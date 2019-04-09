@@ -1,0 +1,78 @@
+#pragma once
+#include "..\dfw2\Header.h"
+
+enum eFCResult
+{
+	FC_OK,
+	FC_ERROR,
+	FC_BUFFEROVERFLOW
+};
+
+typedef unsigned int BITWORD;
+#define PREDICTOR_ORDER 4
+
+class CBitStream
+{
+protected:
+	bool Check();
+	ptrdiff_t WordBitsLeft();
+	eFCResult MoveBitCount(ptrdiff_t BitCount);
+	ptrdiff_t m_nTotalBitsWritten;
+	BITWORD *m_pWord;
+	BITWORD *m_pWordInitial;
+	BITWORD *m_pEnd;
+	ptrdiff_t m_nBitSeek;
+public:
+	CBitStream(BITWORD *Buffer, BITWORD *BufferEnd, ptrdiff_t BitSeek);
+	CBitStream();
+	void Init(BITWORD *Buffer, BITWORD *BufferEnd, ptrdiff_t BitSeek);
+	void Reset();
+	eFCResult WriteBits(CBitStream& Source, ptrdiff_t BitCount);
+	eFCResult ReadBits(CBitStream& Dest, ptrdiff_t BitCount);
+	eFCResult WriteByte(unsigned char Byte);
+	eFCResult WriteDouble(double &dValue);
+	eFCResult ReadByte(unsigned char& Byte);
+	eFCResult AlignTo(ptrdiff_t nAlignTo);
+	ptrdiff_t BytesWritten();
+	ptrdiff_t BitsLeft();
+	BITWORD* Buffer();
+	unsigned char* BytesBuffer();
+	bool EncodeRLE();
+	static const ptrdiff_t WordBitCount;
+};
+
+class CCompressorBase
+{
+protected:
+	void Xor(double& dValue, double& dPredictor);
+	double ys[PREDICTOR_ORDER];
+public:
+	eFCResult WriteDouble(double& dValue, double& dPredictor, CBitStream& Output);
+	eFCResult ReadDouble(double& dValue, double& dPredictor, CBitStream& Input);
+	eFCResult WriteLEB(unsigned __int64 Value, CBitStream& Output);
+	eFCResult ReadLEB(unsigned __int64& Value, CBitStream& Input);
+	static uint32_t CCompressorBase::CLZ1(uint32_t x);
+};
+
+
+class CCompressorSingle : public CCompressorBase
+{
+protected:
+	double ts[PREDICTOR_ORDER];
+	ptrdiff_t m_nPredictorOrder;
+public:
+	CCompressorSingle();
+	virtual double Predict(double t);
+	void UpdatePredictor(double& y, double dTolerance);
+	void UpdatePredictor(double y);
+};
+
+
+class CCompressorParallel : public CCompressorBase
+{
+public:
+	virtual double Predict(double t, bool bPredictorReset, ptrdiff_t nPredictorOrder, const double * const pts);
+	void UpdatePredictor(double y, ptrdiff_t nPredictorOrder);
+	void UpdatePredictor(double& y, ptrdiff_t nPredictorOrder, double dTolerance);
+	void ResetPredictor(ptrdiff_t nPredictorOrder);
+};

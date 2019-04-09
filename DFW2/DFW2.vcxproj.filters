@@ -1,0 +1,483 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="Source Files\SuiteSparce">
+      <UniqueIdentifier>{4c08da4f-9865-4b7e-89df-e324973dd621}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SuiteSparce\AMD">
+      <UniqueIdentifier>{8e92448b-ac57-4cd1-808c-8ee5a47dee98}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SuiteSparce\BTF">
+      <UniqueIdentifier>{080ab594-9349-4439-8a65-6a43addf82c5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SuiteSparce\COLAMD">
+      <UniqueIdentifier>{a276ab0a-b87b-4865-8a9e-bd16c501c819}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SuiteSparce\KLU">
+      <UniqueIdentifier>{e0adf22d-a896-43a4-ba26-ee73772fb264}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SuiteSparce\SuiteSparse_Config">
+      <UniqueIdentifier>{fa9b8a1d-fa91-4d09-a761-d4ff4aaf48ad}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SuiteSparce\CSparse">
+      <UniqueIdentifier>{74bbf33e-2b3d-41b4-a2af-aebd15f24140}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Dynamic Primitives">
+      <UniqueIdentifier>{776c8fad-82b9-4277-bcea-ea26021c7788}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Dynamic Primitives">
+      <UniqueIdentifier>{46fe9d75-90b8-4e5d-ba48-1b1fd6a81a38}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Generators">
+      <UniqueIdentifier>{a02ee619-bc60-4117-8df8-aa55c0f081d1}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Generators">
+      <UniqueIdentifier>{e8ad430e-37c6-44a9-b024-1608dc5575e2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\CustomDevices">
+      <UniqueIdentifier>{b848b420-1067-4cdd-b34a-b7b8fa57a48e}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\CustomDevices">
+      <UniqueIdentifier>{36beb38e-2afd-4d70-83dd-98a3b702901f}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\SuiteSparce\KLU\Complex">
+      <UniqueIdentifier>{72488151-e9df-4853-941f-642e8dd6de08}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="ReadMe.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="targetver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceId.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Header.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cex.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaNode.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Device.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="RastrImport.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Messages.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaLRC.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaModel.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceContainer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Discontinuities.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceTypes.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaBranch.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaExciterBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaExciterMustang.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaPrimitive.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="LimitedLag.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="LimiterConst.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaGenerator1C.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaGenerator3C.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaGeneratorInfBus.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaGeneratorMotion.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="Relay.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaDECMustang.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Sum.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="RSTrigger.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaExcConMustang.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="DerlagContinuous.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaGeneratorMustang.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaPowerInjector.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaVoltageSource.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomDeviceDLL.h">
+      <Filter>Header Files\CustomDevices</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomDeviceContainer.h">
+      <Filter>Header Files\CustomDevices</Filter>
+    </ClInclude>
+    <ClInclude Include="DLLHeader.h">
+      <Filter>Header Files\CustomDevices</Filter>
+    </ClInclude>
+    <ClInclude Include="CustomDevice.h">
+      <Filter>Header Files\CustomDevices</Filter>
+    </ClInclude>
+    <ClInclude Include="DLLStructs.h">
+      <Filter>Header Files\CustomDevices</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceContainerProperties.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="HRTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Comparator.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="AndOrNot.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="Abs.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="ZCDetector.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="DeadBand.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="Expand.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
+    <ClInclude Include="Automatic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DFW2.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceId.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaNode.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Device.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="RastrImport.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Messages.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_1.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_2.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_aat.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_control.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_defaults.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_dump.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_global.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_info.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_order.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_post_tree.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_postorder.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_preprocess.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\AMD\Source\amd_valid.c">
+      <Filter>Source Files\SuiteSparce\AMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\BTF\Source\btf_maxtrans.c">
+      <Filter>Source Files\SuiteSparce\BTF</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\BTF\Source\btf_order.c">
+      <Filter>Source Files\SuiteSparce\BTF</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\BTF\Source\btf_strongcomp.c">
+      <Filter>Source Files\SuiteSparce\BTF</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\COLAMD\Source\colamd.c">
+      <Filter>Source Files\SuiteSparce\COLAMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\COLAMD\Source\colamd_global.c">
+      <Filter>Source Files\SuiteSparce\COLAMD</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_analyze.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_analyze_given.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_defaults.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_diagnostics.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_dump.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_extract.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_factor.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_free_numeric.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_free_symbolic.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_kernel.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_memory.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_refactor.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_scale.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_solve.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_sort.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\klu_tsolve.c">
+      <Filter>Source Files\SuiteSparce\KLU</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\SuiteSparse_config\SuiteSparse_config.c">
+      <Filter>Source Files\SuiteSparce\SuiteSparse_Config</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaLRC.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaModel.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceContainer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaModelUtility.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Nordsiek.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Matrix.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NetworkGraph.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Results.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaBranch.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\CSparse\Source\cs_gaxpy.c">
+      <Filter>Source Files\SuiteSparce\CSparse</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaExciterBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaExciterMustang.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="LimitedLag.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="LimiterConst.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaPrimitive.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaGenerator1C.cpp">
+      <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaGenerator3C.cpp">
+      <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaGeneratorInfBus.cpp">
+      <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaGeneratorMotion.cpp">
+      <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="Relay.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaDECMustang.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Sum.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="RSTrigger.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaExcConMustang.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DerlagContinuous.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaGeneratorMustang.cpp">
+      <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaPowerInjector.cpp">
+      <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaVoltageSource.cpp">
+      <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomDeviceDLL.cpp">
+      <Filter>Source Files\CustomDevices</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomDeviceContainer.cpp">
+      <Filter>Source Files\CustomDevices</Filter>
+    </ClCompile>
+    <ClCompile Include="CustomDevice.cpp">
+      <Filter>Source Files\CustomDevices</Filter>
+    </ClCompile>
+    <ClCompile Include="Discontinuities.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DeviceContainerProperties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Comparator.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="AndOrNot.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="Abs.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="ZCDetector.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="DeadBand.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="Expand.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaModelCompile.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Automatic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu_solve.c">
+      <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu_kernel.c">
+      <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu_factor.c">
+      <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu_free_numeric.c">
+      <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu_scale.c">
+      <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu_tsolve.c">
+      <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu.c">
+      <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
+    </ClCompile>
+    <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu_refactor.c">
+      <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
+    </ClCompile>
+  </ItemGroup>
+</Project>

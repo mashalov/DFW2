@@ -1,0 +1,278 @@
+#include "stdafx.h"
+#include "DynaModel.h"
+
+
+using namespace DFW2;
+
+void CDynaModel::Predict()
+{
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	while (pVectorBegin < pVectorEnd)
+	{
+		pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
+
+		for (ptrdiff_t k = 0; k < sc.q; k++)
+		{
+			for (ptrdiff_t j = sc.q; j >= k + 1; j--)
+			{
+				pVectorBegin->Nordsiek[j - 1] += pVectorBegin->Nordsiek[j];
+			}
+		}
+
+		*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
+		pVectorBegin->Error = 0.0;
+		pVectorBegin++;
+	}
+
+	ConvTest[0].ResetIterations();
+	ConvTest[1].ResetIterations();
+
+	for (DEVICECONTAINERITR it = m_DeviceContainersPredict.begin(); it != m_DeviceContainersPredict.end(); it++)
+	{
+		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+		{
+			(*dit)->Predict();
+		}
+	}
+
+}
+
+void CDynaModel::InitDevicesNordsiek()
+{
+	ChangeOrder(1);
+	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+	{
+		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+		{
+			(*dit)->InitNordsiek(this);
+		}
+	}
+}
+
+void CDynaModel::InitNordsiek()
+{
+	InitDevicesNordsiek();
+
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	while (pVectorBegin < pVectorEnd)
+	{
+		InitNordsiekElement(pVectorBegin);
+		pVectorBegin++;
+	}
+
+	sc.StepChanged();
+	sc.OrderChanged();
+	sc.m_bNordsiekSaved = false;
+}
+
+void CDynaModel::ResetNordsiek()
+{
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	if (sc.m_bNordsiekSaved)
+	{
+		while (pVectorBegin < pVectorEnd)
+		{
+			pVectorBegin->Tminus2Value = pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0] = *pVectorBegin->pValue;
+			pVectorBegin->Nordsiek[1] = pVectorBegin->SavedNordsiek[1] = 0.0;
+			pVectorBegin->SavedError = 0.0;
+			pVectorBegin++;
+		}
+		BuildDerivatives();
+	}
+	sc.OrderChanged();
+	sc.StepChanged();
+}
+
+
+void CDynaModel::ReInitializeNordsiek()
+{
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	if (sc.m_bNordsiekSaved)
+	{
+		while (pVectorBegin < pVectorEnd)
+		{
+			pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0];
+			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
+			pVectorBegin->Nordsiek[1] = pVectorBegin->SavedNordsiek[0] - pVectorBegin->Tminus2Value;
+			pVectorBegin->SavedError = 0.0;
+			pVectorBegin++;
+		}
+		RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
+		BuildDerivatives();
+	}
+	sc.OrderChanged();
+	sc.StepChanged();
+	sc.ResetStepsToFail();
+}
+
+void CDynaModel::RestoreNordsiek()
+{
+
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	if (sc.m_bNordsiekSaved)
+	{
+		while (pVectorBegin < pVectorEnd)
+		{
+			double *pN = pVectorBegin->Nordsiek;
+			double *pS = pVectorBegin->SavedNordsiek;
+			*pN = *pS; pS++; pN++;
+			*pN = *pS; pS++; pN++;
+			*pN = *pS; pS++; pN++;
+
+			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
+			pVectorBegin->Error = pVectorBegin->SavedError;
+
+			pVectorBegin++;
+		}
+	}
+	else
+	{
+		while (pVectorBegin < pVectorEnd)
+		{
+			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
+			pVectorBegin->Nordsiek[1] = pVectorBegin->Nordsiek[2] = 0.0;
+			pVectorBegin->Error = 0.0;
+
+			pVectorBegin++;
+		}
+	}
+}
+
+
+void CDynaModel::UpdateNordsiek()
+{
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	while (pVectorBegin < pVectorEnd)
+	{
+		struct RightVector &rv = *pVectorBegin;
+
+		const double *lm = l[rv.EquationType * 2 + sc.q - 1];
+		double dError = rv.Error;
+
+		rv.Nordsiek[0] += dError * lm[0];
+		rv.Nordsiek[1] += dError * lm[1];
+		rv.Nordsiek[2] += dError * lm[2];
+
+		// save current Nordsiek
+
+		rv.Tminus2Value		= rv.SavedNordsiek[0];
+
+		rv.SavedNordsiek[0] = rv.Nordsiek[0];
+		rv.SavedNordsiek[1] = rv.Nordsiek[1];
+		rv.SavedNordsiek[2] = rv.Nordsiek[2];
+		rv.SavedError = dError;
+
+		pVectorBegin++;
+
+
+		/*
+		for (ptrdiff_t k = 0; k < sc.q + 1; k++)
+		{
+			rv.Nordsiek[k] += rv.Error * lm[k];
+		}
+		*/
+
+		/*
+		double *pN = pVectorBegin->Nordsiek;
+		double *pS = pVectorBegin->SavedNordsiek;
+
+		pVectorBegin->Tminus2Value = *pS;
+
+		*pS = *pN; pS++; pN++;
+		*pS = *pN; pS++; pN++;
+		*pS = *pN; pS++; pN++;
+		*/
+		
+	}
+	sc.m_dOldH = sc.m_dCurrentH;
+	sc.m_bNordsiekSaved = true;
+	m_Discontinuities.PassTime(sc.t);
+	sc.ResetStepsToFail();
+}
+
+
+void CDynaModel::SaveNordsiek()
+{
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	while (pVectorBegin < pVectorEnd)
+	{
+		struct RightVector &rv = *pVectorBegin;
+
+
+		rv.Tminus2Value		= rv.SavedNordsiek[0];
+
+		rv.SavedNordsiek[0] = rv.Nordsiek[0];
+		rv.SavedNordsiek[1] = rv.Nordsiek[1];
+		rv.SavedNordsiek[2] = rv.Nordsiek[2];
+		rv.SavedError		= rv.Error;
+
+		pVectorBegin++;
+	}
+
+	sc.m_dOldH = sc.m_dCurrentH;
+	sc.m_bNordsiekSaved = true;
+}
+
+void CDynaModel::RescaleNordsiek(double r)
+{
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	while (pVectorBegin < pVectorEnd)
+	{
+		double R = 1.0;
+		for (ptrdiff_t j = 1; j < sc.q + 1; j++)
+		{
+			R *= r;
+			pVectorBegin->Nordsiek[j] *= R;
+		}
+		pVectorBegin++;
+	}
+
+	sc.StepChanged();
+	sc.OrderChanged();
+	sc.RefactorMatrix(true);
+}
+
+void CDynaModel::ConstructNordsiekOrder()
+{
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	while (pVectorBegin < pVectorEnd)
+	{
+		pVectorBegin->Nordsiek[2] = pVectorBegin->Error / 2.0;
+		pVectorBegin++;
+	}
+}
+
+
+void CDynaModel::InitNordsiekElement(struct RightVector *pVectorBegin)
+{
+	ZeroMemory(pVectorBegin->Nordsiek + 1, sizeof(double) * 2);
+	ZeroMemory(pVectorBegin->SavedNordsiek, sizeof(double) * 3);
+	pVectorBegin->EquationType = DET_ALGEBRAIC;
+	pVectorBegin->Atol = DFW2_ATOL_DEFAULT;
+	pVectorBegin->Rtol = DFW2_RTOL_DEFAULT;
+	pVectorBegin->SavedError = pVectorBegin->Tminus2Value = 0.0;
+}
+
+void CDynaModel::PrepareNordsiekElement(struct RightVector *pVectorBegin)
+{
+	pVectorBegin->Error = 0.0;
+	pVectorBegin->PhysicalEquationType = DET_ALGEBRAIC;
+}

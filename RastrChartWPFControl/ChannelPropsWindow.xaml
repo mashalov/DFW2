@@ -1,0 +1,108 @@
+﻿<Window x:Class="RastrChartWPFControl.ChannelPropsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+        xmlns:system="clr-namespace:System;assembly=mscorlib"
+        xmlns:local="clr-namespace:RastrChartWPFControl"
+        Title="Свойства канала" Height="235" Width="399"  Loaded="OnLoad" Name="ChanProps" x:ClassModifier="internal" Icon="/RastrChartWPFControl;component/Resources/Images/ChanProps.png">
+    <Window.Resources>
+        <ResourceDictionary>
+            <system:String x:Key="AuxAxis">Вспомогательная</system:String>
+            <system:String x:Key="NewAuxAxis">Новая вспомогательная</system:String>
+            <system:String x:Key="MainAxis">Основная</system:String>
+            <system:String x:Key="StandardColors">Стандартные</system:String>
+            <system:String x:Key="AvailableColors">Доступные цвета</system:String>
+            <system:String x:Key="TitleToolTip">Любое название канала графика</system:String>
+            <system:String x:Key="ColorToolTip">Цвет линии канала графика</system:String>
+            <system:String x:Key="WidthToolTip">Толщина линии канала графика в пикселах</system:String>
+            <system:String x:Key="StyleToolTip">Стиль линии канала графика</system:String>
+            <system:String x:Key="AxisToolTip" xml:space="preserve">Выберите ось для отображения графика &#x0a;или поместите график на новую ось</system:String>
+            <system:String x:Key="UnitsToolTip" xml:space="preserve">Укажите единицы измерения канала графика.&#x0a;Вы можете автоматически распределить каналы &#x0a;по осям с одинаковыми единицами измерения с &#x0a;помощью контекстного меню графика</system:String>
+        </ResourceDictionary>
+    </Window.Resources>
+    <StackPanel Margin="3">
+        <GroupBox Header="Название" Padding="3">
+            <TextBox Name="ChannelLegend" ToolTip="{StaticResource TitleToolTip}"></TextBox>
+        </GroupBox>
+        <GroupBox Header="Отображение" Padding="3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+                <Label Grid.Row="0" Grid.Column="0">Цвет</Label>
+                <local:ColorPickerLocalized x:Name="LegendColor" Grid.Row="0" Grid.Column="1" 
+                                  Width="auto"  
+                                  AvailableColorsHeader="{StaticResource AvailableColors}" 
+                                  StandardColorsHeader="{StaticResource StandardColors}"
+                                  ToolTip="{StaticResource ColorToolTip}">
+                    <local:ColorPickerLocalized.Resources>
+                        <ResourceDictionary>
+                           <system:String x:Key="StandardPicker">Стандартный</system:String>
+                            <system:String x:Key="AdvancedPicker">Расширенный</system:String>
+                        </ResourceDictionary>
+                    </local:ColorPickerLocalized.Resources>
+                </local:ColorPickerLocalized>
+                <Label Grid.Row="0" Grid.Column="2">Толщина</Label>
+                <ComboBox Grid.Row="0" Grid.Column="3" MinWidth="50" Name="Thickness" 
+                            HorizontalContentAlignment="Right"
+                            ToolTip="{StaticResource WidthToolTip}">
+                    <ComboBoxItem>1</ComboBoxItem>
+                    <ComboBoxItem>2</ComboBoxItem>
+                    <ComboBoxItem>3</ComboBoxItem>
+                    <ComboBoxItem>4</ComboBoxItem>
+                    <ComboBoxItem>5</ComboBoxItem>
+                    <ComboBoxItem>6</ComboBoxItem>
+                    <ComboBoxItem>7</ComboBoxItem>
+                    <ComboBoxItem>8</ComboBoxItem>
+                    <ComboBoxItem>9</ComboBoxItem>
+                    <ComboBoxItem>10</ComboBoxItem>
+                </ComboBox>
+                <Label Grid.Row="0" Grid.Column="4">Стиль</Label>
+                <ComboBox Name="LegendStyle" Grid.Row="0" Grid.Column="5" MinWidth="70" 
+                          HorizontalContentAlignment="Stretch" 
+                          ToolTip="{StaticResource StyleToolTip}"/>
+            </Grid>
+        </GroupBox>
+        <GroupBox Header="Ось" Padding="3">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="auto"/>
+                    <ColumnDefinition/>
+                </Grid.ColumnDefinitions>
+                <ComboBox Grid.Column="0" Name="AxisIndex" ToolTip="{StaticResource AxisToolTip}"></ComboBox>
+                <Label Grid.Column="1">Единицы</Label>
+                <!-- <TextBox Name="UnitsName" Grid.Column="2"></TextBox> -->
+                <ComboBox Name="UnitsName" Grid.Column="2" ToolTip="{StaticResource UnitsToolTip}">
+                    <ComboBoxItem>о.е.</ComboBoxItem>
+                    <ComboBoxItem>МВт</ComboBoxItem>
+                    <ComboBoxItem>МВар</ComboBoxItem>
+                    <ComboBoxItem>кВ</ComboBoxItem>
+                    <ComboBoxItem>град</ComboBoxItem>
+                    <ComboBoxItem>А</ComboBoxItem>
+                    <ComboBoxItem>Ом</ComboBoxItem>
+                    <ComboBoxItem>Гц</ComboBoxItem>
+                    <ComboBoxItem>мград</ComboBoxItem>
+                </ComboBox>
+            </Grid>
+        </GroupBox>
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="*"/>
+            </Grid.ColumnDefinitions>
+            <Button Grid.Column="3" Margin="3 3 1 0" Click="OnClickOK" IsDefault="True">OK</Button>
+            <Button Grid.Column="2" Margin="3 3 1 0" Click="OnClickCancel" IsCancel="True">Отмена</Button>
+        </Grid>
+    </StackPanel>
+ </Window>

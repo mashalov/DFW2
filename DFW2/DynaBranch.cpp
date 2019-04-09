@@ -1,0 +1,510 @@
+#include "stdafx.h"
+#include "DynaBranch.h"
+#include "DynaModel.h"
+
+
+using namespace DFW2;
+
+CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(NULL)
+{
+
+}
+
+void CDynaBranch::UpdateVerbalName()
+{
+	m_strVerbalName = Cex(_T("%d - %d%s %s"), Ip, Iq, static_cast<const _TCHAR*>(Np ? Cex(_T(" (%d)"), Np) : _T("")), GetName());
+}
+
+cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
+{
+	double Rf = R;
+	double Xf = X;
+	double Xfictive = m_pNodeIp->Unom;
+	Xfictive *= Xfictive;
+	Xfictive *= 0.0000002;
+
+	if (R == 0 && X == 0)
+		Xf = Xfictive;
+
+	if (bFixNegativeZ)
+	{
+		if (R < 0)
+			Rf = Xfictive;
+		if (X < 0)
+			Xf = Xfictive;
+	}
+	return 1.0 / cplx(Rf, Xf);
+}
+
+
+bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom)
+{
+	bool bRes = false;
+	if (m_pContainer)
+	{
+		bRes = true;
+
+		DEVICEVECTORITR it;
+
+		for (it = m_pContainer->begin(); it != m_pContainer->end(); it++)
+		{
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+
+			pBranch->m_pNodeIp = pBranch->m_pNodeIq = NULL;
+
+			for (int i = 0; i < 2; i++)
+			{
+				CDynaNodeBase *pNode;
+				ptrdiff_t NodeId = i ? pBranch->Ip : pBranch->Iq;
+
+				if (pContainer->GetDevice(NodeId, pNode))
+				{
+					bRes = pNode->IncrementLinkCounter(0) && bRes;
+
+					if (i)
+						pBranch->m_pNodeIp = pNode;
+					else
+						pBranch->m_pNodeIq = pNode;
+				}
+				else
+				{
+					pBranch->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszBranchNodeNotFound, NodeId));
+					bRes = false;
+				}
+			}
+
+			if (pBranch->m_pNodeIp && pBranch->m_pNodeIq)
+			{
+				pBranch->SetName(Cex(_T("%s - %s %s"),
+					pBranch->m_pNodeIp->GetName(),
+					pBranch->m_pNodeIq->GetName(),
+					static_cast<const _TCHAR*>(pBranch->Np ? Cex(_T(" צוןü %d"), pBranch->Np) : _T(""))));
+			}
+		}
+
+		if (bRes)
+		{
+			pContainer->AllocateLinks(0);
+			for (it = m_pContainer->begin(); it != m_pContainer->end(); it++)
+			{
+				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+				pContainer->AddLink(0, pBranch->m_pNodeIp->m_nInContainerIndex, pBranch);
+				pContainer->AddLink(0, pBranch->m_pNodeIq->m_nInContainerIndex, pBranch);
+			}
+			pContainer->RestoreLinks(0);
+		}
+	}
+	return bRes;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBranchState, eDEVICESTATECAUSE eStateCause)
+{
+	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	if (eBranchState != m_BranchState)
+	{
+		m_BranchState = eBranchState;
+		CalcAdmittances();
+		m_pNodeIp->CalcAdmittances();
+		m_pNodeIq->CalcAdmittances();
+		m_pNodeIp->ProcessTopologyRequest();
+	}
+	return Status;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
+{
+	BranchState eBranchState = BRANCH_OFF;
+	if (eState == eDEVICESTATE::DS_ON)
+		eBranchState = BRANCH_ON;
+	return SetBranchState(eBranchState, eStateCause);
+}
+
+eDEVICESTATE CDynaBranch::GetState()
+{
+	eDEVICESTATE State = eDEVICESTATE::DS_ON;
+	if (m_BranchState == BRANCH_OFF)
+		State = DS_OFF;
+	return State;
+}
+
+void CDynaBranch::CalcAdmittances(bool bSeidell)
+{
+	cplx Ybranch = GetYBranch(bSeidell);
+	cplx Ktr(Ktr, Kti);
+
+	switch (m_BranchState)
+	{
+	case CDynaBranch::BRANCH_OFF:
+		Yip = Yiq = Yips = Yiqs = cplx(0.0, 0.0);
+		break;
+	case CDynaBranch::BRANCH_ON:
+		Yip = Ybranch / Ktr;
+		Yiq = Ybranch / conj(Ktr);
+		Yips = cplx(GIp, BIp) + Ybranch;
+		Yiqs = cplx(GIq, BIq) + Ybranch / norm(Ktr);
+		break;
+	case CDynaBranch::BRANCH_TRIPIP:
+	{
+		Yip = Yiq = Yips = 0.0;
+		Yiqs = cplx(GIq, BIq);
+
+		cplx Yip1(GIp, BIp);
+		cplx Ysum = Yip1 + Ybranch;
+
+		_ASSERTE(!Equal(abs(Ysum), 0.0));
+
+		if (!Equal(abs(Ysum), 0.0))
+			Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktr);
+	}
+	break;
+	case CDynaBranch::BRANCH_TRIPIQ:
+	{
+		Yiq = Yip = Yiqs = 0.0;
+		Yips = cplx(GIp, BIp);
+
+		cplx Yip1(GIq, BIq);
+
+		cplx Ysum = Yip1 / norm(Ktr) + Ybranch;
+
+		_ASSERTE(!Equal(abs(Ysum), 0.0));
+
+		if (!Equal(abs(Ysum), 0.0))
+			Yips += Yip1 * Ybranch / Ysum;
+	}
+	break;
+	}
+}
+
+void CDynaBranch::CalcAdmittances()
+{
+	cplx Ybranch = GetYBranch();
+	cplx Ktr(Ktr, Kti);
+
+	switch (m_BranchState)
+	{
+	case CDynaBranch::BRANCH_OFF:
+		Yip = Yiq = Yips = Yiqs = cplx(0.0, 0.0);
+		break;
+	case CDynaBranch::BRANCH_ON:
+		Yip = Ybranch / Ktr;
+		Yiq = Ybranch / conj(Ktr);
+		Yips = cplx(GIp, BIp) + Ybranch;
+		Yiqs = cplx(GIq, BIq) + Ybranch / norm(Ktr);
+		break;
+	case CDynaBranch::BRANCH_TRIPIP:
+		{
+			Yip = Yiq = Yips = 0.0;
+			Yiqs = cplx(GIq, BIq);
+
+			cplx Yip1(GIp, BIp);
+			cplx Ysum = Yip1 + Ybranch;
+
+			_ASSERTE(!Equal(abs(Ysum), 0.0));
+
+			if (!Equal(abs(Ysum), 0.0))
+				Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktr);
+		}
+		break;
+	case CDynaBranch::BRANCH_TRIPIQ:
+		{
+			Yiq = Yip = Yiqs = 0.0;
+			Yips = cplx(GIp, BIp);
+
+			cplx Yip1(GIq, BIq);
+
+			cplx Ysum = Yip1 / norm(Ktr) + Ybranch;
+
+			_ASSERTE(!Equal(abs(Ysum), 0.0));
+
+			if (!Equal(abs(Ysum), 0.0))
+				Yips += Yip1 * Ybranch / Ysum;
+		}
+		break;
+	}
+}
+
+CDynaBranchMeasure::CDynaBranchMeasure(CDynaBranch *pBranch) : CDevice(), m_pBranch(pBranch) 
+{
+	_ASSERTE(pBranch);
+}
+
+double* CDynaBranchMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
+{
+	double *p = NULL;
+	switch (nVarIndex)
+	{
+		MAP_VARIABLE(Ibre, V_IBRE)
+		MAP_VARIABLE(Ibim, V_IBIM)
+		MAP_VARIABLE(Iere, V_IERE)
+		MAP_VARIABLE(Ieim, V_IEIM)
+		MAP_VARIABLE(Ib, V_IB)
+		MAP_VARIABLE(Ie, V_IE)
+		MAP_VARIABLE(Pb, V_PB)
+		MAP_VARIABLE(Qb, V_QB)
+		MAP_VARIABLE(Pe, V_PE)
+		MAP_VARIABLE(Qe, V_QE)
+		MAP_VARIABLE(Sb, V_SB)
+		MAP_VARIABLE(Se, V_SE)
+	}
+	return p;
+}
+
+
+bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
+{
+	bool bRes = true;
+
+	CDynaNodeBase *pNodeIp = m_pBranch->m_pNodeIp;
+	CDynaNodeBase *pNodeIq = m_pBranch->m_pNodeIq;
+
+	double Cosq = cos(m_pBranch->m_pNodeIq->Delta);
+	double Cosp = cos(m_pBranch->m_pNodeIp->Delta);
+	double Sinq = sin(m_pBranch->m_pNodeIq->Delta);
+	double Sinp = sin(m_pBranch->m_pNodeIp->Delta);
+
+	double& Vq = m_pBranch->m_pNodeIq->V;
+	double& Vp = m_pBranch->m_pNodeIp->V;
+
+	double g = m_pBranch->Yip.real();
+	double b = m_pBranch->Yip.imag();
+
+	double ge = m_pBranch->Yiq.real();
+	double be = m_pBranch->Yiq.imag();
+
+	double gips = m_pBranch->Yips.real();
+	double bips = m_pBranch->Yips.imag();
+
+	double giqs = m_pBranch->Yiqs.real();
+	double biqs = m_pBranch->Yiqs.imag();
+
+
+	// dIbre / dIbre
+	pDynaModel->SetElement(A(V_IBRE), A(V_IBRE), 1.0);
+	// dIbre / dVq
+	pDynaModel->SetElement(A(V_IBRE), pNodeIq->A(CDynaNodeBase::V_V), b * Sinq - g * Cosq);
+	// dIbre / dDeltaQ
+	pDynaModel->SetElement(A(V_IBRE), pNodeIq->A(CDynaNodeBase::V_DELTA), Vq * b * Cosq + Vq * g * Sinq);
+	// dIbre / dVp
+	pDynaModel->SetElement(A(V_IBRE), pNodeIp->A(CDynaNodeBase::V_V), gips * Cosp - bips * Sinp);
+	// dIbre / dDeltaP
+	pDynaModel->SetElement(A(V_IBRE), pNodeIp->A(CDynaNodeBase::V_DELTA), -Vp * bips * Cosp - Vp * gips * Sinp );
+
+
+	// dIbim / dIbim
+	pDynaModel->SetElement(A(V_IBIM), A(V_IBIM), 1.0);
+	// dIbim / dVq
+	pDynaModel->SetElement(A(V_IBIM), pNodeIq->A(CDynaNodeBase::V_V), -b * Cosq - g * Sinq);
+	// dIbim / dDeltaQ
+	pDynaModel->SetElement(A(V_IBIM), pNodeIq->A(CDynaNodeBase::V_DELTA), Vq * b * Sinq - Vq * g * Cosq);
+	// dIbim / dVp
+	pDynaModel->SetElement(A(V_IBIM), pNodeIp->A(CDynaNodeBase::V_V), bips * Cosp + gips * Sinp);
+	// dIbim / dDeltaP
+	pDynaModel->SetElement(A(V_IBIM), pNodeIp->A(CDynaNodeBase::V_DELTA), Vp * gips * Cosp - Vp * bips * Sinp);
+
+
+	// dIere / dIere
+	pDynaModel->SetElement(A(V_IERE), A(V_IERE), 1.0);
+	// dIere / dVq
+	pDynaModel->SetElement(A(V_IERE), pNodeIq->A(CDynaNodeBase::V_V), biqs * Sinq - giqs * Cosq);
+	// dIere / dDeltaQ
+	pDynaModel->SetElement(A(V_IERE), pNodeIq->A(CDynaNodeBase::V_DELTA), Vq * biqs * Cosq + Vq * giqs * Sinq);
+	// dIere / dVp
+	pDynaModel->SetElement(A(V_IERE), pNodeIp->A(CDynaNodeBase::V_V), ge * Cosp - be * Sinp);
+	// dIere / dDeltaP
+	pDynaModel->SetElement(A(V_IERE), pNodeIp->A(CDynaNodeBase::V_DELTA), -Vp * be * Cosp - Vp * ge * Sinp);
+
+
+	// dIeim / dIeim
+	pDynaModel->SetElement(A(V_IEIM), A(V_IEIM), 1.0);
+	// dIeim / dVq
+	pDynaModel->SetElement(A(V_IEIM), pNodeIq->A(CDynaNodeBase::V_V), -biqs * Cosq - giqs * Sinq);
+	// dIeim / dDeltaQ
+	pDynaModel->SetElement(A(V_IEIM), pNodeIq->A(CDynaNodeBase::V_DELTA), Vq * biqs * Sinq - Vq * giqs * Cosq);
+	// dIeim / dVp
+	pDynaModel->SetElement(A(V_IEIM), pNodeIp->A(CDynaNodeBase::V_V), be * Cosp + ge * Sinp);
+	// dIeim / dDeltaP
+	pDynaModel->SetElement(A(V_IEIM), pNodeIp->A(CDynaNodeBase::V_DELTA), Vp * ge * Cosp - Vp * be * Sinp);
+
+
+	double absIb = sqrt(Ibre * Ibre + Ibim * Ibim);
+
+	// dIb / dIb
+	pDynaModel->SetElement(A(V_IB), A(V_IB), 1.0);
+	// dIb / dIbre
+	pDynaModel->SetElement(A(V_IB), A(V_IBRE), -CDevice::ZeroDivGuard(Ibre, absIb) );
+	// dIb / dIbim
+	pDynaModel->SetElement(A(V_IB), A(V_IBIM), -CDevice::ZeroDivGuard(Ibim, absIb) );
+
+	absIb = sqrt(Iere * Iere + Ieim * Ieim);
+
+	// dIe / dIe
+	pDynaModel->SetElement(A(V_IE), A(V_IE), 1.0);
+	// dIe / dIbre
+	pDynaModel->SetElement(A(V_IE), A(V_IERE), -CDevice::ZeroDivGuard(Iere, absIb) );
+	// dIe / dIbim
+	pDynaModel->SetElement(A(V_IE), A(V_IEIM), -CDevice::ZeroDivGuard(Ieim, absIb) );
+
+
+	// dPb / dPb
+	pDynaModel->SetElement(A(V_PB), A(V_PB), 1.0);
+	// dPb / dVp
+	pDynaModel->SetElement(A(V_PB), pNodeIp->A(CDynaNodeBase::V_V), -Ibre * Cosp - Ibim * Sinp);
+	// dPb / dDeltaP
+	pDynaModel->SetElement(A(V_PB), pNodeIp->A(CDynaNodeBase::V_DELTA), Ibre * Vp * Sinp - Ibim * Vp * Cosp);
+	// dPb / dIbre
+	pDynaModel->SetElement(A(V_PB), A(V_IBRE), -Vp * Cosp);
+	// dPb / dIbim
+	pDynaModel->SetElement(A(V_PB), A(V_IBIM), -Vp * Sinp);
+
+
+	// dQb / dQb
+	pDynaModel->SetElement(A(V_QB), A(V_QB), 1.0);
+	// dQb / dVp
+	pDynaModel->SetElement(A(V_QB), pNodeIp->A(CDynaNodeBase::V_V), Ibim * Cosp - Ibre * Sinp);
+	// dQb / dDeltaP
+	pDynaModel->SetElement(A(V_QB), pNodeIp->A(CDynaNodeBase::V_DELTA), -Ibre * Vp * Cosp - Ibim * Vp * Sinp);
+	// dQb / dIbre
+	pDynaModel->SetElement(A(V_QB), A(V_IBRE), -Vp * Sinp);
+	// dQb / dIbim
+	pDynaModel->SetElement(A(V_QB), A(V_IBIM),  Vp * Cosp);
+
+
+	// dPe / dPe
+	pDynaModel->SetElement(A(V_PE), A(V_PE), 1.0);
+	// dPe / dVq
+	pDynaModel->SetElement(A(V_PE), pNodeIq->A(CDynaNodeBase::V_V), -Iere * Cosq - Ieim * Sinq);
+	// dPe / dDeltaQ
+	pDynaModel->SetElement(A(V_PE), pNodeIq->A(CDynaNodeBase::V_DELTA), Iere * Vq * Sinq - Ieim * Vq * Cosq);
+	// dPe / dIere
+	pDynaModel->SetElement(A(V_PE), A(V_IERE), -Vq * Cosq);
+	// dPe / dIeim
+	pDynaModel->SetElement(A(V_PE), A(V_IEIM), -Vq * Sinq);
+
+	// dQe / dQe
+	pDynaModel->SetElement(A(V_QE), A(V_QE), 1.0);
+	// dQe / dVq
+	pDynaModel->SetElement(A(V_QE), pNodeIq->A(CDynaNodeBase::V_V), Ieim * Cosq - Iere * Sinq);
+	// dQe / dDeltaQ
+	pDynaModel->SetElement(A(V_QE), pNodeIq->A(CDynaNodeBase::V_DELTA), -Iere * Vq * Cosq - Ieim * Vq * Sinq);
+	// dQe / dIere
+	pDynaModel->SetElement(A(V_QE), A(V_IERE), -Vq * Sinq);
+	// dQe / dIeim
+	pDynaModel->SetElement(A(V_QE), A(V_IEIM), Vq * Cosq);
+
+	absIb = sqrt(Pb * Pb + Qb * Qb);
+
+	// dSb / dSb
+	pDynaModel->SetElement(A(V_SB), A(V_SB), 1.0);
+	// dSb / dPb
+	pDynaModel->SetElement(A(V_SB), A(V_PB), -CDevice::ZeroDivGuard(Pb, absIb) );
+	// dSb / dQb
+	pDynaModel->SetElement(A(V_SB), A(V_QB), -CDevice::ZeroDivGuard(Qb, absIb) );
+
+	absIb = sqrt(Pe * Pe + Qe * Qe);
+
+	if (absIb < DFW2_EPSILON)
+		absIb = DFW2_EPSILON;
+
+	// dSe / dSe
+	pDynaModel->SetElement(A(V_SE), A(V_SE), 1.0);
+	// dSe / dPe
+	pDynaModel->SetElement(A(V_SE), A(V_PE), -CDevice::ZeroDivGuard(Pe, absIb) );
+	// dSe / dQe
+	pDynaModel->SetElement(A(V_SE), A(V_QE), -CDevice::ZeroDivGuard(Qe, absIb) );
+
+
+	return pDynaModel->Status() && bRes;
+}
+
+
+bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
+{
+
+	m_pBranch->m_pNodeIq->UpdateVreVim();
+	m_pBranch->m_pNodeIp->UpdateVreVim();
+
+	cplx& Ue = m_pBranch->m_pNodeIq->VreVim;
+	cplx& Ub = m_pBranch->m_pNodeIp->VreVim;
+	cplx cIb = -m_pBranch->Yips * Ub + m_pBranch->Yip  * Ue;
+	cplx cIe = -m_pBranch->Yiq  * Ub + m_pBranch->Yiqs * Ue;
+	cplx cSb = Ub * conj(cIb);
+	cplx cSe = Ue * conj(cIe);
+
+
+	pDynaModel->SetFunction(A(V_IBRE),	Ibre - cIb.real());
+	pDynaModel->SetFunction(A(V_IBIM),	Ibim - cIb.imag());
+	pDynaModel->SetFunction(A(V_IERE),	Iere - cIe.real());
+	pDynaModel->SetFunction(A(V_IEIM),	Ieim - cIe.imag());
+	pDynaModel->SetFunction(A(V_IB),	Ib - abs(cIb));
+	pDynaModel->SetFunction(A(V_IE),	Ie - abs(cIe));
+	pDynaModel->SetFunction(A(V_PB),	Pb - cSb.real());
+	pDynaModel->SetFunction(A(V_QB),	Qb - cSb.imag());
+	pDynaModel->SetFunction(A(V_PE),	Pe - cSe.real());
+	pDynaModel->SetFunction(A(V_QE),	Qe - cSe.imag());
+	pDynaModel->SetFunction(A(V_SB),	Sb - abs(cSb));
+	pDynaModel->SetFunction(A(V_SE),	Se - abs(cSe));
+
+	return pDynaModel->Status();
+}
+
+eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::Init(CDynaModel* pDynaModel)
+{
+	return ProcessDiscontinuity(pDynaModel);
+}
+
+eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	m_pBranch->m_pNodeIq->UpdateVreVim();
+	m_pBranch->m_pNodeIp->UpdateVreVim();
+	cplx& Ue = m_pBranch->m_pNodeIq->VreVim;
+	cplx& Ub = m_pBranch->m_pNodeIp->VreVim;
+	cplx cIb = -m_pBranch->Yips * Ub + m_pBranch->Yip  * Ue;
+	cplx cIe = -m_pBranch->Yiq  * Ub + m_pBranch->Yiqs * Ue;
+	cplx cSb = Ub * conj(cIb);
+	cplx cSe = Ue * conj(cIe);
+	Ibre = cIb.real();
+	Ibim = cIb.imag();
+	Iere = cIe.real();
+	Ieim = cIe.imag();
+	Ib = abs(cIb);
+	Ie = abs(cIe);
+	Pb = cSb.real();
+	Qb = cSb.imag();
+	Pe = cSe.real();
+	Qe = cSe.imag();
+	Sb = abs(cSb);
+	Se = abs(cSe);
+
+	return DFS_OK;
+}
+
+const CDeviceContainerProperties CDynaBranch::DeviceProperties()
+{
+	CDeviceContainerProperties props;
+	props.SetType(DEVTYPE_BRANCH);
+	props.m_strClassName = CDeviceContainerProperties::m_cszNameBranch;
+	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, _T(""));
+	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasBranch);
+	return props;
+}
+
+const CDeviceContainerProperties CDynaBranchMeasure::DeviceProperties()
+{
+	CDeviceContainerProperties props;
+	props.SetType(DEVTYPE_BRANCHMEASURE);
+	props.m_strClassName = CDeviceContainerProperties::m_cszNameBranchMeasure;
+	props.nEquationsCount = CDynaBranchMeasure::VARS::V_LAST;
+	props.m_VarMap.insert(make_pair(_T("Ibre"), CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Ibim"), CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Iere"), CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Ieim"), CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Ib"),	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Ie"),	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Pb"),	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW)));
+	props.m_VarMap.insert(make_pair(_T("Qb"),	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR)));
+	props.m_VarMap.insert(make_pair(_T("Pe"),	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW)));
+	props.m_VarMap.insert(make_pair(_T("Qe"),	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR)));
+	props.m_VarMap.insert(make_pair(_T("Sb"),	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA)));
+	props.m_VarMap.insert(make_pair(_T("Se"),	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
+	return props;
+}
