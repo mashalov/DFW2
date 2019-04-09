@@ -1,0 +1,2 @@
+c:\lcc64\bin\make -f "c:\tmp\CustomModels\Autodll\Makefile64" OUTNAME="AutoDLL" LCCROOT="c:\lcc64" ROOTDIR="C:\tmp\CustomModels"
+c:\lcc\bin\make -f "c:\tmp\CustomModels\Autodll\Makefile" OUTNAME="AutoDLL" LCCROOT="c:\lcc64" ROOTDIR="C:\tmp\CustomModels"

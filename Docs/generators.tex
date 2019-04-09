@@ -1,0 +1,30 @@
+\documentclass[]{article}
+\usepackage[russian]{babel}
+\usepackage[utf8]{inputenc}
+\usepackage{pscyr}
+\begin{document}
+
+
+
+Модель генератора 3-го порядка (Machowski)
+\renewcommand*{\arraystretch}{1.8}
+\begin{equation}
+\begin{array}{rcl}
+z_{sq} & = & r^2+x'_dx_q  \\
+\delta_{gv} &=& \delta_{g} - \delta_{v} \\
+V_d & = & -Vsin(\delta_{gv}) \\
+V_q & = & Vcos(\delta_{gv}) \\
+I_d & = & \frac{1}{z_{sq}}(-rV_d - x_q(E'_q - V_q)) \\
+I_q & = & \frac{1}{z_{sq}}(r(E'_q - V_q) - x'_dV_d ) \\
+P   & = & V_dI_d + V_qI_q  \\
+Q   & = & V_dI_q - V_qI_d \\
+\delta & = & \omega_0\cdot s  \\ 
+T'_{d0}\frac{dE'_q}{dt}  & = & E_{qe} - E'_q + I_d(x_d - x'_d) \\
+M_j\frac{ds}{dt} & = & \frac{P_t}{1+s} - K_{d}s - \frac{P_{air}}{1+s_v}  \\
+P_{air} & = & P + r(I_d^2+I_q^2) \\
+\end{array}
+\end{equation}
+
+
+
+\end{document}

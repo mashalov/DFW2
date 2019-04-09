@@ -1,0 +1,314 @@
+// ResultFile.idl : IDL source for ResultFile
+//
+
+// This file will be processed by the MIDL tool to
+// produce the type library (ResultFile.tlb) and marshalling code.
+
+import "oaidl.idl";
+import "ocidl.idl";
+
+[
+	object,
+	uuid(92BC385C-48C9-4FB4-B215-3968EA2A1457),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IResultRead : IDispatch
+{
+	[propget, id(1), helpstring("Get file path")] HRESULT Path([out, retval]BSTR* PathName);
+	[propget, id(2), helpstring("Get file creation time")] HRESULT TimeCreated([out, retval]VARIANT* FileTime);
+	[propget, id(3), helpstring("Get file comment")] HRESULT Comment([out, retval]BSTR* Comment);
+	[propget, id(4), helpstring("Get time scale")] HRESULT TimeScale([out, retval]VARIANT* TimeScale);
+	[propget, id(5), helpstring("Get version")] HRESULT Version([out, retval]LONG* Version);
+	[propget, id(6), helpstring("Get top level device")] HRESULT Root([out, retval]VARIANT* Root);
+	[propget, id(7), helpstring("Get device types")] HRESULT Types([out, retval]VARIANT* Types);
+	[id(8), helpstring("Export to csv file")] HRESULT ExportCSV([in]BSTR PathName);
+	[propget, id(9), helpstring("Get slow changing variables")] HRESULT SlowVariables([out, retval]VARIANT *SlowVariables);
+	[id(10), helpstring("Get Plot by Index")] HRESULT GetPlotByIndex([in]LONG Index, [out, retval] VARIANT *Plot);
+	[propget, id(11), helpstring("Get points count")] HRESULT Points([out, retval]LONG* PointsCount);
+	[propget, id(12), helpstring("Get channels count")] HRESULT Channels([out, retval]LONG* ChannelsCount);
+	[id(13), helpstring("Get Plot")] HRESULT GetPlot([in]LONG DeviceType, [in]LONG DeviceId, [in]BSTR VariableName, [out, retval] VARIANT *Plot);
+	[id(14), helpstring("Close")] HRESULT Close();
+	[propget, id(15), helpstring("Get User Comment")] HRESULT UserComment([out, retval]BSTR* UserComment);
+	[propput, id(15), helpstring("Set User Comment")] HRESULT UserComment([in]BSTR UserComment);
+	[propget, id(16), helpstring("Get Ratio")] HRESULT CompressionRatio([out, retval]DOUBLE *pRatio);
+	[propget, id(17), helpstring("Get time step")] HRESULT TimeStep([out, retval]VARIANT* TimeStep);
+};
+
+[
+	object,
+	uuid(318FB4B0-3BE1-4BC7-8BCA-C0220758D805),
+	dual,
+	nonextensible,
+	pointer_default(unique),
+]
+interface IDevice : IDispatch
+{
+	[propget, id(0), helpstring("Get device Id")] HRESULT Id([out, retval]LONG* Id);
+	[propget, id(1), helpstring("Get device Name")] HRESULT Name([out, retval]BSTR* Name);
+	[propget, id(2), helpstring("Get device Type")] HRESULT Type([out, retval]LONG* Type);
+	[propget, id(4), helpstring("Get Children of device")] HRESULT Children([out, retval] VARIANT* Children);
+	[propget, id(5), helpstring("Get Variables of device")] HRESULT Variables([out, retval] VARIANT* Children);
+	[propget, id(6), helpstring("Get device Type Name")] HRESULT TypeName([out, retval]BSTR* TypeName);
+	[propget, id(7), helpstring("Get device has variables")] HRESULT HasVariables([out, retval]VARIANT_BOOL* HasVariables);
+};
+
+
+[
+	object,
+	uuid(F57B4A84-69E2-485A-9688-75F8A5813ED3),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+
+interface IDevices : IDispatch
+{
+	[id(DISPID_VALUE), helpstring("Device Item")] HRESULT Item([in]LONG Index, [out, retval] VARIANT *Item);
+	[propget, id(1), helpstring("Devices Count")] HRESULT Count([out, retval] LONG *Count);
+	[propget, restricted, id(DISPID_NEWENUM), helpstring("Devices Enum")] HRESULT _NewEnum([out, retval] LPUNKNOWN *pVal);
+};
+
+[
+	object,
+	uuid(DBD443D9-0AC4-4236-82A2-D9D30BE88804),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IVariable : IDispatch
+{
+	[propget, id(0), helpstring("Get variable Index")] HRESULT Index([out, retval]LONG* Index);
+	[propget, id(1), helpstring("Get variable Name")]  HRESULT Name([out, retval]BSTR* Name);
+	[propget, id(2), helpstring("Get variable Units")] HRESULT Units([out, retval]LONG* Units);
+	[propget, id(4), helpstring("Get variable Multiplier")] HRESULT Multiplier([out, retval] DOUBLE* Multiplier);
+	[propget, id(5), helpstring("Get plot")] HRESULT Plot([out, retval] VARIANT* Plot);
+	[propget, id(6), helpstring("Get variable Units Name")] HRESULT UnitsName([out, retval]BSTR* UnitsName);
+	[propget, id(7), helpstring("Get variable Device")] HRESULT Device([out, retval]VARIANT* Device);
+	[propget, id(8), helpstring("Get variable channel index")] HRESULT ChannelIndex([out, retval]LONG* Index);
+};
+
+[
+	object,
+	uuid(B543F8D8-20B2-4B48-922E-E15683B181D6),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface ISlowVariable : IDispatch
+{
+	[propget, id(0), helpstring("Get variable Name")]  HRESULT Name([out, retval]BSTR* Name);
+	[propget, id(1), helpstring("Get plot")] HRESULT Plot([out, retval] VARIANT* Plot);
+	[propget, id(2), helpstring("Get device type")] HRESULT DeviceType([out, retval]LONG* Type);
+	[propget, id(3), helpstring("Get device Ids")] HRESULT DeviceIds([out, retval]VARIANT* Ids);
+};
+
+[
+	object,
+	uuid(01A57FD7-A211-4675-B505-1BDCB88A520E),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IVariables : IDispatch
+{
+	[id(DISPID_VALUE), helpstring("Variables Item")] HRESULT Item([in]LONG Index, [out, retval] VARIANT *Item);
+	[propget, id(1), helpstring("Variables Count")] HRESULT Count([out, retval] LONG *Count);
+	[propget, restricted, id(DISPID_NEWENUM), helpstring("Variables Enum")] HRESULT _NewEnum([out, retval] LPUNKNOWN *pVal);
+};
+
+[
+	object,
+	uuid(51D30EAE-3183-46E1-99DB-C2EEC4DD431F),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface ISlowVariables : IDispatch
+{
+	[id(DISPID_VALUE), helpstring("Slow variables Item")] HRESULT Item([in]LONG Index, [out, retval] VARIANT *Item);
+	[propget, id(1), helpstring("Slow variables Count")] HRESULT Count([out, retval] LONG *Count);
+	[propget, restricted, id(DISPID_NEWENUM), helpstring("Slow variables Enum")] HRESULT _NewEnum([out, retval] LPUNKNOWN *pVal);
+	[id(3), helpstring("Slow variable Item by Ids")] HRESULT Find([in]LONG DeviceType, [in]VARIANT DeviceIds, [in]BSTR VariableName, [out, retval]VARIANT *SlowVariable);
+};
+
+[
+	object,
+	uuid(9232811D-DDA7-4BFF-BB73-D38225757CBE),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IDeviceType : IDispatch
+{
+	[propget, id(0), helpstring("Get Type Id")] HRESULT Id([out, retval]LONG* Id);
+	[propget, id(1), helpstring("Get Type Name")]  HRESULT Name([out, retval]BSTR* Name);
+	[propget, id(2), helpstring("Get Devices")] HRESULT Devices([out, retval]VARIANT* Devices);
+};
+
+[
+	object,
+	uuid(81B34404-D51A-4D35-BDC6-B20338E182AD),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IDeviceTypes : IDispatch
+{
+	[id(DISPID_VALUE), helpstring("Device types Item")] HRESULT Item([in]LONG Index, [out, retval] VARIANT *Item);
+	[propget, id(1), helpstring("Device types Count")] HRESULT Count([out, retval] LONG *Count);
+	[propget, restricted, id(DISPID_NEWENUM), helpstring("Device types Enum")] HRESULT _NewEnum([out, retval] LPUNKNOWN *pVal);
+};
+
+[
+	object,
+	uuid(01C0DD6E-5744-4428-A785-EED24B6524CF),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IResult : IDispatch
+{
+	[id(0), helpstring("Load file into Result")] HRESULT Load([in]BSTR PathName, [out, retval] VARIANT* ResultRead);
+	[id(1), helpstring("Create Result file")] HRESULT Create([in]BSTR PathName, [out, retval] VARIANT* ResultWrite);
+};
+
+[
+	object,
+	uuid(FD6266DC-F659-4E69-B9C0-1E49A77AF1B5),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IResultWrite : IDispatch
+{
+	[propput, id(1), helpstring("Set file comment")] HRESULT Comment([in]BSTR Comment);
+	[propput, id(2), helpstring("Set no change tolerance")] HRESULT NoChangeTolerance([in]DOUBLE Tolerance);
+	[id(3), helpstring("Write Header")] HRESULT WriteHeader();
+	[id(4), helpstring("Add variable type")] HRESULT AddVariableUnit([in]LONG UnitId, [in]BSTR UnitName);
+	[id(5), helpstring("Add Device Type")] HRESULT AddDeviceType([in]LONG DeviceTypeId, [in]BSTR DeviceTypeName, [out, retval]VARIANT *DeviceType);
+	[id(6), helpstring("Set channel data")] HRESULT SetChannel([in]LONG DeviceId, [in]LONG DeviceType, [in]LONG VarIndex, [in]DOUBLE *ValuePtr, [in]LONG ChannelIndex);
+	[id(7), helpstring("Write results")] HRESULT WriteResults([in]DOUBLE Time, [in]DOUBLE Step);
+	[id(8), helpstring("Flush channels")] HRESULT FlushChannels();
+	[id(9), helpstring("Close")] HRESULT Close();
+	[id(10), helpstring("Add slow changing variable")] HRESULT AddSlowVariable([in]LONG DeviceTypeId, [in]VARIANT DeviceIds, [in]BSTR VariableName, [in]DOUBLE Time, [in]DOUBLE Value, [in]DOUBLE PreviousValue, [in]BSTR ChangeDescription);
+};
+
+[
+	object,
+	uuid(F3870A42-36D5-42E4-9B2F-AE8B007F023F),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface IDeviceTypeWrite : IDispatch
+{
+	[id(1), helpstring("Set device type metrics")] HRESULT SetDeviceTypeMetrics([in]LONG DeviceIdsCount, [in]LONG ParentIdsCount, [in]LONG DevicesCount);
+	[id(2), helpstring("Add device type variable")] HRESULT AddDeviceTypeVariable([in]BSTR VariableName, [in]LONG UnitId, [in]DOUBLE Multiplier);
+	[id(3), helpstring("Add device")] HRESULT AddDevice([in]BSTR DeviceName, [in]VARIANT DeviceIds, [in]VARIANT ParentIds, [in]VARIANT ParentTypes);
+};
+[
+	uuid(5783CA2F-AEA1-472B-B27B-5FE709F3D893),
+	version(1.0),
+]
+library ResultFileLib
+{
+	importlib("stdole2.tlb");
+	[
+		uuid(42B3D102-40EA-4D7E-BC71-C7FEEED62505),		
+		noncreatable
+	]
+	coclass ResultRead
+	{
+		[default] interface IResultRead;
+	};
+	[
+		uuid(C003BB2D-69EA-4145-A546-D17F771B1827),
+		noncreatable
+	]
+	coclass Device
+	{
+		[default] interface IDevice;
+	};
+	[
+		uuid(0787F552-6F69-4A75-B31E-63D47088D807),
+		noncreatable
+	]
+	coclass Devices
+	{
+		[default] interface IDevices;
+	};
+	[
+		uuid(5E9AE8C4-2093-4D7D-8172-C021324C65F3),
+		noncreatable
+	]
+	coclass SlowVariable
+	{
+		[default] interface ISlowVariable;
+	};
+	[
+		uuid(8183244D-475E-4EC1-99FE-5597452C5492),
+		noncreatable
+	]
+	coclass Variable
+	{
+		[default] interface IVariable;
+	};
+	[
+		uuid(1910D4C5-2853-4C1D-AD74-B4017171D9CE),		
+		noncreatable
+	]
+	coclass Variables
+	{
+		[default] interface IVariables;
+	};
+	[
+		uuid(93DEDA27-B1BE-40B8-8488-EC98C88657AF),
+		noncreatable
+	]
+	coclass SlowVariables
+	{
+		[default] interface ISlowVariables;
+	};
+	[
+		uuid(EA723B54-1F4D-4EBF-B77E-FE1943129D9A),
+		noncreatable
+	]
+	coclass DeviceType
+	{
+		[default] interface IDeviceType;
+	};
+	[
+		uuid(C4B1B750-9298-4C34-BA63-57712AF74563),		
+		noncreatable
+	]
+	coclass DeviceTypes
+	{
+		[default] interface IDeviceTypes;
+	};
+	[
+		uuid(84514F7F-A427-4DFC-880A-B113B5BA4ABF)		
+	]
+	coclass Result
+	{
+		[default] interface IResult;
+	};
+	[
+		uuid(7D3AF0FB-D32C-4672-850F-AFE9997939E3),
+		noncreatable
+	]
+	coclass ResultWrite
+	{
+		[default] interface IResultWrite;
+	};
+	[
+		uuid(2FBEFD0F-6F64-45C5-859F-A4921E1640FC),		
+		noncreatable
+	]
+	coclass DeviceTypeWrite
+	{
+		[default] interface IDeviceTypeWrite;
+	};
+};
+

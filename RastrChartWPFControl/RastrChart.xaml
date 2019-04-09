@@ -1,0 +1,68 @@
+﻿<UserControl x:Class="RastrChartWPFControl.RastrChart"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:RastrChartWPFControl"
+             xmlns:system="clr-namespace:System;assembly=mscorlib"
+             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300" Background="White" Padding="5" DragEnter="OnDragEnter" DragOver="OnDragOver" Drop="OnDrop" AllowDrop="True">
+    <Grid Background="White" FocusManager.IsFocusScope="True" >
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition MinWidth="50" Width="auto"/>
+            <ColumnDefinition Width="4*"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition MinHeight="20" Height="4*" />
+            <RowDefinition MinHeight="20" Height="20"/>
+            <RowDefinition MinHeight="20" Height="auto"/>
+        </Grid.RowDefinitions>
+        <Canvas Name="ChannelCanvas" Background="White" Grid.Column="1" MinWidth="10" MinHeight="10">
+            <!-- <Canvas.CacheMode>
+                <BitmapCache/>
+            </Canvas.CacheMode> -->
+            <Canvas.Resources>
+                <ResourceDictionary>
+                    <TextBlock x:Key="ZoomCursor" Cursor="Resources/Cursors/zoom.cur"/>
+                    <system:String x:Key="ZoomExtents">Показать все</system:String>
+                    <system:String x:Key="SaveChartSet">Сохранить...</system:String>
+                    <system:String x:Key="SaveCSV">Экспорт CSV...</system:String>
+                    <system:String x:Key="SavePNG">Экспорт PNG...</system:String>
+                    <system:String x:Key="ShowGrid">Сетка</system:String>
+                    <system:String x:Key="ShowLegend">Легенда</system:String>
+                    <system:String x:Key="ShowXaxis">Ось X</system:String>
+                    <system:String x:Key="ChannelProperties">Свойства канала...</system:String>
+                    <system:String x:Key="DeleteChannel">Удалить канал</system:String>
+                    <system:String x:Key="AutoAxes">Оси по единицам</system:String>
+                    <system:String x:Key="CopyToClipboard">Копировать</system:String>
+                    <system:String x:Key="SetAsReference">Сделать опорным</system:String>
+                    <system:String x:Key="CopyBitmapToClipboard">Изображение</system:String>
+                    <system:String x:Key="CopyDataToClipboard">Данные</system:String>
+                    <system:String x:Key="CopyDataAndTimeToClipboard">Данные+Время</system:String>
+                    <system:String x:Key="CopyHeadersToClipboard">Заголовки</system:String>
+                    <system:String x:Key="TimeHeader">t,[с]</system:String>
+                    <system:String x:Key="Pin">Фиксировать</system:String>
+                    <system:String x:Key="UnPin">Расфиксировать</system:String>
+                    <BitmapImage x:Key="IconCopy" UriSource="Resources/Images/Copy.png"/>
+                    <BitmapImage x:Key="IconZoomAll" UriSource="Resources/Images/ZoomAll.png"/>
+                    <BitmapImage x:Key="IconDelete" UriSource="Resources/Images/Delete.png"/>
+                    <BitmapImage x:Key="IconAutoAxes" UriSource="Resources/Images/AutoAxes.png"/>
+                    <BitmapImage x:Key="IconCopyImage" UriSource="Resources/Images/CopyImage.png"/>
+                    <BitmapImage x:Key="IconCopyData" UriSource="Resources/Images/CopyData.png"/>
+                    <BitmapImage x:Key="IconCopyDataTime" UriSource="Resources/Images/CopyDataTime.png"/>
+                    <BitmapImage x:Key="IconChanProps" UriSource="Resources/Images/ChanProps.png"/>
+                    <BitmapImage x:Key="IconSetAsReference" UriSource="Resources/Images/SetAsReference.png"/>
+                    <BitmapImage x:Key="SaveChartSett" UriSource="Resources/Images/SaveChartSet.png"/>
+                    <BitmapImage x:Key="IconSaveCSV" UriSource="Resources/Images/FileIconCSV.png"/>
+                    <BitmapImage x:Key="IconSavePNG" UriSource="Resources/Images/FileIconPNG.png"/>
+                    <BitmapImage x:Key="MarkerArrow" UriSource="Resources/Images/MarkerArrow.png"/>
+                </ResourceDictionary>
+            </Canvas.Resources>
+        </Canvas>
+        <Canvas Name="ZoomCanvas" Grid.Column="1"/>
+        <local:AxisX x:Name="HorizontalAxis" Grid.Row="1" Grid.Column="1"/>
+        <local:AxisYBlock x:Name="VerticalAxis" Grid.Row="0" Grid.Column="0"/>
+        <WrapPanel Name="LegendArea" Grid.Row="2" Grid.Column="1" Orientation="Horizontal"></WrapPanel>
+        <Canvas Name="MeasureCanvas" Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="2"/>
+     </Grid>
+      
+</UserControl>
