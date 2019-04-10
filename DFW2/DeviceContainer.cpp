@@ -13,15 +13,19 @@ CDeviceContainer::CDeviceContainer(CDynaModel *pDynaModel) : m_pControlledData(N
 
 }
 
+// очистка контейнера перед заменой содержимого или из под деструктора
 void CDeviceContainer::CleanUp()
 {
 	if (m_pControlledData)
 	{
+		// если был передан линейный массив с созданными устройствами
+		// удаляем каждое из них
 		delete [] m_pControlledData;
 		m_pControlledData = NULL;
 	}
 	else
 	{
+		// если добавляли отдельные устройства - удаляем устройства по отдельности
 		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
 			delete (*it);
 	}
@@ -80,37 +84,51 @@ bool CDeviceContainer::RemoveDevice(ptrdiff_t nId)
 	return bRes;
 }
 
+// добавляет устройство в подготовленный контейнер
 bool CDeviceContainer::AddDevice(CDevice* pDevice)
 {
 	if (pDevice)
 	{
+		// отмечаем в устройстве его индекс в контейнере
+		// этот индекс необходим для связи уравненеий устройств
 		pDevice->m_nInContainerIndex = m_DevVec.size();
+		// помещаем устройство в контейнер
 		m_DevVec.push_back(pDevice);
+		// сообщаем устройству что оно в контейнере
 		pDevice->SetContainer(this);
+		// очищаем сет для поиска, так как идет добавление устройств
+		// и сет в конце этого процесса должен быть перестроен заново
 		m_DevSet.clear();
 		return true;
 	}
 	return false;
 }
 
-
+// добавление переменной состояния в контейнер
+// Требуются имя перменной (уникальное), индекс и единицы измерения
+// если переменная с таким именем уже есть возвращает false
 bool CDeviceContainer::RegisterVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
 {
 	bool bInserted = m_ContainerProps.m_VarMap.insert(make_pair(cszVarName, CVarIndex(nVarIndex, eVarUnits))).second;
 	return bInserted;
 }
 
+// добавление перменной константы устройства (константа - параметр не изменяемый в процессе расчета и пользуемый при инициализации)
+// Требуются имя, индекс и тип константы. Индексы у констант и переменных состояния разные
 bool CDeviceContainer::RegisterConstVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
 {
 	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(make_pair(cszVarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
 	return bInserted;
 }
 
+// управление выводом переменной в результаты
 bool CDeviceContainer::VariableOutputEnable(const _TCHAR* cszVarName, bool bOutputEnable)
 {
+	// ищем переменную по имени в карте переменных контейнера
 	VARINDEXMAPITR it = m_ContainerProps.m_VarMap.find(cszVarName);
 	if (it != m_ContainerProps.m_VarMap.end())
 	{
+		// если нашли - ставим заданный атрибут вывода 
 		it->second.m_bOutput = bOutputEnable;
 		return true;
 	}
@@ -162,22 +180,30 @@ CDevice* CDeviceContainer::GetDeviceByIndex(ptrdiff_t nIndex)
 		return NULL;
 }
 
+// формирование сета для поиска устройств в контейнере
 bool CDeviceContainer::SetUpSearch()
 {
 	bool bRes = true;
+	// добавляем устройства в сет только если он был пуст
+	// по этому признаку обходим обновление сета,
+	// так как SetUpSearch вызывается перед любым поиском устройства
 	if (!m_DevSet.size())
 	{
+		// сет для контроля дублей
 		DEVSEARCHSET AlreadyReported;
 		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
 		{
+			// ищем устройство из вектора в сете по идентификатору
 			if (!m_DevSet.insert(*it).second)
 			{
+				// если такое устройство есть - это дубль.
 				if (AlreadyReported.find(*it) == AlreadyReported.end())
 				{
+					// если про дубль устройства еще не сообщали - сообщаем и добавляем устройство в сет дублей
 					(*it)->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDuplicateDevice, (*it)->GetVerbalName()));
 					AlreadyReported.insert(*it);
 				}
-				bRes = false;
+				bRes = false;	// если обнаружены дубли - это ошибка
 			}
 		}
 	}
@@ -208,9 +234,11 @@ size_t CDeviceContainer::Count()
 	return m_DevVec.size();
 }
 
+// получить количество переменных, которое нужно выводить в результаты
 size_t CDeviceContainer::GetResultVariablesCount()
 {
 	size_t nCount = 0;
+	// определяем простым подсчетом переменных состояния с признаком вывода
 	for (VARINDEXMAPCONSTITR vit = VariablesBegin(); vit != VariablesEnd(); vit++)
 		if (vit->second.m_bOutput)
 			nCount++;
@@ -226,18 +254,24 @@ void CDeviceContainer::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR
 bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 {
 	bool bRes = true;
+	// выделяем память под ссылки в данном контейнере и внешнем контейнере, с которым надо установить связь
 	PrepareSingleLinks();
 	pLinkContainer->PrepareSingleLinks();
+	// если во внешнем контейнере есть устройства
 	if (pLinkContainer->Count())
 	{
 		LinkDirectionTo		LinkTo;
 		LinkDirectionFrom   LinkFrom;
+		// определяем внешние и внутренние связи (небольшой overhead, потому что мы уже вызывали эту функцию раньше, можно закешировать)
+		// или вообще передать заранее определенные LinkTo и LinkFrom
 		CDeviceContainer *pContLead = DetectLinks(pLinkContainer, LinkTo, LinkFrom);
 
 		if (pContLead && pLinkContainer)
 		{
 			if (LinkFrom.eLinkMode == DLM_MULTI)
 			{
+				// если связь одного с несколькими
+
 				eDFW2DEVICETYPE TreatAs = DEVTYPE_UNKNOWN; // search device type to create link according to link map
 				for (LINKSFROMMAPITR it = m_ContainerProps.m_LinksFrom.begin(); it != m_ContainerProps.m_LinksFrom.end(); it++)
 					if (it->second.nLinkIndex == LinkFrom.nLinkIndex)
@@ -276,6 +310,7 @@ bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 			}
 			else
 			{
+				// если связь одного с одним
 				bRes = (*pLinkContainer->begin())->LinkToContainer(this, pContLead, LinkTo, LinkFrom);
 			}
 		}
@@ -290,23 +325,32 @@ bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 
 bool CDeviceContainer::IsKindOfType(eDFW2DEVICETYPE eType)
 {
+	// если запрашиваемый тип и есть тип устройства - оно подходит
 	if (GetType() == eType) return true;
-
+	// если нет - ищем заданный тип в списке типов наследования
 	TYPEINFOSET& TypeInfoSet = m_ContainerProps.m_TypeInfoSet;
+	// и если находим - возвращаем true - "да, это устройство может быть трактовано как требуемое"
 	return TypeInfoSet.find(eType) != TypeInfoSet.end();
 }
 
+// распределение памяти под связи устройства
 void CDeviceContainer::PrepareSingleLinks()
 {
+	// если память еще не была распределена и количество устройств в контейнере не нулевое
 	if (!m_ppSingleLinks && Count() > 0)
 	{
+		// получаем количество возможных связей
 		ptrdiff_t nPossibleLinksCount = GetPossibleSingleLinksCount();
+		// если это количество не нулевое
 		if (nPossibleLinksCount > 0)
 		{
+			// выделяем общий буфер под все устройства
 			m_ppSingleLinks = new CDevice*[nPossibleLinksCount * Count()]();
 			CDevice **ppLinkPtr = m_ppSingleLinks;
+			// обходим все устройства в векторе контейнера
 			for (DEVICEVECTORITR it = begin(); it != end(); it++)
 			{
+				// каждому из устройств сообщаем адрес, откуда можно брать связи
 				(*it)->SetSingleLinkStart(ppLinkPtr);
 				ppLinkPtr += nPossibleLinksCount;
 				_ASSERTE(ppLinkPtr <= m_ppSingleLinks + nPossibleLinksCount * Count());
@@ -494,21 +538,24 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 {
 	m_eDeviceFunctionStatus = DFS_OK;
 
+	// ветви хотя и тоже устройства, но мы их не инициализируем
 	if (GetType() == DEVTYPE_BRANCH)
 		return m_eDeviceFunctionStatus;
 
 
 	DEVICEVECTORITR it = begin();
 	
+	// обходим устройства в векторе 
 	for (; it != end() ; it++)
 	{
+		// проверяем в каком состоянии находится устройство
 		switch ((*it)->CheckInit(pDynaModel))
 		{
 		case DFS_FAILED:
-			m_eDeviceFunctionStatus = DFS_FAILED;
+			m_eDeviceFunctionStatus = DFS_FAILED;		// если инициализации устройства завалена - завален и контейнер
 			break;
 		case DFS_NOTREADY:
-			m_eDeviceFunctionStatus = DFS_NOTREADY;
+			m_eDeviceFunctionStatus = DFS_NOTREADY;		// если инициализация еще не выполнена, отмечаем, что и контейнер нужно инициализировать позже
 			break;
 		}
 	}
@@ -534,25 +581,32 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 	return m_eDeviceFunctionStatus;
 }
 
-
+// получить индекс ссылки по типу заданного контейнера
 ptrdiff_t CDeviceContainer::GetLinkIndex(CDeviceContainer* pLinkContainer)
 {
 	ptrdiff_t nRet = -1;
+	// обходим вектор ссылок
 	for (LINKSVECITR it = m_Links.begin(); it != m_Links.end(); it++)
 		if ((*it)->m_pContainer == pLinkContainer)
 		{
+			// если заданный контейнер входит в набор возможных ссылок 
+			// возвращаем его индекс в векторе ссылок
 			nRet = it - m_Links.begin();
 			break;
 		}
 	return nRet;
 }
 
+// получить индекс ссылки по типу устройства
 ptrdiff_t CDeviceContainer::GetLinkIndex(eDFW2DEVICETYPE eDeviceType)
 {
 	ptrdiff_t nRet = -1;
+	// обходим вектор ссылок
 	for (LINKSVECITR it = m_Links.begin(); it != m_Links.end(); it++)
 		if ((*it)->m_pContainer->IsKindOfType(eDeviceType))
 		{
+			// если заданный тип входит в дерево наследования контейнера 
+			// возвращаем его индекс в векторе ссылок
 			nRet = it - m_Links.begin();
 			break;
 		}
@@ -646,20 +700,25 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 {
 	CDeviceContainer *pRetContainer = NULL;
 
+	// просматриваем возможные связи _из_ внешнего контейнер
 	for (LINKSTOMAPITR extlinkstoit = pExtContainer->m_ContainerProps.m_LinksTo.begin();
 			   		   extlinkstoit != pExtContainer->m_ContainerProps.m_LinksTo.end(); 
 					   extlinkstoit++)
 	{
 		if (IsKindOfType(extlinkstoit->first))
 		{
+			// если данный контейнер подходит по типу для организации связи
 			LinkTo = extlinkstoit->second;
+			// возвращаем внешний контейнер и подтверждаем что готовы быть с ним связаны
 			pRetContainer = pExtContainer;
+			// дополнительно просматриваема связи _из_ контенера 
 			for (LINKSFROMMAPITR linksfrom = m_ContainerProps.m_LinksFrom.begin();
 								 linksfrom != m_ContainerProps.m_LinksFrom.end();
 								 linksfrom++)
 			{
 				if (pExtContainer->IsKindOfType(linksfrom->first))
 				{
+					// если можно связаться по типу с внешним контейнером - заполняем связь, по которой это можно сделать
 					LinkFrom = linksfrom->second;
 					break;
 				}
@@ -670,20 +729,27 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 
 	if (!pRetContainer)
 	{
+		// если из внешнего контейнера к данном связь не найдена
+		// просматриваем возможные связи _из_ данного контейнера
+
 		for (LINKSTOMAPITR linkstoit = m_ContainerProps.m_LinksTo.begin();
 						   linkstoit != m_ContainerProps.m_LinksTo.end();
 						   linkstoit++)
 		{
 			if (pExtContainer->IsKindOfType(linkstoit->first))
 			{
+				// если внешний контейнер может быть связан с данным
 				LinkTo = linkstoit->second;
+				// возвращаем данный контейнер и подтверждаем что он готов с связи с внешним
 				pRetContainer = this;
+				// дополнительно просматриваем связи _из_ внешнего контейнера
 				for (LINKSFROMMAPITR linksfrom = pExtContainer->m_ContainerProps.m_LinksFrom.begin();
 									 linksfrom != pExtContainer->m_ContainerProps.m_LinksFrom.end();
 									 linksfrom++)
 				{
 					if (IsKindOfType(linksfrom->first))
 					{
+						// если данный контейнер может быть связан внешним - заполняем связь
 						LinkFrom = linksfrom->second;
 						break;
 					}
