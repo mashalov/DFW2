@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DeviceId.h"
 #include "DeviceContainerProperties.h"
 #include "DLLStructs.h"
@@ -112,7 +112,7 @@ namespace DFW2
 		double Tminus2Value;											// значение на пред-предыдыущем шаге для реинита Nordsieck
 		DEVICE_EQUATION_TYPE PhysicalEquationType;						// тип уравнения
 		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть
-		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов Ньютона по этой переменной
+		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов итераций Ньютона по этой переменной
 
 		// расчет взвешенной ошибки по значению снаружи
 		// но с допустимыми погрешностями для этой переменной
