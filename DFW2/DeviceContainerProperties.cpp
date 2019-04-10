@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DeviceContainerProperties.h"
 using namespace DFW2;
 
