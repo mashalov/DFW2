@@ -416,22 +416,29 @@ bool CDevice::CheckAddVisited(CDevice* pDevice)
 	return bRes;
 }
 
+// проверка инициализации/инициализация устройства
 eDEVICEFUNCTIONSTATUS CDevice::CheckInit(CDynaModel* pDynaModel)
 {
 	if (m_eInitStatus != DFS_OK)
 	{
+		// если успешной инициализации еще не выполнено
+		// проверяем что с инициализацией ведущих устройств
 		m_eInitStatus = MastersReady(&CDevice::CheckMasterDeviceInit);
 
 		if (IsPresent())
 		{
+			// если устройство представлено в модели
+			// и ведущие устройства инициализированы 
 			if(m_eInitStatus == DFS_OK)
-				m_eInitStatus = Init(pDynaModel);
+				m_eInitStatus = Init(pDynaModel);		// пытаемся инициализировать устройство
 
-			if (m_eInitStatus == DFS_DONTNEED)
-				m_eInitStatus = DFS_OK;
+			// если устройство не нуждается в инициализации
+			if (m_eInitStatus == DFS_DONTNEED)	
+				m_eInitStatus = DFS_OK;					// делаем вид что инициализация прошла успешно
 		}
 		else
-			m_eInitStatus = DFS_OK;
+			m_eInitStatus = DFS_OK;						// для отсутствующих в модели устройств также возвращаем успешную инициализацию
+														// так как далее мы их просто удалим из модели
 	}
 	return m_eInitStatus;
 }
@@ -660,10 +667,11 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const
 	return bRes;
 }
 
+// установить адрес, начиная с которого устройство сможет получить
+// адреса связанных устройств
 void CDevice::SetSingleLinkStart(CDevice **ppLinkStart)
 {
 	_ASSERTE(m_pContainer);
-
 	m_DeviceLinks.SetRange(SingleLinksRange(ppLinkStart, ppLinkStart + m_pContainer->GetPossibleSingleLinksCount()));
 }
 
