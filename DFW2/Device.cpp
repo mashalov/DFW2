@@ -202,6 +202,8 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 		// если совпадает в контейнером данного устройства - подчиненный - внешний контейнер
 		CDeviceContainer *pContSlave = (pContLead == pContainer) ? m_pContainer : pContainer;
 
+		// заранее определяем индекс константы, в которой лежит номер связываемого устройства
+		ptrdiff_t nIdFieldIndex = pContLead->GetConstVariableIndex(LinkTo.strIdField.c_str());
 
 		for (it = pContLead->begin(); it != pContLead->end(); it++)
 		{
@@ -210,8 +212,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 			CDevice *pLinkDev = NULL;
 
 			// пытаемся получить идентификатор устройства, с которым должно быть связано устройство из мастер-контейнера
-			// имя идентификатора извлекается из информации связи _из_ мастер-контейнера
-			const double *pdDevId = pDev->GetConstVariableConstPtr(LinkTo.strIdField.c_str());
+			const double *pdDevId = pDev->GetConstVariableConstPtr(nIdFieldIndex);
 			ptrdiff_t DevId = (pdDevId) ? static_cast<ptrdiff_t>(*pdDevId) : -1;
 
 			if (DevId > 0)
@@ -718,12 +719,13 @@ void CDevice::UpdateVerbalName()
 		m_strVerbalName = Cex(_T("%s %s"), m_pContainer->GetTypeName(), m_strVerbalName.c_str());
 }
 
-
+// получить связанное устройство по индексу связи
 CDevice* CDevice::GetSingleLink(ptrdiff_t nIndex)
 {
 	return m_DeviceLinks.GetLink(nIndex);
 }
 
+// получить связанное устройство по типу связанного устройства
 CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 {
 	_ASSERTE(m_pContainer);
@@ -732,16 +734,22 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 
 	if (m_pContainer)
 	{
+		// по информации из атрибутов контейнера определяем индекс
+		// связи, соответствующий типу
 		LINKSFROMMAP& FromLinks = m_pContainer->m_ContainerProps.m_LinksFrom;
 		LINKSFROMMAPITR itFrom = FromLinks.find(eDevType);
 		if (itFrom != FromLinks.end())
 			pRetDev = GetSingleLink(itFrom->second.nLinkIndex);
+	
+		// если связанное устройство не найдено
+		// пытаемся определить связь "с другой стороны"
 
 #ifdef _DEBUG
 		CDevice *pRetDevTo = NULL;
 		LINKSTOMAP& ToLinks = m_pContainer->m_ContainerProps.m_LinksTo;
 		LINKSTOMAPITR itTo = ToLinks.find(eDevType);
 
+		// в режиме отладки проверяем однозначность определения связи
 		if (itTo != ToLinks.end())
 		{
 			pRetDevTo = GetSingleLink(itTo->second.nLinkIndex);
