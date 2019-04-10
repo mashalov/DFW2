@@ -19,6 +19,8 @@ CDevice::~CDevice()
 
 }
 
+// у устройства нет собственного типа. Тип задается из контейнера
+// к которому устройство принадлежит. Если контейнера нет - тип неизвестен
 eDFW2DEVICETYPE CDevice::GetType() const
 {
 	_ASSERTE(m_pContainer);
@@ -28,12 +30,11 @@ eDFW2DEVICETYPE CDevice::GetType() const
 	else
 		return eDFW2DEVICETYPE::DEVTYPE_UNKNOWN;
 }
-
-
+// функция проверяет входит ли устройство в цепочку наследования от заданного типа
+// например - Генератор Мустанг наследован от ШБМ
 bool CDevice::IsKindOfType(eDFW2DEVICETYPE eType)
 {
 	_ASSERTE(m_pContainer);
-
 	if (m_pContainer)
 	{
 		TYPEINFOSET& TypeInfoSet = m_pContainer->m_ContainerProps.m_TypeInfoSet;
@@ -47,15 +48,20 @@ void CDevice::SetContainer(CDeviceContainer* pContainer)
 	m_pContainer = pContainer;
 }
 
+// получить указатель на переменную устройства по имени
 double* CDevice::GetVariablePtr(const _TCHAR* cszVarName)
 {
 	_ASSERTE(m_pContainer);
 
+	// имена переменных хранятся в контейнере
 	double *pRes = NULL;
+	// если устройство привязано к контейнеру - то можно получить от него индекс
+	// переменной, а по нему уже указатель
 	if (m_pContainer)
 		pRes = GetVariablePtr(m_pContainer->GetVariableIndex(cszVarName));
 	return pRes;
 }
+
 
 double* CDevice::GetConstVariablePtr(const _TCHAR* cszVarName)
 {
@@ -126,7 +132,6 @@ const double* CDevice::GetConstVariableConstPtr(const _TCHAR* cszVarName) const
 	return pRes;
 }
 
-
 double CDevice::GetValue(ptrdiff_t nVarIndex) const
 {
 	const double *pRes = GetVariableConstPtr(nVarIndex);
@@ -136,6 +141,7 @@ double CDevice::GetValue(ptrdiff_t nVarIndex) const
 		return 0.0;
 }
 
+// установить значение переменной по индексу и вернуть исходное значение
 double CDevice::SetValue(ptrdiff_t nVarIndex, double Value)
 {
 	double *pRes = GetVariablePtr(nVarIndex);
@@ -157,6 +163,7 @@ double CDevice::GetValue(const _TCHAR* cszVarName) const
 		return 0.0;
 }
 
+// установить значение переменной по имени и вернуть исходное значение
 double CDevice::SetValue(const _TCHAR* cszVarName, double Value)
 {
 	double *pRes = GetVariablePtr(cszVarName);
@@ -275,7 +282,10 @@ bool CDevice::IncrementLinkCounter(ptrdiff_t nLinkIndex)
 		bRes = m_pContainer->IncrementLinkCounter(nLinkIndex, m_nInContainerIndex);
 	return bRes;
 }
-
+// устройство может быть связано с несколькими типами разных устройств,
+// причем связей каждого из типов тоже может быть несколько
+// функция возвращает связи устройства с заданным типом. Тип задается не явно, а в виде
+// индекса слоя связей
 CLinkPtrCount* CDevice::GetLink(ptrdiff_t nLinkIndex)
 {
 	_ASSERTE(m_pContainer);
@@ -290,37 +300,53 @@ CLinkPtrCount* CDevice::GetLink(ptrdiff_t nLinkIndex)
 	return pLink;
 }
 
+// функция обхода связей устройства (типа обход ветвей узла, генераторов узла и т.п.)
+// на входе указатель на указатель устройства, с которым связь. Каждый следующий
+// вызов In() возвращает очередную связь и true, или false - если связи закончились
+// начало последовательности требует чтобы на вход был передан указатель на null
 bool CLinkPtrCount::In(CDevice ** & p)
 {
 	if (!p)
 	{
+		// если передан указатель на null
 		if (m_nCount)
 		{
+			// если связи есть - возвращаем первую
 			p = m_pPointer;
 			return true;
 		}
 		else
 		{
+			// если связей нет - завершаем обход
 			p = NULL;
 			return false;
 		}
 	}
 
+	// если передан указатель не на null, это
+	// означает, что мы уже начали обходить связи
+	// переходм к следующей
 	p++;
 
+	// проверяем, не достили ли конца списка связей
 	if (p < m_pPointer + m_nCount)
 		return true;
 
+	// если достигли - завершаем обход
 	p = NULL;
-
 	return false;
 }
 
+// функция увеличивает размерность модели на количество уравнений устройства, 
+// и заодно фиксирует строку матрицы, с которой начинается блок его уравнений
 void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 {
 	m_nMatrixRow = pDynaModel->AddMatrixSize(m_pContainer->EquationsCount());
 }
 
+// базовая функция инициализации Nordsieck
+// на самом деле c Nordsieck функция не работает, а только 
+// участвует в CDynaModel::InitNordsieck() для инициализации правой части уравнений
 void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 {
 	_ASSERTE(m_pContainer);
@@ -328,11 +354,12 @@ void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 	struct RightVector *pRv = pDynaModel->GetRightVector(A(0));
 	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
 
+	// инициализация заключается в обходе всех переменных устройства и:
 	for (ptrdiff_t z = 0; z < nEquationsCount ; z++)
 	{
-		pRv->pValue = GetVariablePtr(z);
+		pRv->pValue = GetVariablePtr(z);	// передачи значения переменной устройства в структуру вектора правой части
 		_ASSERTE(pRv->pValue);
-		pRv->pDevice = this;
+		pRv->pDevice = this;				// передачи данных об устройстве в структуру правой части
 		pRv++;
 	}
 }
@@ -354,7 +381,6 @@ bool CDevice::BuildDerivatives(CDynaModel *pDynaModel)
 	bool bRes = true;
 	return bRes;
 }
-
 
 bool CDevice::NewtonUpdateEquation(CDynaModel *pDynaModel)
 {
@@ -651,7 +677,7 @@ bool CDevice::SetSingleLink(ptrdiff_t nIndex, CDevice *pDevice)
 	return true;
 }
 
-
+// подробное имя устройства формируется по с описанием типа. Остальное по правилам CDeviceId::UpdateVerbalName
 void CDevice::UpdateVerbalName()
 {
 	CDeviceId::UpdateVerbalName();
