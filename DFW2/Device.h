@@ -12,34 +12,34 @@ namespace DFW2
 	class CDynaModel;
 	class PrimitiveVariableExternal;
 
-	// класс для хранения связей устройства
+	// РєР»Р°СЃСЃ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ СЃРІСЏР·РµР№ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	class CLinkPtrCount
 	{
 	public:
-		CDevice  **m_pPointer;		// вектор указателей на связанные устройства
-		size_t	 m_nCount;			// количество связанных устройств
+		CDevice  **m_pPointer;		// РІРµРєС‚РѕСЂ СѓРєР°Р·Р°С‚РµР»РµР№ РЅР° СЃРІСЏР·Р°РЅРЅС‹Рµ СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		size_t	 m_nCount;			// РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРІСЏР·Р°РЅРЅС‹С… СѓСЃС‚СЂРѕР№СЃС‚РІ
 		CLinkPtrCount() : m_nCount(0) {}
-		bool In(CDevice ** & p);	// последовательное получение очередного связанного устройства из вектора
+		bool In(CDevice ** & p);	// РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅРѕРµ РїРѕР»СѓС‡РµРЅРёРµ РѕС‡РµСЂРµРґРЅРѕРіРѕ СЃРІСЏР·Р°РЅРЅРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР° РёР· РІРµРєС‚РѕСЂР°
 	};
 
-	// элемент для хранения/передачи списка связанных устройств одного типа
+	// СЌР»РµРјРµРЅС‚ РґР»СЏ С…СЂР°РЅРµРЅРёСЏ/РїРµСЂРµРґР°С‡Рё СЃРїРёСЃРєР° СЃРІСЏР·Р°РЅРЅС‹С… СѓСЃС‚СЂРѕР№СЃС‚РІ РѕРґРЅРѕРіРѕ С‚РёРїР°
 	struct SingleLinksRange
 	{
-		CDevice **m_ppLinkStart;		// начало и конец списка устройств
+		CDevice **m_ppLinkStart;		// РЅР°С‡Р°Р»Рѕ Рё РєРѕРЅРµС† СЃРїРёСЃРєР° СѓСЃС‚СЂРѕР№СЃС‚РІ
 		CDevice **m_ppLinkEnd;
 		SingleLinksRange() {}
-		// конструктор с заданием вектора начала и конца
+		// РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂ СЃ Р·Р°РґР°РЅРёРµРј РІРµРєС‚РѕСЂР° РЅР°С‡Р°Р»Р° Рё РєРѕРЅС†Р°
 		SingleLinksRange(CDevice **ppStart, CDevice **ppEnd) : m_ppLinkStart(ppStart), m_ppLinkEnd(ppEnd)
 		{
 			_ASSERTE(m_ppLinkStart <= m_ppLinkEnd);
 		}
 	};
 
-	// класс связей устройства
+	// РєР»Р°СЃСЃ СЃРІСЏР·РµР№ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	class CSingleLink
 	{
 	protected:
-		SingleLinksRange m_LinkRange;		// список связей
+		SingleLinksRange m_LinkRange;		// СЃРїРёСЃРѕРє СЃРІСЏР·РµР№
 	public:
 		void SetRange(SingleLinksRange& LinkRange)
 		{
@@ -50,11 +50,11 @@ namespace DFW2
 			return m_LinkRange;
 		}
 
-		// задать связь с индексом
+		// Р·Р°РґР°С‚СЊ СЃРІСЏР·СЊ СЃ РёРЅРґРµРєСЃРѕРј
 		bool SetLink(ptrdiff_t nIndex, CDevice *pDevice) const
 		{
-			// проверка на корректность индекса в отладке и в релизе
-			// потому что вызовов в процессе расчета нет
+			// РїСЂРѕРІРµСЂРєР° РЅР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚СЊ РёРЅРґРµРєСЃР° РІ РѕС‚Р»Р°РґРєРµ Рё РІ СЂРµР»РёР·Рµ
+			// РїРѕС‚РѕРјСѓ С‡С‚Рѕ РІС‹Р·РѕРІРѕРІ РІ РїСЂРѕС†РµСЃСЃРµ СЂР°СЃС‡РµС‚Р° РЅРµС‚
 			if (nIndex >= 0 && nIndex < m_LinkRange.m_ppLinkEnd - m_LinkRange.m_ppLinkStart)
 			{
 				*(m_LinkRange.m_ppLinkStart + nIndex) = pDevice;
@@ -63,14 +63,14 @@ namespace DFW2
 			return false;
 		}
 
-		// получить связь с индексом
+		// РїРѕР»СѓС‡РёС‚СЊ СЃРІСЏР·СЊ СЃ РёРЅРґРµРєСЃРѕРј
 		CDevice* GetLink(ptrdiff_t nIndex) const
 		{
 #ifdef _DEBUG
 			if (nIndex >= 0 && nIndex < m_LinkRange.m_ppLinkEnd - m_LinkRange.m_ppLinkStart)
 			{
 #endif
-				// проверка на корректность индекса только в отладке для производительности
+				// РїСЂРѕРІРµСЂРєР° РЅР° РєРѕСЂСЂРµРєС‚РЅРѕСЃС‚СЊ РёРЅРґРµРєСЃР° С‚РѕР»СЊРєРѕ РІ РѕС‚Р»Р°РґРєРµ РґР»СЏ РїСЂРѕРёР·РІРѕРґРёС‚РµР»СЊРЅРѕСЃС‚Рё
 				return *(m_LinkRange.m_ppLinkStart + nIndex);
 #ifdef _DEBUG
 			}
@@ -83,46 +83,46 @@ namespace DFW2
 		}
 	};
 
-	// типы уравнений
+	// С‚РёРїС‹ СѓСЂР°РІРЅРµРЅРёР№
 	enum DEVICE_EQUATION_TYPE
 	{
 		DET_ALGEBRAIC		= 0,
 		DET_DIFFERENTIAL	= 1
 	};
 
-	// способ учета демпфирования в генератора
+	// СЃРїРѕСЃРѕР± СѓС‡РµС‚Р° РґРµРјРїС„РёСЂРѕРІР°РЅРёСЏ РІ РіРµРЅРµСЂР°С‚РѕСЂР°
 	enum ACTIVE_POWER_DAMPING_TYPE
 	{
-		APDT_NODE,			// по скольжению узла
-		APDT_ISLAND			// по скольжению средневзвешенного узла синхронной зоны
+		APDT_NODE,			// РїРѕ СЃРєРѕР»СЊР¶РµРЅРёСЋ СѓР·Р»Р°
+		APDT_ISLAND			// РїРѕ СЃРєРѕР»СЊР¶РµРЅРёСЋ СЃСЂРµРґРЅРµРІР·РІРµС€РµРЅРЅРѕРіРѕ СѓР·Р»Р° СЃРёРЅС…СЂРѕРЅРЅРѕР№ Р·РѕРЅС‹
 	};
 
-	// правая часть уравнения
+	// РїСЂР°РІР°СЏ С‡Р°СЃС‚СЊ СѓСЂР°РІРЅРµРЅРёСЏ
 	struct RightVector
 	{
-		double *pValue;													// значение переменной состояния
-		CDevice *pDevice;												// устройство, в котором эта переменная
-		double Nordsiek[3];												// вектор Nordsieck по переменной до 2 порядка
-		double Error;													// ошибка корректора
-		double Atol;													// абсолютная и относительная погрешности
-		double Rtol;													// задаются индивидуально для каждой переменной
-		DEVICE_EQUATION_TYPE EquationType;								// тип уравнения переменной
-		double SavedNordsiek[3];										// сохраненные перед шагом Nordsieck и ошибка 
-		double SavedError;												// предыдущего шага
-		double Tminus2Value;											// значение на пред-предыдыущем шаге для реинита Nordsieck
-		DEVICE_EQUATION_TYPE PhysicalEquationType;						// тип уравнения
-		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть
-		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов Ньютона по этой переменной
+		double *pValue;													// Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ
+		CDevice *pDevice;												// СѓСЃС‚СЂРѕР№СЃС‚РІРѕ, РІ РєРѕС‚РѕСЂРѕРј СЌС‚Р° РїРµСЂРµРјРµРЅРЅР°СЏ
+		double Nordsiek[3];												// РІРµРєС‚РѕСЂ Nordsieck РїРѕ РїРµСЂРµРјРµРЅРЅРѕР№ РґРѕ 2 РїРѕСЂСЏРґРєР°
+		double Error;													// РѕС€РёР±РєР° РєРѕСЂСЂРµРєС‚РѕСЂР°
+		double Atol;													// Р°Р±СЃРѕР»СЋС‚РЅР°СЏ Рё РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅР°СЏ РїРѕРіСЂРµС€РЅРѕСЃС‚Рё
+		double Rtol;													// Р·Р°РґР°СЋС‚СЃСЏ РёРЅРґРёРІРёРґСѓР°Р»СЊРЅРѕ РґР»СЏ РєР°Р¶РґРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
+		DEVICE_EQUATION_TYPE EquationType;								// С‚РёРї СѓСЂР°РІРЅРµРЅРёСЏ РїРµСЂРµРјРµРЅРЅРѕР№
+		double SavedNordsiek[3];										// СЃРѕС…СЂР°РЅРµРЅРЅС‹Рµ РїРµСЂРµРґ С€Р°РіРѕРј Nordsieck Рё РѕС€РёР±РєР° 
+		double SavedError;												// РїСЂРµРґС‹РґСѓС‰РµРіРѕ С€Р°РіР°
+		double Tminus2Value;											// Р·РЅР°С‡РµРЅРёРµ РЅР° РїСЂРµРґ-РїСЂРµРґС‹РґС‹СѓС‰РµРј С€Р°РіРµ РґР»СЏ СЂРµРёРЅРёС‚Р° Nordsieck
+		DEVICE_EQUATION_TYPE PhysicalEquationType;						// С‚РёРї СѓСЂР°РІРЅРµРЅРёСЏ
+		PrimitiveBlockType PrimitiveBlock;								// С‚РёРї Р±Р»РѕРєР° РїСЂРёРјРёС‚РёРІР° РµСЃР»Рё РµСЃС‚СЊ
+		ptrdiff_t nErrorHits;											// РєРѕР»РёС‡РµСЃС‚РІРѕ РѕРіСЂР°РЅРёС‡РµРЅРёР№ С€Р°РіР° РёР»Рё Р·Р°РІР°Р»РѕРІ РќСЊСЋС‚РѕРЅР° РїРѕ СЌС‚РѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
 
-		// расчет взвешенной ошибки по значению снаружи
-		// но с допустимыми погрешностями для этой переменной
+		// СЂР°СЃС‡РµС‚ РІР·РІРµС€РµРЅРЅРѕР№ РѕС€РёР±РєРё РїРѕ Р·РЅР°С‡РµРЅРёСЋ СЃРЅР°СЂСѓР¶Рё
+		// РЅРѕ СЃ РґРѕРїСѓСЃС‚РёРјС‹РјРё РїРѕРіСЂРµС€РЅРѕСЃС‚СЏРјРё РґР»СЏ СЌС‚РѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
 		double GetWeightedError(double dError, double dAbsValue)
 		{
 			_ASSERTE(Atol > 0.0);
 			return dError / (fabs(dAbsValue) * Rtol + Atol);
 		}
 
-		// расчет взвешенной ошибки по значению данной переменной
+		// СЂР°СЃС‡РµС‚ РІР·РІРµС€РµРЅРЅРѕР№ РѕС€РёР±РєРё РїРѕ Р·РЅР°С‡РµРЅРёСЋ РґР°РЅРЅРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
 		double GetWeightedError(double dAbsValue)
 		{
 			_ASSERTE(Atol > 0.0);
@@ -130,58 +130,58 @@ namespace DFW2
 		}
 	};
 
-	// статусы выполнения функций устройства
+	// СЃС‚Р°С‚СѓСЃС‹ РІС‹РїРѕР»РЅРµРЅРёСЏ С„СѓРЅРєС†РёР№ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	enum eDEVICEFUNCTIONSTATUS
 	{
 		DFS_OK,							// OK
-		DFS_NOTREADY,					// Надо повторить (есть какая-то очередность обработки устройств или итерационный процесс)
-		DFS_DONTNEED,					// Функция для данного устройства не нужна
-		DFS_FAILED						// Ошибка
+		DFS_NOTREADY,					// РќР°РґРѕ РїРѕРІС‚РѕСЂРёС‚СЊ (РµСЃС‚СЊ РєР°РєР°СЏ-С‚Рѕ РѕС‡РµСЂРµРґРЅРѕСЃС‚СЊ РѕР±СЂР°Р±РѕС‚РєРё СѓСЃС‚СЂРѕР№СЃС‚РІ РёР»Рё РёС‚РµСЂР°С†РёРѕРЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ)
+		DFS_DONTNEED,					// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РґР°РЅРЅРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР° РЅРµ РЅСѓР¶РЅР°
+		DFS_FAILED						// РћС€РёР±РєР°
 	};
 
-	// статусы состояния устройства
+	// СЃС‚Р°С‚СѓСЃС‹ СЃРѕСЃС‚РѕСЏРЅРёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	enum eDEVICESTATE
 	{
-		DS_OFF,							// полностью отключено
-		DS_ON,							// включено
-		DS_READY,						// готово (не используется ?)
-		DS_DETERMINE,					// должно быть определено (мастер-устройством, например)
-		DS_ABSENT						// должно быть удалено из модели
+		DS_OFF,							// РїРѕР»РЅРѕСЃС‚СЊСЋ РѕС‚РєР»СЋС‡РµРЅРѕ
+		DS_ON,							// РІРєР»СЋС‡РµРЅРѕ
+		DS_READY,						// РіРѕС‚РѕРІРѕ (РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ ?)
+		DS_DETERMINE,					// РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РѕРїСЂРµРґРµР»РµРЅРѕ (РјР°СЃС‚РµСЂ-СѓСЃС‚СЂРѕР№СЃС‚РІРѕРј, РЅР°РїСЂРёРјРµСЂ)
+		DS_ABSENT						// РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ СѓРґР°Р»РµРЅРѕ РёР· РјРѕРґРµР»Рё
 	};
 
-	// причина изменения состояния устройства
+	// РїСЂРёС‡РёРЅР° РёР·РјРµРЅРµРЅРёСЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	enum eDEVICESTATECAUSE
 	{
-		DSC_EXTERNAL,					// состояние изменено снаружи устройство
-		DSC_INTERNAL					// состояние изменено действием самого устройства
+		DSC_EXTERNAL,					// СЃРѕСЃС‚РѕСЏРЅРёРµ РёР·РјРµРЅРµРЅРѕ СЃРЅР°СЂСѓР¶Рё СѓСЃС‚СЂРѕР№СЃС‚РІРѕ
+		DSC_INTERNAL					// СЃРѕСЃС‚РѕСЏРЅРёРµ РёР·РјРµРЅРµРЅРѕ РґРµР№СЃС‚РІРёРµРј СЃР°РјРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	};
 
 
-	// класс устройства, наследует все что связано с идентификацией
+	// РєР»Р°СЃСЃ СѓСЃС‚СЂРѕР№СЃС‚РІР°, РЅР°СЃР»РµРґСѓРµС‚ РІСЃРµ С‡С‚Рѕ СЃРІСЏР·Р°РЅРѕ СЃ РёРґРµРЅС‚РёС„РёРєР°С†РёРµР№
 	class CDevice : public CDeviceId
 	{
 	protected:
-		CDeviceContainer *m_pContainer;										// контейнер устройства
-		CSingleLink m_DeviceLinks;											// связи устройства
-		eDEVICEFUNCTIONSTATUS m_eInitStatus;								// статус инициализации устройства (заполняется в Init)
+		CDeviceContainer *m_pContainer;										// РєРѕРЅС‚РµР№РЅРµСЂ СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		CSingleLink m_DeviceLinks;											// СЃРІСЏР·Рё СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		eDEVICEFUNCTIONSTATUS m_eInitStatus;								// СЃС‚Р°С‚СѓСЃ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё СѓСЃС‚СЂРѕР№СЃС‚РІР° (Р·Р°РїРѕР»РЅСЏРµС‚СЃСЏ РІ Init)
 		bool CheckAddVisited(CDevice *pDevice);
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);			// инициализация устройства
-		ptrdiff_t m_nMatrixRow;												// строка в матрице с которой начинаются уравнения устройства
-		eDEVICESTATE m_State;												// состояние устройства
-		eDEVICESTATECAUSE m_StateCause;										// причина изменения состояния устройства
+		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);			// РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		ptrdiff_t m_nMatrixRow;												// СЃС‚СЂРѕРєР° РІ РјР°С‚СЂРёС†Рµ СЃ РєРѕС‚РѕСЂРѕР№ РЅР°С‡РёРЅР°СЋС‚СЃСЏ СѓСЂР°РІРЅРµРЅРёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		eDEVICESTATE m_State;												// СЃРѕСЃС‚РѕСЏРЅРёРµ СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		eDEVICESTATECAUSE m_StateCause;										// РїСЂРёС‡РёРЅР° РёР·РјРµРЅРµРЅРёСЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 
-		// функция "безопасного" деления
+		// С„СѓРЅРєС†РёСЏ "Р±РµР·РѕРїР°СЃРЅРѕРіРѕ" РґРµР»РµРЅРёСЏ
 		inline static double ZeroDivGuard(double Nom, double Denom)
 		{
-			// если делитель - ноль, деление не выполняем
+			// РµСЃР»Рё РґРµР»РёС‚РµР»СЊ - РЅРѕР»СЊ, РґРµР»РµРЅРёРµ РЅРµ РІС‹РїРѕР»РЅСЏРµРј
 			return (fabs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
 		}
 
 		const CSingleLink& GetSingleLinks() { return m_DeviceLinks; }
 
-		// формирование подробного имени устройства. По умолчанию учитывается описание типа устройства
+		// С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ РїРѕРґСЂРѕР±РЅРѕРіРѕ РёРјРµРЅРё СѓСЃС‚СЂРѕР№СЃС‚РІР°. РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ СѓС‡РёС‚С‹РІР°РµС‚СЃСЏ РѕРїРёСЃР°РЅРёРµ С‚РёРїР° СѓСЃС‚СЂРѕР№СЃС‚РІР°
 		virtual void UpdateVerbalName();
 		typedef eDEVICEFUNCTIONSTATUS(CheckMasterDeviceFunction)(CDevice*, LinkDirectionFrom&);
 		static CheckMasterDeviceFunction CheckMasterDeviceInit;
@@ -191,8 +191,8 @@ namespace DFW2
 	public:
 		CDevice();
 
-		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
-		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
+		eDFW2DEVICETYPE GetType() const;							// РїРѕР»СѓС‡РёС‚СЊ С‚РёРї СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		bool IsKindOfType(eDFW2DEVICETYPE eType);					// РїСЂРѕРІРµСЂРёС‚СЊ, РІС…РѕРґРёС‚ Р»Рё СѓСЃС‚СЂРѕР№СЃС‚РІРѕ РІ С†РµРїРѕС‡РєСѓ РЅР°СЃР»РµРґРѕРІР°РЅРёСЏ РѕС‚ Р·Р°РґР°РЅРЅРѕРіРѕ С‚РёРїР° СѓСЃС‚СЂРѕР№СЃС‚РІР°
 
 		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage);
 
@@ -223,18 +223,18 @@ namespace DFW2
 		virtual bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		bool IncrementLinkCounter(ptrdiff_t nLinkIndex);
 		ptrdiff_t m_nInContainerIndex;
-		// получить связи устроства из слоя nLinkIndex
+		// РїРѕР»СѓС‡РёС‚СЊ СЃРІСЏР·Рё СѓСЃС‚СЂРѕСЃС‚РІР° РёР· СЃР»РѕСЏ nLinkIndex
 		CLinkPtrCount* GetLink(ptrdiff_t nLinkIndex);
 		void ResetVisited();
 		void SetSingleLinkStart(CDevice **ppLinkStart);
 
-		// построение блока уравнения в Якоби
+		// РїРѕСЃС‚СЂРѕРµРЅРёРµ Р±Р»РѕРєР° СѓСЂР°РІРЅРµРЅРёСЏ РІ РЇРєРѕР±Рё
 		virtual bool BuildEquations(CDynaModel *pDynaModel);
-		// построение правой части уравнений
+		// РїРѕСЃС‚СЂРѕРµРЅРёРµ РїСЂР°РІРѕР№ С‡Р°СЃС‚Рё СѓСЂР°РІРЅРµРЅРёР№
 		virtual bool BuildRightHand(CDynaModel *pDynaModel);
-		// расчет значений производных дифференциальных уравнений
+		// СЂР°СЃС‡РµС‚ Р·РЅР°С‡РµРЅРёР№ РїСЂРѕРёР·РІРѕРґРЅС‹С… РґРёС„С„РµСЂРµРЅС†РёР°Р»СЊРЅС‹С… СѓСЂР°РІРЅРµРЅРёР№
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		// функция обновления данных после итерации Ньютона (если надо)
+		// С„СѓРЅРєС†РёСЏ РѕР±РЅРѕРІР»РµРЅРёСЏ РґР°РЅРЅС‹С… РїРѕСЃР»Рµ РёС‚РµСЂР°С†РёРё РќСЊСЋС‚РѕРЅР° (РµСЃР»Рё РЅР°РґРѕ)
 		virtual bool NewtonUpdateEquation(CDynaModel *pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS Initialized() { return m_eInitStatus; }
@@ -243,7 +243,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() { return m_eInitStatus; }
 		void UnprocessDiscontinuity() { m_eInitStatus = DFS_NOTREADY;  }
 
-		// функция ремапа номера уравнения устройства в номер уравнения в Якоби
+		// С„СѓРЅРєС†РёСЏ СЂРµРјР°РїР° РЅРѕРјРµСЂР° СѓСЂР°РІРЅРµРЅРёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР° РІ РЅРѕРјРµСЂ СѓСЂР°РІРЅРµРЅРёСЏ РІ РЇРєРѕР±Рё
 		inline ptrdiff_t A(ptrdiff_t nOffset) { return m_nMatrixRow + nOffset; }
 		virtual void InitNordsiek(CDynaModel* pDynaModel);
 		virtual void Predict() {};
@@ -262,16 +262,16 @@ namespace DFW2
 
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2);
 
-		// простая статическая округлялка до заданного Precision количества знаков
+		// РїСЂРѕСЃС‚Р°СЏ СЃС‚Р°С‚РёС‡РµСЃРєР°СЏ РѕРєСЂСѓРіР»СЏР»РєР° РґРѕ Р·Р°РґР°РЅРЅРѕРіРѕ Precision РєРѕР»РёС‡РµСЃС‚РІР° Р·РЅР°РєРѕРІ
 		inline static double Round(double Value, double Precision)
 		{
 			return round(Value / Precision) * Precision;
 		}
 
-		// обобщение до bool статуса выполнения функции устройства
+		// РѕР±РѕР±С‰РµРЅРёРµ РґРѕ bool СЃС‚Р°С‚СѓСЃР° РІС‹РїРѕР»РЅРµРЅРёСЏ С„СѓРЅРєС†РёРё СѓСЃС‚СЂРѕР№СЃС‚РІР°
 		inline static bool IsFunctionStatusOK(eDEVICEFUNCTIONSTATUS Status)
 		{
-			// если выполнилось или не было нужно - все OK
+			// РµСЃР»Рё РІС‹РїРѕР»РЅРёР»РѕСЃСЊ РёР»Рё РЅРµ Р±С‹Р»Рѕ РЅСѓР¶РЅРѕ - РІСЃРµ OK
 			return Status == DFS_OK || Status == DFS_DONTNEED;
 		}
 
@@ -281,6 +281,6 @@ namespace DFW2
 
 	};
 
-// макрос для упрощения связи имени и идентификатора переменной, используется в switch CDevice::GetVariablePtr
+// РјР°РєСЂРѕСЃ РґР»СЏ СѓРїСЂРѕС‰РµРЅРёСЏ СЃРІСЏР·Рё РёРјРµРЅРё Рё РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР° РїРµСЂРµРјРµРЅРЅРѕР№, РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ switch CDevice::GetVariablePtr
 #define MAP_VARIABLE(VarName, VarId)  case VarId: p = &VarName; break; 
 }
