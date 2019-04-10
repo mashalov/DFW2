@@ -24,11 +24,11 @@ namespace DFW2
 	class CMultiLink
 	{
 	public:
-		CDevice  **m_ppPointers;
-		CDeviceContainer *m_pContainer;
-		CLinkPtrCount *m_pLinkInfo;
-		size_t	 m_nSize;
-		size_t   m_nCount;
+		CDevice  **m_ppPointers;											// вектор указателей на связанные устройства
+		CDeviceContainer *m_pContainer;										// внешний контейнер, с устройствами которого строится связь
+		CLinkPtrCount *m_pLinkInfo;											// вектор ссылок с количеством связей
+		size_t	 m_nSize;													// количество связей 
+		size_t   m_nCount;													// количество возможных связей (размерность m_ppPointers)
 		CMultiLink(CDeviceContainer* pContainer, size_t nCount);
 		bool Join(CMultiLink *pLink);
 		virtual ~CMultiLink()

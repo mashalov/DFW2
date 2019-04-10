@@ -13,6 +13,7 @@ namespace DFW2
 	class PrimitiveVariableExternal;
 
 	// класс для хранения связей устройства
+	// с помощью него можно обходить связанные с данным устройства
 	class CLinkPtrCount
 	{
 	public:
@@ -36,6 +37,10 @@ namespace DFW2
 	};
 
 	// класс связей устройства
+	// CSingleLink представляет собой вектор указателей на устройства.
+	// Каждый элемент вектора соответствует связи один к одному с другим устройством.
+	// Тип связанного устройства задается индексом.
+
 	class CSingleLink
 	{
 	protected:
@@ -162,7 +167,7 @@ namespace DFW2
 	{
 	protected:
 		CDeviceContainer *m_pContainer;										// контейнер устройства
-		CSingleLink m_DeviceLinks;											// связи устройства
+		CSingleLink m_DeviceLinks;											// связи устройств один к одному
 		eDEVICEFUNCTIONSTATUS m_eInitStatus;								// статус инициализации устройства (заполняется в Init)
 		bool CheckAddVisited(CDevice *pDevice);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);			// инициализация устройства
