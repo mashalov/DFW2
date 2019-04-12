@@ -211,17 +211,25 @@ namespace DFW2
 
 		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage);
 
+		// функция маппинга указателя на переменную к индексу переменной
+		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
+		// внутри этой функции также делается "наследование" переменных
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
+
 		double* GetVariablePtr(const _TCHAR* cszVarName);
 
+		// функция маппинга указателя на переменную к индексу переменной
+		// Аналогична по смыслу virtual double* GetVariablePtr()
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
 		double* GetConstVariablePtr(const _TCHAR* cszVarName);
 
 		virtual ExternalVariable GetExternalVariable(const _TCHAR* cszVarName);
 
+		// константные указатели на переменную. Врапперы virtual double* GetVariablePtr()
 		const double* GetVariableConstPtr(ptrdiff_t nVarIndex) const;
 		const double* GetVariableConstPtr(const _TCHAR* cszVarName) const;
 
+		// константные указатели на переменную константы. Врапперы virtual double* GetConstVariablePtr()
 		const double* GetConstVariableConstPtr(ptrdiff_t nVarIndex) const;
 		const double* GetConstVariableConstPtr(const _TCHAR* cszVarName) const;
 
