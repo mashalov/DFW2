@@ -30,14 +30,18 @@ CDynaNodeBase::~CDynaNodeBase()
 {
 }
 
+// запоминает значение модуля напряжения с предыдущей итерации
+// и рассчитываем напряжение в декартовых координатах
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
 	VreVim = polar(V, Delta);
 }
 
+// рассчитывает нагрузку узла с учетом СХН
 void CDynaNodeBase::GetPnrQnr()
 {
+	// по умолчанию нагрузка равна заданной в УР
 	Pnr = Pn;
 	Qnr = Qn;
 	double VdVnom = V / V0;
@@ -45,6 +49,8 @@ void CDynaNodeBase::GetPnrQnr()
 	dLRCPn = 0.0;
 	dLRCQn = 0.0;
 	
+	// если есть СХН, рассчитываем
+	// комплексную мощность и проивзодные по напряжению
 	if (m_pLRC)
 	{
 		double dP = 0.0, dQ = 0.0;
@@ -233,6 +239,11 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 	return DFS_OK;
 }
 
+// в узлах используется расширенная функция
+// прогноза. После прогноза рассчитывается
+// напряжение в декартовых координатах
+// и сбрасываются значения по умолчанию перед
+// итерационным процессом решения сети
 void CDynaNodeBase::Predict()
 {
 	dLRCVicinity = 0.0;
@@ -310,6 +321,7 @@ eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
 	return Status;
 }
 
+// переменные базового узла - модуль и угол
 double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p = NULL;
@@ -321,6 +333,7 @@ double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
+// константы узла - проводимость шунта
 double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p = NULL;
@@ -332,6 +345,7 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
+// переменные узла - переменные базового узла + скольжение и лаг скольжения
 double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p = CDynaNodeBase::GetVariablePtr(nVarIndex);
@@ -350,6 +364,8 @@ CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) :
 									   CDeviceContainer(pDynaModel),
 									   m_pSynchroZones(NULL)
 {
+	// в контейнере требуем особой функции прогноза и обновления после
+	// ньютоновской итерации
 	m_ContainerProps.bNewtonUpdate = m_ContainerProps.bPredict = true;
 }
 

@@ -137,15 +137,17 @@ bool CDeviceContainer::VariableOutputEnable(const _TCHAR* cszVarName, bool bOutp
 		return false;
 }
 
+// получить индекс переменной устройства по названию
 ptrdiff_t CDeviceContainer::GetVariableIndex(const _TCHAR* cszVarName) const
 {
+	// используем быстрый поиск по карте
 	VARINDEXMAPCONSTITR it = m_ContainerProps.m_VarMap.find(cszVarName);
 	if (it != m_ContainerProps.m_VarMap.end())
 		return it->second.m_nIndex;
 	else
 		return -1;
 }
-
+// получить индекс константной переменной по названию
 ptrdiff_t CDeviceContainer::GetConstVariableIndex(const _TCHAR* cszVarName) const
 {
 	CONSTVARINDEXMAPCONSTITR it = m_ContainerProps.m_ConstVarMap.find(cszVarName);
@@ -274,37 +276,43 @@ bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 			{
 				// если связь одного с несколькими
 				eDFW2DEVICETYPE TreatAs = DEVTYPE_UNKNOWN; // search device type to create link according to link map
+				// просматриваем связи _к_ данному устройству и ищем номер связи, соответствующиий определенной выше LinkFrom
+				// если будет найдена связь - внешний контейнер будет трактоваться как соответсвующий типу этой связи
 				for (LINKSFROMMAPITR it = m_ContainerProps.m_LinksFrom.begin(); it != m_ContainerProps.m_LinksFrom.end(); it++)
 					if (it->second.nLinkIndex == LinkFrom.nLinkIndex)
 					{
-						TreatAs = it->first;
+						TreatAs = it->first;	// если нашли - запоминаем
 						break;
 					}
 
 				if (TreatAs != DEVTYPE_UNKNOWN)
 				{
 					// создаем ссылки на внешний контейнер
-					// передаем в мультисвязь указатель на внешний контейнер и количество устройств в данном контейнере
-					// получаем для каждого из устройств данного контейнера набор связей
 					CMultiLink *pLink = new CMultiLink(pLinkContainer, Count());
-
+					// получаем номер связи по найденному типу
 					ptrdiff_t nLinkIndex = GetLinkIndex(TreatAs);
 
 					// store new link to links, it will be used by LinkToContainer from container to be linked
+					// добавляем к нашим ссылкам еще одну временную связь
 					m_Links.push_back(pLink);
+
 					// give container to be linked control to link to this container
 					// supply this and index of new link
 
-					ptrdiff_t nOldLinkIndex = LinkFrom.nLinkIndex;
-					LinkFrom.nLinkIndex = m_Links.size() - 1;	// fake LinkToContainer by pointing link index to new MultiLink
+					// связь будет строить внешний контейнер
+					// отдаем ему this и индекс временной только что созданной связи
+
+					//ptrdiff_t nOldLinkIndex = LinkFrom.nLinkIndex;		// сохраняем исходный номер связи из свойств контейнера
+					LinkFrom.nLinkIndex = m_Links.size() - 1;			// "обманываем" внешний контейнер, заставляя его работать с временной связью вместо основной
+					// выполняем связь средствами внешнего контейнера
 					bRes = (*pLinkContainer->begin())->LinkToContainer(this, pContLead, LinkTo, LinkFrom);
 
-					// when link successful check link index was >= 0
+					// если связь выолпнена успешно
 					if (bRes && nLinkIndex >= 0)
 					{
-						// in this case relink to existing index
+						// объединяем исходную связь со временной
 						bRes = m_Links[nLinkIndex]->Join(pLink);
-						// and remove new link, use present link of type of container to be linked instead
+						// и удаляем временную связь
 						m_Links.pop_back();
 					}
 				}
@@ -651,18 +659,25 @@ ptrdiff_t CDeviceContainer::GetLinkIndex(eDFW2DEVICETYPE eDeviceType)
 
 CMultiLink::CMultiLink(CDeviceContainer* pContainer, size_t nCount) : m_pContainer(pContainer)
 {
-
 	// память выделим под известное количество связей в AllocateLinks()
 	m_ppPointers = nullptr; // new CDevice*[m_nCount = pContainer->Count() * 2]; // ?
 	m_pLinkInfo = new CLinkPtrCount[nCount];
 	m_nSize = nCount;
 }
 
+// объединяет мультизсвяь с другой мультисвязью
+// небходима для объединения связей один ко многим при последовательной линковке
+// например с точки зрения узла все генераторы одинаковые, но линкуем мы последовательно
+// генераторы разных типов. Поэтому после каждой линковки нам нужно объединять текущие связи
+// с только что слинкованными. В итоге узел видит все генераторы всех типов в одной связи
+
 bool CMultiLink::Join(CMultiLink *pLink)
 {
 	bool bRes = true;
 	_ASSERTE(m_nSize == pLink->m_nSize);
 
+	// создаем новый вектор указателей на связанные устройства
+	// размер = исходный + объединяемый
 	CDevice** ppNewPointers = new CDevice*[m_nCount = m_nCount + pLink->m_nCount];
 	CDevice** ppNewPtr = ppNewPointers;
 
@@ -670,15 +685,18 @@ bool CMultiLink::Join(CMultiLink *pLink)
 	CLinkPtrCount *pRight = pLink->m_pLinkInfo;
 	CLinkPtrCount *pLeftEnd = pLeft + m_nSize;
 
+	// обходим уже существующие связи
+	// для каждого устройства в мультисвязи
 	while (pLeft < pLeftEnd)
 	{
 		CDevice **ppB = pLeft->m_pPointer;
 		CDevice **ppE = pLeft->m_pPointer + pLeft->m_nCount;
 		CDevice **ppNewPtrInitial = ppNewPtr;
 
+		// обходим устройства, связанные с pLeft
 		while (ppB < ppE)
 		{
-			*ppNewPtr = *ppB;
+			*ppNewPtr = *ppB;		// копируем связанное устройство в новый вектор указателей
 			ppB++;
 			ppNewPtr++;
 		}
@@ -686,22 +704,23 @@ bool CMultiLink::Join(CMultiLink *pLink)
 		ppB = pRight->m_pPointer;
 		ppE = pRight->m_pPointer + pRight->m_nCount;
 
+		// обходим устройства из объединяемой мультисвязи
 		while (ppB < ppE)
 		{
-			*ppNewPtr = *ppB;
+			*ppNewPtr = *ppB;		// и тоже копируем связанные устройства в новый вектор указателей
 			ppB++;
 			ppNewPtr++;
 		}
 
-		pLeft->m_pPointer = ppNewPtrInitial;
-		pLeft->m_nCount += pRight->m_nCount;
+		pLeft->m_pPointer = ppNewPtrInitial;		// обновляем параметры мультисвязи текущего устройства :
+		pLeft->m_nCount += pRight->m_nCount;		// указатель на начало и количество связанных устройств
 
-		pLeft++;
-		pRight++;
+		pLeft++;									// переходим к следующим устройствам в мультизсвязи
+		pRight++;									// размерности основной и объединяемой мультисвязей одинаковы
 	}
-	delete m_ppPointers;
-	delete pLink;
-	m_ppPointers = ppNewPointers;
+	delete m_ppPointers;							// очищаем старый вектор указателей
+	delete pLink;									// очищаем объединяемую мультисвязь (она больше не нужна)
+	m_ppPointers = ppNewPointers;					
 	return bRes;
 }
 

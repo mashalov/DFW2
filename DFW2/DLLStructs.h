@@ -97,10 +97,13 @@ typedef struct
 } 
 	BlockDescriptions;
 
+// структура внешей переменой
+// про внешнюю переменную другого устройства 
+// нужно знать:
 typedef struct
 {
-	double *pValue;
-	ptrdiff_t nIndex;
+	double *pValue;			// указатель на значение
+	ptrdiff_t nIndex;		// индекс (номер строки) в системе Якоби
 }
 	ExternalVariable;
 

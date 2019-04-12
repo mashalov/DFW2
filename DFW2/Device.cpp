@@ -62,7 +62,8 @@ double* CDevice::GetVariablePtr(const _TCHAR* cszVarName)
 	return pRes;
 }
 
-
+// получить указатель на константную переменную по имени
+// аналогична по смыслу double* GetVariablePtr(const _TCHAR*)
 double* CDevice::GetConstVariablePtr(const _TCHAR* cszVarName)
 {
 	_ASSERTE(m_pContainer);
@@ -73,16 +74,20 @@ double* CDevice::GetConstVariablePtr(const _TCHAR* cszVarName)
 	return pRes;
 }
 
+// получить описание внешней переменной по имени
 ExternalVariable CDevice::GetExternalVariable(const _TCHAR* cszVarName)
 {
 	_ASSERTE(m_pContainer);
 
 	ExternalVariable ExtVar;
+	// в контейнере находим индекс переменной по имени
 	ExtVar.nIndex = m_pContainer->GetVariableIndex(cszVarName);
 
 	if (ExtVar.nIndex >= 0)
 	{
+		// извлекаем указатель на переменную
 		ExtVar.pValue = GetVariablePtr(ExtVar.nIndex);
+		// извлекаем номер строки в Якоби
 		ExtVar.nIndex = A(ExtVar.nIndex);
 	}
 	else
@@ -91,11 +96,13 @@ ExternalVariable CDevice::GetExternalVariable(const _TCHAR* cszVarName)
 	return ExtVar;
 }
 
+// виртуальная функиця. Должна быть перекрыта во всех устройствах
 double* CDevice::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	return NULL;
 }
 
+// виртуальная функиця. Должна быть перекрыта во всех устройствах
 double* CDevice::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
 	return NULL;
@@ -271,7 +278,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 
 		if (bRes && LinkFrom.eLinkMode == DLM_MULTI)
 		{
-			// если у связываемого контейнера бьл режим мултисвязи
+			// если у связываемого контейнера бьл режим мультисвязи
 			// размечаем мультисвязи в связываемом контейнере
 			pContSlave->AllocateLinks(LinkFrom.nLinkIndex);
 			// для каждого из устройств мастер-контейнера
