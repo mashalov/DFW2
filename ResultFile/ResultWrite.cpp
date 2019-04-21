@@ -1,4 +1,4 @@
-// ResultWrite.cpp : Implementation of CResultWrite
+﻿// ResultWrite.cpp : Implementation of CResultWrite
 
 #include "stdafx.h"
 #include "ResultWrite.h"
@@ -21,6 +21,7 @@ STDMETHODIMP CResultWrite::InterfaceSupportsErrorInfo(REFIID riid)
 	return S_FALSE;
 }
 
+// устанавливает комментарий к файлу результатов
 STDMETHODIMP CResultWrite::put_Comment(BSTR Comment)
 {
 	HRESULT hRes = S_OK;
@@ -28,6 +29,7 @@ STDMETHODIMP CResultWrite::put_Comment(BSTR Comment)
 	return hRes;
 }
 
+// устанавливает пороговое значение для игнорирования изменений значений переменных
 STDMETHODIMP CResultWrite::put_NoChangeTolerance(DOUBLE Tolerance)
 {
 	HRESULT hRes = S_OK;
@@ -35,74 +37,90 @@ STDMETHODIMP CResultWrite::put_NoChangeTolerance(DOUBLE Tolerance)
 	return hRes;
 }
 
+// запись заголовка результатов
 STDMETHODIMP CResultWrite::WriteHeader()
 {
 	HRESULT hRes = E_FAIL;
 	try
 	{
+		// в начало заголовка записываем время создания файла результатов
 		SYSTEMTIME Now;
 		GetLocalTime(&Now);
 		double dCurrentDate = 0;
 		if (!SystemTimeToVariantTime(&Now, &dCurrentDate))
 			throw CFileWriteException(NULL);
 
-		m_ResultFileWriter.WriteDouble(dCurrentDate);
-		m_ResultFileWriter.WriteString(m_strComment.c_str());
-		m_ResultFileWriter.AddDirectoryEntries(3);
+		m_ResultFileWriter.WriteDouble(dCurrentDate);						// записываем время
+		m_ResultFileWriter.WriteString(m_strComment.c_str());				// записываем строку комментария
+		m_ResultFileWriter.AddDirectoryEntries(3);							// описатели разделов
+		m_ResultFileWriter.WriteLEB(m_VarNameMap.size());					// записываем количество единиц измерения
 
-		m_ResultFileWriter.WriteLEB(m_VarNameMap.size());
-
+		// записываем последовательность типов и названий единиц измерения переменных
 		for (VARNAMEITRCONST vnmit = m_VarNameMap.begin(); vnmit != m_VarNameMap.end(); vnmit++)
 		{
 			m_ResultFileWriter.WriteLEB(vnmit->first);
 			m_ResultFileWriter.WriteString(vnmit->second.c_str());
 		}
-
+		// записываем количество типов устройств
 		m_ResultFileWriter.WriteLEB(m_DevTypeSet.size());
 
 		long nChannelsCount = 0;
 
+		// записываем устройства
 		for (auto &di : m_DevTypeSet)
 		{
-			m_ResultFileWriter.WriteLEB(di->eDeviceType);
-			m_ResultFileWriter.WriteString(di->strDevTypeName.c_str());
-			m_ResultFileWriter.WriteLEB(di->DeviceIdsCount);
-			m_ResultFileWriter.WriteLEB(di->DeviceParentIdsCount);
-			m_ResultFileWriter.WriteLEB(di->DevicesCount);
-			m_ResultFileWriter.WriteLEB(di->m_VarTypes.size());
+			// для каждого типа устройств
+			m_ResultFileWriter.WriteLEB(di->eDeviceType);							// идентификатор типа устройства
+			m_ResultFileWriter.WriteString(di->strDevTypeName.c_str());				// название типа устройства
+			m_ResultFileWriter.WriteLEB(di->DeviceIdsCount);						// количество идентификаторов устройства (90% - 1, для ветвей, например - 3)
+			m_ResultFileWriter.WriteLEB(di->DeviceParentIdsCount);					// количество родительских устройств
+			m_ResultFileWriter.WriteLEB(di->DevicesCount);							// количество устройств данного типа
+			m_ResultFileWriter.WriteLEB(di->m_VarTypes.size());						// количество переменных устройства
 
 			long nChannelsByDevice = 0;
 
+			// записываем описания переменных типа устройства
 			for (auto &vi : di->m_VarTypesList)
 			{
-				m_ResultFileWriter.WriteString(vi.Name.c_str());
-				m_ResultFileWriter.WriteLEB(vi.eUnits);
+				m_ResultFileWriter.WriteString(vi.Name.c_str());					// имя переменной
+				m_ResultFileWriter.WriteLEB(vi.eUnits);								// единицы измерения переменной
 				unsigned char BitFlags = 0x0;
+				// если у переменной есть множитель -
+				// добавляем битовый флаг
 				if (!Equal(vi.Multiplier, 1.0))
 					BitFlags |= 0x1;
-				m_ResultFileWriter.WriteLEB(BitFlags);
+				m_ResultFileWriter.WriteLEB(BitFlags);								// битовые флаги переменной
+				// если есть множитель
 				if (BitFlags & 0x1)
-					m_ResultFileWriter.WriteDouble(vi.Multiplier);
+					m_ResultFileWriter.WriteDouble(vi.Multiplier);					// множитель переменной
 
-				nChannelsByDevice++;
+				// считаем количество каналов для данного типа устройства
+				nChannelsByDevice++;			
 			}
 
+			// записываем описания устройств
 			for (CResultFileReader::DeviceInstanceInfo *pDev = di->m_pDeviceInstances; pDev < di->m_pDeviceInstances + di->DevicesCount; pDev++)
 			{
+				// для каждого устройства
+				// записываем последовательность идентификаторов
 				for (int i = 0; i < di->DeviceIdsCount; i++)
 					m_ResultFileWriter.WriteLEB(pDev->GetId(i));
+				// записываем имя устройства
 				m_ResultFileWriter.WriteString(pDev->Name.c_str());
+				// для каждого из родительских устройств
 				for (int i = 0; i < di->DeviceParentIdsCount; i++)
 				{
 					const CResultFileReader::DeviceLinkToParent* pDevLink = pDev->GetParent(i);
+					// записываем тип родительского устройства
 					m_ResultFileWriter.WriteLEB(pDevLink->m_eParentType);
+					// и его идентификатор
 					m_ResultFileWriter.WriteLEB(pDevLink->m_nId);
 				}
-
+				// считаем общее количество каналов
 				nChannelsCount += nChannelsByDevice;
 			}
 		}
-
+		// готовим компрессоры для рассчитанного количества каналов
 		m_ResultFileWriter.PrepareChannelCompressor(nChannelsCount);
 		hRes = S_OK;
 	}
@@ -127,6 +145,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 	return hRes;
 }
 
+// добавляет в карту тип и название единиц измерения
 STDMETHODIMP CResultWrite::AddVariableUnit(LONG UnitId, BSTR UnitName)
 {
 	HRESULT hRes = S_OK;
@@ -170,7 +189,7 @@ STDMETHODIMP CResultWrite::AddDeviceType(LONG DeviceTypeId, BSTR DeviceTypeName,
 	return hRes;
 }
 
-
+// задает адрес значения double, которое будет использоваться для записи заданного устройства 
 STDMETHODIMP CResultWrite::SetChannel(LONG DeviceId, LONG DeviceType, LONG VarIndex, DOUBLE *ValuePtr, LONG ChannelIndex)
 {
 	HRESULT hRes = S_OK;
@@ -186,6 +205,7 @@ STDMETHODIMP CResultWrite::SetChannel(LONG DeviceId, LONG DeviceType, LONG VarIn
 	return hRes;
 }
 
+// запись результатов для заданного времени. Дополнительно записывает шаг интегрирования
 STDMETHODIMP CResultWrite::WriteResults(DOUBLE Time, DOUBLE Step)
 {
 	HRESULT hRes = S_OK;
