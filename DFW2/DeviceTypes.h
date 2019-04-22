@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 //namespace DFW2
 //{
 	// 	режим связи
@@ -29,7 +29,12 @@
 		VARUNIT_PU,
 		VARUNIT_NOTSET
 	};
-
+	
+	// Типы устройств
+	// пользовательские устройства отдельным типом
+	// не предусмотрены и должны соответствовать одному
+	// из встроенных
+	
 	enum eDFW2DEVICETYPE
 	{
 		DEVTYPE_UNKNOWN,
