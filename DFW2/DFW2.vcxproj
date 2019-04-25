@@ -132,6 +132,7 @@
       <SDLCheck>true</SDLCheck>
       <EnablePREfast>false</EnablePREfast>
       <FloatingPointModel>Precise</FloatingPointModel>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -216,7 +217,9 @@
   <ItemGroup>
     <ClCompile Include="Abs.cpp" />
     <ClCompile Include="AndOrNot.cpp" />
-    <ClCompile Include="Automatic.cpp" />
+    <ClCompile Include="Automatic.cpp">
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
+    </ClCompile>
     <ClCompile Include="Comparator.cpp" />
     <ClCompile Include="CustomDevice.cpp" />
     <ClCompile Include="CustomDeviceContainer.cpp" />
@@ -238,7 +241,9 @@
     <ClCompile Include="DynaGeneratorInfBus.cpp" />
     <ClCompile Include="DynaGeneratorMotion.cpp" />
     <ClCompile Include="DynaLRC.cpp" />
-    <ClCompile Include="DynaModel.cpp" />
+    <ClCompile Include="DynaModel.cpp">
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
+    </ClCompile>
     <ClCompile Include="DynaModelCompile.cpp" />
     <ClCompile Include="DynaModelUtility.cpp" />
     <ClCompile Include="DynaNode.cpp" />
@@ -252,9 +257,13 @@
     <ClCompile Include="Messages.cpp" />
     <ClCompile Include="NetworkGraph.cpp" />
     <ClCompile Include="Nordsiek.cpp" />
-    <ClCompile Include="RastrImport.cpp" />
+    <ClCompile Include="RastrImport.cpp">
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
+    </ClCompile>
     <ClCompile Include="Relay.cpp" />
-    <ClCompile Include="Results.cpp" />
+    <ClCompile Include="Results.cpp">
+      <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
+    </ClCompile>
     <ClCompile Include="RSTrigger.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>

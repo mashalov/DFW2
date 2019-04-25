@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DeviceId.h"
 #include "DeviceContainerProperties.h"
 #include "DLLStructs.h"
@@ -13,6 +13,7 @@ namespace DFW2
 	class PrimitiveVariableExternal;
 
 	// класс для хранения связей устройства
+	// с помощью него можно обходить связанные с данным устройства
 	class CLinkPtrCount
 	{
 	public:
@@ -36,6 +37,20 @@ namespace DFW2
 	};
 
 	// класс связей устройства
+	// CSingleLink представляет собой вектор указателей на устройства.
+	// Каждый элемент вектора соответствует связи один к одному с другим устройством.
+	// Тип связанного устройства задается индексом.
+
+	// Общий для всех устройств контейнера вектор указателей на указатели хранится в CDeviceConatainer,
+	// Внутри CDevice есть экземпляр CSingleLink,
+	// которому при инициализации дается SingleLinksRange из этого вектора
+	// внутри диапазона SingleLinkRange можно размещать связи с устройствами
+	// принцип связи : индексу в SingleLinkRange соответствует тип: например для возбудителя
+	// 0 - АРВ, 1 - РФ
+	// размерность вектора формируется с помощью PossibleLinksCount - при линковке определяется
+	// количество контейнеров, которые можно потенциально связать с данным контейнером
+
+	
 	class CSingleLink
 	{
 	protected:
@@ -112,7 +127,7 @@ namespace DFW2
 		double Tminus2Value;											// значение на пред-предыдыущем шаге для реинита Nordsieck
 		DEVICE_EQUATION_TYPE PhysicalEquationType;						// тип уравнения
 		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть
-		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов Ньютона по этой переменной
+		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов итераций Ньютона по этой переменной
 
 		// расчет взвешенной ошибки по значению снаружи
 		// но с допустимыми погрешностями для этой переменной
@@ -162,7 +177,7 @@ namespace DFW2
 	{
 	protected:
 		CDeviceContainer *m_pContainer;										// контейнер устройства
-		CSingleLink m_DeviceLinks;											// связи устройства
+		CSingleLink m_DeviceLinks;											// связи устройств один к одному
 		eDEVICEFUNCTIONSTATUS m_eInitStatus;								// статус инициализации устройства (заполняется в Init)
 		bool CheckAddVisited(CDevice *pDevice);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);			// инициализация устройства
@@ -196,17 +211,25 @@ namespace DFW2
 
 		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage);
 
+		// функция маппинга указателя на переменную к индексу переменной
+		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
+		// внутри этой функции также делается "наследование" переменных
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
+
 		double* GetVariablePtr(const _TCHAR* cszVarName);
 
+		// функция маппинга указателя на переменную к индексу переменной
+		// Аналогична по смыслу virtual double* GetVariablePtr()
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
 		double* GetConstVariablePtr(const _TCHAR* cszVarName);
 
 		virtual ExternalVariable GetExternalVariable(const _TCHAR* cszVarName);
 
+		// константные указатели на переменную. Врапперы virtual double* GetVariablePtr()
 		const double* GetVariableConstPtr(ptrdiff_t nVarIndex) const;
 		const double* GetVariableConstPtr(const _TCHAR* cszVarName) const;
 
+		// константные указатели на переменную константы. Врапперы virtual double* GetConstVariablePtr()
 		const double* GetConstVariableConstPtr(ptrdiff_t nVarIndex) const;
 		const double* GetConstVariableConstPtr(const _TCHAR* cszVarName) const;
 

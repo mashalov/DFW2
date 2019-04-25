@@ -319,9 +319,15 @@ bool CDynaGeneratorMustang::CalculatePower()
 
 const CDeviceContainerProperties CDynaGeneratorMustang::DeviceProperties()
 {
+	// пример "наследования" атрибутов контейнера
+	
+	// берем атрибуты родителя
 	CDeviceContainerProperties props = CDynaGenerator3C::DeviceProperties();
+	// добавляем свой тип. В списке типов уже есть все типы родительской цепочки 
 	props.SetType(DEVTYPE_GEN_MUSTANG);
+	// задаем имя типа устройства
 	props.m_strClassName = CDeviceContainerProperties::m_cszNameGeneratorMustang;
+	// задаем количество уравнений устройства
 	props.nEquationsCount = CDynaGeneratorMustang::VARS::V_LAST;
 	return props;
 }

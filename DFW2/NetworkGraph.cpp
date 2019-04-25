@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaModel.h"
 #include "queue"
 
@@ -28,18 +28,23 @@ bool CDynaModel::Link()
 	}
 
 
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+	// линкуем всех со всеми по матрице
+	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)			// внешний контейнер
 	{
-		for (DEVICECONTAINERITR lt = m_DeviceContainers.begin(); lt != m_DeviceContainers.end(); lt++)
+		for (DEVICECONTAINERITR lt = m_DeviceContainers.begin(); lt != m_DeviceContainers.end(); lt++)		// внутренний контейнер
 		{
+			// не линкуем тип с этим же типом
 			if (it != lt)
 			{
 				LinkDirectionFrom LinkFrom;
 				LinkDirectionTo LinkTo;
+				// проверяем возможность связи внешнего контейнера со внутренним
 				CDeviceContainer *pContLead = (*it)->DetectLinks(*lt, LinkTo, LinkFrom);
 				if (pContLead == *lt)
 				{
+					// если выбран внутренний контейнер
 					_tcprintf(_T("\nLink %s <- %s"), (*it)->GetTypeName(), (*lt)->GetTypeName());			
+					// организуем связь внешгего контейнера с внутренним
 					bRes = (*it)->CreateLink(*lt) && bRes;
 					_ASSERTE(bRes);
 				}
@@ -64,7 +69,8 @@ bool CDynaModel::Link()
 	*/
 
 
-
+	// по атрибутам контейнеров формируем отдельные списки контейнеров для
+	// обновления после итерации Ньютона и после прогноза, чтобы не проверять эти атрибуты в основных циклах
 	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 	{
 		if ((*it)->m_ContainerProps.bNewtonUpdate)
@@ -221,7 +227,7 @@ CSynchroZone* CDynaNodeContainer::CreateNewSynchroZone()
 	pNewSZ->Clear();
 	pNewSZ->m_LinkedGenerators.reserve(3 * Count());
 	pNewSZ->SetId(m_pSynchroZones->Count());
-	pNewSZ->SetName(_T("����������"));
+	pNewSZ->SetName(_T("Синхрозона"));
 	m_pSynchroZones->AddDevice(pNewSZ);
 	m_bRebuildMatrix = true;
 	return pNewSZ;

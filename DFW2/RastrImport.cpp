@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "RastrImport.h"
 using namespace DFW2;
+#import "C:\Program Files (x86)\RastrWin3\astra.dll" no_namespace, named_guids, no_dual_interfaces, no_implementation 
 
 
 CRastrImport::CRastrImport()
@@ -133,7 +134,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
 	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
-	spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_6", ""); 
+	spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", ""); 
 
 	
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");

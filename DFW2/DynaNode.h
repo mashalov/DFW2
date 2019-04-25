@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DeviceContainer.h"
 #include "DynaLRC.h"
 
@@ -12,24 +12,26 @@ namespace DFW2
 	public:
 		enum VARS
 		{
-			V_S,
+			V_S,			// скольжение в синхронной зоне
 			V_LAST
 		};
 
 		DEVICEVECTOR m_LinkedGenerators;
 
-		double S;
-		double Mj;
-		bool m_bPassed;
-		bool m_bInfPower;
-		CSynchroZone();
+		double S;								// переменная состояния - скольжение
+		double Mj;								// суммарный момент инерции
+		bool m_bPassed;				
+		bool m_bInfPower;						// признак наличия ШБМ
+		CSynchroZone();		
 		virtual ~CSynchroZone() {}
-		bool m_bEnergized;
+		bool m_bEnergized;						// признак наличия источника напряжения
+
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		void Clear();
+		// функция сброса параметров на исходные значения
+		void Clear();	
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};
@@ -41,6 +43,8 @@ namespace DFW2
 
 		void UpdateVreVim();
 
+		// в устройствах удобно объявить перечисления
+		// для именования индексов переменных
 		enum CONSTVARS
 		{
 			C_GSH,
@@ -51,7 +55,7 @@ namespace DFW2
 		{
 			V_DELTA,
 			V_V,
-			V_LAST
+			V_LAST		// последняя переменная (реально не существует) указывает количество уравнений устройства
 		};
 
 		double Delta;
@@ -60,31 +64,31 @@ namespace DFW2
 		double Pn,Qn,Pg,Qg,Pnr,Qnr;
 		double G,B, Gr0, Br0;
 		double Gshunt, Bshunt;
-		double Unom;
-		double V0;
+		double Unom;					// номинальное напряжение
+		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
 		bool m_bInMetallicSC;
 
-		double dLRCVicinity;
+		double dLRCVicinity;			// окрестность сглаживания СХН
 
-		double dLRCPn;
+		double dLRCPn;					// расчетные значения прозводных СХН по напряжению
 		double dLRCQn;
 
 
-		CSynchroZone *m_pSyncZone;
+		CSynchroZone *m_pSyncZone;		// синхронная зона, к которой принадлежит узел
 		ptrdiff_t m_nZoneDistance;
 
 		ptrdiff_t Nr;
 		ptrdiff_t Type;
-		cplx Yii;
-		cplx VreVim;
-		double Vold;
-		CDynaLRC *m_pLRC;
+		cplx Yii;						// собственная проводимость
+		cplx VreVim;					// напряжение в декартовых координатах для упрощения расчета элементов якоби
+		double Vold;					// модуль напряжения на предыдущей итерации
+		CDynaLRC *m_pLRC;				// указатель на СХН узла
 		//double m_dLRCKdef;
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		virtual void Predict();
+		virtual void Predict();			// допонительная обработка прогноза
 		void GetPnrQnr();
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
@@ -108,10 +112,11 @@ namespace DFW2
 	class CDynaNode : public CDynaNodeBase
 	{
 	public:
+		// здесь переменные состояния добавляются к базовому классу
 		enum VARS
 		{
-			V_LAG = 2,
-			V_S,
+			V_LAG = 2,			// дифференциальное уравнение лага скольжения в третьей строке
+			V_S,				// скольжение
 			V_LAST
 		};
 

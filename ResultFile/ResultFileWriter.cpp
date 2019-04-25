@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "ResultFileWriter.h"
 #include "memory.h"
 
@@ -66,10 +66,10 @@ void CResultFileWriter::WriteTime(double dTime, double dStep)
 				pEncoder++;
 			}
 
-			// ���� ����� ����� ����� ��������, ��������� ����� ��������
-			// ������� ���������� ��������, �� ���������� ���� m_bPredictorReset
-			// ������� ����� ��� ����, ����� ������������ ��� ���������� ���������
-			// ��������, � �� ���� (��. Predict)
+			// если новое время равно текущему, предиктор нужно сбросить
+			// порядок предиктора обнуляем, но используем флаг m_bPredictorReset
+			// который нужен для того, чтобы использовать для предиктора последнее
+			// значение, а не ноль (см. Predict)
 
 			m_nPredictorOrder = 0;
 			m_bPredictorReset = true;
@@ -366,6 +366,7 @@ CResultFileWriter::~CResultFileWriter()
 	CloseFile();
 }
 
+// завершает и закрывает поток записи
 void CResultFileWriter::TerminateWriterThread()
 {
 	if (m_hThread)
@@ -388,8 +389,10 @@ void CResultFileWriter::TerminateWriterThread()
 	}
 }
 
+// закрывает файл записываемых результатов
 void CResultFileWriter::CloseFile()
 {
+	// сначала останавливаем поток записи
 	TerminateWriterThread();
 
 	if (m_pFile)
@@ -429,23 +432,26 @@ void CResultFileWriter::CloseFile()
 
 }
 
+// создает файл результатов
 void CResultFileWriter::CreateResultFile(const _TCHAR *cszFilePath)
 {
 	if (!_tfopen_s(&m_pFile, cszFilePath, _T("wb+,ccs=UNICODE")))
 	{
+		// запись сигнатуры
 		size_t nCountSignature = sizeof(m_cszSignature);
 		if(fwrite(m_cszSignature, sizeof(m_cszSignature[0]), nCountSignature, m_pFile) != nCountSignature)
 			throw CFileWriteException(m_pFile);
+		// запись версии (версия в define, соответствует исходнику)
 		WriteLEB(DFW2_RESULTFILE_VERSION);
 
+		// создаем объекты синхронизации для управления потоком записи
 		m_hRunEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 		if (m_hRunEvent == NULL)
 			throw CFileWriteException(m_pFile);
-
 		m_hDataMutex = CreateMutex(NULL, FALSE, NULL);
 		if (m_hDataMutex == NULL)
 			throw CFileWriteException(m_pFile);
-		
+		// создаем поток для записи
 		m_hThread = (HANDLE)_beginthreadex(NULL, 0, CResultFileWriter::WriterThread, this, 0, NULL);
 		if (m_hThread == NULL)
 			throw CFileWriteException(m_pFile);
@@ -454,18 +460,20 @@ void CResultFileWriter::CreateResultFile(const _TCHAR *cszFilePath)
 		throw CFileWriteException(NULL,cszFilePath);
 }
 
-
+// записывает double без сжатия
 void CResultFileWriter::WriteDouble(const double &Value)
 {
 	if(fwrite(&Value, sizeof(double), 1, m_pFile) != 1)
 		throw CFileWriteException(m_pFile);
 }
 
+// записывает заданное количество описателей разделов
 void CResultFileWriter::AddDirectoryEntries(size_t nDirectoryEntriesCount)
 {
-	WriteLEB(nDirectoryEntriesCount);
-	struct DataDirectoryEntry DirEntry = { 0, 0LL };
-	m_DataDirectoryOffset = _ftelli64(m_pFile);
+	WriteLEB(nDirectoryEntriesCount);							// записываем количество разделов
+	struct DataDirectoryEntry DirEntry = { 0, 0LL };			// создаем пустой раздел
+	m_DataDirectoryOffset = _ftelli64(m_pFile);					// запоминаем позицию начала разделов в файле
+	// записываем заданное количество пустых разделов
 	for (size_t i = 0; i < nDirectoryEntriesCount; i++)
 	{
 		if (fwrite(&DirEntry, sizeof(struct DataDirectoryEntry), 1, m_pFile) != 1)
@@ -473,16 +481,21 @@ void CResultFileWriter::AddDirectoryEntries(size_t nDirectoryEntriesCount)
 	}
 }
 
+// запись результатов вне потока
 void CResultFileWriter::WriteResults(double dTime, double dStep)
 {
 	DWORD dwExitCode;
+	// проверяем активен ли поток записи
 	if (GetExitCodeThread(m_hThread, &dwExitCode))
 	{
+		// если нет - это ошибка
 		if (dwExitCode != STILL_ACTIVE)
 			throw CFileWriteException(m_pFile);
 
+		// ждем и забираем мьютекс доступа к данным
 		DWORD dwWaitRes = WaitForSingleObject(m_hDataMutex, INFINITE);
 
+		// если при ожидании произошла ошибка - заканчиваем
 		if (dwWaitRes == WAIT_FAILED && dwWaitRes == WAIT_ABANDONED)
 			throw CFileWriteException(m_pFile);
 
@@ -490,6 +503,7 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 		{
 			__try
 			{
+				// сохраняем результаты из указателей во внутрениий буфер
 				CChannelEncoder *pEncoder = m_pEncoders;
 				CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
 				while (pEncoder < pEncoderEnd)
@@ -502,8 +516,10 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 			}
 			__finally
 			{
+				// по завершению копирования результатов освобождаем данные
 				if (!ReleaseMutex(m_hDataMutex))
 					throw CFileWriteException(m_pFile);
+				// и запускаем поток записи
 				if (!SetEvent(m_hRunEvent))
 					throw CFileWriteException(m_pFile);
 			}
@@ -513,33 +529,43 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 		throw CFileWriteException(m_pFile);
 }
 
+// запись результатов в потоке
 bool CResultFileWriter::WriteResultsThreaded()
 {
 	bool bRes = false;
-
+	// ожидаем и захватываем мьютекс доступа к данным (пока не записан предыдущий блок)
 	DWORD dwWaitRes = WaitForSingleObject(m_hDataMutex, INFINITE);
 
 	if (dwWaitRes == WAIT_OBJECT_0)
 	{
+		// если ожидание прошло без ошибок
 		__try
 		{
 			CChannelEncoder *pEncoder = m_pEncoders;
 			CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+			// записываем время и шаг
 			WriteTime(m_dTimeToWrite, m_dStepToWrite);
+			// записываем текущий блок с помощью кодеков каналов
 			pEncoder = m_pEncoders;
 			while (pEncoder < pEncoderEnd)
 			{
+				// WriteChannel сам решает - продолжать писать в буфер или сбрасывать на диск, если 
+				// буфер закончился
 				WriteChannel(pEncoder - m_pEncoders, pEncoder->m_dValue);
 				pEncoder++; 
 			} 
 
 			if (m_nPredictorOrder < PREDICTOR_ORDER)
 			{
+				// если не набрали заданный порядок предиктора
+				// добавляем текущее время и увеличиваем порядок
 				ts[m_nPredictorOrder] = m_dSetTime;
 				m_nPredictorOrder++;
 			}
 			else
 			{
+				// если предиктор работает с заданным порядком,
+				// сдвигаем буфер точек времени на 1 влево и добавляем текущее время
 				memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 				ts[PREDICTOR_ORDER - 1] = m_dSetTime;
 			}
@@ -549,6 +575,7 @@ bool CResultFileWriter::WriteResultsThreaded()
 
 		__finally
 		{
+			// по завершению записи освобождаем мьютекс
 			if (!ReleaseMutex(m_hDataMutex))
 				bRes = false;
 		}
@@ -571,23 +598,30 @@ void CResultFileWriter::SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, p
 		throw CFileWriteException(m_pFile);
 }
 
-
+// поток записи результатов
 unsigned int CResultFileWriter::WriterThread(void *pThis)
 {
+	// получаем объект из параметра функции потока
 	CResultFileWriter *pthis = static_cast<CResultFileWriter*>(pThis);
 
+	// поток работает пока не сброшен флаг работы с параметрах
 	while (pthis->m_bThreadRun)
 	{
+		// ждем команды на запуск записи
 		DWORD dwWaitRes = WaitForSingleObject(pthis->m_hRunEvent, INFINITE);
 
+		// сбрасываем команду (приняли)
 		if (!ResetEvent(pthis->m_hRunEvent))
 			break;
 
 		if (dwWaitRes == WAIT_OBJECT_0)
 		{
+			// если в процессе ожидания не возникло ошибки
+			// и не был сброше флаг работы
 			if (!pthis->m_bThreadRun)
 				break;
 
+			// записываем очередной блок результатов
 			if (!pthis->WriteResultsThreaded())
 				break;
 		}
@@ -599,6 +633,8 @@ unsigned int CResultFileWriter::WriterThread(void *pThis)
 }
 
 
+// возвращает смещение относительно текущей позиции в файле
+// для относительного смещения нужно значительно меньше разрядов
 __int64 CResultFileWriter::OffsetFromCurrent(__int64 AbsoluteOffset)
 {
 	if (AbsoluteOffset)
@@ -614,7 +650,7 @@ __int64 CResultFileWriter::OffsetFromCurrent(__int64 AbsoluteOffset)
 	return AbsoluteOffset;
 }
 
-
+// выполняет кодирование заданного буфера с помошью RLE
 bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize)
 {
 	bool bRes = m_RLECompressor.Compress(pBuffer, nBufferSize, pCompressedBuffer, nCompressedSize);

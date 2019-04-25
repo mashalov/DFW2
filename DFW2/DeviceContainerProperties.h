@@ -4,14 +4,16 @@
 
 namespace DFW2
 {
-	
+	// типы переменных устройства
 	enum eDEVICEVARIABLETYPE
 	{
-		eDVT_CONSTSOURCE,
-		eDVT_INTERNALCONST,
-		eDVT_STATE
+		eDVT_CONSTSOURCE,			// константа исходных данных
+		eDVT_INTERNALCONST,			// константа рассчитываемая внутри устройства в Init
+		eDVT_STATE					// переменная состояния, для которой должно быть уравнение
 	};
 
+	// базовый класс описания переменной
+	// содержит индекс переменной в устройстве
 	class CVarIndexBase
 	{
 	public:
@@ -19,12 +21,13 @@ namespace DFW2
 		CVarIndexBase(ptrdiff_t nIndex) : m_nIndex(nIndex) { };
 	};
 
+	// описание переменной состояния
 	class CVarIndex : public CVarIndexBase
 	{
 	public:
-		bool m_bOutput;
-		double m_dMultiplier;
-		eVARUNITS m_Units;
+		bool m_bOutput;														// признак вывода переменной в результаты
+		double m_dMultiplier;												// множитель переменной
+		eVARUNITS m_Units;													// единицы измерения переменной
 		CVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits) : CVarIndexBase(nIndex),
 			m_bOutput(true),
 			m_dMultiplier(1.0),
@@ -42,6 +45,7 @@ namespace DFW2
 		};
 	};
 
+	// описание константы
 	class CConstVarIndex : public CVarIndexBase
 	{
 	public:
@@ -53,22 +57,26 @@ namespace DFW2
 		}
 	};
 
+	// карта индексов переменных состояния
 	typedef std::map<std::wstring, CVarIndex> VARINDEXMAP;
 	typedef VARINDEXMAP::iterator VARINDEXMAPITR;
 	typedef VARINDEXMAP::const_iterator VARINDEXMAPCONSTITR;
 
+	// карта индексов констант
 	typedef std::map<std::wstring, CConstVarIndex> CONSTVARINDEXMAP;
 	typedef CONSTVARINDEXMAP::iterator CONSTVARINDEXMAPITR;
 	typedef CONSTVARINDEXMAP::const_iterator CONSTVARINDEXMAPCONSTITR;
 
+	// множество типов устройств
 	typedef std::set<ptrdiff_t> TYPEINFOSET;
 	typedef TYPEINFOSET::iterator TYPEINFOSETITR;
 
+	// связь _от_ внешнего устройства
 	struct LinkDirectionFrom
 	{
-		ptrdiff_t nLinkIndex;
-		eDFW2DEVICELINKMODE eLinkMode;
-		eDFW2DEVICEDEPENDENCY eDependency;
+		ptrdiff_t nLinkIndex;												// индекс связи
+		eDFW2DEVICELINKMODE eLinkMode;										// режим линковки
+		eDFW2DEVICEDEPENDENCY eDependency;									// режим подчинения устройств в связи
 		LinkDirectionFrom() : nLinkIndex(0),
 							  eLinkMode(DLM_SINGLE),
 							  eDependency(DPD_MASTER)
@@ -99,6 +107,10 @@ namespace DFW2
 	typedef std::map<eDFW2DEVICETYPE, LinkDirectionTo> LINKSTOMAP;
 	typedef LINKSTOMAP::iterator LINKSTOMAPITR;
 
+	// атрибуты контейнера устройств
+	// Атрибуты контейнера можно "наследовать" в рантайме - брать некий атрибут и изменять его для другого типа устройств,
+	// а далее по нему специфицировать контейнер устройств
+
 	class CDeviceContainerProperties
 	{
 	public:
@@ -108,15 +120,15 @@ namespace DFW2
 		void SetType(eDFW2DEVICETYPE eDevType);
 		void AddLinkTo(eDFW2DEVICETYPE eDevType, eDFW2DEVICELINKMODE eLinkMode, eDFW2DEVICEDEPENDENCY Dependency, const _TCHAR* cszstrIdField);
 		void AddLinkFrom(eDFW2DEVICETYPE eDevType, eDFW2DEVICELINKMODE eLinkMode, eDFW2DEVICEDEPENDENCY Dependency);
-		bool bNewtonUpdate;
-		bool bCheckZeroCrossing;
-		bool bPredict;
+		bool bNewtonUpdate;													// нужен ли контейнеру вызов NewtonUpdate 
+		bool bCheckZeroCrossing;											// нужен ли контейнеру вызов ZeroCrossing
+		bool bPredict;														// нужен ли контейнеру вызов предиктора
 		ptrdiff_t nPossibleLinksCount;
-		ptrdiff_t nEquationsCount;
+		ptrdiff_t nEquationsCount;											// количество уравнений устройства в контейнере
 		eDFW2DEVICETYPE		eDeviceType;
-		VARINDEXMAP m_VarMap;
-		CONSTVARINDEXMAP m_ConstVarMap;
-		TYPEINFOSET m_TypeInfoSet;
+		VARINDEXMAP m_VarMap;												// карта индексов перменных состояния
+		CONSTVARINDEXMAP m_ConstVarMap;										// карта индексов констант
+		TYPEINFOSET m_TypeInfoSet;											// набор типов устройства
 
 		LINKSFROMMAP m_LinksFrom;
 		LINKSTOMAP  m_LinksTo;
@@ -124,9 +136,9 @@ namespace DFW2
 		LINKSFROMMAP m_MasterLinksFrom;
 		LINKSTOMAP  m_MasterLinksTo;
 
-		std::wstring m_strClassName;
+		std::wstring m_strClassName;										// имя типа устройства
 
-		STRINGLIST m_lstAliases;
+		STRINGLIST m_lstAliases;											// возможные псевдонимы типа устройства (типа "Node","node")
 
 		static const _TCHAR *m_cszNameGenerator1C;
 		static const _TCHAR *m_cszNameGenerator3C;

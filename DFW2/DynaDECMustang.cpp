@@ -165,9 +165,12 @@ bool CDynaDECMustang::InitExternalVariables(CDynaModel *pDynaModel)
 const CDeviceContainerProperties CDynaDECMustang::DeviceProperties()
 {
 	CDeviceContainerProperties props;
-	props.SetType(DEVTYPE_DEC);
+	// базовый тип - дискретный контроллер возбуждения
+	// свой тип - форсировка Мустанг
+	props.SetType(DEVTYPE_DEC);	
 	props.SetType(DEVTYPE_DEC_MUSTANG);	
 	props.m_strClassName = CDeviceContainerProperties::m_cszNameDECMustang;
+	// может линковаться с возбудителем
 	props.AddLinkFrom(DEVTYPE_EXCITER, DLM_SINGLE, DPD_MASTER);
 
 	props.nEquationsCount = CDynaDECMustang::VARS::V_LAST;

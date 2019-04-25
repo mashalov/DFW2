@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
@@ -62,7 +62,8 @@ double* CDevice::GetVariablePtr(const _TCHAR* cszVarName)
 	return pRes;
 }
 
-
+// получить указатель на константную переменную по имени
+// аналогична по смыслу double* GetVariablePtr(const _TCHAR*)
 double* CDevice::GetConstVariablePtr(const _TCHAR* cszVarName)
 {
 	_ASSERTE(m_pContainer);
@@ -73,16 +74,20 @@ double* CDevice::GetConstVariablePtr(const _TCHAR* cszVarName)
 	return pRes;
 }
 
+// получить описание внешней переменной по имени
 ExternalVariable CDevice::GetExternalVariable(const _TCHAR* cszVarName)
 {
 	_ASSERTE(m_pContainer);
 
 	ExternalVariable ExtVar;
+	// в контейнере находим индекс переменной по имени
 	ExtVar.nIndex = m_pContainer->GetVariableIndex(cszVarName);
 
 	if (ExtVar.nIndex >= 0)
 	{
+		// извлекаем указатель на переменную
 		ExtVar.pValue = GetVariablePtr(ExtVar.nIndex);
+		// извлекаем номер строки в Якоби
 		ExtVar.nIndex = A(ExtVar.nIndex);
 	}
 	else
@@ -91,11 +96,13 @@ ExternalVariable CDevice::GetExternalVariable(const _TCHAR* cszVarName)
 	return ExtVar;
 }
 
+// виртуальная функиця. Должна быть перекрыта во всех устройствах
 double* CDevice::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	return NULL;
 }
 
+// виртуальная функиця. Должна быть перекрыта во всех устройствах
 double* CDevice::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
 	return NULL;
@@ -186,49 +193,58 @@ void CDevice::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMess
 		_tcprintf(_T("\n%s Status %d DBIndex %d"), cszMessage, Status, GetDBIndex());
 }
 
+// связь экземпляров устройств по информации из из контейнеров
 bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom)
 {
+	// на входе pCountainer - внешний контейнер
+	// pContLead - контейнер по данным которого надо делать связи
 	bool bRes = false;
+
 	if (m_pContainer && pContLead)
 	{
 		bRes = true;
 		DEVICEVECTORITR it;
+		// выбирает подчиненный контейнер по pContLead
+		// если pContLead совпадает с внешним контейнером - подчиненный - контейнер данного устройства
+		// если совпадает в контейнером данного устройства - подчиненный - внешний контейнер
 		CDeviceContainer *pContSlave = (pContLead == pContainer) ? m_pContainer : pContainer;
+
+		// заранее определяем индекс константы, в которой лежит номер связываемого устройства
+		ptrdiff_t nIdFieldIndex = pContLead->GetConstVariableIndex(LinkTo.strIdField.c_str());
 
 		for (it = pContLead->begin(); it != pContLead->end(); it++)
 		{
+			// проходим по устройствам мастер-контейнера
 			CDevice *pDev = *it;
-
-			/*
-			if (!pDev->SetSingleLink(LinkTo.nLinkIndex, NULL))
-			{
-				bRes = false;
-				break;
-			}
-			*/
-
 			CDevice *pLinkDev = NULL;
 
-			const double *pdDevId = pDev->GetConstVariableConstPtr(LinkTo.strIdField.c_str());
+			// пытаемся получить идентификатор устройства, с которым должно быть связано устройство из мастер-контейнера
+			const double *pdDevId = pDev->GetConstVariableConstPtr(nIdFieldIndex);
 			ptrdiff_t DevId = (pdDevId) ? static_cast<ptrdiff_t>(*pdDevId) : -1;
+
 			if (DevId > 0)
 			{
+				// если идентификатор найден и ненулевой
+				// ищем устройство с этим идентификатором в подчиненном контейнере
 				if (pContSlave->GetDevice(DevId, pLinkDev))
 				{
+					// достаем устройство, которое уже связано с текущим по данному типу связи
 					CDevice *pAlreadyLinked = pDev->GetSingleLink(LinkTo.nLinkIndex);
 
-					// block already linked count for multilink
+					// если предусмотрена связь один с несколькими игнорируем уже связанное устройство
 					if (LinkTo.eLinkMode == DLM_MULTI)
 						pAlreadyLinked = NULL;
 
 					if (!pAlreadyLinked)
 					{
+						// если уже связанного устройства нет - привязываем устройство мастер-контейнера к найденному в подчиненном контейнере
 						if (!pDev->SetSingleLink(LinkTo.nLinkIndex, pLinkDev))
 						{
 							bRes = false;
 							break;
 						}
 
+						// если режим связи один к одному - привязываем и подчиненное устройство к мастер-устройству
 						if (LinkFrom.eLinkMode == DLM_SINGLE)
 						{
 							if (!pLinkDev->SetSingleLink(LinkFrom.nLinkIndex, pDev))
@@ -239,17 +255,21 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 						}
 						else
 						{
+							// если режим связи много к одному - добавляем элемент мультисвязи
 							bRes = pLinkDev->IncrementLinkCounter(LinkFrom.nLinkIndex) && bRes;
 						}
 					}
 					else
 					{
+						// если устройство уже было сязано с каким-то и связь один к одному - выдаем ошибку
+						// указываея мастер, подчиенное и уже связанное
 						pDev->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDeviceAlreadyLinked, pDev->GetVerbalName(), pLinkDev->GetVerbalName(), pAlreadyLinked->GetVerbalName()));
 						bRes = false;
 					}
 				}
 				else
 				{
+					// если устройство для связи по идентификатору не нашли - выдаем ошибку
 					pDev->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDeviceForDeviceNotFound, DevId, pDev->GetVerbalName()));
 					bRes = false;
 				}
@@ -258,14 +278,21 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 
 		if (bRes && LinkFrom.eLinkMode == DLM_MULTI)
 		{
+			// если у связываемого контейнера бьл режим мультисвязи
+			// размечаем мультисвязи в связываемом контейнере
 			pContSlave->AllocateLinks(LinkFrom.nLinkIndex);
+			// для каждого из устройств мастер-контейнера
 			for (it = pContLead->begin(); it != pContLead->end(); it++)
 			{
 				CDevice *pDev = *it;
+				// извлекаем связанное устройство данного типа из мастер-устройства
 				CDevice *pDevLinked = pDev->GetSingleLink(LinkTo.nLinkIndex);
+
+				// и добавляем связь с мастер-устройством в мультисвязь подчиненного устройства
 				if (pDevLinked)
 					pContSlave->AddLink(LinkFrom.nLinkIndex, pDevLinked->m_nInContainerIndex, pDev);
 			}
+			// после добавления связей восстанавливаем внутренние указатели связей
 			pContSlave->RestoreLinks(LinkFrom.nLinkIndex);
 
 		}
@@ -273,6 +300,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 	return bRes;
 }
 
+// добавляет элемент связи для хранения связи с очередным устройством
 bool CDevice::IncrementLinkCounter(ptrdiff_t nLinkIndex)
 {
 	_ASSERTE(m_pContainer);
@@ -282,6 +310,7 @@ bool CDevice::IncrementLinkCounter(ptrdiff_t nLinkIndex)
 		bRes = m_pContainer->IncrementLinkCounter(nLinkIndex, m_nInContainerIndex);
 	return bRes;
 }
+
 // устройство может быть связано с несколькими типами разных устройств,
 // причем связей каждого из типов тоже может быть несколько
 // функция возвращает связи устройства с заданным типом. Тип задается не явно, а в виде
@@ -290,10 +319,14 @@ CLinkPtrCount* CDevice::GetLink(ptrdiff_t nLinkIndex)
 {
 	_ASSERTE(m_pContainer);
 
+	// возвращаем объект, в котором есть список ссылок данного устройства
 	CLinkPtrCount *pLink(NULL);
+	// ссылки хранятся в контейнере
 	if (m_pContainer)
 	{
+		// извлекаем список ссылок по заданному типу и индексу текущего устройства
 		CMultiLink *pMultiLink = m_pContainer->GetCheckLink(nLinkIndex, m_nInContainerIndex);
+		// если список ссылок есть - возвращаем список
 		if (pMultiLink)
 			pLink = &pMultiLink->m_pLinkInfo[m_nInContainerIndex];
 	}
@@ -416,22 +449,29 @@ bool CDevice::CheckAddVisited(CDevice* pDevice)
 	return bRes;
 }
 
+// проверка инициализации/инициализация устройства
 eDEVICEFUNCTIONSTATUS CDevice::CheckInit(CDynaModel* pDynaModel)
 {
 	if (m_eInitStatus != DFS_OK)
 	{
+		// если успешной инициализации еще не выполнено
+		// проверяем что с инициализацией ведущих устройств
 		m_eInitStatus = MastersReady(&CDevice::CheckMasterDeviceInit);
 
 		if (IsPresent())
 		{
+			// если устройство представлено в модели
+			// и ведущие устройства инициализированы 
 			if(m_eInitStatus == DFS_OK)
-				m_eInitStatus = Init(pDynaModel);
+				m_eInitStatus = Init(pDynaModel);		// пытаемся инициализировать устройство
 
-			if (m_eInitStatus == DFS_DONTNEED)
-				m_eInitStatus = DFS_OK;
+			// если устройство не нуждается в инициализации
+			if (m_eInitStatus == DFS_DONTNEED)	
+				m_eInitStatus = DFS_OK;					// делаем вид что инициализация прошла успешно
 		}
 		else
-			m_eInitStatus = DFS_OK;
+			m_eInitStatus = DFS_OK;						// для отсутствующих в модели устройств также возвращаем успешную инициализацию
+														// так как далее мы их просто удалим из модели
 	}
 	return m_eInitStatus;
 }
@@ -660,10 +700,11 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const
 	return bRes;
 }
 
+// установить адрес, начиная с которого устройство сможет получить
+// адреса связанных устройств
 void CDevice::SetSingleLinkStart(CDevice **ppLinkStart)
 {
 	_ASSERTE(m_pContainer);
-
 	m_DeviceLinks.SetRange(SingleLinksRange(ppLinkStart, ppLinkStart + m_pContainer->GetPossibleSingleLinksCount()));
 }
 
@@ -685,12 +726,13 @@ void CDevice::UpdateVerbalName()
 		m_strVerbalName = Cex(_T("%s %s"), m_pContainer->GetTypeName(), m_strVerbalName.c_str());
 }
 
-
+// получить связанное устройство по индексу связи
 CDevice* CDevice::GetSingleLink(ptrdiff_t nIndex)
 {
 	return m_DeviceLinks.GetLink(nIndex);
 }
 
+// получить связанное устройство по типу связанного устройства
 CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 {
 	_ASSERTE(m_pContainer);
@@ -699,16 +741,22 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 
 	if (m_pContainer)
 	{
+		// по информации из атрибутов контейнера определяем индекс
+		// связи, соответствующий типу
 		LINKSFROMMAP& FromLinks = m_pContainer->m_ContainerProps.m_LinksFrom;
 		LINKSFROMMAPITR itFrom = FromLinks.find(eDevType);
 		if (itFrom != FromLinks.end())
 			pRetDev = GetSingleLink(itFrom->second.nLinkIndex);
+	
+		// если связанное устройство не найдено
+		// пытаемся определить связь "с другой стороны"
 
 #ifdef _DEBUG
 		CDevice *pRetDevTo = NULL;
 		LINKSTOMAP& ToLinks = m_pContainer->m_ContainerProps.m_LinksTo;
 		LINKSTOMAPITR itTo = ToLinks.find(eDevType);
 
+		// в режиме отладки проверяем однозначность определения связи
 		if (itTo != ToLinks.end())
 		{
 			pRetDevTo = GetSingleLink(itTo->second.nLinkIndex);

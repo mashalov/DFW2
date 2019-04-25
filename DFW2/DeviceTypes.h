@@ -1,16 +1,18 @@
-#pragma once
+﻿#pragma once
 //namespace DFW2
 //{
+	// 	режим связи
 	enum eDFW2DEVICELINKMODE
 	{
-		DLM_SINGLE,
-		DLM_MULTI
+		DLM_SINGLE,		// связь одного устройства с одним устройством
+		DLM_MULTI		// связь одного устройства с несколькими устройствами (узел-генератор, узел-ветвь)
 	};
 
+	// режим зависимости связи
 	enum eDFW2DEVICEDEPENDENCY
 	{
-		DPD_MASTER,
-		DPD_SLAVE
+		DPD_MASTER,		// устройство является ведущим
+		DPD_SLAVE		// устройство является ведомым
 	};
 	
 	enum eVARUNITS
@@ -27,7 +29,12 @@
 		VARUNIT_PU,
 		VARUNIT_NOTSET
 	};
-
+	
+	// Типы устройств
+	// пользовательские устройства отдельным типом
+	// не предусмотрены и должны соответствовать одному
+	// из встроенных
+	
 	enum eDFW2DEVICETYPE
 	{
 		DEVTYPE_UNKNOWN,
