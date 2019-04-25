@@ -1,18 +1,20 @@
-#pragma once
+﻿#pragma once
 #include "map"
 #include "DeviceTypes.h"
 
 namespace DFW2
 {
+	// карта типов единиц измерения к названиям
+	// названия нужны только для взаимодействия с пользователем,
+	// поэтому названия единиц измерения вводим в описании классов сообщений
 	typedef std::map<ptrdiff_t, std::wstring> VARNAMEMAP;
 	typedef VARNAMEMAP::const_iterator VARNAMEITRCONST;
 
-	
-	
+	// класс сообщений и логирования
 	class CDFW2Messages
 	{
 	protected:
-		// map to names of variable units 
+		// карта типов единиц измерения по сути глобальная
 		VARNAMEMAP m_VarNameMap;
 	public:
 		enum DFW2MessageStatus

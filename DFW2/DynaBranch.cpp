@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaBranch.h"
 #include "DynaModel.h"
 
@@ -10,15 +10,21 @@ CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(NULL)
 
 }
 
+// Обновляет имя ветви
 void CDynaBranch::UpdateVerbalName()
 {
 	m_strVerbalName = Cex(_T("%d - %d%s %s"), Ip, Iq, static_cast<const _TCHAR*>(Np ? Cex(_T(" (%d)"), Np) : _T("")), GetName());
 }
 
+// Расчет проводимостей ветви для матрицы проводимостей
+// bFixNegativeZ указаывает на необходимость корректировки
+// отрицательных сопротивлений для устойчивого Зейделя
 cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 {
 	double Rf = R;
 	double Xf = X;
+	// Для ветвей с нулевым сопротивлением
+	// задаем сопротивление в о.е. относительно напряжения
 	double Xfictive = m_pNodeIp->Unom;
 	Xfictive *= Xfictive;
 	Xfictive *= 0.0000002;
@@ -46,21 +52,28 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 
 		DEVICEVECTORITR it;
 
+		// идем по контейнеру ветвей
 		for (it = m_pContainer->begin(); it != m_pContainer->end(); it++)
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
 
 			pBranch->m_pNodeIp = pBranch->m_pNodeIq = NULL;
 
+			// оба узла ветви обрабатываем в последовательных
+			// итерациях цикла
 			for (int i = 0; i < 2; i++)
 			{
 				CDynaNodeBase *pNode;
 				ptrdiff_t NodeId = i ? pBranch->Ip : pBranch->Iq;
 
+				// ищем узел по номеру
 				if (pContainer->GetDevice(NodeId, pNode))
 				{
+					// если узел найден, резервируем в нем
+					// связь для текущей ветви	
 					bRes = pNode->IncrementLinkCounter(0) && bRes;
 
+					// жестко связываем ветвь и узлы
 					if (i)
 						pBranch->m_pNodeIp = pNode;
 					else
@@ -75,42 +88,57 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 
 			if (pBranch->m_pNodeIp && pBranch->m_pNodeIq)
 			{
+				// если оба узла найдены
+				// формируем имя ветви по найденным узлам
 				pBranch->SetName(Cex(_T("%s - %s %s"),
 					pBranch->m_pNodeIp->GetName(),
 					pBranch->m_pNodeIq->GetName(),
-					static_cast<const _TCHAR*>(pBranch->Np ? Cex(_T(" ���� %d"), pBranch->Np) : _T(""))));
+					static_cast<const _TCHAR*>(pBranch->Np ? Cex(_T(" öåïü %d"), pBranch->Np) : _T(""))));
 			}
 		}
 
 		if (bRes)
 		{
+			// формируем буфер под ссылки в контейнере узлов
 			pContainer->AllocateLinks(0);
+			// проходим по контейнеру ветвей
 			for (it = m_pContainer->begin(); it != m_pContainer->end(); it++)
 			{
 				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+				// и добавляем к узлам в контейнере связи с ветвями
 				pContainer->AddLink(0, pBranch->m_pNodeIp->m_nInContainerIndex, pBranch);
 				pContainer->AddLink(0, pBranch->m_pNodeIq->m_nInContainerIndex, pBranch);
 			}
+			// сбрасываем счетчики ссылок (заканчиваем связывание)
 			pContainer->RestoreLinks(0);
 		}
 	}
 	return bRes;
 }
 
+
+// изменяет состояние ветви на заданное
 eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBranchState, eDEVICESTATECAUSE eStateCause)
 {
 	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
 	if (eBranchState != m_BranchState)
 	{
+		// если заданное состояние ветви не 
+		// совпадает с текущим
 		m_BranchState = eBranchState;
+		// заново рассчитываем проводимости ветви
+		// и узлов
 		CalcAdmittances();
 		m_pNodeIp->CalcAdmittances();
 		m_pNodeIq->CalcAdmittances();
+		// информируем модель о необходимости 
+		// обработки разрыва
 		m_pNodeIp->ProcessTopologyRequest();
 	}
 	return Status;
 }
 
+// shortcut для установки состояния ветви в терминах CDevice
 eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
 {
 	BranchState eBranchState = BRANCH_OFF;
@@ -119,6 +147,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAU
 	return SetBranchState(eBranchState, eStateCause);
 }
 
+// shortcut для получения состояния ветви в терминах CDevice
 eDEVICESTATE CDynaBranch::GetState()
 {
 	eDEVICESTATE State = eDEVICESTATE::DS_ON;
@@ -127,17 +156,27 @@ eDEVICESTATE CDynaBranch::GetState()
 	return State;
 }
 
+// рассчитывает проводимости ветви
+// в зависимости от заданного состояния
 void CDynaBranch::CalcAdmittances(bool bSeidell)
 {
+	// продольную проводимость рассчитываем 
+	// в режиме корректировки отрицательных сопротивления
+	// в зависимость от параметра (Зейдель или нет)
+	
 	cplx Ybranch = GetYBranch(bSeidell);
 	cplx Ktr(Ktr, Kti);
 
 	switch (m_BranchState)
 	{
 	case CDynaBranch::BRANCH_OFF:
+		// ветвь полностью отключена
+		// все проводимости равны нулю
 		Yip = Yiq = Yips = Yiqs = cplx(0.0, 0.0);
 		break;
 	case CDynaBranch::BRANCH_ON:
+		// ветвь включена
+		// проводимости рассчитываем по "П"-схеме
 		Yip = Ybranch / Ktr;
 		Yiq = Ybranch / conj(Ktr);
 		Yips = cplx(GIp, BIp) + Ybranch;
@@ -145,7 +184,8 @@ void CDynaBranch::CalcAdmittances(bool bSeidell)
 		break;
 	case CDynaBranch::BRANCH_TRIPIP:
 	{
-		Yip = Yiq = Yips = 0.0;
+		// ветвь отключена в начале		
+		Yip = Yiq = Yips = 0.0;		// взаимные и собственная со стороны узла начала - 0
 		Yiqs = cplx(GIq, BIq);
 
 		cplx Yip1(GIp, BIp);
@@ -153,17 +193,20 @@ void CDynaBranch::CalcAdmittances(bool bSeidell)
 
 		_ASSERTE(!Equal(abs(Ysum), 0.0));
 
+		// собстванная со стороны узла конца
 		if (!Equal(abs(Ysum), 0.0))
 			Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktr);
 	}
 	break;
 	case CDynaBranch::BRANCH_TRIPIQ:
 	{
-		Yiq = Yip = Yiqs = 0.0;
+		// отключена в конце
+		Yiq = Yip = Yiqs = 0.0;		// взаимные и собственная со стороны узла конца - 0
 		Yips = cplx(GIp, BIp);
 
 		cplx Yip1(GIq, BIq);
 
+		// собственная со стороны узла начала
 		cplx Ysum = Yip1 / norm(Ktr) + Ybranch;
 
 		_ASSERTE(!Equal(abs(Ysum), 0.0));
@@ -488,9 +531,12 @@ const CDeviceContainerProperties CDynaBranch::DeviceProperties()
 	return props;
 }
 
+// описание переменных расчетных потоков по ветви
 const CDeviceContainerProperties CDynaBranchMeasure::DeviceProperties()
 {
 	CDeviceContainerProperties props;
+	// линковка делается только с ветвями, поэтому описание
+	// правил связывания не нужно
 	props.SetType(DEVTYPE_BRANCHMEASURE);
 	props.m_strClassName = CDeviceContainerProperties::m_cszNameBranchMeasure;
 	props.nEquationsCount = CDynaBranchMeasure::VARS::V_LAST;
