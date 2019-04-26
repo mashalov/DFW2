@@ -231,65 +231,7 @@ void CDynaModel::ResetElement()
 
 bool CDynaModel::ReallySetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
-	if (nRow >= 0 && nRow < m_nMatrixSize &&
-		nCol >= 0 && nCol < m_nMatrixSize)
-	{
-		m_bStatus = false;
-		MatrixRow *pRow = m_pMatrixRows + nRow;
-
-		DEVICE_EQUATION_TYPE eColVarType = GetRightVector(nCol)->EquationType;
-
-		dValue *= l[eColVarType * 2 + (sc.q - 1)][0] * GetH();
-		if (nRow == nCol)
-			dValue = 1.0 - dValue;
-
-		_CheckNumber(dValue);
-
-		switch (sc.IterationMode)
-		{
-		case StepControl::eIterationMode::JN:
-			if (nRow != nCol) dValue = 0.0;
-			break;
-		case StepControl::eIterationMode::FUNCTIONAL:
-			if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
-			break;
-
-		}
-
-		if (bAddToPrevious)
-		{
-			ptrdiff_t *pSp = pRow->pAp - 1;
-			while (pSp >= pRow->pApRow)
-			{
-				if (*pSp == nCol)
-				{
-					ptrdiff_t pDfr = pSp - pRow->pAp;
-					*(pRow->pAx + pDfr) += dValue;
-					m_bStatus = true;
-					break;
-				}
-				pSp--;
-			}
-		}
-		else
-		{
-			if (pRow->pAp < pRow->pApRow + pRow->m_nColsCount &&
-				pRow->pAx < pRow->pAxRow + pRow->m_nColsCount)
-			{
-				*pRow->pAp = nCol;
-				*pRow->pAx = dValue;
-				pRow->pAp++;
-				pRow->pAx++;
-				m_bStatus = true;
-			}
-		}
-	}
-	else
-		m_bStatus = false;
-
-	_ASSERTE(m_bStatus);
-
-	return m_bStatus;
+	return ReallySetElement(nRow, nCol, dValue, bAddToPrevious);
 }
 
 bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
@@ -304,12 +246,12 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 
 		if (GetRightVector(nRow)->EquationType == DET_ALGEBRAIC)
 			dValue *= l[eColVarType * 2 + (sc.q - 1)][0];
-		/*
 		else
-			if (eColVarType == DET_ALGEBRAIC)
-				dValue *= l[eColVarType * 2 + (sc.q - 1)][0] * GetH();
-		*/
-
+		{
+			dValue *= l[eColVarType * 2 + (sc.q - 1)][0] * GetH();
+			if (nRow == nCol)
+				dValue = 1.0 - dValue;
+		}
 
 		_CheckNumber(dValue);
 
