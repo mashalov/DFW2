@@ -22,7 +22,6 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	if (!pDynaModel->Status())
 		return pDynaModel->Status();
 
-	double hb0 = pDynaModel->GetHB0();
 	bool bRes = true;
 
 

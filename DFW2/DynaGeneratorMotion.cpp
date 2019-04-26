@@ -67,7 +67,6 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		double NodeSv = Sv.Value();
 
 		double DeltaGT = Delta - DeltaV.Value();
-		double hb0 = pDynaModel->GetHB0();
 		double EcosDeltaGT = Eqs * cos(DeltaGT);
 		double EsinDeltaGT = Eqs * sin(DeltaGT);
 		double sp1 = ZeroGuardSlip(1.0 + s);
@@ -109,16 +108,16 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_Q), A(DeltaV.Index()), -dQDelta);
 
 		// dDeltaG / dS
-		pDynaModel->SetElement(A(V_DELTA), A(V_S), -pDynaModel->GetOmega0() * hb0);
+		pDynaModel->SetElement2(A(V_DELTA), A(V_S), -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
 		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
 
 		// dS / dS
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0 - hb0 / Mj * (-Kdemp - Pt / sp1 / sp1));
+		pDynaModel->SetElement2(A(V_S), A(V_S), - 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
 		// dS / dP
-		pDynaModel->SetElement(A(V_S), A(V_P), hb0 / Mj / sp2);
+		pDynaModel->SetElement2(A(V_S), A(V_P), 1.0 / Mj / sp2);
 		// dS / dNodeS
-		pDynaModel->SetElement(A(V_S), A(Sv.Index()), -hb0 / Mj * P / sp2 / sp2);
+		pDynaModel->SetElement2(A(V_S), A(Sv.Index()), -1.0 / Mj * P / sp2 / sp2);
 	}
 	return pDynaModel->Status() && bRes;
 }

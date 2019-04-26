@@ -67,6 +67,8 @@ bool CDynaModel::EstimateMatrix()
 		// substitute element setter to counter (not actually setting values, just count)
 
 		ElementSetter = &CDynaModel::CountSetElement;
+		ElementSetter2 = &CDynaModel::CountSetElement;
+
 		bRes = BuildMatrix();
 		if (bRes)
 		{
@@ -99,6 +101,7 @@ bool CDynaModel::EstimateMatrix()
 
 			// revert to real element setter
 			ElementSetter = &CDynaModel::ReallySetElement;
+			ElementSetter2 = &CDynaModel::ReallySetElement2;
 			
 			InitDevicesNordsiek();
 
@@ -147,7 +150,10 @@ bool CDynaModel::BuildMatrix()
 {
 	bool bRes = true;
 
-	if (sc.m_bRefactorMatrix)
+	if (!EstimateBuild())
+		bRes = BuildRightHand();
+
+	if (sc.m_bRefactorMatrix && bRes)
 	{
 		ResetElement();
 		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && m_bStatus; it++)
@@ -158,14 +164,6 @@ bool CDynaModel::BuildMatrix()
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = sc.m_dCurrentH;
 		_tcprintf(_T("\nРефакторизация матрицы %d"), sc.nFactorizationsCount);
-	}
-
-	if (bRes)
-	{
-		if (!EstimateBuild())
-		{
-			bRes = BuildRightHand();
-		}
 	}
 
 	return bRes;
@@ -231,6 +229,69 @@ void CDynaModel::ResetElement()
 	}
 }
 
+bool CDynaModel::ReallySetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
+{
+	if (nRow >= 0 && nRow < m_nMatrixSize &&
+		nCol >= 0 && nCol < m_nMatrixSize)
+	{
+		m_bStatus = false;
+		MatrixRow *pRow = m_pMatrixRows + nRow;
+
+		DEVICE_EQUATION_TYPE eColVarType = GetRightVector(nCol)->EquationType;
+
+		dValue *= l[eColVarType * 2 + (sc.q - 1)][0] * GetH();
+		if (nRow == nCol)
+			dValue = 1.0 - dValue;
+
+		_CheckNumber(dValue);
+
+		switch (sc.IterationMode)
+		{
+		case StepControl::eIterationMode::JN:
+			if (nRow != nCol) dValue = 0.0;
+			break;
+		case StepControl::eIterationMode::FUNCTIONAL:
+			if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
+			break;
+
+		}
+
+		if (bAddToPrevious)
+		{
+			ptrdiff_t *pSp = pRow->pAp - 1;
+			while (pSp >= pRow->pApRow)
+			{
+				if (*pSp == nCol)
+				{
+					ptrdiff_t pDfr = pSp - pRow->pAp;
+					*(pRow->pAx + pDfr) += dValue;
+					m_bStatus = true;
+					break;
+				}
+				pSp--;
+			}
+		}
+		else
+		{
+			if (pRow->pAp < pRow->pApRow + pRow->m_nColsCount &&
+				pRow->pAx < pRow->pAxRow + pRow->m_nColsCount)
+			{
+				*pRow->pAp = nCol;
+				*pRow->pAx = dValue;
+				pRow->pAp++;
+				pRow->pAx++;
+				m_bStatus = true;
+			}
+		}
+	}
+	else
+		m_bStatus = false;
+
+	_ASSERTE(m_bStatus);
+
+	return m_bStatus;
+}
+
 bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
 	if (nRow >= 0 && nRow < m_nMatrixSize &&
@@ -238,6 +299,17 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 	{
 		m_bStatus = false;
 		MatrixRow *pRow = m_pMatrixRows + nRow;
+
+		DEVICE_EQUATION_TYPE eColVarType = GetRightVector(nCol)->EquationType;
+
+		if (GetRightVector(nRow)->EquationType == DET_ALGEBRAIC)
+			dValue *= l[eColVarType * 2 + (sc.q - 1)][0];
+		/*
+		else
+			if (eColVarType == DET_ALGEBRAIC)
+				dValue *= l[eColVarType * 2 + (sc.q - 1)][0] * GetH();
+		*/
+
 
 		_CheckNumber(dValue);
 
@@ -306,11 +378,19 @@ bool CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, 
 	return m_bStatus;
 }
 
+bool CDynaModel::SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
+{
+	if (!m_bStatus)
+		return m_bStatus;
+
+	(this->*(ElementSetter2))(nRow, nCol, dValue, bAddToPrevious);
+
+	return m_bStatus;
+}
+
 bool CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
 	
-	//_ASSERTE(sc.m_bRefactorMatrix);
-
 	if (!m_bStatus)
 		return m_bStatus;
 
@@ -328,8 +408,7 @@ bool CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 
 	RightVector *pRv = GetRightVector(nRow);
 	if (pRv)
-		(this->*(RightHandSetter))(b + nRow, dValue);
-		//b[nRow] = -dValue / CDynaModel::l[DET_ALGEBRAIC * 2 + sc.q - 1][0];
+		b[nRow] = -dValue;
 	else
 		m_bStatus = false;
 
@@ -394,7 +473,7 @@ bool CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 
 	if (pRv)
 	{
-		SetFunctionEqType(nRow, -(GetH() * dValue - pRv->Nordsiek[1] - pRv->Error), GetDiffEquationType());
+		SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
 		return true;
 	}
 	else
@@ -410,7 +489,7 @@ bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATIO
 
 	if (nRow >= 0 && nRow < m_nMatrixSize)
 	{
-		b[nRow] = -dValue;
+		b[nRow] = dValue;
 		pRightVector[nRow].EquationType = EquationType;
 		pRightVector[nRow].PhysicalEquationType = DET_DIFFERENTIAL;
 	}
@@ -476,7 +555,6 @@ bool CDynaModel::SolveLinearSystem()
 			{
 				Symbolic = KLU_analyze(m_nMatrixSize, Ai, Ap, &Common);
 				RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
-
 
 				// Для всех алгебраических уравнений, в которые входит РДЗ, рекурсивно ставим точность Atol не превышающую РДЗ
 				// если доходим до дифференциального уравнения - его точность и точность связанных с ним уравнений оставляем
@@ -590,16 +668,6 @@ void CDynaModel::ResetMatrixStructure()
 	}
 }
 
-void CDynaModel::RightHandSetter1(double *pRightHand, double& Value)
-{
-	*pRightHand = -Value;
-}
-
-void CDynaModel::RightHandSetter2(double *pRightHand, double& Value)
-{
-	*pRightHand = -Value / CDynaModel::l[1][0];
-}
-
 /*
 Steps count 15494
 Steps by 1st order count 11971, failures 920 Newton failures 24 Time passed 140,572023
@@ -619,6 +687,47 @@ Steps by 2nd order count 1325, failures 0 Newton failures 1034 Time passed 10,97
 Factors count 4754 Analyzings count 1
 Newtons count 31815 1,912304 per step, failures at step 1312 failures at discontinuity 0
 
+Steps count 14369
+Steps by 1st order count 10745, failures 772 Newton failures 0 Time passed 133,496504
+Steps by 2nd order count 1574, failures 65 Newton failures 854 Time passed 16,492013
+Factors count 5244 Analyzings count 1
+Newtons count 32846 2,285893 per step, failures at step 854 failures at discontinuity 0
+
+Steps count 13286
+Steps by 1st order count 9922, failures 681 Newton failures 0 Time passed 148,551765
+Steps by 2nd order count 1514, failures 21 Newton failures 779 Time passed 1,439926
+Factors count 4952 Analyzings count 1
+Newtons count 29139 2,193211 per step, failures at step 779 failures at discontinuity 0
+
+Steps count 13590
+Steps by 1st order count 10125, failures 711 Newton failures 0 Time passed 143,802777
+Steps by 2nd order count 1542, failures 62 Newton failures 790 Time passed 6,185724
+Factors count 4854 Analyzings count 1
+Newtons count 30930 2,275938 per step, failures at step 790 failures at discontinuity 0
+
+Steps count 13721
+Steps by 1st order count 10196, failures 751 Newton failures 0 Time passed 143,360266
+Steps by 2nd order count 1558, failures 41 Newton failures 815 Time passed 6,628234
+Factors count 4952 Analyzings count 1
+Newtons count 31147 2,270024 per step, failures at step 815 failures at discontinuity 0
+
+Steps count 8604
+Steps by 1st order count 3942, failures 388 Newton failures 0 Time passed 74,981291
+Steps by 2nd order count 3563, failures 148 Newton failures 199 Time passed 75,005818
+Factors count 2699 Analyzings count 1
+Newtons count 18065 2,099605 per step, failures at step 199 failures at discontinuity 0
+
+Steps count 8484
+Steps by 1st order count 3868, failures 350 Newton failures 0 Time passed 74,388690
+Steps by 2nd order count 3563, failures 159 Newton failures 181 Time passed 75,599181
+Factors count 2564 Analyzings count 1
+Newtons count 17954 2,116219 per step, failures at step 181 failures at discontinuity 0
+
+Steps count 8295
+Steps by 1st order count 3367, failures 338 Newton failures 0 Time passed 46,176702
+Steps by 2nd order count 3901, failures 173 Newton failures 152 Time passed 103,811461
+Factors count 2589 Analyzings count 1
+Newtons count 17709 2,134901 per step, failures at step 152 failures at discontinuity 0
 */
 
 void CDynaModel::ScaleAlgebraicEquations()

@@ -6,7 +6,7 @@ using namespace DFW2;
 bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	double hb0 = pDynaModel->GetHB0();
+	double T = m_T;
 
 	if (pDynaModel->EstimateBuild())
 	{
@@ -40,13 +40,15 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
 		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex + 1), 0.0);
 		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), 0.0);
-		hb0 = 0.0;
+		T = 0.0;
 	}
 
 	// dY2 / dY2
-	pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), 1.0 + hb0 * m_T);
+	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), 1.0 + hb0 * m_T);
+	pDynaModel->SetElement2(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), -T);
 	// dY2 / dInput
-	pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -hb0 * m_T);
+	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -hb0 * m_T);
+	pDynaModel->SetElement2(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -T);
 
 	return bRes && pDynaModel->Status();
 }

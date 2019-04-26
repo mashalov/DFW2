@@ -7,25 +7,26 @@ using namespace DFW2;
 bool CLimitedLag::BuildEquations(CDynaModel *pDynaModel)
 { 
 	bool bRes = true;
-	double hb0 = pDynaModel->GetHB0();
+
+	double on = 1.0 / m_T;
 
 	switch (GetCurrentState())
 	{
 	case LS_MAX:
-		hb0 = 0.0;
+		on = 0.0;
 		*m_Output = m_dMax;
 		break;
 	case LS_MIN:
-		hb0 = 0.0;
+		on = 0.0;
 		*m_Output = m_dMin;
 		break;
 	}
 
 	if (!m_pDevice->IsStateOn())
-		hb0 = 0.0;
+		on = 0.0;
 
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0 + hb0 / m_T);
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), -hb0 * m_K / m_T);
+	pDynaModel->SetElement2(A(m_OutputEquationIndex), A(m_OutputEquationIndex), -on);
+	pDynaModel->SetElement2(A(m_OutputEquationIndex), A(m_Input->Index()), -on * m_K);
 
 	return bRes && pDynaModel->Status(); 
 }
