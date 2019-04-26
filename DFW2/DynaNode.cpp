@@ -267,11 +267,11 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = CDynaNodeBase::BuildEquations(pDynaModel);
 	double T = pDynaModel->GetFreqTimeConstant();
-	double hb0 = pDynaModel->GetHB0();
 	double w0 = pDynaModel->GetOmega0();
 
-	pDynaModel->SetElement(A(V_LAG), A(V_DELTA), -hb0 / T);
-	pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
+	pDynaModel->SetElement2(A(V_LAG), A(V_DELTA), -1.0 / T);
+	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
+	pDynaModel->SetElement2(A(V_LAG), A(V_LAG), -1.0 / T);
 	
 	
 	if (!pDynaModel->IsInDiscontinuityMode())

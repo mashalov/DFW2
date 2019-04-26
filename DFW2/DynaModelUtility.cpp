@@ -58,10 +58,8 @@ bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
 	switch (sc.q)
 	{
 	case 1:
-		RightHandSetter = &CDynaModel::RightHandSetter1;
 		break;
 	case 2:
-		RightHandSetter = &CDynaModel::RightHandSetter2;
 		break;
 	}
 	return bRes;

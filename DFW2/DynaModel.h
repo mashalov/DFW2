@@ -412,14 +412,11 @@ namespace DFW2
 		void ResetElement();
 		void Analyze();
 		bool ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		bool ReallySetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
 		bool CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
 		typedef bool (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
-		void RightHandSetter1(double *pRightHand, double& Value);
-		void RightHandSetter2(double *pRightHand, double& Value);
 		void ScaleAlgebraicEquations();
-		typedef void (CDynaModel::*RightHandSetterFn)(double *pRightHand, double& Value);
-		ElementSetterFn ElementSetter;
-		RightHandSetterFn RightHandSetter;
+		ElementSetterFn ElementSetter, ElementSetter2;
 		void ReportKLUError();
 
 		void Predict();
@@ -493,6 +490,10 @@ namespace DFW2
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
 		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
+
+		// Для теста с множителями
+		bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
+
 		bool SetFunction(ptrdiff_t nRow, double dValue);
 		bool AddFunction(ptrdiff_t nRow, double dValue);
 		bool SetFunctionDiff(ptrdiff_t nRow, double dValue);

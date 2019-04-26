@@ -60,7 +60,6 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 
 		double DeltaGT = Delta - DeltaV.Value();
 		double NodeV = V.Value();
-		double hb0 = pDynaModel->GetHB0();
 		double cosDeltaGT = cos(DeltaGT);
 		double sinDeltaGT = sin(DeltaGT);
 		double sp1 = ZeroGuardSlip(1.0 + s);
@@ -148,47 +147,47 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 
 
 		// dEqs/dEqs
-		pDynaModel->SetElement(A(V_EQS), A(V_EQS), 1 + hb0 / Td01);
+		pDynaModel->SetElement2(A(V_EQS), A(V_EQS), -1.0 / Td01);
 		// dEqs/dId
-		pDynaModel->SetElement(A(V_EQS), A(V_ID), -hb0 / Td01 * (xd - xd1));
+		pDynaModel->SetElement2(A(V_EQS), A(V_ID), -(xd - xd1) / Td01);
 		// dEqs/dEqe
 		if (ExtEqe.Indexed())
-			pDynaModel->SetElement(A(V_EQS), A(ExtEqe.Index()), -hb0 / Td01);
+			pDynaModel->SetElement2(A(V_EQS), A(ExtEqe.Index()), -1.0 / Td01);
 
 		// m_pExciter->A(CDynaExciterBase::V_EQE)
 
 		// dDeltaG / dS
-		pDynaModel->SetElement(A(V_DELTA), A(V_S), -pDynaModel->GetOmega0() * hb0);
+		pDynaModel->SetElement2(A(V_DELTA), A(V_S), -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
 		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
 
 
 		// dS / dS
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0 - hb0 / Mj * (-Kdemp - Pt / sp1 / sp1));
+		pDynaModel->SetElement2(A(V_S), A(V_S), 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
 		// dS / Eqss
-		pDynaModel->SetElement(A(V_S), A(V_EQSS), hb0 / Mj * Iq);
+		pDynaModel->SetElement2(A(V_S), A(V_EQSS), 1.0 / Mj * Iq);
 		// dS / Edss
-		pDynaModel->SetElement(A(V_S), A(V_EDSS), hb0 / Mj * Id);
+		pDynaModel->SetElement2(A(V_S), A(V_EDSS), 1.0 / Mj * Id);
 		// dS / Id
-		pDynaModel->SetElement(A(V_S), A(V_ID), hb0 / Mj * (Edss + Iq * (xd2 - xq2)));
+		pDynaModel->SetElement2(A(V_S), A(V_ID), 1.0 / Mj * (Edss + Iq * (xd2 - xq2)));
 		// dS / Iq
-		pDynaModel->SetElement(A(V_S), A(V_IQ), hb0 / Mj * (Eqss + Id * (xd2 - xq2)));
+		pDynaModel->SetElement2(A(V_S), A(V_IQ), 1.0 / Mj * (Eqss + Id * (xd2 - xq2)));
 
 
 		// dEqss / dEqss
-		pDynaModel->SetElement(A(V_EQSS), A(V_EQSS), 1.0 + hb0 / Td0ss);
+		pDynaModel->SetElement2(A(V_EQSS), A(V_EQSS), -1.0 / Td0ss);
 		// dEqss / dEqs
-		pDynaModel->SetElement(A(V_EQSS), A(V_EQS), -hb0 * (1.0 / Td0ss - 1.0 / Td01));
+		pDynaModel->SetElement2(A(V_EQSS), A(V_EQS), -(1.0 / Td0ss - 1.0 / Td01));
 		// dEqss / dId
-		pDynaModel->SetElement(A(V_EQSS), A(V_ID), -hb0 * ((xd1 - xd2) / Td0ss + (xd - xd1) / Td01));
+		pDynaModel->SetElement2(A(V_EQSS), A(V_ID), -((xd1 - xd2) / Td0ss + (xd - xd1) / Td01));
 		// dEqss / dEqe
 		if (ExtEqe.Indexed())
-			pDynaModel->SetElement(A(V_EQSS), A(ExtEqe.Index()), -hb0 / Td01);
+			pDynaModel->SetElement2(A(V_EQSS), A(ExtEqe.Index()), -1.0 / Td01);
 
 		// dEdss / dEdss
-		pDynaModel->SetElement(A(V_EDSS), A(V_EDSS), 1.0 + hb0 / Tq0ss);
+		pDynaModel->SetElement2(A(V_EDSS), A(V_EDSS), -1.0 / Tq0ss);
 		// dEdss / dIq
-		pDynaModel->SetElement(A(V_EDSS), A(V_IQ), hb0 * (xq1 - xq2) / Tq0ss);
+		pDynaModel->SetElement2(A(V_EDSS), A(V_IQ), (xq1 - xq2) / Tq0ss);
 
 		// dEq / dEq
 		pDynaModel->SetElement(A(V_EQ), A(V_EQ), 1.0);
