@@ -1405,58 +1405,69 @@ namespace RastrChartWPFControl
             }
             else
             {
-                Dictionary<double, int> xset = new Dictionary<double, int>();
-                int [] ChannelIndexes = new int[Channels.Count];
+                Dictionary<double, List<int>[]> xset = new Dictionary<double, List<int>[]>();
+                int ChannelIndex = 0;
                 foreach (ChartChannel channel in Channels)
                 {
+                    int PointIndex = 0;
                     foreach (Point pt in channel.OriginalPoints)
-                        if(!xset.ContainsKey(pt.X))
-                            xset.Add(pt.X, 0);
+                    {
+                        if(xset.TryGetValue(pt.X, out List<int>[] Indexes))
+                            Indexes[ChannelIndex].Add(PointIndex);
+                        else
+                        { 
+                            List<int>[] NewIndexes = new List<int>[Channels.Count];
+                            for (int lstx = 0; lstx < Channels.Count; lstx++)
+                                NewIndexes[lstx] = new List<int>();
+                            NewIndexes[ChannelIndex].Add(PointIndex);
+                            xset.Add(pt.X, NewIndexes);
+                        }
+                        PointIndex++;
+                    }
+                    ChannelIndex++;
                 }
 
-                foreach (KeyValuePair<double, int> X in xset)
+                foreach (var X in xset)
                 {
                     bool bFirst = true;
                     double x = X.Key;
 
-                    if (bCopyTime)
+                    ChannelIndex = 0;
+                    int PointsCount = 1;
+                    foreach(var channel in Channels)
                     {
-                        tabbedText.Append(Quot + x.ToString("E") + Quot);
-                        csvText.Append(Quot + x.ToString("E") + Quot);
-                        bFirst = false;
+                        PointsCount = Math.Max(PointsCount, X.Value[ChannelIndex].Count);
+                        ChannelIndex++;
                     }
-                    
-                    int cn = 0;
-                    foreach (ChartChannel channel in Channels)
+
+                    for (int dupPoints = 0; dupPoints < PointsCount; dupPoints++)
                     {
-                        if (!bFirst)
+                        if (bCopyTime)
                         {
-                            tabbedText.Append(Tab);
-                            csvText.Append(ListSeparator);
+                            tabbedText.Append(Quot + x.ToString("E") + Quot);
+                            csvText.Append(Quot + x.ToString("E") + Quot);
+                            bFirst = false;
                         }
-                        bFirst = false;
 
-                        double y = 0.0;
-                       
-                        Point pts = channel.PointAtIndex(ChannelIndexes[cn]);
-
-                        if (x <= pts.X)
-                            y = pts.Y;
-                        else
+                        ChannelIndex = 0;
+                        foreach (var channel in Channels)
                         {
-                            ChannelIndexes[cn]++;
-                            y = channel.PointAtIndex(ChannelIndexes[cn]).Y;
-                        }
-                        
-                    
-                        
-                        tabbedText.Append(Quot + y.ToString("E") + Quot);
-                        csvText.Append(Quot + y.ToString("E") + Quot);
+                            if (!bFirst)
+                            {
+                                tabbedText.Append(Tab);
+                                csvText.Append(ListSeparator);
+                            }
+                            bFirst = false;
+                            int CurrentPoint = Math.Min(dupPoints, X.Value[ChannelIndex].Count);
+                            Point pts = channel.PointAtIndex(X.Value[ChannelIndex][CurrentPoint]);
+                            tabbedText.Append(Quot + pts.Y.ToString("E") + Quot);
+                            csvText.Append(Quot + pts.Y.ToString("E") + Quot);
 
-                        cn++;
+                            ChannelIndex++;
+                        }
+                        tabbedText.Append(Environment.NewLine);
+                        csvText.Append(Environment.NewLine);
                     }
-                    tabbedText.Append(Environment.NewLine);
-                    csvText.Append(Environment.NewLine);
                 }
             }
             TabText = tabbedText.ToString();

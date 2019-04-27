@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
@@ -163,7 +163,7 @@ bool CDynaModel::BuildMatrix()
 		bRes = bRes && m_bStatus;
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = sc.m_dCurrentH;
-		_tcprintf(_T("\nРефакторизация матрицы %d"), sc.nFactorizationsCount);
+		_tcprintf(_T("\nР РµС„Р°РєС‚РѕСЂРёР·Р°С†РёСЏ РјР°С‚СЂРёС†С‹ %d"), sc.nFactorizationsCount);
 	}
 
 	return bRes;
@@ -498,8 +498,8 @@ bool CDynaModel::SolveLinearSystem()
 				Symbolic = KLU_analyze(m_nMatrixSize, Ai, Ap, &Common);
 				RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
-				// Для всех алгебраических уравнений, в которые входит РДЗ, рекурсивно ставим точность Atol не превышающую РДЗ
-				// если доходим до дифференциального уравнения - его точность и точность связанных с ним уравнений оставляем
+				// Р”Р»СЏ РІСЃРµС… Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёС… СѓСЂР°РІРЅРµРЅРёР№, РІ РєРѕС‚РѕСЂС‹Рµ РІС…РѕРґРёС‚ Р Р”Р—, СЂРµРєСѓСЂСЃРёРІРЅРѕ СЃС‚Р°РІРёРј С‚РѕС‡РЅРѕСЃС‚СЊ Atol РЅРµ РїСЂРµРІС‹С€Р°СЋС‰СѓСЋ Р Р”Р—
+				// РµСЃР»Рё РґРѕС…РѕРґРёРј РґРѕ РґРёС„С„РµСЂРµРЅС†РёР°Р»СЊРЅРѕРіРѕ СѓСЂР°РІРЅРµРЅРёСЏ - РµРіРѕ С‚РѕС‡РЅРѕСЃС‚СЊ Рё С‚РѕС‡РЅРѕСЃС‚СЊ СЃРІСЏР·Р°РЅРЅС‹С… СЃ РЅРёРј СѓСЂР°РІРЅРµРЅРёР№ РѕСЃС‚Р°РІР»СЏРµРј
 				ptrdiff_t nMarked = 0;
 				do
 				{
@@ -510,14 +510,14 @@ bool CDynaModel::SolveLinearSystem()
 					{
 						if (pVectorBegin->PrimitiveBlock == PBT_DERLAG)
 						{
-							// уравнение отмечено как уравнение РДЗ, меняем отметку, чтобы указать, что это уравнение уже прошли
+							// СѓСЂР°РІРЅРµРЅРёРµ РѕС‚РјРµС‡РµРЅРѕ РєР°Рє СѓСЂР°РІРЅРµРЅРёРµ Р Р”Р—, РјРµРЅСЏРµРј РѕС‚РјРµС‚РєСѓ, С‡С‚РѕР±С‹ СѓРєР°Р·Р°С‚СЊ, С‡С‚Рѕ СЌС‚Рѕ СѓСЂР°РІРЅРµРЅРёРµ СѓР¶Рµ РїСЂРѕС€Р»Рё
 							pVectorBegin->PrimitiveBlock = PBT_LAST;
 							pVectorBegin->Atol = 1E-2;
 
 							ptrdiff_t nDerLagEqIndex = pVectorBegin - pRightVector;
 							MatrixRow *pRow = m_pMatrixRows;
 
-							// просматриваем строки матрицы, ищем столбцы с индексом, соответствующим уравнению РДЗ
+							// РїСЂРѕСЃРјР°С‚СЂРёРІР°РµРј СЃС‚СЂРѕРєРё РјР°С‚СЂРёС†С‹, РёС‰РµРј СЃС‚РѕР»Р±С†С‹ СЃ РёРЅРґРµРєСЃРѕРј, СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёРј СѓСЂР°РІРЅРµРЅРёСЋ Р Р”Р—
 							for (; pRow < m_pMatrixRows + m_nMatrixSize; pRow++)
 							{
 								ptrdiff_t nEqIndex = pRow - m_pMatrixRows;
@@ -527,17 +527,17 @@ bool CDynaModel::SolveLinearSystem()
 									{
 										if (*pc == nDerLagEqIndex)
 										{
-											// нашли столбец с индексом уравнения РДЗ
+											// РЅР°С€Р»Рё СЃС‚РѕР»Р±РµС† СЃ РёРЅРґРµРєСЃРѕРј СѓСЂР°РІРЅРµРЅРёСЏ Р Р”Р—
 											RightVector *pMarkEq = pRightVector + nEqIndex;
-											// если уравнение с этим столбцом алгебраическое и еще не просмотрено
+											// РµСЃР»Рё СѓСЂР°РІРЅРµРЅРёРµ СЃ СЌС‚РёРј СЃС‚РѕР»Р±С†РѕРј Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРѕРµ Рё РµС‰Рµ РЅРµ РїСЂРѕСЃРјРѕС‚СЂРµРЅРѕ
 											if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
 											{
-												// отмечаем его как уравнение РДЗ, ставим точность РДЗ
+												// РѕС‚РјРµС‡Р°РµРј РµРіРѕ РєР°Рє СѓСЂР°РІРЅРµРЅРёРµ Р Р”Р—, СЃС‚Р°РІРёРј С‚РѕС‡РЅРѕСЃС‚СЊ Р Р”Р—
 												_tcprintf(_T("\n%s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
 												pMarkEq->PrimitiveBlock = PBT_DERLAG;
 												pMarkEq->Atol = pVectorBegin->Atol;
 												pMarkEq->Rtol = pVectorBegin->Rtol;
-												// считаем сколько уравнений обработали
+												// СЃС‡РёС‚Р°РµРј СЃРєРѕР»СЊРєРѕ СѓСЂР°РІРЅРµРЅРёР№ РѕР±СЂР°Р±РѕС‚Р°Р»Рё
 												nMarked++;
 											}
 										}
@@ -547,7 +547,7 @@ bool CDynaModel::SolveLinearSystem()
 						}
 						pVectorBegin++;
 					}
-					// продолжаем, пока есть необработанные уравнения
+					// РїСЂРѕРґРѕР»Р¶Р°РµРј, РїРѕРєР° РµСЃС‚СЊ РЅРµРѕР±СЂР°Р±РѕС‚Р°РЅРЅС‹Рµ СѓСЂР°РІРЅРµРЅРёСЏ
 					_tcprintf(_T("\nMarked = %d"), nMarked);
 				} 
 				while (nMarked);

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "DerlagContinuous.h"
 #include "DynaModel.h"
 using namespace DFW2;
@@ -64,13 +64,6 @@ bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 		double Input = m_Input->Value();
 		double dY2 = (Input - *m_Y2) * m_T;
 		double dOut = *m_Output + m_K * m_T * (*m_Y2 - Input);
-
-		/*if (pDynaModel->IsInDiscontinuityMode())
-		{
-			dOut = 0.0;
-			*m_Output = m_K * m_T * (*m_Y2 - Input);
-		}*/
-	
 		pDynaModel->SetFunction(A(m_OutputEquationIndex), dOut);
 		pDynaModel->SetFunctionDiff(A(m_OutputEquationIndex + 1), dY2);
 	}
@@ -126,10 +119,6 @@ bool CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	
-	if (m_pDevice->GetId() == 105701)
-		m_pDevice->GetId();
-
 	if (m_pDevice->IsStateOn())
 	{
 		double Input = m_Input->Value();
@@ -137,11 +126,12 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaM
 			*m_Y2 = 0.0;
 		else
 		{
-			// Ïîêà íå ÿñíî, íàäî äåëàòü íà ÐÄÇ ñêà÷îê íà âûõîäå,
-			// èëè ïûòàòüñÿ ïîäîãíàòü ëàã êî âõîäó
-
-			*m_Y2 = Input - *m_Output / m_T / m_K;			// ïîäãîíêà ëàãà êî âõîäó
-			//*m_Output = m_K * m_T * (Input - *m_Y2);		// âûõîä ïî âõîäó
+			// ÐŸÐ¾ÐºÐ° Ð½Ðµ ÑÑÐ½Ð¾, Ð½Ð°Ð´Ð¾ Ð´ÐµÐ»Ð°Ñ‚ÑŒ Ð½Ð° Ð Ð”Ð— ÑÐºÐ°Ñ‡Ð¾Ðº Ð½Ð° Ð²Ñ‹Ñ…Ð¾Ð´Ðµ,
+			// Ð¸Ð»Ð¸ Ð¿Ñ‹Ñ‚Ð°Ñ‚ÑŒÑÑ Ð¿Ð¾Ð´Ð¾Ð³Ð½Ð°Ñ‚ÑŒ Ð»Ð°Ð³ ÐºÐ¾ Ð²Ñ…Ð¾Ð´Ñƒ
+			if (m_pDevice->GetId() == 1319)
+				m_pDevice->GetId();
+			*m_Y2 = Input - *m_Output / m_T / m_K;			// Ð¿Ð¾Ð´Ð³Ð¾Ð½ÐºÐ° Ð»Ð°Ð³Ð° ÐºÐ¾ Ð²Ñ…Ð¾Ð´Ñƒ
+			//*m_Output = m_K * m_T * (Input - *m_Y2);		// Ð²Ñ‹Ñ…Ð¾Ð´ Ð¿Ð¾ Ð²Ñ…Ð¾Ð´Ñƒ
 		}
 	}
 	return DFS_OK;
