@@ -373,7 +373,7 @@ namespace DFW2
 		double *b;
 		double *pbRightHand;
 		double *pRightHandBackup;
-		double b0;
+
 		struct RightVector *pRightVector;
 
 		ptrdiff_t *Ap, *Ai;
@@ -524,15 +524,6 @@ namespace DFW2
 			return sc.m_dOldH;
 		}
 
-		inline double GetB0()
-		{
-			return b0;
-		}
-
-		inline double GetHB0()
-		{
-			return b0 * sc.m_dCurrentH;
-		}
 
 		inline double GetFreqTimeConstant()
 		{
