@@ -245,7 +245,6 @@ bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, double *pPa
 bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	double hb0 = pDynaModel->GetHB0();
 
 	if (m_pDevice->IsStateOn())
 	{
@@ -258,7 +257,7 @@ bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 		if (!pDynaModel->IsInDiscontinuityMode())
 		{
 			// dOut / dOut
-			pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0 + hb0 * m_T);
+			pDynaModel->SetElement2(A(m_OutputEquationIndex), A(m_OutputEquationIndex), -m_T);
 		}
 		else
 		{
@@ -274,7 +273,6 @@ bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
 		pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), 1.0);
 		pDynaModel->SetElement(A(m_OutputEquationIndex + 2), A(m_OutputEquationIndex + 2), 1.0);
-		hb0 = 0.0;
 	}
 
 	return bRes && pDynaModel->Status();

@@ -53,8 +53,6 @@ bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
 
 	sc.q = Newq;
 
-	b0 = l[GetDiffEquationType() * 2 + sc.q - 1][0];
-
 	switch (sc.q)
 	{
 	case 1:
