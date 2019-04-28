@@ -20,10 +20,21 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 		{
 			// dOutput/ dOutput
 			pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
-			// dOutput / dY2
-			pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex + 1), m_T * m_K);
-			// dOutput / dInput
-			pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), -m_K * m_T);
+
+			if (pDynaModel->IsInDiscontinuityMode())
+			{
+				// dOutput / dY2
+				pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex + 1), 0.0);
+				// dOutput / dInput
+				pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), 0.0);
+			}
+			else
+			{
+				// dOutput / dY2
+				pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex + 1), m_T * m_K);
+				// dOutput / dInput
+				pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), -m_K * m_T);
+			}
 		}
 		//else
 		//{
@@ -56,14 +67,23 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 {
 
-	if (m_pDevice->GetId() == 108701 && m_OutputEquationIndex == 9)
-		m_pDevice->GetId();
-
 	if (m_pDevice->IsStateOn())
 	{
 		double Input = m_Input->Value();
 		double dY2 = (Input - *m_Y2) * m_T;
 		double dOut = *m_Output + m_K * m_T * (*m_Y2 - Input);
+
+		
+
+		if (pDynaModel->IsInDiscontinuityMode())
+		{
+			if (m_pDevice->GetId() == 1319)
+				m_pDevice->GetId();
+
+			ProcessDiscontinuity(pDynaModel);
+			dOut = 0.0;
+		}
+
 		pDynaModel->SetFunction(A(m_OutputEquationIndex), dOut);
 		pDynaModel->SetFunctionDiff(A(m_OutputEquationIndex + 1), dY2);
 	}
