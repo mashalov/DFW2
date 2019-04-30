@@ -35,6 +35,8 @@ namespace DFW2
 		virtual cplx GetEMF() { return cplx(Eqss, Edss) *polar(1.0, Delta); }
 		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
 		virtual bool CalculatePower();
+		double Xgen();
+		virtual const cplx& CalculateEgen();
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};

@@ -325,6 +325,16 @@ bool CDynaGenerator3C::CalculatePower()
 	return true;
 }
 
+const cplx& CDynaGenerator3C::CalculateEgen()
+{
+	double xgen = Xgen();
+	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * polar(1.0, Delta);
+}
+
+double CDynaGenerator3C::Xgen()
+{
+	return 0.5 * (xd2 + xq2);
+}
 
 const CDeviceContainerProperties CDynaGenerator3C::DeviceProperties()
 {

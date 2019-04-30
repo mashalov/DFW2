@@ -775,21 +775,25 @@ bool CDynaNodeContainer::LULF()
 					if (!pVsource->IsStateOn())
 						continue;
 
+					/* Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
 					pVsource->CalculatePower();
 					cplx Sg(pVsource->P, pVsource->Q);
 					cplx E = pVsource->GetEMF();
 					cplx Yg = conj(Sg / pNode->VreVim) / (E - pNode->VreVim);
-					// !!!!!!!!!!!!!!! for motion equation !!!!!!!!!!!!!!!!
-					//cplx Yg = 1.0 / static_cast<CDynaGeneratorMotion*>(pVsource)->GetXofEqs();
-
-					// к задающем току добавляем ток генератора
 					I -= E * Yg;
-					// в диагональ матрицы добавляем проводимость генератора
 					Y -= Yg;
+					*/
+
+
+					CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(pVsource);
+					// в диагональ матрицы добавляем проводимость генератора
+					Y -= 1.0 / cplx(0.0, pGen->Xgen());
+					I -= pGen->Igen(nIteration);
+
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
 
-					_ftprintf(fgen, _T("%g;"), abs(I));
+					_ftprintf(fgen, _T("%g;"), pVsource->P);
 				}
 
 				// рассчитываем задающий ток узла от нагрузки
@@ -906,9 +910,7 @@ bool CDynaNodeContainer::Seidell()
 {
 	bool bRes = true;
 
-	LULF();
-
-	return true;
+	return LULF();
 
 	int nSeidellIterations = 0;
 	cplx dVmax;
@@ -997,31 +999,14 @@ bool CDynaNodeContainer::Seidell()
 						case DEVTYPE_GEN_1C:
 						{
 							CDynaGenerator1C *pGenE = static_cast<CDynaGenerator1C*>(*ppDeivce);
-
-							double Vd = -pNode->V * sin(pGenE->Delta - pNode->Delta);
-							double Vq = pNode->V * cos(pGenE->Delta - pNode->Delta);
-							double zsq = 1.0 / (pGenE->r * pGenE->r + pGenE->xq * pGenE->xd1);
-							double Eqs = pGenE->Eqs;
-							double xq = pGenE->xq;
-							double xd1 = pGenE->xd1;
-							double r = pGenE->r;
-							double Id = zsq * (-r * Vd - xq * (Eqs - Vq));
-							double Iq = zsq * (r * (Eqs - Vq) - xd1 * Vd);
-
-							pGenE->P = Vd  * Id + Vq * Iq;
-							pGenE->Q = Vd  * Iq - Vq * Id;
-												
+							pGenE->CalculatePower();
 							cplx Sg(pGenE->P, pGenE->Q);
 							cplx E = pGenE->GetEMF();
 							cplx Yg = conj(Sg / pNode->VreVim) / (E - pNode->VreVim);
-
 							//_tcprintf(_T("\ndYg %g %g "), Yg.real(), Yg.imag());
-
 							deltaIk -= E * Yg;
-
 							_CheckNumber(deltaIk.real());
 							_CheckNumber(deltaIk.imag());
-
 							YnodeAdd -= Yg;
 
 						}
