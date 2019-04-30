@@ -337,6 +337,34 @@ bool CDynaGenerator1C::InitExternalVariables(CDynaModel *pDynaModel)
 	return bRes;
 }
 
+double CDynaGenerator1C::Xgen()
+{
+	return 0.5 * (xq + xd1);
+}
+
+cplx CDynaGenerator1C::Igen(ptrdiff_t nIteration)
+{
+	cplx YgInt = 1.0 / cplx(0.0, Xgen());
+
+	if (!nIteration)
+		m_Egen = GetEMF();
+	else
+	{
+		cplx Ig = (m_Egen - polar(V.Value(), DeltaV.Value())) * YgInt;
+		cplx Idq = Ig * polar(1.0, -Delta);
+		Id = Idq.imag();
+		Iq = Idq.real();
+	}
+
+	return CalculateEgen() * YgInt;
+}
+
+const cplx& CDynaGenerator1C::CalculateEgen()
+{
+	double xgen = Xgen();
+	return m_Egen = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * polar(1.0, Delta);
+}
+
 bool CDynaGenerator1C::CalculatePower()
 {
 

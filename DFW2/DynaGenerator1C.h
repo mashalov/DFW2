@@ -36,6 +36,9 @@ namespace DFW2
 			V_LAST
 		};
 
+		cplx m_Egen; // эквивалентна€ Ёƒ— генератора дл€ учета €внополюсности в стартовом методе
+					 // используетс€ всеми dq генераторами
+
 		double Vd, Vq;
 		double Id, Iq;
 		double Eq;
@@ -59,6 +62,9 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
 		virtual bool CalculatePower();
+		virtual double Xgen();
+		virtual cplx Igen(ptrdiff_t nIteration);
+		virtual const cplx& CalculateEgen();
 
 		static const _TCHAR *m_cszEqe;
 		static const _TCHAR *m_cszEq;

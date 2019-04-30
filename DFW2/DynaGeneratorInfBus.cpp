@@ -107,6 +107,16 @@ bool CDynaGeneratorInfBus::SetUpDelta()
 	return bRes;
 }
 
+double CDynaGeneratorInfBus::Xgen()
+{
+	return xd1;
+}
+
+cplx CDynaGeneratorInfBus::Igen(ptrdiff_t nIteration)
+{
+	return GetEMF() / cplx(0.0, xd1);
+}
+
 bool CDynaGeneratorInfBus::InitExternalVariables(CDynaModel *pDynaModel)
 {
 	return CDynaVoltageSource::InitExternalVariables(pDynaModel);
