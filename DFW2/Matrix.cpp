@@ -242,9 +242,9 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 		m_bStatus = false;
 		MatrixRow *pRow = m_pMatrixRows + nRow;
 
-		DEVICE_EQUATION_TYPE eColVarType = GetRightVector(nCol)->EquationType;
+		DEVICE_EQUATION_TYPE eColVarType = GetRightVector(nCol)->PhysicalEquationType;
 
-		if (GetRightVector(nRow)->EquationType == DET_ALGEBRAIC)
+		if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
 			dValue *= l[eColVarType * 2 + (sc.q - 1)][0];
 		else
 		{

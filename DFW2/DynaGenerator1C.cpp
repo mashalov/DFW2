@@ -355,8 +355,11 @@ cplx CDynaGenerator1C::Igen(ptrdiff_t nIteration)
 		Id = Idq.imag();
 		Iq = Idq.real();
 	}
-
-	return CalculateEgen() * YgInt;
+	
+	//double Id0 = Id, Iq0 = Iq;
+	cplx Ig = CalculateEgen() * YgInt;
+	//Id = Id0; Iq = Iq0;
+	return Ig;
 }
 
 const cplx& CDynaGenerator1C::CalculateEgen()
