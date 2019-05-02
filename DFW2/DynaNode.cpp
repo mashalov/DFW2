@@ -775,20 +775,25 @@ bool CDynaNodeContainer::LULF()
 					if (!pVsource->IsStateOn())
 						continue;
 
-					/* Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
 					pVsource->CalculatePower();
-					cplx Sg(pVsource->P, pVsource->Q);
-					cplx E = pVsource->GetEMF();
-					cplx Yg = conj(Sg / pNode->VreVim) / (E - pNode->VreVim);
-					I -= E * Yg;
-					Y -= Yg;
-					*/
-
-
-					CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(pVsource);
-					// в диагональ матрицы добавляем проводимость генератора
-					Y -= 1.0 / cplx(0.0, pGen->Xgen());
-					I -= pGen->Igen(nIteration);
+					
+					if (0)
+					{
+						//Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
+						cplx Sg(pVsource->P, pVsource->Q);
+						cplx E = pVsource->GetEMF();
+						cplx Yg = conj(Sg / pNode->VreVim) / (E - pNode->VreVim);
+						I -= E * Yg;
+						Y -= Yg;
+					}
+					else
+					{
+						CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(pVsource);
+						// в диагональ матрицы добавляем проводимость генератора
+						Y -= 1.0 / cplx(0.0, pGen->Xgen());
+						I -= pGen->Igen(nIteration);
+					}
+					
 
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
@@ -889,6 +894,23 @@ ptrdiff_t refactorOK = 1;
 			}
 		}
 	}
+
+	/*
+	for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+
+		CDevice **ppDeivce = NULL;
+		CLinkPtrCount *pLink = NULL;
+		ppDeivce = NULL;
+		pLink = pNode->GetLink(1);
+		pNode->ResetVisited();
+		// проходим по генераторам
+		while (pLink->In(ppDeivce))
+			static_cast<CDynaVoltageSource*>(*ppDeivce)->CalculatePower();
+	}
+	*/
+
 
 	if(Numeric)
 		klu_z_free_numeric(&Numeric, &Common);

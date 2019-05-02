@@ -127,7 +127,7 @@ bool CDynaModel::Run()
 
 	if (bRes)
 	{
-		m_Discontinuities.AddEvent(10.0, new CModelActionStop());
+		m_Discontinuities.AddEvent(150.0, new CModelActionStop());
 
 #ifdef SMZU
 
