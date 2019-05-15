@@ -545,12 +545,15 @@ namespace DFW2
 		{
 			return m_bEstimateBuild;
 		}
-
+		// возвращает тип метода для уравнения
+		// используется для управления методом интегрирования дифференциальных переменных
+		// алгебраические уравнения всегда интегрируются BDF. Дифференциальные - ADAMS или BDF
 		inline DEVICE_EQUATION_TYPE CDynaModel::GetDiffEquationType()
 		{
 			return m_Parameters.m_eDiffEquationType;
 		}
 
+		// возвращает напряжение перехода СХН на шунт
 		double GetLRCToShuntVmin()
 		{
 			return min(m_Parameters.m_dLRCToShuntVmin,1.0);
@@ -560,17 +563,16 @@ namespace DFW2
 		{
 			return m_Parameters.m_bConsiderDampingEquation;
 		}
-
+		// возвращает абсолютную точность из параметров
 		inline double GetAtol()
 		{
 			return m_Parameters.m_dAtol;
 		}
-
+		// возвращает относительную точность из параметров
 		inline double GetRtol()
 		{
 			return m_Parameters.m_dRtol;
 		}
-
 		// Относительная погрешность решения УР по напряжению
 		// с помощью линейного метода
 		inline double GetRtolLULF()
@@ -582,7 +584,7 @@ namespace DFW2
 		{
 			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? FLT_MAX : 100.0 * m_Parameters.m_dAtol;
 		}
-
+		// возвращает текущее время интегрирования
 		inline double GetCurrentTime()
 		{
 			return sc.t;
