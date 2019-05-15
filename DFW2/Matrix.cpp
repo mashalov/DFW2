@@ -242,13 +242,18 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 		m_bStatus = false;
 		MatrixRow *pRow = m_pMatrixRows + nRow;
 
-		DEVICE_EQUATION_TYPE eColVarType = GetRightVector(nCol)->PhysicalEquationType;
+		// в качестве типа уравнения используем __физический__ тип
+		// потому что у алгебраических и дифференциальных уравнений
+		// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
+		DEVICE_EQUATION_TYPE eColVarType = GetRightVector(nCol)->PhysicalEquationType; 
 
 		if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
-			dValue *= l[eColVarType * 2 + (sc.q - 1)][0];
+			dValue *= l[eColVarType * 2 + (sc.q - 1)][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
 		else
 		{
+			// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
 			dValue *= l[eColVarType * 2 + (sc.q - 1)][0] * GetH();
+			// если элемент диагональный, учитываем диагональную единичную матрицу
 			if (nRow == nCol)
 				dValue = 1.0 - dValue;
 		}
@@ -266,6 +271,8 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 
 		}
 
+		// если нужно суммировать элементы, на входа задан флаг bAddToPrevious
+		// пока нужно для параллельных ветвей
 		if (bAddToPrevious)
 		{
 			ptrdiff_t *pSp = pRow->pAp - 1;
@@ -301,13 +308,14 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 
 	return m_bStatus;
 }
-
+// Функция подсчета количества элементов в строке матрицы
 bool CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
 	if (nRow < m_nMatrixSize)
 	{
 		if (!bAddToPrevious)
 		{
+			// учитываем элементы с учетом суммирования
 			MatrixRow *pRow = m_pMatrixRows + nRow;
 			pRow->m_nColsCount++;
 		}
@@ -341,6 +349,7 @@ bool CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool 
 	return m_bStatus;
 }
 
+// задает правую часть алгебраического уравнения
 bool CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 {
 	if (!m_bStatus)
@@ -406,15 +415,16 @@ bool CDynaModel::CorrectNordsiek(ptrdiff_t nRow, double dValue)
 	return bRes;
 }
 
+// задает правую часть дифференциального уравнения
 bool CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 {
 	struct RightVector *pRv = GetRightVector(nRow);
 
 	_CheckNumber(dValue);
 
-
 	if (pRv)
 	{
+		// ставим тип метода для уравнения по параметрам в исходных данных
 		SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
 		return true;
 	}
@@ -432,8 +442,8 @@ bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATIO
 	if (nRow >= 0 && nRow < m_nMatrixSize)
 	{
 		b[nRow] = dValue;
-		pRightVector[nRow].EquationType = EquationType;
-		pRightVector[nRow].PhysicalEquationType = DET_DIFFERENTIAL;
+		pRightVector[nRow].EquationType = EquationType;					// тип метода для уравнения
+		pRightVector[nRow].PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
 	}
 	else
 		m_bStatus = false;

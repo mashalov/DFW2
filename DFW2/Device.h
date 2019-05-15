@@ -121,11 +121,11 @@ namespace DFW2
 		double Error;													// ошибка корректора
 		double Atol;													// абсолютная и относительная погрешности
 		double Rtol;													// задаются индивидуально для каждой переменной
-		DEVICE_EQUATION_TYPE EquationType;								// тип уравнения переменной
+		DEVICE_EQUATION_TYPE EquationType;								// тип уравнения переменной для выбора коэффициентов метода (BDF - алгебраический, ADAM - дифференциальный)
 		double SavedNordsiek[3];										// сохраненные перед шагом Nordsieck и ошибка 
 		double SavedError;												// предыдущего шага
 		double Tminus2Value;											// значение на пред-предыдыущем шаге для реинита Nordsieck
-		DEVICE_EQUATION_TYPE PhysicalEquationType;						// тип уравнения
+		DEVICE_EQUATION_TYPE PhysicalEquationType;						// физический тип уравнения - дифференциальный или алгебраический
 		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть
 		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов итераций Ньютона по этой переменной
 
