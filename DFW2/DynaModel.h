@@ -12,7 +12,7 @@
 #include "klu_version.h"
 #include "cs.h"
 #include "Results.h"
-
+#include "chrono"
 
 namespace DFW2
 {
@@ -203,6 +203,7 @@ namespace DFW2
 			ptrdiff_t nStepsToEndRateGrow;
 			ptrdiff_t nNewtonIteration;
 			double dRightHandNorm;
+			chrono::time_point<chrono::high_resolution_clock> m_ClockStart;
 
 			double Hmin;
 
@@ -234,6 +235,7 @@ namespace DFW2
 				nFactorizationsCount = 0;
 				nAnalyzingsCount = 0;
 				nDiscontinuityNewtonFailures = 0;
+				m_ClockStart = chrono::high_resolution_clock::now();
 			}
 
 			// Устанавливаем относительный лимит изменения шага на заданное количество шагов
@@ -335,6 +337,9 @@ namespace DFW2
 			double m_dAtol;
 			double m_dRtol;
 			double m_dRefactorByHRatio;
+			bool m_bLogToConsole;
+			bool m_bLogToFile;
+			double m_dMustangDerivativeTimeConstant;
 			Parameters()
 			{
 				eFreqDampingType = APDT_ISLAND;
@@ -348,6 +353,9 @@ namespace DFW2
 				m_dAtol = DFW2_ATOL_DEFAULT;
 				m_dRtol = DFW2_RTOL_DEFAULT;
 				m_dRefactorByHRatio = 6.0;
+				m_bLogToConsole = true;
+				m_bLogToFile = true;
+				m_dMustangDerivativeTimeConstant = 1E-6;
 			}
 		} 
 			m_Parameters;
@@ -455,7 +463,7 @@ namespace DFW2
 		void UnprocessDiscontinuity();
 
 
-		FILE *fResult;
+		FILE *fResult, *m_pLogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
 
 		IResultWritePtr m_spResultWrite;
@@ -528,6 +536,11 @@ namespace DFW2
 		inline double GetFreqTimeConstant()
 		{
 			return m_Parameters.m_dFrequencyTimeConstant;
+		}
+
+		inline double GetMustangDerivativeTimeConstant()
+		{
+			return m_Parameters.m_dMustangDerivativeTimeConstant;
 		}
 
 		inline ACTIVE_POWER_DAMPING_TYPE GetFreqDampingType()
@@ -621,7 +634,8 @@ namespace DFW2
 		void RebuildMatrix(bool bRebuild = true);
 		bool AddZeroCrossingDevice(CDevice *pDevice);
 
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ptrdiff_t nDBIndex = -1);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, ptrdiff_t nDBIndex, const _TCHAR* cszMessage);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...);
 		static const double l[4][4];
 
 		bool PushVarSearchStack(CDevice*pDevice);

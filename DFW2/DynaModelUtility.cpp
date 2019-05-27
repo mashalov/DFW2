@@ -1,8 +1,8 @@
 #include "stdafx.h"
 #include "DynaModel.h"
-
 #include "klu.h"
 #include "cs.h"
+#include "stdio.h"
 using namespace DFW2;
 
 void CDynaModel::ReportKLUError()
@@ -32,15 +32,56 @@ bool CDynaModel::Status()
 	return m_bStatus;
 }
 
-void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ptrdiff_t nDBIndex)
+void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status,ptrdiff_t nDBIndex, const _TCHAR* cszMessage)
 {
-	HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
-	CONSOLE_SCREEN_BUFFER_INFO csbi;
-	GetConsoleScreenBufferInfo(hCon, &csbi);
-	SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_INTENSITY);
-	_tcprintf(_T("\n%s Status %d DBIndex %d"), cszMessage, Status, nDBIndex);
-	SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
-	//CloseHandle(hCon);
+	Log(Status, cszMessage);
+}
+
+void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...)
+{
+	const _TCHAR *cszCRLF = _T("\n");
+
+	if (m_Parameters.m_bLogToConsole)
+	{
+		HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
+		CONSOLE_SCREEN_BUFFER_INFO csbi;
+		GetConsoleScreenBufferInfo(hCon, &csbi);
+
+		switch (Status)
+		{
+		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_FATAL:
+			SetConsoleTextAttribute(hCon, BACKGROUND_RED | FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN);
+			break;
+		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_ERROR:
+			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_INTENSITY);
+			break;
+		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_WARNING:
+			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY );
+			break;
+		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_MESSAGE:
+		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO:
+			SetConsoleTextAttribute(hCon, FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN);
+			break;
+		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG:
+			SetConsoleTextAttribute(hCon, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
+			break;
+		}
+		_tcprintf(cszCRLF);
+		va_list argList;
+		va_start(argList, cszMessage);
+		_vtprintf(cszMessage, argList);
+		va_end(argList);
+		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
+	}
+
+	if (m_pLogFile && m_Parameters.m_bLogToFile)
+	{
+		_ftprintf(m_pLogFile,cszCRLF);
+		va_list argList;
+		va_start(argList, cszMessage);
+		_vftprintf(m_pLogFile,cszMessage, argList);
+		va_end(argList);
+	}
 }
 
 
@@ -295,7 +336,7 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 	while (nCount)
 	{
 		pVectorBegin = *ppSortOrder;
-		_tcprintf(_T("\n%-6d %s %s Rtol %g Atol %g"), pVectorBegin->nErrorHits,
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%-6d %s %s Rtol %g Atol %g"), pVectorBegin->nErrorHits,
 								   pVectorBegin->pDevice->GetVerbalName(),
 								   pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
 								   pVectorBegin->Rtol,

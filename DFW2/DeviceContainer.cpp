@@ -251,7 +251,8 @@ size_t CDeviceContainer::GetResultVariablesCount()
 
 void CDeviceContainer::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ptrdiff_t nDBIndex)
 {
-	_tcprintf(_T("\n%s Status %d DBIndex %d"), cszMessage, Status, nDBIndex);
+	if (m_pDynaModel)
+		m_pDynaModel->Log(Status, nDBIndex, cszMessage);
 }
 
 bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)

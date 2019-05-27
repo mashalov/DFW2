@@ -28,7 +28,8 @@ CDynaModel::CDynaModel() : Symbolic(NULL),
 						   ExcConMustang(this),
 						   CustomDevice(this),
 						   BranchMeasures(this),
-						   AutomaticDevice(this)
+						   AutomaticDevice(this),
+						   m_pLogFile(nullptr)
 {
 	Ax = NULL;
 	Ai = Ap = NULL;
@@ -64,6 +65,7 @@ CDynaModel::CDynaModel() : Symbolic(NULL),
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
+	_tfopen_s(&m_pLogFile, _T("c:\\tmp\\dfw2.log"), _T("w+"));
 }
 
 
@@ -89,7 +91,10 @@ bool CDynaModel::Run()
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 	
 
-	//m_Parameters.m_dAtol = 1E-4;
+	m_Parameters.m_dAtol = 1E-4;
+	m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
+	m_Parameters.m_bLogToConsole = false;
+	m_Parameters.m_bLogToFile = true;
 
 	//m_Parameters.m_dOutStep = 1E-5;
 	m_Parameters.m_dRefactorByHRatio = 1.5;
@@ -196,27 +201,29 @@ bool CDynaModel::Run()
 
 	bRes = bRes && FinishWriteResults(); 
 
-	_tcprintf(_T("\nSteps count %d"), sc.nStepsCount);
-	_tcprintf(_T("\nSteps by 1st order count %d, failures %d Newton failures %d Time passed %f"), 
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps count %d"), sc.nStepsCount);
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d Time passed %f"),
 																	sc.OrderStatistics[0].nSteps, 
 																	sc.OrderStatistics[0].nFailures,
 																	sc.OrderStatistics[0].nNewtonFailures,
 																	sc.OrderStatistics[0].dTimePassed);
 
-	_tcprintf(_T("\nSteps by 2nd order count %d, failures %d Newton failures %d Time passed %f"), 
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 2nd order count %d, failures %d Newton failures %d Time passed %f"),
 																	sc.OrderStatistics[1].nSteps,
 																	sc.OrderStatistics[1].nFailures,
 																	sc.OrderStatistics[1].nNewtonFailures,
 																	sc.OrderStatistics[1].dTimePassed);
 
-	_tcprintf(_T("\nFactors count %d Analyzings count %d"), sc.nFactorizationsCount, sc.nAnalyzingsCount);
-	_tcprintf(_T("\nNewtons count %d %f per step, failures at step %d failures at discontinuity %d"), 
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Factors count %d Analyzings count %d"), sc.nFactorizationsCount, sc.nAnalyzingsCount);
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Newtons count %d %f per step, failures at step %d failures at discontinuity %d"),
 																 sc.nNewtonIterationsCount, 
 																 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
 																 sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,
 																 sc.nDiscontinuityNewtonFailures);
 
 	GetWorstEquations(10);
+	chrono::milliseconds CalcDuration = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - sc.m_ClockStart);
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Duration %g"), static_cast<double>(CalcDuration.count()) / 1E3);
 	return bRes;
 }
 
@@ -575,7 +582,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 					if (sc.m_bNewtonConverged)
 					{
 #ifdef _LFINFO_
-						_tcprintf(_T("\nt=%g Converged in %3d iterations %g %s %g %g %s Saving %g"), GetCurrentTime(), 
+						Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Converged in %3d iterations %g %s %g %g %s Saving %g"), GetCurrentTime(),
 																						sc.nNewtonIteration,
 																						sc.Newton.dMaxErrorVariable, 
 																						sc.Newton.pMaxErrorDevice->GetVerbalName(),
@@ -597,7 +604,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 						if (!sc.m_bNewtonStepControl)
 						{
-							_tcprintf(_T("\nt=%g Continue %3d iteration %g %s %g %g %s"), GetCurrentTime(),
+							Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Continue %3d iteration %g %s %g %g %s"), GetCurrentTime(),
 								sc.nNewtonIteration,
 								sc.Newton.dMaxErrorVariable,
 								sc.Newton.pMaxErrorDevice->GetVerbalName(),
@@ -889,7 +896,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = max(1.01, r);
 
-	_tcprintf(_T("\nt=%g %s[%s] %g rSame %g RateLimit %g for %d steps"), GetCurrentTime(), sc.Integrator.pMaxErrorDevice->GetVerbalName(),
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g %s[%s] %g rSame %g RateLimit %g for %d steps"), GetCurrentTime(), sc.Integrator.pMaxErrorDevice->GetVerbalName(),
 		sc.Integrator.pMaxErrorDevice->VariableNameByPtr(sc.Integrator.pMaxErrorVariable),
 		sc.Integrator.dMaxErrorVariable, r,
 		sc.dRateGrowLimit < FLT_MAX ? sc.dRateGrowLimit : 0.0,
