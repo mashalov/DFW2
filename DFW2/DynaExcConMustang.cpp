@@ -65,9 +65,9 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 		K1if *= 0.2;
 
 
-		dVdt.SetTK(1E-6, K1u);
-		dEqdt.SetTK(1E-6, K1if);
-		dSdt.SetTK(1E-6, K1f);
+		dVdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1u);
+		dEqdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1if);
+		dSdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1f);
 
 		dVdt.Init(pDynaModel);
 		dEqdt.Init(pDynaModel);

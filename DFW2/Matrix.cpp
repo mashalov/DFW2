@@ -163,7 +163,7 @@ bool CDynaModel::BuildMatrix()
 		bRes = bRes && m_bStatus;
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = sc.m_dCurrentH;
-		_tcprintf(_T("\nРефакторизация матрицы %d"), sc.nFactorizationsCount);
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Рефакторизация матрицы %d"), sc.nFactorizationsCount);
 	}
 
 	return bRes;
@@ -543,7 +543,7 @@ bool CDynaModel::SolveLinearSystem()
 											if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
 											{
 												// отмечаем его как уравнение РДЗ, ставим точность РДЗ
-												_tcprintf(_T("\n%s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
+												Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
 												pMarkEq->PrimitiveBlock = PBT_DERLAG;
 												pMarkEq->Atol = pVectorBegin->Atol;
 												pMarkEq->Rtol = pVectorBegin->Rtol;
@@ -558,7 +558,7 @@ bool CDynaModel::SolveLinearSystem()
 						pVectorBegin++;
 					}
 					// продолжаем, пока есть необработанные уравнения
-					_tcprintf(_T("\nMarked = %d"), nMarked);
+					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Marked = %d"), nMarked);
 				} 
 				while (nMarked);
 
