@@ -205,6 +205,9 @@ void CDynaModel::UpdateNordsiek()
 	m_Discontinuities.PassTime(GetCurrentTime());
 
 	sc.ResetStepsToFail();
+	// если мы используем режим подавления рингинга путем временного включения BDF, здесь
+	// нужно делать отмену BDF
+	//m_Parameters.m_eDiffEquationType = DET_DIFFERENTIAL;
 }
 
 // сохранение копии Nordsieck перед выполнением шага

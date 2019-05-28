@@ -216,7 +216,9 @@ bool CDynaExcConMustang::InitExternalVariables(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	bool bRes = InitExternalVariable(dSdtIn, GetSingleLink(DEVTYPE_EXCITER), pDynaModel->GetDampingName(), DEVTYPE_NODE);
+	// производную частоты всегда брать из РДЗ узла (подумать надо ли ее во всех узлах или только в тех, которые под генераторами)
+	// или может быть считать ее вообще вне узла - только в АРВ или еще там где нужно
+	bool bRes = InitExternalVariable(dSdtIn, GetSingleLink(DEVTYPE_EXCITER), _T("S"), DEVTYPE_NODE);
 	return bRes ? DFS_OK : DFS_FAILED;
 }
 
