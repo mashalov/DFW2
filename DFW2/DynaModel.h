@@ -436,7 +436,7 @@ namespace DFW2
 		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
 
 		void RescaleNordsiek(double r);
-		void UpdateNordsiek();
+		void UpdateNordsiek(bool bAllowSuppression = false);
 		void SaveNordsiek();
 		void RestoreNordsiek();
 		void ConstructNordsiekOrder();
