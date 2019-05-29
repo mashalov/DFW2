@@ -1200,11 +1200,10 @@ void CDynaModel::GoodStep(double rSame)
 	else
 	{
 		// если шаг хорошо увеличить нельзя, обновляем Nordsieck, сбрасываем фильтр шага, если его увеличивать неэффективно
-		UpdateNordsiek();
+		UpdateNordsiek(true);
 		// если мы находимся здесь - можно включить BDF по дифурам, на случай, если шаг не растет из-за рингинга
 		// но нужно посчитать сколько раз мы не смогли увеличить шаг и перейти на BDF, скажем, на десятом шагу
 		// причем делать это нужно после вызова UpdateNordsiek(), так как в нем BDF отменяется
-		//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 		sc.StepChanged();
 	}
 }

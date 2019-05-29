@@ -169,7 +169,7 @@ void CDynaModel::RestoreNordsiek()
 }
 
 // обновляение Nordsieck после выполнения шага
-void CDynaModel::UpdateNordsiek()
+void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 {
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
@@ -180,9 +180,9 @@ void CDynaModel::UpdateNordsiek()
 	double alpha2 = (1.0 + 2.0 * alpha);
 	bool bSuprressRinging = false;
 
-	if (m_Parameters.bAllowRingingSuppression)
+	if (m_Parameters.bAllowRingingSuppression && bAllowSuppression)
 	{
-		if (sc.q == 2 && sc.nStepsCount % 10 == 0 && sc.m_dCurrentH > 0.1 && sc.m_dOldH > 0.0)
+		if (sc.q == 2 && sc.nStepsCount % 10 == 0 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
 			bSuprressRinging = true;
 	}
 
@@ -221,11 +221,7 @@ void CDynaModel::UpdateNordsiek()
 	// даем информацию для обработки разрывов о том, что данный момент
 	// времени пройден
 	m_Discontinuities.PassTime(GetCurrentTime());
-
 	sc.ResetStepsToFail();
-	// если мы используем режим подавления рингинга путем временного включения BDF, здесь
-	// нужно делать отмену BDF
-	//m_Parameters.m_eDiffEquationType = DET_DIFFERENTIAL;
 }
 
 // сохранение копии Nordsieck перед выполнением шага
