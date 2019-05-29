@@ -174,6 +174,18 @@ void CDynaModel::UpdateNordsiek()
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
+	double alpha = sc.m_dCurrentH / sc.m_dOldH > 0.0 ? sc.m_dOldH : 1.0;
+	double alphasq = alpha * alpha;
+	double alpha1 = (1.0 + alpha);
+	double alpha2 = (1.0 + 2.0 * alpha);
+	bool bSuprressRinging = false;
+
+	if (m_Parameters.bAllowRingingSuppression)
+	{
+		if (sc.q == 2 && sc.nStepsCount % 10 == 0 && sc.m_dCurrentH > 0.1 && sc.m_dOldH > 0.0)
+			bSuprressRinging = true;
+	}
+
 	// обновление по [Lsode 2.76]
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -184,6 +196,12 @@ void CDynaModel::UpdateNordsiek()
 		pVectorBegin->Nordsiek[0] += dError * lm[0];
 		pVectorBegin->Nordsiek[1] += dError * lm[1];
 		pVectorBegin->Nordsiek[2] += dError * lm[2];
+
+		// подавление рингинга
+		if(bSuprressRinging && pVectorBegin->EquationType == DET_DIFFERENTIAL)
+		{
+			pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
+		}
 
 		// сохраняем пред-предыдущее значение переменной состояния
 		pVectorBegin->Tminus2Value = pVectorBegin->SavedNordsiek[0];
