@@ -340,6 +340,7 @@ namespace DFW2
 			bool m_bLogToConsole;
 			bool m_bLogToFile;
 			double m_dMustangDerivativeTimeConstant;
+			bool bAllowRingingSuppression;
 			Parameters()
 			{
 				eFreqDampingType = APDT_ISLAND;
@@ -356,6 +357,7 @@ namespace DFW2
 				m_bLogToConsole = true;
 				m_bLogToFile = true;
 				m_dMustangDerivativeTimeConstant = 1E-6;
+				bAllowRingingSuppression = false;
 			}
 		} 
 			m_Parameters;
