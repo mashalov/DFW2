@@ -364,6 +364,22 @@ void CDynaNodeContainer::ProcessTopologyRequest()
 	m_pDynaModel->ProcessTopologyRequest();
 }
 
+bool CDynaNodeContainer::CreateSuperNodes()
+{
+	bool bRes = true;
+	CDeviceContainer *pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
+	for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
+	{
+		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+		if (pBranch->R < 0.1 && pBranch->X < 0.1)
+		{
+			pBranch->m_pNodeIp->GetVerbalName();
+			pBranch->m_pNodeIq->GetVerbalName();
+		}
+	}
+	return bRes;
+}
+
 bool CDynaNodeContainer::ProcessTopology()
 {
 	bool bRes = false;
@@ -372,6 +388,8 @@ bool CDynaNodeContainer::ProcessTopology()
 		m_pSynchroZones = m_pDynaModel->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_SYNCZONE);
 	if (!m_pSynchroZones)
 		return bRes;
+
+	CreateSuperNodes();
 
 	// unpass existing zones
 	for (DEVICEVECTORITR it = m_pSynchroZones->begin(); it != m_pSynchroZones->end(); it++)
