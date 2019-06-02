@@ -255,9 +255,10 @@ bool CDynaModel::InitExternalVariables()
 	{
 		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
 			bRes = (*dit)->InitExternalVariables(this) && bRes;
-
-		bRes = UpdateExternalVariables() && bRes;
 	}
+
+	bRes = UpdateExternalVariables() && bRes;
+
 	return bRes;
 }
 

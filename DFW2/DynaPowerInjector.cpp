@@ -54,7 +54,8 @@ bool CDynaPowerInjector::InitExternalVariables(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	bool bRes = InitExternalVariable(Sv, GetSingleLink(DEVTYPE_NODE), pDynaModel->GetDampingName(), DEVTYPE_NODE);
+	// при update внешних переменных нужно обновлять V и Delta, так как они могут измениться из-за изменений структуры суперузлов
+	bool bRes = CDynaPowerInjector::InitExternalVariables(pDynaModel) && InitExternalVariable(Sv, GetSingleLink(DEVTYPE_NODE), pDynaModel->GetDampingName(), DEVTYPE_NODE);
 	return bRes ? DFS_OK : DFS_FAILED;
 }
 
