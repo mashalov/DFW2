@@ -508,6 +508,12 @@ bool CDynaModel::SolveLinearSystem()
 				Symbolic = KLU_analyze(m_nMatrixSize, Ai, Ap, &Common);
 				RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
+				if (Numeric)
+				{
+					KLU_free_numeric(&Numeric, &Common);
+					Numeric = NULL;
+				}
+
 				// Для всех алгебраических уравнений, в которые входит РДЗ, рекурсивно ставим точность Atol не превышающую РДЗ
 				// если доходим до дифференциального уравнения - его точность и точность связанных с ним уравнений оставляем
 				ptrdiff_t nMarked = 0;
@@ -567,21 +573,28 @@ bool CDynaModel::SolveLinearSystem()
 
 			if (Symbolic)
 			{
-				if (Numeric)
+				bool bForceRefactor = true; // во всех случаях, кроме рефактора выполняем полную факторизацию матрицы
+											// с выбором элементов
+				if (Numeric)	// если уже есть фактор
+				{
+					if (m_Parameters.m_bUseRefactor) // делаем вторую и более итерацию Ньютона и разрешен рефактор
+					{
+						if (klu_refactor(Ai, Ap, Ax, Symbolic, Numeric, &Common) > 0)	// делаем рефактор 
+								bForceRefactor = false;	// и если он успешен - отказываемся от полной рефакторизации
+					}
+				}
+
+				if(bForceRefactor)
+				{
 					KLU_free_numeric(&Numeric, &Common);
-
-				//_tcprintf(_T("\n----------------Refactor---------------------"));
-
-				// ScaleAlgebraicEquations();
-				Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
+					Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
+					sc.nFactorizationsCount++;
+				}
 
 				if (Numeric)
 				{
-					sc.nFactorizationsCount++;
 					if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
 					{
-						KLU_rcond(Symbolic, Numeric, &Common);
-						//memcpy(Solution, b, sizeof(double) * m_nMatrixSize);
 						bRes = true;
 					}
 

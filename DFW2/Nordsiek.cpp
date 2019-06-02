@@ -180,7 +180,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	double alpha2 = (1.0 + 2.0 * alpha);
 	bool bSuprressRinging = false;
 
-	if (m_Parameters.bAllowRingingSuppression && bAllowSuppression)
+	if (m_Parameters.m_bAllowRingingSuppression && bAllowSuppression)
 	{
 		if (sc.q == 2 && sc.nStepsCount % 10 == 0 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
 			bSuprressRinging = true;

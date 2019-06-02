@@ -149,6 +149,7 @@ namespace DFW2
 		bool  EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
 		bool m_bRebuildMatrix;
 		void CalcAdmittances(bool bSeidell);
+		bool CreateSuperNodes();
 	public:
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();
