@@ -199,29 +199,19 @@ double CDynaExcConMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return rH;
 }
 
-bool CDynaExcConMustang::InitExternalVariables(CDynaModel *pDynaModel)
-{
-	bool bRes = false;
-
-	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
-
-	if (pExciter)
-	{
-		bRes = InitExternalVariable(dVdtIn, pExciter, CDynaNode::m_cszV, DEVTYPE_NODE);
-		bRes = InitExternalVariable(dEqdtIn, pExciter, CDynaGenerator1C::m_cszEq, DEVTYPE_GEN_1C) && bRes;
-	}
-	return bRes;
-}
-
-
 eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
 	// производную частоты всегда брать из РДЗ узла (подумать надо ли ее во всех узлах или только в тех, которые под генераторами)
 	// или может быть считать ее вообще вне узла - только в АРВ или еще там где нужно
-	bool bRes = InitExternalVariable(dSdtIn, GetSingleLink(DEVTYPE_EXCITER), _T("S"), DEVTYPE_NODE);
-	return bRes ? DFS_OK : DFS_FAILED;
+	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(dSdtIn, GetSingleLink(DEVTYPE_EXCITER), CDynaNode::m_cszS, DEVTYPE_NODE));
+	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
+	if (pExciter)
+	{
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dVdtIn, pExciter, CDynaNode::m_cszV, DEVTYPE_NODE));
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dEqdtIn, pExciter, CDynaGenerator1C::m_cszEq, DEVTYPE_GEN_1C));
+	}
+	return eRes;
 }
-
 
 const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()
 {

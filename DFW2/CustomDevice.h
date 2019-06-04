@@ -33,7 +33,7 @@ namespace DFW2
 		static long DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockIndex);
 
 		CCustomDeviceContainer *Container() { return static_cast<CCustomDeviceContainer*>(m_pContainer); }
-		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 
 	public:
 		eDEVICEFUNCTIONSTATUS m_ExternalStatus;

@@ -261,7 +261,6 @@ namespace DFW2
 		virtual bool NewtonUpdateEquation(CDynaModel *pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS Initialized() { return m_eInitStatus; }
-		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() { return m_eInitStatus; }
 		void UnprocessDiscontinuity() { m_eInitStatus = DFS_NOTREADY;  }
@@ -284,6 +283,8 @@ namespace DFW2
 
 
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2);
+		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, bool Status2);
+		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(bool Status1);
 
 		// простая статическая округлялка до заданного Precision количества знаков
 		inline static double Round(double Value, double Precision)

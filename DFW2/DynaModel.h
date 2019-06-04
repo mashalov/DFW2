@@ -418,11 +418,9 @@ namespace DFW2
 		bool PrepareGraph();
 		bool PrepareYs();
 		bool Link();
-		bool InitExternalVariables();
 		bool UpdateExternalVariables();
 
 		void ResetElement();
-		void Analyze();
 		bool ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
 		bool ReallySetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
 		bool CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);

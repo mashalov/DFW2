@@ -60,7 +60,7 @@ namespace DFW2
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
+		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		virtual bool CalculatePower();
 		virtual double Xgen();
 		virtual cplx Igen(ptrdiff_t nIteration);

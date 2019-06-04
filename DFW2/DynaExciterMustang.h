@@ -25,9 +25,7 @@ namespace DFW2
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-
-		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
-
+		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		static const CDeviceContainerProperties DeviceProperties();
 
 	};

@@ -33,7 +33,7 @@ namespace DFW2
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual cplx GetEMF() { return cplx(Eqss, Edss) *polar(1.0, Delta); }
-		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
+		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		virtual bool CalculatePower();
 		double Xgen();
 		virtual const cplx& CalculateEgen();

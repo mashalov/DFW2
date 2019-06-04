@@ -76,21 +76,20 @@ double* CDynaExciterBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-bool CDynaExciterBase::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaExciterBase::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_1C);
-	bRes = InitExternalVariable(GenId, pGen, CDynaGenerator1C::m_cszId, DEVTYPE_GEN_1C) && bRes;
-	bRes = InitExternalVariable(GenIq, pGen, CDynaGenerator1C::m_cszIq, DEVTYPE_GEN_1C) && bRes;
-	bRes = InitExternalVariable(ExtVg, pGen, CDynaNodeBase::m_cszV, DEVTYPE_NODE) && bRes;
-	bRes = InitExternalVariable(EqInput, pGen, CDynaGenerator1C::m_cszEq) && bRes;
+	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(GenId, pGen, CDynaGenerator1C::m_cszId, DEVTYPE_GEN_1C));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(GenIq, pGen, CDynaGenerator1C::m_cszIq, DEVTYPE_GEN_1C));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVg, pGen, CDynaNodeBase::m_cszV, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGenerator1C::m_cszEq));
 	CDevice *pReg = GetSingleLink(DEVTYPE_EXCCON);
 	CDevice *pDEC = GetSingleLink(DEVTYPE_DEC);
 	if (pReg)
-		bRes = InitExternalVariable(ExtUf, pReg, CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG) && bRes;
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, pReg, CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG));
 	if (pDEC)
-		bRes = InitExternalVariable(ExtUdec, pDEC, CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG) && bRes;
-	return bRes;
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, pDEC, CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG));
+	return eRes;
 }
 
 const CDeviceContainerProperties CDynaExciterBase::DeviceProperties()

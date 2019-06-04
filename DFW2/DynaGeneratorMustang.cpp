@@ -294,9 +294,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::ProcessDiscontinuity(CDynaModel *pD
 	return eRes;
 }
 
-bool CDynaGeneratorMustang::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	return CDynaGenerator3C::InitExternalVariables(pDynaModel);
+	return CDynaGenerator3C::UpdateExternalVariables(pDynaModel);
 }
 
 bool CDynaGeneratorMustang::CalculatePower()

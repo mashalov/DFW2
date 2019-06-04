@@ -232,7 +232,10 @@ bool CDynaModel::InitDevices()
 {
 	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
 
-	if (!InitExternalVariables())
+	m_cszDampingName = (GetFreqDampingType() == APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
+
+	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
+	if (!UpdateExternalVariables())
 		Status = DFS_FAILED;
 
 	KLU_defaults(&Common);
@@ -296,7 +299,8 @@ bool CDynaModel::InitDevices()
 bool CDynaModel::InitEquations()
 {
 	InitNordsiek();
-	bool bRes = InitExternalVariables();
+	// Второй раз вызываем обновление внешних переменных чтобы получить реальные индексы элементов из матрицы
+	bool bRes = UpdateExternalVariables(); 
 	if (bRes)
 	{
 		struct RightVector *pVectorBegin = pRightVector;
