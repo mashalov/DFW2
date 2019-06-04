@@ -7,9 +7,9 @@ CDynaVoltageSource::CDynaVoltageSource() : CDynaPowerInjector()
 
 }
 
-bool CDynaVoltageSource::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaVoltageSource::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	return CDynaPowerInjector::InitExternalVariables(pDynaModel);
+	return CDynaPowerInjector::UpdateExternalVariables(pDynaModel);
 }
 
 const CDeviceContainerProperties CDynaVoltageSource::DeviceProperties()

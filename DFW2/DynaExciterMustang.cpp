@@ -206,11 +206,9 @@ bool CDynaExciterMustang::SetUpEqLimits(CDynaModel *pDynaModel, CDynaPrimitiveLi
 	return bRes;
 }
 
-bool CDynaExciterMustang::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaExciterMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	
-	bool bRes = CDynaExciterBase::InitExternalVariables(pDynaModel);
-	return bRes;
+	return CDynaExciterBase::UpdateExternalVariables(pDynaModel);
 }
 
 

@@ -247,21 +247,6 @@ void CDynaModel::ResetStack()
 	m_setVisitedDevices.clear();
 }
 
-bool CDynaModel::InitExternalVariables()
-{
-	bool bRes = true;
-	m_cszDampingName = (GetFreqDampingType() == APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-	{
-		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
-			bRes = (*dit)->InitExternalVariables(this) && bRes;
-	}
-
-	bRes = UpdateExternalVariables() && bRes;
-
-	return bRes;
-}
-
 bool CDynaModel::UpdateExternalVariables()
 {
 	bool bRes = true;

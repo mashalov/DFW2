@@ -395,9 +395,9 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 }
 
 
-bool CCustomDevice::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
+	eDEVICEFUNCTIONSTATUS eRes = DFS_OK;
 
 		
 	PrimitiveVariableExternal *pExtVarsEnd = m_pPrimitiveExtVars + Container()->GetInputsCount();
@@ -408,9 +408,9 @@ bool CCustomDevice::InitExternalVariables(CDynaModel *pDynaModel)
 		const InputVarsInfo *pInputInfo = Container()->DLL().GetInputInfo(nExternalsIndex);
 		if (pInputInfo)
 		{
-			bRes = InitExternalVariable(*pStart, this, pInputInfo->VarInfo.Name,static_cast<eDFW2DEVICETYPE>(pInputInfo->eDeviceType)) && bRes;
+			eRes = DeviceFunctionResult(eRes, InitExternalVariable(*pStart, this, pInputInfo->VarInfo.Name,static_cast<eDFW2DEVICETYPE>(pInputInfo->eDeviceType)));
 			// create contiguous copy of primitive external variables to send to dll
-			if (bRes)
+			if (eRes != DFS_FAILED)
 			{
 				if (nExternalsIndex >= 0 && nExternalsIndex < static_cast<ptrdiff_t>(Container()->GetInputsCount()))
 				{
@@ -418,14 +418,14 @@ bool CCustomDevice::InitExternalVariables(CDynaModel *pDynaModel)
 					m_pExternals[nExternalsIndex].nIndex = pStart->Index();
 				}
 				else
-					bRes = false;
+					eRes = DFS_FAILED;
 			}
 		}
 		else
-			bRes = false;
+			eRes = DFS_FAILED;
 	}
 
-	return bRes;
+	return eRes;
 }
 
 

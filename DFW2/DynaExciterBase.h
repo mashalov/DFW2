@@ -45,7 +45,7 @@ namespace DFW2
 		CDynaExciterBase();
 
 		virtual ~CDynaExciterBase() { }
-		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
+		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
 

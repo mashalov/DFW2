@@ -189,10 +189,9 @@ double* CDynaGeneratorMotion::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-bool CDynaGeneratorMotion::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	bool bRes = CDynaGeneratorInfBus::InitExternalVariables(pDynaModel);
-	return bRes;
+	return CDynaGeneratorInfBus::UpdateExternalVariables(pDynaModel);
 }
 
 

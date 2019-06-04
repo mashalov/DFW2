@@ -117,9 +117,9 @@ cplx CDynaGeneratorInfBus::Igen(ptrdiff_t nIteration)
 	return GetEMF() / cplx(0.0, xd1);
 }
 
-bool CDynaGeneratorInfBus::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	return CDynaVoltageSource::InitExternalVariables(pDynaModel);
+	return CDynaVoltageSource::UpdateExternalVariables(pDynaModel);
 }
 
 const CDeviceContainerProperties CDynaGeneratorInfBus::DeviceProperties()

@@ -45,18 +45,12 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::Init(CDynaModel* pDynaModel)
 	return Status;
 }
 
-bool CDynaPowerInjector::InitExternalVariables(CDynaModel *pDynaModel)
-{
-	bool bRes = InitExternalVariable(V, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszV, DEVTYPE_NODE);
-	bRes = InitExternalVariable(DeltaV, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszDelta, DEVTYPE_NODE) && bRes;
-	return bRes;
-}
-
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	// при update внешних переменных нужно обновлять V и Delta, так как они могут измениться из-за изменений структуры суперузлов
-	bool bRes = CDynaPowerInjector::InitExternalVariables(pDynaModel) && InitExternalVariable(Sv, GetSingleLink(DEVTYPE_NODE), pDynaModel->GetDampingName(), DEVTYPE_NODE);
-	return bRes ? DFS_OK : DFS_FAILED;
+	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(V, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszV, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(DeltaV, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszDelta, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Sv, GetSingleLink(DEVTYPE_NODE), pDynaModel->GetDampingName(), DEVTYPE_NODE));
+	return eRes;
 }
 
 const CDeviceContainerProperties CDynaPowerInjector::DeviceProperties()

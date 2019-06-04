@@ -476,11 +476,6 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckInit(CDynaModel* pDynaModel)
 	return m_eInitStatus;
 }
 
-bool CDevice::InitExternalVariables(CDynaModel *pDynaModel)
-{
-	return true;
-}
-
 eDEVICEFUNCTIONSTATUS CDevice::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
 	return DFS_DONTNEED;
@@ -572,6 +567,21 @@ eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status
 	return DFS_OK;
 }
 
+eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, bool Status2)
+{
+	if (!Status2)
+		return DFS_FAILED;
+
+	return Status1;
+}
+
+eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(bool Status1)
+{
+	if (!Status1)
+		return DFS_FAILED;
+
+	return DFS_OK;
+}
 
 bool CDevice::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
 {

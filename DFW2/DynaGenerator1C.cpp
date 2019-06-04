@@ -328,13 +328,13 @@ double* CDynaGenerator1C::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-bool CDynaGenerator1C::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGenerator1C::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	bool bRes = CDynaGeneratorMotion::InitExternalVariables(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorMotion::UpdateExternalVariables(pDynaModel);
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 	if (pExciter)
-		bRes = InitExternalVariable(ExtEqe, pExciter, m_cszEqe) && bRes;
-	return bRes;
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtEqe, pExciter, m_cszEqe));
+	return eRes;
 }
 
 double CDynaGenerator1C::Xgen()

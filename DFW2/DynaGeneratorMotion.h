@@ -36,7 +36,7 @@ namespace DFW2
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		virtual bool InitExternalVariables(CDynaModel *pDynaModel);
+		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 
 		static const CDeviceContainerProperties DeviceProperties();
 

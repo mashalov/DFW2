@@ -295,10 +295,9 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::ProcessDiscontinuity(CDynaModel *pDynaMo
 	return eRes;
 }
 
-bool CDynaGenerator3C::InitExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGenerator3C::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	bool bRes = CDynaGenerator1C::InitExternalVariables(pDynaModel);
-	return bRes;
+	return CDynaGenerator1C::UpdateExternalVariables(pDynaModel);
 }
 
 bool CDynaGenerator3C::CalculatePower()
