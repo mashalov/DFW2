@@ -253,6 +253,7 @@
     <ClCompile Include="DynaGeneratorMustang.cpp" />
     <ClCompile Include="LimitedLag.cpp" />
     <ClCompile Include="LimiterConst.cpp" />
+    <ClCompile Include="LoadFlow.cpp" />
     <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="Messages.cpp" />
     <ClCompile Include="NetworkGraph.cpp" />

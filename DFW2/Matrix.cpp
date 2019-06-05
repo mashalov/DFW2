@@ -67,7 +67,6 @@ bool CDynaModel::EstimateMatrix()
 		// substitute element setter to counter (not actually setting values, just count)
 
 		ElementSetter = &CDynaModel::CountSetElement;
-		ElementSetter2 = &CDynaModel::CountSetElement;
 
 		bRes = BuildMatrix();
 		if (bRes)
@@ -101,7 +100,6 @@ bool CDynaModel::EstimateMatrix()
 
 			// revert to real element setter
 			ElementSetter = &CDynaModel::ReallySetElement;
-			ElementSetter2 = &CDynaModel::ReallySetElement2;
 			
 			InitDevicesNordsiek();
 
@@ -229,11 +227,6 @@ void CDynaModel::ResetElement()
 	}
 }
 
-bool CDynaModel::ReallySetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
-{
-	return ReallySetElement(nRow, nCol, dValue, bAddToPrevious);
-}
-
 bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
 	if (nRow >= 0 && nRow < m_nMatrixSize &&
@@ -324,16 +317,6 @@ bool CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, 
 		m_bStatus = false;
 
 	_ASSERTE(m_bStatus);
-
-	return m_bStatus;
-}
-
-bool CDynaModel::SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
-{
-	if (!m_bStatus)
-		return m_bStatus;
-
-	(this->*(ElementSetter2))(nRow, nCol, dValue, bAddToPrevious);
 
 	return m_bStatus;
 }
@@ -549,7 +532,7 @@ bool CDynaModel::SolveLinearSystem()
 											if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
 											{
 												// отмечаем его как уравнение РДЗ, ставим точность РДЗ
-												Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
+												Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Точность %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
 												pMarkEq->PrimitiveBlock = PBT_DERLAG;
 												pMarkEq->Atol = pVectorBegin->Atol;
 												pMarkEq->Rtol = pVectorBegin->Rtol;

@@ -98,6 +98,12 @@ namespace DFW2
 		void ProcessTopologyRequest();
 		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
+		
+		inline double GetSelfImbP() { return Pnr - Pg - V * V * Yii.real();	}
+		inline double GetSelfImbQ() { return Qnr - Qg + V * V * Yii.imag(); }
+
+		inline double GetSelfdPdV() { return -2 * V * Yii.real() + dLRCPn;	}
+		inline double GetSelfdQdV() { return  2 * V * Yii.imag() + dLRCQn; }
 
 		virtual ExternalVariable GetExternalVariable(const _TCHAR* cszVarName);
 

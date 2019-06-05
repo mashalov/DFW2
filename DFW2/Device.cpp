@@ -421,12 +421,14 @@ bool CDevice::NewtonUpdateEquation(CDynaModel *pDynaModel)
 	return bRes;
 }
 
+// сбрасывает указатель просмотренных ссылок устройства
 void CDevice::ResetVisited()
 {
 	_ASSERTE(m_pContainer);
-
+	// если списка просмотра нет - создаем его
 	if (!m_pContainer->m_ppDevicesAux)
 		m_pContainer->m_ppDevicesAux = new CDevice*[m_pContainer->Count()];
+	// обнуляем счетчик просмотренных ссылок
 	m_pContainer->m_nVisitedCount = 0;
 }
 
@@ -437,12 +439,17 @@ bool CDevice::CheckAddVisited(CDevice* pDevice)
 	bool bRes = false;
 	CDevice **ppDevice = m_pContainer->m_ppDevicesAux;
 	CDevice **ppEnd = ppDevice + m_pContainer->m_nVisitedCount;
+	// просматриваем список просмотренных
 	for (; ppDevice < ppEnd; ppDevice++)
 		if (*ppDevice == pDevice)
-			break;
+			break; // если нашли заданное устройство - выходим с false
+
 	if (ppDevice == ppEnd)
 	{
+		// если дошли до конца списка и не нашли запрошенного устройства
+		// добавляем его в список просмотренных
 		*ppDevice = pDevice;
+		// и счетчик просмотренных увеличиваем
 		m_pContainer->m_nVisitedCount++;
 		bRes = true;
 	}

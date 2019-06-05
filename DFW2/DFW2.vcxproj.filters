@@ -479,5 +479,8 @@
     <ClCompile Include="SuiteSparse\KLU\Source\Complex\klu_refactor.c">
       <Filter>Source Files\SuiteSparce\KLU\Complex</Filter>
     </ClCompile>
+    <ClCompile Include="LoadFlow.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

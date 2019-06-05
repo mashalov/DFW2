@@ -25,8 +25,8 @@ bool CLimitedLag::BuildEquations(CDynaModel *pDynaModel)
 	if (!m_pDevice->IsStateOn())
 		on = 0.0;
 
-	pDynaModel->SetElement2(A(m_OutputEquationIndex), A(m_OutputEquationIndex), -on);
-	pDynaModel->SetElement2(A(m_OutputEquationIndex), A(m_Input->Index()), -on * m_K);
+	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), -on);
+	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), -on * m_K);
 
 	return bRes && pDynaModel->Status(); 
 }
