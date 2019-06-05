@@ -65,7 +65,7 @@ CDynaModel::CDynaModel() : Symbolic(NULL),
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
-	_tfopen_s(&m_pLogFile, _T("c:\\tmp\\dfw2.log"), _T("w+"));
+	_tfopen_s(&m_pLogFile, _T("c:\\tmp\\dfw2.log"), _T("w+, ccs=UTF-8"));
 }
 
 
