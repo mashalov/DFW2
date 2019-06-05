@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "DynaModel.h"
 #include "klu.h"
 #include "cs.h"
@@ -66,11 +66,20 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszM
 			SetConsoleTextAttribute(hCon, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
 		}
+		//SetConsoleOutputCP(65001);
 		_tcprintf(cszCRLF);
+			   
 		va_list argList;
+		size_t len;
+		TCHAR * buffer;
 		va_start(argList, cszMessage);
-		_vtprintf(cszMessage, argList);
+		len = _vsctprintf(cszMessage, argList) + sizeof(_TCHAR);
+		buffer = new _TCHAR[len];
+		_vstprintf_s(buffer, len, cszMessage, argList);
+		_tcprintf(buffer);
+		delete(buffer);
 		va_end(argList);
+
 		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
 	}
 
@@ -79,7 +88,7 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszM
 		_ftprintf(m_pLogFile,cszCRLF);
 		va_list argList;
 		va_start(argList, cszMessage);
-		_vftprintf(m_pLogFile,cszMessage, argList);
+		_vftprintf_s(m_pLogFile,cszMessage, argList);
 		va_end(argList);
 	}
 }
@@ -335,11 +344,11 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 
 }
 
-// ограничивает частоту изменения шага до минимального, просчитанного на серии шагов
-// возвращает true, если изменение шага может быть разрешено
+// РѕРіСЂР°РЅРёС‡РёРІР°РµС‚ С‡Р°СЃС‚РѕС‚Сѓ РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР° РґРѕ РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ, РїСЂРѕСЃС‡РёС‚Р°РЅРЅРѕРіРѕ РЅР° СЃРµСЂРёРё С€Р°РіРѕРІ
+// РІРѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё РёР·РјРµРЅРµРЅРёРµ С€Р°РіР° РјРѕР¶РµС‚ Р±С‹С‚СЊ СЂР°Р·СЂРµС€РµРЅРѕ
 bool CDynaModel::StepControl::FilterStep(double dStep)
 {
-	// определяем минимальный шаг в серии шагов, длина которой
+	// РѕРїСЂРµРґРµР»СЏРµРј РјРёРЅРёРјР°Р»СЊРЅС‹Р№ С€Р°Рі РІ СЃРµСЂРёРё С€Р°РіРѕРІ, РґР»РёРЅР° РєРѕС‚РѕСЂРѕР№
 	// nStepsToStepChange
 
 	if (dFilteredStepInner > dStep)
@@ -347,21 +356,21 @@ bool CDynaModel::StepControl::FilterStep(double dStep)
 
 	dFilteredStep = dFilteredStepInner;
 
-	// если не достигли шага, на котором ограничение изменения заканчивается
+	// РµСЃР»Рё РЅРµ РґРѕСЃС‚РёРіР»Рё С€Р°РіР°, РЅР° РєРѕС‚РѕСЂРѕРј РѕРіСЂР°РЅРёС‡РµРЅРёРµ РёР·РјРµРЅРµРЅРёСЏ Р·Р°РєР°РЅС‡РёРІР°РµС‚СЃСЏ
 	if (nStepsToEndRateGrow >= nStepsCount)
 	{
-		// и шаг превышает заданный коэффициент ограничения, ограничиваем шаг до этого коэффициента
+		// Рё С€Р°Рі РїСЂРµРІС‹С€Р°РµС‚ Р·Р°РґР°РЅРЅС‹Р№ РєРѕСЌС„С„РёС†РёРµРЅС‚ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ, РѕРіСЂР°РЅРёС‡РёРІР°РµРј С€Р°Рі РґРѕ СЌС‚РѕРіРѕ РєРѕСЌС„С„РёС†РёРµРЅС‚Р°
 		if (dRateGrowLimit < dFilteredStep)
 			dFilteredStep = dRateGrowLimit;
 	}
-	// возвращаем true если серия шагов ограничения закончилась и 
-	// отфильтрованный шаг должен увеличиться
+	// РІРѕР·РІСЂР°С‰Р°РµРј true РµСЃР»Рё СЃРµСЂРёСЏ С€Р°РіРѕРІ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ Р·Р°РєРѕРЅС‡РёР»Р°СЃСЊ Рё 
+	// РѕС‚С„РёР»СЊС‚СЂРѕРІР°РЅРЅС‹Р№ С€Р°Рі РґРѕР»Р¶РµРЅ СѓРІРµР»РёС‡РёС‚СЊСЃСЏ
 	return (--nStepsToStepChange <= 0) && dFilteredStep > 1.0;
 }
 
-// ограничивает частоту изменения порядка, просчитанного на серии шагов
-// возвращает true, если порядок может быть увеличиен после контроля
-// на серии шагов
+// РѕРіСЂР°РЅРёС‡РёРІР°РµС‚ С‡Р°СЃС‚РѕС‚Сѓ РёР·РјРµРЅРµРЅРёСЏ РїРѕСЂСЏРґРєР°, РїСЂРѕСЃС‡РёС‚Р°РЅРЅРѕРіРѕ РЅР° СЃРµСЂРёРё С€Р°РіРѕРІ
+// РІРѕР·РІСЂР°С‰Р°РµС‚ true, РµСЃР»Рё РїРѕСЂСЏРґРѕРє РјРѕР¶РµС‚ Р±С‹С‚СЊ СѓРІРµР»РёС‡РёРµРЅ РїРѕСЃР»Рµ РєРѕРЅС‚СЂРѕР»СЏ
+// РЅР° СЃРµСЂРёРё С€Р°РіРѕРІ
 
 bool CDynaModel::StepControl::FilterOrder(double dStep)
 {
@@ -376,8 +385,8 @@ bool CDynaModel::StepControl::FilterOrder(double dStep)
 		if (dRateGrowLimit < dFilteredOrder)
 			dFilteredOrder = dRateGrowLimit;
 	}
-	// возвращаем true, если отфильтрованный порядок на серии шагов
-	// должен увеличиться
+	// РІРѕР·РІСЂР°С‰Р°РµРј true, РµСЃР»Рё РѕС‚С„РёР»СЊС‚СЂРѕРІР°РЅРЅС‹Р№ РїРѕСЂСЏРґРѕРє РЅР° СЃРµСЂРёРё С€Р°РіРѕРІ
+	// РґРѕР»Р¶РµРЅ СѓРІРµР»РёС‡РёС‚СЊСЃСЏ
 	return (--nStepsToOrderChange <= 0) && dFilteredOrder > 1.0;
 }
 

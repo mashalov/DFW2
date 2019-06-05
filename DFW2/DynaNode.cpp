@@ -89,13 +89,16 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	bool bInMetallicSC = m_bInMetallicSC || V < DFW2_EPSILON;
 		
-	double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
-	double Qe = Qnr - Qg + V * V * Yii.imag();
+	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
+	//double Qe = Qnr - Qg + V * V * Yii.imag();
+
+	double Pe = GetSelfImbP();
+	double Qe = GetSelfImbQ(); 
 		
 	double dPdDelta = 0.0;
-	double dPdV = -2 * V * Yii.real() + dLRCPn;
+	double dPdV = GetSelfdPdV(); // -2 * V * Yii.real() + dLRCPn;
 	double dQdDelta = 0.0;
-	double dQdV = 2 * V * Yii.imag()  + dLRCQn;
+	double dQdV = GetSelfdQdV(); // 2 * V * Yii.imag() + dLRCQn;
 
 	CLinkPtrCount *pBranchLink = GetLink(0);
 	CDevice **ppBranch = NULL;
@@ -269,9 +272,9 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	double T = pDynaModel->GetFreqTimeConstant();
 	double w0 = pDynaModel->GetOmega0();
 
-	pDynaModel->SetElement2(A(V_LAG), A(V_DELTA), -1.0 / T);
+	pDynaModel->SetElement(A(V_LAG), A(V_DELTA), -1.0 / T);
 	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
-	pDynaModel->SetElement2(A(V_LAG), A(V_LAG), -1.0 / T);
+	pDynaModel->SetElement(A(V_LAG), A(V_LAG), -1.0 / T);
 	
 	
 	if (!pDynaModel->IsInDiscontinuityMode())

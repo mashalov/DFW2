@@ -139,7 +139,7 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 		}
 		if (OldState != m_nDbState)
 		{
-			pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("\nt=%g Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), pDynaModel->GetCurrentTime(), GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_DbMin, m_DbMax, OldState, m_nDbState);
+			pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%g Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), pDynaModel->GetCurrentTime(), GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_DbMin, m_DbMax, OldState, m_nDbState);
 			pDynaModel->DiscontinuityRequest();
 		}
 	}

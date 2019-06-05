@@ -179,20 +179,12 @@ namespace DFW2
 		CDeviceContainer *m_pContainer;										// контейнер устройства
 		CSingleLink m_DeviceLinks;											// связи устройств один к одному
 		eDEVICEFUNCTIONSTATUS m_eInitStatus;								// статус инициализации устройства (заполняется в Init)
-		bool CheckAddVisited(CDevice *pDevice);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);			// инициализация устройства
 		ptrdiff_t m_nMatrixRow;												// строка в матрице с которой начинаются уравнения устройства
 		eDEVICESTATE m_State;												// состояние устройства
 		eDEVICESTATECAUSE m_StateCause;										// причина изменения состояния устройства
 		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
-
-		// функция "безопасного" деления
-		inline static double ZeroDivGuard(double Nom, double Denom)
-		{
-			// если делитель - ноль, деление не выполняем
-			return (fabs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
-		}
 
 		const CSingleLink& GetSingleLinks() { return m_DeviceLinks; }
 
@@ -249,6 +241,7 @@ namespace DFW2
 		// получить связи устроства из слоя nLinkIndex
 		CLinkPtrCount* GetLink(ptrdiff_t nLinkIndex);
 		void ResetVisited();
+		bool CheckAddVisited(CDevice *pDevice);
 		void SetSingleLinkStart(CDevice **ppLinkStart);
 
 		// построение блока уравнения в Якоби
@@ -298,6 +291,14 @@ namespace DFW2
 			// если выполнилось или не было нужно - все OK
 			return Status == DFS_OK || Status == DFS_DONTNEED;
 		}
+
+		// функция "безопасного" деления
+		inline static double ZeroDivGuard(double Nom, double Denom)
+		{
+			// если делитель - ноль, деление не выполняем
+			return (fabs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
+		}
+
 
 #ifdef _DEBUG
 		static _TCHAR UnknownVarIndex[80];

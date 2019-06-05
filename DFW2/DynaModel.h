@@ -422,11 +422,10 @@ namespace DFW2
 
 		void ResetElement();
 		bool ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		bool ReallySetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
 		bool CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
 		typedef bool (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
 		void ScaleAlgebraicEquations();
-		ElementSetterFn ElementSetter, ElementSetter2;
+		ElementSetterFn ElementSetter;
 		void ReportKLUError();
 
 		void Predict();
@@ -463,6 +462,8 @@ namespace DFW2
 		void NewtonFailed();
 		void RepeatZeroCrossing();
 		void UnprocessDiscontinuity();
+
+		bool LoadFlow();
 
 
 		FILE *fResult, *m_pLogFile;
@@ -502,7 +503,7 @@ namespace DFW2
 		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
 
 		// Для теста с множителями
-		bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
+		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
 
 		bool SetFunction(ptrdiff_t nRow, double dValue);
 		bool AddFunction(ptrdiff_t nRow, double dValue);

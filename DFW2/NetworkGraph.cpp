@@ -43,7 +43,7 @@ bool CDynaModel::Link()
 				if (pContLead == *lt)
 				{
 					// если выбран внутренний контейнер
-					_tcprintf(_T("\nLink %s <- %s"), (*it)->GetTypeName(), (*lt)->GetTypeName());			
+					Log(DFW2::CDFW2Messages::DFW2LOG_INFO, _T("Связь %s <- %s"), (*it)->GetTypeName(), (*lt)->GetTypeName());
 					// организуем связь внешгего контейнера с внутренним
 					bRes = (*it)->CreateLink(*lt) && bRes;
 					_ASSERTE(bRes);

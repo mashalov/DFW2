@@ -56,10 +56,10 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 
 	// dY2 / dY2
 	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), 1.0 + hb0 * m_T);
-	pDynaModel->SetElement2(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), -T);
+	pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), -T);
 	// dY2 / dInput
 	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -hb0 * m_T);
-	pDynaModel->SetElement2(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -T);
+	pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -T);
 
 	return bRes && pDynaModel->Status();
 }
@@ -257,7 +257,7 @@ bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 		if (!pDynaModel->IsInDiscontinuityMode())
 		{
 			// dOut / dOut
-			pDynaModel->SetElement2(A(m_OutputEquationIndex), A(m_OutputEquationIndex), -m_T);
+			pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), -m_T);
 		}
 		else
 		{

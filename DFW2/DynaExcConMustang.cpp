@@ -121,9 +121,9 @@ bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 		// dUsum / dSdt
 		pDynaModel->SetElement(A(V_USUM), A(V_SDT), -1.0);
 		//dSvt / dSvt
-		pDynaModel->SetElement2(A(V_SVT), A(V_SVT), -1.0 / Tf);
+		pDynaModel->SetElement(A(V_SVT), A(V_SVT), -1.0 / Tf);
 		//dSvt / dSv
-		pDynaModel->SetElement2(A(V_SVT), A(dSdtIn.Index()), -1.0 / Tf);
+		pDynaModel->SetElement(A(V_SVT), A(dSdtIn.Index()), -1.0 / Tf);
 	}
 	else
 	{
