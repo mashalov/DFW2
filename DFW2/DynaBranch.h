@@ -52,6 +52,8 @@ namespace DFW2
 		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
 
+		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);
+
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 

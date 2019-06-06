@@ -97,6 +97,8 @@ namespace DFW2
 	protected:
 		bool CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer);
+		CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType);
+		static const CDynaNodeBase::eLFNodeType RastrTypesMap[5];
 	};
 }
 

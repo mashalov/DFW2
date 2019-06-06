@@ -111,7 +111,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
 			// определяем узел на противоположном конце инцидентной ветви
-			CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == this ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
+			CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
 			cplx mult = conj(VreVim);
 			// определяем взаимную проводимость со смежным узлом
 			cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
@@ -201,7 +201,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	while (pBranchLink->In(ppBranch))
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-		CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == this ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
+		CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
 		cplx mult = conj(VreVim);
 		cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
 		mult *= pOppNode->VreVim ** pYkm;

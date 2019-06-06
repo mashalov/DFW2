@@ -266,6 +266,12 @@ void CDynaBranch::CalcAdmittances()
 	}
 }
 
+CDynaNodeBase* CDynaBranch::GetOppositeNode(CDynaNodeBase* pOriginNode)
+{
+	_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
+	return m_pNodeIp == pOriginNode ? m_pNodeIq : m_pNodeIp;
+}
+
 CDynaBranchMeasure::CDynaBranchMeasure(CDynaBranch *pBranch) : CDevice(), m_pBranch(pBranch) 
 {
 	_ASSERTE(pBranch);

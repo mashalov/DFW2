@@ -25,6 +25,7 @@ namespace DFW2
 	protected:
 		void CleanUp();
 		bool Estimate();
+		bool NodeInMatrix(CDynaNodeBase *pNode);
 				
 		CDynaModel *m_pDynaModel;
 		CDynaNodeContainer *pNodes;

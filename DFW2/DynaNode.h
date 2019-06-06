@@ -47,7 +47,9 @@ namespace DFW2
 		{
 			LFNT_BASE,
 			LFNT_PQ,
-			LFNT_PV
+			LFNT_PV,
+			LFNT_PVQMAX,
+			LFNT_PVQMIN
 		};
 
 		// в устройствах удобно объявить перечисления
