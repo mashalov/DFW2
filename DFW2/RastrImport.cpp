@@ -312,7 +312,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		pNodes->Unom = spUnom->GetZ(i);
 		pNodes->SetDBIndex(i);
 		pNodes->V = spV->GetZ(i);
-		pNodes->m_eLFNodeType = spNtype->GetZ(i).lVal == 0 ? CDynaNodeBase::eLFNodeType::LFNT_BASE : CDynaNodeBase::eLFNodeType::LFNT_PQ;
+		pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
 		pNodes->Delta = spDelta->GetZ(i);
 		pNodes->Pn = spPnr->GetZ(i);
 		pNodes->Qn = spQnr->GetZ(i);
@@ -897,3 +897,19 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 	}
 	return bRes;
 }
+
+CDynaNodeBase::eLFNodeType CRastrImport::NodeTypeFromRastr(long RastrType)
+{
+	if (RastrType >= 0 && RastrType < _countof(RastrTypesMap))
+		return RastrTypesMap[RastrType];
+
+	_ASSERTE(RastrType >= 0 && RastrType < _countof(RastrTypesMap));
+	return CDynaNodeBase::eLFNodeType::LFNT_PQ;
+}
+
+const CDynaNodeBase::eLFNodeType CRastrImport::RastrTypesMap[5] = {   CDynaNodeBase::eLFNodeType::LFNT_BASE, 
+																	  CDynaNodeBase::eLFNodeType::LFNT_PQ, 
+																	  CDynaNodeBase::eLFNodeType::LFNT_PV, 
+																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMAX, 
+																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMIN 
+															      };

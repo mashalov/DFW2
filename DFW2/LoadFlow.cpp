@@ -37,6 +37,11 @@ void CLoadFlow::CleanUp()
 		KLU_free_symbolic(&Symbolic, &Common);
 }
 
+bool CLoadFlow::NodeInMatrix(CDynaNodeBase *pNode)
+{
+	return pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE && pNode->IsStateOn();
+}
+
 bool CDynaModel::LoadFlow()
 {
 	CLoadFlow LoadFlow(this);
@@ -65,38 +70,34 @@ bool CLoadFlow::Estimate()
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		if (pNode->IsStateOn())
-		{
-			pNode->Init(m_pDynaModel);
-			if (!pNode->IsLFBase())
-			{
-				// нумеруем включенные узлы строками матрицы
-				pNode->SetMatrixRow(m_nMatrixSize);
-				m_nMatrixSize += 2;
+		pNode->Init(m_pDynaModel);
 
-				pMatrixInfo->nRowCount += 2;	// считаем диагональный элемент
-				CLinkPtrCount *pBranchLink = pNode->GetLink(0);
-				pNode->ResetVisited();
-				CDevice **ppDevice = nullptr;
-				// обходим ветви и считаем количество внедиагональных элементов
-				while (pBranchLink->In(ppDevice))
+		if (NodeInMatrix(pNode))
+		{
+			// нумеруем включенные узлы строками матрицы
+			pNode->SetMatrixRow(m_nMatrixSize);
+			m_nMatrixSize += 2;
+
+			pMatrixInfo->nRowCount += 2;	// считаем диагональный элемент
+			CLinkPtrCount *pBranchLink = pNode->GetLink(0);
+			pNode->ResetVisited();
+			CDevice **ppDevice = nullptr;
+			// обходим ветви и считаем количество внедиагональных элементов
+			while (pBranchLink->In(ppDevice))
+			{
+				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+				if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
 				{
-					CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-					if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
+					CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
+					if (NodeInMatrix(pOppNode))
 					{
-						CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == pNode ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
-						if (!pOppNode->IsLFBase())
-						{
-							if (pNode->CheckAddVisited(pOppNode) < 0)
-								pMatrixInfo->nRowCount += 2;
-						}
+						if (pNode->CheckAddVisited(pOppNode) < 0)
+							pMatrixInfo->nRowCount += 2;
 					}
 				}
-				m_nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
 			}
+			m_nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
 		}
-		else
-			pNode->V = pNode->Delta = 0.0;
 
 		pMatrixInfo++;
 	}
@@ -116,7 +117,7 @@ bool CLoadFlow::Estimate()
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		if (pNode->IsStateOn() && ! pNode->IsLFBase())
+		if (NodeInMatrix(pNode))
 		{
 			// формируем указатели строк матрицы по две на узел
 			*pAi = nRowPtr;	pAi++;
@@ -140,8 +141,8 @@ bool CLoadFlow::Estimate()
 				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
 				if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
 				{
-					CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == pNode ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
-					if (!pOppNode->IsLFBase())
+					CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
+					if (NodeInMatrix(pOppNode))
 					{
 						if (pNode->CheckAddVisited(pOppNode) < 0)
 						{
@@ -179,7 +180,7 @@ bool CLoadFlow::Run()
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		if (pNode->IsStateOn() && ! pNode->IsLFBase())
+		if (NodeInMatrix(pNode))
 		{
 			pNode->GetPnrQnr();
 			double Pe = pNode->GetSelfImbP();
@@ -201,7 +202,7 @@ bool CLoadFlow::Run()
 				if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
 				{
 					// определяем узел на противоположном конце инцидентной ветви
-					CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == pNode ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
+					CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
 					cplx mult = conj(pNode->VreVim);
 					// определяем взаимную проводимость со смежным узлом
 					cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
@@ -215,7 +216,7 @@ bool CLoadFlow::Run()
 					dQdDelta += -mult.real();
 					dQdV += CDevice::ZeroDivGuard(mult.imag(), pNode->V);
 
-					if (!pOppNode->IsLFBase())
+					if (NodeInMatrix(pOppNode))
 					{
 						ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
 						if (DupIndex < 0)
