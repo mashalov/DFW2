@@ -203,6 +203,7 @@
     <ClInclude Include="HRTimer.h" />
     <ClInclude Include="LimitedLag.h" />
     <ClInclude Include="LimiterConst.h" />
+    <ClInclude Include="LoadFlow.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="RastrImport.h" />
     <ClInclude Include="Relay.h" />

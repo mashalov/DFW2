@@ -283,6 +283,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	CDynaNode *pNodes = new CDynaNode[spNode->Size];
 
 	IColPtr spNy = spNodeCols->Item("ny");
+	IColPtr spNtype = spNodeCols->Item("tip");
 	IColPtr spName = spNodeCols->Item("name");
 	IColPtr spUnom = spNodeCols->Item("uhom");
 	IColPtr spV = spNodeCols->Item("vras");
@@ -297,7 +298,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spB = spNodeCols->Item("bsh");
 	IColPtr spLCId = spNodeCols->Item("dnsx");
 	IColPtr spSta = spNodeCols->Item("sta");
-	IColPtr spType = spNodeCols->Item("tip");
 	IColPtr spG0 = spNodeCols->Item("grk");
 	IColPtr spB0 = spNodeCols->Item("brk");
 	IColPtr spNr = spNodeCols->Item("nrk");
@@ -312,6 +312,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		pNodes->Unom = spUnom->GetZ(i);
 		pNodes->SetDBIndex(i);
 		pNodes->V = spV->GetZ(i);
+		pNodes->m_eLFNodeType = spNtype->GetZ(i).lVal == 0 ? CDynaNodeBase::eLFNodeType::LFNT_BASE : CDynaNodeBase::eLFNodeType::LFNT_PQ;
 		pNodes->Delta = spDelta->GetZ(i);
 		pNodes->Pn = spPnr->GetZ(i);
 		pNodes->Qn = spQnr->GetZ(i);
@@ -324,7 +325,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 		pNodes->Br0 = -spB0->GetZ(i).dblVal;
 		pNodes->Gr0 = spG0->GetZ(i);
 		pNodes->Nr = spNr->GetZ(i);
-		pNodes->Type = spType->GetZ(i).lVal;
 		ptrdiff_t LcId = spLCId->GetZ(i);
 		CDynaLRC *pDynLRC;
 		if (Network.LRCs.GetDevice(LcId, pDynLRC))

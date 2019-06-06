@@ -130,7 +130,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			
 //			if (pOppNode->Type)
 			{
-				bool bDup = !CheckAddVisited(pOppNode);
+				bool bDup = CheckAddVisited(pOppNode) >= 0;
 				{
 					// dP/dDelta
 					pDynaModel->SetElement(A(0), pOppNode->A(0), mult.imag(), bDup);
