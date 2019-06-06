@@ -432,28 +432,24 @@ void CDevice::ResetVisited()
 	m_pContainer->m_nVisitedCount = 0;
 }
 
-bool CDevice::CheckAddVisited(CDevice* pDevice)
+ptrdiff_t CDevice::CheckAddVisited(CDevice* pDevice)
 {
 	_ASSERTE(m_pContainer);
 
-	bool bRes = false;
 	CDevice **ppDevice = m_pContainer->m_ppDevicesAux;
 	CDevice **ppEnd = ppDevice + m_pContainer->m_nVisitedCount;
 	// просматриваем список просмотренных
 	for (; ppDevice < ppEnd; ppDevice++)
 		if (*ppDevice == pDevice)
-			break; // если нашли заданное устройство - выходим с false
-
-	if (ppDevice == ppEnd)
-	{
-		// если дошли до конца списка и не нашли запрошенного устройства
-		// добавляем его в список просмотренных
-		*ppDevice = pDevice;
-		// и счетчик просмотренных увеличиваем
-		m_pContainer->m_nVisitedCount++;
-		bRes = true;
-	}
-	return bRes;
+			return ppDevice - m_pContainer->m_ppDevicesAux ; // если нашли заданное устройство - выходим и возвращаем номер
+															 // с которым это устройство уже было добавлено
+	// если дошли до конца списка и не нашли запрошенного устройства
+	// добавляем его в список просмотренных
+	*ppDevice = pDevice;
+	// и счетчик просмотренных увеличиваем
+	m_pContainer->m_nVisitedCount++;
+	// возвращаем -1, так как устройство не было найдено
+	return -1;
 }
 
 // проверка инициализации/инициализация устройства

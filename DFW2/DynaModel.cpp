@@ -103,10 +103,10 @@ bool CDynaModel::Run()
 	bRes = bRes && (LRCs.Init(this) == DFS_OK);
 
 	bRes = bRes && Link();
-	LoadFlow();
 	bRes = bRes && PrepareGraph();
 	bRes = bRes && PrepareYs();
 	bRes = bRes && Nodes.ProcessTopology();
+	LoadFlow();
 	bRes = bRes && InitDevices();
 	bRes = bRes && EstimateMatrix();
 	bRes = bRes && InitEquations();

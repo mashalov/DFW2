@@ -43,6 +43,13 @@ namespace DFW2
 
 		void UpdateVreVim();
 
+		enum eLFNodeType
+		{
+			LFNT_BASE,
+			LFNT_PQ,
+			LFNT_PV
+		};
+
 		// в устройствах удобно объявить перечисления
 		// для именования индексов переменных
 		enum CONSTVARS
@@ -76,9 +83,8 @@ namespace DFW2
 
 		CSynchroZone *m_pSyncZone;		// синхронная зона, к которой принадлежит узел
 		ptrdiff_t m_nZoneDistance;
-
+		eLFNodeType m_eLFNodeType;
 		ptrdiff_t Nr;
-		ptrdiff_t Type;
 		cplx Yii;						// собственная проводимость
 		cplx VreVim;					// напряжение в декартовых координатах для упрощения расчета элементов якоби
 		double Vold;					// модуль напряжения на предыдущей итерации
@@ -104,6 +110,10 @@ namespace DFW2
 
 		inline double GetSelfdPdV() { return -2 * V * Yii.real() + dLRCPn;	}
 		inline double GetSelfdQdV() { return  2 * V * Yii.imag() + dLRCQn; }
+
+		inline bool IsLFBase() { return m_eLFNodeType == eLFNodeType::LFNT_BASE; }
+
+		void SetMatrixRow(ptrdiff_t nMatrixRow) { m_nMatrixRow = nMatrixRow; }
 
 		virtual ExternalVariable GetExternalVariable(const _TCHAR* cszVarName);
 

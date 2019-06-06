@@ -1,39 +1,137 @@
 #include "stdafx.h"
+#include "LoadFlow.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
 
+CLoadFlow::CLoadFlow(CDynaModel *pDynaModel) :  m_pDynaModel(pDynaModel),
+												Ax(nullptr),
+												b(nullptr),
+												Ai(nullptr),
+												Ap(nullptr),
+												m_pMatrixInfo(nullptr),
+												pNodes(nullptr),
+												Symbolic(nullptr)
+{
+	KLU_defaults(&Common);
+}
+
+CLoadFlow::~CLoadFlow()
+{
+	CleanUp();
+}
+
+void CLoadFlow::CleanUp()
+{
+	if (Ax)
+		delete Ax;
+	if (b)
+		delete b;
+	if (Ai)
+		delete Ai;
+	if (Ap)
+		delete Ap;
+	if (m_pMatrixInfo)
+		delete m_pMatrixInfo;
+	if (Symbolic)
+		KLU_free_symbolic(&Symbolic, &Common);
+}
+
 bool CDynaModel::LoadFlow()
 {
+	CLoadFlow LoadFlow(this);
+	return LoadFlow.Run();
+}
+
+bool CLoadFlow::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double& dValue, bool bAdd)
+{
+	return true;
+}
+
+bool CLoadFlow::Estimate()
+{
 	bool bRes = false;
-	CDynaNodeContainer *pNodes = static_cast<CDynaNodeContainer*>(GetDeviceContainer(DEVTYPE_NODE));
+	CleanUp();
+	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
 	if (!pNodes)
 		return bRes;
 
-	size_t nMatrixSize = 0;
-	size_t nNonZeroCount = 0;
+	m_nMatrixSize = 0;		
 
-	struct _MatrixInfo
-	{
-		ptrdiff_t OnNodeIndex;
-		size_t nRowCount;
-		_MatrixInfo::_MatrixInfo() : OnNodeIndex(-1), nRowCount(0) {}
-	};
-
-	size_t nOnNodesCount = 0;
-
-	_MatrixInfo *MatrixInfo = new _MatrixInfo[pNodes->Count()];
-	_MatrixInfo *pMatrixInfo = MatrixInfo;
-
+	// создаем привязку узлов к информации по строкам матрицы
+	m_pMatrixInfo = new _MatrixInfo[pNodes->Count()];
+	_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
 
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-
 		if (pNode->IsStateOn())
 		{
-			pMatrixInfo->OnNodeIndex = nOnNodesCount++;
-			pMatrixInfo->nRowCount++;
+			pNode->Init(m_pDynaModel);
+			if (!pNode->IsLFBase())
+			{
+				// нумеруем включенные узлы строками матрицы
+				pNode->SetMatrixRow(m_nMatrixSize);
+				m_nMatrixSize += 2;
+
+				pMatrixInfo->nRowCount += 2;	// считаем диагональный элемент
+				CLinkPtrCount *pBranchLink = pNode->GetLink(0);
+				pNode->ResetVisited();
+				CDevice **ppDevice = nullptr;
+				// обходим ветви и считаем количество внедиагональных элементов
+				while (pBranchLink->In(ppDevice))
+				{
+					CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+					if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
+					{
+						CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == pNode ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
+						if (!pOppNode->IsLFBase())
+						{
+							if (pNode->CheckAddVisited(pOppNode) < 0)
+								pMatrixInfo->nRowCount += 2;
+						}
+					}
+				}
+				m_nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
+			}
+		}
+		else
+			pNode->V = pNode->Delta = 0.0;
+
+		pMatrixInfo++;
+	}
+
+	Ax = new double[m_nNonZeroCount];
+	b = new double[m_nMatrixSize];
+	Ai = new ptrdiff_t[m_nMatrixSize + 1];
+	Ap = new ptrdiff_t[m_nNonZeroCount];
+
+	pMatrixInfo = m_pMatrixInfo;
+
+	ptrdiff_t *pAi = Ai;
+	ptrdiff_t *pAp = Ap;
+
+	ptrdiff_t nRowPtr = 0;
+
+	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		if (pNode->IsStateOn() && ! pNode->IsLFBase())
+		{
+			// формируем указатели строк матрицы по две на узел
+			*pAi = nRowPtr;	pAi++;
+			nRowPtr += pMatrixInfo->nRowCount;
+			*pAi = nRowPtr;	pAi++;
+			nRowPtr += pMatrixInfo->nRowCount;
+
+			// формируем номера столбцов в двух строках уравнений узла
+			*pAp = pNode->A(0);
+			*(pAp + pMatrixInfo->nRowCount) = pNode->A(0);
+			pAp++;
+			*pAp = pNode->A(1);
+			*(pAp + pMatrixInfo->nRowCount) = pNode->A(1);
+			pAp++;
+			
 			CLinkPtrCount *pBranchLink = pNode->GetLink(0);
 			pNode->ResetVisited();
 			CDevice **ppDevice = nullptr;
@@ -43,36 +141,45 @@ bool CDynaModel::LoadFlow()
 				if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
 				{
 					CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == pNode ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
-					if (pNode->CheckAddVisited(pOppNode))
-						pMatrixInfo->nRowCount++;
+					if (!pOppNode->IsLFBase())
+					{
+						if (pNode->CheckAddVisited(pOppNode) < 0)
+						{
+							*pAp = pOppNode->A(0);
+							*(pAp + pMatrixInfo->nRowCount) = pOppNode->A(0);
+							pAp++;
+							*pAp = pOppNode->A(1);
+							*(pAp + pMatrixInfo->nRowCount) = pOppNode->A(1);
+							pAp++;
+						}
+					}
 				}
 			}
-			nMatrixSize++;
-			nNonZeroCount += 4 * pMatrixInfo->nRowCount;
+			pAp += pMatrixInfo->nRowCount;
 		}
-		else
-			pNode->V = pNode->Delta = 0.0;
-
 		pMatrixInfo++;
 	}
+	*pAi = m_nNonZeroCount;
 
-	nMatrixSize *= 2;
+	Symbolic = KLU_analyze(m_nMatrixSize, Ai, Ap, &Common);
 
-	double *Ax = new double[nNonZeroCount];
-	double *b = new double[nMatrixSize];
-	ptrdiff_t *Ai = new ptrdiff_t[nMatrixSize + 1];
-	ptrdiff_t *Ap = new ptrdiff_t[nNonZeroCount];
+	return bRes = true;
+}
+
+bool CLoadFlow::Run()
+{
+	bool bRes = Estimate();
+	if (!bRes)
+		return bRes;
 
 	double *pb = b;
 	double *pAx = Ax;
-	ptrdiff_t *pAp = Ap;
-
-	pMatrixInfo = MatrixInfo;
+	_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
 
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		if (pNode->IsStateOn())
+		if (pNode->IsStateOn() && ! pNode->IsLFBase())
 		{
 			pNode->GetPnrQnr();
 			double Pe = pNode->GetSelfImbP();
@@ -84,7 +191,6 @@ bool CDynaModel::LoadFlow()
 
 			double *pAxSelf = pAx;
 			pAx += 2;
-			*pAp = *(pAp + pMatrixInfo->nRowCount) = pMatrixInfo->OnNodeIndex;
 
 			CLinkPtrCount *pBranchLink = pNode->GetLink(0);
 			pNode->ResetVisited();
@@ -92,28 +198,48 @@ bool CDynaModel::LoadFlow()
 			while (pBranchLink->In(ppDevice))
 			{
 				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-				// определяем узел на противоположном конце инцидентной ветви
-				CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == pNode ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
-				cplx mult = conj(pNode->VreVim);
-				// определяем взаимную проводимость со смежным узлом
-				cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
-				mult *= pOppNode->VreVim ** pYkm;
-				Pe -= mult.real();
-				Qe += mult.imag();
+				if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
+				{
+					// определяем узел на противоположном конце инцидентной ветви
+					CDynaNodeBase *pOppNode = pBranch->m_pNodeIp == pNode ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
+					cplx mult = conj(pNode->VreVim);
+					// определяем взаимную проводимость со смежным узлом
+					cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
+					mult *= pOppNode->VreVim ** pYkm;
+					Pe -= mult.real();
+					Qe += mult.imag();
 
-				// diagonals 2
-				dPdDelta -= mult.imag();
-				dPdV += -CDevice::ZeroDivGuard(mult.real(), pNode->V);
-				dQdDelta += -mult.real();
-				dQdV += CDevice::ZeroDivGuard(mult.imag(), pNode->V);
-				bool bDup = pNode->CheckAddVisited(pOppNode);
+					// diagonals 2
+					dPdDelta -= mult.imag();
+					dPdV += -CDevice::ZeroDivGuard(mult.real(), pNode->V);
+					dQdDelta += -mult.real();
+					dQdV += CDevice::ZeroDivGuard(mult.imag(), pNode->V);
 
-				*pAx = mult.imag();
-				*(pAx + 1) = -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
-				*(pAx + pMatrixInfo->nRowCount * 2) = mult.real();
-				*(pAx + pMatrixInfo->nRowCount * 2 + 1) = CDevice::ZeroDivGuard(mult.imag(), pOppNode->V);
+					if (!pOppNode->IsLFBase())
+					{
+						ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
+						if (DupIndex < 0)
+						{
+							//_ASSERTE(pAx - pAxSelf < pMatrixInfo->nRowCount);
+							*pAx = mult.imag();
+							*(pAx + pMatrixInfo->nRowCount) = mult.real();
+							pAx++;
+							*pAx = -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
+							*(pAx + pMatrixInfo->nRowCount) = CDevice::ZeroDivGuard(mult.imag(), pOppNode->V);
+							pAx++;
+						}
+						else
+						{
+							double *pSumAx = pAxSelf + 2 + DupIndex;
+							*pSumAx += mult.imag();
+							*(pSumAx + pMatrixInfo->nRowCount) += mult.real();
+							pSumAx++;
+							*pSumAx += -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
+							*(pSumAx + pMatrixInfo->nRowCount) += CDevice::ZeroDivGuard(mult.imag(), pOppNode->V);
+						}
+					}
+				}
 			
-
 				/*
 				
 				{
@@ -130,9 +256,10 @@ bool CDynaModel::LoadFlow()
 			}
 
 			*pAxSelf = dPdDelta;
-			*(pAxSelf + pMatrixInfo->nRowCount * 2) = dQdDelta;
-			*(pAxSelf + 1) = dPdV;
-			*(pAxSelf + pMatrixInfo->nRowCount * 2 + 1) = dQdV;
+			*(pAxSelf + pMatrixInfo->nRowCount) = dQdDelta;
+			pAxSelf++;
+			*pAxSelf = dPdV;
+			*(pAxSelf + pMatrixInfo->nRowCount) = dQdV;
 
 			pAx += pMatrixInfo->nRowCount;
 
@@ -149,6 +276,9 @@ bool CDynaModel::LoadFlow()
 
 		pMatrixInfo++;
 	}
-	
+
+	KLU_numeric *Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
+	int sq = KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common);
+	KLU_free_numeric(&Numeric, &Common);
 	return bRes;
 }

@@ -241,7 +241,7 @@ namespace DFW2
 		// получить связи устроства из слоя nLinkIndex
 		CLinkPtrCount* GetLink(ptrdiff_t nLinkIndex);
 		void ResetVisited();
-		bool CheckAddVisited(CDevice *pDevice);
+		ptrdiff_t CheckAddVisited(CDevice *pDevice);
 		void SetSingleLinkStart(CDevice **ppLinkStart);
 
 		// построение блока уравнения в Якоби
