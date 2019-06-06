@@ -113,7 +113,7 @@ namespace DFW2
 		inline double GetSelfdPdV() { return -2 * V * Yii.real() + dLRCPn;	}
 		inline double GetSelfdQdV() { return  2 * V * Yii.imag() + dLRCQn; }
 
-		inline bool IsLFBase() { return m_eLFNodeType == eLFNodeType::LFNT_BASE; }
+		inline bool IsLFTypePQ() { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
 
 		void SetMatrixRow(ptrdiff_t nMatrixRow) { m_nMatrixRow = nMatrixRow; }
 

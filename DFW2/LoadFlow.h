@@ -25,11 +25,11 @@ namespace DFW2
 	protected:
 		void CleanUp();
 		bool Estimate();
-		bool NodeInMatrix(CDynaNodeBase *pNode);
+		bool BuildMatrix();
+		static bool NodeInMatrix(CDynaNodeBase *pNode);
 				
 		CDynaModel *m_pDynaModel;
 		CDynaNodeContainer *pNodes;
-		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double& dValue, bool bAdd = false);
 		size_t m_nMatrixSize;
 		size_t m_nNonZeroCount;
 		
