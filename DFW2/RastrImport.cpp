@@ -307,6 +307,10 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spG0 = spNodeCols->Item("grk");
 	IColPtr spB0 = spNodeCols->Item("brk");
 	IColPtr spNr = spNodeCols->Item("nrk");
+	IColPtr spVref = spNodeCols->Item("vzd");
+	IColPtr spQmin = spNodeCols->Item("qmin");
+	IColPtr spQmax = spNodeCols->Item("qmax");
+
 
 	Network.Nodes.AddDevices(pNodes, spNode->Size);
 
@@ -331,6 +335,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 		pNodes->Br0 = -spB0->GetZ(i).dblVal;
 		pNodes->Gr0 = spG0->GetZ(i);
 		pNodes->Nr = spNr->GetZ(i);
+		pNodes->LFVref = spVref->GetZ(i);
+		pNodes->LFQmin = spQmin->GetZ(i);
+		pNodes->LFQmax = spQmax->GetZ(i);
 		ptrdiff_t LcId = spLCId->GetZ(i);
 		CDynaLRC *pDynLRC;
 		if (Network.LRCs.GetDevice(LcId, pDynLRC))

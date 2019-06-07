@@ -30,6 +30,15 @@ namespace DFW2
 			_MatrixInfo::_MatrixInfo() : nRowCount(0), nBranchCount(0) {}
 		};
 
+		struct Parameters
+		{
+			double m_Imb;					// допустимый небаланс мощности
+			Parameters()
+			{
+				m_Imb = 1E-4;
+			}
+		};
+
 
 		CLoadFlow(CDynaModel *pDynaModel);
 		~CLoadFlow();
@@ -37,7 +46,10 @@ namespace DFW2
 	protected:
 		void CleanUp();
 		bool Estimate();
+		bool Seidell();
 		bool BuildMatrix();
+		bool Start();
+
 		static bool NodeInMatrix(CDynaNodeBase *pNode);
 				
 		CDynaModel *m_pDynaModel;
@@ -59,6 +71,8 @@ namespace DFW2
 
 		KLU_symbolic *Symbolic;
 		KLU_common Common;
+
+		Parameters m_Parameters;
 	};
 }
 
