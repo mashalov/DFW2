@@ -243,7 +243,13 @@ bool CLoadFlow::Start()
 			if (pNode->LFQmax - pNode->LFQmin > m_Parameters.m_Imb && pNode->LFVref > 0.0)
 			{
 				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-				if (pNode->Qg - pNode->LFQmax > m_Parameters.m_Imb)
+				if (bFlat)
+				{
+					pNode->V = pNode->LFVref;
+					pNode->Qg = pNode->LFQmin + (pNode->LFQmax - pNode->LFQmin) / 2.0;
+					pNode->Delta = 0.0;
+				}
+				else if (pNode->Qg - pNode->LFQmax > m_Parameters.m_Imb)
 				{
 					pNode->Qg = pNode->LFQmax;
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
@@ -252,13 +258,6 @@ bool CLoadFlow::Start()
 				{
 					pNode->Qg = pNode->LFQmin;
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
-				}
-
-				if (bFlat)
-				{
-					pNode->V = pNode->LFVref;
-					pNode->Qg = pNode->LFQmin + (pNode->LFQmax - pNode->LFQmin) / 2.0;
-					pNode->Delta = 0.0;
 				}
 			}
 			else if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
