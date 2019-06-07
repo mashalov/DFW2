@@ -50,11 +50,7 @@ bool CDynaModel::LoadFlow()
 
 bool CLoadFlow::Estimate()
 {
-	bool bRes = false;
-	CleanUp();
-	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
-	if (!pNodes)
-		return bRes;
+	bool bRes = true;
 
 	m_nMatrixSize = 0;		
 	// создаем привязку узлов к информации по строкам матрицы
@@ -226,7 +222,87 @@ bool CLoadFlow::Estimate()
 	*pAi = m_nNonZeroCount;
 
 	Symbolic = KLU_analyze(m_nMatrixSize, Ai, Ap, &Common);
-	return bRes = true;
+	return bRes;
+}
+
+bool CLoadFlow::Start()
+{
+	bool bRes = true;
+	CleanUp();
+	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
+	if (!pNodes)
+		return bRes;
+
+	bool bFlat = true;
+
+	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		if (pNode->IsStateOn())
+		{
+			if (pNode->LFQmax - pNode->LFQmin > m_Parameters.m_Imb && pNode->LFVref > 0.0)
+			{
+				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+				if (pNode->Qg - pNode->LFQmax > m_Parameters.m_Imb)
+				{
+					pNode->Qg = pNode->LFQmax;
+					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
+				}
+				else if (pNode->LFQmin - pNode->Qg > m_Parameters.m_Imb)
+				{
+					pNode->Qg = pNode->LFQmin;
+					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
+				}
+
+				if (bFlat)
+				{
+					pNode->V = pNode->LFVref;
+					pNode->Qg = pNode->LFQmin + (pNode->LFQmax - pNode->LFQmin) / 2.0;
+					pNode->Delta = 0.0;
+				}
+			}
+			else if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+			{
+				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PQ;
+				if (bFlat)
+				{
+					pNode->V = pNode->Unom;
+					pNode->Delta = 0.0;
+				}
+			}
+		}
+		else
+		{
+			pNode->V = pNode->Delta = 0.0;
+		}
+		/*
+		pNode->V = pNode->Unom;
+		pNode->Delta = 0.0;
+		pNode->Init(m_pDynaModel);
+		*/
+
+	}
+
+	return bRes;
+}
+
+bool CLoadFlow::Seidell()
+{
+	bool bRes = true;
+	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	{
+		CDynaNodeBase *pNode = pMatrixInfo->pNode;
+		pNode->GetPnrQnr();
+		double Pe = pNode->GetSelfImbP(), Qe = pNode->GetSelfImbQ() + pNode->Qg;
+		for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+		{
+			CDynaNodeBase *pOppNode = pBranch->pNode;
+			cplx mult = conj(pNode->VreVim) * pOppNode->VreVim * pBranch->Y;
+			Pe -= mult.real();
+			Qe += mult.imag();
+		}
+	}
+	return bRes;
 }
 
 bool CLoadFlow::BuildMatrix()
@@ -314,20 +390,15 @@ bool CLoadFlow::Run()
 	pBr->SetBranchState(CDynaBranch::BRANCH_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
 	*/
 
-
-	bool bRes = Estimate();
+	bool bRes = Start();
+	bRes = bRes && Estimate();
 	if (!bRes)
 		return bRes;
+		
+	Seidell();
 
-	/*for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
-	{
-		CDynaNodeBase *pNo = static_cast<CDynaNodeBase*>(*it);
-		pNo->V = pNo->Unom;
-		pNo->Delta = 0.0;
-		pNo->Init(m_pDynaModel);
-	}
 	
-
+	/*
 	CDynaNodeBase *pNo = static_cast<CDynaNodeBase*>(*(pNodes->begin()));
 	pNo->Pn += -5;
 	*/

@@ -91,7 +91,7 @@ namespace DFW2
 		cplx VreVim;					// напряжение в декартовых координатах для упрощения расчета элементов якоби
 		double Vold;					// модуль напряжения на предыдущей итерации
 		CDynaLRC *m_pLRC;				// указатель на СХН узла
-		//double m_dLRCKdef;
+		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
