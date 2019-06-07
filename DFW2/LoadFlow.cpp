@@ -236,7 +236,8 @@ bool CLoadFlow::BuildMatrix()
 							}
 							else
 							{
-								double *pSumAx = pAxSelf + 2 + DupIndex;
+								double *pSumAx = pAxSelf + 2 + DupIndex * 2;
+								//_ASSERTE(*pSumAx == dPdDeltaM);
 								*pSumAx += dPdDeltaM;
 								*(pSumAx + pMatrixInfo->nRowCount) += dQdDeltaM;
 								pSumAx++;
@@ -307,7 +308,7 @@ bool CLoadFlow::Run()
 		return bRes;
 
 	CDynaNodeBase *pNo = static_cast<CDynaNodeBase*>(*(pNodes->begin()));
-	pNo->Pn += 2;
+	pNo->Pn += 5;
 
 
 	for (int it = 0; it < 10; it++)
@@ -325,15 +326,15 @@ bool CLoadFlow::Run()
 
 
 		int sq = KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common);
-		/*
-		nmx = 0;
+		
+		/*nmx = 0;
 		for (int i = 1; i < m_nMatrixSize; i++)
 		{
 			if (fabs(b[nmx]) < fabs(b[i]))
 				nmx = i;
 		}
-		ATLTRACE("\n%g", b[nmx]);
-		*/
+		ATLTRACE("\n%g", b[nmx]);*/
+		
 	
 		KLU_free_numeric(&Numeric, &Common);
 
