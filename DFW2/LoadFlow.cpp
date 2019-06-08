@@ -254,7 +254,7 @@ bool CLoadFlow::Start()
 						pNode->Qg = pNode->LFQmax;
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 					}
-					else if (pNode->LFQmin < pNode->Qg)
+					else if (pNode->LFQmin > pNode->Qg)
 					{
 						pNode->Qg = pNode->LFQmin;
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
@@ -311,7 +311,7 @@ bool CLoadFlow::Seidell()
 				Qe += mult.imag();
 			}
 
-			double Q = pNode->Qnr - Qe;
+			double Q = Qe + pNode->Qg;
 
 			switch (pNode->m_eLFNodeType)
 			{
@@ -398,7 +398,9 @@ bool CLoadFlow::Seidell()
 
 			pNode->V = abs(pNode->VreVim);
 			pNode->Delta = arg(pNode->VreVim);
-			UpdateIterationControl(pMatrixInfo);
+
+			if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+				UpdateIterationControl(pMatrixInfo);
 		}
 
 		DumpIterationControl();
@@ -598,7 +600,7 @@ void CLoadFlow::UpdateIterationControl(_MatrixInfo *pMatrixInfo)
 		else if (fabs(m_IterationControl.m_MaxImbP.m_dDiff) < fabs(pMatrixInfo->m_dImbP))
 			{
 				m_IterationControl.m_MaxImbP.m_dDiff = pMatrixInfo->m_dImbP;
-				m_IterationControl.m_MaxImbQ.m_pMatrixInfo = pMatrixInfo;
+				m_IterationControl.m_MaxImbP.m_pMatrixInfo = pMatrixInfo;
 			}
 
 		if (m_IterationControl.m_MaxImbQ.GetId() < 0)

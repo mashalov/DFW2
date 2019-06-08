@@ -76,7 +76,7 @@ namespace DFW2
 			double m_dSeidellStep;					// шаг ускорения метода Зейделя	
 			ptrdiff_t m_nEnableSwitchIteration;		// номер итерации, с которой разрешается переключение PV-PQ
 			Parameters() : m_Imb(1E-4),
-						   m_dSeidellStep(1.0),
+						   m_dSeidellStep(1.05),
 						   m_nEnableSwitchIteration(2)
 						   {}
 		};
