@@ -91,6 +91,8 @@ const _TCHAR* CDFW2Messages::m_cszDuplicatedVariableName = _T("Неуникал�
 const _TCHAR* CDFW2Messages::m_cszUnknownError = _T("Неизвестная ошибка");
 const _TCHAR* CDFW2Messages::m_cszMemoryAllocError = _T("Ошибка распределения памяти %s");
 const _TCHAR* CDFW2Messages::m_cszLULFConverged = _T("Линейный метод сошелся с погрешностью %g за %d итераций");
+const _TCHAR* CDFW2Messages::m_cszLFRunningNewton = _T("Расчет УР методом Ньютона");
+const _TCHAR* CDFW2Messages::m_cszLFRunningSeidell = _T("Расчет УР методом Зейделя");
 
 
 

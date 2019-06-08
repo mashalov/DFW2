@@ -33,7 +33,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_CrtSetBreakAlloc(31658);
 	//_CrtSetBreakAlloc(31657);
 	//_CrtSetBreakAlloc(31630);
-	//_CrtSetBreakAlloc(125525);
 
 	SetConsoleCtrlHandler(HandlerRoutine,TRUE);
 

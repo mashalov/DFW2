@@ -33,6 +33,8 @@ void CLoadFlow::CleanUp()
 		delete Ap;
 	if (m_pMatrixInfo)
 		delete m_pMatrixInfo;
+	if (m_pVirtualBranches)
+		delete m_pVirtualBranches;
 	if (Symbolic)
 		KLU_free_symbolic(&Symbolic, &Common);
 }
@@ -270,6 +272,10 @@ bool CLoadFlow::Start()
 					}
 				}
 			}
+			else
+			{
+				pNode->Pg = pNode->Qg = 0.0;
+			}
 		}
 		else
 		{
@@ -281,14 +287,43 @@ bool CLoadFlow::Start()
 	return bRes;
 }
 
+double ImbNorm(double x, double y)
+{
+	return x * x + y * y;
+}
+
 bool CLoadFlow::Seidell()
 {
 	bool bRes = true;
 
 	pNodes->CalcAdmittances(true);
-
-	for (int nSeidellIterations = 0; nSeidellIterations < 100; nSeidellIterations++)
+	double dPreviousImb = -1.0;
+	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
+		double dStep = m_Parameters.m_dSeidellStep;
+
+		if (nSeidellIterations > 2)
+		{
+			if (dPreviousImb < 0.0)
+			{
+				dPreviousImb = ImbNorm(m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbQ.GetDiff());
+			}
+			else
+			{
+				double dCurrentImb = ImbNorm(m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbQ.GetDiff());
+				double dImbRatio = dCurrentImb / dPreviousImb;
+				/*
+				dPreviousImb = dCurrentImb;
+				if (dImbRatio < 1.0)
+					dStep = 1.0;
+				else
+				{
+					dStep = 1.0 + exp((1 - dImbRatio) * 10.0);
+				}
+				*/
+			}
+		}
+
 		ResetIterationControl();
 
 		bool bPVPQSwitchEnabled = nSeidellIterations >= m_Parameters.m_nEnableSwitchIteration ;
@@ -311,43 +346,43 @@ bool CLoadFlow::Seidell()
 				Qe += mult.imag();
 			}
 
-			double Q = Qe + pNode->Qg;
+			double Q = Qe + pNode->Qg;	// расчетная генерация в узле
+
+			cplx I1 = dStep / conj(pNode->VreVim) / pNode->Yii;
 
 			switch (pNode->m_eLFNodeType)
 			{
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-				if (pNode->V > pNode->LFVref)
+				if (pNode->V > pNode->LFVref && Q < pNode->LFQmax)
 				{
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 					pMatrixInfo->m_nPVSwitchCount++;
 					pNode->Qg = Q;
-					cplx dU = m_Parameters.m_dSeidellStep * cplx(Pe, 0) / conj(pNode->VreVim) / pNode->Yii;
+					cplx dU = I1 * cplx(Pe, 0);
 					dU += pNode->VreVim;
-					dU = pNode->LFVref * dU / abs(dU);
-					pNode->VreVim = dU;
+					pNode->VreVim = pNode->LFVref * dU / abs(dU);
 				}
 				else
 				{
 					pNode->Qg = pNode->LFQmax;
-					cplx dU = m_Parameters.m_dSeidellStep  * cplx(Pe, -Qe) / conj(pNode->VreVim) / pNode->Yii;
+					cplx dU = I1  * cplx(Pe, -Qe);
 					pNode->VreVim += dU;
 				}
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-				if (pNode->V < pNode->LFVref)
+				if (pNode->V < pNode->LFVref && Q > pNode->LFQmin)
 				{
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 					pMatrixInfo->m_nPVSwitchCount++;
 					pNode->Qg = Q;
-					cplx dU = m_Parameters.m_dSeidellStep * cplx(Pe, 0) / conj(pNode->VreVim) / pNode->Yii;
+					cplx dU = I1 * cplx(Pe, 0);
 					dU += pNode->VreVim;
-					dU = pNode->LFVref * dU / abs(dU);
-					pNode->VreVim = dU;
+					pNode->VreVim = pNode->LFVref * dU / abs(dU);
 				}
 				else
 				{
 					pNode->Qg = pNode->LFQmin;
-					cplx dU = m_Parameters.m_dSeidellStep  * cplx(Pe, -Qe) / conj(pNode->VreVim) / pNode->Yii;
+					cplx dU = I1  * cplx(Pe, -Qe);
 					pNode->VreVim += dU;
 				}
 				break;
@@ -359,40 +394,39 @@ bool CLoadFlow::Seidell()
 						{
 							pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 							pNode->Qg = pNode->LFQmax;
-							Qe = pNode->Qnr - pNode->LFQmax;
+							Qe = Q - pNode->Qg;
 						}
 						else if (Q < pNode->LFQmin)
 						{
 							pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 							pNode->Qg = pNode->LFQmin;
-							Qe = pNode->Qnr - pNode->LFQmin;
+							Qe = Q - pNode->Qg;
 						}
 						else
 						{
 							pNode->Qg = Q;
 							Qe = 0.0;
 						}
-						cplx dU = m_Parameters.m_dSeidellStep * cplx(Pe, -Qe) / conj(pNode->VreVim) / pNode->Yii;
+						cplx dU = I1 * cplx(Pe, -Qe);
 						dU += pNode->VreVim;
-						dU = pNode->LFVref * dU / abs(dU);
-						pNode->VreVim = dU;
+						pNode->VreVim = pNode->LFVref * dU / abs(dU);
 					}
 					else
 					{
-						cplx dU = m_Parameters.m_dSeidellStep * cplx(Pe, -Qe) / conj(pNode->VreVim) / pNode->Yii;
+						cplx dU = I1 * cplx(Pe, -Qe);
 						pNode->VreVim += dU;
 					}
 				}
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
 				{
-					cplx dU = m_Parameters.m_dSeidellStep * cplx(Pe, -Qe) / conj(pNode->VreVim) / pNode->Yii ;
+					cplx dU = I1 * cplx(Pe, -Qe);
 					pNode->VreVim += dU;
 				}
 			break;
 			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
-				pNode->Pg = Pe;
-				pNode->Qg = Qe;
+				pNode->Pg += Pe;
+				pNode->Qg += Qe;
 				break;
 			}
 
@@ -402,12 +436,12 @@ bool CLoadFlow::Seidell()
 			if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 				UpdateIterationControl(pMatrixInfo);
 		}
-
 		DumpIterationControl();
+
+		if (m_IterationControl.Converged(m_Parameters.m_Imb))
+			break;
 	}
-
 	pNodes->CalcAdmittances(false);
-
 	return bRes;
 }
 
@@ -490,12 +524,6 @@ bool CLoadFlow::BuildMatrix()
 #include "atlbase.h"
 bool CLoadFlow::Run()
 {
-	/*
-	CDeviceContainer *pBranchCon = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
-	CDynaBranch *pBr = static_cast<CDynaBranch*>(*(pBranchCon->begin() + 4));
-	pBr->SetBranchState(CDynaBranch::BRANCH_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
-	*/
-
 	m_Parameters.m_bFlat = true;
 
 	bool bRes = Start();
@@ -503,14 +531,10 @@ bool CLoadFlow::Run()
 	if (!bRes)
 		return bRes;
 		
+
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 	Seidell();
-
-	
-	/*
-	CDynaNodeBase *pNo = static_cast<CDynaNodeBase*>(*(pNodes->begin()));
-	pNo->Pn += -5;
-	*/
-
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
 
 	for (int it = 0; it < 10; it++)
 	{
@@ -539,8 +563,6 @@ bool CLoadFlow::Run()
 	
 		KLU_free_numeric(&Numeric, &Common);
 
-		
-
 		_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
 		for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
@@ -550,35 +572,50 @@ bool CLoadFlow::Run()
 			pNode->UpdateVreVim();
 		}
 
-
-		// расчет небаланса по Q для PV узлов и PQ для БУ
+		ResetIterationControl();
 		for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			if (!pNode->IsLFTypePQ() || CDynaNodeBase::eLFNodeType::LFNT_BASE == pNode->m_eLFNodeType)
-			{
-				pNode->GetPnrQnr();
-				double Pe = pNode->GetSelfImbP() + pNode->Pg, Qe = pNode->GetSelfImbQ() + pNode->Qg;
+			pNode->GetPnrQnr();
+			double& Pe = pMatrixInfo->m_dImbP;
+			double& Qe = pMatrixInfo->m_dImbQ;
 
-				for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
-				{
-					CDynaNodeBase *pOppNode = pBranch->pNode;
-					cplx mult = conj(pNode->VreVim) * pOppNode->VreVim * pBranch->Y;
-					Pe -= mult.real();
-					Qe += mult.imag();
-				}
-				pNode->Qg = Qe;
-				if (CDynaNodeBase::eLFNodeType::LFNT_BASE == pNode->m_eLFNodeType)
-					pNode->Pg = Pe;
+			Pe = pNode->GetSelfImbP();
+			Qe = pNode->GetSelfImbQ();
+
+			for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+			{
+				CDynaNodeBase *pOppNode = pBranch->pNode;
+				cplx mult = conj(pNode->VreVim) * pOppNode->VreVim * pBranch->Y;
+				Pe -= mult.real();
+				Qe += mult.imag();
 			}
+			if (!pNode->IsLFTypePQ())
+			{
+				pNode->Qg = Qe + pNode->Qg;
+				UpdateIterationControl(pMatrixInfo);
+			}
+			else if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+			{
+				pNode->Pg = Pe + pNode->Pg;
+				pNode->Qg = Qe + pNode->Qg;
+			}
+			else
+				UpdateIterationControl(pMatrixInfo);
+
 		}
+		DumpIterationControl();
+		if (m_IterationControl.Converged(m_Parameters.m_Imb))
+			break;
 	}
 
+	/*
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
 		ATLTRACE("\n %20f %20f %20f %20f %20f %20f", pNode->V, pNode->Delta * 180 / M_PI, pNode->Pg, pNode->Qg, pNode->Pnr, pNode->Qnr);
 	}
+	*/
 	return bRes;
 }
 
@@ -592,50 +629,14 @@ void CLoadFlow::UpdateIterationControl(_MatrixInfo *pMatrixInfo)
 {
 	if (pMatrixInfo && pMatrixInfo->pNode)
 	{
-		if (m_IterationControl.m_MaxImbP.GetId() < 0)
-		{
-			m_IterationControl.m_MaxImbP.m_pMatrixInfo = pMatrixInfo;
-			m_IterationControl.m_MaxImbP.m_dDiff = pMatrixInfo->m_dImbP;
-		}
-		else if (fabs(m_IterationControl.m_MaxImbP.m_dDiff) < fabs(pMatrixInfo->m_dImbP))
-			{
-				m_IterationControl.m_MaxImbP.m_dDiff = pMatrixInfo->m_dImbP;
-				m_IterationControl.m_MaxImbP.m_pMatrixInfo = pMatrixInfo;
-			}
-
-		if (m_IterationControl.m_MaxImbQ.GetId() < 0)
-		{
-			m_IterationControl.m_MaxImbQ.m_pMatrixInfo = pMatrixInfo;
-			m_IterationControl.m_MaxImbQ.m_dDiff = pMatrixInfo->m_dImbQ;
-		}
-		else if (fabs(m_IterationControl.m_MaxImbQ.m_dDiff) < fabs(pMatrixInfo->m_dImbQ))
-			{
-				m_IterationControl.m_MaxImbQ.m_dDiff = pMatrixInfo->m_dImbQ;
-				m_IterationControl.m_MaxImbQ.m_pMatrixInfo = pMatrixInfo;
-			}
-
-		if (m_IterationControl.m_MaxV.GetId() < 0)
-		{
-			m_IterationControl.m_MaxV.m_pMatrixInfo = pMatrixInfo;
-			m_IterationControl.m_MaxV.m_dDiff = pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom;
-		}
-		else if (m_IterationControl.m_MaxV.m_dDiff < pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom)
-			{
-				m_IterationControl.m_MaxV.m_dDiff = pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom;
-				m_IterationControl.m_MaxV.m_pMatrixInfo = pMatrixInfo;
-			}
-
-		if (m_IterationControl.m_MinV.GetId() < 0)
-		{
-			m_IterationControl.m_MinV.m_pMatrixInfo = pMatrixInfo;
-			m_IterationControl.m_MinV.m_dDiff = pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom;
-		}
-		else if (m_IterationControl.m_MinV.m_dDiff > pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom)
-			{
-				m_IterationControl.m_MinV.m_dDiff = pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom;
-				m_IterationControl.m_MinV.m_pMatrixInfo = pMatrixInfo;
-			}
+		m_IterationControl.m_MaxImbP.UpdateMaxAbs(pMatrixInfo, pMatrixInfo->m_dImbP);
+		m_IterationControl.m_MaxImbQ.UpdateMaxAbs(pMatrixInfo, pMatrixInfo->m_dImbQ);
+		double VdVnom = pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom;
+		m_IterationControl.m_MaxV.UpdateMax(pMatrixInfo, VdVnom);
+		m_IterationControl.m_MinV.UpdateMin(pMatrixInfo, VdVnom);
 	}
+	else
+		_ASSERTE(pMatrixInfo && pMatrixInfo->pNode);
 }
 
 void CLoadFlow::DumpIterationControl()
