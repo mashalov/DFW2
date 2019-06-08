@@ -29,19 +29,46 @@ namespace DFW2
 			_VirtualBranch *pBranches;												// список виртуальных ветвей узла
 			ptrdiff_t m_nPVSwitchCount;												// счетчик переключений PV-PQ
 			double m_dImbP, m_dImbQ;												// небалансы по P и Q
-			_MatrixInfo::_MatrixInfo() : nRowCount(0), 
-										 nBranchCount(0), 
-										 m_nPVSwitchCount(0)
-										 {}
+			_MatrixInfo::_MatrixInfo() : nRowCount(0),
+				nBranchCount(0),
+				m_nPVSwitchCount(0)
+			{}
 		};
 
-		struct _MaxNodeDiff
+		class _MaxNodeDiff
 		{
+		protected:
 			_MatrixInfo *m_pMatrixInfo;
 			double m_dDiff;
+			typedef bool (OperatorFunc)(double lhs, double rhs);
+
+			void UpdateOp(_MatrixInfo* pMatrixInfo, double dValue, OperatorFunc OpFunc)
+			{
+				if (pMatrixInfo && pMatrixInfo->pNode)
+				{
+					if (m_pMatrixInfo)
+					{
+						_ASSERTE(m_pMatrixInfo->pNode);
+						if (OpFunc(dValue, m_dDiff))
+						{
+							m_pMatrixInfo = pMatrixInfo;
+							m_dDiff = dValue;
+						}
+					}
+					else
+					{
+						m_pMatrixInfo = pMatrixInfo;
+						m_dDiff = dValue;
+					}
+				}
+				else
+					_ASSERTE(pMatrixInfo && pMatrixInfo->pNode);
+			}
+
+		public:
 			_MaxNodeDiff() : m_pMatrixInfo(nullptr),
-							 m_dDiff(0.0)
-							{}
+				m_dDiff(0.0)
+			{}
 
 			ptrdiff_t GetId()
 			{
@@ -56,6 +83,21 @@ namespace DFW2
 					return m_dDiff;
 				return -1.0;
 			}
+
+			void UpdateMin(_MatrixInfo *pMatrixInfo, double Value)
+			{
+				UpdateOp(pMatrixInfo, Value, [](double lhs, double rhs) -> bool { return lhs < rhs; });
+			}
+
+			void UpdateMax(_MatrixInfo *pMatrixInfo, double Value)
+			{
+				UpdateOp(pMatrixInfo, Value, [](double lhs, double rhs) -> bool { return lhs > rhs; });
+			}
+
+			void UpdateMaxAbs(_MatrixInfo *pMatrixInfo, double Value)
+			{
+				UpdateOp(pMatrixInfo, Value, [](double lhs, double rhs) -> bool { return fabs(lhs) > fabs(rhs) ; });
+			}
 		};
 
 		struct _IterationControl
@@ -64,9 +106,13 @@ namespace DFW2
 			_MaxNodeDiff m_MaxImbQ;
 			_MaxNodeDiff m_MaxV;
 			_MaxNodeDiff m_MinV;
-
 			_IterationControl()
 							{}
+
+			bool Converged(double m_dToleratedImb)
+			{
+				return fabs(m_MaxImbP.GetDiff()) < m_dToleratedImb && fabs(m_MaxImbQ.GetDiff() < m_dToleratedImb);
+			}
 		};
 
 		struct Parameters
@@ -74,10 +120,12 @@ namespace DFW2
 			double m_Imb;							// допустимый небаланс мощности
 			bool m_bFlat;							// плоский старт
 			double m_dSeidellStep;					// шаг ускорения метода Зейделя	
+			ptrdiff_t m_nSeidellIterations;			// количество итераций Зейделем
 			ptrdiff_t m_nEnableSwitchIteration;		// номер итерации, с которой разрешается переключение PV-PQ
 			Parameters() : m_Imb(1E-4),
 						   m_dSeidellStep(1.05),
-						   m_nEnableSwitchIteration(2)
+						   m_nEnableSwitchIteration(2),
+						   m_nSeidellIterations(7)
 						   {}
 		};
 

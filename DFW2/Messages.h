@@ -104,6 +104,8 @@ namespace DFW2
 		static const _TCHAR* m_cszUnknownError;
 		static const _TCHAR* m_cszMemoryAllocError;
 		static const _TCHAR* m_cszLULFConverged;
+		static const _TCHAR* m_cszLFRunningNewton;
+		static const _TCHAR* m_cszLFRunningSeidell;
 	};
 }
 
