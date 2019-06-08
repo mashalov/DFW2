@@ -166,8 +166,9 @@ namespace DFW2
 		bool BuildSynchroZones();
 		bool  EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
 		bool m_bRebuildMatrix;
-		void CalcAdmittances(bool bSeidell);
 		bool CreateSuperNodes();
+		void CalcAdmittances(bool bSeidell);
+		friend class CLoadFlow;
 	public:
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();
