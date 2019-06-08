@@ -27,16 +27,58 @@ namespace DFW2
 			size_t nBranchCount;													// количество виртуальных ветвей от узла (включая БУ)
 			CDynaNodeBase *pNode;													// узел, к которому относится данное Info
 			_VirtualBranch *pBranches;												// список виртуальных ветвей узла
-			_MatrixInfo::_MatrixInfo() : nRowCount(0), nBranchCount(0) {}
+			ptrdiff_t m_nPVSwitchCount;												// счетчик переключений PV-PQ
+			double m_dImbP, m_dImbQ;												// небалансы по P и Q
+			_MatrixInfo::_MatrixInfo() : nRowCount(0), 
+										 nBranchCount(0), 
+										 m_nPVSwitchCount(0)
+										 {}
+		};
+
+		struct _MaxNodeDiff
+		{
+			_MatrixInfo *m_pMatrixInfo;
+			double m_dDiff;
+			_MaxNodeDiff() : m_pMatrixInfo(nullptr),
+							 m_dDiff(0.0)
+							{}
+
+			ptrdiff_t GetId()
+			{
+				if (m_pMatrixInfo && m_pMatrixInfo->pNode)
+					return m_pMatrixInfo->pNode->GetId();
+				return -1;
+			}
+
+			double GetDiff()
+			{
+				if (GetId() >= 0)
+					return m_dDiff;
+				return -1.0;
+			}
+		};
+
+		struct _IterationControl
+		{
+			_MaxNodeDiff m_MaxImbP;
+			_MaxNodeDiff m_MaxImbQ;
+			_MaxNodeDiff m_MaxV;
+			_MaxNodeDiff m_MinV;
+
+			_IterationControl()
+							{}
 		};
 
 		struct Parameters
 		{
-			double m_Imb;					// допустимый небаланс мощности
-			Parameters()
-			{
-				m_Imb = 1E-4;
-			}
+			double m_Imb;							// допустимый небаланс мощности
+			bool m_bFlat;							// плоский старт
+			double m_dSeidellStep;					// шаг ускорения метода Зейделя	
+			ptrdiff_t m_nEnableSwitchIteration;		// номер итерации, с которой разрешается переключение PV-PQ
+			Parameters() : m_Imb(1E-4),
+						   m_dSeidellStep(1.0),
+						   m_nEnableSwitchIteration(2)
+						   {}
 		};
 
 
@@ -73,6 +115,12 @@ namespace DFW2
 		KLU_common Common;
 
 		Parameters m_Parameters;
+		_IterationControl m_IterationControl;
+
+		void ResetIterationControl();
+		void UpdateIterationControl(_MatrixInfo *pMatrixInfo);
+		void DumpIterationControl();
+
 	};
 }
 
