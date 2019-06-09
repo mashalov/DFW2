@@ -292,9 +292,74 @@ double ImbNorm(double x, double y)
 	return x * x + y * y;
 }
 
+bool CLoadFlow::SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs)
+{
+	_ASSERTE(!lhs->pNode->IsLFTypePQ());
+	_ASSERTE(!lhs->pNode->IsLFTypePQ());
+	return (lhs->pNode->LFQmax - lhs->pNode->LFQmin) > (rhs->pNode->LFQmax - rhs->pNode->LFQmin);
+}
+
+void CLoadFlow::AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue)
+{
+	for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+	{
+		CDynaNodeBase *pOppNode = pBranch->pNode;
+		if (pOppNode->IsLFTypePQ() && pOppNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+		{
+			_MatrixInfo *pOppMatrixInfo = m_pMatrixInfo + pOppNode->A(0) / 2;
+			_ASSERTE(pOppMatrixInfo->pNode == pOppNode);
+			if (!pOppMatrixInfo->bVisited)
+			{
+				queue.push_back(pOppMatrixInfo);
+				pOppMatrixInfo->bVisited = true;
+			}
+		}
+	}
+}
+
 bool CLoadFlow::Seidell()
 {
 	bool bRes = true;
+	
+	MATRIXINFO SeidellOrder;
+	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo);
+
+	_MatrixInfo* pMatrixInfo = m_pMatrixInfoSlackEnd - 1;
+
+	// в начало добавляем БУ
+	for (; pMatrixInfo >= m_pMatrixInfoEnd; pMatrixInfo--)
+	{
+		SeidellOrder.push_back(pMatrixInfo);
+		pMatrixInfo->bVisited = true;
+	}
+
+	// затем PV узлы
+	for (; pMatrixInfo >= m_pMatrixInfo; pMatrixInfo--)
+	{
+		CDynaNodeBase *pNode = pMatrixInfo->pNode;
+		if (!pNode->IsLFTypePQ())
+		{
+			SeidellOrder.push_back(pMatrixInfo);
+			pMatrixInfo->bVisited = true;
+		}
+	}
+
+	// сортируем PV узлы по убыванию диапазона реактивной мощности
+	sort(SeidellOrder.begin() + (m_pMatrixInfoSlackEnd - m_pMatrixInfoEnd) , SeidellOrder.end(), SortPV);
+	QUEUE queue;
+
+	for (MATRIXINFOITR it = SeidellOrder.begin(); it != SeidellOrder.end(); it++)
+		AddToQueue(*it, queue);
+
+	while (!queue.empty())
+	{
+		pMatrixInfo = queue.front();
+		queue.pop_front();
+		SeidellOrder.push_back(pMatrixInfo);
+		AddToQueue(pMatrixInfo, queue);
+	}
+
+	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo);
 
 	pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
@@ -328,8 +393,9 @@ bool CLoadFlow::Seidell()
 
 		bool bPVPQSwitchEnabled = nSeidellIterations >= m_Parameters.m_nEnableSwitchIteration ;
 
-		for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
+		for (MATRIXINFOITR it = SeidellOrder.begin() ; it != SeidellOrder.end() ; it++)
 		{
+			pMatrixInfo = *it;
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			pNode->GetPnrQnr();
 			double& Pe = pMatrixInfo->m_dImbP;
@@ -609,13 +675,13 @@ bool CLoadFlow::Run()
 			break;
 	}
 
-	/*
+	
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
 		ATLTRACE("\n %20f %20f %20f %20f %20f %20f", pNode->V, pNode->Delta * 180 / M_PI, pNode->Pg, pNode->Qg, pNode->Pnr, pNode->Qnr);
 	}
-	*/
+	
 	return bRes;
 }
 

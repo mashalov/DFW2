@@ -29,11 +29,17 @@ namespace DFW2
 			_VirtualBranch *pBranches;												// список виртуальных ветвей узла
 			ptrdiff_t m_nPVSwitchCount;												// счетчик переключений PV-PQ
 			double m_dImbP, m_dImbQ;												// небалансы по P и Q
+			bool bVisited;															// признак просмотра для графовых алгоритмов
 			_MatrixInfo::_MatrixInfo() : nRowCount(0),
 				nBranchCount(0),
-				m_nPVSwitchCount(0)
+				m_nPVSwitchCount(0),
+				bVisited(false)
 			{}
 		};
+
+		typedef vector<_MatrixInfo*> MATRIXINFO;
+		typedef MATRIXINFO::iterator MATRIXINFOITR;
+		typedef list<_MatrixInfo*> QUEUE;
 
 		class _MaxNodeDiff
 		{
@@ -168,7 +174,8 @@ namespace DFW2
 		void ResetIterationControl();
 		void UpdateIterationControl(_MatrixInfo *pMatrixInfo);
 		void DumpIterationControl();
-
+		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
+		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);
 	};
 }
 
