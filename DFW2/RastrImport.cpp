@@ -301,6 +301,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spQg = spNodeCols->Item("qg");
 	IColPtr spG = spNodeCols->Item("gsh");
 	IColPtr spB = spNodeCols->Item("bsh");
+	IColPtr spLCIdLF = spNodeCols->Item("nsx");
 	IColPtr spLCId = spNodeCols->Item("dnsx");
 	IColPtr spSta = spNodeCols->Item("sta");
 	IColPtr spG0 = spNodeCols->Item("grk");
@@ -325,8 +326,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 		pNodes->Delta = spDelta->GetZ(i);
 		pNodes->Pn = spPnr->GetZ(i);
 		pNodes->Qn = spQnr->GetZ(i);
-		pNodes->Pnr = spPnr->GetZ(i);
-		pNodes->Qnr = spQnr->GetZ(i);
+		pNodes->Pnr = spPn->GetZ(i);
+		pNodes->Qnr = spQn->GetZ(i);
 		pNodes->Pg = spPg->GetZ(i);
 		pNodes->Qg = spQg->GetZ(i);
 		pNodes->G = spG->GetZ(i);
@@ -337,13 +338,19 @@ void CRastrImport::GetData(CDynaModel& Network)
 		pNodes->LFVref = spVref->GetZ(i);
 		pNodes->LFQmin = spQmin->GetZ(i);
 		pNodes->LFQmax = spQmax->GetZ(i);
-		ptrdiff_t LcId = spLCId->GetZ(i);
 		CDynaLRC *pDynLRC;
-		if (Network.LRCs.GetDevice(LcId, pDynLRC))
+		if (Network.LRCs.GetDevice(spLCId->GetZ(i), pDynLRC))
 		{
 			pNodes->m_pLRC = pDynLRC;
 			//if (!LcId && pNodes->V > 0.0)
 			//	pNodes->m_dLRCKdef = (pNodes->Unom * pNodes->Unom / pNodes->V / pNodes->V);
+		}
+
+		ptrdiff_t nLRCLF = spLCIdLF->GetZ(i);
+		if (nLRCLF > 0)
+		{
+			if (Network.LRCs.GetDevice(nLRCLF, pDynLRC))
+				pNodes->m_pLRCLF = pDynLRC;
 		}
 		pNodes++;
 	}
@@ -813,6 +820,11 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 
 	slit->second->P.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
+
+
+	slit = slcloader.insert(make_pair(-1, new CStorageSLC())).first;
+	slit->second->P.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
+	slit->second->Q.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
 	
 
 	// insert shunt LRC

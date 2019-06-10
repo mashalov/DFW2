@@ -17,8 +17,9 @@ using namespace DFW2;
 #endif
 
 CDynaNodeBase::CDynaNodeBase() : CDevice(),
-								 m_pLRC(NULL),
-								 m_pSyncZone(NULL),
+								 m_pLRC(nullptr),
+								 m_pLRCLF(nullptr),
+								 m_pSyncZone(nullptr),
 								 dLRCVicinity(0.0),
 								 //m_dLRCKdef(1.0),
 								 m_bInMetallicSC(false)
@@ -365,7 +366,8 @@ double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 
 CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) : 
 									   CDeviceContainer(pDynaModel),
-									   m_pSynchroZones(NULL)
+									   m_pSynchroZones(NULL),
+									   m_bDynamicLRC(true)
 {
 	// в контейнере требуем особой функции прогноза и обновления после
 	// ньютоновской итерации
@@ -930,6 +932,22 @@ ptrdiff_t refactorOK = 1;
 	return bRes;
 }
 
+void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
+{
+	if (bSwitchToDynamicLRC != m_bDynamicLRC)
+	{
+		m_bDynamicLRC = bSwitchToDynamicLRC;
+		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+			std::swap(pNode->m_pLRCLF, pNode->m_pLRC);
+			std::swap(pNode->Pn, pNode->Pnr);
+			std::swap(pNode->Qn, pNode->Qnr);
+			if (!m_bDynamicLRC)
+				pNode->V0 = pNode->Unom;
+		}
+	}
+}
 
 bool CDynaNodeContainer::Seidell()
 {

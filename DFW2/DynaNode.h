@@ -90,7 +90,8 @@ namespace DFW2
 		cplx Yii;						// собственная проводимость
 		cplx VreVim;					// напряжение в декартовых координатах для упрощения расчета элементов якоби
 		double Vold;					// модуль напряжения на предыдущей итерации
-		CDynaLRC *m_pLRC;				// указатель на СХН узла
+		CDynaLRC *m_pLRC;				// указатель на СХН узла в динамике
+		CDynaLRC *m_pLRCLF;				// указатель на СХН узла в УР
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
@@ -168,6 +169,7 @@ namespace DFW2
 		bool m_bRebuildMatrix;
 		bool CreateSuperNodes();
 		void CalcAdmittances(bool bSeidell);
+		void SwitchLRCs(bool bSwitchToDynamicLRC);
 		friend class CLoadFlow;
 	public:
 		CDynaNodeContainer(CDynaModel *pDynaModel);
@@ -176,6 +178,7 @@ namespace DFW2
 		bool Seidell(); 
 		bool LULF();
 		void ProcessTopologyRequest();
+		bool m_bDynamicLRC;
 	};
 }
 

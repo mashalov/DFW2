@@ -242,7 +242,7 @@ bool CLoadFlow::Start()
 		{
 			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			{
-				if (pNode->LFQmax - pNode->LFQmin > m_Parameters.m_Imb && pNode->LFVref > 0.0)
+				if (pNode->LFQmax >= pNode->LFQmin /*> m_Parameters.m_Imb */ && fabs(pNode->LFQmax) > m_Parameters.m_Imb && pNode->LFVref > 0.0)
 				{
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 					if (m_Parameters.m_bFlat)
@@ -608,11 +608,12 @@ void CLoadFlow::GetNodeImb(_MatrixInfo *pMatrixInfo)
 bool CLoadFlow::Run()
 {
 	m_Parameters.m_bFlat = true;
-
 	bool bRes = Start();
 	bRes = bRes && Estimate();
 	if (!bRes)
 		return bRes;
+
+	pNodes->SwitchLRCs(false);
 		
 	if (m_Parameters.m_bStartup)
 	{
@@ -782,7 +783,8 @@ bool CLoadFlow::Run()
 		ATLTRACE("\n %20f %20f %20f %20f %20f %20f", pNode->V, pNode->Delta * 180 / M_PI, pNode->Pg, pNode->Qg, pNode->Pnr, pNode->Qnr);
 	}
 	
-	return bRes;
+	pNodes->SwitchLRCs(true);
+  	return bRes;
 }
 
 
