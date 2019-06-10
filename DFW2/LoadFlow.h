@@ -112,12 +112,13 @@ namespace DFW2
 			_MaxNodeDiff m_MaxImbQ;
 			_MaxNodeDiff m_MaxV;
 			_MaxNodeDiff m_MinV;
-			_IterationControl()
+			ptrdiff_t m_nQviolated;
+			_IterationControl() :m_nQviolated(0)
 							{}
 
 			bool Converged(double m_dToleratedImb)
 			{
-				return fabs(m_MaxImbP.GetDiff()) < m_dToleratedImb && fabs(m_MaxImbQ.GetDiff() < m_dToleratedImb);
+				return fabs(m_MaxImbP.GetDiff()) < m_dToleratedImb && fabs(m_MaxImbQ.GetDiff()) < m_dToleratedImb && m_nQviolated == 0;
 			}
 		};
 
@@ -125,13 +126,17 @@ namespace DFW2
 		{
 			double m_Imb;							// допустимый небаланс мощности
 			bool m_bFlat;							// плоский старт
+			bool m_bStartup;						// стартовый метод Зейделя
 			double m_dSeidellStep;					// шаг ускорения метода Зейделя	
 			ptrdiff_t m_nSeidellIterations;			// количество итераций Зейделем
 			ptrdiff_t m_nEnableSwitchIteration;		// номер итерации, с которой разрешается переключение PV-PQ
+			ptrdiff_t m_nMaxIterations;				// максимальное количество итераций Ньютоном
 			Parameters() : m_Imb(1E-4),
 						   m_dSeidellStep(1.05),
+						   m_bStartup(true),
 						   m_nEnableSwitchIteration(2),
-						   m_nSeidellIterations(7)
+						   m_nSeidellIterations(7), 
+						   m_nMaxIterations(100)
 						   {}
 		};
 
@@ -176,6 +181,7 @@ namespace DFW2
 		void DumpIterationControl();
 		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
 		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);
+		void GetNodeImb(_MatrixInfo *pMatrixInfo);
 	};
 }
 

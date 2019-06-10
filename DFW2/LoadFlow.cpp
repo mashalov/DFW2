@@ -587,6 +587,23 @@ bool CLoadFlow::BuildMatrix()
 	return bRes;
 }
 
+// расчет небаланса в узле
+void CLoadFlow::GetNodeImb(_MatrixInfo *pMatrixInfo)
+{
+	CDynaNodeBase *pNode = pMatrixInfo->pNode;
+	// нагрузка по СХН
+	pNode->GetPnrQnr();
+	pMatrixInfo->m_dImbP = pNode->GetSelfImbP();
+	pMatrixInfo->m_dImbQ = pNode->GetSelfImbQ();
+	for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+	{
+		CDynaNodeBase *pOppNode = pBranch->pNode;
+		cplx mult = conj(pNode->VreVim) * pOppNode->VreVim * pBranch->Y;
+		pMatrixInfo->m_dImbP -= mult.real();
+		pMatrixInfo->m_dImbQ += mult.imag();
+	}
+}
+
 #include "atlbase.h"
 bool CLoadFlow::Run()
 {
@@ -597,13 +614,132 @@ bool CLoadFlow::Run()
 	if (!bRes)
 		return bRes;
 		
-
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
-	Seidell();
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
-
-	for (int it = 0; it < 10; it++)
+	if (m_Parameters.m_bStartup)
 	{
+		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
+		Seidell();
+	}
+
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
+	int it(0);
+
+	_MatrixInfo **ppSwitch = new _MatrixInfo *[m_nMatrixSize];
+
+	while(1)
+	{
+		++it;
+		_MatrixInfo **ppSwitchEnd = ppSwitch;
+		ResetIterationControl();
+		// считаем небаланс по всем узлам кроме БУ
+		_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
+		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		{
+			CDynaNodeBase *pNode = pMatrixInfo->pNode;
+			if (it > 10 && pNode->GetId() == 4349)
+				it = it;
+			GetNodeImb(pMatrixInfo);
+			double Qg = pNode->Qg + pMatrixInfo->m_dImbQ;
+			switch (pNode->m_eLFNodeType)
+			{
+			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
+				if (pNode->V < pNode->LFVref && Qg > pNode->LFQmin)
+				{
+					*ppSwitchEnd = pMatrixInfo;
+					pMatrixInfo->m_nPVSwitchCount++;
+					ppSwitchEnd++;
+				}
+				break;
+			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
+				if (pNode->V > pNode->LFVref && Qg < pNode->LFQmax)
+				{
+					*ppSwitchEnd = pMatrixInfo;
+					ppSwitchEnd++;
+					pMatrixInfo->m_nPVSwitchCount++;
+				}
+				break;
+			case CDynaNodeBase::eLFNodeType::LFNT_PV:
+				if (Qg > pNode->LFQmax)
+				{
+					m_IterationControl.m_nQviolated++;
+					*ppSwitchEnd = pMatrixInfo;
+					ppSwitchEnd++;
+				}
+				else if (Qg < pNode->LFQmin)
+				{
+					m_IterationControl.m_nQviolated++;
+					*ppSwitchEnd = pMatrixInfo;
+					ppSwitchEnd++;
+				}
+				else
+					pNode->Qg = Qg;
+				break;
+			}
+			UpdateIterationControl(pMatrixInfo);
+		}
+
+		// досчитываем небалансы в БУ
+		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd ; pMatrixInfo++)
+		{
+			CDynaNodeBase *pNode = pMatrixInfo->pNode;
+			GetNodeImb(pMatrixInfo);
+			pNode->Pg += pMatrixInfo->m_dImbP;
+			pNode->Qg += pMatrixInfo->m_dImbQ;
+		}
+
+		DumpIterationControl();
+
+		if (m_IterationControl.Converged(m_Parameters.m_Imb))
+			break;
+		if (it > m_Parameters.m_nMaxIterations)
+		{
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszNoLFConvergence);
+			bRes = false;
+			break;
+		}
+		// переключаем типы узлов
+		if (m_IterationControl.m_MaxImbP.GetDiff() < m_Parameters.m_Imb)
+		{
+			for (_MatrixInfo **ppSwitchNow = ppSwitch; ppSwitchNow < ppSwitchEnd; ppSwitchNow++)
+			{
+				pMatrixInfo = *ppSwitchNow;
+				CDynaNodeBase *pNode = pMatrixInfo->pNode;
+				double Qg = pNode->Qg + pMatrixInfo->m_dImbQ;
+				switch (pNode->m_eLFNodeType)
+				{
+				case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
+					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+					pMatrixInfo->m_nPVSwitchCount++;
+					pNode->Qg = Qg;
+					pNode->V = pNode->LFVref;
+					break;
+				case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
+					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+					pMatrixInfo->m_nPVSwitchCount++;
+					pNode->Qg = Qg;
+					pNode->V = pNode->LFVref;
+					break;
+				case CDynaNodeBase::eLFNodeType::LFNT_PV:
+					pNode->Qg = Qg;
+					if (pNode->Qg > pNode->LFQmax)
+					{
+						m_IterationControl.m_nQviolated++;
+						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Qmax < Q %g < %g %d"), pNode->LFQmax, pNode->Qg, pNode->GetId());
+						pNode->Qg = pNode->LFQmax;
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
+					}
+					else if (pNode->Qg < pNode->LFQmin)
+					{
+						m_IterationControl.m_nQviolated++;
+						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Qmin > Q %g > %g %d"), pNode->LFQmin, pNode->Qg, pNode->GetId());
+						pNode->Qg = pNode->LFQmin;
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
+					}
+					break;
+				}
+				pNode->UpdateVreVim();
+			}
+		}
+
 		BuildMatrix();
 		KLU_numeric *Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
 
@@ -629,52 +765,16 @@ bool CLoadFlow::Run()
 	
 		KLU_free_numeric(&Numeric, &Common);
 
-		_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
-		for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		for (pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			pNode->Delta -= b[pNode->A(0)];
 			pNode->V -= b[pNode->A(0) + 1];
 			pNode->UpdateVreVim();
 		}
-
-		ResetIterationControl();
-		for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			pNode->GetPnrQnr();
-			double& Pe = pMatrixInfo->m_dImbP;
-			double& Qe = pMatrixInfo->m_dImbQ;
-
-			Pe = pNode->GetSelfImbP();
-			Qe = pNode->GetSelfImbQ();
-
-			for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
-			{
-				CDynaNodeBase *pOppNode = pBranch->pNode;
-				cplx mult = conj(pNode->VreVim) * pOppNode->VreVim * pBranch->Y;
-				Pe -= mult.real();
-				Qe += mult.imag();
-			}
-			if (!pNode->IsLFTypePQ())
-			{
-				pNode->Qg = Qe + pNode->Qg;
-				UpdateIterationControl(pMatrixInfo);
-			}
-			else if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
-			{
-				pNode->Pg = Pe + pNode->Pg;
-				pNode->Qg = Qe + pNode->Qg;
-			}
-			else
-				UpdateIterationControl(pMatrixInfo);
-
-		}
-		DumpIterationControl();
-		if (m_IterationControl.Converged(m_Parameters.m_Imb))
-			break;
 	}
 
+	delete ppSwitch;
 	
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
@@ -708,9 +808,10 @@ void CLoadFlow::UpdateIterationControl(_MatrixInfo *pMatrixInfo)
 void CLoadFlow::DumpIterationControl()
 {
 	// p q minv maxv
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%20g %6d %20g %6d %10g %6d %10g %6d"), 
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%20g %6d %20g %6d %10g %6d %10g %6d %4d"), 
 																			m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
 																			m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
 																			m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),
-																			m_IterationControl.m_MinV.GetDiff(), m_IterationControl.m_MinV.GetId());
+																			m_IterationControl.m_MinV.GetDiff(), m_IterationControl.m_MinV.GetId(),
+																			m_IterationControl.m_nQviolated);
 }
