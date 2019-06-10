@@ -157,6 +157,135 @@ namespace DFW2
 		static const _TCHAR *m_cszSz;
 	};
 
+	// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько
+	// включенных параллельных ветвей эквивалентным Y. Эти два параметра - все что нужно
+	// чтобы рассчитать небаланс узла и производные для смежных узлов
+	struct _VirtualBranch
+	{
+		cplx Y;
+		CDynaNodeBase *pNode;
+	};
+
+	// маппинг узла в строки матрица
+	struct _MatrixInfo
+	{
+		size_t nRowCount;														// количество элементов в строке матрицы
+		size_t nBranchCount;													// количество виртуальных ветвей от узла (включая БУ)
+		CDynaNodeBase *pNode;													// узел, к которому относится данное Info
+		_VirtualBranch *pBranches;												// список виртуальных ветвей узла
+		ptrdiff_t m_nPVSwitchCount;												// счетчик переключений PV-PQ
+		double m_dImbP, m_dImbQ;												// небалансы по P и Q
+		bool bVisited;															// признак просмотра для графовых алгоритмов
+		_MatrixInfo::_MatrixInfo() : nRowCount(0),
+			nBranchCount(0),
+			m_nPVSwitchCount(0),
+			bVisited(false)
+		{}
+	};
+
+	typedef vector<_MatrixInfo*> MATRIXINFO;
+	typedef MATRIXINFO::iterator MATRIXINFOITR;
+	typedef list<_MatrixInfo*> QUEUE;
+
+	class _MaxNodeDiff
+	{
+	protected:
+		CDynaNodeBase *m_pNode;
+		double m_dDiff;
+		typedef bool (OperatorFunc)(double lhs, double rhs);
+
+		void UpdateOp(CDynaNodeBase *pNode, double dValue, OperatorFunc OpFunc)
+		{
+			if (pNode)
+			{
+				if (m_pNode)
+				{
+					if (OpFunc(dValue, m_dDiff))
+					{
+						m_pNode = pNode;
+						m_dDiff = dValue;
+					}
+				}
+				else
+				{
+					m_pNode = pNode;
+					m_dDiff = dValue;
+				}
+			}
+			else
+				_ASSERTE(pNode);
+		}
+
+	public:
+		_MaxNodeDiff() : m_pNode(nullptr),
+			m_dDiff(0.0)
+		{}
+
+		ptrdiff_t GetId()
+		{
+			if (m_pNode)
+				return m_pNode->GetId();
+			return -1;
+		}
+
+		double GetDiff()
+		{
+			if (GetId() >= 0)
+				return m_dDiff;
+			return -1.0;
+		}
+
+		void UpdateMin(CDynaNodeBase *pNode, double Value)
+		{
+			UpdateOp(pNode, Value, [](double lhs, double rhs) -> bool { return lhs < rhs; });
+		}
+
+		void UpdateMax(CDynaNodeBase *pNode, double Value)
+		{
+			UpdateOp(pNode, Value, [](double lhs, double rhs) -> bool { return lhs > rhs; });
+		}
+
+		void UpdateMaxAbs(CDynaNodeBase *pNode, double Value)
+		{
+			UpdateOp(pNode, Value, [](double lhs, double rhs) -> bool { return fabs(lhs) > fabs(rhs); });
+		}
+	};
+
+	struct _IterationControl
+	{
+		_MaxNodeDiff m_MaxImbP;
+		_MaxNodeDiff m_MaxImbQ;
+		_MaxNodeDiff m_MaxV;
+		_MaxNodeDiff m_MinV;
+		ptrdiff_t m_nQviolated;
+		_IterationControl() :m_nQviolated(0)
+		{}
+
+		bool Converged(double m_dToleratedImb)
+		{
+			return fabs(m_MaxImbP.GetDiff()) < m_dToleratedImb && fabs(m_MaxImbQ.GetDiff()) < m_dToleratedImb && m_nQviolated == 0;
+		}
+
+		void Reset()
+		{
+			*this = _IterationControl();
+		}
+
+		void Update(_MatrixInfo *pMatrixInfo)
+		{
+			if (pMatrixInfo && pMatrixInfo->pNode)
+			{
+				m_MaxImbP.UpdateMaxAbs(pMatrixInfo->pNode, pMatrixInfo->m_dImbP);
+				m_MaxImbQ.UpdateMaxAbs(pMatrixInfo->pNode, pMatrixInfo->m_dImbQ);
+				double VdVnom = pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom;
+				m_MaxV.UpdateMax(pMatrixInfo->pNode, VdVnom);
+				m_MinV.UpdateMin(pMatrixInfo->pNode, VdVnom);
+			}
+			else
+				_ASSERTE(pMatrixInfo && pMatrixInfo->pNode);
+		}
+	};
+
 	class CDynaNodeContainer : public CDeviceContainer
 	{
 	protected:
@@ -170,8 +299,11 @@ namespace DFW2
 		bool CreateSuperNodes();
 		void CalcAdmittances(bool bSeidell);
 		void SwitchLRCs(bool bSwitchToDynamicLRC);
+		_IterationControl m_IterationControl;
+		void DumpIterationControl();
 		friend class CLoadFlow;
 	public:
+		_IterationControl& IterationControl();
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();
 		bool ProcessTopology();
@@ -180,5 +312,6 @@ namespace DFW2
 		void ProcessTopologyRequest();
 		bool m_bDynamicLRC;
 	};
+
 }
 

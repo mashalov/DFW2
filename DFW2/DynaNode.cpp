@@ -728,13 +728,13 @@ bool CDynaNodeContainer::LULF()
 		
 	for (ptrdiff_t nIteration = 0; nIteration < 200; nIteration++)
 	{
+		m_IterationControl.Reset();
+
 		ppDiags = pDiags;
 		pB = B;
 
 		_ftprintf(fnode, _T("\n%td;"), nIteration);
 		_ftprintf(fgen, _T("\n%td;"), nIteration);
-
-		CDynaNodeBase *pdVmax = NULL;		// указатель на узел с максимальным изменением напряжения
 
 		// проходим по узлам вне зависимости от их состояния, параллельно идем по диагонали матрицы
 		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++, ppDiags++)
@@ -857,7 +857,6 @@ ptrdiff_t refactorOK = 1;
 			// решаем систему
 			klu_z_tsolve(Symbolic, Numeric, nNodeCount, 1, B, 0, &Common);
 			double *pB = B;
-			double dVmax = 0.0;
 
 			for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
 			{
@@ -877,24 +876,15 @@ ptrdiff_t refactorOK = 1;
 				
 				// считаем изменение напряжения узла между итерациями и находим
 				// самый изменяющийся узел
-				double oldV = fabs(pNode->V/pNode->Vold - 1.0);
-				if (pdVmax)
-				{
-					if (oldV > dVmax)
-					{
-						dVmax = oldV;
-						pdVmax = pNode;
-					}
-				}
-				else
-				{
-					pdVmax = pNode;
-					dVmax = oldV;
-				}
+
+				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
 			}
-			if (dVmax < m_pDynaModel->GetRtolLULF())
+
+			DumpIterationControl();
+			
+			if (fabs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
 			{
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszLULFConverged, dVmax, nIteration));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
 				break;
 			}
 		}
