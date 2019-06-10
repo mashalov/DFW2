@@ -380,6 +380,23 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	return bRes;
 }
 
+_IterationControl& CDynaNodeContainer::IterationControl()
+{
+	return m_IterationControl;
+}
+
+void CDynaNodeContainer::DumpIterationControl()
+{
+	// p q minv maxv
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%20g %6d %20g %6d %10g %6d %10g %6d %4d"),
+	m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
+	m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
+	m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),
+	m_IterationControl.m_MinV.GetDiff(), m_IterationControl.m_MinV.GetId(),
+	m_IterationControl.m_nQviolated);
+}
+
+
 bool CDynaNodeContainer::ProcessTopology()
 {
 	bool bRes = false;

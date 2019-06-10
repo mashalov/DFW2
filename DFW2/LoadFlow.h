@@ -11,117 +11,6 @@ namespace DFW2
 	{
 	public:
 
-		// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько
-		// включенных параллельных ветвей эквивалентным Y. Эти два параметра - все что нужно
-		// чтобы рассчитать небаланс узла и производные для смежных узлов
-		struct _VirtualBranch
-		{
-			cplx Y;
-			CDynaNodeBase *pNode;
-		};
-
-		// маппинг узла в строки матрица
-		struct _MatrixInfo
-		{
-			size_t nRowCount;														// количество элементов в строке матрицы
-			size_t nBranchCount;													// количество виртуальных ветвей от узла (включая БУ)
-			CDynaNodeBase *pNode;													// узел, к которому относится данное Info
-			_VirtualBranch *pBranches;												// список виртуальных ветвей узла
-			ptrdiff_t m_nPVSwitchCount;												// счетчик переключений PV-PQ
-			double m_dImbP, m_dImbQ;												// небалансы по P и Q
-			bool bVisited;															// признак просмотра для графовых алгоритмов
-			_MatrixInfo::_MatrixInfo() : nRowCount(0),
-				nBranchCount(0),
-				m_nPVSwitchCount(0),
-				bVisited(false)
-			{}
-		};
-
-		typedef vector<_MatrixInfo*> MATRIXINFO;
-		typedef MATRIXINFO::iterator MATRIXINFOITR;
-		typedef list<_MatrixInfo*> QUEUE;
-
-		class _MaxNodeDiff
-		{
-		protected:
-			_MatrixInfo *m_pMatrixInfo;
-			double m_dDiff;
-			typedef bool (OperatorFunc)(double lhs, double rhs);
-
-			void UpdateOp(_MatrixInfo* pMatrixInfo, double dValue, OperatorFunc OpFunc)
-			{
-				if (pMatrixInfo && pMatrixInfo->pNode)
-				{
-					if (m_pMatrixInfo)
-					{
-						_ASSERTE(m_pMatrixInfo->pNode);
-						if (OpFunc(dValue, m_dDiff))
-						{
-							m_pMatrixInfo = pMatrixInfo;
-							m_dDiff = dValue;
-						}
-					}
-					else
-					{
-						m_pMatrixInfo = pMatrixInfo;
-						m_dDiff = dValue;
-					}
-				}
-				else
-					_ASSERTE(pMatrixInfo && pMatrixInfo->pNode);
-			}
-
-		public:
-			_MaxNodeDiff() : m_pMatrixInfo(nullptr),
-				m_dDiff(0.0)
-			{}
-
-			ptrdiff_t GetId()
-			{
-				if (m_pMatrixInfo && m_pMatrixInfo->pNode)
-					return m_pMatrixInfo->pNode->GetId();
-				return -1;
-			}
-
-			double GetDiff()
-			{
-				if (GetId() >= 0)
-					return m_dDiff;
-				return -1.0;
-			}
-
-			void UpdateMin(_MatrixInfo *pMatrixInfo, double Value)
-			{
-				UpdateOp(pMatrixInfo, Value, [](double lhs, double rhs) -> bool { return lhs < rhs; });
-			}
-
-			void UpdateMax(_MatrixInfo *pMatrixInfo, double Value)
-			{
-				UpdateOp(pMatrixInfo, Value, [](double lhs, double rhs) -> bool { return lhs > rhs; });
-			}
-
-			void UpdateMaxAbs(_MatrixInfo *pMatrixInfo, double Value)
-			{
-				UpdateOp(pMatrixInfo, Value, [](double lhs, double rhs) -> bool { return fabs(lhs) > fabs(rhs) ; });
-			}
-		};
-
-		struct _IterationControl
-		{
-			_MaxNodeDiff m_MaxImbP;
-			_MaxNodeDiff m_MaxImbQ;
-			_MaxNodeDiff m_MaxV;
-			_MaxNodeDiff m_MinV;
-			ptrdiff_t m_nQviolated;
-			_IterationControl() :m_nQviolated(0)
-							{}
-
-			bool Converged(double m_dToleratedImb)
-			{
-				return fabs(m_MaxImbP.GetDiff()) < m_dToleratedImb && fabs(m_MaxImbQ.GetDiff()) < m_dToleratedImb && m_nQviolated == 0;
-			}
-		};
-
 		struct Parameters
 		{
 			double m_Imb;							// допустимый небаланс мощности
@@ -174,11 +63,6 @@ namespace DFW2
 		KLU_common Common;
 
 		Parameters m_Parameters;
-		_IterationControl m_IterationControl;
-
-		void ResetIterationControl();
-		void UpdateIterationControl(_MatrixInfo *pMatrixInfo);
-		void DumpIterationControl();
 		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
 		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);
 		void GetNodeImb(_MatrixInfo *pMatrixInfo);
