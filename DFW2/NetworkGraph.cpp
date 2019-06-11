@@ -86,6 +86,10 @@ bool CDynaModel::PrepareGraph()
 	bool bRes = false;
 	DEVICEVECTORITR it;
 
+	// сбрасываем обработку топологии
+	// после импорта данных, в которых могли быть отключенные узлы и ветви
+	sc.m_bProcessTopology = false;
+
 	if (Branches.Count() && Nodes.Count())
 	{
 		bRes = true;
@@ -388,12 +392,13 @@ _IterationControl& CDynaNodeContainer::IterationControl()
 void CDynaNodeContainer::DumpIterationControl()
 {
 	// p q minv maxv
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%20g %6d %20g %6d %10g %6d %10g %6d %4d"),
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%20g %6d %20g %6d %10g %6d %10g %6d %4d %10g"),
 	m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
 	m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
 	m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),
 	m_IterationControl.m_MinV.GetDiff(), m_IterationControl.m_MinV.GetId(),
-	m_IterationControl.m_nQviolated);
+	m_IterationControl.m_nQviolated,
+	m_IterationControl.m_ImbRatio);
 }
 
 

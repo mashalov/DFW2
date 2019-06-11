@@ -629,18 +629,22 @@ bool CLoadFlow::Run()
 
 	_MatrixInfo **ppSwitch = new _MatrixInfo *[m_nMatrixSize];
 
+	double ImbSqOld = 0.0;
+	double ImbSq = 0.0;
+
 	while(1)
 	{
 		++it;
 		_MatrixInfo **ppSwitchEnd = ppSwitch;
 		pNodes->m_IterationControl.Reset();
+		ImbSqOld = ImbSq;
+		ImbSq = 0.0;
+
 		// считаем небаланс по всем узлам кроме БУ
 		_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
 		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			if (it > 10 && pNode->GetId() == 4349)
-				it = it;
 			GetNodeImb(pMatrixInfo);
 			double Qg = pNode->Qg + pMatrixInfo->m_dImbQ;
 			switch (pNode->m_eLFNodeType)
@@ -679,6 +683,7 @@ bool CLoadFlow::Run()
 				break;
 			}
 			pNodes->IterationControl().Update(pMatrixInfo);
+			ImbSq += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
 		}
 
 		// досчитываем небалансы в БУ
@@ -690,10 +695,12 @@ bool CLoadFlow::Run()
 			pNode->Qg += pMatrixInfo->m_dImbQ;
 		}
 
+		pNodes->IterationControl().m_ImbRatio = ImbSq;
 		pNodes->DumpIterationControl();
 
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
+
 		if (it > m_Parameters.m_nMaxIterations)
 		{
 			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszNoLFConvergence);
@@ -745,6 +752,22 @@ bool CLoadFlow::Run()
 		}
 
 		BuildMatrix();
+
+		ImbSq = 0.0;
+		for (double *pb = b;  pb < b + m_nMatrixSize ; pb++)
+			ImbSq += *pb * *pb;
+
+		double dStep = 1.0;
+
+		if (ImbSqOld > 0.0 && ImbSq > 0.0)
+		{
+			double ImbSqRatio = ImbSq / ImbSqOld;
+			if (ImbSqRatio > 1.0)
+			{
+				dStep = 1.0 / ImbSqRatio;
+			}
+		}
+
 		KLU_numeric *Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
 
 		int nmx = 0;
@@ -773,7 +796,7 @@ bool CLoadFlow::Run()
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			pNode->Delta -= b[pNode->A(0)];
-			pNode->V -= b[pNode->A(0) + 1];
+			pNode->V -= b[pNode->A(0) + 1] ;
 			pNode->UpdateVreVim();
 		}
 	}
