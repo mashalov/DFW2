@@ -503,6 +503,12 @@ bool CLoadFlow::Seidell()
 				pNodes->IterationControl().Update(pMatrixInfo);
 		}
 
+		if (!CheckLF())
+		{
+			bRes = false;
+			break;
+		}
+
 		pNodes->DumpIterationControl();
 
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
@@ -634,6 +640,12 @@ bool CLoadFlow::Run()
 
 	while(1)
 	{
+		if (!CheckLF())
+		{
+			bRes = false;
+			break;
+		}
+
 		++it;
 		_MatrixInfo **ppSwitchEnd = ppSwitch;
 		pNodes->m_IterationControl.Reset();
@@ -703,7 +715,7 @@ bool CLoadFlow::Run()
 
 		if (it > m_Parameters.m_nMaxIterations)
 		{
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszNoLFConvergence);
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszLFNoConvergence);
 			bRes = false;
 			break;
 		}
@@ -816,4 +828,62 @@ bool CLoadFlow::Run()
 	
 	pNodes->SwitchLRCs(true);
   	return bRes;
+}
+
+struct NodePair
+{
+	const CDynaNodeBase *pNodeIp;
+	const CDynaNodeBase *pNodeIq;
+	bool operator < (const NodePair& rhs) const
+	{
+		ptrdiff_t nDiff = pNodeIp - rhs.pNodeIp;
+
+		if (!nDiff)
+			return pNodeIq < rhs.pNodeIq;
+
+		return nDiff < 0;
+	}
+
+	NodePair(const CDynaNodeBase *pIp, const CDynaNodeBase *pIq) : pNodeIp(pIp), pNodeIq(pIq)
+	{
+		if (pIp > pIq)
+			swap(pNodeIp, pNodeIq);
+	}
+};
+
+
+bool CLoadFlow::CheckLF()
+{
+	bool bRes = true;
+
+	set <NodePair> ReportedBranches;
+
+	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	{
+		CDynaNodeBase *pNode = pMatrixInfo->pNode;
+		double dV = pNode->V / pNode->Unom;
+		if (dV > 2.0)
+		{
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszLFNodeVTooHigh, pNode->GetVerbalName(), dV);
+			bRes = false;
+		}
+		else if (dV < 0.5)
+		{
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszLFNodeVTooLow, pNode->GetVerbalName(), dV);
+			bRes = false;
+		}
+
+		for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+		{
+			double dDelta = pNode->Delta - pBranch->pNode->Delta;
+
+			if (dDelta > M_PI_2 || dDelta < -M_PI_2)
+			{
+				bRes = false;
+				if (ReportedBranches.insert(NodePair(pNode, pBranch->pNode)).second)
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszLFBranchAngleExceeds90, pNode->GetVerbalName(), pBranch->pNode->GetVerbalName(), dDelta * 180.0 / M_PI);
+			}
+		}
+	}
+	return bRes;
 }

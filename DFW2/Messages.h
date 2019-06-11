@@ -106,7 +106,11 @@ namespace DFW2
 		static const _TCHAR* m_cszLULFConverged;
 		static const _TCHAR* m_cszLFRunningNewton;
 		static const _TCHAR* m_cszLFRunningSeidell;
-		static const _TCHAR* m_cszNoLFConvergence;
+		static const _TCHAR* m_cszLFNoConvergence;
+		static const _TCHAR* m_cszLFNodeVTooHigh;
+		static const _TCHAR* m_cszLFNodeVTooLow;
+		static const _TCHAR* m_cszLFBranchAngleExceeds90;
+
 	};
 }
 

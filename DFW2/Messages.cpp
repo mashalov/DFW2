@@ -93,8 +93,10 @@ const _TCHAR* CDFW2Messages::m_cszMemoryAllocError = _T("Ошибка распр
 const _TCHAR* CDFW2Messages::m_cszLULFConverged = _T("Линейный метод сошелся с погрешностью %g за %d итераций");
 const _TCHAR* CDFW2Messages::m_cszLFRunningNewton = _T("Расчет УР методом Ньютона");
 const _TCHAR* CDFW2Messages::m_cszLFRunningSeidell = _T("Расчет УР методом Зейделя");
-const _TCHAR* CDFW2Messages::m_cszNoLFConvergence = _T("Ну удалось сбалансировать установившийся режим");
-
+const _TCHAR* CDFW2Messages::m_cszLFNoConvergence = _T("Ну удалось сбалансировать установившийся режим");
+const _TCHAR* CDFW2Messages::m_cszLFNodeVTooHigh = _T("Недопустимое напряжение в узле %s - %g номинального");
+const _TCHAR* CDFW2Messages::m_cszLFNodeVTooLow = CDFW2Messages::m_cszLFNodeVTooHigh;
+const _TCHAR* CDFW2Messages::m_cszLFBranchAngleExceeds90 = _T("Угол по связи %s - %s превысил 90 град - %g");
 
 
 
