@@ -39,6 +39,7 @@ namespace DFW2
 		bool Seidell();
 		bool BuildMatrix();
 		bool Start();
+		bool CheckLF();
 
 		static bool NodeInMatrix(CDynaNodeBase *pNode);
 				
