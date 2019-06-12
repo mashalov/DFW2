@@ -69,6 +69,10 @@ namespace DFW2
 
 		double Delta;
 		double V;
+
+#ifdef _DEBUG
+		double Vrastr, Deltarastr, Qgrastr, Pnrrastr, Qnrrastr;
+#endif
 				
 		double Pn,Qn,Pg,Qg,Pnr,Qnr;
 		double G,B, Gr0, Br0;

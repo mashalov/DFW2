@@ -238,6 +238,13 @@ bool CLoadFlow::Start()
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+#ifdef _DEBUG
+		pNode->Vrastr = pNode->V;
+		pNode->Deltarastr = pNode->Delta;
+		pNode->Qgrastr = pNode->Qg;
+		pNode->Pnrrastr = pNode->Pn;
+		pNode->Qnrrastr = pNode->Qn;
+#endif
 		if (pNode->IsStateOn())
 		{
 			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
@@ -616,7 +623,8 @@ bool CLoadFlow::Run()
 {
 	m_Parameters.m_bFlat = true;
 	m_Parameters.m_bStartup = true;
-
+	m_Parameters.m_Imb = m_pDynaModel->GetAtol() * 0.1;
+	
 	bool bRes = Start();
 	bRes = bRes && Estimate();
 	if (!bRes)
@@ -814,17 +822,76 @@ bool CLoadFlow::Run()
 	}
 
 	delete ppSwitch;
+
+#ifdef _DEBUG
+
 	ATLTRACE(_T("\n%g %g"), m_pMatrixInfoEnd->pNode->Pg, m_pMatrixInfoEnd->pNode->Qg);
 	FILE *s;
 	fopen_s(&s, "c:\\tmp\\nodes.csv", "w+");
+
+	CDynaNodeBase *pNodeMaxV(nullptr);
+	CDynaNodeBase *pNodeMaxDelta(nullptr);
+	CDynaNodeBase *pNodeMaxQg(nullptr);
+	CDynaNodeBase *pNodeMaxPnr(nullptr);
+	CDynaNodeBase *pNodeMaxQnr(nullptr);
+
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		if (pNode->IsStateOn())
+		{
+			double mx = fabs(pNode->V - pNode->Vrastr);
+			if (pNodeMaxV)
+			{
+				if(mx > fabs(pNodeMaxV->V - pNodeMaxV->Vrastr))
+					pNodeMaxV = pNode;
+			}
+			else
+				pNodeMaxV = pNode;
+
+			mx = fabs(pNode->Delta - pNode->Deltarastr);
+			if (pNodeMaxDelta)
+			{
+				if (mx > fabs(pNodeMaxDelta->V - pNodeMaxDelta->Vrastr))
+					pNodeMaxDelta = pNode;
+			}
+			else
+				pNodeMaxDelta = pNode;
+
+
+			mx = fabs(pNode->Qg - pNode->Qgrastr);
+			if (pNodeMaxQg)
+			{
+				if (mx > fabs(pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr))
+					pNodeMaxQg = pNode;
+			}
+			else
+				pNodeMaxQg = pNode;
+
+			mx = fabs(pNode->Qnr - pNode->Qnrrastr);
+			if (pNodeMaxQnr)
+			{
+				if (mx > fabs(pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr))
+					pNodeMaxQnr = pNode;
+			}
+			else
+				pNodeMaxQnr = pNode;
+
+			mx = fabs(pNode->Pnr - pNode->Pnrrastr);
+			if (pNodeMaxPnr)
+			{
+				if (mx > fabs(pNodeMaxPnr->Pnr - pNodeMaxQnr->Pnrrastr))
+					pNodeMaxPnr = pNode;
+			}
+			else
+				pNodeMaxPnr = pNode;
+		}
 		//ATLTRACE("\n %20f %20f %20f %20f %20f %20f", pNode->V, pNode->Delta * 180 / M_PI, pNode->Pg, pNode->Qg, pNode->Pnr, pNode->Qnr);
 		fprintf(s, "%d;%20g;%20g\n", pNode->GetId(), pNode->V, pNode->Delta * 180 / M_PI);
 	}
 
 	fclose(s);
+#endif
 	
 	pNodes->SwitchLRCs(true);
   	return bRes;
