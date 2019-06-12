@@ -935,6 +935,8 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 			std::swap(pNode->Qn, pNode->Qnr);
 			if (!m_bDynamicLRC)
 				pNode->V0 = pNode->Unom;
+			else
+				pNode->V0 = pNode->V;
 		}
 	}
 }
