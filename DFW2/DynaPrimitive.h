@@ -71,7 +71,9 @@ namespace DFW2
 																												  m_Input(Input), 
 																												  m_Output(pOutput),
 																												  m_OutputEquationIndex(nOutputIndex)
-																												  {}
+		{
+			*m_Output = 0.0;
+		}
 		virtual ~CDynaPrimitive() {}
 
 		virtual bool BuildEquations(CDynaModel *pDynaModel) = 0;
