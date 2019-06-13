@@ -13,6 +13,7 @@ void CDynaModel::ReportKLUError()
 		Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszKLUOk);
 		break;
 	case 1:
+		DumpMatrix();
 		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszKLUSingular);
 		break;
 	case -2:
@@ -408,6 +409,34 @@ csi cs_gatxpy(const cs *A, const double *x, double *y)
 		}
 	}
 	return (1);
+}
+
+void CDynaModel::DumpMatrix()
+{
+	FILE *fmatrix;
+	if (!_tfopen_s(&fmatrix, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
+	{
+		ptrdiff_t *pAi = Ap;
+		double *pAx = Ax;
+		ptrdiff_t nRow = 0;
+		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
+		{
+			ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
+			while (pAi < pAiend)
+			{
+				_ftprintf_s(fmatrix, _T("%10d %10d     %30g"), nRow, *pAi, *pAx);
+				RightVector *pRowVector = pRightVector + nRow;
+				RightVector *pColVector = pRightVector + *pAi;
+				CDevice *pRowDevice = pRowVector->pDevice;
+				CDevice *pColDevice = pColVector->pDevice;
+				_ftprintf_s(fmatrix, _T("    %50s/%30s %50s/%30s"), pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
+												  				    pColDevice->GetVerbalName(), pColDevice->VariableNameByPtr(pColVector->pValue));
+				_ftprintf_s(fmatrix, _T("    %30g\n"), *pRowVector->pValue);
+				pAx++; pAi++;
+			}
+		}
+		fclose(fmatrix);
+	}
 }
 
 //									   l0			l1			l2			Cq
