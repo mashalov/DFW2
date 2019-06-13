@@ -430,19 +430,30 @@ bool CDynaModel::NewtonUpdate()
 			double lambdamin = 0.1;
 			bool bLineSearch = false;
 
+			
 			/*
+
+			Старый вариант определения расходимости 
+
 			if ((sc.nNewtonIteration > 5 && sc.Hmin / sc.m_dCurrentH < 0.98) ||
 				(sc.nNewtonIteration > 2 && sc.Newton.dMaxErrorVariable > 1.0))
 					sc.m_bNewtonDisconverging = true;
-					*/
+			*/
 
-			if (sc.Hmin / sc.m_dCurrentH > 0.99)
+			if (sc.m_bDiscontinuityMode)
+			{
+				// для обработки разрыва шаг линейного поиска делаем больше чем минимальный шаг
+				// (хотя может стоит его сделать таким же, как и для минимального шага,
+				// но будет сходиться очень медленно)
+				lambdamin = 1E-4;
+				bLineSearch = true;
+			}
+			else if (sc.Hmin / sc.m_dCurrentH > 0.99)
 			{
 				// если шаг снижается до минимального 
 				// переходим на Ньютон по параметру
 				lambdamin = sc.Hmin;
  				bLineSearch = true;
-				
 			}
 			else
 			{
@@ -484,10 +495,6 @@ bool CDynaModel::NewtonUpdate()
 							gs1 += yv[s] * pRb[s];
 						delete yv;
 						double lambda = -0.5 * gs1 / (g1 - g0 - gs1);
-
-						if (sc.m_bDiscontinuityMode)
-							lambdamin = sc.Hmin;
-
 
 						if (lambda > lambdamin && lambda < 1.0)
 						{
