@@ -466,6 +466,7 @@ namespace DFW2
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
+		void DumpMatrix();
 
 
 		FILE *fResult, *m_pLogFile;
