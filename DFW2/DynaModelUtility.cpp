@@ -420,6 +420,9 @@ void CDynaModel::DumpMatrix()
 		double *pAx = Ax;
 		ptrdiff_t nRow = 0;
 		set<ptrdiff_t> BadNumbers, FullZeros;
+		vector<bool> NonZeros;
+		NonZeros.resize(m_nMatrixSize, false);
+
 		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
 		{
 			ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
@@ -435,7 +438,11 @@ void CDynaModel::DumpMatrix()
 				if (isnan(*pAx) || isinf(*pAx))
 					BadNumbers.insert(nRow);
 				if (fabs(*pAx) > 1E-7)
+				{
 					bAllZeros = false;
+					NonZeros[*pAi] = true;
+				}
+
 				
 				_ftprintf_s(fmatrix, _T("    %50s/%30s %50s/%30s"), pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
 												  				    pColDevice->GetVerbalName(), pColDevice->VariableNameByPtr(pColVector->pValue));
@@ -447,10 +454,15 @@ void CDynaModel::DumpMatrix()
 		}
 
 		for (const auto& it : BadNumbers)
-			_ftprintf_s(fmatrix, _T("Bad Number : %d\n"), it);
+			_ftprintf_s(fmatrix, _T("Bad Number in Row: %d\n"), it);
 
 		for (const auto& it : FullZeros)
-			_ftprintf_s(fmatrix, _T("Full Zero : %d\n"), it);
+			_ftprintf_s(fmatrix, _T("Full Zero Row : %d\n"), it);
+
+		for (auto& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
+			if(!*it)
+				_ftprintf_s(fmatrix, _T("Full Zero Column: %d\n"), it - NonZeros.begin());
+
 
 		fclose(fmatrix);
 	}
