@@ -138,7 +138,7 @@ bool CDynaModel::BuildRightHand()
 		pBb++;
 	}
 	memcpy(pRightHandBackup, b, sizeof(double) * m_nMatrixSize);
-	sc.dRightHandNorm *= 0.5;
+	//sc.dRightHandNorm *= 0.5;
 	bRes = bRes && m_bStatus;
 
 	return bRes;

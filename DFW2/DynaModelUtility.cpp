@@ -422,8 +422,11 @@ void CDynaModel::DumpMatrix()
 		set<ptrdiff_t> BadNumbers, FullZeros;
 		vector<bool> NonZeros;
 		vector<bool> Diagonals;
+		vector<double> Expanded;
+
 		NonZeros.resize(m_nMatrixSize, false);
 		Diagonals.resize(m_nMatrixSize, false);
+		Expanded.resize(m_nMatrixSize, 0.0);
 
 		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
 		{
@@ -452,7 +455,7 @@ void CDynaModel::DumpMatrix()
 				
 				_ftprintf_s(fmatrix, _T("    %50s/%30s %50s/%30s"), pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
 												  				    pColDevice->GetVerbalName(), pColDevice->VariableNameByPtr(pColVector->pValue));
-				_ftprintf_s(fmatrix, _T("    %30g\n"), *pRowVector->pValue);
+				_ftprintf_s(fmatrix, _T("    %30g %30g\n"), *pRowVector->pValue, *pColVector->pValue);
 				pAx++; pAi++;
 			}
 			if (bAllZeros)
@@ -474,6 +477,66 @@ void CDynaModel::DumpMatrix()
 				_ftprintf_s(fmatrix, _T("Zero Diagonal: %d\n"), it - Diagonals.begin());
 
 
+
+		// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
+		// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
+
+		pAi = Ap; pAx = Ax; nRow = 0;
+		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
+		{
+			fill(Expanded.begin(), Expanded.end(), 0.0);
+
+			ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
+			bool bAllZeros = true;
+			double normi = 0.0;
+
+			set < pair<int, double> > RowI;
+
+			while (pAi < pAiend)
+			{
+				Expanded[*pAi] = *pAx;
+				normi += *pAx * *pAx;
+
+				RowI.insert(make_pair(*pAi, *pAx));
+
+				pAx++; pAi++;
+			}
+
+			ptrdiff_t nRows = 0;
+			ptrdiff_t *pAis = Ap;
+			double *pAxs = Ax;
+			for (ptrdiff_t *pAps = Ai; pAps < Ai + m_nMatrixSize; pAps++, nRows++)
+			{
+				ptrdiff_t *pAiends = pAis + *(pAps + 1) - *pAps;
+				double normj = 0.0;
+				double inner = 0.0;
+
+				set < pair<int, double> > RowJ;
+
+				while (pAis < pAiends)
+				{
+					normj += *pAxs * *pAxs;
+					inner += Expanded[*pAis] * *pAxs;
+
+					RowJ.insert(make_pair(*pAis, *pAxs));
+
+					pAis++; pAxs++;
+				}
+				if (nRow != nRows)
+				{
+					double Ratio = inner * inner / normj / normi;
+					if (fabs(Ratio - 1.0) < 1E-5)
+					{
+						_ftprintf_s(fmatrix, _T("Linear dependent rows %10d %10d with %g\n"), nRow, nRows, Ratio);
+						for(auto & it : RowI)
+							_ftprintf_s(fmatrix, _T("%10d %10d     %30g\n"), nRow, it.first, it.second);
+						for (auto & it : RowJ)
+							_ftprintf_s(fmatrix, _T("%10d %10d     %30g\n"), nRows, it.first, it.second);
+					}
+
+				}
+			}
+		}
 		fclose(fmatrix);
 	}
 }
