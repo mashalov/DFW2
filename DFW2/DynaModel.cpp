@@ -620,6 +620,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 			if (SolveLinearSystem())
 			{
+	//			DumpMatrix();
 				bmax = 0.0;
 
 				for (int r = 0; r < m_nMatrixSize; r++)
