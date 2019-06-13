@@ -97,6 +97,8 @@ bool CDynaModel::Run()
 	m_Parameters.m_bLogToConsole = false;
 	m_Parameters.m_bLogToFile = true;
 
+	m_Parameters.m_bDisableResultsWriter = false;
+
 	//m_Parameters.m_dOutStep = 1E-5;
 	m_Parameters.m_dRefactorByHRatio = 1.5;
 
@@ -131,6 +133,11 @@ bool CDynaModel::Run()
 	*/
 
 #define SMZU
+
+	// Расчет может завалиться внутри цикла, например из-за
+	// сингулярной матрицы, поэтому контролируем
+	// была ли начата запись результатов. Если что-то записали - нужно завершить
+	bool bResultsNeedToBeFinished = false;
 
 	if (bRes)
 	{
@@ -192,7 +199,16 @@ bool CDynaModel::Run()
 		{
 			bRes = bRes && Step();
 			if (!sc.m_bStopCommandReceived)
-				bRes = bRes && WriteResults();
+			{
+				if (bRes)
+				{
+					// если ошибок не было, пишем результаты
+					if (WriteResults())
+						bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
+					else
+						bResultsNeedToBeFinished = bRes = false; // если не записали - сбрасываем признак завершения
+				}
+			}
 			if (WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0)
 				break;
 		}
@@ -201,7 +217,12 @@ bool CDynaModel::Run()
 	if (!bRes)
 		MessageBox(NULL, _T("Failed"), _T("Failed"), MB_OK);
 
-	bRes = bRes && FinishWriteResults(); 
+
+	// вне зависимости от результата завершаем запись результатов
+	// по признаку завершения
+	if (bResultsNeedToBeFinished)
+		if (!FinishWriteResults())
+			bRes = false;	// если завершить не получилось - портим результат
 
 	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps count %d"), sc.nStepsCount);
 	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d Time passed %f"),
@@ -405,67 +426,91 @@ bool CDynaModel::NewtonUpdate()
 		if (ConvTest[0].dCms > 1.0 || ConvTest[1].dCms > 1.0)
 		{
 			sc.RefactorMatrix();
-			if ((sc.nNewtonIteration > 5 && sc.Hmin / sc.m_dCurrentH < 0.98 ) || 
-				(sc.nNewtonIteration > 2 && sc.Newton.dMaxErrorVariable > 1.0) )
+
+			double lambdamin = 0.1;
+			bool bLineSearch = false;
+
+			/*
+			if ((sc.nNewtonIteration > 5 && sc.Hmin / sc.m_dCurrentH < 0.98) ||
+				(sc.nNewtonIteration > 2 && sc.Newton.dMaxErrorVariable > 1.0))
+					sc.m_bNewtonDisconverging = true;
+					*/
+
+			if (sc.Hmin / sc.m_dCurrentH > 0.99)
 			{
-				sc.m_bNewtonDisconverging = true;
+				// если шаг снижается до минимального 
+				// переходим на Ньютон по параметру
+				lambdamin = sc.Hmin;
+ 				bLineSearch = true;
+				
+			}
+			else
+			{
+				// если шаг относительно большой
+				// прерываем итерации Ньютона: проще снизить шаг чем пытаться пройти Ньютоном
+				if(sc.nNewtonIteration > 5)
+					sc.m_bNewtonDisconverging = true;
+				else if(sc.nNewtonIteration > 2 && sc.Newton.dMaxErrorVariable > 1.0)
+					sc.m_bNewtonDisconverging = true;
 			}
 
 			if (!sc.m_bNewtonDisconverging)
 			{
-				double *pRh = new double[m_nMatrixSize];
-				double *pRb = new double[m_nMatrixSize];
-				memcpy(pRh, pRightHandBackup, sizeof(double) * m_nMatrixSize);
-				memcpy(pRb, b, sizeof(double) * m_nMatrixSize);
-				double g0 = sc.dRightHandNorm;
-				BuildRightHand();
-				double g1 = sc.dRightHandNorm;
-
-				if (false && g0 < g1)
+				if (bLineSearch)
 				{
-					double *yv = new double[m_nMatrixSize];
-					ZeroMemory(yv, sizeof(double)*m_nMatrixSize);
-					cs Aj;
-					Aj.i = Ap;
-					Aj.p = Ai;
-					Aj.x = Ax;
-					Aj.m = Aj.n = m_nMatrixSize;
-					Aj.nz = -1;
+					double *pRh = new double[m_nMatrixSize];
+					double *pRb = new double[m_nMatrixSize];
+					memcpy(pRh, pRightHandBackup, sizeof(double) * m_nMatrixSize);
+					memcpy(pRb, b, sizeof(double) * m_nMatrixSize);
+					double g0 = sc.dRightHandNorm;
+					BuildRightHand();
+					double g1 = sc.dRightHandNorm;
 
-					cs_gatxpy(&Aj, pRh, yv);
-
-					double gs1 = 0.0;
-					for (ptrdiff_t s = 0; s < m_nMatrixSize; s++)
-						gs1 += yv[s] * pRb[s];
-					delete yv;
-					double lambda = -0.5 * gs1 / (g1 - g0 - gs1);
-
-					double lambdamin = 0.1;
-					if (sc.m_bDiscontinuityMode)
-						lambdamin = 1E-4;
-
-
-					if (lambda > lambdamin && lambda < 1.0)
+					if (g0 < g1)
 					{
-						pVectorBegin = pRightVector;
-						while (pVectorBegin < pVectorEnd)
-						{
-							double& db = pRb[pVectorBegin - pRightVector];
-							pVectorBegin->Error -= db;
-							pVectorBegin->Error += db * lambda;
-							double l0 = pVectorBegin->Error;
-							l0 *= l[pVectorBegin->EquationType * 2 + (sc.q - 1)][0];
-							*pVectorBegin->pValue = pVectorBegin->Nordsiek[0] + l0;
-							pVectorBegin++;
-						}
-					}
-					else
-						sc.m_bNewtonDisconverging = true;
-				}
+						double *yv = new double[m_nMatrixSize];
+						ZeroMemory(yv, sizeof(double)*m_nMatrixSize);
+						cs Aj;
+						Aj.i = Ap;
+						Aj.p = Ai;
+						Aj.x = Ax;
+						Aj.m = Aj.n = m_nMatrixSize;
+						Aj.nz = -1;
 
-				delete pRh;
-				delete pRb;
-				sc.RefactorMatrix();
+						cs_gatxpy(&Aj, pRh, yv);
+
+						double gs1 = 0.0;
+						for (ptrdiff_t s = 0; s < m_nMatrixSize; s++)
+							gs1 += yv[s] * pRb[s];
+						delete yv;
+						double lambda = -0.5 * gs1 / (g1 - g0 - gs1);
+
+						if (sc.m_bDiscontinuityMode)
+							lambdamin = sc.Hmin;
+
+
+						if (lambda > lambdamin && lambda < 1.0)
+						{
+							pVectorBegin = pRightVector;
+							while (pVectorBegin < pVectorEnd)
+							{
+								double& db = pRb[pVectorBegin - pRightVector];
+								pVectorBegin->Error -= db;
+								pVectorBegin->Error += db * lambda;
+								double l0 = pVectorBegin->Error;
+								l0 *= l[pVectorBegin->EquationType * 2 + (sc.q - 1)][0];
+								*pVectorBegin->pValue = pVectorBegin->Nordsiek[0] + l0;
+								pVectorBegin++;
+							}
+						}
+						else
+							sc.m_bNewtonDisconverging = true;
+					}
+
+					delete pRh;
+					delete pRb;
+					sc.RefactorMatrix();
+				}
 			}
 		}
 		else
@@ -1310,7 +1355,11 @@ void CDynaModel::NewtonFailed()
 
 	sc.CheckAdvance_t0();
 
-	ReInitializeNordsiek();
+	if (sc.Hmin / sc.m_dCurrentH > 0.99)
+		ResetNordsiek();
+	else
+		ReInitializeNordsiek();
+
 	sc.RefactorMatrix();
 	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), sc.q, GetH()));
 }

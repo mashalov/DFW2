@@ -208,6 +208,9 @@ bool CDynaModel::WriteResultsHeaderBinary()
 
 bool CDynaModel::WriteResultsHeader()
 {
+	if (m_Parameters.m_bDisableResultsWriter)
+		return true;
+
 	bool bRes = false;
 	setlocale(LC_ALL, "RU-ru");
 
@@ -250,6 +253,8 @@ bool CDynaModel::WriteResultsHeader()
 bool CDynaModel::WriteResults()
 {
 	bool bRes = true;
+	if (m_Parameters.m_bDisableResultsWriter)
+		return bRes;
 
 	try
 	{
@@ -293,6 +298,9 @@ bool CDynaModel::WriteResults()
 bool CDynaModel::FinishWriteResults()
 {
 	bool bRes = true;
+
+	if (m_Parameters.m_bDisableResultsWriter)
+		return true;
 
 #ifdef _WRITE_CSV
 	fclose(fResult);

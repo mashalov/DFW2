@@ -788,7 +788,7 @@ bool CLoadFlow::Run()
 			}
 		}
 
-		KLU_numeric *Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
+ 		KLU_numeric *Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
 
 		int nmx = 0;
 		for (int i = 1; i < m_nMatrixSize; i++)
