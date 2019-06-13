@@ -421,7 +421,9 @@ void CDynaModel::DumpMatrix()
 		ptrdiff_t nRow = 0;
 		set<ptrdiff_t> BadNumbers, FullZeros;
 		vector<bool> NonZeros;
+		vector<bool> Diagonals;
 		NonZeros.resize(m_nMatrixSize, false);
+		Diagonals.resize(m_nMatrixSize, false);
 
 		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
 		{
@@ -437,10 +439,14 @@ void CDynaModel::DumpMatrix()
 
 				if (isnan(*pAx) || isinf(*pAx))
 					BadNumbers.insert(nRow);
+
 				if (fabs(*pAx) > 1E-7)
 				{
 					bAllZeros = false;
 					NonZeros[*pAi] = true;
+
+					if (nRow == *pAi)
+						Diagonals[nRow] = true;
 				}
 
 				
@@ -462,6 +468,10 @@ void CDynaModel::DumpMatrix()
 		for (auto& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
 			if(!*it)
 				_ftprintf_s(fmatrix, _T("Full Zero Column: %d\n"), it - NonZeros.begin());
+
+		for (auto& it = Diagonals.begin(); it != Diagonals.end(); it++)
+			if (!*it)
+				_ftprintf_s(fmatrix, _T("Zero Diagonal: %d\n"), it - Diagonals.begin());
 
 
 		fclose(fmatrix);
