@@ -37,6 +37,8 @@ void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
 	VreVim = polar(V, Delta);
+	Vre = VreVim.real();
+	Vim = VreVim.imag();
 }
 
 // рассчитывает нагрузку узла с учетом СХН
@@ -83,8 +85,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 			Pg += pGen->P;
 			Qg += pGen->Q;
-			pDynaModel->SetElement(A(0), pGen->A(CDynaPowerInjector::V_P), -1.0);
-			pDynaModel->SetElement(A(1), pGen->A(CDynaPowerInjector::V_Q), -1.0);
+			pDynaModel->SetElement(A(V_DELTA), pGen->A(CDynaPowerInjector::V_P), -1.0);
+			pDynaModel->SetElement(A(V_V), pGen->A(CDynaPowerInjector::V_Q), -1.0);
 		}
 	}
 
@@ -97,73 +99,131 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double Qe = GetSelfImbQ(); 
 		
 	double dPdDelta = 0.0;
-	double dPdV = GetSelfdPdV(); // -2 * V * Yii.real() + dLRCPn;
+	double dPdV = GetSelfdPdV(); 
 	double dQdDelta = 0.0;
-	double dQdV = GetSelfdQdV(); // 2 * V * Yii.imag() + dLRCQn;
+	double dQdV = GetSelfdQdV(); 
 
 	CLinkPtrCount *pBranchLink = GetLink(0);
-	CDevice **ppBranch = NULL;
+	CDevice **ppBranch = nullptr;
 
-	
-	//if (Type)
+	ResetVisited();
+	while (pBranchLink->In(ppBranch))
 	{
+		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
+		// определяем узел на противоположном конце инцидентной ветви
+		CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
+		cplx mult = conj(VreVim);
+		// определяем взаимную проводимость со смежным узлом
+		cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
+
+		mult *= pOppNode->VreVim ** pYkm;
+
+		Pe -= mult.real();
+		Qe += mult.imag();
+
+		// diagonals 2
+
+		dPdDelta -=  mult.imag();
+		dPdV	 += -ZeroDivGuard(mult.real(), V);
+		dQdDelta += -mult.real();
+		dQdV     +=  ZeroDivGuard(mult.imag(), V);
+			
+
+		bool bDup = CheckAddVisited(pOppNode) >= 0;
+		// dP/dDelta
+		pDynaModel->SetElement(A(V_DELTA), pOppNode->A(V_DELTA), mult.imag(), bDup);
+		// dP/dV
+		pDynaModel->SetElement(A(V_DELTA), pOppNode->A(V_V), -ZeroDivGuard(mult.real(), pOppNode->V), bDup);
+		// dQ/dDelta
+		pDynaModel->SetElement(A(V_V), pOppNode->A(V_DELTA), mult.real(), bDup);
+		// dQ/dV
+		pDynaModel->SetElement(A(V_V), pOppNode->A(V_V), ZeroDivGuard(mult.imag(), pOppNode->V), bDup);
+	}
+
+	if (!IsStateOn() || bInMetallicSC)
+	{
+		dQdV = dPdDelta = 1.0;
+		dPdV = dQdDelta = 0.0;
+		Pe = Qe = 0;
+		V = Delta = 0.0;
+	}
+
+	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), dPdDelta);
+	pDynaModel->SetElement(A(V_V), A(V_DELTA), dQdDelta);
+	pDynaModel->SetElement(A(V_DELTA), A(V_V), dPdV);
+	pDynaModel->SetElement(A(V_V), A(V_V), dQdV);
+
+
+
+	double Vre2 = Vre * Vre;
+	double Vim2 = Vim * Vim;
+	double V2 = Vre2 + Vim2;
+
+	if (IsStateOn())
+	{
+		if (pGenLink->m_nCount)
+		{
+			ppGen = nullptr;
+			ResetVisited();
+			while (pGenLink->In(ppGen))
+			{
+				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+
+				pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_P), -Vre / V2);
+				pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_Q), -Vim / V2);
+				pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_P), -Vim / V2);
+				pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_Q),  Vre / V2);
+			}
+		}
+
+		ppBranch = nullptr;
 		ResetVisited();
 		while (pBranchLink->In(ppBranch))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-			// определяем узел на противоположном конце инцидентной ветви
 			CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
-			cplx mult = conj(VreVim);
-			// определяем взаимную проводимость со смежным узлом
 			cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
 
-			mult *= pOppNode->VreVim ** pYkm;
-
-			Pe -= mult.real();
-			Qe += mult.imag();
-
-			// diagonals 2
-
-			dPdDelta -=  mult.imag();
-			dPdV	 += -ZeroDivGuard(mult.real(), V);
-			dQdDelta += -mult.real();
-			dQdV     +=  ZeroDivGuard(mult.imag(), V);
-			
-//			if (pOppNode->Type)
-			{
-				bool bDup = CheckAddVisited(pOppNode) >= 0;
-				{
-					// dP/dDelta
-					pDynaModel->SetElement(A(0), pOppNode->A(0), mult.imag(), bDup);
-					// dP/dV
-					pDynaModel->SetElement(A(0), pOppNode->A(1), -ZeroDivGuard(mult.real(), pOppNode->V), bDup);
-					// dQ/dDelta
-					pDynaModel->SetElement(A(1), pOppNode->A(0), mult.real(), bDup);
-					// dQ/dV
-					pDynaModel->SetElement(A(1), pOppNode->A(1), ZeroDivGuard(mult.imag(), pOppNode->V), bDup);
-				}
-			}
+			bool bDup = CheckAddVisited(pOppNode) >= 0;
+			// dIre /dVre
+			pDynaModel->SetElement(A(V_RE), pOppNode->A(V_RE), -pYkm->real(), bDup);
+			// dIre/dVim
+			pDynaModel->SetElement(A(V_RE), pOppNode->A(V_IM),  pYkm->imag(), bDup);
+			// dIim/dVre
+			pDynaModel->SetElement(A(V_IM), pOppNode->A(V_RE), -pYkm->imag(), bDup);
+			// dIim/dVim
+			pDynaModel->SetElement(A(V_IM), pOppNode->A(V_IM), -pYkm->real(), bDup);
 		}
 
-		if (!IsStateOn() || bInMetallicSC)
-		{
-			dQdV = dPdDelta = 1.0;
-			dPdV = dQdDelta = 0.0;
-			Pe = Qe = 0;
-			V = Delta = 0.0;
-		}
+		double Pgsum = -Pg;
+		double Qgsum = -Qg;
 
-		pDynaModel->SetElement(A(0), A(0), dPdDelta);
-		pDynaModel->SetElement(A(1), A(0), dQdDelta);
-		pDynaModel->SetElement(A(0), A(1), dPdV);
-		pDynaModel->SetElement(A(1), A(1), dQdV);
+		double VreVim2 = 2.0 * Vre * Vim;
+		double V4 = V2 * V2;
+
+		double PgVre2 = Pgsum * Vre2;
+		double PgVim2 = Pgsum * Vim2;
+		double QgVre2 = Qgsum * Vre2;
+		double QgVim2 = Qgsum * Vim2;
+
+		double dIredVre = -Yii.real() + (-PgVre2 + PgVim2 - VreVim2 * Qgsum) / V4;
+		double dIredVim =  Yii.imag() + ( QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
+		double dIimdVre = -Yii.imag() + ( QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
+		double dIimdVim = -Yii.real() + ( PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
+	
+			   
+		pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
+		pDynaModel->SetElement(A(V_RE), A(V_IM), dIredVim);
+		pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
+		pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
+
+
 	}
-//	else
-//	{
-//		Pe = Qe = 0.0;
-//		pDynaModel->SetElement(A(0), A(0), 1.0);
-//		pDynaModel->SetElement(A(1), A(1), 1.0);
-//	}
+	else
+	{
+		pDynaModel->SetElement(A(V_RE), A(V_RE), 1.0);
+		pDynaModel->SetElement(A(V_IM), A(V_IM), 1.0);
+	}
 
 	return pDynaModel->Status();
 }
@@ -194,7 +254,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	double Qe = Qnr - Qg + V * V * Yii.imag();
 
 	CLinkPtrCount *pBranchLink = GetLink(0);
-	CDevice **ppBranch = NULL;
+	CDevice **ppBranch = nullptr;
 
 	double dPdDelta = 0.0;
 
@@ -218,6 +278,40 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	pDynaModel->SetFunction(A(V_DELTA), Pe);
 	pDynaModel->SetFunction(A(V_V), Qe);
+
+
+	double Ire(0.0), Iim(0.0);
+
+	if (IsStateOn())
+	{
+		Ire -= Yii.real() * Vre - Yii.imag() * Vim;
+		Iim -= Yii.imag() * Vre + Yii.real() * Vim;
+
+		double Pk = Pnr - Pg;
+		double Qk = Qnr - Qg;
+
+		ppBranch = nullptr;
+
+		ResetVisited();
+		while (pBranchLink->In(ppBranch))
+		{
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
+			CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
+			cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
+			Ire -= pYkm->real() * pOppNode->Vre - pYkm->imag() * pOppNode->Vim;
+			Iim -= pYkm->imag() * pOppNode->Vre + pYkm->real() * pOppNode->Vim;
+		}
+
+		double V2 = Vre * Vre + Vim * Vim;
+
+		Ire += (Pk * Vre + Qk * Vim) / V2;
+		Iim += (Pk * Vim - Qk * Vre) / V2;
+	}
+
+
+	pDynaModel->SetFunction(A(V_RE), Ire);
+	pDynaModel->SetFunction(A(V_IM), Iim);
+
 	return pDynaModel->Status();
 }
 
@@ -333,6 +427,8 @@ double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	{
 		MAP_VARIABLE(Delta,V_DELTA)
 		MAP_VARIABLE(V, V_V)
+		MAP_VARIABLE(Vre, V_RE)
+		MAP_VARIABLE(Vim, V_IM)
 	}
 	return p;
 }
@@ -1283,7 +1379,7 @@ const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 	props.eDeviceType = DEVTYPE_NODE;
 	props.SetType(DEVTYPE_NODE);
 
-	// к узллу могут быть прилинкованы ветви много к одному
+	// к узлу могут быть прилинкованы ветви много к одному
 	props.AddLinkFrom(DEVTYPE_BRANCH, DLM_MULTI, DPD_SLAVE);
 	// и инжекторы много к одному. Для них узел выступает ведущим
 	props.AddLinkFrom(DEVTYPE_POWER_INJECTOR, DLM_MULTI, DPD_SLAVE);
@@ -1293,6 +1389,8 @@ const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 
 	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA,VARUNIT_RADIANS)));
 	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS)));
 	return props;
 }
 
@@ -1320,6 +1418,8 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");
 const _TCHAR *CDynaNodeBase::m_cszDelta = _T("Delta");
+const _TCHAR *CDynaNodeBase::m_cszVre = _T("Vre");
+const _TCHAR *CDynaNodeBase::m_cszVim = _T("Vim");
 const _TCHAR *CDynaNodeBase::m_cszGsh = _T("gsh");
 const _TCHAR *CDynaNodeBase::m_cszBsh = _T("bsh");
 
