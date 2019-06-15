@@ -64,11 +64,15 @@ namespace DFW2
 		{
 			V_DELTA,
 			V_V,
+			V_RE,
+			V_IM,
 			V_LAST		// последняя переменная (реально не существует) указывает количество уравнений устройства
 		};
 
 		double Delta;
 		double V;
+		double Vre;
+		double Vim;
 
 #ifdef _DEBUG
 		double Vrastr, Deltarastr, Qgrastr, Pnrrastr, Qnrrastr;
@@ -128,6 +132,8 @@ namespace DFW2
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
+		static const _TCHAR *m_cszVre;
+		static const _TCHAR *m_cszVim;
 		static const _TCHAR *m_cszGsh;
 		static const _TCHAR *m_cszBsh;
 	};
@@ -138,8 +144,8 @@ namespace DFW2
 		// здесь переменные состояния добавляются к базовому классу
 		enum VARS
 		{
-			V_LAG = 2,			// дифференциальное уравнение лага скольжения в третьей строке
-			V_S,				// скольжение
+			V_LAG = CDynaNodeBase::V_LAST,			// дифференциальное уравнение лага скольжения в третьей строке
+			V_S,									// скольжение
 			V_LAST
 		};
 
