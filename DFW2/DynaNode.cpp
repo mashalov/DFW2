@@ -36,7 +36,7 @@ CDynaNodeBase::~CDynaNodeBase()
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
-	VreVim = polar(V, Delta);
+	cplx VreVim(polar(V, Delta));
 	Vre = VreVim.real();
 	Vim = VreVim.imag();
 }
@@ -68,13 +68,15 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
-	if (GetId() == 1023 && !pDynaModel->EstimateBuild())
+	if (GetId() == 319 && !pDynaModel->EstimateBuild())
 		bRes = true;
 
 	GetPnrQnr();
 
+	CLinkPtrCount *pBranchLink = GetLink(0);
+	CDevice **ppBranch = nullptr;
 	CLinkPtrCount *pGenLink = GetLink(1);
-	CDevice **ppGen = NULL;
+	CDevice **ppGen = nullptr;
 
 	if (pGenLink->m_nCount)
 	{
@@ -85,8 +87,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 			Pg += pGen->P;
 			Qg += pGen->Q;
-			pDynaModel->SetElement(A(V_DELTA), pGen->A(CDynaPowerInjector::V_P), -1.0);
-			pDynaModel->SetElement(A(V_V), pGen->A(CDynaPowerInjector::V_Q), -1.0);
+			//pDynaModel->SetElement(A(V_DELTA), pGen->A(CDynaPowerInjector::V_P), -1.0);
+			//pDynaModel->SetElement(A(V_V), pGen->A(CDynaPowerInjector::V_Q), -1.0);
 		}
 	}
 
@@ -95,9 +97,9 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
 	//double Qe = Qnr - Qg + V * V * Yii.imag();
 
+	/*
 	double Pe = GetSelfImbP();
 	double Qe = GetSelfImbQ(); 
-		
 	double dPdDelta = 0.0;
 	double dPdV = GetSelfdPdV(); 
 	double dQdDelta = 0.0;
@@ -152,13 +154,15 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	pDynaModel->SetElement(A(V_V), A(V_DELTA), dQdDelta);
 	pDynaModel->SetElement(A(V_DELTA), A(V_V), dPdV);
 	pDynaModel->SetElement(A(V_V), A(V_V), dQdV);
-
+	*/
 
 
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
 	double V2 = Vre2 + Vim2;
 
+	double mv = sqrt(V2);
+		
 	if (IsStateOn())
 	{
 		if (pGenLink->m_nCount)
@@ -168,7 +172,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			while (pGenLink->In(ppGen))
 			{
 				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-
 				pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_P), -Vre / V2);
 				pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_Q), -Vim / V2);
 				pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_P), -Vim / V2);
@@ -195,8 +198,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			pDynaModel->SetElement(A(V_IM), pOppNode->A(V_IM), -pYkm->real(), bDup);
 		}
 
-		double Pgsum = -Pg;
-		double Qgsum = -Qg;
+		double Pgsum =  Pnr - Pg;
+		double Qgsum =  Qnr - Qg;
 
 		double VreVim2 = 2.0 * Vre * Vim;
 		double V4 = V2 * V2;
@@ -217,12 +220,25 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
 		pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
 
+		pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
+
+		pDynaModel->SetElement(A(V_V), A(V_RE), -Vre / sqrt(V2));
+		pDynaModel->SetElement(A(V_V), A(V_IM), -Vim / sqrt(V2));
+
+		
+
+		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+		pDynaModel->SetElement(A(V_DELTA), A(V_RE), Vim / V2);
+		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -Vre / V2);
+
 
 	}
 	else
 	{
 		pDynaModel->SetElement(A(V_RE), A(V_RE), 1.0);
 		pDynaModel->SetElement(A(V_IM), A(V_IM), 1.0);
+		pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
+		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
 	}
 
 	return pDynaModel->Status();
@@ -233,8 +249,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
 	GetPnrQnr();
 
+	CLinkPtrCount *pBranchLink = GetLink(0);
+	CDevice **ppBranch = nullptr;
 	CLinkPtrCount *pGenLink = GetLink(1);
-	CDevice **ppGen = NULL;
+	CDevice **ppGen = nullptr;
 
 	if (pGenLink->m_nCount)
 	{
@@ -248,13 +266,11 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 	}
 
+	/*
 	bool bInMetallicSC = m_bInMetallicSC || V < DFW2_EPSILON;
 
 	double Pe = Pnr - Pg - V * V * Yii.real();
 	double Qe = Qnr - Qg + V * V * Yii.imag();
-
-	CLinkPtrCount *pBranchLink = GetLink(0);
-	CDevice **ppBranch = nullptr;
 
 	double dPdDelta = 0.0;
 
@@ -278,7 +294,9 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	pDynaModel->SetFunction(A(V_DELTA), Pe);
 	pDynaModel->SetFunction(A(V_V), Qe);
+	*/
 
+	double V2 = Vre * Vre + Vim * Vim;
 
 	double Ire(0.0), Iim(0.0);
 
@@ -302,8 +320,6 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Iim -= pYkm->imag() * pOppNode->Vre + pYkm->real() * pOppNode->Vim;
 		}
 
-		double V2 = Vre * Vre + Vim * Vim;
-
 		Ire += (Pk * Vre + Qk * Vim) / V2;
 		Iim += (Pk * Vim - Qk * Vre) / V2;
 	}
@@ -311,6 +327,11 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	pDynaModel->SetFunction(A(V_RE), Ire);
 	pDynaModel->SetFunction(A(V_IM), Iim);
+
+	double dV = V - sqrt(V2);
+	double dDelta = Delta - atan2(Vim, Vre);
+	pDynaModel->SetFunction(A(V_V), dV);
+	pDynaModel->SetFunction(A(V_DELTA), dDelta);
 
 	return pDynaModel->Status();
 }
@@ -324,16 +345,14 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 	if (m_pLRC)
 		dLRCVicinity = 30.0 * fabs(Vold - V) / Unom;
 
-	UpdateVreVim();
+	//UpdateVreVim();
 	return bRes;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 {
 	UpdateVreVim();
-
 	V0 = (V > 0) ? V : Unom;
-		
 	return DFS_OK;
 }
 
@@ -345,7 +364,6 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 void CDynaNodeBase::Predict()
 {
 	dLRCVicinity = 0.0;
-	UpdateVreVim();
 }
 
 CDynaNode::CDynaNode() : CDynaNodeBase()
@@ -492,7 +510,7 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 
 	if (m_bInMetallicSC || !IsStateOn())
 	{
-		VreVim = 0.0;
+		Vre = Vim = 0.0;
 		V = Delta = 0.0;
 	}
 	else
@@ -543,7 +561,7 @@ void CDynaNodeBase::CalcAdmittances()
 
 	if (m_bInMetallicSC || !IsStateOn())
 	{
-		VreVim = 0.0;
+		Vre = Vim = 0.0;
 		V = Delta = 0.0;
 	}
 	else
@@ -744,8 +762,8 @@ bool CDynaNodeContainer::LULF()
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
 		// стартуем с плоского
-		pNode->VreVim = pNode->V = pNode->Unom;
-		pNode->Delta = 0.0;
+		pNode->Vre = pNode->V = pNode->Unom;
+		pNode->Vim = pNode->Delta = 0.0;
 		pNode->dLRCVicinity = 0.0;		// зона сглаживания СХН для начала нулевая - без сглаживания
 
 
@@ -883,7 +901,8 @@ bool CDynaNodeContainer::LULF()
 						//Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
 						cplx Sg(pVsource->P, pVsource->Q);
 						cplx E = pVsource->GetEMF();
-						cplx Yg = conj(Sg / pNode->VreVim) / (E - pNode->VreVim);
+						cplx Unode(pNode->Vre, pNode->Vim);
+						cplx Yg = conj(Sg / Unode) / (E - Unode);
 						I -= E * Yg;
 						Y -= Yg;
 					}
@@ -959,11 +978,13 @@ ptrdiff_t refactorOK = 1;
 				CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
 
 				// напряжение после решения системы в векторе задающий токов
-				pNode->VreVim.real(*pB);		pB++;
-				pNode->VreVim.imag(*pB);		pB++;
+				pNode->Vre = real(*pB);		pB++;
+				pNode->Vim = imag(*pB);		pB++;
+
 				// считаем напряжение узла в полярных координатах
-				pNode->V = abs(pNode->VreVim);
-				pNode->Delta = arg(pNode->VreVim);
+				cplx Unode(pNode->Vre, pNode->Vim);
+				pNode->V = abs(Unode);
+				pNode->Delta = arg(Unode);
 
 				// рассчитываем зону сглаживания СХН (также как для Ньютона)
 				/*if (pNode->m_pLRC)
@@ -1039,324 +1060,7 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 
 bool CDynaNodeContainer::Seidell()
 {
-	bool bRes = true;
-
 	return LULF();
-
-	int nSeidellIterations = 0;
-	cplx dVmax;
-
-	for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		pNode->CalcAdmittances(true);
-	}
-
-
-	for (nSeidellIterations = 0; nSeidellIterations < 200; nSeidellIterations++)
-	{
-		dVmax = 0.0;
-
-		double Pn = 0.0;
-		double Qn = 0.0;
-		cplx dSmax = 0.0;
-		ptrdiff_t dSmaxNode = 0;
-		ptrdiff_t dVmaxNode = 0;
-
-		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-
-			if (pNode->IsStateOn())
-			{
-				double Pnr = pNode->Pn;
-				double Qnr = pNode->Qn;
-
-				if (pNode->m_pLRC)
-				{
-					double dP = 0.0, dQ = 0.0;
-					double VdVnom = pNode->V / pNode->V0;
-					Pnr *= pNode->m_pLRC->GetPdP(VdVnom, dP, 0.0);
-					Qnr *= pNode->m_pLRC->GetQdQ(VdVnom, dQ, 0.0);
-
-					_ASSERTE(dP >= 0.0);
-					_ASSERTE(dQ >= 0.0);
-				}
-
-				Pn += Pnr;
-				Qn += Qnr;
-
-				CDevice **ppDeivce = NULL;
-				CLinkPtrCount *pLink = NULL;
-
-				ppDeivce = NULL;
-				pLink = pNode->GetLink(1);
-				pNode->ResetVisited();
-				bool bGenerators = false;
-
-				cplx deltaIk = 0.0;
-				cplx YnodeAdd = pNode->Yii;
-				
-				while (pLink->In(ppDeivce))
-				{
-					CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppDeivce);
-					pNode->Pg = pNode->Qg = 0.0;
-
-					if (!pGen->IsStateOn()) 
-						continue;
-
-					switch (pGen->GetType())
-					{
-						case DEVTYPE_GEN_MOTION:
-						case DEVTYPE_GEN_INFPOWER:
-						{
-							CDynaGeneratorInfBus *pGenE = static_cast<CDynaGeneratorInfBus*>(*ppDeivce);
-							cplx Yg = 1.0 / pGenE->GetXofEqs();
-							YnodeAdd -= Yg;
-							cplx E = pGenE->GetEMF();
-							deltaIk -= E * Yg;
-
-							_CheckNumber(deltaIk.real());
-							_CheckNumber(deltaIk.imag());
-
-							cplx Sg = pNode->VreVim * conj((E - pNode->VreVim) * Yg);
-							pGen->P = Sg.real();
-							pGen->Q = Sg.imag();
-
-							//if (pGen->GetId() == 305101)
-							//	_tcprintf(_T("\n%g %g"), Sg.real(), Sg.imag());
-						}
-						break;
-						case DEVTYPE_GEN_1C:
-						{
-							CDynaGenerator1C *pGenE = static_cast<CDynaGenerator1C*>(*ppDeivce);
-							pGenE->CalculatePower();
-							cplx Sg(pGenE->P, pGenE->Q);
-							cplx E = pGenE->GetEMF();
-							cplx Yg = conj(Sg / pNode->VreVim) / (E - pNode->VreVim);
-							//_tcprintf(_T("\ndYg %g %g "), Yg.real(), Yg.imag());
-							deltaIk -= E * Yg;
-							_CheckNumber(deltaIk.real());
-							_CheckNumber(deltaIk.imag());
-							YnodeAdd -= Yg;
-
-						}
-						break;
-						case DEVTYPE_GEN_3C:
-						{
-							CDynaGenerator3C *pGenE = static_cast<CDynaGenerator3C*>(*ppDeivce);
-
-							double Vd = -pNode->V * sin(pGenE->Delta - pNode->Delta);
-							double Vq = pNode->V * cos(pGenE->Delta - pNode->Delta);
-							double zsq = 1.0 / (pGenE->r * pGenE->r + pGenE->xd2 * pGenE->xq2);
-
-							double Id = -zsq * (pGenE->r * (Vd - pGenE->Edss) + pGenE->xq2 * (pGenE->Eqss - Vq));
-							double Iq = -zsq * (pGenE->r * (Vq - pGenE->Eqss) + pGenE->xd2 * (Vd - pGenE->Edss));
-
-							pGenE->P = Vd  * Id + Vq * Iq;
-							pGenE->Q = Vd  * Iq - Vq * Id;
-
-							cplx Sg(pGenE->P, pGenE->Q);
-							cplx E = pGenE->GetEMF();
-							cplx Yg = conj(Sg / pNode->VreVim) / (E - pNode->VreVim);
-
-							deltaIk -= E * Yg;
-
-							_CheckNumber(deltaIk.real());
-							_CheckNumber(deltaIk.imag());
-
-
-							YnodeAdd -= Yg;
-						}
-						break;
-						case DEVTYPE_GEN_MUSTANG:
-						{
-							CDynaGeneratorMustang *pGenE = static_cast<CDynaGeneratorMustang*>(*ppDeivce);
-
-							double Vd = -pNode->V * sin(pGenE->Delta - pNode->Delta);
-							double Vq = pNode->V * cos(pGenE->Delta - pNode->Delta);
-
-							CDynaNode *pNodeE = static_cast<CDynaNode*>(pNode);
-							double Sv = ((m_pDynaModel->GetFreqDampingType() == APDT_ISLAND) ? pNodeE->m_pSyncZone->S : pNodeE->S);
-
-							double sp2 = 1 + Sv;
-							double zsq = 1.0 / (pGenE->xd2 * pGenE->xq2);
-							double Id = -zsq * (pGenE->xq2 * (sp2 * pGenE->Eqss - Vq));
-							double Iq = -zsq * (pGenE->xd2 * (Vd - sp2 * pGenE->Edss));
-
-							pGenE->P = sp2 * (pGenE->Edss  * Id + pGenE->Eqss * Iq + Id * Iq * (pGenE->xd2 - pGenE->xq2));
-							pGenE->Q = Vd  * Iq - Vq * Id;
-
-							cplx Sg(pGenE->P, pGenE->Q);
-							cplx E = pGenE->GetEMF();
-							cplx Yg = conj(Sg / pNode->VreVim) / (E - pNode->VreVim);
-
-							cplx Eqss = polar(pGenE->Eqss, pGenE->Delta);
-							cplx Edss = polar(pGenE->Edss, pGenE->Delta + M_PI / 2.0);
-
-							//deltaIk -= Eqss / cplx(0, pGenE->xd2);
-							//deltaIk -= Edss / cplx(0, pGenE->xq2);
-							
-
-							deltaIk -= E * Yg;
-
-							_CheckNumber(deltaIk.real());
-							_CheckNumber(deltaIk.imag());
-
-							YnodeAdd -= Yg;
-
-							//YnodeAdd -= 1.0 / cplx(0, pGenE->xd2);
-							//YnodeAdd -= 1.0 / cplx(0, pGenE->xq2);
-						}
-						break;
-					}
-				}
-
-				deltaIk -= YnodeAdd * pNode->VreVim;
-
-				if (!pNode->m_bInMetallicSC)
-				{
-					deltaIk += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
-					ppDeivce = NULL;
-					pLink = pNode->GetLink(0);
-					pNode->ResetVisited();
-					while (pLink->In(ppDeivce))
-					{
-						CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDeivce);
-						if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
-						{
-							CDynaNodeBase *pn = pBranch->m_pNodeIp == pNode ? pBranch->m_pNodeIq : pBranch->m_pNodeIp;
-							cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
-							deltaIk -= pn->VreVim ** pYkm;
-							_CheckNumber(deltaIk.real());
-							_CheckNumber(deltaIk.imag());
-						}
-					}
-
-					_CheckNumber(pNode->VreVim.real());
-					_CheckNumber(pNode->VreVim.imag());
-	 
-
-					cplx dS = conj(pNode->VreVim) * deltaIk;
-					cplx dV = dS / conj(pNode->VreVim);
-
-					if (abs(dS) > abs(dSmax))
-					{
-						dSmax = dS;
-						dSmaxNode = it - m_DevVec.begin();
-					}
-
-
-					if (abs(YnodeAdd) > DFW2_EPSILON)
-						dV /= YnodeAdd;
-
-
-
-					if (abs(dVmax) < abs(dV))
-					{
-						dVmax = dV;
-						dVmaxNode = it - m_DevVec.begin();
-					}
-
-					pNode->VreVim += dV;
-					pNode->V = abs(pNode->VreVim);
-					pNode->Delta = arg(pNode->VreVim);
-				}
-				else
-				{
-					pNode->VreVim = 0.0;
-					pNode->V = pNode->Delta = 0.0;
-				}
-
-			}
-			else
-			{
-				pNode->VreVim = 0.0;
-				pNode->V = pNode->Delta = 0.0;
-			}
-		}
-
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*(m_DevVec.begin() + dVmaxNode));
-
-		_tcprintf(_T("\ndVmax node %d %g %g %g %g "), pNode->GetId(), dVmax.real(), dVmax.imag(), pNode->V, pNode->Delta);
-
-		pNode = static_cast<CDynaNodeBase*>(*(m_DevVec.begin() + dSmaxNode));
-
-		_tcprintf(_T("dSmax node %d %g %g %g %g"), pNode->GetId(), dSmax.real(), dSmax.imag(), pNode->V, pNode->Delta);
-
-		//if (abs(dVmax) < 1)
-		//	break;
-
-		/*
-		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-			_tcprintf(_T("\n%30s %6.2f %6.2f -> %6.2f %6.2f %6.2f %6.2f"), pNode->GetVerbalName(), pNode->V, pNode->Delta * 180 / 3.14159, abs(pNode->VreVim), arg(pNode->VreVim) * 180 / 3.14159, pNode->Pg, pNode->Qg);
-			CDevice **ppDeivce = NULL;
-			CLinkPtrCount *pLink = pNode->GetLink(1);
-			pNode->ResetVisited();
-			while (pLink->In(ppDeivce))
-			{
-				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppDeivce);
-				_tcprintf(_T("%30s %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
-			}
-			pNode->V = abs(pNode->VreVim);
-			pNode->Delta = arg(pNode->VreVim);
-		}
-		*/
-	}
-
-	for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		pNode->CalcAdmittances(false);
-	}
-
-
-
-	_tcprintf(_T("\nSeidell converged in %d to %g"), nSeidellIterations, abs(dVmax));
-
-	/*
-	for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		_tcprintf(_T("\n%30s %6.2f %6.2f -> %6.2f %6.2f %6.2f %6.2f"), pNode->GetVerbalName(), pNode->V, pNode->Delta * 180 / 3.14159, abs(pNode->VreVim), arg(pNode->VreVim) * 180 / 3.14159, pNode->Pg, pNode->Qg);
-		CDevice **ppDeivce = NULL;
-		CLinkPtrCount *pLink = pNode->GetLink(1);
-		pNode->ResetVisited();
-		while (pLink->In(ppDeivce))
-		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppDeivce);
-			_tcprintf(_T("%30s %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
-		}
-		pNode->V = abs(pNode->VreVim);
-		pNode->Delta = arg(pNode->VreVim);
-	}
-
-	for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		CDevice **ppDeivce = NULL;
-		CLinkPtrCount *pLink = NULL;
-		ppDeivce = NULL;
-		pLink = pNode->GetLink(1);
-		pNode->ResetVisited();
-		bool bGenerators = false;
-		while (pLink->In(ppDeivce))
-		{
-			if (!bGenerators)
-			{
-				bGenerators = true;
-				pNode->Pg = pNode->Qg = 0.0;
-			}
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppDeivce);
-			pNode->Pg += pGen->P;
-			pNode->Qg += pGen->Q;
-
-		}
-	}
-	*/
-	return bRes;
 }
 
 ExternalVariable CDynaNodeBase::GetExternalVariable(const _TCHAR* cszVarName)
