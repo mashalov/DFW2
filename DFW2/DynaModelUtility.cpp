@@ -13,7 +13,7 @@ void CDynaModel::ReportKLUError()
 		Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszKLUOk);
 		break;
 	case 1:
-		DumpMatrix();
+		//DumpMatrix();
 		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszKLUSingular);
 		break;
 	case -2:
