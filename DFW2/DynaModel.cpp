@@ -94,7 +94,7 @@ bool CDynaModel::Run()
 	m_Parameters.m_bUseRefactor = true;
 	m_Parameters.m_dAtol = 1E-4;
 	m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
-	m_Parameters.m_bLogToConsole = true;
+	m_Parameters.m_bLogToConsole = false;
 	m_Parameters.m_bLogToFile = true;
 
 	m_Parameters.m_bDisableResultsWriter = false;
@@ -112,7 +112,6 @@ bool CDynaModel::Run()
 	bRes = bRes && InitDevices();
 	bRes = bRes && EstimateMatrix();
 	bRes = bRes && InitEquations();
-
 	/*
 	CDynaLRC *pLRC = static_cast<CDynaLRC*>(LRCs.GetDevice(2));
 

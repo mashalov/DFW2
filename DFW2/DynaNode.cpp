@@ -78,9 +78,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	CLinkPtrCount *pGenLink = GetLink(1);
 	CDevice **ppGen = nullptr;
 
-	bool bInMetallicSC = false;
-	if (V < DFW2_EPSILON && IsStateOn())
-		bInMetallicSC = true;
+	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON && IsStateOn());
 		
 	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
 	//double Qe = Qnr - Qg + V * V * Yii.imag();
@@ -148,86 +146,92 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
 	double V2 = Vre2 + Vim2;
+	double V2sqInv = V < DFW2_EPSILON ? 0.0 : 1.0 / sqrt(V2);
+	double VreV2 = V < DFW2_EPSILON ? 0.0 : Vre / V2;
+	double VimV2 = V < DFW2_EPSILON ? 0.0 : Vim / V2;
 	
-	if (IsStateOn() && !bInMetallicSC)
+	if (pGenLink->m_nCount)
 	{
-		if (pGenLink->m_nCount)
-		{
-			Pg = Qg = 0.0;
-			ppGen = nullptr;
-			ResetVisited();
-			while (pGenLink->In(ppGen))
-			{
-				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-				pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_P), -Vre / V2);
-				pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_Q), -Vim / V2);
-				pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_P), -Vim / V2);
-				pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_Q),  Vre / V2);
-				Pg += pGen->P;
-				Qg += pGen->Q;
-			}
-		}
-
-		ppBranch = nullptr;
+		Pg = Qg = 0.0;
+		ppGen = nullptr;
 		ResetVisited();
-		while (pBranchLink->In(ppBranch))
+		while (pGenLink->In(ppGen))
 		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-			CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
-			cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
-
-			bool bDup = CheckAddVisited(pOppNode) >= 0;
-			// dIre /dVre
-			pDynaModel->SetElement(A(V_RE), pOppNode->A(V_RE), -pYkm->real(), bDup);
-			// dIre/dVim
-			pDynaModel->SetElement(A(V_RE), pOppNode->A(V_IM),  pYkm->imag(), bDup);
-			// dIim/dVre
-			pDynaModel->SetElement(A(V_IM), pOppNode->A(V_RE), -pYkm->imag(), bDup);
-			// dIim/dVim
-			pDynaModel->SetElement(A(V_IM), pOppNode->A(V_IM), -pYkm->real(), bDup);
+			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_P), -VreV2);
+			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_Q), -VimV2);
+			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_P), -VimV2);
+			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_Q),  VreV2);
+			Pg += pGen->P;
+			Qg += pGen->Q;
 		}
+	}
 
-		double Pgsum =  Pnr - Pg;
-		double Qgsum =  Qnr - Qg;
+	ppBranch = nullptr;
+	ResetVisited();
+	while (pBranchLink->In(ppBranch))
+	{
+		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
+		CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
+		cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
 
-		double VreVim2 = 2.0 * Vre * Vim;
-		double V4 = V2 * V2;
+		bool bDup = CheckAddVisited(pOppNode) >= 0;
+		// dIre /dVre
+		pDynaModel->SetElement(A(V_RE), pOppNode->A(V_RE), -pYkm->real(), bDup);
+		// dIre/dVim
+		pDynaModel->SetElement(A(V_RE), pOppNode->A(V_IM), pYkm->imag(), bDup);
+		// dIim/dVre
+		pDynaModel->SetElement(A(V_IM), pOppNode->A(V_RE), -pYkm->imag(), bDup);
+		// dIim/dVim
+		pDynaModel->SetElement(A(V_IM), pOppNode->A(V_IM), -pYkm->real(), bDup);
+	}
 
-		double PgVre2 = Pgsum * Vre2;
-		double PgVim2 = Pgsum * Vim2;
-		double QgVre2 = Qgsum * Vre2;
-		double QgVim2 = Qgsum * Vim2;
+	double Pgsum =  Pnr - Pg;
+	double Qgsum =  Qnr - Qg;
 
-		double dIredVre = -Yii.real() + (-PgVre2 + PgVim2 - VreVim2 * Qgsum) / V4;
-		double dIredVim =  Yii.imag() + ( QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
-		double dIimdVre = -Yii.imag() + ( QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
-		double dIimdVim = -Yii.real() + ( PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
+	double VreVim2 = 2.0 * Vre * Vim;
+	double V4 = V < DFW2_EPSILON ? 0.0 : 1.0 / (V2 * V2);
+
+	double PgVre2 = Pgsum * Vre2;
+	double PgVim2 = Pgsum * Vim2;
+	double QgVre2 = Qgsum * Vre2;
+	double QgVim2 = Qgsum * Vim2;
+
+	double dIredVre = -Yii.real();
+	double dIredVim =  Yii.imag();
+	double dIimdVre = -Yii.imag();
+	double dIimdVim = -Yii.real();
 	
-			   
-		pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
-		pDynaModel->SetElement(A(V_RE), A(V_IM), dIredVim);
-		pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
-		pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
-
-		pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
-		pDynaModel->SetElement(A(V_V), A(V_RE), -Vre / sqrt(V2));
-		pDynaModel->SetElement(A(V_V), A(V_IM), -Vim / sqrt(V2));
-
-		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
-		pDynaModel->SetElement(A(V_DELTA), A(V_RE), Vim / V2);
-		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -Vre / V2);
-
-		pDynaModel->SetElement(A(V_RE), A(V_V), (dLRCPn * Vre + dLRCQn * Vim) / V2);
-		pDynaModel->SetElement(A(V_IM), A(V_V), (dLRCPn * Vim - dLRCQn * Vre) / V2);
-
+	if (!IsStateOn())
+	{
+		dIredVre = dIimdVim = 1.0;
+		dIredVim = dIimdVre = 0.0;
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_RE), A(V_RE), 1.0);
-		pDynaModel->SetElement(A(V_IM), A(V_IM), 1.0);
-		pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
-		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+		dIredVre += (-PgVre2 + PgVim2 - VreVim2 * Qgsum) * V4;
+		dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
+		dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
+		dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) * V4;
 	}
+			   
+	pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
+	pDynaModel->SetElement(A(V_RE), A(V_IM), dIredVim);
+	pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
+	pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
+
+	pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
+	pDynaModel->SetElement(A(V_V), A(V_RE), -Vre * V2sqInv);
+	pDynaModel->SetElement(A(V_V), A(V_IM), -Vim * V2sqInv);
+
+	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+	pDynaModel->SetElement(A(V_DELTA), A(V_RE), VimV2);
+	pDynaModel->SetElement(A(V_DELTA), A(V_IM), -VreV2);
+
+	pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
+	pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
+
+
 
 	return pDynaModel->Status();
 }
@@ -849,6 +853,8 @@ bool CDynaNodeContainer::LULF()
 			{
 				// для всех узлов которые включены и вне металлического КЗ
 
+				cplx Unode(pNode->Vre, pNode->Vim);
+
 				double Pnr = pNode->Pn;
 				double Qnr = pNode->Qn;
 				cplx I = 0.0;					// обнуляем узел
@@ -891,7 +897,6 @@ bool CDynaNodeContainer::LULF()
 						//Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
 						cplx Sg(pVsource->P, pVsource->Q);
 						cplx E = pVsource->GetEMF();
-						cplx Unode(pNode->Vre, pNode->Vim);
 						cplx Yg = conj(Sg / Unode) / (E - Unode);
 						I -= E * Yg;
 						Y -= Yg;
