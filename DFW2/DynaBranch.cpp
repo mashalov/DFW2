@@ -472,8 +472,9 @@ bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 	m_pBranch->m_pNodeIq->UpdateVreVim();
 	m_pBranch->m_pNodeIp->UpdateVreVim();
 
-	cplx& Ue = m_pBranch->m_pNodeIq->VreVim;
-	cplx& Ub = m_pBranch->m_pNodeIp->VreVim;
+	cplx& Ue = cplx(m_pBranch->m_pNodeIq->Vre, m_pBranch->m_pNodeIq->Vim);
+	cplx& Ub = cplx(m_pBranch->m_pNodeIp->Vre, m_pBranch->m_pNodeIp->Vim);
+
 	cplx cIb = -m_pBranch->Yips * Ub + m_pBranch->Yip  * Ue;
 	cplx cIe = -m_pBranch->Yiq  * Ub + m_pBranch->Yiqs * Ue;
 	cplx cSb = Ub * conj(cIb);
@@ -505,8 +506,10 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 {
 	m_pBranch->m_pNodeIq->UpdateVreVim();
 	m_pBranch->m_pNodeIp->UpdateVreVim();
-	cplx& Ue = m_pBranch->m_pNodeIq->VreVim;
-	cplx& Ub = m_pBranch->m_pNodeIp->VreVim;
+
+	cplx& Ue = cplx(m_pBranch->m_pNodeIq->Vre, m_pBranch->m_pNodeIq->Vim);
+	cplx& Ub = cplx(m_pBranch->m_pNodeIp->Vre, m_pBranch->m_pNodeIp->Vim);
+
 	cplx cIb = -m_pBranch->Yips * Ub + m_pBranch->Yip  * Ue;
 	cplx cIe = -m_pBranch->Yiq  * Ub + m_pBranch->Yiqs * Ue;
 	cplx cSb = Ub * conj(cIb);

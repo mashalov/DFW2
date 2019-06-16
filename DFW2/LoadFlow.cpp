@@ -411,17 +411,18 @@ bool CLoadFlow::Seidell()
 			Pe = pNode->GetSelfImbP();
 			Qe = pNode->GetSelfImbQ();
 
+			cplx Unode(pNode->Vre, pNode->Vim);
 			for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
 			{
 				CDynaNodeBase *pOppNode = pBranch->pNode;
-				cplx mult = conj(pNode->VreVim) * pOppNode->VreVim * pBranch->Y;
+				cplx mult = conj(Unode) * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 				Pe -= mult.real();
 				Qe += mult.imag();
 			}
 
 			double Q = Qe + pNode->Qg;	// расчетная генерация в узле
 
-			cplx I1 = dStep / conj(pNode->VreVim) / pNode->Yii;
+			cplx I1 = dStep / conj(Unode) / pNode->Yii;
 
 			switch (pNode->m_eLFNodeType)
 			{
@@ -432,14 +433,17 @@ bool CLoadFlow::Seidell()
 					pMatrixInfo->m_nPVSwitchCount++;
 					pNode->Qg = Q;
 					cplx dU = I1 * cplx(Pe, 0);
-					dU += pNode->VreVim;
-					pNode->VreVim = pNode->LFVref * dU / abs(dU);
+					dU += Unode;
+					dU = pNode->LFVref * dU / abs(dU);
+					pNode->Vre = dU.real();
+					pNode->Vim = dU.imag();
 				}
 				else
 				{
 					pNode->Qg = pNode->LFQmax;
 					cplx dU = I1  * cplx(Pe, -Qe);
-					pNode->VreVim += dU;
+					pNode->Vre += dU.real();
+					pNode->Vim += dU.imag();
 				}
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
@@ -449,14 +453,17 @@ bool CLoadFlow::Seidell()
 					pMatrixInfo->m_nPVSwitchCount++;
 					pNode->Qg = Q;
 					cplx dU = I1 * cplx(Pe, 0);
-					dU += pNode->VreVim;
-					pNode->VreVim = pNode->LFVref * dU / abs(dU);
+					dU += Unode;
+					dU = pNode->LFVref * dU / abs(dU);
+					pNode->Vre = dU.real();
+					pNode->Vim = dU.imag();
 				}
 				else
 				{
 					pNode->Qg = pNode->LFQmin;
 					cplx dU = I1  * cplx(Pe, -Qe);
-					pNode->VreVim += dU;
+					pNode->Vre += dU.real();
+					pNode->Vim += dU.imag();
 				}
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PV:
@@ -481,20 +488,26 @@ bool CLoadFlow::Seidell()
 							Qe = 0.0;
 						}
 						cplx dU = I1 * cplx(Pe, -Qe);
-						dU += pNode->VreVim;
-						pNode->VreVim = pNode->LFVref * dU / abs(dU);
+
+						dU += Unode;
+						dU = pNode->LFVref * dU / abs(dU);
+						pNode->Vre = dU.real();
+						pNode->Vim = dU.imag();
 					}
 					else
 					{
 						cplx dU = I1 * cplx(Pe, -Qe);
-						pNode->VreVim += dU;
+						pNode->Vre += dU.real();
+						pNode->Vim += dU.imag();
+
 					}
 				}
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
 				{
 					cplx dU = I1 * cplx(Pe, -Qe);
-					pNode->VreVim += dU;
+					pNode->Vre += dU.real();
+					pNode->Vim += dU.imag();
 				}
 			break;
 			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
@@ -503,8 +516,11 @@ bool CLoadFlow::Seidell()
 				break;
 			}
 
-			pNode->V = abs(pNode->VreVim);
-			pNode->Delta = arg(pNode->VreVim);
+			Unode.real(pNode->Vre);
+			Unode.imag(pNode->Vim);
+
+			pNode->V = abs(Unode);
+			pNode->Delta = arg(Unode);
 
 			if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 				pNodes->IterationControl().Update(pMatrixInfo);
@@ -545,11 +561,12 @@ bool CLoadFlow::BuildMatrix()
 		double *pAxSelf = pAx;
 		pAx += 2;
 
+		cplx Unode(pNode->Vre, pNode->Vim);
 		for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
 		{
 			CDynaNodeBase *pOppNode = pBranch->pNode;
-			cplx mult = conj(pNode->VreVim);
-			mult *= pOppNode->VreVim * pBranch->Y;
+			cplx mult = conj(Unode);
+			mult *= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 			Pe -= mult.real();
 			Qe += mult.imag();
 
@@ -609,10 +626,11 @@ void CLoadFlow::GetNodeImb(_MatrixInfo *pMatrixInfo)
 	pNode->GetPnrQnr();
 	pMatrixInfo->m_dImbP = pNode->GetSelfImbP();
 	pMatrixInfo->m_dImbQ = pNode->GetSelfImbQ();
+	cplx Unode(pNode->Vre, pNode->Vim);
 	for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
 	{
 		CDynaNodeBase *pOppNode = pBranch->pNode;
-		cplx mult = conj(pNode->VreVim) * pOppNode->VreVim * pBranch->Y;
+		cplx mult = conj(Unode) * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 		pMatrixInfo->m_dImbP -= mult.real();
 		pMatrixInfo->m_dImbQ += mult.imag();
 	}

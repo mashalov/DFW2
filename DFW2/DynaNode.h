@@ -96,7 +96,6 @@ namespace DFW2
 		eLFNodeType m_eLFNodeType;
 		ptrdiff_t Nr;
 		cplx Yii;						// собственная проводимость
-		cplx VreVim;					// напряжение в декартовых координатах для упрощения расчета элементов якоби
 		double Vold;					// модуль напряжения на предыдущей итерации
 		CDynaLRC *m_pLRC;				// указатель на СХН узла в динамике
 		CDynaLRC *m_pLRCLF;				// указатель на СХН узла в УР
