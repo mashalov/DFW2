@@ -317,6 +317,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	pDynaModel->SetFunction(A(V_IM), Iim);
 
 	double dV = V - sqrt(V2);
+	//_ASSERTE(Delta < M_PI / 2.0 && Delta > -M_PI / 2.0);
 	double dDelta = Delta - atan2(Vim, Vre);
 	pDynaModel->SetFunction(A(V_V), dV);
 	pDynaModel->SetFunction(A(V_DELTA), dDelta);
@@ -333,7 +334,8 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 	if (m_pLRC)
 		dLRCVicinity = 30.0 * fabs(Vold - V) / Unom;
 
-	//UpdateVreVim();
+	Vold = V;
+
 	return bRes;
 }
 
