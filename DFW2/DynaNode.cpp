@@ -78,7 +78,9 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	CLinkPtrCount *pGenLink = GetLink(1);
 	CDevice **ppGen = nullptr;
 
-	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON && IsStateOn());
+	bool bInMetallicSC = false;
+	if (V < DFW2_EPSILON && IsStateOn())
+		bInMetallicSC = true;
 		
 	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
 	//double Qe = Qnr - Qg + V * V * Yii.imag();
@@ -215,8 +217,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_DELTA), A(V_RE), Vim / V2);
 		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -Vre / V2);
 
-		//pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn);
-
+		pDynaModel->SetElement(A(V_RE), A(V_V), (dLRCPn * Vre + dLRCQn * Vim) / V2);
+		pDynaModel->SetElement(A(V_IM), A(V_V), (dLRCPn * Vim - dLRCQn * Vre) / V2);
 
 	}
 	else
