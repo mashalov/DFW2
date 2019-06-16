@@ -79,6 +79,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	CDevice **ppGen = nullptr;
 
 	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON && IsStateOn());
+
+	_ASSERTE(!bInMetallicSC);
 		
 	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
 	//double Qe = Qnr - Qg + V * V * Yii.imag();
@@ -289,6 +291,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	*/
 
 	double V2 = Vre * Vre + Vim * Vim;
+	double V2inv = V < DFW2_EPSILON ? 0.0 : 1.0 / V2;
 
 	double Ire(0.0), Iim(0.0);
 
@@ -312,8 +315,8 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Iim -= pYkm->imag() * pOppNode->Vre + pYkm->real() * pOppNode->Vim;
 		}
 
-		Ire += (Pk * Vre + Qk * Vim) / V2;
-		Iim += (Pk * Vim - Qk * Vre) / V2;
+		Ire += (Pk * Vre + Qk * Vim) * V2inv;
+		Iim += (Pk * Vim - Qk * Vre) * V2inv;
 	}
 
 
@@ -323,10 +326,33 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	double dV = V - sqrt(V2);
 	double angle = atan2(Vim, Vre);
 	//double newDelta = fmod(angle - Delta + M_PI, 2 * M_PI) - M_PI + Delta;
-	double newDelta = angle + static_cast<double>(static_cast<int>(Delta / (2 * M_PI)) * 2 * M_PI);
+	//double newDelta = angle + static_cast<double>(static_cast<int>(Delta / (2 * M_PI)) * 2 * M_PI);
+	ptrdiff_t IntWinds = static_cast<ptrdiff_t>(Delta / 2 / M_PI);
+	double newDelta = static_cast<double>(IntWinds) * 2 * M_PI + angle;
+	double CheckDelta[3] = { newDelta, newDelta + 2 * M_PI, newDelta - 2 * M_PI };
+	double *pMin = nullptr;
+	for (double *pCheck = CheckDelta; pCheck < CheckDelta + _countof(CheckDelta); pCheck++)
+		if (pMin)
+		{
+			if (fabs(*pMin - Delta) > fabs(*pCheck - Delta))
+				pMin = pCheck;
+		}
+		else
+			pMin = pCheck;
 
-	if (Delta > M_PI)
-		Delta *= 1.0;
+	newDelta = *pMin;
+	/*
+	RightVector *pRv = pDynaModel->GetRightVector(A(V_DELTA));
+	if (pRv->Nordsiek[1] > 0.0)
+	{
+		_ASSERTE(newDelta > pRv->SavedNordsiek[0] - pRv->Atol);
+	}
+	else if (pRv->Nordsiek[1] < 0.0)
+	{
+		_ASSERTE(newDelta < pRv->SavedNordsiek[0] + pRv->Atol);
+	}
+	*/
+
 	double dDelta = Delta - newDelta;
 
 	pDynaModel->SetFunction(A(V_V), dV);
