@@ -78,21 +78,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	CLinkPtrCount *pGenLink = GetLink(1);
 	CDevice **ppGen = nullptr;
 
-	if (pGenLink->m_nCount)
-	{
-		Pg = Qg = 0.0;
-		ResetVisited();
-		while (pGenLink->In(ppGen))
-		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-			Pg += pGen->P;
-			Qg += pGen->Q;
-			//pDynaModel->SetElement(A(V_DELTA), pGen->A(CDynaPowerInjector::V_P), -1.0);
-			//pDynaModel->SetElement(A(V_V), pGen->A(CDynaPowerInjector::V_Q), -1.0);
-		}
-	}
-
-	bool bInMetallicSC = m_bInMetallicSC || V < DFW2_EPSILON;
+	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON && IsStateOn());
 		
 	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
 	//double Qe = Qnr - Qg + V * V * Yii.imag();
@@ -160,13 +146,12 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
 	double V2 = Vre2 + Vim2;
-
-	double mv = sqrt(V2);
-		
-	if (IsStateOn())
+	
+	if (IsStateOn() && !bInMetallicSC)
 	{
 		if (pGenLink->m_nCount)
 		{
+			Pg = Qg = 0.0;
 			ppGen = nullptr;
 			ResetVisited();
 			while (pGenLink->In(ppGen))
@@ -176,6 +161,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 				pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_Q), -Vim / V2);
 				pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_P), -Vim / V2);
 				pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_Q),  Vre / V2);
+				Pg += pGen->P;
+				Qg += pGen->Q;
 			}
 		}
 
@@ -221,15 +208,14 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
 
 		pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
-
 		pDynaModel->SetElement(A(V_V), A(V_RE), -Vre / sqrt(V2));
 		pDynaModel->SetElement(A(V_V), A(V_IM), -Vim / sqrt(V2));
-
-		
 
 		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
 		pDynaModel->SetElement(A(V_DELTA), A(V_RE), Vim / V2);
 		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -Vre / V2);
+
+		//pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn);
 
 
 	}
