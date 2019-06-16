@@ -978,8 +978,8 @@ ptrdiff_t refactorOK = 1;
 				CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
 
 				// напряжение после решения системы в векторе задающий токов
-				pNode->Vre = real(*pB);		pB++;
-				pNode->Vim = imag(*pB);		pB++;
+				pNode->Vre = *pB;		pB++;
+				pNode->Vim = *pB;		pB++;
 
 				// считаем напряжение узла в полярных координатах
 				cplx Unode(pNode->Vre, pNode->Vim);
