@@ -321,8 +321,14 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	pDynaModel->SetFunction(A(V_IM), Iim);
 
 	double dV = V - sqrt(V2);
-	//_ASSERTE(Delta < M_PI / 2.0 && Delta > -M_PI / 2.0);
-	double dDelta = Delta - atan2(Vim, Vre);
+	double angle = atan2(Vim, Vre);
+	//double newDelta = fmod(angle - Delta + M_PI, 2 * M_PI) - M_PI + Delta;
+	double newDelta = angle + static_cast<double>(static_cast<int>(Delta / (2 * M_PI)) * 2 * M_PI);
+
+	if (Delta > M_PI)
+		Delta *= 1.0;
+	double dDelta = Delta - newDelta;
+
 	pDynaModel->SetFunction(A(V_V), dV);
 	pDynaModel->SetFunction(A(V_DELTA), dDelta);
 
