@@ -201,7 +201,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	double dIredVre = -Yii.real();
 	double dIredVim =  Yii.imag();
-	double dIimdVre = -Yii.imag() ;
+	double dIimdVre = -Yii.imag();
 	double dIimdVim = -Yii.real();
 	
 	if (!IsStateOn())
@@ -936,7 +936,7 @@ bool CDynaNodeContainer::LULF()
 					}
 					else
 					{
-						CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(pVsource);
+						CDynaGeneratorInfBusBase *pGen = static_cast<CDynaGeneratorInfBusBase*>(pVsource);
 						// в диагональ матрицы добавляем проводимость генератора
 						Y -= 1.0 / cplx(0.0, pGen->Xgen());
 						I -= pGen->Igen(nIteration);
