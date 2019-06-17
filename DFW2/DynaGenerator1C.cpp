@@ -211,6 +211,9 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_EQ), A(V_EQS), -1.0);
 		// dEq / dId
 		pDynaModel->SetElement(A(V_EQ), A(V_ID), xd - xd1);
+
+		bRes = bRes && BuildIfromDQEquations(pDynaModel);
+
 	}
 
 	return pDynaModel->Status() && bRes;
@@ -253,6 +256,8 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_S), eS);
 		pDynaModel->SetFunctionDiff(A(V_DELTA), eDelta);
 		pDynaModel->SetFunctionDiff(A(V_EQS), eEqs);
+
+		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 	}
 
 	return pDynaModel->Status() && bRes;
@@ -426,6 +431,54 @@ void CDynaGenerator1C::IfromDQ()
 	Ire = Iq * co - Id * si;
 	Iim = Iq * si + Id * co;
 }
+
+
+// вводит в матрицу блок уравнении для преобразования
+// из dq в ri
+bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
+{
+	if (!pDynaModel->Status())
+		return pDynaModel->Status();
+
+	double cosDelta = cos(Delta);
+	double sinDelta = sin(Delta);
+
+	// dIre / dIre
+	pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
+	// dIre / dId
+	pDynaModel->SetElement(A(V_IRE), A(V_ID), sinDelta);
+	// dIre / dIq
+	pDynaModel->SetElement(A(V_IRE), A(V_IQ), -cosDelta);
+	// dIre / dDeltaG
+	pDynaModel->SetElement(A(V_IRE), A(V_DELTA), Iq * sinDelta + Id * cosDelta);
+
+	// dIim / dIim
+	pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
+	// dIim / dId
+	pDynaModel->SetElement(A(V_IIM), A(V_ID), -cosDelta);
+	// dIim / dIq
+	pDynaModel->SetElement(A(V_IIM), A(V_IQ), -sinDelta);
+	// dIim / dDeltaG
+	pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * sinDelta - Iq * cosDelta);
+
+	return pDynaModel->Status();
+}
+
+// вводит в правую часть уравнения для преобразования 
+// из dq в ri
+bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
+{
+	if (!pDynaModel->Status())
+		return pDynaModel->Status();
+
+	double cosDelta = cos(Delta);
+	double sinDelta = sin(Delta);
+	pDynaModel->SetFunction(A(V_IRE), Ire - Iq * cosDelta + Id * sinDelta);
+	pDynaModel->SetFunction(A(V_IIM), Iim - Iq * sinDelta - Id * cosDelta);
+
+	return pDynaModel->Status();
+}
+
 
 const _TCHAR *CDynaGenerator1C::m_cszEqe = _T("Eqe");
 const _TCHAR *CDynaGenerator1C::m_cszEq  = _T("Eq");

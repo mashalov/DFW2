@@ -9,7 +9,7 @@ namespace DFW2
 	{
 	protected:
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		PrimitiveVariableExternal V, DeltaV, Sv;
+		PrimitiveVariableExternal V, DeltaV, Vre, Vim, Sv;
 	public:
 		enum VARS
 		{

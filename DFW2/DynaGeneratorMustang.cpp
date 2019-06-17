@@ -64,8 +64,6 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		double sinDeltaGT = sin(DeltaGT);
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
-		double cosDelta = cos(Delta);
-		double sinDelta = sin(Delta);
 
 		if (!IsStateOn())
 		{
@@ -198,28 +196,7 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_EQ), A(V_ID), xd - xd2);
 
 
-		//pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
-
-		
-
-	    // dIre / dIre
-		pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
-		// dIre / dId
-		pDynaModel->SetElement(A(V_IRE), A(V_ID), sinDelta);
-		// dIre / dIq
-		pDynaModel->SetElement(A(V_IRE), A(V_IQ),  -cosDelta);
-		// dIre / dDeltaG
-		pDynaModel->SetElement(A(V_IRE), A(V_DELTA), Iq * sinDelta + Id * cosDeltaGT);
-
-		// dIim / dIim
-		pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
-		// dIim / dId
-		pDynaModel->SetElement(A(V_IIM), A(V_ID), -cosDelta);
-		// dIim / dIq
-		pDynaModel->SetElement(A(V_IIM), A(V_IQ), -sinDelta);
-		// dIim / dDeltaG
-		pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * sinDelta - Iq * cosDelta);
-		
+		bRes = bRes && BuildIfromDQEquations(pDynaModel);
 	}
 	return pDynaModel->Status() && bRes;
 }
@@ -264,10 +241,7 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
 
-		double co = cos(Delta);
-		double si = sin(Delta);
-		pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
-		pDynaModel->SetFunction(A(V_IIM), Iim - Iq * si - Id * co);
+		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 	}
 	return pDynaModel->Status() && bRes;
 }
