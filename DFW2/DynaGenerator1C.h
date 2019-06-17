@@ -27,7 +27,7 @@ namespace DFW2
 
 		enum VARS
 		{
-			V_VD = 4,
+			V_VD = CDynaGeneratorMotion::V_LAST,
 			V_VQ,
 			V_ID,
 			V_IQ,
@@ -50,6 +50,8 @@ namespace DFW2
 
 		double Eqnom, Snom, Qnom, Inom;
 		double m_ExciterId;
+
+		void IfromDQ();
 		
 		CDynaGenerator1C();
 		virtual ~CDynaGenerator1C() {}

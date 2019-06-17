@@ -14,7 +14,7 @@ namespace DFW2
 
 		enum VARS
 		{
-			V_EQSS = 10,
+			V_EQSS = CDynaGenerator1C::V_LAST,
 			V_EDSS,
 			V_LAST
 		};

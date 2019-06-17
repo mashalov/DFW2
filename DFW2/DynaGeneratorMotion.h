@@ -12,7 +12,7 @@ namespace DFW2
 	public:
 		enum VARS
 		{
-			V_S = 2,
+			V_S = CDynaGeneratorInfBus::V_LAST,
 			V_DELTA,
 			V_LAST
 		};

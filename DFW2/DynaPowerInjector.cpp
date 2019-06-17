@@ -27,6 +27,8 @@ double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 	{
 		MAP_VARIABLE(P, V_P)
 		MAP_VARIABLE(Q, V_Q)
+		MAP_VARIABLE(Ire, V_IRE)
+		MAP_VARIABLE(Iim, V_IIM)
 	}
 	return p;
 }
@@ -38,7 +40,7 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::Init(CDynaModel* pDynaModel)
 
 	if (!IsStateOn())
 	{
-		P = Q = 0.0;
+		P = Q = Ire = Iim = 0.0;
 		Status = DFS_OK;
 	}
 

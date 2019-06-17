@@ -71,10 +71,11 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::ProcessDiscontinuity(CDynaModel *pDynaMo
 			Id = (P * Vd - Q * Vq) / det;
 			Iq = (Q * Vd + P * Vq) / det;
 			Eq = Eqs - Id * (xd - xd1);
+			IfromDQ();
 		}
 		else
 		{
-			Id = Iq = Eq = 0.0;
+			Id = Iq = Eq = Ire = Iim = 0.0;
 		}
 	}
 	return eRes;
@@ -418,6 +419,13 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 	return props;
 }
 
+void CDynaGenerator1C::IfromDQ()
+{
+	double co = cos(Delta);
+	double si = sin(Delta);
+	Ire = Iq * co - Id * si;
+	Iim = Iq * si + Id * co;
+}
 
 const _TCHAR *CDynaGenerator1C::m_cszEqe = _T("Eqe");
 const _TCHAR *CDynaGenerator1C::m_cszEq  = _T("Eq");
