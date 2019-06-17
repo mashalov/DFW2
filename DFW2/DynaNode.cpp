@@ -80,7 +80,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON && IsStateOn());
 
-	_ASSERTE(!bInMetallicSC);
+	//_ASSERTE(!bInMetallicSC);
 		
 	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
 	//double Qe = Qnr - Qg + V * V * Yii.imag();
@@ -151,6 +151,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double V2sqInv = V < DFW2_EPSILON ? 0.0 : 1.0 / sqrt(V2);
 	double VreV2 = V < DFW2_EPSILON ? 0.0 : Vre / V2;
 	double VimV2 = V < DFW2_EPSILON ? 0.0 : Vim / V2;
+
+	double Igre(0.0), Igim(0.0);
 	
 	if (pGenLink->m_nCount)
 	{
@@ -160,12 +162,10 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		while (pGenLink->In(ppGen))
 		{
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_P), -VreV2);
-			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_Q), -VimV2);
-			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_P), -VimV2);
-			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_Q),  VreV2);
-			Pg += pGen->P;
-			Qg += pGen->Q;
+			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_IRE), -1.0);
+			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_IIM), -1.0);
+			Igre += pGen->Ire;
+			Igim += pGen->Iim;
 		}
 	}
 
@@ -201,7 +201,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	double dIredVre = -Yii.real();
 	double dIredVim =  Yii.imag();
-	double dIimdVre = -Yii.imag();
+	double dIimdVre = -Yii.imag() ;
 	double dIimdVim = -Yii.real();
 	
 	if (!IsStateOn())
@@ -248,6 +248,8 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	CLinkPtrCount *pGenLink = GetLink(1);
 	CDevice **ppGen = nullptr;
 
+	double Ire(0.0), Iim(0.0);
+
 	if (pGenLink->m_nCount)
 	{
 		Pg = Qg = 0.0;
@@ -255,8 +257,8 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		while (pGenLink->In(ppGen))
 		{
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-			Pg += pGen->P;
-			Qg += pGen->Q;
+			Ire -= pGen->Ire;
+			Iim -= pGen->Iim;
 		}
 	}
 
@@ -292,9 +294,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	double V2 = Vre * Vre + Vim * Vim;
 	double V2inv = V < DFW2_EPSILON ? 0.0 : 1.0 / V2;
-
-	double Ire(0.0), Iim(0.0);
-
+	
 	if (IsStateOn())
 	{
 		Ire -= Yii.real() * Vre - Yii.imag() * Vim;
@@ -370,6 +370,7 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 	if (m_pLRC)
 		dLRCVicinity = 30.0 * fabs(Vold - V) / Unom;
 
+	dLRCVicinity = 0.0;
 	Vold = V;
 
 	return bRes;

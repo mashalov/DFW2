@@ -64,7 +64,8 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		double sinDeltaGT = sin(DeltaGT);
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
-
+		double cosDelta = cos(Delta);
+		double sinDelta = sin(Delta);
 
 		if (!IsStateOn())
 		{
@@ -195,6 +196,30 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_EQ), A(V_EQSS), -1.0);
 		// dEq / dId
 		pDynaModel->SetElement(A(V_EQ), A(V_ID), xd - xd2);
+
+
+		//pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
+
+		
+
+	    // dIre / dIre
+		pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
+		// dIre / dId
+		pDynaModel->SetElement(A(V_IRE), A(V_ID), sinDelta);
+		// dIre / dIq
+		pDynaModel->SetElement(A(V_IRE), A(V_IQ),  -cosDelta);
+		// dIre / dDeltaG
+		pDynaModel->SetElement(A(V_IRE), A(V_DELTA), Iq * sinDelta + Id * cosDeltaGT);
+
+		// dIim / dIim
+		pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
+		// dIim / dId
+		pDynaModel->SetElement(A(V_IIM), A(V_ID), -cosDelta);
+		// dIim / dIq
+		pDynaModel->SetElement(A(V_IIM), A(V_IQ), -sinDelta);
+		// dIim / dDeltaG
+		pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * sinDelta - Iq * cosDelta);
+		
 	}
 	return pDynaModel->Status() && bRes;
 }
@@ -238,6 +263,11 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQS), eEqs);
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
+
+		double co = cos(Delta);
+		double si = sin(Delta);
+		pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
+		pDynaModel->SetFunction(A(V_IIM), Iim - Iq * si - Id * co);
 	}
 	return pDynaModel->Status() && bRes;
 }
@@ -285,10 +315,11 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::ProcessDiscontinuity(CDynaModel *pD
 		P =  sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2));
 		Q =  Vd * Iq - Vq * Id;
 		Eq  = Eqss - Id * (xd - xd2);
+		IfromDQ();
 	}
 	else
 	{
-		Id = Iq = Eq = P = Q = 0.0;
+		Id = Iq = Eq = P = Q = Ire = Iim = 0.0;
 	}
 	
 	return eRes;
@@ -312,6 +343,7 @@ bool CDynaGeneratorMustang::CalculatePower()
 	Iq = -zsq * (Vd - sp2 * Edss) * xd2;
 	P = sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2));
 	Q = Vd * Iq - Vq * Id;
+	IfromDQ();
 	return true;
 }
 

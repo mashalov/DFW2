@@ -37,6 +37,19 @@ bool CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 	// dQ/dDeltaV
 	pDynaModel->SetElement(A(V_Q), A(DeltaV.Index()), -NodeV * EsinDeltaGT / xd1);
 
+	// dIre / dIre
+	pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
+	// dIre / dDeltaV
+	pDynaModel->SetElement(A(V_IRE), A(DeltaV.Index()), NodeV / xd1 * cos(DeltaV.Value()));
+	// dIre / dV
+	pDynaModel->SetElement(A(V_IRE), A(V.Index()), sin(DeltaV.Value()) / xd1);
+
+	// dIim / dIim
+	pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
+	// dIim / dDeltaV
+	pDynaModel->SetElement(A(V_IIM), A(DeltaV.Index()), NodeV / xd1 * sin(DeltaV.Value()));
+	// dIim / dV
+	pDynaModel->SetElement(A(V_IIM), A(V.Index()), -cos(DeltaV.Value()) / xd1);
 	return pDynaModel->Status() && bRes;
 }
 
@@ -48,6 +61,8 @@ bool CDynaGeneratorInfBus::CalculatePower()
 	double EcosDeltaGT = Eqs * cos(DeltaGT);
 	P = NodeV * EsinDeltaGT / xd1;
 	Q = (NodeV * EcosDeltaGT - NodeV * NodeV) / xd1;
+	Ire = (Eqs * sin(Delta) - NodeV * sin(DeltaV.Value())) / xd1;
+	Iim = (NodeV * cos(DeltaV.Value()) - Eqs * cos(Delta)) / xd1;
 	return true;
 }
 
@@ -66,6 +81,8 @@ bool CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 
 	pDynaModel->SetFunction(A(V_P), P - NodeV * EsinDeltaGT / xd1);
 	pDynaModel->SetFunction(A(V_Q), Q - (NodeV * EcosDeltaGT - NodeV * NodeV) / xd1);
+	pDynaModel->SetFunction(A(V_IRE), Ire - 1.0 / xd1 * (Eqs*sin(Delta) - NodeV * sin(DeltaV.Value())));
+	pDynaModel->SetFunction(A(V_IIM), Iim - 1.0 / xd1 * (NodeV * cos(DeltaV.Value()) - Eqs * cos(Delta)));
 	return pDynaModel->Status();
 }
 
@@ -85,7 +102,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
 				Status = DFS_FAILED;
 			break;
 		case DS_OFF:
-			P = Q = Delta = Eqs = 0.0;
+			P = Q = Delta = Eqs = Ire = Iim = 0.0;
 			break;
 		}
 	}
@@ -104,6 +121,9 @@ bool CDynaGeneratorInfBus::SetUpDelta()
 	cplx eQ = v + i * GetXofEqs();
 	Delta = arg(eQ);
 	Eqs = abs(eQ);
+	double NodeV = V.Value();
+	Ire = (Eqs * sin(Delta) - NodeV * sin(DeltaV.Value())) / GetXofEqs().imag() ;
+	Iim = (NodeV * cos(DeltaV.Value()) - Eqs * cos(Delta)) / GetXofEqs().imag();
 	return bRes;
 }
 

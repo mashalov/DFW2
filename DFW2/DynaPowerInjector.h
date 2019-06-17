@@ -15,6 +15,8 @@ namespace DFW2
 		{
 			V_P,
 			V_Q,
+			V_IRE,
+			V_IIM,
 			V_LAST
 		};
 
@@ -27,6 +29,9 @@ namespace DFW2
 
 		double P;
 		double Q;
+		double Ire;
+		double Iim;
+
 		double Kgen;
 
 		double NodeId;
