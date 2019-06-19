@@ -23,8 +23,8 @@ CDynaNodeBase::CDynaNodeBase() : CDevice(),
 								 dLRCVicinity(0.0),
 								 //m_dLRCKdef(1.0),
 								 m_bInMetallicSC(false)
-{
-}
+								 {
+								 }
 
 
 CDynaNodeBase::~CDynaNodeBase()
@@ -51,7 +51,7 @@ void CDynaNodeBase::GetPnrQnr()
 
 	dLRCPn = 0.0;
 	dLRCQn = 0.0;
-	
+
 	// если есть СХН, рассчитываем
 	// комплексную мощность и проивзодные по напряжению
 	if (m_pLRC)
@@ -81,17 +81,17 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON && IsStateOn());
 
 	//_ASSERTE(!bInMetallicSC);
-		
+
 	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
 	//double Qe = Qnr - Qg + V * V * Yii.imag();
 
 	/*
 	double Pe = GetSelfImbP();
-	double Qe = GetSelfImbQ(); 
+	double Qe = GetSelfImbQ();
 	double dPdDelta = 0.0;
-	double dPdV = GetSelfdPdV(); 
+	double dPdV = GetSelfdPdV();
 	double dQdDelta = 0.0;
-	double dQdV = GetSelfdQdV(); 
+	double dQdV = GetSelfdQdV();
 
 	CLinkPtrCount *pBranchLink = GetLink(0);
 	CDevice **ppBranch = nullptr;
@@ -117,7 +117,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		dPdV	 += -ZeroDivGuard(mult.real(), V);
 		dQdDelta += -mult.real();
 		dQdV     +=  ZeroDivGuard(mult.imag(), V);
-			
+
 
 		bool bDup = CheckAddVisited(pOppNode) >= 0;
 		// dP/dDelta
@@ -149,12 +149,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double Vim2 = Vim * Vim;
 	double V2 = Vre2 + Vim2;
 
-	double V2sqInv = V < DFW2_EPSILON ? 0.0 : 1.0 / sqrt(V2);
-	double VreV2 = V < DFW2_EPSILON ? 0.0 : Vre / V2;
-	double VimV2 = V < DFW2_EPSILON ? 0.0 : Vim / V2;
-
 	double Igre(0.0), Igim(0.0);
-	
+
 	if (pGenLink->m_nCount)
 	{
 		Pg = Qg = 0.0;
@@ -189,11 +185,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_IM), pOppNode->A(V_IM), -pYkm->real(), bDup);
 	}
 
-	double Pgsum =  Pnr - Pg;
-	double Qgsum =  Qnr - Qg;
-
-	double VreVim2 = 2.0 * Vre * Vim;
-	double V4 = V < DFW2_EPSILON ? 0.0 : 1.0 / (V2 * V2);
+	double Pgsum = Pnr - Pg;
+	double Qgsum = Qnr - Qg;
 
 	double PgVre2 = Pgsum * Vre2;
 	double PgVim2 = Pgsum * Vim2;
@@ -201,9 +194,11 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double QgVim2 = Qgsum * Vim2;
 
 	double dIredVre = -Yii.real();
-	double dIredVim =  Yii.imag();
+	double dIredVim = Yii.imag();
 	double dIimdVre = -Yii.imag();
 	double dIimdVim = -Yii.real();
+
+	double V2sqInv(0.0), VreV2(0.0), VimV2(0.0), V4(0.0), VreVim2(0.0);
 
 	if (!IsStateOn())
 	{
@@ -212,29 +207,40 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		dIredVre += (-PgVre2 + PgVim2 - VreVim2 * Qgsum) * V4;
-		dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
-		dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
-		dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) * V4;
-	}
-			   
-	pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
-	pDynaModel->SetElement(A(V_RE), A(V_IM), dIredVim);
-	pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
-	pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
+		if (V2 > pDynaModel->GetRtol() * pDynaModel->GetRtol() * Unom * Unom)
+		{
+			V2sqInv = 1.0 / sqrt(V2);
+			VreV2 = Vre / V2;
+			VimV2 = Vim / V2;
+			V4 = 1.0 / (V2 * V2);
+			VreVim2 = 2.0 * Vre * Vim;
 
+			// добавка в диагональ по мощности
+			dIredVre += (-PgVre2 + PgVim2 - VreVim2 * Qgsum) * V4;
+			dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
+			dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
+			dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) * V4;
+		}
+	}
+
+	// расчет модуля напряжения
 	pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
 	pDynaModel->SetElement(A(V_V), A(V_RE), -Vre * V2sqInv);
 	pDynaModel->SetElement(A(V_V), A(V_IM), -Vim * V2sqInv);
 
+	// производные от СХН
+	pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
+	pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
+
+	// расчет угла
 	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
 	pDynaModel->SetElement(A(V_DELTA), A(V_RE), VimV2);
 	pDynaModel->SetElement(A(V_DELTA), A(V_IM), -VreV2);
 
-	pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
-	pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
-
-
+	pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
+	pDynaModel->SetElement(A(V_RE), A(V_IM), dIredVim);
+	pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
+	pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
 
 	return pDynaModel->Status();
 }
@@ -294,8 +300,9 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	*/
 
 	double V2 = Vre * Vre + Vim * Vim;
-	double V2inv = V < DFW2_EPSILON ? 0.0 : 1.0 / V2;
-	
+
+	double dV(0.0), dDelta(0.0);
+
 	if (IsStateOn())
 	{
 		Ire -= Yii.real() * Vre - Yii.imag() * Vim;
@@ -316,46 +323,35 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Iim -= pYkm->imag() * pOppNode->Vre + pYkm->real() * pOppNode->Vim;
 		}
 
-		Ire += (Pk * Vre + Qk * Vim) * V2inv;
-		Iim += (Pk * Vim - Qk * Vre) * V2inv;
-	}
+		if (V2 >= pDynaModel->GetRtol() * pDynaModel->GetRtol() * Unom * Unom)
+		{
+			double V2inv = 1.0 / V2;
+			Ire += (Pk * Vre + Qk * Vim) * V2inv;
+			Iim += (Pk * Vim - Qk * Vre) * V2inv;
 
+			double angle = atan2(Vim, Vre);
+			ptrdiff_t IntWinds = static_cast<ptrdiff_t>(Delta / 2 / M_PI);
+			double newDelta = static_cast<double>(IntWinds) * 2 * M_PI + angle;
+			double CheckDelta[3] = { newDelta, newDelta + 2 * M_PI, newDelta - 2 * M_PI };
+			double *pMin = nullptr;
+			for (double *pCheck = CheckDelta; pCheck < CheckDelta + _countof(CheckDelta); pCheck++)
+				if (pMin)
+				{
+					if (fabs(*pMin - Delta) > fabs(*pCheck - Delta))
+						pMin = pCheck;
+				}
+				else
+					pMin = pCheck;
+
+			newDelta = *pMin;
+
+			dDelta = Delta - newDelta;
+			dV = V - sqrt(V2);
+		}
+	}
 
 	pDynaModel->SetFunction(A(V_RE), Ire);
 	pDynaModel->SetFunction(A(V_IM), Iim);
-
-	double dV = V - sqrt(V2);
-	double angle = atan2(Vim, Vre);
-	//double newDelta = fmod(angle - Delta + M_PI, 2 * M_PI) - M_PI + Delta;
-	//double newDelta = angle + static_cast<double>(static_cast<int>(Delta / (2 * M_PI)) * 2 * M_PI);
-	ptrdiff_t IntWinds = static_cast<ptrdiff_t>(Delta / 2 / M_PI);
-	double newDelta = static_cast<double>(IntWinds) * 2 * M_PI + angle;
-	double CheckDelta[3] = { newDelta, newDelta + 2 * M_PI, newDelta - 2 * M_PI };
-	double *pMin = nullptr;
-	for (double *pCheck = CheckDelta; pCheck < CheckDelta + _countof(CheckDelta); pCheck++)
-		if (pMin)
-		{
-			if (fabs(*pMin - Delta) > fabs(*pCheck - Delta))
-				pMin = pCheck;
-		}
-		else
-			pMin = pCheck;
-
-	newDelta = *pMin;
-	/*
-	RightVector *pRv = pDynaModel->GetRightVector(A(V_DELTA));
-	if (pRv->Nordsiek[1] > 0.0)
-	{
-		_ASSERTE(newDelta > pRv->SavedNordsiek[0] - pRv->Atol);
-	}
-	else if (pRv->Nordsiek[1] < 0.0)
-	{
-		_ASSERTE(newDelta < pRv->SavedNordsiek[0] + pRv->Atol);
-	}
-	*/
-
-	double dDelta = Delta - newDelta;
-
 	pDynaModel->SetFunction(A(V_V), dV);
 	pDynaModel->SetFunction(A(V_DELTA), dDelta);
 
@@ -367,7 +363,7 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 	bool bRes = true;
 	// only update vicinity in case node has LRC ( due to slow complex::abs() )
 	if (m_pLRC)
-		dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
+		dLRCVicinity = 10.0 * fabs(Vold - V) / Unom;
 
 	//dLRCVicinity = 0.0;
 	Vold = V;
@@ -414,8 +410,8 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(A(V_LAG), A(V_DELTA), -1.0 / T);
 	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
 	pDynaModel->SetElement(A(V_LAG), A(V_LAG), -1.0 / T);
-	
-	
+
+
 	if (!pDynaModel->IsInDiscontinuityMode())
 	{
 		pDynaModel->SetElement(A(V_S), A(V_DELTA), -1.0 / T / w0);
@@ -443,9 +439,9 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	double dLag = (Delta - Lag) / T;
 	double dS = S - (Delta - Lag) / T / w0;
 
-	if (pDynaModel->IsInDiscontinuityMode()) 
+	if (pDynaModel->IsInDiscontinuityMode())
 		dS = 0.0;
-	
+
 	pDynaModel->SetFunctionDiff(A(V_LAG), dLag);
 	pDynaModel->SetFunction(A(V_S), dS);
 
@@ -469,10 +465,10 @@ double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	double *p = NULL;
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(Delta,V_DELTA)
-		MAP_VARIABLE(V, V_V)
-		MAP_VARIABLE(Vre, V_RE)
-		MAP_VARIABLE(Vim, V_IM)
+		MAP_VARIABLE(Delta, V_DELTA)
+			MAP_VARIABLE(V, V_V)
+			MAP_VARIABLE(Vre, V_RE)
+			MAP_VARIABLE(Vim, V_IM)
 	}
 	return p;
 }
@@ -484,7 +480,7 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Bshunt, C_BSH)
-		MAP_VARIABLE(Gshunt, C_GSH)
+			MAP_VARIABLE(Gshunt, C_GSH)
 	}
 	return p;
 }
@@ -498,16 +494,16 @@ double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 		switch (nVarIndex)
 		{
 			MAP_VARIABLE(Lag, V_LAG)
-			MAP_VARIABLE(S, V_S)
+				MAP_VARIABLE(S, V_S)
 		}
 	}
 	return p;
 }
 
-CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) : 
-									   CDeviceContainer(pDynaModel),
-									   m_pSynchroZones(NULL),
-									   m_bDynamicLRC(true)
+CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) :
+	CDeviceContainer(pDynaModel),
+	m_pSynchroZones(NULL),
+	m_bDynamicLRC(true)
 {
 	// в контейнере требуем особой функции прогноза и обновления после
 	// ньютоновской итерации
@@ -698,7 +694,7 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 		for (DEVICEVECTORITR it = m_LinkedGenerators.begin(); it != m_LinkedGenerators.end(); it++)
 		{
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*it);
-			if(pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
+			if (pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
 				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(pGen);
 				pDynaModel->SetElement(A(V_S), pGen->A(CDynaGeneratorMotion::V_S), -pGenMj->Mj / Mj);
@@ -756,10 +752,10 @@ bool CDynaNodeContainer::LULF()
 
 	// вектор смежных узлов 
 	NodeToMatrix *pNodeToMatrix = new NodeToMatrix[nBranchesCount];
-	
+
 	// матрица и вектор правой части
 	double *Ax = new double[2 * nNzCount];
-	double *B  = new double[2 * nNodeCount];
+	double *B = new double[2 * nNodeCount];
 	// индексы
 	ptrdiff_t *Ap = new ptrdiff_t[nNodeCount + 1];
 	ptrdiff_t *Ai = new ptrdiff_t[nNzCount];
@@ -842,7 +838,7 @@ bool CDynaNodeContainer::LULF()
 					{
 						// нашли смежный узел, добавляем проводимости
 						*pCheck->pMatrixElement += pYkm->real();
-						*(pCheck->pMatrixElement+1) += pYkm->imag();
+						*(pCheck->pMatrixElement + 1) += pYkm->imag();
 					}
 					else
 					{
@@ -865,7 +861,7 @@ bool CDynaNodeContainer::LULF()
 	nNzCount = (pAx - Ax) / 2;		// рассчитываем получившееся количество ненулевых элементов (делим на 2 потому что комплекс)
 	Ap[nNodeCount] = nNzCount;
 	Symbolic = KLU_analyze(nNodeCount, Ap, Ai, &Common);
-		
+
 	for (ptrdiff_t nIteration = 0; nIteration < 200; nIteration++)
 	{
 		m_IterationControl.Reset();
@@ -923,7 +919,7 @@ bool CDynaNodeContainer::LULF()
 						continue;
 
 					pVsource->CalculatePower();
-					
+
 					if (0)
 					{
 						//Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
@@ -940,7 +936,7 @@ bool CDynaNodeContainer::LULF()
 						Y -= 1.0 / cplx(0.0, pGen->Xgen());
 						I -= pGen->Igen(nIteration);
 					}
-					
+
 
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
@@ -951,7 +947,7 @@ bool CDynaNodeContainer::LULF()
 				// рассчитываем задающий ток узла от нагрузки
 				// можно посчитать ток, а можно посчитать добавку в диагональ
 				//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
-				if(pNode->V > 0.0)
+				if (pNode->V > 0.0)
 					Y += conj(cplx(pNode->Pg - Pnr, pNode->Qg - Qnr) / pNode->V / pNode->V);
 				//Y -= conj(cplx(Pnr, Qnr) / pNode->V / pNode->V);
 
@@ -959,13 +955,13 @@ bool CDynaNodeContainer::LULF()
 				_CheckNumber(I.imag());
 				_CheckNumber(Y.real());
 				_CheckNumber(Y.imag());
-				
+
 				// и заполняем вектор комплексных токов
 				*pB = I.real(); pB++;
 				*pB = I.imag(); pB++;
 				// диагональ матрицы формируем по Y узла
 				**ppDiags = Y.real();
-				*(*ppDiags+1) = Y.imag();
+				*(*ppDiags + 1) = Y.imag();
 				_ftprintf(fnode, _T("%g;"), pNode->V / pNode->V0);
 			}
 			else
@@ -975,12 +971,12 @@ bool CDynaNodeContainer::LULF()
 				*pB = 0.0; pB++;
 			}
 		}
-		
-ptrdiff_t refactorOK = 1;
 
-// KLU может делать повторную факторизацию матрицы с начальным пивотингом
-// это быстро, но при изменении пивотов может вызывать численную неустойчивость.
-// У нас есть два варианта факторизации/рефакторизации на итерации LULF
+		ptrdiff_t refactorOK = 1;
+
+		// KLU может делать повторную факторизацию матрицы с начальным пивотингом
+		// это быстро, но при изменении пивотов может вызывать численную неустойчивость.
+		// У нас есть два варианта факторизации/рефакторизации на итерации LULF
 
 #ifdef USEREFACTOR
 		// делаем факторизацию/рефакторизацию и если она получилась
@@ -1017,7 +1013,7 @@ ptrdiff_t refactorOK = 1;
 				/*if (pNode->m_pLRC)
 					pNode->dLRCVicinity = 30.0 * fabs(pNode->Vold - pNode->V) / pNode->Unom;
 				*/
-				
+
 				// считаем изменение напряжения узла между итерациями и находим
 				// самый изменяющийся узел
 
@@ -1025,7 +1021,7 @@ ptrdiff_t refactorOK = 1;
 			}
 
 			DumpIterationControl();
-			
+
 			if (fabs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
 			{
 				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
@@ -1051,7 +1047,7 @@ ptrdiff_t refactorOK = 1;
 	*/
 
 
-	if(Numeric)
+	if (Numeric)
 		klu_z_free_numeric(&Numeric, &Common);
 
 	fclose(fnode);
@@ -1118,7 +1114,7 @@ const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 	props.nEquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
 
-	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA,VARUNIT_RADIANS)));
+	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS)));
 	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS)));
@@ -1142,7 +1138,7 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 	CDeviceContainerProperties props;
 	props.eDeviceType = DEVTYPE_SYNCZONE;
 	props.nEquationsCount = CSynchroZone::VARS::V_LAST;
-	props.m_VarMap.insert(make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
+	props.m_VarMap.insert(make_pair(CDynaNode::m_cszS, CVarIndex(0, VARUNIT_PU)));
 	return props;
 }
 
