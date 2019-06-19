@@ -104,6 +104,8 @@ bool CDynaModel::Run()
 
 	bRes = bRes && (LRCs.Init(this) == DFS_OK);
 
+	//static_cast<CDynaLRC*>(LRCs.GetDeviceByIndex(0))->TestDump(_T("c:\\tmp\\lrc0.csv"));
+
 	bRes = bRes && Link();
 	bRes = bRes && PrepareGraph();
 	bRes = bRes && PrepareYs();
