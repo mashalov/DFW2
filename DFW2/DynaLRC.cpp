@@ -52,11 +52,13 @@ double CDynaLRC::GetP(double VdivVnom, double dVicinity)
 
 double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC)
 {
+	// По умолчанию считаем что напряжение находится в последнем сегменте
 	CLRCData *pHitV = pBase + nCount - 1;
 
 	CLRCData *v = pBase;
 	VdivVnom = max(0.0, VdivVnom);
 
+	// ищем сегмент у которого напряжение больше заданного
 	while (v < pBase + nCount)
 	{
 		if (v->V > VdivVnom)
@@ -73,17 +75,25 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 
 	if (pHitV->pPrev)
 	{
+		// если у найденного сегмента есть предыдущий сегмент
+		// и напряжение с учетом радиуса сглаживания в него попадает
+		// отмечаем что есть сегмент слева
 		if (VdivVnom - dVicinity < pHitV->V)
 			bLeft = true;
 	}
 
 	if (pHitV->pNext)
 	{
+		// если у найденного сегмента есть следующий сегмент
+		// и напряжение с учетом радиуса сглаживания в него попадает
+		// отмечаем что есть сегмент справа
 		if (VdivVnom + dVicinity > pHitV->pNext->V)
 			bRight = true;
 
 		if (bLeft)
 		{
+			// если есть и левый и правый сегменты (и это в пределах радиуса)
+			// выбрасываем тот который дальше от текущего напряжения
 			if (VdivVnom - pHitV->V > pHitV->pNext->V - VdivVnom)
 				bLeft = false;
 			else
@@ -99,8 +109,9 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 		_ASSERTE(!(bLeft && bRight));
 
 		double x1, x2, y1, y2, k1 = 0.0, k2 = 0.0;
-
 		
+
+		// https://en.wikipedia.org/wiki/Spline_interpolation
 
 		if (bLeft)
 		{
@@ -128,7 +139,8 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 		if (t >= 0 && t <= 1.0)
 		{
 			double P = (1.0 - t) * y1 + t * y2 + t * (1.0 - t) * (a* (1.0 - t) + b * t);
-			dLRC = ((y2 - y1) + (1.0 - 2 * t) * (a * (1.0 - t) + b *t) + t * (1.0 - t) * (b - a)) / x2x1;
+			//dLRC = ((y2 - y1) + (1.0 - 2 * t) * (a * (1.0 - t) + b *t) + t * (1.0 - t) * (b - a)) / x2x1;		
+			dLRC = (a - y1 + y2 - (4.0 * a - 2.0 * b - 3.0 * t * (a - b)) * t) / x2x1;							// matlab derivative, originally a - y1 + y2 - 4*a*t + 2*b*t + 3*a*t^2 - 3*b*t^2
 			return P;
 		}
 	}
@@ -217,6 +229,7 @@ bool CDynaLRC::CollectConstantData(CLRCData *pBase, ptrdiff_t nCount)
 {
 	bool bRes = true;
 	CLRCData *v = pBase;
+	// строим связный список сегментов
 	while (v < pBase + nCount)
 	{
 		v->pPrev = (v == pBase) ? NULL : v - 1;
@@ -225,6 +238,10 @@ bool CDynaLRC::CollectConstantData(CLRCData *pBase, ptrdiff_t nCount)
 	}
 
 	v = pBase;
+	// определяем максимальный радиус сглаживания
+	// для каждого из сегментов
+	// как половину от его ширины по напряжению
+
 	while (v < pBase + nCount)
 	{
 		v->dMaxRadius = 100.0;
@@ -349,8 +366,13 @@ void CDynaLRC::TestDump(const _TCHAR *cszPathName)
 	setlocale(LC_ALL, "ru-ru");
 	if (!_tfopen_s(&flrc, cszPathName, _T("w+")))
 	{
+		double dP(0.0), dQ(0.0), dV(0.5);
 		for (double v = 0.0; v < 1.5; v += 0.01)
-			_ftprintf(flrc, _T("%g;%g;%g\n"), v, GetP(v, 0.3), GetQ(v, 0.3));
+		{
+			double P = GetPdP(v, dP, dV);
+			double Q = GetQdQ(v, dQ, dV);
+			_ftprintf(flrc, _T("%g;%g;%g;%g;%g\n"), v, P,dP, Q, dQ);
+		}
 		fclose(flrc);
 	}
 }

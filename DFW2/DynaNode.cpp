@@ -148,6 +148,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
 	double V2 = Vre2 + Vim2;
+
 	double V2sqInv = V < DFW2_EPSILON ? 0.0 : 1.0 / sqrt(V2);
 	double VreV2 = V < DFW2_EPSILON ? 0.0 : Vre / V2;
 	double VimV2 = V < DFW2_EPSILON ? 0.0 : Vim / V2;
@@ -203,7 +204,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double dIredVim =  Yii.imag();
 	double dIimdVre = -Yii.imag();
 	double dIimdVim = -Yii.real();
-	
+
 	if (!IsStateOn())
 	{
 		dIredVre = dIimdVim = 1.0;
@@ -365,12 +366,10 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
 	// only update vicinity in case node has LRC ( due to slow complex::abs() )
-	//if (m_pLRC)
-	//	dLRCVicinity = 30.0 * fabs(abs(VreVim) - V) / Unom;
 	if (m_pLRC)
-		dLRCVicinity = 30.0 * fabs(Vold - V) / Unom;
+		dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
 
-	dLRCVicinity = 0.0;
+	//dLRCVicinity = 0.0;
 	Vold = V;
 
 	return bRes;
