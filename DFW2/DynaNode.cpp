@@ -508,9 +508,9 @@ double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Delta, V_DELTA)
-			MAP_VARIABLE(V, V_V)
-			MAP_VARIABLE(Vre, V_RE)
-			MAP_VARIABLE(Vim, V_IM)
+		MAP_VARIABLE(V, V_V)
+		MAP_VARIABLE(Vre, V_RE)
+		MAP_VARIABLE(Vim, V_IM)
 	}
 	return p;
 }
