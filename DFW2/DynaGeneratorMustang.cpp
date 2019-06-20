@@ -15,6 +15,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 {
 	xq1 = xq;
 
+	if (GetId() == 97)
+	{
+		FILE *flog;
+		_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("w+"));
+		fclose(flog);
+	}
+
 	if (!pDynaModel->ConsiderDampingEquation())
 		Kdemp = 0.0;
 
@@ -59,6 +66,7 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		bRes = true;
 
 		double dVre(Vre.Value()), dVim(Vim.Value());
+		ptrdiff_t iVre(Vre.Index()), iVim(Vim.Index());
 		double cosg(cos(Delta)), sing(sin(Delta));
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
@@ -127,20 +135,20 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		// dVd/dVd
 		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
 		// dVd/dVre
-		pDynaModel->SetElement(A(V_VD), A(Vre.Index()), sing);
+		pDynaModel->SetElement(A(V_VD), A(iVre), sing);
 		// dVd/dVim
-		pDynaModel->SetElement(A(V_VD), A(Vim.Index()), -cosg);
+		pDynaModel->SetElement(A(V_VD), A(iVim), -cosg);
 		// dVd/dDeltaG
-		pDynaModel->SetElement(A(V_VD), A(V_DELTA), dVre*cosg + dVim * sing);
+		pDynaModel->SetElement(A(V_VD), A(V_DELTA), dVre * cosg + dVim * sing);
 
 		// dVd/dVd
 		pDynaModel->SetElement(A(V_VQ), A(V_VQ), 1);
 		// dVd/dVre
-		pDynaModel->SetElement(A(V_VQ), A(Vre.Index()), -cosg);
+		pDynaModel->SetElement(A(V_VQ), A(iVre), -cosg);
 		// dVd/dVim
-		pDynaModel->SetElement(A(V_VQ), A(Vim.Index()), -sing);
+		pDynaModel->SetElement(A(V_VQ), A(iVim), -sing);
 		// dVd/dDeltaG
-		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), dVre*sing - dVim * cosg);
+		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), dVre * sing - dVim * cosg);
 		
 		// dId/dId
 		pDynaModel->SetElement(A(V_ID), A(V_ID), 1);
@@ -235,7 +243,6 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 			sp1 = sp2 = 1.0;
 		}
 
-
 		pDynaModel->SetFunction(A(V_VD), Vd + dVre * sing - dVim * cosg); 
 		pDynaModel->SetFunction(A(V_VQ), Vq - dVre * cosg - dVim * sing);
 		pDynaModel->SetFunction(A(V_P), P - sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2)));
@@ -254,11 +261,22 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
 
-
 		/*
-		if (pDynaModel->GetCurrentTime() > 9.69 && GetId() == 97)
+		if (GetId() == 97 && pDynaModel->GetCurrentTime() > 9.68)
 		{
-			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("--Gen 97-->DeltaV=%10g V=%10g DeltaG=%10g Vd=%10g Vq=%10g Id=%10g Iq=%10g P=%10g Q=%10g s=%10g sv=%10g"), DeltaV.Value(), V.Value(), Delta, Vd, Vq, Id, Iq, P, Q, s, Sv.Value());
+			FILE *flog;
+			_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("a"));
+			_ftprintf(flog, _T("%10g DeltaV=%10g V=%10g DeltaG=%10g Vd=%10g Vq=%10g Id=%10g Iq=%10g P=%10g Q=%10g s=%10g sv=%10g Eq=%10g\n"), 
+				pDynaModel->GetCurrentTime(), 
+				DeltaV.Value(), 
+				V.Value(), 
+				Delta, 
+				Vd, Vq, 
+				Id, Iq, 
+				P, Q, 
+				s, Sv.Value(),
+				Eq);
+			fclose(flog);
 		}
 		*/
 

@@ -14,10 +14,8 @@ bool CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
 
-	double dVre = Vre.Value();
-	double dVim = Vim.Value();
-	ptrdiff_t iVre = Vre.Index();
-	ptrdiff_t iVim = Vim.Index();
+	double dVre(Vre.Value()), dVim(Vim.Value());
+	ptrdiff_t iVre(Vre.Index()), iVim(Vim.Index());
 
 	// dP / dP
 	pDynaModel->SetElement(A(V_P), A(V_P), 1.0);
@@ -66,8 +64,8 @@ bool CDynaGeneratorInfBusBase::CalculatePower()
 
 bool CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 {
-	double dVre = Vre.Value();
-	double dVim = Vim.Value();
+	double dVre(Vre.Value()), dVim(Vim.Value());
+
 	pDynaModel->SetFunction(A(V_P), P - dVre * Ire - dVim * Iim);
 	pDynaModel->SetFunction(A(V_Q), Q + dVre * Iim - dVim * Ire);
 	pDynaModel->SetFunction(A(V_IRE), Ire - (EqsSin - dVim) / xd1);

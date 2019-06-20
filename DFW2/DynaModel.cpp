@@ -90,6 +90,8 @@ bool CDynaModel::Run()
 	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
+	//sc.Hmin = 1E-10;
+
 	m_Parameters.m_bAllowRingingSuppression = true;
 	m_Parameters.m_bUseRefactor = true;
 	m_Parameters.m_dAtol = 1E-4;

@@ -426,8 +426,8 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 
 void CDynaGenerator1C::IfromDQ()
 {
-	double co = cos(Delta);
-	double si = sin(Delta);
+	double co(cos(Delta)), si(sin(Delta));
+
 	Ire = Iq * co - Id * si;
 	Iim = Iq * si + Id * co;
 }
@@ -440,26 +440,25 @@ bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
 	if (!pDynaModel->Status())
 		return pDynaModel->Status();
 
-	double cosDelta = cos(Delta);
-	double sinDelta = sin(Delta);
+	double co(cos(Delta)), si(sin(Delta));
 
 	// dIre / dIre
 	pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
 	// dIre / dId
-	pDynaModel->SetElement(A(V_IRE), A(V_ID), sinDelta);
+	pDynaModel->SetElement(A(V_IRE), A(V_ID), si);
 	// dIre / dIq
-	pDynaModel->SetElement(A(V_IRE), A(V_IQ), -cosDelta);
+	pDynaModel->SetElement(A(V_IRE), A(V_IQ), -co);
 	// dIre / dDeltaG
-	pDynaModel->SetElement(A(V_IRE), A(V_DELTA), Iq * sinDelta + Id * cosDelta);
+	pDynaModel->SetElement(A(V_IRE), A(V_DELTA), Iq * si + Id * co);
 
 	// dIim / dIim
 	pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
 	// dIim / dId
-	pDynaModel->SetElement(A(V_IIM), A(V_ID), -cosDelta);
+	pDynaModel->SetElement(A(V_IIM), A(V_ID), -co);
 	// dIim / dIq
-	pDynaModel->SetElement(A(V_IIM), A(V_IQ), -sinDelta);
+	pDynaModel->SetElement(A(V_IIM), A(V_IQ), -si);
 	// dIim / dDeltaG
-	pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * sinDelta - Iq * cosDelta);
+	pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * si - Iq * co);
 
 	return pDynaModel->Status();
 }
@@ -471,10 +470,9 @@ bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
 	if (!pDynaModel->Status())
 		return pDynaModel->Status();
 
-	double cosDelta = cos(Delta);
-	double sinDelta = sin(Delta);
-	pDynaModel->SetFunction(A(V_IRE), Ire - Iq * cosDelta + Id * sinDelta);
-	pDynaModel->SetFunction(A(V_IIM), Iim - Iq * sinDelta - Id * cosDelta);
+	double co(cos(Delta)), si(sin(Delta));
+	pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
+	pDynaModel->SetFunction(A(V_IIM), Iim - Iq * si - Id * co);
 
 	return pDynaModel->Status();
 }

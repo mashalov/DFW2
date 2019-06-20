@@ -64,10 +64,8 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + NodeSv);
 
-		double dVre = Vre.Value();
-		double dVim = Vim.Value();
-		ptrdiff_t iVre = Vre.Index();
-		ptrdiff_t iVim = Vim.Index();
+		double dVre(Vre.Value()), dVim(Vim.Value());
+		ptrdiff_t iVre(Vre.Index()), iVim(Vim.Index());
 
 		if (!IsStateOn())
 		{
@@ -133,6 +131,7 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 	if (bRes)
 	{
 		double NodeSv = Sv.Value();
+		double dVre(Vre.Value()), dVim(Vim.Value());
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + NodeSv);
 
@@ -141,10 +140,10 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 			sp1 = sp2 = 1.0;
 		}
 
-		pDynaModel->SetFunction(A(V_P), P - Vre.Value() * Ire - Vim.Value() * Iim);
-		pDynaModel->SetFunction(A(V_Q), Q + Vre.Value() * Iim - Vim.Value() * Ire);
-		pDynaModel->SetFunction(A(V_IRE), Ire - (Eqs * sin(Delta) - Vim.Value()) / xd1);
-		pDynaModel->SetFunction(A(V_IIM), Iim - (Vre.Value() - Eqs * cos(Delta)) / xd1);
+		pDynaModel->SetFunction(A(V_P), P - dVre * Ire - dVim * Iim);
+		pDynaModel->SetFunction(A(V_Q), Q + dVre * Iim - dVim * Ire);
+		pDynaModel->SetFunction(A(V_IRE), Ire - (Eqs * sin(Delta) - dVim) / xd1);
+		pDynaModel->SetFunction(A(V_IIM), Iim - (dVre - Eqs * cos(Delta)) / xd1);
 
 		double eDelta = pDynaModel->GetOmega0() * s;
 		double eS = (Pt / sp1 - Kdemp  * s - P / sp2) / Mj;
