@@ -4,7 +4,7 @@
 
 using namespace DFW2;
 
-#define VO_TOL 0.0001
+#define VO_TOL 0.001
 
 // Мы хотим использовать одновременно
 // обычную и комплексную версии KLU для x86 и x64
@@ -233,8 +233,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		}
 		else
 		{
-			dIredVre += Pgsum / dLowV / dLowV ;
-			dIimdVim -= Qgsum / dLowV / dLowV ;
+			double g =  Pgsum / dLowV;
+			double b = -Qgsum / dLowV;
+
+			dIredVre += g;
+			dIredVim -= b;
+			dIimdVre += b;
+			dIimdVim += g;
 		}
 	}
 
@@ -373,8 +378,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 		else
 		{
-			Ire += Pk / dLowV / dLowV * Vre;
-			Iim -= Qk / dLowV / dLowV * Vim;
+			double g = Pk / dLowV;
+			double b = -Qk / dLowV;
+			Ire += g * Vre - b * Vim;
+			Iim += g * Vim + b * Vre;
 		}
 	}
 
