@@ -4,6 +4,8 @@
 
 using namespace DFW2;
 
+#define VO_TOL 0.0001
+
 // Мы хотим использовать одновременно
 // обычную и комплексную версии KLU для x86 и x64
 // Для комплексной версии потребоваля собственный маппинг x86 и x64
@@ -199,7 +201,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double dIimdVim = -Yii.real();
 	double V2sqInv(0.0), VreV2(0.0), VimV2(0.0), V4(0.0), VreVim2(0.0);
 
-	double dLowV = pDynaModel->GetRtol() * Unom;
+	double dLowV = VO_TOL * Unom;
 	dLowV *= dLowV;
 	bool bVnormal = V2 >= dLowV;
 
@@ -228,6 +230,11 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
 			dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
 			dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) * V4;
+		}
+		else
+		{
+			dIredVre += Pgsum / dLowV / dLowV ;
+			dIimdVim -= Qgsum / dLowV / dLowV ;
 		}
 	}
 
@@ -315,7 +322,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	double V2 = Vre * Vre + Vim * Vim;
 	double dV(0.0), dDelta(0.0);
-	double dLowV = pDynaModel->GetRtol() * Unom;
+	double dLowV = VO_TOL * Unom;
 	dLowV *= dLowV;
 	bool bVnormal = V2 >= dLowV;
 
@@ -366,7 +373,8 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 		else
 		{
-			Delta = Delta;
+			Ire += Pk / dLowV / dLowV * Vre;
+			Iim -= Qk / dLowV / dLowV * Vim;
 		}
 	}
 

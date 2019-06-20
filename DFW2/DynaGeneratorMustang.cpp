@@ -58,16 +58,13 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 	{
 		bRes = true;
 
-		double DeltaGT = Delta - DeltaV.Value();
-		double NodeV = V.Value();
-		double cosDeltaGT = cos(DeltaGT);
-		double sinDeltaGT = sin(DeltaGT);
+		double dVre(Vre.Value()), dVim(Vim.Value());
+		double cosg(cos(Delta)), sing(sin(Delta));
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
 
 		if (!IsStateOn())
 		{
-			NodeV = cosDeltaGT = sinDeltaGT = 0.0;
 			sp1 = sp2 = 1.0;
 		}
 
@@ -107,6 +104,7 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		// dQ/dIq
 		pDynaModel->SetElement(A(V_Q), A(V_IQ), -Vd);
 
+		/*
 		// dVd/dVd
 		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
 		// dVd/dV
@@ -124,7 +122,25 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_VQ), A(DeltaV.Index()), -NodeV * sinDeltaGT);
 		// dVq/dDeltaG
 		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), NodeV * sinDeltaGT);
+		*/
 
+		// dVd/dVd
+		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
+		// dVd/dVre
+		pDynaModel->SetElement(A(V_VD), A(Vre.Index()), sing);
+		// dVd/dVim
+		pDynaModel->SetElement(A(V_VD), A(Vim.Index()), -cosg);
+		// dVd/dDeltaG
+		pDynaModel->SetElement(A(V_VD), A(V_DELTA), dVre*cosg + dVim * sing);
+
+		// dVd/dVd
+		pDynaModel->SetElement(A(V_VQ), A(V_VQ), 1);
+		// dVd/dVre
+		pDynaModel->SetElement(A(V_VQ), A(Vre.Index()), -cosg);
+		// dVd/dVim
+		pDynaModel->SetElement(A(V_VQ), A(Vim.Index()), -sing);
+		// dVd/dDeltaG
+		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), dVre*sing - dVim * cosg);
 		
 		// dId/dId
 		pDynaModel->SetElement(A(V_ID), A(V_ID), 1);
@@ -209,22 +225,19 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 	if (bRes)
 	{
 		bRes = true;
-
-		double DeltaGT = Delta - DeltaV.Value();
-		double NodeV = V.Value();
-		double cosDeltaGT = cos(DeltaGT);
-		double sinDeltaGT = sin(DeltaGT);
+		double dVre(Vre.Value()), dVim(Vim.Value());
+		double cosg(cos(Delta)), sing(sin(Delta));
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
 
 		if (!IsStateOn())
 		{
-			NodeV = cosDeltaGT = sinDeltaGT = 0.0;
 			sp1 = sp2 = 1.0;
 		}
 
-		pDynaModel->SetFunction(A(V_VD), Vd + NodeV * sinDeltaGT);
-		pDynaModel->SetFunction(A(V_VQ), Vq - NodeV * cosDeltaGT);
+
+		pDynaModel->SetFunction(A(V_VD), Vd + dVre * sing - dVim * cosg); 
+		pDynaModel->SetFunction(A(V_VQ), Vq - dVre * cosg - dVim * sing);
 		pDynaModel->SetFunction(A(V_P), P - sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2)));
 		pDynaModel->SetFunction(A(V_Q), Q - Vd * Iq + Vq * Id);
 		pDynaModel->SetFunction(A(V_ID), Id + zsq * (sp2 * Eqss - Vq) * xq2);
@@ -285,13 +298,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::ProcessDiscontinuity(CDynaModel *pD
 	eDEVICEFUNCTIONSTATUS eRes = CDynaGenerator3C::ProcessDiscontinuity(pDynaModel);
 	if (IsStateOn())
 	{
-		double DeltaGT = Delta - DeltaV.Value();
-		double NodeV = V.Value();
-		double sinDeltaGT = sin(DeltaGT);
-		double cosDeltaGT = cos(DeltaGT);
+		double dVre(Vre.Value()), dVim(Vim.Value());
+		double cosg(cos(Delta)), sing(sin(Delta));
+		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
-		Vd = -NodeV * sinDeltaGT;
-		Vq =  NodeV * cosDeltaGT;
+
+		Vd = -dVre * sing + dVim * cosg;
+		Vq =  dVre * cosg + dVim * sing;
 		Id = -zsq * (sp2 * Eqss - Vq) * xq2;
 		Iq = -zsq * (Vd - sp2 * Edss) * xd2;
 		P =  sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2));
@@ -314,13 +327,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::UpdateExternalVariables(CDynaModel 
 
 bool CDynaGeneratorMustang::CalculatePower()
 {
-	double DeltaGT = Delta - DeltaV.Value();
-	double NodeV = V.Value();
-	double sinDeltaGT = sin(DeltaGT);
-	double cosDeltaGT = cos(DeltaGT);
+	double dVre(Vre.Value()), dVim(Vim.Value());
+	double cosg(cos(Delta)), sing(sin(Delta));
+	double sp1 = ZeroGuardSlip(1.0 + s);
 	double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
-	Vd = -NodeV * sinDeltaGT;
-	Vq = NodeV * cosDeltaGT;
+
+	Vd = -dVre * sing + dVim * cosg;
+	Vq =  dVre * cosg + dVim * sing;
 	Id = -zsq * (sp2 * Eqss - Vq) * xq2;
 	Iq = -zsq * (Vd - sp2 * Edss) * xd2;
 	P = sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2));
