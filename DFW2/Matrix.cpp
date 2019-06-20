@@ -581,6 +581,12 @@ bool CDynaModel::SolveLinearSystem()
 				{
 					if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
 					{
+						KLU_rcond(Symbolic, Numeric, &Common);
+						if (Common.rcond > sc.dMaxConditionNumber)
+						{
+							sc.dMaxConditionNumber = Common.rcond;
+							sc.dMaxConditionNumberTime = sc.t;
+						}
 						bRes = true;
 					}
 
@@ -595,6 +601,11 @@ bool CDynaModel::SolveLinearSystem()
 		if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
 		{
 			KLU_rcond(Symbolic, Numeric, &Common);
+			if (Common.rcond > sc.dMaxConditionNumber)
+			{
+				sc.dMaxConditionNumber = Common.rcond;
+				sc.dMaxConditionNumberTime = sc.t;
+			}
 			//memcpy(Solution, b, sizeof(double) * m_nMatrixSize);
 			bRes = true;
 		}
