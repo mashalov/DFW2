@@ -197,8 +197,16 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double dIredVim = Yii.imag();
 	double dIimdVre = -Yii.imag();
 	double dIimdVim = -Yii.real();
-
 	double V2sqInv(0.0), VreV2(0.0), VimV2(0.0), V4(0.0), VreVim2(0.0);
+
+	double dLowV = pDynaModel->GetRtol() * Unom;
+	dLowV *= dLowV;
+	bool bVnormal = V2 >= dLowV;
+
+	/*
+	if (pDynaModel->GetCurrentTime() >= 9.69015 && GetId() == 2021)
+		Log(CDFW2Messages::DFW2LOG_DEBUG, _T(""));
+	*/
 
 	if (!IsStateOn())
 	{
@@ -207,7 +215,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		if (V2 > pDynaModel->GetRtol() * pDynaModel->GetRtol() * Unom * Unom)
+		if (bVnormal)
 		{
 			V2sqInv = 1.0 / sqrt(V2);
 			VreV2 = Vre / V2;
@@ -231,6 +239,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	// производные от СХН
 	pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
 	pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
+
 
 	// расчет угла
 	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
@@ -256,6 +265,11 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	CDevice **ppGen = nullptr;
 
 	double Ire(0.0), Iim(0.0);
+
+	/*
+	if (pDynaModel->GetCurrentTime() >= 9.69015 && GetId() == 2021)
+		Log(CDFW2Messages::DFW2LOG_DEBUG, _T(""));
+		*/
 
 	if (pGenLink->m_nCount)
 	{
@@ -300,8 +314,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	*/
 
 	double V2 = Vre * Vre + Vim * Vim;
-
 	double dV(0.0), dDelta(0.0);
+	double dLowV = pDynaModel->GetRtol() * Unom;
+	dLowV *= dLowV;
+	bool bVnormal = V2 >= dLowV;
 
 	if (IsStateOn())
 	{
@@ -323,7 +339,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Iim -= pYkm->imag() * pOppNode->Vre + pYkm->real() * pOppNode->Vim;
 		}
 
-		if (V2 >= pDynaModel->GetRtol() * pDynaModel->GetRtol() * Unom * Unom)
+		if (bVnormal)
 		{
 			double V2inv = 1.0 / V2;
 			Ire += (Pk * Vre + Qk * Vim) * V2inv;
@@ -348,7 +364,18 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			dDelta = Delta - newDelta;
 			dV = V - sqrt(V2);
 		}
+		else
+		{
+			Delta = Delta;
+		}
 	}
+
+	/*
+	if (pDynaModel->GetCurrentTime() > 9.69 && GetId() == 2021)
+	{
+		pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("--Node 2021-->DeltaV=%10g V=%10g Vre=%10g Vim=%10g Ire=%10g Im=%10g Pg=%10g Qg=%10g Pnr=%10g Qnr=%10g Vnorm=%d"), Delta, V, Vre, Vim, Ire, Iim, Pg, Qg, Pnr, Qnr, bVnormal);
+	}
+	*/
 
 	pDynaModel->SetFunction(A(V_RE), Ire);
 	pDynaModel->SetFunction(A(V_IM), Iim);
