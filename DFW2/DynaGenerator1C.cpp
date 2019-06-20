@@ -409,8 +409,8 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 
 	props.nEquationsCount = CDynaGenerator1C::VARS::V_LAST;
 
-	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszId, CVarIndex(CDynaGenerator1C::V_ID, false, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszIq, CVarIndex(CDynaGenerator1C::V_IQ, false, VARUNIT_KAMPERES)));
+	//props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszId, CVarIndex(CDynaGenerator1C::V_ID, false, VARUNIT_KAMPERES)));
+	//props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszIq, CVarIndex(CDynaGenerator1C::V_IQ, false, VARUNIT_KAMPERES)));
 	props.m_VarMap.insert(make_pair(_T("Eqs"), CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszEq, CVarIndex(CDynaGenerator1C::V_EQ, VARUNIT_KVOLTS)));
 

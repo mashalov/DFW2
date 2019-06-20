@@ -241,6 +241,14 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
 
+
+		/*
+		if (pDynaModel->GetCurrentTime() > 9.69 && GetId() == 97)
+		{
+			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("--Gen 97-->DeltaV=%10g V=%10g DeltaG=%10g Vd=%10g Vq=%10g Id=%10g Iq=%10g P=%10g Q=%10g s=%10g sv=%10g"), DeltaV.Value(), V.Value(), Delta, Vd, Vq, Id, Iq, P, Q, s, Sv.Value());
+		}
+		*/
+
 		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 	}
 	return pDynaModel->Status() && bRes;
@@ -334,5 +342,11 @@ const CDeviceContainerProperties CDynaGeneratorMustang::DeviceProperties()
 	props.m_strClassName = CDeviceContainerProperties::m_cszNameGeneratorMustang;
 	// задаем количество уравнений устройства
 	props.nEquationsCount = CDynaGeneratorMustang::VARS::V_LAST;
+
+	props.m_VarMap.insert(make_pair(_T("Id"), CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Iq"), CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Vd"), CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(make_pair(_T("Vq"), CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
+
 	return props;
 }

@@ -619,6 +619,13 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 				}
 			}
 
+			CDynaNode *pNode2021 = static_cast<CDynaNode*>(Nodes.GetDevice(2021));
+			/*
+			if(pNode2021->Delta > 140)
+				Log(CDFW2Messages::DFW2LOG_DEBUG, _T(""));
+			*/
+
+
 			if (SolveLinearSystem())
 			{
 	//			DumpMatrix();
@@ -637,6 +644,11 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (NewtonUpdate())
 				{
+					/*
+					if (pNode2021->Delta > 140)
+						Log(CDFW2Messages::DFW2LOG_DEBUG, _T(""));
+						*/
+
 					IterationOK = true;
 
 					if (sc.m_bNewtonConverged)
