@@ -246,6 +246,9 @@ bool CDynaModel::Run()
 																 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
 																 sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,
 																 sc.nDiscontinuityNewtonFailures);
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Max condition number %g at time %g"),
+																 sc.dMaxConditionNumber,
+																 sc.dMaxConditionNumberTime);
 
 	GetWorstEquations(10);
 	chrono::milliseconds CalcDuration = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - sc.m_ClockStart);
@@ -656,14 +659,15 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 					if (sc.m_bNewtonConverged)
 					{
 #ifdef _LFINFO_
-						Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Converged in %3d iterations %g %s %g %g %s Saving %g"), GetCurrentTime(),
+						Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Converged in %3d iterations %g %s %g %g %s Saving %g Rcond %g"), GetCurrentTime(),
 																						sc.nNewtonIteration,
 																						sc.Newton.dMaxErrorVariable, 
 																						sc.Newton.pMaxErrorDevice->GetVerbalName(),
 																						*sc.Newton.pMaxErrorVariable, 
 																						pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
 																						sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
-																						1.0 - static_cast<double>(sc.nFactorizationsCount) / sc.nNewtonIterationsCount);
+																						1.0 - static_cast<double>(sc.nFactorizationsCount) / sc.nNewtonIterationsCount,
+																						Common.rcond);
 						
 #endif
 
@@ -678,13 +682,14 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 						if (!sc.m_bNewtonStepControl)
 						{
-							Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Continue %3d iteration %g %s %g %g %s"), GetCurrentTime(),
+							Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Continue %3d iteration %g %s %g %g %s Rcond %g"), GetCurrentTime(),
 								sc.nNewtonIteration,
 								sc.Newton.dMaxErrorVariable,
 								sc.Newton.pMaxErrorDevice->GetVerbalName(),
 								*sc.Newton.pMaxErrorVariable,
 								pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
-								sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable));
+								sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
+								Common.rcond);
 						}
 					}
 

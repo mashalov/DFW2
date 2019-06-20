@@ -250,6 +250,7 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(A(V_ID), Id + zsq * (sp2 * Eqss - Vq) * xq2);
 		pDynaModel->SetFunction(A(V_IQ), Iq + zsq * (Vd - sp2 * Edss) * xd2);
 		pDynaModel->SetFunction(A(V_EQ), Eq - Eqss + Id * (xd - xd2));
+
 		double eDelta = pDynaModel->GetOmega0() * s;
 		double eS = (Pt / sp1 - Kdemp  * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj;
 		double eEqs = (ExtEqe.Value() - Eqs + Id * (xd - xd1)) / Td01;

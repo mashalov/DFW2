@@ -184,6 +184,8 @@ namespace DFW2
 			ptrdiff_t nNewtonIterationsCount;
 			ptrdiff_t nFactorizationsCount;
 			ptrdiff_t nAnalyzingsCount;
+			double dMaxConditionNumber;
+			double dMaxConditionNumberTime;
 			OrderStatistics OrderStatistics[2];
 			ptrdiff_t nDiscontinuityNewtonFailures;
 			double m_dCurrentH;
@@ -235,6 +237,8 @@ namespace DFW2
 				nFactorizationsCount = 0;
 				nAnalyzingsCount = 0;
 				nDiscontinuityNewtonFailures = 0;
+				dMaxConditionNumber = 0;
+				dMaxConditionNumberTime = 0;
 				m_ClockStart = chrono::high_resolution_clock::now();
 			}
 
