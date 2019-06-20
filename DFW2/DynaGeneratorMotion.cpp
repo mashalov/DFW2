@@ -132,7 +132,6 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 	bool bRes = true;
 	if (bRes)
 	{
-		double NodeV = V.Value();
 		double NodeSv = Sv.Value();
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + NodeSv);
