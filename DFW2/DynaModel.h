@@ -471,6 +471,7 @@ namespace DFW2
 
 		bool LoadFlow();
 		void DumpMatrix();
+		void DumpStateVector();
 
 
 		FILE *fResult, *m_pLogFile;
@@ -612,6 +613,18 @@ namespace DFW2
 		inline double GetCurrentTime()
 		{
 			return sc.t;
+		}
+
+		// возвращает номер итерации Ньютона
+		inline ptrdiff_t GetNewtonIterationNumber()
+		{
+			return sc.nNewtonIteration;
+		}
+
+		// возвращает номер шага интегрирования
+		inline ptrdiff_t GetIntegrationStepNumber()
+		{
+			return sc.nStepsCount;
 		}
 
 		inline bool ZeroCrossingStepReached(double dHstep)

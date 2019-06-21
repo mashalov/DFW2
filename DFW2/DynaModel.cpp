@@ -86,7 +86,7 @@ bool CDynaModel::Run()
 
 	//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 	m_Parameters.eFreqDampingType = APDT_NODE;
-	//m_Parameters.m_dOutStep = 1E-10;
+	m_Parameters.m_dOutStep = 1E-10;
 	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
@@ -390,6 +390,7 @@ bool CDynaModel::NewtonUpdate()
 	{
 		double& db = b[pVectorBegin - pRightVector];
 		pVectorBegin->Error += db;
+		pVectorBegin->b = db;
 
 		double dMaxErrorDevice = fabs(db);
 
@@ -420,7 +421,6 @@ bool CDynaModel::NewtonUpdate()
 
 	ConvTest[0].GetConvergenceRatio();
 	ConvTest[1].GetConvergenceRatio();
-
 
 	if (ConvTest[0].dErrorSums < l[sc.q - 1][3] * ConvCheck &&
 		ConvTest[1].dErrorSums < l[sc.q + 1][3] * ConvCheck)
@@ -659,7 +659,8 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 					if (sc.m_bNewtonConverged)
 					{
 #ifdef _LFINFO_
-						Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Converged in %3d iterations %g %s %g %g %s Saving %g Rcond %g"), GetCurrentTime(),
+						Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g(%d) Converged in %3d iterations %g %s %g %g %s Saving %g Rcond %g"), GetCurrentTime(),
+																						sc.nStepsCount,
 																						sc.nNewtonIteration,
 																						sc.Newton.dMaxErrorVariable, 
 																						sc.Newton.pMaxErrorDevice->GetVerbalName(),
@@ -682,7 +683,8 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 						if (!sc.m_bNewtonStepControl)
 						{
-							Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Continue %3d iteration %g %s %g %g %s Rcond %g"), GetCurrentTime(),
+							Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g(%d) Continue %3d iteration %g %s %g %g %s Rcond %g"), GetCurrentTime(),
+								sc.nStepsCount,
 								sc.nNewtonIteration,
 								sc.Newton.dMaxErrorVariable,
 								sc.Newton.pMaxErrorDevice->GetVerbalName(),

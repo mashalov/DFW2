@@ -70,8 +70,10 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
-	if (GetId() == 319 && !pDynaModel->EstimateBuild())
-		bRes = true;
+	if (pDynaModel->GetIntegrationStepNumber() == 2165 && GetId() == 2021)
+	{
+		pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T(""));
+	}
 
 	GetPnrQnr();
 
@@ -217,30 +219,19 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		if (bVnormal)
-		{
-			V2sqInv = 1.0 / sqrt(V2);
-			VreV2 = Vre / V2;
-			VimV2 = Vim / V2;
-			V4 = 1.0 / (V2 * V2);
-			VreVim2 = 2.0 * Vre * Vim;
+		if (!bVnormal)
+			V2 += DFW2_EPSILON;
+		V2sqInv = 1.0 / sqrt(V2);
+		VreV2 = Vre / V2;
+		VimV2 = Vim / V2;
+		V4 = 1.0 / (V2 * V2);
+		VreVim2 = 2.0 * Vre * Vim;
 
-			// добавка в диагональ по мощности
-			dIredVre += (-PgVre2 + PgVim2 - VreVim2 * Qgsum) * V4;
-			dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
-			dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
-			dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) * V4;
-		}
-		else
-		{
-			double g =  Pgsum / dLowV;
-			double b = -Qgsum / dLowV;
-
-			dIredVre += g;
-			dIredVim -= b;
-			dIimdVre += b;
-			dIimdVim += g;
-		}
+		// добавка в диагональ по мощности
+		dIredVre += (-PgVre2 + PgVim2 - VreVim2 * Qgsum) * V4;
+		dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
+		dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
+		dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) * V4;
 	}
 
 	// расчет модуля напряжения
@@ -269,6 +260,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
+
+	if (pDynaModel->GetIntegrationStepNumber() == 2165 && GetId() == 2021)
+	{
+		pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T(""));
+	}
+
+
 	GetPnrQnr();
 
 	CLinkPtrCount *pBranchLink = GetLink(0);
@@ -351,38 +349,31 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Iim -= pYkm->imag() * pOppNode->Vre + pYkm->real() * pOppNode->Vim;
 		}
 
-		if (bVnormal)
-		{
-			double V2inv = 1.0 / V2;
-			Ire += (Pk * Vre + Qk * Vim) * V2inv;
-			Iim += (Pk * Vim - Qk * Vre) * V2inv;
+		if (!bVnormal)
+			V2 += DFW2_EPSILON;
 
-			double angle = atan2(Vim, Vre);
-			ptrdiff_t IntWinds = static_cast<ptrdiff_t>(Delta / 2 / M_PI);
-			double newDelta = static_cast<double>(IntWinds) * 2 * M_PI + angle;
-			double CheckDelta[3] = { newDelta, newDelta + 2 * M_PI, newDelta - 2 * M_PI };
-			double *pMin = nullptr;
-			for (double *pCheck = CheckDelta; pCheck < CheckDelta + _countof(CheckDelta); pCheck++)
-				if (pMin)
-				{
-					if (fabs(*pMin - Delta) > fabs(*pCheck - Delta))
-						pMin = pCheck;
-				}
-				else
+		double V2inv = 1.0 / V2;
+		Ire += (Pk * Vre + Qk * Vim) * V2inv;
+		Iim += (Pk * Vim - Qk * Vre) * V2inv;
+
+		double angle = atan2(Vim, Vre);
+		ptrdiff_t IntWinds = static_cast<ptrdiff_t>(Delta / 2 / M_PI);
+		double newDelta = static_cast<double>(IntWinds) * 2 * M_PI + angle;
+		double CheckDelta[3] = { newDelta, newDelta + 2 * M_PI, newDelta - 2 * M_PI };
+		double *pMin = nullptr;
+		for (double *pCheck = CheckDelta; pCheck < CheckDelta + _countof(CheckDelta); pCheck++)
+			if (pMin)
+			{
+				if (fabs(*pMin - Delta) > fabs(*pCheck - Delta))
 					pMin = pCheck;
+			}
+			else
+				pMin = pCheck;
 
-			newDelta = *pMin;
+		newDelta = *pMin;
 
-			dDelta = Delta - newDelta;
-			dV = V - sqrt(V2);
-		}
-		else
-		{
-			double g = Pk / dLowV;
-			double b = -Qk / dLowV;
-			Ire += g * Vre - b * Vim;
-			Iim += g * Vim + b * Vre;
-		}
+		dDelta = Delta - newDelta;
+		dV = V - sqrt(V2);
 	}
 
 	/*
@@ -472,9 +463,6 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 {
 	bool bRes = CDynaNodeBase::BuildRightHand(pDynaModel);
-
-	if (GetId() == 392)
-		bRes = bRes;
 
 	double T = pDynaModel->GetFreqTimeConstant();
 	double w0 = pDynaModel->GetOmega0();

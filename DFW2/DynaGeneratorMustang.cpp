@@ -18,7 +18,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 	if (GetId() == 97)
 	{
 		FILE *flog;
+		setlocale(LC_ALL, "ru-ru");
 		_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("w+"));
+		_ftprintf(flog, _T("t;Nit;Vre;Vim;V;DeltaG;Vd;Vq;Id;Iq;P;Q;s;sv;Eq;Eqss;dVd;dVq;dP;dQ;dId;dIq;dEq;dIre;dIim\n"));
 		fclose(flog);
 	}
 
@@ -262,26 +264,40 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
 
-		/*
-		if (GetId() == 97 && pDynaModel->GetCurrentTime() > 9.68)
+		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
+
+		if (GetId() == 97 && pDynaModel->GetIntegrationStepNumber() == 2165)
 		{
 			FILE *flog;
 			_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("a"));
-			_ftprintf(flog, _T("%10g DeltaV=%10g V=%10g DeltaG=%10g Vd=%10g Vq=%10g Id=%10g Iq=%10g P=%10g Q=%10g s=%10g sv=%10g Eq=%10g\n"), 
+			//_ftprintf(flog, _T("t;Vre;Vim;V;DeltaG;Vd;Vq;Id;Iq;P;Q;s;sv;Eq\n"));
+			_ftprintf(flog, _T("%g;%d;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g\n"), 
 				pDynaModel->GetCurrentTime(), 
-				DeltaV.Value(), 
-				V.Value(), 
-				Delta, 
+				pDynaModel->GetNewtonIterationNumber(),
+				Vre.Value(), 
+				Vim.Value(), 
+				V.Value(),
+				Delta,
 				Vd, Vq, 
 				Id, Iq, 
 				P, Q, 
 				s, Sv.Value(),
-				Eq);
+				Eq,
+				Eqss,
+				pDynaModel->GetFunction(A(V_VD)),
+				pDynaModel->GetFunction(A(V_VQ)),
+				pDynaModel->GetFunction(A(V_P)),
+				pDynaModel->GetFunction(A(V_Q)),
+				pDynaModel->GetFunction(A(V_ID)),
+				pDynaModel->GetFunction(A(V_IQ)),
+				pDynaModel->GetFunction(A(V_EQ)),
+				pDynaModel->GetFunction(A(V_IRE)),
+				pDynaModel->GetFunction(A(V_IIM))
+			);
 			fclose(flog);
 		}
-		*/
 
-		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
+
 	}
 	return pDynaModel->Status() && bRes;
 }
