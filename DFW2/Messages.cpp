@@ -28,12 +28,12 @@ const _TCHAR* CDFW2Messages::m_cszKLUInvalidInput = _T("KLU - Неправиль
 const _TCHAR* CDFW2Messages::m_cszKLUIntOverflow = _T("KLU - Переполнение целого числа");
 const _TCHAR* CDFW2Messages::m_cszInitLoopedInfinitely = _T("При инициализации устройств обнаружен бесконечный цикл");
 const _TCHAR* CDFW2Messages::m_cszDeviceContainerFailedToInit = _T("Отказ инициализации для устройств типа %d код %d");
-const _TCHAR* CDFW2Messages::m_cszStepAndOrderChanged = _T("t=%g Порядок и шаг метода изменен : порядок %d шаг %g с");
-const _TCHAR* CDFW2Messages::m_cszStepChanged = _T("t=%g Шаг метода изменен : шаг %g с (%g), порядок %d");
-const _TCHAR* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = _T("t=%g Порядок и шаг метода изменен по Ньютону: порядок %d шаг %g с");
-const _TCHAR* CDFW2Messages::m_cszZeroCrossingStep = _T("t=%g Шаг метода изменен для поиска ограничения: шаг %g с");
-const _TCHAR* CDFW2Messages::m_cszStepChangedOnError = _T("t=%g Шаг метода изменен по корректору: шаг %g с, ошибка %g в %s от %g \"%s\" Nordsiek[%g;%g]");
-const _TCHAR* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = _T("t=%g Шаг метода изменен для обработки события: шаг %g");
+const _TCHAR* CDFW2Messages::m_cszStepAndOrderChanged = _T("t=%.12g (%d) Порядок и шаг метода изменен : порядок %d шаг %g с");
+const _TCHAR* CDFW2Messages::m_cszStepChanged = _T("t=%.12g (%d) Шаг метода изменен : шаг %g с (%g), порядок %d");
+const _TCHAR* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = _T("t=%.12g (%d) Порядок и шаг метода изменен по Ньютону: порядок %d шаг %g с");
+const _TCHAR* CDFW2Messages::m_cszZeroCrossingStep = _T("t=%.12g (%d) Шаг метода изменен для поиска ограничения: шаг %g с");
+const _TCHAR* CDFW2Messages::m_cszStepChangedOnError = _T("t=%.12g (%d) Шаг метода изменен по корректору: шаг %g с, ошибка %g в %s от %g \"%s\" Nordsiek[%g;%g]");
+const _TCHAR* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = _T("t=%.12g (%d) Шаг метода изменен для обработки события: шаг %g");
 const _TCHAR* CDFW2Messages::m_cszSynchroZoneCountChanged = _T("Обновлено количество синхронных зон : %d");
 const _TCHAR* CDFW2Messages::m_cszAllNodesOff = _T("Все узлы отключены");
 const _TCHAR* CDFW2Messages::m_cszNodeTripDueToZone = _T("Узел %s отключен, так как находится в зоне без источников напряжения");

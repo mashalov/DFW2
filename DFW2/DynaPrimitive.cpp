@@ -66,7 +66,14 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 	if (oldCurrentState != eCurrentState)
 	{
-		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%g Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), pDynaModel->GetCurrentTime(), GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_dMin, m_dMax, oldCurrentState, eCurrentState);
+		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), 
+			pDynaModel->GetCurrentTime(), 
+			pDynaModel->GetIntegrationStepNumber(),
+			GetVerbalName(), 
+			m_pDevice->GetVerbalName(),
+			*m_Output, 
+			m_dMin, m_dMax, 
+			oldCurrentState, eCurrentState);
 		pDynaModel->DiscontinuityRequest();
 	}
 
