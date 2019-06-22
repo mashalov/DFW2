@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "RastrImport.h"
 using namespace DFW2;
 #import "C:\Program Files (x86)\RastrWin3\astra.dll" no_namespace, named_guids, no_dual_interfaces, no_implementation 
@@ -132,16 +132,16 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	//spRastr->Load(RG_REPL, L"..\\tests\\test92.rst", "");
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\����������.dfw");
+	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test9_sc", ""); 
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\test9_qmin.rst", "");
-	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\cx195.rg2",L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\��������.rst");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\����������.dfw");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\��������.scn");
+	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\cx195.rg2",L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\динамика.rst");
+	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\сценарий.scn");
 
 	
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
@@ -667,20 +667,20 @@ void CRastrImport::GetData(CDynaModel& Network)
 	}
 
 	ITablePtr spExcConMustang = spTables->Item("ExcControl");
-	IColsPtr spE�MCols = spExcConMustang->Cols;
+	IColsPtr spEСMCols = spExcConMustang->Cols;
 
-	IColPtr spECMId = spE�MCols->Item("Id");
-	IColPtr spECMName = spE�MCols->Item("Name");
-	IColPtr spECMTr = spE�MCols->Item("Trv");
-	IColPtr spECMK0u = spE�MCols->Item("Ku");
-	IColPtr spECMK1u = spE�MCols->Item("Ku1");
-	IColPtr spECMK1if = spE�MCols->Item("Kif1");
-	IColPtr spECMK0f = spE�MCols->Item("Kf");
-	IColPtr spECMK1f = spE�MCols->Item("Kf1");
-	IColPtr spECMTf = spE�MCols->Item("Tf");
-	IColPtr spECMUmin = spE�MCols->Item("Urv_min");
-	IColPtr spECMUmax = spE�MCols->Item("Urv_max");
-	IColPtr spECMA = spE�MCols->Item("Alpha");
+	IColPtr spECMId = spEСMCols->Item("Id");
+	IColPtr spECMName = spEСMCols->Item("Name");
+	IColPtr spECMTr = spEСMCols->Item("Trv");
+	IColPtr spECMK0u = spEСMCols->Item("Ku");
+	IColPtr spECMK1u = spEСMCols->Item("Ku1");
+	IColPtr spECMK1if = spEСMCols->Item("Kif1");
+	IColPtr spECMK0f = spEСMCols->Item("Kf");
+	IColPtr spECMK1f = spEСMCols->Item("Kf1");
+	IColPtr spECMTf = spEСMCols->Item("Tf");
+	IColPtr spECMUmin = spEСMCols->Item("Urv_min");
+	IColPtr spECMUmax = spEСMCols->Item("Urv_max");
+	IColPtr spECMA = spEСMCols->Item("Alpha");
 
 	size_t nMustangExcConsCount = spExcConMustang->Size;
 
@@ -799,6 +799,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 		}
 	}
 
+	// типовые СХН Rastr 1 и 2
 	if (slcloader.find(1) == slcloader.end())
 	{
 		slit = slcloader.insert(make_pair(1, new CStorageSLC())).first;
@@ -814,19 +815,17 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.158, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 4.9, -10.1, 6.2));
 		slit->second->Q.push_back(CSLCPolynom(1.2, 1.708, 0.0, 0.0));
-
 	}
 
+	// СХН шунт с Id=0
 	slit = slcloader.insert(make_pair(0, new CStorageSLC())).first;
-
 	slit->second->P.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 
-
+	// СХН с постоянной мощностью с Id=-1
 	slit = slcloader.insert(make_pair(-1, new CStorageSLC())).first;
 	slit->second->P.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
-	
 
 	// insert shunt LRC
 	for (slit = slcloader.begin(); slit != slcloader.end(); slit++)
@@ -837,6 +836,8 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	
 	if (bRes)
 	{
+		// переписываем СХН из загрузчика в котейнер СХН
+
 		CDynaLRC *pLRCs = new CDynaLRC[slcloader.size()];
 		CDynaLRC *pLRC = pLRCs;
 
@@ -872,15 +873,20 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	return bRes;
 }
 
+// вставляет в СХН сегмент шунта от нуля до Vmin
 bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 {
 	bool bRes = true;
 	if (Vmin > 0.0)
 	{
+		// сортируем сегменты по напряжению
 		sort();
-		
 		double LrcV = 0.0;
 		bool bInsert = false;
+
+		// обходим сегменты справа, для первого найденного с напряжением
+		// меньше чем Vmin считаем мощность по этом сегменту от Vmin
+		// и меняем ему напряжение на Vmin
 		for (SLCPOLYRITR itrpoly = rbegin(); itrpoly != rend(); itrpoly++)
 		{
 			if (itrpoly->m_kV < Vmin)
@@ -893,6 +899,8 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 		}
 		if (bInsert)
 		{
+			// если нашли сегмент для Vmin удаляем все сегменты
+			// с напряжением меньше чем Vmin
 			while (size())
 			{
 				SLCPOLYITR itpoly = begin();
@@ -901,11 +909,16 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 				else
 					break;
 			}
+			// вставляем новый сегмент шунта от нуля
 			insert(begin(),CSLCPolynom(0.0, 0.0, 0.0, LrcV / Vmin / Vmin));
 		}
+
+		// снова сортируем по напряжению
 		sort();
 		SLCPOLYITR itpoly = begin();
 
+		// ищем последовательные сегменты с одинаковыми коэффициентами
+		// и удаляем их как изыбыточные
 		while(itpoly != end())
 		{
 			SLCPOLYITR itpolyNext = itpoly;

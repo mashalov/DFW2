@@ -3,11 +3,10 @@
 
 using namespace DFW2;
 
-CDynaLRC::CDynaLRC() : CDevice(),
-P(NULL),
-Q(NULL)
-{
-}
+CDynaLRC::CDynaLRC() : CDevice(), 
+					   P(nullptr),
+					   Q(nullptr)
+					   {}
 
 bool CDynaLRC::SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ)
 {
@@ -366,7 +365,7 @@ void CDynaLRC::TestDump(const _TCHAR *cszPathName)
 	setlocale(LC_ALL, "ru-ru");
 	if (!_tfopen_s(&flrc, cszPathName, _T("w+")))
 	{
-		double dP(0.0), dQ(0.0), dV(0.5);
+		double dP(0.0), dQ(0.0), dV(0.3);
 		for (double v = 0.0; v < 1.5; v += 0.01)
 		{
 			double P = GetPdP(v, dP, dV);

@@ -28,11 +28,13 @@ namespace DFW2
 		double m_k1;
 		double m_k2;
 
+		// оператор сортировки сегментов по напряжению
 		bool operator < (const CSLCPolynom& rhs) const
 		{
 			return (m_kV < rhs.m_kV);
 		}
 
+		// сравнение сегмента СХН с заданным сегментом по коэффициентам
 		bool CompareWith(const CSLCPolynom& rhs) const
 		{
 			return (Equal(m_k0,rhs.m_k0) && Equal(m_k1,rhs.m_k1) && Equal(m_k2,rhs.m_k2));

@@ -36,8 +36,8 @@ CDynaNodeBase::~CDynaNodeBase()
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
-	if (V < 1000 * DFW2_EPSILON && IsStateOn())
-		V = 1000 * DFW2_EPSILON;
+	if (V < DFW2_ATOL_DEFAULT && IsStateOn())
+		V = DFW2_ATOL_DEFAULT;
 	VreVim = polar(V, Delta);
 }
 
