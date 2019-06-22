@@ -581,6 +581,12 @@ bool CDynaModel::SolveLinearSystem()
 				{
 					if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
 					{
+						KLU_rcond(Symbolic, Numeric, &Common);
+						if (Common.rcond > sc.dMaxConditionNumber)
+						{
+							sc.dMaxConditionNumber = Common.rcond;
+							sc.dMaxConditionNumberTime = sc.t;
+						}
 						bRes = true;
 					}
 
@@ -595,7 +601,11 @@ bool CDynaModel::SolveLinearSystem()
 		if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
 		{
 			KLU_rcond(Symbolic, Numeric, &Common);
-			//memcpy(Solution, b, sizeof(double) * m_nMatrixSize);
+			if (Common.rcond > sc.dMaxConditionNumber)
+			{
+				sc.dMaxConditionNumber = Common.rcond;
+				sc.dMaxConditionNumberTime = sc.t;
+			}
 			bRes = true;
 		}
 	}
@@ -618,68 +628,6 @@ void CDynaModel::ResetMatrixStructure()
 		m_pMatrixRows = NULL;
 	}
 }
-
-/*
-Steps count 15494
-Steps by 1st order count 11971, failures 920 Newton failures 24 Time passed 140,572023
-Steps by 2nd order count 1289, failures 0 Newton failures 945 Time passed 9,420801
-Factors count 4780 Analyzings count 1
-Newtons count 30380 1,960759 per step, failures at step 969 failures at discontinuity 0
-
-Steps count 15841
-Steps by 1st order count 12094, failures 843 Newton failures 194 Time passed 138,938238
-Steps by 2nd order count 1374, failures 0 Newton failures 988 Time passed 11,053219
-Factors count 4897 Analyzings count 1
-Newtons count 31078 1,961871 per step, failures at step 1182 failures at discontinuity 0
-
-Steps count 16637
-Steps by 1st order count 12809, failures 835 Newton failures 278 Time passed 139,021073
-Steps by 2nd order count 1325, failures 0 Newton failures 1034 Time passed 10,971442
-Factors count 4754 Analyzings count 1
-Newtons count 31815 1,912304 per step, failures at step 1312 failures at discontinuity 0
-
-Steps count 14369
-Steps by 1st order count 10745, failures 772 Newton failures 0 Time passed 133,496504
-Steps by 2nd order count 1574, failures 65 Newton failures 854 Time passed 16,492013
-Factors count 5244 Analyzings count 1
-Newtons count 32846 2,285893 per step, failures at step 854 failures at discontinuity 0
-
-Steps count 13286
-Steps by 1st order count 9922, failures 681 Newton failures 0 Time passed 148,551765
-Steps by 2nd order count 1514, failures 21 Newton failures 779 Time passed 1,439926
-Factors count 4952 Analyzings count 1
-Newtons count 29139 2,193211 per step, failures at step 779 failures at discontinuity 0
-
-Steps count 13590
-Steps by 1st order count 10125, failures 711 Newton failures 0 Time passed 143,802777
-Steps by 2nd order count 1542, failures 62 Newton failures 790 Time passed 6,185724
-Factors count 4854 Analyzings count 1
-Newtons count 30930 2,275938 per step, failures at step 790 failures at discontinuity 0
-
-Steps count 13721
-Steps by 1st order count 10196, failures 751 Newton failures 0 Time passed 143,360266
-Steps by 2nd order count 1558, failures 41 Newton failures 815 Time passed 6,628234
-Factors count 4952 Analyzings count 1
-Newtons count 31147 2,270024 per step, failures at step 815 failures at discontinuity 0
-
-Steps count 8604
-Steps by 1st order count 3942, failures 388 Newton failures 0 Time passed 74,981291
-Steps by 2nd order count 3563, failures 148 Newton failures 199 Time passed 75,005818
-Factors count 2699 Analyzings count 1
-Newtons count 18065 2,099605 per step, failures at step 199 failures at discontinuity 0
-
-Steps count 8484
-Steps by 1st order count 3868, failures 350 Newton failures 0 Time passed 74,388690
-Steps by 2nd order count 3563, failures 159 Newton failures 181 Time passed 75,599181
-Factors count 2564 Analyzings count 1
-Newtons count 17954 2,116219 per step, failures at step 181 failures at discontinuity 0
-
-Steps count 8295
-Steps by 1st order count 3367, failures 338 Newton failures 0 Time passed 46,176702
-Steps by 2nd order count 3901, failures 173 Newton failures 152 Time passed 103,811461
-Factors count 2589 Analyzings count 1
-Newtons count 17709 2,134901 per step, failures at step 152 failures at discontinuity 0
-*/
 
 void CDynaModel::ScaleAlgebraicEquations()
 {

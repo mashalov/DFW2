@@ -243,6 +243,9 @@ bool CDynaModel::Run()
 																 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
 																 sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,
 																 sc.nDiscontinuityNewtonFailures);
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Max condition number %g at time %g"),
+																 sc.dMaxConditionNumber,
+																 sc.dMaxConditionNumberTime);
 
 	GetWorstEquations(10);
 	chrono::milliseconds CalcDuration = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - sc.m_ClockStart);
@@ -384,6 +387,7 @@ bool CDynaModel::NewtonUpdate()
 	{
 		double& db = b[pVectorBegin - pRightVector];
 		pVectorBegin->Error += db;
+		pVectorBegin->b = db;
 
 		double dMaxErrorDevice = fabs(db);
 
@@ -641,7 +645,8 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 					if (sc.m_bNewtonConverged)
 					{
 #ifdef _LFINFO_
-						Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Converged in %3d iterations %g %s %g %g %s Saving %g"), GetCurrentTime(),
+						Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) Converged in %3d iterations %g %s %g %g %s Saving %g"), GetCurrentTime(),
+																						sc.nStepsCount,
 																						sc.nNewtonIteration,
 																						sc.Newton.dMaxErrorVariable, 
 																						sc.Newton.pMaxErrorDevice->GetVerbalName(),
@@ -663,7 +668,8 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 						if (!sc.m_bNewtonStepControl)
 						{
-							Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g Continue %3d iteration %g %s %g %g %s"), GetCurrentTime(),
+							Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) Continue %3d iteration %g %s %g %g %s"), GetCurrentTime(),
+								sc.nStepsCount,
 								sc.nNewtonIteration,
 								sc.Newton.dMaxErrorVariable,
 								sc.Newton.pMaxErrorDevice->GetVerbalName(),
@@ -721,7 +727,7 @@ bool CDynaModel::Step()
 			{
 				sc.m_dCurrentH *= rHit; 						// меняем шаг
 				RescaleNordsiek(rHit);							// пересчитываем Nordsieck на новый шаг
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, GetCurrentTime(), sc.m_dCurrentH));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, GetCurrentTime(), GetIntegrationStepNumber(), sc.m_dCurrentH));
 				sc.m_bBeforeDiscontinuityWritten = false;		// готовимся к обработке разрыва
 			}
 			else
@@ -955,7 +961,10 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = max(1.01, r);
 
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%g %s[%s] %g rSame %g RateLimit %g for %d steps"), GetCurrentTime(), sc.Integrator.pMaxErrorDevice->GetVerbalName(),
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) %s[%s] %g rSame %g RateLimit %g for %d steps"), 
+		GetCurrentTime(), 
+		GetIntegrationStepNumber(),
+		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
 		sc.Integrator.pMaxErrorDevice->VariableNameByPtr(sc.Integrator.pMaxErrorVariable),
 		sc.Integrator.dMaxErrorVariable, r,
 		sc.dRateGrowLimit < FLT_MAX ? sc.dRateGrowLimit : 0.0,
@@ -1206,7 +1215,7 @@ void CDynaModel::GoodStep(double rSame)
 					sc.m_dCurrentH *= sc.dFilteredOrder;
 					ChangeOrder(2);
 					RescaleNordsiek(sc.dFilteredOrder);
-					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), sc.q, GetH()));
+					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 				}
 			}
 			else
@@ -1230,7 +1239,7 @@ void CDynaModel::GoodStep(double rSame)
 					sc.m_dCurrentH *= sc.dFilteredOrder;
 					ChangeOrder(1);
 					RescaleNordsiek(sc.dFilteredOrder);
-					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), sc.q, GetH()));
+					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 				}
 			}
 			else
@@ -1252,7 +1261,7 @@ void CDynaModel::GoodStep(double rSame)
 			sc.m_dCurrentH *= sc.dFilteredStep;
 			// пересчитываем Nordsieck на новый шаг
 			RescaleNordsiek(sc.dFilteredStep);
-			Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetH(), k, sc.q));
+			Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), GetH(), k, sc.q));
 		}
 	}
 	else
@@ -1273,7 +1282,7 @@ void CDynaModel::BadStep()
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
 
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepChangedOnError, GetCurrentTime(),
+	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepChangedOnError, GetCurrentTime(), GetIntegrationStepNumber(),
 		GetH() < sc.Hmin ? sc.Hmin : GetH(), 
 		sc.Integrator.dMaxErrorVariable,
 		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
@@ -1369,7 +1378,7 @@ void CDynaModel::NewtonFailed()
 		ReInitializeNordsiek();
 
 	sc.RefactorMatrix();
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), sc.q, GetH()));
+	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 }
 
 void CDynaModel::RepeatZeroCrossing()
@@ -1385,7 +1394,7 @@ void CDynaModel::RepeatZeroCrossing()
 	RestoreNordsiek();
 	RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
 	sc.CheckAdvance_t0();
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(), GetH()));
+	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(), GetIntegrationStepNumber(), GetH()));
 }
 
 

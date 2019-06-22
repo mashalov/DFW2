@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DynaGeneratorMustang.h"
 #include "DynaGeneratorInfBus.h"
 #include "DynaExciterMustang.h"
@@ -174,16 +174,18 @@ namespace DFW2
 			bool m_bProcessTopology;
 			bool m_bDiscontinuityRequest;
 			bool m_bEnforceOut;
-			bool m_bBeforeDiscontinuityWritten;						// флаг обработки момента времени до разрыва
+			bool m_bBeforeDiscontinuityWritten;						// С„Р»Р°Рі РѕР±СЂР°Р±РѕС‚РєРё РјРѕРјРµРЅС‚Р° РІСЂРµРјРµРЅРё РґРѕ СЂР°Р·СЂС‹РІР°
 			double dFilteredStep;
 			double dFilteredOrder;
-			double dFilteredStepInner;								// фильтр минимального шага на серии шагов
+			double dFilteredStepInner;								// С„РёР»СЊС‚СЂ РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ С€Р°РіР° РЅР° СЃРµСЂРёРё С€Р°РіРѕРІ
 			double dFilteredOrderInner;
 			double dRateGrowLimit;
 			ptrdiff_t nStepsCount;
 			ptrdiff_t nNewtonIterationsCount;
 			ptrdiff_t nFactorizationsCount;
 			ptrdiff_t nAnalyzingsCount;
+			double dMaxConditionNumber;
+			double dMaxConditionNumberTime;
 			OrderStatistics OrderStatistics[2];
 			ptrdiff_t nDiscontinuityNewtonFailures;
 			double m_dCurrentH;
@@ -235,20 +237,22 @@ namespace DFW2
 				nFactorizationsCount = 0;
 				nAnalyzingsCount = 0;
 				nDiscontinuityNewtonFailures = 0;
+				dMaxConditionNumber = 0;
+				dMaxConditionNumberTime = 0;
 				m_ClockStart = chrono::high_resolution_clock::now();
 			}
 
-			// Устанавливаем относительный лимит изменения шага на заданное количество шагов
+			// РЈСЃС‚Р°РЅР°РІР»РёРІР°РµРј РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅС‹Р№ Р»РёРјРёС‚ РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР° РЅР° Р·Р°РґР°РЅРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С€Р°РіРѕРІ
 			void SetRateGrowLimit(double RateGrowLimit, ptrdiff_t nRateGrowSteps = 10)
 			{
 				dRateGrowLimit = RateGrowLimit;
-				// пока не будет сделано nStepsToEndRateGrow шагов, его относительное 
-				// изменение будет ограничено до dRateGrowLimit
+				// РїРѕРєР° РЅРµ Р±СѓРґРµС‚ СЃРґРµР»Р°РЅРѕ nStepsToEndRateGrow С€Р°РіРѕРІ, РµРіРѕ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕРµ 
+				// РёР·РјРµРЅРµРЅРёРµ Р±СѓРґРµС‚ РѕРіСЂР°РЅРёС‡РµРЅРѕ РґРѕ dRateGrowLimit
 				nStepsToEndRateGrow = nStepsCount + nRateGrowSteps;
 			}
 
-			// устанавливает ограничение изменения шага после очередного изменения
-			// на заданное количество шагов. Сбрасывает фильтр минимального шага
+			// СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РѕРіСЂР°РЅРёС‡РµРЅРёРµ РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР° РїРѕСЃР»Рµ РѕС‡РµСЂРµРґРЅРѕРіРѕ РёР·РјРµРЅРµРЅРёСЏ
+			// РЅР° Р·Р°РґР°РЅРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С€Р°РіРѕРІ. РЎР±СЂР°СЃС‹РІР°РµС‚ С„РёР»СЊС‚СЂ РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ С€Р°РіР°
 			void StepChanged()
 			{
 				nStepsToStepChange = nStepsToStepChangeParameter;
@@ -258,8 +262,8 @@ namespace DFW2
 			bool FilterStep(double dStep);
 			bool FilterOrder(double dStep);
 
-			// устанавливает ограничение изменения порядка на заданное количество шагов
-			// сбрасывает фильтр порядка
+			// СѓСЃС‚Р°РЅР°РІР»РёРІР°РµС‚ РѕРіСЂР°РЅРёС‡РµРЅРёРµ РёР·РјРµРЅРµРЅРёСЏ РїРѕСЂСЏРґРєР° РЅР° Р·Р°РґР°РЅРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С€Р°РіРѕРІ
+			// СЃР±СЂР°СЃС‹РІР°РµС‚ С„РёР»СЊС‚СЂ РїРѕСЂСЏРґРєР°
 			void OrderChanged()
 			{
 				nStepsToOrderChange = nStepsToOrderChangeParameter;
@@ -288,22 +292,22 @@ namespace DFW2
 				return t + m_dCurrentH - KahanC;
 			}
 
-			// рассчитывает текущее время перед выполнением шага
+			// СЂР°СЃСЃС‡РёС‚С‹РІР°РµС‚ С‚РµРєСѓС‰РµРµ РІСЂРµРјСЏ РїРµСЂРµРґ РІС‹РїРѕР»РЅРµРЅРёРµРј С€Р°РіР°
 			inline void Advance_t0()
 			{
-				// математически функция выполняет t = t0 + m_dCurrentH;
+				// РјР°С‚РµРјР°С‚РёС‡РµСЃРєРё С„СѓРЅРєС†РёСЏ РІС‹РїРѕР»РЅСЏРµС‚ t = t0 + m_dCurrentH;
 
-				// но мы используем Kahan summation для устранения накопленной ошибки
+				// РЅРѕ РјС‹ РёСЃРїРѕР»СЊР·СѓРµРј Kahan summation РґР»СЏ СѓСЃС‚СЂР°РЅРµРЅРёСЏ РЅР°РєРѕРїР»РµРЅРЅРѕР№ РѕС€РёР±РєРё
 				double ky = m_dCurrentH - KahanC;
 				double temp = t0 + ky;
-				// предополагается, что шаг не может быть отменен
-				// и поэтому сумма Кэхэна обновляется
+				// РїСЂРµРґРѕРїРѕР»Р°РіР°РµС‚СЃСЏ, С‡С‚Рѕ С€Р°Рі РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РѕС‚РјРµРЅРµРЅ
+				// Рё РїРѕСЌС‚РѕРјСѓ СЃСѓРјРјР° РљСЌС…СЌРЅР° РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ
 				KahanC = (temp - t0) - ky;
 				t = temp;
 			}
 
-			// рассчитывает текущее время перед выполнением шага, с возможностью возврата
-			// к предыдущему времени
+			// СЂР°СЃСЃС‡РёС‚С‹РІР°РµС‚ С‚РµРєСѓС‰РµРµ РІСЂРµРјСЏ РїРµСЂРµРґ РІС‹РїРѕР»РЅРµРЅРёРµРј С€Р°РіР°, СЃ РІРѕР·РјРѕР¶РЅРѕСЃС‚СЊСЋ РІРѕР·РІСЂР°С‚Р°
+			// Рє РїСЂРµРґС‹РґСѓС‰РµРјСѓ РІСЂРµРјРµРЅРё
 			inline void CheckAdvance_t0()
 			{
 				//t = t0 + m_dCurrentH;
@@ -467,6 +471,7 @@ namespace DFW2
 
 		bool LoadFlow();
 		void DumpMatrix();
+		void DumpStateVector();
 
 
 		FILE *fResult, *m_pLogFile;
@@ -505,7 +510,7 @@ namespace DFW2
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
 		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
 
-		// Для теста с множителями
+		// Р”Р»СЏ С‚РµСЃС‚Р° СЃ РјРЅРѕР¶РёС‚РµР»СЏРјРё
 		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
 
 		bool SetFunction(ptrdiff_t nRow, double dValue);
@@ -564,15 +569,15 @@ namespace DFW2
 		{
 			return m_bEstimateBuild;
 		}
-		// возвращает тип метода для уравнения
-		// используется для управления методом интегрирования дифференциальных переменных
-		// алгебраические уравнения всегда интегрируются BDF. Дифференциальные - ADAMS или BDF
+		// РІРѕР·РІСЂР°С‰Р°РµС‚ С‚РёРї РјРµС‚РѕРґР° РґР»СЏ СѓСЂР°РІРЅРµРЅРёСЏ
+		// РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ СѓРїСЂР°РІР»РµРЅРёСЏ РјРµС‚РѕРґРѕРј РёРЅС‚РµРіСЂРёСЂРѕРІР°РЅРёСЏ РґРёС„С„РµСЂРµРЅС†РёР°Р»СЊРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
+		// Р°Р»РіРµР±СЂР°РёС‡РµСЃРєРёРµ СѓСЂР°РІРЅРµРЅРёСЏ РІСЃРµРіРґР° РёРЅС‚РµРіСЂРёСЂСѓСЋС‚СЃСЏ BDF. Р”РёС„С„РµСЂРµРЅС†РёР°Р»СЊРЅС‹Рµ - ADAMS РёР»Рё BDF
 		inline DEVICE_EQUATION_TYPE CDynaModel::GetDiffEquationType()
 		{
 			return m_Parameters.m_eDiffEquationType;
 		}
 
-		// возвращает напряжение перехода СХН на шунт
+		// РІРѕР·РІСЂР°С‰Р°РµС‚ РЅР°РїСЂСЏР¶РµРЅРёРµ РїРµСЂРµС…РѕРґР° РЎРҐРќ РЅР° С€СѓРЅС‚
 		double GetLRCToShuntVmin()
 		{
 			return min(m_Parameters.m_dLRCToShuntVmin,1.0);
@@ -582,18 +587,18 @@ namespace DFW2
 		{
 			return m_Parameters.m_bConsiderDampingEquation;
 		}
-		// возвращает абсолютную точность из параметров
+		// РІРѕР·РІСЂР°С‰Р°РµС‚ Р°Р±СЃРѕР»СЋС‚РЅСѓСЋ С‚РѕС‡РЅРѕСЃС‚СЊ РёР· РїР°СЂР°РјРµС‚СЂРѕРІ
 		inline double GetAtol()
 		{
 			return m_Parameters.m_dAtol;
 		}
-		// возвращает относительную точность из параметров
+		// РІРѕР·РІСЂР°С‰Р°РµС‚ РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅСѓСЋ С‚РѕС‡РЅРѕСЃС‚СЊ РёР· РїР°СЂР°РјРµС‚СЂРѕРІ
 		inline double GetRtol()
 		{
 			return m_Parameters.m_dRtol;
 		}
-		// Относительная погрешность решения УР по напряжению
-		// с помощью линейного метода
+		// РћС‚РЅРѕСЃРёС‚РµР»СЊРЅР°СЏ РїРѕРіСЂРµС€РЅРѕСЃС‚СЊ СЂРµС€РµРЅРёСЏ РЈР  РїРѕ РЅР°РїСЂСЏР¶РµРЅРёСЋ
+		// СЃ РїРѕРјРѕС‰СЊСЋ Р»РёРЅРµР№РЅРѕРіРѕ РјРµС‚РѕРґР°
 		inline double GetRtolLULF()
 		{
 			return m_Parameters.m_dRtol;
@@ -603,7 +608,20 @@ namespace DFW2
 		{
 			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? FLT_MAX : 100.0 * m_Parameters.m_dAtol;
 		}
-		// возвращает текущее время интегрирования
+
+		// РўРµРєСѓС‰РёР№ РЅРѕРјРµСЂ РёС‚РµСЂР°С†РёРё РќСЊСЋС‚РѕРЅР°
+		inline ptrdiff_t GetNewtonIterationNumber()
+		{
+			return sc.nNewtonIteration;
+		}
+
+		// РўРµРєСѓС‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С€Р°РіРѕРІ РёРЅС‚РµРіСЂРёСЂРѕРІР°РЅРёСЏ
+		inline ptrdiff_t GetIntegrationStepNumber()
+		{
+			return sc.nStepsCount;
+		}
+
+		// РІРѕР·РІСЂР°С‰Р°РµС‚ С‚РµРєСѓС‰РµРµ РІСЂРµРјСЏ РёРЅС‚РµРіСЂРёСЂРѕРІР°РЅРёСЏ
 		inline double GetCurrentTime()
 		{
 			return sc.t;
