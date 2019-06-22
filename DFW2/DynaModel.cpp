@@ -113,24 +113,8 @@ bool CDynaModel::Run()
 	bRes = bRes && EstimateMatrix();
 	bRes = bRes && InitEquations();
 
-	/*
-	CDynaLRC *pLRC = static_cast<CDynaLRC*>(LRCs.GetDevice(2));
-
-
-	if (pLRC)
-	{
-		FILE *f = NULL;
-		setlocale(LC_ALL, "RU-ru");
-		_tfopen_s(&f, _T("c:\\tmp\\lrc.csv"), _T("wb+"));
-		for (double dv = 0; dv < 1.5; dv += 0.01)
-		{
-			double dPl = 0.0;
-			double Pl = pLRC->GetQdQ(dv, dPl, 0.0);
-			_ftprintf_s(f, _T("%g;%g;%g\n"), dv, Pl, dPl);
-		}
-		fclose(f);
-	}
-	*/
+	//CDynaLRC *pLRC = static_cast<CDynaLRC*>(LRCs.GetDevice(-1));
+	//pLRC->TestDump();
 
 #define SMZU
 
