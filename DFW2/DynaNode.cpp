@@ -36,8 +36,11 @@ CDynaNodeBase::~CDynaNodeBase()
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
+	if (V < 1000 * DFW2_EPSILON && IsStateOn())
+		V = 1000 * DFW2_EPSILON;
 	VreVim = polar(V, Delta);
 }
+
 
 // рассчитывает нагрузку узла с учетом СХН
 void CDynaNodeBase::GetPnrQnr()
@@ -145,13 +148,15 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			}
 		}
 
-		if (!IsStateOn() || bInMetallicSC)
+
+		if (!IsStateOn())
 		{
 			dQdV = dPdDelta = 1.0;
 			dPdV = dQdDelta = 0.0;
 			Pe = Qe = 0;
 			V = Delta = 0.0;
 		}
+
 
 		pDynaModel->SetElement(A(0), A(0), dPdDelta);
 		pDynaModel->SetElement(A(1), A(0), dQdDelta);
@@ -188,7 +193,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 	}
 
-	bool bInMetallicSC = m_bInMetallicSC || V < DFW2_EPSILON;
+	bool bInMetallicSC = m_bInMetallicSC;
 
 	double Pe = Pnr - Pg - V * V * Yii.real();
 	double Qe = Qnr - Qg + V * V * Yii.imag();
@@ -210,7 +215,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		Qe += mult.imag();
 	}
 
-	if (!IsStateOn() || bInMetallicSC)
+	if (!IsStateOn())
 	{
 		Pe = Qe = 0;
 		V = Delta = 0.0;
