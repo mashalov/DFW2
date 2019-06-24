@@ -28,6 +28,8 @@ namespace DFW2
 		double P;
 		double Q;
 		double Kgen;
+		double LFQmin;
+		double LFQmax;
 
 		double NodeId;
 

@@ -4,7 +4,8 @@
 #include "DynaModel.h"
 using namespace DFW2;
 
-CDynaPowerInjector::CDynaPowerInjector() : CDevice()
+CDynaPowerInjector::CDynaPowerInjector() : CDevice(),
+										   Kgen(1)
 {
 
 }

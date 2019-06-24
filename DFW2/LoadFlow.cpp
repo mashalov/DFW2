@@ -233,7 +233,9 @@ bool CLoadFlow::Start()
 	CleanUp();
 	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
 	if (!pNodes)
-		return bRes;
+		return false;
+	if (!UpdatePQFromGenerators())
+		return false;
 
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
@@ -894,6 +896,7 @@ bool CLoadFlow::Run()
 #endif
 	
 	pNodes->SwitchLRCs(true);
+	UpdateQToGenerators();
   	return bRes;
 }
 
@@ -949,6 +952,74 @@ bool CLoadFlow::CheckLF()
 				bRes = false;
 				if (ReportedBranches.insert(NodePair(pNode, pBranch->pNode)).second)
 					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszLFBranchAngleExceeds90, pNode->GetVerbalName(), pBranch->pNode->GetVerbalName(), dDelta * 180.0 / M_PI);
+			}
+		}
+	}
+	return bRes;
+}
+
+
+bool CLoadFlow::UpdatePQFromGenerators()
+{
+	bool bRes = true;
+	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+
+		if (!pNode->IsStateOn())
+			continue;
+
+		CLinkPtrCount *pGenLink = pNode->GetLink(1);
+		CDevice **ppGen = NULL;
+		if (pGenLink->m_nCount)
+		{
+			pNode->Pg = pNode->Qg = 0.0;
+			pNode->LFQmin = pNode->LFQmax = 0.0;
+			pNode->ResetVisited();
+			while (pGenLink->In(ppGen))
+			{
+				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+				if (pGen->IsStateOn())
+				{
+					pNode->Pg += pGen->P;
+					pNode->Qg += pGen->Q;
+					pNode->LFQmin += pGen->LFQmin * pGen->Kgen;
+					pNode->LFQmax += pGen->LFQmax * pGen->Kgen;
+				}
+			}
+		}
+	}
+	return bRes;
+}
+
+bool CLoadFlow::UpdateQToGenerators()
+{
+	bool bRes = true;
+	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+
+		if (!pNode->IsStateOn())
+			continue;
+
+		CLinkPtrCount *pGenLink = pNode->GetLink(1);
+		CDevice **ppGen = NULL;
+		if (pGenLink->m_nCount)
+		{
+			double Qrange = pNode->LFQmax - pNode->LFQmin;
+			pNode->ResetVisited();
+			while (pGenLink->In(ppGen))
+			{
+				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+				if (pGen->IsStateOn())
+					if (Qrange > 0.0)
+					{
+						double OldQ = pGen->Q;
+						pGen->Q = pGen->Kgen * ( pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
+						_ASSERTE(fabs(pGen->Q - OldQ) < 0.00001);
+					}
+					else
+						pGen->Q = 0.0;
 			}
 		}
 	}
