@@ -438,6 +438,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spGenP = spGenCols->Item("P");
 	IColPtr spGenQ = spGenCols->Item("Q");
 
+	IColPtr spGenQmin = spGenCols->Item("Qmin");
+	IColPtr spGenQmax = spGenCols->Item("Qmax");
+
 	IColPtr spGenXd2 = spGenCols->Item("xd2");
 	IColPtr spGenXq1 = spGenCols->Item("xq1");
 	IColPtr spGenXq2 = spGenCols->Item("xq2");
@@ -513,6 +516,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGensMu->xq2 = spGenXq2->GetZ(i);
 			pGensMu->Td0ss = spGenTd0ss->GetZ(i);
 			pGensMu->Tq0ss = spGenTq0ss->GetZ(i);
+			pGensMu->LFQmax = spGenQmax->GetZ(i);
+			pGensMu->LFQmin = spGenQmin->GetZ(i);
 			pGensMu++;
 			break;
 		case 5:
@@ -533,12 +538,13 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGens3C->Td01 = spGenTd01->GetZ(i);
 			pGens3C->Pnom = spGenPnom->GetZ(i);
 			pGens3C->m_ExciterId = spExciterId->GetZ(i);
-
 			pGens3C->xd2 = spGenXd2->GetZ(i);
 			pGens3C->xq1 = spGenXq1->GetZ(i);
 			pGens3C->xq2 = spGenXq2->GetZ(i);
 			pGens3C->Td0ss = spGenTd0ss->GetZ(i);
 			pGens3C->Tq0ss = spGenTq0ss->GetZ(i);
+			pGens3C->LFQmax = spGenQmax->GetZ(i);
+			pGens3C->LFQmin = spGenQmin->GetZ(i);
 			pGens3C++;
 			break;
 		case 4:
@@ -559,6 +565,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGens1C->Td01 = spGenTd01->GetZ(i);
 			pGens1C->Pnom = spGenPnom->GetZ(i);
 			pGens1C->m_ExciterId = spExciterId->GetZ(i);
+			pGens1C->LFQmax = spGenQmax->GetZ(i);
+			pGens1C->LFQmin = spGenQmin->GetZ(i);
 			pGens1C++;
 			break;
 		case 2:
@@ -570,6 +578,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGensInf->P = spGenP->GetZ(i);
 			pGensInf->Q = spGenQ->GetZ(i);
 			pGensInf->xd1 = spGenXd1->GetZ(i);
+			pGensInf->LFQmax = spGenQmax->GetZ(i);
+			pGensInf->LFQmin = spGenQmin->GetZ(i);
 			pGensInf++;
 			break;
 		case 3:
@@ -586,6 +596,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGensMot->Mj = spGenMj->GetZ(i);
 			pGensMot->xd1 = spGenXd1->GetZ(i);
 			pGensMot->Pnom = spGenPnom->GetZ(i);
+			pGensMot->LFQmax = spGenQmax->GetZ(i);
+			pGensMot->LFQmin = spGenQmin->GetZ(i);
 			pGensMot++;
 		}
 	}

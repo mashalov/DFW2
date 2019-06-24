@@ -40,6 +40,8 @@ namespace DFW2
 		bool BuildMatrix();
 		bool Start();
 		bool CheckLF();
+		bool UpdateQToGenerators();
+		bool UpdatePQFromGenerators();
 
 		static bool NodeInMatrix(CDynaNodeBase *pNode);
 				
