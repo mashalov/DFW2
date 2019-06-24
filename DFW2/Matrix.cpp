@@ -532,7 +532,7 @@ bool CDynaModel::SolveLinearSystem()
 											if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
 											{
 												// отмечаем его как уравнение РДЗ, ставим точность РДЗ
-												Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Точность %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
+												//Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Точность %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
 												pMarkEq->PrimitiveBlock = PBT_DERLAG;
 												pMarkEq->Atol = pVectorBegin->Atol;
 												pMarkEq->Rtol = pVectorBegin->Rtol;

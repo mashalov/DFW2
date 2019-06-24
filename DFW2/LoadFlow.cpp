@@ -247,11 +247,13 @@ bool CLoadFlow::Start()
 		pNode->Pnrrastr = pNode->Pn;
 		pNode->Qnrrastr = pNode->Qn;
 #endif
+		//pNode->Pnr = pNode->Pn;
+		//pNode->Qnr = pNode->Qn;
 		if (pNode->IsStateOn())
 		{
 			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			{
-				if (pNode->LFQmax >= pNode->LFQmin /*> m_Parameters.m_Imb */ && fabs(pNode->LFQmax) > m_Parameters.m_Imb && pNode->LFVref > 0.0)
+				if (pNode->LFQmax >= pNode->LFQmin && (fabs(pNode->LFQmax) > m_Parameters.m_Imb || fabs(pNode->LFQmin) > m_Parameters.m_Imb) && pNode->LFVref > 0.0)
 				{
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 					if (m_Parameters.m_bFlat)
@@ -633,7 +635,7 @@ bool CLoadFlow::Run()
 		return bRes;
 
 	pNodes->SwitchLRCs(false);
-		
+
 	if (m_Parameters.m_bStartup)
 	{
 		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
@@ -827,10 +829,6 @@ bool CLoadFlow::Run()
 
 #ifdef _DEBUG
 
-	ATLTRACE(_T("\n%g %g"), m_pMatrixInfoEnd->pNode->Pg, m_pMatrixInfoEnd->pNode->Qg);
-	FILE *s;
-	fopen_s(&s, "c:\\tmp\\nodes.csv", "w+");
-
 	CDynaNodeBase *pNodeMaxV(nullptr);
 	CDynaNodeBase *pNodeMaxDelta(nullptr);
 	CDynaNodeBase *pNodeMaxQg(nullptr);
@@ -888,15 +886,18 @@ bool CLoadFlow::Run()
 			else
 				pNodeMaxPnr = pNode;
 		}
-		//ATLTRACE("\n %20f %20f %20f %20f %20f %20f", pNode->V, pNode->Delta * 180 / M_PI, pNode->Pg, pNode->Qg, pNode->Pnr, pNode->Qnr);
-		fprintf(s, "%d;%20g;%20g\n", pNode->GetId(), pNode->V, pNode->Delta * 180 / M_PI);
 	}
-
-	fclose(s);
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Rastr differences V %g Delta %g Qg %g Pnr %g Qnr %g"),
+		pNodeMaxV->V - pNodeMaxV->Vrastr,
+		pNodeMaxDelta->Delta - pNodeMaxDelta->Deltarastr,
+		pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr,
+		pNodeMaxPnr->Pnr - pNodeMaxPnr->Pnrrastr,
+		pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr);
 #endif
 	
 	pNodes->SwitchLRCs(true);
 	UpdateQToGenerators();
+	DumpNodes();
   	return bRes;
 }
 
@@ -1011,12 +1012,14 @@ bool CLoadFlow::UpdateQToGenerators()
 			while (pGenLink->In(ppGen))
 			{
 				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+				pGen->Q = 0.0;
 				if (pGen->IsStateOn())
 					if (Qrange > 0.0)
 					{
 						double OldQ = pGen->Q;
-						pGen->Q = pGen->Kgen * ( pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
-						_ASSERTE(fabs(pGen->Q - OldQ) < 0.00001);
+						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
+						_CheckNumber(pGen->Q);
+	//					_ASSERTE(fabs(pGen->Q - OldQ) < 0.00001);
 					}
 					else
 						pGen->Q = 0.0;
@@ -1024,4 +1027,52 @@ bool CLoadFlow::UpdateQToGenerators()
 		}
 	}
 	return bRes;
+}
+
+void CLoadFlow::DumpNodes()
+{
+	FILE *fdump(nullptr);
+	setlocale(LC_ALL, "ru-ru");
+	if (!_tfopen_s(&fdump, _T("c:\\tmp\\nodes.csv"), _T("wb+")))
+	{
+		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
+		for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+#ifdef _DEBUG
+			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g\n"),
+				pNode->GetId(),
+				pNode->V,
+				pNode->Delta / M_PI * 180.0,
+				pNode->Pn,
+				pNode->Qn,
+				pNode->Pnr,
+				pNode->Qnr,
+				pNode->Pg,
+				pNode->Qg,
+				pNode->m_eLFNodeType,
+				pNode->LFQmin,
+				pNode->LFQmax,
+				pNode->LFVref,
+				pNode->Vrastr,
+				pNode->Deltarastr);
+#else
+			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
+				pNode->GetId(),
+				pNode->V,
+				pNode->Delta / M_PI * 180.0,
+				pNode->Pn,
+				pNode->Qn,
+				pNode->Pnr,
+				pNode->Qnr,
+				pNode->Pg,
+				pNode->Qg,
+				pNode->m_eLFNodeType,
+				pNode->LFQmin,
+				pNode->LFQmax,
+				pNode->LFVref);
+#endif
+		}
+		fclose(fdump);
+	}
 }
