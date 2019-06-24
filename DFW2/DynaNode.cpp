@@ -807,6 +807,8 @@ bool CDynaNodeContainer::LULF()
 
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
+					_CheckNumber(Y.real());
+					_CheckNumber(Y.imag());
 
 					_ftprintf(fgen, _T("%g;"), pVsource->P);
 				}
@@ -814,10 +816,12 @@ bool CDynaNodeContainer::LULF()
 				// рассчитываем задающий ток узла от нагрузки
 				// можно посчитать ток, а можно посчитать добавку в диагональ
 				//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
-				if(pNode->V > 0.0)
-					Y += conj(cplx(pNode->Pg - Pnr, pNode->Qg - Qnr) / pNode->V / pNode->V);
-				//Y -= conj(cplx(Pnr, Qnr) / pNode->V / pNode->V);
 
+				if(pNode->V > 0.0001)
+					Y += conj(cplx(pNode->Pg - Pnr, pNode->Qg - Qnr) / pNode->V / pNode->V);
+				else
+					I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
+	
 				_CheckNumber(I.real());
 				_CheckNumber(I.imag());
 				_CheckNumber(Y.real());

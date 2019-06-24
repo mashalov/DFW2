@@ -134,7 +134,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
 	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
-	spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
+	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
+	spRastr->Load(RG_REPL, L"..\\tests\\gen_lf_yes_calc", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test9_sc", ""); 
@@ -816,15 +817,15 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	{
 		slit = slcloader.insert(make_pair(1, new CStorageSLC())).first;
 		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
-		slit->second->Q.push_back(CSLCPolynom(0.0, 0.721, 0.158, 0.0));
+		slit->second->Q.push_back(CSLCPolynom(0.0, 0.721, 0.15971, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 3.7, -7.0, 4.3));
-		slit->second->Q.push_back(CSLCPolynom(1.2, 1.49, 0.0, 0.0));
+		slit->second->Q.push_back(CSLCPolynom(1.2, 1.492, 0.0, 0.0));
 	}
 	if (slcloader.find(2) == slcloader.end())
 	{
 		slit = slcloader.insert(make_pair(2, new CStorageSLC())).first;
 		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
-		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.158, 0.0));
+		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.159135, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 4.9, -10.1, 6.2));
 		slit->second->Q.push_back(CSLCPolynom(1.2, 1.708, 0.0, 0.0));
 	}
