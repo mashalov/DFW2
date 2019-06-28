@@ -56,6 +56,9 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 	if (!pDynaModel->Status())
 		return pDynaModel->Status();
 
+	// для угла относительная точность не имеет смысла
+	pDynaModel->GetRightVector(A(V_DELTA))->Rtol = 0.0;
+
 	bool bRes = true;
 	if (bRes)
 	{
