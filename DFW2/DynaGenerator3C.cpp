@@ -59,6 +59,9 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 	if (GetId() == 376804 && !pDynaModel->EstimateBuild())
 		bRes = bRes;
 
+	// для угла относительная точность не имеет смысла
+	pDynaModel->GetRightVector(A(V_DELTA))->Rtol = 0.0;
+
 	if (bRes)
 	{
 		double NodeV = V.Value();

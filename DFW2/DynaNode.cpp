@@ -72,6 +72,9 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	if (GetId() == 1023 && !pDynaModel->EstimateBuild())
 		bRes = true;
 
+	// для угла относительная точность не имеет смысла
+	pDynaModel->GetRightVector(A(V_DELTA))->Rtol = 0.0;
+
 	GetPnrQnr();
 
 	CLinkPtrCount *pGenLink = GetLink(1);
@@ -233,8 +236,7 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 	//if (m_pLRC)
 	//	dLRCVicinity = 30.0 * fabs(abs(VreVim) - V) / Unom;
 	if (m_pLRC)
-		dLRCVicinity = 30.0 * fabs(Vold - V) / Unom;
-
+		dLRCVicinity = 3.0 * fabs(Vold - V) / Unom;
 	UpdateVreVim();
 	return bRes;
 }
@@ -816,11 +818,7 @@ bool CDynaNodeContainer::LULF()
 				// рассчитываем задающий ток узла от нагрузки
 				// можно посчитать ток, а можно посчитать добавку в диагональ
 				//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
-
-				if(pNode->V > 0.0001)
-					Y += conj(cplx(pNode->Pg - Pnr, pNode->Qg - Qnr) / pNode->V / pNode->V);
-				else
-					I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
+				Y += conj(cplx(pNode->Pg - Pnr, pNode->Qg - Qnr) / pNode->V / pNode->V);
 	
 				_CheckNumber(I.real());
 				_CheckNumber(I.imag());
@@ -877,6 +875,12 @@ ptrdiff_t refactorOK = 1;
 				// считаем напряжение узла в полярных координатах
 				pNode->V = abs(pNode->VreVim);
 				pNode->Delta = arg(pNode->VreVim);
+
+				if (pNode->V < DFW2_ATOL_DEFAULT && pNode->IsStateOn())
+				{
+					pNode->V = DFW2_ATOL_DEFAULT;
+					pNode->VreVim = polar(pNode->V, pNode->Delta);
+				}
 
 				// рассчитываем зону сглаживания СХН (также как для Ньютона)
 				/*if (pNode->m_pLRC)

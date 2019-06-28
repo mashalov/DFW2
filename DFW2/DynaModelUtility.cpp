@@ -116,10 +116,8 @@ bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
 
 struct RightVector* CDynaModel::GetRightVector(ptrdiff_t nRow)
 {
-	struct RightVector *pRv = NULL;
-	if (nRow >= 0 && nRow < m_nMatrixSize)
-		pRv = pRightVector + nRow;
-	return pRv;
+	_ASSERTE(nRow >= 0 && nRow < m_nMatrixSize);
+	return pRightVector + nRow;
 }
 
 
