@@ -963,6 +963,7 @@ bool CLoadFlow::CheckLF()
 bool CLoadFlow::UpdatePQFromGenerators()
 {
 	bool bRes = true;
+	
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
@@ -982,6 +983,11 @@ bool CLoadFlow::UpdatePQFromGenerators()
 				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 				if (pGen->IsStateOn())
 				{
+					if (pGen->Kgen <= 0)
+					{
+						pGen->Kgen = 1.0;
+						pGen->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszWrongGeneratorsNumberFixed, pGen->GetVerbalName(), pGen->Kgen));
+					}
 					pNode->Pg += pGen->P;
 					pNode->Qg += pGen->Q;
 					pNode->LFQmin += pGen->LFQmin * pGen->Kgen;

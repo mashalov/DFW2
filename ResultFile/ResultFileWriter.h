@@ -44,6 +44,7 @@ namespace DFW2
 		__int64 m_DataDirectoryOffset;
 		HANDLE m_hThread;
 		HANDLE m_hRunEvent;
+		HANDLE m_hRunningEvent;
 		HANDLE m_hDataMutex;
 		void TerminateWriterThread();
 		bool m_bThreadRun;
