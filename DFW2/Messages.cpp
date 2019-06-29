@@ -97,6 +97,7 @@ const _TCHAR* CDFW2Messages::m_cszLFNoConvergence = _T("Ну удалось сб
 const _TCHAR* CDFW2Messages::m_cszLFNodeVTooHigh = _T("Недопустимое напряжение в узле %s - %g номинального");
 const _TCHAR* CDFW2Messages::m_cszLFNodeVTooLow = CDFW2Messages::m_cszLFNodeVTooHigh;
 const _TCHAR* CDFW2Messages::m_cszLFBranchAngleExceeds90 = _T("Угол по связи %s - %s превысил 90 град - %g");
+const _TCHAR* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = _T("Количество генераторов для %s задано неверно %d, установлено значение 1");
 
 
 
