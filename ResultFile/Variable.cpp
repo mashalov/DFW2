@@ -145,7 +145,7 @@ STDMETHODIMP CVariable::get_ChannelIndex(LONG* Index)
 	const CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
 
 	if (Index && m_pVariableInfo)
-		*Index = pFileReader->GetChannelIndex(m_pDeviceInstanceInfo->m_pDevType->eDeviceType, m_pDeviceInstanceInfo->GetId(0), m_pVariableInfo->nIndex);
+		*Index = static_cast<LONG>(pFileReader->GetChannelIndex(m_pDeviceInstanceInfo->m_pDevType->eDeviceType, m_pDeviceInstanceInfo->GetId(0), m_pVariableInfo->nIndex));
 	else
 		hRes = E_INVALIDARG;
 

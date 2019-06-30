@@ -346,7 +346,7 @@ STDMETHODIMP CResultRead::get_Points(LONG *PointsCount)
 	HRESULT hRes = S_OK;
 
 	if (PointsCount)
-		*PointsCount = m_ResultFileReader.GetPointsCount();
+		*PointsCount = static_cast<LONG>(m_ResultFileReader.GetPointsCount());
 	else
 		hRes = E_INVALIDARG;
 
@@ -358,7 +358,7 @@ STDMETHODIMP CResultRead::get_Channels(LONG* ChannelsCount)
 	HRESULT hRes = S_OK;
 
 	if (ChannelsCount)
-		*ChannelsCount = m_ResultFileReader.GetChannelsCount();
+		*ChannelsCount = static_cast<LONG>(m_ResultFileReader.GetChannelsCount());
 	else
 		hRes = E_INVALIDARG;
 
