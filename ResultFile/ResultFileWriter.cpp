@@ -453,10 +453,10 @@ void CResultFileWriter::CreateResultFile(const _TCHAR *cszFilePath)
 		WriteLEB(DFW2_RESULTFILE_VERSION);
 
 		// создаем объекты синхронизации для управления потоком записи
-		m_hRunEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		m_hRunEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 		if (m_hRunEvent == NULL)
 			throw CFileWriteException(m_pFile);
-		m_hRunningEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		m_hRunningEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 		if (m_hRunningEvent == NULL)
 			throw CFileWriteException(m_pFile);
 		m_hDataMutex = CreateMutex(NULL, FALSE, NULL);
@@ -532,27 +532,12 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 				// и запускаем поток записи
 				//WriteResultsThreaded();
 
-				if (!ResetEvent(m_hRunningEvent))
-					throw CFileWriteException(m_pFile);
 				if (!ReleaseMutex(m_hDataMutex))
 					throw CFileWriteException(m_pFile);
 				if (!SetEvent(m_hRunEvent))
 					throw CFileWriteException(m_pFile);
-
-				while(1)
-				{
-					dwWaitRes = WaitForSingleObject(m_hRunningEvent, 10);
-					if (dwWaitRes == WAIT_OBJECT_0)
-						break;
-					else if (dwWaitRes == WAIT_FAILED)
-						throw CFileWriteException(m_pFile);
-					else if (dwWaitRes == WAIT_TIMEOUT)
-					{
-						if (!SetEvent(m_hRunEvent))
-							throw CFileWriteException(m_pFile);
-						_tcprintf(_T("\n%g"), dTime);
-					}
-				}
+				if(WaitForSingleObject(m_hRunningEvent, INFINITE) != WAIT_OBJECT_0)
+					throw CFileWriteException(m_pFile);
 			}
 		}
 		else
@@ -660,9 +645,6 @@ unsigned int CResultFileWriter::WriterThread(void *pThis)
 
 				// записываем очередной блок результатов
 				if (!pthis->WriteResultsThreaded())
-					throw CFileWriteException(pthis->m_pFile);
-
-				if (!ResetEvent(pthis->m_hRunEvent))
 					throw CFileWriteException(pthis->m_pFile);
 			}
 			else

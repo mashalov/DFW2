@@ -86,7 +86,7 @@ bool CDynaModel::Run()
 
 	//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 	m_Parameters.eFreqDampingType = APDT_NODE;
-	//m_Parameters.m_dOutStep = 1E-10;
+	m_Parameters.m_dOutStep = 1E-10;
 	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
@@ -125,7 +125,7 @@ bool CDynaModel::Run()
 
 	if (bRes)
 	{
-		m_Discontinuities.AddEvent(150.0, new CModelActionStop());
+		m_Discontinuities.AddEvent(40.0, new CModelActionStop());
 
 #ifdef SMZU
 
