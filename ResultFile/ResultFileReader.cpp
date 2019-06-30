@@ -86,7 +86,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 					delete pReadBuffer;
 					if (!bRes)
 						throw CFileReadException(m_pFile);
-					BytesCount = nDecomprSize;
+					BytesCount = static_cast<int>(nDecomprSize);
 
 				}
 				else
@@ -135,7 +135,7 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, con
 	ptrdiff_t nVarIndex = -1;
 
 	DeviceTypeInfo findType;
-	findType.eDeviceType = eType;
+	findType.eDeviceType = static_cast<int>(eType);
 	DEVTYPEITRCONST it = m_DevTypeSet.find(&findType);
 	if (it != m_DevTypeSet.end())
 	{
@@ -154,8 +154,8 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptr
 	
 	ChannelHeaderInfo findChannel;
 	findChannel.DeviceId = nId;
-	findChannel.DeviceVarIndex = nVarIndex;
-	findChannel.eDeviceType = eType;
+	findChannel.DeviceVarIndex = static_cast<int>(nVarIndex);
+	findChannel.eDeviceType = static_cast<int>(eType);
 	CHANNELSETITRCONST it = m_ChannelSet.find(&findChannel);
 	if (it != m_ChannelSet.end())
 		return *it - m_pChannelHeaders;
@@ -264,7 +264,7 @@ void CResultFileReader::Reparent()
 			if (pLink && pLink->m_eParentType != 0)
 			{
 				DeviceTypeInfo findType;
-				findType.eDeviceType = pLink->m_eParentType;
+				findType.eDeviceType = static_cast<int>(pLink->m_eParentType);
 				DEVTYPEITRCONST ftypeit = m_DevTypeSet.find(&findType);
 				if (ftypeit != m_DevTypeSet.end())
 				{
@@ -319,11 +319,14 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 
 	int VarNameCount = ReadLEBInt();
 	m_VarNameMap.clear();
+
+	// читаем типы и названия единиц измерения
 	for (int varname = 0; varname < VarNameCount; varname++)
 	{
-		int VarType = ReadLEBInt();
+		int VarType = ReadLEBInt();		// тип
 		std::wstring strVarName;
-		ReadString(strVarName);
+		ReadString(strVarName);			// название
+		// тип и название вводим в карту
 		if (!m_VarNameMap.insert(make_pair(VarType,strVarName)).second)
 			throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
 	}
@@ -822,6 +825,7 @@ const CResultFileReader::ChannelHeaderInfo* CResultFileReader::GetChannelHeaders
 	return m_pChannelHeaders;
 }
 
+// возвращает название единиц измерения по заданному типу
 const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType) const
 {
 	VARNAMEITRCONST it = m_VarNameMap.find(eUnitsType);
