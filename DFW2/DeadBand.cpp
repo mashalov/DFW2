@@ -1,18 +1,18 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "DeadBand.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
 
 CDeadBand::CDeadBand(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) :
-					CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input)
+					CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input)
 					{}
 
 bool CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
-	switch (m_nDbState)
+	switch (m_eDbState)
 	{
 	case DBS_MAX:
 	case DBS_MIN:
@@ -35,7 +35,7 @@ bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 	{
 		double dInput = m_Input->Value();
 
-		switch (m_nDbState)
+		switch (m_eDbState)
 		{
 		case DBS_MIN:
 			pDynaModel->SetFunction(A(m_OutputEquationIndex), *m_Output - dInput - m_Db);
@@ -70,7 +70,7 @@ bool CDeadBand::Init(CDynaModel *pDynaModel)
 	}
 	else
 		if (Equal(m_Db,0.0))
-			m_nDbState = DBS_OFF;
+			m_eDbState = DBS_OFF;
 	else
 	{
 		m_DbMax = pDynaModel->GetHysteresis(m_Db);
@@ -88,22 +88,22 @@ eDEVICEFUNCTIONSTATUS CDeadBand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		double dInput = m_Input->Value();
 
-		if (m_nDbState != DBS_OFF)
+		if (m_eDbState != DBS_OFF)
 		{
 			*m_Output = 0.0;
 
-			m_nDbState = DBS_ZERO;
+			m_eDbState = DBS_ZERO;
 
 			if (dInput >= m_Db)
 			{
 				*m_Output = dInput - m_Db;
-				m_nDbState = DBS_MAX;
+				m_eDbState = DBS_MAX;
 			}
 			else
 				if (dInput <= -m_Db)
 				{
 					*m_Output = dInput + m_Db;
-					m_nDbState = DBS_MIN;
+					m_eDbState = DBS_MIN;
 				}
 		}
 		else
@@ -121,9 +121,9 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 	if (m_pDevice->IsStateOn())
 	{
-		DFW2DEADBANDSTATES OldState = m_nDbState;
+		DFW2DEADBANDSTATES OldState = m_eDbState;
 
-		switch (m_nDbState)
+		switch (m_eDbState)
 		{
 		case DBS_MAX:
 			rH = OnStateMax(pDynaModel);
@@ -137,9 +137,9 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 		case DBS_OFF:
 			break;
 		}
-		if (OldState != m_nDbState)
+		if (OldState != m_eDbState)
 		{
-			pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Ïðèìèòèâ %s èç %s èçìåíÿåò ñîñòîÿíèå %g %g %g ñ %d íà %d"), pDynaModel->GetCurrentTime(), pDynaModel->GetIntegrationStepNumber(), GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_DbMin, m_DbMax, OldState, m_nDbState);
+			pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) ÐŸÑ€Ð¸Ð¼Ð¸Ñ‚Ð¸Ð² %s Ð¸Ð· %s Ð¸Ð·Ð¼ÐµÐ½ÑÐµÑ‚ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ðµ %g %g %g Ñ %d Ð½Ð° %d"), pDynaModel->GetCurrentTime(), pDynaModel->GetIntegrationStepNumber(), GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_DbMin, m_DbMax, OldState, m_eDbState);
 			pDynaModel->DiscontinuityRequest();
 		}
 	}
@@ -160,7 +160,7 @@ bool CDeadBand::UnserializeParameters(CDynaModel *pDynaModel, double *pParameter
 
 void CDeadBand::SetCurrentState(DFW2DEADBANDSTATES CurrentState)
 {
-	m_nDbState = CurrentState;
+	m_eDbState = CurrentState;
 }
 
 double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
