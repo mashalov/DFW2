@@ -152,6 +152,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		return;
 
 	ITablesPtr spTables = spRastr->Tables;
+
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
 	IColsPtr spASCols = spAutoStarters->Cols;
 	IColPtr spASId			= spASCols->Item(_T("Id"));

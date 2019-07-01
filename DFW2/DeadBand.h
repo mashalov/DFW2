@@ -1,9 +1,9 @@
-#pragma once
+п»ї#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
 {
-	class CDeadBand : public CDynaPrimitive
+	class CDeadBand : public CDynaPrimitiveState
 	{
 	protected:
 		enum DFW2DEADBANDSTATES
@@ -13,7 +13,7 @@ namespace DFW2
 			DBS_MIN,
 			DBS_OFF
 		}
-			m_nDbState;
+			m_eDbState, m_eDbStateSaved;
 
 		double m_Db;
 
@@ -39,8 +39,10 @@ namespace DFW2
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
 		virtual bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount);
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Мертвая зона"); }
+		virtual const _TCHAR* GetVerbalName() { return _T("РњРµСЂС‚РІР°СЏ Р·РѕРЅР°"); }
 		static size_t PrimitiveSize() { return sizeof(CDeadBand); }
 		static long EquationsCount()  { return 1; }
+		virtual void StoreState() override { m_eDbStateSaved = m_eDbState; }
+		virtual void RestoreState() override { m_eDbState = m_eDbStateSaved; }
 	};
 }

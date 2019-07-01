@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 using namespace std;
 #include "Device.h"
 #include <limits.h>
@@ -73,6 +73,7 @@ namespace DFW2
 																												  m_OutputEquationIndex(nOutputIndex)
 		{
 			*m_Output = 0.0;
+			pDevice->RegisterPrimitive(this);
 		}
 		virtual ~CDynaPrimitive() {}
 
@@ -91,24 +92,37 @@ namespace DFW2
 		inline const double* Output() const { return m_Output; }
 	};
 
-	class CDynaPrimitiveLimited : public CDynaPrimitive
+	class CDynaPrimitiveState : public CDynaPrimitive 
+	{
+	public:
+		CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
+		virtual void StoreState() = 0;
+		virtual void RestoreState() = 0;
+	};
+
+	// примитив с минимальным и максимальным ограничениями 
+	class CDynaPrimitiveLimited : public CDynaPrimitiveState
 	{
 	public:
 
+		// возможные состояния примитива
 		enum eLIMITEDSTATES
 		{
-			LS_MIN,
-			LS_MID,
-			LS_MAX
+			LS_MIN,		// на минимуме
+			LS_MID,		// вне ограничения
+			LS_MAX		// на максимуме
 		};
 
 	private:
-		eLIMITEDSTATES eCurrentState;
+		eLIMITEDSTATES eCurrentState;		// текущее состояние примитива
+		eLIMITEDSTATES eSavedState;			// сохраненное состояние примитива
 
 	protected:
 		void SetCurrentState(CDynaModel *pDynaModel, eLIMITEDSTATES CurrentState);
 
+		// численные значения ограничений и гистерезиса ограничений
 		double m_dMin, m_dMax, m_dMinH, m_dMaxH;
+		// виртуальные функции обработки изменения входного сигнала в зависимости от текущего состояния примитива
 		virtual double OnStateMax(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateMin(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateMid(CDynaModel *pDynaModel) { return 1.0; }
@@ -116,12 +130,14 @@ namespace DFW2
 		inline eLIMITEDSTATES GetCurrentState() { return eCurrentState; }
 		void SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax);
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		CDynaPrimitiveLimited(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input) {}
+		CDynaPrimitiveLimited(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
 		virtual ~CDynaPrimitiveLimited() {}
 		virtual bool Init(CDynaModel *pDynaModel);
+		virtual void StoreState() override { eSavedState = eCurrentState; }
+		virtual void RestoreState() override { eCurrentState = eSavedState; }
 	};
 
-	class CDynaPrimitiveBinary : public CDynaPrimitive
+	class CDynaPrimitiveBinary : public CDynaPrimitiveState
 	{
 	protected:
 		enum eRELAYSTATES
@@ -129,15 +145,18 @@ namespace DFW2
 			RS_ON,
 			RS_OFF,
 		};
-		eRELAYSTATES eCurrentState;
+		eRELAYSTATES eCurrentState;		// текущее состояние реле
+		eRELAYSTATES eSavedState;		// сохраненное состояние реле
 		inline eRELAYSTATES GetCurrentState() { return eCurrentState; }
 		virtual void RequestZCDiscontinuity(CDynaModel* pDynaModel);
 	public:
-		CDynaPrimitiveBinary(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input) {}
+		CDynaPrimitiveBinary(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
 		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
 		virtual bool BuildEquations(CDynaModel *pDynaModel);
 		virtual bool BuildRightHand(CDynaModel *pDynaModel);
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel) { return true; }
+		virtual void StoreState() override { eSavedState = eCurrentState; }
+		virtual void RestoreState() override { eCurrentState = eSavedState; }
 	};
 
 	class CDynaPrimitiveBinaryOutput : public CDynaPrimitiveBinary
@@ -149,100 +168,5 @@ namespace DFW2
 		CDynaPrimitiveBinaryOutput(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input) {}
 		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2);
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-	};
-
-	
-
-	template<size_t nSize>
-	class CPrimitives
-	{
-	protected:
-		size_t m_nSize;
-		size_t m_nCounter;
-	public:
-		CPrimitives() : m_nSize(nSize), m_nCounter(0) {}
-		CDynaPrimitive *m_pPrimitives[nSize];
-		void Add(CDynaPrimitive *pPrimitive)
-		{
-			if (m_nCounter < m_nSize)
-				m_pPrimitives[m_nCounter++] = pPrimitive;
-			else
-				_ASSERTE(!_T("Wrong CPrimitives initial size"));
-		}
-
-		bool BuildDerivatives(CDynaModel *pDynaModel)
-		{
-			bool bRes = true;
-			CDynaPrimitive **pEnd = nSize + m_pPrimitives;
-			for (CDynaPrimitive **pBegin = m_pPrimitives; pBegin < pEnd; pBegin++)
-			{
-				bRes = bRes && (*pBegin)->BuildDerivatives(pDynaModel);
-			}
-			return bRes;
-		}
-
-
-		bool BuildEquations(CDynaModel *pDynaModel)
-		{
-			bool bRes = true;
-			CDynaPrimitive **pEnd = nSize + m_pPrimitives;
-			for (CDynaPrimitive **pBegin = m_pPrimitives; pBegin < pEnd; pBegin++)
-			{
-				bRes = bRes && (*pBegin)->BuildEquations(pDynaModel);
-			}
-			_ASSERTE(bRes);
-			return bRes;
-		}
-
-		bool BuildRightHand(CDynaModel *pDynaModel)
-		{
-			bool bRes = true;
-			CDynaPrimitive **pEnd = nSize + m_pPrimitives;
-			for (CDynaPrimitive **pBegin = m_pPrimitives; pBegin < pEnd; pBegin++)
-			{
-				bRes = bRes && (*pBegin)->BuildRightHand(pDynaModel);
-			}
-			_ASSERTE(bRes);
-			return bRes;
-		}
-
-		double CheckZeroCrossing(CDynaModel *pDynaModel)
-		{
-			bool bRes = true;
-			CDynaPrimitive **pEnd = nSize + m_pPrimitives;
-
-			double rH = 1.0;
-
-			for (CDynaPrimitive **pBegin = m_pPrimitives; pBegin < pEnd; pBegin++)
-			{
-				double rHcurrent = (*pBegin)->CheckZeroCrossing(pDynaModel);
-				if (rHcurrent < rH)
-					rH = rHcurrent;
-			}
-			return rH;
-		}
-
-
-		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel *pDynaModel)
-		{
-			eDEVICEFUNCTIONSTATUS Status = DFS_OK;
-			CDynaPrimitive **pEnd = nSize + m_pPrimitives;
-			for (CDynaPrimitive **pBegin = m_pPrimitives; pBegin < pEnd; pBegin++)
-			{
-				switch ((*pBegin)->ProcessDiscontinuity(pDynaModel))
-				{
-				case DFS_FAILED:
-					Status = DFS_FAILED;
-					break;
-				case DFS_NOTREADY:
-					Status = DFS_NOTREADY;
-					break;
-				}
-			}
-
-			_ASSERTE(Status != DFS_FAILED);
-
-			return Status;
-		}
 	};
 }

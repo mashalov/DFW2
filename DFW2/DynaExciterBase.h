@@ -17,7 +17,6 @@ namespace DFW2
 		PrimitiveVariable PvEqsum;
 		PrimitiveVariableExternal GenId, GenIq, ExtUf, ExtUdec, ExtVg, EqInput;
 		CLimitedLag ExcLag;
-		CPrimitives<1> Prims;
 
 	public:
 		enum VARS

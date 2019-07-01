@@ -11,10 +11,6 @@ CDynaExcConMustang::CDynaExcConMustang() : CDevice(),
 										   dEqdt(this, dEqdtOutValue, V_EQDT, &dEqdtIn),
 										   dSdt(this, dSdtOutValue, V_SDT, &dSdtIn)
 {
-	Prims.Add(&Lag);
-	Prims.Add(&dVdt);
-	Prims.Add(&dEqdt);
-	Prims.Add(&dSdt);
 }
 
 double* CDynaExcConMustang::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -137,14 +133,13 @@ bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(A(V_SVT), A(dSdtIn.Index()), 0.0);
 	}
 		
-	Prims.BuildEquations(pDynaModel);
+	bRes = bRes && CDevice::BuildEquations(pDynaModel);
 
 	return pDynaModel->Status() && bRes;
 }
 
 bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
-
 	if (IsStateOn())
 	{
 		double NodeV = dVdtIn.Value();
@@ -159,13 +154,13 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_SVT), 0.0);
 	}
 
-	Prims.BuildRightHand(pDynaModel);
+	CDevice::BuildRightHand(pDynaModel);
 	return pDynaModel->Status();
 }
 
 bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = Prims.BuildDerivatives(pDynaModel);
+	bool bRes = CDevice::BuildDerivatives(pDynaModel);
 	if (IsStateOn())
 		pDynaModel->SetDerivative(A(V_SVT), (dSdtIn.Value() - Svt) / Tf);
 	else
@@ -182,7 +177,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::ProcessDiscontinuity(CDynaModel* pDyna
 	{
 		double V = dVdtIn.Value();
 		Usum = K0u * (Vref * (1.0 + Alpha * dSdtIn.Value()) - V) + K0f * (dSdtIn.Value() - Svt) - *dVdtOutValue - *dEqdtOutValue + *dSdtOutValue;
-		Status = Prims.ProcessDiscontinuity(pDynaModel);
+		Status = CDevice::ProcessDiscontinuity(pDynaModel);
 	}
 	else
 		Status = DFS_OK;
@@ -195,7 +190,7 @@ double CDynaExcConMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 	if (IsStateOn())
-		rH = Prims.CheckZeroCrossing(pDynaModel);
+		rH = CDevice::CheckZeroCrossing(pDynaModel);
 	return rH;
 }
 

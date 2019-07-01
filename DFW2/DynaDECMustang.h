@@ -36,8 +36,6 @@ namespace DFW2
 		PrimitiveVariable EnforceOnOut, DeforceOnOut;
 		PrimitiveVariable EnforceOffOut, DeforceOffOut;
 
-		CPrimitives<6> Prims;
-
 		double VEnfOn, VEnfOff, VDefOn, VDefOff, EnfRatio, DefRatio, EnfTexc, DefTexc, TdelOn, TdelOff;
 
 		enum VARS

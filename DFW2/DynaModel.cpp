@@ -125,7 +125,7 @@ bool CDynaModel::Run()
 
 	if (bRes)
 	{
-		m_Discontinuities.AddEvent(40.0, new CModelActionStop());
+		m_Discontinuities.AddEvent(150.0, new CModelActionStop());
 
 #ifdef SMZU
 
@@ -821,12 +821,13 @@ bool CDynaModel::Step()
 								if (!sc.m_bDiscontinuityRequest)
 								{
 									// если не возникло запросов на обработку разрыва
+									// обнуляем коэффициент шага, чтобы он не изменился
 									rSame = 0.0;
-									// признаем шаг успешным
+									// и признаем шаг успешным
 									GoodStep(rSame);
 								}
 								else
-									sc.m_bRetryStep = false; // отменяем повтор шага, чтобы обработать разрыв
+									sc.m_bRetryStep = false; // если были запросы на обработку разрыва отменяем повтор шага, чтобы обработать разрыв
 							}
 							else
 							{
@@ -1365,17 +1366,22 @@ void CDynaModel::NewtonFailed()
 	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 }
 
+// функция подготовки к повтору шага
+// для поиска зерокроссинга
 void CDynaModel::RepeatZeroCrossing()
 {
 	if (sc.m_dCurrentH < sc.Hmin)
 	{
+		// если шаг снижен до минимального,
+		// отменяем зерокроссинг, так как его невозможно выполнить
 		sc.m_dCurrentH = sc.Hmin;
 		sc.m_bZeroCrossingMode = false;
 	}
 
-	//ChangeOrder(1);
-
+	// восстанавливаем Nordsieck с предыдущего шага
 	RestoreNordsiek();
+	// масштабируем на шаг зерокроссинга (m_dCurrentH уже должен быть настроен)
+	// старый шаг m_dOldH еще не успели изменить
 	RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
 	sc.CheckAdvance_t0();
 	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(), GetIntegrationStepNumber(), GetH()));

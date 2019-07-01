@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "CustomDevice.h"
 #include "DynaModel.h"
 
@@ -40,8 +40,6 @@ bool CCustomDevice::BuildStructure()
 	const BLOCKSPINSINDEXES&  Pins = Container()->DLL().GetBlocksPinsIndexes();
 
 	_ASSERTE(Blocks.size() == Pins.size());
-
-	m_Primitives.reserve(Blocks.size());
 
 	BLOCKDESCRIPTIONS::const_iterator bit = Blocks.begin();
 	BLOCKSPINSINDEXES::const_iterator iit = Pins.begin();
@@ -151,8 +149,12 @@ bool CCustomDevice::BuildStructure()
 			break;
 		}
 
+		/*
+
+		Примитивы теперь добавляются автоматически
 		if (pDummy)
 			m_Primitives.push_back(pDummy);
+		*/
 	}
 
 	if (!bRes)
@@ -244,8 +246,10 @@ bool CCustomDevice::BuildEquations(CDynaModel *pDynaModel)
 	bool bRes = ConstructDLLParameters(pDynaModel);
 	bRes = Container()->BuildDLLEquations(&m_DLLArgs) && bRes;
 
-	for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
-		bRes = (*it)->BuildEquations(pDynaModel) && bRes;
+	bRes = bRes && CDevice::BuildEquations(pDynaModel);
+
+	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
+		bRes = (*it)->BuildEquations(pDynaModel) && bRes;*/
 
 	return bRes;
 }
@@ -255,8 +259,10 @@ bool CCustomDevice::BuildRightHand(CDynaModel *pDynaModel)
 	bool bRes = ConstructDLLParameters(pDynaModel);
 	bRes = Container()->BuildDLLRightHand(&m_DLLArgs) && bRes;
 
-	for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
-		bRes = (*it)->BuildRightHand(pDynaModel) && bRes;
+	bRes = bRes && CDevice::BuildRightHand(pDynaModel);
+
+	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
+		bRes = (*it)->BuildRightHand(pDynaModel) && bRes;*/
 
 	return bRes;
 }
@@ -279,8 +285,11 @@ bool CCustomDevice::BuildDerivatives(CDynaModel *pDynaModel)
 	bool bRes = ConstructDLLParameters(pDynaModel);
 	bRes = Container()->BuildDLLDerivatives(&m_DLLArgs) && bRes;
 
-	for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
-		bRes = (*it)->BuildDerivatives(pDynaModel) && bRes;
+	
+	bRes = bRes && CDevice::BuildDerivatives(pDynaModel);
+
+	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
+		bRes = (*it)->BuildDerivatives(pDynaModel) && bRes;*/
 
 	return bRes;
 }
@@ -288,14 +297,14 @@ bool CCustomDevice::BuildDerivatives(CDynaModel *pDynaModel)
 double CCustomDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	double rH = 1.0;
+	double rH = CDevice::CheckZeroCrossing(pDynaModel);
 
-	for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
+	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
 	{
 		double rHcurrent = (*it)->CheckZeroCrossing(pDynaModel);
 		if (rHcurrent < rH)
 			rH = rHcurrent;
-	}
+	}*/
 
 	return rH;
 }
@@ -355,10 +364,9 @@ long CCustomDevice::DLLProcessBlockDiscontinuity(BuildEquationsObjects *pBEObjs,
 	
 	CCustomDevice *pDevice = static_cast<CCustomDevice*>(pBEObjs->pDevice);
 	CDynaModel *pDynaModel = static_cast<CDynaModel*>(pBEObjs->pModel);
-	PRIMITIVEBLOCKS& Blocks = pDevice->m_Primitives;
-	if (nBlockIndex >= 0 && nBlockIndex < static_cast<ptrdiff_t>(Blocks.size()))
+	if (nBlockIndex >= 0 && nBlockIndex < static_cast<ptrdiff_t>(pDevice->m_Primitives.size()))
 	{
-		switch (Blocks[nBlockIndex]->ProcessDiscontinuity(pDynaModel))
+		switch (pDevice->m_Primitives[nBlockIndex]->ProcessDiscontinuity(pDynaModel))
 		{
 		case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
 			pDevice->m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
@@ -377,11 +385,10 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 
 	CCustomDevice *pDevice = static_cast<CCustomDevice*>(pBEObjs->pDevice);
 	CDynaModel *pDynaModel = static_cast<CDynaModel*>(pBEObjs->pModel);
-	PRIMITIVEBLOCKS& Blocks = pDevice->m_Primitives;
 
-	if (nBlockIndex >= 0 && nBlockIndex < static_cast<ptrdiff_t>(Blocks.size()))
+	if (nBlockIndex >= 0 && nBlockIndex < static_cast<ptrdiff_t>(pDevice->m_Primitives.size()))
 	{
-		CDynaPrimitive *pPrimitive = Blocks[nBlockIndex];
+		CDynaPrimitive *pPrimitive = pDevice->m_Primitives[nBlockIndex];
 		double *pParBuffer = NULL;
 		long nParCount = static_cast<CCustomDeviceContainer*>(pDevice->Container())->GetParametersValues(pDevice->GetId(), &pDevice->m_DLLArgs, nBlockIndex, &pParBuffer);
 		if (!pPrimitive->UnserializeParameters(pDynaModel, pParBuffer, nParCount))
@@ -463,9 +470,13 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 {
 	const double *pValue = GetVariableConstPtr(cszOutputName);
 
-	for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
+	for (auto& it : m_Primitives)
+		if (it->Output() == pValue)
+			return it;
+
+	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
 		if ((*it)->Output() == pValue)
-			return *it;
+			return *it;*/
 
 	return NULL;
 }

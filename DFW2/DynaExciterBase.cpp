@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaExciterBase.h"
 #include "DynaModel.h"
 
@@ -11,7 +11,6 @@ CDynaExciterBase::CDynaExciterBase() : CDevice(),
 	ExtUf.Value(&Uexc);
 	ExtUdec.Value(&Udec);
 	ExtVg.Value(&Ug0);
-	Prims.Add(&ExcLag);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)

@@ -1,16 +1,16 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "DynaModel.h"
 
 
 using namespace DFW2;
 
-// рассчитывает прогноз Nordsieck для заданного шага
+// СЂР°СЃСЃС‡РёС‚С‹РІР°РµС‚ РїСЂРѕРіРЅРѕР· Nordsieck РґР»СЏ Р·Р°РґР°РЅРЅРѕРіРѕ С€Р°РіР°
 void CDynaModel::Predict()
 {
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
-	// Алгоритм расчета [Lsode 2.61]
+	// РђР»РіРѕСЂРёС‚Рј СЂР°СЃС‡РµС‚Р° [Lsode 2.61]
 	while (pVectorBegin < pVectorEnd)
 	{
 		pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
@@ -23,18 +23,18 @@ void CDynaModel::Predict()
 			}
 		}
 
-		// прогнозное значение переменной состояния обновляем по Nordsieck
+		// РїСЂРѕРіРЅРѕР·РЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ РѕР±РЅРѕРІР»СЏРµРј РїРѕ Nordsieck
 		*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-		pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
+		pVectorBegin->Error = 0.0;	// РѕР±РЅСѓР»СЏРµРј РѕС€РёР±РєСѓ С€Р°РіР°
 		pVectorBegin++;
 	}
 
 	ConvTest[0].ResetIterations();
 	ConvTest[1].ResetIterations();
 
-	// для устройств, которые требует внутренней обработки прогноза
-	// (например для узлов, которым нужно перевести прогноз полярного напряжения в прямоугольное)
-	// делаем цикл с вызовом функции прогноза устройства
+	// РґР»СЏ СѓСЃС‚СЂРѕР№СЃС‚РІ, РєРѕС‚РѕСЂС‹Рµ С‚СЂРµР±СѓРµС‚ РІРЅСѓС‚СЂРµРЅРЅРµР№ РѕР±СЂР°Р±РѕС‚РєРё РїСЂРѕРіРЅРѕР·Р°
+	// (РЅР°РїСЂРёРјРµСЂ РґР»СЏ СѓР·Р»РѕРІ, РєРѕС‚РѕСЂС‹Рј РЅСѓР¶РЅРѕ РїРµСЂРµРІРµСЃС‚Рё РїСЂРѕРіРЅРѕР· РїРѕР»СЏСЂРЅРѕРіРѕ РЅР°РїСЂСЏР¶РµРЅРёСЏ РІ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРѕРµ)
+	// РґРµР»Р°РµРј С†РёРєР» СЃ РІС‹Р·РѕРІРѕРј С„СѓРЅРєС†РёРё РїСЂРѕРіРЅРѕР·Р° СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	for (DEVICECONTAINERITR it = m_DeviceContainersPredict.begin(); it != m_DeviceContainersPredict.end(); it++)
 	{
 		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
@@ -95,8 +95,8 @@ void CDynaModel::ResetNordsiek()
 	sc.StepChanged();
 }
 
-// построение Nordsieck после того, как обнаружено что текущая история
-// ненадежна
+// РїРѕСЃС‚СЂРѕРµРЅРёРµ Nordsieck РїРѕСЃР»Рµ С‚РѕРіРѕ, РєР°Рє РѕР±РЅР°СЂСѓР¶РµРЅРѕ С‡С‚Рѕ С‚РµРєСѓС‰Р°СЏ РёСЃС‚РѕСЂРёСЏ
+// РЅРµРЅР°РґРµР¶РЅР°
 void CDynaModel::ReInitializeNordsiek()
 {
 	struct RightVector *pVectorBegin = pRightVector;
@@ -104,21 +104,21 @@ void CDynaModel::ReInitializeNordsiek()
 
 	if (sc.m_bNordsiekSaved)
 	{
-		// если есть сохраненный шаг
+		// РµСЃР»Рё РµСЃС‚СЊ СЃРѕС…СЂР°РЅРµРЅРЅС‹Р№ С€Р°Рі
 		while (pVectorBegin < pVectorEnd)
 		{
-			// значение восстанавливаем
+			// Р·РЅР°С‡РµРЅРёРµ РІРѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµРј
 			pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0];
 			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-			// а элемент первого порядка конструируем по разности между предыдущим и пред-предыдущим значениями
-			// т.к. первый элемент это hy', а y' = (y(-1) - y(-2)) / h. Note - мы берем производную с пред-предыдущего шага
+			// Р° СЌР»РµРјРµРЅС‚ РїРµСЂРІРѕРіРѕ РїРѕСЂСЏРґРєР° РєРѕРЅСЃС‚СЂСѓРёСЂСѓРµРј РїРѕ СЂР°Р·РЅРѕСЃС‚Рё РјРµР¶РґСѓ РїСЂРµРґС‹РґСѓС‰РёРј Рё РїСЂРµРґ-РїСЂРµРґС‹РґСѓС‰РёРј Р·РЅР°С‡РµРЅРёСЏРјРё
+			// С‚.Рє. РїРµСЂРІС‹Р№ СЌР»РµРјРµРЅС‚ СЌС‚Рѕ hy', Р° y' = (y(-1) - y(-2)) / h. Note - РјС‹ Р±РµСЂРµРј РїСЂРѕРёР·РІРѕРґРЅСѓСЋ СЃ РїСЂРµРґ-РїСЂРµРґС‹РґСѓС‰РµРіРѕ С€Р°РіР°
 
 			//											y(-1)						y(-2)
 			pVectorBegin->Nordsiek[1] = pVectorBegin->SavedNordsiek[0] - pVectorBegin->Tminus2Value;
 			pVectorBegin->SavedError = 0.0;
 			pVectorBegin++;
 		}
-		// масшатабируем Nordsieck на заданный шаг
+		// РјР°СЃС€Р°С‚Р°Р±РёСЂСѓРµРј Nordsieck РЅР° Р·Р°РґР°РЅРЅС‹Р№ С€Р°Рі
 		RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
 		BuildDerivatives();
 	}
@@ -127,7 +127,7 @@ void CDynaModel::ReInitializeNordsiek()
 	sc.ResetStepsToFail();
 }
 
-// восстанавление Nordsieck с предыдущего шага
+// РІРѕСЃСЃС‚Р°РЅР°РІР»РµРЅРёРµ Nordsieck СЃ РїСЂРµРґС‹РґСѓС‰РµРіРѕ С€Р°РіР°
 void CDynaModel::RestoreNordsiek()
 {
 
@@ -136,8 +136,8 @@ void CDynaModel::RestoreNordsiek()
 
 	if (sc.m_bNordsiekSaved)
 	{
-		// если есть данные для восстановления - просто копируем предыдущий шаг
-		// в текущий
+		// РµСЃР»Рё РµСЃС‚СЊ РґР°РЅРЅС‹Рµ РґР»СЏ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ - РїСЂРѕСЃС‚Рѕ РєРѕРїРёСЂСѓРµРј РїСЂРµРґС‹РґСѓС‰РёР№ С€Р°Рі
+		// РІ С‚РµРєСѓС‰РёР№
 		while (pVectorBegin < pVectorEnd)
 		{
 			double *pN = pVectorBegin->Nordsiek;
@@ -154,9 +154,9 @@ void CDynaModel::RestoreNordsiek()
 	}
 	else
 	{
-		// если данных для восстановления нет
-		// считаем что прозводные нулевые
-		// это слабая надежда, но лучше чем ничего
+		// РµСЃР»Рё РґР°РЅРЅС‹С… РґР»СЏ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ РЅРµС‚
+		// СЃС‡РёС‚Р°РµРј С‡С‚Рѕ РїСЂРѕР·РІРѕРґРЅС‹Рµ РЅСѓР»РµРІС‹Рµ
+		// СЌС‚Рѕ СЃР»Р°Р±Р°СЏ РЅР°РґРµР¶РґР°, РЅРѕ Р»СѓС‡С€Рµ С‡РµРј РЅРёС‡РµРіРѕ
 		while (pVectorBegin < pVectorEnd)
 		{
 			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
@@ -166,9 +166,13 @@ void CDynaModel::RestoreNordsiek()
 			pVectorBegin++;
 		}
 	}
+
+	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+			(*dit)->RestoreStates();
 }
 
-// обновляение Nordsieck после выполнения шага
+// РѕР±РЅРѕРІР»СЏРµРЅРёРµ Nordsieck РїРѕСЃР»Рµ РІС‹РїРѕР»РЅРµРЅРёСЏ С€Р°РіР°
 void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 {
 	struct RightVector *pVectorBegin = pRightVector;
@@ -186,10 +190,10 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 			bSuprressRinging = true;
 	}
 
-	// обновление по [Lsode 2.76]
+	// РѕР±РЅРѕРІР»РµРЅРёРµ РїРѕ [Lsode 2.76]
 	while (pVectorBegin < pVectorEnd)
 	{
-		// выбираем коэффициент метода по типу уравнения EquationType
+		// РІС‹Р±РёСЂР°РµРј РєРѕСЌС„С„РёС†РёРµРЅС‚ РјРµС‚РѕРґР° РїРѕ С‚РёРїСѓ СѓСЂР°РІРЅРµРЅРёСЏ EquationType
 		const double *lm = l[pVectorBegin->EquationType * 2 + sc.q - 1];
 
 		double dError = pVectorBegin->Error;
@@ -197,16 +201,16 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 		pVectorBegin->Nordsiek[1] += dError * lm[1];
 		pVectorBegin->Nordsiek[2] += dError * lm[2];
 
-		// подавление рингинга
+		// РїРѕРґР°РІР»РµРЅРёРµ СЂРёРЅРіРёРЅРіР°
 		if(bSuprressRinging && pVectorBegin->EquationType == DET_DIFFERENTIAL)
 		{
 			pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
 		}
 
-		// сохраняем пред-предыдущее значение переменной состояния
+		// СЃРѕС…СЂР°РЅСЏРµРј РїСЂРµРґ-РїСЂРµРґС‹РґСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ
 		pVectorBegin->Tminus2Value = pVectorBegin->SavedNordsiek[0];
 
-		// и сохраняем текущее значение переменных состояния перед новым шагом
+		// Рё СЃРѕС…СЂР°РЅСЏРµРј С‚РµРєСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅС‹С… СЃРѕСЃС‚РѕСЏРЅРёСЏ РїРµСЂРµРґ РЅРѕРІС‹Рј С€Р°РіРѕРј
 		pVectorBegin->SavedNordsiek[0] = pVectorBegin->Nordsiek[0];
 		pVectorBegin->SavedNordsiek[1] = pVectorBegin->Nordsiek[1];
 		pVectorBegin->SavedNordsiek[2] = pVectorBegin->Nordsiek[2];
@@ -218,13 +222,18 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	sc.m_dOldH = sc.m_dCurrentH;
 	sc.m_bNordsiekSaved = true;
 
-	// даем информацию для обработки разрывов о том, что данный момент
-	// времени пройден
+	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+			(*dit)->StoreStates();
+
+
+	// РґР°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё СЂР°Р·СЂС‹РІРѕРІ Рѕ С‚РѕРј, С‡С‚Рѕ РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚
+	// РІСЂРµРјРµРЅРё РїСЂРѕР№РґРµРЅ
 	m_Discontinuities.PassTime(GetCurrentTime());
 	sc.ResetStepsToFail();
 }
 
-// сохранение копии Nordsieck перед выполнением шага
+// СЃРѕС…СЂР°РЅРµРЅРёРµ РєРѕРїРёРё Nordsieck РїРµСЂРµРґ РІС‹РїРѕР»РЅРµРЅРёРµРј С€Р°РіР°
 void CDynaModel::SaveNordsiek()
 {
 	struct RightVector *pVectorBegin = pRightVector;
@@ -235,10 +244,10 @@ void CDynaModel::SaveNordsiek()
 		double *pN = pVectorBegin->Nordsiek;
 		double *pS = pVectorBegin->SavedNordsiek;
 
-		// сохраняем пред-предыдущее значение переменной состояния
+		// СЃРѕС…СЂР°РЅСЏРµРј РїСЂРµРґ-РїСЂРµРґС‹РґСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ
 		pVectorBegin->Tminus2Value = *pS;
 
-		// запоминаем три элемента, не смотря на текущий порядок
+		// Р·Р°РїРѕРјРёРЅР°РµРј С‚СЂРё СЌР»РµРјРµРЅС‚Р°, РЅРµ СЃРјРѕС‚СЂСЏ РЅР° С‚РµРєСѓС‰РёР№ РїРѕСЂСЏРґРѕРє
 		*pS = *pN; pS++; pN++;
 		*pS = *pN; pS++; pN++;
 		*pS = *pN; pS++; pN++;
@@ -250,14 +259,14 @@ void CDynaModel::SaveNordsiek()
 	sc.m_bNordsiekSaved = true;
 }
 
-// масштабирование Nordsieck на заданный коэффициент изменения шага
+// РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёРµ Nordsieck РЅР° Р·Р°РґР°РЅРЅС‹Р№ РєРѕСЌС„С„РёС†РёРµРЅС‚ РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР°
 void CDynaModel::RescaleNordsiek(double r)
 {
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 	
-	// расчет выполняется путем умножения текущего Nordsieck на диагональную матрицу C[q+1;q+1]
-	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
+	// СЂР°СЃС‡РµС‚ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РїСѓС‚РµРј СѓРјРЅРѕР¶РµРЅРёСЏ С‚РµРєСѓС‰РµРіРѕ Nordsieck РЅР° РґРёР°РіРѕРЅР°Р»СЊРЅСѓСЋ РјР°С‚СЂРёС†Сѓ C[q+1;q+1]
+	// СЃ СЌР»РµРјРµРЅС‚Р°РјРё C[i,i] = r^(i-1) [Lsode 2.64]
 	while (pVectorBegin < pVectorEnd)
 	{
 		double R = 1.0;
@@ -269,16 +278,16 @@ void CDynaModel::RescaleNordsiek(double r)
 		pVectorBegin++;
 	}
 
-	// вызываем функции обработки изменения шага и порядка
-	// пока они блокируют дальнейшее увеличение шага на протяжении
-	// заданного количества шагов
+	// РІС‹Р·С‹РІР°РµРј С„СѓРЅРєС†РёРё РѕР±СЂР°Р±РѕС‚РєРё РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР° Рё РїРѕСЂСЏРґРєР°
+	// РїРѕРєР° РѕРЅРё Р±Р»РѕРєРёСЂСѓСЋС‚ РґР°Р»СЊРЅРµР№С€РµРµ СѓРІРµР»РёС‡РµРЅРёРµ С€Р°РіР° РЅР° РїСЂРѕС‚СЏР¶РµРЅРёРё
+	// Р·Р°РґР°РЅРЅРѕРіРѕ РєРѕР»РёС‡РµСЃС‚РІР° С€Р°РіРѕРІ
 	sc.StepChanged();
 	sc.OrderChanged();
 
-	// рассчитываем коэффициент изменения шага
+	// СЂР°СЃСЃС‡РёС‚С‹РІР°РµРј РєРѕСЌС„С„РёС†РёРµРЅС‚ РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР°
 	double dRefactorRatio = sc.m_dCurrentH / sc.m_dLastRefactorH;
-	// если шаг изменился более в заданное количество раз - взводим флаг рефакторизации Якоби
-	// sc.m_dLastRefactorH обновляется после рефакторизации
+	// РµСЃР»Рё С€Р°Рі РёР·РјРµРЅРёР»СЃСЏ Р±РѕР»РµРµ РІ Р·Р°РґР°РЅРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЂР°Р· - РІР·РІРѕРґРёРј С„Р»Р°Рі СЂРµС„Р°РєС‚РѕСЂРёР·Р°С†РёРё РЇРєРѕР±Рё
+	// sc.m_dLastRefactorH РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ РїРѕСЃР»Рµ СЂРµС„Р°РєС‚РѕСЂРёР·Р°С†РёРё
 	if (dRefactorRatio > m_Parameters.m_dRefactorByHRatio || dRefactorRatio < 1.0 / m_Parameters.m_dRefactorByHRatio)
 		sc.RefactorMatrix(true);
 }
