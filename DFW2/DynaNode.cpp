@@ -35,9 +35,11 @@ CDynaNodeBase::~CDynaNodeBase()
 // и рассчитываем напряжение в декартовых координатах
 void CDynaNodeBase::UpdateVreVim()
 {
-	Vold = V;
 	if (V < DFW2_ATOL_DEFAULT && IsStateOn())
 		V = DFW2_ATOL_DEFAULT;
+
+	Vold = V;
+
 	VreVim = polar(V, Delta);
 }
 
@@ -69,11 +71,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
-	if (GetId() == 1023 && !pDynaModel->EstimateBuild())
-		bRes = true;
+	if (GetId() == 2026 && !pDynaModel->EstimateBuild() && pDynaModel->GetIntegrationStepNumber() == 3403)
+	{
+		pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, _T(""));
+	}
 
 	// для угла относительная точность не имеет смысла
-	pDynaModel->GetRightVector(A(V_DELTA))->Rtol = 0.0;
+	//pDynaModel->GetRightVector(A(V_DELTA))->Rtol = 0.0;
 
 	GetPnrQnr();
 
@@ -160,7 +164,14 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			V = Delta = 0.0;
 		}
 
+		/*
+		if (fabs(dPdDelta) < DFW2_ATOL_DEFAULT && V <= DFW2_ATOL_DEFAULT)
+			dPdDelta *= 10.0;
 
+		if (fabs(dQdV) < DFW2_ATOL_DEFAULT && V <= DFW2_ATOL_DEFAULT)
+			dQdV *= 10.0;
+		*/
+		
 		pDynaModel->SetElement(A(0), A(0), dPdDelta);
 		pDynaModel->SetElement(A(1), A(0), dQdDelta);
 		pDynaModel->SetElement(A(0), A(1), dPdV);
@@ -220,7 +231,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	if (!IsStateOn())
 	{
-		Pe = Qe = 0;
+		Pe = Qe = 0.0;
 		V = Delta = 0.0;
 	}
 

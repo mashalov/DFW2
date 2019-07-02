@@ -568,6 +568,25 @@ void CDynaModel::DumpStateVector()
 	}
 }
 
+
+void CDynaModel::FindMaxB(double& bmax, ptrdiff_t& nMaxIndex)
+{
+	bmax = 0.0;
+	nMaxIndex = 0;
+	for (int r = 0; r < m_nMatrixSize; r++)
+	{
+		_CheckNumber(b[r]);
+		if (bmax < abs(b[r]))
+		{
+			nMaxIndex = r;
+			bmax = abs(b[r]);
+		}
+	}
+}
+
+
+
+
 //									   l0			l1			l2			Cq
 const double CDynaModel::l[4][4] = { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
 									 { 2.0 / 3.0,	1.0,		1.0 /3.0,   4.5 },				//  BDF-2
