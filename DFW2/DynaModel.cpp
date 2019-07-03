@@ -94,7 +94,7 @@ bool CDynaModel::Run()
 	m_Parameters.m_bUseRefactor = true;
 	m_Parameters.m_dAtol = 1E-4;
 	m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
-	m_Parameters.m_bLogToConsole = false;
+	m_Parameters.m_bLogToConsole = true;
 	m_Parameters.m_bLogToFile = true;
 
 	m_Parameters.m_bDisableResultsWriter = false;
@@ -125,7 +125,7 @@ bool CDynaModel::Run()
 
 	if (bRes)
 	{
-		m_Discontinuities.AddEvent(150.0, new CModelActionStop());
+		m_Discontinuities.AddEvent(105.0, new CModelActionStop());
 
 #ifdef SMZU
 

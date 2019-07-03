@@ -13,8 +13,8 @@ void CDynaModel::ReportKLUError()
 		Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszKLUOk);
 		break;
 	case 1:
-		DumpMatrix();
 		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszKLUSingular);
+		DumpMatrix();
 		break;
 	case -2:
 		Log(CDFW2Messages::DFW2LOG_FATAL, CDFW2Messages::m_cszKLUOutOfMemory);
@@ -475,7 +475,7 @@ void CDynaModel::DumpMatrix()
 				_ftprintf_s(fmatrix, _T("Zero Diagonal: %d\n"), it - Diagonals.begin());
 
 
-
+		return;
 		// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
 		// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
 
