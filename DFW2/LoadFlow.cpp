@@ -915,6 +915,8 @@ bool CLoadFlow::Run()
 		pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr,
 		pNodeMaxPnr->Pnr - pNodeMaxPnr->Pnrrastr,
 		pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr);
+
+	fclose(s);
 #endif
 	
 	pNodes->SwitchLRCs(true);
