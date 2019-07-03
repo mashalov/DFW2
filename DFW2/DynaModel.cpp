@@ -517,7 +517,6 @@ bool CDynaModel::NewtonUpdate()
 
 
 	bRes = bRes && NewtonUpdateDevices();
-
 	return bRes;
 }
 
