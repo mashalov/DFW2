@@ -24,8 +24,6 @@ namespace DFW2
 
 		double dVdtOutValue[2], dEqdtOutValue[2], dSdtOutValue[2];
 
-		CPrimitives<4> Prims;
-
 	public:
 
 		enum VARS

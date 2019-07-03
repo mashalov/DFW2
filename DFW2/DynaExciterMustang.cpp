@@ -9,6 +9,7 @@ using namespace DFW2;
 CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
 											 EqLimit(this, &EqOutputValue, V_EQE, &EqInput)
 {
+	m_Primitives.pop_back();
 }
 
 double* CDynaExciterMustang::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -65,7 +66,7 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	//dEqe / dV
 	//pDynaModel->SetElement(A(V_EQE), m_pGenerator->m_pNode->A(CDynaNode::V_V), -ZeroDivGuard(EqeV, Ug0));
 	pDynaModel->SetElement(A(V_EQE), A(ExtVg.Index()), -ZeroDivGuard(EqeV, Ug0));
-	Prims.BuildEquations(pDynaModel);
+	bRes = bRes && CDynaExciterBase::BuildEquations(pDynaModel);
 	return pDynaModel->Status() && bRes;
 }
 
@@ -84,7 +85,7 @@ bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 
 	pDynaModel->SetFunction(A(V_EQSUM), dEqsum);
 	pDynaModel->SetFunction(A(V_EQE), Eqe - EqeV * ZeroDivGuard(V, Ug0));
-	Prims.BuildRightHand(pDynaModel);
+	CDevice::BuildRightHand(pDynaModel);
 	return pDynaModel->Status();
 }
 
@@ -120,7 +121,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 
 bool CDynaExciterMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = Prims.BuildDerivatives(pDynaModel);
+	bool bRes = CDynaExciterBase::BuildDerivatives(pDynaModel);
 	return bRes;
 }
 
@@ -149,7 +150,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDyn
 				pDynaModel->DiscontinuityRequest();
 
 			// and then process disco of lag
-			Status = Prims.ProcessDiscontinuity(pDynaModel);
+			Status = CDynaExciterBase::ProcessDiscontinuity(pDynaModel);
 		}
 		else
 			Status = DFS_FAILED;
@@ -167,7 +168,7 @@ double CDynaExciterMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 	if (IsStateOn())
 	{
 		// pick up states before and after zero crossing check of Eq limiter
-		rH = Prims.CheckZeroCrossing(pDynaModel);
+		rH = CDynaExciterBase::CheckZeroCrossing(pDynaModel);
 		CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateInitial = EqLimit.GetCurrentState();
 		double rHEq = EqLimit.CheckZeroCrossing(pDynaModel);
 		CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateResulting = EqLimit.GetCurrentState();

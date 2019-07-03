@@ -11,7 +11,6 @@ CDynaExciterBase::CDynaExciterBase() : CDevice(),
 	ExtUf.Value(&Uexc);
 	ExtUdec.Value(&Udec);
 	ExtVg.Value(&Ug0);
-	Prims.Add(&ExcLag);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)

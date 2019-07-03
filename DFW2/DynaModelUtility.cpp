@@ -13,7 +13,7 @@ void CDynaModel::ReportKLUError()
 		Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszKLUOk);
 		break;
 	case 1:
-		//DumpMatrix();
+		DumpMatrix();
 		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszKLUSingular);
 		break;
 	case -2:
@@ -116,10 +116,8 @@ bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
 
 struct RightVector* CDynaModel::GetRightVector(ptrdiff_t nRow)
 {
-	struct RightVector *pRv = NULL;
-	if (nRow >= 0 && nRow < m_nMatrixSize)
-		pRv = pRightVector + nRow;
-	return pRv;
+	_ASSERTE(nRow >= 0 && nRow < m_nMatrixSize);
+	return pRightVector + nRow;
 }
 
 
@@ -540,6 +538,54 @@ void CDynaModel::DumpMatrix()
 		fclose(fmatrix);
 	}
 }
+
+void CDynaModel::DumpStateVector()
+{
+	FILE *fdump(nullptr);
+	setlocale(LC_ALL, "ru-ru");
+	if (!_tfopen_s(&fdump, Cex(_T("c:\\tmp\\statevector_%d.csv"), sc.nStepsCount), _T("w+, ccs=UTF-8")))
+	{
+		_ftprintf(fdump, _T("Value;db;Device;N0;N1;N2;Error;WError;Atol;Rtol;EqType;SN0;SN1;SN2;SavError;Tminus2Val;PhysEqType;PrimBlockType;ErrorHits\n"));
+		for (RightVector *pRv = pRightVector; pRv < pRightVector + m_nMatrixSize; pRv++)
+		{
+			_ftprintf(fdump, _T("%g;"), *pRv->pValue);
+			_ftprintf(fdump, _T("%g;"), fabs(pRv->b));
+			_ftprintf(fdump, _T("%s - %s;"), pRv->pDevice->GetVerbalName(), pRv->pDevice->VariableNameByPtr(pRv->pValue));
+			_ftprintf(fdump, _T("%g;%g;%g;"), pRv->Nordsiek[0], pRv->Nordsiek[1], pRv->Nordsiek[2]);
+			_ftprintf(fdump, _T("%g;"), fabs(pRv->Error));
+			_ftprintf(fdump, _T("%g;"), fabs(pRv->GetWeightedError(pRv->b, *pRv->pValue)));
+			_ftprintf(fdump, _T("%g;%g;"), pRv->Atol, pRv->Rtol);
+			_ftprintf(fdump, _T("%d;"), pRv->EquationType);
+			_ftprintf(fdump, _T("%g;%g;%g;"), pRv->SavedNordsiek[0], pRv->SavedNordsiek[1], pRv->SavedNordsiek[2]);
+			_ftprintf(fdump, _T("%g;"), pRv->SavedError);
+			_ftprintf(fdump, _T("%g;"), pRv->Tminus2Value);
+			_ftprintf(fdump, _T("%d;"), pRv->PhysicalEquationType);
+			_ftprintf(fdump, _T("%d;"), pRv->PrimitiveBlock);
+			_ftprintf(fdump, _T("%d;"), pRv->nErrorHits);
+			_ftprintf(fdump, _T("\n"));
+		}
+		fclose(fdump);
+	}
+}
+
+
+void CDynaModel::FindMaxB(double& bmax, ptrdiff_t& nMaxIndex)
+{
+	bmax = 0.0;
+	nMaxIndex = 0;
+	for (int r = 0; r < m_nMatrixSize; r++)
+	{
+		_CheckNumber(b[r]);
+		if (bmax < abs(b[r]))
+		{
+			nMaxIndex = r;
+			bmax = abs(b[r]);
+		}
+	}
+}
+
+
+
 
 //									   l0			l1			l2			Cq
 const double CDynaModel::l[4][4] = { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1

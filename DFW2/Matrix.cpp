@@ -532,7 +532,7 @@ bool CDynaModel::SolveLinearSystem()
 											if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
 											{
 												// отмечаем его как уравнение РДЗ, ставим точность РДЗ
-												Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Точность %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
+												//Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Точность %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
 												pMarkEq->PrimitiveBlock = PBT_DERLAG;
 												pMarkEq->Atol = pVectorBegin->Atol;
 												pMarkEq->Rtol = pVectorBegin->Rtol;
@@ -581,6 +581,12 @@ bool CDynaModel::SolveLinearSystem()
 				{
 					if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
 					{
+						KLU_rcond(Symbolic, Numeric, &Common);
+						if (Common.rcond > sc.dMaxConditionNumber)
+						{
+							sc.dMaxConditionNumber = Common.rcond;
+							sc.dMaxConditionNumberTime = sc.t;
+						}
 						bRes = true;
 					}
 
@@ -595,7 +601,11 @@ bool CDynaModel::SolveLinearSystem()
 		if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
 		{
 			KLU_rcond(Symbolic, Numeric, &Common);
-			//memcpy(Solution, b, sizeof(double) * m_nMatrixSize);
+			if (Common.rcond > sc.dMaxConditionNumber)
+			{
+				sc.dMaxConditionNumber = Common.rcond;
+				sc.dMaxConditionNumberTime = sc.t;
+			}
 			bRes = true;
 		}
 	}

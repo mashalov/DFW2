@@ -110,6 +110,8 @@ namespace DFW2
 		static const _TCHAR* m_cszLFNodeVTooHigh;
 		static const _TCHAR* m_cszLFNodeVTooLow;
 		static const _TCHAR* m_cszLFBranchAngleExceeds90;
+		static const _TCHAR* m_cszWrongGeneratorsNumberFixed;
+		static const _TCHAR* m_cszFailureAtMinimalStep;
 
 	};
 }

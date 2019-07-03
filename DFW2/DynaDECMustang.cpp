@@ -19,12 +19,6 @@ CDynaDECMustang::CDynaDECMustang() : CDevice(),
 									 EnforceOffOut(V_ENFOFFRELAY,	EnforceOffValue),
 									 DeforceOffOut(V_DEFOFFRELAY,	DeforceOffValue)
 {
-	Prims.Add(&EnforceOn);
-	Prims.Add(&DeforceOn);
-	Prims.Add(&EnforceOff);
-	Prims.Add(&DeforceOff);
-	Prims.Add(&EnfTrigger);
-	Prims.Add(&DefTrigger);
 }
 
 double* CDynaDECMustang::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -86,14 +80,15 @@ bool CDynaDECMustang::BuildEquations(CDynaModel* pDynaModel)
 	if (!pDynaModel->Status())
 		return pDynaModel->Status();
 	pDynaModel->SetElement(A(V_DEC), A(V_DEC), 1.0);
-	bool bRes = Prims.BuildEquations(pDynaModel);
+	// строим уравнения для примитивов
+	bool bRes = CDevice::BuildEquations(pDynaModel);
 	return pDynaModel->Status() && bRes;
 }
 
 
 bool CDynaDECMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
-	bool bRes = Prims.BuildRightHand(pDynaModel);
+	bool bRes = CDevice::BuildRightHand(pDynaModel);
 	pDynaModel->SetFunction(A(V_DEC), 0.0);
 	return pDynaModel->Status();
 }
@@ -101,7 +96,7 @@ bool CDynaDECMustang::BuildRightHand(CDynaModel* pDynaModel)
 
 bool CDynaDECMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = Prims.BuildDerivatives(pDynaModel);
+	bool bRes = CDevice::BuildDerivatives(pDynaModel);
 	return bRes;
 }
 
@@ -109,7 +104,7 @@ double CDynaDECMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 	if (IsStateOn())
-		rH = Prims.CheckZeroCrossing(pDynaModel);
+		rH = CDevice::CheckZeroCrossing(pDynaModel);
 	return rH;
 }
 
@@ -123,7 +118,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 	{
 		// wait for exciter to process disco
 
-		Status = Prims.ProcessDiscontinuity(pDynaModel);
+		Status = CDevice::ProcessDiscontinuity(pDynaModel);
 		pExciter->SetLagTimeConstantRatio(1.0);
 		double dOldDec = Udec;
 

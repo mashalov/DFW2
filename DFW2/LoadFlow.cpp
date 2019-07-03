@@ -233,7 +233,9 @@ bool CLoadFlow::Start()
 	CleanUp();
 	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
 	if (!pNodes)
-		return bRes;
+		return false;
+	if (!UpdatePQFromGenerators())
+		return false;
 
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
@@ -249,7 +251,7 @@ bool CLoadFlow::Start()
 		{
 			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			{
-				if (pNode->LFQmax >= pNode->LFQmin /*> m_Parameters.m_Imb */ && fabs(pNode->LFQmax) > m_Parameters.m_Imb && pNode->LFVref > 0.0)
+				if (pNode->LFQmax >= pNode->LFQmin && (fabs(pNode->LFQmax) > m_Parameters.m_Imb || fabs(pNode->LFQmin) > m_Parameters.m_Imb) && pNode->LFVref > 0.0)
 				{
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 					if (m_Parameters.m_bFlat)
@@ -907,11 +909,17 @@ bool CLoadFlow::Run()
 		//ATLTRACE("\n %20f %20f %20f %20f %20f %20f", pNode->V, pNode->Delta * 180 / M_PI, pNode->Pg, pNode->Qg, pNode->Pnr, pNode->Qnr);
 		fprintf(s, "%d;%20g;%20g\n", pNode->GetId(), pNode->V, pNode->Delta * 180 / M_PI);
 	}
-
-	fclose(s);
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Rastr differences V %g Delta %g Qg %g Pnr %g Qnr %g"),
+		pNodeMaxV->V - pNodeMaxV->Vrastr,
+		pNodeMaxDelta->Delta - pNodeMaxDelta->Deltarastr,
+		pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr,
+		pNodeMaxPnr->Pnr - pNodeMaxPnr->Pnrrastr,
+		pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr);
 #endif
 	
 	pNodes->SwitchLRCs(true);
+	UpdateQToGenerators();
+	DumpNodes();
   	return bRes;
 }
 
@@ -971,4 +979,128 @@ bool CLoadFlow::CheckLF()
 		}
 	}
 	return bRes;
+}
+
+
+bool CLoadFlow::UpdatePQFromGenerators()
+{
+	bool bRes = true;
+	
+	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+
+		if (!pNode->IsStateOn())
+			continue;
+
+		CLinkPtrCount *pGenLink = pNode->GetLink(1);
+		CDevice **ppGen = NULL;
+		if (pGenLink->m_nCount)
+		{
+			pNode->Pg = pNode->Qg = 0.0;
+			pNode->LFQmin = pNode->LFQmax = 0.0;
+			pNode->ResetVisited();
+			while (pGenLink->In(ppGen))
+			{
+				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+				if (pGen->IsStateOn())
+				{
+					if (pGen->Kgen <= 0)
+					{
+						pGen->Kgen = 1.0;
+						pGen->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszWrongGeneratorsNumberFixed, pGen->GetVerbalName(), pGen->Kgen));
+					}
+					pNode->Pg += pGen->P;
+					pNode->Qg += pGen->Q;
+					pNode->LFQmin += pGen->LFQmin * pGen->Kgen;
+					pNode->LFQmax += pGen->LFQmax * pGen->Kgen;
+				}
+			}
+		}
+	}
+	return bRes;
+}
+
+bool CLoadFlow::UpdateQToGenerators()
+{
+	bool bRes = true;
+	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+
+		if (!pNode->IsStateOn())
+			continue;
+
+		CLinkPtrCount *pGenLink = pNode->GetLink(1);
+		CDevice **ppGen = NULL;
+		if (pGenLink->m_nCount)
+		{
+			double Qrange = pNode->LFQmax - pNode->LFQmin;
+			pNode->ResetVisited();
+			while (pGenLink->In(ppGen))
+			{
+				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+				pGen->Q = 0.0;
+				if (pGen->IsStateOn())
+					if (Qrange > 0.0)
+					{
+						double OldQ = pGen->Q;
+						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
+						_CheckNumber(pGen->Q);
+	//					_ASSERTE(fabs(pGen->Q - OldQ) < 0.00001);
+					}
+					else
+						pGen->Q = 0.0;
+			}
+		}
+	}
+	return bRes;
+}
+
+void CLoadFlow::DumpNodes()
+{
+	FILE *fdump(nullptr);
+	setlocale(LC_ALL, "ru-ru");
+	if (!_tfopen_s(&fdump, _T("c:\\tmp\\nodes.csv"), _T("wb+")))
+	{
+		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
+		for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+#ifdef _DEBUG
+			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g\n"),
+				pNode->GetId(),
+				pNode->V,
+				pNode->Delta / M_PI * 180.0,
+				pNode->Pn,
+				pNode->Qn,
+				pNode->Pnr,
+				pNode->Qnr,
+				pNode->Pg,
+				pNode->Qg,
+				pNode->m_eLFNodeType,
+				pNode->LFQmin,
+				pNode->LFQmax,
+				pNode->LFVref,
+				pNode->Vrastr,
+				pNode->Deltarastr);
+#else
+			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
+				pNode->GetId(),
+				pNode->V,
+				pNode->Delta / M_PI * 180.0,
+				pNode->Pn,
+				pNode->Qn,
+				pNode->Pnr,
+				pNode->Qnr,
+				pNode->Pg,
+				pNode->Qg,
+				pNode->m_eLFNodeType,
+				pNode->LFQmin,
+				pNode->LFQmax,
+				pNode->LFVref);
+#endif
+		}
+		fclose(fdump);
+	}
 }

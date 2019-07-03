@@ -61,34 +61,42 @@ bool CLimiterConst::Init(CDynaModel *pDynaModel)
 	return bRes;
 }
 
+// контроль зерокроссинга для состояния вне ограничения
 double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 {
 
+	/*
 	if (m_pDevice->GetId() == -1)
 		m_pDevice->GetId();
 
 	if (m_pDevice->GetId() == -1 && pDynaModel->GetCurrentTime() > 4.1)
 		m_pDevice->GetId();
-
+	*/
 
 	double rH = 1.0;
 	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-
 	double dInput = m_Input->Value();
+	// контролируем входной сигнал по разности ограничений с гистерезисом
+
 	double CheckMax = dInput - m_dMaxH;
 	double CheckMin = m_dMinH - dInput;
 
+	// по умолчанию выход = входу, если нет ограничений такое значение и формируется на выходе
 	*m_Output = dInput;
 
 	if (CheckMax >= 0.0)
 	{
+		// если вышли за максимум
 		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dInput));
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
+			// если точность зерокроссинга достигнута - изменяем состояние
 			SetCurrentState(pDynaModel, LS_MAX);
 		}
 		else
 		{
+			// если точность зерокроссинга не достаточна - ищем точку по расстонияю до 
+			// гистерезиса максимума
 			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMaxH);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 			{

@@ -5,7 +5,7 @@
 using namespace DFW2;
 
 CAbs::CAbs(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : 
-									CDynaPrimitive(pDevice,pOutput,nOutputIndex,Input) 
+									CDynaPrimitiveState(pDevice,pOutput,nOutputIndex,Input) 
 									{}
 
 bool CAbs::BuildEquations(CDynaModel *pDynaModel)
@@ -59,12 +59,16 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	return DFS_OK;
 }
 
+// проверяем разрыв модуля
+
 double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 
+	// если устройство с этим примитивом включено
 	if (m_pDevice->IsStateOn())
 	{
+		// получаем Нордиск входной переменной
 		RightVector *pRightVector = pDynaModel->GetRightVector(A(m_Input->Index()));
 		double dInput = m_Input->Value();
 
@@ -72,28 +76,42 @@ double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 		if (m_bPositive)
 		{
+			// если было положительное значение переменной
+			// и стало отрицательное - отмечаем готовность к изменению состояния
 			if (dInput < 0)
 				bReadyToChangeState = true;
 		}
 		else
 		{
+			// если было отрицательное значение переменной
+			// и стало положительное- отмечаем готовность к изменению состояния
 			if (dInput > 0)
 				bReadyToChangeState = true;
 		}
 
 		if (bReadyToChangeState)
 		{
+			// если есть готовность к изменению состояния (знак входной переменной изменился)
+			// рассчитываем погрешность входной переменной
+			// оцениванием расстояние от нуля и взвешиваем по самой же переменной,
+			// поэтому параметры на входе в GetWeightedError одинаковые
 			double derr = fabs(pRightVector->GetWeightedError(dInput, dInput));
+			// если погрешность меньше чем заданный порог для зерокроссинга
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
+				// изменяем состояние и запрашиваем обработку разрыва
 				m_bPositive = !m_bPositive;
 				pDynaModel->DiscontinuityRequest();
 			}
 			else
 			{
+				// если погрешность выше, чем заданная для зерокросиинга
+				// ищем долю шага для достижения нуля
 				rH = CDynaPrimitiveLimited::FindZeroCrossingToConst(pDynaModel, pRightVector, 0.0);
 				if (pDynaModel->ZeroCrossingStepReached(rH))
 				{
+					// здесь и выше: состояние изменяем только если нашли время зерокроссинга 
+					// с заданной погрешностью
 					m_bPositive = !m_bPositive;
 					pDynaModel->DiscontinuityRequest();
 				}
