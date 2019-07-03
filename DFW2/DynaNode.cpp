@@ -80,77 +80,12 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON && IsStateOn());
 
-	//_ASSERTE(!bInMetallicSC);
-		
-	//double Pe = Pnr - Pg - V * V * Yii.real();			// небалансы по P и Q
-	//double Qe = Qnr - Qg + V * V * Yii.imag();
-
-	/*
-	double Pe = GetSelfImbP();
-	double Qe = GetSelfImbQ(); 
-	double dPdDelta = 0.0;
-	double dPdV = GetSelfdPdV(); 
-	double dQdDelta = 0.0;
-	double dQdV = GetSelfdQdV(); 
-
-	CLinkPtrCount *pBranchLink = GetLink(0);
-	CDevice **ppBranch = nullptr;
-
-	ResetVisited();
-	while (pBranchLink->In(ppBranch))
-	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-		// определяем узел на противоположном конце инцидентной ветви
-		CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
-		cplx mult = conj(VreVim);
-		// определяем взаимную проводимость со смежным узлом
-		cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
-
-		mult *= pOppNode->VreVim ** pYkm;
-
-		Pe -= mult.real();
-		Qe += mult.imag();
-
-		// diagonals 2
-
-		dPdDelta -=  mult.imag();
-		dPdV	 += -ZeroDivGuard(mult.real(), V);
-		dQdDelta += -mult.real();
-		dQdV     +=  ZeroDivGuard(mult.imag(), V);
-			
-
-		bool bDup = CheckAddVisited(pOppNode) >= 0;
-		// dP/dDelta
-		pDynaModel->SetElement(A(V_DELTA), pOppNode->A(V_DELTA), mult.imag(), bDup);
-		// dP/dV
-		pDynaModel->SetElement(A(V_DELTA), pOppNode->A(V_V), -ZeroDivGuard(mult.real(), pOppNode->V), bDup);
-		// dQ/dDelta
-		pDynaModel->SetElement(A(V_V), pOppNode->A(V_DELTA), mult.real(), bDup);
-		// dQ/dV
-		pDynaModel->SetElement(A(V_V), pOppNode->A(V_V), ZeroDivGuard(mult.imag(), pOppNode->V), bDup);
-	}
-
-	if (!IsStateOn() || bInMetallicSC)
-	{
-		dQdV = dPdDelta = 1.0;
-		dPdV = dQdDelta = 0.0;
-		Pe = Qe = 0;
-		V = Delta = 0.0;
-	}
-
-	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), dPdDelta);
-	pDynaModel->SetElement(A(V_V), A(V_DELTA), dQdDelta);
-	pDynaModel->SetElement(A(V_DELTA), A(V_V), dPdV);
-	pDynaModel->SetElement(A(V_V), A(V_V), dQdV);
-	*/
-
-
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
-	double V2 = Vre2 + Vim2;
-	double V2sqInv = V < DFW2_EPSILON ? 0.0 : 1.0 / sqrt(V2);
-	double VreV2 = V < DFW2_EPSILON ? 0.0 : Vre / V2;
-	double VimV2 = V < DFW2_EPSILON ? 0.0 : Vim / V2;
+	double V2 = Vre2 + Vim2 + DFW2_ATOL_DEFAULT;
+	double V2sqInv = 1.0 / sqrt(V2);
+	double VreV2 = Vre / V2;
+	double VimV2 = Vim / V2;
 
 	double Igre(0.0), Igim(0.0);
 	
@@ -192,7 +127,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double Qgsum =  Qnr - Qg;
 
 	double VreVim2 = 2.0 * Vre * Vim;
-	double V4 = V < DFW2_EPSILON ? 0.0 : 1.0 / (V2 * V2);
+	double V4 = 1.0 / (V2 * V2);
 
 	double PgVre2 = Pgsum * Vre2;
 	double PgVim2 = Pgsum * Vim2;
@@ -201,7 +136,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	double dIredVre = -Yii.real();
 	double dIredVim =  Yii.imag();
-	double dIimdVre = -Yii.imag() ;
+	double dIimdVre = -Yii.imag();
 	double dIimdVim = -Yii.real();
 	
 	if (!IsStateOn())
@@ -262,38 +197,8 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 	}
 
-	/*
-	bool bInMetallicSC = m_bInMetallicSC || V < DFW2_EPSILON;
-
-	double Pe = Pnr - Pg - V * V * Yii.real();
-	double Qe = Qnr - Qg + V * V * Yii.imag();
-
-	double dPdDelta = 0.0;
-
-	ResetVisited();
-	while (pBranchLink->In(ppBranch))
-	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-		CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
-		cplx mult = conj(VreVim);
-		cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
-		mult *= pOppNode->VreVim ** pYkm;
-		Pe -= mult.real();
-		Qe += mult.imag();
-	}
-
-	if (!IsStateOn() || bInMetallicSC)
-	{
-		Pe = Qe = 0;
-		V = Delta = 0.0;
-	}
-
-	pDynaModel->SetFunction(A(V_DELTA), Pe);
-	pDynaModel->SetFunction(A(V_V), Qe);
-	*/
-
-	double V2 = Vre * Vre + Vim * Vim;
-	double V2inv = V < DFW2_EPSILON ? 0.0 : 1.0 / V2;
+	double V2 = Vre * Vre + Vim * Vim + DFW2_ATOL_DEFAULT;
+	double V2inv = 1.0 / V2;
 	
 	if (IsStateOn())
 	{
@@ -324,6 +229,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	pDynaModel->SetFunction(A(V_IM), Iim);
 
 	double dV = V - sqrt(V2);
+
 	double angle = atan2(Vim, Vre);
 	//double newDelta = fmod(angle - Delta + M_PI, 2 * M_PI) - M_PI + Delta;
 	//double newDelta = angle + static_cast<double>(static_cast<int>(Delta / (2 * M_PI)) * 2 * M_PI);
@@ -365,14 +271,9 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
 	// only update vicinity in case node has LRC ( due to slow complex::abs() )
-	//if (m_pLRC)
-	//	dLRCVicinity = 30.0 * fabs(abs(VreVim) - V) / Unom;
 	if (m_pLRC)
 		dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
-
-	dLRCVicinity = 0.0;
 	Vold = V;
-
 	return bRes;
 }
 
@@ -779,8 +680,8 @@ bool CDynaNodeContainer::LULF()
 	ptrdiff_t *pAi = Ai;
 
 	FILE *fnode(NULL), *fgen(NULL);
-	_tfopen_s(&fnode, _T("c:\\tmp\\nodes.csv"), _T("w+"));
-	_tfopen_s(&fgen, _T("c:\\tmp\\gens.csv"), _T("w+"));
+	_tfopen_s(&fnode, _T("c:\\tmp\\nodes.csv"), _T("w+, ccs=UTF-8"));
+	_tfopen_s(&fgen, _T("c:\\tmp\\gens.csv"), _T("w+, ccs=UTF-8"));
 	_ftprintf(fnode, _T(";"));
 
 	CalcAdmittances(false);
@@ -1021,8 +922,8 @@ ptrdiff_t refactorOK = 1;
 				
 				// считаем изменение напряжения узла между итерациями и находим
 				// самый изменяющийся узел
-
-				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
+				if(pNode->IsStateOn())
+					m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
 			}
 
 			DumpIterationControl();

@@ -136,6 +136,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
 	spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
+	//spRastr->Load(RG_REPL, L"..\\tests\\oos", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test9_sc", ""); 
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\test9_qmin.rst", "");

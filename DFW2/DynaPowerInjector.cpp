@@ -4,8 +4,7 @@
 #include "DynaModel.h"
 using namespace DFW2;
 
-CDynaPowerInjector::CDynaPowerInjector() : CDevice(),
-										   Kgen(1)
+CDynaPowerInjector::CDynaPowerInjector() : CDevice()
 {
 
 }
@@ -52,6 +51,8 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pD
 {
 	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(V, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszV, DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(DeltaV, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszDelta, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vre, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszVre, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vim, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszVim, DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Sv, GetSingleLink(DEVTYPE_NODE), pDynaModel->GetDampingName(), DEVTYPE_NODE));
 	return eRes;
 }
