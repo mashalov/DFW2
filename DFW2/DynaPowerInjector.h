@@ -33,6 +33,8 @@ namespace DFW2
 		double Iim;
 
 		double Kgen;
+		double LFQmin;
+		double LFQmax;
 
 		double NodeId;
 

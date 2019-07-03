@@ -11,6 +11,13 @@ namespace DFW2
 	class CDevice;
 	class CDynaModel;
 	class PrimitiveVariableExternal;
+	class CDynaPrimitive;
+	class CDynaPrimitiveState;
+
+	typedef list<CDynaPrimitiveState*> STATEPRIMITIVESLIST;
+	typedef STATEPRIMITIVESLIST::iterator STATEPRIMITIVEITERATOR;
+	typedef vector<CDynaPrimitive*> PRIMITIVESVEC;
+	typedef PRIMITIVESVEC::iterator PRIMITIVEITERATOR;
 
 	// класс для хранения связей устройства
 	// с помощью него можно обходить связанные с данным устройства
@@ -118,6 +125,7 @@ namespace DFW2
 		double *pValue;													// значение переменной состояния
 		CDevice *pDevice;												// устройство, в котором эта переменная
 		double Nordsiek[3];												// вектор Nordsieck по переменной до 2 порядка
+		double b;														// ошибка на итерации Ньютона
 		double Error;													// ошибка корректора
 		double Atol;													// абсолютная и относительная погрешности
 		double Rtol;													// задаются индивидуально для каждой переменной
@@ -183,6 +191,8 @@ namespace DFW2
 		ptrdiff_t m_nMatrixRow;												// строка в матрице с которой начинаются уравнения устройства
 		eDEVICESTATE m_State;												// состояние устройства
 		eDEVICESTATECAUSE m_StateCause;										// причина изменения состояния устройства
+		STATEPRIMITIVESLIST m_StatePrimitives;
+		PRIMITIVESVEC m_Primitives;
 		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 
@@ -272,7 +282,10 @@ namespace DFW2
 		eDEVICESTATECAUSE GetStateCause() { return m_StateCause; }
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 		const _TCHAR* VariableNameByPtr(double *pVariable);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) { return 1.0; }
+		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
+
+		virtual void StoreStates();
+		virtual void RestoreStates();
 
 
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2);
@@ -298,6 +311,9 @@ namespace DFW2
 			// если делитель - ноль, деление не выполняем
 			return (fabs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
 		}
+
+		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);
+		void RegisterPrimitive(CDynaPrimitive *pPrimitive);
 
 
 #ifdef _DEBUG

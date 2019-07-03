@@ -184,8 +184,11 @@ namespace DFW2
 			ptrdiff_t nNewtonIterationsCount;
 			ptrdiff_t nFactorizationsCount;
 			ptrdiff_t nAnalyzingsCount;
+			double dMaxConditionNumber;
+			double dMaxConditionNumberTime;
 			OrderStatistics OrderStatistics[2];
 			ptrdiff_t nDiscontinuityNewtonFailures;
+			ptrdiff_t nMinimumStepFailures;
 			double m_dCurrentH;
 			double m_dOldH;
 			double m_dStoredH;
@@ -235,6 +238,9 @@ namespace DFW2
 				nFactorizationsCount = 0;
 				nAnalyzingsCount = 0;
 				nDiscontinuityNewtonFailures = 0;
+				nMinimumStepFailures = 0;
+				dMaxConditionNumber = 0;
+				dMaxConditionNumberTime = 0;
 				m_ClockStart = chrono::high_resolution_clock::now();
 			}
 
@@ -343,6 +349,7 @@ namespace DFW2
 			bool m_bAllowRingingSuppression;
 			bool m_bUseRefactor;
 			bool m_bDisableResultsWriter;
+			ptrdiff_t m_nMinimumStepFailures;
 			Parameters()
 			{
 				eFreqDampingType = APDT_ISLAND;
@@ -362,6 +369,7 @@ namespace DFW2
 				m_bAllowRingingSuppression = false;
 				m_bUseRefactor = false;
 				m_bDisableResultsWriter = false;
+				m_nMinimumStepFailures = 1;
 			}
 		} 
 			m_Parameters;
@@ -460,13 +468,15 @@ namespace DFW2
 
 
 		void GoodStep(double rSame);
-		void BadStep();
-		void NewtonFailed();
+		bool BadStep();
+		bool NewtonFailed();
 		void RepeatZeroCrossing();
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
 		void DumpMatrix();
+		void DumpStateVector();
+		void FindMaxB(double& bmax, ptrdiff_t& nMaxIndex);
 
 
 		FILE *fResult, *m_pLogFile;
@@ -564,7 +574,6 @@ namespace DFW2
 		{
 			return m_bEstimateBuild;
 		}
-
 		// возвращает тип метода дл€ уравнени€
 		// используетс€ дл€ управлени€ методом интегрировани€ дифференциальных переменных
 		// алгебраические уравнени€ всегда интегрируютс€ BDF. ƒифференциальные - ADAMS или BDF
@@ -604,6 +613,19 @@ namespace DFW2
 		{
 			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? FLT_MAX : 100.0 * m_Parameters.m_dAtol;
 		}
+
+		// “екущий номер итерации Ќьютона
+		inline ptrdiff_t GetNewtonIterationNumber()
+		{
+			return sc.nNewtonIteration;
+		}
+
+		// “екущее количество шагов интегрировани€
+		inline ptrdiff_t GetIntegrationStepNumber()
+		{
+			return sc.nStepsCount;
+		}
+
 		// возвращает текущее врем€ интегрировани€
 		inline double GetCurrentTime()
 		{

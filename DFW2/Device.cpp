@@ -400,18 +400,25 @@ void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 bool CDevice::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
+	for (auto& it : m_Primitives)
+		bRes = bRes && it->BuildEquations(pDynaModel);
 	return bRes;
 }
 
 bool CDevice::BuildRightHand(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
+	for (auto& it : m_Primitives)
+		bRes = bRes && it->BuildRightHand(pDynaModel);
 	return bRes;
+
 }
 
 bool CDevice::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
+	for (auto& it : m_Primitives)
+		bRes = bRes && it->BuildDerivatives(pDynaModel);
 	return bRes;
 }
 
@@ -556,7 +563,21 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckProcessDiscontinuity(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDevice::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	return DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+
+	for (auto& it : m_Primitives)
+	{
+		switch (it->ProcessDiscontinuity(pDynaModel))
+		{
+		case DFS_FAILED:
+			Status = DFS_FAILED;
+			break;
+		case DFS_NOTREADY:
+			Status = DFS_NOTREADY;
+			break;
+		}
+	}
+	return Status;
 }
 
 eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2)
@@ -870,6 +891,44 @@ eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckM
 	}
 
 	return Status;
+}
+
+
+double CDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
+{
+	bool bRes = true;
+	double rH = 1.0;
+	for (auto& it : m_Primitives)
+	{
+		double rHcurrent = it->CheckZeroCrossing(pDynaModel);
+		if (rHcurrent < rH)
+			rH = rHcurrent;
+	}
+	return rH;
+}
+
+
+
+void CDevice::RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive)
+{
+	m_StatePrimitives.push_back(pPrimitive);
+}
+
+void CDevice::RegisterPrimitive(CDynaPrimitive *pPrimitive)
+{
+	m_Primitives.push_back(pPrimitive);
+}
+
+void CDevice::StoreStates()
+{
+	for (auto& it : m_StatePrimitives)
+		it->StoreState();
+}
+
+void CDevice::RestoreStates()
+{
+	for (auto& it : m_StatePrimitives)
+		it->RestoreState();
 }
 
 #ifdef _DEBUG

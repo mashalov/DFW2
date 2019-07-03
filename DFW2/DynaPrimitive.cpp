@@ -17,6 +17,12 @@ bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 	return bRes;
 }
 
+CDynaPrimitiveState::CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input)
+{
+	pDevice->RegisterStatePrimitive(this);
+}
+
+
 bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 {
 	bool bRes = CDynaPrimitive::Init(pDynaModel);
@@ -46,6 +52,7 @@ double CDynaPrimitive::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return 1.0;
 }
 
+// определение доли шага зерокроссинга для примитива с минимальным и максимальным ограничениями
 
 double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
@@ -64,9 +71,17 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 		break;
 	}
 
+	// если состояние изменилось, запрашиваем обработку разрыва
 	if (oldCurrentState != eCurrentState)
 	{
-		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%g Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), pDynaModel->GetCurrentTime(), GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_dMin, m_dMax, oldCurrentState, eCurrentState);
+		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), 
+			pDynaModel->GetCurrentTime(), 
+			pDynaModel->GetIntegrationStepNumber(),
+			GetVerbalName(), 
+			m_pDevice->GetVerbalName(),
+			*m_Output, 
+			m_dMin, m_dMax, 
+			oldCurrentState, eCurrentState);
 		pDynaModel->DiscontinuityRequest();
 	}
 
@@ -225,6 +240,5 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 
 	return rH;
 }
-
 
 const ptrdiff_t PrimitiveVariableBase::nIndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();

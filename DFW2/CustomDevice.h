@@ -5,15 +5,10 @@ using namespace std;
 
 namespace DFW2
 {
-	typedef vector<CDynaPrimitive*> PRIMITIVEBLOCKS;
-	typedef PRIMITIVEBLOCKS::iterator PRIMITIVEBLOCKITR;
-
 	class CCustomDevice : public CDevice
 	{
 	protected:
-		PRIMITIVEBLOCKS		m_Primitives;
 		PrimitiveVariable  *m_pPrimitiveVars;
-
 		PrimitiveVariableExternal *m_pPrimitiveExtVars;
 
 		double *m_pVars;

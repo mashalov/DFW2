@@ -368,7 +368,7 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 	//if (m_pLRC)
 	//	dLRCVicinity = 30.0 * fabs(abs(VreVim) - V) / Unom;
 	if (m_pLRC)
-		dLRCVicinity = 30.0 * fabs(Vold - V) / Unom;
+		dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
 
 	dLRCVicinity = 0.0;
 	Vold = V;

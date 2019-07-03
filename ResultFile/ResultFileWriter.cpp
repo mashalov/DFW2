@@ -347,6 +347,7 @@ CResultFileWriter::CResultFileWriter()
 	m_nBufferGroup = 100;
 	m_nPointsCount = 0;
 	m_hThread = NULL;
+	m_hRunningEvent = NULL;
 	m_hRunEvent = NULL;
 	m_hDataMutex = NULL;
 	m_bThreadRun = true;
@@ -364,6 +365,7 @@ void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
 CResultFileWriter::~CResultFileWriter()
 {
 	CloseFile();
+	_tcprintf(_T("\n%d"), m_nPointsCount);
 }
 
 // завершает и закрывает поток записи
@@ -424,6 +426,12 @@ void CResultFileWriter::CloseFile()
 		m_hRunEvent = NULL;
 	}
 
+	if (m_hRunningEvent)
+	{
+		CloseHandle(m_hRunningEvent);
+		m_hRunningEvent = NULL;
+	}
+
 	if (m_hDataMutex)
 	{
 		CloseHandle(m_hDataMutex);
@@ -445,8 +453,11 @@ void CResultFileWriter::CreateResultFile(const _TCHAR *cszFilePath)
 		WriteLEB(DFW2_RESULTFILE_VERSION);
 
 		// создаем объекты синхронизации для управления потоком записи
-		m_hRunEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+		m_hRunEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
 		if (m_hRunEvent == NULL)
+			throw CFileWriteException(m_pFile);
+		m_hRunningEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		if (m_hRunningEvent == NULL)
 			throw CFileWriteException(m_pFile);
 		m_hDataMutex = CreateMutex(NULL, FALSE, NULL);
 		if (m_hDataMutex == NULL)
@@ -511,19 +522,26 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 					pEncoder->m_dValue = *pEncoder->m_pVariable;
 					pEncoder++;
 				}
+
 				m_dTimeToWrite = dTime;
 				m_dStepToWrite = dStep;
 			}
 			__finally
 			{
 				// по завершению копирования результатов освобождаем данные
+				// и запускаем поток записи
+				//WriteResultsThreaded();
+
 				if (!ReleaseMutex(m_hDataMutex))
 					throw CFileWriteException(m_pFile);
-				// и запускаем поток записи
 				if (!SetEvent(m_hRunEvent))
+					throw CFileWriteException(m_pFile);
+				if(WaitForSingleObject(m_hRunningEvent, INFINITE) != WAIT_OBJECT_0)
 					throw CFileWriteException(m_pFile);
 			}
 		}
+		else
+			throw CFileWriteException(m_pFile);
 	}
 	else
 		throw CFileWriteException(m_pFile);
@@ -533,8 +551,12 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 bool CResultFileWriter::WriteResultsThreaded()
 {
 	bool bRes = false;
+
 	// ожидаем и захватываем мьютекс доступа к данным (пока не записан предыдущий блок)
 	DWORD dwWaitRes = WaitForSingleObject(m_hDataMutex, INFINITE);
+
+	if (!SetEvent(m_hRunningEvent))
+		return bRes;
 
 	if (dwWaitRes == WAIT_OBJECT_0)
 	{
@@ -552,8 +574,8 @@ bool CResultFileWriter::WriteResultsThreaded()
 				// WriteChannel сам решает - продолжать писать в буфер или сбрасывать на диск, если 
 				// буфер закончился
 				WriteChannel(pEncoder - m_pEncoders, pEncoder->m_dValue);
-				pEncoder++; 
-			} 
+				pEncoder++;
+			}
 
 			if (m_nPredictorOrder < PREDICTOR_ORDER)
 			{
@@ -580,7 +602,6 @@ bool CResultFileWriter::WriteResultsThreaded()
 				bRes = false;
 		}
 	}
-
 	return bRes;
 }
 
@@ -601,32 +622,38 @@ void CResultFileWriter::SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, p
 // поток записи результатов
 unsigned int CResultFileWriter::WriterThread(void *pThis)
 {
-	// получаем объект из параметра функции потока
-	CResultFileWriter *pthis = static_cast<CResultFileWriter*>(pThis);
-
-	// поток работает пока не сброшен флаг работы с параметрах
-	while (pthis->m_bThreadRun)
+	try
 	{
-		// ждем команды на запуск записи
-		DWORD dwWaitRes = WaitForSingleObject(pthis->m_hRunEvent, INFINITE);
+		// получаем объект из параметра функции потока
+		CResultFileWriter *pthis = static_cast<CResultFileWriter*>(pThis);
 
-		// сбрасываем команду (приняли)
-		if (!ResetEvent(pthis->m_hRunEvent))
-			break;
+		if (!pthis)
+			throw CFileWriteException(nullptr);
 
-		if (dwWaitRes == WAIT_OBJECT_0)
+		// поток работает пока не сброшен флаг работы в параметрах
+		while (pthis->m_bThreadRun)
 		{
-			// если в процессе ожидания не возникло ошибки
-			// и не был сброше флаг работы
-			if (!pthis->m_bThreadRun)
-				break;
+			// ждем команды на запуск записи
+			DWORD dwWaitRes = WaitForSingleObject(pthis->m_hRunEvent, INFINITE);
+			// сбрасываем команду (приняли)
+			if (dwWaitRes == WAIT_OBJECT_0)
+			{
+				// если в процессе ожидания не возникло ошибки
+				// и не был сброше флаг работы
+				if (!pthis->m_bThreadRun)
+					break;
 
-			// записываем очередной блок результатов
-			if (!pthis->WriteResultsThreaded())
-				break;
+				// записываем очередной блок результатов
+				if (!pthis->WriteResultsThreaded())
+					throw CFileWriteException(pthis->m_pFile);
+			}
+			else
+				throw CFileWriteException(pthis->m_pFile);
 		}
-		else
-			break;
+	}
+	catch (CFileWriteException&)
+	{
+		MessageBox(NULL, _T("Result Write Error"), _T("ResultWriter"), MB_OK);
 	}
 
 	return 0;

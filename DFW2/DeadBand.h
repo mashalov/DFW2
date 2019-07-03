@@ -3,7 +3,7 @@
 
 namespace DFW2
 {
-	class CDeadBand : public CDynaPrimitive
+	class CDeadBand : public CDynaPrimitiveState
 	{
 	protected:
 		enum DFW2DEADBANDSTATES
@@ -13,7 +13,7 @@ namespace DFW2
 			DBS_MIN,
 			DBS_OFF
 		}
-			m_nDbState;
+			m_eDbState, m_eDbStateSaved;
 
 		double m_Db;
 
@@ -42,5 +42,7 @@ namespace DFW2
 		virtual const _TCHAR* GetVerbalName() { return _T("Мертвая зона"); }
 		static size_t PrimitiveSize() { return sizeof(CDeadBand); }
 		static long EquationsCount()  { return 1; }
+		virtual void StoreState() override { m_eDbStateSaved = m_eDbState; }
+		virtual void RestoreState() override { m_eDbState = m_eDbStateSaved; }
 	};
 }

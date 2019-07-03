@@ -166,6 +166,10 @@ void CDynaModel::RestoreNordsiek()
 			pVectorBegin++;
 		}
 	}
+
+	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+			(*dit)->RestoreStates();
 }
 
 // обновляение Nordsieck после выполнения шага
@@ -217,6 +221,11 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	}
 	sc.m_dOldH = sc.m_dCurrentH;
 	sc.m_bNordsiekSaved = true;
+
+	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+			(*dit)->StoreStates();
+
 
 	// даем информацию для обработки разрывов о том, что данный момент
 	// времени пройден

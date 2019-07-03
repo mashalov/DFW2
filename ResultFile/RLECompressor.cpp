@@ -15,7 +15,7 @@ CRLECompressor::~CRLECompressor()
 bool CRLECompressor::OutSkip(const unsigned char *pBuffer, const unsigned char *pInput)
 {
 	//_tcprintf(_T("\n---SKIP---"));
-	bool bRes = OutCompressed(pInput - pBuffer);
+	bool bRes = OutCompressed(static_cast<unsigned char>(pInput - pBuffer));
 	while (pBuffer < pInput && bRes)
 	{
 		bRes = OutCompressed(*pBuffer);
@@ -27,7 +27,7 @@ bool CRLECompressor::OutSkip(const unsigned char *pBuffer, const unsigned char *
 bool CRLECompressor::OutRepeat(const unsigned char *pBuffer, const unsigned char *pInput)
 {
 	//_tcprintf(_T("\n---REPEAT---"));
-	bool bRes = OutCompressed((pInput - pBuffer)|0x80);
+	bool bRes = OutCompressed(static_cast<unsigned char>(pInput - pBuffer)|0x80);
 	bRes = bRes && OutCompressed(*pBuffer) ;
 	return bRes;
 }

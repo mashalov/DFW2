@@ -3,10 +3,11 @@
 
 namespace DFW2
 {
-	class CAbs : public CDynaPrimitive
+	class CAbs : public CDynaPrimitiveState
 	{
 	protected:
-		bool m_bPositive;
+		bool m_bPositive;		// текущее состояние
+		bool m_bPositiveSaved;	// cохраненное состояние
 	public:
 		CAbs(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
 		virtual ~CAbs() {}
@@ -23,5 +24,7 @@ namespace DFW2
 		virtual const _TCHAR* GetVerbalName() { return _T("Модуль"); }
 		static size_t PrimitiveSize() { return sizeof(CAbs); }
 		static long EquationsCount()  { return 1; }
+		virtual void StoreState() override { m_bPositiveSaved = m_bPositive; }
+		virtual void RestoreState() override { m_bPositive = m_bPositiveSaved; }
 	};
 }

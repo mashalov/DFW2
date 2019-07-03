@@ -438,6 +438,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spGenP = spGenCols->Item("P");
 	IColPtr spGenQ = spGenCols->Item("Q");
 
+	IColPtr spGenQmin = spGenCols->Item("Qmin");
+	IColPtr spGenQmax = spGenCols->Item("Qmax");
+
 	IColPtr spGenXd2 = spGenCols->Item("xd2");
 	IColPtr spGenXq1 = spGenCols->Item("xq1");
 	IColPtr spGenXq2 = spGenCols->Item("xq2");
@@ -513,6 +516,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGensMu->xq2 = spGenXq2->GetZ(i);
 			pGensMu->Td0ss = spGenTd0ss->GetZ(i);
 			pGensMu->Tq0ss = spGenTq0ss->GetZ(i);
+			pGensMu->LFQmax = spGenQmax->GetZ(i);
+			pGensMu->LFQmin = spGenQmin->GetZ(i);
 			pGensMu++;
 			break;
 		case 5:
@@ -533,12 +538,13 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGens3C->Td01 = spGenTd01->GetZ(i);
 			pGens3C->Pnom = spGenPnom->GetZ(i);
 			pGens3C->m_ExciterId = spExciterId->GetZ(i);
-
 			pGens3C->xd2 = spGenXd2->GetZ(i);
 			pGens3C->xq1 = spGenXq1->GetZ(i);
 			pGens3C->xq2 = spGenXq2->GetZ(i);
 			pGens3C->Td0ss = spGenTd0ss->GetZ(i);
 			pGens3C->Tq0ss = spGenTq0ss->GetZ(i);
+			pGens3C->LFQmax = spGenQmax->GetZ(i);
+			pGens3C->LFQmin = spGenQmin->GetZ(i);
 			pGens3C++;
 			break;
 		case 4:
@@ -559,6 +565,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGens1C->Td01 = spGenTd01->GetZ(i);
 			pGens1C->Pnom = spGenPnom->GetZ(i);
 			pGens1C->m_ExciterId = spExciterId->GetZ(i);
+			pGens1C->LFQmax = spGenQmax->GetZ(i);
+			pGens1C->LFQmin = spGenQmin->GetZ(i);
 			pGens1C++;
 			break;
 		case 2:
@@ -570,6 +578,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGensInf->P = spGenP->GetZ(i);
 			pGensInf->Q = spGenQ->GetZ(i);
 			pGensInf->xd1 = spGenXd1->GetZ(i);
+			pGensInf->LFQmax = spGenQmax->GetZ(i);
+			pGensInf->LFQmin = spGenQmin->GetZ(i);
 			pGensInf++;
 			break;
 		case 3:
@@ -586,6 +596,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 			pGensMot->Mj = spGenMj->GetZ(i);
 			pGensMot->xd1 = spGenXd1->GetZ(i);
 			pGensMot->Pnom = spGenPnom->GetZ(i);
+			pGensMot->LFQmax = spGenQmax->GetZ(i);
+			pGensMot->LFQmin = spGenQmin->GetZ(i);
 			pGensMot++;
 		}
 	}
@@ -799,34 +811,33 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 		}
 	}
 
+	// типовые СХН Rastr 1 и 2
 	if (slcloader.find(1) == slcloader.end())
 	{
 		slit = slcloader.insert(make_pair(1, new CStorageSLC())).first;
 		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
-		slit->second->Q.push_back(CSLCPolynom(0.0, 0.721, 0.158, 0.0));
+		slit->second->Q.push_back(CSLCPolynom(0.0, 0.721, 0.15971, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 3.7, -7.0, 4.3));
-		slit->second->Q.push_back(CSLCPolynom(1.2, 1.49, 0.0, 0.0));
+		slit->second->Q.push_back(CSLCPolynom(1.2, 1.492, 0.0, 0.0));
 	}
 	if (slcloader.find(2) == slcloader.end())
 	{
 		slit = slcloader.insert(make_pair(2, new CStorageSLC())).first;
 		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
-		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.158, 0.0));
+		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.159135, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 4.9, -10.1, 6.2));
 		slit->second->Q.push_back(CSLCPolynom(1.2, 1.708, 0.0, 0.0));
-
 	}
 
+	// СХН шунт с Id=0
 	slit = slcloader.insert(make_pair(0, new CStorageSLC())).first;
-
 	slit->second->P.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 
-
+	// СХН с постоянной мощностью с Id=-1
 	slit = slcloader.insert(make_pair(-1, new CStorageSLC())).first;
 	slit->second->P.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
-	
 
 	// insert shunt LRC
 	for (slit = slcloader.begin(); slit != slcloader.end(); slit++)
@@ -837,6 +848,8 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	
 	if (bRes)
 	{
+		// переписываем СХН из загрузчика в котейнер СХН
+
 		CDynaLRC *pLRCs = new CDynaLRC[slcloader.size()];
 		CDynaLRC *pLRC = pLRCs;
 
@@ -872,15 +885,20 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	return bRes;
 }
 
+// вставляет в СХН сегмент шунта от нуля до Vmin
 bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 {
 	bool bRes = true;
 	if (Vmin > 0.0)
 	{
+		// сортируем сегменты по напряжению
 		sort();
-		
 		double LrcV = 0.0;
 		bool bInsert = false;
+
+		// обходим сегменты справа, для первого найденного с напряжением
+		// меньше чем Vmin считаем мощность по этом сегменту от Vmin
+		// и меняем ему напряжение на Vmin
 		for (SLCPOLYRITR itrpoly = rbegin(); itrpoly != rend(); itrpoly++)
 		{
 			if (itrpoly->m_kV < Vmin)
@@ -893,6 +911,8 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 		}
 		if (bInsert)
 		{
+			// если нашли сегмент для Vmin удаляем все сегменты
+			// с напряжением меньше чем Vmin
 			while (size())
 			{
 				SLCPOLYITR itpoly = begin();
@@ -901,11 +921,16 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 				else
 					break;
 			}
+			// вставляем новый сегмент шунта от нуля
 			insert(begin(),CSLCPolynom(0.0, 0.0, 0.0, LrcV / Vmin / Vmin));
 		}
+
+		// снова сортируем по напряжению
 		sort();
 		SLCPOLYITR itpoly = begin();
 
+		// ищем последовательные сегменты с одинаковыми коэффициентами
+		// и удаляем их как изыбыточные
 		while(itpoly != end())
 		{
 			SLCPOLYITR itpolyNext = itpoly;
