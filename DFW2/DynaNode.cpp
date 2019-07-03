@@ -900,8 +900,8 @@ ptrdiff_t refactorOK = 1;
 				
 				// считаем изменение напряжения узла между итерациями и находим
 				// самый изменяющийся узел
-
-				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
+				if (pNode->IsStateOn())
+					m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
 			}
 
 			DumpIterationControl();
