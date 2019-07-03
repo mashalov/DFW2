@@ -190,9 +190,6 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_EQ), A(V_EQSS), -1.0);
 		// dEq / dId
 		pDynaModel->SetElement(A(V_EQ), A(V_ID), xd - xd2);
-
-		bRes = bRes && BuildIfromDQEquations(pDynaModel);
-
 	}
 
 	return pDynaModel->Status() && bRes;
@@ -237,8 +234,6 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQS), eEqs);
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
-
-		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 	}
 
 	return pDynaModel->Status() && bRes;

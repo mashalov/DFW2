@@ -211,9 +211,6 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_EQ), A(V_EQS), -1.0);
 		// dEq / dId
 		pDynaModel->SetElement(A(V_EQ), A(V_ID), xd - xd1);
-
-		bRes = bRes && BuildIfromDQEquations(pDynaModel);
-
 	}
 
 	return pDynaModel->Status() && bRes;
@@ -256,8 +253,6 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_S), eS);
 		pDynaModel->SetFunctionDiff(A(V_DELTA), eDelta);
 		pDynaModel->SetFunctionDiff(A(V_EQS), eEqs);
-
-		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 	}
 
 	return pDynaModel->Status() && bRes;
@@ -409,8 +404,8 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 
 	props.nEquationsCount = CDynaGenerator1C::VARS::V_LAST;
 
-	//props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszId, CVarIndex(CDynaGenerator1C::V_ID, false, VARUNIT_KAMPERES)));
-	//props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszIq, CVarIndex(CDynaGenerator1C::V_IQ, false, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszId, CVarIndex(CDynaGenerator1C::V_ID, false, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszIq, CVarIndex(CDynaGenerator1C::V_IQ, false, VARUNIT_KAMPERES)));
 	props.m_VarMap.insert(make_pair(_T("Eqs"), CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszEq, CVarIndex(CDynaGenerator1C::V_EQ, VARUNIT_KVOLTS)));
 
@@ -426,57 +421,11 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 
 void CDynaGenerator1C::IfromDQ()
 {
-	double co(cos(Delta)), si(sin(Delta));
-
+	double co = cos(Delta);
+	double si = sin(Delta);
 	Ire = Iq * co - Id * si;
 	Iim = Iq * si + Id * co;
 }
-
-
-// вводит в матрицу блок уравнении для преобразования
-// из dq в ri
-bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
-{
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
-	double co(cos(Delta)), si(sin(Delta));
-
-	// dIre / dIre
-	pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
-	// dIre / dId
-	pDynaModel->SetElement(A(V_IRE), A(V_ID), si);
-	// dIre / dIq
-	pDynaModel->SetElement(A(V_IRE), A(V_IQ), -co);
-	// dIre / dDeltaG
-	pDynaModel->SetElement(A(V_IRE), A(V_DELTA), Iq * si + Id * co);
-
-	// dIim / dIim
-	pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
-	// dIim / dId
-	pDynaModel->SetElement(A(V_IIM), A(V_ID), -co);
-	// dIim / dIq
-	pDynaModel->SetElement(A(V_IIM), A(V_IQ), -si);
-	// dIim / dDeltaG
-	pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * si - Iq * co);
-
-	return pDynaModel->Status();
-}
-
-// вводит в правую часть уравнения для преобразования 
-// из dq в ri
-bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
-{
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
-	double co(cos(Delta)), si(sin(Delta));
-	pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
-	pDynaModel->SetFunction(A(V_IIM), Iim - Iq * si - Id * co);
-
-	return pDynaModel->Status();
-}
-
 
 const _TCHAR *CDynaGenerator1C::m_cszEqe = _T("Eqe");
 const _TCHAR *CDynaGenerator1C::m_cszEq  = _T("Eq");
