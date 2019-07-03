@@ -15,6 +15,15 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 {
 	xq1 = xq;
 
+	if (GetId() == 97)
+	{
+		FILE *flog;
+		setlocale(LC_ALL, "ru-ru");
+		_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("w+"));
+		_ftprintf(flog, _T("t;Nit;Vre;Vim;V;DeltaG;Vd;Vq;Id;Iq;P;Q;s;sv;Eq;Eqss;dVd;dVq;dP;dQ;dId;dIq;dEq;dIre;dIim\n"));
+		fclose(flog);
+	}
+
 	if (!pDynaModel->ConsiderDampingEquation())
 		Kdemp = 0.0;
 
@@ -58,18 +67,14 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 	{
 		bRes = true;
 
-		double DeltaGT = Delta - DeltaV.Value();
-		double NodeV = V.Value();
-		double cosDeltaGT = cos(DeltaGT);
-		double sinDeltaGT = sin(DeltaGT);
+		double dVre(Vre.Value()), dVim(Vim.Value());
+		ptrdiff_t iVre(Vre.Index()), iVim(Vim.Index());
+		double cosg(cos(Delta)), sing(sin(Delta));
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
-		double cosDelta = cos(Delta);
-		double sinDelta = sin(Delta);
 
 		if (!IsStateOn())
 		{
-			NodeV = cosDeltaGT = sinDeltaGT = 0.0;
 			sp1 = sp2 = 1.0;
 		}
 
@@ -109,6 +114,7 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		// dQ/dIq
 		pDynaModel->SetElement(A(V_Q), A(V_IQ), -Vd);
 
+		/*
 		// dVd/dVd
 		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
 		// dVd/dV
@@ -126,7 +132,25 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_VQ), A(DeltaV.Index()), -NodeV * sinDeltaGT);
 		// dVq/dDeltaG
 		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), NodeV * sinDeltaGT);
+		*/
 
+		// dVd/dVd
+		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
+		// dVd/dVre
+		pDynaModel->SetElement(A(V_VD), A(iVre), sing);
+		// dVd/dVim
+		pDynaModel->SetElement(A(V_VD), A(iVim), -cosg);
+		// dVd/dDeltaG
+		pDynaModel->SetElement(A(V_VD), A(V_DELTA), dVre * cosg + dVim * sing);
+
+		// dVd/dVd
+		pDynaModel->SetElement(A(V_VQ), A(V_VQ), 1);
+		// dVd/dVre
+		pDynaModel->SetElement(A(V_VQ), A(iVre), -cosg);
+		// dVd/dVim
+		pDynaModel->SetElement(A(V_VQ), A(iVim), -sing);
+		// dVd/dDeltaG
+		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), dVre * sing - dVim * cosg);
 		
 		// dId/dId
 		pDynaModel->SetElement(A(V_ID), A(V_ID), 1);
@@ -198,28 +222,7 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_EQ), A(V_ID), xd - xd2);
 
 
-		//pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
-
-		
-
-	    // dIre / dIre
-		pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
-		// dIre / dId
-		pDynaModel->SetElement(A(V_IRE), A(V_ID), sinDelta);
-		// dIre / dIq
-		pDynaModel->SetElement(A(V_IRE), A(V_IQ),  -cosDelta);
-		// dIre / dDeltaG
-		pDynaModel->SetElement(A(V_IRE), A(V_DELTA), Iq * sinDelta + Id * cosDeltaGT);
-
-		// dIim / dIim
-		pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
-		// dIim / dId
-		pDynaModel->SetElement(A(V_IIM), A(V_ID), -cosDelta);
-		// dIim / dIq
-		pDynaModel->SetElement(A(V_IIM), A(V_IQ), -sinDelta);
-		// dIim / dDeltaG
-		pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * sinDelta - Iq * cosDelta);
-		
+		bRes = bRes && BuildIfromDQEquations(pDynaModel);
 	}
 	return pDynaModel->Status() && bRes;
 }
@@ -232,27 +235,24 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 	if (bRes)
 	{
 		bRes = true;
-
-		double DeltaGT = Delta - DeltaV.Value();
-		double NodeV = V.Value();
-		double cosDeltaGT = cos(DeltaGT);
-		double sinDeltaGT = sin(DeltaGT);
+		double dVre(Vre.Value()), dVim(Vim.Value());
+		double cosg(cos(Delta)), sing(sin(Delta));
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
 
 		if (!IsStateOn())
 		{
-			NodeV = cosDeltaGT = sinDeltaGT = 0.0;
 			sp1 = sp2 = 1.0;
 		}
 
-		pDynaModel->SetFunction(A(V_VD), Vd + NodeV * sinDeltaGT);
-		pDynaModel->SetFunction(A(V_VQ), Vq - NodeV * cosDeltaGT);
+		pDynaModel->SetFunction(A(V_VD), Vd + dVre * sing - dVim * cosg); 
+		pDynaModel->SetFunction(A(V_VQ), Vq - dVre * cosg - dVim * sing);
 		pDynaModel->SetFunction(A(V_P), P - sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2)));
 		pDynaModel->SetFunction(A(V_Q), Q - Vd * Iq + Vq * Id);
 		pDynaModel->SetFunction(A(V_ID), Id + zsq * (sp2 * Eqss - Vq) * xq2);
 		pDynaModel->SetFunction(A(V_IQ), Iq + zsq * (Vd - sp2 * Edss) * xd2);
 		pDynaModel->SetFunction(A(V_EQ), Eq - Eqss + Id * (xd - xd2));
+
 		double eDelta = pDynaModel->GetOmega0() * s;
 		double eS = (Pt / sp1 - Kdemp  * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj;
 		double eEqs = (ExtEqe.Value() - Eqs + Id * (xd - xd1)) / Td01;
@@ -264,10 +264,40 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
 
-		double co = cos(Delta);
-		double si = sin(Delta);
-		pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
-		pDynaModel->SetFunction(A(V_IIM), Iim - Iq * si - Id * co);
+		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
+
+		if (GetId() == 97 && pDynaModel->GetIntegrationStepNumber() == 2165)
+		{
+			FILE *flog;
+			_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("a"));
+			//_ftprintf(flog, _T("t;Vre;Vim;V;DeltaG;Vd;Vq;Id;Iq;P;Q;s;sv;Eq\n"));
+			_ftprintf(flog, _T("%g;%d;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g;%g\n"), 
+				pDynaModel->GetCurrentTime(), 
+				pDynaModel->GetNewtonIterationNumber(),
+				Vre.Value(), 
+				Vim.Value(), 
+				V.Value(),
+				Delta,
+				Vd, Vq, 
+				Id, Iq, 
+				P, Q, 
+				s, Sv.Value(),
+				Eq,
+				Eqss,
+				pDynaModel->GetFunction(A(V_VD)),
+				pDynaModel->GetFunction(A(V_VQ)),
+				pDynaModel->GetFunction(A(V_P)),
+				pDynaModel->GetFunction(A(V_Q)),
+				pDynaModel->GetFunction(A(V_ID)),
+				pDynaModel->GetFunction(A(V_IQ)),
+				pDynaModel->GetFunction(A(V_EQ)),
+				pDynaModel->GetFunction(A(V_IRE)),
+				pDynaModel->GetFunction(A(V_IIM))
+			);
+			fclose(flog);
+		}
+
+
 	}
 	return pDynaModel->Status() && bRes;
 }
@@ -303,13 +333,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::ProcessDiscontinuity(CDynaModel *pD
 	eDEVICEFUNCTIONSTATUS eRes = CDynaGenerator3C::ProcessDiscontinuity(pDynaModel);
 	if (IsStateOn())
 	{
-		double DeltaGT = Delta - DeltaV.Value();
-		double NodeV = V.Value();
-		double sinDeltaGT = sin(DeltaGT);
-		double cosDeltaGT = cos(DeltaGT);
+		double dVre(Vre.Value()), dVim(Vim.Value());
+		double cosg(cos(Delta)), sing(sin(Delta));
+		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
-		Vd = -NodeV * sinDeltaGT;
-		Vq =  NodeV * cosDeltaGT;
+
+		Vd = -dVre * sing + dVim * cosg;
+		Vq =  dVre * cosg + dVim * sing;
 		Id = -zsq * (sp2 * Eqss - Vq) * xq2;
 		Iq = -zsq * (Vd - sp2 * Edss) * xd2;
 		P =  sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2));
@@ -332,13 +362,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::UpdateExternalVariables(CDynaModel 
 
 bool CDynaGeneratorMustang::CalculatePower()
 {
-	double DeltaGT = Delta - DeltaV.Value();
-	double NodeV = V.Value();
-	double sinDeltaGT = sin(DeltaGT);
-	double cosDeltaGT = cos(DeltaGT);
+	double dVre(Vre.Value()), dVim(Vim.Value());
+	double cosg(cos(Delta)), sing(sin(Delta));
+	double sp1 = ZeroGuardSlip(1.0 + s);
 	double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
-	Vd = -NodeV * sinDeltaGT;
-	Vq = NodeV * cosDeltaGT;
+
+	Vd = -dVre * sing + dVim * cosg;
+	Vq =  dVre * cosg + dVim * sing;
 	Id = -zsq * (sp2 * Eqss - Vq) * xq2;
 	Iq = -zsq * (Vd - sp2 * Edss) * xd2;
 	P = sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2));
@@ -360,5 +390,11 @@ const CDeviceContainerProperties CDynaGeneratorMustang::DeviceProperties()
 	props.m_strClassName = CDeviceContainerProperties::m_cszNameGeneratorMustang;
 	// задаем количество уравнений устройства
 	props.nEquationsCount = CDynaGeneratorMustang::VARS::V_LAST;
+
+	props.m_VarMap.insert(make_pair(_T("Id"), CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Iq"), CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Vd"), CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(make_pair(_T("Vq"), CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
+
 	return props;
 }
