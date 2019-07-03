@@ -36,6 +36,7 @@ namespace DFW2
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 
+#define DFW2_SQRT_EPSILON DFW2_EPSILON
 
 	class CDynaNodeBase : public CDevice
 	{
@@ -148,6 +149,7 @@ namespace DFW2
 			V_SIP,
 			V_COP,
 			V_SV,
+			V_DLT,
 			V_LAST
 		};
 
@@ -155,8 +157,7 @@ namespace DFW2
 		double Sip;
 		double Cop;
 		double S;
-		double Sv;
-		bool bSipMode;
+		double Sv, Dlt;
 		CDynaNode();
 		virtual ~CDynaNode() {}
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);

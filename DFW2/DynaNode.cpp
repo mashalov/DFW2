@@ -82,7 +82,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
-	double V2 = Vre2 + Vim2 + DFW2_EPSILON;
+	double V2 = Vre2 + Vim2 + DFW2_SQRT_EPSILON;
 	double V2sqInv = 1.0 / sqrt(V2);
 	double VreV2 = Vre / V2;
 	double VimV2 = Vim / V2;
@@ -197,7 +197,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 	}
 
-	double V2 = Vre * Vre + Vim * Vim + DFW2_EPSILON;
+	double V2 = Vre * Vre + Vim * Vim + DFW2_SQRT_EPSILON;
 	double V2inv = 1.0 / V2;
 	
 	if (IsStateOn())
@@ -294,7 +294,7 @@ void CDynaNodeBase::Predict()
 	dLRCVicinity = 0.0;
 }
 
-CDynaNode::CDynaNode() : CDynaNodeBase(), bSipMode(false)
+CDynaNode::CDynaNode() : CDynaNodeBase()
 {
 
 }
@@ -303,9 +303,21 @@ bool CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 	double T = pDynaModel->GetFreqTimeConstant();
+	double V2 = sqrt(Vre * Vre + Vim * Vim + DFW2_SQRT_EPSILON);
 	pDynaModel->SetDerivative(A(V_LAG), (Delta - Lag) / T);
-	pDynaModel->SetDerivative(A(V_SIP), (Vim / V - Sip) / T);
-	pDynaModel->SetDerivative(A(V_COP), (Vre / V - Cop) / T);
+	if (IsStateOn())
+	{
+		pDynaModel->SetDerivative(A(V_SIP), (Vim / V2 - Sip) / T);
+		pDynaModel->SetDerivative(A(V_COP), (Vre / V2 - Cop) / T);
+		pDynaModel->SetDerivative(A(V_DLT), Sv * pDynaModel->GetOmega0());
+	}
+	else
+	{
+		pDynaModel->SetDerivative(A(V_SIP), 0.0);
+		pDynaModel->SetDerivative(A(V_COP), 0.0);
+		pDynaModel->SetDerivative(A(V_DLT), 0.0);
+	}
+
 	return pDynaModel->Status();
 }
 
@@ -319,36 +331,40 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(A(V_LAG), A(V_DELTA), -1.0 / T);
 	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
 	pDynaModel->SetElement(A(V_LAG), A(V_LAG), -1.0 / T);
-	
-	pDynaModel->SetElement(A(V_SIP), A(V_SIP), -1.0 / T ); 
-	pDynaModel->SetElement(A(V_SIP), A(CDynaNodeBase::V_IM), -1.0 / T / V);
-	pDynaModel->SetElement(A(V_SIP), A(CDynaNodeBase::V_V), Vim / T / V / V);
 
-	pDynaModel->SetElement(A(V_COP), A(V_COP), -1.0 / T);
-	pDynaModel->SetElement(A(V_COP), A(CDynaNodeBase::V_RE), -1.0 / T / V);
-	pDynaModel->SetElement(A(V_COP), A(CDynaNodeBase::V_V), Vre / T / V / V);
 
-	pDynaModel->SetElement(A(V_SV), A(V_SV), 1.0);
+	pDynaModel->SetElement(A(V_DLT), A(V_SV), -w0);
+	pDynaModel->SetElement(A(V_DLT), A(V_DLT), 1.0);
 
-	bSipMode = fabs(Sip) > fabs(Cop);
-	
-	if (bSipMode)
+
+	if (IsStateOn())
 	{
-		pDynaModel->SetElement(A(V_SV), A(CDynaNodeBase::V_RE), 1.0 / V / Sip / T / w0);
-		pDynaModel->SetElement(A(V_SV), A(CDynaNodeBase::V_IM), 0.0);
-		pDynaModel->SetElement(A(V_SV), A(V_SIP), (Cop - Vre / V) / T / Sip / Sip / w0);
-		pDynaModel->SetElement(A(V_SV), A(V_COP), -1.0 / Sip / T / w0);
-		pDynaModel->SetElement(A(V_SV), A(CDynaNodeBase::V_V), -Vre / V / V / Sip / T / w0);
+		double Vsq = Vre * Vre + Vim * Vim + DFW2_SQRT_EPSILON;
+		double Vmod = sqrt(Vsq);
+		double Divdr = T * Vsq * Vmod;
+
+		pDynaModel->SetElement(A(V_SIP), A(V_SIP), -1.0 / T);
+		pDynaModel->SetElement(A(V_SIP), A(CDynaNodeBase::V_RE), Vre * Vim / Divdr);
+		pDynaModel->SetElement(A(V_SIP), A(CDynaNodeBase::V_IM), -(Vre * Vre + DFW2_SQRT_EPSILON) / Divdr);
+
+		pDynaModel->SetElement(A(V_COP), A(V_COP), -1.0 / T);
+		pDynaModel->SetElement(A(V_COP), A(CDynaNodeBase::V_RE), -(Vim * Vim + DFW2_SQRT_EPSILON) / Divdr);
+		pDynaModel->SetElement(A(V_COP), A(CDynaNodeBase::V_IM), Vre * Vim / Divdr);
+
+		pDynaModel->SetElement(A(V_SV), A(V_SV), 1.0);
+
+		pDynaModel->SetElement(A(V_SV), A(V_COP), -(-Vim * Cop * Cop + 2 * Vre*Cop*Sip + Vim * Sip * Sip) / (T*w0* pow(Cop * Cop + Sip * Sip, 2.0) * Vmod));
+		pDynaModel->SetElement(A(V_SV), A(V_SIP), (Vre*Cop * Cop + 2 * Vim*Cop*Sip - Vre * Sip * Sip) / (T*w0* pow(Cop * Cop + Sip * Sip, 2.0)* Vmod));
+		pDynaModel->SetElement(A(V_SV), A(CDynaNodeBase::V_RE), (Sip*Vim*Vim + Cop * Vre*Vim + DFW2_SQRT_EPSILON * Sip) / (T*w0*(Cop * Cop + Sip * Sip) * Vmod * Vsq));
+		pDynaModel->SetElement(A(V_SV), A(CDynaNodeBase::V_IM), -(Cop*Vre *Vre + Sip * Vim*Vre + Cop * DFW2_SQRT_EPSILON) / (T*w0*(Cop * Cop + Sip * Sip) * Vmod * Vsq));
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_SV), A(CDynaNodeBase::V_RE), 0.0);
-		pDynaModel->SetElement(A(V_SV), A(CDynaNodeBase::V_IM), -1.0 / V / Cop / T / w0);
-		pDynaModel->SetElement(A(V_SV), A(V_SIP), 1.0 / Cop / T / w0);
-		pDynaModel->SetElement(A(V_SV), A(V_COP), (Vim / V - Sip) / T / Cop / Cop / w0);
-		pDynaModel->SetElement(A(V_SV), A(CDynaNodeBase::V_V), Vim / V / V / Cop / T / w0);
+		pDynaModel->SetElement(A(V_SIP), A(V_SIP), -1.0 / T);
+		pDynaModel->SetElement(A(V_COP), A(V_COP), -1.0 / T);
+		pDynaModel->SetElement(A(V_SV), A(V_SV), 1.0);
 	}
-
+	
 	
 	if (!pDynaModel->IsInDiscontinuityMode())
 	{
@@ -372,6 +388,9 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	if (GetId() == 392)
 		bRes = bRes;
 
+
+	pDynaModel->GetRightVector(A(V_DLT))->Rtol = 0.0;
+
 	double T = pDynaModel->GetFreqTimeConstant();
 	double w0 = pDynaModel->GetOmega0();
 	double dLag = (Delta - Lag) / T;
@@ -383,14 +402,24 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunctionDiff(A(V_LAG), dLag);
 	pDynaModel->SetFunction(A(V_S), dS);
 
-	pDynaModel->SetFunctionDiff(A(V_SIP), (Vim / V - Sip) / T);
-	pDynaModel->SetFunctionDiff(A(V_COP), (Vre / V - Cop) / T);
+	if (IsStateOn())
+	{
+		double V2 = sqrt(Vre * Vre + Vim * Vim + DFW2_SQRT_EPSILON);
+		double dSip = (Vim / V2 - Sip) / T;
+		double dCop = (Vre / V2 - Cop) / T;
+		pDynaModel->SetFunctionDiff(A(V_SIP), dSip);
+		pDynaModel->SetFunctionDiff(A(V_DLT), Sv * w0);
+		pDynaModel->SetFunctionDiff(A(V_COP), dCop);
+		pDynaModel->SetFunction(A(V_SV), Sv - (Cop * dSip - Sip * dCop) / w0 / (Cop * Cop + Sip * Sip));
 
-	if(bSipMode)
-		pDynaModel->SetFunction(A(V_SV), Sv - (Cop - Vre / V) / Sip / T / w0);
+	}
 	else
-		pDynaModel->SetFunction(A(V_SV), Sv - (Vim / V - Sip) / Cop / T / w0);
-
+	{
+		pDynaModel->SetFunctionDiff(A(V_SIP), 0);
+		pDynaModel->SetFunctionDiff(A(V_COP), 0);
+		pDynaModel->SetFunction(A(V_SV), 0);
+		pDynaModel->SetFunctionDiff(A(V_DLT), 0);
+	}
 
 	return pDynaModel->Status() && bRes;
 }
@@ -403,9 +432,14 @@ eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
 		S = 0.0;
 		Sv = 0.0;
 		Lag = Delta;
-		Cop = Vre / V;
-		Sip = Vim / V;
-		bSipMode = fabs(Sip) > fabs(Cop);
+		Dlt = Delta;
+		if (IsStateOn())
+		{
+			Cop = Vre / V;
+			Sip = Vim / V;
+		}
+		else
+			Cop = Sip = 0;
 	}
 	return Status;
 }
@@ -449,6 +483,7 @@ double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 			MAP_VARIABLE(Sv, V_SV)
 			MAP_VARIABLE(Sip, V_SIP)
 			MAP_VARIABLE(Cop, V_COP)
+			MAP_VARIABLE(Dlt, V_DLT)
 		}
 	}
 	return p;
@@ -613,7 +648,6 @@ eDEVICEFUNCTIONSTATUS CDynaNode::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	Sip = Vim / V;
 	Cop = Vre / V;
 	Sv = S;
-	bSipMode = fabs(Sip) > fabs(Cop);
 	return DFS_OK;
 }
 
@@ -1093,6 +1127,7 @@ const CDeviceContainerProperties CDynaNode::DeviceProperties()
 	props.m_VarMap.insert(make_pair(_T("Sip"), CVarIndex(V_SIP, VARUNIT_PU)));
 	props.m_VarMap.insert(make_pair(_T("Cop"), CVarIndex(V_COP, VARUNIT_PU)));
 	props.m_VarMap.insert(make_pair(_T("Sv"), CVarIndex(V_SV, VARUNIT_PU)));
+	props.m_VarMap.insert(make_pair(_T("Dlt"), CVarIndex(V_DLT, VARUNIT_PU)));
 
 
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasNode);
