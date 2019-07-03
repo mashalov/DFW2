@@ -52,6 +52,8 @@ namespace DFW2
 		double m_ExciterId;
 
 		void IfromDQ();
+		bool BuildIfromDQEquations(CDynaModel *pDynaModel);
+		bool BuildIfromDQRightHand(CDynaModel *pDynaModel);
 		
 		CDynaGenerator1C();
 		virtual ~CDynaGenerator1C() {}

@@ -5,21 +5,21 @@
 
 namespace DFW2
 {
-	class CDynaGeneratorMotion : public CDynaGeneratorInfBus
+	class CDynaGeneratorMotion : public CDynaGeneratorInfBusBase
 	{
 	protected:
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 	public:
 		enum VARS
 		{
-			V_S = CDynaGeneratorInfBus::V_LAST,
+			V_S = CDynaGeneratorInfBusBase::V_LAST,
 			V_DELTA,
 			V_LAST
 		};
 
 		enum CONSTVARS
 		{
-			C_UNOM = CDynaGeneratorInfBus::CONSTVARS::C_LAST,
+			C_UNOM = CDynaGeneratorInfBusBase::CONSTVARS::C_LAST,
 			C_LAST
 		};
 
