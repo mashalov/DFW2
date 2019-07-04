@@ -146,18 +146,17 @@ namespace DFW2
 		{
 			V_LAG = CDynaNodeBase::V_LAST,			// дифференциальное уравнение лага скольжения в третьей строке
 			V_S,									// скольжение
-			V_SIP,
-			V_COP,
-			V_SV,
-			V_DLT,
+	//		V_SIP,
+	//		V_COP,
+	//		V_SV,
 			V_LAST
 		};
 
 		double Lag;
-		double Sip;
-		double Cop;
+		//double Sip;
+		//double Cop;
 		double S;
-		double Sv, Dlt;
+		//double Sv, Dlt;
 		CDynaNode();
 		virtual ~CDynaNode() {}
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
