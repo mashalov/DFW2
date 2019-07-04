@@ -4,6 +4,8 @@
 
 using namespace DFW2;
 
+#define LOW_VOLTAGE 0.0001
+
 // Мы хотим использовать одновременно
 // обычную и комплексную версии KLU для x86 и x64
 // Для комплексной версии потребоваля собственный маппинг x86 и x64
@@ -88,7 +90,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double VimV2 = Vim / V2;
 
 	double Igre(0.0), Igim(0.0);
-	
+
 	if (pGenLink->m_nCount)
 	{
 		Pg = Qg = 0.0;
@@ -123,8 +125,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_IM), pOppNode->A(V_IM), -pYkm->real(), bDup);
 	}
 
-	double Pgsum =  Pnr - Pg;
-	double Qgsum =  Qnr - Qg;
+	double Pgsum = Pnr - Pg;
+	double Qgsum = Qnr - Qg;
 
 	double VreVim2 = 2.0 * Vre * Vim;
 	double V4 = 1.0 / (V2 * V2);
@@ -135,10 +137,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double QgVim2 = Qgsum * Vim2;
 
 	double dIredVre = -Yii.real();
-	double dIredVim =  Yii.imag();
+	double dIredVim = Yii.imag();
 	double dIimdVre = -Yii.imag();
 	double dIimdVim = -Yii.real();
-	
+
+	pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
+	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+
 	if (!IsStateOn())
 	{
 		dIredVre = dIimdVim = 1.0;
@@ -151,25 +156,40 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
 		dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) * V4;
 		dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) * V4;
+
+		// check low voltage
+		if (V < LOW_VOLTAGE)
+		{
+			pDynaModel->SetElement(A(V_V), A(V_RE), 0.0);
+			pDynaModel->SetElement(A(V_V), A(V_IM), 0.0);
+		}
+		else
+		{
+			pDynaModel->SetElement(A(V_V), A(V_RE), -Vre * V2sqInv);
+			pDynaModel->SetElement(A(V_V), A(V_IM), -Vim * V2sqInv);
+		}
+
+		if (V < LOW_VOLTAGE)
+		{
+			pDynaModel->SetElement(A(V_DELTA), A(V_RE), 0.0);
+			pDynaModel->SetElement(A(V_DELTA), A(V_IM), 0.0);
+		}
+		else
+		{
+			pDynaModel->SetElement(A(V_DELTA), A(V_RE), VimV2);
+			pDynaModel->SetElement(A(V_DELTA), A(V_IM), -VreV2);
+		}
+
+		// check low voltage
+		pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
+		pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
 	}
-			   
+
 	pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
 	pDynaModel->SetElement(A(V_RE), A(V_IM), dIredVim);
 	pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
 	pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
 
-	// check low voltage
-	pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
-	pDynaModel->SetElement(A(V_V), A(V_RE), -Vre * V2sqInv);
-	pDynaModel->SetElement(A(V_V), A(V_IM), -Vim * V2sqInv);
-
-	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
-	pDynaModel->SetElement(A(V_DELTA), A(V_RE), VimV2);
-	pDynaModel->SetElement(A(V_DELTA), A(V_IM), -VreV2);
-
-	// check low voltage
-	pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
-	pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
 
 
 
@@ -202,6 +222,11 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	double V2 = Vre * Vre + Vim * Vim + DFW2_SQRT_EPSILON;
 	double V2inv = 1.0 / V2;
+
+
+	if (V < DFW2_EPSILON)
+		V = sqrt(V2);
+
 	
 	if (IsStateOn())
 	{
@@ -235,6 +260,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	double dV = V - sqrt(V2);
 
 	double angle = atan2(Vim, Vre);
+
 	//double newDelta = fmod(angle - Delta + M_PI, 2 * M_PI) - M_PI + Delta;
 	//double newDelta = angle + static_cast<double>(static_cast<int>(Delta / (2 * M_PI)) * 2 * M_PI);
 	ptrdiff_t IntWinds = static_cast<ptrdiff_t>(Delta / 2 / M_PI);
@@ -251,19 +277,14 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			pMin = pCheck;
 
 	newDelta = *pMin;
-	/*
-	RightVector *pRv = pDynaModel->GetRightVector(A(V_DELTA));
-	if (pRv->Nordsiek[1] > 0.0)
-	{
-		_ASSERTE(newDelta > pRv->SavedNordsiek[0] - pRv->Atol);
-	}
-	else if (pRv->Nordsiek[1] < 0.0)
-	{
-		_ASSERTE(newDelta < pRv->SavedNordsiek[0] + pRv->Atol);
-	}
-	*/
 
 	double dDelta = Delta - newDelta;
+
+	if (V < LOW_VOLTAGE && IsStateOn())
+	{
+		dV = dDelta = 0.0;
+		pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("LW %d %g %d"), GetId(), V, pDynaModel->GetIntegrationStepNumber());
+	}
 
 	pDynaModel->SetFunction(A(V_V), dV);
 	pDynaModel->SetFunction(A(V_DELTA), dDelta);
