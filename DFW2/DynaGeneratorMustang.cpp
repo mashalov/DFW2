@@ -261,12 +261,12 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
 
-		/*
-		if (GetId() == 97 && pDynaModel->GetCurrentTime() > 9.68)
+		if (GetId() == 97 && pDynaModel->GetIntegrationStepNumber() == 2052)
 		{
 			FILE *flog;
 			_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("a"));
-			_ftprintf(flog, _T("%10g DeltaV=%10g V=%10g DeltaG=%10g Vd=%10g Vq=%10g Id=%10g Iq=%10g P=%10g Q=%10g s=%10g sv=%10g Eq=%10g\n"), 
+			/*
+			_ftprintf(flog, _T("%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g\n"), 
 				pDynaModel->GetCurrentTime(), 
 				DeltaV.Value(), 
 				V.Value(), 
@@ -276,9 +276,18 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 				P, Q, 
 				s, Sv.Value(),
 				Eq);
+				*/
+			_ftprintf(flog, _T("%10g;%10g;%10g;%10g;%10g;%10g;%10g\n"),
+				pDynaModel->GetFunction(A(V_VD)),
+				pDynaModel->GetFunction(A(V_VQ)),
+				pDynaModel->GetFunction(A(V_P)),
+				pDynaModel->GetFunction(A(V_Q)),
+				pDynaModel->GetFunction(A(V_ID)),
+				pDynaModel->GetFunction(A(V_IQ)),
+				pDynaModel->GetFunction(A(V_EQ))
+			);
 			fclose(flog);
 		}
-		*/
 
 		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 	}
