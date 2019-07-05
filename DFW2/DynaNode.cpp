@@ -258,11 +258,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	pDynaModel->SetFunction(A(V_IM), Iim);
 
 	double dV = V - sqrt(V2);
-
 	double angle = atan2(Vim, Vre);
+	double newDelta = angle;
 
-	//double newDelta = fmod(angle - Delta + M_PI, 2 * M_PI) - M_PI + Delta;
-	//double newDelta = angle + static_cast<double>(static_cast<int>(Delta / (2 * M_PI)) * 2 * M_PI);
+	/*
 	ptrdiff_t IntWinds = static_cast<ptrdiff_t>(Delta / 2 / M_PI);
 	double newDelta = static_cast<double>(IntWinds) * 2 * M_PI + angle;
 	double CheckDelta[3] = { newDelta, newDelta + 2 * M_PI, newDelta - 2 * M_PI };
@@ -277,6 +276,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			pMin = pCheck;
 
 	newDelta = *pMin;
+	*/
 
 	double dDelta = Delta - newDelta;
 
@@ -314,9 +314,21 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 // напряжение в декартовых координатах
 // и сбрасываются значения по умолчанию перед
 // итерационным процессом решения сети
-void CDynaNodeBase::Predict()
+void CDynaNode::Predict()
 {
 	dLRCVicinity = 0.0;
+	double newDelta = atan2(sin(Delta), cos(Delta));
+	if (fabs(newDelta - Delta) > DFW2_EPSILON)
+	{
+		RightVector *pRvDelta = m_pContainer->GetModel()->GetRightVector(A(V_DELTA));
+		RightVector *pRvLag = m_pContainer->GetModel()->GetRightVector(A(V_LAG));
+		double dDL = Delta - Lag;
+		Delta = newDelta;
+		Lag = Delta - dDL;
+		pRvDelta->Nordsiek[0] = Delta;
+		pRvLag->Nordsiek[0] = Lag;
+	}
+
 }
 
 CDynaNode::CDynaNode() : CDynaNodeBase()

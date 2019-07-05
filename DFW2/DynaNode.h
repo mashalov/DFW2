@@ -105,7 +105,6 @@ namespace DFW2
 		virtual ~CDynaNodeBase();
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		virtual void Predict();			// допонительная обработка прогноза
 		void GetPnrQnr();
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
@@ -163,6 +162,7 @@ namespace DFW2
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
+		virtual void Predict();			// допонительная обработка прогноза
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
