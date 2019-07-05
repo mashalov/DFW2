@@ -449,6 +449,8 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	}
 	*/
 
+	DumpIntegrationStep(2021, 2123);
+
 	return pDynaModel->Status() && bRes;
 }
 

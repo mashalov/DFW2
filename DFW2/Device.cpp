@@ -931,6 +931,42 @@ void CDevice::RestoreStates()
 		it->RestoreState();
 }
 
+
+void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
+{
+	if (m_pContainer)
+	{
+		CDynaModel *pModel = m_pContainer->GetModel();
+		if (pModel && GetId() == nId && pModel->GetIntegrationStepNumber() == nStepNumber)
+		{
+			wstring FileName = Cex(_T("c:\\tmp\\%s_%d.csv"), GetVerbalName(), nStepNumber);
+			FILE *flog;
+			if (pModel->GetNewtonIterationNumber() == 1)
+				_tunlink(FileName.c_str());
+			_tfopen_s(&flog, FileName.c_str(), _T("a"));
+			if (flog)
+			{
+				if (pModel->GetNewtonIterationNumber() == 1)
+				{
+					for (auto& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+						_ftprintf(flog, _T("%s;"), var->first.c_str());
+					for (auto& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+						_ftprintf(flog, _T("d_%s;"), var->first.c_str());
+					_ftprintf(flog, _T("\n"));
+				}
+
+				for (auto& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+					_ftprintf(flog, _T("%g;"), *GetVariablePtr(var->second.m_nIndex));
+				for (auto& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+					_ftprintf(flog, _T("%g;"), pModel->GetFunction(A(var->second.m_nIndex)));
+				_ftprintf(flog, _T("\n"));
+
+				fclose(flog);
+			}
+		}
+	}
+}
+
 #ifdef _DEBUG
 	_TCHAR CDevice::UnknownVarIndex[80];
 #endif

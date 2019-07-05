@@ -203,8 +203,9 @@ namespace DFW2
 		typedef eDEVICEFUNCTIONSTATUS(CheckMasterDeviceFunction)(CDevice*, LinkDirectionFrom&);
 		static CheckMasterDeviceFunction CheckMasterDeviceInit;
 		static CheckMasterDeviceFunction CheckMasterDeviceDiscontinuity;
-
 		eDEVICEFUNCTIONSTATUS MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice);
+
+		void DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber);
 	public:
 		CDevice();
 
