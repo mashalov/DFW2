@@ -474,7 +474,7 @@ namespace DFW2
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
-		void DumpMatrix();
+		void DumpMatrix(bool bAnalyzeLinearDependenies = false);
 		void DumpStateVector();
 		void FindMaxB(double& bmax, ptrdiff_t& nMaxIndex);
 
