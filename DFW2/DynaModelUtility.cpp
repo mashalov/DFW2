@@ -409,7 +409,7 @@ csi cs_gatxpy(const cs *A, const double *x, double *y)
 	return (1);
 }
 
-void CDynaModel::DumpMatrix()
+void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 {
 	FILE *fmatrix;
 	if (!_tfopen_s(&fmatrix, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
@@ -475,7 +475,9 @@ void CDynaModel::DumpMatrix()
 				_ftprintf_s(fmatrix, _T("Zero Diagonal: %d\n"), it - Diagonals.begin());
 
 
-		return;
+		if(!bAnalyzeLinearDependenies)
+			return;
+
 		// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
 		// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
 

@@ -70,7 +70,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
-	if (GetId() == 319 && !pDynaModel->EstimateBuild())
+	if(GetId() == 2021 && pDynaModel->GetIntegrationStepNumber() == 2123)
 		bRes = true;
 
 	GetPnrQnr();
@@ -84,7 +84,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
-	double V2 = Vre2 + Vim2 + DFW2_SQRT_EPSILON;
+	double V2 = Vre2 + Vim2;
 	double V2sqInv = 1.0 / sqrt(V2);
 	double VreV2 = Vre / V2;
 	double VimV2 = Vim / V2;
@@ -181,6 +181,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		}
 
 		// check low voltage
+		VreV2 = Vre / V / V;
+		VimV2 = Vim / V / V;
 		pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
 		pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
 	}
@@ -220,8 +222,9 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 	}
 
-	double V2 = Vre * Vre + Vim * Vim + DFW2_SQRT_EPSILON;
+	double V2 = Vre * Vre + Vim * Vim;
 	double V2inv = 1.0 / V2;
+	double V2sq = sqrt(V2);
 
 
 	if (V < DFW2_EPSILON)
@@ -257,7 +260,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	pDynaModel->SetFunction(A(V_RE), Ire);
 	pDynaModel->SetFunction(A(V_IM), Iim);
 
-	double dV = V - sqrt(V2);
+	double dV = V - V2sq;
 	double angle = atan2(Vim, Vre);
 	double newDelta = angle;
 
@@ -340,7 +343,6 @@ bool CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 	double T = pDynaModel->GetFreqTimeConstant();
-	double V2 = sqrt(Vre * Vre + Vim * Vim + DFW2_SQRT_EPSILON);
 	pDynaModel->SetDerivative(A(V_LAG), (Delta - Lag) / T);
 	/*
 	if (IsStateOn())
@@ -449,7 +451,9 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	}
 	*/
 
-	DumpIntegrationStep(2021, 2123);
+	DumpIntegrationStep(2021, 2031);
+	DumpIntegrationStep(2143, 2031);
+	DumpIntegrationStep(2141, 2031);
 
 	return pDynaModel->Status() && bRes;
 }
@@ -1193,3 +1197,4 @@ const _TCHAR *CDynaNodeBase::m_cszBsh = _T("bsh");
 
 const _TCHAR *CDynaNode::m_cszS = _T("S");
 const _TCHAR *CDynaNode::m_cszSz = _T("Sz");
+

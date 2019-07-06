@@ -230,6 +230,8 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
+	//pDynaModel->GetRightVector(A(V_DELTA))->Rtol = 0.0;
+
 	if (bRes)
 	{
 		bRes = true;
@@ -262,7 +264,7 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
 		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 
-		DumpIntegrationStep(97, 2123);
+		DumpIntegrationStep(97, 2028);
 	}
 	return pDynaModel->Status() && bRes;
 }
