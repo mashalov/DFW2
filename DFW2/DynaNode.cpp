@@ -1,10 +1,11 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaBranch.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
 
-#define LOW_VOLTAGE 0.0001
+#define LOW_VOLTAGE 0.001
+#define LOW_VOLTAGE_HYST LOW_VOLTAGE * 0.01
 
 // Мы хотим использовать одновременно
 // обычную и комплексную версии KLU для x86 и x64
@@ -158,7 +159,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) * V4;
 
 		// check low voltage
-		if (V < LOW_VOLTAGE)
+		if (m_bLowVoltage)
 		{
 			pDynaModel->SetElement(A(V_V), A(V_RE), 0.0);
 			pDynaModel->SetElement(A(V_V), A(V_IM), 0.0);
@@ -169,7 +170,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			pDynaModel->SetElement(A(V_V), A(V_IM), -Vim * V2sqInv);
 		}
 
-		if (V < LOW_VOLTAGE)
+		if (m_bLowVoltage)
 		{
 			pDynaModel->SetElement(A(V_DELTA), A(V_RE), 0.0);
 			pDynaModel->SetElement(A(V_DELTA), A(V_IM), 0.0);
@@ -180,11 +181,18 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			pDynaModel->SetElement(A(V_DELTA), A(V_IM), -VreV2);
 		}
 
-		// check low voltage
-		VreV2 = Vre / V / V;
-		VimV2 = Vim / V / V;
-		pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
-		pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
+		if (m_bLowVoltage)
+		{
+			pDynaModel->SetElement(A(V_RE), A(V_V), 0.0);
+			pDynaModel->SetElement(A(V_IM), A(V_V), 0.0);
+		}
+		else
+		{
+			VreV2 = Vre / V / V;
+			VimV2 = Vim / V / V;
+			pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
+			pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
+		}
 	}
 
 	pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
@@ -283,11 +291,8 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	double dDelta = Delta - newDelta;
 
-	if (V < LOW_VOLTAGE && IsStateOn())
-	{
+	if (m_bLowVoltage)
 		dV = dDelta = 0.0;
-		pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("LW %d %g %d"), GetId(), V, pDynaModel->GetIntegrationStepNumber());
-	}
 
 	pDynaModel->SetFunction(A(V_V), dV);
 	pDynaModel->SetFunction(A(V_DELTA), dDelta);
@@ -308,6 +313,7 @@ bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 {
 	UpdateVreVim();
+	m_bLowVoltage = V < (LOW_VOLTAGE - LOW_VOLTAGE_HYST);
 	V0 = (V > 0) ? V : Unom;
 	return DFS_OK;
 }
@@ -683,12 +689,8 @@ eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE
 eDEVICEFUNCTIONSTATUS CDynaNode::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	Lag = Delta - S * pDynaModel->GetFreqTimeConstant() * pDynaModel->GetOmega0();
-	/*
-	if (!IsStateOn())
-	{
-		Sip = Cop = 0.0;
-	}
-	*/
+	SetLowVoltage(V < (LOW_VOLTAGE - LOW_VOLTAGE_HYST));
+	//Delta = atan2(Vim, Vre);
 	return DFS_OK;
 }
 
@@ -1135,6 +1137,81 @@ ExternalVariable CDynaNodeBase::GetExternalVariable(const _TCHAR* cszVarName)
 	}
 	else
 		return CDevice::GetExternalVariable(cszVarName);
+}
+
+
+void CDynaNodeBase::StoreStates()
+{
+	m_bSavedLowVoltage = m_bLowVoltage;
+}
+
+void CDynaNodeBase::RestoreStates()
+{
+	m_bLowVoltage = m_bSavedLowVoltage;
+}
+
+void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
+{
+	if (m_bLowVoltage)
+	{
+		if (!bLowVoltage)
+		{
+			m_bLowVoltage = bLowVoltage;
+			if (IsStateOn())
+				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s выше порогового"), V, GetVerbalName()));
+		}
+	}
+	else
+	{
+		if (bLowVoltage)
+		{
+			m_bLowVoltage = bLowVoltage;
+			if (IsStateOn())
+				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s ниже порогового"), V, GetVerbalName()));
+		}
+	}
+}
+
+double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
+{
+	double rH = 1.0;
+	if (!IsStateOn())
+		return rH;
+
+	double Hyst = LOW_VOLTAGE_HYST;
+
+	if (m_bLowVoltage)
+	{
+		if (sqrt(Vre * Vre + Vim * Vim) > LOW_VOLTAGE + Hyst)
+		{
+			SetLowVoltage(false);
+			pDynaModel->DiscontinuityRequest();
+		}
+	}
+	else
+	{
+		if (V < LOW_VOLTAGE - Hyst)
+		{
+			RightVector *pRv = pDynaModel->GetRightVector(A(V_V));
+			double derr = fabs(pRv->GetWeightedError(LOW_VOLTAGE - Hyst, V));
+			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			{
+				SetLowVoltage(true);
+				pDynaModel->DiscontinuityRequest();
+			}
+			else
+			{
+				rH = CDynaPrimitive::FindZeroCrossingToConst(pDynaModel, pRv, LOW_VOLTAGE - Hyst);
+				if (pDynaModel->ZeroCrossingStepReached(rH))
+				{
+					SetLowVoltage(true);
+					pDynaModel->DiscontinuityRequest();
+				}
+			}
+		}
+	}
+
+	return rH;
 }
 
 const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
