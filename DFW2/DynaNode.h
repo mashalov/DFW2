@@ -85,7 +85,8 @@ namespace DFW2
 		double Unom;					// номинальное напряжение
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
 		bool m_bInMetallicSC;
-
+		bool m_bLowVoltage;				// признак низкого модуля напряжения
+		bool m_bSavedLowVoltage;		
 		double dLRCVicinity;			// окрестность сглаживания СХН
 
 		double dLRCPn;					// расчетные значения прозводных СХН по напряжению
@@ -114,7 +115,9 @@ namespace DFW2
 		void ProcessTopologyRequest();
 		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
-		
+		virtual void StoreStates() override;
+		virtual void RestoreStates() override;
+		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() { return Pnr - Pg - V * V * Yii.real();	}
 		inline double GetSelfImbQ() { return Qnr - Qg + V * V * Yii.imag(); }
 
@@ -135,6 +138,8 @@ namespace DFW2
 		static const _TCHAR *m_cszVim;
 		static const _TCHAR *m_cszGsh;
 		static const _TCHAR *m_cszBsh;
+	protected:
+		void SetLowVoltage(bool bLowVoltage);
 	};
 
 	class CDynaNode : public CDynaNodeBase
