@@ -140,6 +140,7 @@ namespace DFW2
 		static const _TCHAR *m_cszBsh;
 	protected:
 		void SetLowVoltage(bool bLowVoltage);
+		double FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow);
 	};
 
 	class CDynaNode : public CDynaNodeBase
