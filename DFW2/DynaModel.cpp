@@ -87,7 +87,7 @@ bool CDynaModel::Run()
 	//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 	m_Parameters.eFreqDampingType = APDT_NODE;
 	m_Parameters.m_dOutStep = 1E-10;
-	m_Parameters.eFreqDampingType = APDT_ISLAND;
+	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
 	m_Parameters.m_bAllowRingingSuppression = true;
