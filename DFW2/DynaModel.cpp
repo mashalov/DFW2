@@ -437,7 +437,7 @@ bool CDynaModel::NewtonUpdate()
 				lambdamin = 1E-4;
 				bLineSearch = true;
 			}
-			else if (sc.Hmin / sc.m_dCurrentH > 0.99)
+			else if (sc.Hmin / sc.m_dCurrentH > 0.95)
 			{
 				// если шаг снижается до минимального 
 				// переходим на Ньютон по параметру
@@ -515,7 +515,6 @@ bool CDynaModel::NewtonUpdate()
 
 	ConvTest[0].NextIteration();
 	ConvTest[1].NextIteration();
-
 
 	bRes = bRes && NewtonUpdateDevices();
 	return bRes;
@@ -604,6 +603,11 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (NewtonUpdate())
 				{
+					if (GetIntegrationStepNumber() == 2031 && GetNewtonIterationNumber() == 5)
+					{
+						DumpStateVector();
+						DumpMatrix();
+					}
 					IterationOK = true;
 
 					if (sc.m_bNewtonConverged)

@@ -230,6 +230,8 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
+	//pDynaModel->GetRightVector(A(V_DELTA))->Rtol = 0.0;
+
 	if (bRes)
 	{
 		bRes = true;
@@ -260,36 +262,9 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EQS), eEqs);
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
-
-		if (GetId() == 97 && pDynaModel->GetIntegrationStepNumber() == 2052)
-		{
-			FILE *flog;
-			_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("a"));
-			/*
-			_ftprintf(flog, _T("%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g;%10g\n"), 
-				pDynaModel->GetCurrentTime(), 
-				DeltaV.Value(), 
-				V.Value(), 
-				Delta, 
-				Vd, Vq, 
-				Id, Iq, 
-				P, Q, 
-				s, Sv.Value(),
-				Eq);
-				*/
-			_ftprintf(flog, _T("%10g;%10g;%10g;%10g;%10g;%10g;%10g\n"),
-				pDynaModel->GetFunction(A(V_VD)),
-				pDynaModel->GetFunction(A(V_VQ)),
-				pDynaModel->GetFunction(A(V_P)),
-				pDynaModel->GetFunction(A(V_Q)),
-				pDynaModel->GetFunction(A(V_ID)),
-				pDynaModel->GetFunction(A(V_IQ)),
-				pDynaModel->GetFunction(A(V_EQ))
-			);
-			fclose(flog);
-		}
-
 		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
+
+		DumpIntegrationStep(97, 2028);
 	}
 	return pDynaModel->Status() && bRes;
 }
@@ -387,6 +362,8 @@ const CDeviceContainerProperties CDynaGeneratorMustang::DeviceProperties()
 	props.m_VarMap.insert(make_pair(_T("Iq"), CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
 	props.m_VarMap.insert(make_pair(_T("Vd"), CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(make_pair(_T("Vq"), CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(make_pair(_T("Ire"), CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Iim"), CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES)));
 
 	return props;
 }
