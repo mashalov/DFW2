@@ -603,11 +603,12 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (NewtonUpdate())
 				{
-					if (GetIntegrationStepNumber() == 2031 && GetNewtonIterationNumber() == 5)
+					/*if (GetIntegrationStepNumber() == 2031 && GetNewtonIterationNumber() == 5)
 					{
 						DumpStateVector();
 						DumpMatrix();
 					}
+					*/
 					IterationOK = true;
 
 					if (sc.m_bNewtonConverged)

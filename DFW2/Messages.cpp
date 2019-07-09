@@ -99,6 +99,7 @@ const _TCHAR* CDFW2Messages::m_cszLFNodeVTooLow = CDFW2Messages::m_cszLFNodeVToo
 const _TCHAR* CDFW2Messages::m_cszLFBranchAngleExceeds90 = _T("Угол по связи %s - %s превысил 90 град - %g");
 const _TCHAR* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = _T("Количество генераторов для %s задано неверно %d, установлено значение 1");
 const _TCHAR* CDFW2Messages::m_cszFailureAtMinimalStep = _T("Необходимая точность решения не может быть достигнута на минимальном шаге t=%.12g (%d) порядок %d шаг=%g");
+const _TCHAR* CDFW2Messages::m_cszMustBeConstPowerLRC = _T("Не найдена типовая СХН на постоянную мощность с номером -1");
 
 
 
