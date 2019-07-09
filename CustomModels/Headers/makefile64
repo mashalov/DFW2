@@ -1,0 +1,47 @@
+# OUTNAME=autodll
+#ROOTDIR=C:\tmp\CustomModels
+#LCCROOT=c:\lcc64
+
+OUTDIR=$(ROOTDIR)\dllx64
+SRCDIR=$(ROOTDIR)\$(OUTNAME)
+HEADERS=$(ROOTDIR)\headers
+LCCHEADERS=$(LCCROOT)\include64
+CFLAGS=-I"$(LCCHEADERS)" -O
+CC=$(LCCROOT)\bin\lcc64.exe
+LINKER=$(LCCROOT)\bin\lcclnk64.exe
+
+
+OBJS=\
+	$(OUTNAME).obj\
+	devicedllutilities.obj
+
+LIBS=
+
+EXE=$(OUTNAME).dll
+
+$(EXE):	$(OBJS) makefile64
+	"$(LINKER)"  -s -dll -entry DllMain -nounderscores -o "$(OUTDIR)\$(OUTNAME).dll" $(OBJS) $(LIBS)
+	if exist "$(SRCDIR)\devicedllutilities.obj" del "$(SRCDIR)\devicedllutilities.obj"
+	if exist "$(SRCDIR)\$(OUTNAME).obj" del "$(SRCDIR)\$(OUTNAME).obj"
+	if exist "$(OUTDIR)\$(OUTNAME).lib" del "$(OUTDIR)\$(OUTNAME).lib"
+	if exist "$(OUTDIR)\$(OUTNAME).exp" del "$(OUTDIR)\$(OUTNAME).exp"
+	if exist "$(HEADERS)\$(OUTNAME).obj" del "$(HEADERS)\$(OUTNAME).obj"
+	if exist "$(HEADERS)\devicedllutilities.obj" del "$(HEADERS)\devicedllutilities.obj"
+
+
+DEVICEDLLUTILITIES_C=\
+	"$(HEADERS)\DeviceDLLUtilities.h"\
+	"$(HEADERS)\DLLStructs.h"\
+	"$(HEADERS)\DeviceTypes.h"\
+	"$(HEADERS)\DeviceDLL.h"
+
+
+$(OUTNAME).obj: $(DEVICEDLLUTILITIES_C) "$(SRCDIR)\$(OUTNAME).c" 
+	"$(CC)" -c $(CFLAGS) "$(SRCDIR)\$(OUTNAME).c "
+
+devicedllutilities.obj: $(DEVICEDLLUTILITIES_C) "$(HEADERS)\devicedllutilities.c" 
+	"$(CC)" -c $(CFLAGS) "$(HEADERS)\devicedllutilities.c"
+
+
+
+

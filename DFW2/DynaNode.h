@@ -85,7 +85,8 @@ namespace DFW2
 		double Unom;					// номинальное напряжение
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
 		bool m_bInMetallicSC;
-
+		bool m_bLowVoltage;				// признак низкого модуля напряжения
+		bool m_bSavedLowVoltage;		
 		double dLRCVicinity;			// окрестность сглаживания СХН
 
 		double dLRCPn;					// расчетные значения прозводных СХН по напряжению
@@ -105,7 +106,6 @@ namespace DFW2
 		virtual ~CDynaNodeBase();
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		virtual void Predict();			// допонительная обработка прогноза
 		void GetPnrQnr();
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
@@ -115,7 +115,9 @@ namespace DFW2
 		void ProcessTopologyRequest();
 		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
-		
+		virtual void StoreStates() override;
+		virtual void RestoreStates() override;
+		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() { return Pnr - Pg - V * V * Yii.real();	}
 		inline double GetSelfImbQ() { return Qnr - Qg + V * V * Yii.imag(); }
 
@@ -136,6 +138,9 @@ namespace DFW2
 		static const _TCHAR *m_cszVim;
 		static const _TCHAR *m_cszGsh;
 		static const _TCHAR *m_cszBsh;
+	protected:
+		void SetLowVoltage(bool bLowVoltage);
+		double FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow);
 	};
 
 	class CDynaNode : public CDynaNodeBase
@@ -163,6 +168,7 @@ namespace DFW2
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
+		virtual void Predict();			// допонительная обработка прогноза
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
