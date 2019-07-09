@@ -94,6 +94,13 @@ bool CDynaModel::PrepareGraph()
 	{
 		bRes = true;
 
+		CDynaNodeBase *pFirstNode = static_cast<CDynaNodeBase*>(*Nodes.begin());
+		if (!(pFirstNode->m_pLRCGen = static_cast<CDynaLRC*>(LRCs.GetDevice(-1))))
+		{
+			Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszMustBeConstPowerLRC));
+			bRes = false;
+		}
+
 		for (it = Branches.begin(); it != Branches.end(); it++)
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);

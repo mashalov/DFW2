@@ -138,6 +138,9 @@ namespace DFW2
 		static const _TCHAR *m_cszVim;
 		static const _TCHAR *m_cszGsh;
 		static const _TCHAR *m_cszBsh;
+
+		// СХН для генерации, которая не задана моделями генераторов
+		static CDynaLRC *m_pLRCGen;
 	protected:
 		void SetLowVoltage(bool bLowVoltage);
 		double FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow);

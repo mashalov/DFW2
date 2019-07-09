@@ -130,6 +130,18 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		}
 	}
 
+	if (fabs(Pg) > DFW2_EPSILON || fabs(Qg) > DFW2_EPSILON)
+	{
+
+		double VdVnom = V / V0;
+		double dLRCPg(0.0), dLRCQg(0.0);
+		//Pg *= m_pLRCGen->GetPdP(VdVnom, dLRCPg, dLRCVicinity);
+		//Qg *= m_pLRCGen->GetQdQ(VdVnom, dLRCQg, dLRCVicinity);
+		dLRCPg *= Pg / V0;
+		dLRCQg *= Qg / V0;
+	}
+
+	
 	ppBranch = nullptr;
 	ResetVisited();
 	while (pBranchLink->In(ppBranch))
@@ -489,9 +501,9 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	}
 	*/
 
-	DumpIntegrationStep(2021, 2031);
-	DumpIntegrationStep(2143, 2031);
-	DumpIntegrationStep(2141, 2031);
+	//DumpIntegrationStep(2021, 2031);
+	//DumpIntegrationStep(2143, 2031);
+	//DumpIntegrationStep(2141, 2031);
 
 	return pDynaModel->Status() && bRes;
 }
@@ -1368,3 +1380,4 @@ const _TCHAR *CDynaNodeBase::m_cszBsh = _T("bsh");
 const _TCHAR *CDynaNode::m_cszS = _T("S");
 const _TCHAR *CDynaNode::m_cszSz = _T("Sz");
 
+CDynaLRC *CDynaNodeBase::m_pLRCGen = nullptr;
