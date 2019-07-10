@@ -109,6 +109,7 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 
 		double x1, x2, y1, y2, k1 = 0.0, k2 = 0.0;
 
+		// https://en.wikipedia.org/wiki/Spline_interpolation
 		
 
 		if (bLeft)
@@ -137,7 +138,8 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 		if (t >= 0 && t <= 1.0)
 		{
 			double P = (1.0 - t) * y1 + t * y2 + t * (1.0 - t) * (a* (1.0 - t) + b * t);
-			dLRC = ((y2 - y1) + (1.0 - 2 * t) * (a * (1.0 - t) + b *t) + t * (1.0 - t) * (b - a)) / x2x1;
+			//dLRC = ((y2 - y1) + (1.0 - 2 * t) * (a * (1.0 - t) + b *t) + t * (1.0 - t) * (b - a)) / x2x1;
+			dLRC = (a - y1 + y2 - (4.0 * a - 2.0 * b - 3.0 * t * (a - b)) * t) / x2x1;
 			return P;
 		}
 	}
