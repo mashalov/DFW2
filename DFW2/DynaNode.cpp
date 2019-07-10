@@ -113,8 +113,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double VreV2 = Vre / V2;
 	double VimV2 = Vim / V2;
 
-	double Igre(0.0), Igim(0.0);
-
 	if (pGenLink->m_nCount)
 	{
 		Pg = Qg = 0.0;
@@ -125,8 +123,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_IRE), -1.0);
 			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_IIM), -1.0);
-			Igre += pGen->Ire;
-			Igim += pGen->Iim;
 		}
 	}
 
