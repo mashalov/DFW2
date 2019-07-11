@@ -374,6 +374,7 @@ namespace DFW2
 		} 
 			m_Parameters;
 
+		CDynaLRC *m_pLRCGen;		// СХН для генераторных узлов без генераторов
 
 		MatrixRow *m_pMatrixRows;
 
@@ -552,6 +553,11 @@ namespace DFW2
 		inline double GetFreqTimeConstant()
 		{
 			return m_Parameters.m_dFrequencyTimeConstant;
+		}
+
+		inline CDynaLRC* GetLRCGen()
+		{
+			return m_pLRCGen;
 		}
 
 		inline double GetMustangDerivativeTimeConstant()
