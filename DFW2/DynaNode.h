@@ -79,7 +79,7 @@ namespace DFW2
 		double Vrastr, Deltarastr, Qgrastr, Pnrrastr, Qnrrastr;
 #endif
 				
-		double Pn,Qn,Pg,Qg,Pnr,Qnr;
+		double Pn,Qn,Pg,Qg,Pnr,Qnr,Pgr,Qgr;
 		double G,B, Gr0, Br0;
 		double Gshunt, Bshunt;
 		double Unom;					// номинальное напряжение
@@ -91,7 +91,8 @@ namespace DFW2
 
 		double dLRCPn;					// расчетные значения прозводных СХН по напряжению
 		double dLRCQn;
-
+		double dLRCPg;
+		double dLRCQg;
 
 		CSynchroZone *m_pSyncZone;		// синхронная зона, к которой принадлежит узел
 		ptrdiff_t m_nZoneDistance;
@@ -101,6 +102,7 @@ namespace DFW2
 		double Vold;					// модуль напряжения на предыдущей итерации
 		CDynaLRC *m_pLRC;				// указатель на СХН узла в динамике
 		CDynaLRC *m_pLRCLF;				// указатель на СХН узла в УР
+		CDynaLRC *m_pLRCGen;			// СХН для генерации, которая не задана моделями генераторов
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
@@ -115,6 +117,7 @@ namespace DFW2
 		void ProcessTopologyRequest();
 		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
+		void InitLF();
 		virtual void StoreStates() override;
 		virtual void RestoreStates() override;
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
@@ -139,8 +142,6 @@ namespace DFW2
 		static const _TCHAR *m_cszGsh;
 		static const _TCHAR *m_cszBsh;
 
-		// СХН для генерации, которая не задана моделями генераторов
-		static CDynaLRC *m_pLRCGen;
 	protected:
 		void SetLowVoltage(bool bLowVoltage);
 		double FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow);

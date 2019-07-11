@@ -8,10 +8,11 @@
 #include "cs.h"
 using namespace DFW2;
 
-CDynaModel::CDynaModel() : Symbolic(NULL),
-						   pRightVector(NULL),
-						   m_ppVarSearchStackBase(NULL),
-						   m_cszDampingName(NULL),
+CDynaModel::CDynaModel() : Symbolic(nullptr),
+						   pRightVector(nullptr),
+						   m_ppVarSearchStackBase(nullptr),
+						   m_cszDampingName(nullptr),
+						   m_pLRCGen(nullptr),
 						   m_Discontinuities(this),
 						   m_Automatic(this),
 						   Nodes(this),
