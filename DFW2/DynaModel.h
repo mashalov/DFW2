@@ -24,7 +24,7 @@ namespace DFW2
 			ptrdiff_t m_nColsCount;
 			double *pAxRow , *pAx;
 			ptrdiff_t *pApRow, *pAp;
-
+			ptrdiff_t m_nConstElementsToSkip;
 			MatrixRow() : m_nColsCount(NULL) 
 			{
 
@@ -163,6 +163,7 @@ namespace DFW2
 
 
 			bool m_bRefactorMatrix;
+			bool m_bFillConstantElements;
 			bool m_bNewtonConverged;
 			bool m_bNordsiekSaved;
 			bool m_bNewtonDisconverging;
@@ -286,6 +287,11 @@ namespace DFW2
 			void RefactorMatrix(bool bRefactor = true)
 			{
 				m_bRefactorMatrix = bRefactor;
+			}
+
+			void UpdateConstElements(bool bUpdate = true)
+			{
+				m_bFillConstantElements = bUpdate;
 			}
 
 			inline double CurrentTimePlusStep()
@@ -576,6 +582,14 @@ namespace DFW2
 			return m_cszDampingName;
 		}
 
+		bool CountConstElementsToSkip(ptrdiff_t nRow);
+		bool SkipConstElements(ptrdiff_t nRow);
+
+		inline bool FillConstantElements()
+		{
+			return sc.m_bFillConstantElements;
+		}
+		
 		inline bool EstimateBuild()
 		{
 			return m_bEstimateBuild;

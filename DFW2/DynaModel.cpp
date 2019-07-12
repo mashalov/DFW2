@@ -249,6 +249,7 @@ bool CDynaModel::InitDevices()
 		Status = DFS_FAILED;
 
 	KLU_defaults(&Common);
+	Common.ordering = 0; // используем amd (0) или colamd (1). 0 - лучше для userefactor = true, 1 - для userefactor = false
 
 	ptrdiff_t nTotalOKInits = -1;
 	
