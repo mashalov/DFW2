@@ -1051,6 +1051,10 @@ bool CLoadFlow::UpdateQToGenerators()
 						_CheckNumber(pGen->Q);
 						//					_ASSERTE(fabs(pGen->Q - OldQ) < 0.00001);
 					}
+					else if (pGen->GetType() == eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER)
+					{
+						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->m_nCount;
+					}
 					else
 						pGen->Q = 0.0;
 			}
