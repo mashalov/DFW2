@@ -100,7 +100,10 @@ bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
 	bool bRes = true;
 
 	if (sc.q != Newq)
+	{
 		sc.RefactorMatrix();
+		sc.UpdateConstElements();
+	}
 
 	sc.q = Newq;
 
@@ -151,6 +154,7 @@ void CDynaModel::RebuildMatrix(bool bRebuild)
 void CDynaModel::ProcessTopologyRequest()
 {
 	sc.m_bProcessTopology = true;
+	sc.UpdateConstElements();
 }
 
 void CDynaModel::DiscontinuityRequest()

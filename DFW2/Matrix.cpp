@@ -13,7 +13,7 @@ bool CDynaModel::EstimateMatrix()
 	CleanUpMatrix(bSaveRightVector);
 	
 	m_nMatrixSize = m_nNonZeroCount = 0;
-	m_bEstimateBuild = true;
+	sc.m_bFillConstantElements = m_bEstimateBuild = true;
 
 	sc.RefactorMatrix();
 
@@ -162,6 +162,10 @@ bool CDynaModel::BuildMatrix()
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = sc.m_dCurrentH;
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Рефакторизация матрицы %d"), sc.nFactorizationsCount);
+		if(sc.m_bFillConstantElements)
+			Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Обновление констант"));
+		if (!EstimateBuild())
+			sc.m_bFillConstantElements = false;
 	}
 
 	return bRes;
@@ -713,3 +717,28 @@ void CDynaModel::ScaleAlgebraicEquations()
 
 	}
 }
+
+bool CDynaModel::CountConstElementsToSkip(ptrdiff_t nRow)
+{
+	if (nRow >= 0 && nRow < m_nMatrixSize)
+	{
+		MatrixRow *pRow = m_pMatrixRows + nRow;
+		pRow->m_nConstElementsToSkip = pRow->pAp - pRow->pApRow;
+	}
+	else
+		m_bStatus = false;
+	return m_bStatus;
+}
+bool CDynaModel::SkipConstElements(ptrdiff_t nRow)
+{
+	if (nRow >= 0 && nRow < m_nMatrixSize)
+	{
+		MatrixRow *pRow = m_pMatrixRows + nRow;
+		pRow->pAp = pRow->pApRow + pRow->m_nConstElementsToSkip;
+		pRow->pAx = pRow->pAxRow + pRow->m_nConstElementsToSkip;
+	}
+	else
+		m_bStatus = false;
+	return m_bStatus;
+}
+
