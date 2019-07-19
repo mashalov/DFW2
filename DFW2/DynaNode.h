@@ -117,6 +117,7 @@ namespace DFW2
 		void ProcessTopologyRequest();
 		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
+		// инициализация узла для расчета УР
 		void InitLF();
 		virtual void StoreStates() override;
 		virtual void RestoreStates() override;
