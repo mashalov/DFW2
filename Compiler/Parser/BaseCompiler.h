@@ -1,16 +1,18 @@
-#pragma once
+﻿#pragma once
 #include "AutoCompilerMessages.h"
 #include "ExpressionParser.h"
 #include "CompilerLogger.h"
 #include "DLLOutput.h"
 
+
+// ссылка на элемент модели
 class CCompilerModelLink
 {
 protected:
-	ptrdiff_t m_eType;
-	wstring m_strObjClass;
-	wstring m_strObjKey;
-	wstring m_strObjProp;
+	ptrdiff_t m_eType;		// тип ссылки
+	wstring m_strObjClass;	// наименование класса
+	wstring m_strObjKey;	// ключ, если сложный то разделенный запятыми
+	wstring m_strObjProp;	// имя параметра
 public:
 	CCompilerModelLink(ptrdiff_t eType, const _TCHAR *cszObjClass, const _TCHAR *cszObjKey, const _TCHAR *cszObjProp) :
 		m_eType(eType),
@@ -22,7 +24,7 @@ public:
 		stringutils::trim(m_strObjKey);
 		stringutils::trim(m_strObjProp);
 	}
-
+	// разворачивает ссылку в строчное представление вида "Класс[Ключ1,...,КлючN].Параметр"
 	wstring ToString() const
 	{
 		return wstring(Cex(_T("%s[%s].%s"), m_strObjClass.c_str(), m_strObjKey.c_str(), m_strObjProp.c_str()));

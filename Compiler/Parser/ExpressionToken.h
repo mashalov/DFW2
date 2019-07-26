@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 
 #include "stack"
 #include "list"
@@ -17,17 +17,19 @@ class CCompilerEquations;
 class CExpressionParser;
 class CExpressionParserRule;
 
+// С‚РёРїС‹ СЃРёРјРІРѕР»РѕРІ
 enum eExpressionSymbolType
 {
-	EST_NUMBER,
-	EST_OPERATOR,
-	EST_DOT,
-	EST_COMMA,
-	EST_ALPHA,
-	EST_ERROR,
-	EST_EOF
+	EST_NUMBER,			// С‡РёСЃР»Рѕ 
+	EST_OPERATOR,		// РѕРїРµСЂР°С‚РѕСЂ
+	EST_DOT,			// С‚РѕС‡РєР°
+	EST_COMMA,			// Р·Р°РїСЏС‚Р°СЏ
+	EST_ALPHA,			// Р±СѓРєРІРµРЅРЅС‹Р№ СЃРёРјРІРѕР»
+	EST_ERROR,			// РїСЂРёР·РЅР°Рє РѕС€РёР±РєРё
+	EST_EOF				// РїСЂРёР·РЅР°Рє РєРѕРЅС†Р° СЃС‚СЂРѕРєРё РІС‹СЂР°Р¶РµРЅРёСЏ
 };
 
+// С‚РёРїС‹ С‚РѕРєРµРЅРѕРІ
 enum eExpressionTokenType
 {
 	ETT_UNDEFINED,
@@ -98,13 +100,14 @@ enum eExpressionTokenType
 	ETT_ROOT
 };
 
+// С‚РёРїС‹ РїРµСЂРµРјРµРЅРЅС‹С… РјРѕРґРµР»Рё
 enum eCOMPILERVARTYPE
 {
-	eCVT_INTERNAL,
-	eCVT_EXTERNAL,
-	eCVT_EXTERNALSETPOINT,
-	eCVT_CONST,
-	eCVT_HOST
+	eCVT_INTERNAL,				// РІРЅСѓС‚СЂРµРЅРЅСЏСЏ РїРµСЂРµРјРµРЅРЅР°СЏ (РїРµСЂРµРјРµРЅРЅР°СЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ РєРѕРјРїРёР»РёСЂСѓРµРјРѕР№ СЃРёСЃС‚РµРјС‹ РІС‹СЂР°Р¶РµРЅРёР№)
+	eCVT_EXTERNAL,				// РІРЅРµС€РЅСЏСЏ РїРµСЂРµРјРµРЅРЅР°СЏ (РёР· РІРЅРµС€РЅРµР№ РјРѕРґРµР»Рё, РЅРµ РёР· РєРѕРјРїРёР»РёСЂСѓРµРјРѕР№ СЃРёСЃС‚РµРјС‹)
+	eCVT_EXTERNALSETPOINT,		// РІРЅРµС€РЅСЏСЏ СѓСЃС‚Р°РІРєР° (РЅРµ СЏРІР»СЏРµС‚СЃСЏ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ, РЅРѕ РјРѕР¶РµС‚ РёР·РјРµРЅСЏС‚СЊСЃСЏ РґРёСЃРєСЂРµС‚РЅРѕ)
+	eCVT_CONST,					// РєРѕРЅСЃС‚Р°РЅС‚Р° (РёРјРµРЅРѕРІР°РЅРЅР°СЏ, РґР»СЏ СЃСЃС‹Р»РєРё РїРѕ РёРјРµРЅРё)
+	eCVT_HOST					// РїРµСЂРµРјРµРЅРЅР°СЏ, РїСЂРµРґРѕСЃС‚Р°РІР»СЏРµРјР°СЏ РїРѕ РёРјРµРЅРё РґРІРёР¶РєРѕРј
 };
 
 class CVariableExtendedInfoBase
@@ -113,15 +116,15 @@ public:
 	virtual ~CVariableExtendedInfoBase() {}
 };
 
-// информация о переменной
+// РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїРµСЂРµРјРµРЅРЅРѕР№
 struct VariableEnum
 {
-	ptrdiff_t m_nIndex;					// индекс (номер уравнения, если переменная в него входит)
-	CExpressionToken *m_pToken;			// токен, который формирует значение переменной
-	size_t m_nRefCount;					// счетчик ссылок на эту переменную
-	eCOMPILERVARTYPE m_eVarType;		// тип переменной по физическому смыслу
-	ptrdiff_t GetIndex() const;			// функция возвращающая индекс в зависимости от типа
-	CVariableExtendedInfoBase *m_pVarExtendedInfo;
+	ptrdiff_t m_nIndex;								// РёРЅРґРµРєСЃ (РЅРѕРјРµСЂ СѓСЂР°РІРЅРµРЅРёСЏ, РµСЃР»Рё РїРµСЂРµРјРµРЅРЅР°СЏ РІ РЅРµРіРѕ РІС…РѕРґРёС‚)
+	CExpressionToken *m_pToken;						// С‚РѕРєРµРЅ, РєРѕС‚РѕСЂС‹Р№ С„РѕСЂРјРёСЂСѓРµС‚ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№
+	size_t m_nRefCount;								// СЃС‡РµС‚С‡РёРє СЃСЃС‹Р»РѕРє РЅР° СЌС‚Сѓ РїРµСЂРµРјРµРЅРЅСѓСЋ
+	eCOMPILERVARTYPE m_eVarType;					// С‚РёРї РїРµСЂРµРјРµРЅРЅРѕР№ РїРѕ С„РёР·РёС‡РµСЃРєРѕРјСѓ СЃРјС‹СЃР»Сѓ
+	ptrdiff_t GetIndex() const;						// С„СѓРЅРєС†РёСЏ РІРѕР·РІСЂР°С‰Р°СЋС‰Р°СЏ РёРЅРґРµРєСЃ РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ С‚РёРїР°
+	CVariableExtendedInfoBase *m_pVarExtendedInfo;	// РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅР°СЏ РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ РїРµСЂРµРјРµРЅРЅРѕР№
 	VariableEnum(CExpressionToken *pToken) : m_pToken(pToken), 
 											 m_nRefCount(0), 
 											 m_nIndex(0), 
@@ -153,25 +156,25 @@ typedef set<const CExpressionToken*> CONSTTOKENSET;
 typedef CONSTTOKENSET::iterator CONSTTOKENSETITR;
 
 
-// базовый класс для преобразований выражений в функциях и операторах
+// Р±Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РґР»СЏ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёР№ РІС‹СЂР°Р¶РµРЅРёР№ РІ С„СѓРЅРєС†РёСЏС… Рё РѕРїРµСЂР°С‚РѕСЂР°С…
 class CExpressionTransform
 {
 public:
-	// упрощение
+	// СѓРїСЂРѕС‰РµРЅРёРµ
 	virtual bool Simplify(CExpressionToken* pToken) = 0;		
-	// развертывание
+	// СЂР°Р·РІРµСЂС‚С‹РІР°РЅРёРµ
 	virtual bool Expand(CExpressionToken* pToken) = 0;
-	// формирование текстового представления производной
+	// С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ С‚РµРєСЃС‚РѕРІРѕРіРѕ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ РїСЂРѕРёР·РІРѕРґРЅРѕР№
 	virtual bool Derivative(CExpressionToken* pToken, CExpressionToken *pChild, wstring& Result) { return false;  };
-	// возврат количества уравнений, описывающих функцию или оперетор
+	// РІРѕР·РІСЂР°С‚ РєРѕР»РёС‡РµСЃС‚РІР° СѓСЂР°РІРЅРµРЅРёР№, РѕРїРёСЃС‹РІР°СЋС‰РёС… С„СѓРЅРєС†РёСЋ РёР»Рё РѕРїРµСЂРµС‚РѕСЂ
 	virtual size_t EquationsCount() { return 1; }
-	// признак реализации функции или оператора в движке, а не в компилируемом тексте
+	// РїСЂРёР·РЅР°Рє СЂРµР°Р»РёР·Р°С†РёРё С„СѓРЅРєС†РёРё РёР»Рё РѕРїРµСЂР°С‚РѕСЂР° РІ РґРІРёР¶РєРµ, Р° РЅРµ РІ РєРѕРјРїРёР»РёСЂСѓРµРјРѕРј С‚РµРєСЃС‚Рµ
 	virtual bool IsHostBlock() { return false;  }
-	// возврат типа блока, если он реализован в движке ?
+	// РІРѕР·РІСЂР°С‚ С‚РёРїР° Р±Р»РѕРєР°, РµСЃР»Рё РѕРЅ СЂРµР°Р»РёР·РѕРІР°РЅ РІ РґРІРёР¶РєРµ ?
 	virtual const _TCHAR* GetBlockType() { _ASSERTE(NULL);  return NULL; }
-	// возврат количества выводов в блоке (входы + выходы)
+	// РІРѕР·РІСЂР°С‚ РєРѕР»РёС‡РµСЃС‚РІР° РІС‹РІРѕРґРѕРІ РІ Р±Р»РѕРєРµ (РІС…РѕРґС‹ + РІС‹С…РѕРґС‹)
 	virtual const long GetPinsCount() { return 2; }
-	// функция, возвращающая строку особенной инициализации блока, если нужна
+	// С„СѓРЅРєС†РёСЏ, РІРѕР·РІСЂР°С‰Р°СЋС‰Р°СЏ СЃС‚СЂРѕРєСѓ РѕСЃРѕР±РµРЅРЅРѕР№ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё Р±Р»РѕРєР°, РµСЃР»Рё РЅСѓР¶РЅР°
 	virtual const _TCHAR* SpecialInitFunctionName() { return NULL; }
 
 	static void CompareTokens(CExpressionToken* pToken1,
@@ -185,13 +188,13 @@ public:
 
 };
 
-// информация о функции
+// РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ С„СѓРЅРєС†РёРё
 struct FunctionEnum
 {
-	eExpressionTokenType m_eOperatorType;		// тип функции
-	wstring m_strOperatorText;					// текстовое представление
-	int m_nArgsCount;							// количество аргументов
-	CExpressionTransform *m_pTransform;			// указатель на класс преобразования
+	eExpressionTokenType m_eOperatorType;		// С‚РёРї С„СѓРЅРєС†РёРё
+	wstring m_strOperatorText;					// С‚РµРєСЃС‚РѕРІРѕРµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ
+	int m_nArgsCount;							// РєРѕР»РёС‡РµСЃС‚РІРѕ Р°СЂРіСѓРјРµРЅС‚РѕРІ
+	CExpressionTransform *m_pTransform;			// СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РєР»Р°СЃСЃ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёСЏ
 
 	FunctionEnum(eExpressionTokenType eType, 
 				 const _TCHAR* cszOperatorText, 
@@ -204,10 +207,10 @@ struct FunctionEnum
 				 m_pTransform(pTransform) { }
 };
 
-// информация об операторе
+// РёРЅС„РѕСЂРјР°С†РёСЏ РѕР± РѕРїРµСЂР°С‚РѕСЂРµ
 struct OperatorEnum : FunctionEnum
 {
-	int m_nPrecedence;		// все как у функции, но дополнительно задаются очередность и признак правой ассоциативности
+	int m_nPrecedence;		// РІСЃРµ РєР°Рє Сѓ С„СѓРЅРєС†РёРё, РЅРѕ РґРѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ Р·Р°РґР°СЋС‚СЃСЏ РѕС‡РµСЂРµРґРЅРѕСЃС‚СЊ Рё РїСЂРёР·РЅР°Рє РїСЂР°РІРѕР№ Р°СЃСЃРѕС†РёР°С‚РёРІРЅРѕСЃС‚Рё
 	int m_nRightAssoc;
 
 	OperatorEnum(eExpressionTokenType eType, 
@@ -229,20 +232,20 @@ typedef vector<OperatorEnum*> OPERATORVEC;
 typedef OPERATORVEC::const_iterator OPERATORITR;
 
 
-// описание уравнения
+// РѕРїРёСЃР°РЅРёРµ СѓСЂР°РІРЅРµРЅРёСЏ
 class CCompilerEquation
 {
 public:
-	CExpressionToken *m_pToken;		// токен, для которого записывается уравнение
-	ptrdiff_t m_nIndex;				// номер уравнения
+	CExpressionToken *m_pToken;		// С‚РѕРєРµРЅ, РґР»СЏ РєРѕС‚РѕСЂРѕРіРѕ Р·Р°РїРёСЃС‹РІР°РµС‚СЃСЏ СѓСЂР°РІРЅРµРЅРёРµ
+	ptrdiff_t m_nIndex;				// РЅРѕРјРµСЂ СѓСЂР°РІРЅРµРЅРёСЏ
 	CCompilerEquation(CExpressionToken *pToken, ptrdiff_t nIndex) : m_pToken(pToken), m_nIndex(nIndex) {}
-	// текстовые шаблоны для ссылок на разные типы переменных в уравнении
+	// С‚РµРєСЃС‚РѕРІС‹Рµ С€Р°Р±Р»РѕРЅС‹ РґР»СЏ СЃСЃС‹Р»РѕРє РЅР° СЂР°Р·РЅС‹Рµ С‚РёРїС‹ РїРµСЂРµРјРµРЅРЅС‹С… РІ СѓСЂР°РІРЅРµРЅРёРё
 	static const _TCHAR *m_cszInternalVar;		
 	static const _TCHAR *m_cszExternalVar;
 	static const _TCHAR *m_cszConstVar;
 	static const _TCHAR *m_cszSetpointVar;
 	static const _TCHAR *m_cszHostVar;
-	// функция генерации текстового представления уравнения (основного или уравнения инициализации)
+	// С„СѓРЅРєС†РёСЏ РіРµРЅРµСЂР°С†РёРё С‚РµРєСЃС‚РѕРІРѕРіРѕ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ СѓСЂР°РІРЅРµРЅРёСЏ (РѕСЃРЅРѕРІРЅРѕРіРѕ РёР»Рё СѓСЂР°РІРЅРµРЅРёСЏ РёРЅРёС†РёР°Р»РёР·Р°С†РёРё)
 	wstring Generate(bool bInitEquiation = false) const;
 	static bool IsParentNeedEquation(CExpressionToken *pToken);
 };
@@ -252,16 +255,16 @@ class CExpressionToken
 {
 
 public:
-	eExpressionTokenType m_eType;			//	тип токена
-	size_t m_nTokenBegin;					//  начало токена в разбираемой строке
-	size_t m_nTokenLength;					//  длина токена
-	TOKENLIST m_Children;					//  токены, являющиеся дочерними к данному
-	TOKENSET m_Parents;						//  множество уникальных родителей токена
-	const FunctionEnum *m_pFunctionInfo;	//  для токена-функции - информация о функции
-	wstring m_strStringValue;				//  строчное представление токена
-	wstring m_strEquation;					//  строчное представление уравнения токена
-	CExpressionParser *m_pParser;			//  экземпляр парсера, которому принадлежит токен
-	CCompilerEquation *m_pEquation;			//  уравнение токена
+	eExpressionTokenType m_eType;			//	С‚РёРї С‚РѕРєРµРЅР°
+	size_t m_nTokenBegin;					//  РЅР°С‡Р°Р»Рѕ С‚РѕРєРµРЅР° РІ СЂР°Р·Р±РёСЂР°РµРјРѕР№ СЃС‚СЂРѕРєРµ
+	size_t m_nTokenLength;					//  РґР»РёРЅР° С‚РѕРєРµРЅР°
+	TOKENLIST m_Children;					//  С‚РѕРєРµРЅС‹, СЏРІР»СЏСЋС‰РёРµСЃСЏ РґРѕС‡РµСЂРЅРёРјРё Рє РґР°РЅРЅРѕРјСѓ
+	TOKENSET m_Parents;						//  РјРЅРѕР¶РµСЃС‚РІРѕ СѓРЅРёРєР°Р»СЊРЅС‹С… СЂРѕРґРёС‚РµР»РµР№ С‚РѕРєРµРЅР°
+	const FunctionEnum *m_pFunctionInfo;	//  РґР»СЏ С‚РѕРєРµРЅР°-С„СѓРЅРєС†РёРё - РёРЅС„РѕСЂРјР°С†РёСЏ Рѕ С„СѓРЅРєС†РёРё
+	wstring m_strStringValue;				//  СЃС‚СЂРѕС‡РЅРѕРµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ С‚РѕРєРµРЅР°
+	wstring m_strEquation;					//  СЃС‚СЂРѕС‡РЅРѕРµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёРµ СѓСЂР°РІРЅРµРЅРёСЏ С‚РѕРєРµРЅР°
+	CExpressionParser *m_pParser;			//  СЌРєР·РµРјРїР»СЏСЂ РїР°СЂСЃРµСЂР°, РєРѕС‚РѕСЂРѕРјСѓ РїСЂРёРЅР°РґР»РµР¶РёС‚ С‚РѕРєРµРЅ
+	CCompilerEquation *m_pEquation;			//  СѓСЂР°РІРЅРµРЅРёРµ С‚РѕРєРµРЅР°
 
 	void GetOperand(CExpressionToken *pToken, wstring& Result, bool bRight) const;
 	bool GetEquationOperandIndex(const CCompilerEquation *pEquation, wstring& Result) const;
@@ -274,7 +277,7 @@ public:
 	virtual ~CExpressionToken() {}
 
 
-	// функции для обобщенного определения типа токена
+	// С„СѓРЅРєС†РёРё РґР»СЏ РѕР±РѕР±С‰РµРЅРЅРѕРіРѕ РѕРїСЂРµРґРµР»РµРЅРёСЏ С‚РёРїР° С‚РѕРєРµРЅР°
 	bool IsEOF() const			{ return m_eType == ETT_EOF; }
 	bool IsVariable() const		{ return m_eType == ETT_VARIABLE || m_eType == ETT_MODELLINK; }
 	bool IsLeaf() const			{ return m_eType == ETT_NUMERIC_CONSTANT || IsVariable() ;  }
@@ -360,7 +363,7 @@ protected:
 	TOKENLIST m_ChildrenSave;
 public:
 
-	// стадии обработки символов в ссылке на модель
+	// СЃС‚Р°РґРёРё РѕР±СЂР°Р±РѕС‚РєРё СЃРёРјРІРѕР»РѕРІ РІ СЃСЃС‹Р»РєРµ РЅР° РјРѕРґРµР»СЊ
 	enum eModelLinkSymbolWait
 	{
 		MLS_NUMBER,
@@ -402,11 +405,13 @@ public:
 	VARIABLECONSTITR End()  const {  return m_Variables.end(); }
 };
 
+
+// С€Р°Р±Р»РѕРЅ РґР»СЏ РїСЂРµРѕР±СЂР°Р·РѕРІР°РЅРёСЏ РІС‹СЂР°Р¶РµРЅРёР№
 class CExpressionRule
 {
 protected:
-	CExpressionParserRule *m_pSource;
-	CExpressionParserRule *m_pDestination;
+	CExpressionParserRule *m_pSource;		// РІС…РѕРґРЅРѕРµ РїСЂР°РІРёР»Рѕ
+	CExpressionParserRule *m_pDestination;	// РІС‹С…РѕРґРЅРѕРµ РїСЂР°РІРёР»Рѕ
 	bool Match(CExpressionToken *pToken);
 	VARIABLES m_Vars;
 public:
@@ -418,6 +423,3 @@ public:
 
 typedef list<CExpressionRule*> EXPRESSIONRULES;
 typedef EXPRESSIONRULES::const_iterator EXPRESSIONTRULEITR;
-
-
-

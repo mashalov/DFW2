@@ -1,4 +1,4 @@
-#include "..\stdafx.h"
+п»ї#include "..\stdafx.h"
 #include "ExpressionParser.h"
 #include "ExpressionDictionary.h"
 
@@ -73,19 +73,20 @@ void CExpressionParser::CleanUp()
 		m_Variables.Clear();
 }
 
+// РёР·РІР»РµРєР°РµС‚ СЃР»РµР¶СѓСЋС‰РёР№ С‚РѕРєРµРЅ РёР· РІС‹СЂР°Р¶РµРЅРёСЏ
 CExpressionToken* CExpressionParser::GetToken()
 {
-	// сбрасываем все атрибуты токена
+	// СЃР±СЂР°СЃС‹РІР°РµРј РІСЃРµ Р°С‚СЂРёР±СѓС‚С‹ С‚РѕРєРµРЅР°
 	ResetToken();
 	
-	// пробуем извлечь оператор
-	// если оператор будет извлечен, будет создан токен внутри ProcessOperator
+	// РїСЂРѕР±СѓРµРј РёР·РІР»РµС‡СЊ РѕРїРµСЂР°С‚РѕСЂ
+	// РµСЃР»Рё РѕРїРµСЂР°С‚РѕСЂ Р±СѓРґРµС‚ РёР·РІР»РµС‡РµРЅ, Р±СѓРґРµС‚ СЃРѕР·РґР°РЅ С‚РѕРєРµРЅ РІРЅСѓС‚СЂРё ProcessOperator
 	if (!ProcessOperator())
 	{
-		// если не оператор
-		while (m_bContinueToken)	// пока токен не разобран полностью
+		// РµСЃР»Рё РЅРµ РѕРїРµСЂР°С‚РѕСЂ
+		while (m_bContinueToken)	// РїРѕРєР° С‚РѕРєРµРЅ РЅРµ СЂР°Р·РѕР±СЂР°РЅ РїРѕР»РЅРѕСЃС‚СЊСЋ
 		{
-			// если следующий символ ошибочный - создаем токен и выходим
+			// РµСЃР»Рё СЃР»РµРґСѓСЋС‰РёР№ СЃРёРјРІРѕР» РѕС€РёР±РѕС‡РЅС‹Р№ - СЃРѕР·РґР°РµРј С‚РѕРєРµРЅ Рё РІС‹С…РѕРґРёРј
 			if (m_eNextSymbolType == EST_ERROR)
 			{
 				Advance();
@@ -93,33 +94,33 @@ CExpressionToken* CExpressionParser::GetToken()
 				break;
 			}
 
-			// если токен есть и он ошибочный - выход
+			// РµСЃР»Рё С‚РѕРєРµРЅ РµСЃС‚СЊ Рё РѕРЅ РѕС€РёР±РѕС‡РЅС‹Р№ - РІС‹С…РѕРґ
 			if (m_pCurrentToken && m_pCurrentToken->IsError())
 				break;
 
-			// выбираем способ обработки токена по ожидаемому типу
+			// РІС‹Р±РёСЂР°РµРј СЃРїРѕСЃРѕР± РѕР±СЂР°Р±РѕС‚РєРё С‚РѕРєРµРЅР° РїРѕ РѕР¶РёРґР°РµРјРѕРјСѓ С‚РёРїСѓ
 			switch (m_eAwaitTokenType)
 			{
 			case ETT_UNDEFINED:
-				ProcessUndefined();			// пока не знаем какой токен, определяем состояние
+				ProcessUndefined();			// РїРѕРєР° РЅРµ Р·РЅР°РµРј РєР°РєРѕР№ С‚РѕРєРµРЅ, РѕРїСЂРµРґРµР»СЏРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ
 				break;
 			case ETT_NUMERIC_CONSTANT:
-				ProcessNumericConstant();	// извлекаем численную константу
+				ProcessNumericConstant();	// РёР·РІР»РµРєР°РµРј С‡РёСЃР»РµРЅРЅСѓСЋ РєРѕРЅСЃС‚Р°РЅС‚Сѓ
 				break;
 			case ETT_VARIABLE:
-				ProcessVariable();			// извлекаем имя переменной
+				ProcessVariable();			// РёР·РІР»РµРєР°РµРј РёРјСЏ РїРµСЂРµРјРµРЅРЅРѕР№
 				break;
 			case ETT_MODELLINK:
-				ProcessModelLink();			// извлекаем ссылку на модель в формате table[key].prop
+				ProcessModelLink();			// РёР·РІР»РµРєР°РµРј СЃСЃС‹Р»РєСѓ РЅР° РјРѕРґРµР»СЊ РІ С„РѕСЂРјР°С‚Рµ table[key].prop
 				break;
 			}
 
-			CurrentSymbolType();			// определяем тип следующего символа
+			CurrentSymbolType();			// РѕРїСЂРµРґРµР»СЏРµРј С‚РёРї СЃР»РµРґСѓСЋС‰РµРіРѕ СЃРёРјРІРѕР»Р°
 		}
 	}
 
-	// если текущий токен является оператором, не является унарным минусом и не является закрывающей скобкой
-	// разрешаем ожидание унарного минуса
+	// РµСЃР»Рё С‚РµРєСѓС‰РёР№ С‚РѕРєРµРЅ СЏРІР»СЏРµС‚СЃСЏ РѕРїРµСЂР°С‚РѕСЂРѕРј, РЅРµ СЏРІР»СЏРµС‚СЃСЏ СѓРЅР°СЂРЅС‹Рј РјРёРЅСѓСЃРѕРј Рё РЅРµ СЏРІР»СЏРµС‚СЃСЏ Р·Р°РєСЂС‹РІР°СЋС‰РµР№ СЃРєРѕР±РєРѕР№
+	// СЂР°Р·СЂРµС€Р°РµРј РѕР¶РёРґР°РЅРёРµ СѓРЅР°СЂРЅРѕРіРѕ РјРёРЅСѓСЃР°
 	if (m_pCurrentToken->IsOperator() && !m_pCurrentToken->IsUnary() && m_pCurrentToken->GetType() != ETT_RB)
 		m_bUnaryMinus = true;
 	else
@@ -128,11 +129,15 @@ CExpressionToken* CExpressionParser::GetToken()
 	return m_pCurrentToken;
 }
 
+// СЂР°Р·Р±РѕСЂ Р·Р°РґР°РЅРЅРѕРіРѕ РІС‹СЂР°Р¶РµРЅРёСЏ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ https://en.wikipedia.org/wiki/Shunting-yard_algorithm
+// Р°Р»РіРѕСЂРёС‚Рј СЂР°СЃС€РёСЂРµРЅ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё С„СѓРЅРєС†РёР№ СЃ РїРµСЂРµРјРµРЅРЅС‹Рј С‡РёСЃР»РѕРј Р°СЂРіСѓРјРµРЅС‚РѕРІ Р·Р° СЃС‡РµС‚ РёСЃРїРѕР»СЊР·РѕРІР°РЅРёСЏ СЃС‚РµРєР° РїРѕСЂСЏРґРєР° -
+// arity stack. Р’ СЂРµР·СѓР»СЊС‚Р°С‚Рµ РїРѕР»СѓС‡Р°РµРј AST РІ ResultStack
+
 bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 {
 	bool bRes = false;
 	eExpressionTokenType eError = ETT_UNDEFINED;
-	// копируем выражение во временный буфер
+	// РєРѕРїРёСЂСѓРµРј РІС‹СЂР°Р¶РµРЅРёРµ РІРѕ РІСЂРµРјРµРЅРЅС‹Р№ Р±СѓС„РµСЂ
 	m_nExpressionLength = _tcslen(cszExpression);
 	m_szExpression = new _TCHAR[m_nExpressionLength + 1];
 	_tcscpy_s(m_szExpression, m_nExpressionLength + 1, cszExpression);
@@ -142,35 +147,38 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 
 	while (pToken)
 	{
-		// работаем пока не конец строки или не ошибка
+		// СЂР°Р±РѕС‚Р°РµРј РїРѕРєР° РЅРµ РєРѕРЅРµС† СЃС‚СЂРѕРєРё РёР»Рё РЅРµ РѕС€РёР±РєР°
 		if (pToken->IsEOF())	break;
 		if (pToken->IsError())	break;
 
-		if (pToken->IsLeaf())								// если токен не может иметь детей - помещаем в стек
+		if (pToken->IsLeaf())								// РµСЃР»Рё С‚РѕРєРµРЅ РЅРµ РјРѕР¶РµС‚ РёРјРµС‚СЊ РґРµС‚РµР№ - РїРѕРјРµС‰Р°РµРј РІ СЃС‚РµРє
 		{
 			m_ResultStack.push(pToken);
 		} 
-		else if (pToken->IsFunction())						// если функция - то помещаем стек и в стек порядка (для многоаргументных функций)
+		else if (pToken->IsFunction())						// РµСЃР»Рё С„СѓРЅРєС†РёСЏ - С‚Рѕ РїРѕРјРµС‰Р°РµРј СЃС‚РµРє Рё РІ СЃС‚РµРє РїРѕСЂСЏРґРєР° (РґР»СЏ РјРЅРѕРіРѕР°СЂРіСѓРјРµРЅС‚РЅС‹С… С„СѓРЅРєС†РёР№)
 		{
 			m_ParserStack.push(pToken);
 			m_ArityStack.push(1);
 		}
-		else if (pToken->IsOperator())						// если оператор
+		else if (pToken->IsOperator())						// РµСЃР»Рё РѕРїРµСЂР°С‚РѕСЂ
 		{
 			if (pToken->GetType() == ETT_COMMA)				
 			{
+				// РµСЃР»Рё Р·Р°РїСЏС‚Р°СЏ
 				bool bMatchParent = false;
 				bool bAtLeastOneOperatorinParenthesis = false;
 
+				// РёС‰РµРј Р»РµРІСѓСЋ СЃРєРѕР±РєСѓ
 				while (!m_ParserStack.empty() && !bMatchParent)
 				{
 					if (m_ParserStack.top()->GetType() == ETT_LB)
-						bMatchParent = true;
+						bMatchParent = true;	// СЃРєРѕР±РєСѓ РЅР°С€Р»Рё, РІСЃРµ РћРљ
 					else
 					{
+						// СЃС‚СЂРѕРёРј РґРµСЂРµРІРѕ РґР»СЏ РѕРїРµСЂР°С‚РѕСЂР° РґРѕ СЃРєРѕР±РєРё
 						eError = BuildOperatorTree();
+						// РѕС‚РјРµС‡Р°РµРј, С‡С‚Рѕ РІРЅСѓС‚СЂРё СЃРєРѕР±РѕРє РµСЃС‚СЊ С…РѕС‚СЏ Р±С‹ РѕРґРёРЅ РѕРїРµСЂР°С‚РѕСЂ
 						bAtLeastOneOperatorinParenthesis = true;
-
 						if (eError != ETT_UNDEFINED)
 							break;
 					}
@@ -178,11 +186,12 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 
 				if (eError == ETT_UNDEFINED)
 				{
+					// РµСЃР»Рё РѕС€РёР±РѕРє РЅРµС‚, РїСЂРѕРІРµСЂСЏРµРј РєСЂР°С‚РЅРѕСЃС‚СЊ СЃРєРѕР±РѕРє
 					if (!bMatchParent)
 						pToken->SetError(ETT_ERROR_NOLEFTPARENTHESIS);
 					else
-						if (!m_ArityStack.empty())
-							m_ArityStack.top()++;
+						if (!m_ArityStack.empty())	
+							m_ArityStack.top()++;		// РµСЃР»Рё СЃС‚РµРє РїРѕСЂСЏРґРєР° РµСЃС‚СЊ - РґРѕР±Р°РІР»СЏРµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Р°СЂРіСѓРјРµРЅС‚РѕРІ РІ Р·Р°РїСЏС‚С‹С…
 						else
 							pToken->SetError(ETT_ERROR_STACKERROR);
 				}
@@ -191,17 +200,20 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 			}
 			else if (pToken->GetType() == ETT_RB)
 			{
+				// РµСЃР»Рё РїСЂР°РІР°СЏ СЃРєРѕР±РєР°
 				bool bMatchParent = false;
 
 				while (!m_ParserStack.empty() && !bMatchParent)
 				{
+					// РёС‰РµРј Р»РµРІСѓСЋ СЃРєРѕР±РєСѓ
 					if (m_ParserStack.top()->GetType() == ETT_LB)
 					{
-						bMatchParent = true;
-						m_ParserStack.pop();
+						bMatchParent = true;	// СЃРєРѕР±РєСѓ РЅР°С€Р»Рё, РІСЃРµ РћРљ
+						m_ParserStack.pop();	// СѓРґР°Р»СЏРµРј РЅР°Р№РґРµРЅРЅСѓСЋ СЃРєРѕР±РєСѓ РёР· СЃС‚РµРєР°
 					}
 					else
 					{
+						// СЃС‚СЂРѕРёРј РґРµСЂРµРІРѕ РґРѕ РѕРїРµСЂР°С‚РѕСЂР° РґРѕ СЃРєРѕР±РєРё
 						eError = BuildOperatorTree();
 						if (eError != ETT_UNDEFINED)
 							break;
@@ -210,18 +222,21 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 
 				if (eError == ETT_UNDEFINED)
 				{
+					// РµСЃР»Рё РѕС€РёР±РѕРє РЅРµС‚ - РїСЂРѕРІРµСЂСЏРµРј РєСЂР°С‚РЅРѕСЃС‚СЊ СЃРєРѕР±РѕРє
 					if (!bMatchParent)
 						pToken->SetError(ETT_ERROR_NOLEFTPARENTHESIS);
 
 					if (!m_ParserStack.empty() && eError == ETT_UNDEFINED)
 					{
+						// РµСЃР»Рё РІ СЃС‚РµРєРµ - С„СѓРЅРєС†РёСЏ
 						if (m_ParserStack.top()->IsFunction())
 						{
+							// СЃС‚СЂРѕРёРј РґР»СЏ РЅРµРµ РґРµСЂРµРІРѕ
 							eError = BuildOperatorTree();
 							if (eError == ETT_UNDEFINED)
 							{
 								if (!m_ArityStack.empty())
-									m_ArityStack.pop();
+									m_ArityStack.pop();		// СѓРґР°Р»СЏРµРј РґР»СЏ С„СѓРєРЅС†РёРё СЌР»РµРјРµРЅС‚ СЃС‚РµРєР° РїРѕСЂСЏРґРєР°
 								else
 									pToken->SetError(ETT_ERROR_STACKERROR);
 							}
@@ -238,10 +253,12 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 			}
 			else if (pToken->GetType() == ETT_LB)
 			{
+				// РµСЃР»Рё Р»РµРІР°СЏ СЃРєРѕР±РєР° - СЃР±СЂР°СЃС‹РІР°РµРј РµРµ РІ СЃС‚РµРє РєР°Рє РѕРїРµСЂР°С‚РѕСЂ
 				m_ParserStack.push(pToken);
 			}
 			else
 			{
+				// С‚РѕРєРµРЅ - РѕРїРµСЂР°С‚РѕСЂ
 				if (!pToken->IsError())
 				{
 					while (!m_ParserStack.empty())
@@ -250,8 +267,10 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 
 						if (pStackToken->RightAssociativity())
 						{
+							// РµСЃР»Рё С‚РѕРєРµРЅ РІ СЃС‚РµРєРµ - РїСЂР°РІРѕР°СЃСЃРѕС†РёР°С‚РёРІРЅС‹Р№, Рё РµРіРѕ РѕС‡РµСЂРµРґРЅРѕСЃС‚СЊ Р±РѕР»СЊС€Рµ С‚РµРєСѓС‰РµРіРѕ С‚РѕРєРµРЅР°
 							if (pStackToken->Precedence() > pToken->Precedence() && !pToken->IsUnary())
 							{
+								// СЃС‚СЂРѕРёРј РґРµСЂРµРІРѕ С‚РѕРєРµРЅР°
 								eError = BuildOperatorTree();
 								if (eError != ETT_UNDEFINED)
 								{
@@ -264,8 +283,10 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 						}
 						else
 						{
+							// РµСЃР»Рё С‚РѕРєРµРЅ Р»РµРІРѕР°СЃСЃРѕС†РёР°С‚РёРІРЅС‹Р№ Рё РµРіРѕ РѕС‡РµСЂРµРґРЅРѕСЃС‚СЊ Р±РѕР»СЊС€Рµ РёР»Рё СЂР°РІРЅР° РѕС‡РµСЂРµРґРЅРѕСЃС‚Рё С‚РµРєСѓС‰РµРіРѕ С‚РѕРєРµРЅР°
 							if (pStackToken->Precedence() >= pToken->Precedence() && !pToken->IsUnary())
 							{
+								// СЃС‚СЂРѕРёРј РґРµСЂРµРІРѕ РѕРїРµСЂР°С‚РѕСЂР°
 								eError = BuildOperatorTree();
 								if (eError != ETT_UNDEFINED)
 								{
@@ -292,6 +313,7 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 	{
 		while (!m_ParserStack.empty())
 		{
+			// РµСЃР»Рё РІРЅРµР·Р°РїРЅРѕ РЅР°С€Р»Рё Р»РµРІСѓСЋ СЃРєРѕР±РєСѓ - РѕС€РёР±РєР°, РїСЂР°РІРѕР№ РЅРµ Р±С‹Р»Рѕ
 			if (m_ParserStack.top()->GetType() == ETT_LB)
 			{
 				pToken->SetError(ETT_ERROR_NORIGHTPARENTHESIS);
@@ -305,8 +327,11 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 			}
 		}
 
+
+		// РѕС‡РёС‰Р°РµРј СЃС‚РµРє РїР°СЂСЃРµСЂР°
 		m_ParserStack = PARSERSTACK();
 
+		// РїСЂРѕРІРµСЂСЏРµРј СЂРµР·СѓР»СЊС‚Р°С‚ - РІ СЃС‚РµРєРµ СЂРµР·СѓР»СЊС‚Р°С‚Р° РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ РѕРґРёРЅ РѕРїРµСЂР°С‚РѕСЂ
 		if (!pToken->IsError())
 			if (m_ResultStack.size() != 1)
 				pToken->SetError(ETT_ERROR_STACKERROR);
@@ -314,6 +339,8 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 
 	if (pToken && !pToken->IsError())
 	{
+		// РІСЃС‚Р°РІР»СЏРµРј РІ СЃС‚РµРє СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ РїСЂРѕРјРµР¶СѓС‚РѕС‡РЅС‹Р№ РєРѕСЂРЅРµРІРѕР№ СЌР»РµРјРµРЅС‚
+		// С‚Р°Рє РєР°Рє РІС‹СЂР°Р¶РµРЅРёРµ РѕР±СЏР·Р°РЅРѕ РёРјРµС‚СЊ РєРѕСЂРЅРµРІРѕР№ СЌР»РµРјРµРЅС‚
 		CExpressionToken *pRoot = NewExpressionToken(ETT_ROOT);
 		pRoot->AddChild(m_ResultStack.top());
 		m_ResultStack.pop();
@@ -325,6 +352,7 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 	return bRes;
 }
 
+// РїСЂРѕРїСѓСЃРє РїСЂРѕР±РµР»РѕРІ РІ РІС‹СЂР°Р¶РµРЅРёРё РґРѕ СЃР»РµРґСѓСЋС‰РµРіРѕ РЅРµ РїСЂРѕР±РµР»Р°
 void CExpressionParser::SkipSpaces()
 {
 	while (m_nHeadPosition < m_nExpressionLength)
@@ -335,26 +363,26 @@ void CExpressionParser::SkipSpaces()
 	}
 }
 
-// возвращает тип символа 
+// РІРѕР·РІСЂР°С‰Р°РµС‚ С‚РёРї СЃРёРјРІРѕР»Р° 
 void CExpressionParser::CurrentSymbolType()
 {
-	m_eNextSymbolType = EST_ERROR;															// возвращаем ошибку, если ни один из нижеследующих типов не подойдет
-	m_nAdvanceNextSymbol = 1;																// по умолчанию длина символа - 1
+	m_eNextSymbolType = EST_ERROR;															// РІРѕР·РІСЂР°С‰Р°РµРј РѕС€РёР±РєСѓ, РµСЃР»Рё РЅРё РѕРґРёРЅ РёР· РЅРёР¶РµСЃР»РµРґСѓСЋС‰РёС… С‚РёРїРѕРІ РЅРµ РїРѕРґРѕР№РґРµС‚
+	m_nAdvanceNextSymbol = 1;																// РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґР»РёРЅР° СЃРёРјРІРѕР»Р° - 1
 	_TCHAR *pCurrentChar = m_szExpression + m_nHeadPosition;
-	if (m_nHeadPosition >= m_nExpressionLength) m_eNextSymbolType = EST_EOF;				// если текущий символ за концом строки - возвращаем тип конец строки
-	else if (_istspace(*pCurrentChar)) m_eNextSymbolType = EST_EOF;							// если пробел - то конец строки
-	else if (_istdigit(*pCurrentChar)) m_eNextSymbolType = EST_NUMBER;						// если цифра - число
-	else if (_istalpha(*pCurrentChar)) m_eNextSymbolType = EST_ALPHA;						// если буква - алфавитно-цифровой
-	else if (*pCurrentChar == _T('.')) m_eNextSymbolType = EST_DOT;							// если точка - разделитель
-	else if (_istoperator(pCurrentChar) != NULL) m_eNextSymbolType = EST_OPERATOR;			// если один из операторов - оператор
+	if (m_nHeadPosition >= m_nExpressionLength) m_eNextSymbolType = EST_EOF;				// РµСЃР»Рё С‚РµРєСѓС‰РёР№ СЃРёРјРІРѕР» Р·Р° РєРѕРЅС†РѕРј СЃС‚СЂРѕРєРё - РІРѕР·РІСЂР°С‰Р°РµРј С‚РёРї РєРѕРЅРµС† СЃС‚СЂРѕРєРё
+	else if (_istspace(*pCurrentChar)) m_eNextSymbolType = EST_EOF;							// РµСЃР»Рё РїСЂРѕР±РµР» - С‚Рѕ РєРѕРЅРµС† СЃС‚СЂРѕРєРё
+	else if (_istdigit(*pCurrentChar)) m_eNextSymbolType = EST_NUMBER;						// РµСЃР»Рё С†РёС„СЂР° - С‡РёСЃР»Рѕ
+	else if (_istalpha(*pCurrentChar)) m_eNextSymbolType = EST_ALPHA;						// РµСЃР»Рё Р±СѓРєРІР° - Р°Р»С„Р°РІРёС‚РЅРѕ-С†РёС„СЂРѕРІРѕР№
+	else if (*pCurrentChar == _T('.')) m_eNextSymbolType = EST_DOT;							// РµСЃР»Рё С‚РѕС‡РєР° - СЂР°Р·РґРµР»РёС‚РµР»СЊ
+	else if (_istoperator(pCurrentChar) != NULL) m_eNextSymbolType = EST_OPERATOR;			// РµСЃР»Рё РѕРґРёРЅ РёР· РѕРїРµСЂР°С‚РѕСЂРѕРІ - РѕРїРµСЂР°С‚РѕСЂ
 }
 
-// проверяет является ли текущий символ символом экспоненты
+// РїСЂРѕРІРµСЂСЏРµС‚ СЏРІР»СЏРµС‚СЃСЏ Р»Рё С‚РµРєСѓС‰РёР№ СЃРёРјРІРѕР» СЃРёРјРІРѕР»РѕРј СЌРєСЃРїРѕРЅРµРЅС‚С‹
 int CExpressionParser::_isdecimalexponent()
 {
 	_ASSERTE(m_nHeadPosition < m_nExpressionLength);
 	_TCHAR pCurrentChar = *(m_szExpression + m_nHeadPosition);
-	// проверяем латинские заглавную и строчную e
+	// РїСЂРѕРІРµСЂСЏРµРј Р»Р°С‚РёРЅСЃРєРёРµ Р·Р°РіР»Р°РІРЅСѓСЋ Рё СЃС‚СЂРѕС‡РЅСѓСЋ e
 	if (pCurrentChar == _T('E') || pCurrentChar == _T('e')) 
 		return 1; 
 	return 0;
@@ -362,30 +390,30 @@ int CExpressionParser::_isdecimalexponent()
 
 const OperatorEnum* CExpressionParser::_istoperator(const _TCHAR* pChar)
 {
-	// сбрасываем текущий оператор
+	// СЃР±СЂР°СЃС‹РІР°РµРј С‚РµРєСѓС‰РёР№ РѕРїРµСЂР°С‚РѕСЂ
 	m_pCurrentOperator = NULL;
 	size_t nMaxMatchLength = 0;
 
-	// идем по словарю операторов
+	// РёРґРµРј РїРѕ СЃР»РѕРІР°СЂСЋ РѕРїРµСЂР°С‚РѕСЂРѕРІ
 	for (OPERATORITR opit = m_pDictionary->OperatorsEnum.begin(); opit != m_pDictionary->OperatorsEnum.end(); opit++)
 	{
 		OperatorEnum *pOpEnum = *opit;
 		size_t nOpLength = pOpEnum->m_strOperatorText.length();
-		// если длина оператора в словаре не превышает оставшуюся длину строки
+		// РµСЃР»Рё РґР»РёРЅР° РѕРїРµСЂР°С‚РѕСЂР° РІ СЃР»РѕРІР°СЂРµ РЅРµ РїСЂРµРІС‹С€Р°РµС‚ РѕСЃС‚Р°РІС€СѓСЋСЃСЏ РґР»РёРЅСѓ СЃС‚СЂРѕРєРё
 		if (nOpLength <= m_nExpressionLength - m_nHeadPosition)
 		{
-			// сравниваем оператор из словаря с входной строкой на длину оператора
+			// СЃСЂР°РІРЅРёРІР°РµРј РѕРїРµСЂР°С‚РѕСЂ РёР· СЃР»РѕРІР°СЂСЏ СЃ РІС…РѕРґРЅРѕР№ СЃС‚СЂРѕРєРѕР№ РЅР° РґР»РёРЅСѓ РѕРїРµСЂР°С‚РѕСЂР°
 			if (!_tcsncmp(pChar, pOpEnum->m_strOperatorText.c_str(), nOpLength))
 			{
-				// если есть попадание
-				if (pOpEnum->m_eOperatorType == ETT_MINUS)			// и текущий оператор - минус
-					if (m_bUnaryMinus)								// и возможен унарный минус
-						pOpEnum = GetOperatorEnum(ETT_UMINUS);		// то меняем оператор на унарный минус
+				// РµСЃР»Рё РµСЃС‚СЊ РїРѕРїР°РґР°РЅРёРµ
+				if (pOpEnum->m_eOperatorType == ETT_MINUS)			// Рё С‚РµРєСѓС‰РёР№ РѕРїРµСЂР°С‚РѕСЂ - РјРёРЅСѓСЃ
+					if (m_bUnaryMinus)								// Рё РІРѕР·РјРѕР¶РµРЅ СѓРЅР°СЂРЅС‹Р№ РјРёРЅСѓСЃ
+						pOpEnum = GetOperatorEnum(ETT_UMINUS);		// С‚Рѕ РјРµРЅСЏРµРј РѕРїРµСЂР°С‚РѕСЂ РЅР° СѓРЅР°СЂРЅС‹Р№ РјРёРЅСѓСЃ
 
-				if (nOpLength > nMaxMatchLength)					// если длина текущего оператора максимальна для данной проверки
+				if (nOpLength > nMaxMatchLength)					// РµСЃР»Рё РґР»РёРЅР° С‚РµРєСѓС‰РµРіРѕ РѕРїРµСЂР°С‚РѕСЂР° РјР°РєСЃРёРјР°Р»СЊРЅР° РґР»СЏ РґР°РЅРЅРѕР№ РїСЂРѕРІРµСЂРєРё
 				{
-					m_pCurrentOperator = pOpEnum;					// ставим текущему оператору в соответствие найденный
-					m_nAdvanceNextSymbol = nOpLength;				// определяем длину оператора для продвижения по выражению дальше
+					m_pCurrentOperator = pOpEnum;					// СЃС‚Р°РІРёРј С‚РµРєСѓС‰РµРјСѓ РѕРїРµСЂР°С‚РѕСЂСѓ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРµ РЅР°Р№РґРµРЅРЅС‹Р№
+					m_nAdvanceNextSymbol = nOpLength;				// РѕРїСЂРµРґРµР»СЏРµРј РґР»РёРЅСѓ РѕРїРµСЂР°С‚РѕСЂР° РґР»СЏ РїСЂРѕРґРІРёР¶РµРЅРёСЏ РїРѕ РІС‹СЂР°Р¶РµРЅРёСЋ РґР°Р»СЊС€Рµ
 					nMaxMatchLength = nOpLength;				
 				}
 			}
@@ -395,17 +423,17 @@ const OperatorEnum* CExpressionParser::_istoperator(const _TCHAR* pChar)
 }
 
 
-// проверяет, является ли содержимое неразобранной строки оператором,
-// если является - создает соответствующий токен, если нет - возвращает код false
+// РїСЂРѕРІРµСЂСЏРµС‚, СЏРІР»СЏРµС‚СЃСЏ Р»Рё СЃРѕРґРµСЂР¶РёРјРѕРµ РЅРµСЂР°Р·РѕР±СЂР°РЅРЅРѕР№ СЃС‚СЂРѕРєРё РѕРїРµСЂР°С‚РѕСЂРѕРј,
+// РµСЃР»Рё СЏРІР»СЏРµС‚СЃСЏ - СЃРѕР·РґР°РµС‚ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓСЋС‰РёР№ С‚РѕРєРµРЅ, РµСЃР»Рё РЅРµС‚ - РІРѕР·РІСЂР°С‰Р°РµС‚ РєРѕРґ false
 bool CExpressionParser::ProcessOperator()
 {
 	bool bRes = false;
-	CurrentSymbolType();			// проверяем есть ли впереди оператор
+	CurrentSymbolType();			// РїСЂРѕРІРµСЂСЏРµРј РµСЃС‚СЊ Р»Рё РІРїРµСЂРµРґРё РѕРїРµСЂР°С‚РѕСЂ
 	switch (m_eNextSymbolType)
 	{
 	case EST_OPERATOR:
-		Advance();													// если да, продвигаемся дальше
-		m_pCurrentToken = NewExpressionToken(m_pCurrentOperator);	// создаем токен для оператора
+		Advance();													// РµСЃР»Рё РґР°, РїСЂРѕРґРІРёРіР°РµРјСЃСЏ РґР°Р»СЊС€Рµ
+		m_pCurrentToken = NewExpressionToken(m_pCurrentOperator);	// СЃРѕР·РґР°РµРј С‚РѕРєРµРЅ РґР»СЏ РѕРїРµСЂР°С‚РѕСЂР°
 		bRes = true;
 		break;
 	}
@@ -414,60 +442,60 @@ bool CExpressionParser::ProcessOperator()
 
 void CExpressionParser::ProcessUndefined()
 {
-	// по текущему типу символа определяем ожидаемый тип токена
+	// РїРѕ С‚РµРєСѓС‰РµРјСѓ С‚РёРїСѓ СЃРёРјРІРѕР»Р° РѕРїСЂРµРґРµР»СЏРµРј РѕР¶РёРґР°РµРјС‹Р№ С‚РёРї С‚РѕРєРµРЅР°
 	switch (m_eNextSymbolType)
 	{
-	case EST_NUMBER:												// для цифры - число
+	case EST_NUMBER:												// РґР»СЏ С†РёС„СЂС‹ - С‡РёСЃР»Рѕ
 		m_bDecimalInteger = true;
 		m_eAwaitTokenType = ETT_NUMERIC_CONSTANT;
 		Advance();
 		break;
-	case EST_DOT:													// для точки - число
+	case EST_DOT:													// РґР»СЏ С‚РѕС‡РєРё - С‡РёСЃР»Рѕ
 		m_eAwaitTokenType = ETT_NUMERIC_CONSTANT;
 		Advance();
 		break;
-	case EST_ALPHA:													// для буквы - переменная
+	case EST_ALPHA:													// РґР»СЏ Р±СѓРєРІС‹ - РїРµСЂРµРјРµРЅРЅР°СЏ
 		m_eAwaitTokenType = ETT_VARIABLE;
 		Advance();
 		break;
-	case EST_OPERATOR:												// для оператора - оператор
+	case EST_OPERATOR:												// РґР»СЏ РѕРїРµСЂР°С‚РѕСЂР° - РѕРїРµСЂР°С‚РѕСЂ
 		Advance();
 		m_eAwaitTokenType = m_pCurrentOperator->m_eOperatorType;
 		break;
-	case EST_EOF:													// для конца строки - сразу создаем токен конца строки
+	case EST_EOF:													// РґР»СЏ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё - СЃСЂР°Р·Сѓ СЃРѕР·РґР°РµРј С‚РѕРєРµРЅ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё
 		m_pCurrentToken = NewExpressionToken(ETT_EOF);
 		break;
 	default:
-		m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGSYMBOL);	// токен ошибки если ничего не подошло
+		m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGSYMBOL);	// С‚РѕРєРµРЅ РѕС€РёР±РєРё РµСЃР»Рё РЅРёС‡РµРіРѕ РЅРµ РїРѕРґРѕС€Р»Рѕ
 		break;
 	}
 }
 
 void CExpressionParser::ProcessNumericConstant()
 {
-	// разбираем число с плавающей точкой
+	// СЂР°Р·Р±РёСЂР°РµРј С‡РёСЃР»Рѕ СЃ РїР»Р°РІР°СЋС‰РµР№ С‚РѕС‡РєРѕР№
 	switch (m_eNextSymbolType)
 	{
-	case EST_NUMBER:							// если видим число
+	case EST_NUMBER:							// РµСЃР»Рё РІРёРґРёРј С‡РёСЃР»Рѕ
 
-		if (m_bDecimalExponent)					// если разрешена экспонента
-			m_bDecimalExponentValue = true;		// это экспонента
+		if (m_bDecimalExponent)					// РµСЃР»Рё СЂР°Р·СЂРµС€РµРЅР° СЌРєСЃРїРѕРЅРµРЅС‚Р°
+			m_bDecimalExponentValue = true;		// СЌС‚Рѕ СЌРєСЃРїРѕРЅРµРЅС‚Р°
 
-		if (m_bDecimalSeparator)				// если было разделитель 
-			m_bDecimalFraction = true;			// это дробная часть
+		if (m_bDecimalSeparator)				// РµСЃР»Рё Р±С‹Р»Рѕ СЂР°Р·РґРµР»РёС‚РµР»СЊ 
+			m_bDecimalFraction = true;			// СЌС‚Рѕ РґСЂРѕР±РЅР°СЏ С‡Р°СЃС‚СЊ
 		else
-			m_bDecimalInteger = true;			// иначе это пока целая часть
+			m_bDecimalInteger = true;			// РёРЅР°С‡Рµ СЌС‚Рѕ РїРѕРєР° С†РµР»Р°СЏ С‡Р°СЃС‚СЊ
 
 		Advance();
 
 		break;
-	case EST_DOT:								// если видим точку
+	case EST_DOT:								// РµСЃР»Рё РІРёРґРёРј С‚РѕС‡РєСѓ
 
-		if (m_bDecimalSeparator || m_bDecimalExponent)		// и была уже точка или экспонента - ошибка
+		if (m_bDecimalSeparator || m_bDecimalExponent)		// Рё Р±С‹Р»Р° СѓР¶Рµ С‚РѕС‡РєР° РёР»Рё СЌРєСЃРїРѕРЅРµРЅС‚Р° - РѕС€РёР±РєР°
 			m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);
 		else
 		{
-			m_bDecimalSeparator = true;			// иначе отмечаем что видели точку
+			m_bDecimalSeparator = true;			// РёРЅР°С‡Рµ РѕС‚РјРµС‡Р°РµРј С‡С‚Рѕ РІРёРґРµР»Рё С‚РѕС‡РєСѓ
 			Advance();
 		}
 
@@ -475,52 +503,52 @@ void CExpressionParser::ProcessNumericConstant()
 
 	case EST_ALPHA:
 
-		if (m_bDecimalExponent)					// если видим букву и была уже экспонента - ошибка ("E" уже не может быть)
+		if (m_bDecimalExponent)					// РµСЃР»Рё РІРёРґРёРј Р±СѓРєРІСѓ Рё Р±С‹Р»Р° СѓР¶Рµ СЌРєСЃРїРѕРЅРµРЅС‚Р° - РѕС€РёР±РєР° ("E" СѓР¶Рµ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ)
 			m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);
 		else
 		{
-			if (_isdecimalexponent())			// если видим экспоненту - отмечаем что видели
+			if (_isdecimalexponent())			// РµСЃР»Рё РІРёРґРёРј СЌРєСЃРїРѕРЅРµРЅС‚Сѓ - РѕС‚РјРµС‡Р°РµРј С‡С‚Рѕ РІРёРґРµР»Рё
 			{
 				m_bDecimalExponent = true;
 				Advance();
 			}
 			else
-				m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);	// никаких других букв в числе не может быть
+				m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);	// РЅРёРєР°РєРёС… РґСЂСѓРіРёС… Р±СѓРєРІ РІ С‡РёСЃР»Рµ РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ
 		}
 
 		break;
 
-	case EST_OPERATOR:		// если видим оператор, то надо заканчивать разбор числа, если это не знак экспоненты
+	case EST_OPERATOR:		// РµСЃР»Рё РІРёРґРёРј РѕРїРµСЂР°С‚РѕСЂ, С‚Рѕ РЅР°РґРѕ Р·Р°РєР°РЅС‡РёРІР°С‚СЊ СЂР°Р·Р±РѕСЂ С‡РёСЃР»Р°, РµСЃР»Рё СЌС‚Рѕ РЅРµ Р·РЅР°Рє СЌРєСЃРїРѕРЅРµРЅС‚С‹
 
-		if (m_bDecimalExponentValue || !m_bDecimalExponent)		// если дошли до цифр экспоненты или не видели экспоненты
+		if (m_bDecimalExponentValue || !m_bDecimalExponent)		// РµСЃР»Рё РґРѕС€Р»Рё РґРѕ С†РёС„СЂ СЌРєСЃРїРѕРЅРµРЅС‚С‹ РёР»Рё РЅРµ РІРёРґРµР»Рё СЌРєСЃРїРѕРЅРµРЅС‚С‹
 		{
-			if (m_bDecimalInteger || m_bDecimalFraction)		// и прошли целую часть или дробную после точки
-				m_pCurrentToken = NewExpressionToken(ETT_NUMERIC_CONSTANT);	// то это численная константа
+			if (m_bDecimalInteger || m_bDecimalFraction)		// Рё РїСЂРѕС€Р»Рё С†РµР»СѓСЋ С‡Р°СЃС‚СЊ РёР»Рё РґСЂРѕР±РЅСѓСЋ РїРѕСЃР»Рµ С‚РѕС‡РєРё
+				m_pCurrentToken = NewExpressionToken(ETT_NUMERIC_CONSTANT);	// С‚Рѕ СЌС‚Рѕ С‡РёСЃР»РµРЅРЅР°СЏ РєРѕРЅСЃС‚Р°РЅС‚Р°
 			else
-				m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER); // иначе ошибка
+				m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER); // РёРЅР°С‡Рµ РѕС€РёР±РєР°
 		}
 		else
-			if (m_bDecimalExponentSign)							// если уже был знак экспоненты - ошибка
+			if (m_bDecimalExponentSign)							// РµСЃР»Рё СѓР¶Рµ Р±С‹Р» Р·РЅР°Рє СЌРєСЃРїРѕРЅРµРЅС‚С‹ - РѕС€РёР±РєР°
 				m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);
 			else
 				if (m_pCurrentOperator && 
-						(m_pCurrentOperator->m_eOperatorType == ETT_PLUS  ||	// если оператор является знаком и был символ экспоненты
+						(m_pCurrentOperator->m_eOperatorType == ETT_PLUS  ||	// РµСЃР»Рё РѕРїРµСЂР°С‚РѕСЂ СЏРІР»СЏРµС‚СЃСЏ Р·РЅР°РєРѕРј Рё Р±С‹Р» СЃРёРјРІРѕР» СЌРєСЃРїРѕРЅРµРЅС‚С‹
 						 m_pCurrentOperator->m_eOperatorType == ETT_MINUS ||
 						 m_pCurrentOperator->m_eOperatorType == ETT_UMINUS ))
 				{
 					Advance();
-					m_bDecimalExponentSign = true;								// отмечаем что знак был
+					m_bDecimalExponentSign = true;								// РѕС‚РјРµС‡Р°РµРј С‡С‚Рѕ Р·РЅР°Рє Р±С‹Р»
 				}
 				else
-					m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);	// если оператор не знак - ошибка
+					m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);	// РµСЃР»Рё РѕРїРµСЂР°С‚РѕСЂ РЅРµ Р·РЅР°Рє - РѕС€РёР±РєР°
 
 		break;
 
-	case EST_EOF:									// если конец строки, надо заканчивать разбор числа
+	case EST_EOF:									// РµСЃР»Рё РєРѕРЅРµС† СЃС‚СЂРѕРєРё, РЅР°РґРѕ Р·Р°РєР°РЅС‡РёРІР°С‚СЊ СЂР°Р·Р±РѕСЂ С‡РёСЃР»Р°
 		if (m_bDecimalExponentValue || !m_bDecimalExponent)
 		{
 			if (m_bDecimalInteger || m_bDecimalFraction)
-				m_pCurrentToken = NewExpressionToken(ETT_NUMERIC_CONSTANT);		// получаем корректное целое или дробное число, аналогично ветке с оператором
+				m_pCurrentToken = NewExpressionToken(ETT_NUMERIC_CONSTANT);		// РїРѕР»СѓС‡Р°РµРј РєРѕСЂСЂРµРєС‚РЅРѕРµ С†РµР»РѕРµ РёР»Рё РґСЂРѕР±РЅРѕРµ С‡РёСЃР»Рѕ, Р°РЅР°Р»РѕРіРёС‡РЅРѕ РІРµС‚РєРµ СЃ РѕРїРµСЂР°С‚РѕСЂРѕРј
 			else
 				m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);
 
@@ -529,7 +557,7 @@ void CExpressionParser::ProcessNumericConstant()
 			m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);
 		break;
 	default:
-		m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);			// странный символ - число задано с ошибкой
+		m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGNUMBER);			// СЃС‚СЂР°РЅРЅС‹Р№ СЃРёРјРІРѕР» - С‡РёСЃР»Рѕ Р·Р°РґР°РЅРѕ СЃ РѕС€РёР±РєРѕР№
 		break;
 	}
 }
@@ -538,29 +566,29 @@ void CExpressionParser::ProcessVariable()
 {
 	switch (m_eNextSymbolType)
 	{
-	case EST_ALPHA:						// пока идут буквы и цифры - это имя переменной
-	case EST_NUMBER:					// причем если в токене была первой цифра - он будет разбираться как число. Сюда попадаем только если первый символ - буква
+	case EST_ALPHA:						// РїРѕРєР° РёРґСѓС‚ Р±СѓРєРІС‹ Рё С†РёС„СЂС‹ - СЌС‚Рѕ РёРјСЏ РїРµСЂРµРјРµРЅРЅРѕР№
+	case EST_NUMBER:					// РїСЂРёС‡РµРј РµСЃР»Рё РІ С‚РѕРєРµРЅРµ Р±С‹Р»Р° РїРµСЂРІРѕР№ С†РёС„СЂР° - РѕРЅ Р±СѓРґРµС‚ СЂР°Р·Р±РёСЂР°С‚СЊСЃСЏ РєР°Рє С‡РёСЃР»Рѕ. РЎСЋРґР° РїРѕРїР°РґР°РµРј С‚РѕР»СЊРєРѕ РµСЃР»Рё РїРµСЂРІС‹Р№ СЃРёРјРІРѕР» - Р±СѓРєРІР°
 		Advance();
 		break;
-	case EST_OPERATOR:					// если нашелся оператор
-		if (m_pCurrentOperator->m_eOperatorType == ETT_LB)		// и этот оператор - левая круглая скобка
-			m_pCurrentToken = NewExpressionTokenFunction(m_szExpression);  // то создаем токен функции
+	case EST_OPERATOR:					// РµСЃР»Рё РЅР°С€РµР»СЃСЏ РѕРїРµСЂР°С‚РѕСЂ
+		if (m_pCurrentOperator->m_eOperatorType == ETT_LB)		// Рё СЌС‚РѕС‚ РѕРїРµСЂР°С‚РѕСЂ - Р»РµРІР°СЏ РєСЂСѓРіР»Р°СЏ СЃРєРѕР±РєР°
+			m_pCurrentToken = NewExpressionTokenFunction(m_szExpression);  // С‚Рѕ СЃРѕР·РґР°РµРј С‚РѕРєРµРЅ С„СѓРЅРєС†РёРё
 		else if (m_pCurrentOperator->m_eOperatorType == ETT_LBS)
 		{
-			// если это квадратная скобка, то это ссылка на модель, дальнейший процессинг будет в ProcessModelLink
+			// РµСЃР»Рё СЌС‚Рѕ РєРІР°РґСЂР°С‚РЅР°СЏ СЃРєРѕР±РєР°, С‚Рѕ СЌС‚Рѕ СЃСЃС‹Р»РєР° РЅР° РјРѕРґРµР»СЊ, РґР°Р»СЊРЅРµР№С€РёР№ РїСЂРѕС†РµСЃСЃРёРЅРі Р±СѓРґРµС‚ РІ ProcessModelLink
 			m_pCurrentToken = new CExpressionTokenModelLink(this, m_nTokenBegin, m_nTokenLength);
 			m_pCurrentToken->SetTextValue(GetText(m_nTokenBegin, m_nTokenLength));
 			m_eAwaitTokenType = ETT_MODELLINK;
 			Advance();
 		}
 		else 
-			m_pCurrentToken = NewExpressionToken(ETT_VARIABLE);		// иначе создаем переменную с именем до символа оператора
+			m_pCurrentToken = NewExpressionToken(ETT_VARIABLE);		// РёРЅР°С‡Рµ СЃРѕР·РґР°РµРј РїРµСЂРµРјРµРЅРЅСѓСЋ СЃ РёРјРµРЅРµРј РґРѕ СЃРёРјРІРѕР»Р° РѕРїРµСЂР°С‚РѕСЂР°
 		break;
 	case EST_EOF:
-		m_pCurrentToken = NewExpressionToken(ETT_VARIABLE);			// точно также создаем пермеменную до конца строки
+		m_pCurrentToken = NewExpressionToken(ETT_VARIABLE);			// С‚РѕС‡РЅРѕ С‚Р°РєР¶Рµ СЃРѕР·РґР°РµРј РїРµСЂРјРµРјРµРЅРЅСѓСЋ РґРѕ РєРѕРЅС†Р° СЃС‚СЂРѕРєРё
 		break;
 	default:
-		m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGSYMBOL);	// если какой-то неожиданный символ - ошибка
+		m_pCurrentToken = NewExpressionToken(ETT_ERROR_WRONGSYMBOL);	// РµСЃР»Рё РєР°РєРѕР№-С‚Рѕ РЅРµРѕР¶РёРґР°РЅРЅС‹Р№ СЃРёРјРІРѕР» - РѕС€РёР±РєР°
 	}
 }
 
@@ -571,16 +599,16 @@ void CExpressionParser::ProcessModelLink()
 	switch (m_eNextSymbolType)
 	{
 	case EST_ALPHA:
-		switch (pModelLink->nWait)					// если видим букву
+		switch (pModelLink->nWait)					// РµСЃР»Рё РІРёРґРёРј Р±СѓРєРІСѓ
 		{
 			case CExpressionTokenModelLink::MLS_ALPHA_CONTINUE:
-			case CExpressionTokenModelLink::MLS_NUMBER_CONTINUE:		// если в обработке букв или цифр - добавляем в текущем дочернему тексту
+			case CExpressionTokenModelLink::MLS_NUMBER_CONTINUE:		// РµСЃР»Рё РІ РѕР±СЂР°Р±РѕС‚РєРµ Р±СѓРєРІ РёР»Рё С†РёС„СЂ - РґРѕР±Р°РІР»СЏРµРј РІ С‚РµРєСѓС‰РµРј РґРѕС‡РµСЂРЅРµРјСѓ С‚РµРєСЃС‚Сѓ
 				pModelLink->AdvanceChild(m_nAdvanceNextSymbol);	
 				Advance();
 			break;
 			case CExpressionTokenModelLink::MLS_ALPHA:
-				pModelLink->nWait = CExpressionTokenModelLink:: MLS_ALPHA_CONTINUE;		// если за буквой идет буква - обрабатываем буквы
-				pModelLink->AddChild(NewChildExpressionToken(ETT_PROPERTY));			// создаем дочерний токен для свойства ссылки
+				pModelLink->nWait = CExpressionTokenModelLink:: MLS_ALPHA_CONTINUE;		// РµСЃР»Рё Р·Р° Р±СѓРєРІРѕР№ РёРґРµС‚ Р±СѓРєРІР° - РѕР±СЂР°Р±Р°С‚С‹РІР°РµРј Р±СѓРєРІС‹
+				pModelLink->AddChild(NewChildExpressionToken(ETT_PROPERTY));			// СЃРѕР·РґР°РµРј РґРѕС‡РµСЂРЅРёР№ С‚РѕРєРµРЅ РґР»СЏ СЃРІРѕР№СЃС‚РІР° СЃСЃС‹Р»РєРё
 				m_bContinueToken = true;
 				Advance();
 				break;
@@ -588,16 +616,16 @@ void CExpressionParser::ProcessModelLink()
 				pModelLink->SetError(ETT_ERROR_WRONGSYMBOL, m_nHeadPosition);
 		}
 		break;
-	case EST_NUMBER:							// если видим цифру
+	case EST_NUMBER:							// РµСЃР»Рё РІРёРґРёРј С†РёС„СЂСѓ
 		switch (pModelLink->nWait)
 		{
 			case CExpressionTokenModelLink::MLS_ALPHA_CONTINUE:
 			case CExpressionTokenModelLink::MLS_NUMBER_CONTINUE:
-				pModelLink->AdvanceChild(m_nAdvanceNextSymbol);		// если в обработке букв или цифр - добавляем к текущему тексту
+				pModelLink->AdvanceChild(m_nAdvanceNextSymbol);		// РµСЃР»Рё РІ РѕР±СЂР°Р±РѕС‚РєРµ Р±СѓРєРІ РёР»Рё С†РёС„СЂ - РґРѕР±Р°РІР»СЏРµРј Рє С‚РµРєСѓС‰РµРјСѓ С‚РµРєСЃС‚Сѓ
 				Advance();
 			break;
 			case CExpressionTokenModelLink::MLS_NUMBER:
-				pModelLink->nWait = CExpressionTokenModelLink::MLS_NUMBER_CONTINUE;			// если в обработке цифр создаем дочерний токен численной константы
+				pModelLink->nWait = CExpressionTokenModelLink::MLS_NUMBER_CONTINUE;			// РµСЃР»Рё РІ РѕР±СЂР°Р±РѕС‚РєРµ С†РёС„СЂ СЃРѕР·РґР°РµРј РґРѕС‡РµСЂРЅРёР№ С‚РѕРєРµРЅ С‡РёСЃР»РµРЅРЅРѕР№ РєРѕРЅСЃС‚Р°РЅС‚С‹
 				pModelLink->AddChild(NewChildExpressionToken(ETT_NUMERIC_CONSTANT));
 				m_bContinueToken = true;
 				Advance();
@@ -607,25 +635,25 @@ void CExpressionParser::ProcessModelLink()
 		}
 		break;
 
-	case EST_OPERATOR:						// если видим оператор 
+	case EST_OPERATOR:						// РµСЃР»Рё РІРёРґРёРј РѕРїРµСЂР°С‚РѕСЂ 
 		if (pModelLink->nWait == CExpressionTokenModelLink::MLS_ALPHA_CONTINUE)
 		{
-			BuildModelLink(pModelLink);		// если работали с буквами - (свойство ссылки), заканчиваем и строим ссылку полностью
+			BuildModelLink(pModelLink);		// РµСЃР»Рё СЂР°Р±РѕС‚Р°Р»Рё СЃ Р±СѓРєРІР°РјРё - (СЃРІРѕР№СЃС‚РІРѕ СЃСЃС‹Р»РєРё), Р·Р°РєР°РЅС‡РёРІР°РµРј Рё СЃС‚СЂРѕРёРј СЃСЃС‹Р»РєСѓ РїРѕР»РЅРѕСЃС‚СЊСЋ
 		}
 		else
 		if (pModelLink->nWait == CExpressionTokenModelLink::MLS_NUMBER_CONTINUE)
 		{
-			// если работали с цифрами 
+			// РµСЃР»Рё СЂР°Р±РѕС‚Р°Р»Рё СЃ С†РёС„СЂР°РјРё 
 			if (m_pCurrentOperator->m_eOperatorType == ETT_RBS)
 			{
-				// и видим правую квадратную скобку, пропускаем ее и входим в режим ожидания точки
+				// Рё РІРёРґРёРј РїСЂР°РІСѓСЋ РєРІР°РґСЂР°С‚РЅСѓСЋ СЃРєРѕР±РєСѓ, РїСЂРѕРїСѓСЃРєР°РµРј РµРµ Рё РІС…РѕРґРёРј РІ СЂРµР¶РёРј РѕР¶РёРґР°РЅРёСЏ С‚РѕС‡РєРё
 				Advance();
 				pModelLink->AdvanceChild(m_nAdvanceNextSymbol);
 				pModelLink->nWait = CExpressionTokenModelLink::MLS_DOT;
 			}
 			else if (m_pCurrentOperator->m_eOperatorType == ETT_COMMA)
 			{
-				// если видим запятую - пропускаем и ждем следующую цифру
+				// РµСЃР»Рё РІРёРґРёРј Р·Р°РїСЏС‚СѓСЋ - РїСЂРѕРїСѓСЃРєР°РµРј Рё Р¶РґРµРј СЃР»РµРґСѓСЋС‰СѓСЋ С†РёС„СЂСѓ
 				Advance();
 				pModelLink->AdvanceChild(m_nAdvanceNextSymbol);
 				pModelLink->nWait = CExpressionTokenModelLink::MLS_NUMBER;
@@ -638,10 +666,10 @@ void CExpressionParser::ProcessModelLink()
 
 		break;
 
-	case EST_DOT:	// если видим точку
+	case EST_DOT:	// РµСЃР»Рё РІРёРґРёРј С‚РѕС‡РєСѓ
 		if (pModelLink->nWait == CExpressionTokenModelLink::MLS_DOT)
 		{
-			// и ждали точку, то переходим в режим букв для обработки свойства ссылки
+			// Рё Р¶РґР°Р»Рё С‚РѕС‡РєСѓ, С‚Рѕ РїРµСЂРµС…РѕРґРёРј РІ СЂРµР¶РёРј Р±СѓРєРІ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё СЃРІРѕР№СЃС‚РІР° СЃСЃС‹Р»РєРё
 			Advance();
 			pModelLink->nWait = CExpressionTokenModelLink::MLS_ALPHA;
 		}
@@ -650,9 +678,9 @@ void CExpressionParser::ProcessModelLink()
 
 		break;
 
-	case EST_EOF: // если видим eof
-		if (pModelLink->nWait == CExpressionTokenModelLink::MLS_ALPHA_CONTINUE) // то можем быть только в режиме букв
-			BuildModelLink(pModelLink);											// и если да - создаем ссылку
+	case EST_EOF: // РµСЃР»Рё РІРёРґРёРј eof
+		if (pModelLink->nWait == CExpressionTokenModelLink::MLS_ALPHA_CONTINUE) // С‚Рѕ РјРѕР¶РµРј Р±С‹С‚СЊ С‚РѕР»СЊРєРѕ РІ СЂРµР¶РёРјРµ Р±СѓРєРІ
+			BuildModelLink(pModelLink);											// Рё РµСЃР»Рё РґР° - СЃРѕР·РґР°РµРј СЃСЃС‹Р»РєСѓ
 		else
 			pModelLink->SetError(ETT_ERROR_WRONGSYMBOL, m_nHeadPosition);
 		break;
@@ -662,8 +690,8 @@ void CExpressionParser::ProcessModelLink()
 	}
 }
 
-// передвигает позицию в выражении на длину найденного символа
-// и задает длину найденного токена
+// РїРµСЂРµРґРІРёРіР°РµС‚ РїРѕР·РёС†РёСЋ РІ РІС‹СЂР°Р¶РµРЅРёРё РЅР° РґР»РёРЅСѓ РЅР°Р№РґРµРЅРЅРѕРіРѕ СЃРёРјРІРѕР»Р°
+// Рё Р·Р°РґР°РµС‚ РґР»РёРЅСѓ РЅР°Р№РґРµРЅРЅРѕРіРѕ С‚РѕРєРµРЅР°
 void CExpressionParser::Advance()
 {
 	m_nTokenLength += m_nAdvanceNextSymbol;
@@ -701,21 +729,21 @@ CExpressionToken* CExpressionParser::NewExpressionToken(CExpressionToken *pClone
 	return pNewToken;
 }
 
-// создает токен по типу
+// СЃРѕР·РґР°РµС‚ С‚РѕРєРµРЅ РїРѕ С‚РёРїСѓ
 CExpressionToken* CExpressionParser::NewExpressionToken(eExpressionTokenType eType)
 {
 	CExpressionToken* pToken = NULL;
-	// если тип - переменна или ссылка на модель
+	// РµСЃР»Рё С‚РёРї - РїРµСЂРµРјРµРЅРЅР° РёР»Рё СЃСЃС‹Р»РєР° РЅР° РјРѕРґРµР»СЊ
 	if (eType == ETT_VARIABLE || eType == ETT_MODELLINK)
 	{
-		// используем текст токена для поиска/создания переменной
+		// РёСЃРїРѕР»СЊР·СѓРµРј С‚РµРєСЃС‚ С‚РѕРєРµРЅР° РґР»СЏ РїРѕРёСЃРєР°/СЃРѕР·РґР°РЅРёСЏ РїРµСЂРµРјРµРЅРЅРѕР№
 		wstring VarName = GetText(m_nTokenBegin, m_nTokenLength);
 		VariableEnum *pEnum = m_Variables.Find(VarName);
 		if (pEnum)
-			pToken = pEnum->m_pToken;		// если переменная уже есть - возвращаем ее токен
+			pToken = pEnum->m_pToken;		// РµСЃР»Рё РїРµСЂРµРјРµРЅРЅР°СЏ СѓР¶Рµ РµСЃС‚СЊ - РІРѕР·РІСЂР°С‰Р°РµРј РµРµ С‚РѕРєРµРЅ
 		else
 		{
-			// иначе создаем новый токен для новой переменной
+			// РёРЅР°С‡Рµ СЃРѕР·РґР°РµРј РЅРѕРІС‹Р№ С‚РѕРєРµРЅ РґР»СЏ РЅРѕРІРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
 			pToken = new CExpressionToken(this, eType, m_nTokenBegin, m_nTokenLength);
 			pToken->SetTextValue(VarName.c_str());
 			m_TokenPool.insert(pToken);
@@ -725,35 +753,35 @@ CExpressionToken* CExpressionParser::NewExpressionToken(eExpressionTokenType eTy
 
 	if (!pToken)
 	{
-		// если токен не был ссылкой или переменной
+		// РµСЃР»Рё С‚РѕРєРµРЅ РЅРµ Р±С‹Р» СЃСЃС‹Р»РєРѕР№ РёР»Рё РїРµСЂРµРјРµРЅРЅРѕР№
 		OperatorEnum *pOpEnum = GetOperatorEnum(eType);
-		// пытаемся создать токен оператора
+		// РїС‹С‚Р°РµРјСЃСЏ СЃРѕР·РґР°С‚СЊ С‚РѕРєРµРЅ РѕРїРµСЂР°С‚РѕСЂР°
 		if (pOpEnum)
 			pToken = new CExpressionToken(this, pOpEnum, m_nTokenBegin, m_nTokenLength);
 		else
 		{
-			// если и это не получилось - токен функции
+			// РµСЃР»Рё Рё СЌС‚Рѕ РЅРµ РїРѕР»СѓС‡РёР»РѕСЃСЊ - С‚РѕРєРµРЅ С„СѓРЅРєС†РёРё
 			FunctionEnum *pOpFunction = GetFunctionEnum(eType);
 			if (pOpFunction)
 				pToken = new CExpressionToken(this, pOpFunction, m_nTokenBegin, m_nTokenLength);
 			else
-				pToken = new CExpressionToken(this, eType, m_nTokenBegin, m_nTokenLength); // иначе - просто некий токен
+				pToken = new CExpressionToken(this, eType, m_nTokenBegin, m_nTokenLength); // РёРЅР°С‡Рµ - РїСЂРѕСЃС‚Рѕ РЅРµРєРёР№ С‚РѕРєРµРЅ
 		}
 	
-		m_TokenPool.insert(pToken);  // созданные токены накапливаем в пуле, чтобы потом удалить или искать по адресу
+		m_TokenPool.insert(pToken);  // СЃРѕР·РґР°РЅРЅС‹Рµ С‚РѕРєРµРЅС‹ РЅР°РєР°РїР»РёРІР°РµРј РІ РїСѓР»Рµ, С‡С‚РѕР±С‹ РїРѕС‚РѕРј СѓРґР°Р»РёС‚СЊ РёР»Рё РёСЃРєР°С‚СЊ РїРѕ Р°РґСЂРµСЃСѓ
 	}
 
-	m_bContinueToken = false;		// если запросили создание токена - обработка текущего токена закончена
+	m_bContinueToken = false;		// РµСЃР»Рё Р·Р°РїСЂРѕСЃРёР»Рё СЃРѕР·РґР°РЅРёРµ С‚РѕРєРµРЅР° - РѕР±СЂР°Р±РѕС‚РєР° С‚РµРєСѓС‰РµРіРѕ С‚РѕРєРµРЅР° Р·Р°РєРѕРЅС‡РµРЅР°
 	return pToken;
 }
 
 
-// функция создания "заготовки" дочернего токена. В него будет накапливаться текст при разборе
+// С„СѓРЅРєС†РёСЏ СЃРѕР·РґР°РЅРёСЏ "Р·Р°РіРѕС‚РѕРІРєРё" РґРѕС‡РµСЂРЅРµРіРѕ С‚РѕРєРµРЅР°. Р’ РЅРµРіРѕ Р±СѓРґРµС‚ РЅР°РєР°РїР»РёРІР°С‚СЊСЃСЏ С‚РµРєСЃС‚ РїСЂРё СЂР°Р·Р±РѕСЂРµ
 CExpressionToken* CExpressionParser::NewChildExpressionToken(eExpressionTokenType eType)
 {
 	m_nTokenLength = 0;
 	m_nTokenBegin = m_nHeadPosition;
-	// длина пустая, пока токен не будет разобран полностью
+	// РґР»РёРЅР° РїСѓСЃС‚Р°СЏ, РїРѕРєР° С‚РѕРєРµРЅ РЅРµ Р±СѓРґРµС‚ СЂР°Р·РѕР±СЂР°РЅ РїРѕР»РЅРѕСЃС‚СЊСЋ
 	CExpressionToken* pToken = new CExpressionToken(this, eType, m_nHeadPosition, m_nTokenLength);
 	m_TokenPool.insert(pToken);
 	m_bContinueToken = false;
@@ -763,36 +791,36 @@ CExpressionToken* CExpressionParser::NewChildExpressionToken(eExpressionTokenTyp
 CExpressionToken* CExpressionParser::NewExpressionTokenFunction(const _TCHAR *cszExpression)
 {
 	CExpressionToken* pToken = NULL;
-	// в эту функциб попадаем из разбора переменной в случае, если нашли некое символьное имя с левой круглой скобкой
+	// РІ СЌС‚Сѓ С„СѓРЅРєС†РёР± РїРѕРїР°РґР°РµРј РёР· СЂР°Р·Р±РѕСЂР° РїРµСЂРµРјРµРЅРЅРѕР№ РІ СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РЅР°С€Р»Рё РЅРµРєРѕРµ СЃРёРјРІРѕР»СЊРЅРѕРµ РёРјСЏ СЃ Р»РµРІРѕР№ РєСЂСѓРіР»РѕР№ СЃРєРѕР±РєРѕР№
 	for (FUNCTIONITR fit = m_pDictionary->FunctionsEnum.begin(); fit != m_pDictionary->FunctionsEnum.end(); fit++)
 	{
 		FunctionEnum *pFunc = *fit;
 		if (!_tcsncmp(pFunc->m_strOperatorText.c_str(), cszExpression + m_nTokenBegin, m_nTokenLength))
 		{
-			// если нашли имя функции в словаре - создаем токе функции
+			// РµСЃР»Рё РЅР°С€Р»Рё РёРјСЏ С„СѓРЅРєС†РёРё РІ СЃР»РѕРІР°СЂРµ - СЃРѕР·РґР°РµРј С‚РѕРєРµ С„СѓРЅРєС†РёРё
 			pToken = new CExpressionToken(this, pFunc, m_nTokenBegin, m_nTokenLength);
 			break;
 		}
 	}
 
-	// если в словаре функции не нашли созаем токен ошибки неизвестной функции
+	// РµСЃР»Рё РІ СЃР»РѕРІР°СЂРµ С„СѓРЅРєС†РёРё РЅРµ РЅР°С€Р»Рё СЃРѕР·Р°РµРј С‚РѕРєРµРЅ РѕС€РёР±РєРё РЅРµРёР·РІРµСЃС‚РЅРѕР№ С„СѓРЅРєС†РёРё
 	if (!pToken)
 		pToken = new CExpressionToken(this, ETT_ERROR_UNKNOWNFUNCTION, m_nTokenBegin, m_nTokenLength);
 
-	// вставляем созданный токен в пул, чтобы потом его удалить корректно
+	// РІСЃС‚Р°РІР»СЏРµРј СЃРѕР·РґР°РЅРЅС‹Р№ С‚РѕРєРµРЅ РІ РїСѓР», С‡С‚РѕР±С‹ РїРѕС‚РѕРј РµРіРѕ СѓРґР°Р»РёС‚СЊ РєРѕСЂСЂРµРєС‚РЅРѕ
 	m_TokenPool.insert(pToken);
-	// отмечаем что разбор токена завершен, функция определена
+	// РѕС‚РјРµС‡Р°РµРј С‡С‚Рѕ СЂР°Р·Р±РѕСЂ С‚РѕРєРµРЅР° Р·Р°РІРµСЂС€РµРЅ, С„СѓРЅРєС†РёСЏ РѕРїСЂРµРґРµР»РµРЅР°
 	m_bContinueToken = false;
 	return pToken;
 }
 
 CExpressionToken* CExpressionParser::NewExpressionToken(const OperatorEnum *pOperator)
 {
-	// создаем токен оператора
+	// СЃРѕР·РґР°РµРј С‚РѕРєРµРЅ РѕРїРµСЂР°С‚РѕСЂР°
 	CExpressionToken* pToken = new CExpressionToken(this, pOperator, m_nTokenBegin, m_nTokenLength);
-	// вставляем созданный токен в пул, чтобы потом его удалить корректно
+	// РІСЃС‚Р°РІР»СЏРµРј СЃРѕР·РґР°РЅРЅС‹Р№ С‚РѕРєРµРЅ РІ РїСѓР», С‡С‚РѕР±С‹ РїРѕС‚РѕРј РµРіРѕ СѓРґР°Р»РёС‚СЊ РєРѕСЂСЂРµРєС‚РЅРѕ
 	m_TokenPool.insert(pToken);
-	// отмечаем что разбор токена завершен, оператор определен
+	// РѕС‚РјРµС‡Р°РµРј С‡С‚Рѕ СЂР°Р·Р±РѕСЂ С‚РѕРєРµРЅР° Р·Р°РІРµСЂС€РµРЅ, РѕРїРµСЂР°С‚РѕСЂ РѕРїСЂРµРґРµР»РµРЅ
 	m_bContinueToken = false;
 
 	return pToken;
@@ -800,9 +828,9 @@ CExpressionToken* CExpressionParser::NewExpressionToken(const OperatorEnum *pOpe
 
 void CExpressionParser::ResetToken()
 {
-	// убираем пробелы то следующего токена
+	// СѓР±РёСЂР°РµРј РїСЂРѕР±РµР»С‹ С‚Рѕ СЃР»РµРґСѓСЋС‰РµРіРѕ С‚РѕРєРµРЅР°
 	SkipSpaces();
-	// сбрасываем все состояния
+	// СЃР±СЂР°СЃС‹РІР°РµРј РІСЃРµ СЃРѕСЃС‚РѕСЏРЅРёСЏ
 	m_eAwaitTokenType = ETT_UNDEFINED;
 	m_nTokenBegin = m_nHeadPosition;
 	m_pCurrentOperator = NULL;
@@ -835,30 +863,38 @@ eExpressionTokenType CExpressionParser::BuildOperatorTree()
 	eExpressionTokenType eError = ETT_UNDEFINED;
 	if (m_ParserStack.empty())
 		return ETT_ERROR_STACKERROR;
-
+	
+	// РёР·РІР»РµРєР°РµРј РѕРїРµСЂР°С‚РѕСЂ РёР· СЃС‚РµРєР°
 	CExpressionToken *pStackToken = m_ParserStack.top();
+	// РёР·РІР»РµРєР°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Р°СЂРіРµРјРµРЅС‚РѕРІ С„СѓРЅРєС†РёРё
 	ptrdiff_t nArgsCount = pStackToken->ArgsCount();
 
 	if (pStackToken->IsFunction())
 	{
+		// РµСЃР»Рё РѕРїРµСЂР°С‚РѕСЂ СЏРІР»СЏРµС‚СЃСЏ С„СѓРЅРєС†РёРµР№
 		if (!m_ArityStack.empty())
 		{
+			// РµСЃР»Рё РІ СЃС‚РµРєРµ РїРѕСЂСЏРґРєР° С‡С‚Рѕ-С‚Рѕ РµСЃС‚СЊ Рё РµРіРѕ РіР»СѓР±РёРЅР°
+			// РЅРµ СЃРѕРѕС‚РІРµС‚СЃС‚РІСѓРµС‚ Р·Р°РґР°РЅРЅРѕРјСѓ РєРѕР»РёС‡РµСЃС‚РІСѓ Р°СЂРіСѓРјРµРЅС‚РѕРІ
 			if (nArgsCount >= 0)
 			{
+				// РІС‹РґР°РµРј РѕС€РёР±РєСѓ
 				if (m_ArityStack.top() != nArgsCount)
 					eError = ETT_ERROR_WRONGNUMBEROFARGS;
 			}
 			else
-				nArgsCount = m_ArityStack.top();
+				nArgsCount = m_ArityStack.top(); // РµСЃР»Рё РєРѕР»РёС‡РµСЃС‚РІРѕ Р°СЂРіСѓРјРµРЅС‚РѕРІ РЅРµ Р·Р°РґР°РЅРѕ - РїСЂРёРЅРёРјР°РµРј РїРѕ РіР»СѓР±РёРЅРµ СЃС‚РµРєР° РїРѕСЂСЏРґРєР°
 		}
 	}
 
 	if (eError == ETT_UNDEFINED)
 	{
+		// РµСЃР»Рё РїРѕРєР° РѕС€РёР±РѕРє РЅРµС‚ РїСЂРѕРІРµСЂСЏРµРј, С…РІР°С‚Р°РµС‚ Р»Рё СЌР»РµРјРµРЅС‚РѕРІ СЃС‚РµРєР° РґР»СЏ РїРѕРёСЃРєР° Р°СЂРіСѓРјРµРЅС‚РѕРІ
 		if (m_ResultStack.size() >= static_cast<size_t>(nArgsCount))
 		{
 			while (nArgsCount--)
 			{
+				// РєР°Р¶РґС‹Р№ Р°СЂРіСѓРјРµРЅС‚ РґРѕР±Р°РІР»СЏРµРј РІ РєР°С‡РµСЃС‚РІРµ РґРѕС‡РµСЂРЅРµРіРѕ Рє РѕРїРµСЂР°С‚РѕСЂСѓ
 				pStackToken->AddChild(m_ResultStack.top());
 				m_ResultStack.pop();
 			}
@@ -869,6 +905,7 @@ eExpressionTokenType CExpressionParser::BuildOperatorTree()
 
 	if (eError == ETT_UNDEFINED)
 	{
+		// РµСЃР»Рё РѕС€РёР±РѕРє РЅРµ Р±С‹Р», СѓРґР°Р»СЏРµРј СЌР»РµРјРµРЅС‚ РёР· СЃС‚РµРєР° РїР°СЂСЃРµСЂР° Рё РїРµСЂРµРЅРѕСЃРёРј РІ СЃС‚РµРє СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 		m_ParserStack.pop();
 		m_ResultStack.push(pStackToken);
 	}
@@ -879,7 +916,7 @@ eExpressionTokenType CExpressionParser::BuildOperatorTree()
 
 const _TCHAR* CExpressionParser::GetErrorDescription(CExpressionToken *pToken)
 {
-	const _TCHAR* cszAtPosition = _T(" в позиции ");
+	const _TCHAR* cszAtPosition = _T(" РІ РїРѕР·РёС†РёРё ");
 
 	if (pToken)
 	{
@@ -888,40 +925,40 @@ const _TCHAR* CExpressionParser::GetErrorDescription(CExpressionToken *pToken)
 			switch (pToken->GetType())
 			{
 			case ETT_ERROR_WRONGSYMBOL:
-				m_szErrorDescription = Cex(_T("Неверный символ %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
+				m_szErrorDescription = Cex(_T("РќРµРІРµСЂРЅС‹Р№ СЃРёРјРІРѕР» %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
 				break;
 			case ETT_ERROR_WRONGNUMBER:
-				m_szErrorDescription = Cex(_T("Неверный формат числа %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
+				m_szErrorDescription = Cex(_T("РќРµРІРµСЂРЅС‹Р№ С„РѕСЂРјР°С‚ С‡РёСЃР»Р° %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
 				break;
 			case ETT_ERROR_UNKNOWNFUNCTION:
-				m_szErrorDescription = Cex(_T("Неизвестная функция %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
+				m_szErrorDescription = Cex(_T("РќРµРёР·РІРµСЃС‚РЅР°СЏ С„СѓРЅРєС†РёСЏ %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
 				break;
 			case ETT_ERROR_STACKERROR:
-				m_szErrorDescription = Cex(_T("Ошибка стека%s%d"),cszAtPosition,pToken->TextBegin());
+				m_szErrorDescription = Cex(_T("РћС€РёР±РєР° СЃС‚РµРєР°%s%d"),cszAtPosition,pToken->TextBegin());
 				break;
 			case ETT_ERROR_WRONGNUMBEROFARGS:
-				m_szErrorDescription = Cex(_T("Неверное число аргументов %s%s%d"),GetText(pToken),cszAtPosition,pToken->TextBegin());
+				m_szErrorDescription = Cex(_T("РќРµРІРµСЂРЅРѕРµ С‡РёСЃР»Рѕ Р°СЂРіСѓРјРµРЅС‚РѕРІ %s%s%d"),GetText(pToken),cszAtPosition,pToken->TextBegin());
 				break;
 			case ETT_ERROR_NOLEFTPARENTHESIS:
-				m_szErrorDescription = Cex(_T("Нет левой скобки %s%d"), cszAtPosition,pToken->TextBegin());
+				m_szErrorDescription = Cex(_T("РќРµС‚ Р»РµРІРѕР№ СЃРєРѕР±РєРё %s%d"), cszAtPosition,pToken->TextBegin());
 				break;
 			case ETT_ERROR_NORIGHTPARENTHESIS:
-				m_szErrorDescription = Cex(_T("Нет правой скобки %s%d"),cszAtPosition,pToken->TextBegin());
+				m_szErrorDescription = Cex(_T("РќРµС‚ РїСЂР°РІРѕР№ СЃРєРѕР±РєРё %s%d"),cszAtPosition,pToken->TextBegin());
 				break;
 			case ETT_ERROR_DIVISIONBYZERO:
-				m_szErrorDescription = Cex(_T("Деление на ноль"));
+				m_szErrorDescription = Cex(_T("Р”РµР»РµРЅРёРµ РЅР° РЅРѕР»СЊ"));
 				break;
 			case ETT_ERROR_NEGATIVEROOT:
-				m_szErrorDescription = Cex(_T("Дробная степень отрицательного числа"));
+				m_szErrorDescription = Cex(_T("Р”СЂРѕР±РЅР°СЏ СЃС‚РµРїРµРЅСЊ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРіРѕ С‡РёСЃР»Р°"));
 				break;
 			case ETT_ERROR_NEGATIVELOG:
-				m_szErrorDescription = Cex(_T("Логарифм из отрицательного числа"));
+				m_szErrorDescription = Cex(_T("Р›РѕРіР°СЂРёС„Рј РёР· РѕС‚СЂРёС†Р°С‚РµР»СЊРЅРѕРіРѕ С‡РёСЃР»Р°"));
 				break;
 			case ETT_ERROR_WRONGARG:
-				m_szErrorDescription = Cex(_T("Аргумент вне допустимого диапазона"));
+				m_szErrorDescription = Cex(_T("РђСЂРіСѓРјРµРЅС‚ РІРЅРµ РґРѕРїСѓСЃС‚РёРјРѕРіРѕ РґРёР°РїР°Р·РѕРЅР°"));
 				break;
 			case ETT_ERROR_WRONGRANGE:
-				m_szErrorDescription = Cex(_T("Неправильный диапазон"));
+				m_szErrorDescription = Cex(_T("РќРµРїСЂР°РІРёР»СЊРЅС‹Р№ РґРёР°РїР°Р·РѕРЅ"));
 				break;
 			}
 		}
@@ -1170,7 +1207,7 @@ bool CExpressionParser::Expand()
 
 }
 
-
+// С„РѕСЂРјРёСЂСѓРµС‚ СЃС‚СЂРѕРєСѓ РёР· СЂР°Р·РѕР±СЂР°РЅРЅРѕРіРѕ AST РІ РёРЅС„РёРєСЃРЅРѕР№ Р·Р°РїРёСЃРё
 bool CExpressionParser::Infix(wstring& strInfix)
 {
 	bool bRes = true;
@@ -1387,31 +1424,31 @@ const _TCHAR* CExpressionParser::GetErrorDescription()
 	return m_szErrorDescription.c_str();
 }
 
-// создание токена ссылки на модель по разобранному тексту
+// СЃРѕР·РґР°РЅРёРµ С‚РѕРєРµРЅР° СЃСЃС‹Р»РєРё РЅР° РјРѕРґРµР»СЊ РїРѕ СЂР°Р·РѕР±СЂР°РЅРЅРѕРјСѓ С‚РµРєСЃС‚Сѓ
 bool CExpressionParser::BuildModelLink(CExpressionTokenModelLink *pModelLink)
 {
 	bool bRes = true;
-	// после приема текста можем находиться только в режиме ожидания букв
+	// РїРѕСЃР»Рµ РїСЂРёРµРјР° С‚РµРєСЃС‚Р° РјРѕР¶РµРј РЅР°С…РѕРґРёС‚СЊСЃСЏ С‚РѕР»СЊРєРѕ РІ СЂРµР¶РёРјРµ РѕР¶РёРґР°РЅРёСЏ Р±СѓРєРІ
 	_ASSERTE(pModelLink->nWait == CExpressionTokenModelLink::MLS_ALPHA_CONTINUE);
 	pModelLink->AdvanceChild(m_nAdvanceNextSymbol);
-	//для всех токенов, которые входя в ссылку создаем текстовые представления
+	//РґР»СЏ РІСЃРµС… С‚РѕРєРµРЅРѕРІ, РєРѕС‚РѕСЂС‹Рµ РІС…РѕРґСЏ РІ СЃСЃС‹Р»РєСѓ СЃРѕР·РґР°РµРј С‚РµРєСЃС‚РѕРІС‹Рµ РїСЂРµРґСЃС‚Р°РІР»РµРЅРёСЏ
 	for (TOKENITR it = pModelLink->ChildrenBegin(); it != pModelLink->ChildrenEnd(); it++)
 		(*it)->SetTextValue(GetText(*it));
-	// и таже создаем текст для всей ссылки
-	pModelLink->SetTextValue(GetText(pModelLink));		// сначала имя таблицы
-	pModelLink->EvaluateText();							// а потом ссылку полностью по дочерним элементам
+	// Рё С‚Р°Р¶Рµ СЃРѕР·РґР°РµРј С‚РµРєСЃС‚ РґР»СЏ РІСЃРµР№ СЃСЃС‹Р»РєРё
+	pModelLink->SetTextValue(GetText(pModelLink));		// СЃРЅР°С‡Р°Р»Р° РёРјСЏ С‚Р°Р±Р»РёС†С‹
+	pModelLink->EvaluateText();							// Р° РїРѕС‚РѕРј СЃСЃС‹Р»РєСѓ РїРѕР»РЅРѕСЃС‚СЊСЋ РїРѕ РґРѕС‡РµСЂРЅРёРј СЌР»РµРјРµРЅС‚Р°Рј
 
-	// для ссылки создаем переменную
+	// РґР»СЏ СЃСЃС‹Р»РєРё СЃРѕР·РґР°РµРј РїРµСЂРµРјРµРЅРЅСѓСЋ
 	VariableEnum *pEnum = m_Variables.Find(pModelLink->GetTextValue());
 	if (!pEnum)
 	{
-		// если ее еще нет
+		// РµСЃР»Рё РµРµ РµС‰Рµ РЅРµС‚
 		m_Variables.Add(pModelLink->GetTextValue(), pModelLink);
 		m_TokenPool.insert(pModelLink);
 	}
 	else
 	{
-		// а если есть, то заменяем токен обрабатываемой ссылки на токен переменной, так как они указывают на один и тот же объект модели
+		// Р° РµСЃР»Рё РµСЃС‚СЊ, С‚Рѕ Р·Р°РјРµРЅСЏРµРј С‚РѕРєРµРЅ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјРѕР№ СЃСЃС‹Р»РєРё РЅР° С‚РѕРєРµРЅ РїРµСЂРµРјРµРЅРЅРѕР№, С‚Р°Рє РєР°Рє РѕРЅРё СѓРєР°Р·С‹РІР°СЋС‚ РЅР° РѕРґРёРЅ Рё С‚РѕС‚ Р¶Рµ РѕР±СЉРµРєС‚ РјРѕРґРµР»Рё
 		m_pCurrentToken = pEnum->m_pToken;
 		delete pModelLink;
 	}
@@ -1484,7 +1521,7 @@ bool CParserVariables::ChangeToEquationNames()
 	return true;
 }
 
-// ищем переменную по имени и возвращаем найденное инфо
+// РёС‰РµРј РїРµСЂРµРјРµРЅРЅСѓСЋ РїРѕ РёРјРµРЅРё Рё РІРѕР·РІСЂР°С‰Р°РµРј РЅР°Р№РґРµРЅРЅРѕРµ РёРЅС„Рѕ
 VariableEnum *CParserVariables::Find(const _TCHAR* cszVarName)
 {
 	VariableEnum *pEnum = NULL;
@@ -1494,24 +1531,24 @@ VariableEnum *CParserVariables::Find(const _TCHAR* cszVarName)
 	return pEnum;
 }
 
-// изменение имени переменной, например BASE <- #Table[Key].Prop
+// РёР·РјРµРЅРµРЅРёРµ РёРјРµРЅРё РїРµСЂРµРјРµРЅРЅРѕР№, РЅР°РїСЂРёРјРµСЂ BASE <- #Table[Key].Prop
 bool CParserVariables::Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarName)
 {
 	bool bRes = false;
 	VariableEnum *pVarEnum = Find(cszVarName);
 	if (pVarEnum)
 	{
-		// находим по заданному имени переменную,
-		// сохраяем информацию по переменной
+		// РЅР°С…РѕРґРёРј РїРѕ Р·Р°РґР°РЅРЅРѕРјСѓ РёРјРµРЅРё РїРµСЂРµРјРµРЅРЅСѓСЋ,
+		// СЃРѕС…СЂР°СЏРµРј РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ РїРµСЂРµРјРµРЅРЅРѕР№
 		VariableEnum Tmp = *pVarEnum;
-		// ищем информацию по новой переменной
+		// РёС‰РµРј РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ РЅРѕРІРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№
 		VariableEnum *pCheckEnum = Find(cszNewVarName);
 		if (pCheckEnum)
 		{
-			// если информация найдена - удаляем старую переменную
+			// РµСЃР»Рё РёРЅС„РѕСЂРјР°С†РёСЏ РЅР°Р№РґРµРЅР° - СѓРґР°Р»СЏРµРј СЃС‚Р°СЂСѓСЋ РїРµСЂРµРјРµРЅРЅСѓСЋ
 			if (m_Variables.erase(cszVarName))
 			{
-				// и обновляем найденную информацию по старой
+				// Рё РѕР±РЅРѕРІР»СЏРµРј РЅР°Р№РґРµРЅРЅСѓСЋ РёРЅС„РѕСЂРјР°С†РёСЋ РїРѕ СЃС‚Р°СЂРѕР№
 				pCheckEnum->m_eVarType = Tmp.m_eVarType;
 				bRes = pCheckEnum->m_pToken->Join(Tmp.m_pToken);
 				Tmp.m_pToken->Delete();
@@ -1519,9 +1556,9 @@ bool CParserVariables::Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarN
 		}
 		else
 		{
-			// если информации по новой переменной нет 
-			// просто меняем имя переменной в токене
-			// и вставляем новое имя в список переменных
+			// РµСЃР»Рё РёРЅС„РѕСЂРјР°С†РёРё РїРѕ РЅРѕРІРѕР№ РїРµСЂРµРјРµРЅРЅРѕР№ РЅРµС‚ 
+			// РїСЂРѕСЃС‚Рѕ РјРµРЅСЏРµРј РёРјСЏ РїРµСЂРµРјРµРЅРЅРѕР№ РІ С‚РѕРєРµРЅРµ
+			// Рё РІСЃС‚Р°РІР»СЏРµРј РЅРѕРІРѕРµ РёРјСЏ РІ СЃРїРёСЃРѕРє РїРµСЂРµРјРµРЅРЅС‹С…
 			pVarEnum->m_pToken->SetTextValue(cszNewVarName);
 			if (m_Variables.erase(cszVarName))
 				bRes = m_Variables.insert(make_pair(cszNewVarName, Tmp)).second;
@@ -1530,13 +1567,13 @@ bool CParserVariables::Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarN
 	return bRes;
 }
 
-// поиск переменной по имени
+// РїРѕРёСЃРє РїРµСЂРµРјРµРЅРЅРѕР№ РїРѕ РёРјРµРЅРё
 VariableEnum *CParserVariables::Find(const wstring& strVarName)
 {
 	return Find(strVarName.c_str());
 }
 
-// поиск перемеменной по уравнению
+// РїРѕРёСЃРє РїРµСЂРµРјРµРјРµРЅРЅРѕР№ РїРѕ СѓСЂР°РІРЅРµРЅРёСЋ
 VariableEnum *CParserVariables::Find(const CCompilerEquation *pEquation)
 {
 	for (VARIABLEITR it = m_Variables.begin(); it != m_Variables.end(); it++)
@@ -1547,11 +1584,11 @@ VariableEnum *CParserVariables::Find(const CCompilerEquation *pEquation)
 	return NULL;
 }
 
-// добавляем новую перменную с токеном
+// РґРѕР±Р°РІР»СЏРµРј РЅРѕРІСѓСЋ РїРµСЂРјРµРЅРЅСѓСЋ СЃ С‚РѕРєРµРЅРѕРј
 void CParserVariables::Add(const _TCHAR* cszVarName, CExpressionToken* pToken)
 {
 	m_Variables.insert(make_pair(cszVarName, VariableEnum(pToken)));
-	// если токен - ссылка на модель - ставим тип переменной "внешняя"
+	// РµСЃР»Рё С‚РѕРєРµРЅ - СЃСЃС‹Р»РєР° РЅР° РјРѕРґРµР»СЊ - СЃС‚Р°РІРёРј С‚РёРї РїРµСЂРµРјРµРЅРЅРѕР№ "РІРЅРµС€РЅСЏСЏ"
 	if (pToken->GetType() == ETT_MODELLINK)
 		m_Variables.find(cszVarName)->second.m_eVarType = eCVT_EXTERNAL;
 
