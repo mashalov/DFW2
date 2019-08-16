@@ -130,10 +130,15 @@ void CDynaPrimitiveLimited::SetMinMax(CDynaModel *pDynaModel, double dMin, doubl
 
 double CDynaPrimitiveLimited::StateMin(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex)
 {
-	return StateMax(pDynaModel, -Diff, TolCheck, Constraint, ValueIndex);
+	return ChangeState(pDynaModel, -Diff, TolCheck, Constraint, ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
 }
 
 double CDynaPrimitiveLimited::StateMax(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex)
+{
+	return ChangeState(pDynaModel, Diff, TolCheck, Constraint, ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
+}
+
+double CDynaPrimitiveLimited::ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES StateSet)
 {
 	// Diff			- контроль знака - если < 0 - переходим в LS_MID
 	// TolCheck		- значение для контроля относительной погрешности
@@ -149,127 +154,38 @@ double CDynaPrimitiveLimited::StateMax(CDynaModel *pDynaModel, double Diff, doub
 			double derr = fabs(pRightVector->GetWeightedError(Diff, TolCheck));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
-				SetCurrentState(pDynaModel, LS_MID);
+				SetCurrentState(pDynaModel, StateSet);
 				rH = 1.0;
 			}
 			else
 			{
 				if (pDynaModel->ZeroCrossingStepReached(rH))
 				{
-					SetCurrentState(pDynaModel, LS_MID);
+					SetCurrentState(pDynaModel, StateSet);
 					rH = 1.0;
 				}
 			}
 		}
+	}
+	else if (Diff < 0.0)
+	{
+		SetCurrentState(pDynaModel, StateSet);
+		rH = 1.0;
+		_ASSERTE(0); // корня нет, но знак изменился !
 	}
 	else
 		rH = 1.0;
 
 	return rH;
-
 }
 
 double CDynaPrimitiveLimited::StateMid(CDynaModel *pDynaModel, double dValue, ptrdiff_t ValueIndex)
 {
-	// ищем точку пересечения переменной с ограничениями
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(ValueIndex));
-	double CheckMax = dValue - m_dMaxH;
-	double CheckMin = m_dMinH - dValue;
-	double rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMaxH);
-
-	///*
-	if (pDynaModel->GetZeroCrossingInRange(rH))
-	{
-		// если точка находится внутри интервала текущего шага, принимаем шаг то этой точки
-		if (CheckMax >= 0.0)
-		{
-			// если вышли за максимум
-			double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dValue));
-			if (derr < pDynaModel->GetZeroCrossingTolerance())
-			{
-				// если точность зерокроссинга достигнута - изменяем состояние
-				SetCurrentState(pDynaModel, LS_MAX);
-				// при этом деление шага отменяем
-				rH = 1.0;
-			}
-			else
-			{
-				// если точность не достигнута, проверяем возможность
-				// уточнения и уточняем деление шага
-				if (pDynaModel->ZeroCrossingStepReached(rH))
-				{
-					SetCurrentState(pDynaModel, LS_MAX);
-					rH = 1.0;
-				}
-			}
-		}
-	}
-	else
-	{
-		// если не нашли ограничения максимума - ищем ограничение с минимумом
-		rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMinH);
-		if (pDynaModel->GetZeroCrossingInRange(rH))
-		{
-			if (CheckMin >= 0.0)
-			{
-				// если вышли за минимум
-				double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dValue));
-				if (derr < pDynaModel->GetZeroCrossingTolerance())
-				{
-					// если точность зерокроссинга достигнута - изменяем состояние
-					SetCurrentState(pDynaModel, LS_MIN);
-					rH = 1.0;
-				}
-				else
-				{
-					if (pDynaModel->ZeroCrossingStepReached(rH))
-					{
-						SetCurrentState(pDynaModel, LS_MIN);
-						rH = 1.0;
-					}
-				}
-			}
-		}
-		else
-			rH = 1.0;
-	}
-	//*/
-
-	/*
-	if (CheckMax >= 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dValue));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MAX);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMaxH);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetCurrentState(pDynaModel, LS_MAX);
-			}
-		}
-	}
-	else
-	if (CheckMin >= 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dValue));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MIN);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMinH);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetCurrentState(pDynaModel, LS_MIN);
-			}
-		}
-	}
-	*/
+	// ищем пересечение с максимумом
+	double rH = ChangeState(pDynaModel, m_dMaxH - dValue, dValue, m_dMaxH, ValueIndex, LS_MAX);
+	// если состояние не изменилось и нет зерокроссинга внутри шага, ищем пересечение с минимумом
+	if(GetCurrentState() == LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
+		rH = ChangeState(pDynaModel, dValue - m_dMinH, dValue, m_dMinH, ValueIndex, LS_MIN);
 	return rH;
 }
 
