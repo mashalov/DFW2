@@ -129,6 +129,7 @@ namespace DFW2
 		double StateMid(CDynaModel *pDynaModel, double dValue, ptrdiff_t ValueIndex);
 		double StateMin(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex);
 		double StateMax(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex);
+		double ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES StateSet);
 	public:
 		inline eLIMITEDSTATES GetCurrentState() { return eCurrentState; }
 		void SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax);
