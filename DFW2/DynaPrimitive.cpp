@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaPrimitive.h"
 #include "DynaModel.h"
 
@@ -52,7 +52,7 @@ double CDynaPrimitive::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return 1.0;
 }
 
-// ����������� ���� ���� ������������� ��� ��������� � ����������� � ������������ �������������
+// определение доли шага зерокроссинга для примитива с минимальным и максимальным ограничениями
 
 double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
@@ -71,10 +71,10 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 		break;
 	}
 
-	// ���� ��������� ����������, ����������� ��������� �������
+	// если состояние изменилось, запрашиваем обработку разрыва
 	if (oldCurrentState != eCurrentState)
 	{
-		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) �������� %s �� %s �������� ��������� %g %g %g � %d �� %d"), 
+		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), 
 			pDynaModel->GetCurrentTime(), 
 			pDynaModel->GetIntegrationStepNumber(),
 			GetVerbalName(), 
@@ -95,14 +95,18 @@ double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVect
 
 	double dError = pRightVector->Error;
 
+	// получаем константу метода интегрирования
 	const double *lm = CDynaModel::l[pRightVector->EquationType * 2 + q - 1];
-	double a = 0.0;
+	// рассчитываем коэффициенты полинома, описывающего изменение переменной
+	double a = 0.0;		// если порядок метода 1 - квадратичный член равен нулю
+	// линейный член
 	double b = (pRightVector->Nordsiek[1] + dError * lm[1]) / h;
+	// постоянный член
 	double c = (pRightVector->Nordsiek[0] + dError * lm[0]) - dConst;
-
+	// если порядок метода 2 - то вводим квадратичный коэффициент
 	if (q == 2)
 		a = (pRightVector->Nordsiek[2] + dError * lm[2]) / h / h;
-
+	// возвращаем отношение зеро-кроссинга для полинома
 	return GetZCStepRatio(pDynaModel, a, b, c);
 }
 
@@ -122,6 +126,151 @@ void CDynaPrimitiveLimited::SetMinMax(CDynaModel *pDynaModel, double dMin, doubl
 	m_dMax = dMax;
 	m_dMinH = m_dMin - pDynaModel->GetHysteresis(m_dMin);
 	m_dMaxH = m_dMax + pDynaModel->GetHysteresis(m_dMax);
+}
+
+double CDynaPrimitiveLimited::StateMin(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex)
+{
+	return StateMax(pDynaModel, -Diff, TolCheck, Constraint, ValueIndex);
+}
+
+double CDynaPrimitiveLimited::StateMax(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex)
+{
+	// Diff			- контроль знака - если < 0 - переходим в LS_MID
+	// TolCheck		- значение для контроля относительной погрешности
+	// Constraint	- константа, относительно которой определяем пересечение
+
+	RightVector *pRightVector = pDynaModel->GetRightVector(A(ValueIndex));
+	double rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
+
+	if (pDynaModel->GetZeroCrossingInRange(rH))
+	{
+		if (Diff < 0.0)
+		{
+			double derr = fabs(pRightVector->GetWeightedError(Diff, TolCheck));
+			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			{
+				SetCurrentState(pDynaModel, LS_MID);
+				rH = 1.0;
+			}
+			else
+			{
+				if (pDynaModel->ZeroCrossingStepReached(rH))
+				{
+					SetCurrentState(pDynaModel, LS_MID);
+					rH = 1.0;
+				}
+			}
+		}
+	}
+	else
+		rH = 1.0;
+
+	return rH;
+
+}
+
+double CDynaPrimitiveLimited::StateMid(CDynaModel *pDynaModel, double dValue, ptrdiff_t ValueIndex)
+{
+	// ищем точку пересечения переменной с ограничениями
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(ValueIndex));
+	double CheckMax = dValue - m_dMaxH;
+	double CheckMin = m_dMinH - dValue;
+	double rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMaxH);
+
+	///*
+	if (pDynaModel->GetZeroCrossingInRange(rH))
+	{
+		// если точка находится внутри интервала текущего шага, принимаем шаг то этой точки
+		if (CheckMax >= 0.0)
+		{
+			// если вышли за максимум
+			double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dValue));
+			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			{
+				// если точность зерокроссинга достигнута - изменяем состояние
+				SetCurrentState(pDynaModel, LS_MAX);
+				// при этом деление шага отменяем
+				rH = 1.0;
+			}
+			else
+			{
+				// если точность не достигнута, проверяем возможность
+				// уточнения и уточняем деление шага
+				if (pDynaModel->ZeroCrossingStepReached(rH))
+				{
+					SetCurrentState(pDynaModel, LS_MAX);
+					rH = 1.0;
+				}
+			}
+		}
+	}
+	else
+	{
+		// если не нашли ограничения максимума - ищем ограничение с минимумом
+		rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMinH);
+		if (pDynaModel->GetZeroCrossingInRange(rH))
+		{
+			if (CheckMin >= 0.0)
+			{
+				// если вышли за минимум
+				double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dValue));
+				if (derr < pDynaModel->GetZeroCrossingTolerance())
+				{
+					// если точность зерокроссинга достигнута - изменяем состояние
+					SetCurrentState(pDynaModel, LS_MIN);
+					rH = 1.0;
+				}
+				else
+				{
+					if (pDynaModel->ZeroCrossingStepReached(rH))
+					{
+						SetCurrentState(pDynaModel, LS_MIN);
+						rH = 1.0;
+					}
+				}
+			}
+		}
+		else
+			rH = 1.0;
+	}
+	//*/
+
+	/*
+	if (CheckMax >= 0.0)
+	{
+		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dValue));
+		if (derr < pDynaModel->GetZeroCrossingTolerance())
+		{
+			SetCurrentState(pDynaModel, LS_MAX);
+		}
+		else
+		{
+			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMaxH);
+			if (pDynaModel->ZeroCrossingStepReached(rH))
+			{
+				SetCurrentState(pDynaModel, LS_MAX);
+			}
+		}
+	}
+	else
+	if (CheckMin >= 0.0)
+	{
+		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dValue));
+		if (derr < pDynaModel->GetZeroCrossingTolerance())
+		{
+			SetCurrentState(pDynaModel, LS_MIN);
+		}
+		else
+		{
+			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMinH);
+			if (pDynaModel->ZeroCrossingStepReached(rH))
+			{
+				SetCurrentState(pDynaModel, LS_MIN);
+			}
+		}
+	}
+	*/
+	return rH;
 }
 
 
@@ -195,28 +344,34 @@ double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel *pDyn
 	return GetZCStepRatio(pDynaModel, a, b, c);
 }
 
+// возвращает отношение текущего шага к шагу до пересечения заданного a*t*t + b*t + c полинома
 double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c)
 {
+	// по умолчанию зеро-кроссинга нет - отношение 1.0
 	double rH = 1.0;
 	double h = pDynaModel->GetH();
 
 	if (Equal(a, 0.0))
 	{
-		double h1 = -c / b;
-		rH = (h + h1) / h;
-
-		_ASSERTE(rH >= 0);
+		// если квадратичный член равен нулю - просто решаем линейное уравнение
+		//if (!Equal(b, 0.0))
+		{
+			double h1 = -c / b;
+			rH = (h + h1) / h;
+			//_ASSERTE(rH >= 0);
+		}
 	}
 	else
 	{
+		// если квадратичный член ненулевой - решаем квадратичное уравнение
 		double d = b * b - 4.0 * a * c;
 
 		if (d >= 0)
 		{
 			d = sqrt(d);
 
-			double h1 = (-b + d) / 2 / a;
-			double h2 = (-b - d) / 2 / a;
+			double h1 = (-b + d) / 2.0 / a;
+			double h2 = (-b - d) / 2.0 / a;
 
 			// use stable formulas to avoid
 			// precision loss by numerical cancellation 
@@ -232,9 +387,10 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 			if (h1 > 0.0 || h1 < -h) h1 = FLT_MAX;
 			if (h2 > 0.0 || h2 < -h) h2 = FLT_MAX;
 
+			// возвращаем наименьший из действительных корней
 			rH = (h + min(h1, h2)) / h;
 
-			_ASSERTE(rH >= 0);
+			//_ASSERTE(rH >= 0);
 		}
 	}
 

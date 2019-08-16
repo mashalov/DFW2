@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "LimiterConst.h"
 #include "DynaModel.h"
 
@@ -61,131 +61,20 @@ bool CLimiterConst::Init(CDynaModel *pDynaModel)
 	return bRes;
 }
 
-// контроль зерокроссинга для состояния вне ограничения
+// РєРѕРЅС‚СЂРѕР»СЊ Р·РµСЂРѕРєСЂРѕСЃСЃРёРЅРіР° РґР»СЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ РІРЅРµ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
 double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 {
-
-	/*
-	if (m_pDevice->GetId() == -1)
-		m_pDevice->GetId();
-
-	if (m_pDevice->GetId() == -1 && pDynaModel->GetCurrentTime() > 4.1)
-		m_pDevice->GetId();
-	*/
-
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-	double dInput = m_Input->Value();
-	// контролируем входной сигнал по разности ограничений с гистерезисом
-
-	double CheckMax = dInput - m_dMaxH;
-	double CheckMin = m_dMinH - dInput;
-
-	// по умолчанию выход = входу, если нет ограничений такое значение и формируется на выходе
-	*m_Output = dInput;
-
-	if (CheckMax >= 0.0)
-	{
-		// если вышли за максимум
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dInput));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			// если точность зерокроссинга достигнута - изменяем состояние
-			SetCurrentState(pDynaModel, LS_MAX);
-		}
-		else
-		{
-			// если точность зерокроссинга не достаточна - ищем точку по расстонияю до 
-			// гистерезиса максимума
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMaxH);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetCurrentState(pDynaModel, LS_MAX);
-			}
-		}
-	}
-	else
-	if (CheckMin >= 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dInput));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MIN);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMinH);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetCurrentState(pDynaModel, LS_MIN);
-			}
-		}
-	}
-
-	return rH;
+	return StateMid(pDynaModel, m_Input->Value(), m_Input->Index());
 }
 
 double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 {
-
-	if (m_pDevice->GetId() == -1)
-		m_pDevice->GetId();
-
-	if (m_pDevice->GetId() == -1 && pDynaModel->GetCurrentTime() > 4.1)
-		m_pDevice->GetId();
-
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-	double dInput = m_Input->Value();
-	double CheckMin = m_dMin - dInput;
-
-	if (CheckMin < 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dInput));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MID);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMin);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, LS_MID);
-		}
-	}
-
-	return rH;
+	return StateMin(pDynaModel, m_Input->Value() - m_dMin, m_Input->Value(), m_dMin, m_Input->Index());
 }
 
 double CLimiterConst::OnStateMax(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->GetId() == -1)
-		m_pDevice->GetId();
-
-	if (m_pDevice->GetId() == -1 && pDynaModel->GetCurrentTime() > 4.1)
-		m_pDevice->GetId();
-	
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-
-	double dInput = m_Input->Value();
-	double CheckMax = dInput - m_dMax;
-	
-	if (CheckMax < 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dInput));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MID);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMax);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, LS_MID);
-		}
-	}
-	return rH;
+	return StateMax(pDynaModel, m_Input->Value() - m_dMax, m_Input->Value(), m_dMax, m_Input->Index());
 }
 
 eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel)

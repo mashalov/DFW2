@@ -629,6 +629,11 @@ namespace DFW2
 			return m_Parameters.m_dRtol;
 		}
 
+		inline double GetZeroCrossingInRange(double rH)
+		{
+			return rH > 0.0 && rH < 1.0;
+		}
+
 		inline double GetZeroCrossingTolerance()
 		{
 			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? FLT_MAX : 100.0 * m_Parameters.m_dAtol;

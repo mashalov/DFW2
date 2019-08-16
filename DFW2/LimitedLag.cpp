@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "LimitedLag.h"
 #include "DynaModel.h"
 
@@ -109,100 +109,17 @@ bool CLimitedLag::BuildDerivatives(CDynaModel *pDynaModel)
 
 double CLimitedLag::OnStateMid(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_OutputEquationIndex));
-
-	double CheckMax = *m_Output - m_dMaxH;
-	double CheckMin = m_dMinH- *m_Output;
-
-
-	if (m_pDevice->GetId() == 100702 && pDynaModel->GetCurrentTime() > 1.96076)
-		m_pDevice->GetId();
-
-	if (CheckMax >= 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, *m_Output));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MAX);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMaxH);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetCurrentState(pDynaModel, LS_MAX);
-			}
-		}
-	}
-	else
-	if (CheckMin >= 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, *m_Output));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MIN);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMinH);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetCurrentState(pDynaModel, LS_MIN);
-			}
-		}
-	}
-
-	return rH;
+	return StateMid(pDynaModel, *m_Output, m_OutputEquationIndex);
 }
 
 double CLimitedLag::OnStateMin(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-
-	double dLag = m_K * m_Input->Value() - *m_Output;
-	RightVector *pRightVector2 = pDynaModel->GetRightVector(A(m_Input->Index()));
-
-	if (dLag > 0.0)
-	{
-		double derr = fabs(pRightVector2->GetWeightedError(dLag, *m_Output));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MID);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector2, *m_Output / m_K);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, LS_MID);
-		}
-	}
-
-	return rH;
+	return StateMin(pDynaModel, m_K * m_Input->Value() - *m_Output, *m_Output, *m_Output / m_K, m_Input->Index());
 }
 
 double CLimitedLag::OnStateMax(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-	double dLag = m_K * m_Input->Value() - *m_Output;
-	RightVector *pRightVector2 = pDynaModel->GetRightVector(A(m_Input->Index()));
-
-	if (dLag < 0.0)
-	{
-		double derr = fabs(pRightVector2->GetWeightedError(dLag, *m_Output));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MID);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector2, *m_Output / m_K);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, LS_MID);
-		}
-	}
-
-	return rH;
+	return StateMax(pDynaModel, m_K * m_Input->Value() - *m_Output, *m_Output, *m_Output / m_K, m_Input->Index());
 }
 
 eDEVICEFUNCTIONSTATUS CLimitedLag::ProcessDiscontinuity(CDynaModel* pDynaModel)
