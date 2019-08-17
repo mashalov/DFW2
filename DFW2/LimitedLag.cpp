@@ -109,17 +109,29 @@ bool CLimitedLag::BuildDerivatives(CDynaModel *pDynaModel)
 
 double CLimitedLag::OnStateMid(CDynaModel *pDynaModel)
 {
-	return StateMid(pDynaModel, *m_Output, m_OutputEquationIndex);
+	double rH = 1.0;
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMaxH - *m_Output, *m_Output, m_dMaxH, m_OutputEquationIndex, rH))
+		SetCurrentState(pDynaModel, LS_MAX);
+	if (GetCurrentState() == LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
+		if (CDynaPrimitive::ChangeState(pDynaModel, *m_Output - m_dMinH, *m_Output, m_dMinH, m_OutputEquationIndex, rH))
+			SetCurrentState(pDynaModel, LS_MIN);
+	return rH;
 }
 
 double CLimitedLag::OnStateMin(CDynaModel *pDynaModel)
 {
-	return ChangeState(pDynaModel, *m_Output - m_K * m_Input->Value(), *m_Output, *m_Output / m_K, m_Input->Index(), CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
+	double rH = 1.0;
+	if (CDynaPrimitive::ChangeState(pDynaModel, *m_Output - m_K * m_Input->Value(), *m_Output, *m_Output / m_K, m_Input->Index(), rH))
+		SetCurrentState(pDynaModel, LS_MID);
+	return rH;
 }
 
 double CLimitedLag::OnStateMax(CDynaModel *pDynaModel)
 {
-	return ChangeState(pDynaModel, m_K * m_Input->Value() - *m_Output, *m_Output, *m_Output / m_K, m_Input->Index(), CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
+	double rH = 1.0;
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_K * m_Input->Value() - *m_Output, *m_Output, *m_Output / m_K, m_Input->Index(), rH))
+		SetCurrentState(pDynaModel, LS_MID);
+	return rH;
 }
 
 eDEVICEFUNCTIONSTATUS CLimitedLag::ProcessDiscontinuity(CDynaModel* pDynaModel)

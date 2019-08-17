@@ -16,64 +16,37 @@ bool CRelay::Init(CDynaModel *pDynaModel)
 double CRelay::OnStateOff(CDynaModel *pDynaModel)
 {
 	double OnBound = m_dUpperH;
-	double Check = m_Input->Value() - m_dUpperH;
+	double Check = m_dUpperH - m_Input->Value();
 
 	if (!m_bMaxRelay)
 	{
 		OnBound = m_dLowerH;
-		Check = m_dLowerH - m_Input->Value();
+		Check = m_Input->Value() - m_dLowerH;
 	}
 
-	return ChangeState(pDynaModel, Check, OnBound, RS_ON);
-}
+	double rH = 1.0;
+	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input->Value(), OnBound, m_Input->Index(), rH))
+		SetCurrentState(pDynaModel, RS_ON);
 
-double CRelay::ChangeState(CDynaModel *pDynaModel, double Check, double OnBound, eRELAYSTATES SetState)
-{
-	RightVector *pRightVector = pDynaModel->GetRightVector(A(m_Input->Index())); 
-	double rH = CDynaPrimitiveLimited::FindZeroCrossingToConst(pDynaModel, pRightVector, OnBound);
-
-	if (pDynaModel->GetZeroCrossingInRange(rH))
-	{
-		if (Check >= 0)
-		{
-			double derr = fabs(pRightVector->GetWeightedError(Check, m_Input->Value()));
-			if (derr < pDynaModel->GetZeroCrossingTolerance())
-			{
-				SetCurrentState(pDynaModel, SetState);
-				rH = 1.0;
-			}
-		}
-		else
-		{
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, SetState);
-		}
-	}
-	else if (Check >= 0)
-	{
-		SetCurrentState(pDynaModel, SetState);
-		rH = 1.0;
-		_ASSERTE(0); // корня нет, но знак изменился !
-	}
-	else
-		rH = 1.0;
-
-	return rH;
-
+	return rH; 
 }
 
 double CRelay::OnStateOn(CDynaModel *pDynaModel)
 {
 	double OnBound = m_dLowerH;
-	double Check = m_dLowerH - m_Input->Value();
+	double Check = m_Input->Value() - m_dLowerH;
 
 	if (!m_bMaxRelay)
 	{
 		OnBound = m_dUpperH;
-		Check = m_Input->Value() - m_dUpperH;
+		Check = m_dUpperH - m_Input->Value();
 	}
 
-	return ChangeState(pDynaModel, Check, OnBound, RS_OFF);
+	double rH = 1.0;
+	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input->Value(), OnBound, m_Input->Index(), rH))
+		SetCurrentState(pDynaModel, RS_OFF);
+	return rH;
+
 }
 
 

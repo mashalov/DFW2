@@ -868,7 +868,7 @@ bool CLoadFlow::Run()
 		ATLTRACE("\n%g", b[nmx]);
 
 
-		int sq = KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common);
+		ptrdiff_t sq = KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common);
 
 		/*nmx = 0;
 		for (int i = 1; i < m_nMatrixSize; i++)
@@ -1140,7 +1140,7 @@ void CLoadFlow::DumpNodes()
 				pNode->Vrastr,
 				pNode->Deltarastr);
 #else
-			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
+			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
 				pNode->GetId(),
 				pNode->V,
 				pNode->Delta / M_PI * 180.0,
