@@ -8,6 +8,7 @@ namespace DFW2
 	protected:
 		virtual double OnStateOn(CDynaModel *pDynaModel);
 		virtual double OnStateOff(CDynaModel *pDynaModel);
+		double ChangeState(CDynaModel *pDynaModel);
 	public:
 		CZCDetector(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input) {}
 		virtual ~CZCDetector() {}

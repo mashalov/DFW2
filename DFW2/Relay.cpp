@@ -15,9 +15,6 @@ bool CRelay::Init(CDynaModel *pDynaModel)
 
 double CRelay::OnStateOff(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-
 	double OnBound = m_dUpperH;
 	double Check = m_Input->Value() - m_dUpperH;
 
@@ -27,29 +24,46 @@ double CRelay::OnStateOff(CDynaModel *pDynaModel)
 		Check = m_dLowerH - m_Input->Value();
 	}
 
-	if (Check >= 0.0)
+	return ChangeState(pDynaModel, Check, OnBound, RS_ON);
+}
+
+double CRelay::ChangeState(CDynaModel *pDynaModel, double Check, double OnBound, eRELAYSTATES SetState)
+{
+	RightVector *pRightVector = pDynaModel->GetRightVector(A(m_Input->Index())); 
+	double rH = CDynaPrimitiveLimited::FindZeroCrossingToConst(pDynaModel, pRightVector, OnBound);
+
+	if (pDynaModel->GetZeroCrossingInRange(rH))
 	{
-		double derr = fabs(pRightVector1->GetWeightedError(Check, m_Input->Value()));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
+		if (Check >= 0)
 		{
-			SetCurrentState(pDynaModel, RS_ON);
+			double derr = fabs(pRightVector->GetWeightedError(Check, m_Input->Value()));
+			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			{
+				SetCurrentState(pDynaModel, SetState);
+				rH = 1.0;
+			}
 		}
 		else
 		{
-			rH = CDynaPrimitiveLimited::FindZeroCrossingToConst(pDynaModel, pRightVector1, OnBound);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, RS_ON);
+				SetCurrentState(pDynaModel, SetState);
 		}
 	}
+	else if (Check >= 0)
+	{
+		SetCurrentState(pDynaModel, SetState);
+		rH = 1.0;
+		_ASSERTE(0); // корня нет, но знак изменился !
+	}
+	else
+		rH = 1.0;
 
 	return rH;
+
 }
 
 double CRelay::OnStateOn(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-
 	double OnBound = m_dLowerH;
 	double Check = m_dLowerH - m_Input->Value();
 
@@ -59,22 +73,7 @@ double CRelay::OnStateOn(CDynaModel *pDynaModel)
 		Check = m_Input->Value() - m_dUpperH;
 	}
 
-	if (Check >= 0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(Check, m_Input->Value()));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, RS_OFF);
-		}
-		else
-		{
-			rH = CDynaPrimitiveLimited::FindZeroCrossingToConst(pDynaModel, pRightVector1, OnBound);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, RS_OFF);
-		}
-	}
-
-	return rH;
+	return ChangeState(pDynaModel, Check, OnBound, RS_OFF);
 }
 
 

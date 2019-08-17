@@ -127,8 +127,6 @@ namespace DFW2
 		virtual double OnStateMin(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateMid(CDynaModel *pDynaModel) { return 1.0; }
 		double StateMid(CDynaModel *pDynaModel, double dValue, ptrdiff_t ValueIndex);
-		double StateMin(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex);
-		double StateMax(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex);
 		double ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES StateSet);
 	public:
 		inline eLIMITEDSTATES GetCurrentState() { return eCurrentState; }
@@ -155,6 +153,7 @@ namespace DFW2
 		virtual void RequestZCDiscontinuity(CDynaModel* pDynaModel);
 	public:
 		CDynaPrimitiveBinary(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
+		void InvertState(CDynaModel *pDynaModel);
 		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
 		virtual bool BuildEquations(CDynaModel *pDynaModel);
 		virtual bool BuildRightHand(CDynaModel *pDynaModel);

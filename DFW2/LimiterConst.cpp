@@ -69,12 +69,12 @@ double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 
 double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 {
-	return StateMin(pDynaModel, m_Input->Value() - m_dMin, m_Input->Value(), m_dMin, m_Input->Index());
+	return ChangeState(pDynaModel, m_dMax - m_Input->Value(), m_Input->Value(), m_dMin, m_Input->Index(), CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
 }
 
 double CLimiterConst::OnStateMax(CDynaModel *pDynaModel)
 {
-	return StateMax(pDynaModel, m_Input->Value() - m_dMax, m_Input->Value(), m_dMax, m_Input->Index());
+	return ChangeState(pDynaModel, m_Input->Value() - m_dMax, m_Input->Value(), m_dMax, m_Input->Index(), CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
 }
 
 eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel)

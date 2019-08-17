@@ -72,6 +72,7 @@ Global
 		{10A29A20-D54F-465D-8A51-EF34EA3D9DD7}.Release|Win32.ActiveCfg = Release|Win32
 		{10A29A20-D54F-465D-8A51-EF34EA3D9DD7}.Release|Win32.Build.0 = Release|Win32
 		{10A29A20-D54F-465D-8A51-EF34EA3D9DD7}.Release|x64.ActiveCfg = Release|x64
+		{10A29A20-D54F-465D-8A51-EF34EA3D9DD7}.Release|x64.Build.0 = Release|x64
 		{5B949741-06EF-4D22-A52E-F63403CD3480}.Debug|Mixed Platforms.ActiveCfg = Release|Any CPU
 		{5B949741-06EF-4D22-A52E-F63403CD3480}.Debug|Mixed Platforms.Build.0 = Release|Any CPU
 		{5B949741-06EF-4D22-A52E-F63403CD3480}.Debug|Win32.ActiveCfg = Debug|Any CPU
