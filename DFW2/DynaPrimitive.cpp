@@ -128,16 +128,6 @@ void CDynaPrimitiveLimited::SetMinMax(CDynaModel *pDynaModel, double dMin, doubl
 	m_dMaxH = m_dMax + pDynaModel->GetHysteresis(m_dMax);
 }
 
-double CDynaPrimitiveLimited::StateMin(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex)
-{
-	return ChangeState(pDynaModel, -Diff, TolCheck, Constraint, ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
-}
-
-double CDynaPrimitiveLimited::StateMax(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex)
-{
-	return ChangeState(pDynaModel, Diff, TolCheck, Constraint, ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
-}
-
 double CDynaPrimitiveLimited::ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES StateSet)
 {
 	// Diff			- контроль знака - если < 0 - переходим в LS_MID
@@ -189,6 +179,10 @@ double CDynaPrimitiveLimited::StateMid(CDynaModel *pDynaModel, double dValue, pt
 	return rH;
 }
 
+void CDynaPrimitiveBinary::InvertState(CDynaModel *pDynaModel)
+{
+	SetCurrentState(pDynaModel, GetCurrentState() == RS_ON ? RS_OFF : RS_ON);
+}
 
 void CDynaPrimitiveBinary::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 {

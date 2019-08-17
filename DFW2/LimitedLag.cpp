@@ -114,12 +114,12 @@ double CLimitedLag::OnStateMid(CDynaModel *pDynaModel)
 
 double CLimitedLag::OnStateMin(CDynaModel *pDynaModel)
 {
-	return StateMin(pDynaModel, m_K * m_Input->Value() - *m_Output, *m_Output, *m_Output / m_K, m_Input->Index());
+	return ChangeState(pDynaModel, *m_Output - m_K * m_Input->Value(), *m_Output, *m_Output / m_K, m_Input->Index(), CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
 }
 
 double CLimitedLag::OnStateMax(CDynaModel *pDynaModel)
 {
-	return StateMax(pDynaModel, m_K * m_Input->Value() - *m_Output, *m_Output, *m_Output / m_K, m_Input->Index());
+	return ChangeState(pDynaModel, m_K * m_Input->Value() - *m_Output, *m_Output, *m_Output / m_K, m_Input->Index(), CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
 }
 
 eDEVICEFUNCTIONSTATUS CLimitedLag::ProcessDiscontinuity(CDynaModel* pDynaModel)

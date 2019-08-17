@@ -566,7 +566,7 @@ bool CDynaModel::SolveLinearSystem()
 				{
 					if (m_Parameters.m_bUseRefactor) // делаем вторую и более итерацию Ньютона и разрешен рефактор
 					{
-						if (klu_refactor(Ai, Ap, Ax, Symbolic, Numeric, &Common) > 0)	// делаем рефактор 
+						if (KLU_refactor(Ai, Ap, Ax, Symbolic, Numeric, &Common) > 0)	// делаем рефактор 
 						{
 							sc.nFactorizationsCount++;
 							bForceRefactor = false;	// и если он успешен - отказываемся от полной рефакторизации
