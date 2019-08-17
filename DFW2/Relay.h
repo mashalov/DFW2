@@ -17,7 +17,6 @@ namespace DFW2
 		virtual double OnStateOn(CDynaModel *pDynaModel);
 		virtual double OnStateOff(CDynaModel *pDynaModel);
 		eRELAYSTATES GetInstantState();
-		double ChangeState(CDynaModel *pDynaModel, double Check, double OnBound, eRELAYSTATES SetState);
 	public:
 		CRelay(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input) {}
 		virtual ~CRelay() {}

@@ -52,6 +52,49 @@ double CDynaPrimitive::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return 1.0;
 }
 
+bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH)
+{
+	// Diff			- контроль знака - если < 0 - переходим в LS_MID
+	// TolCheck		- значение для контроля относительной погрешности
+	// Constraint	- константа, относительно которой определяем пересечение
+
+	bool bChangeState = false;
+
+	RightVector *pRightVector = pDynaModel->GetRightVector(A(ValueIndex));
+	rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
+
+	if (pDynaModel->GetZeroCrossingInRange(rH))
+	{
+		if (Diff < 0.0)
+		{
+			double derr = fabs(pRightVector->GetWeightedError(Diff, TolCheck));
+			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			{
+				bChangeState = true;
+				rH = 1.0;
+			}
+			else
+			{
+				if (pDynaModel->ZeroCrossingStepReached(rH))
+				{
+					bChangeState = true;
+					rH = 1.0;
+				}
+			}
+		}
+	}
+	else if (Diff < 0.0)
+	{
+		bChangeState = true;
+		rH = 1.0;
+		_ASSERTE(0); // корня нет, но знак изменился !
+	}
+	else
+		rH = 1.0;
+
+	return bChangeState;
+}
+
 // определение доли шага зерокроссинга для примитива с минимальным и максимальным ограничениями
 
 double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
@@ -126,57 +169,6 @@ void CDynaPrimitiveLimited::SetMinMax(CDynaModel *pDynaModel, double dMin, doubl
 	m_dMax = dMax;
 	m_dMinH = m_dMin - pDynaModel->GetHysteresis(m_dMin);
 	m_dMaxH = m_dMax + pDynaModel->GetHysteresis(m_dMax);
-}
-
-double CDynaPrimitiveLimited::ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES StateSet)
-{
-	// Diff			- контроль знака - если < 0 - переходим в LS_MID
-	// TolCheck		- значение для контроля относительной погрешности
-	// Constraint	- константа, относительно которой определяем пересечение
-
-	RightVector *pRightVector = pDynaModel->GetRightVector(A(ValueIndex));
-	double rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
-
-	if (pDynaModel->GetZeroCrossingInRange(rH))
-	{
-		if (Diff < 0.0)
-		{
-			double derr = fabs(pRightVector->GetWeightedError(Diff, TolCheck));
-			if (derr < pDynaModel->GetZeroCrossingTolerance())
-			{
-				SetCurrentState(pDynaModel, StateSet);
-				rH = 1.0;
-			}
-			else
-			{
-				if (pDynaModel->ZeroCrossingStepReached(rH))
-				{
-					SetCurrentState(pDynaModel, StateSet);
-					rH = 1.0;
-				}
-			}
-		}
-	}
-	else if (Diff < 0.0)
-	{
-		SetCurrentState(pDynaModel, StateSet);
-		rH = 1.0;
-		_ASSERTE(0); // корня нет, но знак изменился !
-	}
-	else
-		rH = 1.0;
-
-	return rH;
-}
-
-double CDynaPrimitiveLimited::StateMid(CDynaModel *pDynaModel, double dValue, ptrdiff_t ValueIndex)
-{
-	// ищем пересечение с максимумом
-	double rH = ChangeState(pDynaModel, m_dMaxH - dValue, dValue, m_dMaxH, ValueIndex, LS_MAX);
-	// если состояние не изменилось и нет зерокроссинга внутри шага, ищем пересечение с минимумом
-	if(GetCurrentState() == LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
-		rH = ChangeState(pDynaModel, dValue - m_dMinH, dValue, m_dMinH, ValueIndex, LS_MIN);
-	return rH;
 }
 
 void CDynaPrimitiveBinary::InvertState(CDynaModel *pDynaModel)

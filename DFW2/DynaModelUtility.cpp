@@ -436,7 +436,7 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 			bool bAllZeros = true;
 			while (pAi < pAiend)
 			{
-				_ftprintf_s(fmatrix, _T("%10d %10d     %30g"), nRow, *pAi, *pAx);
+				_ftprintf_s(fmatrix, _T("%10td %10td     %30g"), nRow, *pAi, *pAx);
 				RightVector *pRowVector = pRightVector + nRow;
 				RightVector *pColVector = pRightVector + *pAi;
 				CDevice *pRowDevice = pRowVector->pDevice;
@@ -465,18 +465,18 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 		}
 
 		for (const auto& it : BadNumbers)
-			_ftprintf_s(fmatrix, _T("Bad Number in Row: %d\n"), it);
+			_ftprintf_s(fmatrix, _T("Bad Number in Row: %td\n"), it);
 
 		for (const auto& it : FullZeros)
-			_ftprintf_s(fmatrix, _T("Full Zero Row : %d\n"), it);
+			_ftprintf_s(fmatrix, _T("Full Zero Row : %td\n"), it);
 
 		for (auto& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
 			if(!*it)
-				_ftprintf_s(fmatrix, _T("Full Zero Column: %d\n"), it - NonZeros.begin());
+				_ftprintf_s(fmatrix, _T("Full Zero Column: %td\n"), it - NonZeros.begin());
 
 		for (auto& it = Diagonals.begin(); it != Diagonals.end(); it++)
 			if (!*it)
-				_ftprintf_s(fmatrix, _T("Zero Diagonal: %d\n"), it - Diagonals.begin());
+				_ftprintf_s(fmatrix, _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
 
 
 		if(!bAnalyzeLinearDependenies)
@@ -494,7 +494,7 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 			bool bAllZeros = true;
 			double normi = 0.0;
 
-			set < pair<int, double> > RowI;
+			set < pair<ptrdiff_t, double> > RowI;
 
 			while (pAi < pAiend)
 			{
@@ -515,7 +515,7 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 				double normj = 0.0;
 				double inner = 0.0;
 
-				set < pair<int, double> > RowJ;
+				set < pair<ptrdiff_t, double> > RowJ;
 
 				while (pAis < pAiends)
 				{
@@ -531,11 +531,11 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 					double Ratio = inner * inner / normj / normi;
 					if (fabs(Ratio - 1.0) < 1E-5)
 					{
-						_ftprintf_s(fmatrix, _T("Linear dependent rows %10d %10d with %g\n"), nRow, nRows, Ratio);
+						_ftprintf_s(fmatrix, _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
 						for(auto & it : RowI)
-							_ftprintf_s(fmatrix, _T("%10d %10d     %30g\n"), nRow, it.first, it.second);
+							_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
 						for (auto & it : RowJ)
-							_ftprintf_s(fmatrix, _T("%10d %10d     %30g\n"), nRows, it.first, it.second);
+							_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
 					}
 
 				}
@@ -567,7 +567,7 @@ void CDynaModel::DumpStateVector()
 			_ftprintf(fdump, _T("%g;"), pRv->Tminus2Value);
 			_ftprintf(fdump, _T("%d;"), pRv->PhysicalEquationType);
 			_ftprintf(fdump, _T("%d;"), pRv->PrimitiveBlock);
-			_ftprintf(fdump, _T("%d;"), pRv->nErrorHits);
+			_ftprintf(fdump, _T("%td;"), pRv->nErrorHits);
 			_ftprintf(fdump, _T("\n"));
 		}
 		fclose(fdump);

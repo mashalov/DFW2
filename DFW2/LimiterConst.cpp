@@ -64,17 +64,31 @@ bool CLimiterConst::Init(CDynaModel *pDynaModel)
 // контроль зерокроссинга для состояния вне ограничения
 double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 {
-	return StateMid(pDynaModel, m_Input->Value(), m_Input->Index());
+	double dInput = m_Input->Value();
+	double rH = 1.0;
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMaxH - dInput, dInput, m_dMaxH, m_Input->Index(), rH))
+		SetCurrentState(pDynaModel, LS_MAX);
+	if (GetCurrentState() == LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
+		if (CDynaPrimitive::ChangeState(pDynaModel, dInput- m_dMinH, dInput, m_dMinH, m_Input->Index(), rH))
+			SetCurrentState(pDynaModel, LS_MIN);
+	return rH;
+
 }
 
 double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 {
-	return ChangeState(pDynaModel, m_dMax - m_Input->Value(), m_Input->Value(), m_dMin, m_Input->Index(), CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
+	double rH = 1.0;
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMax - m_Input->Value(), m_Input->Value(), m_dMin, m_Input->Index(), rH))
+		SetCurrentState(pDynaModel, LS_MID);
+	return rH;
 }
 
 double CLimiterConst::OnStateMax(CDynaModel *pDynaModel)
 {
-	return ChangeState(pDynaModel, m_Input->Value() - m_dMax, m_Input->Value(), m_dMax, m_Input->Index(), CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID);
+	double rH = 1.0;
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_Input->Value() - m_dMax, m_Input->Value(), m_dMax, m_Input->Index(), rH))
+		SetCurrentState(pDynaModel, LS_MID);
+	return rH;
 }
 
 eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel)

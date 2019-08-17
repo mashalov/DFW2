@@ -65,7 +65,7 @@ namespace DFW2
 		CDevice *m_pDevice;
 		ptrdiff_t A(ptrdiff_t nOffset);
 		ptrdiff_t m_OutputEquationIndex;
-
+		bool ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH);
 	public:
 		CDynaPrimitive(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : m_pDevice(pDevice), 
 																												  m_Input(Input), 
@@ -126,8 +126,6 @@ namespace DFW2
 		virtual double OnStateMax(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateMin(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateMid(CDynaModel *pDynaModel) { return 1.0; }
-		double StateMid(CDynaModel *pDynaModel, double dValue, ptrdiff_t ValueIndex);
-		double ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, CDynaPrimitiveLimited::eLIMITEDSTATES StateSet);
 	public:
 		inline eLIMITEDSTATES GetCurrentState() { return eCurrentState; }
 		void SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax);
