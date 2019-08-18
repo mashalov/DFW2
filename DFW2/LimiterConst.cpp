@@ -78,7 +78,7 @@ double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMax - m_Input->Value(), m_Input->Value(), m_dMin, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMin - m_Input->Value(), m_Input->Value(), m_dMin, m_Input->Index(), rH))
 		SetCurrentState(pDynaModel, LS_MID);
 	return rH;
 }

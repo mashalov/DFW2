@@ -86,8 +86,8 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 	else if (Diff < 0.0)
 	{
 		bChangeState = true;
-		rH = 1.0;
 		_ASSERTE(0); // корня нет, но знак изменился !
+		rH = 1.0;
 	}
 	else
 		rH = 1.0;
