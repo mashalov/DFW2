@@ -78,7 +78,7 @@ double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 	{
 		// если было положительное значение переменной
 		// и стало отрицательное - отмечаем готовность к изменению состояния
-		dHyst -= dHyst;
+		dHyst = -dHyst;
 		if (dInput <= dHyst)
 			bReadyToChangeState = true;
 	}

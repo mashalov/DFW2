@@ -337,6 +337,11 @@ bool CDynaModel::InitEquations()
 		sc.m_bDiscontinuityMode = false;
 		sc.m_dCurrentH = dCurrentH;
 		sc.nStepsCount = 0;
+
+
+		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+			for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+				(*dit)->StoreStates();
 	}
 	return bRes;
 }
