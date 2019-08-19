@@ -64,75 +64,27 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-
 	if (!m_pDevice->IsStateOn())
 		return rH;
 
 	double dInput = m_Input->Value();
-	// получаем Нордиск входной переменной
-	RightVector *pRightVector = pDynaModel->GetRightVector(A(m_Input->Index()));
 	double dHyst = pDynaModel->GetHysteresis(dInput);
-
-	bool bReadyToChangeState = false;
 	if (m_bPositive)
 	{
-		// если было положительное значение переменной
-		// и стало отрицательное - отмечаем готовность к изменению состояния
-		dHyst = -dHyst;
-		if (dInput <= dHyst)
-			bReadyToChangeState = true;
-	}
-	else
-	{
-		// если было отрицательное значение переменной
-		// и стало положительное- отмечаем готовность к изменению состояния
-		if (dInput >= dHyst)
-			bReadyToChangeState = true;
-	}
-
-	// проверяем, могло ли быть изменение знака входной переменной на шаге интегрирования
-	rH = CDynaPrimitiveLimited::FindZeroCrossingToConst(pDynaModel, pRightVector, dHyst);
-
-	if (pDynaModel->GetZeroCrossingInRange(rH))
-	{
-		if (bReadyToChangeState)
+		if (CDynaPrimitive::ChangeState(pDynaModel, dInput + dHyst, dInput + dHyst, -dHyst, m_Input->Index(), rH))
 		{
-			// если есть готовность к изменению состояния (знак входной переменной изменился)
-			// рассчитываем погрешность входной переменной
-			// оцениванием расстояние от нуля и взвешиваем по самой же переменной,
-			// поэтому параметры на входе в GetWeightedError одинаковые
-			double derr = fabs(pRightVector->GetWeightedError(dInput + dHyst, dInput + dHyst));
-			// если погрешность меньше чем заданный порог для зерокроссинга
-			if (derr < pDynaModel->GetZeroCrossingTolerance())
-			{
-				// изменяем состояние и запрашиваем обработку разрыва
-				m_bPositive = !m_bPositive;
-				pDynaModel->DiscontinuityRequest();
-				rH = 1.0;
-			}
-			else
-			{
-				if (pDynaModel->ZeroCrossingStepReached(rH))
-				{
-					// здесь и выше: состояние изменяем только если нашли время зерокроссинга 
-					// с заданной погрешностью
-					m_bPositive = !m_bPositive;
-					pDynaModel->DiscontinuityRequest();
-				}
-			}
+			m_bPositive = false;
+			pDynaModel->DiscontinuityRequest();
 		}
-		// если изменения знака не было - не изменяем состояние, возвращаем шаг до зерокроссинга
-	}
-	else if (bReadyToChangeState)
-	{
-		// если пересечения не было найдено, но знак изменился, меняем состояние
-		m_bPositive = !m_bPositive;
-		pDynaModel->DiscontinuityRequest();
-		rH = 1.0;
-		_ASSERTE(0); // корня нет, но знак изменился !
 	}
 	else
-		rH = 1.0;
+	{
+		if (CDynaPrimitive::ChangeState(pDynaModel, dHyst - dInput, dHyst - dInput, dHyst, m_Input->Index(), rH))
+		{
+			m_bPositive = true;
+			pDynaModel->DiscontinuityRequest();
+		}
+	}
 
 	return rH;
 }
