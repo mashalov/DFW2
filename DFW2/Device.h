@@ -136,6 +136,7 @@ namespace DFW2
 		DEVICE_EQUATION_TYPE PhysicalEquationType;						// физический тип уравнения - дифференциальный или алгебраический
 		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть
 		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов итераций Ньютона по этой переменной
+		ptrdiff_t nRingsCount;
 
 		// расчет взвешенной ошибки по значению снаружи
 		// но с допустимыми погрешностями для этой переменной
