@@ -1204,7 +1204,7 @@ void CDynaModel::GoodStep(double rSame)
 		case 2:
 		{
 			// если были на втором порядке, пробуем шаг для первого порядка
-			double rLower = GetRatioForLowerOrder() / 1.3;
+			double rLower = GetRatioForLowerOrder() / 1.1;
 			// call before step change
 			UpdateNordsiek();
 

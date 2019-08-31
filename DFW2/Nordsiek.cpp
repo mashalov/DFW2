@@ -186,7 +186,8 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 
 	if (m_Parameters.m_bAllowRingingSuppression && bAllowSuppression)
 	{
-		if (sc.q == 2 && sc.nStepsCount % 10 == 0 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
+		if (sc.q == 2 && 
+			sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
 			bSuprressRinging = true;
 	}
 
@@ -202,9 +203,21 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 		pVectorBegin->Nordsiek[2] += dError * lm[2];
 
 		// подавление рингинга
-		if(bSuprressRinging && pVectorBegin->EquationType == DET_DIFFERENTIAL)
+		if (bSuprressRinging && pVectorBegin->EquationType == DET_DIFFERENTIAL)
 		{
-			pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
+#ifdef r1
+			if (pVectorBegin->Nordsiek[0] * pVectorBegin->SavedNordsiek[0] < 0.0)
+				pVectorBegin->nRingsCount++;
+
+			if (pVectorBegin->nRingsCount > 15)
+			{
+				pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
+				pVectorBegin->nRingsCount--;
+			}
+#else
+			if(sc.nStepsCount % 10 == 0)
+				pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
+#endif
 		}
 
 		// сохраняем пред-предыдущее значение переменной состояния
@@ -314,6 +327,7 @@ void CDynaModel::InitNordsiekElement(struct RightVector *pVectorBegin, double At
 	pVectorBegin->Rtol = Rtol;
 	pVectorBegin->SavedError = pVectorBegin->Tminus2Value = 0.0;
 	pVectorBegin->nErrorHits = 0;
+	pVectorBegin->nRingsCount = 0;
 }
 
 void CDynaModel::PrepareNordsiekElement(struct RightVector *pVectorBegin)
