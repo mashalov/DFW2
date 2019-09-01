@@ -137,6 +137,7 @@ namespace DFW2
 		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть
 		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов итераций Ньютона по этой переменной
 		ptrdiff_t nRingsCount;
+		ptrdiff_t nRingsSuppress;
 
 		// расчет взвешенной ошибки по значению снаружи
 		// но с допустимыми погрешностями для этой переменной

@@ -184,12 +184,10 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	double alpha2 = (1.0 + 2.0 * alpha);
 	bool bSuprressRinging = false;
 
-	if (m_Parameters.m_bAllowRingingSuppression && bAllowSuppression)
-	{
-		if (sc.q == 2 && 
-			sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
-			bSuprressRinging = true;
-	}
+	if (m_Parameters.m_bAllowRingingSuppression &&
+		bAllowSuppression &&sc.q == 2 &&
+		sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
+		bSuprressRinging = true;
 
 	// обновление по [Lsode 2.76]
 	while (pVectorBegin < pVectorEnd)
@@ -205,19 +203,23 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 		// подавление рингинга
 		if (bSuprressRinging && pVectorBegin->EquationType == DET_DIFFERENTIAL)
 		{
-#ifdef r1
-			if (pVectorBegin->Nordsiek[0] * pVectorBegin->SavedNordsiek[0] < 0.0)
-				pVectorBegin->nRingsCount++;
+			if (pVectorBegin->nRingsSuppress == 0)
+			{
+				if (pVectorBegin->Nordsiek[0] * pVectorBegin->SavedNordsiek[0] < 0.0)
+					pVectorBegin->nRingsCount++;
 
-			if (pVectorBegin->nRingsCount > 15)
+				if (pVectorBegin->nRingsCount > 3)
+				{
+					pVectorBegin->nRingsSuppress = 1;
+					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Ringing %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue));
+				}
+			}
+
+			if (pVectorBegin->nRingsSuppress > 0)
 			{
 				pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
-				pVectorBegin->nRingsCount--;
+				pVectorBegin->nRingsSuppress--;
 			}
-#else
-			if(sc.nStepsCount % 10 == 0)
-				pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
-#endif
 		}
 
 		// сохраняем пред-предыдущее значение переменной состояния
@@ -232,6 +234,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 
 		pVectorBegin++;
 	}
+
 	sc.m_dOldH = sc.m_dCurrentH;
 	sc.m_bNordsiekSaved = true;
 
@@ -328,6 +331,7 @@ void CDynaModel::InitNordsiekElement(struct RightVector *pVectorBegin, double At
 	pVectorBegin->SavedError = pVectorBegin->Tminus2Value = 0.0;
 	pVectorBegin->nErrorHits = 0;
 	pVectorBegin->nRingsCount = 0;
+	pVectorBegin->nRingsSuppress = 0;
 }
 
 void CDynaModel::PrepareNordsiekElement(struct RightVector *pVectorBegin)
