@@ -134,8 +134,7 @@ bool CAutomatic::CompileModels()
 							LBound++;
 							ppData++;
 						}
-						if (SUCCEEDED(SafeArrayUnaccessData(vtLog.parray)))
-							bRes = true;
+						SafeArrayUnaccessData(vtLog.parray);
 					}
 				}
 			}

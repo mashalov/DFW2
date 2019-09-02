@@ -184,10 +184,24 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	double alpha2 = (1.0 + 2.0 * alpha);
 	bool bSuprressRinging = false;
 
-	if (m_Parameters.m_bAllowRingingSuppression &&
-		bAllowSuppression &&sc.q == 2 &&
-		sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
-		bSuprressRinging = true;
+	// режим подавления рингинга активируем если порядок метода 2
+	// шаг превышает 0.01 и UpdateNordsieck вызван для перехода к следующему
+	// шагу после успешного завершения предыдущего
+	if (sc.q == 2 && bAllowSuppression && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
+	{
+		switch (m_Parameters.m_eAdamsRingingSuppressionMode)
+		{
+		case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL:
+			// в глобальном режиме подавления разрешаем подавления на каждом кратном m_nAdamsGlobalSuppressionStep шаге
+			if (sc.nStepsCount % m_Parameters.m_nAdamsGlobalSuppressionStep == 0 && sc.nStepsCount > m_Parameters.m_nAdamsGlobalSuppressionStep)
+				bSuprressRinging = true;
+			break;
+		case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
+			// в индивидуальном режиме проверяем каждую переменную на рингинг вне зависимости от номера шага
+			bSuprressRinging = true;
+			break;
+		}
+	}
 
 	// обновление по [Lsode 2.76]
 	while (pVectorBegin < pVectorEnd)
@@ -201,24 +215,48 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 		pVectorBegin->Nordsiek[2] += dError * lm[2];
 
 		// подавление рингинга
-		if (bSuprressRinging && pVectorBegin->EquationType == DET_DIFFERENTIAL)
+		if (bSuprressRinging)
 		{
-			if (pVectorBegin->nRingsSuppress == 0)
+			if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
 			{
-				if (pVectorBegin->Nordsiek[0] * pVectorBegin->SavedNordsiek[0] < 0.0)
-					pVectorBegin->nRingsCount++;
-
-				if (pVectorBegin->nRingsCount > 3)
+				// рингинг подавляем только для дифуров (если дифуры решаются BDF надо сбрасывать подавление в ARSM_NONE
+				switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 				{
-					pVectorBegin->nRingsSuppress = 1;
-					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Ringing %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue));
-				}
-			}
+					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
+					{
+						// в индивидуальном режиме проверяем переменные, по которым пока не найдено рингига 
+						if (pVectorBegin->nRingsSuppress == 0)
+						{
+							// если знак переменной изменился - увеличиваем счетчик циклов
+							if (std::signbit(pVectorBegin->Nordsiek[0]) != std::signbit(pVectorBegin->SavedNordsiek[0]))
+								pVectorBegin->nRingsCount++;
 
-			if (pVectorBegin->nRingsSuppress > 0)
-			{
-				pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
-				pVectorBegin->nRingsSuppress--;
+							if (pVectorBegin->nRingsCount > m_Parameters.m_nAdamsIndividualSuppressionCycles)
+							{
+								// если счетчик циклов изменения знака достиг порога - в RightVector устанавливаем
+								// количество шагов, на протяжении которых производная Адамса будет заменяться 
+								// на производную  BDF
+								pVectorBegin->nRingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
+								Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Ringing %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue));
+							}
+						}
+
+						if (pVectorBegin->nRingsSuppress > 0)
+						{
+							// для переменных, у которых количество шагов для замены Адамса на BDF не исчерпано
+							// делаем эту замену и уменьшаем счетчик
+							pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
+							pVectorBegin->nRingsSuppress--;
+						}
+					}
+					break;
+					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL:
+					{
+						// в глобальном режиме просто заменяем производную Адамса на производную BDF
+						pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
+					}
+					break;
+				}
 			}
 		}
 

@@ -91,7 +91,7 @@ bool CDynaModel::Run()
 	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
-	m_Parameters.m_bAllowRingingSuppression = true;
+	m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL;
 	m_Parameters.m_bUseRefactor = true;
 	m_Parameters.m_dAtol = 1E-4;
 	m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
