@@ -84,6 +84,7 @@ CDynaModel::~CDynaModel()
 bool CDynaModel::Run()
 {
 	bool bRes = true;
+	_set_FMA3_enable(0);
 
 	//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 	m_Parameters.eFreqDampingType = APDT_NODE;
