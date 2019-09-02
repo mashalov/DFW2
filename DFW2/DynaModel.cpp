@@ -91,7 +91,7 @@ bool CDynaModel::Run()
 	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
-	m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL;
+	m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
 	m_Parameters.m_bUseRefactor = true;
 	m_Parameters.m_dAtol = 1E-4;
 	m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
@@ -100,9 +100,12 @@ bool CDynaModel::Run()
 
 	m_Parameters.m_bDisableResultsWriter = false;
 
-	//m_Parameters.m_dOutStep = 1E-5;
-	m_Parameters.m_dRefactorByHRatio = 1.5;
+	// если в параметрах задан BDF для дифуров, отключаем
+	// подавление рингинга
+	if(m_Parameters.m_eDiffEquationType == DET_ALGEBRAIC)
+		m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 
+	//m_Parameters.m_dOutStep = 1E-5;
 	bRes = bRes && (LRCs.Init(this) == DFS_OK);
 
 	bRes = bRes && Link();

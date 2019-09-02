@@ -219,7 +219,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 		{
 			if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
 			{
-				// рингинг подавляем только для дифуров (если дифуры решаются BDF надо сбрасывать подавление в ARSM_NONE
+				// рингинг подавляем только для дифуров (если дифуры решаются BDF надо сбрасывать подавление в ARSM_NONE)
 				switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 				{
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
