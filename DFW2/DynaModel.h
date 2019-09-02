@@ -375,7 +375,7 @@ namespace DFW2
 				nVarSearchStackDepth = 100;
 				m_dAtol = DFW2_ATOL_DEFAULT;
 				m_dRtol = DFW2_RTOL_DEFAULT;
-				m_dRefactorByHRatio = 6.0;
+				m_dRefactorByHRatio = 1.5;
 				m_bLogToConsole = true;
 				m_bLogToFile = true;
 				m_dMustangDerivativeTimeConstant = 1E-6;
