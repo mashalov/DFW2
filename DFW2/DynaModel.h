@@ -352,7 +352,10 @@ namespace DFW2
 			bool m_bLogToConsole;
 			bool m_bLogToFile;
 			double m_dMustangDerivativeTimeConstant;
-			bool m_bAllowRingingSuppression;
+			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode;				// режим подавления рингинга
+			ptrdiff_t m_nAdamsIndividualSuppressionCycles;								// количество перемен знака переменной для обнаружения рингинга
+			ptrdiff_t m_nAdamsGlobalSuppressionStep;									// номер шага, на кратном которому работает глобальное подавление рингинга
+			ptrdiff_t m_nAdamsIndividualSuppressStepsRange;								// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
 			bool m_bUseRefactor;
 			bool m_bDisableResultsWriter;
 			ptrdiff_t m_nMinimumStepFailures;
@@ -360,6 +363,10 @@ namespace DFW2
 			{
 				eFreqDampingType = APDT_ISLAND;
 				m_eDiffEquationType = DET_DIFFERENTIAL;
+				m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
+				m_nAdamsGlobalSuppressionStep = 10;
+				m_nAdamsIndividualSuppressionCycles = 3;
+				m_nAdamsIndividualSuppressStepsRange = 1;
 				m_dFrequencyTimeConstant = 0.02;
 				m_dLRCToShuntVmin = 0.5;
 				m_bDontCheckTolOnMinStep = false;
@@ -372,7 +379,6 @@ namespace DFW2
 				m_bLogToConsole = true;
 				m_bLogToFile = true;
 				m_dMustangDerivativeTimeConstant = 1E-6;
-				m_bAllowRingingSuppression = false;
 				m_bUseRefactor = false;
 				m_bDisableResultsWriter = false;
 				m_nMinimumStepFailures = 1;
