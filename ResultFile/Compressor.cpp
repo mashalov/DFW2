@@ -46,8 +46,8 @@ CCompressorBase::fnCountZeros32Ptr CCompressorBase::AssignZeroCounter()
 	return CCompressorBase::CLZ1;						// иначе считаем нулевые биты по таблице
 }
 
-CCompressorBase::fnWriteDoublePtr CCompressorBase::pFnWriteDouble = CCompressorBase::AssignDoubleWriter();
-CCompressorBase::fnCountZeros32Ptr CCompressorBase::pFnCountZeros32 = CCompressorBase::AssignZeroCounter();
+const CCompressorBase::fnWriteDoublePtr CCompressorBase::pFnWriteDouble = CCompressorBase::AssignDoubleWriter();
+const CCompressorBase::fnCountZeros32Ptr CCompressorBase::pFnCountZeros32 = CCompressorBase::AssignZeroCounter();
 
 eFCResult CCompressorBase::WriteDouble(double& dValue, double& dPredictor, CBitStream& Output)
 {
