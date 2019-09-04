@@ -20,7 +20,7 @@ eFCResult CCompressorBase::ReadDouble(double& dValue, double& dPredictor, CBitSt
 	return fcResult;
 }
 
-
+// проверка доступности __lzcnt
 bool IsLzcntAvailable()
 {
 	int cpufeats[4];
@@ -32,8 +32,8 @@ CCompressorBase::fnWriteDoublePtr CCompressorBase::AssignDoubleWriter()
 {
 #ifdef _WIN64
 	if(IsLzcntAvailable())
-		return CCompressorBase::WriteDoubleLZcnt64;
-	return CCompressorBase::WriteDoublePlain;
+		return CCompressorBase::WriteDoubleLZcnt64;		// если доступна __lzcnt64 - используем более быструю функцию сжатия
+	return CCompressorBase::WriteDoublePlain;			// иначе - платформонезависимую
 #else
 	return CCompressorBase::WriteDoublePlain;
 #endif
@@ -42,8 +42,8 @@ CCompressorBase::fnWriteDoublePtr CCompressorBase::AssignDoubleWriter()
 CCompressorBase::fnCountZeros32Ptr CCompressorBase::AssignZeroCounter()
 {
 	if (IsLzcntAvailable())
-		return CCompressorBase::CLZ_LZcnt32;
-	return CCompressorBase::CLZ1;
+		return CCompressorBase::CLZ_LZcnt32;			// если lzcnt доступна - используем ее для подсчета нулевых битов
+	return CCompressorBase::CLZ1;						// иначе считаем нулевые биты по таблице
 }
 
 CCompressorBase::fnWriteDoublePtr CCompressorBase::pFnWriteDouble = CCompressorBase::AssignDoubleWriter();
@@ -51,16 +51,14 @@ CCompressorBase::fnCountZeros32Ptr CCompressorBase::pFnCountZeros32 = CCompresso
 
 eFCResult CCompressorBase::WriteDouble(double& dValue, double& dPredictor, CBitStream& Output)
 {
+	// вызываем функцию сжатия по указателю, который инициализируем в рантайме в зависимости от платформы
 	return (*pFnWriteDouble)(dValue, dPredictor, Output);
 }
 
 void CCompressorBase::Xor(double& dValue, double& dPredictor)
 {
-	int *pv = static_cast<int*>(static_cast<void*>(&dValue));
-	int *pd = static_cast<int*>(static_cast<void*>(&dPredictor));
-	__int64 *z = static_cast<__int64*>(static_cast<void*>(pv));
-	*pv ^= *pd;
-	pv++; pd++;
+	__int64 *pv = static_cast<__int64*>(static_cast<void*>(&dValue));
+	__int64 *pd = static_cast<__int64*>(static_cast<void*>(&dPredictor));
 	*pv ^= *pd;
 }
 

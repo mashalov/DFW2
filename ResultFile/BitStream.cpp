@@ -157,17 +157,4 @@ BITWORD* CBitStream::Buffer()
 	return m_pWordInitial;
 }
 
-bool CBitStream::EncodeRLE()
-{
-	unsigned char *p = static_cast<unsigned char*>(static_cast<void*>(m_pWordInitial));
-	unsigned char *e = p + BytesWritten();
-	while (p < e)
-	{
-		if (*p != 0xf)
-			break;
-		p++;
-	}
-	return p == e;
-}
-
 const ptrdiff_t CBitStream::WordBitCount = (sizeof(BITWORD) * 8);
