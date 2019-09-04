@@ -44,14 +44,25 @@ public:
 class CCompressorBase
 {
 protected:
-	void Xor(double& dValue, double& dPredictor);
 	double ys[PREDICTOR_ORDER];
 public:
+	typedef eFCResult(*fnWriteDoublePtr)(double&, double&, CBitStream&);
+	typedef uint32_t(*fnCountZeros32Ptr)(uint32_t);
 	eFCResult WriteDouble(double& dValue, double& dPredictor, CBitStream& Output);
 	eFCResult ReadDouble(double& dValue, double& dPredictor, CBitStream& Input);
 	eFCResult WriteLEB(unsigned __int64 Value, CBitStream& Output);
 	eFCResult ReadLEB(unsigned __int64& Value, CBitStream& Input);
-	static uint32_t CCompressorBase::CLZ1(uint32_t x);
+	static void Xor(double& dValue, double& dPredictor);
+	static fnWriteDoublePtr pFnWriteDouble;
+	static fnCountZeros32Ptr pFnCountZeros32;
+	static eFCResult WriteDoublePlain(double& dValue, double& dPredictor, CBitStream& Output);
+	static uint32_t CLZ1(uint32_t x);
+	static uint32_t CLZ_LZcnt32(uint32_t x);
+	static fnWriteDoublePtr AssignDoubleWriter();
+	static fnCountZeros32Ptr AssignZeroCounter();
+#ifdef _WIN64
+	static eFCResult WriteDoubleLZcnt64(double& dValue, double& dPredictor, CBitStream& Output);
+#endif
 };
 
 
