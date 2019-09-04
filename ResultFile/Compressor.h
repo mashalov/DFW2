@@ -28,7 +28,6 @@ public:
 	void Init(BITWORD *Buffer, BITWORD *BufferEnd, ptrdiff_t BitSeek);
 	void Reset();
 	eFCResult WriteBits(CBitStream& Source, ptrdiff_t BitCount);
-	eFCResult ReadBits(CBitStream& Dest, ptrdiff_t BitCount);
 	eFCResult WriteByte(unsigned char Byte);
 	eFCResult WriteDouble(double &dValue);
 	eFCResult ReadByte(unsigned char& Byte);
@@ -37,7 +36,6 @@ public:
 	ptrdiff_t BitsLeft();
 	BITWORD* Buffer();
 	unsigned char* BytesBuffer();
-	bool EncodeRLE();
 	static const ptrdiff_t WordBitCount;
 };
 
@@ -46,8 +44,8 @@ class CCompressorBase
 protected:
 	double ys[PREDICTOR_ORDER];
 public:
-	typedef eFCResult(*fnWriteDoublePtr)(double&, double&, CBitStream&);
-	typedef uint32_t(*fnCountZeros32Ptr)(uint32_t);
+	typedef eFCResult(*fnWriteDoublePtr)(double&, double&, CBitStream&);				// прототип функции записи double
+	typedef uint32_t(*fnCountZeros32Ptr)(uint32_t);										// прототип функции подсчета нулевых битов
 	eFCResult WriteDouble(double& dValue, double& dPredictor, CBitStream& Output);
 	eFCResult ReadDouble(double& dValue, double& dPredictor, CBitStream& Input);
 	eFCResult WriteLEB(unsigned __int64 Value, CBitStream& Output);
@@ -55,12 +53,18 @@ public:
 	static void Xor(double& dValue, double& dPredictor);
 	static fnWriteDoublePtr pFnWriteDouble;
 	static fnCountZeros32Ptr pFnCountZeros32;
+	// платформонезависимая запись сжатого double 
 	static eFCResult WriteDoublePlain(double& dValue, double& dPredictor, CBitStream& Output);
+	// подсчет нулевых битов по таблице
 	static uint32_t CLZ1(uint32_t x);
+	// подсчет нулевых битов инструкцией CPU
 	static uint32_t CLZ_LZcnt32(uint32_t x);
+	// выбор функции записи double в зависимости от платформы
 	static fnWriteDoublePtr AssignDoubleWriter();
+	// выбор функции подсчета нулевых битов в зависимости от платформы
 	static fnCountZeros32Ptr AssignZeroCounter();
 #ifdef _WIN64
+	// запись double для x64-процессора с поддержкой __lzcnt64
 	static eFCResult WriteDoubleLZcnt64(double& dValue, double& dPredictor, CBitStream& Output);
 #endif
 };
