@@ -51,8 +51,8 @@ public:
 	eFCResult WriteLEB(unsigned __int64 Value, CBitStream& Output);
 	eFCResult ReadLEB(unsigned __int64& Value, CBitStream& Input);
 	static void Xor(double& dValue, double& dPredictor);
-	static fnWriteDoublePtr pFnWriteDouble;
-	static fnCountZeros32Ptr pFnCountZeros32;
+	static const fnWriteDoublePtr pFnWriteDouble;
+	static const fnCountZeros32Ptr pFnCountZeros32;
 	// платформонезависимая запись сжатого double 
 	static eFCResult WriteDoublePlain(double& dValue, double& dPredictor, CBitStream& Output);
 	// подсчет нулевых битов по таблице
