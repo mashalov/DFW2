@@ -682,7 +682,21 @@ bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, un
 {
 	bool bRes = m_RLECompressor.Compress(pBuffer, nBufferSize, pCompressedBuffer, nCompressedSize);
 	if (bRes)
-		return nCompressedSize < nBufferSize;
+	{
+		if (nCompressedSize < nBufferSize)
+		{
+			// debug RLE
+			/* 
+			unsigned char *pDecoBuf = new unsigned char[2000];
+			size_t nDecoSize(2000);
+			m_RLECompressor.Decompress(pCompressedBuffer, nCompressedSize, pDecoBuf, nDecoSize);
+			_ASSERTE(nBufferSize == nDecoSize);
+			_ASSERTE(!memcmp(pBuffer, pDecoBuf, nDecoSize));
+			*/
+			return true;
+		}
+		return false;
+	}
 	return bRes;
 }
 
