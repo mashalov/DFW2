@@ -47,7 +47,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 		CCompressorSingle comp;
 		size_t nTimeIndex = 0;
 		double dValue = 0.0;
-		BITWORD *pBuffer = NULL;
+		BITWORD *pBuffer(nullptr);
 
 		try
 		{
@@ -69,7 +69,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				int PointsCount = ReadLEBInt();
 				int BytesCount = ReadLEBInt();
 
-				BITWORD *pBuffer = NULL;
+				pBuffer = nullptr;
 
 				if (BlockType == 0)
 				{
@@ -80,8 +80,9 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 						throw CFileReadException(m_pFile);
 					}
 					CRLECompressor rle;
-					pBuffer = new BITWORD[PointsCount * sizeof(double) / sizeof(BITWORD) + 1]();
-					size_t nDecomprSize(PointsCount * sizeof(double));
+					// наихудший результат предиктивного сжатия - по байту на каждый double
+					size_t nDecomprSize(PointsCount * (sizeof(double) + 1));
+					pBuffer = new BITWORD[nDecomprSize / sizeof(BITWORD) + 1]();
 					bool bRes = rle.Decompress(pReadBuffer, BytesCount, static_cast<unsigned char*>(static_cast<void*>(pBuffer)), nDecomprSize);
 					delete pReadBuffer;
 					if (!bRes)
