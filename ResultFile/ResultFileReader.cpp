@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "ResultFileReader.h"
 
 
@@ -47,7 +47,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 		CCompressorSingle comp;
 		size_t nTimeIndex = 0;
 		double dValue = 0.0;
-		BITWORD *pBuffer = NULL;
+		BITWORD *pBuffer(nullptr);
 
 		try
 		{
@@ -69,7 +69,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				int PointsCount = ReadLEBInt();
 				int BytesCount = ReadLEBInt();
 
-				BITWORD *pBuffer = NULL;
+				pBuffer = nullptr;
 
 				if (BlockType == 0)
 				{
@@ -80,8 +80,9 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 						throw CFileReadException(m_pFile);
 					}
 					CRLECompressor rle;
-					pBuffer = new BITWORD[PointsCount * sizeof(double) / sizeof(BITWORD) + 1]();
-					size_t nDecomprSize(PointsCount * sizeof(double));
+					// РЅР°РёС…СѓРґС€РёР№ СЂРµР·СѓР»СЊС‚Р°С‚ РїСЂРµРґРёРєС‚РёРІРЅРѕРіРѕ СЃР¶Р°С‚РёСЏ - РїРѕ Р±Р°Р№С‚Сѓ РЅР° РєР°Р¶РґС‹Р№ double
+					size_t nDecomprSize(PointsCount * (sizeof(double) + 1));
+					pBuffer = new BITWORD[nDecomprSize / sizeof(BITWORD) + 1]();
 					bool bRes = rle.Decompress(pReadBuffer, BytesCount, static_cast<unsigned char*>(static_cast<void*>(pBuffer)), nDecomprSize);
 					delete pReadBuffer;
 					if (!bRes)
@@ -320,13 +321,13 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	int VarNameCount = ReadLEBInt();
 	m_VarNameMap.clear();
 
-	// читаем типы и названия единиц измерения
+	// С‡РёС‚Р°РµРј С‚РёРїС‹ Рё РЅР°Р·РІР°РЅРёСЏ РµРґРёРЅРёС† РёР·РјРµСЂРµРЅРёСЏ
 	for (int varname = 0; varname < VarNameCount; varname++)
 	{
-		int VarType = ReadLEBInt();		// тип
+		int VarType = ReadLEBInt();		// С‚РёРї
 		std::wstring strVarName;
-		ReadString(strVarName);			// название
-		// тип и название вводим в карту
+		ReadString(strVarName);			// РЅР°Р·РІР°РЅРёРµ
+		// С‚РёРї Рё РЅР°Р·РІР°РЅРёРµ РІРІРѕРґРёРј РІ РєР°СЂС‚Сѓ
 		if (!m_VarNameMap.insert(make_pair(VarType,strVarName)).second)
 			throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
 	}
@@ -563,7 +564,7 @@ int CResultFileReader::ReadLEBInt() const
 {
 	unsigned __int64 IntToRead;
 	ReadLEB(IntToRead);
-	if (IntToRead > 2147483647)
+	if (IntToRead > 0x7fffffff)	// РґР»СЏ LEB СЂР°Р·СЂРµС€Р°РµРј С‚РѕР»СЊРєРѕ 31-Р±РёС‚РЅРѕРµ С‡РёСЃР»Рѕ 
 		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
 	return static_cast<int>(IntToRead);
 }
@@ -825,7 +826,7 @@ const CResultFileReader::ChannelHeaderInfo* CResultFileReader::GetChannelHeaders
 	return m_pChannelHeaders;
 }
 
-// возвращает название единиц измерения по заданному типу
+// РІРѕР·РІСЂР°С‰Р°РµС‚ РЅР°Р·РІР°РЅРёРµ РµРґРёРЅРёС† РёР·РјРµСЂРµРЅРёСЏ РїРѕ Р·Р°РґР°РЅРЅРѕРјСѓ С‚РёРїСѓ
 const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType) const
 {
 	VARNAMEITRCONST it = m_VarNameMap.find(eUnitsType);
