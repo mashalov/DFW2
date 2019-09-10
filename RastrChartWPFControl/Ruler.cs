@@ -14,6 +14,13 @@ namespace RastrChartWPFControl
         private double newPosition, oldPosition;
         private Point coordinates;
         private string tag;
+        private double radius;
+
+        public double Radius
+        {
+            get { return radius; }
+            set { radius = value; }
+        }
 
         public string Tag
         {
@@ -49,6 +56,7 @@ namespace RastrChartWPFControl
             newPosition = RulerPositionNew;
             oldPosition = RulerPositionOld;
             Cancel = false;
+            radius = 0;
         }
     }
 
@@ -202,15 +210,13 @@ namespace RastrChartWPFControl
         {
             base.OnRender(drawingContext);
 
-            System.Windows.DpiScale dpiScale = System.Windows.Media.VisualTreeHelper.GetDpi(this);
-            double pixelsPerDip = dpiScale.PixelsPerDip;
-
             FormattedText ft2 = new FormattedText(text,
                                                  System.Globalization.CultureInfo.CurrentCulture,
                                                  System.Windows.FlowDirection.LeftToRight,
                                                  ft,
                                                  tb.FontSize,
-                                                 Brushes.Black, pixelsPerDip);
+                                                 Brushes.Black,
+                                                 System.Windows.Media.VisualTreeHelper.GetDpi(this).PixelsPerDip);
             tb.Text = text;
             tb.Measure(new Size(Double.PositiveInfinity,Double.PositiveInfinity));
 
@@ -272,7 +278,7 @@ namespace RastrChartWPFControl
                 RulerPosition(this, new RulerEventArgs(tag,OldPosition,NewPosition));
         }
 
-        protected bool AskCoordinates(ref Point point)
+        protected bool AskCoordinates(ref Point point, ref double Radius)
         {
             bool bRes = false;
             if (RulerAskCoordinates != null)
@@ -281,6 +287,7 @@ namespace RastrChartWPFControl
                 RulerAskCoordinates(this, rulerEvent);
                 point = rulerEvent.Coordinates;
                 bRes = !rulerEvent.Cancel;
+                Radius = rulerEvent.Radius;
             }
             return bRes;
         }
@@ -446,7 +453,7 @@ namespace RastrChartWPFControl
     }
 
 
-    class RulerSpot : RulerBase
+    internal class RulerSpot : RulerBase
     {
         private Ellipse elpI = new Ellipse();
         private Ellipse elpO = new Ellipse();
@@ -466,10 +473,23 @@ namespace RastrChartWPFControl
             if (!Double.IsNaN(ZoomFactor.Y) && !Double.IsNaN(Offset.Y))
             {
                 Point point = new Point();
-                if (AskCoordinates(ref point))
+                double Radius = 0;
+
+                if (AskCoordinates(ref point, ref Radius))
                 {
                     point.X = point.X * ZoomFactor.X + Offset.X;
                     point.Y = -point.Y * ZoomFactor.Y + Offset.Y;
+
+                    if (Radius == 0)
+                        Radius = 20;
+                    else
+                    {
+                        Radius *= ZoomFactor.X;
+                        if (Radius < 8)
+                            Radius = 8;
+                    }
+
+                    elpO.Width = elpO.Height = Radius;
 
                     Canvas.SetLeft(elpI, point.X - elpI.Width  / 2);
                     Canvas.SetTop(elpI,  point.Y - elpI.Height / 2);
