@@ -1,0 +1,32 @@
+﻿<Window x:Class="RastrChartWPFControl.AxisSetup"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:RastrChartWPFControl"
+        mc:Ignorable="d"
+        Title="Настройка оси" Height="180" Width="373.529" Icon="/RastrChartWPFControl;component/Resources/Images/AxisSetupPNG.png" MaxHeight="180" MinHeight="180" Loaded="OnLoad">
+        <Grid Margin="5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80"/>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="80"/>
+            </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+            <RowDefinition/>
+        </Grid.RowDefinitions>
+        <Label Content="Минимум" Grid.Row="0" Grid.Column="0" Margin="3"/>
+        <TextBox Name="MinBox" Grid.Row="0" Grid.Column="1" Margin="3" LostFocus="OnMinLostFocus"/>
+        <Button Content="Авто" Grid.Row="0" Grid.Column="2" Margin="3" Click="OnMinAuto"/>
+        <Label Content="Максимум" Grid.Row="1" Grid.Column="0" Margin="3"/>
+        <TextBox Name="MaxBox" Grid.Row="1" Grid.Column="1" Margin="3" LostFocus="OnMaxLostFocus"/>
+        <Button Content="Авто" Grid.Row="1" Grid.Column="2" Margin="3" Click="OnMaxAuto"/>
+        <Label Content="Шаг сетки" Grid.Row="2" Grid.Column="0" Margin="3"/>
+        <TextBox Name="GridBox" Grid.Row="2" Grid.Column="1" Margin="3" LostFocus="OnGridStepLostFocus"/>
+        <Button Content="Авто" Grid.Row="2" Grid.Column="2" Margin="3" Click="OnGridStepAuto"/>
+        <Button Content="OK" Grid.Row="3" Grid.Column="3" Margin="3" IsDefault="True" Click="OnClickOK"/>
+    </Grid>
+</Window>

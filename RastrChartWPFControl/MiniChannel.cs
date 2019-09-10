@@ -45,6 +45,7 @@ namespace RastrChartWPFControl
         public double X;
         public double Y;
         public double T;
+        public double ErrorZ;
         public double Angle;
         public double NormalX;
         public double NormalY;
@@ -57,6 +58,7 @@ namespace RastrChartWPFControl
             this.Angle = 0.0;
             this.NormalX = 0.0;
             this.NormalY = 0.0;
+            this.ErrorZ = 0.0;
         }
 
         public MiniPoint(double x, double y, double t, double angle)
@@ -67,6 +69,7 @@ namespace RastrChartWPFControl
             this.T = t;
             this.NormalX = 0.0;
             this.NormalY = 0.0;
+            this.ErrorZ = 0.0;
         }
 
         public MiniPoint(double x, double y, double t)
@@ -77,6 +80,7 @@ namespace RastrChartWPFControl
             this.T = t;
             this.NormalX = 0.0;
             this.NormalY = 0.0;
+            this.ErrorZ = 0.0;
         }
 
         public static implicit operator Point(MiniPoint pt) 
@@ -221,12 +225,12 @@ namespace RastrChartWPFControl
         }
 
 
-        public bool SetPoints(MiniPoint[] Points)
+        public bool SetPoints(MiniPoint[] Points, bool bHodographMode)
         {
             bool bRes = true;
             points = Points;
             CalculateNormals();
-            RangePoints(false);
+            RangePoints(bHodographMode);
             OnPointsChanged();
             return bRes;
         }
@@ -276,12 +280,7 @@ namespace RastrChartWPFControl
             {
                 RangedPoints = new MiniPoint[begend.x1 - begend.x0 + 1];
                 for (int i = begend.x0; i <= begend.x1; i++)
-                {
                     RangedPoints[i - begend.x0] = points[i];
-                    /*RangedPoints[i - begend.x0].X = points[i].X;
-                    RangedPoints[i - begend.x0].Y = points[i].Y;
-                    RangedPoints[i - begend.x0].T = points[i].T;*/
-                }
                 OldZoomFactor.X = -1;
             }
         }
@@ -343,7 +342,6 @@ namespace RastrChartWPFControl
         Point availableRange;
         Color channelColor = Colors.Black;
         private bool hodographMode;
-
         public event EventHandler ChannelChanged;
         public event RangeChangedEventHandler RangeChanged;
         
@@ -578,7 +576,7 @@ namespace RastrChartWPFControl
             return LinePath;
         }
 
-        public bool FindTimeCoordinates(double Time, ref Point point)
+        public bool FindTimeCoordinates(double Time, ref Point point, ref double Radius)
         {
             MiniPoint pt = new MiniPoint(0, 0, Time);
             bool bRes = GetClosestTimePoint(Time, ref pt);
@@ -586,6 +584,7 @@ namespace RastrChartWPFControl
             {
                 point.X = pt.X;
                 point.Y = pt.Y;
+                Radius = pt.ErrorZ;
             }
             return bRes;
         }

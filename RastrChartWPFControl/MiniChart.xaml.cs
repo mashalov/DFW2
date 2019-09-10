@@ -36,24 +36,33 @@ namespace RastrChartWPFControl
         private bool IsPanning;
         private bool hodographMode;
         private HodographMarkingMode markingMode;
+        private bool showCrossMarks = true;
         private Point dragPoint;
 
         private Cursor AddNode;
         private Cursor RemoveNode;
 
+        public ZoneFZ zoneFZ = new ZoneFZ();
         public ComplexZoneRelay Zone1 = new ComplexZoneRelay();
         public ComplexZoneRelay Zone2 = new ComplexZoneRelay();
+        public ZoneHalfPlaneSingleRelay PowerZone = new ZoneHalfPlaneSingleRelay();
+        public ZoneKPA ZoneKPAM = new ZoneKPA();
+
+        private ZoneCrossMarkers zoneCrossMarkers = new ZoneCrossMarkers();
+
 
         public RulerPositionHandler RulerPosition;
         public event RangeChangedEventHandler RangeChanged;
         public event EventHandler ObtainFocus;
+
+        private System.Windows.Forms.Timer updateTimer = new System.Windows.Forms.Timer();
 
         protected void OnRangeChanged(object sender, RangeChangedEventArgs e)
         {
             if (RangeChanged != null)
                 RangeChanged(sender, e);
         }
-      
+        
         public MiniChart()
         {
             channels = new MiniChannels();
@@ -77,19 +86,13 @@ namespace RastrChartWPFControl
             Zone2.ZoneCombinationChanged += OnZoneCombinationChanged;
             Zone1.ZoneParametersChanged += OnZoneParametersChanged;
             Zone2.ZoneParametersChanged += OnZoneParametersChanged;
-
-
-            /*
-            Zone1[0].Type = ZoneType.ZoneTypeEllipse;
-            Zone1[3].Type = ZoneType.ZoneTypeEllipse;
-            Zone1.ZoneCombinations.Add(new ZoneCombination(true, true, true, true));
-             */
-
-            /*
-            Zone2[0].Type = ZoneType.ZoneTypeEllipse;
-            Zone2[3].Type = ZoneType.ZoneTypeEllipse;
-            Zone2.ZoneCombinations.Add(new ZoneCombination(true, true, true, true));
-             */
+            PowerZone.ZoneParametersChanged += OnZoneParametersChanged;
+            ZoneKPAM.ZoneParametersChanged += OnZoneParametersChanged;
+            zoneFZ.ZoneTypeChanged += OnZoneTypeChanged;
+            zoneFZ.ZoneCombinationChanged += OnZoneCombinationChanged;
+            zoneFZ.ZoneParametersChanged += OnZoneParametersChanged;
+            updateTimer.Tick += OnUpdateByTimer;
+            ShowCrossMarks = true;
         }
 
         private bool IsPan
@@ -128,13 +131,13 @@ namespace RastrChartWPFControl
 
         private Point ToWorld(Point screenPoint)
         {
-            return new Point((screenPoint.X - Offset.X) /  ZoomFactor.X, -(screenPoint.Y - Offset.Y) /  ZoomFactor.Y);
+            return new Point((screenPoint.X - Offset.X) / ZoomFactor.X, -(screenPoint.Y - Offset.Y) / ZoomFactor.Y);
         }
 
         protected void OnRulerPosition(string Tag, double OldPostion, double NewPosition)
         {
             if (RulerPosition != null)
-                RulerPosition(this, new RulerEventArgs(Tag,OldPostion,NewPosition));
+                RulerPosition(this, new RulerEventArgs(Tag, OldPostion, NewPosition));
         }
         public double RangeBegin
         {
@@ -153,7 +156,7 @@ namespace RastrChartWPFControl
         {
             get
             {
-                return Math.Min(Range.Y,channels.AvailableRange.Y);
+                return Math.Min(Range.Y, channels.AvailableRange.Y);
             }
             set
             {
@@ -192,6 +195,20 @@ namespace RastrChartWPFControl
             }
         }
 
+        public bool ShowCrossMarks
+        {
+            get { return showCrossMarks; }
+            set
+            {
+                if (showCrossMarks != value)
+                {
+                    showCrossMarks = value;
+                    Update();
+                }
+            }
+        }
+
+
         public bool HodographMode
         {
             get { return hodographMode; }
@@ -229,6 +246,76 @@ namespace RastrChartWPFControl
         {
             get { return channels; }
         }
+        
+        void OnUpdateByTimer(object sender, EventArgs e)
+        {
+            updateTimer.Stop();
+            GetCrossingPoints();
+            UpdateZoneCrossMarkers();
+        }
+
+        internal void GetCrossingPoints()
+        {
+            zoneCrossMarkers.Clear();
+            foreach (MiniChannel mc in channels)
+            {
+                MiniPoint[] pts = mc.Points.PointsRanged;
+                if (pts != null)
+                {
+                    for(int i = 0; i < 2; i++)
+                    {
+
+                        ComplexZoneRelay zone = i == 0 ? Zone1 : Zone2;
+
+                        bool bPrevious = false;
+                        bool bPreviousState = false;
+                        MiniPoint prevPoint = new MiniPoint(0, 0);
+
+                        foreach (MiniPoint mpc in pts)
+                        {
+                            if (bPrevious)
+                            {
+                                bool bActualState = zone.PointInZone(new Point(mpc.X, mpc.Y));
+                                if (bActualState != bPreviousState)
+                                {
+                                    Point testPoint = new Point();
+                                    double kY = (mpc.Y - prevPoint.Y);
+                                    double kX = (mpc.X - prevPoint.X);
+                                    double tleft = 0.0;
+                                    double tright = 1.0;
+
+                                    double ttest = tleft;
+
+                                    while (tright - tleft > 1E-4)
+                                    {
+                                        ttest = tleft + (tright - tleft) * 0.5;
+                                        testPoint.X = prevPoint.X + ttest * kX;
+                                        testPoint.Y = prevPoint.Y + ttest * kY;
+                                        if (zone.PointInZone(testPoint) == bPreviousState)
+                                            tleft = ttest;
+                                        else
+                                            tright = ttest;
+                                    }
+
+                                    double dTime = (mpc.T - prevPoint.T) * ttest + prevPoint.T;
+
+                                    ZoneCrossMarker zm = new ZoneCrossMarker(new MiniPoint(testPoint.X, testPoint.Y, dTime, 0));
+                                    zoneCrossMarkers.Add(zm);
+                                }
+                                bPreviousState = bActualState;
+                                prevPoint = mpc;
+                            }
+                            else
+                            {
+                                bPrevious = true;
+                                prevPoint = mpc;
+                                bPreviousState = zone.PointInZone(new Point(mpc.X, mpc.Y));
+                            }
+                        }
+                    }
+                }
+            }
+        }
 
         protected void Update()
         {
@@ -238,6 +325,19 @@ namespace RastrChartWPFControl
                 UpdateTranslations();
                 if (ZoomFactor.X == 0 || ZoomFactor.Y == 0)
                     ZoomExtents();
+                UpdateAxes();
+            }
+            UpdateChannels();
+            UpdateRulers();
+        }
+
+        public void ZoomAll()
+        {
+            UpdateLegend();
+            if (!channels.NoData())
+            {
+                UpdateTranslations();
+                ZoomExtents();
                 UpdateAxes();
             }
             UpdateChannels();
@@ -295,7 +395,7 @@ namespace RastrChartWPFControl
             Graph.Children.Add(l1);
             */
 
-            if(!canvasBounds.Contains(new Point(bx,by))) return;
+            if (!canvasBounds.Contains(new Point(bx, by))) return;
 
             TextBlock tb = new TextBlock();
             switch (MarkingMode)
@@ -317,16 +417,16 @@ namespace RastrChartWPFControl
 
             tb.FontSize = fontSize;
 
-            tb.Measure(new Size(Double.PositiveInfinity,Double.PositiveInfinity));
+            tb.Measure(new Size(Double.PositiveInfinity, Double.PositiveInfinity));
 
-            
-            double width  = tb.DesiredSize.Width / 2;
+
+            double width = tb.DesiredSize.Width / 2;
             double height = tb.DesiredSize.Height / 2;
 
             double ddx = 0;
             if (Angle > 0) ddx = height / Math.Tan(Angle); else ddx = -height / Math.Tan(Angle);
             if (ddx > width) ddx = width;
-            if(ddx < -width) ddx = -width;
+            if (ddx < -width) ddx = -width;
 
             x -= width;
             x += ddx;
@@ -346,18 +446,18 @@ namespace RastrChartWPFControl
                 else
                 {
                     Grid.Set(x, y);
-                    Grid.Set(x + width *2,y);
-                    Grid.Set(x,y+height*2);
+                    Grid.Set(x + width * 2, y);
+                    Grid.Set(x, y + height * 2);
                     Grid.Set(x + width * 2, y + height * 2);
                 }
             }
 
             Canvas.SetLeft(tb, x);
-            Canvas.SetTop(tb ,y);
+            Canvas.SetTop(tb, y);
 
             Graph.Children.Add(tb);
 
-            
+
             Ellipse el = new Ellipse();
             el.Width = el.Height = 7;
             el.Fill = new SolidColorBrush(color);
@@ -376,19 +476,19 @@ namespace RastrChartWPFControl
             if (channels.NoData())
             {
                 Border border = new Border();
-                border.Width  = Graph.ActualWidth  * 0.8;
+                border.Width = Graph.ActualWidth * 0.8;
                 border.Height = Graph.ActualHeight * 0.8;
 
                 Canvas.SetLeft(border, (Graph.ActualWidth - border.Width) / 2);
                 Canvas.SetTop(border, (Graph.ActualHeight - border.Height) / 2);
 
-                border.CornerRadius= new CornerRadius(7);
+                border.CornerRadius = new CornerRadius(7);
                 border.Background = new SolidColorBrush(Color.FromArgb(50, Colors.Wheat.R, Colors.Wheat.G, Colors.Wheat.B));
                 border.BorderBrush = new SolidColorBrush(Colors.DarkRed);
                 border.BorderThickness = new Thickness(3);
 
                 TextBlock noDataText = new TextBlock();
-                noDataText.Text = "Нет данных для отображения графиков. Для настройки АЛАР с использованием графических форм используется последний активный результат расчета. Выполните расчет или активизируйте один из существующих результатов расчета";
+                noDataText.Text = "Нет данных для отображения графиков. Возможные причины: отсутствуют активные результаты расчета, ошибка в исходных данных, отсутствие возможности рассчитать параметр для заданной привязки АЛАР";
                 noDataText.FontSize = 14;
                 noDataText.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
                 noDataText.VerticalAlignment = System.Windows.VerticalAlignment.Center;
@@ -396,7 +496,7 @@ namespace RastrChartWPFControl
                 noDataText.TextWrapping = TextWrapping.WrapWithOverflow;
                 border.Padding = new Thickness(10, 3, 10, 3);
                 border.Child = noDataText;
-                
+
                 Graph.Children.Add(border);
                 return;
             }
@@ -411,6 +511,13 @@ namespace RastrChartWPFControl
 
                     foreach (MiniChannel mc in channels)
                     {
+                        if (Rulers.Find(x => x.Tag == mc.Tag) == null)
+                        {
+                            RulerSpot spotRuler = new RulerSpot();
+                            spotRuler.Tag = mc.Tag;
+                            spotRuler.RulerAskCoordinates += OnRulerAskCoordinates;
+                            Rulers.Add(spotRuler);
+                        }
 
                         if (mc.Points.PointsRanged != null)
                         {
@@ -459,6 +566,89 @@ namespace RastrChartWPFControl
             return new Rect(ToWorld(new Point(0, 0)), ToWorld(new Point(ZoneCanvas.ActualWidth, ZoneCanvas.ActualHeight)));
         }
 
+        protected void UpdateKPAZone()
+        {
+            if (!hodographMode || !ZoneKPAM.ZoneOn) return;
+
+            if (!hodographMode) return;
+
+            TransformGroup tg = new TransformGroup();
+            tg.Children.Add(new ScaleTransform(ZoomFactor.X, -ZoomFactor.Y));
+            tg.Children.Add(new TranslateTransform(Offset.X, Offset.Y));
+            tg.Freeze();
+
+            Rect worldVisibleRect = WorldVisibleRect();
+
+            int ZonesCount = 0;
+
+            for (int i = 0; i < 2; i++)
+            {
+                ZoneGeometry zoneGeo = ZoneKPAM[i].ZoneGeometry;
+                if (zoneGeo == null) continue;
+                ZonesCount++;
+
+                GeometryGroup transformGroup = new GeometryGroup();
+                transformGroup.Children.Add(zoneGeo.GetGeometry(worldVisibleRect));
+                transformGroup.Transform = tg;
+                Path path = new Path();
+                path.Data = transformGroup;
+
+                path.Fill = (i == 0) ? StaticColors.Zone2Brush : StaticColors.Zone1Brush;
+                path.Stroke = new SolidColorBrush((i == 0) ? StaticColors.Zone2Brush.Color : StaticColors.Zone1Brush.Color);
+                
+                path.StrokeThickness = 1.5;
+                path.StrokeLineJoin = PenLineJoin.Round;
+                RulerCanvas.Children.Add(path);
+            }
+
+            RulerCanvas.Children.Add(ZoneKPAM.sVector);
+            Point p1 = ZoneKPAM[0].ZoneGeometry.ControlPoints[1].Position;
+            Point p2 = ZoneKPAM[0].ZoneGeometry.ControlPoints[0].Position;
+            p2.X = 2 * p2.X - p1.X;
+            p2.Y = 2 * p2.Y - p1.Y;
+            ZoneKPAM.sVector.X1 = p1.X * ZoomFactor.X + Offset.X;
+            ZoneKPAM.sVector.Y1 = -p1.Y * ZoomFactor.Y + Offset.Y;
+            ZoneKPAM.sVector.X2 = p2.X * ZoomFactor.X + Offset.X;
+            ZoneKPAM.sVector.Y2 = -p2.Y * ZoomFactor.Y + Offset.Y;
+
+            foreach(ControlPoint cp in ZoneKPAM[0].ZoneGeometry.ControlPoints)
+                cp.Place(RulerCanvas, ZoomFactor, Offset);
+            ZoneKPAM[1].ZoneGeometry.ControlPoints[2].Place(RulerCanvas, ZoomFactor, Offset);
+            ZoneKPAM[1].ZoneGeometry.ControlPoints[3].Place(RulerCanvas, ZoomFactor, Offset);
+
+        }
+
+        protected void UpdatePowerZone()
+        {
+            if (!hodographMode || !PowerZone.ZoneOn) return;
+
+            TransformGroup tg = new TransformGroup();
+            tg.Children.Add(new ScaleTransform(ZoomFactor.X, -ZoomFactor.Y));
+            tg.Children.Add(new TranslateTransform(Offset.X, Offset.Y));
+            tg.Freeze();
+            Rect worldVisibleRect = WorldVisibleRect();
+
+            ZoneGeometry zoneGeo = PowerZone.Zone.ZoneGeometry;
+            if (zoneGeo == null) return;
+            GeometryGroup transformGroup = new GeometryGroup();
+            transformGroup.Children.Add(zoneGeo.GetGeometry(worldVisibleRect));
+            transformGroup.Transform = tg;
+            Path path = new Path();
+            path.Data = transformGroup;
+            path.Fill = StaticColors.PowerZoneFillBrush;
+            path.Stroke = new SolidColorBrush(StaticColors.PowerZoneOutlineBrush.Color);
+            path.StrokeThickness = 1.5;
+            path.StrokeLineJoin = PenLineJoin.Round;
+            RulerCanvas.Children.Add(path);
+            RulerCanvas.Children.Add(PowerZone.sVector);
+            PowerZone.sVector.X1 = zoneGeo.ControlPoints[0].Position.X * ZoomFactor.X + Offset.X;
+            PowerZone.sVector.Y1 = -zoneGeo.ControlPoints[0].Position.Y * ZoomFactor.Y + Offset.Y;
+            PowerZone.sVector.X2 = Offset.X;
+            PowerZone.sVector.Y2 = Offset.Y;
+            foreach (ControlPoint cp in zoneGeo.ControlPoints)
+                cp.Place(RulerCanvas, ZoomFactor, Offset);
+        }
+
         protected void UpdateComplexZone(ComplexZoneRelay Relay)
         {
             if (!hodographMode) return;
@@ -483,8 +673,30 @@ namespace RastrChartWPFControl
                 transformGroup.Transform = tg;
                 Path path = new Path();
                 path.Data = transformGroup;
-                path.Fill = (Relay == Zone1) ? StaticColors.Zone1Brush : StaticColors.Zone2Brush;
-                path.Stroke = new SolidColorBrush((Relay == Zone1) ? StaticColors.Zone1Brush.Color : StaticColors.Zone2Brush.Color);
+                if (Relay != zoneFZ)
+                {
+                    path.Fill = (Relay == Zone1) ? StaticColors.Zone1Brush : StaticColors.Zone2Brush;
+                    path.Stroke = new SolidColorBrush((Relay == Zone1) ? StaticColors.Zone1Brush.Color : StaticColors.Zone2Brush.Color);
+                }
+                else
+                {
+                    switch (i)
+                    {
+                        case 0:
+                            path.Fill = StaticColors.Zone1Brush;
+                            path.Stroke = new SolidColorBrush(StaticColors.Zone1Brush.Color);
+                        break;
+                        case 1:
+                            path.Fill = StaticColors.Zone2Brush;
+                            path.Stroke = new SolidColorBrush(StaticColors.Zone2Brush.Color);
+                        break;
+                        case 2:
+                            path.Fill = StaticColors.ComplexZoneBrush1;
+                            path.Stroke = new SolidColorBrush(StaticColors.ComplexZoneBrush1.Color);
+                        break;
+                    }
+                }
+
                 path.StrokeThickness = 1.5;
                 path.StrokeLineJoin = PenLineJoin.Round;
                 RulerCanvas.Children.Add(path);
@@ -626,6 +838,50 @@ namespace RastrChartWPFControl
                     cp.Place(RulerCanvas, ZoomFactor, Offset);
             }
         }
+              
+        internal void OnCrossMarkToolTip(object sender, EventArgs e)
+        {
+            ToolTipEventArgs ttea = (ToolTipEventArgs)e;
+            Line lSource = (Line)sender;
+            ToolTip tt = (ToolTip)lSource.ToolTip;
+            ZoneCrossMarker zmSource = (ZoneCrossMarker)lSource.Tag;
+            string ttContent = string.Empty;
+
+            MiniPoint zmSourcePoint = zmSource.MarkPoint;
+
+            foreach(ZoneCrossMarker zm in zoneCrossMarkers)
+            {
+                double dx = zmSourcePoint.X - zm.MarkPoint.X;
+                double dy = zmSourcePoint.Y - zm.MarkPoint.Y;
+                dx = dx * dx + dy * dy;
+                dx *= ZoomFactor.X;
+                if (dx < 3)
+                {
+                    if (ttContent != string.Empty)
+                        ttContent += "\n";
+                    ttContent += Math.Round(zm.MarkPoint.T, 4).ToString();
+                }
+            }
+            tt.Content = ttContent;
+        }
+
+        protected void UpdateZoneCrossMarkers()
+        {
+            if (!Double.IsInfinity(ZoomFactor.Y))
+            {
+                if (HodographMode)
+                    foreach (ZoneCrossMarker zm in zoneCrossMarkers)
+                        zm.Place(RulerCanvas, ZoomFactor, Offset, this);
+            }
+        }
+
+        void StartZoneCrossingTimer()
+        {
+            updateTimer.Stop();
+            updateTimer.Interval = 500;
+            if(ShowCrossMarks)
+                updateTimer.Start();
+        }
 
         protected void UpdateRulers()
         {
@@ -637,14 +893,24 @@ namespace RastrChartWPFControl
                 UpdateComplexZone(Zone2);
                 UpdateComplexZone(Zone1);
 
+                if(zoneFZ.ZoneOn)
+                    UpdateComplexZone(zoneFZ);
+
+                UpdatePowerZone();
+                UpdateKPAZone();
+
                 MarkerX.Visibility = MarkerY.Visibility = Visibility.Visible;
 
                 if (!Double.IsInfinity(ZoomFactor.Y))
+                {
                     foreach (RulerBase ruler in Rulers)
                         ruler.PlaceRuler(RulerCanvas, ZoomFactor, Offset);
+                }
             }
             else
                 MarkerX.Visibility = MarkerY.Visibility = Visibility.Hidden;
+
+            StartZoneCrossingTimer();
         }
 
         private void DrawGrid(AxisData x, AxisData y)
@@ -700,23 +966,30 @@ namespace RastrChartWPFControl
             bool bFirst = true;
             LegendText.Children.Clear();
 
+            List<string> dupCheckList = new List<string>();
+
             if (!channels.NoData())
             {
                 foreach (MiniChannel mc in channels)
                 {
-                    TextBlock legendMc = new TextBlock();
-                    if (bFirst)
-                        bFirst = false;
-                    else
+                    if (!dupCheckList.Contains(mc.Legend))
                     {
-                        TextBlock comma = new TextBlock();
-                        comma.Text = ",";
-                        LegendText.Children.Add(comma);
-                    }
+                        dupCheckList.Add(mc.Legend);
 
-                    legendMc.Text = mc.Legend;
-                    legendMc.Foreground = new SolidColorBrush(mc.Color);
-                    LegendText.Children.Add(legendMc);
+                        TextBlock legendMc = new TextBlock();
+                        if (bFirst)
+                            bFirst = false;
+                        else
+                        {
+                            TextBlock comma = new TextBlock();
+                            comma.Text = ",";
+                            LegendText.Children.Add(comma);
+                        }
+
+                        legendMc.Text = mc.Legend;
+                        legendMc.Foreground = new SolidColorBrush(mc.Color);
+                        LegendText.Children.Add(legendMc);
+                    }
                 }
             }
         }
@@ -753,46 +1026,74 @@ namespace RastrChartWPFControl
                 Cursor = AddNode;
             return zoneHitResult;
         }
+
+        private ControlPoint HitTestControlPoints(ControlPoint[] points, Point Position, ref bool bFirst, ref double MinDistance)
+        {
+            ControlPoint bestCP = null;
+            foreach (ControlPoint pt in points)
+            {
+                Point screenPoint = ToScreen(pt.Position);
+                double dx = screenPoint.X - Position.X;
+                double dy = screenPoint.Y - Position.Y;
+                double distance = Math.Sqrt(dx * dx + dy * dy);
+                if (distance > ControlPoint.ScreenRadius) continue;
+                if (bFirst)
+                {
+                    MinDistance = distance;
+                    bestCP = pt;
+                    bFirst = false;
+                }
+                else
+                {
+                    if (MinDistance > distance)
+                    {
+                        MinDistance = distance;
+                        bestCP = pt;
+                    }
+                }
+            }
+            return bestCP;
+        }
         private ControlPoint ControlPointHittest(Point Position)
         {
             ControlPoint bestCP = null;
+            ControlPoint ptIn = null;
             Rect canvasRect = new Rect(0, 0, RulerCanvas.ActualWidth, RulerCanvas.ActualHeight);
             if (canvasRect.Contains(Position))
             {
                 bool bFirst = true;
                 double MinDistance = 0.0;
 
-                for (int z = 0; z < 2; z++)
+                ComplexZoneRelay[] ComplexZonesList = { Zone1, Zone2, zoneFZ };
+
+                foreach(ComplexZoneRelay Relay in ComplexZonesList)
                 {
-                    ComplexZoneRelay Relay = (z == 0) ? Zone1 : Zone2;
                     for (int i = 0; i < 4; i++)
                     {
                         ZoneGeometry zoneGeo = Relay[i].ZoneGeometry;
                         if (zoneGeo != null)
                         {
-                            foreach (ControlPoint pt in zoneGeo.ControlPoints)
-                            {
-                                Point screenPoint = ToScreen(pt.Position);
-                                double dx = screenPoint.X - Position.X;
-                                double dy = screenPoint.Y - Position.Y;
-                                double distance = Math.Sqrt(dx * dx + dy * dy);
-                                if (distance > ControlPoint.ScreenRadius) continue;
-                                if (bFirst)
-                                {
-                                    MinDistance = distance;
-                                    bestCP = pt;
-                                    bFirst = false;
-                                }
-                                else
-                                {
-                                    if (MinDistance > distance)
-                                    {
-                                        MinDistance = distance;
-                                        bestCP = pt;
-                                    }
-                                }
-                            }
+                            ptIn = HitTestControlPoints(zoneGeo.ControlPoints, Position, ref bFirst, ref MinDistance);
+                            if (ptIn != null)
+                                bestCP = ptIn;
                         }
+                    }
+                }
+
+                if (PowerZone.ZoneOn)
+                {
+                    ptIn = HitTestControlPoints(PowerZone.Zone.ZoneGeometry.ControlPoints, Position, ref bFirst, ref MinDistance);
+                    if (ptIn != null)
+                        bestCP = ptIn;
+                }
+
+                if (ZoneKPAM.ZoneOn)
+                {
+                    for (int i = 0; i < 2; i++)
+                    {
+                        ptIn = HitTestControlPoints(ZoneKPAM[i].ZoneGeometry.ControlPoints, Position, ref bFirst, ref MinDistance);
+                        if (ptIn != null)
+                            bestCP = ptIn;
                     }
                 }
             }
@@ -842,7 +1143,6 @@ namespace RastrChartWPFControl
         {
             if (IsPan)
             {
-
                 Point mouseCurrentPoint = e.GetPosition(Graph);
                 Offset.X = mouseCurrentPoint.X - mouseDownPoint.X;
                 Offset.Y = mouseCurrentPoint.Y - mouseDownPoint.Y;
@@ -1052,9 +1352,8 @@ namespace RastrChartWPFControl
                     newRuler = new RulerVertical(MarkerX);
                     break;
                 case RulerOrientation.RulerSpot:
-                    newRuler = new RulerSpot();
-                    newRuler.RulerAskCoordinates += OnRulerAskCoordinates;
-                    break;
+                    throw new Exception("Hodograph ruler can be added only internally");
+
             }
 
             if (newRuler != null)
@@ -1070,13 +1369,22 @@ namespace RastrChartWPFControl
 
         public void SetRulerValue(string Tag, double Value)
         {
-            RulerBase ruler = GetRulerByTag(Tag);
-            if (ruler == null)
-                throw new Exception(String.Format("No ruler with tag \"{0}\"", Tag));
+            if (hodographMode)
+            {
+                foreach (RulerBase ruler in Rulers)
+                    ruler.Position = Value;
+                UpdateRulers();
+            }
             else
             {
-                ruler.Position = Value;
-                UpdateRulers();
+                RulerBase ruler = GetRulerByTag(Tag);
+                if (ruler == null)
+                    throw new Exception(String.Format("No ruler with tag \"{0}\"", Tag));
+                else
+                {
+                    ruler.Position = Value;
+                    UpdateRulers();
+                }
             }
         }
 
@@ -1107,17 +1415,19 @@ namespace RastrChartWPFControl
         {
             if (hodographMode)
             {
-                
                 Point pt  = new Point();
+                double Radius = 0;
                 e.Coordinates = pt;
-                foreach (MiniChannel mc in channels)
+
+                MiniChannel mc = channels.GetChannelByTag(e.Tag);
+                if(mc != null)
                 {
                     e.Cancel = true;
-                    if(mc.FindTimeCoordinates(e.NewPosition, ref pt))
+                    if (mc.FindTimeCoordinates(e.NewPosition, ref pt, ref Radius))
                     {
                         e.Coordinates = pt;
                         e.Cancel = false;
-                        break;
+                        e.Radius = Radius;
                     }
                 }
             }

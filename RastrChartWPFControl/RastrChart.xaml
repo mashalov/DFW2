@@ -5,7 +5,7 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:RastrChartWPFControl"
              xmlns:system="clr-namespace:System;assembly=mscorlib"
-             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300" Background="White" Padding="5" DragEnter="OnDragEnter" DragOver="OnDragOver" Drop="OnDrop" AllowDrop="True">
+             mc:Ignorable="d" d:DesignHeight="300" d:DesignWidth="300" Background="White" Padding="5" DragEnter="OnDragEnter" DragOver="OnDragOver" Drop="OnDrop" AllowDrop="True" LostMouseCapture="LostMouse">
     <Grid Background="White" FocusManager.IsFocusScope="True" >
         <Grid.ColumnDefinitions>
             <ColumnDefinition MinWidth="50" Width="auto"/>
@@ -24,6 +24,7 @@
                 <ResourceDictionary>
                     <TextBlock x:Key="ZoomCursor" Cursor="Resources/Cursors/zoom.cur"/>
                     <system:String x:Key="ZoomExtents">Показать все</system:String>
+                    <system:String x:Key="ResetAxes">Автомасштаб</system:String>
                     <system:String x:Key="SaveChartSet">Сохранить...</system:String>
                     <system:String x:Key="SaveCSV">Экспорт CSV...</system:String>
                     <system:String x:Key="SavePNG">Экспорт PNG...</system:String>
@@ -42,6 +43,7 @@
                     <system:String x:Key="TimeHeader">t,[с]</system:String>
                     <system:String x:Key="Pin">Фиксировать</system:String>
                     <system:String x:Key="UnPin">Расфиксировать</system:String>
+                    <system:String x:Key="AxisSetup">Настроить ось...</system:String>
                     <BitmapImage x:Key="IconCopy" UriSource="Resources/Images/Copy.png"/>
                     <BitmapImage x:Key="IconZoomAll" UriSource="Resources/Images/ZoomAll.png"/>
                     <BitmapImage x:Key="IconDelete" UriSource="Resources/Images/Delete.png"/>
@@ -55,6 +57,7 @@
                     <BitmapImage x:Key="IconSaveCSV" UriSource="Resources/Images/FileIconCSV.png"/>
                     <BitmapImage x:Key="IconSavePNG" UriSource="Resources/Images/FileIconPNG.png"/>
                     <BitmapImage x:Key="MarkerArrow" UriSource="Resources/Images/MarkerArrow.png"/>
+                    <BitmapImage x:Key="AxisSetupPNG" UriSource="Resources/Images/AxisSetupPNG.png"/>
                 </ResourceDictionary>
             </Canvas.Resources>
         </Canvas>
