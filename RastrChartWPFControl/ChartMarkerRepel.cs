@@ -47,15 +47,15 @@ namespace RastrChartWPFControl
             WindowList.Add(new MarkerInfo(Channel, PointerBegin, yValue));
         }
 
-        public void Arrange()
+        public void Arrange(Canvas ParentCanvas)
         {
             GetPlacement();
 
             foreach (MarkerInfo marker in WindowList)
             {
-                marker.channel.UpdateInfoWindow(marker.pointerEnd, 
-                                                canvasToMeasure.PointFromScreen(marker.pointerBegin), 
-                                                canvasToMeasure.PointFromScreen(marker.pointerEnd), marker.yValue);
+                Point pb = canvasToMeasure.PointFromScreen(marker.pointerBegin);
+                Point pe = canvasToMeasure.PointFromScreen(marker.pointerEnd);
+                marker.channel.UpdateInfoWindow(pe, pb, pe, marker.yValue);
                 marker.channel.InfoWindowOpen = true;
             }
         }

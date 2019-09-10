@@ -83,7 +83,8 @@ namespace RastrChartWPFControl
         private InfoWindow infoWindow;
         private Line linePointer;
 
-
+        private List<FrameworkElement> elements;
+       
         public string Tag
         {
             get 
@@ -313,6 +314,10 @@ namespace RastrChartWPFControl
             legendButton.ButtonRightClick += OnButtonRightClick;
 
             //FilterRedunantPoints(.0001);
+            
+            elements = new List<FrameworkElement>();
+            elements.Add(infoWindow);
+            elements.Add(linePointer);
 
             CanBeReference = false;
             Pin = false;
@@ -697,15 +702,25 @@ namespace RastrChartWPFControl
             get { return linePointer;  }
         }
 
+        public List<FrameworkElement> Elements
+        {
+            get { return elements; }
+        }
+
         public bool InfoWindowOpen
         {
             get { return infoWindow.IsOpen; }
             set { 
-                    infoWindow.IsOpen = value;
                     if (value)
+                    {
                         linePointer.Visibility = Visibility.Visible;
+                        infoWindow.IsOpen = true;
+                    }
                     else
+                    {
                         linePointer.Visibility = Visibility.Hidden;
+                        infoWindow.IsOpen = false;
+                    }
                 }
         }
      }

@@ -4,7 +4,7 @@
         xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
         xmlns:system="clr-namespace:System;assembly=mscorlib"
         xmlns:local="clr-namespace:RastrChartWPFControl"
-        Title="Свойства канала" Height="235" Width="399"  Loaded="OnLoad" Name="ChanProps" x:ClassModifier="internal" Icon="/RastrChartWPFControl;component/Resources/Images/ChanProps.png">
+        Title="Свойства канала" Height="235" Width="399"  Loaded="OnLoad" Name="ChanProps" x:ClassModifier="internal" Icon="/RastrChartWPFControl;component/Resources/Images/ChanProps.png" MaxHeight="235" MinHeight="235">
     <Window.Resources>
         <ResourceDictionary>
             <system:String x:Key="AuxAxis">Вспомогательная</system:String>

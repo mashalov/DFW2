@@ -36,6 +36,11 @@ namespace RastrChartWPFControl
             get { return plotter.GetChannelByTag(Tag); }
         }
 
+        public ChartChannel ByLegend(string Name)
+        {
+            return plotter.GetChannelByLegend(Name);
+        }
+
         public int Count
         {
             get { return plotter.Channels.Count; }
@@ -47,6 +52,11 @@ namespace RastrChartWPFControl
         public List<ChartChannel>.Enumerator GetEnumerator()
         {
             return plotter.Channels.GetEnumerator();
+        }
+
+        public void SortByTags()
+        {
+            plotter.SortChannelsByTags();
         }
     }
 }
