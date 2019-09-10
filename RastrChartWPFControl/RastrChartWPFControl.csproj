@@ -11,8 +11,7 @@
     <RootNamespace>RastrChartWPFControl</RootNamespace>
     <AssemblyName>RastrChartWPFControl</AssemblyName>
     <TargetFrameworkVersion>v4.7.1</TargetFrameworkVersion>
-    <TargetFrameworkProfile>
-    </TargetFrameworkProfile>
+    <TargetFrameworkProfile />
     <FileAlignment>512</FileAlignment>
     <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}</ProjectTypeGuids>
     <WarningLevel>4</WarningLevel>
@@ -23,43 +22,45 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x64'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x64\Debug\</OutputPath>
+    <OutputPath>..\RastrMain\bin\x64\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x64'">
-    <OutputPath>bin\x64\Release\</OutputPath>
+    <OutputPath>..\RastrMain\bin\x64\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x64</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Debug|x86'">
     <DebugSymbols>true</DebugSymbols>
-    <OutputPath>bin\x86\Debug\</OutputPath>
+    <OutputPath>..\RastrMain\bin\x86\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <DebugType>full</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|x86'">
-    <OutputPath>bin\x86\Release\</OutputPath>
+    <OutputPath>..\RastrMain\bin\x86\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <Optimize>true</Optimize>
     <DebugType>pdbonly</DebugType>
     <PlatformTarget>x86</PlatformTarget>
     <ErrorReport>prompt</ErrorReport>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="System.Data" />
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xml" />
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="System.Core" />
@@ -88,11 +89,19 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="AxisSetup.xaml.cs">
+      <DependentUpon>AxisSetup.xaml</DependentUpon>
+    </Compile>
     <Compile Include="ChartMarkerRepel.cs" />
+    <Compile Include="EventExtensions.cs" />
     <Compile Include="MiniChannel.cs" />
     <Compile Include="Ruler.cs" />
     <Compile Include="ZoneGeometry.cs" />
     <Compile Include="ZoneInterface.cs" />
+    <Page Include="AxisSetup.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ChannelPropsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -148,32 +157,14 @@
   </ItemGroup>
   <ItemGroup>
     <Resource Include="Resources\Cursors\zoom.cur" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\Copy.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\ZoomAll.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\Delete.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\AutoAxes.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\CopyImage.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\CopyData.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\CopyDataTime.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\ChanProps.png" />
-  </ItemGroup>
-  <ItemGroup>
     <Resource Include="Resources\Images\SetAsReference.png" />
     <Resource Include="Resources\Images\Pin.png" />
     <Resource Include="Resources\Images\UnPin.png" />
@@ -183,6 +174,7 @@
     <Resource Include="Resources\Images\MarkerArrow.png" />
     <Resource Include="Resources\Images\FileIconCsv.png" />
     <Resource Include="Resources\Images\FileIconPNG.png" />
+    <Resource Include="Resources\Images\AxisSetupPNG.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -201,7 +201,10 @@ namespace RastrChartWPFControl
                         CanvasToMeasure.Children.Add(markerYline);
 
                         foreach (ChartChannel channel in Channels)
-                            CanvasToMeasure.Children.Add(channel.InfoWindowPointer);
+                            foreach (FrameworkElement elt in channel.Elements)
+                                CanvasToMeasure.Children.Add(elt);
+
+                            //CanvasToMeasure.Children.Add(channel.InfoWindowPointer);
 
                         if (ZoomFactor.X < 1000.0 && ZoomFactor.Y < 1000.0)
                             CanvasToPlot.CacheMode = new BitmapCache();
@@ -215,12 +218,14 @@ namespace RastrChartWPFControl
                         CanvasToMeasure.Children.Remove(markerYline);
 
                         foreach (ChartChannel channel in Channels)
-                            CanvasToMeasure.Children.Remove(channel.InfoWindowPointer);
+                            foreach (FrameworkElement elt in channel.Elements)
+                                CanvasToMeasure.Children.Remove(elt);
+                        //CanvasToMeasure.Children.Remove(channel.InfoWindowPointer);
 
                         CanvasToPlot.Cursor = Cursors.Arrow;
                         CanvasToPlot.CacheMode = null;
                         foreach (AxisY axis in axisYBlock.Axes)
-                               axis.infoWindow.IsOpen = false;
+                            axis.infoWindow.IsOpen = false;
                         axisX.infoWindow.IsOpen = false;
                         foreach (ChartChannel channel in Channels)
                             channel.InfoWindowOpen = false;
@@ -245,6 +250,9 @@ namespace RastrChartWPFControl
             axisX = Xaxis;
             axisYBlock = YaxisBlock;
             axisYBlock.TranslationChanged += OnAxisTranslation;
+            axisX.TranslationChanged += OnAxisXTranslationChanged;
+            axisX.ButtonRightClick += OnAxisXRightClick;
+            axisYBlock.ButtonRightClick += OnAxisXRightClick;
             legendArea = LegendArea;
             CanvasToPlot.ClipToBounds = CanvasToMeasure.ClipToBounds = CanvasToZoom.ClipToBounds = true;
             ZoomDash = new DoubleCollection(new double [] {5,5});
@@ -318,6 +326,14 @@ namespace RastrChartWPFControl
             UpdateAxes();
         }
 
+        public void SortChannelsByTags()
+        {
+            Channels.Sort((Chan1,Chan2) => Chan1.Tag.CompareTo(Chan2.Tag));
+            legendArea.Children.Clear();
+            foreach (ChartChannel chan in Channels) legendArea.Children.Add(chan.legendButton);
+            Transform();
+        }
+
 
         public bool RemoveChannel(ChartChannel channel)
         {
@@ -325,6 +341,16 @@ namespace RastrChartWPFControl
             Channels.Remove(channel);
             UpdateAxes();
             return bRes;
+        }
+
+        public ChartChannel GetChannelByLegend(string Legend)
+        {
+            foreach (ChartChannel channel in Channels)
+            {
+                if (channel.LegendText == Legend)
+                    return channel;
+            }
+            return null;
         }
 
         public ChartChannel GetChannelByTag(string Tag)
@@ -387,31 +413,35 @@ namespace RastrChartWPFControl
         {
             if (m_bDrawGrid)
             {
-                for (double gx = x.actualStart; gx <= x.actualEnd && x.actualEnd > x.actualStart; gx += x.step)
+                try
                 {
-                    Line gl = new Line();
-                    gl.StrokeThickness = 1;
-                    gl.SnapsToDevicePixels = true;
-                    gl.Stroke = Brushes.LightGray;
-                    gl.StrokeDashArray = GridDash;
-                    gl.Y1 = 0;
-                    gl.Y2 = CanvasToPlot.ActualHeight;
-                    gl.X1 = gl.X2 = gx * ZoomFactor.X + Offset.X;
-                    CanvasToPlot.Children.Add(gl);
-                }
+                    for (double gx = x.actualStart; gx <= x.actualEnd && x.actualEnd > x.actualStart; gx += x.step)
+                    {
+                        Line gl = new Line();
+                        gl.StrokeThickness = 1;
+                        gl.SnapsToDevicePixels = true;
+                        gl.Stroke = Brushes.LightGray;
+                        gl.StrokeDashArray = GridDash;
+                        gl.Y1 = 0;
+                        gl.Y2 = CanvasToPlot.ActualHeight;
+                        gl.X1 = gl.X2 = gx * ZoomFactor.X + Offset.X;
+                        CanvasToPlot.Children.Add(gl);
+                    }
 
-                for (double gy = y.actualStart; gy <= y.actualEnd && y.actualEnd > y.actualStart; gy += y.step)
-                {
-                    Line gl = new Line();
-                    gl.StrokeThickness = 1;
-                    gl.SnapsToDevicePixels = true;
-                    gl.Stroke = Brushes.LightGray;
-                    gl.StrokeDashArray = GridDash;
-                    gl.Y1 = gl.Y2 = gy * ZoomFactor.Y + Offset.Y;
-                    gl.X1 = 0;
-                    gl.X2 = CanvasToPlot.ActualWidth;
-                    CanvasToPlot.Children.Add(gl);
+                    for (double gy = y.actualStart; gy <= y.actualEnd && y.actualEnd > y.actualStart; gy += y.step)
+                    {
+                        Line gl = new Line();
+                        gl.StrokeThickness = 1;
+                        gl.SnapsToDevicePixels = true;
+                        gl.Stroke = Brushes.LightGray;
+                        gl.StrokeDashArray = GridDash;
+                        gl.Y1 = gl.Y2 = gy * ZoomFactor.Y + Offset.Y;
+                        gl.X1 = 0;
+                        gl.X2 = CanvasToPlot.ActualWidth;
+                        CanvasToPlot.Children.Add(gl);
+                    }
                 }
+                catch (Exception) { }
             }
         }
 
@@ -552,6 +582,22 @@ namespace RastrChartWPFControl
                 }
             }
 
+            foreach(AxisY axisy in axisYBlock.Axes)
+            {
+                if (Math.Abs(axisy.bounds.Height) < 1E-5)
+                {
+                    axisy.bounds.Y -= 0.5;
+                    axisy.bounds.Height = 1;
+                }
+
+                if (Math.Abs(axisy.bounds.Width) < 1E-5)
+                {
+                    axisy.bounds.X -= 0.5;
+                    axisy.bounds.Width = 1;
+                }
+            }
+
+            /*
             if (Math.Abs(axisYBlock.Axes[0].bounds.Height) < 1E-5)
             {
                 axisYBlock.Axes[0].bounds.Y -= 0.5;
@@ -563,14 +609,83 @@ namespace RastrChartWPFControl
                 axisYBlock.Axes[0].bounds.X -= 0.5;
                 axisYBlock.Axes[0].bounds.Width = 1;
             }
+            */
 
             Rect Bounds = axisYBlock.Axes[0].bounds;
+            Rect BoundsBackup = Bounds;
+
+            try
+            {
+                // x - axis constraints
+                if (axisX.AxisConstraints.ViewStart is double)
+                {
+                    if (axisX.AxisConstraints.ViewEnd is double)
+                    {
+                        // both constraints
+                        Bounds.X = (double)axisX.AxisConstraints.ViewStart;
+                        Bounds.Width = (double)axisX.AxisConstraints.ViewEnd - Bounds.X;
+                    }
+                    else
+                    {
+                        // start constraint without end
+                        double rightX = Bounds.Width + Bounds.X;
+                        Bounds.X = (double)axisX.AxisConstraints.ViewStart;
+                        Bounds.Width = rightX - Bounds.X;
+                    }
+                }
+                else
+                {
+                    if (axisX.AxisConstraints.ViewEnd is double)
+                        Bounds.Width = (double)axisX.AxisConstraints.ViewEnd - Bounds.X;
+                }
+            }
+            catch(Exception)
+            {
+                Bounds = BoundsBackup;
+                axisX.AxisConstraints.Reset();
+            }
+            
 
             if (CanvasToPlot.ActualWidth > 0)
             {
                 ZoomFactor.X = CanvasToPlot.ActualWidth / Bounds.Width;
                 Offset.X = -Bounds.X * ZoomFactor.X;
             }
+
+            // y - axis constraints
+
+            BoundsBackup = Bounds;
+            Rect axisBoundsBackup = axisYBlock.GetMainAxis().bounds;
+
+            try
+            {
+                if (axisYBlock.AxisConstraints.ViewStart is double)
+                {
+                    if (axisYBlock.AxisConstraints.ViewEnd is double)
+                    {
+                        axisYBlock.GetMainAxis().bounds.Y = Bounds.Y = -(double)axisYBlock.AxisConstraints.ViewEnd;
+                        axisYBlock.GetMainAxis().bounds.Height = Bounds.Height = (double)axisYBlock.AxisConstraints.ViewEnd - (double)axisYBlock.AxisConstraints.ViewStart;
+                    }
+                    else
+                        axisYBlock.GetMainAxis().bounds.Height = Bounds.Height = -(double)axisYBlock.AxisConstraints.ViewStart - Bounds.Y;
+                }
+                else
+                { 
+                    if (axisYBlock.AxisConstraints.ViewEnd is double)
+                    {
+                        double rightX = Bounds.Height + Bounds.Y;
+                        axisYBlock.GetMainAxis().bounds.Y = Bounds.Y = -(double)axisYBlock.AxisConstraints.ViewEnd;
+                        axisYBlock.GetMainAxis().bounds.Height = Bounds.Height = rightX - Bounds.Y;
+                    }
+                }
+            }
+            catch(Exception)
+            {
+                Bounds = BoundsBackup;
+                axisYBlock.GetMainAxis().bounds = axisBoundsBackup ;
+                axisYBlock.AxisConstraints.Reset();
+            }
+
             if (CanvasToPlot.ActualHeight > 0)
             {
                 ZoomFactor.Y = CanvasToPlot.ActualHeight / Bounds.Height; ;
@@ -591,12 +706,18 @@ namespace RastrChartWPFControl
 
             CanvasToPlot.Children.Clear();
             axisX.SetTransform(ZoomFactor, Offset);
-                        
+
+            if (axisYBlock.Axes.Count() > 1)
+                axisYBlock.AxisConstraints.Reset();
+            else
+                axisYBlock.Axes[0].AxisConstraints = axisYBlock.AxisConstraints;
+
             foreach (AxisY axis in axisYBlock.Axes)
             {
                 Point z = new Point(ZoomFactor.X, ZoomFactor.Y * axis.Translation.X);
                 Point o = new Point(Offset.X, Offset.Y + axis.Translation.Y * ZoomFactor.Y);
                 axis.SetTransform(z, o);
+                axis.AxisConstraints = null;
             }
 
             DrawGrid(axisX.axisData, axisYBlock.Axes[0].axisData);
@@ -642,7 +763,7 @@ namespace RastrChartWPFControl
                 markerArrow.SnapsToDevicePixels = true;
                 markerArrow.Source = ResourceImage("MarkerArrow.png").Source;
                 CanvasToPlot.Children.Add(markerArrow);
-                Canvas.SetLeft(markerArrow, Math.Round(newMarker.X2 - 3));
+                Canvas.SetLeft(markerArrow, Math.Round(newMarker.X2 - 2));
                 Canvas.SetTop(markerArrow, 0);
                 if (marker.m_Name != "")
                 {
@@ -748,6 +869,23 @@ namespace RastrChartWPFControl
                 menuItemZoomExtents.Click += OnZoomExtents;
                 contextMenu.Items.Add(menuItemZoomExtents);
 
+                if(axisX.AxisConstraints.IsSet || axisYBlock.AxisConstraints.IsSet)
+                {
+                    MenuItem menuItemResetAxes = new MenuItem();
+                    menuItemResetAxes.Header = CanvasToPlot.Resources["ResetAxes"];
+                    menuItemResetAxes.Icon = ResourceImage("AxisSetupPNG.png");
+                    menuItemResetAxes.Click += OnResetAxes;
+                    contextMenu.Items.Add(menuItemResetAxes);
+                }
+                else
+                {
+                    MenuItem menuItemShowXAxis = new MenuItem();
+                    menuItemShowXAxis.Header = CanvasToPlot.Resources["ShowXaxis"];
+                    menuItemShowXAxis.IsChecked = m_bShowXAxis;
+                    menuItemShowXAxis.Click += OnShowXaxis;
+                    contextMenu.Items.Add(menuItemShowXAxis);
+                }
+
                 MenuItem menuItemShowGrid = new MenuItem();
                 menuItemShowGrid.Header = CanvasToPlot.Resources["ShowGrid"];
                 menuItemShowGrid.IsChecked = m_bDrawGrid;
@@ -759,15 +897,7 @@ namespace RastrChartWPFControl
                 menuItemShowLegend.IsChecked = m_bDrawLegend;
                 menuItemShowLegend.Click += OnShowLegend;
                 contextMenu.Items.Add(menuItemShowLegend);
-
-
-                MenuItem menuItemShowXAxis = new MenuItem();
-                menuItemShowXAxis.Header = CanvasToPlot.Resources["ShowXaxis"];
-                menuItemShowXAxis.IsChecked = m_bShowXAxis;
-                menuItemShowXAxis.Click += OnShowXaxis;
-                contextMenu.Items.Add(menuItemShowXAxis);
-
-
+                
                 DeepCanvasHitTest(me.GetPosition(CanvasToPlot));
 
 
@@ -999,6 +1129,13 @@ namespace RastrChartWPFControl
             ZoomExtents();
         }
 
+        protected void OnResetAxes(object sender, EventArgs e)
+        {
+            axisX.AxisConstraints.Reset();
+            axisYBlock.AxisConstraints.Reset();
+            ZoomExtents();
+        }
+
         protected void OnSaveChartSet(object sender, EventArgs e)
         {
             if (SaveChartSet != null)
@@ -1134,7 +1271,7 @@ namespace RastrChartWPFControl
                     channel.InfoWindowOpen = false;
             }
 
-            markers.Arrange();
+            markers.Arrange(CanvasToMeasure);
 
             if (CanvasToPlot.CacheMode == null)
                 CanvasToPlot.InvalidateVisual();
@@ -1317,6 +1454,16 @@ namespace RastrChartWPFControl
         {
             Transform();
         }
+        protected void OnAxisXTranslationChanged(object sender, EventArgs e)
+        {
+            double ZoomChange = axisX.Translation.X;
+            ZoomFactor.X *= ZoomChange;
+            Point MouseCurrentPoint = Mouse.GetPosition(CanvasToPlot); 
+            double dX = MouseCurrentPoint.X - ZoomChange * (MouseCurrentPoint.X - Offset.X);
+            MouseDownPoint.X += Offset.X - dX;
+            Offset.X = dX;
+            Transform();
+        }
 
         /*private void OnLoaded(object s, EventArgs e)
         {
@@ -1405,69 +1552,58 @@ namespace RastrChartWPFControl
             }
             else
             {
-                Dictionary<double, List<int>[]> xset = new Dictionary<double, List<int>[]>();
-                int ChannelIndex = 0;
+                Dictionary<double, int> xset = new Dictionary<double, int>();
+                int [] ChannelIndexes = new int[Channels.Count];
                 foreach (ChartChannel channel in Channels)
                 {
-                    int PointIndex = 0;
                     foreach (Point pt in channel.OriginalPoints)
-                    {
-                        if(xset.TryGetValue(pt.X, out List<int>[] Indexes))
-                            Indexes[ChannelIndex].Add(PointIndex);
-                        else
-                        { 
-                            List<int>[] NewIndexes = new List<int>[Channels.Count];
-                            for (int lstx = 0; lstx < Channels.Count; lstx++)
-                                NewIndexes[lstx] = new List<int>();
-                            NewIndexes[ChannelIndex].Add(PointIndex);
-                            xset.Add(pt.X, NewIndexes);
-                        }
-                        PointIndex++;
-                    }
-                    ChannelIndex++;
+                        if(!xset.ContainsKey(pt.X))
+                            xset.Add(pt.X, 0);
                 }
 
-                foreach (var X in xset)
+                foreach (KeyValuePair<double, int> X in xset)
                 {
                     bool bFirst = true;
                     double x = X.Key;
 
-                    ChannelIndex = 0;
-                    int PointsCount = 1;
-                    foreach(var channel in Channels)
+                    if (bCopyTime)
                     {
-                        PointsCount = Math.Max(PointsCount, X.Value[ChannelIndex].Count);
-                        ChannelIndex++;
+                        tabbedText.Append(Quot + x.ToString("E") + Quot);
+                        csvText.Append(Quot + x.ToString("E") + Quot);
+                        bFirst = false;
                     }
-
-                    for (int dupPoints = 0; dupPoints < PointsCount; dupPoints++)
+                    
+                    int cn = 0;
+                    foreach (ChartChannel channel in Channels)
                     {
-                        if (bCopyTime)
+                        if (!bFirst)
                         {
-                            tabbedText.Append(Quot + x.ToString("E") + Quot);
-                            csvText.Append(Quot + x.ToString("E") + Quot);
-                            bFirst = false;
+                            tabbedText.Append(Tab);
+                            csvText.Append(ListSeparator);
                         }
+                        bFirst = false;
 
-                        ChannelIndex = 0;
-                        foreach (var channel in Channels)
+                        double y = 0.0;
+                       
+                        Point pts = channel.PointAtIndex(ChannelIndexes[cn]);
+
+                        if (x <= pts.X)
+                            y = pts.Y;
+                        else
                         {
-                            if (!bFirst)
-                            {
-                                tabbedText.Append(Tab);
-                                csvText.Append(ListSeparator);
-                            }
-                            bFirst = false;
-                            int CurrentPoint = Math.Min(dupPoints, X.Value[ChannelIndex].Count);
-                            Point pts = channel.PointAtIndex(X.Value[ChannelIndex][CurrentPoint]);
-                            tabbedText.Append(Quot + pts.Y.ToString("E") + Quot);
-                            csvText.Append(Quot + pts.Y.ToString("E") + Quot);
-
-                            ChannelIndex++;
+                            ChannelIndexes[cn]++;
+                            y = channel.PointAtIndex(ChannelIndexes[cn]).Y;
                         }
-                        tabbedText.Append(Environment.NewLine);
-                        csvText.Append(Environment.NewLine);
+                        
+                    
+                        
+                        tabbedText.Append(Quot + y.ToString("E") + Quot);
+                        csvText.Append(Quot + y.ToString("E") + Quot);
+
+                        cn++;
                     }
+                    tabbedText.Append(Environment.NewLine);
+                    csvText.Append(Environment.NewLine);
                 }
             }
             TabText = tabbedText.ToString();
@@ -1487,14 +1623,13 @@ namespace RastrChartWPFControl
         {
             try
             {
-                //PNGExportPath pngExportPath = new PNGExportPath();
                 string pngExportPath = "c:\\tmp\\";
                 Microsoft.Win32.SaveFileDialog saveDialog = new Microsoft.Win32.SaveFileDialog();
 
                 saveDialog.InitialDirectory = System.IO.Path.GetDirectoryName(pngExportPath);
                 saveDialog.AddExtension = true;
                 saveDialog.FileName = System.IO.Path.GetFileNameWithoutExtension(pngExportPath);
-                saveDialog.Filter = "PNG-файл (.png)|*.png";
+                saveDialog.Filter = RastrChart.strPngFileMask;
                 if (saveDialog.ShowDialog() == true)
                 {
                     if (RenderBitmap != null)
@@ -1607,5 +1742,95 @@ namespace RastrChartWPFControl
             EventMarkers.Clear();
             Transform();
         }
+
+        public void CancelMouse()
+        {
+            IsInspect = false;
+            IsZoom = false;
+        }
+
+        protected void OnAxisXRightClick(object sender, EventArgs e)
+        {
+            OnAxisMenu(sender, e);
+        }
+
+        protected void OnAxisMenu(object sender, EventArgs e)
+        {
+            ContextMenu contextMenu = new ContextMenu();
+            MenuItem menuItemAxisSetup = new MenuItem();
+            menuItemAxisSetup.Tag = sender;
+            menuItemAxisSetup.Header = CanvasToPlot.Resources["AxisSetup"];
+            menuItemAxisSetup.Icon = ResourceImage("AxisSetupPNG.png");
+            menuItemAxisSetup.Click += OnAxisSetup;
+            contextMenu.Items.Add(menuItemAxisSetup);
+            contextMenu.IsOpen = true;
+        }
+
+        protected void OnAxisSetup(object sender, EventArgs e)
+        {
+            MenuItem mi = (MenuItem)sender;
+            AxisSetup axisSetupForm;
+            if (mi.Tag == axisX)
+            {
+                axisSetupForm = new AxisSetup(axisX, axisX.AxisConstraints, this);
+            }
+            else
+            {
+                axisSetupForm = new AxisSetup(axisYBlock.GetMainAxis(), axisYBlock.AxisConstraints, this);
+            }
+
+            Point ScreenPoint = CanvasToPlot.PointToScreen(Mouse.GetPosition(CanvasToPlot));
+            ScreenPoint.X -= axisSetupForm.Width / 2;
+            ScreenPoint.Y -= axisSetupForm.Height / 2;
+
+            if (ScreenPoint.X < 0) ScreenPoint.X = 0;
+            if (ScreenPoint.Y < 0) ScreenPoint.Y = 0;
+            if (ScreenPoint.X + axisSetupForm.Width > SystemParameters.WorkArea.Width)
+                ScreenPoint.X = SystemParameters.WorkArea.Width - axisSetupForm.Width;
+            if (ScreenPoint.Y + axisSetupForm.Height > SystemParameters.WorkArea.Height)
+                ScreenPoint.Y = SystemParameters.WorkArea.Height - axisSetupForm.Height;
+
+            axisSetupForm.Left = ScreenPoint.X;
+            axisSetupForm.Top = ScreenPoint.Y;
+
+            if (axisSetupForm.ShowDialog() == true)
+            {
+                Transform();
+               /* if (ChannelPropsChanged != null)
+                    ChannelPropsChanged(new SetReferenceValueEventArgs(channel.Tag));*/
+            }
+
+            /*RemoveChannel(channel);
+            if (ChannelDelete != null)
+                ChannelDelete(new SetReferenceValueEventArgs(channel.Tag));*/
+        }
+
+        public AxisConstraints AxisXConstraints
+        {
+            get { return axisX.AxisConstraints; }
+            set {
+                    axisX.AxisConstraints = value;
+                    ZoomExtents();
+                }
+        }
+
+        public AxisConstraints AxisYConstraints
+        {
+            get { return axisYBlock.AxisConstraints; }
+            set
+            {
+                axisYBlock.AxisConstraints = value;
+                ZoomExtents();
+            }
+        }
+
+        public Size PlotSize
+        {
+            get
+            {
+                return new Size(CanvasToPlot.ActualWidth, CanvasToPlot.ActualHeight);
+            }
+        }
+
     }
 }

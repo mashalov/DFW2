@@ -16,7 +16,59 @@ namespace RastrChartWPFControl
         public double actualStart;
         public double actualEnd;
         public double step;
+
+        public AxisData(double ActualStart, double ActualEnd, double GridStep)
+        {
+            actualStart = ActualStart;
+            actualEnd = ActualEnd;
+            step = GridStep;
+        }
     }
+
+    public class AxisConstraints
+    {
+        private object viewStart;
+        private object viewEnd;
+        private object gridStep;
+
+        public AxisConstraints()
+        {
+            Reset();
+        }
+
+        public object ViewStart
+        {
+            get { return viewStart; }
+            set { viewStart = value; }
+        }
+
+        public object ViewEnd
+        {
+            get { return viewEnd; }
+            set { viewEnd = value; }
+        }
+
+        public object GridStep
+        {
+            get { return gridStep; }
+            set { gridStep = value; }
+        }
+
+        public void Reset()
+        {
+            viewStart = null;
+            viewEnd = null;
+            gridStep = null;
+        }
+
+        public bool IsSet
+        {
+            get { return viewStart is double || viewEnd is double || gridStep is double; }
+        }
+
+
+    }
+
 
     internal class InfoWindow : Popup
     {
@@ -38,7 +90,6 @@ namespace RastrChartWPFControl
             Child = border;
             InfoText.Background = back;
             InfoText.Padding = new Thickness(3);
-
         }
         public double Value
         {
@@ -65,6 +116,12 @@ namespace RastrChartWPFControl
         }
     }
 
+    public class AxisInfo
+    {
+        public double Ratio;
+        public double Offset;
+    }
+
     internal class Axis : Canvas
     {
         protected Line AxisLine;
@@ -77,7 +134,9 @@ namespace RastrChartWPFControl
         public bool bGotBounds;
         public Point Translation;
         internal InfoWindow infoWindow;
-        
+        public AxisConstraints AxisConstraints = null;
+
+
         public int Id
         {
             get;
@@ -107,7 +166,7 @@ namespace RastrChartWPFControl
             ZoomFactor = new Point(1, 1);
             Offset = new Point(0, 0);
             AxisLine = new Line();
-            axisData = new AxisData();
+            axisData = new AxisData(0,0,0);
             AxisLine.Stroke = Brushes.Black;
             AxisLine.StrokeThickness = 1;
             AxisLine.SnapsToDevicePixels = true;
@@ -162,6 +221,16 @@ namespace RastrChartWPFControl
                     }
 
                     axisData.step = bases[ClosestIndex] * Math.Pow(10, expInt);
+
+                    if (AxisConstraints != null && AxisConstraints.GridStep is double)
+                    {
+                        if ((double)AxisConstraints.GridStep > 0)
+                            axisData.step = (double)AxisConstraints.GridStep;
+                        else
+                            AxisConstraints.GridStep = axisData.step;
+                    }
+                                            
+
                     axisData.actualEnd = (1.0 + Math.Floor(End / axisData.step)) * axisData.step;
                     axisData.actualStart = axisData.actualEnd - (1.0 + Math.Floor((End - Start) / axisData.step)) * axisData.step;
 
@@ -199,10 +268,37 @@ namespace RastrChartWPFControl
         {
     
         }
+
+
+        public event EventHandler TranslationChanged;
+
+        public void OnTraslationChanged(object sender, EventArgs e)
+        {
+            if (TranslationChanged != null)
+                TranslationChanged(sender, e);
+        }
+
+        public virtual AxisData WorldMinMax()
+        {
+            return new AxisData(0,0,axisData.step);
+        }
     }
 
     internal class AxisX : Axis
     {
+        public event EventHandler ButtonRightClick;
+
+        public AxisX()
+        {
+            AxisConstraints = new AxisConstraints();
+            MouseRightButtonDown += OnRightClick;
+            MouseWheel += OnMouseWheel;
+        }
+
+        public override AxisData WorldMinMax()
+        {
+            return new AxisData(-Offset.X / ZoomFactor.X, (ActualWidth - Offset.X) / ZoomFactor.X, axisData.step);
+        }
         override protected void Update()
         {
             if (ActualWidth > 0)
@@ -213,10 +309,10 @@ namespace RastrChartWPFControl
                 AxisLine.X1 = 0;
                 AxisLine.X2 = ActualWidth;
                 AxisLine.Y1 = AxisLine.Y2 = 0;
-                double WorldXMax = (ActualWidth - Offset.X) / ZoomFactor.X;
-                double WorldXMin = -Offset.X / ZoomFactor.X;
 
-                if (GenerateTickMarks(WorldXMin, WorldXMax))
+                AxisData WorldSize = WorldMinMax();
+
+                if (GenerateTickMarks(WorldSize.actualStart, WorldSize.actualEnd))
                 {
                     for (double x = axisData.actualStart; x <= axisData.actualEnd; x += axisData.step)
                     {
@@ -256,8 +352,22 @@ namespace RastrChartWPFControl
             Point ptt  = PresentationSource.FromVisual(this).CompositionTarget.TransformFromDevice.Transform(new Point(1,1));
             infoWindow.Value = (ptt.X * (screenPoint.X - LeftTop.X) - Offset.X) / ZoomFactor.X;
         }
-    }
 
+        private void OnMouseWheel(object s, EventArgs e)
+        {
+            MouseWheelEventArgs me = (MouseWheelEventArgs)e;
+            double ZoomChange = me.Delta > 0 ? 1.1 : 1 / 1.1;
+            Translation.X = ZoomChange;
+            OnTraslationChanged(this, e);
+        }
+
+        private void OnRightClick(object Sender, EventArgs e)
+        {
+            if (ButtonRightClick != null)
+                ButtonRightClick(this, e);
+        }
+    }
+    
     internal class AxisY: Axis
     {
 
@@ -334,15 +444,12 @@ namespace RastrChartWPFControl
                 Update();
             }
         }
-        
-        public event EventHandler TranslationChanged;
 
-        private void OnTraslationChanged(object sender, EventArgs e)
+        public override AxisData WorldMinMax()
         {
-            if (TranslationChanged != null)
-                TranslationChanged(sender, e);
+            return new AxisData((Offset.Y - ActualHeight) / ZoomFactor.Y, Offset.Y / ZoomFactor.Y, axisData.step);
         }
-        
+
         override protected void Update()
         {
             if (ActualHeight > 0)
@@ -350,11 +457,9 @@ namespace RastrChartWPFControl
                 Children.Clear();
                 
                
-                double WorldYMax = (ActualHeight - Offset.Y) / ZoomFactor.Y;
-                double WorldYMin = -Offset.Y / ZoomFactor.Y;
-                               
+                AxisData WorldSize = WorldMinMax();
 
-                if (GenerateTickMarks(WorldYMin, WorldYMax))
+                if (GenerateTickMarks(-WorldSize.actualEnd, -WorldSize.actualStart))
                 {
                     double testWidth = Double.NegativeInfinity;
                     for (double y = axisData.actualStart; y <= axisData.actualEnd; y += axisData.step)
@@ -496,7 +601,8 @@ namespace RastrChartWPFControl
     internal class AxisYBlock : StackPanel
     {
         private List<AxisY> axes;
-
+        public event EventHandler ButtonRightClick;
+        public AxisConstraints AxisConstraints = new AxisConstraints();
 
         public event EventHandler TranslationChanged;
 
@@ -510,6 +616,7 @@ namespace RastrChartWPFControl
         {
             Orientation = System.Windows.Controls.Orientation.Horizontal;
             axes = new List<AxisY>();
+            MouseRightButtonDown += OnRightClick;
         }
 
         internal AxisY GetMainAxis()
@@ -606,6 +713,29 @@ namespace RastrChartWPFControl
             get { return axes; }
         }
 
+        public AxisInfo[] AxesInfo
+        {
+            get
+            {
+                AxisInfo[] axl = new AxisInfo[axes.Count];
+                int Count = 0;
+                foreach(AxisY axy in axes)
+                {
+                    axl[Count++] = new AxisInfo {
+                                                    Ratio = axy.Translation.X,
+                                                    Offset = axy.Translation.Y
+                                                };
+                }
+                return axl;
+            }
+
+            set
+            {
+                
+            }
+        }
+
+
         protected void OnAxisTranslationChanged(object sender, EventArgs e)
         {
             OnTraslationChanged(sender, e);
@@ -633,6 +763,15 @@ namespace RastrChartWPFControl
                 axis.ScreenOffset = ud * axis.infoWindow.GetSize().Height - dOffs + ud * (dOffs + 1) *2;
                 axis.infoWindow.IsOpen = true;
                 ud = ud == 1 ? 0 : 1;
+            }
+        }
+
+        private void OnRightClick(object Sender, EventArgs e)
+        {
+            if (axes.Count == 1)
+            {
+                if (ButtonRightClick != null)
+                    ButtonRightClick(this, e);
             }
         }
     }

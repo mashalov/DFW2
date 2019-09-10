@@ -31,6 +31,8 @@ namespace RastrChartWPFControl
         public event EventHandler SaveChartSet;
         public event SetReferenceValueEvent ChannelDelete;
         public event SetReferenceValueEvent ChannelPropsChanged;
+
+        public static string strPngFileMask = "PNG-файл (.png)|*.png";
         
         public RastrChart()
         {
@@ -45,6 +47,15 @@ namespace RastrChartWPFControl
             plotter.SaveChartSet += OnSaveChartSet;
             plotter.ChannelDelete += OnChannelDelete;
             plotter.ChannelPropsChanged += OnChannelPropsChanged;
+
+            RoutedCommand AltC = new RoutedCommand();
+            AltC.InputGestures.Add(new KeyGesture(Key.C, ModifierKeys.Alt));
+            CommandBindings.Add(new CommandBinding(AltC, OnAltC));
+
+            RoutedCommand AltS = new RoutedCommand();
+            AltS.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Alt));
+            CommandBindings.Add(new CommandBinding(AltS, OnAltS));
+
         }
 
         protected void OnClipboardCopyBitmap(object sender, EventArgs e)
@@ -90,6 +101,57 @@ namespace RastrChartWPFControl
             bmpCopied.Render(dv);
             Clipboard.SetImage(bmpCopied);
         }
+
+        protected void SaveToPNG(FrameworkElement element)
+        {
+            try
+            {
+                Point ptlu = element.PointToScreen(new Point(0, 0));
+                using (System.Drawing.Bitmap bmp = new System.Drawing.Bitmap((int)element.ActualWidth, (int)element.ActualHeight))
+                {
+                    using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp))
+                    {
+                        g.CopyFromScreen((int)ptlu.X, (int)ptlu.Y, 0, 0, bmp.Size);
+                        plotter.CancelMouse();
+                        string pngExportPath = "c:\\tmp\\";
+                        Microsoft.Win32.SaveFileDialog saveDialog = new Microsoft.Win32.SaveFileDialog();
+                        saveDialog.InitialDirectory = System.IO.Path.GetDirectoryName(pngExportPath);
+                        saveDialog.AddExtension = true;
+                        saveDialog.FileName = System.IO.Path.GetFileNameWithoutExtension(pngExportPath);
+                        saveDialog.Filter = strPngFileMask;
+                        if (saveDialog.ShowDialog() == true)
+                            bmp.Save(saveDialog.FileName);
+                    }
+                }
+
+                
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
+
+        private static void TakeScreenShot(FrameworkElement element)
+        {
+
+            try
+            {
+                Point ptlu = element.PointToScreen(new Point(0, 0));
+                using (System.Drawing.Bitmap bmp = new System.Drawing.Bitmap((int)element.ActualWidth, (int)element.ActualHeight))
+                {
+                    using (System.Drawing.Graphics g = System.Drawing.Graphics.FromImage(bmp))
+                    {
+                        g.CopyFromScreen((int)ptlu.X, (int)ptlu.Y, 0, 0, bmp.Size);
+                        System.Windows.Forms.Clipboard.SetImage(bmp);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(ex.Message);
+            }
+        }
       
 
         public void ZoomExtents()
@@ -121,6 +183,25 @@ namespace RastrChartWPFControl
             plotter.ClearEventMarkers();
         }
 
+        public AxisConstraints AxisXConstraints
+        {
+            get { return plotter.AxisXConstraints; }
+            set { plotter.AxisXConstraints = value; }
+        }
+
+
+        public AxisConstraints AxisYConstraints
+        {
+            get { return plotter.AxisYConstraints; }
+            set { plotter.AxisYConstraints = value; }
+        }
+
+        public Size PlotSize
+        {
+            get { return plotter.PlotSize;  }
+        }
+
+        
         public ChannelCollection Channels
         {
             get
@@ -184,6 +265,20 @@ namespace RastrChartWPFControl
         {
              Focus();
         }
-   }
-  
+
+        private void OnAltC(object sender, ExecutedRoutedEventArgs e)
+        {
+            TakeScreenShot(this);
+        }
+
+        private void OnAltS(object sender, ExecutedRoutedEventArgs e)
+        {
+            SaveToPNG(this);
+        }
+
+        private void LostMouse(object sender, MouseEventArgs e)
+        {
+            plotter.CancelMouse();
+        }
+    }
 }
