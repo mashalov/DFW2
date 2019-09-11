@@ -187,6 +187,7 @@ namespace DFW2
 		size_t m_PointsCount;
 		size_t m_ChannelsCount;
 		typedef list<__int64> INT64LIST;
+		int ReadBlockType() const;
 		void GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset) const;
 		void ReadModelData(double *pData, int nVarIndex);
 		__int64 OffsetFromCurrent() const;

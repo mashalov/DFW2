@@ -59,7 +59,7 @@ namespace DFW2
 		CSlowVariablesSet m_setSlowVariables;
 		CRLECompressor	m_RLECompressor;
 		unsigned char *m_pCompressedBuffer;
-		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize);
+		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
 	public:
 		CResultFileWriter();
 		virtual ~CResultFileWriter();

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "Compressor.h"
 #include <intrin.h>
 
@@ -20,7 +20,7 @@ eFCResult CCompressorBase::ReadDouble(double& dValue, double& dPredictor, CBitSt
 	return fcResult;
 }
 
-// проверка доступности __lzcnt
+// РїСЂРѕРІРµСЂРєР° РґРѕСЃС‚СѓРїРЅРѕСЃС‚Рё __lzcnt
 bool IsLzcntAvailable()
 {
 	int cpufeats[4];
@@ -32,8 +32,8 @@ CCompressorBase::fnWriteDoublePtr CCompressorBase::AssignDoubleWriter()
 {
 #ifdef _WIN64
 	if(IsLzcntAvailable())
-		return CCompressorBase::WriteDoubleLZcnt64;		// если доступна __lzcnt64 - используем более быструю функцию сжатия
-	return CCompressorBase::WriteDoublePlain;			// иначе - платформонезависимую
+		return CCompressorBase::WriteDoubleLZcnt64;		// РµСЃР»Рё РґРѕСЃС‚СѓРїРЅР° __lzcnt64 - РёСЃРїРѕР»СЊР·СѓРµРј Р±РѕР»РµРµ Р±С‹СЃС‚СЂСѓСЋ С„СѓРЅРєС†РёСЋ СЃР¶Р°С‚РёСЏ
+	return CCompressorBase::WriteDoublePlain;			// РёРЅР°С‡Рµ - РїР»Р°С‚С„РѕСЂРјРѕРЅРµР·Р°РІРёСЃРёРјСѓСЋ
 #else
 	return CCompressorBase::WriteDoublePlain;
 #endif
@@ -42,8 +42,8 @@ CCompressorBase::fnWriteDoublePtr CCompressorBase::AssignDoubleWriter()
 CCompressorBase::fnCountZeros32Ptr CCompressorBase::AssignZeroCounter()
 {
 	if (IsLzcntAvailable())
-		return CCompressorBase::CLZ_LZcnt32;			// если lzcnt доступна - используем ее для подсчета нулевых битов
-	return CCompressorBase::CLZ1;						// иначе считаем нулевые биты по таблице
+		return CCompressorBase::CLZ_LZcnt32;			// РµСЃР»Рё lzcnt РґРѕСЃС‚СѓРїРЅР° - РёСЃРїРѕР»СЊР·СѓРµРј РµРµ РґР»СЏ РїРѕРґСЃС‡РµС‚Р° РЅСѓР»РµРІС‹С… Р±РёС‚РѕРІ
+	return CCompressorBase::CLZ1;						// РёРЅР°С‡Рµ СЃС‡РёС‚Р°РµРј РЅСѓР»РµРІС‹Рµ Р±РёС‚С‹ РїРѕ С‚Р°Р±Р»РёС†Рµ
 }
 
 const CCompressorBase::fnWriteDoublePtr CCompressorBase::pFnWriteDouble = CCompressorBase::AssignDoubleWriter();
@@ -51,7 +51,7 @@ const CCompressorBase::fnCountZeros32Ptr CCompressorBase::pFnCountZeros32 = CCom
 
 eFCResult CCompressorBase::WriteDouble(double& dValue, double& dPredictor, CBitStream& Output)
 {
-	// вызываем функцию сжатия по указателю, который инициализируем в рантайме в зависимости от платформы
+	// РІС‹Р·С‹РІР°РµРј С„СѓРЅРєС†РёСЋ СЃР¶Р°С‚РёСЏ РїРѕ СѓРєР°Р·Р°С‚РµР»СЋ, РєРѕС‚РѕСЂС‹Р№ РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј РІ СЂР°РЅС‚Р°Р№РјРµ РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РїР»Р°С‚С„РѕСЂРјС‹
 	return (*pFnWriteDouble)(dValue, dPredictor, Output);
 }
 
@@ -157,18 +157,18 @@ double CCompressorSingle::Predict(double t)
 					ys[0] = ys[m_nPredictorOrder - 1];
 			}
 
-			// если текущее и предыдущее времена одинаковые, сбрасываем предиктор
+			// РµСЃР»Рё С‚РµРєСѓС‰РµРµ Рё РїСЂРµРґС‹РґСѓС‰РµРµ РІСЂРµРјРµРЅР° РѕРґРёРЅР°РєРѕРІС‹Рµ, СЃР±СЂР°СЃС‹РІР°РµРј РїСЂРµРґРёРєС‚РѕСЂ
 			m_nPredictorOrder = 0;
 
 			ts[0] = t;
-			// но вовзвращаем не ноль, а предыдущее значение
+			// РЅРѕ РІРѕРІР·РІСЂР°С‰Р°РµРј РЅРµ РЅРѕР»СЊ, Р° РїСЂРµРґС‹РґСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ
 			return ys[0];
 		}
 	}
 
 	if (m_nPredictorOrder >= PREDICTOR_ORDER)
 	{
-		// текущее и предыдущее времена разные
+		// С‚РµРєСѓС‰РµРµ Рё РїСЂРµРґС‹РґСѓС‰РµРµ РІСЂРµРјРµРЅР° СЂР°Р·РЅС‹Рµ
 		double Pred = 0.0;
 		bool bIdenctical = true;
 
@@ -200,11 +200,11 @@ double CCompressorSingle::Predict(double t)
 	}
 	else
 	{
-		// порядок предиктора не достиг заданного
+		// РїРѕСЂСЏРґРѕРє РїСЂРµРґРёРєС‚РѕСЂР° РЅРµ РґРѕСЃС‚РёРі Р·Р°РґР°РЅРЅРѕРіРѕ
 		ts[m_nPredictorOrder] = t;
 
-		// если еще ничего не предсказывали, возвращаем ноль
-		// иначе - предыдущее значение
+		// РµСЃР»Рё РµС‰Рµ РЅРёС‡РµРіРѕ РЅРµ РїСЂРµРґСЃРєР°Р·С‹РІР°Р»Рё, РІРѕР·РІСЂР°С‰Р°РµРј РЅРѕР»СЊ
+		// РёРЅР°С‡Рµ - РїСЂРµРґС‹РґСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ
 		if (!m_nPredictorOrder)
 			return 0.0;
 		else
@@ -264,13 +264,13 @@ double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nP
 	}
 	else
 	{
-		// если порядок предиктора 0, но взведен флаг, 
-		// используем для предиктора запомненное значение, а не ноль.
+		// РµСЃР»Рё РїРѕСЂСЏРґРѕРє РїСЂРµРґРёРєС‚РѕСЂР° 0, РЅРѕ РІР·РІРµРґРµРЅ С„Р»Р°Рі, 
+		// РёСЃРїРѕР»СЊР·СѓРµРј РґР»СЏ РїСЂРµРґРёРєС‚РѕСЂР° Р·Р°РїРѕРјРЅРµРЅРЅРѕРµ Р·РЅР°С‡РµРЅРёРµ, Р° РЅРµ РЅРѕР»СЊ.
 		if (bPredictorReset)
 			return ys[0];
 
-		// флага нет, значит сброса не было, и порядок предиктора действительно 0
-		// предыдущих значений нет, и возвращаем ноль
+		// С„Р»Р°РіР° РЅРµС‚, Р·РЅР°С‡РёС‚ СЃР±СЂРѕСЃР° РЅРµ Р±С‹Р»Рѕ, Рё РїРѕСЂСЏРґРѕРє РїСЂРµРґРёРєС‚РѕСЂР° РґРµР№СЃС‚РІРёС‚РµР»СЊРЅРѕ 0
+		// РїСЂРµРґС‹РґСѓС‰РёС… Р·РЅР°С‡РµРЅРёР№ РЅРµС‚, Рё РІРѕР·РІСЂР°С‰Р°РµРј РЅРѕР»СЊ
 		if (!nPredictorOrder)
 			return 0.0;
 		else
@@ -327,11 +327,11 @@ eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, 
 	unsigned int *pZ4 = static_cast<unsigned int*>(static_cast<void*>(&nZ4count));
 	CBitStream Source(pZ4, pZ4 + sizeof(ptrdiff_t), 0);
 
-	// если отличается только бит знака - была идея обнулять разницу. Но это приводит
-	// к сбою предиктора при чтении - предиктор делается отрицательный и симметрично уводит в минус
-	// записанные значения, которые исходно были положительные
-	// поэтому обнуление разницы убрано - будут записываться все 80 бит, но так как только старший 
-	// единица а все остальные нули - их сожмет RLE
+	// РµСЃР»Рё РѕС‚Р»РёС‡Р°РµС‚СЃСЏ С‚РѕР»СЊРєРѕ Р±РёС‚ Р·РЅР°РєР° - Р±С‹Р»Р° РёРґРµСЏ РѕР±РЅСѓР»СЏС‚СЊ СЂР°Р·РЅРёС†Сѓ. РќРѕ СЌС‚Рѕ РїСЂРёРІРѕРґРёС‚
+	// Рє СЃР±РѕСЋ РїСЂРµРґРёРєС‚РѕСЂР° РїСЂРё С‡С‚РµРЅРёРё - РїСЂРµРґРёРєС‚РѕСЂ РґРµР»Р°РµС‚СЃСЏ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹Р№ Рё СЃРёРјРјРµС‚СЂРёС‡РЅРѕ СѓРІРѕРґРёС‚ РІ РјРёРЅСѓСЃ
+	// Р·Р°РїРёСЃР°РЅРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ, РєРѕС‚РѕСЂС‹Рµ РёСЃС…РѕРґРЅРѕ Р±С‹Р»Рё РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рµ
+	// РїРѕСЌС‚РѕРјСѓ РѕР±РЅСѓР»РµРЅРёРµ СЂР°Р·РЅРёС†С‹ СѓР±СЂР°РЅРѕ - Р±СѓРґСѓС‚ Р·Р°РїРёСЃС‹РІР°С‚СЊСЃСЏ РІСЃРµ 80 Р±РёС‚, РЅРѕ С‚Р°Рє РєР°Рє С‚РѕР»СЊРєРѕ СЃС‚Р°СЂС€РёР№ 
+	// РµРґРёРЅРёС†Р° Р° РІСЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ РЅСѓР»Рё - РёС… СЃРѕР¶РјРµС‚ RLE
 	/*
 	if (pv == 0x80000000 && *(ppv - 1) == 0)
 		pv = 0x80000000;

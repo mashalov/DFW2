@@ -12,7 +12,7 @@ protected:
 public:
 	CRLECompressor();
 	~CRLECompressor();
-	bool Compress(const unsigned char* pBuffer, size_t nSize, unsigned char *pCompressedBuffer, size_t& nComprSize);
+	bool Compress(const unsigned char* pBuffer, size_t nSize, unsigned char *pCompressedBuffer, size_t& nComprSize, bool& bAllBytesEqual);
 	bool Decompress(const unsigned char *pBuffer, size_t nSize, unsigned char *pDecompressedBuffer, size_t& nDecomprSize);
 	static const size_t m_nMaxBlockSize;
 };

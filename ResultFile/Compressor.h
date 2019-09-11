@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "..\dfw2\Header.h"
 
 enum eFCResult
@@ -27,6 +27,7 @@ public:
 	CBitStream();
 	void Init(BITWORD *Buffer, BITWORD *BufferEnd, ptrdiff_t BitSeek);
 	void Reset();
+	void Rewind();
 	eFCResult WriteBits(CBitStream& Source, ptrdiff_t BitCount);
 	eFCResult WriteByte(unsigned char Byte);
 	eFCResult WriteDouble(double &dValue);
@@ -44,8 +45,8 @@ class CCompressorBase
 protected:
 	double ys[PREDICTOR_ORDER];
 public:
-	typedef eFCResult(*fnWriteDoublePtr)(double&, double&, CBitStream&);				// прототип функции записи double
-	typedef uint32_t(*fnCountZeros32Ptr)(uint32_t);										// прототип функции подсчета нулевых битов
+	typedef eFCResult(*fnWriteDoublePtr)(double&, double&, CBitStream&);				// РїСЂРѕС‚РѕС‚РёРї С„СѓРЅРєС†РёРё Р·Р°РїРёСЃРё double
+	typedef uint32_t(*fnCountZeros32Ptr)(uint32_t);										// РїСЂРѕС‚РѕС‚РёРї С„СѓРЅРєС†РёРё РїРѕРґСЃС‡РµС‚Р° РЅСѓР»РµРІС‹С… Р±РёС‚РѕРІ
 	eFCResult WriteDouble(double& dValue, double& dPredictor, CBitStream& Output);
 	eFCResult ReadDouble(double& dValue, double& dPredictor, CBitStream& Input);
 	eFCResult WriteLEB(unsigned __int64 Value, CBitStream& Output);
@@ -53,18 +54,18 @@ public:
 	static void Xor(double& dValue, double& dPredictor);
 	static const fnWriteDoublePtr pFnWriteDouble;
 	static const fnCountZeros32Ptr pFnCountZeros32;
-	// платформонезависимая запись сжатого double 
+	// РїР»Р°С‚С„РѕСЂРјРѕРЅРµР·Р°РІРёСЃРёРјР°СЏ Р·Р°РїРёСЃСЊ СЃР¶Р°С‚РѕРіРѕ double 
 	static eFCResult WriteDoublePlain(double& dValue, double& dPredictor, CBitStream& Output);
-	// подсчет нулевых битов по таблице
+	// РїРѕРґСЃС‡РµС‚ РЅСѓР»РµРІС‹С… Р±РёС‚РѕРІ РїРѕ С‚Р°Р±Р»РёС†Рµ
 	static uint32_t CLZ1(uint32_t x);
-	// подсчет нулевых битов инструкцией CPU
+	// РїРѕРґСЃС‡РµС‚ РЅСѓР»РµРІС‹С… Р±РёС‚РѕРІ РёРЅСЃС‚СЂСѓРєС†РёРµР№ CPU
 	static uint32_t CLZ_LZcnt32(uint32_t x);
-	// выбор функции записи double в зависимости от платформы
+	// РІС‹Р±РѕСЂ С„СѓРЅРєС†РёРё Р·Р°РїРёСЃРё double РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РїР»Р°С‚С„РѕСЂРјС‹
 	static fnWriteDoublePtr AssignDoubleWriter();
-	// выбор функции подсчета нулевых битов в зависимости от платформы
+	// РІС‹Р±РѕСЂ С„СѓРЅРєС†РёРё РїРѕРґСЃС‡РµС‚Р° РЅСѓР»РµРІС‹С… Р±РёС‚РѕРІ РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РїР»Р°С‚С„РѕСЂРјС‹
 	static fnCountZeros32Ptr AssignZeroCounter();
 #ifdef _WIN64
-	// запись double для x64-процессора с поддержкой __lzcnt64
+	// Р·Р°РїРёСЃСЊ double РґР»СЏ x64-РїСЂРѕС†РµСЃСЃРѕСЂР° СЃ РїРѕРґРґРµСЂР¶РєРѕР№ __lzcnt64
 	static eFCResult WriteDoubleLZcnt64(double& dValue, double& dPredictor, CBitStream& Output);
 #endif
 };
