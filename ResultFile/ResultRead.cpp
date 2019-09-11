@@ -143,7 +143,8 @@ STDMETHODIMP CResultRead::get_TimeStep(VARIANT* TimeStep)
 	}
 
 	if (FAILED(hRes))
-		VariantClear(TimeStep);
+		if(TimeStep)
+			VariantClear(TimeStep);
 
 	if (pResult)
 		delete pResult;
@@ -270,7 +271,8 @@ STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableN
 	}
 
 	if (FAILED(hRes))
-		VariantClear(Plot);
+		if(Plot)
+			VariantClear(Plot);
 
 	if (pResult)
 		delete pResult;
@@ -302,7 +304,8 @@ STDMETHODIMP CResultRead::GetPlotByIndex(long nIndex, VARIANT *Plot)
 	}
 
 	if (FAILED(hRes))
-		VariantClear(Plot);
+		if(Plot)
+			VariantClear(Plot);
 
 	if (pResult)
 		delete pResult;

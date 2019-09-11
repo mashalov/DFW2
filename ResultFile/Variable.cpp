@@ -130,7 +130,8 @@ STDMETHODIMP CVariable::get_Plot(VARIANT* Plot)
 		}
 
 		if (FAILED(hRes))
-			VariantClear(Plot);
+			if(Plot)
+				VariantClear(Plot);
 
 		if (pResult)
 			delete pResult;

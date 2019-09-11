@@ -276,7 +276,7 @@ void CCSVWriter::WriteData()
 	pC = pChannelLink;
 	nRowStep = (pChannelsEnd - pChannel + 2) * MinFieldWidth;
 
-	double *pData = NULL;
+	double *pData(nullptr);
 
 	__try
 	{

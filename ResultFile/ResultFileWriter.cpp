@@ -518,7 +518,7 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 		DWORD dwWaitRes = WaitForSingleObject(m_hDataMutex, INFINITE);
 
 		// если при ожидании произошла ошибка - заканчиваем
-		if (dwWaitRes == WAIT_FAILED && dwWaitRes == WAIT_ABANDONED)
+		if (dwWaitRes == WAIT_FAILED || dwWaitRes == WAIT_ABANDONED)
 			throw CFileWriteException(m_pFile);
 
 		if (dwWaitRes == WAIT_OBJECT_0)
