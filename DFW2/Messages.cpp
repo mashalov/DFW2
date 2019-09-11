@@ -64,7 +64,7 @@ const _TCHAR* CDFW2Messages::m_cszWrongSingleLinkIndex = _T("Попытка ис
 const _TCHAR* CDFW2Messages::m_cszDeviceAlreadyLinked = _T("Устройство %s не может быть связано с устройством %s, так как уже связано с устройством %s");
 const _TCHAR* CDFW2Messages::m_cszDeviceForDeviceNotFound = _T("Устройство Id=%d не найдено для устройства %s");
 const _TCHAR* CDFW2Messages::m_cszIncompatibleLinkModes = _T("Несовместимые режимы связи для устройств");
-const _TCHAR* CDFW2Messages::m_cszFilePostion = _T("Позиция файла %ld");
+const _TCHAR* CDFW2Messages::m_cszFilePostion = _T(". Позиция файла %ld");
 const _TCHAR* CDFW2Messages::m_cszFileReadError = _T("Ошибка чтения файла.");
 const _TCHAR* CDFW2Messages::m_cszFileWriteError = _T("Ошибка записи файла.");
 const _TCHAR* CDFW2Messages::m_cszResultFileHasNewerVersion = _T("Файл результатов имеет более новую версию (%d) по сравнению с версией загрузчика результатов (%d). ");
@@ -100,6 +100,7 @@ const _TCHAR* CDFW2Messages::m_cszLFBranchAngleExceeds90 = _T("Угол по с�
 const _TCHAR* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = _T("Количество генераторов для %s задано неверно %d, установлено значение 1");
 const _TCHAR* CDFW2Messages::m_cszFailureAtMinimalStep = _T("Необходимая точность решения не может быть достигнута на минимальном шаге t=%.12g (%d) порядок %d шаг=%g");
 const _TCHAR* CDFW2Messages::m_cszMustBeConstPowerLRC = _T("Не найдена типовая СХН на постоянную мощность с номером -1");
+const _TCHAR* CDFW2Messages::m_cszResultFileWrongCompressedBlockType = _T("Неверный тип сжатого блока данных в файле результатов");
 
 
 

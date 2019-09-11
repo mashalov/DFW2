@@ -56,23 +56,28 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 			if (!pResultBuffer)
 				throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
 
+			// получаем список блоков данных канала в порядке от конца к началу
 			INT64LIST Offsets;
 			GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
-			INT64LIST::reverse_iterator it = Offsets.rbegin();
 
+			// проходим блоки в обратном порядке от начала к концу
+			INT64LIST::reverse_iterator it = Offsets.rbegin();
 			while (it != Offsets.rend())
 			{
 				if (_fseeki64(m_pFile, *it, SEEK_SET))
 					throw CFileReadException(m_pFile);
 
-				int BlockType = ReadLEBInt();
+				int BlockType	= ReadBlockType();
 				int PointsCount = ReadLEBInt();
-				int BytesCount = ReadLEBInt();
+				int BytesCount	= ReadLEBInt();
 
 				pBuffer = nullptr;
 
-				if (BlockType == 0)
+				switch (BlockType)
 				{
+				case 0:		// RLE-блок
+				{
+					// читаем сжатые данные
 					unsigned char *pReadBuffer = new unsigned char[BytesCount + 1]();
 					if (fread(pReadBuffer, 1, BytesCount, m_pFile) != BytesCount)
 					{
@@ -88,17 +93,27 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 					if (!bRes)
 						throw CFileReadException(m_pFile);
 					BytesCount = static_cast<int>(nDecomprSize);
-
 				}
-				else
-				{
+					break;
+				case 1:		// блок без сжатия
+					// читаем несжатые данные
 					pBuffer = new BITWORD[BytesCount / sizeof(BITWORD) + 1]();
 					if (fread(pBuffer, 1, BytesCount, m_pFile) != BytesCount)
 						throw CFileReadException(m_pFile);
+					break;
+				case 2:		// блок SuperRLE
+					pBuffer = new BITWORD[BytesCount / sizeof(BITWORD) + 1]();
+					// читаем 1 байт сжатых предиктивным методом данных
+					BytesCount = 1;
+					if (fread(pBuffer, 1, BytesCount, m_pFile) != BytesCount)
+						throw CFileReadException(m_pFile);
+					break;
+				default:
+					throw CFileReadException(m_pFile);
+					break;
 				}
 
 				CBitStream Input(pBuffer, pBuffer + BytesCount / sizeof(BITWORD) + 1, 0);
-
 				for (int nPoint = 0; nPoint < PointsCount; nPoint++, nTimeIndex++)
 				{
 					double pred = comp.Predict(m_pTime[nTimeIndex]);
@@ -106,6 +121,8 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 					comp.ReadDouble(dValue, pred, Input);
 					pResultBuffer[nTimeIndex] = dValue;
 					comp.UpdatePredictor(dValue);
+					if (BlockType == 2)
+						Input.Rewind();
 				}
 
 				if(pBuffer)
@@ -115,7 +132,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				it++;
 			}
 		}
-		catch (CFileReadException&)
+		catch (CFileReadException& ex)
 		{
 			if (pBuffer)
 				delete pBuffer;
@@ -124,6 +141,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				delete pResultBuffer;
 				pResultBuffer = NULL;
 			}
+			throw ex;
 		}
 	}
 	return pResultBuffer;
@@ -174,27 +192,40 @@ double *CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TC
 	return ReadChannel(GetChannelIndex(eType, nId, cszVarName));
 }
 
-
+// строит список блоков данных канала от конца к началу
 void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset) const
 {
 	Offsets.clear();
 
+	// начинаем с заданного смещения последнего блока
+	// и работаем, пока не обнаружим смещение предыдущего
+	// блока равное нулю
 	while (LastBlockOffset)
 	{
+		// запоминаем смещение блока
 		Offsets.push_back(LastBlockOffset);
-
+		// встаем на смещение блока и читаем заголовок
 		if (_fseeki64(m_pFile, LastBlockOffset, SEEK_SET))
 			throw CFileReadException(m_pFile);
 
-		ReadLEBInt(); // Block Type
-		ReadLEBInt(); // Count
-		int Bytes = ReadLEBInt();
+		int nBlockType = ReadBlockType();			// Block Type
+		ReadLEBInt();								// doubles count
+		// если блок имеет тип 2 - (SuperRLE) то размер блока 1 байт. Размер не записывается для такого блока
+		// поэтому принимаем его по умолчанию
+		int Bytes(1);
+		if(nBlockType < 2)
+			Bytes = ReadLEBInt();					// если блоки типа 0 или 1 - читаем размер блока в байтах
+
+		// перемещаемся на запись смещения предыдущего блока, используя известный размер блока
 		if (_fseeki64(m_pFile, Bytes, SEEK_CUR))
 			throw CFileReadException(m_pFile);
+
+		// читаем смещение предыдущего блока
 		LastBlockOffset = OffsetFromCurrent();
 	}
 }
 
+// чтение несжатых данных модели
 void CResultFileReader::ReadModelData(double *pData, int nVarIndex)
 {
 	bool bRes = false;
@@ -212,18 +243,19 @@ void CResultFileReader::ReadModelData(double *pData, int nVarIndex)
 
 	if (pChannel < m_pChannelHeaders + m_ChannelsCount)
 	{
+		// получаем список блоков данных канала в порядке от конца к началу
 		INT64LIST Offsets;
 		GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
-		INT64LIST::reverse_iterator it = Offsets.rbegin();
 
+		// проходим блоки в обратном порядке от начала к концу
+		INT64LIST::reverse_iterator it = Offsets.rbegin();
 		while (it != Offsets.rend())
 		{
 			if (_fseeki64(m_pFile, *it, SEEK_SET))
 				throw CFileReadException(m_pFile);
-			ReadLEBInt(); // Block Type
+			ReadBlockType(); // Block Type
 			int PointsCount = ReadLEBInt();
 			ReadLEBInt(); // Bytes
-
 			for (int nPoint = 0; nPoint < PointsCount; nPoint++)
 			{
 				ReadDouble(pData[nTimeIndex]);
@@ -900,6 +932,16 @@ void CResultFileReader::SetUserComment(const _TCHAR* cszUserComment)
 double CResultFileReader::GetCompressionRatio()
 {
 	return m_dRatio;
+}
+
+// чтение типа блока из файла с проверкой корректности типа
+int CResultFileReader::ReadBlockType() const
+{
+	int nBlockType = ReadLEBInt();
+	if (nBlockType >= 0 && nBlockType <= 2)
+		return nBlockType;
+	else
+		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileWrongCompressedBlockType);
 }
 
 

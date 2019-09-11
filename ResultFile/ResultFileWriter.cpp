@@ -187,15 +187,26 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 		{
 			__int64 nCurrentSeek = _ftelli64(m_pFile);
 			size_t nCompressedSize(m_nBufferLength * sizeof(BITWORD));
+			bool bAllBytesEqual(false);
 			if (nIndex < static_cast<ptrdiff_t>(m_nChannelsCount - 2) &&
-				EncodeRLE(Output.BytesBuffer(), Output.BytesWritten(), m_pCompressedBuffer, nCompressedSize))
+				EncodeRLE(Output.BytesBuffer(), Output.BytesWritten(), m_pCompressedBuffer, nCompressedSize, bAllBytesEqual))
 			{	
-				WriteLEB(0);						// type of block 0 - RLE data
-				WriteLEB(Encoder.m_nCount);			// count of doubles
-				WriteLEB(nCompressedSize);			// byte length of RLE data
-
-				if (fwrite(m_pCompressedBuffer, sizeof(unsigned char), nCompressedSize, m_pFile) != nCompressedSize)
-					throw CFileWriteException(m_pFile);
+				if (bAllBytesEqual)
+				{
+					// если все байты во входном буфере RLE одинаковые, тип блока ставим 2 - SuperRLE
+					WriteLEB(2);
+					WriteLEB(Encoder.m_nCount);			// count of doubles
+					if (fwrite(Output.BytesBuffer(), sizeof(unsigned char), 1, m_pFile) != 1)
+						throw CFileWriteException(m_pFile);
+				}
+				else
+				{
+					WriteLEB(0);						// type of block 0 - RLE data
+					WriteLEB(Encoder.m_nCount);			// count of doubles
+					WriteLEB(nCompressedSize);			// byte length of RLE data
+					if (fwrite(m_pCompressedBuffer, sizeof(unsigned char), nCompressedSize, m_pFile) != nCompressedSize)
+						throw CFileWriteException(m_pFile);
+				}
 			}
 			else
 			{
@@ -678,9 +689,9 @@ __int64 CResultFileWriter::OffsetFromCurrent(__int64 AbsoluteOffset)
 }
 
 // выполняет кодирование заданного буфера с помошью RLE
-bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize)
+bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual)
 {
-	bool bRes = m_RLECompressor.Compress(pBuffer, nBufferSize, pCompressedBuffer, nCompressedSize);
+	bool bRes = m_RLECompressor.Compress(pBuffer, nBufferSize, pCompressedBuffer, nCompressedSize, bAllBytesEqual);
 	if (bRes)
 	{
 		if (nCompressedSize < nBufferSize)

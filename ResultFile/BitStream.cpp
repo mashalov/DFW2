@@ -19,11 +19,16 @@ void CBitStream::Init(BITWORD *Buffer, BITWORD *BufferEnd, ptrdiff_t BitSeek)
 	m_nTotalBitsWritten = 0;
 }
 
-void CBitStream::Reset()
+void CBitStream::Rewind()
 {
 	m_pWord = m_pWordInitial;
 	m_nBitSeek = 0;
 	m_nTotalBitsWritten = 0;
+}
+
+void CBitStream::Reset()
+{
+	Rewind();
 	BITWORD *p = m_pWordInitial;
 	while (p < m_pEnd)
 	{

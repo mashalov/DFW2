@@ -166,7 +166,9 @@ class CDFW2GetLastErrorException : public CDFW2Exception
 public:
 	CDFW2GetLastErrorException(const _TCHAR *cszMessage) : CDFW2Exception(cszMessage)
 	{
-		m_strMessage += Cex(_T(" (%s)"), GetLastErrorMessage().c_str());
+		wstring strGetLastErrorMsg = GetLastErrorMessage();
+		if(!strGetLastErrorMsg.empty())
+			m_strMessage += Cex(_T(" (%s)"), strGetLastErrorMsg.c_str());
 		stringutils::removecrlf(m_strMessage);
 	}
 
