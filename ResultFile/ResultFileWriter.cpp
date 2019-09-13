@@ -100,7 +100,12 @@ void CResultFileWriter::FlushChannels()
 	TerminateWriterThread();
 
 	for (size_t nChannel = 0; nChannel < m_nChannelsCount; nChannel++)
+	{
 		FlushChannel(nChannel);
+		// сбрасываем SuperRLE каналы, в которых на всех точках были одинаковые значения
+		if (nChannel >= 0 && nChannel < static_cast<ptrdiff_t>(m_nChannelsCount))
+			FlushSuperRLE(m_pEncoders[nChannel]);
+	}
 
 	struct DataDirectoryEntry de = { 0, 0 };
 
@@ -175,6 +180,21 @@ void CResultFileWriter::FlushChannels()
 
 }
 
+void CResultFileWriter::FlushSuperRLE(CChannelEncoder& Encoder)
+{
+	if (Encoder.m_nUnwrittenSuperRLECount)
+	{
+		__int64 nCurrentSeek = _ftelli64(m_pFile);
+		WriteLEB(2);
+		WriteLEB(Encoder.m_nUnwrittenSuperRLECount);
+		if (fwrite(&Encoder.m_SuperRLEByte, sizeof(unsigned char), 1, m_pFile) != 1)
+			throw CFileWriteException(m_pFile);
+		WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
+		Encoder.m_nPreviousSeek = nCurrentSeek;
+		Encoder.m_nUnwrittenSuperRLECount = 0;
+	}
+}
+
 void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 {
 	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_nChannelsCount))
@@ -185,7 +205,6 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 
 		if (Encoder.m_nCount)
 		{
-			__int64 nCurrentSeek = _ftelli64(m_pFile);
 			size_t nCompressedSize(m_nBufferLength * sizeof(BITWORD));
 			bool bAllBytesEqual(false);
 			if (nIndex < static_cast<ptrdiff_t>(m_nChannelsCount - 2) &&
@@ -194,33 +213,41 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 				if (bAllBytesEqual)
 				{
 					// если все байты во входном буфере RLE одинаковые, тип блока ставим 2 - SuperRLE
-					WriteLEB(2);
-					WriteLEB(Encoder.m_nCount);			// count of doubles
-					if (fwrite(Output.BytesBuffer(), sizeof(unsigned char), 1, m_pFile) != 1)
-						throw CFileWriteException(m_pFile);
+					Encoder.m_nUnwrittenSuperRLECount += Encoder.m_nCount;
+					Encoder.m_SuperRLEByte = *Output.BytesBuffer();
 				}
 				else
 				{
+					// сбрасываем блок SuperRLE если был
+					__int64 nCurrentSeek = _ftelli64(m_pFile);
+					FlushSuperRLE(Encoder);
 					WriteLEB(0);						// type of block 0 - RLE data
 					WriteLEB(Encoder.m_nCount);			// count of doubles
 					WriteLEB(nCompressedSize);			// byte length of RLE data
 					if (fwrite(m_pCompressedBuffer, sizeof(unsigned char), nCompressedSize, m_pFile) != nCompressedSize)
 						throw CFileWriteException(m_pFile);
+
+					WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
+					Encoder.m_nPreviousSeek = nCurrentSeek;
+
 				}
 			}
 			else
 			{
+				// сбрасываем блок SuperRLE если был
+				__int64 nCurrentSeek = _ftelli64(m_pFile);
+				FlushSuperRLE(Encoder);
 				WriteLEB(1);						// type of block 1 - RAW compressed data
 				WriteLEB(Encoder.m_nCount);			// count of doubles
 				WriteLEB(Output.BytesWritten());	// byte length of block
-
 				if (fwrite(Output.Buffer(), sizeof(unsigned char), Output.BytesWritten(), m_pFile) != Output.BytesWritten())
 					throw CFileWriteException(m_pFile);
+
+				WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
+				Encoder.m_nPreviousSeek = nCurrentSeek;
 			}
 			Encoder.m_nCount = 0;
 			Output.Reset();
-			WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
-			Encoder.m_nPreviousSeek = nCurrentSeek;
 		}
 	}
 	else

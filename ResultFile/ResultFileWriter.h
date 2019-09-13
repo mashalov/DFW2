@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ResultFileReader.h"
 #include "..\dfw2\HRTimer.h"
 
@@ -9,17 +9,21 @@ namespace DFW2
 	class CChannelEncoder
 	{
 	public:
-		CCompressorParallel m_Compressor;
-		CBitStream m_Output;
-		unsigned __int64 m_nPreviousSeek;
-		size_t m_nCount;
-		ptrdiff_t m_nVariableIndex;
-		const double *m_pVariable;
-		double m_dValue;
-		ptrdiff_t m_nDeviceId;
-		ptrdiff_t m_nDeviceType;
+		CCompressorParallel m_Compressor;		// экземпляр предиктивного кодера
+		CBitStream m_Output;					// поток для записи битового потока
+		unsigned __int64 m_nPreviousSeek;		// смещение последнего записанного предыдущего блока
+		size_t m_nCount;						// количество сжатых double
+		size_t m_nUnwrittenSuperRLECount;		// количество подсчитанных, но не записанных блоков SuperRLE
+		ptrdiff_t m_nVariableIndex;				// индекс переменной канала
+		const double *m_pVariable;				// адрес переменной канала
+		double m_dValue;						// значение для буферизации переданного на m_pVariable значения и записи в потоке
+		ptrdiff_t m_nDeviceId;					// идентификатор устройства канала
+		ptrdiff_t m_nDeviceType;				// тип устройства канала
+		unsigned char m_SuperRLEByte;			// байт SuperRLE
 
-		CChannelEncoder() : m_nPreviousSeek(0), m_nCount(0),
+		CChannelEncoder() : m_nPreviousSeek(0), 
+							m_nCount(0),
+							m_nUnwrittenSuperRLECount(0),
 							m_pVariable(NULL)
 		{
 
@@ -60,6 +64,7 @@ namespace DFW2
 		CRLECompressor	m_RLECompressor;
 		unsigned char *m_pCompressedBuffer;
 		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
+		void FlushSuperRLE(CChannelEncoder& Encoder);
 	public:
 		CResultFileWriter();
 		virtual ~CResultFileWriter();

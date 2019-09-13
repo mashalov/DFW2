@@ -69,15 +69,16 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 
 				int BlockType	= ReadBlockType();
 				int PointsCount = ReadLEBInt();
-				int BytesCount	= ReadLEBInt();
 
 				pBuffer = nullptr;
+				int BytesCount(1);
 
 				switch (BlockType)
 				{
 				case 0:		// RLE-блок
 				{
 					// читаем сжатые данные
+					BytesCount = ReadLEBInt();
 					unsigned char *pReadBuffer = new unsigned char[BytesCount + 1]();
 					if (fread(pReadBuffer, 1, BytesCount, m_pFile) != BytesCount)
 					{
@@ -97,6 +98,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 					break;
 				case 1:		// блок без сжатия
 					// читаем несжатые данные
+					BytesCount = ReadLEBInt();
 					pBuffer = new BITWORD[BytesCount / sizeof(BITWORD) + 1]();
 					if (fread(pBuffer, 1, BytesCount, m_pFile) != BytesCount)
 						throw CFileReadException(m_pFile);
@@ -104,7 +106,6 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				case 2:		// блок SuperRLE
 					pBuffer = new BITWORD[BytesCount / sizeof(BITWORD) + 1]();
 					// читаем 1 байт сжатых предиктивным методом данных
-					BytesCount = 1;
 					if (fread(pBuffer, 1, BytesCount, m_pFile) != BytesCount)
 						throw CFileReadException(m_pFile);
 					break;
