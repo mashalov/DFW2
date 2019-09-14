@@ -414,6 +414,9 @@ bool CDynaModel::NewtonUpdate()
 		pVectorBegin++;
 	}
 
+	ConvTest[0].FinalizeSum();
+	ConvTest[1].FinalizeSum();
+
 	ConvTest[0].GetConvergenceRatio();
 	ConvTest[1].GetConvergenceRatio();
 
@@ -894,6 +897,22 @@ bool CDynaModel::Step()
 
 }
 
+void CDynaModel::ConvergenceTest::AddError(double dError)
+{
+	// Три варианта расчета суммы погрешностей
+	nVarsCount++;
+	AddErrorStraight(dError);
+	//AddErrorKahan(dError);
+	//AddErrorNeumaier(dError);		// если используется Neumaier - в  FinalizeSum должна быть раскомментирована сумма ошибки с корректором
+}
+
+void CDynaModel::ConvergenceTest::FinalizeSum()
+{
+	//dErrorSum += dKahanC;
+}
+
+
+
 double CDynaModel::GetRatioForCurrentOrder()
 {
 	double r = 0.0;
@@ -903,7 +922,6 @@ double CDynaModel::GetRatioForCurrentOrder()
 
 	ConvTest[0].Reset();
 	ConvTest[1].Reset();
-	
 	sc.Integrator.Reset();
 
 	while (pVectorBegin < pVectorEnd)
@@ -930,7 +948,10 @@ double CDynaModel::GetRatioForCurrentOrder()
 		}
 		pVectorBegin++;
 	}
-
+	// Neumaier addition final phase
+	ConvTest[0].FinalizeSum();
+	ConvTest[1].FinalizeSum();
+		
 	ConvTest[0].GetRMS();
 	ConvTest[1].GetRMS();
 
@@ -984,6 +1005,9 @@ double CDynaModel::GetRatioForHigherOrder()
 		pVectorBegin++;
 	}
 
+	ConvTest[0].FinalizeSum();
+	ConvTest[1].FinalizeSum();
+
 	ConvTest[0].GetRMS();
 	ConvTest[1].GetRMS();
 
@@ -1020,6 +1044,9 @@ double CDynaModel::GetRatioForLowerOrder()
 		}
 		pVectorBegin++;
 	}
+
+	ConvTest[0].FinalizeSum();
+	ConvTest[1].FinalizeSum();
 
 	ConvTest[0].GetRMS();
 	ConvTest[1].GetRMS();

@@ -1591,8 +1591,11 @@ namespace RastrChartWPFControl
                             y = pts.Y;
                         else
                         {
-                            ChannelIndexes[cn]++;
-                            y = channel.PointAtIndex(ChannelIndexes[cn]).Y;
+                            while (x > channel.PointAtIndex(ChannelIndexes[cn]).X)
+                            {
+                                ChannelIndexes[cn]++;
+                                y = channel.PointAtIndex(ChannelIndexes[cn]).Y;
+                            }
                         }
                         
                     

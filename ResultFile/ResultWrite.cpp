@@ -244,10 +244,12 @@ void CResultWrite::CreateFile(const _TCHAR* cszPathName)
 
 STDMETHODIMP CResultWrite::Close()
 {
+	m_ResultFileWriter.CloseFile();
+
 	for (auto &it : m_DevTypeSet)
 		delete it;
 	m_DevTypeSet.clear();
-	m_ResultFileWriter.CloseFile();
+
 	return S_OK;
 }
 

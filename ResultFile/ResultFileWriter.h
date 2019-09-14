@@ -65,6 +65,7 @@ namespace DFW2
 		unsigned char *m_pCompressedBuffer;
 		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
 		void FlushSuperRLE(CChannelEncoder& Encoder);
+		bool m_bChannelsFlushed;
 	public:
 		CResultFileWriter();
 		virtual ~CResultFileWriter();

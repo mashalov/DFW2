@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaModel.h"
 #import "..\ResultFile\ResultFile.tlb" no_namespace, named_guids, no_implementation
 
@@ -18,7 +18,7 @@ bool CDynaModel::WriteResultsHeaderBinary()
 		{
 			m_spResultWrite = spResults->Create(_T("c:\\tmp\\binresultCOM.rst"));
 			m_spResultWrite->NoChangeTolerance = GetAtol();
-			m_spResultWrite->Comment = _T("�������� ����� mdp_debug5 � ��");
+			m_spResultWrite->Comment = _T("Тестовая схема mdp_debug5 с КЗ");
 
 			for (VARNAMEITRCONST vnmit = DFWMessages.VarNameMap().begin(); vnmit != DFWMessages.VarNameMap().end(); vnmit++)
 				m_spResultWrite->AddVariableUnit(static_cast<long>(vnmit->first), vnmit->second.c_str());
@@ -306,7 +306,8 @@ bool CDynaModel::FinishWriteResults()
 	fclose(fResult);
 #endif
 
-	m_spResultWrite->FlushChannels();
+	// сброс результатов делается автоматически при вызове Close
+	//m_spResultWrite->FlushChannels();
 	m_spResultWrite->Close();
 	return bRes;
 }

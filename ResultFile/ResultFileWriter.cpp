@@ -97,14 +97,16 @@ void CResultFileWriter::WriteTime(double dTime, double dStep)
 
 void CResultFileWriter::FlushChannels()
 { 
+	// если каналы уже были сброшены - выходим
+	if (m_bChannelsFlushed)
+		return;
 	TerminateWriterThread();
 
 	for (size_t nChannel = 0; nChannel < m_nChannelsCount; nChannel++)
 	{
 		FlushChannel(nChannel);
 		// сбрасываем SuperRLE каналы, в которых на всех точках были одинаковые значения
-		if (nChannel >= 0 && nChannel < static_cast<ptrdiff_t>(m_nChannelsCount))
-			FlushSuperRLE(m_pEncoders[nChannel]);
+		FlushSuperRLE(m_pEncoders[nChannel]);
 	}
 
 	struct DataDirectoryEntry de = { 0, 0 };
@@ -178,6 +180,8 @@ void CResultFileWriter::FlushChannels()
 	if (fwrite(&de, sizeof(struct DataDirectoryEntry), 1, m_pFile) != 1)
 		throw CFileWriteException(m_pFile);
 
+	// ставим признак сброса каналов
+	m_bChannelsFlushed = true;
 }
 
 void CResultFileWriter::FlushSuperRLE(CChannelEncoder& Encoder)
@@ -392,6 +396,7 @@ CResultFileWriter::CResultFileWriter()
 	m_dNoChangeTolerance = 0.0;
 	m_nPredictorOrder = 0;
 	m_pCompressedBuffer = NULL;
+	m_bChannelsFlushed = true;
 }
 
 void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
@@ -432,6 +437,8 @@ void CResultFileWriter::TerminateWriterThread()
 // закрывает файл записываемых результатов
 void CResultFileWriter::CloseFile()
 {
+	// сбрасываем каналы, если еще не были сброшены
+	FlushChannels();
 	// сначала останавливаем поток записи
 	TerminateWriterThread();
 
@@ -504,6 +511,8 @@ void CResultFileWriter::CreateResultFile(const _TCHAR *cszFilePath)
 		m_hThread = (HANDLE)_beginthreadex(NULL, 0, CResultFileWriter::WriterThread, this, 0, NULL);
 		if (m_hThread == NULL)
 			throw CFileWriteException(m_pFile);
+		// раз создали файл результатов - потребуется финализация
+		m_bChannelsFlushed = false;
 	}
 	else
 		throw CFileWriteException(NULL,cszFilePath);
