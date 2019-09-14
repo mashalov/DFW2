@@ -113,7 +113,6 @@ namespace DFW2
 			void AddErrorStraight(double dError)
 			{
 				dErrorSum += dError;
-				nVarsCount++;
 			}
 
 			void AddError(double dError);
