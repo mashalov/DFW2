@@ -201,6 +201,7 @@ void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 Last
 	// начинаем с заданного смещения последнего блока
 	// и работаем, пока не обнаружим смещение предыдущего
 	// блока равное нулю
+
 	while (LastBlockOffset)
 	{
 		// запоминаем смещение блока
@@ -216,6 +217,18 @@ void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 Last
 		int Bytes(1);
 		if(nBlockType < 2)
 			Bytes = ReadLEBInt();					// если блоки типа 0 или 1 - читаем размер блока в байтах
+
+		
+		/*
+			Если нужно найти канал по смещению в файле - смещение задаем здесь,
+			последовательно читаем все каналы и ждем пока не вылетит исключение.
+			Индекс канала вызывашего исключение использовать для поиска девайса и переменной
+
+			unsigned __int64 addr = 7907939;
+			if (addr >= LastBlockOffset && addr < LastBlockOffset + Bytes)
+				throw CFileReadException(m_pFile);
+		*/
+		
 
 		// перемещаемся на запись смещения предыдущего блока, используя известный размер блока
 		if (_fseeki64(m_pFile, Bytes, SEEK_CUR))
