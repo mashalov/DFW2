@@ -42,13 +42,13 @@ namespace DFW2
 		struct ConvergenceTest
 		{
 			ptrdiff_t nVarsCount;
-			double dErrorSum;
+			volatile double dErrorSum;
 			double dOldErrorSum;
 			double dCm;
 			double dCms;
 			double dOldCm;
 			double dErrorSums;
-			double dKahanC;
+			volatile double dKahanC;
 
 			void Reset()
 			{
@@ -92,26 +92,32 @@ namespace DFW2
 				dOldCm = dCm;
 			}
 
-			inline void AddErrorKahan(double dError)
+			void AddErrorNeumaier(double dError)
 			{
-				double y = dError - dKahanC;
-				double t = dErrorSum + y;
+				volatile double t = dErrorSum + dError;
+				if (fabs(dErrorSum) >= fabs(dError))
+					dKahanC += (dErrorSum - t) + dError;
+				else
+					dKahanC += (dError - t) + dErrorSum;
+				dErrorSum = t;
+			}
+
+			void AddErrorKahan(double dError)
+			{
+				volatile double y = dError - dKahanC;
+				volatile double t = dErrorSum + y;
 				dKahanC = (t - dErrorSum) - y;
 				dErrorSum = t;
 			}
 
-			inline void AddErrorStraight(double dError)
+			void AddErrorStraight(double dError)
 			{
 				dErrorSum += dError;
 				nVarsCount++;
 			}
 
-			inline void AddError(double dError)
-			{
-				AddErrorKahan(dError);
-				nVarsCount++;
-				//AddErrorStraight(dError);
-			}
+			void AddError(double dError);
+			void FinalizeSum();
 		};
 
 		struct StepError
@@ -196,7 +202,7 @@ namespace DFW2
 			ptrdiff_t q;
 			double t;
 			double t0;
-			double KahanC;
+			volatile double KahanC;
 			ptrdiff_t nStepsToStepChangeParameter;
 			ptrdiff_t nStepsToOrderChangeParameter;
 			ptrdiff_t nStepsToFailParameter;
@@ -306,8 +312,8 @@ namespace DFW2
 				// математически функция выполняет t = t0 + m_dCurrentH;
 
 				// но мы используем Kahan summation для устранения накопленной ошибки
-				double ky = m_dCurrentH - KahanC;
-				double temp = t0 + ky;
+				volatile double ky = m_dCurrentH - KahanC;
+				volatile double temp = t0 + ky;
 				// предополагается, что шаг не может быть отменен
 				// и поэтому сумма Кэхэна обновляется
 				KahanC = (temp - t0) - ky;
