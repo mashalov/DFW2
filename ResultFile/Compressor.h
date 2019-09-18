@@ -15,7 +15,11 @@ class CBitStream
 {
 protected:
 	bool Check();
-	size_t WordBitsLeft();								// сколько бит осталось в слове
+	// сколько бит осталось в слове
+	inline size_t WordBitsLeft() const
+	{
+		return WordBitCount - m_nBitSeek;
+	}
 	eFCResult MoveBitCount(size_t BitCount);			// сдвинуть битовое смещение, выбрать новое слово, если нужно, проверить переполнение
 	ptrdiff_t m_nTotalBitsWritten;						// количество записанных битов
 	BITWORD *m_pWord;									// указатель на текущее слово

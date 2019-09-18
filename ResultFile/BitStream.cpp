@@ -96,11 +96,6 @@ bool CBitStream::Check()
 	return true;
 }
 
-size_t CBitStream::WordBitsLeft()
-{
-	return WordBitCount - m_nBitSeek;
-}
-
 size_t CBitStream::BytesWritten()
 {
 	return m_nTotalBitsWritten / 8 + ((m_nTotalBitsWritten % 8) ? 1 : 0);
