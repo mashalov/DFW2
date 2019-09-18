@@ -15,29 +15,30 @@ class CBitStream
 {
 protected:
 	bool Check();
-	ptrdiff_t WordBitsLeft();
-	eFCResult MoveBitCount(ptrdiff_t BitCount);
-	ptrdiff_t m_nTotalBitsWritten;
-	BITWORD *m_pWord;
-	BITWORD *m_pWordInitial;
-	BITWORD *m_pEnd;
-	ptrdiff_t m_nBitSeek;
+	size_t WordBitsLeft();								// сколько бит осталось в слове
+	eFCResult MoveBitCount(size_t BitCount);			// сдвинуть битовое смещение, выбрать новое слово, если нужно, проверить переполнение
+	ptrdiff_t m_nTotalBitsWritten;						// количество записанных битов
+	BITWORD *m_pWord;									// указатель на текущее слово
+	BITWORD *m_pWordInitial;							// указатель на начало буфера
+	BITWORD *m_pEnd;									// указатель на конец буфера
+	ptrdiff_t m_nBitSeek;								// битовое смещение относительно слова
 public:
-	CBitStream(BITWORD *Buffer, BITWORD *BufferEnd, ptrdiff_t BitSeek);
+	CBitStream(BITWORD *Buffer, BITWORD *BufferEnd, size_t BitSeek);
 	CBitStream();
-	void Init(BITWORD *Buffer, BITWORD *BufferEnd, ptrdiff_t BitSeek);
-	void Reset();
-	void Rewind();
-	eFCResult WriteBits(CBitStream& Source, ptrdiff_t BitCount);
+	void Init(BITWORD *Buffer, BITWORD *BufferEnd, size_t BitSeek);
+	void Reset();										// сбросить смещение, слово и количество записанных битов, очистить буфер
+	void Rewind();										// то же что Reset, но без очистки буфера
+
+	eFCResult WriteBits(CBitStream& Source, size_t BitCount);
 	eFCResult WriteByte(unsigned char Byte);
 	eFCResult WriteDouble(double &dValue);
 	eFCResult ReadByte(unsigned char& Byte);
-	eFCResult AlignTo(ptrdiff_t nAlignTo);
-	ptrdiff_t BytesWritten();
-	ptrdiff_t BitsLeft();
-	BITWORD* Buffer();
-	unsigned char* BytesBuffer();
-	static const ptrdiff_t WordBitCount;
+	eFCResult AlignTo(size_t nAlignTo);					// выровнять битовое смещение кратно заданному
+	size_t BytesWritten();								// количество записанных байт
+	size_t BitsLeft();									// количество доступных бит до конца буфера на чтении или записи
+	BITWORD* Buffer();									// указатель на слово начала буфера
+	unsigned char* BytesBuffer();						// указатель на байт начала буфера
+	static const size_t WordBitCount;
 };
 
 class CCompressorBase
