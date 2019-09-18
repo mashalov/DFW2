@@ -86,7 +86,7 @@ bool CTransformMul::SimplifyMulConstant(CExpressionToken* pToken)
 
 	TOKENITR it = pToken->ChildrenBegin();
 	double mul = 1.0;
-	CExpressionToken *pFirstConstant = NULL;
+	CExpressionToken *pFirstConstant(nullptr);
 
 	while (it != pToken->ChildrenEnd())
 	{
@@ -109,7 +109,7 @@ bool CTransformMul::SimplifyMulConstant(CExpressionToken* pToken)
 		{
 			pMulToken->Eliminate();
 			pMulToken->Delete();
-			pFirstConstant = NULL;
+			pFirstConstant = nullptr;;
 			break;
 		}
 		else
@@ -147,7 +147,7 @@ bool CTransformMul::SimplifyMulExpandBraces(CExpressionToken *pToken)
 	bool bRes = true;
 
 	TOKENITR it = pToken->ChildrenBegin();
-	CExpressionToken *pSumToken = NULL;
+	CExpressionToken *pSumToken(nullptr);
 	for (it = pToken->ChildrenBegin(); it != pToken->ChildrenEnd(); it++)
 	{
 		if ((*it)->GetType() == ETT_PLUS)
@@ -242,8 +242,8 @@ bool CTransformMul::SimplifyMulCombinePow(CExpressionToken *pToken)
 			CExpressionToken *pToken1 = *it1;
 			if (pToken1->GetType() == ETT_POWF)
 			{
-				CExpressionToken *pTokenExp1 = NULL, *pTokenBase1 = NULL;
-				CExpressionToken *pTokenExp2 = NULL, *pTokenBase2 = NULL; 
+				CExpressionToken *pTokenExp1(nullptr), *pTokenBase1(nullptr);
+				CExpressionToken *pTokenExp2(nullptr), *pTokenBase2(nullptr);
 
 				if (pToken1->GetChildren(pTokenExp1, pTokenBase1))
 				{
@@ -292,8 +292,8 @@ bool CTransformMul::SimplifyMulCombinePow(CExpressionToken *pToken)
 			CExpressionToken *pToken1 = *it1;
 			if (pToken1->GetType() == ETT_POWF)
 			{
-				CExpressionToken *pTokenExp1 = NULL, *pTokenBase1 = NULL;
-				CExpressionToken *pTokenExp2 = NULL, *pTokenBase2 = NULL;
+				CExpressionToken *pTokenExp1(nullptr), *pTokenBase1(nullptr);
+				CExpressionToken *pTokenExp2(nullptr), *pTokenBase2(nullptr);
 
 				if (pToken1->GetChildren(pTokenExp1, pTokenBase1))
 				{
@@ -341,7 +341,7 @@ bool CTransformMul::SimplifyMulCombinePow(CExpressionToken *pToken)
 			CExpressionToken *pToken1 = *it1;
 			if (pToken1->GetType() == ETT_POWF)
 			{
-				CExpressionToken *pTokenExp1 = NULL, *pTokenBase1 = NULL;
+				CExpressionToken *pTokenExp1(nullptr), *pTokenBase1(nullptr);
 				if (pToken1->GetChildren(pTokenExp1, pTokenBase1))
 				{
 					TOKENLIST MatchList1, MatchList2, DiffList1, DiffList2;
@@ -395,8 +395,8 @@ bool CTransformMul::SimplifyMulCombinePow(CExpressionToken *pToken)
 			CExpressionToken *pToken1 = *it1;
 			if (pToken1->GetType() == ETT_POWF)
 			{
-				CExpressionToken *pTokenExp1 = NULL, *pTokenBase1 = NULL;
-				CExpressionToken *pTokenExp2 = NULL, *pTokenBase2 = NULL;
+				CExpressionToken *pTokenExp1(nullptr), *pTokenBase1(nullptr);
+				CExpressionToken *pTokenExp2(nullptr), *pTokenBase2(nullptr);
 				if (pToken1->GetChildren(pTokenExp1, pTokenBase1))
 				{
 					

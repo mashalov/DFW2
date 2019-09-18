@@ -50,7 +50,7 @@ public:
 		_TCHAR lpszFormat[512];
 		int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
 		// String is truncated to 511 characters
-		m_szBuffer = NULL;
+		m_szBuffer = nullptr;
 		if (nCount)
 		{
 			m_szBuffer = new _TCHAR[EXCEPTION_BUFFER_SIZE];
@@ -98,9 +98,9 @@ public:
 
 	virtual ~Cex()
 	{
-		if (m_szBuffer != NULL)
+		if (m_szBuffer != nullptr)
 			delete[] m_szBuffer;
-		m_szBuffer = NULL;
+		m_szBuffer = nullptr;
 	}
 
 	operator const _TCHAR*()

@@ -26,7 +26,7 @@ class ATL_NO_VTABLE CSlowVariables:
 protected:
 	CResultFileReader *m_pFileReader;
 public:
-	CSlowVariables() : m_pFileReader(NULL)
+	CSlowVariables() : m_pFileReader(nullptr)
 	{
 	}
 

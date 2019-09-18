@@ -36,7 +36,7 @@ FunctionEnum CParserDefaultDictionary::DefaultFunctions[22] = {
 	FunctionEnum(ETT_ABS,		_T("abs"),			1, &TransAbs),
 	FunctionEnum(ETT_LIMIT,		_T("limit"),		3, &TransLimit),
 	FunctionEnum(ETT_DEADBAND,	_T("deadband"),		2, &TransDB),
-	FunctionEnum(ETT_MODANGLE,	_T("modangle"),		3, NULL),
+	FunctionEnum(ETT_MODANGLE,	_T("modangle"),		3, nullptr),
 	FunctionEnum(ETT_DERLAG,    _T("derlag"),		3, &TransDerlag),
 	FunctionEnum(ETT_BIT,		_T("bit"),			1, &TransBit)
 };
@@ -53,11 +53,11 @@ OperatorEnum CParserDefaultDictionary::DefaultOperators[16] = {
 	OperatorEnum(ETT_LOWER,		_T("<"),	2,	&TransLower,	4,	0),
 	OperatorEnum(ETT_AND,		_T("&"),	2,	&TransAnd,		2,	0),
 	OperatorEnum(ETT_OR,		_T("|"),	2,	&TransOr,		2,	0),
-	OperatorEnum(ETT_LB,		_T("("),	0,	NULL,			1,	0),
-	OperatorEnum(ETT_RB,		_T(")"),	0,	NULL,			99, 0),
-	OperatorEnum(ETT_LBS,		_T("["),	0,	NULL,			1,	0),
-	OperatorEnum(ETT_RBS,		_T("]"),	0,	NULL,			99, 0),
-	OperatorEnum(ETT_COMMA,		_T(","),	0,	NULL,			99, 0),
+	OperatorEnum(ETT_LB,		_T("("),	0,	nullptr,		1,	0),
+	OperatorEnum(ETT_RB,		_T(")"),	0,	nullptr,		99, 0),
+	OperatorEnum(ETT_LBS,		_T("["),	0,	nullptr,		1,	0),
+	OperatorEnum(ETT_RBS,		_T("]"),	0,	nullptr,		99, 0),
+	OperatorEnum(ETT_COMMA,		_T(","),	0,	nullptr,		99, 0),
 };
 
 

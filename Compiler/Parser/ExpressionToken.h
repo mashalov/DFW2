@@ -129,7 +129,7 @@ struct VariableEnum
 											 m_nRefCount(0), 
 											 m_nIndex(0), 
 											 m_eVarType(eCVT_INTERNAL),
-											 m_pVarExtendedInfo(NULL)
+											 m_pVarExtendedInfo(nullptr)
 	{
 
 	};
@@ -171,11 +171,11 @@ public:
 	// признак реализации функции или оператора в движке, а не в компилируемом тексте
 	virtual bool IsHostBlock() { return false;  }
 	// возврат типа блока, если он реализован в движке ?
-	virtual const _TCHAR* GetBlockType() { _ASSERTE(NULL);  return NULL; }
+	virtual const _TCHAR* GetBlockType() { _ASSERTE(NULL);  return nullptr; }
 	// возврат количества выводов в блоке (входы + выходы)
 	virtual const long GetPinsCount() { return 2; }
 	// функция, возвращающая строку особенной инициализации блока, если нужна
-	virtual const _TCHAR* SpecialInitFunctionName() { return NULL; }
+	virtual const _TCHAR* SpecialInitFunctionName() { return nullptr; }
 
 	static void CompareTokens(CExpressionToken* pToken1,
 		CExpressionToken*pToken2,

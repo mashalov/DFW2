@@ -27,7 +27,7 @@ class ATL_NO_VTABLE CDevice :
 protected:
 	const CResultFileReader::DeviceInstanceInfo *m_pDeviceInfo;
 public:
-	CDevice() : m_pDeviceInfo(NULL)
+	CDevice() : m_pDeviceInfo(nullptr)
 	{
 
 	}

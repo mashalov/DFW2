@@ -129,7 +129,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IRastrPtr spRastr;
 	HRESULT hr = spRastr.CreateInstance(CLSID_Rastr);
 
-
 	//spRastr->Load(RG_REPL, L"..\\tests\\test92.rst", "");
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
 	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
@@ -716,7 +715,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		pExcConsMustang->Tr   = spECMTr->GetZ(i);
 		pExcConsMustang++;
 	}
-	
+
 }
 
 bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount)

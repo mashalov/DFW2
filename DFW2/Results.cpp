@@ -150,7 +150,7 @@ bool CDynaModel::WriteResultsHeaderBinary()
 						}
 						else
 						{
-							CDevice *pLinkDev = NULL; 
+							CDevice *pLinkDev(nullptr);
 
 							if (!LinksFrom.empty())
 								pLinkDev = pDev->GetSingleLink(LinksFrom.begin()->first);

@@ -348,7 +348,7 @@ bool CAutoCompiler::Generate(const _TCHAR *cszPath)
 		{
 			const VariableEnum& VarEnum = vit->second;
 			if (VarEnum.m_eVarType == eCVT_INTERNAL)
-				if (VarEnum.m_pToken && VarEnum.m_pToken->m_pEquation == NULL)
+				if (VarEnum.m_pToken && VarEnum.m_pToken->m_pEquation == nullptr)
 				{
 					m_Logger.Log(Cex(CAutoCompilerMessages::cszUnassignedVariable, vit->first.c_str()));
 					m_bStatus = false;

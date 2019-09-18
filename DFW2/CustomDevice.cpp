@@ -4,8 +4,8 @@
 
 using namespace DFW2;
 
-CCustomDevice::CCustomDevice() : m_pPrimitiveVars(NULL),
-								 m_pPrimitiveExtVars(NULL)	
+CCustomDevice::CCustomDevice() : m_pPrimitiveVars(nullptr),
+								 m_pPrimitiveExtVars(nullptr)
 {
 	m_DLLArgs.pFnSetElement						= &DLLEntrySetElement;
 	m_DLLArgs.pFnSetFunction					= &DLLEntrySetFunction;
@@ -34,7 +34,7 @@ bool CCustomDevice::BuildStructure()
 
 	PrimitiveVariableExternal *pExtVarsEnd = m_pPrimitiveExtVars + Container()->GetInputsCount();
 	for (PrimitiveVariableExternal *pStart = m_pPrimitiveExtVars; pStart < pExtVarsEnd; pStart++)
-		pStart->IndexAndValue(pStart - m_pPrimitiveExtVars, NULL);
+		pStart->IndexAndValue(pStart - m_pPrimitiveExtVars, nullptr);
 
 	const BLOCKDESCRIPTIONS&  Blocks = Container()->DLL().GetBlocksDescriptions();
 	const BLOCKSPINSINDEXES&  Pins = Container()->DLL().GetBlocksPinsIndexes();
@@ -50,7 +50,7 @@ bool CCustomDevice::BuildStructure()
 
 	for (; bit != Blocks.end(); bit++, iit++)
 	{
-		PrimitiveVariable				*pBlockBegin = NULL;
+		PrimitiveVariable				*pBlockBegin = nullptr;
 
 		PrimitiveVariableBase **pBlockPrims = pPrimsPtrs;
 
@@ -80,7 +80,7 @@ bool CCustomDevice::BuildStructure()
 		if (!m_pPrimitiveVars)
 			m_pPrimitiveVars = pBlockBegin;
 
-		CDynaPrimitive *pDummy = NULL;
+		CDynaPrimitive *pDummy = nullptr;
 		size_t nVarsCount = pBlockPrims - pPrimsPtrs;
 
 		//_ASSERTE(nVarsCount == Container()->PrimitiveEquationsCount(bit->eType));
@@ -389,7 +389,7 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 	if (nBlockIndex >= 0 && nBlockIndex < static_cast<ptrdiff_t>(pDevice->m_Primitives.size()))
 	{
 		CDynaPrimitive *pPrimitive = pDevice->m_Primitives[nBlockIndex];
-		double *pParBuffer = NULL;
+		double *pParBuffer(nullptr);
 		long nParCount = static_cast<CCustomDeviceContainer*>(pDevice->Container())->GetParametersValues(pDevice->GetId(), &pDevice->m_DLLArgs, nBlockIndex, &pParBuffer);
 		if (!pPrimitive->UnserializeParameters(pDynaModel, pParBuffer, nParCount))
 			pDevice->m_ExternalStatus = DFS_FAILED;
@@ -438,7 +438,7 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaMo
 
 double* CCustomDevice::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 
 	if (nVarIndex >= 0)
 	{
@@ -456,7 +456,7 @@ double* CCustomDevice::GetConstVariablePtr(ptrdiff_t nVarIndex)
 
 double* CCustomDevice::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 
 	if (nVarIndex >= 0 && nVarIndex < m_pContainer->EquationsCount())
 		p = m_pVars + nVarIndex;
@@ -470,7 +470,7 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 {
 	const double *pValue = GetVariableConstPtr(cszOutputName);
 
-	for (auto& it : m_Primitives)
+	for (auto&& it : m_Primitives)
 		if (it->Output() == pValue)
 			return it;
 
@@ -478,5 +478,5 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 		if ((*it)->Output() == pValue)
 			return *it;*/
 
-	return NULL;
+	return nullptr;
 }

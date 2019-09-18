@@ -56,10 +56,10 @@ STDMETHODIMP CResultWrite::WriteHeader()
 		m_ResultFileWriter.WriteLEB(m_VarNameMap.size());					// записываем количество единиц измерения
 
 		// записываем последовательность типов и названий единиц измерения переменных
-		for (VARNAMEITRCONST vnmit = m_VarNameMap.begin(); vnmit != m_VarNameMap.end(); vnmit++)
+		for (auto&& vnmit : m_VarNameMap)
 		{
-			m_ResultFileWriter.WriteLEB(vnmit->first);
-			m_ResultFileWriter.WriteString(vnmit->second.c_str());
+			m_ResultFileWriter.WriteLEB(vnmit.first);
+			m_ResultFileWriter.WriteString(vnmit.second.c_str());
 		}
 		// записываем количество типов устройств
 		m_ResultFileWriter.WriteLEB(m_DevTypeSet.size());

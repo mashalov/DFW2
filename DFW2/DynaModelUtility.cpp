@@ -133,7 +133,7 @@ void CDynaModel::StopProcess()
 
 CDeviceContainer* CDynaModel::GetDeviceContainer(eDFW2DEVICETYPE Type)
 {
-	CDeviceContainer *pContainer = NULL;
+	CDeviceContainer *pContainer(nullptr);
 	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 	{
 		if ((*it)->GetType() == Type)
@@ -284,7 +284,7 @@ bool CDynaModel::UpdateExternalVariables()
 
 CDeviceContainer* CDynaModel::GetContainerByAlias(const _TCHAR* cszAlias)
 {
-	CDeviceContainer *pContainer(NULL);
+	CDeviceContainer *pContainer(nullptr);
 
 	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 	{
@@ -470,11 +470,11 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 		for (const auto& it : FullZeros)
 			_ftprintf_s(fmatrix, _T("Full Zero Row : %td\n"), it);
 
-		for (auto& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
+		for (auto&& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
 			if(!*it)
 				_ftprintf_s(fmatrix, _T("Full Zero Column: %td\n"), it - NonZeros.begin());
 
-		for (auto& it = Diagonals.begin(); it != Diagonals.end(); it++)
+		for (auto&& it = Diagonals.begin(); it != Diagonals.end(); it++)
 			if (!*it)
 				_ftprintf_s(fmatrix, _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
 

@@ -136,7 +136,7 @@ bool CTransformPow::SimplifyPowChain(CExpressionToken* pToken)
 	{
 		if (pBase->GetType() == ETT_POWF)
 		{
-			CExpressionToken *pExp1 = NULL, *pBase1 = NULL;
+			CExpressionToken *pExp1(nullptr), *pBase1(nullptr);
 			if (pBase->GetChildren(pExp1, pBase1))
 			{
 				CExpressionToken *pNewMul = pToken->NewExpressionToken(ETT_MUL);
@@ -307,7 +307,7 @@ bool CTransformPow::Derivative(CExpressionToken *pToken, CExpressionToken *pChil
 	_ASSERTE(pToken->GetType() == ETT_POWF || pToken->GetType() == ETT_POW);
 	_ASSERTE(pToken->ChildrenCount() == 2);
 
-	CExpressionToken *pExp = NULL, *pBase = NULL;
+	CExpressionToken *pExp(nullptr), *pBase(nullptr);
 	
 	if (pToken->GetChildren(pExp, pBase))
 	{

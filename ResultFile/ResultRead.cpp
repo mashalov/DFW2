@@ -83,7 +83,7 @@ STDMETHODIMP CResultRead::get_Version(LONG* Version)
 STDMETHODIMP CResultRead::get_TimeScale(VARIANT* TimeScale)
 {
 	HRESULT hRes = E_INVALIDARG;
-	SAFEARRAY *pSA = NULL; 
+	SAFEARRAY *pSA(nullptr);
 	try
 	{
 		if (TimeScale && SUCCEEDED(VariantClear(TimeScale)))
@@ -122,7 +122,7 @@ STDMETHODIMP CResultRead::get_TimeScale(VARIANT* TimeScale)
 STDMETHODIMP CResultRead::get_TimeStep(VARIANT* TimeStep)
 {
 	HRESULT hRes = E_INVALIDARG;
-	double *pResult = NULL;
+	double *pResult(nullptr);
 
 	if (TimeStep && SUCCEEDED(VariantClear(TimeStep)))
 	{
@@ -250,7 +250,7 @@ void CResultRead::OpenFile(const _TCHAR* cszPathName)
 STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableName, VARIANT *Plot)
 {
 	HRESULT hRes = E_INVALIDARG;
-	double *pResult = NULL;
+	double *pResult(nullptr);
 
 	if (Plot && SUCCEEDED(VariantClear(Plot)))
 	{
@@ -283,7 +283,7 @@ STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableN
 STDMETHODIMP CResultRead::GetPlotByIndex(long nIndex, VARIANT *Plot)
 {
 	HRESULT hRes = E_INVALIDARG;
-	double *pResult = NULL; 
+	double *pResult(nullptr);
 
 	if (Plot && SUCCEEDED(VariantClear(Plot)))
 	{

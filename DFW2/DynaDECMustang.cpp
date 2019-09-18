@@ -23,7 +23,7 @@ CDynaDECMustang::CDynaDECMustang() : CDevice(),
 
 double* CDynaDECMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 
 	switch (nVarIndex)
 	{

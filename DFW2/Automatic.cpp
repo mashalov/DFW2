@@ -31,8 +31,8 @@ CAutomaticAction::CAutomaticAction(long Type,
 		m_nActionGroup(ActionGroup),
 		m_nOutputMode(OutputMode),
 		m_nRunsCount(RunsCount),
-		m_pAction(NULL),
-		m_pValue(NULL)
+		m_pAction(nullptr),
+		m_pValue(nullptr)
 	{
 
 	}
@@ -71,10 +71,10 @@ CAutomatic::CAutomatic(CDynaModel* pDynaModel) : m_pDynaModel(pDynaModel)
 
 void CAutomatic::Clean()
 {
-	for (AUTOITEMSITR it = m_lstActions.begin(); it != m_lstActions.end(); it++)
-		delete *it;
-	for (AUTOITEMSITR it = m_lstLogics.begin(); it != m_lstLogics.end(); it++)
-		delete *it;
+	for (auto&& it : m_lstActions)
+		delete it;
+	for (auto&& it : m_lstLogics)
+		delete it;
 	m_lstActions.clear();
 	m_lstLogics.clear();
 	m_mapLogics.clear();
@@ -107,7 +107,7 @@ bool CAutomatic::CompileModels()
 {
 	bool bRes = false;
 
-	if (m_spAutomaticCompiler != NULL)
+	if (m_spAutomaticCompiler != nullptr)
 	{
 		try
 		{
@@ -159,7 +159,7 @@ bool CAutomatic::AddStarter(long Type,
 {
 	bool bRes = false;
 
-	if (m_spAutomaticCompiler != NULL)
+	if (m_spAutomaticCompiler != nullptr)
 	{
 		m_spAutomaticCompiler->AddStarter(Type,Id,cszName,cszExpression,LinkType,cszObjectClass,cszObjectKey,cszObjectProp);
 		bRes = true;
@@ -181,7 +181,7 @@ bool CAutomatic::AddLogic(long Type,
 {
 	bool bRes = false;
 
-	if (m_spAutomaticCompiler != NULL)
+	if (m_spAutomaticCompiler != nullptr)
 	{
 		m_spAutomaticCompiler->AddLogic(Type, Id, cszName, cszExpression, cszActions, cszDelayExpression, OutputMode);
 		CAutomaticLogic *pNewLogic = new CAutomaticLogic(Type, Id, cszName, cszActions, OutputMode);
@@ -209,7 +209,7 @@ bool CAutomatic::AddAction(long Type,
 {
 	bool bRes = false;
 
-	if (m_spAutomaticCompiler != NULL)
+	if (m_spAutomaticCompiler != nullptr)
 	{
 		m_spAutomaticCompiler->AddAction(Type, Id, cszName, cszExpression, LinkType, cszObjectClass, cszObjectKey, cszObjectProp, ActionGroup, OutputMode, RunsCount);
 		CAutomaticAction *pNewAction = new CAutomaticAction(Type, Id, cszName, LinkType, cszObjectClass, cszObjectKey, cszObjectProp, ActionGroup, OutputMode, RunsCount);

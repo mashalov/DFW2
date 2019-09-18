@@ -24,7 +24,7 @@ namespace DFW2
 		CChannelEncoder() : m_nPreviousSeek(0), 
 							m_nCount(0),
 							m_nUnwrittenSuperRLECount(0),
-							m_pVariable(NULL)
+							m_pVariable(nullptr)
 		{
 
 		}
