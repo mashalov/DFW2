@@ -18,7 +18,7 @@ SAFEARRAY* CCompilerLogger::GetSafeArray()
 		else
 		{
 			SafeArrayDestroy(pSALogArray);
-			pSALogArray = NULL;
+			pSALogArray = nullptr;
 		}
 	}
 	return pSALogArray; 

@@ -567,7 +567,7 @@ eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
 // переменные базового узла - модуль и угол
 double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Delta,V_DELTA)
@@ -581,7 +581,7 @@ double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 // константы узла - проводимость шунта
 double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Bshunt, C_BSH)
@@ -612,7 +612,7 @@ double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 
 CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) : 
 									   CDeviceContainer(pDynaModel),
-									   m_pSynchroZones(NULL),
+									   m_pSynchroZones(nullptr),
 									   m_bDynamicLRC(true)
 {
 	// в контейнере требуем особой функции прогноза и обновления после
@@ -647,7 +647,7 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 	}
 	else
 	{
-		CDevice **ppBranch = NULL;
+		CDevice **ppBranch(nullptr);
 		CLinkPtrCount *pLink = GetLink(0);
 		ResetVisited();
 		while (pLink->In(ppBranch))
@@ -698,7 +698,7 @@ void CDynaNodeBase::CalcAdmittances()
 	}
 	else
 	{
-		CDevice **ppBranch = NULL;
+		CDevice **ppBranch(nullptr);
 		CLinkPtrCount *pLink = GetLink(0);
 		ResetVisited();
 		while (pLink->In(ppBranch))
@@ -790,7 +790,7 @@ void CSynchroZone::Clear()
 
 double* CSynchroZone::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 
 	switch (nVarIndex)
 	{
@@ -877,8 +877,8 @@ bool CDynaNodeContainer::LULF()
 	// индексы
 	ptrdiff_t *Ap = new ptrdiff_t[nNodeCount + 1];
 	ptrdiff_t *Ai = new ptrdiff_t[nNzCount];
-	KLU_symbolic *Symbolic = NULL;
-	KLU_numeric *Numeric = NULL;
+	KLU_symbolic *Symbolic(nullptr);
+	KLU_numeric *Numeric(nullptr);
 	KLU_common Common;
 	KLU_defaults(&Common);
 
@@ -891,7 +891,7 @@ bool CDynaNodeContainer::LULF()
 	ptrdiff_t *pAp = Ap;
 	ptrdiff_t *pAi = Ai;
 
-	FILE *fnode(NULL), *fgen(NULL);
+	FILE *fnode(nullptr), *fgen(nullptr);
 	_tfopen_s(&fnode, _T("c:\\tmp\\nodes.csv"), _T("w+, ccs=UTF-8"));
 	_tfopen_s(&fgen, _T("c:\\tmp\\gens.csv"), _T("w+, ccs=UTF-8"));
 	_ftprintf(fnode, _T(";"));
@@ -922,7 +922,7 @@ bool CDynaNodeContainer::LULF()
 			// для всех узлов, которые не отключены и не находятся в металлическом КЗ (КЗ с нулевым шунтом)
 			_ftprintf(fnode, _T("%td;"), pNode->GetId());
 			// Branches
-			CDevice **ppBranch = NULL;
+			CDevice **ppBranch(nullptr);
 			CLinkPtrCount *pLink = pNode->GetLink(0);
 			pNode->ResetVisited();
 			NodeToMatrix *pNodeToMatrixEnd = pNodeToMatrix;
@@ -1021,10 +1021,9 @@ bool CDynaNodeContainer::LULF()
 
 				// Generators
 
-				CDevice **ppDeivce = NULL;
-				CLinkPtrCount *pLink = NULL;
-				ppDeivce = NULL;
-				pLink = pNode->GetLink(1);
+				CDevice **ppDeivce(nullptr);
+				CLinkPtrCount *pLink(nullptr);
+ 			    pLink = pNode->GetLink(1);
 				pNode->ResetVisited();
 				// проходим по генераторам
 				while (pLink->In(ppDeivce))
@@ -1209,7 +1208,7 @@ ExternalVariable CDynaNodeBase::GetExternalVariable(const _TCHAR* cszVarName)
 {
 	if (!_tcscmp(cszVarName, CDynaNode::m_cszSz))
 	{
-		ExternalVariable ExtVar = { NULL, -1 };
+		ExternalVariable ExtVar = { nullptr, -1 };
 
 		if (m_pSyncZone)
 			ExtVar = m_pSyncZone->GetExternalVariable(CDynaNode::m_cszS);

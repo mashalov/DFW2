@@ -109,7 +109,7 @@ STDMETHODIMP CVariable::get_Plot(VARIANT* Plot)
 		m_pDeviceInstanceInfo->m_pDevType &&
 		m_pDeviceInstanceInfo->m_pDevType->m_pFileReader)
 	{
-		double *pResult = NULL;
+		double *pResult(nullptr);
 		const CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
 		if (Plot && SUCCEEDED(VariantClear(Plot)))
 		{

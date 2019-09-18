@@ -7,12 +7,12 @@ using namespace DFW2;
 CCustomDeviceContainer::CCustomDeviceContainer(CDynaModel *pDynaModel) :
 						CDeviceContainer(pDynaModel),
 						m_DLL(this),
-						m_pPrimitiveVarsPool(NULL),
-						m_pDoubleVarsPool(NULL),
-						m_pPrimitiveExtVarsPool(NULL),
-						m_pExternalVarsPool(NULL),
+						m_pPrimitiveVarsPool(nullptr),
+						m_pDoubleVarsPool(nullptr),
+						m_pPrimitiveExtVarsPool(nullptr),
+						m_pExternalVarsPool(nullptr),
 						m_nParameterBufferSize(0),
-						m_pParameterBuffer(NULL)
+						m_pParameterBuffer(nullptr)
 {
 }
 
@@ -312,7 +312,7 @@ long CCustomDeviceContainer::GetParametersValues(ptrdiff_t nId, BuildEquationsAr
 	}
 
 	if (nCount <= 0)
-		ppParameters = NULL;
+		ppParameters = nullptr;
 	else
 		*ppParameters = m_pParameterBuffer;
 

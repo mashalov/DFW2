@@ -231,8 +231,8 @@ bool CDynaLRC::CollectConstantData(CLRCData *pBase, ptrdiff_t nCount)
 	// строим связный список сегментов
 	while (v < pBase + nCount)
 	{
-		v->pPrev = (v == pBase) ? NULL : v - 1;
-		v->pNext = (v + 1 < pBase + nCount) ? v + 1 : NULL;
+		v->pPrev = (v == pBase) ? nullptr : v - 1;
+		v->pNext = (v + 1 < pBase + nCount) ? v + 1 : nullptr;
 		v++;
 	}
 

@@ -15,7 +15,7 @@ CDynaExcConMustang::CDynaExcConMustang() : CDevice(),
 
 double* CDynaExcConMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Uf, V_UF)

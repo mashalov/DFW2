@@ -75,7 +75,7 @@ bool CTransformMinus::Derivative(CExpressionToken *pToken, CExpressionToken *pCh
 	_ASSERTE(pToken->GetType() == ETT_MINUS);
 	_ASSERTE(pToken->ChildrenCount() == 2);
 
-	CExpressionToken *pFirst = NULL, *pSecond = NULL;
+	CExpressionToken *pFirst(nullptr), *pSecond(nullptr);
 
 	if (pToken->GetChildren(pSecond, pFirst))
 	{
@@ -178,7 +178,7 @@ bool CTransformPlus::SimplifyPlusConstants(CExpressionToken *pToken)
 	bool bRes = true;
 
 	TOKENITR it = pToken->ChildrenBegin();
-	CExpressionToken *pFirstConstant = NULL;
+	CExpressionToken *pFirstConstant(nullptr);
 	double sum = 0.0;
 	while (it != pToken->ChildrenEnd())
 	{

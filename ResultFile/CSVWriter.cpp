@@ -4,7 +4,7 @@
 
 CCSVWriter::CCSVWriter(CResultFileReader& ResultFileReader) : m_ResultFileReader(ResultFileReader)
 {
-	pChannelLink = NULL;
+	pChannelLink = nullptr;
 	loc = setlocale(LC_ALL, "RU-ru");
 	pCSVFile = NULL;
 	pCSVOut = NULL;
@@ -41,8 +41,8 @@ void CCSVWriter::IndexChannels()
 		devtypefind.eDeviceType = pChannel->eDeviceType;
 		CResultFileReader::DEVTYPEITRCONST dit = devtypeset.find(&devtypefind);
 
-		pC->pDevice = NULL;
-		pC->pVariable = NULL;
+		pC->pDevice = nullptr;
+		pC->pVariable = nullptr;
 
 		if (dit != devtypeset.end())
 		{
@@ -295,7 +295,7 @@ void CCSVWriter::WriteData()
 	while (pChannel < pChannelsEnd)
 	{
 		pData = m_ResultFileReader.ReadChannel(pChannel->eDeviceType, static_cast<int>(pChannel->DeviceId), pChannel->DeviceVarIndex);
-		double *pDataStart = NULL;
+		double *pDataStart(nullptr);
 		__try
 		{
 			pDataStart = pData;

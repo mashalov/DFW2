@@ -25,7 +25,7 @@ namespace DFW2
 			double *pAxRow , *pAx;
 			ptrdiff_t *pApRow, *pAp;
 			ptrdiff_t m_nConstElementsToSkip;
-			MatrixRow() : m_nColsCount(NULL) 
+			MatrixRow() : m_nColsCount(0)
 			{
 
 			};
@@ -128,8 +128,8 @@ namespace DFW2
 
 			void Reset()
 			{
-				pMaxErrorDevice = NULL;
-				pMaxErrorVariable = NULL;
+				pMaxErrorDevice = nullptr;
+				pMaxErrorVariable = nullptr;
 				dMaxErrorVariable = 0.0;
 				nMaxErrorVariableEquation = -1;
 			}

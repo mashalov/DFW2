@@ -16,9 +16,9 @@ bool CTransformRelayDelay::Simplify(CExpressionToken* pToken)
 
 	if (pToken->ChildrenCount() <= 3 && pToken->ChildrenCount() >= 2)
 	{
-		CExpressionToken *pCoe = NULL;
-		CExpressionToken *pTol = NULL;
-		CExpressionToken *pVal = NULL;
+		CExpressionToken *pCoe(nullptr);
+		CExpressionToken *pTol(nullptr);
+		CExpressionToken *pVal(nullptr);
 	}
 	else
 	{
@@ -35,8 +35,8 @@ bool CTransformExpand::Simplify(CExpressionToken *pToken)
 
 	bool bRes = true;
 
-	CExpressionToken *pInput = NULL;
-	CExpressionToken *pTime = NULL;
+	CExpressionToken *pInput(nullptr);
+	CExpressionToken *pTime(nullptr);
 	if (pToken->GetChildren(pTime, pInput))
 	{
 		if (pInput->IsNumeric() && pInput->GetNumericValue() <= 0.0)
@@ -62,8 +62,8 @@ bool CTransformShrink::Simplify(CExpressionToken *pToken)
 
 	bool bRes = true;
 
-	CExpressionToken *pInput = NULL;
-	CExpressionToken *pTime = NULL;
+	CExpressionToken *pInput(nullptr);
+	CExpressionToken *pTime(nullptr);
 	if (pToken->GetChildren(pTime, pInput))
 	{
 		if (pInput->IsNumeric() && pInput->GetNumericValue() <= 0.0)
@@ -94,9 +94,9 @@ bool CTransformLimit::Simplify(CExpressionToken *pToken)
 
 	bool bRes = true;
 
-	CExpressionToken *pMax = NULL;
-	CExpressionToken *pMin = NULL;
-	CExpressionToken *pVal = NULL;
+	CExpressionToken *pMax(nullptr);
+	CExpressionToken *pMin(nullptr);
+	CExpressionToken *pVal(nullptr);
 
 	if (pToken->ChildrenCount() != 3)
 	{
@@ -146,8 +146,8 @@ bool CTransformHigher::Simplify(CExpressionToken* pToken)
 
 	bool bRes = true;
 
-	CExpressionToken *pInput1	= NULL;
-	CExpressionToken *pInput2	= NULL;
+	CExpressionToken *pInput1(nullptr);
+	CExpressionToken *pInput2(nullptr);
 
 	if (pToken->ChildrenCount() != 2)
 	{
@@ -188,8 +188,8 @@ bool CTransformLower::Simplify(CExpressionToken* pToken)
 
 	bool bRes = true;
 
-	CExpressionToken *pInput1 = NULL;
-	CExpressionToken *pInput2 = NULL;
+	CExpressionToken *pInput1(nullptr);
+	CExpressionToken *pInput2(nullptr);
 
 	if (pToken->ChildrenCount() != 2)
 	{
@@ -266,8 +266,8 @@ bool CTransformDeadband::Simplify(CExpressionToken *pToken)
 
 	bool bRes = true;
 
-	CExpressionToken *pVal = NULL;
-	CExpressionToken *pDB = NULL;
+	CExpressionToken *pVal(nullptr);
+	CExpressionToken *pDB(nullptr);
 
 	if (pToken->GetChildren(pDB, pVal))
 	{
@@ -303,8 +303,8 @@ bool CTransformAnd::Simplify(CExpressionToken* pToken)
 
 	bool bRes = true;
 
-	CExpressionToken *pInput1 = NULL;
-	CExpressionToken *pInput2 = NULL;
+	CExpressionToken *pInput1(nullptr);
+	CExpressionToken *pInput2(nullptr);
 
 	if (pToken->ChildrenCount() != 2)
 	{
@@ -340,8 +340,8 @@ bool CTransformOr::Simplify(CExpressionToken* pToken)
 
 	bool bRes = true;
 
-	CExpressionToken *pInput1 = NULL;
-	CExpressionToken *pInput2 = NULL;
+	CExpressionToken *pInput1(nullptr);
+	CExpressionToken *pInput2(nullptr);
 
 	if (pToken->ChildrenCount() != 2)
 	{

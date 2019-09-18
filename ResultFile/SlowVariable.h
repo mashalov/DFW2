@@ -25,7 +25,7 @@ class ATL_NO_VTABLE CSlowVariable :
 protected:
 	CSlowVariableItem *m_pItem;
 public:
-	CSlowVariable() : m_pItem(NULL)
+	CSlowVariable() : m_pItem(nullptr)
 	{
 	}
 

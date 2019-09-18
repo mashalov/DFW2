@@ -355,7 +355,7 @@ void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 	size_t nBufferGroup = m_nBufferGroup;
 	size_t nSeek = 0;
 	
-	BITWORD *pBuffer = NULL;
+	BITWORD *pBuffer(nullptr);
 
 	for (size_t nChannel = 0; nChannel < m_nChannelsCount; nChannel++)
 	{
@@ -384,7 +384,7 @@ void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 CResultFileWriter::CResultFileWriter()
 {
 	m_pFile = NULL;
-	m_pEncoders = NULL;
+	m_pEncoders = nullptr;
 	m_nBufferLength = 100;
 	m_nBufferGroup = 100;
 	m_nPointsCount = 0;
@@ -395,7 +395,7 @@ CResultFileWriter::CResultFileWriter()
 	m_bThreadRun = true;
 	m_dNoChangeTolerance = 0.0;
 	m_nPredictorOrder = 0;
-	m_pCompressedBuffer = NULL;
+	m_pCompressedBuffer = nullptr;
 	m_bChannelsFlushed = true;
 }
 
@@ -451,17 +451,17 @@ void CResultFileWriter::CloseFile()
 	if (m_pEncoders)
 	{
 		delete[] m_pEncoders;
-		m_pEncoders = NULL;
+		m_pEncoders = nullptr;
 	}
 
 	if (m_pCompressedBuffer)
 	{
 		delete m_pCompressedBuffer;
-		m_pCompressedBuffer = NULL;
+		m_pCompressedBuffer = nullptr;
 	}
 
-	for (BUFFERBEGINITERATOR it = m_BufferBegin.begin(); it != m_BufferBegin.end(); it++)
-		delete *it;
+	for (auto&& it : m_BufferBegin)
+		delete it;
 
 	m_BufferBegin.clear();
 

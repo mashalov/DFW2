@@ -6,15 +6,15 @@ using namespace DFW2;
 
 CResultFileReader::CResultFileReader()
 {
-	m_pDirectoryEntries = NULL;
+	m_pDirectoryEntries = nullptr;
 	m_nVersion = 0;
 	m_dTimeCreated = 0.0;
-	m_pChannelHeaders = NULL;
-	m_pTime = NULL;
-	m_pStep = NULL;
+	m_pChannelHeaders = nullptr;
+	m_pTime = nullptr;
+	m_pStep = nullptr;
 	m_bHeaderLoaded = false;
 	m_pFile = NULL;
-	m_pDeviceTypeInfo = NULL;
+	m_pDeviceTypeInfo = nullptr;
 	m_dRatio = -1.0;
 }
 
@@ -39,7 +39,7 @@ void CResultFileReader::ReadHeader(int& Version)
 
 double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 {
-	double *pResultBuffer = NULL;
+	double *pResultBuffer(nullptr);
 
 	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_ChannelsCount))
 	{
@@ -129,7 +129,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				if(pBuffer)
 					delete pBuffer;
 
-				pBuffer = NULL;
+				pBuffer = nullptr;
 				it++;
 			}
 		}
@@ -140,7 +140,7 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 			if (pResultBuffer)
 			{
 				delete pResultBuffer;
-				pResultBuffer = NULL;
+				pResultBuffer = nullptr;
 			}
 			throw ex;
 		}
@@ -660,37 +660,37 @@ void CResultFileReader::Close()
 	if (m_pFile)
 	{
 		fclose(m_pFile);
-		m_pFile =NULL;
+		m_pFile = NULL;
 	}
 
 	if (m_pDirectoryEntries)
 	{
 		delete m_pDirectoryEntries;
-		m_pDirectoryEntries = NULL;
+		m_pDirectoryEntries = nullptr;
 	}
 
 	if (m_pChannelHeaders)
 	{
 		delete m_pChannelHeaders;
-		m_pChannelHeaders = NULL;
+		m_pChannelHeaders = nullptr;
 	}
 
 	if (m_pTime)
 	{
 		delete m_pTime;
-		m_pTime = NULL;
+		m_pTime = nullptr;
 	}
 
 	if (m_pStep)
 	{
 		delete m_pStep;
-		m_pStep = NULL;
+		m_pStep = nullptr;
 	}
 
 	if (m_pDeviceTypeInfo)
 	{
 		delete[] m_pDeviceTypeInfo;
-		m_pDeviceTypeInfo = NULL;
+		m_pDeviceTypeInfo = nullptr;
 	}
 
 	m_DevTypeSet.clear();
@@ -885,7 +885,7 @@ const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType) const
 
 SAFEARRAY* CResultFileReader::CreateSafeArray(double *pChannelData) const
 {
-	SAFEARRAY *pSA = NULL;
+	SAFEARRAY *pSA = nullptr;
 	try
 	{
 		size_t nPointsCount = GetPointsCount();
@@ -910,7 +910,7 @@ SAFEARRAY* CResultFileReader::CreateSafeArray(double *pChannelData) const
 	{
 		if (pSA)
 			SafeArrayDestroy(pSA);
-		pSA = NULL; 
+		pSA = nullptr;
 	}
 	return pSA;
 }

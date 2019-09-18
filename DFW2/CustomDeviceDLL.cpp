@@ -15,34 +15,34 @@ FARPROC CCustomDeviceDLL::GetProcAddress(const char *cszFunctionName)
 
 void CCustomDeviceDLL::ClearFns()
 {
-	m_hDLL = NULL;
+	m_hDLL = nullptr;
 	m_nGetProcAddresFailureCount = 0;
-	m_pFnDestroy = NULL;
-	m_pFnGetBlocksCount = NULL;
-	m_pFnGetBlockPinsCount = NULL;
-	m_pFnGetBlockPinsIndexes = NULL;
-	m_pFnGetBlockParametersCount = NULL;
-	m_pFnGetBlockParametersValues = NULL;
-	m_pFnBuildEquations = NULL;
-	m_pFnBuildRightHand = NULL;
-	m_pFnBuildDerivatives = NULL;
-	m_pFnGetInputsCount = NULL;
-	m_pFnGetOutputsCount = NULL;
-	m_pFnGetSetPointsCount = NULL;
-	m_pFnGetConstantsCount = NULL;
-	m_pFnGetInternalsCount = NULL;
-	m_pFnGetSetPointsInfos = NULL;
-	m_pFnGetConstantsInfos = NULL;
-	m_pFnGetOutputsInfos = NULL;
-	m_pFnGetInputsInfos = NULL;
-	m_pFnGetInternalsInfos = NULL;
-	m_pFnGetTypesCount = NULL;
-	m_pFnGetTypes = NULL;
-	m_pFnGetLinksCount = NULL;
-	m_pFnGetLinks = NULL;
-	m_pFnGetDeviceTypeName = NULL;
-	m_pFnDeviceInit = NULL;
-	m_pFnProcessDiscontinuity = NULL;
+	m_pFnDestroy = nullptr;
+	m_pFnGetBlocksCount = nullptr;
+	m_pFnGetBlockPinsCount = nullptr;
+	m_pFnGetBlockPinsIndexes = nullptr;
+	m_pFnGetBlockParametersCount = nullptr;
+	m_pFnGetBlockParametersValues = nullptr;
+	m_pFnBuildEquations = nullptr;
+	m_pFnBuildRightHand = nullptr;
+	m_pFnBuildDerivatives = nullptr;
+	m_pFnGetInputsCount = nullptr;
+	m_pFnGetOutputsCount = nullptr;
+	m_pFnGetSetPointsCount = nullptr;
+	m_pFnGetConstantsCount = nullptr;
+	m_pFnGetInternalsCount = nullptr;
+	m_pFnGetSetPointsInfos = nullptr;
+	m_pFnGetConstantsInfos = nullptr;
+	m_pFnGetOutputsInfos = nullptr;
+	m_pFnGetInputsInfos = nullptr;
+	m_pFnGetInternalsInfos = nullptr;
+	m_pFnGetTypesCount = nullptr;
+	m_pFnGetTypes = nullptr;
+	m_pFnGetLinksCount = nullptr;
+	m_pFnGetLinks = nullptr;
+	m_pFnGetDeviceTypeName = nullptr;
+	m_pFnDeviceInit = nullptr;
+	m_pFnProcessDiscontinuity = nullptr;
 
 }
 

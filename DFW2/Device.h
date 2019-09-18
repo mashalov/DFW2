@@ -99,7 +99,7 @@ namespace DFW2
 			else
 			{
 				_ASSERTE(!_T("SingleLinkRange::SetLink() Wrong link index"));
-				return NULL;
+				return nullptr;
 			}
 #endif
 		}

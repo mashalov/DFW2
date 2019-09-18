@@ -30,11 +30,11 @@ CDynaModel::CDynaModel() : Symbolic(nullptr),
 						   CustomDevice(this),
 						   BranchMeasures(this),
 						   AutomaticDevice(this),
-						   m_pLogFile(nullptr)
+						   m_pLogFile(NULL)
 {
-	Ax = NULL;
-	Ai = Ap = NULL;
-	pRightVector = NULL;
+	Ax = nullptr;
+	Ai = Ap = nullptr;
+	pRightVector = nullptr;
 
 	m_hStopEvt = CreateEvent(NULL, TRUE, FALSE, _T("DFW2STOP"));
 
@@ -1077,8 +1077,8 @@ bool CDynaModel::EnterDiscontinuityMode()
 
 void CDynaModel::UnprocessDiscontinuity()
 {
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-		(*it)->UnprocessDiscontinuity();
+	for (auto&& it : m_DeviceContainers)
+		it->UnprocessDiscontinuity();
 }
 
 bool CDynaModel::ProcessDiscontinuity()
@@ -1170,9 +1170,9 @@ double CDynaModel::CheckZeroCrossing()
 {
 	double Kh = 1.0;
 	m_nZeroCrossingDevicesCount = 0;
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() ; it++)
+	for (auto&& it : m_DeviceContainers)
 	{
-		double Khi = (*it)->CheckZeroCrossing(this);
+		double Khi = it->CheckZeroCrossing(this);
 		if (Khi < Kh)
 			Kh = Khi;
 	}
@@ -1443,7 +1443,7 @@ void CDynaModel::RepeatZeroCrossing()
 
 CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, const _TCHAR* cszSymLink)
 {
-	CDevice *pFoundDevice = NULL;
+	CDevice *pFoundDevice(nullptr);
 
 	CDeviceContainer *pContainer = GetContainerByAlias(cszObject);
 	if (pContainer)

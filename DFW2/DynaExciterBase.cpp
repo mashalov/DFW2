@@ -43,7 +43,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 
 double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Eqe, V_EQE)
@@ -66,7 +66,7 @@ void CDynaExciterBase::SetLagTimeConstantRatio(double TexcNew)
 
 double* CDynaExciterBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(RegId, C_REGID)

@@ -23,7 +23,7 @@ namespace DFW2
 		unsigned char *m_pPrimitive;
 		unsigned char *m_pHead;
 		size_t nCount;
-		PrimitivePoolElement() : m_pPrimitive(NULL), nCount(0) {}
+		PrimitivePoolElement() : m_pPrimitive(nullptr), nCount(0) {}
 	};
 
 	struct PrimitiveInfo

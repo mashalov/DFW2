@@ -8,8 +8,8 @@ CExpressionToken::CExpressionToken(CExpressionParser *pParser, eExpressionTokenT
 									m_eType(eType), 
 									m_nTokenBegin(nTokenBegin), 
 									m_nTokenLength(nTokenLength),
-									m_pFunctionInfo(NULL),
-									m_pEquation(NULL)
+									m_pFunctionInfo(nullptr),
+									m_pEquation(nullptr)
 {
 }
 
@@ -19,7 +19,7 @@ CExpressionToken::CExpressionToken(CExpressionParser *pParser, const FunctionEnu
 									m_eType(pFunction->m_eOperatorType), 
 									m_nTokenBegin(nTokenBegin), 
 									m_nTokenLength(nTokenLength),
-									m_pEquation(NULL)
+									m_pEquation(nullptr)
 {
 }
 
@@ -168,7 +168,7 @@ const _TCHAR* CExpressionToken::GetTextValue() const
 	if (IsError())
 		return m_pParser->GetErrorDescription();
 
-	return m_strStringValue.empty() ? NULL : m_strStringValue.c_str();
+	return m_strStringValue.empty() ? nullptr : m_strStringValue.c_str();
 }
 
 void CExpressionToken::GetOperand(CExpressionToken *pToken, wstring& Result, bool bRight) const
@@ -266,7 +266,7 @@ void CExpressionToken::GetEquationVariableType(const CCompilerEquation *pEquatio
 
 void CExpressionToken::GetEquationOperandType(const CCompilerEquation *pEquation, wstring& Result, VariableEnum*& pVarEnum) const
 {
-	pVarEnum = NULL;
+	pVarEnum = nullptr;
 	Result = GetTextValue();
 
 	if (m_pEquation)
@@ -468,7 +468,7 @@ void CExpressionToken::SetNumericConstant(const _TCHAR *cszNumericConstant)
 	}
 
 	m_eType = ETT_NUMERIC_CONSTANT;
-	m_pFunctionInfo = NULL;
+	m_pFunctionInfo = nullptr;
 	SetTextValue(cszNumericConstant);
 }
 
@@ -501,13 +501,13 @@ const _TCHAR *CExpressionToken::GetBlockType() const
 	if (m_pFunctionInfo && m_pFunctionInfo->m_pTransform)
 		return m_pFunctionInfo->m_pTransform->GetBlockType();
 	else
-		return NULL;
+		return nullptr;
 }
 
 bool CExpressionToken::RequireSpecialInit()
 {
 	if (m_pFunctionInfo && m_pFunctionInfo->m_pTransform)
-		return m_pFunctionInfo->m_pTransform->SpecialInitFunctionName() != NULL;
+		return m_pFunctionInfo->m_pTransform->SpecialInitFunctionName() != nullptr;
 	else
 		return false;
 }
@@ -517,7 +517,7 @@ const _TCHAR* CExpressionToken::SpecialInitFunctionName()
 	if (m_pFunctionInfo && m_pFunctionInfo->m_pTransform)
 		return m_pFunctionInfo->m_pTransform->SpecialInitFunctionName();
 	else
-		return NULL;
+		return nullptr;
 }
 
 bool CExpressionToken::Simplify()
@@ -565,7 +565,7 @@ CExpressionToken* CExpressionToken::GetChild()
 	if (m_Children.size() > 0)
 		return *m_Children.begin();
 	else
-		return NULL;
+		return nullptr;
 }
 
 CExpressionToken* CExpressionToken::GetParent()
@@ -575,7 +575,7 @@ CExpressionToken* CExpressionToken::GetParent()
 	if (m_Parents.size() > 0)
 		return *m_Parents.begin();
 	else
-		return NULL;
+		return nullptr;
 }
 
 

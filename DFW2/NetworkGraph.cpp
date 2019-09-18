@@ -173,7 +173,7 @@ bool CDynaModel::PrepareYs()
 
 CDynaNodeBase* CDynaNodeContainer::GetFirstNode()
 {
-	CDynaNodeBase *pDynaNode = NULL;
+	CDynaNodeBase *pDynaNode(nullptr);
 	for (DEVICEVECTORITR it = begin(); it != end(); it++)
 	{
 		CDynaNodeBase *pDynaNodeTest = static_cast<CDynaNode*>(*it);
@@ -198,7 +198,7 @@ CDynaNodeBase* CDynaNodeContainer::GetFirstNode()
 
 CDynaNodeBase* CDynaNodeContainer::GetNextNode()
 {
-	CDynaNodeBase *pDynaNode = NULL;
+	CDynaNodeBase *pDynaNode(nullptr);
 	for (DEVICEVECTORITR it = begin(); it != end(); it++)
 	{
 		CDynaNodeBase *pCheckNode = static_cast<CDynaNode*>(*it);
@@ -266,7 +266,7 @@ bool CDynaNodeContainer::BuildSynchroZones()
 					CDynaNodeBase *pCurrent = Queue.front();
 					pCurrent->MarkZoneEnergized();
 					Queue.pop();
-					CDevice **ppBranch = NULL;
+					CDevice **ppBranch(nullptr);
 					CLinkPtrCount *pLink = pCurrent->GetLink(0);
 					pCurrent->ResetVisited();
 					while (pLink->In(ppBranch))
@@ -347,7 +347,7 @@ void CDynaNodeBase::MarkZoneEnergized()
 		CLinkPtrCount *pLink = GetLink(1);
 		if (pLink)
 		{
-			CDevice  **ppGen = NULL;
+			CDevice  **ppGen(nullptr);
 			ResetVisited();
 			while (pLink->In(ppGen))
 			{
@@ -378,6 +378,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 {
 	bool bRes = true;
 	CDeviceContainer *pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
+
 	for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);

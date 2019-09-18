@@ -8,7 +8,7 @@ bool CDynaModel::EstimateMatrix()
 	bool bRes = true;
 
 	ptrdiff_t nOriginalMatrixSize = m_nMatrixSize;
-	bool bSaveRightVector = pRightVector != NULL;
+	bool bSaveRightVector = pRightVector != nullptr;
 
 	CleanUpMatrix(bSaveRightVector);
 	
@@ -498,7 +498,7 @@ bool CDynaModel::SolveLinearSystem()
 				if (Numeric)
 				{
 					KLU_free_numeric(&Numeric, &Common);
-					Numeric = NULL;
+					Numeric = nullptr;
 				}
 
 				// Для всех алгебраических уравнений, в которые входит РДЗ, рекурсивно ставим точность Atol не превышающую РДЗ
@@ -625,11 +625,11 @@ void CDynaModel::ResetMatrixStructure()
 {
 	KLU_free_symbolic(&Symbolic, &Common);
 
-	Symbolic = NULL;
+	Symbolic = nullptr;
 	if (m_pMatrixRows)
 	{
 		delete m_pMatrixRows;
-		m_pMatrixRows = NULL;
+		m_pMatrixRows = nullptr;
 	}
 }
 

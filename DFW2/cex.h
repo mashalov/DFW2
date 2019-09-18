@@ -89,7 +89,7 @@ public:
 		_TCHAR lpszFormat[512];
 		int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
 		// String is truncated to 511 characters
-		m_szBuffer = NULL;
+		m_szBuffer = nullptr;
 		if (nCount)
 		{
 			m_szBuffer = new _TCHAR[EXCEPTION_BUFFER_SIZE];
@@ -137,9 +137,9 @@ public:
 
 	virtual ~Cex()
 	{
-		if (m_szBuffer != NULL)
+		if (m_szBuffer != nullptr)
 			delete[] m_szBuffer;
-		m_szBuffer = NULL;
+		m_szBuffer = nullptr;
 	}
 
 	operator const _TCHAR*()
@@ -177,7 +177,7 @@ public:
 		DWORD dwError = ::GetLastError();
 		if (dwError != 0)
 		{
-			LPTSTR messageBuffer = NULL;
+			LPTSTR messageBuffer = nullptr;
 			size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				NULL, dwError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&messageBuffer, 0, NULL);
 			std::wstring message(messageBuffer, size);

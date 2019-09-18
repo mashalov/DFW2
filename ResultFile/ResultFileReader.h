@@ -77,7 +77,7 @@ namespace DFW2
 			DeviceTypeInfo* m_pDevType;
 			wstring Name;
 			struct DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo);
-			struct DeviceInstanceInfo() : m_pDevType(NULL) {}
+			struct DeviceInstanceInfo() : m_pDevType(nullptr) {}
 			void SetId(ptrdiff_t nIdIndex, ptrdiff_t nId);
 			virtual ptrdiff_t GetId(ptrdiff_t nIdIndex) const;
 			void SetParent(ptrdiff_t nParentIndex, ptrdiff_t eParentType, ptrdiff_t nParentId);
@@ -113,10 +113,10 @@ namespace DFW2
 			DEVICESSET m_DevSet;
 			wstring strDevTypeName;
 
-			DeviceTypeInfo() : pIds(NULL),
-							   pLinks(NULL),
-							   m_pFileReader(NULL),
-							   m_pDeviceInstances(NULL)
+			DeviceTypeInfo() : pIds(nullptr),
+							   pLinks(nullptr),
+							   m_pFileReader(nullptr),
+							   m_pDeviceInstances(nullptr)
 			{
 
 			}

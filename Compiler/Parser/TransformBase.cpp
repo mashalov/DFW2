@@ -24,7 +24,7 @@ void CExpressionTransform::CompareTokens(CExpressionToken* pToken1, CExpressionT
 	while (it1 != list1.end())
 	{
 		CExpressionToken *pLE1 = *it1;
-		CExpressionToken *pLE2 = NULL;
+		CExpressionToken *pLE2(nullptr);
 		bool bFound = false;
 		for (TOKENITR it2 = list2.begin(); it2 != list2.end(); it2++)
 		{

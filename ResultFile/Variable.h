@@ -27,8 +27,8 @@ protected:
 	const CResultFileReader::VariableTypeInfo* m_pVariableInfo;
 	const CResultFileReader::DeviceInstanceInfo *m_pDeviceInstanceInfo;
 public:
-	CVariable() : m_pVariableInfo(NULL),
-				  m_pDeviceInstanceInfo(NULL)
+	CVariable() : m_pVariableInfo(nullptr),
+				  m_pDeviceInstanceInfo(nullptr)
 	{
 	}
 

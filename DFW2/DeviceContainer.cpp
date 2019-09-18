@@ -5,9 +5,9 @@
 
 using namespace DFW2;
 
-CDeviceContainer::CDeviceContainer(CDynaModel *pDynaModel) : m_pControlledData(NULL),
-															 m_ppDevicesAux(NULL),
-															 m_ppSingleLinks(NULL),
+CDeviceContainer::CDeviceContainer(CDynaModel *pDynaModel) : m_pControlledData(nullptr),
+															 m_ppDevicesAux(nullptr),
+															 m_ppSingleLinks(nullptr),
 															 m_pDynaModel(pDynaModel)
 {
 
@@ -21,30 +21,30 @@ void CDeviceContainer::CleanUp()
 		// если был передан линейный массив с созданными устройствами
 		// удаляем каждое из них
 		delete [] m_pControlledData;
-		m_pControlledData = NULL;
+		m_pControlledData = nullptr;
 	}
 	else
 	{
 		// если добавляли отдельные устройства - удаляем устройства по отдельности
-		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-			delete (*it);
+		for (auto&& it : m_DevVec)
+			delete it;
 	}
 
 	if (m_ppSingleLinks)
 	{
 		delete m_ppSingleLinks;
-		m_ppSingleLinks = NULL;
+		m_ppSingleLinks = nullptr;
 	}
 
 	if (m_ppDevicesAux)
 	{
 		delete m_ppDevicesAux;
-		m_ppDevicesAux = NULL;
+		m_ppDevicesAux = nullptr;
 	}
 
 	// очистка ссылок устройств
-	for (LINKSVECITR it = m_Links.begin(); it != m_Links.end(); it++)
-		delete (*it);
+	for (auto&& it : m_Links)
+		delete it;
 
 	m_DevVec.clear();
 }
@@ -71,7 +71,7 @@ bool CDeviceContainer::RemoveDeviceByIndex(ptrdiff_t nIndex)
 bool CDeviceContainer::RemoveDevice(ptrdiff_t nId)
 {
 	bool bRes = false;
-	for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end() ; it++ )
+	for (auto&& it = m_DevVec.begin(); it != m_DevVec.end() ; it++ )
 	{
 		if ((*it)->GetId() == nId)
 		{
@@ -180,7 +180,7 @@ CDevice* CDeviceContainer::GetDeviceByIndex(ptrdiff_t nIndex)
 	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_DevVec.size()))
 		return m_DevVec[nIndex];
 	else
-		return NULL;
+		return nullptr;
 }
 
 // формирование сета для поиска устройств в контейнере
@@ -194,17 +194,17 @@ bool CDeviceContainer::SetUpSearch()
 	{
 		// сет для контроля дублей
 		DEVSEARCHSET AlreadyReported;
-		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
+		for (auto&& it : m_DevVec)
 		{
 			// ищем устройство из вектора в сете по идентификатору
-			if (!m_DevSet.insert(*it).second)
+			if (!m_DevSet.insert(it).second)
 			{
 				// если такое устройство есть - это дубль.
-				if (AlreadyReported.find(*it) == AlreadyReported.end())
+				if (AlreadyReported.find(it) == AlreadyReported.end())
 				{
 					// если про дубль устройства еще не сообщали - сообщаем и добавляем устройство в сет дублей
-					(*it)->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDuplicateDevice, (*it)->GetVerbalName()));
-					AlreadyReported.insert(*it);
+					it->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDuplicateDevice, it->GetVerbalName()));
+					AlreadyReported.insert(it);
 				}
 				bRes = false;	// если обнаружены дубли - это ошибка
 			}
@@ -215,7 +215,7 @@ bool CDeviceContainer::SetUpSearch()
 
 CDevice* CDeviceContainer::GetDevice(CDeviceId* pDeviceId)
 {
-	CDevice *pRes = NULL;
+	CDevice *pRes(nullptr);
 	if (SetUpSearch())
 	{
 		DEVSEARCHSETITR it = m_DevSet.find(pDeviceId);
@@ -362,10 +362,10 @@ void CDeviceContainer::PrepareSingleLinks()
 			m_ppSingleLinks = new CDevice*[nPossibleLinksCount * Count()]();
 			CDevice **ppLinkPtr = m_ppSingleLinks;
 			// обходим все устройства в векторе контейнера
-			for (DEVICEVECTORITR it = begin(); it != end(); it++)
+			for (auto&& it : m_DevVec)
 			{
 				// каждому из устройств сообщаем адрес, откуда можно брать связи
-				(*it)->SetSingleLinkStart(ppLinkPtr);
+				it->SetSingleLinkStart(ppLinkPtr);
 				ppLinkPtr += nPossibleLinksCount;
 				_ASSERTE(ppLinkPtr <= m_ppSingleLinks + nPossibleLinksCount * Count());
 			}
@@ -384,7 +384,7 @@ CMultiLink* CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDevi
 		if (nDeviceIndex >= 0 && nDeviceIndex < static_cast<ptrdiff_t>((*it)->m_nSize))
 			return *it;
 	}
-	return NULL;
+	return nullptr;
 }
 
 // добавляет элемент для связи с устройством 
@@ -475,10 +475,9 @@ bool CDeviceContainer::AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDe
 bool CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	for (DEVICEVECTORITR it = begin(); it != end() && bRes; it++)
-	{
-		(*it)->EstimateEquations(pDynaModel);
-	}
+	for (auto&& it : m_DevVec)
+		it->EstimateEquations(pDynaModel);
+
 	return bRes;
 }
 
@@ -561,16 +560,16 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaMo
 
 void CDeviceContainer::UnprocessDiscontinuity()
 {
-	for (DEVICEVECTORITR it = begin(); it != end(); it++)
-		(*it)->UnprocessDiscontinuity();
+	for (auto&& it : m_DevVec)
+		it->UnprocessDiscontinuity();
 }
 
 double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double Kh = 1.0;
-	for (DEVICEVECTORITR it = begin(); it != end() ; it++)
+	for (auto&& it : m_DevVec)
 	{
-		double Khi = (*it)->CheckZeroCrossing(pDynaModel);
+		double Khi = it->CheckZeroCrossing(pDynaModel);
 		if (Khi < Kh)
 			Kh = Khi;
 	}
@@ -755,7 +754,7 @@ ptrdiff_t CDeviceContainer::EquationsCount()
 
 CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom)
 {
-	CDeviceContainer *pRetContainer = NULL;
+	CDeviceContainer *pRetContainer(nullptr);
 
 	// просматриваем возможные связи _из_ внешнего контейнер
 	for (LINKSTOMAPITR extlinkstoit = pExtContainer->m_ContainerProps.m_LinksTo.begin();

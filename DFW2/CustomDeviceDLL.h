@@ -17,7 +17,7 @@ namespace DFW2
 	public:
 		size_t m_nVarsCount;
 		T *m_pVarInfo;
-		VarInfo() : m_nVarsCount(0), m_pVarInfo(NULL) {}
+		VarInfo() : m_nVarsCount(0), m_pVarInfo(nullptr) {}
 
 		size_t SetVarsCount(size_t nVarsCount)
 		{

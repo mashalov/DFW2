@@ -5,7 +5,7 @@
 
 using namespace DFW2;
 
-CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(NULL)
+CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(nullptr)
 {
 
 }
@@ -57,7 +57,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
 
-			pBranch->m_pNodeIp = pBranch->m_pNodeIq = NULL;
+			pBranch->m_pNodeIp = pBranch->m_pNodeIq = nullptr;
 
 			// оба узла ветви обрабатываем в последовательных
 			// итерациях цикла
@@ -279,7 +279,7 @@ CDynaBranchMeasure::CDynaBranchMeasure(CDynaBranch *pBranch) : CDevice(), m_pBra
 
 double* CDynaBranchMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Ibre, V_IBRE)

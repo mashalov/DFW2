@@ -12,8 +12,8 @@ CExpressionParserRules::CExpressionParserRules(CParserVariables& CommonVariables
 	m_pRules = &DefaultRules;
 }
 
-CExpressionParser::CExpressionParser() : m_szExpression(NULL),
-										 m_szTokenText(NULL),
+CExpressionParser::CExpressionParser() : m_szExpression(nullptr),
+										 m_szTokenText(nullptr),
 										 m_Variables(m_InternalVariables),
 										 m_bUsingInternalVars(true),
 										 m_pDictionary(&DefaultDictionary)
@@ -21,8 +21,8 @@ CExpressionParser::CExpressionParser() : m_szExpression(NULL),
 	
 }
 
-CExpressionParser::CExpressionParser(CParserVariables& CommonVariables) : m_szExpression(NULL),
-																   m_szTokenText(NULL),
+CExpressionParser::CExpressionParser(CParserVariables& CommonVariables) : m_szExpression(nullptr),
+																   m_szTokenText(nullptr),
 																   m_Variables(CommonVariables),
 																   m_bUsingInternalVars(false),
 																   m_pDictionary(&DefaultDictionary)
@@ -30,12 +30,12 @@ CExpressionParser::CExpressionParser(CParserVariables& CommonVariables) : m_szEx
 
 }
 
-CExpressionParser::CExpressionParser(const CExpressionParser* pParser) : m_szExpression(NULL),
-																		 m_szTokenText(NULL),
+CExpressionParser::CExpressionParser(const CExpressionParser* pParser) : m_szExpression(nullptr),
+																		 m_szTokenText(nullptr),
 																		 m_pDictionary(pParser->m_pDictionary),
 																		 m_Variables(m_InternalVariables),
 																		 m_bUsingInternalVars(true),
-																		 m_pRules(NULL)
+																		 m_pRules(nullptr)
 {
 
 }
@@ -52,12 +52,12 @@ void CExpressionParser::CleanUp()
 	if (m_szExpression)
 	{
 		delete m_szExpression;
-		m_szExpression = NULL;
+		m_szExpression = nullptr;
 	}
 	if (m_szTokenText)
 	{
 		delete m_szTokenText;
-		m_szTokenText = NULL;
+		m_szTokenText = nullptr;
 	}
 
 	m_ResultStack = PARSERSTACK();
@@ -374,7 +374,7 @@ void CExpressionParser::CurrentSymbolType()
 	else if (_istdigit(*pCurrentChar)) m_eNextSymbolType = EST_NUMBER;						// если цифра - число
 	else if (_istalpha(*pCurrentChar)) m_eNextSymbolType = EST_ALPHA;						// если буква - алфавитно-цифровой
 	else if (*pCurrentChar == _T('.')) m_eNextSymbolType = EST_DOT;							// если точка - разделитель
-	else if (_istoperator(pCurrentChar) != NULL) m_eNextSymbolType = EST_OPERATOR;			// если один из операторов - оператор
+	else if (_istoperator(pCurrentChar) != nullptr) m_eNextSymbolType = EST_OPERATOR;		// если один из операторов - оператор
 }
 
 // проверяет является ли текущий символ символом экспоненты
@@ -391,7 +391,7 @@ int CExpressionParser::_isdecimalexponent()
 const OperatorEnum* CExpressionParser::_istoperator(const _TCHAR* pChar)
 {
 	// сбрасываем текущий оператор
-	m_pCurrentOperator = NULL;
+	m_pCurrentOperator = nullptr;
 	size_t nMaxMatchLength = 0;
 
 	// идем по словарю операторов
@@ -700,7 +700,7 @@ void CExpressionParser::Advance()
 
 CExpressionToken* CExpressionParser::NewExpressionToken(CExpressionToken *pCloneToken)
 {
-	CExpressionToken *pNewToken = NULL;
+	CExpressionToken *pNewToken(nullptr);
 	if (pCloneToken->IsVariable())
 	{
 
@@ -732,7 +732,7 @@ CExpressionToken* CExpressionParser::NewExpressionToken(CExpressionToken *pClone
 // создает токен по типу
 CExpressionToken* CExpressionParser::NewExpressionToken(eExpressionTokenType eType)
 {
-	CExpressionToken* pToken = NULL;
+	CExpressionToken* pToken(nullptr);
 	// если тип - переменна или ссылка на модель
 	if (eType == ETT_VARIABLE || eType == ETT_MODELLINK)
 	{
@@ -790,7 +790,7 @@ CExpressionToken* CExpressionParser::NewChildExpressionToken(eExpressionTokenTyp
 
 CExpressionToken* CExpressionParser::NewExpressionTokenFunction(const _TCHAR *cszExpression)
 {
-	CExpressionToken* pToken = NULL;
+	CExpressionToken* pToken(nullptr);
 	// в эту функциб попадаем из разбора переменной в случае, если нашли некое символьное имя с левой круглой скобкой
 	for (FUNCTIONITR fit = m_pDictionary->FunctionsEnum.begin(); fit != m_pDictionary->FunctionsEnum.end(); fit++)
 	{
@@ -833,10 +833,10 @@ void CExpressionParser::ResetToken()
 	// сбрасываем все состояния
 	m_eAwaitTokenType = ETT_UNDEFINED;
 	m_nTokenBegin = m_nHeadPosition;
-	m_pCurrentOperator = NULL;
+	m_pCurrentOperator = nullptr;
 	m_nTokenLength = 0;
 	m_bContinueToken = true;
-	m_pCurrentToken = NULL;
+	m_pCurrentToken = nullptr;
 	m_bDecimalSeparator = false;
 	m_bDecimalExponent = false;
 	m_bDecimalExponentSign = false;
@@ -1263,7 +1263,7 @@ FunctionEnum* CExpressionParser::GetFunctionEnum(eExpressionTokenType eType)
 	for (FUNCTIONITR it = m_pDictionary->FunctionsEnum.begin(); it != m_pDictionary->FunctionsEnum.end(); it++)
 		if ((*it)->m_eOperatorType == eType)
 			return *it;
-	return NULL;
+	return nullptr;
 }
 
 OperatorEnum* CExpressionParser::GetOperatorEnum(eExpressionTokenType eType)
@@ -1271,7 +1271,7 @@ OperatorEnum* CExpressionParser::GetOperatorEnum(eExpressionTokenType eType)
 	for (OPERATORITR it = m_pDictionary->OperatorsEnum.begin(); it != m_pDictionary->OperatorsEnum.end(); it++)
 		if ((*it)->m_eOperatorType == eType)
 			return *it;
-	return NULL;
+	return nullptr;
 }
 
 void CExpressionParser::DeleteToken(CExpressionToken *pToken)
@@ -1524,7 +1524,7 @@ bool CParserVariables::ChangeToEquationNames()
 // ищем переменную по имени и возвращаем найденное инфо
 VariableEnum *CParserVariables::Find(const _TCHAR* cszVarName)
 {
-	VariableEnum *pEnum = NULL;
+	VariableEnum *pEnum(nullptr);
 	VARIABLEITR it = m_Variables.find(cszVarName);
 	if (it != m_Variables.end())
 		pEnum = &it->second;
@@ -1581,7 +1581,7 @@ VariableEnum *CParserVariables::Find(const CCompilerEquation *pEquation)
 		if (it->second.m_pToken->m_pEquation == pEquation)
 			return &it->second;
 	}
-	return NULL;
+	return nullptr;
 }
 
 // добавляем новую перменную с токеном

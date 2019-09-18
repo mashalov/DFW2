@@ -11,7 +11,7 @@ CDynaPowerInjector::CDynaPowerInjector() : CDevice()
 
 double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(NodeId, C_NODEID)
@@ -21,7 +21,7 @@ double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 
 double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 
 	switch (nVarIndex)
 	{

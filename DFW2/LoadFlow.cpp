@@ -188,7 +188,7 @@ bool CLoadFlow::Estimate()
 	// отдельно обрабатываем БУ
 	// добавляем их "под матрицу"
 
-	for (auto& sit : SlackBuses)
+	for (auto&& sit : SlackBuses)
 	{
 		CDynaNodeBase *pNode = sit;
 		pMatrixInfo->pNode = pNode;
@@ -1045,7 +1045,7 @@ bool CLoadFlow::UpdatePQFromGenerators()
 			continue;
 
 		CLinkPtrCount *pGenLink = pNode->GetLink(1);
-		CDevice **ppGen = NULL;
+		CDevice **ppGen(nullptr);
 		if (pGenLink->m_nCount)
 		{
 			pNode->Pg = pNode->Qg = 0.0;
@@ -1083,7 +1083,7 @@ bool CLoadFlow::UpdateQToGenerators()
 			continue;
 
 		CLinkPtrCount *pGenLink = pNode->GetLink(1);
-		CDevice **ppGen = NULL;
+		CDevice **ppGen(nullptr);
 		if (pGenLink->m_nCount)
 		{
 			double Qrange = pNode->LFQmax - pNode->LFQmin;
