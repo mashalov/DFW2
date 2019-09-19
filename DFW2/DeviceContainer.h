@@ -172,6 +172,7 @@ namespace DFW2
 		CDeviceContainer* DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		size_t GetResultVariablesCount();									// получить количество переменных, которое нужно выводить в результаты
 		bool HasAlias(const _TCHAR *cszAlias);								// соответствует ли тип устройства заданному псевдониму
+		ptrdiff_t GetSingleLinkIndex(eDFW2DEVICETYPE eDevType);				// получить индекс ссылки один-к-одному по типу устройства
 	};
 
 	typedef vector<CDeviceContainer*> DEVICECONTAINERS;

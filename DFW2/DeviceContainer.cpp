@@ -819,6 +819,31 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 }
 
 
+ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
+{
+	ptrdiff_t nRet(-1);
+	// по информации из атрибутов контейнера определяем индекс
+	// связи, соответствующий типу
+	LINKSFROMMAP& FromLinks = m_ContainerProps.m_LinksFrom;
+	LINKSFROMMAPITR itFrom  = FromLinks.find(eDevType);
+	if (itFrom != FromLinks.end())
+		nRet = itFrom->second.nLinkIndex;
+
+	// если связанное устройство не найдено
+	// пытаемся определить связь "с другой стороны"
+
+	if (nRet < 0)
+	{
+		LINKSTOMAP& ToLinks = m_ContainerProps.m_LinksTo;
+		LINKSTOMAPITR itTo = ToLinks.find(eDevType);
+		if (itTo != ToLinks.end())
+			nRet = itTo->second.nLinkIndex;
+	}
+
+	return nRet;
+}
+
+
 bool  CDeviceContainer::HasAlias(const _TCHAR *cszAlias)
 {
 	STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
