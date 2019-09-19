@@ -20,7 +20,7 @@ namespace DFW2
 
 		double S;								// переменная состояния - скольжение
 		double Mj;								// суммарный момент инерции
-		bool m_bPassed;				
+		bool m_bPassed;							// признак, используемый для обхода графа
 		bool m_bInfPower;						// признак наличия ШБМ
 		CSynchroZone();		
 		virtual ~CSynchroZone() {}
@@ -135,6 +135,8 @@ namespace DFW2
 		virtual ExternalVariable GetExternalVariable(const _TCHAR* cszVarName);
 
 		static const CDeviceContainerProperties DeviceProperties();
+
+		CDynaNodeBase *m_pSuperNodeParent;
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
@@ -315,6 +317,9 @@ namespace DFW2
 		}
 	};
 
+	typedef map<CDynaNodeBase*, set<CDynaNodeBase*>> NODEISLANDMAP;
+	typedef map<CDynaNodeBase*, set<CDynaNodeBase*>>::const_iterator NODEISLANDMAPITRCONST;
+
 	class CDynaNodeContainer : public CDeviceContainer
 	{
 	protected:
@@ -332,6 +337,8 @@ namespace DFW2
 		void DumpIterationControl();
 		friend class CLoadFlow;
 	public:
+		bool GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
+		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);
 		_IterationControl& IterationControl();
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();
