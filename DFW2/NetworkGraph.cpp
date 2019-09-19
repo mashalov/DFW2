@@ -493,7 +493,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
-		if (pBranch->R < 1E200 && pBranch->X < 1E200)
+		if (pBranch->R < 0.1 && pBranch->X < 0.1)
 		{
 			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
 			JoinableNodes[pBranch->m_pNodeIq].insert(pBranch->m_pNodeIp);
@@ -522,6 +522,38 @@ bool CDynaNodeContainer::CreateSuperNodes()
 					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s from supernode %s"), pBranch->GetVerbalName(), it1->first->GetVerbalName()));
 				else
 					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s connects supernodes %s and %s"), pBranch->GetVerbalName(), it1->first->GetVerbalName(), it2->first->GetVerbalName()));
+			}
+		}
+
+		// идем по мультиссылкам узла
+		for (auto&& multilink : m_Links)
+		{
+			// определяем индекс ссылки один-к-одному в контейнере, с которым связаны узлы
+			// для поиска индекса контейнер запрашиваем по типу связи "Узел"
+			ptrdiff_t nLinkIndex = multilink->m_pContainer->GetSingleLinkIndex(DEVTYPE_NODE);
+			// идем по суперузлам
+			for (auto&& SuperNodeBlock : SuperNodes)
+			{
+				// идем по входящим в суперузлы узлам
+				for (auto&& SlaveNode : SuperNodeBlock.second)
+				{
+					// достаем из узла мультиссылку на текущий тип связи
+					CLinkPtrCount *pLink = &multilink->m_pLinkInfo[SlaveNode->m_nInContainerIndex];
+					SlaveNode->ResetVisited();
+					CDevice **ppDevice(nullptr);
+					// идем по мультиссылке
+					while (pLink->In(ppDevice))
+					{
+						// указатель на прежний узел в устройстве, которое сязано с узлом
+						CDevice *pOldDev = (*ppDevice)->GetSingleLink(nLinkIndex);
+						// заменяем ссылку на старый узел ссылкой на суперузел
+						(*ppDevice)->SetSingleLink(nLinkIndex, SuperNodeBlock.first);
+						wstring strName(pOldDev ? pOldDev->GetVerbalName() : _T(""));
+						m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Change link of object %s from node %s to supernode %s"), 
+								(*ppDevice)->GetVerbalName(), 
+								strName.c_str(),SuperNodeBlock.first->GetVerbalName()));
+					}
+				}
 			}
 		}
 	}

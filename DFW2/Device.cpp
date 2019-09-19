@@ -278,7 +278,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 
 		if (bRes && LinkFrom.eLinkMode == DLM_MULTI)
 		{
-			// если у связываемого контейнера бьл режим мультисвязи
+			// если у связываемого контейнера был режим мультисвязи
 			// размечаем мультисвязи в связываемом контейнере
 			pContSlave->AllocateLinks(LinkFrom.nLinkIndex);
 			// для каждого из устройств мастер-контейнера
