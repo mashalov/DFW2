@@ -778,13 +778,15 @@ CSynchroZone::CSynchroZone() : CDevice()
 	Clear();
 }
 
+// очищает свойства зоны
 void CSynchroZone::Clear()
 {
-	m_bEnergized = false;
-	Mj = 0.0;
-	S = 0.0;
+	// по умолчанию зона :
+	m_bEnergized = false;				// напряжение снято
+	Mj = 0.0;							// суммарный момент инерции равен нулю
+	S = 0.0;							// скольжение равно нулю
 	m_bPassed = true;
-	m_bInfPower = false;
+	m_bInfPower = false;				// в зоне нет ШБМ
 	m_LinkedGenerators.clear();
 }
 
