@@ -150,10 +150,14 @@ namespace DFW2
 		ptrdiff_t GetLinkIndex(CDeviceContainer* pLinkContainer);			// получить индекс ссылок по внешнему контейнеру
 		ptrdiff_t GetLinkIndex(eDFW2DEVICETYPE eDeviceType);				// получить индекс ссылок по типу внешнего устройства
 		bool IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
+		bool IncrementLinkCounter(CMultiLink *pLink, ptrdiff_t nDeviceIndex);
 		bool AllocateLinks(ptrdiff_t nLinkIndex);
+		bool AllocateLinks(CMultiLink *pLink);
 		bool AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice);
-		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
+		bool AddLink(CMultiLink *pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice);
 		bool RestoreLinks(ptrdiff_t nLinkIndex);
+		bool RestoreLinks(CMultiLink *pLink);
+		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		bool EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
 		bool BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
 		bool BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств

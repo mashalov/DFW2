@@ -336,6 +336,7 @@ namespace DFW2
 		_IterationControl m_IterationControl;
 		void DumpIterationControl();
 		friend class CLoadFlow;
+		LINKSVEC m_SuperLinks;
 	public:
 		bool GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
 		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);
