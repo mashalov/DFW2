@@ -525,12 +525,17 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			}
 		}
 
+
 		// идем по мультиссылкам узла
 		for (auto&& multilink : m_Links)
 		{
 			// определяем индекс ссылки один-к-одному в контейнере, с которым связаны узлы
 			// для поиска индекса контейнер запрашиваем по типу связи "Узел"
 			ptrdiff_t nLinkIndex = multilink->m_pContainer->GetSingleLinkIndex(DEVTYPE_NODE);
+
+			CMultiLink *pSuperLink = new CMultiLink(multilink->m_pContainer, Count());
+			m_SuperLinks.push_back(pSuperLink);
+
 			// идем по суперузлам
 			for (auto&& SuperNodeBlock : SuperNodes)
 			{
@@ -543,7 +548,22 @@ bool CDynaNodeContainer::CreateSuperNodes()
 					CDevice **ppDevice(nullptr);
 					// идем по мультиссылке
 					while (pLink->In(ppDevice))
+						IncrementLinkCounter(pSuperLink, SuperNodeBlock.first->m_nInContainerIndex);
+				}
+			}
+
+			AllocateLinks(pSuperLink);
+
+			for (auto&& SuperNodeBlock : SuperNodes)
+			{
+				for (auto&& SlaveNode : SuperNodeBlock.second)
+				{
+					CLinkPtrCount *pLink = &multilink->m_pLinkInfo[SlaveNode->m_nInContainerIndex];
+					SlaveNode->ResetVisited();
+					CDevice **ppDevice(nullptr);
+					while (pLink->In(ppDevice))
 					{
+						AddLink(pSuperLink, SuperNodeBlock.first->m_nInContainerIndex, *ppDevice);
 						// указатель на прежний узел в устройстве, которое сязано с узлом
 						CDevice *pOldDev = (*ppDevice)->GetSingleLink(nLinkIndex);
 						// заменяем ссылку на старый узел ссылкой на суперузел
@@ -552,11 +572,29 @@ bool CDynaNodeContainer::CreateSuperNodes()
 						m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Change link of object %s from node %s to supernode %s"), 
 								(*ppDevice)->GetVerbalName(), 
 								strName.c_str(),SuperNodeBlock.first->GetVerbalName()));
+						
 					}
+				}
+			}
+			RestoreLinks(pSuperLink);
+
+			for (auto&& SuperNodeBlock : SuperNodes)
+			{
+				CDevice **ppDevice(nullptr);
+				SuperNodeBlock.first->ResetVisited();
+				CLinkPtrCount *pLink = &pSuperLink->m_pLinkInfo[SuperNodeBlock.first->m_nInContainerIndex];
+				while (pLink->In(ppDevice))
+				{
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Supernode %s child %s"), SuperNodeBlock.first->GetVerbalName(), (*ppDevice)->GetVerbalName()));
 				}
 			}
 		}
 	}
+
+	for (auto&& it : m_SuperLinks)
+		delete it;
+
+	m_SuperLinks.clear();
 
 	return bRes;
 }

@@ -100,17 +100,17 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 		if (bRes)
 		{
 			// формируем буфер под ссылки в контейнере узлов
-			pContainer->AllocateLinks(0);
+			pContainer->AllocateLinks(ptrdiff_t(0));
 			// проходим по контейнеру ветвей
 			for (it = m_pContainer->begin(); it != m_pContainer->end(); it++)
 			{
 				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
 				// и добавляем к узлам в контейнере связи с ветвями
-				pContainer->AddLink(0, pBranch->m_pNodeIp->m_nInContainerIndex, pBranch);
-				pContainer->AddLink(0, pBranch->m_pNodeIq->m_nInContainerIndex, pBranch);
+				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIp->m_nInContainerIndex, pBranch);
+				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIq->m_nInContainerIndex, pBranch);
 			}
 			// сбрасываем счетчики ссылок (заканчиваем связывание)
-			pContainer->RestoreLinks(0);
+			pContainer->RestoreLinks(ptrdiff_t(0));
 		}
 	}
 	return bRes;

@@ -391,9 +391,13 @@ CMultiLink* CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDevi
 bool CDeviceContainer::IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
 {
 	// на входе имеем индекс связей и индекс устройства, к которому нужно сделать связь
-	bool bRes = false;
-	// извлекаем мультисвязь для требуемого индекса связи и устройства
-	CMultiLink *pLink = GetCheckLink(nLinkIndex, nDeviceIndex);
+	return IncrementLinkCounter(GetCheckLink(nLinkIndex, nDeviceIndex), nDeviceIndex);
+}
+
+// добавляет элемент для связи с устройством 
+bool CDeviceContainer::IncrementLinkCounter(CMultiLink *pLink, ptrdiff_t nDeviceIndex)
+{
+	bool bRes(false);
 	if (pLink)
 	{
 		// если такая мультисвязь есть - увеличиваем счетчик связей
@@ -406,16 +410,19 @@ bool CDeviceContainer::IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDev
 // распределяет память под мультисвязи для выбранного индексом типа связей
 bool CDeviceContainer::AllocateLinks(ptrdiff_t nLinkIndex)
 {
-	bool bRes = false;
-	// извлекаем мультисвязь для первого устройства
-	CMultiLink *pLink = GetCheckLink(nLinkIndex, 0);
+	return AllocateLinks(GetCheckLink(nLinkIndex, 0));
+}
+
+// распределяет память под мультисвязи для выбранного индексом типа связей
+bool CDeviceContainer::AllocateLinks(CMultiLink *pLink)
+{
+	bool bRes(false);
 	if (pLink)
 	{
-
 		// считаем количество связей, которое нужно хранить
 		size_t nLinksSize = 0;
 
-		for(CLinkPtrCount *p = pLink->m_pLinkInfo ; p < pLink->m_pLinkInfo + pLink->m_nSize; p++)
+		for (CLinkPtrCount *p = pLink->m_pLinkInfo; p < pLink->m_pLinkInfo + pLink->m_nSize; p++)
 			nLinksSize += p->m_nCount;
 
 		// выделяем память под нужное количество связей
@@ -430,6 +437,7 @@ bool CDeviceContainer::AllocateLinks(ptrdiff_t nLinkIndex)
 			// и резервируем место под конкретное количество связей этого устройства
 			ppLink += p->m_nCount;
 		}
+		bRes = true;
 	}
 	return bRes;
 }
@@ -438,9 +446,15 @@ bool CDeviceContainer::AllocateLinks(ptrdiff_t nLinkIndex)
 // данная функция возвращает указатели к исходному значению как после AllocateLinks()
 bool CDeviceContainer::RestoreLinks(ptrdiff_t nLinkIndex)
 {
-	bool bRes = false;
+	return RestoreLinks(GetCheckLink(nLinkIndex, 0));
+}
+
+// после добавления связей указатели связей смещаются
+// данная функция возвращает указатели к исходному значению как после AllocateLinks()
+bool CDeviceContainer::RestoreLinks(CMultiLink *pLink)
+{
+	bool bRes(false);
 	// извлекаем связь данного типа для первого устройства
-	CMultiLink *pLink = GetCheckLink(nLinkIndex, 0);
 	if (pLink)
 	{
 		for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(pLink->m_nSize); i++)
@@ -449,6 +463,7 @@ bool CDeviceContainer::RestoreLinks(ptrdiff_t nLinkIndex)
 			CLinkPtrCount *pLinkPtr = &pLink->m_pLinkInfo[i];
 			// указатель смещаем в начальное значение просто вычитая количество добавленных элементов
 			pLinkPtr->m_pPointer -= pLinkPtr->m_nCount;
+			bRes = true;
 		}
 	}
 	return bRes;
@@ -457,9 +472,14 @@ bool CDeviceContainer::RestoreLinks(ptrdiff_t nLinkIndex)
 // добавляет новую связь заданного типа для выбранного индексом устройства
 bool CDeviceContainer::AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice)
 {
-	bool bRes = false;
+	return AddLink(GetCheckLink(nLinkIndex, nDeviceIndex), nDeviceIndex, pDevice);
+}
+
+// добавляет новую связь заданного типа для выбранного индексом устройства
+bool CDeviceContainer::AddLink(CMultiLink *pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice)
+{
+	bool bRes(false);
 	// извлекаем связь заданного типа заданного устройства
-	CMultiLink *pLink = GetCheckLink(nLinkIndex, nDeviceIndex);
 	if (pLink)
 	{
 		// извлекаем данные связи данного устройства
@@ -468,6 +488,7 @@ bool CDeviceContainer::AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDe
 		*pLinkPtr->m_pPointer = pDevice;
 		// переходим к следующей связи
 		pLinkPtr->m_pPointer++;
+		bRes = true;
 	}
 	return bRes;
 }
