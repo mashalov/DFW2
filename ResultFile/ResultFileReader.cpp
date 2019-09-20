@@ -132,6 +132,9 @@ double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				pBuffer = nullptr;
 				it++;
 			}
+
+			if (nTimeIndex != m_PointsCount)
+				throw CFileReadException(m_pFile, Cex(CDFW2Messages::m_cszResultFilePointsCountMismatch, nIndex, nTimeIndex, m_PointsCount));
 		}
 		catch (CFileReadException& ex)
 		{

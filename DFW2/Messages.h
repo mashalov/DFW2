@@ -114,6 +114,7 @@ namespace DFW2
 		static const _TCHAR* m_cszFailureAtMinimalStep;
 		static const _TCHAR* m_cszMustBeConstPowerLRC;
 		static const _TCHAR* m_cszResultFileWrongCompressedBlockType;
+		static const _TCHAR* m_cszResultFilePointsCountMismatch;
 
 	};
 }

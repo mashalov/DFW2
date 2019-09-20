@@ -216,15 +216,35 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 			{	
 				if (bAllBytesEqual)
 				{
-					// если все байты во входном буфере RLE одинаковые, тип блока ставим 2 - SuperRLE
-					Encoder.m_nUnwrittenSuperRLECount += Encoder.m_nCount;
-					Encoder.m_SuperRLEByte = *Output.BytesBuffer();
+					// все байты во входном буфере RLE одинаковые
+					if (Encoder.m_nUnwrittenSuperRLECount > 0)
+					{
+						// уже есть блок данных с одинаковыми байтами
+						// проверяем, это были те же байты, что пришли сейчас ?
+						if(Encoder.m_SuperRLEByte == *Output.BytesBuffer())
+							Encoder.m_nUnwrittenSuperRLECount += Encoder.m_nCount;	// если да, просто увеличиваем счетчик байтов
+						else
+						{
+							// накопленные байты отличаются от тех, что пришли,
+							// поэтому сбрасываем старый RLE блок и начинаем записывать новый
+							FlushSuperRLE(Encoder);
+							Encoder.m_nPreviousSeek = _ftelli64(m_pFile);
+							Encoder.m_nUnwrittenSuperRLECount = Encoder.m_nCount;
+							Encoder.m_SuperRLEByte = *Output.BytesBuffer();
+						}
+					}
+					else
+					{
+						// блока с одинаковыми данными не было, начинаем его записывать
+						Encoder.m_nUnwrittenSuperRLECount = Encoder.m_nCount;
+						Encoder.m_SuperRLEByte = *Output.BytesBuffer();
+					}
 				}
 				else
 				{
 					// сбрасываем блок SuperRLE если был
-					__int64 nCurrentSeek = _ftelli64(m_pFile);
 					FlushSuperRLE(Encoder);
+					__int64 nCurrentSeek = _ftelli64(m_pFile);
 					WriteLEB(0);						// type of block 0 - RLE data
 					WriteLEB(Encoder.m_nCount);			// count of doubles
 					WriteLEB(nCompressedSize);			// byte length of RLE data
@@ -239,8 +259,8 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 			else
 			{
 				// сбрасываем блок SuperRLE если был
-				__int64 nCurrentSeek = _ftelli64(m_pFile);
 				FlushSuperRLE(Encoder);
+				__int64 nCurrentSeek = _ftelli64(m_pFile);
 				WriteLEB(1);						// type of block 1 - RAW compressed data
 				WriteLEB(Encoder.m_nCount);			// count of doubles
 				WriteLEB(Output.BytesWritten());	// byte length of block
@@ -730,7 +750,9 @@ bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, un
 	bool bRes = m_RLECompressor.Compress(pBuffer, nBufferSize, pCompressedBuffer, nCompressedSize, bAllBytesEqual);
 	if (bRes)
 	{
-		if (nCompressedSize < nBufferSize)
+		// если удалось сжать, или все байты одинаковые и размер сжатого равен размеру исходного - возвращаем 
+		// тип блока - RLE
+		if (nCompressedSize < nBufferSize || (bAllBytesEqual && nCompressedSize <= nBufferSize) )
 		{
 			// debug RLE
 			/* 
@@ -740,9 +762,9 @@ bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, un
 			_ASSERTE(nBufferSize == nDecoSize);
 			_ASSERTE(!memcmp(pBuffer, pDecoBuf, nDecoSize));
 			*/
-			return true;
+			return true; // блок RLE
 		}
-		return false;
+		return false; // блок не RLE
 	}
 	return bRes;
 }
