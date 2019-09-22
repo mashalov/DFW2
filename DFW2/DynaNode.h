@@ -323,6 +323,12 @@ namespace DFW2
 	class CDynaNodeContainer : public CDeviceContainer
 	{
 	protected:
+		struct BranchNodes
+		{
+			CDynaNodeBase *pNodeIp;
+			CDynaNodeBase *pNodeIq;
+		};
+
 		CDeviceContainer *m_pSynchroZones;
 		CDynaNodeBase* GetFirstNode();
 		CDynaNodeBase* GetNextNode();
@@ -337,6 +343,7 @@ namespace DFW2
 		void DumpIterationControl();
 		friend class CLoadFlow;
 		LINKSVEC m_SuperLinks;
+		unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
 	public:
 		bool GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
 		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);

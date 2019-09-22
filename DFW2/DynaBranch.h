@@ -51,6 +51,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS SetBranchState(BranchState eBranchState, eDEVICESTATECAUSE eStateCause);
 		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
+		bool IsZeroImpedance();
 
 		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);
 

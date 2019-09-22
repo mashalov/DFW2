@@ -46,6 +46,8 @@ void CDeviceContainer::CleanUp()
 	for (auto&& it : m_Links)
 		delete it;
 
+	m_Links.clear();
+
 	m_DevVec.clear();
 }
 

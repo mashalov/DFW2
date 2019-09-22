@@ -265,6 +265,8 @@ namespace DFW2
 		ptrdiff_t CheckAddVisited(CDevice *pDevice);
 		void SetSingleLinkStart(CDevice **ppLinkStart);
 
+		CDynaModel* GetModel();
+
 		// построение блока уравнения в Якоби
 		virtual bool BuildEquations(CDynaModel *pDynaModel);
 		// построение правой части уравнений

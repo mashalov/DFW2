@@ -364,6 +364,8 @@ namespace DFW2
 			bool m_bUseRefactor;
 			bool m_bDisableResultsWriter;
 			ptrdiff_t m_nMinimumStepFailures;
+			double m_dZeroBranchImpedance;
+
 			Parameters()
 			{
 				eFreqDampingType = APDT_ISLAND;
@@ -387,6 +389,7 @@ namespace DFW2
 				m_bUseRefactor = false;
 				m_bDisableResultsWriter = false;
 				m_nMinimumStepFailures = 1;
+				m_dZeroBranchImpedance = 0.1;
 			}
 		} 
 			m_Parameters;
@@ -546,28 +549,28 @@ namespace DFW2
 		void ResetMatrixStructure();
 		bool Status();
 
-		inline double GetOmega0()
+		inline double GetOmega0() const
 		{
 			return 2 * 50.0 * M_PI;
 		}
 
-		inline ptrdiff_t GetOrder()
+		inline ptrdiff_t GetOrder() const
 		{
 			return sc.q;
 		}
 
-		inline double GetH()
+		inline double GetH() const
 		{
 			return sc.m_dCurrentH;
 		}
 
-		inline double GetOldH()
+		inline double GetOldH() const
 		{
 			return sc.m_dOldH;
 		}
 
 
-		inline double GetFreqTimeConstant()
+		inline double GetFreqTimeConstant() const
 		{
 			return m_Parameters.m_dFrequencyTimeConstant;
 		}
@@ -577,17 +580,17 @@ namespace DFW2
 			return m_pLRCGen;
 		}
 
-		inline double GetMustangDerivativeTimeConstant()
+		inline double GetMustangDerivativeTimeConstant() const
 		{
 			return m_Parameters.m_dMustangDerivativeTimeConstant;
 		}
 
-		inline ACTIVE_POWER_DAMPING_TYPE GetFreqDampingType()
+		inline ACTIVE_POWER_DAMPING_TYPE GetFreqDampingType() const
 		{
 			return m_Parameters.eFreqDampingType;
 		}
 
-		inline const _TCHAR* CDynaModel::GetDampingName()
+		inline const _TCHAR* CDynaModel::GetDampingName() const
 		{
 			_ASSERTE(m_cszDampingName);
 			return m_cszDampingName;
@@ -596,84 +599,89 @@ namespace DFW2
 		bool CountConstElementsToSkip(ptrdiff_t nRow);
 		bool SkipConstElements(ptrdiff_t nRow);
 
-		inline bool FillConstantElements()
+		inline bool FillConstantElements() const
 		{
 			return sc.m_bFillConstantElements;
 		}
 		
-		inline bool EstimateBuild()
+		inline bool EstimateBuild() const
 		{
 			return m_bEstimateBuild;
 		}
 		// возвращает тип метода дл€ уравнени€
 		// используетс€ дл€ управлени€ методом интегрировани€ дифференциальных переменных
 		// алгебраические уравнени€ всегда интегрируютс€ BDF. ƒифференциальные - ADAMS или BDF
-		inline DEVICE_EQUATION_TYPE CDynaModel::GetDiffEquationType()
+		inline DEVICE_EQUATION_TYPE CDynaModel::GetDiffEquationType() const
 		{
 			return m_Parameters.m_eDiffEquationType;
 		}
 
 		// возвращает напр€жение перехода —’Ќ на шунт
-		double GetLRCToShuntVmin()
+		double GetLRCToShuntVmin() const
 		{
 			return min(m_Parameters.m_dLRCToShuntVmin,1.0);
 		}
 
-		bool ConsiderDampingEquation()
+		bool ConsiderDampingEquation() const
 		{
 			return m_Parameters.m_bConsiderDampingEquation;
 		}
 		// возвращает абсолютную точность из параметров
-		inline double GetAtol()
+		inline double GetAtol() const
 		{
 			return m_Parameters.m_dAtol;
 		}
 		// возвращает относительную точность из параметров
-		inline double GetRtol()
+		inline double GetRtol() const
 		{
 			return m_Parameters.m_dRtol;
 		}
 		// ќтносительна€ погрешность решени€ ”– по напр€жению
 		// с помощью линейного метода
-		inline double GetRtolLULF()
+		inline double GetRtolLULF() const
 		{
 			return m_Parameters.m_dRtol;
 		}
 
-		inline double GetZeroCrossingInRange(double rH)
+		inline double GetZeroBranchImpedance() const
+		{
+			return m_Parameters.m_dZeroBranchImpedance;
+		}
+
+		inline double GetZeroCrossingInRange(double rH) const
 		{
 			return rH > 0.0 && rH < 1.0;
 		}
 
-		inline double GetZeroCrossingTolerance()
+		inline double GetZeroCrossingTolerance() const
 		{
 			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? FLT_MAX : 100.0 * m_Parameters.m_dAtol;
 		}
 
 		// “екущий номер итерации Ќьютона
-		inline ptrdiff_t GetNewtonIterationNumber()
+		inline ptrdiff_t GetNewtonIterationNumber() const
 		{
 			return sc.nNewtonIteration;
 		}
 
 		// “екущее количество шагов интегрировани€
-		inline ptrdiff_t GetIntegrationStepNumber()
+		inline ptrdiff_t GetIntegrationStepNumber() const
 		{
 			return sc.nStepsCount;
 		}
 
 		// возвращает текущее врем€ интегрировани€
-		inline double GetCurrentTime()
+		inline double GetCurrentTime() const
 		{
 			return sc.t;
 		}
 
-		inline bool ZeroCrossingStepReached(double dHstep)
+		inline bool ZeroCrossingStepReached(double dHstep) const
 		{
 			return dHstep > 0.997;
 		}
 
-		inline double GetHysteresis(double dValue)
+		inline double GetHysteresis(double dValue) const
 		{
 			return fabs(dValue) * GetRtol() * 0.01 + GetAtol() * 10.0;
 		}
