@@ -102,6 +102,7 @@ const _TCHAR* CDFW2Messages::m_cszFailureAtMinimalStep = _T("Необходим�
 const _TCHAR* CDFW2Messages::m_cszMustBeConstPowerLRC = _T("Не найдена типовая СХН на постоянную мощность с номером -1");
 const _TCHAR* CDFW2Messages::m_cszResultFileWrongCompressedBlockType = _T("Неверный тип сжатого блока данных в файле результатов");
 const _TCHAR* CDFW2Messages::m_cszResultFilePointsCountMismatch = _T("Размерность канала %d %d не совпадает с количеством точек в файле %d");
+const _TCHAR* CDFW2Messages::m_cszDeivceDoesNotHaveAccessToModel = _T("Устройство не имеет доступа к модели");
 
 
 

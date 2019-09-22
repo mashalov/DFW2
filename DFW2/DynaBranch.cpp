@@ -266,6 +266,20 @@ void CDynaBranch::CalcAdmittances()
 	}
 }
 
+bool CDynaBranch::IsZeroImpedance()
+{
+	const CDynaModel *pModel = GetModel();
+
+	if (m_BranchState == CDynaBranch::BRANCH_ON)
+	{
+		double Zmin = pModel->GetZeroBranchImpedance();
+		if (R < Zmin && X < Zmin)
+			return true;
+	}
+
+	return false;
+}
+
 CDynaNodeBase* CDynaBranch::GetOppositeNode(CDynaNodeBase* pOriginNode)
 {
 	_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);

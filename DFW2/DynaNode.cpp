@@ -408,8 +408,8 @@ void CDynaNode::Predict()
 	double newDelta = atan2(sin(Delta), cos(Delta));
 	if (fabs(newDelta - Delta) > DFW2_EPSILON)
 	{
-		RightVector *pRvDelta = m_pContainer->GetModel()->GetRightVector(A(V_DELTA));
-		RightVector *pRvLag = m_pContainer->GetModel()->GetRightVector(A(V_LAG));
+		RightVector *pRvDelta = GetModel()->GetRightVector(A(V_DELTA));
+		RightVector *pRvLag = GetModel()->GetRightVector(A(V_LAG));
 		double dDL = Delta - Lag;
 		Delta = newDelta;
 		Lag = Delta - dDL;

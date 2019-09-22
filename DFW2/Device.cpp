@@ -617,7 +617,7 @@ bool CDevice::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* p
 
 	if (eLimitDeviceType == DEVTYPE_MODEL)
 	{
-		bRes = m_pContainer->GetModel()->InitExternalVariable(ExtVar, pFromDevice, cszName);
+		bRes = GetModel()->InitExternalVariable(ExtVar, pFromDevice, cszName);
 	}
 	else
 	{
@@ -936,7 +936,7 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 {
 	if (m_pContainer)
 	{
-		CDynaModel *pModel = m_pContainer->GetModel();
+		CDynaModel *pModel = GetModel();
 		if (pModel && GetId() == nId && pModel->GetIntegrationStepNumber() == nStepNumber)
 		{
 			wstring FileName = Cex(_T("c:\\tmp\\%s_%d.csv"), GetVerbalName(), nStepNumber);
@@ -965,6 +965,12 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 			}
 		}
 	}
+}
+
+CDynaModel* CDevice::GetModel()
+{
+	_ASSERTE(m_pContainer && m_pContainer->GetModel());
+	return m_pContainer->GetModel();
 }
 
 #ifdef _DEBUG
