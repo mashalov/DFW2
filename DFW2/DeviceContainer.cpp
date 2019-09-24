@@ -375,18 +375,23 @@ void CDeviceContainer::PrepareSingleLinks()
 	}
 }
 
-// возвращает связь заданного типа (по индексу) и устройства 
-CMultiLink* CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
+// возвращает связь заданного типа (по индексу) и устройства из заданного вектора ссылок
+CMultiLink* CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec)
 {
-	if (nLinkIndex >= 0 && nLinkIndex < static_cast<ptrdiff_t>(m_Links.size()))
+	if (nLinkIndex >= 0 && nLinkIndex < static_cast<ptrdiff_t>(LinksVec.size()))
 	{
 		// проверили не запрошен ли индекс вне диапазона связей
-		LINKSVECITR it = m_Links.begin() + nLinkIndex;
+		LINKSVECITR it = LinksVec.begin() + nLinkIndex;
 		// проверяем корректно ли указан индекс устройства, для которого хотят связи
 		if (nDeviceIndex >= 0 && nDeviceIndex < static_cast<ptrdiff_t>((*it)->m_nSize))
 			return *it;
 	}
 	return nullptr;
+}
+// возвращает связь заданного типа (по индексу) и устройства из основного вектора ссылок
+CMultiLink* CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
+{
+	return GetCheckLink(nLinkIndex, nDeviceIndex, m_Links);
 }
 
 // добавляет элемент для связи с устройством 
@@ -462,7 +467,7 @@ bool CDeviceContainer::RestoreLinks(CMultiLink *pLink)
 		for (ptrdiff_t i = 0; i < static_cast<ptrdiff_t>(pLink->m_nSize); i++)
 		{
 			// обходим все связи
-			CLinkPtrCount *pLinkPtr = &pLink->m_pLinkInfo[i];
+			CLinkPtrCount *pLinkPtr = pLink->GetLink(i);
 			// указатель смещаем в начальное значение просто вычитая количество добавленных элементов
 			pLinkPtr->m_pPointer -= pLinkPtr->m_nCount;
 			bRes = true;
@@ -485,7 +490,7 @@ bool CDeviceContainer::AddLink(CMultiLink *pLink, ptrdiff_t nDeviceIndex, CDevic
 	if (pLink)
 	{
 		// извлекаем данные связи данного устройства
-		CLinkPtrCount *pLinkPtr = &pLink->m_pLinkInfo[nDeviceIndex];
+		CLinkPtrCount *pLinkPtr = pLink->GetLink(nDeviceIndex);
 		// в текущий указатель связей вводим указатель на связываемое устройство
 		*pLinkPtr->m_pPointer = pDevice;
 		// переходим к следующей связи

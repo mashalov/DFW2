@@ -622,7 +622,7 @@ CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) :
 
 CDynaNodeContainer::~CDynaNodeContainer()
 {
-
+	ClearSuperLinks();
 }
 
 void CDynaNodeContainer::CalcAdmittances(bool bSeidell)

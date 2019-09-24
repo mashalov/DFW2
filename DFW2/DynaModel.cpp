@@ -88,6 +88,8 @@ bool CDynaModel::Run()
 	_set_FMA3_enable(0);
 #endif
 
+	//m_Parameters.m_dZeroBranchImpedance = -1;
+
 	//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 	m_Parameters.eFreqDampingType = APDT_NODE;
 	m_Parameters.m_dOutStep = 1E-10;

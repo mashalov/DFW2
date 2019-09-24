@@ -328,7 +328,7 @@ CLinkPtrCount* CDevice::GetLink(ptrdiff_t nLinkIndex)
 		CMultiLink *pMultiLink = m_pContainer->GetCheckLink(nLinkIndex, m_nInContainerIndex);
 		// если список ссылок есть - возвращаем список
 		if (pMultiLink)
-			pLink = &pMultiLink->m_pLinkInfo[m_nInContainerIndex];
+			pLink = pMultiLink->GetLink(m_nInContainerIndex);
 	}
 	return pLink;
 }
