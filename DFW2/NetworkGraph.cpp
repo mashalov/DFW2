@@ -495,7 +495,8 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
-		pBranch->m_pNodeSuperIp = pBranch->m_pNodeSuperIq = nullptr;
+		pBranch->m_pNodeSuperIp = pBranch->m_pNodeIp;
+		pBranch->m_pNodeSuperIq = pBranch->m_pNodeIq;
 		if (pBranch->IsZeroImpedance())
 		{
 			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
@@ -530,7 +531,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			if (pass)
 				RestoreLinks(pNodeSuperLink);	// на втором проходе финализируем ссылки
 			else
-				AllocateLinks(pNodeSuperLink);	// на первом проходм размечаем ссылки по узлам
+				AllocateLinks(pNodeSuperLink);	// на первом проходe размечаем ссылки по узлам
 		}
 
 		// перестраиваем связи суперузлов с ветвями:
@@ -544,11 +545,13 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			{
 				// учитываем только включенные ветви (по идее можно фильтровать и ветви с нулевым сопротивлением)
 				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
-				if (pBranch->m_BranchState != CDynaBranch::BRANCH_ON)
-					continue;
+				
+				// Здесь включаем все ветви: и включенные и отключенные, иначе надо всякий раз перестраивать матрицу
+				//if (pBranch->m_BranchState != CDynaBranch::BRANCH_ON)
+				//	continue;
 
-				CDynaNodeBase *pNodeIp = pBranch->m_pNodeIp;
-				CDynaNodeBase *pNodeIq = pBranch->m_pNodeIq;
+				CDynaNodeBase *pNodeIp(pBranch->m_pNodeIp);
+				CDynaNodeBase *pNodeIq(pBranch->m_pNodeIq);
 
 				if (pNodeIp->m_pSuperNodeParent == pNodeIq->m_pSuperNodeParent)
 				{
@@ -708,15 +711,16 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	for (auto&& node : m_DevVec)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		pNode->YiiSuper = pNode->Yii;
 		CLinkPtrCount *pLink = m_SuperLinks[0]->GetLink(node->m_nInContainerIndex);
-		cplx Yii;
 		if (pLink->m_nCount)
 		{
 			CDevice **ppDevice(nullptr);
 			pNode->ResetVisited();
 			while (pLink->In(ppDevice))
 			{
-				Yii += pNode->Yii;
+				CDynaNodeBase *pSlaveNode(static_cast<CDynaNodeBase*>(*ppDevice));
+				pNode->YiiSuper += pSlaveNode->Yii;
 			}
 		}
 	}

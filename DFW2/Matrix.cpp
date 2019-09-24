@@ -47,6 +47,7 @@ bool CDynaModel::EstimateMatrix()
 
 			delete pRightVector;
 			pRightVector = pNewRightVector;
+			pRightHandBackup = new double[m_nMatrixSize];
 		}
 		else
 		{

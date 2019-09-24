@@ -99,6 +99,7 @@ namespace DFW2
 		eLFNodeType m_eLFNodeType;
 		ptrdiff_t Nr;
 		cplx Yii;						// собственная проводимость
+		cplx YiiSuper;					// собственная проводимость суперузла
 		double Vold;					// модуль напряжения на предыдущей итерации
 		CDynaLRC *m_pLRC;				// указатель на СХН узла в динамике
 		CDynaLRC *m_pLRCLF;				// указатель на СХН узла в УР
@@ -122,11 +123,11 @@ namespace DFW2
 		virtual void StoreStates() override;
 		virtual void RestoreStates() override;
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		inline double GetSelfImbP() { return Pnr - Pg - V * V * Yii.real();	}
-		inline double GetSelfImbQ() { return Qnr - Qg + V * V * Yii.imag(); }
+		inline double GetSelfImbP() { return Pnr - Pg - V * V * YiiSuper.real();	}
+		inline double GetSelfImbQ() { return Qnr - Qg + V * V * YiiSuper.imag(); }
 
-		inline double GetSelfdPdV() { return -2 * V * Yii.real() + dLRCPn;	}
-		inline double GetSelfdQdV() { return  2 * V * Yii.imag() + dLRCQn; }
+		inline double GetSelfdPdV() { return -2 * V * YiiSuper.real() + dLRCPn;	}
+		inline double GetSelfdQdV() { return  2 * V * YiiSuper.imag() + dLRCQn; }
 
 		inline bool IsLFTypePQ() { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
 

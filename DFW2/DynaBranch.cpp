@@ -286,6 +286,12 @@ CDynaNodeBase* CDynaBranch::GetOppositeNode(CDynaNodeBase* pOriginNode)
 	return m_pNodeIp == pOriginNode ? m_pNodeIq : m_pNodeIp;
 }
 
+CDynaNodeBase* CDynaBranch::GetOppositeSuperNode(CDynaNodeBase* pOriginNode)
+{
+	_ASSERTE(pOriginNode == m_pNodeSuperIq || pOriginNode == m_pNodeSuperIp);
+	return m_pNodeSuperIp == pOriginNode ? m_pNodeSuperIq : m_pNodeSuperIp;
+}
+
 CDynaBranchMeasure::CDynaBranchMeasure(CDynaBranch *pBranch) : CDevice(), m_pBranch(pBranch) 
 {
 	_ASSERTE(pBranch);
