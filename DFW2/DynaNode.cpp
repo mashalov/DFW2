@@ -124,10 +124,9 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		}
 	}
 
-	CLinkPtrCount *pBranchLink = GetLink(0);
-	CDevice **ppBranch = nullptr;
-	CLinkPtrCount *pGenLink = GetLink(1);
-	CDevice **ppGen = nullptr;
+	CLinkPtrCount *pBranchLink = GetSuperLink(1);
+	CLinkPtrCount *pGenLink    = GetSuperLink(2);
+	CDevice **ppBranch(nullptr), **ppGen(nullptr);
 
 	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON && IsStateOn());
 
@@ -171,7 +170,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		while (pBranchLink->In(ppBranch))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-			CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
+			CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(this);
 			bool bDup = CheckAddVisited(pOppNode) >= 0;
 			// dIre /dVre
 			pDynaModel->SetElement(A(V_RE), pOppNode->A(V_RE), 0.0, bDup);
@@ -201,7 +200,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			while (pBranchLink->In(ppBranch))
 			{
 				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-				CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
+				CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(this);
 				cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
 
 				bool bDup = CheckAddVisited(pOppNode) >= 0;
@@ -314,12 +313,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			}
 		}
 
-		CLinkPtrCount *pBranchLink = GetLink(0);
-		CLinkPtrCount *pGenLink = GetLink(1);
-
-
+		CLinkPtrCount *pBranchLink = GetSuperLink(1);
+		CLinkPtrCount *pGenLink	   = GetSuperLink(2);
+		CDevice **ppBranch(nullptr), **ppGen(nullptr);
 		ResetVisited();
-		CDevice **ppGen = nullptr;
 		while (pGenLink->In(ppGen))
 		{
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
@@ -334,11 +331,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		double Qk = Qnr - Qgr;
 
 		ResetVisited();
-		CDevice **ppBranch = nullptr;
 		while (pBranchLink->In(ppBranch))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-			CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(this);
+			CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(this);
 			cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
 			Ire -= pYkm->real() * pOppNode->Vre - pYkm->imag() * pOppNode->Vim;
 			Iim -= pYkm->imag() * pOppNode->Vre + pYkm->real() * pOppNode->Vim;
@@ -925,7 +921,7 @@ bool CDynaNodeContainer::LULF()
 			_ftprintf(fnode, _T("%td;"), pNode->GetId());
 			// Branches
 			CDevice **ppBranch(nullptr);
-			CLinkPtrCount *pLink = pNode->GetLink(0);
+			CLinkPtrCount *pLink = pNode->GetSuperLink(1);
 			pNode->ResetVisited();
 			NodeToMatrix *pNodeToMatrixEnd = pNodeToMatrix;
 
@@ -1024,8 +1020,7 @@ bool CDynaNodeContainer::LULF()
 				// Generators
 
 				CDevice **ppDeivce(nullptr);
-				CLinkPtrCount *pLink(nullptr);
- 			    pLink = pNode->GetLink(1);
+				CLinkPtrCount *pLink = pNode->GetSuperLink(2);
 				pNode->ResetVisited();
 				// проходим по генераторам
 				while (pLink->In(ppDeivce))

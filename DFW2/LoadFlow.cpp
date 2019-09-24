@@ -76,7 +76,7 @@ bool CLoadFlow::Estimate()
 			SlackBuses.push_back(pNode);
 
 		// обходим все узлы, включая БУ
-		CLinkPtrCount *pBranchLink = pNode->GetLink(0);
+		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
 		pNode->ResetVisited();
 		CDevice **ppDevice = nullptr;
 		while (pBranchLink->In(ppDevice))
@@ -85,7 +85,7 @@ bool CLoadFlow::Estimate()
 			// если ветвь включена, узел на противоположном конце также должен быть включен
 			if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
 			{
-				CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
+				CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(pNode);
 				if (pNode->CheckAddVisited(pOppNode) < 0)
 				{
 					if (NodeInMatrix(pNode))
@@ -147,7 +147,7 @@ bool CLoadFlow::Estimate()
 
 		// привязываем список ветвей к инфо узла
 		pMatrixInfo->pBranches = pBranches;
-		CLinkPtrCount *pBranchLink = pNode->GetLink(0);
+		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
 		pNode->ResetVisited();
 		CDevice **ppDevice = nullptr;
 		while (pBranchLink->In(ppDevice))
@@ -156,7 +156,7 @@ bool CLoadFlow::Estimate()
 			if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
 			{
 				// обходим включенные ветви также как и для подсчета размерностей выше
-				CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
+				CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(pNode);
 				// получаем проводимость к оппозитному узлу
 				cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
 				// проверяем, уже прошли данный оппозитный узел для просматриваемого узла или нет
@@ -194,7 +194,7 @@ bool CLoadFlow::Estimate()
 		pMatrixInfo->pNode = pNode;
 		pMatrixInfo->pBranches = pBranches;
 
-		CLinkPtrCount *pBranchLink = pNode->GetLink(0);
+		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
 		pNode->ResetVisited();
 		CDevice **ppDevice = nullptr;
 		while (pBranchLink->In(ppDevice))
@@ -204,7 +204,7 @@ bool CLoadFlow::Estimate()
 			{
 				// делаем все то же, что для нормальных узлов, исключая все связанное с матрицей
 				// но строим список ветвей от БУ
-				CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
+				CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(pNode);
 				cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
 				ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
 				if (DupIndex < 0)
@@ -461,7 +461,7 @@ bool CLoadFlow::Seidell()
 
 			double Q = Qe + pNode->Qg;	// расчетная генерация в узле
 
-			cplx I1 = dStep / conj(Unode) / pNode->Yii;
+			cplx I1 = dStep / conj(Unode) / pNode->YiiSuper;
 
 			switch (pNode->m_eLFNodeType)
 			{

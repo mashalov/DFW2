@@ -17,7 +17,7 @@ bool CDynaModel::WriteResultsHeaderBinary()
 		try
 		{
 			m_spResultWrite = spResults->Create(_T("c:\\tmp\\binresultCOM.rst"));
-			m_spResultWrite->NoChangeTolerance = GetAtol();
+			m_spResultWrite->NoChangeTolerance = 0.0;// GetAtol();
 			m_spResultWrite->Comment = _T("Тестовая схема mdp_debug5 с КЗ");
 
 			for (VARNAMEITRCONST vnmit = DFWMessages.VarNameMap().begin(); vnmit != DFWMessages.VarNameMap().end(); vnmit++)

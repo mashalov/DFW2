@@ -56,6 +56,7 @@ namespace DFW2
 		bool IsZeroImpedance();
 
 		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);
+		CDynaNodeBase* GetOppositeSuperNode(CDynaNodeBase* pOriginNode);
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};
