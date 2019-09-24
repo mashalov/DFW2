@@ -31,6 +31,13 @@ namespace DFW2
 		size_t   m_nCount;													// количество возможных связей (размерность m_ppPointers)
 		CMultiLink(CDeviceContainer* pContainer, size_t nCount);
 		bool Join(CMultiLink *pLink);
+
+		inline CLinkPtrCount* GetLink(ptrdiff_t nDeviceInContainerIndex)
+		{
+			_ASSERTE(nDeviceInContainerIndex >= 0 && nDeviceInContainerIndex < static_cast<ptrdiff_t>(m_nSize));
+			return m_pLinkInfo + nDeviceInContainerIndex;
+		}
+
 		virtual ~CMultiLink()
 		{
 			delete m_ppPointers;
@@ -158,6 +165,7 @@ namespace DFW2
 		bool RestoreLinks(ptrdiff_t nLinkIndex);
 		bool RestoreLinks(CMultiLink *pLink);
 		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
+		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
 		bool EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
 		bool BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
 		bool BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств

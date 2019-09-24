@@ -137,6 +137,7 @@ namespace DFW2
 		static const CDeviceContainerProperties DeviceProperties();
 
 		CDynaNodeBase *m_pSuperNodeParent;
+		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
@@ -344,7 +345,9 @@ namespace DFW2
 		friend class CLoadFlow;
 		LINKSVEC m_SuperLinks;
 		unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
+		void ClearSuperLinks();
 	public:
+		CMultiLink* GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		bool GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
 		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);
 		_IterationControl& IterationControl();

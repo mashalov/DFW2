@@ -28,6 +28,8 @@ namespace DFW2
 		double G, B, GrIp, GrIq, BrIp, BrIq;		// проводимость ветви, проводимости реакторов в начали и в конце
 		ptrdiff_t NrIp, NrIq;						// количество реакторов в начале и в конце
 		CDynaNodeBase *m_pNodeIp, *m_pNodeIq;		// узлы начала и конца
+		CDynaNodeBase *m_pNodeSuperIp, 
+					  *m_pNodeSuperIq;				// суперузлы начала и конца
 		double GIp, BIp, GIq, BIq;					// расчетные проводимости в начале и в конце
 		cplx Yip, Yiq, Yips, Yiqs;					// компоненты взаимных и собственных проводимостей 
 													// для матрицы узловых проводимостей

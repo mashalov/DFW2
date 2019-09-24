@@ -1044,7 +1044,7 @@ bool CLoadFlow::UpdatePQFromGenerators()
 		if (!pNode->IsStateOn())
 			continue;
 
-		CLinkPtrCount *pGenLink = pNode->GetLink(1);
+		CLinkPtrCount *pGenLink = pNode->GetSuperLink(2);
 		CDevice **ppGen(nullptr);
 		if (pGenLink->m_nCount)
 		{
@@ -1082,7 +1082,7 @@ bool CLoadFlow::UpdateQToGenerators()
 		if (!pNode->IsStateOn())
 			continue;
 
-		CLinkPtrCount *pGenLink = pNode->GetLink(1);
+		CLinkPtrCount *pGenLink = pNode->GetSuperLink(2);
 		CDevice **ppGen(nullptr);
 		if (pGenLink->m_nCount)
 		{
