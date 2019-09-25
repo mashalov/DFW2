@@ -240,17 +240,18 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 		m_bStatus = false;
 		MatrixRow *pRow = m_pMatrixRows + nRow;
 
+		
+		double l0 = l[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
 		// в качестве типа уравнения используем __физический__ тип
 		// потому что у алгебраических и дифференциальных уравнений
 		// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
-		DEVICE_EQUATION_TYPE eColVarType = GetRightVector(nCol)->PhysicalEquationType; 
 
 		if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
-			dValue *= l[eColVarType * 2 + (sc.q - 1)][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
+			dValue *= l0;		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
 		else
 		{
 			// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
-			dValue *= l[eColVarType * 2 + (sc.q - 1)][0] * GetH();
+			dValue *= l0 * GetH();
 			// если элемент диагональный, учитываем диагональную единичную матрицу
 			if (nRow == nCol)
 				dValue = 1.0 - dValue;
