@@ -96,7 +96,7 @@ bool CDynaModel::Run()
 	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
-	m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
+	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
 	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL;
 	//m_Parameters.m_nAdamsGlobalSuppressionStep = 5;
@@ -1017,8 +1017,8 @@ double CDynaModel::GetRatioForHigherOrder()
 	ConvTest[0].GetRMS();
 	ConvTest[1].GetRMS();
 
-	double DqUp0 = ConvTest[0].dErrorSum / 4.5;		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
-	double DqUp1 = ConvTest[1].dErrorSum / 12.0;	// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
+	double DqUp0 = ConvTest[0].dErrorSum / l[1][3];		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
+	double DqUp1 = ConvTest[1].dErrorSum / l[3][3];		// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
 
 	double rUp0 = pow(DqUp0, -1.0 / (sc.q + 2));
 	double rUp1 = pow(DqUp1, -1.0 / (sc.q + 2));

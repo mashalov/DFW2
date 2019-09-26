@@ -595,9 +595,18 @@ void CDynaModel::FindMaxB(double& bmax, ptrdiff_t& nMaxIndex)
 
 
 
-//									   l0			l1			l2			Cq
+/*
 const double CDynaModel::l[4][4] = { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
 									 { 2.0 / 3.0,	1.0,		1.0 /3.0,   4.5 },				//  BDF-2
 									 { 1.0,			1.0,		0.0,		2.0 },				//  ADAMS-1
 									 { 0.5,			1.0,		0.5,		12.0 } };			//  ADAMS-2
+
+*/
+
+const double alpha = 0.2;
+//									   l0			l1			l2			Cq
+const double CDynaModel::l[4][4] = { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
+									 { 2.0 / 3.0,	1.0,		1.0 / 3.0,   4.5 },				//  BDF-2
+									 { 1.0,			1.0,		0.0,		2.0 },				//  ADAMS-1
+									 { 0.5 * (1.0 + alpha),			1.0,		0.5,		1.0 / fabs(-1.0 / 12.0 - 0.5 * alpha)  / (1.0 + alpha) } };			//  ADAMS-2
 
