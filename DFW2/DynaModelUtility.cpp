@@ -594,6 +594,7 @@ void CDynaModel::FindMaxB(double& bmax, ptrdiff_t& nMaxIndex)
 void CDynaModel::SetAdamsDampingAlpha(double Alpha)
 {
 	Methodl[3][0] = MethodlDefault[3][0] * (1.0 + Alpha);
+	// Вместо MethodDefault[3][3] можно использовать честную формулу для LTE (см. Docs)
 	Methodl[3][3] = 1.0 / fabs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
 	sc.RefactorMatrix();
 }

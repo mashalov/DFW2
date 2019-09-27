@@ -379,7 +379,7 @@ bool CDynaModel::NewtonUpdate()
 	sc.Newton.Reset();
 
 	// констатны метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
-	const double Methodl0[2] = { Methodl[GetOrder() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[GetOrder() - 1 + DET_DIFFERENTIAL * 2][0] };
+	const double Methodl0[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -419,8 +419,8 @@ bool CDynaModel::NewtonUpdate()
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetConvergenceRatio);
 
-	if (ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[GetOrder() - 1][3] * ConvCheck &&
-		ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[GetOrder() + 1][3] * ConvCheck)
+	if (ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
+		ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck)
 	{
 		sc.m_bNewtonConverged = true;
 	}
@@ -922,7 +922,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 
 	sc.Integrator.Reset();
 
-	const double Methodl0[2] = { Methodl[GetOrder() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[GetOrder() - 1 + DET_DIFFERENTIAL * 2][0] };
+	const double Methodl0[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -952,10 +952,10 @@ double CDynaModel::GetRatioForCurrentOrder()
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
 		
-	double DqSame0 = ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[GetOrder() - 1][3];
-	double DqSame1 = ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[GetOrder() + 1][3];
-	double rSame0 = pow(DqSame0, -1.0 / (GetOrder() + 1));
-	double rSame1 = pow(DqSame1, -1.0 / (GetOrder() + 1));
+	double DqSame0 = ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[sc.q - 1][3];
+	double DqSame1 = ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[sc.q + 1][3];
+	double rSame0 = pow(DqSame0, -1.0 / (sc.q + 1));
+	double rSame1 = pow(DqSame1, -1.0 / (sc.q + 1));
 
 	r = min(rSame0, rSame1);
 
@@ -987,7 +987,7 @@ double CDynaModel::GetRatioForHigherOrder()
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 	
-	const double Methodl1[2] = { Methodl[GetOrder() - 1 + DET_ALGEBRAIC * 2][1],  Methodl[GetOrder() - 1 + DET_DIFFERENTIAL * 2][1] };
+	const double Methodl1[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -1008,8 +1008,8 @@ double CDynaModel::GetRatioForHigherOrder()
 	double DqUp0 = ConvTest[DET_ALGEBRAIC].dErrorSum    / Methodl[1][3];		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
 	double DqUp1 = ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[3][3];		// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
 
-	double rUp0 = pow(DqUp0, -1.0 / (GetOrder() + 2));
-	double rUp1 = pow(DqUp1, -1.0 / (GetOrder() + 2));
+	double rUp0 = pow(DqUp0, -1.0 / (sc.q + 2));
+	double rUp1 = pow(DqUp1, -1.0 / (sc.q + 2));
 
 	rUp = min(rUp0, rUp1);
 
@@ -1044,8 +1044,8 @@ double CDynaModel::GetRatioForLowerOrder()
 	double DqDown0 = ConvTest[DET_ALGEBRAIC].dErrorSum;
 	double DqDown1 = ConvTest[DET_DIFFERENTIAL].dErrorSum;
 
-	double rDown0 = pow(DqDown0, -1.0 / GetOrder());
-	double rDown1 = pow(DqDown1, -1.0 / GetOrder());
+	double rDown0 = pow(DqDown0, -1.0 / sc.q);
+	double rDown1 = pow(DqDown1, -1.0 / sc.q);
 
 	rDown = min(rDown0, rDown1);
 	return rDown;
