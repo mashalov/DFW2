@@ -8,12 +8,7 @@
 #include "cs.h"
 using namespace DFW2;
 
-CDynaModel::CDynaModel() : Symbolic(nullptr),
-						   pRightVector(nullptr),
-						   m_ppVarSearchStackBase(nullptr),
-						   m_cszDampingName(nullptr),
-						   m_pLRCGen(nullptr),
-						   m_Discontinuities(this),
+CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   m_Automatic(this),
 						   Nodes(this),
 						   Branches(this),
@@ -32,11 +27,10 @@ CDynaModel::CDynaModel() : Symbolic(nullptr),
 						   AutomaticDevice(this),
 						   m_pLogFile(NULL)
 {
-	Ax = nullptr;
-	Ai = Ap = nullptr;
-	pRightVector = nullptr;
-
 	m_hStopEvt = CreateEvent(NULL, TRUE, FALSE, _T("DFW2STOP"));
+	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
+	// константы могут изменяться, например для демпфирования
+	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
 
 	Nodes.m_ContainerProps				= CDynaNode::DeviceProperties();
 	Branches.m_ContainerProps			= CDynaBranch::DeviceProperties();
@@ -96,11 +90,13 @@ bool CDynaModel::Run()
 	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
-	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
+	m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
 	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL;
 	//m_Parameters.m_nAdamsGlobalSuppressionStep = 5;
 	//m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150000;
+
+	//SetAdamsDampingAlpha(0.1);
 	m_Parameters.m_bUseRefactor = true;
 	m_Parameters.m_dAtol = 1E-4;
 	m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
@@ -361,7 +357,6 @@ bool CDynaModel::InitEquations()
 
 csi cs_gatxpy(const cs *A, const double *x, double *y);
 
-
 bool CDynaModel::NewtonUpdate()
 {
 	bool bRes = true;
@@ -373,18 +368,18 @@ bool CDynaModel::NewtonUpdate()
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
-	ConvTest[0].Reset();
-	ConvTest[1].Reset();
-
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
 	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
 	double ConvCheck = 0.1 / (sc.q + 2);
 
 	double dOldMaxAbsError = sc.Newton.dMaxErrorVariable;
 
+	// first check Newton convergence
 	sc.Newton.Reset();
 
-	// first check Newton convergence
+	// констатны метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
+	const double Methodl0[2] = { Methodl[GetOrder() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[GetOrder() - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -403,7 +398,8 @@ bool CDynaModel::NewtonUpdate()
 		}
 
 		double l0 = pVectorBegin->Error;
-		l0 *= l[pVectorBegin->EquationType * 2 + (sc.q - 1)][0];
+
+		l0 *= Methodl0[pVectorBegin->EquationType];
 
 		double dNewValue = pVectorBegin->Nordsiek[0] + l0;
 
@@ -420,21 +416,18 @@ bool CDynaModel::NewtonUpdate()
 		pVectorBegin++;
 	}
 
-	ConvTest[0].FinalizeSum();
-	ConvTest[1].FinalizeSum();
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetConvergenceRatio);
 
-	ConvTest[0].GetConvergenceRatio();
-	ConvTest[1].GetConvergenceRatio();
-
-
-	if (ConvTest[0].dErrorSums < l[sc.q - 1][3] * ConvCheck &&
-		ConvTest[1].dErrorSums < l[sc.q + 1][3] * ConvCheck)
+	if (ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[GetOrder() - 1][3] * ConvCheck &&
+		ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[GetOrder() + 1][3] * ConvCheck)
 	{
 		sc.m_bNewtonConverged = true;
 	}
 	else
 	{
-		if (ConvTest[0].dCms > 1.0 || ConvTest[1].dCms > 1.0)
+		if (ConvTest[DET_ALGEBRAIC].dCms > 1.0 || 
+			ConvTest[DET_DIFFERENTIAL].dCms > 1.0)
 		{
 			sc.RefactorMatrix();
 
@@ -516,7 +509,7 @@ bool CDynaModel::NewtonUpdate()
 								pVectorBegin->Error -= db;
 								pVectorBegin->Error += db * lambda;
 								double l0 = pVectorBegin->Error;
-								l0 *= l[pVectorBegin->EquationType * 2 + (sc.q - 1)][0];
+								l0 *= Methodl0[pVectorBegin->EquationType];
 								*pVectorBegin->pValue = pVectorBegin->Nordsiek[0] + l0;
 								pVectorBegin++;
 							}
@@ -535,8 +528,7 @@ bool CDynaModel::NewtonUpdate()
 			sc.RefactorMatrix(false);
 	}
 
-	ConvTest[0].NextIteration();
-	ConvTest[1].NextIteration();
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::NextIteration);
 
 	bRes = bRes && NewtonUpdateDevices();
 	return bRes;
@@ -926,17 +918,18 @@ double CDynaModel::GetRatioForCurrentOrder()
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
-	ConvTest[0].Reset();
-	ConvTest[1].Reset();
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
+
 	sc.Integrator.Reset();
+
+	const double Methodl0[2] = { Methodl[GetOrder() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[GetOrder() - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	while (pVectorBegin < pVectorEnd)
 	{
 		if (pVectorBegin->Atol > 0)
 		{
-			const double *MethodConsts = l[pVectorBegin->EquationType * 2 + (sc.q - 1)];
 			// compute again to not asking device via pointer
-			double dNewValue = pVectorBegin->Nordsiek[0] + pVectorBegin->Error * MethodConsts[0];
+			double dNewValue = pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType];
 
 			double dError = pVectorBegin->GetWeightedError(dNewValue);
 			double dMaxError = fabs(dError);
@@ -955,16 +948,14 @@ double CDynaModel::GetRatioForCurrentOrder()
 		pVectorBegin++;
 	}
 	// Neumaier addition final phase
-	ConvTest[0].FinalizeSum();
-	ConvTest[1].FinalizeSum();
-		
-	ConvTest[0].GetRMS();
-	ConvTest[1].GetRMS();
 
-	double DqSame0 = ConvTest[0].dErrorSum / l[sc.q - 1][3];
-	double DqSame1 = ConvTest[1].dErrorSum / l[sc.q + 1][3];
-	double rSame0 = pow(DqSame0, -1.0 / (sc.q + 1));
-	double rSame1 = pow(DqSame1, -1.0 / (sc.q + 1));
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
+		
+	double DqSame0 = ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[GetOrder() - 1][3];
+	double DqSame1 = ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[GetOrder() + 1][3];
+	double rSame0 = pow(DqSame0, -1.0 / (GetOrder() + 1));
+	double rSame1 = pow(DqSame1, -1.0 / (GetOrder() + 1));
 
 	r = min(rSame0, rSame1);
 
@@ -994,34 +985,31 @@ double CDynaModel::GetRatioForHigherOrder()
 	RightVector *pVectorBegin = pRightVector;
 	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
-	ConvTest[0].Reset();
-	ConvTest[1].Reset();
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
+	
+	const double Methodl1[2] = { Methodl[GetOrder() - 1 + DET_ALGEBRAIC * 2][1],  Methodl[GetOrder() - 1 + DET_DIFFERENTIAL * 2][1] };
 
 	while (pVectorBegin < pVectorEnd)
 	{
 		if (pVectorBegin->Atol > 0) 
 		{
-			const double *MethodConsts = l[pVectorBegin->EquationType * 2 + (sc.q - 1)];
 			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
 			double dNewValue = *pVectorBegin->pValue;
 			// method consts lq can be 1 only
-			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Error - pVectorBegin->SavedError, dNewValue) * MethodConsts[1];
+			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Error - pVectorBegin->SavedError, dNewValue) * Methodl1[pVectorBegin->EquationType];
 			pCt->AddError(dError * dError);
 		}
 		pVectorBegin++;
 	}
 
-	ConvTest[0].FinalizeSum();
-	ConvTest[1].FinalizeSum();
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
 
-	ConvTest[0].GetRMS();
-	ConvTest[1].GetRMS();
+	double DqUp0 = ConvTest[DET_ALGEBRAIC].dErrorSum    / Methodl[1][3];		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
+	double DqUp1 = ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[3][3];		// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
 
-	double DqUp0 = ConvTest[0].dErrorSum / l[1][3];		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
-	double DqUp1 = ConvTest[1].dErrorSum / l[3][3];		// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
-
-	double rUp0 = pow(DqUp0, -1.0 / (sc.q + 2));
-	double rUp1 = pow(DqUp1, -1.0 / (sc.q + 2));
+	double rUp0 = pow(DqUp0, -1.0 / (GetOrder() + 2));
+	double rUp1 = pow(DqUp1, -1.0 / (GetOrder() + 2));
 
 	rUp = min(rUp0, rUp1);
 
@@ -1035,8 +1023,7 @@ double CDynaModel::GetRatioForLowerOrder()
 	RightVector *pVectorBegin = pRightVector;
 	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
-	ConvTest[0].Reset();
-	ConvTest[1].Reset();
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -1051,17 +1038,14 @@ double CDynaModel::GetRatioForLowerOrder()
 		pVectorBegin++;
 	}
 
-	ConvTest[0].FinalizeSum();
-	ConvTest[1].FinalizeSum();
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
 
-	ConvTest[0].GetRMS();
-	ConvTest[1].GetRMS();
+	double DqDown0 = ConvTest[DET_ALGEBRAIC].dErrorSum;
+	double DqDown1 = ConvTest[DET_DIFFERENTIAL].dErrorSum;
 
-	double DqDown0 = ConvTest[0].dErrorSum;
-	double DqDown1 = ConvTest[1].dErrorSum;
-
-	double rDown0 = pow(DqDown0, -1.0 / sc.q);
-	double rDown1 = pow(DqDown1, -1.0 / sc.q);
+	double rDown0 = pow(DqDown0, -1.0 / GetOrder());
+	double rDown1 = pow(DqDown1, -1.0 / GetOrder());
 
 	rDown = min(rDown0, rDown1);
 	return rDown;

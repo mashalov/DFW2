@@ -117,6 +117,23 @@ namespace DFW2
 
 			void AddError(double dError);
 			void FinalizeSum();
+
+
+			// обработка диапазона тестов сходимости в массиве
+
+			typedef ConvergenceTest ConvergenceTestVec[2];
+
+			static void ProcessRange(ConvergenceTestVec &Range, void(*ProcFunc)(ConvergenceTest& ct))
+			{
+				for (auto&& it : Range) ProcFunc(it);
+			}
+
+			static void Reset(ConvergenceTest& ct) { ct.Reset(); }
+			static void GetConvergenceRatio(ConvergenceTest& ct) { ct.GetConvergenceRatio(); }
+			static void NextIteration(ConvergenceTest& ct) { ct.NextIteration(); }
+			static void FinalizeSum(ConvergenceTest& ct) { ct.FinalizeSum(); }
+			static void GetRMS(ConvergenceTest& ct) { ct.GetRMS(); }
+			static void ResetIterations(ConvergenceTest& ct) { ct.ResetIterations(); }
 		};
 
 		struct StepError
@@ -394,7 +411,7 @@ namespace DFW2
 		} 
 			m_Parameters;
 
-		CDynaLRC *m_pLRCGen;		// СХН для генераторных узлов без генераторов
+		CDynaLRC *m_pLRCGen = nullptr;		// СХН для генераторных узлов без генераторов
 
 		MatrixRow *m_pMatrixRows;
 
@@ -402,24 +419,25 @@ namespace DFW2
 		DEVICECONTAINERS m_DeviceContainersNewtonUpdate;
 		DEVICECONTAINERS m_DeviceContainersPredict;
 
-		CDevice **m_ppVarSearchStackTop, **m_ppVarSearchStackBase;
+		CDevice **m_ppVarSearchStackTop, **m_ppVarSearchStackBase = nullptr;
 		DEVICEPTRSET m_setVisitedDevices;
 
 		ptrdiff_t m_nMatrixSize;
 		ptrdiff_t m_nNonZeroCount;
 
-		KLU_symbolic *Symbolic;
-		KLU_numeric *Numeric;
+		KLU_symbolic *Symbolic = nullptr;
+		KLU_numeric *Numeric = nullptr;
 		KLU_common Common;
 
-		double *Ax;
+		double *Ax = nullptr;
 		double *b;
 		double *pbRightHand;
 		double *pRightHandBackup;
 
-		struct RightVector *pRightVector;
+		struct RightVector *pRightVector = nullptr;
 
-		ptrdiff_t *Ap, *Ai;
+		ptrdiff_t *Ap = nullptr;
+		ptrdiff_t *Ai = nullptr;
 
 		bool m_bStatus;
 		bool m_bEstimateBuild;
@@ -482,12 +500,13 @@ namespace DFW2
 		bool WriteResults();
 		bool FinishWriteResults();
 
-		struct ConvergenceTest ConvTest[2];
+		ConvergenceTest::ConvergenceTestVec ConvTest;
 		struct StepControl sc;
 
 		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
 
 
+		void SetAdamsDampingAlpha(double Alpha);
 		void GoodStep(double rSame);
 		bool BadStep();
 		bool NewtonFailed();
@@ -505,7 +524,7 @@ namespace DFW2
 
 		IResultWritePtr m_spResultWrite;
 		double m_dTimeWritten;
-		const _TCHAR *m_cszDampingName;
+		const _TCHAR *m_cszDampingName = nullptr;
 		HANDLE m_hStopEvt;
 
 	public:
@@ -709,7 +728,9 @@ namespace DFW2
 
 		void Log(CDFW2Messages::DFW2MessageStatus Status, ptrdiff_t nDBIndex, const _TCHAR* cszMessage);
 		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...);
-		static const double l[4][4];
+
+		double Methodl[4][4];
+		static const double MethodlDefault[4][4];
 
 		bool PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);

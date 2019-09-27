@@ -1254,7 +1254,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 
 	double Border = LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst );
 
-	const double *lm = CDynaModel::l[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
+	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
 	double  h = pDynaModel->GetH();
 	double Vre1 = pRvre->Nordsiek[0] + pRvre->Error * lm[0];
 	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
@@ -1326,7 +1326,7 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	double Hyst = LOW_VOLTAGE_HYST;
 	RightVector *pRvre = pDynaModel->GetRightVector(A(V_RE));
 	RightVector *pRvim = pDynaModel->GetRightVector(A(V_IM));
-	const double *lm = CDynaModel::l[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
+	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
 	double Vre1 = pRvre->Nordsiek[0] + pRvre->Error * lm[0];
 	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
 	double Vcheck = sqrt(Vre1 * Vre1 + Vim1 * Vim1);

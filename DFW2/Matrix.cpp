@@ -241,7 +241,7 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 		MatrixRow *pRow = m_pMatrixRows + nRow;
 
 		
-		double l0 = l[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
+		double l0 = Methodl[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
 		// в качестве типа уравнения используем __физический__ тип
 		// потому что у алгебраических и дифференциальных уравнений
 		// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода

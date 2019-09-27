@@ -139,7 +139,7 @@ double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVect
 	double dError = pRightVector->Error;
 
 	// получаем константу метода интегрирования
-	const double *lm = CDynaModel::l[pRightVector->EquationType * 2 + q - 1];
+	const double *lm = pDynaModel->Methodl[pRightVector->EquationType * 2 + q - 1];
 	// рассчитываем коэффициенты полинома, описывающего изменение переменной
 	double a = 0.0;		// если порядок метода 1 - квадратичный член равен нулю
 	// линейный член
@@ -234,8 +234,8 @@ double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel *pDyn
 	double dError1 = pRightVector1->Error;
 	double dError2 = pRightVector2->Error;
 
-	const double *lm1 = CDynaModel::l[pRightVector1->EquationType * 2 + q - 1];
-	const double *lm2 = CDynaModel::l[pRightVector2->EquationType * 2 + q - 1];
+	const double *lm1 = pDynaModel->Methodl[pRightVector1->EquationType * 2 + q - 1];
+	const double *lm2 = pDynaModel->Methodl[pRightVector2->EquationType * 2 + q - 1];
 
 	double a = 0.0;
 	double b = (pRightVector1->Nordsiek[1] + dError1 * lm1[1] - (pRightVector2->Nordsiek[1] + dError2 * lm2[1])) / h;
