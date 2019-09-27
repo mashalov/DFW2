@@ -29,8 +29,7 @@ void CDynaModel::Predict()
 		pVectorBegin++;
 	}
 
-	ConvTest[0].ResetIterations();
-	ConvTest[1].ResetIterations();
+	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::ResetIterations);
 
 	// дл€ устройств, которые требует внутренней обработки прогноза
 	// (например дл€ узлов, которым нужно перевести прогноз пол€рного напр€жени€ в пр€моугольное)
@@ -204,15 +203,21 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	}
 
 	// обновление по [Lsode 2.76]
+
+	// делаем локальную копию коэффициентов метода дл€ текущего пор€дка
+	double LocalMethodl[2][3];
+	std::copy(&Methodl[sc.q - 1][0], &Methodl[sc.q - 1][3], &LocalMethodl[0][0]);
+	std::copy(&Methodl[sc.q + 1][0], &Methodl[sc.q + 1][3], &LocalMethodl[1][0]);
+
 	while (pVectorBegin < pVectorEnd)
 	{
 		// выбираем коэффициент метода по типу уравнени€ EquationType
-		const double *lm = l[pVectorBegin->EquationType * 2 + sc.q - 1];
+		const double *lm = LocalMethodl[pVectorBegin->EquationType];
 
 		double dError = pVectorBegin->Error;
-		pVectorBegin->Nordsiek[0] += dError * lm[0];
-		pVectorBegin->Nordsiek[1] += dError * lm[1];
-		pVectorBegin->Nordsiek[2] += dError * lm[2];
+		pVectorBegin->Nordsiek[0] += dError * *lm;	lm++;
+		pVectorBegin->Nordsiek[1] += dError * *lm;	lm++;
+		pVectorBegin->Nordsiek[2] += dError * *lm;	
 
 		// подавление рингинга
 		if (bSuprressRinging)
