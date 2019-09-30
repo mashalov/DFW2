@@ -547,8 +547,8 @@ bool CDynaNodeContainer::CreateSuperNodes()
 				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
 				
 				// Здесь включаем все ветви: и включенные и отключенные, иначе надо всякий раз перестраивать матрицу
-				//if (pBranch->m_BranchState != CDynaBranch::BRANCH_ON)
-				//	continue;
+				if (pBranch->m_BranchState != CDynaBranch::BRANCH_ON)
+					continue;
 
 				CDynaNodeBase *pNodeIp(pBranch->m_pNodeIp);
 				CDynaNodeBase *pNodeIq(pBranch->m_pNodeIq);
@@ -809,7 +809,7 @@ bool CDynaNodeContainer::ProcessTopology()
 	ptrdiff_t nDeenergizedCount = 1;
 	bRes = true;
 
-	m_bRebuildMatrix = false;
+	m_bRebuildMatrix = true;
 
 	while ((nEnergizedCount || nDeenergizedCount) && bRes)
 	{

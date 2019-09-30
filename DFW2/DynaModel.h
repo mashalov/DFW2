@@ -184,54 +184,55 @@ namespace DFW2
 			};
 
 
-			bool m_bRefactorMatrix;
+			bool m_bRefactorMatrix = false;
 			bool m_bFillConstantElements;
 			bool m_bNewtonConverged;
 			bool m_bNordsiekSaved;
 			bool m_bNewtonDisconverging;
 			bool m_bNewtonStepControl;
-			bool m_bDiscontinuityMode;
-			bool m_bZeroCrossingMode;
+			bool m_bDiscontinuityMode = false;
+			bool m_bZeroCrossingMode = false;
 			bool m_bRetryStep;
-			bool m_bStopCommandReceived;
-			bool m_bProcessTopology;
+			bool m_bStopCommandReceived = false;
+			bool m_bProcessTopology = false;
 			bool m_bDiscontinuityRequest;
-			bool m_bEnforceOut;
-			bool m_bBeforeDiscontinuityWritten;						// флаг обработки момента времени до разрыва
+			bool m_bEnforceOut = false;
+			bool m_bBeforeDiscontinuityWritten = false;				// флаг обработки момента времени до разрыва
 			double dFilteredStep;
 			double dFilteredOrder;
 			double dFilteredStepInner;								// фильтр минимального шага на серии шагов
 			double dFilteredOrderInner;
-			double dRateGrowLimit;
+			double dRateGrowLimit = FLT_MAX;
 			ptrdiff_t nStepsCount;
-			ptrdiff_t nNewtonIterationsCount;
-			ptrdiff_t nFactorizationsCount;
-			ptrdiff_t nAnalyzingsCount;
-			double dMaxConditionNumber;
-			double dMaxConditionNumberTime;
+			ptrdiff_t nNewtonIterationsCount = 0;
+			ptrdiff_t nFactorizationsCount = 0;
+			ptrdiff_t nAnalyzingsCount = 0;
+			double dMaxConditionNumber = 0.0;
+			double dMaxConditionNumberTime = 0.0;
 			OrderStatistics OrderStatistics[2];
-			ptrdiff_t nDiscontinuityNewtonFailures;
-			ptrdiff_t nMinimumStepFailures;
+			ptrdiff_t nDiscontinuityNewtonFailures = 0;
+			ptrdiff_t nMinimumStepFailures = 0;
 			double m_dCurrentH;
-			double m_dOldH;
+			double m_dOldH = -1.0;
 			double m_dStoredH;
 			ptrdiff_t q;
-			double t;
+			double t = 0.0;
 			double t0;
-			volatile double KahanC;
-			ptrdiff_t nStepsToStepChangeParameter;
-			ptrdiff_t nStepsToOrderChangeParameter;
-			ptrdiff_t nStepsToFailParameter;
+			volatile double KahanC = 0.0;
+			ptrdiff_t nStepsToStepChangeParameter = 4;
+			ptrdiff_t nStepsToOrderChangeParameter = 4;
+			ptrdiff_t nStepsToFailParameter = 1;
 			ptrdiff_t nStepsToStepChange;
 			ptrdiff_t nStepsToOrderChange;
 			ptrdiff_t nStepsToFail;
-			ptrdiff_t nSuccessfullStepsOfNewton;
-			ptrdiff_t nStepsToEndRateGrow;
+			ptrdiff_t nSuccessfullStepsOfNewton = 0;
+			ptrdiff_t nStepsToEndRateGrow = 0;
 			ptrdiff_t nNewtonIteration;
 			double dRightHandNorm;
 			chrono::time_point<chrono::high_resolution_clock> m_ClockStart;
-
-			double Hmin;
+			bool bAdamsDampingEnabled = false;
+			ptrdiff_t nNoRingingSteps = 0;
+			double Hmin = 1E-8;
 
 			StepError Newton;
 			StepError Integrator;
@@ -239,31 +240,6 @@ namespace DFW2
 
 			StepControl()
 			{
-				dRateGrowLimit = FLT_MAX;
-				m_bProcessTopology = false;
-				m_bDiscontinuityRequest = false;
-				m_bStopCommandReceived = false;
-				nStepsToOrderChangeParameter = 4;
-				nStepsToStepChangeParameter = 4;
-				nStepsToFailParameter = 1;
-				m_bDiscontinuityMode = false;
-				m_bZeroCrossingMode = false;
-				m_bRefactorMatrix = true;
-				m_bBeforeDiscontinuityWritten = false;
-				m_dOldH = -1.0;
-				t = 0.0;
-				KahanC = 0.0;
-				Hmin = 1E-8;
-				nSuccessfullStepsOfNewton = 0;
-				nStepsToEndRateGrow = 0;
-				m_bEnforceOut = false;
-				nNewtonIterationsCount = 0;
-				nFactorizationsCount = 0;
-				nAnalyzingsCount = 0;
-				nDiscontinuityNewtonFailures = 0;
-				nMinimumStepFailures = 0;
-				dMaxConditionNumber = 0;
-				dMaxConditionNumberTime = 0;
 				m_ClockStart = chrono::high_resolution_clock::now();
 			}
 
@@ -359,55 +335,33 @@ namespace DFW2
 
 		struct Parameters
 		{
-			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType;
-			DEVICE_EQUATION_TYPE m_eDiffEquationType;
-			double m_dFrequencyTimeConstant;
-			double m_dLRCToShuntVmin;
+			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = APDT_ISLAND;
+			DEVICE_EQUATION_TYPE m_eDiffEquationType = DET_DIFFERENTIAL;
+			double m_dFrequencyTimeConstant = 0.02;
+			double m_dLRCToShuntVmin = 0.5;
 			double m_dZeroCrossingTolerance;
-			bool m_bDontCheckTolOnMinStep;
-			bool m_bConsiderDampingEquation;
-			double m_dOutStep;
-			ptrdiff_t nVarSearchStackDepth;
-			double m_dAtol;
-			double m_dRtol;
-			double m_dRefactorByHRatio;
-			bool m_bLogToConsole;
-			bool m_bLogToFile;
-			double m_dMustangDerivativeTimeConstant;
-			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode;				// режим подавления рингинга
-			ptrdiff_t m_nAdamsIndividualSuppressionCycles;								// количество перемен знака переменной для обнаружения рингинга
-			ptrdiff_t m_nAdamsGlobalSuppressionStep;									// номер шага, на кратном которому работает глобальное подавление рингинга
-			ptrdiff_t m_nAdamsIndividualSuppressStepsRange;								// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
-			bool m_bUseRefactor;
-			bool m_bDisableResultsWriter;
-			ptrdiff_t m_nMinimumStepFailures;
-			double m_dZeroBranchImpedance;
+			bool m_bDontCheckTolOnMinStep = false;
+			bool m_bConsiderDampingEquation = false;
+			double m_dOutStep = 0.01;
+			ptrdiff_t nVarSearchStackDepth = 100;
+			double m_dAtol = DFW2_ATOL_DEFAULT;
+			double m_dRtol = DFW2_RTOL_DEFAULT;
+			double m_dRefactorByHRatio = 1.5;
+			bool m_bLogToConsole = true;
+			bool m_bLogToFile = true;
+			double m_dMustangDerivativeTimeConstant = 1E-6;
+			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;				// режим подавления рингинга
+			ptrdiff_t m_nAdamsIndividualSuppressionCycles = 3;								// количество перемен знака переменной для обнаружения рингинга
+			ptrdiff_t m_nAdamsGlobalSuppressionStep = 10;									// номер шага, на кратном которому работает глобальное подавление рингинга
+			ptrdiff_t m_nAdamsIndividualSuppressStepsRange = 5;								// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
+			bool m_bUseRefactor = false;
+			bool m_bDisableResultsWriter = false;
+			ptrdiff_t m_nMinimumStepFailures = 1;
+			double m_dZeroBranchImpedance = 0.1;
+			double m_dAdamsDampingAlpha = 0.01;
+			ptrdiff_t m_nAdamsDampingSteps = 10;
 
-			Parameters()
-			{
-				eFreqDampingType = APDT_ISLAND;
-				m_eDiffEquationType = DET_DIFFERENTIAL;
-				m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
-				m_nAdamsGlobalSuppressionStep = 10;
-				m_nAdamsIndividualSuppressionCycles = 3;
-				m_nAdamsIndividualSuppressStepsRange = 1;
-				m_dFrequencyTimeConstant = 0.02;
-				m_dLRCToShuntVmin = 0.5;
-				m_bDontCheckTolOnMinStep = false;
-				m_bConsiderDampingEquation = false;
-				m_dOutStep = 0.01;
-				nVarSearchStackDepth = 100;
-				m_dAtol = DFW2_ATOL_DEFAULT;
-				m_dRtol = DFW2_RTOL_DEFAULT;
-				m_dRefactorByHRatio = 1.5;
-				m_bLogToConsole = true;
-				m_bLogToFile = true;
-				m_dMustangDerivativeTimeConstant = 1E-6;
-				m_bUseRefactor = false;
-				m_bDisableResultsWriter = false;
-				m_nMinimumStepFailures = 1;
-				m_dZeroBranchImpedance = 0.1;
-			}
+			Parameters() { }
 		} 
 			m_Parameters;
 
@@ -485,6 +439,7 @@ namespace DFW2
 
 		void RescaleNordsiek(double r);
 		void UpdateNordsiek(bool bAllowSuppression = false);
+		bool DetectAdamsRinging();
 		void SaveNordsiek();
 		void RestoreNordsiek();
 		void ConstructNordsiekOrder();
@@ -504,9 +459,7 @@ namespace DFW2
 		struct StepControl sc;
 
 		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
-
-
-		void SetAdamsDampingAlpha(double Alpha);
+		void EnableAdamsCoefficientDamping(bool bEnable);
 		void GoodStep(double rSame);
 		bool BadStep();
 		bool NewtonFailed();

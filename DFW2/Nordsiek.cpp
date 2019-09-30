@@ -171,6 +171,81 @@ void CDynaModel::RestoreNordsiek()
 			(*dit)->RestoreStates();
 }
 
+bool CDynaModel::DetectAdamsRinging()
+{
+	bool bRes = false;
+
+	struct RightVector *pVectorBegin = pRightVector;
+	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+
+	double LocalMethodl[2][1];
+	std::copy(&Methodl[sc.q - 1][0], &Methodl[sc.q - 1][1], &LocalMethodl[0][0]);
+	std::copy(&Methodl[sc.q + 1][0], &Methodl[sc.q + 1][1], &LocalMethodl[1][0]);
+
+	if (sc.q == 2 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
+	{
+		while (pVectorBegin < pVectorEnd)
+		{
+			const double *lm = LocalMethodl[pVectorBegin->EquationType];
+			double newValue = pVectorBegin->Nordsiek[0] + pVectorBegin->Error * *lm;
+
+			// если знак переменной изменился - увеличиваем счетчик циклов
+			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[0]))
+				pVectorBegin->nRingsCount++;
+			else
+				pVectorBegin->nRingsCount = 0;
+
+			// если счетчик циклов изменения знака достиг порога
+			if (pVectorBegin->nRingsCount > m_Parameters.m_nAdamsIndividualSuppressionCycles)
+			{
+				pVectorBegin->nRingsCount = 0;
+				bRes = true;
+				switch (m_Parameters.m_eAdamsRingingSuppressionMode)
+				{
+					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
+						if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
+						{
+							// в RightVector устанавливаемколичество шагов, на протяжении которых производная Адамса будет заменяться 
+							// на производную  BDF
+							pVectorBegin->nRingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
+						}
+						break;
+					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA:
+						pVectorBegin->nRingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
+						break;
+				}
+				
+				if (pVectorBegin->nRingsSuppress)
+				{
+					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Ringing %s %s last values %g %g %d"),
+						pVectorBegin->pDevice->GetVerbalName(),
+						pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
+						newValue,
+						pVectorBegin->SavedNordsiek[0],
+						pVectorBegin->nRingsSuppress);
+				}
+			}
+
+//			if (m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA)
+//				break;
+			pVectorBegin++;
+		}
+
+		if (bRes)
+			sc.nNoRingingSteps = 0;
+		else
+			sc.nNoRingingSteps++;
+
+		if (m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA)
+			if(bRes)
+				EnableAdamsCoefficientDamping(true);
+			else
+				if(sc.nNoRingingSteps > m_Parameters.m_nAdamsDampingSteps)
+					EnableAdamsCoefficientDamping(false);
+	}
+	return true;
+}
+
 // обновляение Nordsieck после выполнения шага
 void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 {
@@ -229,11 +304,11 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 				{
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
 					{
-						// в индивидуальном режиме проверяем переменные, по которым пока не найдено рингига 
+						/*
 						if (pVectorBegin->nRingsSuppress == 0)
 						{
 							// если знак переменной изменился - увеличиваем счетчик циклов
-							if (std::signbit(pVectorBegin->Nordsiek[0]) != std::signbit(pVectorBegin->SavedNordsiek[0]))
+							if (std::signbit(*pVectorBegin->pValue) != std::signbit(pVectorBegin->SavedNordsiek[0]))
 								pVectorBegin->nRingsCount++;
 
 							if (pVectorBegin->nRingsCount > m_Parameters.m_nAdamsIndividualSuppressionCycles)
@@ -245,6 +320,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 								Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Ringing %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue));
 							}
 						}
+						*/
 
 						if (pVectorBegin->nRingsSuppress > 0)
 						{
@@ -252,6 +328,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 							// делаем эту замену и уменьшаем счетчик
 							pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
 							pVectorBegin->nRingsSuppress--;
+							pVectorBegin->nRingsCount = 0;
 						}
 					}
 					break;
