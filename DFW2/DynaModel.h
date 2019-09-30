@@ -358,7 +358,7 @@ namespace DFW2
 			bool m_bDisableResultsWriter = false;
 			ptrdiff_t m_nMinimumStepFailures = 1;
 			double m_dZeroBranchImpedance = 0.1;
-			double m_dAdamsDampingAlpha = 0.01;
+			double m_dAdamsDampingAlpha = 0.05;
 			ptrdiff_t m_nAdamsDampingSteps = 10;
 
 			Parameters() { }
