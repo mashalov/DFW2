@@ -103,6 +103,10 @@ const _TCHAR* CDFW2Messages::m_cszMustBeConstPowerLRC = _T("Не найдена 
 const _TCHAR* CDFW2Messages::m_cszResultFileWrongCompressedBlockType = _T("Неверный тип сжатого блока данных в файле результатов");
 const _TCHAR* CDFW2Messages::m_cszResultFilePointsCountMismatch = _T("Размерность канала %d %d не совпадает с количеством точек в файле %d");
 const _TCHAR* CDFW2Messages::m_cszDeivceDoesNotHaveAccessToModel = _T("Устройство не имеет доступа к модели");
+const _TCHAR* CDFW2Messages::m_cszAdamsDamping = _T("Демпфирование Адамса-2 %s");
+const _TCHAR* CDFW2Messages::m_cszOn = _T("вкл");
+const _TCHAR* CDFW2Messages::m_cszOff = _T("выкл");
+
 
 
 

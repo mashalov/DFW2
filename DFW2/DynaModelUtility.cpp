@@ -591,12 +591,16 @@ void CDynaModel::FindMaxB(double& bmax, ptrdiff_t& nMaxIndex)
 }
 
 
-void CDynaModel::SetAdamsDampingAlpha(double Alpha)
+void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 {
+	if (bEnable == sc.bAdamsDampingEnabled) return;
+	sc.bAdamsDampingEnabled = bEnable;
+	double Alpha = bEnable ? m_Parameters.m_dAdamsDampingAlpha : 0.0;
 	Methodl[3][0] = MethodlDefault[3][0] * (1.0 + Alpha);
 	// Вместо MethodDefault[3][3] можно использовать честную формулу для LTE (см. Docs)
 	Methodl[3][3] = 1.0 / fabs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
 	sc.RefactorMatrix();
+	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(DFW2::CDFW2Messages::m_cszAdamsDamping, bEnable ? DFW2::CDFW2Messages::m_cszOn: DFW2::CDFW2Messages::m_cszOff));
 }
 
 const double CDynaModel::MethodlDefault[4][4] = 

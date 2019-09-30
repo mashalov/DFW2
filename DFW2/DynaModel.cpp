@@ -79,7 +79,7 @@ bool CDynaModel::Run()
 {
 	bool bRes = true;
 #ifdef _WIN64
-	_set_FMA3_enable(0);
+	_set_FMA3_enable(1);
 #endif
 
 	m_Parameters.m_dZeroBranchImpedance = -1;
@@ -90,13 +90,13 @@ bool CDynaModel::Run()
 	//m_Parameters.eFreqDampingType = APDT_ISLAND;
 	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 
-	m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
+	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
 	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL;
+	m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA;
 	//m_Parameters.m_nAdamsGlobalSuppressionStep = 5;
-	//m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150000;
+	m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
 
-	//SetAdamsDampingAlpha(0.1);
 	m_Parameters.m_bUseRefactor = true;
 	m_Parameters.m_dAtol = 1E-4;
 	m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
@@ -795,6 +795,8 @@ bool CDynaModel::Step()
 				// если Ньютон сошелся
 				if (!sc.m_bDiscontinuityMode)
 				{
+					DetectAdamsRinging();
+
 					// и мы не находились в режиме обработки разрыва
 					double rSame = GetRatioForCurrentOrder();	// рассчитываем возможный шаг для текущего порядка метода
 

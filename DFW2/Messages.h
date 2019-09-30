@@ -116,7 +116,9 @@ namespace DFW2
 		static const _TCHAR* m_cszResultFileWrongCompressedBlockType;
 		static const _TCHAR* m_cszResultFilePointsCountMismatch;
 		static const _TCHAR* m_cszDeivceDoesNotHaveAccessToModel;
-
+		static const _TCHAR* m_cszAdamsDamping;
+		static const _TCHAR* m_cszOn;
+		static const _TCHAR* m_cszOff;
 	};
 }
 
