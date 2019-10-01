@@ -237,6 +237,7 @@ namespace DFW2
 			StepError Newton;
 			StepError Integrator;
 			double m_dLastRefactorH;
+			bool bRingingDetected = false;
 
 			StepControl()
 			{

@@ -173,19 +173,19 @@ void CDynaModel::RestoreNordsiek()
 
 bool CDynaModel::DetectAdamsRinging()
 {
-	bool bRes = false;
+	sc.bRingingDetected = false;
 
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
-
-	if (sc.q == 2 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
+	if ((m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA ||
+		m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL) &&
+		sc.q == 2 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
 	{
 		const double Methodl1[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
+		struct RightVector *pVectorBegin = pRightVector;
+		struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
 		while (pVectorBegin < pVectorEnd)
 		{
 			double newValue = pVectorBegin->Nordsiek[1] + pVectorBegin->Error * Methodl1[pVectorBegin->EquationType];
-
 			// если знак производной изменился - увеличиваем счетчик циклов
 			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && fabs(newValue) > pVectorBegin->Atol * sc.m_dCurrentH * 5.0)
 				pVectorBegin->nRingsCount++;
@@ -196,7 +196,7 @@ bool CDynaModel::DetectAdamsRinging()
 			if (pVectorBegin->nRingsCount > m_Parameters.m_nAdamsIndividualSuppressionCycles)
 			{
 				pVectorBegin->nRingsCount = 0;
-				bRes = true;
+				sc.bRingingDetected = true;
 				switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 				{
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
@@ -223,24 +223,16 @@ bool CDynaModel::DetectAdamsRinging()
 				}
 			}
 
-//			if (m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA)
-//				break;
 			pVectorBegin++;
 		}
 
-		if (bRes)
+		if (sc.bRingingDetected)
 			sc.nNoRingingSteps = 0;
 		else
 			sc.nNoRingingSteps++;
 
-		if (m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA)
-			if(bRes)
-				EnableAdamsCoefficientDamping(true);
-			else
-				if(sc.nNoRingingSteps > m_Parameters.m_nAdamsDampingSteps)
-					EnableAdamsCoefficientDamping(false);
 	}
-	return true;
+	return sc.bRingingDetected;
 }
 
 // обновляение Nordsieck после выполнения шага
@@ -300,25 +292,6 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 				switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 				{
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
-					{
-						/*
-						if (pVectorBegin->nRingsSuppress == 0)
-						{
-							// если знак переменной изменился - увеличиваем счетчик циклов
-							if (std::signbit(*pVectorBegin->pValue) != std::signbit(pVectorBegin->SavedNordsiek[0]))
-								pVectorBegin->nRingsCount++;
-
-							if (pVectorBegin->nRingsCount > m_Parameters.m_nAdamsIndividualSuppressionCycles)
-							{
-								// если счетчик циклов изменения знака достиг порога - в RightVector устанавливаем
-								// количество шагов, на протяжении которых производная Адамса будет заменяться 
-								// на производную  BDF
-								pVectorBegin->nRingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
-								Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Ringing %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue));
-							}
-						}
-						*/
-
 						if (pVectorBegin->nRingsSuppress > 0)
 						{
 							// для переменных, у которых количество шагов для замены Адамса на BDF не исчерпано
@@ -327,13 +300,10 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 							pVectorBegin->nRingsSuppress--;
 							pVectorBegin->nRingsCount = 0;
 						}
-					}
 					break;
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL:
-					{
 						// в глобальном режиме просто заменяем производную Адамса на производную BDF
 						pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
-					}
 					break;
 				}
 			}
@@ -358,6 +328,14 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
 			(*dit)->StoreStates();
+
+	if (m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA)
+	{
+		if(sc.bRingingDetected)
+			EnableAdamsCoefficientDamping(true);
+		else if(sc.nNoRingingSteps > m_Parameters.m_nAdamsDampingSteps)
+			EnableAdamsCoefficientDamping(false);
+	}
 
 
 	// даем информацию для обработки разрывов о том, что данный момент
