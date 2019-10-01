@@ -178,19 +178,16 @@ bool CDynaModel::DetectAdamsRinging()
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
 
-	double LocalMethodl[2][1];
-	std::copy(&Methodl[sc.q - 1][0], &Methodl[sc.q - 1][1], &LocalMethodl[0][0]);
-	std::copy(&Methodl[sc.q + 1][0], &Methodl[sc.q + 1][1], &LocalMethodl[1][0]);
-
 	if (sc.q == 2 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
 	{
+		const double Methodl1[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
+
 		while (pVectorBegin < pVectorEnd)
 		{
-			const double *lm = LocalMethodl[pVectorBegin->EquationType];
-			double newValue = pVectorBegin->Nordsiek[0] + pVectorBegin->Error * *lm;
+			double newValue = pVectorBegin->Nordsiek[1] + pVectorBegin->Error * Methodl1[pVectorBegin->EquationType];
 
-			// если знак переменной изменился - увеличиваем счетчик циклов
-			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[0]))
+			// если знак производной изменился - увеличиваем счетчик циклов
+			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && fabs(newValue) > pVectorBegin->Atol * sc.m_dCurrentH * 5.0)
 				pVectorBegin->nRingsCount++;
 			else
 				pVectorBegin->nRingsCount = 0;
