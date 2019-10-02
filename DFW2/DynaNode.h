@@ -110,6 +110,7 @@ namespace DFW2
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
 		void GetPnrQnr();
+		void GetPnrQnrSuper();
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual bool NewtonUpdateEquation(CDynaModel* pDynaModel);
@@ -120,6 +121,7 @@ namespace DFW2
 		void CalcAdmittances(bool bSeidell);
 		// инициализация узла для расчета УР
 		void InitLF();
+		void StartLF(bool bFlatStart, double ImbTol);
 		virtual void StoreStates() override;
 		virtual void RestoreStates() override;
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
@@ -321,6 +323,8 @@ namespace DFW2
 
 	typedef map<CDynaNodeBase*, set<CDynaNodeBase*>> NODEISLANDMAP;
 	typedef map<CDynaNodeBase*, set<CDynaNodeBase*>>::const_iterator NODEISLANDMAPITRCONST;
+	typedef map<CDevice*, CDevice*> DEVICETODEVICEMAP;
+	typedef vector<unique_ptr<DEVICETODEVICEMAP>> ORIGINALLINKSVEC;
 
 	class CDynaNodeContainer : public CDeviceContainer
 	{
@@ -345,9 +349,12 @@ namespace DFW2
 		void DumpIterationControl();
 		friend class CLoadFlow;
 		LINKSVEC m_SuperLinks;
+		ORIGINALLINKSVEC m_OriginalLinks;
 		unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
 		void ClearSuperLinks();
+		void DumpNodeIslands(NODEISLANDMAP& Islands);
 	public:
+		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
 		CMultiLink* GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		bool GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
 		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);

@@ -119,6 +119,7 @@ namespace DFW2
 		static const _TCHAR* m_cszAdamsDamping;
 		static const _TCHAR* m_cszOn;
 		static const _TCHAR* m_cszOff;
+		static const _TCHAR* m_cszIslandOfSuperNode;
 	};
 }
 

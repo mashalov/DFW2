@@ -21,6 +21,11 @@ void CDynaBranch::UpdateVerbalName()
 // отрицательных сопротивлений для устойчивого Зейделя
 cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 {
+	// если связь с нулевым сопротивлением
+	// возвращаем проводимость равную нулю
+	if (IsZeroImpedance())
+		return cplx(0.0);
+
 	double Rf = R;
 	double Xf = X;
 	// Для ветвей с нулевым сопротивлением

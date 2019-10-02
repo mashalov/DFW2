@@ -66,13 +66,15 @@ bool CLoadFlow::Estimate()
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		// обрабатываем только включенные узлы
+		// обрабатываем только включенные узлы и узлы без родительского суперузла
 		if (!pNode->IsStateOn())
 			continue;
+		if(pNode->m_pSuperNodeParent)
+			continue; 
 		// обновляем VreVim узла
 		pNode->InitLF();
 		// добавляем БУ в список БУ для дальнейшей обработки
-		if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE && pNode->IsStateOn())
+		if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE /* && pNode->IsStateOn() */)
 			SlackBuses.push_back(pNode);
 
 		// обходим все узлы, включая БУ
@@ -228,6 +230,64 @@ bool CLoadFlow::Estimate()
 	return bRes;
 }
 
+void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
+{
+	// для всех включенных и небазисных узлов
+	if (IsStateOn())
+	{
+		if (m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+		{
+			// если у узла заданы пределы по реактивной мощности и хотя бы один из них ненулевой + задано напряжение
+			if (LFQmax >= LFQmin && (fabs(LFQmax) > ImbTol || fabs(LFQmin) > ImbTol) && LFVref > 0.0)
+			{
+				// узел является PV-узлом
+				m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+				if (bFlatStart)
+				{
+					// если требуется плоский старт
+					V = LFVref;										// напряжение задаем равным Vref
+					Qg = LFQmin + (LFQmax - LFQmin) / 2.0;			// реактивную мощность ставим в середину диапазона
+					Delta = 0.0;
+				}
+				else if (Qg > LFQmax)
+				{
+					// для неплоского старта приводим реактивную мощность в ограничения
+					// и определяем тип ограничения узла
+					Qg = LFQmax;
+					m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
+				}
+				else if (LFQmin > Qg)
+				{
+					Qg = LFQmin;
+					m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
+				}
+			}
+			else
+			{
+				// для PQ-узлов на плоском старте ставим напряжение равным номинальному
+				m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PQ;
+				if (bFlatStart)
+				{
+					V = Unom;
+					Delta = 0.0;
+				}
+			}
+		}
+		else
+		{
+			// у базисного узла сбрасываем мощность в ноль 
+			Pg = Qg = 0.0;
+		}
+	}
+	else
+	{
+		// у отключенных узлов обнуляем напряжение
+		V = Delta = 0.0;
+	}
+	// используем инициализацию узла для расчета УР
+	InitLF();
+}
+
 bool CLoadFlow::Start()
 {
 	bool bRes = true;
@@ -251,60 +311,32 @@ bool CLoadFlow::Start()
 		pNode->Pnrrastr = pNode->Pn;
 		pNode->Qnrrastr = pNode->Qn;
 #endif
-		// для всех включенных и небазисных узлов
-		if (pNode->IsStateOn())
+		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
+	}
+
+	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		if (!pNode->IsStateOn() || pNode->m_pSuperNodeParent)
+			continue;
+		CLinkPtrCount *pNodeLink = pNode->GetSuperLink(0);
+		CDevice **ppDevice(nullptr);
+		double QrangeMax = -1.0;
+		while (pNodeLink->In(ppDevice))
 		{
-			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+			CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+			pNode->Pg += pSlaveNode->Pg;
+			pNode->Qg += pSlaveNode->Qg;
+			pNode->LFQmin += pSlaveNode->LFQmin;
+			pNode->LFQmax += pSlaveNode->LFQmax;
+			double Qrange = pSlaveNode->LFQmax - pSlaveNode->LFQmin;
+			if ((QrangeMax < 0 || QrangeMax < Qrange) && pSlaveNode->LFVref > 0.0)
 			{
-				// если у узла заданы пределы по реактивной мощности и хотя бы один из них ненулевой + задано напряжение
-				if (pNode->LFQmax >= pNode->LFQmin && (fabs(pNode->LFQmax) > m_Parameters.m_Imb || fabs(pNode->LFQmin) > m_Parameters.m_Imb) && pNode->LFVref > 0.0)
-				{
-					// узел является PV-узлом
-					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-					if (m_Parameters.m_bFlat)
-					{
-						// если требуется плоский старт
-						pNode->V = pNode->LFVref;													// напряжение задаем равным Vref
-						pNode->Qg = pNode->LFQmin + (pNode->LFQmax - pNode->LFQmin) / 2.0;			// реактивную мощность ставим в середину диапазона
-						pNode->Delta = 0.0;
-					}
-					else if (pNode->Qg > pNode->LFQmax)
-					{
-						// для неплоского старта приводим реактивную мощность в ограничения
-						// и определяем тип ограничения узла
-						pNode->Qg = pNode->LFQmax;
-						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
-					}
-					else if (pNode->LFQmin > pNode->Qg)
-					{
-						pNode->Qg = pNode->LFQmin;
-						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
-					}
-				}
-				else
-				{
-					// для PQ-узлов на плоском старте ставим напряжение равным номинальному
-					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PQ;
-					if (m_Parameters.m_bFlat)
-					{
-						pNode->V = pNode->Unom;
-						pNode->Delta = 0.0;
-					}
-				}
-			}
-			else
-			{
-				// у базисного узла сбрасываем мощность в ноль 
-				pNode->Pg = pNode->Qg = 0.0;
+				pNode->LFVref = pSlaveNode->LFVref;
+				QrangeMax = Qrange;
 			}
 		}
-		else
-		{
-			// у отключенных узлов обнуляем напряжение
-			pNode->V = pNode->Delta = 0.0;
-		}
-		// используем инициализацию узла для расчета УР
-		pNode->InitLF();
+		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
 	}
 
 	return bRes;
@@ -443,7 +475,7 @@ bool CLoadFlow::Seidell()
 			pMatrixInfo = *it;
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			// рассчитываем нагрузку по СХН
-			pNode->GetPnrQnr();
+			pNode->GetPnrQnrSuper();
 			double& Pe = pMatrixInfo->m_dImbP;
 			double& Qe = pMatrixInfo->m_dImbQ;
 			// рассчитываем небалансы
@@ -604,7 +636,7 @@ bool CLoadFlow::BuildMatrix()
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		bool bNodePQ = pNode->IsLFTypePQ();
-		pNode->GetPnrQnr();
+		pNode->GetPnrQnrSuper();
 		double Pe = pNode->GetSelfImbP(), Qe = pNode->GetSelfImbQ();
 		double dPdDelta = 0.0, dQdDelta = 0.0;
 		double dPdV = pNode->GetSelfdPdV(), dQdV = pNode->GetSelfdQdV();
@@ -674,7 +706,7 @@ void CLoadFlow::GetNodeImb(_MatrixInfo *pMatrixInfo)
 {
 	CDynaNodeBase *pNode = pMatrixInfo->pNode;
 	// нагрузка по СХН
-	pNode->GetPnrQnr();
+	pNode->GetPnrQnrSuper();
 	pMatrixInfo->m_dImbP = pNode->GetSelfImbP();
 	pMatrixInfo->m_dImbQ = pNode->GetSelfImbQ();
 	cplx Unode(pNode->Vre, pNode->Vim);
@@ -782,6 +814,19 @@ bool CLoadFlow::Run()
 			GetNodeImb(pMatrixInfo);
 			pNode->Pg += pMatrixInfo->m_dImbP;
 			pNode->Qg += pMatrixInfo->m_dImbQ;
+		}
+
+		// обновляем узлы в суперузлах
+		for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+			CDynaNodeBase *pSuperNodeParent = pNode->m_pSuperNodeParent;
+			if (pSuperNodeParent)
+			{
+				pNode->V	 = pSuperNodeParent->V;
+				pNode->Delta = pSuperNodeParent->Delta;
+				pNode->UpdateVreVim();
+			}
 		}
 
 		pNodes->IterationControl().m_ImbRatio = ImbSq;
@@ -907,6 +952,7 @@ bool CLoadFlow::Run()
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		pNode->GetPnrQnr();
 		if (pNode->IsStateOn())
 		{
 			double mx = fabs(pNode->V - pNode->Vrastr);
@@ -1044,7 +1090,8 @@ bool CLoadFlow::UpdatePQFromGenerators()
 		if (!pNode->IsStateOn())
 			continue;
 
-		CLinkPtrCount *pGenLink = pNode->GetSuperLink(2);
+		// проходим по генераторам, подключенным к суперузлу
+		CLinkPtrCount *pGenLink = pNode->GetLink(1);
 		CDevice **ppGen(nullptr);
 		if (pGenLink->m_nCount)
 		{
@@ -1109,6 +1156,28 @@ bool CLoadFlow::UpdateQToGenerators()
 			}
 		}
 	}
+	/*
+	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+
+		if (!pNode->IsStateOn())
+			continue;
+
+		CLinkPtrCount *pGenLink = pNode->GetLink(1);
+		CDevice **ppGen(nullptr);
+		if (pGenLink->m_nCount)
+		{
+			pNode->Pg = pNode->Qg = 0.0;
+			while (pGenLink->In(ppGen))
+			{
+				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+				pNode->Pg += pGen->P;
+				pNode->Qg += pGen->Q;
+			}
+		}
+	}
+	*/
 	return bRes;
 }
 

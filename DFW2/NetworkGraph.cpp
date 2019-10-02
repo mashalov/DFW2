@@ -422,6 +422,16 @@ NODEISLANDMAPITRCONST CDynaNodeContainer::GetNodeIsland(CDynaNodeBase* const pNo
 	return Islands.end();
 }
 
+void CDynaNodeContainer::DumpNodeIslands(NODEISLANDMAP& Islands)
+{
+	for (auto&& supernode : Islands)
+	{
+		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszIslandOfSuperNode , supernode.first->GetVerbalName()));
+		for (auto&& slavenode : supernode.second)
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("--> %s"), slavenode->GetVerbalName()));
+	}
+}
+
 bool CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands)
 {
 	bool bRes(true);
@@ -469,14 +479,6 @@ bool CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 			}
 		}
 	}
-	
-	/*for (auto&& nit : Islands)
-	{
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Supernode %d"), nit.first->GetId()));
-		for (auto&& mit : nit.second)
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("\tSlave %d"), mit->GetId()));
-	}*/
-
 	return bRes;
 }
 
@@ -511,6 +513,8 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		// строим связи от подчиенных узлов к суперузлам
 		// готовим вариант связи с ветвями
 		// в дополнительном списке связей
+
+		DumpNodeIslands(SuperNodes);
 
 		CMultiLink *pNodeSuperLink = new CMultiLink(this, Count());
 		m_SuperLinks.push_back(pNodeSuperLink);
@@ -642,6 +646,8 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			// создаем дополнительную мультисвязь и добавляем в список связей суперузлов
 			CMultiLink *pSuperLink = new CMultiLink(multilink->m_pContainer, Count());
 			m_SuperLinks.push_back(pSuperLink);
+			// для хранения оригинальных связей устройств с узлами используем карту устройство-устройство
+			m_OriginalLinks.push_back(make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
 
 			// обрабатываем связь в два прохода : подсчет + выделение памяти и добавление ссылок
 			for (int pass = 0; pass < 2; pass++)
@@ -670,6 +676,8 @@ bool CDynaNodeContainer::CreateSuperNodes()
 							CDevice *pOldDev = (*ppDevice)->GetSingleLink(nLinkIndex);
 							// заменяем ссылку на старый узел ссылкой на суперузел
 							(*ppDevice)->SetSingleLink(nLinkIndex, pSuperNode);
+							// сохраняем оригинальную связь устройства с узлом в карте
+							m_OriginalLinks.back()->insert(make_pair(*ppDevice, pOldDev));
 							//*
 							//wstring strName(pOldDev ? pOldDev->GetVerbalName() : _T(""));
 							//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Change link of object %s from node %s to supernode %s"),
@@ -694,7 +702,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
 		if (pNode->m_pSuperNodeParent || pNode->GetState() != eDEVICESTATE::DS_ON)
 			continue;
-		//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("%snode %s"), pNode->m_pSuperNodeParent ? _T(""): _T("super"), pNode->GetVerbalName()));
+		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("%snode %s"), pNode->m_pSuperNodeParent ? _T(""): _T("super"), pNode->GetVerbalName()));
 
 		for (auto&& superlink : m_SuperLinks)
 		{
@@ -703,7 +711,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			CLinkPtrCount *pLink = superlink->GetLink(pNode->m_nInContainerIndex);
 			while (pLink->In(ppDevice))
 			{
-				//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("\tchild %s"), (*ppDevice)->GetVerbalName()));
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("\tchild %s"), (*ppDevice)->GetVerbalName()));
 			}
 		}
 	}
@@ -725,6 +733,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		}
 	}
 
+	/*
 	// восстановление внешних одиночных ссылок
 	for (auto&& node : m_DevVec)
 	{
@@ -743,6 +752,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 				(*ppDevice)->SetSingleLink(nLinkIndex, pNode);	
 		}
 	}
+	*/
 
 	return bRes;
 }
@@ -752,6 +762,21 @@ void CDynaNodeContainer::ClearSuperLinks()
 	for (auto&& it : m_SuperLinks)
 		delete it;
 	m_SuperLinks.clear();
+	m_OriginalLinks.clear();
+}
+
+CDynaNodeBase* CDynaNodeContainer::FindGeneratorNodeInSuperNode(CDevice *pGen)
+{
+	CDynaNodeBase *pRet(nullptr);
+	// ищем генератор в карте сохраненных связей и возвращаем оригинальный узел
+	if (pGen && m_OriginalLinks.size() > 0)
+	{
+		auto& GenMap = m_OriginalLinks[0];
+		auto& itGen = GenMap->find(pGen);
+		if (itGen != GenMap->end())
+			pRet = static_cast<CDynaNodeBase*>(itGen->second);
+	}
+	return pRet;
 }
 
 CLinkPtrCount* CDynaNodeBase::GetSuperLink(ptrdiff_t nLinkIndex)

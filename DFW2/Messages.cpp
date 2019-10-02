@@ -106,6 +106,7 @@ const _TCHAR* CDFW2Messages::m_cszDeivceDoesNotHaveAccessToModel = _T("Устр�
 const _TCHAR* CDFW2Messages::m_cszAdamsDamping = _T("Демпфирование Адамса-2 %s");
 const _TCHAR* CDFW2Messages::m_cszOn = _T("вкл");
 const _TCHAR* CDFW2Messages::m_cszOff = _T("выкл");
+const _TCHAR* CDFW2Messages::m_cszIslandOfSuperNode = _T("Суперузел-представитель острова %s");
 
 
 
