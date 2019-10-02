@@ -45,6 +45,25 @@ void CDynaNodeBase::UpdateVreVim()
 }
 
 // рассчитывает нагрузку узла с учетом СХН
+// и суммирует все узлы, входящие в суперузел
+void CDynaNodeBase::GetPnrQnrSuper()
+{
+	GetPnrQnr();
+	CLinkPtrCount *pLink = GetSuperLink(0);
+	CDevice **ppDevice(nullptr);
+	while (pLink->In(ppDevice))
+	{
+		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		pSlaveNode->GetPnrQnr();
+		Pnr += pSlaveNode->Pnr;
+		Qnr += pSlaveNode->Qnr;
+		dLRCPn += pSlaveNode->dLRCPn;
+		dLRCQn += pSlaveNode->dLRCQn;
+		dLRCPg += pSlaveNode->dLRCPg;
+		dLRCQg += pSlaveNode->dLRCQg;
+	}
+}
+// рассчитывает нагрузку узла с учетом СХН
 void CDynaNodeBase::GetPnrQnr()
 {
 	// по умолчанию нагрузка равна заданной в УР
