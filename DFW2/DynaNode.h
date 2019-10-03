@@ -125,8 +125,8 @@ namespace DFW2
 		virtual void StoreStates() override;
 		virtual void RestoreStates() override;
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		inline double GetSelfImbP() { return Pnr - Pg - V * V * YiiSuper.real();	}
-		inline double GetSelfImbQ() { return Qnr - Qg + V * V * YiiSuper.imag(); }
+		inline double GetSelfImbP() { return Pnr - Pgr - V * V * YiiSuper.real();	}
+		inline double GetSelfImbQ() { return Qnr - Qgr + V * V * YiiSuper.imag(); }
 
 		inline double GetSelfdPdV() { return -2 * V * YiiSuper.real() + dLRCPn;	}
 		inline double GetSelfdQdV() { return  2 * V * YiiSuper.imag() + dLRCQn; }

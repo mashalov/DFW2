@@ -10,6 +10,16 @@ namespace DFW2
 	class CLoadFlow
 	{
 	public:
+		struct StoreParameters
+		{
+			CDynaNodeBase *m_pNode;
+			double LFQmin;
+			double LFQmax;
+			StoreParameters(CDynaNodeBase *pNode);
+			void Restore();
+		};
+
+		typedef list<StoreParameters> SUPERNODEPARAMETERSLIST;
 
 		struct Parameters
 		{
@@ -34,6 +44,11 @@ namespace DFW2
 		~CLoadFlow();
 		bool Run();
 	protected:
+
+		SUPERNODEPARAMETERSLIST m_SuperNodeParameters;
+
+		void GetPnrQnr(CDynaNodeBase *pNode);
+		void GetPnrQnrSuper(CDynaNodeBase *pNode);
 		void CleanUp();
 		bool Estimate();
 		bool Seidell();

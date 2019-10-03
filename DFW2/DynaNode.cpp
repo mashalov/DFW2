@@ -57,6 +57,8 @@ void CDynaNodeBase::GetPnrQnrSuper()
 		pSlaveNode->GetPnrQnr();
 		Pnr += pSlaveNode->Pnr;
 		Qnr += pSlaveNode->Qnr;
+		Pgr += pSlaveNode->Pgr;
+		Qgr += pSlaveNode->Qgr;
 		dLRCPn += pSlaveNode->dLRCPn;
 		dLRCQn += pSlaveNode->dLRCQn;
 		dLRCPg += pSlaveNode->dLRCPg;
