@@ -15,6 +15,7 @@ namespace DFW2
 			CDynaNodeBase *m_pNode;
 			double LFQmin;
 			double LFQmax;
+			CDynaNodeBase::eLFNodeType LFNodeType;
 			StoreParameters(CDynaNodeBase *pNode);
 			void Restore();
 		};

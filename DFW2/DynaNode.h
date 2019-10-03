@@ -310,11 +310,12 @@ namespace DFW2
 		{
 			if (pMatrixInfo && pMatrixInfo->pNode)
 			{
-				m_MaxImbP.UpdateMaxAbs(pMatrixInfo->pNode, pMatrixInfo->m_dImbP);
-				m_MaxImbQ.UpdateMaxAbs(pMatrixInfo->pNode, pMatrixInfo->m_dImbQ);
-				double VdVnom = pMatrixInfo->pNode->V / pMatrixInfo->pNode->Unom;
-				m_MaxV.UpdateMax(pMatrixInfo->pNode, VdVnom);
-				m_MinV.UpdateMin(pMatrixInfo->pNode, VdVnom);
+				CDynaNodeBase *pNode = pMatrixInfo->pNode;
+				m_MaxImbP.UpdateMaxAbs(pNode, pMatrixInfo->m_dImbP);
+				m_MaxImbQ.UpdateMaxAbs(pNode, pMatrixInfo->m_dImbQ);
+				double VdVnom = pNode->V / pNode->Unom;
+				m_MaxV.UpdateMax(pNode, VdVnom);
+				m_MinV.UpdateMin(pNode, VdVnom);
 			}
 			else
 				_ASSERTE(pMatrixInfo && pMatrixInfo->pNode);

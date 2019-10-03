@@ -332,17 +332,35 @@ bool CLoadFlow::Start()
 		while (pNodeLink->In(ppDevice))
 		{
 			CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
-			pNode->LFQmin += pSlaveNode->LFQmin;
-			pNode->LFQmax += pSlaveNode->LFQmax;
+			// в суперузел суммируем все мощности входящих узлов
 			pNode->Pgr += pSlaveNode->Pgr;
 			pNode->Qgr += pSlaveNode->Qgr;
-			double Qrange = pSlaveNode->LFQmax - pSlaveNode->LFQmin;
-			// выбираем заданное напряжение по узлу с максимальным диапазоном Qmin/Qmax
-			if ((QrangeMax < 0 || QrangeMax < Qrange) && pSlaveNode->LFVref > 0.0)
+			// здесь вопрос: если входящий в суперузел имеет диапазон регулирования, но не имеет уставки,
+			// этот диапазон суммируется в суперузел или нет ? Сделан вариант суммирования
+			// только полноценных PV узлов
+			if (pSlaveNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			{
-				pNode->LFVref = pSlaveNode->LFVref;
-				QrangeMax = Qrange;
+				// если в суперузел входит базисный узел, весь суперузел становится базисным
+				// можно попроверять соответствие напряжений нескольких базисных узлов
+				pNode->m_eLFNodeType = pSlaveNode->m_eLFNodeType;
+				pNode->V = pSlaveNode->V;
+				pNode->Delta = pSlaveNode->Delta;
 			}
+			else if (!pSlaveNode->IsLFTypePQ())
+			{
+				// если в суперузел входит узел с заданной генерацией
+				pNode->LFQmin += pSlaveNode->LFQmin;
+				pNode->LFQmax += pSlaveNode->LFQmax;
+				double Qrange = pSlaveNode->LFQmax - pSlaveNode->LFQmin;
+				// выбираем заданное напряжение по узлу с максимальным диапазоном Qmin/Qmax
+				if (QrangeMax < 0 || QrangeMax < Qrange)
+				{
+					pNode->LFVref = pSlaveNode->LFVref;
+					QrangeMax = Qrange;
+				}
+			}
+			else
+				QrangeMax = QrangeMax;
 		}
 		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
 	}
@@ -599,6 +617,7 @@ bool CLoadFlow::Seidell()
 			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
 				pNode->Pgr += Pe;
 				pNode->Qgr += Qe;
+				Pe = Qe = 0.0;
 				break;
 			}
 
@@ -608,9 +627,8 @@ bool CLoadFlow::Seidell()
 			pNode->V = abs(Unode);
 			pNode->Delta = arg(Unode);
 
-			// для всех узлов кроме базисных обновляем статистику итерации
-			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
-				pNodes->IterationControl().Update(pMatrixInfo);
+			// для всех узлов кроме статистику итерации
+			pNodes->IterationControl().Update(pMatrixInfo);
 		}
 
 		if (!CheckLF())
@@ -822,6 +840,8 @@ bool CLoadFlow::Run()
 			GetNodeImb(pMatrixInfo);
 			pNode->Pgr += pMatrixInfo->m_dImbP;
 			pNode->Qgr += pMatrixInfo->m_dImbQ;
+			pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
+			pNodes->IterationControl().Update(pMatrixInfo);
 		}
 
 		// обновляем узлы в суперузлах
@@ -1163,7 +1183,7 @@ bool CLoadFlow::UpdateQToGenerators()
 		if (!pNode->IsStateOn())
 			continue;
 
-		CLinkPtrCount *pGenLink = pNode->GetSuperLink(2);
+		CLinkPtrCount *pGenLink = pNode->GetLink(1);
 		CDevice **ppGen(nullptr);
 		if (pGenLink->m_nCount)
 		{
@@ -1177,13 +1197,13 @@ bool CLoadFlow::UpdateQToGenerators()
 					if (Qrange > 0.0)
 					{
 						double OldQ = pGen->Q;
-						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qgr - pNode->LFQmin));
+						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
 						_CheckNumber(pGen->Q);
 						//					_ASSERTE(fabs(pGen->Q - OldQ) < 0.00001);
 					}
 					else if (pGen->GetType() == eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER)
 					{
-						pGen->Q = pGen->Kgen * pNode->Qgr / pGenLink->m_nCount;
+						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->m_nCount;
 					}
 					else
 						pGen->Q = 0.0;
@@ -1306,10 +1326,12 @@ CLoadFlow::StoreParameters::StoreParameters(CDynaNodeBase *pNode)
 	m_pNode = pNode;
 	LFQmin = pNode->LFQmin;
 	LFQmax = pNode->LFQmax;
+	LFNodeType = pNode->m_eLFNodeType;
 }
 
 void CLoadFlow::StoreParameters::Restore()
 {
 	m_pNode->LFQmin = LFQmin;
 	m_pNode->LFQmax = LFQmax;
+	m_pNode->m_eLFNodeType = LFNodeType;
 };
