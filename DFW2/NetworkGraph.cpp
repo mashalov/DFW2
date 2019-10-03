@@ -454,21 +454,18 @@ bool CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 	while (!JoinableNodes.empty())
 	{
 		// берем первый узел из сета и готовим к DFS
-		CDynaNodeBase *pSeed = JoinableNodes.begin()->first;
-		Stack.push(pSeed);
+		Stack.push(JoinableNodes.begin()->first);
 		// вставляем первый узел как основу для острова
-		auto& CurrentSuperNode = Islands.insert(make_pair(pSeed, set<CDynaNodeBase*>{}));
+		auto& CurrentSuperNode = Islands.insert(make_pair(JoinableNodes.begin()->first, set<CDynaNodeBase*>{}));
 
 		// делаем стандартный DFS
 		while (!Stack.empty())
 		{
-			CDynaNodeBase *pCurrentSeed = Stack.top();
 			// к текущему острову добавляем найденный узел
-			CurrentSuperNode.first->second.insert(pCurrentSeed);
-			Stack.pop();
-
+			CurrentSuperNode.first->second.insert(Stack.top());
 			// проверяем, есть ли найденный узел во входном сете
-			auto& jit = JoinableNodes.find(pCurrentSeed);
+			auto& jit = JoinableNodes.find(Stack.top());
+			Stack.pop();
 			// если есть - добавляем в стек все связанные с найденным узлы
 			if (jit != JoinableNodes.end())
 			{
