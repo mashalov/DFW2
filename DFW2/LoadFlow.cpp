@@ -1144,7 +1144,7 @@ bool CLoadFlow::UpdatePQFromGenerators()
 		if (!pNode->IsStateOn())
 			continue;
 
-		// проходим по генераторам, подключенным к суперузлу
+		// проходим по генераторам, подключенным к узлу
 		CLinkPtrCount *pGenLink = pNode->GetLink(1);
 		CDevice **ppGen(nullptr);
 		if (pGenLink->m_nCount)
@@ -1203,35 +1203,15 @@ bool CLoadFlow::UpdateQToGenerators()
 					}
 					else if (pGen->GetType() == eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER)
 					{
-						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->m_nCount;
+						pGen->Q = pGen->Kgen * pNode->Qg  / pGenLink->m_nCount;
+						pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->m_nCount;
 					}
 					else
 						pGen->Q = 0.0;
 			}
 		}
 	}
-	/*
-	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-
-		if (!pNode->IsStateOn())
-			continue;
-
-		CLinkPtrCount *pGenLink = pNode->GetLink(1);
-		CDevice **ppGen(nullptr);
-		if (pGenLink->m_nCount)
-		{
-			pNode->Pg = pNode->Qg = 0.0;
-			while (pGenLink->In(ppGen))
-			{
-				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-				pNode->Pg += pGen->P;
-				pNode->Qg += pGen->Q;
-			}
-		}
-	}
-	*/
+	
 	return bRes;
 }
 

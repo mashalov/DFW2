@@ -102,20 +102,35 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
-	if(GetId() == 2021 && pDynaModel->GetIntegrationStepNumber() == 2123)
-		bRes = true;
 
+	if (m_pSuperNodeParent)
+	{
+		pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
+		pDynaModel->SetElement(A(V_V), m_pSuperNodeParent->A(V_V), -1);
+
+		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+		pDynaModel->SetElement(A(V_DELTA), m_pSuperNodeParent->A(V_DELTA), -1);
+
+		pDynaModel->SetElement(A(V_RE), A(V_RE), 1.0);
+		pDynaModel->SetElement(A(V_RE), m_pSuperNodeParent->A(V_RE), -1);
+
+		pDynaModel->SetElement(A(V_IM), A(V_IM), 1.0);
+		pDynaModel->SetElement(A(V_IM), m_pSuperNodeParent->A(V_IM), -1);
+
+		return pDynaModel->Status();
+	}
+		
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
 	double V2 = Vre2 + Vim2;
 	double V2sq = sqrt(V2);
 
-	GetPnrQnr();
+	GetPnrQnrSuper();
 
-	double dIredVre = -Yii.real();
-	double dIredVim = Yii.imag();
-	double dIimdVre = -Yii.imag();
-	double dIimdVim = -Yii.real();
+	double dIredVre = -YiiSuper.real();
+	double dIredVim = YiiSuper.imag();
+	double dIimdVre = -YiiSuper.imag();
+	double dIimdVim = -YiiSuper.real();
 
 
 	if (IsStateOn() && V2sq < pDynaModel->GetLRCToShuntVmin() * 0.5 * Unom)
@@ -154,11 +169,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	
 	double VreV2 = Vre / V2;
 	double VimV2 = Vim / V2;
-
 	
-
-	
-
 	double Pgsum = Pnr - Pgr;
 	double Qgsum = Qnr - Qgr;
 
@@ -244,9 +255,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			pDynaModel->SkipConstElements(A(V_IM));
 		}
 
-	
-
-
 		// check low voltage
 		dIredVre -= (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
 		dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
@@ -303,7 +311,16 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
-	GetPnrQnr();
+	if (m_pSuperNodeParent)
+	{
+		pDynaModel->SetFunction(A(V_V), V - m_pSuperNodeParent->V);
+		pDynaModel->SetFunction(A(V_DELTA), Delta - m_pSuperNodeParent->Delta);
+		pDynaModel->SetFunction(A(V_RE), Vre - m_pSuperNodeParent->Vre);
+		pDynaModel->SetFunction(A(V_IM), Vim - m_pSuperNodeParent->Vim);
+		return pDynaModel->Status();
+	}
+
+	GetPnrQnrSuper();
 
 	double Ire(0.0), Iim(0.0);
 	double V2 = Vre * Vre + Vim * Vim;
@@ -345,8 +362,8 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Iim -= pGen->Iim;
 		}
 
-		Ire -= Yii.real() * Vre - Yii.imag() * Vim;
-		Iim -= Yii.imag() * Vre + Yii.real() * Vim;
+		Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
+		Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
 
 		double Pk = Pnr - Pgr;
 		double Qk = Qnr - Qgr;
@@ -466,8 +483,20 @@ bool CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = CDynaNodeBase::BuildEquations(pDynaModel);
+
+	if (m_pSuperNodeParent)
+	{
+		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0);
+		pDynaModel->SetElement(A(V_S), m_pSuperNodeParent->A(V_S), -1.0);
+		pDynaModel->SetElement(A(V_LAG), m_pSuperNodeParent->A(V_LAG), -1.0);
+		return pDynaModel->Status();
+	}
+
 	double T = pDynaModel->GetFreqTimeConstant();
 	double w0 = pDynaModel->GetOmega0();
+
+
 
 	pDynaModel->SetElement(A(V_LAG), A(V_DELTA), -1.0 / T);
 	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
@@ -519,6 +548,13 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 {
 	bool bRes = CDynaNodeBase::BuildRightHand(pDynaModel);
+
+	if (m_pSuperNodeParent)
+	{
+		pDynaModel->SetFunction(A(V_S), S - static_cast<CDynaNode*>(m_pSuperNodeParent)->S);
+		pDynaModel->SetFunction(A(V_LAG), Lag - static_cast<CDynaNode*>(m_pSuperNodeParent)->Lag);
+		return pDynaModel->Status();
+	}
 
 	if (GetId() == 392)
 		bRes = bRes;

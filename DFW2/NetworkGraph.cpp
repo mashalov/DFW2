@@ -694,6 +694,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		}
 	}
 
+	/*
 	for (auto&& node : m_DevVec)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
@@ -712,6 +713,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			}
 		}
 	}
+	*/
 
 	for (auto&& node : m_DevVec)
 	{
