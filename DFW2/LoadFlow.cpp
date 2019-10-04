@@ -74,35 +74,14 @@ bool CLoadFlow::Estimate()
 		// обновляем VreVim узла
 		pNode->InitLF();
 		// добавляем БУ в список БУ для дальнейшей обработки
-		if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE /* && pNode->IsStateOn() */)
+		if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			SlackBuses.push_back(pNode);
 
-		// обходим все узлы, включая БУ
-		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
-		pNode->ResetVisited();
-		CDevice **ppDevice = nullptr;
-		while (pBranchLink->In(ppDevice))
-		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-			// если ветвь включена, узел на противоположном конце также должен быть включен
-			if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
-			{
-				CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(pNode);
-				if (pNode->CheckAddVisited(pOppNode) < 0)
-				{
-					if (NodeInMatrix(pNode))
-					{
-						// для узлов которые в матрице считаем количество ветвей
-						// и ненулевых элементов
-						pMatrixInfo->nBranchCount++;		// количество ветвей, включая ветви на БУ
-						if (NodeInMatrix(pOppNode))
-							pMatrixInfo->nRowCount += 2;	// количество ненулевых элементов = ветвей - ветвей на БУ
-					}
-					else
-						m_nBranchesCount++; // для БУ считаем общее количество ветвей
-				}
-			}
-		}
+		// для узлов которые в матрице считаем количество ветвей
+		// и ненулевых элементов
+		for (VirtualBranch *pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
+			if (NodeInMatrix(pNode) && NodeInMatrix(pV->pNode))
+				pMatrixInfo->nRowCount += 2;	// количество ненулевых элементов = ветвей - ветвей на БУ
 
 		if (NodeInMatrix(pNode))
 		{
@@ -112,7 +91,6 @@ bool CLoadFlow::Estimate()
 			m_nMatrixSize += 2;				// на узел 2 уравнения в матрице
 			pMatrixInfo->nRowCount += 2;	// считаем диагональный элемент
 			m_nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
-			m_nBranchesCount += pMatrixInfo->nBranchCount;	// общее количество ветвей для ведения списков ветвей от узлов
 			pMatrixInfo++;
 		}
 	}
@@ -123,8 +101,6 @@ bool CLoadFlow::Estimate()
 	b = new double[m_nMatrixSize];								// вектор правой части
 	Ai = new ptrdiff_t[m_nMatrixSize + 1];						// строки матрицы
 	Ap = new ptrdiff_t[m_nNonZeroCount];						// столбцы матрицы
-	m_pVirtualBranches = new _VirtualBranch[m_nBranchesCount];	// общий список ветвей от узлов, разделяемый указателями внутри _MatrixInfo
-	_VirtualBranch *pBranches = m_pVirtualBranches;
 
 	ptrdiff_t *pAi = Ai;
 	ptrdiff_t *pAp = Ap;
@@ -147,79 +123,27 @@ bool CLoadFlow::Estimate()
 		*(pAp + pMatrixInfo->nRowCount) = pNode->A(1);
 		pAp++;
 
-		// привязываем список ветвей к инфо узла
-		pMatrixInfo->pBranches = pBranches;
-		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
-		pNode->ResetVisited();
-		CDevice **ppDevice = nullptr;
-		while (pBranchLink->In(ppDevice))
+		for (VirtualBranch *pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
 		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-			if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
+			CDynaNodeBase*& pOppNode(pV->pNode);
+			if (NodeInMatrix(pOppNode))
 			{
-				// обходим включенные ветви также как и для подсчета размерностей выше
-				CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(pNode);
-				// получаем проводимость к оппозитному узлу
-				cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
-				// проверяем, уже прошли данный оппозитный узел для просматриваемого узла или нет
-				ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
-				if (DupIndex < 0)
-				{
-					// если нет - добавляем ветвь в список данного узла (включая ветви на БУ)
-					pBranches->Y = *pYkm;
-					pBranches->pNode = pOppNode;
-					if (NodeInMatrix(pOppNode))
-					{
-						// если оппозитный узел в матрице формируем номера столбцов для него
-						*pAp = pOppNode->A(0);
-						*(pAp + pMatrixInfo->nRowCount) = pOppNode->A(0);
-						pAp++;
-						*pAp = pOppNode->A(1);
-						*(pAp + pMatrixInfo->nRowCount) = pOppNode->A(1);
-						pAp++;
-					}
-					pBranches++;
-				}
-				else
-					(pMatrixInfo->pBranches + DupIndex)->Y += *pYkm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
+				// если оппозитный узел в матрице формируем номера столбцов для него
+				*pAp = pOppNode->A(0);
+				*(pAp + pMatrixInfo->nRowCount) = pOppNode->A(0);
+				pAp++;
+				*pAp = pOppNode->A(1);
+				*(pAp + pMatrixInfo->nRowCount) = pOppNode->A(1);
+				pAp++;
 			}
 		}
 		pAp += pMatrixInfo->nRowCount;
 	}
 
-	// отдельно обрабатываем БУ
-	// добавляем их "под матрицу"
-
 	for (auto&& sit : SlackBuses)
 	{
 		CDynaNodeBase *pNode = sit;
 		pMatrixInfo->pNode = pNode;
-		pMatrixInfo->pBranches = pBranches;
-
-		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
-		pNode->ResetVisited();
-		CDevice **ppDevice = nullptr;
-		while (pBranchLink->In(ppDevice))
-		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-			if (pBranch->m_BranchState == CDynaBranch::BRANCH_ON)
-			{
-				// делаем все то же, что для нормальных узлов, исключая все связанное с матрицей
-				// но строим список ветвей от БУ
-				CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(pNode);
-				cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
-				ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
-				if (DupIndex < 0)
-				{
-					pBranches->Y = *pYkm;
-					pBranches->pNode = pOppNode;
-					pBranches++;
-				}
-				else
-					(pMatrixInfo->pBranches + DupIndex)->Y += *pYkm;
-			}
-		}
-		pMatrixInfo->nBranchCount = pBranches - pMatrixInfo->pBranches;
 		pMatrixInfo++;
 	}
 
@@ -386,7 +310,7 @@ bool CLoadFlow::SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs)
 void CLoadFlow::AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue)
 {
 	// просматриваем список ветвей узла
-	for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+	for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 	{
 		CDynaNodeBase *pOppNode = pBranch->pNode;
 		// мы обходим узлы, но кроме данных узлов нам нужны данные матрицы, чтобы просматривать
@@ -509,7 +433,7 @@ bool CLoadFlow::Seidell()
 			Qe = pNode->GetSelfImbQ();
 
 			cplx Unode(pNode->Vre, pNode->Vim);
-			for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+			for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 			{
 				CDynaNodeBase *pOppNode = pBranch->pNode;
 				cplx mult = conj(Unode) * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
@@ -671,7 +595,7 @@ bool CLoadFlow::BuildMatrix()
 		pAx += 2;
 
 		cplx Unode(pNode->Vre, pNode->Vim);
-		for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+		for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 		{
 			CDynaNodeBase *pOppNode = pBranch->pNode;
 			cplx mult = conj(Unode);
@@ -736,7 +660,7 @@ void CLoadFlow::GetNodeImb(_MatrixInfo *pMatrixInfo)
 	pMatrixInfo->m_dImbP = pNode->GetSelfImbP();
 	pMatrixInfo->m_dImbQ = pNode->GetSelfImbQ();
 	cplx Unode(pNode->Vre, pNode->Vim);
-	for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+	for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 	{
 		CDynaNodeBase *pOppNode = pBranch->pNode;
 		cplx mult = conj(Unode) * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
@@ -1117,7 +1041,7 @@ bool CLoadFlow::CheckLF()
 			bRes = false;
 		}
 
-		for (_VirtualBranch *pBranch = pMatrixInfo->pBranches; pBranch < pMatrixInfo->pBranches + pMatrixInfo->nBranchCount; pBranch++)
+		for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 		{
 			double dDelta = pNode->Delta - pBranch->pNode->Delta;
 

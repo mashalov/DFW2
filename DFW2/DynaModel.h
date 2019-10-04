@@ -427,10 +427,13 @@ namespace DFW2
 		void ResetElement();
 		bool ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
 		bool CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		bool ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		bool CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
 		typedef bool (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
+		typedef bool (CDynaModel::*ElementSetterNoDupFn)(ptrdiff_t, ptrdiff_t, double);
 		void ScaleAlgebraicEquations();
-		ElementSetterFn ElementSetter;
-		void ReportKLUError();
+		ElementSetterFn			ElementSetter;
+		ElementSetterNoDupFn	ElementSetterNoDup;
 
 		void Predict();
 		void InitNordsiek();
@@ -507,7 +510,8 @@ namespace DFW2
 		bool InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
-		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
+		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
 
 		// Для теста с множителями
 		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
@@ -696,5 +700,6 @@ namespace DFW2
 		CAutomatic& Automatic();
 
 		void GetWorstEquations(ptrdiff_t nCount);
+		void ReportKLUError(KLU_common& KLUCommon);
 	};
 }

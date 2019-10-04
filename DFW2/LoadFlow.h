@@ -67,7 +67,7 @@ namespace DFW2
 		CDynaNodeContainer *pNodes;
 		size_t m_nMatrixSize;
 		size_t m_nNonZeroCount;
-		size_t m_nBranchesCount;
+		//size_t m_nBranchesCount;
 		
 
 		double *Ax;				// данные матрицы якоби
@@ -78,7 +78,7 @@ namespace DFW2
 		_MatrixInfo *m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
 		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
-		_VirtualBranch *m_pVirtualBranches;
+		VirtualBranch *m_pVirtualBranches;
 
 		KLU_symbolic *Symbolic;
 		KLU_common Common;

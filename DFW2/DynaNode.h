@@ -38,6 +38,8 @@ namespace DFW2
 
 #define DFW2_SQRT_EPSILON DFW2_EPSILON
 
+	struct VirtualBranch;
+
 	class CDynaNodeBase : public CDevice
 	{
 	public:
@@ -142,6 +144,8 @@ namespace DFW2
 		CDynaNodeBase *m_pSuperNodeParent;
 		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
 
+		VirtualBranch *m_VirtualBranchBegin, *m_VirtualBranchEnd;
+
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
 		static const _TCHAR *m_cszVre;
@@ -193,7 +197,7 @@ namespace DFW2
 	// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько
 	// включенных параллельных ветвей эквивалентным Y. Эти два параметра - все что нужно
 	// чтобы рассчитать небаланс узла и производные для смежных узлов
-	struct _VirtualBranch
+	struct VirtualBranch
 	{
 		cplx Y;
 		CDynaNodeBase *pNode;
@@ -202,18 +206,11 @@ namespace DFW2
 	// маппинг узла в строки матрица
 	struct _MatrixInfo
 	{
-		size_t nRowCount;														// количество элементов в строке матрицы
-		size_t nBranchCount;													// количество виртуальных ветвей от узла (включая БУ)
+		size_t nRowCount = 0;													// количество элементов в строке матрицы
 		CDynaNodeBase *pNode;													// узел, к которому относится данное Info
-		_VirtualBranch *pBranches;												// список виртуальных ветвей узла
-		ptrdiff_t m_nPVSwitchCount;												// счетчик переключений PV-PQ
+		ptrdiff_t m_nPVSwitchCount = 0;											// счетчик переключений PV-PQ
 		double m_dImbP, m_dImbQ;												// небалансы по P и Q
-		bool bVisited;															// признак просмотра для графовых алгоритмов
-		_MatrixInfo::_MatrixInfo() : nRowCount(0),
-			nBranchCount(0),
-			m_nPVSwitchCount(0),
-			bVisited(false)
-		{}
+		bool bVisited = false;													// признак просмотра для графовых алгоритмов
 	};
 
 	typedef vector<_MatrixInfo*> MATRIXINFO;
@@ -336,7 +333,6 @@ namespace DFW2
 			CDynaNodeBase *pNodeIq;
 		};
 
-		CDeviceContainer *m_pSynchroZones;
 		CDynaNodeBase* GetFirstNode();
 		CDynaNodeBase* GetNextNode();
 		CSynchroZone* CreateNewSynchroZone();
@@ -354,6 +350,8 @@ namespace DFW2
 		unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
 		void ClearSuperLinks();
 		void DumpNodeIslands(NODEISLANDMAP& Islands);
+		VirtualBranch *m_pVirtualBranches = nullptr;
+		CDeviceContainer *m_pSynchroZones = nullptr;
 	public:
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
 		CMultiLink* GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
@@ -366,7 +364,7 @@ namespace DFW2
 		bool Seidell(); 
 		bool LULF();
 		void ProcessTopologyRequest();
-		bool m_bDynamicLRC;
+		bool m_bDynamicLRC = true;
 	};
 
 }
