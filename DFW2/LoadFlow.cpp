@@ -5,11 +5,6 @@
 using namespace DFW2;
 
 CLoadFlow::CLoadFlow(CDynaModel *pDynaModel) :	m_pDynaModel(pDynaModel),
-												Ax(nullptr),
-												b(nullptr),
-												Ai(nullptr),
-												Ap(nullptr),
-												m_pMatrixInfo(nullptr),
 												pNodes(nullptr),
 												Symbolic(nullptr)
 {
@@ -23,18 +18,6 @@ CLoadFlow::~CLoadFlow()
 
 void CLoadFlow::CleanUp()
 {
-	if (Ax)
-		delete Ax;
-	if (b)
-		delete b;
-	if (Ai)
-		delete Ai;
-	if (Ap)
-		delete Ap;
-	if (m_pMatrixInfo)
-		delete m_pMatrixInfo;
-	if (m_pVirtualBranches)
-		delete m_pVirtualBranches;
 	if (Symbolic)
 		KLU_free_symbolic(&Symbolic, &Common);
 }
@@ -59,8 +42,8 @@ bool CLoadFlow::Estimate()
 	// создаем привязку узлов к информации по строкам матрицы
 	// размер берем по количеству узлов. Реальный размер матрицы будет меньше на
 	// количество отключенных узлов и БУ
-	m_pMatrixInfo = new _MatrixInfo[pNodes->Count()];
-	_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
+	m_pMatrixInfo = make_unique<_MatrixInfo[]>(pNodes->Count());
+	_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
 
 	list<CDynaNodeBase*> SlackBuses;
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
@@ -97,16 +80,16 @@ bool CLoadFlow::Estimate()
 
 	m_pMatrixInfoEnd = pMatrixInfo;								// конец инфо по матрице для узлов, которые в матрице
 
-	Ax = new double[m_nNonZeroCount];							// числа матрицы
-	b = new double[m_nMatrixSize];								// вектор правой части
-	Ai = new ptrdiff_t[m_nMatrixSize + 1];						// строки матрицы
-	Ap = new ptrdiff_t[m_nNonZeroCount];						// столбцы матрицы
+	Ax = make_unique<double[]>(m_nNonZeroCount);				// числа матрицы
+	b = make_unique<double[]>(m_nMatrixSize);					// вектор правой части
+	Ai = make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);			// строки матрицы
+	Ap = make_unique<ptrdiff_t[]>(m_nNonZeroCount);				// столбцы матрицы
 
-	ptrdiff_t *pAi = Ai;
-	ptrdiff_t *pAp = Ap;
+	ptrdiff_t *pAi = Ai.get();
+	ptrdiff_t *pAp = Ap.get();
 	ptrdiff_t nRowPtr = 0;
 
-	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		// формируем указатели строк матрицы по две на узел
@@ -150,7 +133,7 @@ bool CLoadFlow::Estimate()
 	m_pMatrixInfoSlackEnd = pMatrixInfo;
 	*pAi = m_nNonZeroCount;
 
-	Symbolic = KLU_analyze(m_nMatrixSize, Ai, Ap, &Common);
+	Symbolic = KLU_analyze(m_nMatrixSize, Ai.get(), Ap.get(), &Common);
 	return bRes;
 }
 
@@ -220,13 +203,13 @@ bool CLoadFlow::Start()
 	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
 	if (!pNodes)
 		return false;
-	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
-	if (!UpdatePQFromGenerators())
-		return false;
 
-	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
+	UpdatePQFromGenerators();
+
+	for (auto&& it : *pNodes)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		// в режиме отладки запоминаем что было в узлах после расчета Rastr для сравнения результатов
 #ifdef _DEBUG
 		pNode->Vrastr = pNode->V;
@@ -240,9 +223,9 @@ bool CLoadFlow::Start()
 		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
 	}
 
-	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	for (auto&& it : *pNodes)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		if (!pNode->IsStateOn() || pNode->m_pSuperNodeParent)
 			continue;
 		CLinkPtrCount *pNodeLink = pNode->GetSuperLink(0);
@@ -317,7 +300,7 @@ void CLoadFlow::AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue)
 		// признак посещения
 		if (pOppNode->IsLFTypePQ() && pOppNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 		{
-			_MatrixInfo *pOppMatrixInfo = m_pMatrixInfo + pOppNode->A(0) / 2; // находим оппозитный узел в матрице
+			_MatrixInfo *pOppMatrixInfo = &m_pMatrixInfo[pOppNode->A(0) / 2]; // находим оппозитный узел в матрице
 			_ASSERTE(pOppMatrixInfo->pNode == pOppNode);
 			// если оппозитный узел еще не был посещен, добавляем его в очередь и помечаем как посещенный
 			if (!pOppMatrixInfo->bVisited)
@@ -334,7 +317,7 @@ bool CLoadFlow::Seidell()
 	bool bRes = true;
 
 	MATRIXINFO SeidellOrder;
-	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo);
+	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
 	_MatrixInfo* pMatrixInfo = m_pMatrixInfoSlackEnd - 1;
 
@@ -346,7 +329,7 @@ bool CLoadFlow::Seidell()
 	}
 
 	// затем PV узлы
-	for (; pMatrixInfo >= m_pMatrixInfo; pMatrixInfo--)
+	for (; pMatrixInfo >= m_pMatrixInfo.get(); pMatrixInfo--)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		if (!pNode->IsLFTypePQ())
@@ -379,7 +362,7 @@ bool CLoadFlow::Seidell()
 		AddToQueue(pMatrixInfo, queue);
 	}
 
-	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo);
+	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
 	// рассчитываем проводимости узлов с устранением отрицательных сопротивлений
 	pNodes->CalcAdmittances(true);
@@ -577,12 +560,11 @@ bool CLoadFlow::Seidell()
 bool CLoadFlow::BuildMatrix()
 {
 	bool bRes = true;
-	double *pb = b;
-	double *pAx = Ax;
-	_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
+	double *pb = b.get();
+	double *pAx = Ax.get();
 
 	// обходим только узлы в матрице
-	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		bool bNodePQ = pNode->IsLFTypePQ();
@@ -692,7 +674,7 @@ bool CLoadFlow::Run()
 	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
 	int it(0);
 
-	_MatrixInfo **ppSwitch = new _MatrixInfo *[m_nMatrixSize];
+	auto ppSwitch = make_unique<_MatrixInfo*[]>(m_nMatrixSize);
 
 	double ImbSqOld = 0.0;
 	double ImbSq = 0.0;
@@ -706,13 +688,13 @@ bool CLoadFlow::Run()
 		}
 
 		++it;
-		_MatrixInfo **ppSwitchEnd = ppSwitch;
+		_MatrixInfo **ppSwitchEnd = ppSwitch.get();
 		pNodes->m_IterationControl.Reset();
 		ImbSqOld = ImbSq;
 		ImbSq = 0.0;
 
 		// считаем небаланс по всем узлам кроме БУ
-		_MatrixInfo *pMatrixInfo = m_pMatrixInfo;
+		_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
 		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
@@ -796,7 +778,7 @@ bool CLoadFlow::Run()
 		// переключаем типы узлов
 		if (pNodes->m_IterationControl.m_MaxImbP.GetDiff() < m_Parameters.m_Imb)
 		{
-			for (_MatrixInfo **ppSwitchNow = ppSwitch; ppSwitchNow < ppSwitchEnd; ppSwitchNow++)
+			for (_MatrixInfo **ppSwitchNow = ppSwitch.get(); ppSwitchNow < ppSwitchEnd; ppSwitchNow++)
 			{
 				pMatrixInfo = *ppSwitchNow;
 				CDynaNodeBase *pNode = pMatrixInfo->pNode;
@@ -840,7 +822,9 @@ bool CLoadFlow::Run()
 		BuildMatrix();
 
 		ImbSq = 0.0;
-		for (double *pb = b; pb < b + m_nMatrixSize; pb++)
+		double *pb = b.get();
+		const double *pe = pb + m_nMatrixSize;
+		for( ; pb < pe ; pb++)
 			ImbSq += *pb * *pb;
 
 		double dStep = 1.0;
@@ -854,7 +838,7 @@ bool CLoadFlow::Run()
 			}
 		}
 
-		KLU_numeric *Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
+		KLU_numeric *Numeric = KLU_factor(Ai.get(), Ap.get(), Ax.get(), Symbolic, &Common);
 
 		int nmx = 0;
 		for (int i = 1; i < m_nMatrixSize; i++)
@@ -865,7 +849,7 @@ bool CLoadFlow::Run()
 		ATLTRACE("\n%g", b[nmx]);
 
 
-		ptrdiff_t sq = KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common);
+		ptrdiff_t sq = KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b.get(), &Common);
 
 		/*nmx = 0;
 		for (int i = 1; i < m_nMatrixSize; i++)
@@ -878,7 +862,7 @@ bool CLoadFlow::Run()
 
 		KLU_free_numeric(&Numeric, &Common);
 
-		for (pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			pNode->Delta -= b[pNode->A(0)];
@@ -886,8 +870,6 @@ bool CLoadFlow::Run()
 			pNode->UpdateVreVim();
 		}
 	}
-
-	delete ppSwitch;
 
 	// обновляем реактивную генерацию в суперузлах
 
@@ -1026,7 +1008,7 @@ bool CLoadFlow::CheckLF()
 
 	set <NodePair> ReportedBranches;
 
-	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		double dV = pNode->V / pNode->Unom;
@@ -1057,10 +1039,8 @@ bool CLoadFlow::CheckLF()
 }
 
 
-bool CLoadFlow::UpdatePQFromGenerators()
+void CLoadFlow::UpdatePQFromGenerators()
 {
-	bool bRes = true;
-
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
@@ -1094,12 +1074,10 @@ bool CLoadFlow::UpdatePQFromGenerators()
 			}
 		}
 	}
-	return bRes;
 }
 
-bool CLoadFlow::UpdateQToGenerators()
+void CLoadFlow::UpdateQToGenerators()
 {
-	bool bRes = true;
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
@@ -1135,8 +1113,6 @@ bool CLoadFlow::UpdateQToGenerators()
 			}
 		}
 	}
-	
-	return bRes;
 }
 
 void CLoadFlow::GetPnrQnrSuper(CDynaNodeBase *pNode)
