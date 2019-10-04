@@ -67,7 +67,8 @@ bool CDynaModel::EstimateMatrix()
 
 		// substitute element setter to counter (not actually setting values, just count)
 
-		ElementSetter = &CDynaModel::CountSetElement;
+		ElementSetter		= &CDynaModel::CountSetElement;
+		ElementSetterNoDup  = &CDynaModel::CountSetElementNoDup;
 
 		bRes = BuildMatrix();
 		if (bRes)
@@ -100,7 +101,8 @@ bool CDynaModel::EstimateMatrix()
 			}
 
 			// revert to real element setter
-			ElementSetter = &CDynaModel::ReallySetElement;
+			ElementSetter		= &CDynaModel::ReallySetElement;
+			ElementSetterNoDup  = &CDynaModel::ReallySetElementNoDup;
 			
 			InitDevicesNordsiek();
 
@@ -307,6 +309,63 @@ bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 
 	return m_bStatus;
 }
+
+
+bool CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+{
+	if (nRow >= 0 && nRow < m_nMatrixSize &&
+		nCol >= 0 && nCol < m_nMatrixSize)
+	{
+		m_bStatus = false;
+		MatrixRow *pRow = m_pMatrixRows + nRow;
+
+
+		double l0 = Methodl[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
+		// в качестве типа уравнения используем __физический__ тип
+		// потому что у алгебраических и дифференциальных уравнений
+		// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
+
+		if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
+			dValue *= l0;		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
+		else
+		{
+			// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
+			dValue *= l0 * GetH();
+			// если элемент диагональный, учитываем диагональную единичную матрицу
+			if (nRow == nCol)
+				dValue = 1.0 - dValue;
+		}
+
+		_CheckNumber(dValue);
+
+		switch (sc.IterationMode)
+		{
+		case StepControl::eIterationMode::JN:
+			if (nRow != nCol) dValue = 0.0;
+			break;
+		case StepControl::eIterationMode::FUNCTIONAL:
+			if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
+			break;
+
+		}
+
+		if (pRow->pAp < pRow->pApRow + pRow->m_nColsCount &&
+			pRow->pAx < pRow->pAxRow + pRow->m_nColsCount)
+		{
+			*pRow->pAp = nCol;
+			*pRow->pAx = dValue;
+			pRow->pAp++;
+			pRow->pAx++;
+			m_bStatus = true;
+		}
+	}
+	else
+		m_bStatus = false;
+
+	_ASSERTE(m_bStatus);
+
+	return m_bStatus;
+}
 // Функция подсчета количества элементов в строке матрицы
 bool CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
@@ -327,13 +386,38 @@ bool CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, 
 	return m_bStatus;
 }
 
+bool CDynaModel::CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+{
+	if (nRow < m_nMatrixSize)
+	{
+		// учитываем элементы с учетом суммирования
+		MatrixRow *pRow = m_pMatrixRows + nRow;
+		pRow->m_nColsCount++;
+	}
+	else
+		m_bStatus = false;
+
+	_ASSERTE(m_bStatus);
+	return m_bStatus;
+}
+
 bool CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
+{
+	if (!m_bStatus)
+		return m_bStatus;
+
+	(this->*(ElementSetter))(nRow, nCol, dValue, bAddToPrevious);
+
+	return m_bStatus;
+}
+
+bool CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
 	
 	if (!m_bStatus)
 		return m_bStatus;
 
-	(this->*(ElementSetter))(nRow, nCol, dValue, bAddToPrevious);
+	(this->*(ElementSetterNoDup))(nRow, nCol, dValue);
 
 	return m_bStatus;
 }

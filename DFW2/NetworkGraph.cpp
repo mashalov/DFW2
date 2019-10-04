@@ -732,6 +732,39 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		}
 	}
 
+	//  Создаем виртуальные ветви
+	// Количество виртуальных ветвей не превышает количества ссылок суперузлов на ветви
+	m_pVirtualBranches = new VirtualBranch[m_SuperLinks[1]->m_nCount];
+	VirtualBranch *pCurrentBranch = m_pVirtualBranches;
+	for (auto&& node : m_DevVec)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
+		pNode->ResetVisited();
+		CDevice **ppDevice = nullptr;
+		pNode->m_VirtualBranchBegin = pCurrentBranch;
+		while (pBranchLink->In(ppDevice))
+		{
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+			// обходим включенные ветви также как и для подсчета размерностей выше
+			CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(pNode);
+			// получаем проводимость к оппозитному узлу
+			cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
+			// проверяем, уже прошли данный оппозитный узел для просматриваемого узла или нет
+			ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
+			if (DupIndex < 0)
+			{
+				// если нет - добавляем ветвь в список данного узла
+				pCurrentBranch->Y = *pYkm;
+				pCurrentBranch->pNode = pOppNode;
+				pCurrentBranch++;
+			}
+			else
+				(pNode->m_VirtualBranchBegin + DupIndex)->Y += *pYkm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
+		}
+		pNode->m_VirtualBranchEnd = pCurrentBranch;
+	}
+
 	/*
 	// восстановление внешних одиночных ссылок
 	for (auto&& node : m_DevVec)
@@ -760,6 +793,11 @@ void CDynaNodeContainer::ClearSuperLinks()
 {
 	for (auto&& it : m_SuperLinks)
 		delete it;
+	if (m_pVirtualBranches)
+	{
+		delete m_pVirtualBranches;
+		m_pVirtualBranches = nullptr;
+	}
 	m_SuperLinks.clear();
 	m_OriginalLinks.clear();
 }
