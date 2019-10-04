@@ -133,16 +133,12 @@ void CDynaModel::StopProcess()
 
 CDeviceContainer* CDynaModel::GetDeviceContainer(eDFW2DEVICETYPE Type)
 {
-	CDeviceContainer *pContainer(nullptr);
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-	{
-		if ((*it)->GetType() == Type)
-		{
-			pContainer = *it;
-			break;
-		}
-	}
-	return pContainer;
+	auto& it = find_if(m_DeviceContainers.begin(), m_DeviceContainers.end(), [&Type](const auto& Cont) { return Cont->GetType() == Type; });
+
+	if (it == m_DeviceContainers.end())
+		return nullptr;
+	else
+		return *it;
 }
 
 void CDynaModel::RebuildMatrix(bool bRebuild)

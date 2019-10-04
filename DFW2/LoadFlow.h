@@ -56,29 +56,28 @@ namespace DFW2
 		bool BuildMatrix();
 		bool Start();
 		bool CheckLF();
-		bool UpdateQToGenerators();					// обновление данных генераторов по результату расчета PV-узлов
-		bool UpdatePQFromGenerators();				// обновление данных PV-узлов по исходным данным генераторов
+		void UpdateQToGenerators();					// обновление данных генераторов по результату расчета PV-узлов
+		void UpdatePQFromGenerators();				// обновление данных PV-узлов по исходным данным генераторов
 		void DumpNodes();
 
 		// возвращает true если узел учитывается в матрице якоби
 		static bool NodeInMatrix(CDynaNodeBase *pNode);
 				
-		CDynaModel *m_pDynaModel;
-		CDynaNodeContainer *pNodes;
+		CDynaModel *m_pDynaModel = nullptr;
+		CDynaNodeContainer *pNodes = nullptr;
 		size_t m_nMatrixSize;
 		size_t m_nNonZeroCount;
 		//size_t m_nBranchesCount;
 		
 
-		double *Ax;				// данные матрицы якоби
-		double *b;				// вектор правой части
-		ptrdiff_t *Ai;			// номера строк
-		ptrdiff_t *Ap;			// номера столбцов
+		unique_ptr<double[]> Ax,		// данные матрицы якоби
+						     b;			// вектор правой части
+		unique_ptr<ptrdiff_t[]> Ai,		// номера строк
+								Ap;		// номера столбцов
 
-		_MatrixInfo *m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
+		unique_ptr<_MatrixInfo[]> m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
 		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
-		VirtualBranch *m_pVirtualBranches;
 
 		KLU_symbolic *Symbolic;
 		KLU_common Common;
