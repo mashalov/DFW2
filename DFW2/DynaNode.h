@@ -2,7 +2,6 @@
 #include "DeviceContainer.h"
 #include "DynaLRC.h"
 
-
 namespace DFW2
 {
 	class CDynaBranch;

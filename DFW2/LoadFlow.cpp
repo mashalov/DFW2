@@ -4,11 +4,9 @@
 
 using namespace DFW2;
 
-CLoadFlow::CLoadFlow(CDynaModel *pDynaModel) :	m_pDynaModel(pDynaModel),
-												pNodes(nullptr),
-												Symbolic(nullptr)
+CLoadFlow::CLoadFlow(CDynaModel *pDynaModel) :	m_pDynaModel(pDynaModel)
 {
-	KLU_defaults(&Common);
+
 }
 
 CLoadFlow::~CLoadFlow()
@@ -18,8 +16,7 @@ CLoadFlow::~CLoadFlow()
 
 void CLoadFlow::CleanUp()
 {
-	if (Symbolic)
-		KLU_free_symbolic(&Symbolic, &Common);
+
 }
 
 bool CLoadFlow::NodeInMatrix(CDynaNodeBase *pNode)
@@ -38,7 +35,7 @@ bool CLoadFlow::Estimate()
 {
 	bool bRes = true;
 
-	m_nMatrixSize = 0;
+	ptrdiff_t nMatrixSize(0), nNonZeroCount(0);
 	// создаем привязку узлов к информации по строкам матрицы
 	// размер берем по количеству узлов. Реальный размер матрицы будет меньше на
 	// количество отключенных узлов и БУ
@@ -69,24 +66,20 @@ bool CLoadFlow::Estimate()
 		if (NodeInMatrix(pNode))
 		{
 			// для узлов, которые попадают в матрицу нумеруем включенные узлы строками матрицы
-			pNode->SetMatrixRow(m_nMatrixSize);
+			pNode->SetMatrixRow(nMatrixSize);
 			pMatrixInfo->pNode = pNode;
-			m_nMatrixSize += 2;				// на узел 2 уравнения в матрице
+			nMatrixSize += 2;				// на узел 2 уравнения в матрице
 			pMatrixInfo->nRowCount += 2;	// считаем диагональный элемент
-			m_nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
+			nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
 			pMatrixInfo++;
 		}
 	}
 
 	m_pMatrixInfoEnd = pMatrixInfo;								// конец инфо по матрице для узлов, которые в матрице
+	klu.SetSize(nMatrixSize, nNonZeroCount);
 
-	Ax = make_unique<double[]>(m_nNonZeroCount);				// числа матрицы
-	b = make_unique<double[]>(m_nMatrixSize);					// вектор правой части
-	Ai = make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);			// строки матрицы
-	Ap = make_unique<ptrdiff_t[]>(m_nNonZeroCount);				// столбцы матрицы
-
-	ptrdiff_t *pAi = Ai.get();
-	ptrdiff_t *pAp = Ap.get();
+	ptrdiff_t *pAi = klu.Ai();
+	ptrdiff_t *pAp = klu.Ap();
 	ptrdiff_t nRowPtr = 0;
 
 	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
@@ -131,9 +124,7 @@ bool CLoadFlow::Estimate()
 	}
 
 	m_pMatrixInfoSlackEnd = pMatrixInfo;
-	*pAi = m_nNonZeroCount;
-
-	Symbolic = KLU_analyze(m_nMatrixSize, Ai.get(), Ap.get(), &Common);
+	*pAi = nNonZeroCount;
 	return bRes;
 }
 
@@ -560,8 +551,8 @@ bool CLoadFlow::Seidell()
 bool CLoadFlow::BuildMatrix()
 {
 	bool bRes = true;
-	double *pb = b.get();
-	double *pAx = Ax.get();
+	double *pb = klu.B();
+	double *pAx = klu.Ax();
 
 	// обходим только узлы в матрице
 	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
@@ -674,7 +665,7 @@ bool CLoadFlow::Run()
 	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
 	int it(0);
 
-	auto ppSwitch = make_unique<_MatrixInfo*[]>(m_nMatrixSize);
+	auto ppSwitch = make_unique<_MatrixInfo*[]>(klu.MatrixSize());
 
 	double ImbSqOld = 0.0;
 	double ImbSq = 0.0;
@@ -822,8 +813,8 @@ bool CLoadFlow::Run()
 		BuildMatrix();
 
 		ImbSq = 0.0;
-		double *pb = b.get();
-		const double *pe = pb + m_nMatrixSize;
+		double *pb = klu.B();
+		const double *pe = pb + klu.MatrixSize();
 		for( ; pb < pe ; pb++)
 			ImbSq += *pb * *pb;
 
@@ -838,18 +829,21 @@ bool CLoadFlow::Run()
 			}
 		}
 
-		KLU_numeric *Numeric = KLU_factor(Ai.get(), Ap.get(), Ax.get(), Symbolic, &Common);
+		klu.Solve();
+		//KLU_numeric *Numeric = KLU_factor(klu.Ai(), klu.Ap(), klu.Ax(), klu.Symbolic(), klu.Common());
 
+		/*
 		int nmx = 0;
-		for (int i = 1; i < m_nMatrixSize; i++)
+		for (int i = 1; i < klu.MatrixSize(); i++)
 		{
-			if (fabs(b[nmx]) < fabs(b[i]))
+			if (fabs(klu.B()[nmx]) < fabs(klu.B()[i]))
 				nmx = i;
 		}
-		ATLTRACE("\n%g", b[nmx]);
+		ATLTRACE("\n%g", klu.B()[nmx]);
+		*/
 
 
-		ptrdiff_t sq = KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b.get(), &Common);
+		//ptrdiff_t sq = KLU_tsolve(klu.Symbolic(), Numeric, klu.MatrixSize(), 1, klu.B(), klu.Common());
 
 		/*nmx = 0;
 		for (int i = 1; i < m_nMatrixSize; i++)
@@ -860,13 +854,14 @@ bool CLoadFlow::Run()
 		ATLTRACE("\n%g", b[nmx]);*/
 
 
-		KLU_free_numeric(&Numeric, &Common);
+		//KLU_free_numeric(&Numeric, klu.Common());
 
+		
 		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			pNode->Delta -= b[pNode->A(0)];
-			pNode->V -= b[pNode->A(0) + 1];
+			pNode->Delta -= klu.B()[pNode->A(0)];
+			pNode->V -= klu.B()[pNode->A(0) + 1];
 			pNode->UpdateVreVim();
 		}
 	}
