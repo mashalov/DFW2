@@ -204,6 +204,9 @@
     <ClInclude Include="LoadFlow.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="dfw2exception.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

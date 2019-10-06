@@ -181,6 +181,7 @@
     <ClInclude Include="DeviceContainerProperties.h" />
     <ClInclude Include="DeviceId.h" />
     <ClInclude Include="DeviceTypes.h" />
+    <ClInclude Include="dfw2exception.h" />
     <ClInclude Include="Discontinuities.h" />
     <ClInclude Include="DLLHeader.h" />
     <ClInclude Include="DLLStructs.h" />
