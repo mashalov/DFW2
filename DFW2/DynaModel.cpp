@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include "dfw2exception.h"
 #include "DynaModel.h"
 #include "Automatic.h"
 
@@ -117,7 +118,17 @@ bool CDynaModel::Run()
 	bRes = bRes && PrepareGraph();
 	bRes = bRes && PrepareYs();
 	bRes = bRes && Nodes.ProcessTopology();
-	LoadFlow();
+
+	try
+	{
+		LoadFlow();
+	}
+	catch (dfw2error& err)
+	{
+		wstring q = err.uwhat();
+		Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Исключение : %s"), err.uwhat().c_str()));
+	}
+
 	bRes = bRes && InitDevices();
 	bRes = bRes && EstimateMatrix();
 	bRes = bRes && InitEquations();

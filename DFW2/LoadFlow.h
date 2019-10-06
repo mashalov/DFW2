@@ -3,6 +3,7 @@
 #include "klu.h"
 #include "klu_version.h"
 #include "cs.h"
+#include "dfw2exception.h"
 
 class KLUWrapperData
 {
