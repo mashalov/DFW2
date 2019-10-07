@@ -24,6 +24,9 @@
 *.mtx
 *.vc.db
 *.suo
+*.codeanalysis
+*.pch.codeanalysisast
+
 
 
 
