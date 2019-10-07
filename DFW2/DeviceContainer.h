@@ -166,10 +166,10 @@ namespace DFW2
 		bool RestoreLinks(CMultiLink *pLink);
 		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
-		bool EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
-		bool BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
-		bool BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств
-		bool BuildDerivatives(CDynaModel* pDynaModel);						// рассчитать производные дифуров устройств
+		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
+		void BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
+		void BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств
+		void BuildDerivatives(CDynaModel* pDynaModel);						// рассчитать производные дифуров устройств
 		void NewtonUpdateBlock(CDynaModel* pDynaModel);						// обновить данные в устройствах после итерации Ньютона (для тех устройств, которым нужно)
 		bool LeaveDiscontinuityMode(CDynaModel *pDynaModel);				// выйти из режима обработки разрыва
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel *pDynaModel);	// обработать разрыв

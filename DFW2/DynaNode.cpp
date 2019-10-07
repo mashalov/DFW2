@@ -445,7 +445,6 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
 	// only update vicinity in case node has LRC ( due to slow complex::abs() )
 	if (m_pLRC)
 		dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
@@ -590,7 +589,7 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 
 bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 {
-	bool bRes = CDynaNodeBase::BuildRightHand(pDynaModel);
+	CDynaNodeBase::BuildRightHand(pDynaModel);
 
 	if (m_pSuperNodeParent)
 	{
@@ -598,9 +597,6 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 		pDynaModel->SetFunction(A(V_LAG), Lag - static_cast<CDynaNode*>(m_pSuperNodeParent)->Lag);
 		return true;
 	}
-
-	if (GetId() == 392)
-		bRes = bRes;
 
 	double T = pDynaModel->GetFreqTimeConstant();
 	double w0 = pDynaModel->GetOmega0();

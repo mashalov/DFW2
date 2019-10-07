@@ -82,7 +82,7 @@ bool CDynaModel::Run()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = 0.1;
+		m_Parameters.m_dZeroBranchImpedance = -0.1;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 		m_Parameters.eFreqDampingType = APDT_NODE;
@@ -103,7 +103,7 @@ bool CDynaModel::Run()
 		m_Parameters.m_bLogToConsole = false;
 		m_Parameters.m_bLogToFile = true;
 
-		m_Parameters.m_bDisableResultsWriter = false;
+		m_Parameters.m_bDisableResultsWriter = true;
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга
@@ -351,10 +351,9 @@ bool CDynaModel::InitEquations()
 		sc.m_dCurrentH = dCurrentH;
 		sc.nStepsCount = 0;
 
-
-		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-			for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
-				(*dit)->StoreStates();
+		for (auto&& cit : m_DeviceContainers)
+			for (auto&& dit : *cit)
+				dit->StoreStates();
 	}
 	return bRes;
 }
@@ -759,7 +758,7 @@ bool CDynaModel::Step()
 		if (sc.m_bBeforeDiscontinuityWritten)
 		{
 			// и мы уже записали состояние модели до разрыва
-			bRes = bRes && ServeDiscontinuityRequest();	// обрабатываем разрыв
+			ServeDiscontinuityRequest();	// обрабатываем разрыв
 			sc.m_bBeforeDiscontinuityWritten = false;
 		}
 		else
@@ -1052,7 +1051,7 @@ double CDynaModel::GetRatioForLowerOrder()
 	return rDown;
 }
 
-bool CDynaModel::EnterDiscontinuityMode()
+void CDynaModel::EnterDiscontinuityMode()
 {
 	if (!sc.m_bDiscontinuityMode)
 	{
@@ -1063,7 +1062,6 @@ bool CDynaModel::EnterDiscontinuityMode()
 		sc.m_dCurrentH = 0.0;
 		//sc.m_bEnforceOut = true;
 	}
-	return true;
 }
 
 void CDynaModel::UnprocessDiscontinuity()
@@ -1141,20 +1139,16 @@ bool CDynaModel::ProcessDiscontinuity()
 	return CDevice::IsFunctionStatusOK(Status);
 }
 
-bool CDynaModel::LeaveDiscontinuityMode()
+void CDynaModel::LeaveDiscontinuityMode()
 {
-	bool bRes = true;
 	if (sc.m_bDiscontinuityMode)
 	{
 		sc.m_bDiscontinuityMode = false;
-		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && bRes; it++)
-		{
-			bRes = bRes && (*it)->LeaveDiscontinuityMode(this);
-		}
+		for (auto&& it : m_DeviceContainers)
+			it->LeaveDiscontinuityMode(this);
 		sc.m_dCurrentH = sc.Hmin;
 		ResetNordsiek();
 	}
-	return bRes;
 }
 
 double CDynaModel::CheckZeroCrossing()
@@ -1171,9 +1165,9 @@ double CDynaModel::CheckZeroCrossing()
 
 void CDynaModel::AddZeroCrossingDevice(CDevice *pDevice)
 {
+	ZeroCrossingDevices.push_back(pDevice);
 	if (ZeroCrossingDevices.size() >= static_cast<size_t>(klu.MatrixSize()))
 		throw dfw2error(_T("CDynaModel::AddZeroCrossingDevice - matrix size overrun"));
-	ZeroCrossingDevices.push_back(pDevice);
 }
 
 void CDynaModel::GoodStep(double rSame)

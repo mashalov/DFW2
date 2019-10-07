@@ -325,9 +325,9 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	sc.m_dOldH = sc.m_dCurrentH;
 	sc.m_bNordsiekSaved = true;
 
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
-			(*dit)->StoreStates();
+	for (auto&& it : m_DeviceContainers)
+		for (auto&& dit : *it)
+			dit->StoreStates();
 
 	if (m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA)
 	{

@@ -90,10 +90,8 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszM
 }
 
 
-bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
+void CDynaModel::ChangeOrder(ptrdiff_t Newq)
 {
-	bool bRes = true;
-
 	if (sc.q != Newq)
 	{
 		sc.RefactorMatrix();
@@ -109,7 +107,6 @@ bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
 	case 2:
 		break;
 	}
-	return bRes;
 }
 
 struct RightVector* CDynaModel::GetRightVector(ptrdiff_t nRow)
@@ -181,16 +178,14 @@ double CDynaModel::GetNorm(double *pVector)
 	return sqrt(dSum);
 }
 
-bool CDynaModel::ServeDiscontinuityRequest()
+void CDynaModel::ServeDiscontinuityRequest()
 {
-	bool bRes = true;
 	if (sc.m_bDiscontinuityRequest)
 	{
 		sc.m_bDiscontinuityRequest = false;
-		bRes = EnterDiscontinuityMode() && bRes;
-		bRes = ProcessDiscontinuity() && bRes;
+		EnterDiscontinuityMode();
+		ProcessDiscontinuity();
 	}
-	return bRes;
 }
 
 bool CDynaModel::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dDelay)

@@ -398,7 +398,7 @@ namespace DFW2
 		double GetRatioForCurrentOrder();
 		double GetRatioForHigherOrder();
 		double GetRatioForLowerOrder();
-		bool   ChangeOrder(ptrdiff_t Newq);
+		void   ChangeOrder(ptrdiff_t Newq);
 
 		bool Step();
 
@@ -647,7 +647,7 @@ namespace DFW2
 
 		void ProcessTopologyRequest();
 		void DiscontinuityRequest();
-		bool ServeDiscontinuityRequest();
+		void ServeDiscontinuityRequest();
 		bool SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dDelay);
 		bool RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject);
 		bool CheckStateDiscontinuity(CDiscreteDelay *pDelayObject);
@@ -655,8 +655,8 @@ namespace DFW2
 
 		CDeviceContainer* GetDeviceContainer(eDFW2DEVICETYPE Type); 
 
-		bool EnterDiscontinuityMode();
-		bool LeaveDiscontinuityMode();
+		void EnterDiscontinuityMode();
+		void LeaveDiscontinuityMode();
 		bool ProcessDiscontinuity();
 		inline bool IsInDiscontinuityMode() { return sc.m_bDiscontinuityMode; }
 		inline bool IsInZeroCrossingMode() { return sc.m_bZeroCrossingMode; }

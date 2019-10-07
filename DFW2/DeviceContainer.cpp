@@ -244,9 +244,10 @@ size_t CDeviceContainer::GetResultVariablesCount()
 {
 	size_t nCount = 0;
 	// определяем простым подсчетом переменных состояния с признаком вывода
-	for (VARINDEXMAPCONSTITR vit = VariablesBegin(); vit != VariablesEnd(); vit++)
-		if (vit->second.m_bOutput)
+	for (auto&& vit : m_ContainerProps.m_VarMap)
+		if (vit.second.m_bOutput)
 			nCount++;
+
 	return nCount;
 }
 
@@ -281,10 +282,10 @@ bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 				eDFW2DEVICETYPE TreatAs = DEVTYPE_UNKNOWN; // search device type to create link according to link map
 				// просматриваем связи _к_ данному устройству и ищем номер связи, соответствующиий определенной выше LinkFrom
 				// если будет найдена связь - внешний контейнер будет трактоваться как соответсвующий типу этой связи
-				for (LINKSFROMMAPITR it = m_ContainerProps.m_LinksFrom.begin(); it != m_ContainerProps.m_LinksFrom.end(); it++)
-					if (it->second.nLinkIndex == LinkFrom.nLinkIndex)
+				for (auto && it : m_ContainerProps.m_LinksFrom)
+					if (it.second.nLinkIndex == LinkFrom.nLinkIndex)
 					{
-						TreatAs = it->first;	// если нашли - запоминаем
+						TreatAs = it.first;	// если нашли - запоминаем
 						break;
 					}
 
@@ -500,60 +501,42 @@ bool CDeviceContainer::AddLink(CMultiLink *pLink, ptrdiff_t nDeviceIndex, CDevic
 	return bRes;
 }
 
-bool CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
+void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	for (auto&& it : m_DevVec)
 		it->EstimateEquations(pDynaModel);
-
-	return bRes;
 }
 
-bool CDeviceContainer::BuildBlock(CDynaModel* pDynaModel)
+void CDeviceContainer::BuildBlock(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
-	for (DEVICEVECTORITR it = begin(); it != end() && bRes; it++)
-	{
-		bRes = (*it)->BuildEquations(pDynaModel) && bRes;
-	}
-	return bRes;
+	for (auto&& it : m_DevVec)
+		it->BuildEquations(pDynaModel);
 }
 
-bool CDeviceContainer::BuildRightHand(CDynaModel* pDynaModel)
+void CDeviceContainer::BuildRightHand(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
-	for (DEVICEVECTORITR it = begin(); it != end() && bRes; it++)
-	{
-		bRes = (*it)->BuildRightHand(pDynaModel) && bRes;
-	}
-	return bRes;
+	for (auto&& it : m_DevVec)
+		it->BuildRightHand(pDynaModel);
 }
 
 
-bool CDeviceContainer::BuildDerivatives(CDynaModel* pDynaModel)
+void CDeviceContainer::BuildDerivatives(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
-	for (DEVICEVECTORITR it = begin(); it != end() && bRes; it++)
-	{
-		bRes = (*it)->BuildDerivatives(pDynaModel) && bRes;
-	}
-	return bRes;
+	for (auto&& it : m_DevVec)
+		it->BuildDerivatives(pDynaModel);
 }
-
 
 void CDeviceContainer::NewtonUpdateBlock(CDynaModel* pDynaModel)
 {
-	for (DEVICEVECTORITR it = begin(); it != end() ; it++)
-		(*it)->NewtonUpdateEquation(pDynaModel);
+	for (auto&& it : m_DevVec)
+		it->NewtonUpdateEquation(pDynaModel);
 }
 
 bool CDeviceContainer::LeaveDiscontinuityMode(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
-	for (DEVICEVECTORITR it = begin(); it != end() && bRes; it++)
-	{
-		bRes = bRes && (*it)->LeaveDiscontinuityMode(pDynaModel);
-	}
+	for (auto&& it : m_DevVec)
+		it->LeaveDiscontinuityMode(pDynaModel);
 	return bRes;
 }
 
@@ -781,25 +764,21 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 	CDeviceContainer *pRetContainer(nullptr);
 
 	// просматриваем возможные связи _из_ внешнего контейнер
-	for (LINKSTOMAPITR extlinkstoit = pExtContainer->m_ContainerProps.m_LinksTo.begin();
-			   		   extlinkstoit != pExtContainer->m_ContainerProps.m_LinksTo.end(); 
-					   extlinkstoit++)
+	for (auto&& extlinkstoit : pExtContainer->m_ContainerProps.m_LinksTo)
 	{
-		if (IsKindOfType(extlinkstoit->first))
+		if (IsKindOfType(extlinkstoit.first))
 		{
 			// если данный контейнер подходит по типу для организации связи
-			LinkTo = extlinkstoit->second;
+			LinkTo = extlinkstoit.second;
 			// возвращаем внешний контейнер и подтверждаем что готовы быть с ним связаны
 			pRetContainer = pExtContainer;
 			// дополнительно просматриваема связи _из_ контенера 
-			for (LINKSFROMMAPITR linksfrom = m_ContainerProps.m_LinksFrom.begin();
-								 linksfrom != m_ContainerProps.m_LinksFrom.end();
-								 linksfrom++)
+			for (auto&& linksfrom : m_ContainerProps.m_LinksFrom)
 			{
-				if (pExtContainer->IsKindOfType(linksfrom->first))
+				if (pExtContainer->IsKindOfType(linksfrom.first))
 				{
 					// если можно связаться по типу с внешним контейнером - заполняем связь, по которой это можно сделать
-					LinkFrom = linksfrom->second;
+					LinkFrom = linksfrom.second;
 					break;
 				}
 			}
@@ -812,25 +791,21 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 		// если из внешнего контейнера к данном связь не найдена
 		// просматриваем возможные связи _из_ данного контейнера
 
-		for (LINKSTOMAPITR linkstoit = m_ContainerProps.m_LinksTo.begin();
-						   linkstoit != m_ContainerProps.m_LinksTo.end();
-						   linkstoit++)
+		for (auto&& linkstoit : m_ContainerProps.m_LinksTo)
 		{
-			if (pExtContainer->IsKindOfType(linkstoit->first))
+			if (pExtContainer->IsKindOfType(linkstoit.first))
 			{
 				// если внешний контейнер может быть связан с данным
-				LinkTo = linkstoit->second;
+				LinkTo = linkstoit.second;
 				// возвращаем данный контейнер и подтверждаем что он готов с связи с внешним
 				pRetContainer = this;
 				// дополнительно просматриваем связи _из_ внешнего контейнера
-				for (LINKSFROMMAPITR linksfrom = pExtContainer->m_ContainerProps.m_LinksFrom.begin();
-									 linksfrom != pExtContainer->m_ContainerProps.m_LinksFrom.end();
-									 linksfrom++)
+				for (auto&& linksfrom : pExtContainer->m_ContainerProps.m_LinksFrom)
 				{
-					if (IsKindOfType(linksfrom->first))
+					if (IsKindOfType(linksfrom.first))
 					{
 						// если данный контейнер может быть связан внешним - заполняем связь
-						LinkFrom = linksfrom->second;
+						LinkFrom = linksfrom.second;
 						break;
 					}
 				}
