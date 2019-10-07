@@ -365,7 +365,10 @@ namespace DFW2
 		KLUWrapperData klu;
 		CDynaLRC *m_pLRCGen = nullptr;		// СХН для генераторных узлов без генераторов
 
-		MatrixRow *m_pMatrixRows;
+		unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;
+		unique_ptr<RightVector[]> pRightVectorUniq;
+		RightVector *pRightVector = nullptr;
+		MatrixRow *m_pMatrixRows = nullptr;
 
 		DEVICECONTAINERS m_DeviceContainers;
 		DEVICECONTAINERS m_DeviceContainersNewtonUpdate;
@@ -376,17 +379,13 @@ namespace DFW2
 
 		ptrdiff_t m_nEstimatedMatrixSize;
 		double *pbRightHand;
-		double *pRightHandBackup;
-		struct RightVector *pRightVector = nullptr;
+		unique_ptr<double[]> pRightHandBackup;
+		
 
 
 		bool m_bEstimateBuild;
 		bool m_bRebuildMatrixFlag;
-
-		CDevice **m_pZeroCrossingDevices;
-		ptrdiff_t m_nZeroCrossingDevicesCount;
-
-		void CleanUpMatrix(bool bSaveRightVector = false);
+		vector<CDevice*> ZeroCrossingDevices;
 		void ConvertToCCSMatrix();
 		void SolveLinearSystem();
 		void SolveRcond();
@@ -663,7 +662,7 @@ namespace DFW2
 		inline bool IsInZeroCrossingMode() { return sc.m_bZeroCrossingMode; }
 		ptrdiff_t GetStepNumber() {  return sc.nStepsCount;  }
 		void RebuildMatrix(bool bRebuild = true);
-		bool AddZeroCrossingDevice(CDevice *pDevice);
+		void AddZeroCrossingDevice(CDevice *pDevice);
 
 		void Log(CDFW2Messages::DFW2MessageStatus Status, ptrdiff_t nDBIndex, const _TCHAR* cszMessage);
 		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...);
