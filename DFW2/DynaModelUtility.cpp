@@ -28,11 +28,6 @@ void CDynaModel::ReportKLUError()
 	}
 }
 
-bool CDynaModel::Status()
-{
-	return m_bStatus;
-}
-
 void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status,ptrdiff_t nDBIndex, const _TCHAR* cszMessage)
 {
 	Log(Status, cszMessage);
@@ -119,7 +114,8 @@ bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
 
 struct RightVector* CDynaModel::GetRightVector(ptrdiff_t nRow)
 {
-	_ASSERTE(nRow >= 0 && nRow < m_nMatrixSize);
+	if (nRow >= m_nEstimatedMatrixSize)
+		throw dfw2error(Cex(_T("CDynaModel::GetRightVector matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
 	return pRightVector + nRow;
 }
 
@@ -161,7 +157,7 @@ void CDynaModel::DiscontinuityRequest()
 double CDynaModel::GetWeightedNorm(double *pVector)
 {
 	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 	double *pb = pVector;
 	double dSum = 0.0;
 	for (; pVectorBegin < pVectorEnd; pVectorBegin++, pb++)
@@ -176,7 +172,7 @@ double CDynaModel::GetNorm(double *pVector)
 {
 	double dSum = 0.0;
 	double *pb = pVector;
-	double *pe = pVector + m_nMatrixSize;
+	double *pe = pVector + klu.MatrixSize();
 	while (pb < pe)
 	{
 		dSum += *pb * *pb;
@@ -309,9 +305,9 @@ int ErrorCompare(void *pContext, const void *pValue1, const void *pValue2)
 
 void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 {
-	RightVector **pSortOrder = new RightVector*[m_nMatrixSize];
+	RightVector **pSortOrder = new RightVector*[klu.MatrixSize()];
 	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 	RightVector **ppSortOrder = pSortOrder;
 
 	while (pVectorBegin < pVectorEnd)
@@ -321,10 +317,10 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 		ppSortOrder++;
 	}
 
-	qsort_s(pSortOrder, m_nMatrixSize, sizeof(RightVector*), ErrorCompare, nullptr);
+	qsort_s(pSortOrder, klu.MatrixSize(), sizeof(RightVector*), ErrorCompare, nullptr);
 
-	if (nCount > m_nMatrixSize)
-		nCount = m_nMatrixSize;
+	if (nCount > klu.MatrixSize())
+		nCount = klu.MatrixSize();
 
 	ppSortOrder = pSortOrder;
 	while (nCount)
@@ -414,19 +410,19 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 	FILE *fmatrix;
 	if (!_tfopen_s(&fmatrix, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
 	{
-		ptrdiff_t *pAi = Ap;
-		double *pAx = Ax;
+		ptrdiff_t *pAi = klu.Ap();
+		double *pAx = klu.Ax();
 		ptrdiff_t nRow = 0;
 		set<ptrdiff_t> BadNumbers, FullZeros;
 		vector<bool> NonZeros;
 		vector<bool> Diagonals;
 		vector<double> Expanded;
 
-		NonZeros.resize(m_nMatrixSize, false);
-		Diagonals.resize(m_nMatrixSize, false);
-		Expanded.resize(m_nMatrixSize, 0.0);
+		NonZeros.resize(klu.MatrixSize(), false);
+		Diagonals.resize(klu.MatrixSize(), false);
+		Expanded.resize(klu.MatrixSize(), 0.0);
 
-		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
+		for (ptrdiff_t *pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
 		{
 			ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
 			bool bAllZeros = true;
@@ -481,8 +477,8 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 		// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
 		// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
 
-		pAi = Ap; pAx = Ax; nRow = 0;
-		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
+		pAi = klu.Ap(); pAx = klu.Ax(); nRow = 0;
+		for (ptrdiff_t *pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
 		{
 			fill(Expanded.begin(), Expanded.end(), 0.0);
 
@@ -503,9 +499,9 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 			}
 
 			ptrdiff_t nRows = 0;
-			ptrdiff_t *pAis = Ap;
-			double *pAxs = Ax;
-			for (ptrdiff_t *pAps = Ai; pAps < Ai + m_nMatrixSize; pAps++, nRows++)
+			ptrdiff_t *pAis = klu.Ap();
+			double *pAxs = klu.Ax();
+			for (ptrdiff_t *pAps = klu.Ai(); pAps < klu.Ai() + klu.MatrixSize(); pAps++, nRows++)
 			{
 				ptrdiff_t *pAiends = pAis + *(pAps + 1) - *pAps;
 				double normj = 0.0;
@@ -548,7 +544,7 @@ void CDynaModel::DumpStateVector()
 	if (!_tfopen_s(&fdump, Cex(_T("c:\\tmp\\statevector_%d.csv"), sc.nStepsCount), _T("w+, ccs=UTF-8")))
 	{
 		_ftprintf(fdump, _T("Value;db;Device;N0;N1;N2;Error;WError;Atol;Rtol;EqType;SN0;SN1;SN2;SavError;Tminus2Val;PhysEqType;PrimBlockType;ErrorHits\n"));
-		for (RightVector *pRv = pRightVector; pRv < pRightVector + m_nMatrixSize; pRv++)
+		for (RightVector *pRv = pRightVector; pRv < pRightVector + klu.MatrixSize(); pRv++)
 		{
 			_ftprintf(fdump, _T("%g;"), *pRv->pValue);
 			_ftprintf(fdump, _T("%g;"), fabs(pRv->b));
@@ -569,23 +565,6 @@ void CDynaModel::DumpStateVector()
 		fclose(fdump);
 	}
 }
-
-
-void CDynaModel::FindMaxB(double& bmax, ptrdiff_t& nMaxIndex)
-{
-	bmax = 0.0;
-	nMaxIndex = 0;
-	for (int r = 0; r < m_nMatrixSize; r++)
-	{
-		_CheckNumber(b[r]);
-		if (bmax < abs(b[r]))
-		{
-			nMaxIndex = r;
-			bmax = abs(b[r]);
-		}
-	}
-}
-
 
 void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 {

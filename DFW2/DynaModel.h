@@ -8,9 +8,7 @@
 #include "Discontinuities.h"
 #include "CustomDevice.h"
 #include "Automatic.h"
-#include "klu.h"
-#include "klu_version.h"
-#include "cs.h"
+#include "KLUWrapper.h"
 #include "Results.h"
 #include "chrono"
 
@@ -205,8 +203,6 @@ namespace DFW2
 			double dRateGrowLimit = FLT_MAX;
 			ptrdiff_t nStepsCount;
 			ptrdiff_t nNewtonIterationsCount = 0;
-			ptrdiff_t nFactorizationsCount = 0;
-			ptrdiff_t nAnalyzingsCount = 0;
 			double dMaxConditionNumber = 0.0;
 			double dMaxConditionNumberTime = 0.0;
 			OrderStatistics OrderStatistics[2];
@@ -366,6 +362,7 @@ namespace DFW2
 		} 
 			m_Parameters;
 
+		KLUWrapperData klu;
 		CDynaLRC *m_pLRCGen = nullptr;		// СХН для генераторных узлов без генераторов
 
 		MatrixRow *m_pMatrixRows;
@@ -377,24 +374,12 @@ namespace DFW2
 		CDevice **m_ppVarSearchStackTop, **m_ppVarSearchStackBase = nullptr;
 		DEVICEPTRSET m_setVisitedDevices;
 
-		ptrdiff_t m_nMatrixSize;
-		ptrdiff_t m_nNonZeroCount;
-
-		KLU_symbolic *Symbolic = nullptr;
-		KLU_numeric *Numeric = nullptr;
-		KLU_common Common;
-
-		double *Ax = nullptr;
-		double *b;
+		ptrdiff_t m_nEstimatedMatrixSize;
 		double *pbRightHand;
 		double *pRightHandBackup;
-
 		struct RightVector *pRightVector = nullptr;
 
-		ptrdiff_t *Ap = nullptr;
-		ptrdiff_t *Ai = nullptr;
 
-		bool m_bStatus;
 		bool m_bEstimateBuild;
 		bool m_bRebuildMatrixFlag;
 
@@ -402,12 +387,14 @@ namespace DFW2
 		ptrdiff_t m_nZeroCrossingDevicesCount;
 
 		void CleanUpMatrix(bool bSaveRightVector = false);
-		bool ConvertToCCSMatrix();
-		bool SolveLinearSystem();
+		void ConvertToCCSMatrix();
+		void SolveLinearSystem();
+		void SolveRcond();
+		void SetDifferentiatorsTolerance();
 		bool NewtonUpdate();
 		bool SolveNewton(ptrdiff_t nMaxIts);
-		bool EstimateMatrix();
-		bool NewtonUpdateDevices();
+		void EstimateMatrix();
+		void NewtonUpdateDevices();
 
 		double GetRatioForCurrentOrder();
 		double GetRatioForHigherOrder();
@@ -425,12 +412,12 @@ namespace DFW2
 		bool UpdateExternalVariables();
 
 		void ResetElement();
-		bool ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		bool CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		bool ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		bool CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		typedef bool (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
-		typedef bool (CDynaModel::*ElementSetterNoDupFn)(ptrdiff_t, ptrdiff_t, double);
+		void ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		void CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		void ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		typedef void (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
+		typedef void (CDynaModel::*ElementSetterNoDupFn)(ptrdiff_t, ptrdiff_t, double);
 		void ScaleAlgebraicEquations();
 		ElementSetterFn			ElementSetter;
 		ElementSetterNoDupFn	ElementSetterNoDup;
@@ -450,8 +437,8 @@ namespace DFW2
 		void ReInitializeNordsiek();
 		void ResetNordsiek();
 		void BuildDerivatives();
-		bool BuildMatrix();
-		bool BuildRightHand();
+		void BuildMatrix();
+		void BuildRightHand();
 		double CheckZeroCrossing();
 
 		bool WriteResultsHeader();
@@ -473,9 +460,6 @@ namespace DFW2
 		bool LoadFlow();
 		void DumpMatrix(bool bAnalyzeLinearDependenies = false);
 		void DumpStateVector();
-		void FindMaxB(double& bmax, ptrdiff_t& nMaxIndex);
-
-
 		FILE *fResult, *m_pLogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
 
@@ -510,21 +494,18 @@ namespace DFW2
 		bool InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
-		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
 
 		// Для теста с множителями
 		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
 
-		bool SetFunction(ptrdiff_t nRow, double dValue);
-		bool AddFunction(ptrdiff_t nRow, double dValue);
-		bool SetFunctionDiff(ptrdiff_t nRow, double dValue);
-		bool SetDerivative(ptrdiff_t nRow, double dValue);
-		bool CorrectNordsiek(ptrdiff_t nRow, double dValue);
+		void SetFunction(ptrdiff_t nRow, double dValue);
+		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
+		void SetDerivative(ptrdiff_t nRow, double dValue);
+		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		double GetFunction(ptrdiff_t nRow);
 		struct RightVector* GetRightVector(ptrdiff_t nRow);
-		void ResetMatrixStructure();
-		bool Status();
 
 		inline double GetOmega0() const
 		{

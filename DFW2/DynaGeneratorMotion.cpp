@@ -53,9 +53,6 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 
 bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
 	bool bRes = true;
 	if (bRes)
 	{
@@ -121,7 +118,7 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_IIM), A(V_DELTA), -Eqs * sin(Delta) / xd1);
 
 	}
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -151,7 +148,7 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_DELTA), eDelta);
 	}
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -172,7 +169,7 @@ bool CDynaGeneratorMotion::BuildDerivatives(CDynaModel *pDynaModel)
 		pDynaModel->SetDerivative(A(V_S), eS);
 		pDynaModel->SetDerivative(A(V_DELTA), eDelta);
 	}
-	return pDynaModel->Status();
+	return true;
 }
 
 double* CDynaGeneratorMotion::GetConstVariablePtr(ptrdiff_t nVarIndex)

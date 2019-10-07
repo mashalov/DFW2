@@ -541,14 +541,10 @@ bool CDeviceContainer::BuildDerivatives(CDynaModel* pDynaModel)
 }
 
 
-bool CDeviceContainer::NewtonUpdateBlock(CDynaModel* pDynaModel)
+void CDeviceContainer::NewtonUpdateBlock(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
-	for (DEVICEVECTORITR it = begin(); it != end() && bRes; it++)
-	{
-		bRes = (*it)->NewtonUpdateEquation(pDynaModel) && bRes;
-	}
-	return bRes;
+	for (DEVICEVECTORITR it = begin(); it != end() ; it++)
+		(*it)->NewtonUpdateEquation(pDynaModel);
 }
 
 bool CDeviceContainer::LeaveDiscontinuityMode(CDynaModel* pDynaModel)

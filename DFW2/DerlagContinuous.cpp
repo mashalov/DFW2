@@ -61,7 +61,7 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -hb0 * m_T);
 	pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -T);
 
-	return bRes && pDynaModel->Status();
+	return true;
 }
 
 bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
@@ -93,7 +93,7 @@ bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(m_OutputEquationIndex + 1), 0.0);
 	}
 
-	return pDynaModel->Status();
+	return true;
 }
 
 bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
@@ -134,7 +134,7 @@ bool CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
 		pDynaModel->SetDerivative(A(m_OutputEquationIndex + 1), 0.0);
 	}
 
-	return pDynaModel->Status();
+	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaModel)
@@ -210,7 +210,7 @@ bool CDerlagNordsieck::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(A(m_OutputEquationIndex + 2), 0.0);
 	}
 
-	return pDynaModel->Status();
+	return true;
 }
 
 bool CDerlagNordsieck::BuildDerivatives(CDynaModel *pDynaModel)
@@ -226,7 +226,7 @@ bool CDerlagNordsieck::BuildDerivatives(CDynaModel *pDynaModel)
 		pDynaModel->SetDerivative(A(m_OutputEquationIndex), 0.0);
 	}
 
-	return pDynaModel->Status();
+	return true;
 }
 
 bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
@@ -275,7 +275,7 @@ bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(m_OutputEquationIndex + 2), A(m_OutputEquationIndex + 2), 1.0);
 	}
 
-	return bRes && pDynaModel->Status();
+	return true;
 }
 
 

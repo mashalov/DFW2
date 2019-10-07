@@ -487,7 +487,7 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(A(V_SE), A(V_QE), -CDevice::ZeroDivGuard(Qe, absIb) );
 
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -519,7 +519,7 @@ bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunction(A(V_SB),	Sb - abs(cSb));
 	pDynaModel->SetFunction(A(V_SE),	Se - abs(cSe));
 
-	return pDynaModel->Status();
+	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::Init(CDynaModel* pDynaModel)

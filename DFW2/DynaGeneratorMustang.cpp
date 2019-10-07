@@ -56,9 +56,6 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 
 bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-	
 	bool bRes = true;
 	
 	if (bRes)
@@ -222,7 +219,7 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 
 		bRes = bRes && BuildIfromDQEquations(pDynaModel);
 	}
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -266,7 +263,7 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 
 		//DumpIntegrationStep(97, 2028);
 	}
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -292,7 +289,7 @@ bool CDynaGeneratorMustang::BuildDerivatives(CDynaModel *pDynaModel)
 			pDynaModel->SetDerivative(A(V_EDSS), 0.0);
 		}
 	}
-	return pDynaModel->Status();
+	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::ProcessDiscontinuity(CDynaModel *pDynaModel)

@@ -51,9 +51,6 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
 
 bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
 	bool bRes = true;
 
 	if (GetId() == 376804 && !pDynaModel->EstimateBuild())
@@ -192,7 +189,7 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_EQ), A(V_ID), xd - xd2);
 	}
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -236,7 +233,7 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
 	}
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -258,7 +255,7 @@ bool CDynaGenerator3C::BuildDerivatives(CDynaModel *pDynaModel)
 			pDynaModel->SetDerivative(A(V_EDSS), 0.0);
 		}
 	}
-	return pDynaModel->Status();
+	return true;
 }
 
 

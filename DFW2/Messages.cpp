@@ -26,6 +26,7 @@ const _TCHAR* CDFW2Messages::m_cszKLUSingular = _T("KLU - Сингулярная
 const _TCHAR* CDFW2Messages::m_cszKLUOutOfMemory = _T("KLU - Недостаточно памяти");
 const _TCHAR* CDFW2Messages::m_cszKLUInvalidInput = _T("KLU - Неправильные данные");
 const _TCHAR* CDFW2Messages::m_cszKLUIntOverflow = _T("KLU - Переполнение целого числа");
+const _TCHAR* CDFW2Messages::m_cszKLUUnknownError = _T("KLU - Неизвестная ошибка с кодом %d");
 const _TCHAR* CDFW2Messages::m_cszInitLoopedInfinitely = _T("При инициализации устройств обнаружен бесконечный цикл");
 const _TCHAR* CDFW2Messages::m_cszDeviceContainerFailedToInit = _T("Отказ инициализации для устройств типа %d код %d");
 const _TCHAR* CDFW2Messages::m_cszStepAndOrderChanged = _T("t=%.12g (%d) Порядок и шаг метода изменен : порядок %d шаг %g с");

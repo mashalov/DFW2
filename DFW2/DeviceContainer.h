@@ -170,7 +170,7 @@ namespace DFW2
 		bool BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
 		bool BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств
 		bool BuildDerivatives(CDynaModel* pDynaModel);						// рассчитать производные дифуров устройств
-		bool NewtonUpdateBlock(CDynaModel* pDynaModel);						// обновить данные в устройствах после итерации Ньютона (для тех устройств, которым нужно)
+		void NewtonUpdateBlock(CDynaModel* pDynaModel);						// обновить данные в устройствах после итерации Ньютона (для тех устройств, которым нужно)
 		bool LeaveDiscontinuityMode(CDynaModel *pDynaModel);				// выйти из режима обработки разрыва
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel *pDynaModel);	// обработать разрыв
 		void UnprocessDiscontinuity();

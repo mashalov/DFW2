@@ -49,7 +49,7 @@ bool CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 	// dIim / dVre
 	pDynaModel->SetElement(A(V_IIM), A(iVre), -1.0 / xd1);
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 bool CDynaGeneratorInfBusBase::CalculatePower()
@@ -70,7 +70,7 @@ bool CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunction(A(V_Q), Q + dVre * Iim - dVim * Ire);
 	pDynaModel->SetFunction(A(V_IRE), Ire - (EqsSin - dVim) / xd1);
 	pDynaModel->SetFunction(A(V_IIM), Iim - (dVre - EqsCos) / xd1);
-	return pDynaModel->Status();
+	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::Init(CDynaModel* pDynaModel)

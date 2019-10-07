@@ -829,7 +829,7 @@ bool CLoadFlow::Run()
 			}
 		}
 
-		klu.Solve();
+		klu.FactorSolve();
 		//KLU_numeric *Numeric = KLU_factor(klu.Ai(), klu.Ap(), klu.Ax(), klu.Symbolic(), klu.Common());
 
 		/*

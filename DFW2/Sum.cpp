@@ -10,14 +10,14 @@ bool CSum::BuildEquations(CDynaModel *pDynaModel)
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), m_K1);
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input1->Index()), m_K2);
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), -1.0);
-	return bRes && pDynaModel->Status();
+	return true;
 }
 
 
 bool CSum::BuildRightHand(CDynaModel *pDynaModel)
 {
 	pDynaModel->SetFunction(A(m_OutputEquationIndex), m_K1 * m_Input->Value() + m_K2 * m_Input1->Value() - *m_Output);
-	return pDynaModel->Status();
+	return true;
 }
 
 

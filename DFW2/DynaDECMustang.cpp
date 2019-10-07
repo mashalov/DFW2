@@ -77,12 +77,10 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 
 bool CDynaDECMustang::BuildEquations(CDynaModel* pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
 	pDynaModel->SetElement(A(V_DEC), A(V_DEC), 1.0);
 	// строим уравнения для примитивов
 	bool bRes = CDevice::BuildEquations(pDynaModel);
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -90,7 +88,7 @@ bool CDynaDECMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
 	bool bRes = CDevice::BuildRightHand(pDynaModel);
 	pDynaModel->SetFunction(A(V_DEC), 0.0);
-	return pDynaModel->Status();
+	return true;
 }
 
 

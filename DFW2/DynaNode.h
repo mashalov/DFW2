@@ -114,7 +114,7 @@ namespace DFW2
 		void GetPnrQnrSuper();
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool NewtonUpdateEquation(CDynaModel* pDynaModel);
+		virtual void NewtonUpdateEquation(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		void MarkZoneEnergized();
 		void ProcessTopologyRequest();

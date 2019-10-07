@@ -10,12 +10,9 @@ CAbs::CAbs(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveV
 
 bool CAbs::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
-
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), m_bPositive ? 1.0 : -1.0);
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
-
-	return bRes && pDynaModel->Status();
+	return true;
 }
 
 bool CAbs::BuildRightHand(CDynaModel *pDynaModel)
@@ -28,7 +25,7 @@ bool CAbs::BuildRightHand(CDynaModel *pDynaModel)
 	else
 		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 
