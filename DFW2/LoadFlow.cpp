@@ -890,7 +890,10 @@ bool CLoadFlow::Run()
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
 		if (!pNode->m_pSuperNodeParent)
-			pNode->Qg = pNode->IsStateOn() ? pNode->Qgr :0.0;
+		{
+			pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;
+			GetPnrQnr(pNode);
+		}
 	}
 
 #ifdef _DEBUG
@@ -908,7 +911,6 @@ bool CLoadFlow::Run()
 	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		GetPnrQnr(pNode);
 		if (pNode->IsStateOn())
 		{
 			double mx = fabs(pNode->V - pNode->Vrastr);

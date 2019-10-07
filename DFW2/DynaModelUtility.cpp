@@ -5,9 +5,9 @@
 #include "stdio.h"
 using namespace DFW2;
 
-void CDynaModel::ReportKLUError()
+void CDynaModel::ReportKLUError(KLU_common& KLUCommon)
 {
-	switch (Common.status)
+	switch (KLUCommon.status)
 	{
 	case 0:
 		Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszKLUOk);
