@@ -83,9 +83,6 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::ProcessDiscontinuity(CDynaModel *pDynaMo
 
 bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
 	bool bRes = true;
 
 	if (bRes)
@@ -216,15 +213,12 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 
 	}
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
 bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
 	bool bRes = true;
 
 	if (bRes)
@@ -260,7 +254,7 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 	}
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -294,7 +288,7 @@ bool CDynaGenerator1C::BuildDerivatives(CDynaModel *pDynaModel)
 		pDynaModel->SetDerivative(A(V_DELTA), 0.0);
 		pDynaModel->SetDerivative(A(V_EQS), 0.0);
 	}
-	return pDynaModel->Status();
+	return true;
 }
 
 double* CDynaGenerator1C::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -437,8 +431,6 @@ void CDynaGenerator1C::IfromDQ()
 // из dq в ri
 bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
 
 	double co(cos(Delta)), si(sin(Delta));
 
@@ -460,21 +452,18 @@ bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
 	// dIim / dDeltaG
 	pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * si - Iq * co);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 // вводит в правую часть уравнения для преобразования 
 // из dq в ri
 bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
 	double co(cos(Delta)), si(sin(Delta));
 	pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
 	pDynaModel->SetFunction(A(V_IIM), Iim - Iq * si - Id * co);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 

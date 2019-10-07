@@ -422,10 +422,8 @@ bool CDevice::BuildDerivatives(CDynaModel *pDynaModel)
 	return bRes;
 }
 
-bool CDevice::NewtonUpdateEquation(CDynaModel *pDynaModel)
+void CDevice::NewtonUpdateEquation(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
-	return bRes;
 }
 
 // сбрасывает указатель просмотренных ссылок устройства

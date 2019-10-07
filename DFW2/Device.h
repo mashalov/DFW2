@@ -275,7 +275,7 @@ namespace DFW2
 		// расчет значений производных дифференциальных уравнений
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
 		// функция обновления данных после итерации Ньютона (если надо)
-		virtual bool NewtonUpdateEquation(CDynaModel *pDynaModel);
+		virtual void NewtonUpdateEquation(CDynaModel *pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS Initialized() { return m_eInitStatus; }
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);

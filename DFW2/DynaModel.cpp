@@ -83,177 +83,175 @@ bool CDynaModel::Run()
 	_set_FMA3_enable(1);
 #endif
 
-	m_Parameters.m_dZeroBranchImpedance = 0.1;
-
-	//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
-	m_Parameters.eFreqDampingType = APDT_NODE;
-	m_Parameters.m_dOutStep = 1E-10;
-	//m_Parameters.eFreqDampingType = APDT_ISLAND;
-	//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
-
-	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
-	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
-	//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL;
-	m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA;
-	m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
-	m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
-
-	m_Parameters.m_bUseRefactor = true;
-	m_Parameters.m_dAtol = 1E-4;
-	m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
-	m_Parameters.m_bLogToConsole = false;
-	m_Parameters.m_bLogToFile = true;
-
-	m_Parameters.m_bDisableResultsWriter = false;
-
-	// если в параметрах задан BDF для дифуров, отключаем
-	// подавление рингинга
-	if(m_Parameters.m_eDiffEquationType == DET_ALGEBRAIC)
-		m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
-
-	//m_Parameters.m_dOutStep = 1E-5;
-	bRes = bRes && (LRCs.Init(this) == DFS_OK);
-
-	bRes = bRes && Link();
-	bRes = bRes && PrepareGraph();
-	bRes = bRes && PrepareYs();
-	bRes = bRes && Nodes.ProcessTopology();
-
 	try
 	{
+		m_Parameters.m_dZeroBranchImpedance = 0.1;
+
+		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
+		m_Parameters.eFreqDampingType = APDT_NODE;
+		m_Parameters.m_dOutStep = 1E-10;
+		//m_Parameters.eFreqDampingType = APDT_ISLAND;
+		//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
+
+		//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
+		//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
+		//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL;
+		m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA;
+		m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
+		m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
+
+		m_Parameters.m_bUseRefactor = true;
+		m_Parameters.m_dAtol = 1E-4;
+		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
+		m_Parameters.m_bLogToConsole = false;
+		m_Parameters.m_bLogToFile = true;
+
+		m_Parameters.m_bDisableResultsWriter = false;
+
+		// если в параметрах задан BDF для дифуров, отключаем
+		// подавление рингинга
+		if(m_Parameters.m_eDiffEquationType == DET_ALGEBRAIC)
+			m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
+
+		//m_Parameters.m_dOutStep = 1E-5;
+		bRes = bRes && (LRCs.Init(this) == DFS_OK);
+
+		bRes = bRes && Link();
+		bRes = bRes && PrepareGraph();
+		bRes = bRes && PrepareYs();
+		bRes = bRes && Nodes.ProcessTopology();
 		LoadFlow();
-	}
-	catch (dfw2error& err)
-	{
-		wstring q = err.uwhat();
-		Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Исключение : %s"), err.uwhat().c_str()));
-	}
+		bRes = bRes && InitDevices();
+		EstimateMatrix();
+		bRes = bRes && InitEquations();
 
-	bRes = bRes && InitDevices();
-	bRes = bRes && EstimateMatrix();
-	bRes = bRes && InitEquations();
+		//CDynaLRC *pLRC = static_cast<CDynaLRC*>(LRCs.GetDevice(-1));
+		//pLRC->TestDump();
 
-	//CDynaLRC *pLRC = static_cast<CDynaLRC*>(LRCs.GetDevice(-1));
-	//pLRC->TestDump();
+	#define SMZU
 
-#define SMZU
+		// Расчет может завалиться внутри цикла, например из-за
+		// сингулярной матрицы, поэтому контролируем
+		// была ли начата запись результатов. Если что-то записали - нужно завершить
+		bool bResultsNeedToBeFinished = false;
 
-	// Расчет может завалиться внутри цикла, например из-за
-	// сингулярной матрицы, поэтому контролируем
-	// была ли начата запись результатов. Если что-то записали - нужно завершить
-	bool bResultsNeedToBeFinished = false;
+		if (bRes)
+		{
+			m_Discontinuities.AddEvent(150.0, new CModelActionStop());
 
-	if (bRes)
-	{
-		m_Discontinuities.AddEvent(150.0, new CModelActionStop());
+	#ifdef SMZU
 
-#ifdef SMZU
+	/*		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*(Branches.begin() + 520));
+			m_Discontinuities.AddEvent(0.55, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_OFF));
+			m_Discontinuities.AddEvent(0.7, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_ON));
 
-/*		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*(Branches.begin() + 520));
-		m_Discontinuities.AddEvent(0.55, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_OFF));
-		m_Discontinuities.AddEvent(0.7, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_ON));
+			CDynaNode *pNode392 = static_cast<CDynaNode*>(Nodes.GetDevice(1114));
+			m_Discontinuities.AddEvent(0.5, new CModelActionChangeNodeShunt(pNode392, cplx(0.0, 1E-7)));
+			m_Discontinuities.AddEvent(0.6, new CModelActionRemoveNodeShunt(pNode392));*/
 
-		CDynaNode *pNode392 = static_cast<CDynaNode*>(Nodes.GetDevice(1114));
-		m_Discontinuities.AddEvent(0.5, new CModelActionChangeNodeShunt(pNode392, cplx(0.0, 1E-7)));
-		m_Discontinuities.AddEvent(0.6, new CModelActionRemoveNodeShunt(pNode392));*/
+	#else
+			//CDynaGenerator1C *pGen = static_cast<CDynaGenerator1C*>(*Generators1C.begin());
 
-#else
-		//CDynaGenerator1C *pGen = static_cast<CDynaGenerator1C*>(*Generators1C.begin());
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*(Branches.begin() + 5));
 
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*(Branches.begin() + 5));
+			CDynaNode *pNode392 = static_cast<CDynaNode*>(Nodes.GetDevice(392));
+			CDynaNode *pNode319 = static_cast<CDynaNode*>(Nodes.GetDevice(319));
 
-		CDynaNode *pNode392 = static_cast<CDynaNode*>(Nodes.GetDevice(392));
-		CDynaNode *pNode319 = static_cast<CDynaNode*>(Nodes.GetDevice(319));
-
-		//CDynaExciterMustang *pExciter = static_cast<CDynaExciterMustang>(ExcitersMustang.GetDevice(1319));
+			//CDynaExciterMustang *pExciter = static_cast<CDynaExciterMustang>(ExcitersMustang.GetDevice(1319));
 
 
 		
-		//m_Discontinuities.AddEvent(1.0, new CModelActionChangeVariable(&pGen->Pt, 1749.6));
-		//m_Discontinuities.AddEvent(5.0, new CModelActionChangeVariable(&pGen->Pt, 1700.0));
-		//m_Discontinuities.AddEvent(1.0, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_OFF));
+			//m_Discontinuities.AddEvent(1.0, new CModelActionChangeVariable(&pGen->Pt, 1749.6));
+			//m_Discontinuities.AddEvent(5.0, new CModelActionChangeVariable(&pGen->Pt, 1700.0));
+			//m_Discontinuities.AddEvent(1.0, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_OFF));
 
-		// /*
-		m_Discontinuities.AddEvent(0.5, new CModelActionChangeNodeShunt(pNode392, cplx(0.1, 0.1)));
-		m_Discontinuities.AddEvent(0.6, new CModelActionRemoveNodeShunt(pNode392));
-		m_Discontinuities.AddEvent(0.6, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_OFF));
+			// /*
+			m_Discontinuities.AddEvent(0.5, new CModelActionChangeNodeShunt(pNode392, cplx(0.1, 0.1)));
+			m_Discontinuities.AddEvent(0.6, new CModelActionRemoveNodeShunt(pNode392));
+			m_Discontinuities.AddEvent(0.6, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_OFF));
 
-		m_Discontinuities.AddEvent(7.8, new CModelActionChangeNodeLoad(pNode319, cplx(pNode319->Pn * 0.8, pNode319->Qn * 0.8)));
+			m_Discontinuities.AddEvent(7.8, new CModelActionChangeNodeLoad(pNode319, cplx(pNode319->Pn * 0.8, pNode319->Qn * 0.8)));
 
-		m_Discontinuities.AddEvent(.7, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_ON));
-		// */
+			m_Discontinuities.AddEvent(.7, new CModelActionChangeBranchState(pBranch, CDynaBranch::BRANCH_ON));
+			// */
 
-		//m_Discontinuities.AddEvent(5.0, new CModelActionChangeNodeShunt(pNode392, cplx(0.0, 0.0)));
-		//m_Discontinuities.AddEvent(5.5, new CModelActionRemoveNodeShunt(pNode392));
+			//m_Discontinuities.AddEvent(5.0, new CModelActionChangeNodeShunt(pNode392, cplx(0.0, 0.0)));
+			//m_Discontinuities.AddEvent(5.5, new CModelActionRemoveNodeShunt(pNode392));
 
-		//m_Discontinuities.AddEvent(1.0, new CModelActionChangeVariable(&pExciter->Uexc, pExciter->Uexc * 4.1));
-		//m_Discontinuities.AddEvent(15.0, new CModelActionChangeVariable(&pExciter->Uexc, pExciter->Uexc * 0.5 ));
-		//m_Discontinuities.AddEvent(23.0, new CModelActionChangeVariable(&pExciter->Uexc, pExciter->Uexc * 4.1));
-		//m_Discontinuities.AddEvent(5.0, new CModelActionChangeVariable(&pExciter->Uexc, pExciter->Uexc));
-#endif
+			//m_Discontinuities.AddEvent(1.0, new CModelActionChangeVariable(&pExciter->Uexc, pExciter->Uexc * 4.1));
+			//m_Discontinuities.AddEvent(15.0, new CModelActionChangeVariable(&pExciter->Uexc, pExciter->Uexc * 0.5 ));
+			//m_Discontinuities.AddEvent(23.0, new CModelActionChangeVariable(&pExciter->Uexc, pExciter->Uexc * 4.1));
+			//m_Discontinuities.AddEvent(5.0, new CModelActionChangeVariable(&pExciter->Uexc, pExciter->Uexc));
+	#endif
 
 	
 
-		bRes = bRes && m_Automatic.Init();
-		bRes = bRes && m_Discontinuities.Init();
-		bRes = bRes && WriteResultsHeader();
-		sc.m_dCurrentH = 0.01;
+			bRes = bRes && m_Automatic.Init();
+			bRes = bRes && m_Discontinuities.Init();
+			bRes = bRes && WriteResultsHeader();
+			sc.m_dCurrentH = 0.01;
 
-		while (!sc.m_bStopCommandReceived && bRes)
-		{
-			bRes = bRes && Step();
-			if (!sc.m_bStopCommandReceived)
+			while (!sc.m_bStopCommandReceived && bRes)
 			{
-				if (bRes)
+				bRes = bRes && Step();
+				if (!sc.m_bStopCommandReceived)
 				{
-					// если ошибок не было, пишем результаты
-					if (WriteResults())
-						bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
-					else
-						bResultsNeedToBeFinished = bRes = false; // если не записали - сбрасываем признак завершения
+					if (bRes)
+					{
+						// если ошибок не было, пишем результаты
+						if (WriteResults())
+							bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
+						else
+							bResultsNeedToBeFinished = bRes = false; // если не записали - сбрасываем признак завершения
+					}
 				}
+				if (WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0)
+					break;
 			}
-			if (WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0)
-				break;
 		}
+
+		if (!bRes)
+			MessageBox(NULL, _T("Failed"), _T("Failed"), MB_OK);
+
+
+		// вне зависимости от результата завершаем запись результатов
+		// по признаку завершения
+		if (bResultsNeedToBeFinished)
+			if (!FinishWriteResults())
+				bRes = false;	// если завершить не получилось - портим результат
+
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps count %d"), sc.nStepsCount);
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d Time passed %f"),
+																		sc.OrderStatistics[0].nSteps, 
+																		sc.OrderStatistics[0].nFailures,
+																		sc.OrderStatistics[0].nNewtonFailures,
+																		sc.OrderStatistics[0].dTimePassed);
+
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 2nd order count %d, failures %d Newton failures %d Time passed %f"),
+																		sc.OrderStatistics[1].nSteps,
+																		sc.OrderStatistics[1].nFailures,
+																		sc.OrderStatistics[1].nNewtonFailures,
+																		sc.OrderStatistics[1].dTimePassed);
+
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Factors count %d Analyzings count %d"), klu.FactorizationsCount(), klu.AnalyzingsCount());
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Newtons count %d %f per step, failures at step %d failures at discontinuity %d"),
+																	 sc.nNewtonIterationsCount, 
+																	 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
+																	 sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,
+																	 sc.nDiscontinuityNewtonFailures);
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Max condition number %g at time %g"),
+																	 sc.dMaxConditionNumber,
+																	 sc.dMaxConditionNumberTime);
+
+		GetWorstEquations(10);
+		chrono::milliseconds CalcDuration = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - sc.m_ClockStart);
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Duration %g"), static_cast<double>(CalcDuration.count()) / 1E3);
+	}
+	catch (dfw2error& err)
+	{
+		Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Исключение : %s"), err.uwhat()));
 	}
 
-	if (!bRes)
-		MessageBox(NULL, _T("Failed"), _T("Failed"), MB_OK);
-
-
-	// вне зависимости от результата завершаем запись результатов
-	// по признаку завершения
-	if (bResultsNeedToBeFinished)
-		if (!FinishWriteResults())
-			bRes = false;	// если завершить не получилось - портим результат
-
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps count %d"), sc.nStepsCount);
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d Time passed %f"),
-																	sc.OrderStatistics[0].nSteps, 
-																	sc.OrderStatistics[0].nFailures,
-																	sc.OrderStatistics[0].nNewtonFailures,
-																	sc.OrderStatistics[0].dTimePassed);
-
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 2nd order count %d, failures %d Newton failures %d Time passed %f"),
-																	sc.OrderStatistics[1].nSteps,
-																	sc.OrderStatistics[1].nFailures,
-																	sc.OrderStatistics[1].nNewtonFailures,
-																	sc.OrderStatistics[1].dTimePassed);
-
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Factors count %d Analyzings count %d"), sc.nFactorizationsCount, sc.nAnalyzingsCount);
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Newtons count %d %f per step, failures at step %d failures at discontinuity %d"),
-																 sc.nNewtonIterationsCount, 
-																 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
-																 sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,
-																 sc.nDiscontinuityNewtonFailures);
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Max condition number %g at time %g"),
-																 sc.dMaxConditionNumber,
-																 sc.dMaxConditionNumberTime);
-
-	GetWorstEquations(10);
-	chrono::milliseconds CalcDuration = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - sc.m_ClockStart);
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Duration %g"), static_cast<double>(CalcDuration.count()) / 1E3);
 	return bRes;
 }
 
@@ -267,8 +265,7 @@ bool CDynaModel::InitDevices()
 	if (!UpdateExternalVariables())
 		Status = DFS_FAILED;
 
-	KLU_defaults(&Common);
-	Common.ordering = 0; // используем amd (0) или colamd (1). 0 - лучше для userefactor = true, 1 - для userefactor = false
+	klu.Common()->ordering = 0; // используем amd (0) или colamd (1). 0 - лучше для userefactor = true, 1 - для userefactor = false
 
 	ptrdiff_t nTotalOKInits = -1;
 	
@@ -334,7 +331,7 @@ bool CDynaModel::InitEquations()
 	if (bRes)
 	{
 		struct RightVector *pVectorBegin = pRightVector;
-		struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+		struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 		while (pVectorBegin < pVectorEnd)
 		{
@@ -377,7 +374,7 @@ bool CDynaModel::NewtonUpdate()
 	sc.m_bNewtonStepControl = false;
 
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
@@ -392,9 +389,10 @@ bool CDynaModel::NewtonUpdate()
 	// констатны метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
 	const double Methodl0[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
+	double *pB = klu.B();
 	while (pVectorBegin < pVectorEnd)
 	{
-		double& db = b[pVectorBegin - pRightVector];
+		double& db = *(pB + (pVectorBegin - pRightVector));
 		pVectorBegin->Error += db;
 		pVectorBegin->b = db;
 
@@ -484,29 +482,29 @@ bool CDynaModel::NewtonUpdate()
 			{
 				if (bLineSearch)
 				{
-					double *pRh = new double[m_nMatrixSize];
-					double *pRb = new double[m_nMatrixSize];
-					memcpy(pRh, pRightHandBackup, sizeof(double) * m_nMatrixSize);
-					memcpy(pRb, b, sizeof(double) * m_nMatrixSize);
+					double *pRh = new double[klu.MatrixSize()];
+					double *pRb = new double[klu.MatrixSize()];
+					memcpy(pRh, pRightHandBackup, sizeof(double) * klu.MatrixSize());
+					memcpy(pRb, klu.B(), sizeof(double) * klu.MatrixSize());
 					double g0 = sc.dRightHandNorm;
 					BuildRightHand();
 					double g1 = sc.dRightHandNorm;
 
 					if (g0 < g1)
 					{
-						double *yv = new double[m_nMatrixSize];
-						ZeroMemory(yv, sizeof(double)*m_nMatrixSize);
+						double *yv = new double[klu.MatrixSize()];
+						ZeroMemory(yv, sizeof(double) * klu.MatrixSize());
 						cs Aj;
-						Aj.i = Ap;
-						Aj.p = Ai;
-						Aj.x = Ax;
-						Aj.m = Aj.n = m_nMatrixSize;
+						Aj.i = klu.Ap();
+						Aj.p = klu.Ai();
+						Aj.x = klu.Ax();
+						Aj.m = Aj.n = klu.MatrixSize();
 						Aj.nz = -1;
 
 						cs_gatxpy(&Aj, pRh, yv);
 
 						double gs1 = 0.0;
-						for (ptrdiff_t s = 0; s < m_nMatrixSize; s++)
+						for (ptrdiff_t s = klu.MatrixSize(); s >= 0; s--)
 							gs1 += yv[s] * pRb[s];
 						delete yv;
 						double lambda = -0.5 * gs1 / (g1 - g0 - gs1);
@@ -541,18 +539,14 @@ bool CDynaModel::NewtonUpdate()
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::NextIteration);
 
-	bRes = bRes && NewtonUpdateDevices();
+	NewtonUpdateDevices();
 	return bRes;
 }
 
-bool CDynaModel::NewtonUpdateDevices()
+void CDynaModel::NewtonUpdateDevices()
 {
-	bool bRes = true;
-	for (DEVICECONTAINERITR it = m_DeviceContainersNewtonUpdate.begin(); it != m_DeviceContainersNewtonUpdate.end() && bRes; it++)
-	{
-		bRes = bRes && (*it)->NewtonUpdateBlock(this);
-	}
-	return bRes;
+	for (auto&& it : m_DeviceContainersNewtonUpdate)
+		it->NewtonUpdateBlock(this);
 }
 
 bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
@@ -586,101 +580,98 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		if (sc.m_bDiscontinuityMode)
 			sc.RefactorMatrix();
 
-		if (BuildMatrix())
-		{
+		BuildMatrix();
 #ifdef _LFINFO2_
-			if (sc.m_bDiscontinuityMode || sc.m_dCurrentH <= sc.Hmin)
+		if (sc.m_bDiscontinuityMode || sc.m_dCurrentH <= sc.Hmin)
+		{
+			for (DEVICEVECTORITR it = Nodes.begin(); it != Nodes.end(); it++)
 			{
-				for (DEVICEVECTORITR it = Nodes.begin(); it != Nodes.end(); it++)
-				{
-					CDynaNode *pNode = static_cast<CDynaNode*>(*it);
-					_tcprintf(_T("\n%30s - %6.2f %6.2f %6.2f %6.2f"), pNode->GetVerbalName(), pNode->V, pNode->Delta * 180 / 3.14159, pNode->Pnr, pNode->Qnr);
-				}
-				for (DEVICEVECTORITR it = Generators1C.begin(); it != Generators1C.end(); it++)
-				{
-					CDynaGenerator1C *pGen = static_cast<CDynaGenerator1C*>(*it);
-					_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
-				}
-				for (DEVICEVECTORITR it = GeneratorsMotion.begin(); it != GeneratorsMotion.end(); it++)
-				{
-					CDynaGeneratorMotion *pGen = static_cast<CDynaGeneratorMotion*>(*it);
-					_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
-				}
-				for (DEVICEVECTORITR it = GeneratorsInfBus.begin(); it != GeneratorsInfBus.end(); it++)
-				{
-					CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(*it);
-					_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
-				}
+				CDynaNode *pNode = static_cast<CDynaNode*>(*it);
+				_tcprintf(_T("\n%30s - %6.2f %6.2f %6.2f %6.2f"), pNode->GetVerbalName(), pNode->V, pNode->Delta * 180 / 3.14159, pNode->Pnr, pNode->Qnr);
 			}
+			for (DEVICEVECTORITR it = Generators1C.begin(); it != Generators1C.end(); it++)
+			{
+				CDynaGenerator1C *pGen = static_cast<CDynaGenerator1C*>(*it);
+				_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
+			}
+			for (DEVICEVECTORITR it = GeneratorsMotion.begin(); it != GeneratorsMotion.end(); it++)
+			{
+				CDynaGeneratorMotion *pGen = static_cast<CDynaGeneratorMotion*>(*it);
+				_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
+			}
+			for (DEVICEVECTORITR it = GeneratorsInfBus.begin(); it != GeneratorsInfBus.end(); it++)
+			{
+				CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(*it);
+				_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
+			}
+		}
 #endif
 
-			sc.nNewtonIterationsCount++;
+		sc.nNewtonIterationsCount++;
 
-			double bmax(0.0);
-			ptrdiff_t imax(0);
-			FindMaxB(bmax, imax);
+		ptrdiff_t imax(0);
+		double bmax = klu.FindMaxB(imax);
 	
+//		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
+		SolveLinearSystem();
 
-			if (SolveLinearSystem())
+//			DumpMatrix();
+		bmax = klu.FindMaxB(imax);
+//		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
+
+		if (NewtonUpdate())
+		{
+			/*if (GetIntegrationStepNumber() == 2031 && GetNewtonIterationNumber() == 5)
 			{
-	//			DumpMatrix();
-				FindMaxB(bmax, imax);
+				DumpStateVector();
+				DumpMatrix();
+			}
+			*/
+			IterationOK = true;
 
-				if (NewtonUpdate())
-				{
-					/*if (GetIntegrationStepNumber() == 2031 && GetNewtonIterationNumber() == 5)
-					{
-						DumpStateVector();
-						DumpMatrix();
-					}
-					*/
-					IterationOK = true;
-
-					if (sc.m_bNewtonConverged)
-					{
+			if (sc.m_bNewtonConverged)
+			{
 #ifdef _LFINFO_
-						Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) Converged in %3d iterations %g %s %g %g %s Saving %g"), GetCurrentTime(),
-																						sc.nStepsCount,
-																						sc.nNewtonIteration,
-																						sc.Newton.dMaxErrorVariable, 
-																						sc.Newton.pMaxErrorDevice->GetVerbalName(),
-																						*sc.Newton.pMaxErrorVariable, 
-																						pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
-																						sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
-																						1.0 - static_cast<double>(sc.nFactorizationsCount) / sc.nNewtonIterationsCount);
+				Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) Converged in %3d iterations %g %s %g %g %s Saving %g"), GetCurrentTime(),
+																				sc.nStepsCount,
+																				sc.nNewtonIteration,
+																				sc.Newton.dMaxErrorVariable, 
+																				sc.Newton.pMaxErrorDevice->GetVerbalName(),
+																				*sc.Newton.pMaxErrorVariable, 
+																				pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
+																				sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
+																				1.0 - static_cast<double>(klu.FactorizationsCount()) / sc.nNewtonIterationsCount);
 						
 #endif
 
-						// ProcessDiscontinuity checks Discontinuity mode internally and can be called
-						// regardless of this mode
-						bRes = ProcessDiscontinuity();
-						break;
-					}
+				// ProcessDiscontinuity checks Discontinuity mode internally and can be called
+				// regardless of this mode
+				bRes = ProcessDiscontinuity();
+				break;
+			}
 #ifdef _LFINFO_
-					else
-					{
+			else
+			{
 
-						if (!sc.m_bNewtonStepControl)
-						{
-							Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) Continue %3d iteration %g %s %g %g %s"), GetCurrentTime(),
-								sc.nStepsCount,
-								sc.nNewtonIteration,
-								sc.Newton.dMaxErrorVariable,
-								sc.Newton.pMaxErrorDevice->GetVerbalName(),
-								*sc.Newton.pMaxErrorVariable,
-								pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
-								sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable));
-						}
-					}
-
-					if (sc.m_bNewtonDisconverging && !sc.m_bDiscontinuityMode)
-					{
-						bRes = true;
-						break;
-					}
-#endif
+				if (!sc.m_bNewtonStepControl)
+				{
+					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) Continue %3d iteration %g %s %g %g %s"), GetCurrentTime(),
+						sc.nStepsCount,
+						sc.nNewtonIteration,
+						sc.Newton.dMaxErrorVariable,
+						sc.Newton.pMaxErrorDevice->GetVerbalName(),
+						*sc.Newton.pMaxErrorVariable,
+						pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
+						sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable));
 				}
 			}
+
+			if (sc.m_bNewtonDisconverging && !sc.m_bDiscontinuityMode)
+			{
+				bRes = true;
+				break;
+			}
+#endif
 		}
 		if (!IterationOK) 
 			break;
@@ -744,7 +735,7 @@ bool CDynaModel::Step()
 						if (m_bRebuildMatrixFlag)
 						{
 							// строим ее заново
-							bRes = bRes && EstimateMatrix();
+							EstimateMatrix();
 							bRes = bRes && UpdateExternalVariables();
 						}
 						// проверяем, не возникло ли новых запросов на обработку разрыва при обработке разрыва
@@ -929,7 +920,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 	double r = 0.0;
 
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
@@ -996,7 +987,7 @@ double CDynaModel::GetRatioForHigherOrder()
 	_ASSERTE(sc.q == 1);
 
 	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 	
@@ -1034,7 +1025,7 @@ double CDynaModel::GetRatioForLowerOrder()
 	double rDown = 0.0;
 	_ASSERTE(sc.q == 2);
 	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
@@ -1185,7 +1176,7 @@ double CDynaModel::CheckZeroCrossing()
 bool CDynaModel::AddZeroCrossingDevice(CDevice *pDevice)
 {
 	bool bRes = true;
-	if (m_nZeroCrossingDevicesCount < m_nMatrixSize)
+	if (m_nZeroCrossingDevicesCount < klu.MatrixSize())
 		m_pZeroCrossingDevices[m_nZeroCrossingDevicesCount++] = pDevice;
 	return bRes;
 }

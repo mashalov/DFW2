@@ -26,7 +26,7 @@ bool CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
 
-	return bRes && pDynaModel->Status();
+	return true;
 }
 
 bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
@@ -55,7 +55,7 @@ bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 	else
 		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 

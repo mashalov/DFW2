@@ -39,6 +39,7 @@ namespace DFW2
 		static const _TCHAR* m_cszKLUOutOfMemory;
 		static const _TCHAR* m_cszKLUInvalidInput;
 		static const _TCHAR* m_cszKLUIntOverflow;
+		static const _TCHAR* m_cszKLUUnknownError;
 		static const _TCHAR* m_cszInitLoopedInfinitely;
 		static const _TCHAR* m_cszDeviceContainerFailedToInit;
 		static const _TCHAR* m_cszStepAndOrderChanged;

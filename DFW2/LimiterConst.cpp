@@ -27,7 +27,7 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), dOdI);
-	return bRes && pDynaModel->Status();
+	return true;
 }
 
 bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
@@ -49,7 +49,7 @@ bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 	else
 		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 

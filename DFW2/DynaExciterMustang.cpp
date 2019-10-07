@@ -20,9 +20,6 @@ double* CDynaExciterMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 
 bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
 	bool bRes = true;
 
 
@@ -67,7 +64,7 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	//pDynaModel->SetElement(A(V_EQE), m_pGenerator->m_pNode->A(CDynaNode::V_V), -ZeroDivGuard(EqeV, Ug0));
 	pDynaModel->SetElement(A(V_EQE), A(ExtVg.Index()), -ZeroDivGuard(EqeV, Ug0));
 	bRes = bRes && CDynaExciterBase::BuildEquations(pDynaModel);
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -86,7 +83,7 @@ bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunction(A(V_EQSUM), dEqsum);
 	pDynaModel->SetFunction(A(V_EQE), Eqe - EqeV * ZeroDivGuard(V, Ug0));
 	CDevice::BuildRightHand(pDynaModel);
-	return pDynaModel->Status();
+	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)

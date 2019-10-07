@@ -28,7 +28,7 @@ bool CLimitedLag::BuildEquations(CDynaModel *pDynaModel)
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), -on);
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), -on * m_K);
 
-	return bRes && pDynaModel->Status(); 
+	return true;
 }
 
 
@@ -53,7 +53,7 @@ bool CLimitedLag::BuildRightHand(CDynaModel *pDynaModel)
 	else
 		pDynaModel->SetFunctionDiff(A(m_OutputEquationIndex), 0.0);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 bool CLimitedLag::Init(CDynaModel *pDynaModel)
@@ -104,7 +104,7 @@ bool CLimitedLag::BuildDerivatives(CDynaModel *pDynaModel)
 	else
 		pDynaModel->SetDerivative(A(m_OutputEquationIndex), 0.0);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 double CLimitedLag::OnStateMid(CDynaModel *pDynaModel)

@@ -117,7 +117,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(A(V_IM), A(V_IM), 1.0);
 		pDynaModel->SetElement(A(V_IM), m_pSuperNodeParent->A(V_IM), -1);
 
-		return pDynaModel->Status();
+		return true;
 	}
 		
 	double Vre2 = Vre * Vre;
@@ -338,7 +338,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
 	pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 
@@ -350,7 +350,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(A(V_DELTA), Delta - m_pSuperNodeParent->Delta);
 		pDynaModel->SetFunction(A(V_RE), Vre - m_pSuperNodeParent->Vre);
 		pDynaModel->SetFunction(A(V_IM), Vim - m_pSuperNodeParent->Vim);
-		return pDynaModel->Status();
+		return true;
 	}
 
 	GetPnrQnrSuper();
@@ -440,17 +440,16 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	pDynaModel->SetFunction(A(V_V), dV);
 	pDynaModel->SetFunction(A(V_DELTA), dDelta);
 
-	return pDynaModel->Status();
+	return true;
 }
 
-bool CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
+void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
 	// only update vicinity in case node has LRC ( due to slow complex::abs() )
 	if (m_pLRC)
 		dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
 	Vold = V;
-	return bRes;
 }
 
 void CDynaNodeBase::InitLF()
@@ -520,7 +519,7 @@ bool CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 	}
 	*/
 
-	return pDynaModel->Status();
+	return true;
 }
 
 
@@ -534,7 +533,7 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0);
 		pDynaModel->SetElement(A(V_S), m_pSuperNodeParent->A(V_S), -1.0);
 		pDynaModel->SetElement(A(V_LAG), m_pSuperNodeParent->A(V_LAG), -1.0);
-		return pDynaModel->Status();
+		return true;
 	}
 
 	double T = pDynaModel->GetFreqTimeConstant();
@@ -586,7 +585,7 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(A(V_S), A(V_LAG), 0.0);
 		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
 	}
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
@@ -597,7 +596,7 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	{
 		pDynaModel->SetFunction(A(V_S), S - static_cast<CDynaNode*>(m_pSuperNodeParent)->S);
 		pDynaModel->SetFunction(A(V_LAG), Lag - static_cast<CDynaNode*>(m_pSuperNodeParent)->Lag);
-		return pDynaModel->Status();
+		return true;
 	}
 
 	if (GetId() == 392)
@@ -637,7 +636,7 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	//DumpIntegrationStep(2143, 2031);
 	//DumpIntegrationStep(2141, 2031);
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
@@ -916,7 +915,7 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 			}
 		}
 	}
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 
@@ -940,7 +939,7 @@ bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 		}
 		pDynaModel->SetFunction(A(V_S), dS);
 	}
-	return pDynaModel->Status();
+	return true;
 }
 
 

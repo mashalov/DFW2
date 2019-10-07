@@ -8,7 +8,7 @@ using namespace DFW2;
 void CDynaModel::Predict()
 {
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	// Алгоритм расчета [Lsode 2.61]
 	while (pVectorBegin < pVectorEnd)
@@ -61,7 +61,7 @@ void CDynaModel::InitNordsiek()
 	InitDevicesNordsiek();
 
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -77,7 +77,7 @@ void CDynaModel::InitNordsiek()
 void CDynaModel::ResetNordsiek()
 {
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	if (sc.m_bNordsiekSaved)
 	{
@@ -99,7 +99,7 @@ void CDynaModel::ResetNordsiek()
 void CDynaModel::ReInitializeNordsiek()
 {
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	if (sc.m_bNordsiekSaved)
 	{
@@ -131,7 +131,7 @@ void CDynaModel::RestoreNordsiek()
 {
 
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	if (sc.m_bNordsiekSaved)
 	{
@@ -181,7 +181,7 @@ bool CDynaModel::DetectAdamsRinging()
 	{
 		const double Methodl1[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
 		struct RightVector *pVectorBegin = pRightVector;
-		struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+		struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 		while (pVectorBegin < pVectorEnd)
 		{
@@ -239,7 +239,7 @@ bool CDynaModel::DetectAdamsRinging()
 void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 {
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	double alpha = sc.m_dCurrentH / sc.m_dOldH > 0.0 ? sc.m_dOldH : 1.0;
 	double alphasq = alpha * alpha;
@@ -348,7 +348,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 void CDynaModel::SaveNordsiek()
 {
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -374,7 +374,7 @@ void CDynaModel::SaveNordsiek()
 void CDynaModel::RescaleNordsiek(double r)
 {
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 	
 	// расчет выполняется путем умножения текущего Nordsieck на диагональную матрицу C[q+1;q+1]
 	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
@@ -406,7 +406,7 @@ void CDynaModel::RescaleNordsiek(double r)
 void CDynaModel::ConstructNordsiekOrder()
 {
 	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
 	while (pVectorBegin < pVectorEnd)
 	{

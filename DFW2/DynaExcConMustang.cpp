@@ -92,9 +92,6 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 {
-	if (!pDynaModel->Status())
-		return pDynaModel->Status();
-
 	bool bRes = true;
 
 	double V = dVdtIn.Value(); //pNode->V;
@@ -135,7 +132,7 @@ bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 		
 	bRes = bRes && CDevice::BuildEquations(pDynaModel);
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
 bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
@@ -155,7 +152,7 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 	}
 
 	CDevice::BuildRightHand(pDynaModel);
-	return pDynaModel->Status();
+	return true;
 }
 
 bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
@@ -165,7 +162,7 @@ bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
 		pDynaModel->SetDerivative(A(V_SVT), (dSdtIn.Value() - Svt) / Tf);
 	else
 		pDynaModel->SetDerivative(A(V_SVT), 0.0);
-	return pDynaModel->Status();
+	return true;
 }
 
 

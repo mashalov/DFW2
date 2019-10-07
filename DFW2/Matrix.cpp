@@ -3,175 +3,142 @@
 
 using namespace DFW2;
 
-bool CDynaModel::EstimateMatrix()
+void CDynaModel::EstimateMatrix()
 {
-	bool bRes = true;
-
-	ptrdiff_t nOriginalMatrixSize = m_nMatrixSize;
+	ptrdiff_t nOriginalMatrixSize = klu.MatrixSize();
 	bool bSaveRightVector = pRightVector != nullptr;
-
 	CleanUpMatrix(bSaveRightVector);
-	
-	m_nMatrixSize = m_nNonZeroCount = 0;
+	m_nEstimatedMatrixSize = 0;
+	ptrdiff_t nNonZeroCount(0);
 	sc.m_bFillConstantElements = m_bEstimateBuild = true;
-
 	sc.RefactorMatrix();
 
 	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+		(*it)->EstimateBlock(this);
+
+	m_pMatrixRows = new MatrixRow[m_nEstimatedMatrixSize];
+	m_pZeroCrossingDevices = new CDevice*[m_nEstimatedMatrixSize];
+
+	if (bSaveRightVector)
 	{
-		bRes = (*it)->EstimateBlock(this) && bRes;
+		// make a copy of original right vector to new right vector
+		RightVector *pNewRightVector = new RightVector[m_nEstimatedMatrixSize];
+		RightVector *pNewBegin = pNewRightVector;
+		RightVector *pOldBegin = pRightVector;
+		RightVector *pOldEnd = pOldBegin + min(nOriginalMatrixSize, m_nEstimatedMatrixSize);
+
+		while (pOldBegin < pOldEnd)
+		{
+			*pNewBegin = *pOldBegin;
+			pNewBegin++;
+			pOldBegin++;
+		}
+
+		delete pRightVector;
+		pRightVector = pNewRightVector;
+		pRightHandBackup = new double[m_nEstimatedMatrixSize];
 	}
-	if (bRes)
+	else
 	{
-		b = new double[m_nMatrixSize];
-		//bRightHand = new double[m_nMatrixSize];
-		//Solution = new double[m_nMatrixSize];
+		pRightVector = new RightVector[m_nEstimatedMatrixSize];
+		pRightHandBackup = new double[m_nEstimatedMatrixSize];
+	}
 
-		m_pMatrixRows = new MatrixRow[m_nMatrixSize];
-		m_pZeroCrossingDevices = new CDevice* [m_nMatrixSize];
+	// init RightVector primitive block types
+	struct RightVector *pVectorBegin = pRightVector + nOriginalMatrixSize;
+	struct RightVector *pVectorEnd = pRightVector + m_nEstimatedMatrixSize;
+	while (pVectorBegin < pVectorEnd)
+	{
+		pVectorBegin->PrimitiveBlock = PBT_UNKNOWN;
+		pVectorBegin++;
+	}
 
-		if (bSaveRightVector)
-		{
-			// make a copy of original right vector to new right vector
-			RightVector *pNewRightVector = new RightVector[m_nMatrixSize];
-			RightVector *pNewBegin = pNewRightVector;
-			RightVector *pOldBegin = pRightVector;
-			RightVector *pOldEnd = pOldBegin + min(nOriginalMatrixSize,m_nMatrixSize);
 
-			while (pOldBegin < pOldEnd)
-			{
-				*pNewBegin = *pOldBegin;
-				pNewBegin++;
-				pOldBegin++;
-			}
+	// substitute element setter to counter (not actually setting values, just count)
 
-			delete pRightVector;
-			pRightVector = pNewRightVector;
-			pRightHandBackup = new double[m_nMatrixSize];
-		}
-		else
-		{
-			pRightVector = new RightVector[m_nMatrixSize];
-			pRightHandBackup = new double[m_nMatrixSize];
-		}
+	ElementSetter		= &CDynaModel::CountSetElement;
+	ElementSetterNoDup  = &CDynaModel::CountSetElementNoDup;
 
-		// init RightVector primitive block types
-		struct RightVector *pVectorBegin = pRightVector + nOriginalMatrixSize;
-		struct RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	BuildMatrix();
+	nNonZeroCount = 0;
+
+	// allocate matrix row headers to access rows instantly
+
+	MatrixRow *pRow;
+	for (pRow = m_pMatrixRows; pRow < m_pMatrixRows + m_nEstimatedMatrixSize; pRow++)
+		nNonZeroCount += pRow->m_nColsCount;
+
+	// allocate KLU matrix in CCS form
+	klu.SetSize(m_nEstimatedMatrixSize, nNonZeroCount);
+	m_pMatrixRows->pApRow = klu.Ap();
+	m_pMatrixRows->pAxRow = klu.Ax();
+
+	MatrixRow *pPrevRow = m_pMatrixRows;
+
+	// spread pointers to Ap within matrix row headers
+
+	for (pRow = pPrevRow + 1; pRow < m_pMatrixRows + klu.MatrixSize(); pRow++, pPrevRow++)
+	{
+		pRow->pApRow = pPrevRow->pApRow + pPrevRow->m_nColsCount;
+		pRow->pAxRow = pPrevRow->pAxRow + pPrevRow->m_nColsCount;
+	}
+
+	// revert to real element setter
+	ElementSetter		= &CDynaModel::ReallySetElement;
+	ElementSetterNoDup  = &CDynaModel::ReallySetElementNoDup;
+			
+	InitDevicesNordsiek();
+
+	if (bSaveRightVector && nOriginalMatrixSize < klu.MatrixSize())
+	{
+		pVectorBegin = pRightVector + nOriginalMatrixSize;
+
 		while (pVectorBegin < pVectorEnd)
 		{
-			pVectorBegin->PrimitiveBlock = PBT_UNKNOWN;
+			InitNordsiekElement(pVectorBegin,GetAtol(),GetRtol());
+			PrepareNordsiekElement(pVectorBegin);
 			pVectorBegin++;
-		}
-
-
-		// substitute element setter to counter (not actually setting values, just count)
-
-		ElementSetter		= &CDynaModel::CountSetElement;
-		ElementSetterNoDup  = &CDynaModel::CountSetElementNoDup;
-
-		bRes = BuildMatrix();
-		if (bRes)
-		{
-			m_nNonZeroCount = 0;
-
-			// allocate matrix row headers to access rows instantly
-
-			MatrixRow *pRow;
-			for (pRow = m_pMatrixRows; pRow < m_pMatrixRows + m_nMatrixSize; pRow++)
-				m_nNonZeroCount += pRow->m_nColsCount;
-
-			// allocate KLU matrix in CCS form
-
-			Ax = new double[m_nNonZeroCount];
-			Ap = new ptrdiff_t[m_nNonZeroCount];
-			Ai = new ptrdiff_t[m_nMatrixSize + 1];
-
-			m_pMatrixRows->pApRow = Ap;
-			m_pMatrixRows->pAxRow = Ax;
-
-			MatrixRow *pPrevRow = m_pMatrixRows;
-
-			// spread pointers to Ap within matrix row headers
-
-			for (pRow = pPrevRow + 1; pRow < m_pMatrixRows + m_nMatrixSize; pRow++, pPrevRow++)
-			{
-				pRow->pApRow = pPrevRow->pApRow + pPrevRow->m_nColsCount;
-				pRow->pAxRow = pPrevRow->pAxRow + pPrevRow->m_nColsCount;
-			}
-
-			// revert to real element setter
-			ElementSetter		= &CDynaModel::ReallySetElement;
-			ElementSetterNoDup  = &CDynaModel::ReallySetElementNoDup;
-			
-			InitDevicesNordsiek();
-
-			if (bSaveRightVector && nOriginalMatrixSize < m_nMatrixSize)
-			{
-				pVectorBegin = pRightVector + nOriginalMatrixSize;
-
-				while (pVectorBegin < pVectorEnd)
-				{
-					InitNordsiekElement(pVectorBegin,GetAtol(),GetRtol());
-					PrepareNordsiekElement(pVectorBegin);
-					pVectorBegin++;
-				}
-			}
-
 		}
 	}
 	m_bEstimateBuild = false;
-	return bRes;
 }
 
-bool CDynaModel::BuildRightHand()
+void CDynaModel::BuildRightHand()
 {
-	bool bRes = true;
-
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && m_bStatus; it++)
-	{
-		bRes = (*it)->BuildRightHand(this) && bRes && m_bStatus;
-	}
+	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() ; it++)
+		(*it)->BuildRightHand(this);
 
 	sc.dRightHandNorm = 0.0;
-	double *pBb = b, *pBe = b + m_nMatrixSize; 
+	double *pBb = klu.B(), *pBe = pBb + m_nEstimatedMatrixSize;
 	while (pBb < pBe)
 	{
 		sc.dRightHandNorm += *pBb * *pBb;
 		pBb++;
 	}
-	memcpy(pRightHandBackup, b, sizeof(double) * m_nMatrixSize);
+	memcpy(pRightHandBackup, klu.B(), sizeof(double) * m_nEstimatedMatrixSize);
 	//sc.dRightHandNorm *= 0.5;
-	bRes = bRes && m_bStatus;
-
-	return bRes;
 }
 
-bool CDynaModel::BuildMatrix()
+void CDynaModel::BuildMatrix()
 {
-	bool bRes = true;
-
 	if (!EstimateBuild())
-		bRes = BuildRightHand();
+		BuildRightHand();
 
-	if (sc.m_bRefactorMatrix && bRes)
+	if (sc.m_bRefactorMatrix)
 	{
 		ResetElement();
-		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && m_bStatus; it++)
+		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 		{
-			bRes = (*it)->BuildBlock(this) && bRes;
+			(*it)->BuildBlock(this);
 		}
-		bRes = bRes && m_bStatus;
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = sc.m_dCurrentH;
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Рефакторизация матрицы %d"), sc.nFactorizationsCount);
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Рефакторизация матрицы %d"), klu.FactorizationsCount());
 		if(sc.m_bFillConstantElements)
 			Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Обновление констант"));
 		if (!EstimateBuild())
 			sc.m_bFillConstantElements = false;
 	}
-
-	return bRes;
 }
 
 void CDynaModel::BuildDerivatives()
@@ -186,10 +153,6 @@ void CDynaModel::BuildDerivatives()
 
 void CDynaModel::CleanUpMatrix(bool bSaveRightVector)
 {
-	if (Ax) delete Ax;
-	if (Ap) delete Ap;
-	if (Ai) delete Ai;
-	if (b)  delete b;
 	//if (bRightHand) delete bRightHand;
 	//if (Solution) delete Solution;
 
@@ -198,12 +161,6 @@ void CDynaModel::CleanUpMatrix(bool bSaveRightVector)
 
 	if (pRightHandBackup)
 		delete pRightHandBackup;
-
-	if (Symbolic)
-		KLU_free_symbolic(&Symbolic, &Common);
-
-	if (Numeric)
-		KLU_free_numeric(&Numeric, &Common);
 
 	if (m_pMatrixRows)
 		delete m_pMatrixRows;
@@ -214,141 +171,76 @@ void CDynaModel::CleanUpMatrix(bool bSaveRightVector)
 
 ptrdiff_t CDynaModel::AddMatrixSize(ptrdiff_t nSizeIncrement)
 {
-	ptrdiff_t nRet = m_nMatrixSize;
-	m_nMatrixSize += nSizeIncrement;
+	ptrdiff_t nRet = m_nEstimatedMatrixSize;
+	m_nEstimatedMatrixSize += nSizeIncrement;
 	return nRet;
 }
 
 void CDynaModel::ResetElement()
 {
-	m_bStatus = true;
-	if (m_pMatrixRows)
+	_ASSERTE(m_pMatrixRows);
+	MatrixRow *pRow = m_pMatrixRows;
+	MatrixRow *pEnd = m_pMatrixRows + m_nEstimatedMatrixSize;
+	while (pRow < pEnd)
 	{
-		MatrixRow *pRow = m_pMatrixRows;
-		MatrixRow *pEnd = m_pMatrixRows + m_nMatrixSize;
-		while (pRow < pEnd)
-		{
-			pRow->Reset();
-			pRow++;
-		}
+		pRow->Reset();
+		pRow++;
 	}
 }
 
-bool CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
+void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
-	if (nRow >= 0 && nRow < m_nMatrixSize &&
-		nCol >= 0 && nCol < m_nMatrixSize)
+	if(nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize)
+		throw dfw2error(Cex(_T("CDynaModel::ReallySetElement matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
+
+	MatrixRow *pRow = m_pMatrixRows + nRow;
+	double l0 = Methodl[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
+	// в качестве типа уравнения используем __физический__ тип
+	// потому что у алгебраических и дифференциальных уравнений
+	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
+
+	if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
+		dValue *= l0;		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
+	else
 	{
-		m_bStatus = false;
-		MatrixRow *pRow = m_pMatrixRows + nRow;
+		// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
+		dValue *= l0 * GetH();
+		// если элемент диагональный, учитываем диагональную единичную матрицу
+		if (nRow == nCol)
+			dValue = 1.0 - dValue;
+	}
 
-		
-		double l0 = Methodl[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
-		// в качестве типа уравнения используем __физический__ тип
-		// потому что у алгебраических и дифференциальных уравнений
-		// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
+	_CheckNumber(dValue);
 
-		if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
-			dValue *= l0;		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
-		else
+	switch (sc.IterationMode)
+	{
+	case StepControl::eIterationMode::JN:
+		if (nRow != nCol) dValue = 0.0;
+		break;
+	case StepControl::eIterationMode::FUNCTIONAL:
+		if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
+		break;
+
+	}
+
+	// если нужно суммировать элементы, на входа задан флаг bAddToPrevious
+	// пока нужно для параллельных ветвей
+	if (bAddToPrevious)
+	{
+		ptrdiff_t *pSp = pRow->pAp - 1;
+		while (pSp >= pRow->pApRow)
 		{
-			// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
-			dValue *= l0 * GetH();
-			// если элемент диагональный, учитываем диагональную единичную матрицу
-			if (nRow == nCol)
-				dValue = 1.0 - dValue;
-		}
-
-		_CheckNumber(dValue);
-
-		switch (sc.IterationMode)
-		{
-		case StepControl::eIterationMode::JN:
-			if (nRow != nCol) dValue = 0.0;
-			break;
-		case StepControl::eIterationMode::FUNCTIONAL:
-			if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
-			break;
-
-		}
-
-		// если нужно суммировать элементы, на входа задан флаг bAddToPrevious
-		// пока нужно для параллельных ветвей
-		if (bAddToPrevious)
-		{
-			ptrdiff_t *pSp = pRow->pAp - 1;
-			while (pSp >= pRow->pApRow)
+			if (*pSp == nCol)
 			{
-				if (*pSp == nCol)
-				{
-					ptrdiff_t pDfr = pSp - pRow->pAp;
-					*(pRow->pAx + pDfr) += dValue;
-					m_bStatus = true;
-					break;
-				}
-				pSp--;
+				ptrdiff_t pDfr = pSp - pRow->pAp;
+				*(pRow->pAx + pDfr) += dValue;
+				break;
 			}
-		}
-		else
-		{
-			if (pRow->pAp < pRow->pApRow + pRow->m_nColsCount &&
-				pRow->pAx < pRow->pAxRow + pRow->m_nColsCount)
-			{
-				*pRow->pAp = nCol;
-				*pRow->pAx = dValue;
-				pRow->pAp++;
-				pRow->pAx++;
-				m_bStatus = true;
-			}
+			pSp--;
 		}
 	}
 	else
-		m_bStatus = false;
-
-	_ASSERTE(m_bStatus);
-
-	return m_bStatus;
-}
-
-
-bool CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
-{
-	if (nRow >= 0 && nRow < m_nMatrixSize &&
-		nCol >= 0 && nCol < m_nMatrixSize)
 	{
-		m_bStatus = false;
-		MatrixRow *pRow = m_pMatrixRows + nRow;
-
-
-		double l0 = Methodl[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
-		// в качестве типа уравнения используем __физический__ тип
-		// потому что у алгебраических и дифференциальных уравнений
-		// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
-
-		if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
-			dValue *= l0;		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
-		else
-		{
-			// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
-			dValue *= l0 * GetH();
-			// если элемент диагональный, учитываем диагональную единичную матрицу
-			if (nRow == nCol)
-				dValue = 1.0 - dValue;
-		}
-
-		_CheckNumber(dValue);
-
-		switch (sc.IterationMode)
-		{
-		case StepControl::eIterationMode::JN:
-			if (nRow != nCol) dValue = 0.0;
-			break;
-		case StepControl::eIterationMode::FUNCTIONAL:
-			if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
-			break;
-
-		}
-
 		if (pRow->pAp < pRow->pApRow + pRow->m_nColsCount &&
 			pRow->pAx < pRow->pAxRow + pRow->m_nColsCount)
 		{
@@ -356,366 +248,249 @@ bool CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 			*pRow->pAx = dValue;
 			pRow->pAp++;
 			pRow->pAx++;
-			m_bStatus = true;
 		}
 	}
+}
+
+
+void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+{
+	if (nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize)
+		throw dfw2error(Cex(_T("CDynaModel::ReallySetElement matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
+
+	MatrixRow *pRow = m_pMatrixRows + nRow;
+	double l0 = Methodl[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
+	// в качестве типа уравнения используем __физический__ тип
+	// потому что у алгебраических и дифференциальных уравнений
+	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
+
+	if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
+		dValue *= l0;		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
 	else
-		m_bStatus = false;
+	{
+		// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
+		dValue *= l0 * GetH();
+		// если элемент диагональный, учитываем диагональную единичную матрицу
+		if (nRow == nCol)
+			dValue = 1.0 - dValue;
+	}
 
-	_ASSERTE(m_bStatus);
+	_CheckNumber(dValue);
 
-	return m_bStatus;
+	switch (sc.IterationMode)
+	{
+	case StepControl::eIterationMode::JN:
+		if (nRow != nCol) dValue = 0.0;
+		break;
+	case StepControl::eIterationMode::FUNCTIONAL:
+		if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
+		break;
+
+	}
+
+	if (pRow->pAp < pRow->pApRow + pRow->m_nColsCount &&
+		pRow->pAx < pRow->pAxRow + pRow->m_nColsCount)
+	{
+		*pRow->pAp = nCol;
+		*pRow->pAx = dValue;
+		pRow->pAp++;
+		pRow->pAx++;
+	}
 }
 // Функция подсчета количества элементов в строке матрицы
-bool CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
+void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
-	if (nRow < m_nMatrixSize)
-	{
-		if (!bAddToPrevious)
-		{
-			// учитываем элементы с учетом суммирования
-			MatrixRow *pRow = m_pMatrixRows + nRow;
-			pRow->m_nColsCount++;
-		}
-	}
-	else
-		m_bStatus = false;
-
-	_ASSERTE(m_bStatus);
-
-	return m_bStatus;
-}
-
-bool CDynaModel::CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
-{
-	if (nRow < m_nMatrixSize)
+	if (nRow >= m_nEstimatedMatrixSize)
+		throw dfw2error(Cex(_T("CDynaModel::CountSetElement matrix size overrun Row %d Col %d MatrixSize %d"),nRow, nCol, m_nEstimatedMatrixSize));
+	if (!bAddToPrevious)
 	{
 		// учитываем элементы с учетом суммирования
 		MatrixRow *pRow = m_pMatrixRows + nRow;
 		pRow->m_nColsCount++;
 	}
-	else
-		m_bStatus = false;
-
-	_ASSERTE(m_bStatus);
-	return m_bStatus;
 }
 
-bool CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
-{
-	if (!m_bStatus)
-		return m_bStatus;
 
+void CDynaModel::CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+{
+	if (nRow >= m_nEstimatedMatrixSize)
+		throw dfw2error(Cex(_T("CDynaModel::CountSetElementNoDup matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
+	// учитываем элементы с учетом суммирования
+	MatrixRow *pRow = m_pMatrixRows + nRow;
+	pRow->m_nColsCount++;
+}
+
+void CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
+{
 	(this->*(ElementSetter))(nRow, nCol, dValue, bAddToPrevious);
-
-	return m_bStatus;
 }
 
-bool CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+void CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
-	
-	if (!m_bStatus)
-		return m_bStatus;
-
 	(this->*(ElementSetterNoDup))(nRow, nCol, dValue);
-
-	return m_bStatus;
 }
 
 // задает правую часть алгебраического уравнения
-bool CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
+void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 {
-	if (!m_bStatus)
-		return m_bStatus;
-
+	if (nRow >= m_nEstimatedMatrixSize)
+		throw dfw2error(Cex(_T("CDynaModel::SetFunction matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
 	_CheckNumber(dValue);
-
-	RightVector *pRv = GetRightVector(nRow);
-	if (pRv)
-		b[nRow] = -dValue;
-	else
-		m_bStatus = false;
-
-	return m_bStatus;
+	klu.B()[nRow] = -dValue;
 }
 
-bool CDynaModel::AddFunction(ptrdiff_t nRow, double dValue)
-{
-	if (!m_bStatus)
-		return m_bStatus;
-
-	_CheckNumber(dValue);
-
-	if (nRow >= 0 && nRow < m_nMatrixSize)
-		b[nRow] -= dValue;
-	else
-		m_bStatus = false;
-
-	return m_bStatus;
-}
-
-
-bool CDynaModel::SetDerivative(ptrdiff_t nRow, double dValue)
+void CDynaModel::SetDerivative(ptrdiff_t nRow, double dValue)
 {
 	struct RightVector *pRv = GetRightVector(nRow);
-
 	_CheckNumber(dValue);
-
-	if (pRv)
-	{
-		pRv->Nordsiek[1] = dValue * GetH();
-		return true;
-	}
-	else
-		return m_bStatus = false;
+	pRv->Nordsiek[1] = dValue * GetH();
 }
 
-bool CDynaModel::CorrectNordsiek(ptrdiff_t nRow, double dValue)
+void CDynaModel::CorrectNordsiek(ptrdiff_t nRow, double dValue)
 {
-	bool bRes = false;
 	RightVector *pRightVector = GetRightVector(nRow);
-	if (pRightVector)
-	{
-		bRes = true;
-		pRightVector->Nordsiek[0] = dValue;
-		pRightVector->Nordsiek[1] = pRightVector->Nordsiek[2] = 0.0;
+	_CheckNumber(dValue);
+	pRightVector->Nordsiek[0] = dValue;
+	pRightVector->Nordsiek[1] = pRightVector->Nordsiek[2] = 0.0;
 
-		pRightVector->SavedNordsiek[0] = dValue;
-		pRightVector->SavedNordsiek[1] = pRightVector->SavedNordsiek[2] = 0.0;
+	pRightVector->SavedNordsiek[0] = dValue;
+	pRightVector->SavedNordsiek[1] = pRightVector->SavedNordsiek[2] = 0.0;
 
-		pRightVector->Tminus2Value = dValue;
-	}
-	return bRes;
+	pRightVector->Tminus2Value = dValue;
 }
 
 // задает правую часть дифференциального уравнения
-bool CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
+void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 {
 	struct RightVector *pRv = GetRightVector(nRow);
-
 	_CheckNumber(dValue);
-
-	if (pRv)
-	{
-		// ставим тип метода для уравнения по параметрам в исходных данных
-		SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
-		return true;
-	}
-	else
-		return false;
+	// ставим тип метода для уравнения по параметрам в исходных данных
+	SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
 }
 
 
 
 bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType)
 {
-	if (!m_bStatus)
-		return m_bStatus;
-
-	if (nRow >= 0 && nRow < m_nMatrixSize)
-	{
-		b[nRow] = dValue;
-		pRightVector[nRow].EquationType = EquationType;					// тип метода для уравнения
-		pRightVector[nRow].PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
-	}
-	else
-		m_bStatus = false;
-
-	return m_bStatus;
+	RightVector *pRv = GetRightVector(nRow);
+	_CheckNumber(dValue);
+	klu.B()[nRow] = dValue;
+	pRightVector[nRow].EquationType = EquationType;					// тип метода для уравнения
+	pRightVector[nRow].PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
+	return true;
 }
 
 double CDynaModel::GetFunction(ptrdiff_t nRow)
 {
 	double dVal = NAN;
 
-	if (nRow >= 0 && nRow < m_nMatrixSize)
-		dVal = b[nRow];
+	if (nRow >= 0 && nRow < m_nEstimatedMatrixSize)
+		dVal = klu.B()[nRow];
 
 	return dVal;
 }
 
-bool CDynaModel::ConvertToCCSMatrix()
+void CDynaModel::ConvertToCCSMatrix()
 {
-	bool bRes = true;
-
-/*
-#ifdef _DEBUG
-	for (MatrixRow *pRow = m_pMatrixRows; pRow < m_pMatrixRows + m_nMatrixSize; pRow++)
-	{
-		bool bZeroDiagonal = false;
-		for (ptrdiff_t i = 0; i < pRow->m_nColsCount; i++)
-		{
-			if (pRow->pApRow[i] == pRow - m_pMatrixRows)
-			{
-				if (!Equal(pRow->pAxRow[i], 0.0))
-				{
-					bZeroDiagonal = true;
-					break;
-				}
-			}
-		}
-		_ASSERTE(bZeroDiagonal);
-	}
-#endif
-*/
-
-	for (MatrixRow *pRow = m_pMatrixRows; pRow < m_pMatrixRows + m_nMatrixSize; pRow++)
+	ptrdiff_t *Ai = klu.Ai();
+	ptrdiff_t *Ap = klu.Ap();
+	for (MatrixRow *pRow = m_pMatrixRows; pRow < m_pMatrixRows + m_nEstimatedMatrixSize; pRow++)
 		Ai[pRow - m_pMatrixRows] = pRow->pApRow - Ap;
-	Ai[m_nMatrixSize] = m_nNonZeroCount;
-	return bRes;
+	klu.Ai()[m_nEstimatedMatrixSize] = klu.NonZeroCount();
 }
 
-bool CDynaModel::SolveLinearSystem()
+void CDynaModel::SetDifferentiatorsTolerance()
 {
-	bool bRes = false;
-
-	if (!Symbolic || !Numeric)
-		sc.RefactorMatrix();
-
-	if (sc.m_bRefactorMatrix)
+	// Для всех алгебраических уравнений, в которые входит РДЗ, рекурсивно ставим точность Atol не превышающую РДЗ
+	// если доходим до дифференциального уравнения - его точность и точность связанных с ним уравнений оставляем
+	ptrdiff_t nMarked = 0;
+	do
 	{
-		if (ConvertToCCSMatrix())
+		nMarked = 0;
+		RightVector *pVectorBegin = pRightVector;
+		RightVector *pVectorEnd = pRightVector + m_nEstimatedMatrixSize;
+
+		while (pVectorBegin < pVectorEnd)
 		{
-			if (!Symbolic)
+			if (pVectorBegin->PrimitiveBlock == PBT_DERLAG)
 			{
-				Symbolic = KLU_analyze(m_nMatrixSize, Ai, Ap, &Common);
-				RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+				// уравнение отмечено как уравнение РДЗ, меняем отметку, чтобы указать, что это уравнение уже прошли
+				pVectorBegin->PrimitiveBlock = PBT_LAST;
+				pVectorBegin->Atol = 1E-2;
 
-				if (Numeric)
+				ptrdiff_t nDerLagEqIndex = pVectorBegin - pRightVector;
+				MatrixRow *pRow = m_pMatrixRows;
+
+				// просматриваем строки матрицы, ищем столбцы с индексом, соответствующим уравнению РДЗ
+				for (; pRow < m_pMatrixRows + m_nEstimatedMatrixSize; pRow++)
 				{
-					KLU_free_numeric(&Numeric, &Common);
-					Numeric = nullptr;
-				}
-
-				// Для всех алгебраических уравнений, в которые входит РДЗ, рекурсивно ставим точность Atol не превышающую РДЗ
-				// если доходим до дифференциального уравнения - его точность и точность связанных с ним уравнений оставляем
-				ptrdiff_t nMarked = 0;
-				do
-				{
-					nMarked = 0;
-					RightVector *pVectorBegin = pRightVector;
-
-					while (pVectorBegin < pVectorEnd)
+					ptrdiff_t nEqIndex = pRow - m_pMatrixRows;
+					if (nEqIndex != nDerLagEqIndex)
 					{
-						if (pVectorBegin->PrimitiveBlock == PBT_DERLAG)
+						for (ptrdiff_t *pc = pRow->pApRow; pc < pRow->pApRow + pRow->m_nColsCount; pc++)
 						{
-							// уравнение отмечено как уравнение РДЗ, меняем отметку, чтобы указать, что это уравнение уже прошли
-							pVectorBegin->PrimitiveBlock = PBT_LAST;
-							pVectorBegin->Atol = 1E-2;
-
-							ptrdiff_t nDerLagEqIndex = pVectorBegin - pRightVector;
-							MatrixRow *pRow = m_pMatrixRows;
-
-							// просматриваем строки матрицы, ищем столбцы с индексом, соответствующим уравнению РДЗ
-							for (; pRow < m_pMatrixRows + m_nMatrixSize; pRow++)
+							if (*pc == nDerLagEqIndex)
 							{
-								ptrdiff_t nEqIndex = pRow - m_pMatrixRows;
-								if (nEqIndex != nDerLagEqIndex)
+								// нашли столбец с индексом уравнения РДЗ
+								RightVector *pMarkEq = pRightVector + nEqIndex;
+								// если уравнение с этим столбцом алгебраическое и еще не просмотрено
+								if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
 								{
-									for (ptrdiff_t *pc = pRow->pApRow; pc < pRow->pApRow + pRow->m_nColsCount; pc++)
-									{
-										if (*pc == nDerLagEqIndex)
-										{
-											// нашли столбец с индексом уравнения РДЗ
-											RightVector *pMarkEq = pRightVector + nEqIndex;
-											// если уравнение с этим столбцом алгебраическое и еще не просмотрено
-											if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
-											{
-												// отмечаем его как уравнение РДЗ, ставим точность РДЗ
-												//Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Точность %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
-												pMarkEq->PrimitiveBlock = PBT_DERLAG;
-												pMarkEq->Atol = pVectorBegin->Atol;
-												pMarkEq->Rtol = pVectorBegin->Rtol;
-												// считаем сколько уравнений обработали
-												nMarked++;
-											}
-										}
-									}
+									// отмечаем его как уравнение РДЗ, ставим точность РДЗ
+									//Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Точность %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
+									pMarkEq->PrimitiveBlock = PBT_DERLAG;
+									pMarkEq->Atol = pVectorBegin->Atol;
+									pMarkEq->Rtol = pVectorBegin->Rtol;
+									// считаем сколько уравнений обработали
+									nMarked++;
 								}
 							}
 						}
-						pVectorBegin++;
 					}
-					// продолжаем, пока есть необработанные уравнения
-					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Marked = %d"), nMarked);
-				} 
-				while (nMarked);
-
-				sc.nAnalyzingsCount++;
-			}
-
-			if (Symbolic)
-			{
-				bool bForceRefactor = true; // во всех случаях, кроме рефактора выполняем полную факторизацию матрицы
-											// с выбором элементов
-				if (Numeric)	// если уже есть фактор
-				{
-					if (m_Parameters.m_bUseRefactor) // делаем вторую и более итерацию Ньютона и разрешен рефактор
-					{
-						if (KLU_refactor(Ai, Ap, Ax, Symbolic, Numeric, &Common) > 0)	// делаем рефактор 
-						{
-							sc.nFactorizationsCount++;
-							bForceRefactor = false;	// и если он успешен - отказываемся от полной рефакторизации
-						}
-					}
-				}
-
-				if(bForceRefactor)
-				{
-					KLU_free_numeric(&Numeric, &Common);
-					Numeric = KLU_factor(Ai, Ap, Ax, Symbolic, &Common);
-					sc.nFactorizationsCount++;
-				}
-
-				if (Numeric)
-				{
-					if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
-					{
-						KLU_rcond(Symbolic, Numeric, &Common);
-						if (Common.rcond > sc.dMaxConditionNumber)
-						{
-							sc.dMaxConditionNumber = Common.rcond;
-							sc.dMaxConditionNumberTime = sc.t;
-						}
-						bRes = true;
-					}
-
 				}
 			}
+			pVectorBegin++;
 		}
-	}
-	else
-	{
-		_ASSERTE(Symbolic && Numeric);
-		//_tcprintf(_T("\n----------------Solve---------------------"));
-		if (KLU_tsolve(Symbolic, Numeric, m_nMatrixSize, 1, b, &Common))
-		{
-			KLU_rcond(Symbolic, Numeric, &Common);
-			if (Common.rcond > sc.dMaxConditionNumber)
-			{
-				sc.dMaxConditionNumber = Common.rcond;
-				sc.dMaxConditionNumberTime = sc.t;
-			}
-			bRes = true;
-		}
-	}
+		// продолжаем, пока есть необработанные уравнения
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Marked = %d"), nMarked);
+	} while (nMarked);
 
-	if (!bRes)
-		ReportKLUError();
-
-	return bRes;
 }
 
-
-void CDynaModel::ResetMatrixStructure()
+void CDynaModel::SolveLinearSystem()
 {
-	KLU_free_symbolic(&Symbolic, &Common);
-
-	Symbolic = nullptr;
-	if (m_pMatrixRows)
+	if (sc.m_bRefactorMatrix || !klu.Factored())
 	{
-		delete m_pMatrixRows;
-		m_pMatrixRows = nullptr;
+		// если нужен рефактор или в KLU не было факторизации
+		ConvertToCCSMatrix();
+		if (!klu.Analyzed())
+		{
+			// если в KLU не было анализа
+			klu.Analyze();
+			// формируем точности для РДЗ
+			SetDifferentiatorsTolerance();
+		}
+
+		if (klu.Factored())
+		{
+			// если в KLU нет факторизации
+			if (m_Parameters.m_bUseRefactor) // делаем вторую и более итерацию Ньютона и разрешен рефактор
+				klu.Refactor();
+		}
+		SolveRcond();
+	}
+	else
+		SolveRcond();
+}
+
+void CDynaModel::SolveRcond()
+{
+	klu.Solve();
+	double rCond = klu.Rcond();
+	if (rCond > sc.dMaxConditionNumber)
+	{
+		sc.dMaxConditionNumber = rCond;
+		sc.dMaxConditionNumberTime = sc.t;
 	}
 }
 
@@ -784,7 +559,7 @@ Newtons count 17709 2,134901 per step, failures at step 152 failures at disconti
 void CDynaModel::ScaleAlgebraicEquations()
 {
 	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	RightVector *pVectorEnd = pRightVector + m_nEstimatedMatrixSize;
 	double h = GetH();
 
 	if (h <= 0)
@@ -795,8 +570,8 @@ void CDynaModel::ScaleAlgebraicEquations()
 		if (pVectorBegin->EquationType == DET_ALGEBRAIC)
 		{
 			ptrdiff_t j = pVectorBegin - pRightVector;
-			for (ptrdiff_t p = Ai[j]; p < Ai[j + 1]; p++)
-				Ax[p] /= h;
+			for (ptrdiff_t p = klu.Ai()[j]; p < klu.Ai()[j + 1]; p++)
+				klu.Ax()[p] /= h;
 		}
 
 		pVectorBegin++;
@@ -806,25 +581,19 @@ void CDynaModel::ScaleAlgebraicEquations()
 
 bool CDynaModel::CountConstElementsToSkip(ptrdiff_t nRow)
 {
-	if (nRow >= 0 && nRow < m_nMatrixSize)
-	{
-		MatrixRow *pRow = m_pMatrixRows + nRow;
-		pRow->m_nConstElementsToSkip = pRow->pAp - pRow->pApRow;
-	}
-	else
-		m_bStatus = false;
-	return m_bStatus;
+	if (nRow >= m_nEstimatedMatrixSize)
+		throw dfw2error(Cex(_T("CDynaModel::CountConstElementsToSkip matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
+	MatrixRow *pRow = m_pMatrixRows + nRow;
+	pRow->m_nConstElementsToSkip = pRow->pAp - pRow->pApRow;
+	return true;
 }
 bool CDynaModel::SkipConstElements(ptrdiff_t nRow)
 {
-	if (nRow >= 0 && nRow < m_nMatrixSize)
-	{
-		MatrixRow *pRow = m_pMatrixRows + nRow;
-		pRow->pAp = pRow->pApRow + pRow->m_nConstElementsToSkip;
-		pRow->pAx = pRow->pAxRow + pRow->m_nConstElementsToSkip;
-	}
-	else
-		m_bStatus = false;
-	return m_bStatus;
+	if (nRow >= m_nEstimatedMatrixSize)
+		throw dfw2error(Cex(_T("CDynaModel::SkipConstElements matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
+	MatrixRow *pRow = m_pMatrixRows + nRow;
+	pRow->pAp = pRow->pApRow + pRow->m_nConstElementsToSkip;
+	pRow->pAx = pRow->pAxRow + pRow->m_nConstElementsToSkip;
+	return true;
 }
 

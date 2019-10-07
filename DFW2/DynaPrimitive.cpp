@@ -218,13 +218,13 @@ bool CDynaPrimitiveBinary::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
-	return bRes && pDynaModel->Status();
+	return true;
 }
 
 bool CDynaPrimitiveBinary::BuildRightHand(CDynaModel *pDynaModel)
 {
 	pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
-	return pDynaModel->Status();
+	return true;
 }
 
 double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2)
