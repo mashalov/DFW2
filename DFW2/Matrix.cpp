@@ -7,7 +7,6 @@ void CDynaModel::EstimateMatrix()
 {
 	ptrdiff_t nOriginalMatrixSize = klu.MatrixSize();
 	bool bSaveRightVector = pRightVector != nullptr;
-	CleanUpMatrix(bSaveRightVector);
 	m_nEstimatedMatrixSize = 0;
 	ptrdiff_t nNonZeroCount(0);
 	sc.m_bFillConstantElements = m_bEstimateBuild = true;
@@ -16,32 +15,25 @@ void CDynaModel::EstimateMatrix()
 	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 		(*it)->EstimateBlock(this);
 
-	m_pMatrixRows = new MatrixRow[m_nEstimatedMatrixSize];
-	m_pZeroCrossingDevices = new CDevice*[m_nEstimatedMatrixSize];
+	m_pMatrixRowsUniq = make_unique<MatrixRow[]>(m_nEstimatedMatrixSize);
+	m_pMatrixRows = m_pMatrixRowsUniq.get();
+
+	ZeroCrossingDevices.reserve(m_nEstimatedMatrixSize);
 
 	if (bSaveRightVector)
 	{
 		// make a copy of original right vector to new right vector
-		RightVector *pNewRightVector = new RightVector[m_nEstimatedMatrixSize];
-		RightVector *pNewBegin = pNewRightVector;
-		RightVector *pOldBegin = pRightVector;
-		RightVector *pOldEnd = pOldBegin + min(nOriginalMatrixSize, m_nEstimatedMatrixSize);
-
-		while (pOldBegin < pOldEnd)
-		{
-			*pNewBegin = *pOldBegin;
-			pNewBegin++;
-			pOldBegin++;
-		}
-
-		delete pRightVector;
-		pRightVector = pNewRightVector;
-		pRightHandBackup = new double[m_nEstimatedMatrixSize];
+		unique_ptr<RightVector[]>  pNewRightVector = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
+		std::copy(pRightVectorUniq.get(), pRightVectorUniq.get() + min(nOriginalMatrixSize, m_nEstimatedMatrixSize), pNewRightVector.get());
+		pRightVectorUniq = std::move(pNewRightVector);
+		pRightVector = pRightVectorUniq.get();
+		pRightHandBackup = make_unique<double[]>(m_nEstimatedMatrixSize);
 	}
 	else
 	{
-		pRightVector = new RightVector[m_nEstimatedMatrixSize];
-		pRightHandBackup = new double[m_nEstimatedMatrixSize];
+		pRightVectorUniq = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
+		pRightVector = pRightVectorUniq.get();
+		pRightHandBackup = make_unique<double[]>(m_nEstimatedMatrixSize);
 	}
 
 	// init RightVector primitive block types
@@ -64,9 +56,13 @@ void CDynaModel::EstimateMatrix()
 
 	// allocate matrix row headers to access rows instantly
 
-	MatrixRow *pRow;
-	for (pRow = m_pMatrixRows; pRow < m_pMatrixRows + m_nEstimatedMatrixSize; pRow++)
+	MatrixRow *pRow = m_pMatrixRows;
+	const MatrixRow *pRowEnd = pRow + m_nEstimatedMatrixSize;
+	while (pRow < pRowEnd)
+	{
 		nNonZeroCount += pRow->m_nColsCount;
+		pRow++;
+	}
 
 	// allocate KLU matrix in CCS form
 	klu.SetSize(m_nEstimatedMatrixSize, nNonZeroCount);
@@ -77,7 +73,7 @@ void CDynaModel::EstimateMatrix()
 
 	// spread pointers to Ap within matrix row headers
 
-	for (pRow = pPrevRow + 1; pRow < m_pMatrixRows + klu.MatrixSize(); pRow++, pPrevRow++)
+	for (pRow = pPrevRow + 1; pRow < pRowEnd ; pRow++, pPrevRow++)
 	{
 		pRow->pApRow = pPrevRow->pApRow + pPrevRow->m_nColsCount;
 		pRow->pAxRow = pPrevRow->pAxRow + pPrevRow->m_nColsCount;
@@ -115,7 +111,7 @@ void CDynaModel::BuildRightHand()
 		sc.dRightHandNorm += *pBb * *pBb;
 		pBb++;
 	}
-	memcpy(pRightHandBackup, klu.B(), sizeof(double) * m_nEstimatedMatrixSize);
+	memcpy(pRightHandBackup.get(), klu.B(), sizeof(double) * m_nEstimatedMatrixSize);
 	//sc.dRightHandNorm *= 0.5;
 }
 
@@ -127,13 +123,13 @@ void CDynaModel::BuildMatrix()
 	if (sc.m_bRefactorMatrix)
 	{
 		ResetElement();
+
 		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-		{
 			(*it)->BuildBlock(this);
-		}
+
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = sc.m_dCurrentH;
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Рефакторизация матрицы %d"), klu.FactorizationsCount());
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Рефакторизация матрицы %d / %d"), klu.FactorizationsCount(), klu.RefactorizationsCount());
 		if(sc.m_bFillConstantElements)
 			Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Обновление констант"));
 		if (!EstimateBuild())
@@ -145,29 +141,8 @@ void CDynaModel::BuildDerivatives()
 {
 	ResetElement();
 	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-	{
 		(*it)->BuildDerivatives(this);
-	}
 }
-
-
-void CDynaModel::CleanUpMatrix(bool bSaveRightVector)
-{
-	//if (bRightHand) delete bRightHand;
-	//if (Solution) delete Solution;
-
-	if (!bSaveRightVector)
-		if (pRightVector) delete pRightVector;
-
-	if (pRightHandBackup)
-		delete pRightHandBackup;
-
-	if (m_pMatrixRows)
-		delete m_pMatrixRows;
-	if (m_pZeroCrossingDevices)
-		delete m_pZeroCrossingDevices;
-}
-
 
 ptrdiff_t CDynaModel::AddMatrixSize(ptrdiff_t nSizeIncrement)
 {
@@ -180,7 +155,7 @@ void CDynaModel::ResetElement()
 {
 	_ASSERTE(m_pMatrixRows);
 	MatrixRow *pRow = m_pMatrixRows;
-	MatrixRow *pEnd = m_pMatrixRows + m_nEstimatedMatrixSize;
+	MatrixRow *pEnd = pRow + m_nEstimatedMatrixSize;
 	while (pRow < pEnd)
 	{
 		pRow->Reset();
@@ -394,8 +369,14 @@ void CDynaModel::ConvertToCCSMatrix()
 {
 	ptrdiff_t *Ai = klu.Ai();
 	ptrdiff_t *Ap = klu.Ap();
-	for (MatrixRow *pRow = m_pMatrixRows; pRow < m_pMatrixRows + m_nEstimatedMatrixSize; pRow++)
-		Ai[pRow - m_pMatrixRows] = pRow->pApRow - Ap;
+	MatrixRow *pRowBase = m_pMatrixRows;
+	MatrixRow *pRow = pRowBase;
+	MatrixRow *pEnd = pRow + m_nEstimatedMatrixSize;
+	while (pRow < pEnd)
+	{
+		Ai[pRow - pRowBase] = pRow->pApRow - Ap;
+		pRow++;
+	}
 	klu.Ai()[m_nEstimatedMatrixSize] = klu.NonZeroCount();
 }
 
@@ -419,12 +400,14 @@ void CDynaModel::SetDifferentiatorsTolerance()
 				pVectorBegin->Atol = 1E-2;
 
 				ptrdiff_t nDerLagEqIndex = pVectorBegin - pRightVector;
-				MatrixRow *pRow = m_pMatrixRows;
+				MatrixRow *pRowBase = m_pMatrixRows;
+				MatrixRow *pRow = pRowBase;
+				MatrixRow *pRowEnd = pRow + m_nEstimatedMatrixSize;
 
 				// просматриваем строки матрицы, ищем столбцы с индексом, соответствующим уравнению РДЗ
-				for (; pRow < m_pMatrixRows + m_nEstimatedMatrixSize; pRow++)
+				for (; pRow < pRowEnd ; pRow++)
 				{
-					ptrdiff_t nEqIndex = pRow - m_pMatrixRows;
+					ptrdiff_t nEqIndex = pRow - pRowBase;
 					if (nEqIndex != nDerLagEqIndex)
 					{
 						for (ptrdiff_t *pc = pRow->pApRow; pc < pRow->pApRow + pRow->m_nColsCount; pc++)
@@ -591,7 +574,7 @@ bool CDynaModel::SkipConstElements(ptrdiff_t nRow)
 {
 	if (nRow >= m_nEstimatedMatrixSize)
 		throw dfw2error(Cex(_T("CDynaModel::SkipConstElements matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
-	MatrixRow *pRow = m_pMatrixRows + nRow;
+	MatrixRow *pRow = m_pMatrixRows  + nRow;
 	pRow->pAp = pRow->pApRow + pRow->m_nConstElementsToSkip;
 	pRow->pAx = pRow->pAxRow + pRow->m_nConstElementsToSkip;
 	return true;

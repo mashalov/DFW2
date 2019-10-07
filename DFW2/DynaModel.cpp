@@ -67,11 +67,8 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 
 CDynaModel::~CDynaModel()
 {
-	CleanUpMatrix();
-
 	if (m_hStopEvt)
 		CloseHandle(m_hStopEvt);
-
 	if (m_ppVarSearchStackBase)
 		delete m_ppVarSearchStackBase;
 }
@@ -233,7 +230,7 @@ bool CDynaModel::Run()
 																		sc.OrderStatistics[1].nNewtonFailures,
 																		sc.OrderStatistics[1].dTimePassed);
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Factors count %d Analyzings count %d"), klu.FactorizationsCount(), klu.AnalyzingsCount());
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Factors count %d / %d Analyzings count %d"), klu.FactorizationsCount(), klu.RefactorizationsCount(), klu.AnalyzingsCount());
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Newtons count %d %f per step, failures at step %d failures at discontinuity %d"),
 																	 sc.nNewtonIterationsCount, 
 																	 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
@@ -484,7 +481,7 @@ bool CDynaModel::NewtonUpdate()
 				{
 					double *pRh = new double[klu.MatrixSize()];
 					double *pRb = new double[klu.MatrixSize()];
-					memcpy(pRh, pRightHandBackup, sizeof(double) * klu.MatrixSize());
+					memcpy(pRh, pRightHandBackup.get(), sizeof(double) * klu.MatrixSize());
 					memcpy(pRb, klu.B(), sizeof(double) * klu.MatrixSize());
 					double g0 = sc.dRightHandNorm;
 					BuildRightHand();
@@ -1163,7 +1160,6 @@ bool CDynaModel::LeaveDiscontinuityMode()
 double CDynaModel::CheckZeroCrossing()
 {
 	double Kh = 1.0;
-	m_nZeroCrossingDevicesCount = 0;
 	for (auto&& it : m_DeviceContainers)
 	{
 		double Khi = it->CheckZeroCrossing(this);
@@ -1173,12 +1169,11 @@ double CDynaModel::CheckZeroCrossing()
 	return Kh;
 }
 
-bool CDynaModel::AddZeroCrossingDevice(CDevice *pDevice)
+void CDynaModel::AddZeroCrossingDevice(CDevice *pDevice)
 {
-	bool bRes = true;
-	if (m_nZeroCrossingDevicesCount < klu.MatrixSize())
-		m_pZeroCrossingDevices[m_nZeroCrossingDevicesCount++] = pDevice;
-	return bRes;
+	if (ZeroCrossingDevices.size() >= static_cast<size_t>(klu.MatrixSize()))
+		throw dfw2error(_T("CDynaModel::AddZeroCrossingDevice - matrix size overrun"));
+	ZeroCrossingDevices.push_back(pDevice);
 }
 
 void CDynaModel::GoodStep(double rSame)

@@ -17,6 +17,7 @@ namespace DFW2
 		ptrdiff_t m_nNonZeroCount;
 		ptrdiff_t m_nAnalyzingsCount = 0;
 		ptrdiff_t m_nFactorizationsCount = 0;
+		ptrdiff_t m_nRefactorizationsCount = 0;
 		wstring m_strKLUError;
 
 		template <typename T>
@@ -108,6 +109,7 @@ namespace DFW2
 		ptrdiff_t NonZeroCount() { return m_nNonZeroCount; }
 		ptrdiff_t AnalyzingsCount() { return m_nAnalyzingsCount; }
 		ptrdiff_t FactorizationsCount() { return m_nFactorizationsCount; }
+		ptrdiff_t RefactorizationsCount() { return m_nRefactorizationsCount; }
 		double* Ax() { return pAx.get(); }
 		double* B() { return pb.get(); }
 		ptrdiff_t* Ai() { return pAi.get(); }
@@ -128,6 +130,7 @@ namespace DFW2
 				throw dfw2error(Cex(_T("%s::KLU_refactor %s"), KLUWrapperName(), _T("no numeric to refactor")));
 			if (!KLU_refactor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
 				throw dfw2error(Cex(_T("%s::KLU_refactor %s"), KLUWrapperName(), KLUErrorDescription()));
+			m_nRefactorizationsCount++;
 		}
 
 		void Solve()
