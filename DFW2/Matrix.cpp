@@ -451,7 +451,12 @@ void CDynaModel::SolveLinearSystem()
 		{
 			// если в KLU нет факторизации
 			if (m_Parameters.m_bUseRefactor) // делаем вторую и более итерацию Ньютона и разрешен рефактор
-				klu.Refactor();
+			{
+				if (!klu.TryRefactor())
+					klu.Factor();
+			}
+			else
+				klu.Factor();
 		}
 		SolveRcond();
 	}

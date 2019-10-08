@@ -78,15 +78,6 @@ namespace DFW2
 		{
 			return  _T("KLUWrapper::");
 		}
-		void Factor()
-		{
-			if (!Analyzed())
-				Analyze();
-			pNumeric = make_unique<KLUNumeric>(KLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon), pCommon);
-			if (!Factored())
-				throw dfw2error(Cex(_T("%s::KLU_factor %s"), KLUWrapperName(), KLUErrorDescription()));
-			m_nFactorizationsCount++;
-		}
 
 	public:
 		KLUWrapperData()
@@ -123,13 +114,33 @@ namespace DFW2
 			m_nAnalyzingsCount++;
 		}
 
-		void Refactor()
+		void Factor()
+		{
+			if (!Analyzed())
+				Analyze();
+			pNumeric = make_unique<KLUNumeric>(KLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon), pCommon);
+			if (!Factored())
+				throw dfw2error(Cex(_T("%s::KLU_factor %s"), KLUWrapperName(), KLUErrorDescription()));
+			m_nFactorizationsCount++;
+		}
+
+		bool TryRefactor()
 		{
 			if (!Factored())
 				throw dfw2error(Cex(_T("%s::KLU_refactor %s"), KLUWrapperName(), _T("no numeric to refactor")));
-			if (!KLU_refactor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
+			if (KLU_refactor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
+			{
+				m_nRefactorizationsCount++;
+				return true;
+			}
+			else
+				return false;
+		}
+
+		void Refactor()
+		{
+			if (!TryRefactor())
 				throw dfw2error(Cex(_T("%s::KLU_refactor %s"), KLUWrapperName(), KLUErrorDescription()));
-			m_nRefactorizationsCount++;
 		}
 
 		void Solve()
