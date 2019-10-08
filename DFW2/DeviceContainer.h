@@ -24,24 +24,18 @@ namespace DFW2
 	class CMultiLink
 	{
 	public:
-		CDevice  **m_ppPointers;											// вектор указателей на связанные устройства
+		unique_ptr<CDevice*[]>  m_ppPointers;								// вектор указателей на связанные устройства
 		CDeviceContainer *m_pContainer;										// внешний контейнер, с устройствами которого строится связь
-		CLinkPtrCount *m_pLinkInfo;											// вектор ссылок с количеством связей
-		size_t	 m_nSize;													// количество связей 
-		size_t   m_nCount;													// количество возможных связей (размерность m_ppPointers)
+		vector<CLinkPtrCount> m_LinkInfo;									// вектор ссылок с количеством связей
+		size_t   m_nCount;													// количество возможных связей 
 		CMultiLink(CDeviceContainer* pContainer, size_t nCount);
-		bool Join(CMultiLink *pLink);
+		void Join(CMultiLink *pLink);
 
 		inline CLinkPtrCount* GetLink(ptrdiff_t nDeviceInContainerIndex)
 		{
-			_ASSERTE(nDeviceInContainerIndex >= 0 && nDeviceInContainerIndex < static_cast<ptrdiff_t>(m_nSize));
-			return m_pLinkInfo + nDeviceInContainerIndex;
-		}
-
-		virtual ~CMultiLink()
-		{
-			delete m_ppPointers;
-			delete m_pLinkInfo;
+			if (nDeviceInContainerIndex >= static_cast<ptrdiff_t>(m_LinkInfo.size()))
+				throw dfw2error(_T("CLinkPtrCount::GetLink - Device index out of range"));
+			return &m_LinkInfo[nDeviceInContainerIndex];
 		}
 	};
 
@@ -162,8 +156,8 @@ namespace DFW2
 		bool AllocateLinks(CMultiLink *pLink);
 		bool AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice);
 		bool AddLink(CMultiLink *pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice);
-		bool RestoreLinks(ptrdiff_t nLinkIndex);
-		bool RestoreLinks(CMultiLink *pLink);
+		void RestoreLinks(ptrdiff_t nLinkIndex);
+		void RestoreLinks(CMultiLink *pLink);
 		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
 		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
@@ -177,7 +171,7 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel);					// проверить zerocrossing и вернуть долю текущего шага до zerocrossing
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
 		CDynaModel* GetModel() { return m_pDynaModel;  }
-		bool PushVarSearchStack(CDevice*pDevice);
+		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
 		void ResetStack();
 		virtual ptrdiff_t GetPossibleSingleLinksCount();

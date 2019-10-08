@@ -623,38 +623,35 @@ bool CDevice::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* p
 		{
 			CDevice *pInitialDevice = pFromDevice;
 			m_pContainer->ResetStack();
-			if (m_pContainer->PushVarSearchStack(pFromDevice))
+			m_pContainer->PushVarSearchStack(pFromDevice);
+			while (m_pContainer->PopVarSearchStack(pFromDevice))
 			{
-				while (m_pContainer->PopVarSearchStack(pFromDevice))
+				bool bTryGet = true;
+				if (eLimitDeviceType != DEVTYPE_UNKNOWN)
+					if (!pFromDevice->IsKindOfType(eLimitDeviceType))
+						bTryGet = false;
+
+				if (bTryGet)
 				{
-					bool bTryGet = true;
-					if (eLimitDeviceType != DEVTYPE_UNKNOWN)
-						if (!pFromDevice->IsKindOfType(eLimitDeviceType))
-							bTryGet = false;
-
-					if (bTryGet)
+					ExternalVariable extVar = pFromDevice->GetExternalVariable(cszName);
+					if (extVar.pValue)
 					{
-						ExternalVariable extVar = pFromDevice->GetExternalVariable(cszName);
-						if (extVar.pValue)
-						{
-							ExtVar.IndexAndValue(extVar.nIndex - A(0), extVar.pValue);
-							bRes = true;
-						}
+						ExtVar.IndexAndValue(extVar.nIndex - A(0), extVar.pValue);
+						bRes = true;
 					}
-
-					if (!bRes)
-					{
-						const SingleLinksRange& LinkRange = pFromDevice->GetSingleLinks().GetLinksRange();
-						for (CDevice **ppStart = LinkRange.m_ppLinkStart; ppStart < LinkRange.m_ppLinkEnd; ppStart++)
-						{
-							if (*ppStart != pInitialDevice)
-								if (!m_pContainer->PushVarSearchStack(*ppStart))
-									break;
-						}
-					}
-					else
-						break;
 				}
+
+				if (!bRes)
+				{
+					const SingleLinksRange& LinkRange = pFromDevice->GetSingleLinks().GetLinksRange();
+					for (CDevice **ppStart = LinkRange.m_ppLinkStart; ppStart < LinkRange.m_ppLinkEnd; ppStart++)
+					{
+						if (*ppStart != pInitialDevice)
+							m_pContainer->PushVarSearchStack(*ppStart);
+					}
+				}
+				else
+					break;
 			}
 
 			if (!bRes)
@@ -682,41 +679,37 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const
 	if (pFromDevice)
 	{
 		CDevice *pInitialDevice = pFromDevice;
-
-		if (m_pContainer->PushVarSearchStack(pFromDevice))
+		m_pContainer->ResetStack();
+		m_pContainer->PushVarSearchStack(pFromDevice);
+		while (m_pContainer->PopVarSearchStack(pFromDevice))
 		{
-			while (m_pContainer->PopVarSearchStack(pFromDevice))
+			bool bTryGet = true;
+			if (eLimitDeviceType != DEVTYPE_UNKNOWN)
+				if (!pFromDevice->IsKindOfType(eLimitDeviceType))
+					bTryGet = false;
+
+			if (bTryGet)
 			{
-				bool bTryGet = true;
-				if (eLimitDeviceType != DEVTYPE_UNKNOWN)
-					if (!pFromDevice->IsKindOfType(eLimitDeviceType))
-						bTryGet = false;
-
-				if (bTryGet)
+				double *pConstVar = pFromDevice->GetConstVariablePtr(cszName);
+				if (pConstVar)
 				{
-					double *pConstVar = pFromDevice->GetConstVariablePtr(cszName);
-					if (pConstVar)
-					{
-						ConstVar = *pConstVar;
-						bRes = true;
-					}
+					ConstVar = *pConstVar;
+					bRes = true;
 				}
-
-				if (!bRes)
-				{
-					const SingleLinksRange& LinkRange = pFromDevice->GetSingleLinks().GetLinksRange();
-					for (CDevice **ppStart = LinkRange.m_ppLinkStart; ppStart < LinkRange.m_ppLinkEnd; ppStart++)
-					{
-						if (*ppStart != pInitialDevice)
-							if (!m_pContainer->PushVarSearchStack(*ppStart))
-								break;
-					}
-				}
-				else
-					break;
 			}
-		}
 
+			if (!bRes)
+			{
+				const SingleLinksRange& LinkRange = pFromDevice->GetSingleLinks().GetLinksRange();
+				for (CDevice **ppStart = LinkRange.m_ppLinkStart; ppStart < LinkRange.m_ppLinkEnd; ppStart++)
+				{
+					if (*ppStart != pInitialDevice)
+						m_pContainer->PushVarSearchStack(*ppStart);
+				}
+			}
+			else
+				break;
+		}
 		if (!bRes)
 		{
 			Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszConstVarNotFoundInDevice, GetVerbalName(), cszName, pInitialDevice->GetVerbalName()));

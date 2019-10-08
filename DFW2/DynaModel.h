@@ -670,7 +670,7 @@ namespace DFW2
 		double Methodl[4][4];
 		static const double MethodlDefault[4][4];
 
-		bool PushVarSearchStack(CDevice*pDevice);
+		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
 		void ResetStack();
 

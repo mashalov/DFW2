@@ -1,5 +1,4 @@
 ﻿#include "stdafx.h"
-#include "dfw2exception.h"
 #include "DynaModel.h"
 #include "Automatic.h"
 

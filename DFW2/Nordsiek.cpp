@@ -34,26 +34,17 @@ void CDynaModel::Predict()
 	// для устройств, которые требует внутренней обработки прогноза
 	// (например для узлов, которым нужно перевести прогноз полярного напряжения в прямоугольное)
 	// делаем цикл с вызовом функции прогноза устройства
-	for (DEVICECONTAINERITR it = m_DeviceContainersPredict.begin(); it != m_DeviceContainersPredict.end(); it++)
-	{
-		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
-		{
-			(*dit)->Predict();
-		}
-	}
-
+	for (auto&& it : m_DeviceContainersPredict)
+		for (auto&& dit : *it)
+			dit->Predict();
 }
 
 void CDynaModel::InitDevicesNordsiek()
 {
 	ChangeOrder(1);
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-	{
-		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
-		{
-			(*dit)->InitNordsiek(this);
-		}
-	}
+	for (auto&& it : m_DeviceContainers)
+		for (auto&& dit : *it)
+			dit->InitNordsiek(this);
 }
 
 void CDynaModel::InitNordsiek()
@@ -166,9 +157,9 @@ void CDynaModel::RestoreNordsiek()
 		}
 	}
 
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
-			(*dit)->RestoreStates();
+	for (auto&& it : m_DeviceContainers)
+		for (auto&& dit : *it)
+			dit->RestoreStates();
 }
 
 bool CDynaModel::DetectAdamsRinging()

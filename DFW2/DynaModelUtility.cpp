@@ -208,7 +208,7 @@ void CDynaModel::NotifyRelayDelay(const CRelayDelayLogic* pRelayDelay)
 	m_Automatic.NotifyRelayDelay(pRelayDelay);
 }
 
-bool CDynaModel::PushVarSearchStack(CDevice*pDevice)
+void CDynaModel::PushVarSearchStack(CDevice*pDevice)
 {
 	if (pDevice)
 	{
@@ -218,17 +218,13 @@ bool CDynaModel::PushVarSearchStack(CDevice*pDevice)
 			{
 				*m_ppVarSearchStackTop = pDevice;
 				m_ppVarSearchStackTop++;
-				return true;
 			}
 			else
-			{
-				Log(CDFW2Messages::DFW2LOG_FATAL, Cex(CDFW2Messages::m_cszVarSearchStackDepthNotEnough, m_Parameters.nVarSearchStackDepth));
-				return false;
-			}
+				throw dfw2error(Cex(CDFW2Messages::m_cszVarSearchStackDepthNotEnough, m_Parameters.nVarSearchStackDepth));
 		}
 	}
-	return true;
 }
+
 bool CDynaModel::PopVarSearchStack(CDevice* &pDevice)
 {
 	if (m_ppVarSearchStackTop <= m_ppVarSearchStackBase)
