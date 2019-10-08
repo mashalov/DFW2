@@ -6,8 +6,6 @@
 using namespace DFW2;
 
 CDeviceContainer::CDeviceContainer(CDynaModel *pDynaModel) : m_pControlledData(nullptr),
-															 m_ppDevicesAux(nullptr),
-															 m_ppSingleLinks(nullptr),
 															 m_pDynaModel(pDynaModel)
 {
 
@@ -28,18 +26,6 @@ void CDeviceContainer::CleanUp()
 		// если добавляли отдельные устройства - удаляем устройства по отдельности
 		for (auto&& it : m_DevVec)
 			delete it;
-	}
-
-	if (m_ppSingleLinks)
-	{
-		delete m_ppSingleLinks;
-		m_ppSingleLinks = nullptr;
-	}
-
-	if (m_ppDevicesAux)
-	{
-		delete m_ppDevicesAux;
-		m_ppDevicesAux = nullptr;
 	}
 
 	m_Links.clear();
@@ -357,15 +343,15 @@ void CDeviceContainer::PrepareSingleLinks()
 		if (nPossibleLinksCount > 0)
 		{
 			// выделяем общий буфер под все устройства
-			m_ppSingleLinks = new CDevice*[nPossibleLinksCount * Count()]();
-			CDevice **ppLinkPtr = m_ppSingleLinks;
+			m_ppSingleLinks = make_unique<DevicePtr>(nPossibleLinksCount * Count());
+			CDevice **ppLinkPtr = m_ppSingleLinks.get();
 			// обходим все устройства в векторе контейнера
 			for (auto&& it : m_DevVec)
 			{
 				// каждому из устройств сообщаем адрес, откуда можно брать связи
 				it->SetSingleLinkStart(ppLinkPtr);
 				ppLinkPtr += nPossibleLinksCount;
-				_ASSERTE(ppLinkPtr <= m_ppSingleLinks + nPossibleLinksCount * Count());
+				_ASSERTE(ppLinkPtr <= m_ppSingleLinks.get() + nPossibleLinksCount * Count());
 			}
 		}
 	}
@@ -418,7 +404,7 @@ void CDeviceContainer::AllocateLinks(CMultiLink& pLink)
 		nLinksSize += it.m_nCount;
 
 	// выделяем память под нужное количество связей
-	pLink.m_ppPointers = make_unique<CDevice*[]>(pLink.m_nCount = nLinksSize);
+	pLink.m_ppPointers = make_unique<DevicePtr>(pLink.m_nCount = nLinksSize);
 	CDevice **ppLink = pLink.m_ppPointers.get();
 
 	// обходим связи всех устройств
@@ -644,7 +630,7 @@ void CMultiLink::Join(CMultiLink& pLink)
 	// создаем новый вектор указателей на связанные устройства
 	// размер = исходный + объединяемый
 
-	unique_ptr<CDevice*[]> ppNewPointers = make_unique<CDevice*[]>(m_nCount = m_nCount + pLink.m_nCount);
+	DevicesPtrs ppNewPointers = make_unique<DevicePtr>(m_nCount = m_nCount + pLink.m_nCount);
 	CDevice** ppNewPtr = ppNewPointers.get();
 
 	CLinkPtrCount *pLeft = &m_LinkInfo[0];

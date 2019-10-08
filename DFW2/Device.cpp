@@ -422,7 +422,7 @@ void CDevice::ResetVisited()
 	_ASSERTE(m_pContainer);
 	// если списка просмотра нет - создаем его
 	if (!m_pContainer->m_ppDevicesAux)
-		m_pContainer->m_ppDevicesAux = new CDevice*[m_pContainer->Count()];
+		m_pContainer->m_ppDevicesAux = make_unique<DevicePtr>(m_pContainer->Count());
 	// обнуляем счетчик просмотренных ссылок
 	m_pContainer->m_nVisitedCount = 0;
 }
@@ -431,13 +431,13 @@ ptrdiff_t CDevice::CheckAddVisited(CDevice* pDevice)
 {
 	_ASSERTE(m_pContainer);
 
-	CDevice **ppDevice = m_pContainer->m_ppDevicesAux;
+	CDevice **ppDevice = m_pContainer->m_ppDevicesAux.get();
 	CDevice **ppEnd = ppDevice + m_pContainer->m_nVisitedCount;
 	// просматриваем список просмотренных
 	for (; ppDevice < ppEnd; ppDevice++)
 		if (*ppDevice == pDevice)
-			return ppDevice - m_pContainer->m_ppDevicesAux ; // если нашли заданное устройство - выходим и возвращаем номер
-															 // с которым это устройство уже было добавлено
+			return ppDevice - m_pContainer->m_ppDevicesAux.get() ;	// если нашли заданное устройство - выходим и возвращаем номер
+																	// с которым это устройство уже было добавлено
 	// если дошли до конца списка и не нашли запрошенного устройства
 	// добавляем его в список просмотренных
 	*ppDevice = pDevice;

@@ -19,12 +19,14 @@ namespace DFW2
 
 	class CDeviceContainer;
 
+	using DevicePtr = CDevice * [];
+	using DevicesPtrs = unique_ptr<DevicePtr>;
 
 	// контейнер для связей устройства
 	class CMultiLink
 	{
 	public:
-		unique_ptr<CDevice*[]>  m_ppPointers;								// вектор указателей на связанные устройства
+		DevicesPtrs  m_ppPointers;											// вектор указателей на связанные устройства
 		CDeviceContainer *m_pContainer = nullptr;							// внешний контейнер, с устройствами которого строится связь
 		vector<CLinkPtrCount> m_LinkInfo;									// вектор ссылок с количеством связей
 		size_t   m_nCount;													// количество возможных связей 
@@ -61,7 +63,7 @@ namespace DFW2
 		DEVSEARCHSET m_DevSet;												// сет для поиска устройств по идентификаторам
 		bool SetUpSearch();													// подготовка к поиску устройства в сете по идентификаторам
 		CDevice *m_pControlledData;											// вектор указателей созданных устройств для быстрого заполнения контейнера
-		CDevice **m_ppSingleLinks;
+		DevicesPtrs m_ppSingleLinks;										// вектор указателей на устройства с одиночными ссылками
 		void CleanUp();														// очистка контейнера
 		CDynaModel *m_pDynaModel;											// через указатель на модель контейнеры и устройства обмениваются общими данными
 		void PrepareSingleLinks();
@@ -79,7 +81,7 @@ namespace DFW2
 		CDeviceContainer(CDynaModel *pDynaModel);
 		virtual ~CDeviceContainer();
 
-		CDevice **m_ppDevicesAux;
+		DevicesPtrs m_ppDevicesAux;
 		size_t   m_nVisitedCount;
 
 		// передает контейнеру под управление линейный массив указателей с созданными в нем экземплярами
