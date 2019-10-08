@@ -76,7 +76,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				{
 					// если узел найден, резервируем в нем
 					// связь для текущей ветви	
-					bRes = pNode->IncrementLinkCounter(0) && bRes;
+					pNode->IncrementLinkCounter(0);
 
 					// жестко связываем ветвь и узлы
 					if (i)

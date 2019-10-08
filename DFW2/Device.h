@@ -258,7 +258,7 @@ namespace DFW2
 		void SetContainer(CDeviceContainer* pContainer);
 		virtual ~CDevice();
 		virtual bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
-		bool IncrementLinkCounter(ptrdiff_t nLinkIndex);
+		void IncrementLinkCounter(ptrdiff_t nLinkIndex);
 		ptrdiff_t m_nInContainerIndex;
 		// получить связи устроства из слоя nLinkIndex
 		CLinkPtrCount* GetLink(ptrdiff_t nLinkIndex);

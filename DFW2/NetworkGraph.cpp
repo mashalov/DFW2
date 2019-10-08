@@ -513,8 +513,9 @@ bool CDynaNodeContainer::CreateSuperNodes()
 
 		DumpNodeIslands(SuperNodes);
 
-		CMultiLink *pNodeSuperLink = new CMultiLink(this, Count());
-		m_SuperLinks.push_back(pNodeSuperLink);
+		
+		m_SuperLinks.emplace_back(this, Count());
+		CMultiLink& pNodeSuperLink(m_SuperLinks.back());
 		// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
 		for (int pass = 0; pass < 2; pass++)
 		{
@@ -536,8 +537,8 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		}
 
 		// перестраиваем связи суперузлов с ветвями:
-		CMultiLink *pBranchSuperLink = new CMultiLink(m_Links[0]->m_pContainer, Count());
-		m_SuperLinks.push_back(pBranchSuperLink);
+		m_SuperLinks.emplace_back(m_Links[0].m_pContainer, Count());
+		CMultiLink& pBranchSuperLink(m_SuperLinks.back());
 
 		// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
 		for (int pass = 0; pass < 2; pass++)
@@ -634,15 +635,15 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		for (auto&& multilink : m_Links)
 		{
 			// если ссылка на контейнер ветвей - пропускаем (обработали выше отдельно)
-			if (multilink->m_pContainer->GetType() == DEVTYPE_BRANCH)
+			if (multilink.m_pContainer->GetType() == DEVTYPE_BRANCH)
 				continue;
 			// определяем индекс ссылки один-к-одному в контейнере, с которым связаны узлы
 			// для поиска индекса контейнер запрашиваем по типу связи "Узел"
-			ptrdiff_t nLinkIndex = multilink->m_pContainer->GetSingleLinkIndex(DEVTYPE_NODE);
+			ptrdiff_t nLinkIndex = multilink.m_pContainer->GetSingleLinkIndex(DEVTYPE_NODE);
 
 			// создаем дополнительную мультисвязь и добавляем в список связей суперузлов
-			CMultiLink *pSuperLink = new CMultiLink(multilink->m_pContainer, Count());
-			m_SuperLinks.push_back(pSuperLink);
+			m_SuperLinks.emplace_back(multilink.m_pContainer, Count());
+			CMultiLink& pSuperLink(m_SuperLinks.back());
 			// для хранения оригинальных связей устройств с узлами используем карту устройство-устройство
 			m_OriginalLinks.push_back(make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
 
@@ -659,7 +660,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 					if (pNode->m_pSuperNodeParent)
 						pSuperNode = pNode->m_pSuperNodeParent;
 					// достаем из узла мультиссылку на текущий тип связи
-					CLinkPtrCount *pLink = multilink->GetLink(pNode->m_nInContainerIndex);
+					CLinkPtrCount* pLink = multilink.GetLink(pNode->m_nInContainerIndex);
 					node->ResetVisited();
 					CDevice **ppDevice(nullptr);
 					// идем по мультиссылке
@@ -719,7 +720,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
 		pNode->YiiSuper = pNode->Yii;
-		CLinkPtrCount *pLink = m_SuperLinks[0]->GetLink(node->m_nInContainerIndex);
+		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
 		if (pLink->m_nCount)
 		{
 			CDevice **ppDevice(nullptr);
@@ -734,7 +735,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 
 	//  Создаем виртуальные ветви
 	// Количество виртуальных ветвей не превышает количества ссылок суперузлов на ветви
-	m_pVirtualBranches = new VirtualBranch[m_SuperLinks[1]->m_nCount];
+	m_pVirtualBranches = new VirtualBranch[m_SuperLinks[1].m_nCount];
 	VirtualBranch *pCurrentBranch = m_pVirtualBranches;
 	for (auto&& node : m_DevVec)
 	{
@@ -791,8 +792,6 @@ bool CDynaNodeContainer::CreateSuperNodes()
 
 void CDynaNodeContainer::ClearSuperLinks()
 {
-	for (auto&& it : m_SuperLinks)
-		delete it;
 	if (m_pVirtualBranches)
 	{
 		delete m_pVirtualBranches;
@@ -819,17 +818,10 @@ CDynaNodeBase* CDynaNodeContainer::FindGeneratorNodeInSuperNode(CDevice *pGen)
 CLinkPtrCount* CDynaNodeBase::GetSuperLink(ptrdiff_t nLinkIndex)
 {
 	_ASSERTE(m_pContainer);
-	CLinkPtrCount *pLink(nullptr);
-	if (m_pContainer)
-	{
-		CMultiLink *pMultiLink = static_cast<CDynaNodeContainer*>(m_pContainer)->GetCheckSuperLink(nLinkIndex, m_nInContainerIndex);
-		if (pMultiLink)
-			pLink = pMultiLink->GetLink(m_nInContainerIndex);
-	}
-	return pLink;
+	return static_cast<CDynaNodeContainer*>(m_pContainer)->GetCheckSuperLink(nLinkIndex, m_nInContainerIndex).GetLink(m_nInContainerIndex);
 }
 
-CMultiLink* CDynaNodeContainer::GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
+CMultiLink& CDynaNodeContainer::GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
 {
 	return GetCheckLink(nLinkIndex, nDeviceIndex, m_SuperLinks);
 }

@@ -25,11 +25,16 @@ namespace DFW2
 	{
 	public:
 		unique_ptr<CDevice*[]>  m_ppPointers;								// вектор указателей на связанные устройства
-		CDeviceContainer *m_pContainer;										// внешний контейнер, с устройствами которого строится связь
+		CDeviceContainer *m_pContainer = nullptr;							// внешний контейнер, с устройствами которого строится связь
 		vector<CLinkPtrCount> m_LinkInfo;									// вектор ссылок с количеством связей
 		size_t   m_nCount;													// количество возможных связей 
-		CMultiLink(CDeviceContainer* pContainer, size_t nCount);
-		void Join(CMultiLink *pLink);
+		CMultiLink(CDeviceContainer* pContainer, size_t nCount) : m_pContainer(pContainer)
+		{
+			// память выделим под известное количество связей в AllocateLinks()
+			m_LinkInfo.resize(nCount);
+		}
+		// конструктор копирования нет. Для создания CMultiLink в контейнере нужно использовать emplace
+		void Join(CMultiLink& pLink);
 
 		inline CLinkPtrCount* GetLink(ptrdiff_t nDeviceInContainerIndex)
 		{
@@ -40,7 +45,7 @@ namespace DFW2
 	};
 
 	// вектор "векторов" связей с устройствами различных типов
-	typedef vector<CMultiLink*> LINKSVEC;
+	typedef vector<CMultiLink> LINKSVEC;
 	typedef LINKSVEC::iterator LINKSVECITR;
 
 	// контейнер устройств
@@ -150,16 +155,16 @@ namespace DFW2
 		bool CreateLink(CDeviceContainer* pLinkContainer);
 		ptrdiff_t GetLinkIndex(CDeviceContainer* pLinkContainer);			// получить индекс ссылок по внешнему контейнеру
 		ptrdiff_t GetLinkIndex(eDFW2DEVICETYPE eDeviceType);				// получить индекс ссылок по типу внешнего устройства
-		bool IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
-		bool IncrementLinkCounter(CMultiLink *pLink, ptrdiff_t nDeviceIndex);
-		bool AllocateLinks(ptrdiff_t nLinkIndex);
-		bool AllocateLinks(CMultiLink *pLink);
-		bool AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice);
-		bool AddLink(CMultiLink *pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice);
+		void IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
+		void IncrementLinkCounter(CMultiLink& pLink, ptrdiff_t nDeviceIndex);
+		void AllocateLinks(ptrdiff_t nLinkIndex);
+		void AllocateLinks(CMultiLink& pLink);
+		void AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice);
+		void AddLink(CMultiLink& pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice);
 		void RestoreLinks(ptrdiff_t nLinkIndex);
-		void RestoreLinks(CMultiLink *pLink);
-		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
-		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
+		void RestoreLinks(CMultiLink& pLink);
+		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
+		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
 		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
 		void BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
 		void BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств

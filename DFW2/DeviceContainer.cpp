@@ -42,12 +42,7 @@ void CDeviceContainer::CleanUp()
 		m_ppDevicesAux = nullptr;
 	}
 
-	// очистка ссылок устройств
-	for (auto&& it : m_Links)
-		delete it;
-
 	m_Links.clear();
-
 	m_DevVec.clear();
 }
 
@@ -291,14 +286,14 @@ bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 
 				if (TreatAs != DEVTYPE_UNKNOWN)
 				{
-					// создаем ссылки на внешний контейнер
-					CMultiLink *pLink = new CMultiLink(pLinkContainer, Count());
 					// получаем номер связи по найденному типу
 					ptrdiff_t nLinkIndex = GetLinkIndex(TreatAs);
 
 					// store new link to links, it will be used by LinkToContainer from container to be linked
 					// добавляем к нашим ссылкам еще одну временную связь
-					m_Links.push_back(pLink);
+					m_Links.emplace_back(pLinkContainer, Count());
+					//m_Links.push_back();
+					CMultiLink& pLink(m_Links.back());
 
 					// give container to be linked control to link to this container
 					// supply this and index of new link
@@ -315,7 +310,7 @@ bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 					if (bRes && nLinkIndex >= 0)
 					{
 						// объединяем исходную связь со временной
-						m_Links[nLinkIndex]->Join(pLink);
+						m_Links[nLinkIndex].Join(pLink);
 						// и удаляем временную связь
 						m_Links.pop_back();
 					}
@@ -377,75 +372,64 @@ void CDeviceContainer::PrepareSingleLinks()
 }
 
 // возвращает связь заданного типа (по индексу) и устройства из заданного вектора ссылок
-CMultiLink* CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec)
+CMultiLink& CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec)
 {
-	if (nLinkIndex < 0 || nLinkIndex >= static_cast<ptrdiff_t>(LinksVec.size()))
+	if (nLinkIndex >= static_cast<ptrdiff_t>(LinksVec.size()))
 		throw dfw2error(_T("CDeviceContainer::GetCheckLink - LinkIndex out of range"));
 	LINKSVECITR it = LinksVec.begin() + nLinkIndex;
-	if (nDeviceIndex < 0 || nDeviceIndex >= static_cast<ptrdiff_t>((*it)->m_LinkInfo.size()))
+	if (nDeviceIndex >= static_cast<ptrdiff_t>(it->m_LinkInfo.size()))
 		throw dfw2error(_T("CDeviceContainer::GetCheckLink - DeviceIndex out of range"));
 	return *it;
 }
 // возвращает связь заданного типа (по индексу) и устройства из основного вектора ссылок
-CMultiLink* CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
+CMultiLink& CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
 {
 	return GetCheckLink(nLinkIndex, nDeviceIndex, m_Links);
 }
 
 // добавляет элемент для связи с устройством 
-bool CDeviceContainer::IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
+void CDeviceContainer::IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
 {
 	// на входе имеем индекс связей и индекс устройства, к которому нужно сделать связь
-	return IncrementLinkCounter(GetCheckLink(nLinkIndex, nDeviceIndex), nDeviceIndex);
+	IncrementLinkCounter(GetCheckLink(nLinkIndex, nDeviceIndex), nDeviceIndex);
 }
 
 // добавляет элемент для связи с устройством 
-bool CDeviceContainer::IncrementLinkCounter(CMultiLink *pLink, ptrdiff_t nDeviceIndex)
+void CDeviceContainer::IncrementLinkCounter(CMultiLink& pLink, ptrdiff_t nDeviceIndex)
 {
-	bool bRes(false);
-	if (pLink)
-	{
-		// если такая мультисвязь есть - увеличиваем счетчик связей
-		pLink->m_LinkInfo[nDeviceIndex].m_nCount++;
-		bRes = true;
-	}
-	return bRes;
+	if (nDeviceIndex >= static_cast<ptrdiff_t>(pLink.m_LinkInfo.size()))
+		throw dfw2error(_T("CDeviceContainer::IncrementLinkCounter - DeviceIndex out of range"));
+	pLink.m_LinkInfo[nDeviceIndex].m_nCount++;
 }
 
 // распределяет память под мультисвязи для выбранного индексом типа связей
-bool CDeviceContainer::AllocateLinks(ptrdiff_t nLinkIndex)
+void CDeviceContainer::AllocateLinks(ptrdiff_t nLinkIndex)
 {
-	return AllocateLinks(GetCheckLink(nLinkIndex, 0));
+	AllocateLinks(GetCheckLink(nLinkIndex, 0));
 }
 
 // распределяет память под мультисвязи для выбранного индексом типа связей
-bool CDeviceContainer::AllocateLinks(CMultiLink *pLink)
+void CDeviceContainer::AllocateLinks(CMultiLink& pLink)
 {
-	bool bRes(false);
-	if (pLink)
+	// считаем количество связей, которое нужно хранить
+	size_t nLinksSize = 0;
+
+	for (auto&& it : pLink.m_LinkInfo)
+		nLinksSize += it.m_nCount;
+
+	// выделяем память под нужное количество связей
+	pLink.m_ppPointers = make_unique<CDevice*[]>(pLink.m_nCount = nLinksSize);
+	CDevice **ppLink = pLink.m_ppPointers.get();
+
+	// обходим связи всех устройств
+	for (auto&& it : pLink.m_LinkInfo)
 	{
-		// считаем количество связей, которое нужно хранить
-		size_t nLinksSize = 0;
-
-		for (auto&& it : pLink->m_LinkInfo)
-			nLinksSize += it.m_nCount;
-
-		// выделяем память под нужное количество связей
-		pLink->m_ppPointers = make_unique<CDevice*[]>(pLink->m_nCount = nLinksSize);
-		CDevice **ppLink = pLink->m_ppPointers.get();
-
-		// обходим связи всех устройств
-		for (auto&& it : pLink->m_LinkInfo)
-		{
-			// для связей каждого из устройств
-			// задаем адрес начала его связей
-			it.m_pPointer = ppLink;
-			// и резервируем место под конкретное количество связей этого устройства
-			ppLink += it.m_nCount;
-		}
-		bRes = true;
+		// для связей каждого из устройств
+		// задаем адрес начала его связей
+		it.m_pPointer = ppLink;
+		// и резервируем место под конкретное количество связей этого устройства
+		ppLink += it.m_nCount;
 	}
-	return bRes;
 }
 
 // после добавления связей указатели связей смещаются
@@ -457,38 +441,29 @@ void CDeviceContainer::RestoreLinks(ptrdiff_t nLinkIndex)
 
 // после добавления связей указатели связей смещаются
 // данная функция возвращает указатели к исходному значению как после AllocateLinks()
-void CDeviceContainer::RestoreLinks(CMultiLink *pLink)
+void CDeviceContainer::RestoreLinks(CMultiLink& pLink)
 {
-	if (!pLink)
-		throw dfw2error(_T("CDeviceContainer::RestoreLinks - nullptr link passed"));
 	// обходим все связи
 	// указатель смещаем в начальное значение просто вычитая количество добавленных элементов
-	for (auto && it : pLink->m_LinkInfo)
+	for (auto && it : pLink.m_LinkInfo)
 		it.m_pPointer -= it.m_nCount;
 }
 
 // добавляет новую связь заданного типа для выбранного индексом устройства
-bool CDeviceContainer::AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice)
+void CDeviceContainer::AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice)
 {
-	return AddLink(GetCheckLink(nLinkIndex, nDeviceIndex), nDeviceIndex, pDevice);
+	AddLink(GetCheckLink(nLinkIndex, nDeviceIndex), nDeviceIndex, pDevice);
 }
 
 // добавляет новую связь заданного типа для выбранного индексом устройства
-bool CDeviceContainer::AddLink(CMultiLink *pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice)
+void CDeviceContainer::AddLink(CMultiLink& pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice)
 {
-	bool bRes(false);
-	// извлекаем связь заданного типа заданного устройства
-	if (pLink)
-	{
-		// извлекаем данные связи данного устройства
-		CLinkPtrCount *pLinkPtr = pLink->GetLink(nDeviceIndex);
-		// в текущий указатель связей вводим указатель на связываемое устройство
-		*pLinkPtr->m_pPointer = pDevice;
-		// переходим к следующей связи
-		pLinkPtr->m_pPointer++;
-		bRes = true;
-	}
-	return bRes;
+	// извлекаем данные связи данного устройства
+	CLinkPtrCount *pLinkPtr = pLink.GetLink(nDeviceIndex);
+	// в текущий указатель связей вводим указатель на связываемое устройство
+	*pLinkPtr->m_pPointer = pDevice;
+	// переходим к следующей связи
+	pLinkPtr->m_pPointer++;
 }
 
 void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
@@ -627,7 +602,7 @@ ptrdiff_t CDeviceContainer::GetLinkIndex(CDeviceContainer* pLinkContainer)
 	ptrdiff_t nRet = -1;
 	// обходим вектор ссылок
 	for (LINKSVECITR it = m_Links.begin(); it != m_Links.end(); it++)
-		if ((*it)->m_pContainer == pLinkContainer)
+		if (it->m_pContainer == pLinkContainer)
 		{
 			// если заданный контейнер входит в набор возможных ссылок 
 			// возвращаем его индекс в векторе ссылок
@@ -643,7 +618,7 @@ ptrdiff_t CDeviceContainer::GetLinkIndex(eDFW2DEVICETYPE eDeviceType)
 	ptrdiff_t nRet = -1;
 	// обходим вектор ссылок
 	for (LINKSVECITR it = m_Links.begin(); it != m_Links.end(); it++)
-		if ((*it)->m_pContainer->IsKindOfType(eDeviceType))
+		if (it->m_pContainer->IsKindOfType(eDeviceType))
 		{
 			// если заданный тип входит в дерево наследования контейнера 
 			// возвращаем его индекс в векторе ссылок
@@ -654,12 +629,7 @@ ptrdiff_t CDeviceContainer::GetLinkIndex(eDFW2DEVICETYPE eDeviceType)
 }
 
 
-CMultiLink::CMultiLink(CDeviceContainer* pContainer, size_t nCount) : m_pContainer(pContainer)
-{
-	// память выделим под известное количество связей в AllocateLinks()
-	m_ppPointers = nullptr; // new CDevice*[m_nCount = pContainer->Count() * 2]; // ?
-	m_LinkInfo.resize(nCount);
-}
+
 
 // объединяет мультизсвяь с другой мультисвязью
 // небходима для объединения связей один ко многим при последовательной линковке
@@ -667,18 +637,18 @@ CMultiLink::CMultiLink(CDeviceContainer* pContainer, size_t nCount) : m_pContain
 // генераторы разных типов. Поэтому после каждой линковки нам нужно объединять текущие связи
 // с только что слинкованными. В итоге узел видит все генераторы всех типов в одной связи
 
-void CMultiLink::Join(CMultiLink *pLink)
+void CMultiLink::Join(CMultiLink& pLink)
 {
-	_ASSERTE(m_LinkInfo.size() == pLink->m_LinkInfo.size());
+	_ASSERTE(m_LinkInfo.size() == pLink.m_LinkInfo.size());
 
 	// создаем новый вектор указателей на связанные устройства
 	// размер = исходный + объединяемый
 
-	unique_ptr<CDevice*[]> ppNewPointers = make_unique<CDevice*[]>(m_nCount = m_nCount + pLink->m_nCount);
+	unique_ptr<CDevice*[]> ppNewPointers = make_unique<CDevice*[]>(m_nCount = m_nCount + pLink.m_nCount);
 	CDevice** ppNewPtr = ppNewPointers.get();
 
 	CLinkPtrCount *pLeft = &m_LinkInfo[0];
-	CLinkPtrCount *pRight = &pLink->m_LinkInfo[0];
+	CLinkPtrCount *pRight = &pLink.m_LinkInfo[0];
 	CLinkPtrCount *pLeftEnd = pLeft + m_LinkInfo.size();
 
 	// обходим уже существующие связи
@@ -715,7 +685,6 @@ void CMultiLink::Join(CMultiLink *pLink)
 		pRight++;									// размерности основной и объединяемой мультисвязей одинаковы
 	}
 	m_ppPointers = std::move(ppNewPointers);		// очищаем старый вектор указателей
-	delete pLink;									// очищаем объединяемую мультисвязь (она больше не нужна)
 }
 
 

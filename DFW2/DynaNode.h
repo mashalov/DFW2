@@ -353,7 +353,7 @@ namespace DFW2
 		CDeviceContainer *m_pSynchroZones = nullptr;
 	public:
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
-		CMultiLink* GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
+		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		bool GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
 		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);
 		_IterationControl& IterationControl();

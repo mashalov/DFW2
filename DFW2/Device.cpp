@@ -256,7 +256,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 						else
 						{
 							// если режим связи много к одному - добавляем элемент мультисвязи
-							bRes = pLinkDev->IncrementLinkCounter(LinkFrom.nLinkIndex) && bRes;
+							pLinkDev->IncrementLinkCounter(LinkFrom.nLinkIndex);
 						}
 					}
 					else
@@ -301,14 +301,10 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 }
 
 // добавляет элемент связи для хранения связи с очередным устройством
-bool CDevice::IncrementLinkCounter(ptrdiff_t nLinkIndex)
+void CDevice::IncrementLinkCounter(ptrdiff_t nLinkIndex)
 {
 	_ASSERTE(m_pContainer);
-
-	bool bRes = false;
-	if (m_pContainer)
-		bRes = m_pContainer->IncrementLinkCounter(nLinkIndex, m_nInContainerIndex);
-	return bRes;
+	m_pContainer->IncrementLinkCounter(nLinkIndex, m_nInContainerIndex);
 }
 
 // устройство может быть связано с несколькими типами разных устройств,
@@ -318,18 +314,12 @@ bool CDevice::IncrementLinkCounter(ptrdiff_t nLinkIndex)
 CLinkPtrCount* CDevice::GetLink(ptrdiff_t nLinkIndex)
 {
 	_ASSERTE(m_pContainer);
-
 	// возвращаем объект, в котором есть список ссылок данного устройства
 	CLinkPtrCount *pLink(nullptr);
 	// ссылки хранятся в контейнере
-	if (m_pContainer)
-	{
-		// извлекаем список ссылок по заданному типу и индексу текущего устройства
-		CMultiLink *pMultiLink = m_pContainer->GetCheckLink(nLinkIndex, m_nInContainerIndex);
-		// если список ссылок есть - возвращаем список
-		if (pMultiLink)
-			pLink = pMultiLink->GetLink(m_nInContainerIndex);
-	}
+	// извлекаем список ссылок по заданному типу и индексу текущего устройства
+	CMultiLink& pMultiLink = m_pContainer->GetCheckLink(nLinkIndex, m_nInContainerIndex);
+		pLink = pMultiLink.GetLink(m_nInContainerIndex);
 	return pLink;
 }
 
