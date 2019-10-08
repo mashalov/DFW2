@@ -362,7 +362,7 @@ namespace DFW2
 		} 
 			m_Parameters;
 
-		KLUWrapperData klu;
+		KLUWrapper<double> klu;
 		CDynaLRC *m_pLRCGen = nullptr;		// СХН для генераторных узлов без генераторов
 
 		unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;

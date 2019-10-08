@@ -43,9 +43,6 @@
     <Filter Include="Header Files\Generators">
       <UniqueIdentifier>{a02ee619-bc60-4117-8df8-aa55c0f081d1}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Generators">
-      <UniqueIdentifier>{e8ad430e-37c6-44a9-b024-1608dc5575e2}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\CustomDevices">
       <UniqueIdentifier>{b848b420-1067-4cdd-b34a-b7b8fa57a48e}</UniqueIdentifier>
     </Filter>
@@ -54,6 +51,9 @@
     </Filter>
     <Filter Include="Source Files\SuiteSparce\KLU\Complex">
       <UniqueIdentifier>{72488151-e9df-4853-941f-642e8dd6de08}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Generators">
+      <UniqueIdentifier>{e8ad430e-37c6-44a9-b024-1608dc5575e2}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>

@@ -64,7 +64,7 @@ namespace DFW2
 		CDynaModel *m_pDynaModel = nullptr;
 		CDynaNodeContainer *pNodes = nullptr;
 
-		KLUWrapperData	klu;
+		KLUWrapper<double>	klu;
 		unique_ptr<_MatrixInfo[]> m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
 		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных

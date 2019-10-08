@@ -948,6 +948,9 @@ bool CDynaNodeContainer::LULF()
 {
 	bool bRes = true;
 
+	/*KLUWrapper<complex<double>> klu;
+	klu.Solve();*/
+
 	size_t nNodeCount = m_DevVec.size();
 	size_t nBranchesCount = m_pDynaModel->Branches.Count();
 	// оценка количества ненулевых элементов
