@@ -40,7 +40,6 @@ namespace DFW2
 
 
 		CLoadFlow(CDynaModel *pDynaModel);
-		~CLoadFlow();
 		bool Run();
 	protected:
 
@@ -48,12 +47,13 @@ namespace DFW2
 
 		void GetPnrQnr(CDynaNodeBase *pNode);
 		void GetPnrQnrSuper(CDynaNodeBase *pNode);
-		void CleanUp();
-		bool Estimate();
+		void Estimate();
 		bool Seidell();
+		void Newton();
 		bool BuildMatrix();
-		bool Start();
+		void Start();
 		bool CheckLF();
+		void SolveLinearSystem();
 		void UpdateQToGenerators();					// обновление данных генераторов по результату расчета PV-узлов
 		void UpdatePQFromGenerators();				// обновление данных PV-узлов по исходным данным генераторов
 		void DumpNodes();
@@ -74,6 +74,7 @@ namespace DFW2
 		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
 		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);
 		void GetNodeImb(_MatrixInfo *pMatrixInfo);
+		static double ImbNorm(double x, double y);
 	};
 }
 

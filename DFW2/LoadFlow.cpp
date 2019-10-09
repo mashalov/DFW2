@@ -4,20 +4,7 @@
 
 using namespace DFW2;
 
-CLoadFlow::CLoadFlow(CDynaModel *pDynaModel) :	m_pDynaModel(pDynaModel)
-{
-
-}
-
-CLoadFlow::~CLoadFlow()
-{
-	CleanUp();
-}
-
-void CLoadFlow::CleanUp()
-{
-
-}
+CLoadFlow::CLoadFlow(CDynaModel *pDynaModel) :	m_pDynaModel(pDynaModel) {}
 
 bool CLoadFlow::NodeInMatrix(CDynaNodeBase *pNode)
 {
@@ -31,10 +18,8 @@ bool CDynaModel::LoadFlow()
 	return LoadFlow.Run();
 }
 
-bool CLoadFlow::Estimate()
+void CLoadFlow::Estimate()
 {
-	bool bRes = true;
-
 	ptrdiff_t nMatrixSize(0), nNonZeroCount(0);
 	// создаем привязку узлов к информации по строкам матрицы
 	// размер берем по количеству узлов. Реальный размер матрицы будет меньше на
@@ -42,15 +27,16 @@ bool CLoadFlow::Estimate()
 	m_pMatrixInfo = make_unique<_MatrixInfo[]>(pNodes->Count());
 	_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
 
+	// базисные узлы держим в отдельном списке, так как они не в матрице, но
+	// результаты по ним нужно обновлять
 	list<CDynaNodeBase*> SlackBuses;
-	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+
+	for (auto&& it : pNodes->m_DevVec)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		// обрабатываем только включенные узлы и узлы без родительского суперузла
-		if (!pNode->IsStateOn())
+		if (!pNode->IsStateOn() || pNode->m_pSuperNodeParent)
 			continue;
-		if(pNode->m_pSuperNodeParent)
-			continue; 
 		// обновляем VreVim узла
 		pNode->InitLF();
 		// добавляем БУ в список БУ для дальнейшей обработки
@@ -59,12 +45,12 @@ bool CLoadFlow::Estimate()
 
 		// для узлов которые в матрице считаем количество ветвей
 		// и ненулевых элементов
-		for (VirtualBranch *pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
-			if (NodeInMatrix(pNode) && NodeInMatrix(pV->pNode))
-				pMatrixInfo->nRowCount += 2;	// количество ненулевых элементов = ветвей - ветвей на БУ
-
 		if (NodeInMatrix(pNode))
 		{
+			for (VirtualBranch *pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
+				if (NodeInMatrix(pV->pNode))
+					pMatrixInfo->nRowCount += 2;	// количество ненулевых элементов = ветвей - ветвей на БУ
+
 			// для узлов, которые попадают в матрицу нумеруем включенные узлы строками матрицы
 			pNode->SetMatrixRow(nMatrixSize);
 			pMatrixInfo->pNode = pNode;
@@ -125,7 +111,6 @@ bool CLoadFlow::Estimate()
 
 	m_pMatrixInfoSlackEnd = pMatrixInfo;
 	*pAi = nNonZeroCount;
-	return bRes;
 }
 
 void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
@@ -186,14 +171,11 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 	InitLF();
 }
 
-bool CLoadFlow::Start()
+void CLoadFlow::Start()
 {
-	bool bRes = true;
-	// очищаем старые данные, если есть
-	CleanUp();
 	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
 	if (!pNodes)
-		return false;
+		throw dfw2error(_T("CLoadFlow::Start - node container unavailable"));
 
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
 	UpdatePQFromGenerators();
@@ -262,13 +244,6 @@ bool CLoadFlow::Start()
 		}
 		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
 	}
-
-	return bRes;
-}
-
-double ImbNorm(double x, double y)
-{
-	return x * x + y * y;
 }
 
 // функция сортировки PV-узлов для определеия порядка их обработки в Зейделе
@@ -305,6 +280,7 @@ void CLoadFlow::AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue)
 
 bool CLoadFlow::Seidell()
 {
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 	bool bRes = true;
 
 	MATRIXINFO SeidellOrder;
@@ -337,8 +313,8 @@ bool CLoadFlow::Seidell()
 	// очередь строим от базисных и PV-узлов по связям. Порядок очереди 
 	// определяем по мере удаления от узлов базисных и PV-узлов 
 	QUEUE queue;
-	for (MATRIXINFOITR it = SeidellOrder.begin(); it != SeidellOrder.end(); it++)
-		AddToQueue(*it, queue);
+	for (auto&& it : SeidellOrder)
+		AddToQueue(it, queue);
 
 
 	// пока в очереди есть узлы
@@ -394,9 +370,9 @@ bool CLoadFlow::Seidell()
 		bool bPVPQSwitchEnabled = nSeidellIterations >= m_Parameters.m_nEnableSwitchIteration;
 
 		// для всех узлов в порядке обработки Зейделя
-		for (MATRIXINFOITR it = SeidellOrder.begin(); it != SeidellOrder.end(); it++)
+		for (auto&& it : SeidellOrder)
 		{
-			pMatrixInfo = *it;
+			pMatrixInfo = it;
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			// рассчитываем нагрузку по СХН
 			GetPnrQnrSuper(pNode);
@@ -621,6 +597,8 @@ bool CLoadFlow::BuildMatrix()
 		*pb = Pe; pb++;
 		*pb = Qe; pb++;
 	}
+
+	klu.Analyze();
 	return bRes;
 }
 
@@ -649,252 +627,17 @@ bool CLoadFlow::Run()
 	m_Parameters.m_bStartup = true;
 	m_Parameters.m_Imb = m_pDynaModel->GetAtol() * 0.1;
 
-	bool bRes = Start();
-	bRes = bRes && Estimate();
-	if (!bRes)
-		return bRes;
+	bool bRes = true;
+
+	Start();
+	Estimate();
 
 	pNodes->SwitchLRCs(false);
 
 	if (m_Parameters.m_bStartup)
-	{
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 		Seidell();
-	}
 
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
-	int it(0);
-
-	auto ppSwitch = make_unique<_MatrixInfo*[]>(klu.MatrixSize());
-
-	double ImbSqOld = 0.0;
-	double ImbSq = 0.0;
-
-	while (1)
-	{
-		if (!CheckLF())
-		{
-			bRes = false;
-			break;
-		}
-
-		++it;
-		_MatrixInfo **ppSwitchEnd = ppSwitch.get();
-		pNodes->m_IterationControl.Reset();
-		ImbSqOld = ImbSq;
-		ImbSq = 0.0;
-
-		// считаем небаланс по всем узлам кроме БУ
-		_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
-		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			GetNodeImb(pMatrixInfo);
-			double Qg = pNode->Qgr + pMatrixInfo->m_dImbQ;
-			switch (pNode->m_eLFNodeType)
-			{
-			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-				if (pNode->V < pNode->LFVref)
-				{
-					*ppSwitchEnd = pMatrixInfo;
-					pMatrixInfo->m_nPVSwitchCount++;
-					ppSwitchEnd++;
-				}
-				break;
-			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-				if (pNode->V > pNode->LFVref)
-				{
-					*ppSwitchEnd = pMatrixInfo;
-					ppSwitchEnd++;
-					pMatrixInfo->m_nPVSwitchCount++;
-				}
-				break;
-			case CDynaNodeBase::eLFNodeType::LFNT_PV:
-				if (Qg > pNode->LFQmax + m_Parameters.m_Imb)
-				{
-					pNodes->m_IterationControl.m_nQviolated++;
-					*ppSwitchEnd = pMatrixInfo;
-					ppSwitchEnd++;
-				}
-				else if (Qg < pNode->LFQmin - m_Parameters.m_Imb)
-				{
-					pNodes->m_IterationControl.m_nQviolated++;
-					*ppSwitchEnd = pMatrixInfo;
-					ppSwitchEnd++;
-				}
-				else
-					pNode->Qgr = Qg;
-				break;
-			}
-			pNodes->IterationControl().Update(pMatrixInfo);
-			ImbSq += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
-		}
-
-		// досчитываем небалансы в БУ
-		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			GetNodeImb(pMatrixInfo);
-			pNode->Pgr += pMatrixInfo->m_dImbP;
-			pNode->Qgr += pMatrixInfo->m_dImbQ;
-			pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
-			pNodes->IterationControl().Update(pMatrixInfo);
-		}
-
-		// обновляем узлы в суперузлах
-		for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
-		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-			CDynaNodeBase *pSuperNodeParent = pNode->m_pSuperNodeParent;
-			if (pSuperNodeParent)
-			{
-				pNode->V = pSuperNodeParent->V;
-				pNode->Delta = pSuperNodeParent->Delta;
-				pNode->UpdateVreVim();
-			}
-		}
-
-		pNodes->IterationControl().m_ImbRatio = ImbSq;
-		pNodes->DumpIterationControl();
-
-		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
-			break;
-
-		if (it > m_Parameters.m_nMaxIterations)
-		{
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszLFNoConvergence);
-			bRes = false;
-			break;
-		}
-		// переключаем типы узлов
-		if (pNodes->m_IterationControl.m_MaxImbP.GetDiff() < m_Parameters.m_Imb)
-		{
-			for (_MatrixInfo **ppSwitchNow = ppSwitch.get(); ppSwitchNow < ppSwitchEnd; ppSwitchNow++)
-			{
-				pMatrixInfo = *ppSwitchNow;
-				CDynaNodeBase *pNode = pMatrixInfo->pNode;
-				double Qg = pNode->Qgr + pMatrixInfo->m_dImbQ;
-				switch (pNode->m_eLFNodeType)
-				{
-				case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-					pMatrixInfo->m_nPVSwitchCount++;
-					pNode->Qgr = Qg;
-					pNode->V = pNode->LFVref;
-					break;
-				case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-					pMatrixInfo->m_nPVSwitchCount++;
-					pNode->Qgr = Qg;
-					pNode->V = pNode->LFVref;
-					break;
-				case CDynaNodeBase::eLFNodeType::LFNT_PV:
-					pNode->Qgr = Qg;
-					if (pNode->Qgr > pNode->LFQmax)
-					{
-						pNodes->m_IterationControl.m_nQviolated++;
-						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Qmax < Q %g < %g %d"), pNode->LFQmax, pNode->Qg, pNode->GetId());
-						pNode->Qgr = pNode->LFQmax;
-						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
-					}
-					else if (pNode->Qgr < pNode->LFQmin)
-					{
-						pNodes->m_IterationControl.m_nQviolated++;
-						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Qmin > Q %g > %g %d"), pNode->LFQmin, pNode->Qg, pNode->GetId());
-						pNode->Qgr = pNode->LFQmin;
-						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
-					}
-					break;
-				}
-				pNode->UpdateVreVim();
-			}
-		}
-
-		BuildMatrix();
-
-		ImbSq = 0.0;
-		double *pb = klu.B();
-		const double *pe = pb + klu.MatrixSize();
-		for( ; pb < pe ; pb++)
-			ImbSq += *pb * *pb;
-
-		double dStep = 1.0;
-
-		if (ImbSqOld > 0.0 && ImbSq > 0.0)
-		{
-			double ImbSqRatio = ImbSq / ImbSqOld;
-			if (ImbSqRatio > 1.0)
-			{
-				dStep = 1.0 / ImbSqRatio;
-			}
-		}
-
-		klu.FactorSolve();
-		//KLU_numeric *Numeric = KLU_factor(klu.Ai(), klu.Ap(), klu.Ax(), klu.Symbolic(), klu.Common());
-
-		/*
-		int nmx = 0;
-		for (int i = 1; i < klu.MatrixSize(); i++)
-		{
-			if (fabs(klu.B()[nmx]) < fabs(klu.B()[i]))
-				nmx = i;
-		}
-		ATLTRACE("\n%g", klu.B()[nmx]);
-		*/
-
-
-		//ptrdiff_t sq = KLU_tsolve(klu.Symbolic(), Numeric, klu.MatrixSize(), 1, klu.B(), klu.Common());
-
-		/*nmx = 0;
-		for (int i = 1; i < m_nMatrixSize; i++)
-		{
-			if (fabs(b[nmx]) < fabs(b[i]))
-				nmx = i;
-		}
-		ATLTRACE("\n%g", b[nmx]);*/
-
-
-		//KLU_free_numeric(&Numeric, klu.Common());
-
-		
-		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			pNode->Delta -= klu.B()[pNode->A(0)];
-			pNode->V -= klu.B()[pNode->A(0) + 1];
-			pNode->UpdateVreVim();
-		}
-	}
-
-	// обновляем реактивную генерацию в суперузлах
-
-	for (auto && supernode : m_SuperNodeParameters)
-	{
-		CDynaNodeBase *pNode = supernode.m_pNode;
-		double Qrange = pNode->LFQmax - pNode->LFQmin;
-		Qrange = (Qrange > 0.0) ? (pNode->Qgr - pNode->LFQmin) / Qrange : 0.0;
-		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
-		CDevice **ppDevice(nullptr);
-		while (pLink->In(ppDevice))
-		{
-			CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
-			pSlaveNode->Qg = 0.0;
-			if (pSlaveNode->IsStateOn())
-				pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
-		}
-		pNode->Qgr = supernode.LFQmin + (supernode.LFQmax - supernode.LFQmin) * Qrange;
-		supernode.Restore();
-	}
-
-	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		if (!pNode->m_pSuperNodeParent)
-		{
-			pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;
-			GetPnrQnr(pNode);
-		}
-	}
+	Newton();
 
 #ifdef _DEBUG
 
@@ -908,9 +651,9 @@ bool CLoadFlow::Run()
 	CDynaNodeBase *pNodeMaxPnr(nullptr);
 	CDynaNodeBase *pNodeMaxQnr(nullptr);
 
-	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	for (auto&& it : pNodes->m_DevVec)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		if (pNode->IsStateOn())
 		{
 			double mx = fabs(pNode->V - pNode->Vrastr);
@@ -1038,9 +781,9 @@ bool CLoadFlow::CheckLF()
 
 void CLoadFlow::UpdatePQFromGenerators()
 {
-	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	for (auto&& it : pNodes->m_DevVec)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 
 		if (!pNode->IsStateOn())
 			continue;
@@ -1075,9 +818,9 @@ void CLoadFlow::UpdatePQFromGenerators()
 
 void CLoadFlow::UpdateQToGenerators()
 {
-	for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+	for (auto&& it : pNodes->m_DevVec)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 
 		if (!pNode->IsStateOn())
 			continue;
@@ -1156,9 +899,9 @@ void CLoadFlow::DumpNodes()
 	if (!_tfopen_s(&fdump, _T("c:\\tmp\\nodes.csv"), _T("wb+")))
 	{
 		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
-		for (DEVICEVECTORITR it = pNodes->begin(); it != pNodes->end(); it++)
+		for (auto&& it : pNodes->m_DevVec)
 		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 #ifdef _DEBUG
 			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g\n"),
 				pNode->GetId(),
@@ -1212,3 +955,220 @@ void CLoadFlow::StoreParameters::Restore()
 	m_pNode->LFQmax = LFQmax;
 	m_pNode->m_eLFNodeType = LFNodeType;
 };
+
+double CLoadFlow::ImbNorm(double x, double y)
+{
+	return x * x + y * y;
+}
+
+void CLoadFlow::SolveLinearSystem()
+{
+	if (klu.Factored())
+	{
+		if (!klu.TryRefactor())
+			klu.Factor();
+	}
+	else
+		klu.Factor();
+	klu.Solve();
+}
+
+void CLoadFlow::Newton()
+{
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
+	int it(0);
+
+	vector<_MatrixInfo*> vecSwitch;
+	vecSwitch.reserve(klu.MatrixSize() / 2);
+
+	double ImbSqOld, ImbSq(0.0);
+
+	while (1)
+	{
+		if (!CheckLF())
+			break;
+
+		++it;
+		pNodes->m_IterationControl.Reset();
+		ImbSqOld = ImbSq;
+		ImbSq = 0.0;
+
+		vecSwitch.clear();
+
+		// считаем небаланс по всем узлам кроме БУ
+		_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
+		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		{
+			CDynaNodeBase *pNode = pMatrixInfo->pNode;
+			GetNodeImb(pMatrixInfo);
+			double Qg = pNode->Qgr + pMatrixInfo->m_dImbQ;
+			switch (pNode->m_eLFNodeType)
+			{
+			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
+				if (pNode->V < pNode->LFVref)
+				{
+					vecSwitch.push_back(pMatrixInfo);
+					pMatrixInfo->m_nPVSwitchCount++;
+				}
+				break;
+			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
+				if (pNode->V > pNode->LFVref)
+				{
+					vecSwitch.push_back(pMatrixInfo);
+					pMatrixInfo->m_nPVSwitchCount++;
+				}
+				break;
+			case CDynaNodeBase::eLFNodeType::LFNT_PV:
+				if (Qg > pNode->LFQmax + m_Parameters.m_Imb)
+				{
+					vecSwitch.push_back(pMatrixInfo);
+					pNodes->m_IterationControl.m_nQviolated++;
+				}
+				else if (Qg < pNode->LFQmin - m_Parameters.m_Imb)
+				{
+					vecSwitch.push_back(pMatrixInfo);
+					pNodes->m_IterationControl.m_nQviolated++;
+				}
+				else
+					pNode->Qgr = Qg;
+				break;
+			}
+			pNodes->IterationControl().Update(pMatrixInfo);
+			ImbSq += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
+		}
+
+		// досчитываем небалансы в БУ
+		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
+		{
+			CDynaNodeBase *pNode = pMatrixInfo->pNode;
+			GetNodeImb(pMatrixInfo);
+			pNode->Pgr += pMatrixInfo->m_dImbP;
+			pNode->Qgr += pMatrixInfo->m_dImbQ;
+			pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
+			pNodes->IterationControl().Update(pMatrixInfo);
+		}
+
+		// обновляем узлы в суперузлах
+		for (auto&& it : pNodes->m_DevVec)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+			CDynaNodeBase *pSuperNodeParent = pNode->m_pSuperNodeParent;
+			if (pSuperNodeParent)
+			{
+				pNode->V = pSuperNodeParent->V;
+				pNode->Delta = pSuperNodeParent->Delta;
+				pNode->UpdateVreVim();
+			}
+		}
+
+		pNodes->IterationControl().m_ImbRatio = ImbSq;
+		pNodes->DumpIterationControl();
+
+		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
+			break;
+
+		if (it > m_Parameters.m_nMaxIterations)
+			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
+
+		// переключаем типы узлов
+		if (pNodes->m_IterationControl.m_MaxImbP.GetDiff() < m_Parameters.m_Imb)
+		{
+			for (auto SwitchNow : vecSwitch)
+			{
+				CDynaNodeBase *pNode = SwitchNow->pNode;
+				double Qg = pNode->Qgr + SwitchNow->m_dImbQ;
+				switch (pNode->m_eLFNodeType)
+				{
+				case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
+					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+					SwitchNow->m_nPVSwitchCount++;
+					pNode->Qgr = Qg;
+					pNode->V = pNode->LFVref;
+					break;
+				case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
+					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+					SwitchNow->m_nPVSwitchCount++;
+					pNode->Qgr = Qg;
+					pNode->V = pNode->LFVref;
+					break;
+				case CDynaNodeBase::eLFNodeType::LFNT_PV:
+					pNode->Qgr = Qg;
+					if (pNode->Qgr > pNode->LFQmax)
+					{
+						pNodes->m_IterationControl.m_nQviolated++;
+						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Qmax < Q %g < %g %d"), pNode->LFQmax, pNode->Qg, pNode->GetId());
+						pNode->Qgr = pNode->LFQmax;
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
+					}
+					else if (pNode->Qgr < pNode->LFQmin)
+					{
+						pNodes->m_IterationControl.m_nQviolated++;
+						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Qmin > Q %g > %g %d"), pNode->LFQmin, pNode->Qg, pNode->GetId());
+						pNode->Qgr = pNode->LFQmin;
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
+					}
+					break;
+				}
+				pNode->UpdateVreVim();
+			}
+		}
+
+		BuildMatrix();
+
+		ImbSq = 0.0;
+		double *pb = klu.B();
+		const double *pe = pb + klu.MatrixSize();
+		for (; pb < pe; pb++)
+			ImbSq += *pb * *pb;
+
+		double dStep = 1.0;
+
+		if (ImbSqOld > 0.0 && ImbSq > 0.0)
+		{
+			double ImbSqRatio = ImbSq / ImbSqOld;
+			if (ImbSqRatio > 1.0)
+				dStep = 1.0 / ImbSqRatio;
+		}
+
+		SolveLinearSystem();
+		// обновляем переменные
+		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		{
+			CDynaNodeBase *pNode = pMatrixInfo->pNode;
+			double *pb = klu.B() + pNode->A(0);
+			pNode->Delta -= *pb;	pb++;
+			pNode->V -= *pb;
+			pNode->UpdateVreVim();
+		}
+	}
+
+	// обновляем реактивную генерацию в суперузлах
+
+	for (auto && supernode : m_SuperNodeParameters)
+	{
+		CDynaNodeBase *pNode = supernode.m_pNode;
+		double Qrange = pNode->LFQmax - pNode->LFQmin;
+		Qrange = (Qrange > 0.0) ? (pNode->Qgr - pNode->LFQmin) / Qrange : 0.0;
+		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
+		CDevice **ppDevice(nullptr);
+		while (pLink->In(ppDevice))
+		{
+			CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+			pSlaveNode->Qg = 0.0;
+			if (pSlaveNode->IsStateOn())
+				pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
+		}
+		pNode->Qgr = supernode.LFQmin + (supernode.LFQmax - supernode.LFQmin) * Qrange;
+		supernode.Restore();
+	}
+
+	for (auto&& it : pNodes->m_DevVec)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+		if (!pNode->m_pSuperNodeParent)
+		{
+			pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;
+			GetPnrQnr(pNode);
+		}
+	}
+}
