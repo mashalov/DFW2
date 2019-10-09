@@ -7,25 +7,7 @@ using namespace DFW2;
 #define LOW_VOLTAGE 0.01
 #define LOW_VOLTAGE_HYST LOW_VOLTAGE * 0.1
 
-// Мы хотим использовать одновременно
-// обычную и комплексную версии KLU для x86 и x64
-// Для комплексной версии потребоваля собственный маппинг x86 и x64
-// параллельный стоковому klu_version.h
-#ifdef DLONG
-#define klu_z_factor klu_zl_factor
-#define klu_z_refactor klu_zl_refactor
-#define klu_z_tsolve klu_zl_tsolve
-#define klu_z_free_numeric klu_zl_free_numeric
-#define klu_free_symbolic klu_l_free_symbolic
-#endif
-
-CDynaNodeBase::CDynaNodeBase() : CDevice(),
-								 m_pLRC(nullptr),
-								 m_pLRCLF(nullptr),
-								 m_pLRCGen(nullptr),
-								 m_pSyncZone(nullptr),
-								 dLRCVicinity(0.0),
-								 m_bInMetallicSC(false)
+CDynaNodeBase::CDynaNodeBase() : CDevice()
 {
 }
 

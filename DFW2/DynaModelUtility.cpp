@@ -557,6 +557,16 @@ void CDynaModel::DumpStateVector()
 	}
 }
 
+void CDynaModel::Computehl0()
+{
+	// кэшированное значение l0 * GetH для элементов матрицы
+	// пересчитывается при изменении шага и при изменении коэффициентов метода
+	// для демпфирования
+	// lh[i] = l[i][0] * GetH()
+	for (auto&& lh : Methodlh)
+		lh = Methodl[&lh - Methodlh][0] * sc.m_dCurrentH;
+}
+
 void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 {
 	if (bEnable == sc.bAdamsDampingEnabled) return;
@@ -566,6 +576,7 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 	// Вместо MethodDefault[3][3] можно использовать честную формулу для LTE (см. Docs)
 	Methodl[3][3] = 1.0 / fabs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
 	sc.RefactorMatrix();
+	Computehl0();
 	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(DFW2::CDFW2Messages::m_cszAdamsDamping, bEnable ? DFW2::CDFW2Messages::m_cszOn: DFW2::CDFW2Messages::m_cszOff));
 }
 

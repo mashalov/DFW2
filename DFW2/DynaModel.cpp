@@ -185,8 +185,7 @@ bool CDynaModel::Run()
 			bRes = bRes && m_Automatic.Init();
 			bRes = bRes && m_Discontinuities.Init();
 			bRes = bRes && WriteResultsHeader();
-			sc.m_dCurrentH = 0.01;
-
+			SetH(0.01);
 			while (!sc.m_bStopCommandReceived && bRes)
 			{
 				bRes = bRes && Step();
@@ -338,7 +337,7 @@ bool CDynaModel::InitEquations()
 		}
 
 		double dCurrentH = sc.m_dCurrentH;
-		sc.m_dCurrentH = 0.0;
+		SetH(0.0);
 		sc.m_bDiscontinuityMode = true;
 
 		if (!SolveNewton(100))
@@ -347,7 +346,7 @@ bool CDynaModel::InitEquations()
 			bRes = false;
 
 		sc.m_bDiscontinuityMode = false;
-		sc.m_dCurrentH = dCurrentH;
+		SetH(dCurrentH);
 		sc.nStepsCount = 0;
 
 		for (auto&& cit : m_DeviceContainers)
@@ -708,7 +707,7 @@ bool CDynaModel::Step()
 			// если при этом настроенный коэффициент изменения шага больше погрешности
 			if (rHit > DFW2_EPSILON)
 			{
-				sc.m_dCurrentH *= rHit; 						// меняем шаг
+				SetH(sc.m_dCurrentH * rHit); 					// меняем шаг
 				RescaleNordsiek(rHit);							// пересчитываем Nordsieck на новый шаг
 				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, GetCurrentTime(), GetIntegrationStepNumber(), sc.m_dCurrentH));
 				sc.m_bBeforeDiscontinuityWritten = false;		// готовимся к обработке разрыва
@@ -833,7 +832,7 @@ bool CDynaModel::Step()
 							else
 							{
 								// если время зерокроссинга не достаточно точно определено подбираем новый шаг
-								sc.m_dCurrentH *= rZeroCrossing;
+								SetH(sc.m_dCurrentH * rZeroCrossing);
 								RepeatZeroCrossing();
 							}
 						}
@@ -859,7 +858,7 @@ bool CDynaModel::Step()
 								// если время зерокроссинга внутри шага, входим в режим зерокроссинга
 								sc.m_bZeroCrossingMode = true;
 								// и пытаемся подобрать шаг до времени зерокроссинга
-								sc.m_dCurrentH *= rZeroCrossing;
+								SetH(sc.m_dCurrentH * rZeroCrossing);
 								RepeatZeroCrossing();
 							}
 						}
@@ -1065,7 +1064,7 @@ void CDynaModel::EnterDiscontinuityMode()
 		sc.m_bZeroCrossingMode = false;
 		ChangeOrder(1);
 		RescaleNordsiek(sc.Hmin / sc.m_dCurrentH);
-		sc.m_dCurrentH = 0.0;
+		SetH(0.0);
 		//sc.m_bEnforceOut = true;
 	}
 }
@@ -1152,7 +1151,7 @@ void CDynaModel::LeaveDiscontinuityMode()
 		sc.m_bDiscontinuityMode = false;
 		for (auto&& it : m_DeviceContainers)
 			it->LeaveDiscontinuityMode(this);
-		sc.m_dCurrentH = sc.Hmin;
+		SetH(sc.Hmin);
 		ResetNordsiek();
 	}
 }
@@ -1212,7 +1211,7 @@ void CDynaModel::GoodStep(double rSame)
 				if (sc.FilterOrder(rHigher))
 				{
 					ConstructNordsiekOrder();
-					sc.m_dCurrentH *= sc.dFilteredOrder;
+					SetH(sc.m_dCurrentH * sc.dFilteredOrder);
 					ChangeOrder(2);
 					RescaleNordsiek(sc.dFilteredOrder);
 					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
@@ -1236,7 +1235,7 @@ void CDynaModel::GoodStep(double rSame)
 				// пытаемся перейти на первый порядок
 				if (sc.FilterOrder(rLower))
 				{
-					sc.m_dCurrentH *= sc.dFilteredOrder;
+					SetH(sc.m_dCurrentH * sc.dFilteredOrder);
 					ChangeOrder(1);
 					RescaleNordsiek(sc.dFilteredOrder);
 					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
@@ -1258,7 +1257,7 @@ void CDynaModel::GoodStep(double rSame)
 			// RescaleNordsiek
 			double k = sc.dFilteredStep;
 			// рассчитываем новый шаг
-			sc.m_dCurrentH *= sc.dFilteredStep;
+			SetH(sc.m_dCurrentH * sc.dFilteredStep);
 			// пересчитываем Nordsieck на новый шаг
 			RescaleNordsiek(sc.dFilteredStep);
 			Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), GetH(), k, sc.q));
@@ -1280,7 +1279,7 @@ bool CDynaModel::BadStep()
 {
 	bool bRes(true);
 
-	sc.m_dCurrentH *= 0.5;		// делим шаг пополам
+	SetH(sc.m_dCurrentH * 0.5);		// делим шаг пополам
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
 
@@ -1305,7 +1304,7 @@ bool CDynaModel::BadStep()
 			bRes = false;
 		}
 		ChangeOrder(1);				// шаг не изменяем
-		sc.m_dCurrentH = sc.Hmin;
+		SetH(sc.Hmin);
 
 		// проверяем количество последовательно
 		// заваленных шагов
@@ -1354,25 +1353,25 @@ bool CDynaModel::NewtonFailed()
 	{
 		if (sc.m_dOldH / sc.m_dCurrentH >= 0.8)
 		{
-			sc.m_dCurrentH *= 0.87;
+			SetH(sc.m_dCurrentH * 0.87);
 			sc.SetRateGrowLimit(1.0);
 		}
 		else
 		{
-			sc.m_dCurrentH = 0.8 * sc.m_dOldH + 0.2 * sc.m_dCurrentH;
+			SetH(0.8 * sc.m_dOldH + 0.2 * sc.m_dCurrentH);
 			sc.SetRateGrowLimit(1.18);
 		}
 	}
 	else
 	if (sc.nSuccessfullStepsOfNewton > 1)
 	{
-		sc.m_dCurrentH *= 0.87;
+		SetH(sc.m_dCurrentH * 0.87);
 		sc.SetRateGrowLimit(1.0);
 	}
 	else
 	if (sc.nSuccessfullStepsOfNewton == 0)
 	{
-		sc.m_dCurrentH *= 0.25;
+		SetH(sc.m_dCurrentH * 0.25);
 		sc.SetRateGrowLimit(10.0);
 	}
 
@@ -1382,7 +1381,7 @@ bool CDynaModel::NewtonFailed()
 
 	if (sc.m_dCurrentH < sc.Hmin)
 	{
-		sc.m_dCurrentH = sc.Hmin;
+		SetH(sc.Hmin);
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
 		{
 			Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
@@ -1416,7 +1415,7 @@ void CDynaModel::RepeatZeroCrossing()
 	{
 		// если шаг снижен до минимального,
 		// отменяем зерокроссинг, так как его невозможно выполнить
-		sc.m_dCurrentH = sc.Hmin;
+		SetH(sc.Hmin);
 		sc.m_bZeroCrossingMode = false;
 	}
 
