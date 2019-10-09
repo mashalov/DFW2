@@ -20,6 +20,17 @@ namespace DFW2
 		ptrdiff_t m_nRefactorizationsCount = 0;
 		wstring m_strKLUError;
 
+		template <typename T>
+		struct doubles_count 
+		{
+			static const ptrdiff_t count = 1;
+		};
+		template<>
+		struct doubles_count<std::complex<double>>
+		{
+			static const ptrdiff_t count = 2;
+		};
+
 		template <typename T, typename L> class KLUFunctions;
 
 
@@ -219,10 +230,10 @@ namespace DFW2
 		{
 			m_nMatrixSize = nMatrixSize;
 			m_nNonZeroCount = nNonZeroCount;
-			pAx = make_unique<double[]>(m_nNonZeroCount);				// числа матрицы
-			pb = make_unique<double[]>(m_nMatrixSize);					// вектор правой части
-			pAi = make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);			// строки матрицы
-			pAp = make_unique<ptrdiff_t[]>(m_nNonZeroCount);			// столбцы матрицы
+			pAx = make_unique<double[]>(m_nNonZeroCount * doubles_count<T>::count);			// числа матрицы
+			pb = make_unique<double[]>(m_nMatrixSize * doubles_count<T>::count);			// вектор правой части
+			pAi = make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);								// строки матрицы
+			pAp = make_unique<ptrdiff_t[]>(m_nNonZeroCount);								// столбцы матрицы
 			pSymbolic.reset();
 			pNumeric.reset();
 		}

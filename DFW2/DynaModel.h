@@ -12,6 +12,8 @@
 #include "Results.h"
 #include "chrono"
 
+//#define USE_FMA
+
 namespace DFW2
 {
 	class CDynaModel
@@ -669,6 +671,12 @@ namespace DFW2
 
 		double Methodl[4][4];
 		static const double MethodlDefault[4][4];
+
+		static double FMA(double x, double y, double z)
+		{
+			//return x * y + z;
+			return std::fma(x, y, z);
+		}
 
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);

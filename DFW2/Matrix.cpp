@@ -230,12 +230,12 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 		throw dfw2error(Cex(_T("CDynaModel::ReallySetElement matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
 
 	MatrixRow *pRow = m_pMatrixRows + nRow;
-	double l0 = Methodl[GetRightVector(nCol)->EquationType * 2 + (sc.q - 1)][0];
+	double l0 = Methodl[(pRightVector + nCol)->EquationType * 2 + (sc.q - 1)][0];
 	// в качестве типа уравнения используем __физический__ тип
 	// потому что у алгебраических и дифференциальных уравнений
 	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
 
-	if (GetRightVector(nRow)->PhysicalEquationType == DET_ALGEBRAIC)
+	if ((pRightVector + nRow)->PhysicalEquationType == DET_ALGEBRAIC)
 		dValue *= l0;		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
 	else
 	{
@@ -248,6 +248,7 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 
 	_CheckNumber(dValue);
 
+	/*
 	switch (sc.IterationMode)
 	{
 	case StepControl::eIterationMode::JN:
@@ -258,6 +259,7 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 		break;
 
 	}
+	*/
 
 	if (pRow->pAp >= pRow->pApRow + pRow->m_nColsCount || pRow->pAx >= pRow->pAxRow + pRow->m_nColsCount)
 		throw dfw2error(_T("CDynaModel::ReallySetElementNoDup Column count"));

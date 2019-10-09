@@ -401,11 +401,14 @@ bool CDynaModel::NewtonUpdate()
 			sc.Newton.nMaxErrorVariableEquation = pVectorBegin - pRightVector;
 		}
 
+#ifdef USE_FMA
+		double dNewValue = FMA(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]);
+#else
 		double l0 = pVectorBegin->Error;
-
 		l0 *= Methodl0[pVectorBegin->EquationType];
-
 		double dNewValue = pVectorBegin->Nordsiek[0] + l0;
+#endif
+
 
 		double dOldValue = *pVectorBegin->pValue;
 		*pVectorBegin->pValue = dNewValue;
@@ -928,7 +931,11 @@ double CDynaModel::GetRatioForCurrentOrder()
 		if (pVectorBegin->Atol > 0)
 		{
 			// compute again to not asking device via pointer
+#ifdef USE_FMA
+			double dNewValue = FMA(pVectorBegin->Error, Methodl0[pVectorBegin->EquationType], pVectorBegin->Nordsiek[0]);
+#else
 			double dNewValue = pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType];
+#endif
 
 			double dError = pVectorBegin->GetWeightedError(dNewValue);
 			double dMaxError = fabs(dError);
