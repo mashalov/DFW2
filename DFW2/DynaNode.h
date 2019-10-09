@@ -85,26 +85,26 @@ namespace DFW2
 		double Gshunt, Bshunt;
 		double Unom;					// номинальное напряжение
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
-		bool m_bInMetallicSC;
+		bool m_bInMetallicSC = false;
 		bool m_bLowVoltage;				// признак низкого модуля напряжения
 		bool m_bSavedLowVoltage;		
-		double dLRCVicinity;			// окрестность сглаживания СХН
+		double dLRCVicinity = 0.0;		// окрестность сглаживания СХН
 
 		double dLRCPn;					// расчетные значения прозводных СХН по напряжению
 		double dLRCQn;
 		double dLRCPg;
 		double dLRCQg;
 
-		CSynchroZone *m_pSyncZone;		// синхронная зона, к которой принадлежит узел
+		CSynchroZone *m_pSyncZone = nullptr;		// синхронная зона, к которой принадлежит узел
 		ptrdiff_t m_nZoneDistance;
 		eLFNodeType m_eLFNodeType;
 		ptrdiff_t Nr;
 		cplx Yii;						// собственная проводимость
 		cplx YiiSuper;					// собственная проводимость суперузла
 		double Vold;					// модуль напряжения на предыдущей итерации
-		CDynaLRC *m_pLRC;				// указатель на СХН узла в динамике
-		CDynaLRC *m_pLRCLF;				// указатель на СХН узла в УР
-		CDynaLRC *m_pLRCGen;			// СХН для генерации, которая не задана моделями генераторов
+		CDynaLRC *m_pLRC = nullptr;		// указатель на СХН узла в динамике
+		CDynaLRC *m_pLRCLF = nullptr;	// указатель на СХН узла в УР
+		CDynaLRC *m_pLRCGen = nullptr;	// СХН для генерации, которая не задана моделями генераторов
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();

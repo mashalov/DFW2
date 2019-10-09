@@ -7,25 +7,7 @@ using namespace DFW2;
 #define LOW_VOLTAGE 0.01
 #define LOW_VOLTAGE_HYST LOW_VOLTAGE * 0.1
 
-// Мы хотим использовать одновременно
-// обычную и комплексную версии KLU для x86 и x64
-// Для комплексной версии потребоваля собственный маппинг x86 и x64
-// параллельный стоковому klu_version.h
-#ifdef DLONG
-#define klu_z_factor klu_zl_factor
-#define klu_z_refactor klu_zl_refactor
-#define klu_z_tsolve klu_zl_tsolve
-#define klu_z_free_numeric klu_zl_free_numeric
-#define klu_free_symbolic klu_l_free_symbolic
-#endif
-
-CDynaNodeBase::CDynaNodeBase() : CDevice(),
-								 m_pLRC(nullptr),
-								 m_pLRCLF(nullptr),
-								 m_pLRCGen(nullptr),
-								 m_pSyncZone(nullptr),
-								 dLRCVicinity(0.0),
-								 m_bInMetallicSC(false)
+CDynaNodeBase::CDynaNodeBase() : CDevice()
 {
 }
 
@@ -948,28 +930,21 @@ bool CDynaNodeContainer::LULF()
 {
 	bool bRes = true;
 
-	/*KLUWrapper<complex<double>> klu;
-	klu.Solve();*/
-
+	KLUWrapper<complex<double>> klu;
 	size_t nNodeCount = m_DevVec.size();
 	size_t nBranchesCount = m_pDynaModel->Branches.Count();
 	// оценка количества ненулевых элементов
 	size_t nNzCount = nNodeCount + 2 * nBranchesCount;
-	
-	// матрица и вектор правой части
-	double *Ax = new double[2 * nNzCount];
-	double *B  = new double[2 * nNodeCount];
-	// индексы
-	ptrdiff_t *Ap = new ptrdiff_t[nNodeCount + 1];
-	ptrdiff_t *Ai = new ptrdiff_t[nNzCount];
-	KLU_symbolic *Symbolic(nullptr);
-	KLU_numeric *Numeric(nullptr);
-	KLU_common Common;
-	KLU_defaults(&Common);
+
+	klu.SetSize(nNodeCount, nNzCount);
+	double *Ax = klu.Ax();
+	double *B  = klu.B();
+	ptrdiff_t *Ap = klu.Ai();
+	ptrdiff_t *Ai = klu.Ap();
 
 	// вектор указателей на диагональ матрицы
-	double **pDiags = new double*[nNodeCount];
-	double **ppDiags = pDiags;
+	auto pDiags = make_unique<double*[]>(nNodeCount);
+	double **ppDiags = pDiags.get();
 	double *pB = B;
 
 	double *pAx = Ax;
@@ -982,9 +957,11 @@ bool CDynaNodeContainer::LULF()
 	_ftprintf(fnode, _T(";"));
 
 	CalcAdmittances(false);
-
 	for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
 	{
+		_ASSERTE(pAx < Ax + nNzCount * 2);
+		_ASSERTE(pAi < Ai + nNzCount);
+		_ASSERTE(pAp < Ap + nNodeCount);
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
 		// стартуем с плоского
 		pNode->Vre = pNode->V = pNode->Unom;
@@ -1017,206 +994,157 @@ bool CDynaNodeContainer::LULF()
 
 	nNzCount = (pAx - Ax) / 2;		// рассчитываем получившееся количество ненулевых элементов (делим на 2 потому что комплекс)
 	Ap[nNodeCount] = nNzCount;
-	Symbolic = KLU_analyze(nNodeCount, Ap, Ai, &Common);
-	if (Symbolic)
+	for (ptrdiff_t nIteration = 0; nIteration < 200; nIteration++)
 	{
-		for (ptrdiff_t nIteration = 0; nIteration < 200; nIteration++)
+		m_IterationControl.Reset();
+		ppDiags = pDiags.get();
+		pB = B;
+
+		_ftprintf(fnode, _T("\n%td;"), nIteration);
+		_ftprintf(fgen, _T("\n%td;"), nIteration);
+		// проходим по узлам вне зависимости от их состояния, параллельно идем по диагонали матрицы
+		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++, ppDiags++)
 		{
-			m_IterationControl.Reset();
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+			_ASSERTE(pB < B + nNodeCount * 2);
 
-			ppDiags = pDiags;
-			pB = B;
-
-			_ftprintf(fnode, _T("\n%td;"), nIteration);
-			_ftprintf(fgen, _T("\n%td;"), nIteration);
-
-			// проходим по узлам вне зависимости от их состояния, параллельно идем по диагонали матрицы
-			for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++, ppDiags++)
+			if (!pNode->m_bInMetallicSC && pNode->IsStateOn() && !pNode->m_pSuperNodeParent)
 			{
-				CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+				// для всех узлов которые включены и вне металлического КЗ
 
-				if (!pNode->m_bInMetallicSC && pNode->IsStateOn() && !pNode->m_pSuperNodeParent)
+				cplx Unode(pNode->Vre, pNode->Vim);
+
+				cplx I = 0.0;					// обнуляем узел
+				cplx Y = pNode->YiiSuper;		// диагональ матрицы по умолчанию собственная проводимость узла
+
+				pNode->Vold = pNode->V;			// запоминаем напряжение до итерации для анализа сходимости
+
+				pNode->GetPnrQnrSuper();
+
+				// Generators
+
+				CDevice **ppDeivce(nullptr);
+				CLinkPtrCount *pLink = pNode->GetSuperLink(2);
+				pNode->ResetVisited();
+				// проходим по генераторам
+				while (pLink->In(ppDeivce))
 				{
-					// для всех узлов которые включены и вне металлического КЗ
+					CDynaVoltageSource *pVsource = static_cast<CDynaVoltageSource*>(*ppDeivce);
+					// если в узле есть хотя бы один генератор, то обнуляем мощность генерации узла
+					// если в узле нет генераторов но есть мощность генерации - то она будет учитываться
+					// задающим током
+					// если генераторм выключен то просто пропускаем, его мощность и ток будут равны нулю
+					if (!pVsource->IsStateOn())
+						continue;
 
-					cplx Unode(pNode->Vre, pNode->Vim);
+					pVsource->CalculatePower();
 
-					cplx I = 0.0;					// обнуляем узел
-					cplx Y = pNode->YiiSuper;		// диагональ матрицы по умолчанию собственная проводимость узла
-
-					pNode->Vold = pNode->V;			// запоминаем напряжение до итерации для анализа сходимости
-
-					pNode->GetPnrQnrSuper();
-
-					// Generators
-
-					CDevice **ppDeivce(nullptr);
-					CLinkPtrCount *pLink = pNode->GetSuperLink(2);
-					pNode->ResetVisited();
-					// проходим по генераторам
-					while (pLink->In(ppDeivce))
+					if (0)
 					{
-						CDynaVoltageSource *pVsource = static_cast<CDynaVoltageSource*>(*ppDeivce);
-						// если в узле есть хотя бы один генератор, то обнуляем мощность генерации узла
-						// если в узле нет генераторов но есть мощность генерации - то она будет учитываться
-						// задающим током
-						// если генераторм выключен то просто пропускаем, его мощность и ток будут равны нулю
-						if (!pVsource->IsStateOn())
-							continue;
-
-						pVsource->CalculatePower();
-
-						if (0)
-						{
-							//Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
-							cplx Sg(pVsource->P, pVsource->Q);
-							cplx E = pVsource->GetEMF();
-							cplx Yg = conj(Sg / Unode) / (E - Unode);
-							I -= E * Yg;
-							Y -= Yg;
-						}
-						else
-						{
-							CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(pVsource);
-							// в диагональ матрицы добавляем проводимость генератора
-							Y -= 1.0 / cplx(0.0, pGen->Xgen());
-							I -= pGen->Igen(nIteration);
-						}
-
-
-						_CheckNumber(I.real());
-						_CheckNumber(I.imag());
-
-						_ftprintf(fgen, _T("%g;"), pVsource->P);
+						//Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
+						cplx Sg(pVsource->P, pVsource->Q);
+						cplx E = pVsource->GetEMF();
+						cplx Yg = conj(Sg / Unode) / (E - Unode);
+						I -= E * Yg;
+						Y -= Yg;
+					}
+					else
+					{
+						CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(pVsource);
+						// в диагональ матрицы добавляем проводимость генератора
+						Y -= 1.0 / cplx(0.0, pGen->Xgen());
+						I -= pGen->Igen(nIteration);
 					}
 
-					// рассчитываем задающий ток узла от нагрузки
-					// можно посчитать ток, а можно посчитать добавку в диагональ
-					//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
-					if (pNode->V > 0.0)
-						Y += conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V / pNode->V);
-					//Y -= conj(cplx(Pnr, Qnr) / pNode->V / pNode->V);
 
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
-					_CheckNumber(Y.real());
-					_CheckNumber(Y.imag());
 
-					// и заполняем вектор комплексных токов
-					*pB = I.real(); pB++;
-					*pB = I.imag(); pB++;
-					// диагональ матрицы формируем по Y узла
-					**ppDiags = Y.real();
-					*(*ppDiags + 1) = Y.imag();
-					_ftprintf(fnode, _T("%g;"), pNode->V / pNode->V0);
+					_ftprintf(fgen, _T("%g;"), pVsource->P);
 				}
-				else
-				{
-					// если узел не включен, задающий ток для него равен нулю
-					*pB = 0.0; pB++;
-					*pB = 0.0; pB++;
-				}
-			}
 
-			ptrdiff_t refactorOK = 1;
+				// рассчитываем задающий ток узла от нагрузки
+				// можно посчитать ток, а можно посчитать добавку в диагональ
+				//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
+				if (pNode->V > 0.0)
+					Y += conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V / pNode->V);
+				//Y -= conj(cplx(Pnr, Qnr) / pNode->V / pNode->V);
 
-			// KLU может делать повторную факторизацию матрицы с начальным пивотингом
-			// это быстро, но при изменении пивотов может вызывать численную неустойчивость.
-			// У нас есть два варианта факторизации/рефакторизации на итерации LULF
+				_CheckNumber(I.real());
+				_CheckNumber(I.imag());
+				_CheckNumber(Y.real());
+				_CheckNumber(Y.imag());
 
-#ifdef USEREFACTOR
-		// делаем факторизацию/рефакторизацию и если она получилась
-			if (nIteration)
-				refactorOK = klu_z_refactor(Ap, Ai, Ax, Symbolic, Numeric, &Common);
-			else
-				Numeric = klu_z_factor(Ap, Ai, Ax, Symbolic, &Common);
-#else
-			if (Numeric)
-				klu_z_free_numeric(&Numeric, &Common);
-			Numeric = klu_z_factor(Ap, Ai, Ax, Symbolic, &Common);
-#endif
-
-			if (Numeric && refactorOK)
-			{
-				// решаем систему
-				if (klu_z_tsolve(Symbolic, Numeric, nNodeCount, 1, B, 0, &Common))
-				{
-					double *pB = B;
-
-					for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-					{
-						CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-						// напряжение после решения системы в векторе задающий токов
-						pNode->Vre = *pB;		pB++;
-						pNode->Vim = *pB;		pB++;
-
-						// считаем напряжение узла в полярных координатах
-						cplx Unode(pNode->Vre, pNode->Vim);
-						pNode->V = abs(Unode);
-						pNode->Delta = arg(Unode);
-
-						// рассчитываем зону сглаживания СХН (также как для Ньютона)
-						/*if (pNode->m_pLRC)
-							pNode->dLRCVicinity = 30.0 * fabs(pNode->Vold - pNode->V) / pNode->Unom;
-						*/
-
-						// считаем изменение напряжения узла между итерациями и находим
-						// самый изменяющийся узел
-						if (pNode->IsStateOn() && !pNode->m_pSuperNodeParent)
-							m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
-					}
-
-					for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-					{
-						CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-						if (pNode->m_pSuperNodeParent)
-						{
-							pNode->Vre = pNode->m_pSuperNodeParent->Vre;
-							pNode->Vim = pNode->m_pSuperNodeParent->Vim;
-							cplx Unode(pNode->Vre, pNode->Vim);
-							pNode->V = abs(Unode);
-							pNode->Delta = arg(Unode);
-						}
-					}
-
-					DumpIterationControl();
-
-					if (fabs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
-					{
-						Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
-						break;
-					}
-				}
-				else
-				{
-					GetModel()->ReportKLUError(Common);
-					break;
-				}
+				// и заполняем вектор комплексных токов
+				*pB = I.real(); pB++;
+				*pB = I.imag(); pB++;
+				// диагональ матрицы формируем по Y узла
+				**ppDiags = Y.real();
+				*(*ppDiags + 1) = Y.imag();
+				_ftprintf(fnode, _T("%g;"), pNode->V / pNode->V0);
 			}
 			else
 			{
-				GetModel()->ReportKLUError(Common);
-				break;
+				// если узел не включен, задающий ток для него равен нулю
+				*pB = 0.0; pB++;
+				*pB = 0.0; pB++;
+			}
+		}
+		ptrdiff_t refactorOK = 1;
+
+		klu.FactorSolve();
+
+		// KLU может делать повторную факторизацию матрицы с начальным пивотингом
+		// это быстро, но при изменении пивотов может вызывать численную неустойчивость.
+		// У нас есть два варианта факторизации/рефакторизации на итерации LULF
+		double *pB = B;
+
+		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+			// напряжение после решения системы в векторе задающий токов
+			pNode->Vre = *pB;		pB++;
+			pNode->Vim = *pB;		pB++;
+
+			// считаем напряжение узла в полярных координатах
+			cplx Unode(pNode->Vre, pNode->Vim);
+			pNode->V = abs(Unode);
+			pNode->Delta = arg(Unode);
+
+			// рассчитываем зону сглаживания СХН (также как для Ньютона)
+			/*if (pNode->m_pLRC)
+				pNode->dLRCVicinity = 30.0 * fabs(pNode->Vold - pNode->V) / pNode->Unom;
+			*/
+
+			// считаем изменение напряжения узла между итерациями и находим
+			// самый изменяющийся узел
+			if (pNode->IsStateOn() && !pNode->m_pSuperNodeParent)
+				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
+		}
+
+		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+			if (pNode->m_pSuperNodeParent)
+			{
+				pNode->Vre = pNode->m_pSuperNodeParent->Vre;
+				pNode->Vim = pNode->m_pSuperNodeParent->Vim;
+				cplx Unode(pNode->Vre, pNode->Vim);
+				pNode->V = abs(Unode);
+				pNode->Delta = arg(Unode);
 			}
 		}
 
-		if (Numeric)
-			klu_z_free_numeric(&Numeric, &Common);
+		DumpIterationControl();
 
-		klu_free_symbolic(&Symbolic, &Common);
+		if (fabs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
+		{
+			Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
+			break;
+		}
 	}
-	else
-	{
-		GetModel()->ReportKLUError(Common);
-	}
-
 	fclose(fnode);
 	fclose(fgen);
-	delete Ax;
-	delete Ap;
-	delete Ai;
-	delete B;
-	delete pDiags;
 	return bRes;
 }
 
@@ -1297,10 +1225,16 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 
 	double Border = LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst );
 
-	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
 	double  h = pDynaModel->GetH();
+	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
+#ifdef USE_FMA
+	double Vre1 = CDynaModel::FMA(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
+	double Vim1 = CDynaModel::FMA(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
+#else
 	double Vre1 = pRvre->Nordsiek[0] + pRvre->Error * lm[0];
 	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
+#endif
+
 	double Vcheck = sqrt(Vre1 * Vre1 + Vim1 * Vim1);
 	double dVre1 = (pRvre->Nordsiek[1] + pRvre->Error * lm[1]) / h;
 	double dVim1 = (pRvim->Nordsiek[1] + pRvim->Error * lm[1]) / h;
@@ -1370,8 +1304,15 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	RightVector *pRvre = pDynaModel->GetRightVector(A(V_RE));
 	RightVector *pRvim = pDynaModel->GetRightVector(A(V_IM));
 	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
+
+#ifdef USE_FMA
+	double Vre1 = CDynaModel::FMA(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
+	double Vim1 = CDynaModel::FMA(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
+#else
 	double Vre1 = pRvre->Nordsiek[0] + pRvre->Error * lm[0];
 	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
+#endif
+
 	double Vcheck = sqrt(Vre1 * Vre1 + Vim1 * Vim1);
 
 	if (m_bLowVoltage)

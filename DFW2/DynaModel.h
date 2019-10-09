@@ -12,6 +12,7 @@
 #include "Results.h"
 #include "chrono"
 
+//#define USE_FMA
 namespace DFW2
 {
 	class CDynaModel
@@ -399,6 +400,7 @@ namespace DFW2
 		double GetRatioForHigherOrder();
 		double GetRatioForLowerOrder();
 		void   ChangeOrder(ptrdiff_t Newq);
+		void   Computehl0(); // рассчитывает кэшированные произведения l0 * GetH для элементов матрицы
 
 		bool Step();
 
@@ -519,6 +521,12 @@ namespace DFW2
 		inline double GetH() const
 		{
 			return sc.m_dCurrentH;
+		}
+
+		inline void SetH(double h)
+		{
+			sc.m_dCurrentH = h;
+			Computehl0();
 		}
 
 		inline double GetOldH() const
@@ -668,7 +676,14 @@ namespace DFW2
 		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...);
 
 		double Methodl[4][4];
+		double Methodlh[4];
 		static const double MethodlDefault[4][4];
+
+		static double FMA(double x, double y, double z)
+		{
+			//return x * y + z;
+			return std::fma(x, y, z);
+		}
 
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);

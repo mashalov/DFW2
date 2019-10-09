@@ -268,11 +268,16 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	{
 		// выбираем коэффициент метода по типу уравнения EquationType
 		const double *lm = LocalMethodl[pVectorBegin->EquationType];
-
 		double dError = pVectorBegin->Error;
+#ifdef USE_FMA
+		pVectorBegin->Nordsiek[0] = FMA(dError, *lm, pVectorBegin->Nordsiek[0]);	lm++;
+		pVectorBegin->Nordsiek[1] = FMA(dError, *lm, pVectorBegin->Nordsiek[1]);	lm++;
+		pVectorBegin->Nordsiek[2] = FMA(dError, *lm, pVectorBegin->Nordsiek[2]); 
+#else
 		pVectorBegin->Nordsiek[0] += dError * *lm;	lm++;
 		pVectorBegin->Nordsiek[1] += dError * *lm;	lm++;
 		pVectorBegin->Nordsiek[2] += dError * *lm;	
+#endif
 
 		// подавление рингинга
 		if (bSuprressRinging)
