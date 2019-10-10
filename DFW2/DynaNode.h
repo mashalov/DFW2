@@ -261,7 +261,7 @@ namespace DFW2
 		{
 			if (GetId() >= 0)
 				return m_dDiff;
-			return -1.0;
+			return 0.0;
 		}
 
 		void UpdateMin(CDynaNodeBase *pNode, double Value)

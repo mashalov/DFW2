@@ -50,7 +50,7 @@ namespace DFW2
 		void Estimate();
 		bool Seidell();
 		void Newton();
-		bool BuildMatrix();
+		void BuildMatrix();
 		void Start();
 		bool CheckLF();
 		void SolveLinearSystem();
