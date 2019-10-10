@@ -216,19 +216,24 @@ bool CDynaModel::Run()
 				bRes = false;	// если завершить не получилось - портим результат
 
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps count %d"), sc.nStepsCount);
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d Time passed %f"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d zc %d Time passed %f"),
 																		sc.OrderStatistics[0].nSteps, 
 																		sc.OrderStatistics[0].nFailures,
 																		sc.OrderStatistics[0].nNewtonFailures,
+																		sc.OrderStatistics[0].nZeroCrossingsSteps,
 																		sc.OrderStatistics[0].dTimePassed);
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 2nd order count %d, failures %d Newton failures %d Time passed %f"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 2nd order count %d, failures %d Newton failures %d zc %d Time passed %f"),
 																		sc.OrderStatistics[1].nSteps,
 																		sc.OrderStatistics[1].nFailures,
 																		sc.OrderStatistics[1].nNewtonFailures,
+																		sc.OrderStatistics[1].nZeroCrossingsSteps,
 																		sc.OrderStatistics[1].dTimePassed);
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Factors count %d / %d Analyzings count %d"), klu.FactorizationsCount(), klu.RefactorizationsCount(), klu.AnalyzingsCount());
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Factors count %d / (%d + %d failures) Analyzings count %d"), klu.FactorizationsCount(), 
+																															 klu.RefactorizationsCount(), 
+																															 klu.RefactorizationFailuresCount(),
+																															 klu.AnalyzingsCount());
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Newtons count %d %f per step, failures at step %d failures at discontinuity %d"),
 																	 sc.nNewtonIterationsCount, 
 																	 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
@@ -827,7 +832,11 @@ bool CDynaModel::Step()
 									GoodStep(rSame);
 								}
 								else
+								{
 									sc.m_bRetryStep = false; // если были запросы на обработку разрыва отменяем повтор шага, чтобы обработать разрыв
+									sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
+									sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
+								}
 							}
 							else
 							{
@@ -851,7 +860,11 @@ bool CDynaModel::Step()
 									GoodStep(rSame);
 								}
 								else
+								{
 									sc.m_bRetryStep = false; // отменяем повтор шага, чтобы обработать разрыв
+									sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
+									sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
+								}
 							}
 							else
 							{
@@ -879,6 +892,7 @@ bool CDynaModel::Step()
 					sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
 					sc.m_bEnforceOut = true;		// требуем записи результатов после обработки разрыва
 					sc.m_bBeforeDiscontinuityWritten = false;
+					sc.OrderStatistics[sc.q - 1].nSteps++;
 				}
 			}
 			else
@@ -1184,8 +1198,6 @@ void CDynaModel::GoodStep(double rSame)
 
 	// рассчитываем количество успешных шагов и пройденного времени для каждого порядка
 	sc.OrderStatistics[sc.q - 1].nSteps++;
-	sc.OrderStatistics[sc.q - 1].dTimePassed += GetH();
-
 	// переходим к новому рассчитанному времени с обновлением суммы Кэхэна
 	sc.Advance_t0();
 
@@ -1418,7 +1430,7 @@ void CDynaModel::RepeatZeroCrossing()
 		SetH(sc.Hmin);
 		sc.m_bZeroCrossingMode = false;
 	}
-
+	sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
 	// восстанавливаем Nordsieck с предыдущего шага
 	RestoreNordsiek();
 	// масштабируем на шаг зерокроссинга (m_dCurrentH уже должен быть настроен)

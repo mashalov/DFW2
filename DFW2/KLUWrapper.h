@@ -18,6 +18,7 @@ namespace DFW2
 		ptrdiff_t m_nAnalyzingsCount = 0;
 		ptrdiff_t m_nFactorizationsCount = 0;
 		ptrdiff_t m_nRefactorizationsCount = 0;
+		ptrdiff_t m_nRefactorizationFailures = 0;
 		wstring m_strKLUError;
 
 		template <typename T>
@@ -242,6 +243,7 @@ namespace DFW2
 		ptrdiff_t AnalyzingsCount() { return m_nAnalyzingsCount; }
 		ptrdiff_t FactorizationsCount() { return m_nFactorizationsCount; }
 		ptrdiff_t RefactorizationsCount() { return m_nRefactorizationsCount; }
+		ptrdiff_t RefactorizationFailuresCount() { return m_nRefactorizationFailures; }
 		double* Ax() { return pAx.get(); }
 		double* B() { return pb.get(); }
 		ptrdiff_t* Ai() { return pAi.get(); }
@@ -276,7 +278,10 @@ namespace DFW2
 				return true;
 			}
 			else
+			{
+				m_nRefactorizationFailures++;
 				return false;
+			}
 		}
 
 		void Refactor()

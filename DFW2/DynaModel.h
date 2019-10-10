@@ -168,20 +168,15 @@ namespace DFW2
 			} 
 			IterationMode;
 
-			struct OrderStatistics
+			struct _OrderStatistics
 			{
-				ptrdiff_t nSteps;
-				ptrdiff_t nFailures;
-				ptrdiff_t nNewtonFailures;
-				double dTimePassed;
-
-				OrderStatistics() : nSteps(0),
-									nFailures(0),
-									nNewtonFailures(0),
-									dTimePassed(0.0) 
-									{ }
+				ptrdiff_t nSteps = 0;
+				ptrdiff_t nFailures = 0;
+				ptrdiff_t nNewtonFailures = 0;
+				ptrdiff_t nZeroCrossingsSteps = 0;
+				double dTimePassed = 0.0;
+				double dTimePassedKahan = 0.0;
 			};
-
 
 			bool m_bRefactorMatrix = false;
 			bool m_bFillConstantElements;
@@ -206,7 +201,7 @@ namespace DFW2
 			ptrdiff_t nNewtonIterationsCount = 0;
 			double dMaxConditionNumber = 0.0;
 			double dMaxConditionNumberTime = 0.0;
-			OrderStatistics OrderStatistics[2];
+			_OrderStatistics OrderStatistics[2];
 			ptrdiff_t nDiscontinuityNewtonFailures = 0;
 			ptrdiff_t nMinimumStepFailures = 0;
 			double m_dCurrentH;
@@ -214,7 +209,7 @@ namespace DFW2
 			double m_dStoredH;
 			ptrdiff_t q;
 			double t = 0.0;
-			double t0;
+			double t0 = 0.0;
 			volatile double KahanC = 0.0;
 			ptrdiff_t nStepsToStepChangeParameter = 4;
 			ptrdiff_t nStepsToOrderChangeParameter = 4;
@@ -308,6 +303,14 @@ namespace DFW2
 				// и поэтому сумма Кэхэна обновляется
 				KahanC = (temp - t0) - ky;
 				t = temp;
+
+				_OrderStatistics& os = OrderStatistics[q - 1];
+				ky = m_dCurrentH - os.dTimePassedKahan;
+				temp = os.dTimePassed + ky;
+				os.dTimePassedKahan = (temp - os.dTimePassed) - ky;
+				os.dTimePassed = temp;
+
+				_ASSERTE(fabs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t) < DFW2_EPSILON);
 			}
 
 			// рассчитывает текущее время перед выполнением шага, с возможностью возврата
@@ -327,8 +330,6 @@ namespace DFW2
 			{
 				t0 = t;
 			}
-
-
 		};
 
 		struct Parameters
