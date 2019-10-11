@@ -1153,14 +1153,8 @@ void CLoadFlow::Newton()
 
 		SolveLinearSystem();
 		// обновляем переменные
-		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			double *pb = klu.B() + pNode->A(0);
-			pNode->Delta -= *pb;	pb++;
-			pNode->V -= *pb;
-			pNode->UpdateVreVim();
-		}
+
+		UpdateVDelta();
 	}
 
 	// обновляем реактивную генерацию в суперузлах
@@ -1191,5 +1185,43 @@ void CLoadFlow::Newton()
 			pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;
 			GetPnrQnr(pNode);
 		}
+	}
+}
+
+
+void CLoadFlow::UpdateVDelta()
+{
+	_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
+	for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	{
+		CDynaNodeBase *pNode = pMatrixInfo->pNode;
+		double *pb = klu.B() + pNode->A(0);
+		double newDelta = pNode->Delta - *pb;		pb++;
+		double newV = pNode->V - *pb;
+		/*
+		// Не даем узлам на ограничениях реактивной мощности отклоняться от уставки более чем на 10%
+		// стратка работает в Inor при небалансах не превышающих заданный
+		switch (pNode->m_eLFNodeType)
+		{
+		case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
+			if (newV / pNode->LFVref > 1.1)
+			{
+				newV = pNode->LFVref;
+				pNode->Qgr = pNode->LFQmin;
+				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+			}
+			break;
+		case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
+			if (newV / pNode->LFVref < 0.9)
+			{
+				newV = pNode->LFVref;
+				pNode->Qgr = pNode->LFQmax;
+				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+			}
+			break;
+		}
+		*/
+		pNode->Delta = newDelta;	pNode->V	 = newV;
+		pNode->UpdateVreVim();
 	}
 }

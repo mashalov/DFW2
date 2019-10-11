@@ -41,6 +41,7 @@ namespace DFW2
 		void Estimate();
 		void Seidell();
 		void Newton();
+		void UpdateVDelta();
 		void BuildMatrix();
 		void Start();
 		bool CheckLF();
