@@ -1,6 +1,8 @@
 ﻿#pragma once
 #include "DeviceContainer.h"
 #include "DynaLRC.h"
+#include "queue"
+#include "stack"
 
 namespace DFW2
 {
@@ -318,10 +320,12 @@ namespace DFW2
 		}
 	};
 
-	typedef map<CDynaNodeBase*, set<CDynaNodeBase*>> NODEISLANDMAP;
-	typedef map<CDynaNodeBase*, set<CDynaNodeBase*>>::const_iterator NODEISLANDMAPITRCONST;
-	typedef map<CDevice*, CDevice*> DEVICETODEVICEMAP;
-	typedef vector<unique_ptr<DEVICETODEVICEMAP>> ORIGINALLINKSVEC;
+	using NodeQueue = std::queue<CDynaNodeBase*>;
+	using NodeSet = std::set<CDynaNodeBase*>;
+	using NODEISLANDMAP = map<CDynaNodeBase*, NodeSet> ;
+	using NODEISLANDMAPITRCONST = map<CDynaNodeBase*, NodeSet>::const_iterator;
+	using DEVICETODEVICEMAP = map<CDevice*, CDevice*>;
+	using ORIGINALLINKSVEC = vector<unique_ptr<DEVICETODEVICEMAP>>;
 
 	class CDynaNodeContainer : public CDeviceContainer
 	{
@@ -339,6 +343,9 @@ namespace DFW2
 		bool  EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
 		bool m_bRebuildMatrix;
 		bool CreateSuperNodes();
+		void PrepareLFTopology();
+		void SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Queue);
+		void SwitchOffDanglingNodes(NodeSet& Queue);
 		void CalcAdmittances(bool bSeidell);
 		void SwitchLRCs(bool bSwitchToDynamicLRC);
 		_IterationControl m_IterationControl;
@@ -354,7 +361,7 @@ namespace DFW2
 	public:
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
 		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
-		bool GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
+		void GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
 		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);
 		_IterationControl& IterationControl();
 		CDynaNodeContainer(CDynaModel *pDynaModel);

@@ -121,6 +121,13 @@ namespace DFW2
 		static const _TCHAR* m_cszOn;
 		static const _TCHAR* m_cszOff;
 		static const _TCHAR* m_cszIslandOfSuperNode;
+		static const _TCHAR* m_cszSwitchedOffNode;
+		static const _TCHAR* m_cszSwitchedOffBranch;
+		static const _TCHAR* m_cszIslandSlackBusesCount;
+		static const _TCHAR* m_cszIslandCount;
+		static const _TCHAR* m_cszIslandNoSlackBusesShutDown;
+		static const _TCHAR* m_cszNoNodesForLF;
+		static const _TCHAR* m_cszUnacceptableLF;
 	};
 }
 

@@ -62,6 +62,8 @@ void CLoadFlow::Estimate()
 	}
 
 	m_pMatrixInfoEnd = pMatrixInfo;								// конец инфо по матрице для узлов, которые в матрице
+	if (!nMatrixSize)
+		throw dfw2error(CDFW2Messages::m_cszNoNodesForLF);
 	klu.SetSize(nMatrixSize, nNonZeroCount);
 
 	ptrdiff_t *pAi = klu.Ai();
@@ -177,6 +179,9 @@ void CLoadFlow::Start()
 	if (!pNodes)
 		throw dfw2error(_T("CLoadFlow::Start - node container unavailable"));
 
+	pNodes->PrepareLFTopology();
+	pNodes->CreateSuperNodes();
+
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
 	UpdatePQFromGenerators();
 
@@ -278,10 +283,9 @@ void CLoadFlow::AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue)
 	}
 }
 
-bool CLoadFlow::Seidell()
+void CLoadFlow::Seidell()
 {
 	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
-	bool bRes = true;
 
 	MATRIXINFO SeidellOrder;
 	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
@@ -506,11 +510,8 @@ bool CLoadFlow::Seidell()
 		}
 
 		if (!CheckLF())
-		{
 			// если итерация привела не недопустимому режиму - выходим
-			bRes = false;
-			break;
-		}
+			throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
 
 		pNodes->DumpIterationControl();
 
@@ -521,7 +522,6 @@ bool CLoadFlow::Seidell()
 
 	// пересчитываем проводимости узлов без устранения отрицательных сопротивлений
 	pNodes->CalcAdmittances(false);
-	return bRes;
 }
 
 void CLoadFlow::BuildMatrix()
@@ -1002,7 +1002,7 @@ void CLoadFlow::Newton()
 	while (1)
 	{
 		if (!CheckLF())
-			break;
+			throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
 
 		++it;
 		pNodes->m_IterationControl.Reset();

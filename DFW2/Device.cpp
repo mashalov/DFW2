@@ -315,12 +315,10 @@ CLinkPtrCount* CDevice::GetLink(ptrdiff_t nLinkIndex)
 {
 	_ASSERTE(m_pContainer);
 	// возвращаем объект, в котором есть список ссылок данного устройства
-	CLinkPtrCount *pLink(nullptr);
 	// ссылки хранятся в контейнере
 	// извлекаем список ссылок по заданному типу и индексу текущего устройства
 	CMultiLink& pMultiLink = m_pContainer->GetCheckLink(nLinkIndex, m_nInContainerIndex);
-		pLink = pMultiLink.GetLink(m_nInContainerIndex);
-	return pLink;
+	return pMultiLink.GetLink(m_nInContainerIndex);
 }
 
 // функция обхода связей устройства (типа обход ветвей узла, генераторов узла и т.п.)

@@ -1,11 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
-#include "queue"
-#include "stack"
-
 
 using namespace DFW2;
-
 bool CDynaModel::Link()
 {
 	bool bRes = true;
@@ -262,6 +258,8 @@ bool CDynaNodeContainer::BuildSynchroZones()
 {
 	bool bRes = false;
 
+	NodeQueue Queue;
+
 	if (Count() && m_Links.size() > 0)
 	{
 		CDynaNodeBase *pDynaNode = GetFirstNode();
@@ -271,7 +269,6 @@ bool CDynaNodeContainer::BuildSynchroZones()
 			pDynaNode->m_nZoneDistance = 0;
 
 			// используем BFS для обхода сети
-			std::queue<CDynaNodeBase*>  Queue;
 			bRes = true;
 
 			while (pDynaNode)
@@ -432,9 +429,8 @@ void CDynaNodeContainer::DumpNodeIslands(NODEISLANDMAP& Islands)
 	}
 }
 
-bool CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands)
+void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands)
 {
-	bool bRes(true);
 	/*
 	procedure DFS - iterative(G, v) :
 	2      let S be a stack
@@ -476,7 +472,6 @@ bool CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 			}
 		}
 	}
-	return bRes;
 }
 
 bool CDynaNodeContainer::CreateSuperNodes()
@@ -503,7 +498,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		}
 	}
 	// получаем список островов
-	bRes = GetNodeIslands(JoinableNodes, SuperNodes);
+	GetNodeIslands(JoinableNodes, SuperNodes);
 
 	if (bRes)
 	{
@@ -891,8 +886,100 @@ bool CDynaNodeContainer::ProcessTopology()
 	return bRes;
 }
 
-void CDynaNodeBase::ProcessTopologyRequest()
+void CDynaNodeContainer::SwitchOffDanglingNodes(NodeSet& Queue)
 {
-	if (m_pContainer)
-		static_cast<CDynaNodeContainer*>(m_pContainer)->ProcessTopologyRequest();
+	// обрабатываем узлы до тех пор, пока есть отключения узлов при проверке
+	while (!Queue.empty())
+	{
+		auto& it = Queue.begin();
+		CDynaNodeBase *pNextNode = *it;
+		Queue.erase(it);
+		SwitchOffDanglingNode(pNextNode, Queue);
+	}
+}
+
+void CDynaNodeContainer::PrepareLFTopology()
+{
+	NodeSet Queue;
+	// проверяем все узлы на соответствие состояния их самих и инцидентных ветвей
+	for (auto&& node : m_DevVec)
+		SwitchOffDanglingNode(static_cast<CDynaNodeBase*>(node), Queue);
+	// отключаем узлы попавшие в очередь отключения
+	SwitchOffDanglingNodes(Queue);
+	
+	// формируем список связности узлов по включенным ветвям
+	CDeviceContainer *pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
+	NODEISLANDMAP JoinableNodes, NodeIslands;
+	for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
+	{
+		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+		{
+			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
+			JoinableNodes[pBranch->m_pNodeIq].insert(pBranch->m_pNodeIp);
+		}
+	}
+	// формируем перечень островов
+	GetNodeIslands(JoinableNodes, NodeIslands);
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszIslandCount, NodeIslands.size()));
+	for (auto&& island : NodeIslands)
+	{
+		// для каждого острова считаем количество базисных узлов
+		ptrdiff_t nSlacks = std::count_if(island.second.begin(), island.second.end(), [](CDynaNodeBase* pNode) -> bool { 
+				return pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE;
+		});
+		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszIslandSlackBusesCount, island.second.size(), nSlacks));
+		if (!nSlacks)
+		{
+			// если базисных узлов в острове нет - отключаем все узлы острова
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszIslandNoSlackBusesShutDown));
+			NodeSet& Queue = island.second;
+			for (auto&& node : Queue)
+				static_cast<CDynaNodeBase*>(node)->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+			// и отключаем ветви
+			SwitchOffDanglingNodes(Queue);
+		}
+	}
+}
+
+void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Queue)
+{
+	CLinkPtrCount *pLink = pNode->GetLink(0);
+	CDevice **ppDevice(nullptr);
+	if (pNode->GetState() == eDEVICESTATE::DS_ON)
+	{
+		// проверяем есть ли хотя бы одна включенная ветвь к этому узлу
+		while (pLink->In(ppDevice))
+		{
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+			if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+				break; // ветвь есть
+		}
+		if (!ppDevice)
+		{
+			// все ветви отключены, отключаем узел
+			pNode->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+			// и этот узел ставим в очередь на повторную проверку отключения ветвей
+			Queue.insert(pNode);
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszSwitchedOffNode, pNode->GetVerbalName()));
+		}
+	}
+	else
+	{
+		// отключаем все ветви к этому узлу 
+		while (pLink->In(ppDevice))
+		{
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
+			{
+				// к отключенному узлу подходит неотключенная ветвь - отключаем
+				pBranch->m_BranchState = CDynaBranch::BRANCH_OFF;
+				// и узел с другой стороны ставим в очередь на повторную проверку, если он не отключен
+				CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
+				if(pOppNode->GetState() == eDEVICESTATE::DS_ON)
+					Queue.insert(pOppNode);
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszSwitchedOffBranch, pBranch->GetVerbalName(), pNode->GetVerbalName()));
+			}
+		}
+	}
 }

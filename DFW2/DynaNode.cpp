@@ -1335,6 +1335,13 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return rH;
 }
 
+
+void CDynaNodeBase::ProcessTopologyRequest()
+{
+	if (m_pContainer)
+		static_cast<CDynaNodeContainer*>(m_pContainer)->ProcessTopologyRequest();
+}
+
 const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 {
 	CDeviceContainerProperties props;

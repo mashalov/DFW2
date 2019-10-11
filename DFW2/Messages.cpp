@@ -108,7 +108,10 @@ const _TCHAR* CDFW2Messages::m_cszAdamsDamping = _T("Демпфирование 
 const _TCHAR* CDFW2Messages::m_cszOn = _T("вкл");
 const _TCHAR* CDFW2Messages::m_cszOff = _T("выкл");
 const _TCHAR* CDFW2Messages::m_cszIslandOfSuperNode = _T("Суперузел-представитель острова %s");
-
-
-
-
+const _TCHAR* CDFW2Messages::m_cszSwitchedOffNode = _T("Отключен %s так как все ветви отключены");
+const _TCHAR* CDFW2Messages::m_cszSwitchedOffBranch = _T("Отключена %s так как узел %s отключен");
+const _TCHAR* CDFW2Messages::m_cszIslandCount = _T("Найдено синхронных зон %d");
+const _TCHAR* CDFW2Messages::m_cszIslandSlackBusesCount = _T("Синхронная зона содержит %d включенных узлов, из них базисных узлов %d");
+const _TCHAR* CDFW2Messages::m_cszIslandNoSlackBusesShutDown = _T("В синхронной зоне нет базисных узлов. Синхронная зона будет полностью отключена");
+const _TCHAR* CDFW2Messages::m_cszNoNodesForLF = _T("Для расчета УР нет включенных узлов");
+const _TCHAR* CDFW2Messages::m_cszUnacceptableLF = _T("Получен недопустимый режим");

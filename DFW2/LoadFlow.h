@@ -22,33 +22,24 @@ namespace DFW2
 
 		struct Parameters
 		{
-			double m_Imb;							// допустимый небаланс мощности
-			bool m_bFlat;							// плоский старт
-			bool m_bStartup;						// стартовый метод Зейделя
-			double m_dSeidellStep;					// шаг ускорения метода Зейделя	
-			ptrdiff_t m_nSeidellIterations;			// количество итераций Зейделем
-			ptrdiff_t m_nEnableSwitchIteration;		// номер итерации, с которой разрешается переключение PV-PQ
-			ptrdiff_t m_nMaxIterations;				// максимальное количество итераций Ньютоном
-			Parameters() : m_Imb(1E-4),
-						   m_dSeidellStep(1.05),
-						   m_bStartup(true),
-						   m_nEnableSwitchIteration(2),
-						   m_nSeidellIterations(7), 
-						   m_nMaxIterations(100)
-						   {}
+			double m_Imb = 1E-4;						// допустимый небаланс мощности
+			bool m_bFlat = false;						// плоский старт
+			bool m_bStartup = true;						// стартовый метод Зейделя
+			double m_dSeidellStep = 1.05;				// шаг ускорения метода Зейделя	
+			ptrdiff_t m_nSeidellIterations = 7;			// количество итераций Зейделем
+			ptrdiff_t m_nEnableSwitchIteration = 2;		// номер итерации, с которой разрешается переключение PV-PQ
+			ptrdiff_t m_nMaxIterations = 100;			// максимальное количество итераций Ньютоном
 		};
-
 
 		CLoadFlow(CDynaModel *pDynaModel);
 		bool Run();
 	protected:
 
 		SUPERNODEPARAMETERSLIST m_SuperNodeParameters;
-
 		void GetPnrQnr(CDynaNodeBase *pNode);
 		void GetPnrQnrSuper(CDynaNodeBase *pNode);
 		void Estimate();
-		bool Seidell();
+		void Seidell();
 		void Newton();
 		void BuildMatrix();
 		void Start();
