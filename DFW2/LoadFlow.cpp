@@ -403,17 +403,31 @@ void CLoadFlow::Seidell()
 			{
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
 				// если узел на верхнем пределе и напряжение больше заданного
-				if (pNode->V > pNode->LFVref/* && Q < pNode->LFQmax*/)
+				if (pNode->V > pNode->LFVref)
 				{
-					// снимаем узел с ограничения и делаем его PV
-					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-					pMatrixInfo->m_nPVSwitchCount++;
-					pNode->Qgr = Q;
-					cplx dU = I1 * cplx(Pe, 0);
-					dU += Unode;
-					dU = pNode->LFVref * dU / abs(dU);
-					pNode->Vre = dU.real();
-					pNode->Vim = dU.imag();
+					if (Q < pNode->LFQmin)
+					{
+						pNode->Qgr = pNode->LFQmin;
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
+						pNodes->IterationControl().m_nQviolated++;
+						Qe = Q - pNode->Qgr;
+						cplx dU = I1 * cplx(Pe, -Qe);
+						pNode->Vre += dU.real();
+						pNode->Vim += dU.imag();
+					}
+					else
+					{
+						// снимаем узел с ограничения и делаем его PV
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+						pMatrixInfo->m_nPVSwitchCount++;
+						pNodes->IterationControl().m_nQviolated++;
+						pNode->Qgr = Q;
+						cplx dU = I1 * cplx(Pe, 0);
+						dU += Unode;
+						dU = pNode->LFVref * dU / abs(dU);
+						pNode->Vre = dU.real();
+						pNode->Vim = dU.imag();
+					}
 				}
 				else
 				{
@@ -426,17 +440,31 @@ void CLoadFlow::Seidell()
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
 				// если узел на нижнем пределе и напряжение меньше заданного
-				if (pNode->V < pNode->LFVref/* && Q > pNode->LFQmin*/)
+				if (pNode->V < pNode->LFVref)
 				{
-					// снимаем узел с ограничения
-					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-					pMatrixInfo->m_nPVSwitchCount++;
-					pNode->Qgr = Q;
-					cplx dU = I1 * cplx(Pe, 0);
-					dU += Unode;
-					dU = pNode->LFVref * dU / abs(dU);
-					pNode->Vre = dU.real();
-					pNode->Vim = dU.imag();
+					if (Q > pNode->LFQmax)
+					{
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
+						pNodes->IterationControl().m_nQviolated++;
+						pNode->Qgr = pNode->LFQmax;
+						Qe = Q - pNode->Qgr;
+						cplx dU = I1 * cplx(Pe, -Qe);
+						pNode->Vre += dU.real();
+						pNode->Vim += dU.imag();
+					}
+					else
+					{
+						// снимаем узел с ограничения
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+						pNodes->IterationControl().m_nQviolated++;
+						pMatrixInfo->m_nPVSwitchCount++;
+						pNode->Qgr = Q;
+						cplx dU = I1 * cplx(Pe, 0);
+						dU += Unode;
+						dU = pNode->LFVref * dU / abs(dU);
+						pNode->Vre = dU.real();
+						pNode->Vim = dU.imag();
+					}
 				}
 				else
 				{
@@ -455,12 +483,14 @@ void CLoadFlow::Seidell()
 					if (Q > pNode->LFQmax)
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
+						pNodes->IterationControl().m_nQviolated++;
 						pNode->Qgr = pNode->LFQmax;
 						Qe = Q - pNode->Qgr;
 					}
 					else if (Q < pNode->LFQmin)
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
+						pNodes->IterationControl().m_nQviolated++;
 						pNode->Qgr = pNode->LFQmin;
 						Qe = Q - pNode->Qgr;
 					}
@@ -479,9 +509,17 @@ void CLoadFlow::Seidell()
 				else
 				{
 					// до получения разрешения на переключение PV-узел считаем PQ-узлом (может лучше считать PV и распускать реактив)
+
 					cplx dU = I1 * cplx(Pe, -Qe);
 					pNode->Vre += dU.real();
 					pNode->Vim += dU.imag();
+					/*
+					cplx dU = I1 * cplx(Pe, -Qe);
+					dU += Unode;
+					dU = pNode->LFVref * dU / abs(dU);
+					pNode->Vre = dU.real();
+					pNode->Vim = dU.imag();
+					*/
 				}
 			}
 			break;
