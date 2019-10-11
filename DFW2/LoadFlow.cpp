@@ -1037,15 +1037,14 @@ void CLoadFlow::Newton()
 				break;
 				// если узел PV, но реактивная генерация вне диапазона, делаем его PQ
 			case CDynaNodeBase::eLFNodeType::LFNT_PV:
-				if (Qg > pNode->LFQmax + m_Parameters.m_Imb)
+				if (Qg > pNode->LFQmax)
 				{
 					vecSwitch.push_back(pMatrixInfo);
-					pNodes->m_IterationControl.m_nQviolated++;
+ 
 				}
-				else if (Qg < pNode->LFQmin - m_Parameters.m_Imb)
+				else if (Qg < pNode->LFQmin)
 				{
 					vecSwitch.push_back(pMatrixInfo);
-					pNodes->m_IterationControl.m_nQviolated++;
 				}
 				else
 					pNode->Qgr = Qg;	// если реактивная генерация в пределах - обновляем ее значение в узле
@@ -1058,6 +1057,8 @@ void CLoadFlow::Newton()
 				ImbSq += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
 			}
 		}
+
+		pNodes->IterationControl().m_nQviolated = vecSwitch.size();
 
 		// досчитываем небалансы в БУ
 		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
@@ -1082,28 +1083,56 @@ void CLoadFlow::Newton()
 				switch (pNode->m_eLFNodeType)
 				{
 				case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
+					if (Qg > pNode->LFQmax)
+					{
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
+						pNode->Qgr = pNode->LFQmax;
+					}
+					else if (Qg > pNode->LFQmin)
+					{
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+						pNode->V = pNode->LFVref;
+						pNode->UpdateVreVim();
+						pNode->Qgr = Qg;
+					}
+					break;
 				case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
+					if (Qg < pNode->LFQmin)
+					{
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
+						pNode->Qgr = pNode->LFQmin;
+					}
+					else if(pNode->Qg < pNode->LFQmax)
+					{
+						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
+						pNode->V = pNode->LFVref;
+						pNode->UpdateVreVim();
+						pNode->Qgr = Qg;
+					}
+					/*
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 					SwitchNow->m_nPVSwitchCount++;
 					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("PQ->PV : Vref %g V %g %d"), pNode->LFVref, pNode->V, pNode->GetId());
 					pNode->Qgr = Qg;
 					pNode->V = pNode->LFVref;
 					pNode->UpdateVreVim();
+					*/
 					break;
 				case CDynaNodeBase::eLFNodeType::LFNT_PV:
-					pNode->Qgr = Qg;
-					if (pNode->Qgr > pNode->LFQmax)
+					if (Qg > pNode->LFQmax)
 					{
 						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("PV->PQ : Qmax < Q %g < %g %d"), pNode->LFQmax, pNode->Qgr, pNode->GetId());
 						pNode->Qgr = pNode->LFQmax;
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 					}
-					else if (pNode->Qgr < pNode->LFQmin)
+					else if (Qg < pNode->LFQmin)
 					{
 						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("PV->PQ : Qmin > Q %g > %g %d"), pNode->LFQmin, pNode->Qgr, pNode->GetId());
 						pNode->Qgr = pNode->LFQmin;
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 					}
+					else
+						pNode->Qgr = Qg;
 					break;
 				}
 				GetNodeImb(SwitchNow);	// небаланс считается с учетом СХН
