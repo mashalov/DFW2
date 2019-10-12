@@ -540,6 +540,8 @@ void CLoadFlow::Seidell()
 			Unode.real(pNode->Vre);
 			Unode.imag(pNode->Vim);
 
+
+			// **********************************************     здесь обновлять подчиненные суперузлу ! *************************************************************************
 			pNode->V = abs(Unode);
 			pNode->Delta = arg(Unode);
 
@@ -1179,19 +1181,6 @@ void CLoadFlow::Newton()
 			}
 		}
 
-		// обновляем узлы в суперузлах
-		for (auto&& it : pNodes->m_DevVec)
-		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-			CDynaNodeBase *pSuperNodeParent = pNode->m_pSuperNodeParent;
-			if (pSuperNodeParent)
-			{
-				pNode->V = pSuperNodeParent->V;
-				pNode->Delta = pSuperNodeParent->Delta;
-				pNode->UpdateVreVim();
-			}
-		}
-
 		pNodes->IterationControl().m_ImbRatio = ImbSq;
 		pNodes->DumpIterationControl();
 
@@ -1222,6 +1211,19 @@ void CLoadFlow::Newton()
 		// обновляем переменные
 
 		UpdateVDelta();
+
+		// обновляем узлы в суперузлах
+		for (auto&& it : pNodes->m_DevVec)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+			CDynaNodeBase *pSuperNodeParent = pNode->m_pSuperNodeParent;
+			if (pSuperNodeParent)
+			{
+				pNode->V = pSuperNodeParent->V;
+				pNode->Delta = pSuperNodeParent->Delta;
+				pNode->UpdateVreVim();
+			}
+		}
 	}
 
 	// обновляем реактивную генерацию в суперузлах
