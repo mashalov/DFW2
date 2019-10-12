@@ -26,6 +26,42 @@ void CDynaNodeBase::UpdateVreVim()
 	Vim = VreVim.imag();
 }
 
+void CDynaNodeBase::UpdateVDelta()
+{
+	cplx VreVim(Vre, Vim);
+	V = abs(VreVim);
+	Delta = arg(VreVim);
+}
+
+void CDynaNodeBase::UpdateVreVimSuper()
+{
+	UpdateVreVim();
+	CLinkPtrCount *pLink = GetSuperLink(0);
+	CDevice **ppDevice(nullptr);
+	while (pLink->In(ppDevice))
+	{
+		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		pSlaveNode->V = V;
+		pSlaveNode->Delta = Delta;
+		pSlaveNode->UpdateVreVim();
+	}
+}
+
+void CDynaNodeBase::UpdateVDeltaSuper()
+{
+	UpdateVDelta();
+	CLinkPtrCount *pLink = GetSuperLink(0);
+	CDevice **ppDevice(nullptr);
+	while (pLink->In(ppDevice))
+	{
+		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		pSlaveNode->Vre = Vre;
+		pSlaveNode->Vim = Vim;
+		pSlaveNode->UpdateVDelta();
+	}
+}
+
+
 // рассчитывает нагрузку узла с учетом СХН
 // и суммирует все узлы, входящие в суперузел
 void CDynaNodeBase::GetPnrQnrSuper()

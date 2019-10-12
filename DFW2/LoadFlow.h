@@ -40,15 +40,20 @@ namespace DFW2
 		void GetPnrQnrSuper(CDynaNodeBase *pNode);
 		void Estimate();
 		void Seidell();
+		void SeidellTanh();
 		void Newton();
+		void NewtonTanh();
 		void UpdateVDelta();
 		void BuildMatrix();
+		void BuildMatrixTanh();
 		void Start();
 		bool CheckLF();
 		void SolveLinearSystem();
 		void UpdateQToGenerators();					// обновление данных генераторов по результату расчета PV-узлов
 		void UpdatePQFromGenerators();				// обновление данных PV-узлов по исходным данным генераторов
 		void DumpNodes();
+		void CompareWithRastr();
+		double Qgtanh(CDynaNodeBase* pNode);
 
 		// возвращает true если узел учитывается в матрице якоби
 		static bool NodeInMatrix(CDynaNodeBase *pNode);
@@ -60,6 +65,8 @@ namespace DFW2
 		unique_ptr<_MatrixInfo[]> m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
 		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
+
+		double m_dTanhBeta = 1.0;
 
 		Parameters m_Parameters;
 		// определение порядка PV узлов для Зейделя

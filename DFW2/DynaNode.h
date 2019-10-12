@@ -46,6 +46,9 @@ namespace DFW2
 	public:
 
 		void UpdateVreVim();
+		void UpdateVDelta();
+		void UpdateVreVimSuper();
+		void UpdateVDeltaSuper();
 
 		enum eLFNodeType
 		{
@@ -80,6 +83,14 @@ namespace DFW2
 
 #ifdef _DEBUG
 		double Vrastr, Deltarastr, Qgrastr, Pnrrastr, Qnrrastr;
+		void GrabRastrResult()
+		{
+			Vrastr = V;
+			Deltarastr = Delta;
+			Qgrastr = Qg;
+			Pnrrastr = Pn;
+			Qnrrastr = Qn;
+		}
 #endif
 				
 		double Pn,Qn,Pg,Qg,Pnr,Qnr,Pgr,Qgr;

@@ -335,6 +335,7 @@ namespace DFW2
 			{
 				nMaxIndex = 0;
 				bmax = *pbb;
+				pbb++;
 				for (ptrdiff_t x = 1; x < m_nMatrixSize; x++, pbb++)
 				{
 					double absb = abs(*pbb);

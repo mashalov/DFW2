@@ -190,11 +190,7 @@ void CLoadFlow::Start()
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		// в режиме отладки запоминаем что было в узлах после расчета Rastr для сравнения результатов
 #ifdef _DEBUG
-		pNode->Vrastr = pNode->V;
-		pNode->Deltarastr = pNode->Delta;
-		pNode->Qgrastr = pNode->Qg;
-		pNode->Pnrrastr = pNode->Pn;
-		pNode->Qnrrastr = pNode->Qn;
+		pNode->GrabRastrResult();
 #endif
 		pNode->Pgr = pNode->Pg;	
 		pNode->Qgr = pNode->Qg;
@@ -409,7 +405,7 @@ void CLoadFlow::Seidell()
 					{
 						pNode->Qgr = pNode->LFQmin;
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
-						pNodes->IterationControl().m_nQviolated++;
+						pNodes->m_IterationControl.m_nQviolated++;
 						Qe = Q - pNode->Qgr;
 						cplx dU = I1 * cplx(Pe, -Qe);
 						pNode->Vre += dU.real();
@@ -420,7 +416,7 @@ void CLoadFlow::Seidell()
 						// снимаем узел с ограничения и делаем его PV
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 						pMatrixInfo->m_nPVSwitchCount++;
-						pNodes->IterationControl().m_nQviolated++;
+						pNodes->m_IterationControl.m_nQviolated++;
 						pNode->Qgr = Q;
 						cplx dU = I1 * cplx(Pe, 0);
 						dU += Unode;
@@ -445,7 +441,7 @@ void CLoadFlow::Seidell()
 					if (Q > pNode->LFQmax)
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
-						pNodes->IterationControl().m_nQviolated++;
+						pNodes->m_IterationControl.m_nQviolated++;
 						pNode->Qgr = pNode->LFQmax;
 						Qe = Q - pNode->Qgr;
 						cplx dU = I1 * cplx(Pe, -Qe);
@@ -456,7 +452,7 @@ void CLoadFlow::Seidell()
 					{
 						// снимаем узел с ограничения
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-						pNodes->IterationControl().m_nQviolated++;
+						pNodes->m_IterationControl.m_nQviolated++;
 						pMatrixInfo->m_nPVSwitchCount++;
 						pNode->Qgr = Q;
 						cplx dU = I1 * cplx(Pe, 0);
@@ -483,14 +479,14 @@ void CLoadFlow::Seidell()
 					if (Q > pNode->LFQmax)
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
-						pNodes->IterationControl().m_nQviolated++;
+						pNodes->m_IterationControl.m_nQviolated++;
 						pNode->Qgr = pNode->LFQmax;
 						Qe = Q - pNode->Qgr;
 					}
 					else if (Q < pNode->LFQmin)
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
-						pNodes->IterationControl().m_nQviolated++;
+						pNodes->m_IterationControl.m_nQviolated++;
 						pNode->Qgr = pNode->LFQmin;
 						Qe = Q - pNode->Qgr;
 					}
@@ -537,16 +533,10 @@ void CLoadFlow::Seidell()
 				break;
 			}
 
-			Unode.real(pNode->Vre);
-			Unode.imag(pNode->Vim);
-
-
-			// **********************************************     здесь обновлять подчиненные суперузлу ! *************************************************************************
-			pNode->V = abs(Unode);
-			pNode->Delta = arg(Unode);
+			pNode->UpdateVDeltaSuper();
 
 			// для всех узлов кроме статистику итерации
-			pNodes->IterationControl().Update(pMatrixInfo);
+			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 
 		if (!CheckLF())
@@ -690,78 +680,7 @@ bool CLoadFlow::Run()
 	Newton();
 
 #ifdef _DEBUG
-
-	ATLTRACE(_T("\n%g %g"), m_pMatrixInfoEnd->pNode->Pgr, m_pMatrixInfoEnd->pNode->Qgr);
-	FILE *s;
-	fopen_s(&s, "c:\\tmp\\nodes.csv", "w+");
-
-	CDynaNodeBase *pNodeMaxV(nullptr);
-	CDynaNodeBase *pNodeMaxDelta(nullptr);
-	CDynaNodeBase *pNodeMaxQg(nullptr);
-	CDynaNodeBase *pNodeMaxPnr(nullptr);
-	CDynaNodeBase *pNodeMaxQnr(nullptr);
-
-	for (auto&& it : pNodes->m_DevVec)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-		if (pNode->IsStateOn())
-		{
-			double mx = fabs(pNode->V - pNode->Vrastr);
-			if (pNodeMaxV)
-			{
-				if (mx > fabs(pNodeMaxV->V - pNodeMaxV->Vrastr))
-					pNodeMaxV = pNode;
-			}
-			else
-				pNodeMaxV = pNode;
-
-			mx = fabs(pNode->Delta - pNode->Deltarastr);
-			if (pNodeMaxDelta)
-			{
-				if (mx > fabs(pNodeMaxDelta->V - pNodeMaxDelta->Vrastr))
-					pNodeMaxDelta = pNode;
-			}
-			else
-				pNodeMaxDelta = pNode;
-
-
-			mx = fabs(pNode->Qg - pNode->Qgrastr);
-			if (pNodeMaxQg)
-			{
-				if (mx > fabs(pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr))
-					pNodeMaxQg = pNode;
-			}
-			else
-				pNodeMaxQg = pNode;
-
-			mx = fabs(pNode->Qnr - pNode->Qnrrastr);
-			if (pNodeMaxQnr)
-			{
-				if (mx > fabs(pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr))
-					pNodeMaxQnr = pNode;
-			}
-			else
-				pNodeMaxQnr = pNode;
-
-			mx = fabs(pNode->Pnr - pNode->Pnrrastr);
-			if (pNodeMaxPnr)
-			{
-				if (mx > fabs(pNodeMaxPnr->Pnr - pNodeMaxQnr->Pnrrastr))
-					pNodeMaxPnr = pNode;
-			}
-			else
-				pNodeMaxPnr = pNode;
-		}
-		//ATLTRACE("\n %20f %20f %20f %20f %20f %20f", pNode->V, pNode->Delta * 180 / M_PI, pNode->Pg, pNode->Qg, pNode->Pnr, pNode->Qnr);
-		fprintf(s, "%d;%20g;%20g\n", pNode->GetId(), pNode->V, pNode->Delta * 180 / M_PI);
-	}
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Rastr differences"));
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("V     %g %s"), pNodeMaxV->V - pNodeMaxV->Vrastr, pNodeMaxV->GetVerbalName());
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Delta %g %s"), pNodeMaxDelta->Delta - pNodeMaxDelta->Deltarastr, pNodeMaxDelta->GetVerbalName());
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Qg    %g %s"), pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr, pNodeMaxQg->GetVerbalName());
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Pnr   %g %s"), pNodeMaxPnr->Pnr - pNodeMaxPnr->Pnrrastr, pNodeMaxPnr->GetVerbalName());
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Qnr   %g %s"), pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr, pNodeMaxQnr->GetVerbalName());
-	fclose(s);
+	CompareWithRastr();
 #endif
 
 	pNodes->SwitchLRCs(true);
@@ -946,7 +865,7 @@ void CLoadFlow::DumpNodes()
 {
 	FILE *fdump(nullptr);
 	setlocale(LC_ALL, "ru-ru");
-	if (!_tfopen_s(&fdump, _T("c:\\tmp\\nodes.csv"), _T("wb+")))
+	if (!_tfopen_s(&fdump, _T("c:\\tmp\\resnodes.csv"), _T("wb+")))
 	{
 		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
 		for (auto&& it : pNodes->m_DevVec)
@@ -1037,7 +956,7 @@ void CLoadFlow::Newton()
 	vecSwitch.reserve(klu.MatrixSize() / 2);
 
 	// квадраты небалансов до и после итерации
-	double ImbSqOld, ImbSq(0.0);
+	double ImbSqOld(0.0), ImbSq(0.1);
 
 	while (1)
 	{
@@ -1046,8 +965,6 @@ void CLoadFlow::Newton()
 
 		++it;
 		pNodes->m_IterationControl.Reset();
-		ImbSqOld = ImbSq;	ImbSq = 0.0;
-
 		vecSwitch.clear();		// сбрасываем список переключаемых узлов чтобы его обновить
 
 		// считаем небаланс по всем узлам кроме БУ
@@ -1080,7 +997,6 @@ void CLoadFlow::Newton()
 				if (Qg > pNode->LFQmax)
 				{
 					vecSwitch.push_back(pMatrixInfo);
- 
 				}
 				else if (Qg < pNode->LFQmin)
 				{
@@ -1090,15 +1006,16 @@ void CLoadFlow::Newton()
 					pNode->Qgr = Qg;	// если реактивная генерация в пределах - обновляем ее значение в узле
 				break;
 			}
+			/*
 			// если узел не попал в список переключения - учитываем его небаланс в контроле сходимости
 			if (vecSwitch.empty() || vecSwitch.back() != pMatrixInfo)
 			{
 				pNodes->IterationControl().Update(pMatrixInfo);
-				ImbSq += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
 			}
+			*/
 		}
 
-		pNodes->IterationControl().m_nQviolated = vecSwitch.size();
+		pNodes->m_IterationControl.m_nQviolated = vecSwitch.size();
 
 		// досчитываем небалансы в БУ
 		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
@@ -1110,7 +1027,7 @@ void CLoadFlow::Newton()
 			pNode->Qgr += pMatrixInfo->m_dImbQ;
 			// в контроле сходимости небаланс БУ всегда 0.0
 			pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
-			pNodes->IterationControl().Update(pMatrixInfo);
+			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 
 		// переключаем типы узлов
@@ -1132,7 +1049,7 @@ void CLoadFlow::Newton()
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 						pNode->V = pNode->LFVref;
-						pNode->UpdateVreVim();
+						pNode->UpdateVreVimSuper();
 						pNode->Qgr = Qg;
 					}
 					break;
@@ -1146,7 +1063,7 @@ void CLoadFlow::Newton()
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 						pNode->V = pNode->LFVref;
-						pNode->UpdateVreVim();
+						pNode->UpdateVreVimSuper();
 						pNode->Qgr = Qg;
 					}
 					/*
@@ -1176,30 +1093,28 @@ void CLoadFlow::Newton()
 					break;
 				}
 				GetNodeImb(SwitchNow);	// небаланс считается с учетом СХН
-				pNodes->IterationControl().Update(SwitchNow);
-				ImbSq += ImbNorm(SwitchNow->m_dImbP, SwitchNow->m_dImbQ);
 			}
 		}
 
-		pNodes->IterationControl().m_ImbRatio = ImbSq;
-		pNodes->DumpIterationControl();
+		ImbSqOld = ImbSq;
+		BuildMatrix();
 
+		ImbSq = 0.0;
+		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		{
+			ImbSq += pMatrixInfo->m_dImbP * pMatrixInfo->m_dImbP;
+			ImbSq += pMatrixInfo->m_dImbQ * pMatrixInfo->m_dImbQ;
+			pNodes->m_IterationControl.Update(pMatrixInfo);
+		}
+		pNodes->m_IterationControl.m_ImbRatio = ImbSqOld;
+		pNodes->DumpIterationControl();
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb) && vecSwitch.empty())
 			break;
 
 		if (it > m_Parameters.m_nMaxIterations)
 			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
 
-		BuildMatrix();
-
-		ImbSq = 0.0;
-		double *pb = klu.B();
-		const double *pe = pb + klu.MatrixSize();
-		for (; pb < pe; pb++)
-			ImbSq += *pb * *pb;
-
 		double dStep = 1.0;
-
 		if (ImbSqOld > 0.0 && ImbSq > 0.0)
 		{
 			double ImbSqRatio = ImbSq / ImbSqOld;
@@ -1209,21 +1124,7 @@ void CLoadFlow::Newton()
 
 		SolveLinearSystem();
 		// обновляем переменные
-
 		UpdateVDelta();
-
-		// обновляем узлы в суперузлах
-		for (auto&& it : pNodes->m_DevVec)
-		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-			CDynaNodeBase *pSuperNodeParent = pNode->m_pSuperNodeParent;
-			if (pSuperNodeParent)
-			{
-				pNode->V = pSuperNodeParent->V;
-				pNode->Delta = pSuperNodeParent->Delta;
-				pNode->UpdateVreVim();
-			}
-		}
 	}
 
 	// обновляем реактивную генерацию в суперузлах
@@ -1291,6 +1192,8 @@ void CLoadFlow::UpdateVDelta()
 		}
 		*/
 		pNode->Delta = newDelta;	pNode->V	 = newV;
-		pNode->UpdateVreVim();
+		pNode->UpdateVreVimSuper();
 	}
 }
+
+
