@@ -134,7 +134,6 @@ namespace DFW2
 		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
 		// инициализация узла для расчета УР
-		void InitLF();
 		void StartLF(bool bFlatStart, double ImbTol);
 		virtual void StoreStates() override;
 		virtual void RestoreStates() override;

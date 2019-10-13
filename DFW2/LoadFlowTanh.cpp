@@ -24,7 +24,7 @@ void CLoadFlow::NewtonTanh()
 		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			if(!pNode->IsLFTypePQ() && pNode->LFVref > 0)
+			if(!pNode->IsLFTypePQ())
 				Qgtanh(pNode);
 			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
 			double Qg = pNode->Qgr + pMatrixInfo->m_dImbQ;
@@ -287,7 +287,7 @@ void CLoadFlow::BuildMatrixTanh()
 		// здесь считаем, что нагрузка СХН в Node::pnr/Node::qnr уже в расчете и анализе небалансов
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		double Pe = pNode->GetSelfImbP();
-		if (!pNode->IsLFTypePQ() && pNode->LFVref > 0)
+		if (!pNode->IsLFTypePQ())
 		{
 			Qgtanh(pNode);
 		}
@@ -296,7 +296,7 @@ void CLoadFlow::BuildMatrixTanh()
 		double dPdDelta(0.0), dQdDelta(0.0);
 		double dPdV = pNode->GetSelfdPdV();
 		double dQdV = pNode->GetSelfdQdV();
-		if (!pNode->IsLFTypePQ() && pNode->LFVref > 0)
+		if (!pNode->IsLFTypePQ())
 		{
 			double co = cosh(m_dTanhBeta * (pNode->LFVref - pNode->V));
 			double ddQ = m_dTanhBeta * (pNode->LFQmax - pNode->LFQmin) / 2.0 / co / co;

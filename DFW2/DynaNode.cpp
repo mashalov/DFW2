@@ -469,12 +469,6 @@ void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 	Vold = V;
 }
 
-void CDynaNodeBase::InitLF()
-{
-	UpdateVreVim();
-	V0 = (V > 0) ? V : Unom;
-}
-
 eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 {
 	UpdateVreVim();

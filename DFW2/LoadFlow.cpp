@@ -38,7 +38,7 @@ void CLoadFlow::Estimate()
 		if (!pNode->IsStateOn() || pNode->m_pSuperNodeParent)
 			continue;
 		// обновляем VreVim узла
-		pNode->InitLF();
+		pNode->UpdateVreVimSuper();
 		// добавляем БУ в список БУ для дальнейшей обработки
 		if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			SlackBuses.push_back(pNode);
@@ -123,7 +123,7 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 		if (m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 		{
 			// если у узла заданы пределы по реактивной мощности и хотя бы один из них ненулевой + задано напряжение
-			if (LFQmax >= LFQmin && (fabs(LFQmax) > ImbTol || fabs(LFQmin) > ImbTol) && LFVref > 0.0)
+			if (LFQmax > LFQmin && (fabs(LFQmax) > ImbTol || fabs(LFQmin) > ImbTol) && LFVref > 0.0)
 			{
 				// узел является PV-узлом
 				m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
@@ -170,7 +170,7 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 		V = Delta = 0.0;
 	}
 	// используем инициализацию узла для расчета УР
-	InitLF();
+	UpdateVreVimSuper();
 }
 
 void CLoadFlow::Start()
@@ -564,6 +564,7 @@ void CLoadFlow::BuildMatrix()
 	{
 		// здесь считаем, что нагрузка СХН в Node::pnr/Node::qnr уже в расчете и анализе небалансов
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
+		pNode->GetPnrQnrSuper();
 		double Pe = pNode->GetSelfImbP(), Qe(0.0);
 		double dPdDelta(0.0), dQdDelta(0.0);
 		double dPdV = pNode->GetSelfdPdV(), dQdV(1.0);
@@ -677,6 +678,12 @@ bool CLoadFlow::Run()
 	if (m_Parameters.m_bStartup)
 		Seidell();
 
+
+	
+	/*/
+	NewtonTanh();
+	for (auto&& it : *pNodes)
+		static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);*/
 	Newton();
 
 #ifdef _DEBUG
@@ -978,7 +985,7 @@ void CLoadFlow::Newton()
 			{
 				// если узел на минимуме Q и напряжение ниже уставки, он должен стать PV
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-				if (pNode->V < pNode->LFVref)
+				if (pNode->V < pNode->LFVref && Qg > pNode->LFQmin)
 				{
 					vecSwitch.push_back(pMatrixInfo);
 					pMatrixInfo->m_nPVSwitchCount++;
@@ -986,7 +993,7 @@ void CLoadFlow::Newton()
 				break;
 				// если узел на максимуме Q и напряжение выше уставки, он должен стать PV
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-				if (pNode->V > pNode->LFVref)
+				if (pNode->V > pNode->LFVref && Qg < pNode->LFQmax)
 				{
 					vecSwitch.push_back(pMatrixInfo);
 					pMatrixInfo->m_nPVSwitchCount++;
@@ -1006,13 +1013,6 @@ void CLoadFlow::Newton()
 					pNode->Qgr = Qg;	// если реактивная генерация в пределах - обновляем ее значение в узле
 				break;
 			}
-			/*
-			// если узел не попал в список переключения - учитываем его небаланс в контроле сходимости
-			if (vecSwitch.empty() || vecSwitch.back() != pMatrixInfo)
-			{
-				pNodes->IterationControl().Update(pMatrixInfo);
-			}
-			*/
 		}
 
 		pNodes->m_IterationControl.m_nQviolated = vecSwitch.size();
@@ -1045,7 +1045,7 @@ void CLoadFlow::Newton()
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 						pNode->Qgr = pNode->LFQmax;
 					}
-					else if (Qg > pNode->LFQmin)
+					else 
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 						pNode->V = pNode->LFVref;
@@ -1059,21 +1059,13 @@ void CLoadFlow::Newton()
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 						pNode->Qgr = pNode->LFQmin;
 					}
-					else if(pNode->Qg < pNode->LFQmax)
+					else 
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 						pNode->V = pNode->LFVref;
 						pNode->UpdateVreVimSuper();
 						pNode->Qgr = Qg;
 					}
-					/*
-					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-					SwitchNow->m_nPVSwitchCount++;
-					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("PQ->PV : Vref %g V %g %d"), pNode->LFVref, pNode->V, pNode->GetId());
-					pNode->Qgr = Qg;
-					pNode->V = pNode->LFVref;
-					pNode->UpdateVreVim();
-					*/
 					break;
 				case CDynaNodeBase::eLFNodeType::LFNT_PV:
 					if (Qg > pNode->LFQmax)
@@ -1092,7 +1084,6 @@ void CLoadFlow::Newton()
 						pNode->Qgr = Qg;
 					break;
 				}
-				GetNodeImb(SwitchNow);	// небаланс считается с учетом СХН
 			}
 		}
 
