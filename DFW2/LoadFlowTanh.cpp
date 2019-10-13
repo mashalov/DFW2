@@ -266,7 +266,10 @@ double CLoadFlow::Qgtanh(CDynaNodeBase *pNode)
 {
 	double Qs = (pNode->LFQmax - pNode->LFQmin) / 2.0;
 	double Qm = (pNode->LFQmax + pNode->LFQmin) / 2.0;
-	pNode->Qgr = Qs * tanh(m_dTanhBeta * (pNode->LFVref - pNode->V)) + Qm;
+	double k = 1.0 + 0.0001;
+	double Qg0 = min(pNode->LFQmax - m_Parameters.m_Imb, max(0.0, pNode->LFQmin + m_Parameters.m_Imb));
+	double ofs = atanh((Qg0 - Qm) / Qs) / m_dTanhBeta;
+	pNode->Qgr = Qs * tanh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs)) + Qm;
 	_CheckNumber(pNode->Qgr);
 	return pNode->Qgr;
 }
@@ -298,8 +301,13 @@ void CLoadFlow::BuildMatrixTanh()
 		double dQdV = pNode->GetSelfdQdV();
 		if (!pNode->IsLFTypePQ())
 		{
-			double co = cosh(m_dTanhBeta * (pNode->LFVref - pNode->V));
-			double ddQ = m_dTanhBeta * (pNode->LFQmax - pNode->LFQmin) / 2.0 / co / co;
+
+			double Qs = (pNode->LFQmax - pNode->LFQmin) / 2.0;
+			double Qm = (pNode->LFQmax + pNode->LFQmin) / 2.0;
+			double Qg0 = min(pNode->LFQmax - m_Parameters.m_Imb, max(0.0, pNode->LFQmin + m_Parameters.m_Imb));
+			double ofs = atanh((Qg0 - Qm) / Qs) / m_dTanhBeta;
+			double co = cosh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs));
+			double ddQ = m_dTanhBeta * Qs / co / co;
 			dQdV += ddQ;
 		}
 

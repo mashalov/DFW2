@@ -672,11 +672,11 @@ bool CLoadFlow::Run()
 		Seidell();
 
 
-	
-	/*/
+	/*
 	NewtonTanh();
 	for (auto&& it : *pNodes)
-		static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);*/
+		static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
+		*/
 	Newton();
 
 #ifdef _DEBUG
@@ -973,12 +973,13 @@ void CLoadFlow::Newton()
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
+			pNodes->m_IterationControl.Update(pMatrixInfo);
 			double Qg = pNode->Qgr + pMatrixInfo->m_dImbQ;
 			switch (pNode->m_eLFNodeType)
 			{
 				// если узел на минимуме Q и напряжение ниже уставки, он должен стать PV
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-				if (pNode->V < pNode->LFVref && Qg > pNode->LFQmin)
+				if (pNode->V < pNode->LFVref)
 				{
 					vecSwitch.push_back(pMatrixInfo);
 					pMatrixInfo->m_nPVSwitchCount++;
@@ -986,7 +987,7 @@ void CLoadFlow::Newton()
 				break;
 				// если узел на максимуме Q и напряжение выше уставки, он должен стать PV
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-				if (pNode->V > pNode->LFVref && Qg < pNode->LFQmax)
+				if (pNode->V > pNode->LFVref)
 				{
 					vecSwitch.push_back(pMatrixInfo);
 					pMatrixInfo->m_nPVSwitchCount++;
@@ -1024,7 +1025,7 @@ void CLoadFlow::Newton()
 		}
 
 		// переключаем типы узлов
-		if (/*fabs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < 1000.0 * m_Parameters.m_Imb*/ImbSqOld > ImbSq)
+		if (/*fabs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < m_Parameters.m_Imb*/ImbSqOld > ImbSq)
 		{
 			for (auto SwitchNow : vecSwitch)
 			{
@@ -1033,7 +1034,7 @@ void CLoadFlow::Newton()
 				switch (pNode->m_eLFNodeType)
 				{
 				case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-					if (Qg > pNode->LFQmax)
+					if (Qg >= pNode->LFQmax)
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 						pNode->Qgr = pNode->LFQmax;
@@ -1047,7 +1048,7 @@ void CLoadFlow::Newton()
 					}
 					break;
 				case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-					if (Qg < pNode->LFQmin)
+					if (Qg <= pNode->LFQmin)
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 						pNode->Qgr = pNode->LFQmin;
@@ -1088,7 +1089,6 @@ void CLoadFlow::Newton()
 		{
 			ImbSq += pMatrixInfo->m_dImbP * pMatrixInfo->m_dImbP;
 			ImbSq += pMatrixInfo->m_dImbQ * pMatrixInfo->m_dImbQ;
-			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 		pNodes->m_IterationControl.m_ImbRatio = ImbSqOld;
 		pNodes->DumpIterationControl();
