@@ -38,7 +38,8 @@ void CLoadFlow::Estimate()
 		if (!pNode->IsStateOn() || pNode->m_pSuperNodeParent)
 			continue;
 		// обновляем VreVim узла
-		pNode->UpdateVreVimSuper();
+		pNode->UpdateVreVim();
+		pNode->V0 = (pNode->V > 0) ? pNode->V : pNode->Unom;
 		// добавляем БУ в список БУ для дальнейшей обработки
 		if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			SlackBuses.push_back(pNode);
@@ -170,7 +171,8 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 		V = Delta = 0.0;
 	}
 	// используем инициализацию узла для расчета УР
-	UpdateVreVimSuper();
+	UpdateVreVim();
+	V0 = (V > 0) ? V : Unom;
 }
 
 void CLoadFlow::Start()
@@ -375,21 +377,11 @@ void CLoadFlow::Seidell()
 			pMatrixInfo = it;
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			// рассчитываем нагрузку по СХН
-			GetPnrQnrSuper(pNode);
 			double& Pe = pMatrixInfo->m_dImbP;
 			double& Qe = pMatrixInfo->m_dImbQ;
 			// рассчитываем небалансы
-			Pe = pNode->GetSelfImbP();
-			Qe = pNode->GetSelfImbQ();
-
+			GetNodeImb(pMatrixInfo);
 			cplx Unode(pNode->Vre, pNode->Vim);
-			for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
-			{
-				CDynaNodeBase *pOppNode = pBranch->pNode;
-				cplx mult = conj(Unode) * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
-				Pe -= mult.real();
-				Qe += mult.imag();
-			}
 
 			double Q = Qe + pNode->Qgr;	// расчетная генерация в узле
 
@@ -535,7 +527,7 @@ void CLoadFlow::Seidell()
 
 			pNode->UpdateVDeltaSuper();
 
-			// для всех узлов кроме статистику итерации
+			// для всех узлов кроме БУ обновляем статистику итерации
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 
@@ -552,6 +544,7 @@ void CLoadFlow::Seidell()
 
 	// пересчитываем проводимости узлов без устранения отрицательных сопротивлений
 	pNodes->CalcAdmittances(false);
+
 }
 
 void CLoadFlow::BuildMatrix()
@@ -564,7 +557,7 @@ void CLoadFlow::BuildMatrix()
 	{
 		// здесь считаем, что нагрузка СХН в Node::pnr/Node::qnr уже в расчете и анализе небалансов
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
-		pNode->GetPnrQnrSuper();
+		GetPnrQnrSuper(pNode);
 		double Pe = pNode->GetSelfImbP(), Qe(0.0);
 		double dPdDelta(0.0), dQdDelta(0.0);
 		double dPdV = pNode->GetSelfdPdV(), dQdV(1.0);
@@ -854,7 +847,7 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase *pNode)
 	pNode->Qnr = pNode->Qn;
 	double VdVnom = pNode->V / pNode->V0;
 
-	pNode->dLRCPg = pNode->dLRCQg = pNode->dLRCPn = pNode->dLRCQn = 0.0;
+	pNode->dLRCPn = pNode->dLRCQn = 0.0;
 
 	// если есть СХН нагрузки, рассчитываем
 	// комплексную мощность и производные по напряжению
