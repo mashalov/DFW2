@@ -81,7 +81,7 @@ bool CDynaModel::Run()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = 0.1;
+		m_Parameters.m_dZeroBranchImpedance = -0.1;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 		m_Parameters.eFreqDampingType = APDT_NODE;
@@ -484,32 +484,22 @@ bool CDynaModel::NewtonUpdate()
 			{
 				if (bLineSearch)
 				{
-					double *pRh = new double[klu.MatrixSize()];
-					double *pRb = new double[klu.MatrixSize()];
-					memcpy(pRh, pRightHandBackup.get(), sizeof(double) * klu.MatrixSize());
-					memcpy(pRb, klu.B(), sizeof(double) * klu.MatrixSize());
-					double g0 = sc.dRightHandNorm;
-					BuildRightHand();
-					double g1 = sc.dRightHandNorm;
+					unique_ptr<double[]> pRh = make_unique<double[]>(klu.MatrixSize());
+					unique_ptr<double[]> pRb = make_unique<double[]>(klu.MatrixSize());
+					std::copy(pRightHandBackup.get(), pRightHandBackup.get() + klu.MatrixSize(), pRh.get()); // невязки до итерации
+					std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRb.get());								 // решение на данной итерации
+					double g0 = sc.dRightHandNorm;															 // норма небаланса до итерации
+					BuildRightHand();																		 // невязки после итерации
+					double g1 = sc.dRightHandNorm;															 // норма небаланса после итерации
 
 					if (g0 < g1)
 					{
-						double *yv = new double[klu.MatrixSize()];
-						ZeroMemory(yv, sizeof(double) * klu.MatrixSize());
-						cs Aj;
-						Aj.i = klu.Ap();
-						Aj.p = klu.Ai();
-						Aj.x = klu.Ax();
-						Aj.m = Aj.n = klu.MatrixSize();
-						Aj.nz = -1;
-
-						cs_gatxpy(&Aj, pRh, yv);
-
-						double gs1 = 0.0;
-						for (ptrdiff_t s = klu.MatrixSize(); s >= 0; s--)
-							gs1 += yv[s] * pRb[s];
-						delete yv;
-						double lambda = -0.5 * gs1 / (g1 - g0 - gs1);
+						
+						// если небаланс увеличился
+						double gs1v = gs1(klu, pRh, pRb);
+						
+						// считаем множитель
+						double lambda = -0.5 * gs1v / (g1 - g0 - gs1v);
 
 						if (lambda > lambdamin && lambda < 1.0)
 						{
@@ -528,9 +518,6 @@ bool CDynaModel::NewtonUpdate()
 						else
 							sc.m_bNewtonDisconverging = true;
 					}
-
-					delete pRh;
-					delete pRb;
 					sc.RefactorMatrix();
 				}
 			}
@@ -1565,4 +1552,27 @@ bool CDynaModel::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice
 	delete szProp;
 
 	return bRes;
+}
+
+
+double CDynaModel::gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, unique_ptr<double[]>& Sol)
+{
+	// если небаланс увеличился
+	unique_ptr<double[]> yv = make_unique<double[]>(klu.MatrixSize());
+	cs Aj;
+	Aj.i = klu.Ap();
+	Aj.p = klu.Ai();
+	Aj.x = klu.Ax();
+	Aj.m = Aj.n = klu.MatrixSize();
+	Aj.nz = -1;
+
+	// считаем градиент до итерации - умножаем матрицу якоби на вектор невязок до итерации
+	cs_gatxpy(&Aj, Imb.get(), yv.get());
+
+	// умножаем градиент на решение
+	double gs1v(0.0);
+	for (ptrdiff_t s = klu.MatrixSize() - 1; s >= 0; s--)
+		gs1v += yv[s] * Sol[s];
+
+	return gs1v;
 }

@@ -66,7 +66,7 @@ namespace DFW2
 		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
 
-		double m_dTanhBeta = 500.0;
+		double m_dTanhBeta = 1000.0;
 
 		Parameters m_Parameters;
 		// определение порядка PV узлов для Зейделя

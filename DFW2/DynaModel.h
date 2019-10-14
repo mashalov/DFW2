@@ -424,7 +424,6 @@ namespace DFW2
 		void InitDevicesNordsiek();
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
 		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
-
 		void RescaleNordsiek(double r);
 		void UpdateNordsiek(bool bAllowSuppression = false);
 		bool DetectAdamsRinging();
@@ -680,6 +679,8 @@ namespace DFW2
 			//return x * y + z;
 			return std::fma(x, y, z);
 		}
+
+		static double gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, unique_ptr<double[]>& Sol);
 
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
