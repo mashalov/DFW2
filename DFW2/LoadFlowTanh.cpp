@@ -11,9 +11,6 @@ void CLoadFlow::NewtonTanh()
 
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
 
-	unique_ptr<double[]> pRh = make_unique<double[]>(klu.MatrixSize());		// невязки до итерации
-	unique_ptr<double[]> pRb = make_unique<double[]>(klu.MatrixSize());		// решение на итерации
-
 	while (1)
 	{
 		++it;
@@ -27,7 +24,7 @@ void CLoadFlow::NewtonTanh()
 			if(!pNode->IsLFTypePQ())
 				Qgtanh(pNode);
 			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
-			double Qg = pNode->Qgr + pMatrixInfo->m_dImbQ;
+			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 		// досчитываем небалансы в БУ
 		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
@@ -45,21 +42,11 @@ void CLoadFlow::NewtonTanh()
 		BuildMatrixTanh();
 
 		// сохраняем небаланс до итерации
-		std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRh.get());
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
 
 		// сохраняем исходные значения переменных
-		unique_ptr<double[]> vs = make_unique<double[]>(klu.MatrixSize());
-		unique_ptr<double[]> ds = make_unique<double[]>(klu.MatrixSize());
-
-		double g0 = 0.0;
-		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-		{
-			g0 += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
-			pNodes->m_IterationControl.Update(pMatrixInfo);
-			vs[pMatrixInfo - m_pMatrixInfo.get()] = pMatrixInfo->pNode->V;
-			ds[pMatrixInfo - m_pMatrixInfo.get()] = pMatrixInfo->pNode->Delta;
-		}
-
+		StoreVDelta();
+		double g0 = GetSquaredImb();
 		pNodes->m_IterationControl.m_ImbRatio = g0;
 		pNodes->DumpIterationControl();
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
@@ -72,22 +59,22 @@ void CLoadFlow::NewtonTanh()
 		double f = klu.FindMaxB(mxi);
 		SolveLinearSystem();
 
-		std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRb.get());
-
-
 		// обновляем переменные
 		UpdateVDelta();
 
-		double g1(0.0);
 		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
-			GetNodeImb(pMatrixInfo);
-			g1 += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
+			CDynaNodeBase *pNode = pMatrixInfo->pNode;
+			if (!pNode->IsLFTypePQ())
+				Qgtanh(pNode);
+			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
 		}
+
+		double g1 = GetSquaredImb();
 
 		if (g1 > g0)
 		{
-			double gs1v = CDynaModel::gs1(klu, pRh, pRb);
+			double gs1v = CDynaModel::gs1(klu, m_Rh, klu.B());
 			double lambda = -0.5 * gs1v / (g1 - g0 - gs1v);
 			double *pb = klu.B();
 			double *pe = pb + klu.MatrixSize();
@@ -96,11 +83,7 @@ void CLoadFlow::NewtonTanh()
 				*pb *= lambda;
 				pb++;
 			}
-			for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-			{
-				pMatrixInfo->pNode->V = vs[pMatrixInfo - m_pMatrixInfo.get()];
-				pMatrixInfo->pNode->Delta = ds[pMatrixInfo - m_pMatrixInfo.get()];
-			}
+			RestoreVDelta();
 			UpdateVDelta();
 		}
 	}

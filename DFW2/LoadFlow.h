@@ -43,7 +43,7 @@ namespace DFW2
 		void SeidellTanh();
 		void Newton();
 		void NewtonTanh();
-		void UpdateVDelta();
+		void UpdateVDelta(double dStep = 1.0);
 		void BuildMatrix();
 		void BuildMatrixTanh();
 		void Start();
@@ -74,6 +74,14 @@ namespace DFW2
 		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);
 		void GetNodeImb(_MatrixInfo *pMatrixInfo);
 		static double ImbNorm(double x, double y);
+
+		void StoreVDelta();
+		void RestoreVDelta();
+		double GetSquaredImb();
+
+		unique_ptr<double[]> m_Vbackup;
+		unique_ptr<double[]> m_Dbackup;
+		unique_ptr<double[]> m_Rh;		// невязки до итерации
 	};
 }
 

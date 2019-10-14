@@ -496,7 +496,7 @@ bool CDynaModel::NewtonUpdate()
 					{
 						
 						// если небаланс увеличился
-						double gs1v = gs1(klu, pRh, pRb);
+						double gs1v = gs1(klu, pRh, pRb.get());
 						
 						// считаем множитель
 						double lambda = -0.5 * gs1v / (g1 - g0 - gs1v);
@@ -1555,7 +1555,7 @@ bool CDynaModel::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice
 }
 
 
-double CDynaModel::gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, unique_ptr<double[]>& Sol)
+double CDynaModel::gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, const double *pSol)
 {
 	// если небаланс увеличился
 	unique_ptr<double[]> yv = make_unique<double[]>(klu.MatrixSize());
@@ -1572,7 +1572,7 @@ double CDynaModel::gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, uniqu
 	// умножаем градиент на решение
 	double gs1v(0.0);
 	for (ptrdiff_t s = klu.MatrixSize() - 1; s >= 0; s--)
-		gs1v += yv[s] * Sol[s];
+		gs1v += yv[s] * pSol[s];
 
 	return gs1v;
 }

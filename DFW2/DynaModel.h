@@ -680,7 +680,7 @@ namespace DFW2
 			return std::fma(x, y, z);
 		}
 
-		static double gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, unique_ptr<double[]>& Sol);
+		static double gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, const double* Sol);
 
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);

@@ -114,6 +114,7 @@ void CLoadFlow::Estimate()
 
 	m_pMatrixInfoSlackEnd = pMatrixInfo;
 	*pAi = nNonZeroCount;
+	m_Rh = make_unique<double[]>(klu.MatrixSize());		// невязки до итерации
 }
 
 void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
@@ -681,7 +682,7 @@ bool CLoadFlow::Run()
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		pNode->StartLF(false, m_Parameters.m_Imb);
 	}
-		*/
+	*/
 	Newton();
 
 #ifdef _DEBUG
@@ -964,14 +965,16 @@ void CLoadFlow::Newton()
 	PQmin_PV.reserve(klu.MatrixSize() / 2);
 
 	// квадраты небалансов до и после итерации
-	double ImbSqOld(0.0), ImbSq(0.1);
+	double g0(0.0), g1(0.1);
 
 	while (1)
 	{
 		if (!CheckLF())
 			throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
 
-		++it;
+		if (++it > m_Parameters.m_nMaxIterations)
+			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
+
 		pNodes->m_IterationControl.Reset();
 		PV_PQmax.clear();	// сбрасываем список переключаемых узлов чтобы его обновить
 		PV_PQmin.clear();
@@ -1035,6 +1038,27 @@ void CLoadFlow::Newton()
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 
+		g1 = GetSquaredImb();
+
+		pNodes->m_IterationControl.m_ImbRatio = g1;
+		pNodes->DumpIterationControl();
+		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
+			break;
+
+		if (it > 1 && g1 > g0)
+		{
+			double gs1v = CDynaModel::gs1(klu, m_Rh, klu.B());
+			double lambda = -0.5 * gs1v / (g1 - g0 - gs1v);
+			RestoreVDelta();
+			UpdateVDelta(lambda);
+			continue;
+		}
+
+		g0 = g1;
+
+		// сохраняем исходные значения переменных
+		StoreVDelta();
+
 		for (auto&& it : PQmax_PV)
 		{
 			CDynaNodeBase*& pNode = it->pNode;
@@ -1074,31 +1098,9 @@ void CLoadFlow::Newton()
 			}
 		}
 
-		ImbSqOld = ImbSq;
 		BuildMatrix();
-
-		ImbSq = 0.0;
-		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-		{
-			ImbSq += pMatrixInfo->m_dImbP * pMatrixInfo->m_dImbP;
-			ImbSq += pMatrixInfo->m_dImbQ * pMatrixInfo->m_dImbQ;
-		}
-		pNodes->m_IterationControl.m_ImbRatio = ImbSqOld;
-		pNodes->DumpIterationControl();
-		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
-			break;
-
-		if (it > m_Parameters.m_nMaxIterations)
-			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
-
-		double dStep = 1.0;
-		if (ImbSqOld > 0.0 && ImbSq > 0.0)
-		{
-			double ImbSqRatio = ImbSq / ImbSqOld;
-			if (ImbSqRatio > 1.0)
-				dStep = 1.0 / ImbSqRatio;
-		}
-
+		// сохраняем небаланс до итерации
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
 		SolveLinearSystem();
 		// обновляем переменные
 		UpdateVDelta();
@@ -1136,15 +1138,15 @@ void CLoadFlow::Newton()
 }
 
 
-void CLoadFlow::UpdateVDelta()
+void CLoadFlow::UpdateVDelta(double dStep)
 {
 	_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
 	for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		double *pb = klu.B() + pNode->A(0);
-		double newDelta = pNode->Delta - *pb;		pb++;
-		double newV = pNode->V - *pb;
+		double newDelta = pNode->Delta - *pb * dStep;		pb++;
+		double newV = pNode->V - *pb * dStep;
 		/*
 		// Не даем узлам на ограничениях реактивной мощности отклоняться от уставки более чем на 10%
 		// стратка работает в Inor при небалансах не превышающих заданный
@@ -1174,3 +1176,42 @@ void CLoadFlow::UpdateVDelta()
 }
 
 
+void CLoadFlow::StoreVDelta()
+{
+	if(!m_Vbackup)
+		m_Vbackup = make_unique<double[]>(klu.MatrixSize());
+	if(!m_Dbackup)
+		m_Dbackup = make_unique<double[]>(klu.MatrixSize());
+
+	double* pV = m_Vbackup.get();
+	double* pD = m_Dbackup.get();
+	for (_MatrixInfo *pMatrix = m_pMatrixInfo.get(); pMatrix < m_pMatrixInfoEnd; pMatrix++, pV++, pD++)
+	{
+		*pV = pMatrix->pNode->V;
+		*pD = pMatrix->pNode->Delta;
+	}
+}
+
+void CLoadFlow::RestoreVDelta()
+{
+	if (m_Vbackup && m_Dbackup)
+	{
+		double* pV = m_Vbackup.get();
+		double* pD = m_Dbackup.get();
+		for (_MatrixInfo *pMatrix = m_pMatrixInfo.get(); pMatrix < m_pMatrixInfoEnd; pMatrix++, pV++, pD++)
+		{
+			pMatrix->pNode->V = *pV;
+			pMatrix->pNode->Delta = *pD;
+		}
+	}
+	else
+		throw dfw2error(_T("CLoadFlow::RestoreVDelta called before StoreVDelta"));
+}
+
+double CLoadFlow::GetSquaredImb()
+{
+	double Imb(0.0);
+	for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		Imb += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
+	return Imb;
+}
