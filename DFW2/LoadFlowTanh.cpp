@@ -58,34 +58,8 @@ void CLoadFlow::NewtonTanh()
 		ptrdiff_t mxi(0);
 		double f = klu.FindMaxB(mxi);
 		SolveLinearSystem();
-
 		// обновляем переменные
 		UpdateVDelta();
-
-		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			if (!pNode->IsLFTypePQ())
-				Qgtanh(pNode);
-			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
-		}
-
-		double g1 = GetSquaredImb();
-
-		if (g1 > g0)
-		{
-			double gs1v = CDynaModel::gs1(klu, m_Rh, klu.B());
-			double lambda = -0.5 * gs1v / (g1 - g0 - gs1v);
-			double *pb = klu.B();
-			double *pe = pb + klu.MatrixSize();
-			while (pb < pe)
-			{
-				*pb *= lambda;
-				pb++;
-			}
-			RestoreVDelta();
-			UpdateVDelta();
-		}
 	}
 
 	// обновляем реактивную генерацию в суперузлах
@@ -216,7 +190,7 @@ void CLoadFlow::SeidellTanh()
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			// рассчитываем нагрузку по СХН
 			GetPnrQnrSuper(pNode);
-			Qgtanh(pNode);
+			pNode->Qgr = Qgtanh(pNode);
 			double& Pe = pMatrixInfo->m_dImbP;
 			double& Qe = pMatrixInfo->m_dImbQ;
 			// рассчитываем небалансы
@@ -281,10 +255,9 @@ double CLoadFlow::Qgtanh(CDynaNodeBase *pNode)
 	double Qm = (pNode->LFQmax + pNode->LFQmin) / 2.0;
 	double k = 1.0 + 0.0001;
 	double Qg0 = min(pNode->LFQmax - m_Parameters.m_Imb, max(0.0, pNode->LFQmin + m_Parameters.m_Imb));
-	double ofs = atanh((Qg0 - Qm) / Qs) / m_dTanhBeta;
-	pNode->Qgr = Qs * tanh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs)) + Qm;
+	double ofs = atanh((Qg0 - Qm) / Qs) / m_dTanhBeta * 0.0;
+	return Qs * tanh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs)) + Qm;
 	_CheckNumber(pNode->Qgr);
-	return pNode->Qgr;
 }
 
 
@@ -303,7 +276,7 @@ void CLoadFlow::BuildMatrixTanh()
 		double Pe = pNode->GetSelfImbP();
 		if (!pNode->IsLFTypePQ())
 		{
-			Qgtanh(pNode);
+			pNode->Qgr = Qgtanh(pNode);
 		}
 		double Qe = pNode->GetSelfImbQ();
 		_CheckNumber(Qe);
@@ -316,7 +289,7 @@ void CLoadFlow::BuildMatrixTanh()
 			double Qs = (pNode->LFQmax - pNode->LFQmin) / 2.0;
 			double Qm = (pNode->LFQmax + pNode->LFQmin) / 2.0;
 			double Qg0 = min(pNode->LFQmax - m_Parameters.m_Imb, max(0.0, pNode->LFQmin + m_Parameters.m_Imb));
-			double ofs = atanh((Qg0 - Qm) / Qs) / m_dTanhBeta;
+			double ofs = atanh((Qg0 - Qm) / Qs) / m_dTanhBeta * 0.0;
 			double co = cosh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs));
 			double ddQ = m_dTanhBeta * Qs / co / co;
 			dQdV += ddQ;

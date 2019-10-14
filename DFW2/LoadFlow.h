@@ -78,6 +78,7 @@ namespace DFW2
 		void StoreVDelta();
 		void RestoreVDelta();
 		double GetSquaredImb();
+		void CheckFeasible();
 
 		unique_ptr<double[]> m_Vbackup;
 		unique_ptr<double[]> m_Dbackup;

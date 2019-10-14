@@ -39,7 +39,6 @@ void CLoadFlow::Estimate()
 			continue;
 		// обновляем VreVim узла
 		pNode->UpdateVreVim();
-		pNode->V0 = (pNode->V > 0) ? pNode->V : pNode->Unom;
 		// добавляем БУ в список БУ для дальнейшей обработки
 		if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			SlackBuses.push_back(pNode);
@@ -136,6 +135,14 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 					Qgr = LFQmin + (LFQmax - LFQmin) / 2.0;			// реактивную мощность ставим в середину диапазона
 					Delta = 0.0;
 				}
+				else if (V > LFVref && Qgr <= LFQmax)
+				{
+					V = LFVref;
+				}
+				else if (V < LFVref && Qgr >= LFQmin)
+				{
+					V = LFVref;
+				}
 				else if (Qgr > LFQmax)
 				{
 					// для неплоского старта приводим реактивную мощность в ограничения
@@ -175,7 +182,6 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 	}
 	// используем инициализацию узла для расчета УР
 	UpdateVreVim();
-	V0 = (V > 0) ? V : Unom;
 }
 
 void CLoadFlow::Start()
@@ -290,11 +296,12 @@ void CLoadFlow::Seidell()
 
 	MATRIXINFO SeidellOrder;
 	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
-
-	_MatrixInfo* pMatrixInfo = m_pMatrixInfoSlackEnd - 1;
+	_MatrixInfo* pMatrixInfo;
+	for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo <= m_pMatrixInfoEnd; pMatrixInfo++)
+		pMatrixInfo->bVisited = false;
 
 	// в начало добавляем БУ
-	for (; pMatrixInfo >= m_pMatrixInfoEnd; pMatrixInfo--)
+	for (pMatrixInfo = m_pMatrixInfoSlackEnd - 1; pMatrixInfo >= m_pMatrixInfoEnd; pMatrixInfo--)
 	{
 		SeidellOrder.push_back(pMatrixInfo);
 		pMatrixInfo->bVisited = true;
@@ -674,14 +681,15 @@ bool CLoadFlow::Run()
 	if (m_Parameters.m_bStartup)
 		Seidell();
 
-
+	//NewtonTanh();
+	//CheckFeasible();
 	/*
-	NewtonTanh();
 	for (auto&& it : *pNodes)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		pNode->StartLF(false, m_Parameters.m_Imb);
 	}
+
 	*/
 	Newton();
 
@@ -692,6 +700,7 @@ bool CLoadFlow::Run()
 	pNodes->SwitchLRCs(true);
 	UpdateQToGenerators();
 	DumpNodes();
+	CheckFeasible();
 	return bRes;
 }
 
@@ -878,7 +887,7 @@ void CLoadFlow::DumpNodes()
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 #ifdef _DEBUG
-			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g\n"),
+			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%g\n"),
 				pNode->GetId(),
 				pNode->V,
 				pNode->Delta / M_PI * 180.0,
@@ -893,7 +902,17 @@ void CLoadFlow::DumpNodes()
 				pNode->LFQmax,
 				pNode->LFVref,
 				pNode->Vrastr,
-				pNode->Deltarastr);
+				pNode->Deltarastr,
+				pNode->Qgrastr);
+			/*
+			_ftprintf(fdump, _T("%d;%.12g;%.12g;%.12g;%.12g;%.12g;%.12g\n"),
+				pNode->GetId(),
+				pNode->V,
+				pNode->Delta / M_PI * 180.0,
+				pNode->Pnr,
+				pNode->Qnr,
+				pNode->Pg,
+				pNode->Qg);*/
 #else
 			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
 				pNode->GetId(),
@@ -1214,4 +1233,26 @@ double CLoadFlow::GetSquaredImb()
 	for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		Imb += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
 	return Imb;
+}
+
+void CLoadFlow::CheckFeasible()
+{
+	for (auto&& it : *pNodes)
+	{
+		CDynaNodeBase* pNode(static_cast<CDynaNodeBase*>(it));
+		if (pNode->IsStateOn())
+		{
+			if (!pNode->IsLFTypePQ())
+			{
+				if (pNode->V > pNode->LFVref && pNode->Qgr >= pNode->LFQmax)
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
+				if (pNode->V < pNode->LFVref && pNode->Qgr <= pNode->LFQmin)
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
+				if (pNode->Qgr < pNode->LFQmin)
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
+				if (pNode->Qgr > pNode->LFQmax)
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
+			}
+		}
+	}
 }
