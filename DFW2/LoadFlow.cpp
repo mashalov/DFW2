@@ -681,20 +681,17 @@ bool CLoadFlow::Run()
 	if (m_Parameters.m_bStartup)
 		Seidell();
 
-	//Newton();
-
-	//*
-	NewtonTanh();
-	//Newton();
-	CheckFeasible();
 	/*
+	NewtonTanh();
+	
+	CheckFeasible();
 	for (auto&& it : *pNodes)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		pNode->StartLF(false, m_Parameters.m_Imb);
 	}
 	*/
-	
+	Newton();
 
 #ifdef _DEBUG
 	CompareWithRastr();
@@ -885,12 +882,12 @@ void CLoadFlow::DumpNodes()
 	setlocale(LC_ALL, "ru-ru");
 	if (!_tfopen_s(&fdump, _T("c:\\tmp\\resnodes.csv"), _T("wb+")))
 	{
-		//_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
+		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
 		for (auto&& it : pNodes->m_DevVec)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 #ifdef _DEBUG
-			/*
+			///*
 			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%g\n"),
 				pNode->GetId(),
 				pNode->V,
@@ -906,9 +903,10 @@ void CLoadFlow::DumpNodes()
 				pNode->LFQmax,
 				pNode->LFVref,
 				pNode->Vrastr,
-				pNode->Deltarastr,
+				pNode->Deltarastr / M_PI * 180.0,
 				pNode->Qgrastr);
-			*/
+			///*/
+			/*
 			_ftprintf(fdump, _T("%d;%.12g;%.12g;%.12g;%.12g;%.12g;%.12g\n"),
 				pNode->GetId(),
 				pNode->V,
@@ -916,7 +914,7 @@ void CLoadFlow::DumpNodes()
 				pNode->Pnr,
 				pNode->Qnr,
 				pNode->Pg,
-				pNode->Qg);
+				pNode->Qg);*/
 #else
 			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
 				pNode->GetId(),

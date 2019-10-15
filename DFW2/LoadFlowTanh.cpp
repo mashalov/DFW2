@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "LoadFlow.h"
 #include "DynaModel.h"
 
@@ -7,9 +7,9 @@ using namespace DFW2;
 void CLoadFlow::NewtonTanh()
 {
 	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
-	int it(0);	// количество итераций
+	int it(0);	// РєРѕР»РёС‡РµСЃС‚РІРѕ РёС‚РµСЂР°С†РёР№
 
-	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
+	// РІРµРєС‚РѕСЂ РґР»СЏ СѓРєР°Р·Р°С‚РµР»РµР№ РїРµСЂРµРєР»СЋС‡Р°РµРјС‹С… СѓР·Р»РѕРІ, СЃ СЂР°Р·РјРµСЂРЅРѕСЃС‚СЊСЋ РІ РїРѕР»РѕРІРёРЅСѓ СѓСЂР°РІРЅРµРЅРёР№ РјР°С‚СЂРёС†С‹
 
 	double g0(0.0), g1(0.1), lambda(1.0);
 
@@ -23,25 +23,25 @@ void CLoadFlow::NewtonTanh()
 
 		pNodes->m_IterationControl.Reset();
 
-		// считаем небаланс по всем узлам кроме БУ
+		// СЃС‡РёС‚Р°РµРј РЅРµР±Р°Р»Р°РЅСЃ РїРѕ РІСЃРµРј СѓР·Р»Р°Рј РєСЂРѕРјРµ Р‘РЈ
 		_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
 		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
 				pNode->Qgr = Qgtanh(pNode);
-			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
+			GetNodeImb(pMatrixInfo);	// РЅРµР±Р°Р»Р°РЅСЃ СЃС‡РёС‚Р°РµС‚СЃСЏ СЃ СѓС‡РµС‚РѕРј РЎРҐРќ
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
-		// досчитываем небалансы в БУ
+		// РґРѕСЃС‡РёС‚С‹РІР°РµРј РЅРµР±Р°Р»Р°РЅСЃС‹ РІ Р‘РЈ
 		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
 			GetNodeImb(pMatrixInfo);
-			// для БУ небалансы только для результатов
+			// РґР»СЏ Р‘РЈ РЅРµР±Р°Р»Р°РЅСЃС‹ С‚РѕР»СЊРєРѕ РґР»СЏ СЂРµР·СѓР»СЊС‚Р°С‚РѕРІ
 			pNode->Pgr += pMatrixInfo->m_dImbP;
 			pNode->Qgr += pMatrixInfo->m_dImbQ;
-			// в контроле сходимости небаланс БУ всегда 0.0
+			// РІ РєРѕРЅС‚СЂРѕР»Рµ СЃС…РѕРґРёРјРѕСЃС‚Рё РЅРµР±Р°Р»Р°РЅСЃ Р‘РЈ РІСЃРµРіРґР° 0.0
 			pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
@@ -53,10 +53,10 @@ void CLoadFlow::NewtonTanh()
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
 
-		if (it > 1 && g1 > g0)
+		if (it > 10000 && g1 > g0)
 		{
 			double gs1v = -CDynaModel::gs1(klu, m_Rh, klu.B());
-			// знак gs1v должен быть "-" ????
+			// Р·РЅР°Рє gs1v РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ "-" ????
 			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
 			RestoreVDelta();
 			UpdateVDelta(lambda);
@@ -68,19 +68,44 @@ void CLoadFlow::NewtonTanh()
 
 		BuildMatrixTanh();
 
-		// сохраняем небаланс до итерации
+		// СЃРѕС…СЂР°РЅСЏРµРј РЅРµР±Р°Р»Р°РЅСЃ РґРѕ РёС‚РµСЂР°С†РёРё
 		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
 
-		// сохраняем исходные значения переменных
+		// СЃРѕС…СЂР°РЅСЏРµРј РёСЃС…РѕРґРЅС‹Рµ Р·РЅР°С‡РµРЅРёСЏ РїРµСЂРµРјРµРЅРЅС‹С…
 		StoreVDelta();
-		// сохраняем небаланс до итерации
+		// СЃРѕС…СЂР°РЅСЏРµРј РЅРµР±Р°Р»Р°РЅСЃ РґРѕ РёС‚РµСЂР°С†РёРё
 		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
 		SolveLinearSystem();
-		// обновляем переменные
-		UpdateVDelta();
+
+		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		{
+			CDynaNodeBase *pNode = pMatrixInfo->pNode;
+			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
+			{
+				double Vbackup = pNode->V;
+				double *pb = klu.B() + pNode->A(1);
+				pNode->V += *pb;
+				double dQ = fabs(pNode->Qgr - Qgtanh(pNode));
+				if (dQ > 0.9 * (pNode->LFQmax - pNode->LFQmin))
+				{
+					double newLambda = fabs(Vbackup - pNode->LFVref) / fabs(*pb);
+					if (lambda > newLambda)
+						lambda = newLambda;
+
+				}
+				pNode->V = Vbackup;
+			}
+		}
+
+		ptrdiff_t iMax(0);
+		double maxb = klu.FindMaxB(iMax);
+
+		// РѕР±РЅРѕРІР»СЏРµРј РїРµСЂРµРјРµРЅРЅС‹Рµ
+		UpdateVDelta(lambda);
+
 	}
 
-	// обновляем реактивную генерацию в суперузлах
+	// РѕР±РЅРѕРІР»СЏРµРј СЂРµР°РєС‚РёРІРЅСѓСЋ РіРµРЅРµСЂР°С†РёСЋ РІ СЃСѓРїРµСЂСѓР·Р»Р°С…
 
 	for (auto && supernode : m_SuperNodeParameters)
 	{
@@ -120,14 +145,14 @@ void CLoadFlow::SeidellTanh()
 
 	_MatrixInfo* pMatrixInfo = m_pMatrixInfoSlackEnd - 1;
 
-	// в начало добавляем БУ
+	// РІ РЅР°С‡Р°Р»Рѕ РґРѕР±Р°РІР»СЏРµРј Р‘РЈ
 	for (; pMatrixInfo >= m_pMatrixInfoEnd; pMatrixInfo--)
 	{
 		SeidellOrder.push_back(pMatrixInfo);
 		pMatrixInfo->bVisited = true;
 	}
 
-	// затем PV узлы
+	// Р·Р°С‚РµРј PV СѓР·Р»С‹
 	for (; pMatrixInfo >= m_pMatrixInfo.get(); pMatrixInfo--)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
@@ -138,50 +163,50 @@ void CLoadFlow::SeidellTanh()
 		}
 	}
 
-	// сортируем PV узлы по убыванию диапазона реактивной мощности
+	// СЃРѕСЂС‚РёСЂСѓРµРј PV СѓР·Р»С‹ РїРѕ СѓР±С‹РІР°РЅРёСЋ РґРёР°РїР°Р·РѕРЅР° СЂРµР°РєС‚РёРІРЅРѕР№ РјРѕС‰РЅРѕСЃС‚Рё
 	sort(SeidellOrder.begin() + (m_pMatrixInfoSlackEnd - m_pMatrixInfoEnd), SeidellOrder.end(), SortPV);
 
-	// добавляем узлы в порядок обработки Зейделем с помощью очереди
-	// очередь строим от базисных и PV-узлов по связям. Порядок очереди 
-	// определяем по мере удаления от узлов базисных и PV-узлов 
+	// РґРѕР±Р°РІР»СЏРµРј СѓР·Р»С‹ РІ РїРѕСЂСЏРґРѕРє РѕР±СЂР°Р±РѕС‚РєРё Р—РµР№РґРµР»РµРј СЃ РїРѕРјРѕС‰СЊСЋ РѕС‡РµСЂРµРґРё
+	// РѕС‡РµСЂРµРґСЊ СЃС‚СЂРѕРёРј РѕС‚ Р±Р°Р·РёСЃРЅС‹С… Рё PV-СѓР·Р»РѕРІ РїРѕ СЃРІСЏР·СЏРј. РџРѕСЂСЏРґРѕРє РѕС‡РµСЂРµРґРё 
+	// РѕРїСЂРµРґРµР»СЏРµРј РїРѕ РјРµСЂРµ СѓРґР°Р»РµРЅРёСЏ РѕС‚ СѓР·Р»РѕРІ Р±Р°Р·РёСЃРЅС‹С… Рё PV-СѓР·Р»РѕРІ 
 	QUEUE queue;
 	for (auto&& it : SeidellOrder)
 		AddToQueue(it, queue);
 
 
-	// пока в очереди есть узлы
+	// РїРѕРєР° РІ РѕС‡РµСЂРµРґРё РµСЃС‚СЊ СѓР·Р»С‹
 	while (!queue.empty())
 	{
-		// достаем узел из очереди
+		// РґРѕСЃС‚Р°РµРј СѓР·РµР» РёР· РѕС‡РµСЂРµРґРё
 		pMatrixInfo = queue.front();
 		queue.pop_front();
-		// добавляем узел в очередь Зейделя
+		// РґРѕР±Р°РІР»СЏРµРј СѓР·РµР» РІ РѕС‡РµСЂРµРґСЊ Р—РµР№РґРµР»СЏ
 		SeidellOrder.push_back(pMatrixInfo);
-		// и добавляем оппозитные узлы добавленного узла
+		// Рё РґРѕР±Р°РІР»СЏРµРј РѕРїРїРѕР·РёС‚РЅС‹Рµ СѓР·Р»С‹ РґРѕР±Р°РІР»РµРЅРЅРѕРіРѕ СѓР·Р»Р°
 		AddToQueue(pMatrixInfo, queue);
 	}
 
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
-	// рассчитываем проводимости узлов с устранением отрицательных сопротивлений
+	// СЂР°СЃСЃС‡РёС‚С‹РІР°РµРј РїСЂРѕРІРѕРґРёРјРѕСЃС‚Рё СѓР·Р»РѕРІ СЃ СѓСЃС‚СЂР°РЅРµРЅРёРµРј РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹С… СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёР№
 	pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
 	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
-		// множитель для ускорения Зейделя
+		// РјРЅРѕР¶РёС‚РµР»СЊ РґР»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ Р—РµР№РґРµР»СЏ
 		double dStep = m_Parameters.m_dSeidellStep;
 
 		if (nSeidellIterations > 2)
 		{
-			// если сделали более 2-х итераций начинаем анализировать небалансы
+			// РµСЃР»Рё СЃРґРµР»Р°Р»Рё Р±РѕР»РµРµ 2-С… РёС‚РµСЂР°С†РёР№ РЅР°С‡РёРЅР°РµРј Р°РЅР°Р»РёР·РёСЂРѕРІР°С‚СЊ РЅРµР±Р°Р»Р°РЅСЃС‹
 			if (dPreviousImb < 0.0)
 			{
-				// первый небаланс, если еще не рассчитывали
+				// РїРµСЂРІС‹Р№ РЅРµР±Р°Р»Р°РЅСЃ, РµСЃР»Рё РµС‰Рµ РЅРµ СЂР°СЃСЃС‡РёС‚С‹РІР°Р»Рё
 				dPreviousImb = ImbNorm(pNodes->m_IterationControl.m_MaxImbP.GetDiff(), pNodes->m_IterationControl.m_MaxImbQ.GetDiff());
 			}
 			else
 			{
-				// если есть предыдущий небаланс, рассчитываем отношение текущего и предыдущего
+				// РµСЃР»Рё РµСЃС‚СЊ РїСЂРµРґС‹РґСѓС‰РёР№ РЅРµР±Р°Р»Р°РЅСЃ, СЂР°СЃСЃС‡РёС‚С‹РІР°РµРј РѕС‚РЅРѕС€РµРЅРёРµ С‚РµРєСѓС‰РµРіРѕ Рё РїСЂРµРґС‹РґСѓС‰РµРіРѕ
 				double dCurrentImb = ImbNorm(pNodes->m_IterationControl.m_MaxImbP.GetDiff(), pNodes->m_IterationControl.m_MaxImbQ.GetDiff());
 				double dImbRatio = dCurrentImb / dPreviousImb;
 				/*
@@ -196,22 +221,22 @@ void CLoadFlow::SeidellTanh()
 			}
 		}
 
-		// сбрасываем статистику итерации
+		// СЃР±СЂР°СЃС‹РІР°РµРј СЃС‚Р°С‚РёСЃС‚РёРєСѓ РёС‚РµСЂР°С†РёРё
 		pNodes->m_IterationControl.Reset();
-		// определяем можно ли выполнять переключение типов узлов (по количеству итераций)
+		// РѕРїСЂРµРґРµР»СЏРµРј РјРѕР¶РЅРѕ Р»Рё РІС‹РїРѕР»РЅСЏС‚СЊ РїРµСЂРµРєР»СЋС‡РµРЅРёРµ С‚РёРїРѕРІ СѓР·Р»РѕРІ (РїРѕ РєРѕР»РёС‡РµСЃС‚РІСѓ РёС‚РµСЂР°С†РёР№)
 		bool bPVPQSwitchEnabled = nSeidellIterations >= m_Parameters.m_nEnableSwitchIteration;
 
-		// для всех узлов в порядке обработки Зейделя
+		// РґР»СЏ РІСЃРµС… СѓР·Р»РѕРІ РІ РїРѕСЂСЏРґРєРµ РѕР±СЂР°Р±РѕС‚РєРё Р—РµР№РґРµР»СЏ
 		for (auto&& it : SeidellOrder)
 		{
 			pMatrixInfo = it;
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			// рассчитываем нагрузку по СХН
+			// СЂР°СЃСЃС‡РёС‚С‹РІР°РµРј РЅР°РіСЂСѓР·РєСѓ РїРѕ РЎРҐРќ
 			GetPnrQnrSuper(pNode);
 			pNode->Qgr = Qgtanh(pNode);
 			double& Pe = pMatrixInfo->m_dImbP;
 			double& Qe = pMatrixInfo->m_dImbQ;
-			// рассчитываем небалансы
+			// СЂР°СЃСЃС‡РёС‚С‹РІР°РµРј РЅРµР±Р°Р»Р°РЅСЃС‹
 			Pe = pNode->GetSelfImbP();
 			Qe = pNode->GetSelfImbQ();
 
@@ -224,7 +249,7 @@ void CLoadFlow::SeidellTanh()
 				Qe += mult.imag();
 			}
 
-			double Q = Qe + pNode->Qgr;	// расчетная генерация в узле
+			double Q = Qe + pNode->Qgr;	// СЂР°СЃС‡РµС‚РЅР°СЏ РіРµРЅРµСЂР°С†РёСЏ РІ СѓР·Р»Рµ
 
 			cplx I1 = dStep / conj(Unode) / pNode->YiiSuper;
 
@@ -248,22 +273,22 @@ void CLoadFlow::SeidellTanh()
 			}
 
 			pNode->UpdateVDeltaSuper();
-			// для всех узлов кроме статистику итерации
+			// РґР»СЏ РІСЃРµС… СѓР·Р»РѕРІ РєСЂРѕРјРµ СЃС‚Р°С‚РёСЃС‚РёРєСѓ РёС‚РµСЂР°С†РёРё
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 
 		if (!CheckLF())
-			// если итерация привела не недопустимому режиму - выходим
+			// РµСЃР»Рё РёС‚РµСЂР°С†РёСЏ РїСЂРёРІРµР»Р° РЅРµ РЅРµРґРѕРїСѓСЃС‚РёРјРѕРјСѓ СЂРµР¶РёРјСѓ - РІС‹С…РѕРґРёРј
 			throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
 
 		pNodes->DumpIterationControl();
 
-		// если достигли заданного небаланса - выходим
+		// РµСЃР»Рё РґРѕСЃС‚РёРіР»Рё Р·Р°РґР°РЅРЅРѕРіРѕ РЅРµР±Р°Р»Р°РЅСЃР° - РІС‹С…РѕРґРёРј
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
 	}
 
-	// пересчитываем проводимости узлов без устранения отрицательных сопротивлений
+	// РїРµСЂРµСЃС‡РёС‚С‹РІР°РµРј РїСЂРѕРІРѕРґРёРјРѕСЃС‚Рё СѓР·Р»РѕРІ Р±РµР· СѓСЃС‚СЂР°РЅРµРЅРёСЏ РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹С… СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёР№
 	pNodes->CalcAdmittances(false);
 }
 
@@ -274,7 +299,7 @@ double CLoadFlow::Qgtanh(CDynaNodeBase *pNode)
 	double k = 1.0 + 0.0001;
 	double Qg0 = min(pNode->LFQmax - m_Parameters.m_Imb, max(0.0, pNode->LFQmin + m_Parameters.m_Imb));
 	double ofs = atanh((Qg0 - Qm) / Qs) / m_dTanhBeta * 0.0;
-	return Qs * tanh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs)) + Qm;
+	return Qs * tanh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs) / pNode->Unom) + Qm;
 	_CheckNumber(pNode->Qgr);
 }
 
@@ -284,12 +309,12 @@ void CLoadFlow::BuildMatrixTanh()
 	double *pb = klu.B();
 	double *pAx = klu.Ax();
 
-	// обходим только узлы в матрице
+	// РѕР±С…РѕРґРёРј С‚РѕР»СЊРєРѕ СѓР·Р»С‹ РІ РјР°С‚СЂРёС†Рµ
 	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 
 		ptrdiff_t k = pb - klu.B();
-		// здесь считаем, что нагрузка СХН в Node::pnr/Node::qnr уже в расчете и анализе небалансов
+		// Р·РґРµСЃСЊ СЃС‡РёС‚Р°РµРј, С‡С‚Рѕ РЅР°РіСЂСѓР·РєР° РЎРҐРќ РІ Node::pnr/Node::qnr СѓР¶Рµ РІ СЂР°СЃС‡РµС‚Рµ Рё Р°РЅР°Р»РёР·Рµ РЅРµР±Р°Р»Р°РЅСЃРѕРІ
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		GetPnrQnrSuper(pNode);
 		double Pe = pNode->GetSelfImbP();
@@ -307,8 +332,8 @@ void CLoadFlow::BuildMatrixTanh()
 			double Qm = (pNode->LFQmax + pNode->LFQmin) / 2.0;
 			double Qg0 = min(pNode->LFQmax - m_Parameters.m_Imb, max(0.0, pNode->LFQmin + m_Parameters.m_Imb));
 			double ofs = atanh((Qg0 - Qm) / Qs) / m_dTanhBeta * 0.0;
-			double co = cosh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs));
-			double ddQ = m_dTanhBeta * Qs / co / co;
+			double co = cosh(m_dTanhBeta * (pNode->LFVref - pNode->V + ofs) / pNode->Unom);
+			double ddQ = m_dTanhBeta * Qs / co / co / pNode->Unom;
 			dQdV += ddQ;
 		}
 
