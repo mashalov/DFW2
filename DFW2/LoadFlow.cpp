@@ -681,17 +681,20 @@ bool CLoadFlow::Run()
 	if (m_Parameters.m_bStartup)
 		Seidell();
 
-	//NewtonTanh();
-	//CheckFeasible();
+	//Newton();
+
+	//*
+	NewtonTanh();
+	//Newton();
+	CheckFeasible();
 	/*
 	for (auto&& it : *pNodes)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		pNode->StartLF(false, m_Parameters.m_Imb);
 	}
-
 	*/
-	Newton();
+	
 
 #ifdef _DEBUG
 	CompareWithRastr();
@@ -882,11 +885,12 @@ void CLoadFlow::DumpNodes()
 	setlocale(LC_ALL, "ru-ru");
 	if (!_tfopen_s(&fdump, _T("c:\\tmp\\resnodes.csv"), _T("wb+")))
 	{
-		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
+		//_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
 		for (auto&& it : pNodes->m_DevVec)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 #ifdef _DEBUG
+			/*
 			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%g\n"),
 				pNode->GetId(),
 				pNode->V,
@@ -904,7 +908,7 @@ void CLoadFlow::DumpNodes()
 				pNode->Vrastr,
 				pNode->Deltarastr,
 				pNode->Qgrastr);
-			/*
+			*/
 			_ftprintf(fdump, _T("%d;%.12g;%.12g;%.12g;%.12g;%.12g;%.12g\n"),
 				pNode->GetId(),
 				pNode->V,
@@ -912,7 +916,7 @@ void CLoadFlow::DumpNodes()
 				pNode->Pnr,
 				pNode->Qnr,
 				pNode->Pg,
-				pNode->Qg);*/
+				pNode->Qg);
 #else
 			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
 				pNode->GetId(),
@@ -984,7 +988,7 @@ void CLoadFlow::Newton()
 	PQmin_PV.reserve(klu.MatrixSize() / 2);
 
 	// квадраты небалансов до и после итерации
-	double g0(0.0), g1(0.1);
+	double g0(0.0), g1(0.1), lambda(1.0);
 
 	while (1)
 	{
@@ -1067,12 +1071,14 @@ void CLoadFlow::Newton()
 		if (it > 1 && g1 > g0)
 		{
 			double gs1v = CDynaModel::gs1(klu, m_Rh, klu.B());
-			double lambda = -0.5 * gs1v / (g1 - g0 - gs1v);
+			// знак gs1v должен быть "-" ????
+			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
 			RestoreVDelta();
 			UpdateVDelta(lambda);
 			continue;
 		}
 
+		lambda = 1.0;
 		g0 = g1;
 
 		// сохраняем исходные значения переменных
@@ -1232,7 +1238,7 @@ double CLoadFlow::GetSquaredImb()
 	double Imb(0.0);
 	for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		Imb += ImbNorm(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ);
-	return Imb;
+	return sqrt(Imb);
 }
 
 void CLoadFlow::CheckFeasible()

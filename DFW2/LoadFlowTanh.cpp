@@ -11,9 +11,16 @@ void CLoadFlow::NewtonTanh()
 
 	// вектор дл€ указателей переключаемых узлов, с размерностью в половину уравнений матрицы
 
+	double g0(0.0), g1(0.1), lambda(1.0);
+
 	while (1)
 	{
-		++it;
+		//if (!CheckLF())
+		//	throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
+
+		if (++it > m_Parameters.m_nMaxIterations)
+			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
+
 		pNodes->m_IterationControl.Reset();
 
 		// считаем небаланс по всем узлам кроме Ѕ”
@@ -21,8 +28,8 @@ void CLoadFlow::NewtonTanh()
 		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			if(!pNode->IsLFTypePQ())
-				Qgtanh(pNode);
+			if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
+				pNode->Qgr = Qgtanh(pNode);
 			GetNodeImb(pMatrixInfo);	// небаланс считаетс€ с учетом —’Ќ
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
@@ -39,6 +46,26 @@ void CLoadFlow::NewtonTanh()
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 
+		g1 = GetSquaredImb();
+
+		pNodes->m_IterationControl.m_ImbRatio = g1;
+		pNodes->DumpIterationControl();
+		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
+			break;
+
+		if (it > 1 && g1 > g0)
+		{
+			double gs1v = -CDynaModel::gs1(klu, m_Rh, klu.B());
+			// знак gs1v должен быть "-" ????
+			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
+			RestoreVDelta();
+			UpdateVDelta(lambda);
+			continue;
+		}
+
+		lambda = 1.0;
+		g0 = g1;
+
 		BuildMatrixTanh();
 
 		// сохран€ем небаланс до итерации
@@ -46,17 +73,8 @@ void CLoadFlow::NewtonTanh()
 
 		// сохран€ем исходные значени€ переменных
 		StoreVDelta();
-		double g0 = GetSquaredImb();
-		pNodes->m_IterationControl.m_ImbRatio = g0;
-		pNodes->DumpIterationControl();
-		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
-			break;
-
-		if (it > m_Parameters.m_nMaxIterations)
-			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
-
-		ptrdiff_t mxi(0);
-		double f = klu.FindMaxB(mxi);
+		// сохран€ем небаланс до итерации
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
 		SolveLinearSystem();
 		// обновл€ем переменные
 		UpdateVDelta();
@@ -113,7 +131,7 @@ void CLoadFlow::SeidellTanh()
 	for (; pMatrixInfo >= m_pMatrixInfo.get(); pMatrixInfo--)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
-		if (!pNode->IsLFTypePQ())
+		if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
 		{
 			SeidellOrder.push_back(pMatrixInfo);
 			pMatrixInfo->bVisited = true;
@@ -273,17 +291,16 @@ void CLoadFlow::BuildMatrixTanh()
 		ptrdiff_t k = pb - klu.B();
 		// здесь считаем, что нагрузка —’Ќ в Node::pnr/Node::qnr уже в расчете и анализе небалансов
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
+		GetPnrQnrSuper(pNode);
 		double Pe = pNode->GetSelfImbP();
-		if (!pNode->IsLFTypePQ())
-		{
+		if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
 			pNode->Qgr = Qgtanh(pNode);
-		}
 		double Qe = pNode->GetSelfImbQ();
 		_CheckNumber(Qe);
 		double dPdDelta(0.0), dQdDelta(0.0);
 		double dPdV = pNode->GetSelfdPdV();
 		double dQdV = pNode->GetSelfdQdV();
-		if (!pNode->IsLFTypePQ())
+		if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
 		{
 
 			double Qs = (pNode->LFQmax - pNode->LFQmin) / 2.0;
