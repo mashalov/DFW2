@@ -681,16 +681,13 @@ bool CLoadFlow::Run()
 	if (m_Parameters.m_bStartup)
 		Seidell();
 
-	/*
-	NewtonTanh();
-	
-	CheckFeasible();
-	for (auto&& it : *pNodes)
+	if (0)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-		pNode->StartLF(false, m_Parameters.m_Imb);
+		NewtonTanh();
+		CheckFeasible();
+		for (auto&& it : *pNodes)
+			static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
 	}
-	*/
 	Newton();
 
 #ifdef _DEBUG
@@ -1124,7 +1121,16 @@ void CLoadFlow::Newton()
 		BuildMatrix();
 		// сохраняем небаланс до итерации
 		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
+
+		ptrdiff_t iMax(0);
+		double maxb = klu.FindMaxB(iMax);
+		CDynaNodeBase *pNode1(m_pMatrixInfo.get()[iMax / 2].pNode);
+
 		SolveLinearSystem();
+
+		maxb = klu.FindMaxB(iMax);
+		CDynaNodeBase *pNode2(m_pMatrixInfo.get()[iMax / 2].pNode);
+
 		// обновляем переменные
 		UpdateVDelta();
 	}
@@ -1164,12 +1170,13 @@ void CLoadFlow::Newton()
 void CLoadFlow::UpdateVDelta(double dStep)
 {
 	_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
+	double *b = klu.B();
 	for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
-		double *pb = klu.B() + pNode->A(0);
+		double *pb = b + pNode->A(0);
 		double newDelta = pNode->Delta - *pb * dStep;		pb++;
-		double newV = pNode->V - *pb * dStep;
+		double newV		= pNode->V - *pb * dStep;
 		/*
 		// Не даем узлам на ограничениях реактивной мощности отклоняться от уставки более чем на 10%
 		// стратка работает в Inor при небалансах не превышающих заданный
@@ -1193,7 +1200,8 @@ void CLoadFlow::UpdateVDelta(double dStep)
 			break;
 		}
 		*/
-		pNode->Delta = newDelta;	pNode->V	 = newV;
+		pNode->Delta = newDelta;	
+		pNode->V	 = newV;
 		pNode->UpdateVreVimSuper();
 	}
 }

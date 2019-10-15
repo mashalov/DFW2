@@ -53,7 +53,7 @@ void CLoadFlow::NewtonTanh()
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
 
-		if (it > 10000 && g1 > g0)
+		if (it > 100000 && g1 > g0)
 		{
 			double gs1v = -CDynaModel::gs1(klu, m_Rh, klu.B());
 			// знак gs1v должен быть "-" ????
@@ -75,7 +75,18 @@ void CLoadFlow::NewtonTanh()
 		StoreVDelta();
 		// сохраняем небаланс до итерации
 		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
+
+
+		ptrdiff_t iMax(0);
+		double maxb = klu.FindMaxB(iMax);
+		CDynaNodeBase *pNode1(m_pMatrixInfo.get()[iMax / 2].pNode);
+		
 		SolveLinearSystem();
+
+		double *bx = klu.B();
+
+		maxb = klu.FindMaxB(iMax);
+		CDynaNodeBase *pNode2(m_pMatrixInfo.get()[iMax / 2].pNode);
 
 		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
@@ -97,8 +108,9 @@ void CLoadFlow::NewtonTanh()
 			}
 		}
 
-		ptrdiff_t iMax(0);
-		double maxb = klu.FindMaxB(iMax);
+
+
+		
 
 		// обновляем переменные
 		UpdateVDelta(lambda);
