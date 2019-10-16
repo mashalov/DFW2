@@ -135,22 +135,22 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 					Qgr = LFQmin + (LFQmax - LFQmin) / 2.0;			// реактивную мощность ставим в середину диапазона
 					Delta = 0.0;
 				}
-				else if (V > LFVref && Qgr <= LFQmax)
+				else if (V > LFVref && Qgr >= LFQmin + ImbTol)
 				{
 					V = LFVref;
 				}
-				else if (V < LFVref && Qgr >= LFQmin)
+				else if (V < LFVref && Qgr <= LFQmax - ImbTol)
 				{
 					V = LFVref;
 				}
-				else if (Qgr > LFQmax)
+				else if (Qgr >= LFQmax - ImbTol)
 				{
 					// для неплоского старта приводим реактивную мощность в ограничения
 					// и определяем тип ограничения узла
 					Qgr = LFQmax;
 					m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 				}
-				else if (LFQmin > Qgr)
+				else if (LFQmin + ImbTol >= Qgr)
 				{
 					Qgr = LFQmin;
 					m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
@@ -902,7 +902,7 @@ void CLoadFlow::DumpNodes()
 				pNode->Vrastr,
 				pNode->Deltarastr / M_PI * 180.0,
 				pNode->Qgrastr);
-			///*/
+			//*/
 			/*
 			_ftprintf(fdump, _T("%d;%.12g;%.12g;%.12g;%.12g;%.12g;%.12g\n"),
 				pNode->GetId(),

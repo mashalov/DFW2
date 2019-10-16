@@ -13,6 +13,8 @@ void CLoadFlow::NewtonTanh()
 
 	double g0(0.0), g1(0.1), lambda(1.0);
 
+	m_dTanhBeta = 500.0;
+
 	while (1)
 	{
 		//if (!CheckLF())
@@ -97,7 +99,7 @@ void CLoadFlow::NewtonTanh()
 				double *pb = klu.B() + pNode->A(1);
 				pNode->V += *pb;
 				double dQ = fabs(pNode->Qgr - Qgtanh(pNode));
-				if (dQ > 0.9 * (pNode->LFQmax - pNode->LFQmin))
+				if (dQ > 0.5 * (pNode->LFQmax - pNode->LFQmin) && ((Vbackup < pNode->LFVref && pNode->V > pNode->LFVref) || (Vbackup > pNode->LFVref && pNode->V < pNode->LFVref)))
 				{
 					double newLambda = fabs(Vbackup - pNode->LFVref) / fabs(*pb);
 					if (lambda > newLambda)
@@ -108,9 +110,9 @@ void CLoadFlow::NewtonTanh()
 			}
 		}
 
+		if(lambda >= 1.0 && m_dTanhBeta < 2500.0 && g1 < g0)
+			m_dTanhBeta *= 1.5;
 
-
-		
 
 		// обновляем переменные
 		UpdateVDelta(lambda);
