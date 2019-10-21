@@ -491,6 +491,7 @@ bool CDeviceContainer::LeaveDiscontinuityMode(CDynaModel* pDynaModel)
 	return bRes;
 }
 
+// обработка разрыва устройств в контейнере
 eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	m_eDeviceFunctionStatus = DFS_OK;
@@ -512,10 +513,10 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaMo
 			break;
 		}
 	}
-
 	return m_eDeviceFunctionStatus;
 }
 
+// для всех устройств контейнера сбрасывает статус выполнения функции
 void CDeviceContainer::UnprocessDiscontinuity()
 {
 	for (auto&& it : m_DevVec)

@@ -1070,6 +1070,7 @@ void CDynaModel::EnterDiscontinuityMode()
 	}
 }
 
+// для устройств во всех контейнерах сбрасывает статус готовности функции
 void CDynaModel::UnprocessDiscontinuity()
 {
 	for (auto&& it : m_DeviceContainers)
@@ -1082,12 +1083,18 @@ bool CDynaModel::ProcessDiscontinuity()
 
 	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
 		
+	// функция работает только в режиме обработки разрыва
 	if (sc.m_bDiscontinuityMode)
 	{
+		// работаем в двух вложенных циклах
+		// первый работает до тех пор, пока есть запросы на обработку разрыва sc.m_bDiscontinuityRequest в процессе обработки разрыва
+		// второй работает до тех пор, пока все устройства не обработают разрыв успешно
 		while (1)
 		{
-
+			// сбрасываем все статусы готовности. На каждой итерации обработки разрыва все устройства
+			// начинают обработку заново
 			UnprocessDiscontinuity();
+			// запрос на обработку разрыва сбрасываем
 			sc.m_bDiscontinuityRequest = false;
 
 			ChangeOrder(1);
@@ -1097,24 +1104,26 @@ bool CDynaModel::ProcessDiscontinuity()
 
 			while (Status == DFS_NOTREADY)
 			{
+				// пока статус "неготово"
 				ptrdiff_t nOKPds = 0;
-
+				// обрабатываем разрывы для всех устройств во всех контейнерах
 				for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != DFS_FAILED; it++)
 				{
 					switch ((*it)->ProcessDiscontinuity(this))
 					{
 					case DFS_OK:
 					case DFS_DONTNEED:
-						nOKPds++; // count how many inits succeeded
+						nOKPds++; // если контейнер обработал разрыв успешно, считаем количество успехов
 						break;
 					case DFS_FAILED:
-						Status = DFS_FAILED;
+						Status = DFS_FAILED;	// если контейнер завалился - выходим из цикла обработки
 						break;
 					case DFS_NOTREADY:
-						Status = DFS_NOTREADY;
+						Status = DFS_NOTREADY;	// если контейнер не готов - повторяем
 						break;
 					}
 				}
+				// если количество успехов равно количеству конейнеров - модель обработала разрыв успешно, выходим из цикла
 				if (nOKPds == m_DeviceContainers.size())
 				{
 					Status = DFS_OK;
@@ -1122,11 +1131,13 @@ bool CDynaModel::ProcessDiscontinuity()
 				}
 				else
 				{
+					// иначе считаем сколько было успехов на предыдущей итерации
 					if (nTotalOKPds < 0)
-						nTotalOKPds = nOKPds;
+						nTotalOKPds = nOKPds;	// если итерация первая, запоминаем сколько было на ней успехов
 					else
-						if (nTotalOKPds == nOKPds)
+						if (nTotalOKPds == nOKPds)	// если итерация вторая и далее, и количество успехов равно предыдущем количеству успехов
 						{
+							// это бесконечный цикл
 							Status = DFS_FAILED;
 							Log(CDFW2Messages::DFW2LOG_ERROR, DFW2::CDFW2Messages::m_cszProcessDiscontinuityLoopedInfinitely);
 							break;
@@ -1134,9 +1145,11 @@ bool CDynaModel::ProcessDiscontinuity()
 				}
 			}
 
+			// если все ОК, но в процессе обработки разрыва был(и) запрос(ы) на обработку разрывов - повторяем цикл обработки
 			if (!sc.m_bDiscontinuityRequest)
 				break;
 		}
+		// инициализируем Нордсик
 		ResetNordsiek();
 	}
 	else

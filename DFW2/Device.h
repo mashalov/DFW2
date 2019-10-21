@@ -280,6 +280,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Initialized() { return m_eInitStatus; }
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() { return m_eInitStatus; }
+		// ставит статус обработки в "неготово", для того чтобы различать устройства с обработанными разрывами
 		void UnprocessDiscontinuity() { m_eInitStatus = DFS_NOTREADY;  }
 
 		// функция ремапа номера уравнения устройства в номер уравнения в Якоби

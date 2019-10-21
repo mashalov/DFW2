@@ -529,15 +529,19 @@ bool CDevice::LeaveDiscontinuityMode(CDynaModel* pDynaModel)
 	return true;
 }
 
+// обработка разрыва устройства
 eDEVICEFUNCTIONSTATUS CDevice::CheckProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_eInitStatus != DFS_OK)
 	{
+		// проверяем готовы ли ведущие устройства
 		m_eInitStatus = MastersReady(&CheckMasterDeviceDiscontinuity);
 
+		// если ведущие готовы, обрабатываем разрыв устройства
 		if (m_eInitStatus == DFS_OK)
 			m_eInitStatus = ProcessDiscontinuity(pDynaModel);
 
+		// если устройство не требует обработки - считаем что обработано успешно
 		if (m_eInitStatus == DFS_DONTNEED)
 			m_eInitStatus = DFS_OK;
 	}
@@ -546,9 +550,10 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckProcessDiscontinuity(CDynaModel* pDynaModel)
 	return m_eInitStatus;
 }
 
-
+// функция обработки разрыва по умолчанию
 eDEVICEFUNCTIONSTATUS CDevice::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
+	// обрабатываем разрывы в примитивах
 	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
 
 	for (auto&& it : m_Primitives)
@@ -556,21 +561,24 @@ eDEVICEFUNCTIONSTATUS CDevice::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		switch (it->ProcessDiscontinuity(pDynaModel))
 		{
 		case DFS_FAILED:
-			Status = DFS_FAILED;
+			Status = DFS_FAILED;		// если отказ - выходим сразу
 			break;
 		case DFS_NOTREADY:
-			Status = DFS_NOTREADY;
+			Status = DFS_NOTREADY;		// если не готов - выходим сразу
 			break;
 		}
 	}
 	return Status;
 }
 
+// выбор наиболее жесткого результата из двух результатов выполнения функций
 eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2)
 {
+	// если один из статусов - отказ - возвращаем отказ
 	if (Status1 == DFS_FAILED || Status2 == DFS_FAILED)
 		return DFS_FAILED;
 
+	// если один из статусов - не готов - возвращаем не готов
 	if (Status1 == DFS_NOTREADY || Status2 == DFS_NOTREADY)
 		return DFS_NOTREADY;
 
@@ -731,7 +739,7 @@ bool CDevice::SetSingleLink(ptrdiff_t nIndex, CDevice *pDevice)
 	return true;
 }
 
-// подробное имя устройства формируется по с описанием типа. Остальное по правилам CDeviceId::UpdateVerbalName
+// подробное имя устройства формируется с описанием типа. Остальное по правилам CDeviceId::UpdateVerbalName
 void CDevice::UpdateVerbalName()
 {
 	CDeviceId::UpdateVerbalName();
@@ -848,24 +856,25 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, 
 	return Status;
 }
 
+// проверяет готовы ли ведущие устройства
 eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = DFS_OK;	// по умолчанию все хорошо
 	CDeviceContainerProperties &Props = m_pContainer->m_ContainerProps;
 
 	// use links to masters, prepared in CDynaModel::Link() instead of original links
-	LINKSTOMAP	 &LinksTo = Props.m_MasterLinksTo;
-	for (LINKSTOMAPITR it1 = LinksTo.begin(); it1 != LinksTo.end(); it1++)
+
+	// если у устройсва есть ведущие устройства, проверяем, готовы ли они
+
+	for (auto&& it1 : Props.m_MasterLinksTo)
 	{
-		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, it1->second));
+		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, it1.second));
 		if (!CDevice::IsFunctionStatusOK(Status)) return Status;
 	}
 
-
-	LINKSFROMMAP &LinksFrom = Props.m_MasterLinksFrom;
-	for (LINKSFROMMAPITR it2 = LinksFrom.begin(); it2 != LinksFrom.end(); it2++)
+	for (auto&& it2 : Props.m_MasterLinksFrom)
 	{
-		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, it2->second));
+		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, it2.second));
 		if (!CDevice::IsFunctionStatusOK(Status)) return Status;
 	}
 

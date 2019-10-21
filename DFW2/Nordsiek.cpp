@@ -1,16 +1,16 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "DynaModel.h"
 
 
 using namespace DFW2;
 
-// рассчитывает прогноз Nordsieck для заданного шага
+// СЂР°СЃСЃС‡РёС‚С‹РІР°РµС‚ РїСЂРѕРіРЅРѕР· Nordsieck РґР»СЏ Р·Р°РґР°РЅРЅРѕРіРѕ С€Р°РіР°
 void CDynaModel::Predict()
 {
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 
-	// Алгоритм расчета [Lsode 2.61]
+	// РђР»РіРѕСЂРёС‚Рј СЂР°СЃС‡РµС‚Р° [Lsode 2.61]
 	while (pVectorBegin < pVectorEnd)
 	{
 		pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
@@ -23,17 +23,17 @@ void CDynaModel::Predict()
 			}
 		}
 
-		// прогнозное значение переменной состояния обновляем по Nordsieck
+		// РїСЂРѕРіРЅРѕР·РЅРѕРµ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ РѕР±РЅРѕРІР»СЏРµРј РїРѕ Nordsieck
 		*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-		pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
+		pVectorBegin->Error = 0.0;	// РѕР±РЅСѓР»СЏРµРј РѕС€РёР±РєСѓ С€Р°РіР°
 		pVectorBegin++;
 	}
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::ResetIterations);
 
-	// для устройств, которые требует внутренней обработки прогноза
-	// (например для узлов, которым нужно перевести прогноз полярного напряжения в прямоугольное)
-	// делаем цикл с вызовом функции прогноза устройства
+	// РґР»СЏ СѓСЃС‚СЂРѕР№СЃС‚РІ, РєРѕС‚РѕСЂС‹Рµ С‚СЂРµР±СѓРµС‚ РІРЅСѓС‚СЂРµРЅРЅРµР№ РѕР±СЂР°Р±РѕС‚РєРё РїСЂРѕРіРЅРѕР·Р°
+	// (РЅР°РїСЂРёРјРµСЂ РґР»СЏ СѓР·Р»РѕРІ, РєРѕС‚РѕСЂС‹Рј РЅСѓР¶РЅРѕ РїРµСЂРµРІРµСЃС‚Рё РїСЂРѕРіРЅРѕР· РїРѕР»СЏСЂРЅРѕРіРѕ РЅР°РїСЂСЏР¶РµРЅРёСЏ РІ РїСЂСЏРјРѕСѓРіРѕР»СЊРЅРѕРµ)
+	// РґРµР»Р°РµРј С†РёРєР» СЃ РІС‹Р·РѕРІРѕРј С„СѓРЅРєС†РёРё РїСЂРѕРіРЅРѕР·Р° СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	for (auto&& it : m_DeviceContainersPredict)
 		for (auto&& dit : *it)
 			dit->Predict();
@@ -65,6 +65,7 @@ void CDynaModel::InitNordsiek()
 	sc.m_bNordsiekSaved = false;
 }
 
+// СЃР±СЂРѕСЃ СЌР»РµРјРµРЅС‚РѕРІ РќРѕСЂРґРёСЃРєР° (СѓРЅРёС‡С‚РѕР¶РµРЅРёРµ РёСЃС‚РѕСЂРёРё)
 void CDynaModel::ResetNordsiek()
 {
 	struct RightVector *pVectorBegin = pRightVector;
@@ -74,19 +75,22 @@ void CDynaModel::ResetNordsiek()
 	{
 		while (pVectorBegin < pVectorEnd)
 		{
+			// РІ РєР°С‡РµСЃС‚РІРµ Р·РЅР°С‡РµРЅРёСЏ РїСЂРёРЅРёРјР°РµРј С‚Рѕ, С‡С‚Рѕ СЂР°СЃСЃС‡РёС‚Р°РЅРѕ РІ СѓСЃС‚СЂРѕР№СЃС‚РІРµ
 			pVectorBegin->Tminus2Value = pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0] = *pVectorBegin->pValue;
+			// РїРµСЂРІР°СЏ РїСЂРѕРёР·РІРѕРґРЅР°СЏ СЂР°РІРЅР° РЅСѓР»СЋ (РІС‚РѕСЂР°СЏ С‚РѕР¶Рµ, РЅРѕ РїРѕСЃР»Рµ Reset РјС‹ РµРµ РЅРµ РёСЃРїРѕР»СЊР·СѓРµРј, С‚.Рє. СЂР°Р±РѕС‚Р°РµРј РЅР° РїРµСЂРІРѕРј РїРѕСЂСЏРґРєРµ
 			pVectorBegin->Nordsiek[1] = pVectorBegin->SavedNordsiek[1] = 0.0;
 			pVectorBegin->SavedError = 0.0;
 			pVectorBegin++;
 		}
+		// Р·Р°РїСЂР°С€РёРІР°РµРј СЂР°СЃС‡РµС‚ РїСЂРѕРёР·РІРѕРґРЅС‹С… РґРёС„С„РµСЂРµРЅС†РёР°Р»СЊРЅС‹С… СѓСЂР°РІРЅРµРЅРёР№ Сѓ СѓСЃС‚СЂРѕР№СЃС‚РІ, РєРѕС‚РѕСЂС‹Рµ СЌС‚Рѕ РјРѕРіСѓС‚
 		BuildDerivatives();
 	}
 	sc.OrderChanged();
 	sc.StepChanged();
 }
 
-// построение Nordsieck после того, как обнаружено что текущая история
-// ненадежна
+// РїРѕСЃС‚СЂРѕРµРЅРёРµ Nordsieck РїРѕСЃР»Рµ С‚РѕРіРѕ, РєР°Рє РѕР±РЅР°СЂСѓР¶РµРЅРѕ С‡С‚Рѕ С‚РµРєСѓС‰Р°СЏ РёСЃС‚РѕСЂРёСЏ
+// РЅРµРЅР°РґРµР¶РЅР°
 void CDynaModel::ReInitializeNordsiek()
 {
 	struct RightVector *pVectorBegin = pRightVector;
@@ -94,21 +98,21 @@ void CDynaModel::ReInitializeNordsiek()
 
 	if (sc.m_bNordsiekSaved)
 	{
-		// если есть сохраненный шаг
+		// РµСЃР»Рё РµСЃС‚СЊ СЃРѕС…СЂР°РЅРµРЅРЅС‹Р№ С€Р°Рі
 		while (pVectorBegin < pVectorEnd)
 		{
-			// значение восстанавливаем
+			// Р·РЅР°С‡РµРЅРёРµ РІРѕСЃСЃС‚Р°РЅР°РІР»РёРІР°РµРј
 			pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0];
 			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-			// а элемент первого порядка конструируем по разности между предыдущим и пред-предыдущим значениями
-			// т.к. первый элемент это hy', а y' = (y(-1) - y(-2)) / h. Note - мы берем производную с пред-предыдущего шага
+			// Р° СЌР»РµРјРµРЅС‚ РїРµСЂРІРѕРіРѕ РїРѕСЂСЏРґРєР° РєРѕРЅСЃС‚СЂСѓРёСЂСѓРµРј РїРѕ СЂР°Р·РЅРѕСЃС‚Рё РјРµР¶РґСѓ РїСЂРµРґС‹РґСѓС‰РёРј Рё РїСЂРµРґ-РїСЂРµРґС‹РґСѓС‰РёРј Р·РЅР°С‡РµРЅРёСЏРјРё
+			// С‚.Рє. РїРµСЂРІС‹Р№ СЌР»РµРјРµРЅС‚ СЌС‚Рѕ hy', Р° y' = (y(-1) - y(-2)) / h. Note - РјС‹ Р±РµСЂРµРј РїСЂРѕРёР·РІРѕРґРЅСѓСЋ СЃ РїСЂРµРґ-РїСЂРµРґС‹РґСѓС‰РµРіРѕ С€Р°РіР°
 
 			//											y(-1)						y(-2)
 			pVectorBegin->Nordsiek[1] = pVectorBegin->SavedNordsiek[0] - pVectorBegin->Tminus2Value;
 			pVectorBegin->SavedError = 0.0;
 			pVectorBegin++;
 		}
-		// масшатабируем Nordsieck на заданный шаг
+		// РјР°СЃС€Р°С‚Р°Р±РёСЂСѓРµРј Nordsieck РЅР° Р·Р°РґР°РЅРЅС‹Р№ С€Р°Рі
 		RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
 		BuildDerivatives();
 	}
@@ -117,7 +121,7 @@ void CDynaModel::ReInitializeNordsiek()
 	sc.ResetStepsToFail();
 }
 
-// восстанавление Nordsieck с предыдущего шага
+// РІРѕСЃСЃС‚Р°РЅР°РІР»РµРЅРёРµ Nordsieck СЃ РїСЂРµРґС‹РґСѓС‰РµРіРѕ С€Р°РіР°
 void CDynaModel::RestoreNordsiek()
 {
 
@@ -126,8 +130,8 @@ void CDynaModel::RestoreNordsiek()
 
 	if (sc.m_bNordsiekSaved)
 	{
-		// если есть данные для восстановления - просто копируем предыдущий шаг
-		// в текущий
+		// РµСЃР»Рё РµСЃС‚СЊ РґР°РЅРЅС‹Рµ РґР»СЏ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ - РїСЂРѕСЃС‚Рѕ РєРѕРїРёСЂСѓРµРј РїСЂРµРґС‹РґСѓС‰РёР№ С€Р°Рі
+		// РІ С‚РµРєСѓС‰РёР№
 		while (pVectorBegin < pVectorEnd)
 		{
 			double *pN = pVectorBegin->Nordsiek;
@@ -144,9 +148,9 @@ void CDynaModel::RestoreNordsiek()
 	}
 	else
 	{
-		// если данных для восстановления нет
-		// считаем что прозводные нулевые
-		// это слабая надежда, но лучше чем ничего
+		// РµСЃР»Рё РґР°РЅРЅС‹С… РґР»СЏ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ РЅРµС‚
+		// СЃС‡РёС‚Р°РµРј С‡С‚Рѕ РїСЂРѕР·РІРѕРґРЅС‹Рµ РЅСѓР»РµРІС‹Рµ
+		// СЌС‚Рѕ СЃР»Р°Р±Р°СЏ РЅР°РґРµР¶РґР°, РЅРѕ Р»СѓС‡С€Рµ С‡РµРј РЅРёС‡РµРіРѕ
 		while (pVectorBegin < pVectorEnd)
 		{
 			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
@@ -177,13 +181,13 @@ bool CDynaModel::DetectAdamsRinging()
 		while (pVectorBegin < pVectorEnd)
 		{
 			double newValue = pVectorBegin->Nordsiek[1] + pVectorBegin->Error * Methodl1[pVectorBegin->EquationType];
-			// если знак производной изменился - увеличиваем счетчик циклов
+			// РµСЃР»Рё Р·РЅР°Рє РїСЂРѕРёР·РІРѕРґРЅРѕР№ РёР·РјРµРЅРёР»СЃСЏ - СѓРІРµР»РёС‡РёРІР°РµРј СЃС‡РµС‚С‡РёРє С†РёРєР»РѕРІ
 			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && fabs(newValue) > pVectorBegin->Atol * sc.m_dCurrentH * 5.0)
 				pVectorBegin->nRingsCount++;
 			else
 				pVectorBegin->nRingsCount = 0;
 
-			// если счетчик циклов изменения знака достиг порога
+			// РµСЃР»Рё СЃС‡РµС‚С‡РёРє С†РёРєР»РѕРІ РёР·РјРµРЅРµРЅРёСЏ Р·РЅР°РєР° РґРѕСЃС‚РёРі РїРѕСЂРѕРіР°
 			if (pVectorBegin->nRingsCount > m_Parameters.m_nAdamsIndividualSuppressionCycles)
 			{
 				pVectorBegin->nRingsCount = 0;
@@ -193,8 +197,8 @@ bool CDynaModel::DetectAdamsRinging()
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
 						if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
 						{
-							// в RightVector устанавливаемколичество шагов, на протяжении которых производная Адамса будет заменяться 
-							// на производную  BDF
+							// РІ RightVector СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРјРєРѕР»РёС‡РµСЃС‚РІРѕ С€Р°РіРѕРІ, РЅР° РїСЂРѕС‚СЏР¶РµРЅРёРё РєРѕС‚РѕСЂС‹С… РїСЂРѕРёР·РІРѕРґРЅР°СЏ РђРґР°РјСЃР° Р±СѓРґРµС‚ Р·Р°РјРµРЅСЏС‚СЊСЃСЏ 
+							// РЅР° РїСЂРѕРёР·РІРѕРґРЅСѓСЋ  BDF
 							pVectorBegin->nRingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
 						}
 						break;
@@ -226,7 +230,7 @@ bool CDynaModel::DetectAdamsRinging()
 	return sc.bRingingDetected;
 }
 
-// обновляение Nordsieck после выполнения шага
+// РѕР±РЅРѕРІР»СЏРµРЅРёРµ Nordsieck РїРѕСЃР»Рµ РІС‹РїРѕР»РЅРµРЅРёСЏ С€Р°РіР°
 void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 {
 	struct RightVector *pVectorBegin = pRightVector;
@@ -238,35 +242,35 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	double alpha2 = (1.0 + 2.0 * alpha);
 	bool bSuprressRinging = false;
 
-	// режим подавления рингинга активируем если порядок метода 2
-	// шаг превышает 0.01 и UpdateNordsieck вызван для перехода к следующему
-	// шагу после успешного завершения предыдущего
+	// СЂРµР¶РёРј РїРѕРґР°РІР»РµРЅРёСЏ СЂРёРЅРіРёРЅРіР° Р°РєС‚РёРІРёСЂСѓРµРј РµСЃР»Рё РїРѕСЂСЏРґРѕРє РјРµС‚РѕРґР° 2
+	// С€Р°Рі РїСЂРµРІС‹С€Р°РµС‚ 0.01 Рё UpdateNordsieck РІС‹Р·РІР°РЅ РґР»СЏ РїРµСЂРµС…РѕРґР° Рє СЃР»РµРґСѓСЋС‰РµРјСѓ
+	// С€Р°РіСѓ РїРѕСЃР»Рµ СѓСЃРїРµС€РЅРѕРіРѕ Р·Р°РІРµСЂС€РµРЅРёСЏ РїСЂРµРґС‹РґСѓС‰РµРіРѕ
 	if (sc.q == 2 && bAllowSuppression && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
 	{
 		switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 		{
 		case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL:
-			// в глобальном режиме подавления разрешаем подавления на каждом кратном m_nAdamsGlobalSuppressionStep шаге
+			// РІ РіР»РѕР±Р°Р»СЊРЅРѕРј СЂРµР¶РёРјРµ РїРѕРґР°РІР»РµРЅРёСЏ СЂР°Р·СЂРµС€Р°РµРј РїРѕРґР°РІР»РµРЅРёСЏ РЅР° РєР°Р¶РґРѕРј РєСЂР°С‚РЅРѕРј m_nAdamsGlobalSuppressionStep С€Р°РіРµ
 			if (sc.nStepsCount % m_Parameters.m_nAdamsGlobalSuppressionStep == 0 && sc.nStepsCount > m_Parameters.m_nAdamsGlobalSuppressionStep)
 				bSuprressRinging = true;
 			break;
 		case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
-			// в индивидуальном режиме проверяем каждую переменную на рингинг вне зависимости от номера шага
+			// РІ РёРЅРґРёРІРёРґСѓР°Р»СЊРЅРѕРј СЂРµР¶РёРјРµ РїСЂРѕРІРµСЂСЏРµРј РєР°Р¶РґСѓСЋ РїРµСЂРµРјРµРЅРЅСѓСЋ РЅР° СЂРёРЅРіРёРЅРі РІРЅРµ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ РЅРѕРјРµСЂР° С€Р°РіР°
 			bSuprressRinging = true;
 			break;
 		}
 	}
 
-	// обновление по [Lsode 2.76]
+	// РѕР±РЅРѕРІР»РµРЅРёРµ РїРѕ [Lsode 2.76]
 
-	// делаем локальную копию коэффициентов метода для текущего порядка
+	// РґРµР»Р°РµРј Р»РѕРєР°Р»СЊРЅСѓСЋ РєРѕРїРёСЋ РєРѕСЌС„С„РёС†РёРµРЅС‚РѕРІ РјРµС‚РѕРґР° РґР»СЏ С‚РµРєСѓС‰РµРіРѕ РїРѕСЂСЏРґРєР°
 	double LocalMethodl[2][3];
 	std::copy(&Methodl[sc.q - 1][0], &Methodl[sc.q - 1][3], &LocalMethodl[0][0]);
 	std::copy(&Methodl[sc.q + 1][0], &Methodl[sc.q + 1][3], &LocalMethodl[1][0]);
 
 	while (pVectorBegin < pVectorEnd)
 	{
-		// выбираем коэффициент метода по типу уравнения EquationType
+		// РІС‹Р±РёСЂР°РµРј РєРѕСЌС„С„РёС†РёРµРЅС‚ РјРµС‚РѕРґР° РїРѕ С‚РёРїСѓ СѓСЂР°РІРЅРµРЅРёСЏ EquationType
 		const double *lm = LocalMethodl[pVectorBegin->EquationType];
 		double dError = pVectorBegin->Error;
 #ifdef USE_FMA
@@ -279,36 +283,36 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 		pVectorBegin->Nordsiek[2] += dError * *lm;	
 #endif
 
-		// подавление рингинга
+		// РїРѕРґР°РІР»РµРЅРёРµ СЂРёРЅРіРёРЅРіР°
 		if (bSuprressRinging)
 		{
 			if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
 			{
-				// рингинг подавляем только для дифуров (если дифуры решаются BDF надо сбрасывать подавление в ARSM_NONE)
+				// СЂРёРЅРіРёРЅРі РїРѕРґР°РІР»СЏРµРј С‚РѕР»СЊРєРѕ РґР»СЏ РґРёС„СѓСЂРѕРІ (РµСЃР»Рё РґРёС„СѓСЂС‹ СЂРµС€Р°СЋС‚СЃСЏ BDF РЅР°РґРѕ СЃР±СЂР°СЃС‹РІР°С‚СЊ РїРѕРґР°РІР»РµРЅРёРµ РІ ARSM_NONE)
 				switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 				{
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
 						if (pVectorBegin->nRingsSuppress > 0)
 						{
-							// для переменных, у которых количество шагов для замены Адамса на BDF не исчерпано
-							// делаем эту замену и уменьшаем счетчик
+							// РґР»СЏ РїРµСЂРµРјРµРЅРЅС‹С…, Сѓ РєРѕС‚РѕСЂС‹С… РєРѕР»РёС‡РµСЃС‚РІРѕ С€Р°РіРѕРІ РґР»СЏ Р·Р°РјРµРЅС‹ РђРґР°РјСЃР° РЅР° BDF РЅРµ РёСЃС‡РµСЂРїР°РЅРѕ
+							// РґРµР»Р°РµРј СЌС‚Сѓ Р·Р°РјРµРЅСѓ Рё СѓРјРµРЅСЊС€Р°РµРј СЃС‡РµС‚С‡РёРє
 							pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
 							pVectorBegin->nRingsSuppress--;
 							pVectorBegin->nRingsCount = 0;
 						}
 					break;
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL:
-						// в глобальном режиме просто заменяем производную Адамса на производную BDF
+						// РІ РіР»РѕР±Р°Р»СЊРЅРѕРј СЂРµР¶РёРјРµ РїСЂРѕСЃС‚Рѕ Р·Р°РјРµРЅСЏРµРј РїСЂРѕРёР·РІРѕРґРЅСѓСЋ РђРґР°РјСЃР° РЅР° РїСЂРѕРёР·РІРѕРґРЅСѓСЋ BDF
 						pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
 					break;
 				}
 			}
 		}
 
-		// сохраняем пред-предыдущее значение переменной состояния
+		// СЃРѕС…СЂР°РЅСЏРµРј РїСЂРµРґ-РїСЂРµРґС‹РґСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ
 		pVectorBegin->Tminus2Value = pVectorBegin->SavedNordsiek[0];
 
-		// и сохраняем текущее значение переменных состояния перед новым шагом
+		// Рё СЃРѕС…СЂР°РЅСЏРµРј С‚РµРєСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅС‹С… СЃРѕСЃС‚РѕСЏРЅРёСЏ РїРµСЂРµРґ РЅРѕРІС‹Рј С€Р°РіРѕРј
 		pVectorBegin->SavedNordsiek[0] = pVectorBegin->Nordsiek[0];
 		pVectorBegin->SavedNordsiek[1] = pVectorBegin->Nordsiek[1];
 		pVectorBegin->SavedNordsiek[2] = pVectorBegin->Nordsiek[2];
@@ -334,13 +338,13 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	}
 
 
-	// даем информацию для обработки разрывов о том, что данный момент
-	// времени пройден
+	// РґР°РµРј РёРЅС„РѕСЂРјР°С†РёСЋ РґР»СЏ РѕР±СЂР°Р±РѕС‚РєРё СЂР°Р·СЂС‹РІРѕРІ Рѕ С‚РѕРј, С‡С‚Рѕ РґР°РЅРЅС‹Р№ РјРѕРјРµРЅС‚
+	// РІСЂРµРјРµРЅРё РїСЂРѕР№РґРµРЅ
 	m_Discontinuities.PassTime(GetCurrentTime());
 	sc.ResetStepsToFail();
 }
 
-// сохранение копии Nordsieck перед выполнением шага
+// СЃРѕС…СЂР°РЅРµРЅРёРµ РєРѕРїРёРё Nordsieck РїРµСЂРµРґ РІС‹РїРѕР»РЅРµРЅРёРµРј С€Р°РіР°
 void CDynaModel::SaveNordsiek()
 {
 	struct RightVector *pVectorBegin = pRightVector;
@@ -351,10 +355,10 @@ void CDynaModel::SaveNordsiek()
 		double *pN = pVectorBegin->Nordsiek;
 		double *pS = pVectorBegin->SavedNordsiek;
 
-		// сохраняем пред-предыдущее значение переменной состояния
+		// СЃРѕС…СЂР°РЅСЏРµРј РїСЂРµРґ-РїСЂРµРґС‹РґСѓС‰РµРµ Р·РЅР°С‡РµРЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ
 		pVectorBegin->Tminus2Value = *pS;
 
-		// запоминаем три элемента, не смотря на текущий порядок
+		// Р·Р°РїРѕРјРёРЅР°РµРј С‚СЂРё СЌР»РµРјРµРЅС‚Р°, РЅРµ СЃРјРѕС‚СЂСЏ РЅР° С‚РµРєСѓС‰РёР№ РїРѕСЂСЏРґРѕРє
 		*pS = *pN; pS++; pN++;
 		*pS = *pN; pS++; pN++;
 		*pS = *pN; pS++; pN++;
@@ -366,14 +370,14 @@ void CDynaModel::SaveNordsiek()
 	sc.m_bNordsiekSaved = true;
 }
 
-// масштабирование Nordsieck на заданный коэффициент изменения шага
+// РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёРµ Nordsieck РЅР° Р·Р°РґР°РЅРЅС‹Р№ РєРѕСЌС„С„РёС†РёРµРЅС‚ РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР°
 void CDynaModel::RescaleNordsiek(double r)
 {
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 	
-	// расчет выполняется путем умножения текущего Nordsieck на диагональную матрицу C[q+1;q+1]
-	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
+	// СЂР°СЃС‡РµС‚ РІС‹РїРѕР»РЅСЏРµС‚СЃСЏ РїСѓС‚РµРј СѓРјРЅРѕР¶РµРЅРёСЏ С‚РµРєСѓС‰РµРіРѕ Nordsieck РЅР° РґРёР°РіРѕРЅР°Р»СЊРЅСѓСЋ РјР°С‚СЂРёС†Сѓ C[q+1;q+1]
+	// СЃ СЌР»РµРјРµРЅС‚Р°РјРё C[i,i] = r^(i-1) [Lsode 2.64]
 	while (pVectorBegin < pVectorEnd)
 	{
 		double R = 1.0;
@@ -385,16 +389,16 @@ void CDynaModel::RescaleNordsiek(double r)
 		pVectorBegin++;
 	}
 
-	// вызываем функции обработки изменения шага и порядка
-	// пока они блокируют дальнейшее увеличение шага на протяжении
-	// заданного количества шагов
+	// РІС‹Р·С‹РІР°РµРј С„СѓРЅРєС†РёРё РѕР±СЂР°Р±РѕС‚РєРё РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР° Рё РїРѕСЂСЏРґРєР°
+	// РїРѕРєР° РѕРЅРё Р±Р»РѕРєРёСЂСѓСЋС‚ РґР°Р»СЊРЅРµР№С€РµРµ СѓРІРµР»РёС‡РµРЅРёРµ С€Р°РіР° РЅР° РїСЂРѕС‚СЏР¶РµРЅРёРё
+	// Р·Р°РґР°РЅРЅРѕРіРѕ РєРѕР»РёС‡РµСЃС‚РІР° С€Р°РіРѕРІ
 	sc.StepChanged();
 	sc.OrderChanged();
 
-	// рассчитываем коэффициент изменения шага
+	// СЂР°СЃСЃС‡РёС‚С‹РІР°РµРј РєРѕСЌС„С„РёС†РёРµРЅС‚ РёР·РјРµРЅРµРЅРёСЏ С€Р°РіР°
 	double dRefactorRatio = sc.m_dCurrentH / sc.m_dLastRefactorH;
-	// если шаг изменился более в заданное количество раз - взводим флаг рефакторизации Якоби
-	// sc.m_dLastRefactorH обновляется после рефакторизации
+	// РµСЃР»Рё С€Р°Рі РёР·РјРµРЅРёР»СЃСЏ Р±РѕР»РµРµ РІ Р·Р°РґР°РЅРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СЂР°Р· - РІР·РІРѕРґРёРј С„Р»Р°Рі СЂРµС„Р°РєС‚РѕСЂРёР·Р°С†РёРё РЇРєРѕР±Рё
+	// sc.m_dLastRefactorH РѕР±РЅРѕРІР»СЏРµС‚СЃСЏ РїРѕСЃР»Рµ СЂРµС„Р°РєС‚РѕСЂРёР·Р°С†РёРё
 	if (dRefactorRatio > m_Parameters.m_dRefactorByHRatio || dRefactorRatio < 1.0 / m_Parameters.m_dRefactorByHRatio)
 		sc.RefactorMatrix(true);
 }
