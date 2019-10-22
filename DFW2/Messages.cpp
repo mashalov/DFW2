@@ -28,7 +28,7 @@ const _TCHAR* CDFW2Messages::m_cszKLUInvalidInput = _T("KLU - Неправиль
 const _TCHAR* CDFW2Messages::m_cszKLUIntOverflow = _T("KLU - Переполнение целого числа");
 const _TCHAR* CDFW2Messages::m_cszKLUUnknownError = _T("KLU - Неизвестная ошибка с кодом %d");
 const _TCHAR* CDFW2Messages::m_cszInitLoopedInfinitely = _T("При инициализации устройств обнаружен бесконечный цикл");
-const _TCHAR* CDFW2Messages::m_cszDeviceContainerFailedToInit = _T("Отказ инициализации для устройств типа %d код %d");
+const _TCHAR* CDFW2Messages::m_cszDeviceContainerFailedToInit = _T("Отказ инициализации для устройств типа %s код %d");
 const _TCHAR* CDFW2Messages::m_cszStepAndOrderChanged = _T("t=%.12g (%d) Порядок и шаг метода изменен : порядок %d шаг %g с");
 const _TCHAR* CDFW2Messages::m_cszStepChanged = _T("t=%.12g (%d) Шаг метода изменен : шаг %g с (%g), порядок %d");
 const _TCHAR* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = _T("t=%.12g (%d) Порядок и шаг метода изменен по Ньютону: порядок %d шаг %g с");
@@ -116,3 +116,5 @@ const _TCHAR* CDFW2Messages::m_cszIslandNoSlackBusesShutDown = _T("В синхр
 const _TCHAR* CDFW2Messages::m_cszNoNodesForLF = _T("Для расчета УР нет включенных узлов");
 const _TCHAR* CDFW2Messages::m_cszUnacceptableLF = _T("Получен недопустимый режим");
 const _TCHAR* CDFW2Messages::m_cszExtVarFromOffDevice = _T("Требуемая для устройства \"%s\" выходная переменная \"%s\" найдена в отключенном устройстве \"%s\"");
+const _TCHAR* CDFW2Messages::m_cszTurningOffDeviceByMasterDevice = _T("Устройство \"%s\" отключено, так как отключено связанное ведущее устройство \"%s\"");
+const _TCHAR* CDFW2Messages::m_cszMatrixSize = _T("Размерность матрицы %d, количество ненулевых элементов %d");

@@ -5,6 +5,8 @@ using namespace DFW2;
 
 void CDynaModel::EstimateMatrix()
 {
+	TurnOffDevicesByOffMasters();
+
 	ptrdiff_t nOriginalMatrixSize = klu.MatrixSize();
 	bool bSaveRightVector = pRightVector != nullptr;
 	m_nEstimatedMatrixSize = 0;
@@ -66,6 +68,7 @@ void CDynaModel::EstimateMatrix()
 
 	// allocate KLU matrix in CCS form
 	klu.SetSize(m_nEstimatedMatrixSize, nNonZeroCount);
+	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszMatrixSize, m_nEstimatedMatrixSize, nNonZeroCount));
 	m_pMatrixRows->pApRow = klu.Ap();
 	m_pMatrixRows->pAxRow = klu.Ax();
 

@@ -407,6 +407,7 @@ namespace DFW2
 		bool PrepareYs();
 		bool Link();
 		bool UpdateExternalVariables();
+		void TurnOffDevicesByOffMasters();
 
 		void ResetElement();
 		void ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);

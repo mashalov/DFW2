@@ -259,6 +259,8 @@ bool CDynaModel::InitDevices()
 {
 	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
 
+	TurnOffDevicesByOffMasters();
+
 	m_cszDampingName = (GetFreqDampingType() == APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
 
 	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
@@ -309,13 +311,11 @@ bool CDynaModel::InitDevices()
 
 		if (!CDevice::IsFunctionStatusOK(Status) && Status != DFS_FAILED)
 		{
-			for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+			for (auto&& it : m_DeviceContainers)
 			{
-				Status = (*it)->Init(this);
+				Status = it->Init(this);
 				if (!CDevice::IsFunctionStatusOK(Status))
-				{
-					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(DFW2::CDFW2Messages::m_cszDeviceContainerFailedToInit, (*it)->GetType(), Status));
-				}
+					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(DFW2::CDFW2Messages::m_cszDeviceContainerFailedToInit, it->GetTypeName(), Status));
 			}
 		}
 	}
@@ -1588,4 +1588,55 @@ double CDynaModel::gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, const
 		gs1v += yv[s] * pSol[s];
 
 	return gs1v;
+}
+
+
+void CDynaModel::TurnOffDevicesByOffMasters()
+{
+	size_t nOffCount(1);
+	while (nOffCount)
+	{
+		nOffCount = 0;
+		for (auto&& it : m_DeviceContainers)
+		{
+			CDeviceContainerProperties &Props = it->m_ContainerProps;
+
+			for (auto&& dit : *it)
+			{
+				if (!dit->IsStateOn())
+					continue;	// уже отключено
+
+				// идем по всем ссылкам на ведущие устройства
+				for (auto&& masterdevice : Props.m_Masters)
+				{
+					if (masterdevice->eLinkMode == DLM_MULTI)
+					{
+						CLinkPtrCount *pLink(dit->GetLink(masterdevice->nLinkIndex));
+						CDevice **ppDevice(nullptr);
+						while (pLink->In(ppDevice))
+						{
+							if (!(*ppDevice)->IsStateOn())
+							{
+								dit->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+								Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, dit->GetVerbalName(), (*ppDevice)->GetVerbalName()));
+								nOffCount++;
+								break;
+							}
+						}
+					}
+					else
+					{
+						CDevice *pDevice(dit->GetSingleLink(masterdevice->nLinkIndex));
+						if (pDevice && !pDevice->IsStateOn())
+						{
+							dit->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+							Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, dit->GetVerbalName(), pDevice->GetVerbalName()));
+							nOffCount++;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
 }

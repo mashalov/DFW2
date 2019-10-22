@@ -129,6 +129,8 @@ namespace DFW2
 		static const _TCHAR* m_cszIslandNoSlackBusesShutDown;
 		static const _TCHAR* m_cszNoNodesForLF;
 		static const _TCHAR* m_cszUnacceptableLF;
+		static const _TCHAR* m_cszTurningOffDeviceByMasterDevice;
+		static const _TCHAR* m_cszMatrixSize;
 	};
 }
 

@@ -101,11 +101,13 @@ namespace DFW2
 			{}
 	};
 
-	typedef std::map<eDFW2DEVICETYPE, LinkDirectionFrom> LINKSFROMMAP;
-	typedef LINKSFROMMAP::iterator LINKSFROMMAPITR;
+	using LINKSFROMMAP = std::map<eDFW2DEVICETYPE, LinkDirectionFrom>;
+	using LINKSFROMMAPITR = LINKSFROMMAP::iterator;
 
-	typedef std::map<eDFW2DEVICETYPE, LinkDirectionTo> LINKSTOMAP;
-	typedef LINKSTOMAP::iterator LINKSTOMAPITR;
+	using LINKSTOMAP = std::map<eDFW2DEVICETYPE, LinkDirectionTo>;
+	using LINKSTOMAPITR = LINKSTOMAP::iterator;
+
+	using LINKSMASTERS = std::list<LinkDirectionFrom*>;
 
 	// атрибуты контейнера устройств
 	// Атрибуты контейнера можно "наследовать" в рантайме - брать некий атрибут и изменять его для другого типа устройств,
@@ -135,6 +137,8 @@ namespace DFW2
 
 		LINKSFROMMAP m_MasterLinksFrom;
 		LINKSTOMAP  m_MasterLinksTo;
+
+		LINKSMASTERS m_Masters;
 
 		std::wstring m_strClassName;										// имя типа устройства
 

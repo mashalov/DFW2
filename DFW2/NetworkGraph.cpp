@@ -14,14 +14,20 @@ bool CDynaModel::Link()
 		LINKSTOMAP	 &LinksTo = Props.m_LinksTo;
 		for (LINKSTOMAPITR it1 = LinksTo.begin(); it1 != LinksTo.end(); it1++)
 			if (it1->second.eDependency == DPD_MASTER)
-				if(it1->first != DEVTYPE_MODEL)
+				if (it1->first != DEVTYPE_MODEL)
+				{
 					Props.m_MasterLinksTo.insert(make_pair(it1->first, it1->second));
+					Props.m_Masters.push_back(&it1->second);
+				}
 
 		LINKSFROMMAP &LinksFrom = Props.m_LinksFrom;
 		for (LINKSFROMMAPITR it2 = LinksFrom.begin(); it2 != LinksFrom.end(); it2++)
 			if (it2->second.eDependency == DPD_MASTER)
-				if(it2->first != DEVTYPE_MODEL)
+				if (it2->first != DEVTYPE_MODEL)
+				{
 					Props.m_MasterLinksFrom.insert(make_pair(it2->first, it2->second));
+					Props.m_Masters.push_back(&it2->second);
+				}
 	}
 
 

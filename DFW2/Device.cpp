@@ -818,7 +818,7 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceInit(CDevice *pDevice, LinkDirec
 	if (pDev && pDev->IsPresent())
 	{
 		Status = pDev->Initialized();
-
+		/*
 		if (CDevice::IsFunctionStatusOK(Status))
 		{
 			if (!pDev->IsStateOn())
@@ -826,6 +826,7 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceInit(CDevice *pDevice, LinkDirec
 				pDevice->SetState(DS_OFF, DSC_INTERNAL);
 			}
 		}
+		*/
 	}
 	else
 	{
@@ -848,7 +849,7 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, 
 	if (pDev)
 	{
 		Status = pDev->DiscontinuityProcessed();
-
+		/*
 		if (CDevice::IsFunctionStatusOK(Status))
 		{
 			if (!pDev->IsStateOn())
@@ -856,6 +857,7 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, 
 				pDevice->SetState(DS_OFF, DSC_INTERNAL);
 			}
 		}
+		*/
 	}
 
 	_ASSERTE(Status != DFS_FAILED);
@@ -873,15 +875,9 @@ eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckM
 
 	// если у устройсва есть ведущие устройства, проверяем, готовы ли они
 
-	for (auto&& it1 : Props.m_MasterLinksTo)
+	for (auto&& it : Props.m_Masters)
 	{
-		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, it1.second));
-		if (!CDevice::IsFunctionStatusOK(Status)) return Status;
-	}
-
-	for (auto&& it2 : Props.m_MasterLinksFrom)
-	{
-		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, it2.second));
+		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, *it));
 		if (!CDevice::IsFunctionStatusOK(Status)) return Status;
 	}
 
