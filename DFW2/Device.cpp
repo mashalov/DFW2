@@ -88,7 +88,8 @@ ExternalVariable CDevice::GetExternalVariable(const _TCHAR* cszVarName)
 		// извлекаем указатель на переменную
 		ExtVar.pValue = GetVariablePtr(ExtVar.nIndex);
 		// извлекаем номер строки в Якоби
-		ExtVar.nIndex = A(ExtVar.nIndex);
+		// если устройство не в матрице, возвращаем индекс "не привязано"
+		ExtVar.nIndex = AssignedToMatrix() ? A(ExtVar.nIndex) : ExtVar.nIndex = CDevice::nIndexUnassigned;
 	}
 	else
 		ExtVar.pValue = nullptr;
@@ -368,7 +369,7 @@ bool CDevice::InMatrix()
 // и заодно фиксирует строку матрицы, с которой начинается блок его уравнений
 void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 {
-	m_nMatrixRow = InMatrix() ? pDynaModel->AddMatrixSize(m_pContainer->EquationsCount()) : -100000;
+	m_nMatrixRow = InMatrix() ? pDynaModel->AddMatrixSize(m_pContainer->EquationsCount()) : nIndexUnassigned;
 }
 
 // базовая функция инициализации Nordsieck
@@ -637,7 +638,8 @@ bool CDevice::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* p
 					ExternalVariable extVar = pFromDevice->GetExternalVariable(cszName);
 					if (extVar.pValue)
 					{
-						ExtVar.IndexAndValue(extVar.nIndex - A(0), extVar.pValue);
+						// если устроство имеет уравнения - возвращаем индекс относительно индекса устройства, иначе - индекс "не назначено"
+						ExtVar.IndexAndValue(AssignedToMatrix() ? extVar.nIndex - A(0) : CDevice::nIndexUnassigned, extVar.pValue);
 						bRes = true;
 					}
 				}

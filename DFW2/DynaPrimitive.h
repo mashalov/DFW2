@@ -14,16 +14,16 @@ namespace DFW2
 		ptrdiff_t m_nIndex;
 	public:
 		virtual double& Value() = 0;
-		inline bool Indexed() { return m_nIndex != nIndexUnassigned; }
-		inline void UnIndex() { m_nIndex = nIndexUnassigned; }
+		inline bool Indexed() { return m_nIndex != CDevice::nIndexUnassigned; }
+		inline void UnIndex() { m_nIndex = CDevice::nIndexUnassigned; }
 		inline ptrdiff_t Index() 
 		{ 
-			_ASSERTE(Indexed());
+			if (!Indexed())
+				throw dfw2error(_T("PrimitiveVariableBase::Index - access to unindexed variable"));
 			return m_nIndex; 
 		}
 		void Index(ptrdiff_t nIndex) { m_nIndex = nIndex; }
 		virtual void IndexAndValue(ptrdiff_t nIndex, double* pValue) {}
-		static const ptrdiff_t nIndexUnassigned;
 	};
 
 	class PrimitiveVariable : public PrimitiveVariableBase

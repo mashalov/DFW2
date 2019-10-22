@@ -298,5 +298,3 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 
 	return rH;
 }
-
-const ptrdiff_t PrimitiveVariableBase::nIndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();

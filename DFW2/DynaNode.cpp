@@ -192,31 +192,12 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		ResetVisited();
 		while (pGenLink->In(ppGen))
 		{
+			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
+			// или строить суперссылку на генераторы по условию того, что они в матрице
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_IRE), -1.0);
 			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_IIM), -1.0);
 		}
-
-		/*
-		ppBranch = nullptr;
-		ResetVisited();
-		while (pBranchLink->In(ppBranch))
-		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-			CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(this);
-			cplx *pYkm = pBranch->m_pNodeIp == this ? &pBranch->Yip : &pBranch->Yiq;
-
-			bool bDup = CheckAddVisited(pOppNode) >= 0;
-			// dIre /dVre
-			pDynaModel->SetElement(A(V_RE), pOppNode->A(V_RE), -pYkm->real(), bDup);
-			// dIre/dVim
-			pDynaModel->SetElement(A(V_RE), pOppNode->A(V_IM), pYkm->imag(), bDup);
-			// dIim/dVre
-			pDynaModel->SetElement(A(V_IM), pOppNode->A(V_RE), -pYkm->imag(), bDup);
-			// dIim/dVim
-			pDynaModel->SetElement(A(V_IM), pOppNode->A(V_IM), -pYkm->real(), bDup);
-		}
-		*/
 
 		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 		{

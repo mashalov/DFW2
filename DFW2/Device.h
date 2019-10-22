@@ -284,7 +284,17 @@ namespace DFW2
 		void UnprocessDiscontinuity() { m_eInitStatus = DFS_NOTREADY;  }
 
 		// функция ремапа номера уравнения устройства в номер уравнения в Якоби
-		inline ptrdiff_t A(ptrdiff_t nOffset) { return m_nMatrixRow + nOffset; }
+		inline ptrdiff_t A(ptrdiff_t nOffset) 
+		{ 
+			if (!AssignedToMatrix())
+				throw dfw2error(_T("CDevice::A - access to device not in matrix"));
+			return m_nMatrixRow + nOffset; 
+		}
+		// возвращает true если для устройства есть уравнения в системе
+		inline bool AssignedToMatrix()
+		{
+			return m_nMatrixRow != nIndexUnassigned;
+		}
 		virtual void InitNordsiek(CDynaModel* pDynaModel);
 		virtual void Predict() {};
 		virtual bool InMatrix();
@@ -335,7 +345,7 @@ namespace DFW2
 #ifdef _DEBUG
 		static _TCHAR UnknownVarIndex[80];
 #endif
-
+		static const ptrdiff_t nIndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();
 	};
 
 // макрос для упрощения связи имени и идентификатора переменной, используется в switch CDevice::GetVariablePtr

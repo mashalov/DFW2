@@ -148,13 +148,6 @@ bool CCustomDevice::BuildStructure()
 			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
 			break;
 		}
-
-		/*
-
-		ѕримитивы теперь добавл€ютс€ автоматически
-		if (pDummy)
-			m_Primitives.push_back(pDummy);
-		*/
 	}
 
 	if (!bRes)
