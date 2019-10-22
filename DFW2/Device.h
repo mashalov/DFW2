@@ -287,7 +287,8 @@ namespace DFW2
 		inline ptrdiff_t A(ptrdiff_t nOffset) { return m_nMatrixRow + nOffset; }
 		virtual void InitNordsiek(CDynaModel* pDynaModel);
 		virtual void Predict() {};
-		virtual void EstimateEquations(CDynaModel *pDynaModel);
+		virtual bool InMatrix();
+		void EstimateEquations(CDynaModel *pDynaModel);
 		virtual bool LeaveDiscontinuityMode(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);

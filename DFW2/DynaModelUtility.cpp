@@ -245,11 +245,11 @@ void CDynaModel::ResetStack()
 bool CDynaModel::UpdateExternalVariables()
 {
 	bool bRes = true;
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+	for (auto&& it : m_DeviceContainers)
 	{
-		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+		for (auto&& dit : *it)
 		{
-			switch((*dit)->UpdateExternalVariables(this))
+			switch (dit->UpdateExternalVariables(this))
 			{
 			case DFS_DONTNEED:
 				break;
@@ -269,11 +269,11 @@ CDeviceContainer* CDynaModel::GetContainerByAlias(const _TCHAR* cszAlias)
 {
 	CDeviceContainer *pContainer(nullptr);
 
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+	for (auto&& it : m_DeviceContainers)
 	{
-		if ((*it)->HasAlias(cszAlias))
+		if (it->HasAlias(cszAlias))
 		{
-			pContainer = *it;
+			pContainer = it;
 			break;
 		}
 	}

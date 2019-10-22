@@ -358,11 +358,17 @@ bool CLinkPtrCount::In(CDevice ** & p)
 	return false;
 }
 
+// Определяет нужны ли уравнения для этого устройства
+bool CDevice::InMatrix()
+{
+	return IsStateOn();
+}
+
 // функция увеличивает размерность модели на количество уравнений устройства, 
 // и заодно фиксирует строку матрицы, с которой начинается блок его уравнений
 void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 {
-	m_nMatrixRow = pDynaModel->AddMatrixSize(m_pContainer->EquationsCount());
+	m_nMatrixRow = InMatrix() ? pDynaModel->AddMatrixSize(m_pContainer->EquationsCount()) : -100000;
 }
 
 // базовая функция инициализации Nordsieck
@@ -371,7 +377,6 @@ void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 {
 	_ASSERTE(m_pContainer);
-
 	struct RightVector *pRv = pDynaModel->GetRightVector(A(0));
 	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
 

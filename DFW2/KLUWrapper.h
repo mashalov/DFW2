@@ -202,6 +202,7 @@ namespace DFW2
 				break;
 			case 1:
 				m_strKLUError = CDFW2Messages::m_cszKLUSingular;
+				DumpMatrix(true);
 				break;
 			case -2:
 				m_strKLUError = CDFW2Messages::m_cszKLUOutOfMemory;
@@ -347,6 +348,130 @@ namespace DFW2
 				}
 			}
 			return bmax;
+		}
+
+		// todo - complex version
+		void DumpMatrix(bool bAnalyzeLinearDependenies)
+		{
+			FILE *fmatrix;
+			if (!_tfopen_s(&fmatrix, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
+			{
+				ptrdiff_t *pAi = Ap();
+				double *pAx = Ax();
+				ptrdiff_t nRow = 0;
+				set<ptrdiff_t> BadNumbers, FullZeros;
+				vector<bool> NonZeros;
+				vector<bool> Diagonals;
+				vector<double> Expanded;
+
+				NonZeros.resize(MatrixSize(), false);
+				Diagonals.resize(MatrixSize(), false);
+				Expanded.resize(MatrixSize(), 0.0);
+
+				for (ptrdiff_t *pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
+				{
+					ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
+					bool bAllZeros = true;
+					while (pAi < pAiend)
+					{
+						_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRow, *pAi, *pAx);
+
+						if (isnan(*pAx) || isinf(*pAx))
+							BadNumbers.insert(nRow);
+
+						if (fabs(*pAx) > 1E-7)
+						{
+							bAllZeros = false;
+							NonZeros[*pAi] = true;
+
+							if (nRow == *pAi)
+								Diagonals[nRow] = true;
+						}
+						pAx++; pAi++;
+					}
+					if (bAllZeros)
+						FullZeros.insert(nRow);
+				}
+
+				for (const auto& it : BadNumbers)
+					_ftprintf_s(fmatrix, _T("Bad Number in Row: %td\n"), it);
+
+				for (const auto& it : FullZeros)
+					_ftprintf_s(fmatrix, _T("Full Zero Row : %td\n"), it);
+
+				for (auto&& it = NonZeros.begin(); it != NonZeros.end(); it++)
+					if (!*it)
+						_ftprintf_s(fmatrix, _T("Full Zero Column: %td\n"), it - NonZeros.begin());
+
+				for (auto&& it = Diagonals.begin(); it != Diagonals.end(); it++)
+					if (!*it)
+						_ftprintf_s(fmatrix, _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
+
+
+				if (!bAnalyzeLinearDependenies)
+					return;
+
+				// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
+				// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
+
+				pAi = Ap(); pAx = Ax(); nRow = 0;
+				for (ptrdiff_t *pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
+				{
+					fill(Expanded.begin(), Expanded.end(), 0.0);
+
+					ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
+					bool bAllZeros = true;
+					double normi = 0.0;
+
+					set < pair<ptrdiff_t, double> > RowI;
+
+					while (pAi < pAiend)
+					{
+						Expanded[*pAi] = *pAx;
+						normi += *pAx * *pAx;
+
+						RowI.insert(make_pair(*pAi, *pAx));
+
+						pAx++; pAi++;
+					}
+
+					ptrdiff_t nRows = 0;
+					ptrdiff_t *pAis = Ap();
+					double *pAxs = Ax();
+					for (ptrdiff_t *pAps = Ai(); pAps < Ai() + MatrixSize(); pAps++, nRows++)
+					{
+						ptrdiff_t *pAiends = pAis + *(pAps + 1) - *pAps;
+						double normj = 0.0;
+						double inner = 0.0;
+
+						set < pair<ptrdiff_t, double> > RowJ;
+
+						while (pAis < pAiends)
+						{
+							normj += *pAxs * *pAxs;
+							inner += Expanded[*pAis] * *pAxs;
+
+							RowJ.insert(make_pair(*pAis, *pAxs));
+
+							pAis++; pAxs++;
+						}
+						if (nRow != nRows)
+						{
+							double Ratio = inner * inner / normj / normi;
+							if (fabs(Ratio - 1.0) < 1E-5)
+							{
+								_ftprintf_s(fmatrix, _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
+								for (auto & it : RowI)
+									_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
+								for (auto & it : RowJ)
+									_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
+							}
+
+						}
+					}
+				}
+				fclose(fmatrix);
+			}
 		}
 	};
 }

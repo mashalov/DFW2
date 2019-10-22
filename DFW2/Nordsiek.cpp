@@ -43,8 +43,7 @@ void CDynaModel::InitDevicesNordsiek()
 {
 	ChangeOrder(1);
 	for (auto&& it : m_DeviceContainers)
-		for (auto&& dit : *it)
-			dit->InitNordsiek(this);
+		it->InitNordsieck(this);
 }
 
 void CDynaModel::InitNordsiek()

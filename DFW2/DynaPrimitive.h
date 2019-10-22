@@ -16,7 +16,11 @@ namespace DFW2
 		virtual double& Value() = 0;
 		inline bool Indexed() { return m_nIndex != nIndexUnassigned; }
 		inline void UnIndex() { m_nIndex = nIndexUnassigned; }
-		inline ptrdiff_t Index() { return m_nIndex; }
+		inline ptrdiff_t Index() 
+		{ 
+			_ASSERTE(Indexed());
+			return m_nIndex; 
+		}
 		void Index(ptrdiff_t nIndex) { m_nIndex = nIndex; }
 		virtual void IndexAndValue(ptrdiff_t nIndex, double* pValue) {}
 		static const ptrdiff_t nIndexUnassigned;

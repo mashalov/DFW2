@@ -452,41 +452,54 @@ void CDeviceContainer::AddLink(CMultiLink& pLink, ptrdiff_t nDeviceIndex, CDevic
 	pLinkPtr->m_pPointer++;
 }
 
+void CDeviceContainer::InitNordsieck(CDynaModel *pDynaModel)
+{
+	for (auto&& it : m_DevInMatrix)
+		it->InitNordsiek(pDynaModel);
+}
+
 void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 {
+	m_DevInMatrix.clear();
+	m_DevInMatrix.reserve(m_DevVec.size());
 	for (auto&& it : m_DevVec)
+	{
+		// здесь EstimateEquations для отладки с m_MatrixRow = -10000000
 		it->EstimateEquations(pDynaModel);
+		if (it->InMatrix())
+			m_DevInMatrix.push_back(it);
+	}
 }
 
 void CDeviceContainer::BuildBlock(CDynaModel* pDynaModel)
 {
-	for (auto&& it : m_DevVec)
+	for (auto&& it : m_DevInMatrix)
 		it->BuildEquations(pDynaModel);
 }
 
 void CDeviceContainer::BuildRightHand(CDynaModel* pDynaModel)
 {
-	for (auto&& it : m_DevVec)
+	for (auto&& it : m_DevInMatrix)
 		it->BuildRightHand(pDynaModel);
 }
 
 
 void CDeviceContainer::BuildDerivatives(CDynaModel* pDynaModel)
 {
-	for (auto&& it : m_DevVec)
+	for (auto&& it : m_DevInMatrix)
 		it->BuildDerivatives(pDynaModel);
 }
 
 void CDeviceContainer::NewtonUpdateBlock(CDynaModel* pDynaModel)
 {
-	for (auto&& it : m_DevVec)
+	for (auto&& it : m_DevInMatrix)
 		it->NewtonUpdateEquation(pDynaModel);
 }
 
 bool CDeviceContainer::LeaveDiscontinuityMode(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
-	for (auto&& it : m_DevVec)
+	for (auto&& it : m_DevInMatrix)
 		it->LeaveDiscontinuityMode(pDynaModel);
 	return bRes;
 }
@@ -519,14 +532,14 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaMo
 // для всех устройств контейнера сбрасывает статус выполнения функции
 void CDeviceContainer::UnprocessDiscontinuity()
 {
-	for (auto&& it : m_DevVec)
+	for (auto&& it : m_DevInMatrix)
 		it->UnprocessDiscontinuity();
 }
 
 double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double Kh = 1.0;
-	for (auto&& it : m_DevVec)
+	for (auto&& it : m_DevInMatrix)
 	{
 		double Khi = it->CheckZeroCrossing(pDynaModel);
 		if (Khi < Kh)

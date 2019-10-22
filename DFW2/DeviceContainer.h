@@ -60,6 +60,7 @@ namespace DFW2
 	protected:
 		eDEVICEFUNCTIONSTATUS m_eDeviceFunctionStatus;
 		DEVICEVECTOR m_DevVec;												// вектор указателей на экземпляры хранимых в контейнере устройств
+		DEVICEVECTOR m_DevInMatrix;											// вектор указателей на экземпляры устройств, у которых есть уравнения
 		DEVSEARCHSET m_DevSet;												// сет для поиска устройств по идентификаторам
 		bool SetUpSearch();													// подготовка к поиску устройства в сете по идентификаторам
 		CDevice *m_pControlledData;											// вектор указателей созданных устройств для быстрого заполнения контейнера
@@ -167,7 +168,8 @@ namespace DFW2
 		void RestoreLinks(CMultiLink& pLink);
 		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
-		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
+		void InitNordsieck(CDynaModel *pDynaModel);
+  		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
 		void BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
 		void BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств
 		void BuildDerivatives(CDynaModel* pDynaModel);						// рассчитать производные дифуров устройств

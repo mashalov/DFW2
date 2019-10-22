@@ -137,6 +137,7 @@ namespace DFW2
 		void StartLF(bool bFlatStart, double ImbTol);
 		virtual void StoreStates() override;
 		virtual void RestoreStates() override;
+		virtual bool InMatrix() override;
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() { return Pnr - Pgr - V * V * YiiSuper.real();	}
 		inline double GetSelfImbQ() { return Qnr - Qgr + V * V * YiiSuper.imag(); }

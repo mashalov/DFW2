@@ -12,8 +12,8 @@ void CDynaModel::EstimateMatrix()
 	sc.m_bFillConstantElements = m_bEstimateBuild = true;
 	sc.RefactorMatrix();
 
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-		(*it)->EstimateBlock(this);
+	for (auto&& it : m_DeviceContainers)
+		it->EstimateBlock(this);
 
 	m_pMatrixRowsUniq = make_unique<MatrixRow[]>(m_nEstimatedMatrixSize);
 	m_pMatrixRows = m_pMatrixRowsUniq.get();

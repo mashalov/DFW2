@@ -115,3 +115,4 @@ const _TCHAR* CDFW2Messages::m_cszIslandSlackBusesCount = _T("Синхронна
 const _TCHAR* CDFW2Messages::m_cszIslandNoSlackBusesShutDown = _T("В синхронной зоне нет базисных узлов. Синхронная зона будет полностью отключена");
 const _TCHAR* CDFW2Messages::m_cszNoNodesForLF = _T("Для расчета УР нет включенных узлов");
 const _TCHAR* CDFW2Messages::m_cszUnacceptableLF = _T("Получен недопустимый режим");
+const _TCHAR* CDFW2Messages::m_cszExtVarFromOffDevice = _T("Требуемая для устройства \"%s\" выходная переменная \"%s\" найдена в отключенном устройстве \"%s\"");

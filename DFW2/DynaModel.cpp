@@ -102,7 +102,7 @@ bool CDynaModel::Run()
 		m_Parameters.m_bLogToConsole = false;
 		m_Parameters.m_bLogToFile = true;
 
-		m_Parameters.m_bDisableResultsWriter = true;
+		m_Parameters.m_bDisableResultsWriter = false;
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга

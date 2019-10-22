@@ -70,6 +70,7 @@ namespace DFW2
 		static const _TCHAR* m_cszWrongPrimitiveinDLL;
 		static const _TCHAR* m_cszTableNotFoundForCustomDevice;
 		static const _TCHAR* m_cszExtVarNotFoundInDevice;
+		static const _TCHAR* m_cszExtVarFromOffDevice;
 		static const _TCHAR* m_cszExtVarNoDeviceFor;
 		static const _TCHAR* m_cszConstVarNotFoundInDevice;
 		static const _TCHAR* m_cszConstVarNoDeviceFor;

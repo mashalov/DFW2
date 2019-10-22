@@ -605,6 +605,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ITablePtr spExciter = spTables->Item("Exciter");
 	IColsPtr  spExcCols = spExciter->Cols;
 	IColPtr spExcId		= spExcCols->Item("Id");
+	IColPtr spExcSta	= spExcCols->Item("sta");
 	IColPtr spExcName	= spExcCols->Item("Name");
 	IColPtr spExcTexc	= spExcCols->Item("Texc");
 	IColPtr spExcUmin   = spExcCols->Item("Uf_min");
@@ -625,6 +626,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	for (int i = 0; i < spExciter->Size; i++)
 	{
 		pExcitersMustang->SetId(spExcId->GetZ(i));
+		pExcitersMustang->SetState(spExcSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
 		pExcitersMustang->SetName(spExcName->GetZ(i).bstrVal);
 		pExcitersMustang->Texc = spExcTexc->GetZ(i);
 		pExcitersMustang->Umin = spExcUmin->GetZ(i);
@@ -644,6 +646,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColsPtr  spForcerCols = spForcer->Cols;
 
 	IColPtr spForcerId	 = spForcerCols->Item("Id");
+	IColPtr spForcerSta  = spForcerCols->Item("sta");
 	IColPtr spForcerName = spForcerCols->Item("Name");
 	IColPtr spForcerVEnfOn = spForcerCols->Item("Ubf");
 	IColPtr spForcerVEnfOff = spForcerCols->Item("Uef");
@@ -664,6 +667,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	for (int i = 0; i < static_cast<ptrdiff_t>(nMustangDECsCount); i++)
 	{
 		pDECsMustang->SetId(spForcerId->GetZ(i));
+		pDECsMustang->SetState(spForcerSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
 		pDECsMustang->SetName(spForcerName->GetZ(i).bstrVal);
 		pDECsMustang->VEnfOn = spForcerVEnfOn->GetZ(i);
 		pDECsMustang->VEnfOff = spForcerVEnfOff->GetZ(i);
@@ -682,6 +686,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColsPtr spEÑMCols = spExcConMustang->Cols;
 
 	IColPtr spECMId = spEÑMCols->Item("Id");
+	IColPtr spECMSta = spEÑMCols->Item("sta");
 	IColPtr spECMName = spEÑMCols->Item("Name");
 	IColPtr spECMTr = spEÑMCols->Item("Trv");
 	IColPtr spECMK0u = spEÑMCols->Item("Ku");
@@ -702,6 +707,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	for (int i = 0; i < spExcConMustang->Size; i++)
 	{
 		pExcConsMustang->SetId(spECMId->GetZ(i));
+		pExcConsMustang->SetState(spECMSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
 		pExcConsMustang->SetName(spECMName->GetZ(i).bstrVal);
 		pExcConsMustang->Alpha = spECMA->GetZ(i);
 		pExcConsMustang->Umin = spECMUmin->GetZ(i);
