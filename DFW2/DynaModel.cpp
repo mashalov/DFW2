@@ -113,6 +113,7 @@ bool CDynaModel::Run()
 		bRes = bRes && (LRCs.Init(this) == DFS_OK);
 
 		bRes = bRes && Link();
+		TurnOffDevicesByOffMasters();
 		bRes = bRes && PrepareGraph();
 		bRes = bRes && PrepareYs();
 		bRes = bRes && Nodes.ProcessTopology();
@@ -258,9 +259,6 @@ bool CDynaModel::Run()
 bool CDynaModel::InitDevices()
 {
 	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
-
-	TurnOffDevicesByOffMasters();
-
 	m_cszDampingName = (GetFreqDampingType() == APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
 
 	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
@@ -1590,7 +1588,8 @@ double CDynaModel::gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, const
 	return gs1v;
 }
 
-
+// отключает все устройства, у которых отключены ведущие. Предназначено для однократного вызова при инициализации
+// в процессе интегрирования нужно использовать CDevice::ChangeState
 void CDynaModel::TurnOffDevicesByOffMasters()
 {
 	size_t nOffCount(1);

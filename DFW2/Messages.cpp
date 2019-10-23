@@ -118,3 +118,4 @@ const _TCHAR* CDFW2Messages::m_cszUnacceptableLF = _T("Получен недоп
 const _TCHAR* CDFW2Messages::m_cszExtVarFromOffDevice = _T("Требуемая для устройства \"%s\" выходная переменная \"%s\" найдена в отключенном устройстве \"%s\"");
 const _TCHAR* CDFW2Messages::m_cszTurningOffDeviceByMasterDevice = _T("Устройство \"%s\" отключено, так как отключено связанное ведущее устройство \"%s\"");
 const _TCHAR* CDFW2Messages::m_cszMatrixSize = _T("Размерность матрицы %d, количество ненулевых элементов %d");
+const _TCHAR* CDFW2Messages::m_cszTurnOnDeviceImpossibleDueToMaster = _T("Невозможно включить устройство \"%s\", так как отключено по крайней мере одно ведущее устройство \"%s\"");

@@ -307,6 +307,8 @@ namespace DFW2
 		bool IsPresent() const {  return GetState() != DS_ABSENT; }
 		eDEVICESTATECAUSE GetStateCause() { return m_StateCause; }
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
+		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
+
 		const _TCHAR* VariableNameByPtr(double *pVariable);
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
 

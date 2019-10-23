@@ -964,6 +964,112 @@ CDynaModel* CDevice::GetModel()
 	return m_pContainer->GetModel();
 }
 
+eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
+{
+	if (eState == m_State)
+		return eDEVICEFUNCTIONSTATUS::DFS_DONTNEED;	// если устройство уже находится в заданном состоянии - выходим, с индикацией отсутствия необходимости
+
+	if (eState == eDEVICESTATE::DS_ON)
+	{
+		// если устройство хотят включить - нужно проверить, все ли его masters включены. Если да - то включить, если нет - предупреждение и состояние не изменять
+		CDevice *pDeviceOff(nullptr);
+		for (auto&& masterdevice : m_pContainer->m_ContainerProps.m_Masters)
+		{
+			// если было найдено отключенное ведущее устройство - выходим
+			if (pDeviceOff)
+				break;
+
+			if (masterdevice->eLinkMode == DLM_MULTI)
+			{
+				// если есть хотя бы одно отключенное устройство - фиксируем его и выходим из мультиссылки
+				CLinkPtrCount *pLink(GetLink(masterdevice->nLinkIndex));
+				CDevice **ppDevice(nullptr);
+				while (pLink->In(ppDevice))
+				{
+					if (!(*ppDevice)->IsStateOn())
+					{
+						pDeviceOff = *ppDevice;
+						break;
+					}
+				}
+			}
+			else
+			{
+				// если устройство с простой ссылки отключено - фиксируем
+				CDevice *pDevice(GetSingleLink(masterdevice->nLinkIndex));
+				if (pDevice && !pDevice->IsStateOn())
+				{
+					pDeviceOff = pDevice;
+					break;
+				}
+			}
+		}
+
+		if (pDeviceOff)
+		{
+			// если зафиксировано отключенное ведущее устройство - отказываем во включении данного устройства
+			Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszTurnOnDeviceImpossibleDueToMaster, GetVerbalName(), pDeviceOff->GetVerbalName()));
+			return eDEVICEFUNCTIONSTATUS::DFS_NOTREADY; // отказ отключения - модель не готова
+		}
+		else
+		{
+			SetState(eState, eStateCause);
+			return eDEVICEFUNCTIONSTATUS::DFS_OK;
+		}
+	}
+	else if (eState == eDEVICESTATE::DS_OFF)
+	{
+		// если устройство хотят выключить - нужно выключить все его slaves и далее по дереву иерархии
+		
+		// обрабатываем  отключаемые устройства рекурсивно
+		stack<CDevice*> offstack;
+		offstack.push(this);
+		while (!offstack.empty())
+		{
+			CDevice *pOffDevice = offstack.top();
+			offstack.pop();
+			pOffDevice->SetState(eState, eStateCause);
+			// если отключаем не устройство, которое запросили отключить (первое в стеке), а рекурсивно отключаемое - изменяем причину отключения на внутреннюю
+			eStateCause = eDEVICESTATECAUSE::DSC_INTERNAL;
+
+			// перебираем все ведомые устройства текущего устройства из стека
+			for (auto&& slavedevice : pOffDevice->m_pContainer->m_ContainerProps.m_Slaves)
+			{
+				if (slavedevice->eLinkMode == DLM_MULTI)
+				{
+					// перебираем ведомые устройства на мультиссылке
+					CLinkPtrCount *pLink(pOffDevice->GetLink(slavedevice->nLinkIndex));
+					CDevice **ppDevice(nullptr);
+					while (pLink->In(ppDevice))
+					{
+						if ((*ppDevice)->IsStateOn())
+						{
+							// если есть включенное ведомое - помещаем в стек для отключения и дальнейшего просмотра графа связей
+							Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, (*ppDevice)->GetVerbalName(), pOffDevice->GetVerbalName()));
+							offstack.push(*ppDevice);
+						}
+					}
+				}
+				else
+				{
+					// проверяем устройство на простой ссылке
+					CDevice *pDevice(pOffDevice->GetSingleLink(slavedevice->nLinkIndex));
+					if (pDevice && pDevice->IsStateOn())
+					{
+						Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, pDevice->GetVerbalName(), pOffDevice->GetVerbalName()));
+						offstack.push(pDevice);
+					}
+				}
+			}
+		}
+
+		return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	}
+
+	return eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
+}
+
+
 #ifdef _DEBUG
 	_TCHAR CDevice::UnknownVarIndex[80];
 #endif

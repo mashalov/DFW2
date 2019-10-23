@@ -10,24 +10,38 @@ bool CDynaModel::Link()
 	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 	{
 		CDeviceContainerProperties &Props = (*it)->m_ContainerProps;
+		Props.m_Slaves.reserve(Props.m_LinksFrom.size() + Props.m_LinksTo.size());
+		Props.m_Masters.reserve(Props.m_Slaves.capacity());
 
 		LINKSTOMAP	 &LinksTo = Props.m_LinksTo;
 		for (LINKSTOMAPITR it1 = LinksTo.begin(); it1 != LinksTo.end(); it1++)
-			if (it1->second.eDependency == DPD_MASTER)
-				if (it1->first != DEVTYPE_MODEL)
+			if (it1->first != DEVTYPE_MODEL)
+			{
+				if (it1->second.eDependency == DPD_MASTER)
 				{
 					Props.m_MasterLinksTo.insert(make_pair(it1->first, it1->second));
 					Props.m_Masters.push_back(&it1->second);
 				}
+				else
+				{
+					Props.m_Slaves.push_back(&it1->second);
+				}
+			}
 
 		LINKSFROMMAP &LinksFrom = Props.m_LinksFrom;
 		for (LINKSFROMMAPITR it2 = LinksFrom.begin(); it2 != LinksFrom.end(); it2++)
-			if (it2->second.eDependency == DPD_MASTER)
-				if (it2->first != DEVTYPE_MODEL)
+			if (it2->first != DEVTYPE_MODEL)
+			{
+				if (it2->second.eDependency == DPD_MASTER)
 				{
 					Props.m_MasterLinksFrom.insert(make_pair(it2->first, it2->second));
 					Props.m_Masters.push_back(&it2->second);
 				}
+				else
+				{
+					Props.m_Slaves.push_back(&it2->second);
+				}
+			}
 	}
 
 

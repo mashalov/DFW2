@@ -5,8 +5,6 @@ using namespace DFW2;
 
 void CDynaModel::EstimateMatrix()
 {
-	TurnOffDevicesByOffMasters();
-
 	ptrdiff_t nOriginalMatrixSize = klu.MatrixSize();
 	bool bSaveRightVector = pRightVector != nullptr;
 	m_nEstimatedMatrixSize = 0;
