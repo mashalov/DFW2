@@ -771,8 +771,8 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 	{
 		// по информации из атрибутов контейнера определяем индекс
 		// связи, соответствующий типу
-		LINKSFROMMAP& FromLinks = m_pContainer->m_ContainerProps.m_LinksFrom;
-		LINKSFROMMAPITR itFrom = FromLinks.find(eDevType);
+		auto& FromLinks = m_pContainer->m_ContainerProps.m_LinksFrom;
+		auto& itFrom = FromLinks.find(eDevType);
 		if (itFrom != FromLinks.end())
 			pRetDev = GetSingleLink(itFrom->second.nLinkIndex);
 	
@@ -797,7 +797,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 		if(!pRetDev)
 		{
 			LINKSTOMAP& ToLinks = m_pContainer->m_ContainerProps.m_LinksTo;
-			LINKSTOMAPITR itTo = ToLinks.find(eDevType);
+			auto& itTo = ToLinks.find(eDevType);
 			if (itTo != ToLinks.end())
 				pRetDev = GetSingleLink(itTo->second.nLinkIndex);
 		}
@@ -807,13 +807,13 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 }
 
 
-eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceInit(CDevice *pDevice, LinkDirectionFrom& LinkFrom)
+eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceInit(CDevice *pDevice, LinkDirectionFrom const * pLinkFrom)
 {
 	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
 
-	_ASSERTE(LinkFrom.eDependency == DPD_MASTER);
+	_ASSERTE(pLinkFrom->eDependency == DPD_MASTER);
 
-	CDevice *pDev = pDevice->GetSingleLink(LinkFrom.nLinkIndex);
+	CDevice *pDev = pDevice->GetSingleLink(pLinkFrom->nLinkIndex);
 
 	if (pDev && pDev->IsPresent())
 	{
@@ -839,12 +839,12 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceInit(CDevice *pDevice, LinkDirec
 }
 
 
-eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, LinkDirectionFrom& LinkFrom)
+eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, LinkDirectionFrom const * pLinkFrom)
 {
 	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
 
-	_ASSERTE(LinkFrom.eDependency == DPD_MASTER);
-	CDevice *pDev = pDevice->GetSingleLink(LinkFrom.nLinkIndex);
+	_ASSERTE(pLinkFrom->eDependency == DPD_MASTER);
+	CDevice *pDev = pDevice->GetSingleLink(pLinkFrom->nLinkIndex);
 
 	if (pDev)
 	{
@@ -877,7 +877,7 @@ eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckM
 
 	for (auto&& it : Props.m_Masters)
 	{
-		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, *it));
+		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, it));
 		if (!CDevice::IsFunctionStatusOK(Status)) return Status;
 	}
 

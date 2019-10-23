@@ -37,8 +37,8 @@ bool CDynaModel::WriteResultsHeaderBinary()
 					DeviceIdsCount = 3;
 
 				CDeviceContainerProperties &Props = pDevCon->m_ContainerProps;
-				LINKSTOMAP	 &LinksTo = Props.m_MasterLinksTo;
-				LINKSFROMMAP &LinksFrom = Props.m_MasterLinksFrom;
+				LINKSTOMAPPTR	 &LinksTo = Props.m_MasterLinksTo;
+				LINKSFROMMAPPTR  &LinksFrom = Props.m_MasterLinksFrom;
 				ParentIdsCount = static_cast<long>(LinksTo.size() + LinksFrom.size());
 
 				if (pDevCon->GetType() == DEVTYPE_BRANCH)
@@ -115,9 +115,9 @@ bool CDynaModel::WriteResultsHeaderBinary()
 							if (SUCCEEDED(SafeArrayAccessData(ParentIds.parray, (void**)&pParentIds)) &&
 								SUCCEEDED(SafeArrayAccessData(ParentTypes.parray, (void**)&pParentTypes)))
 							{
-								for (LINKSTOMAPITR it1 = LinksTo.begin(); it1 != LinksTo.end(); it1++)
+								for (auto&& it1 : LinksTo)
 								{
-									CDevice *pLinkDev = pDev->GetSingleLink(it1->first);
+									CDevice *pLinkDev = pDev->GetSingleLink(it1.first);
 									if (pLinkDev)
 									{
 										pParentTypes[nIndex] = static_cast<long>(pLinkDev->GetType());
@@ -130,9 +130,9 @@ bool CDynaModel::WriteResultsHeaderBinary()
 									nIndex++;
 								}
 
-								for (LINKSFROMMAPITR it2 = LinksFrom.begin(); it2 != LinksFrom.end(); it2++)
+								for (auto&& it2 : LinksFrom)
 								{
-									CDevice *pLinkDev = pDev->GetSingleLink(it2->first);
+									CDevice *pLinkDev = pDev->GetSingleLink(it2.first);
 									if (pLinkDev)
 									{
 										pParentTypes[nIndex] = static_cast<long>(pLinkDev->GetType());

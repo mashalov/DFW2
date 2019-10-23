@@ -101,13 +101,16 @@ namespace DFW2
 			{}
 	};
 
+	// данные о ссылках устройства хранятся в карте
 	using LINKSFROMMAP = std::map<eDFW2DEVICETYPE, LinkDirectionFrom>;
-	using LINKSFROMMAPITR = LINKSFROMMAP::iterator;
-
 	using LINKSTOMAP = std::map<eDFW2DEVICETYPE, LinkDirectionTo>;
-	using LINKSTOMAPITR = LINKSTOMAP::iterator;
+	// для ускорения обработки ссылок разделенных по иерархии и направлениям
+	// используются те же карты, но с const указателями на second из основных карт ссылок
+	using LINKSFROMMAPPTR = std::map<eDFW2DEVICETYPE, LinkDirectionFrom const *>;
+	using LINKSTOMAPPTR = std::map<eDFW2DEVICETYPE, LinkDirectionTo const *>;
 
-	using LINKSUNDIRECTED = std::vector<LinkDirectionFrom*>;
+	// ссылки без разделения на направления
+	using LINKSUNDIRECTED = std::vector<LinkDirectionFrom const *>;
 
 	// атрибуты контейнера устройств
 	// Атрибуты контейнера можно "наследовать" в рантайме - брать некий атрибут и изменять его для другого типа устройств,
@@ -135,8 +138,8 @@ namespace DFW2
 		LINKSFROMMAP m_LinksFrom;
 		LINKSTOMAP  m_LinksTo;
 
-		LINKSFROMMAP m_MasterLinksFrom;
-		LINKSTOMAP  m_MasterLinksTo;
+		LINKSFROMMAPPTR m_MasterLinksFrom;
+		LINKSTOMAPPTR  m_MasterLinksTo;
 
 		LINKSUNDIRECTED m_Masters, m_Slaves;
 

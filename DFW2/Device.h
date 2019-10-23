@@ -211,7 +211,7 @@ namespace DFW2
 
 		// формирование подробного имени устройства. По умолчанию учитывается описание типа устройства
 		virtual void UpdateVerbalName();
-		typedef eDEVICEFUNCTIONSTATUS(CheckMasterDeviceFunction)(CDevice*, LinkDirectionFrom&);
+		typedef eDEVICEFUNCTIONSTATUS(CheckMasterDeviceFunction)(CDevice*, LinkDirectionFrom const *);
 		static CheckMasterDeviceFunction CheckMasterDeviceInit;
 		static CheckMasterDeviceFunction CheckMasterDeviceDiscontinuity;
 		eDEVICEFUNCTIONSTATUS MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice);

@@ -6,49 +6,49 @@ bool CDynaModel::Link()
 {
 	bool bRes = true;
 
-	// Prepare separate links to master device to help further CDevice::MastersReady
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+	// делаем отдельные списки ссылок устройств контейнера для ведущих устройств, ведомых устройств 
+	// и без учета направления
+	for (auto&& it : m_DeviceContainers)
 	{
-		CDeviceContainerProperties &Props = (*it)->m_ContainerProps;
+		CDeviceContainerProperties &Props = it->m_ContainerProps;
+		// отдельные ссылки без направления для ведущих и ведомых
 		Props.m_Slaves.reserve(Props.m_LinksFrom.size() + Props.m_LinksTo.size());
 		Props.m_Masters.reserve(Props.m_Slaves.capacity());
 
-		LINKSTOMAP	 &LinksTo = Props.m_LinksTo;
-		for (LINKSTOMAPITR it1 = LinksTo.begin(); it1 != LinksTo.end(); it1++)
-			if (it1->first != DEVTYPE_MODEL)
+		for (auto&& it1 : Props.m_LinksTo)
+			if (it1.first != DEVTYPE_MODEL)
 			{
-				if (it1->second.eDependency == DPD_MASTER)
+				if (it1.second.eDependency == DPD_MASTER)
 				{
-					Props.m_MasterLinksTo.insert(make_pair(it1->first, it1->second));
-					Props.m_Masters.push_back(&it1->second);
+					Props.m_MasterLinksTo.insert(make_pair(it1.first, &it1.second));	// ведущие к
+					Props.m_Masters.push_back(&it1.second);								// ведущие без направления
 				}
 				else
 				{
-					Props.m_Slaves.push_back(&it1->second);
+					Props.m_Slaves.push_back(&it1.second);								// ведомые без направления
 				}
 			}
 
-		LINKSFROMMAP &LinksFrom = Props.m_LinksFrom;
-		for (LINKSFROMMAPITR it2 = LinksFrom.begin(); it2 != LinksFrom.end(); it2++)
-			if (it2->first != DEVTYPE_MODEL)
+		for (auto && it2 : Props.m_LinksFrom)
+			if (it2.first != DEVTYPE_MODEL)
 			{
-				if (it2->second.eDependency == DPD_MASTER)
+				if (it2.second.eDependency == DPD_MASTER)
 				{
-					Props.m_MasterLinksFrom.insert(make_pair(it2->first, it2->second));
-					Props.m_Masters.push_back(&it2->second);
+					Props.m_MasterLinksFrom.insert(make_pair(it2.first, &it2.second));	// ведущие от
+					Props.m_Masters.push_back(&it2.second);								// ведущие без направления
 				}
 				else
 				{
-					Props.m_Slaves.push_back(&it2->second);
+					Props.m_Slaves.push_back(&it2.second);								// ведомые без направления
 				}
 			}
 	}
 
 
 	// линкуем всех со всеми по матрице
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)			// внешний контейнер
+	for (auto&& it : m_DeviceContainers)			// внешний контейнер
 	{
-		for (DEVICECONTAINERITR lt = m_DeviceContainers.begin(); lt != m_DeviceContainers.end(); lt++)		// внутренний контейнер
+		for (auto&& lt : m_DeviceContainers)		// внутренний контейнер
 		{
 			// не линкуем тип с этим же типом
 			if (it != lt)
@@ -56,44 +56,26 @@ bool CDynaModel::Link()
 				LinkDirectionFrom LinkFrom;
 				LinkDirectionTo LinkTo;
 				// проверяем возможность связи внешнего контейнера со внутренним
-				CDeviceContainer *pContLead = (*it)->DetectLinks(*lt, LinkTo, LinkFrom);
-				if (pContLead == *lt)
+				CDeviceContainer *pContLead = it->DetectLinks(lt, LinkTo, LinkFrom);
+				if (pContLead == lt)
 				{
 					// если выбран внутренний контейнер
-					Log(DFW2::CDFW2Messages::DFW2LOG_INFO, _T("Связь %s <- %s"), (*it)->GetTypeName(), (*lt)->GetTypeName());
+					Log(DFW2::CDFW2Messages::DFW2LOG_INFO, _T("Связь %s <- %s"), it->GetTypeName(), lt->GetTypeName());
 					// организуем связь внешгего контейнера с внутренним
-					bRes = (*it)->CreateLink(*lt) && bRes;
+					bRes = it->CreateLink(lt) && bRes;
 					_ASSERTE(bRes);
 				}
 			}
 		}
 	}
-
-
-	/*
-	bRes = Nodes.CreateLink(&Branches) && bRes;
-	bRes = Nodes.CreateLink(&GeneratorsMustang) && bRes;
-	bRes = Nodes.CreateLink(&Generators3C) && bRes;
-	bRes = Nodes.CreateLink(&Generators1C) && bRes;
-	bRes = Nodes.CreateLink(&GeneratorsInfBus) && bRes;
-	bRes = Nodes.CreateLink(&GeneratorsMotion) && bRes;
-	bRes = Generators1C.CreateLink(&ExcitersMustang) && bRes;
-	bRes = Generators3C.CreateLink(&ExcitersMustang) && bRes;
-	bRes = GeneratorsMustang.CreateLink(&ExcitersMustang) && bRes;
-	bRes = ExcitersMustang.CreateLink(&DECsMustang) && bRes;
-	bRes = ExcitersMustang.CreateLink(&ExcConMustang) && bRes;
-	//bRes = ExcitersMustang.CreateLink(&CustomDevice) && bRes;
-	*/
-
-
 	// по атрибутам контейнеров формируем отдельные списки контейнеров для
 	// обновления после итерации Ньютона и после прогноза, чтобы не проверять эти атрибуты в основных циклах
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+	for (auto&& it : m_DeviceContainers)
 	{
-		if ((*it)->m_ContainerProps.bNewtonUpdate)
-			m_DeviceContainersNewtonUpdate.push_back(*it);
-		if ((*it)->m_ContainerProps.bPredict)
-			m_DeviceContainersPredict.push_back(*it);
+		if (it->m_ContainerProps.bNewtonUpdate)
+			m_DeviceContainersNewtonUpdate.push_back(it);
+		if (it->m_ContainerProps.bPredict)
+			m_DeviceContainersPredict.push_back(it);
 	}
 	return bRes;
 }
