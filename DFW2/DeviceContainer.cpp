@@ -464,7 +464,6 @@ void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 	m_DevInMatrix.reserve(m_DevVec.size());
 	for (auto&& it : m_DevVec)
 	{
-		// здесь EstimateEquations для отладки с m_MatrixRow = -10000000
 		it->EstimateEquations(pDynaModel);
 		if (it->InMatrix())
 			m_DevInMatrix.push_back(it);

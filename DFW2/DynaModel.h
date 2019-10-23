@@ -364,6 +364,7 @@ namespace DFW2
 
 		unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;
 		unique_ptr<RightVector[]> pRightVectorUniq;
+		unique_ptr<RightVectorTotal[]> pRightVectorTotal;
 		RightVector *pRightVector = nullptr;
 		MatrixRow *m_pMatrixRows = nullptr;
 
@@ -375,6 +376,7 @@ namespace DFW2
 		DEVICEPTRSET m_setVisitedDevices;
 
 		ptrdiff_t m_nEstimatedMatrixSize;
+		ptrdiff_t m_nTotalVariablesCount;
 		double *pbRightHand;
 		unique_ptr<double[]> pRightHandBackup;
 		
@@ -390,6 +392,8 @@ namespace DFW2
 		bool NewtonUpdate();
 		bool SolveNewton(ptrdiff_t nMaxIts);
 		void EstimateMatrix();
+		void CreateTotalRightVector();
+		void UpdateTotalRightVector();
 		void NewtonUpdateDevices();
 
 		double GetRatioForCurrentOrder();

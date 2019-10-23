@@ -23,14 +23,18 @@ void CDynaModel::EstimateMatrix()
 	if (bSaveRightVector)
 	{
 		// make a copy of original right vector to new right vector
+		UpdateTotalRightVector();
 		unique_ptr<RightVector[]>  pNewRightVector = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
-		std::copy(pRightVectorUniq.get(), pRightVectorUniq.get() + min(nOriginalMatrixSize, m_nEstimatedMatrixSize), pNewRightVector.get());
+		// сбрасываем количество ошибок, мы его уже просуммировали в TotalRightVector
+		// все остальное копируем
+		std::transform(pRightVectorUniq.get(), pRightVectorUniq.get() + min(nOriginalMatrixSize, m_nEstimatedMatrixSize), pNewRightVector.get(), [](auto& ty) -> auto { ty.nErrorHits = 0; return ty; });
 		pRightVectorUniq = std::move(pNewRightVector);
 		pRightVector = pRightVectorUniq.get();
 		pRightHandBackup = make_unique<double[]>(m_nEstimatedMatrixSize);
 	}
 	else
 	{
+		CreateTotalRightVector();
 		pRightVectorUniq = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		pRightVector = pRightVectorUniq.get();
 		pRightHandBackup = make_unique<double[]>(m_nEstimatedMatrixSize);
@@ -522,3 +526,48 @@ bool CDynaModel::SkipConstElements(ptrdiff_t nRow)
 	return true;
 }
 
+
+void CDynaModel::CreateTotalRightVector()
+{
+	m_nTotalVariablesCount = 0;
+	for (auto&& cit : m_DeviceContainers)
+		m_nTotalVariablesCount += cit->m_ContainerProps.nEquationsCount * cit->Count();
+	pRightVectorTotal = make_unique<RightVectorTotal[]>(m_nTotalVariablesCount);
+
+	RightVectorTotal *pb = pRightVectorTotal.get();
+
+	for (auto&& cit : m_DeviceContainers)
+		for (auto&& dit : *cit)
+			for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++, pb++)
+			{
+				pb->pValue = dit->GetVariablePtr(z);
+				pb->pDevice = dit;
+				pb->nErrorHits = 0;
+			}
+}
+
+void CDynaModel::UpdateTotalRightVector()
+{
+	RightVectorTotal *pRvB = pRightVectorTotal.get();
+	RightVector *pRv = pRightVectorUniq.get();
+
+	// проходим по всем устройствам, пропускаем фрагменты RightVectorTotal для
+	// устройств без уравнений, для всех остальных копируем то что посчитано в RightVector в RightVectorTotal
+	for (auto&& cit : m_DeviceContainers)
+		for (auto&& dit : *cit)
+		{
+			if (dit->AssignedToMatrix())
+			{
+				for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++)
+				{
+					_ASSERTE(pRvB->pDevice == pRv->pDevice && pRvB->pValue == pRv->pValue);
+					ptrdiff_t nNewErrorHits = pRvB->nErrorHits + pRv->nErrorHits;
+					*pRvB = *pRv;
+					pRvB->nErrorHits = nNewErrorHits;
+					pRv++;	pRvB++;
+				}
+			}
+			else
+				pRvB += cit->EquationsCount();
+		}
+}

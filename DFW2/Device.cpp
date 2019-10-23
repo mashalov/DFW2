@@ -782,7 +782,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 #ifdef _DEBUG
 		CDevice *pRetDevTo(nullptr);
 		LINKSTOMAP& ToLinks = m_pContainer->m_ContainerProps.m_LinksTo;
-		LINKSTOMAPITR itTo = ToLinks.find(eDevType);
+		auto& itTo = ToLinks.find(eDevType);
 
 		// в режиме отладки проверяем однозначность определения связи
 		if (itTo != ToLinks.end())

@@ -289,17 +289,18 @@ bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
 
 int ErrorCompare(void *pContext, const void *pValue1, const void *pValue2)
 {
-	RightVector **pV1 = (RightVector**)pValue1;
-	RightVector **pV2 = (RightVector**)pValue2;
+	RightVectorTotal **pV1 = (RightVectorTotal**)pValue1;
+	RightVectorTotal **pV2 = (RightVectorTotal**)pValue2;
 	return static_cast<int>((*pV2)->nErrorHits - (*pV1)->nErrorHits);
 }
 
 void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 {
-	RightVector **pSortOrder = new RightVector*[klu.MatrixSize()];
-	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
-	RightVector **ppSortOrder = pSortOrder;
+	UpdateTotalRightVector();
+	unique_ptr<RightVectorTotal*[]> pSortOrder = make_unique<RightVectorTotal*[]>(klu.MatrixSize());
+	RightVectorTotal *pVectorBegin = pRightVectorTotal.get();
+	RightVectorTotal *pVectorEnd = pVectorBegin + klu.MatrixSize();
+	RightVectorTotal **ppSortOrder = pSortOrder.get();
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -308,12 +309,12 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 		ppSortOrder++;
 	}
 
-	qsort_s(pSortOrder, klu.MatrixSize(), sizeof(RightVector*), ErrorCompare, nullptr);
+	qsort_s(pSortOrder.get(), klu.MatrixSize(), sizeof(RightVectorTotal*), ErrorCompare, nullptr);
 
 	if (nCount > klu.MatrixSize())
 		nCount = klu.MatrixSize();
 
-	ppSortOrder = pSortOrder;
+	ppSortOrder = pSortOrder.get();
 	while (nCount)
 	{
 		pVectorBegin = *ppSortOrder;
@@ -325,9 +326,6 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 		ppSortOrder++;
 		nCount--;
 	}
-
-	delete pSortOrder;
-
 }
 
 // ограничивает частоту изменения шага до минимального, просчитанного на серии шагов
