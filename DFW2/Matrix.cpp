@@ -531,12 +531,21 @@ void CDynaModel::CreateTotalRightVector()
 {
 	m_nTotalVariablesCount = 0;
 	for (auto&& cit : m_DeviceContainers)
+	{
+		// для синхронных зон в TotalRightVector не оставляем места, т.к. они динамические
+		if (cit->GetType() == eDFW2DEVICETYPE::DEVTYPE_SYNCZONE)
+			continue;
 		m_nTotalVariablesCount += cit->m_ContainerProps.nEquationsCount * cit->Count();
+	}
 	pRightVectorTotal = make_unique<RightVectorTotal[]>(m_nTotalVariablesCount);
 
 	RightVectorTotal *pb = pRightVectorTotal.get();
 
 	for (auto&& cit : m_DeviceContainers)
+	{
+		if (cit->GetType() == eDFW2DEVICETYPE::DEVTYPE_SYNCZONE)
+			continue;
+
 		for (auto&& dit : *cit)
 			for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++, pb++)
 			{
@@ -544,6 +553,7 @@ void CDynaModel::CreateTotalRightVector()
 				pb->pDevice = dit;
 				pb->nErrorHits = 0;
 			}
+	}
 }
 
 void CDynaModel::UpdateTotalRightVector()
@@ -554,6 +564,15 @@ void CDynaModel::UpdateTotalRightVector()
 	// проходим по всем устройствам, пропускаем фрагменты RightVectorTotal для
 	// устройств без уравнений, для всех остальных копируем то что посчитано в RightVector в RightVectorTotal
 	for (auto&& cit : m_DeviceContainers)
+	{
+		if (cit->GetType() == eDFW2DEVICETYPE::DEVTYPE_SYNCZONE)
+		{
+			// если встретили синхронные зоны - пропускаем их в RightVector,
+			// потому что в RightVectorTotal их нет
+			pRv += cit->Count() * cit->EquationsCount();
+			continue;
+		}
+
 		for (auto&& dit : *cit)
 		{
 			if (dit->AssignedToMatrix())
@@ -570,4 +589,5 @@ void CDynaModel::UpdateTotalRightVector()
 			else
 				pRvB += cit->EquationsCount();
 		}
+	}
 }

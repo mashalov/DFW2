@@ -116,7 +116,7 @@ bool CDynaModel::Run()
 		TurnOffDevicesByOffMasters();
 		bRes = bRes && PrepareGraph();
 		bRes = bRes && PrepareYs();
-		bRes = bRes && Nodes.ProcessTopology();
+		Nodes.ProcessTopology();
 		LoadFlow();
 		bRes = bRes && InitDevices();
 		EstimateMatrix();
@@ -716,7 +716,7 @@ bool CDynaModel::Step()
 						bRes = m_Discontinuities.ProcessStaticEvents() != DFW2_ACTION_STATE::AS_ERROR;
 						// проверяем, не возникла ли при обработке разрыва необходимость обработки топологии
 						if (sc.m_bProcessTopology)
-							bRes = bRes && Nodes.ProcessTopology();
+							Nodes.ProcessTopology();
 
 						// если возникла необходимость перестроения Якоби
 						if (m_bRebuildMatrixFlag)

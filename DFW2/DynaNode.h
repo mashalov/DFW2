@@ -19,21 +19,17 @@ namespace DFW2
 
 		DEVICEVECTOR m_LinkedGenerators;
 
-		double S;								// переменная состояния - скольжение
-		double Mj;								// суммарный момент инерции
-		bool m_bPassed;							// признак, используемый для обхода графа
-		bool m_bInfPower;						// признак наличия ШБМ
+		double S = 0.0;							// переменная состояния - скольжение
+		double Mj = 0.0;						// суммарный момент инерции
+		bool m_bInfPower = false;				// признак наличия ШБМ
 		CSynchroZone();		
 		virtual ~CSynchroZone() {}
-		bool m_bEnergized;						// признак наличия источника напряжения
+		bool m_bEnergized = false;				// признак наличия источника напряжения
 
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		// функция сброса параметров на исходные значения
-		void Clear();	
-
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 
@@ -109,7 +105,6 @@ namespace DFW2
 		double dLRCQg;
 
 		CSynchroZone *m_pSyncZone = nullptr;		// синхронная зона, к которой принадлежит узел
-		ptrdiff_t m_nZoneDistance;
 		eLFNodeType m_eLFNodeType;
 		ptrdiff_t Nr;
 		cplx Yii;						// собственная проводимость
@@ -344,14 +339,12 @@ namespace DFW2
 			CDynaNodeBase *pNodeIq;
 		};
 
-		CDynaNodeBase* GetFirstNode();
-		CDynaNodeBase* GetNextNode();
-		CSynchroZone* CreateNewSynchroZone();
-		bool BuildSynchroZones();
-		bool  EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
+		void BuildSynchroZones();
+		void EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
 		bool m_bRebuildMatrix;
 		bool CreateSuperNodes();
 		void PrepareLFTopology();
+		void GetTopologySynchroZones(NODEISLANDMAP& NodeIslands);
 		void SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Queue);
 		void SwitchOffDanglingNodes(NodeSet& Queue);
 		void CalcAdmittances(bool bSeidell);
@@ -374,7 +367,7 @@ namespace DFW2
 		_IterationControl& IterationControl();
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();
-		bool ProcessTopology();
+		void ProcessTopology();
 		bool Seidell(); 
 		bool LULF();
 		void ProcessTopologyRequest();

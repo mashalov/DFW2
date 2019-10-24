@@ -677,19 +677,6 @@ eDEVICEFUNCTIONSTATUS CDynaNode::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 CSynchroZone::CSynchroZone() : CDevice()
 {
-	Clear();
-}
-
-// очищает свойства зоны
-void CSynchroZone::Clear()
-{
-	// по умолчанию зона :
-	m_bEnergized = false;				// напряжение снято
-	Mj = 0.0;							// суммарный момент инерции равен нулю
-	S = 0.0;							// скольжение равно нулю
-	m_bPassed = true;
-	m_bInfPower = false;				// в зоне нет ШБМ
-	m_LinkedGenerators.clear();
 }
 
 double* CSynchroZone::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -713,9 +700,9 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 	else
 	{
 		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
-		for (DEVICEVECTORITR it = m_LinkedGenerators.begin(); it != m_LinkedGenerators.end(); it++)
+		for (auto&& it : m_LinkedGenerators)
 		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*it);
+			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(it);
 			if(pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
 				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(pGen);
