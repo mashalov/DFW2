@@ -173,6 +173,11 @@ bool CDynaModel::PrepareYs()
 void CDynaNodeContainer::BuildSynchroZones()
 {
 	// проверяем, есть ли отключенные узлы
+	
+	// даже не знаю что лучше для поиска первого отключенного узла...
+	bool bGotOffNodes = std::find_if(m_DevVec.begin(), m_DevVec.end(), [](const auto* pNode)->bool { return !pNode->IsStateOn(); }) != m_DevVec.end();
+	
+	/*
 	bool bGotOffNodes(false);
 	for (auto&& it : m_DevVec)
 		if (!it->IsStateOn())
@@ -180,6 +185,7 @@ void CDynaNodeContainer::BuildSynchroZones()
 			bGotOffNodes = true;
 			break;
 		}
+	*/
 
 	ptrdiff_t nEnergizedCount(1), nDeenergizedCount(1);
 	while ((nEnergizedCount || nDeenergizedCount))
