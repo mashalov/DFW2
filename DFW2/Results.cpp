@@ -6,12 +6,10 @@ using namespace DFW2;
 
 //#define _WRITE_CSV
 
-bool CDynaModel::WriteResultsHeaderBinary()
+void CDynaModel::WriteResultsHeaderBinary()
 {
-	bool bRes = true;
 	IResultPtr spResults;
 	CDFW2Messages DFWMessages;
-
 	if (SUCCEEDED(spResults.CreateInstance(CLSID_Result)))
 	{
 		try
@@ -20,47 +18,55 @@ bool CDynaModel::WriteResultsHeaderBinary()
 			m_spResultWrite->NoChangeTolerance = 0.0;// GetAtol();
 			m_spResultWrite->Comment = _T("Тестовая схема mdp_debug5 с КЗ");
 
-			for (VARNAMEITRCONST vnmit = DFWMessages.VarNameMap().begin(); vnmit != DFWMessages.VarNameMap().end(); vnmit++)
-				m_spResultWrite->AddVariableUnit(static_cast<long>(vnmit->first), vnmit->second.c_str());
+			// добавляем описание единиц измерения переменных
+			for (auto&& vnmit : DFWMessages.VarNameMap())
+				m_spResultWrite->AddVariableUnit(static_cast<long>(vnmit.first), vnmit.second.c_str());
 
 
-			for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+			for (auto&& it : m_DeviceContainers)
 			{
-				CDeviceContainer *pDevCon = *it;
+				CDeviceContainer *pDevCon = it;
+				// проверяем, нужно ли записывать данные для такого типа контейнера
 				if (!ApproveContainerToWriteResults(pDevCon)) continue;
-				IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType((*it)->GetType(), (*it)->GetTypeName()); 
+				// если записывать надо - добавляем тип устройства контейнера
+				IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(it->GetType(), it->GetTypeName()); 
 
+				// по умолчанию у устройства один идентификатор и одно родительское устройство
 				long DeviceIdsCount = 1;
 				long ParentIdsCount = 1;
 
+				// у ветви - три идентификатора
 				if (pDevCon->GetType() == DEVTYPE_BRANCH)
 					DeviceIdsCount = 3;
 
 				CDeviceContainerProperties &Props = pDevCon->m_ContainerProps;
-				LINKSTOMAPPTR	 &LinksTo = Props.m_MasterLinksTo;
-				LINKSFROMMAPPTR  &LinksFrom = Props.m_MasterLinksFrom;
-				ParentIdsCount = static_cast<long>(LinksTo.size() + LinksFrom.size());
+				// количество родительских устройств равно количеству ссылок на ведущие устройства
+				ParentIdsCount = static_cast<long>(Props.m_Masters.size());
 
+				// у ветви два ведущих узла
 				if (pDevCon->GetType() == DEVTYPE_BRANCH)
 					ParentIdsCount = 2;
-
+				
+				// добавляем описание устройства: количество идентификаторов, количество ведущих устройств и общее количество устройств данного типа
 				spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, static_cast<long>(pDevCon->Count()));
 
-				for (VARINDEXMAPCONSTITR vit = pDevCon->VariablesBegin(); vit != pDevCon->VariablesEnd(); vit++)
+				// добавляем описания перемнных данного контейнера
+				for (auto&& vit : pDevCon->m_ContainerProps.m_VarMap)
 				{
-					if (vit->second.m_bOutput)
-						spDeviceType->AddDeviceTypeVariable(vit->first.c_str(), vit->second.m_Units, vit->second.m_dMultiplier);
+					if (vit.second.m_bOutput)
+						spDeviceType->AddDeviceTypeVariable(vit.first.c_str(), vit.second.m_Units, vit.second.m_dMultiplier);
 				}
 
 				variant_t DeviceIds, ParentIds, ParentTypes;
 
+				// если у устройства более одного идентификатора, передаем их в SAFERRAY
 				if (DeviceIdsCount > 1)
 				{
 					SAFEARRAYBOUND sabounds = { static_cast<ULONG>(DeviceIdsCount), 0 };
 					DeviceIds.parray = SafeArrayCreate(VT_I4, 1, &sabounds);
 					DeviceIds.vt = VT_ARRAY | VT_I4;
 				}
-
+				// если у устройства более одного ведущего, передаем их идентификаторы в SAFERRAY
 				if (ParentIdsCount > 1)
 				{
 					SAFEARRAYBOUND sabounds = { static_cast<ULONG>(ParentIdsCount), 0 };
@@ -70,11 +76,12 @@ bool CDynaModel::WriteResultsHeaderBinary()
 					ParentTypes.vt = VT_ARRAY | VT_I4;
 				}
 
-				for (DEVICEVECTORITR dit = pDevCon->begin(); dit != pDevCon->end(); dit++)
+				for (auto&& dit : *pDevCon)
 				{
-					CDevice *pDev = *dit;
+					CDevice *pDev = dit;
 					if (pDevCon->GetType() == DEVTYPE_BRANCH)
 					{
+						// для ветвей передаем номер начала, конца и номер параллельной цепи
 						CDynaBranch *pBranch = static_cast<CDynaBranch*>(pDev);
 						int *pDataIds;
 						if (SUCCEEDED(SafeArrayAccessData(DeviceIds.parray, (void**)&pDataIds)))
@@ -115,9 +122,9 @@ bool CDynaModel::WriteResultsHeaderBinary()
 							if (SUCCEEDED(SafeArrayAccessData(ParentIds.parray, (void**)&pParentIds)) &&
 								SUCCEEDED(SafeArrayAccessData(ParentTypes.parray, (void**)&pParentTypes)))
 							{
-								for (auto&& it1 : LinksTo)
+								for (auto&& it1 : Props.m_Masters)
 								{
-									CDevice *pLinkDev = pDev->GetSingleLink(it1.first);
+									CDevice *pLinkDev = pDev->GetSingleLink(it1->nLinkIndex);
 									if (pLinkDev)
 									{
 										pParentTypes[nIndex] = static_cast<long>(pLinkDev->GetType());
@@ -129,21 +136,6 @@ bool CDynaModel::WriteResultsHeaderBinary()
 									}
 									nIndex++;
 								}
-
-								for (auto&& it2 : LinksFrom)
-								{
-									CDevice *pLinkDev = pDev->GetSingleLink(it2.first);
-									if (pLinkDev)
-									{
-										pParentTypes[nIndex] = static_cast<long>(pLinkDev->GetType());
-										pParentIds[nIndex] = static_cast<long>(pLinkDev->GetId());
-									}
-									else
-									{
-										pParentTypes[nIndex] = pParentIds[nIndex] = 0;
-									}
-								}
-
 								SafeArrayUnaccessData(ParentIds.parray);
 								SafeArrayUnaccessData(ParentTypes.parray);
 							}
@@ -151,11 +143,8 @@ bool CDynaModel::WriteResultsHeaderBinary()
 						else
 						{
 							CDevice *pLinkDev(nullptr);
-
-							if (!LinksFrom.empty())
-								pLinkDev = pDev->GetSingleLink(LinksFrom.begin()->first);
-							else if (!LinksTo.empty())
-								pLinkDev = pDev->GetSingleLink(LinksTo.begin()->first);
+							if(!Props.m_Masters.empty())
+								pLinkDev = pDev->GetSingleLink(Props.m_Masters[0]->nLinkIndex);
 
 							if (pLinkDev)
 							{
@@ -170,7 +159,6 @@ bool CDynaModel::WriteResultsHeaderBinary()
 
 						}
 					}
-
 					spDeviceType->AddDevice(pDev->GetName(), DeviceIds, ParentIds, ParentTypes);
 				}
 			}
@@ -179,42 +167,39 @@ bool CDynaModel::WriteResultsHeaderBinary()
 
 			long nIndex = 0;
 
-			for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+			// устанавливаем адреса, откуда ResultWrite будет забирать значения
+			// записываемых переменных
+			for (auto&& it : m_DeviceContainers)
 			{
-				CDeviceContainer *pDevCon = *it;
+				CDeviceContainer *pDevCon = it;
 				if (!ApproveContainerToWriteResults(pDevCon)) continue;
 
-				for (DEVICEVECTORITR dit = pDevCon->begin(); dit != pDevCon->end(); dit++)
+				for (auto&& dit : *pDevCon)
 				{
 					long nVarIndex = 0;
-					for (VARINDEXMAPCONSTITR vit = (*it)->VariablesBegin(); vit != (*it)->VariablesEnd(); vit++)
-						if (vit->second.m_bOutput)
-							m_spResultWrite->SetChannel(static_cast<long>((*dit)->GetId()), 
-														static_cast<long>((*dit)->GetType()), 
+					for (auto&& vit : it->m_ContainerProps.m_VarMap)
+						if (vit.second.m_bOutput)
+							m_spResultWrite->SetChannel(static_cast<long>(dit->GetId()), 
+														static_cast<long>(dit->GetType()), 
 														nVarIndex++, 
-														(*dit)->GetVariablePtr(vit->second.m_nIndex), 
+														dit->GetVariablePtr(vit.second.m_nIndex), 
 														nIndex++);
 				}
 			}
 		}
 		catch (_com_error& ex)
 		{
-			Log(CDFW2Messages::DFW2LOG_ERROR, ex.Description());
-			bRes = false;
+			throw dfw2error(ex.Description());
 		}
 	}
-	return bRes;
 }
 
-bool CDynaModel::WriteResultsHeader()
+void CDynaModel::WriteResultsHeader()
 {
 	if (m_Parameters.m_bDisableResultsWriter)
-		return true;
-
-	bool bRes = false;
-	setlocale(LC_ALL, "RU-ru");
-
+		return;
 #ifdef _WRITE_CSV
+	setlocale(LC_ALL, "RU-ru");
 	if (!_tfopen_s(&fResult, _T("c:\\tmp\\results.csv"), _T("wb+")))
 	{
 		bRes = true;
@@ -241,26 +226,18 @@ bool CDynaModel::WriteResultsHeader()
 		_ftprintf_s(fResult, _T("\n"));
 	}
 #endif
-
-	bRes = true;
-
 	m_dTimeWritten = 0.0;
-	if (bRes)
-		bRes = WriteResultsHeaderBinary();
-	return bRes;
+	WriteResultsHeaderBinary();
 }
 
-bool CDynaModel::WriteResults()
+void CDynaModel::WriteResults()
 {
-	bool bRes = true;
 	if (m_Parameters.m_bDisableResultsWriter)
-		return bRes;
-
+		return;
 	try
 	{
 		if (sc.m_bEnforceOut || GetCurrentTime() >= m_dTimeWritten)
 		{
-
 #ifdef _WRITE_CSV
 			_ftprintf_s(fResult, _T("%g;%g;"), sc.t, sc.m_dCurrentH);
 			ptrdiff_t nIndex = 0;
@@ -280,35 +257,34 @@ bool CDynaModel::WriteResults()
 			_ftprintf_s(fResult, _T("\n"));
 #endif
 			m_spResultWrite->WriteResults(GetCurrentTime(), GetH());
-
 			m_dTimeWritten = GetCurrentTime() + m_Parameters.m_dOutStep;
 			sc.m_bEnforceOut = false;
 		}
 	}
-	catch (_com_error & ex)
+	catch (_com_error& ex)
 	{
-		Log(CDFW2Messages::DFW2LOG_ERROR, ex.Description());
-		bRes = false;
+		throw dfw2error(ex.Description());
 	}
-
-	return bRes;
 }
 
 
-bool CDynaModel::FinishWriteResults()
+void CDynaModel::FinishWriteResults()
 {
-	bool bRes = true;
-
 	if (m_Parameters.m_bDisableResultsWriter)
-		return true;
+		return;
 
 #ifdef _WRITE_CSV
 	fclose(fResult);
 #endif
-
 	// сброс результатов делается автоматически при вызове Close
 	//m_spResultWrite->FlushChannels();
-	m_spResultWrite->Close();
-	return bRes;
+	try
+	{
+		m_spResultWrite->Close();
+	}
+	catch (_com_error& ex)
+	{
+		throw dfw2error(ex.Description());
+	}
 }
 

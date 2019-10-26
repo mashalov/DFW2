@@ -58,18 +58,18 @@ namespace DFW2
 	};
 
 	// карта индексов переменных состояния
-	typedef std::map<std::wstring, CVarIndex> VARINDEXMAP;
-	typedef VARINDEXMAP::iterator VARINDEXMAPITR;
-	typedef VARINDEXMAP::const_iterator VARINDEXMAPCONSTITR;
+	using VARINDEXMAP = std::map<std::wstring, CVarIndex>;
+	using VARINDEXMAPITR = VARINDEXMAP::iterator;
+	using VARINDEXMAPCONSTITR = VARINDEXMAP::const_iterator;
 
 	// карта индексов констант
-	typedef std::map<std::wstring, CConstVarIndex> CONSTVARINDEXMAP;
-	typedef CONSTVARINDEXMAP::iterator CONSTVARINDEXMAPITR;
-	typedef CONSTVARINDEXMAP::const_iterator CONSTVARINDEXMAPCONSTITR;
+	using CONSTVARINDEXMAP = std::map<std::wstring, CConstVarIndex>;
+	using CONSTVARINDEXMAPITR = CONSTVARINDEXMAP::iterator;
+	using CONSTVARINDEXMAPCONSTITR = CONSTVARINDEXMAP::const_iterator;
 
 	// множество типов устройств
-	typedef std::set<ptrdiff_t> TYPEINFOSET;
-	typedef TYPEINFOSET::iterator TYPEINFOSETITR;
+	using TYPEINFOSET = std::set<ptrdiff_t>;
+	using TYPEINFOSETITR = TYPEINFOSET::iterator;
 
 	// связь _от_ внешнего устройства
 	struct LinkDirectionFrom
@@ -119,18 +119,17 @@ namespace DFW2
 	class CDeviceContainerProperties
 	{
 	public:
-		CDeviceContainerProperties();
-		~CDeviceContainerProperties();
 
 		void SetType(eDFW2DEVICETYPE eDevType);
 		void AddLinkTo(eDFW2DEVICETYPE eDevType, eDFW2DEVICELINKMODE eLinkMode, eDFW2DEVICEDEPENDENCY Dependency, const _TCHAR* cszstrIdField);
 		void AddLinkFrom(eDFW2DEVICETYPE eDevType, eDFW2DEVICELINKMODE eLinkMode, eDFW2DEVICEDEPENDENCY Dependency);
-		bool bNewtonUpdate;													// нужен ли контейнеру вызов NewtonUpdate 
-		bool bCheckZeroCrossing;											// нужен ли контейнеру вызов ZeroCrossing
-		bool bPredict;														// нужен ли контейнеру вызов предиктора
-		ptrdiff_t nPossibleLinksCount;
-		ptrdiff_t nEquationsCount;											// количество уравнений устройства в контейнере
-		eDFW2DEVICETYPE		eDeviceType;
+		bool bNewtonUpdate = false;											// нужен ли контейнеру вызов NewtonUpdate. По умолчанию устройство не требует особой обработки итерации Ньютона 
+		bool bCheckZeroCrossing = false;									// нужен ли контейнеру вызов ZeroCrossing
+		bool bPredict = false;												// нужен ли контейнеру вызов предиктора
+		bool bVolatile = false;												// устройства в контейнере могут создаваться и удаляться динамически во время расчета
+		ptrdiff_t nPossibleLinksCount = 0;									// возможное для устройства в контейнере количество ссылок на другие устройства
+		ptrdiff_t nEquationsCount = 0;										// количество уравнений устройства в контейнере
+		eDFW2DEVICETYPE	eDeviceType = DEVTYPE_UNKNOWN;
 		VARINDEXMAP m_VarMap;												// карта индексов перменных состояния
 		CONSTVARINDEXMAP m_ConstVarMap;										// карта индексов констант
 		TYPEINFOSET m_TypeInfoSet;											// набор типов устройства

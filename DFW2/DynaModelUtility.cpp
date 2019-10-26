@@ -283,7 +283,7 @@ CDeviceContainer* CDynaModel::GetContainerByAlias(const _TCHAR* cszAlias)
 
 bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
 {
-	return pDevCon->Count() && pDevCon->GetType() != DEVTYPE_SYNCZONE && pDevCon->GetType() != DEVTYPE_BRANCH;
+	return pDevCon->Count() && !pDevCon->m_ContainerProps.bVolatile && pDevCon->GetType() != DEVTYPE_BRANCH;
 }
 
 

@@ -532,8 +532,8 @@ void CDynaModel::CreateTotalRightVector()
 	m_nTotalVariablesCount = 0;
 	for (auto&& cit : m_DeviceContainers)
 	{
-		// для синхронных зон в TotalRightVector не оставляем места, т.к. они динамические
-		if (cit->GetType() == eDFW2DEVICETYPE::DEVTYPE_SYNCZONE)
+		// для volatile устройств зон в TotalRightVector не оставляем места
+		if (cit->m_ContainerProps.bVolatile)
 			continue;
 		m_nTotalVariablesCount += cit->m_ContainerProps.nEquationsCount * cit->Count();
 	}
@@ -543,7 +543,7 @@ void CDynaModel::CreateTotalRightVector()
 
 	for (auto&& cit : m_DeviceContainers)
 	{
-		if (cit->GetType() == eDFW2DEVICETYPE::DEVTYPE_SYNCZONE)
+		if (cit->m_ContainerProps.bVolatile)
 			continue;
 
 		for (auto&& dit : *cit)
@@ -565,9 +565,9 @@ void CDynaModel::UpdateTotalRightVector()
 	// устройств без уравнений, для всех остальных копируем то что посчитано в RightVector в RightVectorTotal
 	for (auto&& cit : m_DeviceContainers)
 	{
-		if (cit->GetType() == eDFW2DEVICETYPE::DEVTYPE_SYNCZONE)
+		if (cit->m_ContainerProps.bVolatile)
 		{
-			// если встретили синхронные зоны - пропускаем их в RightVector,
+			// если встретили volatile конетейнер (например - синхронные зоны) - пропускаем его в RightVector,
 			// потому что в RightVectorTotal их нет
 			pRv += cit->Count() * cit->EquationsCount();
 			continue;

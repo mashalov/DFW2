@@ -114,8 +114,8 @@ bool CDynaModel::Run()
 
 		bRes = bRes && Link();
 		TurnOffDevicesByOffMasters();
-		bRes = bRes && PrepareGraph();
-		bRes = bRes && PrepareYs();
+		PrepareGraph();
+		PrepareYs();
 		Nodes.ProcessTopology();
 		LoadFlow();
 		bRes = bRes && InitDevices();
@@ -185,7 +185,7 @@ bool CDynaModel::Run()
 
 			bRes = bRes && m_Automatic.Init();
 			bRes = bRes && m_Discontinuities.Init();
-			bRes = bRes && WriteResultsHeader();
+			WriteResultsHeader();
 			SetH(0.01);
 			while (!sc.m_bStopCommandReceived && bRes)
 			{
@@ -195,10 +195,8 @@ bool CDynaModel::Run()
 					if (bRes)
 					{
 						// если ошибок не было, пишем результаты
-						if (WriteResults())
-							bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
-						else
-							bResultsNeedToBeFinished = bRes = false; // если не записали - сбрасываем признак завершения
+						WriteResults();
+						bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
 					}
 				}
 				if (WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0)
@@ -213,8 +211,7 @@ bool CDynaModel::Run()
 		// вне зависимости от результата завершаем запись результатов
 		// по признаку завершения
 		if (bResultsNeedToBeFinished)
-			if (!FinishWriteResults())
-				bRes = false;	// если завершить не получилось - портим результат
+			FinishWriteResults();
 
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps count %d"), sc.nStepsCount);
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d zc %d Time passed %f"),

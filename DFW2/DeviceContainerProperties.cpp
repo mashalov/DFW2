@@ -2,19 +2,6 @@
 #include "DeviceContainerProperties.h"
 using namespace DFW2;
 
-CDeviceContainerProperties::CDeviceContainerProperties()
-{
-	bNewtonUpdate = false;									// по умолчанию устройство не требует особой обработки итерации Ньютона
-	bCheckZeroCrossing = false;								// обработки zerocrossing
-	bPredict = false;										// обработки прогноза. Если нужны - это устанавливается индивидуально
-	nPossibleLinksCount = nEquationsCount = 0;
-	eDeviceType = DEVTYPE_UNKNOWN;
-}
-
-
-CDeviceContainerProperties::~CDeviceContainerProperties()
-{
-}
 
 // добавить тип устройства, или тип, от которого устройство наследовано
 void CDeviceContainerProperties::SetType(eDFW2DEVICETYPE eDevType)

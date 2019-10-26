@@ -407,8 +407,8 @@ namespace DFW2
 		double GetNorm(double *pVector);
 		double GetWeightedNorm(double *pVector);
 
-		bool PrepareGraph();
-		bool PrepareYs();
+		void PrepareGraph();
+		void PrepareYs();
 		bool Link();
 		bool UpdateExternalVariables();
 		void TurnOffDevicesByOffMasters();
@@ -442,10 +442,10 @@ namespace DFW2
 		void BuildRightHand();
 		double CheckZeroCrossing();
 
-		bool WriteResultsHeader();
-		bool WriteResultsHeaderBinary();
-		bool WriteResults();
-		bool FinishWriteResults();
+		void WriteResultsHeader();
+		void WriteResultsHeaderBinary();
+		void WriteResults();
+		void FinishWriteResults();
 
 		ConvergenceTest::ConvergenceTestVec ConvTest;
 		struct StepControl sc;

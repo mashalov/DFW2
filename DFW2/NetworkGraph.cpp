@@ -80,93 +80,72 @@ bool CDynaModel::Link()
 	return bRes;
 }
 
-bool CDynaModel::PrepareGraph()
+void CDynaModel::PrepareGraph()
 {
-	bool bRes = false;
-	DEVICEVECTORITR it;
-
 	// сбрасываем обработку топологии
 	// после импорта данных, в которых могли быть отключенные узлы и ветви
 	sc.m_bProcessTopology = false;
-
 	
 	if (!(m_pLRCGen = static_cast<CDynaLRC*>(LRCs.GetDevice(-1))))
-	{
-		Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszMustBeConstPowerLRC));
-			bRes = false;
-	}
+		throw dfw2error(Cex(CDFW2Messages::m_cszMustBeConstPowerLRC));
 
-	if (Branches.Count() && Nodes.Count())
+	for (auto&& it : Branches)
 	{
-		bRes = true;
-		for (it = Branches.begin(); it != Branches.end(); it++)
+		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
+		// check branch is looped
+		if (pBranch->Iq != pBranch->Ip)
 		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
-
-			// check branch is looped
-			if (pBranch->Iq != pBranch->Ip)
+			// fix transformer ratios to 1.0, allocate admittances to Gamma or Pi transformer circuits
+			if (Equal(pBranch->Ktr,0.0) || Equal(pBranch->Ktr,0.0))
 			{
-				// fix transformer ratios to 1.0, allocate admittances to Gamma or Pi transformer circuits
-				if (Equal(pBranch->Ktr,0.0) || Equal(pBranch->Ktr,0.0))
-				{
-					pBranch->Ktr = 1.0;
-					pBranch->GIp = pBranch->GIq = pBranch->G / 2.0;
-					pBranch->BIp = pBranch->BIq = pBranch->B / 2.0;
-				}
-				else
-				{
-					pBranch->GIp = pBranch->G;
-					pBranch->BIp = pBranch->B;
-					pBranch->GIq = pBranch->BIq = 0.0;
-				}
-
-				// account for reactors
-				pBranch->GIp += pBranch->NrIp * pBranch->GrIp;
-				pBranch->GIq += pBranch->NrIq * pBranch->GrIq;
-				pBranch->BIp += pBranch->NrIp * pBranch->BrIp;
-				pBranch->BIq += pBranch->NrIq * pBranch->BrIq;
+				pBranch->Ktr = 1.0;
+				pBranch->GIp = pBranch->GIq = pBranch->G / 2.0;
+				pBranch->BIp = pBranch->BIq = pBranch->B / 2.0;
 			}
 			else
 			{
-				pBranch->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszBranchLooped, pBranch->Ip));
-				pBranch->m_BranchState = CDynaBranch::BRANCH_OFF;
+				pBranch->GIp = pBranch->G;
+				pBranch->BIp = pBranch->B;
+				pBranch->GIq = pBranch->BIq = 0.0;
 			}
-		}
 
-		if (bRes)
+			// account for reactors
+			pBranch->GIp += pBranch->NrIp * pBranch->GrIp;
+			pBranch->GIq += pBranch->NrIq * pBranch->GrIq;
+			pBranch->BIp += pBranch->NrIp * pBranch->BrIp;
+			pBranch->BIq += pBranch->NrIq * pBranch->BrIq;
+		}
+		else
 		{
-			// also add reactor's admittance
-			for (it = Nodes.begin(); it != Nodes.end(); it++)
-			{
-				CDynaNode *pNode = static_cast<CDynaNode*>(*it);
-				pNode->G += pNode->Gr0 * pNode->Nr;
-				pNode->B += pNode->Br0 * pNode->Nr;
-				pNode->Gshunt = pNode->Bshunt = 0.0;
-			}
+			pBranch->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszBranchLooped, pBranch->Ip));
+			pBranch->m_BranchState = CDynaBranch::BRANCH_OFF;
 		}
 	}
-	return bRes;
+
+	// also add reactor's admittance
+	for (auto&& it : Nodes)
+	{
+		CDynaNode *pNode = static_cast<CDynaNode*>(it);
+		pNode->G += pNode->Gr0 * pNode->Nr;
+		pNode->B += pNode->Br0 * pNode->Nr;
+		pNode->Gshunt = pNode->Bshunt = 0.0;
+	}
 }
 
 
-bool CDynaModel::PrepareYs()
+void CDynaModel::PrepareYs()
 {
-	bool bRes = true;
-	DEVICEVECTORITR it;
-
-	for (it = Branches.begin(); it != Branches.end(); it++)
+	for (auto&& it :Branches)
 	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
 		pBranch->CalcAdmittances();
 	}
 
-	for (it = Nodes.begin(); it != Nodes.end(); it++)
+	for (auto&& it : Nodes)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		pNode->CalcAdmittances();
 	}
-
-	return bRes;
 }
 
 // строит синхронные зоны по топологии и определяет их состояния
