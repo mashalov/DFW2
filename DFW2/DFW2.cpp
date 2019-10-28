@@ -32,7 +32,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(31658);
 	//_CrtSetBreakAlloc(31657);
-	//_CrtSetBreakAlloc(70449);
+	//_CrtSetBreakAlloc(101744);
 
 	SetConsoleCtrlHandler(HandlerRoutine,TRUE);
 

@@ -82,7 +82,7 @@ struct SlowVarItemCompare
 
 class CSlowVariablesSet : public set <CSlowVariableItem*, SlowVarItemCompare>
 {
-	typedef set <CSlowVariableItem*, SlowVarItemCompare>::iterator ITERATOR;
+	using ITERATOR = CSlowVariablesSet::iterator;
 public:
 	bool Add(long DeviceTypeId, const LONGVECTOR& DeviceIds, const _TCHAR* cszVarName, double Time, double Value, double PreviousValue, const _TCHAR* cszChangeDescription);
 	~CSlowVariablesSet()

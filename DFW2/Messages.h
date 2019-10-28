@@ -132,6 +132,7 @@ namespace DFW2
 		static const _TCHAR* m_cszTurningOffDeviceByMasterDevice;
 		static const _TCHAR* m_cszMatrixSize;
 		static const _TCHAR* m_cszTurnOnDeviceImpossibleDueToMaster;
+		static const _TCHAR* m_cszAutomaticOrScenarioFailedToInitialize;
 	};
 }
 

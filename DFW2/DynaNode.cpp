@@ -1209,6 +1209,7 @@ const CDeviceContainerProperties CDynaNode::DeviceProperties()
 const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 {
 	CDeviceContainerProperties props;
+	props.bVolatile = true;
 	props.eDeviceType = DEVTYPE_SYNCZONE;
 	props.nEquationsCount = CSynchroZone::VARS::V_LAST;
 	props.m_VarMap.insert(make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));

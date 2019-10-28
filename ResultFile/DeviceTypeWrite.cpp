@@ -30,7 +30,7 @@ STDMETHODIMP CDeviceTypeWrite::SetDeviceTypeMetrics(LONG DeviceIdsCount, LONG Pa
 		m_pDeviceTypeInfo->DevicesCount = DevicesCount;
 		m_pDeviceTypeInfo->DeviceParentIdsCount = ParentIdsCount;
 		m_pDeviceTypeInfo->AllocateData();
-		m_pDeviceInstanceInfo = m_pDeviceTypeInfo->m_pDeviceInstances;
+		m_pDeviceInstanceInfo = m_pDeviceTypeInfo->m_pDeviceInstances.get();
 		hRes = S_OK;
 	}
 	return hRes;
@@ -97,7 +97,7 @@ STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VAR
 	{
 		if (m_pDeviceTypeInfo)
 		{
-			ptrdiff_t nIndex = m_pDeviceInstanceInfo - m_pDeviceTypeInfo->m_pDeviceInstances;
+			ptrdiff_t nIndex = m_pDeviceInstanceInfo - m_pDeviceTypeInfo->m_pDeviceInstances.get();
 			if (nIndex < m_pDeviceTypeInfo->DevicesCount)
 			{
 				m_pDeviceInstanceInfo->nIndex = nIndex;
@@ -113,7 +113,7 @@ STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VAR
 				hRes = S_OK;
 			}
 			else
-				Error(Cex(CDFW2Messages::m_cszDuplicatedVariableUnit, m_pDeviceInstanceInfo - m_pDeviceTypeInfo->m_pDeviceInstances, m_pDeviceTypeInfo->DevicesCount), IID_IDeviceTypeWrite, hRes);
+				Error(Cex(CDFW2Messages::m_cszDuplicatedVariableUnit, m_pDeviceInstanceInfo - m_pDeviceTypeInfo->m_pDeviceInstances.get(), m_pDeviceTypeInfo->DevicesCount), IID_IDeviceTypeWrite, hRes);
 		}
 	}
 	catch (CFileException &ex)

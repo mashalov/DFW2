@@ -574,24 +574,7 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 		}
 	}
 
-	// some of devices can be marked by state DS_ABSENT, which means such devices
-	// should be removed from model. To do so, elements of vectors of pointers to that devices
-	// should be removed
-
-	it = begin();
-	while (it != end())
-	{
-		if (!(*it)->IsPresent())
-			it = m_DevVec.erase(it);
-		else
-			it++;
-	}
-
-	// when some elements were removed from vectors,
-	// clear set to refresh search
-	if (m_DevVec.size() != m_DevSet.size() )
-		m_DevSet.clear();
-
+	// some of devices can be marked by state 
 	return m_eDeviceFunctionStatus;
 }
 

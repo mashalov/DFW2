@@ -57,8 +57,8 @@ void CResultFileWriter::WriteTime(double dTime, double dStep)
 
 		if (bReset)
 		{
-			CChannelEncoder *pEncoder = m_pEncoders;
-			CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+			CChannelEncoder *pEncoder = m_pEncoders.get();
+			CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 
 			while (pEncoder < pEncoderEnd)
 			{
@@ -121,12 +121,12 @@ void CResultFileWriter::FlushChannels()
 	WriteLEB(m_nPointsCount);
 	WriteLEB(m_nChannelsCount);
 
-	CChannelEncoder *pEncoder = m_pEncoders;
-	CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+	CChannelEncoder *pEncoder = m_pEncoders.get();
+	CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 
 	while (pEncoder < pEncoderEnd)
 	{
-		WriteChannelHeader(pEncoder - m_pEncoders, 
+		WriteChannelHeader(pEncoder - m_pEncoders.get(), 
 						   pEncoder->m_nDeviceType, 
 						   pEncoder->m_nDeviceId, 
 						   pEncoder->m_nVariableIndex);
@@ -212,7 +212,7 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 			size_t nCompressedSize(m_nBufferLength * sizeof(BITWORD));
 			bool bAllBytesEqual(false);
 			if (nIndex < static_cast<ptrdiff_t>(m_nChannelsCount - 2) &&
-				EncodeRLE(Output.BytesBuffer(), Output.BytesWritten(), m_pCompressedBuffer, nCompressedSize, bAllBytesEqual))
+				EncodeRLE(Output.BytesBuffer(), Output.BytesWritten(), m_pCompressedBuffer.get(), nCompressedSize, bAllBytesEqual))
 			{	
 				if (bAllBytesEqual)
 				{
@@ -248,7 +248,7 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 					WriteLEB(0);						// type of block 0 - RLE data
 					WriteLEB(Encoder.m_nCount);			// count of doubles
 					WriteLEB(nCompressedSize);			// byte length of RLE data
-					if (fwrite(m_pCompressedBuffer, sizeof(unsigned char), nCompressedSize, m_pFile) != nCompressedSize)
+					if (fwrite(m_pCompressedBuffer.get(), sizeof(unsigned char), nCompressedSize, m_pFile) != nCompressedSize)
 						throw CFileWriteException(m_pFile);
 
 					WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
@@ -368,9 +368,9 @@ void CResultFileWriter::WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t Type, ptr
 
 void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 {
-	m_pEncoders = new CChannelEncoder[m_nChannelsCount = nChannelsCount + 2];
+	m_pEncoders = make_unique<CChannelEncoder[]>(m_nChannelsCount = nChannelsCount + 2);
 	m_nBufferLength *= sizeof(double) / sizeof(BITWORD);
-	m_pCompressedBuffer = new unsigned char[m_nBufferLength * sizeof(BITWORD)];
+	m_pCompressedBuffer = make_unique<unsigned char[]>(m_nBufferLength * sizeof(BITWORD));
 	
 	size_t nBufferGroup = m_nBufferGroup;
 	size_t nSeek = 0;
@@ -400,30 +400,10 @@ void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 	m_pEncoders[m_nChannelsCount - 2].m_Compressor.UpdatePredictor(0, 0);
 }
 
-
-CResultFileWriter::CResultFileWriter()
-{
-	m_pFile = NULL;
-	m_pEncoders = nullptr;
-	m_nBufferLength = 100;
-	m_nBufferGroup = 100;
-	m_nPointsCount = 0;
-	m_hThread = NULL;
-	m_hRunningEvent = NULL;
-	m_hRunEvent = NULL;
-	m_hDataMutex = NULL;
-	m_bThreadRun = true;
-	m_dNoChangeTolerance = 0.0;
-	m_nPredictorOrder = 0;
-	m_pCompressedBuffer = nullptr;
-	m_bChannelsFlushed = true;
-}
-
 void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
 {
 	m_dNoChangeTolerance = dTolerance;
 }
-
 
 CResultFileWriter::~CResultFileWriter()
 {
@@ -466,18 +446,6 @@ void CResultFileWriter::CloseFile()
 	{
 		fclose(m_pFile);
 		m_pFile = NULL;
-	}
-
-	if (m_pEncoders)
-	{
-		delete[] m_pEncoders;
-		m_pEncoders = nullptr;
-	}
-
-	if (m_pCompressedBuffer)
-	{
-		delete m_pCompressedBuffer;
-		m_pCompressedBuffer = nullptr;
 	}
 
 	for (auto&& it : m_BufferBegin)
@@ -582,8 +550,8 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 			__try
 			{
 				// сохраняем результаты из указателей во внутрениий буфер
-				CChannelEncoder *pEncoder = m_pEncoders;
-				CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+				CChannelEncoder *pEncoder = m_pEncoders.get();
+				CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 				while (pEncoder < pEncoderEnd)
 				{
 					pEncoder->m_dValue = *pEncoder->m_pVariable;
@@ -630,17 +598,17 @@ bool CResultFileWriter::WriteResultsThreaded()
 		// если ожидание прошло без ошибок
 		__try
 		{
-			CChannelEncoder *pEncoder = m_pEncoders;
-			CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+			CChannelEncoder *pEncoder = m_pEncoders.get();
+			CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 			// записываем время и шаг
 			WriteTime(m_dTimeToWrite, m_dStepToWrite);
 			// записываем текущий блок с помощью кодеков каналов
-			pEncoder = m_pEncoders;
+			pEncoder = m_pEncoders.get();
 			while (pEncoder < pEncoderEnd)
 			{
 				// WriteChannel сам решает - продолжать писать в буфер или сбрасывать на диск, если 
 				// буфер закончился
-				WriteChannel(pEncoder - m_pEncoders, pEncoder->m_dValue);
+				WriteChannel(pEncoder - m_pEncoders.get(), pEncoder->m_dValue);
 				pEncoder++;
 			}
 

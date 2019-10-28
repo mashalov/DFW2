@@ -214,7 +214,7 @@ void CDynaModel::PushVarSearchStack(CDevice*pDevice)
 	{
 		if (m_setVisitedDevices.insert(pDevice).second)
 		{
-			if (m_ppVarSearchStackTop < m_ppVarSearchStackBase + m_Parameters.nVarSearchStackDepth)
+			if (m_ppVarSearchStackTop < m_ppVarSearchStackBase.get() + m_Parameters.nVarSearchStackDepth)
 			{
 				*m_ppVarSearchStackTop = pDevice;
 				m_ppVarSearchStackTop++;
@@ -227,7 +227,7 @@ void CDynaModel::PushVarSearchStack(CDevice*pDevice)
 
 bool CDynaModel::PopVarSearchStack(CDevice* &pDevice)
 {
-	if (m_ppVarSearchStackTop <= m_ppVarSearchStackBase)
+	if (m_ppVarSearchStackTop <= m_ppVarSearchStackBase.get())
 		return false;
 	m_ppVarSearchStackTop--;
 	pDevice = *m_ppVarSearchStackTop;
@@ -237,8 +237,8 @@ bool CDynaModel::PopVarSearchStack(CDevice* &pDevice)
 void CDynaModel::ResetStack()
 {
 	if (!m_ppVarSearchStackBase)
-		m_ppVarSearchStackBase = new CDevice*[m_Parameters.nVarSearchStackDepth];
-	m_ppVarSearchStackTop = m_ppVarSearchStackBase;
+		m_ppVarSearchStackBase = make_unique<CDevice*[]>(m_Parameters.nVarSearchStackDepth);
+	m_ppVarSearchStackTop = m_ppVarSearchStackBase.get();
 	m_setVisitedDevices.clear();
 }
 

@@ -18,7 +18,7 @@ protected:
 		const CResultFileReader::VariableTypeInfo *pVariable;
 	};
 
-	ChannelLink *pChannelLink;
+	unique_ptr<ChannelLink[]> pChannelLink;
 	CResultFileReader& m_ResultFileReader;
 	size_t nPointsCount;
 	size_t nChannelsCount;
@@ -33,7 +33,7 @@ protected:
 	void WriteData();
 	string loc;
 
-	void WriteField(ChannelLink *pLink, const _TCHAR *cszField);
+	void WriteField(const ChannelLink *pLink, const _TCHAR *cszField);
 	void WriteCRLF2();
 	void WriteCRLF();
 	void WriteColumn(const double *pData, size_t nColumn, bool bLastColumn);

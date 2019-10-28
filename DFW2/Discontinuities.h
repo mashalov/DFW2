@@ -227,9 +227,9 @@ namespace DFW2
 		bool SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dTime);
 		bool RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject);
 		bool CheckStateDiscontinuity(CDiscreteDelay *pDelayObject);
-		bool Init();
+		void Init();
 		double NextEventTime();
-		bool PassTime(double dTime);
+		void PassTime(double dTime);
 		DFW2_ACTION_STATE ProcessStaticEvents();
 	};
 }

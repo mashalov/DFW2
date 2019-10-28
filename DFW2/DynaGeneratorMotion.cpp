@@ -36,7 +36,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 
 	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorInfBusBase::Init(pDynaModel);
 	
-	if (IsPresent() && CDevice::IsFunctionStatusOK(Status))
+	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		if (Mj < 1E-7)
 			Mj = 3 * Pnom;

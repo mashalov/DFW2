@@ -35,7 +35,7 @@ public:
 	STDMETHOD(get__NewEnum)(LPUNKNOWN *pVal)
 	{
 		size_t size = m_ObjVector.size(); 
-		VARIANT *pVar = new VARIANT[size];
+		unique_ptr<VARIANT[]> pVar = make_unique<VARIANT[]>(size);
 		for (size_t i = 0; i < size; i++)
 		{
 			pVar[i].vt = VT_DISPATCH;
@@ -44,7 +44,6 @@ public:
 		typedef CComObject<CComEnum< IEnumVARIANT, &IID_IEnumVARIANT, VARIANT, _Copy< VARIANT> > > enumVar;
 		enumVar *pEnumVar = new enumVar;
 		pEnumVar->Init(&pVar[0], &pVar[size], NULL, AtlFlagCopy);
-		delete[] pVar;
 		return pEnumVar->QueryInterface(IID_IUnknown, (void**)pVal);
 	}
 

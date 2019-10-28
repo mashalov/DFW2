@@ -68,8 +68,6 @@ CDynaModel::~CDynaModel()
 {
 	if (m_hStopEvt)
 		CloseHandle(m_hStopEvt);
-	if (m_ppVarSearchStackBase)
-		delete m_ppVarSearchStackBase;
 }
 
 bool CDynaModel::Run()
@@ -183,35 +181,47 @@ bool CDynaModel::Run()
 
 	
 
-			bRes = bRes && m_Automatic.Init();
-			bRes = bRes && m_Discontinuities.Init();
+			m_Automatic.Init();
+			m_Discontinuities.Init();
 			WriteResultsHeader();
 			SetH(0.01);
-			while (!sc.m_bStopCommandReceived && bRes)
+			try
 			{
-				bRes = bRes && Step();
-				if (!sc.m_bStopCommandReceived)
+				while (!sc.m_bStopCommandReceived && bRes)
 				{
-					if (bRes)
+					bRes = bRes && Step();
+					if (!sc.m_bStopCommandReceived)
 					{
-						// если ошибок не было, пишем результаты
-						WriteResults();
-						bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
+						if (bRes)
+						{
+							// если ошибок не было, пишем результаты
+							WriteResults();
+							bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
+						}
 					}
+					if (WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0)
+						break;
 				}
-				if (WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0)
-					break;
+			}
+			catch (dfw2error& err)
+			{
+				if (bResultsNeedToBeFinished)
+				{
+					bResultsNeedToBeFinished = false;
+					FinishWriteResults();
+					throw err;
+				}
 			}
 		}
+
+		if (bResultsNeedToBeFinished)
+			FinishWriteResults();
 
 		if (!bRes)
 			MessageBox(NULL, _T("Failed"), _T("Failed"), MB_OK);
 
-
 		// вне зависимости от результата завершаем запись результатов
 		// по признаку завершения
-		if (bResultsNeedToBeFinished)
-			FinishWriteResults();
 
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps count %d"), sc.nStepsCount);
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d zc %d Time passed %f"),

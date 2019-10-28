@@ -136,11 +136,8 @@ bool CDiscontinuities::RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject)
 	return bRes;
 }
 
-bool CDiscontinuities::Init()
+void CDiscontinuities::Init()
 {
-	bool bRes = true;
-//	m_itCurrentStaticEvent = m_StaticEvent.begin();
-	return bRes;
 }
 
 double CDiscontinuities::NextEventTime()
@@ -156,9 +153,8 @@ double CDiscontinuities::NextEventTime()
 	return dNextEventTime;
 }
 
-bool CDiscontinuities::PassTime(double dTime)
+void CDiscontinuities::PassTime(double dTime)
 {
-	bool bRes = true;
 	if (!m_pDynaModel->IsInDiscontinuityMode())
 	{
 		STATICEVENTITR itEvent = m_StaticEvent.lower_bound(CStaticEvent(dTime));
@@ -168,7 +164,6 @@ bool CDiscontinuities::PassTime(double dTime)
 				m_StaticEvent.erase(m_StaticEvent.begin(), itEvent);
 		}
 	}
-	return bRes;
 }
 
 

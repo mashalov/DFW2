@@ -109,14 +109,12 @@ STDMETHODIMP CVariable::get_Plot(VARIANT* Plot)
 		m_pDeviceInstanceInfo->m_pDevType &&
 		m_pDeviceInstanceInfo->m_pDevType->m_pFileReader)
 	{
-		double *pResult(nullptr);
 		const CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
 		if (Plot && SUCCEEDED(VariantClear(Plot)))
 		{
 			try
 			{
-				pResult = pFileReader->ReadChannel(m_pDeviceInstanceInfo->m_pDevType->eDeviceType, m_pDeviceInstanceInfo->GetId(0), m_pVariableInfo->nIndex);
-				Plot->parray = pFileReader->CreateSafeArray(pResult);
+				Plot->parray = pFileReader->CreateSafeArray(pFileReader->ReadChannel(m_pDeviceInstanceInfo->m_pDevType->eDeviceType, m_pDeviceInstanceInfo->GetId(0), m_pVariableInfo->nIndex));
 				if (Plot->parray)
 				{
 					Plot->vt = VT_R8 | VT_ARRAY;
@@ -132,9 +130,6 @@ STDMETHODIMP CVariable::get_Plot(VARIANT* Plot)
 		if (FAILED(hRes))
 			if(Plot)
 				VariantClear(Plot);
-
-		if (pResult)
-			delete pResult;
 	}
 	return hRes;
 }

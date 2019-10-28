@@ -866,23 +866,23 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 
 			CLRCData *pData = pLRC->P;
 
-			for (itpoly = slit->second->P.begin(); itpoly != slit->second->P.end(); itpoly++)
+			for (auto&& itpoly : slit->second->P)
 			{
-				pData->V	=	itpoly->m_kV;
-				pData->a0   =	itpoly->m_k0;
-				pData->a1	=	itpoly->m_k1;
-				pData->a2	=	itpoly->m_k2;
+				pData->V	=	itpoly.m_kV;
+				pData->a0   =	itpoly.m_k0;
+				pData->a1	=	itpoly.m_k1;
+				pData->a2	=	itpoly.m_k2;
 				pData++;
 			}
 
 			pData = pLRC->Q;
 
-			for (itpoly = slit->second->Q.begin(); itpoly != slit->second->Q.end(); itpoly++)
+			for (auto&& itpoly : slit->second->Q)
 			{
-				pData->V	=	itpoly->m_kV;
-				pData->a0	=	itpoly->m_k0;
-				pData->a1	=	itpoly->m_k1;
-				pData->a2	=	itpoly->m_k2;
+				pData->V	=	itpoly.m_kV;
+				pData->a0	=	itpoly.m_k0;
+				pData->a1	=	itpoly.m_k1;
+				pData->a2	=	itpoly.m_k2;
 				pData++;
 			}
 		}

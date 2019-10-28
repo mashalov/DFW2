@@ -31,9 +31,9 @@ public:
 		m_DeviceTypeInfo.DeviceIdsCount = 1;
 		m_DeviceTypeInfo.eDeviceType = 0;
 		m_DeviceTypeInfo.AllocateData();
-		m_DeviceTypeInfo.m_pDeviceInstances->nIndex = 0;
-		m_DeviceTypeInfo.m_pDeviceInstances->SetId(0, 0);
-		m_DeviceTypeInfo.m_pDeviceInstances->Name = CDFW2Messages::m_cszResultRoot;
+		m_DeviceTypeInfo.m_pDeviceInstances.get()->nIndex = 0;
+		m_DeviceTypeInfo.m_pDeviceInstances.get()->SetId(0, 0);
+		m_DeviceTypeInfo.m_pDeviceInstances.get()->Name = CDFW2Messages::m_cszResultRoot;
 	}
 
 DECLARE_REGISTRY_RESOURCEID(IDR_RESULT)

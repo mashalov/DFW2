@@ -99,7 +99,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 			}
 
 			// записываем описания устройств
-			for (CResultFileReader::DeviceInstanceInfo *pDev = di->m_pDeviceInstances; pDev < di->m_pDeviceInstances + di->DevicesCount; pDev++)
+			for (CResultFileReader::DeviceInstanceInfo *pDev = di->m_pDeviceInstances.get(); pDev < di->m_pDeviceInstances.get() + di->DevicesCount; pDev++)
 			{
 				// для каждого устройства
 				// записываем последовательность идентификаторов

@@ -372,7 +372,8 @@ namespace DFW2
 		DEVICECONTAINERS m_DeviceContainersNewtonUpdate;
 		DEVICECONTAINERS m_DeviceContainersPredict;
 
-		CDevice **m_ppVarSearchStackTop, **m_ppVarSearchStackBase = nullptr;
+		CDevice **m_ppVarSearchStackTop;
+		unique_ptr<CDevice*[]> m_ppVarSearchStackBase;
 		DEVICEPTRSET m_setVisitedDevices;
 
 		ptrdiff_t m_nEstimatedMatrixSize;

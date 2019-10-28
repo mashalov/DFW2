@@ -223,84 +223,79 @@ bool CAutomatic::AddAction(long Type,
 	return bRes;
 }
 
-bool CAutomatic::Init()
+void CAutomatic::Init()
 {
-	bool bRes = true;
 	CDeviceContainer *pAutomaticContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_AUTOMATIC);
-	if (pAutomaticContainer)
+	if(!pAutomaticContainer)
+		throw dfw2error(_T("CAutomatic::Init AutomaticContainer not available"));
+	CCustomDevice *pCustomDevice = static_cast<CCustomDevice*>(pAutomaticContainer->GetDeviceByIndex(0));
+	if (!pCustomDevice)
+		throw dfw2error(_T("CAutomatic::Init CustomDevice for automatic not available"));
+
+	bool bRes = true;
+	STRINGLIST ActionList;
+
+	for (auto&& it : m_lstLogics)
 	{
-		CCustomDevice *pCustomDevice = static_cast<CCustomDevice*>(pAutomaticContainer->GetDeviceByIndex(0));
-		if (pCustomDevice)
+		CAutomaticItem *pLogic= it;
+		wstring strVarName = Cex(_T("LT%d"), pLogic->GetId());
+
+		// находим в автоматике выходное реле элемента логики по имени выхода
+		CRelayDelay *pActionRelay = static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName.c_str()));
+		if (!pActionRelay)
+			throw dfw2error(Cex(CDFW2Messages::m_cszLogicNotFoundInDLL, strVarName.c_str()));
+
+		pActionRelay->SetDiscontinuityId(pLogic->GetId());
+		CAutomaticLogic *pLogicItem = static_cast<CAutomaticLogic*>(pLogic);
+		const wstring strActions = pLogicItem->GetActions();
+		stringutils::split(strActions, _T(";,"), ActionList);
+
+		for (auto&& sit : ActionList)
 		{
-			STRINGLIST ActionList;
-
-			for (AUTOITEMSITR it = m_lstLogics.begin(); it != m_lstLogics.end(); it++)
+			wstring strAction = sit;
+			stringutils::trim(strAction);
+			if (!strAction.empty())
 			{
-				CAutomaticItem *pLogic= *it;
-				wstring strVarName = Cex(_T("LT%d"), pLogic->GetId());
-
-				// находим в автоматике выходное реле элемента логики по имени выхода
-				CRelayDelay *pActionRelay = static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName.c_str()));
-				if (pActionRelay)
+				ptrdiff_t nId(0);
+				if (_stscanf_s(strAction.c_str(), CAutomaticAction::cszActionTemplate, &nId) == 1)
 				{
-					pActionRelay->SetDiscontinuityId(pLogic->GetId());
-					CAutomaticLogic *pLogicItem = static_cast<CAutomaticLogic*>(pLogic);
-					const wstring strActions = pLogicItem->GetActions();
-					stringutils::split(strActions, _T(";,"), ActionList);
-					for (STRINGLISTITR sit = ActionList.begin(); sit != ActionList.end(); sit++)
+					AUTOITEMGROUPITR mit = m_AutoActionGroups.find(nId);
+					if (mit != m_AutoActionGroups.end())
 					{
-						wstring strAction = *sit;
-						stringutils::trim(strAction);
-						if (!strAction.empty())
+						if (!pLogicItem->AddActionGroupId(nId))
 						{
-							ptrdiff_t nId(0);
-							if (_stscanf_s(strAction.c_str(), CAutomaticAction::cszActionTemplate, &nId) == 1)
-							{
-								AUTOITEMGROUPITR mit = m_AutoActionGroups.find(nId);
-								if (mit != m_AutoActionGroups.end())
-								{
-									if (!pLogicItem->AddActionGroupId(nId))
-									{
-										m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
-											nId, strActions.c_str(), pLogicItem->GetId()));
-									}
-								}
-								else
-								{
-									m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
-										nId, strActions.c_str(), pLogicItem->GetId()));
-									bRes = false;
-								}
-							}
-							else
-							{
-								m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongActionInLogicList, 
-																			strAction.c_str(), 
-																			strActions.c_str(), 
-																			pLogic->GetId()));
-								bRes = false;
-							}
+							m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
+								nId, strActions.c_str(), pLogicItem->GetId()));
 						}
+					}
+					else
+					{
+						m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
+							nId, strActions.c_str(), pLogicItem->GetId()));
+						bRes = false;
 					}
 				}
 				else
 				{
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLogicNotFoundInDLL, strVarName.c_str()));
-					bRes = false;
-				}
-			}
-			
-			for (AUTOITEMSITR it = m_lstActions.begin(); it != m_lstActions.end(); it++)
-			{
-				CAutomaticAction *pAction = static_cast<CAutomaticAction*>(*it);
-				if (!pAction->Init(m_pDynaModel, pCustomDevice))
-				{
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongActionInLogicList, 
+																strAction.c_str(), 
+																strActions.c_str(), 
+																pLogic->GetId()));
 					bRes = false;
 				}
 			}
 		}
 	}
-	return bRes;
+			
+	for (auto&& it : m_lstActions)
+	{
+		CAutomaticAction *pAction = static_cast<CAutomaticAction*>(it);
+		if (!pAction->Init(m_pDynaModel, pCustomDevice))
+			bRes = false;
+	}
+
+	if (!bRes)
+		throw dfw2error(Cex(CDFW2Messages::m_cszAutomaticOrScenarioFailedToInitialize));
 }
 
 

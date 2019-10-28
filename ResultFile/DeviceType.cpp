@@ -64,7 +64,7 @@ STDMETHODIMP CDeviceType::get_Devices(VARIANT* Devices)
 					CComObject<CDevice> *pDevice;
 					if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
 					{
-						pDevice->SetDeviceInfo(m_pDevTypeInfo->m_pDeviceInstances + i);
+						pDevice->SetDeviceInfo(m_pDevTypeInfo->m_pDeviceInstances.get() + i);
 						pDevice->AddRef();
 						pChildrenCollection->Add(pDevice);
 					}

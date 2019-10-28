@@ -142,7 +142,7 @@ namespace DFW2
 		bool CompileModels();
 		CAutomatic(CDynaModel *pDynaModel);
 		virtual ~CAutomatic();
-		bool Init();
+		void Init();
 		void Clean();
 		bool NotifyRelayDelay(const CRelayDelayLogic* pRelay);
 	};

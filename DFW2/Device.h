@@ -185,7 +185,6 @@ namespace DFW2
 		DS_ON,							// включено
 		DS_READY,						// готово (не используется ?)
 		DS_DETERMINE,					// должно быть определено (мастер-устройством, например)
-		DS_ABSENT						// должно быть удалено из модели
 	};
 
 	// причина изменения состояния устройства
@@ -309,7 +308,6 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICESTATE GetState() const { return m_State; }
 		bool IsStateOn() const { return GetState() == DS_ON;  }
-		bool IsPresent() const {  return GetState() != DS_ABSENT; }
 		eDEVICESTATECAUSE GetStateCause() { return m_StateCause; }
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);

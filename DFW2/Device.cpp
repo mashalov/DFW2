@@ -459,21 +459,11 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckInit(CDynaModel* pDynaModel)
 		// если успешной инициализации еще не выполнено
 		// проверяем что с инициализацией ведущих устройств
 		m_eInitStatus = MastersReady(&CDevice::CheckMasterDeviceInit);
-
-		if (IsPresent())
-		{
-			// если устройство представлено в модели
-			// и ведущие устройства инициализированы 
-			if(m_eInitStatus == DFS_OK)
-				m_eInitStatus = Init(pDynaModel);		// пытаемся инициализировать устройство
-
-			// если устройство не нуждается в инициализации
-			if (m_eInitStatus == DFS_DONTNEED)	
-				m_eInitStatus = DFS_OK;					// делаем вид что инициализация прошла успешно
-		}
-		else
-			m_eInitStatus = DFS_OK;						// для отсутствующих в модели устройств также возвращаем успешную инициализацию
-														// так как далее мы их просто удалим из модели
+		if(m_eInitStatus == DFS_OK)
+			m_eInitStatus = Init(pDynaModel);		// пытаемся инициализировать устройство
+		// если устройство не нуждается в инициализации
+		if (m_eInitStatus == DFS_DONTNEED)	
+			m_eInitStatus = DFS_OK;					// делаем вид что инициализация прошла успешно
 	}
 	return m_eInitStatus;
 }
@@ -814,27 +804,8 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceInit(CDevice *pDevice, LinkDirec
 	_ASSERTE(pLinkFrom->eDependency == DPD_MASTER);
 
 	CDevice *pDev = pDevice->GetSingleLink(pLinkFrom->nLinkIndex);
-
-	if (pDev && pDev->IsPresent())
-	{
-		Status = pDev->Initialized();
-		/*
-		if (CDevice::IsFunctionStatusOK(Status))
-		{
-			if (!pDev->IsStateOn())
-			{
-				pDevice->SetState(DS_OFF, DSC_INTERNAL);
-			}
-		}
-		*/
-	}
-	else
-	{
-		pDevice->SetState(DS_ABSENT, DSC_INTERNAL);
-	}
-
+	Status = pDev->Initialized();
 	_ASSERTE(Status != DFS_FAILED);
-
 	return Status;
 }
 

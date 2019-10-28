@@ -9,65 +9,56 @@ namespace DFW2
 	class CChannelEncoder
 	{
 	public:
-		CCompressorParallel m_Compressor;		// экземпляр предиктивного кодера
-		CBitStream m_Output;					// поток для записи битового потока
-		unsigned __int64 m_nPreviousSeek;		// смещение последнего записанного предыдущего блока
-		size_t m_nCount;						// количество сжатых double
-		size_t m_nUnwrittenSuperRLECount;		// количество подсчитанных, но не записанных блоков SuperRLE
-		ptrdiff_t m_nVariableIndex;				// индекс переменной канала
-		const double *m_pVariable;				// адрес переменной канала
-		double m_dValue;						// значение для буферизации переданного на m_pVariable значения и записи в потоке
-		ptrdiff_t m_nDeviceId;					// идентификатор устройства канала
-		ptrdiff_t m_nDeviceType;				// тип устройства канала
-		unsigned char m_SuperRLEByte;			// байт SuperRLE
-
-		CChannelEncoder() : m_nPreviousSeek(0), 
-							m_nCount(0),
-							m_nUnwrittenSuperRLECount(0),
-							m_pVariable(nullptr)
-		{
-
-		}
+		CCompressorParallel m_Compressor;					// экземпляр предиктивного кодера
+		CBitStream m_Output;								// поток для записи битового потока
+		unsigned __int64 m_nPreviousSeek = 0;				// смещение последнего записанного предыдущего блока
+		size_t m_nCount = 0;								// количество сжатых double
+		size_t m_nUnwrittenSuperRLECount = 0;				// количество подсчитанных, но не записанных блоков SuperRLE
+		ptrdiff_t m_nVariableIndex;							// индекс переменной канала
+		const double *m_pVariable = nullptr;				// адрес переменной канала
+		double m_dValue;									// значение для буферизации переданного на m_pVariable значения и записи в потоке
+		ptrdiff_t m_nDeviceId;								// идентификатор устройства канала
+		ptrdiff_t m_nDeviceType;							// тип устройства канала
+		unsigned char m_SuperRLEByte;						// байт SuperRLE
 	};
 
-	typedef vector<BITWORD*> BUFFERBEGIN;
-	typedef BUFFERBEGIN::iterator BUFFERBEGINITERATOR;
+	using BUFFERBEGIN = vector<BITWORD*>;
+	using BUFFERBEGINITERATOR = BUFFERBEGIN::iterator;
 
 	class CResultFileWriter : public CResultFile
 	{
 	protected:
-		CChannelEncoder *m_pEncoders;
+		unique_ptr<CChannelEncoder[]> m_pEncoders;
 		size_t m_nChannelsCount;
 		BUFFERBEGIN m_BufferBegin;
 		double m_dSetTime;
 		double m_dSetStep;
 		bool m_bPredictorReset;
-		size_t m_nBufferLength;
-		size_t m_nBufferGroup;
-		size_t m_nPointsCount;
+		size_t m_nBufferLength = 100;
+		size_t m_nBufferGroup = 100;
+		size_t m_nPointsCount = 0;
 		__int64 m_DataDirectoryOffset;
-		HANDLE m_hThread;
-		HANDLE m_hRunEvent;
-		HANDLE m_hRunningEvent;
-		HANDLE m_hDataMutex;
+		HANDLE m_hThread = NULL;
+		HANDLE m_hRunEvent = NULL;
+		HANDLE m_hRunningEvent = NULL;
+		HANDLE m_hDataMutex = NULL;
 		void TerminateWriterThread();
-		bool m_bThreadRun;
+		bool m_bThreadRun = true;
 		double m_dTimeToWrite;
 		double m_dStepToWrite;
 		bool CResultFileWriter::WriteResultsThreaded();
 		__int64 OffsetFromCurrent(__int64 AbsoluteOffset);
-		double m_dNoChangeTolerance;
+		double m_dNoChangeTolerance = 0.0;
 		double ts[PREDICTOR_ORDER];
 		double ls[PREDICTOR_ORDER];
-		ptrdiff_t m_nPredictorOrder;
+		ptrdiff_t m_nPredictorOrder = 0;
 		CSlowVariablesSet m_setSlowVariables;
 		CRLECompressor	m_RLECompressor;
-		unsigned char *m_pCompressedBuffer;
+		unique_ptr<unsigned char[]> m_pCompressedBuffer;
 		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
 		void FlushSuperRLE(CChannelEncoder& Encoder);
-		bool m_bChannelsFlushed;
+		bool m_bChannelsFlushed = true;
 	public:
-		CResultFileWriter();
 		virtual ~CResultFileWriter();
 		void CreateResultFile(const _TCHAR *cszFilePath);
 		void CloseFile();
