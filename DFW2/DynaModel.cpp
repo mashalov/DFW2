@@ -605,6 +605,8 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 		ptrdiff_t imax(0);
 		double bmax = klu.FindMaxB(imax);
+
+		double *bwatch = klu.B();
 	
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
 		SolveLinearSystem();

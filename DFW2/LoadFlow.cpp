@@ -799,6 +799,8 @@ void CLoadFlow::UpdatePQFromGenerators()
 
 void CLoadFlow::UpdateQToGenerators()
 {
+	bool bAllOk(true);
+
 	for (auto&& it : pNodes->m_DevVec)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
@@ -812,28 +814,41 @@ void CLoadFlow::UpdateQToGenerators()
 		{
 			double Qrange = pNode->LFQmax - pNode->LFQmin;
 			pNode->ResetVisited();
+			double Qspread(0.0), Qgmin(0.0), Qgmax(0.0);
 			while (pGenLink->In(ppGen))
 			{
 				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 				pGen->Q = 0.0;
 				if (pGen->IsStateOn())
+				{
 					if (Qrange > 0.0)
 					{
 						double OldQ = pGen->Q;
 						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
+						Qgmin += pGen->LFQmin;
+						Qgmax += pGen->LFQmax;
 						_CheckNumber(pGen->Q);
-						//					_ASSERTE(fabs(pGen->Q - OldQ) < 0.00001);
 					}
 					else if (pGen->GetType() == eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER)
 					{
-						pGen->Q = pGen->Kgen * pNode->Qg  / pGenLink->m_nCount;
+						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->m_nCount;
 						pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->m_nCount;
 					}
 					else
 						pGen->Q = 0.0;
+
+					Qspread += pGen->Q;
+				}
+			}
+			if (fabs(pNode->Qg - Qspread) > m_Parameters.m_Imb)
+			{
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForNode, pNode->GetVerbalName(), pNode->Qg, Qgmin, Qgmax));
+				bAllOk = false;
 			}
 		}
 	}
+	if (!bAllOk)
+		throw dfw2error(CDFW2Messages::m_cszLFError);
 }
 
 void CLoadFlow::GetPnrQnrSuper(CDynaNodeBase *pNode)

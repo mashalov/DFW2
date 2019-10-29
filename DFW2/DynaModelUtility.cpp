@@ -297,9 +297,9 @@ int ErrorCompare(void *pContext, const void *pValue1, const void *pValue2)
 void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 {
 	UpdateTotalRightVector();
-	unique_ptr<RightVectorTotal*[]> pSortOrder = make_unique<RightVectorTotal*[]>(klu.MatrixSize());
+	unique_ptr<RightVectorTotal*[]> pSortOrder = make_unique<RightVectorTotal*[]>(m_nTotalVariablesCount);
 	RightVectorTotal *pVectorBegin = pRightVectorTotal.get();
-	RightVectorTotal *pVectorEnd = pVectorBegin + klu.MatrixSize();
+	RightVectorTotal *pVectorEnd = pVectorBegin + m_nTotalVariablesCount;
 	RightVectorTotal **ppSortOrder = pSortOrder.get();
 
 	while (pVectorBegin < pVectorEnd)
@@ -309,10 +309,10 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 		ppSortOrder++;
 	}
 
-	qsort_s(pSortOrder.get(), klu.MatrixSize(), sizeof(RightVectorTotal*), ErrorCompare, nullptr);
+	qsort_s(pSortOrder.get(), m_nTotalVariablesCount, sizeof(RightVectorTotal*), ErrorCompare, nullptr);
 
-	if (nCount > klu.MatrixSize())
-		nCount = klu.MatrixSize();
+	if (nCount > m_nTotalVariablesCount)
+		nCount = m_nTotalVariablesCount;
 
 	ppSortOrder = pSortOrder.get();
 	while (nCount)

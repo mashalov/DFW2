@@ -120,3 +120,5 @@ const _TCHAR* CDFW2Messages::m_cszTurningOffDeviceByMasterDevice = _T("Устр�
 const _TCHAR* CDFW2Messages::m_cszMatrixSize = _T("Размерность матрицы %d, количество ненулевых элементов %d");
 const _TCHAR* CDFW2Messages::m_cszTurnOnDeviceImpossibleDueToMaster = _T("Невозможно включить устройство \"%s\", так как отключено по крайней мере одно ведущее устройство \"%s\"");
 const _TCHAR* CDFW2Messages::m_cszAutomaticOrScenarioFailedToInitialize = _T("При инициализации автоматики или сценария обнаружены ошибки");
+const _TCHAR* CDFW2Messages::m_cszLFWrongQrangeForNode = _T("Для узла \"%s\" невозможно распределение реактивной мощности %g по генераторам c суммарным диапазоном [%g;%g]");
+const _TCHAR* CDFW2Messages::m_cszLFError = _T("Ошибка при расчете УР");

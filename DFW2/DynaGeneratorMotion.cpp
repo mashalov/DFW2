@@ -200,6 +200,7 @@ const CDeviceContainerProperties CDynaGeneratorMotion::DeviceProperties()
 
 	props.m_VarMap.insert(make_pair(_T("S"), CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
 	props.m_VarMap.insert(make_pair(_T("Delta"), CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
+
 	props.m_ConstVarMap.insert(make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, eDVT_CONSTSOURCE)));
 	return props;
 }

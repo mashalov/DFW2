@@ -221,21 +221,21 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	}
 
 	// check low voltage
-	dIredVre -= (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
-	dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
-	dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
-	dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
-
-	// check low voltage
 	if (m_bLowVoltage)
 	{
 		pDynaModel->SetElement(A(V_V), A(V_RE), 0.0);
 		pDynaModel->SetElement(A(V_V), A(V_IM), 0.0);
+		_ASSERTE(fabs(PgVre2) < DFW2_EPSILON && fabs(PgVim2) < DFW2_EPSILON);
+		_ASSERTE(fabs(QgVre2) < DFW2_EPSILON && fabs(QgVim2) < DFW2_EPSILON);
 	}
 	else
 	{
 		pDynaModel->SetElement(A(V_V), A(V_RE), -Vre / V2sq);
 		pDynaModel->SetElement(A(V_V), A(V_IM), -Vim / V2sq);
+		dIredVre -= (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
+		dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
+		dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
+		dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
 	}
 
 	if (m_bLowVoltage)
@@ -329,10 +329,15 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	}
 		
 	// check low voltage
-	Ire += (Pk * Vre + Qk * Vim) / V2;
-	Iim += (Pk * Vim - Qk * Vre) / V2;
+	if (!m_bLowVoltage)
+	{
+		Ire += (Pk * Vre + Qk * Vim) / V2;
+		Iim += (Pk * Vim - Qk * Vre) / V2;
+	}
+	else
+		_ASSERTE(fabs(Pk) < DFW2_EPSILON && fabs(Qk) < DFW2_EPSILON);
 
-	pDynaModel->SetFunction(A(V_RE), Ire);
+ 	pDynaModel->SetFunction(A(V_RE), Ire);
 	pDynaModel->SetFunction(A(V_IM), Iim);
 
 	double dV = V - V2sq;

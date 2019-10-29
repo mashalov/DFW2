@@ -403,10 +403,12 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 
 	props.nEquationsCount = CDynaGenerator1C::VARS::V_LAST;
 
-	//props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszId, CVarIndex(CDynaGenerator1C::V_ID, false, VARUNIT_KAMPERES)));
-	//props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszIq, CVarIndex(CDynaGenerator1C::V_IQ, false, VARUNIT_KAMPERES)));
 	props.m_VarMap.insert(make_pair(_T("Eqs"), CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszEq, CVarIndex(CDynaGenerator1C::V_EQ, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(make_pair(_T("Id"), CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Iq"), CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(make_pair(_T("Vd"), CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(make_pair(_T("Vq"), CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
 
 	props.m_ConstVarMap.insert(make_pair(CDynaGenerator1C::m_cszExciterId, CConstVarIndex(CDynaGenerator1C::C_EXCITERID, eDVT_CONSTSOURCE)));
 	props.m_ConstVarMap.insert(make_pair(CDynaGenerator1C::m_cszEqnom, CConstVarIndex(CDynaGenerator1C::C_EQNOM, eDVT_INTERNALCONST)));

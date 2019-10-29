@@ -354,13 +354,5 @@ const CDeviceContainerProperties CDynaGeneratorMustang::DeviceProperties()
 	props.m_strClassName = CDeviceContainerProperties::m_cszNameGeneratorMustang;
 	// задаем количество уравнений устройства
 	props.nEquationsCount = CDynaGeneratorMustang::VARS::V_LAST;
-
-	props.m_VarMap.insert(make_pair(_T("Id"), CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Iq"), CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Vd"), CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(make_pair(_T("Vq"), CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(make_pair(_T("Ire"), CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Iim"), CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES)));
-
 	return props;
 }
