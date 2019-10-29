@@ -130,11 +130,13 @@ namespace DFW2
 		static const _TCHAR* m_cszNoNodesForLF;
 		static const _TCHAR* m_cszUnacceptableLF;
 		static const _TCHAR* m_cszTurningOffDeviceByMasterDevice;
+		static const _TCHAR* m_cszTurningOffDeviceDueToNoMasterDevice;
 		static const _TCHAR* m_cszMatrixSize;
 		static const _TCHAR* m_cszTurnOnDeviceImpossibleDueToMaster;
 		static const _TCHAR* m_cszAutomaticOrScenarioFailedToInitialize;
 		static const _TCHAR* m_cszLFWrongQrangeForNode;
 		static const _TCHAR* m_cszLFError;
+		static const _TCHAR* m_cszCannotChangePermanentDeviceState;
 	};
 }
 

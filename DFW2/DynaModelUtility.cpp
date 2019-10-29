@@ -249,6 +249,10 @@ bool CDynaModel::UpdateExternalVariables()
 	{
 		for (auto&& dit : *it)
 		{
+			// пропускаем устройства которые не могут быть включены
+			if (dit->IsPermanentOff())
+				continue;
+
 			switch (dit->UpdateExternalVariables(this))
 			{
 			case DFS_DONTNEED:

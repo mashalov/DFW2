@@ -413,6 +413,7 @@ namespace DFW2
 		bool Link();
 		bool UpdateExternalVariables();
 		void TurnOffDevicesByOffMasters();
+		bool SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster);
 
 		void ResetElement();
 		void ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);

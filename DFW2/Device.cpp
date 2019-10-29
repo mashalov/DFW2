@@ -482,7 +482,17 @@ eDEVICEFUNCTIONSTATUS CDevice::Init(CDynaModel* pDynaModel)
 eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
 {
 	m_State = eState;
+	// если устройство было отключено навсегда - попытка изменения его состояния (даже отключение) вызывает исключение
+	// по крайней мере для отладки
+	if (m_StateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
+		throw dfw2error(Cex(CDFW2Messages::m_cszCannotChangePermanentDeviceState, GetVerbalName()));
+
 	m_StateCause = eStateCause;
+	// если устройство отключается навсегда - обнуляем все его переменные, чтобы не было мусора
+	// в результатах (мы такие устройства и так не пишем, но на всякий случай
+	if (eStateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
+		for (int i = 0; i < m_pContainer->EquationsCount(); *GetVariablePtr(i++) = 0.0);
+
 	return DFS_OK;
 }
 
@@ -858,7 +868,6 @@ eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckM
 
 double CDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	double rH = 1.0;
 	for (auto&& it : m_Primitives)
 	{
@@ -939,6 +948,12 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 {
 	if (eState == m_State)
 		return eDEVICEFUNCTIONSTATUS::DFS_DONTNEED;	// если устройство уже находится в заданном состоянии - выходим, с индикацией отсутствия необходимости
+
+	if (m_StateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
+	{
+		Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszCannotChangePermanentDeviceState, GetVerbalName()));
+		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+	}
 
 	if (eState == eDEVICESTATE::DS_ON)
 	{

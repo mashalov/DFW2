@@ -513,9 +513,12 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaMo
 
 	DEVICEVECTORITR it = begin();
 
-	for (; it != end(); it++)
+	for (auto&& it : m_DevVec)
 	{
-		switch ((*it)->CheckProcessDiscontinuity(pDynaModel))
+		if (it->IsPermanentOff())
+			continue;
+
+		switch (it->CheckProcessDiscontinuity(pDynaModel))
 		{
 		case DFS_FAILED:
 			m_eDeviceFunctionStatus = DFS_FAILED;
@@ -560,10 +563,14 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 	DEVICEVECTORITR it = begin();
 	
 	// обходим устройства в векторе 
-	for (; it != end() ; it++)
+	for (auto&& it : m_DevVec)
 	{
+
+		if (it->IsPermanentOff())
+			continue;
+
 		// проверяем в каком состоянии находится устройство
-		switch ((*it)->CheckInit(pDynaModel))
+		switch (it->CheckInit(pDynaModel))
 		{
 		case DFS_FAILED:
 			m_eDeviceFunctionStatus = DFS_FAILED;		// если инициализации устройства завалена - завален и контейнер

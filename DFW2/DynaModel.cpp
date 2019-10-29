@@ -1597,8 +1597,59 @@ double CDynaModel::gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, const
 	return gs1v;
 }
 
-// отключает все устройства, у которых отключены ведущие. Предназначено для однократного вызова при инициализации
+// отключает ведомое устройство если ведущего нет или оно отключено
+bool CDynaModel::SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster)
+{
+	if (pMaster)
+	{
+		// ведущее устройство есть и отключено
+		if (!pMaster->IsStateOn())
+		{
+			// если проверяемое устройство не отключено
+			if (pDev->IsStateOn())
+			{
+				// отключаем его и учитываем в количестве отключений
+				pDev->SetState(eDEVICESTATE::DS_OFF, pMaster->GetStateCause());
+				Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, pDev->GetVerbalName(), pMaster->GetVerbalName()));
+				return true;
+			}
+			else
+			{
+				// проверяемое устройство отключено, но его статус может измениться на DSC_INTERNAL_PERMANENT
+				if (pMaster->IsPermanentOff() && !pDev->IsPermanentOff())
+				{
+					// если ведущее отключено навсегда, а ведомое просто отключено, отключаем ведомое навсегда
+					pDev->SetState(eDEVICESTATE::DS_OFF, pMaster->GetStateCause());
+					return true;
+				}
+			}
+		}
+	}
+	else
+	{
+		// ведущего нет, если ведомое устройство не отключено навсегда - отключаем его
+		if (!pDev->IsPermanentOff())
+		{
+			pDev->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT);
+			Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszTurningOffDeviceDueToNoMasterDevice, pDev->GetVerbalName()));
+			return true;
+		}
+	}
+	return false;
+}
+
+
+// Отключает все устройства, у которых отключены или отсутствуют ведущие. Предназначено для однократного вызова при инициализации
 // в процессе интегрирования нужно использовать CDevice::ChangeState
+// Если в модели есть устройства, которые не получилось слинковать, их нужно отключать, причем отключать так, чтобы было понятно,
+// что их дальнейшая работа невозможна. По идее можно было бы их просто удалить, но тогда потребовалась бы повторная линковка.
+// Поэтому работает такой алгоритм
+// 1. Если ведущее устройство отсутствует - отключаем ведомое навсегда
+// 2. Если ведущее устройство есть и оно отключено навсегда - отключаем ведомое навсегда
+// 3. Если ведущее устройство есть и оно просто отключено, отключаем ведомое
+// 4. Повторяем рекурсивно по всем устройствам до тех пор, пока не будет зафиксировано отключений
+// Отключенные навсегда не инициализируются и не обрабатываются на разрывах
+// При записи результатов отключенные навсегда устройства также не учитываются
 void CDynaModel::TurnOffDevicesByOffMasters()
 {
 	size_t nOffCount(1);
@@ -1608,40 +1659,37 @@ void CDynaModel::TurnOffDevicesByOffMasters()
 		for (auto&& it : m_DeviceContainers)
 		{
 			CDeviceContainerProperties &Props = it->m_ContainerProps;
-
+			if (Props.eDeviceType == eDFW2DEVICETYPE::DEVTYPE_BRANCH)
+				continue;
+					   
 			for (auto&& dit : *it)
 			{
-				if (!dit->IsStateOn())
-					continue;	// уже отключено
+				// если устройство уже отключено навсегда, обходим его
+				if (dit->IsPermanentOff())
+					continue;
 
 				// идем по всем ссылкам на ведущие устройства
 				for (auto&& masterdevice : Props.m_Masters)
 				{
+					// нужно проверить, есть ли вообще ведущие устройства у данного устройства,
+					// если нет - нужное его перевести в DS_OFF DSC_INTERNAL_PERMANENT
 					if (masterdevice->eLinkMode == DLM_MULTI)
 					{
+						// просматриваем мультиссылки на ведущие
 						CLinkPtrCount *pLink(dit->GetLink(masterdevice->nLinkIndex));
 						CDevice **ppDevice(nullptr);
 						while (pLink->In(ppDevice))
 						{
-							if (!(*ppDevice)->IsStateOn())
-							{
-								dit->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
-								Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, dit->GetVerbalName(), (*ppDevice)->GetVerbalName()));
+							if(SetDeviceStateByMaster(dit,*ppDevice))
 								nOffCount++;
-								break;
-							}
 						}
+						// здесь надо принять решение - отключать навсегда при условии что хотя бы одно ведущее отсутствует или должны отсутствовать все
 					}
 					else
 					{
-						CDevice *pDevice(dit->GetSingleLink(masterdevice->nLinkIndex));
-						if (pDevice && !pDevice->IsStateOn())
-						{
-							dit->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
-							Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, dit->GetVerbalName(), pDevice->GetVerbalName()));
+						// проверяем ссылку на ведущее
+						if (SetDeviceStateByMaster(dit, dit->GetSingleLink(masterdevice->nLinkIndex)))
 							nOffCount++;
-							break;
-						}
 					}
 				}
 			}

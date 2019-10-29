@@ -46,9 +46,11 @@ void CDynaModel::WriteResultsHeaderBinary()
 				// у ветви два ведущих узла
 				if (pDevCon->GetType() == DEVTYPE_BRANCH)
 					ParentIdsCount = 2;
+
+				long nDevicesCount = std::count_if(pDevCon->begin(), pDevCon->end(), [](const CDevice* pDev)->bool {return !pDev->IsPermanentOff(); });
 				
 				// добавляем описание устройства: количество идентификаторов, количество ведущих устройств и общее количество устройств данного типа
-				spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, static_cast<long>(pDevCon->Count()));
+				spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, nDevicesCount);
 
 				// добавляем описания перемнных данного контейнера
 				for (auto&& vit : pDevCon->m_ContainerProps.m_VarMap)
@@ -78,11 +80,13 @@ void CDynaModel::WriteResultsHeaderBinary()
 
 				for (auto&& dit : *pDevCon)
 				{
-					CDevice *pDev = dit;
+					if (dit->IsPermanentOff())
+						continue;
+
 					if (pDevCon->GetType() == DEVTYPE_BRANCH)
 					{
 						// для ветвей передаем номер начала, конца и номер параллельной цепи
-						CDynaBranch *pBranch = static_cast<CDynaBranch*>(pDev);
+						CDynaBranch *pBranch = static_cast<CDynaBranch*>(dit);
 						int *pDataIds;
 						if (SUCCEEDED(SafeArrayAccessData(DeviceIds.parray, (void**)&pDataIds)))
 						{
@@ -114,7 +118,7 @@ void CDynaModel::WriteResultsHeaderBinary()
 					}
 					else
 					{
-						DeviceIds = pDev->GetId();
+						DeviceIds = dit->GetId();
 						if (ParentIdsCount > 1)
 						{
 							int *pParentIds, *pParentTypes;
@@ -124,7 +128,7 @@ void CDynaModel::WriteResultsHeaderBinary()
 							{
 								for (auto&& it1 : Props.m_Masters)
 								{
-									CDevice *pLinkDev = pDev->GetSingleLink(it1->nLinkIndex);
+									CDevice *pLinkDev = dit->GetSingleLink(it1->nLinkIndex);
 									if (pLinkDev)
 									{
 										pParentTypes[nIndex] = static_cast<long>(pLinkDev->GetType());
@@ -144,7 +148,7 @@ void CDynaModel::WriteResultsHeaderBinary()
 						{
 							CDevice *pLinkDev(nullptr);
 							if(!Props.m_Masters.empty())
-								pLinkDev = pDev->GetSingleLink(Props.m_Masters[0]->nLinkIndex);
+								pLinkDev = dit->GetSingleLink(Props.m_Masters[0]->nLinkIndex);
 
 							if (pLinkDev)
 							{
@@ -159,7 +163,7 @@ void CDynaModel::WriteResultsHeaderBinary()
 
 						}
 					}
-					spDeviceType->AddDevice(pDev->GetName(), DeviceIds, ParentIds, ParentTypes);
+					spDeviceType->AddDevice(dit->GetName(), DeviceIds, ParentIds, ParentTypes);
 				}
 			}
 				
@@ -176,6 +180,9 @@ void CDynaModel::WriteResultsHeaderBinary()
 
 				for (auto&& dit : *pDevCon)
 				{
+					if (dit->IsPermanentOff())
+						continue;
+
 					long nVarIndex = 0;
 					for (auto&& vit : it->m_ContainerProps.m_VarMap)
 						if (vit.second.m_bOutput)

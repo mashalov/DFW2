@@ -24,17 +24,16 @@ namespace DFW2
 	class CLinkPtrCount
 	{
 	public:
-		CDevice  **m_pPointer;		// вектор указателей на связанные устройства
-		size_t	 m_nCount;			// количество связанных устройств
-		CLinkPtrCount() : m_nCount(0) {}
-		bool In(CDevice ** & p);	// последовательное получение очередного связанного устройства из вектора
+		CDevice  **m_pPointer = nullptr;		// вектор указателей на связанные устройства
+		size_t	 m_nCount = 0;						// количество связанных устройств
+		bool In(CDevice ** & p);				// последовательное получение очередного связанного устройства из вектора
 	};
 
 	// элемент для хранения/передачи списка связанных устройств одного типа
 	struct SingleLinksRange
 	{
-		CDevice **m_ppLinkStart;		// начало и конец списка устройств
-		CDevice **m_ppLinkEnd;
+		CDevice **m_ppLinkStart = nullptr;		// начало и конец списка устройств
+		CDevice **m_ppLinkEnd   = nullptr;
 		SingleLinksRange() {}
 		// конструктор с заданием вектора начала и конца
 		SingleLinksRange(CDevice **ppStart, CDevice **ppEnd) : m_ppLinkStart(ppStart), m_ppLinkEnd(ppEnd)
@@ -191,7 +190,8 @@ namespace DFW2
 	enum eDEVICESTATECAUSE
 	{
 		DSC_EXTERNAL,					// состояние изменено снаружи устройство
-		DSC_INTERNAL					// состояние изменено действием самого устройства
+		DSC_INTERNAL,					// состояние изменено действием самого устройства
+		DSC_INTERNAL_PERMANENT			// состояние изменено действием устройства и не может быть изменено еще раз
 	};
 
 
@@ -308,7 +308,8 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICESTATE GetState() const { return m_State; }
 		bool IsStateOn() const { return GetState() == DS_ON;  }
-		eDEVICESTATECAUSE GetStateCause() { return m_StateCause; }
+		bool IsPermanentOff() const { return GetState() == DS_OFF && GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT; }
+		eDEVICESTATECAUSE GetStateCause() const { return m_StateCause; }
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 
