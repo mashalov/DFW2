@@ -617,14 +617,17 @@ bool CDynaNodeContainer::CreateSuperNodes()
 
 	//  Создаем виртуальные ветви
 	// Количество виртуальных ветвей не превышает количества ссылок суперузлов на ветви
-	m_pVirtualBranches = new VirtualBranch[m_SuperLinks[1].m_nCount];
-	VirtualBranch *pCurrentBranch = m_pVirtualBranches;
+	m_pVirtualBranches = make_unique<VirtualBranch[]>(m_SuperLinks[1].m_nCount);
+	VirtualBranch *pCurrentBranch = m_pVirtualBranches.get();
 	for (auto&& node : m_DevVec)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		// если узел входит в суперузел - для него виртуальные ветви отсутствуют
+		if (pNode->m_pSuperNodeParent)
+			continue;
 		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
 		pNode->ResetVisited();
-		CDevice **ppDevice = nullptr;
+		CDevice **ppDevice(nullptr);
 		pNode->m_VirtualBranchBegin = pCurrentBranch;
 		while (pBranchLink->In(ppDevice))
 		{
@@ -646,6 +649,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 				(pNode->m_VirtualBranchBegin + DupIndex)->Y += *pYkm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
 		}
 		pNode->m_VirtualBranchEnd = pCurrentBranch;
+		_ASSERTE(pNode->m_VirtualBranchBegin < pNode->m_VirtualBranchEnd || !pNode->IsStateOn() || pNode->m_pSuperNodeParent);
 	}
 
 	/*
@@ -674,11 +678,6 @@ bool CDynaNodeContainer::CreateSuperNodes()
 
 void CDynaNodeContainer::ClearSuperLinks()
 {
-	if (m_pVirtualBranches)
-	{
-		delete m_pVirtualBranches;
-		m_pVirtualBranches = nullptr;
-	}
 	m_SuperLinks.clear();
 	m_OriginalLinks.clear();
 }

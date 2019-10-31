@@ -357,7 +357,7 @@ namespace DFW2
 		unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
 		void ClearSuperLinks();
 		void DumpNodeIslands(NODEISLANDMAP& Islands);
-		VirtualBranch *m_pVirtualBranches = nullptr;
+		unique_ptr<VirtualBranch[]> m_pVirtualBranches;
 		CDeviceContainer *m_pSynchroZones = nullptr;
 	public:
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
