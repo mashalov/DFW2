@@ -14,10 +14,8 @@ namespace DFW2
 	class CDynaPrimitive;
 	class CDynaPrimitiveState;
 
-	typedef list<CDynaPrimitiveState*> STATEPRIMITIVESLIST;
-	typedef STATEPRIMITIVESLIST::iterator STATEPRIMITIVEITERATOR;
-	typedef vector<CDynaPrimitive*> PRIMITIVESVEC;
-	typedef PRIMITIVESVEC::iterator PRIMITIVEITERATOR;
+	using STATEPRIMITIVESLIST = list<CDynaPrimitiveState*>;
+	using PRIMITIVESVEC = vector<CDynaPrimitive*>;
 
 	// класс для хранения связей устройства
 	// с помощью него можно обходить связанные с данным устройства

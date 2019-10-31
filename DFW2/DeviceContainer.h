@@ -6,16 +6,16 @@ namespace DFW2
 {
 	class CDynaModel;
 
-	typedef vector<CDevice*> DEVICEVECTOR;
-	typedef DEVICEVECTOR::iterator DEVICEVECTORITR;
+	using DEVICEVECTOR = vector<CDevice*>;
+	using DEVICEVECTORITR = DEVICEVECTOR::iterator;
 
 	// для поиска устройств по идентификаторам используем сет
-	typedef set<CDeviceId*, CDeviceIdComparator> DEVSEARCHSET;
-	typedef DEVSEARCHSET::iterator DEVSEARCHSETITR;
-	typedef DEVSEARCHSET::const_iterator DEVSEARCHSETCONSTITR;
+	using DEVSEARCHSET = set<CDeviceId*, CDeviceIdComparator> ;
+	using DEVSEARCHSETITR = DEVSEARCHSET::iterator;
+	using DEVSEARCHSETCONSTITR = DEVSEARCHSET::const_iterator;
 	// для хранения уникальных указателей
-	typedef set<CDevice*> DEVICEPTRSET;
-	typedef DEVICEPTRSET::iterator DEVICEPTRSETITR;
+	using DEVICEPTRSET = set<CDevice*> ;
+	using DEVICEPTRSETITR = DEVICEPTRSET::iterator;
 
 	class CDeviceContainer;
 
@@ -47,8 +47,8 @@ namespace DFW2
 	};
 
 	// вектор "векторов" связей с устройствами различных типов
-	typedef vector<CMultiLink> LINKSVEC;
-	typedef LINKSVEC::iterator LINKSVECITR;
+	using LINKSVEC = vector<CMultiLink>;
+	using LINKSVECITR = LINKSVEC::iterator;
 
 	// контейнер устройств
 	// Идея контейнера в том, чтобы исключить из экземпляров устройств общую для них информацию:
@@ -190,7 +190,7 @@ namespace DFW2
 		ptrdiff_t GetSingleLinkIndex(eDFW2DEVICETYPE eDevType);				// получить индекс ссылки один-к-одному по типу устройства
 	};
 
-	typedef vector<CDeviceContainer*> DEVICECONTAINERS;
-	typedef DEVICECONTAINERS::iterator DEVICECONTAINERITR;
+	using DEVICECONTAINERS = vector<CDeviceContainer*>;
+	using DEVICECONTAINERITR = DEVICECONTAINERS::iterator;
 };
 
