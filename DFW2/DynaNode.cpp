@@ -606,8 +606,8 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 
 		if (V < DFW2_EPSILON)
 		{
-			V = Unom;
-			Delta = 0.0;
+			Vre = V = Unom;
+			Vim = Delta = 0.0;
 		}
 	}
 }
@@ -656,8 +656,8 @@ void CDynaNodeBase::CalcAdmittances()
 
 		if (V < DFW2_EPSILON)
 		{
-			V = Unom;
-			Delta = 0.0;
+			Vre = V = Unom;
+			Vim = Delta = 0.0;
 		}
 	}
 }
@@ -806,9 +806,6 @@ bool CDynaNodeContainer::LULF()
 		_ASSERTE(pAi < Ai + nNzCount);
 		_ASSERTE(pAp < Ap + nNodeCount);
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-		// стартуем с плоского
-		pNode->Vre = pNode->V = pNode->Unom;
-		pNode->Vim = pNode->Delta = 0.0;
 		pNode->dLRCVicinity = 0.0;		// зона сглаживания СХН для начала нулевая - без сглаживания
 		*pAp = (pAx - Ax) / 2;    pAp++;
 		*pAi = pNode->A(0) / EquationsCount();		  pAi++;
@@ -822,6 +819,9 @@ bool CDynaNodeContainer::LULF()
 
 		if (!pNode->m_bInMetallicSC)
 		{
+			// стартуем с плоского
+			pNode->Vre = pNode->V = pNode->Unom;
+			pNode->Vim = pNode->Delta = 0.0;
 			// для всех узлов, которые не отключены и не находятся в металлическом КЗ (КЗ с нулевым шунтом)
 			_ftprintf(fnode, _T("%td;"), pNode->GetId());
 			// Branches
@@ -928,9 +928,10 @@ bool CDynaNodeContainer::LULF()
 			}
 			else
 			{
-				// если узел не включен, задающий ток для него равен нулю
+				// если узел в металлическом КЗ, задающий ток для него равен нулю
 				*pB = 0.0; pB++;
 				*pB = 0.0; pB++;
+				_ASSERTE(pNode->Vre <= 0.0 && pNode->Vim <= 0.0 && pNode->V <= 0.0);
 			}
 			ppDiags++;
 		}
@@ -951,19 +952,15 @@ bool CDynaNodeContainer::LULF()
 			pNode->Vim = *pB;		pB++;
 
 			// считаем напряжение узла в полярных координатах
-			cplx Unode(pNode->Vre, pNode->Vim);
-			pNode->V = abs(Unode);
-			pNode->Delta = arg(Unode);
-
+			pNode->UpdateVDelta();
 			// рассчитываем зону сглаживания СХН (также как для Ньютона)
 			/*if (pNode->m_pLRC)
 				pNode->dLRCVicinity = 30.0 * fabs(pNode->Vold - pNode->V) / pNode->Unom;
 			*/
-
 			// считаем изменение напряжения узла между итерациями и находим
 			// самый изменяющийся узел
-			if(!pNode->m_bInMetallicSC)
-				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
+			if (!pNode->m_bInMetallicSC)
+				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, CDevice::ZeroDivGuard(pNode->V - pNode->Vold, pNode->Vold));
 		}
 
 		for (auto && it : m_DevInMatrix)
@@ -973,9 +970,7 @@ bool CDynaNodeContainer::LULF()
 			{
 				pNode->Vre = pNode->m_pSuperNodeParent->Vre;
 				pNode->Vim = pNode->m_pSuperNodeParent->Vim;
-				cplx Unode(pNode->Vre, pNode->Vim);
-				pNode->V = abs(Unode);
-				pNode->Delta = arg(Unode);
+				pNode->UpdateVDelta();
 			}
 		}
 
