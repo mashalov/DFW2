@@ -1151,11 +1151,19 @@ void CLoadFlow::Newton()
 	}
 
 	// обновляем реактивную генерацию в суперузлах
+	UpdateSupernodesPQ();
+}
+
+// обновляет инъекции в суперзулах
+void CLoadFlow::UpdateSupernodesPQ()
+{
+	bool bAllOk(true);
 
 	for (auto && supernode : m_SuperNodeParameters)
 	{
 		CDynaNodeBase *pNode = supernode.m_pNode;
 		double Qrange = pNode->LFQmax - pNode->LFQmin;
+		double Qspread(0.0), QgSource(pNode->Qgr);
 		Qrange = (Qrange > 0.0) ? (pNode->Qgr - pNode->LFQmin) / Qrange : 0.0;
 		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
 		CDevice **ppDevice(nullptr);
@@ -1164,11 +1172,19 @@ void CLoadFlow::Newton()
 			CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
 			pSlaveNode->Qg = 0.0;
 			if (pSlaveNode->IsStateOn())
-				pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
+				Qspread += pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
 		}
-		pNode->Qgr = supernode.LFQmin + (supernode.LFQmax - supernode.LFQmin) * Qrange;
+		Qspread += pNode->Qgr = supernode.LFQmin + (supernode.LFQmax - supernode.LFQmin) * Qrange;
+		if (fabs(Qspread - QgSource) > m_Parameters.m_Imb)
+		{
+			bAllOk = false;
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForSuperNode, pNode->GetVerbalName(), QgSource, pNode->LFQmin, pNode->LFQmax));
+		}
 		supernode.Restore();
 	}
+
+	if (!bAllOk)
+		throw dfw2error(CDFW2Messages::m_cszLFError);
 
 	for (auto&& it : pNodes->m_DevVec)
 	{

@@ -18,7 +18,7 @@ namespace DFW2
 			void Restore();
 		};
 
-		typedef list<StoreParameters> SUPERNODEPARAMETERSLIST;
+		using SUPERNODEPARAMETERSLIST = list<StoreParameters>;
 
 		struct Parameters
 		{
@@ -51,6 +51,7 @@ namespace DFW2
 		void SolveLinearSystem();
 		void UpdateQToGenerators();					// обновление данных генераторов по результату расчета PV-узлов
 		void UpdatePQFromGenerators();				// обновление данных PV-узлов по исходным данным генераторов
+		void UpdateSupernodesPQ();					// обновление генерации в суперузлах
 		void DumpNodes();
 		void CompareWithRastr();
 		double Qgtanh(CDynaNodeBase* pNode);

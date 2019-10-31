@@ -122,5 +122,6 @@ const _TCHAR* CDFW2Messages::m_cszMatrixSize = _T("Размерность мат
 const _TCHAR* CDFW2Messages::m_cszTurnOnDeviceImpossibleDueToMaster = _T("Невозможно включить устройство \"%s\", так как отключено по крайней мере одно ведущее устройство \"%s\"");
 const _TCHAR* CDFW2Messages::m_cszAutomaticOrScenarioFailedToInitialize = _T("При инициализации автоматики или сценария обнаружены ошибки");
 const _TCHAR* CDFW2Messages::m_cszLFWrongQrangeForNode = _T("Для узла \"%s\" невозможно распределение реактивной мощности %g по генераторам c суммарным диапазоном [%g;%g]");
+const _TCHAR* CDFW2Messages::m_cszLFWrongQrangeForSuperNode = _T("Для суперузла \"%s\" невозможно распределение реактивной мощности %g по узлам c суммарным диапазоном [%g;%g]");
 const _TCHAR* CDFW2Messages::m_cszLFError = _T("Ошибка при расчете УР");
 const _TCHAR* CDFW2Messages::m_cszCannotChangePermanentDeviceState = _T("Невозможно изменить состояние устройства \"%s\"");
