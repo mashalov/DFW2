@@ -119,7 +119,7 @@ void CDynaNodeBase::GetPnrQnr()
 bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-		
+
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
 	double V2 = Vre2 + Vim2;
@@ -127,36 +127,40 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	GetPnrQnrSuper();
 
-	double dIredVre = -YiiSuper.real();
-	double dIredVim = YiiSuper.imag();
-	double dIimdVre = -YiiSuper.imag();
-	double dIimdVim = -YiiSuper.real();
+	double dIredVre(1.0), dIredVim(0.0), dIimdVre(0.0), dIimdVim(1.0);
 
-
-	if (V2sq < pDynaModel->GetLRCToShuntVmin() * 0.5 * Unom)
+	if (!m_bInMetallicSC)
 	{
-		double V02 = V0 * V0;
+		dIredVre = -YiiSuper.real();
+		dIredVim = YiiSuper.imag();
+		dIimdVre = -YiiSuper.imag();
+		dIimdVim = -YiiSuper.real();
 
-		if (m_pLRC)
+		if (V2sq < pDynaModel->GetLRCToShuntVmin() * 0.5 * Unom)
 		{
-			double g = -Pn * m_pLRC->P->a2 / V02;
-			double b =  Qn * m_pLRC->Q->a2 / V02;
-			dIredVre += -g;
-			dIredVim +=  b;
-			dIimdVre += -b;
-			dIimdVim += -g;
-			dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
-		}
+			double V02 = V0 * V0;
 
-		if (m_pLRCGen)
-		{
-			double g =  Pg * m_pLRCGen->P->a2 / V02;
-			double b = -Qg * m_pLRCGen->Q->a2 / V02;
-			dIredVre += -g;
-			dIredVim +=  b;
-			dIimdVre += -b;
-			dIimdVim += -g;
-			dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
+			if (m_pLRC)
+			{
+				double g = -Pn * m_pLRC->P->a2 / V02;
+				double b = Qn * m_pLRC->Q->a2 / V02;
+				dIredVre += -g;
+				dIredVim += b;
+				dIimdVre += -b;
+				dIimdVim += -g;
+				dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
+			}
+
+			if (m_pLRCGen)
+			{
+				double g = Pg * m_pLRCGen->P->a2 / V02;
+				double b = -Qg * m_pLRCGen->Q->a2 / V02;
+				dIredVre += -g;
+				dIredVim += b;
+				dIimdVre += -b;
+				dIimdVim += -g;
+				dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
+			}
 		}
 	}
 
@@ -165,13 +169,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	CLinkPtrCount *pGenLink    = GetSuperLink(2);
 	CDevice **ppGen(nullptr);
-
-
-	bool bInMetallicSC = m_bInMetallicSC || (V < DFW2_EPSILON );
-
-	
-	double VreV2 = Vre / V2;
-	double VimV2 = Vim / V2;
 	
 	double Pgsum = Pnr - Pgr;
 	double Qgsum = Qnr - Qgr;
@@ -190,25 +187,44 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	{
 		ppGen = nullptr;
 		ResetVisited();
+		double dGenMatrixCoe = m_bInMetallicSC ? 0.0 :-1.0;
+
 		while (pGenLink->In(ppGen))
 		{
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_IRE), -1.0);
-			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_IIM), -1.0);
+			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_IRE), dGenMatrixCoe);
+			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_IIM), dGenMatrixCoe);
 		}
 
-		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
+		if (m_bInMetallicSC)
 		{
-			// dIre /dVre
-			pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_RE), -pV->Y.real());
-			// dIre/dVim
-			pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_IM), pV->Y.imag());
-			// dIim/dVre
-			pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_RE), -pV->Y.imag());
-			// dIim/dVim
-			pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), -pV->Y.real());
+			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
+			{
+				// dIre /dVre
+				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_RE), 0.0);
+				// dIre/dVim
+				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_IM), 0.0);
+				// dIim/dVre
+				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_RE), 0.0);
+				// dIim/dVim
+				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), 0,0);
+			}
+		}
+		else
+		{
+			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
+			{
+				// dIre /dVre
+				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_RE), -pV->Y.real());
+				// dIre/dVim
+				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_IM), pV->Y.imag());
+				// dIim/dVre
+				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_RE), -pV->Y.imag());
+				// dIim/dVim
+				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), -pV->Y.real());
+			}
 		}
 
 		pDynaModel->CountConstElementsToSkip(A(V_RE));
@@ -245,8 +261,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_DELTA), A(V_RE), VimV2);
-		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -VreV2);
+		pDynaModel->SetElement(A(V_DELTA), A(V_RE),  Vim / V2);
+		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -Vre / V2);
 	}
 
 	if (m_bLowVoltage)
@@ -257,8 +273,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	else
 	{
 		V2 = V * V;
-		VreV2 = Vre / V2;	VimV2 = Vim / V2;
-
+		double VreV2 = Vre / V2;	
+		double VimV2 = Vim / V2;
 		dLRCPn -= dLRCPg;		dLRCQn -= dLRCQg;
 		pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
 		pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
@@ -278,76 +294,81 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	GetPnrQnrSuper();
 
 	double Ire(0.0), Iim(0.0);
-	double V2 = Vre * Vre + Vim * Vim;
-	double V2sq = sqrt(V2);
-	
-	if (V2sq < pDynaModel->GetLRCToShuntVmin() * Unom * 0.5)
-	{
-		double V02 = V0 * V0;
+	double dV(0.0), dDelta(0.0);
 
-		if (m_pLRC)
+	if (!m_bInMetallicSC)
+	{
+		double V2 = Vre * Vre + Vim * Vim;
+		double V2sq = sqrt(V2);
+
+		if (V2sq < pDynaModel->GetLRCToShuntVmin() * Unom * 0.5)
 		{
-			double g = -Pn * m_pLRC->P->a2 / V02;
-			double b = Qn * m_pLRC->Q->a2 / V02;
-			Ire -= g * Vre - b * Vim;
-			Iim -= b * Vre + g * Vim;
-			Pnr = Qnr = 0.0;
+			double V02 = V0 * V0;
+
+			if (m_pLRC)
+			{
+				double g = -Pn * m_pLRC->P->a2 / V02;
+				double b = Qn * m_pLRC->Q->a2 / V02;
+				Ire -= g * Vre - b * Vim;
+				Iim -= b * Vre + g * Vim;
+				Pnr = Qnr = 0.0;
+			}
+
+			if (m_pLRCGen)
+			{
+				double g = Pg * m_pLRCGen->P->a2 / V02;
+				double b = -Qg * m_pLRCGen->Q->a2 / V02;
+				Ire -= g * Vre - b * Vim;
+				Iim -= b * Vre + g * Vim;
+				Pgr = Qgr = 0.0;
+			}
 		}
 
-		if (m_pLRCGen)
+		CLinkPtrCount *pBranchLink = GetSuperLink(1);
+		CLinkPtrCount *pGenLink = GetSuperLink(2);
+		CDevice **ppBranch(nullptr), **ppGen(nullptr);
+		ResetVisited();
+		while (pGenLink->In(ppGen))
 		{
-			double g = Pg * m_pLRCGen->P->a2 / V02;
-			double b = -Qg * m_pLRCGen->Q->a2 / V02;
-			Ire -= g * Vre - b * Vim;
-			Iim -= b * Vre + g * Vim;
-			Pgr = Qgr = 0.0;
+			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+			Ire -= pGen->Ire;
+			Iim -= pGen->Iim;
 		}
+
+		Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
+		Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
+
+		double Pk = Pnr - Pgr;
+		double Qk = Qnr - Qgr;
+
+
+		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
+		{
+			Ire -= pV->Y.real() * pV->pNode->Vre - pV->Y.imag() * pV->pNode->Vim;
+			Iim -= pV->Y.imag() * pV->pNode->Vre + pV->Y.real() * pV->pNode->Vim;
+		}
+
+		// check low voltage
+		if (!m_bLowVoltage)
+		{
+			Ire += (Pk * Vre + Qk * Vim) / V2;
+			Iim += (Pk * Vim - Qk * Vre) / V2;
+		}
+		else
+			_ASSERTE(fabs(Pk) < DFW2_EPSILON && fabs(Qk) < DFW2_EPSILON);
+
+		if (!m_bLowVoltage)
+		{
+			dV = V - V2sq;
+			dDelta = Delta - atan2(Vim, Vre);
+		}
+
 	}
-
-	CLinkPtrCount *pBranchLink = GetSuperLink(1);
-	CLinkPtrCount *pGenLink	   = GetSuperLink(2);
-	CDevice **ppBranch(nullptr), **ppGen(nullptr);
-	ResetVisited();
-	while (pGenLink->In(ppGen))
-	{
-		CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-		Ire -= pGen->Ire;
-		Iim -= pGen->Iim;
-	}
-
-	Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
-	Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
-
-	double Pk = Pnr - Pgr;
-	double Qk = Qnr - Qgr;
-
-		
-	for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
-	{
-		Ire -= pV->Y.real() * pV->pNode->Vre - pV->Y.imag() * pV->pNode->Vim;
-		Iim -= pV->Y.imag() * pV->pNode->Vre + pV->Y.real() * pV->pNode->Vim;
-	}
-		
-	// check low voltage
-	if (!m_bLowVoltage)
-	{
-		Ire += (Pk * Vre + Qk * Vim) / V2;
-		Iim += (Pk * Vim - Qk * Vre) / V2;
-	}
-	else
-		_ASSERTE(fabs(Pk) < DFW2_EPSILON && fabs(Qk) < DFW2_EPSILON);
-
- 	pDynaModel->SetFunction(A(V_RE), Ire);
-	pDynaModel->SetFunction(A(V_IM), Iim);
-
-	double dV = V - V2sq;
-	double dDelta = Delta - atan2(Vim, Vre);
-
-	if (m_bLowVoltage)
-		dV = dDelta = 0.0;
 
 	pDynaModel->SetFunction(A(V_V), dV);
 	pDynaModel->SetFunction(A(V_DELTA), dDelta);
+	pDynaModel->SetFunction(A(V_RE), Ire);
+	pDynaModel->SetFunction(A(V_IM), Iim);
 
 	return true;
 }
@@ -941,7 +962,8 @@ bool CDynaNodeContainer::LULF()
 
 			// считаем изменение напряжения узла между итерациями и находим
 			// самый изменяющийся узел
-			m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
+			if(!pNode->m_bInMetallicSC)
+				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, pNode->V / pNode->Vold - 1.0);
 		}
 
 		for (auto && it : m_DevInMatrix)
