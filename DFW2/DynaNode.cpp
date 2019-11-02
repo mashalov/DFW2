@@ -131,10 +131,16 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	if (!m_bInMetallicSC)
 	{
+		// если не в металлическом кз, считаем производные от нагрузки и генерации, заданных в узле
 		dIredVre = -YiiSuper.real();
 		dIredVim = YiiSuper.imag();
 		dIimdVre = -YiiSuper.imag();
 		dIimdVim = -YiiSuper.real();
+
+		// если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
+		// чтобы исключить мощность из уравнений полностью
+		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
+		// Uсхн_min стандартное cглаживание СХН
 
 		if (V2sq < pDynaModel->GetLRCToShuntVmin() * 0.5 * Unom)
 		{
@@ -143,9 +149,9 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			if (m_pLRC)
 			{
 				double g = -Pn * m_pLRC->P->a2 / V02;
-				double b = Qn * m_pLRC->Q->a2 / V02;
+				double b =  Qn * m_pLRC->Q->a2 / V02;
 				dIredVre += -g;
-				dIredVim += b;
+				dIredVim +=  b;
 				dIimdVre += -b;
 				dIimdVim += -g;
 				dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
@@ -153,10 +159,10 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 			if (m_pLRCGen)
 			{
-				double g = Pg * m_pLRCGen->P->a2 / V02;
+				double g =  Pg * m_pLRCGen->P->a2 / V02;
 				double b = -Qg * m_pLRCGen->Q->a2 / V02;
 				dIredVre += -g;
-				dIredVim += b;
+				dIredVim +=  b;
 				dIimdVre += -b;
 				dIimdVim += -g;
 				dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
@@ -164,10 +170,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		}
 	}
 
-	//CLinkPtrCount *pBranchLink = GetSuperLink(1);
-	//CDevice **ppBranch(nullptr);
-
-	CLinkPtrCount *pGenLink    = GetSuperLink(2);
+	CLinkPtrCount *pGenLink = GetSuperLink(2);
 	CDevice **ppGen(nullptr);
 	
 	double Pgsum = Pnr - Pgr;
@@ -185,10 +188,12 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		
 	if (pDynaModel->FillConstantElements())
 	{
-		ppGen = nullptr;
-		ResetVisited();
-		double dGenMatrixCoe = m_bInMetallicSC ? 0.0 :-1.0;
+		// в этом блоке только постоянные элементы (чистые коэффициенты), которые можно не изменять,
+		// если не изменились коэффициенты метода интегрирования и шаг
 
+		// обходим генераторы и формируем производные от токов генераторов
+		// если узел в металлическом КЗ производные равны нулю
+		double dGenMatrixCoe = m_bInMetallicSC ? 0.0 :-1.0;
 		while (pGenLink->In(ppGen))
 		{
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
@@ -200,6 +205,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 		if (m_bInMetallicSC)
 		{
+			// если в металлическом КЗ, то производные от токов ветвей равны нулю (в строке единицы только от Vre и Vim)
 			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 			{
 				// dIre /dVre
@@ -214,6 +220,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		}
 		else
 		{
+			// если не в металлическом КЗ, то производные от токов ветвей формируем как положено
 			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 			{
 				// dIre /dVre
@@ -227,11 +234,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			}
 		}
 
+		// запоминаем позиции в строках матрицы, на которых заканчиваются постоянные элементы
 		pDynaModel->CountConstElementsToSkip(A(V_RE));
 		pDynaModel->CountConstElementsToSkip(A(V_IM));
 	}
 	else
 	{
+		// если постоянные элементы не надо обновлять, то пропускаем их и начинаем с непостоянных
 		pDynaModel->SkipConstElements(A(V_RE));
 		pDynaModel->SkipConstElements(A(V_IM));
 	}
@@ -241,6 +250,11 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	{
 		pDynaModel->SetElement(A(V_V), A(V_RE), 0.0);
 		pDynaModel->SetElement(A(V_V), A(V_IM), 0.0);
+		pDynaModel->SetElement(A(V_DELTA), A(V_RE), 0.0);
+		pDynaModel->SetElement(A(V_DELTA), A(V_IM), 0.0);
+		pDynaModel->SetElement(A(V_RE), A(V_V), 0.0);
+		pDynaModel->SetElement(A(V_IM), A(V_V), 0.0);
+
 		_ASSERTE(fabs(PgVre2) < DFW2_EPSILON && fabs(PgVim2) < DFW2_EPSILON);
 		_ASSERTE(fabs(QgVre2) < DFW2_EPSILON && fabs(QgVim2) < DFW2_EPSILON);
 	}
@@ -248,32 +262,21 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	{
 		pDynaModel->SetElement(A(V_V), A(V_RE), -Vre / V2sq);
 		pDynaModel->SetElement(A(V_V), A(V_IM), -Vim / V2sq);
-		dIredVre -= (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
-		dIredVim += (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
-		dIimdVre += (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
-		dIimdVim += (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
-	}
-
-	if (m_bLowVoltage)
-	{
-		pDynaModel->SetElement(A(V_DELTA), A(V_RE), 0.0);
-		pDynaModel->SetElement(A(V_DELTA), A(V_IM), 0.0);
-	}
-	else
-	{
-		pDynaModel->SetElement(A(V_DELTA), A(V_RE),  Vim / V2);
+		pDynaModel->SetElement(A(V_DELTA), A(V_RE), Vim / V2);
 		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -Vre / V2);
-	}
 
-	if (m_bLowVoltage)
-	{
-		pDynaModel->SetElement(A(V_RE), A(V_V), 0.0);
-		pDynaModel->SetElement(A(V_IM), A(V_V), 0.0);
-	}
-	else
-	{
+		double d1 = (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
+		double d2 = (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
+
+		dIredVre -= d1;
+		dIredVim += d2;
+		dIimdVre += d2;
+		dIimdVim += d1;
+
+		// производные от СХН по напряжению считаем от модуля
+		// через мощности
 		V2 = V * V;
-		double VreV2 = Vre / V2;	
+		double VreV2 = Vre / V2;
 		double VimV2 = Vim / V2;
 		dLRCPn -= dLRCPg;		dLRCQn -= dLRCQg;
 		pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
@@ -298,8 +301,16 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	if (!m_bInMetallicSC)
 	{
+		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию,
+		// заданные в узле
+
 		double V2 = Vre * Vre + Vim * Vim;
 		double V2sq = sqrt(V2);
+
+		// если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
+		// чтобы исключить мощность из уравнений полностью
+		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
+		// Uсхн_min стандартное cглаживание СХН
 
 		if (V2sq < pDynaModel->GetLRCToShuntVmin() * Unom * 0.5)
 		{
@@ -322,8 +333,11 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 				Iim -= b * Vre + g * Vim;
 				Pgr = Qgr = 0.0;
 			}
+
+			// нагрузки и генерации в мощности больше нет, они перенесены в ток
 		}
 
+		// обходим генераторы
 		CLinkPtrCount *pBranchLink = GetSuperLink(1);
 		CLinkPtrCount *pGenLink = GetSuperLink(2);
 		CDevice **ppBranch(nullptr), **ppGen(nullptr);
@@ -335,34 +349,30 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Iim -= pGen->Iim;
 		}
 
+		// добавляем токи собственной проводимости и токи ветвей
 		Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
 		Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
-
-		double Pk = Pnr - Pgr;
-		double Qk = Qnr - Qgr;
-
-
 		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 		{
 			Ire -= pV->Y.real() * pV->pNode->Vre - pV->Y.imag() * pV->pNode->Vim;
 			Iim -= pV->Y.imag() * pV->pNode->Vre + pV->Y.real() * pV->pNode->Vim;
 		}
 
-		// check low voltage
+
 		if (!m_bLowVoltage)
 		{
+			// добавляем токи от нагрузки (если напряжение не очень низкое)
+			// считаем невязки модуля и угла, иначе оставляем нулями
+			double Pk = Pnr - Pgr;
+			double Qk = Qnr - Qgr;
 			Ire += (Pk * Vre + Qk * Vim) / V2;
 			Iim += (Pk * Vim - Qk * Vre) / V2;
+			dV = V - V2sq;
+			dDelta = Delta - atan2(Vim, Vre);
+
 		}
 		else
 			_ASSERTE(fabs(Pk) < DFW2_EPSILON && fabs(Qk) < DFW2_EPSILON);
-
-		if (!m_bLowVoltage)
-		{
-			dV = V - V2sq;
-			dDelta = Delta - atan2(Vim, Vre);
-		}
-
 	}
 
 	pDynaModel->SetFunction(A(V_V), dV);
