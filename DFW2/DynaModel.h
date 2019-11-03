@@ -360,7 +360,8 @@ namespace DFW2
 			m_Parameters;
 
 		KLUWrapper<double> klu;
-		CDynaLRC *m_pLRCGen = nullptr;		// СХН для генераторных узлов без генераторов
+		CDynaLRC *m_pLRCGen		= nullptr;		// СХН для генераторных узлов без генераторов
+		CDynaLRC *m_pLRCLoad	= nullptr;		// СХН для узлов без динамической СХН
 
 		unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;
 		unique_ptr<RightVector[]> pRightVectorUniq;
@@ -545,6 +546,11 @@ namespace DFW2
 		inline CDynaLRC* GetLRCGen()
 		{
 			return m_pLRCGen;
+		}
+
+		inline CDynaLRC* GetLRCDynamicDefault()
+		{
+			return m_pLRCLoad;
 		}
 
 		inline double GetMustangDerivativeTimeConstant() const

@@ -115,6 +115,7 @@ namespace DFW2
 		static const _TCHAR* m_cszWrongGeneratorsNumberFixed;
 		static const _TCHAR* m_cszFailureAtMinimalStep;
 		static const _TCHAR* m_cszMustBeConstPowerLRC;
+		static const _TCHAR* m_cszMustBeDefaultDynamicLRC;
 		static const _TCHAR* m_cszResultFileWrongCompressedBlockType;
 		static const _TCHAR* m_cszResultFilePointsCountMismatch;
 		static const _TCHAR* m_cszDeivceDoesNotHaveAccessToModel;

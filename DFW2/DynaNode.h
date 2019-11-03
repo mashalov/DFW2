@@ -121,6 +121,7 @@ namespace DFW2
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
 		void GetPnrQnr();
 		void GetPnrQnrSuper();
+		bool AllLRCsInShuntPart(double V, double Vmin);
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual void NewtonUpdateEquation(CDynaModel* pDynaModel);

@@ -101,6 +101,7 @@ const _TCHAR* CDFW2Messages::m_cszLFBranchAngleExceeds90 = _T("Угол по с�
 const _TCHAR* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = _T("Количество генераторов для %s задано неверно %d, установлено значение 1");
 const _TCHAR* CDFW2Messages::m_cszFailureAtMinimalStep = _T("Необходимая точность решения не может быть достигнута на минимальном шаге t=%.12g (%d) порядок %d шаг=%g");
 const _TCHAR* CDFW2Messages::m_cszMustBeConstPowerLRC = _T("Не найдена типовая СХН на постоянную мощность с номером -1");
+const _TCHAR* CDFW2Messages::m_cszMustBeDefaultDynamicLRC = _T("Не найдена типовая СХН нагрузки в динамике с номером 0");
 const _TCHAR* CDFW2Messages::m_cszResultFileWrongCompressedBlockType = _T("Неверный тип сжатого блока данных в файле результатов");
 const _TCHAR* CDFW2Messages::m_cszResultFilePointsCountMismatch = _T("Размерность канала %d %d не совпадает с количеством точек в файле %d");
 const _TCHAR* CDFW2Messages::m_cszDeivceDoesNotHaveAccessToModel = _T("Устройство не имеет доступа к модели");

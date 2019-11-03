@@ -89,6 +89,9 @@ void CDynaModel::PrepareGraph()
 	if (!(m_pLRCGen = static_cast<CDynaLRC*>(LRCs.GetDevice(-1))))
 		throw dfw2error(Cex(CDFW2Messages::m_cszMustBeConstPowerLRC));
 
+	if (!(m_pLRCLoad = static_cast<CDynaLRC*>(LRCs.GetDevice((ptrdiff_t)0))))
+		throw dfw2error(Cex(CDFW2Messages::m_cszMustBeDefaultDynamicLRC));
+
 	for (auto&& it : Branches)
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
@@ -607,6 +610,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		{
 			CDevice **ppDevice(nullptr);
 			pNode->ResetVisited();
+			// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
 			while (pLink->In(ppDevice))
 			{
 				CDynaNodeBase *pSlaveNode(static_cast<CDynaNodeBase*>(*ppDevice));

@@ -61,6 +61,20 @@ void CDynaNodeBase::UpdateVDeltaSuper()
 	}
 }
 
+// Проверяет для всех узлов суперузла напряжения перехода с СХН на шунт
+// если они меньше напряжения перехода минус окрестность сглаживания - возвращает true
+bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest, double Vmin)
+{
+	bool bRes = (Vmin - dLRCVicinity) > Vtest / Unom;
+	CLinkPtrCount *pLink = GetSuperLink(0);
+	CDevice **ppDevice(nullptr);
+	while (pLink->In(ppDevice) && bRes)
+	{
+		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		bRes = (Vmin - pSlaveNode->dLRCVicinity) > Vtest / pSlaveNode->Unom;
+	}
+	return bRes;
+}
 
 // рассчитывает нагрузку узла с учетом СХН
 // и суммирует все узлы, входящие в суперузел
@@ -97,13 +111,12 @@ void CDynaNodeBase::GetPnrQnr()
 	// если есть СХН нагрузки, рассчитываем
 	// комплексную мощность и производные по напряжению
 
-	if (m_pLRC)
-	{
-		Pnr *= m_pLRC->GetPdP(VdVnom, dLRCPn, dLRCVicinity);
-		Qnr *= m_pLRC->GetQdQ(VdVnom, dLRCQn, dLRCVicinity);
-		dLRCPn *= Pn / V0;
-		dLRCQn *= Qn / V0;
-	}
+	_ASSERTE(m_pLRC);
+
+	Pnr *= m_pLRC->GetPdP(VdVnom, dLRCPn, dLRCVicinity);
+	Qnr *= m_pLRC->GetQdQ(VdVnom, dLRCQn, dLRCVicinity);
+	dLRCPn *= Pn / V0;
+	dLRCQn *= Qn / V0;
 
 	// если есть СХН генерации (нет привязанных генераторов, но есть заданная в УР генерация)
 	// рассчитываем расчетную генерацию
@@ -142,18 +155,17 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
 		// Uсхн_min стандартное cглаживание СХН
 
-		if (V2sq < pDynaModel->GetLRCToShuntVmin() * 0.5 * Unom)
+		if (AllLRCsInShuntPart(V2sq, pDynaModel->GetLRCToShuntVmin()))
 		{
 			double V02 = V0 * V0;
 
-			if (m_pLRC)
-			{
-				dIredVre +=  dLRCShuntPartP;
-				dIredVim +=  dLRCShuntPartQ;
-				dIimdVre += -dLRCShuntPartQ;
-				dIimdVim +=  dLRCShuntPartP;
-				dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
-			}
+			_ASSERTE(m_pLRC);
+
+			dIredVre +=  dLRCShuntPartP;
+			dIredVim +=  dLRCShuntPartQ;
+			dIimdVre += -dLRCShuntPartQ;
+			dIimdVim +=  dLRCShuntPartP;
+			dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
 
 			if (m_pLRCGen)
 			{
@@ -308,16 +320,13 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
 		// Uсхн_min стандартное cглаживание СХН
 
-		if (V2sq < pDynaModel->GetLRCToShuntVmin() * Unom * 0.5)
+		if (AllLRCsInShuntPart(V2sq, pDynaModel->GetLRCToShuntVmin()))
 		{
 			double V02 = V0 * V0;
 
-			if (m_pLRC)
-			{
-				Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
-				Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
-				Pnr = Qnr = 0.0;
-			}
+			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
+			Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
+			Pnr = Qnr = 0.0;
 
 			if (m_pLRCGen)
 			{
@@ -365,11 +374,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 #ifdef _DEBUG
 		else
-		{
-			double Pk = Pnr - Pgr;
-			double Qk = Qnr - Qgr;
-			_ASSERTE(fabs(Pk) < DFW2_EPSILON && fabs(Qk) < DFW2_EPSILON);
-		}
+			_ASSERTE(fabs(Pnr - Pgr) < DFW2_EPSILON && fabs(Qnr - Qgr) < DFW2_EPSILON);
 #endif
 	}
 
@@ -383,9 +388,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
-	// only update vicinity in case node has LRC ( due to slow complex::abs() )
-	if (m_pLRC)
-		dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
+	dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
 	Vold = V;
 }
 
@@ -401,6 +404,10 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 		Pgr = Qgr = 0.0;
 	else
 		m_pLRCGen = pDynaModel->GetLRCGen();		// если есть генерация но нет генераторов - нужна СХН генераторов
+
+	// если в узле нет СХН для динамики, подставляем СХН по умолчанию
+	if (!m_pLRC)
+		m_pLRC = pDynaModel->GetLRCDynamicDefault();
 
 	return DFS_OK;
 }
@@ -576,13 +583,17 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 
 	dLRCShuntPartP = dLRCShuntPartQ	= dLRCShuntPartPgen	= dLRCShuntPartQgen	= 0.0;
 	double V02 = V0* V0;
+
 	if (m_pLRC)
 	{
+		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
 		dLRCShuntPartP = Pn * m_pLRC->P->a2 / V02;
 		dLRCShuntPartQ = Qn * m_pLRC->Q->a2 / V02;
 	}
+
 	if (m_pLRCGen)
 	{
+		// рассчитываем шунтовую часть СХН генерации в узле для низких напряжений
 		dLRCShuntPartPgen = Pg * m_pLRCGen->P->a2 / V02;
 		dLRCShuntPartQgen = Qg * m_pLRCGen->Q->a2 / V02;
 	}
