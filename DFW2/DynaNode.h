@@ -91,6 +91,7 @@ namespace DFW2
 				
 		double Pn,Qn,Pg,Qg,Pnr,Qnr,Pgr,Qgr;
 		double G,B, Gr0, Br0;
+		double dLRCShuntPartP, dLRCShuntPartQ, dLRCShuntPartPgen, dLRCShuntPartQgen;
 		double Gshunt, Bshunt;
 		double Unom;					// номинальное напряжение
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
@@ -126,7 +127,6 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		void MarkZoneEnergized();
 		void ProcessTopologyRequest();
-		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
 		// инициализация узла для расчета УР
 		void StartLF(bool bFlatStart, double ImbTol);

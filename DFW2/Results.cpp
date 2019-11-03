@@ -47,7 +47,7 @@ void CDynaModel::WriteResultsHeaderBinary()
 				if (pDevCon->GetType() == DEVTYPE_BRANCH)
 					ParentIdsCount = 2;
 
-				long nDevicesCount = std::count_if(pDevCon->begin(), pDevCon->end(), [](const CDevice* pDev)->bool {return !pDev->IsPermanentOff(); });
+				long nDevicesCount = static_cast<long>(std::count_if(pDevCon->begin(), pDevCon->end(), [](const CDevice* pDev)->bool {return !pDev->IsPermanentOff(); }));
 				
 				// добавляем описание устройства: количество идентификаторов, количество ведущих устройств и общее количество устройств данного типа
 				spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, nDevicesCount);

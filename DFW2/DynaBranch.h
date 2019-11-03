@@ -51,7 +51,6 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 		virtual eDEVICESTATE GetState();
 		eDEVICEFUNCTIONSTATUS SetBranchState(BranchState eBranchState, eDEVICESTATECAUSE eStateCause);
-		void CalcAdmittances();
 		void CalcAdmittances(bool bSeidell);
 		bool IsZeroImpedance();
 

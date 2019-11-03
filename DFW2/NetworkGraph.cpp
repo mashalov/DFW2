@@ -138,13 +138,13 @@ void CDynaModel::PrepareYs()
 	for (auto&& it :Branches)
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
-		pBranch->CalcAdmittances();
+		pBranch->CalcAdmittances(false);
 	}
 
 	for (auto&& it : Nodes)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-		pNode->CalcAdmittances();
+		pNode->CalcAdmittances(false);
 	}
 }
 
@@ -611,6 +611,10 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			{
 				CDynaNodeBase *pSlaveNode(static_cast<CDynaNodeBase*>(*ppDevice));
 				pNode->YiiSuper += pSlaveNode->Yii;
+				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
+				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
+				pNode->dLRCShuntPartPgen += pSlaveNode->dLRCShuntPartPgen;
+				pNode->dLRCShuntPartQgen += pSlaveNode->dLRCShuntPartQgen;
 			}
 		}
 	}

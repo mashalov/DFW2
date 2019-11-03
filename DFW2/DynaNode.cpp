@@ -148,23 +148,19 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 			if (m_pLRC)
 			{
-				double g = -Pn * m_pLRC->P->a2 / V02;
-				double b =  Qn * m_pLRC->Q->a2 / V02;
-				dIredVre += -g;
-				dIredVim +=  b;
-				dIimdVre += -b;
-				dIimdVim += -g;
+				dIredVre +=  dLRCShuntPartP;
+				dIredVim +=  dLRCShuntPartQ;
+				dIimdVre += -dLRCShuntPartQ;
+				dIimdVim +=  dLRCShuntPartP;
 				dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
 			}
 
 			if (m_pLRCGen)
 			{
-				double g =  Pg * m_pLRCGen->P->a2 / V02;
-				double b = -Qg * m_pLRCGen->Q->a2 / V02;
-				dIredVre += -g;
-				dIredVim +=  b;
-				dIimdVre += -b;
-				dIimdVim += -g;
+				dIredVre += -dLRCShuntPartPgen;
+				dIredVim += -dLRCShuntPartQgen;
+				dIimdVre +=  dLRCShuntPartQgen;
+				dIimdVim += -dLRCShuntPartPgen;
 				dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
 			}
 		}
@@ -318,19 +314,15 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 			if (m_pLRC)
 			{
-				double g = -Pn * m_pLRC->P->a2 / V02;
-				double b = Qn * m_pLRC->Q->a2 / V02;
-				Ire -= g * Vre - b * Vim;
-				Iim -= b * Vre + g * Vim;
+				Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
+				Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
 				Pnr = Qnr = 0.0;
 			}
 
 			if (m_pLRCGen)
 			{
-				double g = Pg * m_pLRCGen->P->a2 / V02;
-				double b = -Qg * m_pLRCGen->Q->a2 / V02;
-				Ire -= g * Vre - b * Vim;
-				Iim -= b * Vre + g * Vim;
+				Ire -=  dLRCShuntPartPgen * Vre + dLRCShuntPartQgen * Vim;
+				Iim -= -dLRCShuntPartQgen * Vre + dLRCShuntPartPgen * Vim;
 				Pgr = Qgr = 0.0;
 			}
 
@@ -371,8 +363,14 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			dDelta = Delta - atan2(Vim, Vre);
 
 		}
+#ifdef _DEBUG
 		else
+		{
+			double Pk = Pnr - Pgr;
+			double Qk = Qnr - Qgr;
 			_ASSERTE(fabs(Pk) < DFW2_EPSILON && fabs(Qk) < DFW2_EPSILON);
+		}
+#endif
 	}
 
 	pDynaModel->SetFunction(A(V_V), dV);
@@ -576,6 +574,19 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 {
 	Yii = -cplx(G + Gshunt, B + Bshunt);
 
+	dLRCShuntPartP = dLRCShuntPartQ	= dLRCShuntPartPgen	= dLRCShuntPartQgen	= 0.0;
+	double V02 = V0* V0;
+	if (m_pLRC)
+	{
+		dLRCShuntPartP = Pn * m_pLRC->P->a2 / V02;
+		dLRCShuntPartQ = Qn * m_pLRC->Q->a2 / V02;
+	}
+	if (m_pLRCGen)
+	{
+		dLRCShuntPartPgen = Pg * m_pLRCGen->P->a2 / V02;
+		dLRCShuntPartQgen = Qg * m_pLRCGen->Q->a2 / V02;
+	}
+
 	m_bInMetallicSC = !(_finite(Yii.real()) && _finite(Yii.imag()));
 
 	if (m_bInMetallicSC || !IsStateOn())
@@ -592,56 +603,6 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
 			pBranch->CalcAdmittances(bSeidell);
-
-			// TODO Single-end trip
-
-			switch (pBranch->m_BranchState)
-			{
-			case CDynaBranch::BRANCH_OFF:
-				break;
-			case CDynaBranch::BRANCH_ON:
-
-				if (this == pBranch->m_pNodeIp)
-					Yii -= (pBranch->Yips);
-				else
-					Yii -= (pBranch->Yiqs);
-				break;
-
-			case CDynaBranch::BRANCH_TRIPIP:
-				break;
-			case CDynaBranch::BRANCH_TRIPIQ:
-				break;
-			}
-		}
-
-		if (V < DFW2_EPSILON)
-		{
-			Vre = V = Unom;
-			Vim = Delta = 0.0;
-		}
-	}
-}
-
-
-void CDynaNodeBase::CalcAdmittances()
-{
-	Yii = -cplx(G + Gshunt, B + Bshunt);
-
-	m_bInMetallicSC = !(_finite(Yii.real()) && _finite(Yii.imag()));
-
-	if (m_bInMetallicSC || !IsStateOn())
-	{
-		Vre = Vim = 0.0;
-		V = Delta = 0.0;
-	}
-	else
-	{
-		CDevice **ppBranch(nullptr);
-		CLinkPtrCount *pLink = GetLink(0);
-		ResetVisited();
-		while (pLink->In(ppBranch))
-		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
 
 			// TODO Single-end trip
 
@@ -696,7 +657,7 @@ eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE
 			Sip = 0;
 			Cop = 0;
 			*/
-			CalcAdmittances();
+			CalcAdmittances(false);
 			break;
 		}
 	}

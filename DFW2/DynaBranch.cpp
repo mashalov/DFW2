@@ -133,9 +133,9 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBran
 		m_BranchState = eBranchState;
 		// заново рассчитываем проводимости ветви
 		// и узлов
-		CalcAdmittances();
-		m_pNodeIp->CalcAdmittances();
-		m_pNodeIq->CalcAdmittances();
+		CalcAdmittances(false);
+		m_pNodeIp->CalcAdmittances(false);
+		m_pNodeIq->CalcAdmittances(false);
 		// информируем модель о необходимости 
 		// обработки разрыва
 		m_pNodeIp->ProcessTopologyRequest();
@@ -220,54 +220,6 @@ void CDynaBranch::CalcAdmittances(bool bSeidell)
 			Yips += Yip1 * Ybranch / Ysum;
 	}
 	break;
-	}
-}
-
-void CDynaBranch::CalcAdmittances()
-{
-	cplx Ybranch = GetYBranch();
-	cplx Ktr(Ktr, Kti);
-
-	switch (m_BranchState)
-	{
-	case CDynaBranch::BRANCH_OFF:
-		Yip = Yiq = Yips = Yiqs = cplx(0.0, 0.0);
-		break;
-	case CDynaBranch::BRANCH_ON:
-		Yip = Ybranch / Ktr;
-		Yiq = Ybranch / conj(Ktr);
-		Yips = cplx(GIp, BIp) + Ybranch;
-		Yiqs = cplx(GIq, BIq) + Ybranch / norm(Ktr);
-		break;
-	case CDynaBranch::BRANCH_TRIPIP:
-		{
-			Yip = Yiq = Yips = 0.0;
-			Yiqs = cplx(GIq, BIq);
-
-			cplx Yip1(GIp, BIp);
-			cplx Ysum = Yip1 + Ybranch;
-
-			_ASSERTE(!Equal(abs(Ysum), 0.0));
-
-			if (!Equal(abs(Ysum), 0.0))
-				Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktr);
-		}
-		break;
-	case CDynaBranch::BRANCH_TRIPIQ:
-		{
-			Yiq = Yip = Yiqs = 0.0;
-			Yips = cplx(GIp, BIp);
-
-			cplx Yip1(GIq, BIq);
-
-			cplx Ysum = Yip1 / norm(Ktr) + Ybranch;
-
-			_ASSERTE(!Equal(abs(Ysum), 0.0));
-
-			if (!Equal(abs(Ysum), 0.0))
-				Yips += Yip1 * Ybranch / Ysum;
-		}
-		break;
 	}
 }
 
