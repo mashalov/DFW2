@@ -157,24 +157,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 		if (AllLRCsInShuntPart(V2sq, pDynaModel->GetLRCToShuntVmin()))
 		{
-			double V02 = V0 * V0;
-
 			_ASSERTE(m_pLRC);
-
 			dIredVre +=  dLRCShuntPartP;
 			dIredVim +=  dLRCShuntPartQ;
 			dIimdVre += -dLRCShuntPartQ;
 			dIimdVim +=  dLRCShuntPartP;
+			dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
 			dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
-
-			if (m_pLRCGen)
-			{
-				dIredVre += -dLRCShuntPartPgen;
-				dIredVim += -dLRCShuntPartQgen;
-				dIimdVre +=  dLRCShuntPartQgen;
-				dIimdVim += -dLRCShuntPartPgen;
-				dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
-			}
 		}
 	}
 
@@ -322,19 +311,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 		if (AllLRCsInShuntPart(V2sq, pDynaModel->GetLRCToShuntVmin()))
 		{
-			double V02 = V0 * V0;
-
 			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
 			Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
+			Pgr = Qgr = 0.0;
 			Pnr = Qnr = 0.0;
-
-			if (m_pLRCGen)
-			{
-				Ire -=  dLRCShuntPartPgen * Vre + dLRCShuntPartQgen * Vim;
-				Iim -= -dLRCShuntPartQgen * Vre + dLRCShuntPartPgen * Vim;
-				Pgr = Qgr = 0.0;
-			}
-
 			// нагрузки и генерации в мощности больше нет, они перенесены в ток
 		}
 
@@ -581,22 +561,25 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 {
 	Yii = -cplx(G + Gshunt, B + Bshunt);
 
-	dLRCShuntPartP = dLRCShuntPartQ	= dLRCShuntPartPgen	= dLRCShuntPartQgen	= 0.0;
-	double V02 = V0* V0;
+	dLRCShuntPartP = dLRCShuntPartQ	= 0.0;
+	double V02 = V0 * V0;
 
 	if (m_pLRC)
 	{
 		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
-		dLRCShuntPartP = Pn * m_pLRC->P->a2 / V02;
-		dLRCShuntPartQ = Qn * m_pLRC->Q->a2 / V02;
+		dLRCShuntPartP = Pn * m_pLRC->P->a2;
+		dLRCShuntPartQ = Qn * m_pLRC->Q->a2;
 	}
 
 	if (m_pLRCGen)
 	{
 		// рассчитываем шунтовую часть СХН генерации в узле для низких напряжений
-		dLRCShuntPartPgen = Pg * m_pLRCGen->P->a2 / V02;
-		dLRCShuntPartQgen = Qg * m_pLRCGen->Q->a2 / V02;
+		dLRCShuntPartP -= Pg * m_pLRCGen->P->a2;
+		dLRCShuntPartP -= Qg * m_pLRCGen->Q->a2;
 	}
+
+	dLRCShuntPartP /= V02;
+	dLRCShuntPartQ /= V02;
 
 	m_bInMetallicSC = !(_finite(Yii.real()) && _finite(Yii.imag()));
 

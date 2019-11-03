@@ -91,7 +91,7 @@ namespace DFW2
 				
 		double Pn,Qn,Pg,Qg,Pnr,Qnr,Pgr,Qgr;
 		double G,B, Gr0, Br0;
-		double dLRCShuntPartP, dLRCShuntPartQ, dLRCShuntPartPgen, dLRCShuntPartQgen;
+		double dLRCShuntPartP, dLRCShuntPartQ;
 		double Gshunt, Bshunt;
 		double Unom;					// номинальное напряжение
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)

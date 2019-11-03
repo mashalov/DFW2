@@ -617,8 +617,6 @@ bool CDynaNodeContainer::CreateSuperNodes()
 				pNode->YiiSuper += pSlaveNode->Yii;
 				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
 				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
-				pNode->dLRCShuntPartPgen += pSlaveNode->dLRCShuntPartPgen;
-				pNode->dLRCShuntPartQgen += pSlaveNode->dLRCShuntPartQgen;
 			}
 		}
 	}
