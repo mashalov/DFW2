@@ -667,9 +667,11 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	for (auto&& node : m_DevVec)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		// формируем диапазоны ветвей с нулевым сопротивлением для узлов (просто инициализация)
 		pNode->m_VirtualZeroBranchBegin = pNode->m_VirtualZeroBranchEnd = pCurrentZeroBranch;
+		// если у нас есть ветви с нулевым сопротивлением строим их списки
 		// если узел входит в суперузел - его нулевые ветви нам не нужны
-		if (pNode->m_pSuperNodeParent)
+		if (!nZeroBranchCount || pNode->m_pSuperNodeParent)
 			continue;
 
 		CDynaNodeBase *pSlaveNode = pNode;
@@ -689,7 +691,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			// достаем из суперссылки на узлы следующий узел суперузла
 			pSlaveNode = pSlaveNodeLink->In(ppSlaveNode) ? static_cast<CDynaNodeBase*>(*ppSlaveNode) : nullptr;
 		}
-		
+		pNode->TidyZeroBranches();
 	}
 
 	/*

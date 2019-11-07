@@ -930,12 +930,7 @@ bool CDynaNodeContainer::LULF()
 		for (auto && it : m_DevInMatrix)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-			if (pNode->m_pSuperNodeParent)
-			{
-				pNode->Vre = pNode->m_pSuperNodeParent->Vre;
-				pNode->Vim = pNode->m_pSuperNodeParent->Vim;
-				pNode->UpdateVDelta();
-			}
+			pNode->UpdateVDeltaSuper();
 		}
 
 		DumpIterationControl();
@@ -1156,9 +1151,13 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 {
 	if (pBranch->IsZeroImpedance())
 	{
+		if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(m_pContainer)->GetZeroBranchesEnd())
+			throw dfw2error(_T("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun"));
+
 		// если ветвь имеет сопротивление ниже минимального 
 		bool bAdd(true);
 		// проверяем 1) - не добавлена ли она уже; 2) - нет ли параллельной ветви
+		CDynaBranch *pParallelFound(nullptr);
 		for (VirtualZeroBranch *pVb = m_VirtualZeroBranchBegin; pVb < m_VirtualZeroBranchEnd; pVb++)
 		{
 			if (pVb->pBranch == pBranch)
@@ -1168,26 +1167,25 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 				break;
 			}
 
-			// проверяем есть ли параллельная впрямую
-			bool bParr = pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIq;
-			// и если нет - проверяем параллельную в обратную
-			bParr = bParr ? bParr : pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIq;
-			if (bParr)
+			// для того чтобы привязать параллельную цепь нужна основная цепь у которой pParallel == nullptr
+			if (!pVb->pParallelTo)
 			{
-				// если есть параллельная, ставим в добавляемую ветвь ссылку на найденную параллельную ветвь
-				m_VirtualZeroBranchEnd->pParallelTo = pVb->pBranch;
-				break;
+				// проверяем есть ли параллельная впрямую
+				bool bParr = pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIq;
+				// и если нет - проверяем параллельную в обратную
+				bParr = bParr ? bParr : pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIq;
+				if (bParr)
+					// если есть параллельная, ставим в добавляемую ветвь ссылку на найденную параллельную ветвь
+					pParallelFound = pVb->pBranch;
 			}
 		}
 		if (bAdd)
 		{
 			// если ветвь добавляем
 			// то сначала проверяем есть ли место
-			if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(m_pContainer)->GetZeroBranchesEnd())
-				throw dfw2error(_T("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun"));
-
 			// сдвигаем указатель на конец списка ветвей с нулевым сопротивлением для данного узла
 			m_VirtualZeroBranchEnd->pBranch = pBranch;
+			m_VirtualZeroBranchEnd->pParallelTo = pParallelFound;
 			m_VirtualZeroBranchEnd++;
 		}
 	}
@@ -1196,10 +1194,31 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 	return m_VirtualZeroBranchEnd;
 }
 
+void CDynaNodeBase::TidyZeroBranches()
+{
+	// сортируем нулевые ветви так, чтобы вначале были основные, в конце параллельные основным
+	std::sort(m_VirtualZeroBranchBegin, m_VirtualZeroBranchEnd, [](const VirtualZeroBranch& lhs, const VirtualZeroBranch& rhs)->bool { return lhs.pParallelTo < rhs.pParallelTo; });
+	m_VirtualZeroBranchParrallelsBegin = m_VirtualZeroBranchBegin;
+	// находим начало параллельных цепей
+	while (m_VirtualZeroBranchParrallelsBegin < m_VirtualZeroBranchEnd)
+	{
+		if (!m_VirtualZeroBranchParrallelsBegin->pParallelTo)
+			m_VirtualZeroBranchParrallelsBegin++;
+		else
+			break;
+	}
+	//список нулевых ветвей такой
+	// [m_VirtualZeroBranchBegin; m_VirtualZeroBranchParrallelsBegin) - основные
+	// [m_VirtualZeroBranchParrallelsBegin; m_VirtualZeroBranchEnd) - параллельные
+
+}
+
 void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 {
 	if (m_pSuperNodeParent)
 		return; // это не суперузел
+
+	
 
 	bool bLRCShunt = (pDynaModel->GetLRCToShuntVmin() - dLRCVicinity) > V / Unom;
 	CLinkPtrCount *pSlaveNodesLink = GetSuperLink(0);

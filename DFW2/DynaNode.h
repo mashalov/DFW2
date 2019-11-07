@@ -155,9 +155,10 @@ namespace DFW2
 		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
 
 		VirtualBranch	  *m_VirtualBranchBegin, *m_VirtualBranchEnd;
-		VirtualZeroBranch *m_VirtualZeroBranchBegin, *m_VirtualZeroBranchEnd;
+		VirtualZeroBranch *m_VirtualZeroBranchBegin, *m_VirtualZeroBranchEnd, *m_VirtualZeroBranchParrallelsBegin;
 
 		VirtualZeroBranch* AddZeroBranch(CDynaBranch* pBranch);
+		void TidyZeroBranches();
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;

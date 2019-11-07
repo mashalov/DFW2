@@ -209,7 +209,7 @@ bool CDynaModel::Run()
 				{
 					bResultsNeedToBeFinished = false;
 					FinishWriteResults();
-					throw err;
+					throw dfw2error(err);
 				}
 			}
 		}

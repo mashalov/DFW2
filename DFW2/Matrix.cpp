@@ -12,6 +12,12 @@ void CDynaModel::EstimateMatrix()
 	sc.m_bFillConstantElements = m_bEstimateBuild = true;
 	sc.RefactorMatrix();
 
+	// Если нужно обновить данные в общем векторе правой части
+	// делаем это _до_ EstimateBlock, так как состав матрицы
+	// может измениться и рассинхронизироваться с pRightVector
+	if (bSaveRightVector)
+		UpdateTotalRightVector();
+
 	for (auto&& it : m_DeviceContainers)
 		it->EstimateBlock(this);
 
@@ -23,7 +29,6 @@ void CDynaModel::EstimateMatrix()
 	if (bSaveRightVector)
 	{
 		// make a copy of original right vector to new right vector
-		UpdateTotalRightVector();
 		unique_ptr<RightVector[]>  pNewRightVector = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		// сбрасываем количество ошибок, мы его уже просуммировали в TotalRightVector
 		// все остальное копируем
@@ -579,7 +584,9 @@ void CDynaModel::UpdateTotalRightVector()
 			{
 				for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++)
 				{
-					_ASSERTE(pRvB->pDevice == pRv->pDevice && pRvB->pValue == pRv->pValue);
+					if (pRvB->pDevice != pRv->pDevice || pRvB->pValue != pRv->pValue)
+						throw dfw2error(_T("CDynaModel::UpdateTotalRightVector - TotalRightVector Out Of Sync"));
+
 					ptrdiff_t nNewErrorHits = pRvB->nErrorHits + pRv->nErrorHits;
 					*pRvB = *pRv;
 					pRvB->nErrorHits = nNewErrorHits;
