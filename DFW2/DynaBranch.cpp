@@ -230,7 +230,7 @@ bool CDynaBranch::IsZeroImpedance()
 {
 	const CDynaModel *pModel = GetModel();
 
-	if (m_BranchState == CDynaBranch::BRANCH_ON)
+	if (m_BranchState == CDynaBranch::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
 	{
 		double Zmin = pModel->GetZeroBranchImpedance();
 		if (R < Zmin && X < Zmin)

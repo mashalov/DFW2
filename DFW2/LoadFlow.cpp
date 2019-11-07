@@ -1165,23 +1165,29 @@ void CLoadFlow::UpdateSupernodesPQ()
 	for (auto && supernode : m_SuperNodeParameters)
 	{
 		CDynaNodeBase *pNode = supernode.m_pNode;
-		double Qrange = pNode->LFQmax - pNode->LFQmin;
-		double Qspread(0.0), QgSource(pNode->Qgr);
-		Qrange = (Qrange > 0.0) ? (pNode->Qgr - pNode->LFQmin) / Qrange : 0.0;
-		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
-		CDevice **ppDevice(nullptr);
-		while (pLink->In(ppDevice))
+
+		// если суперузел нагрузочный, параметры
+		// входящих в него узлов не могут изменяться
+		if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
 		{
-			CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
-			pSlaveNode->Qg = 0.0;
-			if (pSlaveNode->IsStateOn())
-				Qspread += pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
-		}
-		Qspread += pNode->Qgr = supernode.LFQmin + (supernode.LFQmax - supernode.LFQmin) * Qrange;
-		if (fabs(Qspread - QgSource) > m_Parameters.m_Imb)
-		{
-			bAllOk = false;
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForSuperNode, pNode->GetVerbalName(), QgSource, pNode->LFQmin, pNode->LFQmax));
+			double Qrange = pNode->LFQmax - pNode->LFQmin;
+			double Qspread(0.0), QgSource(pNode->Qgr);
+			Qrange = (Qrange > 0.0) ? (pNode->Qgr - pNode->LFQmin) / Qrange : 0.0;
+			CLinkPtrCount *pLink = pNode->GetSuperLink(0);
+			CDevice **ppDevice(nullptr);
+			while (pLink->In(ppDevice))
+			{
+				CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+				pSlaveNode->Qg = 0.0;
+				if (pSlaveNode->IsStateOn())
+					Qspread += pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
+			}
+			Qspread += pNode->Qgr = supernode.LFQmin + (supernode.LFQmax - supernode.LFQmin) * Qrange;
+			if (fabs(Qspread - QgSource) > m_Parameters.m_Imb)
+			{
+				bAllOk = false;
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForSuperNode, pNode->GetVerbalName(), QgSource, pNode->LFQmin, pNode->LFQmax));
+			}
 		}
 		supernode.Restore();
 	}
@@ -1194,7 +1200,10 @@ void CLoadFlow::UpdateSupernodesPQ()
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		if (!pNode->m_pSuperNodeParent)
 		{
-			pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;
+			// если узел не нагрузочный, обновляем расчетное значение реактивной мощности
+			if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
+				pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;
+			// восстанавливаем исходные значения расчетной генерации и нагрузки по сохраненным Pg,Qg,Pn,Qn
 			GetPnrQnr(pNode);
 		}
 	}

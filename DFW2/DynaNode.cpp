@@ -1185,6 +1185,7 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 			// то сначала проверяем есть ли место
 			if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(m_pContainer)->GetZeroBranchesEnd())
 				throw dfw2error(_T("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun"));
+
 			// сдвигаем указатель на конец списка ветвей с нулевым сопротивлением для данного узла
 			m_VirtualZeroBranchEnd->pBranch = pBranch;
 			m_VirtualZeroBranchEnd++;

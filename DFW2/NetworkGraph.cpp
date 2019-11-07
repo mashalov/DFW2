@@ -386,7 +386,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		{
 			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
 			JoinableNodes[pBranch->m_pNodeIq].insert(pBranch->m_pNodeIp);
-			nZeroBranchCount++;
+			nZeroBranchCount += 2;	// учитываем, что ветвь может учиваться в двух узлах два раза
 		}
 	}
 	// получаем список островов
@@ -675,7 +675,8 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		CDynaNodeBase *pSlaveNode = pNode;
 		CLinkPtrCount *pSlaveNodeLink = pNode->GetSuperLink(0);
 		CDevice **ppSlaveNode(nullptr);
-
+		// сначала обрабатываем узел-представитель суперузла
+		// затем выбираем входящие в суперузел узлы
 		while (pSlaveNode)
 		{
 			CLinkPtrCount *pBranchLink = pSlaveNode->GetLink(0);
@@ -685,6 +686,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
 				pCurrentZeroBranch = pNode->AddZeroBranch(pBranch);
 			}
+			// достаем из суперссылки на узлы следующий узел суперузла
 			pSlaveNode = pSlaveNodeLink->In(ppSlaveNode) ? static_cast<CDynaNodeBase*>(*ppSlaveNode) : nullptr;
 		}
 		
