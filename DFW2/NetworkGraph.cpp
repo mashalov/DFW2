@@ -376,6 +376,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 
 	NODEISLANDMAP JoinableNodes, SuperNodes;
 	// строим список связности по включенным ветвям с нулевым сопротивлением
+	ptrdiff_t nZeroBranchCount(0);
 	for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
@@ -385,6 +386,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		{
 			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
 			JoinableNodes[pBranch->m_pNodeIq].insert(pBranch->m_pNodeIp);
+			nZeroBranchCount++;
 		}
 	}
 	// получаем список островов
@@ -399,7 +401,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		DumpNodeIslands(SuperNodes);
 
 		
-		m_SuperLinks.emplace_back(this, Count());
+		m_SuperLinks.emplace_back(this, Count()); // используем конструктор CMultiLink
 		CMultiLink& pNodeSuperLink(m_SuperLinks.back());
 		// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
 		for (int pass = 0; pass < 2; pass++)
@@ -629,12 +631,12 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
 		// если узел входит в суперузел - для него виртуальные ветви отсутствуют
+		pNode->m_VirtualBranchBegin = pNode->m_VirtualBranchEnd = pCurrentBranch;
 		if (pNode->m_pSuperNodeParent)
 			continue;
 		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
 		pNode->ResetVisited();
 		CDevice **ppDevice(nullptr);
-		pNode->m_VirtualBranchBegin = pCurrentBranch;
 		while (pBranchLink->In(ppDevice))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
@@ -656,6 +658,36 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		}
 		pNode->m_VirtualBranchEnd = pCurrentBranch;
 		_ASSERTE(pNode->m_VirtualBranchBegin < pNode->m_VirtualBranchEnd || !pNode->IsStateOn() || pNode->m_pSuperNodeParent);
+	}
+
+	m_pZeroBranches = make_unique<VirtualZeroBranch[]>(nZeroBranchCount);
+	m_pZeroBranchesEnd = m_pZeroBranches.get() + nZeroBranchCount;
+
+	VirtualZeroBranch *pCurrentZeroBranch = m_pZeroBranches.get();
+	for (auto&& node : m_DevVec)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		pNode->m_VirtualZeroBranchBegin = pNode->m_VirtualZeroBranchEnd = pCurrentZeroBranch;
+		// если узел входит в суперузел - его нулевые ветви нам не нужны
+		if (pNode->m_pSuperNodeParent)
+			continue;
+
+		CDynaNodeBase *pSlaveNode = pNode;
+		CLinkPtrCount *pSlaveNodeLink = pNode->GetSuperLink(0);
+		CDevice **ppSlaveNode(nullptr);
+
+		while (pSlaveNode)
+		{
+			CLinkPtrCount *pBranchLink = pSlaveNode->GetLink(0);
+			CDevice **ppDevice(nullptr);
+			while (pBranchLink->In(ppDevice))
+			{
+				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+				pCurrentZeroBranch = pNode->AddZeroBranch(pBranch);
+			}
+			pSlaveNode = pSlaveNodeLink->In(ppSlaveNode) ? static_cast<CDynaNodeBase*>(*ppSlaveNode) : nullptr;
+		}
+		
 	}
 
 	/*

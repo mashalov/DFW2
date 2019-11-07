@@ -805,6 +805,9 @@ void CLoadFlow::UpdateQToGenerators()
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 
+
+		pNode->SuperNodeLoadFlow(m_pDynaModel);
+
 		if (!pNode->IsStateOn())
 			continue;
 

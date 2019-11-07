@@ -33,10 +33,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	double Xfictive = m_pNodeIp->Unom;
 	Xfictive *= Xfictive;
 	Xfictive *= 0.0000002;
-
-	if (R == 0 && X == 0)
-		Xf = Xfictive;
-
+	
 	if (bFixNegativeZ)
 	{
 		if (R < 0)
@@ -169,6 +166,12 @@ void CDynaBranch::CalcAdmittances(bool bSeidell)
 	// в режиме корректировки отрицательных сопротивления
 	// в зависимость от параметра (Зейдель или нет)
 	
+	// если ветвь имеет сопротивление ниже минимального, проводимость
+	// этой ветви будет трактоваться как нулевая. Такие ветви нужно обрабатывать
+	// в суперузлах. Проводимости в начале в конце (Yip/Yiq) и проводимости в начале в конце 
+	// с учетом шунтов (Yips/Yiqs) при этом будут пригодны для расчета балансовых соотношений
+	// в суперузле
+
 	cplx Ybranch = GetYBranch(bSeidell);
 	cplx Ktr(Ktr, Kti);
 

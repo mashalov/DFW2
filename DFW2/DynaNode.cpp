@@ -592,7 +592,6 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 	{
 		CDevice **ppBranch(nullptr);
 		CLinkPtrCount *pLink = GetLink(0);
-		ResetVisited();
 		while (pLink->In(ppBranch))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
@@ -1152,6 +1151,94 @@ void CDynaNodeBase::ProcessTopologyRequest()
 		static_cast<CDynaNodeContainer*>(m_pContainer)->ProcessTopologyRequest();
 }
 
+// добавляет ветвь в список ветвей с нулевым сопротивлением суперузла
+VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
+{
+	if (pBranch->IsZeroImpedance())
+	{
+		// если ветвь имеет сопротивление ниже минимального 
+		bool bAdd(true);
+		// проверяем 1) - не добавлена ли она уже; 2) - нет ли параллельной ветви
+		for (VirtualZeroBranch *pVb = m_VirtualZeroBranchBegin; pVb < m_VirtualZeroBranchEnd; pVb++)
+		{
+			if (pVb->pBranch == pBranch)
+			{
+				// если уже добавлена, выходим и не добавляем
+				bAdd = false;
+				break;
+			}
+
+			// проверяем есть ли параллельная впрямую
+			bool bParr = pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIq;
+			// и если нет - проверяем параллельную в обратную
+			bParr = bParr ? bParr : pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIq;
+			if (bParr)
+			{
+				// если есть параллельная, ставим в добавляемую ветвь ссылку на найденную параллельную ветвь
+				m_VirtualZeroBranchEnd->pParallelTo = pVb->pBranch;
+				break;
+			}
+		}
+		if (bAdd)
+		{
+			// если ветвь добавляем
+			// то сначала проверяем есть ли место
+			if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(m_pContainer)->GetZeroBranchesEnd())
+				throw dfw2error(_T("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun"));
+			// сдвигаем указатель на конец списка ветвей с нулевым сопротивлением для данного узла
+			m_VirtualZeroBranchEnd->pBranch = pBranch;
+			m_VirtualZeroBranchEnd++;
+		}
+	}
+
+	// возвращаем конец списка ветвей с нулевым сопротивлением
+	return m_VirtualZeroBranchEnd;
+}
+
+void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
+{
+	if (m_pSuperNodeParent)
+		return; // это не суперузел
+
+	bool bLRCShunt = (pDynaModel->GetLRCToShuntVmin() - dLRCVicinity) > V / Unom;
+	CLinkPtrCount *pSlaveNodesLink = GetSuperLink(0);
+	CDevice **ppSlave(nullptr);
+	while (pSlaveNodesLink->In(ppSlave))
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*ppSlave);
+		double Ire(0.0), Iim(0.0);
+		Ire +=  Yii.real() * Vre + Yii.imag() * Vim;
+		Iim += -Yii.imag() * Vre - Yii.real() * Vim;
+
+		CLinkPtrCount *pBranchesLink = pNode->GetLink(0);
+		CDevice **ppBranch(nullptr);
+		pNode->ResetVisited();
+		while (pBranchesLink->In(ppBranch))
+		{
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
+			CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
+			cplx& Ykm = (pOppNode == pNode) ? pBranch->Yip : pBranch->Yiq;
+			Ire += -Ykm.real() * pOppNode->Vre + Ykm.imag() * pOppNode->Vim;
+			Iim += -Ykm.imag() * pOppNode->Vre - Ykm.real() * pOppNode->Vim;
+		}
+
+		if (bLRCShunt)
+		{
+			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
+			Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
+		}
+		else
+		{
+			pNode->GetPnrQnr();
+			double Pk = pNode->Pnr - pNode->Pgr;
+			double Qk = pNode->Qnr - pNode->Qgr;
+			double V2 = V * V;
+			Ire += (Pk * Vre + Qk * Vim) / V2;
+			Iim += (Pk * Vim - Qk * Vre) / V2;
+		}
+	}
+}
+
 const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 {
 	CDeviceContainerProperties props;
@@ -1202,6 +1289,7 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 	props.m_VarMap.insert(make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
 	return props;
 }
+
 
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");

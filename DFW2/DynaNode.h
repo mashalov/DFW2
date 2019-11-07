@@ -36,6 +36,7 @@ namespace DFW2
 #define DFW2_SQRT_EPSILON DFW2_EPSILON
 
 	struct VirtualBranch;
+	struct VirtualZeroBranch;
 
 	class CDynaNodeBase : public CDevice
 	{
@@ -134,6 +135,7 @@ namespace DFW2
 		virtual void StoreStates() override;
 		virtual void RestoreStates() override;
 		virtual bool InMatrix() override;
+		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() { return Pnr - Pgr - V * V * YiiSuper.real();	}
 		inline double GetSelfImbQ() { return Qnr - Qgr + V * V * YiiSuper.imag(); }
@@ -152,7 +154,10 @@ namespace DFW2
 		CDynaNodeBase *m_pSuperNodeParent;
 		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
 
-		VirtualBranch *m_VirtualBranchBegin, *m_VirtualBranchEnd;
+		VirtualBranch	  *m_VirtualBranchBegin, *m_VirtualBranchEnd;
+		VirtualZeroBranch *m_VirtualZeroBranchBegin, *m_VirtualZeroBranchEnd;
+
+		VirtualZeroBranch* AddZeroBranch(CDynaBranch* pBranch);
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
@@ -164,6 +169,7 @@ namespace DFW2
 	protected:
 		void SetLowVoltage(bool bLowVoltage);
 		double FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow);
+
 	};
 
 	class CDynaNode : public CDynaNodeBase
@@ -209,6 +215,13 @@ namespace DFW2
 	{
 		cplx Y;
 		CDynaNodeBase *pNode;
+	};
+
+
+	struct VirtualZeroBranch
+	{
+		CDynaBranch *pBranch;
+		CDynaBranch *pParallelTo;
 	};
 
 	// маппинг узла в строки матрица
@@ -359,8 +372,11 @@ namespace DFW2
 		void ClearSuperLinks();
 		void DumpNodeIslands(NODEISLANDMAP& Islands);
 		unique_ptr<VirtualBranch[]> m_pVirtualBranches;
+		unique_ptr<VirtualZeroBranch[]> m_pZeroBranches;
+		VirtualZeroBranch *m_pZeroBranchesEnd;
 		CDeviceContainer *m_pSynchroZones = nullptr;
 	public:
+		const VirtualZeroBranch* GetZeroBranchesEnd() const { return m_pZeroBranchesEnd; }
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
 		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		void GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
