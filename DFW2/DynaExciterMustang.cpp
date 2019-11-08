@@ -148,6 +148,12 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDyn
 
 			// and then process disco of lag
 			Status = CDynaExciterBase::ProcessDiscontinuity(pDynaModel);
+/*
+			double  V = Ug0;
+			if (bVoltageDependent)
+				V = ExtVg.Value();
+			Eqe = EqeV * ZeroDivGuard(V, Ug0);
+*/
 		}
 		else
 			Status = DFS_FAILED;

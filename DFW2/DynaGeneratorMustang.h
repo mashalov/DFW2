@@ -20,7 +20,8 @@ namespace DFW2
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CDynaGeneratorMustang::CalculatePower();
+		virtual bool CalculatePower() override;
+		virtual const cplx& CalculateEgen() override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};

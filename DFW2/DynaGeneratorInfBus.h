@@ -18,7 +18,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		virtual cplx GetEMF() { return polar(Eqs, Delta); }
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CalculatePower();
+		virtual bool CalculatePower() override;
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 

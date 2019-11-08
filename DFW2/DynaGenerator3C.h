@@ -34,9 +34,9 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual cplx GetEMF() { return cplx(Eqss, Edss) *polar(1.0, Delta); }
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CalculatePower();
+		virtual bool CalculatePower() override;
 		double Xgen();
-		virtual const cplx& CalculateEgen();
+		virtual const cplx& CalculateEgen() override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};

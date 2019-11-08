@@ -65,7 +65,7 @@ namespace DFW2
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CalculatePower();
+		virtual bool CalculatePower() override;
 		virtual double Xgen();
 		virtual cplx Igen(ptrdiff_t nIteration);
 		virtual const cplx& CalculateEgen();

@@ -815,6 +815,12 @@ bool CDynaNodeContainer::LULF()
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 			_ASSERTE(pB < B + nNodeCount * 2);
 
+			/*
+			if (pNode->GetId() == 1067 && m_pDynaModel->GetCurrentTime() > 0.53 && nIteration > 4)
+				pNode->GetId();// pNode->BuildRightHand(m_pDynaModel);
+				*/
+
+
 			if (!pNode->m_bInMetallicSC)
 			{
 				// для всех узлов которые включены и вне металлического КЗ
@@ -916,7 +922,7 @@ bool CDynaNodeContainer::LULF()
 			pNode->Vim = *pB;		pB++;
 
 			// считаем напряжение узла в полярных координатах
-			pNode->UpdateVDelta();
+			pNode->UpdateVDeltaSuper();
 			// рассчитываем зону сглаживания СХН (также как для Ньютона)
 			/*if (pNode->m_pLRC)
 				pNode->dLRCVicinity = 30.0 * fabs(pNode->Vold - pNode->V) / pNode->Unom;
@@ -925,12 +931,6 @@ bool CDynaNodeContainer::LULF()
 			// самый изменяющийся узел
 			if (!pNode->m_bInMetallicSC)
 				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, CDevice::ZeroDivGuard(pNode->V - pNode->Vold, pNode->Vold));
-		}
-
-		for (auto && it : m_DevInMatrix)
-		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-			pNode->UpdateVDeltaSuper();
 		}
 
 		DumpIterationControl();
