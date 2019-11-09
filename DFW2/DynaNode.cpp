@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DynaBranch.h"
 #include "DynaModel.h"
+#include "GraphCycle.h"
 
 using namespace DFW2;
 
@@ -1198,12 +1199,13 @@ void CDynaNodeBase::TidyZeroBranches()
 {
 	// сортируем нулевые ветви так, чтобы вначале были основные, в конце параллельные основным
 	std::sort(m_VirtualZeroBranchBegin, m_VirtualZeroBranchEnd, [](const VirtualZeroBranch& lhs, const VirtualZeroBranch& rhs)->bool { return lhs.pParallelTo < rhs.pParallelTo; });
-	m_VirtualZeroBranchParrallelsBegin = m_VirtualZeroBranchBegin;
+	m_VirtualZeroBranchParallelsBegin = m_VirtualZeroBranchBegin;
+	m_VirtualZeroBranchParallelsBegin = m_VirtualZeroBranchBegin;
 	// находим начало параллельных цепей
-	while (m_VirtualZeroBranchParrallelsBegin < m_VirtualZeroBranchEnd)
+	while (m_VirtualZeroBranchParallelsBegin < m_VirtualZeroBranchEnd)
 	{
-		if (!m_VirtualZeroBranchParrallelsBegin->pParallelTo)
-			m_VirtualZeroBranchParrallelsBegin++;
+		if (!m_VirtualZeroBranchParallelsBegin->pParallelTo)
+			m_VirtualZeroBranchParallelsBegin++;
 		else
 			break;
 	}
@@ -1218,7 +1220,46 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	if (m_pSuperNodeParent)
 		return; // это не суперузел
 
-	
+
+	/*
+	CLinkPtrCount *pSuperNodeLink = GetSuperLink(0);
+	if (pSuperNodeLink->m_nCount)
+	{
+		using GraphType = GraphCycle<CDynaNodeBase*>;
+		using NodeType = GraphType::GraphNodeBase;
+		using EdgeType = GraphType::GraphEdgeBase;
+		unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
+		unique_ptr<EdgeType[]> pGraphEdges = make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
+		CDevice **ppNodeEnd = pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount;
+		NodeType *pNode = pGraphNodes.get();
+		GraphType gc;
+		for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
+			gc.AddNode(pNode->SetId(static_cast<CDynaNodeBase*>(*ppDev)));
+
+		gc.AddNode(pNode->SetId(this));
+
+		EdgeType *pEdge = pGraphEdges.get();
+		for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
+			gc.AddEdge(pEdge->SetIds(pZb->pBranch->m_pNodeIp, pZb->pBranch->m_pNodeIq));
+
+		gc.GenerateCycles();
+	}
+	*/
+
+
+	/*
+	procedure DFS-iterative(G,v):
+2      let S be a stack
+3      S.push(v)
+4      while S is not empty
+5          v = S.pop()
+6          if v is not labeled as discovered:
+7              label v as discovered
+8              for all edges from v to w in G.adjacentEdges(v) do
+9                  S.push(w)
+	*/
+
+		
 
 	bool bLRCShunt = (pDynaModel->GetLRCToShuntVmin() - dLRCVicinity) > V / Unom;
 	CLinkPtrCount *pSlaveNodesLink = GetSuperLink(0);

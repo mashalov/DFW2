@@ -70,11 +70,6 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 
 bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
-	double Ig = GetIg();
-	if (Ig > 0)
-		Ig = Kig / Ig;
-
-
 	double dEqsum = Eqsum - (Eqe0 + ExtUf.Value() + Kig * (GetIg() - Ig0) + Kif * (EqInput.Value() - Eq0) + ExtUdec.Value());
 	double  V = Ug0;
 	if (bVoltageDependent)

@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "DynaModel.h"
 #include "RastrImport.h"
+#include "GraphCycle.h"
 
 
 using namespace DFW2;
@@ -35,6 +36,28 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_CrtSetBreakAlloc(202);
 
 	SetConsoleCtrlHandler(HandlerRoutine,TRUE);
+
+
+		using GraphType = GraphCycle<int>;
+		using NodeType = GraphType::GraphNodeBase;
+		using EdgeType = GraphType::GraphEdgeBase;
+
+		int nodes[] = {1, 2, 3, 4 };
+		int edges[] = {1, 2, 2, 3, 3, 4, 4, 1, 1,3};
+		unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(_countof(nodes));
+		unique_ptr<EdgeType[]> pGraphEdges = make_unique<EdgeType[]>(_countof(edges) / 2);
+		NodeType *pNode = pGraphNodes.get();
+		GraphType gc;
+
+		for (int *p = nodes ; p < _countof(nodes) + nodes; p++, pNode++)
+			gc.AddNode(pNode->SetId(*p));
+
+		EdgeType *pEdge = pGraphEdges.get();
+		for (int *p = edges ; p < _countof(edges) + edges; p+= 2, pEdge++)
+			gc.AddEdge(pEdge->SetIds(*p,  *(p+1)));
+
+		gc.GenerateCycles();
+
 
 	CoInitialize(NULL);
 	{
