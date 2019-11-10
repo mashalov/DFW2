@@ -10,7 +10,8 @@ namespace DFW2
 		class GraphNodeBase
 		{
 		public:
-			GraphNodeBase *m_BackLink = nullptr;
+			GraphNodeBase *m_BackLinkNode = nullptr;
+			GraphEdgeBase *m_BackLinkEdge = nullptr;
 			GraphEdgeBase **m_ppEdgesBegin = nullptr;
 			GraphEdgeBase **m_ppEdgesEnd = nullptr;
 			IdType m_Id;
@@ -35,6 +36,14 @@ namespace DFW2
 				m_IdEnd   = IdEnd;
 				return this;
 			}
+		};
+
+		class GraphCycleEdge
+		{
+		public:
+			GraphEdgeBase *m_pEdge = nullptr;
+			bool m_bDirect = true;
+			GraphCycleEdge(GraphEdgeBase *pEdge, bool bDirect) : m_pEdge(pEdge), m_bDirect(bDirect) {}
 		};
 
 	protected:
@@ -113,25 +122,64 @@ namespace DFW2
 						continue;
 					pEdge->bPassed = true;
 					GraphNodeBase *pOppNode = (*ppEdge)->m_pBegin == pCurrent ? (*ppEdge)->m_pEnd : (*ppEdge)->m_pBegin;
-					if (pOppNode->m_BackLink)
+					if (pOppNode->m_BackLinkNode)
 					{
-						_tcprintf(_T("\nCycle on %d %d"), pEdge->m_IdBegin, pEdge->m_IdEnd);
-						GraphNodeBase *pBack = pEdge->m_pBegin->m_BackLink;
-						while (pBack)
+						
+						list<GraphCycleEdge> Cycle{ GraphCycleEdge(pEdge, true) };
+						set<GraphNodeBase*> BackTrack;
+						GraphNodeBase *pBackNodeBegin = pEdge->m_pBegin;
+						GraphNodeBase *pBackNodeEnd = pEdge->m_pEnd;
+						GraphNodeBase *pLCA = nullptr;
+
+						while (pBackNodeBegin || pBackNodeEnd)
 						{
-							_tcprintf(_T("\nback to %d"), pBack->m_Id);
-							pBack = pBack->m_BackLink;
+							if (pBackNodeBegin)
+							{
+								if (!BackTrack.insert(pBackNodeBegin).second)
+								{
+									pLCA = pBackNodeBegin;
+									break;
+								}
+								pBackNodeBegin = pBackNodeBegin->m_BackLinkNode;
+							}
+							if (pBackNodeEnd)
+							{
+								if (!BackTrack.insert(pBackNodeEnd).second)
+								{
+									pLCA = pBackNodeEnd;
+									break;
+								}
+								pBackNodeEnd = pBackNodeEnd->m_BackLinkNode;
+							}
 						}
-						pBack = pEdge->m_pEnd->m_BackLink;
-						while (pBack)
+
+						pBackNodeBegin = pEdge->m_pBegin;
+						while (pBackNodeBegin && pBackNodeBegin != pLCA)
 						{
-							_tcprintf(_T("\nback to %d"), pBack->m_Id);
-							pBack = pBack->m_BackLink;
+							bool bDirection = pBackNodeBegin->m_BackLinkEdge->m_pBegin != pBackNodeBegin;
+							Cycle.push_back(GraphCycleEdge(pBackNodeBegin->m_BackLinkEdge, bDirection));
+							pBackNodeBegin = pBackNodeBegin->m_BackLinkNode;
 						}
+
+						pBackNodeBegin = pEdge->m_pEnd;
+						while (pBackNodeBegin && pBackNodeBegin != pLCA)
+						{
+							bool bDirection = pBackNodeBegin->m_BackLinkEdge->m_pBegin == pBackNodeBegin;
+							Cycle.push_back(GraphCycleEdge(pBackNodeBegin->m_BackLinkEdge, bDirection));
+							pBackNodeBegin = pBackNodeBegin->m_BackLinkNode;
+						}
+
+						_tcprintf(_T("\nCycle"));
+						for (auto&& it : Cycle)
+						{
+							_tcprintf(_T("\n%s %d-%d"), it.m_bDirect ? _T("+") : _T("-"), it.m_pEdge->m_IdBegin, it.m_pEdge->m_IdEnd);
+						}
+						
 					}
 					else
 					{
-						pOppNode->m_BackLink = pCurrent;
+						pOppNode->m_BackLinkNode = pCurrent;
+						pOppNode->m_BackLinkEdge = pEdge;
 						stack.push(pOppNode);
 					}
 				}

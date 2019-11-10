@@ -42,8 +42,35 @@ int _tmain(int argc, _TCHAR* argv[])
 		using NodeType = GraphType::GraphNodeBase;
 		using EdgeType = GraphType::GraphEdgeBase;
 
-		int nodes[] = {1, 2, 3, 4 };
-		int edges[] = {1, 2, 2, 3, 3, 4, 4, 1, 1,3};
+		int nodes[] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
+		int edges[] = {1, 2, 
+					   2, 3, 
+			           3, 4, 
+			           3, 5, 
+			           4, 6,
+					   5, 6, 
+					   6, 7,
+					   7, 8,
+					   8, 9,
+					   8, 10,
+					   9, 11,
+					   10, 11,
+					   11, 12,
+					   12, 13,
+					   1, 13
+					  };
+		
+		/*
+		int nodes[] = { 1, 2, 3, 4};
+		int edges[] = { 1, 2,
+					    2, 3,
+					    3, 4,
+					    1, 4,
+					    1, 3,
+					    2, 4
+		};
+		*/
+
 		unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(_countof(nodes));
 		unique_ptr<EdgeType[]> pGraphEdges = make_unique<EdgeType[]>(_countof(edges) / 2);
 		NodeType *pNode = pGraphNodes.get();
