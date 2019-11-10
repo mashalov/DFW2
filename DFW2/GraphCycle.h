@@ -60,33 +60,50 @@ namespace DFW2
 		vector<GraphEdgeBase*> m_Edges;
 		unique_ptr<GraphEdgeBase*[]> m_EdgesPtrs;
 
+		// собирает заданный граф в струтуру, оптимальную для обхода
 		void BuildGraph()
 		{
-			GraphNodeBase psrc;
+			GraphNodeBase psrc;	// временный узел для поиска в сете
 			for (auto&& edge : m_Edges)
 			{
+				// для каждого ребра находим узлы начала и конца по идентификаторам в сетее
 				auto& pNodeB = m_Nodes.find(psrc.SetId(edge->m_IdBegin));
 				auto& pNodeE = m_Nodes.find(psrc.SetId(edge->m_IdEnd));
 				if(pNodeB == m_Nodes.end() || pNodeE == m_Nodes.end())
 					throw dfw2error(_T("GraphCycle::BuildGraph - one of the edge's nodes not found"));
+				// задаем указатели на узлы начала и конца в ребре
 				edge->m_pBegin = *pNodeB;
 				edge->m_pEnd = *pNodeE;
+				// увеличиваем количество ребер в найденных узлах (изначально указатель m_ppEdgesEnd == nullptr)
+				// ребра к узлам добавляются дважды: прямые и обратные, так как граф ненаправленный
 				(*pNodeB)->m_ppEdgesEnd++;
 				(*pNodeE)->m_ppEdgesEnd++;
 			}
+			// выделяем вектор указателей на указатели на ребра, общий для всех узлов
 			m_EdgesPtrs = make_unique<GraphEdgeBase*[]>(m_Edges.size() * 2);
 			GraphEdgeBase **ppEdges = m_EdgesPtrs.get();
+			
+
 			for (auto&& node : m_Nodes)
 			{
+				// для каждого узла устанавливаем конечный указатель на ребра в векторе ребер
+				// с учетом количества ребер узла
 				node->m_ppEdgesEnd = ppEdges + (node->m_ppEdgesEnd - node->m_ppEdgesBegin);
+				// начальный указатель устанавливаем на текущее начало вектора
 				node->m_ppEdgesBegin = ppEdges;
+				// текущее начало вектора смещаем на конечный указатель на ребра
 				ppEdges = node->m_ppEdgesEnd;
+				// конечный указатель приравниваем к начальному,
+				// мы сдвинем его добавляя указатели на ребра
 				node->m_ppEdgesEnd = node->m_ppEdgesBegin;
 			}
+
 			for (auto&& edge : m_Edges)
 			{
+				// добавляем указатель на ребро в конечные указатели узлы начала и конца
 				*edge->m_pBegin->m_ppEdgesEnd = edge;
 				*edge->m_pEnd->m_ppEdgesEnd = edge;
+				// сдвигаем конечный указатели
 				edge->m_pBegin->m_ppEdgesEnd++;
 				edge->m_pEnd->m_ppEdgesEnd++;
 			}
@@ -105,7 +122,8 @@ namespace DFW2
 			m_Edges.push_back(pEdge);
 		}
 
-
+		// генерирует набор фундаментальных циклов графа
+		// в виде списков ребер с направлениями
 		void GenerateCycles()
 		{
 			BuildGraph();
@@ -113,30 +131,49 @@ namespace DFW2
 			stack.push(*m_Nodes.begin());
 			while (!stack.empty())
 			{
+				// обходим граф в режиме DFS
 				GraphNodeBase *pCurrent = stack.top();
 				stack.pop();
+				// для текущего узла обходим ребра
 				for (GraphEdgeBase **ppEdge = pCurrent->m_ppEdgesBegin; ppEdge < pCurrent->m_ppEdgesEnd; ppEdge++)
 				{
 					GraphEdgeBase* pEdge = *ppEdge;
+					// если ребро уже прошли в любом направлении - ребро не учитываем
 					if (pEdge->bPassed)
 						continue;
+					// непройденное ребро помечаем как пройденное
 					pEdge->bPassed = true;
+					// определяем узел на обратном конце ребра относительно текущего
 					GraphNodeBase *pOppNode = (*ppEdge)->m_pBegin == pCurrent ? (*ppEdge)->m_pEnd : (*ppEdge)->m_pBegin;
+					// если у узла на обратном конце ребра нет указателя на родительский узел
+					// он пока не входит в дерево, если есть - этот узел входит в цикл
 					if (pOppNode->m_BackLinkNode)
 					{
-						
 						list<GraphCycleEdge> Cycle{ GraphCycleEdge(pEdge, true) };
+						// отслеживаем узлы цикла путем добавления/поиска в сет
 						set<GraphNodeBase*> BackTrack;
+						// начинаем обходить цикл в обратном порядке от узлов
+						// начала и конца текущего ребра (оно образует цикл, все остальные ребра принадлежат дереву)
 						GraphNodeBase *pBackNodeBegin = pEdge->m_pBegin;
 						GraphNodeBase *pBackNodeEnd = pEdge->m_pEnd;
+						// для того, чтобы определить в каком узле начинается цикл
+						// используем поиск LCA - Lowest Common Ancestor
+						// ближайший общий предок двух узлов
 						GraphNodeBase *pLCA = nullptr;
+
+						// идем по дереву обратно до тех пор, пока не придем к узлу
+						// начала или не найдем LCA. Идем с двух концов ребра цикла
 
 						while (pBackNodeBegin || pBackNodeEnd)
 						{
 							if (pBackNodeBegin)
 							{
+								// если на пути из узла начала ребра цикла не дошли до начала дерева
+								// пробуем вставить в сет текущий узел
 								if (!BackTrack.insert(pBackNodeBegin).second)
 								{
+									// если этот узел уже в сете, значит мы прошли его с другой
+									// стороны ребра и он является LCA
 									pLCA = pBackNodeBegin;
 									break;
 								}
@@ -144,6 +181,7 @@ namespace DFW2
 							}
 							if (pBackNodeEnd)
 							{
+								// такой же шаг делаем из узла конца ребра цикла
 								if (!BackTrack.insert(pBackNodeEnd).second)
 								{
 									pLCA = pBackNodeEnd;
@@ -153,18 +191,25 @@ namespace DFW2
 							}
 						}
 
+						// определяем ветки цикла от узлов начала и конца ребра цикла до LCA
 						pBackNodeBegin = pEdge->m_pBegin;
-						while (pBackNodeBegin && pBackNodeBegin != pLCA)
+						while (pBackNodeBegin != pLCA)
 						{
-							bool bDirection = pBackNodeBegin->m_BackLinkEdge->m_pBegin != pBackNodeBegin;
+							// идем либо до начала дерева (если LCA не найден это и есть LCA), 
+							// либо до LCA
+							// при возврате к LCA от узла начала ребра цикла
+							// направление ребер считаем положительным, если их узел конца совпадает с текущим
+							bool bDirection = pBackNodeBegin == pBackNodeBegin->m_BackLinkEdge->m_pEnd;
 							Cycle.push_back(GraphCycleEdge(pBackNodeBegin->m_BackLinkEdge, bDirection));
 							pBackNodeBegin = pBackNodeBegin->m_BackLinkNode;
 						}
 
 						pBackNodeBegin = pEdge->m_pEnd;
-						while (pBackNodeBegin && pBackNodeBegin != pLCA)
+						while (pBackNodeBegin != pLCA)
 						{
-							bool bDirection = pBackNodeBegin->m_BackLinkEdge->m_pBegin == pBackNodeBegin;
+							// при возврате к LCA от узла конца ребра цикла
+							// направление ребер считаем положительным если узел их узел начала совпадает с текущим
+							bool bDirection = pBackNodeBegin == pBackNodeBegin->m_BackLinkEdge->m_pBegin;
 							Cycle.push_back(GraphCycleEdge(pBackNodeBegin->m_BackLinkEdge, bDirection));
 							pBackNodeBegin = pBackNodeBegin->m_BackLinkNode;
 						}
@@ -178,6 +223,9 @@ namespace DFW2
 					}
 					else
 					{
+						// узел на обратном конце связи пока не входит в дерево
+						// добавляем его в дерево путем указания родительского узла (текущего)
+						// и добавляем указатель на ребро, по которому дошли до этого узла
 						pOppNode->m_BackLinkNode = pCurrent;
 						pOppNode->m_BackLinkEdge = pEdge;
 						stack.push(pOppNode);

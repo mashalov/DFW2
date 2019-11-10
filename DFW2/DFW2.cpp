@@ -71,6 +71,15 @@ int _tmain(int argc, _TCHAR* argv[])
 		};
 		*/
 
+		/*
+		int nodes[] = { 1, 2, 3, 4, 5, 6 };
+		int edges[] = { 2, 1,
+						2, 3,
+						4, 3,
+						4, 5,
+						6, 5,
+						6, 1};
+						*/
 		unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(_countof(nodes));
 		unique_ptr<EdgeType[]> pGraphEdges = make_unique<EdgeType[]>(_countof(edges) / 2);
 		NodeType *pNode = pGraphNodes.get();
