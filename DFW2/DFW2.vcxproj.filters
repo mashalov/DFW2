@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
+    <Text Include="updates.txt" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">

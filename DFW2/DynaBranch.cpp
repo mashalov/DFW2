@@ -23,8 +23,21 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 {
 	// если связь с нулевым сопротивлением
 	// возвращаем проводимость равную нулю
-	if (IsZeroImpedance())
+
+	// если связь находится в суперузле (суперузлы начала и конца совпадают)
+	// то возвращаем нулевое сопротивление, так как либо сопротивление этой
+	// ветви меньше минимального, либо связь параллельна такой ветви
+
+#ifdef _DEBUG
+	bool bZ1 = m_pNodeSuperIp == m_pNodeSuperIq;
+	bool bZ2 = IsZeroImpedance
+	_ASSERTE(bZ1 == bZ2)
+	if(bZ2)
 		return cplx(0.0);
+#else
+	if(m_pNodeSuperIp == m_pNodeSuperIq)
+		return cplx(0.0);
+#endif 
 
 	double Rf = R;
 	double Xf = X;
@@ -128,11 +141,6 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBran
 		// если заданное состояние ветви не 
 		// совпадает с текущим
 		m_BranchState = eBranchState;
-		// заново рассчитываем проводимости ветви
-		// и узлов
-		CalcAdmittances(false);
-		m_pNodeIp->CalcAdmittances(false);
-		m_pNodeIq->CalcAdmittances(false);
 		// информируем модель о необходимости 
 		// обработки разрыва
 		m_pNodeIp->ProcessTopologyRequest();

@@ -323,7 +323,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		CLinkPtrCount *pBranchLink = GetSuperLink(1);
 		CLinkPtrCount *pGenLink = GetSuperLink(2);
 		CDevice **ppBranch(nullptr), **ppGen(nullptr);
-		ResetVisited();
+
 		while (pGenLink->In(ppGen))
 		{
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
@@ -551,37 +551,28 @@ CDynaNodeContainer::~CDynaNodeContainer()
 
 void CDynaNodeContainer::CalcAdmittances(bool bSeidell)
 {
-	for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
-		pNode->CalcAdmittances(bSeidell);
-	}
+	for (auto&& it : m_DevVec)
+		static_cast<CDynaNodeBase*>(it)->CalcAdmittances(bSeidell);
 }
-
 void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 {
 	Yii = -cplx(G + Gshunt, B + Bshunt);
-
-	dLRCShuntPartP = dLRCShuntPartQ	= 0.0;
+	dLRCShuntPartP = dLRCShuntPartQ = 0.0;
 	double V02 = V0 * V0;
-
 	if (m_pLRC)
 	{
 		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
 		dLRCShuntPartP = Pn * m_pLRC->P->a2;
 		dLRCShuntPartQ = Qn * m_pLRC->Q->a2;
 	}
-
 	if (m_pLRCGen)
 	{
 		// рассчитываем шунтовую часть СХН генерации в узле для низких напряжений
 		dLRCShuntPartP -= Pg * m_pLRCGen->P->a2;
 		dLRCShuntPartP -= Qg * m_pLRCGen->Q->a2;
 	}
-
 	dLRCShuntPartP /= V02;
 	dLRCShuntPartQ /= V02;
-
 	m_bInMetallicSC = !(_finite(Yii.real()) && _finite(Yii.imag()));
 
 	if (m_bInMetallicSC || !IsStateOn())
@@ -596,22 +587,18 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 		while (pLink->In(ppBranch))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
+			// проводимости ветви будут рассчитаны с учетом того,
+			// что она могла быть отнесена внутрь суперузла
 			pBranch->CalcAdmittances(bSeidell);
 
 			// TODO Single-end trip
-
 			switch (pBranch->m_BranchState)
 			{
 			case CDynaBranch::BRANCH_OFF:
 				break;
 			case CDynaBranch::BRANCH_ON:
-
-				if (this == pBranch->m_pNodeIp)
-					Yii -= (pBranch->Yips);
-				else
-					Yii -= (pBranch->Yiqs);
+				Yii -= (this == pBranch->m_pNodeIp) ? pBranch->Yips : pBranch->Yiqs;
 				break;
-
 			case CDynaBranch::BRANCH_TRIPIP:
 				break;
 			case CDynaBranch::BRANCH_TRIPIQ:
@@ -651,7 +638,6 @@ eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE
 			Sip = 0;
 			Cop = 0;
 			*/
-			CalcAdmittances(false);
 			break;
 		}
 	}
@@ -764,7 +750,6 @@ bool CDynaNodeContainer::LULF()
 	_tfopen_s(&fgen, _T("c:\\tmp\\gens.csv"), _T("w+, ccs=UTF-8"));
 	_ftprintf(fnode, _T(";"));
 
-	CalcAdmittances(false);
 	for (auto&& it : m_DevInMatrix)
 	{
 		_ASSERTE(pAx < Ax + nNzCount * 2);
@@ -839,7 +824,7 @@ bool CDynaNodeContainer::LULF()
 
 				CDevice **ppDeivce(nullptr);
 				CLinkPtrCount *pLink = pNode->GetSuperLink(2);
-				pNode->ResetVisited();
+
 				// проходим по генераторам
 				while (pLink->In(ppDeivce))
 				{
@@ -1280,7 +1265,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 
 		CLinkPtrCount *pBranchesLink = pNode->GetLink(0);
 		CDevice **ppBranch(nullptr);
-		pNode->ResetVisited();
+
 		while (pBranchesLink->In(ppBranch))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);

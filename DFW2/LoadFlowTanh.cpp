@@ -202,8 +202,8 @@ void CLoadFlow::SeidellTanh()
 
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
-	// рассчитываем проводимости узлов с устранением отрицательных сопротивлений
-	pNodes->CalcAdmittances(true);
+	// TODO !!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
+	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
 	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
@@ -302,8 +302,8 @@ void CLoadFlow::SeidellTanh()
 			break;
 	}
 
-	// пересчитываем проводимости узлов без устранения отрицательных сопротивлений
-	pNodes->CalcAdmittances(false);
+	// TODO !!!!! пересчитываем проводимости узлов без устранения отрицательных сопротивлений
+	//pNodes->CalcAdmittances(false);
 }
 
 double CLoadFlow::Qgtanh(CDynaNodeBase *pNode)

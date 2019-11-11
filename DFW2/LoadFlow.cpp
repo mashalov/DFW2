@@ -343,8 +343,8 @@ void CLoadFlow::Seidell()
 
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
-	// рассчитываем проводимости узлов с устранением отрицательных сопротивлений
-	pNodes->CalcAdmittances(true);
+	// TODO !!!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
+	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
 	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
@@ -552,8 +552,8 @@ void CLoadFlow::Seidell()
 			break;
 	}
 
-	// пересчитываем проводимости узлов без устранения отрицательных сопротивлений
-	pNodes->CalcAdmittances(false);
+	// TODO !!!! пересчитываем проводимости узлов без устранения отрицательных сопротивлений
+	//pNodes->CalcAdmittances(false);
 
 }
 
@@ -776,7 +776,6 @@ void CLoadFlow::UpdatePQFromGenerators()
 		{
 			pNode->Pg = pNode->Qg = 0.0;
 			pNode->LFQmin = pNode->LFQmax = 0.0;
-			pNode->ResetVisited();
 			while (pGenLink->In(ppGen))
 			{
 				CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
@@ -816,7 +815,6 @@ void CLoadFlow::UpdateQToGenerators()
 		if (pGenLink->m_nCount)
 		{
 			double Qrange = pNode->LFQmax - pNode->LFQmin;
-			pNode->ResetVisited();
 			double Qspread(0.0), Qgmin(0.0), Qgmax(0.0);
 			while (pGenLink->In(ppGen))
 			{

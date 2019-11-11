@@ -410,7 +410,6 @@ namespace DFW2
 		double GetWeightedNorm(double *pVector);
 
 		void PrepareGraph();
-		void PrepareYs();
 		bool Link();
 		bool UpdateExternalVariables();
 		void TurnOffDevicesByOffMasters();

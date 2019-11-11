@@ -135,22 +135,6 @@ void CDynaModel::PrepareGraph()
 	}
 }
 
-
-void CDynaModel::PrepareYs()
-{
-	for (auto&& it :Branches)
-	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
-		pBranch->CalcAdmittances(false);
-	}
-
-	for (auto&& it : Nodes)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-		pNode->CalcAdmittances(false);
-	}
-}
-
 // строит синхронные зоны по топологии и определяет их состояния
 void CDynaNodeContainer::BuildSynchroZones()
 {
@@ -380,6 +364,7 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+		// по умолчанию суперузлы ветви равны исходным узлам
 		pBranch->m_pNodeSuperIp = pBranch->m_pNodeIp;
 		pBranch->m_pNodeSuperIq = pBranch->m_pNodeIq;
 		if (pBranch->IsZeroImpedance())
@@ -462,8 +447,9 @@ bool CDynaNodeContainer::CreateSuperNodes()
 						}
 						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s connects supernodes %s and %s"), pBranch->GetVerbalName(), pNodeIp->GetVerbalName(), pNodeIq->GetVerbalName()));
 					}
-					//else
+					else
 						// иначе суперузел есть - и ветвь внутри него
+						pBranch->m_pNodeSuperIp = pBranch->m_pNodeSuperIq = pNodeIp->m_pSuperNodeParent;
 						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s in super node %s"), pBranch->GetVerbalName(), pNodeIp->m_pSuperNodeParent->GetVerbalName()));
 				}
 				else
@@ -480,6 +466,9 @@ bool CDynaNodeContainer::CreateSuperNodes()
 					if (pNodeIqSuper->m_pSuperNodeParent)
 						pNodeIqSuper = pNodeIqSuper->m_pSuperNodeParent;
 
+					pBranch->m_pNodeSuperIp = pNodeIpSuper;
+					pBranch->m_pNodeSuperIq = pNodeIqSuper;
+
 					// если суперузел у узлов ветви не общий
 					if (pNodeIpSuper != pNodeIqSuper)
 					{
@@ -489,8 +478,6 @@ bool CDynaNodeContainer::CreateSuperNodes()
 							AddLink(pBranchSuperLink, pNodeIqSuper->m_nInContainerIndex, pBranch);
 							// в ветви нет одиночных связей, но есть два адреса узлов начала и конца.
 							// их меняем на адреса суперузлов
-							pBranch->m_pNodeSuperIp = pNodeIpSuper;
-							pBranch->m_pNodeSuperIq = pNodeIqSuper;
 						}
 						else
 						{
@@ -548,7 +535,6 @@ bool CDynaNodeContainer::CreateSuperNodes()
 						pSuperNode = pNode->m_pSuperNodeParent;
 					// достаем из узла мультиссылку на текущий тип связи
 					CLinkPtrCount* pLink = multilink.GetLink(pNode->m_nInContainerIndex);
-					node->ResetVisited();
 					CDevice **ppDevice(nullptr);
 					// идем по мультиссылке
 					while (pLink->In(ppDevice))
@@ -603,25 +589,12 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	}
 	*/
 
-	for (auto&& node : m_DevVec)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-		pNode->YiiSuper = pNode->Yii;
-		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
-		if (pLink->m_nCount)
-		{
-			CDevice **ppDevice(nullptr);
-			pNode->ResetVisited();
-			// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
-			while (pLink->In(ppDevice))
-			{
-				CDynaNodeBase *pSlaveNode(static_cast<CDynaNodeBase*>(*ppDevice));
-				pNode->YiiSuper += pSlaveNode->Yii;
-				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
-				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
-			}
-		}
-	}
+	// Рассчитываем проводимости узлов и ветвей только после того, как провели
+	// топологический анлализ. Это позволяет определить ветви внутри суперузлов
+	// которые оказались параллельны нулевым ветвям, но имеют сопротивление выше
+	// порогового. Такие ветви можно определить по тому, что они отнесены к одному и 
+	// тому же суперзлу. При этом не нужно искать параллельные нулевые ветви
+	CalcAdmittances(false);
 
 	//  Создаем виртуальные ветви
 	// Количество виртуальных ветвей не превышает количества ссылок суперузлов на ветви
@@ -703,6 +676,27 @@ bool CDynaNodeContainer::CreateSuperNodes()
 
 		// приводим ссылки на нулевые ветви к нужному формату для последующей обработки в циклах
 		pNode->TidyZeroBranches();
+	}
+
+	// считаем проводимости и шунтовые части нагрузки
+	// для суперузлов
+	for (auto&& node : m_DevVec)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		pNode->YiiSuper = pNode->Yii;
+		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
+		if (pLink->m_nCount)
+		{
+			CDevice **ppDevice(nullptr);
+			// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
+			while (pLink->In(ppDevice))
+			{
+				CDynaNodeBase *pSlaveNode(static_cast<CDynaNodeBase*>(*ppDevice));
+				pNode->YiiSuper += pSlaveNode->Yii;
+				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
+				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
+			}
+		}
 	}
 
 	/*
