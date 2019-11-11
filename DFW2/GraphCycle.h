@@ -1,8 +1,8 @@
-#pragma once
+п»ї#pragma once
 #include "memory"
 namespace DFW2
 {
-	template<class IdType>
+	template<class IdNodeType, class IdBranchType = int>
 	class GraphCycle
 	{
 	public:
@@ -14,8 +14,8 @@ namespace DFW2
 			GraphEdgeBase *m_BackLinkEdge = nullptr;
 			GraphEdgeBase **m_ppEdgesBegin = nullptr;
 			GraphEdgeBase **m_ppEdgesEnd = nullptr;
-			IdType m_Id;
-			GraphNodeBase* SetId(IdType Id)
+			IdNodeType m_Id;
+			GraphNodeBase* SetId(IdNodeType Id)
 			{
 				m_Id = Id;
 				return this;
@@ -27,13 +27,14 @@ namespace DFW2
 		public:
 			GraphNodeBase *m_pBegin = nullptr;
 			GraphNodeBase *m_pEnd = nullptr;
-			IdType m_IdBegin;
-			IdType m_IdEnd;
+			IdNodeType m_IdBegin, m_IdEnd;
+			IdBranchType m_IdBranch;
 			bool bPassed = false;
-			GraphEdgeBase* SetIds(IdType IdBegin, IdType IdEnd)
+			GraphEdgeBase* SetIds(IdNodeType IdBegin, IdNodeType IdEnd, IdBranchType IdBranch)
 			{
-				m_IdBegin = IdBegin;
-				m_IdEnd   = IdEnd;
+				m_IdBegin  = IdBegin;
+				m_IdEnd    = IdEnd;
+				m_IdBranch = IdBranch;
 				return this;
 			}
 		};
@@ -45,6 +46,9 @@ namespace DFW2
 			bool m_bDirect = true;
 			GraphCycleEdge(GraphEdgeBase *pEdge, bool bDirect) : m_pEdge(pEdge), m_bDirect(bDirect) {}
 		};
+
+		using CycleType = list<GraphCycleEdge>;
+		using CyclesType = list<CycleType>;
 
 	protected:
 
@@ -60,50 +64,50 @@ namespace DFW2
 		vector<GraphEdgeBase*> m_Edges;
 		unique_ptr<GraphEdgeBase*[]> m_EdgesPtrs;
 
-		// собирает заданный граф в струтуру, оптимальную для обхода
+		// СЃРѕР±РёСЂР°РµС‚ Р·Р°РґР°РЅРЅС‹Р№ РіСЂР°С„ РІ СЃС‚СЂСѓС‚СѓСЂСѓ, РѕРїС‚РёРјР°Р»СЊРЅСѓСЋ РґР»СЏ РѕР±С…РѕРґР°
 		void BuildGraph()
 		{
-			GraphNodeBase psrc;	// временный узел для поиска в сете
+			GraphNodeBase psrc;	// РІСЂРµРјРµРЅРЅС‹Р№ СѓР·РµР» РґР»СЏ РїРѕРёСЃРєР° РІ СЃРµС‚Рµ
 			for (auto&& edge : m_Edges)
 			{
-				// для каждого ребра находим узлы начала и конца по идентификаторам в сетее
+				// РґР»СЏ РєР°Р¶РґРѕРіРѕ СЂРµР±СЂР° РЅР°С…РѕРґРёРј СѓР·Р»С‹ РЅР°С‡Р°Р»Р° Рё РєРѕРЅС†Р° РїРѕ РёРґРµРЅС‚РёС„РёРєР°С‚РѕСЂР°Рј РІ СЃРµС‚РµРµ
 				auto& pNodeB = m_Nodes.find(psrc.SetId(edge->m_IdBegin));
 				auto& pNodeE = m_Nodes.find(psrc.SetId(edge->m_IdEnd));
 				if(pNodeB == m_Nodes.end() || pNodeE == m_Nodes.end())
 					throw dfw2error(_T("GraphCycle::BuildGraph - one of the edge's nodes not found"));
-				// задаем указатели на узлы начала и конца в ребре
+				// Р·Р°РґР°РµРј СѓРєР°Р·Р°С‚РµР»Рё РЅР° СѓР·Р»С‹ РЅР°С‡Р°Р»Р° Рё РєРѕРЅС†Р° РІ СЂРµР±СЂРµ
 				edge->m_pBegin = *pNodeB;
 				edge->m_pEnd = *pNodeE;
-				// увеличиваем количество ребер в найденных узлах (изначально указатель m_ppEdgesEnd == nullptr)
-				// ребра к узлам добавляются дважды: прямые и обратные, так как граф ненаправленный
+				// СѓРІРµР»РёС‡РёРІР°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ СЂРµР±РµСЂ РІ РЅР°Р№РґРµРЅРЅС‹С… СѓР·Р»Р°С… (РёР·РЅР°С‡Р°Р»СЊРЅРѕ СѓРєР°Р·Р°С‚РµР»СЊ m_ppEdgesEnd == nullptr)
+				// СЂРµР±СЂР° Рє СѓР·Р»Р°Рј РґРѕР±Р°РІР»СЏСЋС‚СЃСЏ РґРІР°Р¶РґС‹: РїСЂСЏРјС‹Рµ Рё РѕР±СЂР°С‚РЅС‹Рµ, С‚Р°Рє РєР°Рє РіСЂР°С„ РЅРµРЅР°РїСЂР°РІР»РµРЅРЅС‹Р№
 				(*pNodeB)->m_ppEdgesEnd++;
 				(*pNodeE)->m_ppEdgesEnd++;
 			}
-			// выделяем вектор указателей на указатели на ребра, общий для всех узлов
+			// РІС‹РґРµР»СЏРµРј РІРµРєС‚РѕСЂ СѓРєР°Р·Р°С‚РµР»РµР№ РЅР° СѓРєР°Р·Р°С‚РµР»Рё РЅР° СЂРµР±СЂР°, РѕР±С‰РёР№ РґР»СЏ РІСЃРµС… СѓР·Р»РѕРІ
 			m_EdgesPtrs = make_unique<GraphEdgeBase*[]>(m_Edges.size() * 2);
 			GraphEdgeBase **ppEdges = m_EdgesPtrs.get();
 			
 
 			for (auto&& node : m_Nodes)
 			{
-				// для каждого узла устанавливаем конечный указатель на ребра в векторе ребер
-				// с учетом количества ребер узла
+				// РґР»СЏ РєР°Р¶РґРѕРіРѕ СѓР·Р»Р° СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РєРѕРЅРµС‡РЅС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЂРµР±СЂР° РІ РІРµРєС‚РѕСЂРµ СЂРµР±РµСЂ
+				// СЃ СѓС‡РµС‚РѕРј РєРѕР»РёС‡РµСЃС‚РІР° СЂРµР±РµСЂ СѓР·Р»Р°
 				node->m_ppEdgesEnd = ppEdges + (node->m_ppEdgesEnd - node->m_ppEdgesBegin);
-				// начальный указатель устанавливаем на текущее начало вектора
+				// РЅР°С‡Р°Р»СЊРЅС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ СѓСЃС‚Р°РЅР°РІР»РёРІР°РµРј РЅР° С‚РµРєСѓС‰РµРµ РЅР°С‡Р°Р»Рѕ РІРµРєС‚РѕСЂР°
 				node->m_ppEdgesBegin = ppEdges;
-				// текущее начало вектора смещаем на конечный указатель на ребра
+				// С‚РµРєСѓС‰РµРµ РЅР°С‡Р°Р»Рѕ РІРµРєС‚РѕСЂР° СЃРјРµС‰Р°РµРј РЅР° РєРѕРЅРµС‡РЅС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЂРµР±СЂР°
 				ppEdges = node->m_ppEdgesEnd;
-				// конечный указатель приравниваем к начальному,
-				// мы сдвинем его добавляя указатели на ребра
+				// РєРѕРЅРµС‡РЅС‹Р№ СѓРєР°Р·Р°С‚РµР»СЊ РїСЂРёСЂР°РІРЅРёРІР°РµРј Рє РЅР°С‡Р°Р»СЊРЅРѕРјСѓ,
+				// РјС‹ СЃРґРІРёРЅРµРј РµРіРѕ РґРѕР±Р°РІР»СЏСЏ СѓРєР°Р·Р°С‚РµР»Рё РЅР° СЂРµР±СЂР°
 				node->m_ppEdgesEnd = node->m_ppEdgesBegin;
 			}
 
 			for (auto&& edge : m_Edges)
 			{
-				// добавляем указатель на ребро в конечные указатели узлы начала и конца
+				// РґРѕР±Р°РІР»СЏРµРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЂРµР±СЂРѕ РІ РєРѕРЅРµС‡РЅС‹Рµ СѓРєР°Р·Р°С‚РµР»Рё СѓР·Р»С‹ РЅР°С‡Р°Р»Р° Рё РєРѕРЅС†Р°
 				*edge->m_pBegin->m_ppEdgesEnd = edge;
 				*edge->m_pEnd->m_ppEdgesEnd = edge;
-				// сдвигаем конечный указатели
+				// СЃРґРІРёРіР°РµРј РєРѕРЅРµС‡РЅС‹Р№ СѓРєР°Р·Р°С‚РµР»Рё
 				edge->m_pBegin->m_ppEdgesEnd++;
 				edge->m_pEnd->m_ppEdgesEnd++;
 			}
@@ -122,58 +126,59 @@ namespace DFW2
 			m_Edges.push_back(pEdge);
 		}
 
-		// генерирует набор фундаментальных циклов графа
-		// в виде списков ребер с направлениями
-		void GenerateCycles()
+		// РіРµРЅРµСЂРёСЂСѓРµС‚ РЅР°Р±РѕСЂ С„СѓРЅРґР°РјРµРЅС‚Р°Р»СЊРЅС‹С… С†РёРєР»РѕРІ РіСЂР°С„Р°
+		// РІ РІРёРґРµ СЃРїРёСЃРєРѕРІ СЂРµР±РµСЂ СЃ РЅР°РїСЂР°РІР»РµРЅРёСЏРјРё
+		void GenerateCycles(CyclesType& Cycles)
 		{
 			BuildGraph();
+			Cycles.clear();
 			stack<GraphNodeBase*> stack;
 			stack.push(*m_Nodes.begin());
 			while (!stack.empty())
 			{
-				// обходим граф в режиме DFS
+				// РѕР±С…РѕРґРёРј РіСЂР°С„ РІ СЂРµР¶РёРјРµ DFS
 				GraphNodeBase *pCurrent = stack.top();
 				stack.pop();
-				// для текущего узла обходим ребра
+				// РґР»СЏ С‚РµРєСѓС‰РµРіРѕ СѓР·Р»Р° РѕР±С…РѕРґРёРј СЂРµР±СЂР°
 				for (GraphEdgeBase **ppEdge = pCurrent->m_ppEdgesBegin; ppEdge < pCurrent->m_ppEdgesEnd; ppEdge++)
 				{
 					GraphEdgeBase* pEdge = *ppEdge;
-					// если ребро уже прошли в любом направлении - ребро не учитываем
+					// РµСЃР»Рё СЂРµР±СЂРѕ СѓР¶Рµ РїСЂРѕС€Р»Рё РІ Р»СЋР±РѕРј РЅР°РїСЂР°РІР»РµРЅРёРё - СЂРµР±СЂРѕ РЅРµ СѓС‡РёС‚С‹РІР°РµРј
 					if (pEdge->bPassed)
 						continue;
-					// непройденное ребро помечаем как пройденное
+					// РЅРµРїСЂРѕР№РґРµРЅРЅРѕРµ СЂРµР±СЂРѕ РїРѕРјРµС‡Р°РµРј РєР°Рє РїСЂРѕР№РґРµРЅРЅРѕРµ
 					pEdge->bPassed = true;
-					// определяем узел на обратном конце ребра относительно текущего
+					// РѕРїСЂРµРґРµР»СЏРµРј СѓР·РµР» РЅР° РѕР±СЂР°С‚РЅРѕРј РєРѕРЅС†Рµ СЂРµР±СЂР° РѕС‚РЅРѕСЃРёС‚РµР»СЊРЅРѕ С‚РµРєСѓС‰РµРіРѕ
 					GraphNodeBase *pOppNode = (*ppEdge)->m_pBegin == pCurrent ? (*ppEdge)->m_pEnd : (*ppEdge)->m_pBegin;
-					// если у узла на обратном конце ребра нет указателя на родительский узел
-					// он пока не входит в дерево, если есть - этот узел входит в цикл
+					// РµСЃР»Рё Сѓ СѓР·Р»Р° РЅР° РѕР±СЂР°С‚РЅРѕРј РєРѕРЅС†Рµ СЂРµР±СЂР° РЅРµС‚ СѓРєР°Р·Р°С‚РµР»СЏ РЅР° СЂРѕРґРёС‚РµР»СЊСЃРєРёР№ СѓР·РµР»
+					// РѕРЅ РїРѕРєР° РЅРµ РІС…РѕРґРёС‚ РІ РґРµСЂРµРІРѕ, РµСЃР»Рё РµСЃС‚СЊ - СЌС‚РѕС‚ СѓР·РµР» РІС…РѕРґРёС‚ РІ С†РёРєР»
 					if (pOppNode->m_BackLinkNode)
 					{
-						list<GraphCycleEdge> Cycle{ GraphCycleEdge(pEdge, true) };
-						// отслеживаем узлы цикла путем добавления/поиска в сет
+						CycleType CurrentCycle{ GraphCycleEdge(pEdge, true) };
+						// РѕС‚СЃР»РµР¶РёРІР°РµРј СѓР·Р»С‹ С†РёРєР»Р° РїСѓС‚РµРј РґРѕР±Р°РІР»РµРЅРёСЏ/РїРѕРёСЃРєР° РІ СЃРµС‚
 						set<GraphNodeBase*> BackTrack;
-						// начинаем обходить цикл в обратном порядке от узлов
-						// начала и конца текущего ребра (оно образует цикл, все остальные ребра принадлежат дереву)
+						// РЅР°С‡РёРЅР°РµРј РѕР±С…РѕРґРёС‚СЊ С†РёРєР» РІ РѕР±СЂР°С‚РЅРѕРј РїРѕСЂСЏРґРєРµ РѕС‚ СѓР·Р»РѕРІ
+						// РЅР°С‡Р°Р»Р° Рё РєРѕРЅС†Р° С‚РµРєСѓС‰РµРіРѕ СЂРµР±СЂР° (РѕРЅРѕ РѕР±СЂР°Р·СѓРµС‚ С†РёРєР», РІСЃРµ РѕСЃС‚Р°Р»СЊРЅС‹Рµ СЂРµР±СЂР° РїСЂРёРЅР°РґР»РµР¶Р°С‚ РґРµСЂРµРІСѓ)
 						GraphNodeBase *pBackNodeBegin = pEdge->m_pBegin;
 						GraphNodeBase *pBackNodeEnd = pEdge->m_pEnd;
-						// для того, чтобы определить в каком узле начинается цикл
-						// используем поиск LCA - Lowest Common Ancestor
-						// ближайший общий предок двух узлов
+						// РґР»СЏ С‚РѕРіРѕ, С‡С‚РѕР±С‹ РѕРїСЂРµРґРµР»РёС‚СЊ РІ РєР°РєРѕРј СѓР·Р»Рµ РЅР°С‡РёРЅР°РµС‚СЃСЏ С†РёРєР»
+						// РёСЃРїРѕР»СЊР·СѓРµРј РїРѕРёСЃРє LCA - Lowest Common Ancestor
+						// Р±Р»РёР¶Р°Р№С€РёР№ РѕР±С‰РёР№ РїСЂРµРґРѕРє РґРІСѓС… СѓР·Р»РѕРІ
 						GraphNodeBase *pLCA = nullptr;
 
-						// идем по дереву обратно до тех пор, пока не придем к узлу
-						// начала или не найдем LCA. Идем с двух концов ребра цикла
+						// РёРґРµРј РїРѕ РґРµСЂРµРІСѓ РѕР±СЂР°С‚РЅРѕ РґРѕ С‚РµС… РїРѕСЂ, РїРѕРєР° РЅРµ РїСЂРёРґРµРј Рє СѓР·Р»Сѓ
+						// РЅР°С‡Р°Р»Р° РёР»Рё РЅРµ РЅР°Р№РґРµРј LCA. РРґРµРј СЃ РґРІСѓС… РєРѕРЅС†РѕРІ СЂРµР±СЂР° С†РёРєР»Р°
 
 						while (pBackNodeBegin || pBackNodeEnd)
 						{
 							if (pBackNodeBegin)
 							{
-								// если на пути из узла начала ребра цикла не дошли до начала дерева
-								// пробуем вставить в сет текущий узел
+								// РµСЃР»Рё РЅР° РїСѓС‚Рё РёР· СѓР·Р»Р° РЅР°С‡Р°Р»Р° СЂРµР±СЂР° С†РёРєР»Р° РЅРµ РґРѕС€Р»Рё РґРѕ РЅР°С‡Р°Р»Р° РґРµСЂРµРІР°
+								// РїСЂРѕР±СѓРµРј РІСЃС‚Р°РІРёС‚СЊ РІ СЃРµС‚ С‚РµРєСѓС‰РёР№ СѓР·РµР»
 								if (!BackTrack.insert(pBackNodeBegin).second)
 								{
-									// если этот узел уже в сете, значит мы прошли его с другой
-									// стороны ребра и он является LCA
+									// РµСЃР»Рё СЌС‚РѕС‚ СѓР·РµР» СѓР¶Рµ РІ СЃРµС‚Рµ, Р·РЅР°С‡РёС‚ РјС‹ РїСЂРѕС€Р»Рё РµРіРѕ СЃ РґСЂСѓРіРѕР№
+									// СЃС‚РѕСЂРѕРЅС‹ СЂРµР±СЂР° Рё РѕРЅ СЏРІР»СЏРµС‚СЃСЏ LCA
 									pLCA = pBackNodeBegin;
 									break;
 								}
@@ -181,7 +186,7 @@ namespace DFW2
 							}
 							if (pBackNodeEnd)
 							{
-								// такой же шаг делаем из узла конца ребра цикла
+								// С‚Р°РєРѕР№ Р¶Рµ С€Р°Рі РґРµР»Р°РµРј РёР· СѓР·Р»Р° РєРѕРЅС†Р° СЂРµР±СЂР° С†РёРєР»Р°
 								if (!BackTrack.insert(pBackNodeEnd).second)
 								{
 									pLCA = pBackNodeEnd;
@@ -191,47 +196,115 @@ namespace DFW2
 							}
 						}
 
-						// определяем ветки цикла от узлов начала и конца ребра цикла до LCA
+						// РѕРїСЂРµРґРµР»СЏРµРј РІРµС‚РєРё С†РёРєР»Р° РѕС‚ СѓР·Р»РѕРІ РЅР°С‡Р°Р»Р° Рё РєРѕРЅС†Р° СЂРµР±СЂР° С†РёРєР»Р° РґРѕ LCA
 						pBackNodeBegin = pEdge->m_pBegin;
 						while (pBackNodeBegin != pLCA)
 						{
-							// идем либо до начала дерева (если LCA не найден это и есть LCA), 
-							// либо до LCA
-							// при возврате к LCA от узла начала ребра цикла
-							// направление ребер считаем положительным, если их узел конца совпадает с текущим
+							// РёРґРµРј Р»РёР±Рѕ РґРѕ РЅР°С‡Р°Р»Р° РґРµСЂРµРІР° (РµСЃР»Рё LCA РЅРµ РЅР°Р№РґРµРЅ СЌС‚Рѕ Рё РµСЃС‚СЊ LCA), 
+							// Р»РёР±Рѕ РґРѕ LCA
+							// РїСЂРё РІРѕР·РІСЂР°С‚Рµ Рє LCA РѕС‚ СѓР·Р»Р° РЅР°С‡Р°Р»Р° СЂРµР±СЂР° С†РёРєР»Р°
+							// РЅР°РїСЂР°РІР»РµРЅРёРµ СЂРµР±РµСЂ СЃС‡РёС‚Р°РµРј РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј, РµСЃР»Рё РёС… СѓР·РµР» РєРѕРЅС†Р° СЃРѕРІРїР°РґР°РµС‚ СЃ С‚РµРєСѓС‰РёРј
 							bool bDirection = pBackNodeBegin == pBackNodeBegin->m_BackLinkEdge->m_pEnd;
-							Cycle.push_back(GraphCycleEdge(pBackNodeBegin->m_BackLinkEdge, bDirection));
+							CurrentCycle.push_back(GraphCycleEdge(pBackNodeBegin->m_BackLinkEdge, bDirection));
 							pBackNodeBegin = pBackNodeBegin->m_BackLinkNode;
 						}
 
 						pBackNodeBegin = pEdge->m_pEnd;
 						while (pBackNodeBegin != pLCA)
 						{
-							// при возврате к LCA от узла конца ребра цикла
-							// направление ребер считаем положительным если узел их узел начала совпадает с текущим
+							// РїСЂРё РІРѕР·РІСЂР°С‚Рµ Рє LCA РѕС‚ СѓР·Р»Р° РєРѕРЅС†Р° СЂРµР±СЂР° С†РёРєР»Р°
+							// РЅР°РїСЂР°РІР»РµРЅРёРµ СЂРµР±РµСЂ СЃС‡РёС‚Р°РµРј РїРѕР»РѕР¶РёС‚РµР»СЊРЅС‹Рј РµСЃР»Рё СѓР·РµР» РёС… СѓР·РµР» РЅР°С‡Р°Р»Р° СЃРѕРІРїР°РґР°РµС‚ СЃ С‚РµРєСѓС‰РёРј
 							bool bDirection = pBackNodeBegin == pBackNodeBegin->m_BackLinkEdge->m_pBegin;
-							Cycle.push_back(GraphCycleEdge(pBackNodeBegin->m_BackLinkEdge, bDirection));
+							CurrentCycle.push_back(GraphCycleEdge(pBackNodeBegin->m_BackLinkEdge, bDirection));
 							pBackNodeBegin = pBackNodeBegin->m_BackLinkNode;
 						}
 
+						Cycles.push_back(CurrentCycle);
+						/*
 						_tcprintf(_T("\nCycle"));
 						for (auto&& it : Cycle)
 						{
 							_tcprintf(_T("\n%s %d-%d"), it.m_bDirect ? _T("+") : _T("-"), it.m_pEdge->m_IdBegin, it.m_pEdge->m_IdEnd);
 						}
-						
+						*/
 					}
 					else
 					{
-						// узел на обратном конце связи пока не входит в дерево
-						// добавляем его в дерево путем указания родительского узла (текущего)
-						// и добавляем указатель на ребро, по которому дошли до этого узла
+						// СѓР·РµР» РЅР° РѕР±СЂР°С‚РЅРѕРј РєРѕРЅС†Рµ СЃРІСЏР·Рё РїРѕРєР° РЅРµ РІС…РѕРґРёС‚ РІ РґРµСЂРµРІРѕ
+						// РґРѕР±Р°РІР»СЏРµРј РµРіРѕ РІ РґРµСЂРµРІРѕ РїСѓС‚РµРј СѓРєР°Р·Р°РЅРёСЏ СЂРѕРґРёС‚РµР»СЊСЃРєРѕРіРѕ СѓР·Р»Р° (С‚РµРєСѓС‰РµРіРѕ)
+						// Рё РґРѕР±Р°РІР»СЏРµРј СѓРєР°Р·Р°С‚РµР»СЊ РЅР° СЂРµР±СЂРѕ, РїРѕ РєРѕС‚РѕСЂРѕРјСѓ РґРѕС€Р»Рё РґРѕ СЌС‚РѕРіРѕ СѓР·Р»Р°
 						pOppNode->m_BackLinkNode = pCurrent;
 						pOppNode->m_BackLinkEdge = pEdge;
 						stack.push(pOppNode);
 					}
 				}
 			}
+
+			if (m_Nodes.size() - m_Edges.size() + Cycles.size() != 1)
+				throw dfw2error(_T("GraphCycle::GenerateCycles - Cycles count mismatch"));
+
+		}
+
+
+		void Test()
+		{
+			using GraphType = GraphCycle<int, int>;
+			using NodeType = GraphType::GraphNodeBase;
+			using EdgeType = GraphType::GraphEdgeBase;
+
+			int nodes[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13 };
+			int edges[] = { 1, 2,
+						   2, 3,
+						   3, 4,
+						   3, 5,
+						   4, 6,
+						   5, 6,
+						   6, 7,
+						   7, 8,
+						   8, 9,
+						   8, 10,
+						   9, 11,
+						   10, 11,
+						   11, 12,
+						   12, 13,
+						   1, 13
+			};
+
+			/*
+			int nodes[] = { 1, 2, 3, 4};
+			int edges[] = { 1, 2,
+							2, 3,
+							3, 4,
+							1, 4,
+							1, 3,
+							2, 4
+			};
+			*/
+
+			/*
+			int nodes[] = { 1, 2, 3, 4, 5, 6 };
+			int edges[] = { 2, 1,
+							2, 3,
+							4, 3,
+							4, 5,
+							6, 5,
+							6, 1};
+							*/
+			unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(_countof(nodes));
+			unique_ptr<EdgeType[]> pGraphEdges = make_unique<EdgeType[]>(_countof(edges) / 2);
+			NodeType *pNode = pGraphNodes.get();
+			GraphType gc;
+
+			for (int *p = nodes; p < _countof(nodes) + nodes; p++, pNode++)
+				gc.AddNode(pNode->SetId(*p));
+
+			EdgeType *pEdge = pGraphEdges.get();
+			for (int *p = edges; p < _countof(edges) + edges; p += 2, pEdge++)
+				gc.AddEdge(pEdge->SetIds(*p, *(p + 1), p - edges));
+
+			CyclesType Cycles;
+
+			gc.GenerateCycles(Cycles);
 		}
 	};
 }

@@ -1150,6 +1150,9 @@ void CDynaNodeBase::ProcessTopologyRequest()
 // добавляет ветвь в список ветвей с нулевым сопротивлением суперузла
 VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 {
+
+	// тут возможно придется добавлять ветвь с сопротивлением больше минимального,
+	// если она параллельна нулевой ветви 
 	if (pBranch->IsZeroImpedance())
 	{
 		if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(m_pContainer)->GetZeroBranchesEnd())
@@ -1221,11 +1224,10 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		return; // это не суперузел
 
 
-	/*
 	CLinkPtrCount *pSuperNodeLink = GetSuperLink(0);
 	if (pSuperNodeLink->m_nCount)
 	{
-		using GraphType = GraphCycle<CDynaNodeBase*>;
+		using GraphType = GraphCycle<CDynaNodeBase*, VirtualZeroBranch*>;
 		using NodeType = GraphType::GraphNodeBase;
 		using EdgeType = GraphType::GraphEdgeBase;
 		unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
@@ -1240,26 +1242,31 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 
 		EdgeType *pEdge = pGraphEdges.get();
 		for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
-			gc.AddEdge(pEdge->SetIds(pZb->pBranch->m_pNodeIp, pZb->pBranch->m_pNodeIq));
+			gc.AddEdge(pEdge->SetIds(pZb->pBranch->m_pNodeIp, pZb->pBranch->m_pNodeIq, pZb));
 
-		gc.GenerateCycles();
+		GraphType::CyclesType Cycles;
+		gc.GenerateCycles(Cycles);
+		if (!Cycles.empty())
+		{
+			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Cycles"));
+			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s"), GetVerbalName()));
+			for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
+				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s"), (*ppDev)->GetVerbalName()));
+
+			for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
+				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s"), pZb->pBranch->GetVerbalName()));
+
+			for (auto&& cycle : Cycles)
+			{
+				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Cycle"));
+				for (auto&& vb : cycle)
+				{
+					pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s %s"), vb.m_bDirect ? _T("+") : _T("-"), vb.m_pEdge->m_IdBranch->pBranch->GetVerbalName()));
+				}
+			}
+		}
 	}
-	*/
 
-
-	/*
-	procedure DFS-iterative(G,v):
-2      let S be a stack
-3      S.push(v)
-4      while S is not empty
-5          v = S.pop()
-6          if v is not labeled as discovered:
-7              label v as discovered
-8              for all edges from v to w in G.adjacentEdges(v) do
-9                  S.push(w)
-	*/
-
-		
 
 	bool bLRCShunt = (pDynaModel->GetLRCToShuntVmin() - dLRCVicinity) > V / Unom;
 	CLinkPtrCount *pSlaveNodesLink = GetSuperLink(0);

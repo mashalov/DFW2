@@ -660,6 +660,11 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		_ASSERTE(pNode->m_VirtualBranchBegin < pNode->m_VirtualBranchEnd || !pNode->IsStateOn() || pNode->m_pSuperNodeParent);
 	}
 
+
+	// Создаем список ветвей с нулевым сопротивлением внутри суперузла
+	// Ветви с нулевым сопротивлением хранятся в общем векторе контейнера
+	// узлы имеют три указателя на этот вектор - начало и конец для всех ветвей
+	// и указатель на список параллельных ветвей (см. TidyZeroBranches)
 	m_pZeroBranches = make_unique<VirtualZeroBranch[]>(nZeroBranchCount);
 	m_pZeroBranchesEnd = m_pZeroBranches.get() + nZeroBranchCount;
 
@@ -670,13 +675,17 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		// формируем диапазоны ветвей с нулевым сопротивлением для узлов (просто инициализация)
 		pNode->m_VirtualZeroBranchBegin = pNode->m_VirtualZeroBranchEnd = pCurrentZeroBranch;
 		// если у нас есть ветви с нулевым сопротивлением строим их списки
-		// если узел входит в суперузел - его нулевые ветви нам не нужны
+		// если узел входит в суперузел - его нулевые ветви нам не нужны, 
+		// они будут учтены с узла представителя суперузла
+		// если ветвей с нулевым сопротивлением нет вообще - пропускаем обработку
+		// (цикл не обходим чтобы инициализировать m_VirtualZeroBranchBegin = m_VirtualZeroBranchEnd
 		if (!nZeroBranchCount || pNode->m_pSuperNodeParent)
 			continue;
 
 		CDynaNodeBase *pSlaveNode = pNode;
 		CLinkPtrCount *pSlaveNodeLink = pNode->GetSuperLink(0);
 		CDevice **ppSlaveNode(nullptr);
+
 		// сначала обрабатываем узел-представитель суперузла
 		// затем выбираем входящие в суперузел узлы
 		while (pSlaveNode)
@@ -691,6 +700,8 @@ bool CDynaNodeContainer::CreateSuperNodes()
 			// достаем из суперссылки на узлы следующий узел суперузла
 			pSlaveNode = pSlaveNodeLink->In(ppSlaveNode) ? static_cast<CDynaNodeBase*>(*ppSlaveNode) : nullptr;
 		}
+
+		// приводим ссылки на нулевые ветви к нужному формату для последующей обработки в циклах
 		pNode->TidyZeroBranches();
 	}
 
