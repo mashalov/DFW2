@@ -30,8 +30,8 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 
 #ifdef _DEBUG
 	bool bZ1 = m_pNodeSuperIp == m_pNodeSuperIq;
-	bool bZ2 = IsZeroImpedance
-	_ASSERTE(bZ1 == bZ2)
+	bool bZ2 = IsZeroImpedance();
+	_ASSERTE(bZ1 == bZ2);
 	if(bZ2)
 		return cplx(0.0);
 #else

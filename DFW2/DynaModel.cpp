@@ -79,7 +79,7 @@ bool CDynaModel::Run()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = -0.1;
+		m_Parameters.m_dZeroBranchImpedance = 200.1;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 		m_Parameters.eFreqDampingType = APDT_NODE;
@@ -873,7 +873,7 @@ bool CDynaModel::Step()
 					{
 						// шаг нужно уменьшить
 						// отбрасываем шаг
-						bRes = BadStep() && bRes;
+						BadStep();
 					}
 				}
 				else
@@ -892,7 +892,7 @@ bool CDynaModel::Step()
 			{
 				// Ньютон не сошелся
 				// отбрасываем шаг
-				bRes = NewtonFailed() && bRes;
+				NewtonFailed();
 			}
 		}
 		sc.nStepsCount++;
@@ -1293,10 +1293,8 @@ void CDynaModel::GoodStep(double rSame)
 }
 
 // обработка шага с недопустимой погрешностью
-bool CDynaModel::BadStep()
+void CDynaModel::BadStep()
 {
-	bool bRes(true);
-
 	SetH(sc.m_dCurrentH * 0.5);		// делим шаг пополам
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
@@ -1317,10 +1315,8 @@ bool CDynaModel::BadStep()
 	if (sc.m_dCurrentH < sc.Hmin)
 	{
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-		{
-			Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
-			bRes = false;
-		}
+			throw dfw2error(Cex(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+
 		ChangeOrder(1);				// шаг не изменяем
 		SetH(sc.Hmin);
 
@@ -1339,6 +1335,7 @@ bool CDynaModel::BadStep()
 
 		// шагаем на следующее время без возможности возврата, так как шаг уже не снизить
 		sc.Advance_t0();
+		sc.Assign_t0();
 	}
 	else
 	{
@@ -1348,17 +1345,12 @@ bool CDynaModel::BadStep()
 		RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);		// масштабируем Nordsieck на новый (половинный см. выше) шаг
 		sc.CheckAdvance_t0();
 	}
-
-	return bRes;
 }
 
-bool CDynaModel::NewtonFailed()
+void CDynaModel::NewtonFailed()
 {
-	bool bRes(true);
-
 	if (GetIntegrationStepNumber() == 2052)
 		DumpStateVector();
-
 
 	if (!sc.m_bDiscontinuityMode)
 	{
@@ -1401,28 +1393,23 @@ bool CDynaModel::NewtonFailed()
 	{
 		SetH(sc.Hmin);
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-		{
-			Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
-			bRes = false;
-		}
+			throw dfw2error(Cex(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+		sc.Advance_t0();
+		sc.Assign_t0();
 	}
 	else
-		sc.nMinimumStepFailures = 0;
-
-	if (bRes)
 	{
+		sc.nMinimumStepFailures = 0;
 		sc.CheckAdvance_t0();
-
-		if (sc.Hmin / sc.m_dCurrentH > 0.99)
-			ResetNordsiek();
-		else
-			ReInitializeNordsiek();
-
-		sc.RefactorMatrix();
-		Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 	}
 
-	return bRes;
+	if (sc.Hmin / sc.m_dCurrentH > 0.99)
+		ResetNordsiek();
+	else
+		ReInitializeNordsiek();
+	
+	sc.RefactorMatrix();
+	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 }
 
 // функция подготовки к повтору шага

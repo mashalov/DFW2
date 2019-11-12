@@ -455,8 +455,8 @@ namespace DFW2
 		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
 		void EnableAdamsCoefficientDamping(bool bEnable);
 		void GoodStep(double rSame);
-		bool BadStep();
-		bool NewtonFailed();
+		void BadStep();
+		void NewtonFailed();
 		void RepeatZeroCrossing();
 		void UnprocessDiscontinuity();
 
