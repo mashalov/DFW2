@@ -1233,7 +1233,8 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		gc.GenerateCycles(Cycles);
 		if (!Cycles.empty())
 		{
-			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Cycles"));
+			
+			/*pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Cycles"));
 			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s"), GetVerbalName()));
 			for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
 				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s"), (*ppDev)->GetVerbalName()));
@@ -1249,10 +1250,12 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 					pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s %s"), vb.m_bDirect ? _T("+") : _T("-"), vb.m_pEdge->m_IdBranch->pBranch->GetVerbalName()));
 				}
 			}
+			*/
 		}
 	}
 
 
+	/*
 	bool bLRCShunt = (pDynaModel->GetLRCToShuntVmin() - dLRCVicinity) > V / Unom;
 	CLinkPtrCount *pSlaveNodesLink = GetSuperLink(0);
 	CDevice **ppSlave(nullptr);
@@ -1290,6 +1293,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 			Iim += (Pk * Vim - Qk * Vre) / V2;
 		}
 	}
+	*/
 }
 
 const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()

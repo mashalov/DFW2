@@ -233,6 +233,25 @@ namespace DFW2
 		ptrdiff_t m_nPVSwitchCount = 0;											// счетчик переключений PV-PQ
 		double m_dImbP, m_dImbQ;												// небалансы по P и Q
 		bool bVisited = false;													// признак просмотра для графовых алгоритмов
+		double LFQmin;															// исходные ограничения реактивной мощности до ввода в суперузел
+		double LFQmax;
+		CDynaNodeBase::eLFNodeType LFNodeType;									// исходный тип узла до ввода в суперузел
+		double UncontrolledP = 0.0;
+		double UncontrolledQ = 0.0;												// постоянные значения активной и реактивной генерации в суперузле
+
+		void Store(CDynaNodeBase *pStoreNode)
+		{
+			pNode = pStoreNode;
+			LFQmin = pNode->LFQmin;
+			LFQmax = pNode->LFQmax;
+			LFNodeType = pNode->m_eLFNodeType;
+		}
+		void Restore()
+		{
+			pNode->LFQmin = LFQmin;
+			pNode->LFQmax = LFQmax;
+			pNode->m_eLFNodeType = LFNodeType;
+		}
 	};
 
 	typedef vector<_MatrixInfo*> MATRIXINFO;

@@ -320,13 +320,29 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 	Islands.clear();	// очищаем результат
 	stack<CDynaNodeBase*> Stack;
 
+	auto FindSlack = [](const auto& itr)->bool {return itr.first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE; };
+
+	set<CDynaNodeBase*> Slacks;
+	for (auto&& it : JoinableNodes)
+	{
+		if(FindSlack(it))
+			Slacks.insert(it.first);
+	}
 	// вырабатываем сет заданных узлов
 	while (!JoinableNodes.empty())
 	{
-		// берем первый узел из сета и готовим к DFS
-		Stack.push(JoinableNodes.begin()->first);
+		// ищем первый узел, предопочитаем базисный
+		auto Slack = JoinableNodes.begin();
+		if (!Slacks.empty())
+		{
+			Slack = JoinableNodes.find(*Slacks.begin());
+			Slacks.erase(Slack->first);
+		}
+
 		// вставляем первый узел как основу для острова
-		auto& CurrentSuperNode = Islands.insert(make_pair(JoinableNodes.begin()->first, set<CDynaNodeBase*>{}));
+		auto& CurrentSuperNode = Islands.insert(make_pair(Slack->first, set<CDynaNodeBase*>{}));
+		// берем первый узел из сета и готовим к DFS
+		Stack.push(Slack->first);
 
 		// делаем стандартный DFS
 		while (!Stack.empty())

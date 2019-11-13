@@ -8,18 +8,6 @@ namespace DFW2
 	class CLoadFlow
 	{
 	public:
-		struct StoreParameters
-		{
-			CDynaNodeBase *m_pNode;
-			double LFQmin;
-			double LFQmax;
-			CDynaNodeBase::eLFNodeType LFNodeType;
-			StoreParameters(CDynaNodeBase *pNode);
-			void Restore();
-		};
-
-		using SUPERNODEPARAMETERSLIST = list<StoreParameters>;
-
 		struct Parameters
 		{
 			double m_Imb = 1E-4;						// допустимый небаланс мощности
@@ -35,9 +23,9 @@ namespace DFW2
 		bool Run();
 	protected:
 
-		SUPERNODEPARAMETERSLIST m_SuperNodeParameters;
 		void GetPnrQnr(CDynaNodeBase *pNode);
 		void GetPnrQnrSuper(CDynaNodeBase *pNode);
+		void AllocateSupernodes();
 		void Estimate();
 		void Seidell();
 		void SeidellTanh();

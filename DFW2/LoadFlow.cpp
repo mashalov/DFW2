@@ -18,7 +18,7 @@ bool CDynaModel::LoadFlow()
 	return LoadFlow.Run();
 }
 
-void CLoadFlow::Estimate()
+void CLoadFlow::AllocateSupernodes()
 {
 	ptrdiff_t nMatrixSize(0), nNonZeroCount(0);
 	// создаем привязку узлов к информации по строкам матрицы
@@ -53,7 +53,7 @@ void CLoadFlow::Estimate()
 
 			// для узлов, которые попадают в матрицу нумеруем включенные узлы строками матрицы
 			pNode->SetMatrixRow(nMatrixSize);
-			pMatrixInfo->pNode = pNode;
+			pMatrixInfo->Store(pNode);
 			nMatrixSize += 2;				// на узел 2 уравнения в матрице
 			pMatrixInfo->nRowCount += 2;	// считаем диагональный элемент
 			nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
@@ -61,16 +61,32 @@ void CLoadFlow::Estimate()
 		}
 	}
 
-	m_pMatrixInfoEnd = pMatrixInfo;								// конец инфо по матрице для узлов, которые в матрице
 	if (!nMatrixSize)
 		throw dfw2error(CDFW2Messages::m_cszNoNodesForLF);
-	klu.SetSize(nMatrixSize, nNonZeroCount);
 
+	m_pMatrixInfoEnd = pMatrixInfo;								// конец инфо по матрице для узлов, которые в матрице
+	klu.SetSize(nMatrixSize, nNonZeroCount);
+	// базисные узлы добавляем "под" - матрицу. Они в нее не входят
+	// но должны быть под рукой в общем векторе узлов в расчете
+	for (auto&& sit : SlackBuses)
+	{
+		CDynaNodeBase *pNode = sit;
+		pMatrixInfo->Store(pNode);
+		pMatrixInfo++;
+	}
+
+	m_pMatrixInfoSlackEnd = pMatrixInfo;
+	m_Rh = make_unique<double[]>(klu.MatrixSize());		// невязки до итерации
+}
+
+void CLoadFlow::Estimate()
+{
 	ptrdiff_t *pAi = klu.Ai();
 	ptrdiff_t *pAp = klu.Ap();
 	ptrdiff_t nRowPtr = 0;
 
-	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
+	for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		// формируем указатели строк матрицы по две на узел
@@ -104,16 +120,7 @@ void CLoadFlow::Estimate()
 		pAp += pMatrixInfo->nRowCount;
 	}
 
-	for (auto&& sit : SlackBuses)
-	{
-		CDynaNodeBase *pNode = sit;
-		pMatrixInfo->pNode = pNode;
-		pMatrixInfo++;
-	}
-
-	m_pMatrixInfoSlackEnd = pMatrixInfo;
-	*pAi = nNonZeroCount;
-	m_Rh = make_unique<double[]>(klu.MatrixSize());		// невязки до итерации
+	*pAi = klu.NonZeroCount();
 }
 
 void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
@@ -190,12 +197,14 @@ void CLoadFlow::Start()
 	if (!pNodes)
 		throw dfw2error(_T("CLoadFlow::Start - node container unavailable"));
 
+	// отключаем висячие ветви и узлы, проверяем острова на наличие базисных узлов
 	pNodes->PrepareLFTopology();
+	// создаем суперузлы. Важно - базисные суперузлы имеют узлом представителем один из базисных узлов
 	pNodes->CreateSuperNodes();
-
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
 	UpdatePQFromGenerators();
 
+	// инициализируем все узлы, чтобы корректно определить из тип
 	for (auto&& it : *pNodes)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
@@ -203,58 +212,79 @@ void CLoadFlow::Start()
 #ifdef _DEBUG
 		pNode->GrabRastrResult();
 #endif
-		pNode->Pgr = pNode->Pg;	
+		pNode->Pgr = pNode->Pg;
 		pNode->Qgr = pNode->Qg;
 		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
 	}
 
-	for (auto&& it : *pNodes)
+	// выбираем узлы, которые войдут в матрицу (все суперузлы), а так же базисные суперузлы.
+	AllocateSupernodes();
+
+	for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get() ; pMatrixInfo < m_pMatrixInfoSlackEnd ; pMatrixInfo++)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-		if (!pNode->IsStateOn() || pNode->m_pSuperNodeParent)
-			continue;
+		CDynaNodeBase*& pNode = pMatrixInfo->pNode;
 		CLinkPtrCount *pNodeLink = pNode->GetSuperLink(0);
 		CDevice **ppDevice(nullptr);
 		double QrangeMax = -1.0;
-		// если в узел входят другие узлы, сохраняем исходные параметры 
-		// суперузла
-		if (pNodeLink->m_nCount)
-			m_SuperNodeParameters.push_back(StoreParameters(pNode));
-
 		while (pNodeLink->In(ppDevice))
 		{
 			CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
 			// в суперузел суммируем все мощности входящих узлов
 			pNode->Pgr += pSlaveNode->Pgr;
 			pNode->Qgr += pSlaveNode->Qgr;
-			// здесь вопрос: если входящий в суперузел имеет диапазон регулирования, но не имеет уставки,
-			// этот диапазон суммируется в суперузел или нет ? Сделан вариант суммирования
-			// только полноценных PV узлов
-			if (pSlaveNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+
+			switch (pSlaveNode->m_eLFNodeType)
 			{
-				// если в суперузел входит базисный узел, весь суперузел становится базисным
-				// можно попроверять соответствие напряжений нескольких базисных узлов
-				pNode->m_eLFNodeType = pSlaveNode->m_eLFNodeType;
-				pNode->V = pSlaveNode->V;
-				pNode->Delta = pSlaveNode->Delta;
-			}
-			else if (!pSlaveNode->IsLFTypePQ())
-			{
-				// если в суперузел входит узел с заданной генерацией
+			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
+				// если в суперузле базисный узел - узел представитель тоже должен быть
+				// базисным, потому что так должны строиться суперузлы в CreateSuperNodes
+				_ASSERTE(pNode->m_eLFNodeType == pSlaveNode->m_eLFNodeType);
+				break;
+			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
+				// если в суперузел входит нагрузочный - учитываем его генерацию как неуправляемую
+				pMatrixInfo->UncontrolledP += pSlaveNode->Pgr;
+				pMatrixInfo->UncontrolledQ += pSlaveNode->Qgr;
+				break;
+			default:
+				// если в суперузел входит генераторный - учитываем его активную генерацию как неуправляемую
+				pMatrixInfo->UncontrolledP += pSlaveNode->Pgr;
+				// считаем диапазон реактивной мощности суперзула
 				pNode->LFQmin += pSlaveNode->LFQmin;
 				pNode->LFQmax += pSlaveNode->LFQmax;
-				double Qrange = pSlaveNode->LFQmax - pSlaveNode->LFQmin;
-				// выбираем заданное напряжение по узлу с максимальным диапазоном Qmin/Qmax
-				if (QrangeMax < 0 || QrangeMax < Qrange)
+				if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 				{
-					pNode->LFVref = pSlaveNode->LFVref;
-					QrangeMax = Qrange;
+					// если генераторный узел входит в базисный суперузел
+					// уставка по напряжению равна напряжению базисного узла
+					pSlaveNode->LFVref = pNode->LFVref;
+				}
+				else
+				{
+					double Qrange = pSlaveNode->LFQmax - pSlaveNode->LFQmin;
+					// выбираем заданное напряжение по узлу с максимальным диапазоном Qmin/Qmax
+					if (QrangeMax < 0 || QrangeMax < Qrange)
+					{
+						pNode->LFVref = pSlaveNode->LFVref;
+						QrangeMax = Qrange;
+					}
 				}
 			}
-			else
-				QrangeMax = QrangeMax;
 		}
+		// инициализируем суперузел
 		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
+		// корректируем неуправляемую генерацию
+		switch (pNode->m_eLFNodeType)
+		{
+			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
+				// в базисном учитываем и активную и реактивную
+				break;
+			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
+				// в нагрузочном узле нет неуправляемой генераици
+				pMatrixInfo->UncontrolledP = pMatrixInfo->UncontrolledQ = 0.0;
+				break;
+			default:
+				// в PV, PQmin, PQmax узлах учитываем реактивную неуправляемую генерацию
+				pMatrixInfo->UncontrolledP = 0.0;
+		}
 	}
 }
 
@@ -568,7 +598,9 @@ void CLoadFlow::BuildMatrix()
 		// здесь считаем, что нагрузка СХН в Node::pnr/Node::qnr уже в расчете и анализе небалансов
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		GetPnrQnrSuper(pNode);
-		double Pe = pNode->GetSelfImbP(), Qe(0.0);
+		// учитываем неуправляемую генерацию в суперузле - UncontrolledP и
+		// далее UncontrolledQ
+		double Pe = pNode->GetSelfImbP() - pMatrixInfo->UncontrolledP, Qe(0.0);
 		double dPdDelta(0.0), dQdDelta(0.0);
 		double dPdV = pNode->GetSelfdPdV(), dQdV(1.0);
 		double *pAxSelf = pAx;
@@ -577,7 +609,7 @@ void CLoadFlow::BuildMatrix()
 		if (pNode->IsLFTypePQ())
 		{
 			// для PQ-узлов формируем оба уравнения
-			Qe = pNode->GetSelfImbQ();
+			Qe = pNode->GetSelfImbQ() - pMatrixInfo->UncontrolledQ;
 			dQdV = pNode->GetSelfdQdV();
 			for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 			{
@@ -652,8 +684,9 @@ void CLoadFlow::GetNodeImb(_MatrixInfo *pMatrixInfo)
 	CDynaNodeBase *pNode = pMatrixInfo->pNode;
 	// нагрузка по СХН
 	GetPnrQnrSuper(pNode);
-	pMatrixInfo->m_dImbP = pNode->GetSelfImbP();
-	pMatrixInfo->m_dImbQ = pNode->GetSelfImbQ();
+	//  в небалансе учитываем неконтролируемую генерацию в суперузлах
+	pMatrixInfo->m_dImbP = pNode->GetSelfImbP() - pMatrixInfo->UncontrolledP;
+	pMatrixInfo->m_dImbQ = pNode->GetSelfImbQ() - pMatrixInfo->UncontrolledQ;
 	cplx Unode(pNode->Vre, pNode->Vim);
 	for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 	{
@@ -804,11 +837,21 @@ void CLoadFlow::UpdateQToGenerators()
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 
-
-		pNode->SuperNodeLoadFlow(m_pDynaModel);
-
 		if (!pNode->IsStateOn())
 			continue;
+
+#ifdef _DEBUG
+		if (!pNode->m_pSuperNodeParent)
+		{
+			pNode->GetPnrQnrSuper();
+			_MatrixInfo mx;
+			mx.pNode = pNode;
+			GetNodeImb(&mx);
+			mx.pNode = pNode;
+			_ASSERTE(fabs(mx.m_dImbP) < m_Parameters.m_Imb && fabs(mx.m_dImbQ) < m_Parameters.m_Imb);
+			pNode->GetPnrQnr();
+		}
+#endif
 
 		CLinkPtrCount *pGenLink = pNode->GetLink(1);
 		CDevice **ppGen(nullptr);
@@ -948,22 +991,6 @@ void CLoadFlow::DumpNodes()
 		fclose(fdump);
 	}
 }
-
-
-CLoadFlow::StoreParameters::StoreParameters(CDynaNodeBase *pNode)
-{
-	m_pNode = pNode;
-	LFQmin = pNode->LFQmin;
-	LFQmax = pNode->LFQmax;
-	LFNodeType = pNode->m_eLFNodeType;
-}
-
-void CLoadFlow::StoreParameters::Restore()
-{
-	m_pNode->LFQmin = LFQmin;
-	m_pNode->LFQmax = LFQmax;
-	m_pNode->m_eLFNodeType = LFNodeType;
-};
 
 double CLoadFlow::ImbNorm(double x, double y)
 {
@@ -1160,34 +1187,83 @@ void CLoadFlow::UpdateSupernodesPQ()
 {
 	bool bAllOk(true);
 
-	for (auto && supernode : m_SuperNodeParameters)
+	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get() ; pMatrixInfo < m_pMatrixInfoSlackEnd ; pMatrixInfo++)
 	{
-		CDynaNodeBase *pNode = supernode.m_pNode;
+		CDynaNodeBase*& pNode = pMatrixInfo->pNode;
+		double Qrange = pNode->LFQmax - pNode->LFQmin;
+		double Qspread(0.0), PgSource(pNode->Pgr), QgSource(pNode->Qgr), DropToSlack(0.0);
+		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
+		CDevice **ppDevice(nullptr);
+		list<CDynaNodeBase*> SlackBuses;
 
-		// если суперузел нагрузочный, параметры
-		// входящих в него узлов не могут изменяться
-		if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
+		if (!pNode->m_pSuperNodeParent)
 		{
-			double Qrange = pNode->LFQmax - pNode->LFQmin;
-			double Qspread(0.0), QgSource(pNode->Qgr);
-			Qrange = (Qrange > 0.0) ? (pNode->Qgr - pNode->LFQmin) / Qrange : 0.0;
-			CLinkPtrCount *pLink = pNode->GetSuperLink(0);
-			CDevice **ppDevice(nullptr);
-			while (pLink->In(ppDevice))
-			{
-				CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
-				pSlaveNode->Qg = 0.0;
-				if (pSlaveNode->IsStateOn())
-					Qspread += pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
-			}
-			Qspread += pNode->Qgr = supernode.LFQmin + (supernode.LFQmax - supernode.LFQmin) * Qrange;
-			if (fabs(Qspread - QgSource) > m_Parameters.m_Imb)
-			{
-				bAllOk = false;
-				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForSuperNode, pNode->GetVerbalName(), QgSource, pNode->LFQmin, pNode->LFQmax));
-			}
+			GetNodeImb(pMatrixInfo);
+			_ASSERTE(fabs(pMatrixInfo->m_dImbP) < m_Parameters.m_Imb && fabs(pMatrixInfo->m_dImbQ) < m_Parameters.m_Imb);
 		}
-		supernode.Restore();
+
+		switch (pNode->m_eLFNodeType)
+		{
+			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
+				// если узел нагрузочный в нем ничего не может измениться
+				break;
+			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
+				SlackBuses.push_back(pNode);
+				while (pLink->In(ppDevice))
+				{
+					CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+					if (pSlaveNode->IsStateOn())
+						if (pSlaveNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+							SlackBuses.push_back(pSlaveNode);
+				}
+				// включенные базисные узлы нашли, теперь в них нужно распределить "излишки" реактивной мощности от генераторов
+				// и активную мощность
+				DropToSlack = pNode->Qgr - pNode->LFQmax;
+				if (DropToSlack < 0)
+				{
+					// если генерация супер-БУ вне диапазона узла, то мощность, вне диапазона сбрасываем
+					// в БУ внутри суперузла
+					DropToSlack = pNode->Qgr - pNode->LFQmin;
+					if (DropToSlack > 0)
+						DropToSlack = 0.0;
+				}
+
+				// все что сбросили в БУ изымаем из  общей генерации узла
+				QgSource -= DropToSlack;
+
+				for (auto&& sb : SlackBuses)
+				{
+					sb->Pgr = sb->Pg = PgSource / SlackBuses.size();
+					sb->Qgr = sb->Qg = DropToSlack / SlackBuses.size();
+				}
+
+			default:
+				// все остальные узлы - PV, PVQmin, PVQmax обрабатываем по общим правилам
+				Qrange = (Qrange > 0.0) ? (QgSource - pNode->LFQmin) / Qrange : 0.0;
+				ppDevice = nullptr;
+				while (pLink->In(ppDevice))
+				{
+					CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+					// распределяем реактивную мощность по ненагрузочным узлам
+					if (pSlaveNode->IsStateOn())
+					{
+						if (pSlaveNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ && pSlaveNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+							Qspread += pSlaveNode->Qg = pSlaveNode->Qgr = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
+					}
+					else
+						pSlaveNode->Qg = pSlaveNode->Qgr = 0.0;
+				}
+
+				if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+					Qspread += pNode->Qgr = pNode->Qg = pMatrixInfo->LFQmin + (pMatrixInfo->LFQmax - pMatrixInfo->LFQmin) * Qrange;
+
+				if (fabs(Qspread - QgSource) > m_Parameters.m_Imb)
+				{
+					bAllOk = false;
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForSuperNode, pNode->GetVerbalName(), QgSource, pNode->LFQmin, pNode->LFQmax));
+				}
+		}
+		pMatrixInfo->Restore();
 	}
 
 	if (!bAllOk)
@@ -1198,9 +1274,9 @@ void CLoadFlow::UpdateSupernodesPQ()
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		if (!pNode->m_pSuperNodeParent)
 		{
-			// если узел не нагрузочный, обновляем расчетное значение реактивной мощности
-			if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
-				pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;
+			/*// если узел не нагрузочный, обновляем расчетное значение реактивной мощности
+			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
+				pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;*/
 			// восстанавливаем исходные значения расчетной генерации и нагрузки по сохраненным Pg,Qg,Pn,Qn
 			GetPnrQnr(pNode);
 		}
@@ -1295,11 +1371,15 @@ void CLoadFlow::CheckFeasible()
 		CDynaNodeBase* pNode(static_cast<CDynaNodeBase*>(it));
 		if (pNode->IsStateOn())
 		{
+			
 			if (!pNode->IsLFTypePQ())
 			{
-				if (pNode->V > pNode->LFVref && pNode->Qgr >= pNode->LFQmax)
+				// если узел входит в суперузел его заданное напряжение в расчете было равно заданному напряжению суперузла,
+				// которое, в свою очередь, было выбрано по узлу с наиболее широким диапазоном реактивной мощности внутри суперузла
+				double LFVref = pNode->m_pSuperNodeParent ? pNode->m_pSuperNodeParent->LFVref : pNode->LFVref;
+				if (pNode->V > LFVref && pNode->Qgr >= pNode->LFQmax)
 					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
-				if (pNode->V < pNode->LFVref && pNode->Qgr <= pNode->LFQmin)
+				if (pNode->V < LFVref && pNode->Qgr <= pNode->LFQmin)
 					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
 				if (pNode->Qgr < pNode->LFQmin)
 					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));

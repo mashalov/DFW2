@@ -121,9 +121,9 @@ void CLoadFlow::NewtonTanh()
 
 	// обновляем реактивную генерацию в суперузлах
 
-	for (auto && supernode : m_SuperNodeParameters)
+	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get() ; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
-		CDynaNodeBase *pNode = supernode.m_pNode;
+		CDynaNodeBase*& pNode = pMatrixInfo->pNode;
 		double Qrange = pNode->LFQmax - pNode->LFQmin;
 		Qrange = (Qrange > 0.0) ? (pNode->Qgr - pNode->LFQmin) / Qrange : 0.0;
 		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
@@ -135,8 +135,8 @@ void CLoadFlow::NewtonTanh()
 			if (pSlaveNode->IsStateOn())
 				pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
 		}
-		pNode->Qgr = supernode.LFQmin + (supernode.LFQmax - supernode.LFQmin) * Qrange;
-		supernode.Restore();
+		pNode->Qgr = pMatrixInfo->LFQmin + (pMatrixInfo->LFQmax - pMatrixInfo->LFQmin) * Qrange;
+		pMatrixInfo->Restore();
 	}
 
 	for (auto&& it : pNodes->m_DevVec)
