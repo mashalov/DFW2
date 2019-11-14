@@ -79,7 +79,7 @@ bool CDynaModel::Run()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = -0.1;
+		m_Parameters.m_dZeroBranchImpedance = 200.1;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 		m_Parameters.eFreqDampingType = APDT_NODE;
@@ -112,6 +112,11 @@ bool CDynaModel::Run()
 
 		bRes = bRes && Link();
 		TurnOffDevicesByOffMasters();
+
+		// записывать заголовок нужно сразу после линковки и отключения устройств без ведущих навсегда
+		// иначе устройства могут изменить родителей после топологического анализа
+		WriteResultsHeader();
+
 		PrepareGraph();
 		Nodes.ProcessTopology();
 		LoadFlow();
@@ -182,7 +187,7 @@ bool CDynaModel::Run()
 
 			m_Automatic.Init();
 			m_Discontinuities.Init();
-			WriteResultsHeader();
+			//WriteResultsHeader();
 			SetH(0.01);
 			try
 			{
@@ -208,7 +213,7 @@ bool CDynaModel::Run()
 				{
 					bResultsNeedToBeFinished = false;
 					FinishWriteResults();
-					throw dfw2error(err);
+					Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Ошибка в цикле расчета : %s"), err.uwhat()));
 				}
 			}
 		}
