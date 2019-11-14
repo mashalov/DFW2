@@ -56,6 +56,7 @@ namespace DFW2
 		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
 
 		double m_dTanhBeta = 500.0;
+		ptrdiff_t m_nNodeTypeSwitchesDone;
 
 		Parameters m_Parameters;
 		// определение порядка PV узлов для Зейделя

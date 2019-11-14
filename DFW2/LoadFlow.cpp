@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "LoadFlow.h"
 #include "DynaModel.h"
+#include "limits"
 
 using namespace DFW2;
 
@@ -376,7 +377,7 @@ void CLoadFlow::Seidell()
 	// TODO !!!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
 	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
-	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations + 10; nSeidellIterations++)
+	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
 		// множитель для ускорения Зейделя
 		double dStep = m_Parameters.m_dSeidellStep;
@@ -1047,6 +1048,7 @@ void CLoadFlow::Newton()
 
 	// квадраты небалансов до и после итерации
 	double g0(0.0), g1(0.1), lambda(1.0);
+	m_nNodeTypeSwitchesDone = 1;
 
 	while (1)
 	{
@@ -1126,7 +1128,7 @@ void CLoadFlow::Newton()
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
 
-		if (it > 1 && g1 > g0)
+		if (!m_nNodeTypeSwitchesDone && g1 > g0)
 		{
 			double gs1v = CDynaModel::gs1(klu, m_Rh, klu.B());
 			// знак gs1v должен быть "-" ????
@@ -1142,12 +1144,17 @@ void CLoadFlow::Newton()
 		// сохраняем исходные значения переменных
 		StoreVDelta();
 
+		m_nNodeTypeSwitchesDone = 0;
+
 		for (auto&& it : PQmax_PV)
 		{
 			CDynaNodeBase*& pNode = it->pNode;
 			pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 			pNode->V = pNode->LFVref;
 			pNode->UpdateVreVimSuper();
+			// считаем количество переключений типов узлов
+			// чтобы исключить выбор шага по g1 > g0
+			m_nNodeTypeSwitchesDone++;
 		}
 
 		if (PQmax_PV.empty())
@@ -1158,6 +1165,7 @@ void CLoadFlow::Newton()
 				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 				pNode->V = pNode->LFVref;
 				pNode->UpdateVreVimSuper();
+				m_nNodeTypeSwitchesDone++;
 			}
 		}
 
@@ -1168,6 +1176,7 @@ void CLoadFlow::Newton()
 				CDynaNodeBase*& pNode = it->pNode;
 				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 				pNode->Qgr = pNode->LFQmax;
+				m_nNodeTypeSwitchesDone++;
 			}
 
 			if (PV_PQmax.empty())
@@ -1177,6 +1186,7 @@ void CLoadFlow::Newton()
 					CDynaNodeBase*& pNode = it->pNode;
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 					pNode->Qgr = pNode->LFQmin;
+					m_nNodeTypeSwitchesDone++;
 				}
 			}
 		}
