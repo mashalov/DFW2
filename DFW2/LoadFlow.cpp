@@ -22,7 +22,7 @@ void CLoadFlow::AllocateSupernodes()
 {
 	ptrdiff_t nMatrixSize(0), nNonZeroCount(0);
 	// создаем привязку узлов к информации по строкам матрицы
-	// размер берем по количеству узлов. Реальный размер матрицы будет меньше на
+	// размер берем по количеству суперузлов. Реальный размер матрицы будет меньше на
 	// количество отключенных узлов и БУ
 	m_pMatrixInfo = make_unique<_MatrixInfo[]>(pNodes->Count());
 	_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
@@ -376,7 +376,7 @@ void CLoadFlow::Seidell()
 	// TODO !!!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
 	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
-	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
+	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations + 10; nSeidellIterations++)
 	{
 		// множитель для ускорения Зейделя
 		double dStep = m_Parameters.m_dSeidellStep;
@@ -553,9 +553,31 @@ void CLoadFlow::Seidell()
 			break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
 			{
+				/*
+				double dP = 0.0;// pNode->Pnr - pNode->Pgr - pNode->V * pNode->V * pNode->YiiSuper.real() - pMatrixInfo->UncontrolledP;
+				double dQ = 0.0;// pNode->Qnr - pNode->Qgr + pNode->V * pNode->V * pNode->YiiSuper.imag() - pMatrixInfo->UncontrolledQ;
+				cplx Unode(pNode->Vre, pNode->Vim);
+				for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
+				{
+					CDynaNodeBase *pOppNode = pBranch->pNode;
+					cplx mult = cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+					dP += mult.real();
+					dQ += mult.imag();
+				}
+				cplx Sl = cplx(pNode->Pnr, -pNode->Qnr);
+				cplx Ysl = Sl / conj(Unode) / Unode;
+				cplx newU = (cplx(- pNode->Pgr - pMatrixInfo->UncontrolledP, -(- pNode->Qgr - pMatrixInfo->UncontrolledQ)));
+				newU /= conj(Unode);
+				newU -= cplx(dP, dQ);
+				newU /= (pNode->YiiSuper - Ysl);
+				pNode->Vre = newU.real();
+				pNode->Vim = newU.imag();
+				*/
+
 				cplx dU = I1 * cplx(Pe, -Qe);
 				pNode->Vre += dU.real();
 				pNode->Vim += dU.imag();
+
 			}
 			break;
 			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
@@ -605,7 +627,7 @@ void CLoadFlow::BuildMatrix()
 		double dPdV = pNode->GetSelfdPdV(), dQdV(1.0);
 		double *pAxSelf = pAx;
 		pAx += 2;
-		cplx Unode(pNode->Vre, pNode->Vim);
+		cplx UnodeConj(pNode->Vre, -pNode->Vim);
 		if (pNode->IsLFTypePQ())
 		{
 			// для PQ-узлов формируем оба уравнения
@@ -614,8 +636,7 @@ void CLoadFlow::BuildMatrix()
 			for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 			{
 				CDynaNodeBase *pOppNode = pBranch->pNode;
-				cplx mult = conj(Unode);
-				mult *= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				cplx mult = UnodeConj * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 				Pe -= mult.real();
 				Qe += mult.imag();
 
@@ -645,8 +666,7 @@ void CLoadFlow::BuildMatrix()
 			for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 			{
 				CDynaNodeBase *pOppNode = pBranch->pNode;
-				cplx mult = conj(Unode);
-				mult *= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				cplx mult = UnodeConj * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 				Pe -= mult.real();
 				dPdDelta -= mult.imag();
 				dPdV += -CDevice::ZeroDivGuard(mult.real(), pNode->V);
@@ -687,11 +707,11 @@ void CLoadFlow::GetNodeImb(_MatrixInfo *pMatrixInfo)
 	//  в небалансе учитываем неконтролируемую генерацию в суперузлах
 	pMatrixInfo->m_dImbP = pNode->GetSelfImbP() - pMatrixInfo->UncontrolledP;
 	pMatrixInfo->m_dImbQ = pNode->GetSelfImbQ() - pMatrixInfo->UncontrolledQ;
-	cplx Unode(pNode->Vre, pNode->Vim);
+	cplx Unode(pNode->Vre, -pNode->Vim);
 	for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 	{
 		CDynaNodeBase *pOppNode = pBranch->pNode;
-		cplx mult = conj(Unode) * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+		cplx mult = Unode * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 		pMatrixInfo->m_dImbP -= mult.real();
 		pMatrixInfo->m_dImbQ += mult.imag();
 	}
@@ -1386,6 +1406,8 @@ void CLoadFlow::CheckFeasible()
 				if (pNode->Qgr > pNode->LFQmax)
 					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
 			}
+
+			pNode->SuperNodeLoadFlow(m_pDynaModel);
 		}
 	}
 }
