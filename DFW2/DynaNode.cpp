@@ -87,6 +87,8 @@ void CDynaNodeBase::GetPnrQnrSuper()
 	while (pLink->In(ppDevice))
 	{
 		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		pSlaveNode->FromSuperNode();
+
 		pSlaveNode->GetPnrQnr();
 		Pnr += pSlaveNode->Pnr;
 		Qnr += pSlaveNode->Qnr;
@@ -292,6 +294,12 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
+
+	if ((m_Id == 2014) && pDynaModel->GetStepNumber() == 1030)
+	{
+		_tcprintf(_T("\n"));
+	}
+
 	GetPnrQnrSuper();
 
 	double Ire(0.0), Iim(0.0);
@@ -371,6 +379,10 @@ void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
 	dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
 	Vold = V;
+	CLinkPtrCount *pLink = GetSuperLink(0);
+	CDevice **ppDevice(nullptr);
+	while (pLink->In(ppDevice))
+		static_cast<CDynaNodeBase*>(*ppDevice)->FromSuperNode();
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
@@ -979,6 +991,17 @@ void CDynaNodeBase::StoreStates()
 void CDynaNodeBase::RestoreStates()
 {
 	m_bLowVoltage = m_bSavedLowVoltage;
+}
+
+void CDynaNodeBase::FromSuperNode()
+{
+	_ASSERTE(m_pSuperNodeParent);
+	V = m_pSuperNodeParent->V;
+	Delta = m_pSuperNodeParent->Delta;
+	Vre = m_pSuperNodeParent->Vre;
+	Vim = m_pSuperNodeParent->Vim;
+	dLRCVicinity = m_pSuperNodeParent->dLRCVicinity;
+	m_bLowVoltage = m_pSuperNodeParent->m_bLowVoltage;
 }
 
 void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
