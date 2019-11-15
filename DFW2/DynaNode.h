@@ -130,6 +130,7 @@ namespace DFW2
 		void MarkZoneEnergized();
 		void ProcessTopologyRequest();
 		void CalcAdmittances(bool bSeidell);
+		void CalculateShuntParts();
 		// инициализация узла для расчета УР
 		void StartLF(bool bFlatStart, double ImbTol);
 		virtual void StoreStates() override;
@@ -399,6 +400,7 @@ namespace DFW2
 	public:
 		const VirtualZeroBranch* GetZeroBranchesEnd() const { return m_pZeroBranchesEnd; }
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
+		void CalculateShuntParts();
 		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		void GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
 		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);

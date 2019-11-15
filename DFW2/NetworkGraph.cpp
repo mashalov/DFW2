@@ -129,6 +129,9 @@ void CDynaModel::PrepareGraph()
 	for (auto&& it : Nodes)
 	{
 		CDynaNode *pNode = static_cast<CDynaNode*>(it);
+		// задаем V0 для узла. Оно потребуется временно, для холстого расчета шунтовых
+		// нагрузок в CreateSuperNodes
+		pNode->V0 = (pNode->V > 0.0) ? pNode->V : pNode->Unom;
 		pNode->G += pNode->Gr0 * pNode->Nr;
 		pNode->B += pNode->Br0 * pNode->Nr;
 		pNode->Gshunt = pNode->Bshunt = 0.0;
@@ -695,25 +698,9 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	}
 
 	// считаем проводимости и шунтовые части нагрузки
-	// для суперузлов
-	for (auto&& node : m_DevVec)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-		pNode->YiiSuper = pNode->Yii;
-		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
-		if (pLink->m_nCount)
-		{
-			CDevice **ppDevice(nullptr);
-			// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
-			while (pLink->In(ppDevice))
-			{
-				CDynaNodeBase *pSlaveNode(static_cast<CDynaNodeBase*>(*ppDevice));
-				pNode->YiiSuper += pSlaveNode->Yii;
-				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
-				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
-			}
-		}
-	}
+	// для суперузлов выделенной функцией
+
+	CalculateShuntParts();
 
 	/*
 	// восстановление внешних одиночных ссылок

@@ -194,13 +194,10 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 
 void CLoadFlow::Start()
 {
-	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
-	if (!pNodes)
-		throw dfw2error(_T("CLoadFlow::Start - node container unavailable"));
-
 	// отключаем висячие ветви и узлы, проверяем острова на наличие базисных узлов
 	pNodes->PrepareLFTopology();
 	// создаем суперузлы. Важно - базисные суперузлы имеют узлом представителем один из базисных узлов
+	// здесь для CreateShuntParts нужны V0 и СХН для УР
 	pNodes->CreateSuperNodes();
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
 	UpdatePQFromGenerators();
@@ -727,10 +724,15 @@ bool CLoadFlow::Run()
 
 	bool bRes = true;
 
+	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
+	if (!pNodes)
+		throw dfw2error(_T("CLoadFlow::Start - node container unavailable"));
+
+	// вводим СХН УР и V0 = Unom
+	pNodes->SwitchLRCs(false);
+
 	Start();
 	Estimate();
-
-	pNodes->SwitchLRCs(false);
 
 	if (m_Parameters.m_bStartup)
 		Seidell();

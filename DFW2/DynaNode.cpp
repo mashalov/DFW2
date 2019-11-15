@@ -66,13 +66,14 @@ void CDynaNodeBase::UpdateVDeltaSuper()
 // если они меньше напряжения перехода минус окрестность сглаживания - возвращает true
 bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest, double Vmin)
 {
-	bool bRes = (Vmin - dLRCVicinity) > Vtest / Unom;
+	Vmin *= 0.5;
+	bool bRes = (Vmin - dLRCVicinity) > Vtest / V0;
 	CLinkPtrCount *pLink = GetSuperLink(0);
 	CDevice **ppDevice(nullptr);
 	while (pLink->In(ppDevice) && bRes)
 	{
 		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
-		bRes = (Vmin - pSlaveNode->dLRCVicinity) > Vtest / pSlaveNode->Unom;
+		bRes = (Vmin - pSlaveNode->dLRCVicinity) > Vtest / pSlaveNode->V0;
 	}
 	return bRes;
 }
@@ -295,7 +296,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
 
-	if ((m_Id == 2014) && pDynaModel->GetStepNumber() == 1030)
+	if ((m_Id == 2014) && pDynaModel->GetStepNumber() == 1035)
 	{
 		_tcprintf(_T("\n"));
 	}
@@ -322,6 +323,17 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		{
 			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
 			Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
+#ifdef _DEBUG
+			cplx S = cplx(Ire, -Iim) * cplx(Vre, Vim);
+			double dP = S.real() - (Pnr - Pgr);
+			double dQ = S.imag() - (Qnr - Qgr);
+		
+			if (fabs(dP) > 0.1 || fabs(dQ) > 0.1)
+			{
+				_ASSERTE(0);
+				//GetPnrQnrSuper();
+			}
+#endif
 			Pgr = Qgr = 0.0;
 			Pnr = Qnr = 0.0;
 			// нагрузки и генерации в мощности больше нет, они перенесены в ток
@@ -566,10 +578,39 @@ void CDynaNodeContainer::CalcAdmittances(bool bSeidell)
 	for (auto&& it : m_DevVec)
 		static_cast<CDynaNodeBase*>(it)->CalcAdmittances(bSeidell);
 }
-void CDynaNodeBase::CalcAdmittances(bool bSeidell)
+
+// рассчитывает шунтовые части нагрузок узлов
+void CDynaNodeContainer::CalculateShuntParts()
 {
-	Yii = -cplx(G + Gshunt, B + Bshunt);
-	dLRCShuntPartP = dLRCShuntPartQ = 0.0;
+	// сначала считаем индивидуально для каждого узла
+	for (auto&& it : m_DevVec)
+		static_cast<CDynaNodeBase*>(it)->CalculateShuntParts();
+
+	// затем суммируем шунтовые нагрузки в суперузлы
+	for (auto&& node : m_DevVec)
+	{
+		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		pNode->YiiSuper = pNode->Yii;
+		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
+		if (pLink->m_nCount)
+		{
+			CDevice **ppDevice(nullptr);
+			// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
+			while (pLink->In(ppDevice))
+			{
+				CDynaNodeBase *pSlaveNode(static_cast<CDynaNodeBase*>(*ppDevice));
+				pNode->YiiSuper += pSlaveNode->Yii;
+				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
+				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
+			}
+		}
+	}
+}
+
+// рассчитывает нагрузки узла в виде шунта для V < Vmin СХН
+void CDynaNodeBase::CalculateShuntParts()
+{
+	// TODO - надо разобраться с инициализацией V0 __до__ вызова этой функции
 	double V02 = V0 * V0;
 	if (m_pLRC)
 	{
@@ -581,10 +622,15 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 	{
 		// рассчитываем шунтовую часть СХН генерации в узле для низких напряжений
 		dLRCShuntPartP -= Pg * m_pLRCGen->P->a2;
-		dLRCShuntPartP -= Qg * m_pLRCGen->Q->a2;
+		dLRCShuntPartQ -= Qg * m_pLRCGen->Q->a2;
 	}
 	dLRCShuntPartP /= V02;
 	dLRCShuntPartQ /= V02;
+}
+
+void CDynaNodeBase::CalcAdmittances(bool bSeidell)
+{
+	Yii = -cplx(G + Gshunt, B + Bshunt);
 	m_bInMetallicSC = !(_finite(Yii.real()) && _finite(Yii.imag()));
 
 	if (m_bInMetallicSC || !IsStateOn())

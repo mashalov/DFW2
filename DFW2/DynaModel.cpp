@@ -79,7 +79,7 @@ bool CDynaModel::Run()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = 200.1;
+		m_Parameters.m_dZeroBranchImpedance = 0.1;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 		m_Parameters.eFreqDampingType = APDT_NODE;
@@ -328,6 +328,11 @@ bool CDynaModel::InitDevices()
 			}
 		}
 	}
+
+	// Здесь делаем расчет шунтовой части нагрузки суперузлов,
+	// так как СХН генераторов становятся доступны после завершения 
+	// CDynaNodeBase::Init()
+	Nodes.CalculateShuntParts();
 	return CDevice::IsFunctionStatusOK(Status);
 }
 
@@ -1378,7 +1383,7 @@ void CDynaModel::NewtonFailed()
 		}
 	}
 	else
-	if (sc.nSuccessfullStepsOfNewton > 1)
+	if (sc.nSuccessfullStepsOfNewton >= 1)
 	{
 		SetH(sc.m_dCurrentH * 0.87);
 		sc.SetRateGrowLimit(1.0);
