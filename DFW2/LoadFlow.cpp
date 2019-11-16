@@ -715,7 +715,6 @@ void CLoadFlow::GetNodeImb(_MatrixInfo *pMatrixInfo)
 	}
 }
 
-#include "atlbase.h"
 bool CLoadFlow::Run()
 {
 	m_Parameters.m_bFlat = true;
