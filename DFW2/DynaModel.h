@@ -409,7 +409,7 @@ namespace DFW2
 		double GetNorm(double *pVector);
 		double GetWeightedNorm(double *pVector);
 
-		void PrepareGraph();
+		void PrepareNetworkElements();
 		bool Link();
 		bool UpdateExternalVariables();
 		void TurnOffDevicesByOffMasters();

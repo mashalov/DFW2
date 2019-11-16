@@ -401,7 +401,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 {
 	UpdateVreVim();
 	m_bLowVoltage = V < (LOW_VOLTAGE - LOW_VOLTAGE_HYST);
-	V0 = (V > 0) ? V : Unom;
+	PickV0();
 
 	if (GetLink(1)->m_nCount > 0)					// если к узлу подключены генераторы, то СХН генераторов не нужна и мощности генерации 0
 		Pg = Qg = Pgr = Qgr = 0.0;

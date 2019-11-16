@@ -80,62 +80,87 @@ bool CDynaModel::Link()
 	return bRes;
 }
 
-void CDynaModel::PrepareGraph()
+void CDynaModel::PrepareNetworkElements()
 {
 	// сбрасываем обработку топологии
 	// после импорта данных, в которых могли быть отключенные узлы и ветви
 	sc.m_bProcessTopology = false;
-	
+
+	bool bOk(true);
+
+	// убеждаемся в том, что в исходных данных есть СХН с постоянной мощностью
 	if (!(m_pLRCGen = static_cast<CDynaLRC*>(LRCs.GetDevice(-1))))
-		throw dfw2error(Cex(CDFW2Messages::m_cszMustBeConstPowerLRC));
-
-	if (!(m_pLRCLoad = static_cast<CDynaLRC*>(LRCs.GetDevice((ptrdiff_t)0))))
-		throw dfw2error(Cex(CDFW2Messages::m_cszMustBeDefaultDynamicLRC));
-
-	for (auto&& it : Branches)
 	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
-		// check branch is looped
-		if (pBranch->Iq != pBranch->Ip)
-		{
-			// fix transformer ratios to 1.0, allocate admittances to Gamma or Pi transformer circuits
-			if (Equal(pBranch->Ktr,0.0) || Equal(pBranch->Ktr,0.0))
-			{
-				pBranch->Ktr = 1.0;
-				pBranch->GIp = pBranch->GIq = pBranch->G / 2.0;
-				pBranch->BIp = pBranch->BIq = pBranch->B / 2.0;
-			}
-			else
-			{
-				pBranch->GIp = pBranch->G;
-				pBranch->BIp = pBranch->B;
-				pBranch->GIq = pBranch->BIq = 0.0;
-			}
-
-			// account for reactors
-			pBranch->GIp += pBranch->NrIp * pBranch->GrIp;
-			pBranch->GIq += pBranch->NrIq * pBranch->GrIq;
-			pBranch->BIp += pBranch->NrIp * pBranch->BrIp;
-			pBranch->BIq += pBranch->NrIq * pBranch->BrIq;
-		}
-		else
-		{
-			pBranch->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszBranchLooped, pBranch->Ip));
-			pBranch->m_BranchState = CDynaBranch::BRANCH_OFF;
-		}
+		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszMustBeConstPowerLRC);
+		bOk = false;
+	}
+	// убеждаемся в том, что в исходных данных есть СХН для постоянной генерации в динамике
+	if (!(m_pLRCLoad = static_cast<CDynaLRC*>(LRCs.GetDevice((ptrdiff_t)0))))
+	{
+		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszMustBeConstPowerLRC);
+		bOk = false;
 	}
 
-	// also add reactor's admittance
+	// для узлов учитываем проводимости реакторов
+	// и проверяем значение Uном
 	for (auto&& it : Nodes)
 	{
-		CDynaNode *pNode = static_cast<CDynaNode*>(it);
+		CDynaNode* pNode = static_cast<CDynaNode*>(it);
 		// задаем V0 для узла. Оно потребуется временно, для холстого расчета шунтовых
 		// нагрузок в CreateSuperNodes
-		pNode->V0 = (pNode->V > 0.0) ? pNode->V : pNode->Unom;
+		if (pNode->Unom < DFW2_EPSILON)
+		{
+			pNode->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongUnom, pNode->GetVerbalName(), pNode->Unom));
+			bOk = false;
+		}
+		else
+			pNode->PickV0();
+
 		pNode->G += pNode->Gr0 * pNode->Nr;
 		pNode->B += pNode->Br0 * pNode->Nr;
 		pNode->Gshunt = pNode->Bshunt = 0.0;
 	}
+
+	if (!bOk)
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
+	for (auto&& it : Branches)
+	{
+		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
+		// проверяем не самозамкнута ли ветвь
+		if (pBranch->Iq == pBranch->Ip)
+		{
+			// если ветвь самозамкнута, выключаем ее навсегда
+			pBranch->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszBranchLooped, pBranch->Ip));
+			pBranch->SetBranchState(CDynaBranch::BRANCH_OFF, eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT);
+			continue;
+
+		}
+		// нулевой коэффициент трансформации заменяем на единичный
+		if (Equal(pBranch->Ktr, 0.0) || Equal(pBranch->Ktr, 0.0))
+		{
+			// если ветвь не трансформатор, схема замещения "П"
+			pBranch->Ktr = 1.0;
+			pBranch->GIp = pBranch->GIq = pBranch->G / 2.0;
+			pBranch->BIp = pBranch->BIq = pBranch->B / 2.0;
+		}
+		else
+		{
+			// если трансформатор, схема замещения "Г"
+			pBranch->GIp = pBranch->G;
+			pBranch->BIp = pBranch->B;
+			pBranch->GIq = pBranch->BIq = 0.0;
+		}
+
+		// учитываем реакторы в начале и в конце
+		pBranch->GIp += pBranch->NrIp * pBranch->GrIp;
+		pBranch->GIq += pBranch->NrIq * pBranch->GrIq;
+		pBranch->BIp += pBranch->NrIp * pBranch->BrIp;
+		pBranch->BIq += pBranch->NrIq * pBranch->BrIq;
+	}
+
+	if (!bOk)
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
 }
 
 // строит синхронные зоны по топологии и определяет их состояния

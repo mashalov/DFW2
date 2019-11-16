@@ -126,3 +126,5 @@ const _TCHAR* CDFW2Messages::m_cszLFWrongQrangeForNode = _T("Для узла \"%
 const _TCHAR* CDFW2Messages::m_cszLFWrongQrangeForSuperNode = _T("Для суперузла \"%s\" невозможно распределение реактивной мощности %g по узлам c суммарным диапазоном [%g;%g]");
 const _TCHAR* CDFW2Messages::m_cszLFError = _T("Ошибка при расчете УР");
 const _TCHAR* CDFW2Messages::m_cszCannotChangePermanentDeviceState = _T("Невозможно изменить состояние устройства \"%s\"");
+const _TCHAR* CDFW2Messages::m_cszWrongUnom = _T("Недопустимое значение номинального напряжения \"%s\" Uном = %g");
+const _TCHAR* CDFW2Messages::m_cszWrongSourceData = _T("Обнаружена неустранимая ошибка в исходных данных");

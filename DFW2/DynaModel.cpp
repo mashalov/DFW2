@@ -117,7 +117,7 @@ bool CDynaModel::Run()
 		// иначе устройства могут изменить родителей после топологического анализа
 		WriteResultsHeader();
 
-		PrepareGraph();
+		PrepareNetworkElements();
 		Nodes.ProcessTopology();
 		LoadFlow();
 		bRes = bRes && InitDevices();

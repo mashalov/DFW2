@@ -160,6 +160,8 @@ namespace DFW2
 
 		VirtualZeroBranch* AddZeroBranch(CDynaBranch* pBranch);
 		void TidyZeroBranches();
+		// выбирает исходное напряжение либо равное расчетному, либо (если расчетное равно почему-то нулю), номинальному
+		inline void PickV0() { V0 = (V > 0) ? V : Unom; }
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;

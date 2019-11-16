@@ -139,6 +139,8 @@ namespace DFW2
 		static const _TCHAR* m_cszLFWrongQrangeForSuperNode;
 		static const _TCHAR* m_cszLFError;
 		static const _TCHAR* m_cszCannotChangePermanentDeviceState;
+		static const _TCHAR* m_cszWrongUnom;
+		static const _TCHAR* m_cszWrongSourceData;
 	};
 }
 
