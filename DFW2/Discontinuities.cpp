@@ -260,7 +260,7 @@ DFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel *pDynaModel)
 	cplx y = 1.0 / m_ShuntRX;
 	m_pDynaNode->Gshunt = y.real();
 	m_pDynaNode->Bshunt = y.imag();
-	pDynaModel->ProcessTopologyRequest();
+	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
 
@@ -336,7 +336,7 @@ DFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
 {
 	DFW2_ACTION_STATE State = AS_DONE;
 	m_pDynaNode->Gshunt = m_pDynaNode->Bshunt = 0.0;
-	pDynaModel->ProcessTopologyRequest();
+	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
 
@@ -353,7 +353,7 @@ DFW2_ACTION_STATE CModelActionChangeNodeLoad::Do(CDynaModel *pDynaModel)
 	DFW2_ACTION_STATE State = AS_DONE;
 	m_pDynaNode->Pn = m_newLoad.real();
 	m_pDynaNode->Qn = m_newLoad.imag();
-	pDynaModel->ProcessTopologyRequest();
+	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
 

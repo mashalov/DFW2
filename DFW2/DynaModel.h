@@ -493,7 +493,7 @@ namespace DFW2
 		virtual ~CDynaModel();
 		bool Run();
 
-		bool InitDevices();
+		void InitDevices();
 		bool InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);

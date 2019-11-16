@@ -118,9 +118,11 @@ bool CDynaModel::Run()
 		WriteResultsHeader();
 
 		PrepareNetworkElements();
-		Nodes.ProcessTopology();
 		LoadFlow();
-		bRes = bRes && InitDevices();
+		// TODO здесь надо исключить повторный CreateSuperNodes после расчета УР
+		// в УР он нужен обязательно, но УР может и не вызываться
+		Nodes.ProcessTopology();
+		InitDevices();
 		EstimateMatrix();
 		bRes = bRes && InitEquations();
 
@@ -267,7 +269,7 @@ bool CDynaModel::Run()
 	return bRes;
 }
 
-bool CDynaModel::InitDevices()
+void CDynaModel::InitDevices()
 {
 	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
 	m_cszDampingName = (GetFreqDampingType() == APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
@@ -333,7 +335,8 @@ bool CDynaModel::InitDevices()
 	// так как СХН генераторов становятся доступны после завершения 
 	// CDynaNodeBase::Init()
 	Nodes.CalculateShuntParts();
-	return CDevice::IsFunctionStatusOK(Status);
+	if (!CDevice::IsFunctionStatusOK(Status))
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
 }
 
 

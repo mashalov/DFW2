@@ -379,8 +379,7 @@ namespace DFW2
 
 		void BuildSynchroZones();
 		void EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
-		bool m_bRebuildMatrix;
-		bool CreateSuperNodes();
+		void CreateSuperNodes();
 		void PrepareLFTopology();
 		void GetTopologySynchroZones(NODEISLANDMAP& NodeIslands);
 		void SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Queue);

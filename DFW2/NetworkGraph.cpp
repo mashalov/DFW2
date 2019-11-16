@@ -167,7 +167,6 @@ void CDynaModel::PrepareNetworkElements()
 void CDynaNodeContainer::BuildSynchroZones()
 {
 	// проверяем, есть ли отключенные узлы
-	
 	// даже не знаю что лучше для поиска первого отключенного узла...
 	bool bGotOffNodes = std::find_if(m_DevVec.begin(), m_DevVec.end(), [](const auto* pNode)->bool { return !pNode->IsStateOn(); }) != m_DevVec.end();
 	
@@ -392,10 +391,11 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 	}
 }
 
-bool CDynaNodeContainer::CreateSuperNodes()
+void CDynaNodeContainer::CreateSuperNodes()
 {
-	bool bRes = true;
 	CDeviceContainer *pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
+	if(!pBranchContainer)
+		throw dfw2error(_T("CDynaNodeContainer::CreateSuperNodes - Branch container not found"));
 
 	ClearSuperLinks();
 	// обнуляем ссылки подчиненных узлов на суперузлы
@@ -405,9 +405,9 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	NODEISLANDMAP JoinableNodes, SuperNodes;
 	// строим список связности по включенным ветвям с нулевым сопротивлением
 	ptrdiff_t nZeroBranchCount(0);
-	for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
+	for (auto&& it : *pBranchContainer)
 	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
 		// по умолчанию суперузлы ветви равны исходным узлам
 		pBranch->m_pNodeSuperIp = pBranch->m_pNodeIp;
 		pBranch->m_pNodeSuperIq = pBranch->m_pNodeIq;
@@ -421,194 +421,191 @@ bool CDynaNodeContainer::CreateSuperNodes()
 	// получаем список островов
 	GetNodeIslands(JoinableNodes, SuperNodes);
 
-	if (bRes)
-	{
-		// строим связи от подчиенных узлов к суперузлам
-		// готовим вариант связи с ветвями
-		// в дополнительном списке связей
+	// строим связи от подчиенных узлов к суперузлам
+	// готовим вариант связи с ветвями
+	// в дополнительном списке связей
 
-		DumpNodeIslands(SuperNodes);
+	DumpNodeIslands(SuperNodes);
 
 		
-		m_SuperLinks.emplace_back(this, Count()); // используем конструктор CMultiLink
-		CMultiLink& pNodeSuperLink(m_SuperLinks.back());
-		// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
-		for (int pass = 0; pass < 2; pass++)
-		{
-			for (auto&& nit : SuperNodes)
-				for (auto&& sit : nit.second)
-					if (nit.first != sit)
-					{
-						sit->m_pSuperNodeParent = nit.first;
-						if (pass)
-							AddLink(pNodeSuperLink, nit.first->m_nInContainerIndex, sit);
-						else
-							IncrementLinkCounter(pNodeSuperLink, nit.first->m_nInContainerIndex);
-					}
-
-			if (pass)
-				RestoreLinks(pNodeSuperLink);	// на втором проходе финализируем ссылки
-			else
-				AllocateLinks(pNodeSuperLink);	// на первом проходe размечаем ссылки по узлам
-		}
-
-		// перестраиваем связи суперузлов с ветвями:
-		m_SuperLinks.emplace_back(m_Links[0].m_pContainer, Count());
-		CMultiLink& pBranchSuperLink(m_SuperLinks.back());
-
-		// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
-		for (int pass = 0; pass < 2; pass++)
-		{
-			for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
-			{
-				// учитываем только включенные ветви (по идее можно фильтровать и ветви с нулевым сопротивлением)
-				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
-				
-				// Здесь включаем все ветви: и включенные и отключенные, иначе надо всякий раз перестраивать матрицу
-				if (pBranch->m_BranchState != CDynaBranch::BRANCH_ON)
-					continue;
-
-				CDynaNodeBase *pNodeIp(pBranch->m_pNodeIp);
-				CDynaNodeBase *pNodeIq(pBranch->m_pNodeIq);
-
-				if (pNodeIp->m_pSuperNodeParent == pNodeIq->m_pSuperNodeParent)
+	m_SuperLinks.emplace_back(this, Count()); // используем конструктор CMultiLink
+	CMultiLink& pNodeSuperLink(m_SuperLinks.back());
+	// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
+	for (int pass = 0; pass < 2; pass++)
+	{
+		for (auto&& nit : SuperNodes)
+			for (auto&& sit : nit.second)
+				if (nit.first != sit)
 				{
-					// суперузлы в начале и в конце одинаковые
-					if (!pNodeIp->m_pSuperNodeParent)
+					sit->m_pSuperNodeParent = nit.first;
+					if (pass)
+						AddLink(pNodeSuperLink, nit.first->m_nInContainerIndex, sit);
+					else
+						IncrementLinkCounter(pNodeSuperLink, nit.first->m_nInContainerIndex);
+				}
+
+		if (pass)
+			RestoreLinks(pNodeSuperLink);	// на втором проходе финализируем ссылки
+		else
+			AllocateLinks(pNodeSuperLink);	// на первом проходe размечаем ссылки по узлам
+	}
+
+	// перестраиваем связи суперузлов с ветвями:
+	m_SuperLinks.emplace_back(m_Links[0].m_pContainer, Count());
+	CMultiLink& pBranchSuperLink(m_SuperLinks.back());
+
+	// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
+	for (int pass = 0; pass < 2; pass++)
+	{
+		for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
+		{
+			// учитываем только включенные ветви (по идее можно фильтровать и ветви с нулевым сопротивлением)
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+				
+			// Здесь включаем все ветви: и включенные и отключенные, иначе надо всякий раз перестраивать матрицу
+			if (pBranch->m_BranchState != CDynaBranch::BRANCH_ON)
+				continue;
+
+			CDynaNodeBase *pNodeIp(pBranch->m_pNodeIp);
+			CDynaNodeBase *pNodeIq(pBranch->m_pNodeIq);
+
+			if (pNodeIp->m_pSuperNodeParent == pNodeIq->m_pSuperNodeParent)
+			{
+				// суперузлы в начале и в конце одинаковые
+				if (!pNodeIp->m_pSuperNodeParent)
+				{
+					// суперузлы отсуствуют - ветвь между двумя обычными узлами или суперузлами
+					if (pass)
 					{
-						// суперузлы отсуствуют - ветвь между двумя обычными узлами или суперузлами
-						if (pass)
-						{
-							// на втором проходе добавляем ссылки
-							AddLink(pBranchSuperLink, pNodeIp->m_nInContainerIndex, pBranch);
-							AddLink(pBranchSuperLink, pNodeIq->m_nInContainerIndex, pBranch);
-						}
-						else
-						{
-							// на первом проходе считаем количество ссылок
-							IncrementLinkCounter(pBranchSuperLink, pNodeIp->m_nInContainerIndex);
-							IncrementLinkCounter(pBranchSuperLink, pNodeIq->m_nInContainerIndex);
-						}
-						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s connects supernodes %s and %s"), pBranch->GetVerbalName(), pNodeIp->GetVerbalName(), pNodeIq->GetVerbalName()));
+						// на втором проходе добавляем ссылки
+						AddLink(pBranchSuperLink, pNodeIp->m_nInContainerIndex, pBranch);
+						AddLink(pBranchSuperLink, pNodeIq->m_nInContainerIndex, pBranch);
 					}
 					else
-						// иначе суперузел есть - и ветвь внутри него
-						pBranch->m_pNodeSuperIp = pBranch->m_pNodeSuperIq = pNodeIp->m_pSuperNodeParent;
-						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s in super node %s"), pBranch->GetVerbalName(), pNodeIp->m_pSuperNodeParent->GetVerbalName()));
+					{
+						// на первом проходе считаем количество ссылок
+						IncrementLinkCounter(pBranchSuperLink, pNodeIp->m_nInContainerIndex);
+						IncrementLinkCounter(pBranchSuperLink, pNodeIq->m_nInContainerIndex);
+					}
+					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s connects supernodes %s and %s"), pBranch->GetVerbalName(), pNodeIp->GetVerbalName(), pNodeIq->GetVerbalName()));
 				}
 				else
-				{
-					// суперузлы в начале и в конце разные
-					CDynaNodeBase *pNodeIpSuper(pNodeIp);
-					CDynaNodeBase *pNodeIqSuper(pNodeIq);
-
-					// если у узлов есть суперузел - связываем ветвь не с узлом, а с его
-					// суперузлом
-					if (pNodeIpSuper->m_pSuperNodeParent)
-						pNodeIpSuper = pNodeIpSuper->m_pSuperNodeParent;
-
-					if (pNodeIqSuper->m_pSuperNodeParent)
-						pNodeIqSuper = pNodeIqSuper->m_pSuperNodeParent;
-
-					pBranch->m_pNodeSuperIp = pNodeIpSuper;
-					pBranch->m_pNodeSuperIq = pNodeIqSuper;
-
-					// если суперузел у узлов ветви не общий
-					if (pNodeIpSuper != pNodeIqSuper)
-					{
-						if (pass)
-						{
-							AddLink(pBranchSuperLink, pNodeIpSuper->m_nInContainerIndex, pBranch);
-							AddLink(pBranchSuperLink, pNodeIqSuper->m_nInContainerIndex, pBranch);
-							// в ветви нет одиночных связей, но есть два адреса узлов начала и конца.
-							// их меняем на адреса суперузлов
-						}
-						else
-						{
-							IncrementLinkCounter(pBranchSuperLink, pNodeIpSuper->m_nInContainerIndex);
-							IncrementLinkCounter(pBranchSuperLink, pNodeIqSuper->m_nInContainerIndex);
-						}
-					}
-					/*
-					const _TCHAR *cszSuper = _T("super");
-					const _TCHAR *cszSlave = _T("super");
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s connects %snode %s and %s node %s"),
-						pBranch->GetVerbalName(),
-						pNodeIpSuper->m_pSuperNodeParent ? cszSlave : cszSuper,
-						pNodeIpSuper->GetVerbalName(),
-						pNodeIqSuper->m_pSuperNodeParent ? cszSlave : cszSuper,
-						pNodeIqSuper->GetVerbalName()));
-					*/
-				}
+					// иначе суперузел есть - и ветвь внутри него
+					pBranch->m_pNodeSuperIp = pBranch->m_pNodeSuperIq = pNodeIp->m_pSuperNodeParent;
+					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s in super node %s"), pBranch->GetVerbalName(), pNodeIp->m_pSuperNodeParent->GetVerbalName()));
 			}
-
-			if(pass)
-				RestoreLinks(pBranchSuperLink);		// на втором проходе финализируем ссылки
 			else
-				AllocateLinks(pBranchSuperLink);	// на первом проходм размечаем ссылки по узлам
+			{
+				// суперузлы в начале и в конце разные
+				CDynaNodeBase *pNodeIpSuper(pNodeIp);
+				CDynaNodeBase *pNodeIqSuper(pNodeIq);
+
+				// если у узлов есть суперузел - связываем ветвь не с узлом, а с его
+				// суперузлом
+				if (pNodeIpSuper->m_pSuperNodeParent)
+					pNodeIpSuper = pNodeIpSuper->m_pSuperNodeParent;
+
+				if (pNodeIqSuper->m_pSuperNodeParent)
+					pNodeIqSuper = pNodeIqSuper->m_pSuperNodeParent;
+
+				pBranch->m_pNodeSuperIp = pNodeIpSuper;
+				pBranch->m_pNodeSuperIq = pNodeIqSuper;
+
+				// если суперузел у узлов ветви не общий
+				if (pNodeIpSuper != pNodeIqSuper)
+				{
+					if (pass)
+					{
+						AddLink(pBranchSuperLink, pNodeIpSuper->m_nInContainerIndex, pBranch);
+						AddLink(pBranchSuperLink, pNodeIqSuper->m_nInContainerIndex, pBranch);
+						// в ветви нет одиночных связей, но есть два адреса узлов начала и конца.
+						// их меняем на адреса суперузлов
+					}
+					else
+					{
+						IncrementLinkCounter(pBranchSuperLink, pNodeIpSuper->m_nInContainerIndex);
+						IncrementLinkCounter(pBranchSuperLink, pNodeIqSuper->m_nInContainerIndex);
+					}
+				}
+				/*
+				const _TCHAR *cszSuper = _T("super");
+				const _TCHAR *cszSlave = _T("super");
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s connects %snode %s and %s node %s"),
+					pBranch->GetVerbalName(),
+					pNodeIpSuper->m_pSuperNodeParent ? cszSlave : cszSuper,
+					pNodeIpSuper->GetVerbalName(),
+					pNodeIqSuper->m_pSuperNodeParent ? cszSlave : cszSuper,
+					pNodeIqSuper->GetVerbalName()));
+				*/
+			}
 		}
 
-		// перестраиваем все остальные связи кроме ветвей
-		// идем по мультиссылкам узла
-		for (auto&& multilink : m_Links)
+		if(pass)
+			RestoreLinks(pBranchSuperLink);		// на втором проходе финализируем ссылки
+		else
+			AllocateLinks(pBranchSuperLink);	// на первом проходм размечаем ссылки по узлам
+	}
+
+	// перестраиваем все остальные связи кроме ветвей
+	// идем по мультиссылкам узла
+	for (auto&& multilink : m_Links)
+	{
+		// если ссылка на контейнер ветвей - пропускаем (обработали выше отдельно)
+		if (multilink.m_pContainer->GetType() == DEVTYPE_BRANCH)
+			continue;
+		// определяем индекс ссылки один-к-одному в контейнере, с которым связаны узлы
+		// для поиска индекса контейнер запрашиваем по типу связи "Узел"
+		ptrdiff_t nLinkIndex = multilink.m_pContainer->GetSingleLinkIndex(DEVTYPE_NODE);
+
+		// создаем дополнительную мультисвязь и добавляем в список связей суперузлов
+		m_SuperLinks.emplace_back(multilink.m_pContainer, Count());
+		CMultiLink& pSuperLink(m_SuperLinks.back());
+		// для хранения оригинальных связей устройств с узлами используем карту устройство-устройство
+		m_OriginalLinks.push_back(make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
+
+		// обрабатываем связь в два прохода : подсчет + выделение памяти и добавление ссылок
+		for (int pass = 0; pass < 2; pass++)
 		{
-			// если ссылка на контейнер ветвей - пропускаем (обработали выше отдельно)
-			if (multilink.m_pContainer->GetType() == DEVTYPE_BRANCH)
-				continue;
-			// определяем индекс ссылки один-к-одному в контейнере, с которым связаны узлы
-			// для поиска индекса контейнер запрашиваем по типу связи "Узел"
-			ptrdiff_t nLinkIndex = multilink.m_pContainer->GetSingleLinkIndex(DEVTYPE_NODE);
-
-			// создаем дополнительную мультисвязь и добавляем в список связей суперузлов
-			m_SuperLinks.emplace_back(multilink.m_pContainer, Count());
-			CMultiLink& pSuperLink(m_SuperLinks.back());
-			// для хранения оригинальных связей устройств с узлами используем карту устройство-устройство
-			m_OriginalLinks.push_back(make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
-
-			// обрабатываем связь в два прохода : подсчет + выделение памяти и добавление ссылок
-			for (int pass = 0; pass < 2; pass++)
+			// идем по узлам
+			for (auto&& node : m_DevVec)
 			{
-				// идем по узлам
-				for (auto&& node : m_DevVec)
+				CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+				CDynaNodeBase *pSuperNode = pNode;
+				// если у узла есть суперузел, то берем его указатель
+				// иначе узел сам себе суперузел
+				if (pNode->m_pSuperNodeParent)
+					pSuperNode = pNode->m_pSuperNodeParent;
+				// достаем из узла мультиссылку на текущий тип связи
+				CLinkPtrCount* pLink = multilink.GetLink(pNode->m_nInContainerIndex);
+				CDevice **ppDevice(nullptr);
+				// идем по мультиссылке
+				while (pLink->In(ppDevice))
 				{
-					CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-					CDynaNodeBase *pSuperNode = pNode;
-					// если у узла есть суперузел, то берем его указатель
-					// иначе узел сам себе суперузел
-					if (pNode->m_pSuperNodeParent)
-						pSuperNode = pNode->m_pSuperNodeParent;
-					// достаем из узла мультиссылку на текущий тип связи
-					CLinkPtrCount* pLink = multilink.GetLink(pNode->m_nInContainerIndex);
-					CDevice **ppDevice(nullptr);
-					// идем по мультиссылке
-					while (pLink->In(ppDevice))
+					if (pass)
 					{
-						if (pass)
-						{
-							// добавляем к суперузлу ссылку на внешее устройство
-							AddLink(pSuperLink, pSuperNode->m_nInContainerIndex, *ppDevice);
-							// указатель на прежний узел в устройстве, которое сязано с узлом
-							CDevice *pOldDev = (*ppDevice)->GetSingleLink(nLinkIndex);
-							// заменяем ссылку на старый узел ссылкой на суперузел
-							(*ppDevice)->SetSingleLink(nLinkIndex, pSuperNode);
-							// сохраняем оригинальную связь устройства с узлом в карте
-							m_OriginalLinks.back()->insert(make_pair(*ppDevice, pOldDev));
-							//*
-							//wstring strName(pOldDev ? pOldDev->GetVerbalName() : _T(""));
-							//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Change link of object %s from node %s to supernode %s"),
-							//		(*ppDevice)->GetVerbalName(),
-							//		strName.c_str(),SuperNodeBlock.first->GetVerbalName()));
-						}
-						else
-							IncrementLinkCounter(pSuperLink, pSuperNode->m_nInContainerIndex); // на первом проходе просто считаем количество связей
+						// добавляем к суперузлу ссылку на внешее устройство
+						AddLink(pSuperLink, pSuperNode->m_nInContainerIndex, *ppDevice);
+						// указатель на прежний узел в устройстве, которое сязано с узлом
+						CDevice *pOldDev = (*ppDevice)->GetSingleLink(nLinkIndex);
+						// заменяем ссылку на старый узел ссылкой на суперузел
+						(*ppDevice)->SetSingleLink(nLinkIndex, pSuperNode);
+						// сохраняем оригинальную связь устройства с узлом в карте
+						m_OriginalLinks.back()->insert(make_pair(*ppDevice, pOldDev));
+						//*
+						//wstring strName(pOldDev ? pOldDev->GetVerbalName() : _T(""));
+						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Change link of object %s from node %s to supernode %s"),
+						//		(*ppDevice)->GetVerbalName(),
+						//		strName.c_str(),SuperNodeBlock.first->GetVerbalName()));
 					}
+					else
+						IncrementLinkCounter(pSuperLink, pSuperNode->m_nInContainerIndex); // на первом проходе просто считаем количество связей
 				}
-
-				if (pass)
-					RestoreLinks(pSuperLink);	// на втором проходе финализируем ссылки
-				else
-					AllocateLinks(pSuperLink);	// на первом проходм размечаем ссылки по узлам
 			}
+
+			if (pass)
+				RestoreLinks(pSuperLink);	// на втором проходе финализируем ссылки
+			else
+				AllocateLinks(pSuperLink);	// на первом проходм размечаем ссылки по узлам
 		}
 	}
 
@@ -747,8 +744,6 @@ bool CDynaNodeContainer::CreateSuperNodes()
 		}
 	}
 	*/
-
-	return bRes;
 }
 
 void CDynaNodeContainer::ClearSuperLinks()
@@ -802,17 +797,13 @@ void CDynaNodeContainer::DumpIterationControl()
 
 void CDynaNodeContainer::ProcessTopology()
 {
+	CreateSuperNodes();
 	if (!m_pSynchroZones)
 		m_pSynchroZones = m_pDynaModel->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_SYNCZONE);
 	if (!m_pSynchroZones)
 		throw dfw2error(_T("CDynaNodeContainer::ProcessTopology - SynchroZone container not found"));
-
-	CreateSuperNodes();
 	BuildSynchroZones();
-
-	m_bRebuildMatrix = true;
-
-	m_pDynaModel->RebuildMatrix(m_bRebuildMatrix);
+	m_pDynaModel->RebuildMatrix(true);
 }
 
 void CDynaNodeContainer::SwitchOffDanglingNodes(NodeSet& Queue)
