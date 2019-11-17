@@ -166,6 +166,11 @@ void CDynaModel::PrepareNetworkElements()
 // строит синхронные зоны по топологии и определяет их состояния
 void CDynaNodeContainer::BuildSynchroZones()
 {
+	if (!m_pSynchroZones)
+		m_pSynchroZones = m_pDynaModel->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_SYNCZONE);
+	if (!m_pSynchroZones)
+		throw dfw2error(_T("CDynaNodeContainer::ProcessTopology - SynchroZone container not found"));
+
 	// проверяем, есть ли отключенные узлы
 	// даже не знаю что лучше для поиска первого отключенного узла...
 	bool bGotOffNodes = std::find_if(m_DevVec.begin(), m_DevVec.end(), [](const auto* pNode)->bool { return !pNode->IsStateOn(); }) != m_DevVec.end();
@@ -794,14 +799,24 @@ void CDynaNodeContainer::DumpIterationControl()
 	m_IterationControl.m_ImbRatio);
 }
 
+// функция готовит топологию к дианамике в первый раз
+// учитывает, что суперузлы уже могли быть построены в процессе расчета УР
+// функция должна повторять ProcessTopology за исключением условного вызова
+// CreateSuperNodes()
+void CDynaNodeContainer::ProcessTopologyInitial()
+{
+	// если суперузлы отсутствуют, строим суперузлы
+	// если есть считаем что они построены в УР
+	if(m_SuperLinks.empty())
+		CreateSuperNodes();
+	BuildSynchroZones();
+	m_pDynaModel->RebuildMatrix(true);
+}
 
+// функция обработки топологии, вызывается в процессе расчета динамики
 void CDynaNodeContainer::ProcessTopology()
 {
 	CreateSuperNodes();
-	if (!m_pSynchroZones)
-		m_pSynchroZones = m_pDynaModel->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_SYNCZONE);
-	if (!m_pSynchroZones)
-		throw dfw2error(_T("CDynaNodeContainer::ProcessTopology - SynchroZone container not found"));
 	BuildSynchroZones();
 	m_pDynaModel->RebuildMatrix(true);
 }

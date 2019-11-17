@@ -409,6 +409,7 @@ namespace DFW2
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();
 		void ProcessTopology();
+		void ProcessTopologyInitial();
 		bool Seidell(); 
 		bool LULF();
 		void ProcessTopologyRequest();

@@ -79,7 +79,7 @@ bool CDynaModel::Run()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = 0.1;
+		m_Parameters.m_dZeroBranchImpedance = -0.1;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 		m_Parameters.eFreqDampingType = APDT_NODE;
@@ -119,9 +119,10 @@ bool CDynaModel::Run()
 
 		PrepareNetworkElements();
 		LoadFlow();
-		// TODO здесь надо исключить повторный CreateSuperNodes после расчета УР
-		// в УР он нужен обязательно, но УР может и не вызываться
-		Nodes.ProcessTopology();
+		// Здесь вызываем особый вариант ProcessTopology, который проверяет
+		// наличие созданных суперузлов, и если они уже есть - то не создает их
+		// но создает все остальное (синхронные зоны и все что еще понадобится)
+		Nodes.ProcessTopologyInitial();
 		InitDevices();
 		EstimateMatrix();
 		bRes = bRes && InitEquations();

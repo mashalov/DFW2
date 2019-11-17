@@ -295,12 +295,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
-
-	if ((m_Id == 2014) && pDynaModel->GetStepNumber() == 1035)
-	{
-		_tcprintf(_T("\n"));
-	}
-
 	GetPnrQnrSuper();
 
 	double Ire(0.0), Iim(0.0);
