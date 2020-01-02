@@ -69,18 +69,19 @@ void CExpressionToken::ReplaceChild(CExpressionToken* pOldChild, CExpressionToke
 {
 	bool bReplaced = false;
 	int nCount = 0;
-	for (TOKENITR it = m_Children.begin(); it != m_Children.end(); it++, nCount++)
+	for (auto&& it : m_Children)
 	{
-		if (*it == pOldChild)
+		if (it == pOldChild)
 		{
 			if (nChildNumber < 0 || nChildNumber == nCount)
 			{
-				*it = pNewChild;
+				it = pNewChild;
 				pOldChild->Unparent(this);
 				bReplaced = true;
 				// break; change all occurencies of pOldChild
 			}
 		}
+		nCount++;
 	}
 
 	if (!bReplaced)
@@ -110,9 +111,9 @@ void CExpressionToken::Eliminate()
 	_ASSERTE(m_Parents.size() == 1);
 	CExpressionToken *pParent = *m_Parents.begin();
 
-	for (TOKENITR cit = m_Children.begin(); cit != m_Children.end(); cit++)
+	for (auto&& cit : m_Children)
 	{
-		CExpressionToken *pChild = *cit;
+		CExpressionToken *pChild = cit;
 		pChild->Unparent(this);
 		pParent->ReplaceChild(this,pChild);
 	}
@@ -320,9 +321,9 @@ const _TCHAR* CExpressionToken::EvaluateText()
 		{
 			wstring result;
 			wstring right;
-			for (CONSTTOKENITR it = m_Children.begin(); it != m_Children.end(); it++)
+			for (auto&& it : m_Children)
 			{
-				GetOperand(*it, right, false);
+				GetOperand(it, right, false);
 				result.insert(0, right);
 				result.insert(0, _T(" "));
 				result.insert(0, m_pFunctionInfo->m_strOperatorText);
@@ -386,9 +387,10 @@ const _TCHAR* CExpressionTokenModelLink::EvaluateText()
 		wstring str = GetTextValue();
 		str.push_back(_T('['));
 		size_t nCount = 0;
-		for (TOKENITR it = m_Children.begin(); it != m_Children.end(); it++, nCount++)
+
+		for (auto&& it : m_Children)
 		{
-			str += (*it)->GetTextValue();
+			str += it->GetTextValue();
 			if (nCount < m_Children.size() - 2)
 				str.push_back(_T(','));
 			else
@@ -397,6 +399,8 @@ const _TCHAR* CExpressionTokenModelLink::EvaluateText()
 					str.push_back(_T(']'));
 					str.push_back(_T('.'));
 				}
+
+			nCount++;
 		}
 
 		m_ChildrenSave = m_Children;
@@ -781,8 +785,8 @@ const CExpressionParser* CExpressionToken::GetParser()
 
 CExpressionRule::CExpressionRule(const _TCHAR *cszSource, const _TCHAR *cszDestination, const CExpressionParser* pParser)
 {
-	m_pSource = new CExpressionParserRule(pParser);
-	m_pDestination = new CExpressionParserRule(pParser);
+	m_pSource = make_unique<CExpressionParserRule>(pParser);
+	m_pDestination = make_unique<CExpressionParserRule>(pParser);
 	m_pSource->Parse(cszSource);
 	m_pSource->GetExpressionConstants();
 	m_pSource->Simplify();
@@ -796,8 +800,8 @@ CExpressionRule::CExpressionRule(const _TCHAR *cszSource, const _TCHAR *cszDesti
 
 CExpressionRule::CExpressionRule(const _TCHAR *cszSource, const _TCHAR *cszDestination)
 {
-	m_pSource = new CExpressionParserRule();
-	m_pDestination = new CExpressionParserRule();
+	m_pSource = make_unique<CExpressionParserRule>();
+	m_pDestination = make_unique<CExpressionParserRule>();
 	m_pSource->Parse(cszSource);
 	m_pSource->GetExpressionConstants();
 	m_pSource->Simplify();
@@ -810,8 +814,6 @@ CExpressionRule::CExpressionRule(const _TCHAR *cszSource, const _TCHAR *cszDesti
 
 CExpressionRule::~CExpressionRule()
 {
-	delete m_pSource;
-	delete m_pDestination;
 }
 
 // функция формирует текстовое представление числа с максимальной точностью
@@ -830,9 +832,9 @@ void CExpressionToken::GetNumericText(double dValue, wstring& TextValue)
 
 bool CExpressionToken::Join(CExpressionToken *pToken)
 {
-	for (TOKENSETITR it = pToken->m_Parents.begin(); it != pToken->m_Parents.end(); it++)
+	for (auto&& it : pToken->m_Parents)
 	{
-		CExpressionToken *pParent = *it;
+		CExpressionToken *pParent = it;
 		pParent->ReplaceChild(pToken, this);
 	}
 

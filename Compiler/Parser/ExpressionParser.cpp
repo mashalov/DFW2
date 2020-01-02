@@ -49,23 +49,15 @@ void CExpressionParser::CleanUp()
 {
 	m_nHeadPosition = 0;
 	m_nAdvanceNextSymbol = 0;
-	if (m_szExpression)
-	{
-		delete m_szExpression;
-		m_szExpression = nullptr;
-	}
-	if (m_szTokenText)
-	{
-		delete m_szTokenText;
-		m_szTokenText = nullptr;
-	}
-
+	m_szExpression.reset();
+	m_szTokenText.reset();
+	
 	m_ResultStack = PARSERSTACK();
 	m_ParserStack = PARSERSTACK();
 	m_ArityStack = stack<ptrdiff_t>();
 
-	for (TOKENSET::iterator it = m_TokenPool.begin(); it != m_TokenPool.end(); it++)
-		delete *it;
+	for (auto&& it : m_TokenPool)
+		delete it;
 
 	m_TokenPool.clear();
 
@@ -139,8 +131,8 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 	eExpressionTokenType eError = ETT_UNDEFINED;
 	// копируем выражение во временный буфер
 	m_nExpressionLength = _tcslen(cszExpression);
-	m_szExpression = new _TCHAR[m_nExpressionLength + 1];
-	_tcscpy_s(m_szExpression, m_nExpressionLength + 1, cszExpression);
+	m_szExpression = make_unique<_TCHAR[]>(m_nExpressionLength + 1);
+	_tcscpy_s(m_szExpression.get(), m_nExpressionLength + 1, cszExpression);
 
 	m_bUnaryMinus = true;
 	CExpressionToken *pToken = GetToken();
@@ -357,7 +349,7 @@ void CExpressionParser::SkipSpaces()
 {
 	while (m_nHeadPosition < m_nExpressionLength)
 	{
-		if (!_istspace(*(m_szExpression + m_nHeadPosition))) 
+		if (!_istspace(*(m_szExpression.get() + m_nHeadPosition))) 
 			break;
 		m_nHeadPosition++;
 	}
@@ -368,7 +360,7 @@ void CExpressionParser::CurrentSymbolType()
 {
 	m_eNextSymbolType = EST_ERROR;															// возвращаем ошибку, если ни один из нижеследующих типов не подойдет
 	m_nAdvanceNextSymbol = 1;																// по умолчанию длина символа - 1
-	_TCHAR *pCurrentChar = m_szExpression + m_nHeadPosition;
+	_TCHAR *pCurrentChar = m_szExpression.get() + m_nHeadPosition;
 	if (m_nHeadPosition >= m_nExpressionLength) m_eNextSymbolType = EST_EOF;				// если текущий символ за концом строки - возвращаем тип конец строки
 	else if (_istspace(*pCurrentChar)) m_eNextSymbolType = EST_EOF;							// если пробел - то конец строки
 	else if (_istdigit(*pCurrentChar)) m_eNextSymbolType = EST_NUMBER;						// если цифра - число
@@ -381,7 +373,7 @@ void CExpressionParser::CurrentSymbolType()
 int CExpressionParser::_isdecimalexponent()
 {
 	_ASSERTE(m_nHeadPosition < m_nExpressionLength);
-	_TCHAR pCurrentChar = *(m_szExpression + m_nHeadPosition);
+	_TCHAR pCurrentChar = *(m_szExpression.get() + m_nHeadPosition);
 	// проверяем латинские заглавную и строчную e
 	if (pCurrentChar == _T('E') || pCurrentChar == _T('e')) 
 		return 1; 
@@ -572,7 +564,7 @@ void CExpressionParser::ProcessVariable()
 		break;
 	case EST_OPERATOR:					// если нашелся оператор
 		if (m_pCurrentOperator->m_eOperatorType == ETT_LB)		// и этот оператор - левая круглая скобка
-			m_pCurrentToken = NewExpressionTokenFunction(m_szExpression);  // то создаем токен функции
+			m_pCurrentToken = NewExpressionTokenFunction(m_szExpression.get());  // то создаем токен функции
 		else if (m_pCurrentOperator->m_eOperatorType == ETT_LBS)
 		{
 			// если это квадратная скобка, то это ссылка на модель, дальнейший процессинг будет в ProcessModelLink
@@ -852,10 +844,9 @@ const _TCHAR* CExpressionParser::GetText(const CExpressionToken *pToken)
 
 const _TCHAR* CExpressionParser::GetText(size_t nTokenBegin, size_t nTokenLenght)
 {
-	if (m_szTokenText) delete m_szTokenText;
-	m_szTokenText = new _TCHAR[nTokenLenght + 1];
-	_tcsncpy_s(m_szTokenText, nTokenLenght + 1, m_szExpression + nTokenBegin, nTokenLenght);
-	return m_szTokenText;
+	m_szTokenText.reset(new _TCHAR[nTokenLenght + 1]);
+	_tcsncpy_s(m_szTokenText.get(), nTokenLenght + 1, m_szExpression.get() + nTokenBegin, nTokenLenght);
+	return m_szTokenText.get();
 }
 
 eExpressionTokenType CExpressionParser::BuildOperatorTree()

@@ -55,8 +55,8 @@ bool CCompilerEquations::AddEquation(CExpressionToken *pToken)
 
 CCompilerEquations::~CCompilerEquations()
 {
-	for (EQUATIONSITR it = m_Equations.begin(); it != m_Equations.end(); it++)
-		delete *it;
+	for (auto&& it : m_Equations)
+		delete it;
 }
 
 long CCompilerEquations::GetBlockIndex(const CExpressionToken *pToken) const
@@ -209,14 +209,6 @@ bool CCompilerEquations::GenerateMatrix()
 	}
 	return bRes;
 }
-
-
-CCompilerItem::~CCompilerItem()
-{
-	if (m_pParser)
-		delete m_pParser;
-}
-
 
 bool CExpressionParser::InsertEquations(CCompilerEquations& Eqs)
 {

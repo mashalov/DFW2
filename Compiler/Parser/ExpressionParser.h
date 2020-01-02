@@ -25,12 +25,12 @@ public:
 	bool m_bChanged;
 
 	bool m_bUsingInternalVars;
-	_TCHAR* m_szExpression;			// временный буфер для выражения, предназначен для "разрушающих" операций типа удаления пробелов
+	unique_ptr<_TCHAR[]> m_szExpression;			// временный буфер для выражения, предназначен для "разрушающих" операций типа удаления пробелов
 	size_t m_nExpressionLength;
 	size_t m_nHeadPosition;			// индекс текущего символа в выражении
 	size_t m_nAdvanceNextSymbol;
 
-	_TCHAR* m_szTokenText;
+	unique_ptr<_TCHAR[]> m_szTokenText;
 	size_t m_nTokenTextLength;
 
 	wstring m_szErrorDescription;

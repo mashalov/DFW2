@@ -23,7 +23,7 @@ protected:
 	wstring strCompilerLogTag = cszLCCCompiler;
 
 	CCompilerLogger m_CompilerLogger;
-	CAutoCompiler *m_pAutoCompiler;
+	unique_ptr<CAutoCompiler> m_pAutoCompiler;
 	wstring m_strCompilerRoot;
 	wstring m_strModelRoot;
 	wstring m_strModelDLLName;
@@ -56,13 +56,13 @@ END_COM_MAP()
 
 	HRESULT FinalConstruct()
 	{
-		m_pAutoCompiler = new CAutoCompiler(m_CompilerLogger);
+		m_pAutoCompiler = make_unique<CAutoCompiler>(m_CompilerLogger);
 		return S_OK;
 	}
 
 	void FinalRelease()
 	{
-		delete m_pAutoCompiler;
+
 	}
 
 	static const _TCHAR *cszLCCCompiler;

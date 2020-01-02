@@ -119,12 +119,12 @@ public:
 // информация о переменной
 struct VariableEnum
 {
-	ptrdiff_t m_nIndex;								// индекс (номер уравнения, если переменная в него входит)
-	CExpressionToken *m_pToken;						// токен, который формирует значение переменной
-	size_t m_nRefCount;								// счетчик ссылок на эту переменную
-	eCOMPILERVARTYPE m_eVarType;					// тип переменной по физическому смыслу
-	ptrdiff_t GetIndex() const;						// функция возвращающая индекс в зависимости от типа
-	CVariableExtendedInfoBase *m_pVarExtendedInfo;	// дополнительная информация о переменной
+	ptrdiff_t m_nIndex;											// индекс (номер уравнения, если переменная в него входит)
+	CExpressionToken *m_pToken;									// токен, который формирует значение переменной
+	size_t m_nRefCount;											// счетчик ссылок на эту переменную
+	eCOMPILERVARTYPE m_eVarType;								// тип переменной по физическому смыслу
+	ptrdiff_t GetIndex() const;									// функция возвращающая индекс в зависимости от типа
+	CVariableExtendedInfoBase *m_pVarExtendedInfo;				// дополнительная информация о переменной
 	VariableEnum(CExpressionToken *pToken) : m_pToken(pToken), 
 											 m_nRefCount(0), 
 											 m_nIndex(0), 
@@ -133,12 +133,6 @@ struct VariableEnum
 	{
 
 	};
-
-	~VariableEnum()
-	{
-		if (m_pVarExtendedInfo)
-			delete m_pVarExtendedInfo;
-	}
 };
 
 
@@ -410,8 +404,8 @@ public:
 class CExpressionRule
 {
 protected:
-	CExpressionParserRule *m_pSource;		// входное правило
-	CExpressionParserRule *m_pDestination;	// выходное правило
+	unique_ptr< CExpressionParserRule> m_pSource;		// входное правило
+	unique_ptr< CExpressionParserRule> m_pDestination;	// выходное правило
 	bool Match(CExpressionToken *pToken);
 	VARIABLES m_Vars;
 public:
