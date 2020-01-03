@@ -103,6 +103,7 @@ protected:
 	CCompiler& m_Compiler;
 public:
 	CCompilerItem(CCompiler& Compiler) : m_Compiler(Compiler), m_pParser(nullptr) {}
+	virtual ~CCompilerItem();
 	CExpressionParserRules *m_pParser;
 	VariableEnum* CreateInternalVariable(const _TCHAR* cszVarName);
 	VariableEnum* CreateOutputVariable(const _TCHAR* cszVarName);

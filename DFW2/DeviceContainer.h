@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Device.h"
 #include "DeviceContainerProperties.h"
+#include "Serializer.h"
 
 namespace DFW2
 {

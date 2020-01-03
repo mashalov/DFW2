@@ -279,6 +279,11 @@ bool CCompilerItem::AddSpecialVariables()
 	return bRes;
 }
 
+CCompilerItem::~CCompilerItem()
+{
+	if (m_pParser)
+		delete m_pParser;
+}
 
 bool CCompiler::AddOutputVariable(const _TCHAR *cszVarName, VariableEnum* pVarEnum)
 {

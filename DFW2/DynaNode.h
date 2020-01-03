@@ -85,8 +85,8 @@ namespace DFW2
 			Vrastr = V;
 			Deltarastr = Delta;
 			Qgrastr = Qg;
-			Pnrrastr = Pn;
-			Qnrrastr = Qn;
+			Pnrrastr = Pnr;
+			Qnrrastr = Qnr;
 		}
 #endif
 				
@@ -190,6 +190,8 @@ namespace DFW2
 	//		V_SV,
 			V_LAST
 		};
+
+		unique_ptr<CSerializerBase> GetSerializer();
 
 		double Lag;
 		//double Sip;
@@ -415,6 +417,5 @@ namespace DFW2
 		void ProcessTopologyRequest();
 		bool m_bDynamicLRC = true;
 	};
-
 }
 

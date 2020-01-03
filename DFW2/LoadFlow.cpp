@@ -750,6 +750,7 @@ bool CLoadFlow::Run()
 #endif
 
 	pNodes->SwitchLRCs(true);
+
 	UpdateQToGenerators();
 	DumpNodes();
 	CheckFeasible();
@@ -966,7 +967,7 @@ void CLoadFlow::DumpNodes()
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 #ifdef _DEBUG
 			///*
-			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%g\n"),
+			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%.12g;%.12g\n"),
 				pNode->GetId(),
 				pNode->V,
 				pNode->Delta / M_PI * 180.0,
@@ -982,7 +983,8 @@ void CLoadFlow::DumpNodes()
 				pNode->LFVref,
 				pNode->Vrastr,
 				pNode->Deltarastr / M_PI * 180.0,
-				pNode->Qgrastr);
+				pNode->Qgrastr,
+				pNode->Qnrrastr);
 			//*/
 			/*
 			_ftprintf(fdump, _T("%d;%.12g;%.12g;%.12g;%.12g;%.12g;%.12g\n"),

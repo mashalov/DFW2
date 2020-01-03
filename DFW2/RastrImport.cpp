@@ -319,11 +319,30 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	for (int i = 0; i < spNode->Size; i++)
 	{
+		auto pSerializer = pNodes->GetSerializer();
+		for (auto&& sv : *pSerializer)
+		{
+			IColPtr spCol = spNodeCols->Item(sv.first.c_str());
+			switch (sv.second.ValueType)
+			{
+			case SerializedValue::eValueType::VT_DBL:
+				*sv.second.Value.pDbl = spCol->GetZ(i).dblVal;
+				break;
+			case SerializedValue::eValueType::VT_INT:
+				*sv.second.Value.pInt = spCol->GetZ(i).lVal;
+				break;
+			case SerializedValue::eValueType::VT_BOOL:
+				*sv.second.Value.pBool = spCol->GetZ(i).boolVal;
+				break;
+			}
+		}
+
+		pNodes->SetDBIndex(i);
+
 		pNodes->SetId(spNy->GetZ(i));
 		pNodes->SetName(spName->GetZ(i).bstrVal);
 		pNodes->SetState(spSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 		pNodes->Unom = spUnom->GetZ(i);
-		pNodes->SetDBIndex(i);
 		pNodes->V = spV->GetZ(i);
 		pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
 		pNodes->Delta = spDelta->GetZ(i);

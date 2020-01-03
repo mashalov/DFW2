@@ -1411,6 +1411,29 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 }
 
 
+unique_ptr<CSerializerBase> CDynaNode::GetSerializer()
+{
+	unique_ptr<CSerializerBase> pSerializer = make_unique<CSerializerBase>();
+	pSerializer->AddProperty(_T("vras"), V);
+	pSerializer->AddProperty(_T("delta"), Delta);
+	pSerializer->AddProperty(_T("pnr"), Pn);
+	pSerializer->AddProperty(_T("qnr"), Qn);
+	pSerializer->AddProperty(_T("pn"), Pnr);
+	pSerializer->AddProperty(_T("qn"), Qnr);
+	pSerializer->AddProperty(_T("pg"), Pg);
+	pSerializer->AddProperty(_T("qg"), Qg);
+	pSerializer->AddProperty(_T("gsh"), G);
+	pSerializer->AddProperty(_T("bsh"), B);
+	pSerializer->AddProperty(_T("grk"), Gr0);
+	pSerializer->AddProperty(_T("brk"), Br0);
+	pSerializer->AddProperty(_T("nrk"), Nr);
+	pSerializer->AddProperty(_T("vzd"), LFVref);
+	pSerializer->AddProperty(_T("qmin"), LFQmin);
+	pSerializer->AddProperty(_T("qmax"), LFQmax);
+	pSerializer->AddProperty(_T("uhom"), Unom);
+	return pSerializer;
+}
+
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");
 const _TCHAR *CDynaNodeBase::m_cszDelta = _T("Delta");
