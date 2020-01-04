@@ -223,3 +223,16 @@ const CDeviceContainerProperties CDynaExciterMustang::DeviceProperties()
 
 	return props;
 }
+
+
+void CDynaExciterMustang::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+{
+	CDynaExciterBase::UpdateSerializer(Serializer);
+	Serializer->AddProperty(_T("Texc"), Texc, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(_T("Uf_min"), Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("Uf_max"), Umax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("If_min"), Imin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("If_max"), Imax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("Kif"), Kif, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("Kig"), Kig, eVARUNITS::VARUNIT_PU);
+}

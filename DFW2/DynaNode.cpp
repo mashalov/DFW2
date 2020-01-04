@@ -1411,29 +1411,29 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 }
 
 
-unique_ptr<CSerializerBase> CDynaNode::GetSerializer()
-{
-	unique_ptr<CSerializerBase> pSerializer = make_unique<CSerializerBase>();
-	pSerializer->AddProperty(_T("vras"), V);
-	pSerializer->AddProperty(_T("delta"), Delta);
-	pSerializer->AddProperty(_T("pnr"), Pn);
-	pSerializer->AddProperty(_T("qnr"), Qn);
-	pSerializer->AddProperty(_T("pn"), Pnr);
-	pSerializer->AddProperty(_T("qn"), Qnr);
-	pSerializer->AddProperty(_T("pg"), Pg);
-	pSerializer->AddProperty(_T("qg"), Qg);
-	pSerializer->AddProperty(_T("gsh"), G);
-	pSerializer->AddProperty(_T("bsh"), B);
-	pSerializer->AddProperty(_T("grk"), Gr0);
-	pSerializer->AddProperty(_T("brk"), Br0);
-	pSerializer->AddProperty(_T("nrk"), Nr);
-	pSerializer->AddProperty(_T("vzd"), LFVref);
-	pSerializer->AddProperty(_T("qmin"), LFQmin);
-	pSerializer->AddProperty(_T("qmax"), LFQmax);
-	pSerializer->AddProperty(_T("uhom"), Unom);
-	return pSerializer;
-}
 
+void CDynaNodeBase::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+{
+	CDevice::UpdateSerializer(Serializer);
+
+	Serializer->AddProperty(_T("vras"), V, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(_T("delta"), Delta, eVARUNITS::VARUNIT_DEGREES);
+	Serializer->AddProperty(_T("pnr"), Pn, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(_T("qnr"), Qn, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(_T("pn"), Pnr, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(_T("qn"), Qnr, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(_T("pg"), Pg, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(_T("qg"), Qg, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(_T("gsh"), G, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty(_T("grk"), Gr0, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty(_T("nrk"), Nr, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty(_T("vzd"), LFVref, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(_T("qmin"), LFQmin, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(_T("qmax"), LFQmax, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(_T("uhom"), Unom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(_T("bsh"), B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty(_T("brk"), Br0, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+}
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");
 const _TCHAR *CDynaNodeBase::m_cszDelta = _T("Delta");

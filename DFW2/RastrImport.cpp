@@ -124,6 +124,26 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 	return bRes;
 }
 
+void CRastrImport::ReadRastrRow(unique_ptr<CSerializerBase>& Serializer, long Row)
+{
+	for (auto&& sv : *Serializer)
+	{
+		MetaSerializedValue& mv = *sv.second;
+		switch (mv.Value.ValueType)
+		{
+		case TypedSerializedValue::eValueType::VT_DBL:
+			*mv.Value.Value.pDbl= static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row).dblVal * mv.Multiplier;
+			break;
+		case TypedSerializedValue::eValueType::VT_INT:
+			*mv.Value.Value.pInt = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row).lVal;
+			break;
+		case TypedSerializedValue::eValueType::VT_BOOL:
+			*mv.Value.Value.pBool = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row).boolVal;
+			break;
+		}
+	}
+}
+
 void CRastrImport::GetData(CDynaModel& Network)
 {
 	IRastrPtr spRastr;
@@ -293,58 +313,35 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spNy = spNodeCols->Item("ny");
 	IColPtr spNtype = spNodeCols->Item("tip");
 	IColPtr spName = spNodeCols->Item("name");
-	IColPtr spUnom = spNodeCols->Item("uhom");
-	IColPtr spV = spNodeCols->Item("vras");
-	IColPtr spDelta= spNodeCols->Item("delta");
-	IColPtr spPn = spNodeCols->Item("pn");
-	IColPtr spQn = spNodeCols->Item("qn");
-	IColPtr spPnr = spNodeCols->Item("pnr");
-	IColPtr spQnr = spNodeCols->Item("qnr");
-	IColPtr spPg = spNodeCols->Item("pg");
-	IColPtr spQg = spNodeCols->Item("qg");
-	IColPtr spG = spNodeCols->Item("gsh");
-	IColPtr spB = spNodeCols->Item("bsh");
 	IColPtr spLCIdLF = spNodeCols->Item("nsx");
 	IColPtr spLCId = spNodeCols->Item("dnsx");
 	IColPtr spSta = spNodeCols->Item("sta");
-	IColPtr spG0 = spNodeCols->Item("grk");
-	IColPtr spB0 = spNodeCols->Item("brk");
-	IColPtr spNr = spNodeCols->Item("nrk");
-	IColPtr spVref = spNodeCols->Item("vzd");
-	IColPtr spQmin = spNodeCols->Item("qmin");
-	IColPtr spQmax = spNodeCols->Item("qmax");
-
 
 	Network.Nodes.AddDevices(pNodes, spNode->Size);
 
+	auto pSerializer = pNodes->GetSerializer();
+
+	for (auto&& sv : *pSerializer)
+		sv.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spNodeCols->Item(sv.first.c_str()));
+
 	for (int i = 0; i < spNode->Size; i++)
 	{
-		auto pSerializer = pNodes->GetSerializer();
-		for (auto&& sv : *pSerializer)
-		{
-			IColPtr spCol = spNodeCols->Item(sv.first.c_str());
-			switch (sv.second.ValueType)
-			{
-			case SerializedValue::eValueType::VT_DBL:
-				*sv.second.Value.pDbl = spCol->GetZ(i).dblVal;
-				break;
-			case SerializedValue::eValueType::VT_INT:
-				*sv.second.Value.pInt = spCol->GetZ(i).lVal;
-				break;
-			case SerializedValue::eValueType::VT_BOOL:
-				*sv.second.Value.pBool = spCol->GetZ(i).boolVal;
-				break;
-			}
-		}
+		pNodes->UpdateSerializer(pSerializer);
+		ReadRastrRow(pSerializer, i);
 
 		pNodes->SetDBIndex(i);
 
 		pNodes->SetId(spNy->GetZ(i));
 		pNodes->SetName(spName->GetZ(i).bstrVal);
 		pNodes->SetState(spSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+		pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
+
+		
+		/*
+		pNodes->B = -spB->GetZ(i).dblVal;
+		pNodes->Br0 = -spB0->GetZ(i).dblVal;
 		pNodes->Unom = spUnom->GetZ(i);
 		pNodes->V = spV->GetZ(i);
-		pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
 		pNodes->Delta = spDelta->GetZ(i);
 		pNodes->Pn = spPnr->GetZ(i);
 		pNodes->Qn = spQnr->GetZ(i);
@@ -353,13 +350,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 		pNodes->Pg = spPg->GetZ(i);
 		pNodes->Qg = spQg->GetZ(i);
 		pNodes->G = spG->GetZ(i);
-		pNodes->B = -spB->GetZ(i).dblVal;
-		pNodes->Br0 = -spB0->GetZ(i).dblVal;
 		pNodes->Gr0 = spG0->GetZ(i);
 		pNodes->Nr = spNr->GetZ(i);
 		pNodes->LFVref = spVref->GetZ(i);
 		pNodes->LFQmin = spQmin->GetZ(i);
 		pNodes->LFQmax = spQmax->GetZ(i);
+		*/
 		CDynaLRC *pDynLRC;
 		if (Network.LRCs.GetDevice(spLCId->GetZ(i), pDynLRC))
 		{
@@ -628,13 +624,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spExcId		= spExcCols->Item("Id");
 	IColPtr spExcSta	= spExcCols->Item("sta");
 	IColPtr spExcName	= spExcCols->Item("Name");
-	IColPtr spExcTexc	= spExcCols->Item("Texc");
-	IColPtr spExcUmin   = spExcCols->Item("Uf_min");
-	IColPtr spExcUmax   = spExcCols->Item("Uf_max");
-	IColPtr spExcImin	= spExcCols->Item("If_min");
-	IColPtr spExcImax	= spExcCols->Item("If_max");
-	IColPtr spExcKif	= spExcCols->Item("Kif");
-	IColPtr spExcKig	= spExcCols->Item("Kig");
 	IColPtr spExcVD		= spExcCols->Item("Type_rg");
 	IColPtr spExcDECId = spExcCols->Item("ForcerId");
 	IColPtr spExcRegId = spExcCols->Item("ExcControlId");
@@ -644,18 +633,20 @@ void CRastrImport::GetData(CDynaModel& Network)
 	CDynaExciterMustang *pExcitersMustang = new CDynaExciterMustang[nMustangExcitersCount];
 	Network.ExcitersMustang.AddDevices(pExcitersMustang, nMustangExcitersCount);
 
+
+	auto pSerializer2 = pExcitersMustang->GetSerializer();
+
+	for (auto&& sv : *pSerializer2)
+		sv.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spExcCols->Item(sv.first.c_str()));
+
+
 	for (int i = 0; i < spExciter->Size; i++)
 	{
+		pExcitersMustang->UpdateSerializer(pSerializer2);
+		ReadRastrRow(pSerializer2, i);
 		pExcitersMustang->SetId(spExcId->GetZ(i));
 		pExcitersMustang->SetState(spExcSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
 		pExcitersMustang->SetName(spExcName->GetZ(i).bstrVal);
-		pExcitersMustang->Texc = spExcTexc->GetZ(i);
-		pExcitersMustang->Umin = spExcUmin->GetZ(i);
-		pExcitersMustang->Umax = spExcUmax->GetZ(i);
-		pExcitersMustang->Imin = spExcImin->GetZ(i);
-		pExcitersMustang->Imax = spExcImax->GetZ(i);
-		pExcitersMustang->Kig  = spExcKig->GetZ(i);
-		pExcitersMustang->Kif  = spExcKif->GetZ(i);
 		pExcitersMustang->DECId = spExcDECId->GetZ(i);
 		pExcitersMustang->RegId = spExcRegId->GetZ(i);
 		pExcitersMustang->bVoltageDependent = (spExcVD->GetZ(i).lVal == 1) ? true : false ;

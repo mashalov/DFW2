@@ -47,8 +47,15 @@ int _tmain(int argc, _TCHAR* argv[])
 	{
 		CDynaModel Network;
 		CRastrImport ri;
-		ri.GetData(Network);
-		Network.Run();
+		try
+		{
+			ri.GetData(Network);
+			Network.Run();
+		}
+		catch (dfw2error& err)
+		{
+			Network.Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Ошибка : %s"), err.uwhat()));
+		}
 	}
 	_CrtDumpMemoryLeaks();
 

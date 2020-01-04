@@ -99,8 +99,16 @@ namespace DFW2
 	protected:
 		bool CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer);
+		void ReadRastrRow(unique_ptr<CSerializerBase>& Serializer, long Row);
 		CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType);
 		static const CDynaNodeBase::eLFNodeType RastrTypesMap[5];
+	};
+
+	class CSerializedValueAuxDataRastr : public CSerializedValueAuxDataBase
+	{
+	public:
+		IColPtr m_spCol;
+		CSerializedValueAuxDataRastr(IColPtr spCol) : m_spCol(spCol) { }
 	};
 }
 

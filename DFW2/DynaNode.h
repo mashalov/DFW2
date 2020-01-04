@@ -98,7 +98,7 @@ namespace DFW2
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
 		bool m_bInMetallicSC = false;
 		bool m_bLowVoltage;				// признак низкого модуля напряжения
-		bool m_bSavedLowVoltage;		
+		bool m_bSavedLowVoltage;		// сохраненный признак низкого напряжения для возврата на предыдущий шаг
 		double dLRCVicinity = 0.0;		// окрестность сглаживания СХН
 
 		double dLRCPn;					// расчетные значения прозводных СХН по напряжению
@@ -162,6 +162,7 @@ namespace DFW2
 		void TidyZeroBranches();
 		// выбирает исходное напряжение либо равное расчетному, либо (если расчетное равно почему-то нулю), номинальному
 		inline void PickV0() { V0 = (V > 0) ? V : Unom; }
+		virtual void UpdateSerializer(unique_ptr<CSerializerBase>& Serializer) override;
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
@@ -190,8 +191,6 @@ namespace DFW2
 	//		V_SV,
 			V_LAST
 		};
-
-		unique_ptr<CSerializerBase> GetSerializer();
 
 		double Lag;
 		//double Sip;
