@@ -228,6 +228,9 @@ const CDeviceContainerProperties CDynaExciterMustang::DeviceProperties()
 void CDynaExciterMustang::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
 {
 	CDynaExciterBase::UpdateSerializer(Serializer);
+	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty(_T("Texc"), Texc, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(_T("Uf_min"), Umin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(_T("Uf_max"), Umax, eVARUNITS::VARUNIT_PU);
@@ -235,4 +238,7 @@ void CDynaExciterMustang::UpdateSerializer(unique_ptr<CSerializerBase>& Serializ
 	Serializer->AddProperty(_T("If_max"), Imax, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(_T("Kif"), Kif, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(_T("Kig"), Kig, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("ForcerId"), DECId);
+	Serializer->AddProperty(_T("ExcControlId"), RegId);
+	Serializer->AddProperty(_T("Type_rg"), bVoltageDependent);
 }

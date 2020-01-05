@@ -1416,6 +1416,9 @@ void CDynaNodeBase::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 
+	Serializer->AddProperty(_T("name"), TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddProperty(_T("ny"), TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty(_T("vras"), V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty(_T("delta"), Delta, eVARUNITS::VARUNIT_DEGREES);
 	Serializer->AddProperty(_T("pnr"), Pn, eVARUNITS::VARUNIT_MW);

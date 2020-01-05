@@ -126,20 +126,48 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 
 void CRastrImport::ReadRastrRow(unique_ptr<CSerializerBase>& Serializer, long Row)
 {
+	
+	/*
+	pNodes->SetId(spNy->GetZ(i));
+	pNodes->SetName(spName->GetZ(i).bstrVal);
+	pNodes->SetState(spSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+	pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
+	*/
+
+	Serializer->m_pDevice->SetDBIndex(Row);
+
 	for (auto&& sv : *Serializer)
 	{
 		MetaSerializedValue& mv = *sv.second;
+		variant_t vt = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row);
 		switch (mv.Value.ValueType)
 		{
 		case TypedSerializedValue::eValueType::VT_DBL:
-			*mv.Value.Value.pDbl= static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row).dblVal * mv.Multiplier;
+			vt.ChangeType(VT_R8);
+			*mv.Value.Value.pDbl = vt.dblVal * mv.Multiplier;
 			break;
 		case TypedSerializedValue::eValueType::VT_INT:
-			*mv.Value.Value.pInt = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row).lVal;
+			vt.ChangeType(VT_I4);
+			*mv.Value.Value.pInt = vt.lVal;
 			break;
 		case TypedSerializedValue::eValueType::VT_BOOL:
-			*mv.Value.Value.pBool = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row).boolVal;
+			vt.ChangeType(VT_BOOL);
+			*mv.Value.Value.pBool = vt.boolVal;
 			break;
+		case TypedSerializedValue::eValueType::VT_NAME:
+			vt.ChangeType(VT_BSTR);
+			Serializer->m_pDevice->SetName(vt.bstrVal);
+			break;
+		case TypedSerializedValue::eValueType::VT_STATE:
+			vt.ChangeType(VT_BOOL);
+			Serializer->m_pDevice->SetState(vt.boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			break;
+		case TypedSerializedValue::eValueType::VT_ID:
+			vt.ChangeType(VT_I4);
+			Serializer->m_pDevice->SetId(vt.lVal);
+			break;
+		default:
+			throw dfw2error(Cex(_T("CRastrImport::ReadRastrRow wrong serializer type %d"), mv.Value.ValueType));
 		}
 	}
 }
@@ -328,34 +356,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	{
 		pNodes->UpdateSerializer(pSerializer);
 		ReadRastrRow(pSerializer, i);
-
 		pNodes->SetDBIndex(i);
-
-		pNodes->SetId(spNy->GetZ(i));
-		pNodes->SetName(spName->GetZ(i).bstrVal);
-		pNodes->SetState(spSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 		pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
 
-		
-		/*
-		pNodes->B = -spB->GetZ(i).dblVal;
-		pNodes->Br0 = -spB0->GetZ(i).dblVal;
-		pNodes->Unom = spUnom->GetZ(i);
-		pNodes->V = spV->GetZ(i);
-		pNodes->Delta = spDelta->GetZ(i);
-		pNodes->Pn = spPnr->GetZ(i);
-		pNodes->Qn = spQnr->GetZ(i);
-		pNodes->Pnr = spPn->GetZ(i);
-		pNodes->Qnr = spQn->GetZ(i);
-		pNodes->Pg = spPg->GetZ(i);
-		pNodes->Qg = spQg->GetZ(i);
-		pNodes->G = spG->GetZ(i);
-		pNodes->Gr0 = spG0->GetZ(i);
-		pNodes->Nr = spNr->GetZ(i);
-		pNodes->LFVref = spVref->GetZ(i);
-		pNodes->LFQmin = spQmin->GetZ(i);
-		pNodes->LFQmax = spQmax->GetZ(i);
-		*/
 		CDynaLRC *pDynLRC;
 		if (Network.LRCs.GetDevice(spLCId->GetZ(i), pDynLRC))
 		{
@@ -644,12 +647,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	{
 		pExcitersMustang->UpdateSerializer(pSerializer2);
 		ReadRastrRow(pSerializer2, i);
-		pExcitersMustang->SetId(spExcId->GetZ(i));
-		pExcitersMustang->SetState(spExcSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
-		pExcitersMustang->SetName(spExcName->GetZ(i).bstrVal);
-		pExcitersMustang->DECId = spExcDECId->GetZ(i);
-		pExcitersMustang->RegId = spExcRegId->GetZ(i);
-		pExcitersMustang->bVoltageDependent = (spExcVD->GetZ(i).lVal == 1) ? true : false ;
 		pExcitersMustang++;
 	}
 

@@ -1066,9 +1066,9 @@ unique_ptr<CSerializerBase> CDevice::GetSerializer()
 void CDevice::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
 {
 	if (!Serializer)
-		Serializer = std::make_unique<CSerializerBase>();
+		Serializer = std::make_unique<CSerializerBase>(this);
 	else
-		Serializer->BeginUpdate();
+		Serializer->BeginUpdate(this);
 }
 
 #ifdef _DEBUG
