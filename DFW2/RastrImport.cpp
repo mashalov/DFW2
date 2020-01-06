@@ -174,8 +174,7 @@ void CRastrImport::ReadRastrRow(unique_ptr<CSerializerBase>& Serializer, long Ro
 
 void CRastrImport::GetData(CDynaModel& Network)
 {
-	IRastrPtr spRastr;
-	HRESULT hr = spRastr.CreateInstance(CLSID_Rastr);
+	HRESULT hr = m_spRastr.CreateInstance(CLSID_Rastr);
 
 	//spRastr->Load(RG_REPL, L"..\\tests\\test92.rst", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
@@ -183,7 +182,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
 	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
-	spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
+	m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\oos", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
@@ -199,7 +198,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	if (!Network.Automatic().PrepareCompiler())
 		return;
 
-	ITablesPtr spTables = spRastr->Tables;
+	ITablesPtr spTables = m_spRastr->Tables;
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
 	IColsPtr spASCols = spAutoStarters->Cols;
 	IColPtr spASId			= spASCols->Item(_T("Id"));
@@ -294,9 +293,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	if (!Network.CustomDevice.ConnectDLL(_T("DeviceDLL.dll")))
 		return;
 	CustomDeviceConnectInfo ci(_T("ExcControl"),2);
-	ITablePtr spExAddXcomp = spRastr->Tables->Item("ExcControl");
+	ITablePtr spExAddXcomp = m_spRastr->Tables->Item("ExcControl");
 	spExAddXcomp->Cols->Add("Xcomp", PR_REAL);
-	GetCustomDeviceData(Network, spRastr, ci, Network.CustomDevice);
+	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
 	
 	ITablePtr spLRC = spTables->Item("polin");
 	IColsPtr spLRCCols = spLRC->Cols;
@@ -622,115 +621,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 		}
 	}
 
-	ITablePtr spExciter = spTables->Item("Exciter");
-	IColsPtr  spExcCols = spExciter->Cols;
-	IColPtr spExcId		= spExcCols->Item("Id");
-	IColPtr spExcSta	= spExcCols->Item("sta");
-	IColPtr spExcName	= spExcCols->Item("Name");
-	IColPtr spExcVD		= spExcCols->Item("Type_rg");
-	IColPtr spExcDECId = spExcCols->Item("ForcerId");
-	IColPtr spExcRegId = spExcCols->Item("ExcControlId");
-
-	size_t nMustangExcitersCount = spExciter->Size;
-
-	CDynaExciterMustang *pExcitersMustang = new CDynaExciterMustang[nMustangExcitersCount];
-	Network.ExcitersMustang.AddDevices(pExcitersMustang, nMustangExcitersCount);
-
-
-	auto pSerializer2 = pExcitersMustang->GetSerializer();
-
-	for (auto&& sv : *pSerializer2)
-		sv.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spExcCols->Item(sv.first.c_str()));
-
-
-	for (int i = 0; i < spExciter->Size; i++)
-	{
-		pExcitersMustang->UpdateSerializer(pSerializer2);
-		ReadRastrRow(pSerializer2, i);
-		pExcitersMustang++;
-	}
-
-
-	ITablePtr spForcer = spTables->Item("Forcer");
-	IColsPtr  spForcerCols = spForcer->Cols;
-
-	IColPtr spForcerId	 = spForcerCols->Item("Id");
-	IColPtr spForcerSta  = spForcerCols->Item("sta");
-	IColPtr spForcerName = spForcerCols->Item("Name");
-	IColPtr spForcerVEnfOn = spForcerCols->Item("Ubf");
-	IColPtr spForcerVEnfOff = spForcerCols->Item("Uef");
-	IColPtr spForcerVDefOn = spForcerCols->Item("Ubrf");
-	IColPtr spForcerVDefOff = spForcerCols->Item("Uerf");
-	IColPtr spForcerEnfRatio = spForcerCols->Item("Rf");
-	IColPtr spForcerDefRatio = spForcerCols->Item("Rrf");
-	IColPtr spForcerEnfTexc = spForcerCols->Item("Texc_f");
-	IColPtr spForcerDefTexc = spForcerCols->Item("Texc_rf");
-	IColPtr spForcerTdelOn = spForcerCols->Item("Tz_in");
-	IColPtr spForcerTdelOff = spForcerCols->Item("Tz_out");
-
-	size_t nMustangDECsCount = spForcer->Size;
-
-	CDynaDECMustang *pDECsMustang = new CDynaDECMustang[nMustangDECsCount];
-	Network.DECsMustang.AddDevices(pDECsMustang, nMustangDECsCount);
-
-	for (int i = 0; i < static_cast<ptrdiff_t>(nMustangDECsCount); i++)
-	{
-		pDECsMustang->SetId(spForcerId->GetZ(i));
-		pDECsMustang->SetState(spForcerSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
-		pDECsMustang->SetName(spForcerName->GetZ(i).bstrVal);
-		pDECsMustang->VEnfOn = spForcerVEnfOn->GetZ(i);
-		pDECsMustang->VEnfOff = spForcerVEnfOff->GetZ(i);
-		pDECsMustang->VDefOn = spForcerVDefOn->GetZ(i);
-		pDECsMustang->VDefOff = spForcerVDefOff->GetZ(i);
-		pDECsMustang->EnfRatio = spForcerEnfRatio->GetZ(i);
-		pDECsMustang->DefRatio = spForcerDefRatio->GetZ(i);
-		pDECsMustang->EnfTexc = spForcerEnfTexc->GetZ(i);
-		pDECsMustang->DefTexc = spForcerDefTexc->GetZ(i);
-		pDECsMustang->TdelOn = spForcerTdelOn->GetZ(i);
-		pDECsMustang->TdelOff = spForcerTdelOff->GetZ(i);
-		pDECsMustang++;
-	}
-
-	ITablePtr spExcConMustang = spTables->Item("ExcControl");
-	IColsPtr spEÑMCols = spExcConMustang->Cols;
-
-	IColPtr spECMId = spEÑMCols->Item("Id");
-	IColPtr spECMSta = spEÑMCols->Item("sta");
-	IColPtr spECMName = spEÑMCols->Item("Name");
-	IColPtr spECMTr = spEÑMCols->Item("Trv");
-	IColPtr spECMK0u = spEÑMCols->Item("Ku");
-	IColPtr spECMK1u = spEÑMCols->Item("Ku1");
-	IColPtr spECMK1if = spEÑMCols->Item("Kif1");
-	IColPtr spECMK0f = spEÑMCols->Item("Kf");
-	IColPtr spECMK1f = spEÑMCols->Item("Kf1");
-	IColPtr spECMTf = spEÑMCols->Item("Tf");
-	IColPtr spECMUmin = spEÑMCols->Item("Urv_min");
-	IColPtr spECMUmax = spEÑMCols->Item("Urv_max");
-	IColPtr spECMA = spEÑMCols->Item("Alpha");
-
-	size_t nMustangExcConsCount = spExcConMustang->Size;
-
-	CDynaExcConMustang *pExcConsMustang = new CDynaExcConMustang[nMustangExcConsCount];
-	Network.ExcConMustang.AddDevices(pExcConsMustang, nMustangExcConsCount);
-
-	for (int i = 0; i < spExcConMustang->Size; i++)
-	{
-		pExcConsMustang->SetId(spECMId->GetZ(i));
-		pExcConsMustang->SetState(spECMSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
-		pExcConsMustang->SetName(spECMName->GetZ(i).bstrVal);
-		pExcConsMustang->Alpha = spECMA->GetZ(i);
-		pExcConsMustang->Umin = spECMUmin->GetZ(i);
-		pExcConsMustang->Umax = spECMUmax->GetZ(i);
-		pExcConsMustang->Tf   = spECMTf->GetZ(i);
-		pExcConsMustang->K1f  = spECMK1f->GetZ(i);
-		pExcConsMustang->K0f = spECMK0f->GetZ(i);
-		pExcConsMustang->K1if = spECMK1if->GetZ(i);
-		pExcConsMustang->K1u  = spECMK1u->GetZ(i);
-		pExcConsMustang->K0u  = spECMK0u->GetZ(i);
-		pExcConsMustang->Tr   = spECMTr->GetZ(i);
-		pExcConsMustang++;
-	}
-
+	ReadTable<CDynaExciterMustang>(_T("Exciter"), Network.ExcitersMustang);
+	ReadTable<CDynaDECMustang>(_T("Forcer"), Network.DECsMustang);
+	ReadTable<CDynaExcConMustang>(_T("ExcControl"), Network.ExcConMustang);
 }
 
 bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount)

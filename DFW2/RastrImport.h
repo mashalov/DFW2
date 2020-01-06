@@ -97,9 +97,36 @@ namespace DFW2
 		virtual ~CRastrImport();
 		void GetData(CDynaModel& Network);
 	protected:
+		IRastrPtr m_spRastr;
 		bool CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer);
 		void ReadRastrRow(unique_ptr<CSerializerBase>& Serializer, long Row);
+
+		template<typename T>
+		CDevice* ReadTable(const _TCHAR *cszTableName, CDeviceContainer& Container)
+		{
+			ITablePtr spTable = m_spRastr->Tables->Item(cszTableName);
+			IColsPtr spCols = spTable->Cols;
+			int nSize = spTable->Size;
+			T *pDevs(nullptr), *pDev(nullptr);
+			if (nSize)
+			{
+				pDevs = pDev = new T[nSize];
+				auto pSerializer = pDevs->GetSerializer();
+				for (auto&& serializervalue : *pSerializer)
+					serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(serializervalue.first.c_str()));
+
+				for (int Row = 0; Row < nSize; Row++, pDev++)
+				{
+					pDev->UpdateSerializer(pSerializer);
+					ReadRastrRow(pSerializer, Row);
+				}
+
+				Container.AddDevices(pDevs, nSize);
+			}
+			return pDevs;
+		}
+
 		CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType);
 		static const CDynaNodeBase::eLFNodeType RastrTypesMap[5];
 	};

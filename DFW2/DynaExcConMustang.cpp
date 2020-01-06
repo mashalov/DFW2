@@ -209,6 +209,25 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 	return eRes;
 }
 
+
+void CDynaExcConMustang::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+{
+	CDevice::UpdateSerializer(Serializer);
+	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty(_T("Alpha"), Alpha);
+	Serializer->AddProperty(_T("Trv"), Tr);
+	Serializer->AddProperty(_T("Ku"), K0u);
+	Serializer->AddProperty(_T("Ku1"), K1u);
+	Serializer->AddProperty(_T("Kif1"), K1if);
+	Serializer->AddProperty(_T("Kf"), K0f);
+	Serializer->AddProperty(_T("Kf1"), K1f);
+	Serializer->AddProperty(_T("Tf"), Tf);
+	Serializer->AddProperty(_T("Urv_min"), Umin);
+	Serializer->AddProperty(_T("Urv_max"), Umax);
+}
+
 const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()
 {
 	CDeviceContainerProperties props;
