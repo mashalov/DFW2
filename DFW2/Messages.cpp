@@ -19,6 +19,7 @@ CDFW2Messages::CDFW2Messages()
 	m_VarNameMap[VARUNIT_SIEMENS]	= _T("См");
 	m_VarNameMap[VARUNIT_PIECES]	= _T("Шт");
 	m_VarNameMap[VARUNIT_SECONDS]   = _T("с");
+	m_VarNameMap[VARUNIT_OHM]		= _T("Ом");
 }
 
 const _TCHAR* CDFW2Messages::m_cszBranchNodeNotFound = _T("Узел %d не найден для ветви");

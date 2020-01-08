@@ -190,7 +190,6 @@ bool CDynaModel::Run()
 
 			m_Automatic.Init();
 			m_Discontinuities.Init();
-			//WriteResultsHeader();
 			SetH(0.01);
 			try
 			{
@@ -259,6 +258,7 @@ bool CDynaModel::Run()
 																	 sc.dMaxConditionNumberTime);
 
 		GetWorstEquations(10);
+		Serialize();
 		chrono::milliseconds CalcDuration = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - sc.m_ClockStart);
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Duration %g"), static_cast<double>(CalcDuration.count()) / 1E3);
 	}

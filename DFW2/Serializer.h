@@ -48,8 +48,9 @@ namespace DFW2
 	struct MetaSerializedValue
 	{
 		TypedSerializedValue Value;
-		eVARUNITS Units = eVARUNITS::VARUNIT_PU;
+		eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET;
 		double Multiplier = 1.0;
+		bool bState = false;
 		MetaSerializedValue(double* pDouble) : Value(pDouble) {}
 		MetaSerializedValue(ptrdiff_t* pInteger) : Value(pInteger) {}
 		MetaSerializedValue(bool* pBoolean) : Value(pBoolean) {}
@@ -66,6 +67,7 @@ namespace DFW2
 		SERIALIZERLIST ValueList;
 		SERIALIZERMAP ValueMap;
 		SERIALIZERLIST::iterator UpdateIterator;
+		std::wstring m_strClassName;
 	public:
 		CDevice *m_pDevice = nullptr;
 		static const _TCHAR* m_cszDupName;
@@ -82,6 +84,11 @@ namespace DFW2
 		inline bool IsCreate()
 		{
 			return UpdateIterator == ValueList.end();
+		}
+
+		void SetClassName(const _TCHAR *cszClassName)
+		{
+			m_strClassName = cszClassName;
 		}
 
 		MetaSerializedValue* AddProperty(const _TCHAR* cszName, TypedSerializedValue::eValueType Type)
@@ -102,6 +109,14 @@ namespace DFW2
 				UpdateIterator++;
 				return prev(UpdateIterator)->get();
 			}
+		}
+
+		template<typename T>
+		MetaSerializedValue* AddState(const _TCHAR* cszName, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		{
+			MetaSerializedValue *meta = AddProperty(cszName, Val, Units, Multiplier);
+			meta->bState = true;
+			return meta;
 		}
 
 		template<typename T>
@@ -130,13 +145,25 @@ namespace DFW2
 		SERIALIZERMAP::const_iterator begin() { return ValueMap.begin(); }
 		SERIALIZERMAP::const_iterator end()   { return ValueMap.end();   }
 
+
+		CSerializerBase() : m_pDevice(nullptr)
+		{
+			UpdateIterator = ValueList.end();
+		}
+
 		CSerializerBase(CDevice *pDevice) : m_pDevice(pDevice)
 		{
 			UpdateIterator = ValueList.end();
 		}
+
 		virtual ~CSerializerBase()
 		{
 
+		}
+
+		const std::wstring& GetClassName()
+		{
+			return m_strClassName;
 		}
 	};
 }

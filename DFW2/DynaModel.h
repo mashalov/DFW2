@@ -11,6 +11,7 @@
 #include "KLUWrapper.h"
 #include "Results.h"
 #include "chrono"
+#include "SerializerXML.h"
 
 //#define USE_FMA
 namespace DFW2
@@ -205,7 +206,10 @@ namespace DFW2
 			ptrdiff_t q;
 			double t = 0.0;
 			double t0 = 0.0;
-			volatile double KahanC = 0.0;
+			// volatile нужен для гарантии корректного учета суммы кэхэна в расчете времени
+			// но он же не дает мешает сериалиазации, поэтому временно убран. Проверить, как влияет
+			// наличие или отсутствие volatile на расчет
+			/*volatile */double KahanC = 0.0;
 			ptrdiff_t nStepsToStepChangeParameter = 4;
 			ptrdiff_t nStepsToOrderChangeParameter = 4;
 			ptrdiff_t nStepsToFailParameter = 1;
@@ -325,6 +329,71 @@ namespace DFW2
 			{
 				t0 = t;
 			}
+
+			void UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+			{
+				Serializer->SetClassName(_T("StepControl"));
+				Serializer->AddProperty(_T("RefactorMatrix"), m_bRefactorMatrix);
+				Serializer->AddProperty(_T("FillConstantElements"), m_bFillConstantElements);
+				Serializer->AddProperty(_T("NewtonConverged"), m_bNewtonConverged);
+				Serializer->AddProperty(_T("NordsiekSaved"), m_bNordsiekSaved);
+				Serializer->AddProperty(_T("NewtonDisconverging"), m_bNewtonDisconverging);
+				Serializer->AddProperty(_T("NewtonStepControl"), m_bNewtonStepControl);
+				Serializer->AddProperty(_T("DiscontinuityMode"), m_bDiscontinuityMode);
+				Serializer->AddProperty(_T("ZeroCrossingMode"), m_bZeroCrossingMode);
+				Serializer->AddProperty(_T("RetryStep"), m_bRetryStep);
+				Serializer->AddProperty(_T("ProcessTopology"), m_bProcessTopology);
+				Serializer->AddProperty(_T("DiscontinuityRequest"), m_bDiscontinuityRequest);
+				Serializer->AddProperty(_T("EnforceOut"), m_bEnforceOut);
+				Serializer->AddProperty(_T("BeforeDiscontinuityWritten"), m_bBeforeDiscontinuityWritten);
+				Serializer->AddProperty(_T("FilteredStep"), dFilteredStep);
+				Serializer->AddProperty(_T("FilteredOrder"), dFilteredOrder);
+				Serializer->AddProperty(_T("FilteredStepInner"), dFilteredStepInner);
+				Serializer->AddProperty(_T("FilteredOrderInner"), dFilteredOrderInner);
+				Serializer->AddProperty(_T("RateGrowLimit"), dRateGrowLimit);
+				Serializer->AddProperty(_T("StepsCount"), nStepsCount);
+				Serializer->AddProperty(_T("NewtonIterationsCount"), nNewtonIterationsCount);
+				Serializer->AddProperty(_T("MaxConditionNumber"), dMaxConditionNumber);
+				Serializer->AddProperty(_T("MaxConditionNumberTime"), dMaxConditionNumberTime);
+				Serializer->AddProperty(_T("DiscontinuityNewtonFailures"), nDiscontinuityNewtonFailures);
+				Serializer->AddProperty(_T("MinimumStepFailures"), nMinimumStepFailures);
+				Serializer->AddProperty(_T("CurrentH"), m_dCurrentH);
+				Serializer->AddProperty(_T("OldH"), m_dOldH);
+				Serializer->AddProperty(_T("StoredH"), m_dStoredH);
+				Serializer->AddProperty(_T("q"), q);
+				Serializer->AddProperty(_T("t"), t);
+				//Serializer->AddProperty(_T("KahanC"), KahanC);
+				Serializer->AddProperty(_T("t0"), t0);
+				Serializer->AddProperty(_T("StepsToStepChangeParameter"), nStepsToStepChangeParameter);
+				Serializer->AddProperty(_T("StepsToOrderChangeParameter"), nStepsToOrderChangeParameter);
+				Serializer->AddProperty(_T("StepsToFailParameter"), nStepsToFailParameter);
+				Serializer->AddProperty(_T("StepsToStepChange"), nStepsToStepChange);
+				Serializer->AddProperty(_T("StepsToOrderChange"), nStepsToOrderChange);
+				Serializer->AddProperty(_T("StepsToFail"), nStepsToFail);
+				Serializer->AddProperty(_T("SuccessfullStepsOfNewton"), nSuccessfullStepsOfNewton);
+				Serializer->AddProperty(_T("StepsToEndRateGrow"), nStepsToEndRateGrow);
+				Serializer->AddProperty(_T("NewtonIteration"), nNewtonIteration);
+				Serializer->AddProperty(_T("RightHandNorm"), dRightHandNorm);
+				Serializer->AddProperty(_T("AdamsDampingEnabled"), bAdamsDampingEnabled);
+				Serializer->AddProperty(_T("NoRingingSteps"), nNoRingingSteps);
+				Serializer->AddProperty(_T("Hmin"), Hmin);
+				Serializer->AddProperty(_T("LastRefactorH"), m_dLastRefactorH);
+				Serializer->AddProperty(_T("RingingDetected"), bRingingDetected);
+
+				Serializer->AddProperty(_T("Order0Steps"), OrderStatistics[0].nSteps);
+				Serializer->AddProperty(_T("Order0Failures"), OrderStatistics[0].nFailures);
+				Serializer->AddProperty(_T("Order0NewtonFailures"), OrderStatistics[0].nNewtonFailures);
+				Serializer->AddProperty(_T("Order0ZeroCrossingsSteps"), OrderStatistics[0].nZeroCrossingsSteps);
+				Serializer->AddProperty(_T("Order0TimePassed"), OrderStatistics[0].dTimePassed);
+				Serializer->AddProperty(_T("Order0TimePassedKahan"), OrderStatistics[0].dTimePassedKahan);
+
+				Serializer->AddProperty(_T("Order1Steps"), OrderStatistics[1].nSteps);
+				Serializer->AddProperty(_T("Order1Failures"), OrderStatistics[1].nFailures);
+				Serializer->AddProperty(_T("Order1NewtonFailures"), OrderStatistics[1].nNewtonFailures);
+				Serializer->AddProperty(_T("Order1ZeroCrossingsSteps"), OrderStatistics[1].nZeroCrossingsSteps);
+				Serializer->AddProperty(_T("Order1TimePassed"), OrderStatistics[1].dTimePassed);
+				Serializer->AddProperty(_T("Order1TimePassedKahan"), OrderStatistics[1].dTimePassedKahan);
+			}
 		};
 
 		struct Parameters
@@ -354,8 +423,33 @@ namespace DFW2
 			double m_dZeroBranchImpedance = 0.1;
 			double m_dAdamsDampingAlpha = 0.05;
 			ptrdiff_t m_nAdamsDampingSteps = 10;
-
 			Parameters() { }
+			void UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+			{
+				Serializer->SetClassName(_T("Parameters"));
+				Serializer->AddProperty(_T("FrequencyTimeConstant"), m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
+				Serializer->AddProperty(_T("LRCToShuntVmin"), m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
+				Serializer->AddProperty(_T("ZeroCrossingTolerance"), m_dZeroCrossingTolerance);
+				Serializer->AddProperty(_T("DontCheckTolOnMinStep"), m_bDontCheckTolOnMinStep);
+				Serializer->AddProperty(_T("ConsiderDampingEquation"), m_bConsiderDampingEquation);
+				Serializer->AddProperty(_T("OutStep"), m_dOutStep,eVARUNITS::VARUNIT_SECONDS);
+				Serializer->AddProperty(_T("VarSearchStackDepth"), nVarSearchStackDepth);
+				Serializer->AddProperty(_T("Atol"), m_dAtol);
+				Serializer->AddProperty(_T("Rtol"), m_dRtol);
+				Serializer->AddProperty(_T("RefactorByHRatio"), m_dRefactorByHRatio);
+				Serializer->AddProperty(_T("LogToConsole"), m_bLogToConsole);
+				Serializer->AddProperty(_T("LogToFile"), m_bLogToFile);
+				Serializer->AddProperty(_T("MustangDerivativeTimeConstant"), m_dMustangDerivativeTimeConstant, eVARUNITS::VARUNIT_SECONDS);
+				Serializer->AddProperty(_T("AdamsIndividualSuppressionCycles"), m_nAdamsIndividualSuppressionCycles, eVARUNITS::VARUNIT_PIECES);
+				Serializer->AddProperty(_T("AdamsGlobalSuppressionStep"), m_nAdamsGlobalSuppressionStep, eVARUNITS::VARUNIT_PIECES);
+				Serializer->AddProperty(_T("AdamsIndividualSuppressStepsRange"), m_nAdamsIndividualSuppressStepsRange, eVARUNITS::VARUNIT_PIECES);
+				Serializer->AddProperty(_T("UseRefactor"), m_bUseRefactor);
+				Serializer->AddProperty(_T("DisableResultsWriter"), m_bDisableResultsWriter);
+				Serializer->AddProperty(_T("MinimumStepFailures"), m_nMinimumStepFailures, eVARUNITS::VARUNIT_PIECES);
+				Serializer->AddProperty(_T("ZeroBranchImpedance"), m_dZeroBranchImpedance, eVARUNITS::VARUNIT_OHM);
+				Serializer->AddProperty(_T("AdamsDampingAlpha"), m_dAdamsDampingAlpha);
+				Serializer->AddProperty(_T("AdamsDampingSteps"), m_nAdamsDampingSteps);
+			}
 		} 
 			m_Parameters;
 
@@ -705,5 +799,7 @@ namespace DFW2
 
 		void GetWorstEquations(ptrdiff_t nCount);
 		void ReportKLUError(KLU_common& KLUCommon);
+
+		void Serialize();
 	};
 }

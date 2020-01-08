@@ -157,19 +157,20 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::UpdateExternalVariables(CDynaModel *pDyna
 void CDynaDECMustang::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
+	Serializer->SetClassName(_T("DynaDECMustang"));
 	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
 	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty(_T("Ubf"), VEnfOn);
-	Serializer->AddProperty(_T("Uef"), VEnfOff);
-	Serializer->AddProperty(_T("Ubrf"), VDefOn);
-	Serializer->AddProperty(_T("Uerf"), VDefOff);
+	Serializer->AddProperty(_T("Ubf"), VEnfOn, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("Uef"), VEnfOff, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("Ubrf"), VDefOn, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("Uerf"), VDefOff, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(_T("Rf"), EnfRatio);
 	Serializer->AddProperty(_T("Rrf"), DefRatio);
-	Serializer->AddProperty(_T("Texc_f"), EnfTexc);
-	Serializer->AddProperty(_T("Texc_rf"), DefTexc);
-	Serializer->AddProperty(_T("Tz_in"), TdelOn);
-	Serializer->AddProperty(_T("Tz_out"), TdelOff);
+	Serializer->AddProperty(_T("Texc_f"), EnfTexc, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(_T("Texc_rf"), DefTexc, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(_T("Tz_in"), TdelOn, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(_T("Tz_out"), TdelOff, eVARUNITS::VARUNIT_SECONDS);
 }
 
 const CDeviceContainerProperties CDynaDECMustang::DeviceProperties()

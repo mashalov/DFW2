@@ -139,6 +139,8 @@ void CRastrImport::ReadRastrRow(unique_ptr<CSerializerBase>& Serializer, long Ro
 	for (auto&& sv : *Serializer)
 	{
 		MetaSerializedValue& mv = *sv.second;
+		if (mv.bState)
+			continue;
 		variant_t vt = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row);
 		switch (mv.Value.ValueType)
 		{
@@ -349,7 +351,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	auto pSerializer = pNodes->GetSerializer();
 
 	for (auto&& sv : *pSerializer)
-		sv.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spNodeCols->Item(sv.first.c_str()));
+		if(!sv.second->bState)
+			sv.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spNodeCols->Item(sv.first.c_str()));
 
 	for (int i = 0; i < spNode->Size; i++)
 	{

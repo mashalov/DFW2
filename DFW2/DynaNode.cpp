@@ -1416,6 +1416,7 @@ void CDynaNodeBase::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 
+	Serializer->SetClassName(_T("DynaNode"));
 	Serializer->AddProperty(_T("name"), TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
 	Serializer->AddProperty(_T("ny"), TypedSerializedValue::eValueType::VT_ID);
@@ -1436,6 +1437,8 @@ void CDynaNodeBase::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
 	Serializer->AddProperty(_T("uhom"), Unom, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty(_T("bsh"), B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddProperty(_T("brk"), Br0, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddState(_T("Vre"), Vre, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(_T("Vim"), Vim, eVARUNITS::VARUNIT_KVOLTS);
 }
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");

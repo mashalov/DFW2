@@ -586,6 +586,42 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(DFW2::CDFW2Messages::m_cszAdamsDamping, bEnable ? DFW2::CDFW2Messages::m_cszOn: DFW2::CDFW2Messages::m_cszOff));
 }
 
+
+void CDynaModel::Serialize()
+{
+	CSerializerXML xmlSerializer;
+	xmlSerializer.CreateNewSerialization();
+
+	unique_ptr<CSerializerBase> SerializerParameteres = make_unique<CSerializerBase>();
+	m_Parameters.UpdateSerializer(SerializerParameteres);
+	xmlSerializer.SerializeClassMeta(SerializerParameteres);
+	xmlSerializer.SerializeClass(SerializerParameteres);
+
+	unique_ptr<CSerializerBase> SerializerStepControl = make_unique<CSerializerBase>();
+	sc.UpdateSerializer(SerializerStepControl);
+	xmlSerializer.SerializeClassMeta(SerializerStepControl);
+	xmlSerializer.SerializeClass(SerializerStepControl);
+
+	for (auto&& container : m_DeviceContainers)
+	{
+		if (container->Count())
+		{
+			auto& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
+			if (serializer->GetClassName().empty())
+				continue;
+
+			xmlSerializer.SerializeClassMeta(serializer);
+			for (auto&& device : *container)
+			{
+				device->UpdateSerializer(serializer);
+				xmlSerializer.SerializeClass(serializer);
+			}
+		}
+	}
+	xmlSerializer.Commit();
+}
+
+
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
 								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
