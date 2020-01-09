@@ -14,8 +14,8 @@ namespace DFW2
 		virtual ~CSerializerXML() {}
 		void CreateNewSerialization();
 		void Commit();
-		void SerializeClass(unique_ptr<CSerializerBase>& Serializer);
-		void SerializeClassMeta(unique_ptr<CSerializerBase>& Serializer);
+		void SerializeClass(SerializerPtr& Serializer);
+		void SerializeClassMeta(SerializerPtr& Serializer);
 	};
 }
 

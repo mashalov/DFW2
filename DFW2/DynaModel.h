@@ -330,7 +330,7 @@ namespace DFW2
 				t0 = t;
 			}
 
-			void UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+			void UpdateSerializer(SerializerPtr& Serializer)
 			{
 				Serializer->SetClassName(_T("StepControl"));
 				Serializer->AddProperty(_T("RefactorMatrix"), m_bRefactorMatrix);
@@ -424,7 +424,7 @@ namespace DFW2
 			double m_dAdamsDampingAlpha = 0.05;
 			ptrdiff_t m_nAdamsDampingSteps = 10;
 			Parameters() { }
-			void UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+			void UpdateSerializer(SerializerPtr& Serializer)
 			{
 				Serializer->SetClassName(_T("Parameters"));
 				Serializer->AddProperty(_T("FrequencyTimeConstant"), m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);

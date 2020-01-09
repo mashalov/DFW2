@@ -12,7 +12,7 @@ void CSerializerXML::CreateNewSerialization()
 	m_spXMLDoc->appendChild(m_spXMLDoc->createElement(_T("DFW2")));
 }
 
-void CSerializerXML::SerializeClassMeta(unique_ptr<CSerializerBase>& Serializer)
+void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 {
 	MSXML2::IXMLDOMElementPtr spXMLClass = m_spXMLDoc->createElement(_T("class"));
 	spXMLClass->setAttribute(_T("name"), Serializer->GetClassName().c_str());
@@ -37,7 +37,7 @@ void CSerializerXML::SerializeClassMeta(unique_ptr<CSerializerBase>& Serializer)
 	spXMLClass->appendChild(m_spXMLItems);
 }
 
-void CSerializerXML::SerializeClass(unique_ptr<CSerializerBase>& Serializer)
+void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 {
 	MSXML2::IXMLDOMElementPtr spXMLClass = m_spXMLDoc->createElement(Serializer->GetClassName().c_str());
 	m_spXMLItems->appendChild(spXMLClass);
@@ -66,6 +66,9 @@ void CSerializerXML::SerializeClass(unique_ptr<CSerializerBase>& Serializer)
 				break;
 		case TypedSerializedValue::eValueType::VT_ID:
 			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, Serializer->m_pDevice->GetId());
+				break;
+		case TypedSerializedValue::eValueType::VT_ADAPTER:
+			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, mv.Value.Adapter->GetString().c_str());
 				break;
 		default:
 			throw dfw2error(Cex(_T("CSerializerXML::SerializeClass wrong serializer type %d"), mv.Value.ValueType));

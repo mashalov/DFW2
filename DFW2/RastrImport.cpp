@@ -124,7 +124,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 	return bRes;
 }
 
-void CRastrImport::ReadRastrRow(unique_ptr<CSerializerBase>& Serializer, long Row)
+void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 {
 	
 	/*
@@ -167,6 +167,10 @@ void CRastrImport::ReadRastrRow(unique_ptr<CSerializerBase>& Serializer, long Ro
 		case TypedSerializedValue::eValueType::VT_ID:
 			vt.ChangeType(VT_I4);
 			Serializer->m_pDevice->SetId(vt.lVal);
+			break;
+		case TypedSerializedValue::eValueType::VT_ADAPTER:
+			vt.ChangeType(VT_I4);
+			mv.Value.Adapter->SetInt(NodeTypeFromRastr(vt.lVal));
 			break;
 		default:
 			throw dfw2error(Cex(_T("CRastrImport::ReadRastrRow wrong serializer type %d"), mv.Value.ValueType));
@@ -338,13 +342,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ITablePtr spNode = spTables->Item("node");
 	IColsPtr spNodeCols = spNode->Cols;
 	CDynaNode *pNodes = new CDynaNode[spNode->Size];
-
-	IColPtr spNy = spNodeCols->Item("ny");
-	IColPtr spNtype = spNodeCols->Item("tip");
-	IColPtr spName = spNodeCols->Item("name");
 	IColPtr spLCIdLF = spNodeCols->Item("nsx");
 	IColPtr spLCId = spNodeCols->Item("dnsx");
-	IColPtr spSta = spNodeCols->Item("sta");
+	IColPtr spNtype = spNodeCols->Item("tip");
 
 	Network.Nodes.AddDevices(pNodes, spNode->Size);
 
@@ -358,9 +358,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	{
 		pNodes->UpdateSerializer(pSerializer);
 		ReadRastrRow(pSerializer, i);
-		pNodes->SetDBIndex(i);
-		pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
-
 		CDynaLRC *pDynLRC;
 		if (Network.LRCs.GetDevice(spLCId->GetZ(i), pDynLRC))
 		{

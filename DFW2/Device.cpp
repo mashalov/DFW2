@@ -1056,14 +1056,14 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 }
 
 
-unique_ptr<CSerializerBase> CDevice::GetSerializer()
+SerializerPtr CDevice::GetSerializer()
 {
-	unique_ptr<CSerializerBase> extSerializer;
+	SerializerPtr extSerializer;
 	UpdateSerializer(extSerializer);
 	return extSerializer;
 }
 
-void CDevice::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+void CDevice::UpdateSerializer(SerializerPtr& Serializer)
 {
 	if (!Serializer)
 		Serializer = std::make_unique<CSerializerBase>(this);

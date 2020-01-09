@@ -225,7 +225,7 @@ const CDeviceContainerProperties CDynaExciterMustang::DeviceProperties()
 }
 
 
-void CDynaExciterMustang::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+void CDynaExciterMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDynaExciterBase::UpdateSerializer(Serializer);
 	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);

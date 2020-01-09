@@ -162,7 +162,7 @@ namespace DFW2
 		void TidyZeroBranches();
 		// выбирает исходное напряжение либо равное расчетному, либо (если расчетное равно почему-то нулю), номинальному
 		inline void PickV0() { V0 = (V > 0) ? V : Unom; }
-		virtual void UpdateSerializer(unique_ptr<CSerializerBase>& Serializer) override;
+		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
@@ -170,6 +170,7 @@ namespace DFW2
 		static const _TCHAR *m_cszVim;
 		static const _TCHAR *m_cszGsh;
 		static const _TCHAR *m_cszBsh;
+		static const _TCHAR* m_cszLFNodeTypeNames[5];
 
 	protected:
 		void FromSuperNode();
@@ -207,6 +208,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 

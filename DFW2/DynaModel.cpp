@@ -223,6 +223,8 @@ bool CDynaModel::Run()
 		if (bResultsNeedToBeFinished)
 			FinishWriteResults();
 
+		Serialize();
+
 		if (!bRes)
 			MessageBox(NULL, _T("Failed"), _T("Failed"), MB_OK);
 
@@ -258,7 +260,6 @@ bool CDynaModel::Run()
 																	 sc.dMaxConditionNumberTime);
 
 		GetWorstEquations(10);
-		Serialize();
 		chrono::milliseconds CalcDuration = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - sc.m_ClockStart);
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Duration %g"), static_cast<double>(CalcDuration.count()) / 1E3);
 	}

@@ -1412,13 +1412,13 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 
 
 
-void CDynaNodeBase::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-
 	Serializer->SetClassName(_T("DynaNode"));
 	Serializer->AddProperty(_T("name"), TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddEnumProperty(_T("tip"), new CSerializerAdapterEnumT<CDynaNodeBase::eLFNodeType>(m_eLFNodeType, m_cszLFNodeTypeNames, _countof(m_cszLFNodeTypeNames)));
 	Serializer->AddProperty(_T("ny"), TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty(_T("vras"), V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty(_T("delta"), Delta, eVARUNITS::VARUNIT_DEGREES);
@@ -1439,6 +1439,30 @@ void CDynaNodeBase::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
 	Serializer->AddProperty(_T("brk"), Br0, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddState(_T("Vre"), Vre, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(_T("Vim"), Vim, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(_T("pgr"), Vim, eVARUNITS::VARUNIT_MW);
+	Serializer->AddState(_T("qgr"), Vim, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState(_T("LRCShuntPartP"), dLRCShuntPartP, eVARUNITS::VARUNIT_MW);
+	Serializer->AddState(_T("LRCShuntPartQ"), dLRCShuntPartQ, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState(_T("Gshunt"), Gshunt, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState(_T("Bshunt"), Bshunt, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState(_T("InMetallicSC"), m_bInMetallicSC);
+	Serializer->AddState(_T("InLowVoltage"), m_bLowVoltage);
+	Serializer->AddState(_T("SavedInLowVoltage"), m_bSavedLowVoltage);
+	Serializer->AddState(_T("LRCVicinity"), dLRCVicinity);
+	Serializer->AddState(_T("dLRCPn"), dLRCPn);
+	Serializer->AddState(_T("dLRCQn"), dLRCQn);
+	Serializer->AddState(_T("dLRCPg"), dLRCPg);
+	Serializer->AddState(_T("dLRCQg"), dLRCQg);
+	Serializer->AddState(_T("Vold"), Vold, eVARUNITS::VARUNIT_KVOLTS);
+	//cplx Yii;						// собственная проводимость
+	//cplx YiiSuper;					// собственная проводимость суперузла
+}
+
+void CDynaNode::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDynaNodeBase::UpdateSerializer(Serializer);
+	Serializer->AddState(_T("SLag"), Lag);
+	Serializer->AddState(_T("S"), S);
 }
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");
@@ -1447,6 +1471,7 @@ const _TCHAR *CDynaNodeBase::m_cszVre = _T("Vre");
 const _TCHAR *CDynaNodeBase::m_cszVim = _T("Vim");
 const _TCHAR *CDynaNodeBase::m_cszGsh = _T("gsh");
 const _TCHAR *CDynaNodeBase::m_cszBsh = _T("bsh");
-
 const _TCHAR *CDynaNode::m_cszS = _T("S");
 const _TCHAR *CDynaNode::m_cszSz = _T("Sz");
+
+const _TCHAR* CDynaNodeBase::m_cszLFNodeTypeNames[5] = { _T("База"), _T("Нагр"), _T("Ген"), _T("Ген+"), _T("Ген-") };

@@ -154,7 +154,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::UpdateExternalVariables(CDynaModel *pDyna
 }
 
 
-void CDynaDECMustang::UpdateSerializer(unique_ptr<CSerializerBase>& Serializer)
+void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->SetClassName(_T("DynaDECMustang"));

@@ -318,8 +318,8 @@ namespace DFW2
 		virtual void StoreStates();
 		virtual void RestoreStates();
 
-		unique_ptr<CSerializerBase> CDevice::GetSerializer();
-		virtual void UpdateSerializer(unique_ptr<CSerializerBase>& Serializer);
+		SerializerPtr CDevice::GetSerializer();
+		virtual void UpdateSerializer(SerializerPtr& Serializer);
 
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2);
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, bool Status2);

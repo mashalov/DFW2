@@ -592,12 +592,12 @@ void CDynaModel::Serialize()
 	CSerializerXML xmlSerializer;
 	xmlSerializer.CreateNewSerialization();
 
-	unique_ptr<CSerializerBase> SerializerParameteres = make_unique<CSerializerBase>();
+	SerializerPtr SerializerParameteres = make_unique<CSerializerBase>();
 	m_Parameters.UpdateSerializer(SerializerParameteres);
 	xmlSerializer.SerializeClassMeta(SerializerParameteres);
 	xmlSerializer.SerializeClass(SerializerParameteres);
 
-	unique_ptr<CSerializerBase> SerializerStepControl = make_unique<CSerializerBase>();
+	SerializerPtr SerializerStepControl = make_unique<CSerializerBase>();
 	sc.UpdateSerializer(SerializerStepControl);
 	xmlSerializer.SerializeClassMeta(SerializerStepControl);
 	xmlSerializer.SerializeClass(SerializerStepControl);

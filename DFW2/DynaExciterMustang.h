@@ -19,7 +19,7 @@ namespace DFW2
 		CDynaExciterMustang();
 		virtual ~CDynaExciterMustang() {}
 
-		virtual void UpdateSerializer(unique_ptr<CSerializerBase>& Serializer) override;
+		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
