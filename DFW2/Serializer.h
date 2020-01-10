@@ -79,6 +79,8 @@ namespace DFW2
 		}
 		ValueType;
 
+		static const _TCHAR* m_cszTypeDecs[8];
+
 		uValue Value;
 
 		unique_ptr<CSerializerAdapterBase> Adapter;
@@ -210,7 +212,13 @@ namespace DFW2
 		std::wstring m_strClassName;
 	public:
 		CDevice *m_pDevice = nullptr;
+
+
 		static const _TCHAR* m_cszDupName;
+		static const _TCHAR *m_cszV;
+		static const _TCHAR *m_cszState;
+		static const _TCHAR *m_cszStateCause;
+		static const _TCHAR *m_cszType;
 
 		void BeginUpdate(CDevice *pDevice)
 		{
@@ -322,22 +330,21 @@ namespace DFW2
 			return m_strClassName;
 		}
 
-		protected:
-			MetaSerializedValue* AddValue(const _TCHAR *cszName, MetaSerializedValue* mv)
-			{
-				if (!ValueMap.insert(std::make_pair(cszName, mv)).second)
-					throw dfw2error(Cex(m_cszDupName, cszName));
-				UpdateIterator = ValueList.end();
-				return mv;
-			}
+	protected:
 
-			MetaSerializedValue* UpdateValue()
-			{
-				UpdateIterator++;
-				return prev(UpdateIterator)->get();
-			}
+		MetaSerializedValue* AddValue(const _TCHAR *cszName, MetaSerializedValue* mv)
+		{
+			if (!ValueMap.insert(std::make_pair(cszName, mv)).second)
+				throw dfw2error(Cex(m_cszDupName, cszName));
+			UpdateIterator = ValueList.end();
+			return mv;
+		}
 
-
+		MetaSerializedValue* UpdateValue()
+		{
+			UpdateIterator++;
+			return prev(UpdateIterator)->get();
+		}
 	};
 
 	using SerializerPtr = unique_ptr<CSerializerBase>;

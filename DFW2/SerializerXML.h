@@ -16,6 +16,8 @@ namespace DFW2
 		void Commit();
 		void SerializeClass(SerializerPtr& Serializer);
 		void SerializeClassMeta(SerializerPtr& Serializer);
+
+		static const _TCHAR *m_cszVim;
 	};
 }
 

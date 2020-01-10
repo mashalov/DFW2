@@ -25,11 +25,17 @@ void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 		MSXML2::IXMLDOMElementPtr spXMLProp = m_spXMLDoc->createElement(_T("property"));
 		MetaSerializedValue& mv = *value.second;
 		spXMLProp->setAttribute(_T("name"), value.first.c_str());
-		spXMLProp->setAttribute(_T("type"), static_cast<long>(mv.Value.ValueType));
+
+		if(static_cast<ptrdiff_t>(mv.Value.ValueType) >= 0 &&
+		   static_cast<ptrdiff_t>(mv.Value.ValueType) < _countof(TypedSerializedValue::m_cszTypeDecs))
+			spXMLProp->setAttribute(CSerializerBase::m_cszType, TypedSerializedValue::m_cszTypeDecs[static_cast<ptrdiff_t>(mv.Value.ValueType)]);
+		else
+			spXMLProp->setAttribute(CSerializerBase::m_cszType, static_cast<long>(mv.Value.ValueType));
+
 		if(mv.Value.ValueType == TypedSerializedValue::eValueType::VT_DBL && mv.Multiplier != 1.0)
 			spXMLProp->setAttribute(_T("multiplier"), mv.Multiplier);
 		if(mv.bState)
-			spXMLProp->setAttribute(_T("state"),variant_t(1L));
+			spXMLProp->setAttribute(CSerializerBase::m_cszState,variant_t(1L));
 		auto& it = units.VarNameMap().find(static_cast<ptrdiff_t>(mv.Units));
 		if(units.VarNameMap().end() != it)
 			spXMLProp->setAttribute(_T("units"), it->second.c_str());
@@ -47,34 +53,37 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 	for (auto&& value : *Serializer)
 	{
 		MetaSerializedValue& mv = *value.second;
-		MSXML2::IXMLDOMElementPtr spXMLValue = m_spXMLDoc->createElement(value.first.c_str());
+
+		MSXML2::IXMLDOMElementPtr spXMLValue = m_spXMLDoc->createElement(value.second->Value.ValueType == TypedSerializedValue::eValueType::VT_STATE ? 
+																									CSerializerBase::m_cszState : value.first.c_str());
 		spXMLClass->appendChild(spXMLValue);
 		switch (value.second->Value.ValueType)
 		{
 		case TypedSerializedValue::eValueType::VT_DBL:
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, *mv.Value.Value.pDbl / mv.Multiplier);
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, *mv.Value.Value.pDbl / mv.Multiplier);
 				break;
 		case TypedSerializedValue::eValueType::VT_INT:
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, *mv.Value.Value.pInt);
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, *mv.Value.Value.pInt);
 				break;
 		case TypedSerializedValue::eValueType::VT_BOOL:
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, *mv.Value.Value.pBool);
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, *mv.Value.Value.pBool);
 				break;
 		case TypedSerializedValue::eValueType::VT_CPLX:
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, mv.Value.Value.pCplx->real());
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszVim, mv.Value.Value.pCplx->imag());
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, mv.Value.Value.pCplx->real());
+			spXMLValue->setAttribute(m_cszVim, mv.Value.Value.pCplx->imag());
 			break;
 		case TypedSerializedValue::eValueType::VT_NAME:
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, Serializer->m_pDevice->GetName());
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetName());
 				break;
 		case TypedSerializedValue::eValueType::VT_STATE:
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, (Serializer->m_pDevice->GetState() == eDEVICESTATE::DS_OFF) ? false : true);
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetState());
+			spXMLValue->setAttribute(CSerializerBase::m_cszStateCause, Serializer->m_pDevice->GetStateCause());
 				break;
 		case TypedSerializedValue::eValueType::VT_ID:
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, Serializer->m_pDevice->GetId());
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetId());
 				break;
 		case TypedSerializedValue::eValueType::VT_ADAPTER:
-			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, mv.Value.Adapter->GetString().c_str());
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, mv.Value.Adapter->GetString().c_str());
 				break;
 		default:
 			throw dfw2error(Cex(_T("CSerializerXML::SerializeClass wrong serializer type %d"), mv.Value.ValueType));
@@ -87,3 +96,5 @@ void CSerializerXML::Commit()
 	if(m_spXMLDoc)
 		m_spXMLDoc->save(_T("c:\\tmp\\serialization.xml"));
 }
+
+const _TCHAR* CSerializerXML::m_cszVim = _T("vim");
