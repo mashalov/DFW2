@@ -171,6 +171,19 @@ void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty(_T("Texc_rf"), DefTexc, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(_T("Tz_in"), TdelOn, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(_T("Tz_out"), TdelOff, eVARUNITS::VARUNIT_SECONDS);
+
+	Serializer->AddState(_T("EnforceOnValue"), EnforceOnValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("DeforceOnValue"), DeforceOnValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("EnforceOffValue"), EnforceOffValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("DeforceOffValue"), DeforceOffValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("EnforceTrigValue"), EnforceTrigValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("DeforceTrigValue"), DeforceTrigValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("EnforceValue"), m_dEnforceValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("DeforceValue"), m_dDeforceValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Udec"), Udec, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Texc"), Texc, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Umin"), Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Umax"), Umax, eVARUNITS::VARUNIT_PU);
 }
 
 const CDeviceContainerProperties CDynaDECMustang::DeviceProperties()

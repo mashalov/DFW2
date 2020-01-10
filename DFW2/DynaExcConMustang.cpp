@@ -227,6 +227,10 @@ void CDynaExcConMustang::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty(_T("Tf"), Tf, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(_T("Urv_min"), Umin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(_T("Urv_max"), Umax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Vref"), Vref, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Usum"), Usum, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Uf"), Uf, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Svt"), Svt, eVARUNITS::VARUNIT_PU);
 }
 
 const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()

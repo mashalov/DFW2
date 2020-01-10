@@ -22,9 +22,7 @@ namespace DFW2
 		double EnforceOnValue, DeforceOnValue;
 		double EnforceOffValue, DeforceOffValue;
 		double EnforceTrigValue, DeforceTrigValue;
-
 		double m_dEnforceValue, m_dDeforceValue;
-
 		
 	public:
 		CDynaDECMustang();

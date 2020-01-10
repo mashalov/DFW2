@@ -114,7 +114,8 @@ namespace DFW2
 				pDevs = pDev = new T[nSize];
 				auto pSerializer = pDevs->GetSerializer();
 				for (auto&& serializervalue : *pSerializer)
-					serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(serializervalue.first.c_str()));
+					if (!serializervalue.second->bState)
+						serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(serializervalue.first.c_str()));
 
 				for (int Row = 0; Row < nSize; Row++, pDev++)
 				{

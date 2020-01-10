@@ -28,6 +28,8 @@ void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 		spXMLProp->setAttribute(_T("type"), static_cast<long>(mv.Value.ValueType));
 		if(mv.Value.ValueType == TypedSerializedValue::eValueType::VT_DBL && mv.Multiplier != 1.0)
 			spXMLProp->setAttribute(_T("multiplier"), mv.Multiplier);
+		if(mv.bState)
+			spXMLProp->setAttribute(_T("state"),variant_t(1L));
 		auto& it = units.VarNameMap().find(static_cast<ptrdiff_t>(mv.Units));
 		if(units.VarNameMap().end() != it)
 			spXMLProp->setAttribute(_T("units"), it->second.c_str());
