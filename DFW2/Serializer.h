@@ -6,6 +6,7 @@
 #include "vector"
 #include "cex.h"
 #include "dfw2exception.h"
+#include "Header.h"
 namespace DFW2
 {
 
@@ -14,9 +15,11 @@ namespace DFW2
 		double *pDbl;
 		ptrdiff_t *pInt;
 		bool *pBool;
+		cplx *pCplx;
 		uValue(double* pDouble) : pDbl(pDouble) {}
 		uValue(ptrdiff_t* pInteger) : pInt(pInteger) {}
 		uValue(bool* pBoolean) : pBool(pBoolean) {}
+		uValue(cplx* pComplex) : pCplx(pComplex) {}
 		uValue() {}
 	};
 
@@ -68,6 +71,7 @@ namespace DFW2
 			VT_DBL,
 			VT_INT,
 			VT_BOOL,
+			VT_CPLX,
 			VT_NAME,
 			VT_STATE,
 			VT_ID,
@@ -83,6 +87,7 @@ namespace DFW2
 		TypedSerializedValue(double* pDouble) : Value(pDouble), ValueType(eValueType::VT_DBL) {}
 		TypedSerializedValue(ptrdiff_t* pInteger) : Value(pInteger), ValueType(eValueType::VT_INT) {}
 		TypedSerializedValue(bool* pBoolean) : Value(pBoolean), ValueType(eValueType::VT_BOOL) {}
+		TypedSerializedValue(cplx* pComplex) : Value(pComplex), ValueType(eValueType::VT_CPLX) {}
 		TypedSerializedValue(eValueType Type) : Value(), ValueType(Type) {}
 		/*
 		TypedSerializedValue(TypedSerializedValue&& Copy)
@@ -188,6 +193,7 @@ namespace DFW2
 		MetaSerializedValue(double* pDouble) : Value(pDouble) {}
 		MetaSerializedValue(ptrdiff_t* pInteger) : Value(pInteger) {}
 		MetaSerializedValue(bool* pBoolean) : Value(pBoolean) {}
+		MetaSerializedValue(cplx* pComplex) : Value(pComplex) {}
 		MetaSerializedValue(TypedSerializedValue::eValueType Type) : Value(Type) {}
 		std::unique_ptr<CSerializedValueAuxDataBase> pAux;
 	};

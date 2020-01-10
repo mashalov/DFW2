@@ -58,6 +58,10 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 		case TypedSerializedValue::eValueType::VT_BOOL:
 			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, *mv.Value.Value.pBool);
 				break;
+		case TypedSerializedValue::eValueType::VT_CPLX:
+			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, mv.Value.Value.pCplx->real());
+			spXMLValue->setAttribute(CDynaNodeBase::m_cszVim, mv.Value.Value.pCplx->imag());
+			break;
 		case TypedSerializedValue::eValueType::VT_NAME:
 			spXMLValue->setAttribute(CDynaNodeBase::m_cszV, Serializer->m_pDevice->GetName());
 				break;

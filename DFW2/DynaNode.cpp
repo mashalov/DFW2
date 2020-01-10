@@ -1454,8 +1454,8 @@ void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState(_T("dLRCPg"), dLRCPg);
 	Serializer->AddState(_T("dLRCQg"), dLRCQg);
 	Serializer->AddState(_T("Vold"), Vold, eVARUNITS::VARUNIT_KVOLTS);
-	//cplx Yii;						// собственная проводимость
-	//cplx YiiSuper;					// собственная проводимость суперузла
+	Serializer->AddState(_T("Yii"), Yii, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState(_T("YiiSuper"), YiiSuper, eVARUNITS::VARUNIT_SIEMENS);
 }
 
 void CDynaNode::UpdateSerializer(SerializerPtr& Serializer)
