@@ -149,6 +149,7 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 			if (nCount)
 				spXMLClass->appendChild(spXMLLinks);
 		}
+		spXMLClass->setAttribute(TypedSerializedValue::m_cszTypeDecs[6], Serializer->m_pDevice->GetId());
 	}
 }
 
