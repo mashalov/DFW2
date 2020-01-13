@@ -37,7 +37,7 @@ namespace DFW2
 		virtual bool CalculatePower() override;
 		double Xgen();
 		virtual const cplx& CalculateEgen() override;
-
+		virtual void UpdateSerializer(SerializerPtr& Serializer);
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 }

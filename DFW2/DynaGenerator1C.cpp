@@ -468,6 +468,27 @@ bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
 	return true;
 }
 
+void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDynaGeneratorMotion::UpdateSerializer(Serializer);
+	Serializer->AddState(_T("zsq"), zsq, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("Egen"), m_Egen, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(_T("Vd"), Vd, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(_T("Vq"), Vq, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(_T("Ids"), Id, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(_T("Iqs"), Iq, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszEqe, Eqe, eVARUNITS::VARUNIT_KVOLTS);
+
+	Serializer->AddProperty(_T("Td0"), Eqe, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(_T("xd"), xd, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(_T("r"), r, eVARUNITS::VARUNIT_OHM);
+
+	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszSnom, Snom, eVARUNITS::VARUNIT_MVA);
+	Serializer->AddState(m_cszQnom, Qnom, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState(m_cszInom, Inom, eVARUNITS::VARUNIT_KAMPERES);
+}
 
 const _TCHAR *CDynaGenerator1C::m_cszEqe = _T("Eqe");
 const _TCHAR *CDynaGenerator1C::m_cszEq  = _T("Eq");

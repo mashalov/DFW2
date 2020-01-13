@@ -19,6 +19,7 @@ namespace DFW2
 		virtual cplx GetEMF() { return polar(Eqs, Delta); }
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		virtual bool CalculatePower() override;
+		virtual void UpdateSerializer(SerializerPtr& Serializer);
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 
@@ -30,6 +31,7 @@ namespace DFW2
 		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		virtual void UpdateSerializer(SerializerPtr& Serializer);
 	};
 }
 

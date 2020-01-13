@@ -43,6 +43,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
+		virtual void UpdateSerializer(SerializerPtr& Serializer);
 		static const CDeviceContainerProperties DeviceProperties();
 		static const _TCHAR* m_cszNodeId;
 	};

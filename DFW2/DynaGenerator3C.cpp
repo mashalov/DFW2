@@ -332,6 +332,18 @@ double CDynaGenerator3C::Xgen()
 	return 0.5 * (xd2 + xq2);
 }
 
+void CDynaGenerator3C::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDynaGenerator1C::UpdateSerializer(Serializer);
+	Serializer->AddState(_T("Eqss"), Eqss, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(_T("Edss"), Edss, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(_T("Td0ss"), Td0ss, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddState(_T("Tq0ss"), Tq0ss, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddState(_T("xd2"), xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddState(_T("xq2"), xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddState(_T("xq1"), xq1, eVARUNITS::VARUNIT_OHM);
+}
+
 const CDeviceContainerProperties CDynaGenerator3C::DeviceProperties()
 {
 	CDeviceContainerProperties props = CDynaGenerator1C::DeviceProperties();

@@ -8,7 +8,6 @@ namespace DFW2
 		CDynaVoltageSource();
 		virtual cplx GetEMF() = 0;
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 }

@@ -70,6 +70,8 @@ namespace DFW2
 		virtual cplx Igen(ptrdiff_t nIteration);
 		virtual const cplx& CalculateEgen();
 
+		virtual void UpdateSerializer(SerializerPtr& Serializer);
+
 		static const _TCHAR *m_cszEqe;
 		static const _TCHAR *m_cszEq;
 		static const _TCHAR *m_cszId;

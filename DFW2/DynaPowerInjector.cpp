@@ -57,6 +57,22 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pD
 	return eRes;
 }
 
+
+void CDynaPowerInjector::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDevice::UpdateSerializer(Serializer);
+	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddState(_T("P"), P, eVARUNITS::VARUNIT_MW);
+	Serializer->AddState(_T("Q"), Q, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState(_T("Ire"), Ire, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(_T("Iim"), Iim, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddProperty(_T("Qmin"), LFQmin, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(_T("Qmax"), LFQmax, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(_T("Kgen"), Kgen, eVARUNITS::VARUNIT_PIECES);
+}
+
 const CDeviceContainerProperties CDynaPowerInjector::DeviceProperties()
 {
 	CDeviceContainerProperties props;
