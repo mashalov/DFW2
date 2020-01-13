@@ -215,7 +215,7 @@ const CDeviceContainerProperties CDynaExciterMustang::DeviceProperties()
 {
 	CDeviceContainerProperties props = CDynaExciterBase::DeviceProperties();
 	props.nEquationsCount = CDynaExciterMustang::VARS::V_LAST;
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameExciterMustang;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameExciterMustang, CDeviceContainerProperties::m_cszSysNameExciterMustang);
 
 	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszEqe, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));
 	props.m_VarMap.insert(make_pair(_T("EqeV"), CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));

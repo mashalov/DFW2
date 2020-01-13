@@ -77,7 +77,7 @@ namespace DFW2
 		// тип устройства хранится в атрибутах контейнера. Устройство вне контейнера не знает своего типа
 		inline eDFW2DEVICETYPE GetType() { return m_ContainerProps.eDeviceType; }
 		// текстовое описание типа устройства
-		const _TCHAR* GetTypeName() { return m_ContainerProps.m_strClassName.c_str(); }
+		const _TCHAR* GetTypeName() { return m_ContainerProps.GetVerbalClassName(); }
 
 		CDeviceContainer(CDynaModel *pDynaModel);
 		virtual ~CDeviceContainer();

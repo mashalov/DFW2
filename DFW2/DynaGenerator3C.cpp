@@ -336,7 +336,7 @@ const CDeviceContainerProperties CDynaGenerator3C::DeviceProperties()
 {
 	CDeviceContainerProperties props = CDynaGenerator1C::DeviceProperties();
 	props.SetType(DEVTYPE_GEN_3C);
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameGenerator3C;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator3C, CDeviceContainerProperties::m_cszSysNameGenerator3C);
 	props.nEquationsCount = CDynaGenerator3C::VARS::V_LAST;
 	props.m_VarMap.insert(make_pair(_T("Eqss"), CVarIndex(CDynaGenerator3C::V_EQSS, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(make_pair(_T("Edss"), CVarIndex(CDynaGenerator3C::V_EDSS, VARUNIT_KVOLTS)));

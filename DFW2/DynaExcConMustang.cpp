@@ -213,7 +213,6 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 void CDynaExcConMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->SetClassName(_T("DynaExcConMustang"));
 	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
 	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
@@ -238,7 +237,7 @@ const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()
 	CDeviceContainerProperties props;
 	props.SetType(DEVTYPE_EXCCON);
 	props.SetType(DEVTYPE_EXCCON_MUSTANG);
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameExcConMustang;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameExcConMustang, CDeviceContainerProperties::m_cszSysNameExcConMustang);
 	props.AddLinkFrom(DEVTYPE_EXCITER, DLM_SINGLE, DPD_MASTER);
 
 	props.nEquationsCount = CDynaExcConMustang::VARS::V_LAST;

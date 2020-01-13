@@ -603,11 +603,14 @@ void CDynaModel::Serialize()
 	xmlSerializer.SerializeClass(SerializerStepControl);
 
 	for (auto&& container : m_DeviceContainers)
+		xmlSerializer.AddDeviceTypeDescription(container->GetType(), container->m_ContainerProps.GetSystemClassName());
+
+	for (auto&& container : m_DeviceContainers)
 	{
 		if (container->Count())
 		{
 			auto& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
-			if (serializer->GetClassName().empty())
+			if (!serializer->ValuesCount())
 				continue;
 
 			xmlSerializer.SerializeClassMeta(serializer);

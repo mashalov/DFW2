@@ -141,26 +141,31 @@ namespace DFW2
 		LINKSTOMAPPTR  m_MasterLinksTo;
 
 		LINKSUNDIRECTED m_Masters, m_Slaves;
-
-		std::wstring m_strClassName;										// имя типа устройства
-
 		STRINGLIST m_lstAliases;											// возможные псевдонимы типа устройства (типа "Node","node")
 
-		static const _TCHAR *m_cszNameGenerator1C;
-		static const _TCHAR *m_cszNameGenerator3C;
-		static const _TCHAR *m_cszNameGeneratorMustang;
-		static const _TCHAR *m_cszNameGeneratorInfPower;
-		static const _TCHAR *m_cszNameGeneratorMotion;
-		static const _TCHAR *m_cszNameExciterMustang;
-		static const _TCHAR *m_cszNameExcConMustang;
-		static const _TCHAR *m_cszNameDECMustang;
-		static const _TCHAR *m_cszNameNode;
-		static const _TCHAR *m_cszNameBranch;
-		static const _TCHAR *m_cszNameBranchMeasure;
+		static const _TCHAR *m_cszNameGenerator1C, *m_cszSysNameGenerator1C;
+		static const _TCHAR *m_cszNameGenerator3C, *m_cszSysNameGenerator3C;
+		static const _TCHAR *m_cszNameGeneratorMustang, *m_cszSysNameGeneratorMustang;
+		static const _TCHAR *m_cszNameGeneratorInfPower, *m_cszSysNameGeneratorInfPower;
+		static const _TCHAR *m_cszNameGeneratorMotion, *m_cszSysNameGeneratorMotion;
+		static const _TCHAR *m_cszNameExciterMustang, *m_cszSysNameExciterMustang;
+		static const _TCHAR *m_cszNameExcConMustang, *m_cszSysNameExcConMustang;
+		static const _TCHAR *m_cszNameDECMustang, *m_cszSysNameDECMustang;
+		static const _TCHAR *m_cszNameNode, *m_cszSysNameNode;
+		static const _TCHAR *m_cszNameBranch, *m_cszSysNameBranch;
+		static const _TCHAR *m_cszNameBranchMeasure, *m_cszSysNameBranchMeasure;
 
 		static const _TCHAR *m_cszAliasNode;
 		static const _TCHAR *m_cszAliasBranch;
 		static const _TCHAR *m_cszAliasGenerator;
+
+		void SetClassName(const _TCHAR* cszVerbalName, const _TCHAR* cszSystemName);
+		const _TCHAR* GetVerbalClassName();
+		const _TCHAR* GetSystemClassName();
+
+	protected:
+		std::wstring m_strClassName;										// имя типа устройства
+		std::wstring m_strClassSysName;										// системное имя имя типа устройства для сериализации
 	};
 }
 

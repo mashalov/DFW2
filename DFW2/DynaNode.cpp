@@ -1383,7 +1383,7 @@ const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 const CDeviceContainerProperties CDynaNode::DeviceProperties()
 {
 	CDeviceContainerProperties props = CDynaNodeBase::DeviceProperties();
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameNode;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
 	props.nEquationsCount = CDynaNode::VARS::V_LAST;
 	props.m_VarMap.insert(make_pair(CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU)));
 
@@ -1415,7 +1415,6 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->SetClassName(_T("DynaNode"));
 	Serializer->AddProperty(_T("name"), TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
 	Serializer->AddEnumProperty(_T("tip"), new CSerializerAdapterEnumT<CDynaNodeBase::eLFNodeType>(m_eLFNodeType, m_cszLFNodeTypeNames, _countof(m_cszLFNodeTypeNames)));

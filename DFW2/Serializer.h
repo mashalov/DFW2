@@ -1,5 +1,6 @@
 #pragma once
 #include "DeviceTypes.h"
+#include "DeviceContainerProperties.h"
 #include "string"
 #include "map"
 #include "list"
@@ -212,13 +213,16 @@ namespace DFW2
 		std::wstring m_strClassName;
 	public:
 		CDevice *m_pDevice = nullptr;
-
-
 		static const _TCHAR* m_cszDupName;
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszState;
 		static const _TCHAR *m_cszStateCause;
 		static const _TCHAR *m_cszType;
+
+		ptrdiff_t ValuesCount()
+		{
+			return ValueMap.size();
+		}
 
 		void BeginUpdate(CDevice *pDevice)
 		{
@@ -325,10 +329,7 @@ namespace DFW2
 
 		}
 
-		const std::wstring& GetClassName()
-		{
-			return m_strClassName;
-		}
+		const _TCHAR* GetClassName();
 
 	protected:
 

@@ -522,7 +522,7 @@ const CDeviceContainerProperties CDynaBranch::DeviceProperties()
 {
 	CDeviceContainerProperties props;
 	props.SetType(DEVTYPE_BRANCH);
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameBranch;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameBranch, CDeviceContainerProperties::m_cszSysNameBranch);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, _T(""));
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasBranch);
 	return props;
@@ -535,7 +535,7 @@ const CDeviceContainerProperties CDynaBranchMeasure::DeviceProperties()
 	// линковка делается только с ветвями, поэтому описание
 	// правил связывания не нужно
 	props.SetType(DEVTYPE_BRANCHMEASURE);
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameBranchMeasure;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameBranchMeasure, CDeviceContainerProperties::m_cszSysNameBranchMeasure);
 	props.nEquationsCount = CDynaBranchMeasure::VARS::V_LAST;
 	props.m_VarMap.insert(make_pair(_T("Ibre"), CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES)));
 	props.m_VarMap.insert(make_pair(_T("Ibim"), CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES)));

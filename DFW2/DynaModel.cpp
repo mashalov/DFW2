@@ -191,6 +191,9 @@ bool CDynaModel::Run()
 			m_Automatic.Init();
 			m_Discontinuities.Init();
 			SetH(0.01);
+
+			Serialize();
+
 			try
 			{
 				while (!sc.m_bStopCommandReceived && bRes)
@@ -222,8 +225,6 @@ bool CDynaModel::Run()
 
 		if (bResultsNeedToBeFinished)
 			FinishWriteResults();
-
-		Serialize();
 
 		if (!bRes)
 			MessageBox(NULL, _T("Failed"), _T("Failed"), MB_OK);

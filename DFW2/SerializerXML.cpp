@@ -12,10 +12,16 @@ void CSerializerXML::CreateNewSerialization()
 	m_spXMLDoc->appendChild(m_spXMLDoc->createElement(_T("DFW2")));
 }
 
+void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, const _TCHAR* cszName)
+{
+	if (!m_TypeMap.insert(make_pair(nType, cszName)).second)
+		throw dfw2error(Cex(_T("CSerializerXML::AddDeviceTypeDescription - duplicate device type %d"), nType));
+}
+
 void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 {
 	MSXML2::IXMLDOMElementPtr spXMLClass = m_spXMLDoc->createElement(_T("class"));
-	spXMLClass->setAttribute(_T("name"), Serializer->GetClassName().c_str());
+	spXMLClass->setAttribute(_T("name"), Serializer->GetClassName());
 	m_spXMLDoc->GetdocumentElement()->appendChild(spXMLClass);
 	MSXML2::IXMLDOMElementPtr spXMLProps = m_spXMLDoc->createElement(_T("properties"));
 	spXMLClass->appendChild(spXMLProps);
@@ -25,7 +31,6 @@ void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 		MSXML2::IXMLDOMElementPtr spXMLProp = m_spXMLDoc->createElement(_T("property"));
 		MetaSerializedValue& mv = *value.second;
 		spXMLProp->setAttribute(_T("name"), value.first.c_str());
-
 		if(static_cast<ptrdiff_t>(mv.Value.ValueType) >= 0 &&
 		   static_cast<ptrdiff_t>(mv.Value.ValueType) < _countof(TypedSerializedValue::m_cszTypeDecs))
 			spXMLProp->setAttribute(CSerializerBase::m_cszType, TypedSerializedValue::m_cszTypeDecs[static_cast<ptrdiff_t>(mv.Value.ValueType)]);
@@ -45,9 +50,46 @@ void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 	spXMLClass->appendChild(m_spXMLItems);
 }
 
+
+void CSerializerXML::AddLinks(SerializerPtr& Serializer, MSXML2::IXMLDOMElementPtr& spXMLLinks, LINKSUNDIRECTED& links, bool bMaster)
+{
+	for (auto&& link: links)
+	{
+		switch (link->eLinkMode)
+		{
+		case DLM_MULTI:
+			{
+				CLinkPtrCount *pLinks = Serializer->m_pDevice->GetLink(link->nLinkIndex);
+				CDevice **ppDevice(nullptr);
+				while (pLinks->In(ppDevice))
+					AddLink(spXMLLinks, *ppDevice, bMaster);
+			}
+			break;
+		case DLM_SINGLE:
+				AddLink(spXMLLinks, Serializer->m_pDevice->GetSingleLink(link->nLinkIndex), bMaster);
+			break;
+		}
+	}
+}
+
+void CSerializerXML::AddLink(MSXML2::IXMLDOMElementPtr& spXMLLinks, CDevice *pLinkedDevice, bool bMaster)
+{
+	if (pLinkedDevice)
+	{
+		MSXML2::IXMLDOMElementPtr spXMLLink = m_spXMLDoc->createElement(bMaster ? _T("master") : _T("slave"));
+		spXMLLinks->appendChild(spXMLLink);
+		auto& typeit = m_TypeMap.find(pLinkedDevice->GetType());
+		if(typeit == m_TypeMap.end())
+			spXMLLink->setAttribute(CSerializerBase::m_cszType, pLinkedDevice->GetType());
+		else
+			spXMLLink->setAttribute(CSerializerBase::m_cszType, typeit->second.c_str());
+		spXMLLink->setAttribute(TypedSerializedValue::m_cszTypeDecs[6], pLinkedDevice->GetId());
+	}
+}
+
 void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 {
-	MSXML2::IXMLDOMElementPtr spXMLClass = m_spXMLDoc->createElement(Serializer->GetClassName().c_str());
+	MSXML2::IXMLDOMElementPtr spXMLClass = m_spXMLDoc->createElement(Serializer->GetClassName());
 	m_spXMLItems->appendChild(spXMLClass);
 
 	for (auto&& value : *Serializer)
@@ -87,6 +129,25 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 				break;
 		default:
 			throw dfw2error(Cex(_T("CSerializerXML::SerializeClass wrong serializer type %d"), mv.Value.ValueType));
+		}
+	}
+
+	if (Serializer->m_pDevice)
+	{
+		CDeviceContainer *pContainer(Serializer->m_pDevice->GetContainer());
+		if (pContainer)
+		{
+			CDeviceContainerProperties &Props = pContainer->m_ContainerProps;
+			MSXML2::IXMLDOMElementPtr spXMLLinks = m_spXMLDoc->createElement(_T("links"));
+
+			AddLinks(Serializer, spXMLLinks, Props.m_Masters, true);
+			AddLinks(Serializer, spXMLLinks, Props.m_Slaves, false);
+
+			IXMLDOMNodeListPtr spNodes = spXMLLinks->selectNodes(_T("*"));
+			long nCount(0);
+			spNodes->get_length(&nCount);
+			if (nCount)
+				spXMLClass->appendChild(spXMLLinks);
 		}
 	}
 }

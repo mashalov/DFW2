@@ -241,7 +241,7 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 		}
 
 		if (m_bConnected)
-			m_pDeviceContainer->m_ContainerProps.m_strClassName = (m_pFnGetDeviceTypeName)();
+			m_pDeviceContainer->m_ContainerProps.SetClassName((m_pFnGetDeviceTypeName)(), _T(""));
 		
 		if (!m_bConnected)
 			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, cszDLLFilePath));

@@ -399,7 +399,7 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 	CDeviceContainerProperties props = CDynaGeneratorMotion::DeviceProperties();
 	props.SetType(DEVTYPE_GEN_1C);
 	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGenerator1C::m_cszExciterId);
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameGenerator1C;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator1C, CDeviceContainerProperties::m_cszSysNameGenerator1C);
 
 	props.nEquationsCount = CDynaGenerator1C::VARS::V_LAST;
 

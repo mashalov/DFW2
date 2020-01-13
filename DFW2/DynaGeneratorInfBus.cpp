@@ -143,7 +143,7 @@ const CDeviceContainerProperties CDynaGeneratorInfBusBase::DeviceProperties()
 {
 	CDeviceContainerProperties props = CDynaVoltageSource::DeviceProperties();
 	props.SetType(DEVTYPE_GEN_INFPOWER);
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameGeneratorInfPower;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorInfPower, CDeviceContainerProperties::m_cszSysNameGeneratorInfPower);
 	props.nEquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
 	return props;
 }

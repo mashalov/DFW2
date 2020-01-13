@@ -157,7 +157,6 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::UpdateExternalVariables(CDynaModel *pDyna
 void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->SetClassName(_T("DynaDECMustang"));
 	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
 	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
@@ -193,7 +192,7 @@ const CDeviceContainerProperties CDynaDECMustang::DeviceProperties()
 	// свой тип - форсировка Мустанг
 	props.SetType(DEVTYPE_DEC);	
 	props.SetType(DEVTYPE_DEC_MUSTANG);	
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameDECMustang;
+	props.SetClassName(CDeviceContainerProperties::m_cszNameDECMustang, CDeviceContainerProperties::m_cszSysNameDECMustang);
 	// может линковаться с возбудителем
 	props.AddLinkFrom(DEVTYPE_EXCITER, DLM_SINGLE, DPD_MASTER);
 
