@@ -565,6 +565,8 @@ namespace DFW2
 		const _TCHAR *m_cszDampingName = nullptr;
 		HANDLE m_hStopEvt;
 
+		CDeviceContainer *m_pClosestZeroCrossingContainer = nullptr;
+
 	public:
 		CDynaNodeContainer Nodes;
 		CDeviceContainer Branches;

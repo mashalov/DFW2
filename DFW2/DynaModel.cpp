@@ -1199,7 +1199,10 @@ double CDynaModel::CheckZeroCrossing()
 	{
 		double Khi = it->CheckZeroCrossing(this);
 		if (Khi < Kh)
+		{
 			Kh = Khi;
+			m_pClosestZeroCrossingContainer = it;
+		}
 	}
 	return Kh;
 }
@@ -1446,7 +1449,10 @@ void CDynaModel::RepeatZeroCrossing()
 	// старый шаг m_dOldH еще не успели изменить
 	RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
 	sc.CheckAdvance_t0();
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(), GetIntegrationStepNumber(), GetH()));
+	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(), 
+																				GetIntegrationStepNumber(), 
+																				GetH(), 
+																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName()));
 }
 
 

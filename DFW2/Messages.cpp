@@ -36,7 +36,7 @@ const _TCHAR* CDFW2Messages::m_cszDeviceContainerFailedToInit = _T("Отказ �
 const _TCHAR* CDFW2Messages::m_cszStepAndOrderChanged = _T("t=%.12g (%d) Порядок и шаг метода изменен : порядок %d шаг %g с");
 const _TCHAR* CDFW2Messages::m_cszStepChanged = _T("t=%.12g (%d) Шаг метода изменен : шаг %g с (%g), порядок %d");
 const _TCHAR* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = _T("t=%.12g (%d) Порядок и шаг метода изменен по Ньютону: порядок %d шаг %g с");
-const _TCHAR* CDFW2Messages::m_cszZeroCrossingStep = _T("t=%.12g (%d) Шаг метода изменен для поиска ограничения: шаг %g с");
+const _TCHAR* CDFW2Messages::m_cszZeroCrossingStep = _T("t=%.12g (%d) Шаг метода изменен для поиска ограничения: шаг %g с в устройстве %s");
 const _TCHAR* CDFW2Messages::m_cszStepChangedOnError = _T("t=%.12g (%d) Шаг метода изменен по корректору: шаг %g с, ошибка %g в %s от %g \"%s\" Nordsiek[%g;%g]");
 const _TCHAR* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = _T("t=%.12g (%d) Шаг метода изменен для обработки события: шаг %g");
 const _TCHAR* CDFW2Messages::m_cszSynchroZoneCountChanged = _T("Обновлено количество синхронных зон : %d");

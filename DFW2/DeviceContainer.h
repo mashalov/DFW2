@@ -68,7 +68,7 @@ namespace DFW2
 		void CleanUp();														// очистка контейнера
 		CDynaModel *m_pDynaModel;											// через указатель на модель контейнеры и устройства обмениваются общими данными
 		void PrepareSingleLinks();
-
+		CDevice *m_pClosestZeroCrossingDevice = nullptr;
 	public:
 
 		CDeviceContainerProperties m_ContainerProps;						// описание статических атрибутов контейнера: тип и связи с другими устройствами
@@ -178,6 +178,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel *pDynaModel);	// обработать разрыв
 		void UnprocessDiscontinuity();
 		double CheckZeroCrossing(CDynaModel *pDynaModel);					// проверить zerocrossing и вернуть долю текущего шага до zerocrossing
+		CDevice *GetZeroCrossingDevice();
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
 		CDynaModel* GetModel() { return m_pDynaModel;  }
 		void PushVarSearchStack(CDevice*pDevice);

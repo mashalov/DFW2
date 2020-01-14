@@ -112,6 +112,7 @@ namespace DFW2
 			if (nSize)
 			{
 				pDevs = pDev = new T[nSize];
+				Container.AddDevices(pDevs, nSize);
 				auto pSerializer = pDevs->GetSerializer();
 				for (auto&& serializervalue : *pSerializer)
 					if (!serializervalue.second->bState)
@@ -122,8 +123,6 @@ namespace DFW2
 					pDev->UpdateSerializer(pSerializer);
 					ReadRastrRow(pSerializer, Row);
 				}
-
-				Container.AddDevices(pDevs, nSize);
 			}
 			return pDevs;
 		}

@@ -538,6 +538,11 @@ void CDeviceContainer::UnprocessDiscontinuity()
 		it->UnprocessDiscontinuity();
 }
 
+CDevice* CDeviceContainer::GetZeroCrossingDevice()
+{
+	return m_pClosestZeroCrossingDevice;
+}
+
 double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double Kh = 1.0;
@@ -545,7 +550,10 @@ double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 	{
 		double Khi = it->CheckZeroCrossing(pDynaModel);
 		if (Khi < Kh)
+		{
 			Kh = Khi;
+			m_pClosestZeroCrossingDevice = it;
+		}
 	}
 	return Kh;
 }
