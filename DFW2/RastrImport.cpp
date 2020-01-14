@@ -183,7 +183,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
-	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\oos", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test9_sc", ""); 

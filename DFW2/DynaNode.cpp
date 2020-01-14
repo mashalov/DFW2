@@ -5,7 +5,7 @@
 
 using namespace DFW2;
 
-#define LOW_VOLTAGE 0.01
+#define LOW_VOLTAGE 0.1
 #define LOW_VOLTAGE_HYST LOW_VOLTAGE * 0.1
 
 CDynaNodeBase::CDynaNodeBase() : CDevice()
@@ -1121,13 +1121,21 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 			{
 				double dt = (a*t*t*t*t + b * t*t*t + c * t*t + d * t + e) / (4.0*a*t*t*t + 3.0*b*t*t + 2.0*c*t + d);
 				t = t - dt;
+
+				// здесь была проверка диапазона t, но при ее использовании возможно неправильное
+				// определение доли шага, так как на первых итерациях значение может значительно выходить
+				// за диапазон. Но можно попробовать контролировать диапазон не на первой, а на последующих итерациях
+
+				if (fabs(dt) < DFW2_EPSILON * 10.0)
+					break;
+
+				/*
 				if (t > 0.0 || t < -h)
 				{
 					t = FLT_MAX;
 					break;
 				}
-				else if (fabs(dt) < DFW2_EPSILON * 10.0)
-					break;
+				*/ 
 			}
 			rH = (h + t) / h;
 			if (pDynaModel->ZeroCrossingStepReached(rH))
@@ -1172,17 +1180,18 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	{
 		double Border = LOW_VOLTAGE + Hyst;
 		if (Vcheck > Border)
-		{
 			rH = FindVoltageZC(pDynaModel, pRvre, pRvim, Hyst, false);
-		}
 	}
 	else
 	{
 		double Border = LOW_VOLTAGE - Hyst;
+
+		if (GetId() == 2021 && pDynaModel->GetCurrentTime() > 9.67)
+			SetId(GetId());
+
+
 		if (Vcheck < Border)
-		{
 			rH = FindVoltageZC(pDynaModel, pRvre, pRvim, Hyst, true);
-		}
 	}
 
 	return rH;
