@@ -484,6 +484,8 @@ void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty(_T("xd"), xd, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(_T("r"), r, eVARUNITS::VARUNIT_OHM);
 
+	Serializer->AddProperty(m_cszExciterId, m_ExciterId);
+
 	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszSnom, Snom, eVARUNITS::VARUNIT_MVA);
 	Serializer->AddState(m_cszQnom, Qnom, eVARUNITS::VARUNIT_MVAR);

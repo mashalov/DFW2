@@ -1473,4 +1473,4 @@ const _TCHAR *CDynaNodeBase::m_cszBsh = _T("bsh");
 const _TCHAR *CDynaNode::m_cszS = _T("S");
 const _TCHAR *CDynaNode::m_cszSz = _T("Sz");
 
-const _TCHAR* CDynaNodeBase::m_cszLFNodeTypeNames[5] = { _T("База"), _T("Нагр"), _T("Ген"), _T("Ген+"), _T("Ген-") };
+const _TCHAR* CDynaNodeBase::m_cszLFNodeTypeNames[5] = { _T("Slack"), _T("Load"), _T("Gen"), _T("GenMax"), _T("GenMin") };

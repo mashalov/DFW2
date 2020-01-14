@@ -16,9 +16,6 @@ namespace DFW2
 	protected:
 		virtual void UpdateVerbalName();
 	public:
-		// Состояния вначале и в конце ветви
-		double dStateBegin;
-		double dStateEnd;
 
 		CDynaBranchMeasure *m_pMeasure;
 
@@ -54,10 +51,14 @@ namespace DFW2
 		void CalcAdmittances(bool bSeidell);
 		bool IsZeroImpedance();
 
+		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
+
 		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);
 		CDynaNodeBase* GetOppositeSuperNode(CDynaNodeBase* pOriginNode);
 
 		static const CDeviceContainerProperties DeviceProperties();
+
+		static const _TCHAR* m_cszBranchStateNames[4];
 	};
 
 	// Блок расчета параметров потоков по ветви. Добавляется в Якоби для ветви,

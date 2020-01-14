@@ -248,6 +248,36 @@ bool CDynaBranch::IsZeroImpedance()
 	return false;
 }
 
+
+void CDynaBranch::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDevice::UpdateSerializer(Serializer);
+	Serializer->AddProperty(_T("ip"), Ip);
+	Serializer->AddProperty(_T("iq"), Iq);
+	Serializer->AddProperty(_T("np"), Np);
+	Serializer->AddProperty(_T("r"), R, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(_T("x"), X, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(_T("ktr"), Ktr, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("kti"), Kti, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(_T("g"), G, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty(_T("b"), B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty(_T("gr_ip"), GrIp, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty(_T("gr_iq"), GrIq, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty(_T("br_ip"), BrIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty(_T("br_iq"), BrIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty(_T("nr_ip"), NrIp, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty(_T("nr_iq"), NrIq, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddEnumProperty(_T("sta"), new CSerializerAdapterEnumT<CDynaBranch::BranchState>(m_BranchState, m_cszBranchStateNames, _countof(m_cszBranchStateNames)));
+	Serializer->AddState(_T("Gip"), GIp, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState(_T("Giq"), GIq, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState(_T("Bip"), BIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddState(_T("Biq"), BIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddState(_T("Yip"), Yip, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState(_T("Yiq"), Yiq, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState(_T("Yips"), Yips, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState(_T("Yiqs"), Yiqs, eVARUNITS::VARUNIT_SIEMENS);
+}
+
 CDynaNodeBase* CDynaBranch::GetOppositeNode(CDynaNodeBase* pOriginNode)
 {
 	_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
@@ -518,6 +548,8 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 	return DFS_OK;
 }
 
+
+
 const CDeviceContainerProperties CDynaBranch::DeviceProperties()
 {
 	CDeviceContainerProperties props;
@@ -551,3 +583,5 @@ const CDeviceContainerProperties CDynaBranchMeasure::DeviceProperties()
 	props.m_VarMap.insert(make_pair(_T("Se"),	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
 	return props;
 }
+
+const _TCHAR* CDynaBranch::m_cszBranchStateNames[4] = { _T("On"), _T("Off"), _T("Htrip"), _T("Ttrip"), };

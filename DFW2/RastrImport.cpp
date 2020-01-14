@@ -127,14 +127,8 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 {
 	
-	/*
-	pNodes->SetId(spNy->GetZ(i));
-	pNodes->SetName(spName->GetZ(i).bstrVal);
-	pNodes->SetState(spSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-	pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
-	*/
-
 	Serializer->m_pDevice->SetDBIndex(Row);
+	Serializer->m_pDevice->SetId(Row); // если идентификатора нет или он сложный - ставим пор€дковый номер в качестве идентификатора
 
 	for (auto&& sv : *Serializer)
 	{
@@ -376,7 +370,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	}
 
 	
+	ReadTable<CDynaBranch>(_T("vetv"), Network.Branches);
 
+	/*
 	ITablePtr spBranch = spTables->Item("vetv");
 	CDynaBranch *pBranches = new CDynaBranch[spBranch->Size];
 	IColsPtr spBranchCols = spBranch->Cols;
@@ -429,6 +425,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		(pBranches + i)->NrIq = spNrIq->GetZ(i).lVal;
 	}
 	Network.Branches.AddDevices(pBranches, spBranch->Size);
+	*/
 	
 
 
