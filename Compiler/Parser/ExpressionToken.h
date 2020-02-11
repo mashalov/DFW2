@@ -7,6 +7,7 @@
 #include "map"
 #include "algorithm"
 #include "string"
+#include "memory"
 using namespace std;
 
 #include "cex.h"

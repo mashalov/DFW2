@@ -1,6 +1,8 @@
 #pragma once
 #include "DLLHeader.h"
 #include "vector"
+#include "string"
+
 
 namespace DFW2
 {
