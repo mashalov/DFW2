@@ -1420,7 +1420,6 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 }
 
 
-
 void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);

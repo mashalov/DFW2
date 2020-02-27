@@ -14,7 +14,7 @@ namespace DFW2
 	class CDynaBranch : public CDevice
 	{
 	protected:
-		virtual void UpdateVerbalName();
+		void UpdateVerbalName() override;
 	public:
 
 		CDynaBranchMeasure *m_pMeasure;
@@ -44,14 +44,14 @@ namespace DFW2
 		CDynaBranch();
 		virtual ~CDynaBranch() {}
 		cplx GetYBranch(bool bFixNegativeZ = false);
-		virtual bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
-		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
-		virtual eDEVICESTATE GetState();
+		bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom) override;
+		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause) override;
+		eDEVICESTATE GetState() const override;
 		eDEVICEFUNCTIONSTATUS SetBranchState(BranchState eBranchState, eDEVICESTATECAUSE eStateCause);
 		void CalcAdmittances(bool bSeidell);
 		bool IsZeroImpedance();
 
-		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);
 		CDynaNodeBase* GetOppositeSuperNode(CDynaNodeBase* pOriginNode);
@@ -90,11 +90,11 @@ namespace DFW2
 
 		CDynaBranchMeasure(CDynaBranch *pBranch);
 
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};

@@ -8,15 +8,15 @@ namespace DFW2
 	protected:
 		PrimitiveVariableBase *m_Input2;
 
-		virtual double OnStateOn(CDynaModel *pDynaModel);
-		virtual double OnStateOff(CDynaModel *pDynaModel);
+		double OnStateOn(CDynaModel *pDynaModel) override;
+		double OnStateOff(CDynaModel *pDynaModel) override;
 
 	public:
 		CComparator(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2);
 		virtual ~CComparator() {}
-		virtual bool Init(CDynaModel *pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
 //		virtual const _TCHAR* GetVerbalName() { return _T(""); }
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static size_t PrimitiveSize() { return sizeof(CComparator); }
 		static long EquationsCount()  { return 1; }
 	};

@@ -158,7 +158,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAU
 }
 
 // shortcut для получения состояния ветви в терминах CDevice
-eDEVICESTATE CDynaBranch::GetState()
+eDEVICESTATE CDynaBranch::GetState() const
 {
 	eDEVICESTATE State = eDEVICESTATE::DS_ON;
 	if (m_BranchState == BRANCH_OFF)

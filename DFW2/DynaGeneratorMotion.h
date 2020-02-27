@@ -8,7 +8,7 @@ namespace DFW2
 	class CDynaGeneratorMotion : public CDynaGeneratorInfBusBase
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		 eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 	public:
 		enum VARS
 		{
@@ -30,14 +30,14 @@ namespace DFW2
 		CDynaGeneratorMotion();
 		virtual ~CDynaGeneratorMotion() {}
 
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : DFW2_EPSILON; }
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual void UpdateSerializer(SerializerPtr& Serializer);
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 

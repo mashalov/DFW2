@@ -11,10 +11,10 @@ namespace DFW2
 		CAnd(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2);
 		virtual ~CAnd() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Логическое И"); }
+		const _TCHAR* GetVerbalName() override { return _T("Логическое И"); }
 		static size_t PrimitiveSize() { return sizeof(CAnd); }
 		static long EquationsCount()  { return 1; }
 	};
@@ -27,10 +27,10 @@ namespace DFW2
 		COr(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2);
 		virtual ~COr() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Логическое ИЛИ"); }
+		const _TCHAR* GetVerbalName() override { return _T("Логическое ИЛИ"); }
 		static size_t PrimitiveSize() { return sizeof(COr); }
 		static long EquationsCount()  { return 1; }
 	};
@@ -41,10 +41,10 @@ namespace DFW2
 		CNot(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
 		virtual ~CNot() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Логическое НЕ"); }
+		const _TCHAR* GetVerbalName() override { return _T("Логическое НЕ"); }
 		static size_t PrimitiveSize() { return sizeof(CNot); }
 		static long EquationsCount()  { return 1; }
 	};

@@ -58,7 +58,7 @@ namespace DFW2
 	{
 	public:
 		CModelActionStop();
-		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
 
@@ -71,7 +71,7 @@ namespace DFW2
 	public:
 		CModelActionState(CDiscreteDelay *pDiscreteDelay);
 		CDiscreteDelay *GetDelayObject() { return m_pDiscreteDelay; }
-		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
 	class CModelActionChangeVariable : public CModelAction
@@ -81,7 +81,7 @@ namespace DFW2
 		double *m_pVariable;
 	public:
 		CModelActionChangeVariable(double *pVariable, double TargetValue);
-		virtual  DFW2_ACTION_STATE Do(CDynaModel *pDynaModel);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
 	class CModelActionChangeBranchState : public CModelActionChangeVariable
@@ -91,7 +91,7 @@ namespace DFW2
 		CDynaBranch::BranchState m_NewState;
 	public:
 		CModelActionChangeBranchState(CDynaBranch *pBranch, CDynaBranch::BranchState NewState);
-		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue);
 	};
 
@@ -109,7 +109,7 @@ namespace DFW2
 		cplx m_ShuntRX;
 	public:
 		CModelActionChangeNodeShunt(CDynaNode *pNode, cplx& ShuntRX);
-		virtual  DFW2_ACTION_STATE Do(CDynaModel *pDynaModel);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
 	class CModelActionChangeNodeShuntAdmittance : public CModelActionChangeNodeParameterBase
@@ -118,35 +118,35 @@ namespace DFW2
 		cplx m_ShuntGB;
 	public:
 		CModelActionChangeNodeShuntAdmittance(CDynaNode *pNode, cplx& ShuntGB);
-		virtual  DFW2_ACTION_STATE Do(CDynaModel *pDynaModel);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
 	class CModelActionChangeNodeShuntR : public CModelActionChangeNodeShunt
 	{
 	public:
 		CModelActionChangeNodeShuntR(CDynaNode *pNode, double R);
-		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) override;
 	};
 
 	class CModelActionChangeNodeShuntX : public CModelActionChangeNodeShunt
 	{
 	public:
 		CModelActionChangeNodeShuntX(CDynaNode *pNode, double X);
-		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) override;
 	};
 
 	class CModelActionChangeNodeShuntG : public CModelActionChangeNodeShuntAdmittance
 	{
 	public:
 		CModelActionChangeNodeShuntG(CDynaNode *pNode, double G);
-		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) override;
 	};
 
 	class CModelActionChangeNodeShuntB : public CModelActionChangeNodeShuntAdmittance
 	{
 	public:
 		CModelActionChangeNodeShuntB(CDynaNode *pNode, double B);
-		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) override;
 	};
 		
 	class CModelActionChangeNodeLoad : public CModelActionChangeVariable
@@ -156,14 +156,14 @@ namespace DFW2
 		cplx m_newLoad;
 	public:
 		CModelActionChangeNodeLoad(CDynaNode *pNode, cplx& LoadPower);
-		virtual  DFW2_ACTION_STATE Do(CDynaModel *pDynaModel);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
 	class CModelActionRemoveNodeShunt : public CModelActionChangeNodeParameterBase
 	{
 	public:
 		CModelActionRemoveNodeShunt(CDynaNode *pNode);
-		virtual  DFW2_ACTION_STATE Do(CDynaModel *pDynaModel);
+		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
 	typedef list<CModelAction*> MODELACTIONLIST;

@@ -39,15 +39,15 @@ namespace DFW2
 		bool SetConstDefaultValues();
 		bool SetConstValue(size_t nIndex, double dValue);
 
-		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
+		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual bool BuildEquations(CDynaModel *pDynaModel);
-		virtual bool BuildRightHand(CDynaModel *pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		bool BuildEquations(CDynaModel *pDynaModel) override;
+		bool BuildRightHand(CDynaModel *pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);
 	};
 }

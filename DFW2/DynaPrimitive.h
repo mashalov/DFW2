@@ -32,8 +32,8 @@ namespace DFW2
 		double&   m_dValue;
 	public:
 		PrimitiveVariable(ptrdiff_t nIndex, double& pdValue) : m_dValue(pdValue)  { m_nIndex = nIndex; }
-		virtual double& Value()   { return m_dValue; }
-		virtual void IndexAndValue(ptrdiff_t nIndex, double* pValue) {}
+		double& Value() override { return m_dValue; }
+		void IndexAndValue(ptrdiff_t nIndex, double* pValue) override {}
 	};
 
 	class PrimitiveVariableExternal: public PrimitiveVariableBase
@@ -41,9 +41,9 @@ namespace DFW2
 	protected:
 		double *m_pValue;
 	public:
-		virtual double& Value()   { return *m_pValue; }
+		double& Value()  override { return *m_pValue; }
 		virtual ptrdiff_t Index() { return m_nIndex;  }
-		void IndexAndValue(ptrdiff_t nIndex, double* pValue)
+		void IndexAndValue(ptrdiff_t nIndex, double* pValue) override
 		{
 			m_nIndex = nIndex;
 			m_pValue = pValue;
@@ -133,12 +133,12 @@ namespace DFW2
 	public:
 		inline eLIMITEDSTATES GetCurrentState() { return eCurrentState; }
 		void SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		CDynaPrimitiveLimited(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
 		virtual ~CDynaPrimitiveLimited() {}
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual void StoreState() override { eSavedState = eCurrentState; }
-		virtual void RestoreState() override { eCurrentState = eSavedState; }
+		bool Init(CDynaModel *pDynaModel) override;
+		void StoreState() override { eSavedState = eCurrentState; }
+		void RestoreState() override { eCurrentState = eSavedState; }
 	};
 
 	class CDynaPrimitiveBinary : public CDynaPrimitiveState
@@ -157,11 +157,11 @@ namespace DFW2
 		CDynaPrimitiveBinary(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
 		void InvertState(CDynaModel *pDynaModel);
 		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
-		virtual bool BuildEquations(CDynaModel *pDynaModel);
-		virtual bool BuildRightHand(CDynaModel *pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel) { return true; }
-		virtual void StoreState() override { eSavedState = eCurrentState; }
-		virtual void RestoreState() override { eCurrentState = eSavedState; }
+		bool BuildEquations(CDynaModel *pDynaModel) override;
+		bool BuildRightHand(CDynaModel *pDynaModel)  override;
+		bool BuildDerivatives(CDynaModel *pDynaModel)  override { return true; }
+		void StoreState() override { eSavedState = eCurrentState; }
+		void RestoreState() override { eCurrentState = eSavedState; }
 	};
 
 	class CDynaPrimitiveBinaryOutput : public CDynaPrimitiveBinary
@@ -172,6 +172,6 @@ namespace DFW2
 	public:
 		CDynaPrimitiveBinaryOutput(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input) {}
 		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 	};
 }

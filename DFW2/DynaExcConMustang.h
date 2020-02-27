@@ -9,7 +9,7 @@ namespace DFW2
 	{
 
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		CLimitedLag Lag;
 
 		CDerlag dVdt;
@@ -43,16 +43,16 @@ namespace DFW2
 
 		CDynaExcConMustang();
 		virtual ~CDynaExcConMustang() {}
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 
-		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};

@@ -22,12 +22,12 @@ namespace DFW2
 															{ }
 		virtual ~CRSTrigger() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("RS-Триггер"); }
-		static size_t PrimitiveSize() { return sizeof(CRSTrigger); }
-		static long EquationsCount()  { return 1; }
+		const _TCHAR* GetVerbalName() noexcept  override { return _T("RS-Триггер"); }
+		static size_t PrimitiveSize() noexcept { return sizeof(CRSTrigger); }
+		static long EquationsCount()  noexcept { return 1; }
 	};
 }
 

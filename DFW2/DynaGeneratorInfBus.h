@@ -15,11 +15,11 @@ namespace DFW2
 		virtual double Xgen();
 		virtual cplx Igen(ptrdiff_t nIteration);
 		virtual ~CDynaGeneratorInfBusBase() {}
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual cplx GetEMF() { return polar(Eqs, Delta); }
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CalculatePower() override;
-		virtual void UpdateSerializer(SerializerPtr& Serializer);
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		cplx GetEMF() override { return polar(Eqs, Delta); }
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		bool CalculatePower() override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 
@@ -28,10 +28,10 @@ namespace DFW2
 	protected:
 		double EqsCos, EqsSin;
 	public:
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual void UpdateSerializer(SerializerPtr& Serializer);
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 	};
 }
 

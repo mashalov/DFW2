@@ -30,19 +30,19 @@ namespace DFW2
 		CDeadBand(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
 		virtual ~CDeadBand() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 	
-		virtual bool BuildEquations(CDynaModel *pDynaModel);
-		virtual bool BuildRightHand(CDynaModel *pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel) { return true; }
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		virtual bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount);
+		bool BuildEquations(CDynaModel *pDynaModel) override;
+		bool BuildRightHand(CDynaModel *pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override { return true; }
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Мертвая зона"); }
+		const _TCHAR* GetVerbalName() override { return _T("Мертвая зона"); }
 		static size_t PrimitiveSize() { return sizeof(CDeadBand); }
 		static long EquationsCount()  { return 1; }
-		virtual void StoreState() override { m_eDbStateSaved = m_eDbState; }
-		virtual void RestoreState() override { m_eDbState = m_eDbStateSaved; }
+		void StoreState() override { m_eDbStateSaved = m_eDbState; }
+		void RestoreState() override { m_eDbState = m_eDbStateSaved; }
 	};
 }

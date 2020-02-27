@@ -10,7 +10,7 @@ namespace DFW2
 	class CDynaDECMustang : public CDevice
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 
 		CRelayDelay EnforceOn;
 		CRelayDelay EnforceOff;
@@ -51,15 +51,15 @@ namespace DFW2
 		double Udec;
 		double Texc, Umin, Umax;
 
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 
-		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};

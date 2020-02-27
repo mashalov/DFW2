@@ -15,9 +15,9 @@ namespace DFW2
 																											   m_K2(1.0) { }
 		virtual ~CSum() {}
 		void SetK(double K1, double K2) { m_K1 = K1; m_K2 = K2; }
-		virtual bool BuildEquations(CDynaModel *pDynaModel);
-		virtual bool BuildRightHand(CDynaModel *pDynaModel);
-		virtual PrimitiveVariableBase& Input(ptrdiff_t nIndex) 
+		bool BuildEquations(CDynaModel *pDynaModel) override;
+		bool BuildRightHand(CDynaModel *pDynaModel) override;
+		PrimitiveVariableBase& Input(ptrdiff_t nIndex) override
 		{ 
 			switch (nIndex)
 			{
@@ -26,6 +26,6 @@ namespace DFW2
 			}
 			return CDynaPrimitive::Input(0);
 		}
-		virtual const _TCHAR* GetVerbalName() { return _T("Сумматор"); }
+		const _TCHAR* GetVerbalName() noexcept override { return _T("Сумматор"); }
 	};
 }

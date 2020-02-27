@@ -12,19 +12,19 @@ namespace DFW2
 		CAbs(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
 		virtual ~CAbs() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
 
-		virtual bool BuildEquations(CDynaModel *pDynaModel);
-		virtual bool BuildRightHand(CDynaModel *pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel) { return true; }
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
+		bool BuildEquations(CDynaModel *pDynaModel) override;
+		bool BuildRightHand(CDynaModel *pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override { return true; }
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Модуль"); }
+		const _TCHAR* GetVerbalName() override { return _T("Модуль"); }
 		static size_t PrimitiveSize() { return sizeof(CAbs); }
 		static long EquationsCount()  { return 1; }
-		virtual void StoreState() override { m_bPositiveSaved = m_bPositive; }
-		virtual void RestoreState() override { m_bPositive = m_bPositiveSaved; }
+		void StoreState() override { m_bPositiveSaved = m_bPositive; }
+		void RestoreState() override { m_bPositive = m_bPositiveSaved; }
 	};
 }

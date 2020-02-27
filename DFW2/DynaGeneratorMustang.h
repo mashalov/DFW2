@@ -8,20 +8,20 @@ namespace DFW2
 	class CDynaGeneratorMustang : public CDynaGenerator3C
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual cplx GetXofEqs() { return cplx(0, xq); }
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		cplx GetXofEqs() override { return cplx(0, xq); }
 	public:
 
 		CDynaGeneratorMustang();
 		virtual ~CDynaGeneratorMustang() {}
 
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CalculatePower() override;
-		virtual const cplx& CalculateEgen() override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		bool CalculatePower() override;
+		const cplx& CalculateEgen() override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};

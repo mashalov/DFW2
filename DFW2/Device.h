@@ -213,7 +213,7 @@ namespace DFW2
 		const CSingleLink& GetSingleLinks() { return m_DeviceLinks; }
 
 		// формирование подробного имени устройства. По умолчанию учитывается описание типа устройства
-		virtual void UpdateVerbalName();
+		void UpdateVerbalName() override;
 		typedef eDEVICEFUNCTIONSTATUS(CheckMasterDeviceFunction)(CDevice*, LinkDirectionFrom const *);
 		static CheckMasterDeviceFunction CheckMasterDeviceInit;
 		static CheckMasterDeviceFunction CheckMasterDeviceDiscontinuity;

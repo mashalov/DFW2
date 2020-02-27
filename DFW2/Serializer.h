@@ -162,15 +162,15 @@ namespace DFW2
 		const _TCHAR** m_StringRepresentation;
 		size_t m_nCount;
 	public:
-		virtual ptrdiff_t GetInt() override
+		ptrdiff_t GetInt() override
 		{
 			return static_cast<ptrdiff_t>(*m_pLeft);
 		}
-		virtual void SetInt(ptrdiff_t vInt) override
+		void SetInt(ptrdiff_t vInt) override
 		{
 			*m_pLeft = static_cast<T>(vInt);
 		}
-		virtual wstring GetString() override
+		wstring GetString() override
 		{
 			ptrdiff_t nIndex = static_cast<ptrdiff_t>(*m_pLeft);
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(m_nCount))

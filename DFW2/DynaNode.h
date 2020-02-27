@@ -26,10 +26,10 @@ namespace DFW2
 		virtual ~CSynchroZone() {}
 		bool m_bEnergized = false;				// признак наличия источника напряжения
 
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		bool BuildEquations(CDynaModel* pDynaModel)  override;
+		bool BuildRightHand(CDynaModel* pDynaModel)  override;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 
@@ -118,26 +118,26 @@ namespace DFW2
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
+		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
+		double* GetConstVariablePtr(ptrdiff_t nVarIndex)  override;
 		void GetPnrQnr();
 		void GetPnrQnrSuper();
 		bool AllLRCsInShuntPart(double V, double Vmin);
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual void NewtonUpdateEquation(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		bool BuildEquations(CDynaModel* pDynaModel)  override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		void NewtonUpdateEquation(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		void MarkZoneEnergized();
 		void ProcessTopologyRequest();
 		void CalcAdmittances(bool bSeidell);
 		void CalculateShuntParts();
 		// инициализация узла для расчета УР
 		void StartLF(bool bFlatStart, double ImbTol);
-		virtual void StoreStates() override;
-		virtual void RestoreStates() override;
-		virtual bool InMatrix() override;
+		void StoreStates() override;
+		void RestoreStates() override;
+		bool InMatrix() override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() { return Pnr - Pgr - V * V * YiiSuper.real();	}
 		inline double GetSelfImbQ() { return Qnr - Qgr + V * V * YiiSuper.imag(); }
 
@@ -148,7 +148,7 @@ namespace DFW2
 
 		void SetMatrixRow(ptrdiff_t nMatrixRow) { m_nMatrixRow = nMatrixRow; }
 
-		virtual ExternalVariable GetExternalVariable(const _TCHAR* cszVarName);
+		ExternalVariable GetExternalVariable(const _TCHAR* cszVarName) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 
@@ -162,7 +162,7 @@ namespace DFW2
 		void TidyZeroBranches();
 		// выбирает исходное напряжение либо равное расчетному, либо (если расчетное равно почему-то нулю), номинальному
 		inline void PickV0() { V0 = (V > 0) ? V : Unom; }
-		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
@@ -200,15 +200,15 @@ namespace DFW2
 		//double Sv, Dlt;
 		CDynaNode();
 		virtual ~CDynaNode() {}
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual void Predict();			// допонительная обработка прогноза
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual void UpdateSerializer(SerializerPtr& Serializer) override;
+		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
+		bool BuildEquations(CDynaModel* pDynaModel)  override;
+		bool BuildRightHand(CDynaModel* pDynaModel)  override;
+		bool BuildDerivatives(CDynaModel *pDynaModel)  override;
+		void Predict()  override;			// допонительная обработка прогноза
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
+		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)  override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 

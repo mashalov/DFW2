@@ -12,7 +12,7 @@ namespace DFW2
 	class CDynaExciterBase : public CDevice
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 
 		PrimitiveVariable PvEqsum;
 		PrimitiveVariableExternal GenId, GenIq, ExtUf, ExtUdec, ExtVg, EqInput;
@@ -44,9 +44,9 @@ namespace DFW2
 		CDynaExciterBase();
 
 		virtual ~CDynaExciterBase() { }
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 
 		double GetIg();
 		void SetLagTimeConstantRatio(double TexcNew);
