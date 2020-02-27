@@ -13,7 +13,7 @@ namespace DFW2
 		bool m_bMaxRelay;
 
 	protected:
-		inline eRELAYSTATES GetCurrentState() noexcept { return eCurrentState; }
+		inline eRELAYSTATES GetCurrentState() override { return eCurrentState; }
 		double OnStateOn(CDynaModel *pDynaModel) override;
 		double OnStateOff(CDynaModel *pDynaModel) override;
 		eRELAYSTATES GetInstantState();

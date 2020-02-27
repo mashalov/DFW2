@@ -151,7 +151,7 @@ namespace DFW2
 		};
 		eRELAYSTATES eCurrentState;		// текущее состояние реле
 		eRELAYSTATES eSavedState;		// сохраненное состояние реле
-		inline eRELAYSTATES GetCurrentState() { return eCurrentState; }
+		virtual inline eRELAYSTATES GetCurrentState() { return eCurrentState; }
 		virtual void RequestZCDiscontinuity(CDynaModel* pDynaModel);
 	public:
 		CDynaPrimitiveBinary(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
@@ -167,7 +167,7 @@ namespace DFW2
 	class CDynaPrimitiveBinaryOutput : public CDynaPrimitiveBinary
 	{
 	protected:
-		virtual double OnStateOn(CDynaModel *pDynaModel)  { return 1.0; }
+		virtual double OnStateOn(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateOff(CDynaModel *pDynaModel) { return 1.0; }
 	public:
 		CDynaPrimitiveBinaryOutput(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input) {}
