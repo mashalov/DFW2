@@ -29,12 +29,12 @@ public:
 
 	static inline void ltrim(wstring &s)
 	{
-		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) { return !isspace(ch); }));
+		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) noexcept { return !isspace(ch); }));
 	}
 
 	static inline void rtrim(std::wstring &s)
 	{
-		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) { return !isspace(ch); }).base(), s.end());
+		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) noexcept { return !isspace(ch); }).base(), s.end());
 	}
 
 	static inline void trim(std::wstring &s) { ltrim(s);  rtrim(s); }
@@ -45,7 +45,7 @@ public:
 		size_t nPos = 0;
 		if (cszDelimiters)
 		{
-			size_t nDelimitersCount = _tcslen(cszDelimiters);
+			const size_t nDelimitersCount = _tcslen(cszDelimiters);
 			const _TCHAR* pLastDelimiter = cszDelimiters + nDelimitersCount;
 			while (nPos < str.length())
 			{
@@ -53,7 +53,7 @@ public:
 				const _TCHAR *pDelimiter = cszDelimiters;
 				while (pDelimiter < pLastDelimiter)
 				{
-					size_t nDelPos = str.find(*pDelimiter, nPos);
+					const size_t nDelPos = str.find(*pDelimiter, nPos);
 					if (nDelPos != wstring::npos)
 						if (nMinDelPos == wstring::npos || nMinDelPos > nDelPos)
 							nMinDelPos = nDelPos;
@@ -78,6 +78,7 @@ public:
 	}
 };
 
+using TCHARString = unique_ptr<_TCHAR[]>;
 
 class Cex
 {
@@ -87,16 +88,16 @@ public:
 	{
 
 		_TCHAR lpszFormat[512];
-		int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
+		const int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
 		// String is truncated to 511 characters
 		m_szBuffer = nullptr;
 		if (nCount)
 		{
-			m_szBuffer = new _TCHAR[EXCEPTION_BUFFER_SIZE];
-			*m_szBuffer = _T('\x0');
+			m_szBuffer = make_unique<_TCHAR[]>(512);
+			m_szBuffer[0] = _T('\x0');
 			va_list argList;
 			va_start(argList, nID);
-			_vsntprintf_s(m_szBuffer, EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argList);
+			_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argList);
 			va_end(argList);
 		}
 	}
@@ -104,51 +105,44 @@ public:
 	Cex(Cex* pDummy, UINT nID, va_list argm)
 	{
 		_TCHAR lpszFormat[512];
-		int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
+		const int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
 		// String is truncated to 511 characters
-		m_szBuffer = new _TCHAR[EXCEPTION_BUFFER_SIZE];
-		*m_szBuffer = _T('\x0');
-		_vsntprintf_s(m_szBuffer, EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argm);
+		m_szBuffer = make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
+		m_szBuffer[0] = _T('\x0');
+		_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argm);
 	}
 
 	Cex(Cex* pDummy, const _TCHAR* lpszFormat, va_list argm)
 	{
-		m_szBuffer = new _TCHAR[EXCEPTION_BUFFER_SIZE];
-		*m_szBuffer = _T('\x0');
-		_vsntprintf_s(m_szBuffer, EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argm);
+		m_szBuffer = make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
+		m_szBuffer[0] = _T('\x0');
+		_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argm);
 	}
 
 	Cex(const _TCHAR *lpszFormat, ...)
 	{
 
-		m_szBuffer = new _TCHAR[EXCEPTION_BUFFER_SIZE];
-		*m_szBuffer = _T('\x0');
+		m_szBuffer = make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
+		m_szBuffer[0] = _T('\x0');
 		va_list argList;
 		va_start(argList, lpszFormat);
-		_vsntprintf_s(m_szBuffer, EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argList);
+		_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argList);
 		va_end(argList);
 	}
 
 	Cex(const Cex *pCex)
 	{
-		m_szBuffer = new _TCHAR[EXCEPTION_BUFFER_SIZE];
-		_tcsncpy_s(m_szBuffer, EXCEPTION_BUFFER_SIZE - 1, pCex->m_szBuffer, _TRUNCATE);
+		m_szBuffer = make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
+		_tcsncpy_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, pCex->m_szBuffer.get(), _TRUNCATE);
 	}
 
-	virtual ~Cex()
+	operator const _TCHAR*() noexcept
 	{
-		if (m_szBuffer != nullptr)
-			delete[] m_szBuffer;
-		m_szBuffer = nullptr;
-	}
-
-	operator const _TCHAR*()
-	{
-		return m_szBuffer;
+		return m_szBuffer.get();
 	}
 
 protected:
-	_TCHAR *m_szBuffer;
+	TCHARString m_szBuffer;
 };
 
 
@@ -158,7 +152,7 @@ protected:
 	std::wstring m_strMessage;
 public:
 	CDFW2Exception(const _TCHAR *cszMessage) : m_strMessage(cszMessage) {}
-	const _TCHAR* Message()  { return m_strMessage.c_str(); }
+	const _TCHAR* Message() noexcept { return m_strMessage.c_str(); }
 };
 
 class CDFW2GetLastErrorException : public CDFW2Exception
@@ -174,11 +168,11 @@ public:
 
 	static std::wstring GetLastErrorMessage()
 	{
-		DWORD dwError = ::GetLastError();
+		const DWORD dwError = ::GetLastError();
 		if (dwError != 0)
 		{
 			LPTSTR messageBuffer = nullptr;
-			size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+			const size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				NULL, dwError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&messageBuffer, 0, NULL);
 			std::wstring message(messageBuffer, size);
 			LocalFree(messageBuffer);
@@ -212,7 +206,7 @@ static void NormalizePath(std::wstring& Path)
 	}
 }
 
-static bool CreateAllDirectories(const _TCHAR *szDir)
+static bool CreateAllDirectories(const _TCHAR *szDir) noexcept
 {
 	switch (SHCreateDirectoryEx(NULL, szDir, NULL))
 	{

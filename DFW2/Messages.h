@@ -30,7 +30,7 @@ namespace DFW2
 
 		CDFW2Messages();
 
-		const VARNAMEMAP& VarNameMap() const { return m_VarNameMap; }
+		const VARNAMEMAP& VarNameMap() const noexcept { return m_VarNameMap; }
 
 		static const _TCHAR* m_cszBranchNodeNotFound;
 		static const _TCHAR* m_cszDuplicateDevice;

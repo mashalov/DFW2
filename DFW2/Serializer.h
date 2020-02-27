@@ -17,11 +17,11 @@ namespace DFW2
 		ptrdiff_t *pInt;
 		bool *pBool;
 		cplx *pCplx;
-		uValue(double* pDouble) : pDbl(pDouble) {}
-		uValue(ptrdiff_t* pInteger) : pInt(pInteger) {}
-		uValue(bool* pBoolean) : pBool(pBoolean) {}
-		uValue(cplx* pComplex) : pCplx(pComplex) {}
-		uValue() {}
+		uValue(double* pDouble) noexcept: pDbl(pDouble) {}
+		uValue(ptrdiff_t* pInteger) noexcept : pInt(pInteger) {}
+		uValue(bool* pBoolean) noexcept : pBool(pBoolean) {}
+		uValue(cplx* pComplex) noexcept : pCplx(pComplex) {}
+		uValue() noexcept {}
 	};
 
 	struct TypedSerializedValue;
@@ -115,7 +115,7 @@ namespace DFW2
 		*/
 
 	protected:
-		void MakeCopy(const TypedSerializedValue& Copy)
+		void MakeCopy(const TypedSerializedValue& Copy) noexcept
 		{
 			switch (Copy.ValueType)
 			{
@@ -148,7 +148,7 @@ namespace DFW2
 	protected:
 		T* m_pLeft = nullptr;
 	public:
-		CSerializerAdapterBaseT(T& Left) : m_pLeft(&Left) {}
+		CSerializerAdapterBaseT(T& Left) noexcept : m_pLeft(&Left) {}
 		virtual ~CSerializerAdapterBaseT() {}
 	};
 
@@ -166,13 +166,13 @@ namespace DFW2
 		{
 			return static_cast<ptrdiff_t>(*m_pLeft);
 		}
-		void SetInt(ptrdiff_t vInt) override
+		void SetInt(ptrdiff_t vInt) noexcept override
 		{
 			*m_pLeft = static_cast<T>(vInt);
 		}
 		wstring GetString() override
 		{
-			ptrdiff_t nIndex = static_cast<ptrdiff_t>(*m_pLeft);
+			const ptrdiff_t nIndex = static_cast<ptrdiff_t>(*m_pLeft);
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(m_nCount))
 				throw dfw2error(Cex(_T("CSerializerAdapterEnumT::GetString - invalid enum index or string representation %d"), nIndex));
 			return wstring(m_StringRepresentation[nIndex]);
@@ -219,7 +219,7 @@ namespace DFW2
 		static const _TCHAR *m_cszStateCause;
 		static const _TCHAR *m_cszType;
 
-		ptrdiff_t ValuesCount()
+		ptrdiff_t ValuesCount() noexcept
 		{
 			return ValueMap.size();
 		}

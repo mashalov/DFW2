@@ -22,14 +22,14 @@ CDynaNodeBase::~CDynaNodeBase()
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
-	cplx VreVim(polar(V, Delta));
+	const cplx VreVim(polar(V, Delta));
 	Vre = VreVim.real();
 	Vim = VreVim.imag();
 }
 
 void CDynaNodeBase::UpdateVDelta()
 {
-	cplx VreVim(Vre, Vim);
+	const cplx VreVim(Vre, Vim);
 	V = abs(VreVim);
 	Delta = arg(VreVim);
 }

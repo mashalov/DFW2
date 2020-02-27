@@ -138,15 +138,15 @@ namespace DFW2
 		bool InMatrix() override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		inline double GetSelfImbP() { return Pnr - Pgr - V * V * YiiSuper.real();	}
-		inline double GetSelfImbQ() { return Qnr - Qgr + V * V * YiiSuper.imag(); }
+		inline double GetSelfImbP() noexcept { return Pnr - Pgr - V * V * YiiSuper.real();	}
+		inline double GetSelfImbQ() noexcept { return Qnr - Qgr + V * V * YiiSuper.imag(); }
 
-		inline double GetSelfdPdV() { return -2 * V * YiiSuper.real() + dLRCPn;	}
-		inline double GetSelfdQdV() { return  2 * V * YiiSuper.imag() + dLRCQn; }
+		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn;	}
+		inline double GetSelfdQdV() noexcept { return  2 * V * YiiSuper.imag() + dLRCQn; }
 
-		inline bool IsLFTypePQ() { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
+		inline bool IsLFTypePQ() noexcept { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
 
-		void SetMatrixRow(ptrdiff_t nMatrixRow) { m_nMatrixRow = nMatrixRow; }
+		void SetMatrixRow(ptrdiff_t nMatrixRow) noexcept { m_nMatrixRow = nMatrixRow; }
 
 		ExternalVariable GetExternalVariable(const _TCHAR* cszVarName) override;
 
@@ -161,7 +161,7 @@ namespace DFW2
 		VirtualZeroBranch* AddZeroBranch(CDynaBranch* pBranch);
 		void TidyZeroBranches();
 		// выбирает исходное напряжение либо равное расчетному, либо (если расчетное равно почему-то нулю), номинальному
-		inline void PickV0() { V0 = (V > 0) ? V : Unom; }
+		inline void PickV0() noexcept { V0 = (V > 0) ? V : Unom; }
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const _TCHAR *m_cszV;
@@ -246,14 +246,14 @@ namespace DFW2
 		double UncontrolledP = 0.0;
 		double UncontrolledQ = 0.0;												// постоянные значения активной и реактивной генерации в суперузле
 
-		void Store(CDynaNodeBase *pStoreNode)
+		void Store(CDynaNodeBase *pStoreNode) noexcept
 		{
 			pNode = pStoreNode;
 			LFQmin = pNode->LFQmin;
 			LFQmax = pNode->LFQmax;
 			LFNodeType = pNode->m_eLFNodeType;
 		}
-		void Restore()
+		void Restore() noexcept
 		{
 			pNode->LFQmin = LFQmin;
 			pNode->LFQmax = LFQmax;
@@ -272,7 +272,7 @@ namespace DFW2
 		double m_dDiff;
 		typedef bool (OperatorFunc)(double lhs, double rhs);
 
-		void UpdateOp(CDynaNodeBase *pNode, double dValue, OperatorFunc OpFunc)
+		void UpdateOp(CDynaNodeBase *pNode, double dValue, OperatorFunc OpFunc) noexcept
 		{
 			if (pNode)
 			{
@@ -295,7 +295,7 @@ namespace DFW2
 		}
 
 	public:
-		_MaxNodeDiff() : m_pNode(nullptr),
+		_MaxNodeDiff() noexcept : m_pNode(nullptr),
 			m_dDiff(0.0)
 		{}
 
@@ -315,17 +315,17 @@ namespace DFW2
 
 		void UpdateMin(CDynaNodeBase *pNode, double Value)
 		{
-			UpdateOp(pNode, Value, [](double lhs, double rhs) -> bool { return lhs < rhs; });
+			UpdateOp(pNode, Value, [](double lhs, double rhs) noexcept -> bool { return lhs < rhs; });
 		}
 
 		void UpdateMax(CDynaNodeBase *pNode, double Value)
 		{
-			UpdateOp(pNode, Value, [](double lhs, double rhs) -> bool { return lhs > rhs; });
+			UpdateOp(pNode, Value, [](double lhs, double rhs) noexcept -> bool { return lhs > rhs; });
 		}
 
 		void UpdateMaxAbs(CDynaNodeBase *pNode, double Value)
 		{
-			UpdateOp(pNode, Value, [](double lhs, double rhs) -> bool { return fabs(lhs) > fabs(rhs); });
+			UpdateOp(pNode, Value, [](double lhs, double rhs) noexcept -> bool { return fabs(lhs) > fabs(rhs); });
 		}
 	};
 
@@ -355,7 +355,7 @@ namespace DFW2
 				CDynaNodeBase *pNode = pMatrixInfo->pNode;
 				m_MaxImbP.UpdateMaxAbs(pNode, pMatrixInfo->m_dImbP);
 				m_MaxImbQ.UpdateMaxAbs(pNode, pMatrixInfo->m_dImbQ);
-				double VdVnom = pNode->V / pNode->Unom;
+				const double VdVnom = pNode->V / pNode->Unom;
 				m_MaxV.UpdateMax(pNode, VdVnom);
 				m_MinV.UpdateMin(pNode, VdVnom);
 			}
@@ -402,7 +402,7 @@ namespace DFW2
 		VirtualZeroBranch *m_pZeroBranchesEnd;
 		CDeviceContainer *m_pSynchroZones = nullptr;
 	public:
-		const VirtualZeroBranch* GetZeroBranchesEnd() const { return m_pZeroBranchesEnd; }
+		const VirtualZeroBranch* GetZeroBranchesEnd() const noexcept { return m_pZeroBranchesEnd; }
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
 		void CalculateShuntParts();
 		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
