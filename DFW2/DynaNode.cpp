@@ -1284,24 +1284,30 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	CLinkPtrCount *pSuperNodeLink = GetSuperLink(0);
 	if (pSuperNodeLink->m_nCount)
 	{
+		// Создаем граф с узлами ребрами от типов расчетных узлов и ветвей
 		using GraphType = GraphCycle<CDynaNodeBase*, VirtualZeroBranch*>;
 		using NodeType = GraphType::GraphNodeBase;
 		using EdgeType = GraphType::GraphEdgeBase;
+		// Создаем вектор внутренних узлов суперузла, включая узел представитель
 		unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
+		// Создаем вектор ребер за исключением параллельных ветвей
 		unique_ptr<EdgeType[]> pGraphEdges = make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
 		CDevice **ppNodeEnd = pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount;
 		NodeType *pNode = pGraphNodes.get();
 		GraphType gc;
+		// Вводим узлы в граф. В качестве идентификатора узла используем адрес объекта
 		for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
 			gc.AddNode(pNode->SetId(static_cast<CDynaNodeBase*>(*ppDev)));
-
+		// добавляем узел представитель
 		gc.AddNode(pNode->SetId(this));
 
+		// Вводим в граф ребра
 		EdgeType *pEdge = pGraphEdges.get();
 		for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
 			gc.AddEdge(pEdge->SetIds(pZb->pBranch->m_pNodeIp, pZb->pBranch->m_pNodeIq, pZb));
 
 		GraphType::CyclesType Cycles;
+		// Определяем циклы
 		gc.GenerateCycles(Cycles);
 		if (!Cycles.empty())
 		{
@@ -1323,6 +1329,9 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 				}
 			}
 			*/
+
+			//KLUWrapper<complex<double>> klu;
+			//klu.SetSize(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin, 100);
 		}
 	}
 
