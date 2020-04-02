@@ -1331,7 +1331,6 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 			}
 			*/
 
-			
 			const GraphType::GraphNodeBase *pMaxRangeNode = gc.GetMaxRankNode();
 			ptrdiff_t nNz(gc.Edges().size() * 2 - pMaxRangeNode->Rank());
 			for (auto&& cycle : Cycles)
@@ -1409,7 +1408,6 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 					s += coe * b;
 				}
 			}
-
 		}
 	}
 

@@ -169,6 +169,7 @@ namespace DFW2
 		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
 		void InitNordsieck(CDynaModel *pDynaModel);
+		void Predict();
   		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
 		void BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
 		void BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств

@@ -35,8 +35,7 @@ void CDynaModel::Predict()
 	// (например для узлов, которым нужно перевести прогноз полярного напряжения в прямоугольное)
 	// делаем цикл с вызовом функции прогноза устройства
 	for (auto&& it : m_DeviceContainersPredict)
-		for (auto&& dit : *it)
-			dit->Predict();
+		it->Predict();
 }
 
 void CDynaModel::InitDevicesNordsiek()

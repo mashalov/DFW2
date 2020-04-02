@@ -458,6 +458,12 @@ void CDeviceContainer::InitNordsieck(CDynaModel *pDynaModel)
 		it->InitNordsiek(pDynaModel);
 }
 
+void CDeviceContainer::Predict()
+{
+	for (auto&& dit : m_DevInMatrix)
+		dit->Predict();
+}
+
 void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 {
 	m_DevInMatrix.clear();
