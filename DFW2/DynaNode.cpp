@@ -1275,6 +1275,7 @@ void CDynaNodeBase::TidyZeroBranches()
 
 }
 
+
 void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 {
 	if (m_pSuperNodeParent)
@@ -1330,8 +1331,85 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 			}
 			*/
 
-			//KLUWrapper<complex<double>> klu;
-			//klu.SetSize(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin, 100);
+			
+			const GraphType::GraphNodeBase *pMaxRangeNode = gc.GetMaxRankNode();
+			ptrdiff_t nNz(gc.Edges().size() * 2 - pMaxRangeNode->Rank());
+			for (auto&& cycle : Cycles)
+				nNz += cycle.size();
+
+			KLUWrapper<complex<double>> klu;
+			klu.SetSize(gc.Edges().size(), nNz);
+
+			ptrdiff_t* pAi = klu.Ai();
+			ptrdiff_t* pAp = klu.Ap();
+			double* pAx = klu.Ax();
+			double* pB = klu.B();
+
+			ptrdiff_t* cpAp = pAp;
+			ptrdiff_t* cpAi = pAi;
+			double* cpB  = pB;
+			double* cpAx = pAx;
+
+			*pAi = 0;
+
+			// мнимую часть коэффициентов матрицы обнуляем
+			// вещественная будет -1, 0 или +1
+			double* pz = pAx + nNz * 2 - 1;
+			while (pz > pAx)
+			{
+				*pz = 0.0;
+				pz -= 2;
+			}
+
+			for (auto&& node : gc.Nodes())
+			{
+				if (node != pMaxRangeNode)
+				{
+					ptrdiff_t nCurrentRow = *pAi;
+					pAi++;
+					for (EdgeType** edge = node->m_ppEdgesBegin; edge < node->m_ppEdgesEnd; edge++)
+					{
+						*pAp = (*edge)->m_nIndex;
+						*pAx = (*edge)->m_pBegin == node ? 1.0 : -1.0;;
+						pAx += 2;
+						pAp++;
+					}
+					*pAi = nCurrentRow + node->m_ppEdgesEnd - node->m_ppEdgesBegin;
+					*pB = 10.0;			pB++;
+					*pB = 10.0;			pB++;
+				}
+			}
+
+			for (auto&& cycle : Cycles)
+			{
+				ptrdiff_t nCurrentRow = *pAi;
+				pAi++;
+				for (auto& edge : cycle)
+				{
+					*pAp = edge.m_pEdge->m_nIndex;
+					double Direction = 
+					*pAx = edge.m_bDirect ? 1.0 : -1.0;
+					pAx += 2;
+					pAp++;
+				}
+				*pAi = nCurrentRow + cycle.size();
+				*pB = 0.0;			pB++;
+				*pB = 0.0;			pB++;
+			}
+			klu.Solve();
+
+			
+			for (ptrdiff_t nRow = 0; nRow < klu.MatrixSize(); nRow++)
+			{
+				cplx s;
+				for (ptrdiff_t c = klu.Ai()[nRow]; c < klu.Ai()[nRow + 1]; c++)
+				{
+					cplx coe(klu.Ax()[2 * c], klu.Ax()[2 * c + 1]);
+					cplx b(klu.B()[2 * klu.Ap()[c]], klu.B()[2 * klu.Ap()[c] + 1]);
+					s += coe * b;
+				}
+			}
+
 		}
 	}
 

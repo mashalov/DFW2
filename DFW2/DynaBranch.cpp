@@ -31,8 +31,9 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 #ifdef _DEBUG
 	bool bZ1 = m_pNodeSuperIp == m_pNodeSuperIq;
 	bool bZ2 = IsZeroImpedance();
-	_ASSERTE(bZ1 == bZ2);
-	if(bZ2)
+	// Ассертит случай, когда ветвь в суперузле но имеет большее чем пороговое сопротивление
+	//_ASSERTE(bZ1 == bZ2);
+	if(bZ2||bZ1)
 		return cplx(0.0);
 #else
 	if(m_pNodeSuperIp == m_pNodeSuperIq)

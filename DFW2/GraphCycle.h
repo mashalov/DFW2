@@ -15,10 +15,16 @@ namespace DFW2
 			GraphEdgeBase **m_ppEdgesBegin = nullptr;
 			GraphEdgeBase **m_ppEdgesEnd = nullptr;
 			IdNodeType m_Id;
+			ptrdiff_t m_nIndex = 0;
 			GraphNodeBase* SetId(IdNodeType Id)
 			{
 				m_Id = Id;
 				return this;
+			}
+
+			inline ptrdiff_t Rank() const
+			{
+				return m_ppEdgesEnd - m_ppEdgesBegin;
 			}
 		};
 
@@ -29,6 +35,7 @@ namespace DFW2
 			GraphNodeBase *m_pEnd = nullptr;
 			IdNodeType m_IdBegin, m_IdEnd;
 			IdBranchType m_IdBranch;
+			ptrdiff_t m_nIndex = 0;
 			bool bPassed = false;
 			GraphEdgeBase* SetIds(IdNodeType IdBegin, IdNodeType IdEnd, IdBranchType IdBranch)
 			{
@@ -60,17 +67,22 @@ namespace DFW2
 			}
 		};
 
-		set<GraphNodeBase*, NodeCompare> m_Nodes;
-		vector<GraphEdgeBase*> m_Edges;
+		using NodesType = set<GraphNodeBase*, NodeCompare>;
+		using EdgesType = vector<GraphEdgeBase*>;
+
 		unique_ptr<GraphEdgeBase*[]> m_EdgesPtrs;
+
+		NodesType m_Nodes;
+		EdgesType m_Edges;
 
 		// собирает заданный граф в струтуру, оптимальную для обхода
 		void BuildGraph()
 		{
 			GraphNodeBase psrc;	// временный узел для поиска в сете
+			ptrdiff_t nCount(0);
 			for (auto&& edge : m_Edges)
 			{
-				// для каждого ребра находим узлы начала и конца по идентификаторам в сетее
+				// для каждого ребра находим узлы начала и конца по идентификаторам в сете
 				auto& pNodeB = m_Nodes.find(psrc.SetId(edge->m_IdBegin));
 				auto& pNodeE = m_Nodes.find(psrc.SetId(edge->m_IdEnd));
 				if(pNodeB == m_Nodes.end() || pNodeE == m_Nodes.end())
@@ -78,6 +90,7 @@ namespace DFW2
 				// задаем указатели на узлы начала и конца в ребре
 				edge->m_pBegin = *pNodeB;
 				edge->m_pEnd = *pNodeE;
+				edge->m_nIndex = nCount++;
 				// увеличиваем количество ребер в найденных узлах (изначально указатель m_ppEdgesEnd == nullptr)
 				// ребра к узлам добавляются дважды: прямые и обратные, так как граф ненаправленный
 				(*pNodeB)->m_ppEdgesEnd++;
@@ -88,6 +101,7 @@ namespace DFW2
 			GraphEdgeBase **ppEdges = m_EdgesPtrs.get();
 			
 
+			nCount = 0;
 			for (auto&& node : m_Nodes)
 			{
 				// для каждого узла устанавливаем конечный указатель на ребра в векторе ребер
@@ -100,6 +114,7 @@ namespace DFW2
 				// конечный указатель приравниваем к начальному,
 				// мы сдвинем его добавляя указатели на ребра
 				node->m_ppEdgesEnd = node->m_ppEdgesBegin;
+				node->m_nIndex = nCount++;
 			}
 
 			for (auto&& edge : m_Edges)
@@ -113,7 +128,18 @@ namespace DFW2
 			}
 		}
 
+		
+
 	public:
+
+		[[nodiscard]] const GraphNodeBase* GetMaxRankNode() const
+		{
+			auto it = std::max_element(m_Nodes.begin(), m_Nodes.end(), [](const auto& lhs, const auto& rhs) 
+					{
+							return lhs->Rank() < rhs->Rank();
+				    });
+			return it != m_Nodes.end() ? *it : nullptr;
+		}
 
 		void AddNode(GraphNodeBase *pNode)
 		{
@@ -245,6 +271,15 @@ namespace DFW2
 
 		}
 
+		[[nodiscard]] const NodesType& Nodes() const
+		{
+			return m_Nodes;
+		}
+
+		[[nodiscard]] const EdgesType& Edges() const
+		{
+			return m_Edges;
+		}
 
 		void Test()
 		{
