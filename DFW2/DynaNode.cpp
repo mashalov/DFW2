@@ -1330,83 +1330,102 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 				}
 			}
 			*/
+		}
 
-			const GraphType::GraphNodeBase *pMaxRangeNode = gc.GetMaxRankNode();
-			ptrdiff_t nNz(gc.Edges().size() * 2 - pMaxRangeNode->Rank());
-			for (auto&& cycle : Cycles)
-				nNz += cycle.size();
+		// Формируем матрицу для расчета токов в ветвях
+		// Количество уравнений равно количеству узлов - 1 + количество контуров = количество ветвей внутри суперузла
 
-			KLUWrapper<complex<double>> klu;
-			klu.SetSize(gc.Edges().size(), nNz);
+		// исключаем из списка узлов узел с наибольшим числом связей (можно и первый попавшийся, KLU справится, но найти
+		// такой узел легко
+		const GraphType::GraphNodeBase* pMaxRangeNode = gc.GetMaxRankNode();
+		// количество ненулевых элементов равно количеству ребер * 2 - количество связей исключенного узла + количество ребер в циклах
+		ptrdiff_t nNz(gc.Edges().size() * 2 - pMaxRangeNode->Rank());
+		for (auto&& cycle : Cycles)
+			nNz += cycle.size();
 
-			ptrdiff_t* pAi = klu.Ai();
-			ptrdiff_t* pAp = klu.Ap();
-			double* pAx = klu.Ax();
-			double* pB = klu.B();
+		KLUWrapper<complex<double>> klu;
+		klu.SetSize(gc.Edges().size(), nNz);
 
-			ptrdiff_t* cpAp = pAp;
-			ptrdiff_t* cpAi = pAi;
-			double* cpB  = pB;
-			double* cpAx = pAx;
+		ptrdiff_t* pAi = klu.Ai();
+		ptrdiff_t* pAp = klu.Ap();
+		double* pAx = klu.Ax();
+		double* pB = klu.B();
 
-			*pAi = 0;
+		ptrdiff_t* cpAp = pAp;
+		ptrdiff_t* cpAi = pAi;
+		double* cpB = pB;
+		double* cpAx = pAx;
 
-			// мнимую часть коэффициентов матрицы обнуляем
-			// вещественная будет -1, 0 или +1
-			double* pz = pAx + nNz * 2 - 1;
-			while (pz > pAx)
+		
+		*pAi = 0;	// первая строка начинается с индекса 0
+
+		// мнимую часть коэффициентов матрицы обнуляем
+		// вещественная будет -1, 0 или +1
+		double* pz = pAx + nNz * 2 - 1;
+		while (pz > pAx)
+		{
+			*pz = 0.0;
+			pz -= 2;
+		}
+
+		// уравнения по I зК для узлов
+		for (auto&& node : gc.Nodes())
+		{
+			// исключаем узел с максимальным числом связей
+			if (node != pMaxRangeNode)
 			{
-				*pz = 0.0;
-				pz -= 2;
-			}
-
-			for (auto&& node : gc.Nodes())
-			{
-				if (node != pMaxRangeNode)
+				ptrdiff_t nCurrentRow = *pAi;		// запоминаем начало текущей строки
+				pAi++;								// передвигаем указатель на следующую строку
+				for (EdgeType** edge = node->m_ppEdgesBegin; edge < node->m_ppEdgesEnd; edge++)
 				{
-					ptrdiff_t nCurrentRow = *pAi;
-					pAi++;
-					for (EdgeType** edge = node->m_ppEdgesBegin; edge < node->m_ppEdgesEnd; edge++)
-					{
-						*pAp = (*edge)->m_nIndex;
-						*pAx = (*edge)->m_pBegin == node ? 1.0 : -1.0;;
-						pAx += 2;
-						pAp++;
-					}
-					*pAi = nCurrentRow + node->m_ppEdgesEnd - node->m_ppEdgesBegin;
-					*pB = 10.0;			pB++;
-					*pB = 10.0;			pB++;
-				}
-			}
-
-			for (auto&& cycle : Cycles)
-			{
-				ptrdiff_t nCurrentRow = *pAi;
-				pAi++;
-				for (auto& edge : cycle)
-				{
-					*pAp = edge.m_pEdge->m_nIndex;
-					double Direction = 
-					*pAx = edge.m_bDirect ? 1.0 : -1.0;
-					pAx += 2;
+					*pAp = (*edge)->m_nIndex;							// формируем номер столбца для ребра узла
+					*pAx = (*edge)->m_pBegin == node ? 1.0 : -1.0;;		// формируем вещественный коэффициент в матрице по направлению ребра к узлу
+					pAx += 2;											// переходим к следущему вещественному коэффициенту
 					pAp++;
 				}
-				*pAi = nCurrentRow + cycle.size();
-				*pB = 0.0;			pB++;
-				*pB = 0.0;			pB++;
-			}
-			klu.Solve();
+				// считаем сколько ненулевых элементов в строке и формируем индекс следующей строки
+				*pAi = nCurrentRow + node->m_ppEdgesEnd - node->m_ppEdgesBegin;
 
-			
-			for (ptrdiff_t nRow = 0; nRow < klu.MatrixSize(); nRow++)
+
+				*pB = 10.0;			pB++;
+				*pB = 10.0;			pB++;
+			}
+		}
+
+		// уравнения для контуров
+		for (auto&& cycle : Cycles)
+		{
+			ptrdiff_t nCurrentRow = *pAi;
+			pAi++;
+			for (auto& edge : cycle)
 			{
-				cplx s;
-				for (ptrdiff_t c = klu.Ai()[nRow]; c < klu.Ai()[nRow + 1]; c++)
-				{
-					cplx coe(klu.Ax()[2 * c], klu.Ax()[2 * c + 1]);
-					cplx b(klu.B()[2 * klu.Ap()[c]], klu.B()[2 * klu.Ap()[c] + 1]);
-					s += coe * b;
-				}
+				*pAp = edge.m_pEdge->m_nIndex;				// формируем номер столбца для ребра в контуре
+				*pAx = edge.m_bDirect ? 1.0 : -1.0;			// формируем вещественный коэффициент в матрице по направлению ребра в контуре
+				pAx += 2;									// переходим к следующему вещественому коэффициенту
+				pAp++;
+			}
+			*pAi = nCurrentRow + cycle.size();				// следующая строка матрицы начинается через количество элементов равное количеству ребер контура
+			*pB = 0.0;			pB++;
+			*pB = 0.0;			pB++;
+		}
+		klu.Solve();
+
+
+		// умножение матрицы на вектор в комплексной форме
+		// учитывается что мнимая часть коэффициента матрицы равна нулю
+		// здесь используем для проверки решения, можно вынести в отдельную функцию типа gaxpy
+
+		for (ptrdiff_t nRow = 0; nRow < klu.MatrixSize(); nRow++)
+		{
+			cplx s;
+			for (ptrdiff_t c = klu.Ai()[nRow]; c < klu.Ai()[nRow + 1]; c++)
+			{
+				/*cplx coe(klu.Ax()[2 * c], klu.Ax()[2 * c + 1]);
+				cplx b(klu.B()[2 * klu.Ap()[c]], klu.B()[2 * klu.Ap()[c] + 1]);
+				s += coe * b;
+				*/
+				double* pB = klu.B() + 2 * klu.Ap()[c];
+				s += klu.Ax()[2 * c] * cplx(*pB, *(pB + 1));
 			}
 		}
 	}

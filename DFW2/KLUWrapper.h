@@ -10,9 +10,9 @@ namespace DFW2
 	{
 	protected:
 		unique_ptr<double[]>	pAx,			// данные матрицы якоби
-			pb;				// вектор правой части
+								pb;				// вектор правой части
 		unique_ptr<ptrdiff_t[]> pAi,			// номера строк
-			pAp;			// номера столбцов
+								pAp;			// номера столбцов
 		ptrdiff_t m_nMatrixSize;
 		ptrdiff_t m_nNonZeroCount;
 		ptrdiff_t m_nAnalyzingsCount = 0;
@@ -245,10 +245,10 @@ namespace DFW2
 		ptrdiff_t FactorizationsCount() { return m_nFactorizationsCount; }
 		ptrdiff_t RefactorizationsCount() { return m_nRefactorizationsCount; }
 		ptrdiff_t RefactorizationFailuresCount() { return m_nRefactorizationFailures; }
-		double* Ax() { return pAx.get(); }
-		double* B() { return pb.get(); }
-		ptrdiff_t* Ai() { return pAi.get(); }
-		ptrdiff_t* Ap() { return pAp.get(); }
+		inline double* Ax() { return pAx.get(); }
+		inline double* B() { return pb.get(); }
+		inline ptrdiff_t* Ai() { return pAi.get(); }
+		inline ptrdiff_t* Ap() { return pAp.get(); }
 		KLU_symbolic* Symbolic() { return pSymbolic->GetKLUObject(); }
 		KLU_common* Common() { return &pCommon; }
 		void Analyze()
