@@ -1386,9 +1386,27 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 				// считаем сколько ненулевых элементов в строке и формируем индекс следующей строки
 				*pAi = nCurrentRow + node->m_ppEdgesEnd - node->m_ppEdgesBegin;
 
+				// рассчитываем инъекцию в узле
+				// нагрузка по СХН
+				CDynaNodeBase* pInSuperNode = static_cast<CDynaNodeBase*>(node->m_Id);
+				pInSuperNode->GetPnrQnr();
+				cplx Unode(pInSuperNode->Vre, -pInSuperNode->Vim);
 
-				*pB = 10.0;			pB++;
-				*pB = 10.0;			pB++;
+				cplx S(pInSuperNode->GetSelfImbPnotSuper(), pInSuperNode->GetSelfImbQnotSuper());
+
+				CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
+				CDevice** ppDevice(nullptr);
+				while (pBranchLink->In(ppDevice))
+				{
+					CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
+					CDynaNodeBase* pOppNode = pBranch->GetOppositeNode(pInSuperNode);
+
+					cplx Sbranch = ((pBranch->m_pNodeIp == pInSuperNode) ? pBranch->Yip : pBranch->Yiq) * cplx(pOppNode->Vre, pOppNode->Vim) * Unode;
+					S -= conj(Sbranch);
+				}
+
+				*pB = S.real();			pB++;
+				*pB = S.imag();			pB++;
 			}
 		}
 

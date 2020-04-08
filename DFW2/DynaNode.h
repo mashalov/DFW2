@@ -141,6 +141,10 @@ namespace DFW2
 		inline double GetSelfImbP() noexcept { return Pnr - Pgr - V * V * YiiSuper.real();	}
 		inline double GetSelfImbQ() noexcept { return Qnr - Qgr + V * V * YiiSuper.imag(); }
 
+		// небаланс узла без привязки к суперузлу
+		inline double GetSelfImbPnotSuper() noexcept { return Pnr - Pgr - V * V * Yii.real(); }
+		inline double GetSelfImbQnotSuper() noexcept { return Qnr - Qgr + V * V * Yii.imag(); }
+
 		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn;	}
 		inline double GetSelfdQdV() noexcept { return  2 * V * YiiSuper.imag() + dLRCQn; }
 
