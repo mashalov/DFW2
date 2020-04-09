@@ -233,7 +233,8 @@ namespace DFW2
 	struct VirtualZeroBranch
 	{
 		CDynaBranch *pBranch;
-		CDynaBranch *pParallelTo;
+		CDynaBranch *pParallelTo = nullptr;
+		ptrdiff_t nParallelCount = 1;
 	};
 
 	// маппинг узла в строки матрица

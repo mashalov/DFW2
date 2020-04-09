@@ -235,6 +235,8 @@ void CDynaBranch::CalcAdmittances(bool bSeidell)
 	}
 }
 
+// функция возвращает true если сопротивление ветви меньше порогового для ветви с "нулевым сопротивлением".
+// функция не контролирует, находится ли ветвь в параллели к ветви с нулевым сопротивлением
 bool CDynaBranch::IsZeroImpedance()
 {
 	const CDynaModel *pModel = GetModel();

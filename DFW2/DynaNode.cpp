@@ -1208,8 +1208,10 @@ void CDynaNodeBase::ProcessTopologyRequest()
 VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 {
 
-	// тут возможно придется добавлять ветвь с сопротивлением больше минимального,
-	// если она параллельна нулевой ветви 
+	// На вход могут приходить и ветви с сопротивлением больше порогового, но они не будут добавлены в список
+	// ветвей с нулевым сопротивлением. Потоки по таким ветвями будут рассчитаны как обычно и будут нулями, если ветвь
+	// находится в суперузле (все напряжения одинаковые)
+
 	if (pBranch->IsZeroImpedance())
 	{
 		if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(m_pContainer)->GetZeroBranchesEnd())
@@ -1218,7 +1220,7 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 		// если ветвь имеет сопротивление ниже минимального 
 		bool bAdd(true);
 		// проверяем 1) - не добавлена ли она уже; 2) - нет ли параллельной ветви
-		CDynaBranch *pParallelFound(nullptr);
+		VirtualZeroBranch *pParallelFound(nullptr);
 		for (VirtualZeroBranch *pVb = m_VirtualZeroBranchBegin; pVb < m_VirtualZeroBranchEnd; pVb++)
 		{
 			if (pVb->pBranch == pBranch)
@@ -1237,7 +1239,7 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 				bParr = bParr ? bParr : pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIq;
 				if (bParr)
 					// если есть параллельная, ставим в добавляемую ветвь ссылку на найденную параллельную ветвь
-					pParallelFound = pVb->pBranch;
+					pParallelFound = pVb;
 			}
 		}
 		if (bAdd)
@@ -1246,7 +1248,12 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 			// то сначала проверяем есть ли место
 			// сдвигаем указатель на конец списка ветвей с нулевым сопротивлением для данного узла
 			m_VirtualZeroBranchEnd->pBranch = pBranch;
-			m_VirtualZeroBranchEnd->pParallelTo = pParallelFound;
+			if (pParallelFound)
+			{
+				m_VirtualZeroBranchEnd->pParallelTo = pParallelFound->pBranch;
+				pParallelFound->nParallelCount++;
+			}
+			// а в основной ветви увеличиваем счетчик параллельных
 			m_VirtualZeroBranchEnd++;
 		}
 	}
@@ -1429,6 +1436,26 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		}
 		klu.Solve();
 
+		pB = klu.B();
+		// вводим в ветви с нулевым сопротивлением поток мощности, рассчитанный
+		// по контурным уравнениям
+		for (auto&& edge : gc.Edges())
+		{
+			VirtualZeroBranch* pBranch = static_cast<VirtualZeroBranch*>(edge->m_IdBranch);
+			_ASSERTE(pBranch->pBranch->IsZeroImpedance());
+			// учитываем, что у ветвей могут быть параллельные. Поток будет разделен по параллельным
+			// ветвям. Для ветвей с ненулевым сопротивлением внутри суперузлов
+			// обычный расчет потока по напряжениям даст ноль, так как напряжения узлов одинаковые
+			pBranch->pBranch->Szero.real(*pB / pBranch->nParallelCount);	pB++;
+			pBranch->pBranch->Szero.imag(*pB / pBranch->nParallelCount);	pB++;
+		}
+
+		// для ветвей с нулевым сопротивлением, параллельных основным ветвям копируем потоки основных,
+		// так как потоки основных рассчитаны как доля параллельных потоков. Все потоки по паралелльным цепям
+		// с сопротивлениями ниже минимальных будут одинаковы. 
+
+		for (VirtualZeroBranch* pZb = m_VirtualZeroBranchParallelsBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
+			pZb->pBranch->Szero = pZb->pParallelTo->Szero;
 
 		// умножение матрицы на вектор в комплексной форме
 		// учитывается что мнимая часть коэффициента матрицы равна нулю
