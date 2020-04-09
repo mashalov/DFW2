@@ -1396,11 +1396,12 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 
 				CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
 				CDevice** ppDevice(nullptr);
+				cplx cIb, cIe, cSb, cSe;
 				while (pBranchLink->In(ppDevice))
 				{
 					CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
 					CDynaNodeBase* pOppNode = pBranch->GetOppositeNode(pInSuperNode);
-
+					CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, cSb, cSe);
 					cplx Sbranch = ((pBranch->m_pNodeIp == pInSuperNode) ? pBranch->Yip : pBranch->Yiq) * cplx(pOppNode->Vre, pOppNode->Vim) * Unode;
 					S -= conj(Sbranch);
 				}

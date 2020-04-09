@@ -521,31 +521,30 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::Init(CDynaModel* pDynaModel)
 	return ProcessDiscontinuity(pDynaModel);
 }
 
+void CDynaBranchMeasure::CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, cplx& cIe, cplx& cSb, cplx& cSe)
+{
+	pBranch->m_pNodeIq->UpdateVreVim();
+	pBranch->m_pNodeIp->UpdateVreVim();
+	cplx& Ue = cplx(pBranch->m_pNodeIq->Vre, pBranch->m_pNodeIq->Vim);
+	cplx& Ub = cplx(pBranch->m_pNodeIp->Vre, pBranch->m_pNodeIp->Vim);
+	cIb = -pBranch->Yips * Ub + pBranch->Yip  * Ue;
+	cIe = -pBranch->Yiq  * Ub + pBranch->Yiqs * Ue;
+	cSb = Ub * conj(cIb);
+	cSe = Ue * conj(cIe);
+}
+
 eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	m_pBranch->m_pNodeIq->UpdateVreVim();
 	m_pBranch->m_pNodeIp->UpdateVreVim();
-
-	cplx& Ue = cplx(m_pBranch->m_pNodeIq->Vre, m_pBranch->m_pNodeIq->Vim);
-	cplx& Ub = cplx(m_pBranch->m_pNodeIp->Vre, m_pBranch->m_pNodeIp->Vim);
-
-	cplx cIb = -m_pBranch->Yips * Ub + m_pBranch->Yip  * Ue;
-	cplx cIe = -m_pBranch->Yiq  * Ub + m_pBranch->Yiqs * Ue;
-	cplx cSb = Ub * conj(cIb);
-	cplx cSe = Ue * conj(cIe);
-	Ibre = cIb.real();
-	Ibim = cIb.imag();
-	Iere = cIe.real();
-	Ieim = cIe.imag();
-	Ib = abs(cIb);
-	Ie = abs(cIe);
-	Pb = cSb.real();
-	Qb = cSb.imag();
-	Pe = cSe.real();
-	Qe = cSe.imag();
-	Sb = abs(cSb);
-	Se = abs(cSe);
-
+	cplx cIb, cIe, cSb, cSe;
+	CDynaBranchMeasure::CalculateFlows(m_pBranch, cIb, cIe, cSb, cSe);
+	Ibre = cIb.real();			Ibim = cIb.imag();
+	Iere = cIe.real();			Ieim = cIe.imag();
+	Ib = abs(cIb);				Ie = abs(cIe);
+	Pb = cSb.real();			Qb = cSb.imag();
+	Pe = cSe.real();			Qe = cSe.imag();
+	Sb = abs(cSb);				Se = abs(cSe);
 	return DFS_OK;
 }
 
