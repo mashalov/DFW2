@@ -133,20 +133,19 @@ namespace DFW2
 		double Atol;													// абсолютная и относительная погрешности
 		double Rtol;													// задаются индивидуально для каждой переменной
 		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов итераций Ньютона по этой переменной
+		DEVICE_EQUATION_TYPE EquationType;								// тип уравнения переменной для выбора коэффициентов метода (BDF - алгебраический, ADAM - дифференциальный)
+		DEVICE_EQUATION_TYPE PhysicalEquationType;						// физический тип уравнения - дифференциальный или алгебраический
 	};
 
 	// правая часть уравнения
 	struct RightVector : RightVectorTotal
 	{
-		
 		double Nordsiek[3];												// вектор Nordsieck по переменной до 2 порядка
 		double b;														// ошибка на итерации Ньютона
 		double Error;													// ошибка корректора
-		DEVICE_EQUATION_TYPE EquationType;								// тип уравнения переменной для выбора коэффициентов метода (BDF - алгебраический, ADAM - дифференциальный)
 		double SavedNordsiek[3];										// сохраненные перед шагом Nordsieck и ошибка 
 		double SavedError;												// предыдущего шага
 		double Tminus2Value;											// значение на пред-предыдыущем шаге для реинита Nordsieck
-		DEVICE_EQUATION_TYPE PhysicalEquationType;						// физический тип уравнения - дифференциальный или алгебраический
 		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть
 		ptrdiff_t nRingsCount;
 		ptrdiff_t nRingsSuppress;

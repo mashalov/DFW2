@@ -468,65 +468,65 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 				_ftprintf_s(fmatrix, _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
 
 
-		if(!bAnalyzeLinearDependenies)
-			return;
-
-		// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
-		// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
-
-		pAi = klu.Ap(); pAx = klu.Ax(); nRow = 0;
-		for (ptrdiff_t *pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
+		if (bAnalyzeLinearDependenies)
 		{
-			fill(Expanded.begin(), Expanded.end(), 0.0);
+			// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
+			// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
 
-			ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
-			bool bAllZeros = true;
-			double normi = 0.0;
-
-			set < pair<ptrdiff_t, double> > RowI;
-
-			while (pAi < pAiend)
+			pAi = klu.Ap(); pAx = klu.Ax(); nRow = 0;
+			for (ptrdiff_t* pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
 			{
-				Expanded[*pAi] = *pAx;
-				normi += *pAx * *pAx;
+				fill(Expanded.begin(), Expanded.end(), 0.0);
 
-				RowI.insert(make_pair(*pAi, *pAx));
+				ptrdiff_t* pAiend = pAi + *(pAp + 1) - *pAp;
+				bool bAllZeros = true;
+				double normi = 0.0;
 
-				pAx++; pAi++;
-			}
+				set < pair<ptrdiff_t, double> > RowI;
 
-			ptrdiff_t nRows = 0;
-			ptrdiff_t *pAis = klu.Ap();
-			double *pAxs = klu.Ax();
-			for (ptrdiff_t *pAps = klu.Ai(); pAps < klu.Ai() + klu.MatrixSize(); pAps++, nRows++)
-			{
-				ptrdiff_t *pAiends = pAis + *(pAps + 1) - *pAps;
-				double normj = 0.0;
-				double inner = 0.0;
-
-				set < pair<ptrdiff_t, double> > RowJ;
-
-				while (pAis < pAiends)
+				while (pAi < pAiend)
 				{
-					normj += *pAxs * *pAxs;
-					inner += Expanded[*pAis] * *pAxs;
+					Expanded[*pAi] = *pAx;
+					normi += *pAx * *pAx;
 
-					RowJ.insert(make_pair(*pAis, *pAxs));
+					RowI.insert(make_pair(*pAi, *pAx));
 
-					pAis++; pAxs++;
+					pAx++; pAi++;
 				}
-				if (nRow != nRows)
-				{
-					double Ratio = inner * inner / normj / normi;
-					if (fabs(Ratio - 1.0) < 1E-5)
-					{
-						_ftprintf_s(fmatrix, _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
-						for(auto & it : RowI)
-							_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
-						for (auto & it : RowJ)
-							_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
-					}
 
+				ptrdiff_t nRows = 0;
+				ptrdiff_t* pAis = klu.Ap();
+				double* pAxs = klu.Ax();
+				for (ptrdiff_t* pAps = klu.Ai(); pAps < klu.Ai() + klu.MatrixSize(); pAps++, nRows++)
+				{
+					ptrdiff_t* pAiends = pAis + *(pAps + 1) - *pAps;
+					double normj = 0.0;
+					double inner = 0.0;
+
+					set < pair<ptrdiff_t, double> > RowJ;
+
+					while (pAis < pAiends)
+					{
+						normj += *pAxs * *pAxs;
+						inner += Expanded[*pAis] * *pAxs;
+
+						RowJ.insert(make_pair(*pAis, *pAxs));
+
+						pAis++; pAxs++;
+					}
+					if (nRow != nRows)
+					{
+						double Ratio = inner * inner / normj / normi;
+						if (fabs(Ratio - 1.0) < 1E-5)
+						{
+							_ftprintf_s(fmatrix, _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
+							for (auto& it : RowI)
+								_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
+							for (auto& it : RowJ)
+								_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
+						}
+
+					}
 				}
 			}
 		}

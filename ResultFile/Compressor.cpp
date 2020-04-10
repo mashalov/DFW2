@@ -201,8 +201,10 @@ double CCompressorSingle::Predict(double t)
 		if (bIdenctical)
 			Pred = *ys;
 
-		memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
-		memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
+		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
+		//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 		ts[PREDICTOR_ORDER - 1] = t;
 		return Pred;
 	}
@@ -267,7 +269,8 @@ double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nP
 		if (bIdenctical)
 			Pred = *ys;
 
-		memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
+		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 		return Pred;
 	}
 	else

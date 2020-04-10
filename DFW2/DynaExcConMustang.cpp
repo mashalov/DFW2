@@ -142,7 +142,7 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 		double NodeV = dVdtIn.Value();
 		double dSum = Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn.Value()) - NodeV) - K0f * (dSdtIn.Value() - Svt) + *dVdtOutValue + *dEqdtOutValue - *dSdtOutValue;
 		RightVector *pRV = pDynaModel->GetRightVector(A(V_USUM));
-		if ((m_Id == 94) && (pDynaModel->GetStepNumber() == 1085|| pDynaModel->GetStepNumber() == 1086))
+		if ((m_Id == 16) && pDynaModel->GetStepNumber() >= 399)
 		{
 			ATLTRACE(_T("\nId=%d V=%g dSdtIn=%g Svt=%g dVdt=%g dEqdt=%g dSdt=%g NordUsum=%g"), m_Id, NodeV, dSdtIn.Value(), Svt, *dVdtOutValue, *dEqdtOutValue, *dSdtOutValue, pRV->Nordsiek[0]);
 		}

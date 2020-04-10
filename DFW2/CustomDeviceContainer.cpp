@@ -167,7 +167,7 @@ bool CCustomDeviceContainer::BuildStructure()
 bool CCustomDeviceContainer::InitDLLEquations(BuildEquationsArgs *pArgs)
 {
 	bool bRes = true;
-	ZeroMemory(pArgs->pEquations, sizeof(double) * EquationsCount());
+	std::fill(pArgs->pEquations, pArgs->pEquations + EquationsCount(), 0.0);
 	bRes = m_DLL.InitEquations(pArgs);
 	return bRes;
 }

@@ -577,10 +577,12 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 	bRes = false;
 
+	/*
 	if (sc.m_bDiscontinuityMode)
 	{
 		sc.RefactorMatrix();
 	}
+	*/
 
 	for (; sc.nNewtonIteration < nMaxIts; sc.nNewtonIteration++)
 	{
@@ -590,6 +592,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			sc.RefactorMatrix();
 
 		BuildMatrix();
+
 #ifdef _LFINFO2_
 		if (sc.m_bDiscontinuityMode || sc.m_dCurrentH <= sc.Hmin)
 		{
@@ -624,9 +627,17 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		double *bwatch = klu.B();
 	
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
+
 		SolveLinearSystem();
 
-//			DumpMatrix();
+		/*
+		if (sc.nStepsCount == 398)
+		{
+			DumpStateVector();
+			DumpMatrix();
+		}
+		*/
+
 		bmax = klu.FindMaxB(imax);
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
 

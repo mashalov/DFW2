@@ -6,10 +6,13 @@ using namespace DFW2;
 void CDynaModel::EstimateMatrix()
 {
 	ptrdiff_t nOriginalMatrixSize = klu.MatrixSize();
+	// если RightVector уже есть - ставим флаг сохранения данных в новый вектор
 	bool bSaveRightVector = pRightVector != nullptr;
 	m_nEstimatedMatrixSize = 0;
 	ptrdiff_t nNonZeroCount(0);
+	// заставляем обновиться постоянные элементы в матрице, ставим оценочную сборку матрицы
 	sc.m_bFillConstantElements = m_bEstimateBuild = true;
+	// взводим флаг рефакторизации
 	sc.RefactorMatrix();
 
 	// Если нужно обновить данные в общем векторе правой части
@@ -29,13 +32,10 @@ void CDynaModel::EstimateMatrix()
 	if (bSaveRightVector)
 	{
 		// make a copy of original right vector to new right vector
-		unique_ptr<RightVector[]>  pNewRightVector = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
-		// сбрасываем количество ошибок, мы его уже просуммировали в TotalRightVector
-		// все остальное копируем
-		std::transform(pRightVectorUniq.get(), pRightVectorUniq.get() + min(nOriginalMatrixSize, m_nEstimatedMatrixSize), pNewRightVector.get(), [](auto& ty) -> auto { ty.nErrorHits = 0; return ty; });
-		pRightVectorUniq = std::move(pNewRightVector);
+		pRightVectorUniq = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		pRightVector = pRightVectorUniq.get();
 		pRightHandBackup = make_unique<double[]>(m_nEstimatedMatrixSize);
+		UpdateNewRightVector();
 	}
 	else
 	{
@@ -44,16 +44,6 @@ void CDynaModel::EstimateMatrix()
 		pRightVector = pRightVectorUniq.get();
 		pRightHandBackup = make_unique<double[]>(m_nEstimatedMatrixSize);
 	}
-
-	// init RightVector primitive block types
-	struct RightVector *pVectorBegin = pRightVector + nOriginalMatrixSize;
-	struct RightVector *pVectorEnd = pRightVector + m_nEstimatedMatrixSize;
-	while (pVectorBegin < pVectorEnd)
-	{
-		pVectorBegin->PrimitiveBlock = PBT_UNKNOWN;
-		pVectorBegin++;
-	}
-
 
 	// substitute element setter to counter (not actually setting values, just count)
 
@@ -94,7 +84,18 @@ void CDynaModel::EstimateMatrix()
 	ElementSetterNoDup  = &CDynaModel::ReallySetElementNoDup;
 			
 	InitDevicesNordsiek();
+	
+	// В InitDevicesNordsieck устройства привязываются к pRightVector
+	// указывая свои адреса и адреса своих переменных
+	// следующий вызов контролирует корректность синхронизации рабочего вектора
+	// после изменения его размерности или состава
+	// по идее это можно сделать в UpdateNewRightVector, но он искажает тип блока
+	// примитива, который вводится в BuildMatrix
+	if (bSaveRightVector)
+		DebugCheckRightVectorSync();
 
+	/*
+	// новые элементы рабочего вектора инициализируем
 	if (bSaveRightVector && nOriginalMatrixSize < klu.MatrixSize())
 	{
 		pVectorBegin = pRightVector + nOriginalMatrixSize;
@@ -106,6 +107,7 @@ void CDynaModel::EstimateMatrix()
 			pVectorBegin++;
 		}
 	}
+	*/
 	m_bEstimateBuild = false;
 }
 
@@ -121,7 +123,8 @@ void CDynaModel::BuildRightHand()
 		sc.dRightHandNorm += *pBb * *pBb;
 		pBb++;
 	}
-	memcpy(pRightHandBackup.get(), klu.B(), sizeof(double) * m_nEstimatedMatrixSize);
+	std::copy(klu.B(), klu.B() + m_nEstimatedMatrixSize, pRightHandBackup.get());
+	//memcpy(pRightHandBackup.get(), klu.B(), sizeof(double) * m_nEstimatedMatrixSize);
 	//sc.dRightHandNorm *= 0.5;
 }
 
@@ -534,7 +537,9 @@ bool CDynaModel::SkipConstElements(ptrdiff_t nRow)
 
 void CDynaModel::CreateTotalRightVector()
 {
+	// стром полный вектор всех возможных переменных вне зависимости от состояния устройств
 	m_nTotalVariablesCount = 0;
+	// считаем количество устройств
 	for (auto&& cit : m_DeviceContainers)
 	{
 		// для volatile устройств зон в TotalRightVector не оставляем места
@@ -542,8 +547,8 @@ void CDynaModel::CreateTotalRightVector()
 			continue;
 		m_nTotalVariablesCount += cit->m_ContainerProps.nEquationsCount * cit->Count();
 	}
+	// забираем полный вектор для всех переменных
 	pRightVectorTotal = make_unique<RightVectorTotal[]>(m_nTotalVariablesCount);
-
 	RightVectorTotal *pb = pRightVectorTotal.get();
 
 	for (auto&& cit : m_DeviceContainers)
@@ -551,6 +556,7 @@ void CDynaModel::CreateTotalRightVector()
 		if (cit->m_ContainerProps.bVolatile)
 			continue;
 
+		// запоминаем в полном векторе адреса всех переменных и всех устройств
 		for (auto&& dit : *cit)
 			for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++, pb++)
 			{
@@ -558,6 +564,88 @@ void CDynaModel::CreateTotalRightVector()
 				pb->pDevice = dit;
 				pb->nErrorHits = 0;
 			}
+	}
+}
+
+void CDynaModel::UpdateNewRightVector()
+{
+	RightVectorTotal* pRvB = pRightVectorTotal.get();
+	RightVector* pRv = pRightVectorUniq.get();
+
+	// логика синхронизации векторов такая же как в UpdateTotalRightVector
+	for (auto&& cit : m_DeviceContainers)
+	{
+		if (cit->m_ContainerProps.bVolatile)
+		{
+			pRv += cit->Count() * cit->EquationsCount();
+			continue;
+		}
+
+		// для устройств в контейнере, которые включены в матрицу
+
+		RightVector* pEnd = pRv + m_nEstimatedMatrixSize;
+		for (auto&& dit : *cit)
+		{
+			if (dit->AssignedToMatrix())
+			{
+				for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++)
+				{
+					// проверяем, совпадают ли адрес устройства и переменной в полном векторе
+					// с адресом устройства и переменной во рабочем векторе
+					if (pRv >= pEnd)
+						throw dfw2error(_T("CDynaModel::UpdateNewRightVector - New right vector overrun"));
+
+					/*
+					if (pRvB->pDevice != pRv->pDevice || pRvB->pValue != pRv->pValue)
+						throw dfw2error(_T("CDynaModel::UpdateNewRightVector - TotalRightVector Out Of Sync"));
+						*/
+					InitNordsiekElement(pRv, pRvB->Atol, pRvB->Rtol);
+					PrepareNordsiekElement(pRv);
+					*static_cast<RightVectorTotal*>(pRv) = *pRvB;
+					pRv++;	pRvB++;
+				}
+			}
+			else
+				pRvB += cit->EquationsCount();
+		}
+	}
+}
+
+
+void CDynaModel::DebugCheckRightVectorSync()
+{
+	RightVectorTotal* pRvB = pRightVectorTotal.get();
+	RightVector* pRv = pRightVectorUniq.get();
+
+	// логика синхронизации векторов такая же как в UpdateTotalRightVector
+	for (auto&& cit : m_DeviceContainers)
+	{
+		if (cit->m_ContainerProps.bVolatile)
+		{
+			pRv += cit->Count() * cit->EquationsCount();
+			continue;
+		}
+
+		// для устройств в контейнере, которые включены в матрицу
+		RightVector* pEnd = pRv + m_nEstimatedMatrixSize;
+		for (auto&& dit : *cit)
+		{
+			if (dit->AssignedToMatrix())
+			{
+				for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++)
+				{
+					// проверяем, совпадают ли адрес устройства и переменной в полном векторе
+					// с адресом устройства и переменной во рабочем векторе
+					if (pRv >= pEnd)
+						throw dfw2error(_T("CDynaModel::DebugCheckRightVectorSync - New right vector overrun"));
+					if (pRvB->pDevice != pRv->pDevice || pRvB->pValue != pRv->pValue)
+						throw dfw2error(_T("CDynaModel::DebugCheckRightVectorSync - TotalRightVector Out Of Sync"));
+					pRv++;	pRvB++;
+				}
+			}
+			else
+				pRvB += cit->EquationsCount();
+		}
 	}
 }
 
@@ -578,15 +666,19 @@ void CDynaModel::UpdateTotalRightVector()
 			continue;
 		}
 
+		// для устройств в контейнере, которые включены в матрицу
 		for (auto&& dit : *cit)
 		{
 			if (dit->AssignedToMatrix())
 			{
 				for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++)
 				{
+					// проверяем, совпадают ли адрес устройства и переменной в полном векторе
+					// с адресом устройства и переменной во рабочем векторе
 					if (pRvB->pDevice != pRv->pDevice || pRvB->pValue != pRv->pValue)
 						throw dfw2error(_T("CDynaModel::UpdateTotalRightVector - TotalRightVector Out Of Sync"));
 
+					// количество ошибок в полном векторе суммируем с накопленным количеством ошибок в рабочем
 					ptrdiff_t nNewErrorHits = pRvB->nErrorHits + pRv->nErrorHits;
 					*pRvB = *pRv;
 					pRvB->nErrorHits = nNewErrorHits;

@@ -490,6 +490,8 @@ namespace DFW2
 		void EstimateMatrix();
 		void CreateTotalRightVector();
 		void UpdateTotalRightVector();
+		void UpdateNewRightVector();
+		void DebugCheckRightVectorSync();
 		void NewtonUpdateDevices();
 
 		double GetRatioForCurrentOrder();

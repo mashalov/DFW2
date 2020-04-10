@@ -402,6 +402,7 @@ namespace DFW2
 		unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
 		void ClearSuperLinks();
 		void DumpNodeIslands(NODEISLANDMAP& Islands);
+		void DumpNetwork();
 		unique_ptr<VirtualBranch[]> m_pVirtualBranches;
 		unique_ptr<VirtualZeroBranch[]> m_pZeroBranches;
 		VirtualZeroBranch *m_pZeroBranchesEnd;

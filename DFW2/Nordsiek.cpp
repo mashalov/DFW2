@@ -416,9 +416,10 @@ void CDynaModel::ConstructNordsiekOrder()
 
 void CDynaModel::InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol)
 {
-	ZeroMemory(pVectorBegin->Nordsiek + 1, sizeof(double) * 2);
-	ZeroMemory(pVectorBegin->SavedNordsiek, sizeof(double) * 3);
+	std::fill(pVectorBegin->Nordsiek + 1, pVectorBegin->Nordsiek + 3, 0.0);
+	std::fill(pVectorBegin->SavedNordsiek, pVectorBegin->SavedNordsiek + 3, 0.0);
 	pVectorBegin->EquationType = DET_ALGEBRAIC;
+	pVectorBegin->PrimitiveBlock = PBT_UNKNOWN;
 	pVectorBegin->Atol = Atol;
 	pVectorBegin->Rtol = Rtol;
 	pVectorBegin->SavedError = pVectorBegin->Tminus2Value = 0.0;

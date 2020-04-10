@@ -925,3 +925,63 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 		}
 	}
 }
+
+void CDynaNodeContainer::DumpNetwork()
+{
+	FILE* fn;
+	_TCHAR filename[MAX_PATH];
+	_stprintf_s(filename, MAX_PATH, _T("c:\\tmp\\network-%d.net"), GetModel()->GetStepNumber());
+	if (!_tfopen_s(&fn, filename, _T("w+")))
+	{
+		for (auto& node : m_DevVec)
+		{
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+			_ftprintf_s(fn, _T("Node Id=%d DBIndex=%d V %g / %g"), pNode->GetId(), pNode->GetDBIndex(), pNode->V, pNode->Delta / M_PI * 180.0);
+			if(pNode->m_pSuperNodeParent)
+				_ftprintf_s(fn, _T(" belongs to supernode Id=%d"), pNode->m_pSuperNodeParent->GetId());
+
+			_ftprintf_s(fn, _T("\n"));
+
+			CLinkPtrCount* pBranchLink = pNode->GetLink(0);
+			CDevice** ppDevice(nullptr);
+			while (pBranchLink->In(ppDevice))
+			{
+				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
+				_ftprintf_s(fn, _T("\tOriginal Branch %d-%d-(%d) r=%g x=%g state=%d\n"), pBranch->Ip, pBranch->Iq, pBranch->Np, pBranch->R, pBranch->X, pBranch->m_BranchState);
+			}
+
+			CLinkPtrCount* pSuperNodeLink = pNode->GetSuperLink(0);
+			ppDevice = nullptr;
+			while (pSuperNodeLink->In(ppDevice))
+			{
+				CDynaNodeBase* pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+				_ftprintf_s(fn, _T("\t\tSlave Node Id=%d DBIndex=%d\n"), pSlaveNode->GetId(), pSlaveNode->GetDBIndex());
+
+				CLinkPtrCount* pBranchLink = pSlaveNode->GetLink(0);
+				CDevice** ppDeviceBranch(nullptr);
+				while (pBranchLink->In(ppDeviceBranch))
+				{
+					CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDeviceBranch);
+					_ftprintf_s(fn, _T("\t\t\tOriginal Branch %d-%d-(%d) r=%g x=%g state=%d\n"), pBranch->Ip, pBranch->Iq, pBranch->Np, pBranch->R, pBranch->X, pBranch->m_BranchState);
+				}
+			}
+
+			for (VirtualBranch* pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
+			{
+				_ftprintf_s(fn, _T("\tVirtual Branch to node Id=%d\n"), pV->pNode->GetId());
+			}
+		}
+		fclose(fn);
+	}
+	_stprintf_s(filename, MAX_PATH, _T("c:\\tmp\\nodes LULF-%d.csv"), GetModel()->GetStepNumber());
+	if (!_tfopen_s(&fn, filename, _T("w+")))
+	{
+		for (auto& node : m_DevVec)
+		{
+			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
+			_ftprintf_s(fn, _T("%d;%g;%g\n"), pNode->GetId(), pNode->V, pNode->Delta / M_PI * 180.0);
+		}
+		fclose(fn);
+	}
+
+}

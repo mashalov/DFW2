@@ -623,7 +623,8 @@ bool CResultFileWriter::WriteResultsThreaded()
 			{
 				// если предиктор работает с заданным порядком,
 				// сдвигаем буфер точек времени на 1 влево и добавляем текущее время
-				memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+				std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
+				//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 				ts[PREDICTOR_ORDER - 1] = m_dSetTime;
 			}
 
