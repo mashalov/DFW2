@@ -92,7 +92,7 @@ bool CExpressionRule::Match(CExpressionToken *pToken)
 			VARIABLEITR vit = m_Vars.find(pPatt->GetTextValue());
 			if (vit == m_Vars.end())
 			{
-				m_Vars.insert(make_pair(pPatt->GetTextValue(), VariableEnum(pTree)));
+				m_Vars.insert(std::make_pair(pPatt->GetTextValue(), VariableEnum(pTree)));
 				nIdentical = 0;
 			}
 			else

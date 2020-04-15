@@ -4,8 +4,6 @@
 #include "DLLStructs.h"
 #include "Serializer.h"
 
-using namespace std;
-
 namespace DFW2
 {
 	class CDeviceContainer;
@@ -15,8 +13,8 @@ namespace DFW2
 	class CDynaPrimitive;
 	class CDynaPrimitiveState;
 
-	using STATEPRIMITIVESLIST = list<CDynaPrimitiveState*>;
-	using PRIMITIVESVEC = vector<CDynaPrimitive*>;
+	using STATEPRIMITIVESLIST = std::list<CDynaPrimitiveState*>;
+	using PRIMITIVESVEC = std::vector<CDynaPrimitive*>;
 
 	// класс для хранения связей устройства
 	// с помощью него можно обходить связанные с данным устройства

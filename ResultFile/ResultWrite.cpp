@@ -132,8 +132,8 @@ STDMETHODIMP CResultWrite::WriteHeader()
 
 	catch (std::bad_alloc& badAllocEx)
 	{
-		string strc(badAllocEx.what());
-		wstring str(strc.begin(), strc.end());
+		std::string strc(badAllocEx.what());
+		std::wstring str(strc.begin(), strc.end());
 		Error(Cex(CDFW2Messages::m_cszMemoryAllocError, str.c_str()), IID_IResultWrite, hRes);
 	}
 
@@ -149,7 +149,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 STDMETHODIMP CResultWrite::AddVariableUnit(LONG UnitId, BSTR UnitName)
 {
 	HRESULT hRes = S_OK;
-	if (!m_VarNameMap.insert(make_pair(UnitId, UnitName)).second)
+	if (!m_VarNameMap.insert(std::make_pair(UnitId, UnitName)).second)
 	{
 		hRes = E_INVALIDARG;
 		Error(Cex(CDFW2Messages::m_cszDuplicatedVariableUnit, UnitId), IID_IResultWrite, hRes);

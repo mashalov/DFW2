@@ -72,7 +72,7 @@ bool CTransformTan::Simplify(CExpressionToken* pToken)
 	return bRes;
 }
 
-bool CTransformTan::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformTan::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	_ASSERTE(pToken->GetType() == ETT_TAN);
 	_ASSERTE(pToken->ChildrenCount() == 1);
@@ -116,7 +116,7 @@ bool CTransformAtan2::Expand(CExpressionToken* pToken)
 	return bRes;
 }
 
-bool CTransformAtan2::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformAtan2::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
@@ -127,7 +127,7 @@ bool CTransformAtan2::Derivative(CExpressionToken *pToken, CExpressionToken *pCh
 
 	if (pToken->GetChildren(pDen,pNom))
 	{
-		wstring Den, Nom;
+		std::wstring Den, Nom;
 		pDen->GetEquationOperand(pDen->m_pEquation, Den);
 		pNom->GetEquationOperand(pNom->m_pEquation, Nom);
 		if (pChildToken == pDen)
@@ -176,7 +176,7 @@ bool CTransformAsin::Simplify(CExpressionToken* pToken)
 	return bRes;
 }
 
-bool CTransformAsin::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformAsin::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
@@ -223,7 +223,7 @@ bool CTransformAcos::Simplify(CExpressionToken* pToken)
 	return bRes;
 }
 
-bool CTransformAcos::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformAcos::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
@@ -240,7 +240,7 @@ bool CTransformAcos::Derivative(CExpressionToken *pToken, CExpressionToken *pChi
 	return bRes;
 }
 
-bool CTransformSin::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformSin::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
@@ -257,7 +257,7 @@ bool CTransformSin::Derivative(CExpressionToken *pToken, CExpressionToken *pChil
 	return bRes;
 }
 
-bool CTransformCos::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformCos::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 

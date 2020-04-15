@@ -93,7 +93,7 @@ bool CDeviceContainer::AddDevice(CDevice* pDevice)
 // если переменная с таким именем уже есть возвращает false
 bool CDeviceContainer::RegisterVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
 {
-	bool bInserted = m_ContainerProps.m_VarMap.insert(make_pair(cszVarName, CVarIndex(nVarIndex, eVarUnits))).second;
+	bool bInserted = m_ContainerProps.m_VarMap.insert(std::make_pair(cszVarName, CVarIndex(nVarIndex, eVarUnits))).second;
 	return bInserted;
 }
 
@@ -101,7 +101,7 @@ bool CDeviceContainer::RegisterVariable(const _TCHAR* cszVarName, ptrdiff_t nVar
 // Требуются имя, индекс и тип константы. Индексы у констант и переменных состояния разные
 bool CDeviceContainer::RegisterConstVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
 {
-	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(make_pair(cszVarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
+	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(cszVarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
 	return bInserted;
 }
 
@@ -343,7 +343,7 @@ void CDeviceContainer::PrepareSingleLinks()
 		if (nPossibleLinksCount > 0)
 		{
 			// выделяем общий буфер под все устройства
-			m_ppSingleLinks = make_unique<DevicePtr>(nPossibleLinksCount * Count());
+			m_ppSingleLinks = std::make_unique<DevicePtr>(nPossibleLinksCount * Count());
 			CDevice **ppLinkPtr = m_ppSingleLinks.get();
 			// обходим все устройства в векторе контейнера
 			for (auto&& it : m_DevVec)
@@ -404,7 +404,7 @@ void CDeviceContainer::AllocateLinks(CMultiLink& pLink)
 		nLinksSize += it.m_nCount;
 
 	// выделяем память под нужное количество связей
-	pLink.m_ppPointers = make_unique<DevicePtr>(pLink.m_nCount = nLinksSize);
+	pLink.m_ppPointers = std::make_unique<DevicePtr>(pLink.m_nCount = nLinksSize);
 	CDevice **ppLink = pLink.m_ppPointers.get();
 
 	// обходим связи всех устройств
@@ -647,7 +647,7 @@ void CMultiLink::Join(CMultiLink& pLink)
 	// создаем новый вектор указателей на связанные устройства
 	// размер = исходный + объединяемый
 
-	DevicesPtrs ppNewPointers = make_unique<DevicePtr>(m_nCount = m_nCount + pLink.m_nCount);
+	DevicesPtrs ppNewPointers = std::make_unique<DevicePtr>(m_nCount = m_nCount + pLink.m_nCount);
 	CDevice** ppNewPtr = ppNewPointers.get();
 
 	CLinkPtrCount *pLeft = &m_LinkInfo[0];

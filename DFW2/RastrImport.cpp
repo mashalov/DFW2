@@ -35,7 +35,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 
 			// get and check constants fields from storage
 			size_t nConstsCount = DLL.GetConstsCount();
-			typedef vector<pair<IColPtr,ptrdiff_t> > COLVECTOR;
+			typedef std::vector<std::pair<IColPtr,ptrdiff_t> > COLVECTOR;
 			typedef COLVECTOR::iterator COLITR;
 			COLVECTOR Cols;
 			Cols.reserve(nConstsCount);
@@ -49,7 +49,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 				if (pVarInfo)
 				{
 					if (GetConstFromField(pVarInfo))
-						Cols.push_back(make_pair(spSourceCols->Item(pVarInfo->VarInfo.Name),ConstIndex));
+						Cols.push_back(std::make_pair(spSourceCols->Item(pVarInfo->VarInfo.Name),ConstIndex));
 				}
 				else
 				{
@@ -642,7 +642,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 
 		slit = slcloader.find(pSLC->m_Id);
 		if (slit == slcloader.end())
-			slit = slcloader.insert(make_pair(pSLC->m_Id, new CStorageSLC())).first;
+			slit = slcloader.insert(std::make_pair(pSLC->m_Id, new CStorageSLC())).first;
 
 		CSLCPolynom P(pSLC->Vmin, pSLC->P0, pSLC->P1, pSLC->P2);
 		CSLCPolynom Q(pSLC->Vmin, pSLC->Q0, pSLC->Q1, pSLC->Q2);
@@ -719,7 +719,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	// типовые СХН Rastr 1 и 2
 	if (slcloader.find(1) == slcloader.end())
 	{
-		slit = slcloader.insert(make_pair(1, new CStorageSLC())).first;
+		slit = slcloader.insert(std::make_pair(1, new CStorageSLC())).first;
 		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
 		slit->second->Q.push_back(CSLCPolynom(0.0, 0.721, 0.15971, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 3.7, -7.0, 4.3));
@@ -727,7 +727,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	}
 	if (slcloader.find(2) == slcloader.end())
 	{
-		slit = slcloader.insert(make_pair(2, new CStorageSLC())).first;
+		slit = slcloader.insert(std::make_pair(2, new CStorageSLC())).first;
 		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
 		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.159135, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 4.9, -10.1, 6.2));
@@ -735,12 +735,12 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	}
 
 	// СХН шунт с Id=0
-	slit = slcloader.insert(make_pair(0, new CStorageSLC())).first;
+	slit = slcloader.insert(std::make_pair(0, new CStorageSLC())).first;
 	slit->second->P.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 
 	// СХН с постоянной мощностью с Id=-1
-	slit = slcloader.insert(make_pair(-1, new CStorageSLC())).first;
+	slit = slcloader.insert(std::make_pair(-1, new CStorageSLC())).first;
 	slit->second->P.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
 

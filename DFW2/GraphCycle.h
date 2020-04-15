@@ -54,8 +54,8 @@ namespace DFW2
 			GraphCycleEdge(GraphEdgeBase *pEdge, bool bDirect) : m_pEdge(pEdge), m_bDirect(bDirect) {}
 		};
 
-		using CycleType = list<GraphCycleEdge>;
-		using CyclesType = list<CycleType>;
+		using CycleType = std::list<GraphCycleEdge>;
+		using CyclesType = std::list<CycleType>;
 
 	protected:
 
@@ -67,10 +67,10 @@ namespace DFW2
 			}
 		};
 
-		using NodesType = set<GraphNodeBase*, NodeCompare>;
-		using EdgesType = vector<GraphEdgeBase*>;
+		using NodesType = std::set<GraphNodeBase*, NodeCompare>;
+		using EdgesType = std::vector<GraphEdgeBase*>;
 
-		unique_ptr<GraphEdgeBase*[]> m_EdgesPtrs;
+		std::unique_ptr<GraphEdgeBase*[]> m_EdgesPtrs;
 
 		NodesType m_Nodes;
 		EdgesType m_Edges;
@@ -97,7 +97,7 @@ namespace DFW2
 				(*pNodeE)->m_ppEdgesEnd++;
 			}
 			// выделяем вектор указателей на указатели на ребра, общий для всех узлов
-			m_EdgesPtrs = make_unique<GraphEdgeBase*[]>(m_Edges.size() * 2);
+			m_EdgesPtrs = std::make_unique<GraphEdgeBase*[]>(m_Edges.size() * 2);
 			GraphEdgeBase **ppEdges = m_EdgesPtrs.get();
 			
 
@@ -158,7 +158,7 @@ namespace DFW2
 		{
 			BuildGraph();
 			Cycles.clear();
-			stack<GraphNodeBase*> stack;
+			std::stack<GraphNodeBase*> stack;
 			stack.push(*m_Nodes.begin());
 			while (!stack.empty())
 			{
@@ -182,7 +182,7 @@ namespace DFW2
 					{
 						CycleType CurrentCycle{ GraphCycleEdge(pEdge, true) };
 						// отслеживаем узлы цикла путем добавления/поиска в сет
-						set<GraphNodeBase*> BackTrack;
+						std::set<GraphNodeBase*> BackTrack;
 						// начинаем обходить цикл в обратном порядке от узлов
 						// начала и конца текущего ребра (оно образует цикл, все остальные ребра принадлежат дереву)
 						GraphNodeBase *pBackNodeBegin = pEdge->m_pBegin;

@@ -32,7 +32,7 @@ namespace DFW2
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		cplx GetEMF() override { return cplx(Eqss, Edss) *polar(1.0, Delta); }
+		cplx GetEMF() override { return cplx(Eqss, Edss) * std::polar(1.0, Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
 		double Xgen();

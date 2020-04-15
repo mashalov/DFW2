@@ -220,7 +220,7 @@ namespace DFW2
 			ptrdiff_t nStepsToEndRateGrow = 0;
 			ptrdiff_t nNewtonIteration;
 			double dRightHandNorm;
-			chrono::time_point<chrono::high_resolution_clock> m_ClockStart;
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_ClockStart;
 			bool bAdamsDampingEnabled = false;
 			ptrdiff_t nNoRingingSteps = 0;
 			double Hmin = 1E-8;
@@ -232,7 +232,7 @@ namespace DFW2
 
 			StepControl()
 			{
-				m_ClockStart = chrono::high_resolution_clock::now();
+				m_ClockStart = std::chrono::high_resolution_clock::now();
 			}
 
 			// Устанавливаем относительный лимит изменения шага на заданное количество шагов
@@ -457,9 +457,9 @@ namespace DFW2
 		CDynaLRC *m_pLRCGen		= nullptr;		// СХН для генераторных узлов без генераторов
 		CDynaLRC *m_pLRCLoad	= nullptr;		// СХН для узлов без динамической СХН
 
-		unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;
-		unique_ptr<RightVector[]> pRightVectorUniq;
-		unique_ptr<RightVectorTotal[]> pRightVectorTotal;
+		std::unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;
+		std::unique_ptr<RightVector[]> pRightVectorUniq;
+		std::unique_ptr<RightVectorTotal[]> pRightVectorTotal;
 		RightVector *pRightVector = nullptr;
 		MatrixRow *m_pMatrixRows = nullptr;
 
@@ -468,19 +468,19 @@ namespace DFW2
 		DEVICECONTAINERS m_DeviceContainersPredict;
 
 		CDevice **m_ppVarSearchStackTop;
-		unique_ptr<CDevice*[]> m_ppVarSearchStackBase;
+		std::unique_ptr<CDevice*[]> m_ppVarSearchStackBase;
 		DEVICEPTRSET m_setVisitedDevices;
 
 		ptrdiff_t m_nEstimatedMatrixSize;
 		ptrdiff_t m_nTotalVariablesCount;
 		double *pbRightHand;
-		unique_ptr<double[]> pRightHandBackup;
+		std::unique_ptr<double[]> pRightHandBackup;
 		
 
 
 		bool m_bEstimateBuild;
 		bool m_bRebuildMatrixFlag;
-		vector<CDevice*> ZeroCrossingDevices;
+		std::vector<CDevice*> ZeroCrossingDevices;
 		void ConvertToCCSMatrix();
 		void SolveLinearSystem();
 		void SolveRcond();
@@ -790,7 +790,7 @@ namespace DFW2
 			return std::fma(x, y, z);
 		}
 
-		static double gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, const double* Sol);
+		static double gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double* Sol);
 
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);

@@ -186,7 +186,7 @@ bool CAutomatic::AddLogic(long Type,
 		m_spAutomaticCompiler->AddLogic(Type, Id, cszName, cszExpression, cszActions, cszDelayExpression, OutputMode);
 		CAutomaticLogic *pNewLogic = new CAutomaticLogic(Type, Id, cszName, cszActions, OutputMode);
 		m_lstLogics.push_back(pNewLogic);
-		m_mapLogics.insert(make_pair(Id, pNewLogic));
+		m_mapLogics.insert(std::make_pair(Id, pNewLogic));
 		bRes = true;
 	}
 	else
@@ -238,7 +238,7 @@ void CAutomatic::Init()
 	for (auto&& it : m_lstLogics)
 	{
 		CAutomaticItem *pLogic= it;
-		wstring strVarName = Cex(_T("LT%d"), pLogic->GetId());
+		std::wstring strVarName = Cex(_T("LT%d"), pLogic->GetId());
 
 		// находим в автоматике выходное реле элемента логики по имени выхода
 		CRelayDelay *pActionRelay = static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName.c_str()));
@@ -247,12 +247,12 @@ void CAutomatic::Init()
 
 		pActionRelay->SetDiscontinuityId(pLogic->GetId());
 		CAutomaticLogic *pLogicItem = static_cast<CAutomaticLogic*>(pLogic);
-		const wstring strActions = pLogicItem->GetActions();
+		const std::wstring strActions = pLogicItem->GetActions();
 		stringutils::split(strActions, _T(";,"), ActionList);
 
 		for (auto&& sit : ActionList)
 		{
-			wstring strAction = sit;
+			std::wstring strAction = sit;
 			stringutils::trim(strAction);
 			if (!strAction.empty())
 			{
@@ -361,7 +361,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 	bool bRes = true;
 	_ASSERTE(!m_pAction);
 	_ASSERTE(!m_pValue);
-	wstring strVarName = Cex(cszActionTemplate, m_nId);
+	std::wstring strVarName = Cex(cszActionTemplate, m_nId);
 	m_pValue = pCustomDevice->GetVariableConstPtr(strVarName.c_str());
 	if (m_pValue)
 	{

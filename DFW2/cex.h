@@ -9,8 +9,6 @@
 #include "algorithm"
 #include "ShlObj.h"
 
-using namespace std;
-
 #define EXCEPTION_BUFFER_SIZE 2048
 
 
@@ -20,14 +18,14 @@ typedef STRINGLIST::iterator STRINGLISTITR;
 class stringutils
 {
 public:
-	static inline void removecrlf(wstring& s)
+	static inline void removecrlf(std::wstring& s)
 	{
-		size_t nPos = wstring::npos;
-		while ((nPos = s.find(_T("\r\n"))) != wstring::npos)
+		size_t nPos = std::wstring::npos;
+		while ((nPos = s.find(_T("\r\n"))) != std::wstring::npos)
 			s.replace(nPos, 2, _T(""));
 	}
 
-	static inline void ltrim(wstring &s)
+	static inline void ltrim(std::wstring &s)
 	{
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) noexcept { return !isspace(ch); }));
 	}
@@ -39,7 +37,7 @@ public:
 
 	static inline void trim(std::wstring &s) { ltrim(s);  rtrim(s); }
 
-	static size_t split(const wstring& str, const _TCHAR* cszDelimiters, STRINGLIST& result)
+	static size_t split(const std::wstring& str, const _TCHAR* cszDelimiters, STRINGLIST& result)
 	{
 		result.clear();
 		size_t nPos = 0;
@@ -49,17 +47,17 @@ public:
 			const _TCHAR* pLastDelimiter = cszDelimiters + nDelimitersCount;
 			while (nPos < str.length())
 			{
-				size_t nMinDelPos = wstring::npos;
+				size_t nMinDelPos = std::wstring::npos;
 				const _TCHAR *pDelimiter = cszDelimiters;
 				while (pDelimiter < pLastDelimiter)
 				{
 					const size_t nDelPos = str.find(*pDelimiter, nPos);
-					if (nDelPos != wstring::npos)
-						if (nMinDelPos == wstring::npos || nMinDelPos > nDelPos)
+					if (nDelPos != std::wstring::npos)
+						if (nMinDelPos == std::wstring::npos || nMinDelPos > nDelPos)
 							nMinDelPos = nDelPos;
 					pDelimiter++;
 				}
-				if (nMinDelPos == wstring::npos)
+				if (nMinDelPos == std::wstring::npos)
 				{
 					result.push_back(str.substr(nPos));
 					break;
@@ -78,7 +76,7 @@ public:
 	}
 };
 
-using TCHARString = unique_ptr<_TCHAR[]>;
+using TCHARString = std::unique_ptr<_TCHAR[]>;
 
 class Cex
 {
@@ -93,7 +91,7 @@ public:
 		m_szBuffer = nullptr;
 		if (nCount)
 		{
-			m_szBuffer = make_unique<_TCHAR[]>(512);
+			m_szBuffer = std::make_unique<_TCHAR[]>(512);
 			m_szBuffer[0] = _T('\x0');
 			va_list argList;
 			va_start(argList, nID);
@@ -107,14 +105,14 @@ public:
 		_TCHAR lpszFormat[512];
 		const int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
 		// String is truncated to 511 characters
-		m_szBuffer = make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
+		m_szBuffer = std::make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
 		m_szBuffer[0] = _T('\x0');
 		_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argm);
 	}
 
 	Cex(Cex* pDummy, const _TCHAR* lpszFormat, va_list argm)
 	{
-		m_szBuffer = make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
+		m_szBuffer = std::make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
 		m_szBuffer[0] = _T('\x0');
 		_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argm);
 	}
@@ -122,7 +120,7 @@ public:
 	Cex(const _TCHAR *lpszFormat, ...)
 	{
 
-		m_szBuffer = make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
+		m_szBuffer = std::make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
 		m_szBuffer[0] = _T('\x0');
 		va_list argList;
 		va_start(argList, lpszFormat);
@@ -132,7 +130,7 @@ public:
 
 	Cex(const Cex *pCex)
 	{
-		m_szBuffer = make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
+		m_szBuffer = std::make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
 		_tcsncpy_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, pCex->m_szBuffer.get(), _TRUNCATE);
 	}
 
@@ -160,7 +158,7 @@ class CDFW2GetLastErrorException : public CDFW2Exception
 public:
 	CDFW2GetLastErrorException(const _TCHAR *cszMessage) : CDFW2Exception(cszMessage)
 	{
-		wstring strGetLastErrorMsg = GetLastErrorMessage();
+		std::wstring strGetLastErrorMsg = GetLastErrorMessage();
 		if(!strGetLastErrorMsg.empty())
 			m_strMessage += Cex(_T(" (%s)"), strGetLastErrorMsg.c_str());
 		stringutils::removecrlf(m_strMessage);
@@ -191,7 +189,7 @@ static void NormalizePath(std::wstring& Path)
 
 	size_t nDoubleSlashIndex = Path.find(cszDoubleSlash);
 
-	while (nDoubleSlashIndex != wstring::npos)
+	while (nDoubleSlashIndex != std::wstring::npos)
 	{
 		Path.erase(nDoubleSlashIndex, 1);
 		nDoubleSlashIndex = Path.find(cszDoubleSlash);
@@ -229,7 +227,7 @@ const static std::wstring GetDirectory(const _TCHAR *cszPath)
 	if (!_tsplitpath_s(cszPath, Drv, _MAX_DRIVE, Dir, _MAX_DIR, FileName, _MAX_FNAME, Ext, _MAX_EXT))
 	{
 		if (!_tmakepath_s(szPath, _MAX_PATH, Drv, Dir, NULL, NULL))
-			return wstring(szPath);
+			return std::wstring(szPath);
 	}
-	return wstring();
+	return std::wstring();
 }

@@ -189,7 +189,7 @@ int CUnicodeSCSU::ReadSCSUSymbol()
 	return Symbol;
 }
 
-void CUnicodeSCSU::ReadSCSU(wstring& String, size_t nLen)
+void CUnicodeSCSU::ReadSCSU(std::wstring& String, size_t nLen)
 {
 	if (m_pFile)
 	{

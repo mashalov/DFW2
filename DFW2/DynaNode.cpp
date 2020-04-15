@@ -22,7 +22,7 @@ CDynaNodeBase::~CDynaNodeBase()
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
-	const cplx VreVim(polar(V, Delta));
+	const cplx VreVim(std::polar(V, Delta));
 	Vre = VreVim.real();
 	Vim = VreVim.imag();
 }
@@ -776,7 +776,7 @@ bool CDynaNodeContainer::LULF()
 {
 	bool bRes = true;
 
-	KLUWrapper<complex<double>> klu;
+	KLUWrapper<std::complex<double>> klu;
 	size_t nNodeCount = m_DevInMatrix.size();
 	size_t nBranchesCount = m_pDynaModel->Branches.Count();
 	// оценка количества ненулевых элементов
@@ -789,7 +789,7 @@ bool CDynaNodeContainer::LULF()
 	ptrdiff_t *Ai = klu.Ap();
 
 	// вектор указателей на диагональ матрицы
-	auto pDiags = make_unique<double*[]>(nNodeCount);
+	auto pDiags = std::make_unique<double*[]>(nNodeCount);
 	double **ppDiags = pDiags.get();
 	double *pB = B;
 
@@ -1297,9 +1297,9 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		using NodeType = GraphType::GraphNodeBase;
 		using EdgeType = GraphType::GraphEdgeBase;
 		// Создаем вектор внутренних узлов суперузла, включая узел представитель
-		unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
+		std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
 		// Создаем вектор ребер за исключением параллельных ветвей
-		unique_ptr<EdgeType[]> pGraphEdges = make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
+		std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
 		CDevice **ppNodeEnd = pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount;
 		NodeType *pNode = pGraphNodes.get();
 		GraphType gc;
@@ -1350,7 +1350,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		for (auto&& cycle : Cycles)
 			nNz += cycle.size();
 
-		KLUWrapper<complex<double>> klu;
+		KLUWrapper<std::complex<double>> klu;
 		klu.SetSize(gc.Edges().size(), nNz);
 
 		ptrdiff_t* pAi = klu.Ai();
@@ -1532,10 +1532,10 @@ const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 	props.nEquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
 
-	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA,VARUNIT_RADIANS)));
-	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(make_pair(CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA,VARUNIT_RADIANS)));
+	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS)));
 	return props;
 }
 
@@ -1544,7 +1544,7 @@ const CDeviceContainerProperties CDynaNode::DeviceProperties()
 	CDeviceContainerProperties props = CDynaNodeBase::DeviceProperties();
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
 	props.nEquationsCount = CDynaNode::VARS::V_LAST;
-	props.m_VarMap.insert(make_pair(CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU)));
 
 	/*
 	props.m_VarMap.insert(make_pair(_T("Sip"), CVarIndex(V_SIP, VARUNIT_PU)));
@@ -1554,8 +1554,8 @@ const CDeviceContainerProperties CDynaNode::DeviceProperties()
 
 
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasNode);
-	props.m_ConstVarMap.insert(make_pair(CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(make_pair(CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, eDVT_INTERNALCONST)));
 	return props;
 }
 
@@ -1565,7 +1565,7 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 	props.bVolatile = true;
 	props.eDeviceType = DEVTYPE_SYNCZONE;
 	props.nEquationsCount = CSynchroZone::VARS::V_LAST;
-	props.m_VarMap.insert(make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
 	return props;
 }
 

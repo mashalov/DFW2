@@ -1,7 +1,6 @@
 #pragma once
 #include "Device.h"
 #include "CustomDeviceContainer.h"
-using namespace std;
 
 namespace DFW2
 {

@@ -6,12 +6,10 @@
 
 namespace DFW2
 {
-	using namespace std;
-
-	typedef vector<BlockDescriptions> BLOCKDESCRIPTIONS;
-	typedef vector<BLOCKPININDEX> BLOCKPININDEXVECTOR;
-	typedef vector<BLOCKPININDEXVECTOR> BLOCKSPINSINDEXES;
-	typedef vector<long> LONGVECTOR;
+	typedef std::vector<BlockDescriptions> BLOCKDESCRIPTIONS;
+	typedef std::vector<BLOCKPININDEX> BLOCKPININDEXVECTOR;
+	typedef std::vector<BLOCKPININDEXVECTOR> BLOCKSPINSINDEXES;
+	typedef std::vector<long> LONGVECTOR;
 
 	template <class T>
 	class VarInfo
@@ -46,7 +44,7 @@ namespace DFW2
 	protected:
 		bool m_bConnected;
 		HMODULE m_hDLL;
-		wstring m_strModulePath;
+		std::wstring m_strModulePath;
 		CDeviceContainer *m_pDeviceContainer;
 		ptrdiff_t m_nGetProcAddresFailureCount;
 

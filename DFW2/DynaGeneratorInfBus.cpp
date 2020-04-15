@@ -113,7 +113,7 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 {
 	bool bRes = true;
 	cplx S(P, Q);
-	cplx v = polar(V.Value(), DeltaV.Value());
+	cplx v = std::polar(V.Value(), DeltaV.Value());
 	_ASSERTE(abs(v) > 0.0);
 	cplx i = conj(S / v);
 	cplx eQ = v + i * GetXofEqs();

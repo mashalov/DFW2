@@ -16,7 +16,7 @@ namespace DFW2
 		virtual cplx Igen(ptrdiff_t nIteration);
 		virtual ~CDynaGeneratorInfBusBase() {}
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		cplx GetEMF() override { return polar(Eqs, Delta); }
+		cplx GetEMF() override { return std::polar(Eqs, Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;

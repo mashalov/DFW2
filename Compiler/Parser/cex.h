@@ -9,8 +9,6 @@
 #include "algorithm"
 #include "ShlObj.h"
 
-using namespace std;
-
 #define EXCEPTION_BUFFER_SIZE 2048
 
 typedef std::list<std::wstring> STRINGLIST;
@@ -19,14 +17,14 @@ typedef STRINGLIST::iterator STRINGLISTITR;
 class stringutils
 {
 public:
-	static inline void removecrlf(wstring& s)
+	static inline void removecrlf(std::wstring& s)
 	{
-		size_t nPos = wstring::npos;
-		while ((nPos = s.find(_T("\r\n"))) != wstring::npos)
+		size_t nPos = std::wstring::npos;
+		while ((nPos = s.find(_T("\r\n"))) != std::wstring::npos)
 			s.replace(nPos, 2, _T(""));
 	}
 
-	static inline void ltrim(wstring &s)
+	static inline void ltrim(std::wstring &s)
 	{
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) { return !isspace(ch); }));
 	}
@@ -156,7 +154,7 @@ static void NormalizePath(std::wstring& Path)
 
 	size_t nDoubleSlashIndex = Path.find(cszDoubleSlash);
 
-	while (nDoubleSlashIndex != wstring::npos)
+	while (nDoubleSlashIndex != std::wstring::npos)
 	{
 		Path.erase(nDoubleSlashIndex, 1);
 		nDoubleSlashIndex = Path.find(cszDoubleSlash);
@@ -194,7 +192,7 @@ const static std::wstring GetDirectory(const _TCHAR *cszPath)
 	if (!_tsplitpath_s(cszPath, Drv, _MAX_DRIVE, Dir, _MAX_DIR, FileName, _MAX_FNAME, Ext, _MAX_EXT))
 	{
 		if (!_tmakepath_s(szPath, _MAX_PATH, Drv, Dir, NULL, NULL))
-			return wstring(szPath);
+			return std::wstring(szPath);
 	}
-	return wstring();
+	return std::wstring();
 }

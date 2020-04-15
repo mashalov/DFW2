@@ -431,7 +431,7 @@ void CDevice::ResetVisited()
 	_ASSERTE(m_pContainer);
 	// если списка просмотра нет - создаем его
 	if (!m_pContainer->m_ppDevicesAux)
-		m_pContainer->m_ppDevicesAux = make_unique<DevicePtr>(m_pContainer->Count());
+		m_pContainer->m_ppDevicesAux = std::make_unique<DevicePtr>(m_pContainer->Count());
 	// обнуляем счетчик просмотренных ссылок
 	m_pContainer->m_nVisitedCount = 0;
 }
@@ -915,7 +915,7 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 		CDynaModel *pModel = GetModel();
 		if (pModel && GetId() == nId && pModel->GetIntegrationStepNumber() == nStepNumber)
 		{
-			wstring FileName = Cex(_T("c:\\tmp\\%s_%d.csv"), GetVerbalName(), nStepNumber);
+			std::wstring FileName = Cex(_T("c:\\tmp\\%s_%d.csv"), GetVerbalName(), nStepNumber);
 			FILE *flog;
 			if (pModel->GetNewtonIterationNumber() == 1)
 				_tunlink(FileName.c_str());
@@ -1013,7 +1013,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 		// если устройство хотят выключить - нужно выключить все его slaves и далее по дереву иерархии
 		
 		// обрабатываем  отключаемые устройства рекурсивно
-		stack<CDevice*> offstack;
+		std::stack<CDevice*> offstack;
 		offstack.push(this);
 		while (!offstack.empty())
 		{

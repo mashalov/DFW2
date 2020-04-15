@@ -468,13 +468,13 @@ bool CTransformMul::SimplifyMulCombinePow(CExpressionToken *pToken)
 	return bRes;
 }
 
-bool CTransformMul::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformMul::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
 	_ASSERTE(pToken->GetType() == ETT_MUL);
 
-	wstring Operand;
+	std::wstring Operand;
 	Result.clear();
 	for (TOKENITR it = pToken->ChildrenBegin(); it != pToken->ChildrenEnd(); it++)
 	{

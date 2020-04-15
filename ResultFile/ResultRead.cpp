@@ -384,7 +384,7 @@ STDMETHODIMP CResultRead::put_UserComment(BSTR UserComment)
 	HRESULT hRes = E_FAIL;
 	try
 	{
-		m_ResultFileReader.SetUserComment(wstring(UserComment).c_str());
+		m_ResultFileReader.SetUserComment(std::wstring(UserComment).c_str());
 		hRes = S_OK;
 	}
 	catch (CFileReadException& ex)

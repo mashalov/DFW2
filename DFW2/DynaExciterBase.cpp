@@ -103,8 +103,8 @@ const CDeviceContainerProperties CDynaExciterBase::DeviceProperties()
 	
 	props.nEquationsCount = CDynaExciterBase::VARS::V_LAST;
 
-	props.m_ConstVarMap.insert(make_pair(CDynaExciterBase::m_cszExcConId, CConstVarIndex(CDynaExciterBase::C_REGID, eDVT_CONSTSOURCE)));
-	props.m_ConstVarMap.insert(make_pair(CDynaExciterBase::m_cszDECId, CConstVarIndex(CDynaExciterBase::C_DECID, eDVT_CONSTSOURCE)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaExciterBase::m_cszExcConId, CConstVarIndex(CDynaExciterBase::C_REGID, eDVT_CONSTSOURCE)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaExciterBase::m_cszDECId, CConstVarIndex(CDynaExciterBase::C_DECID, eDVT_CONSTSOURCE)));
 
 	return props;
 }

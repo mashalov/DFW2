@@ -51,7 +51,7 @@ namespace DFW2
 		CDynaNodeContainer *pNodes = nullptr;
 
 		KLUWrapper<double>	klu;
-		unique_ptr<_MatrixInfo[]> m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
+		std::unique_ptr<_MatrixInfo[]> m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
 		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
 
@@ -70,9 +70,9 @@ namespace DFW2
 		double GetSquaredImb();
 		void CheckFeasible();
 
-		unique_ptr<double[]> m_Vbackup;
-		unique_ptr<double[]> m_Dbackup;
-		unique_ptr<double[]> m_Rh;		// невязки до итерации
+		std::unique_ptr<double[]> m_Vbackup;
+		std::unique_ptr<double[]> m_Dbackup;
+		std::unique_ptr<double[]> m_Rh;		// невязки до итерации
 	};
 }
 

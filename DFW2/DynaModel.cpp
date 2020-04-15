@@ -79,7 +79,7 @@ bool CDynaModel::Run()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = 0.5;
+		m_Parameters.m_dZeroBranchImpedance = -0.5;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 		m_Parameters.eFreqDampingType = APDT_NODE;
@@ -261,7 +261,7 @@ bool CDynaModel::Run()
 																	 sc.dMaxConditionNumberTime);
 
 		GetWorstEquations(10);
-		chrono::milliseconds CalcDuration = chrono::duration_cast<std::chrono::milliseconds>(chrono::high_resolution_clock::now() - sc.m_ClockStart);
+		std::chrono::milliseconds CalcDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - sc.m_ClockStart);
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Duration %g"), static_cast<double>(CalcDuration.count()) / 1E3);
 	}
 	catch (dfw2error& err)
@@ -504,8 +504,8 @@ bool CDynaModel::NewtonUpdate()
 			{
 				if (bLineSearch)
 				{
-					unique_ptr<double[]> pRh = make_unique<double[]>(klu.MatrixSize());
-					unique_ptr<double[]> pRb = make_unique<double[]>(klu.MatrixSize());
+					std::unique_ptr<double[]> pRh = std::make_unique<double[]>(klu.MatrixSize());
+					std::unique_ptr<double[]> pRb = std::make_unique<double[]>(klu.MatrixSize());
 					std::copy(pRightHandBackup.get(), pRightHandBackup.get() + klu.MatrixSize(), pRh.get()); // невязки до итерации
 					std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRb.get());								 // решение на данной итерации
 					double g0 = sc.dRightHandNorm;															 // норма небаланса до итерации
@@ -637,6 +637,8 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			DumpMatrix();
 		}
 		*/
+
+//		DumpMatrix();
 
 		bmax = klu.FindMaxB(imax);
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
@@ -1594,10 +1596,10 @@ bool CDynaModel::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice
 }
 
 
-double CDynaModel::gs1(KLUWrapper<double>& klu, unique_ptr<double[]>& Imb, const double *pSol)
+double CDynaModel::gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double *pSol)
 {
 	// если небаланс увеличился
-	unique_ptr<double[]> yv = make_unique<double[]>(klu.MatrixSize());
+	std::unique_ptr<double[]> yv = std::make_unique<double[]>(klu.MatrixSize());
 	cs Aj;
 	Aj.i = klu.Ap();
 	Aj.p = klu.Ai();

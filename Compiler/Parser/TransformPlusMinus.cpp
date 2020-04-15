@@ -68,7 +68,7 @@ bool CTransformMinus::Simplify(CExpressionToken* pToken)
 	return Expand(pToken);
 }
 
-bool CTransformMinus::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformMinus::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
@@ -344,7 +344,7 @@ bool CTransformPlus::SimplifySumCombineBraces(CExpressionToken* pSum)
 	return bRes;
 }
 
-bool CTransformPlus::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformPlus::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 

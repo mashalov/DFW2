@@ -1,10 +1,10 @@
 #include "..\stdafx.h"
 #include "ExpressionParser.h"
 
-wstring CCompilerEquation::Generate(bool bInitEquation) const
+std::wstring CCompilerEquation::Generate(bool bInitEquation) const
 {
-	wstring result;
-	wstring right;
+	std::wstring result;
+	std::wstring right;
 
 	_ASSERTE(m_pToken);
 

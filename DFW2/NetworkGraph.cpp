@@ -20,7 +20,7 @@ bool CDynaModel::Link()
 			{
 				if (it1.second.eDependency == DPD_MASTER)
 				{
-					Props.m_MasterLinksTo.insert(make_pair(it1.first, &it1.second));	// ведущие к
+					Props.m_MasterLinksTo.insert(std::make_pair(it1.first, &it1.second));	// ведущие к
 					Props.m_Masters.push_back(&it1.second);								// ведущие без направления
 				}
 				else
@@ -34,7 +34,7 @@ bool CDynaModel::Link()
 			{
 				if (it2.second.eDependency == DPD_MASTER)
 				{
-					Props.m_MasterLinksFrom.insert(make_pair(it2.first, &it2.second));	// ведущие от
+					Props.m_MasterLinksFrom.insert(std::make_pair(it2.first, &it2.second));	// ведущие от
 					Props.m_Masters.push_back(&it2.second);								// ведущие без направления
 				}
 				else
@@ -350,11 +350,11 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 	*/
 
 	Islands.clear();	// очищаем результат
-	stack<CDynaNodeBase*> Stack;
+	std::stack<CDynaNodeBase*> Stack;
 
 	auto FindSlack = [](const auto& itr)->bool {return itr.first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE; };
 
-	set<CDynaNodeBase*> Slacks;
+	std::set<CDynaNodeBase*> Slacks;
 	for (auto&& it : JoinableNodes)
 	{
 		if(FindSlack(it))
@@ -372,7 +372,7 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 		}
 
 		// вставляем первый узел как основу для острова
-		auto& CurrentSuperNode = Islands.insert(make_pair(Slack->first, set<CDynaNodeBase*>{}));
+		auto& CurrentSuperNode = Islands.insert(std::make_pair(Slack->first, std::set<CDynaNodeBase*>{}));
 		// берем первый узел из сета и готовим к DFS
 		Stack.push(Slack->first);
 
@@ -566,7 +566,7 @@ void CDynaNodeContainer::CreateSuperNodes()
 		m_SuperLinks.emplace_back(multilink.m_pContainer, Count());
 		CMultiLink& pSuperLink(m_SuperLinks.back());
 		// для хранения оригинальных связей устройств с узлами используем карту устройство-устройство
-		m_OriginalLinks.push_back(make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
+		m_OriginalLinks.push_back(std::make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
 
 		// обрабатываем связь в два прохода : подсчет + выделение памяти и добавление ссылок
 		for (int pass = 0; pass < 2; pass++)
@@ -595,7 +595,7 @@ void CDynaNodeContainer::CreateSuperNodes()
 						// заменяем ссылку на старый узел ссылкой на суперузел
 						(*ppDevice)->SetSingleLink(nLinkIndex, pSuperNode);
 						// сохраняем оригинальную связь устройства с узлом в карте
-						m_OriginalLinks.back()->insert(make_pair(*ppDevice, pOldDev));
+						m_OriginalLinks.back()->insert(std::make_pair(*ppDevice, pOldDev));
 						//*
 						//wstring strName(pOldDev ? pOldDev->GetVerbalName() : _T(""));
 						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Change link of object %s from node %s to supernode %s"),
@@ -644,7 +644,7 @@ void CDynaNodeContainer::CreateSuperNodes()
 
 	//  Создаем виртуальные ветви
 	// Количество виртуальных ветвей не превышает количества ссылок суперузлов на ветви
-	m_pVirtualBranches = make_unique<VirtualBranch[]>(m_SuperLinks[1].m_nCount);
+	m_pVirtualBranches = std::make_unique<VirtualBranch[]>(m_SuperLinks[1].m_nCount);
 	VirtualBranch *pCurrentBranch = m_pVirtualBranches.get();
 	for (auto&& node : m_DevVec)
 	{
@@ -684,7 +684,7 @@ void CDynaNodeContainer::CreateSuperNodes()
 	// Ветви с нулевым сопротивлением хранятся в общем векторе контейнера
 	// узлы имеют три указателя на этот вектор - начало и конец для всех ветвей
 	// и указатель на список параллельных ветвей (см. TidyZeroBranches)
-	m_pZeroBranches = make_unique<VirtualZeroBranch[]>(nZeroBranchCount);
+	m_pZeroBranches = std::make_unique<VirtualZeroBranch[]>(nZeroBranchCount);
 	m_pZeroBranchesEnd = m_pZeroBranches.get() + nZeroBranchCount;
 
 	VirtualZeroBranch *pCurrentZeroBranch = m_pZeroBranches.get();

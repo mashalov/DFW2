@@ -3,8 +3,6 @@
 #include "Relay.h"
 #include "RSTrigger.h"
 
-using namespace std;
-
 namespace DFW2
 {
 	class CDynaDECMustang : public CDevice

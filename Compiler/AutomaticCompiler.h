@@ -20,13 +20,13 @@ class ATL_NO_VTABLE CAutomaticCompiler :
 	public IDispatchImpl<IAutomaticCompiler, &IID_IAutomaticCompiler, &LIBID_CompilerLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	wstring strCompilerLogTag = cszLCCCompiler;
+	std::wstring strCompilerLogTag = cszLCCCompiler;
 
 	CCompilerLogger m_CompilerLogger;
-	unique_ptr<CAutoCompiler> m_pAutoCompiler;
-	wstring m_strCompilerRoot;
-	wstring m_strModelRoot;
-	wstring m_strModelDLLName;
+	std::unique_ptr<CAutoCompiler> m_pAutoCompiler;
+	std::wstring m_strCompilerRoot;
+	std::wstring m_strModelRoot;
+	std::wstring m_strModelDLLName;
 public:
 	CAutomaticCompiler()
 	{
@@ -56,7 +56,7 @@ END_COM_MAP()
 
 	HRESULT FinalConstruct()
 	{
-		m_pAutoCompiler = make_unique<CAutoCompiler>(m_CompilerLogger);
+		m_pAutoCompiler = std::make_unique<CAutoCompiler>(m_CompilerLogger);
 		return S_OK;
 	}
 

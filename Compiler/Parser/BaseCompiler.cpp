@@ -116,12 +116,12 @@ bool CCompilerEquations::GenerateEquations()
 				CCompilerEquation *pEquation = *it;
 				if (!pEquation->m_pToken->IsHostBlock())
 				{
-					wstring str = pEquation->Generate();
+					std::wstring str = pEquation->Generate();
 					_tcprintf(_T("\n%3d %s"), pEquation->m_nIndex, str.c_str());
 				}
 				else
 				{
-					wstring str = pEquation->Generate();
+					std::wstring str = pEquation->Generate();
 					_tcprintf(_T("\n // %3d %s"), pEquation->m_nIndex, str.c_str());
 				}
 			}
@@ -134,8 +134,8 @@ bool CCompilerEquations::GenerateEquations()
 
 bool CCompilerEquations::GetDerivative(CExpressionToken *pToken, 
 									   CExpressionToken *pTokenBy, 
-									   wstring& Diff, 
-									   wstring& strCol,
+									   std::wstring& Diff,
+									   std::wstring& strCol,
 									   bool& bExternalGuard) const
 {
 	bExternalGuard = false;
@@ -156,7 +156,7 @@ bool CCompilerEquations::GetDerivative(CExpressionToken *pToken,
 bool CCompilerEquations::GenerateMatrix()
 {
 	bool bRes = true;
-	wstring row, col;
+	std::wstring row, col;
 
 	for (EQUATIONSITR it = m_Equations.begin(); it != m_Equations.end(); it++)
 	{
@@ -165,7 +165,7 @@ bool CCompilerEquations::GenerateMatrix()
 
 		if (!pToken->IsHostBlock())
 		{
-			wstring Diagonal, Diff, strCol;
+			std::wstring Diagonal, Diff, strCol;
 
 			if (pToken->IsVariable() && !pToken->IsConst())
 			{
@@ -182,7 +182,7 @@ bool CCompilerEquations::GenerateMatrix()
 					if (GetDerivative(pToken, pChildToken, Diff, strCol, bExternalGuard))
 					{
 
-						wstring DiagIndex = Cex(_T("%d"), pEquation->m_nIndex);
+						std::wstring DiagIndex = Cex(_T("%d"), pEquation->m_nIndex);
 						if (DiagIndex == strCol)
 						{
 							Diagonal = Diff;
@@ -307,28 +307,28 @@ bool CCompiler::AddConst(const _TCHAR *cszVarName, VariableEnum* pVarEnum)
 
 bool CCompilerEquations::AddOutputVariable(const _TCHAR* cszVarName, VariableEnum *pVarEnum)
 {
-	bool bRes = m_Output.insert(make_pair(cszVarName, pVarEnum)).second;
+	bool bRes = m_Output.insert(std::make_pair(cszVarName, pVarEnum)).second;
 	if (bRes) pVarEnum->m_nIndex = m_Output.size() - 1;
 	return bRes;
 }
 
 bool CCompilerEquations::AddExternalVariable(const _TCHAR* cszVarName, VariableEnum *pVarEnum)
 {
-	bool bRes = m_VarExternal.insert(make_pair(cszVarName, pVarEnum)).second;
+	bool bRes = m_VarExternal.insert(std::make_pair(cszVarName, pVarEnum)).second;
 	if (bRes) pVarEnum->m_nIndex = m_VarExternal.size() - 1;
 	return bRes;
 }
 
 bool CCompilerEquations::AddSetPoint(const _TCHAR* cszVarName, VariableEnum *pVarEnum)
 {
-	bool bRes = m_VarSetpoint.insert(make_pair(cszVarName, pVarEnum)).second;
+	bool bRes = m_VarSetpoint.insert(std::make_pair(cszVarName, pVarEnum)).second;
 	if (bRes) pVarEnum->m_nIndex = m_VarSetpoint.size() - 1;
 	return bRes;
 }
 
 bool CCompilerEquations::AddConst(const _TCHAR* cszVarName, VariableEnum *pVarEnum)
 {
-	bool bRes = m_VarConst.insert(make_pair(cszVarName, pVarEnum)).second;
+	bool bRes = m_VarConst.insert(std::make_pair(cszVarName, pVarEnum)).second;
 	if (bRes) pVarEnum->m_nIndex = m_VarConst.size() - 1;
 	return bRes;
 }

@@ -4,8 +4,6 @@
 
 namespace DFW2
 {
-	using namespace std;
-
 	class CChannelEncoder
 	{
 	public:
@@ -22,13 +20,13 @@ namespace DFW2
 		unsigned char m_SuperRLEByte;						// байт SuperRLE
 	};
 
-	using BUFFERBEGIN = vector<BITWORD*>;
+	using BUFFERBEGIN = std::vector<BITWORD*>;
 	using BUFFERBEGINITERATOR = BUFFERBEGIN::iterator;
 
 	class CResultFileWriter : public CResultFile
 	{
 	protected:
-		unique_ptr<CChannelEncoder[]> m_pEncoders;
+		std::unique_ptr<CChannelEncoder[]> m_pEncoders;
 		size_t m_nChannelsCount;
 		BUFFERBEGIN m_BufferBegin;
 		double m_dSetTime;
@@ -54,7 +52,7 @@ namespace DFW2
 		ptrdiff_t m_nPredictorOrder = 0;
 		CSlowVariablesSet m_setSlowVariables;
 		CRLECompressor	m_RLECompressor;
-		unique_ptr<unsigned char[]> m_pCompressedBuffer;
+		std::unique_ptr<unsigned char[]> m_pCompressedBuffer;
 		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
 		void FlushSuperRLE(CChannelEncoder& Encoder);
 		bool m_bChannelsFlushed = true;

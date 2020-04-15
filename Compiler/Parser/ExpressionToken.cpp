@@ -172,7 +172,7 @@ const _TCHAR* CExpressionToken::GetTextValue() const
 	return m_strStringValue.empty() ? nullptr : m_strStringValue.c_str();
 }
 
-void CExpressionToken::GetOperand(CExpressionToken *pToken, wstring& Result, bool bRight) const
+void CExpressionToken::GetOperand(CExpressionToken *pToken, std::wstring& Result, bool bRight) const
 {
 	Result = pToken->GetTextValue();
 
@@ -202,7 +202,7 @@ void CExpressionToken::GetOperand(CExpressionToken *pToken, wstring& Result, boo
 
 // true если переменная внешняя eCVT_EXTERNAL
 
-bool CExpressionToken::GetEquationOperandIndex(const CCompilerEquation *pEquation, wstring& Result) const
+bool CExpressionToken::GetEquationOperandIndex(const CCompilerEquation *pEquation, std::wstring& Result) const
 {
 	bool bRes = false; 
 
@@ -227,7 +227,7 @@ bool CExpressionToken::GetEquationOperandIndex(const CCompilerEquation *pEquatio
 	return bRes;
 }
 
-void CExpressionToken::GetEquationOperand(const CCompilerEquation *pEquation, wstring& Result) const
+void CExpressionToken::GetEquationOperand(const CCompilerEquation *pEquation, std::wstring& Result) const
 {
 	VariableEnum *pEnum;
 	GetEquationOperandType(pEquation, Result, pEnum);
@@ -241,7 +241,7 @@ void CExpressionToken::GetEquationOperand(const CCompilerEquation *pEquation, ws
 	}
 }
 
-void CExpressionToken::GetEquationVariableType(const CCompilerEquation *pEquation, VariableEnum* pVarEnum, wstring& Result) const
+void CExpressionToken::GetEquationVariableType(const CCompilerEquation *pEquation, VariableEnum* pVarEnum, std::wstring& Result) const
 {
 	_ASSERTE(pVarEnum);
 
@@ -265,7 +265,7 @@ void CExpressionToken::GetEquationVariableType(const CCompilerEquation *pEquatio
 	}
 }
 
-void CExpressionToken::GetEquationOperandType(const CCompilerEquation *pEquation, wstring& Result, VariableEnum*& pVarEnum) const
+void CExpressionToken::GetEquationOperandType(const CCompilerEquation *pEquation, std::wstring& Result, VariableEnum*& pVarEnum) const
 {
 	pVarEnum = nullptr;
 	Result = GetTextValue();
@@ -319,8 +319,8 @@ const _TCHAR* CExpressionToken::EvaluateText()
 	{
 		if (GetType() == ETT_PLUS || GetType() == ETT_MUL)
 		{
-			wstring result;
-			wstring right;
+			std::wstring result;
+			std::wstring right;
 			for (auto&& it : m_Children)
 			{
 				GetOperand(it, right, false);
@@ -340,9 +340,9 @@ const _TCHAR* CExpressionToken::EvaluateText()
 			{
 			case 1:
 			{
-				wstring right;
+				std::wstring right;
 				GetOperand(*m_Children.begin(), right, false);
-				wstring str = m_pFunctionInfo->m_strOperatorText + right;
+				std::wstring str = m_pFunctionInfo->m_strOperatorText + right;
 				SetTextValue(str.c_str());
 			}
 			break;
@@ -354,11 +354,11 @@ const _TCHAR* CExpressionToken::EvaluateText()
 				it1++;
 				CExpressionToken *ptk2 = *it1;
 
-				wstring left, right;
+				std::wstring left, right;
 				GetOperand(ptk2, left, false);
 				GetOperand(ptk1, right, true);
 
-				wstring str = left + m_pFunctionInfo->m_strOperatorText + right;
+				std::wstring str = left + m_pFunctionInfo->m_strOperatorText + right;
 				SetTextValue(str.c_str());
 			}
 			break;
@@ -370,7 +370,7 @@ const _TCHAR* CExpressionToken::EvaluateText()
 	}
 	else if (IsFunction())
 	{
-		wstring str = CExpressionToken::GenerateFunction(this);
+		std::wstring str = CExpressionToken::GenerateFunction(this);
 		SetTextValue(str.c_str());
 	}
 	return pValue;
@@ -384,7 +384,7 @@ const _TCHAR* CExpressionTokenModelLink::EvaluateText()
 	{
 		nWait = MLS_END;
 
-		wstring str = GetTextValue();
+		std::wstring str = GetTextValue();
 		str.push_back(_T('['));
 		size_t nCount = 0;
 
@@ -456,7 +456,7 @@ void CExpressionToken::Unparent(CExpressionToken* pParent)
 
 void CExpressionToken::SetNumericConstant(double Constant)
 {
-	wstring TextValue;
+	std::wstring TextValue;
 	CExpressionToken::GetNumericText(Constant, TextValue);
 	SetNumericConstant(TextValue.c_str());
 }
@@ -532,7 +532,7 @@ bool CExpressionToken::Simplify()
 		return true;
 }
 
-bool CExpressionToken::Derivative(CExpressionToken *pChildToken, wstring& Result)
+bool CExpressionToken::Derivative(CExpressionToken *pChildToken, std::wstring& Result)
 {
 	if (pChildToken->IsConst())
 		return false;
@@ -559,8 +559,8 @@ void CExpressionToken::SetOperator(FunctionEnum* pOpEnum)
 
 bool ChildrenSortPredicate(const CExpressionToken* first, const CExpressionToken* second)
 {
-	wstring str1 = first->GetTextValue();
-	wstring str2 = second->GetTextValue();
+	std::wstring str1 = first->GetTextValue();
+	std::wstring str2 = second->GetTextValue();
 	return str1 > str2;
 }
 
@@ -785,8 +785,8 @@ const CExpressionParser* CExpressionToken::GetParser()
 
 CExpressionRule::CExpressionRule(const _TCHAR *cszSource, const _TCHAR *cszDestination, const CExpressionParser* pParser)
 {
-	m_pSource = make_unique<CExpressionParserRule>(pParser);
-	m_pDestination = make_unique<CExpressionParserRule>(pParser);
+	m_pSource = std::make_unique<CExpressionParserRule>(pParser);
+	m_pDestination = std::make_unique<CExpressionParserRule>(pParser);
 	m_pSource->Parse(cszSource);
 	m_pSource->GetExpressionConstants();
 	m_pSource->Simplify();
@@ -800,8 +800,8 @@ CExpressionRule::CExpressionRule(const _TCHAR *cszSource, const _TCHAR *cszDesti
 
 CExpressionRule::CExpressionRule(const _TCHAR *cszSource, const _TCHAR *cszDestination)
 {
-	m_pSource = make_unique<CExpressionParserRule>();
-	m_pDestination = make_unique<CExpressionParserRule>();
+	m_pSource = std::make_unique<CExpressionParserRule>();
+	m_pDestination = std::make_unique<CExpressionParserRule>();
 	m_pSource->Parse(cszSource);
 	m_pSource->GetExpressionConstants();
 	m_pSource->Simplify();
@@ -819,7 +819,7 @@ CExpressionRule::~CExpressionRule()
 // функция формирует текстовое представление числа с максимальной точностью
 // если число не имеет дробной части, к текстовому представлению добавляем ".0"
 // чтобы у C-компилятора не возникло сомнений что тип double
-void CExpressionToken::GetNumericText(double dValue, wstring& TextValue)
+void CExpressionToken::GetNumericText(double dValue, std::wstring& TextValue)
 {
 	_TCHAR buf[100];
 	_stprintf_s(buf, 100, _T("%.30g"), dValue);
@@ -889,14 +889,14 @@ const _TCHAR* CExpressionToken::GetBlockName() const
 	return _T("");
 }
 
-wstring CExpressionToken::GenerateFunction(CExpressionToken *pToken, bool bEquationMode)
+std::wstring CExpressionToken::GenerateFunction(CExpressionToken *pToken, bool bEquationMode)
 {
 	_ASSERTE(pToken->IsFunction());
 	_ASSERTE(pToken->m_pFunctionInfo);
 
-	wstring result = pToken->m_pFunctionInfo->m_strOperatorText + _T("(");
+	std::wstring result = pToken->m_pFunctionInfo->m_strOperatorText + _T("(");
 	ptrdiff_t nCount = 1000;
-	wstring right;
+	std::wstring right;
 
 	CExpressionTransform *pTransform = pToken->m_pFunctionInfo->m_pTransform;
 

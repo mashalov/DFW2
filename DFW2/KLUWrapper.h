@@ -3,23 +3,25 @@
 #include "klu_version.h"
 #include "cs.h"
 #include "Header.h"
+#include "fstream"
+#include "iomanip"
 namespace DFW2
 {
 	template<typename T>
 	class KLUWrapper
 	{
 	protected:
-		unique_ptr<double[]>	pAx,			// данные матрицы якоби
-								pb;				// вектор правой части
-		unique_ptr<ptrdiff_t[]> pAi,			// номера строк
-								pAp;			// номера столбцов
+		std::unique_ptr<double[]>	 pAx,		// данные матрицы якоби
+									 pb;		// вектор правой части
+		std::unique_ptr<ptrdiff_t[]> pAi,		// номера строк
+									 pAp;		// номера столбцов
 		ptrdiff_t m_nMatrixSize;
 		ptrdiff_t m_nNonZeroCount;
 		ptrdiff_t m_nAnalyzingsCount = 0;
 		ptrdiff_t m_nFactorizationsCount = 0;
 		ptrdiff_t m_nRefactorizationsCount = 0;
 		ptrdiff_t m_nRefactorizationFailures = 0;
-		wstring m_strKLUError;
+		std::wstring m_strKLUError;
 
 		template <typename T>
 		struct doubles_count 
@@ -189,8 +191,8 @@ namespace DFW2
 
 		using KLUSymbolic = KLUCommonDeleter<KLU_symbolic, T>;
 		using KLUNumeric = KLUCommonDeleter<KLU_numeric, T>;
-		unique_ptr<KLUSymbolic> pSymbolic;
-		unique_ptr<KLUNumeric>  pNumeric;
+		std::unique_ptr<KLUSymbolic> pSymbolic;
+		std::unique_ptr<KLUNumeric>  pNumeric;
 		KLU_common pCommon;
 
 		const _TCHAR* KLUErrorDescription()
@@ -232,10 +234,10 @@ namespace DFW2
 		{
 			m_nMatrixSize = nMatrixSize;
 			m_nNonZeroCount = nNonZeroCount;
-			pAx = make_unique<double[]>(m_nNonZeroCount * doubles_count<T>::count);			// числа матрицы
-			pb = make_unique<double[]>(m_nMatrixSize * doubles_count<T>::count);			// вектор правой части
-			pAi = make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);								// строки матрицы
-			pAp = make_unique<ptrdiff_t[]>(m_nNonZeroCount);								// столбцы матрицы
+			pAx = std::make_unique<double[]>(m_nNonZeroCount * doubles_count<T>::count);			// числа матрицы
+			pb = std::make_unique<double[]>(m_nMatrixSize * doubles_count<T>::count);			// вектор правой части
+			pAi = std::make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);								// строки матрицы
+			pAp = std::make_unique<ptrdiff_t[]>(m_nNonZeroCount);								// столбцы матрицы
 			pSymbolic.reset();
 			pNumeric.reset();
 		}
@@ -253,7 +255,7 @@ namespace DFW2
 		KLU_common* Common() { return &pCommon; }
 		void Analyze()
 		{
-			pSymbolic = make_unique<KLUSymbolic>(KLUFunctions<T, ptrdiff_t>::TKLU_analyze(m_nMatrixSize, pAi.get(), pAp.get(), &pCommon), pCommon);
+			pSymbolic = std::make_unique<KLUSymbolic>(KLUFunctions<T, ptrdiff_t>::TKLU_analyze(m_nMatrixSize, pAi.get(), pAp.get(), &pCommon), pCommon);
 			if (!Analyzed())
 				throw dfw2error(Cex(_T("%s::KLU_analyze %s"), KLUWrapperName(), KLUErrorDescription()));
 			m_nAnalyzingsCount++;
@@ -263,7 +265,7 @@ namespace DFW2
 		{
 			if (!Analyzed())
 				Analyze();
-			pNumeric = make_unique<KLUNumeric>(KLUFunctions<T, ptrdiff_t>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon) , pCommon);
+			pNumeric = std::make_unique<KLUNumeric>(KLUFunctions<T, ptrdiff_t>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon) , pCommon);
 			if (!Factored())
 				throw dfw2error(Cex(_T("%s::KLU_factor %s"), KLUWrapperName(), KLUErrorDescription()));
 			m_nFactorizationsCount++;
@@ -353,28 +355,28 @@ namespace DFW2
 		// todo - complex version
 		void DumpMatrix(bool bAnalyzeLinearDependenies)
 		{
-			FILE *fmatrix;
-			if (!_tfopen_s(&fmatrix, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
+			std::ofstream mts(_T("c:\\tmp\\dwfsingularmatrix.mtx"));
+			if (mts.is_open())
 			{
-				ptrdiff_t *pAi = Ap();
-				double *pAx = Ax();
+				ptrdiff_t* pAi = Ap();
+				double* pAx = Ax();
 				ptrdiff_t nRow = 0;
-				set<ptrdiff_t> BadNumbers, FullZeros;
-				vector<bool> NonZeros;
-				vector<bool> Diagonals;
-				vector<double> Expanded;
+				std::set<ptrdiff_t> BadNumbers, FullZeros;
+				std::vector<bool> NonZeros;
+				std::vector<bool> Diagonals;
+				std::vector<double> Expanded;
 
 				NonZeros.resize(MatrixSize(), false);
 				Diagonals.resize(MatrixSize(), false);
 				Expanded.resize(MatrixSize(), 0.0);
 
-				for (ptrdiff_t *pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
+				for (ptrdiff_t* pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
 				{
-					ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
+					ptrdiff_t* pAiend = pAi + *(pAp + 1) - *pAp;
 					bool bAllZeros = true;
 					while (pAi < pAiend)
 					{
-						_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRow, *pAi, *pAx);
+						mts << std::setw(10) << nRow << std::setw(10) << *pAi << std::setw(30) << *pAx << std::endl;
 
 						if (isnan(*pAx) || isinf(*pAx))
 							BadNumbers.insert(nRow);
@@ -394,19 +396,18 @@ namespace DFW2
 				}
 
 				for (const auto& it : BadNumbers)
-					_ftprintf_s(fmatrix, _T("Bad Number in Row: %td\n"), it);
+					mts << "Bad Number in Row:\t" << it << std::endl;
 
 				for (const auto& it : FullZeros)
-					_ftprintf_s(fmatrix, _T("Full Zero Row : %td\n"), it);
+					mts << "Full Zero Row :\t" << it << std::endl;
 
 				for (auto&& it = NonZeros.begin(); it != NonZeros.end(); it++)
 					if (!*it)
-						_ftprintf_s(fmatrix, _T("Full Zero Column: %td\n"), it - NonZeros.begin());
+						mts << "Full Zero Column:\t" << static_cast<ptrdiff_t>(it - NonZeros.begin()) << std::endl;
 
 				for (auto&& it = Diagonals.begin(); it != Diagonals.end(); it++)
 					if (!*it)
-						_ftprintf_s(fmatrix, _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
-
+						mts << "Zero Diagonal:\t" << static_cast<ptrdiff_t>(it - Diagonals.begin()) << std::endl;
 
 				if (!bAnalyzeLinearDependenies)
 					return;
@@ -415,43 +416,45 @@ namespace DFW2
 				// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
 
 				pAi = Ap(); pAx = Ax(); nRow = 0;
-				for (ptrdiff_t *pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
+				for (ptrdiff_t* pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
 				{
-					fill(Expanded.begin(), Expanded.end(), 0.0);
+					std::fill(Expanded.begin(), Expanded.end(), 0.0);
 
-					ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
+					ptrdiff_t* pAiend = pAi + *(pAp + 1) - *pAp;
 					bool bAllZeros = true;
 					double normi = 0.0;
 
-					set < pair<ptrdiff_t, double> > RowI;
+					using PAIRSET = std::set < std::pair<ptrdiff_t, double> >;
+
+					PAIRSET RowI;
 
 					while (pAi < pAiend)
 					{
 						Expanded[*pAi] = *pAx;
 						normi += *pAx * *pAx;
 
-						RowI.insert(make_pair(*pAi, *pAx));
+						RowI.insert(std::make_pair(*pAi, *pAx));
 
 						pAx++; pAi++;
 					}
 
 					ptrdiff_t nRows = 0;
-					ptrdiff_t *pAis = Ap();
-					double *pAxs = Ax();
-					for (ptrdiff_t *pAps = Ai(); pAps < Ai() + MatrixSize(); pAps++, nRows++)
+					ptrdiff_t* pAis = Ap();
+					double* pAxs = Ax();
+					for (ptrdiff_t* pAps = Ai(); pAps < Ai() + MatrixSize(); pAps++, nRows++)
 					{
-						ptrdiff_t *pAiends = pAis + *(pAps + 1) - *pAps;
+						ptrdiff_t* pAiends = pAis + *(pAps + 1) - *pAps;
 						double normj = 0.0;
 						double inner = 0.0;
 
-						set < pair<ptrdiff_t, double> > RowJ;
+						PAIRSET RowJ;
 
 						while (pAis < pAiends)
 						{
 							normj += *pAxs * *pAxs;
 							inner += Expanded[*pAis] * *pAxs;
 
-							RowJ.insert(make_pair(*pAis, *pAxs));
+							RowJ.insert(std::make_pair(*pAis, *pAxs));
 
 							pAis++; pAxs++;
 						}
@@ -460,17 +463,15 @@ namespace DFW2
 							double Ratio = inner * inner / normj / normi;
 							if (fabs(Ratio - 1.0) < 1E-5)
 							{
-								_ftprintf_s(fmatrix, _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
-								for (auto & it : RowI)
-									_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
-								for (auto & it : RowJ)
-									_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
+								mts << "Linear dependent rows " << std::setw(10) << nRow << " " << std::setw(10) << nRows << " with " << Ratio << std::endl;
+								for (auto& it : RowI)
+									mts << std::setw(10) << nRow << std::setw(10) << it.first << std::setw(30) << it.second << std::endl;
+								for (auto& it : RowJ)
+									mts << std::setw(10) << nRows << std::setw(10) << it.first << std::setw(30) << it.second << std::endl;
 							}
-
 						}
 					}
 				}
-				fclose(fmatrix);
 			}
 		}
 	};

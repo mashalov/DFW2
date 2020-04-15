@@ -241,7 +241,7 @@ bool CDynaModel::PopVarSearchStack(CDevice* &pDevice)
 void CDynaModel::ResetStack()
 {
 	if (!m_ppVarSearchStackBase)
-		m_ppVarSearchStackBase = make_unique<CDevice*[]>(m_Parameters.nVarSearchStackDepth);
+		m_ppVarSearchStackBase = std::make_unique<CDevice*[]>(m_Parameters.nVarSearchStackDepth);
 	m_ppVarSearchStackTop = m_ppVarSearchStackBase.get();
 	m_setVisitedDevices.clear();
 }
@@ -305,7 +305,7 @@ int ErrorCompare(void *pContext, const void *pValue1, const void *pValue2)
 void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 {
 	UpdateTotalRightVector();
-	unique_ptr<RightVectorTotal*[]> pSortOrder = make_unique<RightVectorTotal*[]>(m_nTotalVariablesCount);
+	std::unique_ptr<RightVectorTotal*[]> pSortOrder = std::make_unique<RightVectorTotal*[]>(m_nTotalVariablesCount);
 	RightVectorTotal *pVectorBegin = pRightVectorTotal.get();
 	RightVectorTotal *pVectorEnd = pVectorBegin + m_nTotalVariablesCount;
 	RightVectorTotal **ppSortOrder = pSortOrder.get();
@@ -404,16 +404,17 @@ csi cs_gatxpy(const cs *A, const double *x, double *y)
 
 void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 {
-	FILE *fmatrix;
-	if (!_tfopen_s(&fmatrix, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
+	FILE* fmatx(nullptr);
+	if (!_tfopen_s(&fmatx, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
 	{
+		std::unique_ptr<FILE, decltype(&fclose)> fmatrix(fmatx, &fclose);
 		ptrdiff_t *pAi = klu.Ap();
 		double *pAx = klu.Ax();
 		ptrdiff_t nRow = 0;
-		set<ptrdiff_t> BadNumbers, FullZeros;
-		vector<bool> NonZeros;
-		vector<bool> Diagonals;
-		vector<double> Expanded;
+		std::set<ptrdiff_t> BadNumbers, FullZeros;
+		std::vector<bool> NonZeros;
+		std::vector<bool> Diagonals;
+		std::vector<double> Expanded;
 
 		NonZeros.resize(klu.MatrixSize(), false);
 		Diagonals.resize(klu.MatrixSize(), false);
@@ -425,7 +426,7 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 			bool bAllZeros = true;
 			while (pAi < pAiend)
 			{
-				_ftprintf_s(fmatrix, _T("%10td %10td     %30g"), nRow, *pAi, *pAx);
+				_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g"), nRow, *pAi, *pAx);
 				RightVector *pRowVector = pRightVector + nRow;
 				RightVector *pColVector = pRightVector + *pAi;
 				CDevice *pRowDevice = pRowVector->pDevice;
@@ -444,9 +445,9 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 				}
 
 				
-				_ftprintf_s(fmatrix, _T("    %50s/%30s %50s/%30s"), pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
+				_ftprintf_s(fmatrix.get(), _T("    %50s/%30s %50s/%30s"), pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
 												  				    pColDevice->GetVerbalName(), pColDevice->VariableNameByPtr(pColVector->pValue));
-				_ftprintf_s(fmatrix, _T("    %30g %30g\n"), *pRowVector->pValue, *pColVector->pValue);
+				_ftprintf_s(fmatrix.get(), _T("    %30g %30g\n"), *pRowVector->pValue, *pColVector->pValue);
 				pAx++; pAi++;
 			}
 			if (bAllZeros)
@@ -454,18 +455,18 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 		}
 
 		for (const auto& it : BadNumbers)
-			_ftprintf_s(fmatrix, _T("Bad Number in Row: %td\n"), it);
+			_ftprintf_s(fmatrix.get(), _T("Bad Number in Row: %td\n"), it);
 
 		for (const auto& it : FullZeros)
-			_ftprintf_s(fmatrix, _T("Full Zero Row : %td\n"), it);
+			_ftprintf_s(fmatrix.get(), _T("Full Zero Row : %td\n"), it);
 
 		for (auto&& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
 			if(!*it)
-				_ftprintf_s(fmatrix, _T("Full Zero Column: %td\n"), it - NonZeros.begin());
+				_ftprintf_s(fmatrix.get(), _T("Full Zero Column: %td\n"), it - NonZeros.begin());
 
 		for (auto&& it = Diagonals.begin(); it != Diagonals.end(); it++)
 			if (!*it)
-				_ftprintf_s(fmatrix, _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
+				_ftprintf_s(fmatrix.get(), _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
 
 
 		if (bAnalyzeLinearDependenies)
@@ -476,20 +477,20 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 			pAi = klu.Ap(); pAx = klu.Ax(); nRow = 0;
 			for (ptrdiff_t* pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
 			{
-				fill(Expanded.begin(), Expanded.end(), 0.0);
+				std::fill(Expanded.begin(), Expanded.end(), 0.0);
 
 				ptrdiff_t* pAiend = pAi + *(pAp + 1) - *pAp;
 				bool bAllZeros = true;
 				double normi = 0.0;
 
-				set < pair<ptrdiff_t, double> > RowI;
+				std::set < std::pair<ptrdiff_t, double> > RowI;
 
 				while (pAi < pAiend)
 				{
 					Expanded[*pAi] = *pAx;
 					normi += *pAx * *pAx;
 
-					RowI.insert(make_pair(*pAi, *pAx));
+					RowI.insert(std::make_pair(*pAi, *pAx));
 
 					pAx++; pAi++;
 				}
@@ -503,14 +504,14 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 					double normj = 0.0;
 					double inner = 0.0;
 
-					set < pair<ptrdiff_t, double> > RowJ;
+					std::set < std::pair<ptrdiff_t, double> > RowJ;
 
 					while (pAis < pAiends)
 					{
 						normj += *pAxs * *pAxs;
 						inner += Expanded[*pAis] * *pAxs;
 
-						RowJ.insert(make_pair(*pAis, *pAxs));
+						RowJ.insert(std::make_pair(*pAis, *pAxs));
 
 						pAis++; pAxs++;
 					}
@@ -519,18 +520,17 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 						double Ratio = inner * inner / normj / normi;
 						if (fabs(Ratio - 1.0) < 1E-5)
 						{
-							_ftprintf_s(fmatrix, _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
+							_ftprintf_s(fmatrix.get(), _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
 							for (auto& it : RowI)
-								_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
+								_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
 							for (auto& it : RowJ)
-								_ftprintf_s(fmatrix, _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
+								_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
 						}
 
 					}
 				}
 			}
 		}
-		fclose(fmatrix);
 	}
 }
 
@@ -592,12 +592,12 @@ void CDynaModel::Serialize()
 	CSerializerXML xmlSerializer;
 	xmlSerializer.CreateNewSerialization();
 
-	SerializerPtr SerializerParameteres = make_unique<CSerializerBase>();
+	SerializerPtr SerializerParameteres = std::make_unique<CSerializerBase>();
 	m_Parameters.UpdateSerializer(SerializerParameteres);
 	xmlSerializer.SerializeClassMeta(SerializerParameteres);
 	xmlSerializer.SerializeClass(SerializerParameteres);
 
-	SerializerPtr SerializerStepControl = make_unique<CSerializerBase>();
+	SerializerPtr SerializerStepControl = std::make_unique<CSerializerBase>();
 	sc.UpdateSerializer(SerializerStepControl);
 	xmlSerializer.SerializeClassMeta(SerializerStepControl);
 	xmlSerializer.SerializeClass(SerializerStepControl);

@@ -56,7 +56,7 @@ bool CTransformExp::Expand(CExpressionToken* pToken)
 	return Simplify(pToken);
 }
 
-bool CTransformExp::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformExp::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 	
@@ -66,7 +66,7 @@ bool CTransformExp::Derivative(CExpressionToken *pToken, CExpressionToken *pChil
 
 	if (pExp)
 	{
-		wstring Operand;
+		std::wstring Operand;
 		pExp->GetEquationOperand(pToken->m_pEquation, Operand);
 		Result = Cex(_T("exp(%s)"), Operand.c_str());
 		bRes = true;
@@ -231,7 +231,7 @@ bool CTransformLn::Simplify(CExpressionToken* pToken)
 	return bRes;
 }
 
-bool CTransformLn::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformLn::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
@@ -282,7 +282,7 @@ bool CTransformLog::Expand(CExpressionToken* pToken)
 	return Simplify(pToken);
 }
 
-bool CTransformLog::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformLog::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
@@ -300,7 +300,7 @@ bool CTransformLog::Derivative(CExpressionToken *pToken, CExpressionToken *pChil
 	return bRes;
 }
 
-bool CTransformPow::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result)
+bool CTransformPow::Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result)
 {
 	bool bRes = false;
 
@@ -311,7 +311,7 @@ bool CTransformPow::Derivative(CExpressionToken *pToken, CExpressionToken *pChil
 	
 	if (pToken->GetChildren(pExp, pBase))
 	{
-		wstring strExp, strBase;
+		std::wstring strExp, strBase;
 		pExp->GetEquationOperand(pToken->m_pEquation, strExp);
 		pBase->GetEquationOperand(pToken->m_pEquation, strBase);
 

@@ -25,19 +25,19 @@ public:
 	bool m_bChanged;
 
 	bool m_bUsingInternalVars;
-	unique_ptr<_TCHAR[]> m_szExpression;			// временный буфер для выражения, предназначен для "разрушающих" операций типа удаления пробелов
+	std::unique_ptr<_TCHAR[]> m_szExpression;			// временный буфер для выражения, предназначен для "разрушающих" операций типа удаления пробелов
 	size_t m_nExpressionLength;
 	size_t m_nHeadPosition;			// индекс текущего символа в выражении
 	size_t m_nAdvanceNextSymbol;
 
-	unique_ptr<_TCHAR[]> m_szTokenText;
+	std::unique_ptr<_TCHAR[]> m_szTokenText;
 	size_t m_nTokenTextLength;
 
-	wstring m_szErrorDescription;
+	std::wstring m_szErrorDescription;
 
-	PARSERSTACK m_ParserStack;		// временный стек парсера
-	PARSERSTACK m_ResultStack;		// стек результата
-	stack<ptrdiff_t> m_ArityStack;	// стек порядка аргументов для функций с переменным числом аргументов
+	PARSERSTACK m_ParserStack;			// временный стек парсера
+	PARSERSTACK m_ResultStack;			// стек результата
+	std::stack<ptrdiff_t> m_ArityStack;	// стек порядка аргументов для функций с переменным числом аргументов
 
 	CExpressionToken *NewChildExpressionToken(eExpressionTokenType eType);
 	CExpressionToken *NewExpressionToken(const OperatorEnum *pOperator);
@@ -97,7 +97,7 @@ public:
 	bool Process(const _TCHAR *cszExpression);
 	bool GetChanged() const;
 	// формирует строку из разобранного AST в инфиксной записи
-	bool Infix(wstring& strInfix);
+	bool Infix(std::wstring& strInfix);
 	bool InsertEquations(CCompilerEquations& Eqs);
 	const _TCHAR* GetErrorDescription();
 	bool AddRule(const _TCHAR* cszSource, const _TCHAR* cszDestination);

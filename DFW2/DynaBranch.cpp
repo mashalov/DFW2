@@ -571,18 +571,18 @@ const CDeviceContainerProperties CDynaBranchMeasure::DeviceProperties()
 	props.SetType(DEVTYPE_BRANCHMEASURE);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranchMeasure, CDeviceContainerProperties::m_cszSysNameBranchMeasure);
 	props.nEquationsCount = CDynaBranchMeasure::VARS::V_LAST;
-	props.m_VarMap.insert(make_pair(_T("Ibre"), CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Ibim"), CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Iere"), CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Ieim"), CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Ib"),	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Ie"),	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Pb"),	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW)));
-	props.m_VarMap.insert(make_pair(_T("Qb"),	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR)));
-	props.m_VarMap.insert(make_pair(_T("Pe"),	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW)));
-	props.m_VarMap.insert(make_pair(_T("Qe"),	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR)));
-	props.m_VarMap.insert(make_pair(_T("Sb"),	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA)));
-	props.m_VarMap.insert(make_pair(_T("Se"),	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
+	props.m_VarMap.insert(std::make_pair(_T("Ibre"), CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Ibim"), CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Iere"), CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Ieim"), CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Ib"),	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Ie"),	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Pb"),	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW)));
+	props.m_VarMap.insert(std::make_pair(_T("Qb"),	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR)));
+	props.m_VarMap.insert(std::make_pair(_T("Pe"),	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW)));
+	props.m_VarMap.insert(std::make_pair(_T("Qe"),	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR)));
+	props.m_VarMap.insert(std::make_pair(_T("Sb"),	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA)));
+	props.m_VarMap.insert(std::make_pair(_T("Se"),	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
 	return props;
 }
 

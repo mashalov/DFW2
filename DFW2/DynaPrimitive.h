@@ -1,5 +1,4 @@
 #pragma once
-using namespace std;
 #include "Device.h"
 #include <limits.h>
 

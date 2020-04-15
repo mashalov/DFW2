@@ -14,7 +14,7 @@ void CSerializerXML::CreateNewSerialization()
 
 void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, const _TCHAR* cszName)
 {
-	if (!m_TypeMap.insert(make_pair(nType, cszName)).second)
+	if (!m_TypeMap.insert(std::make_pair(nType, cszName)).second)
 		throw dfw2error(Cex(_T("CSerializerXML::AddDeviceTypeDescription - duplicate device type %d"), nType));
 }
 

@@ -50,7 +50,7 @@ bool CCustomDeviceContainer::ConnectDLL(const _TCHAR *cszDLLFilePath)
 		for (size_t nConstIndex = 0; nConstIndex < nConstsCount; nConstIndex++)
 		{
 			const ConstVarsInfo *pConstInfo = m_DLL.GetConstInfo(nConstIndex);
-			m_ContainerProps.m_ConstVarMap.insert(make_pair(pConstInfo->VarInfo.Name, 
+			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(pConstInfo->VarInfo.Name,
 												  CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
 		}
 
@@ -58,7 +58,7 @@ bool CCustomDeviceContainer::ConnectDLL(const _TCHAR *cszDLLFilePath)
 		for (size_t nSetPointndex = 0; nSetPointndex < nSetPointsCount; nSetPointndex++)
 		{
 			const VarsInfo *pVarInfo = m_DLL.GetSetPointInfo(nSetPointndex);
-			m_ContainerProps.m_ConstVarMap.insert(make_pair(pVarInfo->Name, 
+			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(pVarInfo->Name,
 												  CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
 		}
 
@@ -66,7 +66,7 @@ bool CCustomDeviceContainer::ConnectDLL(const _TCHAR *cszDLLFilePath)
 		for (size_t nInternalsIndex = 0; nInternalsIndex < nInternalsCount; nInternalsIndex++)
 		{
 			const VarsInfo *pVarInfo = m_DLL.GetInternalInfo(nInternalsIndex);
-			m_ContainerProps.m_VarMap.insert(make_pair(pVarInfo->Name,
+			m_ContainerProps.m_VarMap.insert(std::make_pair(pVarInfo->Name,
 												  CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
 		}
 
@@ -74,7 +74,7 @@ bool CCustomDeviceContainer::ConnectDLL(const _TCHAR *cszDLLFilePath)
 		for (size_t nOutputIndex = 0; nOutputIndex < nOutputsCount; nOutputIndex++)
 		{
 			const VarsInfo *pVarInfo = m_DLL.GetOutputInfo(nOutputIndex);
-			m_ContainerProps.m_VarMap.insert(make_pair(pVarInfo->Name,
+			m_ContainerProps.m_VarMap.insert(std::make_pair(pVarInfo->Name,
 				CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
 		}
 	}

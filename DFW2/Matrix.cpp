@@ -24,7 +24,7 @@ void CDynaModel::EstimateMatrix()
 	for (auto&& it : m_DeviceContainers)
 		it->EstimateBlock(this);
 
-	m_pMatrixRowsUniq = make_unique<MatrixRow[]>(m_nEstimatedMatrixSize);
+	m_pMatrixRowsUniq = std::make_unique<MatrixRow[]>(m_nEstimatedMatrixSize);
 	m_pMatrixRows = m_pMatrixRowsUniq.get();
 
 	ZeroCrossingDevices.reserve(m_nEstimatedMatrixSize);
@@ -32,17 +32,17 @@ void CDynaModel::EstimateMatrix()
 	if (bSaveRightVector)
 	{
 		// make a copy of original right vector to new right vector
-		pRightVectorUniq = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
+		pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		pRightVector = pRightVectorUniq.get();
-		pRightHandBackup = make_unique<double[]>(m_nEstimatedMatrixSize);
+		pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
 		UpdateNewRightVector();
 	}
 	else
 	{
 		CreateTotalRightVector();
-		pRightVectorUniq = make_unique<RightVector[]>(m_nEstimatedMatrixSize);
+		pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		pRightVector = pRightVectorUniq.get();
-		pRightHandBackup = make_unique<double[]>(m_nEstimatedMatrixSize);
+		pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
 	}
 
 	// substitute element setter to counter (not actually setting values, just count)
@@ -548,7 +548,7 @@ void CDynaModel::CreateTotalRightVector()
 		m_nTotalVariablesCount += cit->m_ContainerProps.nEquationsCount * cit->Count();
 	}
 	// забираем полный вектор для всех переменных
-	pRightVectorTotal = make_unique<RightVectorTotal[]>(m_nTotalVariablesCount);
+	pRightVectorTotal = std::make_unique<RightVectorTotal[]>(m_nTotalVariablesCount);
 	RightVectorTotal *pb = pRightVectorTotal.get();
 
 	for (auto&& cit : m_DeviceContainers)

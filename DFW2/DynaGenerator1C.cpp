@@ -350,8 +350,8 @@ cplx CDynaGenerator1C::Igen(ptrdiff_t nIteration)
 		m_Egen = GetEMF();
 	else
 	{
-		cplx Ig = (m_Egen - polar(V.Value(), DeltaV.Value())) * YgInt;
-		cplx Idq = Ig * polar(1.0, -Delta);
+		cplx Ig = (m_Egen - std::polar(V.Value(), DeltaV.Value())) * YgInt;
+		cplx Idq = Ig * std::polar(1.0, -Delta);
 		Id = Idq.imag();
 		Iq = Idq.real();
 	}
@@ -365,7 +365,7 @@ cplx CDynaGenerator1C::Igen(ptrdiff_t nIteration)
 const cplx& CDynaGenerator1C::CalculateEgen()
 {
 	double xgen = Xgen();
-	return m_Egen = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * polar(1.0, Delta);
+	return m_Egen = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, Delta);
 }
 
 bool CDynaGenerator1C::CalculatePower()
@@ -403,19 +403,19 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 
 	props.nEquationsCount = CDynaGenerator1C::VARS::V_LAST;
 
-	props.m_VarMap.insert(make_pair(_T("Eqs"), CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(make_pair(CDynaGenerator1C::m_cszEq, CVarIndex(CDynaGenerator1C::V_EQ, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(make_pair(_T("Id"), CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Iq"), CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Vd"), CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(make_pair(_T("Vq"), CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(_T("Eqs"), CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEq, CVarIndex(CDynaGenerator1C::V_EQ, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(_T("Id"), CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Iq"), CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Vd"), CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(_T("Vq"), CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
 
-	props.m_ConstVarMap.insert(make_pair(CDynaGenerator1C::m_cszExciterId, CConstVarIndex(CDynaGenerator1C::C_EXCITERID, eDVT_CONSTSOURCE)));
-	props.m_ConstVarMap.insert(make_pair(CDynaGenerator1C::m_cszEqnom, CConstVarIndex(CDynaGenerator1C::C_EQNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(make_pair(CDynaGenerator1C::m_cszSnom, CConstVarIndex(CDynaGenerator1C::C_SNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(make_pair(CDynaGenerator1C::m_cszInom, CConstVarIndex(CDynaGenerator1C::C_INOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(make_pair(CDynaGenerator1C::m_cszQnom, CConstVarIndex(CDynaGenerator1C::C_QNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(make_pair(CDynaGenerator1C::m_cszEqe, CConstVarIndex(CDynaGenerator1C::C_EQE, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszExciterId, CConstVarIndex(CDynaGenerator1C::C_EXCITERID, eDVT_CONSTSOURCE)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqnom, CConstVarIndex(CDynaGenerator1C::C_EQNOM, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszSnom, CConstVarIndex(CDynaGenerator1C::C_SNOM, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszInom, CConstVarIndex(CDynaGenerator1C::C_INOM, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszQnom, CConstVarIndex(CDynaGenerator1C::C_QNOM, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CConstVarIndex(CDynaGenerator1C::C_EQE, eDVT_INTERNALCONST)));
 
 	return props;
 }

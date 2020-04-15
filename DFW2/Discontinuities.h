@@ -4,8 +4,6 @@
 #include "set"
 #include "DynaBranch.h"
 
-using namespace std;
-
 //Откл 
 //Объект
 //Сост узла
@@ -166,7 +164,7 @@ namespace DFW2
 		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	typedef list<CModelAction*> MODELACTIONLIST;
+	typedef std::list<CModelAction*> MODELACTIONLIST;
 	typedef MODELACTIONLIST::iterator MODELACTIONITR;
 
 
@@ -208,9 +206,9 @@ namespace DFW2
 		}
 	};
 
-	typedef set<CStaticEvent> STATICEVENTSET;
+	typedef std::set<CStaticEvent> STATICEVENTSET;
 	typedef STATICEVENTSET::iterator STATICEVENTITR;
-	typedef set<CStateObjectIdToTime> STATEEVENTSET;
+	typedef std::set<CStateObjectIdToTime> STATEEVENTSET;
 	typedef STATEEVENTSET::iterator STATEEVENTITR;
 	
 

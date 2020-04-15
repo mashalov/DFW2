@@ -368,9 +368,9 @@ void CResultFileWriter::WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t Type, ptr
 
 void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 {
-	m_pEncoders = make_unique<CChannelEncoder[]>(m_nChannelsCount = nChannelsCount + 2);
+	m_pEncoders = std::make_unique<CChannelEncoder[]>(m_nChannelsCount = nChannelsCount + 2);
 	m_nBufferLength *= sizeof(double) / sizeof(BITWORD);
-	m_pCompressedBuffer = make_unique<unsigned char[]>(m_nBufferLength * sizeof(BITWORD));
+	m_pCompressedBuffer = std::make_unique<unsigned char[]>(m_nBufferLength * sizeof(BITWORD));
 	
 	size_t nBufferGroup = m_nBufferGroup;
 	size_t nSeek = 0;

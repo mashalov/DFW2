@@ -6,21 +6,21 @@ namespace DFW2
 {
 	class CDynaModel;
 
-	using DEVICEVECTOR = vector<CDevice*>;
+	using DEVICEVECTOR = std::vector<CDevice*>;
 	using DEVICEVECTORITR = DEVICEVECTOR::iterator;
 
 	// для поиска устройств по идентификаторам используем сет
-	using DEVSEARCHSET = set<CDeviceId*, CDeviceIdComparator> ;
+	using DEVSEARCHSET = std::set<CDeviceId*, CDeviceIdComparator> ;
 	using DEVSEARCHSETITR = DEVSEARCHSET::iterator;
 	using DEVSEARCHSETCONSTITR = DEVSEARCHSET::const_iterator;
 	// для хранения уникальных указателей
-	using DEVICEPTRSET = set<CDevice*> ;
+	using DEVICEPTRSET = std::set<CDevice*> ;
 	using DEVICEPTRSETITR = DEVICEPTRSET::iterator;
 
 	class CDeviceContainer;
 
 	using DevicePtr = CDevice * [];
-	using DevicesPtrs = unique_ptr<DevicePtr>;
+	using DevicesPtrs = std::unique_ptr<DevicePtr>;
 
 	// контейнер для связей устройства
 	class CMultiLink
@@ -28,7 +28,7 @@ namespace DFW2
 	public:
 		DevicesPtrs  m_ppPointers;											// вектор указателей на связанные устройства
 		CDeviceContainer *m_pContainer = nullptr;							// внешний контейнер, с устройствами которого строится связь
-		vector<CLinkPtrCount> m_LinkInfo;									// вектор ссылок с количеством связей
+		std::vector<CLinkPtrCount> m_LinkInfo;								// вектор ссылок с количеством связей
 		size_t   m_nCount;													// количество возможных связей 
 		CMultiLink(CDeviceContainer* pContainer, size_t nCount) : m_pContainer(pContainer)
 		{
@@ -47,7 +47,7 @@ namespace DFW2
 	};
 
 	// вектор "векторов" связей с устройствами различных типов
-	using LINKSVEC = vector<CMultiLink>;
+	using LINKSVEC = std::vector<CMultiLink>;
 	using LINKSVECITR = LINKSVEC::iterator;
 
 	// контейнер устройств
@@ -192,7 +192,7 @@ namespace DFW2
 		ptrdiff_t GetSingleLinkIndex(eDFW2DEVICETYPE eDevType);				// получить индекс ссылки один-к-одному по типу устройства
 	};
 
-	using DEVICECONTAINERS = vector<CDeviceContainer*>;
+	using DEVICECONTAINERS = std::vector<CDeviceContainer*>;
 	using DEVICECONTAINERITR = DEVICECONTAINERS::iterator;
 };
 

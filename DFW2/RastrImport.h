@@ -41,7 +41,7 @@ namespace DFW2
 		}
 	};
 
-	class SLCPOLY : public list<CSLCPolynom>
+	class SLCPOLY : public std::list<CSLCPolynom>
 	{
 	public:
 		bool InsertLRCToShuntVmin(double Vmin);
@@ -57,7 +57,7 @@ namespace DFW2
 		SLCPOLY Q;
 	};
 
-	typedef map<ptrdiff_t, CStorageSLC*> SLCSTYPE;
+	typedef std::map<ptrdiff_t, CStorageSLC*> SLCSTYPE;
 	typedef SLCSTYPE::iterator SLCSITERATOR;
 
 	class CSLCLoader : public SLCSTYPE
@@ -73,8 +73,8 @@ namespace DFW2
 	class CustomDeviceConnectInfo
 	{
 	public:
-		wstring m_TableName;
-		wstring m_ModelTypeField;
+		std::wstring m_TableName;
+		std::wstring m_ModelTypeField;
 		long m_nModelType;
 		CustomDeviceConnectInfo(const _TCHAR *cszTableName, const _TCHAR *cszModelTypeField, long nModelType) : m_TableName(cszTableName),
 																												m_ModelTypeField(cszModelTypeField),

@@ -9,7 +9,7 @@ protected:
 	static bool SimplifyPlusDiminished(CExpressionToken *pToken);
 	static bool SimplifySumCombineBraces(CExpressionToken* pSum);
 public:
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
 
@@ -18,7 +18,7 @@ public:
 class CTransformMinus : public CExpressionTransform
 {
 public:
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
 };
@@ -33,7 +33,7 @@ protected:
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 	static const _TCHAR *cszMul;
 };
 
@@ -51,7 +51,7 @@ class CTransformSin : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 class CTransformCos : public CExpressionTransform
@@ -59,7 +59,7 @@ class CTransformCos : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 class CTransformTan : public CExpressionTransform
@@ -67,7 +67,7 @@ class CTransformTan : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 class CTransformAtan2 : public CExpressionTransform
@@ -75,7 +75,7 @@ class CTransformAtan2 : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 
@@ -84,7 +84,7 @@ class CTransformAsin : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 class CTransformAcos : public CExpressionTransform
@@ -92,7 +92,7 @@ class CTransformAcos : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 class CTransformUminus : public CExpressionTransform
@@ -108,7 +108,7 @@ class CTransformPow : public CExpressionTransform
 	static bool SimplifyPowChain(CExpressionToken* pToken);
 	static bool SimplifyPowNested(CExpressionToken* pToken);
 public:
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
 
@@ -121,7 +121,7 @@ class CTransformExp : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 
@@ -130,7 +130,7 @@ class CTransformLn : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 class CTransformLog : public CExpressionTransform
@@ -138,7 +138,7 @@ class CTransformLog : public CExpressionTransform
 public:
 	virtual bool Simplify(CExpressionToken* pToken);
 	virtual bool Expand(CExpressionToken* pToken);
-	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, wstring& Result);
+	virtual bool Derivative(CExpressionToken *pToken, CExpressionToken *pChildToken, std::wstring& Result);
 };
 
 

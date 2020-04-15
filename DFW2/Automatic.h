@@ -19,7 +19,7 @@ namespace DFW2
 	protected:
 		ptrdiff_t m_nType;
 		ptrdiff_t m_nId;
-		wstring m_strName;
+		std::wstring m_strName;
 	public:
 		inline ptrdiff_t GetId() { return m_nId; }
 		CAutomaticItem(long Type, ptrdiff_t Id, const _TCHAR* cszName);
@@ -30,9 +30,9 @@ namespace DFW2
 	{
 	protected:
 		long m_nLinkType;
-		wstring m_strObjectClass;
-		wstring m_strObjectKey;
-		wstring m_strObjectProp;
+		std::wstring m_strObjectClass;
+		std::wstring m_strObjectKey;
+		std::wstring m_strObjectProp;
 		ptrdiff_t m_nActionGroup;
 		long m_nOutputMode;
 		long m_nRunsCount;
@@ -58,24 +58,24 @@ namespace DFW2
 		static const _TCHAR* cszActionTemplate;
 	};
 
-	typedef list<CAutomaticItem*> AUTOITEMS;
+	typedef std::list<CAutomaticItem*> AUTOITEMS;
 	typedef AUTOITEMS::iterator AUTOITEMSITR;
 
-	typedef map<ptrdiff_t, AUTOITEMS> AUTOITEMGROUP;
+	typedef std::map<ptrdiff_t, AUTOITEMS> AUTOITEMGROUP;
 	typedef AUTOITEMGROUP::iterator AUTOITEMGROUPITR;
 
-	typedef list<ptrdiff_t> INTLIST;
+	typedef std::list<ptrdiff_t> INTLIST;
 	typedef INTLIST::iterator INTLISTITR;
 	typedef INTLIST::const_iterator CONSTINTLISTITR;
 
-	typedef map<ptrdiff_t, CAutomaticItem*> AUTOITEMSMAP;
+	typedef std::map<ptrdiff_t, CAutomaticItem*> AUTOITEMSMAP;
 	typedef AUTOITEMSMAP::iterator AUTOITEMSMAPITR;
 
 	class CAutomaticLogic : public CAutomaticItem
 	{
 	protected:
 		long m_nOutputMode;
-		wstring m_strActions;
+		std::wstring m_strActions;
 		INTLIST m_ActionGroupIds;
 	public:
 
@@ -85,7 +85,7 @@ namespace DFW2
 			const _TCHAR* cszActions,
 			long OutputMode);
 
-		const wstring& GetActions() { return m_strActions; }
+		const std::wstring& GetActions() { return m_strActions; }
 		bool AddActionGroupId(ptrdiff_t nActionId);
 		const INTLIST& GetGroupIds() const { return m_ActionGroupIds;  }
 	};

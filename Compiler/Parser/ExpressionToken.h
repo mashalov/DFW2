@@ -8,7 +8,6 @@
 #include "algorithm"
 #include "string"
 #include "memory"
-using namespace std;
 
 #include "cex.h"
 
@@ -137,17 +136,17 @@ struct VariableEnum
 };
 
 
-typedef stack<CExpressionToken*> PARSERSTACK;
-typedef stack<const CExpressionToken*> CONSTPARSERSTACK;
-typedef list<CExpressionToken*> TOKENLIST;
+typedef std::stack<CExpressionToken*> PARSERSTACK;
+typedef std::stack<const CExpressionToken*> CONSTPARSERSTACK;
+typedef std::list<CExpressionToken*> TOKENLIST;
 typedef TOKENLIST::iterator TOKENITR;
 typedef TOKENLIST::reverse_iterator RTOKENITR;
 typedef TOKENLIST::const_reverse_iterator CONSTRTOKENITR;
 typedef TOKENLIST::const_iterator CONSTTOKENITR;
-typedef set<CExpressionToken*> TOKENSET;
+typedef std::set<CExpressionToken*> TOKENSET;
 typedef TOKENSET::iterator TOKENSETITR;
 
-typedef set<const CExpressionToken*> CONSTTOKENSET;
+typedef std::set<const CExpressionToken*> CONSTTOKENSET;
 typedef CONSTTOKENSET::iterator CONSTTOKENSETITR;
 
 
@@ -160,7 +159,7 @@ public:
 	// развертывание
 	virtual bool Expand(CExpressionToken* pToken) = 0;
 	// формирование текстового представления производной
-	virtual bool Derivative(CExpressionToken* pToken, CExpressionToken *pChild, wstring& Result) { return false;  };
+	virtual bool Derivative(CExpressionToken* pToken, CExpressionToken *pChild, std::wstring& Result) { return false;  };
 	// возврат количества уравнений, описывающих функцию или оперетор
 	virtual size_t EquationsCount() { return 1; }
 	// признак реализации функции или оператора в движке, а не в компилируемом тексте
@@ -187,7 +186,7 @@ public:
 struct FunctionEnum
 {
 	eExpressionTokenType m_eOperatorType;		// тип функции
-	wstring m_strOperatorText;					// текстовое представление
+	std::wstring m_strOperatorText;					// текстовое представление
 	int m_nArgsCount;							// количество аргументов
 	CExpressionTransform *m_pTransform;			// указатель на класс преобразования
 
@@ -221,9 +220,9 @@ struct OperatorEnum : FunctionEnum
 	
 };
 
-typedef vector<FunctionEnum*> FUNCTIONVEC;
+typedef std::vector<FunctionEnum*> FUNCTIONVEC;
 typedef FUNCTIONVEC::const_iterator FUNCTIONITR;
-typedef vector<OperatorEnum*> OPERATORVEC;
+typedef std::vector<OperatorEnum*> OPERATORVEC;
 typedef OPERATORVEC::const_iterator OPERATORITR;
 
 
@@ -241,7 +240,7 @@ public:
 	static const _TCHAR *m_cszSetpointVar;
 	static const _TCHAR *m_cszHostVar;
 	// функция генерации текстового представления уравнения (основного или уравнения инициализации)
-	wstring Generate(bool bInitEquiation = false) const;
+	std::wstring Generate(bool bInitEquiation = false) const;
 	static bool IsParentNeedEquation(CExpressionToken *pToken);
 };
 
@@ -256,15 +255,15 @@ public:
 	TOKENLIST m_Children;					//  токены, являющиеся дочерними к данному
 	TOKENSET m_Parents;						//  множество уникальных родителей токена
 	const FunctionEnum *m_pFunctionInfo;	//  для токена-функции - информация о функции
-	wstring m_strStringValue;				//  строчное представление токена
-	wstring m_strEquation;					//  строчное представление уравнения токена
+	std::wstring m_strStringValue;			//  строчное представление токена
+	std::wstring m_strEquation;				//  строчное представление уравнения токена
 	CExpressionParser *m_pParser;			//  экземпляр парсера, которому принадлежит токен
 	CCompilerEquation *m_pEquation;			//  уравнение токена
 
-	void GetOperand(CExpressionToken *pToken, wstring& Result, bool bRight) const;
-	bool GetEquationOperandIndex(const CCompilerEquation *pEquation, wstring& Result) const;
-	void GetEquationOperandType(const CCompilerEquation *pEquation, wstring& Result, VariableEnum*& pVarEnum) const;
-	void GetEquationVariableType(const CCompilerEquation *pEquation, VariableEnum* pVarEnum, wstring& Result) const;
+	void GetOperand(CExpressionToken *pToken, std::wstring& Result, bool bRight) const;
+	bool GetEquationOperandIndex(const CCompilerEquation *pEquation, std::wstring& Result) const;
+	void GetEquationOperandType(const CCompilerEquation *pEquation, std::wstring& Result, VariableEnum*& pVarEnum) const;
+	void GetEquationVariableType(const CCompilerEquation *pEquation, VariableEnum* pVarEnum, std::wstring& Result) const;
 	
 
 	CExpressionToken(CExpressionParser *pParser, eExpressionTokenType eType, size_t nTokenBegin, size_t nTokenLength);
@@ -337,18 +336,18 @@ public:
 	const _TCHAR *GetBlockType() const;
 	long GetPinsCount() const;
 	bool Expand();
-	bool Derivative(CExpressionToken *pChild, wstring& Result);
+	bool Derivative(CExpressionToken *pChild, std::wstring& Result);
 	ptrdiff_t Compare(const CExpressionToken *pToCompare) const;
 	bool ParserChanged() const;
 	bool SortChildren();
 	virtual const _TCHAR* EvaluateText();
 	void SetTextValue(const _TCHAR *cszValue);
 	const _TCHAR* GetTextValue() const;
-	void GetEquationOperand(const CCompilerEquation *pEquation, wstring& Result) const;
+	void GetEquationOperand(const CCompilerEquation *pEquation, std::wstring& Result) const;
 	const CExpressionParser* GetParser();
-	static void GetNumericText(double dValue, wstring& TextValue);
+	static void GetNumericText(double dValue, std::wstring& TextValue);
 	const _TCHAR* GetBlockName() const;
-	static wstring GenerateFunction(CExpressionToken *pToken, bool bEquationMode = false);
+	static std::wstring GenerateFunction(CExpressionToken *pToken, bool bEquationMode = false);
 	static bool CheckTokenIsConstant(const CExpressionToken *pToken);
 };
 
@@ -378,7 +377,7 @@ public:
 	virtual const _TCHAR* EvaluateText();
 };
 
-typedef map<wstring,VariableEnum> VARIABLES;
+typedef std::map<std::wstring,VariableEnum> VARIABLES;
 typedef VARIABLES::iterator VARIABLEITR;
 typedef VARIABLES::const_iterator VARIABLECONSTITR;
 
@@ -389,10 +388,10 @@ protected:
 public:
 	~CParserVariables();
 	VariableEnum *Find(const _TCHAR* cszVarName);
-	VariableEnum *Find(const wstring& strVarName);
+	VariableEnum *Find(const std::wstring& strVarName);
 	VariableEnum *Find(const CCompilerEquation *pEquation);
 	void Add(const _TCHAR* cszVarName, CExpressionToken* pToken);
-	void Add(const wstring& strVarName, CExpressionToken* pToken);
+	void Add(const std::wstring& strVarName, CExpressionToken* pToken);
 	bool Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarName);
 	void Clear();
 	bool ChangeToEquationNames();
@@ -405,8 +404,8 @@ public:
 class CExpressionRule
 {
 protected:
-	unique_ptr< CExpressionParserRule> m_pSource;		// входное правило
-	unique_ptr< CExpressionParserRule> m_pDestination;	// выходное правило
+	std::unique_ptr< CExpressionParserRule> m_pSource;		// входное правило
+	std::unique_ptr< CExpressionParserRule> m_pDestination;	// выходное правило
 	bool Match(CExpressionToken *pToken);
 	VARIABLES m_Vars;
 public:
@@ -416,5 +415,5 @@ public:
 	virtual ~CExpressionRule();
 };
 
-typedef list<CExpressionRule*> EXPRESSIONRULES;
+typedef std::list<CExpressionRule*> EXPRESSIONRULES;
 typedef EXPRESSIONRULES::const_iterator EXPRESSIONTRULEITR;

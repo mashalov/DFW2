@@ -324,7 +324,7 @@ bool CDynaGenerator3C::CalculatePower()
 const cplx& CDynaGenerator3C::CalculateEgen()
 {
 	double xgen = Xgen();
-	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * polar(1.0, Delta);
+	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, Delta);
 }
 
 double CDynaGenerator3C::Xgen()
@@ -350,8 +350,8 @@ const CDeviceContainerProperties CDynaGenerator3C::DeviceProperties()
 	props.SetType(DEVTYPE_GEN_3C);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator3C, CDeviceContainerProperties::m_cszSysNameGenerator3C);
 	props.nEquationsCount = CDynaGenerator3C::VARS::V_LAST;
-	props.m_VarMap.insert(make_pair(_T("Eqss"), CVarIndex(CDynaGenerator3C::V_EQSS, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(make_pair(_T("Edss"), CVarIndex(CDynaGenerator3C::V_EDSS, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(_T("Eqss"), CVarIndex(CDynaGenerator3C::V_EQSS, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(_T("Edss"), CVarIndex(CDynaGenerator3C::V_EDSS, VARUNIT_KVOLTS)));
 
 	return props;
 }

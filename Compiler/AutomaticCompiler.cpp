@@ -70,22 +70,22 @@ STDMETHODIMP CAutomaticCompiler::Compile()
 	NormalizePath(m_strModelRoot);
 	NormalizePath(m_strModelDLLName);
 
-	wstring strSourceFile = Cex(_T("%s\\%s\\%s.c"), m_strModelRoot.c_str(), m_strModelDLLName.c_str(), m_strModelDLLName.c_str());
+	std::wstring strSourceFile = Cex(_T("%s\\%s\\%s.c"), m_strModelRoot.c_str(), m_strModelDLLName.c_str(), m_strModelDLLName.c_str());
 
 	if (m_pAutoCompiler->Generate(strSourceFile.c_str()))
 	{
 
 
-		wstring strCommand = m_strCompilerRoot + _T("\\bin\\make.exe");
-		wstring strHeadersDir = Cex(_T("%s\\headers"), m_strModelRoot.c_str());
+		std::wstring strCommand = m_strCompilerRoot + _T("\\bin\\make.exe");
+		std::wstring strHeadersDir = Cex(_T("%s\\headers"), m_strModelRoot.c_str());
 		NormalizePath(strHeadersDir);
 
 #ifdef _WIN64
 		wstring strCommandLine = Cex(_T("%s\\makefile64"), strHeadersDir.c_str());
 #else
-		wstring strCommandLine = Cex(_T("%s\\makefile"), strHeadersDir.c_str());
+		std::wstring strCommandLine = Cex(_T("%s\\makefile"), strHeadersDir.c_str());
 #endif
-		wstring strCompilerLogTag = cszLCCCompiler;
+		std::wstring strCompilerLogTag = cszLCCCompiler;
 
 		NormalizePath(strCommand);
 		NormalizePath(strCommandLine);
@@ -158,7 +158,7 @@ STDMETHODIMP CAutomaticCompiler::Compile()
 				DWORD dwRead;
 				char chBuf[500];
 				BOOL bSuccess = FALSE;
-				wstring strOut;
+				std::wstring strOut;
 
 				if (!CloseHandle(hStdWrite))
 					throw CDFW2GetLastErrorException(cszCompileCreateProcessFailed);
@@ -170,11 +170,11 @@ STDMETHODIMP CAutomaticCompiler::Compile()
 					bSuccess = ReadFile(hStdRead, chBuf, 500, &dwRead, NULL);
 					if (!bSuccess || dwRead == 0) break;
 
-					string strMsgLine(static_cast<const char*>(chBuf), dwRead);
-					strOut += wstring(strMsgLine.begin(), strMsgLine.end());
+					std::string strMsgLine(static_cast<const char*>(chBuf), dwRead);
+					strOut += std::wstring(strMsgLine.begin(), strMsgLine.end());
 
-					size_t nFind = wstring::npos;
-					while ((nFind = strOut.find(_T("\r\n"))) != wstring::npos)
+					size_t nFind = std::wstring::npos;
+					while ((nFind = strOut.find(_T("\r\n"))) != std::wstring::npos)
 					{
 						m_pAutoCompiler->m_Logger.Log((strCompilerLogTag + strOut.substr(0, nFind)).c_str());
 						strOut.erase(0, nFind + 2);

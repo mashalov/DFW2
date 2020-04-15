@@ -266,9 +266,9 @@ namespace DFW2
 		}
 	};
 
-	typedef vector<_MatrixInfo*> MATRIXINFO;
+	typedef std::vector<_MatrixInfo*> MATRIXINFO;
 	typedef MATRIXINFO::iterator MATRIXINFOITR;
-	typedef list<_MatrixInfo*> QUEUE;
+	typedef std::list<_MatrixInfo*> QUEUE;
 
 	class _MaxNodeDiff
 	{
@@ -371,10 +371,10 @@ namespace DFW2
 
 	using NodeQueue = std::queue<CDynaNodeBase*>;
 	using NodeSet = std::set<CDynaNodeBase*>;
-	using NODEISLANDMAP = map<CDynaNodeBase*, NodeSet> ;
-	using NODEISLANDMAPITRCONST = map<CDynaNodeBase*, NodeSet>::const_iterator;
-	using DEVICETODEVICEMAP = map<CDevice*, CDevice*>;
-	using ORIGINALLINKSVEC = vector<unique_ptr<DEVICETODEVICEMAP>>;
+	using NODEISLANDMAP = std::map<CDynaNodeBase*, NodeSet> ;
+	using NODEISLANDMAPITRCONST = std::map<CDynaNodeBase*, NodeSet>::const_iterator;
+	using DEVICETODEVICEMAP = std::map<CDevice*, CDevice*>;
+	using ORIGINALLINKSVEC = std::vector<std::unique_ptr<DEVICETODEVICEMAP>>;
 
 	class CDynaNodeContainer : public CDeviceContainer
 	{
@@ -399,12 +399,12 @@ namespace DFW2
 		friend class CLoadFlow;
 		LINKSVEC m_SuperLinks;
 		ORIGINALLINKSVEC m_OriginalLinks;
-		unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
+		std::unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
 		void ClearSuperLinks();
 		void DumpNodeIslands(NODEISLANDMAP& Islands);
 		void DumpNetwork();
-		unique_ptr<VirtualBranch[]> m_pVirtualBranches;
-		unique_ptr<VirtualZeroBranch[]> m_pZeroBranches;
+		std::unique_ptr<VirtualBranch[]> m_pVirtualBranches;
+		std::unique_ptr<VirtualZeroBranch[]> m_pZeroBranches;
 		VirtualZeroBranch *m_pZeroBranchesEnd;
 		CDeviceContainer *m_pSynchroZones = nullptr;
 	public:

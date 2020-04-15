@@ -25,12 +25,12 @@ void CLoadFlow::AllocateSupernodes()
 	// создаем привязку узлов к информации по строкам матрицы
 	// размер берем по количеству суперузлов. Реальный размер матрицы будет меньше на
 	// количество отключенных узлов и БУ
-	m_pMatrixInfo = make_unique<_MatrixInfo[]>(pNodes->Count());
+	m_pMatrixInfo = std::make_unique<_MatrixInfo[]>(pNodes->Count());
 	_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
 
 	// базисные узлы держим в отдельном списке, так как они не в матрице, но
 	// результаты по ним нужно обновлять
-	list<CDynaNodeBase*> SlackBuses;
+	std::list<CDynaNodeBase*> SlackBuses;
 
 	for (auto&& it : pNodes->m_DevVec)
 	{
@@ -77,7 +77,7 @@ void CLoadFlow::AllocateSupernodes()
 	}
 
 	m_pMatrixInfoSlackEnd = pMatrixInfo;
-	m_Rh = make_unique<double[]>(klu.MatrixSize());		// невязки до итерации
+	m_Rh = std::make_unique<double[]>(klu.MatrixSize());		// невязки до итерации
 }
 
 void CLoadFlow::Estimate()
@@ -774,7 +774,7 @@ struct NodePair
 	NodePair(const CDynaNodeBase *pIp, const CDynaNodeBase *pIq) : pNodeIp(pIp), pNodeIq(pIq)
 	{
 		if (pIp > pIq)
-			swap(pNodeIp, pNodeIq);
+			std::swap(pNodeIp, pNodeIq);
 	}
 };
 
@@ -783,7 +783,7 @@ bool CLoadFlow::CheckLF()
 {
 	bool bRes = true;
 
-	set <NodePair> ReportedBranches;
+	std::set <NodePair> ReportedBranches;
 
 	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
@@ -1043,7 +1043,7 @@ void CLoadFlow::Newton()
 	int it(0);	// количество итераций
 
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
-	vector<_MatrixInfo*> PV_PQmax, PV_PQmin, PQmax_PV, PQmin_PV;
+	std::vector<_MatrixInfo*> PV_PQmax, PV_PQmin, PQmax_PV, PQmin_PV;
 	PV_PQmax.reserve(klu.MatrixSize() / 2);
 	PV_PQmin.reserve(klu.MatrixSize() / 2);
 	PQmax_PV.reserve(klu.MatrixSize() / 2);
@@ -1227,7 +1227,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 		double Qspread(0.0), PgSource(pNode->Pgr), QgSource(pNode->Qgr), DropToSlack(0.0);
 		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
 		CDevice **ppDevice(nullptr);
-		list<CDynaNodeBase*> SlackBuses;
+		std::list<CDynaNodeBase*> SlackBuses;
 
 		if (!pNode->m_pSuperNodeParent)
 		{
@@ -1360,9 +1360,9 @@ void CLoadFlow::UpdateVDelta(double dStep)
 void CLoadFlow::StoreVDelta()
 {
 	if(!m_Vbackup)
-		m_Vbackup = make_unique<double[]>(klu.MatrixSize());
+		m_Vbackup = std::make_unique<double[]>(klu.MatrixSize());
 	if(!m_Dbackup)
-		m_Dbackup = make_unique<double[]>(klu.MatrixSize());
+		m_Dbackup = std::make_unique<double[]>(klu.MatrixSize());
 
 	double* pV = m_Vbackup.get();
 	double* pD = m_Dbackup.get();

@@ -2,7 +2,6 @@
 #include "DynaGenerator1C.h"
 #include "DynaExciterBase.h"
 #include "LimiterConst.h"
-using namespace std;
 
 namespace DFW2
 {

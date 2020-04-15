@@ -2,7 +2,6 @@
 #include "DynaGenerator1C.h"
 #include "LimitedLag.h"
 #include "Sum.h"
-using namespace std;
 
 namespace DFW2
 {

@@ -4,8 +4,6 @@
 
 namespace DFW2
 {
-	using namespace std;
-
 	class CFileException : public CDFW2GetLastErrorException
 	{
 	public:

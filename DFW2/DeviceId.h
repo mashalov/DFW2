@@ -2,8 +2,6 @@
 #include "header.h"
 #include "DeviceTypes.h"
 
-using namespace std;
-
 namespace DFW2
 {
 	// класс для идентификации устройств. Является базовым для всех устройств
@@ -11,9 +9,9 @@ namespace DFW2
 	{
 	protected:
 		ptrdiff_t m_Id;							// идентификатор (для многоидентификаторных, типа ветвей - только индекс)
-		wstring m_strName;						// имя устройства без подробностей. Типа имя узла
+		std::wstring m_strName;					// имя устройства без подробностей. Типа имя узла
 		ptrdiff_t m_DBIndex;					// индекс устройства во внешней БД
-		wstring m_strVerbalName;				// имя устройства с подробностями - с типом и т.д.
+		std::wstring m_strVerbalName;			// имя устройства с подробностями - с типом и т.д.
 		virtual void UpdateVerbalName();		// функция обновления подробного имени устройства, при установке типа и т.д.
 	public:
 		CDeviceId();

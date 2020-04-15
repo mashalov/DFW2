@@ -54,7 +54,7 @@ void CExpressionParser::CleanUp()
 	
 	m_ResultStack = PARSERSTACK();
 	m_ParserStack = PARSERSTACK();
-	m_ArityStack = stack<ptrdiff_t>();
+	m_ArityStack = std::stack<ptrdiff_t>();
 
 	for (auto&& it : m_TokenPool)
 		delete it;
@@ -131,7 +131,7 @@ bool CExpressionParser::Parse(const _TCHAR* cszExpression)
 	eExpressionTokenType eError = ETT_UNDEFINED;
 	// копируем выражение во временный буфер
 	m_nExpressionLength = _tcslen(cszExpression);
-	m_szExpression = make_unique<_TCHAR[]>(m_nExpressionLength + 1);
+	m_szExpression = std::make_unique<_TCHAR[]>(m_nExpressionLength + 1);
 	_tcscpy_s(m_szExpression.get(), m_nExpressionLength + 1, cszExpression);
 
 	m_bUnaryMinus = true;
@@ -729,7 +729,7 @@ CExpressionToken* CExpressionParser::NewExpressionToken(eExpressionTokenType eTy
 	if (eType == ETT_VARIABLE || eType == ETT_MODELLINK)
 	{
 		// используем текст токена для поиска/создания переменной
-		wstring VarName = GetText(m_nTokenBegin, m_nTokenLength);
+		std::wstring VarName = GetText(m_nTokenBegin, m_nTokenLength);
 		VariableEnum *pEnum = m_Variables.Find(VarName);
 		if (pEnum)
 			pToken = pEnum->m_pToken;		// если переменная уже есть - возвращаем ее токен
@@ -965,7 +965,7 @@ bool CExpressionParser::Simplify()
 
 	CleanTree();
 	m_bChanged = true;
-	wstring infix;
+	std::wstring infix;
 
 	if (bRes)
 	{
@@ -1087,7 +1087,7 @@ bool CExpressionParser::Expand()
 	}
 
 	m_bChanged = true;
-	wstring infix;
+	std::wstring infix;
 
 	if (bRes)
 	{
@@ -1127,7 +1127,7 @@ bool CExpressionParser::Expand()
 
 	CleanTree();
 	m_bChanged = true;
-	wstring infix;
+	std::wstring infix;
 
 	if (bRes)
 	{
@@ -1199,7 +1199,7 @@ bool CExpressionParser::Expand()
 }
 
 // формирует строку из разобранного AST в инфиксной записи
-bool CExpressionParser::Infix(wstring& strInfix)
+bool CExpressionParser::Infix(std::wstring& strInfix)
 {
 	bool bRes = true;
 	if (m_ResultStack.size() != 1)
@@ -1455,7 +1455,7 @@ bool CExpressionParser::Process(const _TCHAR *cszExpression)
 	bRes = bRes && Simplify();
 
 #ifdef _DEBUG
-	wstring str;
+	std::wstring str;
 	bRes = bRes && Infix(str);
 #endif
 
@@ -1493,20 +1493,20 @@ void CParserVariables::Clear()
 
 bool CParserVariables::ChangeToEquationNames()
 {
-	set<CExpressionParser*> Parsers;
+	std::set<CExpressionParser*> Parsers;
 
 	for (VARIABLEITR it = m_Variables.begin(); it != m_Variables.end(); it++)
 	{
-		wstring compname;
+		std::wstring compname;
 		it->second.m_pToken->GetEquationOperand(it->second.m_pToken->m_pEquation, compname);
 		it->second.m_pToken->SetTextValue(compname.c_str());
 		Parsers.insert(it->second.m_pToken->m_pParser);
 	}
 
-	for (set<CExpressionParser*>::iterator pit = Parsers.begin(); pit != Parsers.end(); pit++)
+	for (auto& pit = Parsers.begin(); pit != Parsers.end(); pit++)
 	{
 		CExpressionParser *pParser = *pit;
-		wstring Infix;
+		std::wstring Infix;
 		pParser->Infix(Infix);
 	}
 	return true;
@@ -1552,14 +1552,14 @@ bool CParserVariables::Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarN
 			// и вставляем новое имя в список переменных
 			pVarEnum->m_pToken->SetTextValue(cszNewVarName);
 			if (m_Variables.erase(cszVarName))
-				bRes = m_Variables.insert(make_pair(cszNewVarName, Tmp)).second;
+				bRes = m_Variables.insert(std::make_pair(cszNewVarName, Tmp)).second;
 		}
 	}
 	return bRes;
 }
 
 // поиск переменной по имени
-VariableEnum *CParserVariables::Find(const wstring& strVarName)
+VariableEnum *CParserVariables::Find(const std::wstring& strVarName)
 {
 	return Find(strVarName.c_str());
 }
@@ -1578,14 +1578,14 @@ VariableEnum *CParserVariables::Find(const CCompilerEquation *pEquation)
 // добавляем новую перменную с токеном
 void CParserVariables::Add(const _TCHAR* cszVarName, CExpressionToken* pToken)
 {
-	m_Variables.insert(make_pair(cszVarName, VariableEnum(pToken)));
+	m_Variables.insert(std::make_pair(cszVarName, VariableEnum(pToken)));
 	// если токен - ссылка на модель - ставим тип переменной "внешняя"
 	if (pToken->GetType() == ETT_MODELLINK)
 		m_Variables.find(cszVarName)->second.m_eVarType = eCVT_EXTERNAL;
 
 }
 
-void CParserVariables::Add(const wstring& strVarName, CExpressionToken* pToken)
+void CParserVariables::Add(const std::wstring& strVarName, CExpressionToken* pToken)
 {
 	Add(strVarName.c_str(), pToken);
 }

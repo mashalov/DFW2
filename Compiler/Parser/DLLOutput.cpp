@@ -30,7 +30,7 @@ bool CDLLOutput::CreateSourceFile(const _TCHAR *cszFile)
 
 	try
 	{
-		wstring strDir = GetDirectory(cszFile);
+		std::wstring strDir = GetDirectory(cszFile);
 		if(!CreateAllDirectories(strDir.c_str()))
 			throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileOpenError, m_strFilePath.c_str()));
 
@@ -355,8 +355,8 @@ bool CDLLOutput::EmitVariablesInfo()
 			double dMin = 0.0;
 			double dMax = 0.0;
 			double dDefault = 0.0;
-			wstring strDeviceType = _T("DEVTYPE_UNKNOWN");
-			wstring strConstFlags = _T("0");
+			std::wstring strDeviceType = _T("DEVTYPE_UNKNOWN");
+			std::wstring strConstFlags = _T("0");
 			if (_ftprintf(m_pFile, _T("\tSetConstantVarInfo(pVarsInfo + %5zd, _T(\"%s\"), %10g, %10g, %10g, %s, %s);\n"),
 				nCount,
 				pToken->GetTextValue(),
@@ -469,7 +469,7 @@ bool CDLLOutput::EmitBuildRightHand()
 
 			if (!pEquation->m_pToken->IsHostBlock())
 			{
-				wstring str = pEquation->Generate();
+				std::wstring str = pEquation->Generate();
 
 				if (_ftprintf(m_pFile, _T("\t// %s\n"), pEquation->m_pToken->GetTextValue() ) < 0)
 					throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));
@@ -523,7 +523,7 @@ bool CDLLOutput::EmitBuildEquations()
 
 			if (!pToken->IsHostBlock())
 			{
-				wstring Diagonal, Diff, strCol;
+				std::wstring Diagonal, Diff, strCol;
 
 				if (pToken->IsVariable() && !pToken->IsConst())
 				{
@@ -561,15 +561,15 @@ bool CDLLOutput::EmitBuildEquations()
 				{
 					struct CommentedRow
 					{
-						wstring m_Value;
-						wstring m_Comment;
+						std::wstring m_Value;
+						std::wstring m_Comment;
 						bool bExternalGuard;
-						CommentedRow(wstring& Value, wstring& Comment, bool bExtGuard) : m_Value(Value), 
+						CommentedRow(std::wstring& Value, std::wstring& Comment, bool bExtGuard) : m_Value(Value),
 																						 m_Comment(Comment), 
 																						 bExternalGuard(bExtGuard) {};
 					};
 
-					typedef map<wstring, CommentedRow> MATRIXROW;
+					typedef std::map<std::wstring, CommentedRow> MATRIXROW;
 					MATRIXROW MatrixRow;
 
 					for (TOKENLIST::reverse_iterator tkit = pToken->m_Children.rbegin(); tkit != pToken->m_Children.rend(); tkit++)
@@ -582,7 +582,7 @@ bool CDLLOutput::EmitBuildEquations()
 							// внешней переменной равный DFW2_NON_STATE_INDEX. ¬ случае, если индекс имеет
 							// такое значение, не вставл€ем элемент матрицы на столбец с этой переменной
 
-							wstring DiagIndex = Cex(_T("%d"), pEquation->m_nIndex);
+							std::wstring DiagIndex = Cex(_T("%d"), pEquation->m_nIndex);
 							if (DiagIndex == strCol)
 							{
 								Diagonal = Diff;
@@ -594,7 +594,7 @@ bool CDLLOutput::EmitBuildEquations()
 							}
 							else
 							{
-								wstring Comment = Cex(_T("%s by %s"), pToken->GetTextValue(), pChildToken->GetTextValue());
+								std::wstring Comment = Cex(_T("%s by %s"), pToken->GetTextValue(), pChildToken->GetTextValue());
 								MATRIXROW::iterator mit = MatrixRow.find(strCol);
 								if (mit == MatrixRow.end())
 									MatrixRow.insert(make_pair(strCol, CommentedRow(Diff, Comment, bExternalGuard)));
@@ -724,7 +724,7 @@ bool CDLLOutput::EmitInits()
 
 						CCompilerEquation *pEquation = pChildToken->m_pEquation;
 						size_t nParameterIndex = nPinCount - nPins;
-						wstring Operand = pChildToken->GetTextValue();
+						std::wstring Operand = pChildToken->GetTextValue();
 						if (_ftprintf(m_pFile, cszBlockParameter, nParameterIndex, Operand.c_str()) < 0)
 							throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));
 					}
@@ -766,7 +766,7 @@ bool CDLLOutput::EmitInits()
 			const CCompilerEquation* pEquation = *it;
 			const CExpressionToken *pToken = pEquation->m_pToken;
 
-			wstring str = pEquation->Generate(true);
+			std::wstring str = pEquation->Generate(true);
 
 			if (pToken->IsHostBlock())
 			{
@@ -899,7 +899,7 @@ bool CDLLOutput::EmitProcessDiscontinuity()
 				continue;
 			}
 
-			wstring str = pEquation->Generate(true);
+			std::wstring str = pEquation->Generate(true);
 
 			if (_ftprintf(m_pFile, _T("\t// %s\n"), pEquation->m_pToken->GetTextValue()) < 0)
 				throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));

@@ -79,12 +79,12 @@ const CDeviceContainerProperties CDynaPowerInjector::DeviceProperties()
 	props.SetType(DEVTYPE_POWER_INJECTOR);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, CDynaPowerInjector::m_cszNodeId);
 
-	props.m_VarMap.insert(make_pair(_T("Ire"), CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("Iim"), CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(make_pair(_T("P"), CVarIndex(CDynaPowerInjector::V_P, VARUNIT_MW)));
-	props.m_VarMap.insert(make_pair(_T("Q"), CVarIndex(CDynaPowerInjector::V_Q, VARUNIT_MVAR)));
+	props.m_VarMap.insert(std::make_pair(_T("Ire"), CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("Iim"), CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(_T("P"), CVarIndex(CDynaPowerInjector::V_P, VARUNIT_MW)));
+	props.m_VarMap.insert(std::make_pair(_T("Q"), CVarIndex(CDynaPowerInjector::V_Q, VARUNIT_MVAR)));
 
-	props.m_ConstVarMap.insert(make_pair(CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, eDVT_CONSTSOURCE)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, eDVT_CONSTSOURCE)));
 
 	props.nEquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasGenerator);

@@ -12,8 +12,6 @@
 
 namespace DFW2
 {
-	using namespace std;
-
 	class CResultFile
 	{
 	protected:
@@ -39,7 +37,7 @@ namespace DFW2
 
 		struct VariableTypeInfo
 		{
-			wstring Name;
+			std::wstring Name;
 			double Multiplier;
 			int eUnits;
 			ptrdiff_t nIndex;
@@ -49,10 +47,10 @@ namespace DFW2
 			}
 		};
 
-		using VARTYPESET = set<VariableTypeInfo>;
+		using VARTYPESET = std::set<VariableTypeInfo>;
 		using VARTYPEITR = VARTYPESET::iterator;
 		using VARTYPEITRCONST = VARTYPESET::const_iterator;
-		using VARTYPELIST = list<VariableTypeInfo>;
+		using VARTYPELIST = std::list<VariableTypeInfo>;
 		using VARTYPELISTITRCONST = VARTYPELIST::const_iterator;
 
 		struct DeviceLinkToParent
@@ -75,7 +73,7 @@ namespace DFW2
 		struct DeviceInstanceInfo : public DeviceInstanceInfoBase
 		{
 			DeviceTypeInfo* m_pDevType;
-			wstring Name;
+			std::wstring Name;
 			struct DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo);
 			struct DeviceInstanceInfo() : m_pDevType(nullptr) {}
 			void SetId(ptrdiff_t nIdIndex, ptrdiff_t nId);
@@ -92,7 +90,7 @@ namespace DFW2
 			}
 		};
 
-		using DEVICESSET = set<DeviceInstanceInfoBase*, DeviceInstanceCompare>;
+		using DEVICESSET = std::set<DeviceInstanceInfoBase*, DeviceInstanceCompare>;
 		using DEVIDITR = DEVICESSET::iterator;
 		using DEVIDITRCONST = DEVICESSET::const_iterator;
 
@@ -106,12 +104,12 @@ namespace DFW2
 			int VariablesByDeviceCount;
 			VARTYPESET m_VarTypes;
 			VARTYPELIST m_VarTypesList;
-			unique_ptr<ptrdiff_t[]> pIds;
-			unique_ptr<DeviceLinkToParent[]> pLinks;
-			unique_ptr<DeviceInstanceInfo[]> m_pDeviceInstances;
+			std::unique_ptr<ptrdiff_t[]> pIds;
+			std::unique_ptr<DeviceLinkToParent[]> pLinks;
+			std::unique_ptr<DeviceInstanceInfo[]> m_pDeviceInstances;
 			const CResultFileReader *m_pFileReader = nullptr;
 			DEVICESSET m_DevSet;
-			wstring strDevTypeName;
+			std::wstring strDevTypeName;
 
 			void AllocateData();
 			void IndexDevices();
@@ -125,7 +123,7 @@ namespace DFW2
 			}
 		};
 
-		using DEVTYPESET = set<DeviceTypeInfo*, DeviceTypesComp>;
+		using DEVTYPESET = std::set<DeviceTypeInfo*, DeviceTypesComp>;
 		using DEVTYPEITR = DEVTYPESET::iterator;
 		using DEVTYPEITRCONST= DEVTYPESET::const_iterator;
 
@@ -152,15 +150,15 @@ namespace DFW2
 		};
 
 
-		using CHANNELSET = set<ChannelHeaderInfo*, ChannelHeaderComp>;
+		using CHANNELSET = std::set<ChannelHeaderInfo*, ChannelHeaderComp>;
 		using CHANNELSETITR = CHANNELSET::iterator;
 		using CHANNELSETITRCONST = CHANNELSET::const_iterator;
 
 	protected:
 
-		unique_ptr<ChannelHeaderInfo[]> m_pChannelHeaders;
-		unique_ptr<DataDirectoryEntry[]> m_pDirectoryEntries;
-		unique_ptr<double[]> m_pTime, m_pStep;
+		std::unique_ptr<ChannelHeaderInfo[]> m_pChannelHeaders;
+		std::unique_ptr<DataDirectoryEntry[]> m_pDirectoryEntries;
+		std::unique_ptr<double[]> m_pTime, m_pStep;
 
 		int m_nVersion = 0;
 		double m_dTimeCreated = 0.0;
@@ -170,19 +168,19 @@ namespace DFW2
 
 		size_t m_PointsCount;
 		size_t m_ChannelsCount;
-		typedef list<__int64> INT64LIST;
+		typedef std::list<__int64> INT64LIST;
 		int ReadBlockType() const;
 		void GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset) const;
-		void ReadModelData(unique_ptr<double[]>& pData, int nVarIndex);
+		void ReadModelData(std::unique_ptr<double[]>& pData, int nVarIndex);
 		__int64 OffsetFromCurrent() const;
-		wstring m_strFilePath;
-		wstring m_strComment;
+		std::wstring m_strFilePath;
+		std::wstring m_strComment;
 		bool m_bHeaderLoaded = false;
 
 		DEVTYPESET m_DevTypeSet;
 		CHANNELSET m_ChannelSet;
 
-		unique_ptr<DeviceTypeInfo[]> m_pDeviceTypeInfo;
+		std::unique_ptr<DeviceTypeInfo[]> m_pDeviceTypeInfo;
 
 		VARNAMEMAP m_VarNameMap;
 
@@ -192,7 +190,7 @@ namespace DFW2
 		__int64 m_nCommentDirectoryOffset;
 		__int64 m_DirectoryOffset;
 
-		wstring m_strUserComment;
+		std::wstring m_strUserComment;
 
 		CRLECompressor m_RLECompressor;
 		double m_dRatio = -1.0;
@@ -207,13 +205,13 @@ namespace DFW2
 		void ReadString(std::wstring& String);
 		void ReadDouble(double& Value);
 		void ReadDirectoryEntries();
-		unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName) const;
-		unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const;
-		unique_ptr<double[]> ReadChannel(ptrdiff_t nIndex) const;
-		unique_ptr<double[]> GetTimeStep();
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName) const;
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const;
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t nIndex) const;
+		std::unique_ptr<double[]> GetTimeStep();
 		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const;
 		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR *cszVarName) const;
-		SAFEARRAY* CreateSafeArray(unique_ptr<double[]>& pChannelData) const;
+		SAFEARRAY* CreateSafeArray(std::unique_ptr<double[]>& pChannelData) const;
 		double GetFileTime();
 		const _TCHAR* GetFilePath();
 		const _TCHAR* GetComment();

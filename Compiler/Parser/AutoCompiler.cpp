@@ -57,11 +57,11 @@ bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 {
 	m_pParser = new CExpressionParserRules(m_Compiler.m_Variables);
 
-	wstring strFormula = pStarterItem->GetFormula();
+	std::wstring strFormula = pStarterItem->GetFormula();
 	if (strFormula.empty())
 		strFormula = cszV;
 
-	wstring EquationExpression = Cex(_T("%s"), strFormula.c_str());
+	std::wstring EquationExpression = Cex(_T("%s"), strFormula.c_str());
 
 	bool bRes = m_pParser->Process(EquationExpression.c_str());
 
@@ -75,8 +75,8 @@ bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 	
 	CParserVariables& vars = m_Compiler.m_Variables;
 	VariableEnum *pVarEnum = vars.Find(cszV);
-	wstring strLinkOriginal = pStarterItem->GetModelLink().ToString();
-	wstring strLink = strLinkOriginal;
+	std::wstring strLinkOriginal = pStarterItem->GetModelLink().ToString();
+	std::wstring strLink = strLinkOriginal;
 
 	if (pVarEnum)
 	{
@@ -112,7 +112,7 @@ bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 		}
 	}
 
-	wstring str;
+	std::wstring str;
 	m_pParser->Infix(str);
 	_tcprintf(_T("\n%s"), str.c_str());
 
@@ -130,7 +130,7 @@ bool CCompilerAutoStarterItem::InsertEquations(CCompilerEquations& Equations)
 
 	if (bRes)
 	{
-		wstring NewVarName(Cex(_T("S%d"), GetId()));
+		std::wstring NewVarName(Cex(_T("S%d"), GetId()));
 		_ASSERTE(m_pParser->m_ResultStack.size() > 0 && m_pParser->m_ResultStack.top()->ChildrenCount() > 0);
 		CExpressionToken *pRootEquation = m_pParser->m_ResultStack.top()->GetChild();
 		_ASSERTE(pRootEquation->m_pEquation);
@@ -163,8 +163,8 @@ bool CCompilerAutoLogicItem::InsertEquations(CCompilerEquations& Equations)
 
 	if (bRes)
 	{
-		wstring NewVarName(Cex(_T("LT%d"), GetId()));
-		wstring NewVarLName(Cex(_T("L%d"), GetId()));
+		std::wstring NewVarName(Cex(_T("LT%d"), GetId()));
+		std::wstring NewVarLName(Cex(_T("L%d"), GetId()));
 
 		_ASSERTE(m_pParser->m_ResultStack.size() > 0 && m_pParser->m_ResultStack.top()->ChildrenCount() > 0);
 		CExpressionToken *pRelay = m_pParser->m_ResultStack.top()->GetChild();
@@ -223,7 +223,7 @@ bool CCompilerAutoLogicItem::Process()
 	if (m_strDelay.empty())
 		m_strDelay = _T("0");
 
-	wstring EquationExpression = Cex(_T("alrelay(%s,0,%s)"), m_strFormula.c_str(), m_strDelay.c_str());
+	std::wstring EquationExpression = Cex(_T("alrelay(%s,0,%s)"), m_strFormula.c_str(), m_strDelay.c_str());
 
 	bool bRes = m_pParser->Process(EquationExpression.c_str());
 
@@ -236,7 +236,7 @@ bool CCompilerAutoLogicItem::Process()
 		return false;
 	}
 
-	wstring str;
+	std::wstring str;
 	m_pParser->Infix(str);
 	_tcprintf(_T("\n%s"), str.c_str());
 
@@ -248,7 +248,7 @@ bool CAutoCompiler::AddStarter(CAutoStarterItem& Starter)
 {
 	if (!m_bStatus) return m_bStatus;
 
-	if (!m_Starters.insert(make_pair(Starter.GetId(), CCompilerAutoStarterItem(Starter,*this))).second)
+	if (!m_Starters.insert(std::make_pair(Starter.GetId(), CCompilerAutoStarterItem(Starter,*this))).second)
 	{
 		m_Logger.Log(Cex(CAutoCompilerMessages::cszDuplicatedStarter, Starter.GetVerbalName().c_str()));
 		m_bStatus = false;
@@ -262,7 +262,7 @@ bool CAutoCompiler::AddLogic(CAutoLogicItem& Logic)
 {
 	if (!m_bStatus) return m_bStatus;
 
-	if (!m_Logics.insert(make_pair(Logic.GetId(), CCompilerAutoLogicItem(Logic, *this))).second)
+	if (!m_Logics.insert(std::make_pair(Logic.GetId(), CCompilerAutoLogicItem(Logic, *this))).second)
 	{
 		m_Logger.Log(Cex(CAutoCompilerMessages::cszDuplicatedLogic, Logic.GetVerbalName().c_str()));
 		m_bStatus = false;
@@ -276,7 +276,7 @@ bool CAutoCompiler::AddAction(CAutoActionItem& Action)
 {
 	if (!m_bStatus) return m_bStatus;
 
-	if (!m_Actions.insert(make_pair(Action.GetId(), CCompilerAutoActionItem(Action, *this))).second)
+	if (!m_Actions.insert(std::make_pair(Action.GetId(), CCompilerAutoActionItem(Action, *this))).second)
 	{
 		m_Logger.Log(Cex(CAutoCompilerMessages::cszDuplicatedAction, Action.GetVerbalName().c_str()));
 		m_bStatus = false;
@@ -391,7 +391,7 @@ bool CCompilerAutoActionItem::InsertEquations(CCompilerEquations& Equations)
 
 	if (bRes)
 	{
-		wstring NewVarName(Cex(_T("A%d"), GetId()));
+		std::wstring NewVarName(Cex(_T("A%d"), GetId()));
 		_ASSERTE(m_pParser->m_ResultStack.size() > 0 && m_pParser->m_ResultStack.top()->ChildrenCount() > 0);
 		CExpressionToken *pRootEquation = m_pParser->m_ResultStack.top()->GetChild();
 		_ASSERTE(pRootEquation->m_pEquation);

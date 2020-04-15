@@ -243,14 +243,14 @@ const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()
 	props.nEquationsCount = CDynaExcConMustang::VARS::V_LAST;
 	
 
-	props.m_VarMap.insert(make_pair(_T("Uf"), CVarIndex(CDynaExcConMustang::V_UF, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("Usum"), CVarIndex(CDynaExcConMustang::V_USUM, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("Svt"), CVarIndex(CDynaExcConMustang::V_SVT, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("dVdt"), CVarIndex(CDynaExcConMustang::V_DVDT, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("dEqdt"), CVarIndex(CDynaExcConMustang::V_EQDT, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("dSdt"), CVarIndex(CDynaExcConMustang::V_SDT, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("dVdtLag"), CVarIndex(CDynaExcConMustang::V_DVDT + 1, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("dEqdtLag"), CVarIndex(CDynaExcConMustang::V_EQDT + 1, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("dSdtLag"), CVarIndex(CDynaExcConMustang::V_SDT + 1, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("Uf"), CVarIndex(CDynaExcConMustang::V_UF, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("Usum"), CVarIndex(CDynaExcConMustang::V_USUM, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("Svt"), CVarIndex(CDynaExcConMustang::V_SVT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("dVdt"), CVarIndex(CDynaExcConMustang::V_DVDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("dEqdt"), CVarIndex(CDynaExcConMustang::V_EQDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("dSdt"), CVarIndex(CDynaExcConMustang::V_SDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("dVdtLag"), CVarIndex(CDynaExcConMustang::V_DVDT + 1, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("dEqdtLag"), CVarIndex(CDynaExcConMustang::V_EQDT + 1, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(_T("dSdtLag"), CVarIndex(CDynaExcConMustang::V_SDT + 1, VARUNIT_PU)));
 	return props;
 }

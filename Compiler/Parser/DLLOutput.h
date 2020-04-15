@@ -10,7 +10,7 @@ protected:
 	bool m_bStatus;
 	FILE *m_pFile;
 	CCompiler& m_Compiler;
-	wstring m_strFilePath;
+	std::wstring m_strFilePath;
 	bool EmitVarCount(const _TCHAR *cszFunctionName, size_t nCount);
 public:
 	CDLLOutput(CCompiler& Logger);

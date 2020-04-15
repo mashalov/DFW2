@@ -7,7 +7,7 @@ namespace DFW2
 	class CSerializerXML
 	{
 	protected:
-		using TypeMapType = map<ptrdiff_t, std::wstring>;
+		using TypeMapType = std::map<ptrdiff_t, std::wstring>;
 		MSXML2::IXMLDOMDocument3Ptr m_spXMLDoc;
 		MSXML2::IXMLDOMElementPtr m_spXMLItems;
 		void AddLink(MSXML2::IXMLDOMElementPtr& xmlItem, CDevice *pLinkedDevice, bool bMaster);

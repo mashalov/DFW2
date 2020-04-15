@@ -3,8 +3,6 @@
 #include "tchar.h"
 #include "cex.h"
 
-using namespace std;
-
 class CCompilerLogger
 {
 protected:

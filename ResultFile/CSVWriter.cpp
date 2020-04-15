@@ -27,7 +27,7 @@ void CCSVWriter::IndexChannels()
 {
 	const CResultFileReader::DEVTYPESET &devtypeset = m_ResultFileReader.GetTypesSet();
 	CResultFileReader::DeviceTypeInfo devtypefind;
-	pChannelLink = make_unique<ChannelLink[]>(nChannelsCount);
+	pChannelLink = std::make_unique<ChannelLink[]>(nChannelsCount);
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
 
@@ -272,8 +272,8 @@ void CCSVWriter::WriteData()
 	pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
 	nRowStep = (pChannelsEnd - pChannel + 2) * MinFieldWidth;
 
-	unique_ptr<double[]> pData;
-	pData = make_unique<double[]>(nPointsCount);
+	std::unique_ptr<double[]> pData;
+	pData = std::make_unique<double[]>(nPointsCount);
 	m_ResultFileReader.GetTimeScale(pData.get(), nPointsCount);
 	WriteColumn(pData.get(), 0, false);
 	m_ResultFileReader.GetStep(pData.get(), nPointsCount);
@@ -291,7 +291,7 @@ void CCSVWriter::WriteData()
 
 void CCSVWriter::WriteField(const ChannelLink *pLink, const _TCHAR *cszField)
 {
-	wstring str(cszField);
+	std::wstring str(cszField);
 	std::replace(str.begin(), str.end(), ';', ':');
 	std::replace(str.begin(), str.end(), '\"', '\'');
 	str += _T("\";");

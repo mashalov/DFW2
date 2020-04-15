@@ -85,7 +85,7 @@ bool CDiscontinuities::AddEvent(double dTime, CModelAction* Action)
 {
 	bool bRes = true;
 	CStaticEvent newEvent(dTime);
-	pair<STATICEVENTITR, bool> checkInsert = m_StaticEvent.insert(newEvent);
+	std::pair<STATICEVENTITR, bool> checkInsert = m_StaticEvent.insert(newEvent);
 	checkInsert.first->AddAction(Action);
 	return bRes;
 }

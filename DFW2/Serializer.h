@@ -40,7 +40,7 @@ namespace DFW2
 		{
 			throw dfw2error(cszNotImplemented);
 		}
-		virtual wstring GetString()
+		virtual std::wstring GetString()
 		{
 			throw dfw2error(cszNotImplemented);
 		}
@@ -84,7 +84,7 @@ namespace DFW2
 
 		uValue Value;
 
-		unique_ptr<CSerializerAdapterBase> Adapter;
+		std::unique_ptr<CSerializerAdapterBase> Adapter;
 
 		TypedSerializedValue(CSerializerAdapterBase *pAdapter) : Adapter(pAdapter), ValueType(eValueType::VT_ADAPTER) {}
 		TypedSerializedValue(double* pDouble) : Value(pDouble), ValueType(eValueType::VT_DBL) {}
@@ -170,12 +170,12 @@ namespace DFW2
 		{
 			*m_pLeft = static_cast<T>(vInt);
 		}
-		wstring GetString() override
+		std::wstring GetString() override
 		{
 			const ptrdiff_t nIndex = static_cast<ptrdiff_t>(*m_pLeft);
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(m_nCount))
 				throw dfw2error(Cex(_T("CSerializerAdapterEnumT::GetString - invalid enum index or string representation %d"), nIndex));
-			return wstring(m_StringRepresentation[nIndex]);
+			return std::wstring(m_StringRepresentation[nIndex]);
 		}
 		CSerializerAdapterEnumT(T& Left, const _TCHAR** ppStringRepresentation, size_t nCount) : CSerializerAdapterBaseT<T>(Left), 
 																								 m_StringRepresentation(ppStringRepresentation),
@@ -348,6 +348,6 @@ namespace DFW2
 		}
 	};
 
-	using SerializerPtr = unique_ptr<CSerializerBase>;
+	using SerializerPtr = std::unique_ptr<CSerializerBase>;
 }
 

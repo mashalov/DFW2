@@ -1,6 +1,5 @@
 #pragma once
 #include "DynaPrimitive.h"
-using namespace std;
 
 namespace DFW2
 {

@@ -27,7 +27,7 @@ bool CSlowVariableItem::AddGraphPoint(double Time, double Value, double Previous
 	CSlowVariableGraphItem test(Time, Value, cszChangeDescription);
 	if (test.m_dTime >= 0)
 	{
-		pair<SLOWGRAPHSET::iterator, bool> its = m_Graph.insert(test);
+		std::pair<SLOWGRAPHSET::iterator, bool> its = m_Graph.insert(test);
 		if (!its.second)
 			its.first->m_dValue = Value;
 	}
@@ -41,7 +41,7 @@ bool CSlowVariablesSet::Add(long DeviceTypeId, const LONGVECTOR& DeviceIds, cons
 {
 	bool bRes = true;
 	CSlowVariableItem *pItem = new CSlowVariableItem(DeviceTypeId, DeviceIds, cszVarName);
-	pair<ITERATOR, bool> its = insert(pItem);
+	std::pair<ITERATOR, bool> its = insert(pItem);
 	if (!its.second)
 	{
 		delete pItem;

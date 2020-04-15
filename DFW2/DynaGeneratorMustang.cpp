@@ -328,7 +328,7 @@ const cplx& CDynaGeneratorMustang::CalculateEgen()
 {
 	double xgen = Xgen();
 	double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
-	return m_Egen = cplx(sp2 * Eqss - Id * (xgen - xd2), sp2 * Edss + Iq * (xgen - xq2)) * polar(1.0, Delta);
+	return m_Egen = cplx(sp2 * Eqss - Id * (xgen - xd2), sp2 * Edss + Iq * (xgen - xq2)) * std::polar(1.0, Delta);
 }
 
 bool CDynaGeneratorMustang::CalculatePower()
