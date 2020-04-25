@@ -6,8 +6,8 @@ using namespace DFW2;
 
 CStaticEvent::~CStaticEvent()
 {
-	for (MODELACTIONITR it = m_Actions.begin(); it != m_Actions.end(); it++)
-		delete *it;
+	for (auto&& it : m_Actions)
+		delete it;
 }
 
 CDiscontinuities::CDiscontinuities(CDynaModel *pDynaModel) : m_pDynaModel(pDynaModel)

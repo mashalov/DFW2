@@ -59,9 +59,10 @@ namespace DFW2
 		
 		PrimitiveVariable *m_pPrimitiveVarsPool, *m_pPrimitiveVarsHead;
 		PrimitiveVariableExternal *m_pPrimitiveExtVarsPool, *m_pPrimitiveExtVarsHead;
-		ExternalVariable *m_pExternalVarsPool, *m_pExternalVarsHead;
-
-		double *m_pDoubleVarsPool, *m_pDoubleVarsHead;
+		std::unique_ptr<ExternalVariable[]> m_pExternalVarsPool;
+		std::unique_ptr<double[]> m_pDoubleVarsPool;
+		ExternalVariable *m_pExternalVarsHead;
+		double *m_pDoubleVarsHead;
 
 		size_t m_nBlockEquationsCount;
 		size_t m_nPrimitiveVarsCount;
@@ -69,8 +70,7 @@ namespace DFW2
 		size_t m_nExternalVarsCount;
 
 		void CleanUp();
-		double *m_pParameterBuffer;
-		size_t m_nParameterBufferSize;
+		std::vector<double> m_ParameterBuffer;
 	public:
 		CCustomDeviceContainer(CDynaModel *pDynaModel);
 		bool ConnectDLL(const _TCHAR *cszDLLFilePath);

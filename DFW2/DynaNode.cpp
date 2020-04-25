@@ -609,14 +609,14 @@ void CDynaNodeBase::CalculateShuntParts()
 	if (m_pLRC)
 	{
 		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
-		dLRCShuntPartP = Pn * m_pLRC->P->a2;
-		dLRCShuntPartQ = Qn * m_pLRC->Q->a2;
+		dLRCShuntPartP = Pn * m_pLRC->P.begin()->a2;
+		dLRCShuntPartQ = Qn * m_pLRC->Q.begin()->a2;
 	}
 	if (m_pLRCGen)
 	{
 		// рассчитываем шунтовую часть СХН генерации в узле для низких напряжений
-		dLRCShuntPartP -= Pg * m_pLRCGen->P->a2;
-		dLRCShuntPartQ -= Qg * m_pLRCGen->Q->a2;
+		dLRCShuntPartP -= Pg * m_pLRCGen->P.begin()->a2;
+		dLRCShuntPartQ -= Qg * m_pLRCGen->Q.begin()->a2;
 	}
 	dLRCShuntPartP /= V02;
 	dLRCShuntPartQ /= V02;

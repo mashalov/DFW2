@@ -4,15 +4,13 @@
 
 using namespace DFW2;
 
-CCustomDeviceContainer::CCustomDeviceContainer(CDynaModel *pDynaModel) :
-						CDeviceContainer(pDynaModel),
-						m_DLL(this),
-						m_pPrimitiveVarsPool(nullptr),
-						m_pDoubleVarsPool(nullptr),
-						m_pPrimitiveExtVarsPool(nullptr),
-						m_pExternalVarsPool(nullptr),
-						m_nParameterBufferSize(0),
-						m_pParameterBuffer(nullptr)
+CCustomDeviceContainer::CCustomDeviceContainer(CDynaModel* pDynaModel) :
+	CDeviceContainer(pDynaModel),
+	m_DLL(this),
+	m_pPrimitiveVarsPool(nullptr),
+	m_pDoubleVarsPool(nullptr),
+	m_pPrimitiveExtVarsPool(nullptr),
+	m_pExternalVarsPool(nullptr)
 {
 }
 
@@ -24,8 +22,8 @@ CCustomDeviceContainer::~CCustomDeviceContainer()
 
 void CCustomDeviceContainer::CleanUp()
 {
-	PrimitivePoolElement *pBegin = m_PrimitivePool;
-	PrimitivePoolElement *pEnd = pBegin + PrimitiveBlockType::PBT_LAST;
+	PrimitivePoolElement* pBegin = m_PrimitivePool;
+	PrimitivePoolElement* pEnd = pBegin + PrimitiveBlockType::PBT_LAST;
 	while (pBegin < pEnd)
 	{
 		free(pBegin->m_pPrimitive);
@@ -34,12 +32,9 @@ void CCustomDeviceContainer::CleanUp()
 
 	free(m_pPrimitiveVarsPool);
 	free(m_pPrimitiveExtVarsPool);
-	delete m_pDoubleVarsPool;
-	delete m_pExternalVarsPool;
-	delete m_pParameterBuffer;
 }
 
-bool CCustomDeviceContainer::ConnectDLL(const _TCHAR *cszDLLFilePath)
+bool CCustomDeviceContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
 {
 	bool bRes = false;
 	if (m_DLL.Init(cszDLLFilePath))
@@ -49,31 +44,31 @@ bool CCustomDeviceContainer::ConnectDLL(const _TCHAR *cszDLLFilePath)
 		size_t nConstsCount = m_DLL.GetConstsCount();
 		for (size_t nConstIndex = 0; nConstIndex < nConstsCount; nConstIndex++)
 		{
-			const ConstVarsInfo *pConstInfo = m_DLL.GetConstInfo(nConstIndex);
+			const ConstVarsInfo* pConstInfo = m_DLL.GetConstInfo(nConstIndex);
 			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(pConstInfo->VarInfo.Name,
-												  CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
+				CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
 		}
 
 		size_t nSetPointsCount = m_DLL.GetSetPointsCount();
 		for (size_t nSetPointndex = 0; nSetPointndex < nSetPointsCount; nSetPointndex++)
 		{
-			const VarsInfo *pVarInfo = m_DLL.GetSetPointInfo(nSetPointndex);
+			const VarsInfo* pVarInfo = m_DLL.GetSetPointInfo(nSetPointndex);
 			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(pVarInfo->Name,
-												  CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
+				CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
 		}
 
 		size_t nInternalsCount = m_DLL.GetInternalsCount();
 		for (size_t nInternalsIndex = 0; nInternalsIndex < nInternalsCount; nInternalsIndex++)
 		{
-			const VarsInfo *pVarInfo = m_DLL.GetInternalInfo(nInternalsIndex);
+			const VarsInfo* pVarInfo = m_DLL.GetInternalInfo(nInternalsIndex);
 			m_ContainerProps.m_VarMap.insert(std::make_pair(pVarInfo->Name,
-												  CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
+				CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
 		}
 
 		size_t nOutputsCount = m_DLL.GetOutputsCount();
 		for (size_t nOutputIndex = 0; nOutputIndex < nOutputsCount; nOutputIndex++)
 		{
-			const VarsInfo *pVarInfo = m_DLL.GetOutputInfo(nOutputIndex);
+			const VarsInfo* pVarInfo = m_DLL.GetOutputInfo(nOutputIndex);
 			m_ContainerProps.m_VarMap.insert(std::make_pair(pVarInfo->Name,
 				CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
 		}
@@ -101,7 +96,7 @@ bool CCustomDeviceContainer::BuildStructure()
 	BLOCKDESCRIPTIONS::const_iterator	it = m_DLL.GetBlocksDescriptions().begin();
 	BLOCKSPINSINDEXES::const_iterator  iti = m_DLL.GetBlocksPinsIndexes().begin();
 
-	for ( ; it != m_DLL.GetBlocksDescriptions().end() ; it++, iti++)
+	for (; it != m_DLL.GetBlocksDescriptions().end(); it++, iti++)
 	{
 		if (it->eType > PrimitiveBlockType::PBT_UNKNOWN && it->eType < PrimitiveBlockType::PBT_LAST)
 		{
@@ -143,28 +138,31 @@ bool CCustomDeviceContainer::BuildStructure()
 
 		m_nExternalVarsCount = GetInputsCount();
 
-		m_pPrimitiveVarsPool	= (PrimitiveVariable*)malloc(m_nPrimitiveVarsCount * nCount * sizeof(PrimitiveVariable));
+		m_pPrimitiveVarsPool = (PrimitiveVariable*)malloc(m_nPrimitiveVarsCount * nCount * sizeof(PrimitiveVariable));
 		m_pPrimitiveExtVarsPool = (PrimitiveVariableExternal*)malloc(m_nExternalVarsCount * nCount * sizeof(PrimitiveVariableExternal));
 
 		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsCount();
 		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount() + m_ContainerProps.nEquationsCount;
-		m_pDoubleVarsPool = new double[m_nDoubleVarsCount * nCount];
-		m_pExternalVarsPool = new ExternalVariable[m_nExternalVarsCount * nCount];
 
-		m_pPrimitiveVarsHead	= m_pPrimitiveVarsPool;
+		m_pDoubleVarsPool = std::make_unique<double[]>(m_nDoubleVarsCount * nCount);
+		m_pExternalVarsPool = std::make_unique<ExternalVariable[]>(m_nExternalVarsCount * nCount);
+
+		m_pPrimitiveVarsHead = m_pPrimitiveVarsPool;
 		m_pPrimitiveExtVarsHead = m_pPrimitiveExtVarsPool;
-		m_pDoubleVarsHead		= m_pDoubleVarsPool;
-		m_pExternalVarsHead		= m_pExternalVarsPool;
+		m_pDoubleVarsHead = m_pDoubleVarsPool.get();
+		m_pExternalVarsHead = m_pExternalVarsPool.get();
 
-		for (DEVICEVECTORITR it = begin(); it != end() && bRes; it++)
+		for (auto&& it : *this)
 		{
-			bRes = static_cast<CCustomDevice*>(*it)->BuildStructure() && bRes;
+			bRes = static_cast<CCustomDevice*>(it)->BuildStructure();
+			if (!bRes)
+				break;
 		}
 	}
 	return bRes;
 }
 
-bool CCustomDeviceContainer::InitDLLEquations(BuildEquationsArgs *pArgs)
+bool CCustomDeviceContainer::InitDLLEquations(BuildEquationsArgs* pArgs)
 {
 	bool bRes = true;
 	std::fill(pArgs->pEquations, pArgs->pEquations + EquationsCount(), 0.0);
@@ -172,28 +170,28 @@ bool CCustomDeviceContainer::InitDLLEquations(BuildEquationsArgs *pArgs)
 	return bRes;
 }
 
-bool CCustomDeviceContainer::BuildDLLEquations(BuildEquationsArgs *pArgs)
+bool CCustomDeviceContainer::BuildDLLEquations(BuildEquationsArgs* pArgs)
 {
 	bool bRes = true;
 	bRes = m_DLL.BuildEquations(pArgs);
 	return bRes;
 }
 
-bool CCustomDeviceContainer::BuildDLLRightHand(BuildEquationsArgs *pArgs)
+bool CCustomDeviceContainer::BuildDLLRightHand(BuildEquationsArgs* pArgs)
 {
 	bool bRes = true;
 	bRes = m_DLL.BuildRightHand(pArgs);
 	return bRes;
 }
 
-bool CCustomDeviceContainer::BuildDLLDerivatives(BuildEquationsArgs *pArgs)
+bool CCustomDeviceContainer::BuildDLLDerivatives(BuildEquationsArgs* pArgs)
 {
 	bool bRes = true;
 	bRes = m_DLL.BuildDerivatives(pArgs);
 	return bRes;
 }
 
-bool CCustomDeviceContainer::ProcessDLLDiscontinuity(BuildEquationsArgs *pArgs)
+bool CCustomDeviceContainer::ProcessDLLDiscontinuity(BuildEquationsArgs* pArgs)
 {
 	bool bRes = true;
 	bRes = m_DLL.ProcessDiscontinuity(pArgs);
@@ -203,7 +201,7 @@ bool CCustomDeviceContainer::ProcessDLLDiscontinuity(BuildEquationsArgs *pArgs)
 
 PrimitiveInfo CCustomDeviceContainer::GetPrimitiveInfo(PrimitiveBlockType eType)
 {
-	
+
 	switch (eType)
 	{
 	case PBT_LAG:					return PrimitiveInfo(CLimitedLag::PrimitiveSize(), CLimitedLag::EquationsCount());
@@ -245,7 +243,7 @@ long CCustomDeviceContainer::PrimitiveEquationsCount(PrimitiveBlockType eType)
 PrimitiveVariable* CCustomDeviceContainer::NewPrimitiveVariable(ptrdiff_t nIndex, double& Value)
 {
 	new(m_pPrimitiveVarsHead)PrimitiveVariable(nIndex, Value);
-	PrimitiveVariable *temp = m_pPrimitiveVarsHead;
+	PrimitiveVariable* temp = m_pPrimitiveVarsHead;
 	_ASSERTE(m_pPrimitiveVarsHead < m_pPrimitiveVarsPool + m_nPrimitiveVarsCount * Count());
 	m_pPrimitiveVarsHead++;
 	return temp;
@@ -254,8 +252,8 @@ PrimitiveVariable* CCustomDeviceContainer::NewPrimitiveVariable(ptrdiff_t nIndex
 double* CCustomDeviceContainer::NewDoubleVariables()
 {
 	new(m_pDoubleVarsHead) double[m_nDoubleVarsCount];
-	double *temp = m_pDoubleVarsHead;
-	_ASSERTE(m_pDoubleVarsHead <= m_pDoubleVarsPool + m_nDoubleVarsCount * Count());
+	double* temp = m_pDoubleVarsHead;
+	_ASSERTE(m_pDoubleVarsHead <= m_pDoubleVarsPool.get() + m_nDoubleVarsCount * Count());
 	m_pDoubleVarsHead += m_nDoubleVarsCount;
 	return temp;
 }
@@ -263,8 +261,8 @@ double* CCustomDeviceContainer::NewDoubleVariables()
 ExternalVariable* CCustomDeviceContainer::NewExternalVariables()
 {
 	new(m_pExternalVarsHead) ExternalVariable[m_nExternalVarsCount];
-	ExternalVariable *temp = m_pExternalVarsHead;
-	_ASSERTE(m_pExternalVarsHead <= m_pExternalVarsPool + m_nExternalVarsCount * Count());
+	ExternalVariable* temp = m_pExternalVarsHead;
+	_ASSERTE(m_pExternalVarsHead <= m_pExternalVarsPool.get() + m_nExternalVarsCount * Count());
 	m_pExternalVarsHead += m_nExternalVarsCount;
 	return temp;
 }
@@ -272,7 +270,7 @@ ExternalVariable* CCustomDeviceContainer::NewExternalVariables()
 PrimitiveVariableExternal* CCustomDeviceContainer::NewPrimitiveExtVariables()
 {
 	new(m_pPrimitiveExtVarsHead)PrimitiveVariableExternal[m_nExternalVarsCount];
-	PrimitiveVariableExternal *temp = m_pPrimitiveExtVarsHead;
+	PrimitiveVariableExternal* temp = m_pPrimitiveExtVarsHead;
 	_ASSERTE(m_pPrimitiveExtVarsHead <= m_pPrimitiveExtVarsPool + m_nExternalVarsCount * Count());
 	m_pPrimitiveExtVarsHead += m_nExternalVarsCount;
 	return temp;
@@ -281,10 +279,10 @@ PrimitiveVariableExternal* CCustomDeviceContainer::NewPrimitiveExtVariables()
 void* CCustomDeviceContainer::NewPrimitive(PrimitiveBlockType eType)
 {
 	_ASSERTE(eType > PrimitiveBlockType::PBT_UNKNOWN && eType < PrimitiveBlockType::PBT_LAST);
-	PrimitivePoolElement *pElement = m_PrimitivePool + eType;
+	PrimitivePoolElement* pElement = m_PrimitivePool + eType;
 	size_t nSize = PrimitiveSize(eType);
 	_ASSERTE(pElement->m_pHead < pElement->m_pPrimitive + pElement->nCount * nSize * Count());
-	void *temp = pElement->m_pHead;
+	void* temp = pElement->m_pHead;
 	pElement->m_pHead += nSize;
 	return temp;
 }
@@ -296,25 +294,17 @@ long CCustomDeviceContainer::GetParametersValues(ptrdiff_t nId, BuildEquationsAr
 
 	if (nCount > 0)
 	{
-		if (nCount > static_cast<long>(m_nParameterBufferSize))
-		{
-			if (m_pParameterBuffer)
-				delete m_pParameterBuffer;
-
-			m_nParameterBufferSize = max(nCount, 100);
-			m_pParameterBuffer = new double[m_nParameterBufferSize];
-		}
+		if (nCount > static_cast<long>(m_ParameterBuffer.size()))
+			m_ParameterBuffer.resize(max(nCount, 100));
 		
-		if (nCount != m_DLL.GetBlockParametersValues(nBlockIndex, pArgs, m_pParameterBuffer))
-		{
+		if (nCount != m_DLL.GetBlockParametersValues(nBlockIndex, pArgs, &m_ParameterBuffer[0]))
 			nCount = -1; 
-		}
 	}
 
 	if (nCount <= 0)
 		ppParameters = nullptr;
 	else
-		*ppParameters = m_pParameterBuffer;
+		*ppParameters = &m_ParameterBuffer[0];
 
 	return nCount;
 }

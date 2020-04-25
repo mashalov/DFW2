@@ -36,7 +36,7 @@ namespace DFW2
 		ptrdiff_t m_nActionGroup;
 		long m_nOutputMode;
 		long m_nRunsCount;
-		CModelAction *m_pAction;
+		std::unique_ptr<CModelAction> m_pAction;
 		const double *m_pValue;
 	public:
 

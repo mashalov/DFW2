@@ -3,50 +3,33 @@
 
 using namespace DFW2;
 
-CDynaLRC::CDynaLRC() : CDevice(), 
-					   P(nullptr),
-					   Q(nullptr)
+CDynaLRC::CDynaLRC() : CDevice()
 					   {}
 
 bool CDynaLRC::SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ)
 {
-	bool bRes = false;
+	bool bRes(false);
 	if (nPcsP >= 0 && nPcsQ >= 0)
 	{
-		m_NpcsP = nPcsP;
-		m_NpcsQ = nPcsQ;
-		if (P) delete P;
-		if (Q) delete Q;
-		P = new CLRCData[m_NpcsP];
-		Q = new CLRCData[m_NpcsQ];
+		P.resize(nPcsP);
+		Q.resize(nPcsQ);
 		bRes = true;
 	}
 	return bRes;
 }
 
-int CDynaLRC::CompSLCPoly(const void* V1, const void* V2)
-{
-	const CLRCData *v1 = static_cast<const CLRCData*>(V1);
-	const CLRCData *v2 = static_cast<const CLRCData*>(V2);
 
-	double v = v1->V - v2->V;
-
-	if (Equal(v, 0.0))
-		return 0;
-	else
-		return v > 0.0 ? 1 : -1;
-}
 
 double CDynaLRC::GetP(double VdivVnom, double dVicinity)
 {
-	CLRCData *v = P;
+	CLRCData *v = &P[0];
 
-	if (m_NpcsP == 1)
+	if (P.size() == 1)
 	{
 		return v->Get(VdivVnom);
 	}
 	double dP = 0.0;
-	return GetBothInterpolatedHermite(P, m_NpcsP, VdivVnom, dVicinity, dP);
+	return GetBothInterpolatedHermite(v, P.size(), VdivVnom, dVicinity, dP);
 }
 
 double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC)
@@ -148,110 +131,106 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 
 double CDynaLRC::GetPdP(double VdivVnom, double &dP, double dVicinity)
 {
-	CLRCData *v = P;
-	if (m_NpcsP == 1)
+	CLRCData *v = &P[0];
+	if (P.size() == 1)
 	{
 		return v->GetBoth(VdivVnom, dP);
 	}
-	return GetBothInterpolatedHermite(P, m_NpcsP, VdivVnom, dVicinity, dP);
+	return GetBothInterpolatedHermite(v, P.size(), VdivVnom, dVicinity, dP);
 }
 
 double CDynaLRC::GetQdQ(double VdivVnom, double &dQ, double dVicinity)
 {
-	CLRCData *v = Q;
-	if (m_NpcsQ == 1)
+	CLRCData *v = &Q[0];
+	if (Q.size() == 1)
 	{
 		return v->GetBoth(VdivVnom, dQ);
 	}
-	return GetBothInterpolatedHermite(Q, m_NpcsQ, VdivVnom, dVicinity, dQ);
+	return GetBothInterpolatedHermite(v, Q.size(), VdivVnom, dVicinity, dQ);
 }
 
 double CDynaLRC::GetQ(double VdivVnom, double dVicinity)
 {
-	CLRCData *v = Q;
-	if (m_NpcsQ == 1)
+	CLRCData *v = &Q[0];
+	if (Q.size() == 1)
 	{
 		return v->Get(VdivVnom);
 	}
 	double dQ = 0.0;
-	return GetBothInterpolatedHermite(Q, m_NpcsQ, VdivVnom, dVicinity, dQ);
+	return GetBothInterpolatedHermite(v, Q.size(), VdivVnom, dVicinity, dQ);
 }
 
 bool CDynaLRC::Check()
 {
-	bool bRes = true;
-	qsort(P, m_NpcsP, sizeof(CLRCData), CompSLCPoly);
-	qsort(Q, m_NpcsQ, sizeof(CLRCData), CompSLCPoly);
-	return CheckPtr(P, m_NpcsP) && CheckPtr(Q, m_NpcsQ);
+	auto fnCompare = [](const CLRCData& lhs, const CLRCData& rhs)
+	{ 
+		return lhs.V < rhs.V;
+	};
+
+	sort(P.begin(), P.end(), fnCompare);
+	sort(Q.begin(), Q.end(), fnCompare);
+
+	return CheckPtr(P) && CheckPtr(Q);
 }
 
-
-bool CDynaLRC::CheckPtr(CLRCData *pBase, ptrdiff_t nCount)
+// Проверяет разрывы на границах сегментов СХН
+bool CDynaLRC::CheckPtr(LRCDATA& LRC)
 {
-	ptrdiff_t Ncount = nCount;
-	bool bRes = true;
-	CLRCData *v = pBase;
-	while (v < pBase + Ncount)
+	bool bRes(true);
+
+	// проверяем только в случае, если в СХН несколько сегментов
+	if (LRC.size() > 1)
 	{
-		if (v > pBase)
+		// обходим со второго до последнего
+		for (auto v = std::next(LRC.begin()); v != LRC.end(); ++v)
 		{
-			double s = v->Get(v->V);
-			double q = (v -1)->Get(v->V);
+			double s = v->Get(v->V);				// берем значение в начале следующего
+			double q = std::prev(v)->Get(v->V);		// берем значение в конце предыдущего (в той же точке что и начало следующего)
 			if (!Equal(10.0 * DFW2_EPSILON * (s - q), 0.0))
 			{
 				Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLRCDiscontinuityAt, GetVerbalName(), *v, s, q));
 				bRes = false;
 			}
 		}
-		v ++;
 	}
 	return bRes;
-}
-
-CDynaLRC::~CDynaLRC()
-{
-	delete P;
-	delete Q;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaLRC::Init(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS Status = DFS_FAILED;
 
-	if (Check() && CollectConstantData(P, m_NpcsP) && CollectConstantData(Q,m_NpcsQ))
+	if (Check() && CollectConstantData(P) && CollectConstantData(Q))
 		Status = DFS_OK;
 	return Status;
 	
 }
 
-bool CDynaLRC::CollectConstantData(CLRCData *pBase, ptrdiff_t nCount)
+bool CDynaLRC::CollectConstantData(LRCDATA& LRC)
 {
-	bool bRes = true;
-	CLRCData *v = pBase;
+	bool bRes(true);
 	// строим связный список сегментов
-	while (v < pBase + nCount)
+
+	for (auto& v = LRC.begin(); v != LRC.end(); ++v)
 	{
-		v->pPrev = (v == pBase) ? nullptr : v - 1;
-		v->pNext = (v + 1 < pBase + nCount) ? v + 1 : nullptr;
-		v++;
+		v->pPrev = (v == LRC.begin()) ? nullptr : &*std::prev(v);
+		auto next = std::next(v);
+		v->pNext = (next == LRC.end()) ? nullptr: &*next;
 	}
 
-	v = pBase;
 	// определяем максимальный радиус сглаживания
 	// для каждого из сегментов
 	// как половину от его ширины по напряжению
 
-	while (v < pBase + nCount)
+	for (auto&& v : LRC)
 	{
-		v->dMaxRadius = 100.0;
-
-		if (v->pPrev)
-			v->dMaxRadius = min(0.5 * (v->V - v->pPrev->V), v->dMaxRadius);
-		if (v->pNext)
-			v->dMaxRadius = min(0.5 * (v->pNext->V - v->V), v->dMaxRadius);
-
-		v++;
+		v.dMaxRadius = 100.0;
+		if (v.pPrev)
+			v.dMaxRadius = (std::min)(0.5 * (v.V - v.pPrev->V), v.dMaxRadius);
+		if (v.pNext)
+			v.dMaxRadius = (std::min)(0.5 * (v.pNext->V - v.V), v.dMaxRadius);
 	}
+
 	return bRes;
 }
 

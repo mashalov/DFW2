@@ -189,9 +189,9 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 			long nTypesCount = (m_pFnGetTypesCount)();
 			if (nTypesCount)
 			{
-				long *pTypes = new long[nTypesCount];
-				long *pTypesStart = pTypes;
-				if (pTypes && nTypesCount == (m_pFnGetTypes)(pTypes))
+				std::vector<long> Types(nTypesCount);
+				long *pTypes = &Types[0];
+				if (nTypesCount == (m_pFnGetTypes)(pTypes))
 				{
 					while (nTypesCount)
 					{
@@ -199,7 +199,6 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 						pTypes++;
 						nTypesCount--;
 					}
-					delete pTypesStart;
 				}
 				else
 					m_bConnected = false;
@@ -213,9 +212,9 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 			long nLinksCount = (m_pFnGetLinksCount)();
 			if (nLinksCount)
 			{
-				LinkType *pLinks = new LinkType[nLinksCount];
-				LinkType *pLinksStart = pLinks;
-				if (pLinks && nLinksCount == (m_pFnGetLinks)(pLinks))
+				std::vector<LinkType> Links(nLinksCount);
+				LinkType* pLinks = &Links[0];
+				if (nLinksCount == (m_pFnGetLinks)(pLinks))
 				{
 					while (nLinksCount)
 					{
@@ -231,7 +230,6 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 						pLinks++;
 						nLinksCount--;
 					}
-					delete pLinksStart;
 				}
 				else
 					m_bConnected = false;

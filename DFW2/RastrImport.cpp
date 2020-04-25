@@ -763,7 +763,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 			pLRC->SetId(slit->first);
 			pLRC->SetNpcs(slit->second->P.size(), slit->second->Q.size());
 
-			CLRCData *pData = pLRC->P;
+			CLRCData *pData = &pLRC->P[0];
 
 			for (auto&& itpoly : slit->second->P)
 			{
@@ -774,7 +774,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 				pData++;
 			}
 
-			pData = pLRC->Q;
+			pData = &pLRC->Q[0];
 
 			for (auto&& itpoly : slit->second->Q)
 			{
