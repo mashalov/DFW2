@@ -6,11 +6,7 @@ using namespace DFW2;
 
 CCustomDeviceContainer::CCustomDeviceContainer(CDynaModel* pDynaModel) :
 	CDeviceContainer(pDynaModel),
-	m_DLL(this),
-	m_pPrimitiveVarsPool(nullptr),
-	m_pDoubleVarsPool(nullptr),
-	m_pPrimitiveExtVarsPool(nullptr),
-	m_pExternalVarsPool(nullptr)
+	m_DLL(this)
 {
 }
 
@@ -23,15 +19,12 @@ CCustomDeviceContainer::~CCustomDeviceContainer()
 void CCustomDeviceContainer::CleanUp()
 {
 	PrimitivePoolElement* pBegin = m_PrimitivePool;
-	PrimitivePoolElement* pEnd = pBegin + PrimitiveBlockType::PBT_LAST;
+	PrimitivePoolElement* pEnd = pBegin + _countof(m_PrimitivePool);
 	while (pBegin < pEnd)
 	{
 		free(pBegin->m_pPrimitive);
 		pBegin++;
 	}
-
-	free(m_pPrimitiveVarsPool);
-	free(m_pPrimitiveExtVarsPool);
 }
 
 bool CCustomDeviceContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
@@ -138,19 +131,14 @@ bool CCustomDeviceContainer::BuildStructure()
 
 		m_nExternalVarsCount = GetInputsCount();
 
-		m_pPrimitiveVarsPool = (PrimitiveVariable*)malloc(m_nPrimitiveVarsCount * nCount * sizeof(PrimitiveVariable));
-		m_pPrimitiveExtVarsPool = (PrimitiveVariableExternal*)malloc(m_nExternalVarsCount * nCount * sizeof(PrimitiveVariableExternal));
+		m_PrimitiveVarsPool.reserve(m_nPrimitiveVarsCount * nCount);
+		m_PrimitiveExtVarsPool.reserve(m_nExternalVarsCount * nCount);
 
 		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsCount();
 		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount() + m_ContainerProps.nEquationsCount;
 
-		m_pDoubleVarsPool = std::make_unique<double[]>(m_nDoubleVarsCount * nCount);
-		m_pExternalVarsPool = std::make_unique<ExternalVariable[]>(m_nExternalVarsCount * nCount);
-
-		m_pPrimitiveVarsHead = m_pPrimitiveVarsPool;
-		m_pPrimitiveExtVarsHead = m_pPrimitiveExtVarsPool;
-		m_pDoubleVarsHead = m_pDoubleVarsPool.get();
-		m_pExternalVarsHead = m_pExternalVarsPool.get();
+		m_DoubleVarsPool.reserve(m_nDoubleVarsCount * nCount);
+		m_ExternalVarsPool.reserve(m_nExternalVarsCount * nCount);
 
 		for (auto&& it : *this)
 		{
@@ -242,38 +230,39 @@ long CCustomDeviceContainer::PrimitiveEquationsCount(PrimitiveBlockType eType)
 
 PrimitiveVariable* CCustomDeviceContainer::NewPrimitiveVariable(ptrdiff_t nIndex, double& Value)
 {
-	new(m_pPrimitiveVarsHead)PrimitiveVariable(nIndex, Value);
-	PrimitiveVariable* temp = m_pPrimitiveVarsHead;
-	_ASSERTE(m_pPrimitiveVarsHead < m_pPrimitiveVarsPool + m_nPrimitiveVarsCount * Count());
-	m_pPrimitiveVarsHead++;
-	return temp;
+	_ASSERTE(m_PrimitiveVarsPool.size() < m_PrimitiveVarsPool.capacity());
+	m_PrimitiveVarsPool.emplace_back(PrimitiveVariable(nIndex, Value));
+	return &m_PrimitiveVarsPool.back();
 }
 
 double* CCustomDeviceContainer::NewDoubleVariables()
 {
-	new(m_pDoubleVarsHead) double[m_nDoubleVarsCount];
-	double* temp = m_pDoubleVarsHead;
-	_ASSERTE(m_pDoubleVarsHead <= m_pDoubleVarsPool.get() + m_nDoubleVarsCount * Count());
-	m_pDoubleVarsHead += m_nDoubleVarsCount;
-	return temp;
+	if (!m_nDoubleVarsCount)
+		return nullptr;
+
+	_ASSERTE(m_DoubleVarsPool.size() + m_nDoubleVarsCount <= m_DoubleVarsPool.capacity());
+	m_DoubleVarsPool.resize(m_DoubleVarsPool.size() + m_nDoubleVarsCount);
+	return &*(m_DoubleVarsPool.end() - m_nDoubleVarsCount);
 }
 
 ExternalVariable* CCustomDeviceContainer::NewExternalVariables()
 {
-	new(m_pExternalVarsHead) ExternalVariable[m_nExternalVarsCount];
-	ExternalVariable* temp = m_pExternalVarsHead;
-	_ASSERTE(m_pExternalVarsHead <= m_pExternalVarsPool.get() + m_nExternalVarsCount * Count());
-	m_pExternalVarsHead += m_nExternalVarsCount;
-	return temp;
+	if (!m_nExternalVarsCount)
+		return nullptr;
+
+	_ASSERTE(m_ExternalVarsPool.size() + m_nExternalVarsCount <= m_ExternalVarsPool.capacity());
+	m_ExternalVarsPool.resize(m_ExternalVarsPool.size() + m_nExternalVarsCount);
+	return &*(m_ExternalVarsPool.end() - m_nExternalVarsCount);
 }
 
 PrimitiveVariableExternal* CCustomDeviceContainer::NewPrimitiveExtVariables()
 {
-	new(m_pPrimitiveExtVarsHead)PrimitiveVariableExternal[m_nExternalVarsCount];
-	PrimitiveVariableExternal* temp = m_pPrimitiveExtVarsHead;
-	_ASSERTE(m_pPrimitiveExtVarsHead <= m_pPrimitiveExtVarsPool + m_nExternalVarsCount * Count());
-	m_pPrimitiveExtVarsHead += m_nExternalVarsCount;
-	return temp;
+	if (!m_nExternalVarsCount)
+		return nullptr;
+
+	_ASSERTE(m_PrimitiveExtVarsPool.size() + m_nExternalVarsCount <= m_PrimitiveExtVarsPool.capacity());
+	m_PrimitiveExtVarsPool.resize(m_PrimitiveExtVarsPool.size() + m_nExternalVarsCount);
+	return &*(m_PrimitiveExtVarsPool.end() - m_nExternalVarsCount);
 }
 
 void* CCustomDeviceContainer::NewPrimitive(PrimitiveBlockType eType)

@@ -57,10 +57,10 @@ namespace DFW2
 		CCustomDeviceDLL m_DLL;
 		PrimitivePoolElement m_PrimitivePool[PrimitiveBlockType::PBT_LAST];
 		
-		PrimitiveVariable *m_pPrimitiveVarsPool, *m_pPrimitiveVarsHead;
-		PrimitiveVariableExternal *m_pPrimitiveExtVarsPool, *m_pPrimitiveExtVarsHead;
-		std::unique_ptr<ExternalVariable[]> m_pExternalVarsPool;
-		std::unique_ptr<double[]> m_pDoubleVarsPool;
+		std::vector<PrimitiveVariable> m_PrimitiveVarsPool;
+		std::vector<PrimitiveVariableExternal> m_PrimitiveExtVarsPool;
+		std::vector<ExternalVariable> m_ExternalVarsPool;
+		std::vector<double> m_DoubleVarsPool;
 		ExternalVariable *m_pExternalVarsHead;
 		double *m_pDoubleVarsHead;
 
