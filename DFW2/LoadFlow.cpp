@@ -181,6 +181,9 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 		{
 			// у базисного узла сбрасываем мощность в ноль 
 			Pgr = Qgr = 0.0;
+			// а также обнуляем Qmin и Qmax, чтобы корректно распределить Qg
+			// по обычным узлам внутри базисного суперузла в CLoadFlow::UpdateSupernodesPQ()
+			LFQmax = LFQmin = 0.0;
 		}
 	}
 	else
@@ -202,7 +205,7 @@ void CLoadFlow::Start()
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
 	UpdatePQFromGenerators();
 
-	// инициализируем все узлы, чтобы корректно определить из тип
+	// инициализируем все узлы, чтобы корректно определить их тип
 	for (auto&& it : *pNodes)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
@@ -374,7 +377,7 @@ void CLoadFlow::Seidell()
 	// TODO !!!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
 	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
-	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
+	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations ; nSeidellIterations++)
 	{
 		// множитель для ускорения Зейделя
 		double dStep = m_Parameters.m_dSeidellStep;
@@ -420,6 +423,9 @@ void CLoadFlow::Seidell()
 			// рассчитываем небалансы
 			GetNodeImb(pMatrixInfo);
 			cplx Unode(pNode->Vre, pNode->Vim);
+
+			// для всех узлов кроме БУ обновляем статистику итерации
+			pNodes->m_IterationControl.Update(pMatrixInfo);
 
 			double Q = Qe + pNode->Qgr;	// расчетная генерация в узле
 
@@ -586,9 +592,6 @@ void CLoadFlow::Seidell()
 			}
 
 			pNode->UpdateVDeltaSuper();
-
-			// для всех узлов кроме БУ обновляем статистику итерации
-			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
 
 		if (!CheckLF())
@@ -649,6 +652,12 @@ void CLoadFlow::BuildMatrix()
 					double dPdVM = -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
 					double dQdDeltaM = mult.real();
 					double dQdVM = CDevice::ZeroDivGuard(mult.imag(), pOppNode->V);
+
+					_CheckNumber(dPdDeltaM);
+					_CheckNumber(dPdVM);
+					_CheckNumber(dQdDeltaM);
+					_CheckNumber(dQdVM);
+
 					*pAx = dPdDeltaM;
 					*(pAx + pMatrixInfo->nRowCount) = dQdDeltaM;
 					pAx++;
@@ -673,6 +682,10 @@ void CLoadFlow::BuildMatrix()
 				{
 					double dPdDeltaM = mult.imag();
 					double dPdVM = -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
+
+					_CheckNumber(dPdDeltaM);
+					_CheckNumber(dPdVM);
+
 					*pAx = dPdDeltaM;
 					*(pAx + pMatrixInfo->nRowCount) = 0.0;
 					pAx++;
@@ -683,6 +696,11 @@ void CLoadFlow::BuildMatrix()
 			}
 		}
 
+		_CheckNumber(dPdDelta);
+		_CheckNumber(dPdV);
+		_CheckNumber(dQdDelta);
+		_CheckNumber(dQdV);
+
 		*pAxSelf = dPdDelta;
 		*(pAxSelf + pMatrixInfo->nRowCount) = dQdDelta;
 		pAxSelf++;
@@ -690,6 +708,9 @@ void CLoadFlow::BuildMatrix()
 		*(pAxSelf + pMatrixInfo->nRowCount) = dQdV;
 
 		pAx += pMatrixInfo->nRowCount;
+
+		_CheckNumber(Pe);
+		_CheckNumber(Qe);
 
 		*pb = Pe; pb++;
 		*pb = Qe; pb++;
@@ -818,6 +839,10 @@ bool CLoadFlow::CheckLF()
 
 void CLoadFlow::UpdatePQFromGenerators()
 {
+
+	if (!pNodes->CheckLink(1))
+		return;	// если генераторов нет - выходим. В узлах остаются инъеции pg/qg;
+
 	for (auto&& it : pNodes->m_DevVec)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
@@ -1252,11 +1277,12 @@ void CLoadFlow::UpdateSupernodesPQ()
 				// включенные базисные узлы нашли, теперь в них нужно распределить "излишки" реактивной мощности от генераторов
 				// и активную мощность
 				DropToSlack = pNode->Qgr - pNode->LFQmax;
+
+				// если генерация базисного суперузла превышает максимальную - то сбрасываем излишки в подчиненные базисные узлы
 				if (DropToSlack < 0)
 				{
-					// если генерация супер-БУ вне диапазона узла, то мощность, вне диапазона сбрасываем
-					// в БУ внутри суперузла
 					DropToSlack = pNode->Qgr - pNode->LFQmin;
+					// если генерация в пределах - в подчиненных БУ оставляем нули
 					if (DropToSlack > 0)
 						DropToSlack = 0.0;
 				}

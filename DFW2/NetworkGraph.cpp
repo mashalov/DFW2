@@ -912,6 +912,8 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 		while (pLink->In(ppDevice))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+
+			/// !!!!!!!!!!!!!!!!!!! Здесь надо также проверять отключение с одной стороны !!!!!!!!!!!!!!!!!!!!!!!!
 			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
 			{
 				// к отключенному узлу подходит неотключенная ветвь - отключаем

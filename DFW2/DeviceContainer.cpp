@@ -357,10 +357,22 @@ void CDeviceContainer::PrepareSingleLinks()
 	}
 }
 
+// проверяет наличие связи по индексу
+bool CDeviceContainer::CheckLink(ptrdiff_t nLinkIndex, LINKSVEC& LinksVec)
+{
+	return nLinkIndex < static_cast<ptrdiff_t>(LinksVec.size());
+}
+
+// проверяет наличие связи по индексу
+bool CDeviceContainer::CheckLink(ptrdiff_t nLinkIndex)
+{
+	return CheckLink(nLinkIndex, m_Links);
+}
+
 // возвращает связь заданного типа (по индексу) и устройства из заданного вектора ссылок
 CMultiLink& CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec)
 {
-	if (nLinkIndex >= static_cast<ptrdiff_t>(LinksVec.size()))
+	if (!CheckLink(nLinkIndex, LinksVec))
 		throw dfw2error(_T("CDeviceContainer::GetCheckLink - LinkIndex out of range"));
 	LINKSVECITR it = LinksVec.begin() + nLinkIndex;
 	if (nDeviceIndex >= static_cast<ptrdiff_t>(it->m_LinkInfo.size()))

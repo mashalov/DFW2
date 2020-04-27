@@ -46,15 +46,21 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	// задаем сопротивление в о.е. относительно напряжения
 	double Xfictive = m_pNodeIp->Unom;
 	Xfictive *= Xfictive;
-	Xfictive *= 0.0000002;
+	Xfictive *= 0.000004;
 	
 	if (bFixNegativeZ)
 	{
-		if (R < 0)
+		if (R <= 0)
 			Rf = Xfictive;
-		if (X < 0)
+		if (X <= 0)
 			Xf = Xfictive;
 	}
+	else
+	{
+		if (R == 0.0 && X == 0.0)
+			Xf = Xfictive;
+	}
+
 	return 1.0 / cplx(Rf, Xf);
 }
 
@@ -233,6 +239,15 @@ void CDynaBranch::CalcAdmittances(bool bSeidell)
 	}
 	break;
 	}
+
+	_CheckNumber(Yip.real());
+	_CheckNumber(Yip.imag());
+	_CheckNumber(Yiq.real());
+	_CheckNumber(Yiq.imag());
+	_CheckNumber(Yips.real());
+	_CheckNumber(Yips.imag());
+	_CheckNumber(Yiqs.real());
+	_CheckNumber(Yiqs.imag());
 }
 
 // функция возвращает true если сопротивление ветви меньше порогового для ветви с "нулевым сопротивлением".

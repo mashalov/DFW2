@@ -663,6 +663,9 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 			Vre = V = Unom;
 			Vim = Delta = 0.0;
 		}
+
+		_CheckNumber(Yii.real());
+		_CheckNumber(Yii.imag());
 	}
 }
 
