@@ -410,7 +410,7 @@ void CLoadFlow::Seidell()
 		// сбрасываем статистику итерации
 		pNodes->m_IterationControl.Reset();
 		// определяем можно ли выполнять переключение типов узлов (по количеству итераций)
-		bool bPVPQSwitchEnabled = nSeidellIterations >= m_Parameters.m_nEnableSwitchIteration + 7;
+		bool bPVPQSwitchEnabled = nSeidellIterations >= m_Parameters.m_nEnableSwitchIteration;
 
 		// для всех узлов в порядке обработки Зейделя
 		for (auto&& it : SeidellOrder)
@@ -623,7 +623,7 @@ void CLoadFlow::BuildMatrix()
 		GetPnrQnrSuper(pNode);
 		// учитываем неуправляемую генерацию в суперузле - UncontrolledP и
 		// далее UncontrolledQ
-		double Pe = pNode->GetSelfImbP() - pMatrixInfo->UncontrolledP, Qe(0.0);
+		cplx Sneb;
 		double dPdDelta(0.0), dQdDelta(0.0);
 		double dPdV = pNode->GetSelfdPdV(), dQdV(1.0);
 		double *pAxSelf = pAx;
@@ -632,14 +632,14 @@ void CLoadFlow::BuildMatrix()
 		if (pNode->IsLFTypePQ())
 		{
 			// для PQ-узлов формируем оба уравнения
-			Qe = pNode->GetSelfImbQ() - pMatrixInfo->UncontrolledQ;
+
 			dQdV = pNode->GetSelfdQdV();
 			for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 			{
 				CDynaNodeBase *pOppNode = pBranch->pNode;
 				cplx mult = UnodeConj * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
-				Pe -= mult.real();
-				Qe += mult.imag();
+
+				Sneb -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 
 				dPdDelta -= mult.imag();
 				dPdV += -CDevice::ZeroDivGuard(mult.real(), pNode->V);
@@ -674,7 +674,9 @@ void CLoadFlow::BuildMatrix()
 			{
 				CDynaNodeBase *pOppNode = pBranch->pNode;
 				cplx mult = UnodeConj * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
-				Pe -= mult.real();
+
+				Sneb -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+
 				dPdDelta -= mult.imag();
 				dPdV += -CDevice::ZeroDivGuard(mult.real(), pNode->V);
 
@@ -696,6 +698,9 @@ void CLoadFlow::BuildMatrix()
 			}
 		}
 
+		Sneb -= std::conj(UnodeConj) * pNode->YiiSuper;
+		Sneb = std::conj(Sneb) * std::conj(UnodeConj) + cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
+
 		_CheckNumber(dPdDelta);
 		_CheckNumber(dPdV);
 		_CheckNumber(dQdDelta);
@@ -709,11 +714,11 @@ void CLoadFlow::BuildMatrix()
 
 		pAx += pMatrixInfo->nRowCount;
 
-		_CheckNumber(Pe);
-		_CheckNumber(Qe);
+		_CheckNumber(std::abs(Sneb));
 
-		*pb = Pe; pb++;
-		*pb = Qe; pb++;
+		*pb = Sneb.real(); pb++;
+		// Для PV узла обязательно обуляем уравнение
+		*pb = pNode->IsLFTypePQ() ? Sneb.imag() : 0.0;  pb++;
 	}
 }
 
@@ -734,7 +739,7 @@ void CLoadFlow::GetNodeImb(_MatrixInfo* pMatrixInfo)
 
 	cplx Vnode(pNode->Vre, pNode->Vim);
 	i -= Vnode * pNode->YiiSuper;
-	i = std::conj(i) *Vnode;
+	i = std::conj(i) * Vnode;
 	i += cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
 
 	pMatrixInfo->m_dImbP = i.real();
@@ -1166,7 +1171,7 @@ void CLoadFlow::Newton()
 
 		if (!m_nNodeTypeSwitchesDone && g1 > g0)
 		{
-			double gs1v = CDynaModel::gs1(klu, m_Rh, klu.B());
+			double gs1v = -CDynaModel::gs1(klu, m_Rh, klu.B());
 			// знак gs1v должен быть "-" ????
 			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
 			RestoreVDelta();
@@ -1244,19 +1249,9 @@ void CLoadFlow::Newton()
 
 		// обновляем переменные
 		auto MaxRatio = CheckRatio();
-
-		if (MaxRatio.first > 2.0)
-		{
-			UpdateVDelta(MaxRatio.second);
-			MaxRatio = CheckRatio(0.0);
-		}
-		else if (MaxRatio.first < 0.5)
-		{
-			UpdateVDelta(MaxRatio.second);
-			MaxRatio = CheckRatio(0.0);
-		}
-		else 
-			UpdateVDelta();
+		UpdateVDelta(MaxRatio.second);
+		if (!Equal(MaxRatio.second, 1.0))
+			m_nNodeTypeSwitchesDone = 1;
 	}
 
 	// обновляем реактивную генерацию в суперузлах
@@ -1368,7 +1363,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 // возвращает максимальное отношение V/Unom
 
 
-std::pair<double,double> CLoadFlow::CheckRatio(double dStep)
+std::pair<double,double> CLoadFlow::CheckRatio()
 {
 	_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get();
 	double* b = klu.B();
@@ -1378,23 +1373,28 @@ std::pair<double,double> CLoadFlow::CheckRatio(double dStep)
 	{
 		CDynaNodeBase* pNode = pMatrixInfo->pNode;
 		double* pb = b + pNode->A(0);
-		double newDelta = pNode->Delta - *pb * dStep;		pb++;
-		double newV = pNode->V - *pb * dStep;
+		double newDelta = pNode->Delta - *pb;		pb++;
+		double newV = pNode->V - *pb;
 		double Ratio = newV / pNode->Unom;
+
 		if (std::abs(1 - Ratio) > std::abs(1 - checkRatio.first))
 			checkRatio.first = Ratio;
 
-		if (Ratio > 2.0)
+		for (const double d : {0.5, 2.0})
 		{
-			Ratio = -(2.0 * pNode->Unom - pNode->V) / *pb;
-			if (Ratio < checkRatio.second)
-				checkRatio.second = Ratio * 0.95;
+			if ((d > 1.0) ? Ratio > d : Ratio < d)
+			{
+				Ratio = (pNode->V - d * pNode->Unom) / *pb;
+				if (Ratio < checkRatio.second)
+					checkRatio.second = Ratio * 0.95;
+			}
 		}
-		else if (Ratio < 0.5)
+		double VstepPU = std::abs(*pb) / pNode->Unom;
+		if (VstepPU > 0.3)
 		{
-			Ratio = -(0.5 * pNode->Unom - pNode->V) / *pb;
-			if (Ratio < checkRatio.second)
-				checkRatio.second = Ratio * 0.95;
+			VstepPU = 0.3 / VstepPU;
+			if(VstepPU < checkRatio.second)
+				checkRatio.second = VstepPU * 0.95;
 		}
 	}
 
@@ -1414,11 +1414,6 @@ void CLoadFlow::UpdateVDelta(double dStep)
 		double *pb = b + pNode->A(0);
 		double newDelta = pNode->Delta - *pb * dStep;		pb++;
 		double newV		= pNode->V - *pb * dStep;
-
-		double Ratio = newV / pNode->Unom;
-
-		if (std::abs(1 - Ratio) > std::abs(1 - MaxRatio))
-			MaxRatio = Ratio;
 
 		/*
 		// Не даем узлам на ограничениях реактивной мощности отклоняться от уставки более чем на 10%
