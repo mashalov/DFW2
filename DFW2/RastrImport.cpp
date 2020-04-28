@@ -182,9 +182,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
 	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
-	m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
-	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Работа\\Уват\\Исходные данные\\RastrWin\\режим Уват 2020 - 4.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst"); 
-	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
+	m_spRastr->Load(RG_REPL, L"D:\\Documents\\Работа\\Уват\\Исходные данные\\RastrWin\\режим Уват 2020 - 4.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst"); 
+	m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\oos", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");

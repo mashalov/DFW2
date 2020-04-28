@@ -193,12 +193,12 @@ void CDynaNodeContainer::BuildSynchroZones()
 		// если есть отключенные узлы, то количество синхрозон должно быть на 1 больше
 		// дополнительная зона для отключенных узлов
 		size_t nZonesCount = NodeIslands.size() + (bGotOffNodes ? 1 : 0);
-		CSynchroZone *pSyncZones = new CSynchroZone[nZonesCount]();
+		std::unique_ptr<CSynchroZone[]> pSyncZones(new CSynchroZone[nZonesCount]);
 
 		if (bGotOffNodes)
 		{
 			// если есть отключенные узлы готовим зону для отключенных узлов
-			CSynchroZone *pOffZone = pSyncZones + NodeIslands.size();
+			CSynchroZone *pOffZone = pSyncZones.get() + NodeIslands.size();
 			// зону отключаем, чтобы она не попадала в систему уравнений
 			pOffZone->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pOffZone->SetId(NodeIslands.size());
@@ -209,7 +209,7 @@ void CDynaNodeContainer::BuildSynchroZones()
 					static_cast<CDynaNodeBase*>(it)->m_pSyncZone = pOffZone;
 		}
 
-		CSynchroZone *pNewZone = pSyncZones;
+		CSynchroZone *pNewZone = pSyncZones.get();
 
 		// для всех зон узлы связываем с зонами
 		for (auto&& zone : NodeIslands)
@@ -217,16 +217,17 @@ void CDynaNodeContainer::BuildSynchroZones()
 			// готовим место для списка генераторов
 			pNewZone->m_LinkedGenerators.reserve(3 * Count());
 			// придумываем идентификатор и имя
-			pNewZone->SetId(pNewZone - pSyncZones + 1);
+			pNewZone->SetId(pNewZone - pSyncZones.get() + 1);
 			pNewZone->SetName(_T("SyncZone"));
 			for (auto&& node : zone.second)
 			{
 				node->m_pSyncZone = pNewZone;
 				node->MarkZoneEnergized();
 			}
+			//pNewZone++; ?
 		}
 		EnergizeZones(nDeenergizedCount, nEnergizedCount);
-		m_pSynchroZones->AddDevices(pSyncZones, nZonesCount); /// ???????
+		m_pSynchroZones->AddDevices(pSyncZones.release(), nZonesCount); /// ???????
 	}
 }
 

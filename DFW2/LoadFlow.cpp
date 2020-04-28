@@ -377,7 +377,7 @@ void CLoadFlow::Seidell()
 	// TODO !!!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
 	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
-	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations ; nSeidellIterations++)
+	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
 		// множитель для ускорения Зейделя
 		double dStep = m_Parameters.m_dSeidellStep;
@@ -880,6 +880,9 @@ void CLoadFlow::UpdatePQFromGenerators()
 void CLoadFlow::UpdateQToGenerators()
 {
 	bool bAllOk(true);
+
+	if (!pNodes->CheckLink(1))
+		return;	// если генераторов нет - выходим
 
 	for (auto&& it : pNodes->m_DevVec)
 	{

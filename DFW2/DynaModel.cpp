@@ -79,7 +79,7 @@ bool CDynaModel::Run()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = -0.5;
+		m_Parameters.m_dZeroBranchImpedance = 1E-3;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
 		m_Parameters.eFreqDampingType = APDT_NODE;
@@ -97,7 +97,7 @@ bool CDynaModel::Run()
 		m_Parameters.m_bUseRefactor = true;
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
-		m_Parameters.m_bLogToConsole = false;
+		m_Parameters.m_bLogToConsole = true;
 		m_Parameters.m_bLogToFile = true;
 
 		m_Parameters.m_bDisableResultsWriter = false;
