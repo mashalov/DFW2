@@ -31,6 +31,7 @@ namespace DFW2
 		void SeidellTanh();
 		void Newton();
 		void NewtonTanh();
+		std::pair<double, double> CheckRatio(double dStep = 1.0);
 		void UpdateVDelta(double dStep = 1.0);
 		void BuildMatrix();
 		void BuildMatrixTanh();

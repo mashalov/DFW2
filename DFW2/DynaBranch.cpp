@@ -259,7 +259,7 @@ bool CDynaBranch::IsZeroImpedance()
 	if (m_BranchState == CDynaBranch::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
 	{
 		double Zmin = pModel->GetZeroBranchImpedance();
-		if (std::abs(R) < Zmin && std::abs(X) < Zmin)
+		if (std::abs(cplx(R,X)) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin )
 			return true;
 	}
 
