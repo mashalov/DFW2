@@ -788,16 +788,21 @@ _IterationControl& CDynaNodeContainer::IterationControl()
 	return m_IterationControl;
 }
 
+std::wstring CDynaNodeContainer::GetIterationControlString()
+{
+	std::wstring retString = Cex(_T("%15g %6d %15g %6d %5.2f %6d %5.2f %6d %4d %15.2f"),
+		m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
+		m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
+		m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),
+		m_IterationControl.m_MinV.GetDiff(), m_IterationControl.m_MinV.GetId(),
+		m_IterationControl.m_nQviolated,
+		m_IterationControl.m_ImbRatio);
+	return retString;
+}
+
 void CDynaNodeContainer::DumpIterationControl()
 {
-	// p q minv maxv
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%20g %6d %20g %6d %10g %6d %10g %6d %4d %10g"),
-	m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
-	m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
-	m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),
-	m_IterationControl.m_MinV.GetDiff(), m_IterationControl.m_MinV.GetId(),
-	m_IterationControl.m_nQviolated,
-	m_IterationControl.m_ImbRatio);
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, GetIterationControlString().c_str());
 }
 
 // функция готовит топологию к дианамике в первый раз

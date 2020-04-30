@@ -205,6 +205,7 @@
     <ClInclude Include="Header.h" />
     <ClInclude Include="HRTimer.h" />
     <ClInclude Include="KLUWrapper.h" />
+    <ClInclude Include="IterationControl.h" />
     <ClInclude Include="LimitedLag.h" />
     <ClInclude Include="LimiterConst.h" />
     <ClInclude Include="LoadFlow.h" />
@@ -258,6 +259,7 @@
     <ClCompile Include="DynaPrimitive.cpp" />
     <ClCompile Include="DynaVoltageSource.cpp" />
     <ClCompile Include="DynaGeneratorMustang.cpp" />
+    <ClCompile Include="IterationControl.cpp" />
     <ClCompile Include="LimitedLag.cpp" />
     <ClCompile Include="LimiterConst.cpp" />
     <ClCompile Include="LoadFlow.cpp" />

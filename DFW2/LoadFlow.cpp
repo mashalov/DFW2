@@ -1165,7 +1165,7 @@ void CLoadFlow::Newton()
 		g1 = GetSquaredImb();
 
 		pNodes->m_IterationControl.m_ImbRatio = g1;
-		pNodes->DumpIterationControl();
+		DumpNewtonIterationControl();
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
 
@@ -1176,6 +1176,8 @@ void CLoadFlow::Newton()
 			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
 			RestoreVDelta();
 			UpdateVDelta(lambda);
+			m_NewtonStepRaio.m_dRatio = lambda;
+			m_NewtonStepRaio.m_eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
 			continue;
 		}
 
@@ -1248,9 +1250,9 @@ void CLoadFlow::Newton()
 
 
 		// обновляем переменные
-		auto MaxRatio = CheckRatio();
-		UpdateVDelta(MaxRatio.second);
-		if (!Equal(MaxRatio.second, 1.0))
+		double MaxRatio = GetNewtonRatio();
+		UpdateVDelta(MaxRatio);
+		if (m_NewtonStepRaio.m_eStepCause != LFNewtonStepRatio::eStepLimitCause::None)
 			m_nNodeTypeSwitchesDone = 1;
 	}
 
@@ -1363,42 +1365,62 @@ void CLoadFlow::UpdateSupernodesPQ()
 // возвращает максимальное отношение V/Unom
 
 
-std::pair<double,double> CLoadFlow::CheckRatio()
+double CLoadFlow::GetNewtonRatio()
 {
+	m_NewtonStepRaio.Reset();
+
 	_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get();
 	double* b = klu.B();
-	std::pair<double, double> checkRatio = { 1.0, 1.0 };
 
 	for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		CDynaNodeBase* pNode = pMatrixInfo->pNode;
 		double* pb = b + pNode->A(0);
-		double newDelta = pNode->Delta - *pb;		pb++;
+		double newDelta = pNode->Delta - *pb;	
+		
+		// поиск ограничения шага по углу узла
+		double Dstep = std::abs(*pb);
+		if (Dstep > m_Parameters.m_dNodeAngleNewtonStep)
+			m_NewtonStepRaio.UpdateNodeAngle(std::abs(m_Parameters.m_dVoltageNewtonStep / Dstep), pNode);
+
+		pb++;
 		double newV = pNode->V - *pb;
 		double Ratio = newV / pNode->Unom;
 
-		if (std::abs(1 - Ratio) > std::abs(1 - checkRatio.first))
-			checkRatio.first = Ratio;
-
+		// поиск ограничения по модулю напряжения
 		for (const double d : {0.5, 2.0})
 		{
 			if ((d > 1.0) ? Ratio > d : Ratio < d)
-			{
-				Ratio = (pNode->V - d * pNode->Unom) / *pb;
-				if (Ratio < checkRatio.second)
-					checkRatio.second = Ratio * 0.95;
-			}
+				m_NewtonStepRaio.UpdateVoltageOutOfRange((pNode->V - d * pNode->Unom) / *pb, pNode);
 		}
+
+		// поиск ограничения шага по напряжению
 		double VstepPU = std::abs(*pb) / pNode->Unom;
-		if (VstepPU > 0.3)
-		{
-			VstepPU = 0.3 / VstepPU;
-			if(VstepPU < checkRatio.second)
-				checkRatio.second = VstepPU * 0.95;
-		}
+		if (VstepPU > m_Parameters.m_dVoltageNewtonStep)
+			m_NewtonStepRaio.UpdateVoltage(m_Parameters.m_dVoltageNewtonStep / VstepPU, pNode);
 	}
 
-	return checkRatio;
+	// поиск ограничения по взимному углу
+	CDeviceContainer* pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
+	for (auto&& it : *pBranchContainer)
+	{
+		CDynaBranch* pBranch = static_cast<CDynaBranch*>(it);
+		if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_ON) continue;
+		CDynaNodeBase* pNodeIp(pBranch->m_pNodeIp);
+		CDynaNodeBase* pNodeIq(pBranch->m_pNodeIq);
+		double CurrentDelta = pNodeIp->Delta - pNodeIq->Delta;
+		double DeltaDiff = *(b + pNodeIp->A(0)) - *(b + pNodeIq->A(0));
+		double NewDelta = CurrentDelta + DeltaDiff;
+		double AbsDeltaDiff = std::abs(DeltaDiff);
+
+		if (std::abs(NewDelta) > M_PI_2) 
+			m_NewtonStepRaio.UpdateBranchAngleOutOfRange( (std::signbit(NewDelta) ? M_PI_2 : -M_PI_2 - CurrentDelta) / DeltaDiff, pNodeIp, pNodeIq);
+
+		if (AbsDeltaDiff > m_Parameters.m_dBranchAngleNewtonStep)
+			m_NewtonStepRaio.UpdateBranchAngle(m_Parameters.m_dBranchAngleNewtonStep / AbsDeltaDiff, pNodeIp, pNodeIq);
+	}
+
+	return m_NewtonStepRaio.m_dRatio;
 }
 
 void CLoadFlow::UpdateVDelta(double dStep)
@@ -1511,4 +1533,12 @@ void CLoadFlow::CheckFeasible()
 			pNode->SuperNodeLoadFlow(m_pDynaModel);
 		}
 	}
+}
+
+void CLoadFlow::DumpNewtonIterationControl()
+{
+	const _TCHAR* causes[] = {_T(""), _T("dV"), _T("dD"), _T("dB"), _T("vV"), _T("vD"), _T("Bt")};
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%s %6.2f %4s"), pNodes->GetIterationControlString().c_str(), 
+																	  m_NewtonStepRaio.m_dRatio,
+																	  causes[static_cast<ptrdiff_t>(m_NewtonStepRaio.m_eStepCause)]);
 }

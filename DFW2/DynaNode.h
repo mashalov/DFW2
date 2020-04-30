@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "DeviceContainer.h"
 #include "DynaLRC.h"
+#include "IterationControl.h"
 #include "queue"
 #include "stack"
 
@@ -270,105 +271,6 @@ namespace DFW2
 	typedef MATRIXINFO::iterator MATRIXINFOITR;
 	typedef std::list<_MatrixInfo*> QUEUE;
 
-	class _MaxNodeDiff
-	{
-	protected:
-		CDynaNodeBase *m_pNode;
-		double m_dDiff;
-		typedef bool (OperatorFunc)(double lhs, double rhs);
-
-		void UpdateOp(CDynaNodeBase *pNode, double dValue, OperatorFunc OpFunc) noexcept
-		{
-			if (pNode)
-			{
-				if (m_pNode)
-				{
-					if (OpFunc(dValue, m_dDiff))
-					{
-						m_pNode = pNode;
-						m_dDiff = dValue;
-					}
-				}
-				else
-				{
-					m_pNode = pNode;
-					m_dDiff = dValue;
-				}
-			}
-			else
-				_ASSERTE(pNode);
-		}
-
-	public:
-		_MaxNodeDiff() noexcept : m_pNode(nullptr),
-			m_dDiff(0.0)
-		{}
-
-		ptrdiff_t GetId()
-		{
-			if (m_pNode)
-				return m_pNode->GetId();
-			return -1;
-		}
-
-		double GetDiff()
-		{
-			if (GetId() >= 0)
-				return m_dDiff;
-			return 0.0;
-		}
-
-		void UpdateMin(CDynaNodeBase *pNode, double Value)
-		{
-			UpdateOp(pNode, Value, [](double lhs, double rhs) noexcept -> bool { return lhs < rhs; });
-		}
-
-		void UpdateMax(CDynaNodeBase *pNode, double Value)
-		{
-			UpdateOp(pNode, Value, [](double lhs, double rhs) noexcept -> bool { return lhs > rhs; });
-		}
-
-		void UpdateMaxAbs(CDynaNodeBase *pNode, double Value)
-		{
-			UpdateOp(pNode, Value, [](double lhs, double rhs) noexcept -> bool { return fabs(lhs) > fabs(rhs); });
-		}
-	};
-
-	struct _IterationControl
-	{
-		_MaxNodeDiff m_MaxImbP;
-		_MaxNodeDiff m_MaxImbQ;
-		_MaxNodeDiff m_MaxV;
-		_MaxNodeDiff m_MinV;
-		ptrdiff_t m_nQviolated = 0;
-		double m_ImbRatio = 0.0;
-
-		bool Converged(double m_dToleratedImb)
-		{
-			return fabs(m_MaxImbP.GetDiff()) < m_dToleratedImb && fabs(m_MaxImbQ.GetDiff()) < m_dToleratedImb && m_nQviolated == 0;
-		}
-
-		void Reset()
-		{
-			*this = _IterationControl();
-		}
-
-		void Update(_MatrixInfo *pMatrixInfo)
-		{
-			if (pMatrixInfo && pMatrixInfo->pNode)
-			{
-				CDynaNodeBase *pNode = pMatrixInfo->pNode;
-				m_MaxImbP.UpdateMaxAbs(pNode, pMatrixInfo->m_dImbP);
-				m_MaxImbQ.UpdateMaxAbs(pNode, pMatrixInfo->m_dImbQ);
-				const double VdVnom = pNode->V / pNode->Unom;
-				m_MaxV.UpdateMax(pNode, VdVnom);
-				m_MinV.UpdateMin(pNode, VdVnom);
-			}
-			else
-				_ASSERTE(pMatrixInfo && pMatrixInfo->pNode);
-		}
-	};
-
 	using NodeQueue = std::queue<CDynaNodeBase*>;
 	using NodeSet = std::set<CDynaNodeBase*>;
 	using NODEISLANDMAP = std::map<CDynaNodeBase*, NodeSet> ;
@@ -396,6 +298,7 @@ namespace DFW2
 		void SwitchLRCs(bool bSwitchToDynamicLRC);
 		_IterationControl m_IterationControl;
 		void DumpIterationControl();
+		std::wstring GetIterationControlString();
 		friend class CLoadFlow;
 		LINKSVEC m_SuperLinks;
 		ORIGINALLINKSVEC m_OriginalLinks;

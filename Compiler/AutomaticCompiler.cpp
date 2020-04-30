@@ -81,7 +81,7 @@ STDMETHODIMP CAutomaticCompiler::Compile()
 		NormalizePath(strHeadersDir);
 
 #ifdef _WIN64
-		wstring strCommandLine = Cex(_T("%s\\makefile64"), strHeadersDir.c_str());
+		std::wstring strCommandLine = Cex(_T("%s\\makefile64"), strHeadersDir.c_str());
 #else
 		std::wstring strCommandLine = Cex(_T("%s\\makefile"), strHeadersDir.c_str());
 #endif

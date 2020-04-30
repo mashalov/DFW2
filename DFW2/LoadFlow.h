@@ -17,6 +17,9 @@ namespace DFW2
 			ptrdiff_t m_nSeidellIterations = 7;			// количество итераций Зейделем
 			ptrdiff_t m_nEnableSwitchIteration = 2;		// номер итерации, с которой разрешается переключение PV-PQ
 			ptrdiff_t m_nMaxIterations = 100;			// максимальное количество итераций Ньютоном
+			double m_dVoltageNewtonStep = 0.3;			// максимальное относительное приращение шага Ньютона по напряжению
+			double m_dNodeAngleNewtonStep = 1.5;		// максимальное приращение шага Ньютона по углу узла
+			double m_dBranchAngleNewtonStep = 0.5;		// максимальное приращение шага Ньютона по углу связи
 		};
 
 		CLoadFlow(CDynaModel *pDynaModel);
@@ -31,7 +34,7 @@ namespace DFW2
 		void SeidellTanh();
 		void Newton();
 		void NewtonTanh();
-		std::pair<double, double> CheckRatio();
+		double GetNewtonRatio();
 		void UpdateVDelta(double dStep = 1.0);
 		void BuildMatrix();
 		void BuildMatrixTanh();
@@ -70,6 +73,8 @@ namespace DFW2
 		void RestoreVDelta();
 		double GetSquaredImb();
 		void CheckFeasible();
+		void DumpNewtonIterationControl();
+		LFNewtonStepRatio m_NewtonStepRaio;
 
 		std::unique_ptr<double[]> m_Vbackup;
 		std::unique_ptr<double[]> m_Dbackup;
