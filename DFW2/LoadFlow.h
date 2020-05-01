@@ -79,6 +79,7 @@ namespace DFW2
 		std::unique_ptr<double[]> m_Vbackup;
 		std::unique_ptr<double[]> m_Dbackup;
 		std::unique_ptr<double[]> m_Rh;		// невязки до итерации
+		std::vector<CDynaBranch*> m_BranchAngleCheck;
 	};
 }
 

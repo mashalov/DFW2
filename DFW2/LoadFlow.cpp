@@ -122,6 +122,18 @@ void CLoadFlow::Estimate()
 	}
 
 	*pAi = klu.NonZeroCount();
+
+	// формируем вектор ветвей для контроля взаимного угла
+	// учитываем включенные ветви с сопротивлением выше минимального
+	// вектор таких ветвей построить проще по исходным ветвям, чем собирать его из виртуальных ветвей узлов
+	CDeviceContainer* pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
+	m_BranchAngleCheck.reserve(pBranchContainer->Count());
+	for (auto&& it : *pBranchContainer)
+	{
+		CDynaBranch* pBranch = static_cast<CDynaBranch*>(it);
+		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON && !pBranch->IsZeroImpedance())
+			m_BranchAngleCheck.push_back(pBranch);
+	}
 }
 
 void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
@@ -1005,7 +1017,7 @@ void CLoadFlow::DumpNodes()
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 #ifdef _DEBUG
 			///*
-			_ftprintf(fdump, _T("%d;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%.12g;%.12g\n"),
+			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%.12g;%.12g\n"),
 				pNode->GetId(),
 				pNode->V,
 				pNode->Delta / M_PI * 180.0,
@@ -1401,11 +1413,9 @@ double CLoadFlow::GetNewtonRatio()
 	}
 
 	// поиск ограничения по взимному углу
-	CDeviceContainer* pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
-	for (auto&& it : *pBranchContainer)
+	for (auto&& it : m_BranchAngleCheck)
 	{
 		CDynaBranch* pBranch = static_cast<CDynaBranch*>(it);
-		if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_ON) continue;
 		CDynaNodeBase* pNodeIp(pBranch->m_pNodeIp);
 		CDynaNodeBase* pNodeIq(pBranch->m_pNodeIq);
 		double CurrentDelta = pNodeIp->Delta - pNodeIq->Delta;
