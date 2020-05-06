@@ -307,7 +307,7 @@ namespace DFW2
 		bool IsStateOn() const { return GetState() == DS_ON;  }
 		bool IsPermanentOff() const { return GetState() == DS_OFF && GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT; }
 		eDEVICESTATECAUSE GetStateCause() const { return m_StateCause; }
-		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
+		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr);
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 
 		const _TCHAR* VariableNameByPtr(double *pVariable);

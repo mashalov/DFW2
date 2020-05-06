@@ -669,7 +669,7 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 	}
 }
 
-eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
+eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice)
 {
 	eDEVICESTATE OldState = GetState();
 	eDEVICEFUNCTIONSTATUS Status = CDevice::SetState(eState, eStateCause);

@@ -115,7 +115,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				pBranch->SetName(Cex(_T("%s - %s %s"),
 					pBranch->m_pNodeIp->GetName(),
 					pBranch->m_pNodeIq->GetName(),
-					static_cast<const _TCHAR*>(pBranch->Np ? Cex(_T(" öåïü %d"), pBranch->Np) : _T(""))));
+					static_cast<const _TCHAR*>(pBranch->Np ? Cex(_T(" цепь %d"), pBranch->Np) : _T(""))));
 			}
 		}
 
@@ -156,11 +156,29 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBran
 }
 
 // shortcut для установки состояния ветви в терминах CDevice
-eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
+eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice)
 {
-	BranchState eBranchState = BRANCH_OFF;
-	if (eState == eDEVICESTATE::DS_ON)
-		eBranchState = BRANCH_ON;
+	// при отключении ветви два режима
+	BranchState eBranchState(m_BranchState);
+	if (pCauseDevice && pCauseDevice->GetType() == DEVTYPE_NODE && eState == eDEVICESTATE::DS_OFF)
+	{
+		// если передан узел, из-за которого должно измениться состояние ветви
+		// отключаем ветвь со стороны отключаемого узла или полностью, если оппозитный тоже отключен
+		DisconnectBranchFromNode(static_cast<CDynaNodeBase*>(pCauseDevice));
+		// если состояние ветви изменилось - добавляем оппозитный узел в список проверки,
+		// который может понадобиться для каскадного отключения узлов
+		if (eBranchState != m_BranchState)
+		{
+			GetOppositeNode(static_cast<CDynaNodeBase*>(pCauseDevice))->AddToTopologyCheck();
+			eBranchState = m_BranchState;
+		}
+	}
+	else
+	{
+		// если данных по узлу нет 
+		if (eState == eDEVICESTATE::DS_ON)
+			eBranchState = BRANCH_ON;
+	}
 	return SetBranchState(eBranchState, eStateCause);
 }
 
@@ -532,6 +550,78 @@ bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 
 	return true;
 }
+
+
+bool CDynaBranch::BranchAndNodeConnected(CDynaNodeBase* pNode)
+{
+
+	if (pNode == m_pNodeIp)
+	{
+		return m_BranchState == CDynaBranch::BranchState::BRANCH_ON || m_BranchState == CDynaBranch::BranchState::BRANCH_TRIPIQ;
+	}
+	else if (pNode == m_pNodeIq)
+	{
+		return m_BranchState == CDynaBranch::BranchState::BRANCH_ON || m_BranchState == CDynaBranch::BranchState::BRANCH_TRIPIP;
+	}
+	else
+		_ASSERTE(!_T("CDynaNodeContainer::BranchAndNodeConnected - branch and node mismatch"));
+
+	return false;
+}
+
+bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
+{
+	bool bDisconnected(false);
+	_ASSERTE(pNode->GetState() == eDEVICESTATE::DS_OFF);
+
+	const _TCHAR* pSwitchOffMode(CDFW2Messages::m_cszSwitchedOffBranchComplete);
+
+	if (pNode == m_pNodeIp)
+	{
+		switch (m_BranchState)
+		{
+			// если ветвь включена - отключаем ее со стороны отключенного узла
+		case CDynaBranch::BranchState::BRANCH_ON:
+
+			pSwitchOffMode = CDFW2Messages::m_cszSwitchedOffBranchHead;
+			m_BranchState = CDynaBranch::BranchState::BRANCH_TRIPIP;
+			bDisconnected = true;
+			break;
+			// если ветвь отключена с обратной стороны - отключаем полностью
+		case CDynaBranch::BranchState::BRANCH_TRIPIQ:
+			m_BranchState = CDynaBranch::BranchState::BRANCH_OFF;
+			bDisconnected = true;
+			break;
+		}
+	}
+	else if (pNode == m_pNodeIq)
+	{
+		switch (m_BranchState)
+		{
+			// если ветвь включена - отключаем ее со стороны отключенного узла
+		case CDynaBranch::BranchState::BRANCH_ON:
+			pSwitchOffMode = CDFW2Messages::m_cszSwitchedOffBranchTail;
+			m_BranchState = CDynaBranch::BranchState::BRANCH_TRIPIQ;
+			bDisconnected = true;
+			break;
+			// если ветвь отключена с обратной стороны - отключаем полностью
+		case CDynaBranch::BranchState::BRANCH_TRIPIP:
+			m_BranchState = CDynaBranch::BranchState::BRANCH_OFF;
+			bDisconnected = true;
+			break;
+		}
+	}
+	else
+		_ASSERTE(!_T("CDynaNodeContainer::DisconnectBranchFromNode - branch and node mismatch"));
+
+	if (bDisconnected)
+	{
+		Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszSwitchedOffBranch, m_pContainer->GetTypeName(), GetVerbalName(), pSwitchOffMode, pNode->GetVerbalName()));
+	}
+
+	return bDisconnected;
+}
+
 
 eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::Init(CDynaModel* pDynaModel)
 {

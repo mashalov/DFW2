@@ -484,7 +484,7 @@ eDEVICEFUNCTIONSTATUS CDevice::Init(CDynaModel* pDynaModel)
 	return eStatus;
 }
 
-eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
+eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice)
 {
 	m_State = eState;
 	// если устройство было отключено навсегда - попытка изменения его состояния (даже отключение) вызывает исключение
@@ -1013,13 +1013,23 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 		// если устройство хотят выключить - нужно выключить все его slaves и далее по дереву иерархии
 		
 		// обрабатываем  отключаемые устройства рекурсивно
-		std::stack<CDevice*> offstack;
-		offstack.push(this);
+		std::stack<std::pair<CDevice*, CDevice*>> offstack;
+		offstack.push(std::make_pair(this,nullptr));
 		while (!offstack.empty())
 		{
-			CDevice *pOffDevice = offstack.top();
+			CDevice *pOffDevice = offstack.top().first;	// устройство которое отключают
+			CDevice* pCauseDevice = offstack.top().second; // устройство из-за которого отключают
 			offstack.pop();
-			pOffDevice->SetState(eState, eStateCause);
+
+			// для ветвей состояние не бинарное: могут быть отключены в начале/в конце/полность.
+			// отключение ветвей делается в зависимости от состояния узла и логируется в перекрытой CDynaBranch::SetState
+			// поэтому здесь логирование отключения ветви обходим
+			if(pCauseDevice && pOffDevice->GetType() != DEVTYPE_BRANCH)
+				Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, pOffDevice->GetVerbalName(), pCauseDevice->GetVerbalName()));
+
+			pOffDevice->SetState(eState, eStateCause, pCauseDevice);
+
+
 			// если отключаем не устройство, которое запросили отключить (первое в стеке), а рекурсивно отключаемое - изменяем причину отключения на внутреннюю
 			eStateCause = eDEVICESTATECAUSE::DSC_INTERNAL;
 
@@ -1034,11 +1044,8 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 					while (pLink->In(ppDevice))
 					{
 						if ((*ppDevice)->IsStateOn())
-						{
 							// если есть включенное ведомое - помещаем в стек для отключения и дальнейшего просмотра графа связей
-							Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, (*ppDevice)->GetVerbalName(), pOffDevice->GetVerbalName()));
-							offstack.push(*ppDevice);
-						}
+							offstack.push(std::make_pair(*ppDevice, pOffDevice));
 					}
 				}
 				else
@@ -1046,10 +1053,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 					// проверяем устройство на простой ссылке
 					CDevice *pDevice(pOffDevice->GetSingleLink(slavedevice->nLinkIndex));
 					if (pDevice && pDevice->IsStateOn())
-					{
-						Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, pDevice->GetVerbalName(), pOffDevice->GetVerbalName()));
-						offstack.push(pDevice);
-					}
+						offstack.push(std::make_pair(pDevice, pOffDevice));
 				}
 			}
 		}

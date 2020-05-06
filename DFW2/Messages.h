@@ -126,9 +126,13 @@ namespace DFW2
 		static const _TCHAR* m_cszIslandOfSuperNode;
 		static const _TCHAR* m_cszSwitchedOffNode;
 		static const _TCHAR* m_cszSwitchedOffBranch;
+		static const _TCHAR* m_cszSwitchedOffBranchHead;
+		static const _TCHAR* m_cszSwitchedOffBranchTail;
+		static const _TCHAR* m_cszSwitchedOffBranchComplete;
 		static const _TCHAR* m_cszIslandSlackBusesCount;
 		static const _TCHAR* m_cszIslandCount;
 		static const _TCHAR* m_cszIslandNoSlackBusesShutDown;
+		static const _TCHAR* m_cszNodeShutDownAsNotLinkedToSlack;
 		static const _TCHAR* m_cszNoNodesForLF;
 		static const _TCHAR* m_cszUnacceptableLF;
 		static const _TCHAR* m_cszTurningOffDeviceByMasterDevice;

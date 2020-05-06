@@ -421,7 +421,7 @@ void CDynaNodeContainer::CreateSuperNodes()
 		{
 			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
 			JoinableNodes[pBranch->m_pNodeIq].insert(pBranch->m_pNodeIp);
-			nZeroBranchCount += 2;	// учитываем, что ветвь может учиваться в двух узлах два раза
+			nZeroBranchCount += 2;	// учитываем, что ветвь может учитываться в двух узлах два раза
 		}
 	}
 	// получаем список островов
@@ -827,6 +827,22 @@ void CDynaNodeContainer::ProcessTopology()
 	m_pDynaModel->RebuildMatrix(true);
 }
 
+void CDynaNodeBase::AddToTopologyCheck()
+{
+	if (m_pContainer)
+		static_cast<CDynaNodeContainer*>(m_pContainer)->AddToTopologyCheck(this);
+}
+
+void CDynaNodeContainer::AddToTopologyCheck(CDynaNodeBase *pNode)
+{
+	m_TopologyCheck.insert(pNode);
+}
+
+void CDynaNodeContainer::ResetTopologyCheck()
+{
+	m_TopologyCheck.clear();
+}
+
 void CDynaNodeContainer::SwitchOffDanglingNodes(NodeSet& Queue)
 {
 	// обрабатываем узлы до тех пор, пока есть отключения узлов при проверке
@@ -842,8 +858,18 @@ void CDynaNodeContainer::SwitchOffDanglingNodes(NodeSet& Queue)
 void CDynaNodeContainer::GetTopologySynchroZones(NODEISLANDMAP& NodeIslands)
 {
 	// формируем список связности узлов по включенным ветвям
+	CDeviceContainer* pNodeContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE);
 	CDeviceContainer *pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
 	NODEISLANDMAP JoinableNodes;
+
+	// сначала вводим в список узлов все включенные, чтобы в списке оказались все узлы, даже без связей с базой
+	for (auto&& it : *pNodeContainer)
+	{
+		CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(it);
+		if (pNode->GetState() == eDEVICESTATE::DS_ON)
+			JoinableNodes.insert(std::make_pair(pNode, NodeSet()));
+	}
+
 	for (auto&& it : *pBranchContainer)
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
@@ -883,7 +909,10 @@ void CDynaNodeContainer::PrepareLFTopology()
 			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszIslandNoSlackBusesShutDown));
 			NodeSet& Queue = island.second;
 			for (auto&& node : Queue)
-				static_cast<CDynaNodeBase*>(node)->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+			{
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszNodeShutDownAsNotLinkedToSlack, node->GetVerbalName()));
+				node->ChangeState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+			}
 			// и отключаем ветви
 			SwitchOffDanglingNodes(Queue);
 		}
@@ -900,16 +929,22 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 		while (pLink->In(ppDevice))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-			if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+			if(pBranch->BranchAndNodeConnected(pNode))
 				break; // ветвь есть
 		}
 		if (!ppDevice)
 		{
 			// все ветви отключены, отключаем узел
-			pNode->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszSwitchedOffNode, pNode->GetVerbalName()));
+			// сбрасываем список проверки инцидентных узлов
+			ResetTopologyCheck();
+			// используем функцию ChangeState(), которая отключает все, что отнесено к отключаемому узлу, в том числе и ветви
+			pNode->ChangeState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
 			// и этот узел ставим в очередь на повторную проверку отключения ветвей
 			Queue.insert(pNode);
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszSwitchedOffNode, pNode->GetVerbalName()));
+			// в очередь также ставим все узлы, которые были инцидентны данному и состояния ветвей до которых изменились
+			Queue.insert(m_TopologyCheck.begin(), m_TopologyCheck.end());
+			// после ChangeState ветви, инцидентные узлу изменят состояние, поэтому надо проверить узлы на концах изменивших состояние ветвей
 		}
 	}
 	else
@@ -918,17 +953,12 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 		while (pLink->In(ppDevice))
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-
-			/// !!!!!!!!!!!!!!!!!!! Здесь надо также проверять отключение с одной стороны !!!!!!!!!!!!!!!!!!!!!!!!
-			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
+			if (pBranch->DisconnectBranchFromNode(pNode))
 			{
-				// к отключенному узлу подходит неотключенная ветвь - отключаем
-				pBranch->m_BranchState = CDynaBranch::BRANCH_OFF;
-				// и узел с другой стороны ставим в очередь на повторную проверку, если он не отключен
-				CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
-				if(pOppNode->GetState() == eDEVICESTATE::DS_ON)
+				// состояние ветви изменилось, узел с другой стороны ставим в очередь на проверку
+				CDynaNodeBase* pOppNode = pBranch->GetOppositeNode(pNode);
+				if (pOppNode->GetState() == eDEVICESTATE::DS_ON)
 					Queue.insert(pOppNode);
-				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszSwitchedOffBranch, pBranch->GetVerbalName(), pNode->GetVerbalName()));
 			}
 		}
 	}

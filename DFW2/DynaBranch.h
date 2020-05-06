@@ -46,7 +46,9 @@ namespace DFW2
 		virtual ~CDynaBranch() {}
 		cplx GetYBranch(bool bFixNegativeZ = false);
 		bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom) override;
-		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause) override;
+		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr) override;
+		bool DisconnectBranchFromNode(CDynaNodeBase* pNode);
+		bool BranchAndNodeConnected(CDynaNodeBase* pNode);
 		eDEVICESTATE GetState() const override;
 		eDEVICEFUNCTIONSTATUS SetBranchState(BranchState eBranchState, eDEVICESTATECAUSE eStateCause);
 		void CalcAdmittances(bool bSeidell);

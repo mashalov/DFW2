@@ -169,6 +169,8 @@ namespace DFW2
 		inline void PickV0() noexcept { V0 = (V > 0) ? V : Unom; }
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 
+		void AddToTopologyCheck();
+
 		static const _TCHAR *m_cszV;
 		static const _TCHAR *m_cszDelta;
 		static const _TCHAR *m_cszVre;
@@ -211,7 +213,7 @@ namespace DFW2
 		bool BuildDerivatives(CDynaModel *pDynaModel)  override;
 		void Predict()  override;			// допонительная обработка прогноза
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
-		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)  override;
+		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 
@@ -295,6 +297,7 @@ namespace DFW2
 		void SwitchOffDanglingNodes(NodeSet& Queue);
 		void CalcAdmittances(bool bSeidell);
 		void SwitchLRCs(bool bSwitchToDynamicLRC);
+		static bool BranchAndNodeConnected(CDynaNodeBase* pNode, CDynaBranch* pBranch);
 		_IterationControl m_IterationControl;
 		void DumpIterationControl();
 		std::wstring GetIterationControlString();
@@ -309,6 +312,7 @@ namespace DFW2
 		std::unique_ptr<VirtualZeroBranch[]> m_pZeroBranches;
 		VirtualZeroBranch *m_pZeroBranchesEnd;
 		CDeviceContainer *m_pSynchroZones = nullptr;
+		NodeSet m_TopologyCheck;
 	public:
 		const VirtualZeroBranch* GetZeroBranchesEnd() const noexcept { return m_pZeroBranchesEnd; }
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
@@ -324,6 +328,8 @@ namespace DFW2
 		bool Seidell(); 
 		bool LULF();
 		void ProcessTopologyRequest();
+		void AddToTopologyCheck(CDynaNodeBase* pNode);
+		void ResetTopologyCheck();
 		bool m_bDynamicLRC = true;
 	};
 }
