@@ -60,6 +60,7 @@ void LFNewtonStepRatio::UpdateBranchAngle(double Ratio, CDynaNodeBase* pNode, CD
 
 bool LFNewtonStepRatio::UpdateRatio(double Ratio)
 {
+	_ASSERTE(Ratio >= 0.0);
 	if (Ratio < m_dRatio)
 	{
 		m_dRatio = Ratio * 0.95;

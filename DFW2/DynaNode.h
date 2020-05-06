@@ -248,6 +248,7 @@ namespace DFW2
 		bool bVisited = false;													// признак просмотра для графовых алгоритмов
 		double LFQmin;															// исходные ограничения реактивной мощности до ввода в суперузел
 		double LFQmax;
+		double NodeViolation;													// отклонение параметра от ограничения или уставки
 		CDynaNodeBase::eLFNodeType LFNodeType;									// исходный тип узла до ввода в суперузел
 		double UncontrolledP = 0.0;
 		double UncontrolledQ = 0.0;												// постоянные значения активной и реактивной генерации в суперузле
@@ -267,10 +268,8 @@ namespace DFW2
 		}
 	};
 
-	typedef std::vector<_MatrixInfo*> MATRIXINFO;
-	typedef MATRIXINFO::iterator MATRIXINFOITR;
-	typedef std::list<_MatrixInfo*> QUEUE;
-
+	using QUEUE = std::list<_MatrixInfo*>;
+	using MATRIXINFO = std::vector<_MatrixInfo*>;
 	using NodeQueue = std::queue<CDynaNodeBase*>;
 	using NodeSet = std::set<CDynaNodeBase*>;
 	using NODEISLANDMAP = std::map<CDynaNodeBase*, NodeSet> ;

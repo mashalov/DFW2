@@ -58,7 +58,7 @@ namespace DFW2
 		std::unique_ptr<_MatrixInfo[]> m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
 		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
-
+		
 		double m_dTanhBeta = 500.0;
 		ptrdiff_t m_nNodeTypeSwitchesDone;
 
@@ -74,7 +74,7 @@ namespace DFW2
 		double GetSquaredImb();
 		void CheckFeasible();
 		void DumpNewtonIterationControl();
-		LFNewtonStepRatio m_NewtonStepRaio;
+		LFNewtonStepRatio m_NewtonStepRatio;
 
 		std::unique_ptr<double[]> m_Vbackup;
 		std::unique_ptr<double[]> m_Dbackup;

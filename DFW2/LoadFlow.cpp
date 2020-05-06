@@ -389,7 +389,7 @@ void CLoadFlow::Seidell()
 	// TODO !!!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
 	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
-	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations ; nSeidellIterations++)
+	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
 		// множитель для ускорения Зейделя
 		double dStep = m_Parameters.m_dSeidellStep;
@@ -1011,7 +1011,7 @@ void CLoadFlow::DumpNodes()
 	setlocale(LC_ALL, "ru-ru");
 	if (!_tfopen_s(&fdump, _T("c:\\tmp\\resnodes.csv"), _T("wb+")))
 	{
-		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref\n"));
+		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref;VR;DeltaR;QgR;QnR\n"));
 		for (auto&& it : pNodes->m_DevVec)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
@@ -1093,7 +1093,9 @@ void CLoadFlow::Newton()
 	int it(0);	// количество итераций
 
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
-	std::vector<_MatrixInfo*> PV_PQmax, PV_PQmin, PQmax_PV, PQmin_PV;
+	MATRIXINFO PV_PQmax, PV_PQmin, PQmax_PV, PQmin_PV;
+
+
 	PV_PQmax.reserve(klu.MatrixSize() / 2);
 	PV_PQmin.reserve(klu.MatrixSize() / 2);
 	PQmax_PV.reserve(klu.MatrixSize() / 2);
@@ -1125,11 +1127,12 @@ void CLoadFlow::Newton()
 			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 			double Qg = pNode->Qgr + pMatrixInfo->m_dImbQ;
+			pMatrixInfo->NodeViolation = pNode->V - pNode->LFVref;
 			switch (pNode->m_eLFNodeType)
 			{
 				// если узел на минимуме Q и напряжение ниже уставки, он должен стать PV
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-				if (pNode->V < pNode->LFVref)
+				if (pMatrixInfo->NodeViolation < 0.0)
 				{
 					PQmax_PV.push_back(pMatrixInfo);
 					pMatrixInfo->m_nPVSwitchCount++;
@@ -1137,7 +1140,7 @@ void CLoadFlow::Newton()
 				break;
 				// если узел на максимуме Q и напряжение выше уставки, он должен стать PV
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-				if (pNode->V > pNode->LFVref)
+				if (pMatrixInfo->NodeViolation > 0.0)
 				{
 					PQmin_PV.push_back(pMatrixInfo);
 					pMatrixInfo->m_nPVSwitchCount++;
@@ -1145,11 +1148,11 @@ void CLoadFlow::Newton()
 				break;
 				// если узел PV, но реактивная генерация вне диапазона, делаем его PQ
 			case CDynaNodeBase::eLFNodeType::LFNT_PV:
-				if (Qg > pNode->LFQmax)
+				if ((pMatrixInfo->NodeViolation = Qg - pNode->LFQmax) > 0.0)
 				{
 					PV_PQmax.push_back(pMatrixInfo);
 				}
-				else if (Qg < pNode->LFQmin)
+				else if ((pMatrixInfo->NodeViolation = Qg - pNode->LFQmin) < 0.0)
 				{
 					PV_PQmin.push_back(pMatrixInfo);
 				}
@@ -1188,8 +1191,8 @@ void CLoadFlow::Newton()
 			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
 			RestoreVDelta();
 			UpdateVDelta(lambda);
-			m_NewtonStepRaio.m_dRatio = lambda;
-			m_NewtonStepRaio.m_eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
+			m_NewtonStepRatio.m_dRatio = lambda;
+			m_NewtonStepRatio.m_eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
 			continue;
 		}
 
@@ -1264,7 +1267,7 @@ void CLoadFlow::Newton()
 		// обновляем переменные
 		double MaxRatio = GetNewtonRatio();
 		UpdateVDelta(MaxRatio);
-		if (m_NewtonStepRaio.m_eStepCause != LFNewtonStepRatio::eStepLimitCause::None)
+		if (m_NewtonStepRatio.m_eStepCause != LFNewtonStepRatio::eStepLimitCause::None)
 			m_nNodeTypeSwitchesDone = 1;
 	}
 
@@ -1379,7 +1382,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 
 double CLoadFlow::GetNewtonRatio()
 {
-	m_NewtonStepRaio.Reset();
+	m_NewtonStepRatio.Reset();
 
 	_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get();
 	double* b = klu.B();
@@ -1393,7 +1396,7 @@ double CLoadFlow::GetNewtonRatio()
 		// поиск ограничения шага по углу узла
 		double Dstep = std::abs(*pb);
 		if (Dstep > m_Parameters.m_dNodeAngleNewtonStep)
-			m_NewtonStepRaio.UpdateNodeAngle(std::abs(m_Parameters.m_dVoltageNewtonStep / Dstep), pNode);
+			m_NewtonStepRatio.UpdateNodeAngle(std::abs(m_Parameters.m_dVoltageNewtonStep / Dstep), pNode);
 
 		pb++;
 		double newV = pNode->V - *pb;
@@ -1403,13 +1406,13 @@ double CLoadFlow::GetNewtonRatio()
 		for (const double d : {0.5, 2.0})
 		{
 			if ((d > 1.0) ? Ratio > d : Ratio < d)
-				m_NewtonStepRaio.UpdateVoltageOutOfRange((pNode->V - d * pNode->Unom) / *pb, pNode);
+				m_NewtonStepRatio.UpdateVoltageOutOfRange((pNode->V - d * pNode->Unom) / *pb, pNode);
 		}
 
 		// поиск ограничения шага по напряжению
 		double VstepPU = std::abs(*pb) / pNode->Unom;
 		if (VstepPU > m_Parameters.m_dVoltageNewtonStep)
-			m_NewtonStepRaio.UpdateVoltage(m_Parameters.m_dVoltageNewtonStep / VstepPU, pNode);
+			m_NewtonStepRatio.UpdateVoltage(m_Parameters.m_dVoltageNewtonStep / VstepPU, pNode);
 	}
 
 	// поиск ограничения по взимному углу
@@ -1424,13 +1427,13 @@ double CLoadFlow::GetNewtonRatio()
 		double AbsDeltaDiff = std::abs(DeltaDiff);
 
 		if (std::abs(NewDelta) > M_PI_2) 
-			m_NewtonStepRaio.UpdateBranchAngleOutOfRange( (std::signbit(NewDelta) ? M_PI_2 : -M_PI_2 - CurrentDelta) / DeltaDiff, pNodeIp, pNodeIq);
+			m_NewtonStepRatio.UpdateBranchAngleOutOfRange( ((std::signbit(NewDelta) ? -M_PI_2 : M_PI_2) - CurrentDelta) / DeltaDiff, pNodeIp, pNodeIq);
 
 		if (AbsDeltaDiff > m_Parameters.m_dBranchAngleNewtonStep)
-			m_NewtonStepRaio.UpdateBranchAngle(m_Parameters.m_dBranchAngleNewtonStep / AbsDeltaDiff, pNodeIp, pNodeIq);
+			m_NewtonStepRatio.UpdateBranchAngle(m_Parameters.m_dBranchAngleNewtonStep / AbsDeltaDiff, pNodeIp, pNodeIq);
 	}
 
-	return m_NewtonStepRaio.m_dRatio;
+	return m_NewtonStepRatio.m_dRatio;
 }
 
 void CLoadFlow::UpdateVDelta(double dStep)
@@ -1549,6 +1552,6 @@ void CLoadFlow::DumpNewtonIterationControl()
 {
 	const _TCHAR* causes[] = {_T(""), _T("dV"), _T("dD"), _T("dB"), _T("vV"), _T("vD"), _T("Bt")};
 	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%s %6.2f %4s"), pNodes->GetIterationControlString().c_str(), 
-																	  m_NewtonStepRaio.m_dRatio,
-																	  causes[static_cast<ptrdiff_t>(m_NewtonStepRaio.m_eStepCause)]);
+																	  m_NewtonStepRatio.m_dRatio,
+																	  causes[static_cast<ptrdiff_t>(m_NewtonStepRatio.m_eStepCause)]);
 }
