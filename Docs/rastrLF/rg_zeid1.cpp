@@ -1,4 +1,4 @@
-
+п»ї
 #include "stdafx.h"
 #include "rg_ss.h"
 #define _USE_MATH_DEFINES
@@ -119,7 +119,7 @@ void  steady_state::zeid(int ny, int nby)
 		for (nt = ind1; nt < ind2; nt++)
 		{
 			if (nt->nqy == ptn) { ntd = nt; continue; }
-			// ЇаRў_аЄ  §- Є 
+			// Р‡Р°RСћ_Р°Р„В  В§-В Р„В 
 			if (nt->y.imag() > 0.)
 			{
 				flag = 1;
@@ -362,10 +362,10 @@ void  steady_state::zeid2(ptrdiff_t ny, ptrdiff_t nby)
 	consb.rku = 1.;
 
 	int USE_Z = 0;
-	// Оптимальное упорядочивание узлов для метода Зейделя
+	// РћРїС‚РёРјР°Р»СЊРЅРѕРµ СѓРїРѕСЂСЏРґРѕС‡РёРІР°РЅРёРµ СѓР·Р»РѕРІ РґР»СЏ РјРµС‚РѕРґР° Р—РµР№РґРµР»СЏ
 	for (pny = nod1_s; pny < nod1_s + ny; pny++)  pny->a.nsp = NULL;
 
-	if (USE_Z) // Вариант 1 = по эквивалентному сопротивлению от балансируещего узла
+	if (USE_Z) // Р’Р°СЂРёР°РЅС‚ 1 = РїРѕ СЌРєРІРёРІР°Р»РµРЅС‚РЅРѕРјСѓ СЃРѕРїСЂРѕС‚РёРІР»РµРЅРёСЋ РѕС‚ Р±Р°Р»Р°РЅСЃРёСЂСѓРµС‰РµРіРѕ СѓР·Р»Р°
 	{
 		typedef multimap<double, pnod1> rk;
 		rk keys;
@@ -433,7 +433,7 @@ void  steady_state::zeid2(ptrdiff_t ny, ptrdiff_t nby)
 
 	}
 
-	else   // Простой алгоритм упорядочения от балансирующего узла
+	else   // РџСЂРѕСЃС‚РѕР№ Р°Р»РіРѕСЂРёС‚Рј СѓРїРѕСЂСЏРґРѕС‡РµРЅРёСЏ РѕС‚ Р±Р°Р»Р°РЅСЃРёСЂСѓСЋС‰РµРіРѕ СѓР·Р»Р°
 	{
 
 		for (pny = nod1_s, pnk = nod1_s; pny < nod1_s + ny; pny++)
@@ -468,9 +468,9 @@ void  steady_state::zeid2(ptrdiff_t ny, ptrdiff_t nby)
 		}
 
 	}
-	// Конец блока упорядочения 
+	// РљРѕРЅРµС† Р±Р»РѕРєР° СѓРїРѕСЂСЏРґРѕС‡РµРЅРёСЏ 
 
-	// Формирование проводимостей для метода Зейделя с удалением отрицательных
+	// Р¤РѕСЂРјРёСЂРѕРІР°РЅРёРµ РїСЂРѕРІРѕРґРёРјРѕСЃС‚РµР№ РґР»СЏ РјРµС‚РѕРґР° Р—РµР№РґРµР»СЏ СЃ СѓРґР°Р»РµРЅРёРµРј РѕС‚СЂРёС†Р°С‚РµР»СЊРЅС‹С…
 	for (pvet pv = vet_s; pv < vet_s + nv; pv++) if (!pv->sta) pv->form_c();
 
 	for (pny = nod1_s; pny < nod1_s + ny; pny++)
@@ -488,7 +488,7 @@ void  steady_state::zeid2(ptrdiff_t ny, ptrdiff_t nby)
 		pn->sii = yii;
 	}
 
-	// Цикл метода Зейделя
+	// Р¦РёРєР» РјРµС‚РѕРґР° Р—РµР№РґРµР»СЏ
 
 	
 	for (it = 0; it < consb.itz; it++)
@@ -514,7 +514,7 @@ void  steady_state::zeid2(ptrdiff_t ny, ptrdiff_t nby)
 				du += pnyj->u*((pv->pnb == pn) ? pv->sij : pv->sji);
 			}
 			compl siii = pn->sii;
-			if (0) // Добавление нагрузки в диагональ - отключено в текущей версии
+			if (0) // Р”РѕР±Р°РІР»РµРЅРёРµ РЅР°РіСЂСѓР·РєРё РІ РґРёР°РіРѕРЅР°Р»СЊ - РѕС‚РєР»СЋС‡РµРЅРѕ РІ С‚РµРєСѓС‰РµР№ РІРµСЂСЃРёРё
 			{
 				if (sn.real() > 0. && sn.imag() > 0.)
 				{
@@ -534,16 +534,16 @@ void  steady_state::zeid2(ptrdiff_t ny, ptrdiff_t nby)
 
 				q = s1.imag() + tok.imag()*ud.real() - tok.real()*ud.imag();
 
-				if (it > consb.itz_ogr_max) //Контроль ограничений по Qmax начиная с заданной итерации
+				if (it > consb.itz_ogr_max) //РљРѕРЅС‚СЂРѕР»СЊ РѕРіСЂР°РЅРёС‡РµРЅРёР№ РїРѕ Qmax РЅР°С‡РёРЅР°СЏ СЃ Р·Р°РґР°РЅРЅРѕР№ РёС‚РµСЂР°С†РёРё
 				{
-					if ((it > consb.itz_ogr_max + consb.itz_ogr_min) && q < pn->qmin - consb.qk && method_ogr != DOP_OGR) //Контроль ограничений по Qmin начиная с заданной итерации
+					if ((it > consb.itz_ogr_max + consb.itz_ogr_min) && q < pn->qmin - consb.qk && method_ogr != DOP_OGR) //РљРѕРЅС‚СЂРѕР»СЊ РѕРіСЂР°РЅРёС‡РµРЅРёР№ РїРѕ Qmin РЅР°С‡РёРЅР°СЏ СЃ Р·Р°РґР°РЅРЅРѕР№ РёС‚РµСЂР°С†РёРё
 					{
 						pn->tip = GEN_MIN;
 						q = pn->qmin;
 						q1 = q;
 						check = false;
 					}
-					else if (q > pn->qmax + consb.qk && method_ogr != DOP_OGR) //Контроль ограничений по Qmax
+					else if (q > pn->qmax + consb.qk && method_ogr != DOP_OGR) //РљРѕРЅС‚СЂРѕР»СЊ РѕРіСЂР°РЅРёС‡РµРЅРёР№ РїРѕ Qmax
 					{
 						pn->tip = GEN_MAX;
 						q = pn->qmax;
@@ -578,7 +578,7 @@ void  steady_state::zeid2(ptrdiff_t ny, ptrdiff_t nby)
 
 
 
-			if (check)switch (pn->tip) // Контроль восстановления напряжений
+			if (check)switch (pn->tip) // РљРѕРЅС‚СЂРѕР»СЊ РІРѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРёСЏ РЅР°РїСЂСЏР¶РµРЅРёР№
 			{
 			case GEN_MIN:
 				if (pn->get_difv() > -consb.v) break;
@@ -603,10 +603,10 @@ void  steady_state::zeid2(ptrdiff_t ny, ptrdiff_t nby)
 
 		ATLTRACE("\n%g %d", Pmax, imax);
 	}
-	// Конец цикла метода Зейделя
+	// РљРѕРЅРµС† С†РёРєР»Р° РјРµС‚РѕРґР° Р—РµР№РґРµР»СЏ
 
 
-	// Расчет напряжений в полярных координатах с учетом возможного проворота угла
+	// Р Р°СЃС‡РµС‚ РЅР°РїСЂСЏР¶РµРЅРёР№ РІ РїРѕР»СЏСЂРЅС‹С… РєРѕРѕСЂРґРёРЅР°С‚Р°С… СЃ СѓС‡РµС‚РѕРј РІРѕР·РјРѕР¶РЅРѕРіРѕ РїСЂРѕРІРѕСЂРѕС‚Р° СѓРіР»Р°
 	for (pn = nod1_s; pn < nod1_s + nby; pn++)
 	{
 		pnod1 pny = pn->a.nsp;

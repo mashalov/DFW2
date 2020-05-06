@@ -1,4 +1,4 @@
-
+п»ї
 #include "stdafx.h"
 #include "common.h"
 #include "rg_ss.h"
@@ -24,7 +24,7 @@ int steady_state::main_loop_with_utr(bool utr, bool restsart )
 
 if (!utr)	return			rg_main_loop(ny_save, nby_save, &matr);
 
-	// начальный расчет
+	// РЅР°С‡Р°Р»СЊРЅС‹Р№ СЂР°СЃС‡РµС‚
 	set_save_first(true);
 //	calc_det(ny_niyp, nby_save);
 	int kod = rg_main_loop(ny_save, nby_save, &matr, 1);
@@ -52,7 +52,7 @@ if (!utr)	return			rg_main_loop(ny_save, nby_save, &matr);
 	bool finish = false;
 	int successful_steps = 0, steps = 0;
 
-	//  -- константы
+	//  -- РєРѕРЅСЃС‚Р°РЅС‚С‹
 	int  successful_steps_max = 3;
 	int steps_max = 10;
 	double eps = 10. ;
@@ -86,7 +86,7 @@ if (!utr)	return			rg_main_loop(ny_save, nby_save, &matr);
 		{
 //			calc_det(ny_niyp, nby_save);
 			save_it(ny_save, 1.);
-			// Проверяем сходимость
+			// РџСЂРѕРІРµСЂСЏРµРј СЃС…РѕРґРёРјРѕСЃС‚СЊ
 			if (finish)
 			{
 				//if (test_finish || is_test_finish)
@@ -103,7 +103,7 @@ if (!utr)	return			rg_main_loop(ny_save, nby_save, &matr);
 
 			}
 
-			// делим вперед
+			// РґРµР»РёРј РІРїРµСЂРµРґ
 			//if (successful_steps < successful_steps_max)
 			//{
 				step /= 2.;
@@ -162,13 +162,13 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 	//	method_ogr=DOP_OGR;
 	//	method_ogr=OLD_OGR;
 	int stag=-1;
-	//	ogr_out=true; // временно для отладки
+	//	ogr_out=true; // РІСЂРµРјРµРЅРЅРѕ РґР»СЏ РѕС‚Р»Р°РґРєРё
 
-	// максимальное количество переключений типов генераторных узлов
+	// РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РїРµСЂРµРєР»СЋС‡РµРЅРёР№ С‚РёРїРѕРІ РіРµРЅРµСЂР°С‚РѕСЂРЅС‹С… СѓР·Р»РѕРІ
 	if (max_coun_u_ogr <=0)max_coun_u_ogr=4;
-	if(!blok_out) stag=_Module.Logger.OpenStage ("Расчет установившегося режима");
+	if(!blok_out) stag=_Module.Logger.OpenStage ("Р Р°СЃС‡РµС‚ СѓСЃС‚Р°РЅРѕРІРёРІС€РµРіРѕСЃСЏ СЂРµР¶РёРјР°");
 	int kod=NORM,kod1,nb=0;;
-	// какой-то счетчик анормальных отклонений напряжения
+	// РєР°РєРѕР№-С‚Рѕ СЃС‡РµС‚С‡РёРє Р°РЅРѕСЂРјР°Р»СЊРЅС‹С… РѕС‚РєР»РѕРЅРµРЅРёР№ РЅР°РїСЂСЏР¶РµРЅРёСЏ
 	glob_anormal=0;
 	pnod1 pn;
 	char st;
@@ -181,9 +181,9 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 	log_printf(LOG_INFO,-1,"",get_Rstring(A_IDS_RG_FZ));
 	for(pn=nod1_s;pn<nod1_s+ny;pn++)
 	{
-		// обнуляем счетчики переключений типов узлов
+		// РѕР±РЅСѓР»СЏРµРј СЃС‡РµС‚С‡РёРєРё РїРµСЂРµРєР»СЋС‡РµРЅРёР№ С‚РёРїРѕРІ СѓР·Р»РѕРІ
 		pn->countu_min=pn->countu_max=0;
-		// обнуляем действия переключения узлов и степени ненормальных отклонений
+		// РѕР±РЅСѓР»СЏРµРј РґРµР№СЃС‚РІРёСЏ РїРµСЂРµРєР»СЋС‡РµРЅРёСЏ СѓР·Р»РѕРІ Рё СЃС‚РµРїРµРЅРё РЅРµРЅРѕСЂРјР°Р»СЊРЅС‹С… РѕС‚РєР»РѕРЅРµРЅРёР№
 		pn->action = 0; pn->anormal = 0;
 		if( pn->tip==GEN)		 pn->sg=compl(pn->sg.real(),0.);
 		if (pn->tip == BAZA &&fwc  && pn->pi->tip == islands::I_GEN) pn->sg = compl(pn->sg.real(), 0.);
@@ -229,10 +229,10 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 	bool use_zeidel=true;
 	bool not_save2 = true;
 	test_iter=0;
-	// константы для метода выбора шага
-	double neb_crit=0.99999;   // критическое уменьшение небалансов
-	double decr_step=0.6; // уменьшение шага при отклонении от 1 Уменьшения небалансов
-	double decr_abend=0.4; // уменьшение шага при фиксации аварийного завершения
+	// РєРѕРЅСЃС‚Р°РЅС‚С‹ РґР»СЏ РјРµС‚РѕРґР° РІС‹Р±РѕСЂР° С€Р°РіР°
+	double neb_crit=0.99999;   // РєСЂРёС‚РёС‡РµСЃРєРѕРµ СѓРјРµРЅСЊС€РµРЅРёРµ РЅРµР±Р°Р»Р°РЅСЃРѕРІ
+	double decr_step=0.6; // СѓРјРµРЅСЊС€РµРЅРёРµ С€Р°РіР° РїСЂРё РѕС‚РєР»РѕРЅРµРЅРёРё РѕС‚ 1 РЈРјРµРЅСЊС€РµРЅРёСЏ РЅРµР±Р°Р»Р°РЅСЃРѕРІ
+	double decr_abend=0.4; // СѓРјРµРЅСЊС€РµРЅРёРµ С€Р°РіР° РїСЂРё С„РёРєСЃР°С†РёРё Р°РІР°СЂРёР№РЅРѕРіРѕ Р·Р°РІРµСЂС€РµРЅРёСЏ
 	double min_step=0.00001;
 	
 	time_all.start();
@@ -242,37 +242,37 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 
 //		char buf[20000];
 
-		// по умолчанию итерацию не повторяем
+		// РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РёС‚РµСЂР°С†РёСЋ РЅРµ РїРѕРІС‚РѕСЂСЏРµРј
 		bool repeat_state=false;
-		// шаг итерации по умолчанию 0
+		// С€Р°Рі РёС‚РµСЂР°С†РёРё РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ 0
 		if (rval.iter == ZERO)rval.step=1;
 		rval.rk=0;
 		double rk_dop=0;;
 		do 
 		{
 			repeat_state=false;
-			// определяем максимальное отклонение напряжения узла от номинального и максимальный угол по ветви
-			max_vd(ny); // расчет максимального  отклонения напр. от ном. , макс угла, макс кт
+			// РѕРїСЂРµРґРµР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅРѕРµ РѕС‚РєР»РѕРЅРµРЅРёРµ РЅР°РїСЂСЏР¶РµРЅРёСЏ СѓР·Р»Р° РѕС‚ РЅРѕРјРёРЅР°Р»СЊРЅРѕРіРѕ Рё РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СѓРіРѕР» РїРѕ РІРµС‚РІРё
+			max_vd(ny); // СЂР°СЃС‡РµС‚ РјР°РєСЃРёРјР°Р»СЊРЅРѕРіРѕ  РѕС‚РєР»РѕРЅРµРЅРёСЏ РЅР°РїСЂ. РѕС‚ РЅРѕРј. , РјР°РєСЃ СѓРіР»Р°, РјР°РєСЃ РєС‚
 			if (method==M_OLD)
 			{
 				kod=NORM;
-				// не на первой итерации проверяем аварийное завершение по превышению угла и напряжения
-				// и выбираем шаг чтобы не выйти за ограничения
-				if(rval.iter != ZERO) kod=ab_kon(ny,rk_dop); //проверка аварийного завершения по отклонению рассчитанному max_VD 
-				// если шаг не нулевой повторяем шаг
-				if ( rk_dop !=0. ) // обработка шага при аварийном завершении 
+				// РЅРµ РЅР° РїРµСЂРІРѕР№ РёС‚РµСЂР°С†РёРё РїСЂРѕРІРµСЂСЏРµРј Р°РІР°СЂРёР№РЅРѕРµ Р·Р°РІРµСЂС€РµРЅРёРµ РїРѕ РїСЂРµРІС‹С€РµРЅРёСЋ СѓРіР»Р° Рё РЅР°РїСЂСЏР¶РµРЅРёСЏ
+				// Рё РІС‹Р±РёСЂР°РµРј С€Р°Рі С‡С‚РѕР±С‹ РЅРµ РІС‹Р№С‚Рё Р·Р° РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
+				if(rval.iter != ZERO) kod=ab_kon(ny,rk_dop); //РїСЂРѕРІРµСЂРєР° Р°РІР°СЂРёР№РЅРѕРіРѕ Р·Р°РІРµСЂС€РµРЅРёСЏ РїРѕ РѕС‚РєР»РѕРЅРµРЅРёСЋ СЂР°СЃСЃС‡РёС‚Р°РЅРЅРѕРјСѓ max_VD 
+				// РµСЃР»Рё С€Р°Рі РЅРµ РЅСѓР»РµРІРѕР№ РїРѕРІС‚РѕСЂСЏРµРј С€Р°Рі
+				if ( rk_dop !=0. ) // РѕР±СЂР°Р±РѕС‚РєР° С€Р°РіР° РїСЂРё Р°РІР°СЂРёР№РЅРѕРј Р·Р°РІРµСЂС€РµРЅРёРё 
 				{			
-					// что-то корректируем в матрице
+					// С‡С‚Рѕ-С‚Рѕ РєРѕСЂСЂРµРєС‚РёСЂСѓРµРј РІ РјР°С‚СЂРёС†Рµ
 					kor_maty(rk_dop);
-					// считаем новые модули и углы
+					// СЃС‡РёС‚Р°РµРј РЅРѕРІС‹Рµ РјРѕРґСѓР»Рё Рё СѓРіР»С‹
 					new_v(ny,rk_dop);
-					// повторяем контроль
+					// РїРѕРІС‚РѕСЂСЏРµРј РєРѕРЅС‚СЂРѕР»СЊ
 					max_vd(ny);
 				}
 			}
 
 			time_new.start();
-			// считаем модули и углы после итерации
+			// СЃС‡РёС‚Р°РµРј РјРѕРґСѓР»Рё Рё СѓРіР»С‹ РїРѕСЃР»Рµ РёС‚РµСЂР°С†РёРё
 			new_u(ny);
 			time_new.finish();
 			rval.max_neb_q = rval.s_max = rval.sqrp = rval.sqrq = 0.;
@@ -281,14 +281,14 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 			time_neb.start(); 
 
 			//sij_all_line(ny);
-			//pneb2(ny);   // расчет небалансов
+			//pneb2(ny);   // СЂР°СЃС‡РµС‚ РЅРµР±Р°Р»Р°РЅСЃРѕРІ
 
 
-//			for (pnod1 pnk = nod1_s; pnk < nod1_s + ny; pnk++) if (pnk->npu == 909) 		log_printf(LOG_INFO, -1, "", "Текущее  V=%.2f  \n", pnk->v);
+//			for (pnod1 pnk = nod1_s; pnk < nod1_s + ny; pnk++) if (pnk->npu == 909) 		log_printf(LOG_INFO, -1, "", "РўРµРєСѓС‰РµРµ  V=%.2f  \n", pnk->v);
 
-			pneb(ny);   // расчет небалансов
+			pneb(ny);   // СЂР°СЃС‡РµС‚ РЅРµР±Р°Р»Р°РЅСЃРѕРІ
 
-			// здесь сохраняются небалансы узлов по внешнему флагу. Наверное для утяжеления
+			// Р·РґРµСЃСЊ СЃРѕС…СЂР°РЅСЏСЋС‚СЃСЏ РЅРµР±Р°Р»Р°РЅСЃС‹ СѓР·Р»РѕРІ РїРѕ РІРЅРµС€РЅРµРјСѓ С„Р»Р°РіСѓ. РќР°РІРµСЂРЅРѕРµ РґР»СЏ СѓС‚СЏР¶РµР»РµРЅРёСЏ
 			if (save2 == 1 && not_save2) {
 				not_save2 = false; 	
 				for (pnod1 pny = nod1_s; pny < nod1_s + ny; pny++) 
@@ -300,22 +300,22 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 			//{
 			//	FILE *str = fopen("c:\\tmp\\itp.csv", "a");
 			//	fprintf(str, "----------------%d------------------------- \n", rval.iter);
-			//	//fprintf(str, "-Нагрузка \n");
+			//	//fprintf(str, "-РќР°РіСЂСѓР·РєР° \n");
 			//	//for (pnod1 pn = nod1_s; pn < nod1_s + ny; ++pn)
 			//	//{
 			//	//	fprintf(str, "%8d %8d %12.2f %12.2f  \n ", pn->npu,pn->tip, pn->sn.real(), pn->sn.imag());
 			//	//}
-			//	//fprintf(str, "-Генерация \n");
+			//	//fprintf(str, "-Р“РµРЅРµСЂР°С†РёСЏ \n");
 			//	//for (pnod1 pn = nod1_s; pn < nod1_s + ny; ++pn)
 			//	//{
 			//	//	fprintf(str, "%8d %8d %12.3f %12.3f  \n ", pn->npu,pn->tip, pn->sg.real(), pn->sg.imag());
 			//	//}
-			//	fprintf(str, "-Напряжения \n");
+			//	fprintf(str, "-РќР°РїСЂСЏР¶РµРЅРёСЏ \n");
 			//	for (pnod1 pn = nod1_s; pn < nod1_s + ny; ++pn)
 			//	{
 			//		fprintf(str, "%8d %12.2f %12.2f %12.2f %12.2f  \n ", pn->npu, pn->v, pn->a.delta, pn->r.real(), pn->r.imag());
 			//	}
-			//	//fprintf(str, "-Небалансы \n");
+			//	//fprintf(str, "-РќРµР±Р°Р»Р°РЅСЃС‹ \n");
 			//	//for (pnod1 pn = nod1_s; pn < nod1_s + ny; ++pn)
 			//	//{
 			//	//	fprintf(str, "%8d %12.3f %12.3f \n ", pn->npu, pn->r.real(), pn->r.imag());
@@ -329,18 +329,18 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 
 
 			facts_slave_neb();
-			// определяем узлы с максимальными небалансами
-			// и заодно считаем квадраты небаналсов rval.sqrp / rval.sqrq
+			// РѕРїСЂРµРґРµР»СЏРµРј СѓР·Р»С‹ СЃ РјР°РєСЃРёРјР°Р»СЊРЅС‹РјРё РЅРµР±Р°Р»Р°РЅСЃР°РјРё
+			// Рё Р·Р°РѕРґРЅРѕ СЃС‡РёС‚Р°РµРј РєРІР°РґСЂР°С‚С‹ РЅРµР±Р°РЅР°Р»СЃРѕРІ rval.sqrp / rval.sqrq
 			for(pnod1 pny=nod1_s;pny<nod1_s+ny;pny++) max_p(pny);
 			time_neb.finish();
 			st=' ';
-			// проверка длины шага по величине небалансов
+			// РїСЂРѕРІРµСЂРєР° РґР»РёРЅС‹ С€Р°РіР° РїРѕ РІРµР»РёС‡РёРЅРµ РЅРµР±Р°Р»Р°РЅСЃРѕРІ
 
 			//			double const1=0.9;
 			double r = sqrt(rval.sqrp + rval.sqrq);
 				if (r == 0.) r = 1.;
 			double rk= sqrt(rval.sqrp_old+rval.sqrq_old)/r;
-			// рассчитываем шаг по небалансу
+			// СЂР°СЃСЃС‡РёС‚С‹РІР°РµРј С€Р°Рі РїРѕ РЅРµР±Р°Р»Р°РЅСЃСѓ
 			rval.rk=rk;
 			/*			double rk_inf=max(rval.s_max_old,rval.max_neb_q_old)/max(rval.s_max,rval.max_neb_q);
 			double rk_p=sqrt(rval.sqrp_old)/sqrt(rval.sqrp),kr_q=sqrt(rval.sqrq_old)/sqrt(rval.sqrq);
@@ -355,9 +355,9 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 			*/
 			if (method==M_STEP && newton_step)
 			{
-				// если небаланс меньше критического уменьшения (?) повторяем итерацию 
-				// видимо имеется в виду что если он меньше 1 то надо пересчитать матрицу и новые напряжения
-				// а если нет - то продолжить так
+				// РµСЃР»Рё РЅРµР±Р°Р»Р°РЅСЃ РјРµРЅСЊС€Рµ РєСЂРёС‚РёС‡РµСЃРєРѕРіРѕ СѓРјРµРЅСЊС€РµРЅРёСЏ (?) РїРѕРІС‚РѕСЂСЏРµРј РёС‚РµСЂР°С†РёСЋ 
+				// РІРёРґРёРјРѕ РёРјРµРµС‚СЃСЏ РІ РІРёРґСѓ С‡С‚Рѕ РµСЃР»Рё РѕРЅ РјРµРЅСЊС€Рµ 1 С‚Рѕ РЅР°РґРѕ РїРµСЂРµСЃС‡РёС‚Р°С‚СЊ РјР°С‚СЂРёС†Сѓ Рё РЅРѕРІС‹Рµ РЅР°РїСЂСЏР¶РµРЅРёСЏ
+				// Р° РµСЃР»Рё РЅРµС‚ - С‚Рѕ РїСЂРѕРґРѕР»Р¶РёС‚СЊ С‚Р°Рє
 				if (rk <neb_crit) 
 				{
 					rval.step=decr_step*rk*rk_ab;
@@ -369,10 +369,10 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 				else rval.step=rk_ab;
 			}
 
-			// если повтор итерации пока не нужен - проверяем ограничения по Q
+			// РµСЃР»Рё РїРѕРІС‚РѕСЂ РёС‚РµСЂР°С†РёРё РїРѕРєР° РЅРµ РЅСѓР¶РµРЅ - РїСЂРѕРІРµСЂСЏРµРј РѕРіСЂР°РЅРёС‡РµРЅРёСЏ РїРѕ Q
 			if( method==M_STEP && repeat_state==false &&  con_q(ny,TRUE) == V_MAX) 
 			{ 
-				// если есть ограничения по Vmax > 10% - отменяем итерацию полностью (вычитаем rval.step) пересчитываем матрицу и напряжения и повторяем итерацию
+				// РµСЃР»Рё РµСЃС‚СЊ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ РїРѕ Vmax > 10% - РѕС‚РјРµРЅСЏРµРј РёС‚РµСЂР°С†РёСЋ РїРѕР»РЅРѕСЃС‚СЊСЋ (РІС‹С‡РёС‚Р°РµРј rval.step) РїРµСЂРµСЃС‡РёС‚С‹РІР°РµРј РјР°С‚СЂРёС†Сѓ Рё РЅР°РїСЂСЏР¶РµРЅРёСЏ Рё РїРѕРІС‚РѕСЂСЏРµРј РёС‚РµСЂР°С†РёСЋ
 				kor_maty(-rval.step);
 				new_v(ny,-rval.step);
 				repeat_state=true;
@@ -386,9 +386,9 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 		kod1=Q_MAX;
 		int kod_v = 0, kod_f = 0;;
 
-		// контроль ограничений делаем после того, как небаланс по Q снизился ниже заданного
+		// РєРѕРЅС‚СЂРѕР»СЊ РѕРіСЂР°РЅРёС‡РµРЅРёР№ РґРµР»Р°РµРј РїРѕСЃР»Рµ С‚РѕРіРѕ, РєР°Рє РЅРµР±Р°Р»Р°РЅСЃ РїРѕ Q СЃРЅРёР·РёР»СЃСЏ РЅРёР¶Рµ Р·Р°РґР°РЅРЅРѕРіРѕ
 
-		if( rval.max_neb_q < consb.qk ) // контроль ограничений Q в нормальном состоянии
+		if( rval.max_neb_q < consb.qk ) // РєРѕРЅС‚СЂРѕР»СЊ РѕРіСЂР°РЅРёС‡РµРЅРёР№ Q РІ РЅРѕСЂРјР°Р»СЊРЅРѕРј СЃРѕСЃС‚РѕСЏРЅРёРё
 		{ 
 			kod1 = con_q( ny, FALSE );
 			if (fwc && kod1) { 
@@ -406,7 +406,7 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 		{
 			double d;
 
-			// видимо считается набаланс от ограничения
+			// РІРёРґРёРјРѕ СЃС‡РёС‚Р°РµС‚СЃСЏ РЅР°Р±Р°Р»Р°РЅСЃ РѕС‚ РѕРіСЂР°РЅРёС‡РµРЅРёСЏ
 			oneb(ny);
 			d=rval.sqrp+consb.kfd*rval.sqrq;
 			if(d<ro_min) { //save_it(ny); 
@@ -416,23 +416,23 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 		if (kod1==ZERO && calc_vpt()==false) kod1=VPT;
 		if (kod1==ZERO && facts_test_nb()==false ) kod1=Q_MAX; 
 
-		// запоминаем текущие небалансы для выбора шага
+		// Р·Р°РїРѕРјРёРЅР°РµРј С‚РµРєСѓС‰РёРµ РЅРµР±Р°Р»Р°РЅСЃС‹ РґР»СЏ РІС‹Р±РѕСЂР° С€Р°РіР°
 		rval.sqrp_old =rval.sqrp; 
 		rval.sqrq_old=rval.sqrq;
 		rval.max_neb_q_old=rval.max_neb_q;
 		rval.s_max_old=rval.s_max;
 
-		// выводим результат итерации
+		// РІС‹РІРѕРґРёРј СЂРµР·СѓР»СЊС‚Р°С‚ РёС‚РµСЂР°С†РёРё
 		out_tb(st);
 		if (method==M_STEP && kod != NORM && rval.step > min_step) kod=NORM; 
 		if (fwc && kod_v) kod = AB_CODE_FREC_Q;
 		if (fwc && kod_f) kod = AB_CODE_FREC_P;
 		//ustas if( (kod1==ZERO || kod !=NORM) && !jakk) break;
 		//if( (kod1==ZERO || kod !=NORM) && (!jakk) && ( one_cycle != 1 )) break;
-		//one_cycle = -1;// сбросить переключатель выполнения хотя бы одного цикла расчета режима
+		//one_cycle = -1;// СЃР±СЂРѕСЃРёС‚СЊ РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ РІС‹РїРѕР»РЅРµРЅРёСЏ С…РѕС‚СЏ Р±С‹ РѕРґРЅРѕРіРѕ С†РёРєР»Р° СЂР°СЃС‡РµС‚Р° СЂРµР¶РёРјР°
 		if( (kod1==ZERO ||kod1==AB || kod !=NORM) && (!jakk) && ( blOneCycle == false )) break;
 		if ((blOneCycle == true || jakk) && kod1 == ZERO) nzei = 1;
-		blOneCycle = false;// сбросить переключатель выполнения хотя бы одного цикла расчета режима
+		blOneCycle = false;// СЃР±СЂРѕСЃРёС‚СЊ РїРµСЂРµРєР»СЋС‡Р°С‚РµР»СЊ РІС‹РїРѕР»РЅРµРЅРёСЏ С…РѕС‚СЏ Р±С‹ РѕРґРЅРѕРіРѕ С†РёРєР»Р° СЂР°СЃС‡РµС‚Р° СЂРµР¶РёРјР°
 
 		if(use_zeidel && !nzei)	
 		{
@@ -460,7 +460,7 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 
 			//SaveMatrixY("c:\\projects\\MatrixRG.txt", ny);// - nby);
 			time_formj.finish();
-			// масштабирование небалансов
+			// РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёРµ РЅРµР±Р°Р»Р°РЅСЃРѕРІ
 			scale_nb(ny);
 			if( method==M_POWELL)
 			{
@@ -486,7 +486,7 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 					fprintf(str, "----------------%d------------------------- \n", rval.iter);
 
 
-					fprintf(str, "-Напряжения \n");
+					fprintf(str, "-РќР°РїСЂСЏР¶РµРЅРёСЏ \n");
 					for (pnod2 ptn = nod2_s; ptn < nod2_s + ny_niyp; ptn++)
 					{
 						pnod1 pny = ptn->niyp;
@@ -496,7 +496,7 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 					}
 
 
-					fprintf(str, "-Небалансы \n");
+					fprintf(str, "-РќРµР±Р°Р»Р°РЅСЃС‹ \n");
 					for (pnod2 ptn = nod2_s; ptn < nod2_s + ny_niyp; ptn++)
 					{
 						pnod1 pny = ptn->niyp;
@@ -551,15 +551,15 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 			if(step_mtd > 0)	save_v(ny);
 			bool full_test = false;
 			if ( method==M_STEP) full_test = true;
-			// проверяем длину шага
+			// РїСЂРѕРІРµСЂСЏРµРј РґР»РёРЅСѓ С€Р°РіР°
 				kod=test_new_v(full_test, ny,rk_ab);
-				// если шаг должен быть уменьшен - домножаем его на аварийный коэффициент
+				// РµСЃР»Рё С€Р°Рі РґРѕР»Р¶РµРЅ Р±С‹С‚СЊ СѓРјРµРЅСЊС€РµРЅ - РґРѕРјРЅРѕР¶Р°РµРј РµРіРѕ РЅР° Р°РІР°СЂРёР№РЅС‹Р№ РєРѕСЌС„С„РёС†РёРµРЅС‚
 				if (rk_ab < 1. && full_test) rk_ab*=decr_abend; 
 				rval.step = rk_ab;
 
 			if (save_first && !is_saved) {
 				save_it(ny, rk_ab); is_saved = true;
-	//			for (pnod1 pnk = nod1_s; pnk < nod1_s + ny; pnk++) if (pnk->npu == 909) 		log_printf(LOG_INFO, -1, "", "Сохранено  V=%.2f  \n", pnk->v);
+	//			for (pnod1 pnk = nod1_s; pnk < nod1_s + ny; pnk++) if (pnk->npu == 909) 		log_printf(LOG_INFO, -1, "", "РЎРѕС…СЂР°РЅРµРЅРѕ  V=%.2f  \n", pnk->v);
 
 			}
 
@@ -567,10 +567,10 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 			kor_maty(rk_ab);
 			new_v(ny,rk_ab);
 
-			// проверяем не вышли ли на критические уровни напряжения
+			// РїСЂРѕРІРµСЂСЏРµРј РЅРµ РІС‹С€Р»Рё Р»Рё РЅР° РєСЂРёС‚РёС‡РµСЃРєРёРµ СѓСЂРѕРІРЅРё РЅР°РїСЂСЏР¶РµРЅРёСЏ
 			if( method ==M_OLD &&con_q(ny,TRUE) == V_MAX ) 
 			{ 
-				// если вышли - отменяем итерацию
+				// РµСЃР»Рё РІС‹С€Р»Рё - РѕС‚РјРµРЅСЏРµРј РёС‚РµСЂР°С†РёСЋ
 				kor_maty(-rk_ab);
 				new_v(ny,-rk_ab);
 				newton_step=false;
@@ -591,7 +591,7 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 
 	new_u(ny);
 	sij_all_line(ny);
-	pneb(ny);   // расчет небалансов
+	pneb(ny);   // СЂР°СЃС‡РµС‚ РЅРµР±Р°Р»Р°РЅСЃРѕРІ
 
 
 
@@ -603,13 +603,13 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 //		if (pn->countu_min > max_coun_u_ogr &&	pn->v > pn->vzd )
 		if (pn->countu_min > max_coun_u_ogr &&	dvr > consb.v)
 		{
-			log_printf(LOG_WARNING,pn->rindex,NODE_V,"Игнорировано VMIN :%d V=%.2f Vзд=%.2f \n",pn->npu,pn->v,pn->vzd);
+			log_printf(LOG_WARNING,pn->rindex,NODE_V,"РРіРЅРѕСЂРёСЂРѕРІР°РЅРѕ VMIN :%d V=%.2f VР·Рґ=%.2f \n",pn->npu,pn->v,pn->vzd);
 			kod = AB_CODE_IGNOGRV;
 		}
 //		if (pn->countu_max > max_coun_u_ogr 	&&	pn->v < pn->vzd) 
 		if (pn->countu_max > max_coun_u_ogr 	&&	dvr < -consb.v)
 		{
-			log_printf(LOG_WARNING,pn->rindex,NODE_V,"Игнорировано VMAX :%d V=%.2f Vзд=%.2f \n",pn->npu,pn->v,pn->vzd);
+			log_printf(LOG_WARNING,pn->rindex,NODE_V,"РРіРЅРѕСЂРёСЂРѕРІР°РЅРѕ VMAX :%d V=%.2f VР·Рґ=%.2f \n",pn->npu,pn->v,pn->vzd);
 			kod = AB_CODE_IGNOGRV;
 		}
 
@@ -669,7 +669,7 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 	for (pnod1 pny = nod1_s; pny<nod1_s + ny; pny++)
 		if (pny->genas)
 		{
-			if (pny->tip == BAZA)			//для базы делим P узла пропорционально старым значениям
+			if (pny->tip == BAZA)			//РґР»СЏ Р±Р°Р·С‹ РґРµР»РёРј P СѓР·Р»Р° РїСЂРѕРїРѕСЂС†РёРѕРЅР°Р»СЊРЅРѕ СЃС‚Р°СЂС‹Рј Р·РЅР°С‡РµРЅРёСЏРј
 			{
 				double psum = 0;
 				int num_g = 0;
@@ -704,7 +704,7 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 		restore_it(ny);
 		new_u(ny);
 		sij_all_line(ny);
-//		for (pnod1 pnk = nod1_s; pnk < nod1_s + ny; pnk++) if (pnk->npu==909) 		log_printf(LOG_INFO, -1, "", "Восстановлено  V=%.2f  \n",  pnk->v);
+//		for (pnod1 pnk = nod1_s; pnk < nod1_s + ny; pnk++) if (pnk->npu==909) 		log_printf(LOG_INFO, -1, "", "Р’РѕСЃСЃС‚Р°РЅРѕРІР»РµРЅРѕ  V=%.2f  \n",  pnk->v);
 
 	}
 
@@ -717,12 +717,12 @@ int steady_state::rg_main_loop (ptrdiff_t ny, ptrdiff_t nby,int *matr0 , int sav
 
 
 
-	time_all.print (" Время расчета ");
-	time_trian.print (" Время триангуляции ");
-	time_neb.print (" Время расчета небалансов ");
-	time_formj.print (" Время формирование матрицы ");
-	time_solv.print (" Время решения LU ");
-	time_new.print (" Время нов напр ");
+	time_all.print (" Р’СЂРµРјСЏ СЂР°СЃС‡РµС‚Р° ");
+	time_trian.print (" Р’СЂРµРјСЏ С‚СЂРёР°РЅРіСѓР»СЏС†РёРё ");
+	time_neb.print (" Р’СЂРµРјСЏ СЂР°СЃС‡РµС‚Р° РЅРµР±Р°Р»Р°РЅСЃРѕРІ ");
+	time_formj.print (" Р’СЂРµРјСЏ С„РѕСЂРјРёСЂРѕРІР°РЅРёРµ РјР°С‚СЂРёС†С‹ ");
+	time_solv.print (" Р’СЂРµРјСЏ СЂРµС€РµРЅРёСЏ LU ");
+	time_new.print (" Р’СЂРµРјСЏ РЅРѕРІ РЅР°РїСЂ ");
 
 	if(stag >=0) _Module.Logger.CloseStage (stag);
 	return kod;
@@ -783,7 +783,7 @@ int steady_state::out_ms(int lev,int kod)
 		}break;
 	case   AB_CODE_FREC_Q:
 	case   AB_CODE_FREC_P:
-		log_printf(LOG_ERROR, -1, "", "Невозможно выдержать баланс мощности при расчете с учетом частоты");
+		log_printf(LOG_ERROR, -1, "", "РќРµРІРѕР·РјРѕР¶РЅРѕ РІС‹РґРµСЂР¶Р°С‚СЊ Р±Р°Р»Р°РЅСЃ РјРѕС‰РЅРѕСЃС‚Рё РїСЂРё СЂР°СЃС‡РµС‚Рµ СЃ СѓС‡РµС‚РѕРј С‡Р°СЃС‚РѕС‚С‹");
 		break;
 	case ITER:
 	default:
@@ -798,7 +798,7 @@ int steady_state::out_ms(int lev,int kod)
 
 
 
-int steady_state::out_tb(char st) // вывод стpоки на итеpации
+int steady_state::out_tb(char st) // РІС‹РІРѕРґ СЃС‚pРѕРєРё РЅР° РёС‚РµpР°С†РёРё
 {
 	string s;
 	s = build_str( get_Rstring(A_IDS_RG_FM),		
