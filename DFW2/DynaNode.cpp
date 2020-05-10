@@ -567,10 +567,10 @@ CDynaNodeContainer::~CDynaNodeContainer()
 	ClearSuperLinks();
 }
 
-void CDynaNodeContainer::CalcAdmittances(bool bSeidell)
+void CDynaNodeContainer::CalcAdmittances(bool bFixNegativeZs)
 {
 	for (auto&& it : m_DevVec)
-		static_cast<CDynaNodeBase*>(it)->CalcAdmittances(bSeidell);
+		static_cast<CDynaNodeBase*>(it)->CalcAdmittances(bFixNegativeZs);
 }
 
 // рассчитывает шунтовые части нагрузок узлов
@@ -622,7 +622,7 @@ void CDynaNodeBase::CalculateShuntParts()
 	dLRCShuntPartQ /= V02;
 }
 
-void CDynaNodeBase::CalcAdmittances(bool bSeidell)
+void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 {
 	Yii = -cplx(G + Gshunt, B + Bshunt);
 	m_bInMetallicSC = !(_finite(Yii.real()) && _finite(Yii.imag()));
@@ -641,21 +641,10 @@ void CDynaNodeBase::CalcAdmittances(bool bSeidell)
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
 			// проводимости ветви будут рассчитаны с учетом того,
 			// что она могла быть отнесена внутрь суперузла
-			pBranch->CalcAdmittances(bSeidell);
-
-			// TODO Single-end trip
-			switch (pBranch->m_BranchState)
-			{
-			case CDynaBranch::BRANCH_OFF:
-				break;
-			case CDynaBranch::BRANCH_ON:
-				Yii -= (this == pBranch->m_pNodeIp) ? pBranch->Yips : pBranch->Yiqs;
-				break;
-			case CDynaBranch::BRANCH_TRIPIP:
-				break;
-			case CDynaBranch::BRANCH_TRIPIQ:
-				break;
-			}
+			pBranch->CalcAdmittances(bFixNegativeZs);
+			// состояние ветви в данном случае не важно - слагаемые только к собственной
+			// проводимости узла. Слагаемые сами по себе рассчитаны с учетом состояния ветви
+			Yii -= (this == pBranch->m_pNodeIp) ? pBranch->Yips : pBranch->Yiqs;
 		}
 
 		if (V < DFW2_EPSILON)

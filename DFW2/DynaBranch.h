@@ -51,7 +51,7 @@ namespace DFW2
 		bool BranchAndNodeConnected(CDynaNodeBase* pNode);
 		eDEVICESTATE GetState() const override;
 		eDEVICEFUNCTIONSTATUS SetBranchState(BranchState eBranchState, eDEVICESTATECAUSE eStateCause);
-		void CalcAdmittances(bool bSeidell);
+		void CalcAdmittances(bool bFixNegativeZs);
 		bool IsZeroImpedance();
 
 		void UpdateSerializer(SerializerPtr& Serializer) override;

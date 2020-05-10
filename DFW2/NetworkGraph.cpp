@@ -397,7 +397,20 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 	}
 }
 
+// создает и формирует проводимости сети в суперузлах
 void CDynaNodeContainer::CreateSuperNodes()
+{
+	// отдельные вызовы для построения структуры
+	CreateSuperNodesStructure();
+	// и расчета проводимостей
+	CalculateSuperNodesAdmittances();
+	// позволяют использовать функции раздельно для подготовки
+	// данных к расчету УР и коррекции отрицательных сопротивлений для Зейделя
+	// с последующим возвратом к нормальным сопротивлениям для Ньютона
+	// без полной пересборки суперузлов
+}
+
+void CDynaNodeContainer::CreateSuperNodesStructure()
 {
 	CDeviceContainer *pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
 	if(!pBranchContainer)
@@ -636,51 +649,10 @@ void CDynaNodeContainer::CreateSuperNodes()
 	}
 	*/
 
-	// Рассчитываем проводимости узлов и ветвей только после того, как провели
-	// топологический анлализ. Это позволяет определить ветви внутри суперузлов
-	// которые оказались параллельны нулевым ветвям, но имеют сопротивление выше
-	// порогового. Такие ветви можно определить по тому, что они отнесены к одному и 
-	// тому же суперзлу. При этом не нужно искать параллельные нулевые ветви
-	CalcAdmittances(false);
 
 	//  Создаем виртуальные ветви
 	// Количество виртуальных ветвей не превышает количества ссылок суперузлов на ветви
 	m_pVirtualBranches = std::make_unique<VirtualBranch[]>(m_SuperLinks[1].m_nCount);
-	VirtualBranch *pCurrentBranch = m_pVirtualBranches.get();
-	for (auto&& node : m_DevVec)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-		// если узел входит в суперузел - для него виртуальные ветви отсутствуют
-		pNode->m_VirtualBranchBegin = pNode->m_VirtualBranchEnd = pCurrentBranch;
-		if (pNode->m_pSuperNodeParent)
-			continue;
-		CLinkPtrCount *pBranchLink = pNode->GetSuperLink(1);
-		pNode->ResetVisited();
-		CDevice **ppDevice(nullptr);
-		while (pBranchLink->In(ppDevice))
-		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-			// обходим включенные ветви также как и для подсчета размерностей выше
-			CDynaNodeBase *pOppNode = pBranch->GetOppositeSuperNode(pNode);
-			// получаем проводимость к оппозитному узлу
-			cplx *pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
-			// проверяем, уже прошли данный оппозитный узел для просматриваемого узла или нет
-			ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
-			if (DupIndex < 0)
-			{
-				// если нет - добавляем ветвь в список данного узла
-				pCurrentBranch->Y = *pYkm;
-				pCurrentBranch->pNode = pOppNode;
-				pCurrentBranch++;
-			}
-			else
-				(pNode->m_VirtualBranchBegin + DupIndex)->Y += *pYkm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
-		}
-		pNode->m_VirtualBranchEnd = pCurrentBranch;
-		_ASSERTE(pNode->m_VirtualBranchBegin < pNode->m_VirtualBranchEnd || !pNode->IsStateOn() || pNode->m_pSuperNodeParent);
-	}
-
-
 	// Создаем список ветвей с нулевым сопротивлением внутри суперузла
 	// Ветви с нулевым сопротивлением хранятся в общем векторе контейнера
 	// узлы имеют три указателя на этот вектор - начало и конец для всех ветвей
@@ -688,10 +660,10 @@ void CDynaNodeContainer::CreateSuperNodes()
 	m_pZeroBranches = std::make_unique<VirtualZeroBranch[]>(nZeroBranchCount);
 	m_pZeroBranchesEnd = m_pZeroBranches.get() + nZeroBranchCount;
 
-	VirtualZeroBranch *pCurrentZeroBranch = m_pZeroBranches.get();
+	VirtualZeroBranch* pCurrentZeroBranch = m_pZeroBranches.get();
 	for (auto&& node : m_DevVec)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
 		// формируем диапазоны ветвей с нулевым сопротивлением для узлов (просто инициализация)
 		pNode->m_VirtualZeroBranchBegin = pNode->m_VirtualZeroBranchEnd = pCurrentZeroBranch;
 		// если у нас есть ветви с нулевым сопротивлением строим их списки
@@ -702,19 +674,19 @@ void CDynaNodeContainer::CreateSuperNodes()
 		if (!nZeroBranchCount || pNode->m_pSuperNodeParent)
 			continue;
 
-		CDynaNodeBase *pSlaveNode = pNode;
-		CLinkPtrCount *pSlaveNodeLink = pNode->GetSuperLink(0);
-		CDevice **ppSlaveNode(nullptr);
+		CDynaNodeBase* pSlaveNode = pNode;
+		CLinkPtrCount* pSlaveNodeLink = pNode->GetSuperLink(0);
+		CDevice** ppSlaveNode(nullptr);
 
 		// сначала обрабатываем узел-представитель суперузла
 		// затем выбираем входящие в суперузел узлы
 		while (pSlaveNode)
 		{
-			CLinkPtrCount *pBranchLink = pSlaveNode->GetLink(0);
-			CDevice **ppDevice(nullptr);
+			CLinkPtrCount* pBranchLink = pSlaveNode->GetLink(0);
+			CDevice** ppDevice(nullptr);
 			while (pBranchLink->In(ppDevice))
 			{
-				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
 				pCurrentZeroBranch = pNode->AddZeroBranch(pBranch);
 			}
 			// достаем из суперссылки на узлы следующий узел суперузла
@@ -724,11 +696,6 @@ void CDynaNodeContainer::CreateSuperNodes()
 		// приводим ссылки на нулевые ветви к нужному формату для последующей обработки в циклах
 		pNode->TidyZeroBranches();
 	}
-
-	// считаем проводимости и шунтовые части нагрузки
-	// для суперузлов выделенной функцией
-
-	CalculateShuntParts();
 
 	/*
 	// восстановление внешних одиночных ссылок
@@ -750,6 +717,53 @@ void CDynaNodeContainer::CreateSuperNodes()
 		}
 	}
 	*/
+}
+
+
+void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
+{
+	// Рассчитываем проводимости узлов и ветвей только после того, как провели
+	// топологический анлализ. Это позволяет определить ветви внутри суперузлов
+	// которые оказались параллельны нулевым ветвям, но имеют сопротивление выше
+	// порогового. Такие ветви можно определить по тому, что они отнесены к одному и 
+	// тому же суперзлу. При этом не нужно искать параллельные нулевые ветви
+	CalcAdmittances(bFixNegativeZs);
+	VirtualBranch* pCurrentBranch = m_pVirtualBranches.get();
+	for (auto&& node : m_DevVec)
+	{
+		CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
+		// если узел входит в суперузел - для него виртуальные ветви отсутствуют
+		pNode->m_VirtualBranchBegin = pNode->m_VirtualBranchEnd = pCurrentBranch;
+		if (pNode->m_pSuperNodeParent)
+			continue;
+		CLinkPtrCount* pBranchLink = pNode->GetSuperLink(1);
+		pNode->ResetVisited();
+		CDevice** ppDevice(nullptr);
+		while (pBranchLink->In(ppDevice))
+		{
+			CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
+			// обходим включенные ветви также как и для подсчета размерностей выше
+			CDynaNodeBase* pOppNode = pBranch->GetOppositeSuperNode(pNode);
+			// получаем проводимость к оппозитному узлу
+			cplx* pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
+			// проверяем, уже прошли данный оппозитный узел для просматриваемого узла или нет
+			ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
+			if (DupIndex < 0)
+			{
+				// если нет - добавляем ветвь в список данного узла
+				pCurrentBranch->Y = *pYkm;
+				pCurrentBranch->pNode = pOppNode;
+				pCurrentBranch++;
+			}
+			else
+				(pNode->m_VirtualBranchBegin + DupIndex)->Y += *pYkm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
+		}
+		pNode->m_VirtualBranchEnd = pCurrentBranch;
+		_ASSERTE(pNode->m_VirtualBranchBegin < pNode->m_VirtualBranchEnd || !pNode->IsStateOn() || pNode->m_pSuperNodeParent);
+	}
+	// считаем проводимости и шунтовые части нагрузки
+	// для суперузлов выделенной функцией
+	CalculateShuntParts();
 }
 
 void CDynaNodeContainer::ClearSuperLinks()
@@ -817,7 +831,7 @@ void CDynaNodeContainer::ProcessTopologyInitial()
 		CreateSuperNodes();
 	BuildSynchroZones();
 	m_pDynaModel->RebuildMatrix(true);
-}
+}	
 
 // функция обработки топологии, вызывается в процессе расчета динамики
 void CDynaNodeContainer::ProcessTopology()

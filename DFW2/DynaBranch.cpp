@@ -42,7 +42,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 
 	double Rf = R;
 	double Xf = X;
-	// Для ветвей с нулевым сопротивлением
+	// Для ветвей с малым или отрицательным сопротивлением
 	// задаем сопротивление в о.е. относительно напряжения
 	double Xfictive = m_pNodeIp->Unom;
 	Xfictive *= Xfictive;
@@ -50,6 +50,8 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	
 	if (bFixNegativeZ)
 	{
+		// если нужно убрать отрицательные сопротивления - меняем отрицательные и нулевые на 
+		// положительные
 		if (R <= 0)
 			Rf = Xfictive;
 		if (X <= 0)
@@ -57,6 +59,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	}
 	else
 	{
+		// если нет - только заменяем нулевые на минимальные. Нулевые заменяются только для ветвей вне суперузлов (идеальные трансформаторы)
 		if (R == 0.0 && X == 0.0)
 			Xf = Xfictive;
 	}
@@ -193,7 +196,7 @@ eDEVICESTATE CDynaBranch::GetState() const
 
 // рассчитывает проводимости ветви
 // в зависимости от заданного состояния
-void CDynaBranch::CalcAdmittances(bool bSeidell)
+void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 {
 	// продольную проводимость рассчитываем 
 	// в режиме корректировки отрицательных сопротивления
@@ -205,7 +208,7 @@ void CDynaBranch::CalcAdmittances(bool bSeidell)
 	// с учетом шунтов (Yips/Yiqs) при этом будут пригодны для расчета балансовых соотношений
 	// в суперузле
 
-	cplx Ybranch = GetYBranch(bSeidell);
+	cplx Ybranch = GetYBranch(bFixNegativeZs);
 	cplx Ktr(Ktr, Kti);
 
 	switch (m_BranchState)

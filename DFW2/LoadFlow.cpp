@@ -213,7 +213,11 @@ void CLoadFlow::Start()
 	pNodes->PrepareLFTopology();
 	// создаем суперузлы. Важно - базисные суперузлы имеют узлом представителем один из базисных узлов
 	// здесь для CreateShuntParts нужны V0 и СХН для УР
-	pNodes->CreateSuperNodes();
+	pNodes->CreateSuperNodesStructure();
+	// Рассчитываем проводимости узлов с устранением отрицательных сопротивлений, если
+	// используется метод Зейделя или без устранения в противном случае
+	pNodes->CalculateSuperNodesAdmittances(m_Parameters.m_bStartup);
+
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
 	UpdatePQFromGenerators();
 
@@ -386,8 +390,6 @@ void CLoadFlow::Seidell()
 
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
-	// TODO !!!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
-	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
 	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
@@ -616,10 +618,6 @@ void CLoadFlow::Seidell()
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
 	}
-
-	// TODO !!!! пересчитываем проводимости узлов без устранения отрицательных сопротивлений
-	//pNodes->CalcAdmittances(false);
-
 }
 
 void CLoadFlow::BuildMatrix()
@@ -786,6 +784,13 @@ bool CLoadFlow::Run()
 		for (auto&& it : *pNodes)
 			static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
 	}
+
+	// если использовался стартовый метод, была коррекция 
+	// отрицательных сопротивлений, поэтому восстанавливаем
+	// исходные сопротивления
+	if (m_Parameters.m_bStartup)
+		pNodes->CalculateSuperNodesAdmittances(false);
+
 	Newton();
 
 #ifdef _DEBUG

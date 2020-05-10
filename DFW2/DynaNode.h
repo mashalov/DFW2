@@ -130,7 +130,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		void MarkZoneEnergized();
 		void ProcessTopologyRequest();
-		void CalcAdmittances(bool bSeidell);
+		void CalcAdmittances(bool bFixNegativeZs);
 		void CalculateShuntParts();
 		// инициализация узла для расчета УР
 		void StartLF(bool bFlatStart, double ImbTol);
@@ -291,11 +291,13 @@ namespace DFW2
 		void BuildSynchroZones();
 		void EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
 		void CreateSuperNodes();
+		void CreateSuperNodesStructure();
+		void CalculateSuperNodesAdmittances(bool bFixNegativeZs = false);
 		void PrepareLFTopology();
 		void GetTopologySynchroZones(NODEISLANDMAP& NodeIslands);
 		void SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Queue);
 		void SwitchOffDanglingNodes(NodeSet& Queue);
-		void CalcAdmittances(bool bSeidell);
+		void CalcAdmittances(bool bFixNegativeZs);
 		void SwitchLRCs(bool bSwitchToDynamicLRC);
 		static bool BranchAndNodeConnected(CDynaNodeBase* pNode, CDynaBranch* pBranch);
 		_IterationControl m_IterationControl;
