@@ -1169,18 +1169,7 @@ void CLoadFlow::Newton()
 
 		pNodes->m_IterationControl.m_nQviolated = PV_PQmax.size() + PV_PQmin.size() + PQmax_PV.size() + PQmin_PV.size();
 
-		// досчитываем небалансы в БУ
-		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			GetNodeImb(pMatrixInfo);
-			// для БУ небалансы только для результатов
-			pNode->Pgr += pMatrixInfo->m_dImbP;
-			pNode->Qgr += pMatrixInfo->m_dImbQ;
-			// в контроле сходимости небаланс БУ всегда 0.0
-			pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
-			pNodes->m_IterationControl.Update(pMatrixInfo);
-		}
+		UpdateSlackBusesImbalance();
 
 		g1 = GetSquaredImb();
 
@@ -1556,6 +1545,24 @@ void CLoadFlow::CheckFeasible()
 		}
 	}
 }
+
+void CLoadFlow::UpdateSlackBusesImbalance()
+{
+	// досчитываем небалансы в БУ
+	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
+	{
+		CDynaNodeBase* pNode = pMatrixInfo->pNode;
+		GetNodeImb(pMatrixInfo);
+		// для БУ небалансы только для результатов
+		pNode->Pgr += pMatrixInfo->m_dImbP;
+		pNode->Qgr += pMatrixInfo->m_dImbQ;
+		// в контроле сходимости небаланс БУ всегда 0.0
+		pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
+		pNodes->m_IterationControl.Update(pMatrixInfo);
+	}
+}
+
+
 
 void CLoadFlow::DumpNewtonIterationControl()
 {

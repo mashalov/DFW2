@@ -13,12 +13,13 @@ void CLoadFlow::NewtonTanh()
 
 	double g0(0.0), g1(0.1), lambda(1.0);
 
-	m_dTanhBeta = 500.0;
+	m_dTanhBeta = 50.0;
+	m_NewtonStepRatio.m_dRatio = 0.0;
 
 	while (1)
 	{
-		//if (!CheckLF())
-		//	throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
+		if (!CheckLF())
+			throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
 
 		if (++it > m_Parameters.m_nMaxIterations)
 			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
@@ -35,119 +36,62 @@ void CLoadFlow::NewtonTanh()
 			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
 			pNodes->m_IterationControl.Update(pMatrixInfo);
 		}
-		// досчитываем небалансы в БУ
-		for (pMatrixInfo = m_pMatrixInfoEnd; pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			GetNodeImb(pMatrixInfo);
-			// для БУ небалансы только для результатов
-			pNode->Pgr += pMatrixInfo->m_dImbP;
-			pNode->Qgr += pMatrixInfo->m_dImbQ;
-			// в контроле сходимости небаланс БУ всегда 0.0
-			pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
-			pNodes->m_IterationControl.Update(pMatrixInfo);
-		}
+
+		UpdateSlackBusesImbalance();
 
 		g1 = GetSquaredImb();
 
 		pNodes->m_IterationControl.m_ImbRatio = g1;
-		pNodes->DumpIterationControl();
+		if (g0 > 0.0)
+			pNodes->m_IterationControl.m_ImbRatio = g1 / g0;
+
+		DumpNewtonIterationControl();
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
 
-		if (it > 100000 && g1 > g0)
+		if (m_NewtonStepRatio.m_dRatio >= 1.0 && g1 > g0)
 		{
 			double gs1v = -CDynaModel::gs1(klu, m_Rh, klu.B());
 			// знак gs1v должен быть "-" ????
 			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
 			RestoreVDelta();
 			UpdateVDelta(lambda);
+			m_NewtonStepRatio.m_dRatio = lambda;
+			m_NewtonStepRatio.m_eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
 			continue;
 		}
 
 		lambda = 1.0;
 		g0 = g1;
 
+		StoreVDelta();
+
 		BuildMatrixTanh();
 
 		// сохраняем небаланс до итерации
 		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
-
-		// сохраняем исходные значения переменных
-		StoreVDelta();
-		// сохраняем небаланс до итерации
-		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
-
-
+				
 		ptrdiff_t iMax(0);
 		double maxb = klu.FindMaxB(iMax);
 		CDynaNodeBase *pNode1(m_pMatrixInfo.get()[iMax / 2].pNode);
 		
 		SolveLinearSystem();
 
-		double *bx = klu.B();
-
 		maxb = klu.FindMaxB(iMax);
-		CDynaNodeBase *pNode2(m_pMatrixInfo.get()[iMax / 2].pNode);
-
-		for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-		{
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
-			{
-				double Vbackup = pNode->V;
-				double *pb = klu.B() + pNode->A(1);
-				pNode->V += *pb;
-				double dQ = fabs(pNode->Qgr - Qgtanh(pNode));
-				if (dQ > 0.5 * (pNode->LFQmax - pNode->LFQmin) && ((Vbackup < pNode->LFVref && pNode->V > pNode->LFVref) || (Vbackup > pNode->LFVref && pNode->V < pNode->LFVref)))
-				{
-					double newLambda = fabs(Vbackup - pNode->LFVref) / fabs(*pb);
-					if (lambda > newLambda)
-						lambda = newLambda;
-
-				}
-				pNode->V = Vbackup;
-			}
-		}
-
-		if(lambda >= 1.0 && m_dTanhBeta < 2500.0 && g1 < g0)
-			m_dTanhBeta *= 1.5;
+		CDynaNodeBase* pNode2(m_pMatrixInfo.get()[iMax / 2].pNode);
 
 
 		// обновляем переменные
-		UpdateVDelta(lambda);
-
+		double MaxRatio = GetNewtonRatio();
+		UpdateVDelta(MaxRatio);
+		if (m_NewtonStepRatio.m_dRatio >= 1.0 && m_dTanhBeta < 2500.0)
+		{
+			m_dTanhBeta *= 1.0;
+		}
 	}
 
 	// обновляем реактивную генерацию в суперузлах
-
-	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get() ; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
-	{
-		CDynaNodeBase*& pNode = pMatrixInfo->pNode;
-		double Qrange = pNode->LFQmax - pNode->LFQmin;
-		Qrange = (Qrange > 0.0) ? (pNode->Qgr - pNode->LFQmin) / Qrange : 0.0;
-		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
-		CDevice **ppDevice(nullptr);
-		while (pLink->In(ppDevice))
-		{
-			CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
-			pSlaveNode->Qg = 0.0;
-			if (pSlaveNode->IsStateOn())
-				pSlaveNode->Qg = pSlaveNode->LFQmin + (pSlaveNode->LFQmax - pSlaveNode->LFQmin) * Qrange;
-		}
-		pNode->Qgr = pMatrixInfo->LFQmin + (pMatrixInfo->LFQmax - pMatrixInfo->LFQmin) * Qrange;
-		pMatrixInfo->Restore();
-	}
-
-	for (auto&& it : pNodes->m_DevVec)
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-		if (!pNode->m_pSuperNodeParent)
-		{
-			pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;
-			GetPnrQnr(pNode);
-		}
-	}
+	UpdateSupernodesPQ();
 }
 
 void CLoadFlow::SeidellTanh()
@@ -319,15 +263,12 @@ void CLoadFlow::BuildMatrixTanh()
 	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 
-		ptrdiff_t k = pb - klu.B();
 		// здесь считаем, что нагрузка СХН в Node::pnr/Node::qnr уже в расчете и анализе небалансов
 		CDynaNodeBase *pNode = pMatrixInfo->pNode;
 		GetPnrQnrSuper(pNode);
-		double Pe = pNode->GetSelfImbP();
+		cplx Sneb;
 		if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
 			pNode->Qgr = Qgtanh(pNode);
-		double Qe = pNode->GetSelfImbQ();
-		_CheckNumber(Qe);
 		double dPdDelta(0.0), dQdDelta(0.0);
 		double dPdV = pNode->GetSelfdPdV();
 		double dQdV = pNode->GetSelfdQdV();
@@ -345,14 +286,13 @@ void CLoadFlow::BuildMatrixTanh()
 
 		double *pAxSelf = pAx;
 		pAx += 2;
-		cplx Unode(pNode->Vre, pNode->Vim);
+		cplx UnodeConj(pNode->Vre, -pNode->Vim);
 		for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 		{
 			CDynaNodeBase *pOppNode = pBranch->pNode;
-			cplx mult = conj(Unode);
-			mult *= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
-			Pe -= mult.real();
-			Qe += mult.imag();
+			cplx neb = cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+			cplx mult = UnodeConj * neb;
+			Sneb -= neb;
 
 			dPdDelta -= mult.imag();
 			dPdV += -CDevice::ZeroDivGuard(mult.real(), pNode->V);
@@ -382,9 +322,11 @@ void CLoadFlow::BuildMatrixTanh()
 		pAx += pMatrixInfo->nRowCount;
 
 
+		Sneb -= std::conj(UnodeConj) * pNode->YiiSuper;
+		Sneb = std::conj(Sneb) * std::conj(UnodeConj) + cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
 
-		*pb = Pe; pb++;
-		*pb = Qe; pb++;
+		*pb = Sneb.real(); pb++;
+		*pb = Sneb.imag(); pb++;
 	}
 }
 

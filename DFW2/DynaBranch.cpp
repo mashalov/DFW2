@@ -53,7 +53,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 		// если нужно убрать отрицательные сопротивления - меняем отрицательные и нулевые на 
 		// положительные
 		if (R <= 0)
-			Rf = Xfictive;
+			Rf = 0.0;
 		if (X <= 0)
 			Xf = Xfictive;
 	}

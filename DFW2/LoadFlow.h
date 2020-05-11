@@ -71,6 +71,7 @@ namespace DFW2
 
 		void StoreVDelta();
 		void RestoreVDelta();
+		void UpdateSlackBusesImbalance();
 		double GetSquaredImb();
 		void CheckFeasible();
 		void DumpNewtonIterationControl();
