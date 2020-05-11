@@ -157,7 +157,7 @@ void CLoadFlow::SeidellTanh()
 	MATRIXINFO SeidellOrder;
 	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
-	_MatrixInfo* pMatrixInfo = m_pMatrixInfoSlackEnd - 1;
+	_MatrixInfo* pMatrixInfo(m_pMatrixInfoSlackEnd - 1);
 
 	// в начало добавляем БУ
 	for (; pMatrixInfo >= m_pMatrixInfoEnd; pMatrixInfo--)
@@ -244,24 +244,16 @@ void CLoadFlow::SeidellTanh()
 		for (auto&& it : SeidellOrder)
 		{
 			pMatrixInfo = it;
-			CDynaNodeBase *pNode = pMatrixInfo->pNode;
+			CDynaNodeBase* pNode = pMatrixInfo->pNode;
 			// рассчитываем нагрузку по СХН
-			GetPnrQnrSuper(pNode);
-			pNode->Qgr = Qgtanh(pNode);
 			double& Pe = pMatrixInfo->m_dImbP;
 			double& Qe = pMatrixInfo->m_dImbQ;
 			// рассчитываем небалансы
-			Pe = pNode->GetSelfImbP();
-			Qe = pNode->GetSelfImbQ();
-
+			GetNodeImb(pMatrixInfo);
 			cplx Unode(pNode->Vre, pNode->Vim);
-			for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
-			{
-				CDynaNodeBase *pOppNode = pBranch->pNode;
-				cplx mult = conj(Unode) * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
-				Pe -= mult.real();
-				Qe += mult.imag();
-			}
+
+			// для всех узлов кроме БУ обновляем статистику итерации
+			pNodes->m_IterationControl.Update(pMatrixInfo);
 
 			double Q = Qe + pNode->Qgr;	// расчетная генерация в узле
 

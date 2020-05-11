@@ -804,7 +804,7 @@ _IterationControl& CDynaNodeContainer::IterationControl()
 
 std::wstring CDynaNodeContainer::GetIterationControlString()
 {
-	std::wstring retString = Cex(_T("%15g %6d %15g %6d %5.2f %6d %5.2f %6d %4d %15.2f"),
+	std::wstring retString = Cex(_T("%15g %6d %15g %6d %5.2f %6d %5.2f %6d %4d"),
 		m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
 		m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
 		m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),

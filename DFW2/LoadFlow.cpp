@@ -1185,6 +1185,10 @@ void CLoadFlow::Newton()
 		g1 = GetSquaredImb();
 
 		pNodes->m_IterationControl.m_ImbRatio = g1;
+
+		if(g0 > 0.0)
+			pNodes->m_IterationControl.m_ImbRatio = g1 / g0;
+
 		DumpNewtonIterationControl();
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
@@ -1556,7 +1560,8 @@ void CLoadFlow::CheckFeasible()
 void CLoadFlow::DumpNewtonIterationControl()
 {
 	const _TCHAR* causes[] = {_T(""), _T("dV"), _T("dD"), _T("dB"), _T("vV"), _T("vD"), _T("Bt")};
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%s %6.2f %4s"), pNodes->GetIterationControlString().c_str(), 
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, _T("%s % 15g %6.2f %4s"), pNodes->GetIterationControlString().c_str(), 
+																	  pNodes->m_IterationControl.m_ImbRatio,
 																	  m_NewtonStepRatio.m_dRatio,
 																	  causes[static_cast<ptrdiff_t>(m_NewtonStepRatio.m_eStepCause)]);
 }
