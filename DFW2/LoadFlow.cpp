@@ -839,12 +839,12 @@ bool CLoadFlow::CheckLF()
 		double dV = pNode->V / pNode->Unom;
 		if (dV > 2.0)
 		{
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszLFNodeVTooHigh, pNode->GetVerbalName(), dV);
+			pNode->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFNodeVTooHigh, pNode->GetVerbalName(), dV));
 			bRes = false;
 		}
 		else if (dV < 0.5)
 		{
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszLFNodeVTooLow, pNode->GetVerbalName(), dV);
+			pNode->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFNodeVTooLow, pNode->GetVerbalName(), dV));
 			bRes = false;
 		}
 
@@ -964,7 +964,7 @@ void CLoadFlow::UpdateQToGenerators()
 			}
 			if (fabs(pNode->Qg - Qspread) > m_Parameters.m_Imb)
 			{
-				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForNode, pNode->GetVerbalName(), pNode->Qg, Qgmin, Qgmax));
+				pNode->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForNode, pNode->GetVerbalName(), pNode->Qg, Qgmin, Qgmax));
 				bAllOk = false;
 			}
 		}
@@ -1352,7 +1352,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 				if (fabs(Qspread - QgSource) > m_Parameters.m_Imb)
 				{
 					bAllOk = false;
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForSuperNode, pNode->GetVerbalName(), QgSource, pNode->LFQmin, pNode->LFQmax));
+					pNode->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLFWrongQrangeForSuperNode, pNode->GetVerbalName(), QgSource, pNode->LFQmin, pNode->LFQmax));
 				}
 		}
 		pMatrixInfo->Restore();
@@ -1532,13 +1532,13 @@ void CLoadFlow::CheckFeasible()
 				// которое, в свою очередь, было выбрано по узлу с наиболее широким диапазоном реактивной мощности внутри суперузла
 				double LFVref = pNode->m_pSuperNodeParent ? pNode->m_pSuperNodeParent->LFVref : pNode->LFVref;
 				if (pNode->V > LFVref && pNode->Qgr >= pNode->LFQmax)
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
 				if (pNode->V < LFVref && pNode->Qgr <= pNode->LFQmin)
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
 				if (pNode->Qgr < pNode->LFQmin)
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
 				if (pNode->Qgr > pNode->LFQmax)
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Infeasible %s"), pNode->GetVerbalName()));
 			}
 
 			pNode->SuperNodeLoadFlow(m_pDynaModel);
