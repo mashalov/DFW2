@@ -22,7 +22,7 @@ CDFW2Messages::CDFW2Messages()
 	m_VarNameMap[VARUNIT_OHM]		= _T("Ом");
 }
 
-const _TCHAR* CDFW2Messages::m_cszBranchNodeNotFound = _T("Узел %d не найден для ветви");
+const _TCHAR* CDFW2Messages::m_cszBranchNodeNotFound = _T("Узел %d не найден для ветви %d-%d (%d)");
 const _TCHAR* CDFW2Messages::m_cszDuplicateDevice    = _T("Объект %s имеет неуникальный идентификатор");
 const _TCHAR* CDFW2Messages::m_cszBranchLooped = _T("Ветвь начинается и заканчивается в узле %d");
 const _TCHAR* CDFW2Messages::m_cszKLUOk = _T("KLU - OK");

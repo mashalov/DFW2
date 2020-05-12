@@ -206,6 +206,8 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 	// pContLead - контейнер по данным которого надо делать связи
 	bool bRes = false;
 
+	_ASSERTE(m_pContainer && pContLead);
+
 	if (m_pContainer && pContLead)
 	{
 		bRes = true;
@@ -247,6 +249,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 						if (!pDev->SetSingleLink(LinkTo.nLinkIndex, pLinkDev))
 						{
 							bRes = false;
+							_ASSERTE(bRes);
 							break;
 						}
 
@@ -256,6 +259,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 							if (!pLinkDev->SetSingleLink(LinkFrom.nLinkIndex, pDev))
 							{
 								bRes = false;
+								_ASSERTE(bRes);
 								break;
 							}
 						}
@@ -271,6 +275,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 						// указываея мастер, подчиенное и уже связанное
 						pDev->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDeviceAlreadyLinked, pDev->GetVerbalName(), pLinkDev->GetVerbalName(), pAlreadyLinked->GetVerbalName()));
 						bRes = false;
+						_ASSERTE(bRes);
 					}
 				}
 				else
@@ -278,6 +283,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 					// если устройство для связи по идентификатору не нашли - выдаем ошибку
 					pDev->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDeviceForDeviceNotFound, DevId, pDev->GetVerbalName()));
 					bRes = false;
+					_ASSERTE(bRes);
 				}
 			}
 		}
@@ -1039,13 +1045,20 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 				if (slavedevice->eLinkMode == DLM_MULTI)
 				{
 					// перебираем ведомые устройства на мультиссылке
-					CLinkPtrCount *pLink(pOffDevice->GetLink(slavedevice->nLinkIndex));
-					CDevice **ppDevice(nullptr);
-					while (pLink->In(ppDevice))
+					try
 					{
-						if ((*ppDevice)->IsStateOn())
-							// если есть включенное ведомое - помещаем в стек для отключения и дальнейшего просмотра графа связей
-							offstack.push(std::make_pair(*ppDevice, pOffDevice));
+						CLinkPtrCount* pLink(pOffDevice->GetLink(slavedevice->nLinkIndex));
+						CDevice** ppDevice(nullptr);
+						while (pLink->In(ppDevice))
+						{
+							if ((*ppDevice)->IsStateOn())
+								// если есть включенное ведомое - помещаем в стек для отключения и дальнейшего просмотра графа связей
+								offstack.push(std::make_pair(*ppDevice, pOffDevice));
+						}
+					}
+					catch (dfw2error&) 
+					{
+						// если заявленной в свойствах контейнера ссылки на связанный контейнер нет - просто ничего не делаем
 					}
 				}
 				else

@@ -106,8 +106,9 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				}
 				else
 				{
-					pBranch->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszBranchNodeNotFound, NodeId));
+					pBranch->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszBranchNodeNotFound, NodeId, pBranch->Ip, pBranch->Iq, pBranch->Np));
 					bRes = false;
+					_ASSERTE(bRes);
 				}
 			}
 

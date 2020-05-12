@@ -291,8 +291,9 @@ bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 					LinkFrom.nLinkIndex = m_Links.size() - 1;			// "обманываем" внешний контейнер, заставляя его работать с временной связью вместо основной
 					// выполняем связь средствами внешнего контейнера
 					bRes = (*pLinkContainer->begin())->LinkToContainer(this, pContLead, LinkTo, LinkFrom);
+					_ASSERTE(bRes);
 
-					// если связь выолпнена успешно
+					// если связь выполнена успешно
 					if (bRes && nLinkIndex >= 0)
 					{
 						// объединяем исходную связь со временной
