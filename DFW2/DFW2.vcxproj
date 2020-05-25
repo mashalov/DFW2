@@ -100,6 +100,7 @@
       <SDLCheck>true</SDLCheck>
       <EnablePREfast>false</EnablePREfast>
       <FloatingPointModel>Precise</FloatingPointModel>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -115,6 +116,7 @@
       <SDLCheck>true</SDLCheck>
       <EnablePREfast>false</EnablePREfast>
       <FloatingPointModel>Precise</FloatingPointModel>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -133,6 +135,7 @@
       <EnablePREfast>false</EnablePREfast>
       <FloatingPointModel>Precise</FloatingPointModel>
       <MultiProcessorCompilation>false</MultiProcessorCompilation>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -153,6 +156,7 @@
       <SDLCheck>true</SDLCheck>
       <EnablePREfast>false</EnablePREfast>
       <FloatingPointModel>Precise</FloatingPointModel>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -219,6 +223,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="DynaExciterBase.h" />
     <ClInclude Include="Sum.h" />
+    <ClInclude Include="utf8conv.h" />
     <ClInclude Include="ZCDetector.h" />
     <ClInclude Include="Expand.h" />
   </ItemGroup>
@@ -774,6 +779,7 @@
     </ClCompile>
     <ClCompile Include="DynaExciterBase.cpp" />
     <ClCompile Include="Sum.cpp" />
+    <ClCompile Include="utf8conv.cpp" />
     <ClCompile Include="ZCDetector.cpp" />
     <ClCompile Include="Expand.cpp" />
   </ItemGroup>
