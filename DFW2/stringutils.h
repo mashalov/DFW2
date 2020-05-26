@@ -28,41 +28,22 @@ public:
 
 	static inline void trim(std::wstring& s) { ltrim(s);  rtrim(s); }
 
-	static size_t split(const std::wstring& str, const _TCHAR* cszDelimiters, STRINGLIST& result)
+	static size_t split(std::wstring_view str, std::wstring_view Delimiters, STRINGLIST& result)
 	{
 		result.clear();
-		size_t nPos = 0;
-		if (cszDelimiters)
+		for(size_t nPos(0); nPos < str.length() ; )
 		{
-			const size_t nDelimitersCount = _tcslen(cszDelimiters);
-			const _TCHAR* pLastDelimiter = cszDelimiters + nDelimitersCount;
-			while (nPos < str.length())
+			if (size_t nMinDelPos = str.find_first_of(Delimiters, nPos); nMinDelPos == std::wstring::npos)
 			{
-				size_t nMinDelPos = std::wstring::npos;
-				const _TCHAR* pDelimiter = cszDelimiters;
-				while (pDelimiter < pLastDelimiter)
-				{
-					const size_t nDelPos = str.find(*pDelimiter, nPos);
-					if (nDelPos != std::wstring::npos)
-						if (nMinDelPos == std::wstring::npos || nMinDelPos > nDelPos)
-							nMinDelPos = nDelPos;
-					pDelimiter++;
-				}
-				if (nMinDelPos == std::wstring::npos)
-				{
-					result.push_back(str.substr(nPos));
-					break;
-				}
-				else
-				{
-					result.push_back(str.substr(nPos, nMinDelPos - nPos));
-					nPos = nMinDelPos + 1;
-				}
+				result.push_back(std::wstring(str.substr(nPos)));
+				break;
+			}
+			else
+			{
+				result.push_back(std::wstring(str.substr(nPos, nMinDelPos - nPos)));
+				nPos = nMinDelPos + 1;
 			}
 		}
-		else
-			result.push_back(str);
-
 		return result.size();
 	}
 
