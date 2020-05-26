@@ -1,5 +1,5 @@
 #include "..\stdafx.h"
-#include "cex.h"
+#include "..\..\DFW2\cex.h"
 #include "DLLOutput.h"
 #include "BaseCompiler.h"
 

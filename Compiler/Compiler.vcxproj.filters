@@ -120,9 +120,6 @@
     <ClInclude Include="Parser\AutoCompilerMessages.h">
       <Filter>Header Files\Parser</Filter>
     </ClInclude>
-    <ClInclude Include="Parser\cex.h">
-      <Filter>Header Files\Parser</Filter>
-    </ClInclude>
     <ClInclude Include="Parser\CompilerLogger.h">
       <Filter>Header Files\Parser</Filter>
     </ClInclude>

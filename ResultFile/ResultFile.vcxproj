@@ -230,7 +230,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="..\DFW2\Messages.cpp" />
-    <ClCompile Include="..\DFW2\utf8conv.cpp" />
     <ClCompile Include="BitStream.cpp" />
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="CSVWriter.cpp" />

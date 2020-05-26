@@ -9,7 +9,7 @@
 #include "string"
 #include "memory"
 
-#include "cex.h"
+#include "..\..\DFW2\cex.h"
 
 class CExpressionToken;
 class CCompilerEquation;

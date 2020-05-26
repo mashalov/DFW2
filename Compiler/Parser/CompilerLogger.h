@@ -1,7 +1,7 @@
 #pragma once
 #include "stdio.h"
 #include "tchar.h"
-#include "cex.h"
+#include "..\..\DFW2\cex.h"
 
 class CCompilerLogger
 {

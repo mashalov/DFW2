@@ -4,78 +4,11 @@
 #include "stdio.h"
 #include "tchar.h"
 #include "Messages.h"
-#include "string"
-#include "list"
-#include "algorithm"
 #include "ShlObj.h"
+#include "memory"
+#include "stringutils.h"
 
 #define EXCEPTION_BUFFER_SIZE 2048
-
-
-typedef std::list<std::wstring> STRINGLIST;
-typedef STRINGLIST::iterator STRINGLISTITR;
-
-class stringutils
-{
-public:
-	static inline void removecrlf(std::wstring& s)
-	{
-		size_t nPos = std::wstring::npos;
-		while ((nPos = s.find(_T("\r\n"))) != std::wstring::npos)
-			s.replace(nPos, 2, _T(""));
-	}
-
-	static inline void ltrim(std::wstring &s)
-	{
-		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) noexcept { return !isspace(ch); }));
-	}
-
-	static inline void rtrim(std::wstring &s)
-	{
-		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) noexcept { return !isspace(ch); }).base(), s.end());
-	}
-
-	static inline void trim(std::wstring &s) { ltrim(s);  rtrim(s); }
-
-	static size_t split(const std::wstring& str, const _TCHAR* cszDelimiters, STRINGLIST& result)
-	{
-		result.clear();
-		size_t nPos = 0;
-		if (cszDelimiters)
-		{
-			const size_t nDelimitersCount = _tcslen(cszDelimiters);
-			const _TCHAR* pLastDelimiter = cszDelimiters + nDelimitersCount;
-			while (nPos < str.length())
-			{
-				size_t nMinDelPos = std::wstring::npos;
-				const _TCHAR *pDelimiter = cszDelimiters;
-				while (pDelimiter < pLastDelimiter)
-				{
-					const size_t nDelPos = str.find(*pDelimiter, nPos);
-					if (nDelPos != std::wstring::npos)
-						if (nMinDelPos == std::wstring::npos || nMinDelPos > nDelPos)
-							nMinDelPos = nDelPos;
-					pDelimiter++;
-				}
-				if (nMinDelPos == std::wstring::npos)
-				{
-					result.push_back(str.substr(nPos));
-					break;
-				}
-				else
-				{
-					result.push_back(str.substr(nPos, nMinDelPos - nPos));
-					nPos = nMinDelPos + 1;
-				}
-			}
-		}
-		else
-			result.push_back(str);
-
-		return result.size();
-	}
-};
-
 using TCHARString = std::unique_ptr<_TCHAR[]>;
 
 class Cex
