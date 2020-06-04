@@ -759,7 +759,6 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 				(pNode->m_VirtualBranchBegin + DupIndex)->Y += *pYkm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
 		}
 		pNode->m_VirtualBranchEnd = pCurrentBranch;
-		_ASSERTE(pNode->m_VirtualBranchBegin < pNode->m_VirtualBranchEnd || !pNode->IsStateOn() || pNode->m_pSuperNodeParent);
 	}
 	// считаем проводимости и шунтовые части нагрузки
 	// для суперузлов выделенной функцией
