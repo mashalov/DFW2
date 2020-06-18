@@ -358,7 +358,20 @@ void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 	SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
 }
 
+void CDynaModel::SetFunction(const VariableIndex& Row, double dValue)
+{
+	SetFunction(Row.Index, dValue);
+}
 
+void CDynaModel::SetFunctionDiff(const VariableIndex& Row, double dValue)
+{
+	SetFunctionDiff(Row.Index, dValue);
+}
+
+void CDynaModel::SetDerivative(const VariableIndex& Row, double dValue)
+{
+	SetDerivative(Row.Index, dValue);
+}
 
 bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType)
 {

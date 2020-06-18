@@ -88,12 +88,11 @@ namespace DFW2
 			V_LAST
 		};
 
-		// переменные состояния
-		double Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pe, Qe, Sb, Se;
-
+		VariableIndex Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pe, Qe, Sb, Se;
 		CDynaBranchMeasure(CDynaBranch *pBranch);
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexVec GetVariables() override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;

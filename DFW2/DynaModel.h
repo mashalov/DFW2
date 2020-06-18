@@ -605,6 +605,12 @@ namespace DFW2
 		void SetFunction(ptrdiff_t nRow, double dValue);
 		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
 		void SetDerivative(ptrdiff_t nRow, double dValue);
+
+		void SetFunction(const VariableIndex& Row, double dValue);
+		void SetFunctionDiff(const VariableIndex& Row, double dValue);
+		void SetDerivative(const VariableIndex& Row, double dValue);
+
+
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		double GetFunction(ptrdiff_t nRow);
 		struct RightVector* GetRightVector(ptrdiff_t nRow);

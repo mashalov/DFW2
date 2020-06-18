@@ -389,10 +389,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 #endif
 	}
 
-	pDynaModel->SetFunction(V.Index, dV);
-	pDynaModel->SetFunction(Delta.Index, dDelta);
-	pDynaModel->SetFunction(Vre.Index, Ire);
-	pDynaModel->SetFunction(Vim.Index, Iim);
+	pDynaModel->SetFunction(V, dV);
+	pDynaModel->SetFunction(Delta, dDelta);
+	pDynaModel->SetFunction(Vre, Ire);
+	pDynaModel->SetFunction(Vim, Iim);
 
 	return true;
 }
@@ -457,7 +457,7 @@ bool CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 	double T = pDynaModel->GetFreqTimeConstant();
-	pDynaModel->SetDerivative(Lag.Index, (Delta - Lag) / T);
+	pDynaModel->SetDerivative(Lag, (Delta - Lag) / T);
 	return true;
 }
 
@@ -502,8 +502,8 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	if (pDynaModel->IsInDiscontinuityMode()) 
 		dS = 0.0;
 	
-	pDynaModel->SetFunctionDiff(Lag.Index, dLag);
-	pDynaModel->SetFunction(S.Index, dS);
+	pDynaModel->SetFunctionDiff(Lag, dLag);
+	pDynaModel->SetFunction(S, dS);
 
 	//DumpIntegrationStep(2021, 2031);
 	//DumpIntegrationStep(2143, 2031);
@@ -526,15 +526,7 @@ eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
 // переменные базового узла - модуль и угол
 double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p(nullptr);
-	switch (nVarIndex)
-	{
-		MAP_VARIABLE(Delta.Value , V_DELTA)
-		MAP_VARIABLE(V.Value, V_V)
-		MAP_VARIABLE(Vre.Value, V_RE)
-		MAP_VARIABLE(Vim.Value, V_IM)
-	}
-	return p;
+	return &GetVariable(nVarIndex).Value;
 }
 
 // константы узла - проводимость шунта
@@ -552,21 +544,7 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 // переменные узла - переменные базового узла + скольжение и лаг скольжения
 double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = CDynaNodeBase::GetVariablePtr(nVarIndex);
-	if (!p)
-	{
-		switch (nVarIndex)
-		{
-			MAP_VARIABLE(Lag.Value, V_LAG)
-			MAP_VARIABLE(S.Value, V_S)
-				/*
-			MAP_VARIABLE(Sv, V_SV)
-			MAP_VARIABLE(Sip, V_SIP)
-			MAP_VARIABLE(Cop, V_COP)
-			*/
-		}
-	}
-	return p;
+	return &GetVariable(nVarIndex).Value;
 }
 
 

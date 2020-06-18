@@ -1101,7 +1101,10 @@ VariableIndexVec CDevice::GetVariables()
 VariableIndex& CDevice::GetVariable(ptrdiff_t nVarIndex)
 {
 	VariableIndexVec VarVec(GetVariables());
-	return VarVec[nVarIndex];
+	if (nVarIndex >= 0 && nVarIndex < static_cast<ptrdiff_t>(VarVec.size()))
+		return VarVec[nVarIndex];
+	else
+		throw dfw2error(_T("CDevice::GetVariable index ouf of range"));
 }
 
 #ifdef _DEBUG
