@@ -229,8 +229,10 @@ namespace DFW2
 		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
 		// внутри этой функции также делается "наследование" переменных
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-
 		double* GetVariablePtr(const _TCHAR* cszVarName);
+		virtual VariableIndexVec GetVariables();
+		VariableIndex& GetVariable(ptrdiff_t nVarIndex);
+		
 
 		// функция маппинга указателя на переменную к индексу переменной
 		// Аналогична по смыслу virtual double* GetVariablePtr()

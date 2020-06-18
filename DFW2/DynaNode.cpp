@@ -298,13 +298,12 @@ void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
 	struct RightVector* pRv = pDynaModel->GetRightVector(A(0));
 	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
 
-	// инициализация заключается в обходе всех переменных устройства и:
-	for (ptrdiff_t z = 0; z < nEquationsCount; z++)
+
+	for (auto&& var : GetVariables())
 	{
-		VariableIndex* pv(GetVariable(z));
-		pRv->pValue = &pv->Value;
+		pRv->pValue = &var.get().Value;
 		_ASSERTE(pRv->pValue);
-		pRv->pDevice = this;				// передачи данных об устройстве в структуру правой части
+		pRv->pDevice = this;
 		pRv++;
 	}
 }
@@ -524,19 +523,6 @@ eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
 	return Status;
 }
 
-VariableIndex* CDynaNodeBase::GetVariable(ptrdiff_t nVarIndex)
-{
-	VariableIndex* p(nullptr);
-	switch (nVarIndex)
-	{
-		MAP_VARIABLEINDEX(Delta, V_DELTA)
-		MAP_VARIABLEINDEX(V, V_V)
-		MAP_VARIABLEINDEX(Vre, V_RE)
-		MAP_VARIABLEINDEX(Vim, V_IM)
-	}
-	return p;
-}
-
 // переменные базового узла - модуль и угол
 double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
@@ -578,21 +564,6 @@ double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 			MAP_VARIABLE(Sip, V_SIP)
 			MAP_VARIABLE(Cop, V_COP)
 			*/
-		}
-	}
-	return p;
-}
-
-
-VariableIndex* CDynaNode::GetVariable(ptrdiff_t nVarIndex)
-{
-	VariableIndex* p(CDynaNodeBase::GetVariable(nVarIndex));
-	if (!p)
-	{
-		switch (nVarIndex)
-		{
-			MAP_VARIABLEINDEX(Lag, V_LAG)
-			MAP_VARIABLEINDEX(S, V_S)
 		}
 	}
 	return p;
@@ -1199,11 +1170,9 @@ bool CDynaNode::InMatrix()
 	bool bInMatrix(CDynaNodeBase::InMatrix());
 	if (bInMatrix)
 	{
-		ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
-		for (ptrdiff_t z = 0; z < nEquationsCount; z++)
-		{
-			GetVariable(z)->Index = z + m_nMatrixRow;
-		}
+		ptrdiff_t nRow(m_nMatrixRow);
+		for(auto && var : GetVariables())
+			var.get().Index = nRow++;
 	}
 	return bInMatrix;
 }
@@ -1671,6 +1640,20 @@ void CDynaNode::UpdateSerializer(SerializerPtr& Serializer)
 	CDynaNodeBase::UpdateSerializer(Serializer);
 	Serializer->AddState(_T("SLag"), Lag);
 	Serializer->AddState(_T("S"), S);
+}
+
+VariableIndexVec CDynaNodeBase::GetVariables()
+{
+	return VariableIndexVec{ Delta, V, Vre, Vim };
+}
+
+VariableIndexVec CDynaNode::GetVariables()
+{
+	/*VariableIndexVec retVec(CDynaNodeBase::GetVariables());
+	retVec.insert(retVec.end(), { Lag, S });
+	return retVec;
+	*/
+	return VariableIndexVec{ Delta, V, Vre, Vim, Lag, S };
 }
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");

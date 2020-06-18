@@ -13,6 +13,8 @@ namespace DFW2
 		constexpr double& operator= (double value) { Value = value;  return Value; }
 	};
 
+	using VariableIndexVec = std::vector<std::reference_wrapper<VariableIndex>>;
+
 	// типы переменных устройства
 	enum eDEVICEVARIABLETYPE
 	{

@@ -119,7 +119,7 @@ namespace DFW2
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
-		virtual VariableIndex* GetVariable(ptrdiff_t nVarIndex);
+		VariableIndexVec GetVariables() override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex)  override;
 		void GetPnrQnr();
 		void GetPnrQnrSuper();
@@ -209,7 +209,7 @@ namespace DFW2
 		CDynaNode();
 		virtual ~CDynaNode() {}
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
-		VariableIndex* GetVariable(ptrdiff_t nVarIndex) override;
+		VariableIndexVec GetVariables() override;
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel)  override;
 		bool BuildDerivatives(CDynaModel *pDynaModel)  override;

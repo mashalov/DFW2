@@ -1093,6 +1093,17 @@ void CDevice::UpdateSerializer(SerializerPtr& Serializer)
 		Serializer->BeginUpdate(this);
 }
 
+VariableIndexVec CDevice::GetVariables()
+{
+	return VariableIndexVec();
+}
+
+VariableIndex& CDevice::GetVariable(ptrdiff_t nVarIndex)
+{
+	VariableIndexVec VarVec(GetVariables());
+	return VarVec[nVarIndex];
+}
+
 #ifdef _DEBUG
 	_TCHAR CDevice::UnknownVarIndex[80];
 #endif
