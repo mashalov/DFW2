@@ -216,7 +216,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 				// dIim/dVre
 				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_RE), 0.0);
 				// dIim/dVim
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), 0,0);
+				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), 0.0);
 			}
 		}
 		else
