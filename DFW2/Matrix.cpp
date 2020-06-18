@@ -315,6 +315,11 @@ void CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 	(this->*(ElementSetterNoDup))(nRow, nCol, dValue);
 }
 
+void CDynaModel::SetElement(const VariableIndex& Row, const VariableIndex& Col, double dValue)
+{
+	(this->*(ElementSetterNoDup))(Row.Index, Col.Index, dValue);
+}
+
 // задает правую часть алгебраического уравнения
 void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 {

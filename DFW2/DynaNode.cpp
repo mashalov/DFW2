@@ -184,8 +184,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double QgVre2 = Qgsum * Vre2;
 	double QgVim2 = Qgsum * Vim2;
 
-	pDynaModel->SetElement(V.Index, V.Index, 1.0);
-	pDynaModel->SetElement(Delta.Index, Delta.Index, 1.0);
+	pDynaModel->SetElement(V, V, 1.0);
+	pDynaModel->SetElement(Delta, Delta, 1.0);
 		
 	if (pDynaModel->FillConstantElements())
 	{
@@ -210,13 +210,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 			{
 				// dIre /dVre
-				pDynaModel->SetElement(Vre.Index, pV->pNode->Vre.Index, 0.0);
+				pDynaModel->SetElement(Vre, pV->pNode->Vre, 0.0);
 				// dIre/dVim
-				pDynaModel->SetElement(Vre.Index, pV->pNode->Vim.Index, 0.0);
+				pDynaModel->SetElement(Vre, pV->pNode->Vim, 0.0);
 				// dIim/dVre
-				pDynaModel->SetElement(Vim.Index, pV->pNode->Vre.Index, 0.0);
+				pDynaModel->SetElement(Vim, pV->pNode->Vre, 0.0);
 				// dIim/dVim
-				pDynaModel->SetElement(Vim.Index, pV->pNode->Vim.Index, 0,0);
+				pDynaModel->SetElement(Vim, pV->pNode->Vim, 0.0);
 			}
 		}
 		else
@@ -225,13 +225,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 			{
 				// dIre /dVre
-				pDynaModel->SetElement(Vre.Index, pV->pNode->Vre.Index, -pV->Y.real());
+				pDynaModel->SetElement(Vre, pV->pNode->Vre, -pV->Y.real());
 				// dIre/dVim
-				pDynaModel->SetElement(Vre.Index, pV->pNode->Vim.Index, pV->Y.imag());
+				pDynaModel->SetElement(Vre, pV->pNode->Vim, pV->Y.imag());
 				// dIim/dVre
-				pDynaModel->SetElement(Vim.Index, pV->pNode->Vre.Index, -pV->Y.imag());
+				pDynaModel->SetElement(Vim, pV->pNode->Vre, -pV->Y.imag());
 				// dIim/dVim
-				pDynaModel->SetElement(Vim.Index, pV->pNode->Vim.Index, -pV->Y.real());
+				pDynaModel->SetElement(Vim, pV->pNode->Vim, -pV->Y.real());
 			}
 		}
 
@@ -249,22 +249,22 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	// check low voltage
 	if (m_bLowVoltage)
 	{
-		pDynaModel->SetElement(V.Index, Vre.Index, 0.0);
-		pDynaModel->SetElement(V.Index, Vim.Index, 0.0);
-		pDynaModel->SetElement(Delta.Index, Vre.Index, 0.0);
-		pDynaModel->SetElement(Delta.Index, Vim.Index, 0.0);
-		pDynaModel->SetElement(Vre.Index, V.Index, 0.0);
-		pDynaModel->SetElement(Vim.Index, V.Index, 0.0);
+		pDynaModel->SetElement(V, Vre, 0.0);
+		pDynaModel->SetElement(V, Vim, 0.0);
+		pDynaModel->SetElement(Delta, Vre, 0.0);
+		pDynaModel->SetElement(Delta, Vim, 0.0);
+		pDynaModel->SetElement(Vre, V, 0.0);
+		pDynaModel->SetElement(Vim, V, 0.0);
 
 		_ASSERTE(fabs(PgVre2) < DFW2_EPSILON && fabs(PgVim2) < DFW2_EPSILON);
 		_ASSERTE(fabs(QgVre2) < DFW2_EPSILON && fabs(QgVim2) < DFW2_EPSILON);
 	}
 	else
 	{
-		pDynaModel->SetElement(V.Index, Vre.Index, -Vre / V2sq);
-		pDynaModel->SetElement(V.Index, Vim.Index, -Vim / V2sq);
-		pDynaModel->SetElement(Delta.Index, Vre.Index, Vim / V2);
-		pDynaModel->SetElement(Delta.Index, Vim.Index, -Vre / V2);
+		pDynaModel->SetElement(V, Vre, -Vre / V2sq);
+		pDynaModel->SetElement(V, Vim, -Vim / V2sq);
+		pDynaModel->SetElement(Delta, Vre, Vim / V2);
+		pDynaModel->SetElement(Delta, Vim, -Vre / V2);
 
 		double d1 = (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
 		double d2 = (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
@@ -280,14 +280,14 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		double VreV2 = Vre / V2;
 		double VimV2 = Vim / V2;
 		dLRCPn -= dLRCPg;		dLRCQn -= dLRCQg;
-		pDynaModel->SetElement(Vre.Index, V.Index, dLRCPn * VreV2 + dLRCQn * VimV2);
-		pDynaModel->SetElement(Vim.Index, V.Index, dLRCPn * VimV2 - dLRCQn * VreV2);
+		pDynaModel->SetElement(Vre, V, dLRCPn * VreV2 + dLRCQn * VimV2);
+		pDynaModel->SetElement(Vim, V, dLRCPn * VimV2 - dLRCQn * VreV2);
 	}
 
-	pDynaModel->SetElement(Vre.Index, Vre.Index, dIredVre);
-	pDynaModel->SetElement(Vre.Index, Vim.Index, dIredVim);
-	pDynaModel->SetElement(Vim.Index, Vre.Index, dIimdVre);
-	pDynaModel->SetElement(Vim.Index, Vim.Index, dIimdVim);
+	pDynaModel->SetElement(Vre, Vre, dIredVre);
+	pDynaModel->SetElement(Vre, Vim, dIredVim);
+	pDynaModel->SetElement(Vim, Vre, dIimdVre);
+	pDynaModel->SetElement(Vim, Vim, dIimdVim);
 
 	return true;
 }
@@ -472,21 +472,21 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 
 
 
-	pDynaModel->SetElement(Lag.Index, Delta.Index, -1.0 / T);
+	pDynaModel->SetElement(Lag, Delta, -1.0 / T);
 	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
-	pDynaModel->SetElement(Lag.Index, Lag.Index, -1.0 / T);
+	pDynaModel->SetElement(Lag, Lag, -1.0 / T);
 	
 	if (!pDynaModel->IsInDiscontinuityMode())
 	{
-		pDynaModel->SetElement(S.Index, Delta.Index, -1.0 / T / w0);
-		pDynaModel->SetElement(S.Index, Lag.Index, 1.0 / T / w0);
-		pDynaModel->SetElement(S.Index, S.Index, 1.0);
+		pDynaModel->SetElement(S, Delta, -1.0 / T / w0);
+		pDynaModel->SetElement(S, Lag, 1.0 / T / w0);
+		pDynaModel->SetElement(S, S, 1.0);
 	}
 	else
 	{
-		pDynaModel->SetElement(S.Index, Delta.Index, 0.0);
-		pDynaModel->SetElement(S.Index, Lag.Index, 0.0);
-		pDynaModel->SetElement(S.Index, S.Index, 1.0);
+		pDynaModel->SetElement(S, Delta, 0.0);
+		pDynaModel->SetElement(S, Lag, 0.0);
+		pDynaModel->SetElement(S, S, 1.0);
 	}
 	return true;
 }
