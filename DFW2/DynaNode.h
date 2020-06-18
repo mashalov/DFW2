@@ -8,7 +8,6 @@
 namespace DFW2
 {
 	class CDynaBranch;
-
 	class CSynchroZone : public CDevice
 	{
 	public:
@@ -74,17 +73,17 @@ namespace DFW2
 			V_LAST		// последняя переменная (реально не существует) указывает количество уравнений устройства
 		};
 
-		double Delta;
-		double V;
-		double Vre;
-		double Vim;
+		VariableIndex Delta;
+		VariableIndex V;
+		VariableIndex Vre;
+		VariableIndex Vim;
 
 #ifdef _DEBUG
 		double Vrastr, Deltarastr, Qgrastr, Pnrrastr, Qnrrastr;
 		void GrabRastrResult()
 		{
-			Vrastr = V;
-			Deltarastr = Delta;
+			Vrastr = V.Value;
+			Deltarastr = Delta.Value;
 			Qgrastr = Qg;
 			Pnrrastr = Pnr;
 			Qnrrastr = Qnr;
@@ -120,6 +119,7 @@ namespace DFW2
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
+		virtual VariableIndex* GetVariable(ptrdiff_t nVarIndex);
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex)  override;
 		void GetPnrQnr();
 		void GetPnrQnrSuper();
@@ -137,6 +137,7 @@ namespace DFW2
 		void StoreStates() override;
 		void RestoreStates() override;
 		bool InMatrix() override;
+		void InitNordsiek(CDynaModel* pDynaModel) override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() noexcept { return Pnr - Pgr - V * V * YiiSuper.real();	}
@@ -200,14 +201,15 @@ namespace DFW2
 			V_LAST
 		};
 
-		double Lag;
+		VariableIndex Lag;
 		//double Sip;
 		//double Cop;
-		double S;
+		VariableIndex S;
 		//double Sv, Dlt;
 		CDynaNode();
 		virtual ~CDynaNode() {}
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
+		VariableIndex* GetVariable(ptrdiff_t nVarIndex) override;
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel)  override;
 		bool BuildDerivatives(CDynaModel *pDynaModel)  override;
@@ -216,6 +218,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
+		bool InMatrix() override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 

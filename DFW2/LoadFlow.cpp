@@ -1024,8 +1024,8 @@ void CLoadFlow::DumpNodes()
 			///*
 			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%.12g;%.12g\n"),
 				pNode->GetId(),
-				pNode->V,
-				pNode->Delta / M_PI * 180.0,
+				pNode->V.Value,
+				pNode->Delta.Value / M_PI * 180.0,
 				pNode->Pn,
 				pNode->Qn,
 				pNode->Pnr,
@@ -1053,8 +1053,8 @@ void CLoadFlow::DumpNodes()
 #else
 			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
 				pNode->GetId(),
-				pNode->V,
-				pNode->Delta / M_PI * 180.0,
+				pNode->V.Value,
+				pNode->Delta.Value / M_PI * 180.0,
 				pNode->Pn,
 				pNode->Qn,
 				pNode->Pnr,

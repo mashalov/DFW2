@@ -22,7 +22,7 @@ CDynaNodeBase::~CDynaNodeBase()
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
-	const cplx VreVim(std::polar(V, Delta));
+	const cplx VreVim(std::polar((double)V, (double)Delta));
 	Vre = VreVim.real();
 	Vim = VreVim.imag();
 }
@@ -184,8 +184,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double QgVre2 = Qgsum * Vre2;
 	double QgVim2 = Qgsum * Vim2;
 
-	pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
-	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+	pDynaModel->SetElement(V.Index, V.Index, 1.0);
+	pDynaModel->SetElement(Delta.Index, Delta.Index, 1.0);
 		
 	if (pDynaModel->FillConstantElements())
 	{
@@ -200,8 +200,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_IRE), dGenMatrixCoe);
-			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_IIM), dGenMatrixCoe);
+			pDynaModel->SetElement(Vre.Index, pGen->A(CDynaPowerInjector::V_IRE), dGenMatrixCoe);
+			pDynaModel->SetElement(Vim.Index, pGen->A(CDynaPowerInjector::V_IIM), dGenMatrixCoe);
 		}
 
 		if (m_bInMetallicSC)
@@ -210,13 +210,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 			{
 				// dIre /dVre
-				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_RE), 0.0);
+				pDynaModel->SetElement(Vre.Index, pV->pNode->Vre.Index, 0.0);
 				// dIre/dVim
-				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_IM), 0.0);
+				pDynaModel->SetElement(Vre.Index, pV->pNode->Vim.Index, 0.0);
 				// dIim/dVre
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_RE), 0.0);
+				pDynaModel->SetElement(Vim.Index, pV->pNode->Vre.Index, 0.0);
 				// dIim/dVim
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), 0,0);
+				pDynaModel->SetElement(Vim.Index, pV->pNode->Vim.Index, 0,0);
 			}
 		}
 		else
@@ -225,46 +225,46 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 			{
 				// dIre /dVre
-				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_RE), -pV->Y.real());
+				pDynaModel->SetElement(Vre.Index, pV->pNode->Vre.Index, -pV->Y.real());
 				// dIre/dVim
-				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_IM), pV->Y.imag());
+				pDynaModel->SetElement(Vre.Index, pV->pNode->Vim.Index, pV->Y.imag());
 				// dIim/dVre
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_RE), -pV->Y.imag());
+				pDynaModel->SetElement(Vim.Index, pV->pNode->Vre.Index, -pV->Y.imag());
 				// dIim/dVim
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), -pV->Y.real());
+				pDynaModel->SetElement(Vim.Index, pV->pNode->Vim.Index, -pV->Y.real());
 			}
 		}
 
 		// запоминаем позиции в строках матрицы, на которых заканчиваются постоянные элементы
-		pDynaModel->CountConstElementsToSkip(A(V_RE));
-		pDynaModel->CountConstElementsToSkip(A(V_IM));
+		pDynaModel->CountConstElementsToSkip(Vre.Index);
+		pDynaModel->CountConstElementsToSkip(Vim.Index);
 	}
 	else
 	{
 		// если постоянные элементы не надо обновлять, то пропускаем их и начинаем с непостоянных
-		pDynaModel->SkipConstElements(A(V_RE));
-		pDynaModel->SkipConstElements(A(V_IM));
+		pDynaModel->SkipConstElements(Vre.Index);
+		pDynaModel->SkipConstElements(Vim.Index);
 	}
 
 	// check low voltage
 	if (m_bLowVoltage)
 	{
-		pDynaModel->SetElement(A(V_V), A(V_RE), 0.0);
-		pDynaModel->SetElement(A(V_V), A(V_IM), 0.0);
-		pDynaModel->SetElement(A(V_DELTA), A(V_RE), 0.0);
-		pDynaModel->SetElement(A(V_DELTA), A(V_IM), 0.0);
-		pDynaModel->SetElement(A(V_RE), A(V_V), 0.0);
-		pDynaModel->SetElement(A(V_IM), A(V_V), 0.0);
+		pDynaModel->SetElement(V.Index, Vre.Index, 0.0);
+		pDynaModel->SetElement(V.Index, Vim.Index, 0.0);
+		pDynaModel->SetElement(Delta.Index, Vre.Index, 0.0);
+		pDynaModel->SetElement(Delta.Index, Vim.Index, 0.0);
+		pDynaModel->SetElement(Vre.Index, V.Index, 0.0);
+		pDynaModel->SetElement(Vim.Index, V.Index, 0.0);
 
 		_ASSERTE(fabs(PgVre2) < DFW2_EPSILON && fabs(PgVim2) < DFW2_EPSILON);
 		_ASSERTE(fabs(QgVre2) < DFW2_EPSILON && fabs(QgVim2) < DFW2_EPSILON);
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_V), A(V_RE), -Vre / V2sq);
-		pDynaModel->SetElement(A(V_V), A(V_IM), -Vim / V2sq);
-		pDynaModel->SetElement(A(V_DELTA), A(V_RE), Vim / V2);
-		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -Vre / V2);
+		pDynaModel->SetElement(V.Index, Vre.Index, -Vre / V2sq);
+		pDynaModel->SetElement(V.Index, Vim.Index, -Vim / V2sq);
+		pDynaModel->SetElement(Delta.Index, Vre.Index, Vim / V2);
+		pDynaModel->SetElement(Delta.Index, Vim.Index, -Vre / V2);
 
 		double d1 = (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
 		double d2 = (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
@@ -280,16 +280,33 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		double VreV2 = Vre / V2;
 		double VimV2 = Vim / V2;
 		dLRCPn -= dLRCPg;		dLRCQn -= dLRCQg;
-		pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
-		pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
+		pDynaModel->SetElement(Vre.Index, V.Index, dLRCPn * VreV2 + dLRCQn * VimV2);
+		pDynaModel->SetElement(Vim.Index, V.Index, dLRCPn * VimV2 - dLRCQn * VreV2);
 	}
 
-	pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
-	pDynaModel->SetElement(A(V_RE), A(V_IM), dIredVim);
-	pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
-	pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
+	pDynaModel->SetElement(Vre.Index, Vre.Index, dIredVre);
+	pDynaModel->SetElement(Vre.Index, Vim.Index, dIredVim);
+	pDynaModel->SetElement(Vim.Index, Vre.Index, dIimdVre);
+	pDynaModel->SetElement(Vim.Index, Vim.Index, dIimdVim);
 
 	return true;
+}
+
+void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
+{
+	_ASSERTE(m_pContainer);
+	struct RightVector* pRv = pDynaModel->GetRightVector(A(0));
+	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
+
+	// инициализация заключается в обходе всех переменных устройства и:
+	for (ptrdiff_t z = 0; z < nEquationsCount; z++)
+	{
+		VariableIndex* pv(GetVariable(z));
+		pRv->pValue = &pv->Value;
+		_ASSERTE(pRv->pValue);
+		pRv->pDevice = this;				// передачи данных об устройстве в структуру правой части
+		pRv++;
+	}
 }
 
 
@@ -373,10 +390,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 #endif
 	}
 
-	pDynaModel->SetFunction(A(V_V), dV);
-	pDynaModel->SetFunction(A(V_DELTA), dDelta);
-	pDynaModel->SetFunction(A(V_RE), Ire);
-	pDynaModel->SetFunction(A(V_IM), Iim);
+	pDynaModel->SetFunction(V.Index, dV);
+	pDynaModel->SetFunction(Delta.Index, dDelta);
+	pDynaModel->SetFunction(Vre.Index, Ire);
+	pDynaModel->SetFunction(Vim.Index, Iim);
 
 	return true;
 }
@@ -422,8 +439,8 @@ void CDynaNode::Predict()
 	double newDelta = atan2(sin(Delta), cos(Delta));
 	if (fabs(newDelta - Delta) > DFW2_EPSILON)
 	{
-		RightVector *pRvDelta = GetModel()->GetRightVector(A(V_DELTA));
-		RightVector *pRvLag = GetModel()->GetRightVector(A(V_LAG));
+		RightVector *pRvDelta = GetModel()->GetRightVector(Delta.Index);
+		RightVector *pRvLag = GetModel()->GetRightVector(Lag.Index);
 		double dDL = Delta - Lag;
 		Delta = newDelta;
 		Lag = Delta - dDL;
@@ -435,14 +452,13 @@ void CDynaNode::Predict()
 
 CDynaNode::CDynaNode() : CDynaNodeBase()
 {
-
 }
 
 bool CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 	double T = pDynaModel->GetFreqTimeConstant();
-	pDynaModel->SetDerivative(A(V_LAG), (Delta - Lag) / T);
+	pDynaModel->SetDerivative(Lag.Index, (Delta - Lag) / T);
 	return true;
 }
 
@@ -456,21 +472,21 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 
 
 
-	pDynaModel->SetElement(A(V_LAG), A(V_DELTA), -1.0 / T);
+	pDynaModel->SetElement(Lag.Index, Delta.Index, -1.0 / T);
 	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
-	pDynaModel->SetElement(A(V_LAG), A(V_LAG), -1.0 / T);
+	pDynaModel->SetElement(Lag.Index, Lag.Index, -1.0 / T);
 	
 	if (!pDynaModel->IsInDiscontinuityMode())
 	{
-		pDynaModel->SetElement(A(V_S), A(V_DELTA), -1.0 / T / w0);
-		pDynaModel->SetElement(A(V_S), A(V_LAG), 1.0 / T / w0);
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(S.Index, Delta.Index, -1.0 / T / w0);
+		pDynaModel->SetElement(S.Index, Lag.Index, 1.0 / T / w0);
+		pDynaModel->SetElement(S.Index, S.Index, 1.0);
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_S), A(V_DELTA), 0.0);
-		pDynaModel->SetElement(A(V_S), A(V_LAG), 0.0);
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(S.Index, Delta.Index, 0.0);
+		pDynaModel->SetElement(S.Index, Lag.Index, 0.0);
+		pDynaModel->SetElement(S.Index, S.Index, 1.0);
 	}
 	return true;
 }
@@ -487,8 +503,8 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	if (pDynaModel->IsInDiscontinuityMode()) 
 		dS = 0.0;
 	
-	pDynaModel->SetFunctionDiff(A(V_LAG), dLag);
-	pDynaModel->SetFunction(A(V_S), dS);
+	pDynaModel->SetFunctionDiff(Lag.Index, dLag);
+	pDynaModel->SetFunction(S.Index, dS);
 
 	//DumpIntegrationStep(2021, 2031);
 	//DumpIntegrationStep(2143, 2031);
@@ -508,16 +524,29 @@ eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
 	return Status;
 }
 
+VariableIndex* CDynaNodeBase::GetVariable(ptrdiff_t nVarIndex)
+{
+	VariableIndex* p(nullptr);
+	switch (nVarIndex)
+	{
+		MAP_VARIABLEINDEX(Delta, V_DELTA)
+		MAP_VARIABLEINDEX(V, V_V)
+		MAP_VARIABLEINDEX(Vre, V_RE)
+		MAP_VARIABLEINDEX(Vim, V_IM)
+	}
+	return p;
+}
+
 // переменные базового узла - модуль и угол
 double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p(nullptr);
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(Delta,V_DELTA)
-		MAP_VARIABLE(V, V_V)
-		MAP_VARIABLE(Vre, V_RE)
-		MAP_VARIABLE(Vim, V_IM)
+		MAP_VARIABLE(Delta.Value , V_DELTA)
+		MAP_VARIABLE(V.Value, V_V)
+		MAP_VARIABLE(Vre.Value, V_RE)
+		MAP_VARIABLE(Vim.Value, V_IM)
 	}
 	return p;
 }
@@ -542,8 +571,8 @@ double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 	{
 		switch (nVarIndex)
 		{
-			MAP_VARIABLE(Lag, V_LAG)
-			MAP_VARIABLE(S, V_S)
+			MAP_VARIABLE(Lag.Value, V_LAG)
+			MAP_VARIABLE(S.Value, V_S)
 				/*
 			MAP_VARIABLE(Sv, V_SV)
 			MAP_VARIABLE(Sip, V_SIP)
@@ -553,6 +582,22 @@ double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 	}
 	return p;
 }
+
+
+VariableIndex* CDynaNode::GetVariable(ptrdiff_t nVarIndex)
+{
+	VariableIndex* p(CDynaNodeBase::GetVariable(nVarIndex));
+	if (!p)
+	{
+		switch (nVarIndex)
+		{
+			MAP_VARIABLEINDEX(Lag, V_LAG)
+			MAP_VARIABLEINDEX(S, V_S)
+		}
+	}
+	return p;
+}
+
 
 CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) : 
 									   CDeviceContainer(pDynaModel)
@@ -910,7 +955,7 @@ bool CDynaNodeContainer::LULF()
 				// можно посчитать ток, а можно посчитать добавку в диагональ
 				//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
 				if (pNode->V > 0.0)
-					Y += conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V / pNode->V);
+					Y += std::conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V.Value / pNode->V.Value);
 				//Y -= conj(cplx(Pnr, Qnr) / pNode->V / pNode->V);
 
 				_CheckNumber(I.real());
@@ -1044,7 +1089,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s выше порогового"), V, GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s выше порогового"), V.Value, GetVerbalName()));
 		}
 	}
 	else
@@ -1053,7 +1098,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s ниже порогового"), V, GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s ниже порогового"), V.Value, GetVerbalName()));
 		}
 	}
 }
@@ -1149,13 +1194,27 @@ bool CDynaNodeBase::InMatrix()
 		return true;
 }
 
+bool CDynaNode::InMatrix()
+{
+	bool bInMatrix(CDynaNodeBase::InMatrix());
+	if (bInMatrix)
+	{
+		ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
+		for (ptrdiff_t z = 0; z < nEquationsCount; z++)
+		{
+			GetVariable(z)->Index = z + m_nMatrixRow;
+		}
+	}
+	return bInMatrix;
+}
+
 double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 
 	double Hyst = LOW_VOLTAGE_HYST;
-	RightVector *pRvre = pDynaModel->GetRightVector(A(V_RE));
-	RightVector *pRvim = pDynaModel->GetRightVector(A(V_IM));
+	RightVector *pRvre = pDynaModel->GetRightVector(Vre.Index);
+	RightVector *pRvim = pDynaModel->GetRightVector(Vim.Index);
 	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
 
 #ifdef USE_FMA

@@ -4,6 +4,15 @@
 
 namespace DFW2
 {
+	struct VariableIndex
+	{
+		double Value;
+		ptrdiff_t Index = 0;
+		constexpr operator double& () { return Value; }
+		constexpr operator const double& () const { return Value; }
+		constexpr double& operator= (double value) { Value = value;  return Value; }
+	};
+
 	// типы переменных устройства
 	enum eDEVICEVARIABLETYPE
 	{

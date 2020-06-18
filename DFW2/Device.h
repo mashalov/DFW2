@@ -355,4 +355,5 @@ namespace DFW2
 
 // макрос для упрощения связи имени и идентификатора переменной, используется в switch CDevice::GetVariablePtr
 #define MAP_VARIABLE(VarName, VarId)  case VarId: p = &VarName; break; 
+#define MAP_VARIABLEINDEX(VarName, VarId)  case VarId: p = &VarName; break; 
 }

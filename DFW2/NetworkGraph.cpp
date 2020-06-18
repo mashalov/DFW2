@@ -987,7 +987,7 @@ void CDynaNodeContainer::DumpNetwork()
 		for (auto& node : m_DevVec)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-			_ftprintf_s(fn, _T("Node Id=%d DBIndex=%d V %g / %g"), pNode->GetId(), pNode->GetDBIndex(), pNode->V, pNode->Delta / M_PI * 180.0);
+			_ftprintf_s(fn, _T("Node Id=%d DBIndex=%d V %g / %g"), pNode->GetId(), pNode->GetDBIndex(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
 			if(pNode->m_pSuperNodeParent)
 				_ftprintf_s(fn, _T(" belongs to supernode Id=%d"), pNode->m_pSuperNodeParent->GetId());
 
@@ -1030,7 +1030,7 @@ void CDynaNodeContainer::DumpNetwork()
 		for (auto& node : m_DevVec)
 		{
 			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
-			_ftprintf_s(fn, _T("%d;%g;%g\n"), pNode->GetId(), pNode->V, pNode->Delta / M_PI * 180.0);
+			_ftprintf_s(fn, _T("%d;%g;%g\n"), pNode->GetId(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
 		}
 		fclose(fn);
 	}
