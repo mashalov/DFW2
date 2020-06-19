@@ -597,7 +597,7 @@ namespace DFW2
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
 		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
 		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		void SetElement(const VariableIndex& Row, const VariableIndex& Col, double dValue);
+		void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
 
 		// Для теста с множителями
 		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
@@ -606,9 +606,9 @@ namespace DFW2
 		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
 		void SetDerivative(ptrdiff_t nRow, double dValue);
 
-		void SetFunction(const VariableIndex& Row, double dValue);
-		void SetFunctionDiff(const VariableIndex& Row, double dValue);
-		void SetDerivative(const VariableIndex& Row, double dValue);
+		void SetFunction(const VariableIndexBase& Row, double dValue);
+		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
+		void SetDerivative(const VariableIndexBase& Row, double dValue);
 
 
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);

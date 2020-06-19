@@ -9,7 +9,7 @@ namespace DFW2
 	{
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		PrimitiveVariableExternal V, DeltaV, Vre, Vim, Sv;
+		VariableIndexExternal V, DeltaV, Vre, Vim, Sv;
 	public:
 		enum VARS
 		{
@@ -27,10 +27,7 @@ namespace DFW2
 		};
 
 
-		double P;
-		double Q;
-		double Ire;
-		double Iim;
+		VariableIndex P, Q, Ire, Iim;
 
 		double Kgen;
 		double LFQmin;

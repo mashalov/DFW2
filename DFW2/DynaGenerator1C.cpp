@@ -46,8 +46,8 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 			break;
 		case DS_OFF:
 			zsq = Id = Iq = Eq = 0.0;
-			Vd = -V.Value();
-			Vq = V.Value();
+			Vd = -V;
+			Vq = V;
 			Eq = 0.0;
 			Eqe = 0.0;
 			break;
@@ -63,8 +63,8 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::ProcessDiscontinuity(CDynaModel *pDynaMo
 	{
 		if (IsStateOn())
 		{
-			double DeltaGT = Delta - DeltaV.Value();
-			double NodeV = V.Value();
+			double DeltaGT = Delta - DeltaV;
+			double NodeV = V;
 			Vd = -NodeV * sin(DeltaGT);
 			Vq = NodeV * cos(DeltaGT);
 			double det = (Vd * Vd + Vq * Vq);
@@ -87,14 +87,14 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 
 	if (bRes)
 	{
-		double NodeV  =	V.Value();
-		double DeltaGT = Delta - DeltaV.Value();
+		double NodeV  =	V;
+		double DeltaGT = Delta - DeltaV;
 
 		double cosDeltaGT = cos(DeltaGT);
 		double sinDeltaGT = sin(DeltaGT);
 
 		double sp1 = ZeroGuardSlip(1.0 + s);
-		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
+		double sp2 = ZeroGuardSlip(1.0 + Sv);
 
 		if (!IsStateOn())
 		{
@@ -140,18 +140,18 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		// dVd/dVd
 		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
 		// dVd/dV
-		pDynaModel->SetElement(A(V_VD), A(V.Index()), sinDeltaGT);
+		pDynaModel->SetElement(A(V_VD), A(V.Index), sinDeltaGT);
 		// dVd/dDeltaV
-		pDynaModel->SetElement(A(V_VD), A(DeltaV.Index()), -NodeV * cosDeltaGT);
+		pDynaModel->SetElement(A(V_VD), A(DeltaV.Index), -NodeV * cosDeltaGT);
 		// dVd/dDeltaG
 		pDynaModel->SetElement(A(V_VD), A(V_DELTA), NodeV * cosDeltaGT);
 
 		// dVq/dVq
 		pDynaModel->SetElement(A(V_VQ), A(V_VQ), 1);
 		// dVq/dV
-		pDynaModel->SetElement(A(V_VQ), A(V.Index()), -cosDeltaGT);
+		pDynaModel->SetElement(A(V_VQ), A(V.Index), -cosDeltaGT);
 		// dVq/dDeltaV
-		pDynaModel->SetElement(A(V_VQ), A(DeltaV.Index()), -NodeV * sinDeltaGT);
+		pDynaModel->SetElement(A(V_VQ), A(DeltaV.Index), -NodeV * sinDeltaGT);
 		// dVq/dDeltaG
 		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), NodeV * sinDeltaGT);
 
@@ -183,16 +183,16 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 
 		
 		// dDeltaG / dS
-		pDynaModel->SetElement(A(V_DELTA), A(V_S), -pDynaModel->GetOmega0());
+		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+		pDynaModel->SetElement(Delta , Delta, 1.0);
 		
 
 		// dS / dS
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1) );
+		pDynaModel->SetElement(s, s, 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1) );
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
 		// dS / dNodeS
-		pDynaModel->SetElement(A(V_S), A(Sv.Index()), -1.0 / Mj * Pairgap / sp2 / sp2);
+		pDynaModel->SetElement(s, Sv, -1.0 / Mj * Pairgap / sp2 / sp2);
 		// dS / Vd
 		pDynaModel->SetElement(A(V_S), A(V_VD),  1.0 / Mj * Id / sp2);
 		// dS / Vq
@@ -223,12 +223,12 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 
 	if (bRes)
 	{
-		double NodeV = V.Value();
-		double DeltaGT = Delta - DeltaV.Value();
+		double NodeV = V;
+		double DeltaGT = Delta - DeltaV;
 		double cosDeltaGT = cos(DeltaGT);
 		double sinDeltaGT = sin(DeltaGT);
 		double sp1 = ZeroGuardSlip(1.0 + s);
-		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
+		double sp2 = ZeroGuardSlip(1.0 + Sv);
 
 		if (!IsStateOn())
 		{
@@ -239,16 +239,16 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
 		pDynaModel->SetFunction(A(V_VD), Vd + NodeV * sinDeltaGT);
 		pDynaModel->SetFunction(A(V_VQ), Vq - NodeV * cosDeltaGT);
-		pDynaModel->SetFunction(A(V_P), P - Vd * Id - Vq * Iq);
-		pDynaModel->SetFunction(A(V_Q), Q - Vd * Iq + Vq * Id);
+		pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
+		pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
 		pDynaModel->SetFunction(A(V_ID), Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
 		pDynaModel->SetFunction(A(V_IQ), Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
 		pDynaModel->SetFunction(A(V_EQ), Eq - Eqs + Id * (xd - xd1));
 		double eDelta = pDynaModel->GetOmega0() * s;
 		double eEqs = (ExtEqe.Value() - Eqs + Id * (xd - xd1)) / Td01;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
-		pDynaModel->SetFunctionDiff(A(V_S), eS);
-		pDynaModel->SetFunctionDiff(A(V_DELTA), eDelta);
+		pDynaModel->SetFunctionDiff(s, eS);
+		pDynaModel->SetFunctionDiff(Delta, eDelta);
 		pDynaModel->SetFunctionDiff(A(V_EQS), eEqs);
 
 		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
@@ -262,11 +262,11 @@ bool CDynaGenerator1C::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	if (IsStateOn())
 	{
-		double NodeV = V.Value();
-		double DeltaGT = Delta - DeltaV.Value();
+		double NodeV = V;
+		double DeltaGT = Delta - DeltaV;
 		double cosDeltaGT = cos(DeltaGT);
 		double sp1 = ZeroGuardSlip(1.0 + s) ;
-		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
+		double sp2 = ZeroGuardSlip(1.0 + Sv);
 
 		if (!IsStateOn())
 		{
@@ -278,14 +278,14 @@ bool CDynaGenerator1C::BuildDerivatives(CDynaModel *pDynaModel)
 		double eDelta = pDynaModel->GetOmega0() * s;
 		double eEqs = (ExtEqe.Value() - Eqs + Id * (xd - xd1)) / Td01;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
-		pDynaModel->SetDerivative(A(V_S), eS);
-		pDynaModel->SetDerivative(A(V_DELTA), eDelta);
+		pDynaModel->SetDerivative(s, eS);
+		pDynaModel->SetDerivative(Delta, eDelta);
 		pDynaModel->SetDerivative(A(V_EQS), eEqs);
 	}
 	else
 	{
-		pDynaModel->SetDerivative(A(V_S), 0.0);
-		pDynaModel->SetDerivative(A(V_DELTA), 0.0);
+		pDynaModel->SetDerivative(s, 0.0);
+		pDynaModel->SetDerivative(Delta, 0.0);
 		pDynaModel->SetDerivative(A(V_EQS), 0.0);
 	}
 	return true;
@@ -350,7 +350,7 @@ cplx CDynaGenerator1C::Igen(ptrdiff_t nIteration)
 		m_Egen = GetEMF();
 	else
 	{
-		cplx Ig = (m_Egen - std::polar(V.Value(), DeltaV.Value())) * YgInt;
+		cplx Ig = (m_Egen - std::polar((double)V, (double)DeltaV)) * YgInt;
 		cplx Idq = Ig * std::polar(1.0, -Delta);
 		Id = Idq.imag();
 		Iq = Idq.real();
@@ -365,18 +365,18 @@ cplx CDynaGenerator1C::Igen(ptrdiff_t nIteration)
 const cplx& CDynaGenerator1C::CalculateEgen()
 {
 	double xgen = Xgen();
-	return m_Egen = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, Delta);
+	return m_Egen = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, (double)Delta);
 }
 
 bool CDynaGenerator1C::CalculatePower()
 {
 
-	double NodeV = V.Value();
-	double DeltaGT = Delta - DeltaV.Value();
+	double NodeV = V;
+	double DeltaGT = Delta - DeltaV;
 	double cosDeltaGT = cos(DeltaGT);
 	double sinDeltaGT = sin(DeltaGT);
 	double sp1 = ZeroGuardSlip(1.0 + s);
-	double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
+	double sp2 = ZeroGuardSlip(1.0 + Sv);
 
 	if (!IsStateOn())
 	{
@@ -437,22 +437,22 @@ bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
 	double co(cos(Delta)), si(sin(Delta));
 
 	// dIre / dIre
-	pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
+	pDynaModel->SetElement(Ire, Ire, 1.0);
 	// dIre / dId
 	pDynaModel->SetElement(A(V_IRE), A(V_ID), si);
 	// dIre / dIq
 	pDynaModel->SetElement(A(V_IRE), A(V_IQ), -co);
 	// dIre / dDeltaG
-	pDynaModel->SetElement(A(V_IRE), A(V_DELTA), Iq * si + Id * co);
+	pDynaModel->SetElement(Ire, Delta, Iq * si + Id * co);
 
 	// dIim / dIim
-	pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
+	pDynaModel->SetElement(Iim, Iim, 1.0);
 	// dIim / dId
 	pDynaModel->SetElement(A(V_IIM), A(V_ID), -co);
 	// dIim / dIq
 	pDynaModel->SetElement(A(V_IIM), A(V_IQ), -si);
 	// dIim / dDeltaG
-	pDynaModel->SetElement(A(V_IIM), A(V_DELTA), Id * si - Iq * co);
+	pDynaModel->SetElement(Iim, Delta, Id * si - Iq * co);
 
 	return true;
 }
@@ -462,8 +462,8 @@ bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
 bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
 {
 	double co(cos(Delta)), si(sin(Delta));
-	pDynaModel->SetFunction(A(V_IRE), Ire - Iq * co + Id * si);
-	pDynaModel->SetFunction(A(V_IIM), Iim - Iq * si - Id * co);
+	pDynaModel->SetFunction(Ire, Ire - Iq * co + Id * si);
+	pDynaModel->SetFunction(Iim, Iim - Iq * si - Id * co);
 
 	return true;
 }

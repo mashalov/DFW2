@@ -713,14 +713,13 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(S, S, 1.0);
 		for (auto&& it : m_LinkedGenerators)
 		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(it);
-			if(pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
+			if(it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
-				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(pGen);
-				pDynaModel->SetElement(A(V_S), pGen->A(CDynaGeneratorMotion::V_S), -pGenMj->Mj / Mj);
+				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(it);
+				pDynaModel->SetElement(S, pGenMj->s, -pGenMj->Mj / Mj);
 			}
 		}
 	}
@@ -733,20 +732,19 @@ bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 	double dS = S;
 	if (m_bInfPower)
 	{
-		pDynaModel->SetFunction(A(V_S), 0.0);
+		pDynaModel->SetFunction(S, 0.0);
 	}
 	else
 	{
-		for (DEVICEVECTORITR it = m_LinkedGenerators.begin(); it != m_LinkedGenerators.end(); it++)
+		for (auto&& it : m_LinkedGenerators)
 		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*it);
-			if (pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
+			if (it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
-				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(pGen);
+				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(it);
 				dS -= pGenMj->Mj * pGenMj->s / Mj;
 			}
 		}
-		pDynaModel->SetFunction(A(V_S), dS);
+		pDynaModel->SetFunction(S, dS);
 	}
 	return true;
 }
@@ -896,7 +894,7 @@ bool CDynaNodeContainer::LULF()
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
 
-					_ftprintf(fgen, _T("%g;"), pVsource->P);
+					_ftprintf(fgen, _T("%g;"), pVsource->P.Value);
 				}
 
 				// рассчитываем задающий ток узла от нагрузки

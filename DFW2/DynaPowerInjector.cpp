@@ -25,10 +25,10 @@ double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(P, V_P)
-		MAP_VARIABLE(Q, V_Q)
-		MAP_VARIABLE(Ire, V_IRE)
-		MAP_VARIABLE(Iim, V_IIM)
+		MAP_VARIABLE(P.Value, V_P)
+		MAP_VARIABLE(Q.Value, V_Q)
+		MAP_VARIABLE(Ire.Value, V_IRE)
+		MAP_VARIABLE(Iim.Value, V_IIM)
 	}
 	return p;
 }

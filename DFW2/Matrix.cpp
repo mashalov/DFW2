@@ -315,7 +315,7 @@ void CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 	(this->*(ElementSetterNoDup))(nRow, nCol, dValue);
 }
 
-void CDynaModel::SetElement(const VariableIndex& Row, const VariableIndex& Col, double dValue)
+void CDynaModel::SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
 {
 	(this->*(ElementSetterNoDup))(Row.Index, Col.Index, dValue);
 }
@@ -358,17 +358,17 @@ void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 	SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
 }
 
-void CDynaModel::SetFunction(const VariableIndex& Row, double dValue)
+void CDynaModel::SetFunction(const VariableIndexBase& Row, double dValue)
 {
 	SetFunction(Row.Index, dValue);
 }
 
-void CDynaModel::SetFunctionDiff(const VariableIndex& Row, double dValue)
+void CDynaModel::SetFunctionDiff(const VariableIndexBase& Row, double dValue)
 {
 	SetFunctionDiff(Row.Index, dValue);
 }
 
-void CDynaModel::SetDerivative(const VariableIndex& Row, double dValue)
+void CDynaModel::SetDerivative(const VariableIndexBase& Row, double dValue)
 {
 	SetDerivative(Row.Index, dValue);
 }

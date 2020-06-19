@@ -24,13 +24,15 @@ namespace DFW2
 		};
 
 
-		double s;
+		VariableIndex s;
+
 		double	Unom, Kdemp,xq, Mj, Pt, Pnom, cosPhinom;
 
 		CDynaGeneratorMotion();
 		virtual ~CDynaGeneratorMotion() {}
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexVec GetVariables() override;
 		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : DFW2_EPSILON; }
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;

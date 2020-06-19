@@ -10,17 +10,19 @@ namespace DFW2
 		bool SetUpDelta();
 	public:
 		virtual cplx GetXofEqs() { return cplx(0,xd1); }
-		double Eqs, Delta, xd1;
+		VariableIndex Delta;
+		double Eqs, xd1;
 		CDynaGeneratorInfBusBase();
 		virtual double Xgen();
 		virtual cplx Igen(ptrdiff_t nIteration);
 		virtual ~CDynaGeneratorInfBusBase() {}
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		cplx GetEMF() override { return std::polar(Eqs, Delta); }
+		cplx GetEMF() override { return std::polar(Eqs, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
+		VariableIndexVec GetVariables() override;
 	};
 
 	class CDynaGeneratorInfBus : public CDynaGeneratorInfBusBase

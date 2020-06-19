@@ -4,13 +4,25 @@
 
 namespace DFW2
 {
-	struct VariableIndex
+	struct VariableIndexBase
+	{
+		ptrdiff_t Index = 0;
+	};
+
+	struct VariableIndex : VariableIndexBase
 	{
 		double Value;
-		ptrdiff_t Index = 0;
 		constexpr operator double& () { return Value; }
 		constexpr operator const double& () const { return Value; }
 		constexpr double& operator= (double value) { Value = value;  return Value; }
+	};
+
+	struct VariableIndexExternal : VariableIndexBase
+	{
+		double* m_pValue;
+		constexpr operator double& () { return *m_pValue; }
+		constexpr operator const double& () const { return *m_pValue; }
+		constexpr double& operator= (double value) { *m_pValue = value;  return *m_pValue; }
 	};
 
 	using VariableIndexVec = std::vector<std::reference_wrapper<VariableIndex>>;

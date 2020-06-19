@@ -58,8 +58,8 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 
 	if (bRes)
 	{
-		double NodeV = V.Value();
-		double DeltaGT = Delta - DeltaV.Value();
+		double NodeV = V;
+		double DeltaGT = Delta - DeltaV;
 
 		double cosDeltaGT = cos(DeltaGT);
 		double sinDeltaGT = sin(DeltaGT);
@@ -101,18 +101,18 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		// dVd/dVd
 		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
 		// dVd/dV
-		pDynaModel->SetElement(A(V_VD), A(V.Index()), sinDeltaGT);
+		pDynaModel->SetElement(A(V_VD), A(V.Index), sinDeltaGT);
 		// dVd/dDeltaV
-		pDynaModel->SetElement(A(V_VD), A(DeltaV.Index()), -NodeV * cosDeltaGT);
+		pDynaModel->SetElement(A(V_VD), A(DeltaV.Index), -NodeV * cosDeltaGT);
 		// dVd/dDeltaG
 		pDynaModel->SetElement(A(V_VD), A(V_DELTA), NodeV * cosDeltaGT);
 
 		// dVq/dVq
 		pDynaModel->SetElement(A(V_VQ), A(V_VQ), 1);
 		// dVq/dV
-		pDynaModel->SetElement(A(V_VQ), A(V.Index()), -cosDeltaGT);
+		pDynaModel->SetElement(A(V_VQ), A(V.Index), -cosDeltaGT);
 		// dVq/dDeltaV
-		pDynaModel->SetElement(A(V_VQ), A(DeltaV.Index()), -NodeV * sinDeltaGT);
+		pDynaModel->SetElement(A(V_VQ), A(DeltaV.Index), -NodeV * sinDeltaGT);
 		// dVq/dDeltaG
 		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), NodeV * sinDeltaGT);
 
@@ -148,17 +148,17 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 
 
 		// dDeltaG / dS
-		pDynaModel->SetElement(A(V_DELTA), A(V_S), -pDynaModel->GetOmega0());
+		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+		pDynaModel->SetElement(Delta, Delta, 1.0);
 
 		double sp1 = ZeroGuardSlip(1.0 + s);
-		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
+		double sp2 = ZeroGuardSlip(1.0 + Sv);
 		// dS / dS
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
+		pDynaModel->SetElement(s, s, 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
 		// dS / dNodeS
-		pDynaModel->SetElement(A(V_S), A(Sv.Index()), -1.0 / Mj * Pairgap / sp2 / sp2);
+		pDynaModel->SetElement(s, Sv, -1.0 / Mj * Pairgap / sp2 / sp2);
 		// dS / Vd
 		pDynaModel->SetElement(A(V_S), A(V_VD), 1.0 / Mj * Id / sp2);
 		// dS / Vq
@@ -199,14 +199,14 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 
 	if (bRes)
 	{
-		double NodeV = V.Value();
-		double DeltaGT = Delta - DeltaV.Value();
+		double NodeV = V;
+		double DeltaGT = Delta - DeltaV;
 
 		double cosDeltaGT = cos(DeltaGT);
 		double sinDeltaGT = sin(DeltaGT);
 
 		double sp1 = ZeroGuardSlip(1.0 + s);
-		double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
+		double sp2 = ZeroGuardSlip(1.0 + Sv);
 		
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
 		
@@ -226,8 +226,8 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Td0ss;
 		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq0ss;
 
-		pDynaModel->SetFunctionDiff(A(V_S), eS);
-		pDynaModel->SetFunctionDiff(A(V_DELTA), eDelta);
+		pDynaModel->SetFunctionDiff(s, eS);
+		pDynaModel->SetFunctionDiff(Delta, eDelta);
 		pDynaModel->SetFunctionDiff(A(V_EQS), eEqs);
 		pDynaModel->SetFunctionDiff(A(V_EQSS), eEqss);
 		pDynaModel->SetFunctionDiff(A(V_EDSS), eEdss);
@@ -300,14 +300,14 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::UpdateExternalVariables(CDynaModel *pDyn
 bool CDynaGenerator3C::CalculatePower()
 {
 	
-	double NodeV = V.Value();
-	double DeltaGT = Delta - DeltaV.Value();
+	double NodeV = V;
+	double DeltaGT = Delta - DeltaV;
 
 	double cosDeltaGT = cos(DeltaGT);
 	double sinDeltaGT = sin(DeltaGT);
 
 	double sp1 = ZeroGuardSlip(1.0 + s);
-	double sp2 = ZeroGuardSlip(1.0 + Sv.Value());
+	double sp2 = ZeroGuardSlip(1.0 + Sv);
 
 	double Pairgap = P + (Id*Id + Iq * Iq) * r;
 
@@ -324,7 +324,7 @@ bool CDynaGenerator3C::CalculatePower()
 const cplx& CDynaGenerator3C::CalculateEgen()
 {
 	double xgen = Xgen();
-	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, Delta);
+	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, (double)Delta);
 }
 
 double CDynaGenerator3C::Xgen()
