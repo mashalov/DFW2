@@ -480,12 +480,15 @@ void CDeviceContainer::Predict()
 void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 {
 	m_DevInMatrix.clear();
-	m_DevInMatrix.reserve(m_DevVec.size());
-	for (auto&& it : m_DevVec)
+	if (EquationsCount() > 0)
 	{
-		it->EstimateEquations(pDynaModel);
-		if (it->InMatrix())
-			m_DevInMatrix.push_back(it);
+		m_DevInMatrix.reserve(m_DevVec.size());
+		for (auto&& it : m_DevVec)
+		{
+			it->EstimateEquations(pDynaModel);
+			if (it->InMatrix())
+				m_DevInMatrix.push_back(it);
+		}
 	}
 }
 

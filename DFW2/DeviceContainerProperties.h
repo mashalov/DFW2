@@ -7,6 +7,7 @@ namespace DFW2
 	struct VariableIndexBase
 	{
 		ptrdiff_t Index = 0;
+		constexpr bool Indexed() { return Index >= 0; }
 	};
 
 	struct VariableIndex : VariableIndexBase
@@ -19,9 +20,16 @@ namespace DFW2
 
 	struct VariableIndexExternal : VariableIndexBase
 	{
-		double* m_pValue;
+		double* m_pValue = nullptr;
 		constexpr operator double& () { return *m_pValue; }
 		constexpr operator const double& () const { return *m_pValue; }
+		constexpr double& operator= (double value) { *m_pValue = value;  return *m_pValue; }
+	};
+
+	struct VariableIndexExternalOptional : VariableIndexExternal
+	{
+		double Value;
+		void MakeLocal() { m_pValue = &Value; Index = -1; }
 		constexpr double& operator= (double value) { *m_pValue = value;  return *m_pValue; }
 	};
 

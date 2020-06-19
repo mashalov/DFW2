@@ -626,6 +626,23 @@ eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(bool Status1)
 	return DFS_OK;
 }
 
+bool CDevice::InitExternalVariable(VariableIndexExternalOptional& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
+{
+	if (pFromDevice)
+	{
+		PrimitiveVariableExternal v;
+		InitExternalVariable(v, pFromDevice, cszName, eLimitDeviceType);
+		if (v.Indexed())
+		{
+			ExtVar.Index = v.Index() + A(0);
+			ExtVar.m_pValue = &v.Value();
+		}
+	}
+	if (!ExtVar.m_pValue)
+		ExtVar.MakeLocal();
+	return true;
+}
+
 bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
 {
 	PrimitiveVariableExternal v;

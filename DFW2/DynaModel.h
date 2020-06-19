@@ -453,6 +453,20 @@ namespace DFW2
 		} 
 			m_Parameters;
 
+		void CheckMatrixElement(ptrdiff_t nRow, ptrdiff_t nCol);
+		void ResetCheckMatrixElement();
+
+#ifdef _DEBUG
+		#define CHECK_MATRIX_ELEMENT(row, col) CheckMatrixElement((row),(col));
+		#define RESET_CHECK_MATRIX_ELEMENT() ResetCheckMatrixElement();
+#else
+		#define CHECK_MATRIX_ELEMENT(row, col) ;
+		#define RESET_CHECK_MATRIX_ELEMENT() ;
+#endif
+
+		std::map<ptrdiff_t, std::set<ptrdiff_t>> m_MatrixChecker;
+
+
 		KLUWrapper<double> klu;
 		CDynaLRC *m_pLRCGen		= nullptr;		// СХН для генераторных узлов без генераторов
 		CDynaLRC *m_pLRCLoad	= nullptr;		// СХН для узлов без динамической СХН

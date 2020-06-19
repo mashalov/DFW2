@@ -87,6 +87,7 @@ namespace DFW2
 		std::unique_ptr<CSerializerAdapterBase> Adapter;
 
 		TypedSerializedValue(VariableIndex* pVariable) : Value(&pVariable->Value), ValueType(eValueType::VT_DBL) {}
+		TypedSerializedValue(VariableIndexExternalOptional* pVariable) : Value(pVariable->m_pValue), ValueType(eValueType::VT_DBL) {}
 		TypedSerializedValue(CSerializerAdapterBase *pAdapter) : Adapter(pAdapter), ValueType(eValueType::VT_ADAPTER) {}
 		TypedSerializedValue(double* pDouble) : Value(pDouble), ValueType(eValueType::VT_DBL) {}
 		TypedSerializedValue(ptrdiff_t* pInteger) : Value(pInteger), ValueType(eValueType::VT_INT) {}
@@ -194,6 +195,7 @@ namespace DFW2
 		double Multiplier = 1.0;
 		bool bState = false;
 		MetaSerializedValue(VariableIndex* pVariable) : Value(&pVariable->Value) {}
+		MetaSerializedValue(VariableIndexExternalOptional* pVariable) : Value(pVariable->m_pValue){}
 		MetaSerializedValue(CSerializerAdapterBase* pAdapter) : Value(pAdapter) {}
 		MetaSerializedValue(double* pDouble) : Value(pDouble) {}
 		MetaSerializedValue(ptrdiff_t* pInteger) : Value(pInteger) {}

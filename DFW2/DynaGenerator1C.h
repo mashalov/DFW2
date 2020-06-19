@@ -39,12 +39,8 @@ namespace DFW2
 		cplx m_Egen; // эквивалентна€ Ёƒ— генератора дл€ учета €внополюсности в стартовом методе
 					 // используетс€ всеми dq генераторами
 
-		double Vd, Vq;
-		double Id, Iq;
-		double Eq;
-
-		double Eqe;
-		PrimitiveVariableExternal ExtEqe;
+		VariableIndex Vd, Vq, Id, Iq, Eq;
+		VariableIndexExternalOptional ExtEqe;
 
 		double	Td01, xd, r;
 
@@ -60,6 +56,7 @@ namespace DFW2
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexVec GetVariables() override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;

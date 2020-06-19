@@ -130,6 +130,8 @@ void CDynaModel::BuildRightHand()
 
 void CDynaModel::BuildMatrix()
 {
+	RESET_CHECK_MATRIX_ELEMENT();
+
 	if (!EstimateBuild())
 		BuildRightHand();
 
@@ -243,6 +245,8 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 {
 	if (nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize)
 		throw dfw2error(Cex(_T("CDynaModel::ReallySetElement matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
+
+	CHECK_MATRIX_ELEMENT(nRow, nCol);
 
 	MatrixRow *pRow = m_pMatrixRows + nRow;
 	ptrdiff_t nMethodIndx = (pRightVector + nCol)->EquationType * 2 + (sc.q - 1);
@@ -707,4 +711,19 @@ void CDynaModel::UpdateTotalRightVector()
 				pRvB += cit->EquationsCount();
 		}
 	}
+}
+
+void CDynaModel::CheckMatrixElement(ptrdiff_t nRow, ptrdiff_t nCol)
+{
+	/*
+	auto& ins = m_MatrixChecker.insert(std::make_pair(nRow, std::set<ptrdiff_t>{nCol}));
+	if (!ins.second)
+		if (!ins.first->second.insert(nCol).second)
+			throw dfw2error(Cex(_T("CDynaModel::CheckMatrixElement dup element at %d %d"), nRow, nCol));
+	*/
+}
+
+void CDynaModel::ResetCheckMatrixElement()
+{
+	m_MatrixChecker.clear();
 }

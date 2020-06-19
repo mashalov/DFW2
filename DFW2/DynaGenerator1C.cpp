@@ -8,7 +8,7 @@ using namespace DFW2;
 
 CDynaGenerator1C::CDynaGenerator1C() : CDynaGeneratorMotion()
 {
-	ExtEqe.Value(&Eqe);
+
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
@@ -41,7 +41,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 			zsq = 1.0 / (r*r + xd1 * xq);
 			CDynaGenerator1C::ProcessDiscontinuity(pDynaModel);
 			Eqs = Vq + r * Iq - xd1 * Id;
-			Eqe = Eqs - Id * (xd - xd1);
+			ExtEqe = Eqs - Id * (xd - xd1);
 			Eq = Eqs - Id * (xd - xd1); // repeat eq calc after eqs (first eq calc is in processdiscontinuity)
 			break;
 		case DS_OFF:
@@ -49,7 +49,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 			Vd = -V;
 			Vq = V;
 			Eq = 0.0;
-			Eqe = 0.0;
+			ExtEqe = 0.0;
 			break;
 		}
 	}
@@ -116,70 +116,70 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 
 
 		// dP/dP
-		pDynaModel->SetElement(A(V_P), A(V_P), 1.0);
+		pDynaModel->SetElement(P, P, 1.0);
 		// dP/dVd
-		pDynaModel->SetElement(A(V_P), A(V_VD), -Id);
+		pDynaModel->SetElement(P, Vd, -Id);
 		// dP/dVq
-		pDynaModel->SetElement(A(V_P), A(V_VQ), -Iq);
+		pDynaModel->SetElement(P, Vq, -Iq);
 		// dP/dId
-		pDynaModel->SetElement(A(V_P), A(V_ID), -Vd);
+		pDynaModel->SetElement(P, Id, -Vd);
 		// dP/dIq
-		pDynaModel->SetElement(A(V_P), A(V_IQ), -Vq);
+		pDynaModel->SetElement(P, Iq, -Vq);
 
 		// dQ/dQ
-		pDynaModel->SetElement(A(V_Q), A(V_Q), 1.0);
+		pDynaModel->SetElement(Q, Q, 1.0);
 		// dQ/dVd
-		pDynaModel->SetElement(A(V_Q), A(V_VD), -Iq);
+		pDynaModel->SetElement(Q, Vd, -Iq);
 		// dQ/dVq
-		pDynaModel->SetElement(A(V_Q), A(V_VQ), Id);
+		pDynaModel->SetElement(Q, Vq, Id);
 		// dQ/dId
-		pDynaModel->SetElement(A(V_Q), A(V_ID), Vq);
+		pDynaModel->SetElement(Q, Id, Vq);
 		// dQ/dIq
-		pDynaModel->SetElement(A(V_Q), A(V_IQ), -Vd);
+		pDynaModel->SetElement(Q, Iq, -Vd);
 
 		// dVd/dVd
-		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
+		pDynaModel->SetElement(Vd, Vd, 1);
 		// dVd/dV
-		pDynaModel->SetElement(A(V_VD), A(V.Index), sinDeltaGT);
+		pDynaModel->SetElement(Vd, V, sinDeltaGT);
 		// dVd/dDeltaV
-		pDynaModel->SetElement(A(V_VD), A(DeltaV.Index), -NodeV * cosDeltaGT);
+		pDynaModel->SetElement(Vd, DeltaV, -NodeV * cosDeltaGT);
 		// dVd/dDeltaG
-		pDynaModel->SetElement(A(V_VD), A(V_DELTA), NodeV * cosDeltaGT);
+		pDynaModel->SetElement(Vd, Delta, NodeV * cosDeltaGT);
 
 		// dVq/dVq
-		pDynaModel->SetElement(A(V_VQ), A(V_VQ), 1);
+		pDynaModel->SetElement(Vq, Vq, 1);
 		// dVq/dV
-		pDynaModel->SetElement(A(V_VQ), A(V.Index), -cosDeltaGT);
+		pDynaModel->SetElement(Vq, V, -cosDeltaGT);
 		// dVq/dDeltaV
-		pDynaModel->SetElement(A(V_VQ), A(DeltaV.Index), -NodeV * sinDeltaGT);
+		pDynaModel->SetElement(Vq, DeltaV, -NodeV * sinDeltaGT);
 		// dVq/dDeltaG
-		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), NodeV * sinDeltaGT);
+		pDynaModel->SetElement(Vq, Delta, NodeV * sinDeltaGT);
 
 		// dId/dId
-		pDynaModel->SetElement(A(V_ID), A(V_ID), 1);
+		pDynaModel->SetElement(Id, Id, 1);
 		// dId/dVd
-		pDynaModel->SetElement(A(V_ID), A(V_VD), r * zsq);
+		pDynaModel->SetElement(Id, Vd, r * zsq);
 		// dId/dVq
-		pDynaModel->SetElement(A(V_ID), A(V_VQ), -xq * zsq);
+		pDynaModel->SetElement(Id, Vq, -xq * zsq);
 		// dId/dEqs
-		pDynaModel->SetElement(A(V_ID), A(V_EQS), xq * zsq);
+		pDynaModel->SetElement(Id, Eqs, xq * zsq);
 
 		// dIq/dIq
-		pDynaModel->SetElement(A(V_IQ), A(V_IQ), 1);
+		pDynaModel->SetElement(Iq, Iq, 1);
 		// dIq/dVd
-		pDynaModel->SetElement(A(V_IQ), A(V_VD), xd1 * zsq);
+		pDynaModel->SetElement(Iq, Vd, xd1 * zsq);
 		// dIq/dVq
-		pDynaModel->SetElement(A(V_IQ), A(V_VQ), r * zsq);
+		pDynaModel->SetElement(Iq, Vq, r * zsq);
 		// dIq/dEqs
-		pDynaModel->SetElement(A(V_IQ), A(V_EQS),  -r * zsq);
+		pDynaModel->SetElement(Iq, Eqs,  -r * zsq);
 
 		// dEqs/dEqs
-		pDynaModel->SetElement(A(V_EQS), A(V_EQS), -1.0 / Td01);
+		pDynaModel->SetElement(Eqs, Eqs, -1.0 / Td01);
 		// dEqs/dId
-		pDynaModel->SetElement(A(V_EQS), A(V_ID), -1.0 / Td01 * (xd - xd1));
+		pDynaModel->SetElement(Eqs, Id, -1.0 / Td01 * (xd - xd1));
 		// dEqs/dEqe
 		if (ExtEqe.Indexed())
-			pDynaModel->SetElement(A(V_EQS), A(ExtEqe.Index()), -1.0 / Td01);
+			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Td01);
 
 		
 		// dDeltaG / dS
@@ -194,20 +194,20 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		// dS / dNodeS
 		pDynaModel->SetElement(s, Sv, -1.0 / Mj * Pairgap / sp2 / sp2);
 		// dS / Vd
-		pDynaModel->SetElement(A(V_S), A(V_VD),  1.0 / Mj * Id / sp2);
+		pDynaModel->SetElement(s, Vd,  1.0 / Mj * Id / sp2);
 		// dS / Vq
-		pDynaModel->SetElement(A(V_S), A(V_VQ), 1.0 / Mj * Iq / sp2);
+		pDynaModel->SetElement(s, Vq, 1.0 / Mj * Iq / sp2);
 		// dS / Id
-		pDynaModel->SetElement(A(V_S), A(V_ID), 1.0 / Mj * (Vd + 2 * Id * r) / sp2);
+		pDynaModel->SetElement(s, Id, 1.0 / Mj * (Vd + 2 * Id * r) / sp2);
 		// dS / Iq
-		pDynaModel->SetElement(A(V_S), A(V_IQ), 1.0 / Mj * (Vq + 2 * Iq * r) / sp2);
+		pDynaModel->SetElement(s, Iq, 1.0 / Mj * (Vq + 2 * Iq * r) / sp2);
 
 		// dEq / dEq
-		pDynaModel->SetElement(A(V_EQ), A(V_EQ), 1.0);
+		pDynaModel->SetElement(Eq, Eq, 1.0);
 		// dEq / dEqs
-		pDynaModel->SetElement(A(V_EQ), A(V_EQS), -1.0);
+		pDynaModel->SetElement(Eq, Eqs, -1.0);
 		// dEq / dId
-		pDynaModel->SetElement(A(V_EQ), A(V_ID), xd - xd1);
+		pDynaModel->SetElement(Eq, Id, xd - xd1);
 
 		bRes = bRes && BuildIfromDQEquations(pDynaModel);
 
@@ -237,19 +237,19 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		}
 
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
-		pDynaModel->SetFunction(A(V_VD), Vd + NodeV * sinDeltaGT);
-		pDynaModel->SetFunction(A(V_VQ), Vq - NodeV * cosDeltaGT);
+		pDynaModel->SetFunction(Vd, Vd + NodeV * sinDeltaGT);
+		pDynaModel->SetFunction(Vq, Vq - NodeV * cosDeltaGT);
 		pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
 		pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
-		pDynaModel->SetFunction(A(V_ID), Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
-		pDynaModel->SetFunction(A(V_IQ), Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
-		pDynaModel->SetFunction(A(V_EQ), Eq - Eqs + Id * (xd - xd1));
+		pDynaModel->SetFunction(Id, Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
+		pDynaModel->SetFunction(Iq, Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
+		pDynaModel->SetFunction(Eq, Eq - Eqs + Id * (xd - xd1));
 		double eDelta = pDynaModel->GetOmega0() * s;
-		double eEqs = (ExtEqe.Value() - Eqs + Id * (xd - xd1)) / Td01;
+		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 		pDynaModel->SetFunctionDiff(s, eS);
 		pDynaModel->SetFunctionDiff(Delta, eDelta);
-		pDynaModel->SetFunctionDiff(A(V_EQS), eEqs);
+		pDynaModel->SetFunctionDiff(Eqs, eEqs);
 
 		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
 	}
@@ -276,17 +276,17 @@ bool CDynaGenerator1C::BuildDerivatives(CDynaModel *pDynaModel)
 
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
 		double eDelta = pDynaModel->GetOmega0() * s;
-		double eEqs = (ExtEqe.Value() - Eqs + Id * (xd - xd1)) / Td01;
+		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 		pDynaModel->SetDerivative(s, eS);
 		pDynaModel->SetDerivative(Delta, eDelta);
-		pDynaModel->SetDerivative(A(V_EQS), eEqs);
+		pDynaModel->SetDerivative(Eqs, eEqs);
 	}
 	else
 	{
 		pDynaModel->SetDerivative(s, 0.0);
 		pDynaModel->SetDerivative(Delta, 0.0);
-		pDynaModel->SetDerivative(A(V_EQS), 0.0);
+		pDynaModel->SetDerivative(Eqs, 0.0);
 	}
 	return true;
 }
@@ -298,12 +298,12 @@ double* CDynaGenerator1C::GetVariablePtr(ptrdiff_t nVarIndex)
 	{
 		switch (nVarIndex)
 		{
-			MAP_VARIABLE(Eqs, V_EQS)
-			MAP_VARIABLE(Vd, V_VD)
-			MAP_VARIABLE(Vq, V_VQ)
-			MAP_VARIABLE(Id, V_ID)
-			MAP_VARIABLE(Iq, V_IQ)
-			MAP_VARIABLE(Eq, V_EQ)
+			MAP_VARIABLE(Eqs.Value, V_EQS)
+			MAP_VARIABLE(Vd.Value, V_VD)
+			MAP_VARIABLE(Vq.Value, V_VQ)
+			MAP_VARIABLE(Id.Value, V_ID)
+			MAP_VARIABLE(Iq.Value, V_IQ)
+			MAP_VARIABLE(Eq.Value, V_EQ)
 		}
 	}
 	return p;
@@ -322,7 +322,7 @@ double* CDynaGenerator1C::GetConstVariablePtr(ptrdiff_t nVarIndex)
 			MAP_VARIABLE(Snom, C_SNOM)
 			MAP_VARIABLE(Qnom, C_QNOM)
 			MAP_VARIABLE(Inom, C_INOM)
-			MAP_VARIABLE(Eqe, C_EQE)
+			MAP_VARIABLE(*ExtEqe.m_pValue, C_EQE)
 		}
 	}
 	return p;
@@ -332,8 +332,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::UpdateExternalVariables(CDynaModel *pDyn
 {
 	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorMotion::UpdateExternalVariables(pDynaModel);
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
-	if (pExciter)
-		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtEqe, pExciter, m_cszEqe));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtEqe, pExciter, m_cszEqe));
 	return eRes;
 }
 
@@ -439,18 +438,18 @@ bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
 	// dIre / dIre
 	pDynaModel->SetElement(Ire, Ire, 1.0);
 	// dIre / dId
-	pDynaModel->SetElement(A(V_IRE), A(V_ID), si);
+	pDynaModel->SetElement(Ire, Id, si);
 	// dIre / dIq
-	pDynaModel->SetElement(A(V_IRE), A(V_IQ), -co);
+	pDynaModel->SetElement(Ire, Iq, -co);
 	// dIre / dDeltaG
 	pDynaModel->SetElement(Ire, Delta, Iq * si + Id * co);
 
 	// dIim / dIim
 	pDynaModel->SetElement(Iim, Iim, 1.0);
 	// dIim / dId
-	pDynaModel->SetElement(A(V_IIM), A(V_ID), -co);
+	pDynaModel->SetElement(Iim, Id, -co);
 	// dIim / dIq
-	pDynaModel->SetElement(A(V_IIM), A(V_IQ), -si);
+	pDynaModel->SetElement(Iim, Iq, -si);
 	// dIim / dDeltaG
 	pDynaModel->SetElement(Iim, Delta, Id * si - Iq * co);
 
@@ -468,6 +467,11 @@ bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
 	return true;
 }
 
+VariableIndexVec CDynaGenerator1C::GetVariables()
+{
+	return VariableIndexVec{ P, Q, Ire, Iim, s, Delta, Vd, Vq, Id, Iq, Eqs, Eq };
+}
+
 void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDynaGeneratorMotion::UpdateSerializer(Serializer);
@@ -478,9 +482,9 @@ void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState(_T("Ids"), Id, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState(_T("Iqs"), Iq, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszEqe, Eqe, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszEqe, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
 
-	Serializer->AddProperty(_T("Td0"), Eqe, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(_T("Td0"), Td01, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(_T("xd"), xd, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(_T("r"), r, eVARUNITS::VARUNIT_OHM);
 
