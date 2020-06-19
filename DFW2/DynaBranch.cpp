@@ -539,18 +539,18 @@ bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 	cplx cSe = Ue * conj(cIe);
 
 
-	pDynaModel->SetFunction(A(V_IBRE),	Ibre - cIb.real());
-	pDynaModel->SetFunction(A(V_IBIM),	Ibim - cIb.imag());
-	pDynaModel->SetFunction(A(V_IERE),	Iere - cIe.real());
-	pDynaModel->SetFunction(A(V_IEIM),	Ieim - cIe.imag());
-	pDynaModel->SetFunction(A(V_IB),	Ib - abs(cIb));
-	pDynaModel->SetFunction(A(V_IE),	Ie - abs(cIe));
-	pDynaModel->SetFunction(A(V_PB),	Pb - cSb.real());
-	pDynaModel->SetFunction(A(V_QB),	Qb - cSb.imag());
-	pDynaModel->SetFunction(A(V_PE),	Pe - cSe.real());
-	pDynaModel->SetFunction(A(V_QE),	Qe - cSe.imag());
-	pDynaModel->SetFunction(A(V_SB),	Sb - abs(cSb));
-	pDynaModel->SetFunction(A(V_SE),	Se - abs(cSe));
+	pDynaModel->SetFunction(Ibre,	Ibre - cIb.real());
+	pDynaModel->SetFunction(Ibim,	Ibim - cIb.imag());
+	pDynaModel->SetFunction(Iere,	Iere - cIe.real());
+	pDynaModel->SetFunction(Ieim,	Ieim - cIe.imag());
+	pDynaModel->SetFunction(Ib,		Ib - abs(cIb));
+	pDynaModel->SetFunction(Ie,		Ie - abs(cIe));
+	pDynaModel->SetFunction(Pb,		Pb - cSb.real());
+	pDynaModel->SetFunction(Qb,		Qb - cSb.imag());
+	pDynaModel->SetFunction(Pe,		Pe - cSe.real());
+	pDynaModel->SetFunction(Qe,		Qe - cSe.imag());
+	pDynaModel->SetFunction(Sb,		Sb - abs(cSb));
+	pDynaModel->SetFunction(Se,		Se - abs(cSe));
 
 	return true;
 }

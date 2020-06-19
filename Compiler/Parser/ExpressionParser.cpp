@@ -1488,6 +1488,11 @@ CParserVariables::~CParserVariables()
 
 void CParserVariables::Clear()
 {
+	for (auto&& var : m_Variables)
+	{
+		if (var.second.m_pVarExtendedInfo)
+			delete var.second.m_pVarExtendedInfo;
+	}
 	m_Variables.clear();
 }
 
@@ -1513,7 +1518,7 @@ bool CParserVariables::ChangeToEquationNames()
 }
 
 // ищем переменную по имени и возвращаем найденное инфо
-VariableEnum *CParserVariables::Find(const _TCHAR* cszVarName)
+VariableEnum* CParserVariables::Find(const _TCHAR* cszVarName)
 {
 	VariableEnum *pEnum(nullptr);
 	VARIABLEITR it = m_Variables.find(cszVarName);
@@ -1523,9 +1528,9 @@ VariableEnum *CParserVariables::Find(const _TCHAR* cszVarName)
 }
 
 // изменение имени переменной, например BASE <- #Table[Key].Prop
-bool CParserVariables::Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarName)
+VariableEnum* CParserVariables::Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarName)
 {
-	bool bRes = false;
+	// проверяем есть ли переменная которую надо переименовать
 	VariableEnum *pVarEnum = Find(cszVarName);
 	if (pVarEnum)
 	{
@@ -1537,11 +1542,13 @@ bool CParserVariables::Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarN
 		if (pCheckEnum)
 		{
 			// если информация найдена - удаляем старую переменную
+			pVarEnum = pCheckEnum;
 			if (m_Variables.erase(cszVarName))
 			{
 				// и обновляем найденную информацию по старой
 				pCheckEnum->m_eVarType = Tmp.m_eVarType;
-				bRes = pCheckEnum->m_pToken->Join(Tmp.m_pToken);
+				if (!pCheckEnum->m_pToken->Join(Tmp.m_pToken))
+					pVarEnum = nullptr;
 				Tmp.m_pToken->Delete();
 			}
 		}
@@ -1552,10 +1559,10 @@ bool CParserVariables::Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarN
 			// и вставляем новое имя в список переменных
 			pVarEnum->m_pToken->SetTextValue(cszNewVarName);
 			if (m_Variables.erase(cszVarName))
-				bRes = m_Variables.insert(std::make_pair(cszNewVarName, Tmp)).second;
+				pVarEnum = &m_Variables.insert(std::make_pair(cszNewVarName, Tmp)).first->second;
 		}
 	}
-	return bRes;
+	return pVarEnum;
 }
 
 // поиск переменной по имени

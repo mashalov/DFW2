@@ -18,8 +18,8 @@ namespace DFW2
 		};
 
 		DEVICEVECTOR m_LinkedGenerators;
+		VariableIndex S;						// переменная состояния - скольжение
 
-		double S = 0.0;							// переменная состояния - скольжение
 		double Mj = 0.0;						// суммарный момент инерции
 		bool m_bInfPower = false;				// признак наличия ШБМ
 		CSynchroZone();		
@@ -27,6 +27,7 @@ namespace DFW2
 		bool m_bEnergized = false;				// признак наличия источника напряжения
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexVec GetVariables() override;
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel)  override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
@@ -218,8 +219,6 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
-		bool InMatrix() override;
-
 		static const CDeviceContainerProperties DeviceProperties();
 
 		static const _TCHAR *m_cszS;

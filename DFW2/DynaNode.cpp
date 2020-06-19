@@ -472,7 +472,6 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 
 
 	pDynaModel->SetElement(Lag, Delta, -1.0 / T);
-	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
 	pDynaModel->SetElement(Lag, Lag, -1.0 / T);
 	
 	if (!pDynaModel->IsInDiscontinuityMode())
@@ -694,15 +693,15 @@ CSynchroZone::CSynchroZone() : CDevice()
 {
 }
 
+
+VariableIndexVec CSynchroZone::GetVariables()
+{
+	return VariableIndexVec{ S };
+}
+
 double* CSynchroZone::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p(nullptr);
-
-	switch (nVarIndex)
-	{
-		MAP_VARIABLE(S, V_S)
-	}
-	return p;
+	return &GetVariable(nVarIndex).Value;
 }
 
 bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
@@ -710,7 +709,7 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 	bool bRes = true;
 	if (m_bInfPower)
 	{
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(S, S, 1.0);
 	}
 	else
 	{
@@ -1141,18 +1140,6 @@ bool CDynaNodeBase::InMatrix()
 		return false;
 	else
 		return true;
-}
-
-bool CDynaNode::InMatrix()
-{
-	bool bInMatrix(CDynaNodeBase::InMatrix());
-	if (bInMatrix)
-	{
-		ptrdiff_t nRow(m_nMatrixRow);
-		for(auto && var : GetVariables())
-			var.get().Index = nRow++;
-	}
-	return bInMatrix;
 }
 
 double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)

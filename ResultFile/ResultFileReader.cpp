@@ -318,7 +318,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	ReadHeader(m_nVersion);
 	ReadDouble(m_dTimeCreated);
 	VARIANT vt;
-	VariantClear(&vt);
+	VariantInit(&vt);
 	vt.vt = VT_DATE;
 	vt.date = m_dTimeCreated;
 

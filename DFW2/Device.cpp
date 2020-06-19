@@ -380,7 +380,15 @@ bool CDevice::InMatrix()
 // и заодно фиксирует строку матрицы, с которой начинается блок его уравнений
 void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 {
-	m_nMatrixRow = InMatrix() ? pDynaModel->AddMatrixSize(m_pContainer->EquationsCount()) : nIndexUnassigned;
+	if (InMatrix())
+	{
+		m_nMatrixRow = pDynaModel->AddMatrixSize(m_pContainer->EquationsCount());
+		ptrdiff_t nRow(m_nMatrixRow);
+		for (auto&& var : GetVariables())
+			var.get().Index = nRow++;
+	}
+	else 
+		m_nMatrixRow = nIndexUnassigned;
 }
 
 // базовая функция инициализации Nordsieck

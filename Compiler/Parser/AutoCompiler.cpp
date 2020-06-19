@@ -56,13 +56,11 @@ bool CAutoCompilerItem::InsertEquations(CCompilerEquations& Equations)
 bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 {
 	m_pParser = new CExpressionParserRules(m_Compiler.m_Variables);
-
 	std::wstring strFormula = pStarterItem->GetFormula();
 	if (strFormula.empty())
 		strFormula = cszV;
 
 	std::wstring EquationExpression = Cex(_T("%s"), strFormula.c_str());
-
 	bool bRes = m_pParser->Process(EquationExpression.c_str());
 
 	bRes = bRes && AddSpecialVariables();
@@ -80,13 +78,17 @@ bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 
 	if (pVarEnum)
 	{
-		pVarEnum->m_eVarType = eCVT_EXTERNAL;
-		bRes = vars.Rename(cszV, strLink.c_str());
-		if (!bRes)
+		pVarEnum =  vars.Rename(cszV, strLink.c_str());
+		if (!pVarEnum)
+		{
 			m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszCannotSetVariable, strLink.c_str()));
+			bRes = false;
+		}
 		else
-			//m_Compiler.AddExternalVariable(strLink.c_str(), m_Compiler.m_Variables.Find(strLink.c_str()));
+		{
+			pVarEnum->m_eVarType = eCVT_EXTERNAL;
 			m_Compiler.AddExternalVariable(strLink.c_str(), pVarEnum);
+		}
 	}
 
 	if (bRes)
@@ -94,13 +96,16 @@ bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 		pVarEnum = vars.Find(cszBase);
 		if (pVarEnum)
 		{
-			pVarEnum->m_eVarType = eCVT_EXTERNALSETPOINT;
 			strLink.insert(strLink.begin(), _T('#'));
-			bRes = vars.Rename(cszBase, strLink.c_str());
-			if (!bRes)
+			pVarEnum = vars.Rename(cszBase, strLink.c_str());
+			if (!pVarEnum)
+			{
 				m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszCannotSetVariable, strLink.c_str()));
+				bRes = false;
+			}
 			else
 			{
+				pVarEnum->m_eVarType = eCVT_EXTERNALSETPOINT;
 				//m_Compiler.AddSetPoint(strLink.c_str(), m_Compiler.m_Variables.Find(strLink.c_str()));
 				// тут надо добавить ту переменную, которая переменная для base
 				VariableEnum *pExtToBase = m_pParser->CreateInternalVariable(strLinkOriginal.c_str());
