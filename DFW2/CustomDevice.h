@@ -4,6 +4,7 @@
 
 namespace DFW2
 {
+	// прокси-устройство для включения пользовательского устройства из dll в расчетную модель
 	class CCustomDevice : public CDevice
 	{
 	protected:

@@ -29,42 +29,26 @@ void CCustomDeviceContainer::CleanUp()
 
 bool CCustomDeviceContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
 {
-	bool bRes = false;
+	bool bRes(false);
 	if (m_DLL.Init(cszDLLFilePath))
 	{
+		// копируем в контейнер описания констант
+		for (const auto& it : m_DLL.GetConstsInfo())
+			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(it.VarInfo.Name, CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
+
+		// копируем в контейнер описания уставок
+		for (const auto& it : m_DLL.GetSetPointsInfo())
+			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(it.Name, CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
+
+		// копируем в контейнер описания внутренних переменных
+		for (const auto& it : m_DLL.GetInternalsInfo())
+			m_ContainerProps.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
+
+		// копируем в контейнер описания выходных переменных
+		for (const auto& it : m_DLL.GetOutputsInfo())
+			m_ContainerProps.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
+
 		bRes = true;
-
-		size_t nConstsCount = m_DLL.GetConstsCount();
-		for (size_t nConstIndex = 0; nConstIndex < nConstsCount; nConstIndex++)
-		{
-			const ConstVarsInfo* pConstInfo = m_DLL.GetConstInfo(nConstIndex);
-			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(pConstInfo->VarInfo.Name,
-				CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
-		}
-
-		size_t nSetPointsCount = m_DLL.GetSetPointsCount();
-		for (size_t nSetPointndex = 0; nSetPointndex < nSetPointsCount; nSetPointndex++)
-		{
-			const VarsInfo* pVarInfo = m_DLL.GetSetPointInfo(nSetPointndex);
-			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(pVarInfo->Name,
-				CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
-		}
-
-		size_t nInternalsCount = m_DLL.GetInternalsCount();
-		for (size_t nInternalsIndex = 0; nInternalsIndex < nInternalsCount; nInternalsIndex++)
-		{
-			const VarsInfo* pVarInfo = m_DLL.GetInternalInfo(nInternalsIndex);
-			m_ContainerProps.m_VarMap.insert(std::make_pair(pVarInfo->Name,
-				CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
-		}
-
-		size_t nOutputsCount = m_DLL.GetOutputsCount();
-		for (size_t nOutputIndex = 0; nOutputIndex < nOutputsCount; nOutputIndex++)
-		{
-			const VarsInfo* pVarInfo = m_DLL.GetOutputInfo(nOutputIndex);
-			m_ContainerProps.m_VarMap.insert(std::make_pair(pVarInfo->Name,
-				CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
-		}
 	}
 	return bRes;
 }
@@ -89,19 +73,22 @@ bool CCustomDeviceContainer::BuildStructure()
 	BLOCKDESCRIPTIONS::const_iterator	it = m_DLL.GetBlocksDescriptions().begin();
 	BLOCKSPINSINDEXES::const_iterator  iti = m_DLL.GetBlocksPinsIndexes().begin();
 
+	// просматриваем хост-блоки и их соединения
 	for (; it != m_DLL.GetBlocksDescriptions().end(); it++, iti++)
 	{
 		if (it->eType > PrimitiveBlockType::PBT_UNKNOWN && it->eType < PrimitiveBlockType::PBT_LAST)
 		{
-			m_nBlockEquationsCount += PrimitiveEquationsCount(it->eType);
+			// если блок имеет правильный индекс 
+			m_nBlockEquationsCount += PrimitiveEquationsCount(it->eType); // считаем количество уравнений хост-блоков
+			m_PrimitivePool[it->eType].nCount++;						  // учитываем количество блоков данного типа
 
-			m_PrimitivePool[it->eType].nCount++;
-			for (BLOCKPININDEXVECTOR::const_iterator ciit = iti->begin(); ciit != iti->end(); ciit++)
+			// просматриваем связи блоков
+			for (const auto& ciit : *iti)
 			{
-				switch (ciit->Location)
+				switch (ciit.Location)
 				{
 				case eVL_INTERNAL:
-					m_nPrimitiveVarsCount++;
+					m_nPrimitiveVarsCount++;							 // считаем количество внутренних переменных
 					break;
 				case eVL_EXTERNAL:
 					;
@@ -119,27 +106,35 @@ bool CCustomDeviceContainer::BuildStructure()
 
 	if (bRes)
 	{
-		for (BLOCKDESCRIPTIONS::const_iterator it = m_DLL.GetBlocksDescriptions().begin(); it != m_DLL.GetBlocksDescriptions().end(); it++)
+		// выделяем память под каждый тип хост-блока для всех устройств контейнера
+		for (const auto& it :m_DLL.GetBlocksDescriptions())
 		{
-			if (!m_PrimitivePool[it->eType].m_pPrimitive) // get memory for each type only once
+			if (!m_PrimitivePool[it.eType].m_pPrimitive) 
 			{
-				m_PrimitivePool[it->eType].m_pPrimitive = (unsigned char*)malloc(m_PrimitivePool[it->eType].nCount * nCount * PrimitiveSize(it->eType));
-				m_PrimitivePool[it->eType].m_pHead = m_PrimitivePool[it->eType].m_pPrimitive;
+				// выделение памяти для общего пула хост-блоков
+				m_PrimitivePool[it.eType].m_pPrimitive = (unsigned char*)malloc(m_PrimitivePool[it.eType].nCount * nCount * PrimitiveSize(it.eType));
+				// указатель на начало пула
+				m_PrimitivePool[it.eType].m_pHead = m_PrimitivePool[it.eType].m_pPrimitive;
 			}
 
 		}
 
 		m_nExternalVarsCount = GetInputsCount();
 
+		// создаем пул для внутренних переменных
 		m_PrimitiveVarsPool.reserve(m_nPrimitiveVarsCount * nCount);
+		// создаем пул для входных переменных
 		m_PrimitiveExtVarsPool.reserve(m_nExternalVarsCount * nCount);
-
-		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsCount();
+		// количество уравнений пользовательского устройства равно количеству уравнений для хост-блоков + количество уравнений внутренних переменных
+		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
+		// общее количество double на 1 устройство = константы + уставки + количество уравнений
 		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount() + m_ContainerProps.nEquationsCount;
-
+		// создаем пул для переменных типа double
 		m_DoubleVarsPool.reserve(m_nDoubleVarsCount * nCount);
+		// создаем пул для внешних переменных
 		m_ExternalVarsPool.reserve(m_nExternalVarsCount * nCount);
 
+		// когда все пулы подготовлены - инициализируем структуру каждого устройства контейнера
 		for (auto&& it : *this)
 		{
 			bRes = static_cast<CCustomDevice*>(it)->BuildStructure();

@@ -63,13 +63,21 @@ namespace DFW2
 	class CDynaPrimitive
 	{
 	protected:
-		PrimitiveVariableBase *m_Input;
-		double *m_Output;
+		PrimitiveVariableBase *m_Input = nullptr;
+		VariableIndex m_viOutput;
+		VariableIndex* m_viInput = nullptr;
+		double *m_Output = nullptr;
 		CDevice *m_pDevice;
 		ptrdiff_t A(ptrdiff_t nOffset);
 		ptrdiff_t m_OutputEquationIndex;
 		bool ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH);
 	public:
+		constexpr operator double& () { return m_viOutput.Value; }
+		constexpr operator const double& () const { return m_viOutput.Value; }
+		constexpr double& operator= (double value) { m_viOutput.Value = value;  return m_viOutput.Value; }
+		constexpr operator VariableIndex& () { return m_viOutput; }
+		constexpr operator const VariableIndex& () const { return m_viOutput; }
+
 		CDynaPrimitive(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : m_pDevice(pDevice), 
 																												  m_Input(Input), 
 																												  m_Output(pOutput),
@@ -78,6 +86,14 @@ namespace DFW2
 			*m_Output = 0.0;
 			pDevice->RegisterPrimitive(this);
 		}
+
+		CDynaPrimitive(CDevice* pDevice, VariableIndex* pInput) : m_pDevice(pDevice),
+															      m_viInput(pInput)
+		{
+			m_viOutput = 0.0;
+			pDevice->RegisterPrimitive(this);
+		}
+
 		virtual ~CDynaPrimitive() {}
 
 		virtual bool BuildEquations(CDynaModel *pDynaModel) = 0;
@@ -99,6 +115,7 @@ namespace DFW2
 	{
 	public:
 		CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
+		CDynaPrimitiveState(CDevice* pDevice, VariableIndex* pInput);
 		virtual void StoreState() = 0;
 		virtual void RestoreState() = 0;
 	};
@@ -134,6 +151,7 @@ namespace DFW2
 		void SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		CDynaPrimitiveLimited(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
+		CDynaPrimitiveLimited(CDevice* pDevice, VariableIndex* pInput) : CDynaPrimitiveState(pDevice, pInput) {}
 		virtual ~CDynaPrimitiveLimited() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		void StoreState() override { eSavedState = eCurrentState; }

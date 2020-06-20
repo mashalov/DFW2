@@ -107,26 +107,6 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		// dQ/dIq
 		pDynaModel->SetElement(Q, Iq, -Vd);
 
-		/*
-		// dVd/dVd
-		pDynaModel->SetElement(A(V_VD), A(V_VD), 1);
-		// dVd/dV
-		pDynaModel->SetElement(A(V_VD), A(V.Index()), sinDeltaGT);
-		// dVd/dDeltaV
-		pDynaModel->SetElement(A(V_VD), A(DeltaV.Index()), -NodeV * cosDeltaGT);
-		// dVd/dDeltaG
-		pDynaModel->SetElement(A(V_VD), A(V_DELTA), NodeV * cosDeltaGT);
-
-		// dVq/dVq
-		pDynaModel->SetElement(A(V_VQ), A(V_VQ), 1);
-		// dVq/dV
-		pDynaModel->SetElement(A(V_VQ), A(V.Index()), -cosDeltaGT);
-		// dVq/dDeltaV
-		pDynaModel->SetElement(A(V_VQ), A(DeltaV.Index()), -NodeV * sinDeltaGT);
-		// dVq/dDeltaG
-		pDynaModel->SetElement(A(V_VQ), A(V_DELTA), NodeV * sinDeltaGT);
-		*/
-
 		// dVd/dVd
 		pDynaModel->SetElement(Vd, Vd, 1);
 		// dVd/dVre
@@ -224,8 +204,6 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-
-	//pDynaModel->GetRightVector(A(V_DELTA))->Rtol = 0.0;
 
 	if (bRes)
 	{

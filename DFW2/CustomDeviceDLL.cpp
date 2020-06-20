@@ -78,11 +78,12 @@ void CCustomDeviceDLL::CleanUp()
 bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 {
 	m_bConnected = false;
+	// загружаем dll
 	m_hDLL = LoadLibrary(cszDLLFilePath);
 	if (m_hDLL)
 	{
+		// и импортируем функции
 		m_strModulePath = cszDLLFilePath;
-
 		m_pFnDestroy = (DLLDESTROYPTR)GetProcAddress("Destroy");
 		m_pFnGetBlocksCount = (DLLGETBLOCKSCOUNT)GetProcAddress("GetBlocksCount");
 		m_pFnGetBlocksDescriptions = (DLLGETBLOCKSDESCRIPTIONS)GetProcAddress("GetBlocksDescriptions");
@@ -111,6 +112,7 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 		m_pFnDeviceInit = (DLLDEVICEINIT)GetProcAddress("DeviceInit");
 		m_pFnProcessDiscontinuity = (DLLPROCESSDISCONTINUITY)GetProcAddress("ProcessDiscontinuity");
 
+		// проверяем количество функций, импорт которых не выполнен (рассчитывается в GetProcAddress)
 		if (!m_nGetProcAddresFailureCount)
 			m_bConnected = true;
 		else
@@ -123,25 +125,33 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 	{
 		m_BlockDescriptions.clear();
 		m_BlockPinsIndexes.clear();
-		long nCount = (m_pFnGetBlocksCount)();
+		long nCount = (m_pFnGetBlocksCount)();		// получаем количество хост-блоков
 		m_BlockDescriptions.resize(nCount);
 		m_BlockPinsIndexes.resize(nCount);
 		m_BlockParametersCount.resize(nCount);
 
 		if (nCount)
 		{
+			// если dll требует от хоста использование хотя бы одного блока
+			// проверяем - равно ли количество блоков количеству описаний блоков
 			if (nCount == (m_pFnGetBlocksDescriptions)(&m_BlockDescriptions[0]))
 			{
 				for (long nIndex = 0; nIndex < nCount && m_bConnected; nIndex++)
 				{
+					// для каждого блока получаем количество соединений
 					long nInputsCount = (m_pFnGetBlockPinsCount)(nIndex);
 					if (nInputsCount > 0)
 					{
+						// если соединений 1 или более, ОК, если нет - это ошибка. Блоков без соединений не бывает
+						// для обрабатываемого блока создаем описания соединений
 						m_BlockPinsIndexes[nIndex].resize(nInputsCount);
+						// проверяем, равно ли количество соединений количеству описаний соединений для обрабатываемого блока
 						if (nInputsCount == (m_pFnGetBlockPinsIndexes)(nIndex, &m_BlockPinsIndexes[nIndex][0]))
 						{
+							// проверяем является ли первое соединений внутренней переменной (это выход, и должен рассчитываться внутри блока)
 							if (m_BlockPinsIndexes[nIndex].begin()->Location == eVL_INTERNAL)
 							{
+								// получаем количество параметров блока и сохраняем его
 								long nParametersCount = (m_pFnGetBlockParametersCount)(nIndex);
 								if (nParametersCount >= 0)
 									m_BlockParametersCount[nIndex] = nParametersCount;
@@ -168,29 +178,57 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 				m_bConnected = false;
 			}
 		}
+		// получаем количество и данные по переменным-константам
+		if (m_bConnected)
+		{
+			m_ConstInfos.resize((m_pFnGetConstantsCount)());
+			if (m_ConstInfos.size() > 0 && (m_pFnGetConstantsInfos)(&m_ConstInfos[0]) != m_ConstInfos.size())
+				m_bConnected = false;
+		}
 
-		if (m_bConnected && m_ConstInfos.SetVarsCount((m_pFnGetConstantsCount)()))
-			if ((m_pFnGetConstantsInfos)(m_ConstInfos.m_pVarInfo) != m_ConstInfos.m_nVarsCount) m_bConnected = false;
+		// получаем количество и данные по переменным-уставкам
+		if (m_bConnected)
+		{
+			m_SetPointInfos.resize((m_pFnGetSetPointsCount)());
+			if (m_SetPointInfos.size() > 0 && (m_pFnGetSetPointsInfos)(&m_SetPointInfos[0]) != m_SetPointInfos.size())
+				m_bConnected = false;
+		}
 
-		if (m_bConnected && m_SetPointInfos.SetVarsCount((m_pFnGetSetPointsCount)()))
-			if ((m_pFnGetSetPointsInfos)(m_SetPointInfos.m_pVarInfo) != m_SetPointInfos.m_nVarsCount) m_bConnected = false;
+		// получаем количество и данные по выходным переменным
+		if (m_bConnected)
+		{
+			m_OutputInfos.resize((m_pFnGetOutputsCount)());
+			if (m_OutputInfos.size() > 0 && (m_pFnGetOutputsInfos)(&m_OutputInfos[0]) != m_OutputInfos.size())
+				m_bConnected = false;
+		}
 
-		if (m_bConnected && m_OutputInfos.SetVarsCount((m_pFnGetOutputsCount)()))
-			if ((m_pFnGetOutputsInfos)(m_OutputInfos.m_pVarInfo) != m_OutputInfos.m_nVarsCount) m_bConnected = false;
+		// получаем количество и данные по входным переменным
+		if (m_bConnected)
+		{
+			m_InputInfos.resize((m_pFnGetInputsCount)());
+			if (m_InputInfos.size() > 0 && (m_pFnGetInputsInfos)(&m_InputInfos[0]) != m_InputInfos.size())
+				m_bConnected = false;
+		}
 
-		if (m_bConnected && m_InputInfos.SetVarsCount((m_pFnGetInputsCount)()))
-			if ((m_pFnGetInputsInfos)(m_InputInfos.m_pVarInfo) != m_InputInfos.m_nVarsCount) m_bConnected = false;
-
-		if (m_bConnected && m_InternalInfos.SetVarsCount((m_pFnGetInternalsCount)()))
-			if ((m_pFnGetInternalsInfos)(m_InternalInfos.m_pVarInfo) != m_InternalInfos.m_nVarsCount) m_bConnected = false;
+		// получаем количество и данные по внутренним переменным
+		if (m_bConnected)
+		{
+			m_InternalInfos.resize((m_pFnGetInternalsCount)());
+			if (m_InternalInfos.size() > 0 && (m_pFnGetInternalsInfos)(&m_InternalInfos[0]) != m_InternalInfos.size())
+				m_bConnected = false;
+		}
 
 		if (m_bConnected)
 		{
+			// получаем количество описателей возможных типов устройства
 			long nTypesCount = (m_pFnGetTypesCount)();
+			// проверяем есть ли хотя бы один описатель - любое устройство должно иметь тип
 			if (nTypesCount)
 			{
+				// переписываем типы из dll в свойства контейнера
 				std::vector<long> Types(nTypesCount);
 				long *pTypes = &Types[0];
+				// проверяем равно ли заявленное количество типов количеству передаваемых типов
 				if (nTypesCount == (m_pFnGetTypes)(pTypes))
 				{
 					while (nTypesCount)
@@ -209,15 +247,19 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 
 		if (m_bConnected)
 		{
+			// получаем количество возможных связей
 			long nLinksCount = (m_pFnGetLinksCount)();
+			// устройство должно иметь хотя бы одну связь
 			if (nLinksCount)
 			{
+				// переписываем данные о связях в свойства контейнера
 				std::vector<LinkType> Links(nLinksCount);
 				LinkType* pLinks = &Links[0];
 				if (nLinksCount == (m_pFnGetLinks)(pLinks))
 				{
 					while (nLinksCount)
 					{
+						// распределяем данные о связях в контейнере в соответствии с типов связи (to-from)
 						if (pLinks->eLinkType == eLINKTYPE::eLINK_FROM)
 							m_pDeviceContainer->m_ContainerProps.AddLinkFrom(static_cast<eDFW2DEVICETYPE>(pLinks->eDeviceType), 
 																			 static_cast<eDFW2DEVICELINKMODE>(pLinks->eLinkMode), 
@@ -238,6 +280,7 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 				m_bConnected = false;
 		}
 
+		// задаем имя типа устройства в свойствах контейнера
 		if (m_bConnected)
 			m_pDeviceContainer->m_ContainerProps.SetClassName((m_pFnGetDeviceTypeName)(), _T(""));
 		
@@ -279,47 +322,6 @@ long CCustomDeviceDLL::GetBlockParametersValues(long nBlockIndex, BuildEquations
 	if (nBlockIndex >= 0 && nBlockIndex < static_cast<long>(m_BlockParametersCount.size()))
 		return (m_pFnGetBlockParametersValues)(nBlockIndex, pArgs, pValues);
 	return -1;
-}
-
-
-const ConstVarsInfo* CCustomDeviceDLL::GetConstInfo(size_t nConstIndex) const
-{
-	ConstVarsInfo *pVarInfo(NULL);
-	if (nConstIndex >= 0 && nConstIndex < m_ConstInfos.m_nVarsCount)
-		pVarInfo = m_ConstInfos.m_pVarInfo + nConstIndex;
-	return pVarInfo;
-}
-
-const VarsInfo* CCustomDeviceDLL::GetSetPointInfo(size_t nSetPointIndex) const
-{
-	VarsInfo *pVarInfo(NULL);
-	if (nSetPointIndex >= 0 && nSetPointIndex < m_SetPointInfos.m_nVarsCount)
-		pVarInfo = m_SetPointInfos.m_pVarInfo + nSetPointIndex;
-	return pVarInfo;
-}
-
-const VarsInfo* CCustomDeviceDLL::GetInternalInfo(size_t nInternalIndex) const
-{
-	VarsInfo *pVarInfo(NULL);
-	if (nInternalIndex >= 0 && nInternalIndex < m_InternalInfos.m_nVarsCount)
-		pVarInfo = m_InternalInfos.m_pVarInfo + nInternalIndex;
-	return pVarInfo;
-}
-
-const VarsInfo* CCustomDeviceDLL::GetOutputInfo(size_t nOutputIndex) const
-{
-	VarsInfo *pVarInfo(NULL);
-	if (nOutputIndex >= 0 && nOutputIndex < m_OutputInfos.m_nVarsCount)
-		pVarInfo = m_OutputInfos.m_pVarInfo + nOutputIndex;
-	return pVarInfo;
-}
-
-const InputVarsInfo* CCustomDeviceDLL::GetInputInfo(size_t nInputIndex) const
-{
-	InputVarsInfo *pVarInfo(NULL);
-	if (nInputIndex >= 0 && nInputIndex < m_InputInfos.m_nVarsCount)
-		pVarInfo = m_InputInfos.m_pVarInfo + nInputIndex;
-	return pVarInfo;
 }
 
 bool CCustomDeviceDLL::IsConnected()

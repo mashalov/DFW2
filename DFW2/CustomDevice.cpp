@@ -164,46 +164,36 @@ bool CCustomDevice::SetConstValue(size_t nIndex, double dValue)
 	if (GetId() == 102401)
 		GetId();
 
+	auto& ConstInfo = Container()->DLL().GetConstsInfo();
 
-	if (nIndex >= 0 && nIndex < Container()->GetConstsCount())
+	if (nIndex >= 0 && nIndex < ConstInfo.size())
 	{
-		const ConstVarsInfo *pConstInfo = Container()->DLL().GetConstInfo(nIndex);
+		const ConstVarsInfo& constInfo = ConstInfo[nIndex];
 
-		if (pConstInfo)
+		if (constInfo.VarFlags & CVF_ZEROTODEFAULT)
 		{
-			if (pConstInfo->VarFlags & CVF_ZEROTODEFAULT)
-			{
-				dValue = pConstInfo->dDefault;
-			}
-
-			if (pConstInfo->dMax > pConstInfo->dMin)
-			{
-				if (dValue > pConstInfo->dMax) dValue = pConstInfo->dDefault;
-				if (dValue < pConstInfo->dMin) dValue = pConstInfo->dDefault;
-			}
-
-			m_pConstVars[nIndex] = dValue;
-			bRes = true;
+			dValue = constInfo.dDefault;
 		}
+
+		if (constInfo.dMax > constInfo.dMin)
+		{
+			if (dValue > constInfo.dMax) dValue = constInfo.dDefault;
+			if (dValue < constInfo.dMin) dValue = constInfo.dDefault;
+		}
+
+		m_pConstVars[nIndex] = dValue;
+		bRes = true;
 	}
 	return bRes;
 }
 
 bool CCustomDevice::SetConstDefaultValues()
 {
-	bool bRes = true;
-	size_t nConstsCount = Container()->GetConstsCount();
+	size_t nIndex(0);
+	for (const auto& it : Container()->DLL().GetConstsInfo())
+		m_pConstVars[nIndex++] = it.dDefault;
 
-	for (size_t nIndex = 0; nIndex < nConstsCount; nIndex++)
-	{
-		const ConstVarsInfo *pConstInfo = Container()->DLL().GetConstInfo(nIndex);
-		if (pConstInfo)
-		{
-			m_pConstVars[nIndex] = pConstInfo->dDefault;
-			bRes = true;
-		}
-	}
-	return bRes;
+	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CDynaModel* pDynaModel)
@@ -211,17 +201,11 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CDynaModel* pDynaModel)
 	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
 	bool bRes = true;
 
-	size_t nConstsCount = Container()->DLL().GetConstsCount();
-	for (size_t nConstIndex = 0; nConstIndex < nConstsCount && bRes; nConstIndex++)
+	ptrdiff_t nConstIndex(0);
+	for (const auto& it : Container()->DLL().GetConstsInfo())
 	{
-		const ConstVarsInfo *pConstInfo = Container()->DLL().GetConstInfo(nConstIndex);
-		if (pConstInfo)
-		{
-			if (pConstInfo->eDeviceType != DEVTYPE_UNKNOWN && !(pConstInfo->VarFlags & CVF_INTERNALCONST))
-				bRes = bRes && InitConstantVariable(m_pConstVars[nConstIndex], this, pConstInfo->VarInfo.Name, static_cast<eDFW2DEVICETYPE>(pConstInfo->eDeviceType));
-		}
-		else
-			bRes = false;
+		if (it.eDeviceType != DEVTYPE_UNKNOWN && !(it.VarFlags & CVF_INTERNALCONST))
+			bRes = bRes && InitConstantVariable(m_pConstVars[nConstIndex++], this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType));
 	}
 
 	bRes = bRes && ConstructDLLParameters(pDynaModel);
@@ -397,34 +381,28 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = DFS_OK;
+	eDEVICEFUNCTIONSTATUS eRes(DFS_OK);
 
-		
-	PrimitiveVariableExternal *pExtVarsEnd = m_pPrimitiveExtVars + Container()->GetInputsCount();
+	const auto& InputInfos = Container()->DLL().GetInputsInfo();
 
-	for (PrimitiveVariableExternal *pStart = m_pPrimitiveExtVars; pStart < pExtVarsEnd; pStart++)
+	PrimitiveVariableExternal* pStart = m_pPrimitiveExtVars;
+	ExternalVariable* pExt = m_pExternals;
+
+	for (const auto& it : InputInfos)
 	{
-		ptrdiff_t nExternalsIndex = pStart - m_pPrimitiveExtVars;
-		const InputVarsInfo *pInputInfo = Container()->DLL().GetInputInfo(nExternalsIndex);
-		if (pInputInfo)
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(*pStart, this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType)));
+		if (eRes != DFS_FAILED)
 		{
-			eRes = DeviceFunctionResult(eRes, InitExternalVariable(*pStart, this, pInputInfo->VarInfo.Name,static_cast<eDFW2DEVICETYPE>(pInputInfo->eDeviceType)));
-			// create contiguous copy of primitive external variables to send to dll
-			if (eRes != DFS_FAILED)
-			{
-				if (nExternalsIndex >= 0 && nExternalsIndex < static_cast<ptrdiff_t>(Container()->GetInputsCount()))
-				{
-					m_pExternals[nExternalsIndex].pValue = &pStart->Value();
-					m_pExternals[nExternalsIndex].nIndex = pStart->Index();
-				}
-				else
-					eRes = DFS_FAILED;
-			}
+			pExt->pValue = &pStart->Value();
+			pExt->nIndex = pStart->Index();
 		}
 		else
-			eRes = DFS_FAILED;
-	}
+			break;
 
+		pExt++;		
+		pStart++;
+	}
+	
 	return eRes;
 }
 

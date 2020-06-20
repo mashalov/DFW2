@@ -12,12 +12,17 @@ ptrdiff_t CDynaPrimitive::A(ptrdiff_t nOffset)
 bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 {
 	bool bRes = false;
-	if (m_pDevice && m_Input->Index() >= 0 && m_OutputEquationIndex >= 0)
+	if (m_pDevice/* && m_Input->Index() >= 0 && m_OutputEquationIndex >= 0*/)
 		bRes = true;
 	return bRes;
 }
 
 CDynaPrimitiveState::CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input)
+{
+	pDevice->RegisterStatePrimitive(this);
+}
+
+CDynaPrimitiveState::CDynaPrimitiveState(CDevice *pDevice, VariableIndex* pInput) : CDynaPrimitive(pDevice, pInput)
 {
 	pDevice->RegisterStatePrimitive(this);
 }
@@ -38,10 +43,21 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 
 		SetMinMax(pDynaModel, m_dMin, m_dMax);
 
-		if (*m_Output > m_dMaxH || *m_Output < m_dMinH)
+		if (m_Output)
 		{
-			m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_dMin, m_dMax));
-			bRes = false;
+			if (*m_Output > m_dMaxH || *m_Output < m_dMinH)
+			{
+				m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_dMin, m_dMax));
+				bRes = false;
+			}
+		}
+		else
+		{
+			if (m_viOutput > m_dMaxH || m_viOutput < m_dMinH)
+			{
+				m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, GetVerbalName(), m_pDevice->GetVerbalName(), (double)m_viOutput, m_dMin, m_dMax));
+				bRes = false;
+			}
 		}
 	}
 	return bRes;

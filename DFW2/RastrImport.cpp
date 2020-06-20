@@ -14,10 +14,10 @@ CRastrImport::~CRastrImport()
 
 }
 
-bool GetConstFromField(const ConstVarsInfo* pVarsInfo)
+bool GetConstFromField(const ConstVarsInfo& VarsInfo)
 {
 	bool bRes = false;
-	if (pVarsInfo && !(pVarsInfo->VarFlags & (CVF_INTERNALCONST)) && pVarsInfo->eDeviceType == DEVTYPE_UNKNOWN)
+	if (!(VarsInfo.VarFlags & (CVF_INTERNALCONST)) && VarsInfo.eDeviceType == DEVTYPE_UNKNOWN)
 		bRes = true;
 	return bRes;
 }
@@ -34,7 +34,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			const DFW2::CCustomDeviceDLL& DLL = CustomDeviceContainer.DLL();
 
 			// get and check constants fields from storage
-			size_t nConstsCount = DLL.GetConstsCount();
+			size_t nConstsCount = DLL.GetConstsInfo().size();
 			typedef std::vector<std::pair<IColPtr,ptrdiff_t> > COLVECTOR;
 			typedef COLVECTOR::iterator COLITR;
 			COLVECTOR Cols;
@@ -43,20 +43,12 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			IColPtr spColId		= spSourceCols->Item(_T("Id"));
 			IColPtr spColName	= spSourceCols->Item(_T("Name"));
 
-			for (size_t ConstIndex = 0; ConstIndex < nConstsCount; ConstIndex++)
-			{
-				const ConstVarsInfo *pVarInfo = DLL.GetConstInfo(ConstIndex);
-				if (pVarInfo)
-				{
-					if (GetConstFromField(pVarInfo))
-						Cols.push_back(std::make_pair(spSourceCols->Item(pVarInfo->VarInfo.Name),ConstIndex));
-				}
-				else
-				{
-					Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks,CustomDeviceContainer.DLL().GetModuleFilePath()));
-					break;
-				}
-			}
+
+			ptrdiff_t ConstIndex(0);
+			for (const auto& it : DLL.GetConstsInfo())
+				if (GetConstFromField(it))
+					Cols.push_back(std::make_pair(spSourceCols->Item(it.VarInfo.Name), ConstIndex++));
+
 
 			// count model types in storage
 			IColPtr spModelType = spSourceCols->Item(ConnectInfo.m_ModelTypeField.c_str());

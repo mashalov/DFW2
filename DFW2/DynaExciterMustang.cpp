@@ -59,10 +59,9 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	//dEqe / dEqe
 	pDynaModel->SetElement(Eqe, Eqe, 1.0);
 	//dEqe / dEqeV
-	pDynaModel->SetElement(Eqe, EqeV, -ZeroDivGuard(V, Ug0));
+	pDynaModel->SetElement(Eqe, ExcLag, -ZeroDivGuard(V, Ug0));
 	//dEqe / dV
-	//pDynaModel->SetElement(A(V_EQE), m_pGenerator->m_pNode->A(CDynaNode::V_V), -ZeroDivGuard(EqeV, Ug0));
-	pDynaModel->SetElement(Eqe, ExtVg, -ZeroDivGuard(EqeV, Ug0));
+	pDynaModel->SetElement(Eqe, ExtVg, -ZeroDivGuard(ExcLag, Ug0));
 	bRes = bRes && CDynaExciterBase::BuildEquations(pDynaModel);
 	return true;
 }
@@ -76,7 +75,7 @@ bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 		V = ExtVg;
 
 	pDynaModel->SetFunction(Eqsum, dEqsum);
-	pDynaModel->SetFunction(Eqe, Eqe - EqeV * ZeroDivGuard(V, Ug0));
+	pDynaModel->SetFunction(Eqe, Eqe - ExcLag * ZeroDivGuard(V, Ug0));
 	CDevice::BuildRightHand(pDynaModel);
 	return true;
 }

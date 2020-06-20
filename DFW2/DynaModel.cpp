@@ -218,8 +218,8 @@ bool CDynaModel::Run()
 				{
 					bResultsNeedToBeFinished = false;
 					FinishWriteResults();
-					Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Ошибка в цикле расчета : %s"), err.uwhat()));
 				}
+				Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Ошибка в цикле расчета : %s"), err.uwhat()));
 			}
 		}
 

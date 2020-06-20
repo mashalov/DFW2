@@ -5,8 +5,8 @@
 using namespace DFW2;
 
 CDynaExciterBase::CDynaExciterBase() : CDevice(),
-									   PvEqsum(V_EQSUM,Eqsum),
-									   ExcLag(this, &EqeV.Value, V_EQEV, &PvEqsum)
+									   //ExcLag(this, &EqeV.Value, V_EQEV, &PvEqsum)
+									   ExcLag(this, &Eqsum)
 {
 }
 
@@ -28,7 +28,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 		Ug0 = ExtVg; 
 		Eqe = Eqe0; 
 		Eq0 = EqInput.Value(); 
-		EqeV = Eqsum = Eqe0;
+		(VariableIndex&)ExcLag = Eqsum = Eqe0;
 		Umin *= Eqnom;
 		Umax *= Eqnom;
 		ExtUf = 0.0;
@@ -44,7 +44,7 @@ double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Eqe.Value, V_EQE)
-		MAP_VARIABLE(EqeV.Value, V_EQEV)
+		MAP_VARIABLE(((VariableIndex&)ExcLag).Value, V_EQEV)
 		MAP_VARIABLE(Eqsum.Value, V_EQSUM)
 	}
 	return p;
@@ -52,7 +52,7 @@ double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 
 VariableIndexVec CDynaExciterBase::GetVariables()
 {
-	return VariableIndexVec{Eqe, Eqsum, EqeV};
+	return VariableIndexVec{Eqe, Eqsum, ExcLag};
 }
 
 double CDynaExciterBase::GetIg()
