@@ -14,7 +14,10 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 
 		PrimitiveVariable PvEqsum;
-		PrimitiveVariableExternal GenId, GenIq, ExtUf, ExtUdec, ExtVg, EqInput;
+		PrimitiveVariableExternal EqInput;
+		VariableIndexExternal GenId, GenIq, ExtVg;
+		VariableIndexExternalOptional ExtUf, ExtUdec;
+
 		CLimitedLag ExcLag;
 
 	public:
@@ -34,8 +37,8 @@ namespace DFW2
 
 		double DECId, RegId;
 
-		double Eqe, Uexc, Eqsum, EqeV, Udec;
-		double Eqe0, Ug0, Ig0, Eq0;
+		VariableIndex Eqe, Eqsum, EqeV;
+		double Eqe0, Ig0, Eq0, Ug0;
 
 
 		double Texc, Umin, Umax;
@@ -46,6 +49,8 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
+
+		VariableIndexVec GetVariables() override;
 
 		double GetIg();
 		void SetLagTimeConstantRatio(double TexcNew);
