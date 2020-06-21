@@ -92,7 +92,7 @@ namespace DFW2
 		CDynaBranchMeasure(CDynaBranch *pBranch);
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
-		VariableIndexVec GetVariables() override;
+		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;

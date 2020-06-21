@@ -152,9 +152,9 @@ void CDynaGeneratorInfBus::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState(_T("EqsSin"), EqsSin, eVARUNITS::VARUNIT_PU);
 }
 
-VariableIndexVec CDynaGeneratorInfBusBase::GetVariables()
+VariableIndexVec& CDynaGeneratorInfBusBase::GetVariables(VariableIndexVec& ChildVec)
 {
-	return VariableIndexVec{ P, Q, Ire, Iim };
+	return CDynaVoltageSource::GetVariables(ChildVec);
 }
 
 const CDeviceContainerProperties CDynaGeneratorInfBusBase::DeviceProperties()

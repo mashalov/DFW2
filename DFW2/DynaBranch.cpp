@@ -644,9 +644,9 @@ void CDynaBranchMeasure::CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, c
 	cSe = Ue * conj(cIe);
 }
 
-VariableIndexVec CDynaBranchMeasure::GetVariables()
+VariableIndexVec& CDynaBranchMeasure::GetVariables(VariableIndexVec& ChildVec)
 {
-	return VariableIndexVec{ Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pe, Qe, Sb, Se };
+	return CDevice::GetVariables(JoinVariables({ Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pe, Qe, Sb, Se }, ChildVec));
 }
 
 eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDynaModel)

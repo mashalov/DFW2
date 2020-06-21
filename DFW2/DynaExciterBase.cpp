@@ -50,9 +50,10 @@ double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-VariableIndexVec CDynaExciterBase::GetVariables()
+VariableIndexVec& CDynaExciterBase::GetVariables(VariableIndexVec& ChildVec)
 {
-	return VariableIndexVec{Eqe, Eqsum, ExcLag};
+	// ExcLag добавляется автоматически в JoinVariables
+	return CDevice::GetVariables(JoinVariables({Eqe, Eqsum}, ChildVec));
 }
 
 double CDynaExciterBase::GetIg()

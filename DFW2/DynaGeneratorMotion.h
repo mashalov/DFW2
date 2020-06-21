@@ -32,7 +32,7 @@ namespace DFW2
 		virtual ~CDynaGeneratorMotion() {}
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
-		VariableIndexVec GetVariables() override;
+		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
 		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : DFW2_EPSILON; }
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;

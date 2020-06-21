@@ -384,7 +384,8 @@ void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 	{
 		m_nMatrixRow = pDynaModel->AddMatrixSize(m_pContainer->EquationsCount());
 		ptrdiff_t nRow(m_nMatrixRow);
-		for (auto&& var : GetVariables())
+		VariableIndexVec seed;
+		for (auto&& var : GetVariables(seed))
 			var.get().Index = nRow++;
 	}
 	else 
@@ -1131,16 +1132,26 @@ void CDevice::UpdateSerializer(SerializerPtr& Serializer)
 		Serializer->BeginUpdate(this);
 }
 
-VariableIndexVec CDevice::GetVariables()
+VariableIndexVec& CDevice::GetVariables(VariableIndexVec& ChildVec)
 {
-	return VariableIndexVec();
+	return ChildVec;
+}
+
+VariableIndexVec& CDevice::JoinVariables(std::vector<std::reference_wrapper<VariableIndex>> ThisVars, VariableIndexVec& ChildVec)
+{
+	ChildVec.reserve(ChildVec.size() + ThisVars.size() + m_Primitives.size());
+	for (auto&& it : m_Primitives)
+		ChildVec.insert(ChildVec.begin(), *it);
+	ChildVec.insert(ChildVec.begin(), ThisVars.begin(), ThisVars.end());
+	return ChildVec;
 }
 
 VariableIndex& CDevice::GetVariable(ptrdiff_t nVarIndex)
 {
-	VariableIndexVec VarVec(GetVariables());
-	if (nVarIndex >= 0 && nVarIndex < static_cast<ptrdiff_t>(VarVec.size()))
-		return VarVec[nVarIndex];
+	VariableIndexVec Vars;
+	GetVariables(Vars);
+	if (nVarIndex >= 0 && nVarIndex < static_cast<ptrdiff_t>(Vars.size()))
+		return Vars[nVarIndex];
 	else
 		throw dfw2error(_T("CDevice::GetVariable index ouf of range"));
 }

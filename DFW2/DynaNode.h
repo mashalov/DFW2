@@ -27,7 +27,7 @@ namespace DFW2
 		bool m_bEnergized = false;				// признак наличия источника напряжения
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
-		VariableIndexVec GetVariables() override;
+		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel)  override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
@@ -120,7 +120,7 @@ namespace DFW2
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
-		VariableIndexVec GetVariables() override;
+		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex)  override;
 		void GetPnrQnr();
 		void GetPnrQnrSuper();
@@ -210,7 +210,7 @@ namespace DFW2
 		CDynaNode();
 		virtual ~CDynaNode() {}
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
-		VariableIndexVec GetVariables() override;
+		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel)  override;
 		bool BuildDerivatives(CDynaModel *pDynaModel)  override;

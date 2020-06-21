@@ -11,9 +11,9 @@ CDynaGeneratorMotion::CDynaGeneratorMotion() : CDynaGeneratorInfBusBase()
 }
 
 
-VariableIndexVec CDynaGeneratorMotion::GetVariables()
+VariableIndexVec& CDynaGeneratorMotion::GetVariables(VariableIndexVec& ChildVec)
 {
-	return VariableIndexVec{ P, Q, Ire, Iim, s, Delta };
+	return CDynaGeneratorInfBusBase::GetVariables(JoinVariables({ s, Delta },ChildVec));
 }
 
 double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)

@@ -19,6 +19,11 @@ double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
+VariableIndexVec& CDynaPowerInjector::GetVariables(VariableIndexVec& ChildVec)
+{
+	return CDevice::GetVariables(JoinVariables({ P, Q, Ire, Iim },ChildVec));
+}
+
 double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p(nullptr);
