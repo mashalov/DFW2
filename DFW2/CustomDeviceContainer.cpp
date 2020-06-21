@@ -68,6 +68,7 @@ bool CCustomDeviceContainer::BuildStructure()
 	m_nBlockEquationsCount = 0;
 	m_nPrimitiveVarsCount = 0;
 	m_nDoubleVarsCount = 0;
+	m_nVariableIndexesCount = 0;
 	m_nExternalVarsCount = 0;
 
 	BLOCKDESCRIPTIONS::const_iterator	it = m_DLL.GetBlocksDescriptions().begin();
@@ -127,12 +128,16 @@ bool CCustomDeviceContainer::BuildStructure()
 		m_PrimitiveExtVarsPool.reserve(m_nExternalVarsCount * nCount);
 		// количество уравнений пользовательского устройства равно количеству уравнений для хост-блоков + количество уравнений внутренних переменных
 		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
-		// общее количество double на 1 устройство = константы + уставки + количество уравнений
-		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount() + m_ContainerProps.nEquationsCount;
+		// общее количество double на 1 устройство = константы + уставки
+		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount();
+		//  количество уравнений VariableIndexesCount
+		m_nVariableIndexesCount = m_ContainerProps.nEquationsCount;
 		// создаем пул для переменных типа double
 		m_DoubleVarsPool.reserve(m_nDoubleVarsCount * nCount);
 		// создаем пул для внешних переменных
 		m_ExternalVarsPool.reserve(m_nExternalVarsCount * nCount);
+		// создаем пул для VariableIndexes
+		m_VariableIndexPool.reserve(m_nVariableIndexesCount * nCount);
 
 		// когда все пулы подготовлены - инициализируем структуру каждого устройства контейнера
 		for (auto&& it : *this)
@@ -148,7 +153,7 @@ bool CCustomDeviceContainer::BuildStructure()
 bool CCustomDeviceContainer::InitDLLEquations(BuildEquationsArgs* pArgs)
 {
 	bool bRes = true;
-	std::fill(pArgs->pEquations, pArgs->pEquations + EquationsCount(), 0.0);
+	std::fill(pArgs->pEquations, pArgs->pEquations + EquationsCount(), DLLVariableIndex{0,0.0});
 	bRes = m_DLL.InitEquations(pArgs);
 	return bRes;
 }
@@ -238,6 +243,15 @@ double* CCustomDeviceContainer::NewDoubleVariables()
 	_ASSERTE(m_DoubleVarsPool.size() + m_nDoubleVarsCount <= m_DoubleVarsPool.capacity());
 	m_DoubleVarsPool.resize(m_DoubleVarsPool.size() + m_nDoubleVarsCount);
 	return &*(m_DoubleVarsPool.end() - m_nDoubleVarsCount);
+}
+
+VariableIndex* CCustomDeviceContainer::NewVariableIndexVariables()
+{
+	if (!m_nVariableIndexesCount)
+		return nullptr;
+	_ASSERTE(m_VariableIndexPool.size() + m_nVariableIndexesCount <= m_VariableIndexPool.capacity());
+	m_VariableIndexPool.resize(m_VariableIndexPool.size() + m_nVariableIndexesCount);
+	return &*(m_VariableIndexPool.end() - m_nVariableIndexesCount);
 }
 
 ExternalVariable* CCustomDeviceContainer::NewExternalVariables()

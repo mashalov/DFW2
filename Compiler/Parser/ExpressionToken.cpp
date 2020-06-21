@@ -249,7 +249,7 @@ void CExpressionToken::GetEquationVariableType(const CCompilerEquation *pEquatio
 	{
 	case eCVT_INTERNAL:
 		_ASSERTE(m_pEquation);
-		Result = Cex(_T("%s%d]"), CCompilerEquation::m_cszInternalVar, m_pEquation->m_nIndex);
+		Result = Cex(_T("%s%d].Value"), CCompilerEquation::m_cszInternalVar, m_pEquation->m_nIndex);
 		break;
 	case eCVT_EXTERNAL:
 		Result = Cex(_T("%s%d]"), CCompilerEquation::m_cszExternalVar, pVarEnum->m_nIndex);
@@ -274,7 +274,7 @@ void CExpressionToken::GetEquationOperandType(const CCompilerEquation *pEquation
 	{
 		if (m_pEquation != pEquation)
 		{
-			Result = Cex(_T("%s%d]"), CCompilerEquation::m_cszInternalVar, m_pEquation->m_nIndex);
+			Result = Cex(_T("%s%d].Value"), CCompilerEquation::m_cszInternalVar, m_pEquation->m_nIndex);
 		}
 		else
 		{

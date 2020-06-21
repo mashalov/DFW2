@@ -474,7 +474,7 @@ bool CDLLOutput::EmitBuildRightHand()
 				if (_ftprintf(m_pFile, _T("\t// %s\n"), pEquation->m_pToken->GetTextValue() ) < 0)
 					throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));
 
-				if (_ftprintf(m_pFile, _T("\t(SetFunction)(pm, %5td, pArgs->pEquations[%td] - (%s));\n"),
+				if (_ftprintf(m_pFile, _T("\t(SetFunction)(pm, %5td, pArgs->pEquations[%td].Value - (%s));\n"),
                         pEquation->m_nIndex,
 						pEquation->m_nIndex,
 						str.c_str() ) < 0)
@@ -777,7 +777,7 @@ bool CDLLOutput::EmitInits()
 					throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));
 
 
-				if (_ftprintf(m_pFile, _T("\t// pArgs->pEquations[%td] = %s;\n"), 
+				if (_ftprintf(m_pFile, _T("\t// pArgs->pEquations[%td].Value = %s;\n"), 
 					pEquation->m_nIndex,
 					str.c_str()) < 0)
 					throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));
@@ -790,7 +790,7 @@ bool CDLLOutput::EmitInits()
 				if (_ftprintf(m_pFile, _T("\t// %s\n"), pEquation->m_pToken->GetTextValue()) < 0)
 					throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));
 
-				if (_ftprintf(m_pFile, _T("\tpArgs->pEquations[%td] = %s;\n"),
+				if (_ftprintf(m_pFile, _T("\tpArgs->pEquations[%td].Value = %s;\n"),
 					pEquation->m_nIndex,
 					str.c_str()) < 0)
 					throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));
@@ -904,7 +904,7 @@ bool CDLLOutput::EmitProcessDiscontinuity()
 			if (_ftprintf(m_pFile, _T("\t// %s\n"), pEquation->m_pToken->GetTextValue()) < 0)
 				throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));
 
-			if (_ftprintf(m_pFile, _T("\tpArgs->pEquations[%td] = %s;\n"),
+			if (_ftprintf(m_pFile, _T("\tpArgs->pEquations[%td].Value = %s;\n"),
 				pEquation->m_nIndex,
 				str.c_str()) < 0)
 				throw CDFW2GetLastErrorException(Cex(CAutoCompilerMessages::cszFileWriteError, m_strFilePath.c_str()));

@@ -10,6 +10,12 @@
 typedef _TCHAR STRING80[CUSTOMDEVICEDLL_MAXNAME];
 
 
+struct DLLVariableIndex
+{
+	ptrdiff_t Index;
+	double Value;
+};
+
 enum PrimitiveBlockType
 {
 	PBT_UNKNOWN,
@@ -140,7 +146,7 @@ typedef struct
 	MDLPROCESSBLOCKDISCONTINUITY	pFnProcessBlockDiscontinuity;
 	MDLINITBLOCK					pFnInitBlock;
 	BuildEquationsObjects BuildObjects;
-	double* pEquations;
+	DLLVariableIndex* pEquations;
 	double* pConsts;
 	double* pSetPoints;
 	ExternalVariable* pExternals;

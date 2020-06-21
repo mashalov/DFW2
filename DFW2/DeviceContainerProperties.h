@@ -1,6 +1,7 @@
 #pragma once
 #include "Header.h"
 #include "DeviceTypes.h"
+#include "DLLStructs.h"
 
 namespace DFW2
 {

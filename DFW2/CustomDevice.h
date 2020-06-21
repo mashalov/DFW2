@@ -11,7 +11,7 @@ namespace DFW2
 		PrimitiveVariable  *m_pPrimitiveVars;
 		PrimitiveVariableExternal *m_pPrimitiveExtVars;
 
-		double *m_pVars;
+		VariableIndex *m_pVars;
 		double *m_pConstVars;
 		double *m_pSetPoints;
 		ExternalVariable *m_pExternals;
