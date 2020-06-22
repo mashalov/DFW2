@@ -62,7 +62,12 @@ namespace DFW2
 		void CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container);
 		void SetConstsDefaultValues();
 		DOUBLEVECTOR& GetConstantData();
+		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
 		virtual ~CCustomDeviceCPP();
+		static const _TCHAR* m_cszNoDeviceDLL;
 	};
 }
 

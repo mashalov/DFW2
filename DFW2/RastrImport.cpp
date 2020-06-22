@@ -3,6 +3,8 @@
 using namespace DFW2;
 #import "C:\Program Files (x86)\RastrWin3\astra.dll" no_namespace, named_guids, no_dual_interfaces, no_implementation 
 
+//cl /LD /EHsc -DUNICODE -D_UNICODE customdevice.cpp dllmain.cpp
+
 
 CRastrImport::CRastrImport()
 {
@@ -45,6 +47,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			Cols.reserve(CustomDeviceContainer.m_ContainerProps.m_ConstVarMap.size());
 			IColPtr spColId = spSourceCols->Item(_T("Id"));
 			IColPtr spColName = spSourceCols->Item(_T("Name"));
+			IColPtr spColState = spSourceCols->Item(_T("sta"));
 			for (const auto& col : CustomDeviceContainer.m_ContainerProps.m_ConstVarMap)
 				if (GetConstFromField(col.second))
 					Cols.push_back(std::make_pair(spSourceCols->Item(col.first.c_str()), col.second.m_nIndex));
@@ -87,6 +90,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 						pDevice->SetConstsDefaultValues();
 						pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
 						pDevice->SetName(spColId->GetZS(nTableIndex));
+						pDevice->SetState(spColState->GetZ(nTableIndex).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 						DOUBLEVECTOR& ConstsVec = pDevice->GetConstantData();
 						for (const auto& col : Cols)
 						{
@@ -264,7 +268,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
-	m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Работа\\Уват\\Исходные данные\\RastrWin\\режим Уват 2020.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst"); 
 	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");

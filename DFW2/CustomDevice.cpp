@@ -468,19 +468,47 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 
 void CCustomDeviceCPP::SetConstsDefaultValues()
 {
-	if (m_pDevice)
-		m_pDevice->SetConstsDefaultValues();
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	m_pDevice->SetConstsDefaultValues();
 }
 
 DOUBLEVECTOR& CCustomDeviceCPP::GetConstantData()
 {
-	if (!m_pDevice)
-		throw dfw2error(_T("CCustomDeviceCPP::GetConstantData() - no DLL device initialized"));
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	return m_pDevice->GetConstantData();
 }
 
+VariableIndexVec& CCustomDeviceCPP::GetVariables(VariableIndexVec& ChildVec)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	return CDevice::GetVariables(JoinVariables( m_pDevice->GetVariables(), ChildVec));
+}
+
+double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
+{
+	VariableIndexVec vec;
+	return &GetVariables(vec)[nVarIndex].get().Value;
+}
+
+
+bool CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
+{
+	return true;
+}
+
+bool CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
+{
+	return true;
+}
+
+
 CCustomDeviceCPP::~CCustomDeviceCPP()
 {
-	if (m_pDevice)
+	if (m_pDevice) 
 		m_pDevice->Destroy();
 }
+
+
+
+
+const _TCHAR* CCustomDeviceCPP::m_cszNoDeviceDLL = _T("CCustomDeviceCPP - no DLL device initialized");

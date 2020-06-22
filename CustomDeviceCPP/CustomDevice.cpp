@@ -8,6 +8,7 @@ CCustomDevice::CCustomDevice()
 	CDeviceContainerPropertiesBase props;
 	GetDeviceProperties(props);
 	m_Consts.resize(props.m_ConstVarMap.size());
+	m_Variables.resize(props.m_VarMap.size());
 }
 
 void CCustomDevice::BuildRightHand(CustomDeviceData* pData)
@@ -31,9 +32,7 @@ void CCustomDevice::GetDeviceProperties(CDeviceContainerPropertiesBase& DevicePr
 	DeviceProps.SetType(DEVTYPE_EXCCON_MUSTANG);
 	DeviceProps.SetClassName(_T("АРВ Мустанг"), _T("ExciterMustang"));
 	DeviceProps.AddLinkFrom(DEVTYPE_EXCITER, DLM_SINGLE, DPD_MASTER);
-
-	DeviceProps.nEquationsCount = 15;
-
+	
 	DeviceProps.m_VarMap.insert(std::make_pair(_T("Uf"), CVarIndex(0, VARUNIT_PU)));
 	DeviceProps.m_VarMap.insert(std::make_pair(_T("Usum"), CVarIndex(1, VARUNIT_PU)));
 	DeviceProps.m_VarMap.insert(std::make_pair(_T("Svt"), CVarIndex(2, VARUNIT_PU)));
@@ -61,11 +60,22 @@ void CCustomDevice::GetDeviceProperties(CDeviceContainerPropertiesBase& DevicePr
 	DeviceProps.m_ConstVarMap.insert(std::make_pair(_T("Unom"), CConstVarIndex(15, eDVT_STATE)));
 	DeviceProps.m_ConstVarMap.insert(std::make_pair(_T("Eqnom"), CConstVarIndex(16, eDVT_STATE)));
 	DeviceProps.m_ConstVarMap.insert(std::make_pair(_T("Eqe"), CConstVarIndex(17, eDVT_STATE)));
+
+	DeviceProps.nEquationsCount = DeviceProps.m_VarMap.size();
 }
 
 void CCustomDevice::Destroy()
 {
     delete this;
+}
+
+VariableIndexVec CCustomDevice::GetVariables()
+{
+	VariableIndexVec VarVec;
+	VarVec.reserve(m_Variables.size());
+	for(auto& var : m_Variables)
+		VarVec.emplace_back(var);
+	return VarVec;
 }
 
 extern "C" __declspec(dllexport) ICustomDevice* __cdecl CustomDeviceFactory()

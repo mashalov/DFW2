@@ -4,6 +4,7 @@
 #include "map"
 #include "set"
 #include "string"
+#include "algorithm"
 #include "tchar.h"
 #include "DeviceTypes.h"
 
@@ -108,6 +109,7 @@ namespace DFW2
 	using TYPEINFOSETITR = TYPEINFOSET::iterator;
 
 	using DOUBLEVECTOR = std::vector<double>;
+	using VARIABLEVECTOR = std::vector<VariableIndex>;
 
 	// связь _от_ внешнего устройства
 	struct LinkDirectionFrom

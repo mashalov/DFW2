@@ -16,6 +16,7 @@ namespace DFW2
 		virtual void GetDeviceProperties(CDeviceContainerPropertiesBase& DeviceProps) = 0;
 		virtual DOUBLEVECTOR& GetConstantData() = 0;
 		virtual void SetConstsDefaultValues() = 0;
+		virtual VariableIndexVec GetVariables() = 0;
 	};
 
 	typedef ICustomDevice* (__cdecl* CustomDeviceFactory)();

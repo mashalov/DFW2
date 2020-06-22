@@ -58,6 +58,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&GeneratorsMotion);
 	m_DeviceContainers.push_back(&GeneratorsInfBus);
 	//m_DeviceContainers.push_back(&CustomDevice);
+	//m_DeviceContainers.push_back(&CustomDeviceCPP);
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
