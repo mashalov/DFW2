@@ -75,13 +75,9 @@ void CCustomDevice::Destroy()
     delete this;
 }
 
-VariableIndexVec CCustomDevice::GetVariables()
+VARIABLEVECTOR& CCustomDevice::GetVariables()
 {
-	VariableIndexVec VarVec;
-	VarVec.reserve(m_Variables.size());
-	for(auto& var : m_Variables)
-		VarVec.emplace_back(var);
-	return VarVec;
+	return m_Variables;
 }
 
 extern "C" __declspec(dllexport) ICustomDevice* __cdecl CustomDeviceFactory()

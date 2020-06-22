@@ -14,7 +14,7 @@ namespace DFW2
 		void GetDeviceProperties(CDeviceContainerPropertiesBase& DeviceProps) override;
 		void SetConstsDefaultValues() override;
 		DOUBLEVECTOR& GetConstantData() override;
-		VariableIndexVec GetVariables() override;
+		VARIABLEVECTOR& GetVariables() override;
 		void Destroy() override;
 	};
 }

@@ -481,7 +481,12 @@ DOUBLEVECTOR& CCustomDeviceCPP::GetConstantData()
 VariableIndexVec& CCustomDeviceCPP::GetVariables(VariableIndexVec& ChildVec)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	return CDevice::GetVariables(JoinVariables( m_pDevice->GetVariables(), ChildVec));
+	VARIABLEVECTOR& vecDevice = m_pDevice->GetVariables();
+	VariableIndexVec VarVec;
+	VarVec.reserve(vecDevice.size());
+	for (auto& var : m_pDevice->GetVariables())
+		ChildVec.emplace_back(var);
+	return CDevice::GetVariables(JoinVariables(VarVec, ChildVec));
 }
 
 double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
