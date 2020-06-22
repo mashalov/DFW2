@@ -22,6 +22,95 @@ bool GetConstFromField(const ConstVarsInfo& VarsInfo)
 	return bRes;
 }
 
+bool GetConstFromField(const CConstVarIndex& VarInfo )
+{
+	bool bRes = false;
+	if (VarInfo.m_DevVarType == eDEVICEVARIABLETYPE::eDVT_CONSTSOURCE)
+		bRes = true;
+	return bRes;
+}
+
+bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceCPPContainer& CustomDeviceContainer)
+{
+	bool bRes(false);
+	if (spRastr)
+	{
+		try
+		{
+			ITablePtr spSourceTable = spRastr->Tables->Item(ConnectInfo.m_TableName.c_str());
+			IColsPtr spSourceCols = spSourceTable->Cols;
+
+			using COLVECTOR = std::vector<std::pair<IColPtr, ptrdiff_t>>;
+			COLVECTOR Cols;
+			Cols.reserve(CustomDeviceContainer.m_ContainerProps.m_ConstVarMap.size());
+			IColPtr spColId = spSourceCols->Item(_T("Id"));
+			IColPtr spColName = spSourceCols->Item(_T("Name"));
+			for (const auto& col : CustomDeviceContainer.m_ContainerProps.m_ConstVarMap)
+				if (GetConstFromField(col.second))
+					Cols.push_back(std::make_pair(spSourceCols->Item(col.first.c_str()), col.second.m_nIndex));
+
+			// count model types in storage
+
+			IColPtr spModelType = spSourceCols->Item(ConnectInfo.m_ModelTypeField.c_str());
+			long nTableIndex = 0;
+			long nTableSize = spSourceTable->GetSize();
+			long nModelsCount = 0;
+
+			for (; nTableIndex < nTableSize; nTableIndex++)
+			{
+				if (spModelType->GetZ(nTableIndex).lVal == ConnectInfo.m_nModelType)
+					nModelsCount++;
+			}
+
+			if (nModelsCount)
+			{
+				// create models for count given
+				CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[nModelsCount];
+				std::for_each(pCustomDevices, 
+							  pCustomDevices + nModelsCount, 
+							  [&CustomDeviceContainer](CCustomDeviceCPP& device) { device.CreateDLLDeviceInstance(CustomDeviceContainer); });
+				CustomDeviceContainer.AddDevices(pCustomDevices, nModelsCount);
+
+				// put constants to each model
+				long nModelIndex = 0;
+				for (nTableIndex = 0; nTableIndex < nTableSize; nTableIndex++)
+				{
+					if (spModelType->GetZ(nTableIndex).lVal == ConnectInfo.m_nModelType)
+					{
+						if (nModelIndex >= nModelsCount)
+						{
+							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL()->GetModuleFilePath()));
+							break;
+						}
+
+						CCustomDeviceCPP* pDevice = pCustomDevices + nModelIndex;
+						pDevice->SetConstsDefaultValues();
+						pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
+						pDevice->SetName(spColId->GetZS(nTableIndex));
+						DOUBLEVECTOR& ConstsVec = pDevice->GetConstantData();
+						for (const auto& col : Cols)
+						{
+							if (col.second >= 0 && col.second < static_cast<ptrdiff_t>(ConstsVec.size()))
+								ConstsVec[col.second] = col.first->GetZ(nTableIndex).dblVal;
+							else
+								throw dfw2error(_T("CRastrImport::GetCustomDeviceData - Constants index overrun"));
+						}
+						nModelIndex++;
+					}
+				}
+			}
+		}
+		catch (_com_error& err)
+		{
+			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
+				CustomDeviceContainer.DLL()->GetModuleFilePath(),
+				static_cast<const _TCHAR*>(err.Description())));
+		}
+	}
+	return bRes;
+}
+
+
 bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer)
 {
 	bool bRes = false;
@@ -175,6 +264,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
+	m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Работа\\Уват\\Исходные данные\\RastrWin\\режим Уват 2020.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst"); 
 	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
@@ -287,10 +377,16 @@ void CRastrImport::GetData(CDynaModel& Network)
 	
 	if (!Network.CustomDevice.ConnectDLL(_T("DeviceDLL.dll")))
 		return;
+
+	if (!Network.CustomDeviceCPP.ConnectDLL(_T("CustomDeviceCPP.dll")))
+		return;
+
 	CustomDeviceConnectInfo ci(_T("ExcControl"),2);
 	ITablePtr spExAddXcomp = m_spRastr->Tables->Item("ExcControl");
 	spExAddXcomp->Cols->Add("Xcomp", PR_REAL);
+
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
+	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);
 	
 	ITablePtr spLRC = spTables->Item("polin");
 	IColsPtr spLRCCols = spLRC->Cols;

@@ -457,3 +457,30 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 
 	return nullptr;
 }
+
+CCustomDeviceCPP::CCustomDeviceCPP() { }
+
+void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
+{
+	m_pDLL = Container.DLL();
+	m_pDevice = m_pDLL->CreateDevice();
+}
+
+void CCustomDeviceCPP::SetConstsDefaultValues()
+{
+	if (m_pDevice)
+		m_pDevice->SetConstsDefaultValues();
+}
+
+DOUBLEVECTOR& CCustomDeviceCPP::GetConstantData()
+{
+	if (!m_pDevice)
+		throw dfw2error(_T("CCustomDeviceCPP::GetConstantData() - no DLL device initialized"));
+	return m_pDevice->GetConstantData();
+}
+
+CCustomDeviceCPP::~CCustomDeviceCPP()
+{
+	if (m_pDevice)
+		m_pDevice->Destroy();
+}

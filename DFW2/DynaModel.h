@@ -600,6 +600,7 @@ namespace DFW2
 		CCustomDeviceContainer CustomDevice;
 		CCustomDeviceContainer AutomaticDevice;
 		CAutomatic m_Automatic;
+		CCustomDeviceCPPContainer CustomDeviceCPP;
 
 		CDynaModel();
 		virtual ~CDynaModel();

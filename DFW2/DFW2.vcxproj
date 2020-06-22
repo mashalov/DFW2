@@ -179,11 +179,13 @@
     <ClInclude Include="CustomDevice.h" />
     <ClInclude Include="CustomDeviceContainer.h" />
     <ClInclude Include="CustomDeviceDLL.h" />
+    <ClInclude Include="DataStructs.h" />
     <ClInclude Include="DeadBand.h" />
     <ClInclude Include="DerlagContinuous.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="DeviceContainer.h" />
     <ClInclude Include="DeviceContainerProperties.h" />
+    <ClInclude Include="DeviceContainerPropertiesBase.h" />
     <ClInclude Include="DeviceId.h" />
     <ClInclude Include="DeviceTypes.h" />
     <ClInclude Include="dfw2exception.h" />
@@ -208,6 +210,7 @@
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="HRTimer.h" />
+    <ClInclude Include="ICustomDevice.h" />
     <ClInclude Include="KLUWrapper.h" />
     <ClInclude Include="IterationControl.h" />
     <ClInclude Include="LimitedLag.h" />

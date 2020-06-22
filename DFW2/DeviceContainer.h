@@ -75,7 +75,7 @@ namespace DFW2
 		ptrdiff_t EquationsCount();											// количество уравнений одного устройства в данном контейнере
 
 		// тип устройства хранится в атрибутах контейнера. Устройство вне контейнера не знает своего типа
-		inline eDFW2DEVICETYPE GetType() { return m_ContainerProps.eDeviceType; }
+		inline eDFW2DEVICETYPE GetType() { return m_ContainerProps.GetType(); }
 		// текстовое описание типа устройства
 		const _TCHAR* GetTypeName() { return m_ContainerProps.GetVerbalClassName(); }
 

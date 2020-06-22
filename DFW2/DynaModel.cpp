@@ -25,6 +25,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   CustomDevice(this),
 						   BranchMeasures(this),
 						   AutomaticDevice(this),
+						   CustomDeviceCPP(this),
 						   m_pLogFile(NULL)
 {
 	m_hStopEvt = CreateEvent(NULL, TRUE, FALSE, _T("DFW2STOP"));

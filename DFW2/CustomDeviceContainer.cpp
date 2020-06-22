@@ -306,3 +306,28 @@ long CCustomDeviceContainer::GetParametersValues(ptrdiff_t nId, BuildEquationsAr
 
 	return nCount;
 }
+
+
+
+CCustomDeviceCPPContainer::CCustomDeviceCPPContainer(CDynaModel* pDynaModel) : CDeviceContainer(pDynaModel) {}
+
+CCustomDeviceCPPContainer::~CCustomDeviceCPPContainer()
+{
+
+}
+
+
+bool CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath) 
+{
+	m_pDLL = std::make_shared<CCustomDeviceCPPDLL>();
+	bool bRes(false);
+	if (m_pDLL->Init(cszDLLFilePath))
+	{
+		
+		ICustomDevice* pDevice = m_pDLL->CreateDevice();
+		pDevice->GetDeviceProperties(m_ContainerProps);
+		pDevice->Destroy();
+		bRes = true;
+	}
+	return bRes;
+}

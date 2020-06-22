@@ -50,5 +50,19 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);
 	};
+
+
+	class CCustomDeviceCPP : public CDevice
+	{
+	protected:
+		std::shared_ptr<CCustomDeviceCPPDLL> m_pDLL;
+		ICustomDevice* m_pDevice = nullptr;
+	public:
+		CCustomDeviceCPP();
+		void CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container);
+		void SetConstsDefaultValues();
+		DOUBLEVECTOR& GetConstantData();
+		virtual ~CCustomDeviceCPP();
+	};
 }
 

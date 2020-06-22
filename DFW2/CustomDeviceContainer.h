@@ -85,5 +85,17 @@ namespace DFW2
 		size_t GetConstsCount()				{  return m_DLL.GetConstsInfo().size();     }
 		size_t GetSetPointsCount()			{  return m_DLL.GetSetPointsInfo().size();  }
 	};
+
+
+	class CCustomDeviceCPPContainer : public CDeviceContainer
+	{
+	protected:
+		std::shared_ptr<CCustomDeviceCPPDLL> m_pDLL;
+	public:
+		std::shared_ptr<CCustomDeviceCPPDLL> DLL() { return m_pDLL; }
+		CCustomDeviceCPPContainer(CDynaModel* pDynaModel);
+		virtual ~CCustomDeviceCPPContainer();
+		bool ConnectDLL(const _TCHAR* cszDLLFilePath);
+	};
 }
 

@@ -3,7 +3,7 @@
 #include "vector"
 #include "string"
 #include "memory"
-
+#include "ICustomDevice.h"
 
 namespace DFW2
 {
@@ -97,8 +97,22 @@ namespace DFW2
 		bool BuildEquations(BuildEquationsArgs *pArgs);
 		bool BuildRightHand(BuildEquationsArgs *pArgs);
 		bool BuildDerivatives(BuildEquationsArgs *pArgs);
+	};
 
-
+	class CCustomDeviceCPPDLL
+	{
+	protected:
+		bool m_bConnected = false;
+		HMODULE m_hDLL;
+		std::wstring m_strModulePath;
+		CustomDeviceFactory m_pfnFactory = nullptr;
+		void CleanUp();
+	public:
+		CCustomDeviceCPPDLL();
+		virtual ~CCustomDeviceCPPDLL();
+		bool Init(const _TCHAR* cszDLLFilePath);
+		const _TCHAR* GetModuleFilePath() const { return m_strModulePath.c_str(); }
+		ICustomDevice* CreateDevice();
 	};
 }
 

@@ -375,3 +375,62 @@ bool CCustomDeviceDLL::BuildDerivatives(BuildEquationsArgs *pArgs)
 		bRes = true;
 	return bRes;
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+CCustomDeviceCPPDLL::CCustomDeviceCPPDLL() 
+{
+
+}
+
+CCustomDeviceCPPDLL::~CCustomDeviceCPPDLL()
+{
+	CleanUp();
+}
+
+bool CCustomDeviceCPPDLL::Init(const _TCHAR* cszDLLFilePath)
+{
+	m_bConnected = false;
+	// загружаем dll
+	m_hDLL = LoadLibrary(cszDLLFilePath);
+	if (m_hDLL)
+	{
+		m_pfnFactory = reinterpret_cast<CustomDeviceFactory>(::GetProcAddress(m_hDLL, "CustomDeviceFactory"));
+		if (m_pfnFactory)
+		{
+			m_bConnected = true;
+			m_strModulePath = cszDLLFilePath;
+		}
+	}
+	return m_bConnected;
+};
+
+
+ICustomDevice* CCustomDeviceCPPDLL::CreateDevice()
+{
+	ICustomDevice* pDev(nullptr);
+	if (m_bConnected)
+	{
+		pDev = m_pfnFactory();
+	}
+	return pDev;
+}
+
+void CCustomDeviceCPPDLL::CleanUp()
+{
+	if (m_hDLL)
+		FreeLibrary(m_hDLL);
+	m_hDLL = NULL;
+}
