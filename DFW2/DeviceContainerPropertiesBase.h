@@ -60,12 +60,10 @@ namespace DFW2
 		eDFW2DEVICETYPE	eDeviceType = DEVTYPE_UNKNOWN;
 		VARINDEXMAP m_VarMap;												// карта индексов перменных состояния
 		CONSTVARINDEXMAP m_ConstVarMap;										// карта индексов констант
+		EXTVARINDEXMAP m_ExtVarMap;											// карта индексов внешних переменных
 		TYPEINFOSET m_TypeInfoSet;											// набор типов устройства
 		LINKSFROMMAP m_LinksFrom;
 		LINKSTOMAP  m_LinksTo;
-		LINKSFROMMAPPTR m_MasterLinksFrom;
-		LINKSTOMAPPTR  m_MasterLinksTo;
-		LINKSUNDIRECTED m_Masters, m_Slaves;
 		std::list<std::wstring> m_lstAliases;								// возможные псевдонимы типа устройства (типа "Node","node")
 	protected:
 		std::wstring m_strClassName;										// имя типа устройства

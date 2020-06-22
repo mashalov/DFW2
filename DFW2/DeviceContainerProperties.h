@@ -5,9 +5,20 @@
 
 namespace DFW2
 {
+	// для ускорения обработки ссылок разделенных по иерархии и направлениям
+	// используются те же карты, но с const указателями на second из основных карт ссылок
+	using LINKSFROMMAPPTR = std::map<eDFW2DEVICETYPE, LinkDirectionFrom const*>;
+	using LINKSTOMAPPTR = std::map<eDFW2DEVICETYPE, LinkDirectionTo const*>;
+	// ссылки без разделения на направления
+	using LINKSUNDIRECTED = std::vector<LinkDirectionFrom const*>;
+
 	class CDeviceContainerProperties : public CDeviceContainerPropertiesBase
 	{
 	public:
+		LINKSFROMMAPPTR m_MasterLinksFrom;
+		LINKSTOMAPPTR  m_MasterLinksTo;
+		LINKSUNDIRECTED m_Masters, m_Slaves;
+
 		eDFW2DEVICETYPE GetType() const;
 		const _TCHAR* GetVerbalClassName() const;
 		const _TCHAR* GetSystemClassName() const;

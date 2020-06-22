@@ -94,6 +94,21 @@ namespace DFW2
 		}
 	};
 
+	// описание внешней переменной
+	class CExtVarIndex : public CVarIndexBase
+	{
+	public:
+		eDFW2DEVICETYPE m_DeviceToSearch;
+		CExtVarIndex(ptrdiff_t nIndex, eDFW2DEVICETYPE eDeviceToSearch) : CVarIndexBase(nIndex),
+			m_DeviceToSearch(eDeviceToSearch)
+		{
+
+		}
+
+
+	};
+
+
 	// карта индексов переменных состояния
 	using VARINDEXMAP = std::map<std::wstring, CVarIndex>;
 	using VARINDEXMAPITR = VARINDEXMAP::iterator;
@@ -103,6 +118,11 @@ namespace DFW2
 	using CONSTVARINDEXMAP = std::map<std::wstring, CConstVarIndex>;
 	using CONSTVARINDEXMAPITR = CONSTVARINDEXMAP::iterator;
 	using CONSTVARINDEXMAPCONSTITR = CONSTVARINDEXMAP::const_iterator;
+
+	// карта индексов внешних переменных
+	using EXTVARINDEXMAP = std::map<std::wstring, CExtVarIndex>;
+	using EXTVARINDEXMAPITR = EXTVARINDEXMAP::iterator;
+	using EXTVARINDEXMAPCONSTITR = EXTVARINDEXMAP::const_iterator;
 
 	// множество типов устройств
 	using TYPEINFOSET = std::set<ptrdiff_t>;
@@ -144,11 +164,4 @@ namespace DFW2
 	// данные о ссылках устройства хранятся в карте
 	using LINKSFROMMAP = std::map<eDFW2DEVICETYPE, LinkDirectionFrom>;
 	using LINKSTOMAP = std::map<eDFW2DEVICETYPE, LinkDirectionTo>;
-	// для ускорения обработки ссылок разделенных по иерархии и направлениям
-	// используются те же карты, но с const указателями на second из основных карт ссылок
-	using LINKSFROMMAPPTR = std::map<eDFW2DEVICETYPE, LinkDirectionFrom const*>;
-	using LINKSTOMAPPTR = std::map<eDFW2DEVICETYPE, LinkDirectionTo const*>;
-
-	// ссылки без разделения на направления
-	using LINKSUNDIRECTED = std::vector<LinkDirectionFrom const*>;
 }

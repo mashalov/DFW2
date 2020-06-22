@@ -60,8 +60,14 @@ void CCustomDevice::GetDeviceProperties(CDeviceContainerPropertiesBase& DevicePr
 	DeviceProps.m_ConstVarMap.insert(std::make_pair(_T("Unom"), CConstVarIndex(15, eDVT_STATE)));
 	DeviceProps.m_ConstVarMap.insert(std::make_pair(_T("Eqnom"), CConstVarIndex(16, eDVT_STATE)));
 	DeviceProps.m_ConstVarMap.insert(std::make_pair(_T("Eqe"), CConstVarIndex(17, eDVT_STATE)));
-
+	DeviceProps.m_ConstVarMap.insert(std::make_pair(_T("Vref"), CConstVarIndex(18, eDVT_INTERNALCONST)));
 	DeviceProps.nEquationsCount = DeviceProps.m_VarMap.size();
+
+	DeviceProps.m_ExtVarMap.insert(std::make_pair(_T("S"), CExtVarIndex(0, DEVTYPE_NODE)));
+	DeviceProps.m_ExtVarMap.insert(std::make_pair(_T("Eq"), CExtVarIndex(1, DEVTYPE_GEN_1C)));
+	DeviceProps.m_ExtVarMap.insert(std::make_pair(_T("P"), CExtVarIndex(2, DEVTYPE_UNKNOWN)));
+	DeviceProps.m_ExtVarMap.insert(std::make_pair(_T("V"), CExtVarIndex(3, DEVTYPE_UNKNOWN)));
+
 }
 
 void CCustomDevice::Destroy()
