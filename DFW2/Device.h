@@ -163,33 +163,6 @@ namespace DFW2
 		}
 	};
 
-	// статусы выполнения функций устройства
-	enum eDEVICEFUNCTIONSTATUS
-	{
-		DFS_OK,							// OK
-		DFS_NOTREADY,					// Надо повторить (есть какая-то очередность обработки устройств или итерационный процесс)
-		DFS_DONTNEED,					// Функция для данного устройства не нужна
-		DFS_FAILED						// Ошибка
-	};
-
-	// статусы состояния устройства
-	enum eDEVICESTATE
-	{
-		DS_OFF,							// полностью отключено
-		DS_ON,							// включено
-		DS_READY,						// готово (не используется ?)
-		DS_DETERMINE,					// должно быть определено (мастер-устройством, например)
-	};
-
-	// причина изменения состояния устройства
-	enum eDEVICESTATECAUSE
-	{
-		DSC_EXTERNAL,					// состояние изменено снаружи устройство
-		DSC_INTERNAL,					// состояние изменено действием самого устройства
-		DSC_INTERNAL_PERMANENT			// состояние изменено действием устройства и не может быть изменено еще раз
-	};
-
-
 	// класс устройства, наследует все что связано с идентификацией
 	class CDevice : public CDeviceId
 	{
@@ -232,10 +205,10 @@ namespace DFW2
 		// внутри этой функции также делается "наследование" переменных
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
 		double* GetVariablePtr(const _TCHAR* cszVarName);
-		virtual VariableIndexVec& GetVariables(VariableIndexVec& ChildVec);
+		virtual VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec);
 		VariableIndex& GetVariable(ptrdiff_t nVarIndex);
 		// Объединяет заданный список переменных данного устройства, список переменных примитивов и дочерние переменные
-		VariableIndexVec& JoinVariables(std::vector<std::reference_wrapper<VariableIndex>> ThisVars, VariableIndexVec& ChildVec);
+		VariableIndexRefVec& JoinVariables(std::vector<std::reference_wrapper<VariableIndex>> ThisVars, VariableIndexRefVec& ChildVec);
 		// функция маппинга указателя на переменную к индексу переменной
 		// Аналогична по смыслу virtual double* GetVariablePtr()
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
@@ -349,6 +322,14 @@ namespace DFW2
 
 		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);
 		void RegisterPrimitive(CDynaPrimitive *pPrimitive);
+
+		template<typename T>
+		static void CheckIndex(const T& Container, ptrdiff_t nIndex, const _TCHAR* cszErrorMsg = nullptr)
+		{
+			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(Container.size()))
+				throw dfw2error(Cex(_T("%s - index check failed: index %d container size %d"), 
+					cszErrorMsg ? cszErrorMsg : _T("CDevice::CheckIndex"), nIndex, Container.size()));
+		}
 
 
 #ifdef _DEBUG

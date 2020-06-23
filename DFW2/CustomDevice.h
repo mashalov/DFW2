@@ -28,7 +28,7 @@ namespace DFW2
 		static long DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockIndex);
 
 		CCustomDeviceContainer *Container() { return static_cast<CCustomDeviceContainer*>(m_pContainer); }
-		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 
 	public:
 		eDEVICEFUNCTIONSTATUS m_ExternalStatus;
@@ -51,22 +51,28 @@ namespace DFW2
 		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);
 	};
 
-
+	
 	class CCustomDeviceCPP : public CDevice
 	{
 	protected:
 		std::shared_ptr<CCustomDeviceCPPDLL> m_pDLL;
 		ICustomDevice* m_pDevice = nullptr;
+		CCustomDeviceData CustomDeviceData;
 	public:
 		CCustomDeviceCPP();
 		void CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container);
 		void SetConstsDefaultValues();
 		DOUBLEVECTOR& GetConstantData();
-		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		virtual ~CCustomDeviceCPP();
+		static void CCustomDeviceCPP::DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
+		static void CCustomDeviceCPP::DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
 		static const _TCHAR* m_cszNoDeviceDLL;
 	};
 }

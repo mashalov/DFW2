@@ -40,7 +40,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
-		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
 		static const _TCHAR* m_cszNodeId;

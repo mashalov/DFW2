@@ -22,7 +22,7 @@ namespace DFW2
 		bool CalculatePower() override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
-		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 	};
 
 	class CDynaGeneratorInfBus : public CDynaGeneratorInfBusBase

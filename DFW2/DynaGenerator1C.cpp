@@ -467,7 +467,7 @@ bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
 	return true;
 }
 
-VariableIndexVec& CDynaGenerator1C::GetVariables(VariableIndexVec& ChildVec)
+VariableIndexRefVec& CDynaGenerator1C::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDynaGeneratorMotion::GetVariables(JoinVariables({ Vd, Vq, Id, Iq, Eqs, Eq }, ChildVec));
 }

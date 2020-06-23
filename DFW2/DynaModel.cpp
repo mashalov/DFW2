@@ -50,7 +50,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&Nodes);
 	m_DeviceContainers.push_back(&ExcitersMustang);
 	m_DeviceContainers.push_back(&DECsMustang);
-	m_DeviceContainers.push_back(&ExcConMustang);
+	//m_DeviceContainers.push_back(&ExcConMustang);
 	m_DeviceContainers.push_back(&Branches);
 	m_DeviceContainers.push_back(&Generators3C);
 	m_DeviceContainers.push_back(&GeneratorsMustang);
@@ -58,7 +58,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&GeneratorsMotion);
 	m_DeviceContainers.push_back(&GeneratorsInfBus);
 	//m_DeviceContainers.push_back(&CustomDevice);
-	//m_DeviceContainers.push_back(&CustomDeviceCPP);
+	m_DeviceContainers.push_back(&CustomDeviceCPP);
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);

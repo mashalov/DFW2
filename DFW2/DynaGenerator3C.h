@@ -29,7 +29,7 @@ namespace DFW2
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
-		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;

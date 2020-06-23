@@ -274,7 +274,7 @@ double* CDynaGenerator3C::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-VariableIndexVec& CDynaGenerator3C::GetVariables(VariableIndexVec& ChildVec)
+VariableIndexRefVec& CDynaGenerator3C::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDynaGenerator1C::GetVariables(JoinVariables({ Eqss, Edss }, ChildVec));
 }

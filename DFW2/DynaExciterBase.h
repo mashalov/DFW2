@@ -48,7 +48,7 @@ namespace DFW2
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 
-		VariableIndexVec& GetVariables(VariableIndexVec& ChildVec) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 
 		double GetIg();
 		void SetLagTimeConstantRatio(double TexcNew);

@@ -8,13 +8,19 @@ namespace DFW2
 	protected:
 		DOUBLEVECTOR m_Consts;
 		VARIABLEVECTOR m_Variables;
+		EXTVARIABLEVECTOR	m_ExtVariables;
 	public:
 		CCustomDevice();
-		void BuildRightHand(CustomDeviceData* pData) override;
+		void BuildRightHand(CCustomDeviceData& CustomDeviceData) override;
+		void BuildEquations(CCustomDeviceData& CustomDeviceData) override;
+		void BuildDerivatives(CCustomDeviceData& CustomDeviceData) override;
+		eDEVICEFUNCTIONSTATUS Init(CCustomDeviceData& CustomDeviceData) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CCustomDeviceData& CustomDeviceData) override;
 		void GetDeviceProperties(CDeviceContainerPropertiesBase& DeviceProps) override;
 		void SetConstsDefaultValues() override;
 		DOUBLEVECTOR& GetConstantData() override;
 		VARIABLEVECTOR& GetVariables() override;
+		EXTVARIABLEVECTOR& GetExternalVariables() override;
 		void Destroy() override;
 	};
 }

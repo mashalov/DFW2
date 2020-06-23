@@ -458,7 +458,11 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 	return nullptr;
 }
 
-CCustomDeviceCPP::CCustomDeviceCPP() { }
+CCustomDeviceCPP::CCustomDeviceCPP() 
+{ 
+	CustomDeviceData.pFnSetFunction = DLLSetFunction;
+	CustomDeviceData.pFnSetElement  = DLLSetElement;
+}
 
 void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
 {
@@ -478,11 +482,11 @@ DOUBLEVECTOR& CCustomDeviceCPP::GetConstantData()
 	return m_pDevice->GetConstantData();
 }
 
-VariableIndexVec& CCustomDeviceCPP::GetVariables(VariableIndexVec& ChildVec)
+VariableIndexRefVec& CCustomDeviceCPP::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	VARIABLEVECTOR& vecDevice = m_pDevice->GetVariables();
-	VariableIndexVec VarVec;
+	VariableIndexRefVec VarVec;
 	VarVec.reserve(vecDevice.size());
 	for (auto& var : m_pDevice->GetVariables())
 		ChildVec.emplace_back(var);
@@ -491,19 +495,79 @@ VariableIndexVec& CCustomDeviceCPP::GetVariables(VariableIndexVec& ChildVec)
 
 double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	VariableIndexVec vec;
-	return &GetVariables(vec)[nVarIndex].get().Value;
+	VariableIndexRefVec vec;
+	GetVariables(vec);
+	CDevice::CheckIndex(vec, nVarIndex, _T("CCustomDeviceCPP::GetVariablePtr"));
+	return &vec[nVarIndex].get().Value;
 }
 
 
 bool CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
 {
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	CustomDeviceData.pModel = pDynaModel;
+	CustomDeviceData.pDevice = this;
+	m_pDevice->BuildRightHand(CustomDeviceData);
+
 	return true;
 }
 
 bool CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
 {
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	CustomDeviceData.pModel = pDynaModel;
+	CustomDeviceData.pDevice = this;
+	m_pDevice->BuildEquations(CustomDeviceData);
 	return true;
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::Init(CDynaModel* pDynaModel)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	CustomDeviceData.pModel = pDynaModel;
+	CustomDeviceData.pDevice = this;
+	eDEVICEFUNCTIONSTATUS eRes = m_pDevice->Init(CustomDeviceData);
+	return eRes;
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	CustomDeviceData.pModel = pDynaModel;
+	CustomDeviceData.pDevice = this;
+	eDEVICEFUNCTIONSTATUS eRes = m_pDevice->ProcessDiscontinuity(CustomDeviceData);
+	return eRes;
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDynaModel)
+{
+	eDEVICEFUNCTIONSTATUS eRes(DFS_OK);
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
+	for (const auto& ext : m_pContainer->m_ContainerProps.m_ExtVarMap)
+	{
+		CDevice::CheckIndex(ExtVec, ext.second.m_nIndex, _T("CCustomDeviceCPP::UpdateExternalVariables"));
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVec[ext.second.m_nIndex], this, ext.first.c_str(), ext.second.m_DeviceToSearch));
+		if (eRes == DFS_FAILED)
+			break;
+	}
+	return eRes;
+}
+
+
+void CCustomDeviceCPP::DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
+{
+	CDynaModel* pDynaModel = static_cast<CDynaModel*>(DFWModelData.pModel);
+	CDevice* pDevice = static_cast<CDevice*>(DFWModelData.pDevice);
+	pDynaModel->SetElement(Row,Col,dValue);
+}
+
+
+void CCustomDeviceCPP::DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue)
+{
+	CDynaModel* pDynaModel = static_cast<CDynaModel*>(DFWModelData.pModel);
+	CDevice* pDevice = static_cast<CDevice*>(DFWModelData.pDevice);
+	pDynaModel->SetFunction(Row, dValue);
 }
 
 

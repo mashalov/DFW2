@@ -644,7 +644,7 @@ void CDynaBranchMeasure::CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, c
 	cSe = Ue * conj(cIe);
 }
 
-VariableIndexVec& CDynaBranchMeasure::GetVariables(VariableIndexVec& ChildVec)
+VariableIndexRefVec& CDynaBranchMeasure::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDevice::GetVariables(JoinVariables({ Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pe, Qe, Sb, Se }, ChildVec));
 }

@@ -298,7 +298,7 @@ void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
 	struct RightVector* pRv = pDynaModel->GetRightVector(A(0));
 	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
 
-	VariableIndexVec seed;
+	VariableIndexRefVec seed;
 	for (auto&& var : GetVariables(seed))
 	{
 		pRv->pValue = &var.get().Value;
@@ -694,7 +694,7 @@ CSynchroZone::CSynchroZone() : CDevice()
 }
 
 
-VariableIndexVec& CSynchroZone::GetVariables(VariableIndexVec& ChildVec)
+VariableIndexRefVec& CSynchroZone::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDevice::GetVariables(JoinVariables({ S },ChildVec));
 }
@@ -1605,12 +1605,12 @@ void CDynaNode::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState(_T("S"), S);
 }
 
-VariableIndexVec& CDynaNodeBase::GetVariables(VariableIndexVec& ChildVec)
+VariableIndexRefVec& CDynaNodeBase::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDevice::GetVariables(JoinVariables({ Delta, V, Vre, Vim }, ChildVec));
 }
 
-VariableIndexVec& CDynaNode::GetVariables(VariableIndexVec& ChildVec)
+VariableIndexRefVec& CDynaNode::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDynaNodeBase::GetVariables(JoinVariables({ Lag, S }, ChildVec));
 }

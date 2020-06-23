@@ -39,7 +39,7 @@ namespace DFW2
 		constexpr double& operator= (double value) { *m_pValue = value;  return *m_pValue; }
 	};
 
-	using VariableIndexVec = std::vector<std::reference_wrapper<VariableIndex>>;
+	using VariableIndexRefVec = std::vector<std::reference_wrapper<VariableIndex>>;
 
 	// типы переменных устройства
 	enum eDEVICEVARIABLETYPE
@@ -130,6 +130,7 @@ namespace DFW2
 
 	using DOUBLEVECTOR = std::vector<double>;
 	using VARIABLEVECTOR = std::vector<VariableIndex>;
+	using EXTVARIABLEVECTOR = std::vector<VariableIndexExternal>;
 
 	// связь _от_ внешнего устройства
 	struct LinkDirectionFrom
@@ -164,4 +165,30 @@ namespace DFW2
 	// данные о ссылках устройства хранятся в карте
 	using LINKSFROMMAP = std::map<eDFW2DEVICETYPE, LinkDirectionFrom>;
 	using LINKSTOMAP = std::map<eDFW2DEVICETYPE, LinkDirectionTo>;
+
+	// статусы выполнения функций устройства
+	enum eDEVICEFUNCTIONSTATUS
+	{
+		DFS_OK,							// OK
+		DFS_NOTREADY,					// Надо повторить (есть какая-то очередность обработки устройств или итерационный процесс)
+		DFS_DONTNEED,					// Функция для данного устройства не нужна
+		DFS_FAILED						// Ошибка
+	};
+
+	// статусы состояния устройства
+	enum eDEVICESTATE
+	{
+		DS_OFF,							// полностью отключено
+		DS_ON,							// включено
+		DS_READY,						// готово (не используется ?)
+		DS_DETERMINE,					// должно быть определено (мастер-устройством, например)
+	};
+
+	// причина изменения состояния устройства
+	enum eDEVICESTATECAUSE
+	{
+		DSC_EXTERNAL,					// состояние изменено снаружи устройство
+		DSC_INTERNAL,					// состояние изменено действием самого устройства
+		DSC_INTERNAL_PERMANENT			// состояние изменено действием устройства и не может быть изменено еще раз
+	};
 }

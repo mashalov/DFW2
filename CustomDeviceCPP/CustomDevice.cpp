@@ -9,12 +9,37 @@ CCustomDevice::CCustomDevice()
 	GetDeviceProperties(props);
 	m_Consts.resize(props.m_ConstVarMap.size());
 	m_Variables.resize(props.m_VarMap.size());
+	m_ExtVariables.resize(props.m_ExtVarMap.size());
 }
 
-void CCustomDevice::BuildRightHand(CustomDeviceData* pData)
+void CCustomDevice::BuildRightHand(CCustomDeviceData& CustomDeviceData)
+{
+	for(const auto& var : m_Variables)
+		(*CustomDeviceData.pFnSetFunction)(CustomDeviceData, var, 0.0);
+}
+
+void CCustomDevice::BuildEquations(CCustomDeviceData& CustomDeviceData)
+{
+	for (const auto& var : m_Variables)
+		(*CustomDeviceData.pFnSetElement)(CustomDeviceData, var, var, 1.0);
+}
+
+void CCustomDevice::BuildDerivatives(CCustomDeviceData& CustomDeviceData)
 {
 
 }
+
+eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CCustomDeviceData& CustomDeviceData)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDevice::ProcessDiscontinuity(CCustomDeviceData& CustomDeviceData)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+
 
 DOUBLEVECTOR& CCustomDevice::GetConstantData()
 {
@@ -78,6 +103,11 @@ void CCustomDevice::Destroy()
 VARIABLEVECTOR& CCustomDevice::GetVariables()
 {
 	return m_Variables;
+}
+
+EXTVARIABLEVECTOR& CCustomDevice::GetExternalVariables()
+{
+	return m_ExtVariables;
 }
 
 extern "C" __declspec(dllexport) ICustomDevice* __cdecl CustomDeviceFactory()

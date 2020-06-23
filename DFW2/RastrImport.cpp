@@ -268,7 +268,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
-	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Работа\\Уват\\Исходные данные\\RastrWin\\режим Уват 2020.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst"); 
 	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
