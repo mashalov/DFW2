@@ -44,9 +44,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 	{
 		switch (GetState())
 		{
-			case DS_ON:
+			case eDEVICESTATE::DS_ON:
 		break;
-			case DS_OFF:
+			case eDEVICESTATE::DS_OFF:
 		break;
 		}
 	}

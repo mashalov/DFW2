@@ -41,17 +41,17 @@ double* CDynaDECMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 
 eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	double Unom, Eqnom, Eqe0;
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
 	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom, DEVTYPE_GEN_MOTION))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqnom, pExciter, CDynaGenerator1C::m_cszEqnom, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqe0, pExciter, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	Udec = 0.0;
 
@@ -108,7 +108,7 @@ double CDynaDECMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	CDynaExciterMustang *pExciter = static_cast<CDynaExciterMustang*>(GetSingleLink(DEVTYPE_EXCITER));
 	_ASSERTE(CDevice::IsFunctionStatusOK(pExciter->DiscontinuityProcessed()));
 
@@ -142,7 +142,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 			pDynaModel->DiscontinuityRequest();
 	}
 	else
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return Status;
 }

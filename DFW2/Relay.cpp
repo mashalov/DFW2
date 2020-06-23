@@ -91,7 +91,7 @@ eDEVICEFUNCTIONSTATUS CRelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		SetCurrentState(pDynaModel, State);
 		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 bool CRelay::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
@@ -197,7 +197,7 @@ eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 			*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 		}
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 

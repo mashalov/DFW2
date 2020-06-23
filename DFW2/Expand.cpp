@@ -25,7 +25,7 @@ eDEVICEFUNCTIONSTATUS CExpand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		SetCurrentState(pDynaModel, State);
 		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 
@@ -92,7 +92,7 @@ eDEVICEFUNCTIONSTATUS CShrink::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		SetCurrentState(pDynaModel, State);
 		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 

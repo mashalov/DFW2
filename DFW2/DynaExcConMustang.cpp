@@ -36,7 +36,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 	if (Tf <= 0)
 		Tf = 0.1;
 
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	*dVdtOutValue = *dEqdtOutValue = *dSdtOutValue = 0.0;
 	Svt = Uf = Usum = 0.0;
@@ -45,11 +45,11 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
 	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqnom, pExciter, CDynaGenerator1C::m_cszEqnom))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqe0, pExciter, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -71,16 +71,16 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 		switch (GetState())
 		{
-		case DS_ON:
+		case eDEVICESTATE::DS_ON:
 		{
 			bool bRes = true;
 			Vref = dVdtIn.Value();
 			bRes = Lag.Init(pDynaModel);
-			Status = bRes ? DFS_OK : DFS_FAILED;
+			Status = bRes ? eDEVICEFUNCTIONSTATUS::DFS_OK : eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 		}
 		break;
-		case DS_OFF:
-			Status = DFS_OK;
+		case eDEVICESTATE::DS_OFF:
+			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 			Vref = Usum = 0.0;
 			Lag.Init(pDynaModel);
 			break;
@@ -174,7 +174,7 @@ bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaExcConMustang::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	_ASSERTE(CDevice::IsFunctionStatusOK(GetSingleLink(DEVTYPE_EXCITER)->DiscontinuityProcessed()));
 	if (IsStateOn())
 	{
@@ -183,7 +183,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::ProcessDiscontinuity(CDynaModel* pDyna
 		Status = CDevice::ProcessDiscontinuity(pDynaModel);
 	}
 	else
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return Status;
 }

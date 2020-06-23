@@ -528,7 +528,7 @@ bool CDeviceContainer::LeaveDiscontinuityMode(CDynaModel* pDynaModel)
 // обработка разрыва устройств в контейнере
 eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	m_eDeviceFunctionStatus = DFS_OK;
+	m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	if (GetType() == DEVTYPE_BRANCH)
 		return m_eDeviceFunctionStatus;
@@ -542,11 +542,11 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaMo
 
 		switch (it->CheckProcessDiscontinuity(pDynaModel))
 		{
-		case DFS_FAILED:
-			m_eDeviceFunctionStatus = DFS_FAILED;
+		case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+			m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 			break;
-		case DFS_NOTREADY:
-			m_eDeviceFunctionStatus = DFS_NOTREADY;
+		case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+			m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 			break;
 		}
 	}
@@ -583,7 +583,7 @@ double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 {
-	m_eDeviceFunctionStatus = DFS_OK;
+	m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	// ветви хотя и тоже устройства, но мы их не инициализируем
 	if (GetType() == DEVTYPE_BRANCH)
@@ -602,11 +602,11 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 		// проверяем в каком состоянии находится устройство
 		switch (it->CheckInit(pDynaModel))
 		{
-		case DFS_FAILED:
-			m_eDeviceFunctionStatus = DFS_FAILED;		// если инициализации устройства завалена - завален и контейнер
+		case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+			m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;		// если инициализации устройства завалена - завален и контейнер
 			break;
-		case DFS_NOTREADY:
-			m_eDeviceFunctionStatus = DFS_NOTREADY;		// если инициализация еще не выполнена, отмечаем, что и контейнер нужно инициализировать позже
+		case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+			m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;		// если инициализация еще не выполнена, отмечаем, что и контейнер нужно инициализировать позже
 			break;
 		}
 	}

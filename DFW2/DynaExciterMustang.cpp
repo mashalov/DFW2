@@ -88,9 +88,9 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 	double Eqnom, Inom;
 
 	if (!InitConstantVariable(Eqnom, GetSingleLink(DEVTYPE_GEN_1C), CDynaGenerator1C::m_cszEqnom, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Inom, GetSingleLink(DEVTYPE_GEN_1C), CDynaGenerator1C::m_cszInom, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -103,7 +103,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 		bool bRes = ExcLag.Init(pDynaModel);
 		bRes = bRes && EqLimit.Init(pDynaModel);
 		if (!bRes)
-			Status = DFS_FAILED;
+			Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 
 	return Status;
@@ -118,7 +118,7 @@ bool CDynaExciterMustang::BuildDerivatives(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	// wait for generator to process disco
 
 	_ASSERTE(CDevice::IsFunctionStatusOK(GetSingleLink(DEVTYPE_GEN_1C)->DiscontinuityProcessed()));
@@ -150,10 +150,10 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDyn
 */
 		}
 		else
-			Status = DFS_FAILED;
+			Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 	else
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return Status;
 }

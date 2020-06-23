@@ -16,6 +16,12 @@ struct DLLVariableIndex
 	double Value;
 };
 
+enum eLINKTYPE
+{
+	eLINK_TO,
+	eLINK_FROM
+};
+
 enum PrimitiveBlockType
 {
 	PBT_UNKNOWN,
@@ -46,12 +52,6 @@ enum eVARIABLELOCATION
 {
 	eVL_INTERNAL,
 	eVL_EXTERNAL
-};
-
-enum eLINKTYPE
-{
-	eLINK_TO,
-	eLINK_FROM
 };
 
 enum CONSTVARSFLAGS

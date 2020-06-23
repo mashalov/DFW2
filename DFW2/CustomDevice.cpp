@@ -204,7 +204,7 @@ bool CCustomDevice::SetConstDefaultValues()
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	bool bRes = true;
 
 	ptrdiff_t nConstIndex(0);
@@ -215,11 +215,11 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CDynaModel* pDynaModel)
 	}
 
 	bRes = bRes && ConstructDLLParameters(pDynaModel);
-	m_ExternalStatus = DFS_OK;
+	m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	bRes = bRes && Container()->InitDLLEquations(&m_DLLArgs);
 
 	if (!bRes)
-		m_ExternalStatus = DFS_FAILED;
+		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	return m_ExternalStatus;
 }
@@ -294,16 +294,16 @@ double CCustomDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	m_ExternalStatus = DFS_NOTREADY;
+	m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	
 	if (IsStateOn())
 	{
-		m_ExternalStatus = DFS_OK;
+		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 		bool bRes = ConstructDLLParameters(pDynaModel);
 		Container()->ProcessDLLDiscontinuity(&m_DLLArgs);
 	}
 	else
-		m_ExternalStatus = DFS_OK;
+		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return m_ExternalStatus;
 }
@@ -375,10 +375,10 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 		double *pParBuffer(nullptr);
 		long nParCount = static_cast<CCustomDeviceContainer*>(pDevice->Container())->GetParametersValues(pDevice->GetId(), &pDevice->m_DLLArgs, nBlockIndex, &pParBuffer);
 		if (!pPrimitive->UnserializeParameters(pDynaModel, pParBuffer, nParCount))
-			pDevice->m_ExternalStatus = DFS_FAILED;
+			pDevice->m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 		else
 			if (!pPrimitive->Init(pDynaModel))
-				pDevice->m_ExternalStatus = DFS_FAILED;
+				pDevice->m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 
 	return 1;
@@ -387,7 +387,7 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes(DFS_OK);
+	eDEVICEFUNCTIONSTATUS eRes(eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 	const auto& InputInfos = Container()->DLL().GetInputsInfo();
 
@@ -397,7 +397,7 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaMo
 	for (const auto& it : InputInfos)
 	{
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(*pStart, this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType)));
-		if (eRes != DFS_FAILED)
+		if (eRes != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 		{
 			pExt->pValue = &pStart->Value();
 			pExt->nIndex = pStart->Index();
@@ -541,14 +541,14 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::ProcessDiscontinuity(CDynaModel* pDynaMo
 
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes(DFS_OK);
+	eDEVICEFUNCTIONSTATUS eRes(eDEVICEFUNCTIONSTATUS::DFS_OK);
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
 	for (const auto& ext : m_pContainer->m_ContainerProps.m_ExtVarMap)
 	{
 		CDevice::CheckIndex(ExtVec, ext.second.m_nIndex, _T("CCustomDeviceCPP::UpdateExternalVariables"));
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVec[ext.second.m_nIndex], this, ext.first.c_str(), ext.second.m_DeviceToSearch));
-		if (eRes == DFS_FAILED)
+		if (eRes == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 			break;
 	}
 	return eRes;

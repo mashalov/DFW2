@@ -118,8 +118,8 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetName());
 				break;
 		case TypedSerializedValue::eValueType::VT_STATE:
-			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetState());
-			spXMLValue->setAttribute(CSerializerBase::m_cszStateCause, Serializer->m_pDevice->GetStateCause());
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, static_cast<int>(Serializer->m_pDevice->GetState()));
+			spXMLValue->setAttribute(CSerializerBase::m_cszStateCause, static_cast<int>(Serializer->m_pDevice->GetStateCause()));
 				break;
 		case TypedSerializedValue::eValueType::VT_ID:
 			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetId());

@@ -38,6 +38,7 @@ namespace DFW2
 		virtual DOUBLEVECTOR& GetConstantData() = 0;
 		virtual VARIABLEVECTOR& GetVariables() = 0;
 		virtual EXTVARIABLEVECTOR& GetExternalVariables() = 0;
+		virtual PRIMITIVEVECTOR& GetPrimitives() = 0;
 		virtual void SetConstsDefaultValues() = 0;
 	};
 

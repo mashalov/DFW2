@@ -6,9 +6,10 @@ namespace DFW2
 	class CCustomDevice : public ICustomDevice
 	{
 	protected:
-		DOUBLEVECTOR m_Consts;
-		VARIABLEVECTOR m_Variables;
+		DOUBLEVECTOR		m_Consts;
+		VARIABLEVECTOR		m_Variables;
 		EXTVARIABLEVECTOR	m_ExtVariables;
+		PRIMITIVEVECTOR		m_Primitives;
 	public:
 		CCustomDevice();
 		void BuildRightHand(CCustomDeviceData& CustomDeviceData) override;
@@ -21,6 +22,7 @@ namespace DFW2
 		DOUBLEVECTOR& GetConstantData() override;
 		VARIABLEVECTOR& GetVariables() override;
 		EXTVARIABLEVECTOR& GetExternalVariables() override;
+		PRIMITIVEVECTOR& GetPrimitives() override;
 		void Destroy() override;
 	};
 }

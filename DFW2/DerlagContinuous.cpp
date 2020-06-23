@@ -154,7 +154,7 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaM
 			//*m_Output = m_K * m_T * (Input - *m_Y2);		// выход по входу
 		}
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 bool CDerlagContinuous::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)

@@ -50,7 +50,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&Nodes);
 	m_DeviceContainers.push_back(&ExcitersMustang);
 	m_DeviceContainers.push_back(&DECsMustang);
-	//m_DeviceContainers.push_back(&ExcConMustang);
+	m_DeviceContainers.push_back(&ExcConMustang);
 	m_DeviceContainers.push_back(&Branches);
 	m_DeviceContainers.push_back(&Generators3C);
 	m_DeviceContainers.push_back(&GeneratorsMustang);
@@ -58,7 +58,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&GeneratorsMotion);
 	m_DeviceContainers.push_back(&GeneratorsInfBus);
 	//m_DeviceContainers.push_back(&CustomDevice);
-	m_DeviceContainers.push_back(&CustomDeviceCPP);
+	//m_DeviceContainers.push_back(&CustomDeviceCPP);
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
@@ -110,7 +110,7 @@ bool CDynaModel::Run()
 			m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 
 		//m_Parameters.m_dOutStep = 1E-5;
-		bRes = bRes && (LRCs.Init(this) == DFS_OK);
+		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 		bRes = bRes && Link();
 		TurnOffDevicesByOffMasters();
@@ -276,40 +276,40 @@ bool CDynaModel::Run()
 
 void CDynaModel::InitDevices()
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	m_cszDampingName = (GetFreqDampingType() == APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
 
 	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
 	if (!UpdateExternalVariables())
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	klu.Common()->ordering = 0; // используем amd (0) или colamd (1). 0 - лучше для userefactor = true, 1 - для userefactor = false
 
 	ptrdiff_t nTotalOKInits = -1;
 	
-	while (Status == DFS_NOTREADY && Status != DFS_FAILED)
+	while (Status == eDEVICEFUNCTIONSTATUS::DFS_NOTREADY && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 	{
 		ptrdiff_t nOKInits = 0;
 
-		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != DFS_FAILED; it++)
+		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED; it++)
 		{
 			switch ((*it)->Init(this))
 			{
-			case DFS_OK:
-			case DFS_DONTNEED:
+			case eDEVICEFUNCTIONSTATUS::DFS_OK:
+			case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
 				nOKInits++; // count how many inits succeeded
 				break;
-			case DFS_FAILED:
-				Status = DFS_FAILED;
+			case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+				Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 				break;
-			case DFS_NOTREADY:
-				Status = DFS_NOTREADY;
+			case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+				Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 				break;
 			}
 		}
 		if (nOKInits == m_DeviceContainers.size())
 		{
-			Status = DFS_OK;
+			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 			break;
 		}
 		else
@@ -319,13 +319,13 @@ void CDynaModel::InitDevices()
 			else
 				if (nTotalOKInits == nOKInits)
 				{
-					Status = DFS_FAILED;
+					Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 					Log(CDFW2Messages::DFW2LOG_ERROR, DFW2::CDFW2Messages::m_cszInitLoopedInfinitely);
 					break;
 				}
 		}
 
-		if (!CDevice::IsFunctionStatusOK(Status) && Status != DFS_FAILED)
+		if (!CDevice::IsFunctionStatusOK(Status) && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 		{
 			for (auto&& it : m_DeviceContainers)
 			{
@@ -1118,7 +1118,7 @@ bool CDynaModel::ProcessDiscontinuity()
 {
 	bool bRes = true;
 
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 		
 	// функция работает только в режиме обработки разрыва
 	if (sc.m_bDiscontinuityMode)
@@ -1137,33 +1137,33 @@ bool CDynaModel::ProcessDiscontinuity()
 			ChangeOrder(1);
 			ptrdiff_t nTotalOKPds = -1;
 
-			Status = DFS_NOTREADY;
+			Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 
-			while (Status == DFS_NOTREADY)
+			while (Status == eDEVICEFUNCTIONSTATUS::DFS_NOTREADY)
 			{
 				// пока статус "неготово"
 				ptrdiff_t nOKPds = 0;
 				// обрабатываем разрывы для всех устройств во всех контейнерах
-				for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != DFS_FAILED; it++)
+				for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED; it++)
 				{
 					switch ((*it)->ProcessDiscontinuity(this))
 					{
-					case DFS_OK:
-					case DFS_DONTNEED:
+					case eDEVICEFUNCTIONSTATUS::DFS_OK:
+					case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
 						nOKPds++; // если контейнер обработал разрыв успешно, считаем количество успехов
 						break;
-					case DFS_FAILED:
-						Status = DFS_FAILED;	// если контейнер завалился - выходим из цикла обработки
+					case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+						Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;	// если контейнер завалился - выходим из цикла обработки
 						break;
-					case DFS_NOTREADY:
-						Status = DFS_NOTREADY;	// если контейнер не готов - повторяем
+					case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+						Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;	// если контейнер не готов - повторяем
 						break;
 					}
 				}
 				// если количество успехов равно количеству конейнеров - модель обработала разрыв успешно, выходим из цикла
 				if (nOKPds == m_DeviceContainers.size())
 				{
-					Status = DFS_OK;
+					Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 					break;
 				}
 				else
@@ -1175,7 +1175,7 @@ bool CDynaModel::ProcessDiscontinuity()
 						if (nTotalOKPds == nOKPds)	// если итерация вторая и далее, и количество успехов равно предыдущем количеству успехов
 						{
 							// это бесконечный цикл
-							Status = DFS_FAILED;
+							Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 							Log(CDFW2Messages::DFW2LOG_ERROR, DFW2::CDFW2Messages::m_cszProcessDiscontinuityLoopedInfinitely);
 							break;
 						}
@@ -1190,7 +1190,7 @@ bool CDynaModel::ProcessDiscontinuity()
 		ResetNordsiek();
 	}
 	else
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return CDevice::IsFunctionStatusOK(Status);
 }

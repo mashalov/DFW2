@@ -198,10 +198,10 @@ bool CDynaLRC::CheckPtr(LRCDATA& LRC)
 
 eDEVICEFUNCTIONSTATUS CDynaLRC::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_FAILED;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (Check() && CollectConstantData(P) && CollectConstantData(Q))
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	return Status;
 	
 }

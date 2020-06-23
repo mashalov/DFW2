@@ -82,11 +82,11 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::Init(CDynaModel* pDynaModel)
 	{
 		switch (GetState())
 		{
-		case DS_ON:
+		case eDEVICESTATE::DS_ON:
 			if (!SetUpDelta())
-				Status = DFS_FAILED;
+				Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 			break;
-		case DS_OFF:
+		case eDEVICESTATE::DS_OFF:
 			P = Q = Delta = Eqs = Ire = Iim = 0.0;
 			break;
 		}

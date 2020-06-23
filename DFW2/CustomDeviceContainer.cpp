@@ -323,9 +323,9 @@ bool CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
 	bool bRes(false);
 	if (m_pDLL->Init(cszDLLFilePath))
 	{
-		
 		ICustomDevice* pDevice = m_pDLL->CreateDevice();
 		pDevice->GetDeviceProperties(m_ContainerProps);
+		PRIMITIVEVECTOR& Prims = pDevice->GetPrimitives();
 		pDevice->Destroy();
 		bRes = true;
 	}

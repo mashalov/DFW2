@@ -7,6 +7,7 @@
 #include "algorithm"
 #include "tchar.h"
 #include "DeviceTypes.h"
+#include "DLLStructs.h"
 
 namespace DFW2
 {
@@ -109,6 +110,13 @@ namespace DFW2
 	};
 
 
+	class PrimitiveDescription
+	{
+	public:
+		PrimitiveBlockType eBlockType;
+	};
+
+
 	// карта индексов переменных состояния
 	using VARINDEXMAP = std::map<std::wstring, CVarIndex>;
 	using VARINDEXMAPITR = VARINDEXMAP::iterator;
@@ -131,6 +139,7 @@ namespace DFW2
 	using DOUBLEVECTOR = std::vector<double>;
 	using VARIABLEVECTOR = std::vector<VariableIndex>;
 	using EXTVARIABLEVECTOR = std::vector<VariableIndexExternal>;
+	using PRIMITIVEVECTOR = std::vector<PrimitiveDescription>;
 
 	// связь _от_ внешнего устройства
 	struct LinkDirectionFrom
@@ -167,7 +176,7 @@ namespace DFW2
 	using LINKSTOMAP = std::map<eDFW2DEVICETYPE, LinkDirectionTo>;
 
 	// статусы выполнения функций устройства
-	enum eDEVICEFUNCTIONSTATUS
+	enum class eDEVICEFUNCTIONSTATUS
 	{
 		DFS_OK,							// OK
 		DFS_NOTREADY,					// Надо повторить (есть какая-то очередность обработки устройств или итерационный процесс)
@@ -176,7 +185,7 @@ namespace DFW2
 	};
 
 	// статусы состояния устройства
-	enum eDEVICESTATE
+	enum class eDEVICESTATE
 	{
 		DS_OFF,							// полностью отключено
 		DS_ON,							// включено
@@ -185,7 +194,7 @@ namespace DFW2
 	};
 
 	// причина изменения состояния устройства
-	enum eDEVICESTATECAUSE
+	enum class eDEVICESTATECAUSE
 	{
 		DSC_EXTERNAL,					// состояние изменено снаружи устройство
 		DSC_INTERNAL,					// состояние изменено действием самого устройства

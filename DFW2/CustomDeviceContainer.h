@@ -1,7 +1,6 @@
 #pragma once
 #include "DeviceContainer.h"
 #include "CustomDeviceDLL.h"
-
 #include "LimitedLag.h"
 #include "LimiterConst.h"
 #include "Relay.h"

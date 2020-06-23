@@ -4,9 +4,9 @@
 using namespace DFW2;
 
 CDevice::CDevice() : m_pContainer(nullptr),
-					 m_eInitStatus(DFS_NOTREADY),
-					 m_State(DS_ON),
-					 m_StateCause(DSC_INTERNAL),
+					 m_eInitStatus(eDEVICEFUNCTIONSTATUS::DFS_NOTREADY),
+					 m_State(eDEVICESTATE::DS_ON),
+					 m_StateCause(eDEVICESTATECAUSE::DSC_INTERNAL),
 					 m_nMatrixRow(0)
 
 {
@@ -474,28 +474,28 @@ ptrdiff_t CDevice::CheckAddVisited(CDevice* pDevice)
 // проверка инициализации/инициализация устройства
 eDEVICEFUNCTIONSTATUS CDevice::CheckInit(CDynaModel* pDynaModel)
 {
-	if (m_eInitStatus != DFS_OK)
+	if (m_eInitStatus != eDEVICEFUNCTIONSTATUS::DFS_OK)
 	{
 		// если успешной инициализации еще не выполнено
 		// проверяем что с инициализацией ведущих устройств
 		m_eInitStatus = MastersReady(&CDevice::CheckMasterDeviceInit);
-		if(m_eInitStatus == DFS_OK)
+		if(m_eInitStatus == eDEVICEFUNCTIONSTATUS::DFS_OK)
 			m_eInitStatus = Init(pDynaModel);		// пытаемся инициализировать устройство
 		// если устройство не нуждается в инициализации
-		if (m_eInitStatus == DFS_DONTNEED)	
-			m_eInitStatus = DFS_OK;					// делаем вид что инициализация прошла успешно
+		if (m_eInitStatus == eDEVICEFUNCTIONSTATUS::DFS_DONTNEED)
+			m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;					// делаем вид что инициализация прошла успешно
 	}
 	return m_eInitStatus;
 }
 
 eDEVICEFUNCTIONSTATUS CDevice::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	return DFS_DONTNEED;
+	return eDEVICEFUNCTIONSTATUS::DFS_DONTNEED;
 }
 
 eDEVICEFUNCTIONSTATUS CDevice::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eStatus = DFS_OK;
+	eDEVICEFUNCTIONSTATUS eStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	return eStatus;
 }
 
@@ -513,7 +513,7 @@ eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE e
 	if (eStateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
 		for (int i = 0; i < m_pContainer->EquationsCount(); *GetVariablePtr(i++) = 0.0);
 
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 const _TCHAR* CDevice::VariableNameByPtr(double *pVariable)
@@ -558,21 +558,21 @@ bool CDevice::LeaveDiscontinuityMode(CDynaModel* pDynaModel)
 // обработка разрыва устройства
 eDEVICEFUNCTIONSTATUS CDevice::CheckProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_eInitStatus != DFS_OK)
+	if (m_eInitStatus != eDEVICEFUNCTIONSTATUS::DFS_OK)
 	{
 		// проверяем готовы ли ведущие устройства
 		m_eInitStatus = MastersReady(&CheckMasterDeviceDiscontinuity);
 
 		// если ведущие готовы, обрабатываем разрыв устройства
-		if (m_eInitStatus == DFS_OK)
+		if (m_eInitStatus == eDEVICEFUNCTIONSTATUS::DFS_OK)
 			m_eInitStatus = ProcessDiscontinuity(pDynaModel);
 
 		// если устройство не требует обработки - считаем что обработано успешно
-		if (m_eInitStatus == DFS_DONTNEED)
-			m_eInitStatus = DFS_OK;
+		if (m_eInitStatus == eDEVICEFUNCTIONSTATUS::DFS_DONTNEED)
+			m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	}
 
-	_ASSERTE(m_eInitStatus != DFS_FAILED);
+	_ASSERTE(m_eInitStatus != eDEVICEFUNCTIONSTATUS::DFS_FAILED);
 	return m_eInitStatus;
 }
 
@@ -580,17 +580,17 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckProcessDiscontinuity(CDynaModel* pDynaModel)
 eDEVICEFUNCTIONSTATUS CDevice::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	// обрабатываем разрывы в примитивах
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	for (auto&& it : m_Primitives)
 	{
 		switch (it->ProcessDiscontinuity(pDynaModel))
 		{
-		case DFS_FAILED:
-			Status = DFS_FAILED;		// если отказ - выходим сразу
+		case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+			Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;			// если отказ - выходим сразу
 			break;
-		case DFS_NOTREADY:
-			Status = DFS_NOTREADY;		// если не готов - выходим сразу
+		case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+			Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;		// если не готов - выходим сразу
 			break;
 		}
 	}
@@ -601,20 +601,20 @@ eDEVICEFUNCTIONSTATUS CDevice::ProcessDiscontinuity(CDynaModel* pDynaModel)
 eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2)
 {
 	// если один из статусов - отказ - возвращаем отказ
-	if (Status1 == DFS_FAILED || Status2 == DFS_FAILED)
-		return DFS_FAILED;
+	if (Status1 == eDEVICEFUNCTIONSTATUS::DFS_FAILED || Status2 == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
+		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	// если один из статусов - не готов - возвращаем не готов
-	if (Status1 == DFS_NOTREADY || Status2 == DFS_NOTREADY)
-		return DFS_NOTREADY;
+	if (Status1 == eDEVICEFUNCTIONSTATUS::DFS_NOTREADY || Status2 == eDEVICEFUNCTIONSTATUS::DFS_NOTREADY)
+		return eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, bool Status2)
 {
 	if (!Status2)
-		return DFS_FAILED;
+		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	return Status1;
 }
@@ -622,9 +622,9 @@ eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status
 eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(bool Status1)
 {
 	if (!Status1)
-		return DFS_FAILED;
+		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 bool CDevice::InitExternalVariable(VariableIndexExternalOptional& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
@@ -859,20 +859,20 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 
 eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceInit(CDevice *pDevice, LinkDirectionFrom const * pLinkFrom)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	_ASSERTE(pLinkFrom->eDependency == DPD_MASTER);
 
 	CDevice *pDev = pDevice->GetSingleLink(pLinkFrom->nLinkIndex);
 	Status = pDev->Initialized();
-	_ASSERTE(Status != DFS_FAILED);
+	_ASSERTE(Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED);
 	return Status;
 }
 
 
 eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, LinkDirectionFrom const * pLinkFrom)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	_ASSERTE(pLinkFrom->eDependency == DPD_MASTER);
 	CDevice *pDev = pDevice->GetSingleLink(pLinkFrom->nLinkIndex);
@@ -891,7 +891,7 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, 
 		*/
 	}
 
-	_ASSERTE(Status != DFS_FAILED);
+	_ASSERTE(Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED);
 
 	return Status;
 }
@@ -899,7 +899,7 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, 
 // проверяет готовы ли ведущие устройства
 eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;	// по умолчанию все хорошо
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;	// по умолчанию все хорошо
 	CDeviceContainerProperties &Props = m_pContainer->m_ContainerProps;
 
 	// use links to masters, prepared in CDynaModel::Link() instead of original links

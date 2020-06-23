@@ -44,5 +44,5 @@ eDEVICEFUNCTIONSTATUS CZCDetector::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }

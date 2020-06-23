@@ -49,7 +49,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 		Kdemp *= Pnom;
 		Pt = P;
 		s = 0;
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	}
 
 	return Status;

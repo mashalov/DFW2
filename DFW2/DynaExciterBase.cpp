@@ -12,14 +12,14 @@ CDynaExciterBase::CDynaExciterBase() : CDevice(),
 
 eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status(eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 	double Eqnom;
 	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_1C);
 	if (!InitConstantVariable(Eqnom, pGen, CDynaGenerator1C::m_cszEqnom, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqe0, pGen, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -33,7 +33,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 		Umax *= Eqnom;
 		ExtUf = 0.0;
 		ExtUdec = 0.0;
-		Status = bRes ? DFS_OK : DFS_FAILED;
+		Status = bRes ? eDEVICEFUNCTIONSTATUS::DFS_OK : eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 	return Status;
 }

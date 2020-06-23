@@ -37,7 +37,7 @@ eDEVICEFUNCTIONSTATUS CComparator::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	else
 		*m_Output = 0.0;
 
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 double CComparator::OnStateOn(CDynaModel *pDynaModel)

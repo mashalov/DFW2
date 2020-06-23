@@ -259,9 +259,9 @@ bool CDynaModel::UpdateExternalVariables()
 
 			switch (dit->UpdateExternalVariables(this))
 			{
-			case DFS_DONTNEED:
+			case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
 				break;
-			case DFS_FAILED:
+			case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
 				bRes = false;
 			default:
 				continue;

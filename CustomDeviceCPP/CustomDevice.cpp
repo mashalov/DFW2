@@ -10,6 +10,7 @@ CCustomDevice::CCustomDevice()
 	m_Consts.resize(props.m_ConstVarMap.size());
 	m_Variables.resize(props.m_VarMap.size());
 	m_ExtVariables.resize(props.m_ExtVarMap.size());
+	m_Primitives = { {PBT_DERLAG}, {PBT_DERLAG} };
 }
 
 void CCustomDevice::BuildRightHand(CCustomDeviceData& CustomDeviceData)
@@ -103,6 +104,11 @@ void CCustomDevice::Destroy()
 VARIABLEVECTOR& CCustomDevice::GetVariables()
 {
 	return m_Variables;
+}
+
+PRIMITIVEVECTOR& CCustomDevice::GetPrimitives()
+{
+	return m_Primitives;
 }
 
 EXTVARIABLEVECTOR& CCustomDevice::GetExternalVariables()

@@ -37,14 +37,14 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 
 		switch (GetState())
 		{
-		case DS_ON:
+		case eDEVICESTATE::DS_ON:
 			zsq = 1.0 / (r*r + xd1 * xq);
 			CDynaGenerator1C::ProcessDiscontinuity(pDynaModel);
 			Eqs = Vq + r * Iq - xd1 * Id;
 			ExtEqe = Eqs - Id * (xd - xd1);
 			Eq = Eqs - Id * (xd - xd1); // repeat eq calc after eqs (first eq calc is in processdiscontinuity)
 			break;
-		case DS_OFF:
+		case eDEVICESTATE::DS_OFF:
 			zsq = Id = Iq = Eq = 0.0;
 			Vd = -V;
 			Vq = V;

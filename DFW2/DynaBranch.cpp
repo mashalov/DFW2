@@ -146,7 +146,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 // изменяет состояние ветви на заданное
 eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBranchState, eDEVICESTATECAUSE eStateCause)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	if (eBranchState != m_BranchState)
 	{
 		// если заданное состояние ветви не 
@@ -191,7 +191,7 @@ eDEVICESTATE CDynaBranch::GetState() const
 {
 	eDEVICESTATE State = eDEVICESTATE::DS_ON;
 	if (m_BranchState == BRANCH_OFF)
-		State = DS_OFF;
+		State = eDEVICESTATE::DS_OFF;
 	return State;
 }
 
@@ -661,7 +661,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 	Pb = cSb.real();			Qb = cSb.imag();
 	Pe = cSe.real();			Qe = cSe.imag();
 	Sb = abs(cSb);				Se = abs(cSe);
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 

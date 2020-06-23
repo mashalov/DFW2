@@ -32,7 +32,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
 	{
 		switch (GetState())
 		{
-		case DS_ON:
+		case eDEVICESTATE::DS_ON:
 			zsq = 1.0 / (r * r + xd2 * xq2);
 			Edss = Vd + r * Id + xq2 * Iq;
 			Eqss = Vq - xd2 * Id + r * Iq;
@@ -40,7 +40,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
 			ExtEqe = Eqs - Id * (xd - xd1);
 			Eq = Eqss - Id * (xd - xd2);
 			break;
-		case DS_OFF:
+		case eDEVICESTATE::DS_OFF:
 			zsq = Id = Iq = Eqss = Eqs = Edss = Eq = 0.0;
 			break;
 		}

@@ -268,7 +268,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
-	m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Работа\\Уват\\Исходные данные\\RastrWin\\режим Уват 2020.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst"); 
 	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
@@ -607,7 +607,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 6:
 			pGensMu->SetId(spGenId->GetZ(i));
 			pGensMu->SetName(spGenName->GetZ(i).bstrVal);
-			pGensMu->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGensMu->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensMu->NodeId = spGenNode->GetZ(i);
 			pGensMu->Kdemp = spGenDemp->GetZ(i);
 			pGensMu->Kgen = spGenKgen->GetZ(i);
@@ -634,7 +634,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 5:
 			pGens3C->SetId(spGenId->GetZ(i));
 			pGens3C->SetName(spGenName->GetZ(i).bstrVal);
-			pGens3C->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGens3C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGens3C->NodeId = spGenNode->GetZ(i);
 			pGens3C->Kdemp = spGenDemp->GetZ(i);
 			pGens3C->Kgen  = spGenKgen->GetZ(i);
@@ -661,7 +661,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 4:
 			pGens1C->SetId(spGenId->GetZ(i));
 			pGens1C->SetName(spGenName->GetZ(i).bstrVal);
-			pGens1C->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGens1C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGens1C->NodeId = spGenNode->GetZ(i);
 			pGens1C->Kgen = spGenKgen->GetZ(i);
 			pGens1C->Kdemp = spGenDemp->GetZ(i);
@@ -683,7 +683,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 2:
 			pGensInf->SetId(spGenId->GetZ(i));
 			pGensInf->SetName(spGenName->GetZ(i).bstrVal);
-			pGensInf->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGensInf->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensInf->NodeId = spGenNode->GetZ(i);
 			pGensInf->Kgen = spGenKgen->GetZ(i);
 			pGensInf->P = spGenP->GetZ(i);
@@ -696,7 +696,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 3:
 			pGensMot->SetId(spGenId->GetZ(i));
 			pGensMot->SetName(spGenName->GetZ(i).bstrVal);
-			pGensMot->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGensMot->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensMot->NodeId = spGenNode->GetZ(i);
 			pGensMot->Kgen = spGenKgen->GetZ(i);
 			pGensMot->Kdemp = spGenDemp->GetZ(i);
