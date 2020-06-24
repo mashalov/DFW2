@@ -51,7 +51,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 			throw CFileWriteException(NULL);
 
 		m_ResultFileWriter.WriteDouble(dCurrentDate);						// записываем время
-		m_ResultFileWriter.WriteString(m_strComment.c_str());				// записываем строку комментария
+		m_ResultFileWriter.WriteString(m_strComment);						// записываем строку комментария
 		m_ResultFileWriter.AddDirectoryEntries(3);							// описатели разделов
 		m_ResultFileWriter.WriteLEB(m_VarNameMap.size());					// записываем количество единиц измерения
 
@@ -59,7 +59,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 		for (auto&& vnmit : m_VarNameMap)
 		{
 			m_ResultFileWriter.WriteLEB(vnmit.first);
-			m_ResultFileWriter.WriteString(vnmit.second.c_str());
+			m_ResultFileWriter.WriteString(vnmit.second);
 		}
 		// записываем количество типов устройств
 		m_ResultFileWriter.WriteLEB(m_DevTypeSet.size());
@@ -71,7 +71,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 		{
 			// для каждого типа устройств
 			m_ResultFileWriter.WriteLEB(di->eDeviceType);							// идентификатор типа устройства
-			m_ResultFileWriter.WriteString(di->strDevTypeName.c_str());				// название типа устройства
+			m_ResultFileWriter.WriteString(di->strDevTypeName);						// название типа устройства
 			m_ResultFileWriter.WriteLEB(di->DeviceIdsCount);						// количество идентификаторов устройства (90% - 1, для ветвей, например - 3)
 			m_ResultFileWriter.WriteLEB(di->DeviceParentIdsCount);					// количество родительских устройств
 			m_ResultFileWriter.WriteLEB(di->DevicesCount);							// количество устройств данного типа
@@ -82,7 +82,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 			// записываем описания переменных типа устройства
 			for (auto &vi : di->m_VarTypesList)
 			{
-				m_ResultFileWriter.WriteString(vi.Name.c_str());					// имя переменной
+				m_ResultFileWriter.WriteString(vi.Name);							// имя переменной
 				m_ResultFileWriter.WriteLEB(vi.eUnits);								// единицы измерения переменной
 				unsigned char BitFlags = 0x0;
 				// если у переменной есть множитель -
@@ -106,7 +106,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 				for (int i = 0; i < di->DeviceIdsCount; i++)
 					m_ResultFileWriter.WriteLEB(pDev->GetId(i));
 				// записываем имя устройства
-				m_ResultFileWriter.WriteString(pDev->Name.c_str());
+				m_ResultFileWriter.WriteString(pDev->Name);
 				// для каждого из родительских устройств
 				for (int i = 0; i < di->DeviceParentIdsCount; i++)
 				{

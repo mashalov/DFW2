@@ -273,13 +273,12 @@ bool CDynaModel::UpdateExternalVariables()
 }
 
 
-CDeviceContainer* CDynaModel::GetContainerByAlias(const _TCHAR* cszAlias)
+CDeviceContainer* CDynaModel::GetContainerByAlias(std::wstring_view Alias)
 {
 	CDeviceContainer *pContainer(nullptr);
-
 	for (auto&& it : m_DeviceContainers)
 	{
-		if (it->HasAlias(cszAlias))
+		if (it->HasAlias(Alias))
 		{
 			pContainer = it;
 			break;

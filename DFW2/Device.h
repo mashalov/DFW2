@@ -212,9 +212,8 @@ namespace DFW2
 		// функция маппинга указателя на переменную к индексу переменной
 		// Аналогична по смыслу virtual double* GetVariablePtr()
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		double* GetConstVariablePtr(const _TCHAR* cszVarName);
-
-		virtual ExternalVariable GetExternalVariable(const _TCHAR* cszVarName);
+		double* GetConstVariablePtr(std::wstring_view VarName);
+		virtual ExternalVariable GetExternalVariable(std::wstring_view VarName);
 
 		// константные указатели на переменную. Врапперы virtual double* GetVariablePtr()
 		const double* GetVariableConstPtr(ptrdiff_t nVarIndex) const;

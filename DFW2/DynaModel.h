@@ -820,7 +820,7 @@ namespace DFW2
 
 		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName);
 		CDevice* GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, const _TCHAR* cszSymLink);
-		CDeviceContainer *GetContainerByAlias(const _TCHAR* cszAlias);
+		CDeviceContainer *GetContainerByAlias(std::wstring_view Alias);
 		CAutomatic& Automatic();
 
 		void GetWorstEquations(ptrdiff_t nCount);

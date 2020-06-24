@@ -29,7 +29,7 @@ namespace DFW2
 		int ReadSCSUSymbol();
 	public:
 		CUnicodeSCSU(FILE *pFile);
-		void WriteSCSU(const _TCHAR *pString);
+		void WriteSCSU(std::wstring_view String);
 		void ReadSCSU(std::wstring& String, size_t nLen);
 	};
 }

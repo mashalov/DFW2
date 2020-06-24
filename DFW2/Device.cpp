@@ -69,24 +69,24 @@ double* CDevice::GetVariablePtr(const _TCHAR* cszVarName)
 
 // получить указатель на константную переменную по имени
 // аналогична по смыслу double* GetVariablePtr(const _TCHAR*)
-double* CDevice::GetConstVariablePtr(const _TCHAR* cszVarName)
+double* CDevice::GetConstVariablePtr(std::wstring_view VarName)
 {
 	_ASSERTE(m_pContainer);
 
 	double *pRes(nullptr);
 	if (m_pContainer)
-		pRes = GetConstVariablePtr(m_pContainer->GetConstVariableIndex(cszVarName));
+		pRes = GetConstVariablePtr(m_pContainer->GetConstVariableIndex(VarName));
 	return pRes;
 }
 
 // получить описание внешней переменной по имени
-ExternalVariable CDevice::GetExternalVariable(const _TCHAR* cszVarName)
+ExternalVariable CDevice::GetExternalVariable(std::wstring_view VarName)
 {
 	_ASSERTE(m_pContainer);
 
 	ExternalVariable ExtVar;
 	// в контейнере находим индекс переменной по имени
-	ExtVar.nIndex = m_pContainer->GetVariableIndex(cszVarName);
+	ExtVar.nIndex = m_pContainer->GetVariableIndex(VarName);
 
 	if (ExtVar.nIndex >= 0)
 	{

@@ -114,6 +114,8 @@ namespace DFW2
 	{
 	public:
 		PrimitiveBlockType eBlockType;
+		std::wstring_view Name;
+		VariableIndexExternal Output;
 	};
 
 

@@ -991,9 +991,9 @@ bool CDynaNodeContainer::Seidell()
 	return LULF();
 }
 
-ExternalVariable CDynaNodeBase::GetExternalVariable(const _TCHAR* cszVarName)
+ExternalVariable CDynaNodeBase::GetExternalVariable(std::wstring_view VarName)
 {
-	if (!_tcscmp(cszVarName, CDynaNode::m_cszSz))
+	if (VarName == CDynaNode::m_cszSz)
 	{
 		ExternalVariable ExtVar = { nullptr, -1 };
 
@@ -1002,7 +1002,7 @@ ExternalVariable CDynaNodeBase::GetExternalVariable(const _TCHAR* cszVarName)
 		return ExtVar;
 	}
 	else
-		return CDevice::GetExternalVariable(cszVarName);
+		return CDevice::GetExternalVariable(VarName);
 }
 
 

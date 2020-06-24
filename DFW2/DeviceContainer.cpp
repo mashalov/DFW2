@@ -121,19 +121,19 @@ bool CDeviceContainer::VariableOutputEnable(const _TCHAR* cszVarName, bool bOutp
 }
 
 // получить индекс переменной устройства по названию
-ptrdiff_t CDeviceContainer::GetVariableIndex(const _TCHAR* cszVarName) const
+ptrdiff_t CDeviceContainer::GetVariableIndex(std::wstring_view VarName) const
 {
 	// используем быстрый поиск по карте
-	VARINDEXMAPCONSTITR it = m_ContainerProps.m_VarMap.find(cszVarName);
+	VARINDEXMAPCONSTITR it = m_ContainerProps.m_VarMap.find(std::wstring(VarName));
 	if (it != m_ContainerProps.m_VarMap.end())
 		return it->second.m_nIndex;
 	else
 		return -1;
 }
 // получить индекс константной переменной по названию
-ptrdiff_t CDeviceContainer::GetConstVariableIndex(const _TCHAR* cszVarName) const
+ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::wstring_view VarName) const
 {
-	CONSTVARINDEXMAPCONSTITR it = m_ContainerProps.m_ConstVarMap.find(cszVarName);
+	CONSTVARINDEXMAPCONSTITR it = m_ContainerProps.m_ConstVarMap.find(std::wstring(VarName));
 	if (it != m_ContainerProps.m_ConstVarMap.end())
 		return it->second.m_nIndex;
 	else
@@ -818,8 +818,8 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 }
 
 
-bool  CDeviceContainer::HasAlias(const _TCHAR *cszAlias)
+bool  CDeviceContainer::HasAlias(std::wstring_view Alias)
 {
 	STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
-	return std::find(Aliases.begin(), Aliases.end(), cszAlias) != Aliases.end();
+	return std::find(Aliases.begin(), Aliases.end(), Alias) != Aliases.end();
 }

@@ -10,7 +10,7 @@ CCustomDevice::CCustomDevice()
 	m_Consts.resize(props.m_ConstVarMap.size());
 	m_Variables.resize(props.m_VarMap.size());
 	m_ExtVariables.resize(props.m_ExtVarMap.size());
-	m_Primitives = { {PBT_DERLAG}, {PBT_DERLAG} };
+	m_Primitives = { {PBT_DERLAG, _T("dSu")}, {PBT_DERLAG, _T("dV")}, {PBT_DERLAG, _T("dEq")} };
 }
 
 void CCustomDevice::BuildRightHand(CCustomDeviceData& CustomDeviceData)
