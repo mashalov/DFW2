@@ -12,6 +12,7 @@
 #include "ZCDetector.h"
 #include "DeadBand.h"
 #include "Expand.h"
+#include "array"
 
 
 namespace DFW2
@@ -86,14 +87,86 @@ namespace DFW2
 	};
 
 
+	class CPrimitivePoolBase
+	{
+	protected:
+		size_t m_nSize = 0;
+	public:
+		void IncSize() { m_nSize++; }
+		virtual CDynaPrimitive* Create() = 0;
+		virtual void Allocate(size_t nDevicesCount) = 0;
+		virtual ~CPrimitivePoolBase() {};
+	};
+
+	template<class T>
+	class CPrimitivePoolT : public CPrimitivePoolBase
+	{
+	protected:
+		std::vector<T> m_Primitives;
+	public:
+		size_t m_nSize = 0;
+		CDynaPrimitive* Create() override
+		{
+			return &m_Primitives[0];
+		}
+		void Allocate(size_t nDevicesCount) override
+		{
+			m_Primitives.reserve(m_nSize * nDevicesCount);
+		}
+	};
+
+	class CPrimitivePools
+	{
+	public:
+		CPrimitivePools() : m_Pools { 
+									  nullptr,
+									  std::make_unique< CPrimitivePoolT<CLimitedLag>>(),
+									  std::make_unique< CPrimitivePoolT<CLimitedLag>>(),
+									  std::make_unique< CPrimitivePoolT<CDerlagContinuous>>(),
+									  std::make_unique< CPrimitivePoolT<CLimitedLag>>(),
+									  std::make_unique< CPrimitivePoolT<CLimitedLag>>(),
+									  std::make_unique< CPrimitivePoolT<CLimiterConst>>(),
+									  std::make_unique< CPrimitivePoolT<CRelay>>(),
+									  std::make_unique< CPrimitivePoolT<CRelayDelay>>(),
+									  std::make_unique< CPrimitivePoolT<CRelayDelayLogic>>(),
+									  std::make_unique< CPrimitivePoolT<CRSTrigger>>(),
+									  std::make_unique< CPrimitivePoolT<CComparator>>(),
+									  std::make_unique< CPrimitivePoolT<CComparator>>(),
+									  std::make_unique< CPrimitivePoolT<CZCDetector>>(),
+									  std::make_unique< CPrimitivePoolT<COr>>(),
+									  std::make_unique< CPrimitivePoolT<CAnd>>(),
+									  std::make_unique< CPrimitivePoolT<CNot>>(),
+									  std::make_unique< CPrimitivePoolT<CAbs>>(),
+									  std::make_unique< CPrimitivePoolT<CDeadBand>>(),
+									  std::make_unique< CPrimitivePoolT<CExpand>>(),
+									  std::make_unique< CPrimitivePoolT<CShrink>>()
+									}
+		{
+		}
+		void CountPrimitive(PrimitiveBlockType ePrimitiveType)
+		{
+			CDevice::CheckIndex(m_Pools, ePrimitiveType);
+			m_Pools[ePrimitiveType]->IncSize();
+		}
+		void Allocate(size_t nDevicesCount)
+		{
+			for (auto& pool : m_Pools)
+				if(pool)
+				pool->Allocate(nDevicesCount);
+		}
+		std::array<std::unique_ptr<CPrimitivePoolBase>, PrimitiveBlockType::PBT_LAST> m_Pools;
+	};
+
 	class CCustomDeviceCPPContainer : public CDeviceContainer
 	{
 	protected:
 		std::shared_ptr<CCustomDeviceCPPDLL> m_pDLL;
+		CPrimitivePools m_PrimitivePools;
 	public:
 		std::shared_ptr<CCustomDeviceCPPDLL> DLL() { return m_pDLL; }
 		CCustomDeviceCPPContainer(CDynaModel* pDynaModel);
 		virtual ~CCustomDeviceCPPContainer();
+		void AllocatePools(size_t nDevicesCount);
 		bool ConnectDLL(const _TCHAR* cszDLLFilePath);
 	};
 }

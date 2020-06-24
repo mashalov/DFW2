@@ -51,7 +51,8 @@ namespace DFW2
 		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);
 	};
 
-	
+
+		
 	class CCustomDeviceCPP : public CDevice
 	{
 	protected:

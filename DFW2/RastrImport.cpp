@@ -68,6 +68,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			if (nModelsCount)
 			{
 				// create models for count given
+				CustomDeviceContainer.AllocatePools(nModelsCount);
 				CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[nModelsCount];
 				std::for_each(pCustomDevices, 
 							  pCustomDevices + nModelsCount, 

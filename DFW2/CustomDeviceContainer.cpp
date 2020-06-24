@@ -326,8 +326,15 @@ bool CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
 		ICustomDevice* pDevice = m_pDLL->CreateDevice();
 		pDevice->GetDeviceProperties(m_ContainerProps);
 		PRIMITIVEVECTOR& Prims = pDevice->GetPrimitives();
+		for (const auto& prim : Prims)
+			m_PrimitivePools.CountPrimitive(prim.eBlockType);
 		pDevice->Destroy();
 		bRes = true;
 	}
 	return bRes;
+}
+
+void CCustomDeviceCPPContainer::AllocatePools(size_t nDevicesCount)
+{
+	m_PrimitivePools.Allocate(nDevicesCount);
 }
