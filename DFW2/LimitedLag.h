@@ -13,7 +13,7 @@ namespace DFW2
 		double OnStateMid(CDynaModel *pDynaModel) override;
 	public:
 		CLimitedLag(CDevice *pDevice, VariableIndex* pInput) : CDynaPrimitiveLimited(pDevice, pInput) {}
-		CLimitedLag(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : 
+		CLimitedLag(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :
 				CDynaPrimitiveLimited(pDevice, pOutput, nOutputIndex, Input) {}
 
 		virtual ~CLimitedLag() {}

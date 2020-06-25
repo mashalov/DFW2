@@ -13,13 +13,11 @@ namespace DFW2
 		CRSTrigger::CRSTrigger(CDevice *pDevice, 
 							   double* pOutput, 
 							   ptrdiff_t nOutputIndex, 
-							   PrimitiveVariableBase* R, 
-							   PrimitiveVariableBase* S, 
-							   bool bResetPriority) : 
-															CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, R),
-															m_Input1(S),
-															m_bResetPriority(bResetPriority) 
-															{ }
+							   std::initializer_list<PrimitiveVariableBase*> Input) : 
+		  							CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input)
+									{ 
+										InitializeInputs({&m_Input, &m_Input1}, Input);
+									}
 		virtual ~CRSTrigger() {}
 
 		bool Init(CDynaModel *pDynaModel) override;

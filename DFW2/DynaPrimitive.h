@@ -78,12 +78,27 @@ namespace DFW2
 		constexpr operator VariableIndex& () { return m_viOutput; }
 		constexpr operator const VariableIndex& () const { return m_viOutput; }
 
-		CDynaPrimitive(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : m_pDevice(pDevice), 
-																												  m_Input(Input), 
-																												  m_Output(pOutput),
-																												  m_OutputEquationIndex(nOutputIndex)
+		static void InitializeInputs(std::initializer_list<PrimitiveVariableBase**> InputVariables, std::initializer_list<PrimitiveVariableBase*> Input)
+		{
+			auto source = Input.begin();
+			for (auto& inp : InputVariables)
+			{
+				if (source == Input.end())
+					throw dfw2error(_T("CDynaPrimitive::InitializeInputs - inputs count mismatch"));
+				*inp = *source;
+				source++;
+			}
+		}
+
+		CDynaPrimitive(CDevice *pDevice, 
+					   double* pOutput, 
+					   ptrdiff_t nOutputIndex, 
+					   std::initializer_list<PrimitiveVariableBase*> Input) : m_pDevice(pDevice), 
+																			  m_Output(pOutput),
+																			  m_OutputEquationIndex(nOutputIndex)
 		{
 			*m_Output = 0.0;
+			InitializeInputs({&m_Input}, Input);
 			pDevice->RegisterPrimitive(this);
 		}
 
@@ -114,7 +129,7 @@ namespace DFW2
 	class CDynaPrimitiveState : public CDynaPrimitive 
 	{
 	public:
-		CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
+		CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input);
 		CDynaPrimitiveState(CDevice* pDevice, VariableIndex* pInput);
 		virtual void StoreState() = 0;
 		virtual void RestoreState() = 0;
@@ -150,7 +165,8 @@ namespace DFW2
 		inline eLIMITEDSTATES GetCurrentState() { return eCurrentState; }
 		void SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		CDynaPrimitiveLimited(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
+		CDynaPrimitiveLimited(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
+			CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
 		CDynaPrimitiveLimited(CDevice* pDevice, VariableIndex* pInput) : CDynaPrimitiveState(pDevice, pInput) {}
 		virtual ~CDynaPrimitiveLimited() {}
 		bool Init(CDynaModel *pDynaModel) override;
@@ -171,7 +187,8 @@ namespace DFW2
 		virtual inline eRELAYSTATES GetCurrentState() { return eCurrentState; }
 		virtual void RequestZCDiscontinuity(CDynaModel* pDynaModel);
 	public:
-		CDynaPrimitiveBinary(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
+		CDynaPrimitiveBinary(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
+			CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
 		void InvertState(CDynaModel *pDynaModel);
 		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
 		bool BuildEquations(CDynaModel *pDynaModel) override;
@@ -187,7 +204,8 @@ namespace DFW2
 		virtual double OnStateOn(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateOff(CDynaModel *pDynaModel) { return 1.0; }
 	public:
-		CDynaPrimitiveBinaryOutput(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input) {}
+		CDynaPrimitiveBinaryOutput(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
+			CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input) {}
 		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 	};

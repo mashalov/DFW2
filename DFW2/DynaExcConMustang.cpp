@@ -5,11 +5,11 @@
 using namespace DFW2;
 
 CDynaExcConMustang::CDynaExcConMustang() : CDevice(),
-										   Lag(this, &Uf, V_UF, &LagIn),
-										   LagIn(V_USUM,Usum),
-										   dVdt(this, dVdtOutValue, V_DVDT, &dVdtIn),
-										   dEqdt(this, dEqdtOutValue, V_EQDT, &dEqdtIn),
-										   dSdt(this, dSdtOutValue, V_SDT, &dSdtIn)
+	Lag(this, &Uf, V_UF, { &LagIn }),
+	LagIn(V_USUM,Usum),
+	dVdt(this, dVdtOutValue, V_DVDT, { &dVdtIn }),
+	dEqdt(this, dEqdtOutValue, V_EQDT, { &dEqdtIn }),
+	dSdt(this, dSdtOutValue, V_SDT, { &dSdtIn })
 {
 }
 

@@ -12,7 +12,11 @@ namespace DFW2
 		double OnStateOff(CDynaModel *pDynaModel) override;
 
 	public:
-		CComparator(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2);
+		CComparator(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :
+			CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input)
+		{
+			InitializeInputs({ &m_Input, &m_Input2 }, Input);
+		}
 		virtual ~CComparator() {}
 		bool Init(CDynaModel *pDynaModel) override;
 //		virtual const _TCHAR* GetVerbalName() { return _T(""); }

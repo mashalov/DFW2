@@ -8,16 +8,16 @@ using namespace DFW2;
 
 CDynaDECMustang::CDynaDECMustang() : CDevice(),
 
-									 EnforceOn(this,	&EnforceOnValue,	V_ENFONRELAY,	&Vnode),
-									 DeforceOn(this,	&DeforceOnValue,	V_DEFONRELAY,	&Vnode),
-									 EnforceOff(this,	&EnforceOffValue,	V_ENFOFFRELAY,	&Vnode),
-									 DeforceOff(this,	&DeforceOffValue,	V_DEFOFFRELAY,	&Vnode),
-									 EnfTrigger(this,	&EnforceTrigValue,	V_ENFTRIG,		&EnforceOffOut,		&EnforceOnOut,		true),
-									 DefTrigger(this,	&DeforceTrigValue,	V_DEFTRIG,		&DeforceOffOut,		&DeforceOnOut,		true),
-									 EnforceOnOut(V_ENFONRELAY,		EnforceOnValue),
-									 DeforceOnOut(V_DEFONRELAY,		DeforceOnValue),
-									 EnforceOffOut(V_ENFOFFRELAY,	EnforceOffValue),
-									 DeforceOffOut(V_DEFOFFRELAY,	DeforceOffValue)
+	EnforceOn(this, &EnforceOnValue, V_ENFONRELAY, { &Vnode }),
+	DeforceOn(this, &DeforceOnValue, V_DEFONRELAY, { &Vnode }),
+	EnforceOff(this, &EnforceOffValue, V_ENFOFFRELAY, { &Vnode }),
+	DeforceOff(this, &DeforceOffValue, V_DEFOFFRELAY, { &Vnode }),
+	EnfTrigger(this, &EnforceTrigValue, V_ENFTRIG, { &EnforceOffOut,		&EnforceOnOut }),
+	DefTrigger(this, &DeforceTrigValue, V_DEFTRIG, { &DeforceOffOut,		&DeforceOnOut }),
+	EnforceOnOut(V_ENFONRELAY,		EnforceOnValue),
+	DeforceOnOut(V_DEFONRELAY,		DeforceOnValue),
+	EnforceOffOut(V_ENFOFFRELAY,	EnforceOffValue),
+	DeforceOffOut(V_DEFOFFRELAY,	DeforceOffValue)
 {
 }
 

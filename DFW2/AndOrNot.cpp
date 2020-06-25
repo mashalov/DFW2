@@ -4,17 +4,19 @@
 
 using namespace DFW2;
 
-CAnd::CAnd(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2) : 
-													CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input1),
-													m_Input2(Input2)
-													{ }
+CAnd::CAnd(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :
+													CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input)
+													{ 
+														InitializeInputs({&m_Input, &m_Input2}, Input);
+													}
 
-COr::COr(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2) :
-													CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input1),
-													m_Input2(Input2)
-													{ }
+COr::COr(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :
+													CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input)
+													{ 
+														InitializeInputs({&m_Input, &m_Input2}, Input);
+													}
 
-CNot::CNot(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) :
+CNot::CNot(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :
 													CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input)
 													{ }
 

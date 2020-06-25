@@ -7,7 +7,7 @@ using namespace DFW2;
 
 
 CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
-											 EqLimit(this, &EqOutputValue, V_EQE, &EqInput)
+	EqLimit(this, &EqOutputValue, V_EQE, { &EqInput })
 {
 	m_Primitives.pop_back();
 }

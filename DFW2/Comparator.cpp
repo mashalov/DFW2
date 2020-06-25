@@ -4,19 +4,6 @@
 
 using namespace DFW2;
 
-
-CComparator::CComparator(CDevice *pDevice, 
-						 double* pOutput, 
-						 ptrdiff_t nOutputIndex, 
-						 PrimitiveVariableBase* Input1, 
-						 PrimitiveVariableBase* Input2) : CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input1),
-														  m_Input2(Input2)
-																												
-{
-
-}
-
-
 bool CComparator::Init(CDynaModel *pDynaModel)
 {
 	bool bRes = true;

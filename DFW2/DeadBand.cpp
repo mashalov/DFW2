@@ -4,10 +4,6 @@
 
 using namespace DFW2;
 
-CDeadBand::CDeadBand(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) :
-					CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input)
-					{}
-
 bool CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;

@@ -9,7 +9,7 @@ namespace DFW2
 		double m_K, m_T;
 	public:
 		double *m_Y2;
-		CDerlagContinuous(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) :  
+		CDerlagContinuous(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :  
 			CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input), m_Y2(pOutput + 1) {}
 		virtual ~CDerlagContinuous() {}
 		bool Init(CDynaModel *pDynaModel) override;
@@ -30,7 +30,7 @@ namespace DFW2
 		double m_K, m_T;
 	public:
 		double *m_Dummy1, *m_Dummy2;
-		CDerlagNordsieck(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) :
+		CDerlagNordsieck(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :
 			CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input), m_Dummy1(pOutput + 1), m_Dummy2(pOutput + 2) {}
 		virtual ~CDerlagNordsieck() {}
 		bool Init(CDynaModel *pDynaModel) override;

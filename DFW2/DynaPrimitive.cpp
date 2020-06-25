@@ -17,7 +17,8 @@ bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 	return bRes;
 }
 
-CDynaPrimitiveState::CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input)
+CDynaPrimitiveState::CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
+		CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input)
 {
 	pDevice->RegisterStatePrimitive(this);
 }

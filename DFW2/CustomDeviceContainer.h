@@ -93,7 +93,7 @@ namespace DFW2
 		size_t m_nSize = 0;
 	public:
 		void IncSize() { m_nSize++; }
-		virtual CDynaPrimitive* Create() = 0;
+		virtual CDynaPrimitive* Create(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) = 0;
 		virtual void Allocate(size_t nDevicesCount) = 0;
 		virtual ~CPrimitivePoolBase() {};
 	};
@@ -105,9 +105,10 @@ namespace DFW2
 		std::vector<T> m_Primitives;
 	public:
 		size_t m_nSize = 0;
-		CDynaPrimitive* Create() override
+		CDynaPrimitive* Create(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) override
 		{
-			return &m_Primitives[0];
+			m_Primitives.emplace_back(pDevice, pOutput, nOutputIndex, Input);
+			return &m_Primitives.back();
 		}
 		void Allocate(size_t nDevicesCount) override
 		{
@@ -154,6 +155,13 @@ namespace DFW2
 				if(pool)
 				pool->Allocate(nDevicesCount);
 		}
+
+		CDynaPrimitive* Create(PrimitiveBlockType ePrimitiveType, CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input)
+		{
+			CDevice::CheckIndex(m_Pools, ePrimitiveType);
+			return m_Pools[ePrimitiveType]->Create(pDevice, pOutput, nOutputIndex, Input);
+		}
+
 		std::array<std::unique_ptr<CPrimitivePoolBase>, PrimitiveBlockType::PBT_LAST> m_Pools;
 	};
 

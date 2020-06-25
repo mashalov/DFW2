@@ -18,7 +18,8 @@ namespace DFW2
 		double OnStateOff(CDynaModel *pDynaModel) override;
 		eRELAYSTATES GetInstantState();
 	public:
-		CRelay(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input) {}
+		CRelay(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
+			CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input) {}
 		virtual ~CRelay() {}
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);
 		bool Init(CDynaModel *pDynaModel) override;
@@ -48,7 +49,8 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 		void RequestZCDiscontinuity(CDynaModel* pDynaModel) override;
 	public:
-		CRelayDelay(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CRelay(pDevice, pOutput, nOutputIndex, Input), CDiscreteDelay() {}
+		CRelayDelay(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
+			CRelay(pDevice, pOutput, nOutputIndex, Input), CDiscreteDelay() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
@@ -61,7 +63,8 @@ namespace DFW2
 	class CRelayDelayLogic : public CRelayDelay
 	{
 	public:
-		CRelayDelayLogic(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CRelayDelay(pDevice, pOutput, nOutputIndex, Input) {}
+		CRelayDelayLogic(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
+			CRelayDelay(pDevice, pOutput, nOutputIndex, Input) {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelayLogic); }

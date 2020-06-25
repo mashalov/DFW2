@@ -4,9 +4,7 @@
 
 using namespace DFW2;
 
-CAbs::CAbs(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : 
-									CDynaPrimitiveState(pDevice,pOutput,nOutputIndex,Input) 
-									{}
+
 
 bool CAbs::BuildEquations(CDynaModel *pDynaModel)
 {

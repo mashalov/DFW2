@@ -91,67 +91,69 @@ bool CCustomDevice::BuildStructure()
 
 		//_ASSERTE(nVarsCount == Container()->PrimitiveEquationsCount(bit->eType));
 
+		double* pOutput = &m_pVars[(*pPrimsPtrs)->Index()].Value;
+		ptrdiff_t nOutputIndex = (*pPrimsPtrs)->Index();
 		switch (bit->eType)
 		{
 		case PBT_LAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_LIMITEDLAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_DERLAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CDerlag(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CDerlag(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_INTEGRATOR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_LIMITEDINTEGRATOR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_LIMITERCONST:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimiterConst(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimiterConst(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_RELAY:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_RELAYDELAY:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_RELAYDELAYLOGIC:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_RSTRIGGER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1), *(pPrimsPtrs + 2), true);
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) } );
 			break;
 		case PBT_HIGHER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1), *(pPrimsPtrs + 2));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) });
 			break;
 		case PBT_LOWER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 2), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 2), *(pPrimsPtrs + 1) });
 			break;
 		case PBT_BIT:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CZCDetector(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CZCDetector(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_AND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CAnd(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1), *(pPrimsPtrs + 2));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CAnd(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) });
 			break;
 		case PBT_OR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) COr(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1), *(pPrimsPtrs + 2));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) COr(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) });
 			break;
 		case PBT_NOT:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CNot(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CNot(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_ABS:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CAbs(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CAbs(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_DEADBAND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CDeadBand(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CDeadBand(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_EXPAND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CExpand(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CExpand(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		case PBT_SHRINK:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(this, &m_pVars[(*pPrimsPtrs)->Index()].Value, (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(this, pOutput, nOutputIndex, { *(pPrimsPtrs + 1) });
 			break;
 		}
 	}
