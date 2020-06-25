@@ -143,14 +143,9 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return rH;
 }
 
-bool CDeadBand::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CDeadBand::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	m_Db = 0.0;
-
-	if (nParametersCount == 1)
-		m_Db = pParameters[0];
-
-	return true;
+	return CDynaPrimitive::UnserializeParameters({ {m_Db, 0.0} }, Parameters);
 }
 
 

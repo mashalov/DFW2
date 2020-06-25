@@ -157,19 +157,13 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaM
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CDerlagContinuous::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CDerlagContinuous::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double TK[2] = { 1E-4, 1.0 };
-
-	nParametersCount = min(nParametersCount, sizeof(TK) / sizeof(TK[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		TK[i] = pParameters[i];
-	SetTK(TK[0], TK[1]);
-	return bRes;
+	double T1(1E-4), T2(1.0);
+	CDynaPrimitive::UnserializeParameters({T1,T2}, Parameters);
+	SetTK(T1, T2);
+	return true;
 }
-
 
 // ----------------------------- Derlag Nordsieck --------------------------------------
 bool CDerlagNordsieck::Init(CDynaModel *pDynaModel)
@@ -229,17 +223,12 @@ bool CDerlagNordsieck::BuildDerivatives(CDynaModel *pDynaModel)
 	return true;
 }
 
-bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double TK[2] = { 1E-4, 1.0 };
-
-	nParametersCount = min(nParametersCount, sizeof(TK) / sizeof(TK[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		TK[i] = pParameters[i];
-	SetTK(TK[0], TK[1]);
-	return bRes;
+	double T1(1E-4), T2(1.0);
+	CDynaPrimitive::UnserializeParameters({ T1,T2 }, Parameters);
+	SetTK(T1, T2);
+	return true;
 }
 
 bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)

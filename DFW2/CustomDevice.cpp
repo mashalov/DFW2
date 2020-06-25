@@ -374,9 +374,9 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 	if (nBlockIndex >= 0 && nBlockIndex < static_cast<ptrdiff_t>(pDevice->m_Primitives.size()))
 	{
 		CDynaPrimitive *pPrimitive = pDevice->m_Primitives[nBlockIndex];
-		double *pParBuffer(nullptr);
-		long nParCount = static_cast<CCustomDeviceContainer*>(pDevice->Container())->GetParametersValues(pDevice->GetId(), &pDevice->m_DLLArgs, nBlockIndex, &pParBuffer);
-		if (!pPrimitive->UnserializeParameters(pDynaModel, pParBuffer, nParCount))
+		DOUBLEVECTOR Parameters;
+		static_cast<CCustomDeviceContainer*>(pDevice->Container())->GetParametersValues(pDevice->GetId(), &pDevice->m_DLLArgs, nBlockIndex, Parameters);
+		if (!pPrimitive->UnserializeParameters(pDynaModel, Parameters))
 			pDevice->m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 		else
 			if (!pPrimitive->Init(pDynaModel))

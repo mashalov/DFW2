@@ -286,24 +286,17 @@ void* CCustomDeviceContainer::NewPrimitive(PrimitiveBlockType eType)
 }
 
 
-long CCustomDeviceContainer::GetParametersValues(ptrdiff_t nId, BuildEquationsArgs* pArgs, long nBlockIndex, double **ppParameters)
+long CCustomDeviceContainer::GetParametersValues(ptrdiff_t nId, BuildEquationsArgs* pArgs, long nBlockIndex, DOUBLEVECTOR& Parameters)
 {
 	long nCount = m_DLL.GetBlockParametersCount(nBlockIndex);
 
 	if (nCount > 0)
 	{
-		if (nCount > static_cast<long>(m_ParameterBuffer.size()))
-			m_ParameterBuffer.resize(max(nCount, 100));
-		
-		if (nCount != m_DLL.GetBlockParametersValues(nBlockIndex, pArgs, &m_ParameterBuffer[0]))
+		Parameters.clear();
+		Parameters.resize(nCount);
+		if (nCount != m_DLL.GetBlockParametersValues(nBlockIndex, pArgs, &Parameters[0]))
 			nCount = -1; 
 	}
-
-	if (nCount <= 0)
-		ppParameters = nullptr;
-	else
-		*ppParameters = &m_ParameterBuffer[0];
-
 	return nCount;
 }
 

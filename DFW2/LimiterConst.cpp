@@ -126,17 +126,11 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CLimiterConst::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CLimiterConst::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double LimiterParameters[2] = { -1E6, 1E6 };
-
-	nParametersCount = min(nParametersCount, sizeof(LimiterParameters) / sizeof(LimiterParameters[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		LimiterParameters[i] = pParameters[i];
-
-	SetMinMax(pDynaModel, LimiterParameters[0], LimiterParameters[1]);
-	return bRes;
+	double dMin(-1E6), dMax(-dMin);
+	CDynaPrimitive::UnserializeParameters({ dMin, dMax }, Parameters);
+	SetMinMax(pDynaModel, dMin, dMax);
+	return true;
 }
 

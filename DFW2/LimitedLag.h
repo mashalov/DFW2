@@ -26,7 +26,7 @@ namespace DFW2
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		const _TCHAR* GetVerbalName() override { return _T("Апериодическое звено с ограничениями"); }
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 
 		static size_t PrimitiveSize() { return sizeof(CLimitedLag); }
 		static long EquationsCount()  { return 1; }

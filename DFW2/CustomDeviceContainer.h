@@ -58,7 +58,6 @@ namespace DFW2
 		size_t m_nVariableIndexesCount;												// количество переменных для уравнений
 
 		void CleanUp();
-		std::vector<double> m_ParameterBuffer;
 	public:
 		CCustomDeviceContainer(CDynaModel *pDynaModel);
 		bool ConnectDLL(const _TCHAR *cszDLLFilePath);
@@ -80,7 +79,7 @@ namespace DFW2
 		ExternalVariable* NewExternalVariables();
 		void* NewPrimitive(PrimitiveBlockType eType);
 		const CCustomDeviceDLL& DLL() { return m_DLL; }
-		long GetParametersValues(ptrdiff_t nId, BuildEquationsArgs* pArgs, long nBlockIndex, double **ppParameters);
+		long GetParametersValues(ptrdiff_t nId, BuildEquationsArgs* pArgs, long nBlockIndex, DOUBLEVECTOR& Parameters);
 		size_t GetInputsCount()				{  return m_DLL.GetInputsInfo().size();     }
 		size_t GetConstsCount()				{  return m_DLL.GetConstsInfo().size();     }
 		size_t GetSetPointsCount()			{  return m_DLL.GetSetPointsInfo().size();  }

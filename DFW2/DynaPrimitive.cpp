@@ -69,6 +69,32 @@ double CDynaPrimitive::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return 1.0;
 }
 
+bool CDynaPrimitive::UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters)
+{
+	auto dest = ParametersList.begin();
+	for (auto& src : Parameters)
+		if (dest != ParametersList.end())
+		{
+			dest->get() = src;
+			dest++;
+		}
+	return true;
+}
+
+bool CDynaPrimitive::UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters)
+{
+	auto src = Parameters.begin();
+	for (auto& dest : ParametersList)
+		if (src != Parameters.end())
+		{
+			dest.first.get() = *src;
+			src++;
+		}
+		else
+			dest.first.get() = dest.second;
+	return true;
+}
+
 bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH)
 {
 	// Diff			- контроль знака - если < 0 - переходим в LS_MID

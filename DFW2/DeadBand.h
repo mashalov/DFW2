@@ -38,7 +38,7 @@ namespace DFW2
 		bool BuildRightHand(CDynaModel *pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override { return true; }
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 
 		const _TCHAR* GetVerbalName() override { return _T("Мертвая зона"); }
 		static size_t PrimitiveSize() { return sizeof(CDeadBand); }

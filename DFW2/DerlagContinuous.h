@@ -19,7 +19,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		void SetTK(double T, double K)  { m_K = K;  m_T = T; }
 		const _TCHAR* GetVerbalName() override { return _T("РДЗ со сглаживанием"); }
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() { return sizeof(CDerlagContinuous); }
 		static long EquationsCount()  { return 2; }
 	};
@@ -40,7 +40,7 @@ namespace DFW2
 		//virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		void SetTK(double T, double K) { m_K = K;  m_T = T; }
 		const _TCHAR* GetVerbalName() override { return _T("ДЗ Nordsieck"); }
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() { return sizeof(CDerlagNordsieck); }
 		static long EquationsCount() { return 3; }
 	};

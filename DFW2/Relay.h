@@ -25,7 +25,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		const _TCHAR* GetVerbalName() noexcept override { return _T("Πελε"); }
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelay); }
 		static long EquationsCount()  noexcept { return 1; }
 	};
@@ -54,7 +54,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelay); }
 		static long EquationsCount()  noexcept { return 1; }

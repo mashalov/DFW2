@@ -60,6 +60,10 @@ namespace DFW2
 		}
 	};
 
+	using PRIMITIVEPARAMETERDEFAULT = std::pair<std::reference_wrapper<double>, double>;
+	using PRIMITIVEPARAMETERSDEFAULT = std::vector<PRIMITIVEPARAMETERDEFAULT>;
+	using DOUBLEREFVEC = std::vector<std::reference_wrapper<double>>;
+
 	class CDynaPrimitive
 	{
 	protected:
@@ -71,6 +75,8 @@ namespace DFW2
 		ptrdiff_t A(ptrdiff_t nOffset);
 		ptrdiff_t m_OutputEquationIndex;
 		bool ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH);
+		bool UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters);
+		bool UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters);
 	public:
 		constexpr operator double& () { return m_viOutput.Value; }
 		constexpr operator const double& () const { return m_viOutput.Value; }
@@ -120,7 +126,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) { return eDEVICEFUNCTIONSTATUS::DFS_OK; }
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
 		virtual PrimitiveVariableBase& Input(ptrdiff_t nIndex) { return *m_Input; }
-		virtual bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) { return true; }
+		virtual bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) { return true; }
 		static double GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c);
 		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst);
 		inline const double* Output() const { return m_Output; }

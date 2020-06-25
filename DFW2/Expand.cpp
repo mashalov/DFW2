@@ -67,12 +67,9 @@ bool CExpand::NotifyDelay(CDynaModel *pDynaModel)
 	return true;
 }
 
-bool CExpand::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CExpand::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	m_dDelay = 0.0;
-	if (nParametersCount == 1)
-		m_dDelay = pParameters[0];
-	return true;
+	return CDynaPrimitive::UnserializeParameters({ {m_dDelay,0.0} }, Parameters);
 }
 
 

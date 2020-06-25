@@ -341,15 +341,10 @@ void CLimitedLag::ChangeTimeConstant(double TexcNew)
 	m_T = TexcNew;
 }
 
-bool CLimitedLag::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CLimitedLag::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double TKMinMax[4] = { 1E-4, 1.0, -1E6, 1E6};
-
-	nParametersCount = min(nParametersCount, sizeof(TKMinMax) / sizeof(TKMinMax[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		TKMinMax[i] = pParameters[i];
-	SetMinMaxTK(pDynaModel, TKMinMax[2], TKMinMax[3], TKMinMax[0], TKMinMax[1]);
-	return bRes;
+	double T(1E-4), K(1.0), dMin(-1E6), dMax(-dMin);
+	CDynaPrimitive::UnserializeParameters({ T, K, dMin, dMax }, Parameters);
+	SetMinMaxTK(pDynaModel, dMin, dMax, T, K);
+	return true;
 }

@@ -19,7 +19,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 
 		const _TCHAR* GetVerbalName() override { return _T("Расширитель импульса"); }
 		static size_t PrimitiveSize() { return sizeof(CExpand); }

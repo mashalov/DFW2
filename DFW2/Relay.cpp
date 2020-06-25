@@ -94,18 +94,12 @@ eDEVICEFUNCTIONSTATUS CRelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CRelay::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CRelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double RelayTol[2] = {0, 1};
-
-	nParametersCount = min(nParametersCount, sizeof(RelayTol) / sizeof(RelayTol[0]) );
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		RelayTol[i] = pParameters[i];
-
-	SetRefs(pDynaModel, RelayTol[0], RelayTol[0] * RelayTol[1], true);
-	return bRes;
+	double Rt0(0.0), Rt1(1.0);
+	CDynaPrimitive::UnserializeParameters({ Rt0, Rt1 }, Parameters);
+	SetRefs(pDynaModel, Rt0, Rt0 * Rt1, true);
+	return true;
 }
 
 void CRelay::SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay)
@@ -125,17 +119,12 @@ void CRelayDelay::SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, 
 	m_dDelay = dDelay;
 }
 
-bool CRelayDelay::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CRelayDelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double RelayDelayTol[3] = { 0.0, 0.0, 1.0 };
-
-	nParametersCount = min(nParametersCount, sizeof(RelayDelayTol) / sizeof(RelayDelayTol[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		RelayDelayTol[i] = pParameters[i];
-	SetRefs(pDynaModel, RelayDelayTol[0], RelayDelayTol[0] * RelayDelayTol[2], true, RelayDelayTol[1]);
-	return bRes;
+	double Rt0(0.0), Rt1(0.0), Rt2(1.0);
+	CDynaPrimitive::UnserializeParameters({Rt0, Rt1, Rt2}, Parameters);
+	SetRefs(pDynaModel, Rt0, Rt0 * Rt2, true, Rt1);
+	return true;
 }
 
 bool CRelayDelay::Init(CDynaModel *pDynaModel)
