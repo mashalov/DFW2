@@ -168,6 +168,7 @@ namespace DFW2
 		virtual ~CCustomDeviceCPPContainer();
 		void AllocatePools(size_t nDevicesCount);
 		bool ConnectDLL(const _TCHAR* cszDLLFilePath);
+		CDerlagContinuous* CreateDerLag(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
 	};
 }
 

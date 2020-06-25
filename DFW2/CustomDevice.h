@@ -64,6 +64,8 @@ namespace DFW2
 		void CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container);
 		void SetConstsDefaultValues();
 		DOUBLEVECTOR& GetConstantData();
+		void Connect(CDynaModel* pDynaModel);
+		CCustomDeviceCPPContainer* GetContainer();
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel) override;

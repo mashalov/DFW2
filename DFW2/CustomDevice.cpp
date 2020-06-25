@@ -570,6 +570,26 @@ void CCustomDeviceCPP::DLLSetFunction(CDFWModelData& DFWModelData, const Variabl
 	pDynaModel->SetFunction(Row, dValue);
 }
 
+CCustomDeviceCPPContainer* CCustomDeviceCPP::GetContainer()
+{ 
+	if (!m_pContainer)
+		throw dfw2error(_T("CCustomDeviceCPP::GetContainer - container not set"));
+	return static_cast<CCustomDeviceCPPContainer*>(m_pContainer); 
+}
+
+void CCustomDeviceCPP::Connect(CDynaModel* pDynaModel)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	CCustomDeviceCPPContainer* pContainer = GetContainer();
+	PRIMITIVEVECTOR& Prims = m_pDevice->GetPrimitives();
+	for (auto& prim : Prims)
+	{
+		double voi;
+		PrimitiveVariable p(0, voi);
+		pContainer->CreateDerLag(this, &voi, 0, &p);
+	}
+}
+
 
 CCustomDeviceCPP::~CCustomDeviceCPP()
 {

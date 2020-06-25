@@ -334,6 +334,11 @@ bool CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
 	return bRes;
 }
 
+CDerlagContinuous* CCustomDeviceCPPContainer::CreateDerLag(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input)
+{
+	return nullptr;
+}
+
 void CCustomDeviceCPPContainer::AllocatePools(size_t nDevicesCount)
 {
 	m_PrimitivePools.Allocate(nDevicesCount);

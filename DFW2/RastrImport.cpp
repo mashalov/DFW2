@@ -88,6 +88,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 						}
 
 						CCustomDeviceCPP* pDevice = pCustomDevices + nModelIndex;
+						pDevice->Connect(&Network);
 						pDevice->SetConstsDefaultValues();
 						pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
 						pDevice->SetName(spColId->GetZS(nTableIndex));
