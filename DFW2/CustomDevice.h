@@ -51,7 +51,6 @@ namespace DFW2
 		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);
 	};
 
-
 		
 	class CCustomDeviceCPP : public CDevice
 	{
@@ -59,6 +58,9 @@ namespace DFW2
 		std::shared_ptr<CCustomDeviceCPPDLL> m_pDLL;
 		ICustomDevice* m_pDevice = nullptr;
 		CCustomDeviceData CustomDeviceData;
+		static CDynaModel*			GetModel(CDFWModelData& ModelData)	{ return static_cast<CDynaModel*>(ModelData.pModel); }
+		static CCustomDeviceCPP*	GetDevice(CDFWModelData& ModelData)	{ return static_cast<CCustomDeviceCPP*>(ModelData.pDevice); }
+		void PrepareCustomDeviceData(CDynaModel* pDynaModel);
 	public:
 		CCustomDeviceCPP();
 		void CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container);
@@ -74,8 +76,12 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		virtual ~CCustomDeviceCPP();
-		static void CCustomDeviceCPP::DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
-		static void CCustomDeviceCPP::DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
+		static void DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
+		static void DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
+		static void DLLSetFunctionDiff(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
+		static void DLLSetDerivative(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
+		static eDEVICEFUNCTIONSTATUS DLLInitPrimitive(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);
+		static eDEVICEFUNCTIONSTATUS DLLProcPrimDisco(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);
 		static const _TCHAR* m_cszNoDeviceDLL;
 	};
 }

@@ -32,15 +32,15 @@ void CCustomDevice::BuildDerivatives(CCustomDeviceData& CustomDeviceData)
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CCustomDeviceData& CustomDeviceData)
 {
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDEVICEFUNCTIONSTATUS eRes = (CustomDeviceData.pFnInitPrimitive)(CustomDeviceData, 0);
+	return eRes;
 }
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::ProcessDiscontinuity(CCustomDeviceData& CustomDeviceData)
 {
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDEVICEFUNCTIONSTATUS eRes = (CustomDeviceData.pFnProcPrimDisco)(CustomDeviceData, 0);
+	return eRes;
 }
-
-
 
 DOUBLEVECTOR& CCustomDevice::GetConstantData()
 {

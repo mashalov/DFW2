@@ -462,8 +462,13 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 
 CCustomDeviceCPP::CCustomDeviceCPP() 
 { 
-	CustomDeviceData.pFnSetFunction = DLLSetFunction;
-	CustomDeviceData.pFnSetElement  = DLLSetElement;
+	// может быть вынести в единственном экземпл€ре в контейнер ?
+	CustomDeviceData.pFnSetFunction		= DLLSetFunction;
+	CustomDeviceData.pFnSetElement		= DLLSetElement;
+	CustomDeviceData.pFnSetDerivative	= DLLSetDerivative;
+	CustomDeviceData.pFnSetFunctionDiff = DLLSetFunctionDiff;
+	CustomDeviceData.pFnInitPrimitive	= DLLInitPrimitive;
+	CustomDeviceData.pFnProcPrimDisco	= DLLProcPrimDisco;
 }
 
 void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
@@ -507,8 +512,7 @@ double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
 bool CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	CustomDeviceData.pModel = pDynaModel;
-	CustomDeviceData.pDevice = this;
+	PrepareCustomDeviceData(pDynaModel);
 	m_pDevice->BuildRightHand(CustomDeviceData);
 
 	return true;
@@ -517,8 +521,7 @@ bool CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
 bool CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	CustomDeviceData.pModel = pDynaModel;
-	CustomDeviceData.pDevice = this;
+	PrepareCustomDeviceData(pDynaModel);
 	m_pDevice->BuildEquations(CustomDeviceData);
 	return true;
 }
@@ -526,17 +529,40 @@ bool CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::Init(CDynaModel* pDynaModel)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	CustomDeviceData.pModel = pDynaModel;
-	CustomDeviceData.pDevice = this;
+	PrepareCustomDeviceData(pDynaModel);
 	eDEVICEFUNCTIONSTATUS eRes = m_pDevice->Init(CustomDeviceData);
+
+	
+	/*
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	bool bRes = true;
+
+	ptrdiff_t nConstIndex(0);
+	for (const auto& it : Container()->DLL().GetConstsInfo())
+	{
+		if (it.eDeviceType != DEVTYPE_UNKNOWN && !(it.VarFlags & CVF_INTERNALCONST))
+			bRes = bRes && InitConstantVariable(m_pConstVars[nConstIndex++], this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType));
+	}
+
+	bRes = bRes && ConstructDLLParameters(pDynaModel);
+	m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	bRes = bRes && Container()->InitDLLEquations(&m_DLLArgs);
+
+	if (!bRes)
+		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+
+	return m_ExternalStatus;
+	*/
+
+
+
 	return eRes;
 }
 
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	CustomDeviceData.pModel = pDynaModel;
-	CustomDeviceData.pDevice = this;
+	PrepareCustomDeviceData(pDynaModel);
 	eDEVICEFUNCTIONSTATUS eRes = m_pDevice->ProcessDiscontinuity(CustomDeviceData);
 	return eRes;
 }
@@ -557,19 +583,35 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDyn
 }
 
 
-void CCustomDeviceCPP::DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
+void CCustomDeviceCPP::DLLSetFunctionDiff(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue)
 {
-	CDynaModel* pDynaModel = static_cast<CDynaModel*>(DFWModelData.pModel);
-	CDevice* pDevice = static_cast<CDevice*>(DFWModelData.pDevice);
-	pDynaModel->SetElement(Row,Col,dValue);
+	GetModel(DFWModelData)->SetFunctionDiff(Row, dValue);
 }
 
+void CCustomDeviceCPP::DLLSetDerivative(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue)
+{
+	GetModel(DFWModelData)->SetDerivative(Row, dValue);
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::DLLInitPrimitive(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex)
+{
+	//GetDevice(DFWModelData)->m_pDevice
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::DLLProcPrimDisco(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+void CCustomDeviceCPP::DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
+{
+	GetModel(DFWModelData)->SetElement(Row,Col,dValue);
+}
 
 void CCustomDeviceCPP::DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue)
 {
-	CDynaModel* pDynaModel = static_cast<CDynaModel*>(DFWModelData.pModel);
-	CDevice* pDevice = static_cast<CDevice*>(DFWModelData.pDevice);
-	pDynaModel->SetFunction(Row, dValue);
+	GetModel(DFWModelData)->SetFunction(Row, dValue);
 }
 
 CCustomDeviceCPPContainer* CCustomDeviceCPP::GetContainer()
@@ -592,6 +634,11 @@ void CCustomDeviceCPP::Connect(CDynaModel* pDynaModel)
 	}
 }
 
+void CCustomDeviceCPP::PrepareCustomDeviceData(CDynaModel *pDynaModel)
+{
+	CustomDeviceData.pModel = pDynaModel;
+	CustomDeviceData.pDevice = this;
+}
 
 CCustomDeviceCPP::~CCustomDeviceCPP()
 {
