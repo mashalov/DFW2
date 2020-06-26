@@ -473,8 +473,59 @@ CCustomDeviceCPP::CCustomDeviceCPP()
 
 void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
 {
-	m_pDLL = Container.DLL();
-	m_pDevice = m_pDLL->CreateDevice();
+	m_pDevice.Create(Container.DLL());
+	PRIMITIVEVECTOR& Prims = m_pDevice->GetPrimitives();
+	VARIABLEVECTOR& VarVec = m_pDevice->GetVariables();
+	EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
+
+	for (auto&& prim : Prims)
+	{
+
+		PrimitivePinVec& Inputs = prim.Outputs;
+		if (Inputs.empty())
+			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive inputs"));
+
+		auto& Input = Inputs.front();
+
+		switch (Input.Variable.index())
+		{
+		case 0:
+			{
+				VariableIndex& inputvar(std::get<0>(Input.Variable));
+				m_PrimExt.push_back(std::make_unique<PrimitiveVariable>(&inputvar - &VarVec[0], inputvar.Value));
+			}
+			break;
+		case 1:
+			{
+				VariableIndexExternal& inputvar(std::get<1>(Input.Variable));
+				m_PrimExt.push_back(std::make_unique<PrimitiveVariableExternal>());
+				m_PrimExt.back()->IndexAndValue(&inputvar - &ExtVec[0], nullptr);
+			}
+			break;
+		}
+
+		PrimitivePinVec& Outputs = prim.Outputs;
+		if (Outputs.empty())
+			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive output"));
+		
+		auto& PrimaryOutput = Outputs.front();
+
+		switch (PrimaryOutput.Variable.index())
+		{
+		case 0:
+			{
+				VariableIndex& outputvar(std::get<0>(PrimaryOutput.Variable));
+				Container.CreatePrimitive(prim.eBlockType, this, &outputvar.Value, &outputvar - &VarVec[0], { m_PrimExt.back().get() });
+			}
+			break;
+		case 1:
+			{
+				VariableIndexExternal &outputvar(std::get<1>(PrimaryOutput.Variable));
+				Container.CreatePrimitive(prim.eBlockType, this, outputvar.m_pValue, outputvar.Index, { m_PrimExt.back().get() });
+			}
+			break;
+		}
+	}
 }
 
 void CCustomDeviceCPP::SetConstsDefaultValues()
@@ -514,7 +565,7 @@ bool CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	PrepareCustomDeviceData(pDynaModel);
 	m_pDevice->BuildRightHand(CustomDeviceData);
-
+	CDevice::BuildRightHand(pDynaModel);
 	return true;
 }
 
@@ -523,6 +574,7 @@ bool CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	PrepareCustomDeviceData(pDynaModel);
 	m_pDevice->BuildEquations(CustomDeviceData);
+	CDevice::BuildEquations(pDynaModel);
 	return true;
 }
 
@@ -563,8 +615,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::ProcessDiscontinuity(CDynaModel* pDynaMo
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	PrepareCustomDeviceData(pDynaModel);
-	eDEVICEFUNCTIONSTATUS eRes = m_pDevice->ProcessDiscontinuity(CustomDeviceData);
-	return eRes;
+	return CDevice::DeviceFunctionResult(m_pDevice->ProcessDiscontinuity(CustomDeviceData), CDevice::ProcessDiscontinuity(pDynaModel));
 }
 
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDynaModel)
@@ -621,32 +672,10 @@ CCustomDeviceCPPContainer* CCustomDeviceCPP::GetContainer()
 	return static_cast<CCustomDeviceCPPContainer*>(m_pContainer); 
 }
 
-void CCustomDeviceCPP::Connect(CDynaModel* pDynaModel)
-{
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	CCustomDeviceCPPContainer* pContainer = GetContainer();
-	PRIMITIVEVECTOR& Prims = m_pDevice->GetPrimitives();
-	for (auto& prim : Prims)
-	{
-		double voi;
-		PrimitiveVariable p(0, voi);
-		pContainer->CreateDerLag(this, &voi, 0, &p);
-	}
-}
-
 void CCustomDeviceCPP::PrepareCustomDeviceData(CDynaModel *pDynaModel)
 {
 	CustomDeviceData.pModel = pDynaModel;
 	CustomDeviceData.pDevice = this;
 }
-
-CCustomDeviceCPP::~CCustomDeviceCPP()
-{
-	if (m_pDevice) 
-		m_pDevice->Destroy();
-}
-
-
-
 
 const _TCHAR* CCustomDeviceCPP::m_cszNoDeviceDLL = _T("CCustomDeviceCPP - no DLL device initialized");

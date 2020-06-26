@@ -51,22 +51,35 @@ namespace DFW2
 		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);
 	};
 
-		
-	class CCustomDeviceCPP : public CDevice
+	class CCustomDeviceDLLWrapper
 	{
 	protected:
 		std::shared_ptr<CCustomDeviceCPPDLL> m_pDLL;
 		ICustomDevice* m_pDevice = nullptr;
+	public:
+		CCustomDeviceDLLWrapper() {}
+		void Create(std::shared_ptr<CCustomDeviceCPPDLL>  pDLL) { m_pDLL = pDLL;  m_pDevice = m_pDLL->CreateDevice(); }
+		CCustomDeviceDLLWrapper(std::shared_ptr<CCustomDeviceCPPDLL>  pDLL) { Create(pDLL); }
+		~CCustomDeviceDLLWrapper() { m_pDevice->Destroy(); }
+		constexpr ICustomDevice* operator  -> () { return m_pDevice; }
+		constexpr operator ICustomDevice*() { return m_pDevice; }
+	};
+		
+	class CCustomDeviceCPP : public CDevice
+	{
+	protected:
+		CCustomDeviceDLLWrapper m_pDevice;
 		CCustomDeviceData CustomDeviceData;
 		static CDynaModel*			GetModel(CDFWModelData& ModelData)	{ return static_cast<CDynaModel*>(ModelData.pModel); }
 		static CCustomDeviceCPP*	GetDevice(CDFWModelData& ModelData)	{ return static_cast<CCustomDeviceCPP*>(ModelData.pDevice); }
 		void PrepareCustomDeviceData(CDynaModel* pDynaModel);
+		DOUBLEVECTOR m_PrimitiveVars;
+		std::vector<std::unique_ptr<PrimitiveVariableBase>> m_PrimExt;
 	public:
 		CCustomDeviceCPP();
 		void CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container);
 		void SetConstsDefaultValues();
 		DOUBLEVECTOR& GetConstantData();
-		void Connect(CDynaModel* pDynaModel);
 		CCustomDeviceCPPContainer* GetContainer();
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
@@ -75,7 +88,6 @@ namespace DFW2
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		virtual ~CCustomDeviceCPP();
 		static void DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
 		static void DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
 		static void DLLSetFunctionDiff(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);

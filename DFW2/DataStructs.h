@@ -1,11 +1,12 @@
 #pragma once
-#include "vector"
-#include "list"
-#include "map"
-#include "set"
-#include "string"
-#include "algorithm"
-#include "tchar.h"
+#include <vector>
+#include <list>
+#include <map>
+#include <set>
+#include <string>
+#include <algorithm>
+#include <variant>
+#include <tchar.h>
 #include "DeviceTypes.h"
 #include "DLLStructs.h"
 
@@ -41,6 +42,7 @@ namespace DFW2
 	};
 
 	using VariableIndexRefVec = std::vector<std::reference_wrapper<VariableIndex>>;
+	using VariableIndexExternalRefVec = std::vector<std::reference_wrapper<VariableIndexExternal>>;
 
 	// типы переменных устройства
 	enum eDEVICEVARIABLETYPE
@@ -109,13 +111,26 @@ namespace DFW2
 
 	};
 
+	using VariableVariant = std::variant < const std::reference_wrapper<VariableIndex>,
+										   const std::reference_wrapper<VariableIndexExternal>>;
 
+	struct PrimitivePin
+	{
+		ptrdiff_t nPin;
+		VariableVariant Variable;
+		PrimitivePin(ptrdiff_t Pin, VariableIndex& vi) : nPin(Pin), Variable(vi) {}
+		PrimitivePin(ptrdiff_t Pin, VariableIndexExternal& vi) : nPin(Pin), Variable(vi) {}
+		PrimitivePin& operator = (const PrimitivePin& pin) { return *this; }
+	};
+
+	using PrimitivePinVec = std::vector<PrimitivePin>;
 	class PrimitiveDescription
 	{
 	public:
 		PrimitiveBlockType eBlockType;
 		std::wstring_view Name;
-		VariableIndexExternal Output;
+		PrimitivePinVec Outputs; 
+		PrimitivePinVec Inputs;
 	};
 
 

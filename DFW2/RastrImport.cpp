@@ -68,12 +68,9 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			if (nModelsCount)
 			{
 				// create models for count given
-				CustomDeviceContainer.AllocatePools(nModelsCount);
 				CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[nModelsCount];
-				std::for_each(pCustomDevices, 
-							  pCustomDevices + nModelsCount, 
-							  [&CustomDeviceContainer](CCustomDeviceCPP& device) { device.CreateDLLDeviceInstance(CustomDeviceContainer); });
 				CustomDeviceContainer.AddDevices(pCustomDevices, nModelsCount);
+				CustomDeviceContainer.BuildStructure();
 
 				// put constants to each model
 				long nModelIndex = 0;
@@ -88,7 +85,6 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 						}
 
 						CCustomDeviceCPP* pDevice = pCustomDevices + nModelIndex;
-						pDevice->Connect(&Network);
 						pDevice->SetConstsDefaultValues();
 						pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
 						pDevice->SetName(spColId->GetZS(nTableIndex));
@@ -384,8 +380,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	if (!Network.CustomDevice.ConnectDLL(_T("DeviceDLL.dll")))
 		return;
 
-	if (!Network.CustomDeviceCPP.ConnectDLL(_T("CustomDeviceCPP.dll")))
-		return;
+	Network.CustomDeviceCPP.ConnectDLL(_T("CustomDeviceCPP.dll"));
 
 	CustomDeviceConnectInfo ci(_T("ExcControl"),2);
 	ITablePtr spExAddXcomp = m_spRastr->Tables->Item("ExcControl");

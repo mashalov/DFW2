@@ -400,32 +400,25 @@ CCustomDeviceCPPDLL::~CCustomDeviceCPPDLL()
 	CleanUp();
 }
 
-bool CCustomDeviceCPPDLL::Init(const _TCHAR* cszDLLFilePath)
+void CCustomDeviceCPPDLL::Init(const _TCHAR* cszDLLFilePath)
 {
-	m_bConnected = false;
 	// загружаем dll
 	m_hDLL = LoadLibrary(cszDLLFilePath);
-	if (m_hDLL)
-	{
-		m_pfnFactory = reinterpret_cast<CustomDeviceFactory>(::GetProcAddress(m_hDLL, "CustomDeviceFactory"));
-		if (m_pfnFactory)
-		{
-			m_bConnected = true;
-			m_strModulePath = cszDLLFilePath;
-		}
-	}
-	return m_bConnected;
+	if (!m_hDLL)
+		throw dfw2error(Cex(_T("CCustomDeviceCPPDLL::Init - failed to load %s"), cszDLLFilePath));
+	m_pfnFactory = reinterpret_cast<CustomDeviceFactory>(::GetProcAddress(m_hDLL, "CustomDeviceFactory"));
+	if (!m_hDLL)
+		throw dfw2error(Cex(_T("CCustomDeviceCPPDLL::Init - to extract Device factory from load %s"), cszDLLFilePath));
+	m_strModulePath = cszDLLFilePath;
 };
 
 
 ICustomDevice* CCustomDeviceCPPDLL::CreateDevice()
 {
 	ICustomDevice* pDev(nullptr);
-	if (m_bConnected)
-	{
-		pDev = m_pfnFactory();
-	}
-	return pDev;
+	if (!m_hDLL || !m_pfnFactory)
+		throw dfw2error(_T("CCustomDeviceCPPDLL::CreateDevice - no dll loaded"));
+	return m_pfnFactory();
 }
 
 void CCustomDeviceCPPDLL::CleanUp()

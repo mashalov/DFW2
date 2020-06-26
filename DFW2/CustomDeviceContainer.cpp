@@ -310,29 +310,29 @@ CCustomDeviceCPPContainer::~CCustomDeviceCPPContainer()
 }
 
 
-bool CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath) 
+void CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath) 
 {
 	m_pDLL = std::make_shared<CCustomDeviceCPPDLL>();
-	bool bRes(false);
-	if (m_pDLL->Init(cszDLLFilePath))
-	{
-		ICustomDevice* pDevice = m_pDLL->CreateDevice();
-		pDevice->GetDeviceProperties(m_ContainerProps);
-		PRIMITIVEVECTOR& Prims = pDevice->GetPrimitives();
-		for (const auto& prim : Prims)
-			m_PrimitivePools.CountPrimitive(prim.eBlockType);
-		pDevice->Destroy();
-		bRes = true;
-	}
-	return bRes;
+	m_pDLL->Init(cszDLLFilePath);
+	CCustomDeviceDLLWrapper pDevice(m_pDLL);
+	pDevice->GetDeviceProperties(m_ContainerProps);
+	PRIMITIVEVECTOR& Prims = pDevice->GetPrimitives();
+	for (const auto& prim : Prims)
+		m_PrimitivePools.CountPrimitive(prim.eBlockType);
 }
 
-CDerlagContinuous* CCustomDeviceCPPContainer::CreateDerLag(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input)
+CDynaPrimitive* CCustomDeviceCPPContainer::CreatePrimitive(PrimitiveBlockType ePrimitiveType, 
+														   CDevice* pDevice, 
+														   double* pOutput, 
+														   ptrdiff_t nOutputIndex, 
+														   std::initializer_list<PrimitiveVariableBase*> Input)
 {
-	return nullptr;
+	return m_PrimitivePools.Create(ePrimitiveType, pDevice, pOutput, nOutputIndex, Input);
 }
 
-void CCustomDeviceCPPContainer::AllocatePools(size_t nDevicesCount)
+void CCustomDeviceCPPContainer::BuildStructure()
 {
-	m_PrimitivePools.Allocate(nDevicesCount);
+	m_PrimitivePools.Allocate(m_DevVec.size());
+	for (auto& dit : m_DevVec)
+		static_cast<CCustomDeviceCPP*>(dit)->CreateDLLDeviceInstance(*this);
 }

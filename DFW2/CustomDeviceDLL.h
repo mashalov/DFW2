@@ -102,15 +102,14 @@ namespace DFW2
 	class CCustomDeviceCPPDLL
 	{
 	protected:
-		bool m_bConnected = false;
-		HMODULE m_hDLL;
+		HMODULE m_hDLL = NULL;
 		std::wstring m_strModulePath;
 		CustomDeviceFactory m_pfnFactory = nullptr;
 		void CleanUp();
 	public:
 		CCustomDeviceCPPDLL();
 		virtual ~CCustomDeviceCPPDLL();
-		bool Init(const _TCHAR* cszDLLFilePath);
+		void Init(const _TCHAR* cszDLLFilePath);
 		const _TCHAR* GetModuleFilePath() const { return m_strModulePath.c_str(); }
 		ICustomDevice* CreateDevice();
 	};

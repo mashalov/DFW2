@@ -103,7 +103,6 @@ namespace DFW2
 	protected:
 		std::vector<T> m_Primitives;
 	public:
-		size_t m_nSize = 0;
 		CDynaPrimitive* Create(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) override
 		{
 			m_Primitives.emplace_back(pDevice, pOutput, nOutputIndex, Input);
@@ -173,9 +172,9 @@ namespace DFW2
 		std::shared_ptr<CCustomDeviceCPPDLL> DLL() { return m_pDLL; }
 		CCustomDeviceCPPContainer(CDynaModel* pDynaModel);
 		virtual ~CCustomDeviceCPPContainer();
-		void AllocatePools(size_t nDevicesCount);
-		bool ConnectDLL(const _TCHAR* cszDLLFilePath);
-		CDerlagContinuous* CreateDerLag(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
+		void BuildStructure();
+		void ConnectDLL(const _TCHAR* cszDLLFilePath);
+		CDynaPrimitive* CreatePrimitive(PrimitiveBlockType ePrimitiveType, CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input);
 	};
 }
 
