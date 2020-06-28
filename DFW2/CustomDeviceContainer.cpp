@@ -321,13 +321,13 @@ void CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
 		m_PrimitivePools.CountPrimitive(prim.eBlockType);
 }
 
-CDynaPrimitive* CCustomDeviceCPPContainer::CreatePrimitive(PrimitiveBlockType ePrimitiveType, 
-														   CDevice* pDevice, 
-														   double* pOutput, 
-														   ptrdiff_t nOutputIndex, 
-														   std::initializer_list<PrimitiveVariableBase*> Input)
+CDynaPrimitive* CCustomDeviceCPPContainer::CreatePrimitive(PrimitiveBlockType ePrimitiveType,
+														   CDevice* pDevice,
+														   VariableIndex& OutputVariable,
+														   InputList Input,
+														   ExtraOutputList ExtraOutputVariables)
 {
-	return m_PrimitivePools.Create(ePrimitiveType, pDevice, pOutput, nOutputIndex, Input);
+	return m_PrimitivePools.Create(ePrimitiveType, pDevice, OutputVariable, Input, ExtraOutputVariables);
 }
 
 void CCustomDeviceCPPContainer::BuildStructure()

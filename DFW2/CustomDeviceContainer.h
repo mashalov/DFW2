@@ -68,6 +68,7 @@ namespace DFW2
 		bool BuildDLLRightHand(BuildEquationsArgs *pArgs);
 		bool BuildDLLDerivatives(BuildEquationsArgs *pArgs);
 		bool ProcessDLLDiscontinuity(BuildEquationsArgs *pArgs);
+		ptrdiff_t GetPrimitiveVariablesCount() const { return m_nPrimitiveVarsCount; }
 
 		PrimitiveInfo GetPrimitiveInfo(PrimitiveBlockType eType);
 		size_t PrimitiveSize(PrimitiveBlockType eType);
@@ -92,7 +93,7 @@ namespace DFW2
 		size_t m_nSize = 0;
 	public:
 		void IncSize() { m_nSize++; }
-		virtual CDynaPrimitive* Create(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) = 0;
+		virtual CDynaPrimitive* Create(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) = 0;
 		virtual void Allocate(size_t nDevicesCount) = 0;
 		virtual ~CPrimitivePoolBase() {};
 	};
@@ -103,9 +104,9 @@ namespace DFW2
 	protected:
 		std::vector<T> m_Primitives;
 	public:
-		CDynaPrimitive* Create(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) override
+		CDynaPrimitive* Create(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) override
 		{
-			m_Primitives.emplace_back(pDevice, pOutput, nOutputIndex, Input);
+			m_Primitives.emplace_back(pDevice, OutputVariable, Input, ExtraOutputVariables);
 			return &m_Primitives.back();
 		}
 		void Allocate(size_t nDevicesCount) override
@@ -154,10 +155,14 @@ namespace DFW2
 				pool->Allocate(nDevicesCount);
 		}
 
-		CDynaPrimitive* Create(PrimitiveBlockType ePrimitiveType, CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input)
+		CDynaPrimitive* Create(PrimitiveBlockType ePrimitiveType, 
+							   CDevice* pDevice, 
+							   VariableIndex& OutputVariable, 
+							   InputList Input, 
+							   ExtraOutputList ExtraOutputVariables)
 		{
 			CDevice::CheckIndex(m_Pools, ePrimitiveType);
-			return m_Pools[ePrimitiveType]->Create(pDevice, pOutput, nOutputIndex, Input);
+			return m_Pools[ePrimitiveType]->Create(pDevice, OutputVariable, Input, ExtraOutputVariables);
 		}
 
 		std::array<std::unique_ptr<CPrimitivePoolBase>, PrimitiveBlockType::PBT_LAST> m_Pools;
@@ -174,7 +179,11 @@ namespace DFW2
 		virtual ~CCustomDeviceCPPContainer();
 		void BuildStructure();
 		void ConnectDLL(const _TCHAR* cszDLLFilePath);
-		CDynaPrimitive* CreatePrimitive(PrimitiveBlockType ePrimitiveType, CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input);
+		CDynaPrimitive* CreatePrimitive(PrimitiveBlockType ePrimitiveType,
+										CDevice* pDevice,
+										VariableIndex& OutputVariable,
+										InputList Input,
+										ExtraOutputList ExtraOutputVariables);
 	};
 }
 

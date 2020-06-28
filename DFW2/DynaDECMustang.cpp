@@ -1,6 +1,6 @@
 #include "stdafx.h"
 #include "DynaDECMustang.h"
-#include "DynaExciterBase.h"
+#include "DynaExciterMustang.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
@@ -8,17 +8,30 @@ using namespace DFW2;
 
 CDynaDECMustang::CDynaDECMustang() : CDevice(),
 
-	EnforceOn(this, &EnforceOnValue, V_ENFONRELAY, { &Vnode }),
-	DeforceOn(this, &DeforceOnValue, V_DEFONRELAY, { &Vnode }),
-	EnforceOff(this, &EnforceOffValue, V_ENFOFFRELAY, { &Vnode }),
-	DeforceOff(this, &DeforceOffValue, V_DEFOFFRELAY, { &Vnode }),
-	EnfTrigger(this, &EnforceTrigValue, V_ENFTRIG, { &EnforceOffOut,		&EnforceOnOut }),
-	DefTrigger(this, &DeforceTrigValue, V_DEFTRIG, { &DeforceOffOut,		&DeforceOnOut }),
+	EnforceOn(this, EnforceOnValue, { &Vnode }),
+	DeforceOn(this, DeforceOnValue, { &Vnode }),
+	EnforceOff(this, EnforceOffValue, { &Vnode }),
+	DeforceOff(this, DeforceOffValue, { &Vnode }),
+	EnfTrigger(this, EnforceTrigValue, { &EnforceOffOut,		&EnforceOnOut }),
+	DefTrigger(this, DeforceTrigValue, { &DeforceOffOut,		&DeforceOnOut }),
 	EnforceOnOut(V_ENFONRELAY,		EnforceOnValue),
 	DeforceOnOut(V_DEFONRELAY,		DeforceOnValue),
 	EnforceOffOut(V_ENFOFFRELAY,	EnforceOffValue),
 	DeforceOffOut(V_DEFOFFRELAY,	DeforceOffValue)
 {
+}
+
+
+VariableIndexRefVec& CDynaDECMustang::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDevice::GetVariables(JoinVariables({ EnforceOnValue,
+												 EnforceOffValue,
+												 DeforceOnValue,
+												 DeforceOffValue,
+												 EnforceTrigValue,
+												 DeforceTrigValue,
+												 Udec
+											   }, ChildVec));
 }
 
 double* CDynaDECMustang::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -27,13 +40,13 @@ double* CDynaDECMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(EnforceOnValue, V_ENFONRELAY)
-		MAP_VARIABLE(EnforceOffValue, V_ENFOFFRELAY)
-		MAP_VARIABLE(DeforceOnValue, V_DEFONRELAY)
-		MAP_VARIABLE(DeforceOffValue, V_DEFOFFRELAY)
-		MAP_VARIABLE(EnforceTrigValue, V_ENFTRIG)
-		MAP_VARIABLE(DeforceTrigValue, V_DEFTRIG)
-		MAP_VARIABLE(Udec, V_DEC)
+		MAP_VARIABLE(EnforceOnValue.Value, V_ENFONRELAY)
+		MAP_VARIABLE(EnforceOffValue.Value, V_ENFOFFRELAY)
+		MAP_VARIABLE(DeforceOnValue.Value, V_DEFONRELAY)
+		MAP_VARIABLE(DeforceOffValue.Value, V_DEFOFFRELAY)
+		MAP_VARIABLE(EnforceTrigValue.Value, V_ENFTRIG)
+		MAP_VARIABLE(DeforceTrigValue.Value, V_DEFTRIG)
+		MAP_VARIABLE(Udec.Value, V_DEC)
 	}
 	return p;
 }
@@ -61,15 +74,16 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 		EnforceOff.SetRefs(pDynaModel, Unom * VEnfOff, Unom * VEnfOff, true, TdelOff);
 		DeforceOn.SetRefs(pDynaModel, Unom * VDefOn, Unom * VDefOn, true, TdelOn);
 		DeforceOff.SetRefs(pDynaModel, Unom * VDefOff, Unom * VDefOff, false, TdelOff);
-
 		m_dEnforceValue = EnfRatio * Eqnom - Eqe0;
 		m_dDeforceValue = DefRatio * Eqnom - Eqe0;
+
 		EnforceOn.Init(pDynaModel);
 		DeforceOn.Init(pDynaModel);
 		EnforceOff.Init(pDynaModel);
 		DeforceOff.Init(pDynaModel);
 		EnfTrigger.Init(pDynaModel);
 		DefTrigger.Init(pDynaModel);
+
 		ProcessDiscontinuity(pDynaModel);
 	}
 	return Status;
@@ -77,7 +91,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 
 bool CDynaDECMustang::BuildEquations(CDynaModel* pDynaModel)
 {
-	pDynaModel->SetElement(A(V_DEC), A(V_DEC), 1.0);
+	pDynaModel->SetElement(Udec, Udec, 1.0);
 	// строим уравнения для примитивов
 	bool bRes = CDevice::BuildEquations(pDynaModel);
 	return true;
@@ -87,7 +101,7 @@ bool CDynaDECMustang::BuildEquations(CDynaModel* pDynaModel)
 bool CDynaDECMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
 	bool bRes = CDevice::BuildRightHand(pDynaModel);
-	pDynaModel->SetFunction(A(V_DEC), 0.0);
+	pDynaModel->SetFunction(Udec, 0.0);
 	return true;
 }
 
@@ -150,6 +164,10 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 eDEVICEFUNCTIONSTATUS CDynaDECMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(Vnode, GetSingleLink(DEVTYPE_EXCITER), CDynaNodeBase::m_cszV, DEVTYPE_NODE));
+	EnforceOnOut.Index(m_nMatrixRow + V_ENFONRELAY);
+	DeforceOnOut.Index(m_nMatrixRow + V_DEFONRELAY);
+	EnforceOffOut.Index(m_nMatrixRow + V_ENFOFFRELAY);
+	DeforceOffOut.Index(m_nMatrixRow + V_DEFOFFRELAY);
 	return eRes;
 }
 

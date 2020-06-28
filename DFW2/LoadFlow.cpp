@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "LoadFlow.h"
 #include "DynaModel.h"
+#include "DynaPowerInjector.h"
 #include "limits"
 
 using namespace DFW2;

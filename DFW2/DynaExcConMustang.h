@@ -22,7 +22,7 @@ namespace DFW2
 		PrimitiveVariableExternal dEqdtIn;
 		PrimitiveVariableExternal dSdtIn;
 
-		double dVdtOutValue[2], dEqdtOutValue[2], dSdtOutValue[2];
+		VariableIndex dVdtOutValue[2], dEqdtOutValue[2], dSdtOutValue[2];
 
 	public:
 
@@ -39,12 +39,12 @@ namespace DFW2
 
 		double K0u, K1u, Alpha, K1if, K0f, K1f, Umin, Umax, Tf, Tr;
 		double Vref;
-		double Usum, Uf, Svt;
+		VariableIndex Uf, Usum, Svt;
 
 		CDynaExcConMustang();
 		virtual ~CDynaExcConMustang() {}
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
-
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;

@@ -257,7 +257,10 @@ namespace DFW2
 		{
 			pSymbolic = std::make_unique<KLUSymbolic>(KLUFunctions<T, ptrdiff_t>::TKLU_analyze(m_nMatrixSize, pAi.get(), pAp.get(), &pCommon), pCommon);
 			if (!Analyzed())
+			{
+				DumpMatrix(false);
 				throw dfw2error(Cex(_T("%s::KLU_analyze %s"), KLUWrapperName(), KLUErrorDescription()));
+			}
 			m_nAnalyzingsCount++;
 		}
 

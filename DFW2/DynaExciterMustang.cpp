@@ -7,7 +7,7 @@ using namespace DFW2;
 
 
 CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
-	EqLimit(this, &EqOutputValue, V_EQE, { &EqInput })
+	EqLimit(this, EqOutputValue, { &EqInput })
 {
 	m_Primitives.pop_back();
 }
@@ -50,7 +50,7 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Eqsum, GenIq, -Ig * GenIq);
 
 	//dEqsum / dEq
-	pDynaModel->SetElement(Eqsum.Index, A(EqInput.Index()), -Kif);
+	pDynaModel->SetElement(Eqsum.Index, EqInput.Index(), -Kif);
 
 	double  V = Ug0;
 	if (bVoltageDependent)

@@ -267,6 +267,7 @@ namespace DFW2
 				throw dfw2error(_T("CDevice::A - access to device not in matrix"));
 			return m_nMatrixRow + nOffset; 
 		}
+
 		// возвращает true если для устройства есть уравнения в системе
 		inline bool AssignedToMatrix()
 		{

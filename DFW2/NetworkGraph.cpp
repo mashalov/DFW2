@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
+#include "DynaGeneratorMotion.h"
 
 using namespace DFW2;
 bool CDynaModel::Link()

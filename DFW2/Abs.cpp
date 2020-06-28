@@ -8,8 +8,8 @@ using namespace DFW2;
 
 bool CAbs::BuildEquations(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), m_bPositive ? 1.0 : -1.0);
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
+	pDynaModel->SetElement(m_Output.Index, m_Input->Index(), m_bPositive ? 1.0 : -1.0);
+	pDynaModel->SetElement(m_Output.Index, m_Output.Index, 1.0);
 	return true;
 }
 
@@ -18,10 +18,10 @@ bool CAbs::BuildRightHand(CDynaModel *pDynaModel)
 	if (m_pDevice->IsStateOn())
 	{
 		double dInput = m_Input->Value();
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), *m_Output - (m_bPositive ? dInput : -dInput));
+		pDynaModel->SetFunction(m_Output, m_Output - (m_bPositive ? dInput : -dInput));
 	}
 	else
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
+		pDynaModel->SetFunction(m_Output, 0.0);
 
 	return true;
 }
@@ -46,10 +46,10 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		else
 			m_bPositive = false;
 
-		*m_Output = fabs(dInput);
+		m_Output = fabs(dInput);
 	}
 	else
-		*m_Output = 0.0;
+		m_Output = 0.0;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }

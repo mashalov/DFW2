@@ -8,7 +8,11 @@ namespace DFW2
 	protected:
 		PrimitiveVariableBase *m_Input2;
 	public:
-		CAnd(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input);
+		CAnd(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(pDevice, OutputVariable, Input, ExtraOutputVariables)
+			{
+				InitializeInputs({ &m_Input, &m_Input2 }, Input);
+			}
 		virtual ~CAnd() {}
 
 		bool Init(CDynaModel *pDynaModel) override;
@@ -24,7 +28,11 @@ namespace DFW2
 	protected:
 		PrimitiveVariableBase *m_Input2;
 	public:
-		COr(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input);
+		COr(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(pDevice, OutputVariable, Input, ExtraOutputVariables)
+			{
+				InitializeInputs({ &m_Input, &m_Input2 }, Input);
+			}
 		virtual ~COr() {}
 
 		bool Init(CDynaModel *pDynaModel) override;
@@ -38,7 +46,8 @@ namespace DFW2
 	class CNot : public CDynaPrimitiveBinary
 	{
 	public:
-		CNot(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input);
+		CNot(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables):
+			CDynaPrimitiveBinary(pDevice, OutputVariable, Input, ExtraOutputVariables) { }
 		virtual ~CNot() {}
 
 		bool Init(CDynaModel *pDynaModel) override;

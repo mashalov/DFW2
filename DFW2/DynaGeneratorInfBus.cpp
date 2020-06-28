@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "DynaNode.h"
 #include "DynaModel.h"
+#include "DynaGeneratorInfBus.h"
 
 
 using namespace DFW2;

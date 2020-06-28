@@ -180,7 +180,7 @@ void CDynaModel::ResetElement()
 
 void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
-	if(nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize)
+	if(nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
 		throw dfw2error(Cex(_T("CDynaModel::ReallySetElement matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
 
 	MatrixRow *pRow = m_pMatrixRows + nRow;
@@ -243,7 +243,7 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 
 void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
-	if (nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize)
+	if (nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
 		throw dfw2error(Cex(_T("CDynaModel::ReallySetElement matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
 
 	CHECK_MATRIX_ELEMENT(nRow, nCol);
@@ -289,7 +289,7 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 // Функция подсчета количества элементов в строке матрицы
 void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
-	if (nRow >= m_nEstimatedMatrixSize)
+	if (nRow >= m_nEstimatedMatrixSize || nRow < 0 )
 		throw dfw2error(Cex(_T("CDynaModel::CountSetElement matrix size overrun Row %d Col %d MatrixSize %d"),nRow, nCol, m_nEstimatedMatrixSize));
 	if (!bAddToPrevious)
 	{
@@ -302,7 +302,7 @@ void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, 
 
 void CDynaModel::CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
-	if (nRow >= m_nEstimatedMatrixSize)
+	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
 		throw dfw2error(Cex(_T("CDynaModel::CountSetElementNoDup matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
 	// учитываем элементы с учетом суммирования
 	MatrixRow *pRow = m_pMatrixRows + nRow;
@@ -327,7 +327,7 @@ void CDynaModel::SetElement(const VariableIndexBase& Row, const VariableIndexBas
 // задает правую часть алгебраического уравнения
 void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 {
-	if (nRow >= m_nEstimatedMatrixSize)
+	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
 		throw dfw2error(Cex(_T("CDynaModel::SetFunction matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
 	_CheckNumber(dValue);
 	klu.B()[nRow] = -dValue;
@@ -539,7 +539,7 @@ void CDynaModel::ScaleAlgebraicEquations()
 
 bool CDynaModel::CountConstElementsToSkip(ptrdiff_t nRow)
 {
-	if (nRow >= m_nEstimatedMatrixSize)
+	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
 		throw dfw2error(Cex(_T("CDynaModel::CountConstElementsToSkip matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
 	MatrixRow *pRow = m_pMatrixRows + nRow;
 	pRow->m_nConstElementsToSkip = pRow->pAp - pRow->pApRow;

@@ -13,11 +13,11 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 	switch (GetCurrentState())
 	{
 	case LS_MAX:
-		*m_Output = dInput = m_dMax;
+		m_Output = dInput = m_dMax;
 		dOdI = 0.0;
 		break;
 	case LS_MIN:
-		*m_Output = dInput = m_dMin;
+		m_Output = dInput = m_dMin;
 		dOdI = 0.0;
 		break;
 	}
@@ -25,8 +25,8 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 	if (!m_pDevice->IsStateOn())
 		dOdI = 0.0;
 
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), dOdI);
+	pDynaModel->SetElement(m_Output, m_Output, 1.0);
+	pDynaModel->SetElement(m_Output.Index, m_Input->Index(), dOdI);
 	return true;
 }
 
@@ -38,16 +38,16 @@ bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 		switch (GetCurrentState())
 		{
 		case LS_MAX:
-			*m_Output = dInput = m_dMax;
+			m_Output = dInput = m_dMax;
 			break;
 		case LS_MIN:
-			*m_Output = dInput = m_dMin;
+			m_Output = dInput = m_dMin;
 			break;
 		}
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), *m_Output - dInput);
+		pDynaModel->SetFunction(m_Output, m_Output - dInput);
 	}
 	else
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
+		pDynaModel->SetFunction(m_Output, 0.0);
 
 	return true;
 }
@@ -98,7 +98,7 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 		double dInput   = m_Input->Value();
 		double CheckMax = dInput - m_dMax;
 		double CheckMin = m_dMin - dInput;
-		*m_Output = m_Input->Value();
+		m_Output = m_Input->Value();
 
 		// Bigger or Equal - very important !
 
@@ -107,12 +107,12 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 		if (CheckMax >= 0)
 		{
 			SetCurrentState(pDynaModel, LS_MAX);
-			*m_Output = m_dMax;
+			m_Output = m_dMax;
 		}
 		else if (CheckMin >= 0)
 		{
 			SetCurrentState(pDynaModel, LS_MIN);
-			*m_Output = m_dMin;
+			m_Output = m_dMin;
 		}
 		else
 		{

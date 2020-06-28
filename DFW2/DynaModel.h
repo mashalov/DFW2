@@ -1,10 +1,4 @@
 ﻿#pragma once
-#include "DynaGeneratorMustang.h"
-#include "DynaGeneratorInfBus.h"
-#include "DynaExciterMustang.h"
-#include "DynaDECMustang.h"
-#include "DynaExcConMustang.h"
-#include "DynaBranch.h"
 #include "Discontinuities.h"
 #include "CustomDevice.h"
 #include "Automatic.h"
@@ -629,6 +623,7 @@ namespace DFW2
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		double GetFunction(ptrdiff_t nRow);
 		struct RightVector* GetRightVector(ptrdiff_t nRow);
+		struct RightVector* GetRightVector(VariableIndexBase& Variable);
 
 		inline double GetOmega0() const
 		{

@@ -46,6 +46,7 @@ namespace DFW2
 		bool BuildRightHand(CDynaModel *pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);

@@ -13,14 +13,14 @@ bool CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 	case DBS_MAX:
 	case DBS_MIN:
 	case DBS_OFF:
-		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), 1.0);
+		pDynaModel->SetElement(m_Output.Index, m_Input->Index(), 1.0);
 		break;
 	case DBS_ZERO:
-		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), 0.0);
+		pDynaModel->SetElement(m_Output.Index, m_Input->Index(), 0.0);
 		break;
 	}
 
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
+	pDynaModel->SetElement(m_Output, m_Output, 1.0);
 
 	return true;
 }
@@ -34,22 +34,22 @@ bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 		switch (m_eDbState)
 		{
 		case DBS_MIN:
-			pDynaModel->SetFunction(A(m_OutputEquationIndex), *m_Output - dInput - m_Db);
+			pDynaModel->SetFunction(m_Output, m_Output - dInput - m_Db);
 			break;
 		case DBS_ZERO:
-			pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
-			*m_Output = 0.0;
+			pDynaModel->SetFunction(m_Output, 0.0);
+			m_Output = 0.0;
 			break;
 		case DBS_OFF:
-			pDynaModel->SetFunction(A(m_OutputEquationIndex), *m_Output - dInput);
+			pDynaModel->SetFunction(m_Output, m_Output - dInput);
 			break;
 		case DBS_MAX:
-			pDynaModel->SetFunction(A(m_OutputEquationIndex), *m_Output - dInput + m_Db);
+			pDynaModel->SetFunction(m_Output, m_Output - dInput + m_Db);
 			break;
 		}
 	}
 	else
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
+		pDynaModel->SetFunction(m_Output, 0.0);
 
 	return true;
 }
@@ -86,27 +86,27 @@ eDEVICEFUNCTIONSTATUS CDeadBand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 		if (m_eDbState != DBS_OFF)
 		{
-			*m_Output = 0.0;
+			m_Output = 0.0;
 
 			m_eDbState = DBS_ZERO;
 
 			if (dInput >= m_Db)
 			{
-				*m_Output = dInput - m_Db;
+				m_Output = dInput - m_Db;
 				m_eDbState = DBS_MAX;
 			}
 			else
 				if (dInput <= -m_Db)
 				{
-					*m_Output = dInput + m_Db;
+					m_Output = dInput + m_Db;
 					m_eDbState = DBS_MIN;
 				}
 		}
 		else
-			*m_Output = dInput;
+			m_Output = dInput;
 	}
 	else
-		*m_Output = 0.0;
+		m_Output = 0.0;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -135,7 +135,7 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 		}
 		if (OldState != m_eDbState)
 		{
-			pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), pDynaModel->GetCurrentTime(), pDynaModel->GetIntegrationStepNumber(), GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_DbMin, m_DbMax, OldState, m_eDbState);
+			pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), pDynaModel->GetCurrentTime(), pDynaModel->GetIntegrationStepNumber(), GetVerbalName(), m_pDevice->GetVerbalName(), (const double)m_Output, m_DbMin, m_DbMax, OldState, m_eDbState);
 			pDynaModel->DiscontinuityRequest();
 		}
 	}
@@ -157,7 +157,7 @@ void CDeadBand::SetCurrentState(DFW2DEADBANDSTATES CurrentState)
 double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
 	double dInput = m_Input->Value();
 	double CheckMin = -m_Db - dInput;
 
@@ -182,7 +182,7 @@ double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
 
 	double dInput = m_Input->Value();
 	double CheckMax = dInput - m_Db;
@@ -207,7 +207,7 @@ double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
 
 	double dInput = m_Input->Value();
 

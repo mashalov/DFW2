@@ -19,18 +19,18 @@ eDEVICEFUNCTIONSTATUS CComparator::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	if (m_pDevice->IsStateOn())
 	{
 		SetCurrentState(pDynaModel, (m_Input->Value() > m_Input2->Value()) ? RS_ON : RS_OFF);
-		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
 	else
-		*m_Output = 0.0;
+		m_Output = 0.0;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 double CComparator::OnStateOn(CDynaModel *pDynaModel)
 {
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-	RightVector *pRightVector2 = pDynaModel->GetRightVector(A(m_Input2->Index()));
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
+	RightVector *pRightVector2 = pDynaModel->GetRightVector(m_Input2->Index());
 	double dValue2 = m_Input2->Value();
 	double dCheck = m_Input->Value() - dValue2;
 	double rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
@@ -66,8 +66,8 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 
 double CComparator::OnStateOff(CDynaModel *pDynaModel)
 {
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-	RightVector *pRightVector2 = pDynaModel->GetRightVector(A(m_Input2->Index()));
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
+	RightVector *pRightVector2 = pDynaModel->GetRightVector(m_Input2->Index());
 	double dValue1 = m_Input->Value();
 	double dCheck = m_Input2->Value() - dValue1;
 	double rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);

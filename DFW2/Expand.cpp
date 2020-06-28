@@ -23,7 +23,7 @@ eDEVICEFUNCTIONSTATUS CExpand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		CRelay::eRELAYSTATES State = GetInstantState();
 		SetCurrentState(pDynaModel, State);
-		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -49,7 +49,7 @@ void CExpand::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 				pDynaModel->SetStateDiscontinuity(this, m_dDelay);
 			}
 			eCurrentState = CurrentState;
-			*m_Output = 1.0;
+			m_Output = 1.0;
 		}
 		break;
 	}
@@ -87,7 +87,7 @@ eDEVICEFUNCTIONSTATUS CShrink::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		CRelay::eRELAYSTATES State = GetInstantState();
 		SetCurrentState(pDynaModel, State);
-		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -107,12 +107,12 @@ void CShrink::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 	case RS_OFF:
 		if (CurrentState == RS_ON)
 		{
-			RightVector *pRightVector = pDynaModel->GetRightVector(A(m_Input->Index()));
+			RightVector *pRightVector = pDynaModel->GetRightVector(m_Input->Index());
 			if (pRightVector->SavedNordsiek[0] <= 0)
 			{
 				pDynaModel->SetStateDiscontinuity(this, m_dDelay);
 				eCurrentState = CurrentState;
-				*m_Output = 1.0;
+				m_Output = 1.0;
 			}
 		}
 		break;

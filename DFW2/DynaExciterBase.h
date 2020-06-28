@@ -12,6 +12,7 @@ namespace DFW2
 	{
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		PrimitiveVariable PvEqsum;
 		PrimitiveVariableExternal EqInput;
 		VariableIndexExternal GenId, GenIq, ExtVg;
 		VariableIndexExternalOptional ExtUf, ExtUdec;
@@ -35,7 +36,7 @@ namespace DFW2
 
 		double DECId, RegId;
 
-		VariableIndex Eqe, Eqsum;
+		VariableIndex Eqe, Eqsum, EqeV;
 		double Eqe0, Ig0, Eq0, Ug0;
 
 

@@ -42,7 +42,7 @@ eDEVICEFUNCTIONSTATUS CZCDetector::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		else
 			SetCurrentState(pDynaModel, RS_OFF);
 
-		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }

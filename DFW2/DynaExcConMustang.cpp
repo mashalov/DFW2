@@ -1,16 +1,31 @@
 #include "stdafx.h"
 #include "DynaExcConMustang.h"
 #include "DynaModel.h"
+#include "DerlagContinuous.h"
 
 using namespace DFW2;
 
 CDynaExcConMustang::CDynaExcConMustang() : CDevice(),
-	Lag(this, &Uf, V_UF, { &LagIn }),
+	Lag(this, Uf, { &LagIn }),
 	LagIn(V_USUM,Usum),
-	dVdt(this, dVdtOutValue, V_DVDT, { &dVdtIn }),
-	dEqdt(this, dEqdtOutValue, V_EQDT, { &dEqdtIn }),
-	dSdt(this, dSdtOutValue, V_SDT, { &dSdtIn })
+	dVdt(this, dVdtOutValue[0], { &dVdtIn }, {dVdtOutValue[1] }),
+	dEqdt(this, dEqdtOutValue[0], { &dEqdtIn }, { dEqdtOutValue[1] }),
+	dSdt(this, dSdtOutValue[0], { &dSdtIn }, { dSdtOutValue[1] })
 {
+}
+
+VariableIndexRefVec& CDynaExcConMustang::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDevice::GetVariables(JoinVariables({ Uf, 
+												 Usum, 
+												 Svt, 
+												 dVdtOutValue[0],
+												 dVdtOutValue[1],
+												 dEqdtOutValue[0],
+												 dEqdtOutValue[1],
+												 dSdtOutValue[0],
+												 dSdtOutValue[1]
+												}, ChildVec));
 }
 
 double* CDynaExcConMustang::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -18,15 +33,15 @@ double* CDynaExcConMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 	double *p(nullptr);
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(Uf, V_UF)
-		MAP_VARIABLE(Usum, V_USUM)
-		MAP_VARIABLE(Svt, V_SVT)
-		MAP_VARIABLE(dVdtOutValue[0], V_DVDT)
-		MAP_VARIABLE(dEqdtOutValue[0], V_EQDT)
-		MAP_VARIABLE(dSdtOutValue[0], V_SDT)
-		MAP_VARIABLE(dVdtOutValue[1], V_DVDT + 1)
-		MAP_VARIABLE(dEqdtOutValue[1], V_EQDT + 1)
-		MAP_VARIABLE(dSdtOutValue[1], V_SDT + 1)
+		MAP_VARIABLE(Uf.Value, V_UF)
+		MAP_VARIABLE(Usum.Value, V_USUM)
+		MAP_VARIABLE(Svt.Value, V_SVT)
+		MAP_VARIABLE(dVdtOutValue[0].Value, V_DVDT)
+		MAP_VARIABLE(dEqdtOutValue[0].Value, V_EQDT)
+		MAP_VARIABLE(dSdtOutValue[0].Value, V_SDT)
+		MAP_VARIABLE(dVdtOutValue[1].Value, V_DVDT + 1)
+		MAP_VARIABLE(dEqdtOutValue[1].Value, V_EQDT + 1)
+		MAP_VARIABLE(dSdtOutValue[1].Value, V_SDT + 1)
 	}
 	return p;
 }
@@ -97,37 +112,37 @@ bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 	double V = dVdtIn.Value(); //pNode->V;
 
 	// dUsum / dUsum
-	pDynaModel->SetElement(A(V_USUM), A(V_USUM), 1.0);
+	pDynaModel->SetElement(Usum, Usum, 1.0);
 
 	if (IsStateOn())
 	{
 		// dUsum / dV
-		pDynaModel->SetElement(A(V_USUM), A(dVdtIn.Index()), K0u);
+		pDynaModel->SetElement(Usum.Index, dVdtIn.Index(), K0u);
 		// dUsum / Sv
-		pDynaModel->SetElement(A(V_USUM), A(dSdtIn.Index()), -K0u * Alpha * Vref - K0f);
+		pDynaModel->SetElement(Usum.Index, dSdtIn.Index(), -K0u * Alpha * Vref - K0f);
 		// dUsum / Svt
-		pDynaModel->SetElement(A(V_USUM), A(V_SVT), K0f);
+		pDynaModel->SetElement(Usum, Svt, K0f);
 		// dUsum / dVdt
-		pDynaModel->SetElement(A(V_USUM), A(V_DVDT), 1.0);
+		pDynaModel->SetElement(Usum, dVdtOutValue[0], 1.0);
 		// dUsum / dEqdt
-		pDynaModel->SetElement(A(V_USUM), A(V_EQDT), 1.0);
+		pDynaModel->SetElement(Usum, dEqdtOutValue[0], 1.0);
 		// dUsum / dSdt
-		pDynaModel->SetElement(A(V_USUM), A(V_SDT), -1.0);
+		pDynaModel->SetElement(Usum, dSdtOutValue[0], -1.0);
 		//dSvt / dSvt
-		pDynaModel->SetElement(A(V_SVT), A(V_SVT), -1.0 / Tf);
+		pDynaModel->SetElement(Svt, Svt, -1.0 / Tf);
 		//dSvt / dSv
-		pDynaModel->SetElement(A(V_SVT), A(dSdtIn.Index()), -1.0 / Tf);
+		pDynaModel->SetElement(Svt.Index, dSdtIn.Index(), -1.0 / Tf);
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_USUM), A(dVdtIn.Index()), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(dSdtIn.Index()), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(V_SVT), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(V_DVDT), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(V_EQDT), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(V_SDT), 0.0);
-		pDynaModel->SetElement(A(V_SVT), A(V_SVT), 1.0);
-		pDynaModel->SetElement(A(V_SVT), A(dSdtIn.Index()), 0.0);
+		pDynaModel->SetElement(Usum.Index, dVdtIn.Index(), 0.0);
+		pDynaModel->SetElement(Usum.Index, dSdtIn.Index(), 0.0);
+		pDynaModel->SetElement(Usum, Svt, 0.0);
+		pDynaModel->SetElement(Usum, dVdtOutValue[0], 0.0);
+		pDynaModel->SetElement(Usum, dEqdtOutValue[0], 0.0);
+		pDynaModel->SetElement(Usum, dSdtOutValue[0], 0.0);
+		pDynaModel->SetElement(Svt, Svt, 1.0);
+		pDynaModel->SetElement(Svt.Index, dSdtIn.Index(), 0.0);
 	}
 		
 	bRes = bRes && CDevice::BuildEquations(pDynaModel);
@@ -141,20 +156,20 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 	{
 		double NodeV = dVdtIn.Value();
 		double dSum = Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn.Value()) - NodeV) - K0f * (dSdtIn.Value() - Svt) + *dVdtOutValue + *dEqdtOutValue - *dSdtOutValue;
-		RightVector *pRV = pDynaModel->GetRightVector(A(V_USUM));
+		RightVector *pRV = pDynaModel->GetRightVector(Usum);
 		/*
 		if ((m_Id == 16) && pDynaModel->GetStepNumber() >= 399)
 		{
 			ATLTRACE(_T("\nId=%d V=%g dSdtIn=%g Svt=%g dVdt=%g dEqdt=%g dSdt=%g NordUsum=%g"), m_Id, NodeV, dSdtIn.Value(), Svt, *dVdtOutValue, *dEqdtOutValue, *dSdtOutValue, pRV->Nordsiek[0]);
 		}
 		*/
-		pDynaModel->SetFunction(A(V_USUM), dSum);
-		pDynaModel->SetFunctionDiff(A(V_SVT), (dSdtIn.Value() - Svt) / Tf);
+		pDynaModel->SetFunction(Usum, dSum);
+		pDynaModel->SetFunctionDiff(Svt, (dSdtIn.Value() - Svt) / Tf);
 	}
 	else
 	{
-		pDynaModel->SetFunction(A(V_USUM), 0.0);
-		pDynaModel->SetFunctionDiff(A(V_SVT), 0.0);
+		pDynaModel->SetFunction(Usum, 0.0);
+		pDynaModel->SetFunctionDiff(Svt, 0.0);
 	}
 
 	CDevice::BuildRightHand(pDynaModel);
@@ -165,9 +180,9 @@ bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = CDevice::BuildDerivatives(pDynaModel);
 	if (IsStateOn())
-		pDynaModel->SetDerivative(A(V_SVT), (dSdtIn.Value() - Svt) / Tf);
+		pDynaModel->SetDerivative(Svt, (dSdtIn.Value() - Svt) / Tf);
 	else
-		pDynaModel->SetDerivative(A(V_SVT), 0.0);
+		pDynaModel->SetDerivative(Svt, 0.0);
 	return true;
 }
 
@@ -208,6 +223,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dVdtIn, pExciter, CDynaNode::m_cszV, DEVTYPE_NODE));
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dEqdtIn, pExciter, CDynaGenerator1C::m_cszEq, DEVTYPE_GEN_1C));
 	}
+	LagIn.Index(m_nMatrixRow + V_USUM);
 	return eRes;
 }
 

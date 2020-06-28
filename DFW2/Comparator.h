@@ -12,8 +12,8 @@ namespace DFW2
 		double OnStateOff(CDynaModel *pDynaModel) override;
 
 	public:
-		CComparator(CDevice* pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :
-			CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input)
+		CComparator(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinaryOutput(pDevice, OutputVariable, Input, ExtraOutputVariables)
 		{
 			InitializeInputs({ &m_Input, &m_Input2 }, Input);
 		}

@@ -9,8 +9,8 @@ namespace DFW2
 		double OnStateOn(CDynaModel *pDynaModel) override;
 		double OnStateOff(CDynaModel *pDynaModel) override;
 	public:
-		CZCDetector(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
-			CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input) {}
+		CZCDetector(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinaryOutput(pDevice, OutputVariable, Input, ExtraOutputVariables) {}
 		virtual ~CZCDetector() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

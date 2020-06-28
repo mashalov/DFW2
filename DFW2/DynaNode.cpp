@@ -2,6 +2,7 @@
 #include "DynaBranch.h"
 #include "DynaModel.h"
 #include "GraphCycle.h"
+#include "DynaGeneratorMotion.h"
 
 using namespace DFW2;
 
@@ -200,8 +201,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-			pDynaModel->SetElement(Vre.Index, pGen->A(CDynaPowerInjector::V_IRE), dGenMatrixCoe);
-			pDynaModel->SetElement(Vim.Index, pGen->A(CDynaPowerInjector::V_IIM), dGenMatrixCoe);
+			pDynaModel->SetElement(Vre, pGen->Ire, dGenMatrixCoe);
+			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe);
 		}
 
 		if (m_bInMetallicSC)

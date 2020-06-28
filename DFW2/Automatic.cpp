@@ -308,7 +308,7 @@ bool CAutomatic::NotifyRelayDelay(const CRelayDelayLogic* pRelay)
 	if (pRelay->GetDiscontinuityId() <= 0)
 		return true;
 
-	if (*pRelay->Output() == 0)
+	if (pRelay == 0)
 		return true;
 
 

@@ -4,10 +4,12 @@
 
 using namespace DFW2;
 
+/*
 ptrdiff_t CDynaPrimitive::A(ptrdiff_t nOffset)
 { 
 	return m_pDevice->A(nOffset); 
 }
+*/
 
 bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 {
@@ -16,18 +18,6 @@ bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 		bRes = true;
 	return bRes;
 }
-
-CDynaPrimitiveState::CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
-		CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input)
-{
-	pDevice->RegisterStatePrimitive(this);
-}
-
-CDynaPrimitiveState::CDynaPrimitiveState(CDevice *pDevice, VariableIndex* pInput) : CDynaPrimitive(pDevice, pInput)
-{
-	pDevice->RegisterStatePrimitive(this);
-}
-
 
 bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 {
@@ -44,21 +34,14 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 
 		SetMinMax(pDynaModel, m_dMin, m_dMax);
 
-		if (m_Output)
+		if (m_Output > m_dMaxH || m_Output < m_dMinH)
 		{
-			if (*m_Output > m_dMaxH || *m_Output < m_dMinH)
-			{
-				m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_dMin, m_dMax));
-				bRes = false;
-			}
-		}
-		else
-		{
-			if (m_viOutput > m_dMaxH || m_viOutput < m_dMinH)
-			{
-				m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, GetVerbalName(), m_pDevice->GetVerbalName(), (double)m_viOutput, m_dMin, m_dMax));
-				bRes = false;
-			}
+			m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, 
+						   Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, 
+							   GetVerbalName(), 
+							   m_pDevice->GetVerbalName(), 
+							   static_cast<const double>(m_Output), m_dMin, m_dMax));
+			bRes = false;
 		}
 	}
 	return bRes;
@@ -103,7 +86,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 
 	bool bChangeState = false;
 
-	RightVector *pRightVector = pDynaModel->GetRightVector(A(ValueIndex));
+	RightVector *pRightVector = pDynaModel->GetRightVector(ValueIndex);
 	rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
 
 	if (pDynaModel->GetZeroCrossingInRange(rH))
@@ -165,7 +148,7 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 			pDynaModel->GetIntegrationStepNumber(),
 			GetVerbalName(), 
 			m_pDevice->GetVerbalName(),
-			*m_Output, 
+			static_cast<const double>(m_Output), 
 			m_dMin, m_dMax, 
 			oldCurrentState, eCurrentState);
 		pDynaModel->DiscontinuityRequest();
@@ -260,13 +243,13 @@ void CDynaPrimitiveBinary::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 bool CDynaPrimitiveBinary::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
+	pDynaModel->SetElement(m_Output, m_Output, 1.0);
 	return true;
 }
 
 bool CDynaPrimitiveBinary::BuildRightHand(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
+	pDynaModel->SetFunction(m_Output, 0.0);
 	return true;
 }
 

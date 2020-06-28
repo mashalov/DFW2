@@ -1,6 +1,11 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
-#include "Automatic.h"
+#include "DynaGeneratorMustang.h"
+#include "DynaGeneratorInfBus.h"
+#include "DynaExciterMustang.h"
+#include "DynaDECMustang.h"
+#include "DynaExcConMustang.h"
+#include "DynaBranch.h"
 
 #define _LFINFO_
 

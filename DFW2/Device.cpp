@@ -635,7 +635,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternalOptional& ExtVar, CDevic
 		InitExternalVariable(v, pFromDevice, cszName, eLimitDeviceType);
 		if (v.Indexed())
 		{
-			ExtVar.Index = v.Index() + A(0);
+			ExtVar.Index = v.Index();
 			ExtVar.m_pValue = &v.Value();
 		}
 	}
@@ -651,7 +651,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 	if (bRes)
 	{
 		if(v.Indexed())
-			ExtVar.Index = v.Index() + A(0);
+			ExtVar.Index = v.Index();
 		ExtVar.m_pValue = &v.Value();
 	}
 	return bRes;
@@ -689,7 +689,7 @@ bool CDevice::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* p
 					if (extVar.pValue)
 					{
 						// если устроство имеет уравнения - возвращаем индекс относительно индекса устройства, иначе - индекс "не назначено"
-						ExtVar.IndexAndValue(AssignedToMatrix() ? extVar.nIndex - A(0) : CDevice::nIndexUnassigned, extVar.pValue);
+						ExtVar.IndexAndValue(AssignedToMatrix() ? extVar.nIndex : CDevice::nIndexUnassigned, extVar.pValue);
 						bRes = true;
 					}
 				}
@@ -1139,9 +1139,10 @@ VariableIndexRefVec& CDevice::GetVariables(VariableIndexRefVec& ChildVec)
 
 VariableIndexRefVec& CDevice::JoinVariables(std::vector<std::reference_wrapper<VariableIndex>> ThisVars, VariableIndexRefVec& ChildVec)
 {
-	ChildVec.reserve(ChildVec.size() + ThisVars.size() + m_Primitives.size());
-	for (auto&& it : m_Primitives)
-		ChildVec.insert(ChildVec.begin(), *it);
+	//ChildVec.reserve(ChildVec.size() + ThisVars.size());
+	//for (auto&& it : m_Primitives)
+	//	ChildVec.insert(ChildVec.begin(), *it);
+	//ChildVec.insert(ChildVec.begin(), ThisVars.begin(), ThisVars.end());
 	ChildVec.insert(ChildVec.begin(), ThisVars.begin(), ThisVars.end());
 	return ChildVec;
 }

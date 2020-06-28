@@ -7,7 +7,7 @@ using namespace DFW2;
 bool CRSTrigger::Init(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	*m_Output = 0.0;
+	m_Output = 0.0;
 	ProcessDiscontinuity(pDynaModel);
 	return bRes;
 }
@@ -16,7 +16,7 @@ eDEVICEFUNCTIONSTATUS CRSTrigger::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_pDevice->IsStateOn())
 	{
-		double dOldOut = *m_Output;
+		double dOldOut = m_Output;
 		double &R = m_Input->Value();
 		double &S = m_Input1->Value();
 
@@ -25,20 +25,20 @@ eDEVICEFUNCTIONSTATUS CRSTrigger::ProcessDiscontinuity(CDynaModel* pDynaModel)
 			if (R > 0.0)
 			{
 				if (m_bResetPriority)
-					*m_Output = 0.0;
+					m_Output = 0.0;
 				else
-					*m_Output = 1.0;
+					m_Output = 1.0;
 			}
 			else
-				*m_Output = 1.0;
+				m_Output = 1.0;
 		}
 		else
 		{
 			if (R > 0.0)
-				*m_Output = 0.0;
+				m_Output = 0.0;
 		}
 
-		if (dOldOut != *m_Output)
+		if (dOldOut != m_Output)
 			pDynaModel->DiscontinuityRequest();
 	}
 

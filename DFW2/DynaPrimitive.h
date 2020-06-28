@@ -64,25 +64,37 @@ namespace DFW2
 	using PRIMITIVEPARAMETERSDEFAULT = std::vector<PRIMITIVEPARAMETERDEFAULT>;
 	using DOUBLEREFVEC = std::vector<std::reference_wrapper<double>>;
 
+	struct InputVariable
+	{
+		double*& pValue;
+		double* pInternal;
+		ptrdiff_t& Index;
+		InputVariable(VariableIndex& Variable) : pInternal(&Variable.Value), pValue(pInternal), Index(Variable.Index) {}
+		InputVariable(VariableIndexExternal& Variable) : pInternal(nullptr), pValue(Variable.m_pValue), Index(Variable.Index) {}
+		constexpr operator double& () { return *pValue; }
+		constexpr operator const double& () const { return *pValue; }
+		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
+	};
+
+	using ExtraOutputList = std::initializer_list<std::reference_wrapper<VariableIndex>>;
+	using InputList = std::initializer_list<PrimitiveVariableBase*>;
+
 	class CDynaPrimitive
 	{
 	protected:
 		PrimitiveVariableBase *m_Input = nullptr;
-		VariableIndex m_viOutput;
-		VariableIndex* m_viInput = nullptr;
-		double *m_Output = nullptr;
+		VariableIndex& m_Output;
 		CDevice *m_pDevice;
-		ptrdiff_t A(ptrdiff_t nOffset);
-		ptrdiff_t m_OutputEquationIndex;
+		//ptrdiff_t A(ptrdiff_t nOffset);
 		bool ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH);
 		bool UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters);
 		bool UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters);
 	public:
-		constexpr operator double& () { return m_viOutput.Value; }
-		constexpr operator const double& () const { return m_viOutput.Value; }
-		constexpr double& operator= (double value) { m_viOutput.Value = value;  return m_viOutput.Value; }
-		constexpr operator VariableIndex& () { return m_viOutput; }
-		constexpr operator const VariableIndex& () const { return m_viOutput; }
+		constexpr operator double& () { return m_Output.Value; }
+		constexpr operator const double& () const { return m_Output.Value; }
+		constexpr double& operator= (double value) { m_Output.Value = value;  return m_Output.Value; }
+		constexpr operator VariableIndex& () { return m_Output; }
+		constexpr operator const VariableIndex& () const { return m_Output; }
 
 		static void InitializeInputs(std::initializer_list<PrimitiveVariableBase**> InputVariables, std::initializer_list<PrimitiveVariableBase*> Input)
 		{
@@ -97,21 +109,13 @@ namespace DFW2
 		}
 
 		CDynaPrimitive(CDevice *pDevice, 
-					   double* pOutput, 
-					   ptrdiff_t nOutputIndex, 
-					   std::initializer_list<PrimitiveVariableBase*> Input) : m_pDevice(pDevice), 
-																			  m_Output(pOutput),
-																			  m_OutputEquationIndex(nOutputIndex)
+					   VariableIndex& OutputVariable,
+					   InputList Input,
+					   ExtraOutputList ExtraOutputVariables = {}) : m_pDevice(pDevice),
+																    m_Output(OutputVariable)
 		{
-			*m_Output = 0.0;
+			m_Output = 0.0;
 			InitializeInputs({&m_Input}, Input);
-			pDevice->RegisterPrimitive(this);
-		}
-
-		CDynaPrimitive(CDevice* pDevice, VariableIndex* pInput) : m_pDevice(pDevice),
-															      m_viInput(pInput)
-		{
-			m_viOutput = 0.0;
 			pDevice->RegisterPrimitive(this);
 		}
 
@@ -129,14 +133,20 @@ namespace DFW2
 		virtual bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) { return true; }
 		static double GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c);
 		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst);
-		inline const double* Output() const { return m_Output; }
+		//inline const double* Output() const { return m_Output; }
 	};
 
 	class CDynaPrimitiveState : public CDynaPrimitive 
 	{
 	public:
-		CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input);
-		CDynaPrimitiveState(CDevice* pDevice, VariableIndex* pInput);
+		CDynaPrimitiveState(CDevice* pDevice, 
+							VariableIndex& OutputVariable, 
+							InputList Input, 
+							ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitive(pDevice, OutputVariable, Input, ExtraOutputVariables)
+		{
+			pDevice->RegisterStatePrimitive(this);
+		}
 		virtual void StoreState() = 0;
 		virtual void RestoreState() = 0;
 	};
@@ -171,9 +181,8 @@ namespace DFW2
 		inline eLIMITEDSTATES GetCurrentState() { return eCurrentState; }
 		void SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		CDynaPrimitiveLimited(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
-			CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
-		CDynaPrimitiveLimited(CDevice* pDevice, VariableIndex* pInput) : CDynaPrimitiveState(pDevice, pInput) {}
+		CDynaPrimitiveLimited(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveState(pDevice, OutputVariable, Input, ExtraOutputVariables) {}
 		virtual ~CDynaPrimitiveLimited() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		void StoreState() override { eSavedState = eCurrentState; }
@@ -193,8 +202,8 @@ namespace DFW2
 		virtual inline eRELAYSTATES GetCurrentState() { return eCurrentState; }
 		virtual void RequestZCDiscontinuity(CDynaModel* pDynaModel);
 	public:
-		CDynaPrimitiveBinary(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
-			CDynaPrimitiveState(pDevice, pOutput, nOutputIndex, Input) {}
+		CDynaPrimitiveBinary(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveState(pDevice, OutputVariable, Input, ExtraOutputVariables) {}
 		void InvertState(CDynaModel *pDynaModel);
 		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
 		bool BuildEquations(CDynaModel *pDynaModel) override;
@@ -210,8 +219,8 @@ namespace DFW2
 		virtual double OnStateOn(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateOff(CDynaModel *pDynaModel) { return 1.0; }
 	public:
-		CDynaPrimitiveBinaryOutput(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) : 
-			CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input) {}
+		CDynaPrimitiveBinaryOutput(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(pDevice, OutputVariable, Input, ExtraOutputVariables) {}
 		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 	};

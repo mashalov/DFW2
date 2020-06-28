@@ -5,8 +5,8 @@
 using namespace DFW2;
 
 CDynaExciterBase::CDynaExciterBase() : CDevice(),
-									   //ExcLag(this, &EqeV.Value, V_EQEV, &PvEqsum)
-									   ExcLag(this, &Eqsum)
+									   PvEqsum(V_EQSUM, Eqsum),
+									   ExcLag(this, EqeV, { &PvEqsum })
 {
 }
 
@@ -44,7 +44,7 @@ double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Eqe.Value, V_EQE)
-		MAP_VARIABLE(((VariableIndex&)ExcLag).Value, V_EQEV)
+		MAP_VARIABLE(EqeV.Value, V_EQEV)
 		MAP_VARIABLE(Eqsum.Value, V_EQSUM)
 	}
 	return p;
@@ -53,7 +53,7 @@ double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 VariableIndexRefVec& CDynaExciterBase::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	// ExcLag добавляется автоматически в JoinVariables
-	return CDevice::GetVariables(JoinVariables({Eqe, Eqsum}, ChildVec));
+	return CDevice::GetVariables(JoinVariables({Eqe, Eqsum, EqeV}, ChildVec));
 }
 
 double CDynaExciterBase::GetIg()
@@ -87,6 +87,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::UpdateExternalVariables(CDynaModel *pDyn
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGenerator1C::m_cszEq));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, GetSingleLink(DEVTYPE_EXCCON), CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, GetSingleLink(DEVTYPE_DEC), CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG));
+	PvEqsum.Index(m_nMatrixRow + V_EQSUM);
 	return eRes;
 }
 

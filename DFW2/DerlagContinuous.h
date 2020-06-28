@@ -7,10 +7,10 @@ namespace DFW2
 	{
 	protected:
 		double m_K, m_T;
+		VariableIndex& m_Y2;
 	public:
-		double *m_Y2;
-		CDerlagContinuous(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :  
-			CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input), m_Y2(pOutput + 1) {}
+		CDerlagContinuous(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitive(pDevice, OutputVariable, Input, ExtraOutputVariables), m_Y2(ExtraOutputVariables.begin()->get()) {}
 		virtual ~CDerlagContinuous() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool BuildEquations(CDynaModel *pDynaModel) override;
@@ -24,14 +24,15 @@ namespace DFW2
 		static long EquationsCount()  { return 2; }
 	};
 
+	/*
 	class CDerlagNordsieck : public CDynaPrimitive
 	{
 	protected:
 		double m_K, m_T;
 	public:
-		double *m_Dummy1, *m_Dummy2;
-		CDerlagNordsieck(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, std::initializer_list<PrimitiveVariableBase*> Input) :
-			CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input), m_Dummy1(pOutput + 1), m_Dummy2(pOutput + 2) {}
+		VariableIndex 
+		CDerlagNordsieck(CDevice *pDevice, VariableIndex& OutputVariable, std::initializer_list<PrimitiveVariableBase*> Input) :
+			CDynaPrimitive(pDevice, OutputVariable, Input), m_Dummy1(pOutput + 1), m_Dummy2(pOutput + 2) {}
 		virtual ~CDerlagNordsieck() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool BuildEquations(CDynaModel *pDynaModel) override;
@@ -44,6 +45,7 @@ namespace DFW2
 		static size_t PrimitiveSize() { return sizeof(CDerlagNordsieck); }
 		static long EquationsCount() { return 3; }
 	};
+	*/
 
 
 #define CDerlag CDerlagContinuous
