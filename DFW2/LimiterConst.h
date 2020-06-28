@@ -10,8 +10,8 @@ namespace DFW2
 		double OnStateMin(CDynaModel *pDynaModel) override;
 		double OnStateMid(CDynaModel *pDynaModel) override;
 	public:
-		CLimiterConst(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-			CDynaPrimitiveLimited(pDevice, OutputVariable, Input, ExtraOutputVariables) {}
+		CLimiterConst(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+			CDynaPrimitiveLimited(Device, OutputVariable, Input, ExtraOutputVariables) {}
 		virtual ~CLimiterConst() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool BuildEquations(CDynaModel *pDynaModel) override;

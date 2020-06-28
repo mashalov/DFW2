@@ -96,64 +96,64 @@ bool CCustomDevice::BuildStructure()
 		switch (bit->eType)
 		{
 		case PBT_LAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_LIMITEDLAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_DERLAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CDerlag(this, Output, { *(pPrimsPtrs + 1) }, { m_pVars[(*pPrimsPtrs)->Index() + 1] });
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CDerlag(*this, Output, { *(pPrimsPtrs + 1) }, { m_pVars[(*pPrimsPtrs)->Index() + 1] });
 			break;
 		case PBT_INTEGRATOR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_LIMITEDINTEGRATOR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_LIMITERCONST:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimiterConst(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimiterConst(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_RELAY:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_RELAYDELAY:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_RELAYDELAYLOGIC:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_RSTRIGGER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(*this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
 			break;
 		case PBT_HIGHER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(*this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
 			break;
 		case PBT_LOWER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(this, Output, { *(pPrimsPtrs + 2), *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(*this, Output, { *(pPrimsPtrs + 2), *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_BIT:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CZCDetector(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CZCDetector(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_AND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CAnd(this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CAnd(*this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
 			break;
 		case PBT_OR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) COr(this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) COr(*this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
 			break;
 		case PBT_NOT:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CNot(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CNot(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_ABS:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CAbs(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CAbs(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_DEADBAND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CDeadBand(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CDeadBand(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_EXPAND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CExpand(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CExpand(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		case PBT_SHRINK:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(*this, Output, { *(pPrimsPtrs + 1) }, {});
 			break;
 		}
 	}
@@ -521,7 +521,7 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - output variable must have type VariableIndex"));
 
 		VariableIndex& OutputVar(std::get<0>(PrimaryOutput.Variable));
-		Container.CreatePrimitive(prim.eBlockType, this, OutputVar, { m_PrimExt.back().get() }, {});
+		Container.CreatePrimitive(prim.eBlockType, *this, OutputVar, { m_PrimExt.back().get() }, {});
 	}
 }
 

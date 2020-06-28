@@ -35,7 +35,7 @@ bool CZCDetector::Init(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CZCDetector::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		if (m_Input->Value() > 0)
 			SetCurrentState(pDynaModel, RS_ON);

@@ -93,7 +93,7 @@ namespace DFW2
 		size_t m_nSize = 0;
 	public:
 		void IncSize() { m_nSize++; }
-		virtual CDynaPrimitive* Create(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) = 0;
+		virtual CDynaPrimitive* Create(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) = 0;
 		virtual void Allocate(size_t nDevicesCount) = 0;
 		virtual ~CPrimitivePoolBase() {};
 	};
@@ -104,9 +104,9 @@ namespace DFW2
 	protected:
 		std::vector<T> m_Primitives;
 	public:
-		CDynaPrimitive* Create(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) override
+		CDynaPrimitive* Create(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) override
 		{
-			m_Primitives.emplace_back(pDevice, OutputVariable, Input, ExtraOutputVariables);
+			m_Primitives.emplace_back(Device, OutputVariable, Input, ExtraOutputVariables);
 			return &m_Primitives.back();
 		}
 		void Allocate(size_t nDevicesCount) override
@@ -156,13 +156,13 @@ namespace DFW2
 		}
 
 		CDynaPrimitive* Create(PrimitiveBlockType ePrimitiveType, 
-							   CDevice* pDevice, 
+							   CDevice& Device, 
 							   VariableIndex& OutputVariable, 
 							   InputList Input, 
 							   ExtraOutputList ExtraOutputVariables)
 		{
 			CDevice::CheckIndex(m_Pools, ePrimitiveType);
-			return m_Pools[ePrimitiveType]->Create(pDevice, OutputVariable, Input, ExtraOutputVariables);
+			return m_Pools[ePrimitiveType]->Create(Device, OutputVariable, Input, ExtraOutputVariables);
 		}
 
 		std::array<std::unique_ptr<CPrimitivePoolBase>, PrimitiveBlockType::PBT_LAST> m_Pools;
@@ -180,7 +180,7 @@ namespace DFW2
 		void BuildStructure();
 		void ConnectDLL(const _TCHAR* cszDLLFilePath);
 		CDynaPrimitive* CreatePrimitive(PrimitiveBlockType ePrimitiveType,
-										CDevice* pDevice,
+										CDevice& Device,
 										VariableIndex& OutputVariable,
 										InputList Input,
 										ExtraOutputList ExtraOutputVariables);

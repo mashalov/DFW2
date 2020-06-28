@@ -6,7 +6,7 @@ using namespace DFW2;
 
 CDynaExciterBase::CDynaExciterBase() : CDevice(),
 									   PvEqsum(V_EQSUM, Eqsum),
-									   ExcLag(this, EqeV, { &PvEqsum })
+									   ExcLag(*this, EqeV, { &PvEqsum })
 {
 }
 

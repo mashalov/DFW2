@@ -15,7 +15,7 @@ bool CAbs::BuildEquations(CDynaModel *pDynaModel)
 
 bool CAbs::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dInput = m_Input->Value();
 		pDynaModel->SetFunction(m_Output, m_Output - (m_bPositive ? dInput : -dInput));
@@ -37,7 +37,7 @@ bool CAbs::Init(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dInput = m_Input->Value();
 
@@ -59,7 +59,7 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	if (!m_pDevice->IsStateOn())
+	if (!m_Device.IsStateOn())
 		return rH;
 
 	double dInput = m_Input->Value();

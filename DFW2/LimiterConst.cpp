@@ -22,7 +22,7 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 		break;
 	}
 
-	if (!m_pDevice->IsStateOn())
+	if (!m_Device.IsStateOn())
 		dOdI = 0.0;
 
 	pDynaModel->SetElement(m_Output, m_Output, 1.0);
@@ -32,7 +32,7 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 
 bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dInput = m_Input->Value();
 		switch (GetCurrentState())
@@ -93,7 +93,7 @@ double CLimiterConst::OnStateMax(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dInput   = m_Input->Value();
 		double CheckMax = dInput - m_dMax;

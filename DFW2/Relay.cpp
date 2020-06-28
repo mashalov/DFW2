@@ -85,7 +85,7 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 
 eDEVICEFUNCTIONSTATUS CRelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		CRelay::eRELAYSTATES State = GetInstantState();
 		SetCurrentState(pDynaModel, State);
@@ -133,7 +133,7 @@ bool CRelayDelay::Init(CDynaModel *pDynaModel)
 	bool bRes = true;
 
 	eCurrentState = RS_OFF;
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		eCurrentState = GetInstantState();
 		bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
@@ -174,7 +174,7 @@ void CRelayDelay::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentSt
 
 eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		CRelay::eRELAYSTATES OldState(eCurrentState);
 		CRelay::eRELAYSTATES State = GetInstantState();
@@ -209,7 +209,7 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 	bool bRes = CRelayDelay::Init(pDynaModel);
 	if (bRes)
 	{
-		if (m_pDevice->IsStateOn())
+		if (m_Device.IsStateOn())
 		{
 			if (eCurrentState == RS_ON && m_dDelay > 0)
 			{

@@ -16,7 +16,7 @@ bool CComparator::Init(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CComparator::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		SetCurrentState(pDynaModel, (m_Input->Value() > m_Input2->Value()) ? RS_ON : RS_OFF);
 		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;

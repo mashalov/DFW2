@@ -6,11 +6,11 @@
 using namespace DFW2;
 
 CDynaExcConMustang::CDynaExcConMustang() : CDevice(),
-	Lag(this, Uf, { &LagIn }),
+	Lag(*this, Uf, { &LagIn }),
 	LagIn(V_USUM,Usum),
-	dVdt(this, dVdtOutValue[0], { &dVdtIn }, {dVdtOutValue[1] }),
-	dEqdt(this, dEqdtOutValue[0], { &dEqdtIn }, { dEqdtOutValue[1] }),
-	dSdt(this, dSdtOutValue[0], { &dSdtIn }, { dSdtOutValue[1] })
+	dVdt(*this, dVdtOutValue[0], { &dVdtIn }, {dVdtOutValue[1] }),
+	dEqdt(*this, dEqdtOutValue[0], { &dEqdtIn }, { dEqdtOutValue[1] }),
+	dSdt(*this, dSdtOutValue[0], { &dSdtIn }, { dSdtOutValue[1] })
 {
 }
 

@@ -27,8 +27,8 @@ namespace DFW2
 		void SetCurrentState(DFW2DEADBANDSTATES CurrentState);
 
 	public:
-		CDeadBand(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveState(pDevice, OutputVariable, Input, ExtraOutputVariables) {}
+		CDeadBand(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveState(Device, OutputVariable, Input, ExtraOutputVariables) {}
 		virtual ~CDeadBand() {}
 
 		bool Init(CDynaModel *pDynaModel) override;

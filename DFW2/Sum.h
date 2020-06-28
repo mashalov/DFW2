@@ -8,8 +8,8 @@ namespace DFW2
 		double m_K1, m_K2;
 		PrimitiveVariableBase* m_Input1;
 	public:
-		CSum(CDevice *pDevice, VariableIndex& OutputVariable, std::initializer_list<PrimitiveVariableBase*> Input) :
-			CDynaPrimitive(pDevice, OutputVariable, Input),
+		CSum(CDevice& Device, VariableIndex& OutputVariable, std::initializer_list<PrimitiveVariableBase*> Input) :
+			CDynaPrimitive(Device, OutputVariable, Input),
 			m_K1(1.0), 
 			m_K2(1.0) 
 		{

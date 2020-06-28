@@ -27,7 +27,7 @@ bool CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 
 bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dInput = m_Input->Value();
 
@@ -61,7 +61,7 @@ bool CDeadBand::Init(CDynaModel *pDynaModel)
 	bool bRes = CDynaPrimitive::Init(pDynaModel);
 	if (m_Db < 0)
 	{
-		m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongDeadBandParameter, GetVerbalName(), m_pDevice->GetVerbalName(), m_Db));
+		m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongDeadBandParameter, GetVerbalName(), m_Device.GetVerbalName(), m_Db));
 		bRes = false;
 	}
 	else
@@ -80,7 +80,7 @@ bool CDeadBand::Init(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDeadBand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dInput = m_Input->Value();
 
@@ -115,7 +115,7 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		DFW2DEADBANDSTATES OldState = m_eDbState;
 
@@ -135,7 +135,7 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 		}
 		if (OldState != m_eDbState)
 		{
-			pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), pDynaModel->GetCurrentTime(), pDynaModel->GetIntegrationStepNumber(), GetVerbalName(), m_pDevice->GetVerbalName(), (const double)m_Output, m_DbMin, m_DbMax, OldState, m_eDbState);
+			pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), pDynaModel->GetCurrentTime(), pDynaModel->GetIntegrationStepNumber(), GetVerbalName(), m_Device.GetVerbalName(), (const double)m_Output, m_DbMin, m_DbMax, OldState, m_eDbState);
 			pDynaModel->DiscontinuityRequest();
 		}
 	}

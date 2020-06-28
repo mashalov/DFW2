@@ -8,8 +8,8 @@ namespace DFW2
 	protected:
 		PrimitiveVariableBase *m_Input2;
 	public:
-		CAnd(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveBinary(pDevice, OutputVariable, Input, ExtraOutputVariables)
+		CAnd(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)
 			{
 				InitializeInputs({ &m_Input, &m_Input2 }, Input);
 			}
@@ -28,8 +28,8 @@ namespace DFW2
 	protected:
 		PrimitiveVariableBase *m_Input2;
 	public:
-		COr(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveBinary(pDevice, OutputVariable, Input, ExtraOutputVariables)
+		COr(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)
 			{
 				InitializeInputs({ &m_Input, &m_Input2 }, Input);
 			}
@@ -46,8 +46,8 @@ namespace DFW2
 	class CNot : public CDynaPrimitiveBinary
 	{
 	public:
-		CNot(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables):
-			CDynaPrimitiveBinary(pDevice, OutputVariable, Input, ExtraOutputVariables) { }
+		CNot(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables):
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables) { }
 		virtual ~CNot() {}
 
 		bool Init(CDynaModel *pDynaModel) override;

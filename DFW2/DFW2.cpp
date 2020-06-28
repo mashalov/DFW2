@@ -40,7 +40,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	GraphCycle<int, int>::CyclesType Cycles;
 	gc.Test();
 	*/
-
+		
 	SetConsoleCtrlHandler(HandlerRoutine,TRUE);
 
 	CoInitialize(NULL);

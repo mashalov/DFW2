@@ -18,8 +18,8 @@ namespace DFW2
 		double OnStateOff(CDynaModel *pDynaModel) override;
 		eRELAYSTATES GetInstantState();
 	public:
-		CRelay(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-			CDynaPrimitiveBinaryOutput(pDevice, OutputVariable, Input, ExtraOutputVariables) {}
+		CRelay(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+			CDynaPrimitiveBinaryOutput(Device, OutputVariable, Input, ExtraOutputVariables) {}
 		virtual ~CRelay() {}
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);
 		bool Init(CDynaModel *pDynaModel) override;
@@ -49,8 +49,8 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 		void RequestZCDiscontinuity(CDynaModel* pDynaModel) override;
 	public:
-		CRelayDelay(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-			CRelay(pDevice, OutputVariable, Input, ExtraOutputVariables), CDiscreteDelay() {}
+		CRelayDelay(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+			CRelay(Device, OutputVariable, Input, ExtraOutputVariables), CDiscreteDelay() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
@@ -63,8 +63,8 @@ namespace DFW2
 	class CRelayDelayLogic : public CRelayDelay
 	{
 	public:
-		CRelayDelayLogic(CDevice* pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-			CRelayDelay(pDevice, OutputVariable, Input, ExtraOutputVariables) {}
+		CRelayDelayLogic(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+			CRelayDelay(Device, OutputVariable, Input, ExtraOutputVariables) {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelayLogic); }

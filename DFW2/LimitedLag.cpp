@@ -22,7 +22,7 @@ bool CLimitedLag::BuildEquations(CDynaModel *pDynaModel)
 		break;
 	}
 
-	if (!m_pDevice->IsStateOn())
+	if (!m_Device.IsStateOn())
 		on = 0.0;
 
 	pDynaModel->SetElement(m_Output, m_Output, -on);
@@ -34,7 +34,7 @@ bool CLimitedLag::BuildEquations(CDynaModel *pDynaModel)
 
 bool CLimitedLag::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dLag = (m_K * m_Input->Value() - m_Output) / m_T;
 		switch (GetCurrentState())
@@ -74,7 +74,7 @@ bool CLimitedLag::Init(CDynaModel *pDynaModel)
 	{
 		if (Equal(m_T,0.0))
 		{
-			m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveTimeConstant, GetVerbalName(), m_pDevice->GetVerbalName(), m_T));
+			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveTimeConstant, GetVerbalName(), m_Device.GetVerbalName(), m_T));
 			bRes = false;
 		}
 	}
@@ -87,7 +87,7 @@ bool CLimitedLag::Init(CDynaModel *pDynaModel)
 
 bool CLimitedLag::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dLag = (m_K * m_Input->Value() - m_Output) / m_T;
 		switch (GetCurrentState())
@@ -137,7 +137,7 @@ double CLimitedLag::OnStateMax(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CLimitedLag::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dLag(0.0);
 		dLag = (m_K * m_Input->Value() - m_Output) / m_T;

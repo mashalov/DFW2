@@ -322,12 +322,12 @@ void CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
 }
 
 CDynaPrimitive* CCustomDeviceCPPContainer::CreatePrimitive(PrimitiveBlockType ePrimitiveType,
-														   CDevice* pDevice,
+														   CDevice& Device,
 														   VariableIndex& OutputVariable,
 														   InputList Input,
 														   ExtraOutputList ExtraOutputVariables)
 {
-	return m_PrimitivePools.Create(ePrimitiveType, pDevice, OutputVariable, Input, ExtraOutputVariables);
+	return m_PrimitivePools.Create(ePrimitiveType, Device, OutputVariable, Input, ExtraOutputVariables);
 }
 
 void CCustomDeviceCPPContainer::BuildStructure()

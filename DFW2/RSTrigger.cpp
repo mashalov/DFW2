@@ -14,7 +14,7 @@ bool CRSTrigger::Init(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CRSTrigger::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double dOldOut = m_Output;
 		double &R = m_Input->Value();

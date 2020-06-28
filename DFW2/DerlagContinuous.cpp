@@ -14,7 +14,7 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 		pRightVector->PrimitiveBlock = PBT_DERLAG;
 	}
 
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		//if (!pDynaModel->IsInDiscontinuityMode())
 		{
@@ -67,7 +67,7 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 {
 
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double Input = m_Input->Value();
 		double dY2 = (Input - m_Y2) * m_T;
@@ -77,9 +77,6 @@ bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 
 		if (pDynaModel->IsInDiscontinuityMode())
 		{
-			if (m_pDevice->GetId() == 1319)
-				m_pDevice->GetId();
-
 			ProcessDiscontinuity(pDynaModel);
 			dOut = 0.0;
 		}
@@ -116,7 +113,7 @@ bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
 
 bool CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double Input = m_Input->Value();
 		double dY2 = (Input - m_Y2) * m_T;
@@ -132,7 +129,7 @@ bool CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		double Input = m_Input->Value();
 		if (Equal(m_K, 0.0))

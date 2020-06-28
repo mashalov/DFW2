@@ -13,10 +13,7 @@ ptrdiff_t CDynaPrimitive::A(ptrdiff_t nOffset)
 
 bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = false;
-	if (m_pDevice/* && m_Input->Index() >= 0 && m_OutputEquationIndex >= 0*/)
-		bRes = true;
-	return bRes;
+	return true;
 }
 
 bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
@@ -28,7 +25,7 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 		
 		if (m_dMin > m_dMax)
 		{
-			m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveLimits, GetVerbalName(), m_pDevice->GetVerbalName(), m_dMin, m_dMax));
+			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveLimits, GetVerbalName(), m_Device.GetVerbalName(), m_dMin, m_dMax));
 			bRes = false;
 		}
 
@@ -36,11 +33,11 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 
 		if (m_Output > m_dMaxH || m_Output < m_dMinH)
 		{
-			m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, 
-						   Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, 
-							   GetVerbalName(), 
-							   m_pDevice->GetVerbalName(), 
-							   static_cast<const double>(m_Output), m_dMin, m_dMax));
+			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, 
+					     Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, 
+						 GetVerbalName(), 
+						 m_Device.GetVerbalName(), 
+						 static_cast<const double>(m_Output), m_dMin, m_dMax));
 			bRes = false;
 		}
 	}
@@ -147,7 +144,7 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 			pDynaModel->GetCurrentTime(), 
 			pDynaModel->GetIntegrationStepNumber(),
 			GetVerbalName(), 
-			m_pDevice->GetVerbalName(),
+			m_Device.GetVerbalName(),
 			static_cast<const double>(m_Output), 
 			m_dMin, m_dMax, 
 			oldCurrentState, eCurrentState);
@@ -215,7 +212,7 @@ double CDynaPrimitiveBinaryOutput::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		eRELAYSTATES oldCurrentState = eCurrentState;
 

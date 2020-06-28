@@ -9,8 +9,8 @@ namespace DFW2
 		double m_K, m_T;
 		VariableIndex& m_Y2;
 	public:
-		CDerlagContinuous(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitive(pDevice, OutputVariable, Input, ExtraOutputVariables), m_Y2(ExtraOutputVariables.begin()->get()) {}
+		CDerlagContinuous(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitive(Device, OutputVariable, Input, ExtraOutputVariables), m_Y2(ExtraOutputVariables.begin()->get()) {}
 		virtual ~CDerlagContinuous() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool BuildEquations(CDynaModel *pDynaModel) override;

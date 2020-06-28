@@ -10,8 +10,8 @@ namespace DFW2
 		bool m_bResetPriority;
 	public:
 
-		CRSTrigger::CRSTrigger(CDevice *pDevice, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-		  							CDynaPrimitiveBinary(pDevice, OutputVariable, Input, ExtraOutputVariables)
+		CRSTrigger::CRSTrigger(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+		  							CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)
 									{ 
 										InitializeInputs({&m_Input, &m_Input1}, Input);
 									}
