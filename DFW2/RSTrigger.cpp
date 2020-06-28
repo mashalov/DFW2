@@ -17,8 +17,8 @@ eDEVICEFUNCTIONSTATUS CRSTrigger::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	if (m_Device.IsStateOn())
 	{
 		double dOldOut = m_Output;
-		double &R = m_Input->Value();
-		double &S = m_Input1->Value();
+		const double &R = m_Input;
+		const double &S = m_Input1;
 
 		if (S > 0.0)
 		{

@@ -8,28 +8,25 @@ using namespace DFW2;
 
 CDynaDECMustang::CDynaDECMustang() : CDevice(),
 
-	EnforceOn(*this, EnforceOnValue, { &Vnode }),
-	DeforceOn(*this, DeforceOnValue, { &Vnode }),
-	EnforceOff(*this, EnforceOffValue, { &Vnode }),
-	DeforceOff(*this, DeforceOffValue, { &Vnode }),
-	EnfTrigger(*this, EnforceTrigValue, { &EnforceOffOut,		&EnforceOnOut }),
-	DefTrigger(*this, DeforceTrigValue, { &DeforceOffOut,		&DeforceOnOut }),
-	EnforceOnOut(V_ENFONRELAY,		EnforceOnValue),
-	DeforceOnOut(V_DEFONRELAY,		DeforceOnValue),
-	EnforceOffOut(V_ENFOFFRELAY,	EnforceOffValue),
-	DeforceOffOut(V_DEFOFFRELAY,	DeforceOffValue)
+	EnforceOn(*this,  EnforceOnOut,		{ Vnode }),
+	DeforceOn(*this,  DeforceOnOut,		{ Vnode }),
+	EnforceOff(*this, EnforceOffOut,	{ Vnode }),
+	DeforceOff(*this, DeforceOffOut,	{ Vnode }),
+	EnfTrigger(*this, EnforceTrigOut, { EnforceOffOut, EnforceOnOut }),
+	DefTrigger(*this, DeforceTrigOut, { DeforceOffOut, DeforceOnOut })
 {
+
 }
 
 
 VariableIndexRefVec& CDynaDECMustang::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDevice::GetVariables(JoinVariables({ EnforceOnValue,
-												 EnforceOffValue,
-												 DeforceOnValue,
-												 DeforceOffValue,
-												 EnforceTrigValue,
-												 DeforceTrigValue,
+	return CDevice::GetVariables(JoinVariables({ EnforceOnOut,
+												 EnforceOffOut,
+												 DeforceOnOut,
+												 DeforceOffOut,
+												 EnforceTrigOut,
+												 DeforceTrigOut,
 												 Udec
 											   }, ChildVec));
 }
@@ -40,12 +37,12 @@ double* CDynaDECMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(EnforceOnValue.Value, V_ENFONRELAY)
-		MAP_VARIABLE(EnforceOffValue.Value, V_ENFOFFRELAY)
-		MAP_VARIABLE(DeforceOnValue.Value, V_DEFONRELAY)
-		MAP_VARIABLE(DeforceOffValue.Value, V_DEFOFFRELAY)
-		MAP_VARIABLE(EnforceTrigValue.Value, V_ENFTRIG)
-		MAP_VARIABLE(DeforceTrigValue.Value, V_DEFTRIG)
+		MAP_VARIABLE(EnforceOnOut.Value, V_ENFONRELAY)
+		MAP_VARIABLE(EnforceOffOut.Value, V_ENFOFFRELAY)
+		MAP_VARIABLE(DeforceOnOut.Value, V_DEFONRELAY)
+		MAP_VARIABLE(DeforceOffOut.Value, V_DEFOFFRELAY)
+		MAP_VARIABLE(EnforceTrigOut.Value, V_ENFTRIG)
+		MAP_VARIABLE(DeforceTrigOut.Value, V_DEFTRIG)
 		MAP_VARIABLE(Udec.Value, V_DEC)
 	}
 	return p;
@@ -140,13 +137,13 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 
 		// enforce is in priority
 
-		if (EnforceTrigValue > 0.0)
+		if (EnforceTrigOut > 0.0)
 		{
 			Udec = m_dEnforceValue;
 			pExciter->SetLagTimeConstantRatio(EnfTexc);
 		}
 		else
-			if (DeforceTrigValue > 0.0)
+			if (DeforceTrigOut > 0.0)
 			{
 			Udec = m_dDeforceValue;
 			pExciter->SetLagTimeConstantRatio(DefTexc);
@@ -164,10 +161,6 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 eDEVICEFUNCTIONSTATUS CDynaDECMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(Vnode, GetSingleLink(DEVTYPE_EXCITER), CDynaNodeBase::m_cszV, DEVTYPE_NODE));
-	EnforceOnOut.Index(m_nMatrixRow + V_ENFONRELAY);
-	DeforceOnOut.Index(m_nMatrixRow + V_DEFONRELAY);
-	EnforceOffOut.Index(m_nMatrixRow + V_ENFOFFRELAY);
-	DeforceOffOut.Index(m_nMatrixRow + V_DEFOFFRELAY);
 	return eRes;
 }
 
@@ -189,12 +182,12 @@ void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty(_T("Tz_in"), TdelOn, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(_T("Tz_out"), TdelOff, eVARUNITS::VARUNIT_SECONDS);
 
-	Serializer->AddState(_T("EnforceOnValue"), EnforceOnValue, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("DeforceOnValue"), DeforceOnValue, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("EnforceOffValue"), EnforceOffValue, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("DeforceOffValue"), DeforceOffValue, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("EnforceTrigValue"), EnforceTrigValue, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("DeforceTrigValue"), DeforceTrigValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("EnforceOnValue"), EnforceOnOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("DeforceOnValue"), DeforceOnOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("EnforceOffValue"), EnforceOffOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("DeforceOffValue"), DeforceOffOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("EnforceTrigValue"), EnforceTrigOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("DeforceTrigValue"), DeforceTrigOut, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(_T("EnforceValue"), m_dEnforceValue, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(_T("DeforceValue"), m_dDeforceValue, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(_T("Udec"), Udec, eVARUNITS::VARUNIT_PU);

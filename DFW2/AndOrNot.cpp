@@ -35,7 +35,7 @@ eDEVICEFUNCTIONSTATUS CAnd::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		double dOldOut = m_Output;
 
-		if (m_Input->Value() > 0 && m_Input2->Value() > 0)
+		if (m_Input > 0 && m_Input1 > 0)
 			m_Output = 1.0;
 		else
 			m_Output = 0.0;
@@ -53,7 +53,7 @@ eDEVICEFUNCTIONSTATUS COr::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		double dOldOut = m_Output;
 
-		if (m_Input->Value() > 0 || m_Input2->Value() > 0)
+		if (m_Input  > 0 || m_Input1 > 0)
 			m_Output = 1.0;
 		else
 			m_Output = 0.0;
@@ -71,7 +71,7 @@ eDEVICEFUNCTIONSTATUS CNot::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		double dOldOut = m_Output;
 
-		if (m_Input->Value() > 0 )
+		if (m_Input > 0 )
 			m_Output = 0.0;
 		else
 			m_Output = 1.0;

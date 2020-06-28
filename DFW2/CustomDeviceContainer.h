@@ -43,16 +43,14 @@ namespace DFW2
 		CCustomDeviceDLL m_DLL;
 		// пулы для всех устройств контейнера
 		PrimitivePoolElement m_PrimitivePool[PrimitiveBlockType::PBT_LAST];			// таблица пулов для каждого типа хост-блоков
-		std::vector<PrimitiveVariable> m_PrimitiveVarsPool;							// пул переменных
-		std::vector<PrimitiveVariableExternal> m_PrimitiveExtVarsPool;				// пул внешних переменных (не входящих внутрь блоков)
 		std::vector<ExternalVariable> m_ExternalVarsPool;							// пул внешних переменных устройства
 		std::vector<double> m_DoubleVarsPool;										// пул double - переменных 
 		std::vector<VariableIndex> m_VariableIndexPool;								// пул для VariableIndexes
+		std::vector<VariableIndexExternal> m_VariableIndexExternalPool;
 		ExternalVariable *m_pExternalVarsHead;
-		double *m_pDoubleVarsHead;
 
+		double *m_pDoubleVarsHead;
 		size_t m_nBlockEquationsCount;												// количество внутренних уравнений хост-блоков
-		size_t m_nPrimitiveVarsCount;												// количество внутренних переменных устройства
 		size_t m_nDoubleVarsCount;													// количество необходимых одному устройству double-переменных
 		size_t m_nExternalVarsCount;												// количество внешних переменных
 		size_t m_nVariableIndexesCount;												// количество переменных для уравнений
@@ -68,15 +66,13 @@ namespace DFW2
 		bool BuildDLLRightHand(BuildEquationsArgs *pArgs);
 		bool BuildDLLDerivatives(BuildEquationsArgs *pArgs);
 		bool ProcessDLLDiscontinuity(BuildEquationsArgs *pArgs);
-		ptrdiff_t GetPrimitiveVariablesCount() const { return m_nPrimitiveVarsCount; }
 
 		PrimitiveInfo GetPrimitiveInfo(PrimitiveBlockType eType);
 		size_t PrimitiveSize(PrimitiveBlockType eType);
 		long PrimitiveEquationsCount(PrimitiveBlockType eType);
-		PrimitiveVariable* NewPrimitiveVariable(ptrdiff_t nIndex, double& Value);
-		PrimitiveVariableExternal* NewPrimitiveExtVariables();
 		double* NewDoubleVariables();
 		VariableIndex* NewVariableIndexVariables();
+		VariableIndexExternal* NewVariableIndexExternals();
 		ExternalVariable* NewExternalVariables();
 		void* NewPrimitive(PrimitiveBlockType eType);
 		const CCustomDeviceDLL& DLL() { return m_DLL; }

@@ -26,7 +26,7 @@ bool CLimitedLag::BuildEquations(CDynaModel *pDynaModel)
 		on = 0.0;
 
 	pDynaModel->SetElement(m_Output, m_Output, -on);
-	pDynaModel->SetElement(m_Output.Index, m_Input->Index(), -on * m_K);
+	pDynaModel->SetElement(m_Output, m_Input, -on * m_K);
 
 	return true;
 }
@@ -36,7 +36,7 @@ bool CLimitedLag::BuildRightHand(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dLag = (m_K * m_Input->Value() - m_Output) / m_T;
+		double dLag = (m_K * m_Input - m_Output) / m_T;
 		switch (GetCurrentState())
 		{
 		case LS_MAX:
@@ -65,7 +65,7 @@ bool CLimitedLag::Init(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		m_Input->Value() = m_Output / m_K;
+		m_Input = m_Output / m_K;
 	}
 
 	bool bRes = CDynaPrimitiveLimited::Init(pDynaModel);
@@ -89,7 +89,7 @@ bool CLimitedLag::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dLag = (m_K * m_Input->Value() - m_Output) / m_T;
+		double dLag = (m_K * m_Input - m_Output) / m_T;
 		switch (GetCurrentState())
 		{
 		case LS_MAX:
@@ -122,7 +122,7 @@ double CLimitedLag::OnStateMid(CDynaModel *pDynaModel)
 double CLimitedLag::OnStateMin(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, m_Output - m_K * m_Input->Value(), m_Output, m_Output / m_K, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_Output - m_K * m_Input, m_Output, m_Output / m_K, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, LS_MID);
 	return rH;
 }
@@ -130,7 +130,7 @@ double CLimitedLag::OnStateMin(CDynaModel *pDynaModel)
 double CLimitedLag::OnStateMax(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, m_K * m_Input->Value() - m_Output, m_Output, m_Output / m_K, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_K * m_Input - m_Output, m_Output, m_Output / m_K, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, LS_MID);
 	return rH;
 }
@@ -140,7 +140,7 @@ eDEVICEFUNCTIONSTATUS CLimitedLag::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	if (m_Device.IsStateOn())
 	{
 		double dLag(0.0);
-		dLag = (m_K * m_Input->Value() - m_Output) / m_T;
+		dLag = (m_K * m_Input - m_Output) / m_T;
 		eLIMITEDSTATES OldState = GetCurrentState();
 		switch (OldState)
 		{
@@ -172,7 +172,7 @@ void CLimitedLag::ChangeMinMaxTK(CDynaModel *pDynaModel, double dMin, double dMa
 	double CheckMax = m_Output - m_dMax;
 	double CheckMin = m_dMin - m_Output;
 
-	double dLag = (m_K * m_Input->Value() - m_Output) / m_T;
+	double dLag = (m_K * m_Input - m_Output) / m_T;
 
 	if (CheckMax >= 0.0)
 	{

@@ -12,6 +12,7 @@ namespace DFW2
 {
 	class CDynaModel
 	{
+		friend class CCustomDevice;
 	protected:
 		struct MatrixRow
 		{
@@ -577,6 +578,12 @@ namespace DFW2
 
 		CDeviceContainer *m_pClosestZeroCrossingContainer = nullptr;
 
+		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void SetFunction(ptrdiff_t nRow, double dValue);
+		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
+		void SetDerivative(ptrdiff_t nRow, double dValue);
+
 	public:
 		CDynaNodeContainer Nodes;
 		CDeviceContainer Branches;
@@ -604,16 +611,11 @@ namespace DFW2
 		bool InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
-		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
 		void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
+		void SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue);
 
 		// Для теста с множителями
 		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
-
-		void SetFunction(ptrdiff_t nRow, double dValue);
-		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
-		void SetDerivative(ptrdiff_t nRow, double dValue);
 
 		void SetFunction(const VariableIndexBase& Row, double dValue);
 		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
@@ -622,8 +624,9 @@ namespace DFW2
 
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		double GetFunction(ptrdiff_t nRow);
-		struct RightVector* GetRightVector(ptrdiff_t nRow);
-		struct RightVector* GetRightVector(VariableIndexBase& Variable);
+		struct RightVector* GetRightVector(const ptrdiff_t nRow);
+		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
+		struct RightVector* GetRightVector(const InputVariable& Variable);
 
 		inline double GetOmega0() const
 		{

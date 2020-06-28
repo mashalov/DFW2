@@ -8,8 +8,8 @@ using namespace DFW2;
 
 bool CAbs::BuildEquations(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetElement(m_Output.Index, m_Input->Index(), m_bPositive ? 1.0 : -1.0);
-	pDynaModel->SetElement(m_Output.Index, m_Output.Index, 1.0);
+	pDynaModel->SetElement(m_Output, m_Input, m_bPositive ? 1.0 : -1.0);
+	pDynaModel->SetElement(m_Output, m_Output, 1.0);
 	return true;
 }
 
@@ -17,8 +17,7 @@ bool CAbs::BuildRightHand(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dInput = m_Input->Value();
-		pDynaModel->SetFunction(m_Output, m_Output - (m_bPositive ? dInput : -dInput));
+		pDynaModel->SetFunction(m_Output, m_Output - (m_bPositive ? m_Input : -m_Input));
 	}
 	else
 		pDynaModel->SetFunction(m_Output, 0.0);
@@ -39,14 +38,12 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dInput = m_Input->Value();
-
-		if (dInput >= 0)
+		if (m_Input >= 0)
 			m_bPositive = true;
 		else
 			m_bPositive = false;
 
-		m_Output = fabs(dInput);
+		m_Output = fabs(m_Input);
 	}
 	else
 		m_Output = 0.0;
@@ -62,11 +59,10 @@ double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 	if (!m_Device.IsStateOn())
 		return rH;
 
-	double dInput = m_Input->Value();
-	double dHyst = pDynaModel->GetHysteresis(dInput);
+	double dHyst = pDynaModel->GetHysteresis(m_Input);
 	if (m_bPositive)
 	{
-		if (CDynaPrimitive::ChangeState(pDynaModel, dInput + dHyst, dInput + dHyst, -dHyst, m_Input->Index(), rH))
+		if (CDynaPrimitive::ChangeState(pDynaModel, m_Input + dHyst, m_Input + dHyst, -dHyst, m_Input.Index, rH))
 		{
 			m_bPositive = false;
 			pDynaModel->DiscontinuityRequest();
@@ -74,7 +70,7 @@ double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		if (CDynaPrimitive::ChangeState(pDynaModel, dHyst - dInput, dHyst - dInput, dHyst, m_Input->Index(), rH))
+		if (CDynaPrimitive::ChangeState(pDynaModel, dHyst - m_Input, dHyst - m_Input, dHyst, m_Input.Index, rH))
 		{
 			m_bPositive = true;
 			pDynaModel->DiscontinuityRequest();

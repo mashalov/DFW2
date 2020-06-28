@@ -66,7 +66,6 @@ bool CCustomDeviceContainer::BuildStructure()
 	// чтобы избежать множества мелких new
 
 	m_nBlockEquationsCount = 0;
-	m_nPrimitiveVarsCount = 0;
 	m_nDoubleVarsCount = 0;
 	m_nVariableIndexesCount = 0;
 	m_nExternalVarsCount = 0;
@@ -82,19 +81,6 @@ bool CCustomDeviceContainer::BuildStructure()
 			// если блок имеет правильный индекс 
 			m_nBlockEquationsCount += PrimitiveEquationsCount(it->eType); // считаем количество уравнений хост-блоков
 			m_PrimitivePool[it->eType].nCount++;						  // учитываем количество блоков данного типа
-
-			// просматриваем связи блоков
-			for (const auto& ciit : *iti)
-			{
-				switch (ciit.Location)
-				{
-				case eVL_INTERNAL:
-					m_nPrimitiveVarsCount++;							 // считаем количество внутренних переменных
-					break;
-				case eVL_EXTERNAL:
-					;
-				}
-			}
 		}
 		else
 		{
@@ -122,10 +108,8 @@ bool CCustomDeviceContainer::BuildStructure()
 
 		m_nExternalVarsCount = GetInputsCount();
 
-		// создаем пул для внутренних переменных
-		m_PrimitiveVarsPool.reserve(m_nPrimitiveVarsCount * nCount);
 		// создаем пул для входных переменных
-		m_PrimitiveExtVarsPool.reserve(m_nExternalVarsCount * nCount);
+		m_VariableIndexExternalPool.reserve(m_nExternalVarsCount * nCount);
 		// количество уравнений пользовательского устройства равно количеству уравнений для хост-блоков + количество уравнений внутренних переменных
 		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
 		// общее количество double на 1 устройство = константы + уставки
@@ -228,13 +212,6 @@ long CCustomDeviceContainer::PrimitiveEquationsCount(PrimitiveBlockType eType)
 	return GetPrimitiveInfo(eType).nEquationsCount;
 }
 
-PrimitiveVariable* CCustomDeviceContainer::NewPrimitiveVariable(ptrdiff_t nIndex, double& Value)
-{
-	_ASSERTE(m_PrimitiveVarsPool.size() < m_PrimitiveVarsPool.capacity());
-	m_PrimitiveVarsPool.emplace_back(PrimitiveVariable(nIndex, Value));
-	return &m_PrimitiveVarsPool.back();
-}
-
 double* CCustomDeviceContainer::NewDoubleVariables()
 {
 	if (!m_nDoubleVarsCount)
@@ -264,14 +241,13 @@ ExternalVariable* CCustomDeviceContainer::NewExternalVariables()
 	return &*(m_ExternalVarsPool.end() - m_nExternalVarsCount);
 }
 
-PrimitiveVariableExternal* CCustomDeviceContainer::NewPrimitiveExtVariables()
+VariableIndexExternal* CCustomDeviceContainer::NewVariableIndexExternals()
 {
 	if (!m_nExternalVarsCount)
 		return nullptr;
-
-	_ASSERTE(m_PrimitiveExtVarsPool.size() + m_nExternalVarsCount <= m_PrimitiveExtVarsPool.capacity());
-	m_PrimitiveExtVarsPool.resize(m_PrimitiveExtVarsPool.size() + m_nExternalVarsCount);
-	return &*(m_PrimitiveExtVarsPool.end() - m_nExternalVarsCount);
+	_ASSERTE(m_VariableIndexExternalPool.size() + m_nExternalVarsCount <= m_VariableIndexExternalPool.capacity());
+	m_VariableIndexExternalPool.resize(m_VariableIndexExternalPool.size() + m_nExternalVarsCount);
+	return &*(m_VariableIndexExternalPool.end() - m_nExternalVarsCount);
 }
 
 void* CCustomDeviceContainer::NewPrimitive(PrimitiveBlockType eType)

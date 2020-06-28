@@ -113,12 +113,17 @@ void CDynaModel::ChangeOrder(ptrdiff_t Newq)
 	}
 }
 
-struct RightVector* CDynaModel::GetRightVector(VariableIndexBase& Variable)
+struct RightVector* CDynaModel::GetRightVector(const InputVariable& Variable)
 {
 	return GetRightVector(Variable.Index);
 }
 
-struct RightVector* CDynaModel::GetRightVector(ptrdiff_t nRow)
+struct RightVector* CDynaModel::GetRightVector(const VariableIndexBase& Variable)
+{
+	return GetRightVector(Variable.Index);
+}
+
+struct RightVector* CDynaModel::GetRightVector(const ptrdiff_t nRow)
 {
 	if (nRow < 0 || nRow >= m_nEstimatedMatrixSize)
 		throw dfw2error(Cex(_T("CDynaModel::GetRightVector matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));

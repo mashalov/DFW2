@@ -13,10 +13,10 @@ bool CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 	case DBS_MAX:
 	case DBS_MIN:
 	case DBS_OFF:
-		pDynaModel->SetElement(m_Output.Index, m_Input->Index(), 1.0);
+		pDynaModel->SetElement(m_Output, m_Input, 1.0);
 		break;
 	case DBS_ZERO:
-		pDynaModel->SetElement(m_Output.Index, m_Input->Index(), 0.0);
+		pDynaModel->SetElement(m_Output, m_Input, 0.0);
 		break;
 	}
 
@@ -29,22 +29,20 @@ bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dInput = m_Input->Value();
-
 		switch (m_eDbState)
 		{
 		case DBS_MIN:
-			pDynaModel->SetFunction(m_Output, m_Output - dInput - m_Db);
+			pDynaModel->SetFunction(m_Output, m_Output - m_Input - m_Db);
 			break;
 		case DBS_ZERO:
 			pDynaModel->SetFunction(m_Output, 0.0);
 			m_Output = 0.0;
 			break;
 		case DBS_OFF:
-			pDynaModel->SetFunction(m_Output, m_Output - dInput);
+			pDynaModel->SetFunction(m_Output, m_Output - m_Input);
 			break;
 		case DBS_MAX:
-			pDynaModel->SetFunction(m_Output, m_Output - dInput + m_Db);
+			pDynaModel->SetFunction(m_Output, m_Output - m_Input + m_Db);
 			break;
 		}
 	}
@@ -82,28 +80,26 @@ eDEVICEFUNCTIONSTATUS CDeadBand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dInput = m_Input->Value();
-
 		if (m_eDbState != DBS_OFF)
 		{
 			m_Output = 0.0;
 
 			m_eDbState = DBS_ZERO;
 
-			if (dInput >= m_Db)
+			if (m_Input >= m_Db)
 			{
-				m_Output = dInput - m_Db;
+				m_Output = m_Input - m_Db;
 				m_eDbState = DBS_MAX;
 			}
 			else
-				if (dInput <= -m_Db)
+				if (m_Input <= -m_Db)
 				{
-					m_Output = dInput + m_Db;
+					m_Output = m_Input + m_Db;
 					m_eDbState = DBS_MIN;
 				}
 		}
 		else
-			m_Output = dInput;
+			m_Output = m_Input;
 	}
 	else
 		m_Output = 0.0;
@@ -157,13 +153,12 @@ void CDeadBand::SetCurrentState(DFW2DEADBANDSTATES CurrentState)
 double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
-	double dInput = m_Input->Value();
-	double CheckMin = -m_Db - dInput;
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
+	double CheckMin = -m_Db - m_Input;
 
 	if (CheckMin < 0.0)
 	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dInput));
+		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, m_Input));
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(DBS_ZERO);
@@ -182,14 +177,12 @@ double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
-
-	double dInput = m_Input->Value();
-	double CheckMax = dInput - m_Db;
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
+	double CheckMax = m_Input - m_Db;
 
 	if (CheckMax < 0.0)
 	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dInput));
+		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, m_Input));
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(DBS_ZERO);
@@ -207,16 +200,14 @@ double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
 
-	double dInput = m_Input->Value();
-
-	double CheckMax = dInput - m_DbMax;
-	double CheckMin = m_DbMin - dInput;
+	double CheckMax = m_Input - m_DbMax;
+	double CheckMin = m_DbMin - m_Input;
 
 	if (CheckMax >= 0.0)
 	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dInput));
+		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, m_Input));
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(DBS_MAX);
@@ -233,7 +224,7 @@ double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 	else
 		if (CheckMin >= 0.0)
 		{
-			double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dInput));
+			double derr = fabs(pRightVector1->GetWeightedError(CheckMin, m_Input));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				SetCurrentState(DBS_MIN);

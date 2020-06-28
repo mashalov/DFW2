@@ -16,16 +16,16 @@ bool CRelay::Init(CDynaModel *pDynaModel)
 double CRelay::OnStateOff(CDynaModel *pDynaModel)
 {
 	double OnBound = m_dUpperH;
-	double Check = m_dUpperH - m_Input->Value();
+	double Check = m_dUpperH - m_Input;
 
 	if (!m_bMaxRelay)
 	{
 		OnBound = m_dLowerH;
-		Check = m_Input->Value() - m_dLowerH;
+		Check = m_Input - m_dLowerH;
 	}
 
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input->Value(), OnBound, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input, OnBound, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, RS_ON);
 
 	return rH; 
@@ -34,16 +34,16 @@ double CRelay::OnStateOff(CDynaModel *pDynaModel)
 double CRelay::OnStateOn(CDynaModel *pDynaModel)
 {
 	double OnBound = m_dLowerH;
-	double Check = m_Input->Value() - m_dLowerH;
+	double Check = m_Input - m_dLowerH;
 
 	if (!m_bMaxRelay)
 	{
 		OnBound = m_dUpperH;
-		Check = m_dUpperH - m_Input->Value();
+		Check = m_dUpperH - m_Input;
 	}
 
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input->Value(), OnBound, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input, OnBound, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, RS_OFF);
 	return rH;
 
@@ -53,17 +53,16 @@ double CRelay::OnStateOn(CDynaModel *pDynaModel)
 CRelay::eRELAYSTATES CRelay::GetInstantState()
 {
 	CRelay::eRELAYSTATES State = eCurrentState;
-	double dInput = m_Input->Value();
 	if (m_bMaxRelay)
 	{
 		if (eCurrentState == RS_OFF)
 		{
-			if (dInput > m_dUpper)
+			if (m_Input > m_dUpper)
 				State = RS_ON;
 		}
 		else
 		{
-			if (dInput <= m_dLower)
+			if (m_Input <= m_dLower)
 				State = RS_OFF;
 		}
 	}
@@ -71,12 +70,12 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 	{
 		if (eCurrentState == RS_OFF)
 		{
-			if (dInput < m_dLower)
+			if (m_Input < m_dLower)
 				State = RS_ON;
 		}
 		else
 		{
-			if (dInput >= m_dUpper)
+			if (m_Input >= m_dUpper)
 				State = RS_OFF;
 		}
 	}

@@ -6,15 +6,12 @@ namespace DFW2
 	class CRSTrigger : public CDynaPrimitiveBinary
 	{
 	protected:
-		PrimitiveVariableBase* m_Input1;
+		InputVariable m_Input1;
 		bool m_bResetPriority;
 	public:
 
 		CRSTrigger::CRSTrigger(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-		  							CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)
-									{ 
-										InitializeInputs({&m_Input, &m_Input1}, Input);
-									}
+		  							CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) { }
 		virtual ~CRSTrigger() {}
 
 		bool Init(CDynaModel *pDynaModel) override;

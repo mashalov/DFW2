@@ -14,7 +14,7 @@ bool CExpand::Init(CDynaModel *pDynaModel)
 
 CDynaPrimitiveBinary::eRELAYSTATES CExpand::GetInstantState()
 {
-	return m_Input->Value() > 0 ? RS_ON : RS_OFF;
+	return m_Input > 0 ? RS_ON : RS_OFF;
 }
 
 eDEVICEFUNCTIONSTATUS CExpand::ProcessDiscontinuity(CDynaModel* pDynaModel)
@@ -107,7 +107,7 @@ void CShrink::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 	case RS_OFF:
 		if (CurrentState == RS_ON)
 		{
-			RightVector *pRightVector = pDynaModel->GetRightVector(m_Input->Index());
+			RightVector *pRightVector = pDynaModel->GetRightVector(m_Input);
 			if (pRightVector->SavedNordsiek[0] <= 0)
 			{
 				pDynaModel->SetStateDiscontinuity(this, m_dDelay);

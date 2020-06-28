@@ -8,13 +8,11 @@ namespace DFW2
 	class CCustomDevice : public CDevice
 	{
 	protected:
-		PrimitiveVariable  *m_pPrimitiveVars;
-		PrimitiveVariableExternal *m_pPrimitiveExtVars;
-
-		VariableIndex *m_pVars;
-		double *m_pConstVars;
-		double *m_pSetPoints;
-		ExternalVariable *m_pExternals;
+		VariableIndex* m_pVars = nullptr;
+		VariableIndexExternal* m_pVarsExt = nullptr;
+		double *m_pConstVars = nullptr;
+		double *m_pSetPoints = nullptr;
+		ExternalVariable *m_pExternals = nullptr;
 
 		BuildEquationsArgs m_DLLArgs;
 
@@ -75,7 +73,6 @@ namespace DFW2
 		static CCustomDeviceCPP*	GetDevice(CDFWModelData& ModelData)	{ return static_cast<CCustomDeviceCPP*>(ModelData.pDevice); }
 		void PrepareCustomDeviceData(CDynaModel* pDynaModel);
 		DOUBLEVECTOR m_PrimitiveVars;
-		std::vector<std::unique_ptr<PrimitiveVariableBase>> m_PrimExt;
 	public:
 		CCustomDeviceCPP();
 		void CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container);

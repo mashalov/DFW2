@@ -16,13 +16,9 @@ namespace DFW2
 		CDerlag dEqdt;
 		CDerlag dSdt;
 
-		PrimitiveVariable LagIn;
-
-		PrimitiveVariableExternal dVdtIn;
-		PrimitiveVariableExternal dEqdtIn;
-		PrimitiveVariableExternal dSdtIn;
-
-		VariableIndex dVdtOutValue[2], dEqdtOutValue[2], dSdtOutValue[2];
+		VariableIndexExternal dVdtIn, dEqdtIn, dSdtIn;
+		VariableIndex dVdtOut, dEqdtOut, dSdtOut;
+		VariableIndex dVdtOut1, dEqdtOut1, dSdtOut1;
 
 	public:
 

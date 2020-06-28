@@ -17,22 +17,15 @@ namespace DFW2
 		CRSTrigger  EnfTrigger;
 		CRSTrigger  DefTrigger;
 
-		VariableIndex EnforceOnValue, DeforceOnValue;
-		VariableIndex EnforceOffValue, DeforceOffValue;
-		VariableIndex EnforceTrigValue, DeforceTrigValue;
-		VariableIndex Udec;
 		double m_dEnforceValue, m_dDeforceValue;
 		
 	public:
 		CDynaDECMustang();
 		virtual ~CDynaDECMustang() {}
-		//CDynaExciterBase *m_pExciter;
 
 
-		PrimitiveVariableExternal Vnode;
-		PrimitiveVariable EnforceOnOut, DeforceOnOut;
-		PrimitiveVariable EnforceOffOut, DeforceOffOut;
-
+		VariableIndexExternal Vnode;
+		VariableIndex Udec, EnforceOnOut, DeforceOnOut, EnforceOffOut, DeforceOffOut, EnforceTrigOut, DeforceTrigOut;
 		double VEnfOn, VEnfOff, VDefOn, VDefOff, EnfRatio, DefRatio, EnfTexc, DefTexc, TdelOn, TdelOff;
 
 		enum VARS

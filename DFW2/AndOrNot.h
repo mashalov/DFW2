@@ -6,13 +6,10 @@ namespace DFW2
 	class CAnd: public CDynaPrimitiveBinary
 	{
 	protected:
-		PrimitiveVariableBase *m_Input2;
+		InputVariable m_Input1;
 	public:
 		CAnd(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)
-			{
-				InitializeInputs({ &m_Input, &m_Input2 }, Input);
-			}
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) {}
 		virtual ~CAnd() {}
 
 		bool Init(CDynaModel *pDynaModel) override;
@@ -26,13 +23,10 @@ namespace DFW2
 	class COr : public CDynaPrimitiveBinary
 	{
 	protected:
-		PrimitiveVariableBase *m_Input2;
+		InputVariable m_Input1;
 	public:
 		COr(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)
-			{
-				InitializeInputs({ &m_Input, &m_Input2 }, Input);
-			}
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) {}
 		virtual ~COr() {}
 
 		bool Init(CDynaModel *pDynaModel) override;

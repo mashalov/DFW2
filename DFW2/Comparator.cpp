@@ -18,7 +18,7 @@ eDEVICEFUNCTIONSTATUS CComparator::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		SetCurrentState(pDynaModel, (m_Input->Value() > m_Input2->Value()) ? RS_ON : RS_OFF);
+		SetCurrentState(pDynaModel, (m_Input > m_Input1) ? RS_ON : RS_OFF);
 		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
 	else
@@ -29,17 +29,16 @@ eDEVICEFUNCTIONSTATUS CComparator::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 double CComparator::OnStateOn(CDynaModel *pDynaModel)
 {
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
-	RightVector *pRightVector2 = pDynaModel->GetRightVector(m_Input2->Index());
-	double dValue2 = m_Input2->Value();
-	double dCheck = m_Input->Value() - dValue2;
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
+	RightVector *pRightVector2 = pDynaModel->GetRightVector(m_Input1);
+	double dCheck = m_Input - m_Input1;
 	double rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
 
 	if (pDynaModel->GetZeroCrossingInRange(rH))
 	{
 		if (dCheck < 0)
 		{
-			double derr = fabs(pRightVector1->GetWeightedError(dCheck, dValue2));
+			double derr = fabs(pRightVector1->GetWeightedError(dCheck, m_Input1));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				SetCurrentState(pDynaModel, RS_OFF);
@@ -66,16 +65,15 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 
 double CComparator::OnStateOff(CDynaModel *pDynaModel)
 {
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input->Index());
-	RightVector *pRightVector2 = pDynaModel->GetRightVector(m_Input2->Index());
-	double dValue1 = m_Input->Value();
-	double dCheck = m_Input2->Value() - dValue1;
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
+	RightVector *pRightVector2 = pDynaModel->GetRightVector(m_Input1);
+	double dCheck = m_Input1 - m_Input;
 	double rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
 	if (pDynaModel->GetZeroCrossingInRange(rH))
 	{
 		if (dCheck < 0)
 		{
-			double derr = fabs(pRightVector1->GetWeightedError(dCheck, dValue1));
+			double derr = fabs(pRightVector1->GetWeightedError(dCheck, m_Input));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				SetCurrentState(pDynaModel, RS_ON);

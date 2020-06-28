@@ -4,8 +4,7 @@
 
 using namespace DFW2;
 
-CCustomDevice::CCustomDevice() : m_pPrimitiveVars(nullptr),
-								 m_pPrimitiveExtVars(nullptr)
+CCustomDevice::CCustomDevice() 
 {
 	m_DLLArgs.pFnSetElement						= &DLLEntrySetElement;
 	m_DLLArgs.pFnSetFunction					= &DLLEntrySetFunction;
@@ -36,124 +35,105 @@ bool CCustomDevice::BuildStructure()
 	m_pSetPoints = m_pConstVars + Container()->GetConstsCount();
 	m_pVars = Container()->NewVariableIndexVariables();
 	m_pExternals = Container()->NewExternalVariables();
-	m_pPrimitiveExtVars = Container()->NewPrimitiveExtVariables();
-
-	PrimitiveVariableExternal *pExtVarsEnd = m_pPrimitiveExtVars + Container()->GetInputsCount();
-	for (PrimitiveVariableExternal *pStart = m_pPrimitiveExtVars; pStart < pExtVarsEnd; pStart++)
-		pStart->IndexAndValue(pStart - m_pPrimitiveExtVars, nullptr);
+	m_pVarsExt = Container()->NewVariableIndexExternals();
 
 	const BLOCKDESCRIPTIONS&  Blocks = Container()->DLL().GetBlocksDescriptions();
 	const BLOCKSPINSINDEXES&  Pins = Container()->DLL().GetBlocksPinsIndexes();
 
 	_ASSERTE(Blocks.size() == Pins.size());
 
-	BLOCKDESCRIPTIONS::const_iterator bit = Blocks.begin();
-	BLOCKSPINSINDEXES::const_iterator iit = Pins.begin();
+	auto& iit = Pins.begin();
 
-#define MAX_BLOCKVARIABLES 1000
-
-	PrimitiveVariableBase *pPrimsPtrs[MAX_BLOCKVARIABLES];
-
-	for (; bit != Blocks.end(); bit++, iit++)
+	for (auto& bit = Blocks.begin(); bit != Blocks.end(); bit++, iit++)
 	{
-		PrimitiveVariable				*pBlockBegin = nullptr;
-
-		PrimitiveVariableBase **pBlockPrims = pPrimsPtrs;
-
-		// for all inputs create one PrimitiveVariable from the pool and assign it to 
-		// given input index and double variable at the same index
-
-		for (BLOCKPININDEXVECTOR::const_iterator nit = iit->begin(); nit != iit->end(); nit++)
+		std::vector<InputVariable> inputs;
+		inputs.reserve(iit->size());
+		for (auto& nit : *iit)
 		{
-			switch (nit->Location)
+			switch (nit.Location)
 			{
 			case eVL_INTERNAL:
-				//_ASSERTE(nit->nIndex < Container()->EquationsCount());
-				*pBlockPrims = Container()->NewPrimitiveVariable(nit->nIndex, m_pVars[nit->nIndex]);
-				if (!pBlockBegin)
-					pBlockBegin = static_cast<PrimitiveVariable*>(*pBlockPrims);
+				{
+					InputVariable vx = InputVariable(m_pVars[nit.nIndex]);
+					inputs.push_back(vx);
+				}
 				break;
 			case eVL_EXTERNAL:
-				*pBlockPrims = m_pPrimitiveExtVars + nit->nIndex;
+				{
+					InputVariable vx = InputVariable(m_pVarsExt[nit.nIndex]);
+					inputs.push_back(vx);
+				}
 				break;
 			}
-			pBlockPrims++;
+
+			
 		}
 
-		// assign PrimitiveVars block pointer to device
-		// it is not quite necessary, but useful for debugging
-
-		if (!m_pPrimitiveVars)
-			m_pPrimitiveVars = pBlockBegin;
-
 		CDynaPrimitive *pDummy = nullptr;
-		size_t nVarsCount = pBlockPrims - pPrimsPtrs;
-
-		//_ASSERTE(nVarsCount == Container()->PrimitiveEquationsCount(bit->eType));
-
-		VariableIndex& Output = m_pVars[(*pPrimsPtrs)->Index()];
+		VariableIndex& Output  = m_pVars[iit->front().nIndex];
+		VariableIndex& Output1 = m_pVars[iit->front().nIndex + 1];
 
 		switch (bit->eType)
 		{
 		case PBT_LAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_LIMITEDLAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_DERLAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CDerlag(*this, Output, { *(pPrimsPtrs + 1) }, { m_pVars[(*pPrimsPtrs)->Index() + 1] });
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CDerlag(*this, Output, { inputs[1] }, { Output1 });
 			break;
 		case PBT_INTEGRATOR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_LIMITEDINTEGRATOR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_LIMITERCONST:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimiterConst(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimiterConst(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_RELAY:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_RELAYDELAY:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_RELAYDELAYLOGIC:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_RSTRIGGER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(*this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_HIGHER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(*this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_LOWER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(*this, Output, { *(pPrimsPtrs + 2), *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_BIT:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CZCDetector(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CZCDetector(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_AND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CAnd(*this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CAnd(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_OR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) COr(*this, Output, { *(pPrimsPtrs + 1), *(pPrimsPtrs + 2) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) COr(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_NOT:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CNot(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CNot(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_ABS:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CAbs(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CAbs(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_DEADBAND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CDeadBand(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CDeadBand(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_EXPAND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CExpand(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CExpand(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_SHRINK:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(*this, Output, { *(pPrimsPtrs + 1) }, {});
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(*this, Output, { inputs[1] }, {});
 			break;
 		}
 	}
@@ -392,8 +372,7 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaMo
 	eDEVICEFUNCTIONSTATUS eRes(eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 	const auto& InputInfos = Container()->DLL().GetInputsInfo();
-
-	PrimitiveVariableExternal* pStart = m_pPrimitiveExtVars;
+	VariableIndexExternal * pStart = m_pVarsExt;
 	ExternalVariable* pExt = m_pExternals;
 
 	for (const auto& it : InputInfos)
@@ -401,8 +380,8 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaMo
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(*pStart, this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType)));
 		if (eRes != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 		{
-			pExt->pValue = &pStart->Value();
-			pExt->nIndex = pStart->Index();
+			pExt->pValue = &(double&)*pStart;
+			pExt->nIndex = pStart->Index;
 		}
 		else
 			break;
@@ -411,9 +390,10 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaMo
 		pStart++;
 	}
 
+	/*
 	PrimitiveVariable* pPs(m_pPrimitiveVars);
 	for (ptrdiff_t i = 0; i < Container()->GetPrimitiveVariablesCount(); i++)
-		pPs->Index(i + m_nMatrixRow);
+		pPs->Index(i + m_nMatrixRow);*/
 	
 	return eRes;
 }
@@ -494,6 +474,14 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 		if (Inputs.empty())
 			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive inputs"));
 
+		PrimitivePinVec& Outputs = prim.Outputs;
+		if (Outputs.empty())
+			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive output"));
+		auto& PrimaryOutput = Outputs.front();
+		if (PrimaryOutput.Variable.index() != 0)
+			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - output variable must have type VariableIndex"));
+		VariableIndex& OutputVar(std::get<0>(PrimaryOutput.Variable));
+
 		auto& Input = Inputs.front();
 
 		switch (Input.Variable.index())
@@ -501,27 +489,18 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 		case 0:
 			{
 				VariableIndex& inputvar(std::get<0>(Input.Variable));
-				m_PrimExt.push_back(std::make_unique<PrimitiveVariable>(&inputvar - &VarVec[0], inputvar.Value));
+				Container.CreatePrimitive(prim.eBlockType, *this, OutputVar, { inputvar }, {});
 			}
 			break;
 		case 1:
 			{
 				VariableIndexExternal& inputvar(std::get<1>(Input.Variable));
-				m_PrimExt.push_back(std::make_unique<PrimitiveVariableExternal>());
-				m_PrimExt.back()->IndexAndValue(&inputvar - &ExtVec[0], nullptr);
+				Container.CreatePrimitive(prim.eBlockType, *this, OutputVar, { inputvar }, {});
 			}
 			break;
 		}
 
-		PrimitivePinVec& Outputs = prim.Outputs;
-		if (Outputs.empty())
-			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive output"));
-		auto& PrimaryOutput = Outputs.front();
-		if(PrimaryOutput.Variable.index() != 0)
-			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - output variable must have type VariableIndex"));
 
-		VariableIndex& OutputVar(std::get<0>(PrimaryOutput.Variable));
-		Container.CreatePrimitive(prim.eBlockType, *this, OutputVar, { m_PrimExt.back().get() }, {});
 	}
 }
 

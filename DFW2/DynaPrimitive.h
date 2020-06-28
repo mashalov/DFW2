@@ -25,6 +25,7 @@ namespace DFW2
 		virtual void IndexAndValue(ptrdiff_t nIndex, double* pValue) {}
 	};
 
+	/*
 	class PrimitiveVariable : public PrimitiveVariableBase
 	{
 	protected:
@@ -34,6 +35,7 @@ namespace DFW2
 		double& Value() override { return m_dValue; }
 		void IndexAndValue(ptrdiff_t nIndex, double* pValue) override {}
 	};
+	*/
 
 	class PrimitiveVariableExternal: public PrimitiveVariableBase
 	{
@@ -66,29 +68,35 @@ namespace DFW2
 
 	struct InputVariable
 	{
+	private:
 		double*& pValue;
 		double* pInternal;
+	public:
 		ptrdiff_t& Index;
 		InputVariable(VariableIndex& Variable) : pInternal(&Variable.Value), pValue(pInternal), Index(Variable.Index) {}
 		InputVariable(VariableIndexExternal& Variable) : pInternal(nullptr), pValue(Variable.m_pValue), Index(Variable.Index) {}
-		InputVariable(const InputVariable& Input) : pValue(Input.pValue), pInternal(Input.pInternal), Index(Input.Index) {}
+		InputVariable(const InputVariable& Input) : 
+			pValue(Input.pInternal ? pInternal : Input.pValue),
+			pInternal(Input.pInternal),
+			Index(Input.Index)
+			{}
+
+		InputVariable& operator =(const InputVariable& other) = delete;
+
 		constexpr operator double& () { return *pValue; }
 		constexpr operator const double& () const { return *pValue; }
 		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
 	};
 
 	using ExtraOutputList = std::initializer_list<std::reference_wrapper<VariableIndex>>;
-	using InputList = std::initializer_list<PrimitiveVariableBase*>;
-	using InputList2 = std::initializer_list<InputVariable>;
+	using InputList = std::initializer_list<InputVariable>;
 
 	class CDynaPrimitive
 	{
 	protected:
-		PrimitiveVariableBase *m_Input = nullptr;
-		InputVariable m_InputV;
+		InputVariable  m_Input;
 		VariableIndex& m_Output;
 		CDevice& m_Device;
-		//ptrdiff_t A(ptrdiff_t nOffset);
 		bool ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH);
 		bool UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters);
 		bool UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters);
@@ -99,27 +107,14 @@ namespace DFW2
 		constexpr operator VariableIndex& () { return m_Output; }
 		constexpr operator const VariableIndex& () const { return m_Output; }
 
-		static void InitializeInputs(std::initializer_list<PrimitiveVariableBase**> InputVariables, std::initializer_list<PrimitiveVariableBase*> Input)
-		{
-			auto source = Input.begin();
-			for (auto& inp : InputVariables)
-			{
-				if (source == Input.end())
-					throw dfw2error(_T("CDynaPrimitive::InitializeInputs - inputs count mismatch"));
-				*inp = *source;
-				source++;
-			}
-		}
-
 		CDynaPrimitive(CDevice& Device, 
 					   VariableIndex& OutputVariable,
 					   InputList Input,
 					   ExtraOutputList ExtraOutputVariables = {}) : m_Device(Device),
 																    m_Output(OutputVariable),
-																	m_InputV(OutputVariable)
+																	m_Input(*Input.begin())
 		{
 			m_Output = 0.0;
-			InitializeInputs({&m_Input}, Input);
 			m_Device.RegisterPrimitive(this);
 		}
 
@@ -133,7 +128,7 @@ namespace DFW2
 		virtual const _TCHAR* GetVerbalName() { return _T(""); }
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) { return eDEVICEFUNCTIONSTATUS::DFS_OK; }
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		virtual PrimitiveVariableBase& Input(ptrdiff_t nIndex) { return *m_Input; }
+		//virtual PrimitiveVariableBase& Input(ptrdiff_t nIndex) { return *m_Input; }
 		virtual bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) { return true; }
 		static double GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c);
 		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst);

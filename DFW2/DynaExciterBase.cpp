@@ -5,8 +5,7 @@
 using namespace DFW2;
 
 CDynaExciterBase::CDynaExciterBase() : CDevice(),
-									   PvEqsum(V_EQSUM, Eqsum),
-									   ExcLag(*this, EqeV, { &PvEqsum })
+									   ExcLag(*this, EqeV, { Eqsum })
 {
 }
 
@@ -27,7 +26,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 		Ig0 = GetIg();
 		Ug0 = ExtVg; 
 		Eqe = Eqe0; 
-		Eq0 = EqInput.Value(); 
+		Eq0 = EqInput; 
 		(VariableIndex&)ExcLag = Eqsum = Eqe0;
 		Umin *= Eqnom;
 		Umax *= Eqnom;
@@ -87,7 +86,6 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::UpdateExternalVariables(CDynaModel *pDyn
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGenerator1C::m_cszEq));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, GetSingleLink(DEVTYPE_EXCCON), CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, GetSingleLink(DEVTYPE_DEC), CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG));
-	PvEqsum.Index(m_nMatrixRow + V_EQSUM);
 	return eRes;
 }
 

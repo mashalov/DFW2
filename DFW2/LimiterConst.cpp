@@ -7,17 +7,16 @@ using namespace DFW2;
 bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	double dInput = m_Input->Value();
 	double dOdI = -1.0;
 
 	switch (GetCurrentState())
 	{
 	case LS_MAX:
-		m_Output = dInput = m_dMax;
+		m_Output = m_Input = m_dMax;
 		dOdI = 0.0;
 		break;
 	case LS_MIN:
-		m_Output = dInput = m_dMin;
+		m_Output = m_Input = m_dMin;
 		dOdI = 0.0;
 		break;
 	}
@@ -26,7 +25,7 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 		dOdI = 0.0;
 
 	pDynaModel->SetElement(m_Output, m_Output, 1.0);
-	pDynaModel->SetElement(m_Output.Index, m_Input->Index(), dOdI);
+	pDynaModel->SetElement(m_Output, m_Input, dOdI);
 	return true;
 }
 
@@ -34,17 +33,16 @@ bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dInput = m_Input->Value();
 		switch (GetCurrentState())
 		{
 		case LS_MAX:
-			m_Output = dInput = m_dMax;
+			m_Output = m_Input = m_dMax;
 			break;
 		case LS_MIN:
-			m_Output = dInput = m_dMin;
+			m_Output = m_Input = m_dMin;
 			break;
 		}
-		pDynaModel->SetFunction(m_Output, m_Output - dInput);
+		pDynaModel->SetFunction(m_Output, m_Output - m_Input);
 	}
 	else
 		pDynaModel->SetFunction(m_Output, 0.0);
@@ -64,12 +62,11 @@ bool CLimiterConst::Init(CDynaModel *pDynaModel)
 // контроль зерокроссинга для состояния вне ограничения
 double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 {
-	double dInput = m_Input->Value();
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMaxH - dInput, dInput, m_dMaxH, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMaxH - m_Input, m_Input, m_dMaxH, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, LS_MAX);
 	if (GetCurrentState() == LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
-		if (CDynaPrimitive::ChangeState(pDynaModel, dInput- m_dMinH, dInput, m_dMinH, m_Input->Index(), rH))
+		if (CDynaPrimitive::ChangeState(pDynaModel, m_Input - m_dMinH, m_Input, m_dMinH, m_Input.Index, rH))
 			SetCurrentState(pDynaModel, LS_MIN);
 	return rH;
 
@@ -78,7 +75,7 @@ double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMin - m_Input->Value(), m_Input->Value(), m_dMin, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMin - m_Input, m_Input, m_dMin, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, LS_MID);
 	return rH;
 }
@@ -86,7 +83,7 @@ double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 double CLimiterConst::OnStateMax(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, m_Input->Value() - m_dMax, m_Input->Value(), m_dMax, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_Input - m_dMax, m_Input, m_dMax, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, LS_MID);
 	return rH;
 }
@@ -95,10 +92,9 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 {
 	if (m_Device.IsStateOn())
 	{
-		double dInput   = m_Input->Value();
-		double CheckMax = dInput - m_dMax;
-		double CheckMin = m_dMin - dInput;
-		m_Output = m_Input->Value();
+		double CheckMax = m_Input - m_dMax;
+		double CheckMin = m_dMin - m_Input;
+		m_Output = m_Input;
 
 		// Bigger or Equal - very important !
 

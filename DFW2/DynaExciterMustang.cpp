@@ -7,7 +7,7 @@ using namespace DFW2;
 
 
 CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
-	EqLimit(*this, EqOutputValue, { &EqInput })
+	EqLimit(*this, EqOutputValue, { EqInput })
 {
 	m_Primitives.pop_back();
 }
@@ -50,7 +50,7 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Eqsum, GenIq, -Ig * GenIq);
 
 	//dEqsum / dEq
-	pDynaModel->SetElement(Eqsum.Index, EqInput.Index(), -Kif);
+	pDynaModel->SetElement(Eqsum, EqInput, -Kif);
 
 	double  V = Ug0;
 	if (bVoltageDependent)
@@ -69,7 +69,7 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 
 bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
-	double dEqsum = Eqsum - (Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput.Value() - Eq0) + ExtUdec);
+	double dEqsum = Eqsum - (Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec);
 	double  V = Ug0;
 	if (bVoltageDependent)
 		V = ExtVg;
@@ -125,7 +125,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDyn
 
 	if (IsStateOn())
 	{
-		Eqsum = Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput.Value() - Eq0) + ExtUdec;
+		Eqsum = Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec;
 		// pick up Eq limiter state before disco
 		CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateInitial = EqLimit.GetCurrentState();
 
