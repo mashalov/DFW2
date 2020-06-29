@@ -231,7 +231,7 @@ VariableIndex* CCustomDeviceContainer::NewVariableIndexVariables()
 	return &*(m_VariableIndexPool.end() - m_nVariableIndexesCount);
 }
 
-ExternalVariable* CCustomDeviceContainer::NewExternalVariables()
+DLLExternalVariable* CCustomDeviceContainer::NewExternalVariables()
 {
 	if (!m_nExternalVarsCount)
 		return nullptr;

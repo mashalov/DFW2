@@ -241,7 +241,7 @@ void CAutomatic::Init()
 		// находим в автоматике выходное реле элемента логики по имени выхода
 		CRelayDelay *pActionRelay = static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName.c_str()));
 		if (!pActionRelay)
-			throw dfw2error(fmt::format(CDFW2Messages::m_cszLogicNotFoundInDLL, strVarName.c_str()));
+			throw dfw2error(fmt::format(CDFW2Messages::m_cszLogicNotFoundInDLL, strVarName));
 
 		pActionRelay->SetDiscontinuityId(pLogic->GetId());
 		CAutomaticLogic *pLogicItem = static_cast<CAutomaticLogic*>(pLogic);

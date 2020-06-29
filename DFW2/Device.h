@@ -176,12 +176,9 @@ namespace DFW2
 		eDEVICESTATECAUSE m_StateCause;										// причина изменения состояния устройства
 		STATEPRIMITIVESLIST m_StatePrimitives;
 		PRIMITIVESVEC m_Primitives;
-		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		bool InitExternalVariable(VariableIndexExternalOptional &ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
-
 		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
-
 		const CSingleLink& GetSingleLinks() { return m_DeviceLinks; }
 
 		// формирование подробного имени устройства. По умолчанию учитывается описание типа устройства
@@ -213,7 +210,7 @@ namespace DFW2
 		// Аналогична по смыслу virtual double* GetVariablePtr()
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
 		double* GetConstVariablePtr(std::wstring_view VarName);
-		virtual ExternalVariable GetExternalVariable(std::wstring_view VarName);
+		virtual VariableIndexExternal GetExternalVariable(std::wstring_view VarName);
 
 		// константные указатели на переменную. Врапперы virtual double* GetVariablePtr()
 		const double* GetVariableConstPtr(ptrdiff_t nVarIndex) const;

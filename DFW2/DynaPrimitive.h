@@ -7,61 +7,6 @@ namespace DFW2
 	class CDynaModel;
 	struct RightVector;
 
-	class PrimitiveVariableBase
-	{
-	protected:
-		ptrdiff_t m_nIndex;
-	public:
-		virtual double& Value() = 0;
-		inline bool Indexed() { return m_nIndex != CDevice::nIndexUnassigned; }
-		inline void UnIndex() { m_nIndex = CDevice::nIndexUnassigned; }
-		inline ptrdiff_t Index() 
-		{ 
-			if (!Indexed())
-				throw dfw2error(_T("PrimitiveVariableBase::Index - access to unindexed variable"));
-			return m_nIndex; 
-		}
-		void Index(ptrdiff_t nIndex) { m_nIndex = nIndex; }
-		virtual void IndexAndValue(ptrdiff_t nIndex, double* pValue) {}
-	};
-
-	/*
-	class PrimitiveVariable : public PrimitiveVariableBase
-	{
-	protected:
-		double&   m_dValue;
-	public:
-		PrimitiveVariable(ptrdiff_t nIndex, double& pdValue) : m_dValue(pdValue)  { m_nIndex = nIndex; }
-		double& Value() override { return m_dValue; }
-		void IndexAndValue(ptrdiff_t nIndex, double* pValue) override {}
-	};
-	*/
-
-	class PrimitiveVariableExternal: public PrimitiveVariableBase
-	{
-	protected:
-		double *m_pValue;
-	public:
-		double& Value()  override { return *m_pValue; }
-		virtual ptrdiff_t Index() { return m_nIndex;  }
-		void IndexAndValue(ptrdiff_t nIndex, double* pValue) override
-		{
-			m_nIndex = nIndex;
-			m_pValue = pValue;
-		}
-		void IndexAndValue(ExternalVariable& ExtVar)
-		{
-			m_nIndex = ExtVar.nIndex;
-			m_pValue = ExtVar.pValue;
-		}
-
-		void Value(double* pValue)
-		{
-			m_pValue = pValue;
-			UnIndex(); 
-		}
-	};
-
 	using PRIMITIVEPARAMETERDEFAULT = std::pair<std::reference_wrapper<double>, double>;
 	using PRIMITIVEPARAMETERSDEFAULT = std::vector<PRIMITIVEPARAMETERDEFAULT>;
 	using DOUBLEREFVEC = std::vector<std::reference_wrapper<double>>;
@@ -74,7 +19,7 @@ namespace DFW2
 	public:
 		ptrdiff_t& Index;
 		InputVariable(VariableIndex& Variable) : pInternal(&Variable.Value), pValue(pInternal), Index(Variable.Index) {}
-		InputVariable(VariableIndexExternal& Variable) : pInternal(nullptr), pValue(Variable.m_pValue), Index(Variable.Index) {}
+		InputVariable(VariableIndexExternal& Variable) : pInternal(nullptr), pValue(Variable.pValue), Index(Variable.Index) {}
 		InputVariable(const InputVariable& Input) : 
 			pValue(Input.pInternal ? pInternal : Input.pValue),
 			pInternal(Input.pInternal),

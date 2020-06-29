@@ -1525,7 +1525,7 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCH
 	return pFoundDevice;
 }
 
-bool CDynaModel::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName)
+bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName)
 {
 	bool bRes = false;
 	unsigned int nSourceLength = static_cast<unsigned int>(_tcslen(cszName));
@@ -1542,23 +1542,23 @@ bool CDynaModel::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice
 		if (pFoundDevice)
 		{
 			// Сначала ищем переменную состояния, со значением и с индексом
-			ExternalVariable extVar = pFoundDevice->GetExternalVariable(szProp);
-			if (extVar.pValue)
+			ExtVar = pFoundDevice->GetExternalVariable(szProp);
+			if (ExtVar.pValue)
 			{
-				ExtVar.IndexAndValue(extVar.nIndex - pFromDevice->A(0), extVar.pValue);
+				ExtVar.Index -= pFromDevice->A(0);
 				bRes = true;
 			}
 			else
 			{
 				// если в девайсе такой нет, ищем константу, со значением, но без
 				// индекса
-				extVar.pValue = pFoundDevice->GetConstVariablePtr(szProp);
-				if (extVar.pValue)
+				ExtVar.pValue = pFoundDevice->GetConstVariablePtr(szProp);
+				if (ExtVar.pValue)
 				{
 					// если нашли константу, объявляем ей индекс DFW2_NON_STATE_INDEX,
 					// чтобы при формировании матрицы понимать, что это константа
 					// и не ставить производную в индекс этой переменной
-					ExtVar.IndexAndValue(DFW2_NON_STATE_INDEX, extVar.pValue);
+					ExtVar.Index = DFW2_NON_STATE_INDEX;
 					bRes = true;
 				}
 				else
@@ -1578,11 +1578,11 @@ bool CDynaModel::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice
 						pBranch->m_pMeasure = pBranchMeasure;
 					}
 
-					ExternalVariable extVar = pBranch->m_pMeasure->GetExternalVariable(szProp);
+					ExtVar = pBranch->m_pMeasure->GetExternalVariable(szProp);
 
-					if (extVar.pValue)
+					if (ExtVar.pValue)
 					{
-						ExtVar.IndexAndValue(extVar.nIndex - pFromDevice->A(0), extVar.pValue);
+						ExtVar.Index -= pFromDevice->A(0);
 						bRes = true;
 					}
 					else

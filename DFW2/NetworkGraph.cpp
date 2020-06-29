@@ -816,7 +816,7 @@ std::wstring CDynaNodeContainer::GetIterationControlString()
 
 void CDynaNodeContainer::DumpIterationControl()
 {
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, GetIterationControlString().c_str());
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, GetIterationControlString());
 }
 
 // функция готовит топологию к дианамике в первый раз

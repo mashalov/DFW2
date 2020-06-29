@@ -1582,7 +1582,7 @@ void CLoadFlow::UpdateSlackBusesImbalance()
 void CLoadFlow::DumpNewtonIterationControl()
 {
 	const _TCHAR* causes[] = {_T(""), _T("dV"), _T("dD"), _T("dB"), _T("vV"), _T("vD"), _T("Bt")};
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(_T("{} {:15f} {:6.2} {:4}"), pNodes->GetIterationControlString().c_str(), 
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(_T("{} {:15f} {:6.2} {:4}"), pNodes->GetIterationControlString(), 
 																	  pNodes->m_IterationControl.m_ImbRatio,
 																	  m_NewtonStepRatio.m_dRatio,
 																	  causes[static_cast<ptrdiff_t>(m_NewtonStepRatio.m_eStepCause)]));

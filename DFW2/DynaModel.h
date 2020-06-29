@@ -816,7 +816,7 @@ namespace DFW2
 		bool PopVarSearchStack(CDevice* &pDevice);
 		void ResetStack();
 
-		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName);
+		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName);
 		CDevice* GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, const _TCHAR* cszSymLink);
 		CDeviceContainer *GetContainerByAlias(std::wstring_view Alias);
 		CAutomatic& Automatic();

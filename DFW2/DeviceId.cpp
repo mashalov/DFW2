@@ -25,7 +25,7 @@ void CDeviceId::UpdateVerbalName()
 {
 	// если имя не пустое, формируется подробное имя в формате Id - [Имя]
 	// если имя пустое - просто Id
-	m_strVerbalName = (m_strName.length() ? fmt::format(_T("{}-[{}]"), m_Id, m_strName.c_str()) : fmt::format(_T("{}"), m_Id));
+	m_strVerbalName = (m_strName.length() ? fmt::format(_T("{}-[{}]"), m_Id, m_strName) : fmt::format(_T("{}"), m_Id));
 }
 
 void CDeviceId::SetName(std::wstring_view Name)

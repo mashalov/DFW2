@@ -322,7 +322,7 @@ double* CDynaGenerator1C::GetConstVariablePtr(ptrdiff_t nVarIndex)
 			MAP_VARIABLE(Snom, C_SNOM)
 			MAP_VARIABLE(Qnom, C_QNOM)
 			MAP_VARIABLE(Inom, C_INOM)
-			MAP_VARIABLE(*ExtEqe.m_pValue, C_EQE)
+			MAP_VARIABLE(*ExtEqe.pValue, C_EQE)
 		}
 	}
 	return p;

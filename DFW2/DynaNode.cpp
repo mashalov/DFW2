@@ -992,11 +992,11 @@ bool CDynaNodeContainer::Seidell()
 	return LULF();
 }
 
-ExternalVariable CDynaNodeBase::GetExternalVariable(std::wstring_view VarName)
+VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::wstring_view VarName)
 {
 	if (VarName == CDynaNode::m_cszSz)
 	{
-		ExternalVariable ExtVar = { nullptr, -1 };
+		VariableIndexExternal ExtVar = { -1, nullptr };
 
 		if (m_pSyncZone)
 			ExtVar = m_pSyncZone->GetExternalVariable(CDynaNode::m_cszS);

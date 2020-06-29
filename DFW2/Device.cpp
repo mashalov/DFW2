@@ -80,21 +80,21 @@ double* CDevice::GetConstVariablePtr(std::wstring_view VarName)
 }
 
 // получить описание внешней переменной по имени
-ExternalVariable CDevice::GetExternalVariable(std::wstring_view VarName)
+VariableIndexExternal CDevice::GetExternalVariable(std::wstring_view VarName)
 {
 	_ASSERTE(m_pContainer);
 
-	ExternalVariable ExtVar;
+	VariableIndexExternal ExtVar;
 	// в контейнере находим индекс переменной по имени
-	ExtVar.nIndex = m_pContainer->GetVariableIndex(VarName);
+	ExtVar.Index = m_pContainer->GetVariableIndex(VarName);
 
-	if (ExtVar.nIndex >= 0)
+	if (ExtVar.Index >= 0)
 	{
 		// извлекаем указатель на переменную
-		ExtVar.pValue = GetVariablePtr(ExtVar.nIndex);
+		ExtVar.pValue = GetVariablePtr(ExtVar.Index);
 		// извлекаем номер строки в Якоби
 		// если устройство не в матрице, возвращаем индекс "не привязано"
-		ExtVar.nIndex = AssignedToMatrix() ? A(ExtVar.nIndex) : ExtVar.nIndex = CDevice::nIndexUnassigned;
+		ExtVar.Index = AssignedToMatrix() ? A(ExtVar.Index) : ExtVar.Index = CDevice::nIndexUnassigned;
 	}
 	else
 		ExtVar.pValue = nullptr;
@@ -630,43 +630,21 @@ eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(bool Status1)
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
+
 bool CDevice::InitExternalVariable(VariableIndexExternalOptional& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
 {
-	if (pFromDevice)
-	{
-		PrimitiveVariableExternal v;
-		InitExternalVariable(v, pFromDevice, cszName, eLimitDeviceType);
-		if (v.Indexed())
-		{
-			ExtVar.Index = v.Index();
-			ExtVar.m_pValue = &v.Value();
-		}
-	}
-	if (!ExtVar.m_pValue)
+	InitExternalVariable(ExtVar, pFromDevice, cszName, eLimitDeviceType);
+	if (!ExtVar.pValue)
 		ExtVar.MakeLocal();
 	return true;
 }
 
 bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
 {
-	PrimitiveVariableExternal v;
-	bool bRes = InitExternalVariable(v, pFromDevice, cszName, eLimitDeviceType);
-	if (bRes)
-	{
-		if(v.Indexed())
-			ExtVar.Index = v.Index();
-		ExtVar.m_pValue = &v.Value();
-	}
-	return bRes;
-}
-
-bool CDevice::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
-{
 	_ASSERTE(m_pContainer);
 
 	bool bRes = false;
-	ExtVar.UnIndex();
-
+	ExtVar.Index = -1;
 
 	if (eLimitDeviceType == DEVTYPE_MODEL)
 	{
@@ -688,11 +666,10 @@ bool CDevice::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* p
 
 				if (bTryGet)
 				{
-					ExternalVariable extVar = pFromDevice->GetExternalVariable(cszName);
-					if (extVar.pValue)
+					ExtVar = pFromDevice->GetExternalVariable(cszName);
+					if (ExtVar.pValue)
 					{
 						// если устроство имеет уравнения - возвращаем индекс относительно индекса устройства, иначе - индекс "не назначено"
-						ExtVar.IndexAndValue(AssignedToMatrix() ? extVar.nIndex : CDevice::nIndexUnassigned, extVar.pValue);
 						bRes = true;
 					}
 				}

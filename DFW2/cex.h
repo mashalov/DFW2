@@ -26,7 +26,7 @@ public:
 	{
 		std::wstring strGetLastErrorMsg = GetLastErrorMessage();
 		if(!strGetLastErrorMsg.empty())
-			m_strMessage += fmt::format(_T(" {}"), strGetLastErrorMsg.c_str());
+			m_strMessage += fmt::format(_T(" {}"), strGetLastErrorMsg);
 		stringutils::removecrlf(m_strMessage);
 	}
 

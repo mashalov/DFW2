@@ -373,7 +373,7 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaMo
 
 	const auto& InputInfos = Container()->DLL().GetInputsInfo();
 	VariableIndexExternal * pStart = m_pVarsExt;
-	ExternalVariable* pExt = m_pExternals;
+	DLLExternalVariable* pExt = m_pExternals;
 
 	for (const auto& it : InputInfos)
 	{

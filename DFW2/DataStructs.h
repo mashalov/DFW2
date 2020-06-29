@@ -28,17 +28,17 @@ namespace DFW2
 
 	struct VariableIndexExternal : VariableIndexBase
 	{
-		double* m_pValue = nullptr;
-		constexpr operator double& () { return *m_pValue; }
-		constexpr operator const double& () const { return *m_pValue; }
-		constexpr double& operator= (double value) { *m_pValue = value;  return *m_pValue; }
+		double* pValue = nullptr;
+		constexpr operator double& () { return *pValue; }
+		constexpr operator const double& () const { return *pValue; }
+		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
 	};
 
 	struct VariableIndexExternalOptional : VariableIndexExternal
 	{
 		double Value;
-		void MakeLocal() { m_pValue = &Value; Index = -1; }
-		constexpr double& operator= (double value) { *m_pValue = value;  return *m_pValue; }
+		void MakeLocal() { pValue = &Value; Index = -1; }
+		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
 	};
 
 	using VariableIndexRefVec = std::vector<std::reference_wrapper<VariableIndex>>;

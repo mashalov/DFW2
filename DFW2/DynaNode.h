@@ -155,7 +155,7 @@ namespace DFW2
 
 		void SetMatrixRow(ptrdiff_t nMatrixRow) noexcept { m_nMatrixRow = nMatrixRow; }
 
-		ExternalVariable GetExternalVariable(std::wstring_view VarName) override;
+		VariableIndexExternal GetExternalVariable(std::wstring_view VarName) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 

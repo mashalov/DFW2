@@ -12,7 +12,7 @@ namespace DFW2
 		VariableIndexExternal* m_pVarsExt = nullptr;
 		double *m_pConstVars = nullptr;
 		double *m_pSetPoints = nullptr;
-		ExternalVariable *m_pExternals = nullptr;
+		DLLExternalVariable*m_pExternals = nullptr;
 
 		BuildEquationsArgs m_DLLArgs;
 

@@ -43,11 +43,11 @@ namespace DFW2
 		CCustomDeviceDLL m_DLL;
 		// пулы для всех устройств контейнера
 		PrimitivePoolElement m_PrimitivePool[PrimitiveBlockType::PBT_LAST];			// таблица пулов для каждого типа хост-блоков
-		std::vector<ExternalVariable> m_ExternalVarsPool;							// пул внешних переменных устройства
+		std::vector<DLLExternalVariable> m_ExternalVarsPool;						// пул внешних переменных устройства
 		std::vector<double> m_DoubleVarsPool;										// пул double - переменных 
 		std::vector<VariableIndex> m_VariableIndexPool;								// пул для VariableIndexes
 		std::vector<VariableIndexExternal> m_VariableIndexExternalPool;
-		ExternalVariable *m_pExternalVarsHead;
+		DLLExternalVariable* m_pExternalVarsHead;
 
 		double *m_pDoubleVarsHead;
 		size_t m_nBlockEquationsCount;												// количество внутренних уравнений хост-блоков
@@ -73,7 +73,7 @@ namespace DFW2
 		double* NewDoubleVariables();
 		VariableIndex* NewVariableIndexVariables();
 		VariableIndexExternal* NewVariableIndexExternals();
-		ExternalVariable* NewExternalVariables();
+		DLLExternalVariable* NewExternalVariables();
 		void* NewPrimitive(PrimitiveBlockType eType);
 		const CCustomDeviceDLL& DLL() { return m_DLL; }
 		long GetParametersValues(ptrdiff_t nId, BuildEquationsArgs* pArgs, long nBlockIndex, DOUBLEVECTOR& Parameters);

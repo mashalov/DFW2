@@ -111,7 +111,7 @@ typedef struct
 	double *pValue;			// указатель на значение
 	ptrdiff_t nIndex;		// индекс (номер строки) в системе Якоби
 }
-	ExternalVariable;
+	DLLExternalVariable;
 
 typedef struct 
 {
@@ -149,7 +149,7 @@ typedef struct
 	DLLVariableIndex* pEquations;
 	double* pConsts;
 	double* pSetPoints;
-	ExternalVariable* pExternals;
+	DLLExternalVariable* pExternals;
 	double Omega;
 	double t;
 }
