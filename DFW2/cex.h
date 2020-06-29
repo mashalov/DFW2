@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "winuser.h"
 #include "stdio.h"

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DeviceContainerPropertiesBase.h"
 
 namespace DFW2

@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include <vector>
 #include <list>
 #include <map>
@@ -44,16 +44,16 @@ namespace DFW2
 	using VariableIndexRefVec = std::vector<std::reference_wrapper<VariableIndex>>;
 	using VariableIndexExternalRefVec = std::vector<std::reference_wrapper<VariableIndexExternal>>;
 
-	// типы переменных устройства
+	// С‚РёРїС‹ РїРµСЂРµРјРµРЅРЅС‹С… СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	enum eDEVICEVARIABLETYPE
 	{
-		eDVT_CONSTSOURCE,			// константа исходных данных
-		eDVT_INTERNALCONST,			// константа рассчитываемая внутри устройства в Init
-		eDVT_STATE					// переменная состояния, для которой должно быть уравнение
+		eDVT_CONSTSOURCE,			// РєРѕРЅСЃС‚Р°РЅС‚Р° РёСЃС…РѕРґРЅС‹С… РґР°РЅРЅС‹С…
+		eDVT_INTERNALCONST,			// РєРѕРЅСЃС‚Р°РЅС‚Р° СЂР°СЃСЃС‡РёС‚С‹РІР°РµРјР°СЏ РІРЅСѓС‚СЂРё СѓСЃС‚СЂРѕР№СЃС‚РІР° РІ Init
+		eDVT_STATE					// РїРµСЂРµРјРµРЅРЅР°СЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ, РґР»СЏ РєРѕС‚РѕСЂРѕР№ РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ СѓСЂР°РІРЅРµРЅРёРµ
 	};
 
-	// базовый класс описания переменной
-	// содержит индекс переменной в устройстве
+	// Р±Р°Р·РѕРІС‹Р№ РєР»Р°СЃСЃ РѕРїРёСЃР°РЅРёСЏ РїРµСЂРµРјРµРЅРЅРѕР№
+	// СЃРѕРґРµСЂР¶РёС‚ РёРЅРґРµРєСЃ РїРµСЂРµРјРµРЅРЅРѕР№ РІ СѓСЃС‚СЂРѕР№СЃС‚РІРµ
 	class CVarIndexBase
 	{
 	public:
@@ -61,13 +61,13 @@ namespace DFW2
 		CVarIndexBase(ptrdiff_t nIndex) : m_nIndex(nIndex) { };
 	};
 
-	// описание переменной состояния
+	// РѕРїРёСЃР°РЅРёРµ РїРµСЂРµРјРµРЅРЅРѕР№ СЃРѕСЃС‚РѕСЏРЅРёСЏ
 	class CVarIndex : public CVarIndexBase
 	{
 	public:
-		bool m_bOutput;														// признак вывода переменной в результаты
-		double m_dMultiplier;												// множитель переменной
-		eVARUNITS m_Units;													// единицы измерения переменной
+		bool m_bOutput;														// РїСЂРёР·РЅР°Рє РІС‹РІРѕРґР° РїРµСЂРµРјРµРЅРЅРѕР№ РІ СЂРµР·СѓР»СЊС‚Р°С‚С‹
+		double m_dMultiplier;												// РјРЅРѕР¶РёС‚РµР»СЊ РїРµСЂРµРјРµРЅРЅРѕР№
+		eVARUNITS m_Units;													// РµРґРёРЅРёС†С‹ РёР·РјРµСЂРµРЅРёСЏ РїРµСЂРµРјРµРЅРЅРѕР№
 		CVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits) : CVarIndexBase(nIndex),
 			m_bOutput(true),
 			m_dMultiplier(1.0),
@@ -85,7 +85,7 @@ namespace DFW2
 		};
 	};
 
-	// описание константы
+	// РѕРїРёСЃР°РЅРёРµ РєРѕРЅСЃС‚Р°РЅС‚С‹
 	class CConstVarIndex : public CVarIndexBase
 	{
 	public:
@@ -97,7 +97,7 @@ namespace DFW2
 		}
 	};
 
-	// описание внешней переменной
+	// РѕРїРёСЃР°РЅРёРµ РІРЅРµС€РЅРµР№ РїРµСЂРµРјРµРЅРЅРѕР№
 	class CExtVarIndex : public CVarIndexBase
 	{
 	public:
@@ -134,22 +134,22 @@ namespace DFW2
 	};
 
 
-	// карта индексов переменных состояния
+	// РєР°СЂС‚Р° РёРЅРґРµРєСЃРѕРІ РїРµСЂРµРјРµРЅРЅС‹С… СЃРѕСЃС‚РѕСЏРЅРёСЏ
 	using VARINDEXMAP = std::map<std::wstring, CVarIndex>;
 	using VARINDEXMAPITR = VARINDEXMAP::iterator;
 	using VARINDEXMAPCONSTITR = VARINDEXMAP::const_iterator;
 
-	// карта индексов констант
+	// РєР°СЂС‚Р° РёРЅРґРµРєСЃРѕРІ РєРѕРЅСЃС‚Р°РЅС‚
 	using CONSTVARINDEXMAP = std::map<std::wstring, CConstVarIndex>;
 	using CONSTVARINDEXMAPITR = CONSTVARINDEXMAP::iterator;
 	using CONSTVARINDEXMAPCONSTITR = CONSTVARINDEXMAP::const_iterator;
 
-	// карта индексов внешних переменных
+	// РєР°СЂС‚Р° РёРЅРґРµРєСЃРѕРІ РІРЅРµС€РЅРёС… РїРµСЂРµРјРµРЅРЅС‹С…
 	using EXTVARINDEXMAP = std::map<std::wstring, CExtVarIndex>;
 	using EXTVARINDEXMAPITR = EXTVARINDEXMAP::iterator;
 	using EXTVARINDEXMAPCONSTITR = EXTVARINDEXMAP::const_iterator;
 
-	// множество типов устройств
+	// РјРЅРѕР¶РµСЃС‚РІРѕ С‚РёРїРѕРІ СѓСЃС‚СЂРѕР№СЃС‚РІ
 	using TYPEINFOSET = std::set<ptrdiff_t>;
 	using TYPEINFOSETITR = TYPEINFOSET::iterator;
 
@@ -158,12 +158,12 @@ namespace DFW2
 	using EXTVARIABLEVECTOR = std::vector<VariableIndexExternal>;
 	using PRIMITIVEVECTOR = std::vector<PrimitiveDescription>;
 
-	// связь _от_ внешнего устройства
+	// СЃРІСЏР·СЊ _РѕС‚_ РІРЅРµС€РЅРµРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	struct LinkDirectionFrom
 	{
-		ptrdiff_t nLinkIndex;												// индекс связи
-		eDFW2DEVICELINKMODE eLinkMode;										// режим линковки
-		eDFW2DEVICEDEPENDENCY eDependency;									// режим подчинения устройств в связи
+		ptrdiff_t nLinkIndex;												// РёРЅРґРµРєСЃ СЃРІСЏР·Рё
+		eDFW2DEVICELINKMODE eLinkMode;										// СЂРµР¶РёРј Р»РёРЅРєРѕРІРєРё
+		eDFW2DEVICEDEPENDENCY eDependency;									// СЂРµР¶РёРј РїРѕРґС‡РёРЅРµРЅРёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІ РІ СЃРІСЏР·Рё
 		LinkDirectionFrom() : nLinkIndex(0),
 			eLinkMode(DLM_SINGLE),
 			eDependency(DPD_MASTER)
@@ -188,33 +188,33 @@ namespace DFW2
 		{}
 	};
 
-	// данные о ссылках устройства хранятся в карте
+	// РґР°РЅРЅС‹Рµ Рѕ СЃСЃС‹Р»РєР°С… СѓСЃС‚СЂРѕР№СЃС‚РІР° С…СЂР°РЅСЏС‚СЃСЏ РІ РєР°СЂС‚Рµ
 	using LINKSFROMMAP = std::map<eDFW2DEVICETYPE, LinkDirectionFrom>;
 	using LINKSTOMAP = std::map<eDFW2DEVICETYPE, LinkDirectionTo>;
 
-	// статусы выполнения функций устройства
+	// СЃС‚Р°С‚СѓСЃС‹ РІС‹РїРѕР»РЅРµРЅРёСЏ С„СѓРЅРєС†РёР№ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	enum class eDEVICEFUNCTIONSTATUS
 	{
 		DFS_OK,							// OK
-		DFS_NOTREADY,					// Надо повторить (есть какая-то очередность обработки устройств или итерационный процесс)
-		DFS_DONTNEED,					// Функция для данного устройства не нужна
-		DFS_FAILED						// Ошибка
+		DFS_NOTREADY,					// РќР°РґРѕ РїРѕРІС‚РѕСЂРёС‚СЊ (РµСЃС‚СЊ РєР°РєР°СЏ-С‚Рѕ РѕС‡РµСЂРµРґРЅРѕСЃС‚СЊ РѕР±СЂР°Р±РѕС‚РєРё СѓСЃС‚СЂРѕР№СЃС‚РІ РёР»Рё РёС‚РµСЂР°С†РёРѕРЅРЅС‹Р№ РїСЂРѕС†РµСЃСЃ)
+		DFS_DONTNEED,					// Р¤СѓРЅРєС†РёСЏ РґР»СЏ РґР°РЅРЅРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР° РЅРµ РЅСѓР¶РЅР°
+		DFS_FAILED						// РћС€РёР±РєР°
 	};
 
-	// статусы состояния устройства
+	// СЃС‚Р°С‚СѓСЃС‹ СЃРѕСЃС‚РѕСЏРЅРёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	enum class eDEVICESTATE
 	{
-		DS_OFF,							// полностью отключено
-		DS_ON,							// включено
-		DS_READY,						// готово (не используется ?)
-		DS_DETERMINE,					// должно быть определено (мастер-устройством, например)
+		DS_OFF,							// РїРѕР»РЅРѕСЃС‚СЊСЋ РѕС‚РєР»СЋС‡РµРЅРѕ
+		DS_ON,							// РІРєР»СЋС‡РµРЅРѕ
+		DS_READY,						// РіРѕС‚РѕРІРѕ (РЅРµ РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ ?)
+		DS_DETERMINE,					// РґРѕР»Р¶РЅРѕ Р±С‹С‚СЊ РѕРїСЂРµРґРµР»РµРЅРѕ (РјР°СЃС‚РµСЂ-СѓСЃС‚СЂРѕР№СЃС‚РІРѕРј, РЅР°РїСЂРёРјРµСЂ)
 	};
 
-	// причина изменения состояния устройства
+	// РїСЂРёС‡РёРЅР° РёР·РјРµРЅРµРЅРёСЏ СЃРѕСЃС‚РѕСЏРЅРёСЏ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 	enum class eDEVICESTATECAUSE
 	{
-		DSC_EXTERNAL,					// состояние изменено снаружи устройство
-		DSC_INTERNAL,					// состояние изменено действием самого устройства
-		DSC_INTERNAL_PERMANENT			// состояние изменено действием устройства и не может быть изменено еще раз
+		DSC_EXTERNAL,					// СЃРѕСЃС‚РѕСЏРЅРёРµ РёР·РјРµРЅРµРЅРѕ СЃРЅР°СЂСѓР¶Рё СѓСЃС‚СЂРѕР№СЃС‚РІРѕ
+		DSC_INTERNAL,					// СЃРѕСЃС‚РѕСЏРЅРёРµ РёР·РјРµРЅРµРЅРѕ РґРµР№СЃС‚РІРёРµРј СЃР°РјРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		DSC_INTERNAL_PERMANENT			// СЃРѕСЃС‚РѕСЏРЅРёРµ РёР·РјРµРЅРµРЅРѕ РґРµР№СЃС‚РІРёРµРј СѓСЃС‚СЂРѕР№СЃС‚РІР° Рё РЅРµ РјРѕР¶РµС‚ Р±С‹С‚СЊ РёР·РјРµРЅРµРЅРѕ РµС‰Рµ СЂР°Р·
 	};
 }

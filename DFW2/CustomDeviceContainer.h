@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DeviceContainer.h"
 #include "CustomDeviceDLL.h"
 #include "LimitedLag.h"
@@ -18,21 +18,21 @@
 namespace DFW2
 {
 
-	// пул памяти для хост-блоков
+	// РїСѓР» РїР°РјСЏС‚Рё РґР»СЏ С…РѕСЃС‚-Р±Р»РѕРєРѕРІ
 	struct PrimitivePoolElement
 	{
-		unsigned char *m_pPrimitive;			// начало пула
-		unsigned char *m_pHead;					// текущая позиция в пуле
-		size_t nCount;							// количество элементов в пуле
+		unsigned char *m_pPrimitive;			// РЅР°С‡Р°Р»Рѕ РїСѓР»Р°
+		unsigned char *m_pHead;					// С‚РµРєСѓС‰Р°СЏ РїРѕР·РёС†РёСЏ РІ РїСѓР»Рµ
+		size_t nCount;							// РєРѕР»РёС‡РµСЃС‚РІРѕ СЌР»РµРјРµРЅС‚РѕРІ РІ РїСѓР»Рµ
 		PrimitivePoolElement() : m_pPrimitive(nullptr), 
 							     nCount(0) {}
 	};
 
-	// описание хост-блока
+	// РѕРїРёСЃР°РЅРёРµ С…РѕСЃС‚-Р±Р»РѕРєР°
 	struct PrimitiveInfo
 	{
-		size_t nSize;							// размер в байтах
-		long nEquationsCount;					// количество уравнений
+		size_t nSize;							// СЂР°Р·РјРµСЂ РІ Р±Р°Р№С‚Р°С…
+		long nEquationsCount;					// РєРѕР»РёС‡РµСЃС‚РІРѕ СѓСЂР°РІРЅРµРЅРёР№
 		PrimitiveInfo(size_t Size, long EquationsCount) : nSize(Size),
 														  nEquationsCount(EquationsCount) {}
 	};
@@ -41,19 +41,19 @@ namespace DFW2
 	{
 	protected:
 		CCustomDeviceDLL m_DLL;
-		// пулы для всех устройств контейнера
-		PrimitivePoolElement m_PrimitivePool[PrimitiveBlockType::PBT_LAST];			// таблица пулов для каждого типа хост-блоков
-		std::vector<DLLExternalVariable> m_ExternalVarsPool;						// пул внешних переменных устройства
-		std::vector<double> m_DoubleVarsPool;										// пул double - переменных 
-		std::vector<VariableIndex> m_VariableIndexPool;								// пул для VariableIndexes
+		// РїСѓР»С‹ РґР»СЏ РІСЃРµС… СѓСЃС‚СЂРѕР№СЃС‚РІ РєРѕРЅС‚РµР№РЅРµСЂР°
+		PrimitivePoolElement m_PrimitivePool[PrimitiveBlockType::PBT_LAST];			// С‚Р°Р±Р»РёС†Р° РїСѓР»РѕРІ РґР»СЏ РєР°Р¶РґРѕРіРѕ С‚РёРїР° С…РѕСЃС‚-Р±Р»РѕРєРѕРІ
+		std::vector<DLLExternalVariable> m_ExternalVarsPool;						// РїСѓР» РІРЅРµС€РЅРёС… РїРµСЂРµРјРµРЅРЅС‹С… СѓСЃС‚СЂРѕР№СЃС‚РІР°
+		std::vector<double> m_DoubleVarsPool;										// РїСѓР» double - РїРµСЂРµРјРµРЅРЅС‹С… 
+		std::vector<VariableIndex> m_VariableIndexPool;								// РїСѓР» РґР»СЏ VariableIndexes
 		std::vector<VariableIndexExternal> m_VariableIndexExternalPool;
 		DLLExternalVariable* m_pExternalVarsHead;
 
 		double *m_pDoubleVarsHead;
-		size_t m_nBlockEquationsCount;												// количество внутренних уравнений хост-блоков
-		size_t m_nDoubleVarsCount;													// количество необходимых одному устройству double-переменных
-		size_t m_nExternalVarsCount;												// количество внешних переменных
-		size_t m_nVariableIndexesCount;												// количество переменных для уравнений
+		size_t m_nBlockEquationsCount;												// РєРѕР»РёС‡РµСЃС‚РІРѕ РІРЅСѓС‚СЂРµРЅРЅРёС… СѓСЂР°РІРЅРµРЅРёР№ С…РѕСЃС‚-Р±Р»РѕРєРѕРІ
+		size_t m_nDoubleVarsCount;													// РєРѕР»РёС‡РµСЃС‚РІРѕ РЅРµРѕР±С…РѕРґРёРјС‹С… РѕРґРЅРѕРјСѓ СѓСЃС‚СЂРѕР№СЃС‚РІСѓ double-РїРµСЂРµРјРµРЅРЅС‹С…
+		size_t m_nExternalVarsCount;												// РєРѕР»РёС‡РµСЃС‚РІРѕ РІРЅРµС€РЅРёС… РїРµСЂРµРјРµРЅРЅС‹С…
+		size_t m_nVariableIndexesCount;												// РєРѕР»РёС‡РµСЃС‚РІРѕ РїРµСЂРµРјРµРЅРЅС‹С… РґР»СЏ СѓСЂР°РІРЅРµРЅРёР№
 
 		void CleanUp();
 	public:

@@ -1,10 +1,10 @@
-#pragma once
+п»ї#pragma once
 #include "Device.h"
 #include "CustomDeviceContainer.h"
 
 namespace DFW2
 {
-	// прокси-устройство для включения пользовательского устройства из dll в расчетную модель
+	// РїСЂРѕРєСЃРё-СѓСЃС‚СЂРѕР№СЃС‚РІРѕ РґР»СЏ РІРєР»СЋС‡РµРЅРёСЏ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР° РёР· dll РІ СЂР°СЃС‡РµС‚РЅСѓСЋ РјРѕРґРµР»СЊ
 	class CCustomDevice : public CDevice
 	{
 	protected:

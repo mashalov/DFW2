@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DLLHeader.h"
 #include "vector"
 #include "string"
