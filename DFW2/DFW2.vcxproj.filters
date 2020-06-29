@@ -226,6 +226,15 @@
     <ClInclude Include="stringutils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="ICustomDevice.h">
+      <Filter>Header Files\CustomDevices</Filter>
+    </ClInclude>
+    <ClInclude Include="DataStructs.h">
+      <Filter>Header Files\CustomDevices</Filter>
+    </ClInclude>
+    <ClInclude Include="DeviceContainerPropertiesBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -517,6 +526,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IterationControl.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="..\fmt\src\format.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

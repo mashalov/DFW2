@@ -132,13 +132,13 @@ bool CTransformAtan2::Derivative(CExpressionToken *pToken, CExpressionToken *pCh
 		pNom->GetEquationOperand(pNom->m_pEquation, Nom);
 		if (pChildToken == pDen)
 		{
-			Result = Cex(_T("(-%s / (%s*%s + %s*%s))"), Nom.c_str(), Nom.c_str(), Nom.c_str(), Den.c_str(), Den.c_str());
+			Result = fmt::format(_T("(-{} / ({}*{} + {}*{}))"), Nom, Nom, Nom, Den, Den);
 			bRes = true;
 		}
 		else
 		if (pChildToken == pNom)
 		{
-			Result = Cex(_T("(%s / (%s*%s + %s*%s))"), Den.c_str(), Nom.c_str(), Nom.c_str(), Den.c_str(), Den.c_str());
+			Result = fmt::format(_T("({} / ({}*{} + {}*{}))"), Den, Nom, Nom, Den, Den);
 			bRes = true;
 		}
 	}

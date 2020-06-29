@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "DeviceId.h"
 #include "DeviceContainerProperties.h"
-#include "DLLStructs.h"
 #include "Serializer.h"
 
 namespace DFW2
@@ -164,33 +163,6 @@ namespace DFW2
 		}
 	};
 
-	// статусы выполнения функций устройства
-	enum eDEVICEFUNCTIONSTATUS
-	{
-		DFS_OK,							// OK
-		DFS_NOTREADY,					// Надо повторить (есть какая-то очередность обработки устройств или итерационный процесс)
-		DFS_DONTNEED,					// Функция для данного устройства не нужна
-		DFS_FAILED						// Ошибка
-	};
-
-	// статусы состояния устройства
-	enum eDEVICESTATE
-	{
-		DS_OFF,							// полностью отключено
-		DS_ON,							// включено
-		DS_READY,						// готово (не используется ?)
-		DS_DETERMINE,					// должно быть определено (мастер-устройством, например)
-	};
-
-	// причина изменения состояния устройства
-	enum eDEVICESTATECAUSE
-	{
-		DSC_EXTERNAL,					// состояние изменено снаружи устройство
-		DSC_INTERNAL,					// состояние изменено действием самого устройства
-		DSC_INTERNAL_PERMANENT			// состояние изменено действием устройства и не может быть изменено еще раз
-	};
-
-
 	// класс устройства, наследует все что связано с идентификацией
 	class CDevice : public CDeviceId
 	{
@@ -204,9 +176,8 @@ namespace DFW2
 		eDEVICESTATECAUSE m_StateCause;										// причина изменения состояния устройства
 		STATEPRIMITIVESLIST m_StatePrimitives;
 		PRIMITIVESVEC m_Primitives;
-		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
-		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
-
+		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
+		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::wstring_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		const CSingleLink& GetSingleLinks() { return m_DeviceLinks; }
 
 		// формирование подробного имени устройства. По умолчанию учитывается описание типа устройства
@@ -223,21 +194,22 @@ namespace DFW2
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
 		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
 
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message);
 
 		// функция маппинга указателя на переменную к индексу переменной
 		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
 		// внутри этой функции также делается "наследование" переменных
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-
 		double* GetVariablePtr(const _TCHAR* cszVarName);
-
+		virtual VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec);
+		VariableIndex& GetVariable(ptrdiff_t nVarIndex);
+		// Объединяет заданный список переменных данного устройства, список переменных примитивов и дочерние переменные
+		VariableIndexRefVec& JoinVariables(std::vector<std::reference_wrapper<VariableIndex>> ThisVars, VariableIndexRefVec& ChildVec);
 		// функция маппинга указателя на переменную к индексу переменной
 		// Аналогична по смыслу virtual double* GetVariablePtr()
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		double* GetConstVariablePtr(const _TCHAR* cszVarName);
-
-		virtual ExternalVariable GetExternalVariable(const _TCHAR* cszVarName);
+		double* GetConstVariablePtr(std::wstring_view VarName);
+		virtual VariableIndexExternal GetExternalVariable(std::wstring_view VarName);
 
 		// константные указатели на переменную. Врапперы virtual double* GetVariablePtr()
 		const double* GetVariableConstPtr(ptrdiff_t nVarIndex) const;
@@ -282,7 +254,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
 		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() { return m_eInitStatus; }
 		// ставит статус обработки в "неготово", для того чтобы различать устройства с обработанными разрывами
-		void UnprocessDiscontinuity() { m_eInitStatus = DFS_NOTREADY;  }
+		void UnprocessDiscontinuity() { m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;  }
 
 		// функция ремапа номера уравнения устройства в номер уравнения в Якоби
 		inline ptrdiff_t A(ptrdiff_t nOffset) 
@@ -291,6 +263,7 @@ namespace DFW2
 				throw dfw2error(_T("CDevice::A - access to device not in matrix"));
 			return m_nMatrixRow + nOffset; 
 		}
+
 		// возвращает true если для устройства есть уравнения в системе
 		inline bool AssignedToMatrix()
 		{
@@ -304,8 +277,8 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS CheckProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICESTATE GetState() const { return m_State; }
-		bool IsStateOn() const { return GetState() == DS_ON;  }
-		bool IsPermanentOff() const { return GetState() == DS_OFF && GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT; }
+		bool IsStateOn() const { return GetState() == eDEVICESTATE::DS_ON;  }
+		bool IsPermanentOff() const { return GetState() == eDEVICESTATE::DS_OFF && GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT; }
 		eDEVICESTATECAUSE GetStateCause() const { return m_StateCause; }
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr);
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
@@ -333,7 +306,7 @@ namespace DFW2
 		inline static bool IsFunctionStatusOK(eDEVICEFUNCTIONSTATUS Status)
 		{
 			// если выполнилось или не было нужно - все OK
-			return Status == DFS_OK || Status == DFS_DONTNEED;
+			return Status == eDEVICEFUNCTIONSTATUS::DFS_OK || Status == eDEVICEFUNCTIONSTATUS::DFS_DONTNEED;
 		}
 
 		// функция "безопасного" деления
@@ -346,6 +319,14 @@ namespace DFW2
 		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);
 		void RegisterPrimitive(CDynaPrimitive *pPrimitive);
 
+		template<typename T>
+		static void CheckIndex(const T& Container, ptrdiff_t nIndex, const _TCHAR* cszErrorMsg = nullptr)
+		{
+			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(Container.size()))
+				throw dfw2error(fmt::format(_T("{} - index check failed: index {} container size {}"),
+					cszErrorMsg ? cszErrorMsg : _T("CDevice::CheckIndex"), nIndex, Container.size()));
+		}
+
 
 #ifdef _DEBUG
 		static _TCHAR UnknownVarIndex[80];
@@ -355,4 +336,5 @@ namespace DFW2
 
 // макрос для упрощения связи имени и идентификатора переменной, используется в switch CDevice::GetVariablePtr
 #define MAP_VARIABLE(VarName, VarId)  case VarId: p = &VarName; break; 
+#define MAP_VARIABLEINDEX(VarName, VarId)  case VarId: p = &VarName; break; 
 }

@@ -56,20 +56,18 @@ bool CAutoCompilerItem::InsertEquations(CCompilerEquations& Equations)
 bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 {
 	m_pParser = new CExpressionParserRules(m_Compiler.m_Variables);
-
 	std::wstring strFormula = pStarterItem->GetFormula();
 	if (strFormula.empty())
 		strFormula = cszV;
 
-	std::wstring EquationExpression = Cex(_T("%s"), strFormula.c_str());
-
+	std::wstring EquationExpression = fmt::format(_T("{}"), strFormula.c_str());
 	bool bRes = m_pParser->Process(EquationExpression.c_str());
 
 	bRes = bRes && AddSpecialVariables();
 
 	if (!bRes)
 	{
-		m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszCompileError, EquationExpression.c_str(), m_pParser->GetErrorDescription()));
+		m_Compiler.m_Logger.Log(fmt::format(CAutoCompilerMessages::cszCompileError, EquationExpression, m_pParser->GetErrorDescription()));
 		return false;
 	}
 	
@@ -80,13 +78,17 @@ bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 
 	if (pVarEnum)
 	{
-		pVarEnum->m_eVarType = eCVT_EXTERNAL;
-		bRes = vars.Rename(cszV, strLink.c_str());
-		if (!bRes)
-			m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszCannotSetVariable, strLink.c_str()));
+		pVarEnum =  vars.Rename(cszV, strLink.c_str());
+		if (!pVarEnum)
+		{
+			m_Compiler.m_Logger.Log(fmt::format(CAutoCompilerMessages::cszCannotSetVariable, strLink));
+			bRes = false;
+		}
 		else
-			//m_Compiler.AddExternalVariable(strLink.c_str(), m_Compiler.m_Variables.Find(strLink.c_str()));
+		{
+			pVarEnum->m_eVarType = eCVT_EXTERNAL;
 			m_Compiler.AddExternalVariable(strLink.c_str(), pVarEnum);
+		}
 	}
 
 	if (bRes)
@@ -94,13 +96,16 @@ bool CAutoCompilerItemBaseV::Process(CAutoStarterItem *pStarterItem)
 		pVarEnum = vars.Find(cszBase);
 		if (pVarEnum)
 		{
-			pVarEnum->m_eVarType = eCVT_EXTERNALSETPOINT;
 			strLink.insert(strLink.begin(), _T('#'));
-			bRes = vars.Rename(cszBase, strLink.c_str());
-			if (!bRes)
-				m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszCannotSetVariable, strLink.c_str()));
+			pVarEnum = vars.Rename(cszBase, strLink.c_str());
+			if (!pVarEnum)
+			{
+				m_Compiler.m_Logger.Log(fmt::format(CAutoCompilerMessages::cszCannotSetVariable, strLink));
+				bRes = false;
+			}
 			else
 			{
+				pVarEnum->m_eVarType = eCVT_EXTERNALSETPOINT;
 				//m_Compiler.AddSetPoint(strLink.c_str(), m_Compiler.m_Variables.Find(strLink.c_str()));
 				// тут надо добавить ту переменную, которая переменная для base
 				VariableEnum *pExtToBase = m_pParser->CreateInternalVariable(strLinkOriginal.c_str());
@@ -130,7 +135,7 @@ bool CCompilerAutoStarterItem::InsertEquations(CCompilerEquations& Equations)
 
 	if (bRes)
 	{
-		std::wstring NewVarName(Cex(_T("S%d"), GetId()));
+		std::wstring NewVarName(fmt::format(_T("S{}"), GetId()));
 		_ASSERTE(m_pParser->m_ResultStack.size() > 0 && m_pParser->m_ResultStack.top()->ChildrenCount() > 0);
 		CExpressionToken *pRootEquation = m_pParser->m_ResultStack.top()->GetChild();
 		_ASSERTE(pRootEquation->m_pEquation);
@@ -163,8 +168,8 @@ bool CCompilerAutoLogicItem::InsertEquations(CCompilerEquations& Equations)
 
 	if (bRes)
 	{
-		std::wstring NewVarName(Cex(_T("LT%d"), GetId()));
-		std::wstring NewVarLName(Cex(_T("L%d"), GetId()));
+		std::wstring NewVarName(fmt::format(_T("LT{}"), GetId()));
+		std::wstring NewVarLName(fmt::format(_T("L{}"), GetId()));
 
 		_ASSERTE(m_pParser->m_ResultStack.size() > 0 && m_pParser->m_ResultStack.top()->ChildrenCount() > 0);
 		CExpressionToken *pRelay = m_pParser->m_ResultStack.top()->GetChild();
@@ -205,7 +210,7 @@ bool CCompilerAutoLogicItem::InsertEquations(CCompilerEquations& Equations)
 		}
 		else
 		{
-			m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszWrongLogicRelay, GetVerbalName().c_str()));
+			m_Compiler.m_Logger.Log(fmt::format(CAutoCompilerMessages::cszWrongLogicRelay, GetVerbalName()));
 			bRes = false;
 		}
 	}
@@ -223,7 +228,7 @@ bool CCompilerAutoLogicItem::Process()
 	if (m_strDelay.empty())
 		m_strDelay = _T("0");
 
-	std::wstring EquationExpression = Cex(_T("alrelay(%s,0,%s)"), m_strFormula.c_str(), m_strDelay.c_str());
+	std::wstring EquationExpression = fmt::format(_T("alrelay({},0,{})"), m_strFormula, m_strDelay);
 
 	bool bRes = m_pParser->Process(EquationExpression.c_str());
 
@@ -232,7 +237,7 @@ bool CCompilerAutoLogicItem::Process()
 
 	if (!bRes)
 	{
-		m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszCompileError, EquationExpression.c_str(), m_pParser->GetErrorDescription()));
+		m_Compiler.m_Logger.Log(fmt::format(CAutoCompilerMessages::cszCompileError, EquationExpression, m_pParser->GetErrorDescription()));
 		return false;
 	}
 
@@ -250,7 +255,7 @@ bool CAutoCompiler::AddStarter(CAutoStarterItem& Starter)
 
 	if (!m_Starters.insert(std::make_pair(Starter.GetId(), CCompilerAutoStarterItem(Starter,*this))).second)
 	{
-		m_Logger.Log(Cex(CAutoCompilerMessages::cszDuplicatedStarter, Starter.GetVerbalName().c_str()));
+		m_Logger.Log(fmt::format(CAutoCompilerMessages::cszDuplicatedStarter, Starter.GetVerbalName()));
 		m_bStatus = false;
 	}
 
@@ -264,7 +269,7 @@ bool CAutoCompiler::AddLogic(CAutoLogicItem& Logic)
 
 	if (!m_Logics.insert(std::make_pair(Logic.GetId(), CCompilerAutoLogicItem(Logic, *this))).second)
 	{
-		m_Logger.Log(Cex(CAutoCompilerMessages::cszDuplicatedLogic, Logic.GetVerbalName().c_str()));
+		m_Logger.Log(fmt::format(CAutoCompilerMessages::cszDuplicatedLogic, Logic.GetVerbalName()));
 		m_bStatus = false;
 	}
 
@@ -278,7 +283,7 @@ bool CAutoCompiler::AddAction(CAutoActionItem& Action)
 
 	if (!m_Actions.insert(std::make_pair(Action.GetId(), CCompilerAutoActionItem(Action, *this))).second)
 	{
-		m_Logger.Log(Cex(CAutoCompilerMessages::cszDuplicatedAction, Action.GetVerbalName().c_str()));
+		m_Logger.Log(fmt::format(CAutoCompilerMessages::cszDuplicatedAction, Action.GetVerbalName()));
 		m_bStatus = false;
 	}
 
@@ -350,7 +355,7 @@ bool CAutoCompiler::Generate(const _TCHAR *cszPath)
 			if (VarEnum.m_eVarType == eCVT_INTERNAL)
 				if (VarEnum.m_pToken && VarEnum.m_pToken->m_pEquation == nullptr)
 				{
-					m_Logger.Log(Cex(CAutoCompilerMessages::cszUnassignedVariable, vit->first.c_str()));
+					m_Logger.Log(fmt::format(CAutoCompilerMessages::cszUnassignedVariable, vit->first));
 					m_bStatus = false;
 				}
 		}
@@ -391,7 +396,7 @@ bool CCompilerAutoActionItem::InsertEquations(CCompilerEquations& Equations)
 
 	if (bRes)
 	{
-		std::wstring NewVarName(Cex(_T("A%d"), GetId()));
+		std::wstring NewVarName(fmt::format(_T("A{}"), GetId()));
 		_ASSERTE(m_pParser->m_ResultStack.size() > 0 && m_pParser->m_ResultStack.top()->ChildrenCount() > 0);
 		CExpressionToken *pRootEquation = m_pParser->m_ResultStack.top()->GetChild();
 		_ASSERTE(pRootEquation->m_pEquation);

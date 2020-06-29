@@ -4,8 +4,7 @@
 
 using namespace DFW2;
 
-CCustomDevice::CCustomDevice() : m_pPrimitiveVars(nullptr),
-								 m_pPrimitiveExtVars(nullptr)
+CCustomDevice::CCustomDevice() 
 {
 	m_DLLArgs.pFnSetElement						= &DLLEntrySetElement;
 	m_DLLArgs.pFnSetFunction					= &DLLEntrySetFunction;
@@ -26,132 +25,121 @@ bool CCustomDevice::BuildStructure()
 
 	bool bRes = true;
 
+	// !------------------------
+	// ! Constants
+	// !------------------------
+	// ! Set Points
+	// !------------------------
+
 	m_pConstVars = Container()->NewDoubleVariables();
 	m_pSetPoints = m_pConstVars + Container()->GetConstsCount();
-	m_pVars = m_pSetPoints + Container()->GetSetPointsCount();
+	m_pVars = Container()->NewVariableIndexVariables();
 	m_pExternals = Container()->NewExternalVariables();
-	m_pPrimitiveExtVars = Container()->NewPrimitiveExtVariables();
-
-	PrimitiveVariableExternal *pExtVarsEnd = m_pPrimitiveExtVars + Container()->GetInputsCount();
-	for (PrimitiveVariableExternal *pStart = m_pPrimitiveExtVars; pStart < pExtVarsEnd; pStart++)
-		pStart->IndexAndValue(pStart - m_pPrimitiveExtVars, nullptr);
+	m_pVarsExt = Container()->NewVariableIndexExternals();
 
 	const BLOCKDESCRIPTIONS&  Blocks = Container()->DLL().GetBlocksDescriptions();
 	const BLOCKSPINSINDEXES&  Pins = Container()->DLL().GetBlocksPinsIndexes();
 
 	_ASSERTE(Blocks.size() == Pins.size());
 
-	BLOCKDESCRIPTIONS::const_iterator bit = Blocks.begin();
-	BLOCKSPINSINDEXES::const_iterator iit = Pins.begin();
+	auto& iit = Pins.begin();
 
-#define MAX_BLOCKVARIABLES 1000
-
-	PrimitiveVariableBase *pPrimsPtrs[MAX_BLOCKVARIABLES];
-
-	for (; bit != Blocks.end(); bit++, iit++)
+	for (auto& bit = Blocks.begin(); bit != Blocks.end(); bit++, iit++)
 	{
-		PrimitiveVariable				*pBlockBegin = nullptr;
-
-		PrimitiveVariableBase **pBlockPrims = pPrimsPtrs;
-
-		// for all inputs create one PrimitiveVariable from the pool and assign it to 
-		// given input index and double variable at the same index
-
-		for (BLOCKPININDEXVECTOR::const_iterator nit = iit->begin(); nit != iit->end(); nit++)
+		std::vector<InputVariable> inputs;
+		inputs.reserve(iit->size());
+		for (auto& nit : *iit)
 		{
-			switch (nit->Location)
+			switch (nit.Location)
 			{
 			case eVL_INTERNAL:
-				//_ASSERTE(nit->nIndex < Container()->EquationsCount());
-				*pBlockPrims = Container()->NewPrimitiveVariable(nit->nIndex, m_pVars[nit->nIndex]);
-				if (!pBlockBegin)
-					pBlockBegin = static_cast<PrimitiveVariable*>(*pBlockPrims);
+				{
+					InputVariable vx = InputVariable(m_pVars[nit.nIndex]);
+					inputs.push_back(vx);
+				}
 				break;
 			case eVL_EXTERNAL:
-				*pBlockPrims = m_pPrimitiveExtVars + nit->nIndex;
+				{
+					InputVariable vx = InputVariable(m_pVarsExt[nit.nIndex]);
+					inputs.push_back(vx);
+				}
 				break;
 			}
-			pBlockPrims++;
+
+			
 		}
 
-		// assign PrimitiveVars block pointer to device
-		// it is not quite necessary, but useful for debugging
-
-		if (!m_pPrimitiveVars)
-			m_pPrimitiveVars = pBlockBegin;
-
 		CDynaPrimitive *pDummy = nullptr;
-		size_t nVarsCount = pBlockPrims - pPrimsPtrs;
-
-		//_ASSERTE(nVarsCount == Container()->PrimitiveEquationsCount(bit->eType));
+		VariableIndex& Output  = m_pVars[iit->front().nIndex];
+		VariableIndex& Output1 = m_pVars[iit->front().nIndex + 1];
 
 		switch (bit->eType)
 		{
 		case PBT_LAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_LIMITEDLAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_DERLAG:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CDerlag(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CDerlag(*this, Output, { inputs[1] }, { Output1 });
 			break;
 		case PBT_INTEGRATOR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_LIMITEDINTEGRATOR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimitedLag(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_LIMITERCONST:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimiterConst(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CLimiterConst(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_RELAY:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_RELAYDELAY:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_RELAYDELAYLOGIC:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_RSTRIGGER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1), *(pPrimsPtrs + 2), true);
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_HIGHER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1), *(pPrimsPtrs + 2));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_LOWER:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 2), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CComparator(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_BIT:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CZCDetector(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CZCDetector(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_AND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CAnd(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1), *(pPrimsPtrs + 2));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CAnd(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_OR:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) COr(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1), *(pPrimsPtrs + 2));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) COr(*this, Output, { inputs[1], inputs[2] }, {});
 			break;
 		case PBT_NOT:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CNot(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CNot(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_ABS:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CAbs(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CAbs(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_DEADBAND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CDeadBand(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CDeadBand(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_EXPAND:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CExpand(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CExpand(*this, Output, { inputs[1] }, {});
 			break;
 		case PBT_SHRINK:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(this, m_pVars + (*pPrimsPtrs)->Index(), (*pPrimsPtrs)->Index(), *(pPrimsPtrs + 1));
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CShrink(*this, Output, { inputs[1] }, {});
 			break;
 		}
 	}
 
 	if (!bRes)
-		Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, Container()->DLL().GetModuleFilePath()));
+		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, Container()->DLL().GetModuleFilePath()));
 
 	return bRes;
 }
@@ -164,72 +152,56 @@ bool CCustomDevice::SetConstValue(size_t nIndex, double dValue)
 	if (GetId() == 102401)
 		GetId();
 
+	auto& ConstInfo = Container()->DLL().GetConstsInfo();
 
-	if (nIndex >= 0 && nIndex < Container()->GetConstsCount())
+	if (nIndex >= 0 && nIndex < ConstInfo.size())
 	{
-		const ConstVarsInfo *pConstInfo = Container()->DLL().GetConstInfo(nIndex);
+		const ConstVarsInfo& constInfo = ConstInfo[nIndex];
 
-		if (pConstInfo)
+		if (constInfo.VarFlags & CVF_ZEROTODEFAULT)
 		{
-			if (pConstInfo->VarFlags & CVF_ZEROTODEFAULT)
-			{
-				dValue = pConstInfo->dDefault;
-			}
-
-			if (pConstInfo->dMax > pConstInfo->dMin)
-			{
-				if (dValue > pConstInfo->dMax) dValue = pConstInfo->dDefault;
-				if (dValue < pConstInfo->dMin) dValue = pConstInfo->dDefault;
-			}
-
-			m_pConstVars[nIndex] = dValue;
-			bRes = true;
+			dValue = constInfo.dDefault;
 		}
+
+		if (constInfo.dMax > constInfo.dMin)
+		{
+			if (dValue > constInfo.dMax) dValue = constInfo.dDefault;
+			if (dValue < constInfo.dMin) dValue = constInfo.dDefault;
+		}
+
+		m_pConstVars[nIndex] = dValue;
+		bRes = true;
 	}
 	return bRes;
 }
 
 bool CCustomDevice::SetConstDefaultValues()
 {
-	bool bRes = true;
-	size_t nConstsCount = Container()->GetConstsCount();
+	size_t nIndex(0);
+	for (const auto& it : Container()->DLL().GetConstsInfo())
+		m_pConstVars[nIndex++] = it.dDefault;
 
-	for (size_t nIndex = 0; nIndex < nConstsCount; nIndex++)
-	{
-		const ConstVarsInfo *pConstInfo = Container()->DLL().GetConstInfo(nIndex);
-		if (pConstInfo)
-		{
-			m_pConstVars[nIndex] = pConstInfo->dDefault;
-			bRes = true;
-		}
-	}
-	return bRes;
+	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	bool bRes = true;
 
-	size_t nConstsCount = Container()->DLL().GetConstsCount();
-	for (size_t nConstIndex = 0; nConstIndex < nConstsCount && bRes; nConstIndex++)
+	ptrdiff_t nConstIndex(0);
+	for (const auto& it : Container()->DLL().GetConstsInfo())
 	{
-		const ConstVarsInfo *pConstInfo = Container()->DLL().GetConstInfo(nConstIndex);
-		if (pConstInfo)
-		{
-			if (pConstInfo->eDeviceType != DEVTYPE_UNKNOWN && !(pConstInfo->VarFlags & CVF_INTERNALCONST))
-				bRes = bRes && InitConstantVariable(m_pConstVars[nConstIndex], this, pConstInfo->VarInfo.Name, static_cast<eDFW2DEVICETYPE>(pConstInfo->eDeviceType));
-		}
-		else
-			bRes = false;
+		if (it.eDeviceType != DEVTYPE_UNKNOWN && !(it.VarFlags & CVF_INTERNALCONST))
+			bRes = bRes && InitConstantVariable(m_pConstVars[nConstIndex++], this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType));
 	}
 
 	bRes = bRes && ConstructDLLParameters(pDynaModel);
-	m_ExternalStatus = DFS_OK;
+	m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	bRes = bRes && Container()->InitDLLEquations(&m_DLLArgs);
 
 	if (!bRes)
-		m_ExternalStatus = DFS_FAILED;
+		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	return m_ExternalStatus;
 }
@@ -262,7 +234,7 @@ bool CCustomDevice::BuildRightHand(CDynaModel *pDynaModel)
 
 bool CCustomDevice::ConstructDLLParameters(CDynaModel *pDynaModel)
 {
-	m_DLLArgs.pEquations = m_pVars;
+	m_DLLArgs.pEquations = static_cast<DLLVariableIndex*>(static_cast<void*>(m_pVars));
 	m_DLLArgs.pConsts    = m_pConstVars;
 	m_DLLArgs.pExternals = m_pExternals;
 	m_DLLArgs.pSetPoints = m_pSetPoints;
@@ -304,16 +276,16 @@ double CCustomDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	m_ExternalStatus = DFS_NOTREADY;
+	m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	
 	if (IsStateOn())
 	{
-		m_ExternalStatus = DFS_OK;
+		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 		bool bRes = ConstructDLLParameters(pDynaModel);
 		Container()->ProcessDLLDiscontinuity(&m_DLLArgs);
 	}
 	else
-		m_ExternalStatus = DFS_OK;
+		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return m_ExternalStatus;
 }
@@ -382,13 +354,13 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 	if (nBlockIndex >= 0 && nBlockIndex < static_cast<ptrdiff_t>(pDevice->m_Primitives.size()))
 	{
 		CDynaPrimitive *pPrimitive = pDevice->m_Primitives[nBlockIndex];
-		double *pParBuffer(nullptr);
-		long nParCount = static_cast<CCustomDeviceContainer*>(pDevice->Container())->GetParametersValues(pDevice->GetId(), &pDevice->m_DLLArgs, nBlockIndex, &pParBuffer);
-		if (!pPrimitive->UnserializeParameters(pDynaModel, pParBuffer, nParCount))
-			pDevice->m_ExternalStatus = DFS_FAILED;
+		DOUBLEVECTOR Parameters;
+		static_cast<CCustomDeviceContainer*>(pDevice->Container())->GetParametersValues(pDevice->GetId(), &pDevice->m_DLLArgs, nBlockIndex, Parameters);
+		if (!pPrimitive->UnserializeParameters(pDynaModel, Parameters))
+			pDevice->m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 		else
 			if (!pPrimitive->Init(pDynaModel))
-				pDevice->m_ExternalStatus = DFS_FAILED;
+				pDevice->m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 
 	return 1;
@@ -397,34 +369,32 @@ long CCustomDevice::DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockInde
 
 eDEVICEFUNCTIONSTATUS CCustomDevice::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = DFS_OK;
+	eDEVICEFUNCTIONSTATUS eRes(eDEVICEFUNCTIONSTATUS::DFS_OK);
 
-		
-	PrimitiveVariableExternal *pExtVarsEnd = m_pPrimitiveExtVars + Container()->GetInputsCount();
+	const auto& InputInfos = Container()->DLL().GetInputsInfo();
+	VariableIndexExternal * pStart = m_pVarsExt;
+	DLLExternalVariable* pExt = m_pExternals;
 
-	for (PrimitiveVariableExternal *pStart = m_pPrimitiveExtVars; pStart < pExtVarsEnd; pStart++)
+	for (const auto& it : InputInfos)
 	{
-		ptrdiff_t nExternalsIndex = pStart - m_pPrimitiveExtVars;
-		const InputVarsInfo *pInputInfo = Container()->DLL().GetInputInfo(nExternalsIndex);
-		if (pInputInfo)
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(*pStart, this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType)));
+		if (eRes != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 		{
-			eRes = DeviceFunctionResult(eRes, InitExternalVariable(*pStart, this, pInputInfo->VarInfo.Name,static_cast<eDFW2DEVICETYPE>(pInputInfo->eDeviceType)));
-			// create contiguous copy of primitive external variables to send to dll
-			if (eRes != DFS_FAILED)
-			{
-				if (nExternalsIndex >= 0 && nExternalsIndex < static_cast<ptrdiff_t>(Container()->GetInputsCount()))
-				{
-					m_pExternals[nExternalsIndex].pValue = &pStart->Value();
-					m_pExternals[nExternalsIndex].nIndex = pStart->Index();
-				}
-				else
-					eRes = DFS_FAILED;
-			}
+			pExt->pValue = &(double&)*pStart;
+			pExt->nIndex = pStart->Index;
 		}
 		else
-			eRes = DFS_FAILED;
+			break;
+
+		pExt++;		
+		pStart++;
 	}
 
+	/*
+	PrimitiveVariable* pPs(m_pPrimitiveVars);
+	for (ptrdiff_t i = 0; i < Container()->GetPrimitiveVariablesCount(); i++)
+		pPs->Index(i + m_nMatrixRow);*/
+	
 	return eRes;
 }
 
@@ -447,12 +417,21 @@ double* CCustomDevice::GetConstVariablePtr(ptrdiff_t nVarIndex)
 
 }
 
+VariableIndexRefVec& CCustomDevice::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	ChildVec.insert(ChildVec.begin(), m_pVars, m_pVars + m_pContainer->EquationsCount());
+	return ChildVec;
+}
+
+
+
+
 double* CCustomDevice::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p(nullptr);
 
 	if (nVarIndex >= 0 && nVarIndex < m_pContainer->EquationsCount())
-		p = m_pVars + nVarIndex;
+		p = &(m_pVars + nVarIndex)->Value;
 
 	_ASSERTE(p);
 	return p;
@@ -464,12 +443,215 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 	const double *pValue = GetVariableConstPtr(cszOutputName);
 
 	for (auto&& it : m_Primitives)
-		if (it->Output() == pValue)
+		if (&(const double)*it == pValue)
 			return it;
-
-	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
-		if ((*it)->Output() == pValue)
-			return *it;*/
 
 	return nullptr;
 }
+
+CCustomDeviceCPP::CCustomDeviceCPP() 
+{ 
+	// может быть вынести в единственном экземпл€ре в контейнер ?
+	CustomDeviceData.pFnSetFunction		= DLLSetFunction;
+	CustomDeviceData.pFnSetElement		= DLLSetElement;
+	CustomDeviceData.pFnSetDerivative	= DLLSetDerivative;
+	CustomDeviceData.pFnSetFunctionDiff = DLLSetFunctionDiff;
+	CustomDeviceData.pFnInitPrimitive	= DLLInitPrimitive;
+	CustomDeviceData.pFnProcPrimDisco	= DLLProcPrimDisco;
+}
+
+void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
+{
+	m_pDevice.Create(Container.DLL());
+	PRIMITIVEVECTOR& Prims = m_pDevice->GetPrimitives();
+	VARIABLEVECTOR& VarVec = m_pDevice->GetVariables();
+	EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
+
+	for (auto&& prim : Prims)
+	{
+
+		PrimitivePinVec& Inputs = prim.Outputs;
+		if (Inputs.empty())
+			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive inputs"));
+
+		PrimitivePinVec& Outputs = prim.Outputs;
+		if (Outputs.empty())
+			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive output"));
+		auto& PrimaryOutput = Outputs.front();
+		if (PrimaryOutput.Variable.index() != 0)
+			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - output variable must have type VariableIndex"));
+		VariableIndex& OutputVar(std::get<0>(PrimaryOutput.Variable));
+
+		auto& Input = Inputs.front();
+
+		switch (Input.Variable.index())
+		{
+		case 0:
+			{
+				VariableIndex& inputvar(std::get<0>(Input.Variable));
+				Container.CreatePrimitive(prim.eBlockType, *this, OutputVar, { inputvar }, {});
+			}
+			break;
+		case 1:
+			{
+				VariableIndexExternal& inputvar(std::get<1>(Input.Variable));
+				Container.CreatePrimitive(prim.eBlockType, *this, OutputVar, { inputvar }, {});
+			}
+			break;
+		}
+
+
+	}
+}
+
+void CCustomDeviceCPP::SetConstsDefaultValues()
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	m_pDevice->SetConstsDefaultValues();
+}
+
+DOUBLEVECTOR& CCustomDeviceCPP::GetConstantData()
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	return m_pDevice->GetConstantData();
+}
+
+VariableIndexRefVec& CCustomDeviceCPP::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	VARIABLEVECTOR& vecDevice = m_pDevice->GetVariables();
+	VariableIndexRefVec VarVec;
+	VarVec.reserve(vecDevice.size());
+	for (auto& var : m_pDevice->GetVariables())
+		ChildVec.emplace_back(var);
+	return CDevice::GetVariables(JoinVariables(VarVec, ChildVec));
+}
+
+double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
+{
+	VariableIndexRefVec vec;
+	GetVariables(vec);
+	CDevice::CheckIndex(vec, nVarIndex, _T("CCustomDeviceCPP::GetVariablePtr"));
+	return &vec[nVarIndex].get().Value;
+}
+
+
+bool CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	PrepareCustomDeviceData(pDynaModel);
+	m_pDevice->BuildRightHand(CustomDeviceData);
+	CDevice::BuildRightHand(pDynaModel);
+	return true;
+}
+
+bool CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	PrepareCustomDeviceData(pDynaModel);
+	m_pDevice->BuildEquations(CustomDeviceData);
+	CDevice::BuildEquations(pDynaModel);
+	return true;
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::Init(CDynaModel* pDynaModel)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	PrepareCustomDeviceData(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes = m_pDevice->Init(CustomDeviceData);
+
+	
+	/*
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	bool bRes = true;
+
+	ptrdiff_t nConstIndex(0);
+	for (const auto& it : Container()->DLL().GetConstsInfo())
+	{
+		if (it.eDeviceType != DEVTYPE_UNKNOWN && !(it.VarFlags & CVF_INTERNALCONST))
+			bRes = bRes && InitConstantVariable(m_pConstVars[nConstIndex++], this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType));
+	}
+
+	bRes = bRes && ConstructDLLParameters(pDynaModel);
+	m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	bRes = bRes && Container()->InitDLLEquations(&m_DLLArgs);
+
+	if (!bRes)
+		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+
+	return m_ExternalStatus;
+	*/
+
+
+
+	return eRes;
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	PrepareCustomDeviceData(pDynaModel);
+	return CDevice::DeviceFunctionResult(m_pDevice->ProcessDiscontinuity(CustomDeviceData), CDevice::ProcessDiscontinuity(pDynaModel));
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDynaModel)
+{
+	eDEVICEFUNCTIONSTATUS eRes(eDEVICEFUNCTIONSTATUS::DFS_OK);
+	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
+	for (const auto& ext : m_pContainer->m_ContainerProps.m_ExtVarMap)
+	{
+		CDevice::CheckIndex(ExtVec, ext.second.m_nIndex, _T("CCustomDeviceCPP::UpdateExternalVariables"));
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVec[ext.second.m_nIndex], this, ext.first.c_str(), ext.second.m_DeviceToSearch));
+		if (eRes == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
+			break;
+	}
+	return eRes;
+}
+
+
+void CCustomDeviceCPP::DLLSetFunctionDiff(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue)
+{
+	GetModel(DFWModelData)->SetFunctionDiff(Row, dValue);
+}
+
+void CCustomDeviceCPP::DLLSetDerivative(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue)
+{
+	GetModel(DFWModelData)->SetDerivative(Row, dValue);
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::DLLInitPrimitive(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex)
+{
+	//GetDevice(DFWModelData)->m_pDevice
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::DLLProcPrimDisco(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+void CCustomDeviceCPP::DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
+{
+	GetModel(DFWModelData)->SetElement(Row,Col,dValue);
+}
+
+void CCustomDeviceCPP::DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue)
+{
+	GetModel(DFWModelData)->SetFunction(Row, dValue);
+}
+
+CCustomDeviceCPPContainer* CCustomDeviceCPP::GetContainer()
+{ 
+	if (!m_pContainer)
+		throw dfw2error(_T("CCustomDeviceCPP::GetContainer - container not set"));
+	return static_cast<CCustomDeviceCPPContainer*>(m_pContainer); 
+}
+
+void CCustomDeviceCPP::PrepareCustomDeviceData(CDynaModel *pDynaModel)
+{
+	CustomDeviceData.pModel = pDynaModel;
+	CustomDeviceData.pDevice = this;
+}
+
+const _TCHAR* CCustomDeviceCPP::m_cszNoDeviceDLL = _T("CCustomDeviceCPP - no DLL device initialized");

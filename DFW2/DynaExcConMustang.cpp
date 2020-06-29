@@ -1,16 +1,30 @@
 #include "stdafx.h"
 #include "DynaExcConMustang.h"
 #include "DynaModel.h"
+#include "DerlagContinuous.h"
 
 using namespace DFW2;
 
 CDynaExcConMustang::CDynaExcConMustang() : CDevice(),
-										   Lag(this, &Uf, V_UF, &LagIn),
-										   LagIn(V_USUM,Usum),
-										   dVdt(this, dVdtOutValue, V_DVDT, &dVdtIn),
-										   dEqdt(this, dEqdtOutValue, V_EQDT, &dEqdtIn),
-										   dSdt(this, dSdtOutValue, V_SDT, &dSdtIn)
+	Lag(*this, Uf, { Usum } ),
+	dVdt(*this,	 dVdtOut,	{ dVdtIn },	  { dVdtOut1 }),
+	dEqdt(*this, dEqdtOut,	{ dEqdtIn },  { dEqdtOut1 }),
+	dSdt(*this,  dSdtOut,	{ dSdtIn },   { dSdtOut1 })
 {
+}
+
+VariableIndexRefVec& CDynaExcConMustang::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDevice::GetVariables(JoinVariables({ Uf, 
+												 Usum, 
+												 Svt, 
+												 dVdtOut,
+												 dVdtOut1,
+												 dEqdtOut,
+												 dEqdtOut1,
+												 dSdtOut,
+												 dSdtOut1
+												}, ChildVec));
 }
 
 double* CDynaExcConMustang::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -18,15 +32,15 @@ double* CDynaExcConMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 	double *p(nullptr);
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(Uf, V_UF)
-		MAP_VARIABLE(Usum, V_USUM)
-		MAP_VARIABLE(Svt, V_SVT)
-		MAP_VARIABLE(dVdtOutValue[0], V_DVDT)
-		MAP_VARIABLE(dEqdtOutValue[0], V_EQDT)
-		MAP_VARIABLE(dSdtOutValue[0], V_SDT)
-		MAP_VARIABLE(dVdtOutValue[1], V_DVDT + 1)
-		MAP_VARIABLE(dEqdtOutValue[1], V_EQDT + 1)
-		MAP_VARIABLE(dSdtOutValue[1], V_SDT + 1)
+		MAP_VARIABLE(Uf.Value, V_UF)
+		MAP_VARIABLE(Usum.Value, V_USUM)
+		MAP_VARIABLE(Svt.Value, V_SVT)
+		MAP_VARIABLE(dVdtOut.Value, V_DVDT)
+		MAP_VARIABLE(dEqdtOut.Value, V_EQDT)
+		MAP_VARIABLE(dSdtOut.Value, V_SDT)
+		MAP_VARIABLE(dVdtOut1.Value, V_DVDT + 1)
+		MAP_VARIABLE(dEqdtOut1.Value, V_EQDT + 1)
+		MAP_VARIABLE(dSdtOut1.Value, V_SDT + 1)
 	}
 	return p;
 }
@@ -36,20 +50,20 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 	if (Tf <= 0)
 		Tf = 0.1;
 
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
-	*dVdtOutValue = *dEqdtOutValue = *dSdtOutValue = 0.0;
+	dVdtOut = dEqdtOut = dSdtOut = 0.0;
 	Svt = Uf = Usum = 0.0;
 	double Eqnom, Unom, Eqe0;
 
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
 	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqnom, pExciter, CDynaGenerator1C::m_cszEqnom))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqe0, pExciter, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -71,16 +85,16 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 		switch (GetState())
 		{
-		case DS_ON:
+		case eDEVICESTATE::DS_ON:
 		{
 			bool bRes = true;
-			Vref = dVdtIn.Value();
+			Vref = dVdtIn;
 			bRes = Lag.Init(pDynaModel);
-			Status = bRes ? DFS_OK : DFS_FAILED;
+			Status = bRes ? eDEVICEFUNCTIONSTATUS::DFS_OK : eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 		}
 		break;
-		case DS_OFF:
-			Status = DFS_OK;
+		case eDEVICESTATE::DS_OFF:
+			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 			Vref = Usum = 0.0;
 			Lag.Init(pDynaModel);
 			break;
@@ -94,40 +108,38 @@ bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
 
-	double V = dVdtIn.Value(); //pNode->V;
-
 	// dUsum / dUsum
-	pDynaModel->SetElement(A(V_USUM), A(V_USUM), 1.0);
+	pDynaModel->SetElement(Usum, Usum, 1.0);
 
 	if (IsStateOn())
 	{
 		// dUsum / dV
-		pDynaModel->SetElement(A(V_USUM), A(dVdtIn.Index()), K0u);
+		pDynaModel->SetElement(Usum, dVdtIn, K0u);
 		// dUsum / Sv
-		pDynaModel->SetElement(A(V_USUM), A(dSdtIn.Index()), -K0u * Alpha * Vref - K0f);
+		pDynaModel->SetElement(Usum, dSdtIn, -K0u * Alpha * Vref - K0f);
 		// dUsum / Svt
-		pDynaModel->SetElement(A(V_USUM), A(V_SVT), K0f);
+		pDynaModel->SetElement(Usum, Svt, K0f);
 		// dUsum / dVdt
-		pDynaModel->SetElement(A(V_USUM), A(V_DVDT), 1.0);
+		pDynaModel->SetElement(Usum, dVdtOut, 1.0);
 		// dUsum / dEqdt
-		pDynaModel->SetElement(A(V_USUM), A(V_EQDT), 1.0);
+		pDynaModel->SetElement(Usum, dEqdtOut, 1.0);
 		// dUsum / dSdt
-		pDynaModel->SetElement(A(V_USUM), A(V_SDT), -1.0);
+		pDynaModel->SetElement(Usum, dSdtOut, -1.0);
 		//dSvt / dSvt
-		pDynaModel->SetElement(A(V_SVT), A(V_SVT), -1.0 / Tf);
+		pDynaModel->SetElement(Svt, Svt, -1.0 / Tf);
 		//dSvt / dSv
-		pDynaModel->SetElement(A(V_SVT), A(dSdtIn.Index()), -1.0 / Tf);
+		pDynaModel->SetElement(Svt, dSdtIn, -1.0 / Tf);
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_USUM), A(dVdtIn.Index()), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(dSdtIn.Index()), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(V_SVT), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(V_DVDT), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(V_EQDT), 0.0);
-		pDynaModel->SetElement(A(V_USUM), A(V_SDT), 0.0);
-		pDynaModel->SetElement(A(V_SVT), A(V_SVT), 1.0);
-		pDynaModel->SetElement(A(V_SVT), A(dSdtIn.Index()), 0.0);
+		pDynaModel->SetElement(Usum, dVdtIn, 0.0);
+		pDynaModel->SetElement(Usum, dSdtIn, 0.0);
+		pDynaModel->SetElement(Usum, Svt, 0.0);
+		pDynaModel->SetElement(Usum, dVdtOut, 0.0);
+		pDynaModel->SetElement(Usum, dEqdtOut, 0.0);
+		pDynaModel->SetElement(Usum, dSdtOut, 0.0);
+		pDynaModel->SetElement(Svt, Svt, 1.0);
+		pDynaModel->SetElement(Svt, dSdtIn, 0.0);
 	}
 		
 	bRes = bRes && CDevice::BuildEquations(pDynaModel);
@@ -139,22 +151,21 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
 	if (IsStateOn())
 	{
-		double NodeV = dVdtIn.Value();
-		double dSum = Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn.Value()) - NodeV) - K0f * (dSdtIn.Value() - Svt) + *dVdtOutValue + *dEqdtOutValue - *dSdtOutValue;
-		RightVector *pRV = pDynaModel->GetRightVector(A(V_USUM));
+		double dSum = Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) - K0f * (dSdtIn - Svt) + dVdtOut + dEqdtOut - dSdtOut;
+		RightVector *pRV = pDynaModel->GetRightVector(Usum);
 		/*
 		if ((m_Id == 16) && pDynaModel->GetStepNumber() >= 399)
 		{
 			ATLTRACE(_T("\nId=%d V=%g dSdtIn=%g Svt=%g dVdt=%g dEqdt=%g dSdt=%g NordUsum=%g"), m_Id, NodeV, dSdtIn.Value(), Svt, *dVdtOutValue, *dEqdtOutValue, *dSdtOutValue, pRV->Nordsiek[0]);
 		}
 		*/
-		pDynaModel->SetFunction(A(V_USUM), dSum);
-		pDynaModel->SetFunctionDiff(A(V_SVT), (dSdtIn.Value() - Svt) / Tf);
+		pDynaModel->SetFunction(Usum, dSum);
+		pDynaModel->SetFunctionDiff(Svt, (dSdtIn - Svt) / Tf);
 	}
 	else
 	{
-		pDynaModel->SetFunction(A(V_USUM), 0.0);
-		pDynaModel->SetFunctionDiff(A(V_SVT), 0.0);
+		pDynaModel->SetFunction(Usum, 0.0);
+		pDynaModel->SetFunctionDiff(Svt, 0.0);
 	}
 
 	CDevice::BuildRightHand(pDynaModel);
@@ -165,25 +176,25 @@ bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = CDevice::BuildDerivatives(pDynaModel);
 	if (IsStateOn())
-		pDynaModel->SetDerivative(A(V_SVT), (dSdtIn.Value() - Svt) / Tf);
+		pDynaModel->SetDerivative(Svt, (dSdtIn - Svt) / Tf);
 	else
-		pDynaModel->SetDerivative(A(V_SVT), 0.0);
+		pDynaModel->SetDerivative(Svt, 0.0);
 	return true;
 }
 
 
 eDEVICEFUNCTIONSTATUS CDynaExcConMustang::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	_ASSERTE(CDevice::IsFunctionStatusOK(GetSingleLink(DEVTYPE_EXCITER)->DiscontinuityProcessed()));
 	if (IsStateOn())
 	{
-		double V = dVdtIn.Value();
-		Usum = K0u * (Vref * (1.0 + Alpha * dSdtIn.Value()) - V) + K0f * (dSdtIn.Value() - Svt) - *dVdtOutValue - *dEqdtOutValue + *dSdtOutValue;
+		//double V = dVdtIn.Value();
+		Usum = K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) + K0f * (dSdtIn - Svt) - dVdtOut - dEqdtOut + dSdtOut;
 		Status = CDevice::ProcessDiscontinuity(pDynaModel);
 	}
 	else
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return Status;
 }

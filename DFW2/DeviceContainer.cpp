@@ -91,17 +91,17 @@ bool CDeviceContainer::AddDevice(CDevice* pDevice)
 // добавление переменной состояния в контейнер
 // Требуются имя перменной (уникальное), индекс и единицы измерения
 // если переменная с таким именем уже есть возвращает false
-bool CDeviceContainer::RegisterVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
+bool CDeviceContainer::RegisterVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
 {
-	bool bInserted = m_ContainerProps.m_VarMap.insert(std::make_pair(cszVarName, CVarIndex(nVarIndex, eVarUnits))).second;
+	bool bInserted = m_ContainerProps.m_VarMap.insert(std::make_pair(VarName, CVarIndex(nVarIndex, eVarUnits))).second;
 	return bInserted;
 }
 
 // добавление перменной константы устройства (константа - параметр не изменяемый в процессе расчета и пользуемый при инициализации)
 // Требуются имя, индекс и тип константы. Индексы у констант и переменных состояния разные
-bool CDeviceContainer::RegisterConstVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
+bool CDeviceContainer::RegisterConstVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
 {
-	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(cszVarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
+	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(VarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
 	return bInserted;
 }
 
@@ -121,19 +121,19 @@ bool CDeviceContainer::VariableOutputEnable(const _TCHAR* cszVarName, bool bOutp
 }
 
 // получить индекс переменной устройства по названию
-ptrdiff_t CDeviceContainer::GetVariableIndex(const _TCHAR* cszVarName) const
+ptrdiff_t CDeviceContainer::GetVariableIndex(std::wstring_view VarName) const
 {
 	// используем быстрый поиск по карте
-	VARINDEXMAPCONSTITR it = m_ContainerProps.m_VarMap.find(cszVarName);
+	VARINDEXMAPCONSTITR it = m_ContainerProps.m_VarMap.find(std::wstring(VarName));
 	if (it != m_ContainerProps.m_VarMap.end())
 		return it->second.m_nIndex;
 	else
 		return -1;
 }
 // получить индекс константной переменной по названию
-ptrdiff_t CDeviceContainer::GetConstVariableIndex(const _TCHAR* cszVarName) const
+ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::wstring_view VarName) const
 {
-	CONSTVARINDEXMAPCONSTITR it = m_ContainerProps.m_ConstVarMap.find(cszVarName);
+	CONSTVARINDEXMAPCONSTITR it = m_ContainerProps.m_ConstVarMap.find(std::wstring(VarName));
 	if (it != m_ContainerProps.m_ConstVarMap.end())
 		return it->second.m_nIndex;
 	else
@@ -186,7 +186,7 @@ bool CDeviceContainer::SetUpSearch()
 				if (AlreadyReported.find(it) == AlreadyReported.end())
 				{
 					// если про дубль устройства еще не сообщали - сообщаем и добавляем устройство в сет дублей
-					it->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDuplicateDevice, it->GetVerbalName()));
+					it->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDuplicateDevice, it->GetVerbalName()));
 					AlreadyReported.insert(it);
 				}
 				bRes = false;	// если обнаружены дубли - это ошибка
@@ -233,10 +233,10 @@ size_t CDeviceContainer::GetResultVariablesCount()
 }
 
 
-void CDeviceContainer::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ptrdiff_t nDBIndex)
+void CDeviceContainer::Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message, ptrdiff_t nDBIndex)
 {
 	if (m_pDynaModel)
-		m_pDynaModel->Log(Status, nDBIndex, cszMessage);
+		m_pDynaModel->Log(Status, Message, nDBIndex);
 }
 
 bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
@@ -480,12 +480,15 @@ void CDeviceContainer::Predict()
 void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 {
 	m_DevInMatrix.clear();
-	m_DevInMatrix.reserve(m_DevVec.size());
-	for (auto&& it : m_DevVec)
+	if (EquationsCount() > 0)
 	{
-		it->EstimateEquations(pDynaModel);
-		if (it->InMatrix())
-			m_DevInMatrix.push_back(it);
+		m_DevInMatrix.reserve(m_DevVec.size());
+		for (auto&& it : m_DevVec)
+		{
+			it->EstimateEquations(pDynaModel);
+			if (it->InMatrix())
+				m_DevInMatrix.push_back(it);
+		}
 	}
 }
 
@@ -525,7 +528,7 @@ bool CDeviceContainer::LeaveDiscontinuityMode(CDynaModel* pDynaModel)
 // обработка разрыва устройств в контейнере
 eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	m_eDeviceFunctionStatus = DFS_OK;
+	m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	if (GetType() == DEVTYPE_BRANCH)
 		return m_eDeviceFunctionStatus;
@@ -539,11 +542,11 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaMo
 
 		switch (it->CheckProcessDiscontinuity(pDynaModel))
 		{
-		case DFS_FAILED:
-			m_eDeviceFunctionStatus = DFS_FAILED;
+		case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+			m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 			break;
-		case DFS_NOTREADY:
-			m_eDeviceFunctionStatus = DFS_NOTREADY;
+		case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+			m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 			break;
 		}
 	}
@@ -580,7 +583,7 @@ double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 {
-	m_eDeviceFunctionStatus = DFS_OK;
+	m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	// ветви хотя и тоже устройства, но мы их не инициализируем
 	if (GetType() == DEVTYPE_BRANCH)
@@ -599,11 +602,11 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 		// проверяем в каком состоянии находится устройство
 		switch (it->CheckInit(pDynaModel))
 		{
-		case DFS_FAILED:
-			m_eDeviceFunctionStatus = DFS_FAILED;		// если инициализации устройства завалена - завален и контейнер
+		case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+			m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_FAILED;		// если инициализации устройства завалена - завален и контейнер
 			break;
-		case DFS_NOTREADY:
-			m_eDeviceFunctionStatus = DFS_NOTREADY;		// если инициализация еще не выполнена, отмечаем, что и контейнер нужно инициализировать позже
+		case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+			m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;		// если инициализация еще не выполнена, отмечаем, что и контейнер нужно инициализировать позже
 			break;
 		}
 	}
@@ -815,8 +818,8 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 }
 
 
-bool  CDeviceContainer::HasAlias(const _TCHAR *cszAlias)
+bool  CDeviceContainer::HasAlias(std::wstring_view Alias)
 {
 	STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
-	return std::find(Aliases.begin(), Aliases.end(), cszAlias) != Aliases.end();
+	return std::find(Aliases.begin(), Aliases.end(), Alias) != Aliases.end();
 }

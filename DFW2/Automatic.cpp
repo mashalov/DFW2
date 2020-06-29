@@ -114,7 +114,7 @@ bool CAutomatic::CompileModels()
 		}
 		catch (_com_error& ex)
 		{
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, ex.Description());
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(_T("{}"), ex.Description()));
 			variant_t vtLog = m_spAutomaticCompiler->Log;
 			if ( vtLog.vt == (VT_BSTR | VT_ARRAY) )
 			{
@@ -128,7 +128,7 @@ bool CAutomatic::CompileModels()
 					{
 						while (LBound <= UBound)
 						{
-							m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, _bstr_t(*ppData));
+							m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, static_cast<const _TCHAR*>(_bstr_t(*ppData)));
 							LBound++;
 							ppData++;
 						}
@@ -236,12 +236,12 @@ void CAutomatic::Init()
 	for (auto&& it : m_lstLogics)
 	{
 		CAutomaticItem *pLogic= it;
-		std::wstring strVarName = Cex(_T("LT%d"), pLogic->GetId());
+		std::wstring strVarName = fmt::format(_T("LT{}"), pLogic->GetId());
 
 		// находим в автоматике выходное реле элемента логики по имени выхода
 		CRelayDelay *pActionRelay = static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName.c_str()));
 		if (!pActionRelay)
-			throw dfw2error(Cex(CDFW2Messages::m_cszLogicNotFoundInDLL, strVarName.c_str()));
+			throw dfw2error(fmt::format(CDFW2Messages::m_cszLogicNotFoundInDLL, strVarName));
 
 		pActionRelay->SetDiscontinuityId(pLogic->GetId());
 		CAutomaticLogic *pLogicItem = static_cast<CAutomaticLogic*>(pLogic);
@@ -255,30 +255,34 @@ void CAutomatic::Init()
 			if (!strAction.empty())
 			{
 				ptrdiff_t nId(0);
-				if (_stscanf_s(strAction.c_str(), CAutomaticAction::cszActionTemplate, &nId) == 1)
+				if (_stscanf_s(strAction.c_str(), _T("A%d"), &nId) == 1)
 				{
 					AUTOITEMGROUPITR mit = m_AutoActionGroups.find(nId);
 					if (mit != m_AutoActionGroups.end())
 					{
 						if (!pLogicItem->AddActionGroupId(nId))
 						{
-							m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
-								nId, strActions.c_str(), pLogicItem->GetId()));
+							m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
+																							nId, 
+																							strActions, 
+																							pLogicItem->GetId()));
 						}
 					}
 					else
 					{
-						m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
-							nId, strActions.c_str(), pLogicItem->GetId()));
+						m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
+																					nId, 
+																					strActions, 
+																					pLogicItem->GetId()));
 						bRes = false;
 					}
 				}
 				else
 				{
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongActionInLogicList, 
-																strAction.c_str(), 
-																strActions.c_str(), 
-																pLogic->GetId()));
+					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongActionInLogicList, 
+																	strAction, 
+																	strActions, 
+																	pLogic->GetId()));
 					bRes = false;
 				}
 			}
@@ -293,7 +297,7 @@ void CAutomatic::Init()
 	}
 
 	if (!bRes)
-		throw dfw2error(Cex(CDFW2Messages::m_cszAutomaticOrScenarioFailedToInitialize));
+		throw dfw2error(fmt::format(CDFW2Messages::m_cszAutomaticOrScenarioFailedToInitialize));
 }
 
 
@@ -308,7 +312,7 @@ bool CAutomatic::NotifyRelayDelay(const CRelayDelayLogic* pRelay)
 	if (pRelay->GetDiscontinuityId() <= 0)
 		return true;
 
-	if (*pRelay->Output() == 0)
+	if (pRelay == 0)
 		return true;
 
 
@@ -359,7 +363,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 	bool bRes = true;
 	_ASSERTE(!m_pAction);
 	_ASSERTE(!m_pValue);
-	std::wstring strVarName = Cex(cszActionTemplate, m_nId);
+	std::wstring strVarName = fmt::format(cszActionTemplate, m_nId);
 	m_pValue = pCustomDevice->GetVariableConstPtr(strVarName.c_str());
 	if (m_pValue)
 	{
@@ -424,7 +428,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 	}
 	else
 	{
-		pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszActionNotFoundInDLL, strVarName.c_str()));
+		pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotFoundInDLL, strVarName));
 		bRes = false;
 	}
 
@@ -432,4 +436,4 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 }
 
 
-const _TCHAR* CAutomaticAction::cszActionTemplate = _T("A%d");
+const _TCHAR* CAutomaticAction::cszActionTemplate = _T("A{}");

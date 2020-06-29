@@ -7,7 +7,7 @@ using namespace DFW2;
 
 
 CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
-											 EqLimit(this, &EqOutputValue, V_EQE, &EqInput)
+	EqLimit(*this, EqOutputValue, { EqInput })
 {
 	m_Primitives.pop_back();
 }
@@ -26,13 +26,13 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	if (ExtUf.Indexed())
 	{
 		//dEqsum / dUexc
-		pDynaModel->SetElement(A(V_EQSUM), A(ExtUf.Index()), -1.0);
+		pDynaModel->SetElement(Eqsum, ExtUf, -1.0);
 	}
 
 	if (ExtUdec.Indexed())
 	{
 		//dEqsum / dUdec
-		pDynaModel->SetElement(A(V_EQSUM), A(ExtUdec.Index()), 1.0);
+		pDynaModel->SetElement(Eqsum, ExtUdec, 1.0);
 	}
 
 	double Ig = GetIg();
@@ -42,27 +42,26 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	//double dEqsum = Eqsum - (Eqe0 + Uexc + Kig * (GetIg() - Ig0) + Kif * (m_pGenerator->Eq - Eq0) + Udec);
 
 	//dEqsum / dEqsum
-	pDynaModel->SetElement(A(V_EQSUM), A(V_EQSUM), 1.0);
+	pDynaModel->SetElement(Eqsum, Eqsum, 1.0);
 	
 	//dEqsum / dId
-	pDynaModel->SetElement(A(V_EQSUM), A(GenId.Index()), -Ig * GenId.Value());
+	pDynaModel->SetElement(Eqsum, GenId, -Ig * GenId);
 	//dEqsum / dIq
-	pDynaModel->SetElement(A(V_EQSUM), A(GenIq.Index()), -Ig * GenIq.Value());
+	pDynaModel->SetElement(Eqsum, GenIq, -Ig * GenIq);
 
 	//dEqsum / dEq
-	pDynaModel->SetElement(A(V_EQSUM), A(EqInput.Index()), -Kif);
+	pDynaModel->SetElement(Eqsum, EqInput, -Kif);
 
 	double  V = Ug0;
 	if (bVoltageDependent)
-		V = ExtVg.Value();
+		V = ExtVg;
 
 	//dEqe / dEqe
-	pDynaModel->SetElement(A(V_EQE), A(V_EQE), 1.0);
+	pDynaModel->SetElement(Eqe, Eqe, 1.0);
 	//dEqe / dEqeV
-	pDynaModel->SetElement(A(V_EQE), A(V_EQEV), -ZeroDivGuard(V, Ug0));
+	pDynaModel->SetElement(Eqe, ExcLag, -ZeroDivGuard(V, Ug0));
 	//dEqe / dV
-	//pDynaModel->SetElement(A(V_EQE), m_pGenerator->m_pNode->A(CDynaNode::V_V), -ZeroDivGuard(EqeV, Ug0));
-	pDynaModel->SetElement(A(V_EQE), A(ExtVg.Index()), -ZeroDivGuard(EqeV, Ug0));
+	pDynaModel->SetElement(Eqe, ExtVg, -ZeroDivGuard(ExcLag, Ug0));
 	bRes = bRes && CDynaExciterBase::BuildEquations(pDynaModel);
 	return true;
 }
@@ -70,13 +69,13 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 
 bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
-	double dEqsum = Eqsum - (Eqe0 + ExtUf.Value() + Kig * (GetIg() - Ig0) + Kif * (EqInput.Value() - Eq0) + ExtUdec.Value());
+	double dEqsum = Eqsum - (Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec);
 	double  V = Ug0;
 	if (bVoltageDependent)
-		V = ExtVg.Value();
+		V = ExtVg;
 
-	pDynaModel->SetFunction(A(V_EQSUM), dEqsum);
-	pDynaModel->SetFunction(A(V_EQE), Eqe - EqeV * ZeroDivGuard(V, Ug0));
+	pDynaModel->SetFunction(Eqsum, dEqsum);
+	pDynaModel->SetFunction(Eqe, Eqe - ExcLag * ZeroDivGuard(V, Ug0));
 	CDevice::BuildRightHand(pDynaModel);
 	return true;
 }
@@ -85,13 +84,13 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS Status = CDynaExciterBase::Init(pDynaModel);
 		
-	Udec = 0.0;
+	ExtUdec = 0.0;
 	double Eqnom, Inom;
 
 	if (!InitConstantVariable(Eqnom, GetSingleLink(DEVTYPE_GEN_1C), CDynaGenerator1C::m_cszEqnom, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Inom, GetSingleLink(DEVTYPE_GEN_1C), CDynaGenerator1C::m_cszInom, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -104,7 +103,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 		bool bRes = ExcLag.Init(pDynaModel);
 		bRes = bRes && EqLimit.Init(pDynaModel);
 		if (!bRes)
-			Status = DFS_FAILED;
+			Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 
 	return Status;
@@ -119,14 +118,14 @@ bool CDynaExciterMustang::BuildDerivatives(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	// wait for generator to process disco
 
 	_ASSERTE(CDevice::IsFunctionStatusOK(GetSingleLink(DEVTYPE_GEN_1C)->DiscontinuityProcessed()));
 
 	if (IsStateOn())
 	{
-		Eqsum = Eqe0 + ExtUf.Value() + Kig * (GetIg() - Ig0) + Kif * (EqInput.Value() - Eq0) + ExtUdec.Value();
+		Eqsum = Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec;
 		// pick up Eq limiter state before disco
 		CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateInitial = EqLimit.GetCurrentState();
 
@@ -151,10 +150,10 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDyn
 */
 		}
 		else
-			Status = DFS_FAILED;
+			Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 	else
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return Status;
 }

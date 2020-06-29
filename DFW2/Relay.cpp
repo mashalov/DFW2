@@ -16,16 +16,16 @@ bool CRelay::Init(CDynaModel *pDynaModel)
 double CRelay::OnStateOff(CDynaModel *pDynaModel)
 {
 	double OnBound = m_dUpperH;
-	double Check = m_dUpperH - m_Input->Value();
+	double Check = m_dUpperH - m_Input;
 
 	if (!m_bMaxRelay)
 	{
 		OnBound = m_dLowerH;
-		Check = m_Input->Value() - m_dLowerH;
+		Check = m_Input - m_dLowerH;
 	}
 
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input->Value(), OnBound, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input, OnBound, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, RS_ON);
 
 	return rH; 
@@ -34,16 +34,16 @@ double CRelay::OnStateOff(CDynaModel *pDynaModel)
 double CRelay::OnStateOn(CDynaModel *pDynaModel)
 {
 	double OnBound = m_dLowerH;
-	double Check = m_Input->Value() - m_dLowerH;
+	double Check = m_Input - m_dLowerH;
 
 	if (!m_bMaxRelay)
 	{
 		OnBound = m_dUpperH;
-		Check = m_dUpperH - m_Input->Value();
+		Check = m_dUpperH - m_Input;
 	}
 
 	double rH = 1.0;
-	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input->Value(), OnBound, m_Input->Index(), rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input, OnBound, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, RS_OFF);
 	return rH;
 
@@ -53,17 +53,16 @@ double CRelay::OnStateOn(CDynaModel *pDynaModel)
 CRelay::eRELAYSTATES CRelay::GetInstantState()
 {
 	CRelay::eRELAYSTATES State = eCurrentState;
-	double dInput = m_Input->Value();
 	if (m_bMaxRelay)
 	{
 		if (eCurrentState == RS_OFF)
 		{
-			if (dInput > m_dUpper)
+			if (m_Input > m_dUpper)
 				State = RS_ON;
 		}
 		else
 		{
-			if (dInput <= m_dLower)
+			if (m_Input <= m_dLower)
 				State = RS_OFF;
 		}
 	}
@@ -71,12 +70,12 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 	{
 		if (eCurrentState == RS_OFF)
 		{
-			if (dInput < m_dLower)
+			if (m_Input < m_dLower)
 				State = RS_ON;
 		}
 		else
 		{
-			if (dInput >= m_dUpper)
+			if (m_Input >= m_dUpper)
 				State = RS_OFF;
 		}
 	}
@@ -85,27 +84,21 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 
 eDEVICEFUNCTIONSTATUS CRelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		CRelay::eRELAYSTATES State = GetInstantState();
 		SetCurrentState(pDynaModel, State);
-		*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CRelay::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CRelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double RelayTol[2] = {0, 1};
-
-	nParametersCount = min(nParametersCount, sizeof(RelayTol) / sizeof(RelayTol[0]) );
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		RelayTol[i] = pParameters[i];
-
-	SetRefs(pDynaModel, RelayTol[0], RelayTol[0] * RelayTol[1], true);
-	return bRes;
+	double Rt0(0.0), Rt1(1.0);
+	CDynaPrimitive::UnserializeParameters({ Rt0, Rt1 }, Parameters);
+	SetRefs(pDynaModel, Rt0, Rt0 * Rt1, true);
+	return true;
 }
 
 void CRelay::SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay)
@@ -125,17 +118,12 @@ void CRelayDelay::SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, 
 	m_dDelay = dDelay;
 }
 
-bool CRelayDelay::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CRelayDelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double RelayDelayTol[3] = { 0.0, 0.0, 1.0 };
-
-	nParametersCount = min(nParametersCount, sizeof(RelayDelayTol) / sizeof(RelayDelayTol[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		RelayDelayTol[i] = pParameters[i];
-	SetRefs(pDynaModel, RelayDelayTol[0], RelayDelayTol[0] * RelayDelayTol[2], true, RelayDelayTol[1]);
-	return bRes;
+	double Rt0(0.0), Rt1(0.0), Rt2(1.0);
+	CDynaPrimitive::UnserializeParameters({Rt0, Rt1, Rt2}, Parameters);
+	SetRefs(pDynaModel, Rt0, Rt0 * Rt2, true, Rt1);
+	return true;
 }
 
 bool CRelayDelay::Init(CDynaModel *pDynaModel)
@@ -144,7 +132,7 @@ bool CRelayDelay::Init(CDynaModel *pDynaModel)
 	bool bRes = true;
 
 	eCurrentState = RS_OFF;
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		eCurrentState = GetInstantState();
 		bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
@@ -167,7 +155,7 @@ void CRelayDelay::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentSt
 			{
 				pDynaModel->RemoveStateDiscontinuity(this);
 
-				if (*m_Output > 0.0)
+				if (m_Output > 0.0)
 					pDynaModel->DiscontinuityRequest();
 			}
 			break;
@@ -185,7 +173,7 @@ void CRelayDelay::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentSt
 
 eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		CRelay::eRELAYSTATES OldState(eCurrentState);
 		CRelay::eRELAYSTATES State = GetInstantState();
@@ -194,10 +182,10 @@ eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 		if ((m_dDelay > 0 && !pDynaModel->CheckStateDiscontinuity(this)) || m_dDelay == 0)
 		{
-			*m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+			m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
 		}
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 
@@ -210,7 +198,7 @@ void CRelayDelay::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 bool CRelayDelay::NotifyDelay(CDynaModel *pDynaModel)
 {
 	pDynaModel->RemoveStateDiscontinuity(this);
-	*m_Output = (GetCurrentState() == RS_ON) ? 1.0 : 0.0;
+	m_Output = (GetCurrentState() == RS_ON) ? 1.0 : 0.0;
 	return true;
 }
 
@@ -220,13 +208,13 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 	bool bRes = CRelayDelay::Init(pDynaModel);
 	if (bRes)
 	{
-		if (m_pDevice->IsStateOn())
+		if (m_Device.IsStateOn())
 		{
 			if (eCurrentState == RS_ON && m_dDelay > 0)
 			{
 				pDynaModel->SetStateDiscontinuity(this, m_dDelay);
 				eCurrentState = RS_OFF;
-				*m_Output = 0;
+				m_Output = 0;
 			}
 		}
 	}
@@ -235,9 +223,9 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 
 bool CRelayDelayLogic::NotifyDelay(CDynaModel *pDynaModel)
 {
-	double dOldOut = *m_Output;
+	double dOldOut = m_Output;
 	CRelayDelay::NotifyDelay(pDynaModel);
-	if (*m_Output != dOldOut)
+	if (m_Output != dOldOut)
 		pDynaModel->NotifyRelayDelay(this);
 	return true;
 }

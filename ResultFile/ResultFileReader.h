@@ -18,7 +18,7 @@ namespace DFW2
 		FILE *m_pFile = NULL;
 	public:
 		void WriteLEB(unsigned __int64 nValue);
-		void WriteString(const _TCHAR *cszString);
+		void WriteString(std::wstring_view cszString);
 		static const char m_cszSignature[6];
 	};
 

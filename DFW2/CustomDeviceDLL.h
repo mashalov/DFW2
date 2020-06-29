@@ -2,7 +2,8 @@
 #include "DLLHeader.h"
 #include "vector"
 #include "string"
-
+#include "memory"
+#include "ICustomDevice.h"
 
 namespace DFW2
 {
@@ -10,34 +11,11 @@ namespace DFW2
 	typedef std::vector<BLOCKPININDEX> BLOCKPININDEXVECTOR;
 	typedef std::vector<BLOCKPININDEXVECTOR> BLOCKSPINSINDEXES;
 	typedef std::vector<long> LONGVECTOR;
-
-	template <class T>
-	class VarInfo
-	{
-	public:
-		size_t m_nVarsCount;
-		T *m_pVarInfo;
-		VarInfo() : m_nVarsCount(0), m_pVarInfo(nullptr) {}
-
-		size_t SetVarsCount(size_t nVarsCount)
-		{
-			if (nVarsCount > 0)
-				m_pVarInfo = new T[m_nVarsCount = nVarsCount];
-			return m_nVarsCount;
-		}
-
-		~VarInfo()
-		{
-			if (m_nVarsCount && m_pVarInfo)
-				delete[] m_pVarInfo;
-		}
-	};
-
 	class CDeviceContainer;
 
-	typedef VarInfo<VarsInfo> VARINFO;
-	typedef VarInfo<InputVarsInfo> INPUTVARINFO;
-	typedef VarInfo<ConstVarsInfo> CONSTVARINFO;
+	using VARINFO = std::vector<VarsInfo>;
+	using INPUTVARINFO = std::vector<InputVarsInfo>;
+	using CONSTVARINFO = std::vector<ConstVarsInfo>;
 
 	class CCustomDeviceDLL
 	{
@@ -101,32 +79,39 @@ namespace DFW2
 		CCustomDeviceDLL(CDeviceContainer *pDeviceContainer);
 		virtual ~CCustomDeviceDLL();
 		bool IsConnected();
-		bool Init(const _TCHAR *cszDLLFilePath);
+		bool Init(std::wstring_view DLLFilePath);
 		const BLOCKDESCRIPTIONS& GetBlocksDescriptions() const; 
 		const BLOCKSPINSINDEXES& GetBlocksPinsIndexes() const;
 		const _TCHAR* GetModuleFilePath() const;
 		long GetBlockParametersCount(long nBlockIndex);
 		long GetBlockParametersValues(long nBlockIndex, BuildEquationsArgs* pArgs, double *pValues);
 
-		inline size_t GetConstsCount()	   const { return m_ConstInfos.m_nVarsCount;    }
-		inline size_t GetSetPointsCount()  const { return m_SetPointInfos.m_nVarsCount; }
-		inline size_t GetInternalsCount()  const { return m_InternalInfos.m_nVarsCount; }
-		inline size_t GetInputsCount()	   const { return m_InputInfos.m_nVarsCount;   }
-		inline size_t GetOutputsCount()	   const { return m_OutputInfos.m_nVarsCount; }
-
-		const ConstVarsInfo *GetConstInfo(size_t nConstIndex) const;
-		const InputVarsInfo *GetInputInfo(size_t nInputIndex) const;
-		const VarsInfo *GetSetPointInfo(size_t nSetPointIndex) const;
-		const VarsInfo* GetInternalInfo(size_t nInternalIndex) const;
-		const VarsInfo* GetOutputInfo(size_t nOutputIndex) const;
+		const CONSTVARINFO& GetConstsInfo() const	{ return m_ConstInfos; };
+		const VARINFO& GetSetPointsInfo() const		{ return m_SetPointInfos; }
+		const VARINFO& GetOutputsInfo()	const		{ return m_OutputInfos; }
+		const INPUTVARINFO& GetInputsInfo() const	{ return m_InputInfos; }
+		const VARINFO& GetInternalsInfo() const		{ return m_InternalInfos; }
 
 		bool InitEquations(BuildEquationsArgs *pArgs);
 		bool ProcessDiscontinuity(BuildEquationsArgs *pArgs);
 		bool BuildEquations(BuildEquationsArgs *pArgs);
 		bool BuildRightHand(BuildEquationsArgs *pArgs);
 		bool BuildDerivatives(BuildEquationsArgs *pArgs);
+	};
 
-
+	class CCustomDeviceCPPDLL
+	{
+	protected:
+		HMODULE m_hDLL = NULL;
+		std::wstring m_strModulePath;
+		CustomDeviceFactory m_pfnFactory = nullptr;
+		void CleanUp();
+	public:
+		CCustomDeviceCPPDLL();
+		virtual ~CCustomDeviceCPPDLL();
+		void Init(std::wstring_view DLLFilePath);
+		const _TCHAR* GetModuleFilePath() const { return m_strModulePath.c_str(); }
+		ICustomDevice* CreateDevice();
 	};
 }
 

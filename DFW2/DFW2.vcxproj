@@ -70,25 +70,25 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
-    <CodeAnalysisRuleSet>AllRules.ruleset</CodeAnalysisRuleSet>
+    <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -179,11 +179,13 @@
     <ClInclude Include="CustomDevice.h" />
     <ClInclude Include="CustomDeviceContainer.h" />
     <ClInclude Include="CustomDeviceDLL.h" />
+    <ClInclude Include="DataStructs.h" />
     <ClInclude Include="DeadBand.h" />
     <ClInclude Include="DerlagContinuous.h" />
     <ClInclude Include="Device.h" />
     <ClInclude Include="DeviceContainer.h" />
     <ClInclude Include="DeviceContainerProperties.h" />
+    <ClInclude Include="DeviceContainerPropertiesBase.h" />
     <ClInclude Include="DeviceId.h" />
     <ClInclude Include="DeviceTypes.h" />
     <ClInclude Include="dfw2exception.h" />
@@ -208,6 +210,7 @@
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="HRTimer.h" />
+    <ClInclude Include="ICustomDevice.h" />
     <ClInclude Include="KLUWrapper.h" />
     <ClInclude Include="IterationControl.h" />
     <ClInclude Include="LimitedLag.h" />
@@ -228,6 +231,16 @@
     <ClInclude Include="Expand.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\fmt\src\format.cc">
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">..\fmt\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">..\fmt\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">..\fmt\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories Condition="'$(Configuration)|$(Platform)'=='Release|x64'">..\fmt\include</AdditionalIncludeDirectories>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="Abs.cpp" />
     <ClCompile Include="AndOrNot.cpp" />
     <ClCompile Include="Automatic.cpp">

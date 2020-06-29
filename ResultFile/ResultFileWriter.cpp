@@ -23,17 +23,16 @@ void CResultFile::WriteLEB(unsigned __int64 Value)
 		throw CFileWriteException(m_pFile);
 }
 
-void CResultFile::WriteString(const _TCHAR *cszString)
+void CResultFile::WriteString(std::wstring_view cszString)
 {
-	if (cszString)
+	if (cszString.empty())
+		WriteLEB(0);
+	else
 	{
-		size_t nLen = _tcslen(cszString);
-		WriteLEB(nLen);
+		WriteLEB(cszString.size());
 		CUnicodeSCSU StringWriter(m_pFile);
 		StringWriter.WriteSCSU(cszString);
 	}
-	else
-		WriteLEB(0);
 }
 
 
@@ -154,7 +153,7 @@ void CResultFileWriter::FlushChannels()
 		if (!di->m_Graph.empty())
 		{
 			WriteLEB(di->m_DeviceTypeId);
-			WriteString(di->m_strVarName.c_str());
+			WriteString(di->m_strVarName);
 			WriteLEB(di->m_DeviceIds.size());
 
 			for (auto &idi : di->m_DeviceIds)
@@ -165,7 +164,7 @@ void CResultFileWriter::FlushChannels()
 			{
 				WriteDouble(gi.m_dTime);
 				WriteDouble(gi.m_dValue);
-				WriteString(gi.m_strDescription.c_str());
+				WriteString(gi.m_strDescription);
 			}
 		}
 	}

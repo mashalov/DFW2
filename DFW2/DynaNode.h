@@ -8,7 +8,6 @@
 namespace DFW2
 {
 	class CDynaBranch;
-
 	class CSynchroZone : public CDevice
 	{
 	public:
@@ -19,8 +18,8 @@ namespace DFW2
 		};
 
 		DEVICEVECTOR m_LinkedGenerators;
+		VariableIndex S;						// переменная состояния - скольжение
 
-		double S = 0.0;							// переменная состояния - скольжение
 		double Mj = 0.0;						// суммарный момент инерции
 		bool m_bInfPower = false;				// признак наличия ШБМ
 		CSynchroZone();		
@@ -28,6 +27,7 @@ namespace DFW2
 		bool m_bEnergized = false;				// признак наличия источника напряжения
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel)  override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
@@ -74,17 +74,17 @@ namespace DFW2
 			V_LAST		// последняя переменная (реально не существует) указывает количество уравнений устройства
 		};
 
-		double Delta;
-		double V;
-		double Vre;
-		double Vim;
+		VariableIndex Delta;
+		VariableIndex V;
+		VariableIndex Vre;
+		VariableIndex Vim;
 
 #ifdef _DEBUG
 		double Vrastr, Deltarastr, Qgrastr, Pnrrastr, Qnrrastr;
 		void GrabRastrResult()
 		{
-			Vrastr = V;
-			Deltarastr = Delta;
+			Vrastr = V.Value;
+			Deltarastr = Delta.Value;
 			Qgrastr = Qg;
 			Pnrrastr = Pnr;
 			Qnrrastr = Qnr;
@@ -120,6 +120,7 @@ namespace DFW2
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase();
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex)  override;
 		void GetPnrQnr();
 		void GetPnrQnrSuper();
@@ -137,6 +138,7 @@ namespace DFW2
 		void StoreStates() override;
 		void RestoreStates() override;
 		bool InMatrix() override;
+		void InitNordsiek(CDynaModel* pDynaModel) override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() noexcept { return Pnr - Pgr - V * V * YiiSuper.real();	}
@@ -153,7 +155,7 @@ namespace DFW2
 
 		void SetMatrixRow(ptrdiff_t nMatrixRow) noexcept { m_nMatrixRow = nMatrixRow; }
 
-		ExternalVariable GetExternalVariable(const _TCHAR* cszVarName) override;
+		VariableIndexExternal GetExternalVariable(std::wstring_view VarName) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 
@@ -200,14 +202,15 @@ namespace DFW2
 			V_LAST
 		};
 
-		double Lag;
+		VariableIndex Lag;
 		//double Sip;
 		//double Cop;
-		double S;
+		VariableIndex S;
 		//double Sv, Dlt;
 		CDynaNode();
 		virtual ~CDynaNode() {}
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel)  override;
 		bool BuildDerivatives(CDynaModel *pDynaModel)  override;
@@ -216,7 +219,6 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
-
 		static const CDeviceContainerProperties DeviceProperties();
 
 		static const _TCHAR *m_cszS;

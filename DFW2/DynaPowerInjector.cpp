@@ -19,16 +19,21 @@ double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
+VariableIndexRefVec& CDynaPowerInjector::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDevice::GetVariables(JoinVariables({ P, Q, Ire, Iim },ChildVec));
+}
+
 double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p(nullptr);
 
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(P, V_P)
-		MAP_VARIABLE(Q, V_Q)
-		MAP_VARIABLE(Ire, V_IRE)
-		MAP_VARIABLE(Iim, V_IIM)
+		MAP_VARIABLE(P.Value, V_P)
+		MAP_VARIABLE(Q.Value, V_Q)
+		MAP_VARIABLE(Ire.Value, V_IRE)
+		MAP_VARIABLE(Iim.Value, V_IIM)
 	}
 	return p;
 }
@@ -36,12 +41,12 @@ double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	if (!IsStateOn())
 	{
 		P = Q = Ire = Iim = 0.0;
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	}
 
 	return Status;

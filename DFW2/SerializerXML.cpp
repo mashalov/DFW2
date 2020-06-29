@@ -12,10 +12,10 @@ void CSerializerXML::CreateNewSerialization()
 	m_spXMLDoc->appendChild(m_spXMLDoc->createElement(_T("DFW2")));
 }
 
-void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, const _TCHAR* cszName)
+void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, std::wstring_view Name)
 {
-	if (!m_TypeMap.insert(std::make_pair(nType, cszName)).second)
-		throw dfw2error(Cex(_T("CSerializerXML::AddDeviceTypeDescription - duplicate device type %d"), nType));
+	if (!m_TypeMap.insert(std::make_pair(nType, Name)).second)
+		throw dfw2error(fmt::format(_T("CSerializerXML::AddDeviceTypeDescription - duplicate device type {}"), nType));
 }
 
 void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
@@ -118,8 +118,8 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetName());
 				break;
 		case TypedSerializedValue::eValueType::VT_STATE:
-			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetState());
-			spXMLValue->setAttribute(CSerializerBase::m_cszStateCause, Serializer->m_pDevice->GetStateCause());
+			spXMLValue->setAttribute(CSerializerBase::m_cszV, static_cast<int>(Serializer->m_pDevice->GetState()));
+			spXMLValue->setAttribute(CSerializerBase::m_cszStateCause, static_cast<int>(Serializer->m_pDevice->GetStateCause()));
 				break;
 		case TypedSerializedValue::eValueType::VT_ID:
 			spXMLValue->setAttribute(CSerializerBase::m_cszV, Serializer->m_pDevice->GetId());
@@ -128,7 +128,7 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 			spXMLValue->setAttribute(CSerializerBase::m_cszV, mv.Value.Adapter->GetString().c_str());
 				break;
 		default:
-			throw dfw2error(Cex(_T("CSerializerXML::SerializeClass wrong serializer type %d"), mv.Value.ValueType));
+			throw dfw2error(fmt::format(_T("CSerializerXML::SerializeClass wrong serializer type {}"), mv.Value.ValueType));
 		}
 	}
 

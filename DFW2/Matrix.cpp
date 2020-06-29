@@ -65,7 +65,7 @@ void CDynaModel::EstimateMatrix()
 
 	// allocate KLU matrix in CCS form
 	klu.SetSize(m_nEstimatedMatrixSize, nNonZeroCount);
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszMatrixSize, m_nEstimatedMatrixSize, nNonZeroCount));
+	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszMatrixSize, m_nEstimatedMatrixSize, nNonZeroCount));
 	m_pMatrixRows->pApRow = klu.Ap();
 	m_pMatrixRows->pAxRow = klu.Ax();
 
@@ -130,6 +130,8 @@ void CDynaModel::BuildRightHand()
 
 void CDynaModel::BuildMatrix()
 {
+	RESET_CHECK_MATRIX_ELEMENT();
+
 	if (!EstimateBuild())
 		BuildRightHand();
 
@@ -142,7 +144,8 @@ void CDynaModel::BuildMatrix()
 
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = sc.m_dCurrentH;
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Рефакторизация матрицы %d / %d"), klu.FactorizationsCount(), klu.RefactorizationsCount());
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
+				_T("Рефакторизация матрицы {} / {}"), klu.FactorizationsCount(), klu.RefactorizationsCount()));
 		if(sc.m_bFillConstantElements)
 			Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Обновление констант"));
 		if (!EstimateBuild())
@@ -178,8 +181,8 @@ void CDynaModel::ResetElement()
 
 void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
-	if(nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize)
-		throw dfw2error(Cex(_T("CDynaModel::ReallySetElement matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
+	if(nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
+		throw dfw2error(fmt::format(_T("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}"), nRow, nCol, m_nEstimatedMatrixSize));
 
 	MatrixRow *pRow = m_pMatrixRows + nRow;
 	ptrdiff_t nMethodIndx = (pRightVector + nCol)->EquationType * 2 + (sc.q - 1);
@@ -241,8 +244,10 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 
 void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
-	if (nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize)
-		throw dfw2error(Cex(_T("CDynaModel::ReallySetElement matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
+	if (nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
+		throw dfw2error(fmt::format(_T("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}"), nRow, nCol, m_nEstimatedMatrixSize));
+
+	CHECK_MATRIX_ELEMENT(nRow, nCol);
 
 	MatrixRow *pRow = m_pMatrixRows + nRow;
 	ptrdiff_t nMethodIndx = (pRightVector + nCol)->EquationType * 2 + (sc.q - 1);
@@ -285,8 +290,8 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 // Функция подсчета количества элементов в строке матрицы
 void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
-	if (nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(Cex(_T("CDynaModel::CountSetElement matrix size overrun Row %d Col %d MatrixSize %d"),nRow, nCol, m_nEstimatedMatrixSize));
+	if (nRow >= m_nEstimatedMatrixSize || nRow < 0 )
+		throw dfw2error(fmt::format(_T("CDynaModel::CountSetElement matrix size overrun Row {} Col {} MatrixSize {}"),nRow, nCol, m_nEstimatedMatrixSize));
 	if (!bAddToPrevious)
 	{
 		// учитываем элементы с учетом суммирования
@@ -298,8 +303,8 @@ void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, 
 
 void CDynaModel::CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
-	if (nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(Cex(_T("CDynaModel::CountSetElementNoDup matrix size overrun Row %d Col %d MatrixSize %d"), nRow, nCol, m_nEstimatedMatrixSize));
+	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
+		throw dfw2error(fmt::format(_T("CDynaModel::CountSetElementNoDup matrix size overrun Row {} Col {} MatrixSize {}"), nRow, nCol, m_nEstimatedMatrixSize));
 	// учитываем элементы с учетом суммирования
 	MatrixRow *pRow = m_pMatrixRows + nRow;
 	pRow->m_nColsCount++;
@@ -315,11 +320,21 @@ void CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 	(this->*(ElementSetterNoDup))(nRow, nCol, dValue);
 }
 
+void CDynaModel::SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
+{
+	(this->*(ElementSetterNoDup))(Row.Index, Col.Index, dValue);
+}
+
+void CDynaModel::SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue)
+{
+	(this->*(ElementSetterNoDup))(Row.Index, Col.Index, dValue);
+}
+
 // задает правую часть алгебраического уравнения
 void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 {
-	if (nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(Cex(_T("CDynaModel::SetFunction matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
+	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
+		throw dfw2error(fmt::format(_T("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}"), nRow, m_nEstimatedMatrixSize));
 	_CheckNumber(dValue);
 	klu.B()[nRow] = -dValue;
 }
@@ -353,7 +368,20 @@ void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 	SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
 }
 
+void CDynaModel::SetFunction(const VariableIndexBase& Row, double dValue)
+{
+	SetFunction(Row.Index, dValue);
+}
 
+void CDynaModel::SetFunctionDiff(const VariableIndexBase& Row, double dValue)
+{
+	SetFunctionDiff(Row.Index, dValue);
+}
+
+void CDynaModel::SetDerivative(const VariableIndexBase& Row, double dValue)
+{
+	SetDerivative(Row.Index, dValue);
+}
 
 bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType)
 {
@@ -445,7 +473,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 			pVectorBegin++;
 		}
 		// продолжаем, пока есть необработанные уравнения
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Marked = %d"), nMarked);
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Marked = {}"), nMarked);
 	} while (nMarked);
 
 }
@@ -517,8 +545,8 @@ void CDynaModel::ScaleAlgebraicEquations()
 
 bool CDynaModel::CountConstElementsToSkip(ptrdiff_t nRow)
 {
-	if (nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(Cex(_T("CDynaModel::CountConstElementsToSkip matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
+	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
+		throw dfw2error(fmt::format(_T("CDynaModel::CountConstElementsToSkip matrix size overrun Row {} MatrixSize {}"), nRow, m_nEstimatedMatrixSize));
 	MatrixRow *pRow = m_pMatrixRows + nRow;
 	pRow->m_nConstElementsToSkip = pRow->pAp - pRow->pApRow;
 	return true;
@@ -527,7 +555,7 @@ bool CDynaModel::CountConstElementsToSkip(ptrdiff_t nRow)
 bool CDynaModel::SkipConstElements(ptrdiff_t nRow)
 {
 	if (nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(Cex(_T("CDynaModel::SkipConstElements matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
+		throw dfw2error(fmt::format(_T("CDynaModel::SkipConstElements matrix size overrun Row {} MatrixSize {}"), nRow, m_nEstimatedMatrixSize));
 	MatrixRow *pRow = m_pMatrixRows  + nRow;
 	pRow->pAp = pRow->pApRow + pRow->m_nConstElementsToSkip;
 	pRow->pAx = pRow->pAxRow + pRow->m_nConstElementsToSkip;
@@ -689,4 +717,19 @@ void CDynaModel::UpdateTotalRightVector()
 				pRvB += cit->EquationsCount();
 		}
 	}
+}
+
+void CDynaModel::CheckMatrixElement(ptrdiff_t nRow, ptrdiff_t nCol)
+{
+	/*
+	auto& ins = m_MatrixChecker.insert(std::make_pair(nRow, std::set<ptrdiff_t>{nCol}));
+	if (!ins.second)
+		if (!ins.first->second.insert(nCol).second)
+			throw dfw2error(Cex(_T("CDynaModel::CheckMatrixElement dup element at %d %d"), nRow, nCol));
+	*/
+}
+
+void CDynaModel::ResetCheckMatrixElement()
+{
+	m_MatrixChecker.clear();
 }

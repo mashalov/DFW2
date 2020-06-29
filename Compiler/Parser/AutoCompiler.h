@@ -15,9 +15,9 @@ public:
 	std::wstring GetVerbalName() const
 	{ 
 		if (m_strName.empty())
-			return std::wstring(Cex(_T("%d"), GetId(), m_strName.c_str()));
+			return fmt::format(_T("{}"), GetId(), m_strName.c_str());
 		else
-			return std::wstring(Cex(_T("%d [%s]"), GetId(), m_strName.c_str()));
+			return fmt::format(_T("{} [{}]"), GetId(), m_strName.c_str());
 	};
 
 	const std::wstring& GetFormula() const

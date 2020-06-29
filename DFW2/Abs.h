@@ -9,7 +9,8 @@ namespace DFW2
 		bool m_bPositive;		// текущее состояние
 		bool m_bPositiveSaved;	// cохраненное состояние
 	public:
-		CAbs(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
+		CAbs(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveState(Device, OutputVariable, Input, ExtraOutputVariables) {}
 		virtual ~CAbs() {}
 
 		bool Init(CDynaModel *pDynaModel) override;

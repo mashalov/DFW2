@@ -207,12 +207,12 @@ bool CDynaModel::DetectAdamsRinging()
 				
 				if (pVectorBegin->nRingsSuppress)
 				{
-					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Ringing %s %s last values %g %g %d"),
+					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Ringing {} {} last values {} {} {}"),
 						pVectorBegin->pDevice->GetVerbalName(),
 						pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
 						newValue,
 						pVectorBegin->SavedNordsiek[0],
-						pVectorBegin->nRingsSuppress);
+						pVectorBegin->nRingsSuppress));
 				}
 			}
 

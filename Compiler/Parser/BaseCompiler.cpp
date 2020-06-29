@@ -99,10 +99,10 @@ bool CCompilerEquations::GenerateEquations()
 					size_t nParameterIndex = nPinCount - nPins;
 					if (!CExpressionToken::CheckTokenIsConstant(pChildToken))
 					{
-						m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszNotConstParameter,
-													pToken->GetTextValue(),
-													nPinCount + 1,
-													pChildToken->GetTextValue()));
+						m_Compiler.m_Logger.Log(fmt::format(CAutoCompilerMessages::cszNotConstParameter,
+															pToken->GetTextValue(),
+															nPinCount + 1,
+															pChildToken->GetTextValue()));
 						bRes = false;
 					}
 				}
@@ -144,7 +144,7 @@ bool CCompilerEquations::GetDerivative(CExpressionToken *pToken,
 	if (bRes)
 	{
 		if (pTokenBy->m_pEquation)
-			strCol = Cex(_T("%d"), pTokenBy->m_pEquation->m_nIndex);
+			strCol = fmt::format(_T("{}"), pTokenBy->m_pEquation->m_nIndex);
 		else if (pTokenBy->IsVariable())
 			bExternalGuard = pTokenBy->GetEquationOperandIndex(pToken->m_pEquation, strCol);
 		bRes = true;
@@ -182,13 +182,13 @@ bool CCompilerEquations::GenerateMatrix()
 					if (GetDerivative(pToken, pChildToken, Diff, strCol, bExternalGuard))
 					{
 
-						std::wstring DiagIndex = Cex(_T("%d"), pEquation->m_nIndex);
+						std::wstring DiagIndex = fmt::format(_T("{}"), pEquation->m_nIndex);
 						if (DiagIndex == strCol)
 						{
 							Diagonal = Diff;
 							if (Diff == _T("1"))
 							{
-								m_Compiler.m_Logger.Log(Cex(CAutoCompilerMessages::cszSingularMatrix));
+								m_Compiler.m_Logger.Log(fmt::format(CAutoCompilerMessages::cszSingularMatrix));
 								bRes = false;
 							}
 						}

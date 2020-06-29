@@ -4,24 +4,17 @@
 
 using namespace DFW2;
 
+/*
 ptrdiff_t CDynaPrimitive::A(ptrdiff_t nOffset)
 { 
 	return m_pDevice->A(nOffset); 
 }
+*/
 
 bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = false;
-	if (m_pDevice && m_Input->Index() >= 0 && m_OutputEquationIndex >= 0)
-		bRes = true;
-	return bRes;
+	return true;
 }
-
-CDynaPrimitiveState::CDynaPrimitiveState(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitive(pDevice, pOutput, nOutputIndex, Input)
-{
-	pDevice->RegisterStatePrimitive(this);
-}
-
 
 bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 {
@@ -32,15 +25,22 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 		
 		if (m_dMin > m_dMax)
 		{
-			m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveLimits, GetVerbalName(), m_pDevice->GetVerbalName(), m_dMin, m_dMax));
+			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveLimits, 
+																   GetVerbalName(), 
+																   m_Device.GetVerbalName(), 
+																   m_dMin, 
+																   m_dMax));
 			bRes = false;
 		}
 
 		SetMinMax(pDynaModel, m_dMin, m_dMax);
 
-		if (*m_Output > m_dMaxH || *m_Output < m_dMinH)
+		if (m_Output > m_dMaxH || m_Output < m_dMinH)
 		{
-			m_pDevice->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, GetVerbalName(), m_pDevice->GetVerbalName(), *m_Output, m_dMin, m_dMax));
+			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, 
+																   GetVerbalName(), 
+																   m_Device.GetVerbalName(), 
+																   m_Output, m_dMin, m_dMax));
 			bRes = false;
 		}
 	}
@@ -52,6 +52,32 @@ double CDynaPrimitive::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return 1.0;
 }
 
+bool CDynaPrimitive::UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters)
+{
+	auto dest = ParametersList.begin();
+	for (auto& src : Parameters)
+		if (dest != ParametersList.end())
+		{
+			dest->get() = src;
+			dest++;
+		}
+	return true;
+}
+
+bool CDynaPrimitive::UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters)
+{
+	auto src = Parameters.begin();
+	for (auto& dest : ParametersList)
+		if (src != Parameters.end())
+		{
+			dest.first.get() = *src;
+			src++;
+		}
+		else
+			dest.first.get() = dest.second;
+	return true;
+}
+
 bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH)
 {
 	// Diff			- контроль знака - если < 0 - переходим в LS_MID
@@ -60,7 +86,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 
 	bool bChangeState = false;
 
-	RightVector *pRightVector = pDynaModel->GetRightVector(A(ValueIndex));
+	RightVector *pRightVector = pDynaModel->GetRightVector(ValueIndex);
 	rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
 
 	if (pDynaModel->GetZeroCrossingInRange(rH))
@@ -117,14 +143,15 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 	// если состояние изменилось, запрашиваем обработку разрыва
 	if (oldCurrentState != eCurrentState)
 	{
-		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), 
+		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, 
+			fmt::format(_T("t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}"), 
 			pDynaModel->GetCurrentTime(), 
 			pDynaModel->GetIntegrationStepNumber(),
 			GetVerbalName(), 
-			m_pDevice->GetVerbalName(),
-			*m_Output, 
+			m_Device.GetVerbalName(),
+			/*static_cast<const double>*/m_Output, 
 			m_dMin, m_dMax, 
-			oldCurrentState, eCurrentState);
+			oldCurrentState, eCurrentState));
 		pDynaModel->DiscontinuityRequest();
 	}
 
@@ -189,7 +216,7 @@ double CDynaPrimitiveBinaryOutput::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		eRELAYSTATES oldCurrentState = eCurrentState;
 
@@ -217,13 +244,13 @@ void CDynaPrimitiveBinary::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 bool CDynaPrimitiveBinary::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
+	pDynaModel->SetElement(m_Output, m_Output, 1.0);
 	return true;
 }
 
 bool CDynaPrimitiveBinary::BuildRightHand(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
+	pDynaModel->SetFunction(m_Output, 0.0);
 	return true;
 }
 

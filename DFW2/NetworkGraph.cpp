@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
+#include "DynaGeneratorMotion.h"
 
 using namespace DFW2;
 bool CDynaModel::Link()
@@ -60,7 +61,7 @@ bool CDynaModel::Link()
 				if (pContLead == lt)
 				{
 					// если выбран внутренний контейнер
-					Log(DFW2::CDFW2Messages::DFW2LOG_INFO, _T("Связь %s <- %s"), it->GetTypeName(), lt->GetTypeName());
+					Log(DFW2::CDFW2Messages::DFW2LOG_INFO, fmt::format(_T("Связь {} <- {}"), it->GetTypeName(), lt->GetTypeName()));
 					// организуем связь внешгего контейнера с внутренним
 					bRes = it->CreateLink(lt) && bRes;
 					_ASSERTE(bRes);
@@ -110,7 +111,7 @@ void CDynaModel::PrepareNetworkElements()
 		// нагрузок в CreateSuperNodes
 		if (pNode->Unom < DFW2_EPSILON)
 		{
-			pNode->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongUnom, pNode->GetVerbalName(), pNode->Unom));
+			pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongUnom, pNode->GetVerbalName(), pNode->Unom));
 			bOk = false;
 		}
 		else
@@ -131,7 +132,7 @@ void CDynaModel::PrepareNetworkElements()
 		if (pBranch->Iq == pBranch->Ip)
 		{
 			// если ветвь самозамкнута, выключаем ее навсегда
-			pBranch->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszBranchLooped, pBranch->Ip));
+			pBranch->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszBranchLooped, pBranch->Ip));
 			pBranch->SetBranchState(CDynaBranch::BRANCH_OFF, eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT);
 			continue;
 
@@ -255,7 +256,7 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 				{
 					// включаем узел
 					pNode->SetState(eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_INTERNAL);
-					pNode->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszNodeRiseDueToZone, pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszNodeRiseDueToZone, pNode->GetVerbalName()));
 					// считаем количество включенных узлов
 					nEnergizedCount++;
 				}
@@ -269,7 +270,7 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 			{
 				// отключаем узел с признаком, что его состояние изменилось внутренней командой фреймворка
 				pNode->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
-				pNode->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszNodeTripDueToZone, pNode->GetVerbalName()));
+				pNode->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszNodeTripDueToZone, pNode->GetVerbalName()));
 				// считаем количество отключенных узлов
 				nDeenergizedCount++;
 			}
@@ -330,9 +331,9 @@ void CDynaNodeContainer::DumpNodeIslands(NODEISLANDMAP& Islands)
 {
 	for (auto&& supernode : Islands)
 	{
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszIslandOfSuperNode , supernode.first->GetVerbalName()));
+		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszIslandOfSuperNode , supernode.first->GetVerbalName()));
 		for (auto&& slavenode : supernode.second)
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("--> %s"), slavenode->GetVerbalName()));
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(_T("--> {}"), slavenode->GetVerbalName()));
 	}
 }
 
@@ -803,7 +804,7 @@ _IterationControl& CDynaNodeContainer::IterationControl()
 
 std::wstring CDynaNodeContainer::GetIterationControlString()
 {
-	std::wstring retString = Cex(_T("%15g %6d %15g %6d %5.2f %6d %5.2f %6d %4d"),
+	std::wstring retString = fmt::format(_T("{:15f} {:>6} {:15f} {:>6} {:5.2f} {:>6} {:5.2f} {:>6} {:>4}"),
 		m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
 		m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
 		m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),
@@ -815,7 +816,7 @@ std::wstring CDynaNodeContainer::GetIterationControlString()
 
 void CDynaNodeContainer::DumpIterationControl()
 {
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, GetIterationControlString().c_str());
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, GetIterationControlString());
 }
 
 // функция готовит топологию к дианамике в первый раз
@@ -894,7 +895,7 @@ void CDynaNodeContainer::GetTopologySynchroZones(NODEISLANDMAP& NodeIslands)
 	}
 	// формируем перечень островов
 	GetNodeIslands(JoinableNodes, NodeIslands);
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszIslandCount, NodeIslands.size()));
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandCount, NodeIslands.size()));
 }
 
 void CDynaNodeContainer::PrepareLFTopology()
@@ -915,15 +916,15 @@ void CDynaNodeContainer::PrepareLFTopology()
 		ptrdiff_t nSlacks = std::count_if(island.second.begin(), island.second.end(), [](CDynaNodeBase* pNode) -> bool { 
 				return pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE;
 		});
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszIslandSlackBusesCount, island.second.size(), nSlacks));
+		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandSlackBusesCount, island.second.size(), nSlacks));
 		if (!nSlacks)
 		{
 			// если базисных узлов в острове нет - отключаем все узлы острова
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszIslandNoSlackBusesShutDown));
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszIslandNoSlackBusesShutDown));
 			NodeSet& Queue = island.second;
 			for (auto&& node : Queue)
 			{
-				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszNodeShutDownAsNotLinkedToSlack, node->GetVerbalName()));
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszNodeShutDownAsNotLinkedToSlack, node->GetVerbalName()));
 				node->ChangeState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
 			}
 			// и отключаем ветви
@@ -948,7 +949,7 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 		if (!ppDevice)
 		{
 			// все ветви отключены, отключаем узел
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszSwitchedOffNode, pNode->GetVerbalName()));
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszSwitchedOffNode, pNode->GetVerbalName()));
 			// сбрасываем список проверки инцидентных узлов
 			ResetTopologyCheck();
 			// используем функцию ChangeState(), которая отключает все, что отнесено к отключаемому узлу, в том числе и ветви
@@ -987,7 +988,7 @@ void CDynaNodeContainer::DumpNetwork()
 		for (auto& node : m_DevVec)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-			_ftprintf_s(fn, _T("Node Id=%d DBIndex=%d V %g / %g"), pNode->GetId(), pNode->GetDBIndex(), pNode->V, pNode->Delta / M_PI * 180.0);
+			_ftprintf_s(fn, _T("Node Id=%d DBIndex=%d V %g / %g"), pNode->GetId(), pNode->GetDBIndex(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
 			if(pNode->m_pSuperNodeParent)
 				_ftprintf_s(fn, _T(" belongs to supernode Id=%d"), pNode->m_pSuperNodeParent->GetId());
 
@@ -1030,7 +1031,7 @@ void CDynaNodeContainer::DumpNetwork()
 		for (auto& node : m_DevVec)
 		{
 			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
-			_ftprintf_s(fn, _T("%d;%g;%g\n"), pNode->GetId(), pNode->V, pNode->Delta / M_PI * 180.0);
+			_ftprintf_s(fn, _T("%d;%g;%g\n"), pNode->GetId(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
 		}
 		fclose(fn);
 	}

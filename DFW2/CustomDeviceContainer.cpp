@@ -27,44 +27,28 @@ void CCustomDeviceContainer::CleanUp()
 	}
 }
 
-bool CCustomDeviceContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
+bool CCustomDeviceContainer::ConnectDLL(std::wstring_view DLLFilePath)
 {
-	bool bRes = false;
-	if (m_DLL.Init(cszDLLFilePath))
+	bool bRes(false);
+	if (m_DLL.Init(DLLFilePath))
 	{
+		// копируем в контейнер описания констант
+		for (const auto& it : m_DLL.GetConstsInfo())
+			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(it.VarInfo.Name, CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
+
+		// копируем в контейнер описания уставок
+		for (const auto& it : m_DLL.GetSetPointsInfo())
+			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(it.Name, CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
+
+		// копируем в контейнер описания внутренних переменных
+		for (const auto& it : m_DLL.GetInternalsInfo())
+			m_ContainerProps.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
+
+		// копируем в контейнер описания выходных переменных
+		for (const auto& it : m_DLL.GetOutputsInfo())
+			m_ContainerProps.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
+
 		bRes = true;
-
-		size_t nConstsCount = m_DLL.GetConstsCount();
-		for (size_t nConstIndex = 0; nConstIndex < nConstsCount; nConstIndex++)
-		{
-			const ConstVarsInfo* pConstInfo = m_DLL.GetConstInfo(nConstIndex);
-			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(pConstInfo->VarInfo.Name,
-				CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
-		}
-
-		size_t nSetPointsCount = m_DLL.GetSetPointsCount();
-		for (size_t nSetPointndex = 0; nSetPointndex < nSetPointsCount; nSetPointndex++)
-		{
-			const VarsInfo* pVarInfo = m_DLL.GetSetPointInfo(nSetPointndex);
-			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(pVarInfo->Name,
-				CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
-		}
-
-		size_t nInternalsCount = m_DLL.GetInternalsCount();
-		for (size_t nInternalsIndex = 0; nInternalsIndex < nInternalsCount; nInternalsIndex++)
-		{
-			const VarsInfo* pVarInfo = m_DLL.GetInternalInfo(nInternalsIndex);
-			m_ContainerProps.m_VarMap.insert(std::make_pair(pVarInfo->Name,
-				CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
-		}
-
-		size_t nOutputsCount = m_DLL.GetOutputsCount();
-		for (size_t nOutputIndex = 0; nOutputIndex < nOutputsCount; nOutputIndex++)
-		{
-			const VarsInfo* pVarInfo = m_DLL.GetOutputInfo(nOutputIndex);
-			m_ContainerProps.m_VarMap.insert(std::make_pair(pVarInfo->Name,
-				CVarIndex(pVarInfo->nIndex, pVarInfo->bOutput ? true : false, static_cast<eVARUNITS>(pVarInfo->eUnits))));
-		}
 	}
 	return bRes;
 }
@@ -82,35 +66,25 @@ bool CCustomDeviceContainer::BuildStructure()
 	// чтобы избежать множества мелких new
 
 	m_nBlockEquationsCount = 0;
-	m_nPrimitiveVarsCount = 0;
 	m_nDoubleVarsCount = 0;
+	m_nVariableIndexesCount = 0;
 	m_nExternalVarsCount = 0;
 
 	BLOCKDESCRIPTIONS::const_iterator	it = m_DLL.GetBlocksDescriptions().begin();
 	BLOCKSPINSINDEXES::const_iterator  iti = m_DLL.GetBlocksPinsIndexes().begin();
 
+	// просматриваем хост-блоки и их соединения
 	for (; it != m_DLL.GetBlocksDescriptions().end(); it++, iti++)
 	{
 		if (it->eType > PrimitiveBlockType::PBT_UNKNOWN && it->eType < PrimitiveBlockType::PBT_LAST)
 		{
-			m_nBlockEquationsCount += PrimitiveEquationsCount(it->eType);
-
-			m_PrimitivePool[it->eType].nCount++;
-			for (BLOCKPININDEXVECTOR::const_iterator ciit = iti->begin(); ciit != iti->end(); ciit++)
-			{
-				switch (ciit->Location)
-				{
-				case eVL_INTERNAL:
-					m_nPrimitiveVarsCount++;
-					break;
-				case eVL_EXTERNAL:
-					;
-				}
-			}
+			// если блок имеет правильный индекс 
+			m_nBlockEquationsCount += PrimitiveEquationsCount(it->eType); // считаем количество уравнений хост-блоков
+			m_PrimitivePool[it->eType].nCount++;						  // учитываем количество блоков данного типа
 		}
 		else
 		{
-			Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveinDLL, m_DLL.GetModuleFilePath(), it->eType));
+			Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveinDLL, m_DLL.GetModuleFilePath(), it->eType));
 			bRes = false;
 		}
 	}
@@ -119,27 +93,37 @@ bool CCustomDeviceContainer::BuildStructure()
 
 	if (bRes)
 	{
-		for (BLOCKDESCRIPTIONS::const_iterator it = m_DLL.GetBlocksDescriptions().begin(); it != m_DLL.GetBlocksDescriptions().end(); it++)
+		// выделяем память под каждый тип хост-блока для всех устройств контейнера
+		for (const auto& it :m_DLL.GetBlocksDescriptions())
 		{
-			if (!m_PrimitivePool[it->eType].m_pPrimitive) // get memory for each type only once
+			if (!m_PrimitivePool[it.eType].m_pPrimitive) 
 			{
-				m_PrimitivePool[it->eType].m_pPrimitive = (unsigned char*)malloc(m_PrimitivePool[it->eType].nCount * nCount * PrimitiveSize(it->eType));
-				m_PrimitivePool[it->eType].m_pHead = m_PrimitivePool[it->eType].m_pPrimitive;
+				// выделение памяти для общего пула хост-блоков
+				m_PrimitivePool[it.eType].m_pPrimitive = (unsigned char*)malloc(m_PrimitivePool[it.eType].nCount * nCount * PrimitiveSize(it.eType));
+				// указатель на начало пула
+				m_PrimitivePool[it.eType].m_pHead = m_PrimitivePool[it.eType].m_pPrimitive;
 			}
 
 		}
 
 		m_nExternalVarsCount = GetInputsCount();
 
-		m_PrimitiveVarsPool.reserve(m_nPrimitiveVarsCount * nCount);
-		m_PrimitiveExtVarsPool.reserve(m_nExternalVarsCount * nCount);
-
-		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsCount();
-		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount() + m_ContainerProps.nEquationsCount;
-
+		// создаем пул для входных переменных
+		m_VariableIndexExternalPool.reserve(m_nExternalVarsCount * nCount);
+		// количество уравнений пользовательского устройства равно количеству уравнений для хост-блоков + количество уравнений внутренних переменных
+		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
+		// общее количество double на 1 устройство = константы + уставки
+		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount();
+		//  количество уравнений VariableIndexesCount
+		m_nVariableIndexesCount = m_ContainerProps.nEquationsCount;
+		// создаем пул для переменных типа double
 		m_DoubleVarsPool.reserve(m_nDoubleVarsCount * nCount);
+		// создаем пул для внешних переменных
 		m_ExternalVarsPool.reserve(m_nExternalVarsCount * nCount);
+		// создаем пул для VariableIndexes
+		m_VariableIndexPool.reserve(m_nVariableIndexesCount * nCount);
 
+		// когда все пулы подготовлены - инициализируем структуру каждого устройства контейнера
 		for (auto&& it : *this)
 		{
 			bRes = static_cast<CCustomDevice*>(it)->BuildStructure();
@@ -153,7 +137,7 @@ bool CCustomDeviceContainer::BuildStructure()
 bool CCustomDeviceContainer::InitDLLEquations(BuildEquationsArgs* pArgs)
 {
 	bool bRes = true;
-	std::fill(pArgs->pEquations, pArgs->pEquations + EquationsCount(), 0.0);
+	std::fill(pArgs->pEquations, pArgs->pEquations + EquationsCount(), DLLVariableIndex{0,0.0});
 	bRes = m_DLL.InitEquations(pArgs);
 	return bRes;
 }
@@ -228,13 +212,6 @@ long CCustomDeviceContainer::PrimitiveEquationsCount(PrimitiveBlockType eType)
 	return GetPrimitiveInfo(eType).nEquationsCount;
 }
 
-PrimitiveVariable* CCustomDeviceContainer::NewPrimitiveVariable(ptrdiff_t nIndex, double& Value)
-{
-	_ASSERTE(m_PrimitiveVarsPool.size() < m_PrimitiveVarsPool.capacity());
-	m_PrimitiveVarsPool.emplace_back(PrimitiveVariable(nIndex, Value));
-	return &m_PrimitiveVarsPool.back();
-}
-
 double* CCustomDeviceContainer::NewDoubleVariables()
 {
 	if (!m_nDoubleVarsCount)
@@ -245,7 +222,16 @@ double* CCustomDeviceContainer::NewDoubleVariables()
 	return &*(m_DoubleVarsPool.end() - m_nDoubleVarsCount);
 }
 
-ExternalVariable* CCustomDeviceContainer::NewExternalVariables()
+VariableIndex* CCustomDeviceContainer::NewVariableIndexVariables()
+{
+	if (!m_nVariableIndexesCount)
+		return nullptr;
+	_ASSERTE(m_VariableIndexPool.size() + m_nVariableIndexesCount <= m_VariableIndexPool.capacity());
+	m_VariableIndexPool.resize(m_VariableIndexPool.size() + m_nVariableIndexesCount);
+	return &*(m_VariableIndexPool.end() - m_nVariableIndexesCount);
+}
+
+DLLExternalVariable* CCustomDeviceContainer::NewExternalVariables()
 {
 	if (!m_nExternalVarsCount)
 		return nullptr;
@@ -255,14 +241,13 @@ ExternalVariable* CCustomDeviceContainer::NewExternalVariables()
 	return &*(m_ExternalVarsPool.end() - m_nExternalVarsCount);
 }
 
-PrimitiveVariableExternal* CCustomDeviceContainer::NewPrimitiveExtVariables()
+VariableIndexExternal* CCustomDeviceContainer::NewVariableIndexExternals()
 {
 	if (!m_nExternalVarsCount)
 		return nullptr;
-
-	_ASSERTE(m_PrimitiveExtVarsPool.size() + m_nExternalVarsCount <= m_PrimitiveExtVarsPool.capacity());
-	m_PrimitiveExtVarsPool.resize(m_PrimitiveExtVarsPool.size() + m_nExternalVarsCount);
-	return &*(m_PrimitiveExtVarsPool.end() - m_nExternalVarsCount);
+	_ASSERTE(m_VariableIndexExternalPool.size() + m_nExternalVarsCount <= m_VariableIndexExternalPool.capacity());
+	m_VariableIndexExternalPool.resize(m_VariableIndexExternalPool.size() + m_nExternalVarsCount);
+	return &*(m_VariableIndexExternalPool.end() - m_nExternalVarsCount);
 }
 
 void* CCustomDeviceContainer::NewPrimitive(PrimitiveBlockType eType)
@@ -277,23 +262,53 @@ void* CCustomDeviceContainer::NewPrimitive(PrimitiveBlockType eType)
 }
 
 
-long CCustomDeviceContainer::GetParametersValues(ptrdiff_t nId, BuildEquationsArgs* pArgs, long nBlockIndex, double **ppParameters)
+long CCustomDeviceContainer::GetParametersValues(ptrdiff_t nId, BuildEquationsArgs* pArgs, long nBlockIndex, DOUBLEVECTOR& Parameters)
 {
 	long nCount = m_DLL.GetBlockParametersCount(nBlockIndex);
 
 	if (nCount > 0)
 	{
-		if (nCount > static_cast<long>(m_ParameterBuffer.size()))
-			m_ParameterBuffer.resize(max(nCount, 100));
-		
-		if (nCount != m_DLL.GetBlockParametersValues(nBlockIndex, pArgs, &m_ParameterBuffer[0]))
+		Parameters.clear();
+		Parameters.resize(nCount);
+		if (nCount != m_DLL.GetBlockParametersValues(nBlockIndex, pArgs, &Parameters[0]))
 			nCount = -1; 
 	}
-
-	if (nCount <= 0)
-		ppParameters = nullptr;
-	else
-		*ppParameters = &m_ParameterBuffer[0];
-
 	return nCount;
+}
+
+
+
+CCustomDeviceCPPContainer::CCustomDeviceCPPContainer(CDynaModel* pDynaModel) : CDeviceContainer(pDynaModel) {}
+
+CCustomDeviceCPPContainer::~CCustomDeviceCPPContainer()
+{
+
+}
+
+
+void CCustomDeviceCPPContainer::ConnectDLL(std::wstring_view DLLFilePath)
+{
+	m_pDLL = std::make_shared<CCustomDeviceCPPDLL>();
+	m_pDLL->Init(DLLFilePath);
+	CCustomDeviceDLLWrapper pDevice(m_pDLL);
+	pDevice->GetDeviceProperties(m_ContainerProps);
+	PRIMITIVEVECTOR& Prims = pDevice->GetPrimitives();
+	for (const auto& prim : Prims)
+		m_PrimitivePools.CountPrimitive(prim.eBlockType);
+}
+
+CDynaPrimitive* CCustomDeviceCPPContainer::CreatePrimitive(PrimitiveBlockType ePrimitiveType,
+														   CDevice& Device,
+														   VariableIndex& OutputVariable,
+														   InputList Input,
+														   ExtraOutputList ExtraOutputVariables)
+{
+	return m_PrimitivePools.Create(ePrimitiveType, Device, OutputVariable, Input, ExtraOutputVariables);
+}
+
+void CCustomDeviceCPPContainer::BuildStructure()
+{
+	m_PrimitivePools.Allocate(m_DevVec.size());
+	for (auto& dit : m_DevVec)
+		static_cast<CCustomDeviceCPP*>(dit)->CreateDLLDeviceInstance(*this);
 }

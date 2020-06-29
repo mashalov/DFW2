@@ -2,6 +2,7 @@
 #include "DynaBranch.h"
 #include "DynaModel.h"
 #include "GraphCycle.h"
+#include "DynaGeneratorMotion.h"
 
 using namespace DFW2;
 
@@ -22,7 +23,7 @@ CDynaNodeBase::~CDynaNodeBase()
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
-	const cplx VreVim(std::polar(V, Delta));
+	const cplx VreVim(std::polar((double)V, (double)Delta));
 	Vre = VreVim.real();
 	Vim = VreVim.imag();
 }
@@ -184,8 +185,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double QgVre2 = Qgsum * Vre2;
 	double QgVim2 = Qgsum * Vim2;
 
-	pDynaModel->SetElement(A(V_V), A(V_V), 1.0);
-	pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+	pDynaModel->SetElement(V, V, 1.0);
+	pDynaModel->SetElement(Delta, Delta, 1.0);
 		
 	if (pDynaModel->FillConstantElements())
 	{
@@ -200,8 +201,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
-			pDynaModel->SetElement(A(V_RE), pGen->A(CDynaPowerInjector::V_IRE), dGenMatrixCoe);
-			pDynaModel->SetElement(A(V_IM), pGen->A(CDynaPowerInjector::V_IIM), dGenMatrixCoe);
+			pDynaModel->SetElement(Vre, pGen->Ire, dGenMatrixCoe);
+			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe);
 		}
 
 		if (m_bInMetallicSC)
@@ -210,13 +211,13 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 			{
 				// dIre /dVre
-				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_RE), 0.0);
+				pDynaModel->SetElement(Vre, pV->pNode->Vre, 0.0);
 				// dIre/dVim
-				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_IM), 0.0);
+				pDynaModel->SetElement(Vre, pV->pNode->Vim, 0.0);
 				// dIim/dVre
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_RE), 0.0);
+				pDynaModel->SetElement(Vim, pV->pNode->Vre, 0.0);
 				// dIim/dVim
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), 0.0);
+				pDynaModel->SetElement(Vim, pV->pNode->Vim, 0.0);
 			}
 		}
 		else
@@ -225,46 +226,46 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 			{
 				// dIre /dVre
-				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_RE), -pV->Y.real());
+				pDynaModel->SetElement(Vre, pV->pNode->Vre, -pV->Y.real());
 				// dIre/dVim
-				pDynaModel->SetElement(A(V_RE), pV->pNode->A(V_IM), pV->Y.imag());
+				pDynaModel->SetElement(Vre, pV->pNode->Vim, pV->Y.imag());
 				// dIim/dVre
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_RE), -pV->Y.imag());
+				pDynaModel->SetElement(Vim, pV->pNode->Vre, -pV->Y.imag());
 				// dIim/dVim
-				pDynaModel->SetElement(A(V_IM), pV->pNode->A(V_IM), -pV->Y.real());
+				pDynaModel->SetElement(Vim, pV->pNode->Vim, -pV->Y.real());
 			}
 		}
 
 		// запоминаем позиции в строках матрицы, на которых заканчиваются постоянные элементы
-		pDynaModel->CountConstElementsToSkip(A(V_RE));
-		pDynaModel->CountConstElementsToSkip(A(V_IM));
+		pDynaModel->CountConstElementsToSkip(Vre.Index);
+		pDynaModel->CountConstElementsToSkip(Vim.Index);
 	}
 	else
 	{
 		// если постоянные элементы не надо обновлять, то пропускаем их и начинаем с непостоянных
-		pDynaModel->SkipConstElements(A(V_RE));
-		pDynaModel->SkipConstElements(A(V_IM));
+		pDynaModel->SkipConstElements(Vre.Index);
+		pDynaModel->SkipConstElements(Vim.Index);
 	}
 
 	// check low voltage
 	if (m_bLowVoltage)
 	{
-		pDynaModel->SetElement(A(V_V), A(V_RE), 0.0);
-		pDynaModel->SetElement(A(V_V), A(V_IM), 0.0);
-		pDynaModel->SetElement(A(V_DELTA), A(V_RE), 0.0);
-		pDynaModel->SetElement(A(V_DELTA), A(V_IM), 0.0);
-		pDynaModel->SetElement(A(V_RE), A(V_V), 0.0);
-		pDynaModel->SetElement(A(V_IM), A(V_V), 0.0);
+		pDynaModel->SetElement(V, Vre, 0.0);
+		pDynaModel->SetElement(V, Vim, 0.0);
+		pDynaModel->SetElement(Delta, Vre, 0.0);
+		pDynaModel->SetElement(Delta, Vim, 0.0);
+		pDynaModel->SetElement(Vre, V, 0.0);
+		pDynaModel->SetElement(Vim, V, 0.0);
 
 		_ASSERTE(fabs(PgVre2) < DFW2_EPSILON && fabs(PgVim2) < DFW2_EPSILON);
 		_ASSERTE(fabs(QgVre2) < DFW2_EPSILON && fabs(QgVim2) < DFW2_EPSILON);
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_V), A(V_RE), -Vre / V2sq);
-		pDynaModel->SetElement(A(V_V), A(V_IM), -Vim / V2sq);
-		pDynaModel->SetElement(A(V_DELTA), A(V_RE), Vim / V2);
-		pDynaModel->SetElement(A(V_DELTA), A(V_IM), -Vre / V2);
+		pDynaModel->SetElement(V, Vre, -Vre / V2sq);
+		pDynaModel->SetElement(V, Vim, -Vim / V2sq);
+		pDynaModel->SetElement(Delta, Vre, Vim / V2);
+		pDynaModel->SetElement(Delta, Vim, -Vre / V2);
 
 		double d1 = (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
 		double d2 = (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
@@ -280,16 +281,32 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		double VreV2 = Vre / V2;
 		double VimV2 = Vim / V2;
 		dLRCPn -= dLRCPg;		dLRCQn -= dLRCQg;
-		pDynaModel->SetElement(A(V_RE), A(V_V), dLRCPn * VreV2 + dLRCQn * VimV2);
-		pDynaModel->SetElement(A(V_IM), A(V_V), dLRCPn * VimV2 - dLRCQn * VreV2);
+		pDynaModel->SetElement(Vre, V, dLRCPn * VreV2 + dLRCQn * VimV2);
+		pDynaModel->SetElement(Vim, V, dLRCPn * VimV2 - dLRCQn * VreV2);
 	}
 
-	pDynaModel->SetElement(A(V_RE), A(V_RE), dIredVre);
-	pDynaModel->SetElement(A(V_RE), A(V_IM), dIredVim);
-	pDynaModel->SetElement(A(V_IM), A(V_RE), dIimdVre);
-	pDynaModel->SetElement(A(V_IM), A(V_IM), dIimdVim);
+	pDynaModel->SetElement(Vre, Vre, dIredVre);
+	pDynaModel->SetElement(Vre, Vim, dIredVim);
+	pDynaModel->SetElement(Vim, Vre, dIimdVre);
+	pDynaModel->SetElement(Vim, Vim, dIimdVim);
 
 	return true;
+}
+
+void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
+{
+	_ASSERTE(m_pContainer);
+	struct RightVector* pRv = pDynaModel->GetRightVector(A(0));
+	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
+
+	VariableIndexRefVec seed;
+	for (auto&& var : GetVariables(seed))
+	{
+		pRv->pValue = &var.get().Value;
+		_ASSERTE(pRv->pValue);
+		pRv->pDevice = this;
+		pRv++;
+	}
 }
 
 
@@ -373,10 +390,10 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 #endif
 	}
 
-	pDynaModel->SetFunction(A(V_V), dV);
-	pDynaModel->SetFunction(A(V_DELTA), dDelta);
-	pDynaModel->SetFunction(A(V_RE), Ire);
-	pDynaModel->SetFunction(A(V_IM), Iim);
+	pDynaModel->SetFunction(V, dV);
+	pDynaModel->SetFunction(Delta, dDelta);
+	pDynaModel->SetFunction(Vre, Ire);
+	pDynaModel->SetFunction(Vim, Iim);
 
 	return true;
 }
@@ -408,7 +425,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 	if (!m_pLRC)
 		m_pLRC = pDynaModel->GetLRCDynamicDefault();
 
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 // в узлах используется расширенная функция
@@ -422,8 +439,8 @@ void CDynaNode::Predict()
 	double newDelta = atan2(sin(Delta), cos(Delta));
 	if (fabs(newDelta - Delta) > DFW2_EPSILON)
 	{
-		RightVector *pRvDelta = GetModel()->GetRightVector(A(V_DELTA));
-		RightVector *pRvLag = GetModel()->GetRightVector(A(V_LAG));
+		RightVector *pRvDelta = GetModel()->GetRightVector(Delta.Index);
+		RightVector *pRvLag = GetModel()->GetRightVector(Lag.Index);
 		double dDL = Delta - Lag;
 		Delta = newDelta;
 		Lag = Delta - dDL;
@@ -435,14 +452,13 @@ void CDynaNode::Predict()
 
 CDynaNode::CDynaNode() : CDynaNodeBase()
 {
-
 }
 
 bool CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 	double T = pDynaModel->GetFreqTimeConstant();
-	pDynaModel->SetDerivative(A(V_LAG), (Delta - Lag) / T);
+	pDynaModel->SetDerivative(Lag, (Delta - Lag) / T);
 	return true;
 }
 
@@ -456,21 +472,20 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 
 
 
-	pDynaModel->SetElement(A(V_LAG), A(V_DELTA), -1.0 / T);
-	//pDynaModel->SetElement(A(V_LAG), A(V_LAG), 1.0 + hb0 / T);
-	pDynaModel->SetElement(A(V_LAG), A(V_LAG), -1.0 / T);
+	pDynaModel->SetElement(Lag, Delta, -1.0 / T);
+	pDynaModel->SetElement(Lag, Lag, -1.0 / T);
 	
 	if (!pDynaModel->IsInDiscontinuityMode())
 	{
-		pDynaModel->SetElement(A(V_S), A(V_DELTA), -1.0 / T / w0);
-		pDynaModel->SetElement(A(V_S), A(V_LAG), 1.0 / T / w0);
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(S, Delta, -1.0 / T / w0);
+		pDynaModel->SetElement(S, Lag, 1.0 / T / w0);
+		pDynaModel->SetElement(S, S, 1.0);
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_S), A(V_DELTA), 0.0);
-		pDynaModel->SetElement(A(V_S), A(V_LAG), 0.0);
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(S, Delta, 0.0);
+		pDynaModel->SetElement(S, Lag, 0.0);
+		pDynaModel->SetElement(S, S, 1.0);
 	}
 	return true;
 }
@@ -487,8 +502,8 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	if (pDynaModel->IsInDiscontinuityMode()) 
 		dS = 0.0;
 	
-	pDynaModel->SetFunctionDiff(A(V_LAG), dLag);
-	pDynaModel->SetFunction(A(V_S), dS);
+	pDynaModel->SetFunctionDiff(Lag, dLag);
+	pDynaModel->SetFunction(S, dS);
 
 	//DumpIntegrationStep(2021, 2031);
 	//DumpIntegrationStep(2143, 2031);
@@ -511,15 +526,7 @@ eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
 // переменные базового узла - модуль и угол
 double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p(nullptr);
-	switch (nVarIndex)
-	{
-		MAP_VARIABLE(Delta,V_DELTA)
-		MAP_VARIABLE(V, V_V)
-		MAP_VARIABLE(Vre, V_RE)
-		MAP_VARIABLE(Vim, V_IM)
-	}
-	return p;
+	return &GetVariable(nVarIndex).Value;
 }
 
 // константы узла - проводимость шунта
@@ -537,22 +544,9 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 // переменные узла - переменные базового узла + скольжение и лаг скольжения
 double* CDynaNode::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = CDynaNodeBase::GetVariablePtr(nVarIndex);
-	if (!p)
-	{
-		switch (nVarIndex)
-		{
-			MAP_VARIABLE(Lag, V_LAG)
-			MAP_VARIABLE(S, V_S)
-				/*
-			MAP_VARIABLE(Sv, V_SV)
-			MAP_VARIABLE(Sip, V_SIP)
-			MAP_VARIABLE(Cop, V_COP)
-			*/
-		}
-	}
-	return p;
+	return &GetVariable(nVarIndex).Value;
 }
+
 
 CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) : 
 									   CDeviceContainer(pDynaModel)
@@ -693,22 +687,22 @@ eDEVICEFUNCTIONSTATUS CDynaNode::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	Lag = Delta - S * pDynaModel->GetFreqTimeConstant() * pDynaModel->GetOmega0();
 	SetLowVoltage(sqrt(Vre * Vre + Vim * Vim) < (LOW_VOLTAGE - LOW_VOLTAGE_HYST));
 	//Delta = atan2(Vim, Vre);
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 CSynchroZone::CSynchroZone() : CDevice()
 {
 }
 
+
+VariableIndexRefVec& CSynchroZone::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDevice::GetVariables(JoinVariables({ S },ChildVec));
+}
+
 double* CSynchroZone::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p(nullptr);
-
-	switch (nVarIndex)
-	{
-		MAP_VARIABLE(S, V_S)
-	}
-	return p;
+	return &GetVariable(nVarIndex).Value;
 }
 
 bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
@@ -716,18 +710,17 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 	bool bRes = true;
 	if (m_bInfPower)
 	{
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(S, S, 1.0);
 	}
 	else
 	{
-		pDynaModel->SetElement(A(V_S), A(V_S), 1.0);
+		pDynaModel->SetElement(S, S, 1.0);
 		for (auto&& it : m_LinkedGenerators)
 		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(it);
-			if(pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
+			if(it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
-				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(pGen);
-				pDynaModel->SetElement(A(V_S), pGen->A(CDynaGeneratorMotion::V_S), -pGenMj->Mj / Mj);
+				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(it);
+				pDynaModel->SetElement(S, pGenMj->s, -pGenMj->Mj / Mj);
 			}
 		}
 	}
@@ -740,20 +733,19 @@ bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 	double dS = S;
 	if (m_bInfPower)
 	{
-		pDynaModel->SetFunction(A(V_S), 0.0);
+		pDynaModel->SetFunction(S, 0.0);
 	}
 	else
 	{
-		for (DEVICEVECTORITR it = m_LinkedGenerators.begin(); it != m_LinkedGenerators.end(); it++)
+		for (auto&& it : m_LinkedGenerators)
 		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*it);
-			if (pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
+			if (it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
-				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(pGen);
+				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(it);
 				dS -= pGenMj->Mj * pGenMj->s / Mj;
 			}
 		}
-		pDynaModel->SetFunction(A(V_S), dS);
+		pDynaModel->SetFunction(S, dS);
 	}
 	return true;
 }
@@ -761,7 +753,7 @@ bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CSynchroZone::Init(CDynaModel* pDynaModel)
 {
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 bool CDynaNodeContainer::LULF()
@@ -903,14 +895,14 @@ bool CDynaNodeContainer::LULF()
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
 
-					_ftprintf(fgen, _T("%g;"), pVsource->P);
+					_ftprintf(fgen, _T("%g;"), pVsource->P.Value);
 				}
 
 				// рассчитываем задающий ток узла от нагрузки
 				// можно посчитать ток, а можно посчитать добавку в диагональ
 				//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
 				if (pNode->V > 0.0)
-					Y += conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V / pNode->V);
+					Y += std::conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V.Value / pNode->V.Value);
 				//Y -= conj(cplx(Pnr, Qnr) / pNode->V / pNode->V);
 
 				_CheckNumber(I.real());
@@ -967,7 +959,7 @@ bool CDynaNodeContainer::LULF()
 
 		if (fabs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
 		{
-			Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
+			Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
 			break;
 		}
 	}
@@ -1000,18 +992,18 @@ bool CDynaNodeContainer::Seidell()
 	return LULF();
 }
 
-ExternalVariable CDynaNodeBase::GetExternalVariable(const _TCHAR* cszVarName)
+VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::wstring_view VarName)
 {
-	if (!_tcscmp(cszVarName, CDynaNode::m_cszSz))
+	if (VarName == CDynaNode::m_cszSz)
 	{
-		ExternalVariable ExtVar = { nullptr, -1 };
+		VariableIndexExternal ExtVar = { -1, nullptr };
 
 		if (m_pSyncZone)
 			ExtVar = m_pSyncZone->GetExternalVariable(CDynaNode::m_cszS);
 		return ExtVar;
 	}
 	else
-		return CDevice::GetExternalVariable(cszVarName);
+		return CDevice::GetExternalVariable(VarName);
 }
 
 
@@ -1044,7 +1036,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s выше порогового"), V, GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Напряжение {} в узле {} выше порогового"), V.Value, GetVerbalName()));
 		}
 	}
 	else
@@ -1053,7 +1045,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s ниже порогового"), V, GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Напряжение {} в узле {} ниже порогового"), V.Value, GetVerbalName()));
 		}
 	}
 }
@@ -1154,8 +1146,8 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	double rH = 1.0;
 
 	double Hyst = LOW_VOLTAGE_HYST;
-	RightVector *pRvre = pDynaModel->GetRightVector(A(V_RE));
-	RightVector *pRvim = pDynaModel->GetRightVector(A(V_IM));
+	RightVector *pRvre = pDynaModel->GetRightVector(Vre.Index);
+	RightVector *pRvim = pDynaModel->GetRightVector(Vim.Index);
 	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
 
 #ifdef USE_FMA
@@ -1612,6 +1604,16 @@ void CDynaNode::UpdateSerializer(SerializerPtr& Serializer)
 	CDynaNodeBase::UpdateSerializer(Serializer);
 	Serializer->AddState(_T("SLag"), Lag);
 	Serializer->AddState(_T("S"), S);
+}
+
+VariableIndexRefVec& CDynaNodeBase::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDevice::GetVariables(JoinVariables({ Delta, V, Vre, Vim }, ChildVec));
+}
+
+VariableIndexRefVec& CDynaNode::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDynaNodeBase::GetVariables(JoinVariables({ Lag, S }, ChildVec));
 }
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");

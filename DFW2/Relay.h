@@ -18,13 +18,14 @@ namespace DFW2
 		double OnStateOff(CDynaModel *pDynaModel) override;
 		eRELAYSTATES GetInstantState();
 	public:
-		CRelay(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input) {}
+		CRelay(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+			CDynaPrimitiveBinaryOutput(Device, OutputVariable, Input, ExtraOutputVariables) {}
 		virtual ~CRelay() {}
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		const _TCHAR* GetVerbalName() noexcept override { return _T("Πελε"); }
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelay); }
 		static long EquationsCount()  noexcept { return 1; }
 	};
@@ -48,11 +49,12 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 		void RequestZCDiscontinuity(CDynaModel* pDynaModel) override;
 	public:
-		CRelayDelay(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CRelay(pDevice, pOutput, nOutputIndex, Input), CDiscreteDelay() {}
+		CRelayDelay(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+			CRelay(Device, OutputVariable, Input, ExtraOutputVariables), CDiscreteDelay() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelay); }
 		static long EquationsCount()  noexcept { return 1; }
@@ -61,7 +63,8 @@ namespace DFW2
 	class CRelayDelayLogic : public CRelayDelay
 	{
 	public:
-		CRelayDelayLogic(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CRelayDelay(pDevice, pOutput, nOutputIndex, Input) {}
+		CRelayDelayLogic(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+			CRelayDelay(Device, OutputVariable, Input, ExtraOutputVariables) {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelayLogic); }

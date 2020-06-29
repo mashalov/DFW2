@@ -387,12 +387,12 @@ protected:
 	VARIABLES m_Variables;
 public:
 	~CParserVariables();
-	VariableEnum *Find(const _TCHAR* cszVarName);
-	VariableEnum *Find(const std::wstring& strVarName);
-	VariableEnum *Find(const CCompilerEquation *pEquation);
+	VariableEnum* Find(const _TCHAR* cszVarName);
+	VariableEnum* Find(const std::wstring& strVarName);
+	VariableEnum* Find(const CCompilerEquation *pEquation);
 	void Add(const _TCHAR* cszVarName, CExpressionToken* pToken);
 	void Add(const std::wstring& strVarName, CExpressionToken* pToken);
-	bool Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarName);
+	VariableEnum* Rename(const _TCHAR *cszVarName, const _TCHAR *cszNewVarName);
 	void Clear();
 	bool ChangeToEquationNames();
 	VARIABLECONSTITR Begin() const { return m_Variables.begin(); }

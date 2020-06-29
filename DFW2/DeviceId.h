@@ -20,7 +20,7 @@ namespace DFW2
 		ptrdiff_t GetId() const;				// получить идентификатор
 		void SetId(ptrdiff_t nId);				// задать идентификатор
 		const _TCHAR* GetName() const;			// получить имя без подробностей
-		void SetName(const _TCHAR* cszName);	// задать имя без подробностей
+		void SetName(std::wstring_view Name);	// задать имя без подробностей
 		const _TCHAR* GetVerbalName() const;	// получить имя с подробностями
 		ptrdiff_t GetDBIndex();					// получить индекс в БД
 		void SetDBIndex(ptrdiff_t nIndex);		// задать индекс в БД

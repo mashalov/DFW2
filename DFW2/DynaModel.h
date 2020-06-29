@@ -1,10 +1,4 @@
 ﻿#pragma once
-#include "DynaGeneratorMustang.h"
-#include "DynaGeneratorInfBus.h"
-#include "DynaExciterMustang.h"
-#include "DynaDECMustang.h"
-#include "DynaExcConMustang.h"
-#include "DynaBranch.h"
 #include "Discontinuities.h"
 #include "CustomDevice.h"
 #include "Automatic.h"
@@ -18,6 +12,7 @@ namespace DFW2
 {
 	class CDynaModel
 	{
+		friend class CCustomDevice;
 	protected:
 		struct MatrixRow
 		{
@@ -453,6 +448,20 @@ namespace DFW2
 		} 
 			m_Parameters;
 
+		void CheckMatrixElement(ptrdiff_t nRow, ptrdiff_t nCol);
+		void ResetCheckMatrixElement();
+
+#ifdef _DEBUG
+		#define CHECK_MATRIX_ELEMENT(row, col) CheckMatrixElement((row),(col));
+		#define RESET_CHECK_MATRIX_ELEMENT() ResetCheckMatrixElement();
+#else
+		#define CHECK_MATRIX_ELEMENT(row, col) ;
+		#define RESET_CHECK_MATRIX_ELEMENT() ;
+#endif
+
+		std::map<ptrdiff_t, std::set<ptrdiff_t>> m_MatrixChecker;
+
+
 		KLUWrapper<double> klu;
 		CDynaLRC *m_pLRCGen		= nullptr;		// СХН для генераторных узлов без генераторов
 		CDynaLRC *m_pLRCLoad	= nullptr;		// СХН для узлов без динамической СХН
@@ -559,7 +568,8 @@ namespace DFW2
 		bool LoadFlow();
 		void DumpMatrix(bool bAnalyzeLinearDependenies = false);
 		void DumpStateVector();
-		FILE *fResult, *m_pLogFile;
+		FILE* fResult;
+		std::ofstream LogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
 
 		IResultWritePtr m_spResultWrite;
@@ -568,6 +578,12 @@ namespace DFW2
 		HANDLE m_hStopEvt;
 
 		CDeviceContainer *m_pClosestZeroCrossingContainer = nullptr;
+
+		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void SetFunction(ptrdiff_t nRow, double dValue);
+		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
+		void SetDerivative(ptrdiff_t nRow, double dValue);
 
 	public:
 		CDynaNodeContainer Nodes;
@@ -586,6 +602,7 @@ namespace DFW2
 		CCustomDeviceContainer CustomDevice;
 		CCustomDeviceContainer AutomaticDevice;
 		CAutomatic m_Automatic;
+		CCustomDeviceCPPContainer CustomDeviceCPP;
 
 		CDynaModel();
 		virtual ~CDynaModel();
@@ -595,18 +612,22 @@ namespace DFW2
 		bool InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
-		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
+		void SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue);
 
 		// Для теста с множителями
 		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
 
-		void SetFunction(ptrdiff_t nRow, double dValue);
-		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
-		void SetDerivative(ptrdiff_t nRow, double dValue);
+		void SetFunction(const VariableIndexBase& Row, double dValue);
+		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
+		void SetDerivative(const VariableIndexBase& Row, double dValue);
+
+
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		double GetFunction(ptrdiff_t nRow);
-		struct RightVector* GetRightVector(ptrdiff_t nRow);
+		struct RightVector* GetRightVector(const ptrdiff_t nRow);
+		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
+		struct RightVector* GetRightVector(const InputVariable& Variable);
 
 		inline double GetOmega0() const
 		{
@@ -777,8 +798,7 @@ namespace DFW2
 		void RebuildMatrix(bool bRebuild = true);
 		void AddZeroCrossingDevice(CDevice *pDevice);
 
-		void Log(CDFW2Messages::DFW2MessageStatus Status, ptrdiff_t nDBIndex, const _TCHAR* cszMessage);
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message, ptrdiff_t nDbIndex = -1);
 
 		double Methodl[4][4];
 		double Methodlh[4];
@@ -796,9 +816,9 @@ namespace DFW2
 		bool PopVarSearchStack(CDevice* &pDevice);
 		void ResetStack();
 
-		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName);
-		CDevice* GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, const _TCHAR* cszSymLink);
-		CDeviceContainer *GetContainerByAlias(const _TCHAR* cszAlias);
+		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name);
+		CDevice* GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, std::wstring_view SymLink);
+		CDeviceContainer *GetContainerByAlias(std::wstring_view Alias);
 		CAutomatic& Automatic();
 
 		void GetWorstEquations(ptrdiff_t nCount);

@@ -10,30 +10,30 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 
 	if (pDynaModel->EstimateBuild())
 	{
-		RightVector *pRightVector = pDynaModel->GetRightVector(A(m_OutputEquationIndex));
+		RightVector *pRightVector = pDynaModel->GetRightVector(m_Output);
 		pRightVector->PrimitiveBlock = PBT_DERLAG;
 	}
 
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
 		//if (!pDynaModel->IsInDiscontinuityMode())
 		{
 			// dOutput/ dOutput
-			pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
+			pDynaModel->SetElement(m_Output, m_Output, 1.0);
 
 			if (pDynaModel->IsInDiscontinuityMode())
 			{
 				// dOutput / dY2
-				pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex + 1), 0.0);
+				pDynaModel->SetElement(m_Output, m_Y2, 0.0);
 				// dOutput / dInput
-				pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), 0.0);
+				pDynaModel->SetElement(m_Output, m_Input, 0.0);
 			}
 			else
 			{
 				// dOutput / dY2
-				pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex + 1), m_T * m_K);
+				pDynaModel->SetElement(m_Output, m_Y2, m_T * m_K);
 				// dOutput / dInput
-				pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), -m_K * m_T);
+				pDynaModel->SetElement(m_Output, m_Input, -m_K * m_T);
 			}
 		}
 		//else
@@ -48,18 +48,18 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
-		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex + 1), 0.0);
-		pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), 0.0);
+		pDynaModel->SetElement(m_Output, m_Output, 1.0);
+		pDynaModel->SetElement(m_Output, m_Y2, 0.0);
+		pDynaModel->SetElement(m_Output, m_Input, 0.0);
 		T = 0.0;
 	}
 
 	// dY2 / dY2
 	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), 1.0 + hb0 * m_T);
-	pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), -T);
+	pDynaModel->SetElement(m_Y2, m_Y2, -T);
 	// dY2 / dInput
 	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -hb0 * m_T);
-	pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -T);
+	pDynaModel->SetElement(m_Y2, m_Input, -T);
 
 	return true;
 }
@@ -67,30 +67,24 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 {
 
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
-		double Input = m_Input->Value();
-		double dY2 = (Input - *m_Y2) * m_T;
-		double dOut = *m_Output + m_K * m_T * (*m_Y2 - Input);
-
-		
+		double dY2 = (m_Input - m_Y2) * m_T;
+		double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
 
 		if (pDynaModel->IsInDiscontinuityMode())
 		{
-			if (m_pDevice->GetId() == 1319)
-				m_pDevice->GetId();
-
 			ProcessDiscontinuity(pDynaModel);
 			dOut = 0.0;
 		}
 
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), dOut);
-		pDynaModel->SetFunctionDiff(A(m_OutputEquationIndex + 1), dY2);
+		pDynaModel->SetFunction(m_Output, dOut);
+		pDynaModel->SetFunctionDiff(m_Y2, dY2);
 	}
 	else
 	{
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
-		pDynaModel->SetFunctionDiff(A(m_OutputEquationIndex + 1), 0.0);
+		pDynaModel->SetFunction(m_Output, 0.0);
+		pDynaModel->SetFunctionDiff(m_Y2, 0.0);
 	}
 
 	return true;
@@ -98,11 +92,7 @@ bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 
 bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->GetId() == 102401 && m_OutputEquationIndex == 9)
-		m_pDevice->GetId();
-
 	bool bRes = true;
-
 	if (Equal(m_K, 0.0))
 		m_T = 0.0;
 	else
@@ -110,28 +100,22 @@ bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
 		_ASSERTE(!Equal(m_T, 0.0));
 		m_T = 1.0 / m_T;
 	}
-
-	double Input = m_Input->Value();
-	*m_Y2 = Input;
-	*m_Output = 0.0;
+	m_Y2 = m_Input;
+	m_Output = 0.0;
 	return bRes;
 }
 
 
 bool CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->GetId() == 108701 && m_OutputEquationIndex == 9)
-		m_pDevice->GetId();
-
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
-		double Input = m_Input->Value();
-		double dY2 = (Input - *m_Y2) * m_T;
-		pDynaModel->SetDerivative(A(m_OutputEquationIndex + 1), dY2);
+		double dY2 = (m_Input - m_Y2) * m_T;
+		pDynaModel->SetDerivative(m_Y2, dY2);
 	}
 	else
 	{
-		pDynaModel->SetDerivative(A(m_OutputEquationIndex + 1), 0.0);
+		pDynaModel->SetDerivative(m_Y2, 0.0);
 	}
 
 	return true;
@@ -139,39 +123,31 @@ bool CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
-		double Input = m_Input->Value();
 		if (Equal(m_K, 0.0))
-			*m_Y2 = 0.0;
+			m_Y2 = 0.0;
 		else
 		{
 			// Пока не ясно, надо делать на РДЗ скачок на выходе,
 			// или пытаться подогнать лаг ко входу
-			if (m_pDevice->GetId() == 1319)
-				m_pDevice->GetId();
-			*m_Y2 = Input - *m_Output / m_T / m_K;			// подгонка лага ко входу
-			//*m_Output = m_K * m_T * (Input - *m_Y2);		// выход по входу
+			m_Y2 = m_Input - m_Output / m_T / m_K;			// подгонка лага ко входу
+			//*m_Output = m_K * m_T * (m_Input - *m_Y2);		// выход по входу
 		}
 	}
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CDerlagContinuous::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CDerlagContinuous::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double TK[2] = { 1E-4, 1.0 };
-
-	nParametersCount = min(nParametersCount, sizeof(TK) / sizeof(TK[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		TK[i] = pParameters[i];
-	SetTK(TK[0], TK[1]);
-	return bRes;
+	double T1(1E-4), T2(1.0);
+	CDynaPrimitive::UnserializeParameters({T1,T2}, Parameters);
+	SetTK(T1, T2);
+	return true;
 }
-
 
 // ----------------------------- Derlag Nordsieck --------------------------------------
+/*
 bool CDerlagNordsieck::Init(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
@@ -229,17 +205,12 @@ bool CDerlagNordsieck::BuildDerivatives(CDynaModel *pDynaModel)
 	return true;
 }
 
-bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double TK[2] = { 1E-4, 1.0 };
-
-	nParametersCount = min(nParametersCount, sizeof(TK) / sizeof(TK[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		TK[i] = pParameters[i];
-	SetTK(TK[0], TK[1]);
-	return bRes;
+	double T1(1E-4), T2(1.0);
+	CDynaPrimitive::UnserializeParameters({ T1,T2 }, Parameters);
+	SetTK(T1, T2);
+	return true;
 }
 
 bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
@@ -277,5 +248,5 @@ bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 
 	return true;
 }
-
+*/
 

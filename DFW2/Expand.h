@@ -12,13 +12,14 @@ namespace DFW2
 		eRELAYSTATES GetInstantState();
 	public:
  
-		CExpand::CExpand(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) :  CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input)  { }
+		CExpand::CExpand(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)  { }
 		virtual ~CExpand() {}
 
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
-		bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 
 		const _TCHAR* GetVerbalName() override { return _T("Расширитель импульса"); }
 		static size_t PrimitiveSize() { return sizeof(CExpand); }
@@ -32,7 +33,8 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 
 	public:
-		CShrink::CShrink(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CExpand(pDevice, pOutput, nOutputIndex, Input)  { }
+		CShrink::CShrink(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CExpand(Device, OutputVariable, Input, ExtraOutputVariables)  { }
 		virtual ~CShrink() {}
 
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

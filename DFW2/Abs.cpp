@@ -4,26 +4,23 @@
 
 using namespace DFW2;
 
-CAbs::CAbs(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : 
-									CDynaPrimitiveState(pDevice,pOutput,nOutputIndex,Input) 
-									{}
+
 
 bool CAbs::BuildEquations(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), m_bPositive ? 1.0 : -1.0);
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
+	pDynaModel->SetElement(m_Output, m_Input, m_bPositive ? 1.0 : -1.0);
+	pDynaModel->SetElement(m_Output, m_Output, 1.0);
 	return true;
 }
 
 bool CAbs::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
-		double dInput = m_Input->Value();
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), *m_Output - (m_bPositive ? dInput : -dInput));
+		pDynaModel->SetFunction(m_Output, m_Output - (m_bPositive ? m_Input : -m_Input));
 	}
 	else
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
+		pDynaModel->SetFunction(m_Output, 0.0);
 
 	return true;
 }
@@ -39,21 +36,19 @@ bool CAbs::Init(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
-		double dInput = m_Input->Value();
-
-		if (dInput >= 0)
+		if (m_Input >= 0)
 			m_bPositive = true;
 		else
 			m_bPositive = false;
 
-		*m_Output = fabs(dInput);
+		m_Output = fabs(m_Input);
 	}
 	else
-		*m_Output = 0.0;
+		m_Output = 0.0;
 
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 // проверяем разрыв модуля
@@ -61,14 +56,13 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
-	if (!m_pDevice->IsStateOn())
+	if (!m_Device.IsStateOn())
 		return rH;
 
-	double dInput = m_Input->Value();
-	double dHyst = pDynaModel->GetHysteresis(dInput);
+	double dHyst = pDynaModel->GetHysteresis(m_Input);
 	if (m_bPositive)
 	{
-		if (CDynaPrimitive::ChangeState(pDynaModel, dInput + dHyst, dInput + dHyst, -dHyst, m_Input->Index(), rH))
+		if (CDynaPrimitive::ChangeState(pDynaModel, m_Input + dHyst, m_Input + dHyst, -dHyst, m_Input.Index, rH))
 		{
 			m_bPositive = false;
 			pDynaModel->DiscontinuityRequest();
@@ -76,7 +70,7 @@ double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		if (CDynaPrimitive::ChangeState(pDynaModel, dHyst - dInput, dHyst - dInput, dHyst, m_Input->Index(), rH))
+		if (CDynaPrimitive::ChangeState(pDynaModel, dHyst - m_Input, dHyst - m_Input, dHyst, m_Input.Index, rH))
 		{
 			m_bPositive = true;
 			pDynaModel->DiscontinuityRequest();

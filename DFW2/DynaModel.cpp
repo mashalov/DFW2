@@ -1,6 +1,11 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
-#include "Automatic.h"
+#include "DynaGeneratorMustang.h"
+#include "DynaGeneratorInfBus.h"
+#include "DynaExciterMustang.h"
+#include "DynaDECMustang.h"
+#include "DynaExcConMustang.h"
+#include "DynaBranch.h"
 
 #define _LFINFO_
 
@@ -25,7 +30,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   CustomDevice(this),
 						   BranchMeasures(this),
 						   AutomaticDevice(this),
-						   m_pLogFile(NULL)
+						   CustomDeviceCPP(this)
 {
 	m_hStopEvt = CreateEvent(NULL, TRUE, FALSE, _T("DFW2STOP"));
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
@@ -57,10 +62,11 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&GeneratorsMotion);
 	m_DeviceContainers.push_back(&GeneratorsInfBus);
 	//m_DeviceContainers.push_back(&CustomDevice);
+	//m_DeviceContainers.push_back(&CustomDeviceCPP);
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
-	_tfopen_s(&m_pLogFile, _T("c:\\tmp\\dfw2.log"), _T("w+, ccs=UTF-8"));
+	LogFile.open(_T("c:\\tmp\\dfw2.log"), std::ios::out);
 }
 
 
@@ -68,6 +74,7 @@ CDynaModel::~CDynaModel()
 {
 	if (m_hStopEvt)
 		CloseHandle(m_hStopEvt);
+	LogFile.close();
 }
 
 bool CDynaModel::Run()
@@ -108,7 +115,7 @@ bool CDynaModel::Run()
 			m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 
 		//m_Parameters.m_dOutStep = 1E-5;
-		bRes = bRes && (LRCs.Init(this) == DFS_OK);
+		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 		bRes = bRes && Link();
 		TurnOffDevicesByOffMasters();
@@ -218,8 +225,8 @@ bool CDynaModel::Run()
 				{
 					bResultsNeedToBeFinished = false;
 					FinishWriteResults();
-					Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Ошибка в цикле расчета : %s"), err.uwhat()));
 				}
+				Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Ошибка в цикле расчета : {}"), err.uwhat()));
 			}
 		}
 
@@ -232,41 +239,44 @@ bool CDynaModel::Run()
 		// вне зависимости от результата завершаем запись результатов
 		// по признаку завершения
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps count %d"), sc.nStepsCount);
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 1st order count %d, failures %d Newton failures %d zc %d Time passed %f"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Steps count {}"), sc.nStepsCount));
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Steps by 1st order count {}, failures {} Newton failures {} zc {} Time passed {}"),
 																		sc.OrderStatistics[0].nSteps, 
 																		sc.OrderStatistics[0].nFailures,
 																		sc.OrderStatistics[0].nNewtonFailures,
 																		sc.OrderStatistics[0].nZeroCrossingsSteps,
-																		sc.OrderStatistics[0].dTimePassed);
+																		sc.OrderStatistics[0].dTimePassed));
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Steps by 2nd order count %d, failures %d Newton failures %d zc %d Time passed %f"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Steps by 2nd order count {}, failures {} Newton failures {} zc {} Time passed {}"),
 																		sc.OrderStatistics[1].nSteps,
 																		sc.OrderStatistics[1].nFailures,
 																		sc.OrderStatistics[1].nNewtonFailures,
 																		sc.OrderStatistics[1].nZeroCrossingsSteps,
-																		sc.OrderStatistics[1].dTimePassed);
+																		sc.OrderStatistics[1].dTimePassed));
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Factors count %d / (%d + %d failures) Analyzings count %d"), klu.FactorizationsCount(), 
-																															 klu.RefactorizationsCount(), 
-																															 klu.RefactorizationFailuresCount(),
-																															 klu.AnalyzingsCount());
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Newtons count %d %f per step, failures at step %d failures at discontinuity %d"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Factors count {} / ({} + {} failures) Analyzings count {}"), 
+																															klu.FactorizationsCount(), 
+																															klu.RefactorizationsCount(), 
+																															klu.RefactorizationFailuresCount(),
+																															klu.AnalyzingsCount()));
+
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Newtons count {} {} per step, failures at step {} failures at discontinuity {}"),
 																	 sc.nNewtonIterationsCount, 
 																	 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
 																	 sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,
-																	 sc.nDiscontinuityNewtonFailures);
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Max condition number %g at time %g"),
+																	 sc.nDiscontinuityNewtonFailures));
+
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Max condition number {} at time {}"),
 																	 sc.dMaxConditionNumber,
-																	 sc.dMaxConditionNumberTime);
+																	 sc.dMaxConditionNumberTime));
 
 		GetWorstEquations(10);
 		std::chrono::milliseconds CalcDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - sc.m_ClockStart);
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("Duration %g"), static_cast<double>(CalcDuration.count()) / 1E3);
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Duration {}"), static_cast<double>(CalcDuration.count()) / 1E3));
 	}
 	catch (dfw2error& err)
 	{
-		Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Исключение : %s"), err.uwhat()));
+		Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Исключение : {}"), err.uwhat()));
 	}
 
 	return bRes;
@@ -274,40 +284,40 @@ bool CDynaModel::Run()
 
 void CDynaModel::InitDevices()
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	m_cszDampingName = (GetFreqDampingType() == APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
 
 	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
 	if (!UpdateExternalVariables())
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	klu.Common()->ordering = 0; // используем amd (0) или colamd (1). 0 - лучше для userefactor = true, 1 - для userefactor = false
 
 	ptrdiff_t nTotalOKInits = -1;
 	
-	while (Status == DFS_NOTREADY && Status != DFS_FAILED)
+	while (Status == eDEVICEFUNCTIONSTATUS::DFS_NOTREADY && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 	{
 		ptrdiff_t nOKInits = 0;
 
-		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != DFS_FAILED; it++)
+		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED; it++)
 		{
 			switch ((*it)->Init(this))
 			{
-			case DFS_OK:
-			case DFS_DONTNEED:
+			case eDEVICEFUNCTIONSTATUS::DFS_OK:
+			case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
 				nOKInits++; // count how many inits succeeded
 				break;
-			case DFS_FAILED:
-				Status = DFS_FAILED;
+			case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+				Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 				break;
-			case DFS_NOTREADY:
-				Status = DFS_NOTREADY;
+			case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+				Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 				break;
 			}
 		}
 		if (nOKInits == m_DeviceContainers.size())
 		{
-			Status = DFS_OK;
+			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 			break;
 		}
 		else
@@ -317,19 +327,19 @@ void CDynaModel::InitDevices()
 			else
 				if (nTotalOKInits == nOKInits)
 				{
-					Status = DFS_FAILED;
+					Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 					Log(CDFW2Messages::DFW2LOG_ERROR, DFW2::CDFW2Messages::m_cszInitLoopedInfinitely);
 					break;
 				}
 		}
 
-		if (!CDevice::IsFunctionStatusOK(Status) && Status != DFS_FAILED)
+		if (!CDevice::IsFunctionStatusOK(Status) && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 		{
 			for (auto&& it : m_DeviceContainers)
 			{
 				Status = it->Init(this);
 				if (!CDevice::IsFunctionStatusOK(Status))
-					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(DFW2::CDFW2Messages::m_cszDeviceContainerFailedToInit, it->GetTypeName(), Status));
+					Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszDeviceContainerFailedToInit, it->GetTypeName(), Status));
 			}
 		}
 	}
@@ -656,7 +666,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) Converged in %3d iterations %g %s %g %g %s Saving %g"), GetCurrentTime(),
+				Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("t={:15.012f} {} Converged in {:>3} iterations {} {} {} {} {} Saving {:.2}"), GetCurrentTime(),
 																				sc.nStepsCount,
 																				sc.nNewtonIteration,
 																				sc.Newton.dMaxErrorVariable, 
@@ -664,7 +674,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 																				*sc.Newton.pMaxErrorVariable, 
 																				pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
 																				sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
-																				1.0 - static_cast<double>(klu.FactorizationsCount()) / sc.nNewtonIterationsCount);
+																				1.0 - static_cast<double>(klu.FactorizationsCount()) / sc.nNewtonIterationsCount));
 						
 #endif
 
@@ -679,14 +689,14 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (!sc.m_bNewtonStepControl)
 				{
-					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) Continue %3d iteration %g %s %g %g %s"), GetCurrentTime(),
+					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("t={:15.012f} {} Continue {:>3} iteration {} {} {} {} {}"), GetCurrentTime(),
 						sc.nStepsCount,
 						sc.nNewtonIteration,
 						sc.Newton.dMaxErrorVariable,
 						sc.Newton.pMaxErrorDevice->GetVerbalName(),
 						*sc.Newton.pMaxErrorVariable,
 						pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
-						sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable));
+						sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable)));
 				}
 			}
 
@@ -736,7 +746,7 @@ bool CDynaModel::Step()
 			{
 				SetH(sc.m_dCurrentH * rHit); 					// меняем шаг
 				RescaleNordsiek(rHit);							// пересчитываем Nordsieck на новый шаг
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, GetCurrentTime(), GetIntegrationStepNumber(), sc.m_dCurrentH));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, GetCurrentTime(), GetIntegrationStepNumber(), sc.m_dCurrentH));
 				sc.m_bBeforeDiscontinuityWritten = false;		// готовимся к обработке разрыва
 			}
 			else
@@ -1003,14 +1013,14 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = max(1.01, r);
 
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, _T("t=%.12g (%d) %s[%s] %g rSame %g RateLimit %g for %d steps"), 
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("t={:15.012f} {:>3} {}[{}] {} rSame {} RateLimit {} for {} steps"), 
 		GetCurrentTime(), 
 		GetIntegrationStepNumber(),
 		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
 		sc.Integrator.pMaxErrorDevice->VariableNameByPtr(sc.Integrator.pMaxErrorVariable),
 		sc.Integrator.dMaxErrorVariable, r,
 		sc.dRateGrowLimit < FLT_MAX ? sc.dRateGrowLimit : 0.0,
-		sc.nStepsToEndRateGrow - sc.nStepsCount);
+		sc.nStepsToEndRateGrow - sc.nStepsCount));
 
 	if (sc.Integrator.nMaxErrorVariableEquation >= 0)
 		(pRightVector + sc.Integrator.nMaxErrorVariableEquation)->nErrorHits++;
@@ -1116,7 +1126,7 @@ bool CDynaModel::ProcessDiscontinuity()
 {
 	bool bRes = true;
 
-	eDEVICEFUNCTIONSTATUS Status = DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 		
 	// функция работает только в режиме обработки разрыва
 	if (sc.m_bDiscontinuityMode)
@@ -1135,33 +1145,33 @@ bool CDynaModel::ProcessDiscontinuity()
 			ChangeOrder(1);
 			ptrdiff_t nTotalOKPds = -1;
 
-			Status = DFS_NOTREADY;
+			Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 
-			while (Status == DFS_NOTREADY)
+			while (Status == eDEVICEFUNCTIONSTATUS::DFS_NOTREADY)
 			{
 				// пока статус "неготово"
 				ptrdiff_t nOKPds = 0;
 				// обрабатываем разрывы для всех устройств во всех контейнерах
-				for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != DFS_FAILED; it++)
+				for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED; it++)
 				{
 					switch ((*it)->ProcessDiscontinuity(this))
 					{
-					case DFS_OK:
-					case DFS_DONTNEED:
+					case eDEVICEFUNCTIONSTATUS::DFS_OK:
+					case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
 						nOKPds++; // если контейнер обработал разрыв успешно, считаем количество успехов
 						break;
-					case DFS_FAILED:
-						Status = DFS_FAILED;	// если контейнер завалился - выходим из цикла обработки
+					case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
+						Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;	// если контейнер завалился - выходим из цикла обработки
 						break;
-					case DFS_NOTREADY:
-						Status = DFS_NOTREADY;	// если контейнер не готов - повторяем
+					case eDEVICEFUNCTIONSTATUS::DFS_NOTREADY:
+						Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;	// если контейнер не готов - повторяем
 						break;
 					}
 				}
 				// если количество успехов равно количеству конейнеров - модель обработала разрыв успешно, выходим из цикла
 				if (nOKPds == m_DeviceContainers.size())
 				{
-					Status = DFS_OK;
+					Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 					break;
 				}
 				else
@@ -1173,7 +1183,7 @@ bool CDynaModel::ProcessDiscontinuity()
 						if (nTotalOKPds == nOKPds)	// если итерация вторая и далее, и количество успехов равно предыдущем количеству успехов
 						{
 							// это бесконечный цикл
-							Status = DFS_FAILED;
+							Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 							Log(CDFW2Messages::DFW2LOG_ERROR, DFW2::CDFW2Messages::m_cszProcessDiscontinuityLoopedInfinitely);
 							break;
 						}
@@ -1188,7 +1198,7 @@ bool CDynaModel::ProcessDiscontinuity()
 		ResetNordsiek();
 	}
 	else
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	return CDevice::IsFunctionStatusOK(Status);
 }
@@ -1264,7 +1274,7 @@ void CDynaModel::GoodStep(double rSame)
 					SetH(sc.m_dCurrentH * sc.dFilteredOrder);
 					ChangeOrder(2);
 					RescaleNordsiek(sc.dFilteredOrder);
-					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+					Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 				}
 			}
 			else
@@ -1288,7 +1298,7 @@ void CDynaModel::GoodStep(double rSame)
 					SetH(sc.m_dCurrentH * sc.dFilteredOrder);
 					ChangeOrder(1);
 					RescaleNordsiek(sc.dFilteredOrder);
-					Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+					Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 				}
 			}
 			else
@@ -1310,7 +1320,7 @@ void CDynaModel::GoodStep(double rSame)
 			SetH(sc.m_dCurrentH * sc.dFilteredStep);
 			// пересчитываем Nordsieck на новый шаг
 			RescaleNordsiek(sc.dFilteredStep);
-			Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), GetH(), k, sc.q));
+			Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), GetH(), k, sc.q));
 		}
 	}
 	else
@@ -1331,7 +1341,7 @@ void CDynaModel::BadStep()
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
 
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepChangedOnError, GetCurrentTime(), GetIntegrationStepNumber(),
+	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError, GetCurrentTime(), GetIntegrationStepNumber(),
 		GetH() < sc.Hmin ? sc.Hmin : GetH(), 
 		sc.Integrator.dMaxErrorVariable,
 		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
@@ -1347,7 +1357,7 @@ void CDynaModel::BadStep()
 	if (sc.m_dCurrentH < sc.Hmin)
 	{
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-			throw dfw2error(Cex(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 
 		ChangeOrder(1);				// шаг не изменяем
 		SetH(sc.Hmin);
@@ -1425,7 +1435,7 @@ void CDynaModel::NewtonFailed()
 	{
 		SetH(sc.Hmin);
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-			throw dfw2error(Cex(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 		sc.Advance_t0();
 		sc.Assign_t0();
 	}
@@ -1441,7 +1451,7 @@ void CDynaModel::NewtonFailed()
 		ReInitializeNordsiek();
 	
 	sc.RefactorMatrix();
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 }
 
 // функция подготовки к повтору шага
@@ -1462,14 +1472,14 @@ void CDynaModel::RepeatZeroCrossing()
 	// старый шаг m_dOldH еще не успели изменить
 	RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
 	sc.CheckAdvance_t0();
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(), 
+	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(), 
 																				GetIntegrationStepNumber(), 
 																				GetH(), 
 																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName()));
 }
 
 
-CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, const _TCHAR* cszSymLink)
+CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, std::wstring_view SymLink)
 {
 	CDevice *pFoundDevice(nullptr);
 
@@ -1497,7 +1507,7 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCH
 				}
 			}
 			else
-				Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, cszSymLink));
+				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, SymLink));
 		}
 		else
 		{
@@ -1506,49 +1516,49 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCH
 			if (_stscanf_s(cszKeys, _T("%td"), &nId) == 1)
 				pFoundDevice = pContainer->GetDevice(nId);
 			else
-				Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, cszSymLink));
+				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, SymLink));
 		}
 	}
 	else
-		Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszObjectNotFoundByAlias, cszObject, cszSymLink));
+		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundByAlias, cszObject, SymLink));
 
 	return pFoundDevice;
 }
 
-bool CDynaModel::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName)
+bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name)
 {
 	bool bRes = false;
-	unsigned int nSourceLength = static_cast<unsigned int>(_tcslen(cszName));
+	unsigned int nSourceLength = static_cast<unsigned int>(Name.size());
 
 	_TCHAR* szObject = new _TCHAR[nSourceLength];
 	_TCHAR* szKeys = new _TCHAR[nSourceLength];
 	_TCHAR* szProp = new _TCHAR[nSourceLength];
 
-	int nFieldCount = _stscanf_s(cszName, _T("%[^[][%[^]]].%s"), szObject, nSourceLength, szKeys, nSourceLength, szProp, nSourceLength);
+	int nFieldCount = _stscanf_s(Name.data(), _T("%[^[][%[^]]].%s"), szObject, nSourceLength, szKeys, nSourceLength, szProp, nSourceLength);
 
 	if (nFieldCount == 3)
 	{
-		CDevice *pFoundDevice = GetDeviceBySymbolicLink(szObject, szKeys, cszName);
+		CDevice *pFoundDevice = GetDeviceBySymbolicLink(szObject, szKeys, Name);
 		if (pFoundDevice)
 		{
 			// Сначала ищем переменную состояния, со значением и с индексом
-			ExternalVariable extVar = pFoundDevice->GetExternalVariable(szProp);
-			if (extVar.pValue)
+			ExtVar = pFoundDevice->GetExternalVariable(szProp);
+			if (ExtVar.pValue)
 			{
-				ExtVar.IndexAndValue(extVar.nIndex - pFromDevice->A(0), extVar.pValue);
+				ExtVar.Index -= pFromDevice->A(0);
 				bRes = true;
 			}
 			else
 			{
 				// если в девайсе такой нет, ищем константу, со значением, но без
 				// индекса
-				extVar.pValue = pFoundDevice->GetConstVariablePtr(szProp);
-				if (extVar.pValue)
+				ExtVar.pValue = pFoundDevice->GetConstVariablePtr(szProp);
+				if (ExtVar.pValue)
 				{
 					// если нашли константу, объявляем ей индекс DFW2_NON_STATE_INDEX,
 					// чтобы при формировании матрицы понимать, что это константа
 					// и не ставить производную в индекс этой переменной
-					ExtVar.IndexAndValue(DFW2_NON_STATE_INDEX, extVar.pValue);
+					ExtVar.Index = DFW2_NON_STATE_INDEX;
 					bRes = true;
 				}
 				else
@@ -1568,25 +1578,25 @@ bool CDynaModel::InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice
 						pBranch->m_pMeasure = pBranchMeasure;
 					}
 
-					ExternalVariable extVar = pBranch->m_pMeasure->GetExternalVariable(szProp);
+					ExtVar = pBranch->m_pMeasure->GetExternalVariable(szProp);
 
-					if (extVar.pValue)
+					if (ExtVar.pValue)
 					{
-						ExtVar.IndexAndValue(extVar.nIndex - pFromDevice->A(0), extVar.pValue);
+						ExtVar.Index -= pFromDevice->A(0);
 						bRes = true;
 					}
 					else
-						Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, cszName));
+						Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, Name));
 				}
 				else
-					Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, cszName));
+					Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, Name));
 			}
 		}
 		else
-			Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszObjectNotFoundBySymbolicLink, cszName));
+			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundBySymbolicLink, Name));
 	}
 	else
-		Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongSymbolicLink, cszName));
+		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongSymbolicLink, Name));
 
 	delete szObject;
 	delete szKeys;
@@ -1631,7 +1641,7 @@ bool CDynaModel::SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster)
 			{
 				// отключаем его и учитываем в количестве отключений
 				pDev->SetState(eDEVICESTATE::DS_OFF, pMaster->GetStateCause());
-				Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, pDev->GetVerbalName(), pMaster->GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, pDev->GetVerbalName(), pMaster->GetVerbalName()));
 				return true;
 			}
 			else
@@ -1652,7 +1662,7 @@ bool CDynaModel::SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster)
 		if (!pDev->IsPermanentOff())
 		{
 			pDev->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT);
-			Log(CDFW2Messages::DFW2LOG_INFO, Cex(CDFW2Messages::m_cszTurningOffDeviceDueToNoMasterDevice, pDev->GetVerbalName()));
+			Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszTurningOffDeviceDueToNoMasterDevice, pDev->GetVerbalName()));
 			return true;
 		}
 	}

@@ -19,7 +19,8 @@ namespace DFW2
 			V_LAST
 		};
 
-		double Eqss, Edss;
+		VariableIndex Eqss, Edss;
+
 		double Td0ss, Tq0ss;
 		double xd2, xq1, xq2;
 
@@ -28,11 +29,12 @@ namespace DFW2
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		cplx GetEMF() override { return cplx(Eqss, Edss) * std::polar(1.0, Delta); }
+		cplx GetEMF() override { return cplx(Eqss, Edss) * std::polar(1.0, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
 		double Xgen();

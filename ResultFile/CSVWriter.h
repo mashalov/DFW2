@@ -33,7 +33,7 @@ protected:
 	void WriteData();
 	std::string loc;
 
-	void WriteField(const ChannelLink *pLink, const _TCHAR *cszField);
+	void WriteField(const ChannelLink *pLink, std::wstring_view Field);
 	void WriteCRLF2();
 	void WriteCRLF();
 	void WriteColumn(const double *pData, size_t nColumn, bool bLastColumn);

@@ -27,7 +27,7 @@ public:
 	// разворачивает ссылку в строчное представление вида "Класс[Ключ1,...,КлючN].Параметр"
 	std::wstring ToString() const
 	{
-		return std::wstring(Cex(_T("%s[%s].%s"), m_strObjClass.c_str(), m_strObjKey.c_str(), m_strObjProp.c_str()));
+		return fmt::format(_T("{}[{}].{}"), m_strObjClass.c_str(), m_strObjKey.c_str(), m_strObjProp.c_str());
 	}
 };
 

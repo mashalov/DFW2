@@ -11,6 +11,11 @@ CDynaGeneratorMotion::CDynaGeneratorMotion() : CDynaGeneratorInfBusBase()
 }
 
 
+VariableIndexRefVec& CDynaGeneratorMotion::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDynaGeneratorInfBusBase::GetVariables(JoinVariables({ s, Delta },ChildVec));
+}
+
 double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p = CDynaGeneratorInfBusBase::GetVariablePtr(nVarIndex);
@@ -18,8 +23,8 @@ double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
 	{
 		switch (nVarIndex)
 		{
-			MAP_VARIABLE(Delta, V_DELTA)
-			MAP_VARIABLE(s, V_S)
+			MAP_VARIABLE(Delta.Value, V_DELTA)
+			MAP_VARIABLE(s.Value, V_S)
 		}
 	}
 	return p;
@@ -44,7 +49,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 		Kdemp *= Pnom;
 		Pt = P;
 		s = 0;
-		Status = DFS_OK;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	}
 
 	return Status;
@@ -57,12 +62,9 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 	if (bRes)
 	{
 
-		double NodeSv = Sv.Value();
+		double NodeSv = Sv;
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + NodeSv);
-
-		double dVre(Vre.Value()), dVim(Vim.Value());
-		ptrdiff_t iVre(Vre.Index()), iVim(Vim.Index());
 
 		if (!IsStateOn())
 		{
@@ -70,52 +72,52 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		}
 
 		// dP / dP
-		pDynaModel->SetElement(A(V_P), A(V_P), 1.0);
+		pDynaModel->SetElement(P, P, 1.0);
 		// dP / dVre
-		pDynaModel->SetElement(A(V_P), A(iVre), -Ire);
+		pDynaModel->SetElement(P, Vre, -Ire);
 		// dP / dVim
-		pDynaModel->SetElement(A(V_P), A(iVim), -Iim);
+		pDynaModel->SetElement(P, Vim, -Iim);
 		// dP / dIre
-		pDynaModel->SetElement(A(V_P), A(V_IRE), -dVre);
+		pDynaModel->SetElement(P, Ire, -Vre);
 		// dP / dIim
-		pDynaModel->SetElement(A(V_P), A(V_IIM), -dVim);
+		pDynaModel->SetElement(P, Iim, -Vim);
 
 		// dQ / dP
-		pDynaModel->SetElement(A(V_Q), A(V_Q), 1.0);
+		pDynaModel->SetElement(Q, Q, 1.0);
 		// dQ / dVre
-		pDynaModel->SetElement(A(V_Q), A(iVre), Iim);
+		pDynaModel->SetElement(Q, Vre, Iim);
 		// dQ / dVim
-		pDynaModel->SetElement(A(V_Q), A(iVim), -Ire);
+		pDynaModel->SetElement(Q, Vim, -Ire);
 		// dQ / dIre
-		pDynaModel->SetElement(A(V_Q), A(V_IRE), -dVim);
+		pDynaModel->SetElement(Q, Ire, -Vim);
 		// dQ / dIim
-		pDynaModel->SetElement(A(V_Q), A(V_IIM), dVre);
+		pDynaModel->SetElement(Q, Iim, Vre);
 
 		// dDeltaG / dS
-		pDynaModel->SetElement(A(V_DELTA), A(V_S), -pDynaModel->GetOmega0());
+		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(A(V_DELTA), A(V_DELTA), 1.0);
+		pDynaModel->SetElement(Delta, Delta, 1.0);
 
 		// dS / dS
-		pDynaModel->SetElement(A(V_S), A(V_S), - 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
+		pDynaModel->SetElement(s, s, - 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
 		// dS / dP
-		pDynaModel->SetElement(A(V_S), A(V_P), 1.0 / Mj / sp2);
+		pDynaModel->SetElement(s, P, 1.0 / Mj / sp2);
 		// dS / dNodeS
-		pDynaModel->SetElement(A(V_S), A(Sv.Index()), -1.0 / Mj * P / sp2 / sp2);
+		pDynaModel->SetElement(s, Sv, -1.0 / Mj * P / sp2 / sp2);
 
 		// dIre / dIre
-		pDynaModel->SetElement(A(V_IRE), A(V_IRE), 1.0);
+		pDynaModel->SetElement(Ire, Ire, 1.0);
 		// dIre / dVim
-		pDynaModel->SetElement(A(V_IRE), A(Vim.Index()), 1.0 / xd1);
+		pDynaModel->SetElement(Ire, Vim, 1.0 / xd1);
 		// dIre / dDeltaG
-		pDynaModel->SetElement(A(V_IRE), A(V_DELTA), -Eqs * cos(Delta) / xd1);
+		pDynaModel->SetElement(Ire, Delta, -Eqs * cos(Delta) / xd1);
 
 		// dIim / dIim
-		pDynaModel->SetElement(A(V_IIM), A(V_IIM), 1.0);
+		pDynaModel->SetElement(Iim, Iim, 1.0);
 		// dIim / dVre
-		pDynaModel->SetElement(A(V_IIM), A(Vre.Index()), -1.0 / xd1);
+		pDynaModel->SetElement(Iim, Vre, -1.0 / xd1);
 		// dIim / dDeltaG
-		pDynaModel->SetElement(A(V_IIM), A(V_DELTA), -Eqs * sin(Delta) / xd1);
+		pDynaModel->SetElement(Iim, Delta, -Eqs * sin(Delta) / xd1);
 
 	}
 	return true;
@@ -127,8 +129,8 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 	bool bRes = true;
 	if (bRes)
 	{
-		double NodeSv = Sv.Value();
-		double dVre(Vre.Value()), dVim(Vim.Value());
+		double NodeSv = Sv;
+		double dVre(Vre), dVim(Vim);
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + NodeSv);
 
@@ -137,15 +139,15 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 			sp1 = sp2 = 1.0;
 		}
 
-		pDynaModel->SetFunction(A(V_P), P - dVre * Ire - dVim * Iim);
-		pDynaModel->SetFunction(A(V_Q), Q + dVre * Iim - dVim * Ire);
-		pDynaModel->SetFunction(A(V_IRE), Ire - (Eqs * sin(Delta) - dVim) / xd1);
-		pDynaModel->SetFunction(A(V_IIM), Iim - (dVre - Eqs * cos(Delta)) / xd1);
+		pDynaModel->SetFunction(P, P - dVre * Ire - dVim * Iim);
+		pDynaModel->SetFunction(Q, Q + dVre * Iim - dVim * Ire);
+		pDynaModel->SetFunction(Ire, Ire - (Eqs * sin(Delta) - dVim) / xd1);
+		pDynaModel->SetFunction(Iim, Iim - (dVre - Eqs * cos(Delta)) / xd1);
 
 		double eDelta = pDynaModel->GetOmega0() * s;
 		double eS = (Pt / sp1 - Kdemp  * s - P / sp2) / Mj;
-		pDynaModel->SetFunctionDiff(A(V_S), eS);
-		pDynaModel->SetFunctionDiff(A(V_DELTA), eDelta);
+		pDynaModel->SetFunctionDiff(s, eS);
+		pDynaModel->SetFunctionDiff(Delta, eDelta);
 	}
 
 	return true;
@@ -158,7 +160,7 @@ bool CDynaGeneratorMotion::BuildDerivatives(CDynaModel *pDynaModel)
 	if (bRes)
 	{
 		double sp1 = 1.0 + s;
-		double sp2 = 1.0 + Sv.Value();
+		double sp2 = 1.0 + Sv;
 
 		if (!IsStateOn())
 			sp1 = sp2 = 1.0;
@@ -166,8 +168,8 @@ bool CDynaGeneratorMotion::BuildDerivatives(CDynaModel *pDynaModel)
 		double eDelta = pDynaModel->GetOmega0() * s;
 		double eS = (Pt / sp1 - Kdemp  * s - P / sp2) / Mj;
 
-		pDynaModel->SetDerivative(A(V_S), eS);
-		pDynaModel->SetDerivative(A(V_DELTA), eDelta);
+		pDynaModel->SetDerivative(s, eS);
+		pDynaModel->SetDerivative(Delta , eDelta);
 	}
 	return true;
 }
