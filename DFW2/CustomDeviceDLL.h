@@ -79,7 +79,7 @@ namespace DFW2
 		CCustomDeviceDLL(CDeviceContainer *pDeviceContainer);
 		virtual ~CCustomDeviceDLL();
 		bool IsConnected();
-		bool Init(const _TCHAR *cszDLLFilePath);
+		bool Init(std::wstring_view DLLFilePath);
 		const BLOCKDESCRIPTIONS& GetBlocksDescriptions() const; 
 		const BLOCKSPINSINDEXES& GetBlocksPinsIndexes() const;
 		const _TCHAR* GetModuleFilePath() const;
@@ -109,7 +109,7 @@ namespace DFW2
 	public:
 		CCustomDeviceCPPDLL();
 		virtual ~CCustomDeviceCPPDLL();
-		void Init(const _TCHAR* cszDLLFilePath);
+		void Init(std::wstring_view DLLFilePath);
 		const _TCHAR* GetModuleFilePath() const { return m_strModulePath.c_str(); }
 		ICustomDevice* CreateDevice();
 	};

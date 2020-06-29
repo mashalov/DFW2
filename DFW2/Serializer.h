@@ -242,18 +242,18 @@ namespace DFW2
 			return UpdateIterator == ValueList.end();
 		}
 
-		void SetClassName(const _TCHAR *cszClassName)
+		void SetClassName(std::wstring_view ClassName)
 		{
-			m_strClassName = cszClassName;
+			m_strClassName = ClassName;
 		}
 
-		MetaSerializedValue* AddProperty(const _TCHAR* cszName, TypedSerializedValue::eValueType Type)
+		MetaSerializedValue* AddProperty(std::wstring_view Name, TypedSerializedValue::eValueType Type)
 		{
 			if (IsCreate())
 			{
 				// создаем новое значение
 				MetaSerializedValue* mv = ValueList.emplace(ValueList.end(), std::make_unique<MetaSerializedValue>(Type))->get();
-				return AddValue(cszName, mv);
+				return AddValue(Name, mv);
 			}
 			else
 			{
@@ -264,21 +264,21 @@ namespace DFW2
 		}
 
 		template<typename T>
-		MetaSerializedValue* AddState(const _TCHAR* cszName, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		MetaSerializedValue* AddState(std::wstring_view Name, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
-			MetaSerializedValue *meta = AddProperty(cszName, Val, Units, Multiplier);
+			MetaSerializedValue *meta = AddProperty(Name, Val, Units, Multiplier);
 			meta->bState = true;
 			return meta;
 		}
 
 		template<typename T>
-		MetaSerializedValue* AddProperty(const _TCHAR* cszName, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		MetaSerializedValue* AddProperty(std::wstring_view Name, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
 			if (IsCreate())
 			{
 				// создаем новое значение
 				MetaSerializedValue* mv = ValueList.emplace(ValueList.end(), std::make_unique<MetaSerializedValue>(&Val))->get();
-				AddValue(cszName, mv);
+				AddValue(Name, mv);
 				mv->Multiplier = Multiplier;
 				mv->Units = Units;
 				return mv;
@@ -291,13 +291,13 @@ namespace DFW2
 			}
 		}
 
-		MetaSerializedValue* AddEnumProperty(const _TCHAR* cszName, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		MetaSerializedValue* AddEnumProperty(std::wstring_view Name, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
 			if (IsCreate())
 			{
 				// создаем новое значение
 				MetaSerializedValue* mv = ValueList.emplace(ValueList.end(), std::make_unique<MetaSerializedValue>(pAdapter))->get();
-				return AddValue(cszName, mv);
+				return AddValue(Name, mv);
 			}
 			else
 			{
@@ -307,9 +307,9 @@ namespace DFW2
 		}
 
 		template<typename T>
-		MetaSerializedValue* AddEnumState(const _TCHAR* cszName, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		MetaSerializedValue* AddEnumState(std::wstring_view Name, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
-			MetaSerializedValue *meta = AddEnumProperty(cszName, pAdapter, Units, Multiplier);
+			MetaSerializedValue *meta = AddEnumProperty(Name, pAdapter, Units, Multiplier);
 			meta->bState = true;
 			return meta;
 		}
@@ -337,10 +337,10 @@ namespace DFW2
 
 	protected:
 
-		MetaSerializedValue* AddValue(const _TCHAR *cszName, MetaSerializedValue* mv)
+		MetaSerializedValue* AddValue(std::wstring_view Name, MetaSerializedValue* mv)
 		{
-			if (!ValueMap.insert(std::make_pair(cszName, mv)).second)
-				throw dfw2error(fmt::format(m_cszDupName, cszName));
+			if (!ValueMap.insert(std::make_pair(Name, mv)).second)
+				throw dfw2error(fmt::format(m_cszDupName, Name));
 			UpdateIterator = ValueList.end();
 			return mv;
 		}

@@ -666,7 +666,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("t={:15.012f} {} Converged in {:>3} iterations {} {} {} {} {} Saving {}"), GetCurrentTime(),
+				Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("t={:15.012f} {} Converged in {:>3} iterations {} {} {} {} {} Saving {:.2}"), GetCurrentTime(),
 																				sc.nStepsCount,
 																				sc.nNewtonIteration,
 																				sc.Newton.dMaxErrorVariable, 
@@ -1479,7 +1479,7 @@ void CDynaModel::RepeatZeroCrossing()
 }
 
 
-CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, const _TCHAR* cszSymLink)
+CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, std::wstring_view SymLink)
 {
 	CDevice *pFoundDevice(nullptr);
 
@@ -1507,7 +1507,7 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCH
 				}
 			}
 			else
-				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, cszSymLink));
+				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, SymLink));
 		}
 		else
 		{
@@ -1516,29 +1516,29 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCH
 			if (_stscanf_s(cszKeys, _T("%td"), &nId) == 1)
 				pFoundDevice = pContainer->GetDevice(nId);
 			else
-				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, cszSymLink));
+				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, SymLink));
 		}
 	}
 	else
-		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundByAlias, cszObject, cszSymLink));
+		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundByAlias, cszObject, SymLink));
 
 	return pFoundDevice;
 }
 
-bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName)
+bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name)
 {
 	bool bRes = false;
-	unsigned int nSourceLength = static_cast<unsigned int>(_tcslen(cszName));
+	unsigned int nSourceLength = static_cast<unsigned int>(Name.size());
 
 	_TCHAR* szObject = new _TCHAR[nSourceLength];
 	_TCHAR* szKeys = new _TCHAR[nSourceLength];
 	_TCHAR* szProp = new _TCHAR[nSourceLength];
 
-	int nFieldCount = _stscanf_s(cszName, _T("%[^[][%[^]]].%s"), szObject, nSourceLength, szKeys, nSourceLength, szProp, nSourceLength);
+	int nFieldCount = _stscanf_s(Name.data(), _T("%[^[][%[^]]].%s"), szObject, nSourceLength, szKeys, nSourceLength, szProp, nSourceLength);
 
 	if (nFieldCount == 3)
 	{
-		CDevice *pFoundDevice = GetDeviceBySymbolicLink(szObject, szKeys, cszName);
+		CDevice *pFoundDevice = GetDeviceBySymbolicLink(szObject, szKeys, Name);
 		if (pFoundDevice)
 		{
 			// Сначала ищем переменную состояния, со значением и с индексом
@@ -1586,17 +1586,17 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 						bRes = true;
 					}
 					else
-						Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, cszName));
+						Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, Name));
 				}
 				else
-					Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, cszName));
+					Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, Name));
 			}
 		}
 		else
-			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundBySymbolicLink, cszName));
+			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundBySymbolicLink, Name));
 	}
 	else
-		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongSymbolicLink, cszName));
+		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongSymbolicLink, Name));
 
 	delete szObject;
 	delete szKeys;

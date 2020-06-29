@@ -27,10 +27,10 @@ void CCustomDeviceContainer::CleanUp()
 	}
 }
 
-bool CCustomDeviceContainer::ConnectDLL(const _TCHAR* cszDLLFilePath)
+bool CCustomDeviceContainer::ConnectDLL(std::wstring_view DLLFilePath)
 {
 	bool bRes(false);
-	if (m_DLL.Init(cszDLLFilePath))
+	if (m_DLL.Init(DLLFilePath))
 	{
 		// копируем в контейнер описания констант
 		for (const auto& it : m_DLL.GetConstsInfo())
@@ -286,10 +286,10 @@ CCustomDeviceCPPContainer::~CCustomDeviceCPPContainer()
 }
 
 
-void CCustomDeviceCPPContainer::ConnectDLL(const _TCHAR* cszDLLFilePath) 
+void CCustomDeviceCPPContainer::ConnectDLL(std::wstring_view DLLFilePath)
 {
 	m_pDLL = std::make_shared<CCustomDeviceCPPDLL>();
-	m_pDLL->Init(cszDLLFilePath);
+	m_pDLL->Init(DLLFilePath);
 	CCustomDeviceDLLWrapper pDevice(m_pDLL);
 	pDevice->GetDeviceProperties(m_ContainerProps);
 	PRIMITIVEVECTOR& Prims = pDevice->GetPrimitives();

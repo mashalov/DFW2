@@ -75,15 +75,15 @@ void CCustomDeviceDLL::CleanUp()
 	}
 }
 
-bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
+bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 {
 	m_bConnected = false;
 	// загружаем dll
-	m_hDLL = LoadLibrary(cszDLLFilePath);
+	m_hDLL = LoadLibrary(std::wstring(DLLFilePath).c_str());
 	if (m_hDLL)
 	{
 		// и импортируем функции
-		m_strModulePath = cszDLLFilePath;
+		m_strModulePath = DLLFilePath;
 		m_pFnDestroy = (DLLDESTROYPTR)GetProcAddress("Destroy");
 		m_pFnGetBlocksCount = (DLLGETBLOCKSCOUNT)GetProcAddress("GetBlocksCount");
 		m_pFnGetBlocksDescriptions = (DLLGETBLOCKSDESCRIPTIONS)GetProcAddress("GetBlocksDescriptions");
@@ -116,10 +116,10 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 		if (!m_nGetProcAddresFailureCount)
 			m_bConnected = true;
 		else
-			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLFuncMissing, cszDLLFilePath));
+			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLFuncMissing, DLLFilePath));
 	}
 	else
-		m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format (CDFW2Messages::m_cszDLLLoadFailed, cszDLLFilePath));
+		m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format (CDFW2Messages::m_cszDLLLoadFailed, DLLFilePath));
 
 	if (m_bConnected)
 	{
@@ -160,7 +160,7 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 							}
 							else
 							{
-								m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszPrimitiveExternalOutput, cszDLLFilePath, m_BlockDescriptions[nIndex].Name));
+								m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszPrimitiveExternalOutput, DLLFilePath, m_BlockDescriptions[nIndex].Name));
 								m_bConnected = false;
 							}
 						}
@@ -285,7 +285,7 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 			m_pDeviceContainer->m_ContainerProps.SetClassName((m_pFnGetDeviceTypeName)(), _T(""));
 		
 		if (!m_bConnected)
-			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, cszDLLFilePath));
+			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, DLLFilePath));
 	}
 
 	if (!m_bConnected)
@@ -400,16 +400,16 @@ CCustomDeviceCPPDLL::~CCustomDeviceCPPDLL()
 	CleanUp();
 }
 
-void CCustomDeviceCPPDLL::Init(const _TCHAR* cszDLLFilePath)
+void CCustomDeviceCPPDLL::Init(std::wstring_view DLLFilePath)
 {
 	// загружаем dll
-	m_hDLL = LoadLibrary(cszDLLFilePath);
+	m_hDLL = LoadLibrary(std::wstring(DLLFilePath).c_str());
 	if (!m_hDLL)
-		throw dfw2error(fmt::format(_T("CCustomDeviceCPPDLL::Init - failed to load {}"), cszDLLFilePath));
+		throw dfw2error(fmt::format(_T("CCustomDeviceCPPDLL::Init - failed to load {}"), DLLFilePath));
 	m_pfnFactory = reinterpret_cast<CustomDeviceFactory>(::GetProcAddress(m_hDLL, "CustomDeviceFactory"));
 	if (!m_hDLL)
-		throw dfw2error(fmt::format(_T("CCustomDeviceCPPDLL::Init - to extract Device factory from load {}"), cszDLLFilePath));
-	m_strModulePath = cszDLLFilePath;
+		throw dfw2error(fmt::format(_T("CCustomDeviceCPPDLL::Init - to extract Device factory from load {}"), DLLFilePath));
+	m_strModulePath = DLLFilePath;
 };
 
 

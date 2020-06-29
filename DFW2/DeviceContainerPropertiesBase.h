@@ -15,10 +15,10 @@ namespace DFW2
 		{
 			m_TypeInfoSet.insert(eDeviceType = eDevType);
 		}
-		void SetClassName(const _TCHAR* cszVerbalName, const _TCHAR* cszSystemName)
+		void SetClassName(std::wstring_view VerbalName, std::wstring_view SystemName)
 		{
-			m_strClassName = cszVerbalName;
-			m_strClassSysName = cszSystemName;
+			m_strClassName = VerbalName;
+			m_strClassSysName = SystemName;
 		}
 
 		// добавить возможность связи от устройства

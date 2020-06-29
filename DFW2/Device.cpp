@@ -631,15 +631,7 @@ eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(bool Status1)
 }
 
 
-bool CDevice::InitExternalVariable(VariableIndexExternalOptional& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
-{
-	InitExternalVariable(ExtVar, pFromDevice, cszName, eLimitDeviceType);
-	if (!ExtVar.pValue)
-		ExtVar.MakeLocal();
-	return true;
-}
-
-bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
+bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name, eDFW2DEVICETYPE eLimitDeviceType)
 {
 	_ASSERTE(m_pContainer);
 
@@ -648,7 +640,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 
 	if (eLimitDeviceType == DEVTYPE_MODEL)
 	{
-		bRes = GetModel()->InitExternalVariable(ExtVar, pFromDevice, cszName);
+		bRes = GetModel()->InitExternalVariable(ExtVar, pFromDevice, Name);
 	}
 	else
 	{
@@ -666,7 +658,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 
 				if (bTryGet)
 				{
-					ExtVar = pFromDevice->GetExternalVariable(cszName);
+					ExtVar = pFromDevice->GetExternalVariable(Name);
 					if (ExtVar.pValue)
 					{
 						// если устроство имеет уравнения - возвращаем индекс относительно индекса устройства, иначе - индекс "не назначено"
@@ -691,7 +683,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 			{
 				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszExtVarNotFoundInDevice, 
 															  GetVerbalName(), 
-															  cszName, 
+															  Name, 
 															  pInitialDevice->GetVerbalName()));
 				bRes = false;
 			}
@@ -699,7 +691,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 		else
 		{
 			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszExtVarNoDeviceFor, 
-														  cszName, 
+														  Name, 
 														  GetVerbalName()));
 			bRes = false;
 		}
@@ -708,7 +700,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 }
 
 
-bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const _TCHAR* cszName, eDFW2DEVICETYPE eLimitDeviceType)
+bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::wstring_view Name, eDFW2DEVICETYPE eLimitDeviceType)
 {
 	_ASSERTE(m_pContainer);
 
@@ -728,7 +720,7 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const
 
 			if (bTryGet)
 			{
-				double *pConstVar = pFromDevice->GetConstVariablePtr(cszName);
+				double *pConstVar = pFromDevice->GetConstVariablePtr(Name);
 				if (pConstVar)
 				{
 					ConstVar = *pConstVar;
@@ -752,7 +744,7 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const
 		{
 			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszConstVarNotFoundInDevice, 
 														  GetVerbalName(), 
-														  cszName, 
+														  Name, 
 														  pInitialDevice->GetVerbalName()));
 			bRes = false;
 		}
@@ -760,7 +752,7 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, const
 	else
 	{
 		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszConstVarNoDeviceFor, 
-													  cszName, 
+													  Name, 
 													  GetVerbalName()));
 		bRes = false;
 	}

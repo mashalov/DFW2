@@ -91,17 +91,17 @@ bool CDeviceContainer::AddDevice(CDevice* pDevice)
 // добавление переменной состояния в контейнер
 // Требуются имя перменной (уникальное), индекс и единицы измерения
 // если переменная с таким именем уже есть возвращает false
-bool CDeviceContainer::RegisterVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
+bool CDeviceContainer::RegisterVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
 {
-	bool bInserted = m_ContainerProps.m_VarMap.insert(std::make_pair(cszVarName, CVarIndex(nVarIndex, eVarUnits))).second;
+	bool bInserted = m_ContainerProps.m_VarMap.insert(std::make_pair(VarName, CVarIndex(nVarIndex, eVarUnits))).second;
 	return bInserted;
 }
 
 // добавление перменной константы устройства (константа - параметр не изменяемый в процессе расчета и пользуемый при инициализации)
 // Требуются имя, индекс и тип константы. Индексы у констант и переменных состояния разные
-bool CDeviceContainer::RegisterConstVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
+bool CDeviceContainer::RegisterConstVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
 {
-	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(cszVarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
+	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(VarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
 	return bInserted;
 }
 

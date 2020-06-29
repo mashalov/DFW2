@@ -126,8 +126,8 @@ namespace DFW2
 		// добавление переменных состояния и констант устройств к атрибутам контейнера
 		// константы и переменные состояния обрабатываются по разному, т.к. для констант нет уравнений
 		// и они в процессе расчета не изменяются
-		bool RegisterVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits);
-		bool RegisterConstVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType);
+		bool RegisterVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits);
+		bool RegisterConstVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType);
 		// управление выводом переменной в результаты
 		bool VariableOutputEnable(const _TCHAR* cszVarName, bool bOutputEnable);
 

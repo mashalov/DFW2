@@ -16,7 +16,7 @@ namespace DFW2
 	public:
 		CSerializerXML() {}
 		virtual ~CSerializerXML() {}
-		void AddDeviceTypeDescription(ptrdiff_t nType, const _TCHAR* cszName);
+		void AddDeviceTypeDescription(ptrdiff_t nType, std::wstring_view Name);
 		void CreateNewSerialization();
 		void Commit();
 		void SerializeClass(SerializerPtr& Serializer);

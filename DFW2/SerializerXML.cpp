@@ -12,9 +12,9 @@ void CSerializerXML::CreateNewSerialization()
 	m_spXMLDoc->appendChild(m_spXMLDoc->createElement(_T("DFW2")));
 }
 
-void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, const _TCHAR* cszName)
+void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, std::wstring_view Name)
 {
-	if (!m_TypeMap.insert(std::make_pair(nType, cszName)).second)
+	if (!m_TypeMap.insert(std::make_pair(nType, Name)).second)
 		throw dfw2error(fmt::format(_T("CSerializerXML::AddDeviceTypeDescription - duplicate device type {}"), nType));
 }
 

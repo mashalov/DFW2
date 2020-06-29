@@ -58,7 +58,7 @@ namespace DFW2
 		void CleanUp();
 	public:
 		CCustomDeviceContainer(CDynaModel *pDynaModel);
-		bool ConnectDLL(const _TCHAR *cszDLLFilePath);
+		bool ConnectDLL(std::wstring_view DLLFilePath);
 		virtual ~CCustomDeviceContainer();
 		bool BuildStructure();
 		bool InitDLLEquations(BuildEquationsArgs *pArgs);
@@ -174,7 +174,7 @@ namespace DFW2
 		CCustomDeviceCPPContainer(CDynaModel* pDynaModel);
 		virtual ~CCustomDeviceCPPContainer();
 		void BuildStructure();
-		void ConnectDLL(const _TCHAR* cszDLLFilePath);
+		void ConnectDLL(std::wstring_view DLLFilePath);
 		CDynaPrimitive* CreatePrimitive(PrimitiveBlockType ePrimitiveType,
 										CDevice& Device,
 										VariableIndex& OutputVariable,
