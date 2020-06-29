@@ -17,10 +17,10 @@ void CResultFileReader::ReadHeader(int& Version)
 		ReadLEB(Version64);
 		Version = static_cast<int>(Version64);
 		if (Version64 > DFW2_RESULTFILE_VERSION)
-			return throw CFileReadException(m_pFile, Cex(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION));
+			return throw CFileReadException(m_pFile, fmt::format(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION).c_str());
 	}
 	else
-		return throw CFileReadException(NULL);
+		return throw CFileReadException(nullptr);
 }
 
 std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
@@ -110,7 +110,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 		}
 
 		if (nTimeIndex != m_PointsCount)
-			throw CFileReadException(m_pFile, Cex(CDFW2Messages::m_cszResultFilePointsCountMismatch, nIndex, nTimeIndex, m_PointsCount));
+			throw CFileReadException(m_pFile, fmt::format(CDFW2Messages::m_cszResultFilePointsCountMismatch, nIndex, nTimeIndex, m_PointsCount).c_str());
 	}
 	return pResultBuffer;
 }

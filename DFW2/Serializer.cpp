@@ -3,7 +3,7 @@
 #include "DeviceContainer.h"
 using namespace DFW2;
 
-const _TCHAR* CSerializerBase::m_cszDupName = _T("CSerializerBase::AddProperty duplicated name \"%s\"");
+const _TCHAR* CSerializerBase::m_cszDupName = _T("CSerializerBase::AddProperty duplicated name \"{}\"");
 const _TCHAR* CSerializerAdapterBase::cszNotImplemented = _T("CSerializerAdapterBase: - Not implemented");
 const _TCHAR* CSerializerBase::m_cszState = _T("state");
 const _TCHAR* CSerializerBase::m_cszV = _T("v");

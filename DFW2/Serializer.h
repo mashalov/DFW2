@@ -176,7 +176,7 @@ namespace DFW2
 		{
 			const ptrdiff_t nIndex = static_cast<ptrdiff_t>(*m_pLeft);
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(m_nCount))
-				throw dfw2error(Cex(_T("CSerializerAdapterEnumT::GetString - invalid enum index or string representation %d"), nIndex));
+				throw dfw2error(fmt::format(_T("CSerializerAdapterEnumT::GetString - invalid enum index or string representation {}"), nIndex));
 			return std::wstring(m_StringRepresentation[nIndex]);
 		}
 		CSerializerAdapterEnumT(T& Left, const _TCHAR** ppStringRepresentation, size_t nCount) : CSerializerAdapterBaseT<T>(Left), 
@@ -340,7 +340,7 @@ namespace DFW2
 		MetaSerializedValue* AddValue(const _TCHAR *cszName, MetaSerializedValue* mv)
 		{
 			if (!ValueMap.insert(std::make_pair(cszName, mv)).second)
-				throw dfw2error(Cex(m_cszDupName, cszName));
+				throw dfw2error(fmt::format(m_cszDupName, cszName));
 			UpdateIterator = ValueList.end();
 			return mv;
 		}

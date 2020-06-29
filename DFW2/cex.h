@@ -7,93 +7,26 @@
 #include "ShlObj.h"
 #include "memory"
 #include "stringutils.h"
-
-#define EXCEPTION_BUFFER_SIZE 2048
-using TCHARString = std::unique_ptr<_TCHAR[]>;
-
-class Cex
-{
-public:
-
-	Cex(UINT nID, ...)
-	{
-
-		_TCHAR lpszFormat[512];
-		const int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
-		// String is truncated to 511 characters
-		m_szBuffer = nullptr;
-		if (nCount)
-		{
-			m_szBuffer = std::make_unique<_TCHAR[]>(512);
-			m_szBuffer[0] = _T('\x0');
-			va_list argList;
-			va_start(argList, nID);
-			_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argList);
-			va_end(argList);
-		}
-	}
-
-	Cex(Cex* pDummy, UINT nID, va_list argm)
-	{
-		_TCHAR lpszFormat[512];
-		const int nCount = LoadString(GetModuleHandle(NULL), nID, lpszFormat, 512);
-		// String is truncated to 511 characters
-		m_szBuffer = std::make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
-		m_szBuffer[0] = _T('\x0');
-		_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argm);
-	}
-
-	Cex(Cex* pDummy, const _TCHAR* lpszFormat, va_list argm)
-	{
-		m_szBuffer = std::make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
-		m_szBuffer[0] = _T('\x0');
-		_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argm);
-	}
-
-	Cex(const _TCHAR *lpszFormat, ...)
-	{
-
-		m_szBuffer = std::make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
-		m_szBuffer[0] = _T('\x0');
-		va_list argList;
-		va_start(argList, lpszFormat);
-		_vsntprintf_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, _TRUNCATE, lpszFormat, argList);
-		va_end(argList);
-	}
-
-	Cex(const Cex *pCex)
-	{
-		m_szBuffer = std::make_unique<_TCHAR[]>(EXCEPTION_BUFFER_SIZE);
-		_tcsncpy_s(m_szBuffer.get(), EXCEPTION_BUFFER_SIZE - 1, pCex->m_szBuffer.get(), _TRUNCATE);
-	}
-
-	operator const _TCHAR*() noexcept
-	{
-		return m_szBuffer.get();
-	}
-
-protected:
-	TCHARString m_szBuffer;
-};
-
+#include "..\fmt\include\fmt\core.h"
+#include "..\fmt\include\fmt\format.h"
 
 class CDFW2Exception
 {
 protected:
 	std::wstring m_strMessage;
 public:
-	CDFW2Exception(const _TCHAR *cszMessage) : m_strMessage(cszMessage) {}
+	CDFW2Exception(std::wstring_view Description) : m_strMessage(Description) {}
 	const _TCHAR* Message() noexcept { return m_strMessage.c_str(); }
 };
 
 class CDFW2GetLastErrorException : public CDFW2Exception
 {
 public:
-	CDFW2GetLastErrorException(const _TCHAR *cszMessage) : CDFW2Exception(cszMessage)
+	CDFW2GetLastErrorException(std::wstring_view Description) : CDFW2Exception(Description)
 	{
 		std::wstring strGetLastErrorMsg = GetLastErrorMessage();
 		if(!strGetLastErrorMsg.empty())
-			m_strMessage += Cex(_T(" (%s)"), strGetLastErrorMsg.c_str());
+			m_strMessage += fmt::format(_T(" {}"), strGetLastErrorMsg.c_str());
 		stringutils::removecrlf(m_strMessage);
 	}
 

@@ -54,7 +54,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		catch (dfw2error& err)
 		{
-			Network.Log(CDFW2Messages::DFW2LOG_FATAL, Cex(_T("Ошибка : %s"), err.uwhat()));
+			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Ошибка : {}"), err.uwhat()));
 		}
 	}
 	_CrtDumpMemoryLeaks();

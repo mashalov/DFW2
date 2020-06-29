@@ -151,7 +151,7 @@ namespace DFW2
 		size_t Count();														// получить количество устройств в контейнере
 		inline DEVICEVECTORITR begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
 		inline DEVICEVECTORITR end() { return m_DevVec.end(); }
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ptrdiff_t nDBIndex = -1);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, const std::wstring_view Message, ptrdiff_t nDBIndex = -1);
 
 		LINKSVEC m_Links;													// вектор возможных связей. Элемент вектора - связь с определенным типом устройств
 		bool IsKindOfType(eDFW2DEVICETYPE eType);

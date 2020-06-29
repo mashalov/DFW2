@@ -87,14 +87,14 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 					{
 						if (nModelIndex >= nModelsCount)
 						{
-							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL()->GetModuleFilePath()));
+							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL()->GetModuleFilePath()));
 							break;
 						}
 
 						CCustomDeviceCPP* pDevice = pCustomDevices + nModelIndex;
 						pDevice->SetConstsDefaultValues();
 						pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
-						pDevice->SetName(spColId->GetZS(nTableIndex));
+						pDevice->SetName(static_cast<const _TCHAR*>(spColId->GetZS(nTableIndex)));
 						pDevice->SetState(spColState->GetZ(nTableIndex).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 						DOUBLEVECTOR& ConstsVec = pDevice->GetConstantData();
 						for (const auto& col : Cols)
@@ -111,7 +111,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 		}
 		catch (_com_error& err)
 		{
-			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
+			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
 				CustomDeviceContainer.DLL()->GetModuleFilePath(),
 				static_cast<const _TCHAR*>(err.Description())));
 		}
@@ -176,7 +176,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 					{
 						if (nModelIndex >= nModelsCount)
 						{
-							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 							break;
 						}
 
@@ -184,19 +184,19 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 						if (pDevice->SetConstDefaultValues())
 						{
 							pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
-							pDevice->SetName(spColId->GetZS(nTableIndex));
+							pDevice->SetName(static_cast<const _TCHAR*>(spColId->GetZS(nTableIndex)));
 							for (COLITR cit = Cols.begin(); cit != Cols.end(); cit++)
 							{
 								if (!pDevice->SetConstValue(cit->second, cit->first->GetZ(nTableIndex).dblVal))
 								{
-									Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+									Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 									break;
 								}
 							}
 						}
 						else
 						{
-							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 							break;
 						}
 						nModelIndex++;
@@ -206,7 +206,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 		}
 		catch (_com_error &err)
 		{
-			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
+			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
 																CustomDeviceContainer.DLL().GetModuleFilePath(), 
 																static_cast<const _TCHAR*>(err.Description())));
 		}
@@ -257,7 +257,7 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 			mv.Value.Adapter->SetInt(NodeTypeFromRastr(vt.lVal));
 			break;
 		default:
-			throw dfw2error(Cex(_T("CRastrImport::ReadRastrRow wrong serializer type %d"), mv.Value.ValueType));
+			throw dfw2error(fmt::format(_T("CRastrImport::ReadRastrRow wrong serializer type {}"), mv.Value.ValueType));
 		}
 	}
 }
@@ -735,7 +735,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 		DBSLC *pSLC = pLRCBuffer + i;
 		if (pSLC->m_Id == 1 || pSLC->m_Id == 2)
 		{
-			Network.Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszLRC1And2Reserved,pSLC->m_Id));
+			Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRC1And2Reserved,pSLC->m_Id));
 			continue;
 		}
 
@@ -778,7 +778,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 				double Vbeg = poly.front().m_kV;
 				if (Vbeg > 0.0)
 				{
-					Network.Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszLRCStartsNotFrom0, slit->first, Vbeg));
+					Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCStartsNotFrom0, slit->first, Vbeg));
 					poly.front().m_kV = 0.0;
 				}
 			}
@@ -797,7 +797,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 						{
 							if (!itpoly->CompareWith(*itpolyNext))
 							{
-								Network.Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszAmbigousLRCSegment, slit->first, 
+								Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszAmbigousLRCSegment, slit->first, 
 																													    itpoly->m_kV, 
 																														itpoly->m_k0,
 																														itpoly->m_k1, 

@@ -68,7 +68,7 @@ bool CTransformExp::Derivative(CExpressionToken *pToken, CExpressionToken *pChil
 	{
 		std::wstring Operand;
 		pExp->GetEquationOperand(pToken->m_pEquation, Operand);
-		Result = Cex(_T("exp(%s)"), Operand.c_str());
+		Result = fmt::format(_T("exp({})"), Operand.c_str());
 		bRes = true;
 	}
 
@@ -324,7 +324,7 @@ bool CTransformPow::Derivative(CExpressionToken *pToken, CExpressionToken *pChil
 				if (dExp != 1.0)
 				{
 					CExpressionToken::GetNumericText(dExp, strExp);
-					Result += Cex(_T("%s%s, %s)"), cszPow, strBase.c_str(), strExp.c_str());
+					Result += fmt::format(_T("{}{}, {})"), cszPow, strBase.c_str(), strExp.c_str());
 				}
 				else
 				{
@@ -334,13 +334,13 @@ bool CTransformPow::Derivative(CExpressionToken *pToken, CExpressionToken *pChil
 			}
 			else
 			{
-				Result = Cex(_T("%s * %s%s, %s-1)"), strExp.c_str(), cszPow, strBase.c_str(), strExp.c_str());
+				Result = fmt::format(_T("{} * {}{}, {}-1)"), strExp.c_str(), cszPow, strBase.c_str(), strExp.c_str());
 			}
 			bRes = true;
 		}
 		else if (pChildToken == pExp)
 		{
-			Result = Cex(_T("%s%s,%s)*ln(%s)"), cszPow, strBase.c_str(), strExp.c_str(), strBase.c_str());
+			Result = fmt::format(_T("{}{},{})*ln({})"), cszPow, strBase.c_str(), strExp.c_str(), strBase.c_str());
 			bRes = true;
 		}
 	}

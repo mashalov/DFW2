@@ -25,7 +25,11 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 		
 		if (m_dMin > m_dMax)
 		{
-			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveLimits, GetVerbalName(), m_Device.GetVerbalName(), m_dMin, m_dMax));
+			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveLimits, 
+																   GetVerbalName(), 
+																   m_Device.GetVerbalName(), 
+																   m_dMin, 
+																   m_dMax));
 			bRes = false;
 		}
 
@@ -33,11 +37,10 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 
 		if (m_Output > m_dMaxH || m_Output < m_dMinH)
 		{
-			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, 
-					     Cex(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, 
-						 GetVerbalName(), 
-						 m_Device.GetVerbalName(), 
-						 static_cast<const double>(m_Output), m_dMin, m_dMax));
+			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, 
+																   GetVerbalName(), 
+																   m_Device.GetVerbalName(), 
+																   m_Output, m_dMin, m_dMax));
 			bRes = false;
 		}
 	}
@@ -140,14 +143,15 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 	// если состояние изменилось, запрашиваем обработку разрыва
 	if (oldCurrentState != eCurrentState)
 	{
-		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("t=%.12g (%d) Примитив %s из %s изменяет состояние %g %g %g с %d на %d"), 
+		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, 
+			fmt::format(_T("t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}"), 
 			pDynaModel->GetCurrentTime(), 
 			pDynaModel->GetIntegrationStepNumber(),
 			GetVerbalName(), 
 			m_Device.GetVerbalName(),
-			static_cast<const double>(m_Output), 
+			/*static_cast<const double>*/m_Output, 
 			m_dMin, m_dMax, 
-			oldCurrentState, eCurrentState);
+			oldCurrentState, eCurrentState));
 		pDynaModel->DiscontinuityRequest();
 	}
 

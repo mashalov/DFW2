@@ -188,7 +188,7 @@ bool CDynaLRC::CheckPtr(LRCDATA& LRC)
 			double q = std::prev(v)->Get(v->V);		// берем значение в конце предыдущего (в той же точке что и начало следующего)
 			if (!Equal(10.0 * DFW2_EPSILON * (s - q), 0.0))
 			{
-				Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszLRCDiscontinuityAt, GetVerbalName(), *v, s, q));
+				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCDiscontinuityAt, GetVerbalName(), v->V, s, q));
 				bRes = false;
 			}
 		}

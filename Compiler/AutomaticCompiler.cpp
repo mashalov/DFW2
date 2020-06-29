@@ -70,32 +70,32 @@ STDMETHODIMP CAutomaticCompiler::Compile()
 	NormalizePath(m_strModelRoot);
 	NormalizePath(m_strModelDLLName);
 
-	std::wstring strSourceFile = Cex(_T("%s\\%s\\%s.c"), m_strModelRoot.c_str(), m_strModelDLLName.c_str(), m_strModelDLLName.c_str());
+	std::wstring strSourceFile = fmt::format(_T("{}\\{}\\{}.c"), m_strModelRoot.c_str(), m_strModelDLLName.c_str(), m_strModelDLLName.c_str());
 
 	if (m_pAutoCompiler->Generate(strSourceFile.c_str()))
 	{
 
 
 		std::wstring strCommand = m_strCompilerRoot + _T("\\bin\\make.exe");
-		std::wstring strHeadersDir = Cex(_T("%s\\headers"), m_strModelRoot.c_str());
+		std::wstring strHeadersDir = fmt::format(_T("{}\\headers"), m_strModelRoot.c_str());
 		NormalizePath(strHeadersDir);
 
 #ifdef _WIN64
-		std::wstring strCommandLine = Cex(_T("%s\\makefile64"), strHeadersDir.c_str());
+		std::wstring strCommandLine = fmt::format(_T("{}\\makefile64"), strHeadersDir.c_str());
 #else
-		std::wstring strCommandLine = Cex(_T("%s\\makefile"), strHeadersDir.c_str());
+		std::wstring strCommandLine = fmt::format(_T("{}\\makefile"), strHeadersDir.c_str());
 #endif
 		std::wstring strCompilerLogTag = cszLCCCompiler;
 
 		NormalizePath(strCommand);
 		NormalizePath(strCommandLine);
 
-		strCommandLine = Cex(_T("\"%s\" -f \"%s\" LCCROOT=\"%s\" ROOTDIR=\"%s\" OUTNAME=\"%s\""),
-			strCommand.c_str(), 
-			strCommandLine.c_str(),
-			m_strCompilerRoot.c_str(),
-			m_strModelRoot.c_str(),
-			m_strModelDLLName.c_str());
+		strCommandLine = fmt::format(_T("\"{}\" -f \"{}\" LCCROOT=\"{}\" ROOTDIR=\"{}\" OUTNAME=\"{}\""),
+			strCommand, 
+			strCommandLine,
+			m_strCompilerRoot,
+			m_strModelRoot,
+			m_strModelDLLName);
 
 		NormalizePath(strCommandLine);
 

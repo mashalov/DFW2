@@ -52,7 +52,11 @@ STDMETHODIMP CDeviceTypeWrite::AddDeviceTypeVariable(BSTR VariableName, LONG Uni
 			hRes = S_OK;
 		}
 		else
-			Error(Cex(CDFW2Messages::m_cszDuplicatedVariableName, VarTypeInfo.Name.c_str(), m_pDeviceTypeInfo->strDevTypeName.c_str()), IID_IDeviceTypeWrite, hRes);
+			Error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableName, 
+											 VarTypeInfo.Name, 
+											 m_pDeviceTypeInfo->strDevTypeName).c_str(), 
+							IID_IDeviceTypeWrite, 
+							hRes);
 	}
 	return hRes;
 }
@@ -113,7 +117,11 @@ STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VAR
 				hRes = S_OK;
 			}
 			else
-				Error(Cex(CDFW2Messages::m_cszDuplicatedVariableUnit, m_pDeviceInstanceInfo - m_pDeviceTypeInfo->m_pDeviceInstances.get(), m_pDeviceTypeInfo->DevicesCount), IID_IDeviceTypeWrite, hRes);
+				Error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableUnit, 
+								  m_pDeviceInstanceInfo - m_pDeviceTypeInfo->m_pDeviceInstances.get(), 
+								  m_pDeviceTypeInfo->DevicesCount).c_str(), 
+					  IID_IDeviceTypeWrite, 
+					  hRes);
 		}
 	}
 	catch (CFileException &ex)

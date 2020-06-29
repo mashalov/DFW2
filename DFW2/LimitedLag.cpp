@@ -74,7 +74,10 @@ bool CLimitedLag::Init(CDynaModel *pDynaModel)
 	{
 		if (Equal(m_T,0.0))
 		{
-			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszWrongPrimitiveTimeConstant, GetVerbalName(), m_Device.GetVerbalName(), m_T));
+			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveTimeConstant, 
+																   GetVerbalName(), 
+																   m_Device.GetVerbalName(), 
+																   m_T));
 			bRes = false;
 		}
 	}

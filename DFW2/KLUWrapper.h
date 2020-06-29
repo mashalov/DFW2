@@ -216,7 +216,7 @@ namespace DFW2
 				m_strKLUError = CDFW2Messages::m_cszKLUIntOverflow;
 				break;
 			default:
-				m_strKLUError = Cex(CDFW2Messages::m_cszKLUUnknownError, pCommon.status);
+				m_strKLUError = fmt::format(CDFW2Messages::m_cszKLUUnknownError, pCommon.status);
 			}
 			return m_strKLUError.c_str();
 		}
@@ -259,7 +259,7 @@ namespace DFW2
 			if (!Analyzed())
 			{
 				DumpMatrix(false);
-				throw dfw2error(Cex(_T("%s::KLU_analyze %s"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format(_T("{}::KLU_analyze {}"), KLUWrapperName(), KLUErrorDescription()));
 			}
 			m_nAnalyzingsCount++;
 		}
@@ -270,14 +270,14 @@ namespace DFW2
 				Analyze();
 			pNumeric = std::make_unique<KLUNumeric>(KLUFunctions<T, ptrdiff_t>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon) , pCommon);
 			if (!Factored())
-				throw dfw2error(Cex(_T("%s::KLU_factor %s"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format(_T("{}::KLU_factor {}"), KLUWrapperName(), KLUErrorDescription()));
 			m_nFactorizationsCount++;
 		}
 
 		bool TryRefactor()
 		{
 			if (!Factored())
-				throw dfw2error(Cex(_T("%s::KLU_refactor - no numeric to refactor"), KLUWrapperName()));
+				throw dfw2error(fmt::format(_T("{}::KLU_refactor - no numeric to refactor"), KLUWrapperName()));
 			if (KLUFunctions<T,ptrdiff_t>::TKLU_refactor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
 			{
 				m_nRefactorizationsCount++;
@@ -293,7 +293,7 @@ namespace DFW2
 		void Refactor()
 		{
 			if (!TryRefactor())
-				throw dfw2error(Cex(_T("%s::KLU_refactor %s"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format(_T("{}::KLU_refactor {}"), KLUWrapperName(), KLUErrorDescription()));
 		}
 
 		void Solve()
@@ -303,7 +303,7 @@ namespace DFW2
 			if(!Factored())
 				Factor();
 			if(!KLUFunctions<T, ptrdiff_t>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
-				throw dfw2error(Cex(_T("%s::KLU_tsolve %s"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format(_T("{}::KLU_tsolve {}"), KLUWrapperName(), KLUErrorDescription()));
 		}
 
 		void FactorSolve()
@@ -312,13 +312,13 @@ namespace DFW2
 				Analyze();
 			Factor();
 			if (!KLUFunctions<T,ptrdiff_t>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
-				throw dfw2error(Cex(_T("%s::KLU_tsolve %s"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format(_T("{}::KLU_tsolve {}"), KLUWrapperName(), KLUErrorDescription()));
 		}
 
 		double Rcond()
 		{
 			if(!KLUFunctions<T, ptrdiff_t>::TKLU_rcond(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
-				throw dfw2error(Cex(_T("%s::KLU_rcond %s"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format(_T("{}::KLU_rcond {}"), KLUWrapperName(), KLUErrorDescription()));
 			return pCommon.rcond;
 		}
 

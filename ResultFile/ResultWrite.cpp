@@ -134,7 +134,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 	{
 		std::string strc(badAllocEx.what());
 		std::wstring str(strc.begin(), strc.end());
-		Error(Cex(CDFW2Messages::m_cszMemoryAllocError, str.c_str()), IID_IResultWrite, hRes);
+		Error(fmt::format(CDFW2Messages::m_cszMemoryAllocError, str).c_str(), IID_IResultWrite, hRes);
 	}
 
 	catch (...)
@@ -152,7 +152,7 @@ STDMETHODIMP CResultWrite::AddVariableUnit(LONG UnitId, BSTR UnitName)
 	if (!m_VarNameMap.insert(std::make_pair(UnitId, UnitName)).second)
 	{
 		hRes = E_INVALIDARG;
-		Error(Cex(CDFW2Messages::m_cszDuplicatedVariableUnit, UnitId), IID_IResultWrite, hRes);
+		Error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableUnit, UnitId).c_str(), IID_IResultWrite, hRes);
 	}
 	return hRes;
 }
@@ -182,7 +182,7 @@ STDMETHODIMP CResultWrite::AddDeviceType(LONG DeviceTypeId, BSTR DeviceTypeName,
 		}
 		else
 		{
-			Error(Cex(CDFW2Messages::m_cszDuplicatedDeviceType, DeviceTypeId), IID_IResultWrite, hRes);
+			Error(fmt::format(CDFW2Messages::m_cszDuplicatedDeviceType, DeviceTypeId).c_str(), IID_IResultWrite, hRes);
 			delete pDeviceType;
 		}
 	}

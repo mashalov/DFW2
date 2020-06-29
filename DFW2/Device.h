@@ -198,7 +198,7 @@ namespace DFW2
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
 		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
 
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message);
 
 		// функция маппинга указателя на переменную к индексу переменной
 		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
@@ -327,7 +327,7 @@ namespace DFW2
 		static void CheckIndex(const T& Container, ptrdiff_t nIndex, const _TCHAR* cszErrorMsg = nullptr)
 		{
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(Container.size()))
-				throw dfw2error(Cex(_T("%s - index check failed: index %d container size %d"), 
+				throw dfw2error(fmt::format(_T("{} - index check failed: index {} container size {}"),
 					cszErrorMsg ? cszErrorMsg : _T("CDevice::CheckIndex"), nIndex, Container.size()));
 		}
 

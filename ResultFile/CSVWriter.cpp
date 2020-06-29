@@ -80,7 +80,7 @@ void CCSVWriter::WriteDeviceTypes()
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, Cex(_T("%s"), pC->pDevice->m_pDevType->strDevTypeName.c_str()));
+			WriteField(pC, fmt::format(_T("%s"), pC->pDevice->m_pDevType->strDevTypeName));
 		else
 			WriteField(pC, cszUnknonwn);
 
@@ -100,7 +100,7 @@ void CCSVWriter::WriteDeviceIds()
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, Cex(_T("%d"), pC->pDevice->GetId(0)));
+			WriteField(pC, fmt::format(_T("%d"), pC->pDevice->GetId(0)));
 		else
 			WriteField(pC, cszUnknonwn);
 		pC++;
@@ -119,7 +119,7 @@ void CCSVWriter::WriteDeviceNames()
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, Cex(_T("%s"), pC->pDevice->Name.c_str()));
+			WriteField(pC, fmt::format(_T("%s"), pC->pDevice->Name));
 		else
 			WriteField(pC, cszUnknonwn);
 
@@ -139,7 +139,7 @@ void CCSVWriter::WriteVariableNames()
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pVariable)
-			WriteField(pC, Cex(_T("%s"), pC->pVariable->Name.c_str()));
+			WriteField(pC, fmt::format(_T("%s"), pC->pVariable->Name));
 		else
 			WriteField(pC, cszUnknonwn);
 		pC++;
@@ -289,9 +289,9 @@ void CCSVWriter::WriteData()
 	}
 }
 
-void CCSVWriter::WriteField(const ChannelLink *pLink, const _TCHAR *cszField)
+void CCSVWriter::WriteField(const ChannelLink *pLink, std::wstring_view Field)
 {
-	std::wstring str(cszField);
+	std::wstring str(Field);
 	std::replace(str.begin(), str.end(), ';', ':');
 	std::replace(str.begin(), str.end(), '\"', '\'');
 	str += _T("\";");

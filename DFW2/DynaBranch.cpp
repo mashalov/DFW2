@@ -13,7 +13,7 @@ CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(nullptr)
 // Обновляет имя ветви
 void CDynaBranch::UpdateVerbalName()
 {
-	m_strVerbalName = Cex(_T("%d - %d%s %s"), Ip, Iq, static_cast<const _TCHAR*>(Np ? Cex(_T(" (%d)"), Np) : _T("")), GetName());
+	m_strVerbalName = fmt::format(_T("{} - {}{} {}"), Ip, Iq, (Np ? fmt::format(_T(" ({})"), Np) : _T("")), GetName());
 }
 
 // Расчет проводимостей ветви для матрицы проводимостей
@@ -106,7 +106,11 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				}
 				else
 				{
-					pBranch->Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszBranchNodeNotFound, NodeId, pBranch->Ip, pBranch->Iq, pBranch->Np));
+					pBranch->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszBranchNodeNotFound, 
+																		   NodeId, 
+																		   pBranch->Ip, 
+																		   pBranch->Iq, 
+																		   pBranch->Np));
 					bRes = false;
 					_ASSERTE(bRes);
 				}
@@ -116,10 +120,10 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			{
 				// если оба узла найдены
 				// формируем имя ветви по найденным узлам
-				pBranch->SetName(Cex(_T("%s - %s %s"),
+				pBranch->SetName(fmt::format(_T("{} - {} {}"),
 					pBranch->m_pNodeIp->GetName(),
 					pBranch->m_pNodeIq->GetName(),
-					static_cast<const _TCHAR*>(pBranch->Np ? Cex(_T(" цепь %d"), pBranch->Np) : _T(""))));
+					pBranch->Np ? fmt::format(_T(" цепь {}"), pBranch->Np) : _T("")));
 			}
 		}
 
@@ -620,7 +624,11 @@ bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 
 	if (bDisconnected)
 	{
-		Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszSwitchedOffBranch, m_pContainer->GetTypeName(), GetVerbalName(), pSwitchOffMode, pNode->GetVerbalName()));
+		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszSwitchedOffBranch, 
+														m_pContainer->GetTypeName(), 
+														GetVerbalName(), 
+														pSwitchOffMode, 
+														pNode->GetVerbalName()));
 	}
 
 	return bDisconnected;

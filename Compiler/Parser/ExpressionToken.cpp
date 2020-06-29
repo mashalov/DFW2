@@ -214,7 +214,7 @@ bool CExpressionToken::GetEquationOperandIndex(const CCompilerEquation *pEquatio
 		{
 		case eCVT_INTERNAL:
 			_ASSERTE(m_pEquation);
-			Result = Cex(_T("%d"), m_pEquation->m_nIndex);
+			Result = fmt::format(_T("{}"), m_pEquation->m_nIndex);
 			break;
 		case eCVT_EXTERNAL:
 			Result += _T(".nIndex");
@@ -249,18 +249,18 @@ void CExpressionToken::GetEquationVariableType(const CCompilerEquation *pEquatio
 	{
 	case eCVT_INTERNAL:
 		_ASSERTE(m_pEquation);
-		Result = Cex(_T("%s%d].Value"), CCompilerEquation::m_cszInternalVar, m_pEquation->m_nIndex);
+		Result = fmt::format(_T("{}{}].Value"), CCompilerEquation::m_cszInternalVar, m_pEquation->m_nIndex);
 		break;
 	case eCVT_EXTERNAL:
-		Result = Cex(_T("%s%d]"), CCompilerEquation::m_cszExternalVar, pVarEnum->m_nIndex);
+		Result = fmt::format(_T("{}{}]"), CCompilerEquation::m_cszExternalVar, pVarEnum->m_nIndex);
 		break;
 	case eCVT_EXTERNALSETPOINT:
-		Result = Cex(_T("%s%d]"), CCompilerEquation::m_cszSetpointVar, pVarEnum->m_nIndex);
+		Result = fmt::format(_T("{}{}]"), CCompilerEquation::m_cszSetpointVar, pVarEnum->m_nIndex);
 		break;
 	case eCVT_CONST:
-		Result = Cex(_T("%s%d]"), CCompilerEquation::m_cszConstVar, pVarEnum->m_nIndex);
+		Result = fmt::format(_T("{}{}]"), CCompilerEquation::m_cszConstVar, pVarEnum->m_nIndex);
 	case eCVT_HOST:
-		Result = Cex(_T("%s%s"), CCompilerEquation::m_cszHostVar, GetTextValue());
+		Result = fmt::format(_T("{}{}"), CCompilerEquation::m_cszHostVar, GetTextValue());
 		break;
 	}
 }
@@ -274,7 +274,7 @@ void CExpressionToken::GetEquationOperandType(const CCompilerEquation *pEquation
 	{
 		if (m_pEquation != pEquation)
 		{
-			Result = Cex(_T("%s%d].Value"), CCompilerEquation::m_cszInternalVar, m_pEquation->m_nIndex);
+			Result = fmt::format(_T("{}{}].Value"), CCompilerEquation::m_cszInternalVar, m_pEquation->m_nIndex);
 		}
 		else
 		{

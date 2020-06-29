@@ -139,7 +139,7 @@ bool CCustomDevice::BuildStructure()
 	}
 
 	if (!bRes)
-		Log(CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, Container()->DLL().GetModuleFilePath()));
+		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, Container()->DLL().GetModuleFilePath()));
 
 	return bRes;
 }

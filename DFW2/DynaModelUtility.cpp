@@ -3,6 +3,9 @@
 #include "klu.h"
 #include "cs.h"
 #include "stdio.h"
+#include <iostream>
+#include <io.h>
+#include <fcntl.h>
 using namespace DFW2;
 
 void CDynaModel::ReportKLUError(KLU_common& KLUCommon)
@@ -28,14 +31,9 @@ void CDynaModel::ReportKLUError(KLU_common& KLUCommon)
 	}
 }
 
-void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status,ptrdiff_t nDBIndex, const _TCHAR* cszMessage)
+void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message, ptrdiff_t nDbIndex)
 {
-	Log(Status, cszMessage);
-}
-
-void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...)
-{
-	const _TCHAR *cszCRLF = _T("\n");
+	std::string utf8Message(stringutils::utf8_encode(Message));
 
 	if (m_Parameters.m_bLogToConsole)
 	{
@@ -52,7 +50,7 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszM
 			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_INTENSITY);
 			break;
 		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_WARNING:
-			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY );
+			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
 		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_MESSAGE:
 		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO:
@@ -62,33 +60,17 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszM
 			SetConsoleTextAttribute(hCon, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
 		}
-		//SetConsoleOutputCP(65001);
-		_tcprintf(cszCRLF);
-			   
-		va_list argList;
-		size_t len;
-		TCHAR * buffer;
-		va_start(argList, cszMessage);
-		len = _vsctprintf(cszMessage, argList) + sizeof(_TCHAR);
-		buffer = new _TCHAR[len];
-		_vstprintf_s(buffer, len, cszMessage, argList);
-		_tcprintf(buffer);
-		delete(buffer);
-		va_end(argList);
-
+		/*SetConsoleOutputCP(CP_UTF8);
+		std::cout << utf8Message << std::endl;
+		*/
+		_setmode(_fileno(stdout), _O_U16TEXT);
+		std::wcout << Message << std::endl;
 		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
 	}
 
-	if (m_pLogFile && m_Parameters.m_bLogToFile)
-	{
-		_ftprintf(m_pLogFile,cszCRLF);
-		va_list argList;
-		va_start(argList, cszMessage);
-		_vftprintf_s(m_pLogFile,cszMessage, argList);
-		va_end(argList);
-	}
+	if (LogFile.is_open() && m_Parameters.m_bLogToFile)
+		LogFile << utf8Message << std::endl;
 }
-
 
 void CDynaModel::ChangeOrder(ptrdiff_t Newq)
 {
@@ -126,7 +108,7 @@ struct RightVector* CDynaModel::GetRightVector(const VariableIndexBase& Variable
 struct RightVector* CDynaModel::GetRightVector(const ptrdiff_t nRow)
 {
 	if (nRow < 0 || nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(Cex(_T("CDynaModel::GetRightVector matrix size overrun Row %d MatrixSize %d"), nRow, m_nEstimatedMatrixSize));
+		throw dfw2error(fmt::format(_T("CDynaModel::GetRightVector matrix size overrun Row {} MatrixSize {}"), nRow, m_nEstimatedMatrixSize));
 	return pRightVector + nRow;
 }
 
@@ -231,7 +213,7 @@ void CDynaModel::PushVarSearchStack(CDevice*pDevice)
 				m_ppVarSearchStackTop++;
 			}
 			else
-				throw dfw2error(Cex(CDFW2Messages::m_cszVarSearchStackDepthNotEnough, m_Parameters.nVarSearchStackDepth));
+				throw dfw2error(fmt::format(CDFW2Messages::m_cszVarSearchStackDepthNotEnough, m_Parameters.nVarSearchStackDepth));
 		}
 	}
 }
@@ -332,11 +314,14 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 	while (nCount)
 	{
 		pVectorBegin = *ppSortOrder;
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%-6d %s %s Rtol %g Atol %g"), pVectorBegin->nErrorHits,
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, 
+					fmt::format(_T("{:<6} {} {} Rtol {} Atol {}"), 
+								   pVectorBegin->nErrorHits,
 								   pVectorBegin->pDevice->GetVerbalName(),
 								   pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
 								   pVectorBegin->Rtol,
-								   pVectorBegin->Atol);
+								   pVectorBegin->Atol)
+		   );
 		ppSortOrder++;
 		nCount--;
 	}
@@ -544,7 +529,7 @@ void CDynaModel::DumpStateVector()
 {
 	FILE *fdump(nullptr);
 	setlocale(LC_ALL, "ru-ru");
-	if (!_tfopen_s(&fdump, Cex(_T("c:\\tmp\\statevector_%d.csv"), sc.nStepsCount), _T("w+, ccs=UTF-8")))
+	if (!_tfopen_s(&fdump, fmt::format(_T("c:\\tmp\\statevector_{}.csv"), sc.nStepsCount).c_str(), _T("w+, ccs=UTF-8")))
 	{
 		_ftprintf(fdump, _T("Value;db;Device;N0;N1;N2;Error;WError;Atol;Rtol;EqType;SN0;SN1;SN2;SavError;Tminus2Val;PhysEqType;PrimBlockType;ErrorHits\n"));
 		for (RightVector *pRv = pRightVector; pRv < pRightVector + klu.MatrixSize(); pRv++)
@@ -589,7 +574,8 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 	Methodl[3][3] = 1.0 / fabs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
 	sc.RefactorMatrix();
 	Computehl0();
-	Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(DFW2::CDFW2Messages::m_cszAdamsDamping, bEnable ? DFW2::CDFW2Messages::m_cszOn: DFW2::CDFW2Messages::m_cszOff));
+	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping, 
+														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
 }
 
 

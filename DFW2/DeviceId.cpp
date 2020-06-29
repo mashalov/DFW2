@@ -25,13 +25,13 @@ void CDeviceId::UpdateVerbalName()
 {
 	// если имя не пустое, формируется подробное имя в формате Id - [Имя]
 	// если имя пустое - просто Id
-	m_strVerbalName = static_cast<const _TCHAR*>(m_strName.length() ? Cex(_T("%d-[%s]"), m_Id, m_strName.c_str()) : Cex(_T("%d"), m_Id));
+	m_strVerbalName = (m_strName.length() ? fmt::format(_T("{}-[{}]"), m_Id, m_strName.c_str()) : fmt::format(_T("{}"), m_Id));
 }
 
-void CDeviceId::SetName(const _TCHAR* cszName)
+void CDeviceId::SetName(std::wstring_view Name)
 {
 	// при изменении имени перестраиваем подробное имя
-	m_strName = cszName;
+	m_strName = Name;
 	UpdateVerbalName();
 }
 

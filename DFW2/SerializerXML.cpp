@@ -15,7 +15,7 @@ void CSerializerXML::CreateNewSerialization()
 void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, const _TCHAR* cszName)
 {
 	if (!m_TypeMap.insert(std::make_pair(nType, cszName)).second)
-		throw dfw2error(Cex(_T("CSerializerXML::AddDeviceTypeDescription - duplicate device type %d"), nType));
+		throw dfw2error(fmt::format(_T("CSerializerXML::AddDeviceTypeDescription - duplicate device type {}"), nType));
 }
 
 void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
@@ -128,7 +128,7 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 			spXMLValue->setAttribute(CSerializerBase::m_cszV, mv.Value.Adapter->GetString().c_str());
 				break;
 		default:
-			throw dfw2error(Cex(_T("CSerializerXML::SerializeClass wrong serializer type %d"), mv.Value.ValueType));
+			throw dfw2error(fmt::format(_T("CSerializerXML::SerializeClass wrong serializer type {}"), mv.Value.ValueType));
 		}
 	}
 

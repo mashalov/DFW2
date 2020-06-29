@@ -916,40 +916,40 @@ const _TCHAR* CExpressionParser::GetErrorDescription(CExpressionToken *pToken)
 			switch (pToken->GetType())
 			{
 			case ETT_ERROR_WRONGSYMBOL:
-				m_szErrorDescription = Cex(_T("Неверный символ %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
+				m_szErrorDescription = fmt::format(_T("Неверный символ {}{}{}"), GetText(pToken), cszAtPosition, pToken->TextBegin());
 				break;
 			case ETT_ERROR_WRONGNUMBER:
-				m_szErrorDescription = Cex(_T("Неверный формат числа %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
+				m_szErrorDescription = fmt::format(_T("Неверный формат числа {}{}{}"), GetText(pToken), cszAtPosition, pToken->TextBegin());
 				break;
 			case ETT_ERROR_UNKNOWNFUNCTION:
-				m_szErrorDescription = Cex(_T("Неизвестная функция %s%s%d"), GetText(pToken), cszAtPosition, pToken->TextBegin());
+				m_szErrorDescription = fmt::format(_T("Неизвестная функция {}{}{}"), GetText(pToken), cszAtPosition, pToken->TextBegin());
 				break;
 			case ETT_ERROR_STACKERROR:
-				m_szErrorDescription = Cex(_T("Ошибка стека%s%d"),cszAtPosition,pToken->TextBegin());
+				m_szErrorDescription = fmt::format(_T("Ошибка стека{}{}"),cszAtPosition,pToken->TextBegin());
 				break;
 			case ETT_ERROR_WRONGNUMBEROFARGS:
-				m_szErrorDescription = Cex(_T("Неверное число аргументов %s%s%d"),GetText(pToken),cszAtPosition,pToken->TextBegin());
+				m_szErrorDescription = fmt::format(_T("Неверное число аргументов {}{}{}"),GetText(pToken),cszAtPosition,pToken->TextBegin());
 				break;
 			case ETT_ERROR_NOLEFTPARENTHESIS:
-				m_szErrorDescription = Cex(_T("Нет левой скобки %s%d"), cszAtPosition,pToken->TextBegin());
+				m_szErrorDescription = fmt::format(_T("Нет левой скобки {}{}"), cszAtPosition,pToken->TextBegin());
 				break;
 			case ETT_ERROR_NORIGHTPARENTHESIS:
-				m_szErrorDescription = Cex(_T("Нет правой скобки %s%d"),cszAtPosition,pToken->TextBegin());
+				m_szErrorDescription = fmt::format(_T("Нет правой скобки {}{}"),cszAtPosition,pToken->TextBegin());
 				break;
 			case ETT_ERROR_DIVISIONBYZERO:
-				m_szErrorDescription = Cex(_T("Деление на ноль"));
+				m_szErrorDescription = fmt::format(_T("Деление на ноль"));
 				break;
 			case ETT_ERROR_NEGATIVEROOT:
-				m_szErrorDescription = Cex(_T("Дробная степень отрицательного числа"));
+				m_szErrorDescription = fmt::format(_T("Дробная степень отрицательного числа"));
 				break;
 			case ETT_ERROR_NEGATIVELOG:
-				m_szErrorDescription = Cex(_T("Логарифм из отрицательного числа"));
+				m_szErrorDescription = fmt::format(_T("Логарифм из отрицательного числа"));
 				break;
 			case ETT_ERROR_WRONGARG:
-				m_szErrorDescription = Cex(_T("Аргумент вне допустимого диапазона"));
+				m_szErrorDescription = fmt::format(_T("Аргумент вне допустимого диапазона"));
 				break;
 			case ETT_ERROR_WRONGRANGE:
-				m_szErrorDescription = Cex(_T("Неправильный диапазон"));
+				m_szErrorDescription = fmt::format(_T("Неправильный диапазон"));
 				break;
 			}
 		}

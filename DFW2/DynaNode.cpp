@@ -959,7 +959,7 @@ bool CDynaNodeContainer::LULF()
 
 		if (fabs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
 		{
-			Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
+			Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
 			break;
 		}
 	}
@@ -1036,7 +1036,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s выше порогового"), V.Value, GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Напряжение {} в узле {} выше порогового"), V.Value, GetVerbalName()));
 		}
 	}
 	else
@@ -1045,7 +1045,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("Напряжение %g в узле %s ниже порогового"), V.Value, GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Напряжение {} в узле {} ниже порогового"), V.Value, GetVerbalName()));
 		}
 	}
 }

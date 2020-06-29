@@ -116,10 +116,10 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 		if (!m_nGetProcAddresFailureCount)
 			m_bConnected = true;
 		else
-			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLFuncMissing, cszDLLFilePath));
+			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLFuncMissing, cszDLLFilePath));
 	}
 	else
-		m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLLoadFailed, cszDLLFilePath));
+		m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format (CDFW2Messages::m_cszDLLLoadFailed, cszDLLFilePath));
 
 	if (m_bConnected)
 	{
@@ -160,7 +160,7 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 							}
 							else
 							{
-								m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszPrimitiveExternalOutput, cszDLLFilePath, m_BlockDescriptions[nIndex].Name));
+								m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszPrimitiveExternalOutput, cszDLLFilePath, m_BlockDescriptions[nIndex].Name));
 								m_bConnected = false;
 							}
 						}
@@ -285,7 +285,7 @@ bool CCustomDeviceDLL::Init(const _TCHAR *cszDLLFilePath)
 			m_pDeviceContainer->m_ContainerProps.SetClassName((m_pFnGetDeviceTypeName)(), _T(""));
 		
 		if (!m_bConnected)
-			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, cszDLLFilePath));
+			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, cszDLLFilePath));
 	}
 
 	if (!m_bConnected)
@@ -405,10 +405,10 @@ void CCustomDeviceCPPDLL::Init(const _TCHAR* cszDLLFilePath)
 	// загружаем dll
 	m_hDLL = LoadLibrary(cszDLLFilePath);
 	if (!m_hDLL)
-		throw dfw2error(Cex(_T("CCustomDeviceCPPDLL::Init - failed to load %s"), cszDLLFilePath));
+		throw dfw2error(fmt::format(_T("CCustomDeviceCPPDLL::Init - failed to load {}"), cszDLLFilePath));
 	m_pfnFactory = reinterpret_cast<CustomDeviceFactory>(::GetProcAddress(m_hDLL, "CustomDeviceFactory"));
 	if (!m_hDLL)
-		throw dfw2error(Cex(_T("CCustomDeviceCPPDLL::Init - to extract Device factory from load %s"), cszDLLFilePath));
+		throw dfw2error(fmt::format(_T("CCustomDeviceCPPDLL::Init - to extract Device factory from load {}"), cszDLLFilePath));
 	m_strModulePath = cszDLLFilePath;
 };
 
