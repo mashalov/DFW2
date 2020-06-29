@@ -6,17 +6,18 @@ namespace DFW2
 	class CComparator : public CDynaPrimitiveBinaryOutput
 	{
 	protected:
-		PrimitiveVariableBase *m_Input2;
+		InputVariable m_Input1;
 
-		virtual double OnStateOn(CDynaModel *pDynaModel);
-		virtual double OnStateOff(CDynaModel *pDynaModel);
+		double OnStateOn(CDynaModel *pDynaModel) override;
+		double OnStateOff(CDynaModel *pDynaModel) override;
 
 	public:
-		CComparator(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2);
+		CComparator(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinaryOutput(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) { }
 		virtual ~CComparator() {}
-		virtual bool Init(CDynaModel *pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
 //		virtual const _TCHAR* GetVerbalName() { return _T(""); }
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static size_t PrimitiveSize() { return sizeof(CComparator); }
 		static long EquationsCount()  { return 1; }
 	};

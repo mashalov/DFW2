@@ -1,16 +1,18 @@
-#pragma once
+﻿#pragma once
 #include "AutoCompilerMessages.h"
 #include "ExpressionParser.h"
 #include "CompilerLogger.h"
 #include "DLLOutput.h"
 
+
+// ссылка на элемент модели
 class CCompilerModelLink
 {
 protected:
-	ptrdiff_t m_eType;
-	wstring m_strObjClass;
-	wstring m_strObjKey;
-	wstring m_strObjProp;
+	ptrdiff_t m_eType;			// тип ссылки
+	std::wstring m_strObjClass;	// наименование класса
+	std::wstring m_strObjKey;	// ключ, если сложный то разделенный запятыми
+	std::wstring m_strObjProp;	// имя параметра
 public:
 	CCompilerModelLink(ptrdiff_t eType, const _TCHAR *cszObjClass, const _TCHAR *cszObjKey, const _TCHAR *cszObjProp) :
 		m_eType(eType),
@@ -22,18 +24,18 @@ public:
 		stringutils::trim(m_strObjKey);
 		stringutils::trim(m_strObjProp);
 	}
-
-	wstring ToString() const
+	// разворачивает ссылку в строчное представление вида "Класс[Ключ1,...,КлючN].Параметр"
+	std::wstring ToString() const
 	{
-		return wstring(Cex(_T("%s[%s].%s"), m_strObjClass.c_str(), m_strObjKey.c_str(), m_strObjProp.c_str()));
+		return fmt::format(_T("{}[{}].{}"), m_strObjClass.c_str(), m_strObjKey.c_str(), m_strObjProp.c_str());
 	}
 };
 
-typedef list<CCompilerEquation*> EQUATIONSLIST;
+typedef std::list<CCompilerEquation*> EQUATIONSLIST;
 typedef EQUATIONSLIST::iterator EQUATIONSITR;
 typedef EQUATIONSLIST::const_iterator EQUATIONSCONSTITR;
 
-typedef map<wstring, VariableEnum*> COMPILERVARS;
+typedef std::map<std::wstring, VariableEnum*> COMPILERVARS;
 typedef COMPILERVARS::iterator COMPILERVARSITR;
 typedef COMPILERVARS::const_iterator COMPILERVARSCONSTITR;
 
@@ -63,7 +65,7 @@ public:
 	bool AddExternalVariable(const _TCHAR* cszVarName, VariableEnum *pVarEnum);
 	bool AddSetPoint(const _TCHAR* cszVarName, VariableEnum *pVarEnum);
 	bool AddConst(const _TCHAR* cszVarName, VariableEnum *pVarEnum);
-	bool GetDerivative(CExpressionToken *pToken, CExpressionToken *pTokenBy, wstring& Diff, wstring& StrCol, bool& bExternalGuard) const;
+	bool GetDerivative(CExpressionToken *pToken, CExpressionToken *pTokenBy, std::wstring& Diff, std::wstring& StrCol, bool& bExternalGuard) const;
 	bool FindEquationInList(EQUATIONSLIST& NewList, const CCompilerEquation *pEquation);
 	long GetBlockIndex(const CExpressionToken *pToken) const;
 	virtual ~CCompilerEquations();
@@ -100,7 +102,7 @@ class CCompilerItem
 protected:
 	CCompiler& m_Compiler;
 public:
-	CCompilerItem(CCompiler& Compiler) : m_Compiler(Compiler), m_pParser(NULL) {}
+	CCompilerItem(CCompiler& Compiler) : m_Compiler(Compiler), m_pParser(nullptr) {}
 	virtual ~CCompilerItem();
 	CExpressionParserRules *m_pParser;
 	VariableEnum* CreateInternalVariable(const _TCHAR* cszVarName);

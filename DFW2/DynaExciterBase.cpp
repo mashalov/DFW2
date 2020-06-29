@@ -1,61 +1,63 @@
-п»ї#include "stdafx.h"
+#include "stdafx.h"
 #include "DynaExciterBase.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
 
 CDynaExciterBase::CDynaExciterBase() : CDevice(),
-									   PvEqsum(V_EQSUM,Eqsum),
-									   ExcLag(this, &EqeV, V_EQEV, &PvEqsum)
+									   ExcLag(*this, EqeV, { Eqsum })
 {
-	ExtUf.Value(&Uexc);
-	ExtUdec.Value(&Udec);
-	ExtVg.Value(&Ug0);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status(eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 	double Eqnom;
 	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_1C);
 	if (!InitConstantVariable(Eqnom, pGen, CDynaGenerator1C::m_cszEqnom, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqe0, pGen, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
-		Status = DFS_FAILED;
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		bool bRes = true;
 		Ig0 = GetIg();
-		Ug0 = ExtVg.Value(); 
+		Ug0 = ExtVg; 
 		Eqe = Eqe0; 
-		Eq0 = EqInput.Value(); 
-		EqeV = Eqsum = Eqe0;
+		Eq0 = EqInput; 
+		(VariableIndex&)ExcLag = Eqsum = Eqe0;
 		Umin *= Eqnom;
 		Umax *= Eqnom;
-		Uexc = 0.0;
-		Udec = 0.0;
-		Status = bRes ? DFS_OK : DFS_FAILED;
+		ExtUf = 0.0;
+		ExtUdec = 0.0;
+		Status = bRes ? eDEVICEFUNCTIONSTATUS::DFS_OK : eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 	return Status;
 }
 
 double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(Eqe, V_EQE)
-		MAP_VARIABLE(EqeV, V_EQEV)
-		MAP_VARIABLE(Eqsum, V_EQSUM)
+		MAP_VARIABLE(Eqe.Value, V_EQE)
+		MAP_VARIABLE(EqeV.Value, V_EQEV)
+		MAP_VARIABLE(Eqsum.Value, V_EQSUM)
 	}
 	return p;
 }
 
+VariableIndexRefVec& CDynaExciterBase::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	// ExcLag добавляется автоматически в JoinVariables
+	return CDevice::GetVariables(JoinVariables({Eqe, Eqsum, EqeV}, ChildVec));
+}
+
 double CDynaExciterBase::GetIg()
 {
-	return sqrt(GenId.Value() * GenId.Value() + GenIq.Value() * GenIq.Value());
+	return sqrt(GenId * GenId + GenIq * GenIq);
 }
 
 void CDynaExciterBase::SetLagTimeConstantRatio(double TexcNew)
@@ -66,7 +68,7 @@ void CDynaExciterBase::SetLagTimeConstantRatio(double TexcNew)
 
 double* CDynaExciterBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = NULL;
+	double *p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(RegId, C_REGID)
@@ -82,12 +84,8 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::UpdateExternalVariables(CDynaModel *pDyn
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(GenIq, pGen, CDynaGenerator1C::m_cszIq, DEVTYPE_GEN_1C));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVg, pGen, CDynaNodeBase::m_cszV, DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGenerator1C::m_cszEq));
-	CDevice *pReg = GetSingleLink(DEVTYPE_EXCCON);
-	CDevice *pDEC = GetSingleLink(DEVTYPE_DEC);
-	if (pReg)
-		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, pReg, CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG));
-	if (pDEC)
-		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, pDEC, CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, GetSingleLink(DEVTYPE_EXCCON), CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, GetSingleLink(DEVTYPE_DEC), CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG));
 	return eRes;
 }
 
@@ -103,8 +101,8 @@ const CDeviceContainerProperties CDynaExciterBase::DeviceProperties()
 	
 	props.nEquationsCount = CDynaExciterBase::VARS::V_LAST;
 
-	props.m_ConstVarMap.insert(make_pair(CDynaExciterBase::m_cszExcConId, CConstVarIndex(CDynaExciterBase::C_REGID, eDVT_CONSTSOURCE)));
-	props.m_ConstVarMap.insert(make_pair(CDynaExciterBase::m_cszDECId, CConstVarIndex(CDynaExciterBase::C_DECID, eDVT_CONSTSOURCE)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaExciterBase::m_cszExcConId, CConstVarIndex(CDynaExciterBase::C_REGID, eDVT_CONSTSOURCE)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaExciterBase::m_cszDECId, CConstVarIndex(CDynaExciterBase::C_DECID, eDVT_CONSTSOURCE)));
 
 	return props;
 }

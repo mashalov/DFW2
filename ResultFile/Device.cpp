@@ -93,7 +93,7 @@ STDMETHODIMP CDevice::get_Children(VARIANT* Children)
 				{
 					for (int i = 0; i < pDevTypeInfo->DevicesCount; i++)
 					{
-						CResultFileReader::DeviceInstanceInfo *pDevInfo = pDevTypeInfo->m_pDeviceInstances + i;
+						CResultFileReader::DeviceInstanceInfo *pDevInfo = pDevTypeInfo->m_pDeviceInstances.get() + i;
 
 						for (int p = 0; p < nParentsCount; p++)
 						{
@@ -112,7 +112,7 @@ STDMETHODIMP CDevice::get_Children(VARIANT* Children)
 									CComObject<CDevice> *pDevice;
 									if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
 									{
-										pDevice->SetDeviceInfo((*it)->m_pDeviceInstances + i);
+										pDevice->SetDeviceInfo((*it)->m_pDeviceInstances.get() + i);
 										pDevice->AddRef();
 										pChildrenCollection->Add(pDevice);
 									}
@@ -154,7 +154,7 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 						CComObject<CDevice> *pDevice;
 						if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
 						{
-							pDevice->SetDeviceInfo(pDevType->m_pDeviceInstances + i);
+							pDevice->SetDeviceInfo(pDevType->m_pDeviceInstances.get() + i);
 							pDevice->AddRef();
 							pChildrenCollection->Add(pDevice);
 						}
@@ -164,7 +164,7 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 				{
 					for (int i = 0; i < pDevType->DevicesCount; i++)
 					{
-						CResultFileReader::DeviceInstanceInfo *pInst = pDevType->m_pDeviceInstances + i;
+						CResultFileReader::DeviceInstanceInfo *pInst = pDevType->m_pDeviceInstances.get() + i;
 						const CResultFileReader::DeviceLinkToParent *pLink = pInst->GetParent(0);
 						if(pLink && pLink->m_eParentType == 0 && pLink->m_nId == 0)
 						{

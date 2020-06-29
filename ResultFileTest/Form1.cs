@@ -47,9 +47,9 @@ namespace ResultFileTest
                     rastrChart.ZoomExtents();
                 }
             }
-            catch(Exception)
+            catch(Exception ex)
             {
-
+                System.Windows.MessageBox.Show(ex.Message,"Ошибка",System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Exclamation);
             }
         }
 

@@ -4,14 +4,14 @@
 class CHRTimer
 {
 public:
-	CHRTimer(const char *szName = NULL, bool bNoAuto = false)
+	CHRTimer(const char *szName = nullptr, bool bNoAuto = false)
 	{
 		QueryPerformanceFrequency(&liFreq);
 		m_Seconds = -1;
 		if (szName)
 			m_szName = _strdup(szName);
 		else
-			m_szName = NULL;
+			m_szName = nullptr;
 
 		if (!bNoAuto)
 			StartTimer();

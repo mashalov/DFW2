@@ -4,16 +4,14 @@
 
 namespace DFW2
 {
-	using namespace std;
-
 	class CFileException : public CDFW2GetLastErrorException
 	{
 	public:
-		CFileException(const _TCHAR *cszMessage, FILE *pFile) : CDFW2GetLastErrorException(cszMessage)
+		CFileException(std::wstring_view Description, FILE *pFile) : CDFW2GetLastErrorException(Description)
 		{
 			if (pFile)
 			{
-				m_strMessage += Cex(CDFW2Messages::m_cszFilePostion, _ftelli64(pFile));
+				m_strMessage += fmt::format(CDFW2Messages::m_cszFilePostion, _ftelli64(pFile));
 			}
 		}
 	};
@@ -22,15 +20,15 @@ namespace DFW2
 	{
 	public:
 		CFileReadException(FILE *pFile) : CFileException(CDFW2Messages::m_cszFileReadError, pFile) {}
-		CFileReadException(FILE *pFile, const _TCHAR* cszDescription) : 
-			CFileException(Cex(_T("%s %s"), CDFW2Messages::m_cszFileReadError, cszDescription), pFile) {}
+		CFileReadException(FILE *pFile, std::wstring_view Description) : 
+			CFileException(fmt::format(_T("{} {}"), CDFW2Messages::m_cszFileReadError, Description), pFile) {}
 	};
 
 	class CFileWriteException : public CFileException
 	{
 	public:
 		CFileWriteException(FILE *pFile) : CFileException(CDFW2Messages::m_cszFileWriteError, pFile) {}
-		CFileWriteException(FILE *pFile, const _TCHAR* cszDescription) :
-			CFileException(Cex(_T("%s %s"), CDFW2Messages::m_cszFileWriteError, cszDescription), pFile) {}
+		CFileWriteException(FILE *pFile, std::wstring_view Description) :
+			CFileException(fmt::format(_T("{} {}"), CDFW2Messages::m_cszFileWriteError, Description), pFile) {}
 	};
 }

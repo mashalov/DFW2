@@ -1,35 +1,25 @@
 ﻿#pragma once
-#include "DynaGeneratorMustang.h"
-#include "DynaGeneratorInfBus.h"
-#include "DynaExciterMustang.h"
-#include "DynaDECMustang.h"
-#include "DynaExcConMustang.h"
-#include "DynaBranch.h"
 #include "Discontinuities.h"
 #include "CustomDevice.h"
 #include "Automatic.h"
-#include "klu.h"
-#include "klu_version.h"
-#include "cs.h"
+#include "KLUWrapper.h"
 #include "Results.h"
 #include "chrono"
+#include "SerializerXML.h"
 
+//#define USE_FMA
 namespace DFW2
 {
 	class CDynaModel
 	{
+		friend class CCustomDevice;
 	protected:
 		struct MatrixRow
 		{
-			ptrdiff_t m_nColsCount;
+			ptrdiff_t m_nColsCount = 0;
 			double *pAxRow , *pAx;
 			ptrdiff_t *pApRow, *pAp;
-
-			MatrixRow() : m_nColsCount(NULL) 
-			{
-
-			};
-
+			ptrdiff_t m_nConstElementsToSkip;
 			inline void Reset() 
 			{ 
 				pAx = pAxRow; 
@@ -42,13 +32,13 @@ namespace DFW2
 		struct ConvergenceTest
 		{
 			ptrdiff_t nVarsCount;
-			double dErrorSum;
+			volatile double dErrorSum;
 			double dOldErrorSum;
 			double dCm;
 			double dCms;
 			double dOldCm;
 			double dErrorSums;
-			double dKahanC;
+			volatile double dKahanC;
 
 			void Reset()
 			{
@@ -92,26 +82,48 @@ namespace DFW2
 				dOldCm = dCm;
 			}
 
-			inline void AddErrorKahan(double dError)
+			void AddErrorNeumaier(double dError)
 			{
-				double y = dError - dKahanC;
-				double t = dErrorSum + y;
+				volatile double t = dErrorSum + dError;
+				if (fabs(dErrorSum) >= fabs(dError))
+					dKahanC += (dErrorSum - t) + dError;
+				else
+					dKahanC += (dError - t) + dErrorSum;
+				dErrorSum = t;
+			}
+
+			void AddErrorKahan(double dError)
+			{
+				volatile double y = dError - dKahanC;
+				volatile double t = dErrorSum + y;
 				dKahanC = (t - dErrorSum) - y;
 				dErrorSum = t;
 			}
 
-			inline void AddErrorStraight(double dError)
+			void AddErrorStraight(double dError)
 			{
 				dErrorSum += dError;
-				nVarsCount++;
 			}
 
-			inline void AddError(double dError)
+			void AddError(double dError);
+			void FinalizeSum();
+
+
+			// обработка диапазона тестов сходимости в массиве
+
+			typedef ConvergenceTest ConvergenceTestVec[2];
+
+			static void ProcessRange(ConvergenceTestVec &Range, void(*ProcFunc)(ConvergenceTest& ct))
 			{
-				AddErrorKahan(dError);
-				nVarsCount++;
-				//AddErrorStraight(dError);
+				for (auto&& it : Range) ProcFunc(it);
 			}
+
+			static void Reset(ConvergenceTest& ct) { ct.Reset(); }
+			static void GetConvergenceRatio(ConvergenceTest& ct) { ct.GetConvergenceRatio(); }
+			static void NextIteration(ConvergenceTest& ct) { ct.NextIteration(); }
+			static void FinalizeSum(ConvergenceTest& ct) { ct.FinalizeSum(); }
+			static void GetRMS(ConvergenceTest& ct) { ct.GetRMS(); }
+			static void ResetIterations(ConvergenceTest& ct) { ct.ResetIterations(); }
 		};
 
 		struct StepError
@@ -123,8 +135,8 @@ namespace DFW2
 
 			void Reset()
 			{
-				pMaxErrorDevice = NULL;
-				pMaxErrorVariable = NULL;
+				pMaxErrorDevice = nullptr;
+				pMaxErrorVariable = nullptr;
 				dMaxErrorVariable = 0.0;
 				nMaxErrorVariableEquation = -1;
 			}
@@ -147,101 +159,75 @@ namespace DFW2
 			} 
 			IterationMode;
 
-			struct OrderStatistics
+			struct _OrderStatistics
 			{
-				ptrdiff_t nSteps;
-				ptrdiff_t nFailures;
-				ptrdiff_t nNewtonFailures;
-				double dTimePassed;
-
-				OrderStatistics() : nSteps(0),
-									nFailures(0),
-									nNewtonFailures(0),
-									dTimePassed(0.0) 
-									{ }
+				ptrdiff_t nSteps = 0;
+				ptrdiff_t nFailures = 0;
+				ptrdiff_t nNewtonFailures = 0;
+				ptrdiff_t nZeroCrossingsSteps = 0;
+				double dTimePassed = 0.0;
+				double dTimePassedKahan = 0.0;
 			};
 
-
-			bool m_bRefactorMatrix;
+			bool m_bRefactorMatrix = false;
+			bool m_bFillConstantElements;
 			bool m_bNewtonConverged;
 			bool m_bNordsiekSaved;
 			bool m_bNewtonDisconverging;
 			bool m_bNewtonStepControl;
-			bool m_bDiscontinuityMode;
-			bool m_bZeroCrossingMode;
+			bool m_bDiscontinuityMode = false;
+			bool m_bZeroCrossingMode = false;
 			bool m_bRetryStep;
-			bool m_bStopCommandReceived;
-			bool m_bProcessTopology;
+			bool m_bStopCommandReceived = false;
+			bool m_bProcessTopology = false;
 			bool m_bDiscontinuityRequest;
-			bool m_bEnforceOut;
-			bool m_bBeforeDiscontinuityWritten;						// флаг обработки момента времени до разрыва
+			bool m_bEnforceOut = false;
+			bool m_bBeforeDiscontinuityWritten = false;				// флаг обработки момента времени до разрыва
 			double dFilteredStep;
 			double dFilteredOrder;
 			double dFilteredStepInner;								// фильтр минимального шага на серии шагов
 			double dFilteredOrderInner;
-			double dRateGrowLimit;
+			double dRateGrowLimit = FLT_MAX;
 			ptrdiff_t nStepsCount;
-			ptrdiff_t nNewtonIterationsCount;
-			ptrdiff_t nFactorizationsCount;
-			ptrdiff_t nAnalyzingsCount;
-			double dMaxConditionNumber;
-			double dMaxConditionNumberTime;
-			OrderStatistics OrderStatistics[2];
-			ptrdiff_t nDiscontinuityNewtonFailures;
-			ptrdiff_t nMinimumStepFailures;
+			ptrdiff_t nNewtonIterationsCount = 0;
+			double dMaxConditionNumber = 0.0;
+			double dMaxConditionNumberTime = 0.0;
+			_OrderStatistics OrderStatistics[2];
+			ptrdiff_t nDiscontinuityNewtonFailures = 0;
+			ptrdiff_t nMinimumStepFailures = 0;
 			double m_dCurrentH;
-			double m_dOldH;
+			double m_dOldH = -1.0;
 			double m_dStoredH;
 			ptrdiff_t q;
-			double t;
-			double t0;
-			double KahanC;
-			ptrdiff_t nStepsToStepChangeParameter;
-			ptrdiff_t nStepsToOrderChangeParameter;
-			ptrdiff_t nStepsToFailParameter;
+			double t = 0.0;
+			double t0 = 0.0;
+			// volatile нужен для гарантии корректного учета суммы кэхэна в расчете времени
+			// но он же не дает мешает сериалиазации, поэтому временно убран. Проверить, как влияет
+			// наличие или отсутствие volatile на расчет
+			/*volatile */double KahanC = 0.0;
+			ptrdiff_t nStepsToStepChangeParameter = 4;
+			ptrdiff_t nStepsToOrderChangeParameter = 4;
+			ptrdiff_t nStepsToFailParameter = 1;
 			ptrdiff_t nStepsToStepChange;
 			ptrdiff_t nStepsToOrderChange;
 			ptrdiff_t nStepsToFail;
-			ptrdiff_t nSuccessfullStepsOfNewton;
-			ptrdiff_t nStepsToEndRateGrow;
+			ptrdiff_t nSuccessfullStepsOfNewton = 0;
+			ptrdiff_t nStepsToEndRateGrow = 0;
 			ptrdiff_t nNewtonIteration;
 			double dRightHandNorm;
-			chrono::time_point<chrono::high_resolution_clock> m_ClockStart;
-
-			double Hmin;
+			std::chrono::time_point<std::chrono::high_resolution_clock> m_ClockStart;
+			bool bAdamsDampingEnabled = false;
+			ptrdiff_t nNoRingingSteps = 0;
+			double Hmin = 1E-8;
 
 			StepError Newton;
 			StepError Integrator;
 			double m_dLastRefactorH;
+			bool bRingingDetected = false;
 
 			StepControl()
 			{
-				dRateGrowLimit = FLT_MAX;
-				m_bProcessTopology = false;
-				m_bDiscontinuityRequest = false;
-				m_bStopCommandReceived = false;
-				nStepsToOrderChangeParameter = 4;
-				nStepsToStepChangeParameter = 4;
-				nStepsToFailParameter = 1;
-				m_bDiscontinuityMode = false;
-				m_bZeroCrossingMode = false;
-				m_bRefactorMatrix = true;
-				m_bBeforeDiscontinuityWritten = false;
-				m_dOldH = -1.0;
-				t = 0.0;
-				KahanC = 0.0;
-				Hmin = 1E-8;
-				nSuccessfullStepsOfNewton = 0;
-				nStepsToEndRateGrow = 0;
-				m_bEnforceOut = false;
-				nNewtonIterationsCount = 0;
-				nFactorizationsCount = 0;
-				nAnalyzingsCount = 0;
-				nDiscontinuityNewtonFailures = 0;
-				nMinimumStepFailures = 0;
-				dMaxConditionNumber = 0;
-				dMaxConditionNumberTime = 0;
-				m_ClockStart = chrono::high_resolution_clock::now();
+				m_ClockStart = std::chrono::high_resolution_clock::now();
 			}
 
 			// Устанавливаем относительный лимит изменения шага на заданное количество шагов
@@ -288,6 +274,11 @@ namespace DFW2
 				m_bRefactorMatrix = bRefactor;
 			}
 
+			void UpdateConstElements(bool bUpdate = true)
+			{
+				m_bFillConstantElements = bUpdate;
+			}
+
 			inline double CurrentTimePlusStep()
 			{
 				//return t + m_dCurrentH;
@@ -300,12 +291,20 @@ namespace DFW2
 				// математически функция выполняет t = t0 + m_dCurrentH;
 
 				// но мы используем Kahan summation для устранения накопленной ошибки
-				double ky = m_dCurrentH - KahanC;
-				double temp = t0 + ky;
+				volatile double ky = m_dCurrentH - KahanC;
+				volatile double temp = t0 + ky;
 				// предополагается, что шаг не может быть отменен
 				// и поэтому сумма Кэхэна обновляется
 				KahanC = (temp - t0) - ky;
 				t = temp;
+
+				_OrderStatistics& os = OrderStatistics[q - 1];
+				ky = m_dCurrentH - os.dTimePassedKahan;
+				temp = os.dTimePassed + ky;
+				os.dTimePassedKahan = (temp - os.dTimePassed) - ky;
+				os.dTimePassed = temp;
+
+				_ASSERTE(fabs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t) < DFW2_EPSILON);
 			}
 
 			// рассчитывает текущее время перед выполнением шага, с возможностью возврата
@@ -326,166 +325,265 @@ namespace DFW2
 				t0 = t;
 			}
 
+			void UpdateSerializer(SerializerPtr& Serializer)
+			{
+				Serializer->SetClassName(_T("StepControl"));
+				Serializer->AddProperty(_T("RefactorMatrix"), m_bRefactorMatrix);
+				Serializer->AddProperty(_T("FillConstantElements"), m_bFillConstantElements);
+				Serializer->AddProperty(_T("NewtonConverged"), m_bNewtonConverged);
+				Serializer->AddProperty(_T("NordsiekSaved"), m_bNordsiekSaved);
+				Serializer->AddProperty(_T("NewtonDisconverging"), m_bNewtonDisconverging);
+				Serializer->AddProperty(_T("NewtonStepControl"), m_bNewtonStepControl);
+				Serializer->AddProperty(_T("DiscontinuityMode"), m_bDiscontinuityMode);
+				Serializer->AddProperty(_T("ZeroCrossingMode"), m_bZeroCrossingMode);
+				Serializer->AddProperty(_T("RetryStep"), m_bRetryStep);
+				Serializer->AddProperty(_T("ProcessTopology"), m_bProcessTopology);
+				Serializer->AddProperty(_T("DiscontinuityRequest"), m_bDiscontinuityRequest);
+				Serializer->AddProperty(_T("EnforceOut"), m_bEnforceOut);
+				Serializer->AddProperty(_T("BeforeDiscontinuityWritten"), m_bBeforeDiscontinuityWritten);
+				Serializer->AddProperty(_T("FilteredStep"), dFilteredStep);
+				Serializer->AddProperty(_T("FilteredOrder"), dFilteredOrder);
+				Serializer->AddProperty(_T("FilteredStepInner"), dFilteredStepInner);
+				Serializer->AddProperty(_T("FilteredOrderInner"), dFilteredOrderInner);
+				Serializer->AddProperty(_T("RateGrowLimit"), dRateGrowLimit);
+				Serializer->AddProperty(_T("StepsCount"), nStepsCount);
+				Serializer->AddProperty(_T("NewtonIterationsCount"), nNewtonIterationsCount);
+				Serializer->AddProperty(_T("MaxConditionNumber"), dMaxConditionNumber);
+				Serializer->AddProperty(_T("MaxConditionNumberTime"), dMaxConditionNumberTime);
+				Serializer->AddProperty(_T("DiscontinuityNewtonFailures"), nDiscontinuityNewtonFailures);
+				Serializer->AddProperty(_T("MinimumStepFailures"), nMinimumStepFailures);
+				Serializer->AddProperty(_T("CurrentH"), m_dCurrentH);
+				Serializer->AddProperty(_T("OldH"), m_dOldH);
+				Serializer->AddProperty(_T("StoredH"), m_dStoredH);
+				Serializer->AddProperty(_T("q"), q);
+				Serializer->AddProperty(_T("t"), t);
+				//Serializer->AddProperty(_T("KahanC"), KahanC);
+				Serializer->AddProperty(_T("t0"), t0);
+				Serializer->AddProperty(_T("StepsToStepChangeParameter"), nStepsToStepChangeParameter);
+				Serializer->AddProperty(_T("StepsToOrderChangeParameter"), nStepsToOrderChangeParameter);
+				Serializer->AddProperty(_T("StepsToFailParameter"), nStepsToFailParameter);
+				Serializer->AddProperty(_T("StepsToStepChange"), nStepsToStepChange);
+				Serializer->AddProperty(_T("StepsToOrderChange"), nStepsToOrderChange);
+				Serializer->AddProperty(_T("StepsToFail"), nStepsToFail);
+				Serializer->AddProperty(_T("SuccessfullStepsOfNewton"), nSuccessfullStepsOfNewton);
+				Serializer->AddProperty(_T("StepsToEndRateGrow"), nStepsToEndRateGrow);
+				Serializer->AddProperty(_T("NewtonIteration"), nNewtonIteration);
+				Serializer->AddProperty(_T("RightHandNorm"), dRightHandNorm);
+				Serializer->AddProperty(_T("AdamsDampingEnabled"), bAdamsDampingEnabled);
+				Serializer->AddProperty(_T("NoRingingSteps"), nNoRingingSteps);
+				Serializer->AddProperty(_T("Hmin"), Hmin);
+				Serializer->AddProperty(_T("LastRefactorH"), m_dLastRefactorH);
+				Serializer->AddProperty(_T("RingingDetected"), bRingingDetected);
 
+				Serializer->AddProperty(_T("Order0Steps"), OrderStatistics[0].nSteps);
+				Serializer->AddProperty(_T("Order0Failures"), OrderStatistics[0].nFailures);
+				Serializer->AddProperty(_T("Order0NewtonFailures"), OrderStatistics[0].nNewtonFailures);
+				Serializer->AddProperty(_T("Order0ZeroCrossingsSteps"), OrderStatistics[0].nZeroCrossingsSteps);
+				Serializer->AddProperty(_T("Order0TimePassed"), OrderStatistics[0].dTimePassed);
+				Serializer->AddProperty(_T("Order0TimePassedKahan"), OrderStatistics[0].dTimePassedKahan);
+
+				Serializer->AddProperty(_T("Order1Steps"), OrderStatistics[1].nSteps);
+				Serializer->AddProperty(_T("Order1Failures"), OrderStatistics[1].nFailures);
+				Serializer->AddProperty(_T("Order1NewtonFailures"), OrderStatistics[1].nNewtonFailures);
+				Serializer->AddProperty(_T("Order1ZeroCrossingsSteps"), OrderStatistics[1].nZeroCrossingsSteps);
+				Serializer->AddProperty(_T("Order1TimePassed"), OrderStatistics[1].dTimePassed);
+				Serializer->AddProperty(_T("Order1TimePassedKahan"), OrderStatistics[1].dTimePassedKahan);
+			}
 		};
 
 		struct Parameters
 		{
-			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType;
-			DEVICE_EQUATION_TYPE m_eDiffEquationType;
-			double m_dFrequencyTimeConstant;
-			double m_dLRCToShuntVmin;
+			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = APDT_ISLAND;
+			DEVICE_EQUATION_TYPE m_eDiffEquationType = DET_DIFFERENTIAL;
+			double m_dFrequencyTimeConstant = 0.02;
+			double m_dLRCToShuntVmin = 0.5;
 			double m_dZeroCrossingTolerance;
-			bool m_bDontCheckTolOnMinStep;
-			bool m_bConsiderDampingEquation;
-			double m_dOutStep;
-			ptrdiff_t nVarSearchStackDepth;
-			double m_dAtol;
-			double m_dRtol;
-			double m_dRefactorByHRatio;
-			bool m_bLogToConsole;
-			bool m_bLogToFile;
-			double m_dMustangDerivativeTimeConstant;
-			bool m_bAllowRingingSuppression;
-			bool m_bUseRefactor;
-			bool m_bDisableResultsWriter;
-			ptrdiff_t m_nMinimumStepFailures;
-			Parameters()
+			bool m_bDontCheckTolOnMinStep = false;
+			bool m_bConsiderDampingEquation = false;
+			double m_dOutStep = 0.01;
+			ptrdiff_t nVarSearchStackDepth = 100;
+			double m_dAtol = DFW2_ATOL_DEFAULT;
+			double m_dRtol = DFW2_RTOL_DEFAULT;
+			double m_dRefactorByHRatio = 1.5;
+			bool m_bLogToConsole = true;
+			bool m_bLogToFile = true;
+			double m_dMustangDerivativeTimeConstant = 1E-6;
+			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;				// режим подавления рингинга
+			ptrdiff_t m_nAdamsIndividualSuppressionCycles = 3;								// количество перемен знака переменной для обнаружения рингинга
+			ptrdiff_t m_nAdamsGlobalSuppressionStep = 10;									// номер шага, на кратном которому работает глобальное подавление рингинга
+			ptrdiff_t m_nAdamsIndividualSuppressStepsRange = 5;								// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
+			bool m_bUseRefactor = false;
+			bool m_bDisableResultsWriter = false;
+			ptrdiff_t m_nMinimumStepFailures = 1;
+			double m_dZeroBranchImpedance = 0.1;
+			double m_dAdamsDampingAlpha = 0.05;
+			ptrdiff_t m_nAdamsDampingSteps = 10;
+			Parameters() { }
+			void UpdateSerializer(SerializerPtr& Serializer)
 			{
-				eFreqDampingType = APDT_ISLAND;
-				m_eDiffEquationType = DET_DIFFERENTIAL;
-				m_dFrequencyTimeConstant = 0.02;
-				m_dLRCToShuntVmin = 0.5;
-				m_bDontCheckTolOnMinStep = false;
-				m_bConsiderDampingEquation = false;
-				m_dOutStep = 0.01;
-				nVarSearchStackDepth = 100;
-				m_dAtol = DFW2_ATOL_DEFAULT;
-				m_dRtol = DFW2_RTOL_DEFAULT;
-				m_dRefactorByHRatio = 6.0;
-				m_bLogToConsole = true;
-				m_bLogToFile = true;
-				m_dMustangDerivativeTimeConstant = 1E-6;
-				m_bAllowRingingSuppression = false;
-				m_bUseRefactor = false;
-				m_bDisableResultsWriter = false;
-				m_nMinimumStepFailures = 1;
+				Serializer->SetClassName(_T("Parameters"));
+				Serializer->AddProperty(_T("FrequencyTimeConstant"), m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
+				Serializer->AddProperty(_T("LRCToShuntVmin"), m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
+				Serializer->AddProperty(_T("ZeroCrossingTolerance"), m_dZeroCrossingTolerance);
+				Serializer->AddProperty(_T("DontCheckTolOnMinStep"), m_bDontCheckTolOnMinStep);
+				Serializer->AddProperty(_T("ConsiderDampingEquation"), m_bConsiderDampingEquation);
+				Serializer->AddProperty(_T("OutStep"), m_dOutStep,eVARUNITS::VARUNIT_SECONDS);
+				Serializer->AddProperty(_T("VarSearchStackDepth"), nVarSearchStackDepth);
+				Serializer->AddProperty(_T("Atol"), m_dAtol);
+				Serializer->AddProperty(_T("Rtol"), m_dRtol);
+				Serializer->AddProperty(_T("RefactorByHRatio"), m_dRefactorByHRatio);
+				Serializer->AddProperty(_T("LogToConsole"), m_bLogToConsole);
+				Serializer->AddProperty(_T("LogToFile"), m_bLogToFile);
+				Serializer->AddProperty(_T("MustangDerivativeTimeConstant"), m_dMustangDerivativeTimeConstant, eVARUNITS::VARUNIT_SECONDS);
+				Serializer->AddProperty(_T("AdamsIndividualSuppressionCycles"), m_nAdamsIndividualSuppressionCycles, eVARUNITS::VARUNIT_PIECES);
+				Serializer->AddProperty(_T("AdamsGlobalSuppressionStep"), m_nAdamsGlobalSuppressionStep, eVARUNITS::VARUNIT_PIECES);
+				Serializer->AddProperty(_T("AdamsIndividualSuppressStepsRange"), m_nAdamsIndividualSuppressStepsRange, eVARUNITS::VARUNIT_PIECES);
+				Serializer->AddProperty(_T("UseRefactor"), m_bUseRefactor);
+				Serializer->AddProperty(_T("DisableResultsWriter"), m_bDisableResultsWriter);
+				Serializer->AddProperty(_T("MinimumStepFailures"), m_nMinimumStepFailures, eVARUNITS::VARUNIT_PIECES);
+				Serializer->AddProperty(_T("ZeroBranchImpedance"), m_dZeroBranchImpedance, eVARUNITS::VARUNIT_OHM);
+				Serializer->AddProperty(_T("AdamsDampingAlpha"), m_dAdamsDampingAlpha);
+				Serializer->AddProperty(_T("AdamsDampingSteps"), m_nAdamsDampingSteps);
 			}
 		} 
 			m_Parameters;
 
+		void CheckMatrixElement(ptrdiff_t nRow, ptrdiff_t nCol);
+		void ResetCheckMatrixElement();
 
-		MatrixRow *m_pMatrixRows;
+#ifdef _DEBUG
+		#define CHECK_MATRIX_ELEMENT(row, col) CheckMatrixElement((row),(col));
+		#define RESET_CHECK_MATRIX_ELEMENT() ResetCheckMatrixElement();
+#else
+		#define CHECK_MATRIX_ELEMENT(row, col) ;
+		#define RESET_CHECK_MATRIX_ELEMENT() ;
+#endif
+
+		std::map<ptrdiff_t, std::set<ptrdiff_t>> m_MatrixChecker;
+
+
+		KLUWrapper<double> klu;
+		CDynaLRC *m_pLRCGen		= nullptr;		// СХН для генераторных узлов без генераторов
+		CDynaLRC *m_pLRCLoad	= nullptr;		// СХН для узлов без динамической СХН
+
+		std::unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;
+		std::unique_ptr<RightVector[]> pRightVectorUniq;
+		std::unique_ptr<RightVectorTotal[]> pRightVectorTotal;
+		RightVector *pRightVector = nullptr;
+		MatrixRow *m_pMatrixRows = nullptr;
 
 		DEVICECONTAINERS m_DeviceContainers;
 		DEVICECONTAINERS m_DeviceContainersNewtonUpdate;
 		DEVICECONTAINERS m_DeviceContainersPredict;
 
-		CDevice **m_ppVarSearchStackTop, **m_ppVarSearchStackBase;
+		CDevice **m_ppVarSearchStackTop;
+		std::unique_ptr<CDevice*[]> m_ppVarSearchStackBase;
 		DEVICEPTRSET m_setVisitedDevices;
 
-		ptrdiff_t m_nMatrixSize;
-		ptrdiff_t m_nNonZeroCount;
-
-		KLU_symbolic *Symbolic;
-		KLU_numeric *Numeric;
-		KLU_common Common;
-
-		double *Ax;
-		double *b;
+		ptrdiff_t m_nEstimatedMatrixSize;
+		ptrdiff_t m_nTotalVariablesCount;
 		double *pbRightHand;
-		double *pRightHandBackup;
+		std::unique_ptr<double[]> pRightHandBackup;
+		
 
-		struct RightVector *pRightVector;
 
-		ptrdiff_t *Ap, *Ai;
-
-		bool m_bStatus;
 		bool m_bEstimateBuild;
 		bool m_bRebuildMatrixFlag;
-
-		CDevice **m_pZeroCrossingDevices;
-		ptrdiff_t m_nZeroCrossingDevicesCount;
-
-		void CleanUpMatrix(bool bSaveRightVector = false);
-		bool ConvertToCCSMatrix();
-		bool SolveLinearSystem();
+		std::vector<CDevice*> ZeroCrossingDevices;
+		void ConvertToCCSMatrix();
+		void SolveLinearSystem();
+		void SolveRcond();
+		void SetDifferentiatorsTolerance();
 		bool NewtonUpdate();
 		bool SolveNewton(ptrdiff_t nMaxIts);
-		bool EstimateMatrix();
-		bool NewtonUpdateDevices();
+		void EstimateMatrix();
+		void CreateTotalRightVector();
+		void UpdateTotalRightVector();
+		void UpdateNewRightVector();
+		void DebugCheckRightVectorSync();
+		void NewtonUpdateDevices();
 
 		double GetRatioForCurrentOrder();
 		double GetRatioForHigherOrder();
 		double GetRatioForLowerOrder();
-		bool   ChangeOrder(ptrdiff_t Newq);
+		void   ChangeOrder(ptrdiff_t Newq);
+		void   Computehl0(); // рассчитывает кэшированные произведения l0 * GetH для элементов матрицы
 
 		bool Step();
 
 		double GetNorm(double *pVector);
 		double GetWeightedNorm(double *pVector);
 
-		bool PrepareGraph();
-		bool PrepareYs();
+		void PrepareNetworkElements();
 		bool Link();
 		bool UpdateExternalVariables();
+		void TurnOffDevicesByOffMasters();
+		bool SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster);
 
 		void ResetElement();
-		bool ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		bool CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		typedef bool (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
+		void ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		void CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		void ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		typedef void (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
+		typedef void (CDynaModel::*ElementSetterNoDupFn)(ptrdiff_t, ptrdiff_t, double);
 		void ScaleAlgebraicEquations();
-		ElementSetterFn ElementSetter;
-		void ReportKLUError();
+		ElementSetterFn			ElementSetter;
+		ElementSetterNoDupFn	ElementSetterNoDup;
 
 		void Predict();
 		void InitNordsiek();
 		void InitDevicesNordsiek();
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
 		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
-
 		void RescaleNordsiek(double r);
 		void UpdateNordsiek(bool bAllowSuppression = false);
+		bool DetectAdamsRinging();
 		void SaveNordsiek();
 		void RestoreNordsiek();
 		void ConstructNordsiekOrder();
 		void ReInitializeNordsiek();
 		void ResetNordsiek();
 		void BuildDerivatives();
-		bool BuildMatrix();
-		bool BuildRightHand();
+		void BuildMatrix();
+		void BuildRightHand();
 		double CheckZeroCrossing();
 
-		bool WriteResultsHeader();
-		bool WriteResultsHeaderBinary();
-		bool WriteResults();
-		bool FinishWriteResults();
+		void WriteResultsHeader();
+		void WriteResultsHeaderBinary();
+		void WriteResults();
+		void FinishWriteResults();
 
-		struct ConvergenceTest ConvTest[2];
+		ConvergenceTest::ConvergenceTestVec ConvTest;
 		struct StepControl sc;
 
 		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
-
-
+		void EnableAdamsCoefficientDamping(bool bEnable);
 		void GoodStep(double rSame);
-		bool BadStep();
-		bool NewtonFailed();
+		void BadStep();
+		void NewtonFailed();
 		void RepeatZeroCrossing();
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
-		void DumpMatrix();
+		void DumpMatrix(bool bAnalyzeLinearDependenies = false);
 		void DumpStateVector();
-		void FindMaxB(double& bmax, ptrdiff_t& nMaxIndex);
-
-
-		FILE *fResult, *m_pLogFile;
+		FILE* fResult;
+		std::ofstream LogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
 
 		IResultWritePtr m_spResultWrite;
 		double m_dTimeWritten;
-		const _TCHAR *m_cszDampingName;
+		const _TCHAR *m_cszDampingName = nullptr;
 		HANDLE m_hStopEvt;
+
+		CDeviceContainer *m_pClosestZeroCrossingContainer = nullptr;
+
+		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
+		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void SetFunction(ptrdiff_t nRow, double dValue);
+		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
+		void SetDerivative(ptrdiff_t nRow, double dValue);
 
 	public:
 		CDynaNodeContainer Nodes;
@@ -504,140 +602,177 @@ namespace DFW2
 		CCustomDeviceContainer CustomDevice;
 		CCustomDeviceContainer AutomaticDevice;
 		CAutomatic m_Automatic;
+		CCustomDeviceCPPContainer CustomDeviceCPP;
 
 		CDynaModel();
 		virtual ~CDynaModel();
 		bool Run();
 
-		bool InitDevices();
+		void InitDevices();
 		bool InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
-		bool SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
+		void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
+		void SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue);
 
 		// Для теста с множителями
 		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
 
-		bool SetFunction(ptrdiff_t nRow, double dValue);
-		bool AddFunction(ptrdiff_t nRow, double dValue);
-		bool SetFunctionDiff(ptrdiff_t nRow, double dValue);
-		bool SetDerivative(ptrdiff_t nRow, double dValue);
-		bool CorrectNordsiek(ptrdiff_t nRow, double dValue);
-		double GetFunction(ptrdiff_t nRow);
-		struct RightVector* GetRightVector(ptrdiff_t nRow);
-		void ResetMatrixStructure();
-		bool Status();
+		void SetFunction(const VariableIndexBase& Row, double dValue);
+		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
+		void SetDerivative(const VariableIndexBase& Row, double dValue);
 
-		inline double GetOmega0()
+
+		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
+		double GetFunction(ptrdiff_t nRow);
+		struct RightVector* GetRightVector(const ptrdiff_t nRow);
+		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
+		struct RightVector* GetRightVector(const InputVariable& Variable);
+
+		inline double GetOmega0() const
 		{
 			return 2 * 50.0 * M_PI;
 		}
 
-		inline ptrdiff_t GetOrder()
+		inline ptrdiff_t GetOrder() const
 		{
 			return sc.q;
 		}
 
-		inline double GetH()
+		inline double GetH() const
 		{
 			return sc.m_dCurrentH;
 		}
 
-		inline double GetOldH()
+		inline void SetH(double h)
+		{
+			sc.m_dCurrentH = h;
+			Computehl0();
+		}
+
+		inline double GetOldH() const
 		{
 			return sc.m_dOldH;
 		}
 
 
-		inline double GetFreqTimeConstant()
+		inline double GetFreqTimeConstant() const
 		{
 			return m_Parameters.m_dFrequencyTimeConstant;
 		}
 
-		inline double GetMustangDerivativeTimeConstant()
+		inline CDynaLRC* GetLRCGen()
+		{
+			return m_pLRCGen;
+		}
+
+		inline CDynaLRC* GetLRCDynamicDefault()
+		{
+			return m_pLRCLoad;
+		}
+
+		inline double GetMustangDerivativeTimeConstant() const
 		{
 			return m_Parameters.m_dMustangDerivativeTimeConstant;
 		}
 
-		inline ACTIVE_POWER_DAMPING_TYPE GetFreqDampingType()
+		inline ACTIVE_POWER_DAMPING_TYPE GetFreqDampingType() const
 		{
 			return m_Parameters.eFreqDampingType;
 		}
 
-		inline const _TCHAR* CDynaModel::GetDampingName()
+		inline const _TCHAR* CDynaModel::GetDampingName() const
 		{
 			_ASSERTE(m_cszDampingName);
 			return m_cszDampingName;
 		}
 
-		inline bool EstimateBuild()
+		bool CountConstElementsToSkip(ptrdiff_t nRow);
+		bool SkipConstElements(ptrdiff_t nRow);
+
+		inline bool FillConstantElements() const
+		{
+			return sc.m_bFillConstantElements;
+		}
+		
+		inline bool EstimateBuild() const
 		{
 			return m_bEstimateBuild;
 		}
 		// возвращает тип метода для уравнения
 		// используется для управления методом интегрирования дифференциальных переменных
 		// алгебраические уравнения всегда интегрируются BDF. Дифференциальные - ADAMS или BDF
-		inline DEVICE_EQUATION_TYPE CDynaModel::GetDiffEquationType()
+		inline DEVICE_EQUATION_TYPE CDynaModel::GetDiffEquationType() const
 		{
 			return m_Parameters.m_eDiffEquationType;
 		}
 
 		// возвращает напряжение перехода СХН на шунт
-		double GetLRCToShuntVmin()
+		double GetLRCToShuntVmin() const
 		{
 			return min(m_Parameters.m_dLRCToShuntVmin,1.0);
 		}
 
-		bool ConsiderDampingEquation()
+		bool ConsiderDampingEquation() const
 		{
 			return m_Parameters.m_bConsiderDampingEquation;
 		}
 		// возвращает абсолютную точность из параметров
-		inline double GetAtol()
+		inline double GetAtol() const
 		{
 			return m_Parameters.m_dAtol;
 		}
 		// возвращает относительную точность из параметров
-		inline double GetRtol()
+		inline double GetRtol() const
 		{
 			return m_Parameters.m_dRtol;
 		}
 		// Относительная погрешность решения УР по напряжению
 		// с помощью линейного метода
-		inline double GetRtolLULF()
+		inline double GetRtolLULF() const
 		{
 			return m_Parameters.m_dRtol;
 		}
 
-		inline double GetZeroCrossingTolerance()
+		inline double GetZeroBranchImpedance() const
+		{
+			return m_Parameters.m_dZeroBranchImpedance;
+		}
+
+		inline double GetZeroCrossingInRange(double rH) const
+		{
+			return rH > 0.0 && rH < 1.0;
+		}
+
+		inline double GetZeroCrossingTolerance() const
 		{
 			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? FLT_MAX : 100.0 * m_Parameters.m_dAtol;
 		}
 
 		// Текущий номер итерации Ньютона
-		inline ptrdiff_t GetNewtonIterationNumber()
+		inline ptrdiff_t GetNewtonIterationNumber() const
 		{
 			return sc.nNewtonIteration;
 		}
 
 		// Текущее количество шагов интегрирования
-		inline ptrdiff_t GetIntegrationStepNumber()
+		inline ptrdiff_t GetIntegrationStepNumber() const
 		{
 			return sc.nStepsCount;
 		}
 
 		// возвращает текущее время интегрирования
-		inline double GetCurrentTime()
+		inline double GetCurrentTime() const
 		{
 			return sc.t;
 		}
 
-		inline bool ZeroCrossingStepReached(double dHstep)
+		inline bool ZeroCrossingStepReached(double dHstep) const
 		{
 			return dHstep > 0.997;
 		}
 
-		inline double GetHysteresis(double dValue)
+		inline double GetHysteresis(double dValue) const
 		{
 			return fabs(dValue) * GetRtol() * 0.01 + GetAtol() * 10.0;
 		}
@@ -646,7 +781,7 @@ namespace DFW2
 
 		void ProcessTopologyRequest();
 		void DiscontinuityRequest();
-		bool ServeDiscontinuityRequest();
+		void ServeDiscontinuityRequest();
 		bool SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dDelay);
 		bool RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject);
 		bool CheckStateDiscontinuity(CDiscreteDelay *pDelayObject);
@@ -654,28 +789,41 @@ namespace DFW2
 
 		CDeviceContainer* GetDeviceContainer(eDFW2DEVICETYPE Type); 
 
-		bool EnterDiscontinuityMode();
-		bool LeaveDiscontinuityMode();
+		void EnterDiscontinuityMode();
+		void LeaveDiscontinuityMode();
 		bool ProcessDiscontinuity();
 		inline bool IsInDiscontinuityMode() { return sc.m_bDiscontinuityMode; }
 		inline bool IsInZeroCrossingMode() { return sc.m_bZeroCrossingMode; }
 		ptrdiff_t GetStepNumber() {  return sc.nStepsCount;  }
 		void RebuildMatrix(bool bRebuild = true);
-		bool AddZeroCrossingDevice(CDevice *pDevice);
+		void AddZeroCrossingDevice(CDevice *pDevice);
 
-		void Log(CDFW2Messages::DFW2MessageStatus Status, ptrdiff_t nDBIndex, const _TCHAR* cszMessage);
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...);
-		static const double l[4][4];
+		void Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message, ptrdiff_t nDbIndex = -1);
 
-		bool PushVarSearchStack(CDevice*pDevice);
+		double Methodl[4][4];
+		double Methodlh[4];
+		static const double MethodlDefault[4][4];
+
+		static double FMA(double x, double y, double z)
+		{
+			//return x * y + z;
+			return std::fma(x, y, z);
+		}
+
+		static double gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double* Sol);
+
+		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
 		void ResetStack();
 
-		bool InitExternalVariable(PrimitiveVariableExternal& ExtVar, CDevice* pFromDevice, const _TCHAR* cszName);
-		CDevice* GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, const _TCHAR* cszSymLink);
-		CDeviceContainer *GetContainerByAlias(const _TCHAR* cszAlias);
+		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name);
+		CDevice* GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, std::wstring_view SymLink);
+		CDeviceContainer *GetContainerByAlias(std::wstring_view Alias);
 		CAutomatic& Automatic();
 
 		void GetWorstEquations(ptrdiff_t nCount);
+		void ReportKLUError(KLU_common& KLUCommon);
+
+		void Serialize();
 	};
 }

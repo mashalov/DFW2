@@ -108,13 +108,12 @@ void CUnicodeSCSU::WriteSCSUSymbol(int Symbol)
 	}
 }
 
-void CUnicodeSCSU::WriteSCSU(const _TCHAR* pString)
+void CUnicodeSCSU::WriteSCSU(std::wstring_view String)
 {
 	if (m_pFile)
 	{
-		size_t nLen = _tcslen(pString);
-		for (const _TCHAR *pChar = pString; pChar < pString + nLen; pChar++)
-			WriteSCSUSymbol(static_cast<int>(*pChar));
+		for(const auto& sym : String)
+			WriteSCSUSymbol(static_cast<int>(sym));
 	}
 	else
 		throw CFileWriteException(NULL);
@@ -189,7 +188,7 @@ int CUnicodeSCSU::ReadSCSUSymbol()
 	return Symbol;
 }
 
-void CUnicodeSCSU::ReadSCSU(wstring& String, size_t nLen)
+void CUnicodeSCSU::ReadSCSU(std::wstring& String, size_t nLen)
 {
 	if (m_pFile)
 	{

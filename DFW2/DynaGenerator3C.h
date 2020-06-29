@@ -8,8 +8,8 @@ namespace DFW2
 	class CDynaGenerator3C : public CDynaGenerator1C
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual cplx GetXofEqs() { return cplx(0, xq); }
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		cplx GetXofEqs() override { return cplx(0, xq); };
 	public:
 
 		enum VARS
@@ -19,25 +19,27 @@ namespace DFW2
 			V_LAST
 		};
 
-		double Eqss, Edss;
+		VariableIndex Eqss, Edss;
+
 		double Td0ss, Tq0ss;
 		double xd2, xq1, xq2;
 
 		CDynaGenerator3C();
 		virtual ~CDynaGenerator3C() {}
 
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual cplx GetEMF() { return cplx(Eqss, Edss) *polar(1.0, Delta); }
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CalculatePower();
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		cplx GetEMF() override { return cplx(Eqss, Edss) * std::polar(1.0, (double)Delta); }
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		bool CalculatePower() override;
 		double Xgen();
-		virtual const cplx& CalculateEgen();
-
+		const cplx& CalculateEgen() override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
 	};
 }

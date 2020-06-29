@@ -6,41 +6,49 @@ namespace DFW2
 {
 	class CDynaModel;
 
-	typedef vector<CDevice*> DEVICEVECTOR;
-	typedef DEVICEVECTOR::iterator DEVICEVECTORITR;
+	using DEVICEVECTOR = std::vector<CDevice*>;
+	using DEVICEVECTORITR = DEVICEVECTOR::iterator;
 
 	// для поиска устройств по идентификаторам используем сет
-	typedef set<CDeviceId*, CDeviceIdComparator> DEVSEARCHSET;
-	typedef DEVSEARCHSET::iterator DEVSEARCHSETITR;
-	typedef DEVSEARCHSET::const_iterator DEVSEARCHSETCONSTITR;
+	using DEVSEARCHSET = std::set<CDeviceId*, CDeviceIdComparator> ;
+	using DEVSEARCHSETITR = DEVSEARCHSET::iterator;
+	using DEVSEARCHSETCONSTITR = DEVSEARCHSET::const_iterator;
 	// для хранения уникальных указателей
-	typedef set<CDevice*> DEVICEPTRSET;
-	typedef DEVICEPTRSET::iterator DEVICEPTRSETITR;
+	using DEVICEPTRSET = std::set<CDevice*> ;
+	using DEVICEPTRSETITR = DEVICEPTRSET::iterator;
 
 	class CDeviceContainer;
 
+	using DevicePtr = CDevice * [];
+	using DevicesPtrs = std::unique_ptr<DevicePtr>;
 
 	// контейнер для связей устройства
 	class CMultiLink
 	{
 	public:
-		CDevice  **m_ppPointers;											// вектор указателей на связанные устройства
-		CDeviceContainer *m_pContainer;										// внешний контейнер, с устройствами которого строится связь
-		CLinkPtrCount *m_pLinkInfo;											// вектор ссылок с количеством связей
-		size_t	 m_nSize;													// количество связей 
-		size_t   m_nCount;													// количество возможных связей (размерность m_ppPointers)
-		CMultiLink(CDeviceContainer* pContainer, size_t nCount);
-		bool Join(CMultiLink *pLink);
-		virtual ~CMultiLink()
+		DevicesPtrs  m_ppPointers;											// вектор указателей на связанные устройства
+		CDeviceContainer *m_pContainer = nullptr;							// внешний контейнер, с устройствами которого строится связь
+		std::vector<CLinkPtrCount> m_LinkInfo;								// вектор ссылок с количеством связей
+		size_t   m_nCount;													// количество возможных связей 
+		CMultiLink(CDeviceContainer* pContainer, size_t nCount) : m_pContainer(pContainer)
 		{
-			delete m_ppPointers;
-			delete m_pLinkInfo;
+			// память выделим под известное количество связей в AllocateLinks()
+			m_LinkInfo.resize(nCount);
+		}
+		// конструктор копирования нет. Для создания CMultiLink в контейнере нужно использовать emplace
+		void Join(CMultiLink& pLink);
+
+		inline CLinkPtrCount* GetLink(ptrdiff_t nDeviceInContainerIndex)
+		{
+			if (nDeviceInContainerIndex >= static_cast<ptrdiff_t>(m_LinkInfo.size()))
+				throw dfw2error(_T("CLinkPtrCount::GetLink - Device index out of range"));
+			return &m_LinkInfo[nDeviceInContainerIndex];
 		}
 	};
 
 	// вектор "векторов" связей с устройствами различных типов
-	typedef vector<CMultiLink*> LINKSVEC;
-	typedef LINKSVEC::iterator LINKSVECITR;
+	using LINKSVEC = std::vector<CMultiLink>;
+	using LINKSVECITR = LINKSVEC::iterator;
 
 	// контейнер устройств
 	// Идея контейнера в том, чтобы исключить из экземпляров устройств общую для них информацию:
@@ -52,28 +60,29 @@ namespace DFW2
 	protected:
 		eDEVICEFUNCTIONSTATUS m_eDeviceFunctionStatus;
 		DEVICEVECTOR m_DevVec;												// вектор указателей на экземпляры хранимых в контейнере устройств
+		DEVICEVECTOR m_DevInMatrix;											// вектор указателей на экземпляры устройств, у которых есть уравнения
 		DEVSEARCHSET m_DevSet;												// сет для поиска устройств по идентификаторам
 		bool SetUpSearch();													// подготовка к поиску устройства в сете по идентификаторам
 		CDevice *m_pControlledData;											// вектор указателей созданных устройств для быстрого заполнения контейнера
-		CDevice **m_ppSingleLinks;
+		DevicesPtrs m_ppSingleLinks;										// вектор указателей на устройства с одиночными ссылками
 		void CleanUp();														// очистка контейнера
 		CDynaModel *m_pDynaModel;											// через указатель на модель контейнеры и устройства обмениваются общими данными
 		void PrepareSingleLinks();
-
+		CDevice *m_pClosestZeroCrossingDevice = nullptr;
 	public:
 
 		CDeviceContainerProperties m_ContainerProps;						// описание статических атрибутов контейнера: тип и связи с другими устройствами
 		ptrdiff_t EquationsCount();											// количество уравнений одного устройства в данном контейнере
 
 		// тип устройства хранится в атрибутах контейнера. Устройство вне контейнера не знает своего типа
-		inline eDFW2DEVICETYPE GetType() { return m_ContainerProps.eDeviceType; }
+		inline eDFW2DEVICETYPE GetType() { return m_ContainerProps.GetType(); }
 		// текстовое описание типа устройства
-		const _TCHAR* GetTypeName() { return m_ContainerProps.m_strClassName.c_str(); }
+		const _TCHAR* GetTypeName() { return m_ContainerProps.GetVerbalClassName(); }
 
 		CDeviceContainer(CDynaModel *pDynaModel);
 		virtual ~CDeviceContainer();
 
-		CDevice **m_ppDevicesAux;
+		DevicesPtrs m_ppDevicesAux;
 		size_t   m_nVisitedCount;
 
 		// передает контейнеру под управление линейный массив указателей с созданными в нем экземплярами
@@ -117,8 +126,8 @@ namespace DFW2
 		// добавление переменных состояния и констант устройств к атрибутам контейнера
 		// константы и переменные состояния обрабатываются по разному, т.к. для констант нет уравнений
 		// и они в процессе расчета не изменяются
-		bool RegisterVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits);
-		bool RegisterConstVariable(const _TCHAR* cszVarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType);
+		bool RegisterVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits);
+		bool RegisterConstVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType);
 		// управление выводом переменной в результаты
 		bool VariableOutputEnable(const _TCHAR* cszVarName, bool bOutputEnable);
 
@@ -131,8 +140,8 @@ namespace DFW2
 		CONSTVARINDEXMAPCONSTITR ConstVariablesEnd();
 
 		
-		ptrdiff_t GetVariableIndex(const _TCHAR* cszVarName)	  const;	// получить индекс переменной состояния по имени
-		ptrdiff_t GetConstVariableIndex(const _TCHAR* cszVarName) const;	// получить индекс константы состояния по имени
+		ptrdiff_t GetVariableIndex(std::wstring_view VarName)	  const;	// получить индекс переменной состояния по имени
+		ptrdiff_t GetConstVariableIndex(std::wstring_view VarName) const;	// получить индекс константы состояния по имени
 		CDevice* GetDeviceByIndex(ptrdiff_t nIndex);						// получить устройство по индексу
 		CDevice* GetDevice(CDeviceId* pDeviceId);							// получить устройство по базовому идентификатору
 		CDevice* GetDevice(ptrdiff_t nId);									// получить устройство по идентификатору
@@ -142,39 +151,50 @@ namespace DFW2
 		size_t Count();														// получить количество устройств в контейнере
 		inline DEVICEVECTORITR begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
 		inline DEVICEVECTORITR end() { return m_DevVec.end(); }
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ptrdiff_t nDBIndex = -1);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, const std::wstring_view Message, ptrdiff_t nDBIndex = -1);
 
 		LINKSVEC m_Links;													// вектор возможных связей. Элемент вектора - связь с определенным типом устройств
 		bool IsKindOfType(eDFW2DEVICETYPE eType);
 		bool CreateLink(CDeviceContainer* pLinkContainer);
 		ptrdiff_t GetLinkIndex(CDeviceContainer* pLinkContainer);			// получить индекс ссылок по внешнему контейнеру
 		ptrdiff_t GetLinkIndex(eDFW2DEVICETYPE eDeviceType);				// получить индекс ссылок по типу внешнего устройства
-		bool IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
-		bool AllocateLinks(ptrdiff_t nLinkIndex);
-		bool AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice);
-		CMultiLink* GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
-		bool RestoreLinks(ptrdiff_t nLinkIndex);
-		bool EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
-		bool BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
-		bool BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств
-		bool BuildDerivatives(CDynaModel* pDynaModel);						// рассчитать производные дифуров устройств
-		bool NewtonUpdateBlock(CDynaModel* pDynaModel);						// обновить данные в устройствах после итерации Ньютона (для тех устройств, которым нужно)
+		void IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
+		void IncrementLinkCounter(CMultiLink& pLink, ptrdiff_t nDeviceIndex);
+		void AllocateLinks(ptrdiff_t nLinkIndex);
+		void AllocateLinks(CMultiLink& pLink);
+		void AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice);
+		void AddLink(CMultiLink& pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice);
+		void RestoreLinks(ptrdiff_t nLinkIndex);
+		void RestoreLinks(CMultiLink& pLink);
+		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
+		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
+		bool CheckLink(ptrdiff_t nLinkIndex);
+		bool CheckLink(ptrdiff_t nLinkIndex, LINKSVEC& LinksVec);
+		void InitNordsieck(CDynaModel *pDynaModel);
+		void Predict();
+  		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
+		void BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
+		void BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств
+		void BuildDerivatives(CDynaModel* pDynaModel);						// рассчитать производные дифуров устройств
+		void NewtonUpdateBlock(CDynaModel* pDynaModel);						// обновить данные в устройствах после итерации Ньютона (для тех устройств, которым нужно)
 		bool LeaveDiscontinuityMode(CDynaModel *pDynaModel);				// выйти из режима обработки разрыва
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel *pDynaModel);	// обработать разрыв
 		void UnprocessDiscontinuity();
 		double CheckZeroCrossing(CDynaModel *pDynaModel);					// проверить zerocrossing и вернуть долю текущего шага до zerocrossing
+		CDevice *GetZeroCrossingDevice();
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
 		CDynaModel* GetModel() { return m_pDynaModel;  }
-		bool PushVarSearchStack(CDevice*pDevice);
+		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
 		void ResetStack();
 		virtual ptrdiff_t GetPossibleSingleLinksCount();
 		CDeviceContainer* DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		size_t GetResultVariablesCount();									// получить количество переменных, которое нужно выводить в результаты
-		bool HasAlias(const _TCHAR *cszAlias);								// соответствует ли тип устройства заданному псевдониму
+		bool HasAlias(std::wstring_view Alias);								// соответствует ли тип устройства заданному псевдониму
+		ptrdiff_t GetSingleLinkIndex(eDFW2DEVICETYPE eDevType);				// получить индекс ссылки один-к-одному по типу устройства
 	};
 
-	typedef vector<CDeviceContainer*> DEVICECONTAINERS;
-	typedef DEVICECONTAINERS::iterator DEVICECONTAINERITR;
+	using DEVICECONTAINERS = std::vector<CDeviceContainer*>;
+	using DEVICECONTAINERITR = DEVICECONTAINERS::iterator;
 };
 

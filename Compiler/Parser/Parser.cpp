@@ -64,7 +64,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		CExpressionParserRules rps;
 		rps.Process(_T("relay(0,S1^2-S2^2,1)"));
-		wstring str;
+		std::wstring str;
 		rps.Infix(str);
 
 		str = _T("");

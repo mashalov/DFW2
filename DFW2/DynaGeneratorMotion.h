@@ -5,38 +5,41 @@
 
 namespace DFW2
 {
-	class CDynaGeneratorMotion : public CDynaGeneratorInfBus
+	class CDynaGeneratorMotion : public CDynaGeneratorInfBusBase
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		 eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 	public:
 		enum VARS
 		{
-			V_S = CDynaGeneratorInfBus::V_LAST,
+			V_S = CDynaGeneratorInfBusBase::V_LAST,
 			V_DELTA,
 			V_LAST
 		};
 
 		enum CONSTVARS
 		{
-			C_UNOM = CDynaGeneratorInfBus::CONSTVARS::C_LAST,
+			C_UNOM = CDynaGeneratorInfBusBase::CONSTVARS::C_LAST,
 			C_LAST
 		};
 
 
-		double s;
+		VariableIndex s;
+
 		double	Unom, Kdemp,xq, Mj, Pt, Pnom, cosPhinom;
 
 		CDynaGeneratorMotion();
 		virtual ~CDynaGeneratorMotion() {}
 
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : DFW2_EPSILON; }
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 

@@ -1,8 +1,6 @@
-#pragma once
+﻿#pragma once
 #include "DynaNode.h"
-#include "klu.h"
-#include "klu_version.h"
-#include "cs.h"
+#include "KLUWrapper.h"
 
 namespace DFW2
 {
@@ -10,66 +8,79 @@ namespace DFW2
 	class CLoadFlow
 	{
 	public:
-
 		struct Parameters
 		{
-			double m_Imb;							// ���������� �������� ��������
-			bool m_bFlat;							// ������� �����
-			bool m_bStartup;						// ��������� ����� �������
-			double m_dSeidellStep;					// ��� ��������� ������ �������	
-			ptrdiff_t m_nSeidellIterations;			// ���������� �������� ��������
-			ptrdiff_t m_nEnableSwitchIteration;		// ����� ��������, � ������� ����������� ������������ PV-PQ
-			ptrdiff_t m_nMaxIterations;				// ������������ ���������� �������� ��������
-			Parameters() : m_Imb(1E-4),
-						   m_dSeidellStep(1.05),
-						   m_bStartup(true),
-						   m_nEnableSwitchIteration(2),
-						   m_nSeidellIterations(7), 
-						   m_nMaxIterations(100)
-						   {}
+			double m_Imb = 1E-4;						// допустимый небаланс мощности
+			bool m_bFlat = false;						// плоский старт
+			bool m_bStartup = true;						// стартовый метод Зейделя
+			double m_dSeidellStep = 1.05;				// шаг ускорения метода Зейделя	
+			ptrdiff_t m_nSeidellIterations = 7;			// количество итераций Зейделем
+			ptrdiff_t m_nEnableSwitchIteration = 2;		// номер итерации, с которой разрешается переключение PV-PQ
+			ptrdiff_t m_nMaxIterations = 100;			// максимальное количество итераций Ньютоном
+			double m_dVoltageNewtonStep = 0.3;			// максимальное относительное приращение шага Ньютона по напряжению
+			double m_dNodeAngleNewtonStep = 1.5;		// максимальное приращение шага Ньютона по углу узла
+			double m_dBranchAngleNewtonStep = 0.5;		// максимальное приращение шага Ньютона по углу связи
 		};
 
-
 		CLoadFlow(CDynaModel *pDynaModel);
-		~CLoadFlow();
 		bool Run();
 	protected:
-		void CleanUp();
-		bool Estimate();
-		bool Seidell();
-		bool BuildMatrix();
-		bool Start();
-		bool CheckLF();
-		bool UpdateQToGenerators();
-		bool UpdatePQFromGenerators();
-		void DumpNodes();
 
+		void GetPnrQnr(CDynaNodeBase *pNode);
+		void GetPnrQnrSuper(CDynaNodeBase *pNode);
+		void AllocateSupernodes();
+		void Estimate();
+		void Seidell();
+		void SeidellTanh();
+		void Newton();
+		void NewtonTanh();
+		double GetNewtonRatio();
+		void UpdateVDelta(double dStep = 1.0);
+		void BuildMatrix();
+		void BuildMatrixTanh();
+		void Start();
+		bool CheckLF();
+		void SolveLinearSystem();
+		void UpdateQToGenerators();					// обновление данных генераторов по результату расчета PV-узлов
+		void UpdatePQFromGenerators();				// обновление данных PV-узлов по исходным данным генераторов
+		void UpdateSupernodesPQ();					// обновление генерации в суперузлах
+		void DumpNodes();
+		void CompareWithRastr();
+		double Qgtanh(CDynaNodeBase* pNode);
+
+		// возвращает true если узел учитывается в матрице якоби
 		static bool NodeInMatrix(CDynaNodeBase *pNode);
 				
-		CDynaModel *m_pDynaModel;
-		CDynaNodeContainer *pNodes;
-		size_t m_nMatrixSize;
-		size_t m_nNonZeroCount;
-		size_t m_nBranchesCount;
+		CDynaModel *m_pDynaModel = nullptr;
+		CDynaNodeContainer *pNodes = nullptr;
+
+		KLUWrapper<double>	klu;
+		std::unique_ptr<_MatrixInfo[]> m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
+		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
+		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
 		
-
-		double *Ax;				// ������ ������� �����
-		double *b;				// ������ ������ �����
-		ptrdiff_t *Ai;			// ������ �����
-		ptrdiff_t *Ap;			// ������ ��������
-
-		_MatrixInfo *m_pMatrixInfo;
-		_MatrixInfo *m_pMatrixInfoEnd;
-		_MatrixInfo *m_pMatrixInfoSlackEnd;
-		_VirtualBranch *m_pVirtualBranches;
-
-		KLU_symbolic *Symbolic;
-		KLU_common Common;
+		double m_dTanhBeta = 500.0;
+		ptrdiff_t m_nNodeTypeSwitchesDone;
 
 		Parameters m_Parameters;
+		// определение порядка PV узлов для Зейделя
 		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
 		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);
 		void GetNodeImb(_MatrixInfo *pMatrixInfo);
+		static double ImbNorm(double x, double y);
+
+		void StoreVDelta();
+		void RestoreVDelta();
+		void UpdateSlackBusesImbalance();
+		double GetSquaredImb();
+		void CheckFeasible();
+		void DumpNewtonIterationControl();
+		LFNewtonStepRatio m_NewtonStepRatio;
+
+		std::unique_ptr<double[]> m_Vbackup;
+		std::unique_ptr<double[]> m_Dbackup;
+		std::unique_ptr<double[]> m_Rh;		// невязки до итерации
+		std::vector<CDynaBranch*> m_BranchAngleCheck;
 	};
 }
 

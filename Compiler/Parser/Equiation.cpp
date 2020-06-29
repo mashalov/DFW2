@@ -1,10 +1,10 @@
 #include "..\stdafx.h"
 #include "ExpressionParser.h"
 
-wstring CCompilerEquation::Generate(bool bInitEquation) const
+std::wstring CCompilerEquation::Generate(bool bInitEquation) const
 {
-	wstring result;
-	wstring right;
+	std::wstring result;
+	std::wstring right;
 
 	_ASSERTE(m_pToken);
 
@@ -38,7 +38,7 @@ wstring CCompilerEquation::Generate(bool bInitEquation) const
 			{
 				m_pToken->GetChild()->GetEquationOperand(this, right);
 				if (bInitEquation && m_pToken->RequireSpecialInit())
-					result = Cex(_T("init_%s(%s)"), m_pToken->SpecialInitFunctionName(), right.c_str());
+					result = fmt::format(_T("init_{}({})"), m_pToken->SpecialInitFunctionName(), right);
 				else
 					result = m_pToken->m_pFunctionInfo->m_strOperatorText + right;
 			}
@@ -55,7 +55,7 @@ wstring CCompilerEquation::Generate(bool bInitEquation) const
 				{
 					ptk2->GetEquationOperand(this, result);
 					ptk1->GetEquationOperand(this, right);
-					result = Cex(_T("init_%s(%s,%s)"), m_pToken->SpecialInitFunctionName(), result.c_str(), right.c_str());
+					result = fmt::format (_T("init_{}({},{})"), m_pToken->SpecialInitFunctionName(), result, right);
 				}
 				else
 				{

@@ -1,12 +1,11 @@
 #pragma once
 #include "vector"
-using namespace std;
 
 template<class TInterface, class TObject>
 class CGenericCollection : public TInterface
 {
 protected:
-	typedef vector< CComObject<TObject> *> OBJVECTOR;
+	typedef std::vector< CComObject<TObject> *> OBJVECTOR;
 	OBJVECTOR m_ObjVector;
 
 public:
@@ -35,7 +34,7 @@ public:
 	STDMETHOD(get__NewEnum)(LPUNKNOWN *pVal)
 	{
 		size_t size = m_ObjVector.size(); 
-		VARIANT *pVar = new VARIANT[size];
+		std::unique_ptr<VARIANT[]> pVar = std::make_unique<VARIANT[]>(size);
 		for (size_t i = 0; i < size; i++)
 		{
 			pVar[i].vt = VT_DISPATCH;
@@ -44,7 +43,6 @@ public:
 		typedef CComObject<CComEnum< IEnumVARIANT, &IID_IEnumVARIANT, VARIANT, _Copy< VARIANT> > > enumVar;
 		enumVar *pEnumVar = new enumVar;
 		pEnumVar->Init(&pVar[0], &pVar[size], NULL, AtlFlagCopy);
-		delete[] pVar;
 		return pEnumVar->QueryInterface(IID_IUnknown, (void**)pVal);
 	}
 

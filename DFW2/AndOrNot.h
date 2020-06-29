@@ -6,15 +6,16 @@ namespace DFW2
 	class CAnd: public CDynaPrimitiveBinary
 	{
 	protected:
-		PrimitiveVariableBase *m_Input2;
+		InputVariable m_Input1;
 	public:
-		CAnd(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2);
+		CAnd(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) {}
 		virtual ~CAnd() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Логическое И"); }
+		const _TCHAR* GetVerbalName() override { return _T("Логическое И"); }
 		static size_t PrimitiveSize() { return sizeof(CAnd); }
 		static long EquationsCount()  { return 1; }
 	};
@@ -22,15 +23,16 @@ namespace DFW2
 	class COr : public CDynaPrimitiveBinary
 	{
 	protected:
-		PrimitiveVariableBase *m_Input2;
+		InputVariable m_Input1;
 	public:
-		COr(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input1, PrimitiveVariableBase* Input2);
+		COr(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) {}
 		virtual ~COr() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Логическое ИЛИ"); }
+		const _TCHAR* GetVerbalName() override { return _T("Логическое ИЛИ"); }
 		static size_t PrimitiveSize() { return sizeof(COr); }
 		static long EquationsCount()  { return 1; }
 	};
@@ -38,13 +40,14 @@ namespace DFW2
 	class CNot : public CDynaPrimitiveBinary
 	{
 	public:
-		CNot(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input);
+		CNot(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables):
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables) { }
 		virtual ~CNot() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Логическое НЕ"); }
+		const _TCHAR* GetVerbalName() override { return _T("Логическое НЕ"); }
 		static size_t PrimitiveSize() { return sizeof(CNot); }
 		static long EquationsCount()  { return 1; }
 	};

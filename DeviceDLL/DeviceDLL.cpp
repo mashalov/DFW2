@@ -316,23 +316,23 @@ __declspec(dllexport) long BuildRightHand(BuildEquationsArgs *pArgs)
 	MDLSETFUNCTION SetFunction = pArgs->pFnSetFunction;
 
 	// e14 - Ig * Xcomp
-	(SetFunction)(pm, 14, pArgs->pEquations[14] - pArgs->pConsts[13] * (*pArgs->pExternals[2].pValue));
+	(SetFunction)(pm, 14, pArgs->pEquations[14].Value - pArgs->pConsts[13] * (*pArgs->pExternals[2].pValue));
 	// e15 - Vref + Vg - e14
-	(SetFunction)(pm, 15, pArgs->pEquations[15] - pArgs->pSetPoints[0] + (*pArgs->pExternals[3].pValue) - pArgs->pEquations[14]);
+	(SetFunction)(pm, 15, pArgs->pEquations[15].Value - pArgs->pSetPoints[0] + (*pArgs->pExternals[3].pValue) - pArgs->pEquations[14].Value);
 	// e16 - Ku * e15
-	(SetFunction)(pm, 16, pArgs->pEquations[16] - pArgs->pConsts[1] * pArgs->pEquations[15]);
+	(SetFunction)(pm, 16, pArgs->pEquations[16].Value - pArgs->pConsts[1] * pArgs->pEquations[15].Value);
 	// e17 - Ku1 * e0
-	(SetFunction)(pm, 17, pArgs->pEquations[17] - pArgs->pConsts[2] * pArgs->pEquations[0]);
+	(SetFunction)(pm, 17, pArgs->pEquations[17].Value - pArgs->pConsts[2] * pArgs->pEquations[0].Value);
 	// e18 - Kf * e3
-	(SetFunction)(pm, 18, pArgs->pEquations[18] - pArgs->pConsts[10] * pArgs->pEquations[3]);
+	(SetFunction)(pm, 18, pArgs->pEquations[18].Value - pArgs->pConsts[10] * pArgs->pEquations[3].Value);
 	// e19 - Kf1 * e6
-	(SetFunction)(pm, 19, pArgs->pEquations[19] - pArgs->pConsts[9] * pArgs->pEquations[6]);
+	(SetFunction)(pm, 19, pArgs->pEquations[19].Value - pArgs->pConsts[9] * pArgs->pEquations[6].Value);
 	// e20 - e18 - e19
-	(SetFunction)(pm, 20, pArgs->pEquations[20] - pArgs->pEquations[18] - pArgs->pEquations[19]);
+	(SetFunction)(pm, 20, pArgs->pEquations[20].Value - pArgs->pEquations[18].Value - pArgs->pEquations[19].Value);
 	// e21 - Kif1 * e9
-	(SetFunction)(pm, 21, pArgs->pEquations[21] - pArgs->pConsts[7] * pArgs->pEquations[9]);
+	(SetFunction)(pm, 21, pArgs->pEquations[21].Value - pArgs->pConsts[7] * pArgs->pEquations[9].Value);
 	// e22 - e12 - e17 - e16 + e21
-	(SetFunction)(pm, 22, pArgs->pEquations[22] - pArgs->pEquations[12] - pArgs->pEquations[17] - pArgs->pEquations[16] + pArgs->pEquations[21]);
+	(SetFunction)(pm, 22, pArgs->pEquations[22].Value - pArgs->pEquations[12].Value - pArgs->pEquations[17].Value - pArgs->pEquations[16].Value + pArgs->pEquations[21].Value);
 
 	return GetInternalsCount();
 }
@@ -359,14 +359,14 @@ extern "C" __declspec(dllexport) long DeviceInit(BuildEquationsArgs *pArgs)
 
 extern "C" __declspec(dllexport) long ProcessDiscontinuity(BuildEquationsArgs *pArgs)
 {
-	pArgs->pEquations[14] = pArgs->pConsts[13] * (*pArgs->pExternals[2].pValue);
-	pArgs->pEquations[15] = pArgs->pSetPoints[0] - (*pArgs->pExternals[3].pValue) + pArgs->pEquations[14];
-	pArgs->pEquations[16] = pArgs->pConsts[1] * pArgs->pEquations[15];
-	pArgs->pEquations[17] = pArgs->pConsts[2] * pArgs->pEquations[0];
-	pArgs->pEquations[18] = pArgs->pConsts[10] * pArgs->pEquations[3];
-	pArgs->pEquations[19] = pArgs->pConsts[9] * pArgs->pEquations[6];
-	pArgs->pEquations[20] = pArgs->pEquations[18] + pArgs->pEquations[19];
-	pArgs->pEquations[21] = pArgs->pConsts[7] * pArgs->pEquations[9];
-	pArgs->pEquations[22] = pArgs->pEquations[12] + pArgs->pEquations[17] + pArgs->pEquations[16] - pArgs->pEquations[21];
+	pArgs->pEquations[14].Value = pArgs->pConsts[13] * (*pArgs->pExternals[2].pValue);
+	pArgs->pEquations[15].Value = pArgs->pSetPoints[0] - (*pArgs->pExternals[3].pValue) + pArgs->pEquations[14].Value;
+	pArgs->pEquations[16].Value = pArgs->pConsts[1] * pArgs->pEquations[15].Value;
+	pArgs->pEquations[17].Value = pArgs->pConsts[2] * pArgs->pEquations[0].Value;
+	pArgs->pEquations[18].Value = pArgs->pConsts[10] * pArgs->pEquations[3].Value;
+	pArgs->pEquations[19].Value = pArgs->pConsts[9] * pArgs->pEquations[6].Value;
+	pArgs->pEquations[20].Value = pArgs->pEquations[18].Value + pArgs->pEquations[19].Value;
+	pArgs->pEquations[21].Value = pArgs->pConsts[7] * pArgs->pEquations[9].Value;
+	pArgs->pEquations[22].Value = pArgs->pEquations[12].Value + pArgs->pEquations[17].Value + pArgs->pEquations[16].Value - pArgs->pEquations[21].Value;
 	return GetInternalsCount();
 }

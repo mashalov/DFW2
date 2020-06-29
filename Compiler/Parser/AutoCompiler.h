@@ -6,21 +6,21 @@ class CAutoItem
 protected:
 	ptrdiff_t m_eType;
 	ptrdiff_t m_nId;
-	wstring m_strName;
-	wstring m_strFormula;
+	std::wstring m_strName;
+	std::wstring m_strFormula;
 public:
 	CAutoItem(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszName, const _TCHAR *cszFormula);
 	ptrdiff_t GetId() const { return m_nId; }
 
-	wstring GetVerbalName() const 
+	std::wstring GetVerbalName() const
 	{ 
 		if (m_strName.empty())
-			return wstring(Cex(_T("%d"), GetId(), m_strName.c_str())); 
+			return fmt::format(_T("{}"), GetId(), m_strName.c_str());
 		else
-			return wstring(Cex(_T("%d [%s]"), GetId(), m_strName.c_str()));
+			return fmt::format(_T("{} [{}]"), GetId(), m_strName.c_str());
 	};
 
-	const wstring& GetFormula() const
+	const std::wstring& GetFormula() const
 	{
 		return m_strFormula;
 	}
@@ -49,8 +49,8 @@ public:
 class CAutoLogicItem : public CAutoItem
 {
 protected:
-	wstring m_strDelay;
-	wstring m_strActions;
+	std::wstring m_strDelay;
+	std::wstring m_strActions;
 	int m_nOutputMode;
 public:
 	CAutoLogicItem(CAutoItem& AutoItem, const _TCHAR* cszActions, const _TCHAR* cszDelay, int nOutputMode);
@@ -105,13 +105,13 @@ public:
 	bool InsertEquations(CCompilerEquations& Equations);
 };
 
-typedef map<ptrdiff_t, CCompilerAutoStarterItem> STARTERMAP;
+typedef std::map<ptrdiff_t, CCompilerAutoStarterItem> STARTERMAP;
 typedef STARTERMAP::iterator STARTERMAPITR;
 
-typedef map<ptrdiff_t, CCompilerAutoLogicItem> LOGICMAP;
+typedef std::map<ptrdiff_t, CCompilerAutoLogicItem> LOGICMAP;
 typedef LOGICMAP::iterator LOGICMAPITR;
 
-typedef map<ptrdiff_t, CCompilerAutoActionItem> ACTIONMAP;
+typedef std::map<ptrdiff_t, CCompilerAutoActionItem> ACTIONMAP;
 typedef ACTIONMAP::iterator ACTIONMAPITR;
 
 class CAutoCompiler : public CCompiler

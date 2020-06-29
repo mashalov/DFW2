@@ -94,6 +94,9 @@
     <ClCompile Include="Parser\CompilerLogger.cpp">
       <Filter>Source Files\Parser</Filter>
     </ClCompile>
+    <ClCompile Include="..\fmt\src\format.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -118,9 +121,6 @@
       <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Parser\AutoCompilerMessages.h">
-      <Filter>Header Files\Parser</Filter>
-    </ClInclude>
-    <ClInclude Include="Parser\cex.h">
       <Filter>Header Files\Parser</Filter>
     </ClInclude>
     <ClInclude Include="Parser\CompilerLogger.h">

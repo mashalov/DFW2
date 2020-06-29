@@ -3,18 +3,21 @@
 #include "klu.h"
 #include "cs.h"
 #include "stdio.h"
+#include <iostream>
+#include <io.h>
+#include <fcntl.h>
 using namespace DFW2;
 
-void CDynaModel::ReportKLUError()
+void CDynaModel::ReportKLUError(KLU_common& KLUCommon)
 {
-	switch (Common.status)
+	switch (KLUCommon.status)
 	{
 	case 0:
 		Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszKLUOk);
 		break;
 	case 1:
-		DumpMatrix();
 		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszKLUSingular);
+		DumpMatrix();
 		break;
 	case -2:
 		Log(CDFW2Messages::DFW2LOG_FATAL, CDFW2Messages::m_cszKLUOutOfMemory);
@@ -28,19 +31,9 @@ void CDynaModel::ReportKLUError()
 	}
 }
 
-bool CDynaModel::Status()
+void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message, ptrdiff_t nDbIndex)
 {
-	return m_bStatus;
-}
-
-void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status,ptrdiff_t nDBIndex, const _TCHAR* cszMessage)
-{
-	Log(Status, cszMessage);
-}
-
-void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszMessage, ...)
-{
-	const _TCHAR *cszCRLF = _T("\n");
+	std::string utf8Message(stringutils::utf8_encode(Message));
 
 	if (m_Parameters.m_bLogToConsole)
 	{
@@ -57,7 +50,7 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszM
 			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_INTENSITY);
 			break;
 		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_WARNING:
-			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY );
+			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
 		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_MESSAGE:
 		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO:
@@ -67,40 +60,29 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, const _TCHAR* cszM
 			SetConsoleTextAttribute(hCon, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
 		}
-		//SetConsoleOutputCP(65001);
-		_tcprintf(cszCRLF);
-			   
-		va_list argList;
-		size_t len;
-		TCHAR * buffer;
-		va_start(argList, cszMessage);
-		len = _vsctprintf(cszMessage, argList) + sizeof(_TCHAR);
-		buffer = new _TCHAR[len];
-		_vstprintf_s(buffer, len, cszMessage, argList);
-		_tcprintf(buffer);
-		delete(buffer);
-		va_end(argList);
-
+		/*SetConsoleOutputCP(CP_UTF8);
+		std::cout << utf8Message << std::endl;
+		*/
+		_setmode(_fileno(stdout), _O_U16TEXT);
+		std::wcout << Message << std::endl;
 		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
 	}
 
-	if (m_pLogFile && m_Parameters.m_bLogToFile)
-	{
-		_ftprintf(m_pLogFile,cszCRLF);
-		va_list argList;
-		va_start(argList, cszMessage);
-		_vftprintf_s(m_pLogFile,cszMessage, argList);
-		va_end(argList);
-	}
+	if (LogFile.is_open() && m_Parameters.m_bLogToFile)
+		LogFile << utf8Message << std::endl;
 }
 
-
-bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
+void CDynaModel::ChangeOrder(ptrdiff_t Newq)
 {
-	bool bRes = true;
-
 	if (sc.q != Newq)
+	{
 		sc.RefactorMatrix();
+		// если меняется порядок - то нужно обновлять элементы матрицы считавшиеся постоянными, так как 
+		// изменяются коэффициенты метода.
+		// Для подавления рингинга обновление элементов не требуется, так как постоянные элементы
+		// относятся к алгебре, а подавление рингинга адамса выполняется в дифурах
+		sc.UpdateConstElements();
+	}
 
 	sc.q = Newq;
 
@@ -111,17 +93,24 @@ bool CDynaModel::ChangeOrder(ptrdiff_t Newq)
 	case 2:
 		break;
 	}
-	return bRes;
 }
 
-struct RightVector* CDynaModel::GetRightVector(ptrdiff_t nRow)
+struct RightVector* CDynaModel::GetRightVector(const InputVariable& Variable)
 {
-	_ASSERTE(nRow >= 0 && nRow < m_nMatrixSize);
+	return GetRightVector(Variable.Index);
+}
+
+struct RightVector* CDynaModel::GetRightVector(const VariableIndexBase& Variable)
+{
+	return GetRightVector(Variable.Index);
+}
+
+struct RightVector* CDynaModel::GetRightVector(const ptrdiff_t nRow)
+{
+	if (nRow < 0 || nRow >= m_nEstimatedMatrixSize)
+		throw dfw2error(fmt::format(_T("CDynaModel::GetRightVector matrix size overrun Row {} MatrixSize {}"), nRow, m_nEstimatedMatrixSize));
 	return pRightVector + nRow;
 }
-
-
-
 
 void CDynaModel::StopProcess()
 {
@@ -130,16 +119,12 @@ void CDynaModel::StopProcess()
 
 CDeviceContainer* CDynaModel::GetDeviceContainer(eDFW2DEVICETYPE Type)
 {
-	CDeviceContainer *pContainer = NULL;
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
-	{
-		if ((*it)->GetType() == Type)
-		{
-			pContainer = *it;
-			break;
-		}
-	}
-	return pContainer;
+	auto& it = find_if(m_DeviceContainers.begin(), m_DeviceContainers.end(), [&Type](const auto& Cont) { return Cont->GetType() == Type; });
+
+	if (it == m_DeviceContainers.end())
+		return nullptr;
+	else
+		return *it;
 }
 
 void CDynaModel::RebuildMatrix(bool bRebuild)
@@ -151,6 +136,7 @@ void CDynaModel::RebuildMatrix(bool bRebuild)
 void CDynaModel::ProcessTopologyRequest()
 {
 	sc.m_bProcessTopology = true;
+	sc.UpdateConstElements();
 }
 
 void CDynaModel::DiscontinuityRequest()
@@ -161,7 +147,7 @@ void CDynaModel::DiscontinuityRequest()
 double CDynaModel::GetWeightedNorm(double *pVector)
 {
 	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
+	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
 	double *pb = pVector;
 	double dSum = 0.0;
 	for (; pVectorBegin < pVectorEnd; pVectorBegin++, pb++)
@@ -176,7 +162,7 @@ double CDynaModel::GetNorm(double *pVector)
 {
 	double dSum = 0.0;
 	double *pb = pVector;
-	double *pe = pVector + m_nMatrixSize;
+	double *pe = pVector + klu.MatrixSize();
 	while (pb < pe)
 	{
 		dSum += *pb * *pb;
@@ -185,16 +171,14 @@ double CDynaModel::GetNorm(double *pVector)
 	return sqrt(dSum);
 }
 
-bool CDynaModel::ServeDiscontinuityRequest()
+void CDynaModel::ServeDiscontinuityRequest()
 {
-	bool bRes = true;
 	if (sc.m_bDiscontinuityRequest)
 	{
 		sc.m_bDiscontinuityRequest = false;
-		bRes = EnterDiscontinuityMode() && bRes;
-		bRes = ProcessDiscontinuity() && bRes;
+		EnterDiscontinuityMode();
+		ProcessDiscontinuity();
 	}
-	return bRes;
 }
 
 bool CDynaModel::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dDelay)
@@ -217,30 +201,26 @@ void CDynaModel::NotifyRelayDelay(const CRelayDelayLogic* pRelayDelay)
 	m_Automatic.NotifyRelayDelay(pRelayDelay);
 }
 
-bool CDynaModel::PushVarSearchStack(CDevice*pDevice)
+void CDynaModel::PushVarSearchStack(CDevice*pDevice)
 {
 	if (pDevice)
 	{
 		if (m_setVisitedDevices.insert(pDevice).second)
 		{
-			if (m_ppVarSearchStackTop < m_ppVarSearchStackBase + m_Parameters.nVarSearchStackDepth)
+			if (m_ppVarSearchStackTop < m_ppVarSearchStackBase.get() + m_Parameters.nVarSearchStackDepth)
 			{
 				*m_ppVarSearchStackTop = pDevice;
 				m_ppVarSearchStackTop++;
-				return true;
 			}
 			else
-			{
-				Log(CDFW2Messages::DFW2LOG_FATAL, Cex(CDFW2Messages::m_cszVarSearchStackDepthNotEnough, m_Parameters.nVarSearchStackDepth));
-				return false;
-			}
+				throw dfw2error(fmt::format(CDFW2Messages::m_cszVarSearchStackDepthNotEnough, m_Parameters.nVarSearchStackDepth));
 		}
 	}
-	return true;
 }
+
 bool CDynaModel::PopVarSearchStack(CDevice* &pDevice)
 {
-	if (m_ppVarSearchStackTop <= m_ppVarSearchStackBase)
+	if (m_ppVarSearchStackTop <= m_ppVarSearchStackBase.get())
 		return false;
 	m_ppVarSearchStackTop--;
 	pDevice = *m_ppVarSearchStackTop;
@@ -250,23 +230,27 @@ bool CDynaModel::PopVarSearchStack(CDevice* &pDevice)
 void CDynaModel::ResetStack()
 {
 	if (!m_ppVarSearchStackBase)
-		m_ppVarSearchStackBase = new CDevice*[m_Parameters.nVarSearchStackDepth];
-	m_ppVarSearchStackTop = m_ppVarSearchStackBase;
+		m_ppVarSearchStackBase = std::make_unique<CDevice*[]>(m_Parameters.nVarSearchStackDepth);
+	m_ppVarSearchStackTop = m_ppVarSearchStackBase.get();
 	m_setVisitedDevices.clear();
 }
 
 bool CDynaModel::UpdateExternalVariables()
 {
 	bool bRes = true;
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+	for (auto&& it : m_DeviceContainers)
 	{
-		for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
+		for (auto&& dit : *it)
 		{
-			switch((*dit)->UpdateExternalVariables(this))
+			// пропускаем устройства которые не могут быть включены
+			if (dit->IsPermanentOff())
+				continue;
+
+			switch (dit->UpdateExternalVariables(this))
 			{
-			case DFS_DONTNEED:
+			case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
 				break;
-			case DFS_FAILED:
+			case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
 				bRes = false;
 			default:
 				continue;
@@ -278,15 +262,14 @@ bool CDynaModel::UpdateExternalVariables()
 }
 
 
-CDeviceContainer* CDynaModel::GetContainerByAlias(const _TCHAR* cszAlias)
+CDeviceContainer* CDynaModel::GetContainerByAlias(std::wstring_view Alias)
 {
-	CDeviceContainer *pContainer(NULL);
-
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
+	CDeviceContainer *pContainer(nullptr);
+	for (auto&& it : m_DeviceContainers)
 	{
-		if ((*it)->HasAlias(cszAlias))
+		if (it->HasAlias(Alias))
 		{
-			pContainer = *it;
+			pContainer = it;
 			break;
 		}
 	}
@@ -296,23 +279,24 @@ CDeviceContainer* CDynaModel::GetContainerByAlias(const _TCHAR* cszAlias)
 
 bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
 {
-	return pDevCon->Count() && pDevCon->GetType() != DEVTYPE_SYNCZONE && pDevCon->GetType() != DEVTYPE_BRANCH;
+	return pDevCon->Count() && !pDevCon->m_ContainerProps.bVolatile && pDevCon->GetType() != DEVTYPE_BRANCH;
 }
 
 
 int ErrorCompare(void *pContext, const void *pValue1, const void *pValue2)
 {
-	RightVector **pV1 = (RightVector**)pValue1;
-	RightVector **pV2 = (RightVector**)pValue2;
+	RightVectorTotal **pV1 = (RightVectorTotal**)pValue1;
+	RightVectorTotal **pV2 = (RightVectorTotal**)pValue2;
 	return static_cast<int>((*pV2)->nErrorHits - (*pV1)->nErrorHits);
 }
 
 void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 {
-	RightVector **pSortOrder = new RightVector*[m_nMatrixSize];
-	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + m_nMatrixSize;
-	RightVector **ppSortOrder = pSortOrder;
+	UpdateTotalRightVector();
+	std::unique_ptr<RightVectorTotal*[]> pSortOrder = std::make_unique<RightVectorTotal*[]>(m_nTotalVariablesCount);
+	RightVectorTotal *pVectorBegin = pRightVectorTotal.get();
+	RightVectorTotal *pVectorEnd = pVectorBegin + m_nTotalVariablesCount;
+	RightVectorTotal **ppSortOrder = pSortOrder.get();
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -321,26 +305,26 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 		ppSortOrder++;
 	}
 
-	qsort_s(pSortOrder, m_nMatrixSize, sizeof(RightVector*), ErrorCompare, nullptr);
+	qsort_s(pSortOrder.get(), m_nTotalVariablesCount, sizeof(RightVectorTotal*), ErrorCompare, nullptr);
 
-	if (nCount > m_nMatrixSize)
-		nCount = m_nMatrixSize;
+	if (nCount > m_nTotalVariablesCount)
+		nCount = m_nTotalVariablesCount;
 
-	ppSortOrder = pSortOrder;
+	ppSortOrder = pSortOrder.get();
 	while (nCount)
 	{
 		pVectorBegin = *ppSortOrder;
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%-6d %s %s Rtol %g Atol %g"), pVectorBegin->nErrorHits,
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, 
+					fmt::format(_T("{:<6} {} {} Rtol {} Atol {}"), 
+								   pVectorBegin->nErrorHits,
 								   pVectorBegin->pDevice->GetVerbalName(),
 								   pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
 								   pVectorBegin->Rtol,
-								   pVectorBegin->Atol);
+								   pVectorBegin->Atol)
+		   );
 		ppSortOrder++;
 		nCount--;
 	}
-
-	delete pSortOrder;
-
 }
 
 // ограничивает частоту изменения шага до минимального, просчитанного на серии шагов
@@ -409,30 +393,31 @@ csi cs_gatxpy(const cs *A, const double *x, double *y)
 	return (1);
 }
 
-void CDynaModel::DumpMatrix()
+void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 {
-	FILE *fmatrix;
-	if (!_tfopen_s(&fmatrix, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
+	FILE* fmatx(nullptr);
+	if (!_tfopen_s(&fmatx, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
 	{
-		ptrdiff_t *pAi = Ap;
-		double *pAx = Ax;
+		std::unique_ptr<FILE, decltype(&fclose)> fmatrix(fmatx, &fclose);
+		ptrdiff_t *pAi = klu.Ap();
+		double *pAx = klu.Ax();
 		ptrdiff_t nRow = 0;
-		set<ptrdiff_t> BadNumbers, FullZeros;
-		vector<bool> NonZeros;
-		vector<bool> Diagonals;
-		vector<double> Expanded;
+		std::set<ptrdiff_t> BadNumbers, FullZeros;
+		std::vector<bool> NonZeros;
+		std::vector<bool> Diagonals;
+		std::vector<double> Expanded;
 
-		NonZeros.resize(m_nMatrixSize, false);
-		Diagonals.resize(m_nMatrixSize, false);
-		Expanded.resize(m_nMatrixSize, 0.0);
+		NonZeros.resize(klu.MatrixSize(), false);
+		Diagonals.resize(klu.MatrixSize(), false);
+		Expanded.resize(klu.MatrixSize(), 0.0);
 
-		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
+		for (ptrdiff_t *pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
 		{
 			ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
 			bool bAllZeros = true;
 			while (pAi < pAiend)
 			{
-				_ftprintf_s(fmatrix, _T("%10d %10d     %30g"), nRow, *pAi, *pAx);
+				_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g"), nRow, *pAi, *pAx);
 				RightVector *pRowVector = pRightVector + nRow;
 				RightVector *pColVector = pRightVector + *pAi;
 				CDevice *pRowDevice = pRowVector->pDevice;
@@ -451,9 +436,9 @@ void CDynaModel::DumpMatrix()
 				}
 
 				
-				_ftprintf_s(fmatrix, _T("    %50s/%30s %50s/%30s"), pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
+				_ftprintf_s(fmatrix.get(), _T("    %50s/%30s %50s/%30s"), pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
 												  				    pColDevice->GetVerbalName(), pColDevice->VariableNameByPtr(pColVector->pValue));
-				_ftprintf_s(fmatrix, _T("    %30g %30g\n"), *pRowVector->pValue, *pColVector->pValue);
+				_ftprintf_s(fmatrix.get(), _T("    %30g %30g\n"), *pRowVector->pValue, *pColVector->pValue);
 				pAx++; pAi++;
 			}
 			if (bAllZeros)
@@ -461,81 +446,82 @@ void CDynaModel::DumpMatrix()
 		}
 
 		for (const auto& it : BadNumbers)
-			_ftprintf_s(fmatrix, _T("Bad Number in Row: %d\n"), it);
+			_ftprintf_s(fmatrix.get(), _T("Bad Number in Row: %td\n"), it);
 
 		for (const auto& it : FullZeros)
-			_ftprintf_s(fmatrix, _T("Full Zero Row : %d\n"), it);
+			_ftprintf_s(fmatrix.get(), _T("Full Zero Row : %td\n"), it);
 
-		for (auto& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
+		for (auto&& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
 			if(!*it)
-				_ftprintf_s(fmatrix, _T("Full Zero Column: %d\n"), it - NonZeros.begin());
+				_ftprintf_s(fmatrix.get(), _T("Full Zero Column: %td\n"), it - NonZeros.begin());
 
-		for (auto& it = Diagonals.begin(); it != Diagonals.end(); it++)
+		for (auto&& it = Diagonals.begin(); it != Diagonals.end(); it++)
 			if (!*it)
-				_ftprintf_s(fmatrix, _T("Zero Diagonal: %d\n"), it - Diagonals.begin());
+				_ftprintf_s(fmatrix.get(), _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
 
 
-
-		// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
-		// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
-
-		pAi = Ap; pAx = Ax; nRow = 0;
-		for (ptrdiff_t *pAp = Ai; pAp < Ai + m_nMatrixSize; pAp++, nRow++)
+		if (bAnalyzeLinearDependenies)
 		{
-			fill(Expanded.begin(), Expanded.end(), 0.0);
+			// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
+			// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
 
-			ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
-			bool bAllZeros = true;
-			double normi = 0.0;
-
-			set < pair<int, double> > RowI;
-
-			while (pAi < pAiend)
+			pAi = klu.Ap(); pAx = klu.Ax(); nRow = 0;
+			for (ptrdiff_t* pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
 			{
-				Expanded[*pAi] = *pAx;
-				normi += *pAx * *pAx;
+				std::fill(Expanded.begin(), Expanded.end(), 0.0);
 
-				RowI.insert(make_pair(*pAi, *pAx));
+				ptrdiff_t* pAiend = pAi + *(pAp + 1) - *pAp;
+				bool bAllZeros = true;
+				double normi = 0.0;
 
-				pAx++; pAi++;
-			}
+				std::set < std::pair<ptrdiff_t, double> > RowI;
 
-			ptrdiff_t nRows = 0;
-			ptrdiff_t *pAis = Ap;
-			double *pAxs = Ax;
-			for (ptrdiff_t *pAps = Ai; pAps < Ai + m_nMatrixSize; pAps++, nRows++)
-			{
-				ptrdiff_t *pAiends = pAis + *(pAps + 1) - *pAps;
-				double normj = 0.0;
-				double inner = 0.0;
-
-				set < pair<int, double> > RowJ;
-
-				while (pAis < pAiends)
+				while (pAi < pAiend)
 				{
-					normj += *pAxs * *pAxs;
-					inner += Expanded[*pAis] * *pAxs;
+					Expanded[*pAi] = *pAx;
+					normi += *pAx * *pAx;
 
-					RowJ.insert(make_pair(*pAis, *pAxs));
+					RowI.insert(std::make_pair(*pAi, *pAx));
 
-					pAis++; pAxs++;
+					pAx++; pAi++;
 				}
-				if (nRow != nRows)
-				{
-					double Ratio = inner * inner / normj / normi;
-					if (fabs(Ratio - 1.0) < 1E-5)
-					{
-						_ftprintf_s(fmatrix, _T("Linear dependent rows %10d %10d with %g\n"), nRow, nRows, Ratio);
-						for(auto & it : RowI)
-							_ftprintf_s(fmatrix, _T("%10d %10d     %30g\n"), nRow, it.first, it.second);
-						for (auto & it : RowJ)
-							_ftprintf_s(fmatrix, _T("%10d %10d     %30g\n"), nRows, it.first, it.second);
-					}
 
+				ptrdiff_t nRows = 0;
+				ptrdiff_t* pAis = klu.Ap();
+				double* pAxs = klu.Ax();
+				for (ptrdiff_t* pAps = klu.Ai(); pAps < klu.Ai() + klu.MatrixSize(); pAps++, nRows++)
+				{
+					ptrdiff_t* pAiends = pAis + *(pAps + 1) - *pAps;
+					double normj = 0.0;
+					double inner = 0.0;
+
+					std::set < std::pair<ptrdiff_t, double> > RowJ;
+
+					while (pAis < pAiends)
+					{
+						normj += *pAxs * *pAxs;
+						inner += Expanded[*pAis] * *pAxs;
+
+						RowJ.insert(std::make_pair(*pAis, *pAxs));
+
+						pAis++; pAxs++;
+					}
+					if (nRow != nRows)
+					{
+						double Ratio = inner * inner / normj / normi;
+						if (fabs(Ratio - 1.0) < 1E-5)
+						{
+							_ftprintf_s(fmatrix.get(), _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
+							for (auto& it : RowI)
+								_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
+							for (auto& it : RowJ)
+								_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
+						}
+
+					}
 				}
 			}
 		}
-		fclose(fmatrix);
 	}
 }
 
@@ -543,10 +529,10 @@ void CDynaModel::DumpStateVector()
 {
 	FILE *fdump(nullptr);
 	setlocale(LC_ALL, "ru-ru");
-	if (!_tfopen_s(&fdump, Cex(_T("c:\\tmp\\statevector_%d.csv"), sc.nStepsCount), _T("w+, ccs=UTF-8")))
+	if (!_tfopen_s(&fdump, fmt::format(_T("c:\\tmp\\statevector_{}.csv"), sc.nStepsCount).c_str(), _T("w+, ccs=UTF-8")))
 	{
 		_ftprintf(fdump, _T("Value;db;Device;N0;N1;N2;Error;WError;Atol;Rtol;EqType;SN0;SN1;SN2;SavError;Tminus2Val;PhysEqType;PrimBlockType;ErrorHits\n"));
-		for (RightVector *pRv = pRightVector; pRv < pRightVector + m_nMatrixSize; pRv++)
+		for (RightVector *pRv = pRightVector; pRv < pRightVector + klu.MatrixSize(); pRv++)
 		{
 			_ftprintf(fdump, _T("%g;"), *pRv->pValue);
 			_ftprintf(fdump, _T("%g;"), fabs(pRv->b));
@@ -561,34 +547,79 @@ void CDynaModel::DumpStateVector()
 			_ftprintf(fdump, _T("%g;"), pRv->Tminus2Value);
 			_ftprintf(fdump, _T("%d;"), pRv->PhysicalEquationType);
 			_ftprintf(fdump, _T("%d;"), pRv->PrimitiveBlock);
-			_ftprintf(fdump, _T("%d;"), pRv->nErrorHits);
+			_ftprintf(fdump, _T("%td;"), pRv->nErrorHits);
 			_ftprintf(fdump, _T("\n"));
 		}
 		fclose(fdump);
 	}
 }
 
-
-void CDynaModel::FindMaxB(double& bmax, ptrdiff_t& nMaxIndex)
+void CDynaModel::Computehl0()
 {
-	bmax = 0.0;
-	nMaxIndex = 0;
-	for (int r = 0; r < m_nMatrixSize; r++)
-	{
-		_CheckNumber(b[r]);
-		if (bmax < abs(b[r]))
-		{
-			nMaxIndex = r;
-			bmax = abs(b[r]);
-		}
-	}
+	// кэшированное значение l0 * GetH для элементов матрицы
+	// пересчитывается при изменении шага и при изменении коэффициентов метода
+	// для демпфирования
+	// lh[i] = l[i][0] * GetH()
+	for (auto&& lh : Methodlh)
+		lh = Methodl[&lh - Methodlh][0] * sc.m_dCurrentH;
+}
+
+void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
+{
+	if (bEnable == sc.bAdamsDampingEnabled) return;
+	sc.bAdamsDampingEnabled = bEnable;
+	double Alpha = bEnable ? m_Parameters.m_dAdamsDampingAlpha : 0.0;
+	Methodl[3][0] = MethodlDefault[3][0] * (1.0 + Alpha);
+	// Вместо MethodDefault[3][3] можно использовать честную формулу для LTE (см. Docs)
+	Methodl[3][3] = 1.0 / fabs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
+	sc.RefactorMatrix();
+	Computehl0();
+	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping, 
+														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
 }
 
 
+void CDynaModel::Serialize()
+{
+	CSerializerXML xmlSerializer;
+	xmlSerializer.CreateNewSerialization();
+
+	SerializerPtr SerializerParameteres = std::make_unique<CSerializerBase>();
+	m_Parameters.UpdateSerializer(SerializerParameteres);
+	xmlSerializer.SerializeClassMeta(SerializerParameteres);
+	xmlSerializer.SerializeClass(SerializerParameteres);
+
+	SerializerPtr SerializerStepControl = std::make_unique<CSerializerBase>();
+	sc.UpdateSerializer(SerializerStepControl);
+	xmlSerializer.SerializeClassMeta(SerializerStepControl);
+	xmlSerializer.SerializeClass(SerializerStepControl);
+
+	for (auto&& container : m_DeviceContainers)
+		xmlSerializer.AddDeviceTypeDescription(container->GetType(), container->m_ContainerProps.GetSystemClassName());
+
+	for (auto&& container : m_DeviceContainers)
+	{
+		if (container->Count())
+		{
+			auto& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
+			if (!serializer->ValuesCount())
+				continue;
+
+			xmlSerializer.SerializeClassMeta(serializer);
+			for (auto&& device : *container)
+			{
+				device->UpdateSerializer(serializer);
+				xmlSerializer.SerializeClass(serializer);
+			}
+		}
+	}
+	xmlSerializer.Commit();
+}
 
 
-//									   l0			l1			l2			Cq
-const double CDynaModel::l[4][4] = { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
+const double CDynaModel::MethodlDefault[4][4] = 
+//									   l0			l1			l2			Tauq
+								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
 									 { 2.0 / 3.0,	1.0,		1.0 /3.0,   4.5 },				//  BDF-2
 									 { 1.0,			1.0,		0.0,		2.0 },				//  ADAMS-1
 									 { 0.5,			1.0,		0.5,		12.0 } };			//  ADAMS-2

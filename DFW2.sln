@@ -1,18 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.27130.2020
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DFW2", "DFW2\DFW2.vcxproj", "{3F83480D-B24E-487E-895E-E4F7FA099A87}"
 	ProjectSection(ProjectDependencies) = postProject
 		{10A29A20-D54F-465D-8A51-EF34EA3D9DD7} = {10A29A20-D54F-465D-8A51-EF34EA3D9DD7}
 		{E8CA4426-44D6-4451-94EC-EF9E478733FE} = {E8CA4426-44D6-4451-94EC-EF9E478733FE}
 		{DFC50FFE-44CC-45C6-BE06-859ED33F6119} = {DFC50FFE-44CC-45C6-BE06-859ED33F6119}
-	EndProjectSection
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{07E1761C-06B5-4FCE-8EDE-0D9087B1DFDE}"
-	ProjectSection(SolutionItems) = preProject
-		Performance1.psess = Performance1.psess
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DeviceDLL", "DeviceDLL\DeviceDLL.vcxproj", "{DFC50FFE-44CC-45C6-BE06-859ED33F6119}"
@@ -29,6 +24,8 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "AutoDLL", "AutoDLL\AutoDLL.vcxproj", "{863ACE24-9117-489F-9CF9-CC2FD6797B42}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Compiler", "Compiler\Compiler.vcxproj", "{E8CA4426-44D6-4451-94EC-EF9E478733FE}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CustomDeviceCPP", "CustomDeviceCPP\CustomDeviceCPP.vcxproj", "{EA4AC777-9593-4631-B51E-A8798E707581}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -90,6 +87,14 @@ Global
 		{E8CA4426-44D6-4451-94EC-EF9E478733FE}.Release|Win32.Build.0 = Release|Win32
 		{E8CA4426-44D6-4451-94EC-EF9E478733FE}.Release|x64.ActiveCfg = Release|x64
 		{E8CA4426-44D6-4451-94EC-EF9E478733FE}.Release|x64.Build.0 = Release|x64
+		{EA4AC777-9593-4631-B51E-A8798E707581}.Debug|Win32.ActiveCfg = Debug|Win32
+		{EA4AC777-9593-4631-B51E-A8798E707581}.Debug|Win32.Build.0 = Debug|Win32
+		{EA4AC777-9593-4631-B51E-A8798E707581}.Debug|x64.ActiveCfg = Debug|x64
+		{EA4AC777-9593-4631-B51E-A8798E707581}.Debug|x64.Build.0 = Debug|x64
+		{EA4AC777-9593-4631-B51E-A8798E707581}.Release|Win32.ActiveCfg = Release|Win32
+		{EA4AC777-9593-4631-B51E-A8798E707581}.Release|Win32.Build.0 = Release|Win32
+		{EA4AC777-9593-4631-B51E-A8798E707581}.Release|x64.ActiveCfg = Release|x64
+		{EA4AC777-9593-4631-B51E-A8798E707581}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

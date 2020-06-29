@@ -51,15 +51,15 @@ STDMETHODIMP CResultWrite::WriteHeader()
 			throw CFileWriteException(NULL);
 
 		m_ResultFileWriter.WriteDouble(dCurrentDate);						// записываем время
-		m_ResultFileWriter.WriteString(m_strComment.c_str());				// записываем строку комментария
+		m_ResultFileWriter.WriteString(m_strComment);						// записываем строку комментария
 		m_ResultFileWriter.AddDirectoryEntries(3);							// описатели разделов
 		m_ResultFileWriter.WriteLEB(m_VarNameMap.size());					// записываем количество единиц измерения
 
 		// записываем последовательность типов и названий единиц измерения переменных
-		for (VARNAMEITRCONST vnmit = m_VarNameMap.begin(); vnmit != m_VarNameMap.end(); vnmit++)
+		for (auto&& vnmit : m_VarNameMap)
 		{
-			m_ResultFileWriter.WriteLEB(vnmit->first);
-			m_ResultFileWriter.WriteString(vnmit->second.c_str());
+			m_ResultFileWriter.WriteLEB(vnmit.first);
+			m_ResultFileWriter.WriteString(vnmit.second);
 		}
 		// записываем количество типов устройств
 		m_ResultFileWriter.WriteLEB(m_DevTypeSet.size());
@@ -71,7 +71,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 		{
 			// для каждого типа устройств
 			m_ResultFileWriter.WriteLEB(di->eDeviceType);							// идентификатор типа устройства
-			m_ResultFileWriter.WriteString(di->strDevTypeName.c_str());				// название типа устройства
+			m_ResultFileWriter.WriteString(di->strDevTypeName);						// название типа устройства
 			m_ResultFileWriter.WriteLEB(di->DeviceIdsCount);						// количество идентификаторов устройства (90% - 1, для ветвей, например - 3)
 			m_ResultFileWriter.WriteLEB(di->DeviceParentIdsCount);					// количество родительских устройств
 			m_ResultFileWriter.WriteLEB(di->DevicesCount);							// количество устройств данного типа
@@ -82,7 +82,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 			// записываем описания переменных типа устройства
 			for (auto &vi : di->m_VarTypesList)
 			{
-				m_ResultFileWriter.WriteString(vi.Name.c_str());					// имя переменной
+				m_ResultFileWriter.WriteString(vi.Name);							// имя переменной
 				m_ResultFileWriter.WriteLEB(vi.eUnits);								// единицы измерения переменной
 				unsigned char BitFlags = 0x0;
 				// если у переменной есть множитель -
@@ -99,14 +99,14 @@ STDMETHODIMP CResultWrite::WriteHeader()
 			}
 
 			// записываем описания устройств
-			for (CResultFileReader::DeviceInstanceInfo *pDev = di->m_pDeviceInstances; pDev < di->m_pDeviceInstances + di->DevicesCount; pDev++)
+			for (CResultFileReader::DeviceInstanceInfo *pDev = di->m_pDeviceInstances.get(); pDev < di->m_pDeviceInstances.get() + di->DevicesCount; pDev++)
 			{
 				// для каждого устройства
 				// записываем последовательность идентификаторов
 				for (int i = 0; i < di->DeviceIdsCount; i++)
 					m_ResultFileWriter.WriteLEB(pDev->GetId(i));
 				// записываем имя устройства
-				m_ResultFileWriter.WriteString(pDev->Name.c_str());
+				m_ResultFileWriter.WriteString(pDev->Name);
 				// для каждого из родительских устройств
 				for (int i = 0; i < di->DeviceParentIdsCount; i++)
 				{
@@ -132,9 +132,9 @@ STDMETHODIMP CResultWrite::WriteHeader()
 
 	catch (std::bad_alloc& badAllocEx)
 	{
-		string strc(badAllocEx.what());
-		wstring str(strc.begin(), strc.end());
-		Error(Cex(CDFW2Messages::m_cszMemoryAllocError, str.c_str()), IID_IResultWrite, hRes);
+		std::string strc(badAllocEx.what());
+		std::wstring str(strc.begin(), strc.end());
+		Error(fmt::format(CDFW2Messages::m_cszMemoryAllocError, str).c_str(), IID_IResultWrite, hRes);
 	}
 
 	catch (...)
@@ -149,10 +149,10 @@ STDMETHODIMP CResultWrite::WriteHeader()
 STDMETHODIMP CResultWrite::AddVariableUnit(LONG UnitId, BSTR UnitName)
 {
 	HRESULT hRes = S_OK;
-	if (!m_VarNameMap.insert(make_pair(UnitId, UnitName)).second)
+	if (!m_VarNameMap.insert(std::make_pair(UnitId, UnitName)).second)
 	{
 		hRes = E_INVALIDARG;
-		Error(Cex(CDFW2Messages::m_cszDuplicatedVariableUnit, UnitId), IID_IResultWrite, hRes);
+		Error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableUnit, UnitId).c_str(), IID_IResultWrite, hRes);
 	}
 	return hRes;
 }
@@ -182,7 +182,7 @@ STDMETHODIMP CResultWrite::AddDeviceType(LONG DeviceTypeId, BSTR DeviceTypeName,
 		}
 		else
 		{
-			Error(Cex(CDFW2Messages::m_cszDuplicatedDeviceType, DeviceTypeId), IID_IResultWrite, hRes);
+			Error(fmt::format(CDFW2Messages::m_cszDuplicatedDeviceType, DeviceTypeId).c_str(), IID_IResultWrite, hRes);
 			delete pDeviceType;
 		}
 	}
@@ -244,10 +244,12 @@ void CResultWrite::CreateFile(const _TCHAR* cszPathName)
 
 STDMETHODIMP CResultWrite::Close()
 {
+	m_ResultFileWriter.CloseFile();
+
 	for (auto &it : m_DevTypeSet)
 		delete it;
 	m_DevTypeSet.clear();
-	m_ResultFileWriter.CloseFile();
+
 	return S_OK;
 }
 

@@ -9,20 +9,16 @@ namespace DFW2
 	{
 
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		CLimitedLag Lag;
 
 		CDerlag dVdt;
 		CDerlag dEqdt;
 		CDerlag dSdt;
 
-		PrimitiveVariable LagIn;
-
-		PrimitiveVariableExternal dVdtIn;
-		PrimitiveVariableExternal dEqdtIn;
-		PrimitiveVariableExternal dSdtIn;
-
-		double dVdtOutValue[2], dEqdtOutValue[2], dSdtOutValue[2];
+		VariableIndexExternal dVdtIn, dEqdtIn, dSdtIn;
+		VariableIndex dVdtOut, dEqdtOut, dSdtOut;
+		VariableIndex dVdtOut1, dEqdtOut1, dSdtOut1;
 
 	public:
 
@@ -39,18 +35,20 @@ namespace DFW2
 
 		double K0u, K1u, Alpha, K1if, K0f, K1f, Umin, Umax, Tf, Tr;
 		double Vref;
-		double Usum, Uf, Svt;
+		VariableIndex Uf, Usum, Svt;
 
 		CDynaExcConMustang();
 		virtual ~CDynaExcConMustang() {}
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 	};

@@ -8,8 +8,8 @@ namespace DFW2
 	class CDynaGenerator1C : public CDynaGeneratorMotion
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual cplx GetXofEqs() { return cplx(0,xq); }
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		cplx GetXofEqs() override { return cplx(0, xq); };
 		double zsq;
 	public:
 
@@ -27,7 +27,7 @@ namespace DFW2
 
 		enum VARS
 		{
-			V_VD = 4,
+			V_VD = CDynaGeneratorMotion::V_LAST,
 			V_VQ,
 			V_ID,
 			V_IQ,
@@ -39,32 +39,35 @@ namespace DFW2
 		cplx m_Egen; // эквивалентна€ Ёƒ— генератора дл€ учета €внополюсности в стартовом методе
 					 // используетс€ всеми dq генераторами
 
-		double Vd, Vq;
-		double Id, Iq;
-		double Eq;
-
-		double Eqe;
-		PrimitiveVariableExternal ExtEqe;
+		VariableIndex Vd, Vq, Id, Iq, Eq;
+		VariableIndexExternalOptional ExtEqe;
 
 		double	Td01, xd, r;
 
 		double Eqnom, Snom, Qnom, Inom;
 		double m_ExciterId;
+
+		void IfromDQ();
+		bool BuildIfromDQEquations(CDynaModel *pDynaModel);
+		bool BuildIfromDQRightHand(CDynaModel *pDynaModel);
 		
 		CDynaGenerator1C();
 		virtual ~CDynaGenerator1C() {}
 
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CalculatePower();
-		virtual double Xgen();
-		virtual cplx Igen(ptrdiff_t nIteration);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		bool CalculatePower() override;
+		double Xgen() override;
+		cplx Igen(ptrdiff_t nIteration) override;
 		virtual const cplx& CalculateEgen();
+
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 
 		static const _TCHAR *m_cszEqe;
 		static const _TCHAR *m_cszEq;

@@ -4,24 +4,36 @@
 
 namespace DFW2
 {
-	class CDynaGeneratorInfBus : public CDynaVoltageSource
+	class CDynaGeneratorInfBusBase : public CDynaVoltageSource
 	{
 	protected:
 		bool SetUpDelta();
 	public:
 		virtual cplx GetXofEqs() { return cplx(0,xd1); }
-		double Eqs, Delta, xd1;
-		CDynaGeneratorInfBus();
+		VariableIndex Delta, Eqs;
+		double xd1;
+		CDynaGeneratorInfBusBase();
 		virtual double Xgen();
 		virtual cplx Igen(ptrdiff_t nIteration);
-		virtual ~CDynaGeneratorInfBus() {}
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		virtual cplx GetEMF() { return polar(Eqs, Delta); }
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual bool CalculatePower();
+		virtual ~CDynaGeneratorInfBusBase() {}
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		cplx GetEMF() override { return std::polar((double)Eqs, (double)Delta); }
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		bool CalculatePower() override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+	};
+
+	class CDynaGeneratorInfBus : public CDynaGeneratorInfBusBase
+	{
+	protected:
+		double EqsCos, EqsSin;
+	public:
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 	};
 }
 

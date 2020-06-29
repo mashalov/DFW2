@@ -1,7 +1,16 @@
-п»ї#include "stdafx.h"
+#include "stdafx.h"
 #include "RastrImport.h"
+#include "DynaGeneratorMustang.h"
+#include "DynaGeneratorInfBus.h"
+#include "DynaExciterMustang.h"
+#include "DynaDECMustang.h"
+#include "DynaExcConMustang.h"
+#include "DynaBranch.h"
+
 using namespace DFW2;
 #import "C:\Program Files (x86)\RastrWin3\astra.dll" no_namespace, named_guids, no_dual_interfaces, no_implementation 
+
+//cl /LD /EHsc -DUNICODE -D_UNICODE customdevice.cpp dllmain.cpp
 
 
 CRastrImport::CRastrImport()
@@ -14,13 +23,102 @@ CRastrImport::~CRastrImport()
 
 }
 
-bool GetConstFromField(const ConstVarsInfo* pVarsInfo)
+bool GetConstFromField(const ConstVarsInfo& VarsInfo)
 {
 	bool bRes = false;
-	if (pVarsInfo && !(pVarsInfo->VarFlags & (CVF_INTERNALCONST)) && pVarsInfo->eDeviceType == DEVTYPE_UNKNOWN)
+	if (!(VarsInfo.VarFlags & (CVF_INTERNALCONST)) && VarsInfo.eDeviceType == DEVTYPE_UNKNOWN)
 		bRes = true;
 	return bRes;
 }
+
+bool GetConstFromField(const CConstVarIndex& VarInfo )
+{
+	bool bRes = false;
+	if (VarInfo.m_DevVarType == eDEVICEVARIABLETYPE::eDVT_CONSTSOURCE)
+		bRes = true;
+	return bRes;
+}
+
+bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceCPPContainer& CustomDeviceContainer)
+{
+	bool bRes(false);
+	if (spRastr)
+	{
+		try
+		{
+			ITablePtr spSourceTable = spRastr->Tables->Item(ConnectInfo.m_TableName.c_str());
+			IColsPtr spSourceCols = spSourceTable->Cols;
+
+			using COLVECTOR = std::vector<std::pair<IColPtr, ptrdiff_t>>;
+			COLVECTOR Cols;
+			Cols.reserve(CustomDeviceContainer.m_ContainerProps.m_ConstVarMap.size());
+			IColPtr spColId = spSourceCols->Item(_T("Id"));
+			IColPtr spColName = spSourceCols->Item(_T("Name"));
+			IColPtr spColState = spSourceCols->Item(_T("sta"));
+			for (const auto& col : CustomDeviceContainer.m_ContainerProps.m_ConstVarMap)
+				if (GetConstFromField(col.second))
+					Cols.push_back(std::make_pair(spSourceCols->Item(col.first.c_str()), col.second.m_nIndex));
+
+			// count model types in storage
+
+			IColPtr spModelType = spSourceCols->Item(ConnectInfo.m_ModelTypeField.c_str());
+			long nTableIndex = 0;
+			long nTableSize = spSourceTable->GetSize();
+			long nModelsCount = 0;
+
+			for (; nTableIndex < nTableSize; nTableIndex++)
+			{
+				if (spModelType->GetZ(nTableIndex).lVal == ConnectInfo.m_nModelType)
+					nModelsCount++;
+			}
+
+			if (nModelsCount)
+			{
+				// create models for count given
+				CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[nModelsCount];
+				CustomDeviceContainer.AddDevices(pCustomDevices, nModelsCount);
+				CustomDeviceContainer.BuildStructure();
+
+				// put constants to each model
+				long nModelIndex = 0;
+				for (nTableIndex = 0; nTableIndex < nTableSize; nTableIndex++)
+				{
+					if (spModelType->GetZ(nTableIndex).lVal == ConnectInfo.m_nModelType)
+					{
+						if (nModelIndex >= nModelsCount)
+						{
+							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL()->GetModuleFilePath()));
+							break;
+						}
+
+						CCustomDeviceCPP* pDevice = pCustomDevices + nModelIndex;
+						pDevice->SetConstsDefaultValues();
+						pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
+						pDevice->SetName(static_cast<const _TCHAR*>(spColId->GetZS(nTableIndex)));
+						pDevice->SetState(spColState->GetZ(nTableIndex).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+						DOUBLEVECTOR& ConstsVec = pDevice->GetConstantData();
+						for (const auto& col : Cols)
+						{
+							if (col.second >= 0 && col.second < static_cast<ptrdiff_t>(ConstsVec.size()))
+								ConstsVec[col.second] = col.first->GetZ(nTableIndex).dblVal;
+							else
+								throw dfw2error(_T("CRastrImport::GetCustomDeviceData - Constants index overrun"));
+						}
+						nModelIndex++;
+					}
+				}
+			}
+		}
+		catch (_com_error& err)
+		{
+			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
+				CustomDeviceContainer.DLL()->GetModuleFilePath(),
+				static_cast<const _TCHAR*>(err.Description())));
+		}
+	}
+	return bRes;
+}
+
 
 bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer)
 {
@@ -34,8 +132,8 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			const DFW2::CCustomDeviceDLL& DLL = CustomDeviceContainer.DLL();
 
 			// get and check constants fields from storage
-			size_t nConstsCount = DLL.GetConstsCount();
-			typedef vector<pair<IColPtr,ptrdiff_t> > COLVECTOR;
+			size_t nConstsCount = DLL.GetConstsInfo().size();
+			typedef std::vector<std::pair<IColPtr,ptrdiff_t> > COLVECTOR;
 			typedef COLVECTOR::iterator COLITR;
 			COLVECTOR Cols;
 			Cols.reserve(nConstsCount);
@@ -43,20 +141,12 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			IColPtr spColId		= spSourceCols->Item(_T("Id"));
 			IColPtr spColName	= spSourceCols->Item(_T("Name"));
 
-			for (size_t ConstIndex = 0; ConstIndex < nConstsCount; ConstIndex++)
-			{
-				const ConstVarsInfo *pVarInfo = DLL.GetConstInfo(ConstIndex);
-				if (pVarInfo)
-				{
-					if (GetConstFromField(pVarInfo))
-						Cols.push_back(make_pair(spSourceCols->Item(pVarInfo->VarInfo.Name),ConstIndex));
-				}
-				else
-				{
-					Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks,CustomDeviceContainer.DLL().GetModuleFilePath()));
-					break;
-				}
-			}
+
+			ptrdiff_t ConstIndex(0);
+			for (const auto& it : DLL.GetConstsInfo())
+				if (GetConstFromField(it))
+					Cols.push_back(std::make_pair(spSourceCols->Item(it.VarInfo.Name), ConstIndex++));
+
 
 			// count model types in storage
 			IColPtr spModelType = spSourceCols->Item(ConnectInfo.m_ModelTypeField.c_str());
@@ -86,7 +176,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 					{
 						if (nModelIndex >= nModelsCount)
 						{
-							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 							break;
 						}
 
@@ -94,19 +184,19 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 						if (pDevice->SetConstDefaultValues())
 						{
 							pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
-							pDevice->SetName(spColId->GetZS(nTableIndex));
+							pDevice->SetName(static_cast<const _TCHAR*>(spColId->GetZS(nTableIndex)));
 							for (COLITR cit = Cols.begin(); cit != Cols.end(); cit++)
 							{
 								if (!pDevice->SetConstValue(cit->second, cit->first->GetZ(nTableIndex).dblVal))
 								{
-									Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+									Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 									break;
 								}
 							}
 						}
 						else
 						{
-							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 							break;
 						}
 						nModelIndex++;
@@ -116,7 +206,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 		}
 		catch (_com_error &err)
 		{
-			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, Cex(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
+			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
 																CustomDeviceContainer.DLL().GetModuleFilePath(), 
 																static_cast<const _TCHAR*>(err.Description())));
 		}
@@ -124,26 +214,78 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 	return bRes;
 }
 
+void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
+{
+	
+	Serializer->m_pDevice->SetDBIndex(Row);
+	Serializer->m_pDevice->SetId(Row); // если идентификатора нет или он сложный - ставим порядковый номер в качестве идентификатора
+
+	for (auto&& sv : *Serializer)
+	{
+		MetaSerializedValue& mv = *sv.second;
+		if (mv.bState)
+			continue;
+		variant_t vt = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row);
+		switch (mv.Value.ValueType)
+		{
+		case TypedSerializedValue::eValueType::VT_DBL:
+			vt.ChangeType(VT_R8);
+			*mv.Value.Value.pDbl = vt.dblVal * mv.Multiplier;
+			break;
+		case TypedSerializedValue::eValueType::VT_INT:
+			vt.ChangeType(VT_I4);
+			*mv.Value.Value.pInt = vt.lVal;
+			break;
+		case TypedSerializedValue::eValueType::VT_BOOL:
+			vt.ChangeType(VT_BOOL);
+			*mv.Value.Value.pBool = vt.boolVal;
+			break;
+		case TypedSerializedValue::eValueType::VT_NAME:
+			vt.ChangeType(VT_BSTR);
+			Serializer->m_pDevice->SetName(vt.bstrVal);
+			break;
+		case TypedSerializedValue::eValueType::VT_STATE:
+			vt.ChangeType(VT_BOOL);
+			Serializer->m_pDevice->SetState(vt.boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			break;
+		case TypedSerializedValue::eValueType::VT_ID:
+			vt.ChangeType(VT_I4);
+			Serializer->m_pDevice->SetId(vt.lVal);
+			break;
+		case TypedSerializedValue::eValueType::VT_ADAPTER:
+			vt.ChangeType(VT_I4);
+			mv.Value.Adapter->SetInt(NodeTypeFromRastr(vt.lVal));
+			break;
+		default:
+			throw dfw2error(fmt::format(_T("CRastrImport::ReadRastrRow wrong serializer type {}"), mv.Value.ValueType));
+		}
+	}
+}
+
 void CRastrImport::GetData(CDynaModel& Network)
 {
-	IRastrPtr spRastr;
-	HRESULT hr = spRastr.CreateInstance(CLSID_Rastr);
-
+	HRESULT hr = m_spRastr.CreateInstance(CLSID_Rastr);
 
 	//spRastr->Load(RG_REPL, L"..\\tests\\test92.rst", "");
+	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\Р°РІС‚РѕРјР°С‚РёРєР°.dfw");
+	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
-	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
+	m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_1", ""); 
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Работа\\Уват\\Исходные данные\\RastrWin\\режим Уват 2020.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst"); 
+	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\oos", "");
-	//spRastr->Load(RG_REPL, L"..\\tests\\gen_lf_no_calc", "");
-	spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
-	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test9_sc", ""); 
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\test9_qmin.rst", "");
-	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\cx195.rg2",L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\РґРёРЅР°РјРёРєР°.rst");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\Р°РІС‚РѕРјР°С‚РёРєР°.dfw");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\СЃС†РµРЅР°СЂРёР№.scn");
+	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\cx195.rg2",L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\динамика.rst");
+	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\сценарий.scn");
 
 	
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
@@ -151,8 +293,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	if (!Network.Automatic().PrepareCompiler())
 		return;
 
-	ITablesPtr spTables = spRastr->Tables;
-
+	ITablesPtr spTables = m_spRastr->Tables;
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
 	IColsPtr spASCols = spAutoStarters->Cols;
 	IColPtr spASId			= spASCols->Item(_T("Id"));
@@ -246,10 +387,15 @@ void CRastrImport::GetData(CDynaModel& Network)
 	
 	if (!Network.CustomDevice.ConnectDLL(_T("DeviceDLL.dll")))
 		return;
+
+	Network.CustomDeviceCPP.ConnectDLL(_T("CustomDeviceCPP.dll"));
+
 	CustomDeviceConnectInfo ci(_T("ExcControl"),2);
-	ITablePtr spExAddXcomp = spRastr->Tables->Item("ExcControl");
+	ITablePtr spExAddXcomp = m_spRastr->Tables->Item("ExcControl");
 	spExAddXcomp->Cols->Add("Xcomp", PR_REAL);
-	GetCustomDeviceData(Network, spRastr, ci, Network.CustomDevice);
+
+	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
+	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);
 	
 	ITablePtr spLRC = spTables->Item("polin");
 	IColsPtr spLRCCols = spLRC->Cols;
@@ -290,58 +436,22 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ITablePtr spNode = spTables->Item("node");
 	IColsPtr spNodeCols = spNode->Cols;
 	CDynaNode *pNodes = new CDynaNode[spNode->Size];
-
-	IColPtr spNy = spNodeCols->Item("ny");
-	IColPtr spNtype = spNodeCols->Item("tip");
-	IColPtr spName = spNodeCols->Item("name");
-	IColPtr spUnom = spNodeCols->Item("uhom");
-	IColPtr spV = spNodeCols->Item("vras");
-	IColPtr spDelta= spNodeCols->Item("delta");
-	IColPtr spPn = spNodeCols->Item("pn");
-	IColPtr spQn = spNodeCols->Item("qn");
-	IColPtr spPnr = spNodeCols->Item("pnr");
-	IColPtr spQnr = spNodeCols->Item("qnr");
-	IColPtr spPg = spNodeCols->Item("pg");
-	IColPtr spQg = spNodeCols->Item("qg");
-	IColPtr spG = spNodeCols->Item("gsh");
-	IColPtr spB = spNodeCols->Item("bsh");
 	IColPtr spLCIdLF = spNodeCols->Item("nsx");
 	IColPtr spLCId = spNodeCols->Item("dnsx");
-	IColPtr spSta = spNodeCols->Item("sta");
-	IColPtr spG0 = spNodeCols->Item("grk");
-	IColPtr spB0 = spNodeCols->Item("brk");
-	IColPtr spNr = spNodeCols->Item("nrk");
-	IColPtr spVref = spNodeCols->Item("vzd");
-	IColPtr spQmin = spNodeCols->Item("qmin");
-	IColPtr spQmax = spNodeCols->Item("qmax");
-
+	IColPtr spNtype = spNodeCols->Item("tip");
 
 	Network.Nodes.AddDevices(pNodes, spNode->Size);
 
+	auto pSerializer = pNodes->GetSerializer();
+
+	for (auto&& sv : *pSerializer)
+		if(!sv.second->bState)
+			sv.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spNodeCols->Item(sv.first.c_str()));
+
 	for (int i = 0; i < spNode->Size; i++)
 	{
-		pNodes->SetId(spNy->GetZ(i));
-		pNodes->SetName(spName->GetZ(i).bstrVal);
-		pNodes->SetState(spSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-		pNodes->Unom = spUnom->GetZ(i);
-		pNodes->SetDBIndex(i);
-		pNodes->V = spV->GetZ(i);
-		pNodes->m_eLFNodeType = NodeTypeFromRastr(spNtype->GetZ(i).lVal);
-		pNodes->Delta = spDelta->GetZ(i);
-		pNodes->Pn = spPnr->GetZ(i);
-		pNodes->Qn = spQnr->GetZ(i);
-		pNodes->Pnr = spPn->GetZ(i);
-		pNodes->Qnr = spQn->GetZ(i);
-		pNodes->Pg = spPg->GetZ(i);
-		pNodes->Qg = spQg->GetZ(i);
-		pNodes->G = spG->GetZ(i);
-		pNodes->B = -spB->GetZ(i).dblVal;
-		pNodes->Br0 = -spB0->GetZ(i).dblVal;
-		pNodes->Gr0 = spG0->GetZ(i);
-		pNodes->Nr = spNr->GetZ(i);
-		pNodes->LFVref = spVref->GetZ(i);
-		pNodes->LFQmin = spQmin->GetZ(i);
-		pNodes->LFQmax = spQmax->GetZ(i);
+		pNodes->UpdateSerializer(pSerializer);
+		ReadRastrRow(pSerializer, i);
 		CDynaLRC *pDynLRC;
 		if (Network.LRCs.GetDevice(spLCId->GetZ(i), pDynLRC))
 		{
@@ -360,7 +470,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	}
 
 	
+	ReadTable<CDynaBranch>(_T("vetv"), Network.Branches);
 
+	/*
 	ITablePtr spBranch = spTables->Item("vetv");
 	CDynaBranch *pBranches = new CDynaBranch[spBranch->Size];
 	IColsPtr spBranchCols = spBranch->Cols;
@@ -413,6 +525,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		(pBranches + i)->NrIq = spNrIq->GetZ(i).lVal;
 	}
 	Network.Branches.AddDevices(pBranches, spBranch->Size);
+	*/
 	
 
 
@@ -499,7 +612,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 6:
 			pGensMu->SetId(spGenId->GetZ(i));
 			pGensMu->SetName(spGenName->GetZ(i).bstrVal);
-			pGensMu->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGensMu->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensMu->NodeId = spGenNode->GetZ(i);
 			pGensMu->Kdemp = spGenDemp->GetZ(i);
 			pGensMu->Kgen = spGenKgen->GetZ(i);
@@ -526,7 +639,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 5:
 			pGens3C->SetId(spGenId->GetZ(i));
 			pGens3C->SetName(spGenName->GetZ(i).bstrVal);
-			pGens3C->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGens3C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGens3C->NodeId = spGenNode->GetZ(i);
 			pGens3C->Kdemp = spGenDemp->GetZ(i);
 			pGens3C->Kgen  = spGenKgen->GetZ(i);
@@ -553,7 +666,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 4:
 			pGens1C->SetId(spGenId->GetZ(i));
 			pGens1C->SetName(spGenName->GetZ(i).bstrVal);
-			pGens1C->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGens1C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGens1C->NodeId = spGenNode->GetZ(i);
 			pGens1C->Kgen = spGenKgen->GetZ(i);
 			pGens1C->Kdemp = spGenDemp->GetZ(i);
@@ -575,7 +688,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 2:
 			pGensInf->SetId(spGenId->GetZ(i));
 			pGensInf->SetName(spGenName->GetZ(i).bstrVal);
-			pGensInf->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGensInf->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensInf->NodeId = spGenNode->GetZ(i);
 			pGensInf->Kgen = spGenKgen->GetZ(i);
 			pGensInf->P = spGenP->GetZ(i);
@@ -588,7 +701,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		case 3:
 			pGensMot->SetId(spGenId->GetZ(i));
 			pGensMot->SetName(spGenName->GetZ(i).bstrVal);
-			pGensMot->SetState(spGenSta->GetZ(i).boolVal ? DS_OFF : DS_ON, DSC_EXTERNAL);
+			pGensMot->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensMot->NodeId = spGenNode->GetZ(i);
 			pGensMot->Kgen = spGenKgen->GetZ(i);
 			pGensMot->Kdemp = spGenDemp->GetZ(i);
@@ -605,120 +718,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 		}
 	}
 
-	ITablePtr spExciter = spTables->Item("Exciter");
-	IColsPtr  spExcCols = spExciter->Cols;
-	IColPtr spExcId		= spExcCols->Item("Id");
-	IColPtr spExcName	= spExcCols->Item("Name");
-	IColPtr spExcTexc	= spExcCols->Item("Texc");
-	IColPtr spExcUmin   = spExcCols->Item("Uf_min");
-	IColPtr spExcUmax   = spExcCols->Item("Uf_max");
-	IColPtr spExcImin	= spExcCols->Item("If_min");
-	IColPtr spExcImax	= spExcCols->Item("If_max");
-	IColPtr spExcKif	= spExcCols->Item("Kif");
-	IColPtr spExcKig	= spExcCols->Item("Kig");
-	IColPtr spExcVD		= spExcCols->Item("Type_rg");
-	IColPtr spExcDECId = spExcCols->Item("ForcerId");
-	IColPtr spExcRegId = spExcCols->Item("ExcControlId");
-
-	size_t nMustangExcitersCount = spExciter->Size;
-
-	CDynaExciterMustang *pExcitersMustang = new CDynaExciterMustang[nMustangExcitersCount];
-	Network.ExcitersMustang.AddDevices(pExcitersMustang, nMustangExcitersCount);
-
-	for (int i = 0; i < spExciter->Size; i++)
-	{
-		pExcitersMustang->SetId(spExcId->GetZ(i));
-		pExcitersMustang->SetName(spExcName->GetZ(i).bstrVal);
-		pExcitersMustang->Texc = spExcTexc->GetZ(i);
-		pExcitersMustang->Umin = spExcUmin->GetZ(i);
-		pExcitersMustang->Umax = spExcUmax->GetZ(i);
-		pExcitersMustang->Imin = spExcImin->GetZ(i);
-		pExcitersMustang->Imax = spExcImax->GetZ(i);
-		pExcitersMustang->Kig  = spExcKig->GetZ(i);
-		pExcitersMustang->Kif  = spExcKif->GetZ(i);
-		pExcitersMustang->DECId = spExcDECId->GetZ(i);
-		pExcitersMustang->RegId = spExcRegId->GetZ(i);
-		pExcitersMustang->bVoltageDependent = (spExcVD->GetZ(i).lVal == 1) ? true : false ;
-		pExcitersMustang++;
-	}
-
-
-	ITablePtr spForcer = spTables->Item("Forcer");
-	IColsPtr  spForcerCols = spForcer->Cols;
-
-	IColPtr spForcerId	 = spForcerCols->Item("Id");
-	IColPtr spForcerName = spForcerCols->Item("Name");
-	IColPtr spForcerVEnfOn = spForcerCols->Item("Ubf");
-	IColPtr spForcerVEnfOff = spForcerCols->Item("Uef");
-	IColPtr spForcerVDefOn = spForcerCols->Item("Ubrf");
-	IColPtr spForcerVDefOff = spForcerCols->Item("Uerf");
-	IColPtr spForcerEnfRatio = spForcerCols->Item("Rf");
-	IColPtr spForcerDefRatio = spForcerCols->Item("Rrf");
-	IColPtr spForcerEnfTexc = spForcerCols->Item("Texc_f");
-	IColPtr spForcerDefTexc = spForcerCols->Item("Texc_rf");
-	IColPtr spForcerTdelOn = spForcerCols->Item("Tz_in");
-	IColPtr spForcerTdelOff = spForcerCols->Item("Tz_out");
-
-	size_t nMustangDECsCount = spForcer->Size;
-
-	CDynaDECMustang *pDECsMustang = new CDynaDECMustang[nMustangDECsCount];
-	Network.DECsMustang.AddDevices(pDECsMustang, nMustangDECsCount);
-
-	for (int i = 0; i < static_cast<ptrdiff_t>(nMustangDECsCount); i++)
-	{
-		pDECsMustang->SetId(spForcerId->GetZ(i));
-		pDECsMustang->SetName(spForcerName->GetZ(i).bstrVal);
-		pDECsMustang->VEnfOn = spForcerVEnfOn->GetZ(i);
-		pDECsMustang->VEnfOff = spForcerVEnfOff->GetZ(i);
-		pDECsMustang->VDefOn = spForcerVDefOn->GetZ(i);
-		pDECsMustang->VDefOff = spForcerVDefOff->GetZ(i);
-		pDECsMustang->EnfRatio = spForcerEnfRatio->GetZ(i);
-		pDECsMustang->DefRatio = spForcerDefRatio->GetZ(i);
-		pDECsMustang->EnfTexc = spForcerEnfTexc->GetZ(i);
-		pDECsMustang->DefTexc = spForcerDefTexc->GetZ(i);
-		pDECsMustang->TdelOn = spForcerTdelOn->GetZ(i);
-		pDECsMustang->TdelOff = spForcerTdelOff->GetZ(i);
-		pDECsMustang++;
-	}
-
-	ITablePtr spExcConMustang = spTables->Item("ExcControl");
-	IColsPtr spEРЎMCols = spExcConMustang->Cols;
-
-	IColPtr spECMId = spEРЎMCols->Item("Id");
-	IColPtr spECMName = spEРЎMCols->Item("Name");
-	IColPtr spECMTr = spEРЎMCols->Item("Trv");
-	IColPtr spECMK0u = spEРЎMCols->Item("Ku");
-	IColPtr spECMK1u = spEРЎMCols->Item("Ku1");
-	IColPtr spECMK1if = spEРЎMCols->Item("Kif1");
-	IColPtr spECMK0f = spEРЎMCols->Item("Kf");
-	IColPtr spECMK1f = spEРЎMCols->Item("Kf1");
-	IColPtr spECMTf = spEРЎMCols->Item("Tf");
-	IColPtr spECMUmin = spEРЎMCols->Item("Urv_min");
-	IColPtr spECMUmax = spEРЎMCols->Item("Urv_max");
-	IColPtr spECMA = spEРЎMCols->Item("Alpha");
-
-	size_t nMustangExcConsCount = spExcConMustang->Size;
-
-	CDynaExcConMustang *pExcConsMustang = new CDynaExcConMustang[nMustangExcConsCount];
-	Network.ExcConMustang.AddDevices(pExcConsMustang, nMustangExcConsCount);
-
-	for (int i = 0; i < spExcConMustang->Size; i++)
-	{
-		pExcConsMustang->SetId(spECMId->GetZ(i));
-		pExcConsMustang->SetName(spECMName->GetZ(i).bstrVal);
-		pExcConsMustang->Alpha = spECMA->GetZ(i);
-		pExcConsMustang->Umin = spECMUmin->GetZ(i);
-		pExcConsMustang->Umax = spECMUmax->GetZ(i);
-		pExcConsMustang->Tf   = spECMTf->GetZ(i);
-		pExcConsMustang->K1f  = spECMK1f->GetZ(i);
-		pExcConsMustang->K0f = spECMK0f->GetZ(i);
-		pExcConsMustang->K1if = spECMK1if->GetZ(i);
-		pExcConsMustang->K1u  = spECMK1u->GetZ(i);
-		pExcConsMustang->K0u  = spECMK0u->GetZ(i);
-		pExcConsMustang->Tr   = spECMTr->GetZ(i);
-		pExcConsMustang++;
-	}
-	
+	ReadTable<CDynaExciterMustang>(_T("Exciter"), Network.ExcitersMustang);
+	ReadTable<CDynaDECMustang>(_T("Forcer"), Network.DECsMustang);
+	ReadTable<CDynaExcConMustang>(_T("ExcControl"), Network.ExcConMustang);
 }
 
 bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount)
@@ -734,13 +736,13 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 		DBSLC *pSLC = pLRCBuffer + i;
 		if (pSLC->m_Id == 1 || pSLC->m_Id == 2)
 		{
-			Network.Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszLRC1And2Reserved,pSLC->m_Id));
+			Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRC1And2Reserved,pSLC->m_Id));
 			continue;
 		}
 
 		slit = slcloader.find(pSLC->m_Id);
 		if (slit == slcloader.end())
-			slit = slcloader.insert(make_pair(pSLC->m_Id, new CStorageSLC())).first;
+			slit = slcloader.insert(std::make_pair(pSLC->m_Id, new CStorageSLC())).first;
 
 		CSLCPolynom P(pSLC->Vmin, pSLC->P0, pSLC->P1, pSLC->P2);
 		CSLCPolynom Q(pSLC->Vmin, pSLC->Q0, pSLC->Q1, pSLC->Q2);
@@ -777,7 +779,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 				double Vbeg = poly.front().m_kV;
 				if (Vbeg > 0.0)
 				{
-					Network.Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszLRCStartsNotFrom0, slit->first, Vbeg));
+					Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCStartsNotFrom0, slit->first, Vbeg));
 					poly.front().m_kV = 0.0;
 				}
 			}
@@ -796,7 +798,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 						{
 							if (!itpoly->CompareWith(*itpolyNext))
 							{
-								Network.Log(CDFW2Messages::DFW2LOG_WARNING, Cex(CDFW2Messages::m_cszAmbigousLRCSegment, slit->first, 
+								Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszAmbigousLRCSegment, slit->first, 
 																													    itpoly->m_kV, 
 																														itpoly->m_k0,
 																														itpoly->m_k1, 
@@ -814,10 +816,10 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 		}
 	}
 
-	// С‚РёРїРѕРІС‹Рµ РЎРҐРќ Rastr 1 Рё 2
+	// типовые СХН Rastr 1 и 2
 	if (slcloader.find(1) == slcloader.end())
 	{
-		slit = slcloader.insert(make_pair(1, new CStorageSLC())).first;
+		slit = slcloader.insert(std::make_pair(1, new CStorageSLC())).first;
 		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
 		slit->second->Q.push_back(CSLCPolynom(0.0, 0.721, 0.15971, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 3.7, -7.0, 4.3));
@@ -825,20 +827,20 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	}
 	if (slcloader.find(2) == slcloader.end())
 	{
-		slit = slcloader.insert(make_pair(2, new CStorageSLC())).first;
+		slit = slcloader.insert(std::make_pair(2, new CStorageSLC())).first;
 		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
 		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.159135, 0.0));
 		slit->second->Q.push_back(CSLCPolynom(0.815, 4.9, -10.1, 6.2));
 		slit->second->Q.push_back(CSLCPolynom(1.2, 1.708, 0.0, 0.0));
 	}
 
-	// РЎРҐРќ С€СѓРЅС‚ СЃ Id=0
-	slit = slcloader.insert(make_pair(0, new CStorageSLC())).first;
+	// СХН шунт с Id=0
+	slit = slcloader.insert(std::make_pair(0, new CStorageSLC())).first;
 	slit->second->P.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 
-	// РЎРҐРќ СЃ РїРѕСЃС‚РѕСЏРЅРЅРѕР№ РјРѕС‰РЅРѕСЃС‚СЊСЋ СЃ Id=-1
-	slit = slcloader.insert(make_pair(-1, new CStorageSLC())).first;
+	// СХН с постоянной мощностью с Id=-1
+	slit = slcloader.insert(std::make_pair(-1, new CStorageSLC())).first;
 	slit->second->P.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
 
@@ -851,7 +853,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	
 	if (bRes)
 	{
-		// РїРµСЂРµРїРёСЃС‹РІР°РµРј РЎРҐРќ РёР· Р·Р°РіСЂСѓР·С‡РёРєР° РІ РєРѕС‚РµР№РЅРµСЂ РЎРҐРќ
+		// переписываем СХН из загрузчика в котейнер СХН
 
 		CDynaLRC *pLRCs = new CDynaLRC[slcloader.size()];
 		CDynaLRC *pLRC = pLRCs;
@@ -861,25 +863,25 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 			pLRC->SetId(slit->first);
 			pLRC->SetNpcs(slit->second->P.size(), slit->second->Q.size());
 
-			CLRCData *pData = pLRC->P;
+			CLRCData *pData = &pLRC->P[0];
 
-			for (itpoly = slit->second->P.begin(); itpoly != slit->second->P.end(); itpoly++)
+			for (auto&& itpoly : slit->second->P)
 			{
-				pData->V	=	itpoly->m_kV;
-				pData->a0   =	itpoly->m_k0;
-				pData->a1	=	itpoly->m_k1;
-				pData->a2	=	itpoly->m_k2;
+				pData->V	=	itpoly.m_kV;
+				pData->a0   =	itpoly.m_k0;
+				pData->a1	=	itpoly.m_k1;
+				pData->a2	=	itpoly.m_k2;
 				pData++;
 			}
 
-			pData = pLRC->Q;
+			pData = &pLRC->Q[0];
 
-			for (itpoly = slit->second->Q.begin(); itpoly != slit->second->Q.end(); itpoly++)
+			for (auto&& itpoly : slit->second->Q)
 			{
-				pData->V	=	itpoly->m_kV;
-				pData->a0	=	itpoly->m_k0;
-				pData->a1	=	itpoly->m_k1;
-				pData->a2	=	itpoly->m_k2;
+				pData->V	=	itpoly.m_kV;
+				pData->a0	=	itpoly.m_k0;
+				pData->a1	=	itpoly.m_k1;
+				pData->a2	=	itpoly.m_k2;
 				pData++;
 			}
 		}
@@ -888,20 +890,20 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	return bRes;
 }
 
-// РІСЃС‚Р°РІР»СЏРµС‚ РІ РЎРҐРќ СЃРµРіРјРµРЅС‚ С€СѓРЅС‚Р° РѕС‚ РЅСѓР»СЏ РґРѕ Vmin
+// вставляет в СХН сегмент шунта от нуля до Vmin
 bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 {
 	bool bRes = true;
 	if (Vmin > 0.0)
 	{
-		// СЃРѕСЂС‚РёСЂСѓРµРј СЃРµРіРјРµРЅС‚С‹ РїРѕ РЅР°РїСЂСЏР¶РµРЅРёСЋ
+		// сортируем сегменты по напряжению
 		sort();
 		double LrcV = 0.0;
 		bool bInsert = false;
 
-		// РѕР±С…РѕРґРёРј СЃРµРіРјРµРЅС‚С‹ СЃРїСЂР°РІР°, РґР»СЏ РїРµСЂРІРѕРіРѕ РЅР°Р№РґРµРЅРЅРѕРіРѕ СЃ РЅР°РїСЂСЏР¶РµРЅРёРµРј
-		// РјРµРЅСЊС€Рµ С‡РµРј Vmin СЃС‡РёС‚Р°РµРј РјРѕС‰РЅРѕСЃС‚СЊ РїРѕ СЌС‚РѕРј СЃРµРіРјРµРЅС‚Сѓ РѕС‚ Vmin
-		// Рё РјРµРЅСЏРµРј РµРјСѓ РЅР°РїСЂСЏР¶РµРЅРёРµ РЅР° Vmin
+		// обходим сегменты справа, для первого найденного с напряжением
+		// меньше чем Vmin считаем мощность по этом сегменту от Vmin
+		// и меняем ему напряжение на Vmin
 		for (SLCPOLYRITR itrpoly = rbegin(); itrpoly != rend(); itrpoly++)
 		{
 			if (itrpoly->m_kV < Vmin)
@@ -914,8 +916,8 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 		}
 		if (bInsert)
 		{
-			// РµСЃР»Рё РЅР°С€Р»Рё СЃРµРіРјРµРЅС‚ РґР»СЏ Vmin СѓРґР°Р»СЏРµРј РІСЃРµ СЃРµРіРјРµРЅС‚С‹
-			// СЃ РЅР°РїСЂСЏР¶РµРЅРёРµРј РјРµРЅСЊС€Рµ С‡РµРј Vmin
+			// если нашли сегмент для Vmin удаляем все сегменты
+			// с напряжением меньше чем Vmin
 			while (size())
 			{
 				SLCPOLYITR itpoly = begin();
@@ -924,16 +926,16 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 				else
 					break;
 			}
-			// РІСЃС‚Р°РІР»СЏРµРј РЅРѕРІС‹Р№ СЃРµРіРјРµРЅС‚ С€СѓРЅС‚Р° РѕС‚ РЅСѓР»СЏ
+			// вставляем новый сегмент шунта от нуля
 			insert(begin(),CSLCPolynom(0.0, 0.0, 0.0, LrcV / Vmin / Vmin));
 		}
 
-		// СЃРЅРѕРІР° СЃРѕСЂС‚РёСЂСѓРµРј РїРѕ РЅР°РїСЂСЏР¶РµРЅРёСЋ
+		// снова сортируем по напряжению
 		sort();
 		SLCPOLYITR itpoly = begin();
 
-		// РёС‰РµРј РїРѕСЃР»РµРґРѕРІР°С‚РµР»СЊРЅС‹Рµ СЃРµРіРјРµРЅС‚С‹ СЃ РѕРґРёРЅР°РєРѕРІС‹РјРё РєРѕСЌС„С„РёС†РёРµРЅС‚Р°РјРё
-		// Рё СѓРґР°Р»СЏРµРј РёС… РєР°Рє РёР·С‹Р±С‹С‚РѕС‡РЅС‹Рµ
+		// ищем последовательные сегменты с одинаковыми коэффициентами
+		// и удаляем их как изыбыточные
 		while(itpoly != end())
 		{
 			SLCPOLYITR itpolyNext = itpoly;

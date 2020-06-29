@@ -3,16 +3,14 @@
 #include "string"
 #include "set"
 
-using namespace std;
-
-typedef vector<long> LONGVECTOR;
+typedef std::vector<long> LONGVECTOR;
 
 class CSlowVariableGraphItem
 {
 public:
 	double m_dTime;
 	mutable double m_dValue;
-	mutable wstring m_strDescription;
+	mutable std::wstring m_strDescription;
 	CSlowVariableGraphItem(double dTime, double dValue, const _TCHAR* cszChangeDescription) : 
 															m_dTime(dTime), 
 															m_dValue(dValue),
@@ -25,7 +23,7 @@ public:
 	}
 };
 
-typedef set<CSlowVariableGraphItem> SLOWGRAPHSET;
+typedef std::set<CSlowVariableGraphItem> SLOWGRAPHSET;
 typedef SLOWGRAPHSET::const_iterator SLOWGRAPHSETITRCONST;
 
 class CSlowVariableItem
@@ -34,7 +32,7 @@ public:
 	CSlowVariableItem(long DeviceTypeId, const LONGVECTOR& DeviceIds, const _TCHAR *cszVarName);
 	long m_DeviceTypeId;
 	LONGVECTOR m_DeviceIds;
-	wstring m_strVarName;
+	std::wstring m_strVarName;
 	SLOWGRAPHSET m_Graph;
 	~CSlowVariableItem();
 
@@ -80,9 +78,9 @@ struct SlowVarItemCompare
 	}
 };
 
-class CSlowVariablesSet : public set <CSlowVariableItem*, SlowVarItemCompare>
+class CSlowVariablesSet : public std::set <CSlowVariableItem*, SlowVarItemCompare>
 {
-	typedef set <CSlowVariableItem*, SlowVarItemCompare>::iterator ITERATOR;
+	using ITERATOR = CSlowVariablesSet::iterator;
 public:
 	bool Add(long DeviceTypeId, const LONGVECTOR& DeviceIds, const _TCHAR* cszVarName, double Time, double Value, double PreviousValue, const _TCHAR* cszChangeDescription);
 	~CSlowVariablesSet()

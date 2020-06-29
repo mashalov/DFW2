@@ -10,6 +10,18 @@
 typedef _TCHAR STRING80[CUSTOMDEVICEDLL_MAXNAME];
 
 
+struct DLLVariableIndex
+{
+	ptrdiff_t Index;
+	double Value;
+};
+
+enum eLINKTYPE
+{
+	eLINK_TO,
+	eLINK_FROM
+};
+
 enum PrimitiveBlockType
 {
 	PBT_UNKNOWN,
@@ -40,12 +52,6 @@ enum eVARIABLELOCATION
 {
 	eVL_INTERNAL,
 	eVL_EXTERNAL
-};
-
-enum eLINKTYPE
-{
-	eLINK_TO,
-	eLINK_FROM
 };
 
 enum CONSTVARSFLAGS
@@ -105,7 +111,7 @@ typedef struct
 	double *pValue;			// указатель на значение
 	ptrdiff_t nIndex;		// индекс (номер строки) в системе Якоби
 }
-	ExternalVariable;
+	DLLExternalVariable;
 
 typedef struct 
 {
@@ -140,10 +146,10 @@ typedef struct
 	MDLPROCESSBLOCKDISCONTINUITY	pFnProcessBlockDiscontinuity;
 	MDLINITBLOCK					pFnInitBlock;
 	BuildEquationsObjects BuildObjects;
-	double* pEquations;
+	DLLVariableIndex* pEquations;
 	double* pConsts;
 	double* pSetPoints;
-	ExternalVariable* pExternals;
+	DLLExternalVariable* pExternals;
 	double Omega;
 	double t;
 }

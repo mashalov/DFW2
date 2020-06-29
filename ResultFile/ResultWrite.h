@@ -28,7 +28,7 @@ class ATL_NO_VTABLE CResultWrite :
 {
 protected:
 	CResultFileWriter m_ResultFileWriter;
-	wstring m_strComment;
+	std::wstring m_strComment;
 	VARNAMEMAP m_VarNameMap;
 	CResultFileReader::DEVTYPESET m_DevTypeSet;
 public:

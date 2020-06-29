@@ -18,7 +18,7 @@ protected:
 		const CResultFileReader::VariableTypeInfo *pVariable;
 	};
 
-	ChannelLink *pChannelLink;
+	std::unique_ptr<ChannelLink[]> pChannelLink;
 	CResultFileReader& m_ResultFileReader;
 	size_t nPointsCount;
 	size_t nChannelsCount;
@@ -31,15 +31,15 @@ protected:
 	void WriteDeviceNames();
 	void WriteVariableNames();
 	void WriteData();
-	string loc;
+	std::string loc;
 
-	void WriteField(ChannelLink *pLink, const _TCHAR *cszField);
+	void WriteField(const ChannelLink *pLink, std::wstring_view Field);
 	void WriteCRLF2();
 	void WriteCRLF();
 	void WriteColumn(const double *pData, size_t nColumn, bool bLastColumn);
 
 
-	wstring strFilePath;
+	std::wstring strFilePath;
 	
 public:
 	HRESULT WriteCSV(const _TCHAR *cszFilePath);

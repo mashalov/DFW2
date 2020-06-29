@@ -23,17 +23,16 @@ void CResultFile::WriteLEB(unsigned __int64 Value)
 		throw CFileWriteException(m_pFile);
 }
 
-void CResultFile::WriteString(const _TCHAR *cszString)
+void CResultFile::WriteString(std::wstring_view cszString)
 {
-	if (cszString)
+	if (cszString.empty())
+		WriteLEB(0);
+	else
 	{
-		size_t nLen = _tcslen(cszString);
-		WriteLEB(nLen);
+		WriteLEB(cszString.size());
 		CUnicodeSCSU StringWriter(m_pFile);
 		StringWriter.WriteSCSU(cszString);
 	}
-	else
-		WriteLEB(0);
 }
 
 
@@ -57,8 +56,8 @@ void CResultFileWriter::WriteTime(double dTime, double dStep)
 
 		if (bReset)
 		{
-			CChannelEncoder *pEncoder = m_pEncoders;
-			CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+			CChannelEncoder *pEncoder = m_pEncoders.get();
+			CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 
 			while (pEncoder < pEncoderEnd)
 			{
@@ -97,10 +96,17 @@ void CResultFileWriter::WriteTime(double dTime, double dStep)
 
 void CResultFileWriter::FlushChannels()
 { 
+	// если каналы уже были сброшены - выходим
+	if (m_bChannelsFlushed)
+		return;
 	TerminateWriterThread();
 
 	for (size_t nChannel = 0; nChannel < m_nChannelsCount; nChannel++)
+	{
 		FlushChannel(nChannel);
+		// сбрасываем SuperRLE каналы, в которых на всех точках были одинаковые значения
+		FlushSuperRLE(m_pEncoders[nChannel]);
+	}
 
 	struct DataDirectoryEntry de = { 0, 0 };
 
@@ -114,12 +120,12 @@ void CResultFileWriter::FlushChannels()
 	WriteLEB(m_nPointsCount);
 	WriteLEB(m_nChannelsCount);
 
-	CChannelEncoder *pEncoder = m_pEncoders;
-	CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+	CChannelEncoder *pEncoder = m_pEncoders.get();
+	CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 
 	while (pEncoder < pEncoderEnd)
 	{
-		WriteChannelHeader(pEncoder - m_pEncoders, 
+		WriteChannelHeader(pEncoder - m_pEncoders.get(), 
 						   pEncoder->m_nDeviceType, 
 						   pEncoder->m_nDeviceId, 
 						   pEncoder->m_nVariableIndex);
@@ -147,7 +153,7 @@ void CResultFileWriter::FlushChannels()
 		if (!di->m_Graph.empty())
 		{
 			WriteLEB(di->m_DeviceTypeId);
-			WriteString(di->m_strVarName.c_str());
+			WriteString(di->m_strVarName);
 			WriteLEB(di->m_DeviceIds.size());
 
 			for (auto &idi : di->m_DeviceIds)
@@ -158,7 +164,7 @@ void CResultFileWriter::FlushChannels()
 			{
 				WriteDouble(gi.m_dTime);
 				WriteDouble(gi.m_dValue);
-				WriteString(gi.m_strDescription.c_str());
+				WriteString(gi.m_strDescription);
 			}
 		}
 	}
@@ -173,6 +179,23 @@ void CResultFileWriter::FlushChannels()
 	if (fwrite(&de, sizeof(struct DataDirectoryEntry), 1, m_pFile) != 1)
 		throw CFileWriteException(m_pFile);
 
+	// ставим признак сброса каналов
+	m_bChannelsFlushed = true;
+}
+
+void CResultFileWriter::FlushSuperRLE(CChannelEncoder& Encoder)
+{
+	if (Encoder.m_nUnwrittenSuperRLECount)
+	{
+		__int64 nCurrentSeek = _ftelli64(m_pFile);
+		WriteLEB(2);
+		WriteLEB(Encoder.m_nUnwrittenSuperRLECount);
+		if (fwrite(&Encoder.m_SuperRLEByte, sizeof(unsigned char), 1, m_pFile) != 1)
+			throw CFileWriteException(m_pFile);
+		WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
+		Encoder.m_nPreviousSeek = nCurrentSeek;
+		Encoder.m_nUnwrittenSuperRLECount = 0;
+	}
 }
 
 void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
@@ -185,31 +208,69 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 
 		if (Encoder.m_nCount)
 		{
-			__int64 nCurrentSeek = _ftelli64(m_pFile);
 			size_t nCompressedSize(m_nBufferLength * sizeof(BITWORD));
+			bool bAllBytesEqual(false);
 			if (nIndex < static_cast<ptrdiff_t>(m_nChannelsCount - 2) &&
-				EncodeRLE(Output.BytesBuffer(), Output.BytesWritten(), m_pCompressedBuffer, nCompressedSize))
+				EncodeRLE(Output.BytesBuffer(), Output.BytesWritten(), m_pCompressedBuffer.get(), nCompressedSize, bAllBytesEqual))
 			{	
-				WriteLEB(0);						// type of block 0 - RLE data
-				WriteLEB(Encoder.m_nCount);			// count of doubles
-				WriteLEB(nCompressedSize);			// byte length of RLE data
+				if (bAllBytesEqual)
+				{
+					// все байты во входном буфере RLE одинаковые
+					if (Encoder.m_nUnwrittenSuperRLECount > 0)
+					{
+						// уже есть блок данных с одинаковыми байтами
+						// проверяем, это были те же байты, что пришли сейчас ?
+						if(Encoder.m_SuperRLEByte == *Output.BytesBuffer())
+							Encoder.m_nUnwrittenSuperRLECount += Encoder.m_nCount;	// если да, просто увеличиваем счетчик байтов
+						else
+						{
+							// накопленные байты отличаются от тех, что пришли,
+							// поэтому сбрасываем старый RLE блок и начинаем записывать новый
+							FlushSuperRLE(Encoder);
+							Encoder.m_nPreviousSeek = _ftelli64(m_pFile);
+							Encoder.m_nUnwrittenSuperRLECount = Encoder.m_nCount;
+							Encoder.m_SuperRLEByte = *Output.BytesBuffer();
+						}
+					}
+					else
+					{
+						// блока с одинаковыми данными не было, начинаем его записывать
+						Encoder.m_nUnwrittenSuperRLECount = Encoder.m_nCount;
+						Encoder.m_SuperRLEByte = *Output.BytesBuffer();
+					}
+				}
+				else
+				{
+					// сбрасываем блок SuperRLE если был
+					FlushSuperRLE(Encoder);
+					__int64 nCurrentSeek = _ftelli64(m_pFile);
+					WriteLEB(0);						// type of block 0 - RLE data
+					WriteLEB(Encoder.m_nCount);			// count of doubles
+					WriteLEB(nCompressedSize);			// byte length of RLE data
+					if (fwrite(m_pCompressedBuffer.get(), sizeof(unsigned char), nCompressedSize, m_pFile) != nCompressedSize)
+						throw CFileWriteException(m_pFile);
 
-				if (fwrite(m_pCompressedBuffer, sizeof(unsigned char), nCompressedSize, m_pFile) != nCompressedSize)
-					throw CFileWriteException(m_pFile);
+					WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
+					Encoder.m_nPreviousSeek = nCurrentSeek;
+
+				}
 			}
 			else
 			{
+				// сбрасываем блок SuperRLE если был
+				FlushSuperRLE(Encoder);
+				__int64 nCurrentSeek = _ftelli64(m_pFile);
 				WriteLEB(1);						// type of block 1 - RAW compressed data
 				WriteLEB(Encoder.m_nCount);			// count of doubles
 				WriteLEB(Output.BytesWritten());	// byte length of block
-
 				if (fwrite(Output.Buffer(), sizeof(unsigned char), Output.BytesWritten(), m_pFile) != Output.BytesWritten())
 					throw CFileWriteException(m_pFile);
+
+				WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
+				Encoder.m_nPreviousSeek = nCurrentSeek;
 			}
 			Encoder.m_nCount = 0;
 			Output.Reset();
-			WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
-			Encoder.m_nPreviousSeek = nCurrentSeek;
 		}
 	}
 	else
@@ -306,14 +367,14 @@ void CResultFileWriter::WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t Type, ptr
 
 void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 {
-	m_pEncoders = new CChannelEncoder[m_nChannelsCount = nChannelsCount + 2];
+	m_pEncoders = std::make_unique<CChannelEncoder[]>(m_nChannelsCount = nChannelsCount + 2);
 	m_nBufferLength *= sizeof(double) / sizeof(BITWORD);
-	m_pCompressedBuffer = new unsigned char[m_nBufferLength * sizeof(BITWORD)];
+	m_pCompressedBuffer = std::make_unique<unsigned char[]>(m_nBufferLength * sizeof(BITWORD));
 	
 	size_t nBufferGroup = m_nBufferGroup;
 	size_t nSeek = 0;
 	
-	BITWORD *pBuffer = NULL;
+	BITWORD *pBuffer(nullptr);
 
 	for (size_t nChannel = 0; nChannel < m_nChannelsCount; nChannel++)
 	{
@@ -338,29 +399,10 @@ void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 	m_pEncoders[m_nChannelsCount - 2].m_Compressor.UpdatePredictor(0, 0);
 }
 
-
-CResultFileWriter::CResultFileWriter()
-{
-	m_pFile = NULL;
-	m_pEncoders = NULL;
-	m_nBufferLength = 100;
-	m_nBufferGroup = 100;
-	m_nPointsCount = 0;
-	m_hThread = NULL;
-	m_hRunningEvent = NULL;
-	m_hRunEvent = NULL;
-	m_hDataMutex = NULL;
-	m_bThreadRun = true;
-	m_dNoChangeTolerance = 0.0;
-	m_nPredictorOrder = 0;
-	m_pCompressedBuffer = NULL;
-}
-
 void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
 {
 	m_dNoChangeTolerance = dTolerance;
 }
-
 
 CResultFileWriter::~CResultFileWriter()
 {
@@ -394,6 +436,8 @@ void CResultFileWriter::TerminateWriterThread()
 // закрывает файл записываемых результатов
 void CResultFileWriter::CloseFile()
 {
+	// сбрасываем каналы, если еще не были сброшены
+	FlushChannels();
 	// сначала останавливаем поток записи
 	TerminateWriterThread();
 
@@ -403,20 +447,8 @@ void CResultFileWriter::CloseFile()
 		m_pFile = NULL;
 	}
 
-	if (m_pEncoders)
-	{
-		delete[] m_pEncoders;
-		m_pEncoders = NULL;
-	}
-
-	if (m_pCompressedBuffer)
-	{
-		delete m_pCompressedBuffer;
-		m_pCompressedBuffer = NULL;
-	}
-
-	for (BUFFERBEGINITERATOR it = m_BufferBegin.begin(); it != m_BufferBegin.end(); it++)
-		delete *it;
+	for (auto&& it : m_BufferBegin)
+		delete it;
 
 	m_BufferBegin.clear();
 
@@ -466,6 +498,8 @@ void CResultFileWriter::CreateResultFile(const _TCHAR *cszFilePath)
 		m_hThread = (HANDLE)_beginthreadex(NULL, 0, CResultFileWriter::WriterThread, this, 0, NULL);
 		if (m_hThread == NULL)
 			throw CFileWriteException(m_pFile);
+		// раз создали файл результатов - потребуется финализация
+		m_bChannelsFlushed = false;
 	}
 	else
 		throw CFileWriteException(NULL,cszFilePath);
@@ -507,7 +541,7 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 		DWORD dwWaitRes = WaitForSingleObject(m_hDataMutex, INFINITE);
 
 		// если при ожидании произошла ошибка - заканчиваем
-		if (dwWaitRes == WAIT_FAILED && dwWaitRes == WAIT_ABANDONED)
+		if (dwWaitRes == WAIT_FAILED || dwWaitRes == WAIT_ABANDONED)
 			throw CFileWriteException(m_pFile);
 
 		if (dwWaitRes == WAIT_OBJECT_0)
@@ -515,8 +549,8 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 			__try
 			{
 				// сохраняем результаты из указателей во внутрениий буфер
-				CChannelEncoder *pEncoder = m_pEncoders;
-				CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+				CChannelEncoder *pEncoder = m_pEncoders.get();
+				CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 				while (pEncoder < pEncoderEnd)
 				{
 					pEncoder->m_dValue = *pEncoder->m_pVariable;
@@ -563,17 +597,17 @@ bool CResultFileWriter::WriteResultsThreaded()
 		// если ожидание прошло без ошибок
 		__try
 		{
-			CChannelEncoder *pEncoder = m_pEncoders;
-			CChannelEncoder *pEncoderEnd = m_pEncoders + m_nChannelsCount - 2;
+			CChannelEncoder *pEncoder = m_pEncoders.get();
+			CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 			// записываем время и шаг
 			WriteTime(m_dTimeToWrite, m_dStepToWrite);
 			// записываем текущий блок с помощью кодеков каналов
-			pEncoder = m_pEncoders;
+			pEncoder = m_pEncoders.get();
 			while (pEncoder < pEncoderEnd)
 			{
 				// WriteChannel сам решает - продолжать писать в буфер или сбрасывать на диск, если 
 				// буфер закончился
-				WriteChannel(pEncoder - m_pEncoders, pEncoder->m_dValue);
+				WriteChannel(pEncoder - m_pEncoders.get(), pEncoder->m_dValue);
 				pEncoder++;
 			}
 
@@ -588,7 +622,8 @@ bool CResultFileWriter::WriteResultsThreaded()
 			{
 				// если предиктор работает с заданным порядком,
 				// сдвигаем буфер точек времени на 1 влево и добавляем текущее время
-				memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+				std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
+				//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 				ts[PREDICTOR_ORDER - 1] = m_dSetTime;
 			}
 
@@ -678,11 +713,27 @@ __int64 CResultFileWriter::OffsetFromCurrent(__int64 AbsoluteOffset)
 }
 
 // выполняет кодирование заданного буфера с помошью RLE
-bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize)
+bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual)
 {
-	bool bRes = m_RLECompressor.Compress(pBuffer, nBufferSize, pCompressedBuffer, nCompressedSize);
+	bool bRes = m_RLECompressor.Compress(pBuffer, nBufferSize, pCompressedBuffer, nCompressedSize, bAllBytesEqual);
 	if (bRes)
-		return nCompressedSize < nBufferSize;
+	{
+		// если удалось сжать, или все байты одинаковые и размер сжатого равен размеру исходного - возвращаем 
+		// тип блока - RLE
+		if (nCompressedSize < nBufferSize || (bAllBytesEqual && nCompressedSize <= nBufferSize) )
+		{
+			// debug RLE
+			/* 
+			unsigned char *pDecoBuf = new unsigned char[2000];
+			size_t nDecoSize(2000);
+			m_RLECompressor.Decompress(pCompressedBuffer, nCompressedSize, pDecoBuf, nDecoSize);
+			_ASSERTE(nBufferSize == nDecoSize);
+			_ASSERTE(!memcmp(pBuffer, pDecoBuf, nDecoSize));
+			*/
+			return true; // блок RLE
+		}
+		return false; // блок не RLE
+	}
 	return bRes;
 }
 

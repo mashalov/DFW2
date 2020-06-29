@@ -1,139 +1,72 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Compressor.h"
+#include <intrin.h>
 
+// чтение double и его декодирование по предиктору
 eFCResult CCompressorBase::ReadDouble(double& dValue, double& dPredictor, CBitStream& Input)
 {
-	unsigned int nz = 0;
+	// количество нулевых бит
+	BITWORD nz(0);
+	// обнуляем double
 	dValue = 0.0;
+	// готовим буфер для чтения количества нулевых бит
 	CBitStream NzCount(&nz, &nz + 1, 0);
+	// читаем количетсво нулевых бит, деленное на 4 (4 бита)
 	eFCResult fcResult = NzCount.WriteBits(Input, 4);
 
 	if (fcResult == FC_OK)
 	{
-		unsigned int *pd = static_cast<unsigned int*>(static_cast<void*>(&dValue));
-		CBitStream Dbl(pd, pd + 2, 0);
+		// готовим буфер для чтения битов 
+		BITWORD *pd = static_cast<BITWORD*>(static_cast<void*>(&dValue));
+		CBitStream Dbl(pd, pd + sizeof(double) / sizeof(BITWORD), 0);
+		// читаем ненулевые биты
 		fcResult = Dbl.WriteBits(Input, sizeof(double) * 8 - nz * 4);
+		// если нет ошибок - декодируем double
 		if (fcResult == FC_OK)
 			Xor(dValue, dPredictor);
 	}
 	return fcResult;
 }
 
+// проверка доступности __lzcnt
+bool IsLzcntAvailable()
+{
+	int cpufeats[4];
+	__cpuid(cpufeats, 0x80000001);
+	return cpufeats[2] & 0x20;
+}
+
+CCompressorBase::fnWriteDoublePtr CCompressorBase::AssignDoubleWriter()
+{
+#ifdef _WIN64
+	if(IsLzcntAvailable())
+		return CCompressorBase::WriteDoubleLZcnt64;		// если доступна __lzcnt64 - используем более быструю функцию сжатия
+	return CCompressorBase::WriteDoublePlain;			// иначе - платформонезависимую
+#else
+	return CCompressorBase::WriteDoublePlain;
+#endif
+}
+
+CCompressorBase::fnCountZeros32Ptr CCompressorBase::AssignZeroCounter()
+{
+	if (IsLzcntAvailable())
+		return CCompressorBase::CLZ_LZcnt32;			// если lzcnt доступна - используем ее для подсчета нулевых битов
+	return CCompressorBase::CLZ1;						// иначе считаем нулевые биты по таблице
+}
+
+const CCompressorBase::fnWriteDoublePtr CCompressorBase::pFnWriteDouble = CCompressorBase::AssignDoubleWriter();
+const CCompressorBase::fnCountZeros32Ptr CCompressorBase::pFnCountZeros32 = CCompressorBase::AssignZeroCounter();
+
 eFCResult CCompressorBase::WriteDouble(double& dValue, double& dPredictor, CBitStream& Output)
 {
-	eFCResult Result = FC_OK;
-
-	Xor(dValue, dPredictor);
-	unsigned int *ppv = static_cast<unsigned int*>(static_cast<void*>(&dValue)) + 1;
-	unsigned int pv = *ppv;
-	ptrdiff_t nZ4count = 0;
-	unsigned int *pZ4 = static_cast<unsigned int*>(static_cast<void*>(&nZ4count));
-	CBitStream Source(pZ4, pZ4 + sizeof(ptrdiff_t), 0);
-
-	if (pv == 0x80000000 && *(ppv - 1) == 0)
-		pv = 0;
-
-	if (!pv)
-	{
-		if (*(ppv - 1))
-		{
-			// bits in the lower int only
-			//nZ4count = 8;
-
-			pv = *static_cast<int*>(static_cast<void*>(&dValue));
-
-			/*
-			mask = 0xf << 28;
-			while (nZ4count < 16)
-			{
-				if (pv & mask)
-					break;
-				nZ4count++;
-				mask >>= 4;
-			}
-			*/
-
-			nZ4count = 8 + (CLZ1(pv) >> 2);
-
-			if (Output.BitsLeft() >= 68 - nZ4count * 4)
-			{
-				Result = Output.WriteBits(Source, 4);
-				if (Result == FC_OK)
-				{
-					CBitStream SourceDbl2(ppv - 1, ppv, 0);
-					Result = Output.WriteBits(SourceDbl2, sizeof(int) * 8 - (nZ4count - 8) * 4);
-				}
-			}
-			else
-			{
-				Xor(dValue, dPredictor);
-				Result = FC_BUFFEROVERFLOW;
-			}
-		}
-		else
-		{
-			nZ4count = 15;
-			if (Output.BitsLeft() >= 68 - nZ4count * 4)
-			{
-				Result = Output.WriteBits(Source, 4);
-				if (Result == FC_OK)
-				{
-					CBitStream SourceDbl2(ppv - 1, ppv, 0);
-					Result = Output.WriteBits(SourceDbl2, 4);
-				}
-			}
-			else
-			{
-				Xor(dValue, dPredictor);
-				Result = FC_BUFFEROVERFLOW;
-			}
-		}
-	}
-	else
-	{
-		// bits in the higher int too
-		/*
-		while (nZ4count < 8)
-		{
-			if (pv & mask)
-				break;
-			nZ4count++;
-			mask >>= 4;
-		}
-		*/
-
-		nZ4count = CLZ1(pv) >> 2;
-
-		if (Output.BitsLeft() >= 68 - nZ4count * 4)
-		{
-			Result = Output.WriteBits(Source, 4);
-			if (Result == FC_OK)
-			{
-				CBitStream SourceDbl1(ppv - 1, ppv, 0);
-				Result = Output.WriteBits(SourceDbl1, sizeof(int) * 8);
-				if (Result == FC_OK)
-				{
-					CBitStream SourceDbl2(ppv, ppv + 1, 0);
-					Result = Output.WriteBits(SourceDbl2, sizeof(int) * 8 - nZ4count * 4);
-				}
-			}
-		}
-		else
-		{
-			Xor(dValue, dPredictor);
-			Result = FC_BUFFEROVERFLOW;
-		}
-	}
-	return Result;
+	// вызываем функцию сжатия по указателю, который инициализируем в рантайме в зависимости от платформы
+	return (*pFnWriteDouble)(dValue, dPredictor, Output);
 }
 
 void CCompressorBase::Xor(double& dValue, double& dPredictor)
 {
-	int *pv = static_cast<int*>(static_cast<void*>(&dValue));
-	int *pd = static_cast<int*>(static_cast<void*>(&dPredictor));
-	__int64 *z = static_cast<__int64*>(static_cast<void*>(pv));
-	*pv ^= *pd;
-	pv++; pd++;
+	__int64 *pv = static_cast<__int64*>(static_cast<void*>(&dValue));
+	__int64 *pd = static_cast<__int64*>(static_cast<void*>(&dPredictor));
 	*pv ^= *pd;
 }
 
@@ -232,18 +165,18 @@ double CCompressorSingle::Predict(double t)
 					ys[0] = ys[m_nPredictorOrder - 1];
 			}
 
-			// ���� ������� � ���������� ������� ����������, ���������� ���������
+			// если текущее и предыдущее времена одинаковые, сбрасываем предиктор
 			m_nPredictorOrder = 0;
 
 			ts[0] = t;
-			// �� ����������� �� ����, � ���������� ��������
+			// но вовзвращаем не ноль, а предыдущее значение
 			return ys[0];
 		}
 	}
 
 	if (m_nPredictorOrder >= PREDICTOR_ORDER)
 	{
-		// ������� � ���������� ������� ������
+		// текущее и предыдущее времена разные
 		double Pred = 0.0;
 		bool bIdenctical = true;
 
@@ -268,18 +201,20 @@ double CCompressorSingle::Predict(double t)
 		if (bIdenctical)
 			Pred = *ys;
 
-		memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
-		memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
+		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
+		//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 		ts[PREDICTOR_ORDER - 1] = t;
 		return Pred;
 	}
 	else
 	{
-		// ������� ���������� �� ������ ���������
+		// порядок предиктора не достиг заданного
 		ts[m_nPredictorOrder] = t;
 
-		// ���� ��� ������ �� �������������, ���������� ����
-		// ����� - ���������� ��������
+		// если еще ничего не предсказывали, возвращаем ноль
+		// иначе - предыдущее значение
 		if (!m_nPredictorOrder)
 			return 0.0;
 		else
@@ -334,24 +269,178 @@ double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nP
 		if (bIdenctical)
 			Pred = *ys;
 
-		memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
+		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 		return Pred;
 	}
 	else
 	{
-		// ���� ������� ���������� 0, �� ������� ����, 
-		// ���������� ��� ���������� ����������� ��������, � �� ����.
+		// если порядок предиктора 0, но взведен флаг, 
+		// используем для предиктора запомненное значение, а не ноль.
 		if (bPredictorReset)
 			return ys[0];
 
-		// ����� ���, ������ ������ �� ����, � ������� ���������� ������������� 0
-		// ���������� �������� ���, � ���������� ����
+		// флага нет, значит сброса не было, и порядок предиктора действительно 0
+		// предыдущих значений нет, и возвращаем ноль
 		if (!nPredictorOrder)
 			return 0.0;
 		else
 			return ys[nPredictorOrder - 1];
 	}
 }
+
+#ifdef _WIN64
+// Запись сжатого double на системе с доступной командой __lzcnt64
+eFCResult CCompressorBase::WriteDoubleLZcnt64(double& dValue, double& dPredictor, CBitStream& Output)
+{
+	eFCResult Result = FC_OK;
+	Xor(dValue, dPredictor);
+	unsigned __int64 *pv = static_cast<unsigned __int64*>(static_cast<void*>(&dValue));
+	// формируем буфер для записи количества нулевых битов
+	unsigned __int64 nZ4count(0);
+	BITWORD *pZ4(static_cast<BITWORD*>(static_cast<void*>(&nZ4count)));
+	CBitStream Source(pZ4, pZ4 + sizeof(BITWORD), 0);
+
+	// считаем количество нулевых младших бит и делим на 4
+	// lzcnt считает количество старших битов - то есть начиная от знака и экспоненты
+	// double при этом расчете представлено от старших к младшим
+	nZ4count = __lzcnt64(*pv) >> 2;
+	// если все 64 бита нулевые 
+	// это не подойдет для формата
+	// делаем 60 бит, записываем 0xF0
+	if (nZ4count == 16)
+		nZ4count--;
+	// считаем количество нулевых битов, округленное до 4
+	size_t ZeroBitsCount = nZ4count << 2;
+	
+	// если в буфере осталось место для записи ненулевых битов
+	// 64 + 4 = 68 - максимальное количество бит
+	if (Output.BitsLeft() >= 68 - ZeroBitsCount)
+	{
+		// записываем количество нулевых битов деленное на 4
+		Result = Output.WriteBits(Source, 4);
+		// если записалось нормально
+		if (Result == FC_OK)
+		{
+			// формируем буфер для записи double
+			BITWORD *pvb = static_cast<BITWORD*>(static_cast<void*>(pv));
+			BITWORD *pve = static_cast<BITWORD*>(static_cast<void*>(pv+1));
+			CBitStream SourceDbl(pvb, pve, 0);
+			// и записываем только ненулевые биты
+			// double в памяти лежит от младших битов к старшим, так что записываем ненулевые младшие
+			Result = Output.WriteBits(SourceDbl, sizeof(unsigned __int64) * 8 - ZeroBitsCount);
+		}
+		// если количество битов не записалось - возвращаем результат (ошибка или переполенение)
+	}
+	else
+	{
+		// если в буфере не было достаточно места для
+		// записи восстанавливаем исходный double и сбрасываем буфер
+		Xor(dValue, dPredictor);
+		Result = FC_BUFFEROVERFLOW;
+	}
+	return Result;
+}
+#endif
+
+eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, CBitStream& Output)
+{
+	eFCResult Result = FC_OK;
+
+	Xor(dValue, dPredictor);
+	unsigned int *ppv = static_cast<unsigned int*>(static_cast<void*>(&dValue)) + 1;
+	unsigned int pv = *ppv;
+	BITWORD nZ4count = 0;
+	BITWORD *pZ4(&nZ4count);
+	CBitStream Source(pZ4, pZ4 + sizeof(BITWORD), 0);
+
+	// если отличается только бит знака - была идея обнулять разницу. Но это приводит
+	// к сбою предиктора при чтении - предиктор делается отрицательный и симметрично уводит в минус
+	// записанные значения, которые исходно были положительные
+	// поэтому обнуление разницы убрано - будут записываться все 80 бит, но так как только старший 
+	// единица а все остальные нули - их сожмет RLE
+
+	if (!pv)
+	{
+		if (*(ppv - 1))
+		{
+			// bits in the lower int only
+			//nZ4count = 8;
+
+			pv = *static_cast<int*>(static_cast<void*>(&dValue));
+
+			//nZ4count = 8 + (CLZ1(pv) >> 2);
+			nZ4count = 8 + ((CCompressorBase::pFnCountZeros32)(pv) >> 2);
+
+			if (Output.BitsLeft() >= 68 - nZ4count * 4)
+			{
+				Result = Output.WriteBits(Source, 4);
+				if (Result == FC_OK)
+				{
+					CBitStream SourceDbl2(static_cast<BITWORD*>(static_cast<void*>(ppv - 1)), static_cast<BITWORD*>(static_cast<void*>(ppv)), 0);
+					Result = Output.WriteBits(SourceDbl2, sizeof(int) * 8 - (nZ4count - 8) * 4);
+				}
+			}
+			else
+			{
+				Xor(dValue, dPredictor);
+				Result = FC_BUFFEROVERFLOW;
+			}
+		}
+		else
+		{
+			nZ4count = 15;
+			if (Output.BitsLeft() >= 68 - nZ4count * 4)
+			{
+				Result = Output.WriteBits(Source, 4);
+				if (Result == FC_OK)
+				{
+					CBitStream SourceDbl2(static_cast<BITWORD*>(static_cast<void*>(ppv - 1)), static_cast<BITWORD*>(static_cast<void*>(ppv)), 0);
+					Result = Output.WriteBits(SourceDbl2, 4);
+				}
+			}
+			else
+			{
+				Xor(dValue, dPredictor);
+				Result = FC_BUFFEROVERFLOW;
+			}
+		}
+	}
+	else
+	{
+
+		//nZ4count = CLZ1(pv) >> 2;
+		nZ4count = (CCompressorBase::pFnCountZeros32)(pv) >> 2;
+
+		if (Output.BitsLeft() >= 68 - nZ4count * 4)
+		{
+			Result = Output.WriteBits(Source, 4);
+			if (Result == FC_OK)
+			{
+				CBitStream SourceDbl1(static_cast<BITWORD*>(static_cast<void*>(ppv - 1)), static_cast<BITWORD*>(static_cast<void*>(ppv)), 0);
+				Result = Output.WriteBits(SourceDbl1, sizeof(int) * 8);
+				if (Result == FC_OK)
+				{
+					CBitStream SourceDbl2(static_cast<BITWORD*>(static_cast<void*>(ppv)), static_cast<BITWORD*>(static_cast<void*>(ppv + 1)), 0);
+					Result = Output.WriteBits(SourceDbl2, sizeof(int) * 8 - nZ4count * 4);
+				}
+			}
+		}
+		else
+		{
+			Xor(dValue, dPredictor);
+			Result = FC_BUFFEROVERFLOW;
+		}
+	}
+
+	return Result;
+}
+
+uint32_t CCompressorBase::CLZ_LZcnt32(uint32_t x)
+{
+	return __lzcnt(x);
+}
+
 
 // https://embeddedgurus.com/state-space/2014/09/fast-deterministic-and-portable-counting-leading-zeros/
 

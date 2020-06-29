@@ -1,0 +1,1 @@
+rastr.tables("node").readcsv RG_KEY, "c:\tmp\resnodes.csv", "ny,vras,delta,pnr,qnr,pg,qg",";",""

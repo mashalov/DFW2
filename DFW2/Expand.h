@@ -7,20 +7,21 @@ namespace DFW2
 	class CExpand : public CDynaPrimitiveBinary, public CDiscreteDelay
 	{
 	protected:
-		virtual void RequestZCDiscontinuity(CDynaModel* pDynaModel);
-		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
+		void RequestZCDiscontinuity(CDynaModel* pDynaModel)  override;
+		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)  override;
 		eRELAYSTATES GetInstantState();
 	public:
  
-		CExpand::CExpand(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) :  CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, Input)  { }
+		CExpand::CExpand(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)  { }
 		virtual ~CExpand() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual bool NotifyDelay(CDynaModel *pDynaModel);
-		virtual bool UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		bool NotifyDelay(CDynaModel *pDynaModel) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Расширитель импульса"); }
+		const _TCHAR* GetVerbalName() override { return _T("Расширитель импульса"); }
 		static size_t PrimitiveSize() { return sizeof(CExpand); }
 		static long EquationsCount()  { return 1; }
 	};
@@ -29,16 +30,17 @@ namespace DFW2
 	class CShrink : public CExpand
 	{
 	protected:
-		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
+		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 
 	public:
-		CShrink::CShrink(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CExpand(pDevice, pOutput, nOutputIndex, Input)  { }
+		CShrink::CShrink(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CExpand(Device, OutputVariable, Input, ExtraOutputVariables)  { }
 		virtual ~CShrink() {}
 
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual bool NotifyDelay(CDynaModel *pDynaModel);
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		bool NotifyDelay(CDynaModel *pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("Ограничитель импульса"); }
+		const _TCHAR* GetVerbalName() override { return _T("Ограничитель импульса"); }
 		static size_t PrimitiveSize() { return sizeof(CShrink); }
 		static long EquationsCount()  { return 1; }
 	};

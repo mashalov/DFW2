@@ -8,13 +8,15 @@ namespace DFW2
 	class CDynaPowerInjector : public CDevice
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		PrimitiveVariableExternal V, DeltaV, Sv;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		VariableIndexExternal V, DeltaV, Vre, Vim, Sv;
 	public:
 		enum VARS
 		{
 			V_P,
 			V_Q,
+			V_IRE,
+			V_IIM,
 			V_LAST
 		};
 
@@ -25,8 +27,8 @@ namespace DFW2
 		};
 
 
-		double P;
-		double Q;
+		VariableIndex P, Q, Ire, Iim;
+
 		double Kgen;
 		double LFQmin;
 		double LFQmax;
@@ -35,9 +37,11 @@ namespace DFW2
 
 		CDynaPowerInjector(); 
 		virtual bool CalculatePower() { return true; }
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
 		static const _TCHAR* m_cszNodeId;
 	};

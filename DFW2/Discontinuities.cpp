@@ -6,8 +6,8 @@ using namespace DFW2;
 
 CStaticEvent::~CStaticEvent()
 {
-	for (MODELACTIONITR it = m_Actions.begin(); it != m_Actions.end(); it++)
-		delete *it;
+	for (auto&& it : m_Actions)
+		delete it;
 }
 
 CDiscontinuities::CDiscontinuities(CDynaModel *pDynaModel) : m_pDynaModel(pDynaModel)
@@ -85,7 +85,7 @@ bool CDiscontinuities::AddEvent(double dTime, CModelAction* Action)
 {
 	bool bRes = true;
 	CStaticEvent newEvent(dTime);
-	pair<STATICEVENTITR, bool> checkInsert = m_StaticEvent.insert(newEvent);
+	std::pair<STATICEVENTITR, bool> checkInsert = m_StaticEvent.insert(newEvent);
 	checkInsert.first->AddAction(Action);
 	return bRes;
 }
@@ -136,11 +136,8 @@ bool CDiscontinuities::RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject)
 	return bRes;
 }
 
-bool CDiscontinuities::Init()
+void CDiscontinuities::Init()
 {
-	bool bRes = true;
-//	m_itCurrentStaticEvent = m_StaticEvent.begin();
-	return bRes;
 }
 
 double CDiscontinuities::NextEventTime()
@@ -156,9 +153,8 @@ double CDiscontinuities::NextEventTime()
 	return dNextEventTime;
 }
 
-bool CDiscontinuities::PassTime(double dTime)
+void CDiscontinuities::PassTime(double dTime)
 {
-	bool bRes = true;
 	if (!m_pDynaModel->IsInDiscontinuityMode())
 	{
 		STATICEVENTITR itEvent = m_StaticEvent.lower_bound(CStaticEvent(dTime));
@@ -168,7 +164,6 @@ bool CDiscontinuities::PassTime(double dTime)
 				m_StaticEvent.erase(m_StaticEvent.begin(), itEvent);
 		}
 	}
-	return bRes;
 }
 
 
@@ -265,9 +260,7 @@ DFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel *pDynaModel)
 	cplx y = 1.0 / m_ShuntRX;
 	m_pDynaNode->Gshunt = y.real();
 	m_pDynaNode->Bshunt = y.imag();
-	m_pDynaNode->CalcAdmittances();
-	pDynaModel->ProcessTopologyRequest();
-	
+	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
 
@@ -305,9 +298,7 @@ DFW2_ACTION_STATE CModelActionChangeNodeShuntAdmittance::Do(CDynaModel *pDynaMod
 	DFW2_ACTION_STATE State = AS_DONE;
 	m_pDynaNode->Gshunt = m_ShuntGB.real();
 	m_pDynaNode->Bshunt = m_ShuntGB.imag();
-	m_pDynaNode->CalcAdmittances();
 	pDynaModel->ProcessTopologyRequest();
-
 	return State;
 }
 
@@ -345,8 +336,7 @@ DFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
 {
 	DFW2_ACTION_STATE State = AS_DONE;
 	m_pDynaNode->Gshunt = m_pDynaNode->Bshunt = 0.0;
-	m_pDynaNode->CalcAdmittances();
-	pDynaModel->ProcessTopologyRequest();
+	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
 
@@ -363,7 +353,7 @@ DFW2_ACTION_STATE CModelActionChangeNodeLoad::Do(CDynaModel *pDynaModel)
 	DFW2_ACTION_STATE State = AS_DONE;
 	m_pDynaNode->Pn = m_newLoad.real();
 	m_pDynaNode->Qn = m_newLoad.imag();
-	pDynaModel->ProcessTopologyRequest();
+	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
 

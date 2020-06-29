@@ -28,7 +28,7 @@ protected:
 	CResultFileReader::DeviceInstanceInfo *m_pDeviceInstanceInfo;
 	long GetParameterByIndex(VARIANT& vt, long nIndex);
 public:
-	CDeviceTypeWrite() : m_pDeviceTypeInfo(NULL)
+	CDeviceTypeWrite() : m_pDeviceTypeInfo(nullptr)
 	{
 	}
 

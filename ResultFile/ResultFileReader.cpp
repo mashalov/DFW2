@@ -4,20 +4,6 @@
 
 using namespace DFW2;
 
-CResultFileReader::CResultFileReader()
-{
-	m_pDirectoryEntries = NULL;
-	m_nVersion = 0;
-	m_dTimeCreated = 0.0;
-	m_pChannelHeaders = NULL;
-	m_pTime = NULL;
-	m_pStep = NULL;
-	m_bHeaderLoaded = false;
-	m_pFile = NULL;
-	m_pDeviceTypeInfo = NULL;
-	m_dRatio = -1.0;
-}
-
 CResultFileReader::~CResultFileReader()
 {
 	Close();
@@ -31,100 +17,100 @@ void CResultFileReader::ReadHeader(int& Version)
 		ReadLEB(Version64);
 		Version = static_cast<int>(Version64);
 		if (Version64 > DFW2_RESULTFILE_VERSION)
-			return throw CFileReadException(m_pFile, Cex(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION));
+			return throw CFileReadException(m_pFile, fmt::format(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION).c_str());
 	}
 	else
-		return throw CFileReadException(NULL);
+		return throw CFileReadException(nullptr);
 }
 
-double *CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
+std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 {
-	double *pResultBuffer = NULL;
+	std::unique_ptr<double[]> pResultBuffer;
 
 	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_ChannelsCount))
 	{
-		ChannelHeaderInfo *pChannel = m_pChannelHeaders + nIndex;
+		ChannelHeaderInfo *pChannel = m_pChannelHeaders.get() + nIndex;
 		CCompressorSingle comp;
 		size_t nTimeIndex = 0;
 		double dValue = 0.0;
-		BITWORD *pBuffer(nullptr);
+		std::unique_ptr<BITWORD[]> pBuffer;
 
-		try
+		pResultBuffer = std::make_unique<double[]>(m_PointsCount);
+
+		if (!pResultBuffer)
+			throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
+
+		// получаем список блоков данных канала в порядке от конца к началу
+		INT64LIST Offsets;
+		GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
+
+		// проходим блоки в обратном порядке от начала к концу
+		INT64LIST::reverse_iterator it = Offsets.rbegin();
+		while (it != Offsets.rend())
 		{
-			pResultBuffer = new double[m_PointsCount];
+			if (_fseeki64(m_pFile, *it, SEEK_SET))
+				throw CFileReadException(m_pFile);
 
-			if (!pResultBuffer)
-				throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
+			int BlockType	= ReadBlockType();
+			int PointsCount = ReadLEBInt();
 
-			INT64LIST Offsets;
-			GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
-			INT64LIST::reverse_iterator it = Offsets.rbegin();
+			pBuffer = nullptr;
+			int BytesCount(1);
 
-			while (it != Offsets.rend())
+			switch (BlockType)
 			{
-				if (_fseeki64(m_pFile, *it, SEEK_SET))
+			case 0:		// RLE-блок
+			{
+				// читаем сжатые данные
+				BytesCount = ReadLEBInt();
+				std::unique_ptr<unsigned char[]> pReadBuffer = std::make_unique<unsigned char[]>(BytesCount + 1);
+				if (fread(pReadBuffer.get(), 1, BytesCount, m_pFile) != BytesCount)
 					throw CFileReadException(m_pFile);
 
-				int BlockType = ReadLEBInt();
-				int PointsCount = ReadLEBInt();
-				int BytesCount = ReadLEBInt();
-
-				pBuffer = nullptr;
-
-				if (BlockType == 0)
-				{
-					unsigned char *pReadBuffer = new unsigned char[BytesCount + 1]();
-					if (fread(pReadBuffer, 1, BytesCount, m_pFile) != BytesCount)
-					{
-						delete pReadBuffer;
-						throw CFileReadException(m_pFile);
-					}
-					CRLECompressor rle;
-					// наихудший результат предиктивного сжатия - по байту на каждый double
-					size_t nDecomprSize(PointsCount * (sizeof(double) + 1));
-					pBuffer = new BITWORD[nDecomprSize / sizeof(BITWORD) + 1]();
-					bool bRes = rle.Decompress(pReadBuffer, BytesCount, static_cast<unsigned char*>(static_cast<void*>(pBuffer)), nDecomprSize);
-					delete pReadBuffer;
-					if (!bRes)
-						throw CFileReadException(m_pFile);
-					BytesCount = static_cast<int>(nDecomprSize);
-
-				}
-				else
-				{
-					pBuffer = new BITWORD[BytesCount / sizeof(BITWORD) + 1]();
-					if (fread(pBuffer, 1, BytesCount, m_pFile) != BytesCount)
-						throw CFileReadException(m_pFile);
-				}
-
-				CBitStream Input(pBuffer, pBuffer + BytesCount / sizeof(BITWORD) + 1, 0);
-
-				for (int nPoint = 0; nPoint < PointsCount; nPoint++, nTimeIndex++)
-				{
-					double pred = comp.Predict(m_pTime[nTimeIndex]);
-					dValue = 0.0;
-					comp.ReadDouble(dValue, pred, Input);
-					pResultBuffer[nTimeIndex] = dValue;
-					comp.UpdatePredictor(dValue);
-				}
-
-				if(pBuffer)
-					delete pBuffer;
-
-				pBuffer = NULL;
-				it++;
+				CRLECompressor rle;
+				// наихудший результат предиктивного сжатия - по байту на каждый double
+				size_t nDecomprSize(PointsCount * (sizeof(double) + 1));
+				pBuffer = std::make_unique<BITWORD[]>(nDecomprSize / sizeof(BITWORD) + 1);
+				bool bRes = rle.Decompress(pReadBuffer.get(), BytesCount, static_cast<unsigned char*>(static_cast<void*>(pBuffer.get())), nDecomprSize);
+				if (!bRes)
+					throw CFileReadException(m_pFile);
+				BytesCount = static_cast<int>(nDecomprSize);
 			}
-		}
-		catch (CFileReadException&)
-		{
-			if (pBuffer)
-				delete pBuffer;
-			if (pResultBuffer)
+				break;
+			case 1:		// блок без сжатия
+				// читаем несжатые данные
+				BytesCount = ReadLEBInt();
+				pBuffer = std::make_unique<BITWORD[]>(BytesCount / sizeof(BITWORD) + 1);
+				if (fread(pBuffer.get(), 1, BytesCount, m_pFile) != BytesCount)
+					throw CFileReadException(m_pFile);
+				break;
+			case 2:		// блок SuperRLE
+				pBuffer = std::make_unique<BITWORD[]>(BytesCount / sizeof(BITWORD) + 1);
+				// читаем 1 байт сжатых предиктивным методом данных
+				if (fread(pBuffer.get(), 1, BytesCount, m_pFile) != BytesCount)
+					throw CFileReadException(m_pFile);
+				break;
+			default:
+				throw CFileReadException(m_pFile);
+				break;
+			}
+
+			CBitStream Input(pBuffer.get(), pBuffer.get() + BytesCount / sizeof(BITWORD) + 1, 0);
+			for (int nPoint = 0; nPoint < PointsCount; nPoint++, nTimeIndex++)
 			{
-				delete pResultBuffer;
-				pResultBuffer = NULL;
+				double pred = comp.Predict(m_pTime[nTimeIndex]);
+				dValue = 0.0;
+				comp.ReadDouble(dValue, pred, Input);
+				pResultBuffer[nTimeIndex] = dValue;
+				comp.UpdatePredictor(dValue);
+				if (BlockType == 2)
+					Input.Rewind();
 			}
+			it++;
 		}
+
+		if (nTimeIndex != m_PointsCount)
+			throw CFileReadException(m_pFile, fmt::format(CDFW2Messages::m_cszResultFilePointsCountMismatch, nIndex, nTimeIndex, m_PointsCount).c_str());
 	}
 	return pResultBuffer;
 }
@@ -159,47 +145,73 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptr
 	findChannel.eDeviceType = static_cast<int>(eType);
 	CHANNELSETITRCONST it = m_ChannelSet.find(&findChannel);
 	if (it != m_ChannelSet.end())
-		return *it - m_pChannelHeaders;
+		return *it - m_pChannelHeaders.get();
 	else
 		return -1;
 }
 
-double *CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const
+std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const
 {
 	return ReadChannel(GetChannelIndex(eType,nId,nVarIndex));
 }
 
-double *CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName) const
+std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName) const
 {
 	return ReadChannel(GetChannelIndex(eType, nId, cszVarName));
 }
 
-
+// строит список блоков данных канала от конца к началу
 void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset) const
 {
 	Offsets.clear();
 
+	// начинаем с заданного смещения последнего блока
+	// и работаем, пока не обнаружим смещение предыдущего
+	// блока равное нулю
+
 	while (LastBlockOffset)
 	{
+		// запоминаем смещение блока
 		Offsets.push_back(LastBlockOffset);
-
+		// встаем на смещение блока и читаем заголовок
 		if (_fseeki64(m_pFile, LastBlockOffset, SEEK_SET))
 			throw CFileReadException(m_pFile);
 
-		ReadLEBInt(); // Block Type
-		ReadLEBInt(); // Count
-		int Bytes = ReadLEBInt();
+		int nBlockType = ReadBlockType();			// Block Type
+		ReadLEBInt();								// doubles count
+		// если блок имеет тип 2 - (SuperRLE) то размер блока 1 байт. Размер не записывается для такого блока
+		// поэтому принимаем его по умолчанию
+		int Bytes(1);
+		if(nBlockType < 2)
+			Bytes = ReadLEBInt();					// если блоки типа 0 или 1 - читаем размер блока в байтах
+
+		
+		/*
+			Если нужно найти канал по смещению в файле - смещение задаем здесь,
+			последовательно читаем все каналы и ждем пока не вылетит исключение.
+			Индекс канала вызывашего исключение использовать для поиска девайса и переменной
+
+			unsigned __int64 addr = 7907939;
+			if (addr >= LastBlockOffset && addr < LastBlockOffset + Bytes)
+				throw CFileReadException(m_pFile);
+		*/
+		
+
+		// перемещаемся на запись смещения предыдущего блока, используя известный размер блока
 		if (_fseeki64(m_pFile, Bytes, SEEK_CUR))
 			throw CFileReadException(m_pFile);
+
+		// читаем смещение предыдущего блока
 		LastBlockOffset = OffsetFromCurrent();
 	}
 }
 
-void CResultFileReader::ReadModelData(double *pData, int nVarIndex)
+// чтение несжатых данных модели
+void CResultFileReader::ReadModelData(std::unique_ptr<double[]>& pData, int nVarIndex)
 {
 	bool bRes = false;
-	ChannelHeaderInfo *pChannel = m_pChannelHeaders;
-	while (pChannel < m_pChannelHeaders + m_ChannelsCount)
+	ChannelHeaderInfo *pChannel = m_pChannelHeaders.get();
+	while (pChannel < m_pChannelHeaders.get() + m_ChannelsCount)
 	{
 		if (pChannel->eDeviceType == DEVTYPE_MODEL &&
 			pChannel->DeviceId == 0 &&
@@ -210,20 +222,21 @@ void CResultFileReader::ReadModelData(double *pData, int nVarIndex)
 
 	size_t nTimeIndex = 0;
 
-	if (pChannel < m_pChannelHeaders + m_ChannelsCount)
+	if (pChannel < m_pChannelHeaders.get() + m_ChannelsCount)
 	{
+		// получаем список блоков данных канала в порядке от конца к началу
 		INT64LIST Offsets;
 		GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
-		INT64LIST::reverse_iterator it = Offsets.rbegin();
 
+		// проходим блоки в обратном порядке от начала к концу
+		INT64LIST::reverse_iterator it = Offsets.rbegin();
 		while (it != Offsets.rend())
 		{
 			if (_fseeki64(m_pFile, *it, SEEK_SET))
 				throw CFileReadException(m_pFile);
-			ReadLEBInt(); // Block Type
+			ReadBlockType(); // Block Type
 			int PointsCount = ReadLEBInt();
 			ReadLEBInt(); // Bytes
-
 			for (int nPoint = 0; nPoint < PointsCount; nPoint++)
 			{
 				ReadDouble(pData[nTimeIndex]);
@@ -242,9 +255,9 @@ void CResultFileReader::ReadDirectoryEntries()
 	unsigned __int64 nDirEntries;
 	ReadLEB(nDirEntries);
 	m_nDirectoryEntriesCount = static_cast<size_t>(nDirEntries);
-	m_pDirectoryEntries = new DataDirectoryEntry[m_nDirectoryEntriesCount];
+	m_pDirectoryEntries = std::make_unique<DataDirectoryEntry[]>(m_nDirectoryEntriesCount);
 	m_DirectoryOffset = _ftelli64(m_pFile);
-	if (fread_s(m_pDirectoryEntries, m_nDirectoryEntriesCount * sizeof(struct DataDirectoryEntry), sizeof(struct DataDirectoryEntry), m_nDirectoryEntriesCount, m_pFile) != m_nDirectoryEntriesCount)
+	if (fread_s(m_pDirectoryEntries.get(), m_nDirectoryEntriesCount * sizeof(struct DataDirectoryEntry), sizeof(struct DataDirectoryEntry), m_nDirectoryEntriesCount, m_pFile) != m_nDirectoryEntriesCount)
 		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
 }
 
@@ -256,8 +269,8 @@ void CResultFileReader::Reparent()
 
 		if (pDevType->DeviceParentIdsCount == 0) continue;
 
-		DeviceInstanceInfo *pb = pDevType->m_pDeviceInstances;
-		DeviceInstanceInfo *pe = pDevType->m_pDeviceInstances + pDevType->DevicesCount;
+		DeviceInstanceInfo *pb = pDevType->m_pDeviceInstances.get();
+		DeviceInstanceInfo *pe = pb + pDevType->DevicesCount;
 
 		while (pb < pe)
 		{
@@ -305,7 +318,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	ReadHeader(m_nVersion);
 	ReadDouble(m_dTimeCreated);
 	VARIANT vt;
-	VariantClear(&vt);
+	VariantInit(&vt);
 	vt.vt = VT_DATE;
 	vt.date = m_dTimeCreated;
 
@@ -334,8 +347,8 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 
 	m_DevTypesCount = ReadLEBInt();
 
-	m_pDeviceTypeInfo = new DeviceTypeInfo[m_DevTypesCount];
-	DeviceTypeInfo  *pDevTypeInfo = m_pDeviceTypeInfo;
+	m_pDeviceTypeInfo = std::make_unique<DeviceTypeInfo[]>(m_DevTypesCount);
+	DeviceTypeInfo  *pDevTypeInfo = m_pDeviceTypeInfo.get();
 
 	for (int i = 0; i < m_DevTypesCount; i++, pDevTypeInfo++)
 	{
@@ -381,7 +394,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 		if (!m_DevTypeSet.insert(pDevTypeInfo).second) 
 			throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
 
-		DeviceInstanceInfo *pDevInst = pDevTypeInfo->m_pDeviceInstances;
+		DeviceInstanceInfo *pDevInst = pDevTypeInfo->m_pDeviceInstances.get();
 
 		for (int iDev = 0; iDev < pDevTypeInfo->DevicesCount; iDev++, pDevInst++)
 		{
@@ -452,8 +465,8 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	ReadLEB(ReadInt64);
 	m_ChannelsCount = static_cast<size_t>(ReadInt64);
 
-	m_pChannelHeaders = new ChannelHeaderInfo[m_ChannelsCount];
-	ChannelHeaderInfo *pChannel = m_pChannelHeaders;
+	m_pChannelHeaders = std::make_unique<ChannelHeaderInfo[]>(m_ChannelsCount);
+	ChannelHeaderInfo *pChannel = m_pChannelHeaders.get();
 
 	for (size_t nChannel = 0; nChannel < m_ChannelsCount; nChannel++, pChannel++)
 	{
@@ -466,8 +479,8 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	}
 
 
-	m_pTime = new double[m_PointsCount];
-	m_pStep = new double[m_PointsCount];
+	m_pTime = std::make_unique<double[]>(m_PointsCount);
+	m_pStep = std::make_unique<double[]>(m_PointsCount);
 	ReadModelData(m_pTime,0);
 	ReadModelData(m_pStep,1);
 
@@ -485,7 +498,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	{
 		unsigned __int64 nDeviceType = 0;
 		unsigned __int64 nKeysSize = 0;
-		wstring strVarName;
+		std::wstring strVarName;
 
 		ReadLEB(nDeviceType);
 		ReadString(strVarName);
@@ -500,7 +513,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 			nKeysSize--;
 		}
 
-		CSlowVariableItem *pItm = new  CSlowVariableItem(static_cast<long>(nDeviceType), DeviceIds, strVarName.c_str());
+		CSlowVariableItem *pItm = new CSlowVariableItem(static_cast<long>(nDeviceType), DeviceIds, strVarName.c_str());
 
 		ReadLEB(nKeysSize); // graph size now
 
@@ -614,37 +627,7 @@ void CResultFileReader::Close()
 	if (m_pFile)
 	{
 		fclose(m_pFile);
-		m_pFile =NULL;
-	}
-
-	if (m_pDirectoryEntries)
-	{
-		delete m_pDirectoryEntries;
-		m_pDirectoryEntries = NULL;
-	}
-
-	if (m_pChannelHeaders)
-	{
-		delete m_pChannelHeaders;
-		m_pChannelHeaders = NULL;
-	}
-
-	if (m_pTime)
-	{
-		delete m_pTime;
-		m_pTime = NULL;
-	}
-
-	if (m_pStep)
-	{
-		delete m_pStep;
-		m_pStep = NULL;
-	}
-
-	if (m_pDeviceTypeInfo)
-	{
-		delete[] m_pDeviceTypeInfo;
-		m_pDeviceTypeInfo = NULL;
+		m_pFile = NULL;
 	}
 
 	m_DevTypeSet.clear();
@@ -692,12 +675,12 @@ size_t CResultFileReader::GetChannelsCount() const
 	return m_ChannelsCount;
 }
 
-double* CResultFileReader::GetTimeStep()
+std::unique_ptr<double[]> CResultFileReader::GetTimeStep()
 {
-	double *pResultBuffer = new double[m_PointsCount];
+	std::unique_ptr<double[]> pResultBuffer = std::make_unique<double[]>(m_PointsCount);
 	if (!pResultBuffer)
 		throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
-	GetStep(pResultBuffer, m_PointsCount);
+	GetStep(pResultBuffer.get(), m_PointsCount);
 	return pResultBuffer;
 }
 
@@ -707,7 +690,7 @@ void CResultFileReader::GetTimeScale(double *pTimeBuffer, size_t nPointsCount) c
 		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	if (nPointsCount <= m_PointsCount && nPointsCount >= 0)
-		memcpy(pTimeBuffer, m_pTime, sizeof(double) * nPointsCount);
+		std::copy(m_pTime.get(), m_pTime.get()+ nPointsCount, pTimeBuffer);
 	else
 		throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
 }
@@ -718,7 +701,7 @@ void CResultFileReader::GetStep(double *pStepBuffer, size_t nPointsCount) const
 		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	if (nPointsCount <= m_PointsCount && nPointsCount >= 0)
-		memcpy(pStepBuffer, m_pStep, sizeof(double) * nPointsCount);
+		std::copy(m_pStep.get(), m_pStep.get() + nPointsCount, pStepBuffer);
 	else
 		throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
 }
@@ -755,10 +738,8 @@ void CResultFileReader::DeviceInstanceInfo::SetParent(ptrdiff_t nParentIndex, pt
 {
 	if (nParentIndex >= 0 && nParentIndex < m_pDevType->DeviceParentIdsCount)
 	{
-		DeviceLinkToParent *pLink = m_pDevType->pLinks + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
-
-		_ASSERTE(pLink < m_pDevType->pLinks + m_pDevType->DeviceParentIdsCount * m_pDevType->DevicesCount);
-
+		DeviceLinkToParent *pLink = m_pDevType->pLinks.get() + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
+		_ASSERTE(pLink < m_pDevType->pLinks.get() + m_pDevType->DeviceParentIdsCount * m_pDevType->DevicesCount);
 		pLink->m_eParentType = eParentType;
 		pLink->m_nId = nParentId;
 	}
@@ -771,7 +752,7 @@ const CResultFileReader::DeviceLinkToParent* CResultFileReader::DeviceInstanceIn
 	if (m_pDevType->DeviceParentIdsCount)
 	{
 		if (nParentIndex >= 0 && nParentIndex < m_pDevType->DeviceParentIdsCount)
-			return m_pDevType->pLinks + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
+			return m_pDevType->pLinks.get() + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
 		else
 			throw CFileReadException(NULL, CDFW2Messages::m_cszWrongResultFile);
 	}
@@ -785,8 +766,8 @@ const CResultFileReader::DEVTYPESET& CResultFileReader::GetTypesSet() const
 
 void CResultFileReader::DeviceTypeInfo::IndexDevices()
 {
-	DeviceInstanceInfo *pb = m_pDeviceInstances;
-	DeviceInstanceInfo *pe = m_pDeviceInstances + DevicesCount;
+	DeviceInstanceInfo *pb = m_pDeviceInstances.get();
+	DeviceInstanceInfo *pe = pb + DevicesCount;
 
 	while (pb < pe)
 	{
@@ -802,16 +783,16 @@ void CResultFileReader::DeviceTypeInfo::AllocateData()
 	{
 		_ASSERTE(!pLinks);
 		if (DeviceParentIdsCount)
-			pLinks = new DeviceLinkToParent[DeviceParentIdsCount * DevicesCount];
+			pLinks = std::make_unique<DeviceLinkToParent[]>(DeviceParentIdsCount * DevicesCount);
 
 		_ASSERTE(!pIds);
-		pIds = new ptrdiff_t[DeviceIdsCount  * DevicesCount];
+		pIds = std::make_unique<ptrdiff_t[]>(DeviceIdsCount  * DevicesCount);
 
 		_ASSERTE(!m_pDeviceInstances);
-		m_pDeviceInstances = new DeviceInstanceInfo[DevicesCount];
+		m_pDeviceInstances = std::make_unique<DeviceInstanceInfo[]>(DevicesCount);
 
-		DeviceInstanceInfo *pb = m_pDeviceInstances;
-		DeviceInstanceInfo *pe = m_pDeviceInstances + DevicesCount;
+		DeviceInstanceInfo *pb = m_pDeviceInstances.get();
+		DeviceInstanceInfo *pe = pb + DevicesCount;
 
 		while (pb < pe)
 		{
@@ -823,7 +804,7 @@ void CResultFileReader::DeviceTypeInfo::AllocateData()
 
 const CResultFileReader::ChannelHeaderInfo* CResultFileReader::GetChannelHeaders() const
 {
-	return m_pChannelHeaders;
+	return m_pChannelHeaders.get();
 }
 
 // возвращает название единиц измерения по заданному типу
@@ -837,9 +818,9 @@ const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType) const
 }
 
 
-SAFEARRAY* CResultFileReader::CreateSafeArray(double *pChannelData) const
+SAFEARRAY* CResultFileReader::CreateSafeArray(std::unique_ptr<double[]>& pChannelData) const
 {
-	SAFEARRAY *pSA = NULL;
+	SAFEARRAY *pSA = nullptr;
 	try
 	{
 		size_t nPointsCount = GetPointsCount();
@@ -853,7 +834,7 @@ SAFEARRAY* CResultFileReader::CreateSafeArray(double *pChannelData) const
 				if (SUCCEEDED(SafeArrayAccessData(pSA, &pData)))
 				{
 					GetTimeScale(static_cast<double*>(pData)+nPointsCount, nPointsCount);
-					memcpy(static_cast<double*>(pData), pChannelData, sizeof(double) * nPointsCount);
+					std::copy(pChannelData.get(), pChannelData.get() + nPointsCount, static_cast<double*>(pData));
 					HRESULT hRes = SafeArrayUnaccessData(pSA);
 					_ASSERTE(SUCCEEDED(hRes));
 				}
@@ -864,7 +845,7 @@ SAFEARRAY* CResultFileReader::CreateSafeArray(double *pChannelData) const
 	{
 		if (pSA)
 			SafeArrayDestroy(pSA);
-		pSA = NULL; 
+		pSA = nullptr;
 	}
 	return pSA;
 }
@@ -900,6 +881,16 @@ void CResultFileReader::SetUserComment(const _TCHAR* cszUserComment)
 double CResultFileReader::GetCompressionRatio()
 {
 	return m_dRatio;
+}
+
+// чтение типа блока из файла с проверкой корректности типа
+int CResultFileReader::ReadBlockType() const
+{
+	int nBlockType = ReadLEBInt();
+	if (nBlockType >= 0 && nBlockType <= 2)
+		return nBlockType;
+	else
+		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileWrongCompressedBlockType);
 }
 
 

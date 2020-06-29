@@ -34,7 +34,7 @@ bool SimplifyPlus(CExpressionParser* pParser, CExpressionToken* pToken)
 	bool bChanged = false;
 
 	TOKENITR it = pToken->ChildrenBegin();
-	CExpressionToken *pFirstConstant = NULL;
+	CExpressionToken *pFirstConstant(nullptr);
 	double sum = 0.0;
 	while (it != pToken->ChildrenEnd())
 	{
@@ -120,7 +120,7 @@ bool SimplifyMul(CExpressionParser* pParser, CExpressionToken* pToken)
 	
 	TOKENITR it = pToken->ChildrenBegin();
 	double mul = 1.0;
-	CExpressionToken *pFirstConstant = NULL;
+	CExpressionToken *pFirstConstant(nullptr);
 	while (it != pToken->ChildrenEnd())
 	{
 		CExpressionToken *pMulToken = *it;

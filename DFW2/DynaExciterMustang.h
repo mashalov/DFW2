@@ -2,15 +2,14 @@
 #include "DynaGenerator1C.h"
 #include "DynaExciterBase.h"
 #include "LimiterConst.h"
-using namespace std;
 
 namespace DFW2
 {
 	class CDynaExciterMustang : public CDynaExciterBase
 	{
 	protected:
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		double EqInputValue, EqOutputValue;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		VariableIndex EqOutputValue;
 		CLimiterConst EqLimit;
 		bool SetUpEqLimits(CDynaModel *pDynaModel, CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateInitial, CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateResulting);
 	public:
@@ -19,13 +18,14 @@ namespace DFW2
 		CDynaExciterMustang();
 		virtual ~CDynaExciterMustang() {}
 
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
+		void UpdateSerializer(SerializerPtr& Serializer) override;
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		static const CDeviceContainerProperties DeviceProperties();
 
 	};

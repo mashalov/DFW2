@@ -4,7 +4,7 @@
 
 CCSVWriter::CCSVWriter(CResultFileReader& ResultFileReader) : m_ResultFileReader(ResultFileReader)
 {
-	pChannelLink = NULL;
+	pChannelLink = nullptr;
 	loc = setlocale(LC_ALL, "RU-ru");
 	pCSVFile = NULL;
 	pCSVOut = NULL;
@@ -13,9 +13,6 @@ CCSVWriter::CCSVWriter(CResultFileReader& ResultFileReader) : m_ResultFileReader
 
 CCSVWriter::~CCSVWriter()
 {
-	if (pChannelLink)
-		delete pChannelLink;
-
 	if (pCSVFile)
 		fclose(pCSVFile);
 
@@ -30,25 +27,25 @@ void CCSVWriter::IndexChannels()
 {
 	const CResultFileReader::DEVTYPESET &devtypeset = m_ResultFileReader.GetTypesSet();
 	CResultFileReader::DeviceTypeInfo devtypefind;
-	pChannelLink = new ChannelLink[nChannelsCount];
+	pChannelLink = std::make_unique<ChannelLink[]>(nChannelsCount);
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
 
-	ChannelLink *pC = pChannelLink;
+	ChannelLink *pC = pChannelLink.get();
 
 	while (pChannel < pChannelsEnd)
 	{
 		devtypefind.eDeviceType = pChannel->eDeviceType;
 		CResultFileReader::DEVTYPEITRCONST dit = devtypeset.find(&devtypefind);
 
-		pC->pDevice = NULL;
-		pC->pVariable = NULL;
+		pC->pDevice = nullptr;
+		pC->pVariable = nullptr;
 
 		if (dit != devtypeset.end())
 		{
 			CResultFileReader::DeviceTypeInfo *pDevType = *dit;
-			CResultFileReader::DeviceInstanceInfo *pDev = pDevType->m_pDeviceInstances;
-			CResultFileReader::DeviceInstanceInfo *pDevEnd = pDevType->m_pDeviceInstances + pDevType->DevicesCount;
+			CResultFileReader::DeviceInstanceInfo *pDev = pDevType->m_pDeviceInstances.get();
+			CResultFileReader::DeviceInstanceInfo *pDevEnd = pDevType->m_pDeviceInstances.get() + pDevType->DevicesCount;
 			while (pDev < pDevEnd)
 			{
 				if (pDev->GetId(0) == pChannel->DeviceId && pDev->m_pDevType)
@@ -78,12 +75,12 @@ void CCSVWriter::WriteDeviceTypes()
 {
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
-	ChannelLink *pC = pChannelLink;
+	const ChannelLink *pC = pChannelLink.get();
 
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, Cex(_T("%s"), pC->pDevice->m_pDevType->strDevTypeName.c_str()));
+			WriteField(pC, fmt::format(_T("%s"), pC->pDevice->m_pDevType->strDevTypeName));
 		else
 			WriteField(pC, cszUnknonwn);
 
@@ -98,12 +95,12 @@ void CCSVWriter::WriteDeviceIds()
 {
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
-	ChannelLink *pC = pChannelLink;
+	const ChannelLink *pC = pChannelLink.get();
 
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, Cex(_T("%d"), pC->pDevice->GetId(0)));
+			WriteField(pC, fmt::format(_T("%d"), pC->pDevice->GetId(0)));
 		else
 			WriteField(pC, cszUnknonwn);
 		pC++;
@@ -117,12 +114,12 @@ void CCSVWriter::WriteDeviceNames()
 {
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
-	ChannelLink *pC = pChannelLink;
+	const ChannelLink *pC = pChannelLink.get();
 
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, Cex(_T("%s"), pC->pDevice->Name.c_str()));
+			WriteField(pC, fmt::format(_T("%s"), pC->pDevice->Name));
 		else
 			WriteField(pC, cszUnknonwn);
 
@@ -137,12 +134,12 @@ void CCSVWriter::WriteVariableNames()
 {
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
-	ChannelLink *pC = pChannelLink;
+	const ChannelLink *pC = pChannelLink.get();
 
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pVariable)
-			WriteField(pC, Cex(_T("%s"), pC->pVariable->Name.c_str()));
+			WriteField(pC, fmt::format(_T("%s"), pC->pVariable->Name));
 		else
 			WriteField(pC, cszUnknonwn);
 		pC++;
@@ -259,7 +256,7 @@ void CCSVWriter::WriteData()
 {
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
-	ChannelLink *pC = pChannelLink;
+	const ChannelLink *pC = pChannelLink.get();
 
 	fclose(pCSVFile);
 
@@ -273,48 +270,28 @@ void CCSVWriter::WriteData()
 
 	pChannel = m_ResultFileReader.GetChannelHeaders();
 	pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
-	pC = pChannelLink;
 	nRowStep = (pChannelsEnd - pChannel + 2) * MinFieldWidth;
 
-	double *pData = NULL;
-
-	__try
-	{
-		pData = new double[nPointsCount];
-		m_ResultFileReader.GetTimeScale(pData, nPointsCount);
-		WriteColumn(pData, 0, false);
-		m_ResultFileReader.GetStep(pData, nPointsCount);
-		WriteColumn(pData, 1, false);
-	}
-	__finally
-	{
-		if (pData)
-			delete pData;
-	}
+	std::unique_ptr<double[]> pData;
+	pData = std::make_unique<double[]>(nPointsCount);
+	m_ResultFileReader.GetTimeScale(pData.get(), nPointsCount);
+	WriteColumn(pData.get(), 0, false);
+	m_ResultFileReader.GetStep(pData.get(), nPointsCount);
+	WriteColumn(pData.get(), 1, false);
 
 	while (pChannel < pChannelsEnd)
 	{
-		pData = m_ResultFileReader.ReadChannel(pChannel->eDeviceType, static_cast<int>(pChannel->DeviceId), pChannel->DeviceVarIndex);
-		double *pDataStart = NULL;
-		__try
-		{
-			pDataStart = pData;
-			if (pData)
-				WriteColumn(pData, pC - pChannelLink + 2, pChannel == pChannelsEnd - 1);
-		}
-		__finally
-		{
-			if (pDataStart)
-				delete pDataStart;
-		}
+		pData = std::move(m_ResultFileReader.ReadChannel(pChannel->eDeviceType, static_cast<int>(pChannel->DeviceId), pChannel->DeviceVarIndex));
+		if (pData)
+			WriteColumn(pData.get(), pC - pChannelLink.get() + 2, pChannel == pChannelsEnd - 1);
 		pC++;
 		pChannel++;
 	}
 }
 
-void CCSVWriter::WriteField(ChannelLink *pLink, const _TCHAR *cszField)
+void CCSVWriter::WriteField(const ChannelLink *pLink, std::wstring_view Field)
 {
-	wstring str(cszField);
+	std::wstring str(Field);
 	std::replace(str.begin(), str.end(), ';', ':');
 	std::replace(str.begin(), str.end(), '\"', '\'');
 	str += _T("\";");

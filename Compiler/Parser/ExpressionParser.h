@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "ExpressionToken.h"
 #include "ExpressionDictionary.h"
 
@@ -25,19 +25,19 @@ public:
 	bool m_bChanged;
 
 	bool m_bUsingInternalVars;
-	_TCHAR* m_szExpression;			// ��������� ����� ��� ���������, ������������ ��� "�����������" �������� ���� �������� ��������
+	std::unique_ptr<_TCHAR[]> m_szExpression;			// временный буфер для выражения, предназначен для "разрушающих" операций типа удаления пробелов
 	size_t m_nExpressionLength;
-	size_t m_nHeadPosition;
+	size_t m_nHeadPosition;			// индекс текущего символа в выражении
 	size_t m_nAdvanceNextSymbol;
 
-	_TCHAR* m_szTokenText;
+	std::unique_ptr<_TCHAR[]> m_szTokenText;
 	size_t m_nTokenTextLength;
 
-	wstring m_szErrorDescription;
+	std::wstring m_szErrorDescription;
 
-	PARSERSTACK m_ParserStack;
-	PARSERSTACK m_ResultStack;
-	stack<ptrdiff_t> m_ArityStack;
+	PARSERSTACK m_ParserStack;			// временный стек парсера
+	PARSERSTACK m_ResultStack;			// стек результата
+	std::stack<ptrdiff_t> m_ArityStack;	// стек порядка аргументов для функций с переменным числом аргументов
 
 	CExpressionToken *NewChildExpressionToken(eExpressionTokenType eType);
 	CExpressionToken *NewExpressionToken(const OperatorEnum *pOperator);
@@ -96,8 +96,8 @@ public:
 	void CheckLinks() const;
 	bool Process(const _TCHAR *cszExpression);
 	bool GetChanged() const;
-	bool Infix(wstring& strInfix);
-	bool InfixOperand();
+	// формирует строку из разобранного AST в инфиксной записи
+	bool Infix(std::wstring& strInfix);
 	bool InsertEquations(CCompilerEquations& Eqs);
 	const _TCHAR* GetErrorDescription();
 	bool AddRule(const _TCHAR* cszSource, const _TCHAR* cszDestination);
@@ -126,8 +126,8 @@ public:
 };
 
 
-// ����� ��������� ���������� ���������� �� �����
-// � ���� ������� �������
+// класс позволяет определить существует ли токен
+// в пуле токенов парсера
 class CValidToken
 {
 protected:

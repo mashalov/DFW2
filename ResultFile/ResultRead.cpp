@@ -83,7 +83,7 @@ STDMETHODIMP CResultRead::get_Version(LONG* Version)
 STDMETHODIMP CResultRead::get_TimeScale(VARIANT* TimeScale)
 {
 	HRESULT hRes = E_INVALIDARG;
-	SAFEARRAY *pSA = NULL; 
+	SAFEARRAY *pSA(nullptr);
 	try
 	{
 		if (TimeScale && SUCCEEDED(VariantClear(TimeScale)))
@@ -122,14 +122,11 @@ STDMETHODIMP CResultRead::get_TimeScale(VARIANT* TimeScale)
 STDMETHODIMP CResultRead::get_TimeStep(VARIANT* TimeStep)
 {
 	HRESULT hRes = E_INVALIDARG;
-	double *pResult = NULL;
-
 	if (TimeStep && SUCCEEDED(VariantClear(TimeStep)))
 	{
 		try
 		{
-			pResult = m_ResultFileReader.GetTimeStep();
-			TimeStep->parray = m_ResultFileReader.CreateSafeArray(pResult);
+			TimeStep->parray = m_ResultFileReader.CreateSafeArray(m_ResultFileReader.GetTimeStep());
 			if (TimeStep->parray)
 			{
 				TimeStep->vt = VT_R8 | VT_ARRAY;
@@ -143,10 +140,8 @@ STDMETHODIMP CResultRead::get_TimeStep(VARIANT* TimeStep)
 	}
 
 	if (FAILED(hRes))
-		VariantClear(TimeStep);
-
-	if (pResult)
-		delete pResult;
+		if(TimeStep)
+			VariantClear(TimeStep);
 
 	return hRes;
 }
@@ -179,7 +174,7 @@ STDMETHODIMP CResultRead::get_Root(VARIANT* Root)
 	{
 		if (SUCCEEDED(CComObject<CRootDevice>::CreateInstance(&pRootDevice)))
 		{
-			pRootDevice->SetDeviceInfo(m_DeviceTypeInfo.m_pDeviceInstances);
+			pRootDevice->SetDeviceInfo(m_DeviceTypeInfo.m_pDeviceInstances.get());
 			pRootDevice->AddRef();
 			Root->vt = VT_DISPATCH;
 			Root->pdispVal = pRootDevice;
@@ -249,14 +244,11 @@ void CResultRead::OpenFile(const _TCHAR* cszPathName)
 STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableName, VARIANT *Plot)
 {
 	HRESULT hRes = E_INVALIDARG;
-	double *pResult = NULL;
-
 	if (Plot && SUCCEEDED(VariantClear(Plot)))
 	{
 		try
 		{
-			pResult = m_ResultFileReader.ReadChannel(DeviceType, DeviceId, VariableName);
-			Plot->parray = m_ResultFileReader.CreateSafeArray(pResult);
+			Plot->parray = m_ResultFileReader.CreateSafeArray(m_ResultFileReader.ReadChannel(DeviceType, DeviceId, VariableName));
 			if (Plot->parray)
 			{
 				Plot->vt = VT_R8 | VT_ARRAY;
@@ -270,10 +262,8 @@ STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableN
 	}
 
 	if (FAILED(hRes))
-		VariantClear(Plot);
-
-	if (pResult)
-		delete pResult;
+		if(Plot)
+			VariantClear(Plot);
 
 	return hRes;
 }
@@ -281,14 +271,12 @@ STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableN
 STDMETHODIMP CResultRead::GetPlotByIndex(long nIndex, VARIANT *Plot)
 {
 	HRESULT hRes = E_INVALIDARG;
-	double *pResult = NULL; 
 
 	if (Plot && SUCCEEDED(VariantClear(Plot)))
 	{
 		try
 		{
-			pResult = m_ResultFileReader.ReadChannel(nIndex);
-			Plot->parray = m_ResultFileReader.CreateSafeArray(pResult);
+			Plot->parray = m_ResultFileReader.CreateSafeArray(m_ResultFileReader.ReadChannel(nIndex));
 			if (Plot->parray)
 			{
 				Plot->vt = VT_R8 | VT_ARRAY;
@@ -302,10 +290,8 @@ STDMETHODIMP CResultRead::GetPlotByIndex(long nIndex, VARIANT *Plot)
 	}
 
 	if (FAILED(hRes))
-		VariantClear(Plot);
-
-	if (pResult)
-		delete pResult;
+		if(Plot)
+			VariantClear(Plot);
 
 	return hRes;
 }
@@ -398,7 +384,7 @@ STDMETHODIMP CResultRead::put_UserComment(BSTR UserComment)
 	HRESULT hRes = E_FAIL;
 	try
 	{
-		m_ResultFileReader.SetUserComment(wstring(UserComment).c_str());
+		m_ResultFileReader.SetUserComment(std::wstring(UserComment).c_str());
 		hRes = S_OK;
 	}
 	catch (CFileReadException& ex)

@@ -6,15 +6,16 @@ namespace DFW2
 	class CZCDetector : public CDynaPrimitiveBinaryOutput
 	{
 	protected:
-		virtual double OnStateOn(CDynaModel *pDynaModel);
-		virtual double OnStateOff(CDynaModel *pDynaModel);
+		double OnStateOn(CDynaModel *pDynaModel) override;
+		double OnStateOff(CDynaModel *pDynaModel) override;
 	public:
-		CZCDetector(CDevice *pDevice, double* pOutput, ptrdiff_t nOutputIndex, PrimitiveVariableBase* Input) : CDynaPrimitiveBinaryOutput(pDevice, pOutput, nOutputIndex, Input) {}
+		CZCDetector(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
+			CDynaPrimitiveBinaryOutput(Device, OutputVariable, Input, ExtraOutputVariables) {}
 		virtual ~CZCDetector() {}
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		virtual const _TCHAR* GetVerbalName() { return _T("Пороговый элемент"); }
-		static size_t PrimitiveSize() { return sizeof(CZCDetector); }
-		static long EquationsCount()  { return 1; }
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		const _TCHAR* GetVerbalName() noexcept override { return _T("Пороговый элемент"); }
+		static size_t PrimitiveSize() noexcept { return sizeof(CZCDetector); }
+		static long EquationsCount() noexcept { return 1; }
 	};
 }

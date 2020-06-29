@@ -24,7 +24,7 @@ void CExpressionTransform::CompareTokens(CExpressionToken* pToken1, CExpressionT
 	while (it1 != list1.end())
 	{
 		CExpressionToken *pLE1 = *it1;
-		CExpressionToken *pLE2 = NULL;
+		CExpressionToken *pLE2(nullptr);
 		bool bFound = false;
 		for (TOKENITR it2 = list2.begin(); it2 != list2.end(); it2++)
 		{
@@ -92,7 +92,7 @@ bool CExpressionRule::Match(CExpressionToken *pToken)
 			VARIABLEITR vit = m_Vars.find(pPatt->GetTextValue());
 			if (vit == m_Vars.end())
 			{
-				m_Vars.insert(make_pair(pPatt->GetTextValue(), VariableEnum(pTree)));
+				m_Vars.insert(std::make_pair(pPatt->GetTextValue(), VariableEnum(pTree)));
 				nIdentical = 0;
 			}
 			else

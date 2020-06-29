@@ -1,11 +1,12 @@
 #include "stdafx.h"
 #include "DynaNode.h"
 #include "DynaModel.h"
+#include "DynaGeneratorInfBus.h"
 
 
 using namespace DFW2;
 
-CDynaGeneratorInfBus::CDynaGeneratorInfBus() : CDynaVoltageSource()
+CDynaGeneratorInfBusBase::CDynaGeneratorInfBusBase() : CDynaVoltageSource()
 {
 
 }
@@ -13,63 +14,65 @@ CDynaGeneratorInfBus::CDynaGeneratorInfBus() : CDynaVoltageSource()
 bool CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
-	double DeltaGT = Delta - DeltaV.Value();
-	double NodeV = V.Value();
-	double EsinDeltaGT = Eqs * sin(DeltaGT);
-	double EcosDeltaGT = Eqs * cos(DeltaGT);
 
-	if (!IsStateOn())
-	{
-		NodeV = EcosDeltaGT = EsinDeltaGT = 0.0;
-	}
+	// dP / dP
+	pDynaModel->SetElement(P, P, 1.0);
+	// dP / dVre
+	pDynaModel->SetElement(P, Vre, -Ire);
+	// dP / dVim
+	pDynaModel->SetElement(P, Vim, -Iim);
+	// dP / dIre
+	pDynaModel->SetElement(P, Ire, -Vre);
+	// dP / dIim
+	pDynaModel->SetElement(P, Iim, -Vim);
 
-	// dP/dP
-	pDynaModel->SetElement(A(V_P), A(V_P), 1.0);
-	// dP/dV
-	pDynaModel->SetElement(A(V_P), A(V.Index()), -EsinDeltaGT / xd1);
-	// dP/dDeltaV
-	pDynaModel->SetElement(A(V_P), A(DeltaV.Index()), NodeV * EcosDeltaGT / xd1);
+	// dQ / dP
+	pDynaModel->SetElement(Q, Q, 1.0);
+	// dQ / dVre
+	pDynaModel->SetElement(Q, Vre, Iim);
+	// dQ / dVim
+	pDynaModel->SetElement(Q, Vim, -Ire);
+	// dQ / dIre
+	pDynaModel->SetElement(Q, Ire, -Vim);
+	// dQ / dIim
+	pDynaModel->SetElement(Q, Iim, Vre);
+	   	
+	// dIre / dIre
+	pDynaModel->SetElement(Ire, Ire, 1.0);
+	// dIre / dVim
+	pDynaModel->SetElement(Ire, Vim, 1.0 / xd1);
 
-	// dQ/dQ
-	pDynaModel->SetElement(A(V_Q), A(V_Q), 1.0);
-	// dQ/dV
-	pDynaModel->SetElement(A(V_Q), A(V.Index()), (2.0 * NodeV - EcosDeltaGT) / xd1);
-	// dQ/dDeltaV
-	pDynaModel->SetElement(A(V_Q), A(DeltaV.Index()), -NodeV * EsinDeltaGT / xd1);
+	// dIim / dIim
+	pDynaModel->SetElement(Iim, Iim, 1.0);
+	// dIim / dVre
+	pDynaModel->SetElement(Iim, Vre, -1.0 / xd1);
 
-	return pDynaModel->Status() && bRes;
+	return true;
 }
 
-bool CDynaGeneratorInfBus::CalculatePower()
+bool CDynaGeneratorInfBusBase::CalculatePower()
 {
-	double DeltaGT = Delta - DeltaV.Value();
-	double NodeV = V.Value();
-	double EsinDeltaGT = Eqs * sin(DeltaGT);
-	double EcosDeltaGT = Eqs * cos(DeltaGT);
-	P = NodeV * EsinDeltaGT / xd1;
-	Q = (NodeV * EcosDeltaGT - NodeV * NodeV) / xd1;
+	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs().imag();
+	Iim = (Vre - Eqs * cos(Delta)) / GetXofEqs().imag();
+
+	P = 2.0 * P;
+
+	P =  Vre * Ire + Vim * Iim;
+	Q = -Vre * Iim + Vim * Ire;
 	return true;
 }
 
 
 bool CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 {
-	double DeltaGT = Delta - DeltaV.Value();
-	double NodeV = V.Value();
-	double EsinDeltaGT = Eqs * sin(DeltaGT);
-	double EcosDeltaGT = Eqs * cos(DeltaGT);
-
-	if (!IsStateOn())
-	{
-		NodeV = EcosDeltaGT = EsinDeltaGT = 0.0;
-	}
-
-	pDynaModel->SetFunction(A(V_P), P - NodeV * EsinDeltaGT / xd1);
-	pDynaModel->SetFunction(A(V_Q), Q - (NodeV * EcosDeltaGT - NodeV * NodeV) / xd1);
-	return pDynaModel->Status();
+	pDynaModel->SetFunction(P, P - Vre * Ire - Vim * Iim);
+	pDynaModel->SetFunction(Q, Q + Vre * Iim - Vim * Ire);
+	pDynaModel->SetFunction(Ire, Ire - (EqsSin - Vim) / xd1);
+	pDynaModel->SetFunction(Iim, Iim - (Vre - EqsCos) / xd1);
+	return true;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::Init(CDynaModel* pDynaModel)
 {
 	if (Kgen > 1)
 		xd1 /= Kgen;
@@ -80,12 +83,12 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
 	{
 		switch (GetState())
 		{
-		case DS_ON:
+		case eDEVICESTATE::DS_ON:
 			if (!SetUpDelta())
-				Status = DFS_FAILED;
+				Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 			break;
-		case DS_OFF:
-			P = Q = Delta = Eqs = 0.0;
+		case eDEVICESTATE::DS_OFF:
+			P = Q = Delta = Eqs = Ire = Iim = 0.0;
 			break;
 		}
 	}
@@ -93,42 +96,73 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
 	return Status;
 }
 
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
+{
+	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorInfBusBase::Init(pDynaModel);
+	if (CDevice::IsFunctionStatusOK(Status))
+	{
+		EqsCos = Eqs * cos(Delta);
+		EqsSin = Eqs * sin(Delta);
+	}
+	return Status;
+}
 
-bool CDynaGeneratorInfBus::SetUpDelta()
+
+bool CDynaGeneratorInfBusBase::SetUpDelta()
 {
 	bool bRes = true;
 	cplx S(P, Q);
-	cplx v = polar(V.Value(), DeltaV.Value());
+	cplx v = std::polar((double)V, (double)DeltaV);
 	_ASSERTE(abs(v) > 0.0);
 	cplx i = conj(S / v);
 	cplx eQ = v + i * GetXofEqs();
 	Delta = arg(eQ);
 	Eqs = abs(eQ);
+	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs().imag();
+	Iim = (Vre - Eqs * cos(Delta)) / GetXofEqs().imag();
 	return bRes;
 }
 
-double CDynaGeneratorInfBus::Xgen()
+double CDynaGeneratorInfBusBase::Xgen()
 {
 	return xd1;
 }
 
-cplx CDynaGeneratorInfBus::Igen(ptrdiff_t nIteration)
+cplx CDynaGeneratorInfBusBase::Igen(ptrdiff_t nIteration)
 {
 	return GetEMF() / cplx(0.0, xd1);
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::UpdateExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
 	return CDynaVoltageSource::UpdateExternalVariables(pDynaModel);
 }
 
-const CDeviceContainerProperties CDynaGeneratorInfBus::DeviceProperties()
+void CDynaGeneratorInfBusBase::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDynaVoltageSource::UpdateSerializer(Serializer);
+	Serializer->AddState(_T("Eqs"), Eqs, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(CDynaNodeBase::m_cszDelta, Delta, eVARUNITS::VARUNIT_RADIANS);
+	Serializer->AddProperty(_T("xd1"), xd1, eVARUNITS::VARUNIT_PU);
+}
+
+void CDynaGeneratorInfBus::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
+	Serializer->AddState(_T("EqsCos"), EqsCos, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(_T("EqsSin"), EqsSin, eVARUNITS::VARUNIT_PU);
+}
+
+VariableIndexRefVec& CDynaGeneratorInfBusBase::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDynaVoltageSource::GetVariables(ChildVec);
+}
+
+const CDeviceContainerProperties CDynaGeneratorInfBusBase::DeviceProperties()
 {
 	CDeviceContainerProperties props = CDynaVoltageSource::DeviceProperties();
 	props.SetType(DEVTYPE_GEN_INFPOWER);
-	props.m_strClassName = CDeviceContainerProperties::m_cszNameGeneratorInfPower;
-	props.nEquationsCount = CDynaGeneratorInfBus::VARS::V_LAST;
-	props.m_VarMap.insert(make_pair(_T("P"), CVarIndex(CDynaGeneratorInfBus::V_P, VARUNIT_MW)));
-	props.m_VarMap.insert(make_pair(_T("Q"), CVarIndex(CDynaGeneratorInfBus::V_Q, VARUNIT_MVAR)));
+	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorInfPower, CDeviceContainerProperties::m_cszSysNameGeneratorInfPower);
+	props.nEquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
 	return props;
 }

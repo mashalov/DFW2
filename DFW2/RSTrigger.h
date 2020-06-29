@@ -6,28 +6,20 @@ namespace DFW2
 	class CRSTrigger : public CDynaPrimitiveBinary
 	{
 	protected:
-		PrimitiveVariableBase* m_Input1;
+		InputVariable m_Input1;
 		bool m_bResetPriority;
 	public:
 
-		CRSTrigger::CRSTrigger(CDevice *pDevice, 
-							   double* pOutput, 
-							   ptrdiff_t nOutputIndex, 
-							   PrimitiveVariableBase* R, 
-							   PrimitiveVariableBase* S, 
-							   bool bResetPriority) : 
-															CDynaPrimitiveBinary(pDevice, pOutput, nOutputIndex, R),
-															m_Input1(S),
-															m_bResetPriority(bResetPriority) 
-															{ }
+		CRSTrigger::CRSTrigger(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
+		  							CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) { }
 		virtual ~CRSTrigger() {}
 
-		virtual bool Init(CDynaModel *pDynaModel);
-		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		bool Init(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		virtual const _TCHAR* GetVerbalName() { return _T("RS-Триггер"); }
-		static size_t PrimitiveSize() { return sizeof(CRSTrigger); }
-		static long EquationsCount()  { return 1; }
+		const _TCHAR* GetVerbalName() noexcept  override { return _T("RS-Триггер"); }
+		static size_t PrimitiveSize() noexcept { return sizeof(CRSTrigger); }
+		static long EquationsCount()  noexcept { return 1; }
 	};
 }
 

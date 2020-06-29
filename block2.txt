@@ -24,6 +24,10 @@
 *.mtx
 *.vc.db
 *.suo
+*.codeanalysis
+*.codeanalysisast
+
+
 
 
 

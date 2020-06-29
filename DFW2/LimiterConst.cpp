@@ -7,49 +7,47 @@ using namespace DFW2;
 bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	double dInput = m_Input->Value();
 	double dOdI = -1.0;
 
 	switch (GetCurrentState())
 	{
 	case LS_MAX:
-		*m_Output = dInput = m_dMax;
+		m_Output = m_Input = m_dMax;
 		dOdI = 0.0;
 		break;
 	case LS_MIN:
-		*m_Output = dInput = m_dMin;
+		m_Output = m_Input = m_dMin;
 		dOdI = 0.0;
 		break;
 	}
 
-	if (!m_pDevice->IsStateOn())
+	if (!m_Device.IsStateOn())
 		dOdI = 0.0;
 
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_OutputEquationIndex), 1.0);
-	pDynaModel->SetElement(A(m_OutputEquationIndex), A(m_Input->Index()), dOdI);
-	return bRes && pDynaModel->Status();
+	pDynaModel->SetElement(m_Output, m_Output, 1.0);
+	pDynaModel->SetElement(m_Output, m_Input, dOdI);
+	return true;
 }
 
 bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
-		double dInput = m_Input->Value();
 		switch (GetCurrentState())
 		{
 		case LS_MAX:
-			*m_Output = dInput = m_dMax;
+			m_Output = m_Input = m_dMax;
 			break;
 		case LS_MIN:
-			*m_Output = dInput = m_dMin;
+			m_Output = m_Input = m_dMin;
 			break;
 		}
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), *m_Output - dInput);
+		pDynaModel->SetFunction(m_Output, m_Output - m_Input);
 	}
 	else
-		pDynaModel->SetFunction(A(m_OutputEquationIndex), 0.0);
+		pDynaModel->SetFunction(m_Output, 0.0);
 
-	return pDynaModel->Status();
+	return true;
 }
 
 
@@ -64,138 +62,39 @@ bool CLimiterConst::Init(CDynaModel *pDynaModel)
 // контроль зерокроссинга для состояния вне ограничения
 double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 {
-
-	/*
-	if (m_pDevice->GetId() == -1)
-		m_pDevice->GetId();
-
-	if (m_pDevice->GetId() == -1 && pDynaModel->GetCurrentTime() > 4.1)
-		m_pDevice->GetId();
-	*/
-
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-	double dInput = m_Input->Value();
-	// контролируем входной сигнал по разности ограничений с гистерезисом
-
-	double CheckMax = dInput - m_dMaxH;
-	double CheckMin = m_dMinH - dInput;
-
-	// по умолчанию выход = входу, если нет ограничений такое значение и формируется на выходе
-	*m_Output = dInput;
-
-	if (CheckMax >= 0.0)
-	{
-		// если вышли за максимум
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dInput));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			// если точность зерокроссинга достигнута - изменяем состояние
-			SetCurrentState(pDynaModel, LS_MAX);
-		}
-		else
-		{
-			// если точность зерокроссинга не достаточна - ищем точку по расстонияю до 
-			// гистерезиса максимума
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMaxH);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetCurrentState(pDynaModel, LS_MAX);
-			}
-		}
-	}
-	else
-	if (CheckMin >= 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dInput));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMaxH - m_Input, m_Input, m_dMaxH, m_Input.Index, rH))
+		SetCurrentState(pDynaModel, LS_MAX);
+	if (GetCurrentState() == LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
+		if (CDynaPrimitive::ChangeState(pDynaModel, m_Input - m_dMinH, m_Input, m_dMinH, m_Input.Index, rH))
 			SetCurrentState(pDynaModel, LS_MIN);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMinH);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetCurrentState(pDynaModel, LS_MIN);
-			}
-		}
-	}
-
 	return rH;
+
 }
 
 double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 {
-
-	if (m_pDevice->GetId() == -1)
-		m_pDevice->GetId();
-
-	if (m_pDevice->GetId() == -1 && pDynaModel->GetCurrentTime() > 4.1)
-		m_pDevice->GetId();
-
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-	double dInput = m_Input->Value();
-	double CheckMin = m_dMin - dInput;
-
-	if (CheckMin < 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, dInput));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MID);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMin);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, LS_MID);
-		}
-	}
-
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMin - m_Input, m_Input, m_dMin, m_Input.Index, rH))
+		SetCurrentState(pDynaModel, LS_MID);
 	return rH;
 }
 
 double CLimiterConst::OnStateMax(CDynaModel *pDynaModel)
 {
-	if (m_pDevice->GetId() == -1)
-		m_pDevice->GetId();
-
-	if (m_pDevice->GetId() == -1 && pDynaModel->GetCurrentTime() > 4.1)
-		m_pDevice->GetId();
-	
 	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(A(m_Input->Index()));
-
-	double dInput = m_Input->Value();
-	double CheckMax = dInput - m_dMax;
-	
-	if (CheckMax < 0.0)
-	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, dInput));
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
-		{
-			SetCurrentState(pDynaModel, LS_MID);
-		}
-		else
-		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_dMax);
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-				SetCurrentState(pDynaModel, LS_MID);
-		}
-	}
+	if (CDynaPrimitive::ChangeState(pDynaModel, m_Input - m_dMax, m_Input, m_dMax, m_Input.Index, rH))
+		SetCurrentState(pDynaModel, LS_MID);
 	return rH;
 }
 
 eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_pDevice->IsStateOn())
+	if (m_Device.IsStateOn())
 	{
-		double dInput   = m_Input->Value();
-		double CheckMax = dInput - m_dMax;
-		double CheckMin = m_dMin - dInput;
-		*m_Output = m_Input->Value();
+		double CheckMax = m_Input - m_dMax;
+		double CheckMin = m_dMin - m_Input;
+		m_Output = m_Input;
 
 		// Bigger or Equal - very important !
 
@@ -204,12 +103,12 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 		if (CheckMax >= 0)
 		{
 			SetCurrentState(pDynaModel, LS_MAX);
-			*m_Output = m_dMax;
+			m_Output = m_dMax;
 		}
 		else if (CheckMin >= 0)
 		{
 			SetCurrentState(pDynaModel, LS_MIN);
-			*m_Output = m_dMin;
+			m_Output = m_dMin;
 		}
 		else
 		{
@@ -220,20 +119,14 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 			pDynaModel->DiscontinuityRequest();
 	}
 
-	return DFS_OK;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CLimiterConst::UnserializeParameters(CDynaModel *pDynaModel, double *pParameters, size_t nParametersCount)
+bool CLimiterConst::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	bool bRes = true;
-	double LimiterParameters[2] = { -1E6, 1E6 };
-
-	nParametersCount = min(nParametersCount, sizeof(LimiterParameters) / sizeof(LimiterParameters[0]));
-
-	for (size_t i = 0; i < nParametersCount; i++)
-		LimiterParameters[i] = pParameters[i];
-
-	SetMinMax(pDynaModel, LimiterParameters[0], LimiterParameters[1]);
-	return bRes;
+	double dMin(-1E6), dMax(-dMin);
+	CDynaPrimitive::UnserializeParameters({ dMin, dMax }, Parameters);
+	SetMinMax(pDynaModel, dMin, dMax);
+	return true;
 }
 

@@ -14,6 +14,7 @@
 #include "set"
 #include "algorithm"
 #include "cex.h"
+#include "dfw2exception.h"
 #include "Messages.h"
 
 namespace DFW2

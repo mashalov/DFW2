@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "map"
+#include "string"
 #include "DeviceTypes.h"
 
 namespace DFW2
@@ -29,7 +30,7 @@ namespace DFW2
 
 		CDFW2Messages();
 
-		const VARNAMEMAP& VarNameMap() const { return m_VarNameMap; }
+		const VARNAMEMAP& VarNameMap() const noexcept { return m_VarNameMap; }
 
 		static const _TCHAR* m_cszBranchNodeNotFound;
 		static const _TCHAR* m_cszDuplicateDevice;
@@ -39,6 +40,7 @@ namespace DFW2
 		static const _TCHAR* m_cszKLUOutOfMemory;
 		static const _TCHAR* m_cszKLUInvalidInput;
 		static const _TCHAR* m_cszKLUIntOverflow;
+		static const _TCHAR* m_cszKLUUnknownError;
 		static const _TCHAR* m_cszInitLoopedInfinitely;
 		static const _TCHAR* m_cszDeviceContainerFailedToInit;
 		static const _TCHAR* m_cszStepAndOrderChanged;
@@ -69,6 +71,7 @@ namespace DFW2
 		static const _TCHAR* m_cszWrongPrimitiveinDLL;
 		static const _TCHAR* m_cszTableNotFoundForCustomDevice;
 		static const _TCHAR* m_cszExtVarNotFoundInDevice;
+		static const _TCHAR* m_cszExtVarFromOffDevice;
 		static const _TCHAR* m_cszExtVarNoDeviceFor;
 		static const _TCHAR* m_cszConstVarNotFoundInDevice;
 		static const _TCHAR* m_cszConstVarNoDeviceFor;
@@ -112,7 +115,37 @@ namespace DFW2
 		static const _TCHAR* m_cszLFBranchAngleExceeds90;
 		static const _TCHAR* m_cszWrongGeneratorsNumberFixed;
 		static const _TCHAR* m_cszFailureAtMinimalStep;
-
+		static const _TCHAR* m_cszMustBeConstPowerLRC;
+		static const _TCHAR* m_cszMustBeDefaultDynamicLRC;
+		static const _TCHAR* m_cszResultFileWrongCompressedBlockType;
+		static const _TCHAR* m_cszResultFilePointsCountMismatch;
+		static const _TCHAR* m_cszDeivceDoesNotHaveAccessToModel;
+		static const _TCHAR* m_cszAdamsDamping;
+		static const _TCHAR* m_cszOn;
+		static const _TCHAR* m_cszOff;
+		static const _TCHAR* m_cszIslandOfSuperNode;
+		static const _TCHAR* m_cszSwitchedOffNode;
+		static const _TCHAR* m_cszSwitchedOffBranch;
+		static const _TCHAR* m_cszSwitchedOffBranchHead;
+		static const _TCHAR* m_cszSwitchedOffBranchTail;
+		static const _TCHAR* m_cszSwitchedOffBranchComplete;
+		static const _TCHAR* m_cszIslandSlackBusesCount;
+		static const _TCHAR* m_cszIslandCount;
+		static const _TCHAR* m_cszIslandNoSlackBusesShutDown;
+		static const _TCHAR* m_cszNodeShutDownAsNotLinkedToSlack;
+		static const _TCHAR* m_cszNoNodesForLF;
+		static const _TCHAR* m_cszUnacceptableLF;
+		static const _TCHAR* m_cszTurningOffDeviceByMasterDevice;
+		static const _TCHAR* m_cszTurningOffDeviceDueToNoMasterDevice;
+		static const _TCHAR* m_cszMatrixSize;
+		static const _TCHAR* m_cszTurnOnDeviceImpossibleDueToMaster;
+		static const _TCHAR* m_cszAutomaticOrScenarioFailedToInitialize;
+		static const _TCHAR* m_cszLFWrongQrangeForNode;
+		static const _TCHAR* m_cszLFWrongQrangeForSuperNode;
+		static const _TCHAR* m_cszLFError;
+		static const _TCHAR* m_cszCannotChangePermanentDeviceState;
+		static const _TCHAR* m_cszWrongUnom;
+		static const _TCHAR* m_cszWrongSourceData;
 	};
 }
 

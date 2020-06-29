@@ -41,7 +41,7 @@ namespace DFW2
 		}
 	};
 
-	class SLCPOLY : public list<CSLCPolynom>
+	class SLCPOLY : public std::list<CSLCPolynom>
 	{
 	public:
 		bool InsertLRCToShuntVmin(double Vmin);
@@ -57,7 +57,7 @@ namespace DFW2
 		SLCPOLY Q;
 	};
 
-	typedef map<ptrdiff_t, CStorageSLC*> SLCSTYPE;
+	typedef std::map<ptrdiff_t, CStorageSLC*> SLCSTYPE;
 	typedef SLCSTYPE::iterator SLCSITERATOR;
 
 	class CSLCLoader : public SLCSTYPE
@@ -73,8 +73,8 @@ namespace DFW2
 	class CustomDeviceConnectInfo
 	{
 	public:
-		wstring m_TableName;
-		wstring m_ModelTypeField;
+		std::wstring m_TableName;
+		std::wstring m_ModelTypeField;
 		long m_nModelType;
 		CustomDeviceConnectInfo(const _TCHAR *cszTableName, const _TCHAR *cszModelTypeField, long nModelType) : m_TableName(cszTableName),
 																												m_ModelTypeField(cszModelTypeField),
@@ -97,10 +97,46 @@ namespace DFW2
 		virtual ~CRastrImport();
 		void GetData(CDynaModel& Network);
 	protected:
+		IRastrPtr m_spRastr;
 		bool CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer);
+		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceCPPContainer& CustomDeviceContainer);
+		void ReadRastrRow(SerializerPtr& Serializer, long Row);
+
+		template<typename T>
+		CDevice* ReadTable(const _TCHAR *cszTableName, CDeviceContainer& Container)
+		{
+			ITablePtr spTable = m_spRastr->Tables->Item(cszTableName);
+			IColsPtr spCols = spTable->Cols;
+			int nSize = spTable->Size;
+			T *pDevs(nullptr), *pDev(nullptr);
+			if (nSize)
+			{
+				pDevs = pDev = new T[nSize];
+				Container.AddDevices(pDevs, nSize);
+				auto pSerializer = pDevs->GetSerializer();
+				for (auto&& serializervalue : *pSerializer)
+					if (!serializervalue.second->bState)
+						serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(serializervalue.first.c_str()));
+
+				for (int Row = 0; Row < nSize; Row++, pDev++)
+				{
+					pDev->UpdateSerializer(pSerializer);
+					ReadRastrRow(pSerializer, Row);
+				}
+			}
+			return pDevs;
+		}
+
 		CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType);
 		static const CDynaNodeBase::eLFNodeType RastrTypesMap[5];
+	};
+
+	class CSerializedValueAuxDataRastr : public CSerializedValueAuxDataBase
+	{
+	public:
+		IColPtr m_spCol;
+		CSerializedValueAuxDataRastr(IColPtr spCol) : m_spCol(spCol) { }
 	};
 }
 

@@ -3,8 +3,6 @@
 
 namespace DFW2
 {
-	using namespace std;
-
 	class CUnicodeSCSU
 	{
 	protected:
@@ -31,7 +29,7 @@ namespace DFW2
 		int ReadSCSUSymbol();
 	public:
 		CUnicodeSCSU(FILE *pFile);
-		void WriteSCSU(const _TCHAR *pString);
-		void ReadSCSU(wstring& String, size_t nLen);
+		void WriteSCSU(std::wstring_view String);
+		void ReadSCSU(std::wstring& String, size_t nLen);
 	};
 }

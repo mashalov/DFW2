@@ -4,6 +4,7 @@
 #include "stdafx.h"
 #include "DynaModel.h"
 #include "RastrImport.h"
+#include "GraphCycle.h"
 
 
 using namespace DFW2;
@@ -32,16 +33,29 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(31658);
 	//_CrtSetBreakAlloc(31657);
-	//_CrtSetBreakAlloc(31630);
+	//_CrtSetBreakAlloc(5821);
 
+	/*
+	GraphCycle<int, int> gc;
+	GraphCycle<int, int>::CyclesType Cycles;
+	gc.Test();
+	*/
+		
 	SetConsoleCtrlHandler(HandlerRoutine,TRUE);
 
 	CoInitialize(NULL);
 	{
 		CDynaModel Network;
 		CRastrImport ri;
-		ri.GetData(Network);
-		Network.Run();
+		try
+		{
+			ri.GetData(Network);
+			Network.Run();
+		}
+		catch (dfw2error& err)
+		{
+			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Ошибка : {}"), err.uwhat()));
+		}
 	}
 	_CrtDumpMemoryLeaks();
 
