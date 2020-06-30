@@ -753,6 +753,7 @@ bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CSynchroZone::Init(CDynaModel* pDynaModel)
 {
+	S = 0.0;
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 

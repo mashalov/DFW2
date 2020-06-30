@@ -84,6 +84,19 @@ bool CDynaModel::Run()
 	_set_FMA3_enable(1);
 #endif
 
+	/*
+	unsigned int u;
+	unsigned int control_word;
+	_controlfp_s(&control_word, 0, 0);
+	u = control_word & ~(_EM_INVALID
+		| _EM_DENORMAL
+		| _EM_ZERODIVIDE
+		| _EM_OVERFLOW
+		| _EM_UNDERFLOW
+		| _EM_INEXACT);
+	_controlfp_s(&control_word, u, _MCW_EM);
+	*/
+
 	try
 	{
 		m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
@@ -452,6 +465,8 @@ bool CDynaModel::NewtonUpdate()
 			double dError = pVectorBegin->GetWeightedError(db, dOldValue);
 			_CheckNumber(dError);
 			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
+			if (_isnan(dError))
+				dError *= dError;
 			pCt->AddError(dError * dError);
 		}
 		pVectorBegin++;

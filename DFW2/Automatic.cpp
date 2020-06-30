@@ -114,7 +114,13 @@ bool CAutomatic::CompileModels()
 		}
 		catch (_com_error& ex)
 		{
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(_T("{}"), ex.Description()));
+			_bstr_t desc(ex.Description());
+			std::wstring out;
+			if (desc.length())
+				out = static_cast<const _TCHAR*>(desc);
+
+
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(_T("{}"), out));
 			variant_t vtLog = m_spAutomaticCompiler->Log;
 			if ( vtLog.vt == (VT_BSTR | VT_ARRAY) )
 			{
