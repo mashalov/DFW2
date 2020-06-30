@@ -1,7 +1,5 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
-#import "..\ResultFile\ResultFile.tlb" no_namespace, named_guids, no_implementation
-
 using namespace DFW2;
 
 //#define _WRITE_CSV

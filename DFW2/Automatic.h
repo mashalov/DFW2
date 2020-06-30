@@ -4,10 +4,18 @@
 
 
 #ifdef _DEBUG
-#import "..\Compiler\debug\Compiler.tlb" no_namespace, named_guids
+#ifdef _WIN64
+#include "x64\debug\Compiler.tlh"
 #else
-#import "..\Compiler\release\Compiler.tlb" no_namespace, named_guids
-#endif 
+#include "debug\Compiler.tlh"
+#endif
+#else
+#ifdef _WIN64
+#include "x64\release\Compiler.tlh"
+#else
+#include "release\Compiler.tlh"
+#endif
+#endif
 
 namespace DFW2
 {

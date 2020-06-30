@@ -1,9 +1,14 @@
 #pragma once
-#import "..\ResultFile\ResultFile.tlb" no_namespace, named_guids
-/*
 #ifdef _DEBUG
-	#import "..\ResultFile\ResultFile.tlb" no_namespace, named_guids
+#ifdef _WIN64
+#include "x64\debug\resultfile.tlh"
 #else
-	#import "..\ResultFile\Release\ResultFile.tlb" no_namespace, named_guids
+#include "debug\resultfile.tlh"
 #endif
-*/
+#else
+#ifdef _WIN64
+#include "x64\release\resultfile.tlh"
+#else
+#include "release\resultfile.tlh"
+#endif
+#endif

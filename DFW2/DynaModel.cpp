@@ -1533,9 +1533,9 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 	std::wstring Object(nSourceLength, cszSpace),
 				 Keys(nSourceLength, cszSpace),
 				 Prop(nSourceLength, cszSpace);
-	int nFieldCount = _stscanf_s(std::wstring(Name).c_str(), _T("%[^[][%[^]]].%s"), &Object[0], nSourceLength,
-																					&Keys[0],   nSourceLength, 
-																					&Prop[0],   nSourceLength);
+	int nFieldCount = _stscanf_s(std::wstring(Name).c_str(), _T("%[^[][%[^]]].%s"), &Object[0], static_cast<unsigned int>(nSourceLength),
+																					&Keys[0],   static_cast<unsigned int>(nSourceLength),
+																					&Prop[0],   static_cast<unsigned int>(nSourceLength));
 	// обрезаем длину строк до нуль-терминатора
 	Object = Object.c_str();
 	Keys   = Keys.c_str();

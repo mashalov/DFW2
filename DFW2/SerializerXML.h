@@ -1,6 +1,6 @@
 #pragma once
 #include "Serializer.h"
-#import <msxml6.dll> named_guids
+#include "Release/msxml6.tlh"
 
 namespace DFW2
 {

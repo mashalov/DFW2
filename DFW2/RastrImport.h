@@ -1,7 +1,22 @@
 #pragma once
 #include "DynaModel.h"
 #include "Automatic.h"
-#import "C:\Program Files (x86)\RastrWin3\astra.dll" no_namespace, named_guids, no_dual_interfaces 
+
+#ifdef _DEBUG
+#ifdef _WIN64
+#include "x64\debug\astra.tlh"
+#else
+#include "debug\astra.tlh"
+#endif
+#else
+#ifdef _WIN64
+#include "x64\release\astra.tlh"
+#else
+#include "release\astra.tlh"
+#endif
+#endif
+
+//#import "C:\Program Files (x86)\RastrWin3\astra.dll" no_namespace, named_guids, no_dual_interfaces 
 
 namespace DFW2
 {

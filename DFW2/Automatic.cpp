@@ -255,7 +255,7 @@ void CAutomatic::Init()
 			if (!strAction.empty())
 			{
 				ptrdiff_t nId(0);
-				if (_stscanf_s(strAction.c_str(), _T("A%d"), &nId) == 1)
+				if (_stscanf_s(strAction.c_str(), _T("A%td"), &nId) == 1)
 				{
 					AUTOITEMGROUPITR mit = m_AutoActionGroups.find(nId);
 					if (mit != m_AutoActionGroups.end())
