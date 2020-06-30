@@ -7,12 +7,7 @@
 #include <stdlib.h>
 #include <crtdbg.h>
 #include "targetver.h"
-#include <stdio.h>
 #include <tchar.h>
 #include "atltrace.h"
-
-
-
-
 // TODO: reference additional headers your program requires here
 

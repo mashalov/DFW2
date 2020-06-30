@@ -260,7 +260,7 @@ bool CDynaModel::Run()
 																															klu.RefactorizationFailuresCount(),
 																															klu.AnalyzingsCount()));
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Newtons count {} {} per step, failures at step {} failures at discontinuity {}"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Newtons count {} {:.2} per step, failures at step {} failures at discontinuity {}"),
 																	 sc.nNewtonIterationsCount, 
 																	 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
 																	 sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,

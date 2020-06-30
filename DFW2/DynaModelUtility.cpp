@@ -2,7 +2,7 @@
 #include "DynaModel.h"
 #include "klu.h"
 #include "cs.h"
-#include "stdio.h"
+#include <stdio.h>
 #include <iostream>
 #include <io.h>
 #include <fcntl.h>
@@ -265,16 +265,12 @@ bool CDynaModel::UpdateExternalVariables()
 CDeviceContainer* CDynaModel::GetContainerByAlias(std::wstring_view Alias)
 {
 	CDeviceContainer *pContainer(nullptr);
-	for (auto&& it : m_DeviceContainers)
-	{
-		if (it->HasAlias(Alias))
-		{
-			pContainer = it;
-			break;
-		}
-	}
-
-	return pContainer;
+	auto it = std::find_if(m_DeviceContainers.begin(), 
+						   m_DeviceContainers.end(), 
+						  [&Alias](const auto& cont) { return cont->HasAlias(Alias); });
+	if (it != m_DeviceContainers.end())
+		return *it;
+	return nullptr;
 }
 
 bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
@@ -282,21 +278,14 @@ bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
 	return pDevCon->Count() && !pDevCon->m_ContainerProps.bVolatile && pDevCon->GetType() != DEVTYPE_BRANCH;
 }
 
-
-int ErrorCompare(void *pContext, const void *pValue1, const void *pValue2)
-{
-	RightVectorTotal **pV1 = (RightVectorTotal**)pValue1;
-	RightVectorTotal **pV2 = (RightVectorTotal**)pValue2;
-	return static_cast<int>((*pV2)->nErrorHits - (*pV1)->nErrorHits);
-}
-
 void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 {
 	UpdateTotalRightVector();
-	std::unique_ptr<RightVectorTotal*[]> pSortOrder = std::make_unique<RightVectorTotal*[]>(m_nTotalVariablesCount);
-	RightVectorTotal *pVectorBegin = pRightVectorTotal.get();
-	RightVectorTotal *pVectorEnd = pVectorBegin + m_nTotalVariablesCount;
-	RightVectorTotal **ppSortOrder = pSortOrder.get();
+
+	std::unique_ptr<const RightVectorTotal*[]> pSortOrder = std::make_unique<const RightVectorTotal*[]>(m_nTotalVariablesCount);
+	const RightVectorTotal *pVectorBegin  = pRightVectorTotal.get();
+	const RightVectorTotal *pVectorEnd = pVectorBegin + m_nTotalVariablesCount;
+	const RightVectorTotal **ppSortOrder = pSortOrder.get();
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -305,8 +294,10 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 		ppSortOrder++;
 	}
 
-	qsort_s(pSortOrder.get(), m_nTotalVariablesCount, sizeof(RightVectorTotal*), ErrorCompare, nullptr);
-
+	std::sort(pSortOrder.get(),
+			  pSortOrder.get() + m_nTotalVariablesCount,
+			  [](const RightVectorTotal* lhs, const RightVectorTotal* rhs) { return rhs->nErrorHits < lhs->nErrorHits; });
+	
 	if (nCount > m_nTotalVariablesCount)
 		nCount = m_nTotalVariablesCount;
 

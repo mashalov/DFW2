@@ -1,11 +1,10 @@
 ﻿#pragma once
 
-#include "winuser.h"
-#include "stdio.h"
-#include "tchar.h"
+#include <winuser.h>
+#include <tchar.h>
+#include <ShlObj.h>
+#include <memory>
 #include "Messages.h"
-#include "ShlObj.h"
-#include "memory"
 #include "stringutils.h"
 #include "..\fmt\include\fmt\core.h"
 #include "..\fmt\include\fmt\format.h"
