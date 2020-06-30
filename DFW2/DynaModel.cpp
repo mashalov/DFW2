@@ -1527,11 +1527,12 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::wstring_view Object, std::wstr
 
 bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name)
 {
-	bool bRes = false;
-	unsigned int nSourceLength = static_cast<unsigned int>(Name.size());
-	std::wstring Object(_T(' '), nSourceLength),
-				 Keys(_T(' '), nSourceLength),
-				 Prop(_T(' '), nSourceLength);
+	bool bRes(false);
+	const size_t nSourceLength(Name.size());
+	const _TCHAR cszSpace(_T(' '));
+	std::wstring Object(nSourceLength, cszSpace),
+				 Keys(nSourceLength, cszSpace),
+				 Prop(nSourceLength, cszSpace);
 	int nFieldCount = _stscanf_s(std::wstring(Name).c_str(), _T("%[^[][%[^]]].%s"), &Object[0], nSourceLength,
 																					&Keys[0],   nSourceLength, 
 																					&Prop[0],   nSourceLength);
