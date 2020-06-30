@@ -817,7 +817,7 @@ namespace DFW2
 		void ResetStack();
 
 		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name);
-		CDevice* GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, std::wstring_view SymLink);
+		CDevice* GetDeviceBySymbolicLink(std::wstring_view Object, std::wstring_view Keys, std::wstring_view SymLink);
 		CDeviceContainer *GetContainerByAlias(std::wstring_view Alias);
 		CAutomatic& Automatic();
 

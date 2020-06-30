@@ -372,7 +372,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 3:
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasBranch;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass.c_str(), m_strObjectKey.c_str(), m_strObjectProp.c_str());
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BRANCH_OFF);
@@ -383,7 +383,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 4:
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass.c_str(), m_strObjectKey.c_str(), m_strObjectProp.c_str());
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeNodeShuntG>(static_cast<CDynaNode*>(pDev), *m_pValue);
@@ -394,7 +394,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 5:
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass.c_str(), m_strObjectKey.c_str(), m_strObjectProp.c_str());
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeNodeShuntB>(static_cast<CDynaNode*>(pDev), *m_pValue);
@@ -405,7 +405,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 6:
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass.c_str(), m_strObjectKey.c_str(), m_strObjectProp.c_str());
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeNodeShuntR>(static_cast<CDynaNode*>(pDev), *m_pValue);
@@ -416,7 +416,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 7:
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass.c_str(), m_strObjectKey.c_str(), m_strObjectProp.c_str());
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeNodeShuntX>(static_cast<CDynaNode*>(pDev), *m_pValue);

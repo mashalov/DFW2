@@ -1479,18 +1479,18 @@ void CDynaModel::RepeatZeroCrossing()
 }
 
 
-CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCHAR* cszKeys, std::wstring_view SymLink)
+CDevice* CDynaModel::GetDeviceBySymbolicLink(std::wstring_view Object, std::wstring_view Keys, std::wstring_view SymLink)
 {
 	CDevice *pFoundDevice(nullptr);
 
-	CDeviceContainer *pContainer = GetContainerByAlias(cszObject);
+	CDeviceContainer *pContainer = GetContainerByAlias(Object);
 	if (pContainer)
 	{
 		if (pContainer->GetType() == DEVTYPE_BRANCH)
 		{
 			ptrdiff_t nIp(0), nIq(0), nNp(0);
 			bool bReverse = false;
-			ptrdiff_t nKeysCount = _stscanf_s(cszKeys, _T("%td,%td,%td"), &nIp, &nIq, &nNp);
+			ptrdiff_t nKeysCount = _stscanf_s(std::wstring(Keys).c_str(), _T("%td,%td,%td"), &nIp, &nIq, &nNp);
 			if (nKeysCount > 1)
 			{
 				for (DEVICEVECTORITR it = pContainer->begin(); it != pContainer->end(); it++)
@@ -1507,20 +1507,20 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(const _TCHAR* cszObject, const _TCH
 				}
 			}
 			else
-				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, SymLink));
+				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
 		}
 		else
 		{
 			ptrdiff_t nId(0);
 
-			if (_stscanf_s(cszKeys, _T("%td"), &nId) == 1)
+			if (_stscanf_s(std::wstring(Keys).c_str(), _T("%td"), &nId) == 1)
 				pFoundDevice = pContainer->GetDevice(nId);
 			else
-				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, cszKeys, SymLink));
+				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
 		}
 	}
 	else
-		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundByAlias, cszObject, SymLink));
+		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundByAlias, Object, SymLink));
 
 	return pFoundDevice;
 }
@@ -1529,20 +1529,24 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 {
 	bool bRes = false;
 	unsigned int nSourceLength = static_cast<unsigned int>(Name.size());
-
-	_TCHAR* szObject = new _TCHAR[nSourceLength];
-	_TCHAR* szKeys = new _TCHAR[nSourceLength];
-	_TCHAR* szProp = new _TCHAR[nSourceLength];
-
-	int nFieldCount = _stscanf_s(Name.data(), _T("%[^[][%[^]]].%s"), szObject, nSourceLength, szKeys, nSourceLength, szProp, nSourceLength);
+	std::wstring Object(_T(' '), nSourceLength),
+				 Keys(_T(' '), nSourceLength),
+				 Prop(_T(' '), nSourceLength);
+	int nFieldCount = _stscanf_s(std::wstring(Name).c_str(), _T("%[^[][%[^]]].%s"), &Object[0], nSourceLength,
+																					&Keys[0],   nSourceLength, 
+																					&Prop[0],   nSourceLength);
+	// обрезаем длину строк до нуль-терминатора
+	Object = Object.c_str();
+	Keys   = Keys.c_str();
+	Prop   = Prop.c_str();
 
 	if (nFieldCount == 3)
 	{
-		CDevice *pFoundDevice = GetDeviceBySymbolicLink(szObject, szKeys, Name);
+		CDevice *pFoundDevice = GetDeviceBySymbolicLink(Object, Keys, Name);
 		if (pFoundDevice)
 		{
 			// Сначала ищем переменную состояния, со значением и с индексом
-			ExtVar = pFoundDevice->GetExternalVariable(szProp);
+			ExtVar = pFoundDevice->GetExternalVariable(Prop);
 			if (ExtVar.pValue)
 			{
 				ExtVar.Index -= pFromDevice->A(0);
@@ -1552,7 +1556,7 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 			{
 				// если в девайсе такой нет, ищем константу, со значением, но без
 				// индекса
-				ExtVar.pValue = pFoundDevice->GetConstVariablePtr(szProp);
+				ExtVar.pValue = pFoundDevice->GetConstVariablePtr(Prop);
 				if (ExtVar.pValue)
 				{
 					// если нашли константу, объявляем ей индекс DFW2_NON_STATE_INDEX,
@@ -1564,10 +1568,9 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 				else
 				if (pFoundDevice->GetType() == DEVTYPE_BRANCH)
 				{
-					ptrdiff_t nIp;
-					_stscanf_s(szKeys, _T("%td"), &nIp);
+					//ptrdiff_t nIp;
+					//_stscanf_s(std::wstring(Keys).c_str(), _T("%td"), &nIp);
 					CDynaBranch *pBranch = static_cast<CDynaBranch*>(pFoundDevice);
-
 					if (!pBranch->m_pMeasure)
 					{
 						CDynaBranchMeasure *pBranchMeasure = new CDynaBranchMeasure(pBranch);
@@ -1578,7 +1581,7 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 						pBranch->m_pMeasure = pBranchMeasure;
 					}
 
-					ExtVar = pBranch->m_pMeasure->GetExternalVariable(szProp);
+					ExtVar = pBranch->m_pMeasure->GetExternalVariable(Prop);
 
 					if (ExtVar.pValue)
 					{
@@ -1586,10 +1589,10 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 						bRes = true;
 					}
 					else
-						Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, Name));
+						Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, Prop, Name));
 				}
 				else
-					Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, szProp, Name));
+					Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, Prop, Name));
 			}
 		}
 		else
@@ -1597,10 +1600,6 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 	}
 	else
 		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongSymbolicLink, Name));
-
-	delete szObject;
-	delete szKeys;
-	delete szProp;
 
 	return bRes;
 }
