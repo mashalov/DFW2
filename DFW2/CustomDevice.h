@@ -13,7 +13,6 @@ namespace DFW2
 		double *m_pConstVars = nullptr;
 		double *m_pSetPoints = nullptr;
 		DLLExternalVariable*m_pExternals = nullptr;
-
 		BuildEquationsArgs m_DLLArgs;
 
 		bool ConstructDLLParameters(CDynaModel *pDynaModel);

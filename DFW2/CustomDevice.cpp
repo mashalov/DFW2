@@ -470,7 +470,7 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 	for (auto&& prim : Prims)
 	{
 
-		PrimitivePinVec& Inputs = prim.Outputs;
+		PrimitivePinVec& Inputs = prim.Inputs;
 		if (Inputs.empty())
 			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive inputs"));
 
@@ -560,6 +560,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::Init(CDynaModel* pDynaModel)
 	PrepareCustomDeviceData(pDynaModel);
 	eDEVICEFUNCTIONSTATUS eRes = m_pDevice->Init(CustomDeviceData);
 
+
 	
 	/*
 	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -622,13 +623,22 @@ void CCustomDeviceCPP::DLLSetDerivative(CDFWModelData& DFWModelData, const Varia
 
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::DLLInitPrimitive(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex)
 {
-	//GetDevice(DFWModelData)->m_pDevice
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	CCustomDeviceCPP* pDevice(GetDevice(DFWModelData));
+	CDynaModel* pDynaModel(GetModel(DFWModelData));
+	CDevice::CheckIndex(pDevice->m_Primitives, nPrimitiveIndex, _T("CCustomDeviceCPP::DLLInitPrimitive - index out of range"));
+	CDynaPrimitive* pPrimitive = pDevice->m_Primitives[nPrimitiveIndex];
+	if(pPrimitive->UnserializeParameters(pDynaModel, pDevice->m_pDevice->GetBlockParameters(nPrimitiveIndex)) && pPrimitive->Init(pDynaModel))
+		return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	else
+		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 }
 
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::DLLProcPrimDisco(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex)
 {
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	CCustomDeviceCPP* pDevice(GetDevice(DFWModelData));
+	CDynaModel* pDynaModel(GetModel(DFWModelData));
+	CDevice::CheckIndex(pDevice->m_Primitives, nPrimitiveIndex, _T("CCustomDeviceCPP::DLLProcPrimDisco - index out of range"));
+	return pDevice->m_Primitives[nPrimitiveIndex]->ProcessDiscontinuity(pDynaModel);
 }
 
 void CCustomDeviceCPP::DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)

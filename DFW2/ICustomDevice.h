@@ -37,13 +37,13 @@ namespace DFW2
 		virtual void BuildDerivatives(CCustomDeviceData& CustomDeviceData) = 0;
 		virtual eDEVICEFUNCTIONSTATUS Init(CCustomDeviceData& CustomDeviceData) = 0;
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CCustomDeviceData& CustomDeviceData) = 0;
-
 		virtual void GetDeviceProperties(CDeviceContainerPropertiesBase& DeviceProps) = 0;
 		virtual DOUBLEVECTOR& GetConstantData() = 0;
 		virtual VARIABLEVECTOR& GetVariables() = 0;
 		virtual EXTVARIABLEVECTOR& GetExternalVariables() = 0;
 		virtual PRIMITIVEVECTOR& GetPrimitives() = 0;
 		virtual void SetConstsDefaultValues() = 0;
+		virtual const DOUBLEVECTOR& GetBlockParameters(ptrdiff_t nBlockIndex) = 0;
 	};
 
 	typedef ICustomDevice* (__cdecl* CustomDeviceFactory)();

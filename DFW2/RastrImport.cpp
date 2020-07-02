@@ -372,11 +372,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 	if (!Network.AutomaticDevice.ConnectDLL(_T("C:\\tmp\\CustomModels\\dllx64\\autodll.dll")))
 		return;
 #else
-	if (!Network.AutomaticDevice.ConnectDLL(_T("C:\\tmp\\CustomModels\\dll\\autodll.dll")))
-			return;
+	//Network.AutomaticDevice.ConnectDLL(_T("C:\\tmp\\CustomModels\\dll\\autodll.dll"));
+	//CCustomDevice* pCustomDevices = new CCustomDevice[1];
+	Network.AutomaticDevice.ConnectDLL(_T("customdevicecpp.dll"));
+	CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[1];
 #endif
 	
-	CCustomDevice *pCustomDevices = new CCustomDevice[1];
 	Network.AutomaticDevice.AddDevices(pCustomDevices, 1);
 	Network.AutomaticDevice.BuildStructure();
 	

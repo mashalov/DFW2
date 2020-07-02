@@ -10,6 +10,7 @@ namespace DFW2
 		VARIABLEVECTOR		m_Variables;
 		EXTVARIABLEVECTOR	m_ExtVariables;
 		PRIMITIVEVECTOR		m_Primitives;
+		DOUBLEVECTOR		m_BlockParameters;
 	public:
 		CCustomDevice();
 		void BuildRightHand(CCustomDeviceData& CustomDeviceData) override;
@@ -23,6 +24,7 @@ namespace DFW2
 		VARIABLEVECTOR& GetVariables() override;
 		EXTVARIABLEVECTOR& GetExternalVariables() override;
 		PRIMITIVEVECTOR& GetPrimitives() override;
+		const DOUBLEVECTOR& GetBlockParameters(ptrdiff_t nBlockIndex) override;
 		void Destroy() override;
 	};
 }

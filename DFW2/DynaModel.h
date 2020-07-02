@@ -600,7 +600,7 @@ namespace DFW2
 		CDeviceContainer ExcConMustang;
 		CDeviceContainer BranchMeasures;
 		CCustomDeviceContainer CustomDevice;
-		CCustomDeviceContainer AutomaticDevice;
+		CCustomDeviceCPPContainer AutomaticDevice;
 		CAutomatic m_Automatic;
 		CCustomDeviceCPPContainer CustomDeviceCPP;
 
