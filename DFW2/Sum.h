@@ -3,11 +3,14 @@
 
 namespace DFW2
 {
+	// примитив сумма двух переменных
 	class CSum : public CDynaPrimitive
 	{
 		double m_K1, m_K2;
 		InputVariable m_Input1;
 	public:
+		// данный примитив пример примитива с несколькими входами
+		// первый вход инициализируется в базовом классе, второй - в конструкторе 
 		CSum(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
 			CDynaPrimitive(Device, OutputVariable, Input), m_Input1(*(Input.begin() + 1)), m_K1(1.0), m_K2(1.0) { }
 		virtual ~CSum() {}

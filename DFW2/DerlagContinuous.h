@@ -3,12 +3,14 @@
 
 namespace DFW2
 {
+	// реально-дифференцирующее звено
 	class CDerlagContinuous : public CDynaPrimitive
 	{
 	protected:
 		double m_K, m_T;
 		VariableIndex& m_Y2;
 	public:
+		// этот примитив пример примитива с двумя выходами. Второй выход соответсвует дополнительному второму алгебраическому уравнению
 		CDerlagContinuous(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
 			CDynaPrimitive(Device, OutputVariable, Input, ExtraOutputVariables), m_Y2(ExtraOutputVariables.begin()->get()) {}
 		virtual ~CDerlagContinuous() {}

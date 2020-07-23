@@ -11,54 +11,84 @@ namespace DFW2
 	using PRIMITIVEPARAMETERSDEFAULT = std::vector<PRIMITIVEPARAMETERDEFAULT>;
 	using DOUBLEREFVEC = std::vector<std::reference_wrapper<double>>;
 
+	// Входая переменная примитива 
+	// Унифицирует типы переменных - внутренней и внешней
+	// Если входная переменная связана с внешней - используем ссылку на указатель внешней переменной, поэтому
+	// InputVariable всегда тождественна внешней переменной
+	// Если входная переменная связана с внутренней, у нас есть только указатель на значение и ссылку мы использовать не можем
+	// Чтобы использовать единый интерфейс доступа значение внутренней переменной берется на указатель pInternal, а ссылка инициализуется
+	// этим указателем.
+
 	struct InputVariable
 	{
 	private:
-		double*& pValue;
-		double* pInternal;
+		double*& pValue;		// ссылка на указатель на значение
+		double* pInternal;		// промежуточный указатель для внутренней переменной
 	public:
-		ptrdiff_t& Index;
+		ptrdiff_t& Index;		// ссылка на индекс переменной
+		// конструктор для внутренней переменной берет указатель на значение внутренней переменной
+		// а ссылку инициализирует на внутренний указатель
 		InputVariable(VariableIndex& Variable) : pInternal(&Variable.Value), pValue(pInternal), Index(Variable.Index) {}
+		// конструктор для внешней переменной просто берет указатель из внешней переменной и не использует
 		InputVariable(VariableIndexExternal& Variable) : pInternal(nullptr), pValue(Variable.pValue), Index(Variable.Index) {}
+
+		// конструктор копирования 
+		// если аргумент был связан с внутренней переменной
+		// ссылка на указатель инициализируется ссылкой на указатель _своей_ внутренней переменной
+		// иначе берется ссылка из копии
+		// внутренний указатель просто копируется
 		InputVariable(const InputVariable& Input) : 
-			pValue(Input.pInternal ? pInternal : Input.pValue),
+			pValue(Input.pInternal ? pInternal : Input.pValue),		
 			pInternal(Input.pInternal),
 			Index(Input.Index)
 			{}
 
+		// оператор присваивания для InputVariable блокирован
 		InputVariable& operator =(const InputVariable& other) = delete;
 
+		// значение всегда возвращается с указателя pValue
+		// для внешней переменной этот совпадает с указателем на значение переменной
+		// для внутренней указатель указывает на промежуточный внутренний указатель, 
+		// который иницализирован указателем на значение внутренней переменной
 		constexpr operator double& () { return *pValue; }
 		constexpr operator const double& () const { return *pValue; }
+		// значение double можно присвоить
 		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
 	};
 
 	using ExtraOutputList = std::initializer_list<std::reference_wrapper<VariableIndex>>;
 	using InputList = std::initializer_list<InputVariable>;
 
+	// базовый класс примитива
 	class CDynaPrimitive
 	{
 	protected:
-		InputVariable  m_Input;
-		VariableIndex& m_Output;
-		CDevice& m_Device;
+		InputVariable  m_Input;			// одна входная переменная
+		VariableIndex& m_Output;		// одна выходная переменная, которая должна быть снаружи
+		CDevice& m_Device;				// ссылка на устройство, к которому принадлежит примитив
 		bool ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH);
 		bool UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters);
 		bool UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters);
 	public:
+		// возвращает значение выхода
 		constexpr operator double& () { return m_Output.Value; }
 		constexpr operator const double& () const { return m_Output.Value; }
+		// присваивает значение связанной выходной переменной
 		constexpr double& operator= (double value) { m_Output.Value = value;  return m_Output.Value; }
+		// возвращает ссылки на выходную переменную
 		constexpr operator VariableIndex& () { return m_Output; }
 		constexpr operator const VariableIndex& () const { return m_Output; }
 
+		// примитив может иметь несколько входов и выходов (количество выходов соответствует порядку примитива)
+		// поэтому конструктор принимает список входных переменных, одну обязательную выходную переменную
+		// и список дополнительных выходных переменных
 		CDynaPrimitive(CDevice& Device, 
 					   VariableIndex& OutputVariable,
 					   InputList Input,
 					   ExtraOutputList ExtraOutputVariables = {}) : m_Device(Device),
 																    m_Output(OutputVariable),
-																	m_Input(*Input.begin())
-		{
+																	m_Input(*Input.begin())	// обязательный вход берем как 
+		{																				    // первый элемент списка входов		
 			m_Output = 0.0;
 			m_Device.RegisterPrimitive(this);
 		}
@@ -73,13 +103,12 @@ namespace DFW2
 		virtual const _TCHAR* GetVerbalName() { return _T(""); }
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) { return eDEVICEFUNCTIONSTATUS::DFS_OK; }
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-		//virtual PrimitiveVariableBase& Input(ptrdiff_t nIndex) { return *m_Input; }
 		virtual bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) { return true; }
 		static double GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c);
 		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst);
-		//inline const double* Output() const { return m_Output; }
 	};
 
+	// примитив с состоянием, изменение которого может вызывать разрыв
 	class CDynaPrimitiveState : public CDynaPrimitive 
 	{
 	public:
