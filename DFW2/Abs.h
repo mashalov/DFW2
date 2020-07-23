@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
@@ -6,8 +6,8 @@ namespace DFW2
 	class CAbs : public CDynaPrimitiveState
 	{
 	protected:
-		bool m_bPositive;		// текущее состояние
-		bool m_bPositiveSaved;	// cохраненное состояние
+		bool m_bPositive;		// С‚РµРєСѓС‰РµРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
+		bool m_bPositiveSaved;	// cРѕС…СЂР°РЅРµРЅРЅРѕРµ СЃРѕСЃС‚РѕСЏРЅРёРµ
 	public:
 		CAbs(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
 			CDynaPrimitiveState(Device, OutputVariable, Input, ExtraOutputVariables) {}
@@ -22,7 +22,7 @@ namespace DFW2
 		bool BuildDerivatives(CDynaModel *pDynaModel) override { return true; }
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Модуль"); }
+		const _TCHAR* GetVerbalName() override { return _T("РњРѕРґСѓР»СЊ"); }
 		static size_t PrimitiveSize() { return sizeof(CAbs); }
 		static long EquationsCount()  { return 1; }
 		void StoreState() override { m_bPositiveSaved = m_bPositive; }

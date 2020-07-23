@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
@@ -18,7 +18,7 @@ namespace DFW2
 		bool BuildRightHand(CDynaModel *pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override { return true; }
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		const _TCHAR* GetVerbalName() override { return _T("Ограничитель"); }
+		const _TCHAR* GetVerbalName() override { return _T("РћРіСЂР°РЅРёС‡РёС‚РµР»СЊ"); }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() { return sizeof(CLimiterConst); }
 		static long EquationsCount()  { return 1; }

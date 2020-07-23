@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DynaPrimitive.h"
 #include "Relay.h"
 
@@ -21,7 +21,7 @@ namespace DFW2
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Расширитель импульса"); }
+		const _TCHAR* GetVerbalName() override { return _T("Р Р°СЃС€РёСЂРёС‚РµР»СЊ РёРјРїСѓР»СЊСЃР°"); }
 		static size_t PrimitiveSize() { return sizeof(CExpand); }
 		static long EquationsCount()  { return 1; }
 	};
@@ -40,7 +40,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Ограничитель импульса"); }
+		const _TCHAR* GetVerbalName() override { return _T("РћРіСЂР°РЅРёС‡РёС‚РµР»СЊ РёРјРїСѓР»СЊСЃР°"); }
 		static size_t PrimitiveSize() { return sizeof(CShrink); }
 		static long EquationsCount()  { return 1; }
 	};

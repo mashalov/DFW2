@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
@@ -17,7 +17,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		const _TCHAR* GetVerbalName() noexcept  override { return _T("RS-Òðèããåð"); }
+		const _TCHAR* GetVerbalName() noexcept  override { return _T("RS-Ð¢Ñ€Ð¸Ð³Ð³ÐµÑ€"); }
 		static size_t PrimitiveSize() noexcept { return sizeof(CRSTrigger); }
 		static long EquationsCount()  noexcept { return 1; }
 	};

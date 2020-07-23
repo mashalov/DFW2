@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
@@ -15,7 +15,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Логическое И"); }
+		const _TCHAR* GetVerbalName() override { return _T("Р›РѕРіРёС‡РµСЃРєРѕРµ Р"); }
 		static size_t PrimitiveSize() { return sizeof(CAnd); }
 		static long EquationsCount()  { return 1; }
 	};
@@ -32,7 +32,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Логическое ИЛИ"); }
+		const _TCHAR* GetVerbalName() override { return _T("Р›РѕРіРёС‡РµСЃРєРѕРµ РР›Р"); }
 		static size_t PrimitiveSize() { return sizeof(COr); }
 		static long EquationsCount()  { return 1; }
 	};
@@ -47,7 +47,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Логическое НЕ"); }
+		const _TCHAR* GetVerbalName() override { return _T("Р›РѕРіРёС‡РµСЃРєРѕРµ РќР•"); }
 		static size_t PrimitiveSize() { return sizeof(CNot); }
 		static long EquationsCount()  { return 1; }
 	};

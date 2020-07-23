@@ -1,16 +1,16 @@
-#pragma once
+п»ї#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
 {
-	// примитив сумма двух переменных
+	// РїСЂРёРјРёС‚РёРІ СЃСѓРјРјР° РґРІСѓС… РїРµСЂРµРјРµРЅРЅС‹С…
 	class CSum : public CDynaPrimitive
 	{
 		double m_K1, m_K2;
 		InputVariable m_Input1;
 	public:
-		// данный примитив пример примитива с несколькими входами
-		// первый вход инициализируется в базовом классе, второй - в конструкторе 
+		// РґР°РЅРЅС‹Р№ РїСЂРёРјРёС‚РёРІ РїСЂРёРјРµСЂ РїСЂРёРјРёС‚РёРІР° СЃ РЅРµСЃРєРѕР»СЊРєРёРјРё РІС…РѕРґР°РјРё
+		// РїРµСЂРІС‹Р№ РІС…РѕРґ РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµС‚СЃСЏ РІ Р±Р°Р·РѕРІРѕРј РєР»Р°СЃСЃРµ, РІС‚РѕСЂРѕР№ - РІ РєРѕРЅСЃС‚СЂСѓРєС‚РѕСЂРµ 
 		CSum(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
 			CDynaPrimitive(Device, OutputVariable, Input), m_Input1(*(Input.begin() + 1)), m_K1(1.0), m_K2(1.0) { }
 		virtual ~CSum() {}
@@ -28,6 +28,6 @@ namespace DFW2
 			return CDynaPrimitive::Input(0);
 		}
 		*/
-		const _TCHAR* GetVerbalName() noexcept override { return _T("Сумматор"); }
+		const _TCHAR* GetVerbalName() noexcept override { return _T("РЎСѓРјРјР°С‚РѕСЂ"); }
 	};
 }

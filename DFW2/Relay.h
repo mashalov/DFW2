@@ -1,4 +1,4 @@
-#pragma once
+ο»Ώ#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
@@ -24,7 +24,7 @@ namespace DFW2
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		const _TCHAR* GetVerbalName() noexcept override { return _T("Πελε"); }
+		const _TCHAR* GetVerbalName() noexcept override { return _T("Π ΠµΠ»Πµ"); }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelay); }
 		static long EquationsCount()  noexcept { return 1; }

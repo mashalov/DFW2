@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
@@ -14,7 +14,7 @@ namespace DFW2
 		virtual ~CZCDetector() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		const _TCHAR* GetVerbalName() noexcept override { return _T("Пороговый элемент"); }
+		const _TCHAR* GetVerbalName() noexcept override { return _T("РџРѕСЂРѕРіРѕРІС‹Р№ СЌР»РµРјРµРЅС‚"); }
 		static size_t PrimitiveSize() noexcept { return sizeof(CZCDetector); }
 		static long EquationsCount() noexcept { return 1; }
 	};

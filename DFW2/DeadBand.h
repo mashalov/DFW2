@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DynaPrimitive.h"
 
 namespace DFW2
@@ -40,7 +40,7 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Мертвая зона"); }
+		const _TCHAR* GetVerbalName() override { return _T("РњРµСЂС‚РІР°СЏ Р·РѕРЅР°"); }
 		static size_t PrimitiveSize() { return sizeof(CDeadBand); }
 		static long EquationsCount()  { return 1; }
 		void StoreState() override { m_eDbStateSaved = m_eDbState; }
