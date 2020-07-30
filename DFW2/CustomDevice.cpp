@@ -463,18 +463,17 @@ CCustomDeviceCPP::CCustomDeviceCPP()
 void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
 {
 	m_pDevice.Create(Container.DLL());
-	PRIMITIVEVECTOR& Prims = m_pDevice->GetPrimitives();
-	VARIABLEVECTOR& VarVec = m_pDevice->GetVariables();
-	EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
+	//VariableIndexRefVec& VarVec = m_pDevice->GetVariables();
+	//EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
 
-	for (auto&& prim : Prims)
+	for (const auto& prim : m_pDevice->GetPrimitives())
 	{
 
-		PrimitivePinVec& Inputs = prim.Inputs;
+		const PrimitivePinVec& Inputs = prim.Inputs;
 		if (Inputs.empty())
 			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive inputs"));
 
-		PrimitivePinVec& Outputs = prim.Outputs;
+		const PrimitivePinVec& Outputs = prim.Outputs;
 		if (Outputs.empty())
 			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive output"));
 		auto& PrimaryOutput = Outputs.front();
@@ -510,21 +509,18 @@ void CCustomDeviceCPP::SetConstsDefaultValues()
 	m_pDevice->SetConstsDefaultValues();
 }
 
-DOUBLEVECTOR& CCustomDeviceCPP::GetConstantData()
+void CCustomDeviceCPP::SetSourceConstant(size_t nIndex, double Value)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	return m_pDevice->GetConstantData();
+	if (!m_pDevice->SetSourceConstant(nIndex, Value))
+		throw dfw2error(_T("CCustomDeviceCPP::SetSourceConstant - Constants index overrun"));
 }
+
 
 VariableIndexRefVec& CCustomDeviceCPP::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	VARIABLEVECTOR& vecDevice = m_pDevice->GetVariables();
-	VariableIndexRefVec VarVec;
-	VarVec.reserve(vecDevice.size());
-	for (auto& var : m_pDevice->GetVariables())
-		ChildVec.emplace_back(var);
-	return CDevice::GetVariables(JoinVariables(VarVec, ChildVec));
+	return CDevice::GetVariables(JoinVariables(m_pDevice->GetVariables(), ChildVec));
 }
 
 double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -599,7 +595,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDyn
 {
 	eDEVICEFUNCTIONSTATUS eRes(eDEVICEFUNCTIONSTATUS::DFS_OK);
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
-	EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
+	const VariableIndexExternalRefVec& ExtVec = m_pDevice->GetExternalVariables();
 	for (const auto& ext : m_pContainer->m_ContainerProps.m_ExtVarMap)
 	{
 		CDevice::CheckIndex(ExtVec, ext.second.m_nIndex, _T("CCustomDeviceCPP::UpdateExternalVariables"));

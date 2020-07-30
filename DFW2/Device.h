@@ -204,7 +204,7 @@ namespace DFW2
 		virtual VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec);
 		VariableIndex& GetVariable(ptrdiff_t nVarIndex);
 		// Объединяет заданный список переменных данного устройства, список переменных примитивов и дочерние переменные
-		VariableIndexRefVec& JoinVariables(std::vector<std::reference_wrapper<VariableIndex>> ThisVars, VariableIndexRefVec& ChildVec);
+		VariableIndexRefVec& JoinVariables(const VariableIndexRefVec& ThisVars, VariableIndexRefVec& ChildVec);
 		// функция маппинга указателя на переменную к индексу переменной
 		// Аналогична по смыслу virtual double* GetVariablePtr()
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);

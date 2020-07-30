@@ -9,7 +9,9 @@ CCustomDevice::CCustomDevice()
 	GetDeviceProperties(props);
 	m_Consts.resize(props.m_ConstVarMap.size());
 	m_Variables.resize(props.nEquationsCount);
+	m_StateVariablesRefs = VariableIndexRefVec(m_Variables.begin(), m_Variables.end());
 	m_ExtVariables.resize(props.m_ExtVarMap.size());
+	m_ExternalVariablesRefs = VariableIndexExternalRefVec(m_ExtVariables.begin(), m_ExtVariables.end());
 	m_Primitives = 
 	{ 
 		{PBT_RELAYDELAYLOGIC, _T("L1"), { {0, m_Variables[16] } }, { {0, m_Variables[0]  } } },
@@ -214,9 +216,14 @@ const DOUBLEVECTOR& CCustomDevice::GetBlockParameters(ptrdiff_t nBlockIndex)
 	return m_BlockParameters;
 }
 
-DOUBLEVECTOR& CCustomDevice::GetConstantData()
+bool CCustomDevice::SetSourceConstant(size_t nIndex, double Value)
 {
-	return m_Consts;
+	if (nIndex < m_Consts.size())
+	{
+		m_Consts[nIndex] = Value;
+		return true;
+	}
+	return false;
 }
 
 void CCustomDevice::SetConstsDefaultValues()
@@ -288,19 +295,19 @@ void CCustomDevice::Destroy()
     delete this;
 }
 
-VARIABLEVECTOR& CCustomDevice::GetVariables()
+const VariableIndexRefVec& CCustomDevice::GetVariables()
 {
-	return m_Variables;
+	return m_StateVariablesRefs;
 }
 
-PRIMITIVEVECTOR& CCustomDevice::GetPrimitives()
+const PRIMITIVEVECTOR& CCustomDevice::GetPrimitives()
 {
 	return m_Primitives;
 }
 
-EXTVARIABLEVECTOR& CCustomDevice::GetExternalVariables()
+const VariableIndexExternalRefVec& CCustomDevice::GetExternalVariables()
 {
-	return m_ExtVariables;
+	return m_ExternalVariablesRefs;
 }
 
 extern "C" __declspec(dllexport) ICustomDevice* __cdecl CustomDeviceFactory()

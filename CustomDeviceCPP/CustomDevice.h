@@ -11,6 +11,8 @@ namespace DFW2
 		EXTVARIABLEVECTOR	m_ExtVariables;
 		PRIMITIVEVECTOR		m_Primitives;
 		DOUBLEVECTOR		m_BlockParameters;
+		VariableIndexRefVec m_StateVariablesRefs;
+		VariableIndexExternalRefVec m_ExternalVariablesRefs;
 	public:
 		CCustomDevice();
 		void BuildRightHand(CCustomDeviceData& CustomDeviceData) override;
@@ -20,10 +22,10 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CCustomDeviceData& CustomDeviceData) override;
 		void GetDeviceProperties(CDeviceContainerPropertiesBase& DeviceProps) override;
 		void SetConstsDefaultValues() override;
-		DOUBLEVECTOR& GetConstantData() override;
-		VARIABLEVECTOR& GetVariables() override;
-		EXTVARIABLEVECTOR& GetExternalVariables() override;
-		PRIMITIVEVECTOR& GetPrimitives() override;
+		bool SetSourceConstant(size_t nIndex, double Value);
+		const VariableIndexRefVec& GetVariables() override;
+		const VariableIndexExternalRefVec& GetExternalVariables() override;
+		const PRIMITIVEVECTOR& GetPrimitives() override;
 		const DOUBLEVECTOR& GetBlockParameters(ptrdiff_t nBlockIndex) override;
 		void Destroy() override;
 	};

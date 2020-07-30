@@ -292,8 +292,7 @@ void CCustomDeviceCPPContainer::ConnectDLL(std::wstring_view DLLFilePath)
 	m_pDLL->Init(DLLFilePath);
 	CCustomDeviceDLLWrapper pDevice(m_pDLL);
 	pDevice->GetDeviceProperties(m_ContainerProps);
-	PRIMITIVEVECTOR& Prims = pDevice->GetPrimitives();
-	for (const auto& prim : Prims)
+	for (const auto& prim : pDevice->GetPrimitives())
 		m_PrimitivePools.CountPrimitive(prim.eBlockType);
 }
 

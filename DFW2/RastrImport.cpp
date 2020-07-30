@@ -94,14 +94,8 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 						pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
 						pDevice->SetName(static_cast<const _TCHAR*>(spColId->GetZS(nTableIndex)));
 						pDevice->SetState(spColState->GetZ(nTableIndex).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-						DOUBLEVECTOR& ConstsVec = pDevice->GetConstantData();
 						for (const auto& col : Cols)
-						{
-							if (col.second >= 0 && col.second < static_cast<ptrdiff_t>(ConstsVec.size()))
-								ConstsVec[col.second] = col.first->GetZ(nTableIndex).dblVal;
-							else
-								throw dfw2error(_T("CRastrImport::GetCustomDeviceData - Constants index overrun"));
-						}
+							pDevice->SetSourceConstant(col.second, col.first->GetZ(nTableIndex).dblVal);
 						nModelIndex++;
 					}
 				}

@@ -38,10 +38,10 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS Init(CCustomDeviceData& CustomDeviceData) = 0;
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CCustomDeviceData& CustomDeviceData) = 0;
 		virtual void GetDeviceProperties(CDeviceContainerPropertiesBase& DeviceProps) = 0;
-		virtual DOUBLEVECTOR& GetConstantData() = 0;
-		virtual VARIABLEVECTOR& GetVariables() = 0;
-		virtual EXTVARIABLEVECTOR& GetExternalVariables() = 0;
-		virtual PRIMITIVEVECTOR& GetPrimitives() = 0;
+		virtual bool SetSourceConstant(size_t nIndex, double Value) = 0;
+		virtual const VariableIndexRefVec& GetVariables() = 0;
+		virtual const  VariableIndexExternalRefVec& GetExternalVariables() = 0;
+		virtual const PRIMITIVEVECTOR& GetPrimitives() = 0;
 		virtual void SetConstsDefaultValues() = 0;
 		virtual const DOUBLEVECTOR& GetBlockParameters(ptrdiff_t nBlockIndex) = 0;
 	};

@@ -76,7 +76,7 @@ namespace DFW2
 		CCustomDeviceCPP();
 		void CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container);
 		void SetConstsDefaultValues();
-		DOUBLEVECTOR& GetConstantData();
+		void SetSourceConstant(size_t nIndex, double Value);
 		CCustomDeviceCPPContainer* GetContainer();
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;

@@ -1126,7 +1126,7 @@ VariableIndexRefVec& CDevice::GetVariables(VariableIndexRefVec& ChildVec)
 	return ChildVec;
 }
 
-VariableIndexRefVec& CDevice::JoinVariables(std::vector<std::reference_wrapper<VariableIndex>> ThisVars, VariableIndexRefVec& ChildVec)
+VariableIndexRefVec& CDevice::JoinVariables(const VariableIndexRefVec& ThisVars, VariableIndexRefVec& ChildVec)
 {
 	//ChildVec.reserve(ChildVec.size() + ThisVars.size());
 	//for (auto&& it : m_Primitives)
