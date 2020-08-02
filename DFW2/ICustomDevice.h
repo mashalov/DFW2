@@ -17,15 +17,32 @@ namespace DFW2
 	using FNCDINITPRIMITIVE		= eDEVICEFUNCTIONSTATUS(*)(CDFWModelData&, ptrdiff_t nPrimitiveIndex);
 	using FNCDPROCPRIMDISCO		= eDEVICEFUNCTIONSTATUS(*)(CDFWModelData&, ptrdiff_t nPrimitiveIndex);
 
-	class CCustomDeviceData : public CDFWModelData
+	class CCustomDeviceData : protected CDFWModelData
 	{
-	public:
+	protected:
 		FNCDSETELEMENT			pFnSetElement;
 		FNCDSETFUNCTION			pFnSetFunction;
 		FNCDSETFUNCTIONDIFF		pFnSetFunctionDiff;
 		FNCDSETDERIVATIVE		pFnSetDerivative;
 		FNCDINITPRIMITIVE		pFnInitPrimitive;
 		FNCDPROCPRIMDISCO		pFnProcPrimDisco;
+	public:
+		inline void ProcessPrimitiveDisco(ptrdiff_t nPrimitiveIndex)
+		{
+			(*pFnProcPrimDisco)(*this, nPrimitiveIndex);
+		}
+		inline void InitPrimitive(ptrdiff_t nPrimitiveIndex)
+		{
+			(*pFnInitPrimitive)(*this, nPrimitiveIndex);
+		}
+		inline void SetFunction(VariableIndexBase& Row, double Value)
+		{
+			(*pFnSetFunction)(*this, Row, Value);
+		}
+		inline void SetElement(VariableIndexBase& Row, VariableIndexBase& Col, double Value)
+		{
+			(*pFnSetElement)(*this, Row, Col, Value);
+		}
 	};
 
 	class ICustomDevice

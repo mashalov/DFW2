@@ -452,12 +452,12 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 CCustomDeviceCPP::CCustomDeviceCPP() 
 { 
 	// может быть вынести в единственном экземпл€ре в контейнер ?
-	CustomDeviceData.pFnSetFunction		= DLLSetFunction;
-	CustomDeviceData.pFnSetElement		= DLLSetElement;
-	CustomDeviceData.pFnSetDerivative	= DLLSetDerivative;
-	CustomDeviceData.pFnSetFunctionDiff = DLLSetFunctionDiff;
-	CustomDeviceData.pFnInitPrimitive	= DLLInitPrimitive;
-	CustomDeviceData.pFnProcPrimDisco	= DLLProcPrimDisco;
+	CustomDeviceData.SetFnSetFunction(DLLSetFunction);
+	CustomDeviceData.SetFnSetElement(DLLSetElement);
+	CustomDeviceData.SetFnSetDerivative(DLLSetDerivative);
+	CustomDeviceData.SetFnSetFunctionDiff(DLLSetFunctionDiff);
+	CustomDeviceData.SetFnInitPrimitive(DLLInitPrimitive);
+	CustomDeviceData.SetFnProcessPrimitiveDisco(DLLProcPrimDisco);
 }
 
 void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
@@ -656,8 +656,7 @@ CCustomDeviceCPPContainer* CCustomDeviceCPP::GetContainer()
 
 void CCustomDeviceCPP::PrepareCustomDeviceData(CDynaModel *pDynaModel)
 {
-	CustomDeviceData.pModel = pDynaModel;
-	CustomDeviceData.pDevice = this;
+	CustomDeviceData.SetModelData(CDFWModelData{ pDynaModel, this });
 }
 
 const _TCHAR* CCustomDeviceCPP::m_cszNoDeviceDLL = _T("CCustomDeviceCPP - no DLL device initialized");

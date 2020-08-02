@@ -62,12 +62,25 @@ namespace DFW2
 		constexpr ICustomDevice* operator  -> () { return m_pDevice; }
 		constexpr operator ICustomDevice*() { return m_pDevice; }
 	};
+
+	class CCustomDeviceDataHost : public CCustomDeviceData
+	{
+	public:
+		void SetFnSetElement(FNCDSETELEMENT pFn) { pFnSetElement = pFn; }
+		void SetFnSetFunction(FNCDSETFUNCTION pFn) { pFnSetFunction = pFn; }
+		void SetFnSetFunctionDiff(FNCDSETFUNCTIONDIFF pFn) { pFnSetFunctionDiff = pFn; }
+		void SetFnSetDerivative(FNCDSETDERIVATIVE pFn) { pFnSetDerivative = pFn; }
+		void SetFnInitPrimitive(FNCDINITPRIMITIVE pFn) { pFnInitPrimitive = pFn; }
+		void SetFnProcessPrimitiveDisco(FNCDPROCPRIMDISCO pFn) { pFnProcPrimDisco = pFn; }
+		void SetModelData(CDFWModelData& ModelData) { *static_cast<CDFWModelData*>(this) = ModelData; }
+	};
+
 		
 	class CCustomDeviceCPP : public CDevice
 	{
 	protected:
 		CCustomDeviceDLLWrapper m_pDevice;
-		CCustomDeviceData CustomDeviceData;
+		CCustomDeviceDataHost CustomDeviceData;
 		static CDynaModel*			GetModel(CDFWModelData& ModelData)	{ return static_cast<CDynaModel*>(ModelData.pModel); }
 		static CCustomDeviceCPP*	GetDevice(CDFWModelData& ModelData)	{ return static_cast<CCustomDeviceCPP*>(ModelData.pDevice); }
 		void PrepareCustomDeviceData(CDynaModel* pDynaModel);
