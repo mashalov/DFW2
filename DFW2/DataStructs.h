@@ -24,6 +24,9 @@ namespace DFW2
 		constexpr operator double& () { return Value; }
 		constexpr operator const double& () const { return Value; }
 		constexpr double& operator= (double value) { Value = value;  return Value; }
+		// опасный ход, но пока работает
+		// нужен для корректных присваиваний в исходнике пользовательского устройства
+		constexpr VariableIndex& operator = (VariableIndex& value) {  Value = value.Value; return *this; }
 	};
 
 	struct VariableIndexExternal : VariableIndexBase
