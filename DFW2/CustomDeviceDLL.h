@@ -1,9 +1,8 @@
 ﻿#pragma once
 #include "DLLHeader.h"
 #include "vector"
-#include "string"
-#include "memory"
 #include "ICustomDevice.h"
+#include "DLLWrapper.h"
 
 namespace DFW2
 {
@@ -99,18 +98,11 @@ namespace DFW2
 		bool BuildDerivatives(BuildEquationsArgs *pArgs);
 	};
 
-	class CCustomDeviceCPPDLL
+	class CCustomDeviceCPPDLL : public CDLLInstance
 	{
-	protected:
-		HMODULE m_hDLL = NULL;
-		std::wstring m_strModulePath;
 		CustomDeviceFactory m_pfnFactory = nullptr;
-		void CleanUp();
 	public:
-		CCustomDeviceCPPDLL();
-		virtual ~CCustomDeviceCPPDLL();
-		void Init(std::wstring_view DLLFilePath);
-		const _TCHAR* GetModuleFilePath() const { return m_strModulePath.c_str(); }
+		void Init(std::wstring_view DLLFilePath) override;
 		ICustomDevice* CreateDevice();
 	};
 }

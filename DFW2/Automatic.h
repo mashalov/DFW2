@@ -1,6 +1,7 @@
 #pragma once
 #include "Discontinuities.h"
 #include "Relay.h"
+#include "DLLWrapper.h"
 
 
 #ifdef _DEBUG
@@ -21,6 +22,19 @@ namespace DFW2
 {
 	class CDynaModel;
 	class CCustomDevice;
+
+	class CCompilerDLL : public CDLLInstance
+	{
+	public:
+		virtual void Init(std::wstring_view DLLFilePath)
+		{
+			CDLLInstance::Init(DLLFilePath);
+			//m_pfnFactory = reinterpret_cast<CustomDeviceFactory>(::GetProcAddress(m_hDLL, "GetCompiler"));
+			FARPROC p = ::GetProcAddress(m_hDLL, "GetCompiler");
+			if (!p)
+				throw dfw2error(fmt::format(_T("Функция создания компилятора недоступна {}"), DLLFilePath));
+		}
+	};
 		
 	class CAutomaticItem
 	{

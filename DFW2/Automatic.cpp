@@ -107,6 +107,9 @@ bool CAutomatic::CompileModels()
 	{
 		src << _T("main\n{\n") << source.str() << _T("}\n");
 		src.close();
+
+		CCompilerDLL Compiler;
+		Compiler.Init(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Debug DLL\\AntlrCPP.dll"));
 	}
 
 	if (m_spAutomaticCompiler != nullptr)

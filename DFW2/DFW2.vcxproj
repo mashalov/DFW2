@@ -195,6 +195,7 @@
     <ClInclude Include="Discontinuities.h" />
     <ClInclude Include="DLLHeader.h" />
     <ClInclude Include="DLLStructs.h" />
+    <ClInclude Include="DLLWrapper.h" />
     <ClInclude Include="DynaBranch.h" />
     <ClInclude Include="DynaDECMustang.h" />
     <ClInclude Include="DynaExcConMustang.h" />
