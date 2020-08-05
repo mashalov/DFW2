@@ -30,7 +30,7 @@ namespace DFW2
 		std::wstring m_strName;
 	public:
 		inline ptrdiff_t GetId() { return m_nId; }
-		CAutomaticItem(long Type, ptrdiff_t Id, const _TCHAR* cszName);
+		CAutomaticItem(long Type, ptrdiff_t Id, std::wstring_view Name);
 		virtual ~CAutomaticItem() {}
 	};
 
@@ -50,11 +50,11 @@ namespace DFW2
 
 		CAutomaticAction(long Type, 
 						 ptrdiff_t Id,
-						 const _TCHAR* cszName,
+					     std::wstring_view Name,
 						 long LinkType,
-			  			 const _TCHAR* cszObjectClass,
-						 const _TCHAR* cszObjectKey,
-						 const _TCHAR *cszObjectProp,
+			             std::wstring_view  ObjectClass,
+			             std::wstring_view ObjectKey,
+			             std::wstring_view ObjectProp,
 						 long ActionGroup,
 						 long OutputMode,
 						 long RunsCount);
@@ -66,18 +66,10 @@ namespace DFW2
 		static const _TCHAR* cszActionTemplate;
 	};
 
-	typedef std::list<CAutomaticItem*> AUTOITEMS;
-	typedef AUTOITEMS::iterator AUTOITEMSITR;
-
-	typedef std::map<ptrdiff_t, AUTOITEMS> AUTOITEMGROUP;
-	typedef AUTOITEMGROUP::iterator AUTOITEMGROUPITR;
-
-	typedef std::list<ptrdiff_t> INTLIST;
-	typedef INTLIST::iterator INTLISTITR;
-	typedef INTLIST::const_iterator CONSTINTLISTITR;
-
-	typedef std::map<ptrdiff_t, CAutomaticItem*> AUTOITEMSMAP;
-	typedef AUTOITEMSMAP::iterator AUTOITEMSMAPITR;
+	using AUTOITEMS = std::list<std::unique_ptr<CAutomaticItem>>;
+	using AUTOITEMGROUP = std::map<ptrdiff_t, std::list<CAutomaticItem*> > ;
+	using INTLIST = std::list<ptrdiff_t> ;
+	using AUTOITEMSMAP = std::map<ptrdiff_t, CAutomaticItem*> ;
 
 	class CAutomaticLogic : public CAutomaticItem
 	{
@@ -89,8 +81,8 @@ namespace DFW2
 
 		CAutomaticLogic(long Type,
 			ptrdiff_t Id,
-			const _TCHAR* cszName,
-			const _TCHAR* cszActions,
+			std::wstring_view cszName,
+			std::wstring_view cszActions,
 			long OutputMode);
 
 		const std::wstring& GetActions() { return m_strActions; }
@@ -100,10 +92,10 @@ namespace DFW2
 
 	bool AddLogic(long Type,
 		ptrdiff_t Id,
-		const _TCHAR* cszName,
-		const _TCHAR* cszExpression,
-		const _TCHAR* cszActions,
-		const _TCHAR* cszDelayExpression,
+		std::wstring_view Name,
+		std::wstring_view Expression,
+		std::wstring_view Actions,
+		std::wstring_view DelayExpression,
 		long OutputMode);
 
 	class CAutomatic
@@ -115,34 +107,35 @@ namespace DFW2
 		AUTOITEMS m_lstLogics;
 		AUTOITEMSMAP m_mapLogics;
 		AUTOITEMGROUP m_AutoActionGroups;
+		std::wostringstream source;
 	public:
 		bool PrepareCompiler();
 
 		bool AddStarter(long Type, 
 						long Id, 
-						const _TCHAR* cszName, 
-						const _TCHAR* cszExpression, 
+						std::wstring_view cszName,
+						std::wstring_view cszExpression,
 						long LinkType, 
-						const _TCHAR* cszObjectClass, 
-						const _TCHAR* cszObjectKey, 
-						const _TCHAR* cszObjectProp);
+						std::wstring_view ObjectClass,
+						std::wstring_view ObjectKey,
+						std::wstring_view ObjectProp);
 
 		bool AddLogic(long Type, 
 					  long Id, 
-					  const _TCHAR* cszName, 
-					  const _TCHAR* cszExpression,
-					  const _TCHAR* cszActions, 
-					  const _TCHAR* cszDelayExpression, 
+					  std::wstring_view Name, 
+					  std::wstring_view Expression,
+					  std::wstring_view Actions,
+					  std::wstring_view DelayExpression,
 					  long OutputMode);
 
 		bool AddAction(long Type, 
 					   long Id, 
-					   const _TCHAR* cszName, 
-					   const _TCHAR* cszExpression, 
+					   std::wstring_view Name,
+					   std::wstring_view Expression,
 					   long LinkType, 
-					   const _TCHAR* cszObjectClass, 
-					   const _TCHAR* cszObjectKey, 
-					   const _TCHAR *cszObjectProp, 
+					   std::wstring_view ObjectClass,
+					   std::wstring_view ObjectKey,
+					   std::wstring_view ObjectProp,
 					   long ActionGroup, 
 					   long OutputMode, 
 					   long RunsCount);

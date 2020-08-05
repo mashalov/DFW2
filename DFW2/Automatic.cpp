@@ -4,30 +4,30 @@
 
 using namespace DFW2;
 
-CAutomaticItem::CAutomaticItem(long Type, ptrdiff_t Id, const _TCHAR* cszName) :
+CAutomaticItem::CAutomaticItem(long Type, ptrdiff_t Id, std::wstring_view Name) :
 		m_nType(Type),
 		m_nId(Id),
-		m_strName(cszName)
+		m_strName(Name)
 {
 
 }
 
 CAutomaticAction::CAutomaticAction(long Type,
 		ptrdiff_t Id,
-		const _TCHAR* cszName,
+	    std::wstring_view Name,
 		long LinkType,
-		const _TCHAR* cszObjectClass,
-		const _TCHAR* cszObjectKey,
-		const _TCHAR *cszObjectProp,
+		std::wstring_view ObjectClass,
+		std::wstring_view ObjectKey,
+		std::wstring_view ObjectProp,
 		long ActionGroup,
 		long OutputMode,
 		long RunsCount) :
 
-		CAutomaticItem(Type,Id,cszName),
+		CAutomaticItem(Type,Id,Name),
 		m_nLinkType(LinkType),
-		m_strObjectClass(cszObjectClass),
-		m_strObjectKey(cszObjectKey),
-		m_strObjectProp(cszObjectProp),
+		m_strObjectClass(ObjectClass),
+		m_strObjectKey(ObjectKey),
+		m_strObjectProp(ObjectProp),
 		m_nActionGroup(ActionGroup),
 		m_nOutputMode(OutputMode),
 		m_nRunsCount(RunsCount),
@@ -43,13 +43,13 @@ CAutomaticAction::~CAutomaticAction()
 
 CAutomaticLogic::CAutomaticLogic(long Type,
 	ptrdiff_t Id,
-	const _TCHAR* cszName,
-	const _TCHAR* cszActions,
+	std::wstring_view Name,
+	std::wstring_view Actions,
 	long OutputMode) :
 
-	CAutomaticItem(Type, Id, cszName),
+	CAutomaticItem(Type, Id, Name),
 	m_nOutputMode(OutputMode),
-	m_strActions(cszActions)
+	m_strActions(Actions)
 {
 
 }
@@ -69,10 +69,6 @@ CAutomatic::CAutomatic(CDynaModel* pDynaModel) : m_pDynaModel(pDynaModel)
 
 void CAutomatic::Clean()
 {
-	for (auto&& it : m_lstActions)
-		delete it;
-	for (auto&& it : m_lstLogics)
-		delete it;
 	m_lstActions.clear();
 	m_lstLogics.clear();
 	m_mapLogics.clear();
@@ -104,6 +100,14 @@ bool CAutomatic::PrepareCompiler()
 bool CAutomatic::CompileModels()
 {
 	bool bRes = false;
+
+	std::wofstream src;
+	src.open(_T("c:\\tmp\\auto.cmp"), std::fstream::out);
+	if (src.is_open())
+	{
+		src << _T("main\n{\n") << source.str() << _T("}\n");
+		src.close();
+	}
 
 	if (m_spAutomaticCompiler != nullptr)
 	{
@@ -152,20 +156,24 @@ bool CAutomatic::CompileModels()
 }
 
 
+#define COMSTR(a) std::wstring((a)).c_str()
+
 bool CAutomatic::AddStarter(long Type,
 							long Id,
-							const _TCHAR* cszName,
-							const _TCHAR* cszExpression,
+							std::wstring_view Name,
+							std::wstring_view Expression,
 							long LinkType,
-							const _TCHAR* cszObjectClass,
-							const _TCHAR* cszObjectKey,
-							const _TCHAR* cszObjectProp)
+							std::wstring_view ObjectClass,
+							std::wstring_view ObjectKey,
+						    std::wstring_view ObjectProp)
 {
 	bool bRes = false;
 
+	source << fmt::format(_T("S{} = starter({}, {})\n"), Id, Expression, ObjectClass);
+
 	if (m_spAutomaticCompiler != nullptr)
 	{
-		m_spAutomaticCompiler->AddStarter(Type,Id,cszName,cszExpression,LinkType,cszObjectClass,cszObjectKey,cszObjectProp);
+		m_spAutomaticCompiler->AddStarter(Type,Id, COMSTR(Name), COMSTR(Expression), LinkType, COMSTR(ObjectClass), COMSTR(ObjectKey), COMSTR(ObjectProp));
 		bRes = true;
 	}
 	else
@@ -177,20 +185,22 @@ bool CAutomatic::AddStarter(long Type,
 
 bool CAutomatic::AddLogic(long Type,
 						  long Id,
-						  const _TCHAR* cszName,
-						  const _TCHAR* cszExpression,
-						  const _TCHAR* cszActions,
-						  const _TCHAR* cszDelayExpression,
+						  std::wstring_view Name,
+						  std::wstring_view Expression,
+						  std::wstring_view Actions,
+						  std::wstring_view DelayExpression,
 						  long OutputMode)
 {
 	bool bRes = false;
 
+	source << fmt::format(_T("L{} = {}\n"), Id, Expression);
+	source << fmt::format(_T("LT{} = relay(L{}, 0.0, {})\n"), Id, Id, DelayExpression);
+
 	if (m_spAutomaticCompiler != nullptr)
 	{
-		m_spAutomaticCompiler->AddLogic(Type, Id, cszName, cszExpression, cszActions, cszDelayExpression, OutputMode);
-		CAutomaticLogic *pNewLogic = new CAutomaticLogic(Type, Id, cszName, cszActions, OutputMode);
-		m_lstLogics.push_back(pNewLogic);
-		m_mapLogics.insert(std::make_pair(Id, pNewLogic));
+		m_spAutomaticCompiler->AddLogic(Type, Id, COMSTR(Name), COMSTR(Expression), COMSTR(Actions), COMSTR(DelayExpression), OutputMode);
+		m_lstLogics.push_back(std::make_unique<CAutomaticLogic>(Type, Id, Name, Actions, OutputMode));
+		m_mapLogics.insert(std::make_pair(Id, m_lstLogics.back().get()));
 		bRes = true;
 	}
 	else
@@ -201,24 +211,28 @@ bool CAutomatic::AddLogic(long Type,
 
 bool CAutomatic::AddAction(long Type,
 						   long Id,
-						   const _TCHAR* cszName,
-						   const _TCHAR* cszExpression,
+						   std::wstring_view Name,
+						   std::wstring_view Expression,
 						   long LinkType,
-						   const _TCHAR* cszObjectClass,
-						   const _TCHAR* cszObjectKey,
-						   const _TCHAR *cszObjectProp,
+						   std::wstring_view ObjectClass,
+						   std::wstring_view ObjectKey,
+						   std::wstring_view ObjectProp,
 						   long ActionGroup,
 						   long OutputMode,
 						   long RunsCount)
 {
 	bool bRes = false;
 
+	source << fmt::format(_T("A{} = {}\n"), Id, Expression);
+
 	if (m_spAutomaticCompiler != nullptr)
 	{
-		m_spAutomaticCompiler->AddAction(Type, Id, cszName, cszExpression, LinkType, cszObjectClass, cszObjectKey, cszObjectProp, ActionGroup, OutputMode, RunsCount);
-		CAutomaticAction *pNewAction = new CAutomaticAction(Type, Id, cszName, LinkType, cszObjectClass, cszObjectKey, cszObjectProp, ActionGroup, OutputMode, RunsCount);
-		m_lstActions.push_back(pNewAction);
-		m_AutoActionGroups[ActionGroup].push_back(pNewAction);
+		m_spAutomaticCompiler->AddAction(Type, Id, COMSTR(Name), 
+												   COMSTR(Expression), 
+											       LinkType, COMSTR(ObjectClass), COMSTR(ObjectKey), 
+												   COMSTR(ObjectProp), ActionGroup, OutputMode, RunsCount);
+		m_lstActions.push_back(std::make_unique<CAutomaticAction>(Type, Id, Name, LinkType, ObjectClass, ObjectKey, ObjectProp, ActionGroup, OutputMode, RunsCount));
+		m_AutoActionGroups[ActionGroup].push_back(m_lstActions.back().get());
 		bRes = true;
 	}
 	else
@@ -241,7 +255,7 @@ void CAutomatic::Init()
 
 	for (auto&& it : m_lstLogics)
 	{
-		CAutomaticItem *pLogic= it;
+		CAutomaticItem *pLogic= it.get();
 		std::wstring strVarName = fmt::format(_T("LT{}"), pLogic->GetId());
 
 		// находим в автоматике выходное реле элемента логики по имени выхода
@@ -263,7 +277,7 @@ void CAutomatic::Init()
 				ptrdiff_t nId(0);
 				if (_stscanf_s(strAction.c_str(), _T("A%td"), &nId) == 1)
 				{
-					AUTOITEMGROUPITR mit = m_AutoActionGroups.find(nId);
+					auto mit = m_AutoActionGroups.find(nId);
 					if (mit != m_AutoActionGroups.end())
 					{
 						if (!pLogicItem->AddActionGroupId(nId))
@@ -297,7 +311,7 @@ void CAutomatic::Init()
 			
 	for (auto&& it : m_lstActions)
 	{
-		CAutomaticAction *pAction = static_cast<CAutomaticAction*>(it);
+		CAutomaticAction *pAction = static_cast<CAutomaticAction*>(it.get());
 		if (!pAction->Init(m_pDynaModel, pCustomDevice))
 			bRes = false;
 	}
@@ -322,26 +336,25 @@ bool CAutomatic::NotifyRelayDelay(const CRelayDelayLogic* pRelay)
 		return true;
 
 
-	AUTOITEMSMAPITR mit = m_mapLogics.find(pRelay->GetDiscontinuityId());
+	auto mit = m_mapLogics.find(pRelay->GetDiscontinuityId());
 
 	_ASSERTE(mit != m_mapLogics.end());
 
 	if (mit != m_mapLogics.end())
 	{
 		CAutomaticLogic *pLogic = static_cast<CAutomaticLogic*>(mit->second);
-		for (CONSTINTLISTITR git = pLogic->GetGroupIds().begin(); git != pLogic->GetGroupIds().end(); git++)
+		for (auto git : pLogic->GetGroupIds())
 		{
-			AUTOITEMGROUPITR autoGroupIt = m_AutoActionGroups.find(*git);
+			auto autoGroupIt = m_AutoActionGroups.find(git);
 
 			_ASSERTE(autoGroupIt != m_AutoActionGroups.end());
 
 			if (autoGroupIt != m_AutoActionGroups.end())
 			{
-				AUTOITEMS& lstActions = autoGroupIt->second;
-				for (AUTOITEMSITR autoItemIt = lstActions.begin(); autoItemIt != lstActions.end(); autoItemIt++)
+				auto& lstActions = autoGroupIt->second;
+				for (auto & item : lstActions)
 				{
-					CAutomaticAction *pAction = static_cast<CAutomaticAction*>(*autoItemIt);
-					pAction->Do(m_pDynaModel);
+					static_cast<CAutomaticAction*>(item)->Do(m_pDynaModel);
 					bRes = true;
 				}
 			}
