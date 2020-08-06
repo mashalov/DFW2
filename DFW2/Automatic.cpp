@@ -107,9 +107,13 @@ bool CAutomatic::CompileModels()
 	{
 		src << _T("main\n{\n") << source.str() << _T("}\n");
 		src.close();
-
-		CCompilerDLL Compiler;
-		Compiler.Init(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Debug DLL\\AntlrCPP.dll"));
+		auto pCompiler = std::make_shared<CCompilerDLL>();
+		pCompiler->Init(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Debug DLL\\AntlrCPP.dll"), "CompilerFactory");
+		std::stringstream Sourceutf8stream;
+		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
+		Sourceutf8stream <<"main\n{\n" << stringutils::utf8_encode(source.str()) << "}\n";
+		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\");
+		Compiler->Compile(Sourceutf8stream);
 	}
 
 	if (m_spAutomaticCompiler != nullptr)

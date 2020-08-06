@@ -375,20 +375,3 @@ bool CCustomDeviceDLL::BuildDerivatives(BuildEquationsArgs *pArgs)
 		bRes = true;
 	return bRes;
 }
-
-void CCustomDeviceCPPDLL::Init(std::wstring_view DLLFilePath)
-{
-	CDLLInstance::Init(DLLFilePath);
-	m_pfnFactory = reinterpret_cast<CustomDeviceFactory>(::GetProcAddress(m_hDLL, "CustomDeviceFactory"));
-	if (!m_pfnFactory)
-		throw dfw2error(fmt::format(_T("CCustomDeviceCPPDLL::Init - to extract Device factory from load {}"), DLLFilePath));
-};
-
-
-ICustomDevice* CCustomDeviceCPPDLL::CreateDevice()
-{
-	ICustomDevice* pDev(nullptr);
-	if (!m_hDLL || !m_pfnFactory)
-		throw dfw2error(_T("CCustomDeviceCPPDLL::CreateDevice - no dll loaded"));
-	return m_pfnFactory();
-}

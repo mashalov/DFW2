@@ -289,7 +289,7 @@ CCustomDeviceCPPContainer::~CCustomDeviceCPPContainer()
 void CCustomDeviceCPPContainer::ConnectDLL(std::wstring_view DLLFilePath)
 {
 	m_pDLL = std::make_shared<CCustomDeviceCPPDLL>();
-	m_pDLL->Init(DLLFilePath);
+	m_pDLL->Init(DLLFilePath, "CustomDeviceFactory");
 	CCustomDeviceDLLWrapper pDevice(m_pDLL);
 	pDevice->GetDeviceProperties(m_ContainerProps);
 	for (const auto& prim : pDevice->GetPrimitives())

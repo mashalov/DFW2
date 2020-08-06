@@ -49,19 +49,7 @@ namespace DFW2
 		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);
 	};
 
-	class CCustomDeviceDLLWrapper
-	{
-	protected:
-		std::shared_ptr<CCustomDeviceCPPDLL> m_pDLL;
-		ICustomDevice* m_pDevice = nullptr;
-	public:
-		CCustomDeviceDLLWrapper() {}
-		void Create(std::shared_ptr<CCustomDeviceCPPDLL>  pDLL) { m_pDLL = pDLL;  m_pDevice = m_pDLL->CreateDevice(); }
-		CCustomDeviceDLLWrapper(std::shared_ptr<CCustomDeviceCPPDLL>  pDLL) { Create(pDLL); }
-		~CCustomDeviceDLLWrapper() { m_pDevice->Destroy(); }
-		constexpr ICustomDevice* operator  -> () { return m_pDevice; }
-		constexpr operator ICustomDevice*() { return m_pDevice; }
-	};
+	using CCustomDeviceDLLWrapper = CDLLInstanceWrapper<CCustomDeviceCPPDLL>;
 
 	class CCustomDeviceDataHost : public CCustomDeviceData
 	{

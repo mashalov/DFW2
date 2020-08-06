@@ -98,12 +98,6 @@ namespace DFW2
 		bool BuildDerivatives(BuildEquationsArgs *pArgs);
 	};
 
-	class CCustomDeviceCPPDLL : public CDLLInstance
-	{
-		CustomDeviceFactory m_pfnFactory = nullptr;
-	public:
-		void Init(std::wstring_view DLLFilePath) override;
-		ICustomDevice* CreateDevice();
-	};
+	using CCustomDeviceCPPDLL = CDLLInstanceFactory<ICustomDevice>;
 }
 

@@ -18,23 +18,38 @@
 #endif
 #endif
 
+#include "..\..\AntlrCPP\AntlrCPP\ICompiler.h"
+
 namespace DFW2
 {
 	class CDynaModel;
 	class CCustomDevice;
 
+	/*
 	class CCompilerDLL : public CDLLInstance
 	{
+	protected:
+		fnCompilerFactory m_pfnFactory;
 	public:
-		virtual void Init(std::wstring_view DLLFilePath)
+		void Init(std::wstring_view DLLFilePath) override
 		{
 			CDLLInstance::Init(DLLFilePath);
-			//m_pfnFactory = reinterpret_cast<CustomDeviceFactory>(::GetProcAddress(m_hDLL, "GetCompiler"));
-			FARPROC p = ::GetProcAddress(m_hDLL, "GetCompiler");
-			if (!p)
+			m_pfnFactory = reinterpret_cast<fnCompilerFactory>(::GetProcAddress(m_hDLL, "CompilerFactory"));
+			if (!m_pfnFactory)
 				throw dfw2error(fmt::format(_T("Функция создания компилятора недоступна {}"), DLLFilePath));
 		}
+
+		ICompiler* CreateCompiler()
+		{
+			ICompiler* pCompiler(nullptr);
+			if (!m_hDLL || !m_pfnFactory)
+				throw dfw2error(_T("CreateCompiler - no dll loaded"));
+			return m_pfnFactory();
+		}
 	};
+	*/
+
+	using CCompilerDLL = CDLLInstanceFactory<ICompiler>;
 		
 	class CAutomaticItem
 	{
