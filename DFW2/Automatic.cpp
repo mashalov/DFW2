@@ -112,7 +112,7 @@ bool CAutomatic::CompileModels()
 		std::stringstream Sourceutf8stream;
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
 		Sourceutf8stream <<"main\n{\n" << stringutils::utf8_encode(source.str()) << "}\n";
-		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\");
+		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\output.cpp");
 		Compiler->Compile(Sourceutf8stream);
 	}
 
