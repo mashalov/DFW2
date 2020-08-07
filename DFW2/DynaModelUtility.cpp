@@ -60,11 +60,15 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view 
 			SetConsoleTextAttribute(hCon, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
 		}
-		/*SetConsoleOutputCP(CP_UTF8);
+
+		/*
+		SetConsoleOutputCP(CP_UTF8);
 		std::cout << utf8Message << std::endl;
 		*/
+
 		_setmode(_fileno(stdout), _O_U16TEXT);
 		std::wcout << Message << std::endl;
+
 		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
 	}
 

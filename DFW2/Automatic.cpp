@@ -113,8 +113,34 @@ bool CAutomatic::CompileModels()
 #else
 		pCompiler->Init(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Release DLL\\AntlrCPP.dll"), "CompilerFactory");
 #endif 
+		
 		std::stringstream Sourceutf8stream;
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
+		CDynaModel* pDynaModel(m_pDynaModel);
+		
+		/*
+		Compiler->SetMessageCallBacks(
+				MessageCallBacks
+				{
+					[&pDynaModel](std::string_view message)
+					{
+						pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, stringutils::utf8_decode(std::string(message)));
+						return true;
+					},
+					[&pDynaModel](std::string_view message)
+					{
+						pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, stringutils::utf8_decode(std::string(message)));
+						return true;
+					},
+					[&pDynaModel](std::string_view message)
+					{
+						pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, stringutils::utf8_decode(std::string(message)));
+						return true;
+					}
+				}
+		);
+		*/
+
 		Sourceutf8stream <<"main\n{\n" << stringutils::utf8_encode(source.str()) << "}\n";
 #ifdef _WIN64
 		Compiler->SetProperty("Platform", "x64");
