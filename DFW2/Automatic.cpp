@@ -108,12 +108,33 @@ bool CAutomatic::CompileModels()
 		src << _T("main\n{\n") << source.str() << _T("}\n");
 		src.close();
 		auto pCompiler = std::make_shared<CCompilerDLL>();
+#ifdef _DEBUG
 		pCompiler->Init(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Debug DLL\\AntlrCPP.dll"), "CompilerFactory");
+#else
+		pCompiler->Init(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Release DLL\\AntlrCPP.dll"), "CompilerFactory");
+#endif 
 		std::stringstream Sourceutf8stream;
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
 		Sourceutf8stream <<"main\n{\n" << stringutils::utf8_encode(source.str()) << "}\n";
+#ifdef _WIN64
+		Compiler->SetProperty("Platform", "x64");
+#else
+		Compiler->SetProperty("Platform", "Win32");
+#endif 
+#ifdef _DEBUG
+		Compiler->SetProperty("Configuration", "Debug");
+#else
+		Compiler->SetProperty("Configuration", "Release");
+#endif
 		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\output.cpp");
-		Compiler->Compile(Sourceutf8stream);
+		Compiler->SetProperty("ProjectName", "automatic");
+		Compiler->SetProperty("DllLibraryPath", "C:\\tmp\\CustomModels\\dll\\");
+
+		if (!Compiler->Compile(Sourceutf8stream))
+			throw dfw2error(_T("Ошибка компиляции"));
+
+		pathAutomaticDLL = Compiler->GetProperty("DllLibraryPath");
+		pathAutomaticDLL.append(Compiler->GetProperty("ProjectName")).replace_extension(".dll");
 	}
 
 	if (m_spAutomaticCompiler != nullptr)

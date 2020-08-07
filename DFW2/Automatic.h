@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include "Discontinuities.h"
 #include "Relay.h"
 #include "DLLWrapper.h"
@@ -137,6 +138,7 @@ namespace DFW2
 		AUTOITEMSMAP m_mapLogics;
 		AUTOITEMGROUP m_AutoActionGroups;
 		std::wostringstream source;
+		std::filesystem::path pathAutomaticDLL;
 	public:
 		bool PrepareCompiler();
 
@@ -169,6 +171,7 @@ namespace DFW2
 					   long OutputMode, 
 					   long RunsCount);
 
+		const std::filesystem::path& GetDLLPath() { return pathAutomaticDLL; }
 		bool CompileModels();
 		CAutomatic(CDynaModel *pDynaModel);
 		virtual ~CAutomatic();
