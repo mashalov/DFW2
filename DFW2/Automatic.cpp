@@ -149,12 +149,15 @@ bool CAutomatic::CompileModels()
 #endif 
 #ifdef _DEBUG
 		Compiler->SetProperty("Configuration", "Debug");
+		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\debug\\");
+		Compiler->SetProperty("DllLibraryPath", "C:\\tmp\\CustomModels\\dll\\debug\\");
 #else
 		Compiler->SetProperty("Configuration", "Release");
+		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\release\\");
+		Compiler->SetProperty("DllLibraryPath", "C:\\tmp\\CustomModels\\dll\\release\\");
 #endif
-		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\output.cpp");
+		
 		Compiler->SetProperty("ProjectName", "automatic");
-		Compiler->SetProperty("DllLibraryPath", "C:\\tmp\\CustomModels\\dll\\");
 
 		if (!Compiler->Compile(Sourceutf8stream))
 			throw dfw2error(_T("Ошибка компиляции"));
