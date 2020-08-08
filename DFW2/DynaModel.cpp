@@ -287,11 +287,11 @@ bool CDynaModel::Run()
 		std::chrono::milliseconds CalcDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - sc.m_ClockStart);
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Duration {}"), static_cast<double>(CalcDuration.count()) / 1E3));
 	}
+
 	catch (dfw2error& err)
 	{
 		Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Исключение : {}"), err.uwhat()));
 	}
-
 	return bRes;
 }
 

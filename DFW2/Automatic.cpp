@@ -107,11 +107,10 @@ bool CAutomatic::CompileModels()
 	{
 		src << _T("main\n{\n") << source.str() << _T("}\n");
 		src.close();
-		auto pCompiler = std::make_shared<CCompilerDLL>();
 #ifdef _DEBUG
-		pCompiler->Init(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Debug DLL\\AntlrCPP.dll"), "CompilerFactory");
+		auto pCompiler = std::make_shared<CCompilerDLL>(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Debug DLL\\AntlrCPP.dll"), "CompilerFactory");
 #else
-		pCompiler->Init(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Release DLL\\AntlrCPP.dll"), "CompilerFactory");
+		auto pCompiler = std::make_shared<CCompilerDLL>(_T("C:\\Users\\masha\\source\\repos\\AntlrCPP\\Release DLL\\AntlrCPP.dll"), "CompilerFactory");
 #endif 
 		
 		std::stringstream Sourceutf8stream;

@@ -15,15 +15,19 @@ namespace DFW2
 				FreeLibrary(m_hDLL);
 			m_hDLL = NULL;
 		}
-	public:
-		virtual ~CDLLInstance() { CleanUp(); }
 		void Init(std::wstring_view DLLFilePath)
 		{
 			// загружаем dll
 			m_hDLL = LoadLibrary(std::wstring(DLLFilePath).c_str());
 			if (!m_hDLL)
-				throw dfw2error(fmt::format(_T("Failed to load DLL {}. GetLastError {}"), DLLFilePath, ::GetLastError()));
+				throw dfw2errorGLE(fmt::format(_T("Ошибка загрузки DLL \"{}\"."), DLLFilePath));
 			m_strModulePath = DLLFilePath;
+		}
+	public:
+		virtual ~CDLLInstance() { CleanUp(); }
+		CDLLInstance(std::wstring_view DLLFilePath)
+		{
+			Init(DLLFilePath);
 		}
 		std::wstring_view GetModuleFilePath() const { return m_strModulePath.c_str(); }
 	};
@@ -34,15 +38,18 @@ namespace DFW2
 		using fnFactory = Interface* (__cdecl *)();
 	protected:
 		fnFactory m_pfnFactory = nullptr;
-	public:
-		using IntType = Interface;
-		void Init(std::wstring_view DLLFilePath, std::string_view FactoryFunction)
+		void Init(std::string_view FactoryFunction)
 		{
-			CDLLInstance::Init(DLLFilePath);
 			std::string strFactoryFn(FactoryFunction);
 			m_pfnFactory = reinterpret_cast<fnFactory>(::GetProcAddress(m_hDLL, strFactoryFn.c_str()));
 			if (!m_pfnFactory)
-				throw dfw2error(fmt::format(_T("Функция \"{}\" не найдена в DLL {}"), stringutils::utf8_decode(strFactoryFn), DLLFilePath));
+				throw dfw2error(fmt::format(_T("Функция \"{}\" не найдена в DLL \"{}\""), stringutils::utf8_decode(strFactoryFn), m_strModulePath));
+		}
+	public:
+		using IntType = Interface;
+		CDLLInstanceFactory(std::wstring_view DLLFilePath, std::string_view FactoryFunction) : CDLLInstance(DLLFilePath)
+		{
+			Init(FactoryFunction);
 		}
 		Interface* Create()
 		{
