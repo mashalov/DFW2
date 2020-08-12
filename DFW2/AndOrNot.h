@@ -8,8 +8,11 @@ namespace DFW2
 	protected:
 		InputVariable m_Input1;
 	public:
-		CAnd(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) {}
+		CAnd(CDevice& Device, const ORange& Output, const IRange& Input) : 
+			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(*(Input.begin + 1)) {}
+		CAnd(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CAnd(Device, ORange(Output), IRange(Input)) { }
+
 		virtual ~CAnd() {}
 
 		bool Init(CDynaModel *pDynaModel) override;
@@ -25,8 +28,11 @@ namespace DFW2
 	protected:
 		InputVariable m_Input1;
 	public:
-		COr(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables), m_Input1(*(Input.begin() + 1)) {}
+
+		COr(CDevice& Device, const ORange& Output, const IRange& Input) : 
+			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(*(Input.begin + 1)) {}
+		COr(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			COr(Device, ORange(Output), IRange(Input)) { }
 		virtual ~COr() {}
 
 		bool Init(CDynaModel *pDynaModel) override;
@@ -40,8 +46,11 @@ namespace DFW2
 	class CNot : public CDynaPrimitiveBinary
 	{
 	public:
-		CNot(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables):
-			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables) { }
+		CNot(CDevice& Device, const ORange& Output, const IRange& Input) : 
+			CDynaPrimitiveBinary(Device, Output, Input) {}
+		CNot(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CNot(Device, ORange(Output), IRange(Input)) { }
+
 		virtual ~CNot() {}
 
 		bool Init(CDynaModel *pDynaModel) override;

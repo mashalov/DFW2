@@ -18,8 +18,10 @@ namespace DFW2
 		double OnStateOff(CDynaModel *pDynaModel) override;
 		eRELAYSTATES GetInstantState();
 	public:
-		CRelay(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-			CDynaPrimitiveBinaryOutput(Device, OutputVariable, Input, ExtraOutputVariables) {}
+		CRelay(CDevice& Device, ORange Output, IRange Input) : 
+			CDynaPrimitiveBinaryOutput(Device, Output, Input) {}
+		CRelay(CDevice& Device, const OutputList& Output, const InputList& Input) : CRelay(Device, ORange(Output), IRange(Input)) { }
+
 		virtual ~CRelay() {}
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);
 		bool Init(CDynaModel *pDynaModel) override;
@@ -49,8 +51,10 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 		void RequestZCDiscontinuity(CDynaModel* pDynaModel) override;
 	public:
-		CRelayDelay(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-			CRelay(Device, OutputVariable, Input, ExtraOutputVariables), CDiscreteDelay() {}
+
+		CRelayDelay(CDevice& Device, ORange Output, IRange Input) : CRelay(Device, Output, Input), CDiscreteDelay() {}
+		CRelayDelay(CDevice& Device, const OutputList& Output, const InputList& Input) : CRelayDelay(Device, ORange(Output), IRange(Input)) { }
+
 		bool Init(CDynaModel *pDynaModel) override;
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
@@ -63,8 +67,12 @@ namespace DFW2
 	class CRelayDelayLogic : public CRelayDelay
 	{
 	public:
-		CRelayDelayLogic(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-			CRelayDelay(Device, OutputVariable, Input, ExtraOutputVariables) {}
+
+		CRelayDelayLogic(CDevice& Device, const ORange& Output, const IRange& Input) : 
+			CRelayDelay(Device, Output, Input){}
+		CRelayDelayLogic(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CRelayDelayLogic(Device, ORange(Output), IRange(Input)) { }
+
 		bool Init(CDynaModel *pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelayLogic); }

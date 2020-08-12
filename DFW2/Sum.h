@@ -11,8 +11,13 @@ namespace DFW2
 	public:
 		// данный примитив пример примитива с несколькими входами
 		// первый вход инициализируется в базовом классе, второй - в конструкторе 
-		CSum(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-			CDynaPrimitive(Device, OutputVariable, Input), m_Input1(*(Input.begin() + 1)), m_K1(1.0), m_K2(1.0) { }
+
+		CSum(CDevice& Device, const ORange& Output, const IRange& Input) :
+			CDynaPrimitive(Device, Output, Input), m_Input1(*(Input.begin + 1)), m_K1(1.0), m_K2(1.0) {}
+		CSum(CDevice& Device, const OutputList& Output, const InputList& Input) :
+			CSum(Device, ORange(Output), IRange(Input)) { }
+
+
 		virtual ~CSum() {}
 		void SetK(double K1, double K2) { m_K1 = K1; m_K2 = K2; }
 		bool BuildEquations(CDynaModel *pDynaModel) override;

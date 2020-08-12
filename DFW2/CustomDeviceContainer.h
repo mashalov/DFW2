@@ -89,7 +89,7 @@ namespace DFW2
 		size_t m_nSize = 0;
 	public:
 		void IncSize() { m_nSize++; }
-		virtual CDynaPrimitive* Create(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) = 0;
+		virtual CDynaPrimitive* Create(CDevice& Device, const ORange& Output, const IRange& Input) = 0;
 		virtual void Allocate(size_t nDevicesCount) = 0;
 		virtual ~CPrimitivePoolBase() {};
 	};
@@ -100,9 +100,9 @@ namespace DFW2
 	protected:
 		std::vector<T> m_Primitives;
 	public:
-		CDynaPrimitive* Create(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) override
+		CDynaPrimitive* Create(CDevice& Device, const ORange& Output, const IRange& Input) override
 		{
-			m_Primitives.emplace_back(Device, OutputVariable, Input, ExtraOutputVariables);
+			m_Primitives.emplace_back(Device, Output, Input);
 			return &m_Primitives.back();
 		}
 		void Allocate(size_t nDevicesCount) override
@@ -153,12 +153,11 @@ namespace DFW2
 
 		CDynaPrimitive* Create(PrimitiveBlockType ePrimitiveType, 
 							   CDevice& Device, 
-							   VariableIndex& OutputVariable, 
-							   InputList Input, 
-							   ExtraOutputList ExtraOutputVariables)
+							   const ORange& Output, 
+							   const IRange& Input)
 		{
 			CDevice::CheckIndex(m_Pools, ePrimitiveType);
-			return m_Pools[ePrimitiveType]->Create(Device, OutputVariable, Input, ExtraOutputVariables);
+			return m_Pools[ePrimitiveType]->Create(Device, Output, Input);
 		}
 
 		std::array<std::unique_ptr<CPrimitivePoolBase>, PrimitiveBlockType::PBT_LAST> m_Pools;
@@ -175,11 +174,14 @@ namespace DFW2
 		virtual ~CCustomDeviceCPPContainer();
 		void BuildStructure();
 		void ConnectDLL(std::wstring_view DLLFilePath);
+
 		CDynaPrimitive* CreatePrimitive(PrimitiveBlockType ePrimitiveType,
-										CDevice& Device,
-										VariableIndex& OutputVariable,
-										InputList Input,
-										ExtraOutputList ExtraOutputVariables);
+			CDevice& Device,
+			const ORange& Output,
+			const IRange& Input)
+		{
+				return m_PrimitivePools.Create(ePrimitiveType, Device, Output, Input);
+		}
 	};
 }
 

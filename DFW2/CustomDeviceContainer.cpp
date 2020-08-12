@@ -295,14 +295,7 @@ void CCustomDeviceCPPContainer::ConnectDLL(std::wstring_view DLLFilePath)
 		m_PrimitivePools.CountPrimitive(prim.eBlockType);
 }
 
-CDynaPrimitive* CCustomDeviceCPPContainer::CreatePrimitive(PrimitiveBlockType ePrimitiveType,
-														   CDevice& Device,
-														   VariableIndex& OutputVariable,
-														   InputList Input,
-														   ExtraOutputList ExtraOutputVariables)
-{
-	return m_PrimitivePools.Create(ePrimitiveType, Device, OutputVariable, Input, ExtraOutputVariables);
-}
+
 
 void CCustomDeviceCPPContainer::BuildStructure()
 {

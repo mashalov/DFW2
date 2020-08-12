@@ -8,12 +8,12 @@ using namespace DFW2;
 
 CDynaDECMustang::CDynaDECMustang() : CDevice(),
 
-	EnforceOn(*this,  EnforceOnOut,		{ Vnode }),
-	DeforceOn(*this,  DeforceOnOut,		{ Vnode }),
-	EnforceOff(*this, EnforceOffOut,	{ Vnode }),
-	DeforceOff(*this, DeforceOffOut,	{ Vnode }),
-	EnfTrigger(*this, EnforceTrigOut, { EnforceOffOut, EnforceOnOut }),
-	DefTrigger(*this, DeforceTrigOut, { DeforceOffOut, DeforceOnOut })
+	EnforceOn(*this, { EnforceOnOut }, { Vnode }),
+	DeforceOn(*this, { DeforceOnOut }, { Vnode }),
+	EnforceOff(*this, { EnforceOffOut }, { Vnode }),
+	DeforceOff(*this, { DeforceOffOut }, { Vnode }),
+	EnfTrigger(*this, { EnforceTrigOut }, { EnforceOffOut, EnforceOnOut }),
+	DefTrigger(*this, { DeforceTrigOut }, { DeforceOffOut, DeforceOnOut })
 {
 
 }

@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Device.h"
 #include <limits.h>
+#include <type_traits>
 
 namespace DFW2
 {
@@ -56,8 +57,22 @@ namespace DFW2
 		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
 	};
 
-	using ExtraOutputList = std::initializer_list<std::reference_wrapper<VariableIndex>>;
+	using OutputList = std::initializer_list<std::reference_wrapper<VariableIndex>>;
 	using InputList = std::initializer_list<InputVariable>;
+	using InputVariableVec = std::vector<InputVariable>;
+
+	template<typename T>
+	struct IORangeT
+	{
+		typename T::const_iterator begin;
+		typename T::const_iterator end;
+
+		IORangeT(const T& rng) : begin(rng.begin()), end(rng.end()) {}
+	};
+
+	using IRange = IORangeT<InputVariableVec>;
+	using ORange = IORangeT<VariableIndexRefVec>;
+		
 
 	// базовый класс примитива
 	class CDynaPrimitive
@@ -82,13 +97,16 @@ namespace DFW2
 		// примитив может иметь несколько входов и выходов (количество выходов соответствует порядку примитива)
 		// поэтому конструктор принимает список входных переменных, одну обязательную выходную переменную
 		// и список дополнительных выходных переменных
-		CDynaPrimitive(CDevice& Device, 
-					   VariableIndex& OutputVariable,
-					   InputList Input,
-					   ExtraOutputList ExtraOutputVariables = {}) : m_Device(Device),
-																    m_Output(OutputVariable),
-																	m_Input(*Input.begin())	// обязательный вход берем как 
-		{																				    // первый элемент списка входов		
+
+		CDynaPrimitive(CDevice& Device,
+			const OutputList& Output,
+			const InputList& Input) : CDynaPrimitive(Device, ORange(Output), IRange(Input)) {}
+
+		CDynaPrimitive(CDevice& Device, const ORange& Output, const IRange& Input) :
+			m_Device(Device),
+			m_Output(*Output.begin),
+			m_Input(*Input.begin)
+		{
 			m_Output = 0.0;
 			m_Device.RegisterPrimitive(this);
 		}
@@ -112,14 +130,14 @@ namespace DFW2
 	class CDynaPrimitiveState : public CDynaPrimitive 
 	{
 	public:
-		CDynaPrimitiveState(CDevice& Device, 
-							VariableIndex& OutputVariable, 
-							InputList Input, 
-							ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitive(Device, OutputVariable, Input, ExtraOutputVariables)
+
+		CDynaPrimitiveState(CDevice& Device, const ORange& Output, const IRange& Input) : CDynaPrimitive(Device, Output, Input)
 		{
 			m_Device.RegisterStatePrimitive(this);
 		}
+		CDynaPrimitiveState(CDevice& Device, const OutputList& Output, const InputList& Input) :
+			CDynaPrimitiveState(Device, ORange(Output), IRange(Input)) { }
+
 		virtual void StoreState() = 0;
 		virtual void RestoreState() = 0;
 	};
@@ -154,8 +172,12 @@ namespace DFW2
 		inline eLIMITEDSTATES GetCurrentState() { return eCurrentState; }
 		void SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		CDynaPrimitiveLimited(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveState(Device, OutputVariable, Input, ExtraOutputVariables) {}
+
+		CDynaPrimitiveLimited(CDevice& Device, const ORange& Output, const IRange& Input) :
+			CDynaPrimitiveState(Device, Output, Input) {}
+		CDynaPrimitiveLimited(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CDynaPrimitiveLimited(Device, ORange(Output), IRange(Input)) { }
+
 		virtual ~CDynaPrimitiveLimited() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		void StoreState() override { eSavedState = eCurrentState; }
@@ -175,8 +197,11 @@ namespace DFW2
 		virtual inline eRELAYSTATES GetCurrentState() { return eCurrentState; }
 		virtual void RequestZCDiscontinuity(CDynaModel* pDynaModel);
 	public:
-		CDynaPrimitiveBinary(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveState(Device, OutputVariable, Input, ExtraOutputVariables) {}
+
+		CDynaPrimitiveBinary(CDevice& Device, const ORange& Output, const IRange& Input) : CDynaPrimitiveState(Device, Output, Input) {}
+		CDynaPrimitiveBinary(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CDynaPrimitiveBinary(Device, ORange(Output), IRange(Input)) { }
+
 		void InvertState(CDynaModel *pDynaModel);
 		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
 		bool BuildEquations(CDynaModel *pDynaModel) override;
@@ -192,8 +217,10 @@ namespace DFW2
 		virtual double OnStateOn(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateOff(CDynaModel *pDynaModel) { return 1.0; }
 	public:
-		CDynaPrimitiveBinaryOutput(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables) {}
+		CDynaPrimitiveBinaryOutput(CDevice& Device, const ORange& Output, const IRange& Input) : CDynaPrimitiveBinary(Device, Output, Input) {}
+		CDynaPrimitiveBinaryOutput(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CDynaPrimitiveBinaryOutput(Device, ORange(Output), IRange(Input)) { }
+
 		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 	};

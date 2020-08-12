@@ -12,8 +12,11 @@ namespace DFW2
 		double OnStateMin(CDynaModel *pDynaModel) override;
 		double OnStateMid(CDynaModel *pDynaModel) override;
 	public:
-		CLimitedLag(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables = {}) :
-				CDynaPrimitiveLimited(Device, OutputVariable, Input, ExtraOutputVariables) {}
+
+		CLimitedLag(CDevice& Device, const ORange& Output, const IRange& Input) :
+			CDynaPrimitiveLimited(Device, Output, Input) {}
+		CLimitedLag(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CLimitedLag(Device, ORange(Output), IRange(Input)) { }
 
 		virtual ~CLimitedLag() {}
 		void SetMinMaxTK(CDynaModel *pDynaModel, double dMin, double dMax, double T, double K);

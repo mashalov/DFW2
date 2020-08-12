@@ -11,8 +11,12 @@ namespace DFW2
 		VariableIndex& m_Y2;
 	public:
 		// этот примитив пример примитива с двумя выходами. Второй выход соответсвует дополнительному второму алгебраическому уравнению
-		CDerlagContinuous(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitive(Device, OutputVariable, Input, ExtraOutputVariables), m_Y2(ExtraOutputVariables.begin()->get()) {}
+
+		CDerlagContinuous(CDevice& Device, const ORange& Output, const IRange& Input) :
+			CDynaPrimitive(Device, Output, Input), m_Y2(*(Output.begin + 1)) {}
+		CDerlagContinuous(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CDerlagContinuous(Device, ORange(Output), IRange(Input)) { }
+
 		virtual ~CDerlagContinuous() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool BuildEquations(CDynaModel *pDynaModel) override;

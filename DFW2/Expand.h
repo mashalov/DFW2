@@ -11,9 +11,12 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)  override;
 		eRELAYSTATES GetInstantState();
 	public:
+
+		CExpand(CDevice& Device, const ORange& Output, const IRange& Input) : 
+			CDynaPrimitiveBinary(Device, Output, Input) {}
+		CExpand(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+			CExpand(Device, ORange(Output), IRange(Input)) { }
  
-		CExpand::CExpand(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CDynaPrimitiveBinary(Device, OutputVariable, Input, ExtraOutputVariables)  { }
 		virtual ~CExpand() {}
 
 		bool Init(CDynaModel *pDynaModel) override;
@@ -33,8 +36,10 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 
 	public:
-		CShrink::CShrink(CDevice& Device, VariableIndex& OutputVariable, InputList Input, ExtraOutputList ExtraOutputVariables) :
-			CExpand(Device, OutputVariable, Input, ExtraOutputVariables)  { }
+
+		CShrink(CDevice& Device, ORange Output, IRange Input) : CExpand(Device, Output, Input) {}
+		CShrink(CDevice& Device, const OutputList& Output, const InputList& Input) : CShrink(Device, ORange(Output), IRange(Input))  { }
+
 		virtual ~CShrink() {}
 
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
