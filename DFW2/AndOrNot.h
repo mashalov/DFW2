@@ -9,7 +9,7 @@ namespace DFW2
 		InputVariable m_Input1;
 	public:
 		CAnd(CDevice& Device, const ORange& Output, const IRange& Input) : 
-			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(*(Input.begin + 1)) {}
+			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(Input[1]) {}
 		CAnd(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CAnd(Device, ORange(Output), IRange(Input)) { }
 
@@ -30,7 +30,7 @@ namespace DFW2
 	public:
 
 		COr(CDevice& Device, const ORange& Output, const IRange& Input) : 
-			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(*(Input.begin + 1)) {}
+			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(Input[1]) {}
 		COr(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			COr(Device, ORange(Output), IRange(Input)) { }
 		virtual ~COr() {}

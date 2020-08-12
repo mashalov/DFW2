@@ -12,7 +12,7 @@ namespace DFW2
 
 
 		CRSTrigger(CDevice& Device, const ORange& Output, const IRange& Input) : 
-			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(*(Input.begin + 1)) {}
+			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(Input[1]) {}
 		CRSTrigger(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CRSTrigger(Device, ORange(Output), IRange(Input)) { }
 

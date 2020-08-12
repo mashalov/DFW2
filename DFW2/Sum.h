@@ -13,7 +13,7 @@ namespace DFW2
 		// первый вход инициализируется в базовом классе, второй - в конструкторе 
 
 		CSum(CDevice& Device, const ORange& Output, const IRange& Input) :
-			CDynaPrimitive(Device, Output, Input), m_Input1(*(Input.begin + 1)), m_K1(1.0), m_K2(1.0) {}
+			CDynaPrimitive(Device, Output, Input), m_Input1(Input[1]), m_K1(1.0), m_K2(1.0) {}
 		CSum(CDevice& Device, const OutputList& Output, const InputList& Input) :
 			CSum(Device, ORange(Output), IRange(Input)) { }
 

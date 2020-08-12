@@ -13,7 +13,7 @@ namespace DFW2
 		// этот примитив пример примитива с двумя выходами. Второй выход соответсвует дополнительному второму алгебраическому уравнению
 
 		CDerlagContinuous(CDevice& Device, const ORange& Output, const IRange& Input) :
-			CDynaPrimitive(Device, Output, Input), m_Y2(*(Output.begin + 1)) {}
+			CDynaPrimitive(Device, Output, Input), m_Y2(Output[1]) {}
 		CDerlagContinuous(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CDerlagContinuous(Device, ORange(Output), IRange(Input)) { }
 

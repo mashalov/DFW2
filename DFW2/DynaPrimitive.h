@@ -61,15 +61,29 @@ namespace DFW2
 	using InputList = std::initializer_list<InputVariable>;
 	using InputVariableVec = std::vector<InputVariable>;
 
+	// адаптер диапазона для конструкторов примитивов
+	// принимает contiguous контейнер с range, запоминает итераторы диапазона
+	// дает доступ по индексу
+	// используется для конструктора с векторами входных и выходных переменных
+	// и для адаптации initializer_list из соответствующего конструктора примитива
+
 	template<typename T>
 	struct IORangeT
 	{
-		typename T::const_iterator begin;
-		typename T::const_iterator end;
+		typename T::const_iterator begin, end;
 
 		IORangeT(const T& rng) : begin(rng.begin()), end(rng.end()) {}
+
+		typename T::value_type operator[] (const int index) const
+		{
+			if (end - begin > index)
+				return *(begin + index);
+			else
+				throw dfw2error(_T("IORange Iterator out of range"));
+		}
 	};
 
+	// специализация для входных и выходных переменных примитива
 	using IRange = IORangeT<InputVariableVec>;
 	using ORange = IORangeT<VariableIndexRefVec>;
 		
@@ -104,8 +118,8 @@ namespace DFW2
 
 		CDynaPrimitive(CDevice& Device, const ORange& Output, const IRange& Input) :
 			m_Device(Device),
-			m_Output(*Output.begin),
-			m_Input(*Input.begin)
+			m_Output(Output[0]),
+			m_Input(Input[0])
 		{
 			m_Output = 0.0;
 			m_Device.RegisterPrimitive(this);
