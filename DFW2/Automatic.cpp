@@ -225,7 +225,11 @@ bool CAutomatic::AddStarter(long Type,
 {
 	bool bRes = false;
 
-	source << fmt::format(_T("S{} = starter({}, {})\n"), Id, Expression, ObjectClass);
+	source << fmt::format(_T("S{} = starter({}, {}[{}].{})\n"), Id, 
+		Expression.empty() ? _T("V") : Expression,
+		ObjectClass, 
+		ObjectKey, 
+		ObjectProp);
 
 	if (m_spAutomaticCompiler != nullptr)
 	{
@@ -250,7 +254,7 @@ bool CAutomatic::AddLogic(long Type,
 	bool bRes = false;
 
 	source << fmt::format(_T("L{} = {}\n"), Id, Expression);
-	source << fmt::format(_T("LT{} = relay(L{}, 0.0, {})\n"), Id, Id, DelayExpression);
+	source << fmt::format(_T("LT{} = relay(L{}, 0.0, {})\n"), Id, Id, DelayExpression.empty() ? _T("0") : DelayExpression);
 
 	if (m_spAutomaticCompiler != nullptr)
 	{
@@ -279,7 +283,11 @@ bool CAutomatic::AddAction(long Type,
 {
 	bool bRes = false;
 
-	source << fmt::format(_T("A{} = {}\n"), Id, Expression);
+	source << fmt::format(_T("A{} = action({}, {}[{}].{})\n"), Id,
+		Expression.empty() ? _T("V") : Expression,
+		ObjectClass,
+		ObjectKey,
+		ObjectProp);
 
 	if (m_spAutomaticCompiler != nullptr)
 	{
