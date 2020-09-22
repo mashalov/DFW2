@@ -67,7 +67,6 @@ namespace DFW2
 
 		enum VARS
 		{
-			V_DELTA,
 			V_V,
 			V_RE,
 			V_IM,
@@ -194,8 +193,9 @@ namespace DFW2
 		// здесь переменные состояния добавляются к базовому классу
 		enum VARS
 		{
-			V_LAG = CDynaNodeBase::V_LAST,			// дифференциальное уравнение лага скольжения в третьей строке
-			V_S,									// скольжение
+			V_DELTA = CDynaNodeBase::V_LAST,
+			V_LAG, 			// дифференциальное уравнение лага скольжения в третьей строке
+			V_S,			// скольжение
 	//		V_SIP,
 	//		V_COP,
 	//		V_SV,
