@@ -184,9 +184,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double PgVim2 = Pgsum * Vim2;
 	double QgVre2 = Qgsum * Vre2;
 	double QgVim2 = Qgsum * Vim2;
-
-	pDynaModel->SetElement(V, V, 1.0);
-	pDynaModel->SetElement(Delta, Delta, 1.0);
 		
 	if (pDynaModel->FillConstantElements())
 	{
@@ -252,8 +249,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	{
 		pDynaModel->SetElement(V, Vre, 0.0);
 		pDynaModel->SetElement(V, Vim, 0.0);
-		pDynaModel->SetElement(Delta, Vre, 0.0);
-		pDynaModel->SetElement(Delta, Vim, 0.0);
 		pDynaModel->SetElement(Vre, V, 0.0);
 		pDynaModel->SetElement(Vim, V, 0.0);
 
@@ -264,8 +259,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	{
 		pDynaModel->SetElement(V, Vre, -Vre / V2sq);
 		pDynaModel->SetElement(V, Vim, -Vim / V2sq);
-		pDynaModel->SetElement(Delta, Vre, Vim / V2);
-		pDynaModel->SetElement(Delta, Vim, -Vre / V2);
 
 		double d1 = (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
 		double d2 = (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
@@ -315,7 +308,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	GetPnrQnrSuper();
 
 	double Ire(0.0), Iim(0.0);
-	double dV(0.0), dDelta(0.0);
+	double dV(0.0);
 
 	if (!m_bInMetallicSC)
 	{
@@ -381,8 +374,6 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Ire += (Pk * Vre + Qk * Vim) / V2;
 			Iim += (Pk * Vim - Qk * Vre) / V2;
 			dV = V - V2sq;
-			dDelta = Delta - atan2(Vim, Vre);
-
 		}
 #ifdef _DEBUG
 		else
@@ -391,7 +382,6 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	}
 
 	pDynaModel->SetFunction(V, dV);
-	pDynaModel->SetFunction(Delta, dDelta);
 	pDynaModel->SetFunction(Vre, Ire);
 	pDynaModel->SetFunction(Vim, Iim);
 
@@ -470,10 +460,27 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	double T = pDynaModel->GetFreqTimeConstant();
 	double w0 = pDynaModel->GetOmega0();
 
+	double Vre2 = Vre * Vre;
+	double Vim2 = Vim * Vim;
+	double V2 = Vre2 + Vim2;
 
+	pDynaModel->SetElement(V, V, 1.0);
+	pDynaModel->SetElement(Delta, Delta, 1.0);
 
 	pDynaModel->SetElement(Lag, Delta, -1.0 / T);
 	pDynaModel->SetElement(Lag, Lag, -1.0 / T);
+
+
+	if (m_bLowVoltage)
+	{
+		pDynaModel->SetElement(Delta, Vre, 0.0);
+		pDynaModel->SetElement(Delta, Vim, 0.0);
+	}
+	else
+	{
+		pDynaModel->SetElement(Delta, Vre, Vim / V2);
+		pDynaModel->SetElement(Delta, Vim, -Vre / V2);
+	}
 	
 	if (!pDynaModel->IsInDiscontinuityMode())
 	{
@@ -499,11 +506,17 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	double dLag = (Delta - Lag) / T;
 	double dS = S - (Delta - Lag) / T / w0;
 
+	double dDelta(0.0);
+
 	if (pDynaModel->IsInDiscontinuityMode()) 
 		dS = 0.0;
+
+	if (!m_bLowVoltage)
+		dDelta = Delta - atan2(Vim, Vre);
 	
 	pDynaModel->SetFunctionDiff(Lag, dLag);
 	pDynaModel->SetFunction(S, dS);
+	pDynaModel->SetFunction(Delta, dDelta);
 
 	//DumpIntegrationStep(2021, 2031);
 	//DumpIntegrationStep(2143, 2031);
@@ -1516,11 +1529,9 @@ const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 
 	props.nEquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
-
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA,VARUNIT_RADIANS)));
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
 	return props;
 }
 
@@ -1530,6 +1541,7 @@ const CDeviceContainerProperties CDynaNode::DeviceProperties()
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
 	props.nEquationsCount = CDynaNode::VARS::V_LAST;
 	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS)));
 
 	/*
 	props.m_VarMap.insert(make_pair(_T("Sip"), CVarIndex(V_SIP, VARUNIT_PU)));
@@ -1609,12 +1621,12 @@ void CDynaNode::UpdateSerializer(SerializerPtr& Serializer)
 
 VariableIndexRefVec& CDynaNodeBase::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDevice::GetVariables(JoinVariables({ Delta, V, Vre, Vim }, ChildVec));
+	return CDevice::GetVariables(JoinVariables({ V, Vre, Vim }, ChildVec));
 }
 
 VariableIndexRefVec& CDynaNode::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDynaNodeBase::GetVariables(JoinVariables({ Lag, S }, ChildVec));
+	return CDynaNodeBase::GetVariables(JoinVariables({ Delta, Lag, S }, ChildVec));
 }
 
 const _TCHAR *CDynaNodeBase::m_cszV = _T("V");
