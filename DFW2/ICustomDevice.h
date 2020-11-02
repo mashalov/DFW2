@@ -8,6 +8,7 @@ namespace DFW2
 	public:
 		void* pModel = nullptr;
 		void* pDevice = nullptr;
+		double t;
 	};
 
 	using FNCDSETELEMENT		= void(*)(CDFWModelData&, const VariableIndexBase&, const VariableIndexBase&, double);
@@ -42,6 +43,10 @@ namespace DFW2
 		inline void SetElement(VariableIndexBase& Row, VariableIndexBase& Col, double Value)
 		{
 			(*pFnSetElement)(*this, Row, Col, Value);
+		}
+		inline double time() const
+		{
+			return t;
 		}
 	};
 

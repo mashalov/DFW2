@@ -655,7 +655,12 @@ CCustomDeviceCPPContainer* CCustomDeviceCPP::GetContainer()
 
 void CCustomDeviceCPP::PrepareCustomDeviceData(CDynaModel *pDynaModel)
 {
-	CustomDeviceData.SetModelData(CDFWModelData{ pDynaModel, this });
+	CustomDeviceData.SetModelData(pDynaModel, this);
+}
+
+void CCustomDeviceDataHost::SetModelData(CDynaModel* Model, CDevice* Device)
+{
+	*static_cast<CDFWModelData*>(this) = CDFWModelData{ Model, Device, Model->GetCurrentTime() };
 }
 
 const _TCHAR* CCustomDeviceCPP::m_cszNoDeviceDLL = _T("CCustomDeviceCPP - no DLL device initialized");

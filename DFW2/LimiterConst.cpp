@@ -12,11 +12,11 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 	switch (GetCurrentState())
 	{
 	case LS_MAX:
-		m_Output = m_Input = m_dMax;
+		m_Output = m_dMax;
 		dOdI = 0.0;
 		break;
 	case LS_MIN:
-		m_Output = m_Input = m_dMin;
+		m_Output = m_dMin;
 		dOdI = 0.0;
 		break;
 	}
@@ -31,18 +31,22 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 
 bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 {
+	double dOdI = m_Output - m_Input;
+
 	if (m_Device.IsStateOn())
 	{
 		switch (GetCurrentState())
 		{
 		case LS_MAX:
-			m_Output = m_Input = m_dMax;
+			m_Output = m_dMax;
+			dOdI = 0.0;
 			break;
 		case LS_MIN:
-			m_Output = m_Input = m_dMin;
+			m_Output = m_dMin;
+			dOdI = 0.0;
 			break;
 		}
-		pDynaModel->SetFunction(m_Output, m_Output - m_Input);
+		pDynaModel->SetFunction(m_Output, dOdI);
 	}
 	else
 		pDynaModel->SetFunction(m_Output, 0.0);

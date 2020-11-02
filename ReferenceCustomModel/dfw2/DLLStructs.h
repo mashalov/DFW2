@@ -4,6 +4,7 @@
 #include "tchar.h"
 #include "DeviceTypes.h"
 #include "limits.h"
+#include "cmath"
 
 #define DFW2_NON_STATE_INDEX LONG_MAX
 #define CUSTOMDEVICEDLL_MAXNAME 80
@@ -154,5 +155,24 @@ typedef struct
 	double t;
 }
 	BuildEquationsArgs;
+
+
+template<typename T>
+bool IsTrue(T Value)
+{
+	return Value > 0;
+}
+
+template <typename ...Args>
+double Or(Args ...args)
+{
+	return (IsTrue(args) || ...) ? 1.0 : 0.0;
+}
+
+template <typename ...Args>
+double And(Args ...args)
+{
+	return (IsTrue(args) && ...) ? 1.0 : 0.0;
+}
 
 #endif

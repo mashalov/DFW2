@@ -60,7 +60,7 @@ namespace DFW2
 		void SetFnSetDerivative(FNCDSETDERIVATIVE pFn) { pFnSetDerivative = pFn; }
 		void SetFnInitPrimitive(FNCDINITPRIMITIVE pFn) { pFnInitPrimitive = pFn; }
 		void SetFnProcessPrimitiveDisco(FNCDPROCPRIMDISCO pFn) { pFnProcPrimDisco = pFn; }
-		void SetModelData(CDFWModelData& ModelData) { *static_cast<CDFWModelData*>(this) = ModelData; }
+		void SetModelData(CDynaModel* Model, CDevice* Device);
 	};
 
 		

@@ -1565,7 +1565,8 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 			ExtVar = pFoundDevice->GetExternalVariable(Prop);
 			if (ExtVar.pValue)
 			{
-				ExtVar.Index -= pFromDevice->A(0);
+				// смещение больше не нужно - работаем в абсолютных индексах
+				//ExtVar.Index -= pFromDevice->A(0);
 				bRes = true;
 			}
 			else
@@ -1601,7 +1602,8 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 
 					if (ExtVar.pValue)
 					{
-						ExtVar.Index -= pFromDevice->A(0);
+						// смещение больше не нужно - работаем в абсолютных индексах
+						//ExtVar.Index -= pFromDevice->A(0);
 						bRes = true;
 					}
 					else
