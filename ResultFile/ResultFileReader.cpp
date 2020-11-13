@@ -11,16 +11,11 @@ CResultFileReader::~CResultFileReader()
 
 void CResultFileReader::ReadHeader(int& Version)
 {
-	if (infile.is_open())
-	{
-		unsigned __int64 Version64;
-		ReadLEB(Version64);
-		Version = static_cast<int>(Version64);
-		if (Version64 > DFW2_RESULTFILE_VERSION)
-			return throw CFileReadException(infile, fmt::format(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION).c_str());
-	}
-	else
-		return throw CFileReadException();
+	unsigned __int64 Version64;
+	ReadLEB(Version64);
+	Version = static_cast<int>(Version64);
+	if (Version64 > DFW2_RESULTFILE_VERSION)
+		return throw CFileReadException(infile, fmt::format(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION).c_str());
 }
 
 std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex)
@@ -533,26 +528,18 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 
 void CResultFileReader::ReadString(std::wstring& String)
 {
-	if (infile.is_open())
+	unsigned __int64 nLen64 = 0;
+	ReadLEB(nLen64);
+	if (nLen64 < 0xffff)
 	{
-		unsigned __int64 nLen64 = 0;
-		ReadLEB(nLen64);
-		if (nLen64 < 0xffff)
-		{
-			CUnicodeSCSU StringWriter(infile);
-			StringWriter.ReadSCSU(String, static_cast<int>(nLen64));
-		}
+		CUnicodeSCSU StringWriter(infile);
+		StringWriter.ReadSCSU(String, static_cast<int>(nLen64));
 	}
-	else
-		throw CFileReadException();
 }
 
 void CResultFileReader::ReadDouble(double& Value)
 {
-	if (infile.is_open())
-		infile.read(&Value, sizeof(double));
-	else
-		throw CFileReadException();
+	infile.read(&Value, sizeof(double));
 }
 
 int CResultFileReader::ReadLEBInt()
@@ -565,22 +552,17 @@ int CResultFileReader::ReadLEBInt()
 }
 void CResultFileReader::ReadLEB(unsigned __int64 & nValue)
 {
-	if (infile.is_open())
+	nValue = 0;
+	ptrdiff_t shift = 0;
+	unsigned char low;
+	do
 	{
-		nValue = 0;
-		ptrdiff_t shift = 0;
-		unsigned char low;
-		do
-		{
-			infile.read(&low, sizeof(low));
-			nValue |= ((static_cast<unsigned __int64>(low)& 0x7f) << shift);
-			shift += 7;
-			if (shift > 64)
-				break;
-		} while (low & 0x80);
-	}
-	else
-		throw CFileReadException(infile);
+		infile.read(&low, sizeof(low));
+		nValue |= ((static_cast<unsigned __int64>(low)& 0x7f) << shift);
+		shift += 7;
+		if (shift > 64)
+			break;
+	} while (low & 0x80);
 }
 
 
@@ -604,8 +586,7 @@ void CResultFileReader::Close()
 	m_strFilePath.clear();
 	m_bHeaderLoaded = false;
 
-	if (infile.is_open())
-		infile.close();
+	infile.close();
 
 	m_DevTypeSet.clear();
 	m_dRatio = -1.0;

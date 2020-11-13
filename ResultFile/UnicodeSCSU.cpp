@@ -110,13 +110,8 @@ void CUnicodeSCSU::WriteSCSUSymbol(int Symbol)
 
 void CUnicodeSCSU::WriteSCSU(std::wstring_view String)
 {
-	if (file.is_open())
-	{
-		for(const auto& sym : String)
-			WriteSCSUSymbol(static_cast<int>(sym));
-	}
-	else
-		throw CFileWriteException();
+	for(const auto& sym : String)
+		WriteSCSUSymbol(static_cast<int>(sym));
 }
 
 int CUnicodeSCSU::ReadSCSUSymbol()
@@ -190,14 +185,9 @@ int CUnicodeSCSU::ReadSCSUSymbol()
 
 void CUnicodeSCSU::ReadSCSU(std::wstring& String, size_t nLen)
 {
-	if (file.is_open())
-	{
-		String.resize(nLen, _T('\x0'));
-		for (unsigned int nSymbol = 0; nSymbol < nLen; nSymbol++)
-			String[nSymbol] = ReadSCSUSymbol();
-	}
-	else
-		throw CFileWriteException();
+	String.resize(nLen, _T('\x0'));
+	for (unsigned int nSymbol = 0; nSymbol < nLen; nSymbol++)
+		String[nSymbol] = ReadSCSUSymbol();
 }
 
 
@@ -225,13 +215,11 @@ CUnicodeSCSU::CUnicodeSCSU(CStreamedFile& File) :	file(File),
 
 void CUnicodeSCSU::Out(unsigned char Symbol)
 {
-	if (!file.is_open()) throw CFileWriteException();
 	file.write(&Symbol, sizeof(unsigned char));
 }
 
 unsigned char CUnicodeSCSU::In()
 {
-	if (!file.is_open()) throw CFileWriteException();
 	unsigned char Symbol = '\x0';
 	file.read(&Symbol, sizeof(unsigned char));
 	return Symbol;

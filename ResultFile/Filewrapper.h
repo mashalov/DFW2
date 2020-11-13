@@ -72,7 +72,11 @@ namespace DFW2
 					throw CFileExceptionGLE<CFileWriteException>(*this);
 		}
 
-		void close() { std::fstream::close(); }
+		void close() 
+		{ 
+			if(std::fstream::is_open())
+				std::fstream::close(); 
+		}
 
 		std::wstring_view path()
 		{

@@ -11,12 +11,8 @@ CCSVWriter::CCSVWriter(CResultFileReader& ResultFileReader) : m_ResultFileReader
 
 CCSVWriter::~CCSVWriter()
 {
-	if (CSVFile.is_open())
-		CSVFile.close();
-
-	if (CSVOut.is_open())
-		CSVOut.close();
-
+	CSVFile.close();
+	CSVOut.close();
 	setlocale(LC_ALL, loc.c_str());
 }
 

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "RastrImport.h"
 #include "DynaGeneratorMustang.h"
 #include "DynaGeneratorInfBus.h"
@@ -210,7 +210,7 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 {
 	
 	Serializer->m_pDevice->SetDBIndex(Row);
-	Serializer->m_pDevice->SetId(Row); // åñëè èäåíòèôèêàòîðà íåò èëè îí ñëîæíûé - ñòàâèì ïîðÿäêîâûé íîìåð â êà÷åñòâå èäåíòèôèêàòîðà
+	Serializer->m_pDevice->SetId(Row); // ÐµÑÐ»Ð¸ Ð¸Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€Ð° Ð½ÐµÑ‚ Ð¸Ð»Ð¸ Ð¾Ð½ ÑÐ»Ð¾Ð¶Ð½Ñ‹Ð¹ - ÑÑ‚Ð°Ð²Ð¸Ð¼ Ð¿Ð¾Ñ€ÑÐ´ÐºÐ¾Ð²Ñ‹Ð¹ Ð½Ð¾Ð¼ÐµÑ€ Ð² ÐºÐ°Ñ‡ÐµÑÑ‚Ð²Ðµ Ð¸Ð´ÐµÐ½Ñ‚Ð¸Ñ„Ð¸ÐºÐ°Ñ‚Ð¾Ñ€Ð°
 
 	for (auto&& sv : *Serializer)
 	{
@@ -259,25 +259,25 @@ void CRastrImport::GetData(CDynaModel& Network)
 	HRESULT hr = m_spRastr.CreateInstance(CLSID_Rastr);
 
 	//spRastr->Load(RG_REPL, L"..\\tests\\test92.rst", "");
-	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
+	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸ÐºÐ°.dfw");
 
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
-	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
+	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸ÐºÐ°.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1", ""); 
-	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
-	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
-	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
-	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Ðàáîòà\\Óâàò\\Èñõîäíûå äàííûå\\RastrWin\\ðåæèì Óâàò 2020.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\äèíàìèêà.rst"); 
-	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸ÐºÐ°.dfw");
+	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸ÐºÐ°.dfw");
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸ÐºÐ°.dfw");
+	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Ð Ð°Ð±Ð¾Ñ‚Ð°\\Ð£Ð²Ð°Ñ‚\\Ð˜ÑÑ…Ð¾Ð´Ð½Ñ‹Ðµ Ð´Ð°Ð½Ð½Ñ‹Ðµ\\RastrWin\\Ñ€ÐµÐ¶Ð¸Ð¼ Ð£Ð²Ð°Ñ‚ 2020.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\Ð´Ð¸Ð½Ð°Ð¼Ð¸ÐºÐ°.rst"); 
+	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸ÐºÐ°.dfw");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\oos", "");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test9_sc", ""); 
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\test9_qmin.rst", "");
-	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\cx195.rg2",L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\äèíàìèêà.rst");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\àâòîìàòèêà.dfw");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\ñöåíàðèé.scn");
+	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\cx195.rg2",L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\Ð´Ð¸Ð½Ð°Ð¼Ð¸ÐºÐ°.rst");
+	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\Ð°Ð²Ñ‚Ð¾Ð¼Ð°Ñ‚Ð¸ÐºÐ°.dfw");
+	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\ÑÑ†ÐµÐ½Ð°Ñ€Ð¸Ð¹.scn");
 
 	
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
@@ -810,7 +810,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 		}
 	}
 
-	// òèïîâûå ÑÕÍ Rastr 1 è 2
+	// Ñ‚Ð¸Ð¿Ð¾Ð²Ñ‹Ðµ Ð¡Ð¥Ð Rastr 1 Ð¸ 2
 	if (slcloader.find(1) == slcloader.end())
 	{
 		slit = slcloader.insert(std::make_pair(1, new CStorageSLC())).first;
@@ -828,12 +828,12 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 		slit->second->Q.push_back(CSLCPolynom(1.2, 1.708, 0.0, 0.0));
 	}
 
-	// ÑÕÍ øóíò ñ Id=0
+	// Ð¡Ð¥Ð ÑˆÑƒÐ½Ñ‚ Ñ Id=0
 	slit = slcloader.insert(std::make_pair(0, new CStorageSLC())).first;
 	slit->second->P.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
 
-	// ÑÕÍ ñ ïîñòîÿííîé ìîùíîñòüþ ñ Id=-1
+	// Ð¡Ð¥Ð Ñ Ð¿Ð¾ÑÑ‚Ð¾ÑÐ½Ð½Ð¾Ð¹ Ð¼Ð¾Ñ‰Ð½Ð¾ÑÑ‚ÑŒÑŽ Ñ Id=-1
 	slit = slcloader.insert(std::make_pair(-1, new CStorageSLC())).first;
 	slit->second->P.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
 	slit->second->Q.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
@@ -847,7 +847,7 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	
 	if (bRes)
 	{
-		// ïåðåïèñûâàåì ÑÕÍ èç çàãðóç÷èêà â êîòåéíåð ÑÕÍ
+		// Ð¿ÐµÑ€ÐµÐ¿Ð¸ÑÑ‹Ð²Ð°ÐµÐ¼ Ð¡Ð¥Ð Ð¸Ð· Ð·Ð°Ð³Ñ€ÑƒÐ·Ñ‡Ð¸ÐºÐ° Ð² ÐºÐ¾Ñ‚ÐµÐ¹Ð½ÐµÑ€ Ð¡Ð¥Ð
 
 		CDynaLRC *pLRCs = new CDynaLRC[slcloader.size()];
 		CDynaLRC *pLRC = pLRCs;
@@ -884,20 +884,20 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	return bRes;
 }
 
-// âñòàâëÿåò â ÑÕÍ ñåãìåíò øóíòà îò íóëÿ äî Vmin
+// Ð²ÑÑ‚Ð°Ð²Ð»ÑÐµÑ‚ Ð² Ð¡Ð¥Ð ÑÐµÐ³Ð¼ÐµÐ½Ñ‚ ÑˆÑƒÐ½Ñ‚Ð° Ð¾Ñ‚ Ð½ÑƒÐ»Ñ Ð´Ð¾ Vmin
 bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 {
 	bool bRes = true;
 	if (Vmin > 0.0)
 	{
-		// ñîðòèðóåì ñåãìåíòû ïî íàïðÿæåíèþ
+		// ÑÐ¾Ñ€Ñ‚Ð¸Ñ€ÑƒÐµÐ¼ ÑÐµÐ³Ð¼ÐµÐ½Ñ‚Ñ‹ Ð¿Ð¾ Ð½Ð°Ð¿Ñ€ÑÐ¶ÐµÐ½Ð¸ÑŽ
 		sort();
 		double LrcV = 0.0;
 		bool bInsert = false;
 
-		// îáõîäèì ñåãìåíòû ñïðàâà, äëÿ ïåðâîãî íàéäåííîãî ñ íàïðÿæåíèåì
-		// ìåíüøå ÷åì Vmin ñ÷èòàåì ìîùíîñòü ïî ýòîì ñåãìåíòó îò Vmin
-		// è ìåíÿåì åìó íàïðÿæåíèå íà Vmin
+		// Ð¾Ð±Ñ…Ð¾Ð´Ð¸Ð¼ ÑÐµÐ³Ð¼ÐµÐ½Ñ‚Ñ‹ ÑÐ¿Ñ€Ð°Ð²Ð°, Ð´Ð»Ñ Ð¿ÐµÑ€Ð²Ð¾Ð³Ð¾ Ð½Ð°Ð¹Ð´ÐµÐ½Ð½Ð¾Ð³Ð¾ Ñ Ð½Ð°Ð¿Ñ€ÑÐ¶ÐµÐ½Ð¸ÐµÐ¼
+		// Ð¼ÐµÐ½ÑŒÑˆÐµ Ñ‡ÐµÐ¼ Vmin ÑÑ‡Ð¸Ñ‚Ð°ÐµÐ¼ Ð¼Ð¾Ñ‰Ð½Ð¾ÑÑ‚ÑŒ Ð¿Ð¾ ÑÑ‚Ð¾Ð¼ ÑÐµÐ³Ð¼ÐµÐ½Ñ‚Ñƒ Ð¾Ñ‚ Vmin
+		// Ð¸ Ð¼ÐµÐ½ÑÐµÐ¼ ÐµÐ¼Ñƒ Ð½Ð°Ð¿Ñ€ÑÐ¶ÐµÐ½Ð¸Ðµ Ð½Ð° Vmin
 		for (SLCPOLYRITR itrpoly = rbegin(); itrpoly != rend(); itrpoly++)
 		{
 			if (itrpoly->m_kV < Vmin)
@@ -910,8 +910,8 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 		}
 		if (bInsert)
 		{
-			// åñëè íàøëè ñåãìåíò äëÿ Vmin óäàëÿåì âñå ñåãìåíòû
-			// ñ íàïðÿæåíèåì ìåíüøå ÷åì Vmin
+			// ÐµÑÐ»Ð¸ Ð½Ð°ÑˆÐ»Ð¸ ÑÐµÐ³Ð¼ÐµÐ½Ñ‚ Ð´Ð»Ñ Vmin ÑƒÐ´Ð°Ð»ÑÐµÐ¼ Ð²ÑÐµ ÑÐµÐ³Ð¼ÐµÐ½Ñ‚Ñ‹
+			// Ñ Ð½Ð°Ð¿Ñ€ÑÐ¶ÐµÐ½Ð¸ÐµÐ¼ Ð¼ÐµÐ½ÑŒÑˆÐµ Ñ‡ÐµÐ¼ Vmin
 			while (size())
 			{
 				SLCPOLYITR itpoly = begin();
@@ -920,16 +920,16 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 				else
 					break;
 			}
-			// âñòàâëÿåì íîâûé ñåãìåíò øóíòà îò íóëÿ
+			// Ð²ÑÑ‚Ð°Ð²Ð»ÑÐµÐ¼ Ð½Ð¾Ð²Ñ‹Ð¹ ÑÐµÐ³Ð¼ÐµÐ½Ñ‚ ÑˆÑƒÐ½Ñ‚Ð° Ð¾Ñ‚ Ð½ÑƒÐ»Ñ
 			insert(begin(),CSLCPolynom(0.0, 0.0, 0.0, LrcV / Vmin / Vmin));
 		}
 
-		// ñíîâà ñîðòèðóåì ïî íàïðÿæåíèþ
+		// ÑÐ½Ð¾Ð²Ð° ÑÐ¾Ñ€Ñ‚Ð¸Ñ€ÑƒÐµÐ¼ Ð¿Ð¾ Ð½Ð°Ð¿Ñ€ÑÐ¶ÐµÐ½Ð¸ÑŽ
 		sort();
 		SLCPOLYITR itpoly = begin();
 
-		// èùåì ïîñëåäîâàòåëüíûå ñåãìåíòû ñ îäèíàêîâûìè êîýôôèöèåíòàìè
-		// è óäàëÿåì èõ êàê èçûáûòî÷íûå
+		// Ð¸Ñ‰ÐµÐ¼ Ð¿Ð¾ÑÐ»ÐµÐ´Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒÐ½Ñ‹Ðµ ÑÐµÐ³Ð¼ÐµÐ½Ñ‚Ñ‹ Ñ Ð¾Ð´Ð¸Ð½Ð°ÐºÐ¾Ð²Ñ‹Ð¼Ð¸ ÐºÐ¾ÑÑ„Ñ„Ð¸Ñ†Ð¸ÐµÐ½Ñ‚Ð°Ð¼Ð¸
+		// Ð¸ ÑƒÐ´Ð°Ð»ÑÐµÐ¼ Ð¸Ñ… ÐºÐ°Ðº Ð¸Ð·Ñ‹Ð±Ñ‹Ñ‚Ð¾Ñ‡Ð½Ñ‹Ðµ
 		while(itpoly != end())
 		{
 			SLCPOLYITR itpolyNext = itpoly;

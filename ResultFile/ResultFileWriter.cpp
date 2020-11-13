@@ -6,19 +6,14 @@ using namespace DFW2;
 
 void CResultFile::WriteLEB(unsigned __int64 Value)
 {
-	if (infile.is_open())
+	do
 	{
-		do
-		{
-			unsigned char low = Value & 0x7f;
-			Value >>= 7;
-			if (Value != 0)
-				low |= 0x80;
-			infile.write(&low, sizeof(unsigned char));
-		} while (Value != 0);
-	}
-	else
-		throw CFileWriteException(infile);
+		unsigned char low = Value & 0x7f;
+		Value >>= 7;
+		if (Value != 0)
+			low |= 0x80;
+		infile.write(&low, sizeof(unsigned char));
+	} while (Value != 0);
 }
 
 void CResultFile::WriteString(std::wstring_view cszString)
@@ -424,8 +419,7 @@ void CResultFileWriter::CloseFile()
 	// сначала останавливаем поток записи
 	TerminateWriterThread();
 
-	if (infile.is_open())
-		infile.close();
+	infile.close();
 
 	for (auto&& it : m_BufferBegin)
 		delete it;
