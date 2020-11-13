@@ -6,18 +6,16 @@ CCSVWriter::CCSVWriter(CResultFileReader& ResultFileReader) : m_ResultFileReader
 {
 	pChannelLink = nullptr;
 	loc = setlocale(LC_ALL, "RU-ru");
-	pCSVFile = NULL;
-	pCSVOut = NULL;
 }
 
 
 CCSVWriter::~CCSVWriter()
 {
-	if (pCSVFile)
-		fclose(pCSVFile);
+	if (CSVFile.is_open())
+		CSVFile.close();
 
-	if (pCSVOut)
-		fclose(pCSVOut);
+	if (CSVOut.is_open())
+		CSVOut.close();
 
 	setlocale(LC_ALL, loc.c_str());
 }
@@ -172,24 +170,20 @@ HRESULT CCSVWriter::WriteCSV(const _TCHAR *cszFilePath)
 	fclose(pw);
 	*/
 
-	if (_tfopen_s(&pCSVOut, cszFilePath, _T("w+, ccs=UTF-8")))
-		throw CFileWriteException(NULL);
+	CSVOut.open(cszFilePath, std::ios_base::out);
 
 	_TCHAR TempPath[MAX_PATH];
 	if (!GetTempPath(MAX_PATH, TempPath))
-		throw CFileWriteException(NULL);
+		throw CFileWriteException();
 
 	_TCHAR TempFileName[MAX_PATH];
 	if(!GetTempFileName(TempPath, _T("csv"), 0, TempFileName))
-		throw CFileWriteException(NULL);
+		throw CFileWriteException();
 
 	strFilePath = TempFileName;
 
-	if (_tfopen_s(&pCSVFile, strFilePath.c_str(), _T("w+, ccs=UTF-8")))
-		throw CFileWriteException(NULL);
-
-	if (_ftprintf_s(pCSVFile, _T("t;h;")) < 0)
-		throw CFileWriteException(pCSVFile);
+	CSVFile.open(strFilePath.c_str(), std::ios_base::out);
+	CSVFile << _T("t;h");
 
 	IndexChannels();
 	WriteDeviceTypes();
@@ -197,30 +191,18 @@ HRESULT CCSVWriter::WriteCSV(const _TCHAR *cszFilePath)
 	WriteDeviceNames();
 	WriteVariableNames();
 	WriteData();
+	CSVFile.close();
 
-	fclose(pCSVFile);
-	pCSVFile = NULL;
+	CSVFile.open(strFilePath.c_str(), std::ios_base::in);
 
-	if (_tfopen_s(&pCSVFile, strFilePath.c_str(), _T("r, ccs=UTF-8")))
-		throw CFileWriteException(NULL);
+	CSVOut << CSVFile.rdbuf();
 
-	wint_t symb;
-
-	while ((symb = _fgettc(pCSVFile)) != WEOF)
-	{
-		if (symb != 0)
-			_fputtc(symb, pCSVOut);
-	}
-
-	fclose(pCSVOut);
-	pCSVOut = NULL;
-	fclose(pCSVFile);
-	pCSVFile = NULL;
+	CSVOut.close();
+	CSVFile.close();
 
 	DeleteFile(TempFileName);
 	
 	hRes = S_OK;
-			
 	return hRes;
 }
 
@@ -233,19 +215,12 @@ void CCSVWriter::WriteColumn(const double *pData, size_t nColumn, bool bLastColu
 	{
 		__int64 nOffs = nRowStep * (pData - pDataStart) + nColumn * MinFieldWidth + nOffset;
 
-		if (_fseeki64(pCSVFile, nOffs, SEEK_SET))
-			throw CFileWriteException(pCSVFile);
-
+		CSVFile.seekg(nOffs, std::ios_base::beg);
+		
 		if (bLastColumn)
-		{
-			if (fprintf_s(pCSVFile, "%g\n", *pData) < 0)
-				throw CFileWriteException(pCSVFile);
-		}
+			CSVFile << *pData << "\n";
 		else
-		{
-			if (fprintf_s(pCSVFile, "%g;", *pData) < 0)
-				throw CFileWriteException(pCSVFile);
-		}
+			CSVFile << *pData;
 
 		pData++;
 	}
@@ -258,15 +233,18 @@ void CCSVWriter::WriteData()
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
 	const ChannelLink *pC = pChannelLink.get();
 
-	fclose(pCSVFile);
+	CSVFile.close();
 
+	CSVFile.open(strFilePath.c_str(), std::ios_base::in| std::ios_base::out|std::ios_base::binary);
+
+	/*
 	if (_tfopen_s(&pCSVFile, strFilePath.c_str(), _T("rb+R")))
 		throw CFileWriteException(NULL);
+	*/
 
-	if (_fseeki64(pCSVFile, 0 , SEEK_END))
-		throw CFileWriteException(pCSVFile);
+	CSVFile.seekg(0, std::ios_base::end);
 
-	nOffset = _ftelli64(pCSVFile);
+	nOffset = CSVFile.tellg();
 
 	pChannel = m_ResultFileReader.GetChannelHeaders();
 	pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
@@ -296,21 +274,17 @@ void CCSVWriter::WriteField(const ChannelLink *pLink, std::wstring_view Field)
 	std::replace(str.begin(), str.end(), '\"', '\'');
 	str += _T("\";");
 	str.insert(str.begin(), L'\"');
-
-	if (_ftprintf_s(pCSVFile, str.c_str()) < 0)
-		throw CFileWriteException(pCSVFile);
+	CSVFile << stringutils::utf8_encode(str).c_str();
 }
 
 void CCSVWriter::WriteCRLF2()
 {
-	if (_ftprintf_s(pCSVFile, cszCRLF2) < 0)
-		throw CFileWriteException(pCSVFile);
+	CSVFile << cszCRLF2;
 }
 
 void CCSVWriter::WriteCRLF()
 {
-	if (_ftprintf_s(pCSVFile, cszCRLF) < 0)
-		throw CFileWriteException(pCSVFile);
+	CSVFile << cszCRLF;
 }
 
 

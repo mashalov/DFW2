@@ -25,14 +25,14 @@ class ATL_NO_VTABLE CVariable :
 {
 protected:
 	const CResultFileReader::VariableTypeInfo* m_pVariableInfo;
-	const CResultFileReader::DeviceInstanceInfo *m_pDeviceInstanceInfo;
+	CResultFileReader::DeviceInstanceInfo *m_pDeviceInstanceInfo;
 public:
 	CVariable() : m_pVariableInfo(nullptr),
 				  m_pDeviceInstanceInfo(nullptr)
 	{
 	}
 
-	void SetVariableInfo(const CResultFileReader::VariableTypeInfo* pVariableInfo, const CResultFileReader::DeviceInstanceInfo *pDeviceInstanceInfo)
+	void SetVariableInfo(const CResultFileReader::VariableTypeInfo* pVariableInfo, CResultFileReader::DeviceInstanceInfo *pDeviceInstanceInfo)
 	{
 		m_pVariableInfo = pVariableInfo;
 		m_pDeviceInstanceInfo = pDeviceInstanceInfo;

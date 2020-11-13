@@ -6,7 +6,7 @@ using namespace DFW2;
 
 void CResultFile::WriteLEB(unsigned __int64 Value)
 {
-	if (m_pFile)
+	if (infile.is_open())
 	{
 		do
 		{
@@ -14,13 +14,11 @@ void CResultFile::WriteLEB(unsigned __int64 Value)
 			Value >>= 7;
 			if (Value != 0)
 				low |= 0x80;
-
-			if (fwrite(&low, sizeof(unsigned char), 1, m_pFile) != 1)
-				throw CFileWriteException(m_pFile);
+			infile.write(&low, sizeof(unsigned char));
 		} while (Value != 0);
 	}
 	else
-		throw CFileWriteException(m_pFile);
+		throw CFileWriteException(infile);
 }
 
 void CResultFile::WriteString(std::wstring_view cszString)
@@ -30,7 +28,7 @@ void CResultFile::WriteString(std::wstring_view cszString)
 	else
 	{
 		WriteLEB(cszString.size());
-		CUnicodeSCSU StringWriter(m_pFile);
+		CUnicodeSCSU StringWriter(infile);
 		StringWriter.WriteSCSU(cszString);
 	}
 }
@@ -110,13 +108,10 @@ void CResultFileWriter::FlushChannels()
 
 	struct DataDirectoryEntry de = { 0, 0 };
 
-	de.m_Offset = _ftelli64(m_pFile);
-	if(_fseeki64(m_pFile, m_DataDirectoryOffset, SEEK_SET))
-		throw CFileWriteException(m_pFile);
-	if (fwrite(&de, sizeof(struct DataDirectoryEntry), 1, m_pFile) != 1)
-		throw CFileWriteException(m_pFile);
-	if (_fseeki64(m_pFile, de.m_Offset, SEEK_SET))
-		throw CFileWriteException(m_pFile);
+	de.m_Offset = infile.tellg();
+	infile.seekg(m_DataDirectoryOffset, std::ios_base::beg);
+	infile.write(&de, sizeof(struct DataDirectoryEntry));
+	infile.seekg(de.m_Offset, std::ios_base::beg);
 	WriteLEB(m_nPointsCount);
 	WriteLEB(m_nChannelsCount);
 
@@ -138,14 +133,10 @@ void CResultFileWriter::FlushChannels()
 	
 	// write slow variables
 	de.m_DataType = 1;
-	de.m_Offset = _ftelli64(m_pFile);
-	if (_fseeki64(m_pFile, m_DataDirectoryOffset + sizeof(struct DataDirectoryEntry), SEEK_SET))
-		throw CFileWriteException(m_pFile);
-
-	if (fwrite(&de, sizeof(struct DataDirectoryEntry), 1, m_pFile) != 1)
-		throw CFileWriteException(m_pFile);
-	if (_fseeki64(m_pFile, de.m_Offset, SEEK_SET))
-		throw CFileWriteException(m_pFile);
+	de.m_Offset = infile.tellg();
+	infile.seekg(m_DataDirectoryOffset + sizeof(struct DataDirectoryEntry), std::ios_base::beg);
+	infile.write(&de, sizeof(struct DataDirectoryEntry));
+	infile.seekg(de.m_Offset, std::ios_base::beg);
 
 	WriteLEB(m_setSlowVariables.size());
 	for (auto &di : m_setSlowVariables)
@@ -170,14 +161,11 @@ void CResultFileWriter::FlushChannels()
 	}
 
 	de.m_DataType = 2;
-	de.m_Offset = _ftelli64(m_pFile);
+	de.m_Offset = infile.tellg();
 	WriteString(_T(""));
 
-	if (_fseeki64(m_pFile, m_DataDirectoryOffset + sizeof(struct DataDirectoryEntry) * 2, SEEK_SET))
-		throw CFileWriteException(m_pFile);
-
-	if (fwrite(&de, sizeof(struct DataDirectoryEntry), 1, m_pFile) != 1)
-		throw CFileWriteException(m_pFile);
+	infile.seekg(m_DataDirectoryOffset + sizeof(struct DataDirectoryEntry) * 2, std::ios_base::beg);
+	infile.write(&de, sizeof(struct DataDirectoryEntry));
 
 	// ставим признак сброса каналов
 	m_bChannelsFlushed = true;
@@ -187,11 +175,10 @@ void CResultFileWriter::FlushSuperRLE(CChannelEncoder& Encoder)
 {
 	if (Encoder.m_nUnwrittenSuperRLECount)
 	{
-		__int64 nCurrentSeek = _ftelli64(m_pFile);
+		__int64 nCurrentSeek = infile.tellg();
 		WriteLEB(2);
 		WriteLEB(Encoder.m_nUnwrittenSuperRLECount);
-		if (fwrite(&Encoder.m_SuperRLEByte, sizeof(unsigned char), 1, m_pFile) != 1)
-			throw CFileWriteException(m_pFile);
+		infile.write(&Encoder.m_SuperRLEByte, sizeof(unsigned char));
 		WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
 		Encoder.m_nPreviousSeek = nCurrentSeek;
 		Encoder.m_nUnwrittenSuperRLECount = 0;
@@ -227,7 +214,7 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 							// накопленные байты отличаются от тех, что пришли,
 							// поэтому сбрасываем старый RLE блок и начинаем записывать новый
 							FlushSuperRLE(Encoder);
-							Encoder.m_nPreviousSeek = _ftelli64(m_pFile);
+							Encoder.m_nPreviousSeek = infile.tellg();
 							Encoder.m_nUnwrittenSuperRLECount = Encoder.m_nCount;
 							Encoder.m_SuperRLEByte = *Output.BytesBuffer();
 						}
@@ -243,13 +230,11 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 				{
 					// сбрасываем блок SuperRLE если был
 					FlushSuperRLE(Encoder);
-					__int64 nCurrentSeek = _ftelli64(m_pFile);
+					__int64 nCurrentSeek = infile.tellg();
 					WriteLEB(0);						// type of block 0 - RLE data
 					WriteLEB(Encoder.m_nCount);			// count of doubles
 					WriteLEB(nCompressedSize);			// byte length of RLE data
-					if (fwrite(m_pCompressedBuffer.get(), sizeof(unsigned char), nCompressedSize, m_pFile) != nCompressedSize)
-						throw CFileWriteException(m_pFile);
-
+					infile.write(m_pCompressedBuffer.get(), nCompressedSize);
 					WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
 					Encoder.m_nPreviousSeek = nCurrentSeek;
 
@@ -259,13 +244,11 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 			{
 				// сбрасываем блок SuperRLE если был
 				FlushSuperRLE(Encoder);
-				__int64 nCurrentSeek = _ftelli64(m_pFile);
+				__int64 nCurrentSeek = infile.tellg();
 				WriteLEB(1);						// type of block 1 - RAW compressed data
 				WriteLEB(Encoder.m_nCount);			// count of doubles
 				WriteLEB(Output.BytesWritten());	// byte length of block
-				if (fwrite(Output.Buffer(), sizeof(unsigned char), Output.BytesWritten(), m_pFile) != Output.BytesWritten())
-					throw CFileWriteException(m_pFile);
-
+				infile.write(Output.Buffer(), Output.BytesWritten());
 				WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
 				Encoder.m_nPreviousSeek = nCurrentSeek;
 			}
@@ -274,7 +257,7 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 		}
 	}
 	else
-		throw CFileWriteException(m_pFile);
+		throw CFileWriteException(infile);
 }
 
 void CResultFileWriter::WriteChannel(ptrdiff_t nIndex, double dValue)
@@ -297,14 +280,14 @@ void CResultFileWriter::WriteChannel(ptrdiff_t nIndex, double dValue)
 				FlushChannel(nIndex);
 				Result = Output.WriteDouble(dValue);
 				if (Result == FC_ERROR)
-					throw CFileWriteException(m_pFile);
+					throw CFileWriteException(infile);
 				else
 					if (Result == FC_OK)
 						Encoder.m_nCount++;
 			}
 			else
 				if (Result == FC_ERROR)
-					throw CFileWriteException(m_pFile);
+					throw CFileWriteException(infile);
 				else
 					if (Result == FC_OK)
 						Encoder.m_nCount++;
@@ -335,21 +318,21 @@ void CResultFileWriter::WriteChannel(ptrdiff_t nIndex, double dValue)
 				FlushChannel(nIndex);
 				Result = FloatCompressor.WriteDouble(dValue, pred, Output);
 				if (Result == FC_ERROR)
-					throw CFileWriteException(m_pFile);
+					throw CFileWriteException(infile);
 				else
 					if (Result == FC_OK)
 						Encoder.m_nCount++;
 			}
 			else
 				if (Result == FC_ERROR)
-					throw CFileWriteException(m_pFile);
+					throw CFileWriteException(infile);
 				else
 					if (Result == FC_OK)
 						Encoder.m_nCount++;
 		}
 	}
 	else
-		throw CFileWriteException(m_pFile);
+		throw CFileWriteException(infile);
 }
 
 void CResultFileWriter::WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t Type, ptrdiff_t nId, ptrdiff_t nVarIndex)
@@ -362,7 +345,7 @@ void CResultFileWriter::WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t Type, ptr
 		WriteLEB(OffsetFromCurrent(m_pEncoders[nIndex].m_nPreviousSeek));
 	}
 	else
-		throw CFileWriteException(m_pFile);
+		throw CFileWriteException(infile);
 }
 
 void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
@@ -441,11 +424,8 @@ void CResultFileWriter::CloseFile()
 	// сначала останавливаем поток записи
 	TerminateWriterThread();
 
-	if (m_pFile)
-	{
-		fclose(m_pFile);
-		m_pFile = NULL;
-	}
+	if (infile.is_open())
+		infile.close();
 
 	for (auto&& it : m_BufferBegin)
 		delete it;
@@ -475,41 +455,35 @@ void CResultFileWriter::CloseFile()
 // создает файл результатов
 void CResultFileWriter::CreateResultFile(const _TCHAR *cszFilePath)
 {
-	if (!_tfopen_s(&m_pFile, cszFilePath, _T("wb+,ccs=UNICODE")))
-	{
-		// запись сигнатуры
-		size_t nCountSignature = sizeof(m_cszSignature);
-		if(fwrite(m_cszSignature, sizeof(m_cszSignature[0]), nCountSignature, m_pFile) != nCountSignature)
-			throw CFileWriteException(m_pFile);
-		// запись версии (версия в define, соответствует исходнику)
-		WriteLEB(DFW2_RESULTFILE_VERSION);
+	infile.open(cszFilePath, std::ios_base::out|std::ios_base::binary);
+	// запись сигнатуры
+	size_t nCountSignature = sizeof(m_cszSignature);
+	infile.write(m_cszSignature, nCountSignature);
+	// запись версии (версия в define, соответствует исходнику)
+	WriteLEB(DFW2_RESULTFILE_VERSION);
 
-		// создаем объекты синхронизации для управления потоком записи
-		m_hRunEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		if (m_hRunEvent == NULL)
-			throw CFileWriteException(m_pFile);
-		m_hRunningEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		if (m_hRunningEvent == NULL)
-			throw CFileWriteException(m_pFile);
-		m_hDataMutex = CreateMutex(NULL, FALSE, NULL);
-		if (m_hDataMutex == NULL)
-			throw CFileWriteException(m_pFile);
-		// создаем поток для записи
-		m_hThread = (HANDLE)_beginthreadex(NULL, 0, CResultFileWriter::WriterThread, this, 0, NULL);
-		if (m_hThread == NULL)
-			throw CFileWriteException(m_pFile);
-		// раз создали файл результатов - потребуется финализация
-		m_bChannelsFlushed = false;
-	}
-	else
-		throw CFileWriteException(NULL,cszFilePath);
+	// создаем объекты синхронизации для управления потоком записи
+	m_hRunEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (m_hRunEvent == NULL)
+		throw CFileWriteException(infile);
+	m_hRunningEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+	if (m_hRunningEvent == NULL)
+		throw CFileWriteException(infile);
+	m_hDataMutex = CreateMutex(NULL, FALSE, NULL);
+	if (m_hDataMutex == NULL)
+		throw CFileWriteException(infile);
+	// создаем поток для записи
+	m_hThread = (HANDLE)_beginthreadex(NULL, 0, CResultFileWriter::WriterThread, this, 0, NULL);
+	if (m_hThread == NULL)
+		throw CFileWriteException(infile);
+	// раз создали файл результатов - потребуется финализация
+	m_bChannelsFlushed = false;
 }
 
 // записывает double без сжатия
 void CResultFileWriter::WriteDouble(const double &Value)
 {
-	if(fwrite(&Value, sizeof(double), 1, m_pFile) != 1)
-		throw CFileWriteException(m_pFile);
+	infile.write(&Value, sizeof(double));
 }
 
 // записывает заданное количество описателей разделов
@@ -517,13 +491,10 @@ void CResultFileWriter::AddDirectoryEntries(size_t nDirectoryEntriesCount)
 {
 	WriteLEB(nDirectoryEntriesCount);							// записываем количество разделов
 	struct DataDirectoryEntry DirEntry = { 0, 0LL };			// создаем пустой раздел
-	m_DataDirectoryOffset = _ftelli64(m_pFile);					// запоминаем позицию начала разделов в файле
+	m_DataDirectoryOffset = infile.tellg();						//	запоминаем позицию начала разделов в файле
 	// записываем заданное количество пустых разделов
 	for (size_t i = 0; i < nDirectoryEntriesCount; i++)
-	{
-		if (fwrite(&DirEntry, sizeof(struct DataDirectoryEntry), 1, m_pFile) != 1)
-			throw CFileWriteException(m_pFile);
-	}
+		infile.write(&DirEntry, sizeof(struct DataDirectoryEntry));
 }
 
 // запись результатов вне потока
@@ -535,14 +506,14 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 	{
 		// если нет - это ошибка
 		if (dwExitCode != STILL_ACTIVE)
-			throw CFileWriteException(m_pFile);
+			throw CFileWriteException(infile);
 
 		// ждем и забираем мьютекс доступа к данным
 		DWORD dwWaitRes = WaitForSingleObject(m_hDataMutex, INFINITE);
 
 		// если при ожидании произошла ошибка - заканчиваем
 		if (dwWaitRes == WAIT_FAILED || dwWaitRes == WAIT_ABANDONED)
-			throw CFileWriteException(m_pFile);
+			throw CFileWriteException(infile);
 
 		if (dwWaitRes == WAIT_OBJECT_0)
 		{
@@ -567,18 +538,18 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 				//WriteResultsThreaded();
 
 				if (!ReleaseMutex(m_hDataMutex))
-					throw CFileWriteException(m_pFile);
+					throw CFileWriteException(infile);
 				if (!SetEvent(m_hRunEvent))
-					throw CFileWriteException(m_pFile);
+					throw CFileWriteException(infile);
 				if(WaitForSingleObject(m_hRunningEvent, INFINITE) != WAIT_OBJECT_0)
-					throw CFileWriteException(m_pFile);
+					throw CFileWriteException(infile);
 			}
 		}
 		else
-			throw CFileWriteException(m_pFile);
+			throw CFileWriteException(infile);
 	}
 	else
-		throw CFileWriteException(m_pFile);
+		throw CFileWriteException(infile);
 }
 
 // запись результатов в потоке
@@ -651,7 +622,7 @@ void CResultFileWriter::SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, p
 		Encoder.m_nVariableIndex = nDeviceVarIndex;
 	}
 	else
-		throw CFileWriteException(m_pFile);
+		throw CFileWriteException(infile);
 }
 
 // поток записи результатов
@@ -680,10 +651,10 @@ unsigned int CResultFileWriter::WriterThread(void *pThis)
 
 				// записываем очередной блок результатов
 				if (!pthis->WriteResultsThreaded())
-					throw CFileWriteException(pthis->m_pFile);
+					throw CFileWriteException(pthis->infile);
 			}
 			else
-				throw CFileWriteException(pthis->m_pFile);
+				throw CFileWriteException(pthis->infile);
 		}
 	}
 	catch (CFileWriteException&)
@@ -701,11 +672,10 @@ __int64 CResultFileWriter::OffsetFromCurrent(__int64 AbsoluteOffset)
 {
 	if (AbsoluteOffset)
 	{
-		_ASSERTE(m_pFile);
-		__int64 nCurrentOffset = _ftelli64(m_pFile);
+		__int64 nCurrentOffset = infile.tellg();
 
 		if (AbsoluteOffset >= nCurrentOffset)
-			throw CFileWriteException(m_pFile);
+			throw CFileWriteException(infile);
 
 		AbsoluteOffset = nCurrentOffset - AbsoluteOffset;
 	}

@@ -212,7 +212,7 @@ STDMETHODIMP CDevice::get_Variables(VARIANT* Variables)
 			Variables->vt = VT_DISPATCH;
 			Variables->pdispVal = pVariablesCollection;
 
-			const CResultFileReader::VARTYPESET& VarTypes= m_pDeviceInfo->m_pDevType->m_VarTypes;
+			CResultFileReader::VARTYPESET& VarTypes= m_pDeviceInfo->m_pDevType->m_VarTypes;
 			CResultFileReader::VARTYPEITRCONST it = VarTypes.begin();
 
 			for (; it != VarTypes.end(); it++)

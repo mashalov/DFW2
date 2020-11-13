@@ -75,20 +75,20 @@ long CDeviceTypeWrite::GetParameterByIndex(VARIANT& vt, long nIndex)
 				nResult = nElement;
 			}
 			else
-				throw CFileWriteException(NULL, CDFW2Messages::m_cszWrongParameter);
+				throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
 		}
 		else if (!nIndex)
 		{
 			if (SUCCEEDED(VariantChangeType(&vt, &vt, 0, VT_I4)))
 				nResult = vt.lVal;
 			else
-				throw CFileWriteException(NULL, CDFW2Messages::m_cszWrongParameter);
+				throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
 		}
 		else
-			throw CFileWriteException(NULL, CDFW2Messages::m_cszWrongParameter);
+			throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
 	}
 	else
-		throw CFileWriteException(NULL, CDFW2Messages::m_cszWrongParameter);
+		throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
 
 	return nResult;
 }

@@ -1,12 +1,13 @@
 #pragma once
-#include "..\dfw2\FileExceptions.h"
+#include "FileWrapper.h"
+#include "FileExceptions.h"
 
 namespace DFW2
 {
 	class CUnicodeSCSU
 	{
 	protected:
-		FILE *m_pFile;
+		CStreamedFile& file;
 		enum
 		{
 			SQ0 = 0x01, /* Quote from window pair 0 */
@@ -28,7 +29,7 @@ namespace DFW2
 		void WriteSCSUSymbol(int Symbol);
 		int ReadSCSUSymbol();
 	public:
-		CUnicodeSCSU(FILE *pFile);
+		CUnicodeSCSU(CStreamedFile& File);
 		void WriteSCSU(std::wstring_view String);
 		void ReadSCSU(std::wstring& String, size_t nLen);
 	};

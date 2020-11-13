@@ -11,19 +11,19 @@ CResultFileReader::~CResultFileReader()
 
 void CResultFileReader::ReadHeader(int& Version)
 {
-	if (m_pFile)
+	if (infile.is_open())
 	{
 		unsigned __int64 Version64;
 		ReadLEB(Version64);
 		Version = static_cast<int>(Version64);
 		if (Version64 > DFW2_RESULTFILE_VERSION)
-			return throw CFileReadException(m_pFile, fmt::format(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION).c_str());
+			return throw CFileReadException(infile, fmt::format(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION).c_str());
 	}
 	else
-		return throw CFileReadException(nullptr);
+		return throw CFileReadException();
 }
 
-std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
+std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex)
 {
 	std::unique_ptr<double[]> pResultBuffer;
 
@@ -38,7 +38,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 		pResultBuffer = std::make_unique<double[]>(m_PointsCount);
 
 		if (!pResultBuffer)
-			throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
+			throw CFileReadException(infile, CDFW2Messages::m_cszNoMemory);
 
 		// получаем список блоков данных канала в порядке от конца к началу
 		INT64LIST Offsets;
@@ -48,8 +48,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 		INT64LIST::reverse_iterator it = Offsets.rbegin();
 		while (it != Offsets.rend())
 		{
-			if (_fseeki64(m_pFile, *it, SEEK_SET))
-				throw CFileReadException(m_pFile);
+			infile.seekg(*it, std::ios_base::beg);
 
 			int BlockType	= ReadBlockType();
 			int PointsCount = ReadLEBInt();
@@ -64,8 +63,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				// читаем сжатые данные
 				BytesCount = ReadLEBInt();
 				std::unique_ptr<unsigned char[]> pReadBuffer = std::make_unique<unsigned char[]>(BytesCount + 1);
-				if (fread(pReadBuffer.get(), 1, BytesCount, m_pFile) != BytesCount)
-					throw CFileReadException(m_pFile);
+				infile.read(pReadBuffer.get(), BytesCount);
 
 				CRLECompressor rle;
 				// наихудший результат предиктивного сжатия - по байту на каждый double
@@ -73,7 +71,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				pBuffer = std::make_unique<BITWORD[]>(nDecomprSize / sizeof(BITWORD) + 1);
 				bool bRes = rle.Decompress(pReadBuffer.get(), BytesCount, static_cast<unsigned char*>(static_cast<void*>(pBuffer.get())), nDecomprSize);
 				if (!bRes)
-					throw CFileReadException(m_pFile);
+					throw CFileReadException();
 				BytesCount = static_cast<int>(nDecomprSize);
 			}
 				break;
@@ -81,17 +79,15 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 				// читаем несжатые данные
 				BytesCount = ReadLEBInt();
 				pBuffer = std::make_unique<BITWORD[]>(BytesCount / sizeof(BITWORD) + 1);
-				if (fread(pBuffer.get(), 1, BytesCount, m_pFile) != BytesCount)
-					throw CFileReadException(m_pFile);
+				infile.read(pBuffer.get(), BytesCount);
 				break;
 			case 2:		// блок SuperRLE
 				pBuffer = std::make_unique<BITWORD[]>(BytesCount / sizeof(BITWORD) + 1);
 				// читаем 1 байт сжатых предиктивным методом данных
-				if (fread(pBuffer.get(), 1, BytesCount, m_pFile) != BytesCount)
-					throw CFileReadException(m_pFile);
+				infile.read(pBuffer.get(), BytesCount);
 				break;
 			default:
-				throw CFileReadException(m_pFile);
+				throw CFileReadException(infile);
 				break;
 			}
 
@@ -110,13 +106,13 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex) const
 		}
 
 		if (nTimeIndex != m_PointsCount)
-			throw CFileReadException(m_pFile, fmt::format(CDFW2Messages::m_cszResultFilePointsCountMismatch, nIndex, nTimeIndex, m_PointsCount).c_str());
+			throw CFileReadException(infile, fmt::format(CDFW2Messages::m_cszResultFilePointsCountMismatch, nIndex, nTimeIndex, m_PointsCount).c_str());
 	}
 	return pResultBuffer;
 }
 
 
-ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR *cszVarName) const
+ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR *cszVarName)
 {
 
 	ptrdiff_t nVarIndex = -1;
@@ -136,7 +132,7 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, con
 }
 
 
-ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const
+ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex)
 {
 	
 	ChannelHeaderInfo findChannel;
@@ -150,18 +146,18 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptr
 		return -1;
 }
 
-std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const
+std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex)
 {
 	return ReadChannel(GetChannelIndex(eType,nId,nVarIndex));
 }
 
-std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName) const
+std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName)
 {
 	return ReadChannel(GetChannelIndex(eType, nId, cszVarName));
 }
 
 // строит список блоков данных канала от конца к началу
-void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset) const
+void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset)
 {
 	Offsets.clear();
 
@@ -174,8 +170,7 @@ void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 Last
 		// запоминаем смещение блока
 		Offsets.push_back(LastBlockOffset);
 		// встаем на смещение блока и читаем заголовок
-		if (_fseeki64(m_pFile, LastBlockOffset, SEEK_SET))
-			throw CFileReadException(m_pFile);
+		infile.seekg(LastBlockOffset, std::ios_base::beg);
 
 		int nBlockType = ReadBlockType();			// Block Type
 		ReadLEBInt();								// doubles count
@@ -198,8 +193,7 @@ void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 Last
 		
 
 		// перемещаемся на запись смещения предыдущего блока, используя известный размер блока
-		if (_fseeki64(m_pFile, Bytes, SEEK_CUR))
-			throw CFileReadException(m_pFile);
+		infile.seekg(Bytes, std::ios_base::cur);
 
 		// читаем смещение предыдущего блока
 		LastBlockOffset = OffsetFromCurrent();
@@ -232,8 +226,7 @@ void CResultFileReader::ReadModelData(std::unique_ptr<double[]>& pData, int nVar
 		INT64LIST::reverse_iterator it = Offsets.rbegin();
 		while (it != Offsets.rend())
 		{
-			if (_fseeki64(m_pFile, *it, SEEK_SET))
-				throw CFileReadException(m_pFile);
+			infile.seekg(*it, std::ios_base::beg);
 			ReadBlockType(); // Block Type
 			int PointsCount = ReadLEBInt();
 			ReadLEBInt(); // Bytes
@@ -241,13 +234,13 @@ void CResultFileReader::ReadModelData(std::unique_ptr<double[]>& pData, int nVar
 			{
 				ReadDouble(pData[nTimeIndex]);
 				if (++nTimeIndex > m_PointsCount)
-					throw CFileReadException(m_pFile);
+					throw CFileReadException(infile);
 			}
 			it++;
 		}
 	}
 	else
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 }
 
 void CResultFileReader::ReadDirectoryEntries()
@@ -256,9 +249,8 @@ void CResultFileReader::ReadDirectoryEntries()
 	ReadLEB(nDirEntries);
 	m_nDirectoryEntriesCount = static_cast<size_t>(nDirEntries);
 	m_pDirectoryEntries = std::make_unique<DataDirectoryEntry[]>(m_nDirectoryEntriesCount);
-	m_DirectoryOffset = _ftelli64(m_pFile);
-	if (fread_s(m_pDirectoryEntries.get(), m_nDirectoryEntriesCount * sizeof(struct DataDirectoryEntry), sizeof(struct DataDirectoryEntry), m_nDirectoryEntriesCount, m_pFile) != m_nDirectoryEntriesCount)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+	m_DirectoryOffset = infile.tellg();
+	infile.read(m_pDirectoryEntries.get(), m_nDirectoryEntriesCount * sizeof(struct DataDirectoryEntry));
 }
 
 void CResultFileReader::Reparent()
@@ -304,17 +296,13 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 
 	m_strFilePath = cszFilePath;
 
-	if (_tfopen_s(&m_pFile, cszFilePath, _T("rb+,ccs=UNICODE")))
-		throw CFileReadException(NULL, cszFilePath);
+	infile.open(cszFilePath, std::ios_base::in|std::ios_base::binary|std::ios_base::out);
 
 	size_t nCountSignature = sizeof(m_cszSignature);
 	char SignatureBuffer[sizeof(m_cszSignature)];
-
-	if (fread_s(SignatureBuffer, nCountSignature, sizeof(m_cszSignature[0]), nCountSignature, m_pFile) != nCountSignature)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
-
+	infile.read(SignatureBuffer, nCountSignature);
 	if (memcmp(m_cszSignature, SignatureBuffer, nCountSignature))
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 	ReadHeader(m_nVersion);
 	ReadDouble(m_dTimeCreated);
 	VARIANT vt;
@@ -323,7 +311,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	vt.date = m_dTimeCreated;
 
 	if(!SUCCEEDED(VariantChangeType(&vt, &vt, 0, VT_BSTR)))
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 
 	std::wstring strDateTime(vt.bstrVal, SysStringLen(vt.bstrVal));
 	_tcprintf(_T("\nCreated %s "), strDateTime.c_str());
@@ -342,7 +330,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 		ReadString(strVarName);			// название
 		// тип и название вводим в карту
 		if (!m_VarNameMap.insert(make_pair(VarType,strVarName)).second)
-			throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+			throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 	}
 
 	m_DevTypesCount = ReadLEBInt();
@@ -386,13 +374,13 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 			VarTypeInfo.nIndex = iVar;
 
 			if (!pDevTypeInfo->m_VarTypes.insert(VarTypeInfo).second)
-				throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+				throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 		}
 
 		pDevTypeInfo->AllocateData();
 
 		if (!m_DevTypeSet.insert(pDevTypeInfo).second) 
-			throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+			throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 
 		DeviceInstanceInfo *pDevInst = pDevTypeInfo->m_pDeviceInstances.get();
 
@@ -410,7 +398,6 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 			}
 
 			ReadString(pDevInst->Name);
-			_tcprintf(_T("Name %s "), pDevInst->Name.c_str());
 
 			for (int Ids = 0; Ids < pDevTypeInfo->DeviceParentIdsCount; Ids++)
 			{
@@ -453,12 +440,12 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 		}
 	}
 
-	__int64 nCompressedDataOffset = _ftelli64(m_pFile);
+	__int64 nCompressedDataOffset = infile.tellg();
 
 	if (nChannelHeadersOffset < 0)
-		throw CFileReadException(m_pFile);
-	if (_fseeki64(m_pFile, nChannelHeadersOffset, SEEK_SET))
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(infile);
+	infile.seekg(nChannelHeadersOffset, std::ios_base::beg);
+
 	unsigned __int64 ReadInt64;
 	ReadLEB(ReadInt64);
 	m_PointsCount = static_cast<size_t>(ReadInt64);
@@ -486,10 +473,9 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 
 
 	if (nSlowVarsOffset < 0)
-		throw CFileReadException(m_pFile);
-	if (_fseeki64(m_pFile, nSlowVarsOffset, SEEK_SET))
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
-
+		throw CFileReadException(infile);
+	infile.seekg(nSlowVarsOffset, std::ios_base::beg);
+		
 	m_dRatio = static_cast<double>(nSlowVarsOffset - nCompressedDataOffset) / sizeof(double) / m_ChannelsCount / m_PointsCount;
 
 	unsigned __int64 nSlowVarsCount = 0;
@@ -536,8 +522,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 
 	if (m_nCommentOffset > 0)
 	{
-		if (_fseeki64(m_pFile, m_nCommentOffset, SEEK_SET))
-			throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+		infile.seekg(m_nCommentOffset, std::ios_base::beg);
 		ReadString(m_strUserComment);
 	}
 
@@ -548,51 +533,46 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 
 void CResultFileReader::ReadString(std::wstring& String)
 {
-	if (m_pFile)
+	if (infile.is_open())
 	{
 		unsigned __int64 nLen64 = 0;
 		ReadLEB(nLen64);
 		if (nLen64 < 0xffff)
 		{
-			CUnicodeSCSU StringWriter(m_pFile);
+			CUnicodeSCSU StringWriter(infile);
 			StringWriter.ReadSCSU(String, static_cast<int>(nLen64));
 		}
 	}
 	else
-		throw CFileReadException(NULL);
+		throw CFileReadException();
 }
 
 void CResultFileReader::ReadDouble(double& Value)
 {
-	if (m_pFile)
-	{
-		if (fread_s(&Value, sizeof(double), sizeof(double), 1, m_pFile) != 1)
-			throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
-	}
+	if (infile.is_open())
+		infile.read(&Value, sizeof(double));
 	else
-		throw CFileReadException(NULL);
+		throw CFileReadException();
 }
 
-int CResultFileReader::ReadLEBInt() const
+int CResultFileReader::ReadLEBInt()
 {
 	unsigned __int64 IntToRead;
 	ReadLEB(IntToRead);
 	if (IntToRead > 0x7fffffff)	// для LEB разрешаем только 31-битное число 
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 	return static_cast<int>(IntToRead);
 }
-void CResultFileReader::ReadLEB(unsigned __int64 & nValue) const
+void CResultFileReader::ReadLEB(unsigned __int64 & nValue)
 {
-	if (m_pFile)
+	if (infile.is_open())
 	{
 		nValue = 0;
 		ptrdiff_t shift = 0;
 		unsigned char low;
 		do
 		{
-			if (fread_s(&low, sizeof(low), sizeof(low), 1, m_pFile) != 1)
-				throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
-
+			infile.read(&low, sizeof(low));
 			nValue |= ((static_cast<unsigned __int64>(low)& 0x7f) << shift);
 			shift += 7;
 			if (shift > 64)
@@ -600,18 +580,18 @@ void CResultFileReader::ReadLEB(unsigned __int64 & nValue) const
 		} while (low & 0x80);
 	}
 	else
-		throw CFileReadException(NULL);
+		throw CFileReadException(infile);
 }
 
 
-__int64 CResultFileReader::OffsetFromCurrent() const
+__int64 CResultFileReader::OffsetFromCurrent()
 {
-	__int64 nCurrentOffset = _ftelli64(m_pFile);
+	__int64 nCurrentOffset = infile.tellg();
 	unsigned __int64 nRelativeOffset = 0;
 	ReadLEB(nRelativeOffset);
 
 	if (static_cast<__int64>(nRelativeOffset) > nCurrentOffset)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 
 	if (nRelativeOffset)
 		nRelativeOffset = nCurrentOffset - nRelativeOffset;
@@ -624,11 +604,8 @@ void CResultFileReader::Close()
 	m_strFilePath.clear();
 	m_bHeaderLoaded = false;
 
-	if (m_pFile)
-	{
-		fclose(m_pFile);
-		m_pFile = NULL;
-	}
+	if (infile.is_open())
+		infile.close();
 
 	m_DevTypeSet.clear();
 	m_dRatio = -1.0;
@@ -638,7 +615,7 @@ void CResultFileReader::Close()
 double CResultFileReader::GetFileTime()
 {
 	if (!m_bHeaderLoaded)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	return m_dTimeCreated;
 }
@@ -646,7 +623,7 @@ double CResultFileReader::GetFileTime()
 const _TCHAR* CResultFileReader::GetFilePath()
 {
 	if (!m_bHeaderLoaded)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	return m_strFilePath.c_str();
 }
@@ -654,23 +631,23 @@ const _TCHAR* CResultFileReader::GetFilePath()
 const _TCHAR* CResultFileReader::GetComment()
 {
 	if (!m_bHeaderLoaded)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	return m_strComment.c_str();
 }
 
-size_t CResultFileReader::GetPointsCount() const
+size_t CResultFileReader::GetPointsCount()
 {
 	if (!m_bHeaderLoaded)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	return m_PointsCount;
 }
 
-size_t CResultFileReader::GetChannelsCount() const
+size_t CResultFileReader::GetChannelsCount()
 {
 	if (!m_bHeaderLoaded)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	return m_ChannelsCount;
 }
@@ -679,37 +656,37 @@ std::unique_ptr<double[]> CResultFileReader::GetTimeStep()
 {
 	std::unique_ptr<double[]> pResultBuffer = std::make_unique<double[]>(m_PointsCount);
 	if (!pResultBuffer)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
+		throw CFileReadException(infile, CDFW2Messages::m_cszNoMemory);
 	GetStep(pResultBuffer.get(), m_PointsCount);
 	return pResultBuffer;
 }
 
-void CResultFileReader::GetTimeScale(double *pTimeBuffer, size_t nPointsCount) const
+void CResultFileReader::GetTimeScale(double *pTimeBuffer, size_t nPointsCount)
 {
 	if (!m_bHeaderLoaded)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	if (nPointsCount <= m_PointsCount && nPointsCount >= 0)
 		std::copy(m_pTime.get(), m_pTime.get()+ nPointsCount, pTimeBuffer);
 	else
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
+		throw CFileReadException(infile, CDFW2Messages::m_cszNoMemory);
 }
 
-void CResultFileReader::GetStep(double *pStepBuffer, size_t nPointsCount) const
+void CResultFileReader::GetStep(double *pStepBuffer, size_t nPointsCount)
 {
 	if (!m_bHeaderLoaded)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 
 	if (nPointsCount <= m_PointsCount && nPointsCount >= 0)
 		std::copy(m_pStep.get(), m_pStep.get() + nPointsCount, pStepBuffer);
 	else
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszNoMemory);
+		throw CFileReadException(infile, CDFW2Messages::m_cszNoMemory);
 }
 
 int CResultFileReader::GetVersion()
 {
 	if (!m_bHeaderLoaded)
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
 	return m_nVersion;
 }
 
@@ -723,7 +700,7 @@ void CResultFileReader::DeviceInstanceInfo::SetId(ptrdiff_t nIdIndex, ptrdiff_t 
 		m_pDevType->pIds[nIndex * m_pDevType->DeviceIdsCount + nIdIndex] = nId;
 	}
 	else
-		throw CFileReadException(NULL, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
 ptrdiff_t CResultFileReader::DeviceInstanceInfo::GetId(ptrdiff_t nIdIndex) const
@@ -731,7 +708,7 @@ ptrdiff_t CResultFileReader::DeviceInstanceInfo::GetId(ptrdiff_t nIdIndex) const
 	if (nIdIndex >= 0 && nIdIndex < m_pDevType->DeviceIdsCount)
 		return m_pDevType->pIds[nIndex * m_pDevType->DeviceIdsCount + nIdIndex];
 	else
-		throw CFileReadException(NULL, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
 void CResultFileReader::DeviceInstanceInfo::SetParent(ptrdiff_t nParentIndex, ptrdiff_t eParentType, ptrdiff_t nParentId) 
@@ -744,7 +721,7 @@ void CResultFileReader::DeviceInstanceInfo::SetParent(ptrdiff_t nParentIndex, pt
 		pLink->m_nId = nParentId;
 	}
 	else
-		throw CFileReadException(NULL, CDFW2Messages::m_cszWrongResultFile);
+		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
 const CResultFileReader::DeviceLinkToParent* CResultFileReader::DeviceInstanceInfo::GetParent(ptrdiff_t nParentIndex) const
@@ -754,7 +731,7 @@ const CResultFileReader::DeviceLinkToParent* CResultFileReader::DeviceInstanceIn
 		if (nParentIndex >= 0 && nParentIndex < m_pDevType->DeviceParentIdsCount)
 			return m_pDevType->pLinks.get() + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
 		else
-			throw CFileReadException(NULL, CDFW2Messages::m_cszWrongResultFile);
+			throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 	}
 	else return nullptr;
 }
@@ -802,13 +779,13 @@ void CResultFileReader::DeviceTypeInfo::AllocateData()
 	}
 }
 
-const CResultFileReader::ChannelHeaderInfo* CResultFileReader::GetChannelHeaders() const
+const CResultFileReader::ChannelHeaderInfo* CResultFileReader::GetChannelHeaders()
 {
 	return m_pChannelHeaders.get();
 }
 
 // возвращает название единиц измерения по заданному типу
-const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType) const
+const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType)
 {
 	VARNAMEITRCONST it = m_VarNameMap.find(eUnitsType);
 	if (it != m_VarNameMap.end())
@@ -818,7 +795,7 @@ const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType) const
 }
 
 
-SAFEARRAY* CResultFileReader::CreateSafeArray(std::unique_ptr<double[]>& pChannelData) const
+SAFEARRAY* CResultFileReader::CreateSafeArray(std::unique_ptr<double[]>& pChannelData)
 {
 	SAFEARRAY *pSA = nullptr;
 	try
@@ -859,21 +836,12 @@ void CResultFileReader::SetUserComment(const _TCHAR* cszUserComment)
 {
 	if (m_nCommentOffset > 0 && m_nCommentDirectoryOffset > 0 && cszUserComment)
 	{
-		if (_fseeki64(m_pFile, m_nCommentOffset, SEEK_SET))
-			throw CFileWriteException(m_pFile);
+		infile.seekg(m_nCommentOffset, std::ios_base::beg);
 		WriteString(cszUserComment);
-
-		if(_chsize_s(_fileno(m_pFile), _ftelli64(m_pFile)))
-			throw CFileWriteException(m_pFile);
-
-		if (_fseeki64(m_pFile, m_nCommentDirectoryOffset, SEEK_SET))
-			throw CFileWriteException(m_pFile);
-		
+		infile.truncate();
+		infile.seekg(m_nCommentDirectoryOffset, std::ios_base::beg);
 		DataDirectoryEntry de = {2, m_nCommentOffset};
-
-		if (fwrite(&de, sizeof(DataDirectoryEntry), 1, m_pFile) != 1)
-			throw CFileWriteException(m_pFile);
-
+		infile.write(&de, sizeof(DataDirectoryEntry));
 		m_strUserComment = cszUserComment;
 	}
 }
@@ -884,13 +852,13 @@ double CResultFileReader::GetCompressionRatio()
 }
 
 // чтение типа блока из файла с проверкой корректности типа
-int CResultFileReader::ReadBlockType() const
+int CResultFileReader::ReadBlockType()
 {
 	int nBlockType = ReadLEBInt();
 	if (nBlockType >= 0 && nBlockType <= 2)
 		return nBlockType;
 	else
-		throw CFileReadException(m_pFile, CDFW2Messages::m_cszResultFileWrongCompressedBlockType);
+		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileWrongCompressedBlockType);
 }
 
 

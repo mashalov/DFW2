@@ -15,7 +15,7 @@ namespace DFW2
 	class CResultFile
 	{
 	protected:
-		FILE *m_pFile = NULL;
+		CStreamedFile infile;
 	public:
 		void WriteLEB(unsigned __int64 nValue);
 		void WriteString(std::wstring_view cszString);
@@ -107,7 +107,7 @@ namespace DFW2
 			std::unique_ptr<ptrdiff_t[]> pIds;
 			std::unique_ptr<DeviceLinkToParent[]> pLinks;
 			std::unique_ptr<DeviceInstanceInfo[]> m_pDeviceInstances;
-			const CResultFileReader *m_pFileReader = nullptr;
+			CResultFileReader *m_pFileReader = nullptr;
 			DEVICESSET m_DevSet;
 			std::wstring strDevTypeName;
 
@@ -169,10 +169,10 @@ namespace DFW2
 		size_t m_PointsCount;
 		size_t m_ChannelsCount;
 		typedef std::list<__int64> INT64LIST;
-		int ReadBlockType() const;
-		void GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset) const;
+		int ReadBlockType();
+		void GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset);
 		void ReadModelData(std::unique_ptr<double[]>& pData, int nVarIndex);
-		__int64 OffsetFromCurrent() const;
+		__int64 OffsetFromCurrent();
 		std::wstring m_strFilePath;
 		std::wstring m_strComment;
 		bool m_bHeaderLoaded = false;
@@ -200,30 +200,30 @@ namespace DFW2
 		void OpenFile(const _TCHAR *cszFilePath);
 		void Reparent();
 		void ReadHeader(int& Version);
-		void ReadLEB(unsigned __int64& nValue) const;
-		int ReadLEBInt() const;
+		void ReadLEB(unsigned __int64& nValue);
+		int ReadLEBInt();
 		void ReadString(std::wstring& String);
 		void ReadDouble(double& Value);
 		void ReadDirectoryEntries();
-		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName) const;
-		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const;
-		std::unique_ptr<double[]> ReadChannel(ptrdiff_t nIndex) const;
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName);
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t nIndex);
 		std::unique_ptr<double[]> GetTimeStep();
-		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex) const;
-		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR *cszVarName) const;
-		SAFEARRAY* CreateSafeArray(std::unique_ptr<double[]>& pChannelData) const;
+		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
+		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR *cszVarName);
+		SAFEARRAY* CreateSafeArray(std::unique_ptr<double[]>& pChannelData);
 		double GetFileTime();
 		const _TCHAR* GetFilePath();
 		const _TCHAR* GetComment();
-		size_t GetPointsCount() const;
-		size_t GetChannelsCount() const;
-		void GetTimeScale(double *pTimeBuffer, size_t nPointsCount) const;
-		void GetStep(double *pStepBuffer, size_t nPointsCount) const;
+		size_t GetPointsCount();
+		size_t GetChannelsCount();
+		void GetTimeScale(double *pTimeBuffer, size_t nPointsCount);
+		void GetStep(double *pStepBuffer, size_t nPointsCount);
 		void Close();
 		int GetVersion();
 		const DEVTYPESET& GetTypesSet() const;
-		const ChannelHeaderInfo* GetChannelHeaders() const;
-		const _TCHAR* GetUnitsName(ptrdiff_t eUnitsType) const;
+		const ChannelHeaderInfo* GetChannelHeaders();
+		const _TCHAR* GetUnitsName(ptrdiff_t eUnitsType);
 		const CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
 		const _TCHAR* GetUserComment();
 		void SetUserComment(const _TCHAR* cszUserComment);

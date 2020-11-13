@@ -266,6 +266,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
       </PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="FileExceptions.cpp" />
     <ClCompile Include="Result.cpp" />
     <ClCompile Include="ResultFileReader.cpp" />
     <ClCompile Include="ResultFileWriter.cpp" />
@@ -303,7 +304,6 @@
   <ItemGroup>
     <ClInclude Include="..\DFW2\cex.h" />
     <ClInclude Include="..\DFW2\DeviceTypes.h" />
-    <ClInclude Include="..\DFW2\FileExceptions.h" />
     <ClInclude Include="..\DFW2\Header.h" />
     <ClInclude Include="..\DFW2\HRTimer.h" />
     <ClInclude Include="..\DFW2\Messages.h" />
@@ -316,6 +316,8 @@
     <ClInclude Include="DeviceTypes.h" />
     <ClInclude Include="DeviceTypeWrite.h" />
     <ClInclude Include="dllmain.h" />
+    <ClInclude Include="FileExceptions.h" />
+    <ClInclude Include="Filewrapper.h" />
     <ClInclude Include="GenericCollection.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Result.h" />

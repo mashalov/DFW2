@@ -10,8 +10,9 @@ class CCSVWriter
 {
 protected:
 
-	FILE *pCSVFile;
-	FILE *pCSVOut;
+	CStreamedFile CSVFile;
+	CStreamedFile CSVOut;
+
 	struct ChannelLink
 	{
 		const CResultFileReader::DeviceInstanceInfo *pDevice;

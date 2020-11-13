@@ -97,6 +97,9 @@
     <ClCompile Include="..\fmt\src\format.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="FileExceptions.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stdafx.h">
@@ -156,9 +159,6 @@
     <ClInclude Include="..\DFW2\DeviceTypes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="..\DFW2\FileExceptions.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\DFW2\Header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -196,6 +196,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="RLECompressor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Filewrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="FileExceptions.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

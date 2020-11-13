@@ -62,7 +62,7 @@ STDMETHODIMP CVariable::get_UnitsName(BSTR* UnitsName)
 	HRESULT hRes = E_INVALIDARG;
 	if (UnitsName && m_pVariableInfo && m_pDeviceInstanceInfo && m_pDeviceInstanceInfo->m_pDevType)
 	{
-		const CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
+		CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
 		*UnitsName = SysAllocString(pFileReader->GetUnitsName(m_pVariableInfo->eUnits));
 		hRes = S_OK;
 	}
@@ -109,7 +109,7 @@ STDMETHODIMP CVariable::get_Plot(VARIANT* Plot)
 		m_pDeviceInstanceInfo->m_pDevType &&
 		m_pDeviceInstanceInfo->m_pDevType->m_pFileReader)
 	{
-		const CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
+		CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
 		if (Plot && SUCCEEDED(VariantClear(Plot)))
 		{
 			try
@@ -138,7 +138,7 @@ STDMETHODIMP CVariable::get_ChannelIndex(LONG* Index)
 {
 	HRESULT hRes = S_OK;
 
-	const CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
+	CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
 
 	if (Index && m_pVariableInfo)
 		*Index = static_cast<LONG>(pFileReader->GetChannelIndex(m_pDeviceInstanceInfo->m_pDevType->eDeviceType, m_pDeviceInstanceInfo->GetId(0), m_pVariableInfo->nIndex));

@@ -69,7 +69,7 @@ const _TCHAR* CDFW2Messages::m_cszWrongSingleLinkIndex = _T("Попытка ис
 const _TCHAR* CDFW2Messages::m_cszDeviceAlreadyLinked = _T("Устройство {} не может быть связано с устройством {}, так как уже связано с устройством {}");
 const _TCHAR* CDFW2Messages::m_cszDeviceForDeviceNotFound = _T("Устройство Id={} не найдено для устройства {}");
 const _TCHAR* CDFW2Messages::m_cszIncompatibleLinkModes = _T("Несовместимые режимы связи для устройств");
-const _TCHAR* CDFW2Messages::m_cszFilePostion = _T(". Позиция файла {}");
+const _TCHAR* CDFW2Messages::m_cszFilePostion = _T(" Позиция файла: {}. ");
 const _TCHAR* CDFW2Messages::m_cszFileReadError = _T("Ошибка чтения файла.");
 const _TCHAR* CDFW2Messages::m_cszFileWriteError = _T("Ошибка записи файла.");
 const _TCHAR* CDFW2Messages::m_cszResultFileHasNewerVersion = _T("Файл результатов имеет более новую версию ({}) по сравнению с версией загрузчика результатов ({}). ");

@@ -110,13 +110,13 @@ void CUnicodeSCSU::WriteSCSUSymbol(int Symbol)
 
 void CUnicodeSCSU::WriteSCSU(std::wstring_view String)
 {
-	if (m_pFile)
+	if (file.is_open())
 	{
 		for(const auto& sym : String)
 			WriteSCSUSymbol(static_cast<int>(sym));
 	}
 	else
-		throw CFileWriteException(NULL);
+		throw CFileWriteException();
 }
 
 int CUnicodeSCSU::ReadSCSUSymbol()
@@ -183,21 +183,21 @@ int CUnicodeSCSU::ReadSCSUSymbol()
 	}
 
 	if (Symbol > 0x10ffff)
-		throw CFileReadException(m_pFile);
+		throw CFileReadException(file);
 
 	return Symbol;
 }
 
 void CUnicodeSCSU::ReadSCSU(std::wstring& String, size_t nLen)
 {
-	if (m_pFile)
+	if (file.is_open())
 	{
 		String.resize(nLen, _T('\x0'));
 		for (unsigned int nSymbol = 0; nSymbol < nLen; nSymbol++)
 			String[nSymbol] = ReadSCSUSymbol();
 	}
 	else
-		throw CFileWriteException(NULL);
+		throw CFileWriteException();
 }
 
 
@@ -216,7 +216,7 @@ int CUnicodeSCSU::getWindow(int Symbol)
 	return -1;
 }
 
-CUnicodeSCSU::CUnicodeSCSU(FILE *pFile) :	m_pFile(pFile),
+CUnicodeSCSU::CUnicodeSCSU(CStreamedFile& File) :	file(File),
 											windowState(0),
 											IsUnicodeMode(false)
 {
@@ -225,15 +225,15 @@ CUnicodeSCSU::CUnicodeSCSU(FILE *pFile) :	m_pFile(pFile),
 
 void CUnicodeSCSU::Out(unsigned char Symbol)
 {
-	if (!m_pFile) throw CFileWriteException(NULL);
-	if (fwrite(&Symbol, sizeof(unsigned char), 1, m_pFile) != 1) throw CFileWriteException(m_pFile);
+	if (!file.is_open()) throw CFileWriteException();
+	file.write(&Symbol, sizeof(unsigned char));
 }
 
 unsigned char CUnicodeSCSU::In()
 {
-	if (!m_pFile) throw CFileWriteException(NULL);
+	if (!file.is_open()) throw CFileWriteException();
 	unsigned char Symbol = '\x0';
-	if (fread(&Symbol, sizeof(unsigned char), 1, m_pFile) != 1) throw CFileWriteException(m_pFile);
+	file.read(&Symbol, sizeof(unsigned char));
 	return Symbol;
 }
 
