@@ -1,0 +1,30 @@
+main
+{	
+	a = x^2*2 - y^5*4 + x^3*5 + x*4 + y*y^1 + x*y + 30 - y + y/x
+	m = 5 + k + f + sin(d) + z + a
+	k = (a+1)^2 + (b+1)^2 - 2*(a+1)*(b+1)
+	
+	x*3 - 2*y*x*sin(-x*y) - 4* z = 0
+	y = z + 10 
+	z = 4 + m
+	m = 3
+
+	v = ((a-vre)^2 + vim^2)^0.5
+
+}
+init
+{	
+	//k = -(a^2 -2*a*b + b^2) + mo
+	//u = 2*c*c*3*a/b/b*-f^3 + x
+	//d = q -p^2 - b*a
+	//g = (a+b)*(a+b)*(a-b)*(a-b) + x
+	//z = m*a*b*c + q*a*d*e*b + g
+	//mo = 2/b*b - 2
+//	x = a + a + a - a*b - a - a + d*k
+	
+	
+	x = 2*y*x - 4* z
+	y = z + 10 
+	z = 4 + m
+	m = 3
+}

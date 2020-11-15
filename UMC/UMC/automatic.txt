@@ -1,0 +1,30 @@
+main
+{
+S1 = starter(5*exp(-t/10)*sin(t*15), node[1018].V)
+S2 = starter(V+S1, vetv[1214,1114].Pb)
+S3 = starter(V, vetv[1214,1114].Qb)
+S4 = starter(V+10.15, node[1018].V)
+S5 = starter(BASE, node[1018].V)
+S13 = starter(sin(t*15), node[1018].V)
+S12 = starter(S13+0.5+S17+0.99, node[1018].V)
+S17 = starter(2*sin(t*20), node[1018].V)
+S18 = starter(S12+S17, node[1018].V)
+S19 = starter(S13+S17, node[1018].V)
+L1 = sqrt(3*S2^2+S3^2)-116
+LT1 = relay(L1, 0.0, 0)
+L2 = 1+S1+S2+55
+LT2 = relay(L2, 0.0, 0)
+L3 = limit(L2,-5,5)
+LT3 = relay(L3, 0.0, 0)
+L5 = deadband(abs(S1),3.5)
+LT5 = relay(L5, 0.0, 0.1)
+L6 = expand(LT5,0.03)
+LT6 = relay(L6, 0.0, 0.02)
+L7 = shrink(L6,0.02)
+LT7 = relay(L7, 0.0, 0.02)
+L8 = expand(L7,0.04)
+LT8 = relay(L8, 0.0, 0.02)
+A1 = action(105 + LT1, vetv[1111,1646,2].sta)
+A2 = action(V, vetv[1111,1648].Pb)
+A3 = action(0, vetv[1111,1648].sta)
+}

@@ -261,3 +261,7 @@ __pycache__/
 *.pyc
 *.rar
 /DFW2/VTune Profiler Results/DFW2
+
+*.tlog
+*.recipe
+*.idb

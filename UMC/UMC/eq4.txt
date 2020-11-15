@@ -1,0 +1,15 @@
+variables
+{
+	const Trv, T1u, Tbch, T1if, Tf, T1f
+	const Ufmin, Ufmax
+	const Ku, K1u, K1if, Kf, K1f
+	const Xc
+	external Vref, Su, Vg, Ig, If
+}
+main
+{	
+	Uf = laglim(Usum, Trv, Ufmin, Ufmax)
+	Usum = Ku * Vc + K1u * derlag(Vc, T1u) +  lag(Vs, Tbch) - K1if * derlag(If,T1if)
+	Vs = Kf * Tf * derlag(Su,Tf) + K1f * derlag(Su,T1f)
+	Vc = Vref - Vg + Ig * Xc
+}

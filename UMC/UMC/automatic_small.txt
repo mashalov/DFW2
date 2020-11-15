@@ -1,0 +1,17 @@
+main
+{
+L1 = 1
+LT1 = relay(L1, 0.0, 0.55)
+L2 = LT1
+LT2 = relay(L2, 0.0, 0.15)
+L3 = 1
+LT3 = relay(L3, 0.0, 0.5)
+L4 = LT3
+LT4 = relay(L4, 0.0, 0.1)
+A3 = action(0, vetv[3673,3904].sta)
+A4 = action(1, vetv[3673,3904].sta)
+A5 = action(0, node[1114].r)
+A6 = action(1E-7, node[1114].x)
+A7 = action(0, node[1114].gsh)
+A8 = action(0, node[1114].bsh)
+}

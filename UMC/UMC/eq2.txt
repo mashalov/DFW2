@@ -1,0 +1,31 @@
+variables
+{
+	const d,a
+	//external k,x, u
+}
+main
+{	
+	S1 = starter(V*5 + 30, vetv[1223,3434,0].Qb)
+	S2 = starter(abs(BASE) + S1, vetv[1223,3434,0].Qb)
+	S3 = starter(V+1, vetv[1223,3434,0].Qb)
+	S4 = starter(BASE + S3, vetv[1223,3434,0].Qb)
+	L1 = 1
+	//L1 = L2 //в этом случае уравнение лишнее из-за разрешения через relay
+	LT1 = relay(L1, 0.0, a + 0.55)
+	L2 = sin(d) + cos(abs(L1)-abs(L1))
+	LT2 = relay(L2, 0.0, 0.15)
+	L3 = 1
+	LT3 = relay(L3, 0.0, 0.5)
+	L4 = LT3
+	LT4 = relay(L4, 0.0, 0.1)
+	A3 = 0
+	A4 = 1
+	A5 = 0
+	A6 = 1E-7
+	A7 = 0
+	A8 = 0
+	
+//		i + j + f = 120
+//	2*i + 2*j + 2*f = 150
+//	3*i + 3*j + 3*f = 350
+}
