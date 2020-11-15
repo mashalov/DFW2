@@ -72,9 +72,6 @@
     <ClCompile Include="ASTTrigonometry.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="AntlrCPP.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="EquationsOps.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -115,6 +112,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="ASTNodeLogicOps.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="UMC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

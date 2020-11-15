@@ -77,30 +77,12 @@ void CAutomatic::Clean()
 
 CAutomatic::~CAutomatic()
 {
-	m_spAutomaticCompiler.Release();
 	CoFreeUnusedLibraries();
 	Clean();
 }
 
-
-bool CAutomatic::PrepareCompiler()
+void CAutomatic::CompileModels()
 {
-	bool bRes = false;
-
-	if (SUCCEEDED(m_spAutomaticCompiler.CreateInstance(CLSID_AutomaticCompiler)))
-	{
-		bRes = true;
-	}
-	else
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszNoCompilerDLL);
-
-	return bRes;
-}
-
-bool CAutomatic::CompileModels()
-{
-	bool bRes = false;
-
 	std::wofstream src;
 	src.open(_T("c:\\tmp\\auto.cmp"), std::fstream::out);
 	if (src.is_open())
@@ -108,7 +90,7 @@ bool CAutomatic::CompileModels()
 		src << _T("main\n{\n") << source.str() << _T("}\n");
 		src.close();
 
-		auto pCompiler = std::make_shared<CCompilerDLL>(_T("AntlrCPP.dll"), "CompilerFactory");
+		auto pCompiler = std::make_shared<CCompilerDLL>(_T("UMC.dll"), "CompilerFactory");
 		
 		std::stringstream Sourceutf8stream;
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
@@ -161,51 +143,6 @@ bool CAutomatic::CompileModels()
 		pathAutomaticDLL = Compiler->GetProperty("DllLibraryPath");
 		pathAutomaticDLL.append(Compiler->GetProperty("ProjectName")).replace_extension(".dll");
 	}
-
-	if (m_spAutomaticCompiler != nullptr)
-	{
-		try
-		{
-			m_spAutomaticCompiler->Compile();
-			bRes = true;
-		}
-		catch (_com_error& ex)
-		{
-			_bstr_t desc(ex.Description());
-			std::wstring out;
-			if (desc.length())
-				out = static_cast<const _TCHAR*>(desc);
-
-
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(_T("{}"), out));
-			variant_t vtLog = m_spAutomaticCompiler->Log;
-			if ( vtLog.vt == (VT_BSTR | VT_ARRAY) )
-			{
-				LONG LBound, UBound;
-				if (SafeArrayGetDim(vtLog.parray) == 1 &&
-					SUCCEEDED(SafeArrayGetLBound(vtLog.parray, 1, &LBound)) &&
-					SUCCEEDED(SafeArrayGetUBound(vtLog.parray, 1, &UBound)))
-				{
-					BSTR *ppData;
-					if (SUCCEEDED(SafeArrayAccessData(vtLog.parray, (void**)&ppData)))
-					{
-						while (LBound <= UBound)
-						{
-							m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, static_cast<const _TCHAR*>(_bstr_t(*ppData)));
-							LBound++;
-							ppData++;
-						}
-						SafeArrayUnaccessData(vtLog.parray);
-					}
-				}
-			}
-			vtLog.Clear();
-		}
-	}
-	else
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszNoCompilerDLL);
-
-	return bRes;
 }
 
 
@@ -220,23 +157,13 @@ bool CAutomatic::AddStarter(long Type,
 							std::wstring_view ObjectKey,
 						    std::wstring_view ObjectProp)
 {
-	bool bRes = false;
-
 	source << fmt::format(_T("S{} = starter({}, {}[{}].{})\n"), Id, 
 		Expression.empty() ? _T("V") : Expression,
 		ObjectClass, 
 		ObjectKey, 
 		ObjectProp);
 
-	if (m_spAutomaticCompiler != nullptr)
-	{
-		m_spAutomaticCompiler->AddStarter(Type,Id, COMSTR(Name), COMSTR(Expression), LinkType, COMSTR(ObjectClass), COMSTR(ObjectKey), COMSTR(ObjectProp));
-		bRes = true;
-	}
-	else
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszNoCompilerDLL);
-
-	return bRes;
+	return true;
 }
 
 
@@ -248,22 +175,13 @@ bool CAutomatic::AddLogic(long Type,
 						  std::wstring_view DelayExpression,
 						  long OutputMode)
 {
-	bool bRes = false;
-
 	source << fmt::format(_T("L{} = {}\n"), Id, Expression);
 	source << fmt::format(_T("LT{} = relay(L{}, 0.0, {})\n"), Id, Id, DelayExpression.empty() ? _T("0") : DelayExpression);
 
-	if (m_spAutomaticCompiler != nullptr)
-	{
-		m_spAutomaticCompiler->AddLogic(Type, Id, COMSTR(Name), COMSTR(Expression), COMSTR(Actions), COMSTR(DelayExpression), OutputMode);
-		m_lstLogics.push_back(std::make_unique<CAutomaticLogic>(Type, Id, Name, Actions, OutputMode));
-		m_mapLogics.insert(std::make_pair(Id, m_lstLogics.back().get()));
-		bRes = true;
-	}
-	else
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszNoCompilerDLL);
+	m_lstLogics.push_back(std::make_unique<CAutomaticLogic>(Type, Id, Name, Actions, OutputMode));
+	m_mapLogics.insert(std::make_pair(Id, m_lstLogics.back().get()));
 
-	return bRes;
+	return true;
 }
 
 bool CAutomatic::AddAction(long Type,
@@ -278,28 +196,15 @@ bool CAutomatic::AddAction(long Type,
 						   long OutputMode,
 						   long RunsCount)
 {
-	bool bRes = false;
-
 	source << fmt::format(_T("A{} = action({}, {}[{}].{})\n"), Id,
 		Expression.empty() ? _T("V") : Expression,
 		ObjectClass,
 		ObjectKey,
 		ObjectProp);
 
-	if (m_spAutomaticCompiler != nullptr)
-	{
-		m_spAutomaticCompiler->AddAction(Type, Id, COMSTR(Name), 
-												   COMSTR(Expression), 
-											       LinkType, COMSTR(ObjectClass), COMSTR(ObjectKey), 
-												   COMSTR(ObjectProp), ActionGroup, OutputMode, RunsCount);
-		m_lstActions.push_back(std::make_unique<CAutomaticAction>(Type, Id, Name, LinkType, ObjectClass, ObjectKey, ObjectProp, ActionGroup, OutputMode, RunsCount));
-		m_AutoActionGroups[ActionGroup].push_back(m_lstActions.back().get());
-		bRes = true;
-	}
-	else
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszNoCompilerDLL);
-
-	return bRes;
+	m_lstActions.push_back(std::make_unique<CAutomaticAction>(Type, Id, Name, LinkType, ObjectClass, ObjectKey, ObjectProp, ActionGroup, OutputMode, RunsCount));
+	m_AutoActionGroups[ActionGroup].push_back(m_lstActions.back().get());
+	return true;
 }
 
 void CAutomatic::Init()

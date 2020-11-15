@@ -282,9 +282,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 
-	if (!Network.Automatic().PrepareCompiler())
-		return;
-
 	ITablesPtr spTables = m_spRastr->Tables;
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
 	IColsPtr spASCols = spAutoStarters->Cols;
@@ -359,16 +356,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 			spAAORunsCount->GetZ(i).lVal);
 	}
 
-	if (!Network.Automatic().CompileModels())
-		return;
+	Network.Automatic().CompileModels();
 
 	Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetDLLPath().generic_wstring());
 	CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[1];
 	Network.AutomaticDevice.AddDevices(pCustomDevices, 1);
 	Network.AutomaticDevice.BuildStructure();
-	
-	
-
 	
 	if (!Network.CustomDevice.ConnectDLL(_T("DeviceDLL.dll")))
 		return;

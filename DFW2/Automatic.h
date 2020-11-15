@@ -4,22 +4,7 @@
 #include "Relay.h"
 #include "DLLWrapper.h"
 
-
-#ifdef _DEBUG
-#ifdef _WIN64
-#include "x64\debug\Compiler.tlh"
-#else
-#include "debug\Compiler.tlh"
-#endif
-#else
-#ifdef _WIN64
-#include "x64\release\Compiler.tlh"
-#else
-#include "release\Compiler.tlh"
-#endif
-#endif
-
-#include "..\..\AntlrCPP\AntlrCPP\ICompiler.h"
+#include "..\UMC\UMC\ICompiler.h"
 
 namespace DFW2
 {
@@ -131,7 +116,6 @@ namespace DFW2
 	class CAutomatic
 	{
 	protected:
-		IAutomaticCompilerPtr m_spAutomaticCompiler;
 		CDynaModel *m_pDynaModel;
 		AUTOITEMS m_lstActions;
 		AUTOITEMS m_lstLogics;
@@ -140,7 +124,6 @@ namespace DFW2
 		std::wostringstream source;
 		std::filesystem::path pathAutomaticDLL;
 	public:
-		bool PrepareCompiler();
 
 		bool AddStarter(long Type, 
 						long Id, 
@@ -172,7 +155,7 @@ namespace DFW2
 					   long RunsCount);
 
 		const std::filesystem::path& GetDLLPath() { return pathAutomaticDLL; }
-		bool CompileModels();
+		void CompileModels();
 		CAutomatic(CDynaModel *pDynaModel);
 		virtual ~CAutomatic();
 		void Init();

@@ -38,8 +38,9 @@
     <VCProjectVersion>16.0</VCProjectVersion>
     <Keyword>Win32Proj</Keyword>
     <ProjectGuid>{1542d340-284b-4d66-989e-f51d98f2e115}</ProjectGuid>
-    <RootNamespace>AntlrCPP</RootNamespace>
+    <RootNamespace>UMC</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>UMC</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -326,7 +327,7 @@
     <ClCompile Include="..\..\fmt\src\format.cc" />
     <ClCompile Include="AntlrASTErrorListener.cpp" />
     <ClCompile Include="AntlrASTVisitor.cpp" />
-    <ClCompile Include="AntlrCPP.cpp" />
+    <ClCompile Include="UMC.cpp" />
     <ClCompile Include="ASTNodeDeadBand.cpp" />
     <ClCompile Include="ASTEquation.cpp" />
     <ClCompile Include="ASTNodeDerLag.cpp" />
