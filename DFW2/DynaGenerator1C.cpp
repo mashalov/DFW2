@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaNode.h"
 #include "DynaModel.h"
 #include "DynaExciterBase.h"
@@ -428,8 +428,8 @@ void CDynaGenerator1C::IfromDQ()
 }
 
 
-// ������ � ������� ���� ��������� ��� ��������������
-// �� dq � ri
+// вводит в матрицу блок уравнении для преобразования
+// из dq в ri
 bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
 {
 
@@ -456,8 +456,8 @@ bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
 	return true;
 }
 
-// ������ � ������ ����� ��������� ��� �������������� 
-// �� dq � ri
+// вводит в правую часть уравнения для преобразования 
+// из dq в ri
 bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
 {
 	double co(cos(Delta)), si(sin(Delta));
@@ -474,7 +474,14 @@ VariableIndexRefVec& CDynaGenerator1C::GetVariables(VariableIndexRefVec& ChildVe
 
 void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
 {
+	// обновляем сериализатор базового класса
 	CDynaGeneratorMotion::UpdateSerializer(Serializer);
+	// добавляем свойства модели одноконтурной модели генератора в ЭДС
+	Serializer->AddProperty(_T("Td0"), Td01, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(_T("xd"), xd, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(_T("r"), r, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszExciterId, m_ExciterId);
+	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState(_T("zsq"), zsq, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(_T("Egen"), m_Egen, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(_T("Vd"), Vd, eVARUNITS::VARUNIT_KVOLTS);
@@ -483,13 +490,6 @@ void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState(_T("Iqs"), Iq, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqe, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
-
-	Serializer->AddProperty(_T("Td0"), Td01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(_T("xd"), xd, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(_T("r"), r, eVARUNITS::VARUNIT_OHM);
-
-	Serializer->AddProperty(m_cszExciterId, m_ExciterId);
-
 	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszSnom, Snom, eVARUNITS::VARUNIT_MVA);
 	Serializer->AddState(m_cszQnom, Qnom, eVARUNITS::VARUNIT_MVAR);

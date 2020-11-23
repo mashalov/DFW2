@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "DeviceContainer.h"
 #include "DynaNode.h"
 #include "DynaGeneratorMotion.h"
@@ -36,8 +36,8 @@ namespace DFW2
 			V_LAST
 		};
 
-		cplx m_Egen; // эквивалентная ЭДС генератора для учета явнополюсности в стартовом методе
-					 // используется всеми dq генераторами
+		cplx m_Egen; // СЌРєРІРёРІР°Р»РµРЅС‚РЅР°СЏ Р­Р”РЎ РіРµРЅРµСЂР°С‚РѕСЂР° РґР»СЏ СѓС‡РµС‚Р° СЏРІРЅРѕРїРѕР»СЋСЃРЅРѕСЃС‚Рё РІ СЃС‚Р°СЂС‚РѕРІРѕРј РјРµС‚РѕРґРµ
+					 // РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІСЃРµРјРё dq РіРµРЅРµСЂР°С‚РѕСЂР°РјРё
 
 		VariableIndex Vd, Vq, Id, Iq, Eq;
 		VariableIndexExternalOptional ExtEqe;

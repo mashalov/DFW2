@@ -289,7 +289,9 @@ namespace DFW2
 		virtual void StoreStates();
 		virtual void RestoreStates();
 
+		// возвращает сериализатор для данного типа устройств
 		SerializerPtr CDevice::GetSerializer();
+		// обновляет сериализатор для данного типа устройств
 		virtual void UpdateSerializer(SerializerPtr& Serializer);
 
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2);

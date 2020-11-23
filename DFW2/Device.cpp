@@ -1105,20 +1105,28 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 	return eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 }
 
-
+// возвращает сериализатор для данного типа устройств
 SerializerPtr CDevice::GetSerializer()
 {
+	// создаем сериализатор
 	SerializerPtr extSerializer;
+	// заполняем сериализатор данными из этого устройства
 	UpdateSerializer(extSerializer);
 	return extSerializer;
 }
 
+// идея UpdateSerializer состоит в том, что
+// для данного экземпляра устройства функция заполняет
+// переданный Serializer значениями, необходимыми устройству 
+// и связывает значения с внутренними переменными устройства
+
 void CDevice::UpdateSerializer(SerializerPtr& Serializer)
 {
+	// если сериализатор не создан на указателе
 	if (!Serializer)
-		Serializer = std::make_unique<CSerializerBase>(this);
+		Serializer = std::make_unique<CSerializerBase>(this);	// создаем его
 	else
-		Serializer->BeginUpdate(this);
+		Serializer->BeginUpdate(this);	// если уже есть - начинаем обновление с данного устройства
 }
 
 VariableIndexRefVec& CDevice::GetVariables(VariableIndexRefVec& ChildVec)

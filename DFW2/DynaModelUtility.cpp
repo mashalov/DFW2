@@ -573,41 +573,58 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
 }
 
-
+// сериализация в xml
 void CDynaModel::Serialize()
 {
+	// создаем xml-сериализатор
 	CSerializerXML xmlSerializer;
 	xmlSerializer.CreateNewSerialization();
 
+	// создаем базовый сериализатор для параметров расчета
 	SerializerPtr SerializerParameteres = std::make_unique<CSerializerBase>();
+	// сериализуем параметры расчета в базовый сериализатор
 	m_Parameters.UpdateSerializer(SerializerParameteres);
+	// сериализуем в xml метаинформацию и значения параметров
 	xmlSerializer.SerializeClassMeta(SerializerParameteres);
 	xmlSerializer.SerializeClass(SerializerParameteres);
 
+	// создаем базовый сериализатор для глобальных переменных расчета
+	// и сериализуем их в xml аналогично параметрам расчета
 	SerializerPtr SerializerStepControl = std::make_unique<CSerializerBase>();
 	sc.UpdateSerializer(SerializerStepControl);
 	xmlSerializer.SerializeClassMeta(SerializerStepControl);
 	xmlSerializer.SerializeClass(SerializerStepControl);
 
+	// обходим контейнеры устройств и регистрируем перечисление типов устройств
 	for (auto&& container : m_DeviceContainers)
 		xmlSerializer.AddDeviceTypeDescription(container->GetType(), container->m_ContainerProps.GetSystemClassName());
 
+	// обходим контейнеры снова
 	for (auto&& container : m_DeviceContainers)
 	{
 		if (container->Count())
 		{
+			// если контейнер не пустой
+			// достаем сериализатор из первого устройства контейнера
 			auto& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
+			// пропускаем контейнер, если в сериализаторе его устройств нет значений
 			if (!serializer->ValuesCount())
 				continue;
 
+			// сериализуем метаданные класса устройств из контейнера
 			xmlSerializer.SerializeClassMeta(serializer);
+
+			// обходим устройства в контейнере
 			for (auto&& device : *container)
 			{
+				// обновляем сериализатор устройства
 				device->UpdateSerializer(serializer);
+				// и сериализуем его в xml
 				xmlSerializer.SerializeClass(serializer);
 			}
 		}
 	}
+	// завершаем сериализацию в xml
 	xmlSerializer.Commit();
 }
 

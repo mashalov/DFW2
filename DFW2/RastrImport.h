@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DynaModel.h"
 #include "Automatic.h"
 
@@ -43,13 +43,13 @@ namespace DFW2
 		double m_k1;
 		double m_k2;
 
-		// �������� ���������� ��������� �� ����������
+		// оператор сортировки сегментов по напряжению
 		bool operator < (const CSLCPolynom& rhs) const
 		{
 			return (m_kV < rhs.m_kV);
 		}
 
-		// ��������� �������� ��� � �������� ��������� �� �������������
+		// сравнение сегмента СХН с заданным сегментом по коэффициентам
 		bool CompareWith(const CSLCPolynom& rhs) const
 		{
 			return (Equal(m_k0,rhs.m_k0) && Equal(m_k1,rhs.m_k1) && Equal(m_k2,rhs.m_k2));
@@ -118,25 +118,38 @@ namespace DFW2
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceCPPContainer& CustomDeviceContainer);
 		void ReadRastrRow(SerializerPtr& Serializer, long Row);
 
+		// чтение таблицы с помощью сериализатора
 		template<typename T>
 		CDevice* ReadTable(const _TCHAR *cszTableName, CDeviceContainer& Container)
 		{
-			ITablePtr spTable = m_spRastr->Tables->Item(cszTableName);
+			 // на входе имя таблицы и контейнер, куда надо читать
+
+			ITablePtr spTable = m_spRastr->Tables->Item(cszTableName);		// находим таблицу
 			IColsPtr spCols = spTable->Cols;
-			int nSize = spTable->Size;
+			int nSize = spTable->Size;		// определяем размер контейнера по размеру таблицы
 			T *pDevs(nullptr), *pDev(nullptr);
 			if (nSize)
 			{
+				// создаем вектор устройств заданного типа
 				pDevs = pDev = new T[nSize];
+				// добавляем устройства в контейнер
 				Container.AddDevices(pDevs, nSize);
+				// достаем сериализатор для устройства данного типа
 				auto pSerializer = pDevs->GetSerializer();
+				// обходим значения в карте сериализаторе
+				// если значение не является переменной состояния
+				// добавляем добавляем к ней адаптер для БД RastrWin
+				// адаптер связываем с полем таблицы
 				for (auto&& serializervalue : *pSerializer)
-					if (!serializervalue.second->bState)
+					if (!serializervalue.second->bState)	
 						serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(serializervalue.first.c_str()));
 
+				// проходим по таблице RastrWin и устройствам контейнера
 				for (int Row = 0; Row < nSize; Row++, pDev++)
 				{
+					// обновляем сериализатор для текущего устройства в контейнере
 					pDev->UpdateSerializer(pSerializer);
+					// читаем данные из строки таблицы RastrWin
 					ReadRastrRow(pSerializer, Row);
 				}
 			}
@@ -147,10 +160,12 @@ namespace DFW2
 		static const CDynaNodeBase::eLFNodeType RastrTypesMap[5];
 	};
 
+	// адаптер значения для БД RastrWin
 	class CSerializedValueAuxDataRastr : public CSerializedValueAuxDataBase
 	{
 	public:
-		IColPtr m_spCol;
+		IColPtr m_spCol; // указатель на поле БД
+		// конструктор по полю БД
 		CSerializedValueAuxDataRastr(IColPtr spCol) : m_spCol(spCol) { }
 	};
 }

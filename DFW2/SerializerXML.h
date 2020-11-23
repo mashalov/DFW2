@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Serializer.h"
 #include "Release/msxml6.tlh"
 
@@ -7,6 +7,7 @@ namespace DFW2
 	class CSerializerXML
 	{
 	protected:
+		// карта типов устройств
 		using TypeMapType = std::map<ptrdiff_t, std::wstring>;
 		MSXML2::IXMLDOMDocument3Ptr m_spXMLDoc;
 		MSXML2::IXMLDOMElementPtr m_spXMLItems;

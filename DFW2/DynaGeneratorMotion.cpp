@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaGeneratorMotion.h"
 #include "DynaModel.h"
 
@@ -195,13 +195,16 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::UpdateExternalVariables(CDynaModel *
 
 void CDynaGeneratorMotion::UpdateSerializer(SerializerPtr& Serializer)
 {
+	// обновляем сериализатор базового класса
 	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
+	// добавляем свойства модели генератора в уравнении движения
 	Serializer->AddProperty(_T("Kdemp"), Kdemp, eVARUNITS::VARUNIT_PIECES);
 	Serializer->AddProperty(_T("xq"), xq, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(_T("Mj"), Mj, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(_T("Pnom"), Pnom, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty(_T("Unom"), Unom, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty(_T("cosPhinom"), cosPhinom, eVARUNITS::VARUNIT_PU);
+	// добавляем переменные состояния
 	Serializer->AddState(_T("Pt"), Pt, eVARUNITS::VARUNIT_MW);
 	Serializer->AddState(_T("s"), s, eVARUNITS::VARUNIT_PU);
 }

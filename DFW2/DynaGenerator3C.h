@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DeviceContainer.h"
 #include "DynaNode.h"
 #include "DynaGenerator1C.h"

@@ -164,10 +164,12 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::UpdateExternalVariables(CDynaModel *pDyna
 	return eRes;
 }
 
-
+// сериализация 
 void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
+	// обновляем переданный сериализатор
 	CDevice::UpdateSerializer(Serializer);
+	// добавляем свойства форсировки
 	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
 	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
@@ -182,6 +184,7 @@ void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty(_T("Tz_in"), TdelOn, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(_T("Tz_out"), TdelOff, eVARUNITS::VARUNIT_SECONDS);
 
+	// добавляем переменные состояния форсировки
 	Serializer->AddState(_T("EnforceOnValue"), EnforceOnOut, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(_T("DeforceOnValue"), DeforceOnOut, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(_T("EnforceOffValue"), EnforceOffOut, eVARUNITS::VARUNIT_PU);

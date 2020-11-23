@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaNode.h"
 #include "DynaModel.h"
 #include "DynaExciterBase.h"
@@ -339,7 +339,9 @@ double CDynaGenerator3C::Xgen()
 
 void CDynaGenerator3C::UpdateSerializer(SerializerPtr& Serializer)
 {
+	// обновляем сериализатор базового класса
 	CDynaGenerator1C::UpdateSerializer(Serializer);
+	// добавляем перменные состояния трехконтурной модели в ЭДС
 	Serializer->AddState(_T("Eqss"), Eqss, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(_T("Edss"), Edss, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(_T("Td0ss"), Td0ss, eVARUNITS::VARUNIT_SECONDS);

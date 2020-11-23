@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DeviceTypes.h"
 #include "DeviceContainerProperties.h"
 #include "string"
@@ -11,12 +11,15 @@
 namespace DFW2
 {
 
+	// возможные типы значений для сериализации
 	union uValue
 	{
-		double *pDbl;
-		ptrdiff_t *pInt;
-		bool *pBool;
-		cplx *pCplx;
+		double *pDbl;												// double
+		ptrdiff_t *pInt;											// int (32/64)
+		bool *pBool;												// bool
+		cplx *pCplx;												// complex
+
+		// конструкторы для разных типов
 		uValue(double* pDouble) noexcept: pDbl(pDouble) {}
 		uValue(ptrdiff_t* pInteger) noexcept : pInt(pInteger) {}
 		uValue(bool* pBoolean) noexcept : pBool(pBoolean) {}
@@ -25,6 +28,9 @@ namespace DFW2
 	};
 
 	struct TypedSerializedValue;
+
+	// базовый класс адаптера для пользовательского значения
+
 	class CSerializerAdapterBase
 	{
 	public:
@@ -65,34 +71,42 @@ namespace DFW2
 		virtual ~CSerializerAdapterBase() {}
 	};
 
+	// сериализуемое значение
 	struct TypedSerializedValue
 	{
+		// типы сериализуемых значений
 		enum class eValueType
 		{
 			VT_DBL,
 			VT_INT,
 			VT_BOOL,
 			VT_CPLX,
-			VT_NAME,
-			VT_STATE,
-			VT_ID,
-			VT_ADAPTER
+			VT_NAME,			// имя (дополнительное преобразование)
+			VT_STATE,			// состояние (дополнительное преобразование)
+			VT_ID,				// идентификатор (дополнительное преобразование)
+			VT_ADAPTER			// пользовательское преобразование с помощью внешнего класса адаптера
 		}
-		ValueType;
+		ValueType;		
 
-		static const _TCHAR* m_cszTypeDecs[8];
+		static const _TCHAR* m_cszTypeDecs[8];				// текстовое описание типа
 
-		uValue Value;
+		uValue Value;										// собственно значение
 
-		std::unique_ptr<CSerializerAdapterBase> Adapter;
+		std::unique_ptr<CSerializerAdapterBase> Adapter;	// адаптер для типа eValueType::VT_ADAPTER
 
+		// конструкторы для разных типов принимают указатели на значения 
+
+		// переменная состояния
 		TypedSerializedValue(VariableIndex* pVariable) : Value(&pVariable->Value), ValueType(eValueType::VT_DBL) {}
+		// внешняя переменная
 		TypedSerializedValue(VariableIndexExternalOptional* pVariable) : Value(pVariable->pValue), ValueType(eValueType::VT_DBL) {}
+		// адаптер
 		TypedSerializedValue(CSerializerAdapterBase *pAdapter) : Adapter(pAdapter), ValueType(eValueType::VT_ADAPTER) {}
 		TypedSerializedValue(double* pDouble) : Value(pDouble), ValueType(eValueType::VT_DBL) {}
 		TypedSerializedValue(ptrdiff_t* pInteger) : Value(pInteger), ValueType(eValueType::VT_INT) {}
 		TypedSerializedValue(bool* pBoolean) : Value(pBoolean), ValueType(eValueType::VT_BOOL) {}
 		TypedSerializedValue(cplx* pComplex) : Value(pComplex), ValueType(eValueType::VT_CPLX) {}
+		// значение без значения, но с типом
 		TypedSerializedValue(eValueType Type) : Value(), ValueType(Type) {}
 		/*
 		TypedSerializedValue(TypedSerializedValue&& Copy)
@@ -117,6 +131,7 @@ namespace DFW2
 		*/
 
 	protected:
+		// deep-copy
 		void MakeCopy(const TypedSerializedValue& Copy) noexcept
 		{
 			switch (Copy.ValueType)
@@ -154,13 +169,13 @@ namespace DFW2
 		virtual ~CSerializerAdapterBaseT() {}
 	};
 
-
 	using StringVector = std::vector<std::wstring>;
 
 	template<typename T>
 	class CSerializerAdapterEnumT : public CSerializerAdapterBaseT<T>
 	{
 	protected:
+		// текстовое представление значения
 		const _TCHAR** m_StringRepresentation;
 		size_t m_nCount;
 	public:
@@ -188,12 +203,13 @@ namespace DFW2
 
 	class CDevice;
 
+	// сериализуемое значение с метаинформацией
 	struct MetaSerializedValue
 	{
-		TypedSerializedValue Value;
-		eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET;
-		double Multiplier = 1.0;
-		bool bState = false;
+		TypedSerializedValue Value;							// собственно значение
+		eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET;		// единицы измерения
+		double Multiplier = 1.0;							// множитель
+		bool bState = false;								// признак переменной состояния
 		MetaSerializedValue(VariableIndex* pVariable) : Value(&pVariable->Value) {}
 		MetaSerializedValue(VariableIndexExternalOptional* pVariable) : Value(pVariable->pValue){}
 		MetaSerializedValue(CSerializerAdapterBase* pAdapter) : Value(pAdapter) {}
@@ -202,19 +218,20 @@ namespace DFW2
 		MetaSerializedValue(bool* pBoolean) : Value(pBoolean) {}
 		MetaSerializedValue(cplx* pComplex) : Value(pComplex) {}
 		MetaSerializedValue(TypedSerializedValue::eValueType Type) : Value(Type) {}
-		std::unique_ptr<CSerializedValueAuxDataBase> pAux;
+		std::unique_ptr<CSerializedValueAuxDataBase> pAux;	// адаптер для внешней базы данных
 	};
 
 	using SERIALIZERMAP  = std::map<std::wstring, MetaSerializedValue*>;
 	using SERIALIZERLIST = std::list<std::unique_ptr<MetaSerializedValue>>;
 
+	// базовый сериализатор
 	class CSerializerBase
 	{
 	protected:
-		SERIALIZERLIST ValueList;
-		SERIALIZERMAP ValueMap;
+		SERIALIZERLIST ValueList;		// список значений
+		SERIALIZERMAP ValueMap;			// карта "имя"->"значение"
 		SERIALIZERLIST::iterator UpdateIterator;
-		std::wstring m_strClassName;
+		std::wstring m_strClassName;	// имя сериализуемого класса 
 	public:
 		CDevice *m_pDevice = nullptr;
 		static const _TCHAR* m_cszDupName;
@@ -228,17 +245,21 @@ namespace DFW2
 			return ValueMap.size();
 		}
 
+		// начало обновления сериализатора с заданного устройства
 		void BeginUpdate(CDevice *pDevice)
 		{
+			// запоминаем устройство
 			m_pDevice = pDevice;
+			// проверяем есть ли сериализуемые значения
 			if (ValueList.empty())
 				throw dfw2error(_T("CSerializerBase::BeginUpdate on empty value list"));
 			else
-				UpdateIterator = ValueList.begin();
+				UpdateIterator = ValueList.begin();  // ставим итератор обновления на начало списка значений
 		}
 
 		inline bool IsCreate()
 		{
+			// если итератор обновления не сброшен в начало списка значений - то мы только что создали сериализатор
 			return UpdateIterator == ValueList.end();
 		}
 
@@ -247,26 +268,33 @@ namespace DFW2
 			m_strClassName = ClassName;
 		}
 
+		// добавление свойства
 		MetaSerializedValue* AddProperty(std::wstring_view Name, TypedSerializedValue::eValueType Type)
 		{
 			if (IsCreate())
 			{
-				// ������� ����� ��������
+				// создаем новое свойство 
+				// в список свойств добавляем новое значение с метаинформацией
 				MetaSerializedValue* mv = ValueList.emplace(ValueList.end(), std::make_unique<MetaSerializedValue>(Type))->get();
+				// добавляем свойство в список значений
 				return AddValue(Name, mv);
 			}
 			else
 			{
-				// ��������� ���������
+				// обновляем указатель 
 				UpdateIterator->get()->Value = TypedSerializedValue(Type);
+				// переходим к следующему значению
 				return UpdateValue();
 			}
 		}
 
+		// добавляем переменную состояния
 		template<typename T>
 		MetaSerializedValue* AddState(std::wstring_view Name, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
+			// добавляем свойство по заданному типу
 			MetaSerializedValue *meta = AddProperty(Name, Val, Units, Multiplier);
+			// ставим признак переменной состояния
 			meta->bState = true;
 			return meta;
 		}
@@ -276,7 +304,7 @@ namespace DFW2
 		{
 			if (IsCreate())
 			{
-				// ������� ����� ��������
+				// создаем новое значение
 				MetaSerializedValue* mv = ValueList.emplace(ValueList.end(), std::make_unique<MetaSerializedValue>(&Val))->get();
 				AddValue(Name, mv);
 				mv->Multiplier = Multiplier;
@@ -285,7 +313,7 @@ namespace DFW2
 			}
 			else
 			{
-				// ��������� ���������
+				// обновляем указатель
 				UpdateIterator->get()->Value = TypedSerializedValue(&Val);
 				return UpdateValue();
 			}
@@ -295,7 +323,7 @@ namespace DFW2
 		{
 			if (IsCreate())
 			{
-				// ������� ����� ��������
+				// создаем новое значение
 				MetaSerializedValue* mv = ValueList.emplace(ValueList.end(), std::make_unique<MetaSerializedValue>(pAdapter))->get();
 				return AddValue(Name, mv);
 			}
@@ -314,6 +342,7 @@ namespace DFW2
 			return meta;
 		}
 
+		// поддержка range для карты значений
 		SERIALIZERMAP::const_iterator begin() { return ValueMap.begin(); }
 		SERIALIZERMAP::const_iterator end()   { return ValueMap.end();   }
 
@@ -337,10 +366,14 @@ namespace DFW2
 
 	protected:
 
+		// добавляем в карту значений новое по имени
 		MetaSerializedValue* AddValue(std::wstring_view Name, MetaSerializedValue* mv)
 		{
+			// имеем имя значения и его метаданные
+			// проверяем нет ли такого значения в карте по имени
 			if (!ValueMap.insert(std::make_pair(Name, mv)).second)
 				throw dfw2error(fmt::format(m_cszDupName, Name));
+			// итератор обновления ставим в конец списка (режим создания итератора)
 			UpdateIterator = ValueList.end();
 			return mv;
 		}
