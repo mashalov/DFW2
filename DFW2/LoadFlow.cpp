@@ -73,6 +73,11 @@ void CLoadFlow::AllocateSupernodes()
 	for (auto&& sit : SlackBuses)
 	{
 		CDynaNodeBase *pNode = sit;
+		// обнуляем ограничения БУ, чтобы
+		// они не влияли на суммарные ограничения
+		// суперузла, который может быть образован
+		// от данного БУ
+		pNode->LFQmin = pNode->LFQmax = 0.0;
 		pMatrixInfo->Store(pNode);
 		pMatrixInfo++;
 	}
@@ -196,7 +201,15 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 			Pgr = Qgr = 0.0;
 			// а также обнуляем Qmin и Qmax, чтобы корректно распределить Qg
 			// по обычным узлам внутри базисного суперузла в CLoadFlow::UpdateSupernodesPQ()
-			LFQmax = LFQmin = 0.0;
+			// !!!!! нет !!!!! мы не обнуляем ограничения суперузла, образованного БУ !
+			// мы используем рассчитанные ограничения такого узла чтобы определить  какую долю
+			// реактивной мощности положить в диапазон генераторных узлов, а излишек - в БУ
+			// здесь остается суммарный диапазон генераторных узлов
+			// заданные в исходных данных ненулевые ограничения БУ
+			// сбрасываются в ноль ранее, поэтому эти ограничения здесь
+			// не учитываются 
+			// LFQmax = LFQmin = 0.0;
+
 		}
 	}
 	else
@@ -896,10 +909,10 @@ void CLoadFlow::UpdatePQFromGenerators()
 				{
 					if (pGen->Kgen <= 0)
 					{
-						pGen->Kgen = 1.0;
 						pGen->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongGeneratorsNumberFixed, 
 																			  pGen->GetVerbalName(), 
 																			  pGen->Kgen));
+						pGen->Kgen = 1.0;
 					}
 					pNode->Pg += pGen->P;
 					pNode->Qg += pGen->Q;
@@ -1292,6 +1305,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 	for (_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get() ; pMatrixInfo < m_pMatrixInfoSlackEnd ; pMatrixInfo++)
 	{
 		CDynaNodeBase*& pNode = pMatrixInfo->pNode;
+		// диапазон реактивной мощности узла
 		double Qrange = pNode->LFQmax - pNode->LFQmin;
 		double Qspread(0.0), PgSource(pNode->Pgr), QgSource(pNode->Qgr), DropToSlack(0.0);
 		CLinkPtrCount *pLink = pNode->GetSuperLink(0);
@@ -1310,7 +1324,9 @@ void CLoadFlow::UpdateSupernodesPQ()
 				// если узел нагрузочный в нем ничего не может измениться
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
+				// если суперузел базисный, вносим его в список базисных узлов данного суперузла
 				SlackBuses.push_back(pNode);
+				// и перечисляем подчиненные узлы
 				while (pLink->In(ppDevice))
 				{
 					CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
@@ -1357,18 +1373,19 @@ void CLoadFlow::UpdateSupernodesPQ()
 						pSlaveNode->Qg = pSlaveNode->Qgr = 0.0;
 				}
 
-				if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+				if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 					Qspread += pNode->Qgr = pNode->Qg = pMatrixInfo->LFQmin + (pMatrixInfo->LFQmax - pMatrixInfo->LFQmin) * Qrange;
 
 				if (fabs(Qspread - QgSource) > m_Parameters.m_Imb)
 				{
 					bAllOk = false;
-					pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForSuperNode, 
-																		 pNode->GetVerbalName(), 
-																		 QgSource, 
-																		 pNode->LFQmin, 
-																		 pNode->LFQmax));
+					pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForSuperNode,
+						pNode->GetVerbalName(),
+						QgSource,
+						pNode->LFQmin,
+						pNode->LFQmax));
 				}
+
 		}
 		pMatrixInfo->Restore();
 	}

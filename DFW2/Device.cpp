@@ -335,6 +335,7 @@ CLinkPtrCount* CDevice::GetLink(ptrdiff_t nLinkIndex)
 	return pMultiLink.GetLink(m_nInContainerIndex);
 }
 
+
 // функция обхода связей устройства (типа обход ветвей узла, генераторов узла и т.п.)
 // на входе указатель на указатель устройства, с которым связь. Каждый следующий
 // вызов In() возвращает очередную связь и true, или false - если связи закончились
@@ -369,6 +370,17 @@ bool CLinkPtrCount::In(CDevice ** & p)
 
 	// если достигли - завершаем обход
 	p = nullptr;
+	return false;
+}
+
+// возвращаем только связанные устройства, которые включены в матрицу
+bool CLinkPtrCount::InMatrix(CDevice**& p)
+{
+	while (In(p))
+	{
+		if ((*p)->InMatrix()) 
+			return true;
+	}
 	return false;
 }
 

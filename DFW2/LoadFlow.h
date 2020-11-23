@@ -14,7 +14,7 @@ namespace DFW2
 			bool m_bFlat = false;						// плоский старт
 			bool m_bStartup = true;						// стартовый метод Зейделя
 			double m_dSeidellStep = 1.05;				// шаг ускорения метода Зейделя	
-			ptrdiff_t m_nSeidellIterations = 7;			// количество итераций Зейделем
+			ptrdiff_t m_nSeidellIterations = 17;		// количество итераций Зейделем
 			ptrdiff_t m_nEnableSwitchIteration = 2;		// номер итерации, с которой разрешается переключение PV-PQ
 			ptrdiff_t m_nMaxIterations = 100;			// максимальное количество итераций Ньютоном
 			double m_dVoltageNewtonStep = 0.3;			// максимальное относительное приращение шага Ньютона по напряжению

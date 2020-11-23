@@ -52,6 +52,10 @@ int _tmain(int argc, _TCHAR* argv[])
 			ri.GetData(Network);
 			Network.Run();
 		}
+		catch (_com_error& err)
+		{
+			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Ошибка : {}"), static_cast<const _TCHAR*>(err.Description())));
+		}
 		catch (dfw2error& err)
 		{
 			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Ошибка : {}"), err.uwhat()));

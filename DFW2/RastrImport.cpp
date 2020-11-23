@@ -275,6 +275,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1", ""); 
+	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");

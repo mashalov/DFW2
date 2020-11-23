@@ -102,7 +102,7 @@ const _TCHAR* CDFW2Messages::m_cszLFNoConvergence = _T("Не удалось сб
 const _TCHAR* CDFW2Messages::m_cszLFNodeVTooHigh = _T("Недопустимое напряжение в узле {} - {} номинального");
 const _TCHAR* CDFW2Messages::m_cszLFNodeVTooLow = CDFW2Messages::m_cszLFNodeVTooHigh;
 const _TCHAR* CDFW2Messages::m_cszLFBranchAngleExceeds90 = _T("Угол по связи {} - {} превысил 90 град - {}");
-const _TCHAR* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = _T("Количество генераторов для {} задано неверно {}, установлено значение 1");
+const _TCHAR* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = _T("Количество генераторов для {} задано неверно - {:.0f}, установлено значение 1");
 const _TCHAR* CDFW2Messages::m_cszFailureAtMinimalStep = _T("Необходимая точность решения не может быть достигнута на минимальном шаге t={} {:>3} порядок {} шаг={}");
 const _TCHAR* CDFW2Messages::m_cszMustBeConstPowerLRC = _T("Не найдена типовая СХН на постоянную мощность с номером -1");
 const _TCHAR* CDFW2Messages::m_cszMustBeDefaultDynamicLRC = _T("Не найдена типовая СХН нагрузки в динамике с номером 0");

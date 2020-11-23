@@ -193,7 +193,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		// обходим генераторы и формируем производные от токов генераторов
 		// если узел в металлическом КЗ производные равны нулю
 		double dGenMatrixCoe = m_bInMetallicSC ? 0.0 :-1.0;
-		while (pGenLink->In(ppGen))
+		while (pGenLink->InMatrix(ppGen))
 		{
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
@@ -348,7 +348,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		CLinkPtrCount *pGenLink = GetSuperLink(2);
 		CDevice **ppBranch(nullptr), **ppGen(nullptr);
 
-		while (pGenLink->In(ppGen))
+		while (pGenLink->InMatrix(ppGen))
 		{
 			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 			Ire -= pGen->Ire;
@@ -876,7 +876,7 @@ bool CDynaNodeContainer::LULF()
 				CLinkPtrCount *pLink = pNode->GetSuperLink(2);
 
 				// проходим по генераторам
-				while (pLink->In(ppDeivce))
+				while (pLink->InMatrix(ppDeivce))
 				{
 					CDynaVoltageSource *pVsource = static_cast<CDynaVoltageSource*>(*ppDeivce);
 					// если в узле есть хотя бы один генератор, то обнуляем мощность генерации узла
