@@ -650,10 +650,29 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		double bmax = klu.FindMaxB(imax);
 
 		double *bwatch = klu.B();
-	
+
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
 
 		SolveLinearSystem();
+
+		/*
+		cs Aj;
+		Aj.i = klu.Ap();
+		Aj.p = klu.Ai();
+		Aj.x = klu.Ax();
+		Aj.m = Aj.n = klu.MatrixSize();
+		Aj.nz = -1;
+
+		double *y = new double[klu.MatrixSize()]();
+		memcpy(y, bwatch, sizeof(double) * klu.MatrixSize());
+		ZeroMemory(bwatch, sizeof(double) * klu.MatrixSize());
+
+		cs_gatxpy(&Aj, y, bwatch);
+		bmax = klu.FindMaxB(imax);
+
+
+		memcpy(bwatch, y, sizeof(double) * klu.MatrixSize());
+		*/
 
 		/*
 		if (sc.nStepsCount == 398)
@@ -663,7 +682,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		}
 		*/
 
-//		DumpMatrix();
+//		DumpMatrix(true);
 
 		bmax = klu.FindMaxB(imax);
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);

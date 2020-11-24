@@ -512,7 +512,8 @@ void CDynaModel::SolveLinearSystem()
 void CDynaModel::SolveRcond()
 {
 	klu.Solve();
-	double rCond = klu.Rcond();
+	double rCond = 1.0 / klu.Rcond();
+	//double Cond = klu.Condest();
 	if (rCond > sc.dMaxConditionNumber)
 	{
 		sc.dMaxConditionNumber = rCond;

@@ -67,6 +67,10 @@ namespace DFW2
 			{
 				return klu_rcond(Symbolic, Numeric, Common);
 			}
+			static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+			{
+				return klu_condest(Ap, Ax, Symbolic, Numeric, Common);
+			}
 		};
 
 		template<> struct KLUFunctions<double, __int64>
@@ -99,6 +103,11 @@ namespace DFW2
 			{
 				return klu_l_rcond(Symbolic, Numeric, Common);
 			}
+
+			static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+			{
+				return klu_l_condest(Ap, Ax, Symbolic, Numeric, Common);
+			}
 		};
 
 		template<> struct KLUFunctions<std::complex<double>, int>
@@ -129,7 +138,11 @@ namespace DFW2
 			}
 			static int TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
 			{
-				return klu_l_rcond(Symbolic, Numeric, Common);
+				return klu_z_rcond(Symbolic, Numeric, Common);
+			}
+			static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+			{
+				return klu_z_condest(Ap, Ax, Symbolic, Numeric, Common);
 			}
 		};
 
@@ -163,6 +176,11 @@ namespace DFW2
 			{
 				return klu_zl_rcond(Symbolic, Numeric, Common);
 			}
+			static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+			{
+				return klu_zl_condest(Ap, Ax, Symbolic, Numeric, Common);
+			}
+
 		};
 
 		template <typename T, typename L>
@@ -315,6 +333,13 @@ namespace DFW2
 				throw dfw2error(fmt::format(_T("{}::KLU_tsolve {}"), KLUWrapperName(), KLUErrorDescription()));
 		}
 
+		double Condest()
+		{
+			if (!KLUFunctions<T, ptrdiff_t>::TKLU_condest(pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
+				throw dfw2error(fmt::format(_T("{}::KLU_condest {}"), KLUWrapperName(), KLUErrorDescription()));
+			return pCommon.condest;
+		}
+
 		double Rcond()
 		{
 			if(!KLUFunctions<T, ptrdiff_t>::TKLU_rcond(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
@@ -340,11 +365,11 @@ namespace DFW2
 			if (m_nMatrixSize > 0)
 			{
 				nMaxIndex = 0;
-				bmax = *pbb;
+				bmax = std::fabs(*pbb);
 				pbb++;
 				for (ptrdiff_t x = 1; x < m_nMatrixSize; x++, pbb++)
 				{
-					double absb = abs(*pbb);
+					double absb = std::fabs(*pbb);
 					if (bmax < absb)
 					{
 						nMaxIndex = x;
