@@ -211,6 +211,11 @@ bool CDynaModel::Run()
 			m_Automatic.Init();
 			m_Discontinuities.Init();
 			SetH(0.01);
+			// сохраняем начальные условия
+			// в истории Нордсика с тем чтобы иметь 
+			// возможность восстановить их при сбое Ньютона
+			// на первом шаге
+			SaveNordsiek();
 
 			Serialize();
 
@@ -1428,11 +1433,13 @@ void CDynaModel::NewtonFailed()
 	if (GetIntegrationStepNumber() == 2052)
 		DumpStateVector();
 
+	// обновляем подсчет ошибок Ньютона
 	if (!sc.m_bDiscontinuityMode)
 	{
+		// если вне разрыва - считаем для порядка шага
 		sc.OrderStatistics[sc.q - 1].nNewtonFailures++;
 	}
-	else
+	else // если в разрыве - считаем количество завалов на разрывах
 		sc.nDiscontinuityNewtonFailures++;
 
 	if (sc.nSuccessfullStepsOfNewton > 10)

@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "klu.h"
 #include "klu_version.h"
 #include "cs.h"
@@ -11,10 +11,10 @@ namespace DFW2
 	class KLUWrapper
 	{
 	protected:
-		std::unique_ptr<double[]>	 pAx,		// данные матрицы якоби
-									 pb;		// вектор правой части
-		std::unique_ptr<ptrdiff_t[]> pAi,		// номера строк
-									 pAp;		// номера столбцов
+		std::unique_ptr<double[]>	 pAx,		// РґР°РЅРЅС‹Рµ РјР°С‚СЂРёС†С‹ СЏРєРѕР±Рё
+									 pb;		// РІРµРєС‚РѕСЂ РїСЂР°РІРѕР№ С‡Р°СЃС‚Рё
+		std::unique_ptr<ptrdiff_t[]> pAi,		// РЅРѕРјРµСЂР° СЃС‚СЂРѕРє
+									 pAp;		// РЅРѕРјРµСЂР° СЃС‚РѕР»Р±С†РѕРІ
 		ptrdiff_t m_nMatrixSize;
 		ptrdiff_t m_nNonZeroCount;
 		ptrdiff_t m_nAnalyzingsCount = 0;
@@ -252,10 +252,10 @@ namespace DFW2
 		{
 			m_nMatrixSize = nMatrixSize;
 			m_nNonZeroCount = nNonZeroCount;
-			pAx = std::make_unique<double[]>(m_nNonZeroCount * doubles_count<T>::count);			// числа матрицы
-			pb = std::make_unique<double[]>(m_nMatrixSize * doubles_count<T>::count);			// вектор правой части
-			pAi = std::make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);								// строки матрицы
-			pAp = std::make_unique<ptrdiff_t[]>(m_nNonZeroCount);								// столбцы матрицы
+			pAx = std::make_unique<double[]>(m_nNonZeroCount * doubles_count<T>::count);			// С‡РёСЃР»Р° РјР°С‚СЂРёС†С‹
+			pb = std::make_unique<double[]>(m_nMatrixSize * doubles_count<T>::count);			// РІРµРєС‚РѕСЂ РїСЂР°РІРѕР№ С‡Р°СЃС‚Рё
+			pAi = std::make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);								// СЃС‚СЂРѕРєРё РјР°С‚СЂРёС†С‹
+			pAp = std::make_unique<ptrdiff_t[]>(m_nNonZeroCount);								// СЃС‚РѕР»Р±С†С‹ РјР°С‚СЂРёС†С‹
 			pSymbolic.reset();
 			pNumeric.reset();
 		}
@@ -440,7 +440,7 @@ namespace DFW2
 				if (!bAnalyzeLinearDependenies)
 					return;
 
-				// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
+				// РїС‹С‚Р°РµРјСЃСЏ РѕРїСЂРµРґРµР»РёС‚СЊ Р»РёРЅРµР№РЅРѕ Р·Р°РІРёСЃРёРјС‹Рµ СЃС‚СЂРѕРєРё СЃ РїРѕРјРѕС‰СЊСЋ РЅРµСЂР°РІРµРЅСЃС‚РІР° РљРѕС€Рё-РЁРІР°СЂС†Р°
 				// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
 
 				pAi = Ap(); pAx = Ax(); nRow = 0;
