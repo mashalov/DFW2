@@ -3,8 +3,7 @@
 
 bool CompilerBase::SetProperty(std::string_view PropertyName, std::string_view Value)
 {
-	auto it = Properties.find(std::string(PropertyName));
-	if (it != Properties.end())
+	if (auto it = Properties.find(std::string(PropertyName)); it != Properties.end())
 	{
 		it->second = Value;
 		return true;
@@ -14,8 +13,7 @@ bool CompilerBase::SetProperty(std::string_view PropertyName, std::string_view V
 
 std::string CompilerBase::GetProperty(std::string_view PropertyName)
 {
-	auto it = Properties.find(std::string(PropertyName));
-	if (it != Properties.end())
+	if (auto it = Properties.find(std::string(PropertyName)); it != Properties.end())
 		return it->second;
 	else
 		return "";
