@@ -181,15 +181,15 @@ namespace DFW2
 	public:
 		ptrdiff_t GetInt() override
 		{
-			return static_cast<ptrdiff_t>(*m_pLeft);
+			return static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::m_pLeft);
 		}
 		void SetInt(ptrdiff_t vInt) noexcept override
 		{
-			*m_pLeft = static_cast<T>(vInt);
+			*CSerializerAdapterBaseT<T>::m_pLeft = static_cast<T>(vInt);
 		}
 		std::wstring GetString() override
 		{
-			const ptrdiff_t nIndex = static_cast<ptrdiff_t>(*m_pLeft);
+			const ptrdiff_t nIndex = static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::m_pLeft);
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(m_nCount))
 				throw dfw2error(fmt::format(_T("CSerializerAdapterEnumT::GetString - invalid enum index or string representation {}"), nIndex));
 			return std::wstring(m_StringRepresentation[nIndex]);

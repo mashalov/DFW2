@@ -42,9 +42,9 @@ bool CCustomDevice::BuildStructure()
 
 	_ASSERTE(Blocks.size() == Pins.size());
 
-	auto& iit = Pins.begin();
+	auto&& iit = Pins.begin();
 
-	for (auto& bit = Blocks.begin(); bit != Blocks.end(); bit++, iit++)
+	for (auto&& bit = Blocks.begin(); bit != Blocks.end(); bit++, iit++)
 	{
 		std::vector<InputVariable> inputs;
 		inputs.reserve(iit->size());
@@ -442,8 +442,8 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 {
 	const double *pValue = GetVariableConstPtr(cszOutputName);
 
-	for (auto&& it : m_Primitives)
-		if (&(const double)*it == pValue)
+	for (const auto& it : m_Primitives)
+		if (static_cast<const double*>(*it) == pValue)
 			return it;
 
 	return nullptr;

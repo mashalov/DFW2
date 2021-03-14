@@ -819,7 +819,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 		// по информации из атрибутов контейнера определяем индекс
 		// связи, соответствующий типу
 		auto& FromLinks = m_pContainer->m_ContainerProps.m_LinksFrom;
-		auto& itFrom = FromLinks.find(eDevType);
+		auto&& itFrom = FromLinks.find(eDevType);
 		if (itFrom != FromLinks.end())
 			pRetDev = GetSingleLink(itFrom->second.nLinkIndex);
 	
@@ -829,7 +829,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 #ifdef _DEBUG
 		CDevice *pRetDevTo(nullptr);
 		LINKSTOMAP& ToLinks = m_pContainer->m_ContainerProps.m_LinksTo;
-		auto& itTo = ToLinks.find(eDevType);
+		const auto& itTo = ToLinks.find(eDevType);
 
 		// в режиме отладки проверяем однозначность определения связи
 		if (itTo != ToLinks.end())
@@ -844,7 +844,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 		if(!pRetDev)
 		{
 			LINKSTOMAP& ToLinks = m_pContainer->m_ContainerProps.m_LinksTo;
-			auto& itTo = ToLinks.find(eDevType);
+			auto&& itTo = ToLinks.find(eDevType);
 			if (itTo != ToLinks.end())
 				pRetDev = GetSingleLink(itTo->second.nLinkIndex);
 		}
@@ -966,16 +966,16 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 			{
 				if (pModel->GetNewtonIterationNumber() == 1)
 				{
-					for (auto& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+					for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
 						_ftprintf(flog, _T("%s;"), var->first.c_str());
-					for (auto& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+					for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
 						_ftprintf(flog, _T("d_%s;"), var->first.c_str());
 					_ftprintf(flog, _T("\n"));
 				}
 
-				for (auto& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+				for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
 					_ftprintf(flog, _T("%g;"), *GetVariablePtr(var->second.m_nIndex));
-				for (auto& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+				for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
 					_ftprintf(flog, _T("%g;"), pModel->GetFunction(A(var->second.m_nIndex)));
 				_ftprintf(flog, _T("\n"));
 

@@ -123,7 +123,7 @@ void CDynaModel::StopProcess()
 
 CDeviceContainer* CDynaModel::GetDeviceContainer(eDFW2DEVICETYPE Type)
 {
-	auto& it = find_if(m_DeviceContainers.begin(), m_DeviceContainers.end(), [&Type](const auto& Cont) { return Cont->GetType() == Type; });
+	auto&& it = find_if(m_DeviceContainers.begin(), m_DeviceContainers.end(), [&Type](const auto& Cont) { return Cont->GetType() == Type; });
 
 	if (it == m_DeviceContainers.end())
 		return nullptr;
@@ -606,7 +606,7 @@ void CDynaModel::Serialize()
 		{
 			// если контейнер не пустой
 			// достаем сериализатор из первого устройства контейнера
-			auto& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
+			auto&& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
 			// пропускаем контейнер, если в сериализаторе его устройств нет значений
 			if (!serializer->ValuesCount())
 				continue;

@@ -105,6 +105,15 @@ namespace DFW2
 		}
 	};
 
+	// адаптер значения для БД RastrWin
+	class CSerializedValueAuxDataRastr : public CSerializedValueAuxDataBase
+	{
+	public:
+		IColPtr m_spCol; // указатель на поле БД
+		// конструктор по полю БД
+		CSerializedValueAuxDataRastr(IColPtr spCol) : m_spCol(spCol) { }
+	};
+
 	class CRastrImport
 	{
 	public:
@@ -158,15 +167,6 @@ namespace DFW2
 
 		CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType);
 		static const CDynaNodeBase::eLFNodeType RastrTypesMap[5];
-	};
-
-	// адаптер значения для БД RastrWin
-	class CSerializedValueAuxDataRastr : public CSerializedValueAuxDataBase
-	{
-	public:
-		IColPtr m_spCol; // указатель на поле БД
-		// конструктор по полю БД
-		CSerializedValueAuxDataRastr(IColPtr spCol) : m_spCol(spCol) { }
 	};
 }
 

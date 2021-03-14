@@ -68,8 +68,8 @@ namespace DFW2
 		{
 			std::wstring strGetLastErrorMsg = GetLastErrorMessage();
 			if (!strGetLastErrorMsg.empty())
-				m_strMessage += fmt::format(_T(" {}"), strGetLastErrorMsg);
-			stringutils::removecrlf(m_strMessage);
+				T::m_strMessage += fmt::format(_T(" {}"), strGetLastErrorMsg);
+			stringutils::removecrlf(T::m_strMessage);
 		}
 
 	static std::wstring GetLastErrorMessage()

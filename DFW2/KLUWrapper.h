@@ -36,6 +36,7 @@ namespace DFW2
 
 		template <typename T, typename L> class KLUFunctions;
 
+#ifndef _WIN64
 
 		template<> struct KLUFunctions<double, int>
 		{
@@ -72,7 +73,9 @@ namespace DFW2
 				return klu_condest(Ap, Ax, Symbolic, Numeric, Common);
 			}
 		};
+#endif
 
+#ifdef _WIN64
 		template<> struct KLUFunctions<double, __int64>
 		{
 			static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic *Symbolic, KLU_common* Common)
@@ -104,12 +107,14 @@ namespace DFW2
 				return klu_l_rcond(Symbolic, Numeric, Common);
 			}
 
-			static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+			static int TKLU_condest(ptrdiff_t* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
 			{
 				return klu_l_condest(Ap, Ax, Symbolic, Numeric, Common);
 			}
 		};
+#endif
 
+#ifndef _WIN64
 		template<> struct KLUFunctions<std::complex<double>, int>
 		{
 			static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic *Symbolic, KLU_common* Common)
@@ -145,7 +150,9 @@ namespace DFW2
 				return klu_z_condest(Ap, Ax, Symbolic, Numeric, Common);
 			}
 		};
+#endif 
 
+#ifdef _WIN64
 		template<> struct KLUFunctions<std::complex<double>, __int64>
 		{
 			static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic *Symbolic, KLU_common* Common)
@@ -176,13 +183,14 @@ namespace DFW2
 			{
 				return klu_zl_rcond(Symbolic, Numeric, Common);
 			}
-			static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+			static int TKLU_condest(ptrdiff_t* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
 			{
 				return klu_zl_condest(Ap, Ax, Symbolic, Numeric, Common);
 			}
 
 		};
-
+#endif
+		
 		template <typename T, typename L>
 		class KLUCommonDeleter
 		{

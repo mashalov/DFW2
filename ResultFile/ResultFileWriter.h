@@ -44,7 +44,7 @@ namespace DFW2
 		bool m_bThreadRun = true;
 		double m_dTimeToWrite;
 		double m_dStepToWrite;
-		bool CResultFileWriter::WriteResultsThreaded();
+		bool WriteResultsThreaded();
 		__int64 OffsetFromCurrent(__int64 AbsoluteOffset);
 		double m_dNoChangeTolerance = 0.0;
 		double ts[PREDICTOR_ORDER];

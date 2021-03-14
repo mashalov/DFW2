@@ -776,7 +776,7 @@ const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType)
 }
 
 
-SAFEARRAY* CResultFileReader::CreateSafeArray(std::unique_ptr<double[]>& pChannelData)
+SAFEARRAY* CResultFileReader::CreateSafeArray(std::unique_ptr<double[]>&& pChannelData)
 {
 	SAFEARRAY *pSA = nullptr;
 	try

@@ -211,7 +211,7 @@ namespace DFW2
 		std::unique_ptr<double[]> GetTimeStep();
 		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
 		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR *cszVarName);
-		SAFEARRAY* CreateSafeArray(std::unique_ptr<double[]>& pChannelData);
+		SAFEARRAY* CreateSafeArray(std::unique_ptr<double[]>&& pChannelData);
 		double GetFileTime();
 		const _TCHAR* GetFilePath();
 		const _TCHAR* GetComment();

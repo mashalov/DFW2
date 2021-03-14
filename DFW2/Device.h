@@ -59,7 +59,7 @@ namespace DFW2
 	protected:
 		SingleLinksRange m_LinkRange;		// список связей
 	public:
-		void SetRange(SingleLinksRange& LinkRange)
+		void SetRange(SingleLinksRange&& LinkRange)
 		{
 			m_LinkRange = LinkRange;
 		}
@@ -291,7 +291,7 @@ namespace DFW2
 		virtual void RestoreStates();
 
 		// возвращает сериализатор для данного типа устройств
-		SerializerPtr CDevice::GetSerializer();
+		SerializerPtr GetSerializer();
 		// обновляет сериализатор для данного типа устройств
 		virtual void UpdateSerializer(SerializerPtr& Serializer);
 

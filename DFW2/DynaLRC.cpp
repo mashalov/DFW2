@@ -211,7 +211,7 @@ bool CDynaLRC::CollectConstantData(LRCDATA& LRC)
 	bool bRes(true);
 	// строим связный список сегментов
 
-	for (auto& v = LRC.begin(); v != LRC.end(); ++v)
+	for (auto&& v = LRC.begin(); v != LRC.end(); ++v)
 	{
 		v->pPrev = (v == LRC.begin()) ? nullptr : &*std::prev(v);
 		auto next = std::next(v);

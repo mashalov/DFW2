@@ -374,7 +374,7 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 		}
 
 		// вставляем первый узел как основу для острова
-		auto& CurrentSuperNode = Islands.insert(std::make_pair(Slack->first, std::set<CDynaNodeBase*>{}));
+		const auto& CurrentSuperNode = Islands.insert(std::make_pair(Slack->first, std::set<CDynaNodeBase*>{}));
 		// берем первый узел из сета и готовим к DFS
 		Stack.push(Slack->first);
 
@@ -384,7 +384,7 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 			// к текущему острову добавляем найденный узел
 			CurrentSuperNode.first->second.insert(Stack.top());
 			// проверяем, есть ли найденный узел во входном сете
-			auto& jit = JoinableNodes.find(Stack.top());
+			const auto& jit = JoinableNodes.find(Stack.top());
 			Stack.pop();
 			// если есть - добавляем в стек все связанные с найденным узлы
 			if (jit != JoinableNodes.end())
@@ -778,8 +778,8 @@ CDynaNodeBase* CDynaNodeContainer::FindGeneratorNodeInSuperNode(CDevice *pGen)
 	// ищем генератор в карте сохраненных связей и возвращаем оригинальный узел
 	if (pGen && m_OriginalLinks.size() > 0)
 	{
-		auto& GenMap = m_OriginalLinks[0];
-		auto& itGen = GenMap->find(pGen);
+		const auto& GenMap = m_OriginalLinks[0];
+		const auto& itGen = GenMap->find(pGen);
 		if (itGen != GenMap->end())
 			pRet = static_cast<CDynaNodeBase*>(itGen->second);
 	}
@@ -862,7 +862,7 @@ void CDynaNodeContainer::SwitchOffDanglingNodes(NodeSet& Queue)
 	// обрабатываем узлы до тех пор, пока есть отключения узлов при проверке
 	while (!Queue.empty())
 	{
-		auto& it = Queue.begin();
+		const auto& it = Queue.begin();
 		CDynaNodeBase *pNextNode = *it;
 		Queue.erase(it);
 		SwitchOffDanglingNode(pNextNode, Queue);

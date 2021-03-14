@@ -102,6 +102,7 @@ namespace DFW2
 		// возвращает значение выхода
 		constexpr operator double& () { return m_Output.Value; }
 		constexpr operator const double& () const { return m_Output.Value; }
+		constexpr operator double* () { return &m_Output.Value; }
 		// присваивает значение связанной выходной переменной
 		constexpr double& operator= (double value) { m_Output.Value = value;  return m_Output.Value; }
 		// возвращает ссылки на выходную переменную

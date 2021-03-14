@@ -799,7 +799,7 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 	// по информации из атрибутов контейнера определяем индекс
 	// связи, соответствующий типу
 	LINKSFROMMAP& FromLinks = m_ContainerProps.m_LinksFrom;
-	auto& itFrom  = FromLinks.find(eDevType);
+	auto&& itFrom  = FromLinks.find(eDevType);
 	if (itFrom != FromLinks.end())
 		nRet = itFrom->second.nLinkIndex;
 
@@ -809,7 +809,7 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 	if (nRet < 0)
 	{
 		LINKSTOMAP& ToLinks = m_ContainerProps.m_LinksTo;
-		auto& itTo = ToLinks.find(eDevType);
+		auto&& itTo = ToLinks.find(eDevType);
 		if (itTo != ToLinks.end())
 			nRet = itTo->second.nLinkIndex;
 	}

@@ -53,7 +53,7 @@ void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 		if(mv.bState)
 			spXMLProp->setAttribute(CSerializerBase::m_cszState,variant_t(1L));
 		// задаем единицы измерения
-		auto& it = units.VarNameMap().find(static_cast<ptrdiff_t>(mv.Units));
+		const auto& it = units.VarNameMap().find(static_cast<ptrdiff_t>(mv.Units));
 		if(units.VarNameMap().end() != it)
 			spXMLProp->setAttribute(_T("units"), it->second.c_str());
 		spXMLProps->appendChild(spXMLProp);
@@ -100,7 +100,7 @@ void CSerializerXML::AddLink(MSXML2::IXMLDOMElementPtr& spXMLLinks, CDevice *pLi
 		MSXML2::IXMLDOMElementPtr spXMLLink = m_spXMLDoc->createElement(bMaster ? _T("master") : _T("slave"));
 		spXMLLinks->appendChild(spXMLLink);
 		// находим описание типа устройства
-		auto& typeit = m_TypeMap.find(pLinkedDevice->GetType());
+		const auto& typeit = m_TypeMap.find(pLinkedDevice->GetType());
 		if(typeit == m_TypeMap.end())
 			spXMLLink->setAttribute(CSerializerBase::m_cszType, pLinkedDevice->GetType()); // если описание не найдено - сериализуем перечисление
 		else

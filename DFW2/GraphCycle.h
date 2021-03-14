@@ -83,8 +83,8 @@ namespace DFW2
 			for (auto&& edge : m_Edges)
 			{
 				// для каждого ребра находим узлы начала и конца по идентификаторам в сете
-				auto& pNodeB = m_Nodes.find(psrc.SetId(edge->m_IdBegin));
-				auto& pNodeE = m_Nodes.find(psrc.SetId(edge->m_IdEnd));
+				const auto& pNodeB = m_Nodes.find(psrc.SetId(edge->m_IdBegin));
+				const auto& pNodeE = m_Nodes.find(psrc.SetId(edge->m_IdEnd));
 				if(pNodeB == m_Nodes.end() || pNodeE == m_Nodes.end())
 					throw dfw2error(_T("GraphCycle::BuildGraph - one of the edge's nodes not found"));
 				// задаем указатели на узлы начала и конца в ребре
@@ -325,8 +325,8 @@ namespace DFW2
 							6, 5,
 							6, 1};
 							*/
-			unique_ptr<NodeType[]> pGraphNodes = make_unique<NodeType[]>(_countof(nodes));
-			unique_ptr<EdgeType[]> pGraphEdges = make_unique<EdgeType[]>(_countof(edges) / 2);
+			std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(_countof(nodes));
+			std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(_countof(edges) / 2);
 			NodeType *pNode = pGraphNodes.get();
 			GraphType gc;
 

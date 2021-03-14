@@ -106,7 +106,7 @@ namespace DFW2
 	protected:
 		cplx m_ShuntRX;
 	public:
-		CModelActionChangeNodeShunt(CDynaNode *pNode, cplx& ShuntRX);
+		CModelActionChangeNodeShunt(CDynaNode *pNode, const cplx& ShuntRX);
 		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
@@ -115,7 +115,7 @@ namespace DFW2
 	protected:
 		cplx m_ShuntGB;
 	public:
-		CModelActionChangeNodeShuntAdmittance(CDynaNode *pNode, cplx& ShuntGB);
+		CModelActionChangeNodeShuntAdmittance(CDynaNode *pNode, const cplx& ShuntGB);
 		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 

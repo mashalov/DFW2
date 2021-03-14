@@ -681,7 +681,7 @@ namespace DFW2
 			return m_Parameters.eFreqDampingType;
 		}
 
-		inline const _TCHAR* CDynaModel::GetDampingName() const
+		inline const _TCHAR* GetDampingName() const
 		{
 			_ASSERTE(m_cszDampingName);
 			return m_cszDampingName;
@@ -702,7 +702,7 @@ namespace DFW2
 		// возвращает тип метода для уравнения
 		// используется для управления методом интегрирования дифференциальных переменных
 		// алгебраические уравнения всегда интегрируются BDF. Дифференциальные - ADAMS или BDF
-		inline DEVICE_EQUATION_TYPE CDynaModel::GetDiffEquationType() const
+		inline DEVICE_EQUATION_TYPE GetDiffEquationType() const
 		{
 			return m_Parameters.m_eDiffEquationType;
 		}

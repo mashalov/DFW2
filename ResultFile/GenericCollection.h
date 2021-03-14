@@ -54,8 +54,8 @@ public:
 
 	void CollectionFinalRelease()
 	{
-		for (OBJVECTOR::iterator it = m_ObjVector.begin(); it != m_ObjVector.end(); it++)
-			(*it)->Release();
+		for (auto&& it : m_ObjVector)
+			it->Release();
 	}
 
 };

@@ -534,8 +534,8 @@ bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 	m_pBranch->m_pNodeIq->UpdateVreVim();
 	m_pBranch->m_pNodeIp->UpdateVreVim();
 
-	cplx& Ue = cplx(m_pBranch->m_pNodeIq->Vre, m_pBranch->m_pNodeIq->Vim);
-	cplx& Ub = cplx(m_pBranch->m_pNodeIp->Vre, m_pBranch->m_pNodeIp->Vim);
+	const cplx& Ue = cplx(m_pBranch->m_pNodeIq->Vre, m_pBranch->m_pNodeIq->Vim);
+	const cplx& Ub = cplx(m_pBranch->m_pNodeIp->Vre, m_pBranch->m_pNodeIp->Vim);
 
 	cplx cIb = -m_pBranch->Yips * Ub + m_pBranch->Yip  * Ue;
 	cplx cIe = -m_pBranch->Yiq  * Ub + m_pBranch->Yiqs * Ue;
@@ -644,8 +644,8 @@ void CDynaBranchMeasure::CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, c
 {
 	// !!!!!!!!!!!!!   здесь рассчитываем на то, что для узлов начала и конца были сделаны UpdateVreVim !!!!!!!!!!!!!!
 
-	cplx& Ue = cplx(pBranch->m_pNodeIq->Vre, pBranch->m_pNodeIq->Vim);
-	cplx& Ub = cplx(pBranch->m_pNodeIp->Vre, pBranch->m_pNodeIp->Vim);
+	const cplx& Ue = cplx(pBranch->m_pNodeIq->Vre, pBranch->m_pNodeIq->Vim);
+	const cplx& Ub = cplx(pBranch->m_pNodeIp->Vre, pBranch->m_pNodeIp->Vim);
 	cIb = -pBranch->Yips * Ub + pBranch->Yip  * Ue;
 	cIe = -pBranch->Yiq  * Ub + pBranch->Yiqs * Ue;
 	cSb = Ub * conj(cIb);

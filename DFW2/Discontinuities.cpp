@@ -248,7 +248,7 @@ DFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, doub
 }
 
 
-CModelActionChangeNodeShunt::CModelActionChangeNodeShunt(CDynaNode *pNode, cplx& ShuntRX) : CModelActionChangeNodeParameterBase(pNode),
+CModelActionChangeNodeShunt::CModelActionChangeNodeShunt(CDynaNode *pNode, const cplx& ShuntRX) : CModelActionChangeNodeParameterBase(pNode),
 																							m_ShuntRX(ShuntRX)
 {
 	
@@ -288,7 +288,7 @@ DFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, doubl
 	return CModelActionChangeNodeShunt::Do(pDynaModel);
 }
 
-CModelActionChangeNodeShuntAdmittance::CModelActionChangeNodeShuntAdmittance(CDynaNode *pNode, cplx& ShuntGB) : CModelActionChangeNodeParameterBase(pNode),
+CModelActionChangeNodeShuntAdmittance::CModelActionChangeNodeShuntAdmittance(CDynaNode *pNode, const cplx& ShuntGB) : CModelActionChangeNodeParameterBase(pNode),
 																												m_ShuntGB(ShuntGB)
 																												{
 
