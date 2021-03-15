@@ -7,6 +7,200 @@
 #include "iomanip"
 namespace DFW2
 {
+	template <typename T, typename L> class KLUFunctions;
+
+	// Instantiate KLU function wrappers based on KLU's define DLONG (int or __int64)
+
+#ifdef DLONG
+
+	template<> struct KLUFunctions<double, __int64>
+	{
+		static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_common* Common)
+		{
+			return klu_l_factor(Ap, Ai, Ax, Symbolic, Common);
+		}
+		static KLU_symbolic* TKLU_analyze(ptrdiff_t nSize, ptrdiff_t* Ap, ptrdiff_t* Ai, KLU_common* Common)
+		{
+			return klu_l_analyze(nSize, Ap, Ai, Common);
+		}
+		static ptrdiff_t TKLU_refactor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_l_refactor(Ap, Ai, Ax, Symbolic, Numeric, Common);
+		}
+		static void TKLU_free_numeric(KLU_numeric** Numeric, KLU_common* Common)
+		{
+			klu_l_free_numeric(Numeric, Common);
+		}
+		static void TKLU_free_symbolic(KLU_symbolic** Symbolic, KLU_common* Common)
+		{
+			klu_l_free_symbolic(Symbolic, Common);
+		}
+		static ptrdiff_t TKLU_tsolve(KLU_symbolic* Symbolic, KLU_numeric* Numeric, ptrdiff_t nSize, ptrdiff_t nrhs, double* B, KLU_common* Common)
+		{
+			return klu_l_tsolve(Symbolic, Numeric, nSize, nrhs, B, Common);
+		}
+		static ptrdiff_t TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_l_rcond(Symbolic, Numeric, Common);
+		}
+
+		static ptrdiff_t TKLU_condest(ptrdiff_t* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_l_condest(Ap, Ax, Symbolic, Numeric, Common);
+		}
+	};
+
+	template<> struct KLUFunctions<std::complex<double>, __int64>
+	{
+		static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_common* Common)
+		{
+			return klu_zl_factor(Ap, Ai, Ax, Symbolic, Common);
+		}
+		static KLU_symbolic* TKLU_analyze(ptrdiff_t nSize, ptrdiff_t* Ap, ptrdiff_t* Ai, KLU_common* Common)
+		{
+			return klu_l_analyze(nSize, Ap, Ai, Common);
+		}
+		static ptrdiff_t TKLU_refactor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_zl_refactor(Ap, Ai, Ax, Symbolic, Numeric, Common);
+		}
+		static void TKLU_free_numeric(KLU_numeric** Numeric, KLU_common* Common)
+		{
+			klu_zl_free_numeric(Numeric, Common);
+		}
+		static void TKLU_free_symbolic(KLU_symbolic** Symbolic, KLU_common* Common)
+		{
+			klu_l_free_symbolic(Symbolic, Common);
+		}
+		static ptrdiff_t TKLU_tsolve(KLU_symbolic* Symbolic, KLU_numeric* Numeric, ptrdiff_t nSize, ptrdiff_t nrhs, double* B, KLU_common* Common)
+		{
+			return klu_zl_tsolve(Symbolic, Numeric, nSize, nrhs, B, 0, Common);
+		}
+		static ptrdiff_t TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_zl_rcond(Symbolic, Numeric, Common);
+		}
+		static ptrdiff_t TKLU_condest(ptrdiff_t* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_zl_condest(Ap, Ax, Symbolic, Numeric, Common);
+		}
+
+	};
+
+#else
+
+	template<> struct KLUFunctions<double, int>
+	{
+		static KLU_numeric* TKLU_factor(int* Ap, int* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_common* Common)
+		{
+			return klu_factor(Ap, Ai, Ax, Symbolic, Common);
+		}
+		static KLU_symbolic* TKLU_analyze(int nSize, int* Ap, int* Ai, KLU_common* Common)
+		{
+			return klu_analyze(nSize, Ap, Ai, Common);
+		}
+		static int TKLU_refactor(int* Ap, int* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_refactor(Ap, Ai, Ax, Symbolic, Numeric, Common);
+		}
+		static void TKLU_free_numeric(KLU_numeric** Numeric, KLU_common* Common)
+		{
+			klu_free_numeric(Numeric, Common);
+		}
+		static void TKLU_free_symbolic(KLU_symbolic** Symbolic, KLU_common* Common)
+		{
+			klu_free_symbolic(Symbolic, Common);
+		}
+		static int TKLU_tsolve(KLU_symbolic* Symbolic, KLU_numeric* Numeric, int nSize, int nrhs, double* B, KLU_common* Common)
+		{
+			return klu_tsolve(Symbolic, Numeric, nSize, nrhs, B, Common);
+		}
+		static int TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_rcond(Symbolic, Numeric, Common);
+		}
+		static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_condest(Ap, Ax, Symbolic, Numeric, Common);
+		}
+	};
+
+	template<> struct KLUFunctions<std::complex<double>, int>
+	{
+		static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_common* Common)
+		{
+			return klu_z_factor(Ap, Ai, Ax, Symbolic, Common);
+		}
+		static KLU_symbolic* TKLU_analyze(ptrdiff_t nSize, ptrdiff_t* Ap, ptrdiff_t* Ai, KLU_common* Common)
+		{
+			return klu_analyze(nSize, Ap, Ai, Common);
+		}
+		static int TKLU_refactor(int* Ap, int* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_z_refactor(Ap, Ai, Ax, Symbolic, Numeric, Common);
+		}
+		static void TKLU_free_numeric(KLU_numeric** Numeric, KLU_common* Common)
+		{
+			klu_z_free_numeric(Numeric, Common);
+		}
+		static void TKLU_free_symbolic(KLU_symbolic** Symbolic, KLU_common* Common)
+		{
+			klu_free_symbolic(Symbolic, Common);
+		}
+		static int TKLU_tsolve(KLU_symbolic* Symbolic, KLU_numeric* Numeric, int nSize, int nrhs, double* B, KLU_common* Common)
+		{
+			return klu_z_tsolve(Symbolic, Numeric, nSize, nrhs, B, 0, Common);
+		}
+		static int TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_z_rcond(Symbolic, Numeric, Common);
+		}
+		static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
+		{
+			return klu_z_condest(Ap, Ax, Symbolic, Numeric, Common);
+		}
+	};
+
+#endif
+
+	template <typename T>
+	struct doubles_count
+	{
+		static const ptrdiff_t count = 1;
+	};
+
+	template<>
+	struct doubles_count<std::complex<double>>
+	{
+		static const ptrdiff_t count = 2;
+	};
+
+	// Deleters for KLU objects to be wrapped to unique_ptrs
+
+	template <typename T, typename L>
+	class KLUCommonDeleter
+	{
+		T* m_p;
+		KLU_common& Common;
+		void CleanUp(KLU_numeric*)
+		{
+			KLUFunctions<L, ptrdiff_t>::TKLU_free_numeric(&m_p, &Common);
+		}
+		void CleanUp(KLU_symbolic*)
+		{
+			KLUFunctions<L, ptrdiff_t>::TKLU_free_symbolic(&m_p, &Common);
+		}
+	public:
+		KLUCommonDeleter(T* p, KLU_common& common) : m_p(p), Common(common) {}
+		virtual ~KLUCommonDeleter()
+		{
+			if (m_p)
+				CleanUp(m_p);
+		}
+		T* GetKLUObject() { return m_p; }
+
+	};
+
 	template<typename T>
 	class KLUWrapper
 	{
@@ -22,198 +216,6 @@ namespace DFW2
 		ptrdiff_t m_nRefactorizationsCount = 0;
 		ptrdiff_t m_nRefactorizationFailures = 0;
 		std::wstring m_strKLUError;
-
-		template <typename T>
-		struct doubles_count 
-		{
-			static const ptrdiff_t count = 1;
-		};
-		template<>
-		struct doubles_count<std::complex<double>>
-		{
-			static const ptrdiff_t count = 2;
-		};
-
-		template <typename T, typename L> class KLUFunctions;
-
-#ifndef _WIN64
-
-		template<> struct KLUFunctions<double, int>
-		{
-			static KLU_numeric* TKLU_factor(int* Ap, int* Ai, double* Ax, KLU_symbolic *Symbolic, KLU_common* Common)
-			{
-				return klu_factor(Ap, Ai, Ax, Symbolic, Common);
-			}
-			static KLU_symbolic* TKLU_analyze(int nSize, int* Ap, int* Ai, KLU_common* Common)
-			{
-				return klu_analyze(nSize, Ap, Ai, Common);
-			}
-			static int TKLU_refactor(int* Ap, int* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_refactor(Ap, Ai, Ax, Symbolic, Numeric, Common);
-			}
-			static void TKLU_free_numeric(KLU_numeric** Numeric, KLU_common* Common)
-			{
-				klu_free_numeric(Numeric, Common);
-			}
-			static void TKLU_free_symbolic(KLU_symbolic** Symbolic, KLU_common* Common)
-			{
-				klu_free_symbolic(Symbolic, Common);
-			}
-			static int TKLU_tsolve(KLU_symbolic* Symbolic, KLU_numeric* Numeric, int nSize, int nrhs, double* B, KLU_common* Common)
-			{
-				return klu_tsolve(Symbolic, Numeric, nSize, nrhs, B, Common);
-			}
-			static int TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_rcond(Symbolic, Numeric, Common);
-			}
-			static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_condest(Ap, Ax, Symbolic, Numeric, Common);
-			}
-		};
-#endif
-
-#ifdef _WIN64
-		template<> struct KLUFunctions<double, __int64>
-		{
-			static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic *Symbolic, KLU_common* Common)
-			{
-				return klu_l_factor(Ap, Ai, Ax, Symbolic, Common);
-			}
-			static KLU_symbolic* TKLU_analyze(ptrdiff_t nSize, ptrdiff_t* Ap, ptrdiff_t* Ai, KLU_common* Common)
-			{
-				return klu_l_analyze(nSize, Ap, Ai, Common);
-			}
-			static ptrdiff_t TKLU_refactor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_l_refactor(Ap, Ai, Ax, Symbolic, Numeric, Common);
-			}
-			static void TKLU_free_numeric(KLU_numeric** Numeric, KLU_common* Common)
-			{
-				klu_l_free_numeric(Numeric, Common);
-			}
-			static void TKLU_free_symbolic(KLU_symbolic** Symbolic, KLU_common* Common)
-			{
-				klu_l_free_symbolic(Symbolic, Common);
-			}
-			static ptrdiff_t TKLU_tsolve(KLU_symbolic* Symbolic, KLU_numeric* Numeric, ptrdiff_t nSize, ptrdiff_t nrhs, double* B, KLU_common* Common)
-			{
-				return klu_l_tsolve(Symbolic, Numeric, nSize, nrhs, B, Common);
-			}
-			static ptrdiff_t TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_l_rcond(Symbolic, Numeric, Common);
-			}
-
-			static int TKLU_condest(ptrdiff_t* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_l_condest(Ap, Ax, Symbolic, Numeric, Common);
-			}
-		};
-#endif
-
-#ifndef _WIN64
-		template<> struct KLUFunctions<std::complex<double>, int>
-		{
-			static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic *Symbolic, KLU_common* Common)
-			{
-				return klu_z_factor(Ap, Ai, Ax, Symbolic, Common);
-			}
-			static KLU_symbolic* TKLU_analyze(ptrdiff_t nSize, ptrdiff_t* Ap, ptrdiff_t* Ai, KLU_common* Common)
-			{
-				return klu_analyze(nSize, Ap, Ai, Common);
-			}
-			static int TKLU_refactor(int* Ap, int* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_z_refactor(Ap, Ai, Ax, Symbolic, Numeric, Common);
-			}
-			static void TKLU_free_numeric(KLU_numeric** Numeric, KLU_common* Common)
-			{
-				klu_z_free_numeric(Numeric, Common);
-			}
-			static void TKLU_free_symbolic(KLU_symbolic** Symbolic, KLU_common* Common)
-			{
-				klu_free_symbolic(Symbolic, Common);
-			}
-			static int TKLU_tsolve(KLU_symbolic* Symbolic, KLU_numeric* Numeric, int nSize, int nrhs, double* B, KLU_common* Common)
-			{
-				return klu_z_tsolve(Symbolic, Numeric, nSize, nrhs, B, 0, Common);
-			}
-			static int TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_z_rcond(Symbolic, Numeric, Common);
-			}
-			static int TKLU_condest(int* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_z_condest(Ap, Ax, Symbolic, Numeric, Common);
-			}
-		};
-#endif 
-
-#ifdef _WIN64
-		template<> struct KLUFunctions<std::complex<double>, __int64>
-		{
-			static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic *Symbolic, KLU_common* Common)
-			{
-				return klu_zl_factor(Ap, Ai, Ax, Symbolic, Common);
-			}
-			static KLU_symbolic* TKLU_analyze(ptrdiff_t nSize, ptrdiff_t* Ap, ptrdiff_t* Ai, KLU_common* Common)
-			{
-				return klu_l_analyze(nSize, Ap, Ai, Common);
-			}
-			static ptrdiff_t TKLU_refactor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_zl_refactor(Ap, Ai, Ax, Symbolic, Numeric, Common);
-			}
-			static void TKLU_free_numeric(KLU_numeric** Numeric, KLU_common* Common)
-			{
-				klu_zl_free_numeric(Numeric, Common);
-			}
-			static void TKLU_free_symbolic(KLU_symbolic** Symbolic, KLU_common* Common)
-			{
-				klu_l_free_symbolic(Symbolic, Common);
-			}
-			static ptrdiff_t TKLU_tsolve(KLU_symbolic* Symbolic, KLU_numeric* Numeric, ptrdiff_t nSize, ptrdiff_t nrhs, double* B, KLU_common* Common)
-			{
-				return klu_zl_tsolve(Symbolic, Numeric, nSize, nrhs, B, 0, Common);
-			}
-			static ptrdiff_t TKLU_rcond(KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_zl_rcond(Symbolic, Numeric, Common);
-			}
-			static int TKLU_condest(ptrdiff_t* Ap, double* Ax, KLU_symbolic* Symbolic, KLU_numeric* Numeric, KLU_common* Common)
-			{
-				return klu_zl_condest(Ap, Ax, Symbolic, Numeric, Common);
-			}
-
-		};
-#endif
-		
-		template <typename T, typename L>
-		class KLUCommonDeleter
-		{
-			T *m_p;
-			KLU_common& Common;
-			void CleanUp(KLU_numeric*)
-			{
-				KLUFunctions<L, ptrdiff_t>::TKLU_free_numeric(&m_p, &Common);
-			}
-			void CleanUp(KLU_symbolic*)
-			{
-				KLUFunctions<L, ptrdiff_t>::TKLU_free_symbolic(&m_p, &Common);
-			}
-		public:
-			KLUCommonDeleter(T* p, KLU_common& common) : m_p(p), Common(common) {}
-			virtual ~KLUCommonDeleter()
-			{
-				if (m_p)
-					CleanUp(m_p);
-			}
-			T* GetKLUObject() { return m_p; }
-
-		};
 
 		using KLUSymbolic = KLUCommonDeleter<KLU_symbolic, T>;
 		using KLUNumeric = KLUCommonDeleter<KLU_numeric, T>;
