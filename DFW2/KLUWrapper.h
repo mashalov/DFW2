@@ -215,7 +215,7 @@ namespace DFW2
 		ptrdiff_t m_nFactorizationsCount = 0;
 		ptrdiff_t m_nRefactorizationsCount = 0;
 		ptrdiff_t m_nRefactorizationFailures = 0;
-		std::wstring m_strKLUError;
+		std::string m_strKLUError;
 
 		using KLUSymbolic = KLUCommonDeleter<KLU_symbolic, T>;
 		using KLUNumeric = KLUCommonDeleter<KLU_numeric, T>;
@@ -223,7 +223,7 @@ namespace DFW2
 		std::unique_ptr<KLUNumeric>  pNumeric;
 		KLU_common pCommon;
 
-		const _TCHAR* KLUErrorDescription()
+		const char* KLUErrorDescription()
 		{
 			switch (pCommon.status)
 			{
@@ -248,9 +248,9 @@ namespace DFW2
 			}
 			return m_strKLUError.c_str();
 		}
-		static const _TCHAR* KLUWrapperName()
+		static const char* KLUWrapperName()
 		{
-			return  _T("KLUWrapper");
+			return  "KLUWrapper";
 		}
 
 	public:
@@ -287,7 +287,7 @@ namespace DFW2
 			if (!Analyzed())
 			{
 				DumpMatrix(false);
-				throw dfw2error(fmt::format(_T("{}::KLU_analyze {}"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format("{}::KLU_analyze {}", KLUWrapperName(), KLUErrorDescription()));
 			}
 			m_nAnalyzingsCount++;
 		}
@@ -298,14 +298,14 @@ namespace DFW2
 				Analyze();
 			pNumeric = std::make_unique<KLUNumeric>(KLUFunctions<T, ptrdiff_t>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon) , pCommon);
 			if (!Factored())
-				throw dfw2error(fmt::format(_T("{}::KLU_factor {}"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format("{}::KLU_factor {}", KLUWrapperName(), KLUErrorDescription()));
 			m_nFactorizationsCount++;
 		}
 
 		bool TryRefactor()
 		{
 			if (!Factored())
-				throw dfw2error(fmt::format(_T("{}::KLU_refactor - no numeric to refactor"), KLUWrapperName()));
+				throw dfw2error(fmt::format("{}::KLU_refactor - no numeric to refactor", KLUWrapperName()));
 			if (KLUFunctions<T,ptrdiff_t>::TKLU_refactor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
 			{
 				m_nRefactorizationsCount++;
@@ -321,7 +321,7 @@ namespace DFW2
 		void Refactor()
 		{
 			if (!TryRefactor())
-				throw dfw2error(fmt::format(_T("{}::KLU_refactor {}"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format("{}::KLU_refactor {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
 		void Solve()
@@ -331,7 +331,7 @@ namespace DFW2
 			if(!Factored())
 				Factor();
 			if(!KLUFunctions<T, ptrdiff_t>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
-				throw dfw2error(fmt::format(_T("{}::KLU_tsolve {}"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
 		void FactorSolve()
@@ -340,20 +340,20 @@ namespace DFW2
 				Analyze();
 			Factor();
 			if (!KLUFunctions<T,ptrdiff_t>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
-				throw dfw2error(fmt::format(_T("{}::KLU_tsolve {}"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
 		double Condest()
 		{
 			if (!KLUFunctions<T, ptrdiff_t>::TKLU_condest(pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
-				throw dfw2error(fmt::format(_T("{}::KLU_condest {}"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format("{}::KLU_condest {}", KLUWrapperName(), KLUErrorDescription()));
 			return pCommon.condest;
 		}
 
 		double Rcond()
 		{
 			if(!KLUFunctions<T, ptrdiff_t>::TKLU_rcond(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
-				throw dfw2error(fmt::format(_T("{}::KLU_rcond {}"), KLUWrapperName(), KLUErrorDescription()));
+				throw dfw2error(fmt::format("{}::KLU_rcond {}", KLUWrapperName(), KLUErrorDescription()));
 			return pCommon.rcond;
 		}
 
@@ -393,7 +393,7 @@ namespace DFW2
 		// todo - complex version
 		void DumpMatrix(bool bAnalyzeLinearDependenies)
 		{
-			std::ofstream mts(_T("c:\\tmp\\dwfsingularmatrix.mtx"));
+			std::ofstream mts("c:\\tmp\\dwfsingularmatrix.mtx");
 			if (mts.is_open())
 			{
 				ptrdiff_t* pAi = Ap();

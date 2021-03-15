@@ -796,9 +796,9 @@ bool CDynaNodeContainer::LULF()
 	ptrdiff_t *pAi = Ai;
 
 	FILE *fnode(nullptr), *fgen(nullptr);
-	_tfopen_s(&fnode, _T("c:\\tmp\\nodes.csv"), _T("w+, ccs=UTF-8"));
-	_tfopen_s(&fgen, _T("c:\\tmp\\gens.csv"), _T("w+, ccs=UTF-8"));
-	_ftprintf(fnode, _T(";"));
+	fopen_s(&fnode, "c:\\tmp\\nodes.csv", "w+");
+	fopen_s(&fgen, "c:\\tmp\\gens.csv", "w+");
+	fprintf(fnode, ";");
 
 	for (auto&& it : m_DevInMatrix)
 	{
@@ -823,7 +823,7 @@ bool CDynaNodeContainer::LULF()
 			pNode->Vre = pNode->V = pNode->Unom;
 			pNode->Vim = pNode->Delta = 0.0;
 			// для всех узлов, которые не отключены и не находятся в металлическом КЗ (КЗ с нулевым шунтом)
-			_ftprintf(fnode, _T("%td;"), pNode->GetId());
+			fprintf(fnode, "%td;", pNode->GetId());
 			// Branches
 
 			for (VirtualBranch *pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
@@ -843,8 +843,8 @@ bool CDynaNodeContainer::LULF()
 		ppDiags = pDiags.get();
 		pB = B;
 
-		_ftprintf(fnode, _T("\n%td;"), nIteration);
-		_ftprintf(fgen, _T("\n%td;"), nIteration);
+		fprintf(fnode, "\n%td;", nIteration);
+		fprintf(fgen, "\n%td;", nIteration);
 		// проходим по узлам вне зависимости от их состояния, параллельно идем по диагонали матрицы
 		for (auto&& it : m_DevInMatrix)
 		{
@@ -909,7 +909,7 @@ bool CDynaNodeContainer::LULF()
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
 
-					_ftprintf(fgen, _T("%g;"), pVsource->P.Value);
+					fprintf(fgen, "%g;", pVsource->P.Value);
 				}
 
 				// рассчитываем задающий ток узла от нагрузки
@@ -930,7 +930,7 @@ bool CDynaNodeContainer::LULF()
 				// диагональ матрицы формируем по Y узла
 				**ppDiags = Y.real();
 				*(*ppDiags + 1) = Y.imag();
-				_ftprintf(fnode, _T("%g;"), pNode->V / pNode->V0);
+				fprintf(fnode, "%g;", pNode->V / pNode->V0);
 			}
 			else
 			{
@@ -1006,7 +1006,7 @@ bool CDynaNodeContainer::Seidell()
 	return LULF();
 }
 
-VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::wstring_view VarName)
+VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::string_view VarName)
 {
 	if (VarName == CDynaNode::m_cszSz)
 	{
@@ -1050,7 +1050,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Напряжение {} в узле {} выше порогового"), V.Value, GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Напряжение {} в узле {} выше порогового", V.Value, GetVerbalName()));
 		}
 	}
 	else
@@ -1059,7 +1059,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Напряжение {} в узле {} ниже порогового"), V.Value, GetVerbalName()));
+				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Напряжение {} в узле {} ниже порогового", V.Value, GetVerbalName()));
 		}
 	}
 }
@@ -1213,7 +1213,7 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 	if (pBranch->IsZeroImpedance())
 	{
 		if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(m_pContainer)->GetZeroBranchesEnd())
-			throw dfw2error(_T("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun"));
+			throw dfw2error("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun");
 
 		// если ветвь имеет сопротивление ниже минимального 
 		bool bAdd(true);
@@ -1318,20 +1318,20 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		if (!Cycles.empty())
 		{
 			
-			/*pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Cycles"));
-			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s"), GetVerbalName()));
+			/*pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, "Cycles");
+			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", GetVerbalName()));
 			for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
-				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s"), (*ppDev)->GetVerbalName()));
+				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", (*ppDev)->GetVerbalName()));
 
 			for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
-				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s"), pZb->pBranch->GetVerbalName()));
+				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", pZb->pBranch->GetVerbalName()));
 
 			for (auto&& cycle : Cycles)
 			{
-				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, _T("Cycle"));
+				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, "Cycle");
 				for (auto&& vb : cycle)
 				{
-					pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex(_T("%s %s"), vb.m_bDirect ? _T("+") : _T("-"), vb.m_pEdge->m_IdBranch->pBranch->GetVerbalName()));
+					pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s %s", vb.m_bDirect ? "+" : "-", vb.m_pEdge->m_IdBranch->pBranch->GetVerbalName()));
 				}
 			}
 			*/
@@ -1544,9 +1544,9 @@ const CDeviceContainerProperties CDynaNode::DeviceProperties()
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS)));
 
 	/*
-	props.m_VarMap.insert(make_pair(_T("Sip"), CVarIndex(V_SIP, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("Cop"), CVarIndex(V_COP, VARUNIT_PU)));
-	props.m_VarMap.insert(make_pair(_T("Sv"), CVarIndex(V_SV, VARUNIT_PU)));
+	props.m_VarMap.insert(make_pair("Sip", CVarIndex(V_SIP, VARUNIT_PU)));
+	props.m_VarMap.insert(make_pair("Cop", CVarIndex(V_COP, VARUNIT_PU)));
+	props.m_VarMap.insert(make_pair("Sv", CVarIndex(V_SV, VARUNIT_PU)));
 	*/
 
 
@@ -1570,53 +1570,53 @@ const CDeviceContainerProperties CSynchroZone::DeviceProperties()
 void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty(_T("name"), TypedSerializedValue::eValueType::VT_NAME);
-	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
-	Serializer->AddEnumProperty(_T("tip"), new CSerializerAdapterEnumT<CDynaNodeBase::eLFNodeType>(m_eLFNodeType, m_cszLFNodeTypeNames, _countof(m_cszLFNodeTypeNames)));
-	Serializer->AddProperty(_T("ny"), TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty(_T("vras"), V, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(_T("delta"), Delta, eVARUNITS::VARUNIT_DEGREES);
-	Serializer->AddProperty(_T("pnr"), Pn, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(_T("qnr"), Qn, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty(_T("pn"), Pnr, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(_T("qn"), Qnr, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty(_T("pg"), Pg, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(_T("qg"), Qg, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty(_T("gsh"), G, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddProperty(_T("grk"), Gr0, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddProperty(_T("nrk"), Nr, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddProperty(_T("vzd"), LFVref, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(_T("qmin"), LFQmin, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty(_T("qmax"), LFQmax, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty(_T("uhom"), Unom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(_T("bsh"), B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
-	Serializer->AddProperty(_T("brk"), Br0, eVARUNITS::VARUNIT_SIEMENS, -1.0);
-	Serializer->AddState(_T("Vre"), Vre, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(_T("Vim"), Vim, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(_T("pgr"), Vim, eVARUNITS::VARUNIT_MW);
-	Serializer->AddState(_T("qgr"), Vim, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddState(_T("LRCShuntPartP"), dLRCShuntPartP, eVARUNITS::VARUNIT_MW);
-	Serializer->AddState(_T("LRCShuntPartQ"), dLRCShuntPartQ, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddState(_T("Gshunt"), Gshunt, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState(_T("Bshunt"), Bshunt, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState(_T("InMetallicSC"), m_bInMetallicSC);
-	Serializer->AddState(_T("InLowVoltage"), m_bLowVoltage);
-	Serializer->AddState(_T("SavedInLowVoltage"), m_bSavedLowVoltage);
-	Serializer->AddState(_T("LRCVicinity"), dLRCVicinity);
-	Serializer->AddState(_T("dLRCPn"), dLRCPn);
-	Serializer->AddState(_T("dLRCQn"), dLRCQn);
-	Serializer->AddState(_T("dLRCPg"), dLRCPg);
-	Serializer->AddState(_T("dLRCQg"), dLRCQg);
-	Serializer->AddState(_T("Vold"), Vold, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(_T("Yii"), Yii, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState(_T("YiiSuper"), YiiSuper, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty("name", TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnumT<CDynaNodeBase::eLFNodeType>(m_eLFNodeType, m_cszLFNodeTypeNames, _countof(m_cszLFNodeTypeNames)));
+	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);
+	Serializer->AddProperty("pnr", Pn, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty("qnr", Qn, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty("pn", Pnr, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty("qn", Qnr, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty("pg", Pg, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty("qg", Qg, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty("gsh", G, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty("grk", Gr0, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty("nrk", Nr, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty("vzd", LFVref, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty("qmin", LFQmin, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty("qmax", LFQmax, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty("uhom", Unom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty("bsh", B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty("brk", Br0, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddState("Vre", Vre, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Vim", Vim, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("pgr", Vim, eVARUNITS::VARUNIT_MW);
+	Serializer->AddState("qgr", Vim, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState("LRCShuntPartP", dLRCShuntPartP, eVARUNITS::VARUNIT_MW);
+	Serializer->AddState("LRCShuntPartQ", dLRCShuntPartQ, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState("Gshunt", Gshunt, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState("Bshunt", Bshunt, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState("InMetallicSC", m_bInMetallicSC);
+	Serializer->AddState("InLowVoltage", m_bLowVoltage);
+	Serializer->AddState("SavedInLowVoltage", m_bSavedLowVoltage);
+	Serializer->AddState("LRCVicinity", dLRCVicinity);
+	Serializer->AddState("dLRCPn", dLRCPn);
+	Serializer->AddState("dLRCQn", dLRCQn);
+	Serializer->AddState("dLRCPg", dLRCPg);
+	Serializer->AddState("dLRCQg", dLRCQg);
+	Serializer->AddState("Vold", Vold, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Yii", Yii, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState("YiiSuper", YiiSuper, eVARUNITS::VARUNIT_SIEMENS);
 }
 
 void CDynaNode::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDynaNodeBase::UpdateSerializer(Serializer);
-	Serializer->AddState(_T("SLag"), Lag);
-	Serializer->AddState(_T("S"), S);
+	Serializer->AddState("SLag", Lag);
+	Serializer->AddState("S", S);
 }
 
 VariableIndexRefVec& CDynaNodeBase::GetVariables(VariableIndexRefVec& ChildVec)
@@ -1629,13 +1629,13 @@ VariableIndexRefVec& CDynaNode::GetVariables(VariableIndexRefVec& ChildVec)
 	return CDynaNodeBase::GetVariables(JoinVariables({ Delta, Lag, S }, ChildVec));
 }
 
-const _TCHAR *CDynaNodeBase::m_cszV = _T("V");
-const _TCHAR *CDynaNodeBase::m_cszDelta = _T("Delta");
-const _TCHAR *CDynaNodeBase::m_cszVre = _T("Vre");
-const _TCHAR *CDynaNodeBase::m_cszVim = _T("Vim");
-const _TCHAR *CDynaNodeBase::m_cszGsh = _T("gsh");
-const _TCHAR *CDynaNodeBase::m_cszBsh = _T("bsh");
-const _TCHAR *CDynaNode::m_cszS = _T("S");
-const _TCHAR *CDynaNode::m_cszSz = _T("Sz");
+const char* CDynaNodeBase::m_cszV = "V";
+const char* CDynaNodeBase::m_cszDelta = "Delta";
+const char* CDynaNodeBase::m_cszVre = "Vre";
+const char* CDynaNodeBase::m_cszVim = "Vim";
+const char* CDynaNodeBase::m_cszGsh = "gsh";
+const char* CDynaNodeBase::m_cszBsh = "bsh";
+const char* CDynaNode::m_cszS = "S";
+const char* CDynaNode::m_cszSz = "Sz";
 
-const _TCHAR* CDynaNodeBase::m_cszLFNodeTypeNames[5] = { _T("Slack"), _T("Load"), _T("Gen"), _T("GenMax"), _T("GenMin") };
+const char* CDynaNodeBase::m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };

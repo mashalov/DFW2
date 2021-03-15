@@ -1,4 +1,4 @@
-// Devices.h : Declaration of the CDevices
+﻿// Devices.h : Declaration of the CDevices
 
 #pragma once
 #include "resource.h"       // main symbols

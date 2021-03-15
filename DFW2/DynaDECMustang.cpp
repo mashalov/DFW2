@@ -170,33 +170,33 @@ void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
 	// обновляем переданный сериализатор
 	CDevice::UpdateSerializer(Serializer);
 	// добавляем свойства форсировки
-	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
-	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
-	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty(_T("Ubf"), VEnfOn, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Uef"), VEnfOff, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Ubrf"), VDefOn, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Uerf"), VDefOff, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Rf"), EnfRatio);
-	Serializer->AddProperty(_T("Rrf"), DefRatio);
-	Serializer->AddProperty(_T("Texc_f"), EnfTexc, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(_T("Texc_rf"), DefTexc, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(_T("Tz_in"), TdelOn, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(_T("Tz_out"), TdelOff, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty("Ubf", VEnfOn, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Uef", VEnfOff, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Ubrf", VDefOn, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Uerf", VDefOff, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Rf", EnfRatio);
+	Serializer->AddProperty("Rrf", DefRatio);
+	Serializer->AddProperty("Texc_f", EnfTexc, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("Texc_rf", DefTexc, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("Tz_in", TdelOn, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("Tz_out", TdelOff, eVARUNITS::VARUNIT_SECONDS);
 
 	// добавляем переменные состояния форсировки
-	Serializer->AddState(_T("EnforceOnValue"), EnforceOnOut, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("DeforceOnValue"), DeforceOnOut, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("EnforceOffValue"), EnforceOffOut, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("DeforceOffValue"), DeforceOffOut, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("EnforceTrigValue"), EnforceTrigOut, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("DeforceTrigValue"), DeforceTrigOut, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("EnforceValue"), m_dEnforceValue, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("DeforceValue"), m_dDeforceValue, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Udec"), Udec, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Texc"), Texc, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Umin"), Umin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Umax"), Umax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("EnforceOnValue", EnforceOnOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("DeforceOnValue", DeforceOnOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("EnforceOffValue", EnforceOffOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("DeforceOffValue", DeforceOffOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("EnforceTrigValue", EnforceTrigOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("DeforceTrigValue", DeforceTrigOut, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("EnforceValue", m_dEnforceValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("DeforceValue", m_dDeforceValue, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Udec", Udec, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Texc", Texc, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Umin", Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Umax", Umax, eVARUNITS::VARUNIT_PU);
 }
 
 const CDeviceContainerProperties CDynaDECMustang::DeviceProperties()
@@ -212,12 +212,12 @@ const CDeviceContainerProperties CDynaDECMustang::DeviceProperties()
 
 	props.nEquationsCount = CDynaDECMustang::VARS::V_LAST;
 
-	props.m_VarMap.insert(std::make_pair(_T("EnfOnRly"), CVarIndex(CDynaDECMustang::V_ENFONRELAY, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("DefOnRly"), CVarIndex(CDynaDECMustang::V_DEFONRELAY, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("EnfOffRly"), CVarIndex(CDynaDECMustang::V_ENFOFFRELAY, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("DefOffRly"), CVarIndex(CDynaDECMustang::V_DEFOFFRELAY, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("EnfTrg"), CVarIndex(CDynaDECMustang::V_ENFTRIG, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("DefTrg"), CVarIndex(CDynaDECMustang::V_DEFTRIG, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("EnfOnRly", CVarIndex(CDynaDECMustang::V_ENFONRELAY, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("DefOnRly", CVarIndex(CDynaDECMustang::V_DEFONRELAY, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("EnfOffRly", CVarIndex(CDynaDECMustang::V_ENFOFFRELAY, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("DefOffRly", CVarIndex(CDynaDECMustang::V_DEFOFFRELAY, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("EnfTrg", CVarIndex(CDynaDECMustang::V_ENFTRIG, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("DefTrg", CVarIndex(CDynaDECMustang::V_DEFTRIG, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair(CDynaExciterBase::m_cszUdec, CVarIndex(CDynaDECMustang::V_DEC, VARUNIT_PU)));
 	
 	return props;

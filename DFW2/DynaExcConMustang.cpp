@@ -1,4 +1,4 @@
-#include "stdafx.h"
+ï»¿#include "stdafx.h"
 #include "DynaExcConMustang.h"
 #include "DynaModel.h"
 #include "DerlagContinuous.h"
@@ -156,7 +156,7 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 		/*
 		if ((m_Id == 16) && pDynaModel->GetStepNumber() >= 399)
 		{
-			ATLTRACE(_T("\nId=%d V=%g dSdtIn=%g Svt=%g dVdt=%g dEqdt=%g dSdt=%g NordUsum=%g"), m_Id, NodeV, dSdtIn.Value(), Svt, *dVdtOutValue, *dEqdtOutValue, *dSdtOutValue, pRV->Nordsiek[0]);
+			ATLTRACE("\nId=%d V=%g dSdtIn=%g Svt=%g dVdt=%g dEqdt=%g dSdt=%g NordUsum=%g", m_Id, NodeV, dSdtIn.Value(), Svt, *dVdtOutValue, *dEqdtOutValue, *dSdtOutValue, pRV->Nordsiek[0]);
 		}
 		*/
 		pDynaModel->SetFunction(Usum, dSum);
@@ -210,8 +210,8 @@ double CDynaExcConMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	// ïðîèçâîäíóþ ÷àñòîòû âñåãäà áðàòü èç ÐÄÇ óçëà (ïîäóìàòü íàäî ëè åå âî âñåõ óçëàõ èëè òîëüêî â òåõ, êîòîðûå ïîä ãåíåðàòîðàìè)
-	// èëè ìîæåò áûòü ñ÷èòàòü åå âîîáùå âíå óçëà - òîëüêî â ÀÐÂ èëè åùå òàì ãäå íóæíî
+	// Ð¿Ñ€Ð¾Ð¸Ð·Ð²Ð¾Ð´Ð½ÑƒÑŽ Ñ‡Ð°ÑÑ‚Ð¾Ñ‚Ñ‹ Ð²ÑÐµÐ³Ð´Ð° Ð±Ñ€Ð°Ñ‚ÑŒ Ð¸Ð· Ð Ð”Ð— ÑƒÐ·Ð»Ð° (Ð¿Ð¾Ð´ÑƒÐ¼Ð°Ñ‚ÑŒ Ð½Ð°Ð´Ð¾ Ð»Ð¸ ÐµÐµ Ð²Ð¾ Ð²ÑÐµÑ… ÑƒÐ·Ð»Ð°Ñ… Ð¸Ð»Ð¸ Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð² Ñ‚ÐµÑ…, ÐºÐ¾Ñ‚Ð¾Ñ€Ñ‹Ðµ Ð¿Ð¾Ð´ Ð³ÐµÐ½ÐµÑ€Ð°Ñ‚Ð¾Ñ€Ð°Ð¼Ð¸)
+	// Ð¸Ð»Ð¸ Ð¼Ð¾Ð¶ÐµÑ‚ Ð±Ñ‹Ñ‚ÑŒ ÑÑ‡Ð¸Ñ‚Ð°Ñ‚ÑŒ ÐµÐµ Ð²Ð¾Ð¾Ð±Ñ‰Ðµ Ð²Ð½Ðµ ÑƒÐ·Ð»Ð° - Ñ‚Ð¾Ð»ÑŒÐºÐ¾ Ð² ÐÐ Ð’ Ð¸Ð»Ð¸ ÐµÑ‰Ðµ Ñ‚Ð°Ð¼ Ð³Ð´Ðµ Ð½ÑƒÐ¶Ð½Ð¾
 	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(dSdtIn, GetSingleLink(DEVTYPE_EXCITER), CDynaNode::m_cszS, DEVTYPE_NODE));
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 	if (pExciter)
@@ -226,23 +226,23 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 void CDynaExcConMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
-	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
-	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty(_T("Alpha"), Alpha);
-	Serializer->AddProperty(_T("Trv"), Tr, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(_T("Ku"), K0u);
-	Serializer->AddProperty(_T("Ku1"), K1u);
-	Serializer->AddProperty(_T("Kif1"), K1if);
-	Serializer->AddProperty(_T("Kf"), K0f);
-	Serializer->AddProperty(_T("Kf1"), K1f);
-	Serializer->AddProperty(_T("Tf"), Tf, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(_T("Urv_min"), Umin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Urv_max"), Umax, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Vref"), Vref, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Usum"), Usum, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Uf"), Uf, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Svt"), Svt, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty("Alpha", Alpha);
+	Serializer->AddProperty("Trv", Tr, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("Ku", K0u);
+	Serializer->AddProperty("Ku1", K1u);
+	Serializer->AddProperty("Kif1", K1if);
+	Serializer->AddProperty("Kf", K0f);
+	Serializer->AddProperty("Kf1", K1f);
+	Serializer->AddProperty("Tf", Tf, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("Urv_min", Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Urv_max", Umax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Vref", Vref, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Usum", Usum, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Uf", Uf, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Svt", Svt, eVARUNITS::VARUNIT_PU);
 }
 
 const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()
@@ -256,14 +256,14 @@ const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()
 	props.nEquationsCount = CDynaExcConMustang::VARS::V_LAST;
 	
 
-	props.m_VarMap.insert(std::make_pair(_T("Uf"), CVarIndex(CDynaExcConMustang::V_UF, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("Usum"), CVarIndex(CDynaExcConMustang::V_USUM, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("Svt"), CVarIndex(CDynaExcConMustang::V_SVT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("dVdt"), CVarIndex(CDynaExcConMustang::V_DVDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("dEqdt"), CVarIndex(CDynaExcConMustang::V_EQDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("dSdt"), CVarIndex(CDynaExcConMustang::V_SDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("dVdtLag"), CVarIndex(CDynaExcConMustang::V_DVDT + 1, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("dEqdtLag"), CVarIndex(CDynaExcConMustang::V_EQDT + 1, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("dSdtLag"), CVarIndex(CDynaExcConMustang::V_SDT + 1, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("Uf", CVarIndex(CDynaExcConMustang::V_UF, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("Usum", CVarIndex(CDynaExcConMustang::V_USUM, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("Svt", CVarIndex(CDynaExcConMustang::V_SVT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dVdt", CVarIndex(CDynaExcConMustang::V_DVDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dEqdt", CVarIndex(CDynaExcConMustang::V_EQDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dSdt", CVarIndex(CDynaExcConMustang::V_SDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dVdtLag", CVarIndex(CDynaExcConMustang::V_DVDT + 1, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dEqdtLag", CVarIndex(CDynaExcConMustang::V_EQDT + 1, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dSdtLag", CVarIndex(CDynaExcConMustang::V_SDT + 1, VARUNIT_PU)));
 	return props;
 }

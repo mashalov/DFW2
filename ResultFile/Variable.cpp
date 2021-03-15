@@ -1,4 +1,4 @@
-// Variable.cpp : Implementation of CVariable
+﻿// Variable.cpp : Implementation of CVariable
 
 #include "stdafx.h"
 #include "Device.h"
@@ -28,7 +28,7 @@ STDMETHODIMP CVariable::get_Name(BSTR* Name)
 	HRESULT hRes = E_INVALIDARG;
 	if (Name && m_pVariableInfo)
 	{
-		*Name = SysAllocString(m_pVariableInfo->Name.c_str());
+		*Name = SysAllocString(stringutils::utf8_decode(m_pVariableInfo->Name).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -63,7 +63,7 @@ STDMETHODIMP CVariable::get_UnitsName(BSTR* UnitsName)
 	if (UnitsName && m_pVariableInfo && m_pDeviceInstanceInfo && m_pDeviceInstanceInfo->m_pDevType)
 	{
 		CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
-		*UnitsName = SysAllocString(pFileReader->GetUnitsName(m_pVariableInfo->eUnits));
+		*UnitsName = SysAllocString(stringutils::utf8_decode(pFileReader->GetUnitsName(m_pVariableInfo->eUnits)).c_str());
 		hRes = S_OK;
 	}
 	return hRes;

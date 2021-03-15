@@ -154,7 +154,7 @@ namespace DFW2
 
 		void SetMatrixRow(ptrdiff_t nMatrixRow) noexcept { m_nMatrixRow = nMatrixRow; }
 
-		VariableIndexExternal GetExternalVariable(std::wstring_view VarName) override;
+		VariableIndexExternal GetExternalVariable(std::string_view VarName) override;
 
 		static const CDeviceContainerProperties DeviceProperties();
 
@@ -172,13 +172,13 @@ namespace DFW2
 
 		void AddToTopologyCheck();
 
-		static const _TCHAR *m_cszV;
-		static const _TCHAR *m_cszDelta;
-		static const _TCHAR *m_cszVre;
-		static const _TCHAR *m_cszVim;
-		static const _TCHAR *m_cszGsh;
-		static const _TCHAR *m_cszBsh;
-		static const _TCHAR* m_cszLFNodeTypeNames[5];
+		static const char* m_cszV;
+		static const char* m_cszDelta;
+		static const char* m_cszVre;
+		static const char* m_cszVim;
+		static const char* m_cszGsh;
+		static const char* m_cszBsh;
+		static const char* m_cszLFNodeTypeNames[5];
 
 	protected:
 		void FromSuperNode();
@@ -221,8 +221,8 @@ namespace DFW2
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
 
-		static const _TCHAR *m_cszS;
-		static const _TCHAR *m_cszSz;
+		static const char *m_cszS;
+		static const char *m_cszSz;
 	};
 
 	// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько
@@ -304,7 +304,7 @@ namespace DFW2
 		static bool BranchAndNodeConnected(CDynaNodeBase* pNode, CDynaBranch* pBranch);
 		_IterationControl m_IterationControl;
 		void DumpIterationControl();
-		std::wstring GetIterationControlString();
+		std::string GetIterationControlString();
 		friend class CLoadFlow;
 		LINKSVEC m_SuperLinks;
 		ORIGINALLINKSVEC m_OriginalLinks;

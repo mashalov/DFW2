@@ -1,4 +1,4 @@
-// SlowVariables.h : Declaration of the CSlowVariables
+﻿// SlowVariables.h : Declaration of the CSlowVariables
 
 #pragma once
 #include "resource.h"       // main symbols

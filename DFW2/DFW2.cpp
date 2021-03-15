@@ -1,4 +1,4 @@
-// DFW2.cpp : Defines the entry point for the console application.
+Ôªø// DFW2.cpp : Defines the entry point for the console application.
 //
 
 #include "stdafx.h"
@@ -21,7 +21,7 @@ CrtBreakAllocSetter g_crtBreakAllocSetter;
 
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
-	HANDLE hEvt = CreateEvent(NULL, TRUE, FALSE, _T("DFW2STOP"));
+	HANDLE hEvt = CreateEvent(NULL, TRUE, FALSE, L"DFW2STOP");
 	SetEvent(hEvt);
 	CloseHandle(hEvt);
 	return TRUE;
@@ -33,7 +33,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(31658);
 	//_CrtSetBreakAlloc(31657);
-	//_CrtSetBreakAlloc(5821);
+	//_CrtSetBreakAlloc(236965);
 
 	/*
 	GraphCycle<int, int> gc;
@@ -54,11 +54,11 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		catch (_com_error& err)
 		{
-			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Œ¯Ë·Í‡ : {}"), static_cast<const _TCHAR*>(err.Description())));
+			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("–û—à–∏–±–∫–∞ : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
 		}
 		catch (dfw2error& err)
 		{
-			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Œ¯Ë·Í‡ : {}"), err.uwhat()));
+			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("–û—à–∏–±–∫–∞ : {}", err.what()));
 		}
 	}
 	_CrtDumpMemoryLeaks();

@@ -131,24 +131,24 @@ namespace DFW2
 	{
 	public:
 		PrimitiveBlockType eBlockType;
-		std::wstring_view Name;
+		std::string_view Name;
 		PrimitivePinVec Outputs; 
 		PrimitivePinVec Inputs;
 	};
 
 
 	// карта индексов переменных состояния
-	using VARINDEXMAP = std::map<std::wstring, CVarIndex>;
+	using VARINDEXMAP = std::map<std::string, CVarIndex>;
 	using VARINDEXMAPITR = VARINDEXMAP::iterator;
 	using VARINDEXMAPCONSTITR = VARINDEXMAP::const_iterator;
 
 	// карта индексов констант
-	using CONSTVARINDEXMAP = std::map<std::wstring, CConstVarIndex>;
+	using CONSTVARINDEXMAP = std::map<std::string, CConstVarIndex>;
 	using CONSTVARINDEXMAPITR = CONSTVARINDEXMAP::iterator;
 	using CONSTVARINDEXMAPCONSTITR = CONSTVARINDEXMAP::const_iterator;
 
 	// карта индексов внешних переменных
-	using EXTVARINDEXMAP = std::map<std::wstring, CExtVarIndex>;
+	using EXTVARINDEXMAP = std::map<std::string, CExtVarIndex>;
 	using EXTVARINDEXMAPITR = EXTVARINDEXMAP::iterator;
 	using EXTVARINDEXMAPCONSTITR = EXTVARINDEXMAP::const_iterator;
 
@@ -180,12 +180,12 @@ namespace DFW2
 
 	struct LinkDirectionTo : LinkDirectionFrom
 	{
-		std::wstring strIdField;
+		std::string strIdField;
 		LinkDirectionTo() : LinkDirectionFrom()
 		{
 			strIdField.clear();
 		}
-		LinkDirectionTo(eDFW2DEVICELINKMODE LinkMode, eDFW2DEVICEDEPENDENCY Dependency, ptrdiff_t LinkIndex, const _TCHAR* cszIdField) :
+		LinkDirectionTo(eDFW2DEVICELINKMODE LinkMode, eDFW2DEVICEDEPENDENCY Dependency, ptrdiff_t LinkIndex, const char* cszIdField) :
 			LinkDirectionFrom(LinkMode, Dependency, LinkIndex),
 			strIdField(cszIdField)
 		{}

@@ -1,4 +1,4 @@
-// ResultFile.cpp : Implementation of DLL Exports.
+﻿// ResultFile.cpp : Implementation of DLL Exports.
 
 
 #include "stdafx.h"

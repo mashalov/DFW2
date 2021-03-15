@@ -46,7 +46,7 @@ namespace DFW2
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		CDynaPrimitive* GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName);
+		CDynaPrimitive* GetPrimitiveForNamedOutput(std::string_view OutputName);
 	};
 
 	using CCustomDeviceDLLWrapper = CDLLInstanceWrapper<CCustomDeviceCPPDLL>;
@@ -92,7 +92,7 @@ namespace DFW2
 		static void DLLSetDerivative(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
 		static eDEVICEFUNCTIONSTATUS DLLInitPrimitive(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);
 		static eDEVICEFUNCTIONSTATUS DLLProcPrimDisco(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);
-		static const _TCHAR* m_cszNoDeviceDLL;
+		static const char* m_cszNoDeviceDLL;
 	};
 }
 

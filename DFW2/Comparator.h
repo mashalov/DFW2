@@ -20,7 +20,7 @@ namespace DFW2
 
 		virtual ~CComparator() {}
 		bool Init(CDynaModel *pDynaModel) override;
-//		virtual const _TCHAR* GetVerbalName() { return _T(""); }
+//		virtual const char* GetVerbalName() { return ""; }
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static size_t PrimitiveSize() { return sizeof(CComparator); }
 		static long EquationsCount()  { return 1; }

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "CustomDeviceDLL.h"
 #include "DeviceContainer.h"
 
@@ -75,14 +75,14 @@ void CCustomDeviceDLL::CleanUp()
 	}
 }
 
-bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
+bool CCustomDeviceDLL::Init(std::string_view DLLFilePath)
 {
 	m_bConnected = false;
-	// загружаем dll
-	m_hDLL = LoadLibrary(std::wstring(DLLFilePath).c_str());
+	// Р·Р°РіСЂСѓР¶Р°РµРј dll
+	m_hDLL = LoadLibrary(stringutils::utf8_decode(DLLFilePath).c_str());
 	if (m_hDLL)
 	{
-		// и импортируем функции
+		// Рё РёРјРїРѕСЂС‚РёСЂСѓРµРј С„СѓРЅРєС†РёРё
 		m_strModulePath = DLLFilePath;
 		m_pFnDestroy = (DLLDESTROYPTR)GetProcAddress("Destroy");
 		m_pFnGetBlocksCount = (DLLGETBLOCKSCOUNT)GetProcAddress("GetBlocksCount");
@@ -112,7 +112,7 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 		m_pFnDeviceInit = (DLLDEVICEINIT)GetProcAddress("DeviceInit");
 		m_pFnProcessDiscontinuity = (DLLPROCESSDISCONTINUITY)GetProcAddress("ProcessDiscontinuity");
 
-		// проверяем количество функций, импорт которых не выполнен (рассчитывается в GetProcAddress)
+		// РїСЂРѕРІРµСЂСЏРµРј РєРѕР»РёС‡РµСЃС‚РІРѕ С„СѓРЅРєС†РёР№, РёРјРїРѕСЂС‚ РєРѕС‚РѕСЂС‹С… РЅРµ РІС‹РїРѕР»РЅРµРЅ (СЂР°СЃСЃС‡РёС‚С‹РІР°РµС‚СЃСЏ РІ GetProcAddress)
 		if (!m_nGetProcAddresFailureCount)
 			m_bConnected = true;
 		else
@@ -125,33 +125,33 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 	{
 		m_BlockDescriptions.clear();
 		m_BlockPinsIndexes.clear();
-		long nCount = (m_pFnGetBlocksCount)();		// получаем количество хост-блоков
+		long nCount = (m_pFnGetBlocksCount)();		// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ С…РѕСЃС‚-Р±Р»РѕРєРѕРІ
 		m_BlockDescriptions.resize(nCount);
 		m_BlockPinsIndexes.resize(nCount);
 		m_BlockParametersCount.resize(nCount);
 
 		if (nCount)
 		{
-			// если dll требует от хоста использование хотя бы одного блока
-			// проверяем - равно ли количество блоков количеству описаний блоков
+			// РµСЃР»Рё dll С‚СЂРµР±СѓРµС‚ РѕС‚ С…РѕСЃС‚Р° РёСЃРїРѕР»СЊР·РѕРІР°РЅРёРµ С…РѕС‚СЏ Р±С‹ РѕРґРЅРѕРіРѕ Р±Р»РѕРєР°
+			// РїСЂРѕРІРµСЂСЏРµРј - СЂР°РІРЅРѕ Р»Рё РєРѕР»РёС‡РµСЃС‚РІРѕ Р±Р»РѕРєРѕРІ РєРѕР»РёС‡РµСЃС‚РІСѓ РѕРїРёСЃР°РЅРёР№ Р±Р»РѕРєРѕРІ
 			if (nCount == (m_pFnGetBlocksDescriptions)(&m_BlockDescriptions[0]))
 			{
 				for (long nIndex = 0; nIndex < nCount && m_bConnected; nIndex++)
 				{
-					// для каждого блока получаем количество соединений
+					// РґР»СЏ РєР°Р¶РґРѕРіРѕ Р±Р»РѕРєР° РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРѕРµРґРёРЅРµРЅРёР№
 					long nInputsCount = (m_pFnGetBlockPinsCount)(nIndex);
 					if (nInputsCount > 0)
 					{
-						// если соединений 1 или более, ОК, если нет - это ошибка. Блоков без соединений не бывает
-						// для обрабатываемого блока создаем описания соединений
+						// РµСЃР»Рё СЃРѕРµРґРёРЅРµРЅРёР№ 1 РёР»Рё Р±РѕР»РµРµ, РћРљ, РµСЃР»Рё РЅРµС‚ - СЌС‚Рѕ РѕС€РёР±РєР°. Р‘Р»РѕРєРѕРІ Р±РµР· СЃРѕРµРґРёРЅРµРЅРёР№ РЅРµ Р±С‹РІР°РµС‚
+						// РґР»СЏ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјРѕРіРѕ Р±Р»РѕРєР° СЃРѕР·РґР°РµРј РѕРїРёСЃР°РЅРёСЏ СЃРѕРµРґРёРЅРµРЅРёР№
 						m_BlockPinsIndexes[nIndex].resize(nInputsCount);
-						// проверяем, равно ли количество соединений количеству описаний соединений для обрабатываемого блока
+						// РїСЂРѕРІРµСЂСЏРµРј, СЂР°РІРЅРѕ Р»Рё РєРѕР»РёС‡РµСЃС‚РІРѕ СЃРѕРµРґРёРЅРµРЅРёР№ РєРѕР»РёС‡РµСЃС‚РІСѓ РѕРїРёСЃР°РЅРёР№ СЃРѕРµРґРёРЅРµРЅРёР№ РґР»СЏ РѕР±СЂР°Р±Р°С‚С‹РІР°РµРјРѕРіРѕ Р±Р»РѕРєР°
 						if (nInputsCount == (m_pFnGetBlockPinsIndexes)(nIndex, &m_BlockPinsIndexes[nIndex][0]))
 						{
-							// проверяем является ли первое соединений внутренней переменной (это выход, и должен рассчитываться внутри блока)
+							// РїСЂРѕРІРµСЂСЏРµРј СЏРІР»СЏРµС‚СЃСЏ Р»Рё РїРµСЂРІРѕРµ СЃРѕРµРґРёРЅРµРЅРёР№ РІРЅСѓС‚СЂРµРЅРЅРµР№ РїРµСЂРµРјРµРЅРЅРѕР№ (СЌС‚Рѕ РІС‹С…РѕРґ, Рё РґРѕР»Р¶РµРЅ СЂР°СЃСЃС‡РёС‚С‹РІР°С‚СЊСЃСЏ РІРЅСѓС‚СЂРё Р±Р»РѕРєР°)
 							if (m_BlockPinsIndexes[nIndex].begin()->Location == eVL_INTERNAL)
 							{
-								// получаем количество параметров блока и сохраняем его
+								// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РїР°СЂР°РјРµС‚СЂРѕРІ Р±Р»РѕРєР° Рё СЃРѕС…СЂР°РЅСЏРµРј РµРіРѕ
 								long nParametersCount = (m_pFnGetBlockParametersCount)(nIndex);
 								if (nParametersCount >= 0)
 									m_BlockParametersCount[nIndex] = nParametersCount;
@@ -178,7 +178,7 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 				m_bConnected = false;
 			}
 		}
-		// получаем количество и данные по переменным-константам
+		// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Рё РґР°РЅРЅС‹Рµ РїРѕ РїРµСЂРµРјРµРЅРЅС‹Рј-РєРѕРЅСЃС‚Р°РЅС‚Р°Рј
 		if (m_bConnected)
 		{
 			m_ConstInfos.resize((m_pFnGetConstantsCount)());
@@ -186,7 +186,7 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 				m_bConnected = false;
 		}
 
-		// получаем количество и данные по переменным-уставкам
+		// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Рё РґР°РЅРЅС‹Рµ РїРѕ РїРµСЂРµРјРµРЅРЅС‹Рј-СѓСЃС‚Р°РІРєР°Рј
 		if (m_bConnected)
 		{
 			m_SetPointInfos.resize((m_pFnGetSetPointsCount)());
@@ -194,7 +194,7 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 				m_bConnected = false;
 		}
 
-		// получаем количество и данные по выходным переменным
+		// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Рё РґР°РЅРЅС‹Рµ РїРѕ РІС‹С…РѕРґРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 		if (m_bConnected)
 		{
 			m_OutputInfos.resize((m_pFnGetOutputsCount)());
@@ -202,7 +202,7 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 				m_bConnected = false;
 		}
 
-		// получаем количество и данные по входным переменным
+		// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Рё РґР°РЅРЅС‹Рµ РїРѕ РІС…РѕРґРЅС‹Рј РїРµСЂРµРјРµРЅРЅС‹Рј
 		if (m_bConnected)
 		{
 			m_InputInfos.resize((m_pFnGetInputsCount)());
@@ -210,7 +210,7 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 				m_bConnected = false;
 		}
 
-		// получаем количество и данные по внутренним переменным
+		// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Рё РґР°РЅРЅС‹Рµ РїРѕ РІРЅСѓС‚СЂРµРЅРЅРёРј РїРµСЂРµРјРµРЅРЅС‹Рј
 		if (m_bConnected)
 		{
 			m_InternalInfos.resize((m_pFnGetInternalsCount)());
@@ -220,15 +220,15 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 
 		if (m_bConnected)
 		{
-			// получаем количество описателей возможных типов устройства
+			// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РѕРїРёСЃР°С‚РµР»РµР№ РІРѕР·РјРѕР¶РЅС‹С… С‚РёРїРѕРІ СѓСЃС‚СЂРѕР№СЃС‚РІР°
 			long nTypesCount = (m_pFnGetTypesCount)();
-			// проверяем есть ли хотя бы один описатель - любое устройство должно иметь тип
+			// РїСЂРѕРІРµСЂСЏРµРј РµСЃС‚СЊ Р»Рё С…РѕС‚СЏ Р±С‹ РѕРґРёРЅ РѕРїРёСЃР°С‚РµР»СЊ - Р»СЋР±РѕРµ СѓСЃС‚СЂРѕР№СЃС‚РІРѕ РґРѕР»Р¶РЅРѕ РёРјРµС‚СЊ С‚РёРї
 			if (nTypesCount)
 			{
-				// переписываем типы из dll в свойства контейнера
+				// РїРµСЂРµРїРёСЃС‹РІР°РµРј С‚РёРїС‹ РёР· dll РІ СЃРІРѕР№СЃС‚РІР° РєРѕРЅС‚РµР№РЅРµСЂР°
 				std::vector<long> Types(nTypesCount);
 				long *pTypes = &Types[0];
-				// проверяем равно ли заявленное количество типов количеству передаваемых типов
+				// РїСЂРѕРІРµСЂСЏРµРј СЂР°РІРЅРѕ Р»Рё Р·Р°СЏРІР»РµРЅРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ С‚РёРїРѕРІ РєРѕР»РёС‡РµСЃС‚РІСѓ РїРµСЂРµРґР°РІР°РµРјС‹С… С‚РёРїРѕРІ
 				if (nTypesCount == (m_pFnGetTypes)(pTypes))
 				{
 					while (nTypesCount)
@@ -247,19 +247,19 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 
 		if (m_bConnected)
 		{
-			// получаем количество возможных связей
+			// РїРѕР»СѓС‡Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ РІРѕР·РјРѕР¶РЅС‹С… СЃРІСЏР·РµР№
 			long nLinksCount = (m_pFnGetLinksCount)();
-			// устройство должно иметь хотя бы одну связь
+			// СѓСЃС‚СЂРѕР№СЃС‚РІРѕ РґРѕР»Р¶РЅРѕ РёРјРµС‚СЊ С…РѕС‚СЏ Р±С‹ РѕРґРЅСѓ СЃРІСЏР·СЊ
 			if (nLinksCount)
 			{
-				// переписываем данные о связях в свойства контейнера
+				// РїРµСЂРµРїРёСЃС‹РІР°РµРј РґР°РЅРЅС‹Рµ Рѕ СЃРІСЏР·СЏС… РІ СЃРІРѕР№СЃС‚РІР° РєРѕРЅС‚РµР№РЅРµСЂР°
 				std::vector<LinkType> Links(nLinksCount);
 				LinkType* pLinks = &Links[0];
 				if (nLinksCount == (m_pFnGetLinks)(pLinks))
 				{
 					while (nLinksCount)
 					{
-						// распределяем данные о связях в контейнере в соответствии с типов связи (to-from)
+						// СЂР°СЃРїСЂРµРґРµР»СЏРµРј РґР°РЅРЅС‹Рµ Рѕ СЃРІСЏР·СЏС… РІ РєРѕРЅС‚РµР№РЅРµСЂРµ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ С‚РёРїРѕРІ СЃРІСЏР·Рё (to-from)
 						if (pLinks->eLinkType == eLINKTYPE::eLINK_FROM)
 							m_pDeviceContainer->m_ContainerProps.AddLinkFrom(static_cast<eDFW2DEVICETYPE>(pLinks->eDeviceType), 
 																			 static_cast<eDFW2DEVICELINKMODE>(pLinks->eLinkMode), 
@@ -280,9 +280,9 @@ bool CCustomDeviceDLL::Init(std::wstring_view DLLFilePath)
 				m_bConnected = false;
 		}
 
-		// задаем имя типа устройства в свойствах контейнера
+		// Р·Р°РґР°РµРј РёРјСЏ С‚РёРїР° СѓСЃС‚СЂРѕР№СЃС‚РІР° РІ СЃРІРѕР№СЃС‚РІР°С… РєРѕРЅС‚РµР№РЅРµСЂР°
 		if (m_bConnected)
-			m_pDeviceContainer->m_ContainerProps.SetClassName((m_pFnGetDeviceTypeName)(), _T(""));
+			m_pDeviceContainer->m_ContainerProps.SetClassName((m_pFnGetDeviceTypeName)(), "");
 		
 		if (!m_bConnected)
 			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, DLLFilePath));
@@ -305,7 +305,7 @@ const BLOCKSPINSINDEXES& CCustomDeviceDLL::GetBlocksPinsIndexes() const
 	return m_BlockPinsIndexes;
 }
 
-const _TCHAR* CCustomDeviceDLL::GetModuleFilePath() const
+const char* CCustomDeviceDLL::GetModuleFilePath() const
 {
 	return m_strModulePath.c_str();
 }

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "vector"
 #include "string"
 #include "set"
@@ -10,11 +10,11 @@ class CSlowVariableGraphItem
 public:
 	double m_dTime;
 	mutable double m_dValue;
-	mutable std::wstring m_strDescription;
-	CSlowVariableGraphItem(double dTime, double dValue, const _TCHAR* cszChangeDescription) : 
+	mutable std::string m_strDescription;
+	CSlowVariableGraphItem(double dTime, double dValue, std::string_view ChangeDescription) : 
 															m_dTime(dTime), 
 															m_dValue(dValue),
-															m_strDescription(cszChangeDescription)
+															m_strDescription(ChangeDescription)
 	{ }
 	bool operator < (const CSlowVariableGraphItem& sg) const
 	{
@@ -29,14 +29,14 @@ typedef SLOWGRAPHSET::const_iterator SLOWGRAPHSETITRCONST;
 class CSlowVariableItem
 {
 public:
-	CSlowVariableItem(long DeviceTypeId, const LONGVECTOR& DeviceIds, const _TCHAR *cszVarName);
+	CSlowVariableItem(long DeviceTypeId, const LONGVECTOR& DeviceIds, std::string_view VarName);
 	long m_DeviceTypeId;
 	LONGVECTOR m_DeviceIds;
-	std::wstring m_strVarName;
+	std::string m_strVarName;
 	SLOWGRAPHSET m_Graph;
 	~CSlowVariableItem();
 
-	bool AddGraphPoint(double Time, double Value, double PreviousValue, const _TCHAR* cszChangeDescription);
+	bool AddGraphPoint(double Time, double Value, double PreviousValue, std::string_view ChangeDescription);
 };
 
 struct SlowVarItemCompare
@@ -82,7 +82,14 @@ class CSlowVariablesSet : public std::set <CSlowVariableItem*, SlowVarItemCompar
 {
 	using ITERATOR = CSlowVariablesSet::iterator;
 public:
-	bool Add(long DeviceTypeId, const LONGVECTOR& DeviceIds, const _TCHAR* cszVarName, double Time, double Value, double PreviousValue, const _TCHAR* cszChangeDescription);
+
+	bool Add(long DeviceTypeId, 
+			 const LONGVECTOR& DeviceIds, 
+			 std::string_view VarName, 
+			 double Time, double Value, 
+			 double PreviousValue, 
+			 std::string_view ChangeDescription);
+
 	~CSlowVariablesSet()
 	{
 		for (auto &it : *this)

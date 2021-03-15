@@ -1,4 +1,4 @@
-// DeviceTypes.cpp : Implementation of CDeviceTypes
+﻿// DeviceTypes.cpp : Implementation of CDeviceTypes
 
 #include "stdafx.h"
 #include "DeviceTypes.h"

@@ -1,46 +1,46 @@
-#pragma once
+﻿#pragma once
 #include "list"
 #include "algorithm"
 #include "string"
 
-typedef std::list<std::wstring> STRINGLIST;
+typedef std::list<std::string> STRINGLIST;
 typedef STRINGLIST::iterator STRINGLISTITR;
 
 class stringutils
 {
 public:
-	static inline void removecrlf(std::wstring& s)
+	static inline void removecrlf(std::string& s)
 	{
-		size_t nPos = std::wstring::npos;
-		while ((nPos = s.find(_T("\r\n"))) != std::wstring::npos)
-			s.replace(nPos, 2, _T(""));
+		size_t nPos = std::string::npos;
+		while ((nPos = s.find("\r\n")) != std::string::npos)
+			s.replace(nPos, 2, "");
 	}
 
-	static inline void ltrim(std::wstring& s)
+	static inline void ltrim(std::string& s)
 	{
 		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) noexcept { return !isspace(ch); }));
 	}
 
-	static inline void rtrim(std::wstring& s)
+	static inline void rtrim(std::string& s)
 	{
 		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) noexcept { return !isspace(ch); }).base(), s.end());
 	}
 
-	static inline void trim(std::wstring& s) { ltrim(s);  rtrim(s); }
+	static inline void trim(std::string& s) { ltrim(s);  rtrim(s); }
 
-	static size_t split(std::wstring_view str, std::wstring_view Delimiters, STRINGLIST& result)
+	static size_t split(std::string_view str, std::string_view Delimiters, STRINGLIST& result)
 	{
 		result.clear();
 		for(size_t nPos(0); nPos < str.length() ; )
 		{
-			if (size_t nMinDelPos = str.find_first_of(Delimiters, nPos); nMinDelPos == std::wstring::npos)
+			if (size_t nMinDelPos = str.find_first_of(Delimiters, nPos); nMinDelPos == std::string::npos)
 			{
-				result.push_back(std::wstring(str.substr(nPos)));
+				result.push_back(std::string(str.substr(nPos)));
 				break;
 			}
 			else
 			{
-				result.push_back(std::wstring(str.substr(nPos, nMinDelPos - nPos)));
+				result.push_back(std::string(str.substr(nPos, nMinDelPos - nPos)));
 				nPos = nMinDelPos + 1;
 			}
 		}
@@ -56,16 +56,16 @@ public:
 		return strTo;
 	}
 
-	static std::wstring acp_decode(const std::string& str)
+	static std::string acp_decode(const std::string_view& str)
 	{
-		if (str.empty()) return std::wstring();
+		if (str.empty()) return std::string();
 		int size_needed = MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), NULL, 0);
 		std::wstring wstrTo(size_needed, 0);
 		MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
-		return wstrTo;
+		return utf8_encode(wstrTo);
 	}
 
-	static std::wstring utf8_decode(const std::string& str)
+	static std::wstring utf8_decode(const std::string_view& str)
 	{
 		if (str.empty()) return std::wstring();
 		int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);

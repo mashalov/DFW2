@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "CSVWriter.h"
 
 
@@ -74,7 +74,7 @@ void CCSVWriter::WriteDeviceTypes()
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, fmt::format(_T("%s"), pC->pDevice->m_pDevType->strDevTypeName));
+			WriteField(pC, fmt::format("%s", pC->pDevice->m_pDevType->strDevTypeName));
 		else
 			WriteField(pC, cszUnknonwn);
 
@@ -94,7 +94,7 @@ void CCSVWriter::WriteDeviceIds()
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, fmt::format(_T("%d"), pC->pDevice->GetId(0)));
+			WriteField(pC, fmt::format("%d", pC->pDevice->GetId(0)));
 		else
 			WriteField(pC, cszUnknonwn);
 		pC++;
@@ -113,7 +113,7 @@ void CCSVWriter::WriteDeviceNames()
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pDevice)
-			WriteField(pC, fmt::format(_T("%s"), pC->pDevice->Name));
+			WriteField(pC, fmt::format("%s", pC->pDevice->Name));
 		else
 			WriteField(pC, cszUnknonwn);
 
@@ -133,7 +133,7 @@ void CCSVWriter::WriteVariableNames()
 	while (pChannel < pChannelsEnd)
 	{
 		if (pC->pVariable)
-			WriteField(pC, fmt::format(_T("%s"), pC->pVariable->Name));
+			WriteField(pC, fmt::format("%s", pC->pVariable->Name));
 		else
 			WriteField(pC, cszUnknonwn);
 		pC++;
@@ -144,7 +144,7 @@ void CCSVWriter::WriteVariableNames()
 }
 
 
-HRESULT CCSVWriter::WriteCSV(const _TCHAR *cszFilePath)
+HRESULT CCSVWriter::WriteCSV(std::string_view FilePath)
 {
 	HRESULT hRes = E_FAIL;
 
@@ -166,20 +166,20 @@ HRESULT CCSVWriter::WriteCSV(const _TCHAR *cszFilePath)
 	fclose(pw);
 	*/
 
-	CSVOut.open(cszFilePath, std::ios_base::out);
+	CSVOut.open(FilePath, std::ios_base::out);
 
-	_TCHAR TempPath[MAX_PATH];
+	wchar_t TempPath[MAX_PATH];
 	if (!GetTempPath(MAX_PATH, TempPath))
 		throw CFileWriteException();
 
-	_TCHAR TempFileName[MAX_PATH];
-	if(!GetTempFileName(TempPath, _T("csv"), 0, TempFileName))
+	wchar_t TempFileName[MAX_PATH];
+	if(!GetTempFileName(TempPath, L"csv", 0, TempFileName))
 		throw CFileWriteException();
 
-	strFilePath = TempFileName;
+	strFilePath = stringutils::utf8_encode(TempFileName);
 
 	CSVFile.open(strFilePath.c_str(), std::ios_base::out);
-	CSVFile << _T("t;h");
+	CSVFile << "t;h";
 
 	IndexChannels();
 	WriteDeviceTypes();
@@ -263,14 +263,14 @@ void CCSVWriter::WriteData()
 	}
 }
 
-void CCSVWriter::WriteField(const ChannelLink *pLink, std::wstring_view Field)
+void CCSVWriter::WriteField(const ChannelLink *pLink, std::string_view Field)
 {
-	std::wstring str(Field);
+	std::string str(Field);
 	std::replace(str.begin(), str.end(), ';', ':');
 	std::replace(str.begin(), str.end(), '\"', '\'');
-	str += _T("\";");
+	str += "\";";
 	str.insert(str.begin(), L'\"');
-	CSVFile << stringutils::utf8_encode(str).c_str();
+	CSVFile << str.c_str();
 }
 
 void CCSVWriter::WriteCRLF2()
@@ -283,9 +283,7 @@ void CCSVWriter::WriteCRLF()
 	CSVFile << cszCRLF;
 }
 
-
-
-const _TCHAR *CCSVWriter::cszUnknonwn	= _T("???");
-const _TCHAR *CCSVWriter::cszCRLF2		= _T("\n;;");
-const _TCHAR *CCSVWriter::cszCRLF		= _T("\n");
+const char* CCSVWriter::cszUnknonwn		= "???";
+const char* CCSVWriter::cszCRLF2		= "\n;;";
+const char* CCSVWriter::cszCRLF			= "\n";
 const size_t CCSVWriter::MinFieldWidth	= 30;

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "DynaLRC.h"
 
 using namespace DFW2;
@@ -34,13 +34,13 @@ double CDynaLRC::GetP(double VdivVnom, double dVicinity)
 
 double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC)
 {
-	// По умолчанию считаем что напряжение находится в последнем сегменте
+	// РџРѕ СѓРјРѕР»С‡Р°РЅРёСЋ СЃС‡РёС‚Р°РµРј С‡С‚Рѕ РЅР°РїСЂСЏР¶РµРЅРёРµ РЅР°С…РѕРґРёС‚СЃСЏ РІ РїРѕСЃР»РµРґРЅРµРј СЃРµРіРјРµРЅС‚Рµ
 	CLRCData *pHitV = pBase + nCount - 1;
 
 	CLRCData *v = pBase;
 	VdivVnom = max(0.0, VdivVnom);
 
-	// ищем сегмент у которого напряжение больше заданного
+	// РёС‰РµРј СЃРµРіРјРµРЅС‚ Сѓ РєРѕС‚РѕСЂРѕРіРѕ РЅР°РїСЂСЏР¶РµРЅРёРµ Р±РѕР»СЊС€Рµ Р·Р°РґР°РЅРЅРѕРіРѕ
 	while (v < pBase + nCount)
 	{
 		if (v->V > VdivVnom)
@@ -57,25 +57,25 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 
 	if (pHitV->pPrev)
 	{
-		// если у найденного сегмента есть предыдущий сегмент
-		// и напряжение с учетом радиуса сглаживания в него попадает
-		// отмечаем что есть сегмент слева
+		// РµСЃР»Рё Сѓ РЅР°Р№РґРµРЅРЅРѕРіРѕ СЃРµРіРјРµРЅС‚Р° РµСЃС‚СЊ РїСЂРµРґС‹РґСѓС‰РёР№ СЃРµРіРјРµРЅС‚
+		// Рё РЅР°РїСЂСЏР¶РµРЅРёРµ СЃ СѓС‡РµС‚РѕРј СЂР°РґРёСѓСЃР° СЃРіР»Р°Р¶РёРІР°РЅРёСЏ РІ РЅРµРіРѕ РїРѕРїР°РґР°РµС‚
+		// РѕС‚РјРµС‡Р°РµРј С‡С‚Рѕ РµСЃС‚СЊ СЃРµРіРјРµРЅС‚ СЃР»РµРІР°
 		if (VdivVnom - dVicinity < pHitV->V)
 			bLeft = true;
 	}
 
 	if (pHitV->pNext)
 	{
-		// если у найденного сегмента есть следующий сегмент
-		// и напряжение с учетом радиуса сглаживания в него попадает
-		// отмечаем что есть сегмент справа
+		// РµСЃР»Рё Сѓ РЅР°Р№РґРµРЅРЅРѕРіРѕ СЃРµРіРјРµРЅС‚Р° РµСЃС‚СЊ СЃР»РµРґСѓСЋС‰РёР№ СЃРµРіРјРµРЅС‚
+		// Рё РЅР°РїСЂСЏР¶РµРЅРёРµ СЃ СѓС‡РµС‚РѕРј СЂР°РґРёСѓСЃР° СЃРіР»Р°Р¶РёРІР°РЅРёСЏ РІ РЅРµРіРѕ РїРѕРїР°РґР°РµС‚
+		// РѕС‚РјРµС‡Р°РµРј С‡С‚Рѕ РµСЃС‚СЊ СЃРµРіРјРµРЅС‚ СЃРїСЂР°РІР°
 		if (VdivVnom + dVicinity > pHitV->pNext->V)
 			bRight = true;
 
 		if (bLeft)
 		{
-			// если есть и левый и правый сегменты (и это в пределах радиуса)
-			// выбрасываем тот который дальше от текущего напряжения
+			// РµСЃР»Рё РµСЃС‚СЊ Рё Р»РµРІС‹Р№ Рё РїСЂР°РІС‹Р№ СЃРµРіРјРµРЅС‚С‹ (Рё СЌС‚Рѕ РІ РїСЂРµРґРµР»Р°С… СЂР°РґРёСѓСЃР°)
+			// РІС‹Р±СЂР°СЃС‹РІР°РµРј С‚РѕС‚ РєРѕС‚РѕСЂС‹Р№ РґР°Р»СЊС€Рµ РѕС‚ С‚РµРєСѓС‰РµРіРѕ РЅР°РїСЂСЏР¶РµРЅРёСЏ
 			if (VdivVnom - pHitV->V > pHitV->pNext->V - VdivVnom)
 				bLeft = false;
 			else
@@ -173,19 +173,19 @@ bool CDynaLRC::Check()
 	return CheckPtr(P) && CheckPtr(Q);
 }
 
-// Проверяет разрывы на границах сегментов СХН
+// РџСЂРѕРІРµСЂСЏРµС‚ СЂР°Р·СЂС‹РІС‹ РЅР° РіСЂР°РЅРёС†Р°С… СЃРµРіРјРµРЅС‚РѕРІ РЎРҐРќ
 bool CDynaLRC::CheckPtr(LRCDATA& LRC)
 {
 	bool bRes(true);
 
-	// проверяем только в случае, если в СХН несколько сегментов
+	// РїСЂРѕРІРµСЂСЏРµРј С‚РѕР»СЊРєРѕ РІ СЃР»СѓС‡Р°Рµ, РµСЃР»Рё РІ РЎРҐРќ РЅРµСЃРєРѕР»СЊРєРѕ СЃРµРіРјРµРЅС‚РѕРІ
 	if (LRC.size() > 1)
 	{
-		// обходим со второго до последнего
+		// РѕР±С…РѕРґРёРј СЃРѕ РІС‚РѕСЂРѕРіРѕ РґРѕ РїРѕСЃР»РµРґРЅРµРіРѕ
 		for (auto v = std::next(LRC.begin()); v != LRC.end(); ++v)
 		{
-			double s = v->Get(v->V);				// берем значение в начале следующего
-			double q = std::prev(v)->Get(v->V);		// берем значение в конце предыдущего (в той же точке что и начало следующего)
+			double s = v->Get(v->V);				// Р±РµСЂРµРј Р·РЅР°С‡РµРЅРёРµ РІ РЅР°С‡Р°Р»Рµ СЃР»РµРґСѓСЋС‰РµРіРѕ
+			double q = std::prev(v)->Get(v->V);		// Р±РµСЂРµРј Р·РЅР°С‡РµРЅРёРµ РІ РєРѕРЅС†Рµ РїСЂРµРґС‹РґСѓС‰РµРіРѕ (РІ С‚РѕР№ Р¶Рµ С‚РѕС‡РєРµ С‡С‚Рѕ Рё РЅР°С‡Р°Р»Рѕ СЃР»РµРґСѓСЋС‰РµРіРѕ)
 			if (!Equal(10.0 * DFW2_EPSILON * (s - q), 0.0))
 			{
 				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCDiscontinuityAt, GetVerbalName(), v->V, s, q));
@@ -209,7 +209,7 @@ eDEVICEFUNCTIONSTATUS CDynaLRC::Init(CDynaModel* pDynaModel)
 bool CDynaLRC::CollectConstantData(LRCDATA& LRC)
 {
 	bool bRes(true);
-	// строим связный список сегментов
+	// СЃС‚СЂРѕРёРј СЃРІСЏР·РЅС‹Р№ СЃРїРёСЃРѕРє СЃРµРіРјРµРЅС‚РѕРІ
 
 	for (auto&& v = LRC.begin(); v != LRC.end(); ++v)
 	{
@@ -218,9 +218,9 @@ bool CDynaLRC::CollectConstantData(LRCDATA& LRC)
 		v->pNext = (next == LRC.end()) ? nullptr: &*next;
 	}
 
-	// определяем максимальный радиус сглаживания
-	// для каждого из сегментов
-	// как половину от его ширины по напряжению
+	// РѕРїСЂРµРґРµР»СЏРµРј РјР°РєСЃРёРјР°Р»СЊРЅС‹Р№ СЂР°РґРёСѓСЃ СЃРіР»Р°Р¶РёРІР°РЅРёСЏ
+	// РґР»СЏ РєР°Р¶РґРѕРіРѕ РёР· СЃРµРіРјРµРЅС‚РѕРІ
+	// РєР°Рє РїРѕР»РѕРІРёРЅСѓ РѕС‚ РµРіРѕ С€РёСЂРёРЅС‹ РїРѕ РЅР°РїСЂСЏР¶РµРЅРёСЋ
 
 	for (auto&& v : LRC)
 	{
@@ -338,18 +338,18 @@ return GetBoth(pHitV, VdivVnom, dP);
 }
 */
 
-void CDynaLRC::TestDump(const _TCHAR *cszPathName)
+void CDynaLRC::TestDump(const char* cszPathName)
 {
 	FILE *flrc(NULL);
 	setlocale(LC_ALL, "ru-ru");
-	if (!_tfopen_s(&flrc, cszPathName, _T("w+")))
+	if (!fopen_s(&flrc, cszPathName, "w+"))
 	{
 		double dP(0.0), dQ(0.0), dV(0.3);
 		for (double v = 0.0; v < 1.5; v += 0.01)
 		{
 			double P = GetPdP(v, dP, dV);
 			double Q = GetQdQ(v, dQ, dV);
-			_ftprintf(flrc, _T("%g;%g;%g;%g;%g\n"), v, P, dP, Q, dQ);
+			fprintf(flrc, "%g;%g;%g;%g;%g\n", v, P, dP, Q, dQ);
 		}
 		fclose(flrc);
 	}

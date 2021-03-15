@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaVoltageSource.h"
 using namespace DFW2;
 

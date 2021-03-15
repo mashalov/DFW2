@@ -9,9 +9,9 @@ namespace DFW2
 	{
 	protected:
 		ptrdiff_t m_Id;							// идентификатор (для многоидентификаторных, типа ветвей - только индекс)
-		std::wstring m_strName;					// имя устройства без подробностей. Типа имя узла
+		std::string m_strName;					// имя устройства без подробностей. Типа имя узла
 		ptrdiff_t m_DBIndex;					// индекс устройства во внешней БД
-		std::wstring m_strVerbalName;			// имя устройства с подробностями - с типом и т.д.
+		std::string m_strVerbalName;			// имя устройства с подробностями - с типом и т.д.
 		virtual void UpdateVerbalName();		// функция обновления подробного имени устройства, при установке типа и т.д.
 	public:
 		CDeviceId();
@@ -19,9 +19,9 @@ namespace DFW2
 		virtual ~CDeviceId() {}
 		ptrdiff_t GetId() const;				// получить идентификатор
 		void SetId(ptrdiff_t nId);				// задать идентификатор
-		const _TCHAR* GetName() const;			// получить имя без подробностей
-		void SetName(std::wstring_view Name);	// задать имя без подробностей
-		const _TCHAR* GetVerbalName() const;	// получить имя с подробностями
+		const char* GetName() const;			// получить имя без подробностей
+		void SetName(std::string_view Name);	// задать имя без подробностей
+		const char* GetVerbalName() const;		// получить имя с подробностями
 		ptrdiff_t GetDBIndex();					// получить индекс в БД
 		void SetDBIndex(ptrdiff_t nIndex);		// задать индекс в БД
 	};

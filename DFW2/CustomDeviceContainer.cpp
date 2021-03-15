@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "CustomDeviceContainer.h"
 #include "CustomDevice.h"
 
@@ -27,24 +27,24 @@ void CCustomDeviceContainer::CleanUp()
 	}
 }
 
-bool CCustomDeviceContainer::ConnectDLL(std::wstring_view DLLFilePath)
+bool CCustomDeviceContainer::ConnectDLL(std::string_view DLLFilePath)
 {
 	bool bRes(false);
 	if (m_DLL.Init(DLLFilePath))
 	{
-		// копируем в контейнер описания констант
+		// РєРѕРїРёСЂСѓРµРј РІ РєРѕРЅС‚РµР№РЅРµСЂ РѕРїРёСЃР°РЅРёСЏ РєРѕРЅСЃС‚Р°РЅС‚
 		for (const auto& it : m_DLL.GetConstsInfo())
 			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(it.VarInfo.Name, CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
 
-		// копируем в контейнер описания уставок
+		// РєРѕРїРёСЂСѓРµРј РІ РєРѕРЅС‚РµР№РЅРµСЂ РѕРїРёСЃР°РЅРёСЏ СѓСЃС‚Р°РІРѕРє
 		for (const auto& it : m_DLL.GetSetPointsInfo())
 			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(it.Name, CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
 
-		// копируем в контейнер описания внутренних переменных
+		// РєРѕРїРёСЂСѓРµРј РІ РєРѕРЅС‚РµР№РЅРµСЂ РѕРїРёСЃР°РЅРёСЏ РІРЅСѓС‚СЂРµРЅРЅРёС… РїРµСЂРµРјРµРЅРЅС‹С…
 		for (const auto& it : m_DLL.GetInternalsInfo())
 			m_ContainerProps.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
 
-		// копируем в контейнер описания выходных переменных
+		// РєРѕРїРёСЂСѓРµРј РІ РєРѕРЅС‚РµР№РЅРµСЂ РѕРїРёСЃР°РЅРёСЏ РІС‹С…РѕРґРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
 		for (const auto& it : m_DLL.GetOutputsInfo())
 			m_ContainerProps.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
 
@@ -62,8 +62,8 @@ bool CCustomDeviceContainer::BuildStructure()
 
 	_ASSERTE(m_DLL.GetBlocksDescriptions().size() == m_DLL.GetBlocksPinsIndexes().size());
 
-	// можно организовать общий для контейнера пул блоков и раздавать их по устройствам
-	// чтобы избежать множества мелких new
+	// РјРѕР¶РЅРѕ РѕСЂРіР°РЅРёР·РѕРІР°С‚СЊ РѕР±С‰РёР№ РґР»СЏ РєРѕРЅС‚РµР№РЅРµСЂР° РїСѓР» Р±Р»РѕРєРѕРІ Рё СЂР°Р·РґР°РІР°С‚СЊ РёС… РїРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР°Рј
+	// С‡С‚РѕР±С‹ РёР·Р±РµР¶Р°С‚СЊ РјРЅРѕР¶РµСЃС‚РІР° РјРµР»РєРёС… new
 
 	m_nBlockEquationsCount = 0;
 	m_nDoubleVarsCount = 0;
@@ -73,14 +73,14 @@ bool CCustomDeviceContainer::BuildStructure()
 	BLOCKDESCRIPTIONS::const_iterator	it = m_DLL.GetBlocksDescriptions().begin();
 	BLOCKSPINSINDEXES::const_iterator  iti = m_DLL.GetBlocksPinsIndexes().begin();
 
-	// просматриваем хост-блоки и их соединения
+	// РїСЂРѕСЃРјР°С‚СЂРёРІР°РµРј С…РѕСЃС‚-Р±Р»РѕРєРё Рё РёС… СЃРѕРµРґРёРЅРµРЅРёСЏ
 	for (; it != m_DLL.GetBlocksDescriptions().end(); it++, iti++)
 	{
 		if (it->eType > PrimitiveBlockType::PBT_UNKNOWN && it->eType < PrimitiveBlockType::PBT_LAST)
 		{
-			// если блок имеет правильный индекс 
-			m_nBlockEquationsCount += PrimitiveEquationsCount(it->eType); // считаем количество уравнений хост-блоков
-			m_PrimitivePool[it->eType].nCount++;						  // учитываем количество блоков данного типа
+			// РµСЃР»Рё Р±Р»РѕРє РёРјРµРµС‚ РїСЂР°РІРёР»СЊРЅС‹Р№ РёРЅРґРµРєСЃ 
+			m_nBlockEquationsCount += PrimitiveEquationsCount(it->eType); // СЃС‡РёС‚Р°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ СѓСЂР°РІРЅРµРЅРёР№ С…РѕСЃС‚-Р±Р»РѕРєРѕРІ
+			m_PrimitivePool[it->eType].nCount++;						  // СѓС‡РёС‚С‹РІР°РµРј РєРѕР»РёС‡РµСЃС‚РІРѕ Р±Р»РѕРєРѕРІ РґР°РЅРЅРѕРіРѕ С‚РёРїР°
 		}
 		else
 		{
@@ -93,14 +93,14 @@ bool CCustomDeviceContainer::BuildStructure()
 
 	if (bRes)
 	{
-		// выделяем память под каждый тип хост-блока для всех устройств контейнера
+		// РІС‹РґРµР»СЏРµРј РїР°РјСЏС‚СЊ РїРѕРґ РєР°Р¶РґС‹Р№ С‚РёРї С…РѕСЃС‚-Р±Р»РѕРєР° РґР»СЏ РІСЃРµС… СѓСЃС‚СЂРѕР№СЃС‚РІ РєРѕРЅС‚РµР№РЅРµСЂР°
 		for (const auto& it :m_DLL.GetBlocksDescriptions())
 		{
 			if (!m_PrimitivePool[it.eType].m_pPrimitive) 
 			{
-				// выделение памяти для общего пула хост-блоков
+				// РІС‹РґРµР»РµРЅРёРµ РїР°РјСЏС‚Рё РґР»СЏ РѕР±С‰РµРіРѕ РїСѓР»Р° С…РѕСЃС‚-Р±Р»РѕРєРѕРІ
 				m_PrimitivePool[it.eType].m_pPrimitive = (unsigned char*)malloc(m_PrimitivePool[it.eType].nCount * nCount * PrimitiveSize(it.eType));
-				// указатель на начало пула
+				// СѓРєР°Р·Р°С‚РµР»СЊ РЅР° РЅР°С‡Р°Р»Рѕ РїСѓР»Р°
 				m_PrimitivePool[it.eType].m_pHead = m_PrimitivePool[it.eType].m_pPrimitive;
 			}
 
@@ -108,22 +108,22 @@ bool CCustomDeviceContainer::BuildStructure()
 
 		m_nExternalVarsCount = GetInputsCount();
 
-		// создаем пул для входных переменных
+		// СЃРѕР·РґР°РµРј РїСѓР» РґР»СЏ РІС…РѕРґРЅС‹С… РїРµСЂРµРјРµРЅРЅС‹С…
 		m_VariableIndexExternalPool.reserve(m_nExternalVarsCount * nCount);
-		// количество уравнений пользовательского устройства равно количеству уравнений для хост-блоков + количество уравнений внутренних переменных
+		// РєРѕР»РёС‡РµСЃС‚РІРѕ СѓСЂР°РІРЅРµРЅРёР№ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊСЃРєРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР° СЂР°РІРЅРѕ РєРѕР»РёС‡РµСЃС‚РІСѓ СѓСЂР°РІРЅРµРЅРёР№ РґР»СЏ С…РѕСЃС‚-Р±Р»РѕРєРѕРІ + РєРѕР»РёС‡РµСЃС‚РІРѕ СѓСЂР°РІРЅРµРЅРёР№ РІРЅСѓС‚СЂРµРЅРЅРёС… РїРµСЂРµРјРµРЅРЅС‹С…
 		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
-		// общее количество double на 1 устройство = константы + уставки
+		// РѕР±С‰РµРµ РєРѕР»РёС‡РµСЃС‚РІРѕ double РЅР° 1 СѓСЃС‚СЂРѕР№СЃС‚РІРѕ = РєРѕРЅСЃС‚Р°РЅС‚С‹ + СѓСЃС‚Р°РІРєРё
 		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount();
-		//  количество уравнений VariableIndexesCount
+		//  РєРѕР»РёС‡РµСЃС‚РІРѕ СѓСЂР°РІРЅРµРЅРёР№ VariableIndexesCount
 		m_nVariableIndexesCount = m_ContainerProps.nEquationsCount;
-		// создаем пул для переменных типа double
+		// СЃРѕР·РґР°РµРј РїСѓР» РґР»СЏ РїРµСЂРµРјРµРЅРЅС‹С… С‚РёРїР° double
 		m_DoubleVarsPool.reserve(m_nDoubleVarsCount * nCount);
-		// создаем пул для внешних переменных
+		// СЃРѕР·РґР°РµРј РїСѓР» РґР»СЏ РІРЅРµС€РЅРёС… РїРµСЂРµРјРµРЅРЅС‹С…
 		m_ExternalVarsPool.reserve(m_nExternalVarsCount * nCount);
-		// создаем пул для VariableIndexes
+		// СЃРѕР·РґР°РµРј РїСѓР» РґР»СЏ VariableIndexes
 		m_VariableIndexPool.reserve(m_nVariableIndexesCount * nCount);
 
-		// когда все пулы подготовлены - инициализируем структуру каждого устройства контейнера
+		// РєРѕРіРґР° РІСЃРµ РїСѓР»С‹ РїРѕРґРіРѕС‚РѕРІР»РµРЅС‹ - РёРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј СЃС‚СЂСѓРєС‚СѓСЂСѓ РєР°Р¶РґРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР° РєРѕРЅС‚РµР№РЅРµСЂР°
 		for (auto&& it : *this)
 		{
 			bRes = static_cast<CCustomDevice*>(it)->BuildStructure();
@@ -286,7 +286,7 @@ CCustomDeviceCPPContainer::~CCustomDeviceCPPContainer()
 }
 
 
-void CCustomDeviceCPPContainer::ConnectDLL(std::wstring_view DLLFilePath)
+void CCustomDeviceCPPContainer::ConnectDLL(std::string_view DLLFilePath)
 {
 	m_pDLL = std::make_shared<CCustomDeviceCPPDLL>(DLLFilePath, "CustomDeviceFactory");
 	CCustomDeviceDLLWrapper pDevice(m_pDLL);

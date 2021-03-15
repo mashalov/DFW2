@@ -46,7 +46,7 @@ namespace DFW2
 		{
 			throw dfw2error(cszNotImplemented);
 		}
-		virtual std::wstring GetString()
+		virtual std::string GetString()
 		{
 			throw dfw2error(cszNotImplemented);
 		}
@@ -62,11 +62,11 @@ namespace DFW2
 		{
 			throw dfw2error(cszNotImplemented);
 		}
-		virtual void SetString(const _TCHAR* cszString)
+		virtual void SetString(const char* cszString)
 		{
 			throw dfw2error(cszNotImplemented);
 		}
-		static const _TCHAR* cszNotImplemented;
+		static const char* cszNotImplemented;
 
 		virtual ~CSerializerAdapterBase() {}
 	};
@@ -88,7 +88,7 @@ namespace DFW2
 		}
 		ValueType;		
 
-		static const _TCHAR* m_cszTypeDecs[8];				// текстовое описание типа
+		static const char* m_cszTypeDecs[8];				// текстовое описание типа
 
 		uValue Value;										// собственно значение
 
@@ -169,14 +169,14 @@ namespace DFW2
 		virtual ~CSerializerAdapterBaseT() {}
 	};
 
-	using StringVector = std::vector<std::wstring>;
+	using StringVector = std::vector<std::string>;
 
 	template<typename T>
 	class CSerializerAdapterEnumT : public CSerializerAdapterBaseT<T>
 	{
 	protected:
 		// текстовое представление значения
-		const _TCHAR** m_StringRepresentation;
+		const char** m_StringRepresentation;
 		size_t m_nCount;
 	public:
 		ptrdiff_t GetInt() override
@@ -187,14 +187,14 @@ namespace DFW2
 		{
 			*CSerializerAdapterBaseT<T>::m_pLeft = static_cast<T>(vInt);
 		}
-		std::wstring GetString() override
+		std::string GetString() override
 		{
 			const ptrdiff_t nIndex = static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::m_pLeft);
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(m_nCount))
-				throw dfw2error(fmt::format(_T("CSerializerAdapterEnumT::GetString - invalid enum index or string representation {}"), nIndex));
-			return std::wstring(m_StringRepresentation[nIndex]);
+				throw dfw2error(fmt::format("CSerializerAdapterEnumT::GetString - invalid enum index or string representation {}", nIndex));
+			return std::string(m_StringRepresentation[nIndex]);
 		}
-		CSerializerAdapterEnumT(T& Left, const _TCHAR** ppStringRepresentation, size_t nCount) : CSerializerAdapterBaseT<T>(Left), 
+		CSerializerAdapterEnumT(T& Left, const char** ppStringRepresentation, size_t nCount) : CSerializerAdapterBaseT<T>(Left),
 																								 m_StringRepresentation(ppStringRepresentation),
 																								 m_nCount(nCount)
 																								 {}
@@ -221,7 +221,7 @@ namespace DFW2
 		std::unique_ptr<CSerializedValueAuxDataBase> pAux;	// адаптер для внешней базы данных
 	};
 
-	using SERIALIZERMAP  = std::map<std::wstring, MetaSerializedValue*>;
+	using SERIALIZERMAP  = std::map<std::string, MetaSerializedValue*>;
 	using SERIALIZERLIST = std::list<std::unique_ptr<MetaSerializedValue>>;
 
 	// базовый сериализатор
@@ -231,14 +231,14 @@ namespace DFW2
 		SERIALIZERLIST ValueList;		// список значений
 		SERIALIZERMAP ValueMap;			// карта "имя"->"значение"
 		SERIALIZERLIST::iterator UpdateIterator;
-		std::wstring m_strClassName;	// имя сериализуемого класса 
+		std::string m_strClassName;	// имя сериализуемого класса 
 	public:
 		CDevice *m_pDevice = nullptr;
-		static const _TCHAR* m_cszDupName;
-		static const _TCHAR *m_cszV;
-		static const _TCHAR *m_cszState;
-		static const _TCHAR *m_cszStateCause;
-		static const _TCHAR *m_cszType;
+		static const char* m_cszDupName;
+		static const char* m_cszV;
+		static const char* m_cszState;
+		static const char* m_cszStateCause;
+		static const char* m_cszType;
 
 		ptrdiff_t ValuesCount() noexcept
 		{
@@ -263,13 +263,13 @@ namespace DFW2
 			return UpdateIterator == ValueList.end();
 		}
 
-		void SetClassName(std::wstring_view ClassName)
+		void SetClassName(std::string_view ClassName)
 		{
 			m_strClassName = ClassName;
 		}
 
 		// добавление свойства
-		MetaSerializedValue* AddProperty(std::wstring_view Name, TypedSerializedValue::eValueType Type)
+		MetaSerializedValue* AddProperty(std::string_view Name, TypedSerializedValue::eValueType Type)
 		{
 			if (IsCreate())
 			{
@@ -290,7 +290,7 @@ namespace DFW2
 
 		// добавляем переменную состояния
 		template<typename T>
-		MetaSerializedValue* AddState(std::wstring_view Name, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		MetaSerializedValue* AddState(std::string_view Name, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
 			// добавляем свойство по заданному типу
 			MetaSerializedValue *meta = AddProperty(Name, Val, Units, Multiplier);
@@ -300,7 +300,7 @@ namespace DFW2
 		}
 
 		template<typename T>
-		MetaSerializedValue* AddProperty(std::wstring_view Name, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		MetaSerializedValue* AddProperty(std::string_view Name, T& Val, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
 			if (IsCreate())
 			{
@@ -319,7 +319,7 @@ namespace DFW2
 			}
 		}
 
-		MetaSerializedValue* AddEnumProperty(std::wstring_view Name, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		MetaSerializedValue* AddEnumProperty(std::string_view Name, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
 			if (IsCreate())
 			{
@@ -335,7 +335,7 @@ namespace DFW2
 		}
 
 		template<typename T>
-		MetaSerializedValue* AddEnumState(std::wstring_view Name, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
+		MetaSerializedValue* AddEnumState(std::string_view Name, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
 			MetaSerializedValue *meta = AddEnumProperty(Name, pAdapter, Units, Multiplier);
 			meta->bState = true;
@@ -362,12 +362,12 @@ namespace DFW2
 
 		}
 
-		const _TCHAR* GetClassName();
+		const char* GetClassName();
 
 	protected:
 
 		// добавляем в карту значений новое по имени
-		MetaSerializedValue* AddValue(std::wstring_view Name, MetaSerializedValue* mv)
+		MetaSerializedValue* AddValue(std::string_view Name, MetaSerializedValue* mv)
 		{
 			// имеем имя значения и его метаданные
 			// проверяем нет ли такого значения в карте по имени

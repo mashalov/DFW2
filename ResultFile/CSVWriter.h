@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "resource.h"       // main symbols
 #include "ResultFile_i.h"
@@ -34,22 +34,22 @@ protected:
 	void WriteData();
 	std::string loc;
 
-	void WriteField(const ChannelLink *pLink, std::wstring_view Field);
+	void WriteField(const ChannelLink *pLink, std::string_view Field);
 	void WriteCRLF2();
 	void WriteCRLF();
 	void WriteColumn(const double *pData, size_t nColumn, bool bLastColumn);
 
 
-	std::wstring strFilePath;
+	std::string strFilePath;
 	
 public:
-	HRESULT WriteCSV(const _TCHAR *cszFilePath);
+	HRESULT WriteCSV(std::string_view FilePath);
 	CCSVWriter(CResultFileReader& ResultFileReader);
 	~CCSVWriter();
 
-	static const _TCHAR *cszUnknonwn;
-	static const _TCHAR *cszCRLF2;
-	static const _TCHAR *cszCRLF;
+	static const char* cszUnknonwn;
+	static const char* cszCRLF2;
+	static const char* cszCRLF;
 	static const size_t MinFieldWidth;
 
 };

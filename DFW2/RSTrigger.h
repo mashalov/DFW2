@@ -21,7 +21,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		const _TCHAR* GetVerbalName() noexcept  override { return _T("RS-Триггер"); }
+		const char* GetVerbalName() noexcept  override { return "RS-Триггер"; }
 		static size_t PrimitiveSize() noexcept { return sizeof(CRSTrigger); }
 		static long EquationsCount()  noexcept { return 1; }
 	};

@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "Abs.h"
 #include "DynaModel.h"
 
@@ -51,7 +51,7 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-// проверяем разрыв модуля
+// РїСЂРѕРІРµСЂСЏРµРј СЂР°Р·СЂС‹РІ РјРѕРґСѓР»СЏ
 
 double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 {

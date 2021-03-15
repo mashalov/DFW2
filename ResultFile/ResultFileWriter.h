@@ -58,7 +58,7 @@ namespace DFW2
 		bool m_bChannelsFlushed = true;
 	public:
 		virtual ~CResultFileWriter();
-		void CreateResultFile(const _TCHAR *cszFilePath);
+		void CreateResultFile(std::string_view FilePath);
 		void CloseFile();
 		void WriteDouble(const double &Value);
 		void WriteTime(double dTime, double dStep);

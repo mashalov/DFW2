@@ -198,15 +198,15 @@ void CDynaGeneratorMotion::UpdateSerializer(SerializerPtr& Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели генератора в уравнении движения
-	Serializer->AddProperty(_T("Kdemp"), Kdemp, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddProperty(_T("xq"), xq, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(_T("Mj"), Mj, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Pnom"), Pnom, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(_T("Unom"), Unom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(_T("cosPhinom"), cosPhinom, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Kdemp", Kdemp, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty("xq", xq, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("Mj", Mj, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Pnom", Pnom, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty("Unom", Unom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty("cosPhinom", cosPhinom, eVARUNITS::VARUNIT_PU);
 	// добавляем переменные состояния
-	Serializer->AddState(_T("Pt"), Pt, eVARUNITS::VARUNIT_MW);
-	Serializer->AddState(_T("s"), s, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Pt", Pt, eVARUNITS::VARUNIT_MW);
+	Serializer->AddState("s", s, eVARUNITS::VARUNIT_PU);
 }
 
 const CDeviceContainerProperties CDynaGeneratorMotion::DeviceProperties()
@@ -216,11 +216,11 @@ const CDeviceContainerProperties CDynaGeneratorMotion::DeviceProperties()
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorMotion, CDeviceContainerProperties::m_cszSysNameGeneratorMotion);
 	props.nEquationsCount = CDynaGeneratorMotion::VARS::V_LAST;
 
-	props.m_VarMap.insert(std::make_pair(_T("S"), CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("S", CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, eDVT_CONSTSOURCE)));
 	return props;
 }
 
-const _TCHAR *CDynaGeneratorMotion::m_cszUnom = _T("Unom");
+const char* CDynaGeneratorMotion::m_cszUnom = "Unom";

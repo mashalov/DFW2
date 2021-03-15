@@ -61,7 +61,7 @@ bool CDynaModel::Link()
 				if (pContLead == lt)
 				{
 					// если выбран внутренний контейнер
-					Log(DFW2::CDFW2Messages::DFW2LOG_INFO, fmt::format(_T("Связь {} <- {}"), it->GetTypeName(), lt->GetTypeName()));
+					Log(DFW2::CDFW2Messages::DFW2LOG_INFO, fmt::format("Связь {} <- {}", it->GetTypeName(), lt->GetTypeName()));
 					// организуем связь внешгего контейнера с внутренним
 					bRes = it->CreateLink(lt) && bRes;
 					_ASSERTE(bRes);
@@ -203,7 +203,7 @@ void CDynaNodeContainer::BuildSynchroZones()
 			// зону отключаем, чтобы она не попадала в систему уравнений
 			pOffZone->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pOffZone->SetId(NodeIslands.size());
-			pOffZone->SetName(_T("SyncZone offline"));
+			pOffZone->SetName("SyncZone offline");
 			// и ставим эту зону для всех отключенных узлов
 			for (auto&& it : m_DevVec)
 				if(!it->IsStateOn())
@@ -219,7 +219,7 @@ void CDynaNodeContainer::BuildSynchroZones()
 			pNewZone->m_LinkedGenerators.reserve(3 * Count());
 			// придумываем идентификатор и имя
 			pNewZone->SetId(pNewZone - pSyncZones.get() + 1);
-			pNewZone->SetName(_T("SyncZone"));
+			pNewZone->SetName("SyncZone");
 			for (auto&& node : zone.second)
 			{
 				node->m_pSyncZone = pNewZone;
@@ -333,7 +333,7 @@ void CDynaNodeContainer::DumpNodeIslands(NODEISLANDMAP& Islands)
 	{
 		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszIslandOfSuperNode , supernode.first->GetVerbalName()));
 		for (auto&& slavenode : supernode.second)
-			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(_T("--> {}"), slavenode->GetVerbalName()));
+			m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format("--> {}", slavenode->GetVerbalName()));
 	}
 }
 
@@ -548,9 +548,9 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 					}
 				}
 				/*
-				const _TCHAR *cszSuper = _T("super");
-				const _TCHAR *cszSlave = _T("super");
-				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s connects %snode %s and %s node %s"),
+				const char* cszSuper = "super";
+				const char* cszSlave = "super";
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Branch %s connects %snode %s and %s node %s",
 					pBranch->GetVerbalName(),
 					pNodeIpSuper->m_pSuperNodeParent ? cszSlave : cszSuper,
 					pNodeIpSuper->GetVerbalName(),
@@ -612,7 +612,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 						// сохраняем оригинальную связь устройства с узлом в карте
 						m_OriginalLinks.back()->insert(std::make_pair(*ppDevice, pOldDev));
 						//*
-						//wstring strName(pOldDev ? pOldDev->GetVerbalName() : _T(""));
+						//string strName(pOldDev ? pOldDev->GetVerbalName() : _T(""));
 						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Change link of object %s from node %s to supernode %s"),
 						//		(*ppDevice)->GetVerbalName(),
 						//		strName.c_str(),SuperNodeBlock.first->GetVerbalName()));
@@ -802,9 +802,9 @@ _IterationControl& CDynaNodeContainer::IterationControl()
 	return m_IterationControl;
 }
 
-std::wstring CDynaNodeContainer::GetIterationControlString()
+std::string CDynaNodeContainer::GetIterationControlString()
 {
-	std::wstring retString = fmt::format(_T("{:15f} {:>6} {:15f} {:>6} {:5.2f} {:>6} {:5.2f} {:>6} {:>4}"),
+	std::string retString = fmt::format("{:15f} {:>6} {:15f} {:>6} {:5.2f} {:>6} {:5.2f} {:>6} {:>4}",
 		m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
 		m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
 		m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),
@@ -981,25 +981,25 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 void CDynaNodeContainer::DumpNetwork()
 {
 	FILE* fn;
-	_TCHAR filename[MAX_PATH];
-	_stprintf_s(filename, MAX_PATH, _T("c:\\tmp\\network-%td.net"), GetModel()->GetStepNumber());
-	if (!_tfopen_s(&fn, filename, _T("w+")))
+	char filename[MAX_PATH];
+	sprintf_s(filename, MAX_PATH, "c:\\tmp\\network-%td.net", GetModel()->GetStepNumber());
+	if (!fopen_s(&fn, filename, "w+"))
 	{
 		for (auto& node : m_DevVec)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-			_ftprintf_s(fn, _T("Node Id=%td DBIndex=%td V %g / %g"), pNode->GetId(), pNode->GetDBIndex(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
+			fprintf(fn, "Node Id=%td DBIndex=%td V %g / %g", pNode->GetId(), pNode->GetDBIndex(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
 			if(pNode->m_pSuperNodeParent)
-				_ftprintf_s(fn, _T(" belongs to supernode Id=%td"), pNode->m_pSuperNodeParent->GetId());
+				fprintf(fn, " belongs to supernode Id=%td", pNode->m_pSuperNodeParent->GetId());
 
-			_ftprintf_s(fn, _T("\n"));
+			fprintf(fn, "\n");
 
 			CLinkPtrCount* pBranchLink = pNode->GetLink(0);
 			CDevice** ppDevice(nullptr);
 			while (pBranchLink->In(ppDevice))
 			{
 				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
-				_ftprintf_s(fn, _T("\tOriginal Branch %td-%td-(%td) r=%g x=%g state=%d\n"), pBranch->Ip, pBranch->Iq, pBranch->Np, pBranch->R, pBranch->X, pBranch->m_BranchState);
+				fprintf(fn, "\tOriginal Branch %td-%td-(%td) r=%g x=%g state=%d\n", pBranch->Ip, pBranch->Iq, pBranch->Np, pBranch->R, pBranch->X, pBranch->m_BranchState);
 			}
 
 			CLinkPtrCount* pSuperNodeLink = pNode->GetSuperLink(0);
@@ -1007,31 +1007,31 @@ void CDynaNodeContainer::DumpNetwork()
 			while (pSuperNodeLink->In(ppDevice))
 			{
 				CDynaNodeBase* pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
-				_ftprintf_s(fn, _T("\t\tSlave Node Id=%td DBIndex=%td\n"), pSlaveNode->GetId(), pSlaveNode->GetDBIndex());
+				fprintf(fn, "\t\tSlave Node Id=%td DBIndex=%td\n", pSlaveNode->GetId(), pSlaveNode->GetDBIndex());
 
 				CLinkPtrCount* pBranchLink = pSlaveNode->GetLink(0);
 				CDevice** ppDeviceBranch(nullptr);
 				while (pBranchLink->In(ppDeviceBranch))
 				{
 					CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDeviceBranch);
-					_ftprintf_s(fn, _T("\t\t\tOriginal Branch %td-%td-(%td) r=%g x=%g state=%d\n"), pBranch->Ip, pBranch->Iq, pBranch->Np, pBranch->R, pBranch->X, pBranch->m_BranchState);
+					fprintf(fn, "\t\t\tOriginal Branch %td-%td-(%td) r=%g x=%g state=%d\n", pBranch->Ip, pBranch->Iq, pBranch->Np, pBranch->R, pBranch->X, pBranch->m_BranchState);
 				}
 			}
 
 			for (VirtualBranch* pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
 			{
-				_ftprintf_s(fn, _T("\tVirtual Branch to node Id=%td\n"), pV->pNode->GetId());
+				fprintf(fn, "\tVirtual Branch to node Id=%td\n", pV->pNode->GetId());
 			}
 		}
 		fclose(fn);
 	}
-	_stprintf_s(filename, MAX_PATH, _T("c:\\tmp\\nodes LULF-%td.csv"), GetModel()->GetStepNumber());
-	if (!_tfopen_s(&fn, filename, _T("w+")))
+	sprintf_s(filename, MAX_PATH, "c:\\tmp\\nodes LULF-%td.csv", GetModel()->GetStepNumber());
+	if (!fopen_s(&fn, filename, "w+"))
 	{
 		for (auto& node : m_DevVec)
 		{
 			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
-			_ftprintf_s(fn, _T("%td;%g;%g\n"), pNode->GetId(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
+			fprintf(fn, "%td;%g;%g\n", pNode->GetId(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
 		}
 		fclose(fn);
 	}

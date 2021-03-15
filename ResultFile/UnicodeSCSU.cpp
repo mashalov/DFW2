@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "UnicodeSCSU.h"
 
 using namespace DFW2;
@@ -108,7 +108,7 @@ void CUnicodeSCSU::WriteSCSUSymbol(int Symbol)
 	}
 }
 
-void CUnicodeSCSU::WriteSCSU(std::wstring_view String)
+void CUnicodeSCSU::WriteSCSU(std::string_view String)
 {
 	for(const auto& sym : String)
 		WriteSCSUSymbol(static_cast<int>(sym));
@@ -183,7 +183,7 @@ int CUnicodeSCSU::ReadSCSUSymbol()
 	return Symbol;
 }
 
-void CUnicodeSCSU::ReadSCSU(std::wstring& String, size_t nLen)
+void CUnicodeSCSU::ReadSCSU(std::string& String, size_t nLen)
 {
 	String.resize(nLen, _T('\x0'));
 	for (unsigned int nSymbol = 0; nSymbol < nLen; nSymbol++)

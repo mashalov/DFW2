@@ -26,7 +26,7 @@ namespace DFW2
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		const _TCHAR* GetVerbalName() noexcept override { return _T("Реле"); }
+		const char* GetVerbalName() noexcept override { return "Реле"; }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelay); }
 		static long EquationsCount()  noexcept { return 1; }

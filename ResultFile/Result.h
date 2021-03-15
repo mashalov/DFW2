@@ -1,4 +1,4 @@
-// Result2.h : Declaration of the CResult2
+﻿// Result2.h : Declaration of the CResult2
 
 #pragma once
 #include "resource.h"       // main symbols

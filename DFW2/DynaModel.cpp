@@ -32,7 +32,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   AutomaticDevice(this),
 						   CustomDeviceCPP(this)
 {
-	m_hStopEvt = CreateEvent(NULL, TRUE, FALSE, _T("DFW2STOP"));
+	m_hStopEvt = CreateEvent(NULL, TRUE, FALSE, L"DFW2STOP");
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
 	// константы могут изменяться, например для демпфирования
 	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
@@ -66,7 +66,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
-	LogFile.open(_T("c:\\tmp\\dfw2.log"), std::ios::out);
+	LogFile.open("c:\\tmp\\dfw2.log", std::ios::out);
 }
 
 
@@ -244,7 +244,7 @@ bool CDynaModel::Run()
 					bResultsNeedToBeFinished = false;
 					FinishWriteResults();
 				}
-				Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Ошибка в цикле расчета : {}"), err.uwhat()));
+				Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Ошибка в цикле расчета : {}", err.what()));
 			}
 		}
 
@@ -252,50 +252,50 @@ bool CDynaModel::Run()
 			FinishWriteResults();
 
 		if (!bRes)
-			MessageBox(NULL, _T("Failed"), _T("Failed"), MB_OK);
+			MessageBox(NULL, L"Failed", L"Failed", MB_OK);
 
 		// вне зависимости от результата завершаем запись результатов
 		// по признаку завершения
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Steps count {}"), sc.nStepsCount));
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Steps by 1st order count {}, failures {} Newton failures {} zc {} Time passed {}"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Steps count {}", sc.nStepsCount));
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Steps by 1st order count {}, failures {} Newton failures {} zc {} Time passed {}",
 																		sc.OrderStatistics[0].nSteps, 
 																		sc.OrderStatistics[0].nFailures,
 																		sc.OrderStatistics[0].nNewtonFailures,
 																		sc.OrderStatistics[0].nZeroCrossingsSteps,
 																		sc.OrderStatistics[0].dTimePassed));
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Steps by 2nd order count {}, failures {} Newton failures {} zc {} Time passed {}"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Steps by 2nd order count {}, failures {} Newton failures {} zc {} Time passed {}",
 																		sc.OrderStatistics[1].nSteps,
 																		sc.OrderStatistics[1].nFailures,
 																		sc.OrderStatistics[1].nNewtonFailures,
 																		sc.OrderStatistics[1].nZeroCrossingsSteps,
 																		sc.OrderStatistics[1].dTimePassed));
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Factors count {} / ({} + {} failures) Analyzings count {}"), 
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Factors count {} / ({} + {} failures) Analyzings count {}", 
 																															klu.FactorizationsCount(), 
 																															klu.RefactorizationsCount(), 
 																															klu.RefactorizationFailuresCount(),
 																															klu.AnalyzingsCount()));
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Newtons count {} {:.2} per step, failures at step {} failures at discontinuity {}"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Newtons count {} {:.2} per step, failures at step {} failures at discontinuity {}",
 																	 sc.nNewtonIterationsCount, 
 																	 static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount, 
 																	 sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,
 																	 sc.nDiscontinuityNewtonFailures));
 
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Max condition number {} at time {}"),
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Max condition number {} at time {}",
 																	 sc.dMaxConditionNumber,
 																	 sc.dMaxConditionNumberTime));
 
 		GetWorstEquations(10);
 		std::chrono::milliseconds CalcDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - sc.m_ClockStart);
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("Duration {}"), static_cast<double>(CalcDuration.count()) / 1E3));
+		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Duration {}", static_cast<double>(CalcDuration.count()) / 1E3));
 	}
 
 	catch (dfw2error& err)
 	{
-		Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(_T("Исключение : {}"), err.uwhat()));
+		Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Исключение : {}", err.what()));
 	}
 	return bRes;
 }
@@ -629,22 +629,22 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			for (DEVICEVECTORITR it = Nodes.begin(); it != Nodes.end(); it++)
 			{
 				CDynaNode *pNode = static_cast<CDynaNode*>(*it);
-				_tcprintf(_T("\n%30s - %6.2f %6.2f %6.2f %6.2f"), pNode->GetVerbalName(), pNode->V, pNode->Delta * 180 / 3.14159, pNode->Pnr, pNode->Qnr);
+				_tcprintf("\n%30s - %6.2f %6.2f %6.2f %6.2f", pNode->GetVerbalName(), pNode->V, pNode->Delta * 180 / 3.14159, pNode->Pnr, pNode->Qnr);
 			}
 			for (DEVICEVECTORITR it = Generators1C.begin(); it != Generators1C.end(); it++)
 			{
 				CDynaGenerator1C *pGen = static_cast<CDynaGenerator1C*>(*it);
-				_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
+				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
 			}
 			for (DEVICEVECTORITR it = GeneratorsMotion.begin(); it != GeneratorsMotion.end(); it++)
 			{
 				CDynaGeneratorMotion *pGen = static_cast<CDynaGeneratorMotion*>(*it);
-				_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
+				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
 			}
 			for (DEVICEVECTORITR it = GeneratorsInfBus.begin(); it != GeneratorsInfBus.end(); it++)
 			{
 				CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(*it);
-				_tcprintf(_T("\n%30s - %6.2f %6.2f"), pGen->GetVerbalName(), pGen->P, pGen->Q);
+				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
 			}
 		}
 #endif
@@ -656,7 +656,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 		double *bwatch = klu.B();
 
-//		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
+//		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "%g %d", bmax, imax);
 
 		SolveLinearSystem();
 
@@ -690,7 +690,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 //		DumpMatrix(true);
 
 		bmax = klu.FindMaxB(imax);
-//		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("%g %d"), bmax, imax);
+//		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "%g %d", bmax, imax);
 
 		if (NewtonUpdate())
 		{
@@ -705,7 +705,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("t={:15.012f} {} Converged in {:>3} iterations {} {} {} {} {} Saving {:.2}"), GetCurrentTime(),
+				Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("t={:15.012f} {} Converged in {:>3} iterations {} {} {} {} {} Saving {:.2}", GetCurrentTime(),
 																				sc.nStepsCount,
 																				sc.nNewtonIteration,
 																				sc.Newton.dMaxErrorVariable, 
@@ -728,7 +728,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (!sc.m_bNewtonStepControl)
 				{
-					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("t={:15.012f} {} Continue {:>3} iteration {} {} {} {} {}"), GetCurrentTime(),
+					Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("t={:15.012f} {} Continue {:>3} iteration {} {} {} {} {}", GetCurrentTime(),
 						sc.nStepsCount,
 						sc.nNewtonIteration,
 						sc.Newton.dMaxErrorVariable,
@@ -1052,7 +1052,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = max(1.01, r);
 
-	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format(_T("t={:15.012f} {:>3} {}[{}] {} rSame {} RateLimit {} for {} steps"), 
+	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("t={:15.012f} {:>3} {}[{}] {} rSame {} RateLimit {} for {} steps", 
 		GetCurrentTime(), 
 		GetIntegrationStepNumber(),
 		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
@@ -1273,7 +1273,7 @@ void CDynaModel::AddZeroCrossingDevice(CDevice *pDevice)
 {
 	ZeroCrossingDevices.push_back(pDevice);
 	if (ZeroCrossingDevices.size() >= static_cast<size_t>(klu.MatrixSize()))
-		throw dfw2error(_T("CDynaModel::AddZeroCrossingDevice - matrix size overrun"));
+		throw dfw2error("CDynaModel::AddZeroCrossingDevice - matrix size overrun");
 }
 
 void CDynaModel::GoodStep(double rSame)
@@ -1520,7 +1520,7 @@ void CDynaModel::RepeatZeroCrossing()
 }
 
 
-CDevice* CDynaModel::GetDeviceBySymbolicLink(std::wstring_view Object, std::wstring_view Keys, std::wstring_view SymLink)
+CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::string_view Keys, std::string_view SymLink)
 {
 	CDevice *pFoundDevice(nullptr);
 
@@ -1531,7 +1531,7 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::wstring_view Object, std::wstr
 		{
 			ptrdiff_t nIp(0), nIq(0), nNp(0);
 			bool bReverse = false;
-			ptrdiff_t nKeysCount = _stscanf_s(std::wstring(Keys).c_str(), _T("%td,%td,%td"), &nIp, &nIq, &nNp);
+			ptrdiff_t nKeysCount = sscanf_s(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
 			if (nKeysCount > 1)
 			{
 				for (DEVICEVECTORITR it = pContainer->begin(); it != pContainer->end(); it++)
@@ -1554,7 +1554,7 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::wstring_view Object, std::wstr
 		{
 			ptrdiff_t nId(0);
 
-			if (_stscanf_s(std::wstring(Keys).c_str(), _T("%td"), &nId) == 1)
+			if (sscanf_s(std::string(Keys).c_str(), "%td", &nId) == 1)
 				pFoundDevice = pContainer->GetDevice(nId);
 			else
 				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
@@ -1566,17 +1566,17 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::wstring_view Object, std::wstr
 	return pFoundDevice;
 }
 
-bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name)
+bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name)
 {
 	bool bRes(false);
 	const size_t nSourceLength(Name.size());
-	const _TCHAR cszSpace(_T(' '));
-	std::wstring Object(nSourceLength, cszSpace),
+	const char cszSpace(' ');
+	std::string Object(nSourceLength, cszSpace),
 				 Keys(nSourceLength, cszSpace),
 				 Prop(nSourceLength, cszSpace);
-	int nFieldCount = _stscanf_s(std::wstring(Name).c_str(), _T("%[^[][%[^]]].%s"), &Object[0], static_cast<unsigned int>(nSourceLength),
-																					&Keys[0],   static_cast<unsigned int>(nSourceLength),
-																					&Prop[0],   static_cast<unsigned int>(nSourceLength));
+	int nFieldCount = sscanf_s(std::string(Name).c_str(), "%[^[][%[^]]].%s", &Object[0], static_cast<unsigned int>(nSourceLength),
+																			 &Keys[0],   static_cast<unsigned int>(nSourceLength),
+																			 &Prop[0],   static_cast<unsigned int>(nSourceLength));
 	// обрезаем длину строк до нуль-терминатора
 	Object = Object.c_str();
 	Keys   = Keys.c_str();
@@ -1612,7 +1612,7 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 				if (pFoundDevice->GetType() == DEVTYPE_BRANCH)
 				{
 					//ptrdiff_t nIp;
-					//_stscanf_s(std::wstring(Keys).c_str(), _T("%td"), &nIp);
+					//_stscanf_s(std::string(Keys).c_str(), "%td", &nIp);
 					CDynaBranch *pBranch = static_cast<CDynaBranch*>(pFoundDevice);
 					if (!pBranch->m_pMeasure)
 					{

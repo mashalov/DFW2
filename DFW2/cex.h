@@ -1,35 +1,33 @@
 ﻿#pragma once
-
 #include <winuser.h>
-#include <tchar.h>
-#include <ShlObj.h>
 #include <memory>
 #include "Messages.h"
 #include "stringutils.h"
 #include "..\fmt\include\fmt\core.h"
 #include "..\fmt\include\fmt\format.h"
+#include <filesystem>
 
 class CDFW2Exception
 {
 protected:
-	std::wstring m_strMessage;
+	std::string m_strMessage;
 public:
-	CDFW2Exception(std::wstring_view Description) : m_strMessage(Description) {}
-	const _TCHAR* Message() noexcept { return m_strMessage.c_str(); }
+	CDFW2Exception(std::string_view Description) : m_strMessage(Description) {}
+	const char* Message() noexcept { return m_strMessage.c_str(); }
 };
 
 class CDFW2GetLastErrorException : public CDFW2Exception
 {
 public:
-	CDFW2GetLastErrorException(std::wstring_view Description) : CDFW2Exception(Description)
+	CDFW2GetLastErrorException(std::string_view Description) : CDFW2Exception(Description)
 	{
-		std::wstring strGetLastErrorMsg = GetLastErrorMessage();
+		std::string strGetLastErrorMsg = GetLastErrorMessage();
 		if(!strGetLastErrorMsg.empty())
-			m_strMessage += fmt::format(_T(" {}"), strGetLastErrorMsg);
+			m_strMessage += fmt::format(" {}", strGetLastErrorMsg);
 		stringutils::removecrlf(m_strMessage);
 	}
 
-	static std::wstring GetLastErrorMessage()
+	static std::string GetLastErrorMessage()
 	{
 		const DWORD dwError = ::GetLastError();
 		if (dwError != 0)
@@ -37,24 +35,24 @@ public:
 			LPTSTR messageBuffer = nullptr;
 			const size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
 				NULL, dwError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&messageBuffer, 0, NULL);
-			std::wstring message(messageBuffer, size);
+			std::string message(stringutils::utf8_encode(std::wstring(messageBuffer, size)));
 			LocalFree(messageBuffer);
 			return message;
 		}
-		return std::wstring(_T(""));
+		return std::string("");
 	}
 };
 
 
-static const _TCHAR* cszDoubleSlash = _T("\\\\");
+static const char* cszDoubleSlash = "\\\\";
 
-static void NormalizePath(std::wstring& Path)
+static void NormalizePath(std::string& Path)
 {
 	stringutils::trim(Path);
 
 	size_t nDoubleSlashIndex = Path.find(cszDoubleSlash);
 
-	while (nDoubleSlashIndex != std::wstring::npos)
+	while (nDoubleSlashIndex != std::string::npos)
 	{
 		Path.erase(nDoubleSlashIndex, 1);
 		nDoubleSlashIndex = Path.find(cszDoubleSlash);
@@ -69,30 +67,14 @@ static void NormalizePath(std::wstring& Path)
 	}
 }
 
-static bool CreateAllDirectories(const _TCHAR *szDir) noexcept
+static bool CreateAllDirectories(std::string_view Dir)
 {
-	switch (SHCreateDirectoryEx(NULL, szDir, NULL))
-	{
-	case ERROR_SUCCESS:
-	case ERROR_FILE_EXISTS:
-	case ERROR_ALREADY_EXISTS:
-		return true;
-	}
-
-	return false;
+	return std::filesystem::create_directories(Dir);
 }
 
-const static std::wstring GetDirectory(const _TCHAR *cszPath)
+const static std::string GetDirectory(std::string_view Path)
 {
-	_TCHAR Drv[_MAX_DRIVE];
-	_TCHAR Dir[_MAX_DIR];
-	_TCHAR FileName[_MAX_FNAME];
-	_TCHAR Ext[_MAX_EXT];
-	_TCHAR szPath[_MAX_PATH];
-	if (!_tsplitpath_s(cszPath, Drv, _MAX_DRIVE, Dir, _MAX_DIR, FileName, _MAX_FNAME, Ext, _MAX_EXT))
-	{
-		if (!_tmakepath_s(szPath, _MAX_PATH, Drv, Dir, NULL, NULL))
-			return std::wstring(szPath);
-	}
-	return std::wstring();
+	std::filesystem::path getPath(Path);
+	getPath.remove_filename();
+	return getPath.string();
 }

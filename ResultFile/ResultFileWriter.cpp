@@ -16,7 +16,7 @@ void CResultFile::WriteLEB(unsigned __int64 Value)
 	} while (Value != 0);
 }
 
-void CResultFile::WriteString(std::wstring_view cszString)
+void CResultFile::WriteString(std::string_view cszString)
 {
 	if (cszString.empty())
 		WriteLEB(0);
@@ -157,7 +157,7 @@ void CResultFileWriter::FlushChannels()
 
 	de.m_DataType = 2;
 	de.m_Offset = infile.tellg();
-	WriteString(_T(""));
+	WriteString("");
 
 	infile.seekg(m_DataDirectoryOffset + sizeof(struct DataDirectoryEntry) * 2, std::ios_base::beg);
 	infile.write(&de, sizeof(struct DataDirectoryEntry));
@@ -447,9 +447,9 @@ void CResultFileWriter::CloseFile()
 }
 
 // создает файл результатов
-void CResultFileWriter::CreateResultFile(const _TCHAR *cszFilePath)
+void CResultFileWriter::CreateResultFile(std::string_view FilePath)
 {
-	infile.open(cszFilePath, std::ios_base::out|std::ios_base::binary);
+	infile.open(FilePath, std::ios_base::out|std::ios_base::binary);
 	// запись сигнатуры
 	size_t nCountSignature = sizeof(m_cszSignature);
 	infile.write(m_cszSignature, nCountSignature);

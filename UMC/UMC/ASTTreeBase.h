@@ -22,11 +22,11 @@
 
 
 class CASTTreeBase;
-class PropertyMap : public std::map<std::string, std::string>
+class PropertyMap : public std::map<std::string, std::string, std::less<>>
 {
 protected:
     CASTTreeBase* pTree = nullptr;
-    using std::map<std::string, std::string>::map;
+    using std::map<std::string, std::string, std::less<>>::map;
 public:
     static inline constexpr const char* szPropOutputPath = "OutputPath";
     static inline constexpr const char* szPropProjectName = "ProjectName";

@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include "cex.h"
 #include "dfw2exception.h"
 
@@ -8,28 +8,28 @@ namespace DFW2
 	{
 	protected:
 		HMODULE m_hDLL = NULL;
-		std::wstring m_strModulePath;
+		std::string m_strModulePath;
 		void CleanUp()
 		{
 			if (m_hDLL)
 				FreeLibrary(m_hDLL);
 			m_hDLL = NULL;
 		}
-		void Init(std::wstring_view DLLFilePath)
+		void Init(std::string_view DLLFilePath)
 		{
-			// загружаем dll
-			m_hDLL = LoadLibrary(std::wstring(DLLFilePath).c_str());
+			// Р·Р°РіСЂСѓР¶Р°РµРј dll 
+			m_hDLL = LoadLibrary(stringutils::utf8_decode(DLLFilePath).c_str());
 			if (!m_hDLL)
-				throw dfw2errorGLE(fmt::format(_T("Ошибка загрузки DLL \"{}\"."), DLLFilePath));
+				throw dfw2errorGLE(fmt::format("РћС€РёР±РєР° Р·Р°РіСЂСѓР·РєРё DLL \"{}\".", DLLFilePath));
 			m_strModulePath = DLLFilePath;
 		}
 	public:
 		virtual ~CDLLInstance() { CleanUp(); }
-		CDLLInstance(std::wstring_view DLLFilePath)
+		CDLLInstance(std::string_view DLLFilePath)
 		{
 			Init(DLLFilePath);
 		}
-		std::wstring_view GetModuleFilePath() const { return m_strModulePath.c_str(); }
+		std::string_view GetModuleFilePath() const { return m_strModulePath.c_str(); }
 	};
 
 	template<class Interface>
@@ -43,18 +43,18 @@ namespace DFW2
 			std::string strFactoryFn(FactoryFunction);
 			m_pfnFactory = reinterpret_cast<fnFactory>(::GetProcAddress(m_hDLL, strFactoryFn.c_str()));
 			if (!m_pfnFactory)
-				throw dfw2error(fmt::format(_T("Функция \"{}\" не найдена в DLL \"{}\""), stringutils::utf8_decode(strFactoryFn), m_strModulePath));
+				throw dfw2error(fmt::format("Р¤СѓРЅРєС†РёСЏ \"{}\" РЅРµ РЅР°Р№РґРµРЅР° РІ DLL \"{}\"", strFactoryFn, m_strModulePath));
 		}
 	public:
 		using IntType = Interface;
-		CDLLInstanceFactory(std::wstring_view DLLFilePath, std::string_view FactoryFunction) : CDLLInstance(DLLFilePath)
+		CDLLInstanceFactory(std::string_view DLLFilePath, std::string_view FactoryFunction) : CDLLInstance(DLLFilePath)
 		{
 			Init(FactoryFunction);
 		}
 		Interface* Create()
 		{
 			if (!m_hDLL || !m_pfnFactory)
-				throw dfw2error(_T("DLL is not ready for Create call"));
+				throw dfw2error("DLL is not ready for Create call");
 			return m_pfnFactory();
 		}
 	};

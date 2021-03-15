@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DeviceContainer.h"
 #include "DynaNode.h"
 #include "DynaGeneratorInfBus.h"
@@ -43,7 +43,7 @@ namespace DFW2
 
 		static const CDeviceContainerProperties DeviceProperties();
 
-		static const _TCHAR *m_cszUnom;
+		static const char* m_cszUnom;
 	};
 }
 

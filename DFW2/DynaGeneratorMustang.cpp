@@ -18,7 +18,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 	if (GetId() == 97)
 	{
 		FILE *flog;
-		_tfopen_s(&flog, _T("c:\\tmp\\gen97.csv"), _T("w+"));
+		fopen_s(&flog, "c:\\tmp\\gen97.csv", "w+");
 		fclose(flog);
 	}
 

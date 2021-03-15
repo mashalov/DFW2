@@ -217,10 +217,10 @@ void CDynaModel::WriteResultsHeader()
 				{
 					if (vit->second.m_bOutput)
 					{
-						wstring fltr = vit->first;
+						string fltr = vit->first;
 						std::replace(fltr.begin(), fltr.end(), ';', ':');
 
-						wstring name = std::to_wstring((*dit)->GetId());
+						string name = std::to_string((*dit)->GetId());
 
 						std::replace(name.begin(), name.end(), ';', ':');
 						_ftprintf_s(fResult, _T("\"%s [%s]\";"), fltr.c_str(), name.c_str());

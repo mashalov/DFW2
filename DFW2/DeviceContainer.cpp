@@ -91,7 +91,7 @@ bool CDeviceContainer::AddDevice(CDevice* pDevice)
 // добавление переменной состояния в контейнер
 // Требуются имя перменной (уникальное), индекс и единицы измерения
 // если переменная с таким именем уже есть возвращает false
-bool CDeviceContainer::RegisterVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
+bool CDeviceContainer::RegisterVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
 {
 	bool bInserted = m_ContainerProps.m_VarMap.insert(std::make_pair(VarName, CVarIndex(nVarIndex, eVarUnits))).second;
 	return bInserted;
@@ -99,17 +99,17 @@ bool CDeviceContainer::RegisterVariable(std::wstring_view VarName, ptrdiff_t nVa
 
 // добавление перменной константы устройства (константа - параметр не изменяемый в процессе расчета и пользуемый при инициализации)
 // Требуются имя, индекс и тип константы. Индексы у констант и переменных состояния разные
-bool CDeviceContainer::RegisterConstVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
+bool CDeviceContainer::RegisterConstVariable(std::string_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
 {
 	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(VarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
 	return bInserted;
 }
 
 // управление выводом переменной в результаты
-bool CDeviceContainer::VariableOutputEnable(const _TCHAR* cszVarName, bool bOutputEnable)
+bool CDeviceContainer::VariableOutputEnable(std::string_view VarName, bool bOutputEnable)
 {
 	// ищем переменную по имени в карте переменных контейнера
-	VARINDEXMAPITR it = m_ContainerProps.m_VarMap.find(cszVarName);
+	VARINDEXMAPITR it = m_ContainerProps.m_VarMap.find(VarName);
 	if (it != m_ContainerProps.m_VarMap.end())
 	{
 		// если нашли - ставим заданный атрибут вывода 
@@ -121,19 +121,19 @@ bool CDeviceContainer::VariableOutputEnable(const _TCHAR* cszVarName, bool bOutp
 }
 
 // получить индекс переменной устройства по названию
-ptrdiff_t CDeviceContainer::GetVariableIndex(std::wstring_view VarName) const
+ptrdiff_t CDeviceContainer::GetVariableIndex(std::string_view VarName) const
 {
-	// используем быстрый поиск по карте
-	VARINDEXMAPCONSTITR it = m_ContainerProps.m_VarMap.find(std::wstring(VarName));
+	// используем быстрый поиск по карте (тут зачем-то из string_view надо делать string)
+	VARINDEXMAPCONSTITR it = m_ContainerProps.m_VarMap.find(VarName);
 	if (it != m_ContainerProps.m_VarMap.end())
 		return it->second.m_nIndex;
 	else
 		return -1;
 }
 // получить индекс константной переменной по названию
-ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::wstring_view VarName) const
+ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::string_view VarName) const
 {
-	CONSTVARINDEXMAPCONSTITR it = m_ContainerProps.m_ConstVarMap.find(std::wstring(VarName));
+	CONSTVARINDEXMAPCONSTITR it = m_ContainerProps.m_ConstVarMap.find(std::string(VarName));
 	if (it != m_ContainerProps.m_ConstVarMap.end())
 		return it->second.m_nIndex;
 	else
@@ -233,7 +233,7 @@ size_t CDeviceContainer::GetResultVariablesCount()
 }
 
 
-void CDeviceContainer::Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message, ptrdiff_t nDBIndex)
+void CDeviceContainer::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDBIndex)
 {
 	if (m_pDynaModel)
 		m_pDynaModel->Log(Status, Message, nDBIndex);
@@ -818,7 +818,7 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 }
 
 
-bool  CDeviceContainer::HasAlias(std::wstring_view Alias)
+bool  CDeviceContainer::HasAlias(std::string_view Alias)
 {
 	STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
 	return std::find(Aliases.begin(), Aliases.end(), Alias) != Aliases.end();

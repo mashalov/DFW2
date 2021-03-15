@@ -1,4 +1,4 @@
-// VariablesCollection.h : Declaration of the CVariablesCollection
+﻿// VariablesCollection.h : Declaration of the CVariablesCollection
 
 #pragma once
 #include "resource.h"       // main symbols

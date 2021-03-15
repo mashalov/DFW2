@@ -11,7 +11,7 @@ protected:
     std::string infix;              // строка инфиксной записи узла
     std::string Id;                 // идентификатор узла
     static inline const ptrdiff_t precedence = 0;
-    static inline constexpr std::string_view static_text = "";  // заглушка общая для всех узлов - для возврата в GetText()
+    static constexpr std::string_view static_text = "";  // заглушка общая для всех узлов - для возврата в GetText()
     bool bDeleted = false;          // признак удаления узла
     double sortPower = 1.0;         // текущая степень узла
     size_t score = 0;               // скоринг узла

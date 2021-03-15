@@ -25,7 +25,7 @@ STDMETHODIMP CResultWrite::InterfaceSupportsErrorInfo(REFIID riid)
 STDMETHODIMP CResultWrite::put_Comment(BSTR Comment)
 {
 	HRESULT hRes = S_OK;
-	m_strComment = Comment;
+	m_strComment = stringutils::utf8_encode(Comment);
 	return hRes;
 }
 
@@ -133,7 +133,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 	catch (std::bad_alloc& badAllocEx)
 	{
 		std::string strc(badAllocEx.what());
-		std::wstring str(strc.begin(), strc.end());
+		std::string str(strc.begin(), strc.end());
 		Error(fmt::format(CDFW2Messages::m_cszMemoryAllocError, str).c_str(), IID_IResultWrite, hRes);
 	}
 
@@ -149,7 +149,7 @@ STDMETHODIMP CResultWrite::WriteHeader()
 STDMETHODIMP CResultWrite::AddVariableUnit(LONG UnitId, BSTR UnitName)
 {
 	HRESULT hRes = S_OK;
-	if (!m_VarNameMap.insert(std::make_pair(UnitId, UnitName)).second)
+	if (!m_VarNameMap.insert(std::make_pair(UnitId, stringutils::utf8_encode(UnitName))).second)
 	{
 		hRes = E_INVALIDARG;
 		Error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableUnit, UnitId).c_str(), IID_IResultWrite, hRes);
@@ -162,7 +162,7 @@ STDMETHODIMP CResultWrite::AddDeviceType(LONG DeviceTypeId, BSTR DeviceTypeName,
 	HRESULT hRes = E_FAIL;
 	CResultFileReader::DeviceTypeInfo *pDeviceType = new CResultFileReader::DeviceTypeInfo();
 	pDeviceType->eDeviceType = DeviceTypeId;
-	pDeviceType->strDevTypeName = DeviceTypeName;
+	pDeviceType->strDevTypeName = stringutils::utf8_encode(DeviceTypeName);
 	pDeviceType->DeviceParentIdsCount = pDeviceType->DeviceIdsCount = 1;
 	pDeviceType->VariablesByDeviceCount = pDeviceType->DevicesCount = 0;
 
@@ -237,9 +237,9 @@ STDMETHODIMP CResultWrite::FlushChannels()
 }
 
 
-void CResultWrite::CreateFile(const _TCHAR* cszPathName)
+void CResultWrite::CreateFile(std::string_view PathName)
 {
-	m_ResultFileWriter.CreateResultFile(cszPathName);
+	m_ResultFileWriter.CreateResultFile(PathName);
 }
 
 STDMETHODIMP CResultWrite::Close()
@@ -266,7 +266,13 @@ STDMETHODIMP CResultWrite::AddSlowVariable(LONG DeviceTypeId, VARIANT DeviceIds,
 	CSlowVariablesSet& SlowVariables = m_ResultFileWriter.GetSlowVariables();
 
 	if (SlowVariables.VariantToIds(&DeviceIds, vecDeviceIds))
-		if (SlowVariables.Add(DeviceTypeId, vecDeviceIds, VariableName, Time, Value, PreviousValue, ChangeDescription))
+		if (SlowVariables.Add(DeviceTypeId, 
+							  vecDeviceIds, 
+						      stringutils::utf8_encode(VariableName), 
+							  Time, 
+							  Value, 
+							  PreviousValue, 
+							  stringutils::utf8_encode(ChangeDescription)))
 			hRes = S_OK;
 
 	return hRes;

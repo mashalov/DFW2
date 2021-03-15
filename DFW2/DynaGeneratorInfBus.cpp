@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaNode.h"
 #include "DynaModel.h"
 #include "DynaGeneratorInfBus.h"
@@ -141,16 +141,16 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::UpdateExternalVariables(CDynaMod
 void CDynaGeneratorInfBusBase::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDynaVoltageSource::UpdateSerializer(Serializer);
-	Serializer->AddState(_T("Eqs"), Eqs, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Eqs", Eqs, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(CDynaNodeBase::m_cszDelta, Delta, eVARUNITS::VARUNIT_RADIANS);
-	Serializer->AddProperty(_T("xd1"), xd1, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("xd1", xd1, eVARUNITS::VARUNIT_PU);
 }
 
 void CDynaGeneratorInfBus::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
-	Serializer->AddState(_T("EqsCos"), EqsCos, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("EqsSin"), EqsSin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("EqsCos", EqsCos, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("EqsSin", EqsSin, eVARUNITS::VARUNIT_PU);
 }
 
 VariableIndexRefVec& CDynaGeneratorInfBusBase::GetVariables(VariableIndexRefVec& ChildVec)

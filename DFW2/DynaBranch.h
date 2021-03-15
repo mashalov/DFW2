@@ -61,7 +61,7 @@ namespace DFW2
 
 		static const CDeviceContainerProperties DeviceProperties();
 
-		static const _TCHAR* m_cszBranchStateNames[4];
+		static const char* m_cszBranchStateNames[4];
 	};
 
 	// Блок расчета параметров потоков по ветви. Добавляется в Якоби для ветви,

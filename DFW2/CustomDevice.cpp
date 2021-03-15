@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "CustomDevice.h"
 #include "DynaModel.h"
 
@@ -438,9 +438,9 @@ double* CCustomDevice::GetVariablePtr(ptrdiff_t nVarIndex)
 }
 
 
-CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutputName)
+CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(std::string_view OutputName)
 {
-	const double *pValue = GetVariableConstPtr(cszOutputName);
+	const double *pValue = GetVariableConstPtr(OutputName);
 
 	for (const auto& it : m_Primitives)
 		if (static_cast<const double*>(*it) == pValue)
@@ -451,7 +451,7 @@ CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(const _TCHAR* cszOutpu
 
 CCustomDeviceCPP::CCustomDeviceCPP() 
 { 
-	// может быть вынести в единственном экземпляре в контейнер ?
+	// РјРѕР¶РµС‚ Р±С‹С‚СЊ РІС‹РЅРµСЃС‚Рё РІ РµРґРёРЅСЃС‚РІРµРЅРЅРѕРј СЌРєР·РµРјРїР»СЏСЂРµ РІ РєРѕРЅС‚РµР№РЅРµСЂ ?
 	CustomDeviceData.SetFnSetFunction(DLLSetFunction);
 	CustomDeviceData.SetFnSetElement(DLLSetElement);
 	CustomDeviceData.SetFnSetDerivative(DLLSetDerivative);
@@ -471,17 +471,17 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 
 		const PrimitivePinVec& Inputs = prim.Inputs;
 		if (Inputs.empty())
-			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive inputs"));
+			throw dfw2error("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive inputs");
 
 		const PrimitivePinVec& Outputs = prim.Outputs;
 		if (Outputs.empty())
-			throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive output"));
+			throw dfw2error("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive output");
 
 		VariableIndexRefVec outputs;
 		for (auto& vo : Outputs)
 		{
 			if (vo.Variable.index() != 0)
-				throw dfw2error(_T("CCustomDeviceCPP::CreateDLLDeviceInstance - output variable must have type VariableIndex"));
+				throw dfw2error("CCustomDeviceCPP::CreateDLLDeviceInstance - output variable must have type VariableIndex");
 			outputs.emplace_back(std::get<0>(vo.Variable));
 		}
 
@@ -512,7 +512,7 @@ void CCustomDeviceCPP::SetSourceConstant(size_t nIndex, double Value)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	if (!m_pDevice->SetSourceConstant(nIndex, Value))
-		throw dfw2error(_T("CCustomDeviceCPP::SetSourceConstant - Constants index overrun"));
+		throw dfw2error("CCustomDeviceCPP::SetSourceConstant - Constants index overrun");
 }
 
 
@@ -526,7 +526,7 @@ double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	VariableIndexRefVec vec;
 	GetVariables(vec);
-	CDevice::CheckIndex(vec, nVarIndex, _T("CCustomDeviceCPP::GetVariablePtr"));
+	CDevice::CheckIndex(vec, nVarIndex, "CCustomDeviceCPP::GetVariablePtr");
 	return &vec[nVarIndex].get().Value;
 }
 
@@ -597,7 +597,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDyn
 	const VariableIndexExternalRefVec& ExtVec = m_pDevice->GetExternalVariables();
 	for (const auto& ext : m_pContainer->m_ContainerProps.m_ExtVarMap)
 	{
-		CDevice::CheckIndex(ExtVec, ext.second.m_nIndex, _T("CCustomDeviceCPP::UpdateExternalVariables"));
+		CDevice::CheckIndex(ExtVec, ext.second.m_nIndex, "CCustomDeviceCPP::UpdateExternalVariables");
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVec[ext.second.m_nIndex], this, ext.first.c_str(), ext.second.m_DeviceToSearch));
 		if (eRes == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 			break;
@@ -620,7 +620,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::DLLInitPrimitive(CDFWModelData& DFWModel
 {
 	CCustomDeviceCPP* pDevice(GetDevice(DFWModelData));
 	CDynaModel* pDynaModel(GetModel(DFWModelData));
-	CDevice::CheckIndex(pDevice->m_Primitives, nPrimitiveIndex, _T("CCustomDeviceCPP::DLLInitPrimitive - index out of range"));
+	CDevice::CheckIndex(pDevice->m_Primitives, nPrimitiveIndex, "CCustomDeviceCPP::DLLInitPrimitive - index out of range");
 	CDynaPrimitive* pPrimitive = pDevice->m_Primitives[nPrimitiveIndex];
 	if(pPrimitive->UnserializeParameters(pDynaModel, pDevice->m_pDevice->GetBlockParameters(nPrimitiveIndex)) && pPrimitive->Init(pDynaModel))
 		return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -632,7 +632,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::DLLProcPrimDisco(CDFWModelData& DFWModel
 {
 	CCustomDeviceCPP* pDevice(GetDevice(DFWModelData));
 	CDynaModel* pDynaModel(GetModel(DFWModelData));
-	CDevice::CheckIndex(pDevice->m_Primitives, nPrimitiveIndex, _T("CCustomDeviceCPP::DLLProcPrimDisco - index out of range"));
+	CDevice::CheckIndex(pDevice->m_Primitives, nPrimitiveIndex, "CCustomDeviceCPP::DLLProcPrimDisco - index out of range");
 	return pDevice->m_Primitives[nPrimitiveIndex]->ProcessDiscontinuity(pDynaModel);
 }
 
@@ -649,7 +649,7 @@ void CCustomDeviceCPP::DLLSetFunction(CDFWModelData& DFWModelData, const Variabl
 CCustomDeviceCPPContainer* CCustomDeviceCPP::GetContainer()
 { 
 	if (!m_pContainer)
-		throw dfw2error(_T("CCustomDeviceCPP::GetContainer - container not set"));
+		throw dfw2error("CCustomDeviceCPP::GetContainer - container not set");
 	return static_cast<CCustomDeviceCPPContainer*>(m_pContainer); 
 }
 
@@ -663,4 +663,4 @@ void CCustomDeviceDataHost::SetModelData(CDynaModel* Model, CDevice* Device)
 	*static_cast<CDFWModelData*>(this) = CDFWModelData{ Model, Device, Model->GetCurrentTime() };
 }
 
-const _TCHAR* CCustomDeviceCPP::m_cszNoDeviceDLL = _T("CCustomDeviceCPP - no DLL device initialized");
+const char* CCustomDeviceCPP::m_cszNoDeviceDLL = "CCustomDeviceCPP - no DLL device initialized";

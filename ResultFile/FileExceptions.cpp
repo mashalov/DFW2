@@ -1,12 +1,12 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "FileExceptions.h"
 #include "Filewrapper.h"
 
 using namespace DFW2;
 
-CFileException::CFileException(const std::wstring_view Description, CStreamedFile& file) : CDFW2Exception(Description)
+CFileException::CFileException(const std::string_view Description, CStreamedFile& file) : CDFW2Exception(Description)
 {
-	m_strMessage += fmt::format(_T("\"{}\"."), file.path());
+	m_strMessage += fmt::format("\"{}\".", file.path());
 	if(file.is_open())
 		m_strMessage += fmt::format(CDFW2Messages::m_cszFilePostion, file.tellg());
 }

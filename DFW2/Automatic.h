@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #include <filesystem>
 #include "Discontinuities.h"
 #include "Relay.h"
@@ -22,7 +22,7 @@ namespace DFW2
 			CDLLInstance::Init(DLLFilePath);
 			m_pfnFactory = reinterpret_cast<fnCompilerFactory>(::GetProcAddress(m_hDLL, "CompilerFactory"));
 			if (!m_pfnFactory)
-				throw dfw2error(fmt::format(_T("Функция создания компилятора недоступна {}"), DLLFilePath));
+				throw dfw2error(fmt::format(_T("Р¤СѓРЅРєС†РёСЏ СЃРѕР·РґР°РЅРёСЏ РєРѕРјРїРёР»СЏС‚РѕСЂР° РЅРµРґРѕСЃС‚СѓРїРЅР° {}"), DLLFilePath));
 		}
 
 		ICompiler* CreateCompiler()
@@ -42,10 +42,10 @@ namespace DFW2
 	protected:
 		ptrdiff_t m_nType;
 		ptrdiff_t m_nId;
-		std::wstring m_strName;
+		std::string m_strName;
 	public:
 		inline ptrdiff_t GetId() { return m_nId; }
-		CAutomaticItem(long Type, ptrdiff_t Id, std::wstring_view Name);
+		CAutomaticItem(long Type, ptrdiff_t Id, std::string_view Name);
 		virtual ~CAutomaticItem() {}
 	};
 
@@ -53,9 +53,9 @@ namespace DFW2
 	{
 	protected:
 		long m_nLinkType;
-		std::wstring m_strObjectClass;
-		std::wstring m_strObjectKey;
-		std::wstring m_strObjectProp;
+		std::string m_strObjectClass;
+		std::string m_strObjectKey;
+		std::string m_strObjectProp;
 		ptrdiff_t m_nActionGroup;
 		long m_nOutputMode;
 		long m_nRunsCount;
@@ -65,11 +65,11 @@ namespace DFW2
 
 		CAutomaticAction(long Type, 
 						 ptrdiff_t Id,
-					     std::wstring_view Name,
+					     std::string_view Name,
 						 long LinkType,
-			             std::wstring_view  ObjectClass,
-			             std::wstring_view ObjectKey,
-			             std::wstring_view ObjectProp,
+			             std::string_view  ObjectClass,
+			             std::string_view ObjectKey,
+			             std::string_view ObjectProp,
 						 long ActionGroup,
 						 long OutputMode,
 						 long RunsCount);
@@ -78,7 +78,7 @@ namespace DFW2
 		bool Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice);
 		virtual ~CAutomaticAction();
 
-		static const _TCHAR* cszActionTemplate;
+		static const char* cszActionTemplate;
 	};
 
 	using AUTOITEMS = std::list<std::unique_ptr<CAutomaticItem>>;
@@ -90,27 +90,27 @@ namespace DFW2
 	{
 	protected:
 		long m_nOutputMode;
-		std::wstring m_strActions;
+		std::string m_strActions;
 		INTLIST m_ActionGroupIds;
 	public:
 
 		CAutomaticLogic(long Type,
 			ptrdiff_t Id,
-			std::wstring_view cszName,
-			std::wstring_view cszActions,
+			std::string_view cszName,
+			std::string_view cszActions,
 			long OutputMode);
 
-		const std::wstring& GetActions() { return m_strActions; }
+		const std::string& GetActions() { return m_strActions; }
 		bool AddActionGroupId(ptrdiff_t nActionId);
 		const INTLIST& GetGroupIds() const { return m_ActionGroupIds;  }
 	};
 
 	bool AddLogic(long Type,
 		ptrdiff_t Id,
-		std::wstring_view Name,
-		std::wstring_view Expression,
-		std::wstring_view Actions,
-		std::wstring_view DelayExpression,
+		std::string_view Name,
+		std::string_view Expression,
+		std::string_view Actions,
+		std::string_view DelayExpression,
 		long OutputMode);
 
 	class CAutomatic
@@ -121,35 +121,35 @@ namespace DFW2
 		AUTOITEMS m_lstLogics;
 		AUTOITEMSMAP m_mapLogics;
 		AUTOITEMGROUP m_AutoActionGroups;
-		std::wostringstream source;
+		std::ostringstream source;
 		std::filesystem::path pathAutomaticDLL;
 	public:
 
 		bool AddStarter(long Type, 
 						long Id, 
-						std::wstring_view cszName,
-						std::wstring_view cszExpression,
+						std::string_view cszName,
+						std::string_view cszExpression,
 						long LinkType, 
-						std::wstring_view ObjectClass,
-						std::wstring_view ObjectKey,
-						std::wstring_view ObjectProp);
+						std::string_view ObjectClass,
+						std::string_view ObjectKey,
+						std::string_view ObjectProp);
 
 		bool AddLogic(long Type, 
 					  long Id, 
-					  std::wstring_view Name, 
-					  std::wstring_view Expression,
-					  std::wstring_view Actions,
-					  std::wstring_view DelayExpression,
+					  std::string_view Name, 
+					  std::string_view Expression,
+					  std::string_view Actions,
+					  std::string_view DelayExpression,
 					  long OutputMode);
 
 		bool AddAction(long Type, 
 					   long Id, 
-					   std::wstring_view Name,
-					   std::wstring_view Expression,
+					   std::string_view Name,
+					   std::string_view Expression,
 					   long LinkType, 
-					   std::wstring_view ObjectClass,
-					   std::wstring_view ObjectKey,
-					   std::wstring_view ObjectProp,
+					   std::string_view ObjectClass,
+					   std::string_view ObjectKey,
+					   std::string_view ObjectProp,
 					   long ActionGroup, 
 					   long OutputMode, 
 					   long RunsCount);

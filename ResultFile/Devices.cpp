@@ -1,4 +1,4 @@
-// DeviceCollection.cpp : Implementation of CDeviceCollection
+﻿// DeviceCollection.cpp : Implementation of CDeviceCollection
 
 #include "stdafx.h"
 #include "Devices.h"

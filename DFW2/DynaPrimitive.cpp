@@ -144,7 +144,7 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 	if (oldCurrentState != eCurrentState)
 	{
 		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, 
-			fmt::format(_T("t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}"), 
+			fmt::format("t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}", 
 			pDynaModel->GetCurrentTime(), 
 			pDynaModel->GetIntegrationStepNumber(),
 			GetVerbalName(), 

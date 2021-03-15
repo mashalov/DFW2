@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 
 #include "..\dfw2\Header.h"
 #include "..\dfw2\Messages.h"
@@ -18,7 +18,7 @@ namespace DFW2
 		CStreamedFile infile;
 	public:
 		void WriteLEB(unsigned __int64 nValue);
-		void WriteString(std::wstring_view cszString);
+		void WriteString(std::string_view cszString);
 		static const char m_cszSignature[6];
 	};
 
@@ -37,7 +37,7 @@ namespace DFW2
 
 		struct VariableTypeInfo
 		{
-			std::wstring Name;
+			std::string Name;
 			double Multiplier;
 			int eUnits;
 			ptrdiff_t nIndex;
@@ -73,7 +73,7 @@ namespace DFW2
 		struct DeviceInstanceInfo : public DeviceInstanceInfoBase
 		{
 			DeviceTypeInfo* m_pDevType;
-			std::wstring Name;
+			std::string Name;
 			struct DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo);
 			struct DeviceInstanceInfo() : m_pDevType(nullptr) {}
 			void SetId(ptrdiff_t nIdIndex, ptrdiff_t nId);
@@ -109,7 +109,7 @@ namespace DFW2
 			std::unique_ptr<DeviceInstanceInfo[]> m_pDeviceInstances;
 			CResultFileReader *m_pFileReader = nullptr;
 			DEVICESSET m_DevSet;
-			std::wstring strDevTypeName;
+			std::string strDevTypeName;
 
 			void AllocateData();
 			void IndexDevices();
@@ -173,8 +173,8 @@ namespace DFW2
 		void GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset);
 		void ReadModelData(std::unique_ptr<double[]>& pData, int nVarIndex);
 		__int64 OffsetFromCurrent();
-		std::wstring m_strFilePath;
-		std::wstring m_strComment;
+		std::string m_strFilePath;
+		std::string m_strComment;
 		bool m_bHeaderLoaded = false;
 
 		DEVTYPESET m_DevTypeSet;
@@ -190,31 +190,31 @@ namespace DFW2
 		__int64 m_nCommentDirectoryOffset;
 		__int64 m_DirectoryOffset;
 
-		std::wstring m_strUserComment;
+		std::string m_strUserComment;
 
 		CRLECompressor m_RLECompressor;
 		double m_dRatio = -1.0;
 
 	public:
 		virtual ~CResultFileReader();
-		void OpenFile(const _TCHAR *cszFilePath);
+		void OpenFile(std::string_view FilePath);
 		void Reparent();
 		void ReadHeader(int& Version);
 		void ReadLEB(unsigned __int64& nValue);
 		int ReadLEBInt();
-		void ReadString(std::wstring& String);
+		void ReadString(std::string& String);
 		void ReadDouble(double& Value);
 		void ReadDirectoryEntries();
-		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName);
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, std::string_view VarName);
 		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
 		std::unique_ptr<double[]> ReadChannel(ptrdiff_t nIndex);
 		std::unique_ptr<double[]> GetTimeStep();
 		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
-		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR *cszVarName);
+		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, std::string_view VarName);
 		SAFEARRAY* CreateSafeArray(std::unique_ptr<double[]>&& pChannelData);
 		double GetFileTime();
-		const _TCHAR* GetFilePath();
-		const _TCHAR* GetComment();
+		const char* GetFilePath();
+		const char* GetComment();
 		size_t GetPointsCount();
 		size_t GetChannelsCount();
 		void GetTimeScale(double *pTimeBuffer, size_t nPointsCount);
@@ -223,11 +223,11 @@ namespace DFW2
 		int GetVersion();
 		const DEVTYPESET& GetTypesSet() const;
 		const ChannelHeaderInfo* GetChannelHeaders();
-		const _TCHAR* GetUnitsName(ptrdiff_t eUnitsType);
+		const char* GetUnitsName(ptrdiff_t eUnitsType);
 		const CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
-		const _TCHAR* GetUserComment();
-		void SetUserComment(const _TCHAR* cszUserComment);
+		const char* GetUserComment();
+		void SetUserComment(std::string_view UserComment);
 		double GetCompressionRatio();
-		static const _TCHAR* m_cszUnknownUnits;
+		static const char* m_cszUnknownUnits;
 	};
 }

@@ -1,15 +1,15 @@
-#pragma once
+п»ї#pragma once
 #include "Header.h"
 #include "DeviceContainerPropertiesBase.h"
 #include "DLLStructs.h"
 
 namespace DFW2
 {
-	// для ускорения обработки ссылок разделенных по иерархии и направлениям
-	// используются те же карты, но с const указателями на second из основных карт ссылок
+	// РґР»СЏ СѓСЃРєРѕСЂРµРЅРёСЏ РѕР±СЂР°Р±РѕС‚РєРё СЃСЃС‹Р»РѕРє СЂР°Р·РґРµР»РµРЅРЅС‹С… РїРѕ РёРµСЂР°СЂС…РёРё Рё РЅР°РїСЂР°РІР»РµРЅРёСЏРј
+	// РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ С‚Рµ Р¶Рµ РєР°СЂС‚С‹, РЅРѕ СЃ const СѓРєР°Р·Р°С‚РµР»СЏРјРё РЅР° second РёР· РѕСЃРЅРѕРІРЅС‹С… РєР°СЂС‚ СЃСЃС‹Р»РѕРє
 	using LINKSFROMMAPPTR = std::map<eDFW2DEVICETYPE, LinkDirectionFrom const*>;
 	using LINKSTOMAPPTR = std::map<eDFW2DEVICETYPE, LinkDirectionTo const*>;
-	// ссылки без разделения на направления
+	// СЃСЃС‹Р»РєРё Р±РµР· СЂР°Р·РґРµР»РµРЅРёСЏ РЅР° РЅР°РїСЂР°РІР»РµРЅРёСЏ
 	using LINKSUNDIRECTED = std::vector<LinkDirectionFrom const*>;
 
 	class CDeviceContainerProperties : public CDeviceContainerPropertiesBase
@@ -20,22 +20,22 @@ namespace DFW2
 		LINKSUNDIRECTED m_Masters, m_Slaves;
 
 		eDFW2DEVICETYPE GetType() const;
-		const _TCHAR* GetVerbalClassName() const;
-		const _TCHAR* GetSystemClassName() const;
-		static const _TCHAR *m_cszNameGenerator1C, *m_cszSysNameGenerator1C;
-		static const _TCHAR *m_cszNameGenerator3C, *m_cszSysNameGenerator3C;
-		static const _TCHAR *m_cszNameGeneratorMustang, *m_cszSysNameGeneratorMustang;
-		static const _TCHAR *m_cszNameGeneratorInfPower, *m_cszSysNameGeneratorInfPower;
-		static const _TCHAR *m_cszNameGeneratorMotion, *m_cszSysNameGeneratorMotion;
-		static const _TCHAR *m_cszNameExciterMustang, *m_cszSysNameExciterMustang;
-		static const _TCHAR *m_cszNameExcConMustang, *m_cszSysNameExcConMustang;
-		static const _TCHAR *m_cszNameDECMustang, *m_cszSysNameDECMustang;
-		static const _TCHAR *m_cszNameNode, *m_cszSysNameNode;
-		static const _TCHAR *m_cszNameBranch, *m_cszSysNameBranch;
-		static const _TCHAR *m_cszNameBranchMeasure, *m_cszSysNameBranchMeasure;
-		static const _TCHAR *m_cszAliasNode;
-		static const _TCHAR *m_cszAliasBranch;
-		static const _TCHAR *m_cszAliasGenerator;
+		const char* GetVerbalClassName() const;
+		const char* GetSystemClassName() const;
+		static const char* m_cszNameGenerator1C, *m_cszSysNameGenerator1C;
+		static const char* m_cszNameGenerator3C, *m_cszSysNameGenerator3C;
+		static const char* m_cszNameGeneratorMustang, *m_cszSysNameGeneratorMustang;
+		static const char* m_cszNameGeneratorInfPower, *m_cszSysNameGeneratorInfPower;
+		static const char* m_cszNameGeneratorMotion, *m_cszSysNameGeneratorMotion;
+		static const char* m_cszNameExciterMustang, *m_cszSysNameExciterMustang;
+		static const char* m_cszNameExcConMustang, *m_cszSysNameExcConMustang;
+		static const char* m_cszNameDECMustang, *m_cszSysNameDECMustang;
+		static const char* m_cszNameNode, *m_cszSysNameNode;
+		static const char* m_cszNameBranch, *m_cszSysNameBranch;
+		static const char* m_cszNameBranchMeasure, *m_cszSysNameBranchMeasure;
+		static const char* m_cszAliasNode;
+		static const char* m_cszAliasBranch;
+		static const char* m_cszAliasGenerator;
 	};
 }
 

@@ -402,12 +402,12 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 
 	props.nEquationsCount = CDynaGenerator1C::VARS::V_LAST;
 
-	props.m_VarMap.insert(std::make_pair(_T("Eqs"), CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair("Eqs", CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEq, CVarIndex(CDynaGenerator1C::V_EQ, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(_T("Id"), CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(_T("Iq"), CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(_T("Vd"), CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(_T("Vq"), CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair("Id", CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair("Iq", CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair("Vd", CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair("Vq", CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
 
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszExciterId, CConstVarIndex(CDynaGenerator1C::C_EXCITERID, eDVT_CONSTSOURCE)));
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqnom, CConstVarIndex(CDynaGenerator1C::C_EQNOM, eDVT_INTERNALCONST)));
@@ -477,17 +477,17 @@ void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorMotion::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
-	Serializer->AddProperty(_T("Td0"), Td01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(_T("xd"), xd, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(_T("r"), r, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("Td0", Td01, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("xd", xd, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("r", r, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszExciterId, m_ExciterId);
 	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
-	Serializer->AddState(_T("zsq"), zsq, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(_T("Egen"), m_Egen, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(_T("Vd"), Vd, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(_T("Vq"), Vq, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(_T("Ids"), Id, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddState(_T("Iqs"), Iq, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState("zsq", zsq, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState("Egen", m_Egen, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Vd", Vd, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Vq", Vq, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Ids", Id, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState("Iqs", Iq, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqe, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
@@ -496,12 +496,3 @@ void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState(m_cszInom, Inom, eVARUNITS::VARUNIT_KAMPERES);
 }
 
-const _TCHAR *CDynaGenerator1C::m_cszEqe = _T("Eqe");
-const _TCHAR *CDynaGenerator1C::m_cszEq  = _T("Eq");
-const _TCHAR *CDynaGenerator1C::m_cszId = _T("Id");
-const _TCHAR *CDynaGenerator1C::m_cszIq = _T("Iq");
-const _TCHAR *CDynaGenerator1C::m_cszExciterId = _T("ExciterId");
-const _TCHAR *CDynaGenerator1C::m_cszEqnom = _T("Eqnom");
-const _TCHAR *CDynaGenerator1C::m_cszSnom = _T("Snom");
-const _TCHAR *CDynaGenerator1C::m_cszInom = _T("Inom");
-const _TCHAR *CDynaGenerator1C::m_cszQnom = _T("Qnom");

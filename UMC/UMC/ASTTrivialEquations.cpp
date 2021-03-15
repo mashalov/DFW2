@@ -161,7 +161,7 @@ void CASTTreeBase::RemoveTrivialEquations(CASTEquationSystem* pSystem)
         if (substitution.Check(ParentEq, ASTNodeType::Variable, h->GetType()))
         {
             substitution.left.Node<CASTVariable>()->Info().pHostBlockOutput = h;
-            h->Outputs.push_back(Vars.find(std::string(substitution.left.pNode->GetText())));
+            h->Outputs.push_back(Vars.find(substitution.left.pNode->GetText()));
         }
     }
 }

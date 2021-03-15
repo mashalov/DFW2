@@ -18,7 +18,7 @@ namespace DFW2
 		virtual ~CZCDetector() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		const _TCHAR* GetVerbalName() noexcept override { return _T("Пороговый элемент"); }
+		const char* GetVerbalName() noexcept override { return "Пороговый элемент"; }
 		static size_t PrimitiveSize() noexcept { return sizeof(CZCDetector); }
 		static long EquationsCount() noexcept { return 1; }
 	};

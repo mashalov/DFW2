@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "DynaExciterBase.h"
 #include "DynaModel.h"
 
@@ -51,7 +51,7 @@ double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 
 VariableIndexRefVec& CDynaExciterBase::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	// ExcLag добавляется автоматически в JoinVariables
+	// ExcLag РґРѕР±Р°РІР»СЏРµС‚СЃСЏ Р°РІС‚РѕРјР°С‚РёС‡РµСЃРєРё РІ JoinVariables
 	return CDevice::GetVariables(JoinVariables({Eqe, Eqsum, EqeV}, ChildVec));
 }
 
@@ -107,7 +107,7 @@ const CDeviceContainerProperties CDynaExciterBase::DeviceProperties()
 	return props;
 }
 
-const _TCHAR *CDynaExciterBase::m_cszUf			= _T("Uf");
-const _TCHAR *CDynaExciterBase::m_cszUdec		= _T("Vdec");
-const _TCHAR *CDynaExciterBase::m_cszExcConId	= _T("ExcControlId");
-const _TCHAR *CDynaExciterBase::m_cszDECId		= _T("ForcerId");
+const char* CDynaExciterBase::m_cszUf		= "Uf";
+const char* CDynaExciterBase::m_cszUdec		= "Vdec";
+const char* CDynaExciterBase::m_cszExcConId	= "ExcControlId";
+const char* CDynaExciterBase::m_cszDECId	= "ForcerId";

@@ -1,4 +1,4 @@
-// Variables.cpp : Implementation of CVariablesCollection
+﻿// Variables.cpp : Implementation of CVariablesCollection
 
 #include "stdafx.h"
 #include "SlowVariables.h"
@@ -31,7 +31,7 @@ STDMETHODIMP CSlowVariables::Find(LONG DeviceTypeId, VARIANT DeviceIds, BSTR Var
 		LONGVECTOR vecDeviceIds;
 		if (SlowVariables.VariantToIds(&DeviceIds, vecDeviceIds))
 		{
-			CSlowVariableItem FindItem(DeviceTypeId, vecDeviceIds, VariableName);
+			CSlowVariableItem FindItem(DeviceTypeId, vecDeviceIds, stringutils::utf8_encode(VariableName));
 			CSlowVariablesSet::const_iterator it = SlowVariables.find(&FindItem);
 			if (it != SlowVariables.end())
 			{

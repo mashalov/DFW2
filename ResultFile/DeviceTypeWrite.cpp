@@ -1,4 +1,4 @@
-// DeviceTypeWrite.cpp : Implementation of CDeviceTypeWrite
+﻿// DeviceTypeWrite.cpp : Implementation of CDeviceTypeWrite
 
 #include "stdafx.h"
 #include "DeviceTypeWrite.h"
@@ -44,7 +44,7 @@ STDMETHODIMP CDeviceTypeWrite::AddDeviceTypeVariable(BSTR VariableName, LONG Uni
 		CResultFileReader::VariableTypeInfo VarTypeInfo;
 		VarTypeInfo.eUnits = UnitId;
 		VarTypeInfo.Multiplier = Multiplier;
-		VarTypeInfo.Name = VariableName;
+		VarTypeInfo.Name = stringutils::utf8_encode(VariableName);
 		VarTypeInfo.nIndex = m_pDeviceTypeInfo->m_VarTypes.size();
 		if (m_pDeviceTypeInfo->m_VarTypes.insert(VarTypeInfo).second)
 		{
@@ -105,7 +105,7 @@ STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VAR
 			if (nIndex < m_pDeviceTypeInfo->DevicesCount)
 			{
 				m_pDeviceInstanceInfo->nIndex = nIndex;
-				m_pDeviceInstanceInfo->Name = DeviceName;
+				m_pDeviceInstanceInfo->Name = stringutils::utf8_encode(DeviceName);
 
 				for (int i = 0; i < m_pDeviceTypeInfo->DeviceIdsCount; i++)
 					m_pDeviceInstanceInfo->SetId(i, GetParameterByIndex(DeviceIds, i));

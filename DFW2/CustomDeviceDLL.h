@@ -21,7 +21,7 @@ namespace DFW2
 	protected:
 		bool m_bConnected;
 		HMODULE m_hDLL;
-		std::wstring m_strModulePath;
+		std::string m_strModulePath;
 		CDeviceContainer *m_pDeviceContainer;
 		ptrdiff_t m_nGetProcAddresFailureCount;
 
@@ -78,10 +78,10 @@ namespace DFW2
 		CCustomDeviceDLL(CDeviceContainer *pDeviceContainer);
 		virtual ~CCustomDeviceDLL();
 		bool IsConnected();
-		bool Init(std::wstring_view DLLFilePath);
+		bool Init(std::string_view DLLFilePath);
 		const BLOCKDESCRIPTIONS& GetBlocksDescriptions() const; 
 		const BLOCKSPINSINDEXES& GetBlocksPinsIndexes() const;
-		const _TCHAR* GetModuleFilePath() const;
+		const char* GetModuleFilePath() const;
 		long GetBlockParametersCount(long nBlockIndex);
 		long GetBlockParametersValues(long nBlockIndex, BuildEquationsArgs* pArgs, double *pValues);
 

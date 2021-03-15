@@ -177,8 +177,8 @@ namespace DFW2
 		eDEVICESTATECAUSE m_StateCause;										// причина изменения состояния устройства
 		STATEPRIMITIVESLIST m_StatePrimitives;
 		PRIMITIVESVEC m_Primitives;
-		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
-		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::wstring_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
+		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
+		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		const CSingleLink& GetSingleLinks() { return m_DeviceLinks; }
 
 		// формирование подробного имени устройства. По умолчанию учитывается описание типа устройства
@@ -195,13 +195,13 @@ namespace DFW2
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
 		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
 
-		void Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message);
 
 		// функция маппинга указателя на переменную к индексу переменной
 		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
 		// внутри этой функции также делается "наследование" переменных
 		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
-		double* GetVariablePtr(const _TCHAR* cszVarName);
+		double* GetVariablePtr(std::string_view VarName);
 		virtual VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec);
 		VariableIndex& GetVariable(ptrdiff_t nVarIndex);
 		// Объединяет заданный список переменных данного устройства, список переменных примитивов и дочерние переменные
@@ -209,21 +209,21 @@ namespace DFW2
 		// функция маппинга указателя на переменную к индексу переменной
 		// Аналогична по смыслу virtual double* GetVariablePtr()
 		virtual double* GetConstVariablePtr(ptrdiff_t nVarIndex);
-		double* GetConstVariablePtr(std::wstring_view VarName);
-		virtual VariableIndexExternal GetExternalVariable(std::wstring_view VarName);
+		double* GetConstVariablePtr(std::string_view VarName);
+		virtual VariableIndexExternal GetExternalVariable(std::string_view VarName);
 
 		// константные указатели на переменную. Врапперы virtual double* GetVariablePtr()
 		const double* GetVariableConstPtr(ptrdiff_t nVarIndex) const;
-		const double* GetVariableConstPtr(const _TCHAR* cszVarName) const;
+		const double* GetVariableConstPtr(std::string_view VarName) const;
 
 		// константные указатели на переменную константы. Врапперы virtual double* GetConstVariablePtr()
 		const double* GetConstVariableConstPtr(ptrdiff_t nVarIndex) const;
-		const double* GetConstVariableConstPtr(const _TCHAR* cszVarName) const;
+		const double* GetConstVariableConstPtr(std::string_view VarName) const;
 
 		double GetValue(ptrdiff_t nVarIndex) const;
 		double SetValue(ptrdiff_t nVarIndex, double Value);
-		double GetValue(const _TCHAR* cszVarName) const;
-		double SetValue(const _TCHAR* cszVarName, double Value);
+		double GetValue(std::string_view VarName) const;
+		double SetValue(std::string_view VarName, double Value);
 
 		bool SetSingleLink(ptrdiff_t nIndex, CDevice *pDevice);
 		CDevice* GetSingleLink(ptrdiff_t nIndex);
@@ -284,7 +284,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr);
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 
-		const _TCHAR* VariableNameByPtr(double *pVariable);
+		const char* VariableNameByPtr(double *pVariable);
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
 
 		virtual void StoreStates();
@@ -323,16 +323,16 @@ namespace DFW2
 		void RegisterPrimitive(CDynaPrimitive *pPrimitive);
 
 		template<typename T>
-		static void CheckIndex(const T& Container, ptrdiff_t nIndex, const _TCHAR* cszErrorMsg = nullptr)
+		static void CheckIndex(const T& Container, ptrdiff_t nIndex, const char* cszErrorMsg = nullptr)
 		{
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(Container.size()))
-				throw dfw2error(fmt::format(_T("{} - index check failed: index {} container size {}"),
-					cszErrorMsg ? cszErrorMsg : _T("CDevice::CheckIndex"), nIndex, Container.size()));
+				throw dfw2error(fmt::format("{} - index check failed: index {} container size {}",
+					cszErrorMsg ? cszErrorMsg : "CDevice::CheckIndex", nIndex, Container.size()));
 		}
 
 
 #ifdef _DEBUG
-		static _TCHAR UnknownVarIndex[80];
+		static char UnknownVarIndex[80];
 #endif
 		static const ptrdiff_t nIndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();
 	};

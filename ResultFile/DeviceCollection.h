@@ -1,4 +1,4 @@
-// DeviceCollection.h : Declaration of the CDeviceCollection
+﻿// DeviceCollection.h : Declaration of the CDeviceCollection
 
 #pragma once
 #include "resource.h"       // main symbols

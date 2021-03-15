@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaExciterMustang.h"
 #include "DynaModel.h"
 
@@ -217,8 +217,8 @@ const CDeviceContainerProperties CDynaExciterMustang::DeviceProperties()
 	props.SetClassName(CDeviceContainerProperties::m_cszNameExciterMustang, CDeviceContainerProperties::m_cszSysNameExciterMustang);
 
 	props.m_VarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("EqeV"), CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(_T("Eqsum"), CVarIndex(CDynaExciterMustang::V_EQSUM, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("EqeV", CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("Eqsum", CVarIndex(CDynaExciterMustang::V_EQSUM, VARUNIT_PU)));
 
 	return props;
 }
@@ -227,17 +227,17 @@ const CDeviceContainerProperties CDynaExciterMustang::DeviceProperties()
 void CDynaExciterMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDynaExciterBase::UpdateSerializer(Serializer);
-	Serializer->AddProperty(_T("sta"), TypedSerializedValue::eValueType::VT_STATE);
-	Serializer->AddProperty(_T("Name"), TypedSerializedValue::eValueType::VT_NAME);
-	Serializer->AddProperty(_T("Id"), TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty(_T("Texc"), Texc, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(_T("Uf_min"), Umin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Uf_max"), Umax, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("If_min"), Imin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("If_max"), Imax, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Kif"), Kif, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("Kig"), Kig, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("ForcerId"), DECId);
-	Serializer->AddProperty(_T("ExcControlId"), RegId);
-	Serializer->AddProperty(_T("Type_rg"), bVoltageDependent);
+	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty("Texc", Texc, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("Uf_min", Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Uf_max", Umax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("If_min", Imin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("If_max", Imax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Kif", Kif, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Kig", Kig, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("ForcerId", DECId);
+	Serializer->AddProperty("ExcControlId", RegId);
+	Serializer->AddProperty("Type_rg", bVoltageDependent);
 }

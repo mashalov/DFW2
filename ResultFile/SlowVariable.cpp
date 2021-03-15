@@ -1,4 +1,4 @@
-// SlowVariable.cpp : Implementation of CSlowVariable
+﻿// SlowVariable.cpp : Implementation of CSlowVariable
 
 #include "stdafx.h"
 #include "SlowVariable.h"
@@ -38,7 +38,7 @@ STDMETHODIMP CSlowVariable::get_Name(BSTR* Name)
 	HRESULT hRes = E_FAIL;
 	if (m_pItem)
 	{
-		*Name = SysAllocString(m_pItem->m_strVarName.c_str());
+		*Name = SysAllocString(stringutils::utf8_decode(m_pItem->m_strVarName).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -101,7 +101,7 @@ STDMETHODIMP CSlowVariable::get_Plot(VARIANT *Plot)
 				pVals->vt = VT_R8;	pVals->dblVal = it->m_dValue;
 				pTime->vt = VT_R8;	pTime->dblVal = it->m_dTime;
 				pDesc->vt = VT_BSTR;
-				pDesc->bstrVal = SysAllocString(it->m_strDescription.c_str());
+				pDesc->bstrVal = SysAllocString(stringutils::utf8_decode(it->m_strDescription).c_str());
 
 				pVals++;
 				pTime++;

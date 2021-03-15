@@ -1,4 +1,4 @@
-// Variable.h : Declaration of the CVariable
+﻿// Variable.h : Declaration of the CVariable
 
 #pragma once
 #include "resource.h"       // main symbols

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DynaExciterBase.h"
 #include "Relay.h"
 #include "RSTrigger.h"

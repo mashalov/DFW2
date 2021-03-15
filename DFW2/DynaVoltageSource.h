@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DynaPowerInjector.h"
 namespace DFW2
 {

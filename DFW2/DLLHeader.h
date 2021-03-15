@@ -1,4 +1,4 @@
-#include "windows.h"
+﻿#include "windows.h"
 #include "DLLStructs.h"
 
 
@@ -6,7 +6,7 @@ typedef long (*DLLGETTYPESCOUNT)(void);
 typedef long (*DLLGETTYPES)(long *pTypes);
 typedef long (*DLLGETLINKSCOUNT)(void);
 typedef long (*DLLGETLINKS)(LinkType* pLinks);
-typedef const _TCHAR* (*DLLGETDEVICETYPENAME)(void);
+typedef const char* (*DLLGETDEVICETYPENAME)(void);
 
 typedef long (*DLLDESTROYPTR)(void);
 typedef long (*DLLGETBLOCKSCOUNT)(void);

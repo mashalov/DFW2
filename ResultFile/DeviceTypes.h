@@ -1,4 +1,4 @@
-// DeviceTypes.h : Declaration of the CDeviceTypes
+﻿// DeviceTypes.h : Declaration of the CDeviceTypes
 
 #pragma once
 #include "resource.h"       // main symbols

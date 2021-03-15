@@ -780,7 +780,7 @@ bool CLoadFlow::Run()
 
 	pNodes = static_cast<CDynaNodeContainer*>(m_pDynaModel->GetDeviceContainer(DEVTYPE_NODE));
 	if (!pNodes)
-		throw dfw2error(_T("CLoadFlow::Start - node container unavailable"));
+		throw dfw2error("CLoadFlow::Start - node container unavailable");
 
 	// вводим СХН УР и V0 = Unom
 	pNodes->SwitchLRCs(false);
@@ -1038,15 +1038,15 @@ void CLoadFlow::DumpNodes()
 {
 	FILE *fdump(nullptr);
 	setlocale(LC_ALL, "ru-ru");
-	if (!_tfopen_s(&fdump, _T("c:\\tmp\\resnodes.csv"), _T("wb+")))
+	if (!fopen_s(&fdump, "c:\\tmp\\resnodes.csv", "wb+"))
 	{
-		_ftprintf(fdump, _T("N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref;VR;DeltaR;QgR;QnR\n"));
+		fprintf(fdump, "N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref;VR;DeltaR;QgR;QnR\n");
 		for (auto&& it : pNodes->m_DevVec)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 #ifdef _DEBUG
 			///*
-			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%.12g;%.12g\n"),
+			fprintf(fdump, "%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%.12g;%.12g\n",
 				pNode->GetId(),
 				pNode->V.Value,
 				pNode->Delta.Value / M_PI * 180.0,
@@ -1066,7 +1066,7 @@ void CLoadFlow::DumpNodes()
 				pNode->Qnrrastr);
 			//*/
 			/*
-			_ftprintf(fdump, _T("%d;%.12g;%.12g;%.12g;%.12g;%.12g;%.12g\n"),
+			fprintf(fdump, "%d;%.12g;%.12g;%.12g;%.12g;%.12g;%.12g\n",
 				pNode->GetId(),
 				pNode->V,
 				pNode->Delta / M_PI * 180.0,
@@ -1075,7 +1075,7 @@ void CLoadFlow::DumpNodes()
 				pNode->Pg,
 				pNode->Qg);*/
 #else
-			_ftprintf(fdump, _T("%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n"),
+			fprintf(fdump, "%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n",
 				pNode->GetId(),
 				pNode->V.Value,
 				pNode->Delta.Value / M_PI * 180.0,
@@ -1539,7 +1539,7 @@ void CLoadFlow::RestoreVDelta()
 		}
 	}
 	else
-		throw dfw2error(_T("CLoadFlow::RestoreVDelta called before StoreVDelta"));
+		throw dfw2error("CLoadFlow::RestoreVDelta called before StoreVDelta");
 }
 
 double CLoadFlow::GetSquaredImb()
@@ -1564,13 +1564,13 @@ void CLoadFlow::CheckFeasible()
 				// которое, в свою очередь, было выбрано по узлу с наиболее широким диапазоном реактивной мощности внутри суперузла
 				double LFVref = pNode->m_pSuperNodeParent ? pNode->m_pSuperNodeParent->LFVref : pNode->LFVref;
 				if (pNode->V > LFVref && pNode->Qgr >= pNode->LFQmax)
-					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Infeasible {}"), pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 				if (pNode->V < LFVref && pNode->Qgr <= pNode->LFQmin)
-					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Infeasible {}"), pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 				if (pNode->Qgr < pNode->LFQmin)
-					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Infeasible {}"), pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 				if (pNode->Qgr > pNode->LFQmax)
-					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(_T("Infeasible {}"), pNode->GetVerbalName()));
+					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 			}
 
 			pNode->SuperNodeLoadFlow(m_pDynaModel);
@@ -1598,8 +1598,8 @@ void CLoadFlow::UpdateSlackBusesImbalance()
 
 void CLoadFlow::DumpNewtonIterationControl()
 {
-	const _TCHAR* causes[] = {_T(""), _T("dV"), _T("dD"), _T("dB"), _T("vV"), _T("vD"), _T("Bt")};
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(_T("{} {:15f} {:6.2} {:4}"), pNodes->GetIterationControlString(), 
+	const char* causes[] = {"", "dV", "dD", "dB", "vV", "vD", "Bt"};
+	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format("{} {:15f} {:6.2} {:4}", pNodes->GetIterationControlString(), 
 																	  pNodes->m_IterationControl.m_ImbRatio,
 																	  m_NewtonStepRatio.m_dRatio,
 																	  causes[static_cast<ptrdiff_t>(m_NewtonStepRatio.m_eStepCause)]));

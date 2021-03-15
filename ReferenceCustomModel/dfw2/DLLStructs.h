@@ -1,14 +1,13 @@
-#ifndef _DLL_STRUCTS_
+п»ї#ifndef _DLL_STRUCTS_
 #define _DLL_STRUCTS_
 
 #include "tchar.h"
 #include "DeviceTypes.h"
 #include "limits.h"
-#include "cmath"
 
 #define DFW2_NON_STATE_INDEX LONG_MAX
 #define CUSTOMDEVICEDLL_MAXNAME 80
-typedef _TCHAR STRING80[CUSTOMDEVICEDLL_MAXNAME];
+typedef char STRING80[CUSTOMDEVICEDLL_MAXNAME];
 
 
 struct DLLVariableIndex
@@ -104,13 +103,13 @@ typedef struct
 } 
 	BlockDescriptions;
 
-// структура внешей переменой
-// про внешнюю переменную другого устройства 
-// нужно знать:
+// СЃС‚СЂСѓРєС‚СѓСЂР° РІРЅРµС€РµР№ РїРµСЂРµРјРµРЅРѕР№
+// РїСЂРѕ РІРЅРµС€РЅСЋСЋ РїРµСЂРµРјРµРЅРЅСѓСЋ РґСЂСѓРіРѕРіРѕ СѓСЃС‚СЂРѕР№СЃС‚РІР° 
+// РЅСѓР¶РЅРѕ Р·РЅР°С‚СЊ:
 typedef struct
 {
-	double *pValue;			// указатель на значение
-	ptrdiff_t nIndex;		// индекс (номер строки) в системе Якоби
+	double *pValue;			// СѓРєР°Р·Р°С‚РµР»СЊ РЅР° Р·РЅР°С‡РµРЅРёРµ
+	ptrdiff_t nIndex;		// РёРЅРґРµРєСЃ (РЅРѕРјРµСЂ СЃС‚СЂРѕРєРё) РІ СЃРёСЃС‚РµРјРµ РЇРєРѕР±Рё
 }
 	DLLExternalVariable;
 
@@ -155,24 +154,5 @@ typedef struct
 	double t;
 }
 	BuildEquationsArgs;
-
-
-template<typename T>
-bool IsTrue(T Value)
-{
-	return Value > 0;
-}
-
-template <typename ...Args>
-double Or(Args ...args)
-{
-	return (IsTrue(args) || ...) ? 1.0 : 0.0;
-}
-
-template <typename ...Args>
-double And(Args ...args)
-{
-	return (IsTrue(args) && ...) ? 1.0 : 0.0;
-}
 
 #endif

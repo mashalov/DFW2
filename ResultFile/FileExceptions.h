@@ -1,10 +1,10 @@
-#pragma once
+﻿#pragma once
 #include "..\DFW2\Messages.h"
 #include "..\DFW2\cex.h"
-
 #include <windows.h>
+
 #ifdef _DEBUG
-bool _trace(TCHAR* format, ...);
+bool _trace(char* format, ...);
 #define TRACE _trace
 #else
 #define TRACE false && _trace
@@ -17,17 +17,17 @@ namespace DFW2
 	class CDFW2Exception
 	{
 	protected:
-		std::wstring m_strMessage;
+		std::string m_strMessage;
 	public:
-		CDFW2Exception(std::wstring_view Description) : m_strMessage(Description) {}
-		const _TCHAR* Message() noexcept { return m_strMessage.c_str(); }
+		CDFW2Exception(std::string_view Description) : m_strMessage(Description) {}
+		const char* Message() noexcept { return m_strMessage.c_str(); }
 	};
 
 	class CFileException : public CDFW2Exception
 	{
 	public:
-		CFileException(const std::wstring_view Description, CStreamedFile& file);
-		CFileException(const std::wstring_view Description) : CDFW2Exception(Description)
+		CFileException(const std::string_view Description, CStreamedFile& file);
+		CFileException(const std::string_view Description) : CDFW2Exception(Description)
 		{
 		}
 	};
@@ -36,22 +36,22 @@ namespace DFW2
 	{
 	public:
 		CFileReadException() : CFileException(CDFW2Messages::m_cszFileReadError) {}
-		CFileReadException(const std::wstring_view Description) :
-			CFileException(fmt::format(_T("{} {}"), CDFW2Messages::m_cszFileReadError, Description)) {}
+		CFileReadException(const std::string_view Description) :
+			CFileException(fmt::format("{} {}", CDFW2Messages::m_cszFileReadError, Description)) {}
 		CFileReadException(CStreamedFile& file) : CFileException(CDFW2Messages::m_cszFileReadError, file) {}
-		CFileReadException(CStreamedFile& file, const std::wstring_view Description) :
-			CFileException(fmt::format(_T("{} {}"), CDFW2Messages::m_cszFileReadError, Description), file) {}
+		CFileReadException(CStreamedFile& file, const std::string_view Description) :
+			CFileException(fmt::format("{} {}", CDFW2Messages::m_cszFileReadError, Description), file) {}
 	};
 
 	class CFileWriteException : public CFileException
 	{
 	public:
 		CFileWriteException() : CFileException(CDFW2Messages::m_cszFileWriteError) {}
-		CFileWriteException(const std::wstring_view Description) :
-			CFileException(fmt::format(_T("{} {}"), CDFW2Messages::m_cszFileWriteError, Description)) {}
+		CFileWriteException(const std::string_view Description) :
+			CFileException(fmt::format("{} {}", CDFW2Messages::m_cszFileWriteError, Description)) {}
 		CFileWriteException(CStreamedFile& file) : CFileException(CDFW2Messages::m_cszFileWriteError, file) {}
-		CFileWriteException(CStreamedFile& file, const std::wstring_view Description) :
-			CFileException(fmt::format(_T("{} {}"), CDFW2Messages::m_cszFileWriteError, Description), file) {}
+		CFileWriteException(CStreamedFile& file, const std::string_view Description) :
+			CFileException(fmt::format("{} {}", CDFW2Messages::m_cszFileWriteError, Description), file) {}
 	};
 
 	template<class T>
@@ -59,20 +59,20 @@ namespace DFW2
 	{
 	public:
 		CFileExceptionGLE() : T() { AddGLE(); }
-		CFileExceptionGLE(const std::wstring_view Description) : T(Description) { AddGLE(); }
+		CFileExceptionGLE(const std::string_view Description) : T(Description) { AddGLE(); }
 		CFileExceptionGLE(CStreamedFile& file) : T(file) { AddGLE(); }
-		CFileExceptionGLE(CStreamedFile& file, const std::wstring_view Description) : T(Description, file) { AddGLE(); }
+		CFileExceptionGLE(CStreamedFile& file, const std::string_view Description) : T(Description, file) { AddGLE(); }
 
 	protected:
 		void AddGLE()
 		{
-			std::wstring strGetLastErrorMsg = GetLastErrorMessage();
+			std::string strGetLastErrorMsg = GetLastErrorMessage();
 			if (!strGetLastErrorMsg.empty())
-				T::m_strMessage += fmt::format(_T(" {}"), strGetLastErrorMsg);
+				T::m_strMessage += fmt::format(" {}", strGetLastErrorMsg);
 			stringutils::removecrlf(T::m_strMessage);
 		}
 
-	static std::wstring GetLastErrorMessage()
+	static std::string GetLastErrorMessage()
 	{
 		const DWORD dwError = ::GetLastError();
 		if (dwError != 0)
@@ -82,9 +82,9 @@ namespace DFW2
 				NULL, dwError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&messageBuffer, 0, NULL);
 			std::wstring message(messageBuffer, size);
 			LocalFree(messageBuffer);
-			return message;
+			return stringutils::utf8_encode(message);
 		}
-		return std::wstring(_T(""));
+		return std::string("");
 	}
 	};
 	

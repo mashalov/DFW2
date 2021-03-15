@@ -1,4 +1,4 @@
-// Result2.cpp : Implementation of CResult2
+﻿// Result2.cpp : Implementation of CResult2
 
 #include "stdafx.h"
 #include "Result.h"
@@ -35,7 +35,7 @@ STDMETHODIMP CResult::Load(BSTR PathName, VARIANT *ResultRead)
 			pResultRead->AddRef();
 			try
 			{
-				pResultRead->OpenFile(static_cast<const _TCHAR*>(CComBSTR(PathName)));
+				pResultRead->OpenFile(stringutils::utf8_encode(PathName));
 				ResultRead->vt = VT_DISPATCH;
 				ResultRead->pdispVal = pResultRead;
 				hRes = S_OK;
@@ -61,7 +61,7 @@ STDMETHODIMP CResult::Create(BSTR PathName, VARIANT *ResultWrite)
 			pResultWrite->AddRef();
 			try
 			{
-				pResultWrite->CreateFile(static_cast<const _TCHAR*>(CComBSTR(PathName)));
+				pResultWrite->CreateFile(stringutils::utf8_encode(PathName));
 				ResultWrite->vt = VT_DISPATCH;
 				ResultWrite->pdispVal = pResultWrite;
 				hRes = S_OK;

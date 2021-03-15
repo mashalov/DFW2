@@ -88,18 +88,18 @@ namespace DFW2
 	class CustomDeviceConnectInfo
 	{
 	public:
-		std::wstring m_TableName;
-		std::wstring m_ModelTypeField;
+		std::string m_TableName;
+		std::string m_ModelTypeField;
 		long m_nModelType;
-		CustomDeviceConnectInfo(const _TCHAR *cszTableName, const _TCHAR *cszModelTypeField, long nModelType) : m_TableName(cszTableName),
-																												m_ModelTypeField(cszModelTypeField),
-																												m_nModelType(nModelType)
+		CustomDeviceConnectInfo(std::string_view TableName, std::string_view ModelTypeField, long nModelType) : m_TableName(TableName),
+																										    m_ModelTypeField(ModelTypeField),
+																											m_nModelType(nModelType)
 		{
 
 		}
-		CustomDeviceConnectInfo(const _TCHAR *cszTableName, long nModelType) : m_TableName(cszTableName),
-																			   m_ModelTypeField(_T("ModelType")),
-																			   m_nModelType(nModelType)
+		CustomDeviceConnectInfo(std::string_view TableName, long nModelType) : m_TableName(TableName),
+																		     m_ModelTypeField("ModelType"),
+																			 m_nModelType(nModelType)
 		{
 
 		}
@@ -129,7 +129,7 @@ namespace DFW2
 
 		// чтение таблицы с помощью сериализатора
 		template<typename T>
-		CDevice* ReadTable(const _TCHAR *cszTableName, CDeviceContainer& Container)
+		CDevice* ReadTable(const char* cszTableName, CDeviceContainer& Container)
 		{
 			 // на входе имя таблицы и контейнер, куда надо читать
 

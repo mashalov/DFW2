@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DeviceContainer.h"
 #include "DynaNode.h"
 #include "DynaPrimitive.h"
@@ -43,6 +43,6 @@ namespace DFW2
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 		static const CDeviceContainerProperties DeviceProperties();
-		static const _TCHAR* m_cszNodeId;
+		static const char* m_cszNodeId;
 	};
 }

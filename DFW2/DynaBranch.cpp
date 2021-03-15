@@ -13,7 +13,7 @@ CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(nullptr)
 // Обновляет имя ветви
 void CDynaBranch::UpdateVerbalName()
 {
-	m_strVerbalName = fmt::format(_T("{} - {}{} {}"), Ip, Iq, (Np ? fmt::format(_T(" ({})"), Np) : _T("")), GetName());
+	m_strVerbalName = fmt::format("{} - {}{} {}", Ip, Iq, (Np ? fmt::format(" ({})", Np) : ""), GetName());
 }
 
 // Расчет проводимостей ветви для матрицы проводимостей
@@ -120,10 +120,10 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			{
 				// если оба узла найдены
 				// формируем имя ветви по найденным узлам
-				pBranch->SetName(fmt::format(_T("{} - {} {}"),
+				pBranch->SetName(fmt::format("{} - {} {}",
 					pBranch->m_pNodeIp->GetName(),
 					pBranch->m_pNodeIq->GetName(),
-					pBranch->Np ? fmt::format(_T(" цепь {}"), pBranch->Np) : _T("")));
+					pBranch->Np ? fmt::format(" цепь {}", pBranch->Np) : ""));
 			}
 		}
 
@@ -296,30 +296,30 @@ bool CDynaBranch::IsZeroImpedance()
 void CDynaBranch::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty(_T("ip"), Ip);
-	Serializer->AddProperty(_T("iq"), Iq);
-	Serializer->AddProperty(_T("np"), Np);
-	Serializer->AddProperty(_T("r"), R, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(_T("x"), X, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(_T("ktr"), Ktr, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("kti"), Kti, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(_T("g"), G, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddProperty(_T("b"), B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
-	Serializer->AddProperty(_T("gr_ip"), GrIp, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddProperty(_T("gr_iq"), GrIq, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddProperty(_T("br_ip"), BrIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
-	Serializer->AddProperty(_T("br_iq"), BrIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
-	Serializer->AddProperty(_T("nr_ip"), NrIp, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddProperty(_T("nr_iq"), NrIq, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddEnumProperty(_T("sta"), new CSerializerAdapterEnumT<CDynaBranch::BranchState>(m_BranchState, m_cszBranchStateNames, _countof(m_cszBranchStateNames)));
-	Serializer->AddState(_T("Gip"), GIp, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState(_T("Giq"), GIq, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState(_T("Bip"), BIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
-	Serializer->AddState(_T("Biq"), BIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
-	Serializer->AddState(_T("Yip"), Yip, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState(_T("Yiq"), Yiq, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState(_T("Yips"), Yips, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState(_T("Yiqs"), Yiqs, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty("ip", Ip);
+	Serializer->AddProperty("iq", Iq);
+	Serializer->AddProperty("np", Np);
+	Serializer->AddProperty("r", R, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("x", X, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("ktr", Ktr, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("kti", Kti, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("g", G, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty("b", B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty("gr_ip", GrIp, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty("gr_iq", GrIq, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty("br_ip", BrIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty("br_iq", BrIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty("nr_ip", NrIp, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty("nr_iq", NrIq, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddEnumProperty("sta", new CSerializerAdapterEnumT<CDynaBranch::BranchState>(m_BranchState, m_cszBranchStateNames, _countof(m_cszBranchStateNames)));
+	Serializer->AddState("Gip", GIp, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState("Giq", GIq, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState("Bip", BIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddState("Biq", BIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddState("Yip", Yip, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState("Yiq", Yiq, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState("Yips", Yips, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddState("Yiqs", Yiqs, eVARUNITS::VARUNIT_SIEMENS);
 }
 
 CDynaNodeBase* CDynaBranch::GetOppositeNode(CDynaNodeBase* pOriginNode)
@@ -572,7 +572,7 @@ bool CDynaBranch::BranchAndNodeConnected(CDynaNodeBase* pNode)
 		return m_BranchState == CDynaBranch::BranchState::BRANCH_ON || m_BranchState == CDynaBranch::BranchState::BRANCH_TRIPIP;
 	}
 	else
-		_ASSERTE(!_T("CDynaNodeContainer::BranchAndNodeConnected - branch and node mismatch"));
+		_ASSERTE(!"CDynaNodeContainer::BranchAndNodeConnected - branch and node mismatch");
 
 	return false;
 }
@@ -582,7 +582,7 @@ bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 	bool bDisconnected(false);
 	_ASSERTE(pNode->GetState() == eDEVICESTATE::DS_OFF);
 
-	const _TCHAR* pSwitchOffMode(CDFW2Messages::m_cszSwitchedOffBranchComplete);
+	const char* pSwitchOffMode(CDFW2Messages::m_cszSwitchedOffBranchComplete);
 
 	if (pNode == m_pNodeIp)
 	{
@@ -620,7 +620,7 @@ bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 		}
 	}
 	else
-		_ASSERTE(!_T("CDynaNodeContainer::DisconnectBranchFromNode - branch and node mismatch"));
+		_ASSERTE(!"CDynaNodeContainer::DisconnectBranchFromNode - branch and node mismatch");
 
 	if (bDisconnected)
 	{
@@ -679,7 +679,7 @@ const CDeviceContainerProperties CDynaBranch::DeviceProperties()
 	CDeviceContainerProperties props;
 	props.SetType(DEVTYPE_BRANCH);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranch, CDeviceContainerProperties::m_cszSysNameBranch);
-	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, _T(""));
+	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, "");
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasBranch);
 	return props;
 }
@@ -693,19 +693,19 @@ const CDeviceContainerProperties CDynaBranchMeasure::DeviceProperties()
 	props.SetType(DEVTYPE_BRANCHMEASURE);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranchMeasure, CDeviceContainerProperties::m_cszSysNameBranchMeasure);
 	props.nEquationsCount = CDynaBranchMeasure::VARS::V_LAST;
-	props.m_VarMap.insert(std::make_pair(_T("Ibre"), CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(_T("Ibim"), CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(_T("Iere"), CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(_T("Ieim"), CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(_T("Ib"),	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(_T("Ie"),	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(_T("Pb"),	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW)));
-	props.m_VarMap.insert(std::make_pair(_T("Qb"),	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR)));
-	props.m_VarMap.insert(std::make_pair(_T("Pe"),	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW)));
-	props.m_VarMap.insert(std::make_pair(_T("Qe"),	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR)));
-	props.m_VarMap.insert(std::make_pair(_T("Sb"),	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA)));
-	props.m_VarMap.insert(std::make_pair(_T("Se"),	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
+	props.m_VarMap.insert(std::make_pair("Ibre", CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair("Ibim", CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair("Iere", CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair("Ieim", CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair("Ib",	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair("Ie",	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair("Pb",	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW)));
+	props.m_VarMap.insert(std::make_pair("Qb",	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR)));
+	props.m_VarMap.insert(std::make_pair("Pe",	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW)));
+	props.m_VarMap.insert(std::make_pair("Qe",	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR)));
+	props.m_VarMap.insert(std::make_pair("Sb",	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA)));
+	props.m_VarMap.insert(std::make_pair("Se",	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
 	return props;
 }
 
-const _TCHAR* CDynaBranch::m_cszBranchStateNames[4] = { _T("On"), _T("Off"), _T("Htrip"), _T("Ttrip"), };
+const char* CDynaBranch::m_cszBranchStateNames[4] = { "On", "Off", "Htrip", "Ttrip", };

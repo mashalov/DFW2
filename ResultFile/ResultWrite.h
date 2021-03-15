@@ -1,4 +1,4 @@
-// ResultWrite.h : Declaration of the CResultWrite
+﻿// ResultWrite.h : Declaration of the CResultWrite
 
 #pragma once
 #include "resource.h"       // main symbols
@@ -28,7 +28,7 @@ class ATL_NO_VTABLE CResultWrite :
 {
 protected:
 	CResultFileWriter m_ResultFileWriter;
-	std::wstring m_strComment;
+	std::string m_strComment;
 	VARNAMEMAP m_VarNameMap;
 	CResultFileReader::DEVTYPESET m_DevTypeSet;
 public:
@@ -71,6 +71,6 @@ public:
 	STDMETHOD(FlushChannels)();
 	STDMETHOD(Close)();
 	STDMETHOD(AddSlowVariable)(LONG DeviceTypeId, VARIANT DeviceIds, BSTR VariableName, DOUBLE Time, DOUBLE Value, DOUBLE PreviousValue, BSTR ChangeDescription);
-	void CreateFile(const _TCHAR* cszPathName);
+	void CreateFile(std::string_view PathName);
 };
 

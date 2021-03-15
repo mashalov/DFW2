@@ -9,36 +9,36 @@ using namespace DFW2;
 void CSerializerXML::CreateNewSerialization()
 {
 	m_spXMLDoc.CreateInstance(__uuidof(MSXML2::DOMDocument60));
-	m_spXMLDoc->appendChild(m_spXMLDoc->createProcessingInstruction(_T("xml"), _T("version=\"1.0\" encoding=\"utf-8\"")));
-	m_spXMLDoc->appendChild(m_spXMLDoc->createElement(_T("DFW2")));
+	m_spXMLDoc->appendChild(m_spXMLDoc->createProcessingInstruction(L"xml", L"version=\"1.0\" encoding=\"utf-8\""));
+	m_spXMLDoc->appendChild(m_spXMLDoc->createElement(L"DFW2"));
 }
 
-void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, std::wstring_view Name)
+void CSerializerXML::AddDeviceTypeDescription(ptrdiff_t nType, std::string_view Name)
 {
 	if (!m_TypeMap.insert(std::make_pair(nType, Name)).second)
-		throw dfw2error(fmt::format(_T("CSerializerXML::AddDeviceTypeDescription - duplicate device type {}"), nType));
+		throw dfw2error(fmt::format("CSerializerXML::AddDeviceTypeDescription - duplicate device type {}", nType));
 }
 
 // сериализация в xml метаданных сериализатора
 void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 {
 	// создаем узел описания класса
-	MSXML2::IXMLDOMElementPtr spXMLClass = m_spXMLDoc->createElement(_T("class"));
+	MSXML2::IXMLDOMElementPtr spXMLClass = m_spXMLDoc->createElement(L"class");
 	// задаем имя класса
-	spXMLClass->setAttribute(_T("name"), Serializer->GetClassName());
+	spXMLClass->setAttribute(L"name", Serializer->GetClassName());
 	m_spXMLDoc->GetdocumentElement()->appendChild(spXMLClass);
 	// создаем перечисление свойств класса
-	MSXML2::IXMLDOMElementPtr spXMLProps = m_spXMLDoc->createElement(_T("properties"));
+	MSXML2::IXMLDOMElementPtr spXMLProps = m_spXMLDoc->createElement(L"properties");
 	spXMLClass->appendChild(spXMLProps);
 	CDFW2Messages units;
 	// перебираем значения из сериализатора
 	for (auto&& value : *Serializer)
 	{
 		// добавляем свойство в xml
-		MSXML2::IXMLDOMElementPtr spXMLProp = m_spXMLDoc->createElement(_T("property"));
+		MSXML2::IXMLDOMElementPtr spXMLProp = m_spXMLDoc->createElement(L"property");
 		MetaSerializedValue& mv = *value.second;
 		// задаем имя свойства
-		spXMLProp->setAttribute(_T("name"), value.first.c_str());
+		spXMLProp->setAttribute(L"name", value.first.c_str());
 		// задаем тип свойства либо текстом (если есть описание типа для значения перечисления), либо перечислением
 		if(static_cast<ptrdiff_t>(mv.Value.ValueType) >= 0 &&
 		   static_cast<ptrdiff_t>(mv.Value.ValueType) < _countof(TypedSerializedValue::m_cszTypeDecs))
@@ -48,18 +48,18 @@ void CSerializerXML::SerializeClassMeta(SerializerPtr& Serializer)
 
 		// задаем множитель для вещественного значения
 		if(mv.Value.ValueType == TypedSerializedValue::eValueType::VT_DBL && mv.Multiplier != 1.0)
-			spXMLProp->setAttribute(_T("multiplier"), mv.Multiplier);
+			spXMLProp->setAttribute(L"multiplier", mv.Multiplier);
 		// указываем признак переменной состояния
 		if(mv.bState)
 			spXMLProp->setAttribute(CSerializerBase::m_cszState,variant_t(1L));
 		// задаем единицы измерения
 		const auto& it = units.VarNameMap().find(static_cast<ptrdiff_t>(mv.Units));
 		if(units.VarNameMap().end() != it)
-			spXMLProp->setAttribute(_T("units"), it->second.c_str());
+			spXMLProp->setAttribute(L"units", it->second.c_str());
 		spXMLProps->appendChild(spXMLProp);
 	}
 	// создаем заготовку для экземпляров из данного сериализатора
-	m_spXMLItems = m_spXMLDoc->createElement(_T("items"));
+	m_spXMLItems = m_spXMLDoc->createElement(L"items");
 	spXMLClass->appendChild(m_spXMLItems);
 }
 
@@ -97,7 +97,7 @@ void CSerializerXML::AddLink(MSXML2::IXMLDOMElementPtr& spXMLLinks, CDevice *pLi
 	{
 		// если задано связанное устройство
 		// сериализуем тип связи - master или slave
-		MSXML2::IXMLDOMElementPtr spXMLLink = m_spXMLDoc->createElement(bMaster ? _T("master") : _T("slave"));
+		MSXML2::IXMLDOMElementPtr spXMLLink = m_spXMLDoc->createElement(bMaster ? L"master" : L"slave");
 		spXMLLinks->appendChild(spXMLLink);
 		// находим описание типа устройства
 		const auto& typeit = m_TypeMap.find(pLinkedDevice->GetType());
@@ -157,7 +157,7 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 			spXMLValue->setAttribute(CSerializerBase::m_cszV, mv.Value.Adapter->GetString().c_str());
 				break;
 		default:
-			throw dfw2error(fmt::format(_T("CSerializerXML::SerializeClass wrong serializer type {}"), mv.Value.ValueType));
+			throw dfw2error(fmt::format("CSerializerXML::SerializeClass wrong serializer type {}", mv.Value.ValueType));
 		}
 	}
 
@@ -171,14 +171,14 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 			// и сериализуем связи данного экземпляра устройства
 			// по свойствам контейнера
 			CDeviceContainerProperties &Props = pContainer->m_ContainerProps;
-			MSXML2::IXMLDOMElementPtr spXMLLinks = m_spXMLDoc->createElement(_T("links"));
+			MSXML2::IXMLDOMElementPtr spXMLLinks = m_spXMLDoc->createElement(L"links");
 
 			// добавляем связи от ведущих и ведомых
 			AddLinks(Serializer, spXMLLinks, Props.m_Masters, true);
 			AddLinks(Serializer, spXMLLinks, Props.m_Slaves, false);
 
 			// проверяем, добавлены ли связи
-			IXMLDOMNodeListPtr spNodes = spXMLLinks->selectNodes(_T("*"));
+			IXMLDOMNodeListPtr spNodes = spXMLLinks->selectNodes(L"*");
 			long nCount(0);
 			spNodes->get_length(&nCount);
 			// если хотя бы одна связь добавлена - выводим связи в xml
@@ -193,7 +193,7 @@ void CSerializerXML::SerializeClass(SerializerPtr& Serializer)
 void CSerializerXML::Commit()
 {
 	if(m_spXMLDoc)
-		m_spXMLDoc->save(_T("c:\\tmp\\serialization.xml"));
+		m_spXMLDoc->save(L"c:\\tmp\\serialization.xml");
 }
 
-const _TCHAR* CSerializerXML::m_cszVim = _T("vim");
+const char* CSerializerXML::m_cszVim = "vim";

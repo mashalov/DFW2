@@ -1,4 +1,4 @@
-// Result.cpp : Implementation of CResult
+﻿// Result.cpp : Implementation of CResult
 
 #include "stdafx.h"
 #include "ResultRead.h"
@@ -33,7 +33,7 @@ STDMETHODIMP CResultRead::get_Path(BSTR* PathName)
 	{
 		if (PathName)
 		{
-			*PathName = SysAllocString(m_ResultFileReader.GetFilePath());
+			*PathName = SysAllocString(stringutils::utf8_decode(m_ResultFileReader.GetFilePath()).c_str());
 			hRes = S_OK;
 		}
 	}
@@ -51,7 +51,7 @@ STDMETHODIMP CResultRead::get_Comment(BSTR* Comment)
 	{
 		if (Comment)
 		{
-			*Comment = SysAllocString(m_ResultFileReader.GetComment());
+			*Comment = SysAllocString(stringutils::utf8_decode(m_ResultFileReader.GetComment()).c_str());
 			hRes = S_OK;
 		}
 	}
@@ -223,7 +223,7 @@ STDMETHODIMP CResultRead::ExportCSV(BSTR PathName)
 	try
 	{
 		CCSVWriter CSVWriter(m_ResultFileReader);
-		hRes = CSVWriter.WriteCSV(static_cast<const _TCHAR*>(CComBSTR(PathName)));
+		hRes = CSVWriter.WriteCSV(stringutils::utf8_encode(PathName));
 	}
 
 	catch (CFileReadException& ex)
@@ -235,10 +235,10 @@ STDMETHODIMP CResultRead::ExportCSV(BSTR PathName)
 }
 
 
-void CResultRead::OpenFile(const _TCHAR* cszPathName)
+void CResultRead::OpenFile(std::string_view PathName)
 {
 	m_ResultFileReader.Close();
-	m_ResultFileReader.OpenFile(cszPathName);
+	m_ResultFileReader.OpenFile(PathName);
 }
 
 STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableName, VARIANT *Plot)
@@ -248,7 +248,7 @@ STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableN
 	{
 		try
 		{
-			Plot->parray = m_ResultFileReader.CreateSafeArray(m_ResultFileReader.ReadChannel(DeviceType, DeviceId, VariableName));
+			Plot->parray = m_ResultFileReader.CreateSafeArray(m_ResultFileReader.ReadChannel(DeviceType, DeviceId, stringutils::utf8_encode(VariableName)));
 			if (Plot->parray)
 			{
 				Plot->vt = VT_R8 | VT_ARRAY;
@@ -362,7 +362,7 @@ STDMETHODIMP CResultRead::get_UserComment(BSTR* UserComment)
 	HRESULT hRes = E_INVALIDARG;
 	if (UserComment)
 	{
-		*UserComment = SysAllocString(m_ResultFileReader.GetUserComment());
+		*UserComment = SysAllocString(stringutils::utf8_decode(m_ResultFileReader.GetUserComment()).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -384,7 +384,7 @@ STDMETHODIMP CResultRead::put_UserComment(BSTR UserComment)
 	HRESULT hRes = E_FAIL;
 	try
 	{
-		m_ResultFileReader.SetUserComment(std::wstring(UserComment).c_str());
+		m_ResultFileReader.SetUserComment(stringutils::utf8_encode(UserComment));
 		hRes = S_OK;
 	}
 	catch (CFileReadException& ex)

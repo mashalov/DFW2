@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DynaGenerator1C.h"
 #include "LimitedLag.h"
 #include "Sum.h"
@@ -55,10 +55,10 @@ namespace DFW2
 
 		static const CDeviceContainerProperties DeviceProperties();
 
-		static const _TCHAR *m_cszUf;
-		static const _TCHAR *m_cszUdec;
-		static const _TCHAR *m_cszExcConId;
-		static const _TCHAR *m_cszDECId;
+		static const char* m_cszUf;
+		static const char* m_cszUdec;
+		static const char* m_cszExcConId;
+		static const char* m_cszDECId;
 	};
 }
 

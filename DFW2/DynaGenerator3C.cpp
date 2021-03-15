@@ -342,13 +342,13 @@ void CDynaGenerator3C::UpdateSerializer(SerializerPtr& Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGenerator1C::UpdateSerializer(Serializer);
 	// добавляем перменные состояния трехконтурной модели в ЭДС
-	Serializer->AddState(_T("Eqss"), Eqss, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(_T("Edss"), Edss, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(_T("Td0ss"), Td0ss, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddState(_T("Tq0ss"), Tq0ss, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddState(_T("xd2"), xd2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddState(_T("xq2"), xq2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddState(_T("xq1"), xq1, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddState("Eqss", Eqss, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Edss", Edss, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Td0ss", Td0ss, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddState("Tq0ss", Tq0ss, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddState("xd2", xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddState("xq2", xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddState("xq1", xq1, eVARUNITS::VARUNIT_OHM);
 }
 
 const CDeviceContainerProperties CDynaGenerator3C::DeviceProperties()
@@ -357,8 +357,8 @@ const CDeviceContainerProperties CDynaGenerator3C::DeviceProperties()
 	props.SetType(DEVTYPE_GEN_3C);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator3C, CDeviceContainerProperties::m_cszSysNameGenerator3C);
 	props.nEquationsCount = CDynaGenerator3C::VARS::V_LAST;
-	props.m_VarMap.insert(std::make_pair(_T("Eqss"), CVarIndex(CDynaGenerator3C::V_EQSS, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(_T("Edss"), CVarIndex(CDynaGenerator3C::V_EDSS, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair("Eqss", CVarIndex(CDynaGenerator3C::V_EQSS, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair("Edss", CVarIndex(CDynaGenerator3C::V_EDSS, VARUNIT_KVOLTS)));
 
 	return props;
 }

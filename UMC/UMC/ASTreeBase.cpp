@@ -549,7 +549,7 @@ VariableInfo& CASTTreeBase::GetVariableInfo(std::string_view VarName)
 VariableInfo* CASTTreeBase::CheckVariableInfo(std::string_view VarName)
 {
     VariableInfo* pVarInfo(nullptr);
-    auto it = Vars.find(std::string(VarName));
+    auto it = Vars.find(VarName);
     if (it != Vars.end())
         pVarInfo = &it->second;
     return pVarInfo;
@@ -1002,7 +1002,7 @@ std::string CASTTreeBase::FindModelLinkVariable(std::string_view ModelLink)
 std::filesystem::path CASTTreeBase::GetPropertyPath(std::string_view PropNamePath)
 {
     std::filesystem::path Path;
-    if (auto itp = properties.find(std::string(PropNamePath)); itp != properties.end())
+    if (auto itp = properties.find(PropNamePath); itp != properties.end())
     {
         Path = itp->second;
         if (Path.has_filename())

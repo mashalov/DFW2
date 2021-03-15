@@ -54,7 +54,7 @@ CDeviceContainer* CDevice::GetContainer()
 }
 
 // получить указатель на переменную устройства по имени
-double* CDevice::GetVariablePtr(const _TCHAR* cszVarName)
+double* CDevice::GetVariablePtr(std::string_view VarName)
 {
 	_ASSERTE(m_pContainer);
 
@@ -63,13 +63,14 @@ double* CDevice::GetVariablePtr(const _TCHAR* cszVarName)
 	// если устройство привязано к контейнеру - то можно получить от него индекс
 	// переменной, а по нему уже указатель
 	if (m_pContainer)
-		pRes = GetVariablePtr(m_pContainer->GetVariableIndex(cszVarName));
+		pRes = GetVariablePtr(m_pContainer->GetVariableIndex(VarName));
 	return pRes;
 }
 
 // получить указатель на константную переменную по имени
-// аналогична по смыслу double* GetVariablePtr(const _TCHAR*)
-double* CDevice::GetConstVariablePtr(std::wstring_view VarName)
+// аналогична по смыслу double* GetVariablePtr(const char*)
+
+double* CDevice::GetConstVariablePtr(std::string_view VarName)
 {
 	_ASSERTE(m_pContainer);
 
@@ -80,7 +81,7 @@ double* CDevice::GetConstVariablePtr(std::wstring_view VarName)
 }
 
 // получить описание внешней переменной по имени
-VariableIndexExternal CDevice::GetExternalVariable(std::wstring_view VarName)
+VariableIndexExternal CDevice::GetExternalVariable(std::string_view VarName)
 {
 	_ASSERTE(m_pContainer);
 
@@ -125,23 +126,23 @@ const double* CDevice::GetConstVariableConstPtr(ptrdiff_t nVarIndex) const
 }
 
 
-const double* CDevice::GetVariableConstPtr(const _TCHAR* cszVarName) const
+const double* CDevice::GetVariableConstPtr(std::string_view VarName) const
 {
 	_ASSERTE(m_pContainer);
 
 	double *pRes(nullptr);
 	if (m_pContainer)
-		pRes = const_cast<CDevice*>(this)->GetVariablePtr(m_pContainer->GetVariableIndex(cszVarName));
+		pRes = const_cast<CDevice*>(this)->GetVariablePtr(m_pContainer->GetVariableIndex(VarName));
 	return pRes;
 }
 
-const double* CDevice::GetConstVariableConstPtr(const _TCHAR* cszVarName) const
+const double* CDevice::GetConstVariableConstPtr(std::string_view VarName) const
 {
 	_ASSERTE(m_pContainer);
 
 	double *pRes(nullptr);
 	if (m_pContainer)
-		pRes = const_cast<CDevice*>(this)->GetConstVariablePtr(m_pContainer->GetConstVariableIndex(cszVarName));
+		pRes = const_cast<CDevice*>(this)->GetConstVariablePtr(m_pContainer->GetConstVariableIndex(VarName));
 	return pRes;
 }
 
@@ -167,9 +168,9 @@ double CDevice::SetValue(ptrdiff_t nVarIndex, double Value)
 	return OldValue;
 }
 
-double CDevice::GetValue(const _TCHAR* cszVarName) const
+double CDevice::GetValue(std::string_view VarName) const
 {
-	const double *pRes = GetVariableConstPtr(cszVarName);
+	const double *pRes = GetVariableConstPtr(VarName);
 	if (pRes)
 		return *pRes;
 	else
@@ -177,9 +178,9 @@ double CDevice::GetValue(const _TCHAR* cszVarName) const
 }
 
 // установить значение переменной по имени и вернуть исходное значение
-double CDevice::SetValue(const _TCHAR* cszVarName, double Value)
+double CDevice::SetValue(std::string_view VarName, double Value)
 {
-	double *pRes = GetVariablePtr(cszVarName);
+	double *pRes = GetVariablePtr(VarName);
 	double OldValue = 0.0;
 	if (pRes)
 	{
@@ -189,7 +190,7 @@ double CDevice::SetValue(const _TCHAR* cszVarName, double Value)
 	return OldValue;
 }
 
-void CDevice::Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message)
+void CDevice::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message)
 {
 	// TODO - add device type information
 	if (m_pContainer)
@@ -530,11 +531,11 @@ eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE e
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-const _TCHAR* CDevice::VariableNameByPtr(double *pVariable)
+const char* CDevice::VariableNameByPtr(double *pVariable)
 {
 	_ASSERTE(m_pContainer);
 
-	const _TCHAR *pName = CDFW2Messages::m_cszUnknown;
+	const char *pName = CDFW2Messages::m_cszUnknown;
 	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
 
 	for (ptrdiff_t i = 0; i < nEquationsCount ; i++)
@@ -547,16 +548,16 @@ const _TCHAR* CDevice::VariableNameByPtr(double *pVariable)
 			{
 				if (it->second.m_nIndex == i)
 				{
-					pName = static_cast<const _TCHAR*>(it->first.c_str());
+					pName = static_cast<const char*>(it->first.c_str());
 					break;
 				}
 			}
 #ifdef _DEBUG
 			if (it == m_pContainer->VariablesEnd())
 			{
-				std::wstring UnknownVar(fmt::format(_T("Unknown name Index - {}"), i));
-				_tcsncpy_s(UnknownVarIndex, UnknownVar.c_str(), 80);
-				pName = static_cast<_TCHAR*>(UnknownVarIndex);
+				std::string UnknownVar(fmt::format("Unknown name Index - {}", i));
+				strncpy_s(UnknownVarIndex, 80, UnknownVar.c_str(), 80);
+				pName = static_cast<char*>(UnknownVarIndex);
 			}
 #endif
 
@@ -643,7 +644,7 @@ eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(bool Status1)
 }
 
 
-bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::wstring_view Name, eDFW2DEVICETYPE eLimitDeviceType)
+bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType)
 {
 	_ASSERTE(m_pContainer);
 
@@ -712,7 +713,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 }
 
 
-bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::wstring_view Name, eDFW2DEVICETYPE eLimitDeviceType)
+bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType)
 {
 	_ASSERTE(m_pContainer);
 
@@ -798,7 +799,7 @@ void CDevice::UpdateVerbalName()
 {
 	CDeviceId::UpdateVerbalName();
 	if (m_pContainer)
-		m_strVerbalName = fmt::format(_T("{} {}"), m_pContainer->GetTypeName(), m_strVerbalName);
+		m_strVerbalName = fmt::format("{} {}", m_pContainer->GetTypeName(), m_strVerbalName);
 }
 
 // получить связанное устройство по индексу связи
@@ -836,7 +837,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 		{
 			pRetDevTo = GetSingleLink(itTo->second.nLinkIndex);
 			if (pRetDev && pRetDevTo)
-				_ASSERTE(!_T("CDevice::GetSingleLink - Ambiguous link"));
+				_ASSERTE(!"CDevice::GetSingleLink - Ambiguous link");
 			else
 				pRetDev = pRetDevTo;
 		}
@@ -957,27 +958,27 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 		CDynaModel *pModel = GetModel();
 		if (pModel && GetId() == nId && pModel->GetIntegrationStepNumber() == nStepNumber)
 		{
-			std::wstring FileName = fmt::format(_T("c:\\tmp\\{}_{}.csv"), GetVerbalName(), nStepNumber);
+			std::string FileName = fmt::format("c:\\tmp\\{}_{}.csv", GetVerbalName(), nStepNumber);
 			FILE *flog;
 			if (pModel->GetNewtonIterationNumber() == 1)
-				_tunlink(FileName.c_str());
-			_tfopen_s(&flog, FileName.c_str(), _T("a"));
+				_unlink(FileName.c_str());
+			fopen_s(&flog, FileName.c_str(), "a");
 			if (flog)
 			{
 				if (pModel->GetNewtonIterationNumber() == 1)
 				{
 					for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-						_ftprintf(flog, _T("%s;"), var->first.c_str());
+						fprintf(flog, "%s;", var->first.c_str());
 					for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-						_ftprintf(flog, _T("d_%s;"), var->first.c_str());
-					_ftprintf(flog, _T("\n"));
+						fprintf(flog, "d_%s;", var->first.c_str());
+					fprintf(flog, "\n");
 				}
 
 				for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-					_ftprintf(flog, _T("%g;"), *GetVariablePtr(var->second.m_nIndex));
+					fprintf(flog, "%g;", *GetVariablePtr(var->second.m_nIndex));
 				for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-					_ftprintf(flog, _T("%g;"), pModel->GetFunction(A(var->second.m_nIndex)));
-				_ftprintf(flog, _T("\n"));
+					fprintf(flog, "%g;", pModel->GetFunction(A(var->second.m_nIndex)));
+				fprintf(flog, "\n");
 
 				fclose(flog);
 			}
@@ -1163,9 +1164,9 @@ VariableIndex& CDevice::GetVariable(ptrdiff_t nVarIndex)
 	if (nVarIndex >= 0 && nVarIndex < static_cast<ptrdiff_t>(Vars.size()))
 		return Vars[nVarIndex];
 	else
-		throw dfw2error(_T("CDevice::GetVariable index ouf of range"));
+		throw dfw2error("CDevice::GetVariable index ouf of range");
 }
 
 #ifdef _DEBUG
-	_TCHAR CDevice::UnknownVarIndex[80];
+	char CDevice::UnknownVarIndex[80];
 #endif

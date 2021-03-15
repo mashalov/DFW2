@@ -24,7 +24,7 @@ namespace DFW2
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		void SetTK(double T, double K)  { m_K = K;  m_T = T; }
-		const _TCHAR* GetVerbalName() override { return _T("РДЗ со сглаживанием"); }
+		const char* GetVerbalName() override { return "РДЗ со сглаживанием"; }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() { return sizeof(CDerlagContinuous); }
 		static long EquationsCount()  { return 2; }
@@ -46,7 +46,7 @@ namespace DFW2
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		//virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		void SetTK(double T, double K) { m_K = K;  m_T = T; }
-		const _TCHAR* GetVerbalName() override { return _T("ДЗ Nordsieck"); }
+		const char* GetVerbalName() override { return "ДЗ Nordsieck"; }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() { return sizeof(CDerlagNordsieck); }
 		static long EquationsCount() { return 3; }

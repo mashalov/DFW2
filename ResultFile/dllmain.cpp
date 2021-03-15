@@ -1,4 +1,4 @@
-// dllmain.cpp : Implementation of DllMain.
+﻿// dllmain.cpp : Implementation of DllMain.
 
 #include "stdafx.h"
 #include "resource.h"

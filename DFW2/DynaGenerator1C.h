@@ -69,15 +69,15 @@ namespace DFW2
 
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 
-		static const _TCHAR *m_cszEqe;
-		static const _TCHAR *m_cszEq;
-		static const _TCHAR *m_cszId;
-		static const _TCHAR *m_cszIq;
-		static const _TCHAR *m_cszExciterId;
-		static const _TCHAR *m_cszEqnom;
-		static const _TCHAR *m_cszSnom;
-		static const _TCHAR *m_cszInom;
-		static const _TCHAR *m_cszQnom;
+		static constexpr const char* m_cszEqe = "Eqe";
+		static constexpr const char* m_cszEq = "Eq";
+		static constexpr const char* m_cszId = "Id";
+		static constexpr const char* m_cszIq = "Iq";
+		static constexpr const char* m_cszExciterId = "ExciterId";
+		static constexpr const char* m_cszEqnom = "Eqnom";
+		static constexpr const char* m_cszSnom = "Snom";
+		static constexpr const char* m_cszInom = "Inom";
+		static constexpr const char* m_cszQnom = "Qnom";
 
 		static const CDeviceContainerProperties DeviceProperties();
 

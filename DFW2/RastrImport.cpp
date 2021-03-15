@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include "stringutils.h"
 #include "RastrImport.h"
 #include "DynaGeneratorMustang.h"
 #include "DynaGeneratorInfBus.h"
@@ -92,7 +93,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 						CCustomDeviceCPP* pDevice = pCustomDevices + nModelIndex;
 						pDevice->SetConstsDefaultValues();
 						pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
-						pDevice->SetName(static_cast<const _TCHAR*>(spColId->GetZS(nTableIndex)));
+						pDevice->SetName(static_cast<const char*>(spColId->GetZS(nTableIndex)));
 						pDevice->SetState(spColState->GetZ(nTableIndex).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 						for (const auto& col : Cols)
 							pDevice->SetSourceConstant(col.second, col.first->GetZ(nTableIndex).dblVal);
@@ -105,7 +106,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 		{
 			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
 				CustomDeviceContainer.DLL()->GetModuleFilePath(),
-				static_cast<const _TCHAR*>(err.Description())));
+				static_cast<const char*>(err.Description())));
 		}
 	}
 	return bRes;
@@ -176,7 +177,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 						if (pDevice->SetConstDefaultValues())
 						{
 							pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
-							pDevice->SetName(static_cast<const _TCHAR*>(spColId->GetZS(nTableIndex)));
+							pDevice->SetName(static_cast<const char*>(spColId->GetZS(nTableIndex)));
 							for (COLITR cit = Cols.begin(); cit != Cols.end(); cit++)
 							{
 								if (!pDevice->SetConstValue(cit->second, cit->first->GetZ(nTableIndex).dblVal))
@@ -200,7 +201,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 		{
 			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
 																CustomDeviceContainer.DLL().GetModuleFilePath(), 
-																static_cast<const _TCHAR*>(err.Description())));
+																static_cast<const char*>(err.Description())));
 		}
 	}
 	return bRes;
@@ -241,7 +242,7 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 			break;
 		case TypedSerializedValue::eValueType::VT_NAME:
 			vt.ChangeType(VT_BSTR);
-			Serializer->m_pDevice->SetName(vt.bstrVal);
+			Serializer->m_pDevice->SetName(stringutils::utf8_encode(vt.bstrVal));
 			break;
 		case TypedSerializedValue::eValueType::VT_STATE:
 			vt.ChangeType(VT_BOOL);
@@ -259,7 +260,7 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 			mv.Value.Adapter->SetInt(NodeTypeFromRastr(vt.lVal));
 			break;
 		default:
-			throw dfw2error(fmt::format(_T("CRastrImport::ReadRastrRow wrong serializer type {}"), mv.Value.ValueType));
+			throw dfw2error(fmt::format("CRastrImport::ReadRastrRow wrong serializer type {}", mv.Value.ValueType));
 		}
 	}
 }
@@ -309,12 +310,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 	{
 		Network.Automatic().AddStarter(spASType->GetZ(i),
 			spASId->GetZ(i).lVal,
-			spASName->GetZ(i).bstrVal,
-			spASExpr->GetZ(i).bstrVal,
+			stringutils::utf8_encode(spASName->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spASExpr->GetZ(i).bstrVal),
 			0,
-			spASObjClass->GetZ(i).bstrVal,
-			spASObjKey->GetZ(i).bstrVal,
-			spASObjProp->GetZ(i).bstrVal);
+			stringutils::utf8_encode(spASObjClass->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spASObjKey->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spASObjProp->GetZ(i).bstrVal));
 	}
 
 	ITablePtr spAutoLogic = spTables->Item("DFWAutoLogic");
@@ -331,10 +332,10 @@ void CRastrImport::GetData(CDynaModel& Network)
 	{
 		Network.Automatic().AddLogic(spALType->GetZ(i),
 			spALId->GetZ(i).lVal,
-			spALName->GetZ(i).bstrVal,
-			spALExpr->GetZ(i).bstrVal,
-			spALActions->GetZ(i).bstrVal,
-			spALDelay->GetZ(i).bstrVal,
+			stringutils::utf8_encode(spALName->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spALExpr->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spALActions->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spALDelay->GetZ(i).bstrVal),
 			spALOutputMode->GetZ(i).lVal);
 	}
 
@@ -356,12 +357,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 	{
 		Network.Automatic().AddAction(spAAType->GetZ(i),
 			spAAId->GetZ(i).lVal,
-			spAAName->GetZ(i).bstrVal,
-			spAAExpr->GetZ(i).bstrVal,
+			stringutils::utf8_encode(spAAName->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spAAExpr->GetZ(i).bstrVal),
 			0,
-			spAAObjClass->GetZ(i).bstrVal,
-			spAAObjKey->GetZ(i).bstrVal,
-			spAAObjProp->GetZ(i).bstrVal,
+			stringutils::utf8_encode(spAAObjClass->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spAAObjKey->GetZ(i).bstrVal),
+			stringutils::utf8_encode(spAAObjProp->GetZ(i).bstrVal),
 			spAAActionGroup->GetZ(i).lVal,
 			spAAOutputMode->GetZ(i).lVal,
 			spAAORunsCount->GetZ(i).lVal);
@@ -369,41 +370,42 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	Network.Automatic().CompileModels();
 
-	Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetDLLPath().generic_wstring());
+	Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetDLLPath().string());
 	CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[1];
 	Network.AutomaticDevice.AddDevices(pCustomDevices, 1);
 	Network.AutomaticDevice.BuildStructure();
 	
-	if (!Network.CustomDevice.ConnectDLL(_T("DeviceDLL.dll")))
+	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
 		return;
+		*/
 
-	Network.CustomDeviceCPP.ConnectDLL(_T("CustomDeviceCPP.dll"));
+	Network.CustomDeviceCPP.ConnectDLL("CustomDeviceCPP.dll");
 
-	CustomDeviceConnectInfo ci(_T("ExcControl"),2);
-	ITablePtr spExAddXcomp = m_spRastr->Tables->Item("ExcControl");
-	spExAddXcomp->Cols->Add("Xcomp", PR_REAL);
+	CustomDeviceConnectInfo ci("ExcControl",2);
+	ITablePtr spExAddXcomp = m_spRastr->Tables->Item(L"ExcControl");
+	spExAddXcomp->Cols->Add(L"Xcomp", PR_REAL);
 
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);
 	
-	ITablePtr spLRC = spTables->Item("polin");
+	ITablePtr spLRC = spTables->Item(L"polin");
 	IColsPtr spLRCCols = spLRC->Cols;
 
-	IColPtr spLCLCId = spLRCCols->Item("nsx");
-	IColPtr spP0 = spLRCCols->Item("p0");
-	IColPtr spP1 = spLRCCols->Item("p1");
-	IColPtr spP2 = spLRCCols->Item("p2");
-	IColPtr spP3 = spLRCCols->Item("p3");
-	IColPtr spP4 = spLRCCols->Item("p4");
+	IColPtr spLCLCId = spLRCCols->Item(L"nsx");
+	IColPtr spP0 = spLRCCols->Item(L"p0");
+	IColPtr spP1 = spLRCCols->Item(L"p1");
+	IColPtr spP2 = spLRCCols->Item(L"p2");
+	IColPtr spP3 = spLRCCols->Item(L"p3");
+	IColPtr spP4 = spLRCCols->Item(L"p4");
 
-	IColPtr spQ0 = spLRCCols->Item("q0");
-	IColPtr spQ1 = spLRCCols->Item("q1");
-	IColPtr spQ2 = spLRCCols->Item("q2");
-	IColPtr spQ3 = spLRCCols->Item("q3");
-	IColPtr spQ4 = spLRCCols->Item("q4");
+	IColPtr spQ0 = spLRCCols->Item(L"q0");
+	IColPtr spQ1 = spLRCCols->Item(L"q1");
+	IColPtr spQ2 = spLRCCols->Item(L"q2");
+	IColPtr spQ3 = spLRCCols->Item(L"q3");
+	IColPtr spQ4 = spLRCCols->Item(L"q4");
 
-	IColPtr spLCUmin = spLRCCols->Item("umin");
-	IColPtr spLCFreq = spLRCCols->Item("frec");
+	IColPtr spLCUmin = spLRCCols->Item(L"umin");
+	IColPtr spLCFreq = spLRCCols->Item(L"frec");
 
 	DBSLC *pLRCBuffer = new DBSLC[spLRC->GetSize()];
 	for (int i = 0; i < spLRC->GetSize(); i++)
@@ -459,7 +461,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	}
 
 	
-	ReadTable<CDynaBranch>(_T("vetv"), Network.Branches);
+	ReadTable<CDynaBranch>("vetv", Network.Branches);
 
 	/*
 	ITablePtr spBranch = spTables->Item("vetv");
@@ -600,7 +602,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		{
 		case 6:
 			pGensMu->SetId(spGenId->GetZ(i));
-			pGensMu->SetName(spGenName->GetZ(i).bstrVal);
+			pGensMu->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
 			pGensMu->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensMu->NodeId = spGenNode->GetZ(i);
 			pGensMu->Kdemp = spGenDemp->GetZ(i);
@@ -627,7 +629,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 			break;
 		case 5:
 			pGens3C->SetId(spGenId->GetZ(i));
-			pGens3C->SetName(spGenName->GetZ(i).bstrVal);
+			pGens3C->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
 			pGens3C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGens3C->NodeId = spGenNode->GetZ(i);
 			pGens3C->Kdemp = spGenDemp->GetZ(i);
@@ -654,7 +656,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 			break;
 		case 4:
 			pGens1C->SetId(spGenId->GetZ(i));
-			pGens1C->SetName(spGenName->GetZ(i).bstrVal);
+			pGens1C->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
 			pGens1C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGens1C->NodeId = spGenNode->GetZ(i);
 			pGens1C->Kgen = spGenKgen->GetZ(i);
@@ -676,7 +678,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 			break;
 		case 2:
 			pGensInf->SetId(spGenId->GetZ(i));
-			pGensInf->SetName(spGenName->GetZ(i).bstrVal);
+			pGensInf->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
 			pGensInf->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensInf->NodeId = spGenNode->GetZ(i);
 			pGensInf->Kgen = spGenKgen->GetZ(i);
@@ -689,7 +691,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 			break;
 		case 3:
 			pGensMot->SetId(spGenId->GetZ(i));
-			pGensMot->SetName(spGenName->GetZ(i).bstrVal);
+			pGensMot->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
 			pGensMot->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			pGensMot->NodeId = spGenNode->GetZ(i);
 			pGensMot->Kgen = spGenKgen->GetZ(i);
@@ -707,9 +709,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 		}
 	}
 
-	ReadTable<CDynaExciterMustang>(_T("Exciter"), Network.ExcitersMustang);
-	ReadTable<CDynaDECMustang>(_T("Forcer"), Network.DECsMustang);
-	ReadTable<CDynaExcConMustang>(_T("ExcControl"), Network.ExcConMustang);
+	ReadTable<CDynaExciterMustang>("Exciter", Network.ExcitersMustang);
+	ReadTable<CDynaDECMustang>("Forcer", Network.DECsMustang);
+	ReadTable<CDynaExcConMustang>("ExcControl", Network.ExcConMustang);
 }
 
 bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount)

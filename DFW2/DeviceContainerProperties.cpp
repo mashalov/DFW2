@@ -3,11 +3,11 @@
 using namespace DFW2;
 
 
-const _TCHAR* CDeviceContainerProperties::GetVerbalClassName() const
+const char* CDeviceContainerProperties::GetVerbalClassName() const
 {
 	return m_strClassName.c_str();
 }
-const _TCHAR* CDeviceContainerProperties::GetSystemClassName() const
+const char* CDeviceContainerProperties::GetSystemClassName() const
 {
 	return m_strClassSysName.c_str();
 }
@@ -17,30 +17,30 @@ eDFW2DEVICETYPE CDeviceContainerProperties::GetType() const
 	return eDeviceType;
 }
 
-const _TCHAR *CDeviceContainerProperties::m_cszNameGenerator1C = _T("Генератор 1К");
-const _TCHAR *CDeviceContainerProperties::m_cszNameGenerator3C = _T("Генератор 3К");
-const _TCHAR *CDeviceContainerProperties::m_cszNameGeneratorMustang = _T("Генератор Mustang");
-const _TCHAR *CDeviceContainerProperties::m_cszNameGeneratorInfPower = _T("ШБМ");
-const _TCHAR *CDeviceContainerProperties::m_cszNameGeneratorMotion = _T("Генератор УД");
-const _TCHAR *CDeviceContainerProperties::m_cszNameExciterMustang = _T("Возбудитель Mustang");
-const _TCHAR *CDeviceContainerProperties::m_cszNameExcConMustang = _T("АРВ Мустанг");
-const _TCHAR *CDeviceContainerProperties::m_cszNameDECMustang = _T("Форсировка Мустанг");
-const _TCHAR *CDeviceContainerProperties::m_cszNameNode = _T("Узел");
-const _TCHAR *CDeviceContainerProperties::m_cszNameBranch = _T("Ветвь");
-const _TCHAR *CDeviceContainerProperties::m_cszNameBranchMeasure = _T("Измерения ветви");
+const char* CDeviceContainerProperties::m_cszNameGenerator1C = "Генератор 1К";
+const char* CDeviceContainerProperties::m_cszNameGenerator3C = "Генератор 3К";
+const char* CDeviceContainerProperties::m_cszNameGeneratorMustang = "Генератор Mustang";
+const char* CDeviceContainerProperties::m_cszNameGeneratorInfPower = "ШБМ";
+const char* CDeviceContainerProperties::m_cszNameGeneratorMotion = "Генератор УД";
+const char* CDeviceContainerProperties::m_cszNameExciterMustang = "Возбудитель Mustang";
+const char* CDeviceContainerProperties::m_cszNameExcConMustang = "АРВ Мустанг";
+const char* CDeviceContainerProperties::m_cszNameDECMustang = "Форсировка Мустанг";
+const char* CDeviceContainerProperties::m_cszNameNode = "Узел";
+const char* CDeviceContainerProperties::m_cszNameBranch = "Ветвь";
+const char* CDeviceContainerProperties::m_cszNameBranchMeasure = "Измерения ветви";
 
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameGenerator1C = _T("Generator1C");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameGenerator3C = _T("Generator3C");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameGeneratorMustang = _T("GeneratorMustang");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameGeneratorInfPower = _T("GeneratorInfBus");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameGeneratorMotion = _T("GeneratorMotion");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameExciterMustang = _T("ExciterMustang");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameExcConMustang = _T("ExcControlMustang");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameDECMustang = _T("DecMustang");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameNode = _T("Node");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameBranch = _T("Branch");
-const _TCHAR *CDeviceContainerProperties::m_cszSysNameBranchMeasure = _T("BranchMeasure");
+const char* CDeviceContainerProperties::m_cszSysNameGenerator1C = "Generator1C";
+const char* CDeviceContainerProperties::m_cszSysNameGenerator3C = "Generator3C";
+const char* CDeviceContainerProperties::m_cszSysNameGeneratorMustang = "GeneratorMustang";
+const char* CDeviceContainerProperties::m_cszSysNameGeneratorInfPower = "GeneratorInfBus";
+const char* CDeviceContainerProperties::m_cszSysNameGeneratorMotion = "GeneratorMotion";
+const char* CDeviceContainerProperties::m_cszSysNameExciterMustang = "ExciterMustang";
+const char* CDeviceContainerProperties::m_cszSysNameExcConMustang = "ExcControlMustang";
+const char* CDeviceContainerProperties::m_cszSysNameDECMustang = "DecMustang";
+const char* CDeviceContainerProperties::m_cszSysNameNode = "Node";
+const char* CDeviceContainerProperties::m_cszSysNameBranch = "Branch";
+const char* CDeviceContainerProperties::m_cszSysNameBranchMeasure = "BranchMeasure";
 
-const _TCHAR *CDeviceContainerProperties::m_cszAliasNode = _T("node");
-const _TCHAR *CDeviceContainerProperties::m_cszAliasBranch = _T("vetv");
-const _TCHAR *CDeviceContainerProperties::m_cszAliasGenerator = _T("Generator");
+const char* CDeviceContainerProperties::m_cszAliasNode = "node";
+const char* CDeviceContainerProperties::m_cszAliasBranch = "vetv";
+const char* CDeviceContainerProperties::m_cszAliasGenerator = "Generator";

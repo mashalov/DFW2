@@ -14,7 +14,7 @@ CDeviceId::CDeviceId(ptrdiff_t nId) : m_Id(nId)
 {
 }
 
-const _TCHAR* CDeviceId::GetVerbalName() const
+const char* CDeviceId::GetVerbalName() const
 {
 	return m_strVerbalName.c_str();
 		
@@ -25,10 +25,10 @@ void CDeviceId::UpdateVerbalName()
 {
 	// если имя не пустое, формируется подробное имя в формате Id - [Имя]
 	// если имя пустое - просто Id
-	m_strVerbalName = (m_strName.length() ? fmt::format(_T("{}-[{}]"), m_Id, m_strName) : fmt::format(_T("{}"), m_Id));
+	m_strVerbalName = (m_strName.length() ? fmt::format("{}-[{}]", m_Id, m_strName) : fmt::format("{}", m_Id));
 }
 
-void CDeviceId::SetName(std::wstring_view Name)
+void CDeviceId::SetName(std::string_view Name)
 {
 	// при изменении имени перестраиваем подробное имя
 	m_strName = Name;
@@ -51,7 +51,7 @@ ptrdiff_t CDeviceId::GetId() const
 	return m_Id;
 }
 
-const _TCHAR* CDeviceId::GetName() const
+const char* CDeviceId::GetName() const
 {
 	return m_strName.c_str();
 }

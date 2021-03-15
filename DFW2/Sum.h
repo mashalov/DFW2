@@ -33,6 +33,6 @@ namespace DFW2
 			return CDynaPrimitive::Input(0);
 		}
 		*/
-		const _TCHAR* GetVerbalName() noexcept override { return _T("Сумматор"); }
+		const char* GetVerbalName() noexcept override { return "Сумматор"; }
 	};
 }

@@ -82,7 +82,7 @@ struct VariableInfo
 };
 
 // карта переменных, глобальная для дерева
-using VarInfoMap = std::map<std::string, VariableInfo>;
+using VarInfoMap = std::map<std::string, VariableInfo, std::less<>>;
 
 // сравнитель переменных по итераторам карты
 struct VarMapIteratorCompare

@@ -107,7 +107,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex)
 }
 
 
-ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR *cszVarName)
+ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, std::string_view VarName)
 {
 
 	ptrdiff_t nVarIndex = -1;
@@ -118,7 +118,7 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, con
 	if (it != m_DevTypeSet.end())
 	{
 		VariableTypeInfo findVar; 
-		findVar.Name = cszVarName;
+		findVar.Name = VarName;
 		VARTYPEITRCONST vit = (*it)->m_VarTypes.find(findVar);
 		if (vit != (*it)->m_VarTypes.end())
 			return GetChannelIndex(eType, nId, vit->nIndex);
@@ -146,9 +146,9 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdif
 	return ReadChannel(GetChannelIndex(eType,nId,nVarIndex));
 }
 
-std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, const _TCHAR* cszVarName)
+std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdiff_t nId, std::string_view VarName)
 {
-	return ReadChannel(GetChannelIndex(eType, nId, cszVarName));
+	return ReadChannel(GetChannelIndex(eType, nId, VarName));
 }
 
 // строит список блоков данных канала от конца к началу
@@ -285,13 +285,13 @@ void CResultFileReader::Reparent()
 	}
 }
 
-void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
+void CResultFileReader::OpenFile(std::string_view FilePath)
 {
 	m_dRatio = -1.0;
 
-	m_strFilePath = cszFilePath;
+	m_strFilePath = FilePath;
 
-	infile.open(cszFilePath, std::ios_base::in|std::ios_base::binary|std::ios_base::out);
+	infile.open(FilePath, std::ios_base::in|std::ios_base::binary|std::ios_base::out);
 
 	size_t nCountSignature = sizeof(m_cszSignature);
 	char SignatureBuffer[sizeof(m_cszSignature)];
@@ -308,7 +308,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	if(!SUCCEEDED(VariantChangeType(&vt, &vt, 0, VT_BSTR)))
 		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 
-	std::wstring strDateTime(vt.bstrVal, SysStringLen(vt.bstrVal));
+	std::string strDateTime(stringutils::utf8_encode(vt.bstrVal));
 	_tcprintf(_T("\nCreated %s "), strDateTime.c_str());
 
 	ReadString(m_strComment);
@@ -321,7 +321,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	for (int varname = 0; varname < VarNameCount; varname++)
 	{
 		int VarType = ReadLEBInt();		// тип
-		std::wstring strVarName;
+		std::string strVarName;
 		ReadString(strVarName);			// название
 		// тип и название вводим в карту
 		if (!m_VarNameMap.insert(make_pair(VarType,strVarName)).second)
@@ -479,7 +479,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 	{
 		unsigned __int64 nDeviceType = 0;
 		unsigned __int64 nKeysSize = 0;
-		std::wstring strVarName;
+		std::string strVarName;
 
 		ReadLEB(nDeviceType);
 		ReadString(strVarName);
@@ -526,7 +526,7 @@ void CResultFileReader::OpenFile(const _TCHAR *cszFilePath)
 }
 
 
-void CResultFileReader::ReadString(std::wstring& String)
+void CResultFileReader::ReadString(std::string& String)
 {
 	unsigned __int64 nLen64 = 0;
 	ReadLEB(nLen64);
@@ -601,7 +601,7 @@ double CResultFileReader::GetFileTime()
 	return m_dTimeCreated;
 }
 
-const _TCHAR* CResultFileReader::GetFilePath()
+const char* CResultFileReader::GetFilePath()
 {
 	if (!m_bHeaderLoaded)
 		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
@@ -609,7 +609,7 @@ const _TCHAR* CResultFileReader::GetFilePath()
 	return m_strFilePath.c_str();
 }
 
-const _TCHAR* CResultFileReader::GetComment()
+const char* CResultFileReader::GetComment()
 {
 	if (!m_bHeaderLoaded)
 		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileNotLoadedProperly);
@@ -766,7 +766,7 @@ const CResultFileReader::ChannelHeaderInfo* CResultFileReader::GetChannelHeaders
 }
 
 // возвращает название единиц измерения по заданному типу
-const _TCHAR* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType)
+const char* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType)
 {
 	VARNAMEITRCONST it = m_VarNameMap.find(eUnitsType);
 	if (it != m_VarNameMap.end())
@@ -808,22 +808,22 @@ SAFEARRAY* CResultFileReader::CreateSafeArray(std::unique_ptr<double[]>&& pChann
 	return pSA;
 }
 
-const _TCHAR* CResultFileReader::GetUserComment()
+const char* CResultFileReader::GetUserComment()
 {
 	return m_strUserComment.c_str();
 }
 
-void CResultFileReader::SetUserComment(const _TCHAR* cszUserComment)
+void CResultFileReader::SetUserComment(std::string_view UserComment)
 {
-	if (m_nCommentOffset > 0 && m_nCommentDirectoryOffset > 0 && cszUserComment)
+	if (m_nCommentOffset > 0 && m_nCommentDirectoryOffset > 0 && UserComment.length() > 0)
 	{
 		infile.seekg(m_nCommentOffset, std::ios_base::beg);
-		WriteString(cszUserComment);
+		WriteString(UserComment);
 		infile.truncate();
 		infile.seekg(m_nCommentDirectoryOffset, std::ios_base::beg);
 		DataDirectoryEntry de = {2, m_nCommentOffset};
 		infile.write(&de, sizeof(DataDirectoryEntry));
-		m_strUserComment = cszUserComment;
+		m_strUserComment = UserComment;
 	}
 }
 
@@ -844,4 +844,4 @@ int CResultFileReader::ReadBlockType()
 
 
 const char CResultFile::m_cszSignature[] = { 'R', 'a', 'i', 'd', 'e', 'n' };
-const _TCHAR* CResultFileReader::m_cszUnknownUnits = _T("???");
+const char* CResultFileReader::m_cszUnknownUnits = "???";

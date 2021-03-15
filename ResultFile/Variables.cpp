@@ -1,4 +1,4 @@
-// Variables.cpp : Implementation of CVariablesCollection
+﻿// Variables.cpp : Implementation of CVariablesCollection
 
 #include "stdafx.h"
 #include "Variables.h"

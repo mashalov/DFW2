@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 namespace DFW2
 {
 	class CDynaNodeBase;

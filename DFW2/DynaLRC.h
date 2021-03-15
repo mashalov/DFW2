@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Device.h"
 
 namespace DFW2
@@ -47,7 +47,7 @@ namespace DFW2
 		static const CDeviceContainerProperties DeviceProperties();
 		using LRCDATA = std::vector<CLRCData>;
 		LRCDATA P, Q;
-		void TestDump(const _TCHAR *cszPathName = _T("c:\\tmp\\lrctest.csv"));
+		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");
 	protected:
 		bool CollectConstantData(LRCDATA& LRC);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);

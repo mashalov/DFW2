@@ -27,7 +27,7 @@ namespace DFW2
 		bool BuildDerivatives(CDynaModel *pDynaModel) override { return true; }
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Модуль"); }
+		const char* GetVerbalName() override { return "Модуль"; }
 		static size_t PrimitiveSize() { return sizeof(CAbs); }
 		static long EquationsCount()  { return 1; }
 		void StoreState() override { m_bPositiveSaved = m_bPositive; }

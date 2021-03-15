@@ -35,7 +35,7 @@ public:
 		Indent++;
 
 		EmitLine("DeviceProps.SetType(DEVTYPE_AUTOMATIC);");
-		EmitLine("DeviceProps.SetClassName(_T(\"Automatic & scenario\"), _T(\"Automatic\"));");
+		EmitLine("DeviceProps.SetClassName(\"Automatic & scenario\", \"Automatic\");");
 		EmitLine("DeviceProps.AddLinkFrom(DEVTYPE_MODEL, DLM_SINGLE, DPD_MASTER);");
 
 		size_t nConstVarIndex(0), nExtVarIndex(0), nStateVarIndex(0);
@@ -55,7 +55,7 @@ public:
 				else
 				{
 					_ASSERTE(v.second.IsNamedConstant());
-					constVars.push_back(fmt::format("{{ _T(\"{}\"), {{ {}, eDVT_CONSTSOURCE }} }}", v.first, nConstVarIndex));
+					constVars.push_back(fmt::format("{{ \"{}\", {{ {}, eDVT_CONSTSOURCE }} }}", v.first, nConstVarIndex));
 				}
 				nConstVarIndex++;
 			}
@@ -66,14 +66,14 @@ public:
 				else
 				{
 					_ASSERTE(v.second.IsExternal());
-					extVars.push_back(fmt::format("{{ _T(\"{}\"), {{ {}, DEVTYPE_MODEL }} }}", v.second.ModelLink, nExtVarIndex));
+					extVars.push_back(fmt::format("{{ \"{}\", {{ {}, DEVTYPE_MODEL }} }}", v.second.ModelLink, nExtVarIndex));
 				}
 				nExtVarIndex++;
 			}
 			else
 			{
 				if (v.second.IsMainStateVariable())
-					stateVars.push_back(fmt::format("{{ _T(\"{}\"), {{ {}, VARUNIT_NOTSET }} }}", v.first, nStateVarIndex++));
+					stateVars.push_back(fmt::format("{{ \"{}\", {{ {}, VARUNIT_NOTSET }} }}", v.first, nStateVarIndex++));
 			}
 		}
 
@@ -129,7 +129,7 @@ public:
 			CryptoPP::StringSource ss(SourceText, true, new CryptoPP::Gzip(new CryptoPP::StringSink(Gzipped)));
 			CryptoPP::StringSource b64(Gzipped, true, new CryptoPP::Base64Encoder(new CryptoPP::StringSink(Base64Encoded), false));
 		}
-		std::string Line("static inline constexpr const char* zipSource = ");
+		std::string Line("static constexpr const char* zipSource = ");
 		size_t counter = Base64Encoded.size();
 		size_t varsinline = 0;
 		size_t indent = Line.length();
@@ -295,7 +295,7 @@ public:
 				pin++;
 			}
 			 
-			Line += fmt::format("{{ {}, _T(\"{}\"),  {{ {} }},  {{ {} }} }}",
+			Line += fmt::format("{{ {}, \"{}\",  {{ {} }},  {{ {} }} }}",
 				h->GetHostBlockInfo().PrimitiveCompilerName,
 				h->GetId(),
 				fmt::join(outputs, ", "),

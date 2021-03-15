@@ -31,9 +31,9 @@ void CDynaModel::ReportKLUError(KLU_common& KLUCommon)
 	}
 }
 
-void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view Message, ptrdiff_t nDbIndex)
+void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex)
 {
-	std::string utf8Message(stringutils::utf8_encode(Message));
+	std::string utf8Message(Message);
 
 	if (m_Parameters.m_bLogToConsole)
 	{
@@ -61,13 +61,12 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::wstring_view 
 			break;
 		}
 
-		/*
 		SetConsoleOutputCP(CP_UTF8);
 		std::cout << utf8Message << std::endl;
-		*/
 
-		_setmode(_fileno(stdout), _O_U16TEXT);
-		std::wcout << Message << std::endl;
+		/*_setmode(_fileno(stdout), _O_U16TEXT);
+		std::cout << Message << std::endl;
+		*/
 
 		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
 	}
@@ -112,7 +111,7 @@ struct RightVector* CDynaModel::GetRightVector(const VariableIndexBase& Variable
 struct RightVector* CDynaModel::GetRightVector(const ptrdiff_t nRow)
 {
 	if (nRow < 0 || nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(fmt::format(_T("CDynaModel::GetRightVector matrix size overrun Row {} MatrixSize {}"), nRow, m_nEstimatedMatrixSize));
+		throw dfw2error(fmt::format("CDynaModel::GetRightVector matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
 	return pRightVector + nRow;
 }
 
@@ -266,7 +265,7 @@ bool CDynaModel::UpdateExternalVariables()
 }
 
 
-CDeviceContainer* CDynaModel::GetContainerByAlias(std::wstring_view Alias)
+CDeviceContainer* CDynaModel::GetContainerByAlias(std::string_view Alias)
 {
 	CDeviceContainer *pContainer(nullptr);
 	auto it = std::find_if(m_DeviceContainers.begin(), 
@@ -310,7 +309,7 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 	{
 		pVectorBegin = *ppSortOrder;
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, 
-					fmt::format(_T("{:<6} {} {} Rtol {} Atol {}"), 
+					fmt::format("{:<6} {} {} Rtol {} Atol {}", 
 								   pVectorBegin->nErrorHits,
 								   pVectorBegin->pDevice->GetVerbalName(),
 								   pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
@@ -391,7 +390,7 @@ csi cs_gatxpy(const cs *A, const double *x, double *y)
 void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 {
 	FILE* fmatx(nullptr);
-	if (!_tfopen_s(&fmatx, _T("c:\\tmp\\dwfsingularmatrix.mtx"), _T("w+")))
+	if (!fopen_s(&fmatx, "c:\\tmp\\dwfsingularmatrix.mtx", "w+"))
 	{
 		std::unique_ptr<FILE, decltype(&fclose)> fmatrix(fmatx, &fclose);
 		ptrdiff_t *pAi = klu.Ap();
@@ -412,7 +411,7 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 			bool bAllZeros = true;
 			while (pAi < pAiend)
 			{
-				_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g"), nRow, *pAi, *pAx);
+				fprintf(fmatrix.get(), "%10td %10td     %30g", nRow, *pAi, *pAx);
 				RightVector *pRowVector = pRightVector + nRow;
 				RightVector *pColVector = pRightVector + *pAi;
 				CDevice *pRowDevice = pRowVector->pDevice;
@@ -431,9 +430,9 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 				}
 
 				
-				_ftprintf_s(fmatrix.get(), _T("    %50s/%30s %50s/%30s"), pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
+				fprintf(fmatrix.get(), "    %50s/%30s %50s/%30s", pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
 												  				    pColDevice->GetVerbalName(), pColDevice->VariableNameByPtr(pColVector->pValue));
-				_ftprintf_s(fmatrix.get(), _T("    %30g %30g\n"), *pRowVector->pValue, *pColVector->pValue);
+				fprintf(fmatrix.get(), "    %30g %30g\n", *pRowVector->pValue, *pColVector->pValue);
 				pAx++; pAi++;
 			}
 			if (bAllZeros)
@@ -441,18 +440,18 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 		}
 
 		for (const auto& it : BadNumbers)
-			_ftprintf_s(fmatrix.get(), _T("Bad Number in Row: %td\n"), it);
+			fprintf(fmatrix.get(), "Bad Number in Row: %td\n", it);
 
 		for (const auto& it : FullZeros)
-			_ftprintf_s(fmatrix.get(), _T("Full Zero Row : %td\n"), it);
+			fprintf(fmatrix.get(), "Full Zero Row : %td\n", it);
 
 		for (auto&& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
 			if(!*it)
-				_ftprintf_s(fmatrix.get(), _T("Full Zero Column: %td\n"), it - NonZeros.begin());
+				fprintf(fmatrix.get(), "Full Zero Column: %td\n", it - NonZeros.begin());
 
 		for (auto&& it = Diagonals.begin(); it != Diagonals.end(); it++)
 			if (!*it)
-				_ftprintf_s(fmatrix.get(), _T("Zero Diagonal: %td\n"), it - Diagonals.begin());
+				fprintf(fmatrix.get(), "Zero Diagonal: %td\n", it - Diagonals.begin());
 
 
 		if (bAnalyzeLinearDependenies)
@@ -506,11 +505,11 @@ void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
 						double Ratio = inner * inner / normj / normi;
 						if (fabs(Ratio - 1.0) < 1E-5)
 						{
-							_ftprintf_s(fmatrix.get(), _T("Linear dependent rows %10td %10td with %g\n"), nRow, nRows, Ratio);
+							fprintf(fmatrix.get(), "Linear dependent rows %10td %10td with %g\n", nRow, nRows, Ratio);
 							for (auto& it : RowI)
-								_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g\n"), nRow, it.first, it.second);
+								fprintf(fmatrix.get(), "%10td %10td     %30g\n", nRow, it.first, it.second);
 							for (auto& it : RowJ)
-								_ftprintf_s(fmatrix.get(), _T("%10td %10td     %30g\n"), nRows, it.first, it.second);
+								fprintf(fmatrix.get(), "%10td %10td     %30g\n", nRows, it.first, it.second);
 						}
 
 					}
@@ -524,26 +523,26 @@ void CDynaModel::DumpStateVector()
 {
 	FILE *fdump(nullptr);
 	setlocale(LC_ALL, "ru-ru");
-	if (!_tfopen_s(&fdump, fmt::format(_T("c:\\tmp\\statevector_{}.csv"), sc.nStepsCount).c_str(), _T("w+, ccs=UTF-8")))
+	if (!fopen_s(&fdump, fmt::format("c:\\tmp\\statevector_{}.csv", sc.nStepsCount).c_str(), "w+"))
 	{
-		_ftprintf(fdump, _T("Value;db;Device;N0;N1;N2;Error;WError;Atol;Rtol;EqType;SN0;SN1;SN2;SavError;Tminus2Val;PhysEqType;PrimBlockType;ErrorHits\n"));
+		fprintf(fdump, "Value;db;Device;N0;N1;N2;Error;WError;Atol;Rtol;EqType;SN0;SN1;SN2;SavError;Tminus2Val;PhysEqType;PrimBlockType;ErrorHits\n");
 		for (RightVector *pRv = pRightVector; pRv < pRightVector + klu.MatrixSize(); pRv++)
 		{
-			_ftprintf(fdump, _T("%g;"), *pRv->pValue);
-			_ftprintf(fdump, _T("%g;"), fabs(pRv->b));
-			_ftprintf(fdump, _T("%s - %s;"), pRv->pDevice->GetVerbalName(), pRv->pDevice->VariableNameByPtr(pRv->pValue));
-			_ftprintf(fdump, _T("%g;%g;%g;"), pRv->Nordsiek[0], pRv->Nordsiek[1], pRv->Nordsiek[2]);
-			_ftprintf(fdump, _T("%g;"), fabs(pRv->Error));
-			_ftprintf(fdump, _T("%g;"), fabs(pRv->GetWeightedError(pRv->b, *pRv->pValue)));
-			_ftprintf(fdump, _T("%g;%g;"), pRv->Atol, pRv->Rtol);
-			_ftprintf(fdump, _T("%d;"), pRv->EquationType);
-			_ftprintf(fdump, _T("%g;%g;%g;"), pRv->SavedNordsiek[0], pRv->SavedNordsiek[1], pRv->SavedNordsiek[2]);
-			_ftprintf(fdump, _T("%g;"), pRv->SavedError);
-			_ftprintf(fdump, _T("%g;"), pRv->Tminus2Value);
-			_ftprintf(fdump, _T("%d;"), pRv->PhysicalEquationType);
-			_ftprintf(fdump, _T("%d;"), pRv->PrimitiveBlock);
-			_ftprintf(fdump, _T("%td;"), pRv->nErrorHits);
-			_ftprintf(fdump, _T("\n"));
+			fprintf(fdump, "%g;", *pRv->pValue);
+			fprintf(fdump, "%g;", fabs(pRv->b));
+			fprintf(fdump, "%s - %s;", pRv->pDevice->GetVerbalName(), pRv->pDevice->VariableNameByPtr(pRv->pValue));
+			fprintf(fdump, "%g;%g;%g;", pRv->Nordsiek[0], pRv->Nordsiek[1], pRv->Nordsiek[2]);
+			fprintf(fdump, "%g;", fabs(pRv->Error));
+			fprintf(fdump, "%g;", fabs(pRv->GetWeightedError(pRv->b, *pRv->pValue)));
+			fprintf(fdump, "%g;%g;", pRv->Atol, pRv->Rtol);
+			fprintf(fdump, "%d;", pRv->EquationType);
+			fprintf(fdump, "%g;%g;%g;", pRv->SavedNordsiek[0], pRv->SavedNordsiek[1], pRv->SavedNordsiek[2]);
+			fprintf(fdump, "%g;", pRv->SavedError);
+			fprintf(fdump, "%g;", pRv->Tminus2Value);
+			fprintf(fdump, "%d;", pRv->PhysicalEquationType);
+			fprintf(fdump, "%d;", pRv->PrimitiveBlock);
+			fprintf(fdump, "%td;", pRv->nErrorHits);
+			fprintf(fdump, "\n");
 		}
 		fclose(fdump);
 	}

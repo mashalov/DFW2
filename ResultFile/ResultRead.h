@@ -1,4 +1,4 @@
-// Result.h : Declaration of the CResult
+﻿// Result.h : Declaration of the CResult
 
 #pragma once
 #include "resource.h"       // main symbols
@@ -80,7 +80,7 @@ public:
 	STDMETHOD(get_UserComment)(BSTR* UserComment);
 	STDMETHOD(put_UserComment)(BSTR UserComment);
 	STDMETHOD(get_CompressionRatio)(DOUBLE *pRatio);
-	void OpenFile(const _TCHAR* cszPathName);
+	void OpenFile(std::string_view PathName);
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(ResultRead), CResultRead)

@@ -1,10 +1,10 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "Automatic.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
 
-CAutomaticItem::CAutomaticItem(long Type, ptrdiff_t Id, std::wstring_view Name) :
+CAutomaticItem::CAutomaticItem(long Type, ptrdiff_t Id, std::string_view Name) :
 		m_nType(Type),
 		m_nId(Id),
 		m_strName(Name)
@@ -14,11 +14,11 @@ CAutomaticItem::CAutomaticItem(long Type, ptrdiff_t Id, std::wstring_view Name) 
 
 CAutomaticAction::CAutomaticAction(long Type,
 		ptrdiff_t Id,
-	    std::wstring_view Name,
+	    std::string_view Name,
 		long LinkType,
-		std::wstring_view ObjectClass,
-		std::wstring_view ObjectKey,
-		std::wstring_view ObjectProp,
+		std::string_view ObjectClass,
+		std::string_view ObjectKey,
+		std::string_view ObjectProp,
 		long ActionGroup,
 		long OutputMode,
 		long RunsCount) :
@@ -43,8 +43,8 @@ CAutomaticAction::~CAutomaticAction()
 
 CAutomaticLogic::CAutomaticLogic(long Type,
 	ptrdiff_t Id,
-	std::wstring_view Name,
-	std::wstring_view Actions,
+	std::string_view Name,
+	std::string_view Actions,
 	long OutputMode) :
 
 	CAutomaticItem(Type, Id, Name),
@@ -83,14 +83,14 @@ CAutomatic::~CAutomatic()
 
 void CAutomatic::CompileModels()
 {
-	std::wofstream src;
-	src.open(_T("c:\\tmp\\auto.cmp"), std::fstream::out);
+	std::ofstream src;
+	src.open("c:\\tmp\\auto.cmp", std::fstream::out);
 	if (src.is_open())
 	{
-		src << _T("main\n{\n") << source.str() << _T("}\n");
+		src << "main\n{\n" << source.str() << "}\n";
 		src.close();
 
-		auto pCompiler = std::make_shared<CCompilerDLL>(_T("UMC.dll"), "CompilerFactory");
+		auto pCompiler = std::make_shared<CCompilerDLL>("UMC.dll", "CompilerFactory");
 		
 		std::stringstream Sourceutf8stream;
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
@@ -119,7 +119,7 @@ void CAutomatic::CompileModels()
 		);
 		*/
 
-		Sourceutf8stream <<"main\n{\n" << stringutils::utf8_encode(source.str()) << "}\n";
+		Sourceutf8stream <<"main\n{\n" << source.str() << "}\n";
 #ifdef _WIN64
 		Compiler->SetProperty("Platform", "x64");
 #else
@@ -138,7 +138,7 @@ void CAutomatic::CompileModels()
 		Compiler->SetProperty("ProjectName", "automatic");
 
 		if (!Compiler->Compile(Sourceutf8stream))
-			throw dfw2error(_T("Ошибка компиляции"));
+			throw dfw2error("РћС€РёР±РєР° РєРѕРјРїРёР»СЏС†РёРё");
 
 		pathAutomaticDLL = Compiler->GetProperty("DllLibraryPath");
 		pathAutomaticDLL.append(Compiler->GetProperty("ProjectName")).replace_extension(".dll");
@@ -146,19 +146,19 @@ void CAutomatic::CompileModels()
 }
 
 
-#define COMSTR(a) std::wstring((a)).c_str()
+#define COMSTR(a) std::string((a)).c_str()
 
 bool CAutomatic::AddStarter(long Type,
 							long Id,
-							std::wstring_view Name,
-							std::wstring_view Expression,
+							std::string_view Name,
+							std::string_view Expression,
 							long LinkType,
-							std::wstring_view ObjectClass,
-							std::wstring_view ObjectKey,
-						    std::wstring_view ObjectProp)
+							std::string_view ObjectClass,
+							std::string_view ObjectKey,
+						    std::string_view ObjectProp)
 {
-	source << fmt::format(_T("S{} = starter({}, {}[{}].{})\n"), Id, 
-		Expression.empty() ? _T("V") : Expression,
+	source << fmt::format("S{} = starter({}, {}[{}].{})\n", Id, 
+		Expression.empty() ? "V" : Expression,
 		ObjectClass, 
 		ObjectKey, 
 		ObjectProp);
@@ -169,14 +169,14 @@ bool CAutomatic::AddStarter(long Type,
 
 bool CAutomatic::AddLogic(long Type,
 						  long Id,
-						  std::wstring_view Name,
-						  std::wstring_view Expression,
-						  std::wstring_view Actions,
-						  std::wstring_view DelayExpression,
+						  std::string_view Name,
+						  std::string_view Expression,
+						  std::string_view Actions,
+						  std::string_view DelayExpression,
 						  long OutputMode)
 {
-	source << fmt::format(_T("L{} = {}\n"), Id, Expression);
-	source << fmt::format(_T("LT{} = relay(L{}, 0.0, {})\n"), Id, Id, DelayExpression.empty() ? _T("0") : DelayExpression);
+	source << fmt::format("L{} = {}\n", Id, Expression);
+	source << fmt::format("LT{} = relay(L{}, 0.0, {})\n", Id, Id, DelayExpression.empty() ? "0" : DelayExpression);
 
 	m_lstLogics.push_back(std::make_unique<CAutomaticLogic>(Type, Id, Name, Actions, OutputMode));
 	m_mapLogics.insert(std::make_pair(Id, m_lstLogics.back().get()));
@@ -186,18 +186,18 @@ bool CAutomatic::AddLogic(long Type,
 
 bool CAutomatic::AddAction(long Type,
 						   long Id,
-						   std::wstring_view Name,
-						   std::wstring_view Expression,
+						   std::string_view Name,
+						   std::string_view Expression,
 						   long LinkType,
-						   std::wstring_view ObjectClass,
-						   std::wstring_view ObjectKey,
-						   std::wstring_view ObjectProp,
+						   std::string_view ObjectClass,
+						   std::string_view ObjectKey,
+						   std::string_view ObjectProp,
 						   long ActionGroup,
 						   long OutputMode,
 						   long RunsCount)
 {
-	source << fmt::format(_T("A{} = action({}, {}[{}].{})\n"), Id,
-		Expression.empty() ? _T("V") : Expression,
+	source << fmt::format("A{} = action({}, {}[{}].{})\n", Id,
+		Expression.empty() ? "V" : Expression,
 		ObjectClass,
 		ObjectKey,
 		ObjectProp);
@@ -211,10 +211,10 @@ void CAutomatic::Init()
 {
 	CDeviceContainer *pAutomaticContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_AUTOMATIC);
 	if(!pAutomaticContainer)
-		throw dfw2error(_T("CAutomatic::Init AutomaticContainer not available"));
+		throw dfw2error("CAutomatic::Init AutomaticContainer not available");
 	CCustomDevice *pCustomDevice = static_cast<CCustomDevice*>(pAutomaticContainer->GetDeviceByIndex(0));
 	if (!pCustomDevice)
-		throw dfw2error(_T("CAutomatic::Init CustomDevice for automatic not available"));
+		throw dfw2error("CAutomatic::Init CustomDevice for automatic not available");
 
 	bool bRes = true;
 	STRINGLIST ActionList;
@@ -222,26 +222,26 @@ void CAutomatic::Init()
 	for (auto&& it : m_lstLogics)
 	{
 		CAutomaticItem *pLogic= it.get();
-		std::wstring strVarName = fmt::format(_T("LT{}"), pLogic->GetId());
+		std::string strVarName = fmt::format("LT{}", pLogic->GetId());
 
-		// находим в автоматике выходное реле элемента логики по имени выхода
+		// РЅР°С…РѕРґРёРј РІ Р°РІС‚РѕРјР°С‚РёРєРµ РІС‹С…РѕРґРЅРѕРµ СЂРµР»Рµ СЌР»РµРјРµРЅС‚Р° Р»РѕРіРёРєРё РїРѕ РёРјРµРЅРё РІС‹С…РѕРґР°
 		CRelayDelay *pActionRelay = static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName.c_str()));
 		if (!pActionRelay)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszLogicNotFoundInDLL, strVarName));
 
 		pActionRelay->SetDiscontinuityId(pLogic->GetId());
 		CAutomaticLogic *pLogicItem = static_cast<CAutomaticLogic*>(pLogic);
-		const std::wstring strActions = pLogicItem->GetActions();
-		stringutils::split(strActions, _T(";,"), ActionList);
+		const std::string strActions = pLogicItem->GetActions();
+		stringutils::split(strActions, ";,", ActionList);
 
 		for (auto&& sit : ActionList)
 		{
-			std::wstring strAction = sit;
+			std::string strAction = sit;
 			stringutils::trim(strAction);
 			if (!strAction.empty())
 			{
 				ptrdiff_t nId(0);
-				if (_stscanf_s(strAction.c_str(), _T("A%td"), &nId) == 1)
+				if (sscanf_s(strAction.c_str(), "A%td", &nId) == 1)
 				{
 					auto mit = m_AutoActionGroups.find(nId);
 					if (mit != m_AutoActionGroups.end())
@@ -348,7 +348,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 	bool bRes = true;
 	_ASSERTE(!m_pAction);
 	_ASSERTE(!m_pValue);
-	std::wstring strVarName = fmt::format(cszActionTemplate, m_nId);
+	std::string strVarName = fmt::format(cszActionTemplate, m_nId);
 	m_pValue = pCustomDevice->GetVariableConstPtr(strVarName.c_str());
 	if (m_pValue)
 	{
@@ -421,4 +421,4 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 }
 
 
-const _TCHAR* CAutomaticAction::cszActionTemplate = _T("A{}");
+const char* CAutomaticAction::cszActionTemplate = "A{}";

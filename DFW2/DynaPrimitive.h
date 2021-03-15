@@ -12,7 +12,7 @@ namespace DFW2
 	using PRIMITIVEPARAMETERSDEFAULT = std::vector<PRIMITIVEPARAMETERDEFAULT>;
 	using DOUBLEREFVEC = std::vector<std::reference_wrapper<double>>;
 
-	// Входая переменная примитива 
+	// Входная переменная примитива 
 	// Унифицирует типы переменных - внутренней и внешней
 	// Если входная переменная связана с внешней - используем ссылку на указатель внешней переменной, поэтому
 	// InputVariable всегда тождественна внешней переменной
@@ -79,7 +79,7 @@ namespace DFW2
 			if (end - begin > index)
 				return *(begin + index);
 			else
-				throw dfw2error(_T("IORange Iterator out of range"));
+				throw dfw2error("IORange Iterator out of range");
 		}
 	};
 
@@ -133,7 +133,7 @@ namespace DFW2
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel) = 0;
 
 		virtual bool Init(CDynaModel *pDynaModel);
-		virtual const _TCHAR* GetVerbalName() { return _T(""); }
+		virtual const char* GetVerbalName() { return ""; }
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) { return eDEVICEFUNCTIONSTATUS::DFS_OK; }
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
 		virtual bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) { return true; }

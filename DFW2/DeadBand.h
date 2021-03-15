@@ -45,7 +45,7 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 
-		const _TCHAR* GetVerbalName() override { return _T("Мертвая зона"); }
+		const char* GetVerbalName() override { return "Мертвая зона"; }
 		static size_t PrimitiveSize() { return sizeof(CDeadBand); }
 		static long EquationsCount()  { return 1; }
 		void StoreState() override { m_eDbStateSaved = m_eDbState; }

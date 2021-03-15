@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "fstream"
 #include "filesystem"
 #include "FileExceptions.h"
@@ -7,7 +7,7 @@ namespace DFW2
 {
 	class CStreamedFile : protected std::fstream
 	{
-		std::wstring filename;
+		std::string filename;
 	public:
 
 		bool is_open() const { return std::fstream::is_open(); }
@@ -47,7 +47,7 @@ namespace DFW2
 		template <typename T>
 		CStreamedFile& operator << (const T& v)
 		{
-			std::fstream::operator<<(v);
+			std::fstream::operator << (v);
 			return *this;
 		}
 
@@ -60,8 +60,7 @@ namespace DFW2
 
 
 
-		template<typename T>
-		void open(const T* FileName, ios_base::openmode mode = ios_base::in | ios_base::out)
+		void open(std::string_view FileName, ios_base::openmode mode = ios_base::in | ios_base::out)
 		{
 			filename = FileName;
 			std::fstream::open(filename, mode);
@@ -78,7 +77,7 @@ namespace DFW2
 				std::fstream::close(); 
 		}
 
-		std::wstring_view path()
+		std::string_view path()
 		{
 			return filename;
 		}

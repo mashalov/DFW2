@@ -77,7 +77,7 @@ namespace DFW2
 		// тип устройства хранится в атрибутах контейнера. Устройство вне контейнера не знает своего типа
 		inline eDFW2DEVICETYPE GetType() { return m_ContainerProps.GetType(); }
 		// текстовое описание типа устройства
-		const _TCHAR* GetTypeName() { return m_ContainerProps.GetVerbalClassName(); }
+		const char* GetTypeName() { return m_ContainerProps.GetVerbalClassName(); }
 
 		CDeviceContainer(CDynaModel *pDynaModel);
 		virtual ~CDeviceContainer();
@@ -126,10 +126,10 @@ namespace DFW2
 		// добавление переменных состояния и констант устройств к атрибутам контейнера
 		// константы и переменные состояния обрабатываются по разному, т.к. для констант нет уравнений
 		// и они в процессе расчета не изменяются
-		bool RegisterVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits);
-		bool RegisterConstVariable(std::wstring_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType);
+		bool RegisterVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits);
+		bool RegisterConstVariable(std::string_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType);
 		// управление выводом переменной в результаты
-		bool VariableOutputEnable(const _TCHAR* cszVarName, bool bOutputEnable);
+		bool VariableOutputEnable(std::string_view VarName, bool bOutputEnable);
 
 		// диапазон карты переменных состояния
 		VARINDEXMAPCONSTITR VariablesBegin();
@@ -140,8 +140,8 @@ namespace DFW2
 		CONSTVARINDEXMAPCONSTITR ConstVariablesEnd();
 
 		
-		ptrdiff_t GetVariableIndex(std::wstring_view VarName)	  const;	// получить индекс переменной состояния по имени
-		ptrdiff_t GetConstVariableIndex(std::wstring_view VarName) const;	// получить индекс константы состояния по имени
+		ptrdiff_t GetVariableIndex(std::string_view VarName)	  const;	// получить индекс переменной состояния по имени
+		ptrdiff_t GetConstVariableIndex(std::string_view VarName) const;	// получить индекс константы состояния по имени
 		CDevice* GetDeviceByIndex(ptrdiff_t nIndex);						// получить устройство по индексу
 		CDevice* GetDevice(CDeviceId* pDeviceId);							// получить устройство по базовому идентификатору
 		CDevice* GetDevice(ptrdiff_t nId);									// получить устройство по идентификатору
@@ -151,7 +151,7 @@ namespace DFW2
 		size_t Count();														// получить количество устройств в контейнере
 		inline DEVICEVECTORITR begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
 		inline DEVICEVECTORITR end() { return m_DevVec.end(); }
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const std::wstring_view Message, ptrdiff_t nDBIndex = -1);
+		void Log(CDFW2Messages::DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);
 
 		LINKSVEC m_Links;													// вектор возможных связей. Элемент вектора - связь с определенным типом устройств
 		bool IsKindOfType(eDFW2DEVICETYPE eType);
@@ -190,7 +190,7 @@ namespace DFW2
 		virtual ptrdiff_t GetPossibleSingleLinksCount();
 		CDeviceContainer* DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		size_t GetResultVariablesCount();									// получить количество переменных, которое нужно выводить в результаты
-		bool HasAlias(std::wstring_view Alias);								// соответствует ли тип устройства заданному псевдониму
+		bool HasAlias(std::string_view Alias);								// соответствует ли тип устройства заданному псевдониму
 		ptrdiff_t GetSingleLinkIndex(eDFW2DEVICETYPE eDevType);				// получить индекс ссылки один-к-одному по типу устройства
 	};
 

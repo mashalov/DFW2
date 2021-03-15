@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "Sum.h"
 #include "DynaModel.h"
 

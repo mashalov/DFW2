@@ -1,4 +1,4 @@
-#include "stdafx.h"
+п»ї#include "stdafx.h"
 #include "Comparator.h"
 #include "DynaModel.h"
 
@@ -55,7 +55,7 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 	{
 		SetCurrentState(pDynaModel, RS_OFF);
 		rH = 1.0;
-		_ASSERTE(0); // корня нет, но знак изменился !
+		_ASSERTE(0); // РєРѕСЂРЅСЏ РЅРµС‚, РЅРѕ Р·РЅР°Рє РёР·РјРµРЅРёР»СЃСЏ !
 	}
 	else
 		rH = 1.0;
@@ -90,7 +90,7 @@ double CComparator::OnStateOff(CDynaModel *pDynaModel)
 	{
 		SetCurrentState(pDynaModel, RS_ON);
 		rH = 1.0;
-		_ASSERTE(0); // корня нет, но знак изменился !
+		_ASSERTE(0); // РєРѕСЂРЅСЏ РЅРµС‚, РЅРѕ Р·РЅР°Рє РёР·РјРµРЅРёР»СЃСЏ !
 	}
 	else
 		rH = 1.0;

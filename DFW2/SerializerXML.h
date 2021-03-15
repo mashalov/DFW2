@@ -8,7 +8,7 @@ namespace DFW2
 	{
 	protected:
 		// карта типов устройств
-		using TypeMapType = std::map<ptrdiff_t, std::wstring>;
+		using TypeMapType = std::map<ptrdiff_t, std::string>;
 		MSXML2::IXMLDOMDocument3Ptr m_spXMLDoc;
 		MSXML2::IXMLDOMElementPtr m_spXMLItems;
 		void AddLink(MSXML2::IXMLDOMElementPtr& xmlItem, CDevice *pLinkedDevice, bool bMaster);
@@ -17,12 +17,12 @@ namespace DFW2
 	public:
 		CSerializerXML() {}
 		virtual ~CSerializerXML() {}
-		void AddDeviceTypeDescription(ptrdiff_t nType, std::wstring_view Name);
+		void AddDeviceTypeDescription(ptrdiff_t nType, std::string_view Name);
 		void CreateNewSerialization();
 		void Commit();
 		void SerializeClass(SerializerPtr& Serializer);
 		void SerializeClassMeta(SerializerPtr& Serializer);
-		static const _TCHAR *m_cszVim;
+		static const char* m_cszVim;
 	};
 }
 

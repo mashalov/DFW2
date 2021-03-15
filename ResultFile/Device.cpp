@@ -1,4 +1,4 @@
-// Device.cpp : Implementation of CDevice
+﻿// Device.cpp : Implementation of CDevice
 
 #include "stdafx.h"
 #include "Device.h"
@@ -40,7 +40,7 @@ STDMETHODIMP CDevice::get_Name(BSTR* Name)
 	HRESULT hRes = E_INVALIDARG;
 	if (Name && m_pDeviceInfo)
 	{
-		*Name = SysAllocString(m_pDeviceInfo->Name.c_str());
+		*Name = SysAllocString(stringutils::utf8_decode(m_pDeviceInfo->Name).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -51,7 +51,7 @@ STDMETHODIMP CDevice::get_TypeName(BSTR* TypeName)
 	HRESULT hRes = E_INVALIDARG;
 	if (TypeName && m_pDeviceInfo)
 	{
-		*TypeName = SysAllocString(m_pDeviceInfo->m_pDevType->strDevTypeName.c_str());
+		*TypeName = SysAllocString(stringutils::utf8_decode(m_pDeviceInfo->m_pDevType->strDevTypeName).c_str());
 		hRes = S_OK;
 	}
 	return hRes;

@@ -86,7 +86,7 @@ namespace DFW2
 				const auto& pNodeB = m_Nodes.find(psrc.SetId(edge->m_IdBegin));
 				const auto& pNodeE = m_Nodes.find(psrc.SetId(edge->m_IdEnd));
 				if(pNodeB == m_Nodes.end() || pNodeE == m_Nodes.end())
-					throw dfw2error(_T("GraphCycle::BuildGraph - one of the edge's nodes not found"));
+					throw dfw2error("GraphCycle::BuildGraph - one of the edge's nodes not found");
 				// задаем указатели на узлы начала и конца в ребре
 				edge->m_pBegin = *pNodeB;
 				edge->m_pEnd = *pNodeE;
@@ -144,7 +144,7 @@ namespace DFW2
 		void AddNode(GraphNodeBase *pNode)
 		{
 			if (!m_Nodes.insert(pNode).second)
-				throw dfw2error(_T("GraphCycle::AddNode - Duplicated node"));
+				throw dfw2error("GraphCycle::AddNode - Duplicated node");
 		}
 
 		void AddEdge(GraphEdgeBase *pEdge)
@@ -247,10 +247,10 @@ namespace DFW2
 
 						Cycles.push_back(CurrentCycle);
 						/*
-						_tcprintf(_T("\nCycle"));
+						_tcprintf("\nCycle");
 						for (auto&& it : Cycle)
 						{
-							_tcprintf(_T("\n%s %d-%d"), it.m_bDirect ? _T("+") : _T("-"), it.m_pEdge->m_IdBegin, it.m_pEdge->m_IdEnd);
+							_tcprintf("\n%s %d-%d", it.m_bDirect ? "+" : "-", it.m_pEdge->m_IdBegin, it.m_pEdge->m_IdEnd);
 						}
 						*/
 					}
@@ -267,7 +267,7 @@ namespace DFW2
 			}
 
 			if (m_Nodes.size() - m_Edges.size() + Cycles.size() != 1)
-				throw dfw2error(_T("GraphCycle::GenerateCycles - Cycles count mismatch"));
+				throw dfw2error("GraphCycle::GenerateCycles - Cycles count mismatch");
 
 		}
 
