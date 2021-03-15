@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include "cex.h"
 #include "dfw2exception.h"
 
 namespace DFW2

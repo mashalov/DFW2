@@ -181,7 +181,6 @@
     <ClInclude Include="Abs.h" />
     <ClInclude Include="AndOrNot.h" />
     <ClInclude Include="Automatic.h" />
-    <ClInclude Include="cex.h" />
     <ClInclude Include="Comparator.h" />
     <ClInclude Include="CustomDevice.h" />
     <ClInclude Include="CustomDeviceContainer.h" />

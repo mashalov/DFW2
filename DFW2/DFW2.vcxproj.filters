@@ -73,9 +73,6 @@
     <ClInclude Include="Header.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="cex.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="DynaNode.h">
       <Filter>Header Files</Filter>
     </ClInclude>

@@ -1,11 +1,16 @@
 ﻿#pragma once
 #include <stdlib.h>  
+#ifdef _MSC_VER
 #include <crtdbg.h>  
+#endif
 
 #define _USE_MATH_DEFINES
 #include <cmath>
 
+#ifdef _MSC_VER
 #include "windows.h"
+#endif
+
 #include "string"
 #include "complex"
 #include "vector"
@@ -13,7 +18,6 @@
 #include "map"
 #include "set"
 #include "algorithm"
-#include "cex.h"
 #include "dfw2exception.h"
 #include "Messages.h"
 

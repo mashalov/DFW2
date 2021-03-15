@@ -1,6 +1,8 @@
 ﻿#pragma once
+
+#include "..\DFW2\dfw2exception.h"
 #include "..\DFW2\Messages.h"
-#include "..\DFW2\cex.h"
+
 #include <windows.h>
 
 #ifdef _DEBUG

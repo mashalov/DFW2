@@ -5,7 +5,6 @@
 #include "map"
 #include "list"
 #include "vector"
-#include "cex.h"
 #include "dfw2exception.h"
 #include "Header.h"
 namespace DFW2

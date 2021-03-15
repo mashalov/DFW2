@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <stdexcept>
 #include <memory>
+#include "stringutils.h"
 #include "..\fmt\include\fmt\core.h"
 #include "..\fmt\include\fmt\format.h"
 #include <system_error>
