@@ -51,7 +51,7 @@ public:
 			if (v.second.NamedConstant)
 			{
 				if(v.second.VarInstances.size() == 0)
-					pTree->Warning(fmt::format(u8"Переменная \"{}\" объявлена как константа, но не используется в модели", v.first));
+					pTree->Warning(fmt::format("Переменная \"{}\" объявлена как константа, но не используется в модели", v.first));
 				else
 				{
 					_ASSERTE(v.second.IsNamedConstant());
@@ -62,7 +62,7 @@ public:
 			else if (v.second.External)
 			{
 				if (v.second.VarInstances.size() == 0)
-					pTree->Warning(fmt::format(u8"Переменная \"{}\" объявлена как внешняя, но не используется в модели", v.first));
+					pTree->Warning(fmt::format("Переменная \"{}\" объявлена как внешняя, но не используется в модели", v.first));
 				else
 				{
 					_ASSERTE(v.second.IsExternal());
@@ -527,7 +527,7 @@ public:
 		HeaderPath.append(CustomDeviceHeader);
 		OutputStream.open(HeaderPath);
 		if (!OutputStream.is_open())
-			throw std::system_error(std::error_code(GetLastError(),std::system_category()), fmt::format(u8"Невозможно открыть файл \"{}\"", OutputPath.u8string()));
+			throw std::system_error(std::error_code(GetLastError(),std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
 		GenerateHeader();
 		OutputStream.close();
 		pTree->PrintErrorsWarnings();

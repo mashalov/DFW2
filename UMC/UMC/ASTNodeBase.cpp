@@ -200,7 +200,7 @@ std::string CASTNodeBase::ParentEquationSourceDescription()
 
 void CASTNodeBase::Warning(std::string_view warning, bool SourceOnly)
 {
-     pTree->Warning(fmt::format(u8"{} {}", warning, SourceOnly ? ParentEquationSourceDescription() : ParentEquationDescription()));
+     pTree->Warning(fmt::format("{} {}", warning, SourceOnly ? ParentEquationSourceDescription() : ParentEquationDescription()));
 }
 
 void CASTNodeBase::Error(std::string_view error, bool SourceOnly)
@@ -208,7 +208,7 @@ void CASTNodeBase::Error(std::string_view error, bool SourceOnly)
     if (!IsError)
     {
         IsError = true;
-        pTree->Error(fmt::format(u8"{} {}", error, SourceOnly ? ParentEquationSourceDescription() : ParentEquationDescription()));
+        pTree->Error(fmt::format("{} {}", error, SourceOnly ? ParentEquationSourceDescription() : ParentEquationDescription()));
     }
 }
 

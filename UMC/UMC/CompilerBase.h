@@ -98,13 +98,13 @@ public:
         }
         catch (std::exception& ex)
         {
-            pTree->Error(fmt::format(u8"Исключение {}", ex.what()));
+            pTree->Error(fmt::format("Исключение {}", ex.what()));
         }
 
         if (pTree->ErrorCount() == 0)
-            pTree->Message(fmt::format(u8"Выполнена компиляция модуля \"{}\"", pathDLLOutput.filename().u8string()));
+            pTree->Message(fmt::format("Выполнена компиляция модуля \"{}\"", pathDLLOutput.filename().string()));
         else
-            pTree->Error(fmt::format(u8"Ошибка компиляции модуля \"{}\"", pathDLLOutput.filename().u8string()));
+            pTree->Error(fmt::format("Ошибка компиляции модуля \"{}\"", pathDLLOutput.filename().string()));
 
         return pTree->ErrorCount() == 0;
     }

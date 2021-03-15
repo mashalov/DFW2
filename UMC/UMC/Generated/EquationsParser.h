@@ -1,5 +1,5 @@
 
-// Generated from C:\Users\masha\source\repos\DFW2\UMC\UMC\Equations.g4 by ANTLR 4.8
+// Generated from C:\Users\masha\source\repos\DFW2\UMC\UMC\Equations.g4 by ANTLR 4.9.2
 
 #pragma once
 
@@ -27,7 +27,7 @@ public:
     RuleModlinkbase = 17, RuleExpression = 18
   };
 
-  EquationsParser(antlr4::TokenStream *input);
+  explicit EquationsParser(antlr4::TokenStream *input);
   ~EquationsParser();
 
   virtual std::string getGrammarFileName() const override;
@@ -228,8 +228,8 @@ public:
 
   class  EquationContext : public antlr4::ParserRuleContext {
   public:
-    EquationsParser::ExpressionContext *left = nullptr;;
-    EquationsParser::ExpressionContext *right = nullptr;;
+    EquationsParser::ExpressionContext *left = nullptr;
+    EquationsParser::ExpressionContext *right = nullptr;
     EquationContext(antlr4::ParserRuleContext *parent, size_t invokingState);
     virtual size_t getRuleIndex() const override;
     antlr4::tree::TerminalNode *EQUAL();

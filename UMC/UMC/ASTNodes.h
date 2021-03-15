@@ -902,8 +902,8 @@ public:
         size_t line(GetSourceEquationLine());
         if (line >= 0 && !strSource.empty())
         {
-            result << u8" Исходный текст: строка " << line;
-            result << u8" фрагмент \"" << strSource << "\"";
+            result << " Исходный текст: строка " << line;
+            result << " фрагмент \"" << strSource << "\"";
         }
         return result.str();
     }
@@ -1416,7 +1416,7 @@ public:
     // выводим для с++ всегда в форме функции pow(x,y)
     void ToInfix() override
     {
-        infix = u8"std::pow(";
+        infix = "std::pow(";
         ChildrenSplitByToInfix(",");
         infix += ")";
     }
@@ -1438,7 +1438,7 @@ public:
             if (exp == 0.0)
             {
                 if (IsNumericZero(Children.front()))
-                    Warning(u8"Ноль в степени ноль, принято значение 1.0");
+                    Warning("Ноль в степени ноль, принято значение 1.0");
                 pParent->ReplaceChild<CASTNumeric>(this, 1.0);
             }
             else if (exp == 1.0)

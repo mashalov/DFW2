@@ -19,7 +19,7 @@ if(NOT WITH_DEMO)
     FORCE)
 endif(NOT WITH_DEMO)
 
-option(WITH_LIBCXX "Building with clang++ and libc++(in Linux). To enable with: -DWITH_LIBCXX=On" On)
+option(WITH_LIBCXX "Building with clang++ and libc++(in Linux). To enable with: -DWITH_LIBCXX=On" Off)
 option(WITH_STATIC_CRT "(Visual C++) Enable to statically link CRT, which avoids requiring users to install the redistribution package.
  To disable with: -DWITH_STATIC_CRT=Off" On)
 
@@ -71,10 +71,18 @@ else()
   set(MY_CXX_WARNING_FLAGS "  -Wall -pedantic -W")
 endif()
 
+# Define USE_UTF8_INSTEAD_OF_CODECVT macro.
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_UTF8_INSTEAD_OF_CODECVT")
+
 # Initialize CXXFLAGS.
 if("${CMAKE_VERSION}" VERSION_GREATER 3.1.0)
-  set(CMAKE_CXX_STANDARD 11)
+  if(NOT DEFINED CMAKE_CXX_STANDARD)
+    # only set CMAKE_CXX_STANDARD if not already set
+    # this allows the standard to be set by the caller, for example with -DCMAKE_CXX_STANDARD:STRING=17
+    set(CMAKE_CXX_STANDARD 11)
+  endif()
   set(CMAKE_CXX_STANDARD_REQUIRED ON)
+  set(CMAKE_CXX_EXTENSIONS OFF)
 else()
   set(CMAKE_CXX_FLAGS                "${CMAKE_CXX_FLAGS} -std=c++11")
   set(CMAKE_CXX_FLAGS_DEBUG          "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11")
@@ -141,11 +149,12 @@ if (ANTLR4_INSTALL)
   include(CMakePackageConfigHelpers)
 
   if(NOT ANTLR4_CMAKE_DIR)
-    set(ANTLR4_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake/antlr4 CACHE STRING
+    set(ANTLR4_CMAKE_DIR ${CMAKE_INSTALL_LIBDIR}/cmake CACHE STRING
       "Installation directory for cmake files." FORCE )
   endif(NOT ANTLR4_CMAKE_DIR)
 
-  set(version_config ${PROJECT_BINARY_DIR}/antlr4-config-version.cmake)
+  set(version_runtime_config ${PROJECT_BINARY_DIR}/antlr4-runtime-config-version.cmake)
+  set(version_generator_config ${PROJECT_BINARY_DIR}/antlr4-generator-config-version.cmake)
   set(project_runtime_config ${PROJECT_BINARY_DIR}/antlr4-runtime-config.cmake)
   set(project_generator_config ${PROJECT_BINARY_DIR}/antlr4-generator-config.cmake)
   set(targets_export_name antlr4-targets)
@@ -159,31 +168,39 @@ if (ANTLR4_INSTALL)
   configure_package_config_file(
     cmake/antlr4-runtime.cmake.in
     ${project_runtime_config}
-    INSTALL_DESTINATION ${ANTLR4_CMAKE_DIR}
+    INSTALL_DESTINATION ${ANTLR4_CMAKE_DIR}/antlr4-runtime
     PATH_VARS 
     ANTLR4_INCLUDE_DIR
     ANTLR4_LIB_DIR )
   
-configure_package_config_file(
+  configure_package_config_file(
     cmake/antlr4-generator.cmake.in
     ${project_generator_config}
-    INSTALL_DESTINATION ${ANTLR4_CMAKE_DIR}
+    INSTALL_DESTINATION ${ANTLR4_CMAKE_DIR}/antlr4-generator
     PATH_VARS 
     ANTLR4_INCLUDE_DIR
     ANTLR4_LIB_DIR )
   
   write_basic_package_version_file(
-    ${version_config}
+    ${version_runtime_config}
+    VERSION ${ANTLR_VERSION}
+    COMPATIBILITY SameMajorVersion )
+
+  write_basic_package_version_file(
+    ${version_generator_config}
     VERSION ${ANTLR_VERSION}
     COMPATIBILITY SameMajorVersion )
 
   install(EXPORT ${targets_export_name}
-          DESTINATION ${ANTLR4_CMAKE_DIR} )
+          DESTINATION ${ANTLR4_CMAKE_DIR}/antlr4-runtime )
 
   install(FILES ${project_runtime_config}
-                ${project_generator_config}
-                ${version_config}
-          DESTINATION ${ANTLR4_CMAKE_DIR} )
+                ${version_runtime_config}
+          DESTINATION ${ANTLR4_CMAKE_DIR}/antlr4-runtime )
+
+  install(FILES ${project_generator_config}
+                ${version_generator_config}
+          DESTINATION ${ANTLR4_CMAKE_DIR}/antlr4-generator )
 
 endif(ANTLR4_INSTALL)
 

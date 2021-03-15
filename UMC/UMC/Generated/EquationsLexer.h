@@ -1,5 +1,5 @@
 
-// Generated from C:\Users\masha\source\repos\DFW2\UMC\UMC\Equations.g4 by ANTLR 4.8
+// Generated from C:\Users\masha\source\repos\DFW2\UMC\UMC\Equations.g4 by ANTLR 4.9.2
 
 #pragma once
 
@@ -19,7 +19,7 @@ public:
     HIGH = 28, LOW = 29, WS = 30
   };
 
-  EquationsLexer(antlr4::CharStream *input);
+  explicit EquationsLexer(antlr4::CharStream *input);
   ~EquationsLexer();
 
   virtual std::string getGrammarFileName() const override;

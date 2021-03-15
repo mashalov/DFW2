@@ -724,8 +724,8 @@ public:
         return false;
     }
 
-    static inline const char *szErrorParamterMustBeNonNegative = u8"Неправильный параметр функции {} : параметр должен быть неотрицательным {}";
-    static inline const char* szErrorLimitsWrong = u8"Неправильные ограничения функции {} : Min>Max ({}>{})";
+    static inline const char *szErrorParamterMustBeNonNegative = "Неправильный параметр функции {} : параметр должен быть неотрицательным {}";
+    static inline const char* szErrorLimitsWrong = "Неправильные ограничения функции {} : Min>Max ({}>{})";
 };
 
 class CASTNodeTextBase : public CASTNodeBase

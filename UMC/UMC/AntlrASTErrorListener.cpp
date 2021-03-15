@@ -1,4 +1,4 @@
-#include "AntlrASTErrorListener.h"
+п»ї#include "AntlrASTErrorListener.h"
 
 
 std::string AntlrASTErrorListener::GetSourceLineFromSource(std::string_view source, size_t line)
@@ -17,5 +17,5 @@ std::string AntlrASTErrorListener::GetSourceLineFromSource(std::string_view sour
 
 std::string AntlrASTErrorListener::ParserError(std::string_view What, std::string_view FullSourceText, std::string_view Offending, size_t line, size_t pos)
 {
-    return fmt::format(u8"(компиляция) {} \"{}\" строка {} позиция {} в \"{}\"", What, Offending, line, pos, GetSourceLineFromSource(FullSourceText, line));
+    return fmt::format("(РєРѕРјРїРёР»СЏС†РёСЏ) {} \"{}\" СЃС‚СЂРѕРєР° {} РїРѕР·РёС†РёСЏ {} РІ \"{}\"", What, Offending, line, pos, GetSourceLineFromSource(FullSourceText, line));
 }

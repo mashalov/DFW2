@@ -184,8 +184,9 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeTypeInfo>
       </RuntimeTypeInfo>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -202,8 +203,9 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeTypeInfo>
       </RuntimeTypeInfo>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -219,9 +221,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CONSOLE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -239,9 +242,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions);_CONSOLE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -257,9 +261,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -273,9 +278,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -291,9 +297,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -311,9 +318,10 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions);;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <LanguageStandard>stdcpp17</LanguageStandard>
+      <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <AdditionalOptions>/utf-8 %(AdditionalOptions)</AdditionalOptions>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -359,14 +367,14 @@
   <ItemGroup>
     <CustomBuild Include="Equations.g4">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">java -jar $(ProjectDir)antlr\antlr-4.8-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">java -jar $(ProjectDir)antlr\antlr-4.8-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">java -jar $(ProjectDir)antlr\antlr-4.8-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">java -jar $(ProjectDir)antlr\antlr-4.8-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">java -jar $(ProjectDir)antlr\antlr-4.8-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'">java -jar $(ProjectDir)antlr\antlr-4.8-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">java -jar $(ProjectDir)antlr\antlr-4.8-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">java -jar $(ProjectDir)antlr\antlr-4.8-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generated\EquationsLexer.h;Generated\EquationsParser.h;</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">Generated\EquationsLexer.h;Generated\EquationsParser.h;</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generated\EquationsLexer.h;Generated\EquationsParser.h;</Outputs>

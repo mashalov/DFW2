@@ -229,7 +229,7 @@ public:
         else if (ctx->VARIABLE()->getText() == "not")
             Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnNot>()));
             */
-        else Parent->Error(ParserError(ctx, u8"неизвестная функция", ctx->VARIABLE()->getText()), true);
+        else Parent->Error(ParserError(ctx, "неизвестная функция", ctx->VARIABLE()->getText()), true);
         return visitChildren(ctx);
     }
 
@@ -252,9 +252,9 @@ public:
         {
             std::string varName(v->getText());
 
-            if (varName == u8"t")
+            if (varName == "t")
             {
-                pTree->Error(ParserError(ctx, fmt::format(u8"Имя переменной зарезервировано :", varName), varName));
+                pTree->Error(ParserError(ctx, fmt::format("Имя переменной зарезервировано :", varName), varName));
                 continue;
             }
 
@@ -264,8 +264,8 @@ public:
                 const std::string strConst = "const";
                 const std::string strExt = "external";
 
-                const std::string strError = u8"переменная {}, ранее объявленная как {}, переопределяется как {}";
-                const std::string strWarning = u8"переменная {} повторно объявляется как {}";
+                const std::string strError = "переменная {}, ранее объявленная как {}, переопределяется как {}";
+                const std::string strWarning = "переменная {} повторно объявляется как {}";
 
                 const std::string& strDest = pVarInfo->Constant ? strConst : strExt;
                 const std::string& strSource = Type == VariableType::Const ? strConst : strExt;

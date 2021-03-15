@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 
 #include "antlr4-runtime.h"
 #include "Generated/EquationsLexer.h"
@@ -25,10 +25,10 @@ public:
     virtual void syntaxError(antlr4::Recognizer* recognizer, antlr4::Token* offendingSymbol, size_t line,
         size_t charPositionInLine, const std::string& msg, std::exception_ptr e)
     {
-        // èíîãäà offendingSymbol == nullptr
-        // ïîýòîìó äëÿ îïèñàíèÿ îøèáêè èñïîëüçóåì
-        // ïðîñòî òåêñò èñõîäíèêà SourceText
-        pTree->Error(ParserError(fmt::format(u8"ñèíòàêñè÷åñêàÿ îøèáêà {}", msg),
+        // Ð¸Ð½Ð¾Ð³Ð´Ð° offendingSymbol == nullptr
+        // Ð¿Ð¾ÑÑ‚Ð¾Ð¼Ñƒ Ð´Ð»Ñ Ð¾Ð¿Ð¸ÑÐ°Ð½Ð¸Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ¸ Ð¸ÑÐ¿Ð¾Ð»ÑŒÐ·ÑƒÐµÐ¼
+        // Ð¿Ñ€Ð¾ÑÑ‚Ð¾ Ñ‚ÐµÐºÑÑ‚ Ð¸ÑÑ…Ð¾Ð´Ð½Ð¸ÐºÐ° SourceText
+        pTree->Error(ParserError(fmt::format("ÑÐ¸Ð½Ñ‚Ð°ÐºÑÐ¸Ñ‡ÐµÑÐºÐ°Ñ Ð¾ÑˆÐ¸Ð±ÐºÐ° {}", msg),
             SourceText,
             offendingSymbol ? offendingSymbol->getText() : "",
             line, charPositionInLine));
@@ -36,7 +36,7 @@ public:
         auto stk = static_cast<antlr4::Parser*>(recognizer)->getRuleInvocationStack();
         for (auto& sti : stk)
         {
-            std::cout << u8"rule stack: " << sti << std::endl;
+            std::cout << "rule stack: " << sti << std::endl;
         }
         */
     }

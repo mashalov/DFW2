@@ -79,8 +79,8 @@ void CompilerBase::CompileWithMSBuild()
 	// проверяем, есть ли CustomDevice.h в каталоге сборки
 	if (!std::filesystem::exists(pathCustomDeviceHeader))
 	{
-		pTree->Error(fmt::format(u8"В каталоге \"{}\" не найден файл скомпилированного пользовательского устройства \"{}\".",
-			pathOutDir.u8string(), 
+		pTree->Error(fmt::format("В каталоге \"{}\" не найден файл скомпилированного пользовательского устройства \"{}\".",
+			pathOutDir.string(), 
 			CASTCodeGeneratorBase::CustomDeviceHeader));
 		return;
 	}
@@ -89,8 +89,8 @@ void CompilerBase::CompileWithMSBuild()
 	// проверяем есть ли он
 	if (!std::filesystem::exists(pathRefDir))
 	{
-		pTree->Error(fmt::format(u8"Не найден каталог исходных файлов для сборки пользовательской модели \"{}\".",
-			pathRefDir.u8string()));
+		pTree->Error(fmt::format("Не найден каталог исходных файлов для сборки пользовательской модели \"{}\".",
+			pathRefDir.string()));
 		return;
 	}
 	// если каталог есть - копируем референсные файлы в каталог сборки (только уровень каталога, без рекурсии)
@@ -121,15 +121,15 @@ void CompilerBase::CompileWithMSBuild()
 	std::filesystem::remove(pathPDB,ec);
 
 	// генерируем командную строку msbuild
-	std::string commandLine = fmt::format(u8"\"{}\"", MSBuildPath);
+	std::string commandLine = fmt::format("\"{}\"", MSBuildPath);
 
-	std::string commandLineArgs = fmt::format(u8" /p:Platform={} /p:Configuration={} /p:TargetName={} /p:OutDir=\"{}\\\\\" /p:DFW2Include=\"{}\\\\\"  \"{}\"",
+	std::string commandLineArgs = fmt::format(" /p:Platform={} /p:Configuration={} /p:TargetName={} /p:OutDir=\"{}\\\\\" /p:DFW2Include=\"{}\\\\\"  \"{}\"",
 		Platform,
 		Configuration,
 		TargetName,
-		pathDLLOutput.u8string(),
-		pathDFW2Include.u8string(),
-		pathVcxproj.u8string());
+		pathDLLOutput.string(),
+		pathDFW2Include.string(),
+		pathVcxproj.string());
 
 	commandLine += commandLineArgs;
 
@@ -234,7 +234,7 @@ void CompilerBase::CompileWithMSBuild()
 	{
 		for (auto& l : listConsole)
 			std::cout << l << std::endl;
-		pTree->Error(u8"Ошибка компиляции MSBuild");
+		pTree->Error("Ошибка компиляции MSBuild");
 	}
 	else
 	{
@@ -253,7 +253,7 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 	std::filesystem::create_directories(OutputPath);
 	std::ofstream OutputStream(pathSourceOutput);
 	if (!OutputStream.is_open())
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), fmt::format(u8"Невозможно открыть файл \"{}\"", OutputPath.u8string()));
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
 	OutputStream << SourceToCompile;
 	OutputStream.close();
 }
@@ -281,9 +281,9 @@ bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, std::file
 	}
 
 	if (bRes)
-		pTree->Message(fmt::format(u8"Модуль \"{}\" не нуждается в повторной компиляции", pathDLLOutput.u8string()));
+		pTree->Message(fmt::format("Модуль \"{}\" не нуждается в повторной компиляции", pathDLLOutput.string()));
 	else
-		pTree->Message(fmt::format(u8"Необходима компиляция модуля \"{}\"", pathDLLOutput.u8string()));
+		pTree->Message(fmt::format("Необходима компиляция модуля \"{}\"", pathDLLOutput.string()));
 
 	return bRes;
 }

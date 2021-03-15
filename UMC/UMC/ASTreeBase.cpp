@@ -114,7 +114,7 @@ void CASTTreeBase::Flatten()
 
 void CASTTreeBase::PrintErrorsWarnings() const
 {
-    std::cout << fmt::format(u8"Ошибок : {}, Предупреждений: {}", nErrors, nWarnings) << std::endl;
+    std::cout << fmt::format("Ошибок : {}, Предупреждений: {}", nErrors, nWarnings) << std::endl;
 }
 
 void CASTTreeBase::PrintInfix()
@@ -488,7 +488,7 @@ void CASTTreeBase::CheckInitEquations()
         const CASTNodeBase* pInitVar = e->ChildNodes().front();
         if (!pInitVar->CheckType(ASTNodeType::Variable))
         {
-            Error(fmt::format(u8"Уравнения инициализации должны иметь вид присваивания : Variable = Expression {}",
+            Error(fmt::format("Уравнения инициализации должны иметь вид присваивания : Variable = Expression {}",
                     e->GetEquationDescription()));
         }
         else
@@ -499,7 +499,7 @@ void CASTTreeBase::CheckInitEquations()
             // проверяем присвоение константной переменной
             // разрешаем это только для переменных в секции инициализации базовых значений внешний переменных
             if (pVarInfo->Constant && e->GetParentOfType(ASTNodeType::InitExtVars) == nullptr)
-                Error(fmt::format(u8"Попытка при инициализации присвоить значение переменной \"{}\", объявленной как const. \"{}\" {}", 
+                Error(fmt::format("Попытка при инициализации присвоить значение переменной \"{}\", объявленной как const. \"{}\" {}", 
                     pInitVar->GetText(),
                     ctrim(e->GetInfix()),
                     e->GetEquationSourceDescription()));
@@ -513,7 +513,7 @@ void CASTTreeBase::Warning(std::string_view warning)
     if (messageCallBacks.Warning)
         messageCallBacks.Warning(warning);
     else
-        std::cout << u8"Предупреждение: " << warning << std::endl;
+        std::cout << "Предупреждение: " << warning << std::endl;
     nWarnings++;
 }
 
@@ -523,7 +523,7 @@ void CASTTreeBase::Message(std::string_view message)
     if (messageCallBacks.Info)
         messageCallBacks.Info(message);
     else
-        std::cout << u8"Информация: " << message << std::endl;
+        std::cout << "Информация: " << message << std::endl;
 }
 
 void CASTTreeBase::Error(std::string_view error)
@@ -532,7 +532,7 @@ void CASTTreeBase::Error(std::string_view error)
     if (messageCallBacks.Error)
         messageCallBacks.Error(error);
     else
-        std::cout << u8"Ошибка: " << error << std::endl;
+        std::cout << "Ошибка: " << error << std::endl;
     nErrors++;
 }
 
@@ -783,7 +783,7 @@ void CASTTreeBase::ProcessProxyFunction()
                 !static_cast<CASTVariable*>(pFn->ChildNodes().back())->Info().ModelLink.empty())
                 pExtVar = pFn->ChildNodes().back();
             else
-                pFn->Error(fmt::format(u8"В функции {} во втором аргументе должна быть ссылка на модель.", pFn->GetText()), true);
+                pFn->Error(fmt::format("В функции {} во втором аргументе должна быть ссылка на модель.", pFn->GetText()), true);
         }
 
         // если переменные "V" и "BASE" найдены, заменяем их
@@ -825,7 +825,7 @@ void CASTTreeBase::ProcessProxyFunction()
                 bVandBaseReplacedOK = true;
             }
             else
-                pFn->Error(fmt::format(u8"В функции {} используется ссылка на внешнюю переменную, но переменная не задана.", pFn->GetText()), true);
+                pFn->Error(fmt::format("В функции {} используется ссылка на внешнюю переменную, но переменная не задана.", pFn->GetText()), true);
         }
 
         if (bVandBaseReplacedOK)
@@ -922,7 +922,7 @@ void CASTTreeBase::PostParseCheck()
             {
                 // если количество аргументов меньше количества обязательных аргументов - ошибка
                 if(p->ChildNodes().size() < fi.MandatoryArguments)
-                    p->Error(fmt::format(u8"Неправильное количество параметров функции {}. Ожидается {}...∞, задано {}.",
+                    p->Error(fmt::format("Неправильное количество параметров функции {}. Ожидается {}...∞, задано {}.",
                         pFn->GetText(),
                         fi.MandatoryArguments,
                         p->ChildNodes().size()), true);
@@ -931,7 +931,7 @@ void CASTTreeBase::PostParseCheck()
             {
                 // для невариадик функций проверяем количество аргументов по допустимому количеству и количеству обязательных аргументов
                 if (p->ChildNodes().size() > fi.Args.size() || p->ChildNodes().size() < fi.MandatoryArguments)
-                    p->Error(fmt::format(u8"Неправильное количество параметров функции {}. Ожидается {}, задано {}.",
+                    p->Error(fmt::format("Неправильное количество параметров функции {}. Ожидается {}, задано {}.",
                         pFn->GetText(),
                         fi.Args.size() != fi.MandatoryArguments ? fmt::format("{}...{}", fi.MandatoryArguments, fi.Args.size()) : fmt::format("{}", fi.Args.size()),
                         p->ChildNodes().size()), true);
@@ -960,7 +960,7 @@ void CASTTreeBase::PostParseCheck()
                 // если выражение после DFS не является константным - выводим ошибку
                 if (!pExpression->IsConst())
                 {
-                    p->Error(fmt::format(u8"Функция {} ожидает в аргументе {} константу. Выражение \"{}\" не является константой",
+                    p->Error(fmt::format("Функция {} ожидает в аргументе {} константу. Выражение \"{}\" не является константой",
                         p->GetText(),
                         cp.second,
                         pExpression->GetInfix()), true);
@@ -1007,9 +1007,9 @@ std::filesystem::path CASTTreeBase::GetPropertyPath(std::string_view PropNamePat
         Path = itp->second;
         if (Path.has_filename())
         {
-            Warning(fmt::format(u8"Путь не должен содержать имени файла \"{}\"", Path.u8string()));
+            Warning(fmt::format("Путь не должен содержать имени файла \"{}\"", Path.string()));
             Path.remove_filename();
-            itp->second = Path.u8string();
+            itp->second = Path.string();
         }
     }
     return Path;

@@ -133,14 +133,14 @@ void CASTTreeBase::GetUnresolvedVariables(CASTEquation* eq, VarItList& Unresolve
                 break;
             }
 
-            vareqs.push_back(fmt::format(u8"{} -> {} {}",
+            vareqs.push_back(fmt::format("{} -> {} {}",
                 v->first,
                 trim(v->second.pResovledByEquation->GetInfix()),
                 v->second.pResovledByEquation->GetEquationSourceDescription()));
         }
         if (bRedundantEquation)
         {
-            Error(fmt::format(u8"Избыточное уравнение {}.\nВсе переменные уже разрешены:\n{}",
+            Error(fmt::format("Избыточное уравнение {}.\nВсе переменные уже разрешены:\n{}",
                 eq->GetEquationDescription(),
                 fmt::join(vareqs, "\n")));
         }
@@ -186,7 +186,7 @@ void CASTTreeBase::SortEquationSection(ASTNodeType SectionType)
 
     if (eqVars.size() != eqs.size())
     {
-        Error(fmt::format(u8"Количество уравнений {} не равно количеству переменных {} в секции \"{}\"",
+        Error(fmt::format("Количество уравнений {} не равно количеству переменных {} в секции \"{}\"",
             eqs.size(),
             eqVars.size(),
             pEquationSection->GetParent()->GetText()));
@@ -254,7 +254,7 @@ void CASTTreeBase::SortEquationSection(ASTNodeType SectionType)
             }
         }
         // выводим сообщение об ошибке со списком уравнений алгебраического цикла
-        Error(fmt::format(u8"Алгебраический цикл в следующих уравнениях секции \"{}\": \n {}",
+        Error(fmt::format("Алгебраический цикл в следующих уравнениях секции \"{}\": \n {}",
             pEquationSection->GetParent()->GetText(),
             fmt::join(AlgebraicLoop, "\n")));
     }

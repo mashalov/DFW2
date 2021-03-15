@@ -84,7 +84,7 @@ bool CASTTreeBase::IsEquationTrivial(CASTEquation* pEquation, SimpleEquation& su
             if (!TrivialEquationsReported.Contains(pEquation))
             {
                 // выдаем предупреждение по тривиальному уравнению с пользовательскими переменными 1 раз
-                Warning(fmt::format(u8"Тривиальное уравнение с исходными переменными {}",
+                Warning(fmt::format("Тривиальное уравнение с исходными переменными {}",
                     static_cast<CASTEquation*>(pEquation)->GetEquationDescription()));
                 TrivialEquationsReported.insert(pEquation);
             }
