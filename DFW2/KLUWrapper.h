@@ -1,19 +1,19 @@
 ﻿#pragma once
+#include "Header.h"
 #include "klu.h"
 #include "klu_version.h"
 #include "cs.h"
-#include "Header.h"
 #include "fstream"
 #include "iomanip"
 namespace DFW2
 {
-	template <typename T, typename L> class KLUFunctions;
+	template <typename T> class KLUFunctions;
 
-	// Instantiate KLU function wrappers based on KLU's define DLONG (int or __int64)
+	// Instantiate KLU function wrappers based on matrix element type
 
 #ifdef DLONG
 
-	template<> struct KLUFunctions<double, __int64>
+	template<> struct KLUFunctions<double>
 	{
 		static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_common* Common)
 		{
@@ -50,7 +50,7 @@ namespace DFW2
 		}
 	};
 
-	template<> struct KLUFunctions<std::complex<double>, __int64>
+	template<> struct KLUFunctions<std::complex<double>>
 	{
 		static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_common* Common)
 		{
@@ -89,7 +89,7 @@ namespace DFW2
 
 #else
 
-	template<> struct KLUFunctions<double, int>
+	template<> struct KLUFunctions<double>
 	{
 		static KLU_numeric* TKLU_factor(int* Ap, int* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_common* Common)
 		{
@@ -125,7 +125,7 @@ namespace DFW2
 		}
 	};
 
-	template<> struct KLUFunctions<std::complex<double>, int>
+	template<> struct KLUFunctions<std::complex<double>>
 	{
 		static KLU_numeric* TKLU_factor(ptrdiff_t* Ap, ptrdiff_t* Ai, double* Ax, KLU_symbolic* Symbolic, KLU_common* Common)
 		{
@@ -177,18 +177,19 @@ namespace DFW2
 
 	// Deleters for KLU objects to be wrapped to unique_ptrs
 
-	template <typename T, typename L>
+	// T - KLU object: Numeric or Symboilc. D - KLU data-type (double or complex)
+	template <typename T, typename D>
 	class KLUCommonDeleter
 	{
 		T* m_p;
 		KLU_common& Common;
 		void CleanUp(KLU_numeric*)
 		{
-			KLUFunctions<L, ptrdiff_t>::TKLU_free_numeric(&m_p, &Common);
+			KLUFunctions<D>::TKLU_free_numeric(&m_p, &Common);
 		}
 		void CleanUp(KLU_symbolic*)
 		{
-			KLUFunctions<L, ptrdiff_t>::TKLU_free_symbolic(&m_p, &Common);
+			KLUFunctions<D>::TKLU_free_symbolic(&m_p, &Common);
 		}
 	public:
 		KLUCommonDeleter(T* p, KLU_common& common) : m_p(p), Common(common) {}
@@ -250,7 +251,7 @@ namespace DFW2
 		}
 		static const char* KLUWrapperName()
 		{
-			return  "KLUWrapper";
+			return "KLUWrapper";
 		}
 
 	public:
@@ -283,7 +284,7 @@ namespace DFW2
 		KLU_common* Common() { return &pCommon; }
 		void Analyze()
 		{
-			pSymbolic = std::make_unique<KLUSymbolic>(KLUFunctions<T, ptrdiff_t>::TKLU_analyze(m_nMatrixSize, pAi.get(), pAp.get(), &pCommon), pCommon);
+			pSymbolic = std::make_unique<KLUSymbolic>(KLUFunctions<T>::TKLU_analyze(m_nMatrixSize, pAi.get(), pAp.get(), &pCommon), pCommon);
 			if (!Analyzed())
 			{
 				DumpMatrix(false);
@@ -296,7 +297,7 @@ namespace DFW2
 		{
 			if (!Analyzed())
 				Analyze();
-			pNumeric = std::make_unique<KLUNumeric>(KLUFunctions<T, ptrdiff_t>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon) , pCommon);
+			pNumeric = std::make_unique<KLUNumeric>(KLUFunctions<T>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon) , pCommon);
 			if (!Factored())
 				throw dfw2error(fmt::format("{}::KLU_factor {}", KLUWrapperName(), KLUErrorDescription()));
 			m_nFactorizationsCount++;
@@ -306,7 +307,7 @@ namespace DFW2
 		{
 			if (!Factored())
 				throw dfw2error(fmt::format("{}::KLU_refactor - no numeric to refactor", KLUWrapperName()));
-			if (KLUFunctions<T,ptrdiff_t>::TKLU_refactor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
+			if (KLUFunctions<T>::TKLU_refactor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
 			{
 				m_nRefactorizationsCount++;
 				return true;
@@ -330,7 +331,7 @@ namespace DFW2
 				Analyze();
 			if(!Factored())
 				Factor();
-			if(!KLUFunctions<T, ptrdiff_t>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
+			if(!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
@@ -339,20 +340,20 @@ namespace DFW2
 			if (!Analyzed())
 				Analyze();
 			Factor();
-			if (!KLUFunctions<T,ptrdiff_t>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
+			if (!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
 		double Condest()
 		{
-			if (!KLUFunctions<T, ptrdiff_t>::TKLU_condest(pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
+			if (!KLUFunctions<T>::TKLU_condest(pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_condest {}", KLUWrapperName(), KLUErrorDescription()));
 			return pCommon.condest;
 		}
 
 		double Rcond()
 		{
-			if(!KLUFunctions<T, ptrdiff_t>::TKLU_rcond(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
+			if(!KLUFunctions<T>::TKLU_rcond(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_rcond {}", KLUWrapperName(), KLUErrorDescription()));
 			return pCommon.rcond;
 		}

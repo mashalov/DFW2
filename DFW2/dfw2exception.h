@@ -2,8 +2,8 @@
 #include <stdexcept>
 #include <memory>
 #include "stringutils.h"
-#include "..\fmt\include\fmt\core.h"
-#include "..\fmt\include\fmt\format.h"
+#include "../fmt/include/fmt/core.h"
+#include "../fmt/include/fmt/format.h"
 #include <system_error>
 
 class dfw2error : public std::runtime_error
@@ -28,7 +28,11 @@ public:
 
 	static std::string MessageFormat(std::string_view Message)
 	{
+#ifdef _MSC_VER
 		std::error_code code(::GetLastError(), std::system_category());
+#else
+		std::error_code code(errno, std::system_category());
+#endif 
 		// Описание ошибки от code приходит в CP_ACP, поэтому его декодируем с помощью
 		// утилиты acp_decode
 	    // https://blogs.msmvps.com/gdicanio/2017/08/16/what-is-the-encoding-used-by-the-error_code-message-string/

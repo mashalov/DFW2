@@ -1,5 +1,4 @@
 #include "cs.h"
-#include "crtdbg.h"
 /* y = A*x+y */
 csi cs_gaxpy (const cs *A, const double *x, double *y)
 {
@@ -12,7 +11,6 @@ csi cs_gaxpy (const cs *A, const double *x, double *y)
         for (p = Ap [j] ; p < Ap [j+1] ; p++)
         {
             y [Ai [p]] += Ax [p] * x [j] ;
-			_ASSERTE(Ai[p] < n);
         }
     }
     return (1) ;

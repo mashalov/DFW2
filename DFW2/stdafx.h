@@ -3,11 +3,20 @@
 // are changed infrequently
 //
 
+#ifdef _MSC_VER
+
 #define _CRTDBG_MAP_ALLOC
+
+#endif
+
 #include <stdlib.h>
+
+#ifdef _MSC_VER
+
 #include <crtdbg.h>
 #include "targetver.h"
 #include <tchar.h>
 #include "atltrace.h"
-// TODO: reference additional headers your program requires here
+
+#endif
 
