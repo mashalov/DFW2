@@ -51,9 +51,9 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			using COLVECTOR = std::vector<std::pair<IColPtr, ptrdiff_t>>;
 			COLVECTOR Cols;
 			Cols.reserve(CustomDeviceContainer.m_ContainerProps.m_ConstVarMap.size());
-			IColPtr spColId = spSourceCols->Item(_T("Id"));
-			IColPtr spColName = spSourceCols->Item(_T("Name"));
-			IColPtr spColState = spSourceCols->Item(_T("sta"));
+			IColPtr spColId = spSourceCols->Item(L"Id");
+			IColPtr spColName = spSourceCols->Item(L"Name");
+			IColPtr spColState = spSourceCols->Item(L"sta");
 			for (const auto& col : CustomDeviceContainer.m_ContainerProps.m_ConstVarMap)
 				if (GetConstFromField(col.second))
 					Cols.push_back(std::make_pair(spSourceCols->Item(col.first.c_str()), col.second.m_nIndex));
@@ -131,8 +131,8 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			COLVECTOR Cols;
 			Cols.reserve(nConstsCount);
 
-			IColPtr spColId		= spSourceCols->Item(_T("Id"));
-			IColPtr spColName	= spSourceCols->Item(_T("Name"));
+			IColPtr spColId		= spSourceCols->Item(L"Id");
+			IColPtr spColName	= spSourceCols->Item(L"Name");
 
 
 			ptrdiff_t ConstIndex(0);
@@ -297,13 +297,13 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ITablesPtr spTables = m_spRastr->Tables;
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
 	IColsPtr spASCols = spAutoStarters->Cols;
-	IColPtr spASId			= spASCols->Item(_T("Id"));
-	IColPtr spASName		= spASCols->Item(_T("Name"));
-	IColPtr spASType		= spASCols->Item(_T("Type"));
-	IColPtr spASExpr		= spASCols->Item(_T("Formula"));
-	IColPtr spASObjClass	= spASCols->Item(_T("ObjectClass"));
-	IColPtr spASObjKey		= spASCols->Item(_T("ObjectKey"));
-	IColPtr spASObjProp		= spASCols->Item(_T("ObjectProp"));
+	IColPtr spASId			= spASCols->Item(L"Id");
+	IColPtr spASName		= spASCols->Item(L"Name");
+	IColPtr spASType		= spASCols->Item(L"Type");
+	IColPtr spASExpr		= spASCols->Item(L"Formula");
+	IColPtr spASObjClass	= spASCols->Item(L"ObjectClass");
+	IColPtr spASObjKey		= spASCols->Item(L"ObjectKey");
+	IColPtr spASObjProp		= spASCols->Item(L"ObjectProp");
 
 
 	for (int i = 0; i < spAutoStarters->GetSize(); i++)
@@ -320,13 +320,13 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	ITablePtr spAutoLogic = spTables->Item("DFWAutoLogic");
 	IColsPtr spALCols = spAutoLogic->Cols;
-	IColPtr spALId			= spALCols->Item(_T("Id"));
-	IColPtr spALName		= spALCols->Item(_T("Name"));
-	IColPtr spALType		= spALCols->Item(_T("Type"));
-	IColPtr spALExpr		= spALCols->Item(_T("Formula"));
-	IColPtr spALActions		= spALCols->Item(_T("Actions"));
-	IColPtr spALDelay		= spALCols->Item(_T("Delay"));
-	IColPtr spALOutputMode	= spALCols->Item(_T("OutputMode"));
+	IColPtr spALId			= spALCols->Item(L"Id");
+	IColPtr spALName		= spALCols->Item(L"Name");
+	IColPtr spALType		= spALCols->Item(L"Type");
+	IColPtr spALExpr		= spALCols->Item(L"Formula");
+	IColPtr spALActions		= spALCols->Item(L"Actions");
+	IColPtr spALDelay		= spALCols->Item(L"Delay");
+	IColPtr spALOutputMode	= spALCols->Item(L"OutputMode");
 
 	for (int i = 0; i < spAutoLogic->GetSize(); i++)
 	{
@@ -342,16 +342,16 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	ITablePtr spAutoActions = spTables->Item("DFWAutoAction");
 	IColsPtr spAACols = spAutoActions->Cols;
-	IColPtr spAAId = spAACols->Item(_T("Id"));
-	IColPtr spAAName = spAACols->Item(_T("Name"));
-	IColPtr spAAType = spAACols->Item(_T("Type"));
-	IColPtr spAAExpr = spAACols->Item(_T("Formula"));
-	IColPtr spAAObjClass = spAACols->Item(_T("ObjectClass"));
-	IColPtr spAAObjKey = spAACols->Item(_T("ObjectKey"));
-	IColPtr spAAObjProp = spAACols->Item(_T("ObjectProp"));
-	IColPtr spAAOutputMode = spAACols->Item(_T("OutputMode"));
-	IColPtr spAAActionGroup = spAACols->Item(_T("ParentId"));
-	IColPtr spAAORunsCount = spAACols->Item(_T("RunsCount"));
+	IColPtr spAAId = spAACols->Item(L"Id");
+	IColPtr spAAName = spAACols->Item(L"Name");
+	IColPtr spAAType = spAACols->Item(L"Type");
+	IColPtr spAAExpr = spAACols->Item(L"Formula");
+	IColPtr spAAObjClass = spAACols->Item(L"ObjectClass");
+	IColPtr spAAObjKey = spAACols->Item(L"ObjectKey");
+	IColPtr spAAObjProp = spAACols->Item(L"ObjectProp");
+	IColPtr spAAOutputMode = spAACols->Item(L"OutputMode");
+	IColPtr spAAActionGroup = spAACols->Item(L"ParentId");
+	IColPtr spAAORunsCount = spAACols->Item(L"RunsCount");
 	
 	for (int i = 0; i < spAutoActions->GetSize(); i++)
 	{

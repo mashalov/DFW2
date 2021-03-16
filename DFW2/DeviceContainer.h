@@ -41,7 +41,7 @@ namespace DFW2
 		inline CLinkPtrCount* GetLink(ptrdiff_t nDeviceInContainerIndex)
 		{
 			if (nDeviceInContainerIndex >= static_cast<ptrdiff_t>(m_LinkInfo.size()))
-				throw dfw2error(_T("CLinkPtrCount::GetLink - Device index out of range"));
+				throw dfw2error("CLinkPtrCount::GetLink - Device index out of range");
 			return &m_LinkInfo[nDeviceInContainerIndex];
 		}
 	};

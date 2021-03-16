@@ -4,7 +4,7 @@
 #include "Relay.h"
 #include "DLLWrapper.h"
 
-#include "..\UMC\UMC\ICompiler.h"
+#include "../UMC/UMC/ICompiler.h"
 
 namespace DFW2
 {
@@ -22,14 +22,14 @@ namespace DFW2
 			CDLLInstance::Init(DLLFilePath);
 			m_pfnFactory = reinterpret_cast<fnCompilerFactory>(::GetProcAddress(m_hDLL, "CompilerFactory"));
 			if (!m_pfnFactory)
-				throw dfw2error(fmt::format(_T("Функция создания компилятора недоступна {}"), DLLFilePath));
+				throw dfw2error(fmt::format("Функция создания компилятора недоступна {}", DLLFilePath));
 		}
 
 		ICompiler* CreateCompiler()
 		{
 			ICompiler* pCompiler(nullptr);
 			if (!m_hDLL || !m_pfnFactory)
-				throw dfw2error(_T("CreateCompiler - no dll loaded"));
+				throw dfw2error("CreateCompiler - no dll loaded");
 			return m_pfnFactory();
 		}
 	};

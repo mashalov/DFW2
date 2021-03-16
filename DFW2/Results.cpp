@@ -12,9 +12,9 @@ void CDynaModel::WriteResultsHeaderBinary()
 	{
 		try
 		{
-			m_spResultWrite = spResults->Create(_T("c:\\tmp\\binresultCOM.rst"));
+			m_spResultWrite = spResults->Create(L"c:\\tmp\\binresultCOM.rst");
 			m_spResultWrite->NoChangeTolerance = 0.0;// GetAtol();
-			m_spResultWrite->Comment = _T("Тестовая схема mdp_debug5 с КЗ");
+			m_spResultWrite->Comment = L"Тестовая схема mdp_debug5 с КЗ";
 
 			// добавляем описание единиц измерения переменных
 			for (auto&& vnmit : DFWMessages.VarNameMap())
@@ -205,10 +205,10 @@ void CDynaModel::WriteResultsHeader()
 		return;
 #ifdef _WRITE_CSV
 	setlocale(LC_ALL, "RU-ru");
-	if (!_tfopen_s(&fResult, _T("c:\\tmp\\results.csv"), _T("wb+")))
+	if (!_tfopen_s(&fResult, "c:\\tmp\\results.csv", "wb+"))
 	{
 		bRes = true;
-		_ftprintf_s(fResult, _T("t;h;"));
+		_ftprintf_s(fResult, "t;h;");
 		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 		{
 			for (DEVICEVECTORITR dit = (*it)->begin(); dit != (*it)->end(); dit++)
@@ -223,12 +223,12 @@ void CDynaModel::WriteResultsHeader()
 						string name = std::to_string((*dit)->GetId());
 
 						std::replace(name.begin(), name.end(), ';', ':');
-						_ftprintf_s(fResult, _T("\"%s [%s]\";"), fltr.c_str(), name.c_str());
+						_ftprintf_s(fResult, "\"%s [%s]\";", fltr.c_str(), name.c_str());
 					}
 				}
 			}
 		}
-		_ftprintf_s(fResult, _T("\n"));
+		_ftprintf_s(fResult, "\n");
 	}
 #endif
 	m_dTimeWritten = 0.0;
@@ -244,7 +244,7 @@ void CDynaModel::WriteResults()
 		if (sc.m_bEnforceOut || GetCurrentTime() >= m_dTimeWritten)
 		{
 #ifdef _WRITE_CSV
-			_ftprintf_s(fResult, _T("%g;%g;"), sc.t, sc.m_dCurrentH);
+			_ftprintf_s(fResult, "%g;%g;", sc.t, sc.m_dCurrentH);
 			ptrdiff_t nIndex = 0;
 			for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end(); it++)
 			{
@@ -254,12 +254,12 @@ void CDynaModel::WriteResults()
 					{
 						if (vit->second.m_bOutput)
 						{
-							_ftprintf_s(fResult, _T("%g;"), (*dit)->GetValue(vit->second.m_nIndex));
+							_ftprintf_s(fResult, "%g;", (*dit)->GetValue(vit->second.m_nIndex));
 						}
 					}
 				}
 			}
-			_ftprintf_s(fResult, _T("\n"));
+			_ftprintf_s(fResult, "\n");
 #endif
 			m_spResultWrite->WriteResults(GetCurrentTime(), GetH());
 			m_dTimeWritten = GetCurrentTime() + m_Parameters.m_dOutStep;

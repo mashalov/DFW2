@@ -1,6 +1,5 @@
 ﻿#ifndef _DLL_STRUCTS_
 #define _DLL_STRUCTS_
-
 #include "DeviceTypes.h"
 #include "limits.h"
 

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Device.h"
+#include <algorithm>
 
 namespace DFW2
 {
@@ -22,13 +23,13 @@ namespace DFW2
 
 		double Get(double VdivVnom)
 		{
-			VdivVnom = max(VdivVnom, 0.0);
+			VdivVnom = (std::max)(VdivVnom, 0.0);
 			return a0 + (a1 + a2 * VdivVnom) * VdivVnom;
 		}
 
 		double GetBoth(double VdivVnom, double &dLRC)
 		{
-			VdivVnom = max(VdivVnom, 0.0);
+			VdivVnom = (std::max)(VdivVnom, 0.0);
 			dLRC = a1 + a2 * 2.0 * VdivVnom;
 			return a0 + (a1 + a2 * VdivVnom) * VdivVnom;
 		}

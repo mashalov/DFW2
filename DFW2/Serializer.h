@@ -251,7 +251,7 @@ namespace DFW2
 			m_pDevice = pDevice;
 			// проверяем есть ли сериализуемые значения
 			if (ValueList.empty())
-				throw dfw2error(_T("CSerializerBase::BeginUpdate on empty value list"));
+				throw dfw2error("CSerializerBase::BeginUpdate on empty value list");
 			else
 				UpdateIterator = ValueList.begin();  // ставим итератор обновления на начало списка значений
 		}

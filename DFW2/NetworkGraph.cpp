@@ -170,7 +170,7 @@ void CDynaNodeContainer::BuildSynchroZones()
 	if (!m_pSynchroZones)
 		m_pSynchroZones = m_pDynaModel->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_SYNCZONE);
 	if (!m_pSynchroZones)
-		throw dfw2error(_T("CDynaNodeContainer::ProcessTopology - SynchroZone container not found"));
+		throw dfw2error("CDynaNodeContainer::ProcessTopology - SynchroZone container not found");
 
 	// проверяем, есть ли отключенные узлы
 	// даже не знаю что лучше для поиска первого отключенного узла...
@@ -244,7 +244,7 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		// если в узле есть синхронная зона
 		if (!pNode->m_pSyncZone)
-			throw dfw2error(_T("CDynaNodeContainer::EnergizeZones SyncZone not assigned"));
+			throw dfw2error("CDynaNodeContainer::EnergizeZones SyncZone not assigned");
 		// и она под напряжением
 		if (pNode->m_pSyncZone->m_bEnergized)
 		{
@@ -282,7 +282,7 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 void CDynaNodeBase::MarkZoneEnergized()
 {
 	if (!m_pSyncZone)
-		throw dfw2error(_T("CDynaNodeBase::MarkZoneEnergized SyncZone not assigned"));
+		throw dfw2error("CDynaNodeBase::MarkZoneEnergized SyncZone not assigned");
 
 	if (IsStateOn())
 	{
@@ -415,7 +415,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 {
 	CDeviceContainer *pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
 	if(!pBranchContainer)
-		throw dfw2error(_T("CDynaNodeContainer::CreateSuperNodes - Branch container not found"));
+		throw dfw2error("CDynaNodeContainer::CreateSuperNodes - Branch container not found");
 
 	ClearSuperLinks();
 	// обнуляем ссылки подчиненных узлов на суперузлы
@@ -507,12 +507,12 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 						IncrementLinkCounter(pBranchSuperLink, pNodeIp->m_nInContainerIndex);
 						IncrementLinkCounter(pBranchSuperLink, pNodeIq->m_nInContainerIndex);
 					}
-					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s connects supernodes %s and %s"), pBranch->GetVerbalName(), pNodeIp->GetVerbalName(), pNodeIq->GetVerbalName()));
+					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Branch %s connects supernodes %s and %s", pBranch->GetVerbalName(), pNodeIp->GetVerbalName(), pNodeIq->GetVerbalName()));
 				}
 				else
 					// иначе суперузел есть - и ветвь внутри него
 					pBranch->m_pNodeSuperIp = pBranch->m_pNodeSuperIq = pNodeIp->m_pSuperNodeParent;
-					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Branch %s in super node %s"), pBranch->GetVerbalName(), pNodeIp->m_pSuperNodeParent->GetVerbalName()));
+					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Branch %s in super node %s", pBranch->GetVerbalName(), pNodeIp->m_pSuperNodeParent->GetVerbalName()));
 			}
 			else
 			{
@@ -612,8 +612,8 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 						// сохраняем оригинальную связь устройства с узлом в карте
 						m_OriginalLinks.back()->insert(std::make_pair(*ppDevice, pOldDev));
 						//*
-						//string strName(pOldDev ? pOldDev->GetVerbalName() : _T(""));
-						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("Change link of object %s from node %s to supernode %s"),
+						//string strName(pOldDev ? pOldDev->GetVerbalName() : "");
+						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Change link of object %s from node %s to supernode %s",
 						//		(*ppDevice)->GetVerbalName(),
 						//		strName.c_str(),SuperNodeBlock.first->GetVerbalName()));
 					}
@@ -635,7 +635,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
 		if (pNode->m_pSuperNodeParent || pNode->GetState() != eDEVICESTATE::DS_ON)
 			continue;
-		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("%snode %s"), pNode->m_pSuperNodeParent ? _T(""): _T("super"), pNode->GetVerbalName()));
+		m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("%snode %s", pNode->m_pSuperNodeParent ? "": "super", pNode->GetVerbalName()));
 
 		for (auto&& superlink : m_SuperLinks)
 		{
@@ -644,7 +644,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			CLinkPtrCount *pLink = superlink->GetLink(pNode->m_nInContainerIndex);
 			while (pLink->In(ppDevice))
 			{
-				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex(_T("\tchild %s"), (*ppDevice)->GetVerbalName()));
+				m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("\tchild %s", (*ppDevice)->GetVerbalName()));
 			}
 		}
 	}

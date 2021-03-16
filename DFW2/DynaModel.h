@@ -1,10 +1,12 @@
 ﻿#pragma once
+#include <chrono>
+#include <algorithm>
+#include <cfloat>
 #include "Discontinuities.h"
 #include "CustomDevice.h"
 #include "Automatic.h"
 #include "KLUWrapper.h"
 #include "Results.h"
-#include "chrono"
 #include "SerializerXML.h"
 
 //#define USE_FMA
@@ -54,9 +56,9 @@ namespace DFW2
 				if (!Equal(dOldErrorSum,0.0))
 				{
 					dCm = dErrorSum / dOldErrorSum;
-					dCms = max(0.2 * dOldCm, dCm);
+					dCms = (std::max)(0.2 * dOldCm, dCm);
 				}
-				dErrorSums = dErrorSum * min(1.0, 1.5 * dCms); 
+				dErrorSums = dErrorSum * (std::min)(1.0, 1.5 * dCms); 
 			}
 
 			void GetRMS()
@@ -710,7 +712,7 @@ namespace DFW2
 		// возвращает напряжение перехода СХН на шунт
 		double GetLRCToShuntVmin() const
 		{
-			return min(m_Parameters.m_dLRCToShuntVmin,1.0);
+			return (std::min)(m_Parameters.m_dLRCToShuntVmin,1.0);
 		}
 
 		bool ConsiderDampingEquation() const

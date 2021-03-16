@@ -21,6 +21,12 @@
 #include "dfw2exception.h"
 #include "Messages.h"
 
+#ifndef _MSC_VER
+#include <assert.h>
+#define _ASSERTE(a) assert((a))
+#define __cdecl __attribute__((__cdecl__))
+#endif
+
 namespace DFW2
 {
 	typedef std::complex<double> cplx;
@@ -32,7 +38,7 @@ namespace DFW2
 #define DFW2_VERSION 1
 #define DFW2_RESULTFILE_VERSION 1
 
-#define _CheckNumber(a) _ASSERTE(!_isnan((a)) && !isinf((a)));
+#define _CheckNumber(a) _ASSERTE(!__isnan((a)) && !isinf((a)));
 
 
 #define Equal(x,y) (fabs((x)-(y)) < DFW2_EPSILON)

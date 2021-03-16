@@ -155,7 +155,7 @@ HRESULT CCSVWriter::WriteCSV(std::string_view FilePath)
 	
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	FILE *pw = NULL;
-	_tfopen_s(&pw, _T("c:\\tmp\\binarydata"), _T("wb+"));
+	fopen_s(&pw, "c:\\tmp\\binarydata", "wb+");
 
 	for (int c = 0; c < nChannelsCount; c++)
 	{
@@ -234,7 +234,7 @@ void CCSVWriter::WriteData()
 	CSVFile.open(strFilePath.c_str(), std::ios_base::in| std::ios_base::out|std::ios_base::binary);
 
 	/*
-	if (_tfopen_s(&pCSVFile, strFilePath.c_str(), _T("rb+R")))
+	if (_tfopen_s(&pCSVFile, strFilePath.c_str(), "rb+R"))
 		throw CFileWriteException(NULL);
 	*/
 

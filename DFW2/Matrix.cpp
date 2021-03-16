@@ -235,7 +235,7 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 	else
 	{
 		if (pRow->pAp >= pRow->pApRow + pRow->m_nColsCount || pRow->pAx >= pRow->pAxRow + pRow->m_nColsCount)
-			throw dfw2error(_T("CDynaModel::ReallySetElement Column count"));
+			throw dfw2error("CDynaModel::ReallySetElement Column count");
 		*pRow->pAp = nCol;			*pRow->pAx = dValue;
 		pRow->pAp++;				pRow->pAx++;
 	}
@@ -282,7 +282,7 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 	*/
 
 	if (pRow->pAp >= pRow->pApRow + pRow->m_nColsCount || pRow->pAx >= pRow->pAxRow + pRow->m_nColsCount)
-		throw dfw2error(_T("CDynaModel::ReallySetElementNoDup Column count"));
+		throw dfw2error("CDynaModel::ReallySetElementNoDup Column count");
 
 	*pRow->pAp = nCol;			*pRow->pAx = dValue;
 	pRow->pAp++;				pRow->pAx++;
@@ -458,7 +458,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 								if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
 								{
 									// отмечаем его как уравнение РДЗ, ставим точность РДЗ
-									//Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, _T("Точность %s %s"), pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
+									//Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "Точность %s %s", pVectorBegin->pDevice->GetVerbalName(), pVectorBegin->pDevice->VariableNameByPtr((pRightVector + nEqIndex)->pValue));
 									pMarkEq->PrimitiveBlock = PBT_DERLAG;
 									pMarkEq->Atol = pVectorBegin->Atol;
 									pMarkEq->Rtol = pVectorBegin->Rtol;
@@ -622,11 +622,11 @@ void CDynaModel::UpdateNewRightVector()
 					// проверяем, совпадают ли адрес устройства и переменной в полном векторе
 					// с адресом устройства и переменной во рабочем векторе
 					if (pRv >= pEnd)
-						throw dfw2error(_T("CDynaModel::UpdateNewRightVector - New right vector overrun"));
+						throw dfw2error("CDynaModel::UpdateNewRightVector - New right vector overrun");
 
 					/*
 					if (pRvB->pDevice != pRv->pDevice || pRvB->pValue != pRv->pValue)
-						throw dfw2error(_T("CDynaModel::UpdateNewRightVector - TotalRightVector Out Of Sync"));
+						throw dfw2error("CDynaModel::UpdateNewRightVector - TotalRightVector Out Of Sync");
 						*/
 					InitNordsiekElement(pRv, pRvB->Atol, pRvB->Rtol);
 					PrepareNordsiekElement(pRv);
@@ -666,9 +666,9 @@ void CDynaModel::DebugCheckRightVectorSync()
 					// проверяем, совпадают ли адрес устройства и переменной в полном векторе
 					// с адресом устройства и переменной во рабочем векторе
 					if (pRv >= pEnd)
-						throw dfw2error(_T("CDynaModel::DebugCheckRightVectorSync - New right vector overrun"));
+						throw dfw2error("CDynaModel::DebugCheckRightVectorSync - New right vector overrun");
 					if (pRvB->pDevice != pRv->pDevice || pRvB->pValue != pRv->pValue)
-						throw dfw2error(_T("CDynaModel::DebugCheckRightVectorSync - TotalRightVector Out Of Sync"));
+						throw dfw2error("CDynaModel::DebugCheckRightVectorSync - TotalRightVector Out Of Sync");
 					pRv++;	pRvB++;
 				}
 			}
@@ -705,7 +705,7 @@ void CDynaModel::UpdateTotalRightVector()
 					// проверяем, совпадают ли адрес устройства и переменной в полном векторе
 					// с адресом устройства и переменной во рабочем векторе
 					if (pRvB->pDevice != pRv->pDevice || pRvB->pValue != pRv->pValue)
-						throw dfw2error(_T("CDynaModel::UpdateTotalRightVector - TotalRightVector Out Of Sync"));
+						throw dfw2error("CDynaModel::UpdateTotalRightVector - TotalRightVector Out Of Sync");
 
 					// количество ошибок в полном векторе суммируем с накопленным количеством ошибок в рабочем
 					ptrdiff_t nNewErrorHits = pRvB->nErrorHits + pRv->nErrorHits;
@@ -726,7 +726,7 @@ void CDynaModel::CheckMatrixElement(ptrdiff_t nRow, ptrdiff_t nCol)
 	auto& ins = m_MatrixChecker.insert(std::make_pair(nRow, std::set<ptrdiff_t>{nCol}));
 	if (!ins.second)
 		if (!ins.first->second.insert(nCol).second)
-			throw dfw2error(Cex(_T("CDynaModel::CheckMatrixElement dup element at %d %d"), nRow, nCol));
+			throw dfw2error(Cex("CDynaModel::CheckMatrixElement dup element at %d %d", nRow, nCol));
 	*/
 }
 

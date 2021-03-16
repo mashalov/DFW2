@@ -33,7 +33,6 @@ bool CRLECompressor::OutRepeat(const unsigned char *pBuffer, const unsigned char
 
 bool CRLECompressor::OutCompressed(const unsigned char Byte)
 {
-	//_tcprintf(_T("\n%02x %c"), Byte, Byte);
 	if (m_pCompr < m_pWriteBufferEnd)
 	{
 		*m_pCompr = Byte;
@@ -45,7 +44,6 @@ bool CRLECompressor::OutCompressed(const unsigned char Byte)
 
 bool CRLECompressor::OutDecompressed(const unsigned char Byte)
 {
-	//_tcprintf(_T("%c"), Byte, Byte);
 	if (m_pDecompr < m_pWriteBufferEnd)
 	{
 		*m_pDecompr = Byte;

@@ -68,5 +68,9 @@ namespace DFW2
 		virtual const DOUBLEVECTOR& GetBlockParameters(ptrdiff_t nBlockIndex) = 0;
 	};
 
+#ifdef _MSC_VER
 	typedef ICustomDevice* (__cdecl* CustomDeviceFactory)();
+#else
+	typedef ICustomDevice* (*CustomDeviceFactory)();
+#endif 
 }

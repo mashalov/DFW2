@@ -16,5 +16,8 @@ public:
 	virtual void Destroy() = 0;
 };
 
-
+#ifdef _MSC_VER
 typedef ICompiler* (__cdecl* fnCompilerFactory)();
+#else
+typedef ICompiler* (*fnCompilerFactory)();
+#endif

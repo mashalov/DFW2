@@ -309,7 +309,7 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 
 	std::string strDateTime(stringutils::utf8_encode(vt.bstrVal));
-	_tcprintf(_T("\nCreated %s "), strDateTime.c_str());
+	printf("\nCreated %s ", strDateTime.c_str());
 
 	ReadString(m_strComment);
 	ReadDirectoryEntries();
@@ -338,15 +338,15 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		pDevTypeInfo->m_pFileReader = this;
 		pDevTypeInfo->eDeviceType = ReadLEBInt();
 		ReadString(pDevTypeInfo->strDevTypeName);
-		_tcprintf(_T("\nType %d "), pDevTypeInfo->eDeviceType);
+		printf("\nType %d ", pDevTypeInfo->eDeviceType);
 		pDevTypeInfo->DeviceIdsCount = ReadLEBInt();
-		_tcprintf(_T("IdsCount %d "), pDevTypeInfo->DeviceIdsCount);
+		printf("IdsCount %d ", pDevTypeInfo->DeviceIdsCount);
 		pDevTypeInfo->DeviceParentIdsCount = ReadLEBInt();
-		_tcprintf(_T("ParentIdsCount %d "), pDevTypeInfo->DeviceParentIdsCount);
+		printf("ParentIdsCount %d ", pDevTypeInfo->DeviceParentIdsCount);
 		pDevTypeInfo->DevicesCount = ReadLEBInt();
-		_tcprintf(_T("DevCount %d "), pDevTypeInfo->DevicesCount);
+		printf("DevCount %d ", pDevTypeInfo->DevicesCount);
 		pDevTypeInfo->VariablesByDeviceCount = ReadLEBInt();
-		_tcprintf(_T("VarsCount %d"), pDevTypeInfo->VariablesByDeviceCount);
+		printf("VarsCount %d", pDevTypeInfo->VariablesByDeviceCount);
 
 
 		VariableTypeInfo VarTypeInfo;
@@ -354,14 +354,14 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		for (int iVar = 0; iVar < pDevTypeInfo->VariablesByDeviceCount; iVar++)
 		{
 			ReadString(VarTypeInfo.Name);
-			_tcprintf(_T("\nVar %s "), VarTypeInfo.Name.c_str());
+			printf("\nVar %s ", VarTypeInfo.Name.c_str());
 			VarTypeInfo.eUnits = ReadLEBInt();
-			_tcprintf(_T("Units %d "), VarTypeInfo.eUnits);
+			printf("Units %d ", VarTypeInfo.eUnits);
 			int nBitFlags = ReadLEBInt();
 			if (nBitFlags & 0x01)
 			{
 				ReadDouble(VarTypeInfo.Multiplier);
-				_tcprintf(_T("Mult %g "), VarTypeInfo.Multiplier);
+				printf("Mult %g ", VarTypeInfo.Multiplier);
 			}
 			else
 				VarTypeInfo.Multiplier = 1.0;
@@ -383,12 +383,12 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		{
 			pDevInst->nIndex = iDev;
 
-			_tcprintf(_T("\n"));
+			printf("\n");
 			for (int Ids = 0; Ids < pDevTypeInfo->DeviceIdsCount; Ids++)
 			{
 				unsigned __int64 ReadInt64;
 				ReadLEB(ReadInt64);
-				_tcprintf(_T("Id[%d] %d "), Ids, static_cast<int>(ReadInt64));
+				printf("Id[%d] %d ", Ids, static_cast<int>(ReadInt64));
 				pDevInst->SetId(Ids, static_cast<int>(ReadInt64));
 			}
 
@@ -400,7 +400,7 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 				unsigned __int64 eType = 0;
 				ReadLEB(eType);
 				ReadLEB(nId);
-				_tcprintf(_T("Link to %d of type %d "), static_cast<int>(nId), static_cast<int>(eType));
+				printf("Link to %d of type %d ", static_cast<int>(nId), static_cast<int>(eType));
 				pDevInst->SetParent(Ids, static_cast<int>(eType), static_cast<int>(nId));
 			}
 		}

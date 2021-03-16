@@ -94,7 +94,7 @@ namespace DFW2
 			}
 			else
 			{
-				_ASSERTE(!_T("SingleLinkRange::SetLink() Wrong link index"));
+				_ASSERTE(!"SingleLinkRange::SetLink() Wrong link index");
 				return nullptr;
 			}
 #endif
@@ -261,7 +261,7 @@ namespace DFW2
 		inline ptrdiff_t A(ptrdiff_t nOffset) 
 		{ 
 			if (!AssignedToMatrix())
-				throw dfw2error(_T("CDevice::A - access to device not in matrix"));
+				throw dfw2error("CDevice::A - access to device not in matrix");
 			return m_nMatrixRow + nOffset; 
 		}
 

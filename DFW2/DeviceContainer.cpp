@@ -374,10 +374,10 @@ bool CDeviceContainer::CheckLink(ptrdiff_t nLinkIndex)
 CMultiLink& CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec)
 {
 	if (!CheckLink(nLinkIndex, LinksVec))
-		throw dfw2error(_T("CDeviceContainer::GetCheckLink - LinkIndex out of range"));
+		throw dfw2error("CDeviceContainer::GetCheckLink - LinkIndex out of range");
 	LINKSVECITR it = LinksVec.begin() + nLinkIndex;
 	if (nDeviceIndex >= static_cast<ptrdiff_t>(it->m_LinkInfo.size()))
-		throw dfw2error(_T("CDeviceContainer::GetCheckLink - DeviceIndex out of range"));
+		throw dfw2error("CDeviceContainer::GetCheckLink - DeviceIndex out of range");
 	return *it;
 }
 // возвращает связь заданного типа (по индексу) и устройства из основного вектора ссылок
@@ -397,7 +397,7 @@ void CDeviceContainer::IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDev
 void CDeviceContainer::IncrementLinkCounter(CMultiLink& pLink, ptrdiff_t nDeviceIndex)
 {
 	if (nDeviceIndex >= static_cast<ptrdiff_t>(pLink.m_LinkInfo.size()))
-		throw dfw2error(_T("CDeviceContainer::IncrementLinkCounter - DeviceIndex out of range"));
+		throw dfw2error("CDeviceContainer::IncrementLinkCounter - DeviceIndex out of range");
 	pLink.m_LinkInfo[nDeviceIndex].m_nCount++;
 }
 

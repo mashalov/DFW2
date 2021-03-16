@@ -385,7 +385,7 @@ void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
 CResultFileWriter::~CResultFileWriter()
 {
 	CloseFile();
-	_tcprintf(_T("\n%d"), m_nPointsCount);
+	printf("\n%d", m_nPointsCount);
 }
 
 // завершает и закрывает поток записи
@@ -653,7 +653,7 @@ unsigned int CResultFileWriter::WriterThread(void *pThis)
 	}
 	catch (CFileWriteException&)
 	{
-		MessageBox(NULL, _T("Result Write Error"), _T("ResultWriter"), MB_OK);
+		MessageBox(NULL, L"Result Write Error", L"ResultWriter", MB_OK);
 	}
 
 	return 0;
