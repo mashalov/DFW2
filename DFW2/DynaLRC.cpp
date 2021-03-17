@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaLRC.h"
+#include <fstream>
 
 using namespace DFW2;
 
@@ -38,7 +39,7 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 	CLRCData *pHitV = pBase + nCount - 1;
 
 	CLRCData *v = pBase;
-	VdivVnom = max(0.0, VdivVnom);
+	VdivVnom = (std::max)(0.0, VdivVnom);
 
 	// ищем сегмент у которого напряжение больше заданного
 	while (v < pBase + nCount)
@@ -97,7 +98,7 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 
 		if (bLeft)
 		{
-			dVicinity = min(dVicinity, pHitV->dMaxRadius);
+			dVicinity = (std::min)(dVicinity, pHitV->dMaxRadius);
 			x1 = pHitV->V - dVicinity;
 			y1 = pHitV->pPrev->GetBoth(x1, k1);
 			x2 = pHitV->V + dVicinity;
@@ -105,7 +106,7 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 		}
 		else
 		{
-			dVicinity = min(dVicinity, pHitV->pNext->dMaxRadius);
+			dVicinity = (std::min)(dVicinity, pHitV->pNext->dMaxRadius);
 			x1 = pHitV->pNext->V - dVicinity;
 			y1 = pHitV->GetBoth(x1, k1);
 			x2 = pHitV->pNext->V + dVicinity;
@@ -340,17 +341,15 @@ return GetBoth(pHitV, VdivVnom, dP);
 
 void CDynaLRC::TestDump(const char* cszPathName)
 {
-	FILE *flrc(NULL);
-	setlocale(LC_ALL, "ru-ru");
-	if (!fopen_s(&flrc, cszPathName, "w+"))
+	std::ofstream dump(cszPathName);
+	if (dump.is_open())
 	{
 		double dP(0.0), dQ(0.0), dV(0.3);
 		for (double v = 0.0; v < 1.5; v += 0.01)
 		{
 			double P = GetPdP(v, dP, dV);
 			double Q = GetQdQ(v, dQ, dV);
-			fprintf(flrc, "%g;%g;%g;%g;%g\n", v, P, dP, Q, dQ);
+			dump << fmt::format("{};{};{};{};{}", v, P, dP, Q, dQ) << std::endl;
 		}
-		fclose(flrc);
 	}
 }

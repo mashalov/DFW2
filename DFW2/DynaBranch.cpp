@@ -214,7 +214,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 	// в суперузле
 
 	cplx Ybranch = GetYBranch(bFixNegativeZs);
-	cplx Ktr(Ktr, Kti);
+	cplx Ktrx(Ktr, Kti);
 
 	switch (m_BranchState)
 	{
@@ -226,10 +226,10 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 	case CDynaBranch::BRANCH_ON:
 		// ветвь включена
 		// проводимости рассчитываем по "П"-схеме
-		Yip = Ybranch / Ktr;
-		Yiq = Ybranch / conj(Ktr);
+		Yip = Ybranch / Ktrx;
+		Yiq = Ybranch / conj(Ktrx);
 		Yips = cplx(GIp, BIp) + Ybranch;
-		Yiqs = cplx(GIq, BIq) + Ybranch / norm(Ktr);
+		Yiqs = cplx(GIq, BIq) + Ybranch / norm(Ktrx);
 		break;
 	case CDynaBranch::BRANCH_TRIPIP:
 	{
@@ -244,7 +244,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 
 		// собстванная со стороны узла конца
 		if (!Equal(abs(Ysum), 0.0))
-			Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktr);
+			Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktrx);
 	}
 	break;
 	case CDynaBranch::BRANCH_TRIPIQ:
@@ -256,7 +256,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 		cplx Yip1(GIq, BIq);
 
 		// собственная со стороны узла начала
-		cplx Ysum = Yip1 / norm(Ktr) + Ybranch;
+		cplx Ysum = Yip1 / norm(Ktrx) + Ybranch;
 
 		_ASSERTE(!Equal(abs(Ysum), 0.0));
 
@@ -311,7 +311,7 @@ void CDynaBranch::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty("br_iq", BrIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddProperty("nr_ip", NrIp, eVARUNITS::VARUNIT_PIECES);
 	Serializer->AddProperty("nr_iq", NrIq, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddEnumProperty("sta", new CSerializerAdapterEnumT<CDynaBranch::BranchState>(m_BranchState, m_cszBranchStateNames, _countof(m_cszBranchStateNames)));
+	Serializer->AddEnumProperty("sta", new CSerializerAdapterEnumT<CDynaBranch::BranchState>(m_BranchState, m_cszBranchStateNames, std::size(m_cszBranchStateNames)));
 	Serializer->AddState("Gip", GIp, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Giq", GIq, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Bip", BIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);

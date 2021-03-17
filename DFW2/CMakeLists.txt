@@ -17,6 +17,14 @@ set(EMSSSOURCES
     format.cc 
     Messages.cpp
     LoadFlow.cpp
+    Device.cpp
+    DeviceContainer.cpp
+    DynaNode.cpp
+    DynaBranch.cpp
+    DeviceId.cpp
+    DynaLRC.cpp
+    DeviceContainerProperties.cpp
+    Serializer.cpp
     )             
 
 add_subdirectory("SuiteSparse/KLU")

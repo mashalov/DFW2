@@ -9,7 +9,13 @@
 
 #ifdef _MSC_VER
 #include "windows.h"
+#define	LIBMODULE HMODULE
+#else
+#include <dlfcn.h>
+#define LIBMODULE void*
+typedef int (*FARPROC)();
 #endif
+
 
 #include "string"
 #include "complex"

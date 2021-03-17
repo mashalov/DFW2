@@ -1036,17 +1036,15 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase *pNode)
 
 void CLoadFlow::DumpNodes()
 {
-	FILE *fdump(nullptr);
-	setlocale(LC_ALL, "ru-ru");
-	if (!fopen_s(&fdump, "c:\\tmp\\resnodes.csv", "wb+"))
+	std::ofstream dump("c:\\tmp\\resnodes.csv");
+	if (dump.is_open())
 	{
-		fprintf(fdump, "N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref;VR;DeltaR;QgR;QnR\n");
+		dump << "N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref;VR;DeltaR;QgR;QnR" << std::endl;
 		for (auto&& it : pNodes->m_DevVec)
 		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(it);
 #ifdef _DEBUG
-			///*
-			fprintf(fdump, "%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g;%.12g;%.12g;%.12g;%.12g\n",
+			dump << fmt::format("{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{};{}",
 				pNode->GetId(),
 				pNode->V.Value,
 				pNode->Delta.Value / M_PI * 180.0,
@@ -1063,19 +1061,9 @@ void CLoadFlow::DumpNodes()
 				pNode->Vrastr,
 				pNode->Deltarastr / M_PI * 180.0,
 				pNode->Qgrastr,
-				pNode->Qnrrastr);
-			//*/
-			/*
-			fprintf(fdump, "%d;%.12g;%.12g;%.12g;%.12g;%.12g;%.12g\n",
-				pNode->GetId(),
-				pNode->V,
-				pNode->Delta / M_PI * 180.0,
-				pNode->Pnr,
-				pNode->Qnr,
-				pNode->Pg,
-				pNode->Qg);*/
+				pNode->Qnrrastr) << std::endl;
 #else
-			fprintf(fdump, "%td;%.12g;%.12g;%g;%g;%g;%g;%g;%g;%d;%g;%g;%g\n",
+			dump << fmt::format("{};{};{};{};{};{};{};{};{};{};{};{};{}",
 				pNode->GetId(),
 				pNode->V.Value,
 				pNode->Delta.Value / M_PI * 180.0,
@@ -1088,10 +1076,10 @@ void CLoadFlow::DumpNodes()
 				pNode->m_eLFNodeType,
 				pNode->LFQmin,
 				pNode->LFQmax,
-				pNode->LFVref);
+				pNode->LFVref) << std::endl;
 #endif
 		}
-		fclose(fdump);
+
 	}
 }
 

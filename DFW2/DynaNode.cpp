@@ -632,7 +632,7 @@ void CDynaNodeBase::CalculateShuntParts()
 void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 {
 	Yii = -cplx(G + Gshunt, B + Bshunt);
-	m_bInMetallicSC = !(_finite(Yii.real()) && _finite(Yii.imag()));
+	m_bInMetallicSC = !(std::isfinite(Yii.real()) && std::isfinite(Yii.imag()));
 
 	if (m_bInMetallicSC || !IsStateOn())
 	{
@@ -795,10 +795,10 @@ bool CDynaNodeContainer::LULF()
 	ptrdiff_t *pAp = Ap;
 	ptrdiff_t *pAi = Ai;
 
-	FILE *fnode(nullptr), *fgen(nullptr);
-	fopen_s(&fnode, "c:\\tmp\\nodes.csv", "w+");
-	fopen_s(&fgen, "c:\\tmp\\gens.csv", "w+");
-	fprintf(fnode, ";");
+	std::ofstream fnode("c:\\tmp\\nodes.csv");
+	std::ofstream fgen("c:\\tmp\\gens.csv");
+
+	fnode << ";";
 
 	for (auto&& it : m_DevInMatrix)
 	{
@@ -823,7 +823,7 @@ bool CDynaNodeContainer::LULF()
 			pNode->Vre = pNode->V = pNode->Unom;
 			pNode->Vim = pNode->Delta = 0.0;
 			// для всех узлов, которые не отключены и не находятся в металлическом КЗ (КЗ с нулевым шунтом)
-			fprintf(fnode, "%td;", pNode->GetId());
+			fnode << pNode->GetId() << ";";
 			// Branches
 
 			for (VirtualBranch *pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
@@ -843,8 +843,9 @@ bool CDynaNodeContainer::LULF()
 		ppDiags = pDiags.get();
 		pB = B;
 
-		fprintf(fnode, "\n%td;", nIteration);
-		fprintf(fgen, "\n%td;", nIteration);
+		fnode << std::endl << nIteration << ";";
+		fgen  << std::endl << nIteration << ";";
+
 		// проходим по узлам вне зависимости от их состояния, параллельно идем по диагонали матрицы
 		for (auto&& it : m_DevInMatrix)
 		{
@@ -909,7 +910,7 @@ bool CDynaNodeContainer::LULF()
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
 
-					fprintf(fgen, "%g;", pVsource->P.Value);
+					fgen << pVsource->P.Value << ";";
 				}
 
 				// рассчитываем задающий ток узла от нагрузки
@@ -930,7 +931,8 @@ bool CDynaNodeContainer::LULF()
 				// диагональ матрицы формируем по Y узла
 				**ppDiags = Y.real();
 				*(*ppDiags + 1) = Y.imag();
-				fprintf(fnode, "%g;", pNode->V / pNode->V0);
+
+				fnode << pNode->V / pNode->V0 << ";";
 			}
 			else
 			{
@@ -977,8 +979,6 @@ bool CDynaNodeContainer::LULF()
 			break;
 		}
 	}
-	fclose(fnode);
-	fclose(fgen);
 	return bRes;
 }
 
@@ -1572,7 +1572,7 @@ void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("name", TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
-	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnumT<CDynaNodeBase::eLFNodeType>(m_eLFNodeType, m_cszLFNodeTypeNames, _countof(m_cszLFNodeTypeNames)));
+	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnumT<CDynaNodeBase::eLFNodeType>(m_eLFNodeType, m_cszLFNodeTypeNames, std::size(m_cszLFNodeTypeNames)));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);

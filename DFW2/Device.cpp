@@ -959,28 +959,32 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 		if (pModel && GetId() == nId && pModel->GetIntegrationStepNumber() == nStepNumber)
 		{
 			std::string FileName = fmt::format("c:\\tmp\\{}_{}.csv", GetVerbalName(), nStepNumber);
-			FILE *flog;
+
 			if (pModel->GetNewtonIterationNumber() == 1)
-				_unlink(FileName.c_str());
-			fopen_s(&flog, FileName.c_str(), "a");
-			if (flog)
+				std::remove(FileName.c_str());
+
+			std::ofstream flog(FileName, std::fstream::app | std::fstream::out);
+
+			if (flog.is_open())
 			{
 				if (pModel->GetNewtonIterationNumber() == 1)
 				{
+					// для первой итерации добавляем заголовок с именами переменных контейнера
 					for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-						fprintf(flog, "%s;", var->first.c_str());
+						flog << var->first;
+					// и именами приращений - "d_переменная"
 					for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-						fprintf(flog, "d_%s;", var->first.c_str());
-					fprintf(flog, "\n");
+						flog << fmt::format("d_{}",var->first);
+					flog << std::endl;
 				}
 
+				// для всех итераций добавляем текущее значение переменной
 				for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-					fprintf(flog, "%g;", *GetVariablePtr(var->second.m_nIndex));
+					flog << *GetVariablePtr(var->second.m_nIndex);
+				// и приращение на итерации из правой части
 				for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-					fprintf(flog, "%g;", pModel->GetFunction(A(var->second.m_nIndex)));
-				fprintf(flog, "\n");
-
-				fclose(flog);
+					flog << pModel->GetFunction(A(var->second.m_nIndex));
+				flog << std::endl;
 			}
 		}
 	}

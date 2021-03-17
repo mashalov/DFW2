@@ -7,7 +7,13 @@
 #include "Automatic.h"
 #include "KLUWrapper.h"
 #include "Results.h"
+
+// временно изолируем msxml для linux
+#ifdef _MSC_VER
 #include "SerializerXML.h"
+#else
+#include "Serializer.h"
+#endif
 
 //#define USE_FMA
 namespace DFW2
@@ -574,10 +580,14 @@ namespace DFW2
 		std::ofstream LogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
 
+#ifdef _MSC_VER
 		IResultWritePtr m_spResultWrite;
+		// TODO !!!!!  Заменить на std !!!!!
+		HANDLE m_hStopEvt;
+#endif
 		double m_dTimeWritten;
 		const char* m_cszDampingName = nullptr;
-		HANDLE m_hStopEvt;
+
 
 		CDeviceContainer *m_pClosestZeroCrossingContainer = nullptr;
 
@@ -626,6 +636,8 @@ namespace DFW2
 
 
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
+
+		// возвращает значение правой части системы уравнений
 		double GetFunction(ptrdiff_t nRow);
 		struct RightVector* GetRightVector(const ptrdiff_t nRow);
 		struct RightVector* GetRightVector(const VariableIndexBase& Variable);

@@ -325,16 +325,16 @@ namespace DFW2
 							6, 5,
 							6, 1};
 							*/
-			std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(_countof(nodes));
-			std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(_countof(edges) / 2);
+			std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(std::size(nodes));
+			std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(std::size(edges) / 2);
 			NodeType *pNode = pGraphNodes.get();
 			GraphType gc;
 
-			for (int *p = nodes; p < _countof(nodes) + nodes; p++, pNode++)
+			for (int *p = nodes; p < std::size(nodes) + nodes; p++, pNode++)
 				gc.AddNode(pNode->SetId(*p));
 
 			EdgeType *pEdge = pGraphEdges.get();
-			for (int *p = edges; p < _countof(edges) + edges; p += 2, pEdge++)
+			for (int *p = edges; p < std::size(edges) + edges; p += 2, pEdge++)
 				gc.AddEdge(pEdge->SetIds(*p, *(p + 1), p - edges));
 
 			CyclesType Cycles;

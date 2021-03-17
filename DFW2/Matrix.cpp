@@ -393,6 +393,7 @@ bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATIO
 	return true;
 }
 
+
 double CDynaModel::GetFunction(ptrdiff_t nRow)
 {
 	double dVal = NAN;

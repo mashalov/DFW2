@@ -1,23 +1,31 @@
 ﻿#pragma once
-#include "dfw2exception.h"
+#include "Header.h"
 
 namespace DFW2
 {
 	class CDLLInstance
 	{
 	protected:
-		HMODULE m_hDLL = NULL;
+		LIBMODULE m_hDLL = NULL;
 		std::string m_strModulePath;
 		void CleanUp()
 		{
 			if (m_hDLL)
+#ifdef _MSC_VER
 				FreeLibrary(m_hDLL);
+#else 
+				dlclose(m_hDLL);
+#endif
 			m_hDLL = NULL;
 		}
 		void Init(std::string_view DLLFilePath)
 		{
 			// загружаем dll 
+#ifdef _MSC_VER
 			m_hDLL = LoadLibrary(stringutils::utf8_decode(DLLFilePath).c_str());
+#else
+			m_hDLL = dlopen(std::string(DLLFilePath).c_str(), RTLD_LAZY);
+#endif
 			if (!m_hDLL)
 				throw dfw2errorGLE(fmt::format("Ошибка загрузки DLL \"{}\".", DLLFilePath));
 			m_strModulePath = DLLFilePath;
@@ -34,13 +42,21 @@ namespace DFW2
 	template<class Interface>
 	class CDLLInstanceFactory : public CDLLInstance
 	{
+#ifdef _MSC_VER		
 		using fnFactory = Interface* (__cdecl *)();
+#else
+		using fnFactory = Interface * (*)();
+#endif
 	protected:
 		fnFactory m_pfnFactory = nullptr;
 		void Init(std::string_view FactoryFunction)
 		{
 			std::string strFactoryFn(FactoryFunction);
+#ifdef _MSC_VER
 			m_pfnFactory = reinterpret_cast<fnFactory>(::GetProcAddress(m_hDLL, strFactoryFn.c_str()));
+#else
+			m_pfnFactory = reinterpret_cast<fnFactory>(dlsym(m_hDLL, strFactoryFn.c_str()));
+#endif
 			if (!m_pfnFactory)
 				throw dfw2error(fmt::format("Функция \"{}\" не найдена в DLL \"{}\"", strFactoryFn, m_strModulePath));
 		}

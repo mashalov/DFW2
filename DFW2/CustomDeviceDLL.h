@@ -20,11 +20,10 @@ namespace DFW2
 	{
 	protected:
 		bool m_bConnected;
-		HMODULE m_hDLL;
+		LIBMODULE m_hDLL;
 		std::string m_strModulePath;
 		CDeviceContainer *m_pDeviceContainer;
 		ptrdiff_t m_nGetProcAddresFailureCount;
-
 		FARPROC GetProcAddress(const char *cszFunctionName);
 		void CleanUp();
 		void ClearFns();
