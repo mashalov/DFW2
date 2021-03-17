@@ -341,7 +341,7 @@ return GetBoth(pHitV, VdivVnom, dP);
 
 void CDynaLRC::TestDump(const char* cszPathName)
 {
-	std::ofstream dump(cszPathName);
+	std::ofstream dump(stringutils::utf8_decode(cszPathName));
 	if (dump.is_open())
 	{
 		double dP(0.0), dQ(0.0), dV(0.3);

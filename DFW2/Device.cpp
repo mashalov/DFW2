@@ -963,7 +963,7 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 			if (pModel->GetNewtonIterationNumber() == 1)
 				std::remove(FileName.c_str());
 
-			std::ofstream flog(FileName, std::fstream::app | std::fstream::out);
+			std::ofstream flog(stringutils::utf8_decode(FileName), std::fstream::app | std::fstream::out);
 
 			if (flog.is_open())
 			{

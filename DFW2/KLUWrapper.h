@@ -394,7 +394,7 @@ namespace DFW2
 		// todo - complex version
 		void DumpMatrix(bool bAnalyzeLinearDependenies)
 		{
-			std::ofstream mts("c:\\tmp\\dwfsingularmatrix.mtx");
+			std::ofstream mts(stringutils::utf8_decode("c:\\tmp\\dwfsingularmatrix.mtx"));
 			if (mts.is_open())
 			{
 				ptrdiff_t* pAi = Ap();

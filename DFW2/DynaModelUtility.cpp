@@ -2,34 +2,8 @@
 #include "DynaModel.h"
 #include "klu.h"
 #include "cs.h"
-#include <stdio.h>
-#include <iostream>
-#include <io.h>
-#include <fcntl.h>
 using namespace DFW2;
 
-void CDynaModel::ReportKLUError(KLU_common& KLUCommon)
-{
-	switch (KLUCommon.status)
-	{
-	case 0:
-		Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszKLUOk);
-		break;
-	case 1:
-		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszKLUSingular);
-		DumpMatrix();
-		break;
-	case -2:
-		Log(CDFW2Messages::DFW2LOG_FATAL, CDFW2Messages::m_cszKLUOutOfMemory);
-		break;
-	case -3:
-		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszKLUInvalidInput);
-		break;
-	case -4:
-		Log(CDFW2Messages::DFW2LOG_ERROR, CDFW2Messages::m_cszKLUIntOverflow);
-		break;
-	}
-}
 
 void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex)
 {
@@ -37,6 +11,8 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view M
 
 	if (m_Parameters.m_bLogToConsole)
 	{
+#ifdef _MSC_VER
+		// для Windows делаем разные цвета в консоли
 		HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
 		CONSOLE_SCREEN_BUFFER_INFO csbi;
 		GetConsoleScreenBufferInfo(hCon, &csbi);
@@ -62,13 +38,12 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view M
 		}
 
 		SetConsoleOutputCP(CP_UTF8);
+#endif
 		std::cout << utf8Message << std::endl;
 
-		/*_setmode(_fileno(stdout), _O_U16TEXT);
-		std::cout << Message << std::endl;
-		*/
-
+#ifdef _MSC_VER
 		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
+#endif
 	}
 
 	if (LogFile.is_open() && m_Parameters.m_bLogToFile)
@@ -387,164 +362,29 @@ csi cs_gatxpy(const cs *A, const double *x, double *y)
 	return (1);
 }
 
-void CDynaModel::DumpMatrix(bool bAnalyzeLinearDependenies)
-{
-	FILE* fmatx(nullptr);
-	if (!fopen_s(&fmatx, "c:\\tmp\\dwfsingularmatrix.mtx", "w+"))
-	{
-		std::unique_ptr<FILE, decltype(&fclose)> fmatrix(fmatx, &fclose);
-		ptrdiff_t *pAi = klu.Ap();
-		double *pAx = klu.Ax();
-		ptrdiff_t nRow = 0;
-		std::set<ptrdiff_t> BadNumbers, FullZeros;
-		std::vector<bool> NonZeros;
-		std::vector<bool> Diagonals;
-		std::vector<double> Expanded;
-
-		NonZeros.resize(klu.MatrixSize(), false);
-		Diagonals.resize(klu.MatrixSize(), false);
-		Expanded.resize(klu.MatrixSize(), 0.0);
-
-		for (ptrdiff_t *pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
-		{
-			ptrdiff_t *pAiend = pAi + *(pAp + 1) - *pAp;
-			bool bAllZeros = true;
-			while (pAi < pAiend)
-			{
-				fprintf(fmatrix.get(), "%10td %10td     %30g", nRow, *pAi, *pAx);
-				RightVector *pRowVector = pRightVector + nRow;
-				RightVector *pColVector = pRightVector + *pAi;
-				CDevice *pRowDevice = pRowVector->pDevice;
-				CDevice *pColDevice = pColVector->pDevice;
-
-				if (isnan(*pAx) || isinf(*pAx))
-					BadNumbers.insert(nRow);
-
-				if (fabs(*pAx) > 1E-7)
-				{
-					bAllZeros = false;
-					NonZeros[*pAi] = true;
-
-					if (nRow == *pAi)
-						Diagonals[nRow] = true;
-				}
-
-				
-				fprintf(fmatrix.get(), "    %50s/%30s %50s/%30s", pRowDevice->GetVerbalName(), pRowDevice->VariableNameByPtr(pRowVector->pValue),
-												  				    pColDevice->GetVerbalName(), pColDevice->VariableNameByPtr(pColVector->pValue));
-				fprintf(fmatrix.get(), "    %30g %30g\n", *pRowVector->pValue, *pColVector->pValue);
-				pAx++; pAi++;
-			}
-			if (bAllZeros)
-				FullZeros.insert(nRow);
-		}
-
-		for (const auto& it : BadNumbers)
-			fprintf(fmatrix.get(), "Bad Number in Row: %td\n", it);
-
-		for (const auto& it : FullZeros)
-			fprintf(fmatrix.get(), "Full Zero Row : %td\n", it);
-
-		for (auto&& it = NonZeros.begin() ; it != NonZeros.end() ; it++)
-			if(!*it)
-				fprintf(fmatrix.get(), "Full Zero Column: %td\n", it - NonZeros.begin());
-
-		for (auto&& it = Diagonals.begin(); it != Diagonals.end(); it++)
-			if (!*it)
-				fprintf(fmatrix.get(), "Zero Diagonal: %td\n", it - Diagonals.begin());
-
-
-		if (bAnalyzeLinearDependenies)
-		{
-			// пытаемся определить линейно зависимые строки с помощью неравенства Коши-Шварца
-			// (v1 dot v2)^2 <= norm2(v1) * norm2(v2)
-
-			pAi = klu.Ap(); pAx = klu.Ax(); nRow = 0;
-			for (ptrdiff_t* pAp = klu.Ai(); pAp < klu.Ai() + klu.MatrixSize(); pAp++, nRow++)
-			{
-				std::fill(Expanded.begin(), Expanded.end(), 0.0);
-
-				ptrdiff_t* pAiend = pAi + *(pAp + 1) - *pAp;
-				bool bAllZeros = true;
-				double normi = 0.0;
-
-				std::set < std::pair<ptrdiff_t, double> > RowI;
-
-				while (pAi < pAiend)
-				{
-					Expanded[*pAi] = *pAx;
-					normi += *pAx * *pAx;
-
-					RowI.insert(std::make_pair(*pAi, *pAx));
-
-					pAx++; pAi++;
-				}
-
-				ptrdiff_t nRows = 0;
-				ptrdiff_t* pAis = klu.Ap();
-				double* pAxs = klu.Ax();
-				for (ptrdiff_t* pAps = klu.Ai(); pAps < klu.Ai() + klu.MatrixSize(); pAps++, nRows++)
-				{
-					ptrdiff_t* pAiends = pAis + *(pAps + 1) - *pAps;
-					double normj = 0.0;
-					double inner = 0.0;
-
-					std::set < std::pair<ptrdiff_t, double> > RowJ;
-
-					while (pAis < pAiends)
-					{
-						normj += *pAxs * *pAxs;
-						inner += Expanded[*pAis] * *pAxs;
-
-						RowJ.insert(std::make_pair(*pAis, *pAxs));
-
-						pAis++; pAxs++;
-					}
-					if (nRow != nRows)
-					{
-						double Ratio = inner * inner / normj / normi;
-						if (fabs(Ratio - 1.0) < 1E-5)
-						{
-							fprintf(fmatrix.get(), "Linear dependent rows %10td %10td with %g\n", nRow, nRows, Ratio);
-							for (auto& it : RowI)
-								fprintf(fmatrix.get(), "%10td %10td     %30g\n", nRow, it.first, it.second);
-							for (auto& it : RowJ)
-								fprintf(fmatrix.get(), "%10td %10td     %30g\n", nRows, it.first, it.second);
-						}
-
-					}
-				}
-			}
-		}
-	}
-}
-
 void CDynaModel::DumpStateVector()
 {
-	FILE *fdump(nullptr);
-	setlocale(LC_ALL, "ru-ru");
-	if (!fopen_s(&fdump, fmt::format("c:\\tmp\\statevector_{}.csv", sc.nStepsCount).c_str(), "w+"))
+	std::ofstream dump(stringutils::utf8_decode(fmt::format("c:\\tmp\\statevector_{}.csv", sc.nStepsCount)));
+	if (dump.is_open())
 	{
-		fprintf(fdump, "Value;db;Device;N0;N1;N2;Error;WError;Atol;Rtol;EqType;SN0;SN1;SN2;SavError;Tminus2Val;PhysEqType;PrimBlockType;ErrorHits\n");
-		for (RightVector *pRv = pRightVector; pRv < pRightVector + klu.MatrixSize(); pRv++)
+		dump << "Value; db; Device; N0; N1; N2; Error; WError; Atol; Rtol; EqType; SN0; SN1; SN2; SavError; Tminus2Val; PhysEqType; PrimBlockType; ErrorHits" << std::endl;
+		for (RightVector* pRv = pRightVector; pRv < pRightVector + klu.MatrixSize(); pRv++)
 		{
-			fprintf(fdump, "%g;", *pRv->pValue);
-			fprintf(fdump, "%g;", fabs(pRv->b));
-			fprintf(fdump, "%s - %s;", pRv->pDevice->GetVerbalName(), pRv->pDevice->VariableNameByPtr(pRv->pValue));
-			fprintf(fdump, "%g;%g;%g;", pRv->Nordsiek[0], pRv->Nordsiek[1], pRv->Nordsiek[2]);
-			fprintf(fdump, "%g;", fabs(pRv->Error));
-			fprintf(fdump, "%g;", fabs(pRv->GetWeightedError(pRv->b, *pRv->pValue)));
-			fprintf(fdump, "%g;%g;", pRv->Atol, pRv->Rtol);
-			fprintf(fdump, "%d;", pRv->EquationType);
-			fprintf(fdump, "%g;%g;%g;", pRv->SavedNordsiek[0], pRv->SavedNordsiek[1], pRv->SavedNordsiek[2]);
-			fprintf(fdump, "%g;", pRv->SavedError);
-			fprintf(fdump, "%g;", pRv->Tminus2Value);
-			fprintf(fdump, "%d;", pRv->PhysicalEquationType);
-			fprintf(fdump, "%d;", pRv->PrimitiveBlock);
-			fprintf(fdump, "%td;", pRv->nErrorHits);
-			fprintf(fdump, "\n");
+			dump << fmt::format("{};", *pRv->pValue);
+			dump << fmt::format("{};", fabs(pRv->b));
+			dump << fmt::format("{} - {};", pRv->pDevice->GetVerbalName(), pRv->pDevice->VariableNameByPtr(pRv->pValue));
+			dump << fmt::format("{};{};{};", pRv->Nordsiek[0], pRv->Nordsiek[1], pRv->Nordsiek[2]);
+			dump << fmt::format("{};", fabs(pRv->Error));
+			dump << fmt::format("{};", fabs(pRv->GetWeightedError(pRv->b, *pRv->pValue)));
+			dump << fmt::format("{};{};", pRv->Atol, pRv->Rtol);
+			dump << fmt::format("{};", pRv->EquationType);
+			dump << fmt::format("{};{};{};", pRv->SavedNordsiek[0], pRv->SavedNordsiek[1], pRv->SavedNordsiek[2]);
+			dump << fmt::format("{};", pRv->SavedError);
+			dump << fmt::format("{};", pRv->Tminus2Value);
+			dump << fmt::format("{};", pRv->PhysicalEquationType);
+			dump << fmt::format("{};", pRv->PrimitiveBlock);
+			dump << fmt::format("{}", pRv->nErrorHits) << std::endl;
 		}
-		fclose(fdump);
 	}
 }
 
@@ -575,6 +415,7 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 // сериализация в xml
 void CDynaModel::Serialize()
 {
+#ifdef _MSC_VER
 	// создаем xml-сериализатор
 	CSerializerXML xmlSerializer;
 	xmlSerializer.CreateNewSerialization();
@@ -625,8 +466,21 @@ void CDynaModel::Serialize()
 	}
 	// завершаем сериализацию в xml
 	xmlSerializer.Commit();
+#else
+	// TODO !!!!!! На linux пока ничего не делаем !!!!!! 
+	return;
+#endif
 }
 
+bool CDynaModel::CancelProcessing() 
+{
+	// TODO !!!!! сделать std !!!!!
+#ifdef _MSC_VER
+	return WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0;
+#else
+	return false;
+#endif
+}
 
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq

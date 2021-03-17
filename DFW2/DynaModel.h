@@ -574,7 +574,6 @@ namespace DFW2
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
-		void DumpMatrix(bool bAnalyzeLinearDependenies = false);
 		void DumpStateVector();
 		FILE* fResult;
 		std::ofstream LogFile;
@@ -836,8 +835,10 @@ namespace DFW2
 		CAutomatic& Automatic();
 
 		void GetWorstEquations(ptrdiff_t nCount);
-		void ReportKLUError(KLU_common& KLUCommon);
 
 		void Serialize();
+
+		// возвращает true, если расчет нужно прекратить (отмена пользователем)
+		bool CancelProcessing();
 	};
 }

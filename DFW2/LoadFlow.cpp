@@ -1036,7 +1036,7 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase *pNode)
 
 void CLoadFlow::DumpNodes()
 {
-	std::ofstream dump("c:\\tmp\\resnodes.csv");
+	std::ofstream dump(stringutils::utf8_decode("c:\\tmp\\resnodes.csv"));
 	if (dump.is_open())
 	{
 		dump << "N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref;VR;DeltaR;QgR;QnR" << std::endl;

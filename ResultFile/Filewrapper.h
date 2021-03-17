@@ -63,7 +63,7 @@ namespace DFW2
 		void open(std::string_view FileName, ios_base::openmode mode = ios_base::in | ios_base::out)
 		{
 			filename = FileName;
-			std::fstream::open(filename, mode);
+			std::fstream::open(stringutils::utf8_decode(filename), mode);
 			if (std::fstream::fail())
 				if(mode & std::ios_base::in)
 					throw CFileExceptionGLE<CFileReadException>(*this);

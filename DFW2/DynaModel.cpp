@@ -233,7 +233,7 @@ bool CDynaModel::Run()
 							bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
 						}
 					}
-					if (WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0)
+					if(CancelProcessing())
 						break;
 				}
 			}
@@ -856,7 +856,7 @@ bool CDynaModel::Step()
 	// пока шаг нужно повторять, все в порядке и не получена команда останова
 	while (sc.m_bRetryStep && bRes && !sc.m_bStopCommandReceived)
 	{
-		if (WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0)
+		if (CancelProcessing())
 			break;
 
 		Predict();		// делаем прогноз Nordsieck для следуюшего времени

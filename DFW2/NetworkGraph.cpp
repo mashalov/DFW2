@@ -980,26 +980,25 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 
 void CDynaNodeContainer::DumpNetwork()
 {
-	FILE* fn;
-	char filename[MAX_PATH];
-	sprintf_s(filename, MAX_PATH, "c:\\tmp\\network-%td.net", GetModel()->GetStepNumber());
-	if (!fopen_s(&fn, filename, "w+"))
+	std::ofstream dump(stringutils::utf8_decode(fmt::format("c:\\tmp\\network-{}.net", GetModel()->GetStepNumber())));
+	if (dump.is_open())
 	{
 		for (auto& node : m_DevVec)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-			fprintf(fn, "Node Id=%td DBIndex=%td V %g / %g", pNode->GetId(), pNode->GetDBIndex(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
+			dump << fmt::format("Node Id={} DBIndex={} V {} / {}", pNode->GetId(), pNode->GetDBIndex(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
 			if(pNode->m_pSuperNodeParent)
-				fprintf(fn, " belongs to supernode Id=%td", pNode->m_pSuperNodeParent->GetId());
-
-			fprintf(fn, "\n");
+				dump << fmt::format(" belongs to supernode Id={}", pNode->m_pSuperNodeParent->GetId());
+			dump << std::endl;
 
 			CLinkPtrCount* pBranchLink = pNode->GetLink(0);
 			CDevice** ppDevice(nullptr);
 			while (pBranchLink->In(ppDevice))
 			{
 				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
-				fprintf(fn, "\tOriginal Branch %td-%td-(%td) r=%g x=%g state=%d\n", pBranch->Ip, pBranch->Iq, pBranch->Np, pBranch->R, pBranch->X, pBranch->m_BranchState);
+				dump << fmt::format("\tOriginal Branch %{}-%{}-({}) r={} x={} state={}",
+					pBranch->Ip, pBranch->Iq, pBranch->Np,
+					pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
 			}
 
 			CLinkPtrCount* pSuperNodeLink = pNode->GetSuperLink(0);
@@ -1007,33 +1006,30 @@ void CDynaNodeContainer::DumpNetwork()
 			while (pSuperNodeLink->In(ppDevice))
 			{
 				CDynaNodeBase* pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
-				fprintf(fn, "\t\tSlave Node Id=%td DBIndex=%td\n", pSlaveNode->GetId(), pSlaveNode->GetDBIndex());
+				dump << fmt::format("\t\tSlave Node Id={} DBIndex={}", pSlaveNode->GetId(), pSlaveNode->GetDBIndex()) << std::endl;
 
 				CLinkPtrCount* pBranchLink = pSlaveNode->GetLink(0);
 				CDevice** ppDeviceBranch(nullptr);
 				while (pBranchLink->In(ppDeviceBranch))
 				{
 					CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDeviceBranch);
-					fprintf(fn, "\t\t\tOriginal Branch %td-%td-(%td) r=%g x=%g state=%d\n", pBranch->Ip, pBranch->Iq, pBranch->Np, pBranch->R, pBranch->X, pBranch->m_BranchState);
+					dump << fmt::format("\t\t\tOriginal Branch %{}-%{}-({}) r={} x={} state={}", 
+						pBranch->Ip, pBranch->Iq, pBranch->Np, 
+						pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
 				}
 			}
 
 			for (VirtualBranch* pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
-			{
-				fprintf(fn, "\tVirtual Branch to node Id=%td\n", pV->pNode->GetId());
-			}
+				dump << fmt::format("\tVirtual Branch to node Id={}", pV->pNode->GetId()) << std::endl;
 		}
-		fclose(fn);
 	}
-	sprintf_s(filename, MAX_PATH, "c:\\tmp\\nodes LULF-%td.csv", GetModel()->GetStepNumber());
-	if (!fopen_s(&fn, filename, "w+"))
+	std::ofstream lulf(stringutils::utf8_decode(fmt::format("c:\\tmp\\nodes LULF-{}.csv", GetModel()->GetStepNumber())));
+	if (lulf.is_open())
 	{
 		for (auto& node : m_DevVec)
 		{
 			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
-			fprintf(fn, "%td;%g;%g\n", pNode->GetId(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
+			lulf << fmt::format("{};{};{}", pNode->GetId(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0) << std::endl;
 		}
-		fclose(fn);
 	}
-
 }

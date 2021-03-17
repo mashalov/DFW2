@@ -251,6 +251,7 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 	std::filesystem::path OutputPath(pathSourceOutput);
 	OutputPath.remove_filename();
 	std::filesystem::create_directories(OutputPath);
+	// UTF-8 filename ?
 	std::ofstream OutputStream(pathSourceOutput);
 	if (!OutputStream.is_open())
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
