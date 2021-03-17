@@ -230,19 +230,19 @@ DFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, doub
 	int nState = static_cast<int>(dValue);
 	CDynaBranch::BranchState variants[4] =
 	{
-		CDynaBranch::BRANCH_OFF,
-		CDynaBranch::BRANCH_ON,
-		CDynaBranch::BRANCH_TRIPIP,
-		CDynaBranch::BRANCH_TRIPIQ
+		CDynaBranch::BranchState::BRANCH_OFF,
+		CDynaBranch::BranchState::BRANCH_ON,
+		CDynaBranch::BranchState::BRANCH_TRIPIP,
+		CDynaBranch::BranchState::BRANCH_TRIPIQ
 	};
 
 	if (nState >= 0 && nState <= 3)
 		m_NewState = variants[nState];
 	else
 	if (nState > 0)
-		m_NewState = CDynaBranch::BRANCH_ON;
+		m_NewState = CDynaBranch::BranchState::BRANCH_ON;
 	else
-		m_NewState = CDynaBranch::BRANCH_OFF;
+		m_NewState = CDynaBranch::BranchState::BRANCH_OFF;
 
 	return Do(pDynaModel);
 }

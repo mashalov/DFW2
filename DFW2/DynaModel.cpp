@@ -32,7 +32,9 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   AutomaticDevice(this),
 						   CustomDeviceCPP(this)
 {
+#ifdef _MSC_VER
 	m_hStopEvt = CreateEvent(NULL, TRUE, FALSE, L"DFW2STOP");
+#endif
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
 	// константы могут изменяться, например для демпфирования
 	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
@@ -72,8 +74,10 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 
 CDynaModel::~CDynaModel()
 {
+#ifdef _MSC_VER
 	if (m_hStopEvt)
 		CloseHandle(m_hStopEvt);
+#endif
 	LogFile.close();
 }
 
@@ -251,8 +255,10 @@ bool CDynaModel::Run()
 		if (bResultsNeedToBeFinished)
 			FinishWriteResults();
 
+#ifdef _MSC_VER
 		if (!bRes)
 			MessageBox(NULL, L"Failed", L"Failed", MB_OK);
+#endif
 
 		// вне зависимости от результата завершаем запись результатов
 		// по признаку завершения
@@ -470,8 +476,11 @@ bool CDynaModel::NewtonUpdate()
 			double dError = pVectorBegin->GetWeightedError(db, dOldValue);
 			_CheckNumber(dError);
 			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
-			if (_isnan(dError))
+#ifdef _DEBUG
+			// breakpoint place for nans
+			if (std::isnan(dError))
 				dError *= dError;
+#endif
 			pCt->AddError(dError * dError);
 		}
 		pVectorBegin++;
@@ -1047,10 +1056,10 @@ double CDynaModel::GetRatioForCurrentOrder()
 	double rSame0 = pow(DqSame0, -1.0 / (sc.q + 1));
 	double rSame1 = pow(DqSame1, -1.0 / (sc.q + 1));
 
-	r = min(rSame0, rSame1);
+	r = (std::min)(rSame0, rSame1);
 
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
-		r = max(1.01, r);
+		r = (std::max)(1.01, r);
 
 	Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("t={:15.012f} {:>3} {}[{}] {} rSame {} RateLimit {} for {} steps", 
 		GetCurrentTime(), 
@@ -1101,7 +1110,7 @@ double CDynaModel::GetRatioForHigherOrder()
 	double rUp0 = pow(DqUp0, -1.0 / (sc.q + 2));
 	double rUp1 = pow(DqUp1, -1.0 / (sc.q + 2));
 
-	rUp = min(rUp0, rUp1);
+	rUp = (std::min)(rUp0, rUp1);
 
 	return rUp;
 }
@@ -1137,7 +1146,7 @@ double CDynaModel::GetRatioForLowerOrder()
 	double rDown0 = pow(DqDown0, -1.0 / sc.q);
 	double rDown1 = pow(DqDown1, -1.0 / sc.q);
 
-	rDown = min(rDown0, rDown1);
+	rDown = (std::min)(rDown0, rDown1);
 	return rDown;
 }
 
@@ -1531,7 +1540,11 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::strin
 		{
 			ptrdiff_t nIp(0), nIq(0), nNp(0);
 			bool bReverse = false;
+#ifdef _MSC_VER
 			ptrdiff_t nKeysCount = sscanf_s(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
+#else
+			ptrdiff_t nKeysCount = sscanf(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
+#endif
 			if (nKeysCount > 1)
 			{
 				for (DEVICEVECTORITR it = pContainer->begin(); it != pContainer->end(); it++)
@@ -1553,8 +1566,11 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::strin
 		else
 		{
 			ptrdiff_t nId(0);
-
+#ifdef _MSC_VER
 			if (sscanf_s(std::string(Keys).c_str(), "%td", &nId) == 1)
+#else
+			if (sscanf(std::string(Keys).c_str(), "%td", &nId) == 1)
+#endif
 				pFoundDevice = pContainer->GetDevice(nId);
 			else
 				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
@@ -1574,9 +1590,13 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 	std::string Object(nSourceLength, cszSpace),
 				 Keys(nSourceLength, cszSpace),
 				 Prop(nSourceLength, cszSpace);
+#ifdef _MSC_VER
 	int nFieldCount = sscanf_s(std::string(Name).c_str(), "%[^[][%[^]]].%s", &Object[0], static_cast<unsigned int>(nSourceLength),
 																			 &Keys[0],   static_cast<unsigned int>(nSourceLength),
 																			 &Prop[0],   static_cast<unsigned int>(nSourceLength));
+#else
+	int nFieldCount = sscanf(std::string(Name).c_str(), "%[^[][%[^]]].%s", &Object[0],&Keys[0],&Prop[0]);
+#endif 
 	// обрезаем длину строк до нуль-терминатора
 	Object = Object.c_str();
 	Keys   = Keys.c_str();

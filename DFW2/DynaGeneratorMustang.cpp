@@ -15,13 +15,6 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 {
 	xq1 = xq;
 
-	if (GetId() == 97)
-	{
-		FILE *flog;
-		fopen_s(&flog, "c:\\tmp\\gen97.csv", "w+");
-		fclose(flog);
-	}
-
 	if (!pDynaModel->ConsiderDampingEquation())
 		Kdemp = 0.0;
 

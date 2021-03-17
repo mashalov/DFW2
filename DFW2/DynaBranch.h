@@ -33,7 +33,7 @@ namespace DFW2
 
 		cplx Szero;									// поток в ветви с нулевым сопротивлением
 		// состояние ветви
-		enum BranchState	
+		enum class BranchState	
 		{
 			BRANCH_ON,				// полностью включена
 			BRANCH_OFF,				// полностью отключена

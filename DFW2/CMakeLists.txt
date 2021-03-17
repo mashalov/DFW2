@@ -25,9 +25,46 @@ set(EMSSSOURCES
     DynaLRC.cpp
     DeviceContainerProperties.cpp
     Serializer.cpp
+    DynaModelUtility.cpp
+    NetworkGraph.cpp
+    IterationControl.cpp
+    Automatic.cpp
+    Discontinuities.cpp
+    DynaModel.cpp
+    Matrix.cpp
+    DynaPrimitive.cpp
+    CustomDevice.cpp
+    CustomDeviceContainer.cpp
+    CustomDeviceDLL.cpp
+    DynaPowerInjector.cpp
+    DynaVoltageSource.cpp
+    DynaGeneratorInfBus.cpp
+    DynaGeneratorMotion.cpp
+    DynaGeneratorMustang.cpp
+    DynaGenerator1C.cpp
+    DynaGenerator3C.cpp
+    DynaDECMustang.cpp
+    DynaExcConMustang.cpp
+    DynaExciterBase.cpp
+    DynaExciterMustang.cpp
+    Nordsiek.cpp
+    Relay.cpp
+    Abs.cpp
+    Results.cpp
+    LimiterConst.cpp
+    LimitedLag.cpp
+    RSTrigger.cpp
+    AndOrNot.cpp
+    Sum.cpp
+    DeadBand.cpp
+    DerlagContinuous.cpp
+    Comparator.cpp
+    Expand.cpp
+    ZCDetector.cpp
     )             
 
 add_subdirectory("SuiteSparse/KLU")
 add_executable(EMSServer ${EMSSSOURCES})
 target_include_directories(EMSServer PRIVATE ${KINCLUDES})
-target_link_libraries(EMSServer klu kluz)
+find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
+target_link_libraries(EMSServer klu kluz dl)

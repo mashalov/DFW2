@@ -19,7 +19,7 @@ CCustomDeviceContainer::~CCustomDeviceContainer()
 void CCustomDeviceContainer::CleanUp()
 {
 	PrimitivePoolElement* pBegin = m_PrimitivePool;
-	PrimitivePoolElement* pEnd = pBegin + _countof(m_PrimitivePool);
+	PrimitivePoolElement* pEnd = pBegin + std::size(m_PrimitivePool);
 	while (pBegin < pEnd)
 	{
 		free(pBegin->m_pPrimitive);

@@ -7,7 +7,12 @@ using namespace DFW2;
 FARPROC CCustomDeviceDLL::GetProcAddress(const char *cszFunctionName)
 {
 	_ASSERTE(m_hDLL);
+#ifdef _MSC_VER
 	FARPROC pRet = ::GetProcAddress(m_hDLL, cszFunctionName);
+#else
+	FARPROC pRet = (FARPROC)(dlsym(m_hDLL, cszFunctionName));
+#endif
+
 	if (!pRet)
 		m_nGetProcAddresFailureCount++;
 	return pRet;
@@ -65,7 +70,11 @@ void CCustomDeviceDLL::CleanUp()
 		if (m_pFnDestroy)
 			(m_pFnDestroy)();
 
+#ifdef _MSC_VER
 		FreeLibrary(m_hDLL);
+#else
+		dlclose(m_hDLL);
+#endif
 
 		ClearFns();
 
@@ -79,11 +88,16 @@ bool CCustomDeviceDLL::Init(std::string_view DLLFilePath)
 {
 	m_bConnected = false;
 	// загружаем dll
+#ifdef _MSC_VER
 	m_hDLL = LoadLibrary(stringutils::utf8_decode(DLLFilePath).c_str());
+#else
+	m_hDLL = dlopen(std::string(DLLFilePath).c_str(), RTLD_LAZY);
+#endif
 	if (m_hDLL)
 	{
 		// и импортируем функции
 		m_strModulePath = DLLFilePath;
+
 		m_pFnDestroy = (DLLDESTROYPTR)GetProcAddress("Destroy");
 		m_pFnGetBlocksCount = (DLLGETBLOCKSCOUNT)GetProcAddress("GetBlocksCount");
 		m_pFnGetBlocksDescriptions = (DLLGETBLOCKSDESCRIPTIONS)GetProcAddress("GetBlocksDescriptions");

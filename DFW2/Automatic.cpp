@@ -77,7 +77,9 @@ void CAutomatic::Clean()
 
 CAutomatic::~CAutomatic()
 {
+#ifdef _MSC_VER
 	CoFreeUnusedLibraries();
+#endif
 	Clean();
 }
 
@@ -241,7 +243,11 @@ void CAutomatic::Init()
 			if (!strAction.empty())
 			{
 				ptrdiff_t nId(0);
+#ifdef _MSC_VER
 				if (sscanf_s(strAction.c_str(), "A%td", &nId) == 1)
+#else
+				if (sscanf(strAction.c_str(), "A%td", &nId) == 1)
+#endif
 				{
 					auto mit = m_AutoActionGroups.find(nId);
 					if (mit != m_AutoActionGroups.end())
@@ -360,7 +366,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
 				if (pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BRANCH_OFF);
+					m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
 					bRes = true;
 				}
 				break;
