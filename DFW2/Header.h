@@ -44,7 +44,7 @@ namespace DFW2
 #define DFW2_VERSION 1
 #define DFW2_RESULTFILE_VERSION 1
 
-#define _CheckNumber(a) _ASSERTE(!__isnan((a)) && !isinf((a)));
+#define _CheckNumber(a) _ASSERTE(!std::isnan((a)) && !isinf((a)));
 
 
 #define Equal(x,y) (fabs((x)-(y)) < DFW2_EPSILON)

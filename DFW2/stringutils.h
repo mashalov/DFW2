@@ -60,6 +60,15 @@ public:
 #endif
 	}
 
+	static std::string utf8_encode(const wchar_t *wstr)
+	{
+#ifdef _MSC_VER
+		return stringutils::utf8_encode(std::wstring_view(wstr));
+#else
+		return std::string(); // nothing to convert on linux
+#endif
+	}
+
 	static std::string acp_decode(const std::string_view& str)
 	{
 #ifdef _MSC_VER

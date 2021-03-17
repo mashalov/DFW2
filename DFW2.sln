@@ -31,6 +31,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cryptlib", "UMC\CryptoPP\cr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "antlr4cpp-vs2019", "UMC\antlr4-master\antlr4-master\runtime\Cpp\runtime\antlr4cpp-vs2019.vcxproj", "{83BE66CD-9C4F-4F84-B72A-DD1855C8FC8A}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rastr2Json", "Rastr2Json\Rastr2Json.vcxproj", "{598573D3-ECF6-41AD-A698-3D632B7CC6FC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug DLL|Win32 = Debug DLL|Win32
@@ -307,6 +309,38 @@ Global
 		{83BE66CD-9C4F-4F84-B72A-DD1855C8FC8A}.Release|Win32.Build.0 = Release Static|Win32
 		{83BE66CD-9C4F-4F84-B72A-DD1855C8FC8A}.Release|x64.ActiveCfg = Release Static|x64
 		{83BE66CD-9C4F-4F84-B72A-DD1855C8FC8A}.Release|x64.Build.0 = Release Static|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug DLL|Win32.ActiveCfg = Debug|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug DLL|Win32.Build.0 = Debug|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug DLL|x64.ActiveCfg = Debug|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug DLL|x64.Build.0 = Debug|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug Static|Win32.ActiveCfg = Debug|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug Static|Win32.Build.0 = Debug|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug Static|x64.ActiveCfg = Debug|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug Static|x64.Build.0 = Debug|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug|Win32.Build.0 = Debug|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug|x64.ActiveCfg = Debug|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Debug|x64.Build.0 = Debug|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.DLL-Import Debug|Win32.ActiveCfg = Debug|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.DLL-Import Debug|Win32.Build.0 = Debug|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.DLL-Import Debug|x64.ActiveCfg = Debug|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.DLL-Import Debug|x64.Build.0 = Debug|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.DLL-Import Release|Win32.ActiveCfg = Release|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.DLL-Import Release|Win32.Build.0 = Release|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.DLL-Import Release|x64.ActiveCfg = Release|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.DLL-Import Release|x64.Build.0 = Release|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release DLL|Win32.ActiveCfg = Release|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release DLL|Win32.Build.0 = Release|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release DLL|x64.ActiveCfg = Release|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release DLL|x64.Build.0 = Release|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release Static|Win32.ActiveCfg = Release|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release Static|Win32.Build.0 = Release|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release Static|x64.ActiveCfg = Release|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release Static|x64.Build.0 = Release|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release|Win32.ActiveCfg = Release|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release|Win32.Build.0 = Release|Win32
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release|x64.ActiveCfg = Release|x64
+		{598573D3-ECF6-41AD-A698-3D632B7CC6FC}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
