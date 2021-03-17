@@ -185,7 +185,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAU
 	{
 		// если данных по узлу нет 
 		if (eState == eDEVICESTATE::DS_ON)
-			eBranchState = BRANCH_ON;
+			eBranchState = BranchState::BRANCH_ON;
 	}
 	return SetBranchState(eBranchState, eStateCause);
 }
@@ -194,7 +194,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAU
 eDEVICESTATE CDynaBranch::GetState() const
 {
 	eDEVICESTATE State = eDEVICESTATE::DS_ON;
-	if (m_BranchState == BRANCH_OFF)
+	if (m_BranchState == BranchState::BRANCH_OFF)
 		State = eDEVICESTATE::DS_OFF;
 	return State;
 }
@@ -218,12 +218,12 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 
 	switch (m_BranchState)
 	{
-	case CDynaBranch::BRANCH_OFF:
+	case CDynaBranch::BranchState::BRANCH_OFF:
 		// ветвь полностью отключена
 		// все проводимости равны нулю
 		Yip = Yiq = Yips = Yiqs = cplx(0.0, 0.0);
 		break;
-	case CDynaBranch::BRANCH_ON:
+	case CDynaBranch::BranchState::BRANCH_ON:
 		// ветвь включена
 		// проводимости рассчитываем по "П"-схеме
 		Yip = Ybranch / Ktrx;
@@ -231,7 +231,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 		Yips = cplx(GIp, BIp) + Ybranch;
 		Yiqs = cplx(GIq, BIq) + Ybranch / norm(Ktrx);
 		break;
-	case CDynaBranch::BRANCH_TRIPIP:
+	case CDynaBranch::BranchState::BRANCH_TRIPIP:
 	{
 		// ветвь отключена в начале		
 		Yip = Yiq = Yips = 0.0;		// взаимные и собственная со стороны узла начала - 0
@@ -247,7 +247,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 			Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktrx);
 	}
 	break;
-	case CDynaBranch::BRANCH_TRIPIQ:
+	case CDynaBranch::BranchState::BRANCH_TRIPIQ:
 	{
 		// отключена в конце
 		Yiq = Yip = Yiqs = 0.0;		// взаимные и собственная со стороны узла конца - 0
@@ -282,7 +282,7 @@ bool CDynaBranch::IsZeroImpedance()
 {
 	const CDynaModel *pModel = GetModel();
 
-	if (m_BranchState == CDynaBranch::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
+	if (m_BranchState == CDynaBranch::BranchState::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
 	{
 		double Zmin = pModel->GetZeroBranchImpedance();
 		if (std::abs(cplx(R,X)) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin )

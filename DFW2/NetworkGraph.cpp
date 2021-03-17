@@ -133,7 +133,7 @@ void CDynaModel::PrepareNetworkElements()
 		{
 			// если ветвь самозамкнута, выключаем ее навсегда
 			pBranch->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszBranchLooped, pBranch->Ip));
-			pBranch->SetBranchState(CDynaBranch::BRANCH_OFF, eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT);
+			pBranch->SetBranchState(CDynaBranch::BranchState::BRANCH_OFF, eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT);
 			continue;
 
 		}
@@ -483,7 +483,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
 				
 			// Здесь включаем все ветви: и включенные и отключенные, иначе надо всякий раз перестраивать матрицу
-			if (pBranch->m_BranchState != CDynaBranch::BRANCH_ON)
+			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_ON)
 				continue;
 
 			CDynaNodeBase *pNodeIp(pBranch->m_pNodeIp);

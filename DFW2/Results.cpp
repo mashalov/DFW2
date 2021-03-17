@@ -6,6 +6,7 @@ using namespace DFW2;
 
 void CDynaModel::WriteResultsHeaderBinary()
 {
+#ifdef _MSC_VER
 	IResultPtr spResults;
 	CDFW2Messages DFWMessages;
 	if (SUCCEEDED(spResults.CreateInstance(CLSID_Result)))
@@ -197,6 +198,7 @@ void CDynaModel::WriteResultsHeaderBinary()
 			throw dfw2error(ex.Description());
 		}
 	}
+#endif
 }
 
 void CDynaModel::WriteResultsHeader()
@@ -237,6 +239,7 @@ void CDynaModel::WriteResultsHeader()
 
 void CDynaModel::WriteResults()
 {
+#ifdef _MSC_VER
 	if (m_Parameters.m_bDisableResultsWriter)
 		return;
 	try
@@ -270,6 +273,7 @@ void CDynaModel::WriteResults()
 	{
 		throw dfw2error(ex.Description());
 	}
+#endif
 }
 
 
@@ -283,6 +287,8 @@ void CDynaModel::FinishWriteResults()
 #endif
 	// сброс результатов делается автоматически при вызове Close
 	//m_spResultWrite->FlushChannels();
+
+#ifdef _MSC_VER
 	try
 	{
 		m_spResultWrite->Close();
@@ -291,5 +297,6 @@ void CDynaModel::FinishWriteResults()
 	{
 		throw dfw2error(ex.Description());
 	}
+#endif
 }
 

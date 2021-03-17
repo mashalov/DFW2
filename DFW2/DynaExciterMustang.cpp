@@ -170,7 +170,7 @@ double CDynaExciterMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 		double rHEq = EqLimit.CheckZeroCrossing(pDynaModel);
 		CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateResulting = EqLimit.GetCurrentState();
 
-		rH = min(rH, rHEq);
+		rH = (std::min)(rH, rHEq);
 
 		// change lag limits when eq limiter state changes
 		//if (SetUpEqLimits(EqLimitStateInitial, EqLimitStateResulting))

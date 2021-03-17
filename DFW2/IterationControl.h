@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include "Header.h"
 namespace DFW2
 {
 	class CDynaNodeBase;

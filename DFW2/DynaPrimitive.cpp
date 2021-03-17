@@ -317,7 +317,7 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 			if (h2 > 0.0 || h2 < -h) h2 = FLT_MAX;
 
 			// возвращаем наименьший из действительных корней
-			rH = (h + min(h1, h2)) / h;
+			rH = (h + (std::min)(h1, h2)) / h;
 
 			//_ASSERTE(rH >= 0);
 		}

@@ -1,8 +1,10 @@
 ﻿#pragma once
+#include "Header.h"
 #include "DLLHeader.h"
 #include "vector"
 #include "ICustomDevice.h"
 #include "DLLWrapper.h"
+
 
 namespace DFW2
 {
