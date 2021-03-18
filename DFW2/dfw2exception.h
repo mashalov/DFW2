@@ -2,8 +2,8 @@
 #include <stdexcept>
 #include <memory>
 #include "stringutils.h"
-#include "../fmt/include/fmt/core.h"
-#include "../fmt/include/fmt/format.h"
+#include "fmt/core.h"
+#include "fmt/format.h"
 #include <system_error>
 
 class dfw2error : public std::runtime_error
