@@ -235,6 +235,9 @@
     <ClInclude Include="SerializerJson.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Results.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

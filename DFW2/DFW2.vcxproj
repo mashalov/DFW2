@@ -226,6 +226,7 @@
     <ClInclude Include="Messages.h" />
     <ClInclude Include="RastrImport.h" />
     <ClInclude Include="Relay.h" />
+    <ClInclude Include="Results.h" />
     <ClInclude Include="RSTrigger.h" />
     <ClInclude Include="Serializer.h" />
     <ClInclude Include="SerializerJson.h" />

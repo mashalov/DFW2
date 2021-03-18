@@ -11,9 +11,9 @@ namespace DFW2
 	protected:
 		// карта типов устройств
 		using TypeMapType = std::map<ptrdiff_t, std::string>;
-		nlohmann::json m_JsonDoc;
-		nlohmann::json m_JsonData;
-		nlohmann::json m_JsonStructure;
+		nlohmann::json m_JsonDoc;		// общий json документ
+		nlohmann::json m_JsonData;		// данные
+		nlohmann::json m_JsonStructure;	// структура данных
 		void AddLink(nlohmann::json& jsonLinks, CDevice* pLinkedDevice, bool bMaster);
 		void AddLinks(SerializerPtr& Serializer, nlohmann::json& jsonLinks, LINKSUNDIRECTED& links, bool bMaster);
 		TypeMapType m_TypeMap;

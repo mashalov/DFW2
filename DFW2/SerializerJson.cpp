@@ -3,7 +3,7 @@
 #include <fstream>
 #include "SerializerJson.h"
 #include "Messages.h"
-#include "Dynanode.h"
+#include "DynaNode.h"
 
 using namespace DFW2;
 
@@ -55,7 +55,7 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer, FnNextSerializer
 			MetaSerializedValue& mv = *value.second;
 			// задаем тип свойства либо текстом (если есть описание типа для значения перечисления), либо перечислением
 			if (static_cast<ptrdiff_t>(mv.Value.ValueType) >= 0 &&
-				static_cast<ptrdiff_t>(mv.Value.ValueType) < _countof(TypedSerializedValue::m_cszTypeDecs))
+				static_cast<ptrdiff_t>(mv.Value.ValueType) < std::size(TypedSerializedValue::m_cszTypeDecs))
 				ClassProp[CSerializerBase::m_cszDataType] = TypedSerializedValue::m_cszTypeDecs[static_cast<ptrdiff_t>(mv.Value.ValueType)];
 			else
 				ClassProp[CSerializerBase::m_cszDataType] = static_cast<long>(mv.Value.ValueType);
