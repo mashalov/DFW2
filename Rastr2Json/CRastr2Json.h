@@ -15,9 +15,9 @@ protected:
 	long m_DataType;
 public:
 	CJsonField(std::string_view Name, long DataType) : m_Name(Name), m_DataType(DataType) {}
-	std::string_view GetName() const
+	const char* GetName() const
 	{
-		return m_Name;
+		return m_Name.c_str();
 	}
 	long GetDataType() const
 	{
@@ -49,6 +49,10 @@ public:
 	CRastrTable(ITablePtr rastrTable);
 	void StructureToJson(nlohmann::json & json) const;
 	void DataToJson(nlohmann::json& json) const;
+	const char* GetName() const 
+	{
+		return m_Name.c_str();
+	}
 };
 
 using RastrTables = std::vector<CRastrTable>;
@@ -59,8 +63,8 @@ protected:
 	IRastrPtr m_Rastr;
 	RastrTables m_Tables;
 	nlohmann::json m_json;
-	std::unique_ptr<nlohmann::json> WriteDBStructure();
-	std::unique_ptr<nlohmann::json> WriteData();
+	void WriteDBStructure(nlohmann::json& ParentJson);
+	void WriteData(nlohmann::json& ParentJson);
 	// json can't accept string_view key, so we pass string as key
 	void AddPropertyIfNotEmpty(nlohmann::json& jobject, std::string key, const _variant_t& value);
 	void GetCols(ITablePtr rastrTable, RastrTableCols& rastrCols);

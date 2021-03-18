@@ -412,64 +412,59 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
 }
 
-// сериализация в xml
+// сериализация в json
 void CDynaModel::Serialize()
 {
-#ifdef _MSC_VER
-	// создаем xml-сериализатор
-	CSerializerXML xmlSerializer;
-	xmlSerializer.CreateNewSerialization();
+	// создаем json-сериализатор
+	CSerializerJson jsonSerializer;
+	jsonSerializer.CreateNewSerialization();
 
 	// создаем базовый сериализатор для параметров расчета
 	SerializerPtr SerializerParameteres = std::make_unique<CSerializerBase>();
-	// сериализуем параметры расчета в базовый сериализатор
-	m_Parameters.UpdateSerializer(SerializerParameteres);
-	// сериализуем в xml метаинформацию и значения параметров
-	xmlSerializer.SerializeClassMeta(SerializerParameteres);
-	xmlSerializer.SerializeClass(SerializerParameteres);
+	long RecordsCount(1);
+	jsonSerializer.SerializeClass(SerializerParameteres, [this, &SerializerParameteres, &RecordsCount]() 
+		{ 
+			if (--RecordsCount < 0) return false;
+			m_Parameters.UpdateSerializer(SerializerParameteres);
+			return true;
+		});
 
 	// создаем базовый сериализатор для глобальных переменных расчета
-	// и сериализуем их в xml аналогично параметрам расчета
+	// и сериализуем их аналогично параметрам расчета
 	SerializerPtr SerializerStepControl = std::make_unique<CSerializerBase>();
-	sc.UpdateSerializer(SerializerStepControl);
-	xmlSerializer.SerializeClassMeta(SerializerStepControl);
-	xmlSerializer.SerializeClass(SerializerStepControl);
+	RecordsCount = 1;
+	jsonSerializer.SerializeClass(SerializerStepControl, [this, &SerializerStepControl, &RecordsCount]()
+	{
+		if (--RecordsCount < 0) return false;
+		sc.UpdateSerializer(SerializerStepControl);
+		return true;
+	});
 
 	// обходим контейнеры устройств и регистрируем перечисление типов устройств
-	for (auto&& container : m_DeviceContainers)
-		xmlSerializer.AddDeviceTypeDescription(container->GetType(), container->m_ContainerProps.GetSystemClassName());
+	for (auto&& container : m_DeviceContainers) 
+		jsonSerializer.AddDeviceTypeDescription(container->GetType(), container->m_ContainerProps.GetSystemClassName());
 
 	// обходим контейнеры снова
 	for (auto&& container : m_DeviceContainers)
 	{
-		if (container->Count())
-		{
-			// если контейнер не пустой
-			// достаем сериализатор из первого устройства контейнера
-			auto&& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
-			// пропускаем контейнер, если в сериализаторе его устройств нет значений
-			if (!serializer->ValuesCount())
-				continue;
+		auto itb = container->begin();
+		const auto ite = container->end();
 
-			// сериализуем метаданные класса устройств из контейнера
-			xmlSerializer.SerializeClassMeta(serializer);
+		// если контейнер пустой - пропускаем
+		if (itb == ite) continue;
 
-			// обходим устройства в контейнере
-			for (auto&& device : *container)
+		auto&& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
+		jsonSerializer.SerializeClass(serializer, [this, &itb, &ite, &serializer]() 
 			{
-				// обновляем сериализатор устройства
-				device->UpdateSerializer(serializer);
-				// и сериализуем его в xml
-				xmlSerializer.SerializeClass(serializer);
-			}
-		}
+				if (itb == ite)
+					return false;
+				(*itb)->UpdateSerializer(serializer);
+				itb++;
+				return true;
+			});
 	}
-	// завершаем сериализацию в xml
-	xmlSerializer.Commit();
-#else
-	// TODO !!!!!! На linux пока ничего не делаем !!!!!! 
-	return;
-#endif
+	// завершаем сериализацию
+	jsonSerializer.Commit();
 }
 
 bool CDynaModel::CancelProcessing() 

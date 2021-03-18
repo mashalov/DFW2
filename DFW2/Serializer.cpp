@@ -9,6 +9,7 @@ const char* CSerializerBase::m_cszState = "state";
 const char* CSerializerBase::m_cszV = "v";
 const char* CSerializerBase::m_cszStateCause = "cause";
 const char* CSerializerBase::m_cszType = "type";
+const char* CSerializerBase::m_cszDataType = "dataType";
 
 const char* TypedSerializedValue::m_cszTypeDecs[8] =
 {

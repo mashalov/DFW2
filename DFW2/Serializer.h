@@ -107,27 +107,26 @@ namespace DFW2
 		TypedSerializedValue(cplx* pComplex) : Value(pComplex), ValueType(eValueType::VT_CPLX) {}
 		// значение без значения, но с типом
 		TypedSerializedValue(eValueType Type) : Value(), ValueType(Type) {}
-		/*
-		TypedSerializedValue(TypedSerializedValue&& Copy)
+		
+		// Проверяет значение на значение по-умолчанию
+		// 0 для int, 0.0 для double, 0.0+j0.0 для complex
+		// можно добавить "" для строки
+		bool isSignificant() 
 		{
-			MakeCopy(Copy);
-			Adapter = std::move(Copy.Adapter);
+			switch (ValueType)
+			{
+			case eValueType::VT_DBL:
+				if (*Value.pDbl == 0.0) return false;
+				break;
+			case eValueType::VT_INT:
+				if (*Value.pInt == 0.0) return false;
+				break;
+			case eValueType::VT_CPLX:
+				if (Value.pCplx->real() == 0.0 && Value.pCplx->imag() == 0.0) return false;
+				break;
+			}
+			return true;
 		}
-
-		TypedSerializedValue& operator=(const TypedSerializedValue& Copy)
-		{
-			MakeCopy(Copy);
-			//Adapter.reset(new Adapter(Copy.Adapter));
-			return *this;
-		}
-
-		TypedSerializedValue& operator=(TypedSerializedValue&& Copy)
-		{
-			MakeCopy(Copy);
-			Adapter = std::move(Copy.Adapter);
-			return *this;
-		}
-		*/
 
 	protected:
 		// deep-copy
@@ -156,7 +155,6 @@ namespace DFW2
 	};
 
 	class CSerializedValueAuxDataBase {};
-
 
 	template<typename T>
 	class CSerializerAdapterBaseT : public CSerializerAdapterBase
@@ -237,7 +235,8 @@ namespace DFW2
 		static const char* m_cszV;
 		static const char* m_cszState;
 		static const char* m_cszStateCause;
-		static const char* m_cszType;
+		static const char* m_cszType;		// тип
+		static const char* m_cszDataType;	// тип _данных_
 
 		ptrdiff_t ValuesCount() noexcept
 		{

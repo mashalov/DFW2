@@ -17,18 +17,17 @@ CRastrTable::CRastrTable(ITablePtr rastrTable) : m_Table(rastrTable),
 
 void CRastrTable::StructureToJson(nlohmann::json & json) const
 {
-	json["name"] = m_Name;
 	json["description"] = stringutils::utf8_encode(m_Table->GetDescription());
 	json["keys"] = stringutils::utf8_encode(m_Table->GetKey());
 
-	nlohmann::json jsonCols = nlohmann::json::array();
+	nlohmann::json jsonCols = nlohmann::json();
 	for (const auto& col : m_Cols)
 	{
 		auto jsonCol = nlohmann::json({});
 		col.StructureToJson(jsonCol);
-		jsonCols.push_back(jsonCol);
+		jsonCols[col.GetName()] = jsonCol;
 	}
-	json["fields"] = jsonCols;
+	json["properties"] = jsonCols;
 }
 
 void CRastrTable::DataToJson(nlohmann::json& json) const
@@ -47,7 +46,6 @@ void CRastrTable::DataToJson(nlohmann::json& json) const
 
 void CRastrCol::StructureToJson(nlohmann::json& json) const
 {
-	json["name"] = GetName();
 	json["dataType"] = GetDataType();
 	AddPropertyIfNotEmpty(json, "caption", m_Col->GetProp(PropType::FL_ZAG));
 	AddPropertyIfNotEmpty(json, "description", m_Col->GetProp(PropType::FL_DESC));
@@ -129,35 +127,31 @@ void CRastrCol::AddPropertyIfNotEmpty(nlohmann::json& jobject, std::string key, 
 	}
 }
 
-std::unique_ptr<nlohmann::json> CRastr2Json::WriteData()
+void CRastr2Json::WriteData(nlohmann::json& ParentJson)
 {
-	auto jsonData = std::make_unique<nlohmann::json>();
-	auto jsonTables = nlohmann::json::array();
+	auto jsonObjects = nlohmann::json();
+	auto jsonTables = nlohmann::json();
 
 	for (const auto& table : m_Tables)
-	{
-		auto jsonTable = nlohmann::json();
-		table.DataToJson(jsonTable);
-		jsonTables.push_back(jsonTable);
-	}
-	jsonData->operator[]("tables") = jsonTables;
-	return jsonData;
+		table.DataToJson(jsonTables);
+
+	jsonObjects["objects"] = jsonTables;
+	ParentJson["data"] = jsonObjects;
 }
 
 
-std::unique_ptr<nlohmann::json> CRastr2Json::WriteDBStructure() 
+void CRastr2Json::WriteDBStructure(nlohmann::json& ParentJson) 
 {
-	auto jsonDBstructure = std::make_unique<nlohmann::json>();
-	auto jsonTables = nlohmann::json::array();
+	auto jsonObjects = nlohmann::json();
+	auto jsonTables = nlohmann::json();
 	for (const auto& table : m_Tables)
 	{
 		auto jsonTable = nlohmann::json();
 		table.StructureToJson(jsonTable);
-		jsonTables.push_back(jsonTable);
+		jsonTables[table.GetName()] = jsonTable;
 	}
-	jsonDBstructure->operator[]("tables") = jsonTables;
-
-	return jsonDBstructure;
+	jsonObjects["objects"] = jsonTables;
+	ParentJson["structure"] = jsonObjects;
 }
 
 void CRastr2Json::WriteJson(std::filesystem::path JsonPath)
@@ -171,9 +165,9 @@ void CRastr2Json::WriteJson(std::filesystem::path JsonPath)
 		m_Tables.emplace_back(Tables->Item(xtable));
 
 
-	jsonDatabase["structure"] = *WriteDBStructure();
-	jsonDatabase["data"] = *WriteData();
-	m_json["rastrDatabase"] = jsonDatabase;
+	WriteDBStructure(jsonDatabase);
+	WriteData(jsonDatabase);
+	m_json["powerSystemModel"] = jsonDatabase;
 
 	std::ofstream fjson(JsonPath.wstring());
 	if (fjson.is_open()) 

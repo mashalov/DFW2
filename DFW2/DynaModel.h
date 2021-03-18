@@ -8,12 +8,7 @@
 #include "KLUWrapper.h"
 #include "Results.h"
 
-// временно изолируем msxml для linux
-#ifdef _MSC_VER
-#include "SerializerXML.h"
-#else
-#include "Serializer.h"
-#endif
+#include "SerializerJson.h"
 
 //#define USE_FMA
 namespace DFW2

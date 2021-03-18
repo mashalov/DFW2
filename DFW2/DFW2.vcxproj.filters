@@ -214,9 +214,6 @@
     <ClInclude Include="Serializer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="SerializerXML.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="IterationControl.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -233,6 +230,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DLLWrapper.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="SerializerJson.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -522,13 +522,13 @@
     <ClCompile Include="Serializer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SerializerXML.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="IterationControl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="..\fmt\src\format.cc">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SerializerJson.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
