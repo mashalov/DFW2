@@ -21,7 +21,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 	};
 

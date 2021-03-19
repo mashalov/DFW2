@@ -42,7 +42,7 @@ namespace DFW2
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 		static const char* m_cszNodeId;
 	};
 }

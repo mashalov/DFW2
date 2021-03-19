@@ -1516,9 +1516,8 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	*/
 }
 
-const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
+void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	props.eDeviceType = DEVTYPE_NODE;
 	props.SetType(DEVTYPE_NODE);
 
@@ -1532,12 +1531,11 @@ const CDeviceContainerProperties CDynaNodeBase::DeviceProperties()
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
-	return props;
 }
 
-const CDeviceContainerProperties CDynaNode::DeviceProperties()
+void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props = CDynaNodeBase::DeviceProperties();
+	CDynaNodeBase::DeviceProperties(props);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
 	props.nEquationsCount = CDynaNode::VARS::V_LAST;
 	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU)));
@@ -1549,21 +1547,19 @@ const CDeviceContainerProperties CDynaNode::DeviceProperties()
 	props.m_VarMap.insert(make_pair("Sv", CVarIndex(V_SV, VARUNIT_PU)));
 	*/
 
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaNode>>();
 
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasNode);
 	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, eDVT_INTERNALCONST)));
 	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, eDVT_INTERNALCONST)));
-	return props;
 }
 
-const CDeviceContainerProperties CSynchroZone::DeviceProperties()
+void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	props.bVolatile = true;
 	props.eDeviceType = DEVTYPE_SYNCZONE;
 	props.nEquationsCount = CSynchroZone::VARS::V_LAST;
 	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
-	return props;
 }
 
 

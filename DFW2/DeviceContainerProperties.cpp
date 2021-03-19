@@ -17,6 +17,8 @@ eDFW2DEVICETYPE CDeviceContainerProperties::GetType() const
 	return eDeviceType;
 }
 
+
+
 const char* CDeviceContainerProperties::m_cszNameGenerator1C = "Генератор 1К";
 const char* CDeviceContainerProperties::m_cszNameGenerator3C = "Генератор 3К";
 const char* CDeviceContainerProperties::m_cszNameGeneratorMustang = "Генератор Mustang";

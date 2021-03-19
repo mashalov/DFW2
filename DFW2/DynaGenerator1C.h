@@ -79,7 +79,7 @@ namespace DFW2
 		static constexpr const char* m_cszInom = "Inom";
 		static constexpr const char* m_cszQnom = "Qnom";
 
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 	};
 }

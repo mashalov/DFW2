@@ -68,24 +68,26 @@ bool CDeviceContainer::RemoveDevice(ptrdiff_t nId)
 	return bRes;
 }
 
-// добавляет устройство в подготовленный контейнер
-bool CDeviceContainer::AddDevice(CDevice* pDevice)
+void CDeviceContainer::SettleDevice(CDevice *pDevice, ptrdiff_t nIndex)
 {
-	if (pDevice)
-	{
-		// отмечаем в устройстве его индекс в контейнере
-		// этот индекс необходим для связи уравненеий устройств
-		pDevice->m_nInContainerIndex = m_DevVec.size();
-		// помещаем устройство в контейнер
-		m_DevVec.push_back(pDevice);
-		// сообщаем устройству что оно в контейнере
-		pDevice->SetContainer(this);
-		// очищаем сет для поиска, так как идет добавление устройств
-		// и сет в конце этого процесса должен быть перестроен заново
-		m_DevSet.clear();
-		return true;
-	}
-	return false;
+	// отмечаем в устройстве его индекс в контейнере
+	// этот индекс необходим для связи уравненеий устройств
+	pDevice->m_nInContainerIndex = nIndex;
+	// сообщаем устройству что оно в контейнере
+	pDevice->SetContainer(this);
+	// очищаем сет для поиска, так как идет добавление устройств
+	// и сет в конце этого процесса должен быть перестроен заново
+	m_DevSet.clear();
+}
+
+// добавляет устройство в подготовленный контейнер
+void CDeviceContainer::AddDevice(CDevice* pDevice)
+{
+	if (!pDevice)
+		throw dfw2error("CDeviceContainer::AddDevice - nullptr passed");
+	SettleDevice(pDevice, m_DevVec.size());
+	// помещаем устройство в контейнер
+	m_DevVec.push_back(pDevice);
 }
 
 // добавление переменной состояния в контейнер

@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "Device.h"
+#include "DeviceContainer.h"
 #include <algorithm>
 
 namespace DFW2
@@ -45,7 +45,7 @@ namespace DFW2
 		double GetQ(double VdivVnom, double dVicinity);
 		double GetPdP(double VdivVnom, double &dP, double dVicinity);
 		double GetQdQ(double VdivVnom, double &dQ, double dVicinity);
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 		using LRCDATA = std::vector<CLRCData>;
 		LRCDATA P, Q;
 		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");

@@ -5,10 +5,6 @@
 namespace DFW2
 {
 	class CDynaModel;
-
-	using DEVICEVECTOR = std::vector<CDevice*>;
-	using DEVICEVECTORITR = DEVICEVECTOR::iterator;
-
 	// для поиска устройств по идентификаторам используем сет
 	using DEVSEARCHSET = std::set<CDeviceId*, CDeviceIdComparator> ;
 	using DEVSEARCHSETITR = DEVSEARCHSET::iterator;
@@ -85,9 +81,20 @@ namespace DFW2
 		DevicesPtrs m_ppDevicesAux;
 		size_t   m_nVisitedCount;
 
+		void CreateDevices(size_t nCount) 
+		{
+			m_ContainerProps.DeviceFactory->Create(nCount, m_DevVec);
+			ptrdiff_t nIndex(0);
+			for(auto&& it : m_DevVec)
+				SettleDevice(it, nIndex++);
+			/// <summary>
+			///  HACK !!!!!!!!! ////
+			m_pControlledData = new CDevice[2];
+		}
+
 		// передает контейнеру под управление линейный массив указателей с созданными в нем экземплярами
 		// устройств
-		template<typename T> bool AddDevices(T* pDevice, size_t nCount)
+		template<typename T> void AddDevices(T* pDevice, size_t nCount)
 		{
 			// очистка предыдущего содержимого контейнера
 			CleanUp();
@@ -96,13 +103,10 @@ namespace DFW2
 			// при очистке контейнера данный массив будет обработан delete []
 			m_pControlledData = pDevice;
 			T* p = pDevice;
-			bool bRes = true;
 			m_DevVec.reserve(m_DevVec.size() + nCount);
 			// добавление устройств в контейнер
 			for (size_t i = 0; i < nCount; i++)
-				bRes = AddDevice(p++) && bRes;
-
-			return bRes;
+				AddDevice(p++);
 		}
 		// извлечение устройства из контейнера по идентификатору
 		template<typename T> bool GetDevice(ptrdiff_t nId, T* &pDevice)
@@ -145,7 +149,8 @@ namespace DFW2
 		CDevice* GetDeviceByIndex(ptrdiff_t nIndex);						// получить устройство по индексу
 		CDevice* GetDevice(CDeviceId* pDeviceId);							// получить устройство по базовому идентификатору
 		CDevice* GetDevice(ptrdiff_t nId);									// получить устройство по идентификатору
-		bool AddDevice(CDevice* pDevice);									// добавить устройство в контейнер
+		void AddDevice(CDevice* pDevice);									// добавить устройство в контейнер
+		void SettleDevice(CDevice *pDevice, ptrdiff_t nIndex);				// привязать устройство в контейнере
 		bool RemoveDevice(ptrdiff_t nId);									// удалить устройство по идентификатору или индексу
 		bool RemoveDeviceByIndex(ptrdiff_t nIndex); 
 		size_t Count() const;												// получить количество устройств в контейнере

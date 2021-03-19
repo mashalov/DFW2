@@ -393,9 +393,9 @@ bool CDynaGenerator1C::CalculatePower()
 	return true;
 }
 
-const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
+void CDynaGenerator1C::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props = CDynaGeneratorMotion::DeviceProperties();
+	CDynaGeneratorMotion::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_1C);
 	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGenerator1C::m_cszExciterId);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator1C, CDeviceContainerProperties::m_cszSysNameGenerator1C);
@@ -415,8 +415,6 @@ const CDeviceContainerProperties CDynaGenerator1C::DeviceProperties()
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszInom, CConstVarIndex(CDynaGenerator1C::C_INOM, eDVT_INTERNALCONST)));
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszQnom, CConstVarIndex(CDynaGenerator1C::C_QNOM, eDVT_INTERNALCONST)));
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CConstVarIndex(CDynaGenerator1C::C_EQE, eDVT_INTERNALCONST)));
-
-	return props;
 }
 
 void CDynaGenerator1C::IfromDQ()

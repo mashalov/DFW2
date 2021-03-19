@@ -426,14 +426,19 @@ void CRastrImport::GetData(CDynaModel& Network)
 		
 	ITablePtr spNode = spTables->Item("node");
 	IColsPtr spNodeCols = spNode->Cols;
-	CDynaNode *pNodes = new CDynaNode[spNode->Size];
+
+	//CDynaNode *pNodes = new CDynaNode[spNode->Size];
+
 	IColPtr spLCIdLF = spNodeCols->Item("nsx");
 	IColPtr spLCId = spNodeCols->Item("dnsx");
 	IColPtr spNtype = spNodeCols->Item("tip");
 
-	Network.Nodes.AddDevices(pNodes, spNode->Size);
+	Network.Nodes.CreateDevices(spNode->Size);
 
-	auto pSerializer = pNodes->GetSerializer();
+	//Network.Nodes.AddDevices(pNodes, spNode->Size);
+
+	auto pNodes = Network.Nodes.begin();
+	auto pSerializer = (*pNodes)->GetSerializer();
 
 	for (auto&& sv : *pSerializer)
 		if(!sv.second->bState)
@@ -441,12 +446,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	for (int i = 0; i < spNode->Size; i++)
 	{
-		pNodes->UpdateSerializer(pSerializer);
+		(*pNodes)->UpdateSerializer(pSerializer);
 		ReadRastrRow(pSerializer, i);
 		CDynaLRC *pDynLRC;
 		if (Network.LRCs.GetDevice(spLCId->GetZ(i), pDynLRC))
 		{
-			pNodes->m_pLRC = pDynLRC;
+			static_cast<CDynaNode*>(*pNodes)->m_pLRC = pDynLRC;
 			//if (!LcId && pNodes->V > 0.0)
 			//	pNodes->m_dLRCKdef = (pNodes->Unom * pNodes->Unom / pNodes->V / pNodes->V);
 		}
@@ -455,7 +460,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		if (nLRCLF > 0)
 		{
 			if (Network.LRCs.GetDevice(nLRCLF, pDynLRC))
-				pNodes->m_pLRCLF = pDynLRC;
+				static_cast<CDynaNode*>(*pNodes)->m_pLRCLF = pDynLRC;
 		}
 		pNodes++;
 	}

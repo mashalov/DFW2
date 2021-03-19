@@ -41,7 +41,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static const char* m_cszUnom;
 	};

@@ -318,17 +318,16 @@ bool CDynaGeneratorMustang::CalculatePower()
 }
 
 
-const CDeviceContainerProperties CDynaGeneratorMustang::DeviceProperties()
+void CDynaGeneratorMustang::DeviceProperties(CDeviceContainerProperties& props)
 {
 	// пример "наследования" атрибутов контейнера
 	
 	// берем атрибуты родителя
-	CDeviceContainerProperties props = CDynaGenerator3C::DeviceProperties();
+	CDynaGenerator3C::DeviceProperties(props);
 	// добавляем свой тип. В списке типов уже есть все типы родительской цепочки 
 	props.SetType(DEVTYPE_GEN_MUSTANG);
 	// задаем имя типа устройства
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorMustang, CDeviceContainerProperties::m_cszSysNameGeneratorMustang);
 	// задаем количество уравнений устройства
 	props.nEquationsCount = CDynaGeneratorMustang::VARS::V_LAST;
-	return props;
 }

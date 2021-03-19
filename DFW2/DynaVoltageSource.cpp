@@ -12,10 +12,9 @@ eDEVICEFUNCTIONSTATUS CDynaVoltageSource::UpdateExternalVariables(CDynaModel *pD
 	return CDynaPowerInjector::UpdateExternalVariables(pDynaModel);
 }
 
-const CDeviceContainerProperties CDynaVoltageSource::DeviceProperties()
+void CDynaVoltageSource::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props = CDynaPowerInjector::DeviceProperties();
+	CDynaPowerInjector::DeviceProperties(props);
 	props.SetType(DEVTYPE_VOLTAGE_SOURCE);
 	props.nEquationsCount = CDynaVoltageSource::VARS::V_LAST;
-	return props;
 }

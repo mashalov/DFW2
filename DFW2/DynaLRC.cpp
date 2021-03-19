@@ -235,11 +235,9 @@ bool CDynaLRC::CollectConstantData(LRCDATA& LRC)
 	return bRes;
 }
 
-const CDeviceContainerProperties CDynaLRC::DeviceProperties()
+void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	props.SetType(DEVTYPE_LRC);
-	return props;
 }
 
 /*

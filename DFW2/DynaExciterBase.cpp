@@ -89,9 +89,8 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::UpdateExternalVariables(CDynaModel *pDyn
 	return eRes;
 }
 
-const CDeviceContainerProperties CDynaExciterBase::DeviceProperties()
+void CDynaExciterBase::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	props.SetType(DEVTYPE_EXCITER);
 	props.SetType(DEVTYPE_EXCITER_MUSTANG);
 
@@ -104,7 +103,6 @@ const CDeviceContainerProperties CDynaExciterBase::DeviceProperties()
 	props.m_ConstVarMap.insert(std::make_pair(CDynaExciterBase::m_cszExcConId, CConstVarIndex(CDynaExciterBase::C_REGID, eDVT_CONSTSOURCE)));
 	props.m_ConstVarMap.insert(std::make_pair(CDynaExciterBase::m_cszDECId, CConstVarIndex(CDynaExciterBase::C_DECID, eDVT_CONSTSOURCE)));
 
-	return props;
 }
 
 const char* CDynaExciterBase::m_cszUf		= "Uf";

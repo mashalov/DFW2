@@ -40,6 +40,6 @@ namespace DFW2
 		double Xgen();
 		const cplx& CalculateEgen() override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 }

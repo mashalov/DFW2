@@ -39,19 +39,19 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	// константы могут изменяться, например для демпфирования
 	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
 
-	Nodes.m_ContainerProps				= CDynaNode::DeviceProperties();
-	Branches.m_ContainerProps			= CDynaBranch::DeviceProperties();
-	LRCs.m_ContainerProps				= CDynaLRC::DeviceProperties();
-	GeneratorsInfBus.m_ContainerProps	= CDynaGeneratorInfBus::DeviceProperties();
-	GeneratorsMotion.m_ContainerProps	= CDynaGeneratorMotion::DeviceProperties();
-	Generators1C.m_ContainerProps		= CDynaGenerator1C::DeviceProperties();
-	Generators3C.m_ContainerProps		= CDynaGenerator3C::DeviceProperties();
-	GeneratorsMustang.m_ContainerProps	= CDynaGeneratorMustang::DeviceProperties();
-	DECsMustang.m_ContainerProps		= CDynaDECMustang::DeviceProperties();
-	ExcConMustang.m_ContainerProps		= CDynaExcConMustang::DeviceProperties();
-	ExcitersMustang.m_ContainerProps	= CDynaExciterMustang::DeviceProperties();
-	SynchroZones.m_ContainerProps		= CSynchroZone::DeviceProperties();
-	BranchMeasures.m_ContainerProps		= CDynaBranchMeasure::DeviceProperties();
+	CDynaNode::DeviceProperties(Nodes.m_ContainerProps);
+	CSynchroZone::DeviceProperties(SynchroZones.m_ContainerProps);
+	CDynaBranch::DeviceProperties(Branches.m_ContainerProps);
+	CDynaLRC::DeviceProperties(LRCs.m_ContainerProps);
+	CDynaGeneratorInfBus::DeviceProperties(GeneratorsInfBus.m_ContainerProps);
+	CDynaGeneratorMotion::DeviceProperties(GeneratorsMotion.m_ContainerProps);
+	CDynaGenerator1C::DeviceProperties(Generators1C.m_ContainerProps);
+	CDynaGenerator3C::DeviceProperties(Generators3C.m_ContainerProps);
+	CDynaGeneratorMustang::DeviceProperties(GeneratorsMustang.m_ContainerProps);
+	CDynaDECMustang::DeviceProperties(DECsMustang.m_ContainerProps);
+	CDynaExcConMustang::DeviceProperties(ExcConMustang.m_ContainerProps);
+	CDynaExciterMustang::DeviceProperties(ExcitersMustang.m_ContainerProps);
+	CDynaBranchMeasure::DeviceProperties(BranchMeasures.m_ContainerProps);
 
 	m_DeviceContainers.push_back(&Nodes);
 	m_DeviceContainers.push_back(&ExcitersMustang);

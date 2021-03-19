@@ -158,11 +158,10 @@ VariableIndexRefVec& CDynaGeneratorInfBusBase::GetVariables(VariableIndexRefVec&
 	return CDynaVoltageSource::GetVariables(ChildVec);
 }
 
-const CDeviceContainerProperties CDynaGeneratorInfBusBase::DeviceProperties()
+void CDynaGeneratorInfBusBase::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props = CDynaVoltageSource::DeviceProperties();
+	CDynaVoltageSource::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_INFPOWER);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorInfPower, CDeviceContainerProperties::m_cszSysNameGeneratorInfPower);
 	props.nEquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
-	return props;
 }

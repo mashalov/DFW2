@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "DeviceTypes.h"
-#include "DeviceContainerProperties.h"
+#include "DeviceContainerPropertiesBase.h"
 #include "string"
 #include "map"
 #include "list"

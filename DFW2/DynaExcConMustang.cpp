@@ -245,9 +245,8 @@ void CDynaExcConMustang::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState("Svt", Svt, eVARUNITS::VARUNIT_PU);
 }
 
-const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()
+void CDynaExcConMustang::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	props.SetType(DEVTYPE_EXCCON);
 	props.SetType(DEVTYPE_EXCCON_MUSTANG);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameExcConMustang, CDeviceContainerProperties::m_cszSysNameExcConMustang);
@@ -265,5 +264,4 @@ const CDeviceContainerProperties CDynaExcConMustang::DeviceProperties()
 	props.m_VarMap.insert(std::make_pair("dVdtLag", CVarIndex(CDynaExcConMustang::V_DVDT + 1, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair("dEqdtLag", CVarIndex(CDynaExcConMustang::V_EQDT + 1, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair("dSdtLag", CVarIndex(CDynaExcConMustang::V_SDT + 1, VARUNIT_PU)));
-	return props;
 }

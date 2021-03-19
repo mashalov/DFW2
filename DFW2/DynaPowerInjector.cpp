@@ -78,9 +78,8 @@ void CDynaPowerInjector::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty("Kgen", Kgen, eVARUNITS::VARUNIT_PIECES);
 }
 
-const CDeviceContainerProperties CDynaPowerInjector::DeviceProperties()
+void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	props.SetType(DEVTYPE_POWER_INJECTOR);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, CDynaPowerInjector::m_cszNodeId);
 
@@ -93,7 +92,7 @@ const CDeviceContainerProperties CDynaPowerInjector::DeviceProperties()
 
 	props.nEquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
-	return props;
+
 }
 
 const char* CDynaPowerInjector::m_cszNodeId = "NodeId";

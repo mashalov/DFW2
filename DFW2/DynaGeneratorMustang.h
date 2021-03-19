@@ -23,6 +23,6 @@ namespace DFW2
 		bool CalculatePower() override;
 		const cplx& CalculateEgen() override;
 
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 }

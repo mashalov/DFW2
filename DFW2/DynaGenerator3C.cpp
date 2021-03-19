@@ -351,14 +351,12 @@ void CDynaGenerator3C::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState("xq1", xq1, eVARUNITS::VARUNIT_OHM);
 }
 
-const CDeviceContainerProperties CDynaGenerator3C::DeviceProperties()
+void CDynaGenerator3C::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props = CDynaGenerator1C::DeviceProperties();
+	CDynaGenerator1C::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_3C);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator3C, CDeviceContainerProperties::m_cszSysNameGenerator3C);
 	props.nEquationsCount = CDynaGenerator3C::VARS::V_LAST;
 	props.m_VarMap.insert(std::make_pair("Eqss", CVarIndex(CDynaGenerator3C::V_EQSS, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(std::make_pair("Edss", CVarIndex(CDynaGenerator3C::V_EDSS, VARUNIT_KVOLTS)));
-
-	return props;
 }

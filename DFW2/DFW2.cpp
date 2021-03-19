@@ -31,7 +31,7 @@ int _tmain(int argc, _TCHAR* argv[])
 {
 	//_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF);
 	//_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-	//_CrtSetBreakAlloc(31658);
+	//_CrtSetBreakAlloc(260215);
 	//_CrtSetBreakAlloc(31657);
 	//_CrtSetBreakAlloc(236965);
 
@@ -49,7 +49,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		CRastrImport ri;
 		try
 		{
-			Network.DeSerialize("c:\\tmp\\r.json");
+			Network.DeSerialize("c:\\tmp\\serialization.json");
 			ri.GetData(Network);
 			Network.Run();
 		}

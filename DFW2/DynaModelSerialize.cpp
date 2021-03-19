@@ -56,6 +56,16 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 		auto sax = std::make_unique<CJsonSax>();
 		nlohmann::json::sax_parse(js, sax.get());
 
+		for (const auto& [objkey, objsize] : sax->GetObjectSizeMap())
+		{
+			if (auto pContainer(GetContainerByAlias(objkey)); pContainer)
+			{
+				std::cout << objkey << " size " << objsize << std::endl;
+			}
+		}
+		//sax->Dump();
+
+		/*
 		js.clear();
 		js.seekg(0);
 
@@ -71,6 +81,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 				//std::string ky(key);
 			}
 		}
+		*/
 	}
 
 

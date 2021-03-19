@@ -59,7 +59,7 @@ namespace DFW2
 		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);
 		CDynaNodeBase* GetOppositeSuperNode(CDynaNodeBase* pOriginNode);
 
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static const char* m_cszBranchStateNames[4];
 	};
@@ -98,7 +98,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 		static void CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, cplx& cIe, cplx& cSb, cplx& cSe);
 	};
 }

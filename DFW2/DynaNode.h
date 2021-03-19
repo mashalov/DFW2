@@ -31,7 +31,7 @@ namespace DFW2
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel)  override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 
 #define DFW2_SQRT_EPSILON DFW2_EPSILON
@@ -156,7 +156,7 @@ namespace DFW2
 
 		VariableIndexExternal GetExternalVariable(std::string_view VarName) override;
 
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		CDynaNodeBase *m_pSuperNodeParent;
 		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
@@ -219,7 +219,8 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
-		static const CDeviceContainerProperties DeviceProperties();
+
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static const char *m_cszS;
 		static const char *m_cszSz;

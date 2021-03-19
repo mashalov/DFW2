@@ -6,7 +6,6 @@ namespace DFW2
 	// атрибуты контейнера устройств
 	// Атрибуты контейнера можно "наследовать" в рантайме - брать некий атрибут и изменять его для другого типа устройств,
 	// а далее по нему специфицировать контейнер устройств
-
 	class CDeviceContainerPropertiesBase
 	{
 	public:
@@ -66,7 +65,7 @@ namespace DFW2
 		LINKSTOMAP  m_LinksTo;
 		std::list<std::string> m_lstAliases;								// возможные псевдонимы типа устройства (типа "Node","node")
 	protected:
-		std::string m_strClassName;										// имя типа устройства
+		std::string m_strClassName;											// имя типа устройства
 		std::string m_strClassSysName;										// системное имя имя типа устройства для сериализации
 	};
 }

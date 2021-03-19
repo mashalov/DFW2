@@ -241,11 +241,16 @@ bool CDynaModel::UpdateExternalVariables()
 CDeviceContainer* CDynaModel::GetContainerByAlias(std::string_view Alias)
 {
 	CDeviceContainer *pContainer(nullptr);
+
+	// ищем контейнер по системному имени или псевдониму
+
 	auto it = std::find_if(m_DeviceContainers.begin(), 
 						   m_DeviceContainers.end(), 
-						  [&Alias](const auto& cont) { return cont->HasAlias(Alias); });
+						  [&Alias](const auto& cont) { return cont->m_ContainerProps.GetSystemClassName() == Alias || cont->HasAlias(Alias); });
+
 	if (it != m_DeviceContainers.end())
 		return *it;
+
 	return nullptr;
 }
 

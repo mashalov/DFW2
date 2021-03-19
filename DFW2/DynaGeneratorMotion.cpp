@@ -209,9 +209,9 @@ void CDynaGeneratorMotion::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState("s", s, eVARUNITS::VARUNIT_PU);
 }
 
-const CDeviceContainerProperties CDynaGeneratorMotion::DeviceProperties()
+void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props = CDynaGeneratorInfBusBase::DeviceProperties();
+	CDynaGeneratorInfBusBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_MOTION);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorMotion, CDeviceContainerProperties::m_cszSysNameGeneratorMotion);
 	props.nEquationsCount = CDynaGeneratorMotion::VARS::V_LAST;
@@ -220,7 +220,7 @@ const CDeviceContainerProperties CDynaGeneratorMotion::DeviceProperties()
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, eDVT_CONSTSOURCE)));
-	return props;
+
 }
 
 const char* CDynaGeneratorMotion::m_cszUnom = "Unom";

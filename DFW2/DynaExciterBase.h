@@ -53,7 +53,7 @@ namespace DFW2
 		double GetIg();
 		void SetLagTimeConstantRatio(double TexcNew);
 
-		static const CDeviceContainerProperties DeviceProperties();
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static const char* m_cszUf;
 		static const char* m_cszUdec;

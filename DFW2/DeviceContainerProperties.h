@@ -1,7 +1,9 @@
 ﻿#pragma once
 #include "Header.h"
 #include "DeviceContainerPropertiesBase.h"
-#include "DLLStructs.h"
+#include "Device.h"
+//#include "DLLStructs.h"
+
 
 namespace DFW2
 {
@@ -12,13 +14,35 @@ namespace DFW2
 	// ссылки без разделения на направления
 	using LINKSUNDIRECTED = std::vector<LinkDirectionFrom const*>;
 
+
+	class CDeviceFactoryBase {
+	public:
+		virtual void Create(size_t nCount, DEVICEVECTOR& DevVec) = 0;
+		virtual ~CDeviceFactoryBase() {}
+	};
+
+	template<class T>
+	class CDeviceFactory : public CDeviceFactoryBase
+	{
+		std::unique_ptr<T[]> m_pDevices;
+	public:
+		void Create(size_t nCount, DEVICEVECTOR& DevVec) override
+		{
+			m_pDevices = std::make_unique<T[]>(nCount);
+			DevVec.resize(nCount);
+			auto it = DevVec.begin();
+			for (T* p = m_pDevices.get(); p < m_pDevices.get() + nCount; p++, it++)
+				*it = p;
+		}
+	};
+
 	class CDeviceContainerProperties : public CDeviceContainerPropertiesBase
 	{
 	public:
+		std::unique_ptr<CDeviceFactoryBase> DeviceFactory;
 		LINKSFROMMAPPTR m_MasterLinksFrom;
 		LINKSTOMAPPTR  m_MasterLinksTo;
 		LINKSUNDIRECTED m_Masters, m_Slaves;
-
 		eDFW2DEVICETYPE GetType() const;
 		const char* GetVerbalClassName() const;
 		const char* GetSystemClassName() const;
@@ -37,5 +61,8 @@ namespace DFW2
 		static const char* m_cszAliasBranch;
 		static const char* m_cszAliasGenerator;
 	};
+
+
+
 }
 

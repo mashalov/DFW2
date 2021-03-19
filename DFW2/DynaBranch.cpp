@@ -674,20 +674,17 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 
 
 
-const CDeviceContainerProperties CDynaBranch::DeviceProperties()
+void CDynaBranch::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	props.SetType(DEVTYPE_BRANCH);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranch, CDeviceContainerProperties::m_cszSysNameBranch);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, "");
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasBranch);
-	return props;
 }
 
 // описание переменных расчетных потоков по ветви
-const CDeviceContainerProperties CDynaBranchMeasure::DeviceProperties()
+void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	// линковка делается только с ветвями, поэтому описание
 	// правил связывания не нужно
 	props.SetType(DEVTYPE_BRANCHMEASURE);
@@ -705,7 +702,6 @@ const CDeviceContainerProperties CDynaBranchMeasure::DeviceProperties()
 	props.m_VarMap.insert(std::make_pair("Qe",	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR)));
 	props.m_VarMap.insert(std::make_pair("Sb",	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA)));
 	props.m_VarMap.insert(std::make_pair("Se",	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
-	return props;
 }
 
 const char* CDynaBranch::m_cszBranchStateNames[4] = { "On", "Off", "Htrip", "Ttrip", };

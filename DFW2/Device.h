@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "DeviceId.h"
-#include "DeviceContainerProperties.h"
 #include "Serializer.h"
 
 namespace DFW2
@@ -336,6 +335,9 @@ namespace DFW2
 #endif
 		static const ptrdiff_t nIndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();
 	};
+
+using DEVICEVECTOR = std::vector<CDevice*>;
+using DEVICEVECTORITR = DEVICEVECTOR::iterator;
 
 // макрос для упрощения связи имени и идентификатора переменной, используется в switch CDevice::GetVariablePtr
 #define MAP_VARIABLE(VarName, VarId)  case VarId: p = &VarName; break; 

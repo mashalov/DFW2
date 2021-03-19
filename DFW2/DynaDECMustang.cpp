@@ -199,9 +199,8 @@ void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddState("Umax", Umax, eVARUNITS::VARUNIT_PU);
 }
 
-const CDeviceContainerProperties CDynaDECMustang::DeviceProperties()
+void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDeviceContainerProperties props;
 	// базовый тип - дискретный контроллер возбуждения
 	// свой тип - форсировка Мустанг
 	props.SetType(DEVTYPE_DEC);	
@@ -219,6 +218,4 @@ const CDeviceContainerProperties CDynaDECMustang::DeviceProperties()
 	props.m_VarMap.insert(std::make_pair("EnfTrg", CVarIndex(CDynaDECMustang::V_ENFTRIG, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair("DefTrg", CVarIndex(CDynaDECMustang::V_DEFTRIG, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair(CDynaExciterBase::m_cszUdec, CVarIndex(CDynaDECMustang::V_DEC, VARUNIT_PU)));
-	
-	return props;
 }
