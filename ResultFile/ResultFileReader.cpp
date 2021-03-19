@@ -532,8 +532,20 @@ void CResultFileReader::ReadString(std::string& String)
 	ReadLEB(nLen64);
 	if (nLen64 < 0xffff)
 	{
-		CUnicodeSCSU StringWriter(infile);
-		StringWriter.ReadSCSU(String, static_cast<int>(nLen64));
+		if (m_nVersion > 1)
+		{
+			// if file version 2 and above read plain utf-8
+			String.resize(static_cast<int>(nLen64), '\x0');
+			infile.read(String.data(), static_cast<int>(nLen64));
+		}
+		else
+		{
+			// for 1st version read scsu
+			std::wstring scsuToDecode;
+			CUnicodeSCSU StringWriter(infile);
+			StringWriter.ReadSCSU(scsuToDecode, static_cast<int>(nLen64));
+			String = stringutils::utf8_encode(scsuToDecode);
+		}
 	}
 }
 

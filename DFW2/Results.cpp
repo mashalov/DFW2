@@ -19,7 +19,7 @@ void CDynaModel::WriteResultsHeaderBinary()
 
 			// добавляем описание единиц измерения переменных
 			for (auto&& vnmit : DFWMessages.VarNameMap())
-				m_spResultWrite->AddVariableUnit(static_cast<long>(vnmit.first), vnmit.second.c_str());
+				m_spResultWrite->AddVariableUnit(static_cast<long>(vnmit.first), stringutils::utf8_decode(vnmit.second).c_str());
 
 
 			for (auto&& it : m_DeviceContainers)
@@ -28,7 +28,7 @@ void CDynaModel::WriteResultsHeaderBinary()
 				// проверяем, нужно ли записывать данные для такого типа контейнера
 				if (!ApproveContainerToWriteResults(pDevCon)) continue;
 				// если записывать надо - добавляем тип устройства контейнера
-				IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(it->GetType(), it->GetTypeName()); 
+				IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(it->GetType(), stringutils::utf8_decode(it->GetTypeName()).c_str());
 
 				// по умолчанию у устройства один идентификатор и одно родительское устройство
 				long DeviceIdsCount = 1;
@@ -55,7 +55,9 @@ void CDynaModel::WriteResultsHeaderBinary()
 				for (auto&& vit : pDevCon->m_ContainerProps.m_VarMap)
 				{
 					if (vit.second.m_bOutput)
-						spDeviceType->AddDeviceTypeVariable(vit.first.c_str(), vit.second.m_Units, vit.second.m_dMultiplier);
+						spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(vit.first).c_str(), 
+							vit.second.m_Units, 
+							vit.second.m_dMultiplier);
 				}
 
 				variant_t DeviceIds, ParentIds, ParentTypes;
@@ -162,7 +164,11 @@ void CDynaModel::WriteResultsHeaderBinary()
 
 						}
 					}
-					spDeviceType->AddDevice(dit->GetName(), DeviceIds, ParentIds, ParentTypes);
+
+					spDeviceType->AddDevice(stringutils::utf8_decode(dit->GetName()).c_str(), 
+						DeviceIds, 
+						ParentIds, 
+						ParentTypes);
 				}
 			}
 				

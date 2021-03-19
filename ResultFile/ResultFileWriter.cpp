@@ -22,9 +22,18 @@ void CResultFile::WriteString(std::string_view cszString)
 		WriteLEB(0);
 	else
 	{
+		
+#if DFW2_RESULTFILE_VERSION > 1
 		WriteLEB(cszString.size());
+		// for file versions > 1 write plain utf-8 strings
+		infile.write(cszString.data(), cszString.size());
+#else
+		// for older versions write scsu
+		std::wstring scsuToEncode = stringutils::utf8_decode(cszString);
+		WriteLEB(scsuToEncode.size());
 		CUnicodeSCSU StringWriter(infile);
-		StringWriter.WriteSCSU(cszString);
+		StringWriter.WriteSCSU(scsuToEncode);
+#endif
 	}
 }
 

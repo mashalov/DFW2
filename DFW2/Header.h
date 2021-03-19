@@ -42,7 +42,7 @@ namespace DFW2
 #define DFW2_RTOL_DEFAULT 1E-4
 #define M_SQRT3 1.7320508075688772935274463415059
 #define DFW2_VERSION 1
-#define DFW2_RESULTFILE_VERSION 1
+#define DFW2_RESULTFILE_VERSION 2
 
 #define _CheckNumber(a) _ASSERTE(!std::isnan((a)) && !isinf((a)));
 
