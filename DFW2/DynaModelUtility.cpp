@@ -7,8 +7,6 @@ using namespace DFW2;
 
 void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex)
 {
-	std::string utf8Message(Message);
-
 	if (m_Parameters.m_bLogToConsole)
 	{
 #ifdef _MSC_VER
@@ -39,7 +37,7 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view M
 
 		SetConsoleOutputCP(CP_UTF8);
 #endif
-		std::cout << utf8Message << std::endl;
+		std::cout << Message << std::endl;
 
 #ifdef _MSC_VER
 		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
@@ -47,7 +45,7 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view M
 	}
 
 	if (LogFile.is_open() && m_Parameters.m_bLogToFile)
-		LogFile << utf8Message << std::endl;
+		LogFile << Message << std::endl;
 }
 
 void CDynaModel::ChangeOrder(ptrdiff_t Newq)
@@ -410,61 +408,6 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 	Computehl0();
 	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping, 
 														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
-}
-
-// сериализация в json
-void CDynaModel::Serialize()
-{
-	// создаем json-сериализатор
-	CSerializerJson jsonSerializer;
-	jsonSerializer.CreateNewSerialization();
-
-	// создаем базовый сериализатор для параметров расчета
-	SerializerPtr SerializerParameteres = std::make_unique<CSerializerBase>();
-	long RecordsCount(1);
-	jsonSerializer.SerializeClass(SerializerParameteres, [this, &SerializerParameteres, &RecordsCount]() 
-		{ 
-			if (--RecordsCount < 0) return false;
-			m_Parameters.UpdateSerializer(SerializerParameteres);
-			return true;
-		});
-
-	// создаем базовый сериализатор для глобальных переменных расчета
-	// и сериализуем их аналогично параметрам расчета
-	SerializerPtr SerializerStepControl = std::make_unique<CSerializerBase>();
-	RecordsCount = 1;
-	jsonSerializer.SerializeClass(SerializerStepControl, [this, &SerializerStepControl, &RecordsCount]()
-	{
-		if (--RecordsCount < 0) return false;
-		sc.UpdateSerializer(SerializerStepControl);
-		return true;
-	});
-
-	// обходим контейнеры устройств и регистрируем перечисление типов устройств
-	for (auto&& container : m_DeviceContainers) 
-		jsonSerializer.AddDeviceTypeDescription(container->GetType(), container->m_ContainerProps.GetSystemClassName());
-
-	// обходим контейнеры снова
-	for (auto&& container : m_DeviceContainers)
-	{
-		auto itb = container->begin();
-		const auto ite = container->end();
-
-		// если контейнер пустой - пропускаем
-		if (itb == ite) continue;
-
-		auto&& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
-		jsonSerializer.SerializeClass(serializer, [this, &itb, &ite, &serializer]() 
-			{
-				if (itb == ite)
-					return false;
-				(*itb)->UpdateSerializer(serializer);
-				itb++;
-				return true;
-			});
-	}
-	// завершаем сериализацию
-	jsonSerializer.Commit();
 }
 
 bool CDynaModel::CancelProcessing() 

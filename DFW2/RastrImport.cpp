@@ -211,8 +211,8 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 {
 	// ставим устройству в сериализаторе индекс в БД и идентификатор
-	Serializer->m_pDevice->SetDBIndex(Row);
-	Serializer->m_pDevice->SetId(Row); // если идентификатора нет или он сложный - ставим порядковый номер в качестве идентификатора
+	Serializer->GetDevice()->SetDBIndex(Row);
+	Serializer->GetDevice()->SetId(Row); // если идентификатора нет или он сложный - ставим порядковый номер в качестве идентификатора
 
 	// проходим по значениям сериализатора
 	for (auto&& sv : *Serializer)
@@ -242,17 +242,17 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 			break;
 		case TypedSerializedValue::eValueType::VT_NAME:
 			vt.ChangeType(VT_BSTR);
-			Serializer->m_pDevice->SetName(stringutils::utf8_encode(vt.bstrVal));
+			Serializer->GetDevice()->SetName(stringutils::utf8_encode(vt.bstrVal));
 			break;
 		case TypedSerializedValue::eValueType::VT_STATE:
 			vt.ChangeType(VT_BOOL);
 			// состояние RastrWin конвертируем в состояние устройства
-			Serializer->m_pDevice->SetState(vt.boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			Serializer->GetDevice()->SetState(vt.boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			break;
 		case TypedSerializedValue::eValueType::VT_ID:
 			vt.ChangeType(VT_I4);
 			// для установки идентификатора используем функцию устройства вместо присваивания
-			Serializer->m_pDevice->SetId(vt.lVal);
+			Serializer->GetDevice()->SetId(vt.lVal);
 			break;
 		case TypedSerializedValue::eValueType::VT_ADAPTER:
 			vt.ChangeType(VT_I4);

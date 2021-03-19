@@ -65,7 +65,8 @@ namespace DFW2
 		{
 			throw dfw2error(cszNotImplemented);
 		}
-		static const char* cszNotImplemented;
+
+		static constexpr const char* cszNotImplemented = "CSerializerAdapterBase: - Not implemented";
 
 		virtual ~CSerializerAdapterBase() {}
 	};
@@ -87,7 +88,16 @@ namespace DFW2
 		}
 		ValueType;		
 
-		static const char* m_cszTypeDecs[8];				// текстовое описание типа
+		static constexpr const char* m_cszTypeDecs[] = { 
+			"double",
+			"int",
+			"bool",
+			"complex",
+			"name",
+			"state",
+			"id",
+			"adapter"
+		};
 
 		uValue Value;										// собственно значение
 
@@ -229,19 +239,21 @@ namespace DFW2
 		SERIALIZERMAP ValueMap;			// карта "имя"->"значение"
 		SERIALIZERLIST::iterator UpdateIterator;
 		std::string m_strClassName;	// имя сериализуемого класса 
+		CDevice* m_pDevice = nullptr;
 	public:
-		CDevice *m_pDevice = nullptr;
-		static const char* m_cszDupName;
-		static const char* m_cszV;
-		static const char* m_cszState;
-		static const char* m_cszStateCause;
-		static const char* m_cszType;		// тип
-		static const char* m_cszDataType;	// тип _данных_
+
+		static constexpr const char* m_cszDupName = "CSerializerBase::AddProperty duplicated name \"{}\"";
+		static constexpr const char* m_cszState = TypedSerializedValue::m_cszTypeDecs[5];
+		static constexpr const char* m_cszStateCause = "cause";
+		static constexpr const char* m_cszType = "type";
+		static constexpr const char* m_cszDataType = "dataType";
 
 		ptrdiff_t ValuesCount() noexcept
 		{
 			return ValueMap.size();
 		}
+		CDevice* GetDevice() { return m_pDevice; }
+
 
 		// начало обновления сериализатора с заданного устройства
 		void BeginUpdate(CDevice *pDevice)

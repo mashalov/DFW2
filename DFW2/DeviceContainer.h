@@ -148,7 +148,7 @@ namespace DFW2
 		bool AddDevice(CDevice* pDevice);									// добавить устройство в контейнер
 		bool RemoveDevice(ptrdiff_t nId);									// удалить устройство по идентификатору или индексу
 		bool RemoveDeviceByIndex(ptrdiff_t nIndex); 
-		size_t Count();														// получить количество устройств в контейнере
+		size_t Count() const;												// получить количество устройств в контейнере
 		inline DEVICEVECTORITR begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
 		inline DEVICEVECTORITR end() { return m_DevVec.end(); }
 		void Log(CDFW2Messages::DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);

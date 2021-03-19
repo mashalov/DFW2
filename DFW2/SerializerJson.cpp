@@ -8,8 +8,9 @@
 using namespace DFW2;
 
 // создаем новый Json
-void CSerializerJson::CreateNewSerialization()
+void CSerializerJson::CreateNewSerialization(const std::filesystem::path& path)
 {
+	m_Path = path;
 	m_JsonDoc = nlohmann::json();
 }
 
@@ -24,7 +25,7 @@ void CSerializerJson::Commit()
 	jsonModel["structure"] = jsonStructureObjects;
 	m_JsonDoc["powerSystemModel"] = jsonModel;
 
-	std::ofstream fjson(stringutils::utf8_decode("c:\\tmp\\serialization.json"));
+	std::ofstream fjson(stringutils::utf8_decode(m_Path.string()));
 	if (fjson.is_open())
 		fjson << std::setw(4) << m_JsonDoc << std::endl;
 }
@@ -36,11 +37,22 @@ void CSerializerJson::AddDeviceTypeDescription(ptrdiff_t nType, std::string_view
 }
 
 // сериализация в json из сериализатора
-void CSerializerJson::SerializeClass(SerializerPtr& Serializer, FnNextSerializer NextSerializer)
+void CSerializerJson::SerializeClass(SerializerPtr& Serializer)
 {
-	// пробуем получить значения из сериализатора,
-	// если не получается - класс пустой и его не сериализуем
-	if (Serializer->ValuesCount() > 0 && NextSerializer())
+	// предполагается, что сериализатор содержит данные для первого объекта
+
+	auto SetType = [](MetaSerializedValue& mv, nlohmann::json& jsonType) 
+	{
+		const ptrdiff_t type(static_cast<ptrdiff_t>(mv.Value.ValueType));
+		if(type >= 0 && type < static_cast<ptrdiff_t>(std::size(TypedSerializedValue::m_cszTypeDecs)))
+			jsonType[CSerializerBase::m_cszDataType] = TypedSerializedValue::m_cszTypeDecs[type];
+		else
+			jsonType[CSerializerBase::m_cszDataType] = type;
+	};
+
+	// если в сериализаторе нет полей - пропускаем
+
+	if (Serializer->ValuesCount() > 0)
 	{
 		// создаем узел описания класса
 		auto Class = nlohmann::json();
@@ -53,12 +65,9 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer, FnNextSerializer
 		{
 			auto ClassProp = nlohmann::json();
 			MetaSerializedValue& mv = *value.second;
+
 			// задаем тип свойства либо текстом (если есть описание типа для значения перечисления), либо перечислением
-			if (static_cast<ptrdiff_t>(mv.Value.ValueType) >= 0 &&
-				static_cast<ptrdiff_t>(mv.Value.ValueType) < std::size(TypedSerializedValue::m_cszTypeDecs))
-				ClassProp[CSerializerBase::m_cszDataType] = TypedSerializedValue::m_cszTypeDecs[static_cast<ptrdiff_t>(mv.Value.ValueType)];
-			else
-				ClassProp[CSerializerBase::m_cszDataType] = static_cast<long>(mv.Value.ValueType);
+			SetType(mv, ClassProp);
 
 			// задаем множитель для вещественного значения
 			if (mv.Value.ValueType == TypedSerializedValue::eValueType::VT_DBL && mv.Multiplier != 1.0)
@@ -81,8 +90,20 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer, FnNextSerializer
 
 		auto items = nlohmann::json::array();
 
-		// выводим сериализаторы пока они выдаются NextSerializer
-		do
+		// если в сериализаторе есть устройство, проходим
+		// по всем устройствам из контейнера
+
+		CDevice* pDevice(Serializer->GetDevice());
+		CDeviceContainer* pContainer(pDevice ? pDevice->GetContainer() : nullptr);
+		size_t nDeviceIndex(0);
+		bool bContinue(true);
+
+		// продолжаем пока сериализатор
+		// может переходить на следующий объект
+		// одну сериализацию делаем в любом случае, так как получили
+		// настроенный сериализатор
+
+		while(bContinue)
 		{
 			auto item = nlohmann::json();
 
@@ -113,14 +134,14 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer, FnNextSerializer
 					item[ValueName] = { {"re", mv.Value.Value.pCplx->real()}, {"im" ,mv.Value.Value.pCplx->imag()} };
 					break;
 				case TypedSerializedValue::eValueType::VT_NAME:
-					item[ValueName] = Serializer->m_pDevice->GetName();
+					item[ValueName] = Serializer->GetDevice()->GetName();
 					break;
 				case TypedSerializedValue::eValueType::VT_STATE:
-					item[ValueName] = static_cast<int>(Serializer->m_pDevice->GetState());
-					item["stateCause"] = static_cast<int>(Serializer->m_pDevice->GetStateCause());
+					item[ValueName] = static_cast<int>(Serializer->GetDevice()->GetState());
+					item["stateCause"] = static_cast<int>(Serializer->GetDevice()->GetStateCause());
 					break;
 				case TypedSerializedValue::eValueType::VT_ID:
-					item[ValueName] = Serializer->m_pDevice->GetId();
+					item[ValueName] = Serializer->GetDevice()->GetId();
 					break;
 				case TypedSerializedValue::eValueType::VT_ADAPTER:
 					item[ValueName] = mv.Value.Adapter->GetString();
@@ -134,30 +155,37 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer, FnNextSerializer
 			// (было в xml, зачем ? мы его сериализовали из сериализатора в цикле по свойствам. Закомментировано.
 			//item[TypedSerializedValue::m_cszTypeDecs[6]] = Serializer->m_pDevice->GetId();
 
-			// если в сериализаторе есть устройство
-			if (Serializer->m_pDevice)
+			if (pContainer)
 			{
-				CDeviceContainer* pContainer(Serializer->m_pDevice->GetContainer());
-				// достаем контейнер устройства
-				if (pContainer)
-				{
-					// и сериализуем связи данного экземпляра устройства
-					// по свойствам контейнера
-					CDeviceContainerProperties& Props = pContainer->m_ContainerProps;
+				// и сериализуем связи данного экземпляра устройства
+				// по свойствам контейнера
+				const CDeviceContainerProperties& Props = pContainer->m_ContainerProps;
+				auto jsonLinks = nlohmann::json::array();
+				// добавляем связи от ведущих и ведомых
+				AddLinks(Serializer, jsonLinks, Props.m_Masters, true);
+				AddLinks(Serializer, jsonLinks, Props.m_Slaves, false);
+				// если что-то добавилось в ссылки - добавляем их в данные объекта
+				// пустые ссылки не добавляем
+				if (!jsonLinks.empty())
+					item["Links"] = jsonLinks;
 
-					auto jsonLinks = nlohmann::json::array();
+				// у нас есть контейнер и было задано устройство
+				// с помощью контейнера переходим к следующем устройству
+				// (первое устройство уже обработали)
 
-					// добавляем связи от ведущих и ведомых
-					AddLinks(Serializer, jsonLinks, Props.m_Masters, true);
-					AddLinks(Serializer, jsonLinks, Props.m_Slaves, false);
-					if(!jsonLinks.empty())
-						item["Links"] = jsonLinks;
-				}
+				pDevice = pContainer->GetDeviceByIndex(++nDeviceIndex);
+
+				// если следующее устройство доступно, обновляем сериализатор на него
+				if (pDevice)
+					pDevice->UpdateSerializer(Serializer);
+				else
+					bContinue = false;	// если устройств больше нет - ставим флаг завершения обхода устройств
 			}
+			else
+				bContinue = false; // если в сериализаторе нет устройства - заканчиваем 
 
 			items.push_back(item);
 		} 		
-		while (NextSerializer());
 
 		// добавляем массив данных под именем объекта
 		m_JsonData[Serializer->GetClassName()] = items;
@@ -165,7 +193,7 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer, FnNextSerializer
 }
 
 // сериализация связей устройства
-void CSerializerJson::AddLink(nlohmann::json& jsonLinks, CDevice* pLinkedDevice, bool bMaster)
+void CSerializerJson::AddLink(nlohmann::json& jsonLinks, const CDevice* pLinkedDevice, bool bMaster)
 {
 	if (pLinkedDevice)
 	{
@@ -187,7 +215,7 @@ void CSerializerJson::AddLink(nlohmann::json& jsonLinks, CDevice* pLinkedDevice,
 	}
 }
 
-void CSerializerJson::AddLinks(SerializerPtr& Serializer, nlohmann::json& jsonLinks, LINKSUNDIRECTED& links, bool bMaster)
+void CSerializerJson::AddLinks(SerializerPtr& Serializer, nlohmann::json& jsonLinks, const LINKSUNDIRECTED& links, bool bMaster)
 {
 	// просматриваем связи устройства
 	for (auto&& link : links)
@@ -197,7 +225,7 @@ void CSerializerJson::AddLinks(SerializerPtr& Serializer, nlohmann::json& jsonLi
 		case DLM_MULTI:
 		{
 			// для мультисвязей выводим все
-			CLinkPtrCount* pLinks = Serializer->m_pDevice->GetLink(link->nLinkIndex);
+			const CLinkPtrCount* pLinks = Serializer->GetDevice()->GetLink(link->nLinkIndex);
 			CDevice** ppDevice(nullptr);
 			// перебираем все устройства в мультисвязи и выводим
 			// сериалиазацию для каждого
@@ -207,7 +235,7 @@ void CSerializerJson::AddLinks(SerializerPtr& Serializer, nlohmann::json& jsonLi
 		break;
 		case DLM_SINGLE:
 			// для одиночной связи выводим только ее
-			AddLink(jsonLinks, Serializer->m_pDevice->GetSingleLink(link->nLinkIndex), bMaster);
+			AddLink(jsonLinks, Serializer->GetDevice()->GetSingleLink(link->nLinkIndex), bMaster);
 			break;
 		}
 	}

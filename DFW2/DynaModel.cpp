@@ -221,7 +221,7 @@ bool CDynaModel::Run()
 			// на первом шаге
 			SaveNordsiek();
 
-			Serialize();
+			Serialize("c:\\tmp\\serialization.json");
 
 			try
 			{

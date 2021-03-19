@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <string>
 #include <vector>
+#include <map>
 #include <filesystem>
 #include "nlohmann/json.hpp"
 #include "fmt/format.h"
@@ -35,6 +36,8 @@ public:
 	void AddPropertyIfNotEmpty(nlohmann::json& jobject, std::string key, const _variant_t& value) const;
 	void StructureToJson(nlohmann::json& json) const;
 	void DataToJson(nlohmann::json& json, long index) const;
+	static constexpr const char* cszDataType = "dataType";
+	static constexpr const char* cszTypes[] = { "int", "double", "string", "bool", "enum", "enpic", "color", "superenum", "time", "hex" };
 };
 
 using RastrTableCols = std::vector<CRastrCol>;

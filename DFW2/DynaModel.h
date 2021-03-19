@@ -8,8 +8,6 @@
 #include "KLUWrapper.h"
 #include "Results.h"
 
-#include "SerializerJson.h"
-
 //#define USE_FMA
 namespace DFW2
 {
@@ -831,7 +829,8 @@ namespace DFW2
 
 		void GetWorstEquations(ptrdiff_t nCount);
 
-		void Serialize();
+		void Serialize(const std::filesystem::path path);
+		void DeSerialize(const std::filesystem::path path);
 
 		// возвращает true, если расчет нужно прекратить (отмена пользователем)
 		bool CancelProcessing();

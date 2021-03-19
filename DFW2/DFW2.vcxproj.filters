@@ -534,5 +534,8 @@
     <ClCompile Include="SerializerJson.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DynaModelSerialize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

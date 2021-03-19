@@ -46,7 +46,13 @@ void CRastrTable::DataToJson(nlohmann::json& json) const
 
 void CRastrCol::StructureToJson(nlohmann::json& json) const
 {
-	json["dataType"] = GetDataType();
+	long dataType(GetDataType());
+	if (dataType >= 0 && dataType < static_cast<ptrdiff_t>(std::size(cszTypes)))
+		json[cszDataType] = cszTypes[dataType];
+	else
+		json[cszDataType] = dataType;
+
+
 	AddPropertyIfNotEmpty(json, "caption", m_Col->GetProp(PropType::FL_ZAG));
 	AddPropertyIfNotEmpty(json, "description", m_Col->GetProp(PropType::FL_DESC));
 
@@ -71,6 +77,9 @@ _variant_t CRastrCol::GetVariantData(long index) const
 		break;
 	case PropTT::PR_STRING:
 		value.ChangeType(VT_BSTR);
+		break;
+	case PropTT::PR_BOOL:
+		value.ChangeType(VT_BOOL);
 		break;
 	case PropTT::PR_ENUM:
 		// OutEnumAsInt Required

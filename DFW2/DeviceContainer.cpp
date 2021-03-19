@@ -215,7 +215,7 @@ CDevice* CDeviceContainer::GetDevice(ptrdiff_t nId)
 	return GetDevice(&Id);
 }
 
-size_t CDeviceContainer::Count()
+size_t CDeviceContainer::Count() const
 {
 	return m_DevVec.size();
 }

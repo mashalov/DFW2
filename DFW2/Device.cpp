@@ -341,7 +341,7 @@ CLinkPtrCount* CDevice::GetLink(ptrdiff_t nLinkIndex)
 // на входе указатель на указатель устройства, с которым связь. Каждый следующий
 // вызов In() возвращает очередную связь и true, или false - если связи закончились
 // начало последовательности требует чтобы на вход был передан указатель на null
-bool CLinkPtrCount::In(CDevice ** & p)
+bool CLinkPtrCount::In(CDevice ** & p) const
 {
 	if (!p)
 	{

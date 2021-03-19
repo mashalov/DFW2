@@ -284,6 +284,7 @@
       <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
     </ClCompile>
     <ClCompile Include="DynaModelCompile.cpp" />
+    <ClCompile Include="DynaModelSerialize.cpp" />
     <ClCompile Include="DynaModelUtility.cpp" />
     <ClCompile Include="DynaNode.cpp" />
     <ClCompile Include="DynaPowerInjector.cpp" />
