@@ -14,11 +14,11 @@ CDeviceContainer::CDeviceContainer(CDynaModel *pDynaModel) : m_pDynaModel(pDynaM
 void CDeviceContainer::CleanUp()
 {
 	// если добавляли отдельные устройства - удаляем устройства по отдельности
-	if (!m_ContainerProps.DeviceFactory)
-	{
+	if(m_MemoryManagement == ContainerMemoryManagementType::ByPieces)
 		for (auto&& it : m_DevVec)
 			delete it;
-	}
+	// сбрасываем тип управления
+	m_MemoryManagement = ContainerMemoryManagementType::Unspecified;
 	m_Links.clear();
 	m_DevVec.clear();
 }
@@ -28,35 +28,35 @@ CDeviceContainer::~CDeviceContainer()
 	CleanUp();
 }
 
-bool CDeviceContainer::RemoveDeviceByIndex(ptrdiff_t nIndex)
+void CDeviceContainer::RemoveDeviceByIndex(ptrdiff_t nIndex)
 {
-	bool bRes = false;
 	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_DevVec.size()))
 	{
 		DEVICEVECTORITR it = m_DevVec.begin() + nIndex;
-		delete *it;
+		// если в контейнера индивидуальные устройства - удаляем прямо устройство
+		// если под управлением вектор из фабрики - просто удаляем из вектора указатель
+		if(m_MemoryManagement == ContainerMemoryManagementType::ByPieces)
+			delete *it;
 		m_DevVec.erase(it);
 		m_DevSet.clear();
-		bRes = true;
 	}
-	return bRes;
 }
 
-bool CDeviceContainer::RemoveDevice(ptrdiff_t nId)
+void CDeviceContainer::RemoveDevice(ptrdiff_t nId)
 {
-	bool bRes = false;
 	for (auto&& it = m_DevVec.begin(); it != m_DevVec.end() ; it++ )
 	{
 		if ((*it)->GetId() == nId)
 		{
-			delete *it;
+			// если в контейнера индивидуальные устройства - удаляем прямо устройство
+			// если под управлением вектор из фабрики - просто удаляем из вектора указатель
+			if (m_MemoryManagement == ContainerMemoryManagementType::ByPieces)
+				delete* it;
 			m_DevVec.erase(it);
 			m_DevSet.clear();
-			bRes = true;
 			break;
 		}
 	}
-	return bRes;
 }
 
 void CDeviceContainer::SettleDevice(CDevice *pDevice, ptrdiff_t nIndex)
@@ -76,6 +76,7 @@ void CDeviceContainer::AddDevice(CDevice* pDevice)
 {
 	if (!pDevice)
 		throw dfw2error("CDeviceContainer::AddDevice - nullptr passed");
+	SetMemoryManagement(ContainerMemoryManagementType::ByPieces);
 	SettleDevice(pDevice, m_DevVec.size());
 	// помещаем устройство в контейнер
 	m_DevVec.push_back(pDevice);
@@ -815,4 +816,14 @@ bool  CDeviceContainer::HasAlias(std::string_view Alias)
 {
 	STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
 	return std::find(Aliases.begin(), Aliases.end(), Alias) != Aliases.end();
+}
+
+
+void CDeviceContainer::SetMemoryManagement(ContainerMemoryManagementType ManagementType)
+{
+	if (m_MemoryManagement == ContainerMemoryManagementType::Unspecified)
+		m_MemoryManagement = ManagementType;
+	else
+		if (m_MemoryManagement != ManagementType)
+			throw dfw2error(fmt::format("Attempt to mix memory management types for Container {}", m_ContainerProps.GetSystemClassName()));
 }

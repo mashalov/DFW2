@@ -14,9 +14,10 @@ namespace DFW2
 	// ссылки без разделения на направления
 	using LINKSUNDIRECTED = std::vector<LinkDirectionFrom const*>;
 
-
+	// базовый класс для фабрики
 	class CDeviceFactoryBase {
 	public:
+		// создает устройства какого-то типа и привязать их к переданному вектору указателей устройств
 		virtual void Create(size_t nCount, DEVICEVECTOR& DevVec) = 0;
 		virtual ~CDeviceFactoryBase() {}
 	};
@@ -24,21 +25,27 @@ namespace DFW2
 	template<class T>
 	class CDeviceFactory : public CDeviceFactoryBase
 	{
-		std::unique_ptr<T[]> m_pDevices;
+		// вектор устройств, которым управляет фабрика
+		using DeviceVectorType = std::unique_ptr<T[]>;
+		DeviceVectorType m_pDevices;
 	public:
+		// создать некоторые устройства и привязать к вектору
 		void Create(size_t nCount, DEVICEVECTOR& DevVec) override
 		{
 			CreateRet(nCount, DevVec);
 		}
-
-		T* CreateRet(size_t nCount, DEVICEVECTOR& DevVec) 
+		// создать устройства по типу контейнера, вернуть указатель на вектор даного типа
+		T* CreateRet(size_t nCount, DEVICEVECTOR& DevVec)
 		{
+			// создаем новые устройства
 			m_pDevices = std::make_unique<T[]>(nCount);
+			// ставим новый размер вектора указателей на устройства
 			DevVec.resize(nCount);
 			auto it = DevVec.begin();
+			// заполняем вектор указателей указателями на созданные фабрикой устройства
 			for (T* p = m_pDevices.get(); p < m_pDevices.get() + nCount; p++, it++)
 				*it = p;
-
+			// возвращаем  на вектор устройств типа
 			return m_pDevices.get();
 		}
 	};

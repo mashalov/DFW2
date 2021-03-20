@@ -7,6 +7,11 @@
 
 using namespace DFW2;
 
+JsonParsingState::JsonParsingState(JsonSaxWalkerBase* saxWalker, ptrdiff_t StackDepth, std::string_view Key) : JsonParsingState(StackDepth, Key)
+{
+	saxWalker->AddState(*this);
+}
+
 // создаем новый Json
 void CSerializerJson::CreateNewSerialization(const std::filesystem::path& path)
 {

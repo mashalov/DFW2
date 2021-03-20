@@ -54,7 +54,20 @@ namespace DFW2
 	class CDeviceContainer
 	{
 	protected:
-		eDEVICEFUNCTIONSTATUS m_eDeviceFunctionStatus;
+
+		// тип управления данными в контейнере
+		enum class ContainerMemoryManagementType
+		{
+			Unspecified,		// не инициализирован
+			BySolid,			// вектор устройств в CDeviceProperties
+			ByPieces			// указатели на отдельные устройства
+		}
+		m_MemoryManagement = ContainerMemoryManagementType::Unspecified;
+
+		void SetMemoryManagement(ContainerMemoryManagementType ManagementType);
+
+		eDEVICEFUNCTIONSTATUS m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
+
 		DEVICEVECTOR m_DevVec;												// вектор указателей на экземпляры хранимых в контейнере устройств
 		DEVICEVECTOR m_DevInMatrix;											// вектор указателей на экземпляры устройств, у которых есть уравнения
 		DEVSEARCHSET m_DevSet;												// сет для поиска устройств по идентификаторам
@@ -64,6 +77,14 @@ namespace DFW2
 		CDynaModel *m_pDynaModel;											// через указатель на модель контейнеры и устройства обмениваются общими данными
 		void PrepareSingleLinks();
 		CDevice *m_pClosestZeroCrossingDevice = nullptr;
+
+		// привязать созданные устройства к контейнеру
+		void SettleDevicesFromSolid()
+		{
+			ptrdiff_t nIndex(0);
+			for (auto&& it : m_DevVec)
+				SettleDevice(it, nIndex++);
+		}
 	public:
 
 		CDeviceContainerProperties m_ContainerProps;						// описание статических атрибутов контейнера: тип и связи с другими устройствами
@@ -78,55 +99,40 @@ namespace DFW2
 		virtual ~CDeviceContainer();
 
 		DevicesPtrs m_ppDevicesAux;
-		size_t   m_nVisitedCount;
+		size_t   m_nVisitedCount = 0;
 
 		template<class T>
 		T* CreateDevices(size_t nCount)
 		{
 			CleanUp();
-
+			// ставим тип управления памятью
+			SetMemoryManagement(ContainerMemoryManagementType::BySolid);
+			// создаем фабрику устройств заданного типа
 			auto factory = std::make_unique<CDeviceFactory<T>>();
+			// создаем вектор устройств
 			T* ptr = factory->CreateRet(nCount, m_DevVec);
+			// оставляем фабрику устройств в свойствах устройства (??? может оставлять старую ?)
 			m_ContainerProps.DeviceFactory = std::move(factory);
-			
-
-			ptrdiff_t nIndex(0);
-			for (auto&& it : m_DevVec)
-				SettleDevice(it, nIndex++);
-
+			// указатели на отдельные устройства теперь в m_DevVec, а
+			// вектор устройств остался в фабрике под ее контролем
+			// привязываем устройства к контейнеру
+			SettleDevicesFromSolid();
 			return ptr;
 		}
 
 		void CreateDevices(size_t nCount) 
 		{
 			CleanUp();
-
+			// ставим тип управления памятью
+			SetMemoryManagement(ContainerMemoryManagementType::BySolid);
+			// проверяем есть ли встроенная фабрика устройств
 			if (!m_ContainerProps.DeviceFactory)
 				throw dfw2error(fmt::format("CDynaNodeContainer::CreateDevice - DeviceFactory not defined for \"{}\"", m_ContainerProps.GetSystemClassName()));
-
+			// создаем устройства с помощью фабрики
 			m_ContainerProps.DeviceFactory->Create(nCount, m_DevVec);
-			ptrdiff_t nIndex(0);
-			for(auto&& it : m_DevVec)
-				SettleDevice(it, nIndex++);
+			// и привязываем их к контейнеру
+			SettleDevicesFromSolid();
 		}
-
-		/*
-		// передает контейнеру под управление линейный массив указателей с созданными в нем экземплярами
-		// устройств
-		template<typename T> void AddDevices(T* pDevice, size_t nCount)
-		{
-			// очистка предыдущего содержимого контейнера
-			CleanUp();
-			// фиксация внешнего указателя из аргумента
-			// устройства из этого массива будут по указателям перенесены в контейнер
-			// при очистке контейнера данный массив будет обработан delete []
-			T* p = pDevice;
-			m_DevVec.reserve(m_DevVec.size() + nCount);
-			// добавление устройств в контейнер
-			for (size_t i = 0; i < nCount; i++)
-				AddDevice(p++);
-		}
-		*/
 
 		// извлечение устройства из контейнера по идентификатору
 		template<typename T> bool GetDevice(ptrdiff_t nId, T* &pDevice)
@@ -171,8 +177,8 @@ namespace DFW2
 		CDevice* GetDevice(ptrdiff_t nId);									// получить устройство по идентификатору
 		void AddDevice(CDevice* pDevice);									// добавить устройство в контейнер
 		void SettleDevice(CDevice *pDevice, ptrdiff_t nIndex);				// привязать устройство в контейнере
-		bool RemoveDevice(ptrdiff_t nId);									// удалить устройство по идентификатору или индексу
-		bool RemoveDeviceByIndex(ptrdiff_t nIndex); 
+		void RemoveDevice(ptrdiff_t nId);									// удалить устройство по идентификатору или индексу
+		void RemoveDeviceByIndex(ptrdiff_t nIndex); 
 		size_t Count() const;												// получить количество устройств в контейнере
 		inline DEVICEVECTORITR begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
 		inline DEVICEVECTORITR end() { return m_DevVec.end(); }

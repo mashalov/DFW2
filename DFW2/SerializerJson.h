@@ -40,7 +40,7 @@ namespace DFW2
             m_Type = Type;
         }
 
-        std::string_view Key() const
+        const std::string_view Key() const
         {
             return m_Key;
         }
@@ -48,20 +48,78 @@ namespace DFW2
 
     using JsonStack_t = std::list<CJsonObject>;
 
-	class CJsonSax : public nlohmann::json_sax<nlohmann::json>
-	{
 
+    // обход json в SAX-режиме с контролем стека разбора
+    // и фиксацией состояний
+
+    class JsonSaxWalkerBase;
+
+    class JsonParsingState
+    {
     protected:
-        using ObjectMap_t = std::map<std::string, ptrdiff_t>;
-        using ObjectMapIterator_t = ObjectMap_t::iterator;
-        using ObjectList = std::list<std::string>;
-        ObjectMap_t m_ObjectMap;
-        ObjectMapIterator_t m_itCurrentObject;
-        JsonStack_t stack;
-        const ptrdiff_t ObjectsAtNest = 4;
+        ptrdiff_t m_StackDepth = 0;
+        std::string m_Key;
+        bool m_State = false;
 
-        bool m_bDataInStack = false;
-        static constexpr const char* cszData = "data";
+    public:
+        JsonParsingState(JsonSaxWalkerBase* saxWalker, ptrdiff_t StackDepth, std::string_view Key);
+
+        JsonParsingState(ptrdiff_t StackDepth, const std::string_view Key) : m_StackDepth(StackDepth),
+            m_Key(Key)
+        { }
+
+        // вводит состосяние если глубина стека и ключ совпадают с заданными
+        bool Push(ptrdiff_t StackDepth, const std::string_view Key) 
+        {
+            if (!m_State && StackDepth == m_StackDepth && Key == m_Key)
+            {
+                std::cout << Key << " state on" << std::endl;
+                m_State = true;
+            }
+
+            return m_State;
+        } 
+
+        // отменяет состояние, если глубина стека и ключ совпадают с заданными
+        bool Pop(ptrdiff_t StackDepth, const std::string_view Key)
+        {
+            if (m_State && StackDepth == m_StackDepth && Key == m_Key)
+            {
+                std::cout << Key << " state off" << std::endl;
+                m_State = false;
+            }
+
+            return m_State;
+        }
+
+        ptrdiff_t StackDepth() const
+        {
+            return m_StackDepth;
+        }
+
+        operator bool() const {
+            return m_State;
+        }
+    };
+
+    class JsonParsingStateBoundSearch : public JsonParsingState
+    {
+    public:
+        using JsonParsingState::JsonParsingState;
+        void SetStackDepth(ptrdiff_t nStackDepth)
+        {
+            m_StackDepth = nStackDepth;
+        }
+    };
+
+    using JsonParsingStates = std::list<JsonParsingState*>;
+    using JsonParsingStatesItr = JsonParsingStates::iterator;
+
+    class JsonSaxWalkerBase : public nlohmann::json_sax<nlohmann::json>
+    {
+    protected:
+        JsonStack_t stack;
+        JsonParsingStates states;
 
         void DumpStack(std::string_view pushpop)
         {
@@ -70,6 +128,13 @@ namespace DFW2
                 std::cout << " { " << s.Key() << " ; " << static_cast<ptrdiff_t>(s.Type()) << " } / ";
             std::cout << std::endl;
         }
+
+        static bool StatesComp(const JsonParsingState* lhs, const JsonParsingState* rhs)
+        {
+            return lhs->StackDepth() < rhs->StackDepth();
+        };
+
+        std::unique_ptr<JsonParsingStateBoundSearch> boundSearchState = std::make_unique<JsonParsingStateBoundSearch>(0, "");
 
         void Push(JsonObjectTypes Type, std::string_view Key = {})
         {
@@ -80,16 +145,55 @@ namespace DFW2
             else
                 stack.push_back(CJsonObject(Type, Key));
 
-            if (stack.size() == 3 && stack.back().Key() == cszData)
-                m_bDataInStack = true;
+            ptrdiff_t nStackDepth(stack.size());
+            const std::string_view& StackKey(stack.back().Key());
+
+            auto itl = StatesLower(nStackDepth);
+            auto itu = StatesUpper(nStackDepth);
+
+            while (itl != itu)
+            {
+                (*itl)->Push(nStackDepth, StackKey);
+                itl++;
+            }
+
+            //DumpStack("push");
+        }
+
+        JsonParsingStatesItr StatesLower(ptrdiff_t nStackDepth)
+        {
+            boundSearchState->SetStackDepth(nStackDepth);
+            return std::lower_bound(states.begin(), states.end(), boundSearchState.get(), StatesComp);
+        }
+
+        JsonParsingStatesItr StatesUpper(ptrdiff_t nStackDepth)
+        {
+            boundSearchState->SetStackDepth(nStackDepth);
+            return std::upper_bound(states.begin(), states.end(), boundSearchState.get(), StatesComp);
         }
 
         void Pop(JsonObjectTypes Type)
         {
             if (stack.empty())
-                throw dfw2error("CJsonSax - parsing error: stack empty on Pop");
+                throw dfw2error("JsonSaxWalkerBase - parsing error: stack empty on Pop");
 
             const auto BackType = stack.back().Type();
+
+            ptrdiff_t nStackDepth(stack.size());
+            const std::string_view StackKey(stack.back().Key());
+
+            // определяем состояния, соответствующие текущей глубине стека
+            auto itl = StatesLower(nStackDepth);
+            auto itu = StatesUpper(nStackDepth);
+
+            // обходим состояния и проверяем
+            // должны ли они быть отменены
+            while (itl != itu)
+            {
+                (*itl)->Pop(nStackDepth, StackKey);
+                itl++;
+            }
+
             if (Type == JsonObjectTypes::Value)
             {
                 // если обработали значение, и предыдущий объект был ключ - удаляем этот ключ
@@ -99,20 +203,23 @@ namespace DFW2
             else
             {
                 if (BackType != Type)
-                    throw dfw2error("CJsonSax - parsing error: stack types mismatch");
+                    throw dfw2error("JsonSaxWalkerBase - parsing error: stack types mismatch");
                 stack.pop_back();
             }
 
-            if (stack.size() == 3 && stack.back().Key() != cszData)
-                m_bDataInStack = true;
+            //DumpStack("pop");
+        }
 
+        ptrdiff_t StackDepth() const
+        {
+            return stack.size();
         }
 
     public:
 
-        CJsonSax() : m_itCurrentObject(m_ObjectMap.end())
+        void AddState(JsonParsingState& state)
         {
-
+            states.insert(StatesLower(state.StackDepth()),&state);
         }
 
         bool null() override
@@ -138,7 +245,7 @@ namespace DFW2
             Pop(JsonObjectTypes::Value);
             return true;
         }
-        
+
         bool number_float(number_float_t val, const string_t& s) override
         {
             Pop(JsonObjectTypes::Value);
@@ -150,7 +257,7 @@ namespace DFW2
             Pop(JsonObjectTypes::Value);
             return true;
         }
-        
+
         virtual bool binary(binary_t& val) override
         {
             Pop(JsonObjectTypes::Value);
@@ -160,10 +267,6 @@ namespace DFW2
         virtual bool start_object(std::size_t elements) override
         {
             Push(JsonObjectTypes::Object);
-
-            if (m_bDataInStack && stack.size() == 6 && m_itCurrentObject != m_ObjectMap.end())
-                m_itCurrentObject->second++;
-
             return true;
         }
 
@@ -172,32 +275,71 @@ namespace DFW2
             Push(JsonObjectTypes::Key, val);
             return true;
         }
-        
+
         bool end_object() override
         {
             Pop(JsonObjectTypes::Object);
             return true;
         }
-        
+
         bool start_array(std::size_t elements) override
         {
             Push(JsonObjectTypes::Array);
-            if (m_bDataInStack && stack.size() == 5)
-                m_itCurrentObject = m_ObjectMap.insert(std::make_pair(stack.back().Key(), 0)).first;
             return true;
         }
-                
+
         bool end_array() override
         {
             Pop(JsonObjectTypes::Array);
             return true;
         }
-                
-        bool parse_error(std::size_t position,  const std::string& last_token, const nlohmann::detail::exception& ex) override
+
+        bool parse_error(std::size_t position, const std::string& last_token, const nlohmann::detail::exception& ex) override
         {
+            // !!!!!!!!! TODO !!!!!!!!! что-то делать с ошибкой, возможно просто throw или как-то fallback
             return true;
         }
 
+    };
+
+	class CJsonSax : public JsonSaxWalkerBase
+	{
+
+    protected:
+        using ObjectMap_t = std::map<std::string, ptrdiff_t>;
+        using ObjectMapIterator_t = ObjectMap_t::iterator;
+        ObjectMap_t m_ObjectMap;
+        ObjectMapIterator_t m_itCurrentObject;
+        // добавляем состояние для поиска внутри powerSystemModel/data/
+        JsonParsingState stateInData = JsonParsingState(this, 3, "data");
+        JsonParsingState stateInObjects = JsonParsingState(this, 4, "objects");
+
+    public:
+
+        CJsonSax() : m_itCurrentObject(m_ObjectMap.end())
+        {
+
+        }
+
+        virtual bool start_object(std::size_t elements) override
+        {
+            JsonSaxWalkerBase::start_object(elements);
+
+            if(stateInData && StackDepth() == 6 && m_itCurrentObject != m_ObjectMap.end())
+                m_itCurrentObject->second++;
+
+            return true;
+        }
+        
+        bool start_array(std::size_t elements) override
+        {
+            JsonSaxWalkerBase::start_array(elements);
+
+            if (stateInData && StackDepth() == 5)
+                m_itCurrentObject = m_ObjectMap.insert(std::make_pair(stack.back().Key(), 0)).first;
+            return true;
+        }
+                
         const ObjectMap_t GetObjectSizeMap() const
         {
             return m_ObjectMap;
