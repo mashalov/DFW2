@@ -680,6 +680,8 @@ void CDynaBranch::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranch, CDeviceContainerProperties::m_cszSysNameBranch);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, "");
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasBranch);
+
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranch>>();
 }
 
 // описание переменных расчетных потоков по ветви
@@ -702,6 +704,9 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	props.m_VarMap.insert(std::make_pair("Qe",	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR)));
 	props.m_VarMap.insert(std::make_pair("Sb",	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA)));
 	props.m_VarMap.insert(std::make_pair("Se",	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
+
+	// измерения создаются индивидуально с ветвью в конструкторе
+	//props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();
 }
 
 const char* CDynaBranch::m_cszBranchStateNames[4] = { "On", "Off", "Htrip", "Ttrip", };

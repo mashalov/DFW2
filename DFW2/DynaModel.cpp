@@ -53,6 +53,11 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	CDynaExciterMustang::DeviceProperties(ExcitersMustang.m_ContainerProps);
 	CDynaBranchMeasure::DeviceProperties(BranchMeasures.m_ContainerProps);
 
+	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
+	AutomaticDevice.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
+	CustomDevice.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDevice>>();
+	CustomDeviceCPP.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
+
 	m_DeviceContainers.push_back(&Nodes);
 	m_DeviceContainers.push_back(&ExcitersMustang);
 	m_DeviceContainers.push_back(&DECsMustang);

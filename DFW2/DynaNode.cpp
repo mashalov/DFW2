@@ -1560,6 +1560,7 @@ void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 	props.eDeviceType = DEVTYPE_SYNCZONE;
 	props.nEquationsCount = CSynchroZone::VARS::V_LAST;
 	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CSynchroZone>>();
 }
 
 

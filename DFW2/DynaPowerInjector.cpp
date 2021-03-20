@@ -93,6 +93,8 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.nEquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
 
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaPowerInjector>>();
+
 }
 
 const char* CDynaPowerInjector::m_cszNodeId = "NodeId";

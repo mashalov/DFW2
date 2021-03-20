@@ -264,4 +264,6 @@ void CDynaExcConMustang::DeviceProperties(CDeviceContainerProperties& props)
 	props.m_VarMap.insert(std::make_pair("dVdtLag", CVarIndex(CDynaExcConMustang::V_DVDT + 1, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair("dEqdtLag", CVarIndex(CDynaExcConMustang::V_EQDT + 1, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair("dSdtLag", CVarIndex(CDynaExcConMustang::V_SDT + 1, VARUNIT_PU)));
+
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExcConMustang>>();
 }

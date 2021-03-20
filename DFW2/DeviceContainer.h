@@ -59,7 +59,6 @@ namespace DFW2
 		DEVICEVECTOR m_DevInMatrix;											// вектор указателей на экземпляры устройств, у которых есть уравнения
 		DEVSEARCHSET m_DevSet;												// сет для поиска устройств по идентификаторам
 		bool SetUpSearch();													// подготовка к поиску устройства в сете по идентификаторам
-		CDevice *m_pControlledData;											// вектор указателей созданных устройств для быстрого заполнения контейнера
 		DevicesPtrs m_ppSingleLinks;										// вектор указателей на устройства с одиночными ссылками
 		void CleanUp();														// очистка контейнера
 		CDynaModel *m_pDynaModel;											// через указатель на модель контейнеры и устройства обмениваются общими данными
@@ -81,17 +80,37 @@ namespace DFW2
 		DevicesPtrs m_ppDevicesAux;
 		size_t   m_nVisitedCount;
 
+		template<class T>
+		T* CreateDevices(size_t nCount)
+		{
+			CleanUp();
+
+			auto factory = std::make_unique<CDeviceFactory<T>>();
+			T* ptr = factory->CreateRet(nCount, m_DevVec);
+			m_ContainerProps.DeviceFactory = std::move(factory);
+			
+
+			ptrdiff_t nIndex(0);
+			for (auto&& it : m_DevVec)
+				SettleDevice(it, nIndex++);
+
+			return ptr;
+		}
+
 		void CreateDevices(size_t nCount) 
 		{
+			CleanUp();
+
+			if (!m_ContainerProps.DeviceFactory)
+				throw dfw2error(fmt::format("CDynaNodeContainer::CreateDevice - DeviceFactory not defined for \"{}\"", m_ContainerProps.GetSystemClassName()));
+
 			m_ContainerProps.DeviceFactory->Create(nCount, m_DevVec);
 			ptrdiff_t nIndex(0);
 			for(auto&& it : m_DevVec)
 				SettleDevice(it, nIndex++);
-			/// <summary>
-			///  HACK !!!!!!!!! ////
-			m_pControlledData = new CDevice[2];
 		}
 
+		/*
 		// передает контейнеру под управление линейный массив указателей с созданными в нем экземплярами
 		// устройств
 		template<typename T> void AddDevices(T* pDevice, size_t nCount)
@@ -101,13 +120,14 @@ namespace DFW2
 			// фиксация внешнего указателя из аргумента
 			// устройства из этого массива будут по указателям перенесены в контейнер
 			// при очистке контейнера данный массив будет обработан delete []
-			m_pControlledData = pDevice;
 			T* p = pDevice;
 			m_DevVec.reserve(m_DevVec.size() + nCount);
 			// добавление устройств в контейнер
 			for (size_t i = 0; i < nCount; i++)
 				AddDevice(p++);
 		}
+		*/
+
 		// извлечение устройства из контейнера по идентификатору
 		template<typename T> bool GetDevice(ptrdiff_t nId, T* &pDevice)
 		{

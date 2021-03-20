@@ -218,4 +218,6 @@ void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
 	props.m_VarMap.insert(std::make_pair("EnfTrg", CVarIndex(CDynaDECMustang::V_ENFTRIG, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair("DefTrg", CVarIndex(CDynaDECMustang::V_DEFTRIG, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair(CDynaExciterBase::m_cszUdec, CVarIndex(CDynaDECMustang::V_DEC, VARUNIT_PU)));
+
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaDECMustang>>();
 }

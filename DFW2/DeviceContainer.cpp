@@ -5,8 +5,7 @@
 
 using namespace DFW2;
 
-CDeviceContainer::CDeviceContainer(CDynaModel *pDynaModel) : m_pControlledData(nullptr),
-															 m_pDynaModel(pDynaModel)
+CDeviceContainer::CDeviceContainer(CDynaModel *pDynaModel) : m_pDynaModel(pDynaModel)
 {
 
 }
@@ -14,20 +13,12 @@ CDeviceContainer::CDeviceContainer(CDynaModel *pDynaModel) : m_pControlledData(n
 // очистка контейнера перед заменой содержимого или из под деструктора
 void CDeviceContainer::CleanUp()
 {
-	if (m_pControlledData)
+	// если добавляли отдельные устройства - удаляем устройства по отдельности
+	if (!m_ContainerProps.DeviceFactory)
 	{
-		// если был передан линейный массив с созданными устройствами
-		// удаляем каждое из них
-		delete [] m_pControlledData;
-		m_pControlledData = nullptr;
-	}
-	else
-	{
-		// если добавляли отдельные устройства - удаляем устройства по отдельности
 		for (auto&& it : m_DevVec)
 			delete it;
 	}
-
 	m_Links.clear();
 	m_DevVec.clear();
 }

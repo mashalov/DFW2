@@ -74,8 +74,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			if (nModelsCount)
 			{
 				// create models for count given
-				CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[nModelsCount];
-				CustomDeviceContainer.AddDevices(pCustomDevices, nModelsCount);
+				CCustomDeviceCPP* pCustomDevices = CustomDeviceContainer.CreateDevices<CCustomDeviceCPP>(nModelsCount);
 				CustomDeviceContainer.BuildStructure();
 
 				// put constants to each model
@@ -157,8 +156,9 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			if (nModelsCount)
 			{
 				// create models for count given
-				CCustomDevice *pCustomDevices = new CCustomDevice[nModelsCount];
-				Network.CustomDevice.AddDevices(pCustomDevices, nModelsCount);
+				
+				
+				CCustomDevice *pCustomDevices = Network.CustomDevice.CreateDevices<CCustomDevice>(nModelsCount);
 				Network.CustomDevice.BuildStructure();
 
 				// put constants to each model
@@ -369,10 +369,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	}
 
 	Network.Automatic().CompileModels();
-
 	Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetDLLPath().string());
-	CCustomDeviceCPP* pCustomDevices = new CCustomDeviceCPP[1];
-	Network.AutomaticDevice.AddDevices(pCustomDevices, 1);
+	Network.AutomaticDevice.CreateDevices(1);
 	Network.AutomaticDevice.BuildStructure();
 	
 	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
@@ -434,8 +432,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spNtype = spNodeCols->Item("tip");
 
 	Network.Nodes.CreateDevices(spNode->Size);
-
-	//Network.Nodes.AddDevices(pNodes, spNode->Size);
 
 	auto pNodes = Network.Nodes.begin();
 	auto pSerializer = (*pNodes)->GetSerializer();
@@ -588,18 +584,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 		}
 	}
 
-	CDynaGeneratorMustang	*pGensMu  = new CDynaGeneratorMustang[nGenMustangCount];
-	CDynaGenerator3C		*pGens3C  = new CDynaGenerator3C[nGen3CCount];
-	CDynaGenerator1C		*pGens1C  = new CDynaGenerator1C[nGen1CCount];
-	CDynaGeneratorInfBus	*pGensInf = new CDynaGeneratorInfBus[nGenInfBusCount];
-	CDynaGeneratorMotion	*pGensMot = new CDynaGeneratorMotion[nGenMotCount];
 
-	Network.Generators3C.AddDevices(pGens3C, nGen3CCount);
-	Network.GeneratorsMustang.AddDevices(pGensMu, nGenMustangCount);
-	Network.Generators1C.AddDevices(pGens1C, nGen1CCount);
-	Network.GeneratorsMotion.AddDevices(pGensMot, nGenMotCount);
-	Network.GeneratorsInfBus.AddDevices(pGensInf, nGenInfBusCount);
-
+	CDynaGenerator3C* pGens3C =			Network.Generators3C.CreateDevices<CDynaGenerator3C>(nGen3CCount);
+	CDynaGeneratorMustang* pGensMu =	Network.GeneratorsMustang.CreateDevices<CDynaGeneratorMustang>(nGenMustangCount);
+	CDynaGenerator1C* pGens1C =			Network.Generators1C.CreateDevices<CDynaGenerator1C>(nGen1CCount);
+	CDynaGeneratorMotion* pGensMot =	Network.GeneratorsMotion.CreateDevices<CDynaGeneratorMotion>(nGenMotCount);
+	CDynaGeneratorInfBus* pGensInf =	Network.GeneratorsInfBus.CreateDevices<CDynaGeneratorInfBus>(nGenInfBusCount);
 
 	for (int i = 0; i < spGen->Size; i++)
 	{
@@ -851,8 +841,8 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 	{
 		// переписываем СХН из загрузчика в котейнер СХН
 
-		CDynaLRC *pLRCs = new CDynaLRC[slcloader.size()];
-		CDynaLRC *pLRC = pLRCs;
+		CDynaLRC* pLRCs = Network.LRCs.CreateDevices<CDynaLRC>(slcloader.size());
+		CDynaLRC* pLRC(pLRCs);
 
 		for (slit = slcloader.begin(); slit != slcloader.end(); slit++, pLRC++)
 		{
@@ -881,7 +871,6 @@ bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, p
 				pData++;
 			}
 		}
-		Network.LRCs.AddDevices(pLRCs, slcloader.size());
 	}
 	return bRes;
 }

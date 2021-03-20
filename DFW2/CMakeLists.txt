@@ -5,7 +5,11 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_compile_definitions(DLONG)
 
-set(KINCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU/Include" 
+
+set(DFW_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/include/"
+                 "${CMAKE_CURRENT_SOURCE_DIR}/../../njson/")
+
+set(KLU_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU/Include" 
              "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/AMD/Include"
              "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/COLAMD/Include"
              "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/BTF/Include"
@@ -14,7 +18,7 @@ set(KINCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU/Include"
 
 set(EMSSSOURCES 
     main.cpp 
-    format.cc 
+    ../../../fmt/src/format.cc 
     Messages.cpp
     LoadFlow.cpp
     Device.cpp
@@ -61,10 +65,12 @@ set(EMSSSOURCES
     Comparator.cpp
     Expand.cpp
     ZCDetector.cpp
+    DynaModelSerialize.cpp
+    SerializerJson.cpp
     )             
 
 add_subdirectory("SuiteSparse/KLU")
 add_executable(EMSServer ${EMSSSOURCES})
-target_include_directories(EMSServer PRIVATE ${KINCLUDES})
+target_include_directories(EMSServer PRIVATE ${KLU_INCLUDES} ${DFW_INCLUDES}) 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
 target_link_libraries(EMSServer klu kluz dl)

@@ -415,6 +415,8 @@ void CDynaGenerator1C::DeviceProperties(CDeviceContainerProperties& props)
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszInom, CConstVarIndex(CDynaGenerator1C::C_INOM, eDVT_INTERNALCONST)));
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszQnom, CConstVarIndex(CDynaGenerator1C::C_QNOM, eDVT_INTERNALCONST)));
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CConstVarIndex(CDynaGenerator1C::C_EQE, eDVT_INTERNALCONST)));
+
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGenerator1C>>();
 }
 
 void CDynaGenerator1C::IfromDQ()

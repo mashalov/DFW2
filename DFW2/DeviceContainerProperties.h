@@ -28,11 +28,18 @@ namespace DFW2
 	public:
 		void Create(size_t nCount, DEVICEVECTOR& DevVec) override
 		{
+			CreateRet(nCount, DevVec);
+		}
+
+		T* CreateRet(size_t nCount, DEVICEVECTOR& DevVec) 
+		{
 			m_pDevices = std::make_unique<T[]>(nCount);
 			DevVec.resize(nCount);
 			auto it = DevVec.begin();
 			for (T* p = m_pDevices.get(); p < m_pDevices.get() + nCount; p++, it++)
 				*it = p;
+
+			return m_pDevices.get();
 		}
 	};
 

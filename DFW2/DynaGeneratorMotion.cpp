@@ -221,6 +221,8 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, eDVT_CONSTSOURCE)));
 
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorMotion>>();
+
 }
 
 const char* CDynaGeneratorMotion::m_cszUnom = "Unom";
