@@ -37,7 +37,7 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 		// если контейнер пустой - пропускаем
 		if (itb == ite) continue;
 
-		auto&& serializer = static_cast<CDevice*>(*container->begin())->GetSerializer();
+		auto&& serializer = container->GetDeviceByIndex(0)->GetSerializer();
 		jsonSerializer.SerializeClass(serializer);
 	}
 	// завершаем сериализацию
@@ -54,17 +54,35 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 	if (js.is_open())
 	{
 		//auto sax = std::make_unique<CJsonSax>();
-		auto sax = std::make_unique<CJsonSax>();
-		nlohmann::json::sax_parse(js, sax.get());
+		auto saxCounter = std::make_unique<CJsonSaxCounter>();
+		nlohmann::json::sax_parse(js, saxCounter.get());
+		saxCounter->Dump();
 
-		for (const auto& [objkey, objsize] : sax->GetObjectSizeMap())
+		auto saxSerializer = std::make_unique<CJsonSaxSerializer>();
+
+		for (const auto& [objkey, objsize] : saxCounter->GetObjectSizeMap())
 		{
+			if (objsize == 0) continue;
+			
 			if (auto pContainer(GetContainerByAlias(objkey)); pContainer)
 			{
 				std::cout << objkey << " size " << objsize << std::endl;
+				pContainer->CreateDevices(objsize);
+				auto&& serializer = pContainer->GetDeviceByIndex(0)->GetSerializer();
+				saxSerializer->AddSerializer(objkey, serializer);
 			}
 		}
-		sax->Dump();
+
+		js.clear();
+		js.seekg(0);
+
+		nlohmann::json::sax_parse(js, saxSerializer.get());
+
+
+
+		
+
+
 
 		/*
 		js.clear();

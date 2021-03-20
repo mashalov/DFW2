@@ -149,7 +149,7 @@ namespace DFW2
             const std::string_view& StackKey(stack.back().Key());
 
             auto itl = StatesLower(nStackDepth);
-            auto itu = StatesUpper(nStackDepth);
+            const auto itu = StatesUpper(nStackDepth);
 
             while (itl != itu)
             {
@@ -160,6 +160,8 @@ namespace DFW2
             //DumpStack("push");
         }
 
+        // !!!!!!! TODO !!!!!!!!!!! можно построить просто пары индексов
+        // состояний для каждой глубины стека и не искать их каждый раз
         JsonParsingStatesItr StatesLower(ptrdiff_t nStackDepth)
         {
             boundSearchState->SetStackDepth(nStackDepth);
@@ -184,7 +186,7 @@ namespace DFW2
 
             // определяем состояния, соответствующие текущей глубине стека
             auto itl = StatesLower(nStackDepth);
-            auto itu = StatesUpper(nStackDepth);
+            const auto itu = StatesUpper(nStackDepth);
 
             // обходим состояния и проверяем
             // должны ли они быть отменены
@@ -302,7 +304,15 @@ namespace DFW2
 
     };
 
-	class CJsonSax : public JsonSaxWalkerBase
+    class CJsonSaxDataObjects : public JsonSaxWalkerBase
+    {
+    protected:
+        // добавляем состояние для поиска внутри powerSystemModel/data/
+        JsonParsingState stateInData = JsonParsingState(this, 3, "data");
+        JsonParsingState stateInObjects = JsonParsingState(this, 4, "objects");
+    };
+
+	class CJsonSaxCounter : public CJsonSaxDataObjects
 	{
 
     protected:
@@ -310,13 +320,10 @@ namespace DFW2
         using ObjectMapIterator_t = ObjectMap_t::iterator;
         ObjectMap_t m_ObjectMap;
         ObjectMapIterator_t m_itCurrentObject;
-        // добавляем состояние для поиска внутри powerSystemModel/data/
-        JsonParsingState stateInData = JsonParsingState(this, 3, "data");
-        JsonParsingState stateInObjects = JsonParsingState(this, 4, "objects");
 
     public:
 
-        CJsonSax() : m_itCurrentObject(m_ObjectMap.end())
+        CJsonSaxCounter() : m_itCurrentObject(m_ObjectMap.end())
         {
 
         }
@@ -325,7 +332,7 @@ namespace DFW2
         {
             JsonSaxWalkerBase::start_object(elements);
 
-            if(stateInData && StackDepth() == 6 && m_itCurrentObject != m_ObjectMap.end())
+            if(stateInData && stateInObjects && StackDepth() == 6 && m_itCurrentObject != m_ObjectMap.end())
                 m_itCurrentObject->second++;
 
             return true;
@@ -335,7 +342,7 @@ namespace DFW2
         {
             JsonSaxWalkerBase::start_array(elements);
 
-            if (stateInData && StackDepth() == 5)
+            if (stateInData && stateInObjects && StackDepth() == 5)
                 m_itCurrentObject = m_ObjectMap.insert(std::make_pair(stack.back().Key(), 0)).first;
             return true;
         }
@@ -351,6 +358,37 @@ namespace DFW2
             std::cout << key << " " << val << std::endl;
         }
 	};
+
+    using SerializerMap = std::map<std::string, SerializerPtr, std::less<> >;
+
+    class CJsonSaxSerializer : public CJsonSaxDataObjects
+    {
+    protected:
+        SerializerMap m_SerializerMap;
+
+    public:
+        CJsonSaxSerializer()
+        {
+
+        }
+        void AddSerializer(const std::string_view& ClassName, SerializerPtr& serializer)
+        {
+            m_SerializerMap.insert(std::make_pair(ClassName, std::move(serializer)));
+        }
+
+        bool start_array(std::size_t elements) override
+        {
+            JsonSaxWalkerBase::start_array(elements);
+            if (stateInData && stateInObjects && StackDepth() == 5)
+            {
+                if (auto it = m_SerializerMap.find(stack.back().Key());  it != m_SerializerMap.end())
+                {
+                    it->second->GetDevice()->UpdateSerializer(it->second);
+                }
+            }
+            return true;
+        }
+    };
 
 	class CSerializerJson
 	{
