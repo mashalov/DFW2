@@ -19,13 +19,13 @@ namespace DFW2
         Value
     };
 
-    class CJsonObject
+    class JsonObject
     {
     protected:
         std::string m_Key;
         JsonObjectTypes m_Type;
     public:
-        CJsonObject(JsonObjectTypes Type, const std::string_view& Key) : m_Key(Key), m_Type(Type)
+        JsonObject(JsonObjectTypes Type, const std::string_view& Key) : m_Key(Key), m_Type(Type)
         {
 
         }
@@ -46,7 +46,7 @@ namespace DFW2
         }
     };
 
-    using JsonStack_t = std::list<CJsonObject>;
+    using JsonStack_t = std::list<JsonObject>;
 
 
     // обход json в SAX-режиме с контролем стека разбора
@@ -143,7 +143,7 @@ namespace DFW2
             if ((Type == JsonObjectTypes::Object || Type == JsonObjectTypes::Array) && !stack.empty() && stack.back().Type() == JsonObjectTypes::Key)
                 stack.back().ChangeType(Type);
             else
-                stack.push_back(CJsonObject(Type, Key));
+                stack.push_back(JsonObject(Type, Key));
 
             ptrdiff_t nStackDepth(stack.size());
             const std::string_view& StackKey(stack.back().Key());
@@ -304,7 +304,7 @@ namespace DFW2
 
     };
 
-    class CJsonSaxDataObjects : public JsonSaxWalkerBase
+    class JsonSaxDataObjects : public JsonSaxWalkerBase
     {
     protected:
         // добавляем состояние для поиска внутри powerSystemModel/data/
@@ -312,7 +312,7 @@ namespace DFW2
         JsonParsingState stateInObjects = JsonParsingState(this, 4, "objects");
     };
 
-	class CJsonSaxCounter : public CJsonSaxDataObjects
+	class JsonSaxCounter : public JsonSaxDataObjects
 	{
 
     protected:
@@ -323,7 +323,7 @@ namespace DFW2
 
     public:
 
-        CJsonSaxCounter() : m_itCurrentObject(m_ObjectMap.end())
+        JsonSaxCounter() : m_itCurrentObject(m_ObjectMap.end())
         {
 
         }
@@ -360,20 +360,59 @@ namespace DFW2
 	};
 
     using SerializerMap = std::map<std::string, SerializerPtr, std::less<> >;
+    using SerializerMapItr = SerializerMap::iterator;
 
-    class CJsonSaxSerializer : public CJsonSaxDataObjects
+    class JsonSaxSerializer : public JsonSaxDataObjects
     {
     protected:
         SerializerMap m_SerializerMap;
+        SerializerMapItr itCurrentSerializer;
 
     public:
-        CJsonSaxSerializer()
+        JsonSaxSerializer() : itCurrentSerializer(m_SerializerMap.end())
         {
 
         }
         void AddSerializer(const std::string_view& ClassName, SerializerPtr& serializer)
         {
             m_SerializerMap.insert(std::make_pair(ClassName, std::move(serializer)));
+        }
+
+        template<typename T>
+        void SerializerSetValue(const T& value)
+        {
+            if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
+            {
+                std::string_view Key(stack.back().Key());
+                auto DeSerialize = itCurrentSerializer->second->at(Key);
+                if(DeSerialize)
+                    DeSerialize->Set<T>(value);
+            }
+        }
+
+        bool boolean(bool val) override
+        {
+            SerializerSetValue(val);
+            return JsonSaxDataObjects::boolean(val);;
+        }
+
+        bool number_integer(number_integer_t val) override
+        {
+            SerializerSetValue(val);
+            return JsonSaxDataObjects::number_integer(val);
+        }
+
+        bool number_unsigned(number_unsigned_t val) override
+        {
+            SerializerSetValue(val);
+            return JsonSaxDataObjects::number_unsigned(val);
+        }
+
+
+        bool number_float(number_float_t val, const string_t& s) override
+        {
+            SerializerSetValue(val);
+            return JsonSaxDataObjects::number_float(val, s);
         }
 
         bool start_array(std::size_t elements) override
@@ -383,11 +422,19 @@ namespace DFW2
             {
                 if (auto it = m_SerializerMap.find(stack.back().Key());  it != m_SerializerMap.end())
                 {
-                    it->second->GetDevice()->UpdateSerializer(it->second);
+                    itCurrentSerializer = it;
+                    std::cout << "start " << it->first << std::endl;
                 }
             }
             return true;
         }
+
+        bool end_array() override
+        {
+            JsonSaxWalkerBase::end_array();
+            return true;
+        }
+
     };
 
 	class CSerializerJson

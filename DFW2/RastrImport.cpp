@@ -225,20 +225,24 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 		variant_t vt = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row);
 		// конвертируем вариант из таблицы в нужный тип значения сериализатора
 		// с необходимыми преобразованиями по метаданным
-		switch (mv.Value.ValueType)
+		switch (mv.ValueType)
 		{
 		case TypedSerializedValue::eValueType::VT_DBL:
 			vt.ChangeType(VT_R8);
+			mv.SetDouble(vt.dblVal * mv.Multiplier);
+			*mv.Value.pDbl = vt.dblVal * mv.Multiplier;
 			// для вещественного поля учитываем множитель
-			*mv.Value.Value.pDbl = vt.dblVal * mv.Multiplier;
+			//*mv.Value.Value.pDbl = vt.dblVal * mv.Multiplier;
 			break;
 		case TypedSerializedValue::eValueType::VT_INT:
 			vt.ChangeType(VT_I4);
-			*mv.Value.Value.pInt = vt.lVal;
+			mv.SetInt(vt.lVal);
+			*mv.Value.pInt = vt.lVal;
 			break;
 		case TypedSerializedValue::eValueType::VT_BOOL:
 			vt.ChangeType(VT_BOOL);
-			*mv.Value.Value.pBool = vt.boolVal;
+			mv.SetBool(vt.boolVal);
+			*mv.Value.pBool = vt.boolVal;
 			break;
 		case TypedSerializedValue::eValueType::VT_NAME:
 			vt.ChangeType(VT_BSTR);
@@ -257,10 +261,10 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 		case TypedSerializedValue::eValueType::VT_ADAPTER:
 			vt.ChangeType(VT_I4);
 			// если поле привязано к адаптеру, даем адаптеру int (недоделано)
-			mv.Value.Adapter->SetInt(NodeTypeFromRastr(vt.lVal));
+			mv.Adapter->SetInt(NodeTypeFromRastr(vt.lVal));
 			break;
 		default:
-			throw dfw2error(fmt::format("CRastrImport::ReadRastrRow wrong serializer type {}", mv.Value.ValueType));
+			throw dfw2error(fmt::format("CRastrImport::ReadRastrRow wrong serializer type {}", mv.ValueType));
 		}
 	}
 }

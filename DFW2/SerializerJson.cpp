@@ -48,11 +48,7 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer)
 
 	auto SetType = [](MetaSerializedValue& mv, nlohmann::json& jsonType) 
 	{
-		const ptrdiff_t type(static_cast<ptrdiff_t>(mv.Value.ValueType));
-		if(type >= 0 && type < static_cast<ptrdiff_t>(std::size(TypedSerializedValue::m_cszTypeDecs)))
-			jsonType[CSerializerBase::m_cszDataType] = TypedSerializedValue::m_cszTypeDecs[type];
-		else
-			jsonType[CSerializerBase::m_cszDataType] = type;
+		jsonType[CSerializerBase::m_cszDataType] = mv.GetTypeVerb();
 	};
 
 	// если в сериализаторе нет полей - пропускаем
@@ -75,7 +71,7 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer)
 			SetType(mv, ClassProp);
 
 			// задаем множитель для вещественного значения
-			if (mv.Value.ValueType == TypedSerializedValue::eValueType::VT_DBL && mv.Multiplier != 1.0)
+			if (mv.ValueType == TypedSerializedValue::eValueType::VT_DBL && mv.Multiplier != 1.0)
 				ClassProp["multiplier"] = mv.Multiplier;
 			// указываем признак переменной состояния
 			if (mv.bState)
@@ -116,27 +112,27 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer)
 			for (auto&& value : *Serializer)
 			{
 
-				if (!value.second->Value.isSignificant())
+				if (!value.second->isSignificant())
 					continue;
 
 				MetaSerializedValue& mv = *value.second;
 				// сериализуем имя значения (если состояние - заменяем на стандартное)
-				std::string ValueName = value.second->Value.ValueType == TypedSerializedValue::eValueType::VT_STATE ? CSerializerBase::m_cszState : value.first.c_str();
+				std::string ValueName = value.second->ValueType == TypedSerializedValue::eValueType::VT_STATE ? CSerializerBase::m_cszState : value.first.c_str();
 				// сериализуем значение в соответствии с типом
 				// и метаданными
-				switch (value.second->Value.ValueType)
+				switch (value.second->ValueType)
 				{
 				case TypedSerializedValue::eValueType::VT_DBL:
-					item[ValueName] = *mv.Value.Value.pDbl / mv.Multiplier;
+					item[ValueName] = *mv.Value.pDbl / mv.Multiplier;
 					break;
 				case TypedSerializedValue::eValueType::VT_INT:
-					item[ValueName] = *mv.Value.Value.pInt;
+					item[ValueName] = *mv.Value.pInt;
 					break;
 				case TypedSerializedValue::eValueType::VT_BOOL:
-					item[ValueName] = *mv.Value.Value.pBool;
+					item[ValueName] = *mv.Value.pBool;
 					break;
 				case TypedSerializedValue::eValueType::VT_CPLX:
-					item[ValueName] = { {"re", mv.Value.Value.pCplx->real()}, {"im" ,mv.Value.Value.pCplx->imag()} };
+					item[ValueName] = { {"re", mv.Value.pCplx->real()}, {"im" ,mv.Value.pCplx->imag()} };
 					break;
 				case TypedSerializedValue::eValueType::VT_NAME:
 					item[ValueName] = Serializer->GetDevice()->GetName();
@@ -149,10 +145,10 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer)
 					item[ValueName] = Serializer->GetDevice()->GetId();
 					break;
 				case TypedSerializedValue::eValueType::VT_ADAPTER:
-					item[ValueName] = mv.Value.Adapter->GetString();
+					item[ValueName] = mv.Adapter->GetString();
 					break;
 				default:
-					throw dfw2error(fmt::format("CSerializerJson::SerializeClass wrong serializer type {}", mv.Value.ValueType));
+					throw dfw2error(fmt::format("CSerializerJson::SerializeClass wrong serializer type {}", mv.ValueType));
 				}
 			}
 

@@ -54,11 +54,11 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 	if (js.is_open())
 	{
 		//auto sax = std::make_unique<CJsonSax>();
-		auto saxCounter = std::make_unique<CJsonSaxCounter>();
+		auto saxCounter = std::make_unique<JsonSaxCounter>();
 		nlohmann::json::sax_parse(js, saxCounter.get());
 		saxCounter->Dump();
 
-		auto saxSerializer = std::make_unique<CJsonSaxSerializer>();
+		auto saxSerializer = std::make_unique<JsonSaxSerializer>();
 
 		for (const auto& [objkey, objsize] : saxCounter->GetObjectSizeMap())
 		{
@@ -76,7 +76,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 		js.clear();
 		js.seekg(0);
 
-		nlohmann::json::sax_parse(js, saxSerializer.get());
+		//nlohmann::json::sax_parse(js, saxSerializer.get());
 
 
 
