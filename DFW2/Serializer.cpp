@@ -246,33 +246,39 @@ void TypedSerializedValue::SetString(std::string_view value)
 }
 
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<double>(double value)
+template<> TypedSerializedValue* TypedSerializedValue::Set<const double&>(const double& value)
 {
 	SetDouble(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<ptrdiff_t>(ptrdiff_t value)
+template<> TypedSerializedValue* TypedSerializedValue::Set<const ptrdiff_t&>(const ptrdiff_t& value)
 {
 	SetInt(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<bool>(bool value)
+template<> TypedSerializedValue* TypedSerializedValue::Set<const bool&>(const bool& value)
 {
 	SetBool(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<size_t>(size_t value)
+template<> TypedSerializedValue* TypedSerializedValue::Set<const size_t&>(const size_t& value)
 {
 	SetInt(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<std::string>(std::string value)
+template<> TypedSerializedValue* TypedSerializedValue::Set<const std::string&>(const std::string& value)
 {
 	SetString(value);
+	return this;
+}
+
+template<> TypedSerializedValue* TypedSerializedValue::Set<const cplx&>(const cplx& value)
+{
+	SetComplex(value);
 	return this;
 }
 

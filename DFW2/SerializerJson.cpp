@@ -132,7 +132,10 @@ void CSerializerJson::SerializeClass(SerializerPtr& Serializer)
 					item[ValueName] = *mv.Value.pBool;
 					break;
 				case TypedSerializedValue::eValueType::VT_CPLX:
-					item[ValueName] = { {"re", mv.Value.pCplx->real()}, {"im" ,mv.Value.pCplx->imag()} };
+					item[ValueName] = { 
+						{JsonSaxWalkerBase::cszRe, mv.Value.pCplx->real()}, 
+						{JsonSaxWalkerBase::cszIm ,mv.Value.pCplx->imag()} 
+					};
 					break;
 				case TypedSerializedValue::eValueType::VT_NAME:
 					item[ValueName] = Serializer->GetDevice()->GetName();

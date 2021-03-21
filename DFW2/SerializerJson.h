@@ -302,6 +302,8 @@ namespace DFW2
             return true;
         }
 
+        static constexpr const char* cszRe = "re";
+        static constexpr const char* cszIm = "im";
     };
 
     class JsonSaxDataObjects : public JsonSaxWalkerBase
@@ -367,6 +369,8 @@ namespace DFW2
     protected:
         SerializerMap m_SerializerMap;
         SerializerMapItr itCurrentSerializer;
+        cplx complexValue;          // буфер для комплексного значения
+        std::string complexName;    // имя для комплексного значения
 
     public:
         JsonSaxSerializer() : itCurrentSerializer(m_SerializerMap.end())
@@ -378,17 +382,47 @@ namespace DFW2
             m_SerializerMap.insert(std::make_pair(ClassName, std::move(serializer)));
         }
 
+        // функция для всех типов значений, которые можно присвоить переменной сериализации
+        // по имени
+        template<typename T>
+        void SerializerSetNamedValue(std::string_view Key, const T& value)
+        {
+            auto DeSerialize = itCurrentSerializer->second->at(Key);
+            if (DeSerialize)
+                DeSerialize->Set<const T&>(value);
+            std::cout << itCurrentSerializer->second->GetClassName() << "." << Key << "=" << value << std::endl;
+        }
+
+        // shortcut для значения, имя которого в стеке
         template<typename T>
         void SerializerSetValue(const T& value)
         {
             if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
             {
                 std::string_view Key(stack.back().Key());
-                auto DeSerialize = itCurrentSerializer->second->at(Key);
-                if(DeSerialize)
-                    DeSerialize->Set<T>(value);
+                SerializerSetNamedValue<T>(Key, value);
+            }
+        }
 
-                std::cout << itCurrentSerializer->second->GetClassName() << "." << Key << "=" << value << std::endl;
+        // специализация для double, который может идти в переменную
+        // напрямую или идти в буфер комплексного значения
+        template<> void SerializerSetValue<double>(const double& value)
+        {
+            if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
+            {
+                std::string_view Key(stack.back().Key());
+                if (complexName.length() > 0)
+                {
+                    // если буфер есть, определяем соствляющую по имени
+                    if (Key == JsonSaxWalkerBase::cszRe)
+                        complexValue.real(value);
+                    else if (Key == JsonSaxWalkerBase::cszIm)
+                        complexValue.imag(value);
+                    else
+                        throw dfw2error(fmt::format("SerializerSetValue<double> - wrong key for complex number - \"{}\"", Key));
+                }
+                else
+                    SerializerSetNamedValue<double>(Key, value);
             }
         }
 
@@ -437,20 +471,47 @@ namespace DFW2
             return true;
         }
 
+        bool start_object(std::size_t elements) override
+        {
+            JsonSaxDataObjects::start_object(elements);
+            if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end() && StackDepth() == 7)
+            {
+                // ожидаем комплексное значение
+                complexValue.real(0.0);
+                complexValue.imag(0.0);
+                complexName = stack.back().Key();
+            }
+            return true;
+        }
+
+
         bool end_object() override
         {
             JsonSaxDataObjects::end_object();
-            if (stateInData && stateInObjects && StackDepth() == 5 && itCurrentSerializer != m_SerializerMap.end())
+            if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
             {
-                auto unset = itCurrentSerializer->second->GetUnsetValues();
-                if (unset.size())
+                if (StackDepth() == 5)
                 {
-                    STRINGLIST unsetNames;
-                    for (const auto& [Name, Var] : unset)
-                        unsetNames.push_back(Name);
-                    std::cout << fmt::format("Finished object {} : unset variables {}",
-                        itCurrentSerializer->second->GetClassName(),
-                        fmt::join(unsetNames, ","));
+                    // объект закрывается - проверяем
+                    // все ли переменные прочитаны
+                    auto unset = itCurrentSerializer->second->GetUnsetValues();
+                    if (unset.size())
+                    {
+                        STRINGLIST unsetNames;
+                        for (const auto& [Name, Var] : unset)
+                            unsetNames.push_back(Name);
+                        std::cout << fmt::format("Finished object {} : unset variables {}",
+                            itCurrentSerializer->second->GetClassName(),
+                            fmt::join(unsetNames, ","));
+                    }
+                }
+                else if (StackDepth() == 6)
+                {
+                    // закрывается комплексное значение
+                    // ставим значение из буфера по сохранненому имени
+                    // в переменную сериализации
+                    SerializerSetNamedValue(complexName, complexValue);
+                    complexName.clear();
                 }
             }
             return true;
