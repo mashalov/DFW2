@@ -387,6 +387,8 @@ namespace DFW2
                 auto DeSerialize = itCurrentSerializer->second->at(Key);
                 if(DeSerialize)
                     DeSerialize->Set<T>(value);
+
+                std::cout << itCurrentSerializer->second->GetClassName() << "." << Key << "=" << value << std::endl;
             }
         }
 
@@ -415,6 +417,12 @@ namespace DFW2
             return JsonSaxDataObjects::number_float(val, s);
         }
 
+        bool string(string_t& val) override
+        {
+            SerializerSetValue(val);
+            return JsonSaxDataObjects::string(val);
+        }
+
         bool start_array(std::size_t elements) override
         {
             JsonSaxWalkerBase::start_array(elements);
@@ -429,10 +437,28 @@ namespace DFW2
             return true;
         }
 
+        bool end_object() override
+        {
+            JsonSaxDataObjects::end_object();
+            if (stateInData && stateInObjects && StackDepth() == 5 && itCurrentSerializer != m_SerializerMap.end())
+            {
+                auto unset = itCurrentSerializer->second->GetUnsetValues();
+                if (unset.size())
+                {
+                    STRINGLIST unsetNames;
+                    for (const auto& [Name, Var] : unset)
+                        unsetNames.push_back(Name);
+                    std::cout << fmt::format("Finished object {} : unset variables {}",
+                        itCurrentSerializer->second->GetClassName(),
+                        fmt::join(unsetNames, ","));
+                }
+            }
+            return true;
+        }
+
         bool end_array() override
         {
-            JsonSaxWalkerBase::end_array();
-            return true;
+            return JsonSaxWalkerBase::end_array();
         }
 
     };

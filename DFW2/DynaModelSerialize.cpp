@@ -76,7 +76,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 		js.clear();
 		js.seekg(0);
 
-		//nlohmann::json::sax_parse(js, saxSerializer.get());
+		nlohmann::json::sax_parse(js, saxSerializer.get());
 
 
 

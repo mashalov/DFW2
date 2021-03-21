@@ -62,7 +62,7 @@ namespace DFW2
 		{
 			throw dfw2error(cszNotImplemented);
 		}
-		virtual void SetString(const char* cszString)
+		virtual void SetString(const std::string_view String)
 		{
 			throw dfw2error(cszNotImplemented);
 		}
@@ -104,6 +104,7 @@ namespace DFW2
 		};
 
 		uValue Value;										// собственно значение
+		bool bSet = false;									// флаг изменения
 
 		std::unique_ptr<CSerializerAdapterBase> Adapter;	// адаптер для типа eValueType::VT_ADAPTER
 
@@ -115,7 +116,9 @@ namespace DFW2
 																					   ValueType(eValueType::VT_DBL) {}
 		// внешняя переменная
 		TypedSerializedValue(CSerializerBase* pSerializer, VariableIndexExternalOptional* pVariable) : m_pSerializer(pSerializer),
-																									   Value(pVariable->pValue), 
+																									   // если указатель внутри переменной nullptr
+																									   // забираем локальную переменную
+																									   Value(pVariable->pValue ? pVariable->pValue : &pVariable->Value),
 																									   ValueType(eValueType::VT_DBL) {}
 		// адаптер
 		TypedSerializedValue(CSerializerBase* pSerializer, CSerializerAdapterBase *pAdapter) : m_pSerializer(pSerializer),
@@ -164,7 +167,7 @@ namespace DFW2
 		void SetBool(bool value);
 		void SetInt(ptrdiff_t value);
 		void SetComplex(const cplx& value);
-		void SetComplex(std::string_view value);
+		void SetString(std::string_view value);
 				
 	protected:
 		void NoConversion(eValueType fromType);
@@ -209,6 +212,38 @@ namespace DFW2
 				throw dfw2error(fmt::format("CSerializerAdapterEnumT::GetString - invalid enum index or string representation {}", nIndex));
 			return std::string(m_StringRepresentation[nIndex]);
 		}
+
+		std::string GetEnumStrings()
+		{
+			std::string enumStrings = "[";
+			for (ptrdiff_t nIndex = 0; nIndex < static_cast<ptrdiff_t>(m_nCount); nIndex++)
+			{
+				if (nIndex > 0)
+					enumStrings += ',';
+
+				enumStrings += m_StringRepresentation[nIndex];
+			}
+			enumStrings += "]";
+			return enumStrings;
+		}
+
+		void SetString(const std::string_view String) override
+		{
+			ptrdiff_t nIndex(0);
+			for ( ; nIndex < static_cast<ptrdiff_t>(m_nCount); nIndex++)
+				if (String == m_StringRepresentation[nIndex])
+				{
+					SetInt(nIndex);
+					break;
+				}
+
+			if(nIndex == m_nCount)
+				throw dfw2error(fmt::format("CSerializerAdapterEnumT::SetString - enum string representation \"{}\" not found in enum {}", 
+					String,
+					GetEnumStrings()
+					));
+		}
+
 		CSerializerAdapterEnumT(T& Left, const char** ppStringRepresentation, size_t nCount) : CSerializerAdapterBaseT<T>(Left),
 																								 m_StringRepresentation(ppStringRepresentation),
 																								 m_nCount(nCount)
@@ -223,7 +258,7 @@ namespace DFW2
 		double Multiplier = 1.0;							// множитель
 		bool bState = false;								// признак переменной состояния
 		MetaSerializedValue(CSerializerBase* pSerializer, VariableIndex* pVariable) : TypedSerializedValue(pSerializer, &pVariable->Value) {}
-		MetaSerializedValue(CSerializerBase* pSerializer, VariableIndexExternalOptional* pVariable) : TypedSerializedValue(pSerializer, pVariable->pValue){}
+		MetaSerializedValue(CSerializerBase* pSerializer, VariableIndexExternalOptional* pVariable) : TypedSerializedValue(pSerializer, pVariable){}
 		MetaSerializedValue(CSerializerBase* pSerializer, CSerializerAdapterBase* pAdapter) : TypedSerializedValue(pSerializer, pAdapter) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, double* pDouble) : TypedSerializedValue(pSerializer, pDouble) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, ptrdiff_t* pInteger) : TypedSerializedValue(pSerializer, pInteger) {}
@@ -382,6 +417,7 @@ namespace DFW2
 				return nullptr;
 		}
 
+		const SERIALIZERMAP GetUnsetValues() const;
 
 		CSerializerBase() : m_pDevice(nullptr)
 		{

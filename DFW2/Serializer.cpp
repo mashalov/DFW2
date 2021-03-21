@@ -19,6 +19,15 @@ std::string CSerializerBase::GetVariableName(TypedSerializedValue* pValue) const
 	return CDFW2Messages::m_cszUnknown;
 }
 
+const SERIALIZERMAP CSerializerBase::GetUnsetValues() const
+{
+	SERIALIZERMAP outMap;
+	for (const auto& [Name, Var] : ValueMap)
+		if (!Var->bSet)
+			outMap.insert(std::make_pair(Name, Var));
+	return outMap;
+}
+
 bool TypedSerializedValue::isSignificant()
 {
 	switch (ValueType)
@@ -69,7 +78,7 @@ CDevice* TypedSerializedValue::GetDevice()
 
 void TypedSerializedValue::NoConversion(eValueType fromType)
 {
-	std::string msg = fmt::format("There is no conversion of variable of type {} to type {}",
+	std::string msg = fmt::format("There is no conversion of variable of type '\"{}\" to type \"{}\"",
 		GetTypeVerb(),
 		TypedSerializedValue::GetTypeVerbByType(fromType)
 	);
@@ -95,38 +104,68 @@ void TypedSerializedValue::SetDouble(double value)
 	{
 	case eValueType::VT_DBL:
 		*Value.pDbl = value;
+		bSet = true;
 		break;
 	case eValueType::VT_INT:
 		*Value.pInt = static_cast<ptrdiff_t>(value);
+		bSet = true;
 		break;
 	case eValueType::VT_BOOL:
 		*Value.pBool = value > 0.0;
+		bSet = true;
 		break;
 	case eValueType::VT_CPLX:
-		NoConversion(eValueType::VT_DBL);
 	case eValueType::VT_NAME:
+	case eValueType::VT_ID:
 		NoConversion(eValueType::VT_DBL);
-		if (auto device = GetDevice(); device)
-				device->SetName("");
 		break;
 	case eValueType::VT_STATE:
 		if (auto device = GetDevice(); device)
-				device->SetState(value > 0 ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-		break;
-	case eValueType::VT_ID:
-		NoConversion(eValueType::VT_DBL);
-		if (auto device = GetDevice(); device)
-				device->SetId(static_cast<ptrdiff_t>(value));
+		{
+			device->SetState(value > 0 ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			bSet = true;
+		}
 		break;
 	case eValueType::VT_ADAPTER:
 		Adapter->SetInt(static_cast<ptrdiff_t>(value));
+		bSet = true;
 		break;
 	}
 }
 
 void TypedSerializedValue::SetBool(bool value)
 {
-
+	switch (ValueType)
+	{
+	case eValueType::VT_DBL:
+		*Value.pDbl = value ? 1.0 : 0.0;
+		bSet = true;
+		break;
+	case eValueType::VT_INT:
+		*Value.pInt = value ? 1 : 0;
+		bSet = true;
+		break;
+	case eValueType::VT_BOOL:
+		*Value.pBool = value;
+		bSet = true;
+		break;
+	case eValueType::VT_CPLX:
+	case eValueType::VT_NAME:
+	case eValueType::VT_ID:
+		NoConversion(eValueType::VT_BOOL);
+		break;
+	case eValueType::VT_STATE:
+		if (auto device = GetDevice(); device)
+		{
+			device->SetState(value ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			bSet = true;
+		}
+		break;
+	case eValueType::VT_ADAPTER:
+		Adapter->SetInt(static_cast<ptrdiff_t>(value));
+		bSet = true;
+		break;
+	}
 }
 
 void TypedSerializedValue::SetInt(ptrdiff_t value)
@@ -135,40 +174,75 @@ void TypedSerializedValue::SetInt(ptrdiff_t value)
 	{
 	case eValueType::VT_DBL:
 		*Value.pDbl = static_cast<double>(value);
+		bSet = true;
 		break;
 	case eValueType::VT_INT:
 		*Value.pInt = value;
+		bSet = true;
 		break;
 	case eValueType::VT_BOOL:
 		*Value.pBool = value > 0.0;
+		bSet = true;
 		break;
 	case eValueType::VT_CPLX:
-		NoConversion(eValueType::VT_INT);
 	case eValueType::VT_NAME:
 		NoConversion(eValueType::VT_INT);
 		break;
 	case eValueType::VT_STATE:
 		if (auto device = GetDevice(); device)
+		{
 			device->SetState(value > 0 ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			bSet = true;
+		}
 		break;
 	case eValueType::VT_ID:
 		if (auto device = GetDevice(); device)
+		{
 			device->SetId(static_cast<ptrdiff_t>(value));
+			bSet = true;
+		}
 		break;
 	case eValueType::VT_ADAPTER:
 		Adapter->SetInt(static_cast<ptrdiff_t>(value));
+		bSet = true;
 		break;
 	}
 }
 
 void TypedSerializedValue::SetComplex(const cplx& value)
 {
-
+	switch (ValueType)
+	{
+	case eValueType::VT_CPLX:
+		*Value.pCplx = value;
+		bSet = true;
+		break;
+	//case eValueType::VT_ADAPTER:
+	//	Adapter->SetInt(static_cast<ptrdiff_t>(value));
+	//	break;
+	default:
+		NoConversion(eValueType::VT_CPLX);
+	}
 }
 
-void TypedSerializedValue::SetComplex(std::string_view value)
+void TypedSerializedValue::SetString(std::string_view value)
 {
-
+	switch (ValueType)
+	{
+	case eValueType::VT_NAME:
+		if (auto device = GetDevice(); device)
+		{
+			device->SetName(value);
+			bSet = true;
+		}
+		break;
+		case eValueType::VT_ADAPTER:
+			Adapter->SetString(value);
+			bSet = true;
+			break;
+	default:
+		NoConversion(eValueType::VT_NAME);
+	}
 }
 
 
@@ -193,6 +267,12 @@ template<> TypedSerializedValue* TypedSerializedValue::Set<bool>(bool value)
 template<> TypedSerializedValue* TypedSerializedValue::Set<size_t>(size_t value)
 {
 	SetInt(value);
+	return this;
+}
+
+template<> TypedSerializedValue* TypedSerializedValue::Set<std::string>(std::string value)
+{
+	SetString(value);
 	return this;
 }
 
