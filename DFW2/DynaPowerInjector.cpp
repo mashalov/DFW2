@@ -69,8 +69,9 @@ void CDynaPowerInjector::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
 	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddState("P", P, eVARUNITS::VARUNIT_MW);
-	Serializer->AddState("Q", Q, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty("NodeId", NodeId, eVARUNITS::VARUNIT_NOTSET);
+	Serializer->AddProperty("P", P, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty("Q", Q, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddState("Ire", Ire, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState("Iim", Iim, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddProperty("Qmin", LFQmin, eVARUNITS::VARUNIT_MVAR);

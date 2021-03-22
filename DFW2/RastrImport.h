@@ -21,6 +21,78 @@
 namespace DFW2
 {
 
+	class CRastrSynonyms 
+	{
+	protected:
+		using StringSet = std::set<std::string, std::less<> >;
+		using FieldSynonyms = std::map<std::string, StringSet, std::less<> >;
+		struct TableSynonym 
+		{
+			StringSet m_TableSynonym;
+			FieldSynonyms m_FieldSynonyms;
+
+			template <typename ...Args>
+			TableSynonym& AddFieldSynonyms(std::string_view field, Args... synonymus)
+			{
+				FieldSynonyms::iterator it = m_FieldSynonyms.find(field);
+				if (it == m_FieldSynonyms.end())
+					it = m_FieldSynonyms.insert(std::make_pair(field, StringSet())).first;
+				it->second.insert({ synonymus... });
+				return *this;
+			}
+
+			const StringSet GetSynonyms(std::string_view field) 
+			{
+				StringSet ret;
+				
+				if (auto it = m_FieldSynonyms.find(field); it != m_FieldSynonyms.end())
+					ret = it->second;
+				ret.insert(std::string(field));
+
+				return ret;
+			}
+		};
+		using RastrSynonyms = std::map<std::string, TableSynonym, std::less<> >;
+		RastrSynonyms m_Synonyms;
+
+		TableSynonym& GetTableSynonym(std::string_view containerName) 
+		{
+			return m_Synonyms.insert(std::make_pair(containerName, TableSynonym())).first->second;
+		}
+
+	public:
+
+		TableSynonym& AddTableSynonym(std::string_view containerName, std::string_view rastrSynonymName)
+		{
+			TableSynonym& table = GetTableSynonym(containerName);
+			table.m_TableSynonym.insert(std::string(rastrSynonymName));
+			return table;
+		}
+
+		TableSynonym& GetTable(std::string_view containerName)
+		{
+			return GetTableSynonym(containerName);
+		}
+	};
+	/*
+	template <typename ...Args>
+	void AddValueNameSynonym(std::string_view valueName, Args... synonymus)
+	{
+		SynonymMap.insert(std::make_pair(valueName, decltype(SynonymMap)::mapped_type({ synonymus... })));
+	}
+
+	void GetSynonyms(std::string_view valueName, STRINGSET& synonyms)
+	{
+		synonyms.clear();
+		if (auto vit = ValueMap.find(valueName); vit != ValueMap.end())
+		{
+			synonyms.insert(vit->first);
+			if (auto it = SynonymMap.find(valueName);  it != SynonymMap.end())
+				synonyms = it->second;
+		}
+	}*/
+
+
 	struct DBSLC
 	{
 		ptrdiff_t m_Id;
@@ -122,6 +194,8 @@ namespace DFW2
 		void GetData(CDynaModel& Network);
 	protected:
 		IRastrPtr m_spRastr;
+		CRastrSynonyms m_rastrSynonyms;
+
 		bool CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceCPPContainer& CustomDeviceContainer);
@@ -131,6 +205,8 @@ namespace DFW2
 		void ReadTable(const char* cszRastrTableName, CDeviceContainer& Container, const char* cszRastrSelection = "")
 		{
 			 // на входе имя таблицы и контейнер, куда надо читать
+
+			auto tableSynonyms = m_rastrSynonyms.GetTable(cszRastrTableName);
 
 			ITablePtr spTable = m_spRastr->Tables->Item(cszRastrTableName);		// находим таблицу
 			spTable->SetSel(cszRastrSelection);
@@ -149,8 +225,28 @@ namespace DFW2
 				// адаптер связываем с полем таблицы
 
 				for (auto&& serializervalue : *pSerializer)
-					if (!serializervalue.second->bState)	
-						serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(serializervalue.first.c_str()));
+				{
+					if (!serializervalue.second->bState)
+					{
+
+						auto synonyms = tableSynonyms.GetSynonyms(serializervalue.first);
+						for (const auto& synonym : synonyms)
+						{
+							if (long index = spCols->GetFind(synonym.c_str()) ; index >= 0)
+							{
+								serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(index));
+								break;
+							}
+						}
+
+						if (!serializervalue.second->pAux)
+							throw dfw2error(fmt::format("RastrImport::ReadTable - no synonyms for field \"{}\" from \"{}\" of container \"{}\" found in table \"{}\"",
+								serializervalue.first,
+								fmt::join(synonyms,","),
+								pSerializer->GetClassName(),
+								cszRastrTableName));
+					}
+				}
 
 				long selIndex = spTable->GetFindNextSel(-1);
 				while (selIndex >= 0)

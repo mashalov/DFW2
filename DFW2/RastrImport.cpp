@@ -468,246 +468,17 @@ void CRastrImport::GetData(CDynaModel& Network)
 	
 	ReadTable("vetv", Network.Branches);
 
-	/*
-	ITablePtr spBranch = spTables->Item("vetv");
-	CDynaBranch *pBranches = new CDynaBranch[spBranch->Size];
-	IColsPtr spBranchCols = spBranch->Cols;
-	IColPtr spIp = spBranchCols->Item("ip");
-	IColPtr spIq = spBranchCols->Item("iq");
-	IColPtr spNp = spBranchCols->Item("np");
-	IColPtr spBSta = spBranchCols->Item("sta");
-	IColPtr spR = spBranchCols->Item("r");
-	IColPtr spX = spBranchCols->Item("x");
-	IColPtr spKtr = spBranchCols->Item("ktr");
-	IColPtr spKti = spBranchCols->Item("kti");
-	IColPtr spGip = spBranchCols->Item("g");
-	IColPtr spBip = spBranchCols->Item("b");
-	IColPtr spGrip0 = spBranchCols->Item("gr_ip");
-	IColPtr spBrip0 = spBranchCols->Item("br_ip");
-	IColPtr spGriq0 = spBranchCols->Item("gr_iq");
-	IColPtr spBriq0 = spBranchCols->Item("br_iq");
-	IColPtr spNrIp = spBranchCols->Item("nr_ip");
-	IColPtr spNrIq = spBranchCols->Item("nr_iq");
-	IColPtr spPlIp = spBranchCols->Item("pl_ip");
-	IColPtr spQlIp = spBranchCols->Item("ql_ip");
-	IColPtr spPlIq = spBranchCols->Item("pl_iq");
-	IColPtr spQlIq = spBranchCols->Item("ql_iq");
-	IColPtr spIdop = spBranchCols->Item("i_dop");
-	IColPtr spI = spBranchCols->Item("ie");
+	m_rastrSynonyms.GetTable("Generator")
+		.AddFieldSynonyms("Kgen", "NumBrand")
+		.AddFieldSynonyms("Kdemp", "Demp")
+		.AddFieldSynonyms("cosPhinom", "cosFi")
+		.AddFieldSynonyms("Unom", "Ugnom");
 
-	CDynaBranch::BranchState StateDecode[4] = { CDynaBranch::BRANCH_ON, CDynaBranch::BRANCH_OFF, CDynaBranch::BRANCH_TRIPIP, CDynaBranch::BRANCH_TRIPIQ };
-
-	for (int i = 0; i < spBranch->Size; i++)
-	{
-		(pBranches + i)->SetId(i);
-		int State = spBSta->GetZ(i).lVal;
-		(pBranches + i)->m_BranchState = StateDecode[0];
-		if (State > 0 && State < 4)
-			(pBranches + i)->m_BranchState = StateDecode[State];
-		(pBranches + i)->Ip = spIp->GetZ(i);
-		(pBranches + i)->Iq = spIq->GetZ(i);
-		(pBranches + i)->Np = spNp->GetZ(i);
-		(pBranches + i)->R  = spR->GetZ(i);
-		(pBranches + i)->X  = spX->GetZ(i);
-		(pBranches + i)->Ktr = spKtr->GetZ(i);
-		(pBranches + i)->Kti = spKti->GetZ(i);
-		(pBranches + i)->G = spGip->GetZ(i);
-		(pBranches + i)->B = -spBip->GetZ(i).dblVal;
-		(pBranches + i)->GrIp = spGrip0->GetZ(i).dblVal;
-		(pBranches + i)->BrIp = -spBrip0->GetZ(i).dblVal;
-		(pBranches + i)->GrIq = spGriq0->GetZ(i).dblVal;
-		(pBranches + i)->BrIq = -spBriq0->GetZ(i).dblVal;
-		(pBranches + i)->NrIp = spNrIp->GetZ(i).lVal;
-		(pBranches + i)->NrIq = spNrIq->GetZ(i).lVal;
-	}
-	Network.Branches.AddDevices(pBranches, spBranch->Size);
-	*/
-	
-
-
-	ITablePtr spGen = spTables->Item("Generator");
-	IColsPtr spGenCols = spGen->Cols;
-
-	IColPtr spGenId = spGenCols->Item("Id");
-	IColPtr spGenName = spGenCols->Item("Name");
-	IColPtr spGenSta = spGenCols->Item("sta");
-
-	IColPtr spGenUnom = spGenCols->Item("Ugnom");
-	IColPtr spGenPnom = spGenCols->Item("Pnom");
-	IColPtr spGenCos  = spGenCols->Item("cosFi");
-	IColPtr spGenNode = spGenCols->Item("Node");
-	IColPtr spGenKgen = spGenCols->Item("NumBrand");
-	IColPtr spGenModelType = spGenCols->Item("ModelType");
-
-	IColPtr spGenDemp = spGenCols->Item("Demp");
-	IColPtr spGenMj   = spGenCols->Item("Mj");
-	IColPtr spGenXd = spGenCols->Item("xd");
-	IColPtr spGenXd1  = spGenCols->Item("xd1");
-	IColPtr spGenXq   = spGenCols->Item("xq");
-	IColPtr spGenTd01 = spGenCols->Item("td01");
-	IColPtr spExciterId = spGenCols->Item("ExciterId");
-
-	IColPtr spGenP = spGenCols->Item("P");
-	IColPtr spGenQ = spGenCols->Item("Q");
-
-	IColPtr spGenQmin = spGenCols->Item("Qmin");
-	IColPtr spGenQmax = spGenCols->Item("Qmax");
-
-	IColPtr spGenXd2 = spGenCols->Item("xd2");
-	IColPtr spGenXq1 = spGenCols->Item("xq1");
-	IColPtr spGenXq2 = spGenCols->Item("xq2");
-	IColPtr spGenTd0ss = spGenCols->Item("td02");
-	IColPtr spGenTq0ss = spGenCols->Item("tq02");
-
-
-	size_t nGen1CCount = 0;
-	size_t nGen3CCount = 0;
-	size_t nGenMustangCount = 0;
-	size_t nGenMotCount = 0;
-	size_t nGenInfBusCount = 0;
-
-	for (int i = 0; i < spGen->Size; i++)
-	{
-		switch (spGenModelType->GetZ(i).lVal)
-		{
-		case 6:
-			nGenMustangCount++;
-			break;
-		case 5:
-			nGen3CCount++;
-			break;
-		case 4:
-			nGen1CCount++;
-			break;
-		case 3:
-			nGenMotCount++;
-			break;
-		case 2:
-			nGenInfBusCount++;
-			break;
-		}
-	}
-
-
-	CDynaGenerator3C* pGens3C =			Network.Generators3C.CreateDevices<CDynaGenerator3C>(nGen3CCount);
-	CDynaGeneratorMustang* pGensMu =	Network.GeneratorsMustang.CreateDevices<CDynaGeneratorMustang>(nGenMustangCount);
-	CDynaGenerator1C* pGens1C =			Network.Generators1C.CreateDevices<CDynaGenerator1C>(nGen1CCount);
-	CDynaGeneratorMotion* pGensMot =	Network.GeneratorsMotion.CreateDevices<CDynaGeneratorMotion>(nGenMotCount);
-	CDynaGeneratorInfBus* pGensInf =	Network.GeneratorsInfBus.CreateDevices<CDynaGeneratorInfBus>(nGenInfBusCount);
-
-	for (int i = 0; i < spGen->Size; i++)
-	{
-		switch (spGenModelType->GetZ(i).lVal)
-		{
-		case 6:
-			pGensMu->SetId(spGenId->GetZ(i));
-			pGensMu->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
-			pGensMu->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-			pGensMu->NodeId = spGenNode->GetZ(i);
-			pGensMu->Kdemp = spGenDemp->GetZ(i);
-			pGensMu->Kgen = spGenKgen->GetZ(i);
-			pGensMu->P = spGenP->GetZ(i);
-			pGensMu->Q = spGenQ->GetZ(i);
-			pGensMu->cosPhinom = spGenCos->GetZ(i);
-			pGensMu->Unom = spGenUnom->GetZ(i);
-			pGensMu->Mj = spGenMj->GetZ(i);
-			pGensMu->xd1 = spGenXd1->GetZ(i);
-			pGensMu->xq = spGenXq->GetZ(i);
-			pGensMu->xd = spGenXd->GetZ(i);
-			pGensMu->Td01 = spGenTd01->GetZ(i);
-			pGensMu->Pnom = spGenPnom->GetZ(i);
-			pGensMu->m_ExciterId = spExciterId->GetZ(i);
-			pGensMu->xd2 = spGenXd2->GetZ(i);
-			pGensMu->xq1 = spGenXq1->GetZ(i);
-			pGensMu->xq2 = spGenXq2->GetZ(i);
-			pGensMu->Td0ss = spGenTd0ss->GetZ(i);
-			pGensMu->Tq0ss = spGenTq0ss->GetZ(i);
-			pGensMu->LFQmax = spGenQmax->GetZ(i);
-			pGensMu->LFQmin = spGenQmin->GetZ(i);
-			pGensMu++;
-			break;
-		case 5:
-			pGens3C->SetId(spGenId->GetZ(i));
-			pGens3C->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
-			pGens3C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-			pGens3C->NodeId = spGenNode->GetZ(i);
-			pGens3C->Kdemp = spGenDemp->GetZ(i);
-			pGens3C->Kgen  = spGenKgen->GetZ(i);
-			pGens3C->P = spGenP->GetZ(i);
-			pGens3C->Q = spGenQ->GetZ(i);
-			pGens3C->cosPhinom = spGenCos->GetZ(i);
-			pGens3C->Unom = spGenUnom->GetZ(i);
-			pGens3C->Mj = spGenMj->GetZ(i);
-			pGens3C->xd1 = spGenXd1->GetZ(i);
-			pGens3C->xq = spGenXq->GetZ(i);
-			pGens3C->xd = spGenXd->GetZ(i);
-			pGens3C->Td01 = spGenTd01->GetZ(i);
-			pGens3C->Pnom = spGenPnom->GetZ(i);
-			pGens3C->m_ExciterId = spExciterId->GetZ(i);
-			pGens3C->xd2 = spGenXd2->GetZ(i);
-			pGens3C->xq1 = spGenXq1->GetZ(i);
-			pGens3C->xq2 = spGenXq2->GetZ(i);
-			pGens3C->Td0ss = spGenTd0ss->GetZ(i);
-			pGens3C->Tq0ss = spGenTq0ss->GetZ(i);
-			pGens3C->LFQmax = spGenQmax->GetZ(i);
-			pGens3C->LFQmin = spGenQmin->GetZ(i);
-			pGens3C++;
-			break;
-		case 4:
-			pGens1C->SetId(spGenId->GetZ(i));
-			pGens1C->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
-			pGens1C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-			pGens1C->NodeId = spGenNode->GetZ(i);
-			pGens1C->Kgen = spGenKgen->GetZ(i);
-			pGens1C->Kdemp = spGenDemp->GetZ(i);
-			pGens1C->P = spGenP->GetZ(i);
-			pGens1C->Q = spGenQ->GetZ(i);
-			pGens1C->cosPhinom = spGenCos->GetZ(i);
-			pGens1C->Unom = spGenUnom->GetZ(i);
-			pGens1C->Mj = spGenMj->GetZ(i);
-			pGens1C->xd1 = spGenXd1->GetZ(i);
-			pGens1C->xq = spGenXq->GetZ(i);
-			pGens1C->xd = spGenXd->GetZ(i);
-			pGens1C->Td01 = spGenTd01->GetZ(i);
-			pGens1C->Pnom = spGenPnom->GetZ(i);
-			pGens1C->m_ExciterId = spExciterId->GetZ(i);
-			pGens1C->LFQmax = spGenQmax->GetZ(i);
-			pGens1C->LFQmin = spGenQmin->GetZ(i);
-			pGens1C++;
-			break;
-		case 2:
-			pGensInf->SetId(spGenId->GetZ(i));
-			pGensInf->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
-			pGensInf->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-			pGensInf->NodeId = spGenNode->GetZ(i);
-			pGensInf->Kgen = spGenKgen->GetZ(i);
-			pGensInf->P = spGenP->GetZ(i);
-			pGensInf->Q = spGenQ->GetZ(i);
-			pGensInf->xd1 = spGenXd1->GetZ(i);
-			pGensInf->LFQmax = spGenQmax->GetZ(i);
-			pGensInf->LFQmin = spGenQmin->GetZ(i);
-			pGensInf++;
-			break;
-		case 3:
-			pGensMot->SetId(spGenId->GetZ(i));
-			pGensMot->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
-			pGensMot->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
-			pGensMot->NodeId = spGenNode->GetZ(i);
-			pGensMot->Kgen = spGenKgen->GetZ(i);
-			pGensMot->Kdemp = spGenDemp->GetZ(i);
-			pGensMot->P = spGenP->GetZ(i);
-			pGensMot->Q = spGenQ->GetZ(i);
-			pGensMot->cosPhinom = spGenCos->GetZ(i);
-			pGensMot->Unom = spGenUnom->GetZ(i);
-			pGensMot->Mj = spGenMj->GetZ(i);
-			pGensMot->xd1 = spGenXd1->GetZ(i);
-			pGensMot->Pnom = spGenPnom->GetZ(i);
-			pGensMot->LFQmax = spGenQmax->GetZ(i);
-			pGensMot->LFQmin = spGenQmin->GetZ(i);
-			pGensMot++;
-		}
-	}
-
+	ReadTable("Generator", Network.GeneratorsInfBus, "ModelType=2");
+	ReadTable("Generator", Network.GeneratorsMotion, "ModelType=3");
+	ReadTable("Generator", Network.Generators1C, "ModelType=4");
+	ReadTable("Generator", Network.Generators3C, "ModelType=5");
+	ReadTable("Generator", Network.GeneratorsMustang, "ModelType=6");
 	ReadTable("Exciter", Network.ExcitersMustang);
 	ReadTable("Forcer", Network.DECsMustang);
 	ReadTable("ExcControl", Network.ExcConMustang);
@@ -957,3 +728,191 @@ const CDynaNodeBase::eLFNodeType CRastrImport::RastrTypesMap[5] = {   CDynaNodeB
 																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMAX, 
 																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMIN 
 															      };
+
+
+/*
+* Archived source for reference
+* 
+ITablePtr spGen = spTables->Item("Generator");
+	IColsPtr spGenCols = spGen->Cols;
+
+	IColPtr spGenId = spGenCols->Item("Id");
+	IColPtr spGenName = spGenCols->Item("Name");
+	IColPtr spGenSta = spGenCols->Item("sta");
+
+	IColPtr spGenUnom = spGenCols->Item("Ugnom");
+	IColPtr spGenPnom = spGenCols->Item("Pnom");
+	IColPtr spGenCos  = spGenCols->Item("cosFi");
+	IColPtr spGenNode = spGenCols->Item("Node");
+	IColPtr spGenKgen = spGenCols->Item("NumBrand");
+	IColPtr spGenModelType = spGenCols->Item("ModelType");
+
+	IColPtr spGenDemp = spGenCols->Item("Demp");
+	IColPtr spGenMj   = spGenCols->Item("Mj");
+	IColPtr spGenXd = spGenCols->Item("xd");
+	IColPtr spGenXd1  = spGenCols->Item("xd1");
+	IColPtr spGenXq   = spGenCols->Item("xq");
+	IColPtr spGenTd01 = spGenCols->Item("td01");
+	IColPtr spExciterId = spGenCols->Item("ExciterId");
+
+	IColPtr spGenP = spGenCols->Item("P");
+	IColPtr spGenQ = spGenCols->Item("Q");
+
+	IColPtr spGenQmin = spGenCols->Item("Qmin");
+	IColPtr spGenQmax = spGenCols->Item("Qmax");
+
+	IColPtr spGenXd2 = spGenCols->Item("xd2");
+	IColPtr spGenXq1 = spGenCols->Item("xq1");
+	IColPtr spGenXq2 = spGenCols->Item("xq2");
+	IColPtr spGenTd0ss = spGenCols->Item("td02");
+	IColPtr spGenTq0ss = spGenCols->Item("tq02");
+
+
+	size_t nGen1CCount = 0;
+	size_t nGen3CCount = 0;
+	size_t nGenMustangCount = 0;
+	size_t nGenMotCount = 0;
+	size_t nGenInfBusCount = 0;
+
+	for (int i = 0; i < spGen->Size; i++)
+	{
+		switch (spGenModelType->GetZ(i).lVal)
+		{
+		case 6:
+			nGenMustangCount++;
+			break;
+		case 5:
+			nGen3CCount++;
+			break;
+		case 4:
+			nGen1CCount++;
+			break;
+		case 3:
+			nGenMotCount++;
+			break;
+		case 2:
+			nGenInfBusCount++;
+			break;
+		}
+	}
+
+
+	CDynaGenerator3C* pGens3C =			Network.Generators3C.CreateDevices<CDynaGenerator3C>(nGen3CCount);
+	CDynaGeneratorMustang* pGensMu =	Network.GeneratorsMustang.CreateDevices<CDynaGeneratorMustang>(nGenMustangCount);
+	CDynaGenerator1C* pGens1C =			Network.Generators1C.CreateDevices<CDynaGenerator1C>(nGen1CCount);
+	CDynaGeneratorMotion* pGensMot =	Network.GeneratorsMotion.CreateDevices<CDynaGeneratorMotion>(nGenMotCount);
+	CDynaGeneratorInfBus* pGensInf =	Network.GeneratorsInfBus.CreateDevices<CDynaGeneratorInfBus>(nGenInfBusCount);
+
+	for (int i = 0; i < spGen->Size; i++)
+	{
+		switch (spGenModelType->GetZ(i).lVal)
+		{
+		case 6:
+			pGensMu->SetId(spGenId->GetZ(i));
+			pGensMu->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
+			pGensMu->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			pGensMu->NodeId = spGenNode->GetZ(i);
+			pGensMu->Kdemp = spGenDemp->GetZ(i);
+			pGensMu->Kgen = spGenKgen->GetZ(i);
+			pGensMu->P = spGenP->GetZ(i);
+			pGensMu->Q = spGenQ->GetZ(i);
+			pGensMu->cosPhinom = spGenCos->GetZ(i);
+			pGensMu->Unom = spGenUnom->GetZ(i);
+			pGensMu->Mj = spGenMj->GetZ(i);
+			pGensMu->xd1 = spGenXd1->GetZ(i);
+			pGensMu->xq = spGenXq->GetZ(i);
+			pGensMu->xd = spGenXd->GetZ(i);
+			pGensMu->Td01 = spGenTd01->GetZ(i);
+			pGensMu->Pnom = spGenPnom->GetZ(i);
+			pGensMu->m_ExciterId = spExciterId->GetZ(i);
+			pGensMu->xd2 = spGenXd2->GetZ(i);
+			pGensMu->xq1 = spGenXq1->GetZ(i);
+			pGensMu->xq2 = spGenXq2->GetZ(i);
+			pGensMu->Td0ss = spGenTd0ss->GetZ(i);
+			pGensMu->Tq0ss = spGenTq0ss->GetZ(i);
+			pGensMu->LFQmax = spGenQmax->GetZ(i);
+			pGensMu->LFQmin = spGenQmin->GetZ(i);
+			pGensMu++
+			break;
+		case 5:
+			pGens3C->SetId(spGenId->GetZ(i));
+			pGens3C->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
+			pGens3C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			pGens3C->NodeId = spGenNode->GetZ(i);
+			pGens3C->Kdemp = spGenDemp->GetZ(i);
+			pGens3C->Kgen = spGenKgen->GetZ(i);
+			pGens3C->P = spGenP->GetZ(i);
+			pGens3C->Q = spGenQ->GetZ(i);
+			pGens3C->cosPhinom = spGenCos->GetZ(i);
+			pGens3C->Unom = spGenUnom->GetZ(i);
+			pGens3C->Mj = spGenMj->GetZ(i);
+			pGens3C->xd1 = spGenXd1->GetZ(i);
+			pGens3C->xq = spGenXq->GetZ(i);
+			pGens3C->xd = spGenXd->GetZ(i);
+			pGens3C->Td01 = spGenTd01->GetZ(i);
+			pGens3C->Pnom = spGenPnom->GetZ(i);
+			pGens3C->m_ExciterId = spExciterId->GetZ(i);
+			pGens3C->xd2 = spGenXd2->GetZ(i);
+			pGens3C->xq1 = spGenXq1->GetZ(i);
+			pGens3C->xq2 = spGenXq2->GetZ(i);
+			pGens3C->Td0ss = spGenTd0ss->GetZ(i);
+			pGens3C->Tq0ss = spGenTq0ss->GetZ(i);
+			pGens3C->LFQmax = spGenQmax->GetZ(i);
+			pGens3C->LFQmin = spGenQmin->GetZ(i);
+			pGens3C++;
+			break;
+		case 4:
+			pGens1C->SetId(spGenId->GetZ(i));
+			pGens1C->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
+			pGens1C->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			pGens1C->NodeId = spGenNode->GetZ(i);
+			pGens1C->Kgen = spGenKgen->GetZ(i);
+			pGens1C->Kdemp = spGenDemp->GetZ(i);
+			pGens1C->P = spGenP->GetZ(i);
+			pGens1C->Q = spGenQ->GetZ(i);
+			pGens1C->cosPhinom = spGenCos->GetZ(i);
+			pGens1C->Unom = spGenUnom->GetZ(i);
+			pGens1C->Mj = spGenMj->GetZ(i);
+			pGens1C->xd1 = spGenXd1->GetZ(i);
+			pGens1C->xq = spGenXq->GetZ(i);
+			pGens1C->xd = spGenXd->GetZ(i);
+			pGens1C->Td01 = spGenTd01->GetZ(i);
+			pGens1C->Pnom = spGenPnom->GetZ(i);
+			pGens1C->m_ExciterId = spExciterId->GetZ(i);
+			pGens1C->LFQmax = spGenQmax->GetZ(i);
+			pGens1C->LFQmin = spGenQmin->GetZ(i);
+			pGens1C++;
+			break;
+		case 2:
+			pGensInf->SetId(spGenId->GetZ(i));
+			pGensInf->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
+			pGensInf->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			pGensInf->NodeId = spGenNode->GetZ(i);
+			pGensInf->Kgen = spGenKgen->GetZ(i);
+			pGensInf->P = spGenP->GetZ(i);
+			pGensInf->Q = spGenQ->GetZ(i);
+			pGensInf->xd1 = spGenXd1->GetZ(i);
+			pGensInf->LFQmax = spGenQmax->GetZ(i);
+			pGensInf->LFQmin = spGenQmin->GetZ(i);
+			pGensInf++;
+			break;
+		case 3:
+			pGensMot->SetId(spGenId->GetZ(i));
+			pGensMot->SetName(stringutils::utf8_encode(spGenName->GetZ(i).bstrVal));
+			pGensMot->SetState(spGenSta->GetZ(i).boolVal ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			pGensMot->NodeId = spGenNode->GetZ(i);
+			pGensMot->Kgen = spGenKgen->GetZ(i);
+			pGensMot->Kdemp = spGenDemp->GetZ(i);
+			pGensMot->P = spGenP->GetZ(i);
+			pGensMot->Q = spGenQ->GetZ(i);
+			pGensMot->cosPhinom = spGenCos->GetZ(i);
+			pGensMot->Unom = spGenUnom->GetZ(i);
+			pGensMot->Mj = spGenMj->GetZ(i);
+			pGensMot->xd1 = spGenXd1->GetZ(i);
+			pGensMot->Pnom = spGenPnom->GetZ(i);
+			pGensMot->LFQmax = spGenQmax->GetZ(i);
+			pGensMot->LFQmin = spGenQmin->GetZ(i);
+			pGensMot++;
+		}
+	}
+*/

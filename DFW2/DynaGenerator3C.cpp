@@ -344,11 +344,11 @@ void CDynaGenerator3C::UpdateSerializer(SerializerPtr& Serializer)
 	// добавляем перменные состояния трехконтурной модели в ЭДС
 	Serializer->AddState("Eqss", Eqss, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Edss", Edss, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Td0ss", Td0ss, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddState("Tq0ss", Tq0ss, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddState("xd2", xd2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddState("xq2", xq2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddState("xq1", xq1, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("td02", Td0ss, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("tq02", Tq0ss, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("xd2", xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("xq2", xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("xq1", xq1, eVARUNITS::VARUNIT_OHM);
 }
 
 void CDynaGenerator3C::DeviceProperties(CDeviceContainerProperties& props)

@@ -165,5 +165,5 @@ void CDynaGeneratorInfBusBase::DeviceProperties(CDeviceContainerProperties& prop
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorInfPower, CDeviceContainerProperties::m_cszSysNameGeneratorInfPower);
 	props.nEquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
 
-	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorInfBusBase>>();
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorInfBus>>();
 }

@@ -276,8 +276,9 @@ namespace DFW2
 	class CSerializerBase
 	{
 	protected:
-		SERIALIZERLIST ValueList;		// список значений
-		SERIALIZERMAP ValueMap;			// карта "имя"->"значение"
+		SERIALIZERLIST ValueList;			// список значений
+		SERIALIZERMAP ValueMap;				// карта "имя"->"значение"
+
 		SERIALIZERLIST::iterator UpdateIterator;
 		std::string m_strClassName;	// имя сериализуемого класса 
 		CDevice* m_pDevice = nullptr;
