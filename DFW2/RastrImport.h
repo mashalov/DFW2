@@ -128,16 +128,16 @@ namespace DFW2
 		void ReadRastrRow(SerializerPtr& Serializer, long Row);
 
 		// чтение таблицы с помощью сериализатора
-		template<typename T>
-		void ReadTable(const char* cszTableName, CDeviceContainer& Container)
+		void ReadTable(const char* cszRastrTableName, CDeviceContainer& Container, const char* cszRastrSelection = "")
 		{
 			 // на входе имя таблицы и контейнер, куда надо читать
 
-			ITablePtr spTable = m_spRastr->Tables->Item(cszTableName);		// находим таблицу
-			IColsPtr spCols = spTable->Cols;
-			int nSize = spTable->Size;		// определяем размер контейнера по размеру таблицы
+			ITablePtr spTable = m_spRastr->Tables->Item(cszRastrTableName);		// находим таблицу
+			spTable->SetSel(cszRastrSelection);
+			int nSize = spTable->Count;		// определяем размер контейнера по размеру таблицы с выборкой
 			if (nSize)
 			{
+				IColsPtr spCols = spTable->Cols;
 				Container.CreateDevices(nSize);
 				// создаем вектор устройств заданного типа
 				auto pDevs = Container.begin();
@@ -147,17 +147,23 @@ namespace DFW2
 				// если значение не является переменной состояния
 				// добавляем добавляем к ней адаптер для БД RastrWin
 				// адаптер связываем с полем таблицы
+
 				for (auto&& serializervalue : *pSerializer)
 					if (!serializervalue.second->bState)	
 						serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(serializervalue.first.c_str()));
 
-				// проходим по таблице RastrWin и устройствам контейнера
-				for (int Row = 0; Row < nSize; Row++, pDevs++)
+				long selIndex = spTable->GetFindNextSel(-1);
+				while (selIndex >= 0)
 				{
-					// обновляем сериализатор для текущего устройства в контейнере
 					(*pDevs)->UpdateSerializer(pSerializer);
-					// читаем данные из строки таблицы RastrWin
-					ReadRastrRow(pSerializer, Row);
+					ReadRastrRow(pSerializer, selIndex);
+					selIndex = spTable->GetFindNextSel(selIndex);
+					if (pDevs != Container.end())
+						pDevs++;
+					else
+						throw dfw2error(fmt::format("RastrImport::ReadTable - container \"{}\" size set to {} does not fit devices",
+							pSerializer->GetClassName(),
+							Container.Count()));
 				}
 			}
 		}

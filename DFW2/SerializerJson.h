@@ -369,6 +369,10 @@ namespace DFW2
     protected:
         SerializerMap m_SerializerMap;
         SerializerMapItr itCurrentSerializer;
+        bool stateInDevice = false;
+        DEVICEVECTORITR itCurrentDevice;
+        DEVICEVECTORITR itLastDevice;
+
         cplx complexValue;          // буфер для комплексного значения
         std::string complexName;    // имя для комплексного значения
 
@@ -390,7 +394,7 @@ namespace DFW2
             auto DeSerialize = itCurrentSerializer->second->at(Key);
             if (DeSerialize)
                 DeSerialize->Set<const T&>(value);
-            std::cout << itCurrentSerializer->second->GetClassName() << "." << Key << "=" << value << std::endl;
+            //std::cout << itCurrentSerializer->second->GetClassName() << "." << Key << "=" << value << std::endl;
         }
 
         // shortcut для значения, имя которого в стеке
@@ -457,19 +461,7 @@ namespace DFW2
             return JsonSaxDataObjects::string(val);
         }
 
-        bool start_array(std::size_t elements) override
-        {
-            JsonSaxWalkerBase::start_array(elements);
-            if (stateInData && stateInObjects && StackDepth() == 5)
-            {
-                if (auto it = m_SerializerMap.find(stack.back().Key());  it != m_SerializerMap.end())
-                {
-                    itCurrentSerializer = it;
-                    std::cout << "start " << it->first << std::endl;
-                }
-            }
-            return true;
-        }
+        bool start_array(std::size_t elements) override;
 
         bool start_object(std::size_t elements) override
         {
@@ -485,43 +477,22 @@ namespace DFW2
         }
 
 
-        bool end_object() override
-        {
-            JsonSaxDataObjects::end_object();
-            if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
-            {
-                if (StackDepth() == 5)
-                {
-                    // объект закрывается - проверяем
-                    // все ли переменные прочитаны
-                    auto unset = itCurrentSerializer->second->GetUnsetValues();
-                    if (unset.size())
-                    {
-                        STRINGLIST unsetNames;
-                        for (const auto& [Name, Var] : unset)
-                            unsetNames.push_back(Name);
-                        std::cout << fmt::format("Finished object {} : unset variables {}",
-                            itCurrentSerializer->second->GetClassName(),
-                            fmt::join(unsetNames, ","));
-                    }
-                }
-                else if (StackDepth() == 6)
-                {
-                    // закрывается комплексное значение
-                    // ставим значение из буфера по сохранненому имени
-                    // в переменную сериализации
-                    SerializerSetNamedValue(complexName, complexValue);
-                    complexName.clear();
-                }
-            }
-            return true;
-        }
+        bool end_object() override;
 
         bool end_array() override
         {
-            return JsonSaxWalkerBase::end_array();
-        }
+            JsonSaxWalkerBase::end_array();
+            if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
+            {
+                if (StackDepth() == 4)
+                {
+                    std::cout << "finished objects " << itCurrentSerializer->second->GetClassName() << std::endl;
+                    stateInDevice = false;
+                }
+            }
 
+            return true;
+        }
     };
 
 	class CSerializerJson

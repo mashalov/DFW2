@@ -30,6 +30,8 @@ const SERIALIZERMAP CSerializerBase::GetUnsetValues() const
 
 bool TypedSerializedValue::isSignificant()
 {
+	return true;
+
 	switch (ValueType)
 	{
 	case eValueType::VT_DBL:

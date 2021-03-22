@@ -245,3 +245,95 @@ void CSerializerJson::AddLinks(SerializerPtr& Serializer, nlohmann::json& jsonLi
 	}
 }
 
+
+
+bool JsonSaxSerializer::start_array(std::size_t elements)
+{
+	JsonSaxWalkerBase::start_array(elements);
+	
+	// начинается некий массив, убеждаемся что это массив объектов, которые нас
+	// интересуют (мы в "data\objects" и на нужной глубине стека
+
+	if (stateInData && stateInObjects && StackDepth() == 5)
+	{
+		// находим сериализатор с именем ключа, который пришел из json
+		if (auto it = m_SerializerMap.find(stack.back().Key());  it != m_SerializerMap.end())
+		{
+			itCurrentSerializer = it;
+			std::cout << "start " << it->first << std::endl;
+
+			// у нас есть сериализатор, проверяем, есть ли в нем устройства
+			auto device = itCurrentSerializer->second->GetDevice();
+			if (device)
+			{
+				// устройства есть, достаем контейнер
+				auto container = device->GetContainer();
+				if (container)
+				{
+					// контейнер есть, берем диапазон устройств
+					// ставим состояние stateInDevice, обновляем сериализатор
+					// переменными из первого устройства контейнера
+					itCurrentDevice = container->begin();
+					itLastDevice = container->end();
+					if (itCurrentDevice != itLastDevice)
+					{
+						stateInDevice = true;
+						(*itCurrentDevice)->UpdateSerializer(itCurrentSerializer->second);
+					}
+					else
+						throw dfw2error(fmt::format("JsonSaxWalkerBase::start_array - device container with length set to {} cannot fit new device",
+													"from \"{}\" serializer",
+							container->Count(),
+							itCurrentSerializer->second->GetClassName()));
+				}
+			}
+		}
+	}
+	return true;
+}
+
+
+bool JsonSaxSerializer::end_object()
+{
+	JsonSaxDataObjects::end_object();
+	// заканчивается некоторый объект
+
+	if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
+	{
+		// мы находимся в "data/objects" и имеем сериализатор
+
+		if (StackDepth() == 5)
+		{
+			// на этой глубине стека закрывается объект из массива 
+			// проверяем все ли переменные объекта прочитаны
+
+			auto unset = itCurrentSerializer->second->GetUnsetValues();
+
+			if (unset.size())
+			{
+				STRINGLIST unsetNames;
+				for (const auto& [Name, Var] : unset)
+					unsetNames.push_back(Name);
+				std::cout << fmt::format("Finished object {} : unset variables {}",
+					itCurrentSerializer->second->GetClassName(),
+					fmt::join(unsetNames, ",")) << std::endl;
+			}
+
+			if (stateInDevice) 
+			{
+				// а еще мы находимся в чтении устройства контейнера, мы его прочитали 
+				// и должны перейти к следующему
+					itCurrentDevice++;
+			}
+		}
+		else if (StackDepth() == 6)
+		{
+			// закрывается комплексное значение
+			// ставим значение из буфера по сохранненому имени
+			// в переменную сериализации
+			SerializerSetNamedValue(complexName, complexValue);
+			complexName.clear();
+		}
+	}
+	return true;
+}

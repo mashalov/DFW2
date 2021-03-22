@@ -466,7 +466,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	}
 
 	
-	ReadTable<CDynaBranch>("vetv", Network.Branches);
+	ReadTable("vetv", Network.Branches);
 
 	/*
 	ITablePtr spBranch = spTables->Item("vetv");
@@ -708,9 +708,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 		}
 	}
 
-	ReadTable<CDynaExciterMustang>("Exciter", Network.ExcitersMustang);
-	ReadTable<CDynaDECMustang>("Forcer", Network.DECsMustang);
-	ReadTable<CDynaExcConMustang>("ExcControl", Network.ExcConMustang);
+	ReadTable("Exciter", Network.ExcitersMustang);
+	ReadTable("Forcer", Network.DECsMustang);
+	ReadTable("ExcControl", Network.ExcConMustang);
 }
 
 bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount)
