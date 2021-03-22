@@ -4,9 +4,6 @@
 
 using namespace DFW2;
 
-CDynaLRC::CDynaLRC() : CDevice()
-					   {}
-
 bool CDynaLRC::SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ)
 {
 	bool bRes(false);
@@ -238,6 +235,8 @@ bool CDynaLRC::CollectConstantData(LRCDATA& LRC)
 void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_LRC);
+	props.SetClassName(CDeviceContainerProperties::m_cszNameLRC, CDeviceContainerProperties::m_cszSysNameLRC);
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDummyLRC>>();
 }
 
 /*
@@ -350,4 +349,19 @@ void CDynaLRC::TestDump(const char* cszPathName)
 			dump << fmt::format("{};{};{};{};{}", v, P, dP, Q, dQ) << std::endl;
 		}
 	}
+}
+
+
+void CDummyLRC::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDevice::UpdateSerializer(Serializer);
+	Serializer->AddProperty("LRCId", TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty("Umin", Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Freq", Freq, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("p0", P.a0, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("p1", P.a1, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("p2", P.a2, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("q0", Q.a0, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("q1", Q.a1, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("q2", Q.a2, eVARUNITS::VARUNIT_PU);
 }

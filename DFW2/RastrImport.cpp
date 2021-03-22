@@ -229,20 +229,17 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 		{
 		case TypedSerializedValue::eValueType::VT_DBL:
 			vt.ChangeType(VT_R8);
-			mv.SetDouble(vt.dblVal * mv.Multiplier);
-			*mv.Value.pDbl = vt.dblVal * mv.Multiplier;
 			// для вещественного поля учитываем множитель
 			//*mv.Value.Value.pDbl = vt.dblVal * mv.Multiplier;
+			mv.SetDouble(vt.dblVal * mv.Multiplier);
 			break;
 		case TypedSerializedValue::eValueType::VT_INT:
 			vt.ChangeType(VT_I4);
 			mv.SetInt(vt.lVal);
-			*mv.Value.pInt = vt.lVal;
 			break;
 		case TypedSerializedValue::eValueType::VT_BOOL:
 			vt.ChangeType(VT_BOOL);
 			mv.SetBool(vt.boolVal);
-			*mv.Value.pBool = vt.boolVal;
 			break;
 		case TypedSerializedValue::eValueType::VT_NAME:
 			vt.ChangeType(VT_BSTR);
@@ -389,6 +386,21 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);
+
+
+
+	CDeviceContainer lrc(&Network);
+	CDynaLRC::DeviceProperties(lrc.m_ContainerProps);
+
+	m_rastrSynonyms.GetTable("polin")
+		.AddFieldSynonyms("LRCId", "nsx")
+		.AddFieldSynonyms("Umin", "umin")
+		.AddFieldSynonyms("Freq", "frec");
+
+	ReadTable("polin", lrc);
+
+
+
 	
 	ITablePtr spLRC = spTables->Item(L"polin");
 	IColsPtr spLRCCols = spLRC->Cols;
@@ -433,9 +445,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	IColPtr spLCIdLF = spNodeCols->Item("nsx");
 	IColPtr spLCId = spNodeCols->Item("dnsx");
-	IColPtr spNtype = spNodeCols->Item("tip");
 
 	Network.Nodes.CreateDevices(spNode->Size);
+
+	m_rastrSynonyms.GetTable("node")
+		.AddFieldSynonyms("LRCLFId", "nsx")
+		.AddFieldSynonyms("LRCTransId", "dnsx");
 
 	auto pNodes = Network.Nodes.begin();
 	auto pSerializer = (*pNodes)->GetSerializer();

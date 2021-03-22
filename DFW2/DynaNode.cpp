@@ -1588,6 +1588,8 @@ void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty("uhom", Unom, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("bsh", B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddProperty("brk", Br0, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	// Serializer->AddProperty("LRCLFId", LRCLoadLowId);
+	// Serializer->AddProperty("LRCTransId", LRCTransientId);
 	Serializer->AddState("Vre", Vre, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Vim", Vim, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("pgr", Vim, eVARUNITS::VARUNIT_MW);

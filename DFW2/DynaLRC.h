@@ -4,18 +4,18 @@
 
 namespace DFW2
 {
-	struct CLRCData
+	struct LRCRawData
 	{
 		double V;
 		double a0;
 		double a1;
 		double a2;
-		/*
-		double a3;
-		double a4;
-		double kf;
-		*/
+		// double a3;
+		// double a4;
+	};
 
+	struct CLRCData : public LRCRawData
+	{
 		CLRCData *pPrev;
 		CLRCData *pNext;
 
@@ -35,10 +35,22 @@ namespace DFW2
 		}
 	};
 
+	class CDummyLRC : public CDevice
+	{
+	public:
+		using CDevice::CDevice;
+		LRCRawData P, Q;
+		double Umin = 0;
+		double Freq = 1.0;
+		void UpdateSerializer(SerializerPtr& Serializer) override;
+	};
+
+
 	class CDynaLRC : public CDevice
 	{
 	public:
-		CDynaLRC();
+		using CDevice::CDevice;
+
 		bool SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ);
 		bool Check();
 		double GetP(double VdivVnom, double dVicinity);

@@ -49,7 +49,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		CRastrImport ri;
 		try
 		{
-			Network.DeSerialize("c:\\tmp\\serialization.json");
+			//Network.DeSerialize("c:\\tmp\\serialization.json");
 			ri.GetData(Network);
 			Network.Run();
 		}
