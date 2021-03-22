@@ -408,28 +408,6 @@ namespace DFW2
             }
         }
 
-        // специализация для double, который может идти в переменную
-        // напрямую или идти в буфер комплексного значения
-        template<> void SerializerSetValue<double>(const double& value)
-        {
-            if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
-            {
-                std::string_view Key(stack.back().Key());
-                if (complexName.length() > 0)
-                {
-                    // если буфер есть, определяем соствляющую по имени
-                    if (Key == JsonSaxWalkerBase::cszRe)
-                        complexValue.real(value);
-                    else if (Key == JsonSaxWalkerBase::cszIm)
-                        complexValue.imag(value);
-                    else
-                        throw dfw2error(fmt::format("SerializerSetValue<double> - wrong key for complex number - \"{}\"", Key));
-                }
-                else
-                    SerializerSetNamedValue<double>(Key, value);
-            }
-        }
-
         bool boolean(bool val) override
         {
             SerializerSetValue(val);
@@ -493,6 +471,29 @@ namespace DFW2
 
             return true;
         }
+
+        // overolad для double, который может идти в переменную
+        // напрямую или идти в буфер комплексного значения
+        void SerializerSetValue(const double& value)
+        {
+            if (stateInData && stateInObjects && itCurrentSerializer != m_SerializerMap.end())
+            {
+                std::string_view Key(stack.back().Key());
+                if (complexName.length() > 0)
+                {
+                    // если буфер есть, определяем соствляющую по имени
+                    if (Key == JsonSaxWalkerBase::cszRe)
+                        complexValue.real(value);
+                    else if (Key == JsonSaxWalkerBase::cszIm)
+                        complexValue.imag(value);
+                    else
+                        throw dfw2error(fmt::format("SerializerSetValue<double> - wrong key for complex number - \"{}\"", Key));
+                }
+                else
+                    SerializerSetNamedValue<double>(Key, value);
+            }
+        }
+
     };
 
 	class CSerializerJson
