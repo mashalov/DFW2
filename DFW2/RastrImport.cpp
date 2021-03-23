@@ -417,8 +417,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable("Exciter", Network.ExcitersMustang);
 	ReadTable("Forcer", Network.DECsMustang);
 	ReadTable("ExcControl", Network.ExcConMustang);
-
-	Network.Nodes.LinkToLRCs(Network.LRCs);
 }
 
 

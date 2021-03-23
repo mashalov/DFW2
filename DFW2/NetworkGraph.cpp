@@ -7,6 +7,8 @@ bool CDynaModel::Link()
 {
 	bool bRes = true;
 
+	Nodes.LinkToLRCs(LRCs);
+
 	// делаем отдельные списки ссылок устройств контейнера для ведущих устройств, ведомых устройств 
 	// и без учета направления
 	for (auto&& it : m_DeviceContainers)
@@ -78,6 +80,7 @@ bool CDynaModel::Link()
 		if (it->m_ContainerProps.bPredict)
 			m_DeviceContainersPredict.push_back(it);
 	}
+
 	return bRes;
 }
 
