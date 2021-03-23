@@ -146,6 +146,8 @@ namespace DFW2
 		static const char* m_cszCannotChangePermanentDeviceState;
 		static const char* m_cszWrongUnom;
 		static const char* m_cszWrongSourceData;
+		static const char* m_cszUserLRCChangedToStandard;
+		static const char* m_cszUserOverrideOfStandardLRC;
 	};
 }
 

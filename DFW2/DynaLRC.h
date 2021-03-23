@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "DeviceContainer.h"
+#include <array>
 #include <algorithm>
 
 namespace DFW2
@@ -7,6 +8,7 @@ namespace DFW2
 	struct LRCRawData
 	{
 		double V;
+		double Freq;
 		double a0;
 		double a1;
 		double a2;
@@ -39,12 +41,11 @@ namespace DFW2
 	{
 	public:
 		using CDevice::CDevice;
-		LRCRawData P, Q;
-		double Umin = 0;
-		double Freq = 1.0;
+		std::array<LRCRawData, 2> PQ;
 		void UpdateSerializer(SerializerPtr& Serializer) override;
 	};
 
+	using LRCDATA = std::vector<CLRCData>;
 
 	class CDynaLRC : public CDevice
 	{
@@ -58,7 +59,6 @@ namespace DFW2
 		double GetPdP(double VdivVnom, double &dP, double dVicinity);
 		double GetQdQ(double VdivVnom, double &dQ, double dVicinity);
 		static void DeviceProperties(CDeviceContainerProperties& properties);
-		using LRCDATA = std::vector<CLRCData>;
 		LRCDATA P, Q;
 		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");
 	protected:
@@ -66,5 +66,17 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		bool CheckPtr(LRCDATA& LRC);
 		double GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC);
+	};
+
+
+
+	class CDynaLRCContainer : public CDeviceContainer
+	{
+	protected:
+		static bool IsLRCEmpty(const LRCRawData& lrc);
+	public:
+		using CDeviceContainer::CDeviceContainer;
+		virtual ~CDynaLRCContainer() {}
+		void CreateFromSerialized();
 	};
 }

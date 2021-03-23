@@ -389,7 +389,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 
 
-	CDeviceContainer lrc(&Network);
+	CDynaLRCContainer lrc(&Network);
 	CDynaLRC::DeviceProperties(lrc.m_ContainerProps);
 
 	m_rastrSynonyms.GetTable("polin")
@@ -398,6 +398,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 		.AddFieldSynonyms("Freq", "frec");
 
 	ReadTable("polin", lrc);
+
+	lrc.CreateFromSerialized();
 
 
 

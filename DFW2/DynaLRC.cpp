@@ -356,12 +356,127 @@ void CDummyLRC::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("LRCId", TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty("Umin", Umin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Freq", Freq, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("p0", P.a0, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("p1", P.a1, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("p2", P.a2, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("q0", Q.a0, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("q1", Q.a1, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("q2", Q.a2, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("Umin", PQ[0].V, eVARUNITS::VARUNIT_PU);		// копировать в Q
+	Serializer->AddProperty("Freq", PQ[0].Freq, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("p0", PQ[0].a0, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("p1", PQ[0].a1, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("p2", PQ[0].a2, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("q0", PQ[1].a0, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("q1", PQ[1].a1, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("q2", PQ[1].a2, eVARUNITS::VARUNIT_PU);
+}
+
+
+void CDynaLRCContainer::CreateFromSerialized()
+{
+	struct DualLRC { std::array<LRCDATA,2> PQ; };
+	using LRCConstructmMap = std::map<ptrdiff_t, DualLRC>;
+	LRCConstructmMap constructMap;
+
+	// проходим по десериализованным СХН
+	for (auto&& dev : m_DevVec)
+	{
+		auto lrc = static_cast<CDummyLRC*>(dev);
+
+		// копируем V и Freq из P в Q, так как для Q отдельно не задавали
+		lrc->PQ[1].V = lrc->PQ[0].V;
+		lrc->PQ[1].Freq = lrc->PQ[0].Freq;
+
+		// собираем сегменты СХН в карту по идентификаторам
+		auto& pqFromId = constructMap[dev->GetId()].PQ;
+
+		// копируем непустые сериализованные СХН в настоящие СХН
+		for(ptrdiff_t x = 0 ; x < 2 ; x++)
+			if(!CDynaLRCContainer::IsLRCEmpty(lrc->PQ[x]))
+				pqFromId[x].push_back(CLRCData(lrc->PQ[x]));
+	}
+
+
+	// добавляем типовые и служебные СХН
+	// типовые СХН Rastr 1 и 2
+
+	bool bForceStandardLRC = true;
+
+	
+
+	auto clearPQ = [](DualLRC& dualLRC)
+	{
+		dualLRC.PQ[0].clear(); dualLRC.PQ[1].clear();
+	};
+
+	auto CheckUserLRC = [this,&constructMap](ptrdiff_t Id, bool bForceStandardLRC) -> bool
+	{
+		bool bInsert = true;
+		auto itLRC = constructMap.find(Id);
+		if (itLRC != constructMap.end())
+		{
+			this->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUserOverrideOfStandardLRC, Id));
+			if (bForceStandardLRC)
+				this->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUserLRCChangedToStandard, Id));
+			else
+				bInsert = false;
+		}
+		return bInsert;
+	};
+
+	if (CheckUserLRC(1, bForceStandardLRC))
+	{
+		auto& lrc = constructMap[2];
+		clearPQ(lrc);
+		lrc.PQ[0].push_back({ 0.0,		1.0,	0.83,		-0.3,		0.47 });
+		lrc.PQ[1].push_back({ 0.0,		1.0,	0.721,		0.15971,	0.0 });
+		lrc.PQ[1].push_back({ 0.815,	1.0,	3.7,		-7.0,		4.3 });
+		lrc.PQ[1].push_back({ 1.2,		1.0,	1.492,		0.0,		0.0 });
+	}
+
+	if (CheckUserLRC(2, bForceStandardLRC))
+	{
+		auto& lrc = constructMap[2];
+		clearPQ(lrc);
+		lrc.PQ[0].push_back({ 0.0,		1.0,	0.83,		-0.3,		0.47 });
+		lrc.PQ[1].push_back({ 0.0,		1.0,	0.657,		0.159135,	0.0 });
+		lrc.PQ[1].push_back({ 0.815,	1.0,	4.9,		-10.1,		6.2 });
+		lrc.PQ[1].push_back({ 1.2,		1.0,	1.708,		0.0,		0.0 });
+	}
+
+	if (CheckUserLRC(0, true))
+	{
+		auto& lrcShunt = constructMap[0];
+		clearPQ(lrcShunt);
+		lrcShunt.PQ[0].push_back({ 0.0, 1.0, 0.0, 0.0, 1.0 });
+		lrcShunt.PQ[1].push_back({ 0.0, 1.0, 0.0, 0.0, 1.0 });
+	}
+
+	if (CheckUserLRC(-1, true))
+	{
+		auto& lrcConstP = constructMap[-1];
+		clearPQ(lrcConstP);
+		lrcConstP.PQ[0].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
+		lrcConstP.PQ[1].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
+	}
+
+	auto SortLRC = [](const auto& lhs, const auto& rhs) { return lhs.V < rhs.V; };
+
+	for (auto&& lrc : constructMap)
+		for (auto&& pq : lrc.second.PQ)
+		{
+			// сортируем сегменты 
+			std::sort(pq.begin(), pq.end(), SortLRC);
+			// проверяем что СХН начинается с нуля
+			if (pq.size())
+			{
+				if (double& Vbeg = pq.front().V; Vbeg > 0.0)
+				{
+					Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCStartsNotFrom0, lrc.first, Vbeg));
+					Vbeg = 0.0;
+				}
+
+
+			}
+		}
+}
+
+bool CDynaLRCContainer::IsLRCEmpty(const LRCRawData& lrc)
+{
+	return Equal(lrc.a0, 0.0) && Equal(lrc.a1, 0.0) && Equal(lrc.a2, 0.0);
 }

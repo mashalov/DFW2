@@ -101,7 +101,7 @@ namespace DFW2
 		bool m_bSavedLowVoltage;		// сохраненный признак низкого напряжения для возврата на предыдущий шаг
 		double dLRCVicinity = 0.0;		// окрестность сглаживания СХН
 
-		ptrdiff_t LRCLoadLowId   = 0;	// идентифакторы СХН и ДСХН
+		ptrdiff_t LRCLoadLowId   = 0;	// идентификаторы СХН и ДСХН
 		ptrdiff_t LRCTransientId = 0;
 
 		double dLRCPn;					// расчетные значения прозводных СХН по напряжению
