@@ -1588,8 +1588,8 @@ void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty("uhom", Unom, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("bsh", B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddProperty("brk", Br0, eVARUNITS::VARUNIT_SIEMENS, -1.0);
-	// Serializer->AddProperty("LRCLFId", LRCLoadLowId);
-	// Serializer->AddProperty("LRCTransId", LRCTransientId);
+	Serializer->AddProperty("LRCLFId", LRCLoadFlowId);
+	Serializer->AddProperty("LRCTransId", LRCTransientId);
 	Serializer->AddState("Vre", Vre, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Vim", Vim, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("pgr", Vim, eVARUNITS::VARUNIT_MW);
@@ -1626,6 +1626,29 @@ VariableIndexRefVec& CDynaNodeBase::GetVariables(VariableIndexRefVec& ChildVec)
 VariableIndexRefVec& CDynaNode::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDynaNodeBase::GetVariables(JoinVariables({ Delta, Lag, S }, ChildVec));
+}
+
+
+
+void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
+{
+	static_cast<CDynaLRCContainer*>(&containerLRC)->CreateFromSerialized();
+
+	for (auto&& dev : m_DevVec)
+	{
+		auto pNode = static_cast<CDynaNode*>(dev);
+		if (pNode->LRCLoadFlowId > 0)
+		{
+			pNode->m_pLRCLF = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCLoadFlowId));
+			if (!pNode->m_pLRCLF)
+				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCLoadFlowId, pNode->GetVerbalName()));
+		}
+
+		pNode->m_pLRC = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCTransientId));
+		if (!pNode->m_pLRC)
+			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCLoadFlowId, pNode->GetVerbalName()));
+			
+	}
 }
 
 const char* CDynaNodeBase::m_cszV = "V";

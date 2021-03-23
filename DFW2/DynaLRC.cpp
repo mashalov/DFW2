@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaLRC.h"
+#include "DynaModel.h"
 #include <fstream>
 
 using namespace DFW2;
@@ -369,9 +370,19 @@ void CDummyLRC::UpdateSerializer(SerializerPtr& Serializer)
 
 void CDynaLRCContainer::CreateFromSerialized()
 {
-	struct DualLRC { std::array<LRCDATA,2> PQ; };
+	double Vmin = GetModel()->GetLRCToShuntVmin();
+
+	struct DualLRC { std::array<std::list<CLRCData>,2> PQ; };
 	using LRCConstructmMap = std::map<ptrdiff_t, DualLRC>;
+
 	LRCConstructmMap constructMap;
+
+
+	if (Vmin <= 0.0)
+	{
+		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCVminChanged, Vmin, 0.5));
+		Vmin = 0.5;
+	}
 
 	// проходим по десериализованным СХН
 	for (auto&& dev : m_DevVec)
@@ -395,10 +406,9 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// добавляем типовые и служебные СХН
 	// типовые СХН Rastr 1 и 2
 
-	bool bForceStandardLRC = true;
-
+	bool bForceStandardLRC = !GetModel()->AllowUserToOverrideStandardLRC();
 	
-
+	// удаляем все сегменты по p и q
 	auto clearPQ = [](DualLRC& dualLRC)
 	{
 		dualLRC.PQ[0].clear(); dualLRC.PQ[1].clear();
@@ -410,7 +420,9 @@ void CDynaLRCContainer::CreateFromSerialized()
 		auto itLRC = constructMap.find(Id);
 		if (itLRC != constructMap.end())
 		{
+			// если СХН с данным Id есть сообщаем что она уже существует
 			this->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUserOverrideOfStandardLRC, Id));
+			// и если задан флаг - разрешаем заменить на новую
 			if (bForceStandardLRC)
 				this->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUserLRCChangedToStandard, Id));
 			else
@@ -419,9 +431,10 @@ void CDynaLRCContainer::CreateFromSerialized()
 		return bInsert;
 	};
 
+	// проверяем и добавляем/заменяем стандартные СХН
 	if (CheckUserLRC(1, bForceStandardLRC))
 	{
-		auto& lrc = constructMap[2];
+		auto& lrc = constructMap[1];
 		clearPQ(lrc);
 		lrc.PQ[0].push_back({ 0.0,		1.0,	0.83,		-0.3,		0.47 });
 		lrc.PQ[1].push_back({ 0.0,		1.0,	0.721,		0.15971,	0.0 });
@@ -439,6 +452,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 		lrc.PQ[1].push_back({ 1.2,		1.0,	1.708,		0.0,		0.0 });
 	}
 
+	// СХН на шунт для динамики
 	if (CheckUserLRC(0, true))
 	{
 		auto& lrcShunt = constructMap[0];
@@ -447,6 +461,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 		lrcShunt.PQ[1].push_back({ 0.0, 1.0, 0.0, 0.0, 1.0 });
 	}
 
+	// СХН на постоянную мощность для УР
 	if (CheckUserLRC(-1, true))
 	{
 		auto& lrcConstP = constructMap[-1];
@@ -461,22 +476,97 @@ void CDynaLRCContainer::CreateFromSerialized()
 		for (auto&& pq : lrc.second.PQ)
 		{
 			// сортируем сегменты 
-			std::sort(pq.begin(), pq.end(), SortLRC);
-			// проверяем что СХН начинается с нуля
+			pq.sort(SortLRC);
 			if (pq.size())
 			{
+				// проверяем что СХН начинается с нуля
 				if (double& Vbeg = pq.front().V; Vbeg > 0.0)
 				{
 					Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCStartsNotFrom0, lrc.first, Vbeg));
 					Vbeg = 0.0;
 				}
 
+				// проверяем наличие сегментов с одинаковым напряжением
+				auto it = pq.begin();
+				while (it != pq.end())
+				{
+					auto nextIt = std::next(it);
 
+					if (nextIt != pq.end() && Equal(it->V, nextIt->V)) 
+					{
+
+						if(CDynaLRCContainer::CompareLRCs(*it,*nextIt))
+							Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszAmbigousLRCSegment, 
+								lrc.first, 
+								it->V, 
+								it->a0, 
+								it->a1,
+								it->a2));
+						// если нашли сегменты с одинаковым напряжением - убираем второй по счету
+						nextIt = pq.erase(nextIt);
+					}
+
+					it = nextIt;
+				}
+
+				// вставляем сегмент от 0 до Vmin
+
+				// ищем последний сегмент в отсортированном списке с напряжением меньше минимального
+				auto rit = std::find_if(pq.rbegin(), pq.rend(), [&Vmin](const CLRCData& lrc) { return lrc.V < Vmin; });
+				if (rit != pq.rend())
+				{
+					// если нашли получаем значение при Vmin
+					double LRCatV = rit->Get(Vmin);
+					// ставим найденному сегменту Vmin (обрезаем СХН до Vmin)
+					rit->V = Vmin;
+					// удаляем все сегменты до Vmin
+					auto revRit = std::prev(rit.base());
+					
+					pq.erase(pq.begin(), revRit);
+					// добавляем шунтовой сегмент от нуля до Vmin в точку предыдущего сегмента
+					pq.insert(pq.begin(), { 0.0,	1.0,	0.0,	0.0,	LRCatV / Vmin / Vmin } );
+				}
+
+				// удаляем из СХН сегменты с одинаковыми коэффициентами
+				it = pq.begin();
+				while (it != pq.end())
+				{
+					auto nextIt = std::next(it);
+					if (nextIt != pq.end() && CDynaLRCContainer::CompareLRCs(*it, *nextIt))
+						nextIt = pq.erase(nextIt);
+					it = nextIt;
+				}
 			}
 		}
+	// все собрали и обработали в constructMap
+	// теперь создаем настоящие СХН
+
+	CDynaLRC* pLRC = CreateDevices<CDynaLRC>(constructMap.size());
+
+	for (auto&& lrc : constructMap)
+	{
+		std::copy(lrc.second.PQ[0].begin(), lrc.second.PQ[0].end(), std::back_inserter(pLRC->P));
+		std::copy(lrc.second.PQ[1].begin(), lrc.second.PQ[1].end(), std::back_inserter(pLRC->Q));
+		pLRC->SetId(lrc.first);
+
+		/*
+		std::cout << pLRC->GetId() << std::endl;
+		for (const auto& l : pLRC->P)
+			std::cout << "P " << l.V << " " << l.a0 << " " << l.a1 << " " << l.a2 << std::endl;
+		for (const auto& l : pLRC->Q)
+			std::cout << "Q " << l.V << " " << l.a0 << " " << l.a1 << " " << l.a2 << std::endl;
+		*/
+
+		pLRC++;
+	}
 }
 
 bool CDynaLRCContainer::IsLRCEmpty(const LRCRawData& lrc)
 {
 	return Equal(lrc.a0, 0.0) && Equal(lrc.a1, 0.0) && Equal(lrc.a2, 0.0);
+}
+
+bool CDynaLRCContainer::CompareLRCs(const LRCRawData& lhs, const LRCRawData& rhs)
+{
+	return Equal(lhs.a0, rhs.a0) && Equal(lhs.a1, rhs.a1) && Equal(lhs.a2, rhs.a2);
 }

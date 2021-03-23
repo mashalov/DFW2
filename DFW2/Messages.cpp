@@ -136,5 +136,7 @@ const char* CDFW2Messages::m_cszLFError = "Ошибка при расчете У
 const char* CDFW2Messages::m_cszCannotChangePermanentDeviceState = "Невозможно изменить состояние устройства \"{}\"";
 const char* CDFW2Messages::m_cszWrongUnom = "Недопустимое значение номинального напряжения \"{}\" Uном = {}";
 const char* CDFW2Messages::m_cszWrongSourceData = "Обнаружена неустранимая ошибка в исходных данных";
-const char* CDFW2Messages::m_cszUserLRCChangedToStandard = "СХН № {}, заданная пользователем, заменена на стандартную";
+const char* CDFW2Messages::m_cszUserLRCChangedToStandard = "СХН № {}, заданная пользователем, заменена на стандартную в соответствии с заданным параметром расчета";
 const char* CDFW2Messages::m_cszUserOverrideOfStandardLRC = "СХН с номером {} является стандартной, но задана пользователем";
+const char* CDFW2Messages::m_cszLRCVminChanged = "Значение Vmin={} недопустимо для обработки СХН. Значение изменено на {}";
+const char* CDFW2Messages::m_cszLRCIdNotFound = "СХН {} не найдена для узла {}";

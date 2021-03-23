@@ -214,7 +214,7 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel);					// проверить zerocrossing и вернуть долю текущего шага до zerocrossing
 		CDevice *GetZeroCrossingDevice();
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
-		CDynaModel* GetModel() { return m_pDynaModel;  }
+		CDynaModel* GetModel();
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
 		void ResetStack();

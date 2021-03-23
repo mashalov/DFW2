@@ -419,6 +419,7 @@ namespace DFW2
 			double m_dZeroBranchImpedance = 0.1;
 			double m_dAdamsDampingAlpha = 0.05;
 			ptrdiff_t m_nAdamsDampingSteps = 10;
+			bool m_bAllowUserOverrideStandardLRC = false;
 			Parameters() { }
 			void UpdateSerializer(SerializerPtr& Serializer)
 			{
@@ -445,6 +446,7 @@ namespace DFW2
 				Serializer->AddProperty("ZeroBranchImpedance", m_dZeroBranchImpedance, eVARUNITS::VARUNIT_OHM);
 				Serializer->AddProperty("AdamsDampingAlpha", m_dAdamsDampingAlpha);
 				Serializer->AddProperty("AdamsDampingSteps", m_nAdamsDampingSteps);
+				Serializer->AddProperty("AllowUserOverrideStandardLRC", m_bAllowUserOverrideStandardLRC);
 			}
 		} 
 			m_Parameters;
@@ -717,6 +719,11 @@ namespace DFW2
 		double GetLRCToShuntVmin() const
 		{
 			return (std::min)(m_Parameters.m_dLRCToShuntVmin,1.0);
+		}
+
+		bool AllowUserToOverrideStandardLRC()
+		{
+			return m_Parameters.m_bAllowUserOverrideStandardLRC;
 		}
 
 		bool ConsiderDampingEquation() const

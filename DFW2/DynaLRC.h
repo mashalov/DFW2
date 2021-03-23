@@ -74,6 +74,7 @@ namespace DFW2
 	{
 	protected:
 		static bool IsLRCEmpty(const LRCRawData& lrc);
+		static bool CompareLRCs(const LRCRawData& lhs, const LRCRawData& rhs);
 	public:
 		using CDeviceContainer::CDeviceContainer;
 		virtual ~CDynaLRCContainer() {}

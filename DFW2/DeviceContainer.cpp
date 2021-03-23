@@ -811,6 +811,10 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 	return nRet;
 }
 
+CDynaModel* CDeviceContainer::GetModel() 
+{ 
+	return m_pDynaModel; 
+}
 
 bool  CDeviceContainer::HasAlias(std::string_view Alias)
 {

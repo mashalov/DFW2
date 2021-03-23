@@ -389,101 +389,15 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 
 
-	CDynaLRCContainer lrc(&Network);
-	CDynaLRC::DeviceProperties(lrc.m_ContainerProps);
 
 	m_rastrSynonyms.GetTable("polin")
 		.AddFieldSynonyms("LRCId", "nsx")
 		.AddFieldSynonyms("Umin", "umin")
 		.AddFieldSynonyms("Freq", "frec");
 
-	ReadTable("polin", lrc);
-
-	lrc.CreateFromSerialized();
-
-
-
-	
-	ITablePtr spLRC = spTables->Item(L"polin");
-	IColsPtr spLRCCols = spLRC->Cols;
-
-	IColPtr spLCLCId = spLRCCols->Item(L"nsx");
-	IColPtr spP0 = spLRCCols->Item(L"p0");
-	IColPtr spP1 = spLRCCols->Item(L"p1");
-	IColPtr spP2 = spLRCCols->Item(L"p2");
-	IColPtr spP3 = spLRCCols->Item(L"p3");
-	IColPtr spP4 = spLRCCols->Item(L"p4");
-
-	IColPtr spQ0 = spLRCCols->Item(L"q0");
-	IColPtr spQ1 = spLRCCols->Item(L"q1");
-	IColPtr spQ2 = spLRCCols->Item(L"q2");
-	IColPtr spQ3 = spLRCCols->Item(L"q3");
-	IColPtr spQ4 = spLRCCols->Item(L"q4");
-
-	IColPtr spLCUmin = spLRCCols->Item(L"umin");
-	IColPtr spLCFreq = spLRCCols->Item(L"frec");
-
-	DBSLC *pLRCBuffer = new DBSLC[spLRC->GetSize()];
-	for (int i = 0; i < spLRC->GetSize(); i++)
-	{
-		DBSLC *pSLC = pLRCBuffer + i;
-		pSLC->m_Id = spLCLCId->GetZ(i).lVal;
-		pSLC->Vmin = spLCUmin->GetZ(i).dblVal;
-		pSLC->P0 = spP0->GetZ(i).dblVal;
-		pSLC->P1 = spP1->GetZ(i).dblVal;
-		pSLC->P2 = spP2->GetZ(i).dblVal;
-		pSLC->Q0 = spQ0->GetZ(i).dblVal;
-		pSLC->Q1 = spQ1->GetZ(i).dblVal;
-		pSLC->Q2 = spQ2->GetZ(i).dblVal;
-	}
-
-	CreateLRCFromDBSLCS(Network, pLRCBuffer, spLRC->GetSize());
-	delete [] pLRCBuffer;
-		
-	ITablePtr spNode = spTables->Item("node");
-	IColsPtr spNodeCols = spNode->Cols;
-
-	//CDynaNode *pNodes = new CDynaNode[spNode->Size];
-
-	IColPtr spLCIdLF = spNodeCols->Item("nsx");
-	IColPtr spLCId = spNodeCols->Item("dnsx");
-
-	Network.Nodes.CreateDevices(spNode->Size);
-
 	m_rastrSynonyms.GetTable("node")
 		.AddFieldSynonyms("LRCLFId", "nsx")
 		.AddFieldSynonyms("LRCTransId", "dnsx");
-
-	auto pNodes = Network.Nodes.begin();
-	auto pSerializer = (*pNodes)->GetSerializer();
-
-	for (auto&& sv : *pSerializer)
-		if(!sv.second->bState)
-			sv.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spNodeCols->Item(sv.first.c_str()));
-
-	for (int i = 0; i < spNode->Size; i++)
-	{
-		(*pNodes)->UpdateSerializer(pSerializer);
-		ReadRastrRow(pSerializer, i);
-		CDynaLRC *pDynLRC;
-		if (Network.LRCs.GetDevice(spLCId->GetZ(i), pDynLRC))
-		{
-			static_cast<CDynaNode*>(*pNodes)->m_pLRC = pDynLRC;
-			//if (!LcId && pNodes->V > 0.0)
-			//	pNodes->m_dLRCKdef = (pNodes->Unom * pNodes->Unom / pNodes->V / pNodes->V);
-		}
-
-		ptrdiff_t nLRCLF = spLCIdLF->GetZ(i);
-		if (nLRCLF > 0)
-		{
-			if (Network.LRCs.GetDevice(nLRCLF, pDynLRC))
-				static_cast<CDynaNode*>(*pNodes)->m_pLRCLF = pDynLRC;
-		}
-		pNodes++;
-	}
-
-	
-	ReadTable("vetv", Network.Branches);
 
 	m_rastrSynonyms.GetTable("Generator")
 		.AddFieldSynonyms("Kgen", "NumBrand")
@@ -491,6 +405,10 @@ void CRastrImport::GetData(CDynaModel& Network)
 		.AddFieldSynonyms("cosPhinom", "cosFi")
 		.AddFieldSynonyms("Unom", "Ugnom");
 
+
+	ReadTable("polin", Network.LRCs);
+	ReadTable("node", Network.Nodes);
+	ReadTable("vetv", Network.Branches);
 	ReadTable("Generator", Network.GeneratorsInfBus, "ModelType=2");
 	ReadTable("Generator", Network.GeneratorsMotion, "ModelType=3");
 	ReadTable("Generator", Network.Generators1C, "ModelType=4");
@@ -499,236 +417,10 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable("Exciter", Network.ExcitersMustang);
 	ReadTable("Forcer", Network.DECsMustang);
 	ReadTable("ExcControl", Network.ExcConMustang);
+
+	Network.Nodes.LinkToLRCs(Network.LRCs);
 }
 
-bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount)
-{
-	bool bRes = true;
-	CSLCLoader slcloader;
-	SLCSITERATOR slit;
-
-	double Vmin = Network.GetLRCToShuntVmin();
-
-	for (ptrdiff_t i = 0; i < nLRCCount; i++)
-	{
-		DBSLC *pSLC = pLRCBuffer + i;
-		if (pSLC->m_Id == 1 || pSLC->m_Id == 2)
-		{
-			Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRC1And2Reserved,pSLC->m_Id));
-			continue;
-		}
-
-		slit = slcloader.find(pSLC->m_Id);
-		if (slit == slcloader.end())
-			slit = slcloader.insert(std::make_pair(pSLC->m_Id, new CStorageSLC())).first;
-
-		CSLCPolynom P(pSLC->Vmin, pSLC->P0, pSLC->P1, pSLC->P2);
-		CSLCPolynom Q(pSLC->Vmin, pSLC->Q0, pSLC->Q1, pSLC->Q2);
-
-		if (!P.IsEmpty())
-			slit->second->P.push_back(P);
-		if (!Q.IsEmpty())
-			slit->second->Q.push_back(Q);
-	}
-
-	for (slit = slcloader.begin(); slit != slcloader.end();)
-	{
-		if (!slit->second->P.size() && !slit->second->Q.size())
-		{
-			delete slit->second;
-			slcloader.erase(slit++);
-		}
-		else
-			slit++;
-	}
-
-	SLCPOLYITR  itpoly;
-
-	for (slit = slcloader.begin(); slit != slcloader.end(); slit++)
-	{
-		for (int pq = 0; pq < 2; pq++)
-		{
-			SLCPOLY& poly = pq ? slit->second->Q : slit->second->P;
-
-			poly.sort();
-
-			if (poly.size())
-			{
-				double Vbeg = poly.front().m_kV;
-				if (Vbeg > 0.0)
-				{
-					Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCStartsNotFrom0, slit->first, Vbeg));
-					poly.front().m_kV = 0.0;
-				}
-			}
-
-			itpoly = poly.begin();
-			bool bAmbiguityWarned = false;
-			while (itpoly != poly.end())
-			{
-				SLCPOLYITR itpolyNext = itpoly;
-				itpolyNext++;
-				if (itpolyNext != poly.end())
-				{
-					if (Equal(itpoly->m_kV, itpolyNext->m_kV))
-					{
-						if (!bAmbiguityWarned)
-						{
-							if (!itpoly->CompareWith(*itpolyNext))
-							{
-								Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszAmbigousLRCSegment, slit->first, 
-																													    itpoly->m_kV, 
-																														itpoly->m_k0,
-																														itpoly->m_k1, 
-																														itpoly->m_k2));
-								bAmbiguityWarned = true;
-							}
-						}
-						poly.erase(itpolyNext);
-					}
-					itpoly++;
-				}
-				else
-					break;
-			}
-		}
-	}
-
-	// типовые СХН Rastr 1 и 2
-	if (slcloader.find(1) == slcloader.end())
-	{
-		slit = slcloader.insert(std::make_pair(1, new CStorageSLC())).first;
-		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
-		slit->second->Q.push_back(CSLCPolynom(0.0, 0.721, 0.15971, 0.0));
-		slit->second->Q.push_back(CSLCPolynom(0.815, 3.7, -7.0, 4.3));
-		slit->second->Q.push_back(CSLCPolynom(1.2, 1.492, 0.0, 0.0));
-	}
-	if (slcloader.find(2) == slcloader.end())
-	{
-		slit = slcloader.insert(std::make_pair(2, new CStorageSLC())).first;
-		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
-		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.159135, 0.0));
-		slit->second->Q.push_back(CSLCPolynom(0.815, 4.9, -10.1, 6.2));
-		slit->second->Q.push_back(CSLCPolynom(1.2, 1.708, 0.0, 0.0));
-	}
-
-	// СХН шунт с Id=0
-	slit = slcloader.insert(std::make_pair(0, new CStorageSLC())).first;
-	slit->second->P.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
-	slit->second->Q.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
-
-	// СХН с постоянной мощностью с Id=-1
-	slit = slcloader.insert(std::make_pair(-1, new CStorageSLC())).first;
-	slit->second->P.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
-	slit->second->Q.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
-
-	// insert shunt LRC
-	for (slit = slcloader.begin(); slit != slcloader.end(); slit++)
-	{
-		bRes = bRes && slit->second->P.InsertLRCToShuntVmin(Vmin);
-		bRes = bRes && slit->second->Q.InsertLRCToShuntVmin(Vmin);
-	}
-	
-	if (bRes)
-	{
-		// переписываем СХН из загрузчика в котейнер СХН
-
-		CDynaLRC* pLRCs = Network.LRCs.CreateDevices<CDynaLRC>(slcloader.size());
-		CDynaLRC* pLRC(pLRCs);
-
-		for (slit = slcloader.begin(); slit != slcloader.end(); slit++, pLRC++)
-		{
-			pLRC->SetId(slit->first);
-			pLRC->SetNpcs(slit->second->P.size(), slit->second->Q.size());
-
-			CLRCData *pData = &pLRC->P[0];
-
-			for (auto&& itpoly : slit->second->P)
-			{
-				pData->V	=	itpoly.m_kV;
-				pData->a0   =	itpoly.m_k0;
-				pData->a1	=	itpoly.m_k1;
-				pData->a2	=	itpoly.m_k2;
-				pData++;
-			}
-
-			pData = &pLRC->Q[0];
-
-			for (auto&& itpoly : slit->second->Q)
-			{
-				pData->V	=	itpoly.m_kV;
-				pData->a0	=	itpoly.m_k0;
-				pData->a1	=	itpoly.m_k1;
-				pData->a2	=	itpoly.m_k2;
-				pData++;
-			}
-		}
-	}
-	return bRes;
-}
-
-// вставляет в СХН сегмент шунта от нуля до Vmin
-bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
-{
-	bool bRes = true;
-	if (Vmin > 0.0)
-	{
-		// сортируем сегменты по напряжению
-		sort();
-		double LrcV = 0.0;
-		bool bInsert = false;
-
-		// обходим сегменты справа, для первого найденного с напряжением
-		// меньше чем Vmin считаем мощность по этом сегменту от Vmin
-		// и меняем ему напряжение на Vmin
-		for (SLCPOLYRITR itrpoly = rbegin(); itrpoly != rend(); itrpoly++)
-		{
-			if (itrpoly->m_kV < Vmin)
-			{
-				LrcV = itrpoly->m_k0 + Vmin * itrpoly->m_k1 + Vmin * Vmin * itrpoly->m_k2;
-				itrpoly->m_kV = Vmin;
-				bInsert = true;
-				break;
-			}
-		}
-		if (bInsert)
-		{
-			// если нашли сегмент для Vmin удаляем все сегменты
-			// с напряжением меньше чем Vmin
-			while (size())
-			{
-				SLCPOLYITR itpoly = begin();
-				if (itpoly->m_kV < Vmin)
-					erase(itpoly);
-				else
-					break;
-			}
-			// вставляем новый сегмент шунта от нуля
-			insert(begin(),CSLCPolynom(0.0, 0.0, 0.0, LrcV / Vmin / Vmin));
-		}
-
-		// снова сортируем по напряжению
-		sort();
-		SLCPOLYITR itpoly = begin();
-
-		// ищем последовательные сегменты с одинаковыми коэффициентами
-		// и удаляем их как изыбыточные
-		while(itpoly != end())
-		{
-			SLCPOLYITR itpolyNext = itpoly;
-			itpolyNext++;
-			if (itpolyNext != end())
-			{
-				if (itpoly->CompareWith(*itpolyNext))
-					erase(itpolyNext);
-				itpoly++;
-			}
-			else
-				break;
-		}
-	}
-	return bRes;
-}
 
 CDynaNodeBase::eLFNodeType CRastrImport::NodeTypeFromRastr(long RastrType)
 {
@@ -739,12 +431,13 @@ CDynaNodeBase::eLFNodeType CRastrImport::NodeTypeFromRastr(long RastrType)
 	return CDynaNodeBase::eLFNodeType::LFNT_PQ;
 }
 
-const CDynaNodeBase::eLFNodeType CRastrImport::RastrTypesMap[5] = {   CDynaNodeBase::eLFNodeType::LFNT_BASE, 
-																	  CDynaNodeBase::eLFNodeType::LFNT_PQ, 
-																	  CDynaNodeBase::eLFNodeType::LFNT_PV, 
-																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMAX, 
-																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMIN 
-															      };
+const CDynaNodeBase::eLFNodeType CRastrImport::RastrTypesMap[5] = { CDynaNodeBase::eLFNodeType::LFNT_BASE,
+																	  CDynaNodeBase::eLFNodeType::LFNT_PQ,
+																	  CDynaNodeBase::eLFNodeType::LFNT_PV,
+																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMAX,
+																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMIN
+};
+
 
 
 /*
@@ -933,3 +626,326 @@ ITablePtr spGen = spTables->Item("Generator");
 		}
 	}
 */
+
+
+/*
+
+ITablePtr spLRC = spTables->Item(L"polin");
+IColsPtr spLRCCols = spLRC->Cols;
+
+IColPtr spLCLCId = spLRCCols->Item(L"nsx");
+IColPtr spP0 = spLRCCols->Item(L"p0");
+IColPtr spP1 = spLRCCols->Item(L"p1");
+IColPtr spP2 = spLRCCols->Item(L"p2");
+IColPtr spP3 = spLRCCols->Item(L"p3");
+IColPtr spP4 = spLRCCols->Item(L"p4");
+
+IColPtr spQ0 = spLRCCols->Item(L"q0");
+IColPtr spQ1 = spLRCCols->Item(L"q1");
+IColPtr spQ2 = spLRCCols->Item(L"q2");
+IColPtr spQ3 = spLRCCols->Item(L"q3");
+IColPtr spQ4 = spLRCCols->Item(L"q4");
+
+IColPtr spLCUmin = spLRCCols->Item(L"umin");
+IColPtr spLCFreq = spLRCCols->Item(L"frec");
+
+DBSLC *pLRCBuffer = new DBSLC[spLRC->GetSize()];
+for (int i = 0; i < spLRC->GetSize(); i++)
+{
+	DBSLC *pSLC = pLRCBuffer + i;
+	pSLC->m_Id = spLCLCId->GetZ(i).lVal;
+	pSLC->Vmin = spLCUmin->GetZ(i).dblVal;
+	pSLC->P0 = spP0->GetZ(i).dblVal;
+	pSLC->P1 = spP1->GetZ(i).dblVal;
+	pSLC->P2 = spP2->GetZ(i).dblVal;
+	pSLC->Q0 = spQ0->GetZ(i).dblVal;
+	pSLC->Q1 = spQ1->GetZ(i).dblVal;
+	pSLC->Q2 = spQ2->GetZ(i).dblVal;
+}
+
+CreateLRCFromDBSLCS(Network, pLRCBuffer, spLRC->GetSize());
+delete [] pLRCBuffer;
+
+ITablePtr spNode = spTables->Item("node");
+IColsPtr spNodeCols = spNode->Cols;
+
+//CDynaNode *pNodes = new CDynaNode[spNode->Size];
+
+IColPtr spLCIdLF = spNodeCols->Item("nsx");
+IColPtr spLCId = spNodeCols->Item("dnsx");
+
+Network.Nodes.CreateDevices(spNode->Size);
+
+
+
+
+auto pNodes = Network.Nodes.begin();
+auto pSerializer = (*pNodes)->GetSerializer();
+
+for (auto&& sv : *pSerializer)
+	if(!sv.second->bState)
+		sv.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spNodeCols->Item(sv.first.c_str()));
+
+for (int i = 0; i < spNode->Size; i++)
+{
+	(*pNodes)->UpdateSerializer(pSerializer);
+	ReadRastrRow(pSerializer, i);
+	CDynaLRC *pDynLRC;
+	if (Network.LRCs.GetDevice(spLCId->GetZ(i), pDynLRC))
+	{
+		static_cast<CDynaNode*>(*pNodes)->m_pLRC = pDynLRC;
+		//if (!LcId && pNodes->V > 0.0)
+		//	pNodes->m_dLRCKdef = (pNodes->Unom * pNodes->Unom / pNodes->V / pNodes->V);
+	}
+
+	ptrdiff_t nLRCLF = spLCIdLF->GetZ(i);
+	if (nLRCLF > 0)
+	{
+		if (Network.LRCs.GetDevice(nLRCLF, pDynLRC))
+			static_cast<CDynaNode*>(*pNodes)->m_pLRCLF = pDynLRC;
+	}
+	pNodes++;
+}
+
+*/
+
+/*
+bool CRastrImport::CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount)
+{
+	bool bRes = true;
+	CSLCLoader slcloader;
+	SLCSITERATOR slit;
+
+	double Vmin = Network.GetLRCToShuntVmin();
+
+	for (ptrdiff_t i = 0; i < nLRCCount; i++)
+	{
+		DBSLC *pSLC = pLRCBuffer + i;
+		if (pSLC->m_Id == 1 || pSLC->m_Id == 2)
+		{
+			Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRC1And2Reserved,pSLC->m_Id));
+			continue;
+		}
+
+		slit = slcloader.find(pSLC->m_Id);
+		if (slit == slcloader.end())
+			slit = slcloader.insert(std::make_pair(pSLC->m_Id, new CStorageSLC())).first;
+
+		CSLCPolynom P(pSLC->Vmin, pSLC->P0, pSLC->P1, pSLC->P2);
+		CSLCPolynom Q(pSLC->Vmin, pSLC->Q0, pSLC->Q1, pSLC->Q2);
+
+		if (!P.IsEmpty())
+			slit->second->P.push_back(P);
+		if (!Q.IsEmpty())
+			slit->second->Q.push_back(Q);
+	}
+
+	for (slit = slcloader.begin(); slit != slcloader.end();)
+	{
+		if (!slit->second->P.size() && !slit->second->Q.size())
+		{
+			delete slit->second;
+			slcloader.erase(slit++);
+		}
+		else
+			slit++;
+	}
+
+	SLCPOLYITR  itpoly;
+
+	for (slit = slcloader.begin(); slit != slcloader.end(); slit++)
+	{
+		for (int pq = 0; pq < 2; pq++)
+		{
+			SLCPOLY& poly = pq ? slit->second->Q : slit->second->P;
+
+			poly.sort();
+
+			if (poly.size())
+			{
+				double Vbeg = poly.front().m_kV;
+				if (Vbeg > 0.0)
+				{
+					Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCStartsNotFrom0, slit->first, Vbeg));
+					poly.front().m_kV = 0.0;
+				}
+			}
+
+			itpoly = poly.begin();
+			bool bAmbiguityWarned = false;
+			while (itpoly != poly.end())
+			{
+				SLCPOLYITR itpolyNext = itpoly;
+				itpolyNext++;
+				if (itpolyNext != poly.end())
+				{
+					if (Equal(itpoly->m_kV, itpolyNext->m_kV))
+					{
+						if (!bAmbiguityWarned)
+						{
+							if (!itpoly->CompareWith(*itpolyNext))
+							{
+								Network.Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszAmbigousLRCSegment, slit->first,
+																														itpoly->m_kV,
+																														itpoly->m_k0,
+																														itpoly->m_k1,
+																														itpoly->m_k2));
+								bAmbiguityWarned = true;
+							}
+						}
+						poly.erase(itpolyNext);
+					}
+					itpoly++;
+				}
+				else
+					break;
+			}
+		}
+	}
+
+	// типовые СХН Rastr 1 и 2
+	if (slcloader.find(1) == slcloader.end())
+	{
+		slit = slcloader.insert(std::make_pair(1, new CStorageSLC())).first;
+		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
+		slit->second->Q.push_back(CSLCPolynom(0.0, 0.721, 0.15971, 0.0));
+		slit->second->Q.push_back(CSLCPolynom(0.815, 3.7, -7.0, 4.3));
+		slit->second->Q.push_back(CSLCPolynom(1.2, 1.492, 0.0, 0.0));
+	}
+	if (slcloader.find(2) == slcloader.end())
+	{
+		slit = slcloader.insert(std::make_pair(2, new CStorageSLC())).first;
+		slit->second->P.push_back(CSLCPolynom(0.0, 0.83, -0.3, 0.47));
+		slit->second->Q.push_back(CSLCPolynom(0.0, 0.657, 0.159135, 0.0));
+		slit->second->Q.push_back(CSLCPolynom(0.815, 4.9, -10.1, 6.2));
+		slit->second->Q.push_back(CSLCPolynom(1.2, 1.708, 0.0, 0.0));
+	}
+
+	// СХН шунт с Id=0
+	slit = slcloader.insert(std::make_pair(0, new CStorageSLC())).first;
+	slit->second->P.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
+	slit->second->Q.push_back(CSLCPolynom(0.0, 0.0, 0.0, 1.0));
+
+	// СХН с постоянной мощностью с Id=-1
+	slit = slcloader.insert(std::make_pair(-1, new CStorageSLC())).first;
+	slit->second->P.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
+	slit->second->Q.push_back(CSLCPolynom(0.0, 1.0, 0.0, 0.0));
+
+	// insert shunt LRC
+	for (slit = slcloader.begin(); slit != slcloader.end(); slit++)
+	{
+		bRes = bRes && slit->second->P.InsertLRCToShuntVmin(Vmin);
+		bRes = bRes && slit->second->Q.InsertLRCToShuntVmin(Vmin);
+	}
+
+	if (bRes)
+	{
+		// переписываем СХН из загрузчика в котейнер СХН
+
+		CDynaLRC* pLRCs = Network.LRCs.CreateDevices<CDynaLRC>(slcloader.size());
+		CDynaLRC* pLRC(pLRCs);
+
+		for (slit = slcloader.begin(); slit != slcloader.end(); slit++, pLRC++)
+		{
+			pLRC->SetId(slit->first);
+			pLRC->SetNpcs(slit->second->P.size(), slit->second->Q.size());
+
+			CLRCData *pData = &pLRC->P[0];
+
+			std::cout << pLRC->GetId() << std::endl;
+
+			for (auto&& itpoly : slit->second->P)
+			{
+				pData->V	=	itpoly.m_kV;
+				pData->a0   =	itpoly.m_k0;
+				pData->a1	=	itpoly.m_k1;
+				pData->a2	=	itpoly.m_k2;
+
+				std::cout << "P " << pData->V << " " << pData->a0 << " " << pData->a1 << " " << pData->a2 << std::endl;
+
+				pData++;
+			}
+
+			pData = &pLRC->Q[0];
+
+			for (auto&& itpoly : slit->second->Q)
+			{
+				pData->V	=	itpoly.m_kV;
+				pData->a0	=	itpoly.m_k0;
+				pData->a1	=	itpoly.m_k1;
+				pData->a2	=	itpoly.m_k2;
+
+				std::cout << "Q " << pData->V << " " << pData->a0 << " " << pData->a1 << " " << pData->a2 << std::endl;
+
+				pData++;
+			}
+		}
+	}
+	return bRes;
+}
+
+// вставляет в СХН сегмент шунта от нуля до Vmin
+bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
+{
+	bool bRes = true;
+	if (Vmin > 0.0)
+	{
+		// сортируем сегменты по напряжению
+		sort();
+		double LrcV = 0.0;
+		bool bInsert = false;
+
+		// обходим сегменты справа, для первого найденного с напряжением
+		// меньше чем Vmin считаем мощность по этом сегменту от Vmin
+		// и меняем ему напряжение на Vmin
+		for (SLCPOLYRITR itrpoly = rbegin(); itrpoly != rend(); itrpoly++)
+		{
+			if (itrpoly->m_kV < Vmin)
+			{
+				LrcV = itrpoly->m_k0 + Vmin * itrpoly->m_k1 + Vmin * Vmin * itrpoly->m_k2;
+				itrpoly->m_kV = Vmin;
+				bInsert = true;
+				break;
+			}
+		}
+		if (bInsert)
+		{
+			// если нашли сегмент для Vmin удаляем все сегменты
+			// с напряжением меньше чем Vmin
+			while (size())
+			{
+				SLCPOLYITR itpoly = begin();
+				if (itpoly->m_kV < Vmin)
+					erase(itpoly);
+				else
+					break;
+			}
+			// вставляем новый сегмент шунта от нуля
+			insert(begin(),CSLCPolynom(0.0, 0.0, 0.0, LrcV / Vmin / Vmin));
+		}
+
+		// снова сортируем по напряжению
+		sort();
+		SLCPOLYITR itpoly = begin();
+
+		// ищем последовательные сегменты с одинаковыми коэффициентами
+		// и удаляем их как изыбыточные
+		while(itpoly != end())
+		{
+			SLCPOLYITR itpolyNext = itpoly;
+			itpolyNext++;
+			if (itpolyNext != end())
+			{
+				if (itpoly->CompareWith(*itpolyNext))
+					erase(itpolyNext);
+				itpoly++;
+			}
+			else
+				break;
+		}
+	}
+	return bRes;
+}
+
+
+																  */
