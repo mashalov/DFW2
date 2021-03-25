@@ -387,25 +387,49 @@ void CRastrImport::GetData(CDynaModel& Network)
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);
 
+	m_rastrSynonyms
+		.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameLRC, "polin")
+			.AddFieldSynonyms("LRCId", "nsx")
+			.AddFieldSynonyms("Umin", "umin")
+			.AddFieldSynonyms("Freq", "frec");
+
+
+	m_rastrSynonyms
+		.AddRastrSynonym("Node", "node")
+			.AddFieldSynonyms("LRCLFId", "nsx")
+			.AddFieldSynonyms("LRCTransId", "dnsx");
+
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameBranch, "vetv");
+	m_rastrSynonyms
+		.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorInfPower, "Generator")
+			.AddFieldSynonyms("Kgen", "NumBrand")
+			.AddFieldSynonyms("Kdemp", "Demp")
+			.AddFieldSynonyms("cosPhinom", "cosFi")
+			.AddFieldSynonyms("Unom", "Ugnom");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMotion, "Generator");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator1C, "Generator");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator3C, "Generator");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMustang, "Generator");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExciterMustang, "Exciter");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameDECMustang, "Forcer");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
+
+
+	ReadTable(Network.LRCs);
+	ReadTable(Network.Nodes);
+	ReadTable(Network.Branches);
+	ReadTable(Network.GeneratorsInfBus, "ModelType=2");
+	ReadTable(Network.GeneratorsMotion, "ModelType=3");
+	ReadTable(Network.Generators1C, "ModelType=4");
+	ReadTable(Network.Generators3C, "ModelType=5");
+	ReadTable(Network.GeneratorsMustang, "ModelType=6");
+	ReadTable(Network.ExcitersMustang);
+	ReadTable(Network.DECsMustang);
+	ReadTable(Network.ExcConMustang);
 
 
 
-	m_rastrSynonyms.GetTable("polin")
-		.AddFieldSynonyms("LRCId", "nsx")
-		.AddFieldSynonyms("Umin", "umin")
-		.AddFieldSynonyms("Freq", "frec");
-
-	m_rastrSynonyms.GetTable("node")
-		.AddFieldSynonyms("LRCLFId", "nsx")
-		.AddFieldSynonyms("LRCTransId", "dnsx");
-
-	m_rastrSynonyms.GetTable("Generator")
-		.AddFieldSynonyms("Kgen", "NumBrand")
-		.AddFieldSynonyms("Kdemp", "Demp")
-		.AddFieldSynonyms("cosPhinom", "cosFi")
-		.AddFieldSynonyms("Unom", "Ugnom");
-
-
+	/*
 	ReadTable("polin", Network.LRCs);
 	ReadTable("node", Network.Nodes);
 	ReadTable("vetv", Network.Branches);
@@ -417,6 +441,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable("Exciter", Network.ExcitersMustang);
 	ReadTable("Forcer", Network.DECsMustang);
 	ReadTable("ExcControl", Network.ExcConMustang);
+	*/
 }
 
 

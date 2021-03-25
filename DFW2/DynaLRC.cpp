@@ -399,7 +399,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 		// копируем непустые сериализованные СХН в настоящие СХН
 		for(ptrdiff_t x = 0 ; x < 2 ; x++)
 			if(!CDynaLRCContainer::IsLRCEmpty(lrc->PQ[x]))
-				pqFromId[x].push_back(CLRCData(lrc->PQ[x]));
+				pqFromId[x].push_back(CLRCData{ lrc->PQ[x] });
 	}
 
 
