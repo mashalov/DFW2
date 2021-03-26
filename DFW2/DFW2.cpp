@@ -35,7 +35,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_CrtSetBreakAlloc(31657);
 	//_CrtSetBreakAlloc(236965);
 	
-		_CrtSetBreakAlloc(101223);
+		//_CrtSetBreakAlloc(859880);
 
 	/*
 	GraphCycle<int, int> gc;
@@ -52,8 +52,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		try
 		{
 			//Network.DeSerialize("c:\\tmp\\serialization.json");
+			//Network.DeSerialize("c:\\tmp\\lf_rg2.json");
 			ri.GetData(Network);
-			Network.Run();
+			//Network.RunLoadFlow();
+			Network.RunTransient();
 		}
 		catch (_com_error& err)
 		{
@@ -63,6 +65,8 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
 		}
+
+		Network.Serialize("c:\\tmp\\lf.json");
 	}
 	_CrtDumpMemoryLeaks();
 

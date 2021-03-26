@@ -86,7 +86,7 @@ CDynaModel::~CDynaModel()
 	LogFile.close();
 }
 
-bool CDynaModel::Run()
+bool CDynaModel::RunTransient()
 {
 	bool bRes = true;
 #ifdef _WIN64
@@ -1794,4 +1794,20 @@ void CDynaModel::TurnOffDevicesByOffMasters()
 			}
 		}
 	}
+}
+
+
+bool CDynaModel::RunLoadFlow() 
+{
+	bool bRes(false);
+
+	m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
+
+	if (LRCs.Init(this) != eDEVICEFUNCTIONSTATUS::DFS_OK)
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+	if(!Link())
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+	TurnOffDevicesByOffMasters();
+	PrepareNetworkElements();
+	return LoadFlow();
 }

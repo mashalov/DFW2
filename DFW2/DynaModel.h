@@ -612,7 +612,8 @@ namespace DFW2
 
 		CDynaModel();
 		virtual ~CDynaModel();
-		bool Run();
+		bool RunTransient();
+		bool RunLoadFlow();
 
 		void InitDevices();
 		bool InitEquations();

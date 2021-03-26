@@ -73,7 +73,7 @@ namespace DFW2
         {
             if (!m_State && StackDepth == m_StackDepth && Key == m_Key)
             {
-                std::cout << Key << " state on" << std::endl;
+                //std::cout << Key << " state on" << std::endl;
                 m_State = true;
             }
 
@@ -85,7 +85,7 @@ namespace DFW2
         {
             if (m_State && StackDepth == m_StackDepth && Key == m_Key)
             {
-                std::cout << Key << " state off" << std::endl;
+                //std::cout << Key << " state off" << std::endl;
                 m_State = false;
             }
 
@@ -361,6 +361,9 @@ namespace DFW2
         }
 	};
 
+
+    // Сериализатор второго прохода, который реально читает данные в контейнеры
+
     using SerializerMap = std::map<std::string, SerializerPtr, std::less<> >;
     using SerializerMapItr = SerializerMap::iterator;
 
@@ -369,18 +372,24 @@ namespace DFW2
     protected:
         SerializerMap m_SerializerMap;
         SerializerMapItr itCurrentSerializer;
-        bool stateInDevice = false;
+        size_t nDevicesCount = 0; // количество устройств в контейнере
+        bool stateInDeviceArray = false; // флаг состояния "в векторе устройств"
         DEVICEVECTORITR itCurrentDevice;
         DEVICEVECTORITR itLastDevice;
 
         cplx complexValue;          // буфер для комплексного значения
         std::string complexName;    // имя для комплексного значения
 
+        CDeviceContainer* GetContainer();
+        void ContainerDoesNotFitJsonArray(CDeviceContainer* pContainer);
+
     public:
         JsonSaxSerializer() : itCurrentSerializer(m_SerializerMap.end())
         {
 
         }
+        // добавить в карту сериалиазтор контейнера, по имени которого и списку
+        // полей будет работать json-сериализатор
         void AddSerializer(const std::string_view& ClassName, SerializerPtr& serializer)
         {
             m_SerializerMap.insert(std::make_pair(ClassName, std::move(serializer)));
@@ -391,6 +400,9 @@ namespace DFW2
         template<typename T>
         void SerializerSetNamedValue(std::string_view Key, const T& value)
         {
+            if(itCurrentDevice == itLastDevice)
+                ContainerDoesNotFitJsonArray(GetContainer());
+
             auto DeSerialize = itCurrentSerializer->second->at(Key);
             if (DeSerialize)
                 DeSerialize->Set<const T&>(value);
@@ -426,7 +438,6 @@ namespace DFW2
             return JsonSaxDataObjects::number_unsigned(val);
         }
 
-
         bool number_float(number_float_t val, const string_t& s) override
         {
             SerializerSetValue(val);
@@ -440,6 +451,7 @@ namespace DFW2
         }
 
         bool start_array(std::size_t elements) override;
+        bool end_object() override;
 
         bool start_object(std::size_t elements) override
         {
@@ -454,9 +466,6 @@ namespace DFW2
             return true;
         }
 
-
-        bool end_object() override;
-
         bool end_array() override
         {
             JsonSaxWalkerBase::end_array();
@@ -464,8 +473,8 @@ namespace DFW2
             {
                 if (StackDepth() == 4)
                 {
-                    std::cout << "finished objects " << itCurrentSerializer->second->GetClassName() << std::endl;
-                    stateInDevice = false;
+                    //std::cout << "finished objects " << itCurrentSerializer->second->GetClassName() << std::endl;
+                    stateInDeviceArray = false;
                 }
             }
 
@@ -493,7 +502,6 @@ namespace DFW2
                     SerializerSetNamedValue<double>(Key, value);
             }
         }
-
     };
 
 	class CSerializerJson

@@ -122,6 +122,10 @@ void CDynaModel::PrepareNetworkElements()
 
 		pNode->G += pNode->Gr0 * pNode->Nr;
 		pNode->B += pNode->Br0 * pNode->Nr;
+		// после того как обновили значения G и B обнуляем количество реакторов,
+		// чтобы после сериализации мы получили итоговое G и при сериализации получили 
+		// правильное значение
+		pNode->Nr = 0;
 		pNode->Gshunt = pNode->Bshunt = 0.0;
 	}
 
@@ -141,7 +145,7 @@ void CDynaModel::PrepareNetworkElements()
 
 		}
 		// нулевой коэффициент трансформации заменяем на единичный
-		if (Equal(pBranch->Ktr, 0.0) || Equal(pBranch->Ktr, 0.0))
+		if (Equal(pBranch->Ktr, 0.0) || Equal(pBranch->Ktr, 1.0))
 		{
 			// если ветвь не трансформатор, схема замещения "П"
 			pBranch->Ktr = 1.0;
@@ -161,6 +165,9 @@ void CDynaModel::PrepareNetworkElements()
 		pBranch->GIq += pBranch->NrIq * pBranch->GrIq;
 		pBranch->BIp += pBranch->NrIp * pBranch->BrIp;
 		pBranch->BIq += pBranch->NrIq * pBranch->BrIq;
+
+		// также как и для узлов обнуляем количество реакторов
+		pBranch->NrIp = pBranch->NrIq = 0;
 	}
 
 	if (!bOk)

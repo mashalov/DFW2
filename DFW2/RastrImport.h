@@ -252,8 +252,14 @@ namespace DFW2
 				{
 					if (!serializervalue.second->bState)
 					{
-
 						auto synonyms = tableSynonyms.GetFieldSynonyms(serializervalue.first);
+
+						// в почти всех контейнерах и таблицах
+						// есть состояния, поэтому для всех
+						// вводим "глобальный" синоним
+						if (serializervalue.first == "state")
+							synonyms.insert("sta");
+
 						for (const auto& synonym : synonyms)
 						{
 							if (long index = spCols->GetFind(synonym.c_str()); index >= 0)

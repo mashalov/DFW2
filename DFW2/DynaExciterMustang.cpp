@@ -227,7 +227,7 @@ void CDynaExciterMustang::DeviceProperties(CDeviceContainerProperties& props)
 void CDynaExciterMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDynaExciterBase::UpdateSerializer(Serializer);
-	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
+	AddStateProperty(Serializer);
 	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("Texc", Texc, eVARUNITS::VARUNIT_SECONDS);

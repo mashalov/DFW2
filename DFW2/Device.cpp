@@ -1146,6 +1146,11 @@ void CDevice::UpdateSerializer(SerializerPtr& Serializer)
 		Serializer->BeginUpdate(this);	// если уже есть - начинаем обновление с данного устройства
 }
 
+void CDevice::AddStateProperty(SerializerPtr& Serializer)
+{
+	Serializer->AddProperty("state", TypedSerializedValue::eValueType::VT_STATE);
+}
+
 VariableIndexRefVec& CDevice::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return ChildVec;

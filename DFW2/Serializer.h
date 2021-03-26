@@ -159,16 +159,6 @@ namespace DFW2
 		// Возвращает тип в виде строки, "unknown" если для типа не найдено строкового описания
 		std::string_view GetTypeVerb() const;
 		static std::string_view GetTypeVerbByType(TypedSerializedValue::eValueType type);
-
-		template<typename T>
-		TypedSerializedValue* Set(T value);
-
-		void SetDouble(double value);
-		void SetBool(bool value);
-		void SetInt(ptrdiff_t value);
-		void SetComplex(const cplx& value);
-		void SetString(std::string_view value);
-				
 	protected:
 		void NoConversion(eValueType fromType);
 		CSerializerBase* m_pSerializer = nullptr;
@@ -267,6 +257,15 @@ namespace DFW2
 		MetaSerializedValue(CSerializerBase* pSerializer, TypedSerializedValue::eValueType Type) : TypedSerializedValue(pSerializer, Type) {}
 		std::unique_ptr<CSerializedValueAuxDataBase> pAux;	// адаптер для внешней базы данных
 		MetaSerializedValue* Update(TypedSerializedValue&& value);
+
+		void SetDouble(double value);
+		void SetBool(bool value);
+		void SetInt(ptrdiff_t value);
+		void SetComplex(const cplx& value);
+		void SetString(std::string_view value);
+
+		template<typename T>
+		MetaSerializedValue* Set(T value);
 	};
 
 	using SERIALIZERMAP  = std::map<std::string, MetaSerializedValue*, std::less<> >;

@@ -226,7 +226,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 void CDynaExcConMustang::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
+	AddStateProperty(Serializer);
 	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("Alpha", Alpha);

@@ -782,40 +782,48 @@ bool CLoadFlow::Run()
 	if (!pNodes)
 		throw dfw2error("CLoadFlow::Start - node container unavailable");
 
-	// вводим СХН УР и V0 = Unom
-	pNodes->SwitchLRCs(false);
-
-	Start();
-	Estimate();
-
-	if (m_Parameters.m_bStartup)
-		Seidell();
-
-	if (0)
+	try
 	{
-		NewtonTanh();
-		CheckFeasible();
-		for (auto&& it : *pNodes)
-			static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
-	}
+		// вводим СХН УР и V0 = Unom
+		pNodes->SwitchLRCs(false);
 
-	// если использовался стартовый метод, была коррекция 
-	// отрицательных сопротивлений, поэтому восстанавливаем
-	// исходные сопротивления
-	if (m_Parameters.m_bStartup)
-		pNodes->CalculateSuperNodesAdmittances(false);
+		Start();
+		Estimate();
 
-	Newton();
+		if (m_Parameters.m_bStartup)
+			Seidell();
+
+		if (0)
+		{
+			NewtonTanh();
+			CheckFeasible();
+			for (auto&& it : *pNodes)
+				static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
+		}
+
+		// если использовался стартовый метод, была коррекция 
+		// отрицательных сопротивлений, поэтому восстанавливаем
+		// исходные сопротивления
+		if (m_Parameters.m_bStartup)
+			pNodes->CalculateSuperNodesAdmittances(false);
+
+		Newton();
 
 #ifdef _DEBUG
-	CompareWithRastr();
+		CompareWithRastr();
 #endif
 
-	pNodes->SwitchLRCs(true);
+		pNodes->SwitchLRCs(true);
 
-	UpdateQToGenerators();
-	DumpNodes();
-	CheckFeasible();
+		UpdateQToGenerators();
+		DumpNodes();
+		CheckFeasible();
+	}
+	catch (dfw2error&)
+	{
+		pNodes->SwitchLRCs(true);
+		throw;
+	}
 	return bRes;
 }
 

@@ -260,36 +260,54 @@ bool JsonSaxSerializer::start_array(std::size_t elements)
 		if (auto it = m_SerializerMap.find(stack.back().Key());  it != m_SerializerMap.end())
 		{
 			itCurrentSerializer = it;
-			std::cout << "start " << it->first << std::endl;
-
-			// у нас есть сериализатор, проверяем, есть ли в нем устройства
-			auto device = itCurrentSerializer->second->GetDevice();
-			if (device)
+			//std::cout << "start " << it->first << std::endl;
+			if (auto container = GetContainer(); container)
 			{
-				// устройства есть, достаем контейнер
-				auto container = device->GetContainer();
-				if (container)
+				// контейнер есть, берем диапазон устройств
+				// ставим состояние stateInDeviceArray, обновляем сериализатор
+				// переменными из первого устройства контейнера
+
+				itCurrentDevice = container->begin();
+				itLastDevice = container->end();
+				nDevicesCount = container->Count();
+				if (itCurrentDevice != itLastDevice)
 				{
-					// контейнер есть, берем диапазон устройств
-					// ставим состояние stateInDevice, обновляем сериализатор
-					// переменными из первого устройства контейнера
-					itCurrentDevice = container->begin();
-					itLastDevice = container->end();
-					if (itCurrentDevice != itLastDevice)
-					{
-						stateInDevice = true;
-						(*itCurrentDevice)->UpdateSerializer(itCurrentSerializer->second);
-					}
-					else
-						throw dfw2error(fmt::format("JsonSaxWalkerBase::start_array - device container with length set to {} cannot fit new device",
-													"from \"{}\" serializer",
-							container->Count(),
-							itCurrentSerializer->second->GetClassName()));
+					stateInDeviceArray = true;
+					(*itCurrentDevice)->UpdateSerializer(itCurrentSerializer->second);
 				}
+				else
+					ContainerDoesNotFitJsonArray(container);
 			}
 		}
+		else
+		{
+			// если не нашли сериализатор для теущего json-объекта - сбрасываем текущий сериализатор
+			itCurrentSerializer = m_SerializerMap.end();
+		}
+			
 	}
 	return true;
+}
+
+
+CDeviceContainer* JsonSaxSerializer::GetContainer()
+{
+	if (itCurrentSerializer != m_SerializerMap.end())
+	{
+		auto device = itCurrentSerializer->second->GetDevice();
+		if (device)
+			if (auto container = device->GetContainer(); container)
+				return container;
+	}
+	return nullptr;
+}
+
+void JsonSaxSerializer::ContainerDoesNotFitJsonArray(CDeviceContainer* pContainer = nullptr)
+{
+	throw dfw2error(fmt::format("JsonSaxWalkerBase::start_array - device container with length set to {} cannot fit new device",
+		"from \"{}\" serializer",
+		pContainer ? pContainer->Count() : 0,
+		itCurrentSerializer != m_SerializerMap.end() ? itCurrentSerializer->second->GetClassName() : ""));
 }
 
 
@@ -314,16 +332,36 @@ bool JsonSaxSerializer::end_object()
 				STRINGLIST unsetNames;
 				for (const auto& [Name, Var] : unset)
 					unsetNames.push_back(Name);
+				/*
 				std::cout << fmt::format("Finished object {} : unset variables {}",
 					itCurrentSerializer->second->GetClassName(),
 					fmt::join(unsetNames, ",")) << std::endl;
+				*/
 			}
 
-			if (stateInDevice) 
+			if (stateInDeviceArray) 
 			{
 				// а еще мы находимся в чтении устройства контейнера, мы его прочитали 
 				// и должны перейти к следующему
+
+				// первое устройство в массиве мы уже обработали
+				// переходим к следующему. Если мы попали сюда отработав
+				// все доступные в контейнере устройства, выбрасываем исключение
+				if (itCurrentDevice != itLastDevice)
+				{
+					auto& device = (*itCurrentDevice);
+					ptrdiff_t index(itCurrentDevice - itLastDevice + nDevicesCount);
+					device->SetDBIndex(index);
+					if(device->GetId() < 0)
+						device->SetId(index);
 					itCurrentDevice++;
+				}
+				else
+					ContainerDoesNotFitJsonArray(GetContainer());
+
+				// если устройств больше нет, не ставим следующий сериализатор
+				if (itCurrentDevice != itLastDevice)
+					(*itCurrentDevice)->UpdateSerializer(itCurrentSerializer->second);
 			}
 		}
 		else if (StackDepth() == 6)

@@ -1568,7 +1568,7 @@ void CDynaNodeBase::UpdateSerializer(SerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("name", TypedSerializedValue::eValueType::VT_NAME);
-	Serializer->AddProperty("sta", TypedSerializedValue::eValueType::VT_STATE);
+	AddStateProperty(Serializer);
 	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnumT<CDynaNodeBase::eLFNodeType>(m_eLFNodeType, m_cszLFNodeTypeNames, std::size(m_cszLFNodeTypeNames)));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
@@ -1646,7 +1646,7 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 
 		pNode->m_pLRC = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCTransientId));
 		if (!pNode->m_pLRC)
-			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCLoadFlowId, pNode->GetVerbalName()));
+			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCTransientId, pNode->GetVerbalName()));
 			
 	}
 }

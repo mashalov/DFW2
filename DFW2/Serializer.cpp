@@ -100,12 +100,12 @@ void TypedSerializedValue::NoConversion(eValueType fromType)
 	throw dfw2error(msg);
 }
 
-void TypedSerializedValue::SetDouble(double value)
+void MetaSerializedValue::SetDouble(double value)
 {
 	switch (ValueType)
 	{
 	case eValueType::VT_DBL:
-		*Value.pDbl = value;
+		*Value.pDbl = value * Multiplier;
 		bSet = true;
 		break;
 	case eValueType::VT_INT:
@@ -124,7 +124,7 @@ void TypedSerializedValue::SetDouble(double value)
 	case eValueType::VT_STATE:
 		if (auto device = GetDevice(); device)
 		{
-			device->SetState(value > 0 ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			device->SetState(value > 0 ? eDEVICESTATE::DS_ON : eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			bSet = true;
 		}
 		break;
@@ -135,12 +135,12 @@ void TypedSerializedValue::SetDouble(double value)
 	}
 }
 
-void TypedSerializedValue::SetBool(bool value)
+void MetaSerializedValue::SetBool(bool value)
 {
 	switch (ValueType)
 	{
 	case eValueType::VT_DBL:
-		*Value.pDbl = value ? 1.0 : 0.0;
+		*Value.pDbl = Multiplier * (value ? 1.0 : 0.0);
 		bSet = true;
 		break;
 	case eValueType::VT_INT:
@@ -159,7 +159,7 @@ void TypedSerializedValue::SetBool(bool value)
 	case eValueType::VT_STATE:
 		if (auto device = GetDevice(); device)
 		{
-			device->SetState(value ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			device->SetState(value ? eDEVICESTATE::DS_ON : eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			bSet = true;
 		}
 		break;
@@ -170,12 +170,12 @@ void TypedSerializedValue::SetBool(bool value)
 	}
 }
 
-void TypedSerializedValue::SetInt(ptrdiff_t value)
+void MetaSerializedValue::SetInt(ptrdiff_t value)
 {
 	switch (ValueType)
 	{
 	case eValueType::VT_DBL:
-		*Value.pDbl = static_cast<double>(value);
+		*Value.pDbl = Multiplier * static_cast<double>(value);
 		bSet = true;
 		break;
 	case eValueType::VT_INT:
@@ -193,7 +193,7 @@ void TypedSerializedValue::SetInt(ptrdiff_t value)
 	case eValueType::VT_STATE:
 		if (auto device = GetDevice(); device)
 		{
-			device->SetState(value > 0 ? eDEVICESTATE::DS_OFF : eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_EXTERNAL);
+			device->SetState(value > 0 ? eDEVICESTATE::DS_ON : eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_EXTERNAL);
 			bSet = true;
 		}
 		break;
@@ -211,12 +211,12 @@ void TypedSerializedValue::SetInt(ptrdiff_t value)
 	}
 }
 
-void TypedSerializedValue::SetComplex(const cplx& value)
+void MetaSerializedValue::SetComplex(const cplx& value)
 {
 	switch (ValueType)
 	{
 	case eValueType::VT_CPLX:
-		*Value.pCplx = value;
+		*Value.pCplx = value * Multiplier;
 		bSet = true;
 		break;
 	//case eValueType::VT_ADAPTER:
@@ -227,7 +227,7 @@ void TypedSerializedValue::SetComplex(const cplx& value)
 	}
 }
 
-void TypedSerializedValue::SetString(std::string_view value)
+void MetaSerializedValue::SetString(std::string_view value)
 {
 	switch (ValueType)
 	{
@@ -248,37 +248,37 @@ void TypedSerializedValue::SetString(std::string_view value)
 }
 
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<const double&>(const double& value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const double&>(const double& value)
 {
 	SetDouble(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<const ptrdiff_t&>(const ptrdiff_t& value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const ptrdiff_t&>(const ptrdiff_t& value)
 {
 	SetInt(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<const bool&>(const bool& value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const bool&>(const bool& value)
 {
 	SetBool(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<const size_t&>(const size_t& value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const size_t&>(const size_t& value)
 {
 	SetInt(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<const std::string&>(const std::string& value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const std::string&>(const std::string& value)
 {
 	SetString(value);
 	return this;
 }
 
-template<> TypedSerializedValue* TypedSerializedValue::Set<const cplx&>(const cplx& value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const cplx&>(const cplx& value)
 {
 	SetComplex(value);
 	return this;

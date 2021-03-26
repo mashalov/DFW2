@@ -293,6 +293,8 @@ namespace DFW2
 		SerializerPtr GetSerializer();
 		// обновляет сериализатор для данного типа устройств
 		virtual void UpdateSerializer(SerializerPtr& Serializer);
+		// shortcut добавляет в сериализатор свойство состояния
+		void AddStateProperty(SerializerPtr& Serializer);
 
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2);
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, bool Status2);

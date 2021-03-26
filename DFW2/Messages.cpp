@@ -140,3 +140,8 @@ const char* CDFW2Messages::m_cszUserLRCChangedToStandard = "СХН № {}, за�
 const char* CDFW2Messages::m_cszUserOverrideOfStandardLRC = "СХН с номером {} является стандартной, но задана пользователем";
 const char* CDFW2Messages::m_cszLRCVminChanged = "Значение Vmin={} недопустимо для обработки СХН. Значение изменено на {}";
 const char* CDFW2Messages::m_cszLRCIdNotFound = "СХН {} не найдена для узла {}";
+const char* CDFW2Messages::m_cszLoadingJson = "Загрузка модели в формате json \"{}\"";
+const char* CDFW2Messages::m_cszStdFileStreamError = "Ошибка работы с файлом - \"{}\"";
+const char* CDFW2Messages::m_cszJsonParserError = "Ошибка парсера json \"{}\"";
+const char* CDFW2Messages::m_cszFoundContainerData = "Найдены данные для ввода \"{}\". Количество объектов {}";
+

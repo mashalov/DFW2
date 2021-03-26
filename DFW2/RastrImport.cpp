@@ -230,8 +230,7 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 		case TypedSerializedValue::eValueType::VT_DBL:
 			vt.ChangeType(VT_R8);
 			// для вещественного поля учитываем множитель
-			//*mv.Value.Value.pDbl = vt.dblVal * mv.Multiplier;
-			mv.SetDouble(vt.dblVal * mv.Multiplier);
+			mv.SetDouble(vt.dblVal);
 			break;
 		case TypedSerializedValue::eValueType::VT_INT:
 			vt.ChangeType(VT_I4);
