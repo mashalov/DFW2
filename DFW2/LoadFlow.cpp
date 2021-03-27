@@ -404,6 +404,9 @@ void CLoadFlow::Seidell()
 
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
+
+	//std::ofstream check("c:\\tmp\\checklf.txt");
+
 	double dPreviousImb = -1.0;
 	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
@@ -620,6 +623,8 @@ void CLoadFlow::Seidell()
 			}
 
 			pNode->UpdateVDeltaSuper();
+
+			//check << pNode->GetId() << " " << Pe << " " << Qe << "" << pNode->V << " " << pNode->Delta << std::endl;
 		}
 
 		if (!CheckLF())
@@ -813,7 +818,39 @@ bool CLoadFlow::Run()
 		CompareWithRastr();
 #endif
 
+#ifdef _DEBUG3
+
+
+		for (auto&& it : pNodes->m_DevVec)
+		{
+			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(it);
+
+			if (!pNode->IsStateOn())
+				continue;
+
+
+			if (!pNode->m_pSuperNodeParent)
+			{
+				// этот вызов портит qnr
+				// если его вызвать после 
+				// переключения СХН на динамику
+
+				// до переключения он просто не работает
+				// с СХН на постоянную мощность
+				// которые в УР заданы nullptr
+				pNode->GetPnrQnrSuper();
+				_MatrixInfo mx;
+				mx.pNode = pNode;
+				GetNodeImb(&mx);
+				mx.pNode = pNode;
+				_ASSERTE(fabs(mx.m_dImbP) < m_Parameters.m_Imb && fabs(mx.m_dImbQ) < m_Parameters.m_Imb);
+				pNode->GetPnrQnr();
+			}
+		}
+#endif
+
 		pNodes->SwitchLRCs(true);
+
 
 		UpdateQToGenerators();
 		DumpNodes();
@@ -945,19 +982,6 @@ void CLoadFlow::UpdateQToGenerators()
 
 		if (!pNode->IsStateOn())
 			continue;
-
-#ifdef _DEBUG
-		if (!pNode->m_pSuperNodeParent)
-		{
-			pNode->GetPnrQnrSuper();
-			_MatrixInfo mx;
-			mx.pNode = pNode;
-			GetNodeImb(&mx);
-			mx.pNode = pNode;
-			_ASSERTE(fabs(mx.m_dImbP) < m_Parameters.m_Imb && fabs(mx.m_dImbQ) < m_Parameters.m_Imb);
-			pNode->GetPnrQnr();
-		}
-#endif
 
 		CLinkPtrCount *pGenLink = pNode->GetLink(1);
 		CDevice **ppGen(nullptr);

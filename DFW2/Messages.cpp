@@ -123,6 +123,7 @@ const char* CDFW2Messages::m_cszIslandSlackBusesCount = "Синхронная з
 const char* CDFW2Messages::m_cszIslandNoSlackBusesShutDown = "В синхронной зоне нет базисных узлов. Синхронная зона будет полностью отключена";
 const char* CDFW2Messages::m_cszNodeShutDownAsNotLinkedToSlack = "Узел {} отключен так как находится в зоне, не содержащей базисного узла";
 const char* CDFW2Messages::m_cszNoNodesForLF = "Для расчета УР нет включенных узлов";
+const char* CDFW2Messages::m_cszNoNodesOrBranchesForLF = "Количество узлоов или ветвей равно нулю";
 const char* CDFW2Messages::m_cszUnacceptableLF = "Получен недопустимый режим";
 const char* CDFW2Messages::m_cszExtVarFromOffDevice = "Требуемая для устройства \"{}\" выходная переменная \"{}\" найдена в отключенном устройстве \"{}\"";
 const char* CDFW2Messages::m_cszTurningOffDeviceByMasterDevice = "Устройство \"{}\" отключено, так как отключено связанное ведущее устройство \"{}\"";
@@ -144,4 +145,5 @@ const char* CDFW2Messages::m_cszLoadingJson = "Загрузка модели в 
 const char* CDFW2Messages::m_cszStdFileStreamError = "Ошибка работы с файлом - \"{}\"";
 const char* CDFW2Messages::m_cszJsonParserError = "Ошибка парсера json \"{}\"";
 const char* CDFW2Messages::m_cszFoundContainerData = "Найдены данные для ввода \"{}\". Количество объектов {}";
+
 

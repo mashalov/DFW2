@@ -59,6 +59,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	CustomDeviceCPP.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
 
 	m_DeviceContainers.push_back(&Nodes);
+	m_DeviceContainers.push_back(&LRCs);
 	m_DeviceContainers.push_back(&ExcitersMustang);
 	m_DeviceContainers.push_back(&DECsMustang);
 	m_DeviceContainers.push_back(&ExcConMustang);

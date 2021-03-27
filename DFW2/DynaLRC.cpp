@@ -352,6 +352,11 @@ void CDynaLRC::TestDump(const char* cszPathName)
 	}
 }
 
+void CDynaLRC::UpdateSerializer(SerializerPtr& Serializer)
+{
+	CDevice::UpdateSerializer(Serializer);
+}
+
 
 void CDummyLRC::UpdateSerializer(SerializerPtr& Serializer)
 {
@@ -468,6 +473,16 @@ void CDynaLRCContainer::CreateFromSerialized()
 		clearPQ(lrcConstP);
 		lrcConstP.PQ[0].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
 		lrcConstP.PQ[1].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
+	}
+
+
+	// !!!!!!!!!!!!! debug !!!!!!!!!!!!!!!!!!!!
+	if (CheckUserLRC(3, true))
+	{
+		auto& lrcConstP = constructMap[3];
+		clearPQ(lrcConstP);
+		lrcConstP.PQ[0].push_back({ 0.0, 1.0, 0.0, 1.0, 0.0 });
+		lrcConstP.PQ[1].push_back({ 0.0, 1.0, 0.0, 0.0, 1.0 });
 	}
 
 	auto SortLRC = [](const auto& lhs, const auto& rhs) { return lhs.V < rhs.V; };

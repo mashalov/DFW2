@@ -90,6 +90,9 @@ void CDynaModel::PrepareNetworkElements()
 	// после импорта данных, в которых могли быть отключенные узлы и ветви
 	sc.m_bProcessTopology = false;
 
+	if(Nodes.Count() == 0 || Branches.Count() == 0)
+		throw dfw2error(CDFW2Messages::m_cszNoNodesOrBranchesForLF);
+
 	bool bOk(true);
 
 	// убеждаемся в том, что в исходных данных есть СХН с постоянной мощностью
@@ -165,9 +168,6 @@ void CDynaModel::PrepareNetworkElements()
 		pBranch->GIq += pBranch->NrIq * pBranch->GrIq;
 		pBranch->BIp += pBranch->NrIp * pBranch->BrIp;
 		pBranch->BIq += pBranch->NrIq * pBranch->BrIq;
-
-		// также как и для узлов обнуляем количество реакторов
-		pBranch->NrIp = pBranch->NrIq = 0;
 	}
 
 	if (!bOk)

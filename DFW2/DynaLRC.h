@@ -66,6 +66,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		bool CheckPtr(LRCDATA& LRC);
 		double GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC);
+		void UpdateSerializer(SerializerPtr& Serializer) override;
 	};
 
 
