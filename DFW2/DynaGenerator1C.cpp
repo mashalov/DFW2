@@ -472,7 +472,7 @@ VariableIndexRefVec& CDynaGenerator1C::GetVariables(VariableIndexRefVec& ChildVe
 	return CDynaGeneratorMotion::GetVariables(JoinVariables({ Vd, Vq, Id, Iq, Eqs, Eq }, ChildVec));
 }
 
-void CDynaGenerator1C::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaGenerator1C::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	// обновляем сериализатор базового класса
 	CDynaGeneratorMotion::UpdateSerializer(Serializer);

@@ -208,7 +208,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 }
 
 // читаем в сериализатор строку с заднным номером из таблицы RastrWin
-void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
+void CRastrImport::ReadRastrRow(DeviceSerializerPtr& Serializer, long Row)
 {
 	// ставим устройству в сериализаторе индекс в БД и идентификатор
 	Serializer->GetDevice()->SetDBIndex(Row);

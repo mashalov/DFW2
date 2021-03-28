@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include <algorithm>
 #include "LoadFlow.h"
 #include "DynaModel.h"
 #include "DynaPowerInjector.h"
@@ -818,7 +819,9 @@ bool CLoadFlow::Run()
 		CompareWithRastr();
 #endif
 
-#ifdef _DEBUG3
+		pNodes->SwitchLRCs(true);
+
+//#ifdef _DEBUG
 
 
 		for (auto&& it : pNodes->m_DevVec)
@@ -847,9 +850,9 @@ bool CLoadFlow::Run()
 				pNode->GetPnrQnr();
 			}
 		}
-#endif
+//#endif
 
-		pNodes->SwitchLRCs(true);
+
 
 
 		UpdateQToGenerators();
@@ -960,6 +963,22 @@ void CLoadFlow::UpdatePQFromGenerators()
 						pGen->Kgen = 1.0;
 					}
 					pNode->Pg += pGen->P;
+
+					// проверяем ограничения по реактивной мощности
+					if (pGen->LFQmin > pGen->LFQmax)
+					{
+						pGen->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongGeneratirQlimitsFixed,
+							pGen->LFQmin,
+							pGen->LFQmax,
+							pGen->LFQmax));
+
+						// если Qmin>Qmax ставим Qmin=Qmax (нужно больше реактивки)
+						pGen->LFQmin = pGen->LFQmax;
+
+					}
+
+					// вводим Q генератора в диапазон
+					pGen->Q = (std::max)((std::min)(pGen->Q.Value, pGen->LFQmax), pGen->LFQmin);
 					pNode->Qg += pGen->Q;
 					pNode->LFQmin += pGen->LFQmin * pGen->Kgen;
 					pNode->LFQmax += pGen->LFQmax * pGen->Kgen;
@@ -1583,13 +1602,13 @@ void CLoadFlow::CheckFeasible()
 				// если узел входит в суперузел его заданное напряжение в расчете было равно заданному напряжению суперузла,
 				// которое, в свою очередь, было выбрано по узлу с наиболее широким диапазоном реактивной мощности внутри суперузла
 				double LFVref = pNode->m_pSuperNodeParent ? pNode->m_pSuperNodeParent->LFVref : pNode->LFVref;
-				if (pNode->V > LFVref && pNode->Qgr >= pNode->LFQmax)
+				if (pNode->V > LFVref && pNode->Qgr >= pNode->LFQmax + m_Parameters.m_Imb)
 					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
-				if (pNode->V < LFVref && pNode->Qgr <= pNode->LFQmin)
+				if (pNode->V < LFVref && pNode->Qgr <= pNode->LFQmin - m_Parameters.m_Imb)
 					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
-				if (pNode->Qgr < pNode->LFQmin)
+				if (pNode->Qgr < pNode->LFQmin - m_Parameters.m_Imb)
 					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
-				if (pNode->Qgr > pNode->LFQmax)
+				if (pNode->Qgr > pNode->LFQmax + m_Parameters.m_Imb)
 					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 			}
 

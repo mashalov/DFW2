@@ -54,7 +54,7 @@ namespace DFW2
 		void CalcAdmittances(bool bFixNegativeZs);
 		bool IsZeroImpedance();
 
-		void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
 
 		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);
 		CDynaNodeBase* GetOppositeSuperNode(CDynaNodeBase* pOriginNode);

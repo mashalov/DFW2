@@ -5,10 +5,15 @@ using namespace DFW2;
 
 const char* CSerializerBase::GetClassName()
 {
+	return m_strClassName.c_str();
+}
+
+const char* CDeviceSerializer::GetClassName()
+{
 	if (m_pDevice)
 		return m_pDevice->GetContainer()->m_ContainerProps.GetSystemClassName();
 	else
-		return m_strClassName.c_str();
+		return CSerializerBase::GetClassName();
 }
 
 std::string CSerializerBase::GetVariableName(TypedSerializedValue* pValue) const
@@ -26,6 +31,24 @@ const SERIALIZERMAP CSerializerBase::GetUnsetValues() const
 		if (!Var->bSet)
 			outMap.insert(std::make_pair(Name, Var));
 	return outMap;
+}
+
+
+bool CDeviceSerializer::NextItem()
+{
+	if (auto container = m_pDevice->GetContainer() ; container)
+	{
+		if (m_nDeviceIndex < static_cast<ptrdiff_t>(container->Count()))
+		{
+			m_nDeviceIndex++;
+			m_pDevice = container->GetDeviceByIndex(m_nDeviceIndex);
+			std::unique_ptr<CDeviceSerializer> serializer(this);
+			m_pDevice->UpdateSerializer(serializer);
+			serializer.release();
+			return false;
+		}
+	}
+	return false;
 }
 
 bool TypedSerializedValue::isSignificant()

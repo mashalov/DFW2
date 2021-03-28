@@ -224,7 +224,7 @@ void CDynaExciterMustang::DeviceProperties(CDeviceContainerProperties& props)
 }
 
 
-void CDynaExciterMustang::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaExciterMustang::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	CDynaExciterBase::UpdateSerializer(Serializer);
 	AddStateProperty(Serializer);

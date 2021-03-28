@@ -293,7 +293,7 @@ bool CDynaBranch::IsZeroImpedance()
 }
 
 
-void CDynaBranch::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaBranch::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("ip", Ip);

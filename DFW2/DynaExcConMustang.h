@@ -48,7 +48,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 
-		void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 }

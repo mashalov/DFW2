@@ -14,13 +14,13 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 	jsonSerializer.CreateNewSerialization(path);
 
 	// создаем базовый сериализатор для параметров расчета
-	SerializerPtr SerializerParameteres = std::make_unique<CSerializerBase>();
+	DeviceSerializerPtr SerializerParameteres = std::make_unique<CDeviceSerializer>();
 	m_Parameters.UpdateSerializer(SerializerParameteres);
 	jsonSerializer.SerializeClass(SerializerParameteres);
 
 	// создаем базовый сериализатор для глобальных переменных расчета
 	// и сериализуем их аналогично параметрам расчета
-	SerializerPtr SerializerStepControl = std::make_unique<CSerializerBase>();
+	DeviceSerializerPtr SerializerStepControl = std::make_unique<CDeviceSerializer>();
 	sc.UpdateSerializer(SerializerStepControl);
 	jsonSerializer.SerializeClass(SerializerStepControl);
 

@@ -326,7 +326,7 @@ namespace DFW2
 				t0 = t;
 			}
 
-			void UpdateSerializer(SerializerPtr& Serializer)
+			void UpdateSerializer(DeviceSerializerPtr& Serializer)
 			{
 				Serializer->SetClassName("StepControl");
 				Serializer->AddProperty("RefactorMatrix", m_bRefactorMatrix);
@@ -421,7 +421,7 @@ namespace DFW2
 			ptrdiff_t m_nAdamsDampingSteps = 10;
 			bool m_bAllowUserOverrideStandardLRC = false;
 			Parameters() { }
-			void UpdateSerializer(SerializerPtr& Serializer)
+			void UpdateSerializer(DeviceSerializerPtr& Serializer)
 			{
 				Serializer->SetClassName("Parameters");
 				Serializer->AddProperty("FrequencyTimeConstant", m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);

@@ -171,7 +171,7 @@ namespace DFW2
 		void TidyZeroBranches();
 		// выбирает исходное напряжение либо равное расчетному, либо (если расчетное равно почему-то нулю), номинальному
 		inline void PickV0() noexcept { V0 = (V > 0) ? V : Unom; }
-		void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
 
 		void AddToTopologyCheck();
 
@@ -221,7 +221,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
-		void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 

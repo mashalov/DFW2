@@ -165,7 +165,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::UpdateExternalVariables(CDynaModel *pDyna
 }
 
 // сериализация 
-void CDynaDECMustang::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaDECMustang::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	// обновляем переданный сериализатор
 	CDevice::UpdateSerializer(Serializer);

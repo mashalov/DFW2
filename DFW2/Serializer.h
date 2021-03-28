@@ -10,6 +10,7 @@
 #include "Header.h"
 namespace DFW2
 {
+	class CSerializerBase;
 
 	// возможные типы значений для сериализации
 	union uValue
@@ -18,7 +19,6 @@ namespace DFW2
 		ptrdiff_t *pInt;									// int (32/64)
 		bool *pBool;										// bool
 		cplx *pCplx;										// complex
-
 		// конструкторы для разных типов
 		uValue(double* pDouble) noexcept: pDbl(pDouble) {}
 		uValue(ptrdiff_t* pInteger) noexcept : pInt(pInteger) {}
@@ -88,7 +88,8 @@ namespace DFW2
 			VT_NAME,			// имя (дополнительное преобразование)
 			VT_STATE,			// состояние (дополнительное преобразование)
 			VT_ID,				// идентификатор (дополнительное преобразование)
-			VT_ADAPTER			// пользовательское преобразование с помощью внешнего класса адаптера
+			VT_ADAPTER,			// пользовательское преобразование с помощью внешнего класса адаптера
+			VT_SERIALIZER		// вложенный сериализатор
 		}
 		ValueType;		
 
@@ -100,13 +101,15 @@ namespace DFW2
 			"name",
 			"state",
 			"id",
-			"adapter"
+			"adapter",
+			"serializer"
 		};
 
 		uValue Value;										// собственно значение
 		bool bSet = false;									// флаг изменения
 
-		std::unique_ptr<CSerializerAdapterBase> Adapter;	// адаптер для типа eValueType::VT_ADAPTER
+		std::unique_ptr<CSerializerAdapterBase> Adapter;		// адаптер для типа eValueType::VT_ADAPTER
+		std::unique_ptr<CSerializerBase> m_pNestedSerializer;	// вложенный сериализатор
 
 		// конструкторы для разных типов принимают указатели на значения 
 
@@ -146,6 +149,10 @@ namespace DFW2
 																			  Value(), 
 																			  ValueType(Type) {}
 		
+		TypedSerializedValue(CSerializerBase* pSerializer, CSerializerBase* pNestedSerializer) : m_pSerializer(pSerializer),
+			m_pNestedSerializer(pNestedSerializer),
+			ValueType(eValueType::VT_SERIALIZER) {}
+
 		// Проверяет значение на значение по-умолчанию
 		// 0 для int, 0.0 для double, 0.0+j0.0 для complex
 		// можно добавить "" для строки
@@ -255,6 +262,7 @@ namespace DFW2
 		MetaSerializedValue(CSerializerBase* pSerializer, bool* pBoolean) : TypedSerializedValue(pSerializer, pBoolean) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, cplx* pComplex) : TypedSerializedValue(pSerializer, pComplex) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, TypedSerializedValue::eValueType Type) : TypedSerializedValue(pSerializer, Type) {}
+		MetaSerializedValue(CSerializerBase* pSerializer, CSerializerBase* pNestedSerializer) : TypedSerializedValue(pSerializer, pNestedSerializer) {}
 		std::unique_ptr<CSerializedValueAuxDataBase> pAux;	// адаптер для внешней базы данных
 		MetaSerializedValue* Update(TypedSerializedValue&& value);
 
@@ -280,7 +288,6 @@ namespace DFW2
 
 		SERIALIZERLIST::iterator UpdateIterator;
 		std::string m_strClassName;	// имя сериализуемого класса 
-		CDevice* m_pDevice = nullptr;
 	public:
 
 		static constexpr const char* m_cszDupName = "CSerializerBase::AddProperty duplicated name \"{}\"";
@@ -288,20 +295,18 @@ namespace DFW2
 		static constexpr const char* m_cszStateCause = "cause";
 		static constexpr const char* m_cszType = "type";
 		static constexpr const char* m_cszDataType = "dataType";
+		static constexpr const char* m_cszSerializerType = "serializerType";
 
 		ptrdiff_t ValuesCount() noexcept
 		{
 			return ValueMap.size();
 		}
-		CDevice* GetDevice() { return m_pDevice; }
 
+		virtual CDevice* GetDevice() { return nullptr; }
 
 		// начало обновления сериализатора с заданного устройства
-		void BeginUpdate(CDevice *pDevice)
+		void BeginUpdate()
 		{
-			// запоминаем устройство
-			m_pDevice = pDevice;
-			// проверяем есть ли сериализуемые значения
 			if (ValueList.empty())
 				throw dfw2error("CSerializerBase::BeginUpdate on empty value list");
 			else
@@ -317,11 +322,6 @@ namespace DFW2
 		void SetClassName(std::string_view ClassName)
 		{
 			m_strClassName = ClassName;
-		}
-
-		std::string_view GetClassName() const
-		{
-			return m_strClassName;
 		}
 
 		// добавление свойства
@@ -375,6 +375,21 @@ namespace DFW2
 			}
 		}
 
+		MetaSerializedValue* AddSerializer(std::string_view Name, CSerializerBase* pSerializer)
+		{
+			if (IsCreate())
+			{
+				MetaSerializedValue* mv = ValueList.emplace(ValueList.end(), std::make_unique<MetaSerializedValue>(this, pSerializer))->get();
+				AddValue(Name, mv);
+				return mv;
+			}
+			else
+			{
+				(*UpdateIterator)->Update(TypedSerializedValue(this, pSerializer));
+				return UpdateValue();
+			}
+		}
+
 		MetaSerializedValue* AddEnumProperty(std::string_view Name, CSerializerAdapterBase* pAdapter, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET, double Multiplier = 1.0)
 		{
 			if (IsCreate())
@@ -419,12 +434,7 @@ namespace DFW2
 
 		const SERIALIZERMAP GetUnsetValues() const;
 
-		CSerializerBase() : m_pDevice(nullptr)
-		{
-			UpdateIterator = ValueList.end();
-		}
-
-		CSerializerBase(CDevice *pDevice) : m_pDevice(pDevice)
+		CSerializerBase()
 		{
 			UpdateIterator = ValueList.end();
 		}
@@ -434,9 +444,13 @@ namespace DFW2
 
 		}
 
-		const char* GetClassName();
+		virtual const char* GetClassName();
 		std::string GetVariableName(TypedSerializedValue* pValue) const;
 
+		virtual bool NextItem()
+		{
+			return false;
+		}
 
 	protected:
 
@@ -459,6 +473,33 @@ namespace DFW2
 		}
 	};
 
+
+	class CDeviceSerializer : public CSerializerBase
+	{
+	protected:
+		CDevice* m_pDevice = nullptr;
+		ptrdiff_t m_nDeviceIndex = 0;
+	public:
+
+		CDeviceSerializer() : CSerializerBase() {}
+		CDeviceSerializer(CDevice* pDevice) : CSerializerBase(), m_pDevice(pDevice) {}
+		CDevice* GetDevice() override { return m_pDevice; }
+
+		// начало обновления сериализатора с заданного устройства
+		void BeginUpdate(CDevice* pDevice)
+		{
+			// запоминаем устройство
+			m_pDevice = pDevice;
+			m_nDeviceIndex = 0;
+			CSerializerBase::BeginUpdate();
+		}
+
+		const char* GetClassName() override;
+		bool NextItem() override;
+
+	};
+
 	using SerializerPtr = std::unique_ptr<CSerializerBase>;
+	using DeviceSerializerPtr = std::unique_ptr<CDeviceSerializer>;
 }
 

@@ -67,7 +67,7 @@ namespace DFW2
 		cplx Igen(ptrdiff_t nIteration) override;
 		virtual const cplx& CalculateEgen();
 
-		void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
 
 		static constexpr const char* m_cszEqe = "Eqe";
 		static constexpr const char* m_cszEq = "Eq";

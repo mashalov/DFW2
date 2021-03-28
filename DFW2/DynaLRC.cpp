@@ -352,13 +352,17 @@ void CDynaLRC::TestDump(const char* cszPathName)
 	}
 }
 
-void CDynaLRC::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaLRC::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
+	Serializer->AddProperty("LRCId", TypedSerializedValue::eValueType::VT_ID);
+	auto pPolynomSerializer = new CSerializerBase();
+	pPolynomSerializer->AddProperty("p0", p0, eVARUNITS::VARUNIT_NOTSET);
+	Serializer->AddSerializer("Polynom", pPolynomSerializer);
 }
 
 
-void CDummyLRC::UpdateSerializer(SerializerPtr& Serializer)
+void CDummyLRC::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("LRCId", TypedSerializedValue::eValueType::VT_ID);

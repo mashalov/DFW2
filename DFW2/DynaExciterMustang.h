@@ -18,7 +18,7 @@ namespace DFW2
 		CDynaExciterMustang();
 		virtual ~CDynaExciterMustang() {}
 
-		void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;

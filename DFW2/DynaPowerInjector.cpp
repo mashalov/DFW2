@@ -63,7 +63,7 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pD
 }
 
 
-void CDynaPowerInjector::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaPowerInjector::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);

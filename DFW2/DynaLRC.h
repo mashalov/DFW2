@@ -42,7 +42,7 @@ namespace DFW2
 	public:
 		using CDevice::CDevice;
 		std::array<LRCRawData, 2> PQ;
-		void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
 	};
 
 	using LRCDATA = std::vector<CLRCData>;
@@ -60,13 +60,14 @@ namespace DFW2
 		double GetQdQ(double VdivVnom, double &dQ, double dVicinity);
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		LRCDATA P, Q;
+		double p0;
 		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");
 	protected:
 		bool CollectConstantData(LRCDATA& LRC);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		bool CheckPtr(LRCDATA& LRC);
 		double GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC);
-		void UpdateSerializer(SerializerPtr& Serializer) override;
+		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
 	};
 
 

@@ -290,11 +290,11 @@ namespace DFW2
 		virtual void RestoreStates();
 
 		// возвращает сериализатор для данного типа устройств
-		SerializerPtr GetSerializer();
+		DeviceSerializerPtr GetSerializer();
 		// обновляет сериализатор для данного типа устройств
-		virtual void UpdateSerializer(SerializerPtr& Serializer);
+		virtual void UpdateSerializer(DeviceSerializerPtr& Serializer);
 		// shortcut добавляет в сериализатор свойство состояния
-		void AddStateProperty(SerializerPtr& Serializer);
+		void AddStateProperty(DeviceSerializerPtr& Serializer);
 
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2);
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, bool Status2);

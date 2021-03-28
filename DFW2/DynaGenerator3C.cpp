@@ -337,7 +337,7 @@ double CDynaGenerator3C::Xgen()
 	return 0.5 * (xd2 + xq2);
 }
 
-void CDynaGenerator3C::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaGenerator3C::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	// обновляем сериализатор базового класса
 	CDynaGenerator1C::UpdateSerializer(Serializer);

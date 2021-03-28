@@ -138,7 +138,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::UpdateExternalVariables(CDynaMod
 	return CDynaVoltageSource::UpdateExternalVariables(pDynaModel);
 }
 
-void CDynaGeneratorInfBusBase::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaGeneratorInfBusBase::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	CDynaVoltageSource::UpdateSerializer(Serializer);
 	Serializer->AddState("Eqs", Eqs, eVARUNITS::VARUNIT_PU);
@@ -146,7 +146,7 @@ void CDynaGeneratorInfBusBase::UpdateSerializer(SerializerPtr& Serializer)
 	Serializer->AddProperty("xd1", xd1, eVARUNITS::VARUNIT_PU);
 }
 
-void CDynaGeneratorInfBus::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaGeneratorInfBus::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
 	Serializer->AddState("EqsCos", EqsCos, eVARUNITS::VARUNIT_PU);

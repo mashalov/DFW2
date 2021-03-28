@@ -1123,10 +1123,10 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 }
 
 // возвращает сериализатор для данного типа устройств
-SerializerPtr CDevice::GetSerializer()
+DeviceSerializerPtr CDevice::GetSerializer()
 {
 	// создаем сериализатор
-	SerializerPtr extSerializer;
+	DeviceSerializerPtr extSerializer;
 	// заполняем сериализатор данными из этого устройства
 	UpdateSerializer(extSerializer);
 	return extSerializer;
@@ -1137,16 +1137,16 @@ SerializerPtr CDevice::GetSerializer()
 // переданный Serializer значениями, необходимыми устройству 
 // и связывает значения с внутренними переменными устройства
 
-void CDevice::UpdateSerializer(SerializerPtr& Serializer)
+void CDevice::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	// если сериализатор не создан на указателе
 	if (!Serializer)
-		Serializer = std::make_unique<CSerializerBase>(this);	// создаем его
+		Serializer = std::make_unique<CDeviceSerializer>(this);	// создаем его
 	else
 		Serializer->BeginUpdate(this);	// если уже есть - начинаем обновление с данного устройства
 }
 
-void CDevice::AddStateProperty(SerializerPtr& Serializer)
+void CDevice::AddStateProperty(DeviceSerializerPtr& Serializer)
 {
 	Serializer->AddProperty("state", TypedSerializedValue::eValueType::VT_STATE);
 }

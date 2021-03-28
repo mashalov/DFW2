@@ -193,7 +193,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::UpdateExternalVariables(CDynaModel *
 }
 
 
-void CDynaGeneratorMotion::UpdateSerializer(SerializerPtr& Serializer)
+void CDynaGeneratorMotion::UpdateSerializer(DeviceSerializerPtr& Serializer)
 {
 	// обновляем сериализатор базового класса
 	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
