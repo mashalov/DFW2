@@ -22,10 +22,8 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 
 	// обходим контейнеры снова
 	for (auto&& container : m_DeviceContainers)
-	{
-		if (!container->Count()) continue;
-		jsonSerializer.SerializeClass(container->GetDeviceByIndex(0)->GetSerializer());
-	}
+		jsonSerializer.SerializeClass(container->GetSerializer());
+
 	// завершаем сериализацию
 	jsonSerializer.Commit();
 }

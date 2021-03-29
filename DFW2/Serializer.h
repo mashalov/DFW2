@@ -360,11 +360,6 @@ namespace DFW2
 		static constexpr const char* m_cszDataType = "dataType";
 		static constexpr const char* m_cszSerializerType = "serializerType";
 
-		const CSerializerDataSourceBase* GetDataSource()
-		{
-			return m_DataSource.get();
-		}
-
 		// количество полей в сериализаторе
 		ptrdiff_t ValuesCount() noexcept
 		{
@@ -522,7 +517,9 @@ namespace DFW2
 
 		void Update()
 		{
+			// инициализируем итератор полей
 			BeginUpdate();
+			// вводим элемент из источника данных
 			m_DataSource->UpdateSerializer(this);
 		}
 
@@ -534,6 +531,11 @@ namespace DFW2
 				return true;
 			}
 			return false;
+		}
+
+		ptrdiff_t ItemsCount() 
+		{
+			return m_DataSource->ItemsCount();
 		}
 
 	protected:

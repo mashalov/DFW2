@@ -223,6 +223,7 @@ namespace DFW2
 		size_t GetResultVariablesCount();									// получить количество переменных, которое нужно выводить в результаты
 		bool HasAlias(std::string_view Alias);								// соответствует ли тип устройства заданному псевдониму
 		ptrdiff_t GetSingleLinkIndex(eDFW2DEVICETYPE eDevType);				// получить индекс ссылки один-к-одному по типу устройства
+		SerializerPtr GetSerializer();
 	};
 
 	using DEVICECONTAINERS = std::vector<CDeviceContainer*>;

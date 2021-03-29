@@ -138,20 +138,26 @@ void CSerializerJson::SerializeData(CSerializerBase* pSerializer, nlohmann::json
 			break;
 		case TypedSerializedValue::eValueType::VT_SERIALIZER:
 			{
-				auto items = nlohmann::json::array();
-				if (mv.m_pNestedSerializer->GetDataSource()->ItemsCount())
+				// если вложенный сериализатор не пустой
+				if (mv.m_pNestedSerializer->ItemsCount())
 				{
+					// создаем массив
+					auto items = nlohmann::json::array();
+					// обновляем сериализатор с первого элемента источника данных
 					mv.m_pNestedSerializer->Update();
 					do
 					{
+						// и сериализуем первый и последующие элементы
+						// в массив
 						auto data = nlohmann::json();
 						SerializeData(mv.m_pNestedSerializer.get(), data);
 						items.push_back(data);
 					}
 					while (mv.m_pNestedSerializer->NextItem());
-				}
 
-				item[ValueName] = items;
+					// массив вводим под именем сериализатора
+					item[ValueName] = items;
+				}
 			}
 			break;
 		default:
@@ -163,8 +169,8 @@ void CSerializerJson::SerializeData(CSerializerBase* pSerializer, nlohmann::json
 // сериализация в json из сериализатора
 void CSerializerJson::SerializeClass(const SerializerPtr& Serializer)
 {
-	// если в сериализаторе нет полей - пропускаем
-	if (Serializer->ValuesCount() == 0) return;
+	if (!Serializer || !Serializer->ValuesCount())
+		return;
 
 	// создаем узел описания класса
 	auto Class = nlohmann::json();
@@ -190,6 +196,8 @@ void CSerializerJson::SerializeClass(const SerializerPtr& Serializer)
 		auto item = nlohmann::json();
 		SerializeData(Serializer.get(), item);
 
+		// если есть контейнер, достаем и сериализуем
+		// информаию о связях устройств
 		if (pContainer)
 		{
 			// и сериализуем связи данного экземпляра устройства

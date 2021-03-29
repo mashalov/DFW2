@@ -831,3 +831,15 @@ void CDeviceContainer::SetMemoryManagement(ContainerMemoryManagementType Managem
 		if (m_MemoryManagement != ManagementType)
 			throw dfw2error(fmt::format("Attempt to mix memory management types for Container {}", m_ContainerProps.GetSystemClassName()));
 }
+
+
+SerializerPtr CDeviceContainer::GetSerializer()
+{
+	SerializerPtr ret;
+	if (Count())
+	{
+		ret = std::make_unique<CSerializerBase>(new CSerializerDataSourceContainer(this));
+		m_DevVec.front()->UpdateSerializer(ret.get());
+	}
+	return ret;
+}
