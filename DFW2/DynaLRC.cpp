@@ -352,13 +352,29 @@ void CDynaLRC::TestDump(const char* cszPathName)
 	}
 }
 
+
+template<class T>
+class CSerializerLRCPolynom : public CSerializerDataSourceVector<T>
+{
+	using CSerializerDataSourceVector<T>::CSerializerDataSourceVector;
+public:
+	void UpdateSerializer(CSerializerBase* pSerializer) override
+	{
+		CSerializerDataSourceVector<T>::UpdateSerializer(pSerializer);
+		pSerializer->AddProperty("v", CSerializerDataSourceVector<T>::DataItem.V, eVARUNITS::VARUNIT_PU);
+		pSerializer->AddProperty("freq", CSerializerDataSourceVector<T>::DataItem.Freq, eVARUNITS::VARUNIT_PU);
+		pSerializer->AddProperty("a0", CSerializerDataSourceVector<T>::DataItem.a0);
+		pSerializer->AddProperty("a1", CSerializerDataSourceVector<T>::DataItem.a1);
+		pSerializer->AddProperty("a2", CSerializerDataSourceVector<T>::DataItem.a2);
+	}
+};
+
 void CDynaLRC::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("LRCId", TypedSerializedValue::eValueType::VT_ID);
-	auto pPolynomSerializer = new CSerializerBase(new CSerializerDataSourceContainer(GetContainer()));
-	pPolynomSerializer->AddProperty("p0", p0, eVARUNITS::VARUNIT_NOTSET);
-	Serializer->AddSerializer("Polynom", pPolynomSerializer);
+	Serializer->AddSerializer("P", new CSerializerBase(new CSerializerLRCPolynom<CLRCData>(P)));
+	Serializer->AddSerializer("Q", new CSerializerBase(new CSerializerLRCPolynom<CLRCData>(Q)));
 }
 
 

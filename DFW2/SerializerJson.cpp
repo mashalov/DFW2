@@ -138,9 +138,20 @@ void CSerializerJson::SerializeData(CSerializerBase* pSerializer, nlohmann::json
 			break;
 		case TypedSerializedValue::eValueType::VT_SERIALIZER:
 			{
-				auto data = nlohmann::json();
-				SerializeData(mv.m_pNestedSerializer.get(), data);
-				item[ValueName] = data;
+				auto items = nlohmann::json::array();
+				if (mv.m_pNestedSerializer->GetDataSource()->ItemsCount())
+				{
+					mv.m_pNestedSerializer->Update();
+					do
+					{
+						auto data = nlohmann::json();
+						SerializeData(mv.m_pNestedSerializer.get(), data);
+						items.push_back(data);
+					}
+					while (mv.m_pNestedSerializer->NextItem());
+				}
+
+				item[ValueName] = items;
 			}
 			break;
 		default:

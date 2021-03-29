@@ -60,7 +60,6 @@ namespace DFW2
 		double GetQdQ(double VdivVnom, double &dQ, double dVicinity);
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		LRCDATA P, Q;
-		double p0;
 		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");
 	protected:
 		bool CollectConstantData(LRCDATA& LRC);

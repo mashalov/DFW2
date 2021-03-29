@@ -4,7 +4,7 @@
 using namespace DFW2;
 
 
-ptrdiff_t CSerializerDataSourceContainer::ItemsCount()
+ptrdiff_t CSerializerDataSourceContainer::ItemsCount() const
 {
 	return m_pContainer->Count();
 }
@@ -18,7 +18,7 @@ bool CSerializerDataSourceContainer::NextItem()
 		return false;
 }
 
-CDevice* CSerializerDataSourceContainer::GetDevice()
+CDevice* CSerializerDataSourceContainer::GetDevice() const
 {
 	if (m_pContainer->Count())
 		return m_pContainer->GetDeviceByIndex(0);
@@ -111,6 +111,7 @@ MetaSerializedValue* MetaSerializedValue::Update(TypedSerializedValue&& value)
 {
 	Value = value.Value;
 	Adapter = std::move(value.Adapter);
+	m_pNestedSerializer = std::move(value.m_pNestedSerializer);
 	return this;
 }
 

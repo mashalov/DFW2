@@ -285,24 +285,10 @@ namespace DFW2
 	class CSerializerDataSourceBase
 	{
 	public:
-		virtual ptrdiff_t ItemsCount() 
-		{
-			return 1;
-		}
-		virtual bool NextItem()
-		{
-			return false;
-		}
-		virtual void UpdateSerializer(CSerializerBase* pSerializer)
-		{
-
-		}
-
-		virtual CDevice* GetDevice() 
-		{
-			return nullptr;
-		}
-
+		virtual ptrdiff_t ItemsCount() const { return 1; }
+		virtual bool NextItem() { return false; }
+		virtual void UpdateSerializer(CSerializerBase* pSerializer) {}
+		virtual CDevice* GetDevice() const { return nullptr;}
 		virtual ~CSerializerDataSourceBase() {}
 	};
 
@@ -314,10 +300,44 @@ namespace DFW2
 		ptrdiff_t nItemIndex = 0;
 	public:
 		CSerializerDataSourceContainer(CDeviceContainer* pContainer) : m_pContainer(pContainer) {}
-		ptrdiff_t ItemsCount() override;
+		ptrdiff_t ItemsCount() const override;
 		bool NextItem() override;
 		void UpdateSerializer(CSerializerBase* pSerializer) override;
-		CDevice* GetDevice() override;
+		CDevice* GetDevice() const override;
+	};
+
+	template<class T>
+	class CSerializerDataSourceVector : public CSerializerDataSourceBase
+	{
+		using DataVector = std::vector<T>;
+	protected:
+		DataVector& m_Vec;
+		T DataItem = {};
+		ptrdiff_t nItemIndex = 0;
+	public:
+
+		CSerializerDataSourceVector(DataVector& vec) : m_Vec(vec) 
+		{
+			if (!m_Vec.empty())
+				DataItem = m_Vec.front();
+		}
+
+		ptrdiff_t ItemsCount() const override
+		{
+			return static_cast<ptrdiff_t>(m_Vec.size());
+		}
+
+		bool NextItem() override
+		{
+			nItemIndex++;
+			if (nItemIndex < ItemsCount())
+			{
+				DataItem = m_Vec[nItemIndex];
+				return true;
+			}
+			else
+				return false;
+		}
 	};
 
 
@@ -339,6 +359,11 @@ namespace DFW2
 		static constexpr const char* m_cszType = "type";
 		static constexpr const char* m_cszDataType = "dataType";
 		static constexpr const char* m_cszSerializerType = "serializerType";
+
+		const CSerializerDataSourceBase* GetDataSource()
+		{
+			return m_DataSource.get();
+		}
 
 		// количество полей в сериализаторе
 		ptrdiff_t ValuesCount() noexcept
@@ -495,28 +520,19 @@ namespace DFW2
 		virtual ~CSerializerBase() {}
 		std::string GetVariableName(TypedSerializedValue* pValue) const;
 
+		void Update()
+		{
+			BeginUpdate();
+			m_DataSource->UpdateSerializer(this);
+		}
+
 		virtual bool NextItem()
 		{
 			if (m_DataSource->NextItem())
 			{
-				m_DataSource->UpdateSerializer(this);
+				Update();
 				return true;
 			}
-			return false;
-
-			/*
-			* 	// у нас есть контейнер и было задано устройство
-			// с помощью контейнера переходим к следующем устройству
-			// (первое устройство уже обработали)
-
-			pDevice = pContainer->GetDeviceByIndex(++nDeviceIndex);
-
-			// если следующее устройство доступно, обновляем сериализатор на него
-			if (pDevice)
-				pDevice->UpdateSerializer(Serializer);
-			else
-				bContinue = false;	// если устройств больше нет - ставим флаг завершения обхода устройств
-			*/
 			return false;
 		}
 
