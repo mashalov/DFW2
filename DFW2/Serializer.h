@@ -167,8 +167,11 @@ namespace DFW2
 		std::string_view GetTypeVerb() const;
 		static std::string_view GetTypeVerbByType(TypedSerializedValue::eValueType type);
 	protected:
+		// shortcut функция выбрасывает исключение при ошибке приведения типа
 		void NoConversion(eValueType fromType);
+		// сериализатор, связанный с данным сериазуемым значением
 		CSerializerBase* m_pSerializer = nullptr;
+		// возвращает указатель на устройство, связанное с сериализатором
 		CDevice* GetDevice();
 	};
 
@@ -279,13 +282,53 @@ namespace DFW2
 	using SERIALIZERMAP  = std::map<std::string, MetaSerializedValue*, std::less<> >;
 	using SERIALIZERLIST = std::list<std::unique_ptr<MetaSerializedValue>>;
 
+	class CSerializerDataSourceBase
+	{
+	public:
+		virtual ptrdiff_t ItemsCount() 
+		{
+			return 1;
+		}
+		virtual bool NextItem()
+		{
+			return false;
+		}
+		virtual void UpdateSerializer(CSerializerBase* pSerializer)
+		{
+
+		}
+
+		virtual CDevice* GetDevice() 
+		{
+			return nullptr;
+		}
+
+		virtual ~CSerializerDataSourceBase() {}
+	};
+
+	class CDeviceContainer;
+
+	class CSerializerDataSourceContainer : public CSerializerDataSourceBase
+	{
+		CDeviceContainer* m_pContainer;
+		ptrdiff_t nItemIndex = 0;
+	public:
+		CSerializerDataSourceContainer(CDeviceContainer* pContainer) : m_pContainer(pContainer) {}
+		ptrdiff_t ItemsCount() override;
+		bool NextItem() override;
+		void UpdateSerializer(CSerializerBase* pSerializer) override;
+		CDevice* GetDevice() override;
+	};
+
+
 	// базовый сериализатор
 	class CSerializerBase
 	{
 	protected:
 		SERIALIZERLIST ValueList;			// список значений
 		SERIALIZERMAP ValueMap;				// карта "имя"->"значение"
-
+		std::unique_ptr<CSerializerDataSourceBase> m_DataSource;
+		CDevice* m_pDevice = nullptr;
 		SERIALIZERLIST::iterator UpdateIterator;
 		std::string m_strClassName;	// имя сериализуемого класса 
 	public:
@@ -297,19 +340,20 @@ namespace DFW2
 		static constexpr const char* m_cszDataType = "dataType";
 		static constexpr const char* m_cszSerializerType = "serializerType";
 
+		// количество полей в сериализаторе
 		ptrdiff_t ValuesCount() noexcept
 		{
 			return ValueMap.size();
 		}
 
-		virtual CDevice* GetDevice() { return nullptr; }
+		// возвращает указатель на устройство, связанное с данным сериализатором
+		// нужено для работы VT_STATE, VT_NAME и т.п. 
+		virtual CDevice* GetDevice() { return m_pDevice; }
 
 		// начало обновления сериализатора с заданного устройства
 		void BeginUpdate()
 		{
-			if (ValueList.empty())
-				throw dfw2error("CSerializerBase::BeginUpdate on empty value list");
-			else
+			if (!ValueList.empty())
 				UpdateIterator = ValueList.begin();  // ставим итератор обновления на начало списка значений
 		}
 
@@ -434,21 +478,45 @@ namespace DFW2
 
 		const SERIALIZERMAP GetUnsetValues() const;
 
-		CSerializerBase()
+		CSerializerBase(CSerializerDataSourceBase* pDataSource) : m_DataSource(pDataSource),
+																  m_pDevice(m_DataSource->GetDevice()),
+																  UpdateIterator(ValueList.end()) {}
+
+		// начало обновления сериализатора с заданного устройства
+		void BeginUpdate(CDevice* pDevice)
 		{
-			UpdateIterator = ValueList.end();
+			// запоминаем устройство
+			m_pDevice = pDevice;
+			CSerializerBase::BeginUpdate();
 		}
 
-		virtual ~CSerializerBase()
-		{
+		const char* GetClassName();
 
-		}
-
-		virtual const char* GetClassName();
+		virtual ~CSerializerBase() {}
 		std::string GetVariableName(TypedSerializedValue* pValue) const;
 
 		virtual bool NextItem()
 		{
+			if (m_DataSource->NextItem())
+			{
+				m_DataSource->UpdateSerializer(this);
+				return true;
+			}
+			return false;
+
+			/*
+			* 	// у нас есть контейнер и было задано устройство
+			// с помощью контейнера переходим к следующем устройству
+			// (первое устройство уже обработали)
+
+			pDevice = pContainer->GetDeviceByIndex(++nDeviceIndex);
+
+			// если следующее устройство доступно, обновляем сериализатор на него
+			if (pDevice)
+				pDevice->UpdateSerializer(Serializer);
+			else
+				bContinue = false;	// если устройств больше нет - ставим флаг завершения обхода устройств
+			*/
 			return false;
 		}
 
@@ -473,33 +541,6 @@ namespace DFW2
 		}
 	};
 
-
-	class CDeviceSerializer : public CSerializerBase
-	{
-	protected:
-		CDevice* m_pDevice = nullptr;
-		ptrdiff_t m_nDeviceIndex = 0;
-	public:
-
-		CDeviceSerializer() : CSerializerBase() {}
-		CDeviceSerializer(CDevice* pDevice) : CSerializerBase(), m_pDevice(pDevice) {}
-		CDevice* GetDevice() override { return m_pDevice; }
-
-		// начало обновления сериализатора с заданного устройства
-		void BeginUpdate(CDevice* pDevice)
-		{
-			// запоминаем устройство
-			m_pDevice = pDevice;
-			m_nDeviceIndex = 0;
-			CSerializerBase::BeginUpdate();
-		}
-
-		const char* GetClassName() override;
-		bool NextItem() override;
-
-	};
-
 	using SerializerPtr = std::unique_ptr<CSerializerBase>;
-	using DeviceSerializerPtr = std::unique_ptr<CDeviceSerializer>;
 }
 

@@ -150,73 +150,56 @@ void CSerializerJson::SerializeData(CSerializerBase* pSerializer, nlohmann::json
 }
 
 // сериализация в json из сериализатора
-void CSerializerJson::SerializeClass(DeviceSerializerPtr& Serializer)
+void CSerializerJson::SerializeClass(const SerializerPtr& Serializer)
 {
 	// если в сериализаторе нет полей - пропускаем
+	if (Serializer->ValuesCount() == 0) return;
 
-	if (Serializer->ValuesCount() > 0)
+	// создаем узел описания класса
+	auto Class = nlohmann::json();
+	SerializeProps(Serializer.get(), Class);
+	m_JsonStructure[Serializer->GetClassName()] = Class;
+	// перечень устройств размещаем в массиве json
+	auto items = nlohmann::json::array();
+
+	// если в сериализаторе есть устройство, проходим
+	// по всем устройствам из контейнера
+	CDevice* pDevice(Serializer->GetDevice());
+	CDeviceContainer* pContainer(pDevice ? pDevice->GetContainer() : nullptr);
+	size_t nDeviceIndex(0);
+	bool bContinue(true);
+
+	// продолжаем пока сериализатор
+	// может переходить на следующий объект
+	// одну сериализацию делаем в любом случае, так как получили
+	// настроенный сериализатор
+
+	do
 	{
-		// создаем узел описания класса
-		auto Class = nlohmann::json();
-		SerializeProps(Serializer.get(), Class);
-		m_JsonStructure[Serializer->GetClassName()] = Class;
-		// перечень устройств размещаем в массиве json
-		auto items = nlohmann::json::array();
+		auto item = nlohmann::json();
+		SerializeData(Serializer.get(), item);
 
-		// если в сериализаторе есть устройство, проходим
-		// по всем устройствам из контейнера
-
-		CDevice* pDevice(Serializer->GetDevice());
-		CDeviceContainer* pContainer(pDevice ? pDevice->GetContainer() : nullptr);
-		size_t nDeviceIndex(0);
-		bool bContinue(true);
-
-		// продолжаем пока сериализатор
-		// может переходить на следующий объект
-		// одну сериализацию делаем в любом случае, так как получили
-		// настроенный сериализатор
-
-		while(bContinue)
+		if (pContainer)
 		{
-			auto item = nlohmann::json();
+			// и сериализуем связи данного экземпляра устройства
+			// по свойствам контейнера
+			const CDeviceContainerProperties& Props = pContainer->m_ContainerProps;
+			auto jsonLinks = nlohmann::json::array();
+			// добавляем связи от ведущих и ведомых
+			AddLinks(Serializer, jsonLinks, Props.m_Masters, true);
+			AddLinks(Serializer, jsonLinks, Props.m_Slaves, false);
+			// если что-то добавилось в ссылки - добавляем их в данные объекта
+			// пустые ссылки не добавляем
+			if (!jsonLinks.empty())
+				item["Links"] = jsonLinks;
+		}
 
-			SerializeData(Serializer.get(), item);
+		items.push_back(item);
 
-			if (pContainer)
-			{
-				// и сериализуем связи данного экземпляра устройства
-				// по свойствам контейнера
-				const CDeviceContainerProperties& Props = pContainer->m_ContainerProps;
-				auto jsonLinks = nlohmann::json::array();
-				// добавляем связи от ведущих и ведомых
-				AddLinks(Serializer, jsonLinks, Props.m_Masters, true);
-				AddLinks(Serializer, jsonLinks, Props.m_Slaves, false);
-				// если что-то добавилось в ссылки - добавляем их в данные объекта
-				// пустые ссылки не добавляем
-				if (!jsonLinks.empty())
-					item["Links"] = jsonLinks;
+	} while (Serializer->NextItem());
 
-				// у нас есть контейнер и было задано устройство
-				// с помощью контейнера переходим к следующем устройству
-				// (первое устройство уже обработали)
-
-				pDevice = pContainer->GetDeviceByIndex(++nDeviceIndex);
-
-				// если следующее устройство доступно, обновляем сериализатор на него
-				if (pDevice)
-					pDevice->UpdateSerializer(Serializer);
-				else
-					bContinue = false;	// если устройств больше нет - ставим флаг завершения обхода устройств
-			}
-			else
-				bContinue = false; // если в сериализаторе нет устройства - заканчиваем 
-
-			items.push_back(item);
-		} 		
-
-		// добавляем массив данных под именем объекта
-		m_JsonData[Serializer->GetClassName()] = items;
-	}
+	// добавляем массив данных под именем объекта
+	m_JsonData[Serializer->GetClassName()] = items;
 }
 
 // сериализация связей устройства
@@ -242,7 +225,7 @@ void CSerializerJson::AddLink(nlohmann::json& jsonLinks, const CDevice* pLinkedD
 	}
 }
 
-void CSerializerJson::AddLinks(DeviceSerializerPtr& Serializer, nlohmann::json& jsonLinks, const LINKSUNDIRECTED& links, bool bMaster)
+void CSerializerJson::AddLinks(const SerializerPtr& Serializer, nlohmann::json& jsonLinks, const LINKSUNDIRECTED& links, bool bMaster)
 {
 	// просматриваем связи устройства
 	for (auto&& link : links)
@@ -296,7 +279,7 @@ bool JsonSaxSerializer::start_array(std::size_t elements)
 				if (itCurrentDevice != itLastDevice)
 				{
 					stateInDeviceArray = true;
-					(*itCurrentDevice)->UpdateSerializer(itCurrentSerializer->second);
+					(*itCurrentDevice)->UpdateSerializer(itCurrentSerializer->second.get());
 				}
 				else
 					ContainerDoesNotFitJsonArray(container);
@@ -384,7 +367,7 @@ bool JsonSaxSerializer::end_object()
 
 				// если устройств больше нет, не ставим следующий сериализатор
 				if (itCurrentDevice != itLastDevice)
-					(*itCurrentDevice)->UpdateSerializer(itCurrentSerializer->second);
+					(*itCurrentDevice)->UpdateSerializer(itCurrentSerializer->second.get());
 			}
 		}
 		else if (StackDepth() == 6)

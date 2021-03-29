@@ -3,17 +3,40 @@
 #include "DeviceContainer.h"
 using namespace DFW2;
 
-const char* CSerializerBase::GetClassName()
+
+ptrdiff_t CSerializerDataSourceContainer::ItemsCount()
 {
-	return m_strClassName.c_str();
+	return m_pContainer->Count();
 }
 
-const char* CDeviceSerializer::GetClassName()
+bool CSerializerDataSourceContainer::NextItem()
+{
+	nItemIndex++;
+	if (nItemIndex < ItemsCount())
+		return true;
+	else
+		return false;
+}
+
+CDevice* CSerializerDataSourceContainer::GetDevice()
+{
+	if (m_pContainer->Count())
+		return m_pContainer->GetDeviceByIndex(0);
+	else
+		return CSerializerDataSourceBase::GetDevice();
+}
+
+void CSerializerDataSourceContainer::UpdateSerializer(CSerializerBase* pSerializer)
+{
+	m_pContainer->GetDeviceByIndex(nItemIndex)->UpdateSerializer(pSerializer);
+}
+
+const char* CSerializerBase::GetClassName()
 {
 	if (m_pDevice)
 		return m_pDevice->GetContainer()->m_ContainerProps.GetSystemClassName();
 	else
-		return CSerializerBase::GetClassName();
+		return m_strClassName.c_str();
 }
 
 std::string CSerializerBase::GetVariableName(TypedSerializedValue* pValue) const
@@ -33,8 +56,7 @@ const SERIALIZERMAP CSerializerBase::GetUnsetValues() const
 	return outMap;
 }
 
-
-bool CDeviceSerializer::NextItem()
+/*bool CDeviceSerializer::NextItem()
 {
 	if (auto container = m_pDevice->GetContainer() ; container)
 	{
@@ -49,7 +71,7 @@ bool CDeviceSerializer::NextItem()
 		}
 	}
 	return false;
-}
+}*/
 
 bool TypedSerializedValue::isSignificant()
 {

@@ -39,7 +39,7 @@ namespace DFW2
 		bool CalculatePower() override;
 		double Xgen();
 		const cplx& CalculateEgen() override;
-		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
+		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 }

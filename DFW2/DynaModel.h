@@ -326,8 +326,9 @@ namespace DFW2
 				t0 = t;
 			}
 
-			void UpdateSerializer(DeviceSerializerPtr& Serializer)
+			SerializerPtr GetSerializer()
 			{
+				SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
 				Serializer->SetClassName("StepControl");
 				Serializer->AddProperty("RefactorMatrix", m_bRefactorMatrix);
 				Serializer->AddProperty("FillConstantElements", m_bFillConstantElements);
@@ -389,6 +390,8 @@ namespace DFW2
 				Serializer->AddProperty("Order1ZeroCrossingsSteps", OrderStatistics[1].nZeroCrossingsSteps);
 				Serializer->AddProperty("Order1TimePassed", OrderStatistics[1].dTimePassed);
 				Serializer->AddProperty("Order1TimePassedKahan", OrderStatistics[1].dTimePassedKahan);
+
+				return Serializer;
 			}
 		};
 
@@ -398,7 +401,7 @@ namespace DFW2
 			DEVICE_EQUATION_TYPE m_eDiffEquationType = DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
 			double m_dLRCToShuntVmin = 0.5;
-			double m_dZeroCrossingTolerance;
+			double m_dZeroCrossingTolerance = 0.0;
 			bool m_bDontCheckTolOnMinStep = false;
 			bool m_bConsiderDampingEquation = false;
 			double m_dOutStep = 0.01;
@@ -421,8 +424,10 @@ namespace DFW2
 			ptrdiff_t m_nAdamsDampingSteps = 10;
 			bool m_bAllowUserOverrideStandardLRC = false;
 			Parameters() { }
-			void UpdateSerializer(DeviceSerializerPtr& Serializer)
+
+			SerializerPtr GetSerializer()
 			{
+				SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
 				Serializer->SetClassName("Parameters");
 				Serializer->AddProperty("FrequencyTimeConstant", m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
 				Serializer->AddProperty("LRCToShuntVmin", m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
@@ -447,6 +452,7 @@ namespace DFW2
 				Serializer->AddProperty("AdamsDampingAlpha", m_dAdamsDampingAlpha);
 				Serializer->AddProperty("AdamsDampingSteps", m_nAdamsDampingSteps);
 				Serializer->AddProperty("AllowUserOverrideStandardLRC", m_bAllowUserOverrideStandardLRC);
+				return Serializer;
 			}
 		} 
 			m_Parameters;

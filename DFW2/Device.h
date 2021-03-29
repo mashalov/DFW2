@@ -11,6 +11,7 @@ namespace DFW2
 	class CDynaPrimitive;
 	class CDynaPrimitiveState;
 
+
 	using STATEPRIMITIVESLIST = std::list<CDynaPrimitiveState*>;
 	using PRIMITIVESVEC = std::vector<CDynaPrimitive*>;
 
@@ -290,11 +291,11 @@ namespace DFW2
 		virtual void RestoreStates();
 
 		// возвращает сериализатор для данного типа устройств
-		DeviceSerializerPtr GetSerializer();
+		SerializerPtr GetSerializer();
 		// обновляет сериализатор для данного типа устройств
-		virtual void UpdateSerializer(DeviceSerializerPtr& Serializer);
+		virtual void UpdateSerializer(CSerializerBase* Serializer);
 		// shortcut добавляет в сериализатор свойство состояния
-		void AddStateProperty(DeviceSerializerPtr& Serializer);
+		void AddStateProperty(CSerializerBase* Serializer);
 
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, eDEVICEFUNCTIONSTATUS Status2);
 		static eDEVICEFUNCTIONSTATUS DeviceFunctionResult(eDEVICEFUNCTIONSTATUS Status1, bool Status2);

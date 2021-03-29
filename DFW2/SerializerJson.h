@@ -364,7 +364,7 @@ namespace DFW2
 
     // Сериализатор второго прохода, который реально читает данные в контейнеры
 
-    using SerializerMap = std::map<std::string, DeviceSerializerPtr, std::less<> >;
+    using SerializerMap = std::map<std::string, SerializerPtr, std::less<> >;
     using SerializerMapItr = SerializerMap::iterator;
 
     class JsonSaxSerializer : public JsonSaxDataObjects
@@ -390,7 +390,7 @@ namespace DFW2
         }
         // добавить в карту сериалиазтор контейнера, по имени которого и списку
         // полей будет работать json-сериализатор
-        void AddSerializer(const std::string_view& ClassName, DeviceSerializerPtr& serializer)
+        void AddSerializer(const std::string_view& ClassName, SerializerPtr& serializer)
         {
             m_SerializerMap.insert(std::make_pair(ClassName, std::move(serializer)));
         }
@@ -513,7 +513,7 @@ namespace DFW2
 		nlohmann::json m_JsonData;		// данные
 		nlohmann::json m_JsonStructure;	// структура данных
 		void AddLink(nlohmann::json& jsonLinks, const CDevice* pLinkedDevice, bool bMaster);
-		void AddLinks(DeviceSerializerPtr& Serializer, nlohmann::json& jsonLinks, const LINKSUNDIRECTED& links, bool bMaster);
+		void AddLinks(const SerializerPtr& Serializer, nlohmann::json& jsonLinks, const LINKSUNDIRECTED& links, bool bMaster);
 		TypeMapType m_TypeMap;
 		std::filesystem::path m_Path;
 	public:
@@ -522,7 +522,7 @@ namespace DFW2
 		void AddDeviceTypeDescription(ptrdiff_t nType, std::string_view Name);
 		void CreateNewSerialization(const std::filesystem::path& path);
 		void Commit();
-		void SerializeClass(DeviceSerializerPtr& Serializer);
+		void SerializeClass(const SerializerPtr& Serializer);
         void SerializeProps(CSerializerBase* Serializer, nlohmann::json& Class);
         void SerializeData(CSerializerBase* pSerializer, nlohmann::json& Class);
 		static const char* m_cszVim;

@@ -20,7 +20,7 @@ namespace DFW2
 		cplx GetEMF() override { return std::polar((double)Eqs, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
-		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
+		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 	};
@@ -33,7 +33,7 @@ namespace DFW2
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
+		void UpdateSerializer(CSerializerBase* Serializer) override;
 	};
 }
 

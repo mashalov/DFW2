@@ -13,16 +13,8 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 	CSerializerJson jsonSerializer;
 	jsonSerializer.CreateNewSerialization(path);
 
-	// создаем базовый сериализатор для параметров расчета
-	DeviceSerializerPtr SerializerParameteres = std::make_unique<CDeviceSerializer>();
-	m_Parameters.UpdateSerializer(SerializerParameteres);
-	jsonSerializer.SerializeClass(SerializerParameteres);
-
-	// создаем базовый сериализатор для глобальных переменных расчета
-	// и сериализуем их аналогично параметрам расчета
-	DeviceSerializerPtr SerializerStepControl = std::make_unique<CDeviceSerializer>();
-	sc.UpdateSerializer(SerializerStepControl);
-	jsonSerializer.SerializeClass(SerializerStepControl);
+	jsonSerializer.SerializeClass(m_Parameters.GetSerializer());
+	jsonSerializer.SerializeClass(sc.GetSerializer());
 
 	// обходим контейнеры устройств и регистрируем перечисление типов устройств
 	for (auto&& container : m_DeviceContainers)
@@ -31,14 +23,8 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 	// обходим контейнеры снова
 	for (auto&& container : m_DeviceContainers)
 	{
-		auto itb = container->begin();
-		const auto ite = container->end();
-
-		// если контейнер пустой - пропускаем
-		if (itb == ite) continue;
-
-		auto&& serializer = container->GetDeviceByIndex(0)->GetSerializer();
-		jsonSerializer.SerializeClass(serializer);
+		if (!container->Count()) continue;
+		jsonSerializer.SerializeClass(container->GetDeviceByIndex(0)->GetSerializer());
 	}
 	// завершаем сериализацию
 	jsonSerializer.Commit();

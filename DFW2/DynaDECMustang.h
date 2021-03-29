@@ -51,7 +51,7 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 
-		void UpdateSerializer(DeviceSerializerPtr& Serializer) override;
+		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 }

@@ -212,7 +212,7 @@ namespace DFW2
 		//bool CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceCPPContainer& CustomDeviceContainer);
-		void ReadRastrRow(DeviceSerializerPtr& Serializer, long Row);
+		void ReadRastrRow(SerializerPtr& Serializer, long Row);
 
 		// Читаем контейнер из таблицы RastrWin
 		void ReadTable(CDeviceContainer& Container, const char* cszRastrSelection = "")
@@ -279,14 +279,15 @@ namespace DFW2
 				}
 
 				long selIndex = spTable->GetFindNextSel(-1);
-				while (selIndex >= 0)
+				while (true)
 				{
-					(*pDevs)->UpdateSerializer(pSerializer);
 					ReadRastrRow(pSerializer, selIndex);
 					selIndex = spTable->GetFindNextSel(selIndex);
-					if (pDevs != Container.end())
-						pDevs++;
-					else
+
+					if (selIndex < 0)
+						break;
+
+					if(!pSerializer->NextItem())
 						throw dfw2error(fmt::format("RastrImport::ReadTable - container \"{}\" size set to {} does not fit devices",
 							pSerializer->GetClassName(),
 							Container.Count()));

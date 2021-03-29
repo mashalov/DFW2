@@ -223,7 +223,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 }
 
 
-void CDynaExcConMustang::UpdateSerializer(DeviceSerializerPtr& Serializer)
+void CDynaExcConMustang::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	AddStateProperty(Serializer);

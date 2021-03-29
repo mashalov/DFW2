@@ -1567,7 +1567,7 @@ void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 }
 
 
-void CDynaNodeBase::UpdateSerializer(DeviceSerializerPtr& Serializer)
+void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("name", TypedSerializedValue::eValueType::VT_NAME);
@@ -1614,7 +1614,7 @@ void CDynaNodeBase::UpdateSerializer(DeviceSerializerPtr& Serializer)
 	Serializer->AddState("YiiSuper", YiiSuper, eVARUNITS::VARUNIT_SIEMENS);
 }
 
-void CDynaNode::UpdateSerializer(DeviceSerializerPtr& Serializer)
+void CDynaNode::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDynaNodeBase::UpdateSerializer(Serializer);
 	Serializer->AddState("SLag", Lag);
