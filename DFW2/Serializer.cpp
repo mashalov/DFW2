@@ -56,23 +56,6 @@ const SERIALIZERMAP CSerializerBase::GetUnsetValues() const
 	return outMap;
 }
 
-/*bool CDeviceSerializer::NextItem()
-{
-	if (auto container = m_pDevice->GetContainer() ; container)
-	{
-		if (m_nDeviceIndex < static_cast<ptrdiff_t>(container->Count()))
-		{
-			m_nDeviceIndex++;
-			m_pDevice = container->GetDeviceByIndex(m_nDeviceIndex);
-			std::unique_ptr<CDeviceSerializer> serializer(this);
-			m_pDevice->UpdateSerializer(serializer);
-			serializer.release();
-			return false;
-		}
-	}
-	return false;
-}*/
-
 bool TypedSerializedValue::isSignificant()
 {
 	return true;

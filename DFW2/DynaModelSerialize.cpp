@@ -65,10 +65,8 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszFoundContainerData, objkey, objsize));
 				// создаем заданное в json количество объектов
 				pContainer->CreateDevices(objsize);
-				// достаем из первого созданного устройства контейнера сериализатор
-				auto&& serializer = pContainer->GetDeviceByIndex(0)->GetSerializer();
 				// и отдаем сериализатор контейнера сериализатору json
-				saxSerializer->AddSerializer(objkey, serializer);
+				saxSerializer->AddSerializer(objkey, pContainer->GetSerializer());
 			}
 		}
 

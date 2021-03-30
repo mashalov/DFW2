@@ -1,53 +1,9 @@
 ﻿#pragma once
-#include <filesystem>
-#include <map>
-#include <memory>
-#include <list>
-#include <iostream>
-#include "Serializer.h"
-#include "nlohmann/json.hpp"
+#include "JsonWalkers.h"
 #include "DeviceContainerProperties.h"
-
 
 namespace DFW2
 {
-    enum class JsonObjectTypes
-    {
-        Object,
-        Array,
-        Key,
-        Value
-    };
-
-    class JsonObject
-    {
-    protected:
-        std::string m_Key;
-        JsonObjectTypes m_Type;
-    public:
-        JsonObject(JsonObjectTypes Type, const std::string_view& Key) : m_Key(Key), m_Type(Type)
-        {
-
-        }
-
-        JsonObjectTypes Type() const
-        { 
-            return m_Type;
-        };
-
-        void ChangeType(JsonObjectTypes Type)
-        {
-            m_Type = Type;
-        }
-
-        const std::string_view Key() const
-        {
-            return m_Key;
-        }
-    };
-
-    using JsonStack_t = std::list<JsonObject>;
-
 
     // обход json в SAX-режиме с контролем стека разбора
     // и фиксацией состояний
@@ -68,7 +24,7 @@ namespace DFW2
             m_Key(Key)
         { }
 
-        // вводит состосяние если глубина стека и ключ совпадают с заданными
+        // вводит состояние если глубина стека и ключ совпадают с заданными
         bool Push(ptrdiff_t StackDepth, const std::string_view Key) 
         {
             if (!m_State && StackDepth == m_StackDepth && Key == m_Key)
@@ -115,19 +71,10 @@ namespace DFW2
     using JsonParsingStates = std::list<JsonParsingState*>;
     using JsonParsingStatesItr = JsonParsingStates::iterator;
 
-    class JsonSaxWalkerBase : public nlohmann::json_sax<nlohmann::json>
+    class JsonSaxWalkerBase : public JsonSaxStackWalker
     {
     protected:
-        JsonStack_t stack;
         JsonParsingStates states;
-
-        void DumpStack(std::string_view pushpop)
-        {
-            std::cout << pushpop;
-            for (const auto& s : stack)
-                std::cout << " { " << s.Key() << " ; " << static_cast<ptrdiff_t>(s.Type()) << " } / ";
-            std::cout << std::endl;
-        }
 
         static bool StatesComp(const JsonParsingState* lhs, const JsonParsingState* rhs)
         {
@@ -136,14 +83,9 @@ namespace DFW2
 
         std::unique_ptr<JsonParsingStateBoundSearch> boundSearchState = std::make_unique<JsonParsingStateBoundSearch>(0, "");
 
-        void Push(JsonObjectTypes Type, std::string_view Key = {})
+        void Push(JsonObjectTypes Type, std::string_view Key = {}) override
         {
-            // если пришел объект или массив, и в стеке был ключ,
-            // убираем ключ и ставим вместо него массив или объект. Ключ оставляем
-            if ((Type == JsonObjectTypes::Object || Type == JsonObjectTypes::Array) && !stack.empty() && stack.back().Type() == JsonObjectTypes::Key)
-                stack.back().ChangeType(Type);
-            else
-                stack.push_back(JsonObject(Type, Key));
+            JsonSaxStackWalker::Push(Type, Key);
 
             ptrdiff_t nStackDepth(stack.size());
             const std::string_view& StackKey(stack.back().Key());
@@ -176,11 +118,6 @@ namespace DFW2
 
         void Pop(JsonObjectTypes Type)
         {
-            if (stack.empty())
-                throw dfw2error("JsonSaxWalkerBase - parsing error: stack empty on Pop");
-
-            const auto BackType = stack.back().Type();
-
             ptrdiff_t nStackDepth(stack.size());
             const std::string_view StackKey(stack.back().Key());
 
@@ -196,19 +133,7 @@ namespace DFW2
                 itl++;
             }
 
-            if (Type == JsonObjectTypes::Value)
-            {
-                // если обработали значение, и предыдущий объект был ключ - удаляем этот ключ
-                if (BackType == JsonObjectTypes::Key)
-                    stack.pop_back();
-            }
-            else
-            {
-                if (BackType != Type)
-                    throw dfw2error("JsonSaxWalkerBase - parsing error: stack types mismatch");
-                stack.pop_back();
-            }
-
+            JsonSaxStackWalker::Pop(Type);
             //DumpStack("pop");
         }
 
@@ -222,84 +147,6 @@ namespace DFW2
         void AddState(JsonParsingState& state)
         {
             states.insert(StatesLower(state.StackDepth()),&state);
-        }
-
-        bool null() override
-        {
-            Pop(JsonObjectTypes::Value);
-            return true;
-        }
-
-        bool boolean(bool val) override
-        {
-            Pop(JsonObjectTypes::Value);
-            return true;
-        }
-
-        bool number_integer(number_integer_t val) override
-        {
-            Pop(JsonObjectTypes::Value);
-            return true;
-        }
-
-        bool number_unsigned(number_unsigned_t val) override
-        {
-            Pop(JsonObjectTypes::Value);
-            return true;
-        }
-
-        bool number_float(number_float_t val, const string_t& s) override
-        {
-            Pop(JsonObjectTypes::Value);
-            return true;
-        }
-
-        bool string(string_t& val) override
-        {
-            Pop(JsonObjectTypes::Value);
-            return true;
-        }
-
-        virtual bool binary(binary_t& val) override
-        {
-            Pop(JsonObjectTypes::Value);
-            return true;
-        }
-
-        virtual bool start_object(std::size_t elements) override
-        {
-            Push(JsonObjectTypes::Object);
-            return true;
-        }
-
-        bool key(string_t& val) override
-        {
-            Push(JsonObjectTypes::Key, val);
-            return true;
-        }
-
-        bool end_object() override
-        {
-            Pop(JsonObjectTypes::Object);
-            return true;
-        }
-
-        bool start_array(std::size_t elements) override
-        {
-            Push(JsonObjectTypes::Array);
-            return true;
-        }
-
-        bool end_array() override
-        {
-            Pop(JsonObjectTypes::Array);
-            return true;
-        }
-
-        bool parse_error(std::size_t position, const std::string& last_token, const nlohmann::detail::exception& ex) override
-        {
-            // !!!!!!!!! TODO !!!!!!!!! что-то делать с ошибкой, возможно просто throw или как-то fallback
-            return true;
         }
 
         static constexpr const char* cszRe = "re";
@@ -390,7 +237,7 @@ namespace DFW2
         }
         // добавить в карту сериалиазтор контейнера, по имени которого и списку
         // полей будет работать json-сериализатор
-        void AddSerializer(const std::string_view& ClassName, SerializerPtr& serializer)
+        void AddSerializer(const std::string_view& ClassName, SerializerPtr&& serializer)
         {
             m_SerializerMap.insert(std::make_pair(ClassName, std::move(serializer)));
         }

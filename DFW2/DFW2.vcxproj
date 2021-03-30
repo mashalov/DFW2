@@ -218,6 +218,7 @@
     <ClInclude Include="Header.h" />
     <ClInclude Include="HRTimer.h" />
     <ClInclude Include="ICustomDevice.h" />
+    <ClInclude Include="JsonWalkers.h" />
     <ClInclude Include="KLUWrapper.h" />
     <ClInclude Include="IterationControl.h" />
     <ClInclude Include="LimitedLag.h" />
