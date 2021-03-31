@@ -42,10 +42,8 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 		js.open(path);
 
 		// делаем первый проход - считаем сколько чего мы можем взять из json
-		auto saxCounter = std::make_unique<JsonSaxCounter>();
-		nlohmann::json::sax_parse(js, saxCounter.get());
-		//saxCounter->Dump();
-
+		auto acceptorCounter = std::make_unique<JsonSaxElementCounter>();
+		nlohmann::json::sax_parse(js, acceptorCounter.get());
 		// после первого прохода в saxCounter количество объекто для каждого найденного
 		// в json контейнера
 		// создаем сериалиазатор для второго прохода
@@ -53,7 +51,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 		// в которых первый проход нашел данные
 		auto saxSerializer = std::make_unique<JsonSaxSerializer>();
 
-		for (const auto& [objkey, objsize] : saxCounter->GetObjectSizeMap())
+		for (const auto& [objkey, objsize] : acceptorCounter->Objects())
 		{
 			// если описатель контейнера есть, а данных нет, то второй проход 
 			// по нему не делаем
@@ -70,10 +68,16 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 			}
 		}
 
+
 		// перематываем файл в начало для второго прохода
 		js.clear(); js.seekg(0);
 		// делаем второй проход с реальным чтением данных
-		nlohmann::json::sax_parse(js, saxSerializer.get());
+		//nlohmann::json::sax_parse(js, saxSerializer.get());
+
+		/*auto acceptorCounter = jsonSerializer.CounterAcceptor();
+		auto saxAcceptorSerializer = std::make_unique<JsonSaxAcceptorWalker>(acceptorCounter.get());
+		nlohmann::json::sax_parse(js, saxAcceptorSerializer.get());
+		*/
 	}
 	catch (nlohmann::json::exception& e)
 	{

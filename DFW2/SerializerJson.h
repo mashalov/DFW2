@@ -161,53 +161,6 @@ namespace DFW2
         JsonParsingState stateInObjects = JsonParsingState(this, 4, "objects");
     };
 
-	class JsonSaxCounter : public JsonSaxDataObjects
-	{
-
-    protected:
-        using ObjectMap_t = std::map<std::string, ptrdiff_t>;
-        using ObjectMapIterator_t = ObjectMap_t::iterator;
-        ObjectMap_t m_ObjectMap;
-        ObjectMapIterator_t m_itCurrentObject;
-
-    public:
-
-        JsonSaxCounter() : m_itCurrentObject(m_ObjectMap.end())
-        {
-
-        }
-
-        virtual bool start_object(std::size_t elements) override
-        {
-            JsonSaxWalkerBase::start_object(elements);
-
-            if(stateInData && stateInObjects && StackDepth() == 6 && m_itCurrentObject != m_ObjectMap.end())
-                m_itCurrentObject->second++;
-
-            return true;
-        }
-        
-        bool start_array(std::size_t elements) override
-        {
-            JsonSaxWalkerBase::start_array(elements);
-
-            if (stateInData && stateInObjects && StackDepth() == 5)
-                m_itCurrentObject = m_ObjectMap.insert(std::make_pair(stack.back().Key(), 0)).first;
-            return true;
-        }
-                
-        const ObjectMap_t GetObjectSizeMap() const
-        {
-            return m_ObjectMap;
-        }
-
-        void Dump()
-        {
-            for(const auto& [key, val] : m_ObjectMap)
-            std::cout << key << " " << val << std::endl;
-        }
-	};
-
 
     // Сериализатор второго прохода, который реально читает данные в контейнеры
 
@@ -348,6 +301,86 @@ namespace DFW2
                 else
                     SerializerSetNamedValue<double>(Key, value);
             }
+        }
+    };
+
+    // акцептор для расчета количества элементов
+    // в массиве и построения картны названий массивов и их размерностей
+    class JsonArrayElementCounter : public JsonSaxAcceptorBase
+    {
+    public:
+        // карта название - количество элементов
+        using ObjectMap = std::map<std::string, ptrdiff_t, std::less<>>;
+    protected:
+        ObjectMap m_ObjectMap;
+        ptrdiff_t m_ItemsCount = 0;     // счетчик элементов
+    public:
+
+        JsonArrayElementCounter() : JsonSaxAcceptorBase(JsonObjectTypes::Array, "") {}
+
+        // возвращаем готовую карту
+        const ObjectMap& Objects()
+        {
+            return m_ObjectMap;
+        }
+
+        // после того, как акцептор объекта в массиве отработал - считаем новый элемент массива
+        void NestedEnd(JsonSaxAcceptorBase* nested) override
+        {
+            JsonSaxAcceptorBase::NestedEnd(nested);
+            m_ItemsCount++;
+        }
+
+        // в начале обработки массива
+        void Start(const JsonStack& stack) override
+        {
+            JsonSaxAcceptorBase::Start(stack);
+            // проверяем, есть ли название обрабатываемого массива в карте,
+            // и если нет - создаем с нулевым числом элементов
+            if (auto it(m_ObjectMap.find(Key())); it == m_ObjectMap.end())
+                m_ObjectMap.insert(std::make_pair(Key(), 0));
+            m_ItemsCount = 0;
+        }
+
+        // в конце обработки массива
+        void End(const JsonStack& stack) override
+        {
+            JsonSaxAcceptorBase::End(stack);
+            // находим название массива в карте и добавляем посчитанное 
+            // количество элементов. Если названия массива нет - это необъяснимая просто ошибка
+            if (auto it(m_ObjectMap.find(Key())); it != m_ObjectMap.end())
+                it->second += m_ItemsCount;
+            else
+                throw dfw2error(fmt::format("JsonArrayElementCounter::End - no object in map after count has been finished"));
+        }
+    };
+
+    // сериализатор первого прохода - считает сколько объектов, которые
+    // можно прочитать из json
+
+    class JsonSaxElementCounter : public JsonSaxAcceptorWalker
+    {
+        // акцептор массива, который считает элементы в массиве
+        JsonArrayElementCounter* pArrayCounter = nullptr;
+    public:
+        JsonSaxElementCounter() : JsonSaxAcceptorWalker(std::make_unique<JsonSaxAcceptorBase>(JsonObjectTypes::Object, ""))
+        {
+            auto object = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "");
+            pArrayCounter = new JsonArrayElementCounter();
+            auto objects = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "objects");
+            auto data = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "data");
+            pArrayCounter->AddAcceptor(object);
+            objects->AddAcceptor(pArrayCounter);
+            data->AddAcceptor(objects);
+            auto powerSystem = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "powerSystemModel");
+            powerSystem->AddAcceptor(data);
+            rootAcceptor->AddAcceptor(powerSystem);
+        }
+
+        // возвращает карту объектов : название - количество
+        const JsonArrayElementCounter::ObjectMap& Objects() const
+        {
+            return pArrayCounter->Objects();
         }
     };
 
