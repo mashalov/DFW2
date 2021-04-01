@@ -355,32 +355,209 @@ namespace DFW2
         }
     };
 
+    // базовый сериализатор, настроенный на структуру входного json
+    
+    class JsonSaxAcceptorWalkerBase : public JsonSaxAcceptorWalker
+    {
+    protected:
+        JsonSaxAcceptorBase* data;
+    public:
+        JsonSaxAcceptorWalkerBase() : JsonSaxAcceptorWalker(std::make_unique<JsonSaxAcceptorBase>(JsonObjectTypes::Object, ""))
+        {
+            auto powerSystem = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "powerSystemModel");
+            powerSystem->AddAcceptor(data = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "data"));
+            rootAcceptor->AddAcceptor(powerSystem);
+        }
+    };
+
     // сериализатор первого прохода - считает сколько объектов, которые
     // можно прочитать из json
 
-    class JsonSaxElementCounter : public JsonSaxAcceptorWalker
+    class JsonSaxElementCounter : public JsonSaxAcceptorWalkerBase
     {
         // акцептор массива, который считает элементы в массиве
         JsonArrayElementCounter* pArrayCounter = nullptr;
     public:
-        JsonSaxElementCounter() : JsonSaxAcceptorWalker(std::make_unique<JsonSaxAcceptorBase>(JsonObjectTypes::Object, ""))
+        JsonSaxElementCounter() : JsonSaxAcceptorWalkerBase()
         {
             auto object = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "");
             pArrayCounter = new JsonArrayElementCounter();
             auto objects = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "objects");
-            auto data = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "data");
             pArrayCounter->AddAcceptor(object);
             objects->AddAcceptor(pArrayCounter);
             data->AddAcceptor(objects);
-            auto powerSystem = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "powerSystemModel");
-            powerSystem->AddAcceptor(data);
-            rootAcceptor->AddAcceptor(powerSystem);
         }
 
         // возвращает карту объектов : название - количество
         const JsonArrayElementCounter::ObjectMap& Objects() const
         {
             return pArrayCounter->Objects();
+        }
+    };
+
+    class JsonObjectValue : public JsonSaxAcceptorBase
+    {
+    protected:
+        MetaSerializedValue* m_InputValue = nullptr;
+    public:
+        JsonObjectValue() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") {}
+        void SetInputValue(MetaSerializedValue* value)
+        {
+            m_InputValue = value;
+        }
+
+        bool null() override
+        {
+            if (!m_InputValue) return true;
+            m_InputValue->Set(ptrdiff_t(0));
+            return true;
+        }
+
+        bool boolean(bool val) override
+        {
+            if (!m_InputValue) return true;
+            m_InputValue->Set(val);
+            return true;
+        }
+
+        bool number_integer(number_integer_t val) override
+        {
+            if (!m_InputValue) return true;
+            m_InputValue->Set(static_cast<ptrdiff_t>(val));
+            return true;
+        }
+
+        bool number_unsigned(number_unsigned_t val) override
+        {
+            if (!m_InputValue) return true;
+            m_InputValue->Set(static_cast<ptrdiff_t>(val));
+            return true;
+        }
+
+        bool number_float(number_float_t val, const string_t& s) override
+        {
+            if (!m_InputValue) return true;
+            m_InputValue->Set(val);
+            return true;
+        }
+
+        bool string(string_t& val) override
+        {
+            if (!m_InputValue) return true;
+            m_InputValue->Set<const std::string&>(val);
+            return true;
+        }
+    };
+
+
+    class JsonContainerObject : public JsonSaxAcceptorBase
+    {
+    protected:
+        CSerializerBase* m_pSerializer = nullptr;
+    public:
+        JsonContainerObject() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") {}
+        void SetSerializer(CSerializerBase* serializer)
+        {
+            m_pSerializer = serializer;
+        }
+
+        void NestedStart(JsonSaxAcceptorBase* nested) override
+        {
+            if (!m_pSerializer) return;
+            JsonObjectValue* value(static_cast<JsonObjectValue*>(nested));
+            value->SetInputValue(m_pSerializer->at(nested->Key()));
+        }
+
+
+        void NestedEnd(JsonSaxAcceptorBase* nested) override
+        {
+            
+        }
+    };
+
+
+
+    class JsonContainerArray : public JsonSaxAcceptorBase
+    {
+    protected:
+        CSerializerBase* m_pSerializer = nullptr;
+        ptrdiff_t counter = 0;
+    public:
+        JsonContainerArray() : JsonSaxAcceptorBase(JsonObjectTypes::Array, "") {}
+
+        void SetSerializer(CSerializerBase* serializer)
+        {
+            m_pSerializer = serializer;
+            counter = 0;
+        }
+
+        void NestedStart(JsonSaxAcceptorBase* nested) override
+        {
+            if (!m_pSerializer) return;
+            if(counter >= m_pSerializer->ItemsCount())
+                throw dfw2error(fmt::format("JsonContainerArray::NestedStart - device container with length set to {} cannot fit new device",
+                    "from \"{}\" serializer",
+                    m_pSerializer->ItemsCount(),
+                    m_pSerializer->GetClassName()));
+
+            static_cast<JsonContainerObject*>(nested)->SetSerializer(m_pSerializer);
+        }
+
+        void NestedEnd(JsonSaxAcceptorBase* nested) override
+        {
+            if (!m_pSerializer) return;
+
+            m_pSerializer->NextItem();
+            counter++;
+        }
+    };
+
+
+    class JsonContainers : public JsonSaxAcceptorBase
+    {
+    protected:
+        SerializerMap m_SerializerMap;
+    public:
+        JsonContainers() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") {}
+
+        void AddSerializer(const std::string_view& ClassName, SerializerPtr&& serializer)
+        {
+            m_SerializerMap.insert(std::make_pair(ClassName, std::move(serializer)));
+        }
+
+        void NestedStart(JsonSaxAcceptorBase* nested) override
+        {
+            JsonContainerArray* pArray(static_cast<JsonContainerArray*>(nested));
+
+            if (auto its(m_SerializerMap.find(nested->Key())); its != m_SerializerMap.end())
+            {
+                pArray->SetSerializer(its->second.get());
+            }
+            else
+                pArray->SetSerializer(nullptr);
+        }
+    };
+
+    class JsonSaxMainSerializer : public JsonSaxAcceptorWalkerBase
+    {
+    protected:
+        JsonContainers* containers;
+    public:
+        JsonSaxMainSerializer() : JsonSaxAcceptorWalkerBase()
+        {
+            data->AddAcceptor(containers = new JsonContainers());
+            auto containerArray = new JsonContainerArray();
+            auto containerObject = new JsonContainerObject();
+            auto objectValue = new JsonObjectValue();
+            containers->AddAcceptor(containerArray);
+            containerArray->AddAcceptor(containerObject);
+            containerObject->AddAcceptor(objectValue);
+           
+        }
+
+        void AddSerializer(const std::string_view& ClassName, SerializerPtr&& serializer)
+        {
+            containers->AddSerializer(ClassName, std::move(serializer));
         }
     };
 
