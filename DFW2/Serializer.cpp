@@ -277,25 +277,25 @@ void MetaSerializedValue::SetString(std::string_view value)
 }
 
 
-template<> MetaSerializedValue* MetaSerializedValue::Set<double>(double value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const double&>(const double& value)
 {
 	SetDouble(value);
 	return this;
 }
 
-template<> MetaSerializedValue* MetaSerializedValue::Set<ptrdiff_t>(ptrdiff_t value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const ptrdiff_t&>(const ptrdiff_t& value)
 {
 	SetInt(value);
 	return this;
 }
 
-template<> MetaSerializedValue* MetaSerializedValue::Set<bool>(bool value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const bool&>(const bool& value)
 {
 	SetBool(value);
 	return this;
 }
 
-template<> MetaSerializedValue* MetaSerializedValue::Set<size_t>(size_t value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<const size_t&>(const size_t& value)
 {
 	SetInt(value);
 	return this;

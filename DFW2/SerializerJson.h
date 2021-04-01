@@ -395,83 +395,88 @@ namespace DFW2
         }
     };
 
-    class JsonObjectValue : public JsonSaxAcceptorBase
+    class JsonComplexValue : public JsonSaxAcceptorBase
     {
-    protected:
-        MetaSerializedValue* m_InputValue = nullptr;
     public:
-        JsonObjectValue() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") {}
-        void SetInputValue(MetaSerializedValue* value)
+        JsonComplexValue() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "")
         {
-            m_InputValue = value;
+
         }
 
-        bool null() override
+        void Start(const JsonStack& stack) override
         {
-            if (!m_InputValue) return true;
-            m_InputValue->Set(ptrdiff_t(0));
-            return true;
+            std::cout << Key() << std::endl;
         }
 
-        bool boolean(bool val) override
+        void End(const JsonStack& stack) override
         {
-            if (!m_InputValue) return true;
-            m_InputValue->Set(val);
-            return true;
-        }
 
-        bool number_integer(number_integer_t val) override
-        {
-            if (!m_InputValue) return true;
-            m_InputValue->Set(static_cast<ptrdiff_t>(val));
-            return true;
-        }
-
-        bool number_unsigned(number_unsigned_t val) override
-        {
-            if (!m_InputValue) return true;
-            m_InputValue->Set(static_cast<ptrdiff_t>(val));
-            return true;
-        }
-
-        bool number_float(number_float_t val, const string_t& s) override
-        {
-            if (!m_InputValue) return true;
-            m_InputValue->Set(val);
-            return true;
-        }
-
-        bool string(string_t& val) override
-        {
-            if (!m_InputValue) return true;
-            m_InputValue->Set<const std::string&>(val);
-            return true;
         }
     };
-
 
     class JsonContainerObject : public JsonSaxAcceptorBase
     {
     protected:
         CSerializerBase* m_pSerializer = nullptr;
+        std::string currentKey;
     public:
-        JsonContainerObject() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") {}
+        JsonContainerObject() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") 
+        {
+            AddAcceptor(new JsonComplexValue());
+        }
+
         void SetSerializer(CSerializerBase* serializer)
         {
             m_pSerializer = serializer;
         }
 
-        void NestedStart(JsonSaxAcceptorBase* nested) override
+        template<typename T>
+        void Set(const T& value)
         {
-            if (!m_pSerializer) return;
-            JsonObjectValue* value(static_cast<JsonObjectValue*>(nested));
-            value->SetInputValue(m_pSerializer->at(nested->Key()));
+            if (auto input(m_pSerializer->at(currentKey)); input)
+                input->Set<const T&>(value);
         }
 
-
-        void NestedEnd(JsonSaxAcceptorBase* nested) override
+        bool key(string_t& val) override
         {
-            
+            currentKey = val;
+            return true;
+        }
+
+        bool null() override
+        {
+            Set(ptrdiff_t(0));
+            return true;
+        }
+
+        bool boolean(bool val) override
+        {
+            Set(val);
+            return true;
+        }
+
+        bool number_integer(number_integer_t val) override
+        {
+            Set(val);
+            return true;
+        }
+
+        bool number_unsigned(number_unsigned_t val) override
+        {
+            Set(val);
+            return true;
+        }
+
+        bool number_float(number_float_t val, const string_t& s) override
+        {
+            Set(val);
+            return true;
+        }
+
+        bool string(string_t& val) override
+        {
+            Set(val);
+            return true;
         }
     };
 
@@ -548,11 +553,8 @@ namespace DFW2
             data->AddAcceptor(containers = new JsonContainers());
             auto containerArray = new JsonContainerArray();
             auto containerObject = new JsonContainerObject();
-            auto objectValue = new JsonObjectValue();
             containers->AddAcceptor(containerArray);
             containerArray->AddAcceptor(containerObject);
-            containerObject->AddAcceptor(objectValue);
-           
         }
 
         void AddSerializer(const std::string_view& ClassName, SerializerPtr&& serializer)
