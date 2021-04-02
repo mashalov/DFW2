@@ -26,6 +26,11 @@ public:
 		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) noexcept { return !isspace(ch); }).base(), s.end());
 	}
 
+	static inline void tolower(std::string& s)
+	{
+		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
+	}
+
 	static inline void trim(std::string& s) { ltrim(s);  rtrim(s); }
 
 	static size_t split(std::string_view str, std::string_view Delimiters, STRINGLIST& result)

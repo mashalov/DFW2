@@ -72,6 +72,11 @@ namespace DFW2
 
         }
 
+        virtual bool ConfirmAccept(const AcceptorPtr& acceptor, const JsonObject& jsonObject)
+        {
+            return true;
+        }
+
     public:
 
         std::string VerbalName() const
@@ -118,9 +123,24 @@ namespace DFW2
             {
                 // если у акцептора не задан ключ, он подходит для любых jsonOбъектов совпадающего с ним типа
                 if (acceptor->Type() == jsonObject.Type())
-                    if (acceptor->Key().empty() || acceptor->Key() == jsonObject.Key())
+                {
+                    if (acceptor->Key().empty())
+                    {
+                        // если ключ пустой проверяем через виртуальную функцию нужно ли
+                        // запускать новый акцептор
+                        if (ConfirmAccept(acceptor, jsonObject))
                             candidates.push_back(acceptor.get());
+                    }
+                    else
+                    {
+                        // если ключ не пустой, проверяем совпадает ли он с ключом из стека
+                        // без дополнительной проверки через виртуальную функцию
+                        if (acceptor->Key() == jsonObject.Key())
+                            candidates.push_back(acceptor.get());
+                    }
+                }
             }
+
             if (candidates.size() == 1)
                 return candidates.front();
             else if (candidates.size() > 1)
