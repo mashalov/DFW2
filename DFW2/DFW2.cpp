@@ -52,10 +52,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		try
 		{
 			//Network.DeSerialize("c:\\tmp\\serialization.json");
-			Network.DeSerialize("c:\\tmp\\lf_rg2.json");
-			//ri.GetData(Network);
-			Network.RunLoadFlow();
-			//Network.RunTransient();
+			//Network.DeSerialize("c:\\tmp\\lf_rg2.json");
+			ri.GetData(Network);
+			//Network.RunLoadFlow();
+			Network.RunTransient();
 		}
 		catch (_com_error& err)
 		{

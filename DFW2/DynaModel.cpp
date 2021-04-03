@@ -1803,11 +1803,16 @@ bool CDynaModel::RunLoadFlow()
 	bool bRes(false);
 
 	m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
+	
+	// внутри линка делается обработка СХН
+	if(!Link())
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
+	// Поэтому Init СХН с pNext/pPrev делаем после линка
 
 	if (LRCs.Init(this) != eDEVICEFUNCTIONSTATUS::DFS_OK)
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
-	if(!Link())
-		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
 	TurnOffDevicesByOffMasters();
 	PrepareNetworkElements();
 	return LoadFlow();
