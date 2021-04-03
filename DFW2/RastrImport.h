@@ -214,6 +214,9 @@ namespace DFW2
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceCPPContainer& CustomDeviceContainer);
 		void ReadRastrRow(SerializerPtr& Serializer, long Row);
 
+
+		void ReadLRCs(CDynaLRCContainer& container);
+
 		// Читаем контейнер из таблицы RastrWin
 		void ReadTable(CDeviceContainer& Container, const char* cszRastrSelection = "")
 		{

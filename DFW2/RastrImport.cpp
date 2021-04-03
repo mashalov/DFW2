@@ -414,7 +414,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
 
 
-	ReadTable(Network.LRCs);
+
+	ReadLRCs(static_cast<CDynaLRCContainer&>(Network.LRCs));
 	ReadTable(Network.Nodes);
 	ReadTable(Network.Branches);
 	ReadTable(Network.GeneratorsInfBus, "ModelType=2");
@@ -425,22 +426,60 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
+}
 
 
+void CRastrImport::ReadLRCs(CDynaLRCContainer& container)
+{
+	ITablePtr spLRC = m_spRastr->Tables->Item("polin");
+	IColsPtr spCols = spLRC->Cols;
+	IColPtr Id = spCols->Item("nsx");
+	IColPtr v = spCols->Item("umin");
+	IColPtr f = spCols->Item("frec");
 
-	/*
-	ReadTable("polin", Network.LRCs);
-	ReadTable("node", Network.Nodes);
-	ReadTable("vetv", Network.Branches);
-	ReadTable("Generator", Network.GeneratorsInfBus, "ModelType=2");
-	ReadTable("Generator", Network.GeneratorsMotion, "ModelType=3");
-	ReadTable("Generator", Network.Generators1C, "ModelType=4");
-	ReadTable("Generator", Network.Generators3C, "ModelType=5");
-	ReadTable("Generator", Network.GeneratorsMustang, "ModelType=6");
-	ReadTable("Exciter", Network.ExcitersMustang);
-	ReadTable("Forcer", Network.DECsMustang);
-	ReadTable("ExcControl", Network.ExcConMustang);
-	*/
+	using lrcpolynom = std::array<IColPtr, 3>;
+	lrcpolynom pcols { spCols->Item("p0"), spCols->Item("p1"), spCols->Item("p2") },
+			   qcols { spCols->Item("q0"), spCols->Item("q1"), spCols->Item("q2") };
+
+	// считаем сколько у нас уникальных СХН
+	std::set<ptrdiff_t> uniques;
+	for (long index = 0; index < spLRC->GetSize(); index++)
+		uniques.insert(Id->GetZ(index));
+
+	auto lrcs = container.CreateDevices<CDynaLRC>(uniques.size());
+	for (const auto& id : uniques)
+	{
+		lrcs->SetId(id);
+		lrcs++;
+	}
+
+
+	for (long index = 0; index < spLRC->GetSize(); index++)
+	{
+		auto lrc = static_cast<CDynaLRC*>(container.GetDevice(Id->GetZ(index)));
+		if (!lrc) continue;
+
+		struct polynoms
+		{
+			LRCDATA* target;
+			lrcpolynom& source;
+		};
+
+		std::array<polynoms, 2> pq{ { { &lrc->P, pcols }, { &lrc->Q, qcols }  } };
+
+		for (auto&& power : pq)
+		{
+			power.target->push_back(
+				{ 
+				  v->GetZ(index), 
+				  f->GetZ(index), 
+				  power.source[0]->GetZ(index), 
+				  power.source[1]->GetZ(index), 
+				  power.source[2]->GetZ(index) 
+				});
+		}
+	}
+
 }
 
 

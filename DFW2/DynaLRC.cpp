@@ -237,8 +237,7 @@ void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_LRC);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameLRC, CDeviceContainerProperties::m_cszSysNameLRC);
-	//props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaLRC>>();
-	props.DeviceFactory = std::make_unique<CDeviceFactory<CDummyLRC>>();
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaLRC>>();
 }
 
 /*
@@ -361,12 +360,13 @@ class CSerializerLRCPolynom : public CSerializerDataSourceVector<T>
 public:
 	void UpdateSerializer(CSerializerBase* pSerializer) override
 	{
+		T& DataItem(CSerializerDataSourceVector<T>::GetItem());
 		CSerializerDataSourceVector<T>::UpdateSerializer(pSerializer);
-		pSerializer->AddProperty("v", CSerializerDataSourceVector<T>::DataItem.V, eVARUNITS::VARUNIT_PU);
-		pSerializer->AddProperty("freq", CSerializerDataSourceVector<T>::DataItem.Freq, eVARUNITS::VARUNIT_PU);
-		pSerializer->AddProperty("a0", CSerializerDataSourceVector<T>::DataItem.a0);
-		pSerializer->AddProperty("a1", CSerializerDataSourceVector<T>::DataItem.a1);
-		pSerializer->AddProperty("a2", CSerializerDataSourceVector<T>::DataItem.a2);
+		pSerializer->AddProperty("v", DataItem.V, eVARUNITS::VARUNIT_PU);
+		pSerializer->AddProperty("freq", DataItem.Freq, eVARUNITS::VARUNIT_PU);
+		pSerializer->AddProperty("a0", DataItem.a0);
+		pSerializer->AddProperty("a1", DataItem.a1);
+		pSerializer->AddProperty("a2", DataItem.a2);
 	}
 };
 
@@ -376,21 +376,6 @@ void CDynaLRC::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("LRCId", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddSerializer("P", new CSerializerBase(new CSerializerLRCPolynom<CLRCData>(P)));
 	Serializer->AddSerializer("Q", new CSerializerBase(new CSerializerLRCPolynom<CLRCData>(Q)));
-}
-
-
-void CDummyLRC::UpdateSerializer(CSerializerBase* Serializer)
-{
-	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty("LRCId", TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty("Umin", PQ[0].V, eVARUNITS::VARUNIT_PU);		// копировать в Q
-	Serializer->AddProperty("Freq", PQ[0].Freq, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("p0", PQ[0].a0, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("p1", PQ[0].a1, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("p2", PQ[0].a2, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("q0", PQ[1].a0, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("q1", PQ[1].a1, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("q2", PQ[1].a2, eVARUNITS::VARUNIT_PU);
 }
 
 
@@ -413,19 +398,20 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// проходим по десериализованным СХН
 	for (auto&& dev : m_DevVec)
 	{
-		auto lrc = static_cast<CDummyLRC*>(dev);
-
-		// копируем V и Freq из P в Q, так как для Q отдельно не задавали
-		lrc->PQ[1].V = lrc->PQ[0].V;
-		lrc->PQ[1].Freq = lrc->PQ[0].Freq;
+		auto lrc = static_cast<CDynaLRC*>(dev);
 
 		// собираем сегменты СХН в карту по идентификаторам
 		auto& pqFromId = constructMap[dev->GetId()].PQ;
 
 		// копируем непустые сериализованные СХН в настоящие СХН
-		for(ptrdiff_t x = 0 ; x < 2 ; x++)
-			if(!CDynaLRCContainer::IsLRCEmpty(lrc->PQ[x]))
-				pqFromId[x].push_back(CLRCData{ lrc->PQ[x] });
+		for (ptrdiff_t x = 0; x < 2; x++)
+		{
+			for (const auto& p : x == 0 ? lrc->P : lrc->Q)
+			{
+				if(!CDynaLRCContainer::IsLRCEmpty(p))
+					pqFromId[x].push_back(p);
+			}
+		}
 	}
 
 
@@ -494,16 +480,6 @@ void CDynaLRCContainer::CreateFromSerialized()
 		clearPQ(lrcConstP);
 		lrcConstP.PQ[0].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
 		lrcConstP.PQ[1].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
-	}
-
-
-	// !!!!!!!!!!!!! debug !!!!!!!!!!!!!!!!!!!!
-	if (CheckUserLRC(3, true))
-	{
-		auto& lrcConstP = constructMap[3];
-		clearPQ(lrcConstP);
-		lrcConstP.PQ[0].push_back({ 0.0, 1.0, 0.0, 1.0, 0.0 });
-		lrcConstP.PQ[1].push_back({ 0.0, 1.0, 0.0, 0.0, 1.0 });
 	}
 
 	auto SortLRC = [](const auto& lhs, const auto& rhs) { return lhs.V < rhs.V; };

@@ -313,15 +313,22 @@ namespace DFW2
 		using DataVector = std::vector<T>;
 	protected:
 		DataVector& m_Vec;
-		T DataItem = {};
 		ptrdiff_t nItemIndex = 0;
+
+		// возвращает ссылку на текущий элемент сериализатора или выдает
+		// исключение, если элемент недоступен
+		// используется для десериализации чего-то в массив
+		// для контейнеров не применяется
+
+		T& GetItem()
+		{
+			if (nItemIndex < ItemsCount())
+				return m_Vec[nItemIndex];
+			throw dfw2error("CSerializerDataSourceVector::GetItem cannot return item from empty storage");
+		}
 	public:
 
-		CSerializerDataSourceVector(DataVector& vec) : m_Vec(vec) 
-		{
-			if (!m_Vec.empty())
-				DataItem = m_Vec.front();
-		}
+		CSerializerDataSourceVector(DataVector& vec) : m_Vec(vec)  { }
 
 		ptrdiff_t ItemsCount() const override
 		{
@@ -331,19 +338,12 @@ namespace DFW2
 		bool NextItem() override
 		{
 			nItemIndex++;
-			if (nItemIndex < ItemsCount())
-			{
-				DataItem = m_Vec[nItemIndex];
-				return true;
-			}
-			else
-				return false;
+			return nItemIndex < ItemsCount();
 		}
 
 		bool AddItem() override
 		{
-			nItemIndex++;
-			m_Vec.push_back(DataItem);
+			m_Vec.push_back({});
 			return true;
 		}
 	};

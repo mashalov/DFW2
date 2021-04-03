@@ -333,6 +333,14 @@ namespace DFW2
                     if (counter >= m_pSerializer->ItemsCount())
                         ContainerDoesNotFitNewDevice();
 
+            // если в контейнере устройства - до ввода идентификаторов
+            // ставим идентификатор равный индексу. Работает, в частности,
+            // для ветвей, у которых идентификатор сложный и не сохраняется
+            // в сериализации
+
+            if (auto device(m_pSerializer->GetDevice()); device)
+                device->SetId(counter);
+
             // ставим объекту сериализатор
             static_cast<JsonSerializerObject*>(nested)->SetSerializer(m_pSerializer);
         }

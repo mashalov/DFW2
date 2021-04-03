@@ -37,14 +37,6 @@ namespace DFW2
 		}
 	};
 
-	class CDummyLRC : public CDevice
-	{
-	public:
-		using CDevice::CDevice;
-		std::array<LRCRawData, 2> PQ;
-		void UpdateSerializer(CSerializerBase* Serializer) override;
-	};
-
 	using LRCDATA = std::vector<CLRCData>;
 
 	class CDynaLRC : public CDevice
