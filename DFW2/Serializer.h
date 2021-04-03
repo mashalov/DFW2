@@ -287,6 +287,7 @@ namespace DFW2
 	public:
 		virtual ptrdiff_t ItemsCount() const { return 1; }
 		virtual bool NextItem() { return false; }
+		virtual bool AddItem() { return false; }
 		virtual void UpdateSerializer(CSerializerBase* pSerializer) {}
 		virtual CDevice* GetDevice() const { return nullptr;}
 		virtual ~CSerializerDataSourceBase() {}
@@ -337,6 +338,13 @@ namespace DFW2
 			}
 			else
 				return false;
+		}
+
+		bool AddItem() override
+		{
+			nItemIndex++;
+			m_Vec.push_back(DataItem);
+			return true;
 		}
 	};
 
@@ -521,6 +529,16 @@ namespace DFW2
 			BeginUpdate();
 			// вводим элемент из источника данных
 			m_DataSource->UpdateSerializer(this);
+		}
+
+		virtual bool AddItem()
+		{
+			if (m_DataSource->AddItem())
+			{
+				Update();
+				return true;
+			}
+			return false;
 		}
 
 		virtual bool NextItem()

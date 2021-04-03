@@ -21,7 +21,7 @@ bool CDynaLRC::SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ)
 
 double CDynaLRC::GetP(double VdivVnom, double dVicinity)
 {
-	CLRCData *v = &P[0];
+	CLRCData *v = &P.front();
 
 	if (P.size() == 1)
 	{
@@ -130,7 +130,7 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 
 double CDynaLRC::GetPdP(double VdivVnom, double &dP, double dVicinity)
 {
-	CLRCData *v = &P[0];
+	CLRCData *v = &P.front();
 	if (P.size() == 1)
 	{
 		return v->GetBoth(VdivVnom, dP);
@@ -140,7 +140,7 @@ double CDynaLRC::GetPdP(double VdivVnom, double &dP, double dVicinity)
 
 double CDynaLRC::GetQdQ(double VdivVnom, double &dQ, double dVicinity)
 {
-	CLRCData *v = &Q[0];
+	CLRCData *v = &Q.front();
 	if (Q.size() == 1)
 	{
 		return v->GetBoth(VdivVnom, dQ);
@@ -150,7 +150,7 @@ double CDynaLRC::GetQdQ(double VdivVnom, double &dQ, double dVicinity)
 
 double CDynaLRC::GetQ(double VdivVnom, double dVicinity)
 {
-	CLRCData *v = &Q[0];
+	CLRCData *v = &Q.front();
 	if (Q.size() == 1)
 	{
 		return v->Get(VdivVnom);
@@ -237,6 +237,7 @@ void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_LRC);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameLRC, CDeviceContainerProperties::m_cszSysNameLRC);
+	//props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaLRC>>();
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDummyLRC>>();
 }
 

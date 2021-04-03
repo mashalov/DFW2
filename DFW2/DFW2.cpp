@@ -52,10 +52,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		try
 		{
 			//Network.DeSerialize("c:\\tmp\\serialization.json");
-			Network.DeSerialize("c:\\tmp\\lf_rg2.json");
-			//ri.GetData(Network);
-			Network.RunLoadFlow();
-			//Network.RunTransient();
+			//Network.DeSerialize("c:\\tmp\\lf_rg2.json");
+			ri.GetData(Network);
+			//Network.RunLoadFlow();
+			Network.RunTransient();
 		}
 		catch (_com_error& err)
 		{
@@ -66,7 +66,7 @@ int _tmain(int argc, _TCHAR* argv[])
 			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
 		}
 
-		//Network.Serialize("c:\\tmp\\lf.json");
+		Network.Serialize("c:\\tmp\\lf.json");
 	}
 	_CrtDumpMemoryLeaks();
 

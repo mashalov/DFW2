@@ -7,6 +7,31 @@
 
 using namespace DFW2;
 
+
+void JsonSerializerObject::Start(const JsonStack& stack)
+{
+	if(!nestedSerializer)
+		AddAcceptor(nestedSerializer = new JsonSerializerArray());
+}
+
+bool JsonSerializerObject::ConfirmAccept(const AcceptorPtr& acceptor, const JsonObject& jsonObject)
+{
+	// акцепторы могут запуститься если в сериализаторе есть параметр соответствующий ключу
+	if (auto input(m_pSerializer->at(currentKey)); input)
+	{
+		// для параметра комплексного типа разрешаем комплексный акцептор
+		if (input->ValueType == TypedSerializedValue::eValueType::VT_CPLX && acceptor.get() == complex)
+			return true;
+		// для параметра, который представляет собой сериализатор разрешаем вложенный JsonSerializerArray
+		if (input->ValueType == TypedSerializedValue::eValueType::VT_SERIALIZER && acceptor.get() == nestedSerializer)
+		{
+			nestedSerializer->SetSerializer(input->m_pNestedSerializer.get());
+			return true;
+		}
+	}
+	return false;
+}
+
 // создаем новый Json
 void CSerializerJson::CreateNewSerialization(const std::filesystem::path& path)
 {

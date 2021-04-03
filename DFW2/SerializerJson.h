@@ -198,25 +198,37 @@ namespace DFW2
         }
     };
 
-    class JsonContainerObject : public JsonSaxAcceptorBase
+    class JsonSerializerArray;
+
+    // устанавливает значения параметров объекта из json
+    // в сериализатор
+    class JsonSerializerObject : public JsonSaxAcceptorBase
     {
     protected:
+        JsonSerializerArray* nestedSerializer = nullptr;
         CSerializerBase* m_pSerializer = nullptr;
-        std::string currentKey;
-        JsonComplexValue* complex = nullptr;
-        JsonDeviceLinks* links = nullptr;
+        std::string currentKey;                 // текущий ключ параметра
+        JsonComplexValue* complex = nullptr;    // акцептор для комплексных чисел
+        JsonDeviceLinks* links = nullptr;       // акцептор для связей
     public:
-        JsonContainerObject() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") 
+
+        JsonSerializerObject() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "")
         {
+            // добавляем акцепторы комплексных чисел и связей
             AddAcceptor(complex = new JsonComplexValue());
             AddAcceptor(links = new JsonDeviceLinks());
         }
 
+
+        void Start(const JsonStack& stack) override;
+
+        // устанавливает сериализатор для текущего объекта
         void SetSerializer(CSerializerBase* serializer)
         {
             m_pSerializer = serializer;
         }
 
+        // устанавливает значение из json в запомненный ключ
         template<typename T>
         void Set(const T& value)
         {
@@ -224,6 +236,7 @@ namespace DFW2
                 input->Set<const T&>(value);
         }
 
+        // запоминает полученный из json ключ параметра
         bool key(string_t& val) override
         {
             currentKey = val;
@@ -266,87 +279,113 @@ namespace DFW2
             return true;
         }
 
+        // вызывается в при завершении одного из акцепторов
         void NestedEnd(JsonSaxAcceptorBase* nested) override
         {
+            // если комплексное число - устанавливаем из комплексного
+            // акцептора параметр в запомненный ключ
             if (nested == complex)
                 Set(static_cast<JsonComplexValue*>(complex)->Value());
         }
 
-        bool ConfirmAccept(const AcceptorPtr& acceptor, const JsonObject& jsonObject) override
-        {
-            if (auto input(m_pSerializer->at(currentKey)); input)
-            {
-                if (input->ValueType == TypedSerializedValue::eValueType::VT_CPLX && acceptor.get() == complex)
-                    return true;
-            }
-            return false;
-        }
-
+        // определяет, который из акцепторов нужно запустить в работу
+        bool ConfirmAccept(const AcceptorPtr& acceptor, const JsonObject& jsonObject) override;
     };
 
-
-
-    class JsonContainerArray : public JsonSaxAcceptorBase
+    class JsonSerializerArray : public JsonSaxAcceptorBase
     {
     protected:
         CSerializerBase* m_pSerializer = nullptr;
+        JsonSerializerObject* containerObject = nullptr;
         ptrdiff_t counter = 0;
+        void ContainerDoesNotFitNewDevice()
+        {
+            throw dfw2error(fmt::format("JsonContainerArray::NestedStart - device container with length set to {} cannot fit new device",
+                "from \"{}\" serializer",
+                m_pSerializer->ItemsCount(),
+                m_pSerializer->GetClassName()));
+        }
     public:
-        JsonContainerArray() : JsonSaxAcceptorBase(JsonObjectTypes::Array, "") {}
+        JsonSerializerArray() : JsonSaxAcceptorBase(JsonObjectTypes::Array, "") 
+        {
+            AddAcceptor(new JsonSerializerObject());
+        }
 
+        // функиця ставит сериалиазатор, найденный в карте
+        // сериализаторов
         void SetSerializer(CSerializerBase* serializer)
         {
             m_pSerializer = serializer;
-            counter = 0;
+            counter = 0;    // начинается новый массив - сбрасываем счетчик объектов
         }
 
+
+        // функция вызывается при обнаружении нового объекта в массиве
         void NestedStart(JsonSaxAcceptorBase* nested) override
         {
+            // если не задан сериализатор - выходим
             if (!m_pSerializer) return;
-            if(counter >= m_pSerializer->ItemsCount())
-                throw dfw2error(fmt::format("JsonContainerArray::NestedStart - device container with length set to {} cannot fit new device",
-                    "from \"{}\" serializer",
-                    m_pSerializer->ItemsCount(),
-                    m_pSerializer->GetClassName()));
+            // проверяем может ли сериализатор принять еще одно устройство
+            if (counter >= m_pSerializer->ItemsCount())
+                if(!m_pSerializer->AddItem())
+                    ContainerDoesNotFitNewDevice();
+                else
+                    if (counter >= m_pSerializer->ItemsCount())
+                        ContainerDoesNotFitNewDevice();
 
-            static_cast<JsonContainerObject*>(nested)->SetSerializer(m_pSerializer);
+            // ставим объекту сериализатор
+            static_cast<JsonSerializerObject*>(nested)->SetSerializer(m_pSerializer);
         }
 
+        // функция вызывается при завершении обработки объекта в массиве
         void NestedEnd(JsonSaxAcceptorBase* nested) override
         {
             if (!m_pSerializer) return;
 
+            // переводим сериалиазатор не следующий объект
+            // и обновляем количество объектов
             m_pSerializer->NextItem();
+            // если NextItem не сработал - мы узнаем об этом
+            // в NestedStart при проверке размера массива сериализатора
             counter++;
         }
     };
 
-
+    // в объектe data множество именованных контейнеров,
+    // каждый из которых представляет собой массив объектов устройств
     class JsonContainers : public JsonSaxAcceptorBase
     {
     protected:
-        SerializerMap m_SerializerMap;
+        JsonSerializerArray* containerArray = nullptr;
+        SerializerMap m_SerializerMap;  // карта именованных контейнеров
     public:
-        JsonContainers() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") {}
+        JsonContainers() : JsonSaxAcceptorBase(JsonObjectTypes::Object, "") 
+        {
+            // добавляем акцептор для массива контейнера
+            AddAcceptor(containerArray = new JsonSerializerArray());
+        }
 
+        // добавляет сериализатор контейнера в карту сериализаторов
         void AddSerializer(const std::string_view& ClassName, SerializerPtr&& serializer)
         {
             m_SerializerMap.insert(std::make_pair(ClassName, std::move(serializer)));
         }
 
+        // функция вызывается при обнаружении нового массива объектов
         void NestedStart(JsonSaxAcceptorBase* nested) override
         {
-            JsonContainerArray* pArray(static_cast<JsonContainerArray*>(nested));
-
+            JsonSerializerArray* pArray(static_cast<JsonSerializerArray*>(nested));
+            // ищем в карте сериализатор по имени по значению ключа json
+            // если сериализатор найден - отдаем его массиву
+            // если нет - отдаем nullptr и массив отрабатывает вхолостую
             if (auto its(m_SerializerMap.find(nested->Key())); its != m_SerializerMap.end())
-            {
                 pArray->SetSerializer(its->second.get());
-            }
             else
                 pArray->SetSerializer(nullptr);
         }
     };
 
+    // сериализатор второго прохода по json
     class JsonSaxMainSerializer : public JsonSaxAcceptorWalkerBase
     {
     protected:
@@ -354,13 +393,10 @@ namespace DFW2
     public:
         JsonSaxMainSerializer() : JsonSaxAcceptorWalkerBase()
         {
+            // добавляем акцептор для контейнеров
             data->AddAcceptor(containers = new JsonContainers());
-            auto containerArray = new JsonContainerArray();
-            auto containerObject = new JsonContainerObject();
-            containers->AddAcceptor(containerArray);
-            containerArray->AddAcceptor(containerObject);
         }
-
+        // добавление сериализатора контейнера
         void AddSerializer(const std::string_view& ClassName, SerializerPtr&& serializer)
         {
             containers->AddSerializer(ClassName, std::move(serializer));
