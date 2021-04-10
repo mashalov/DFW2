@@ -271,10 +271,16 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	//spRastr->Load(RG_REPL, L"..\\tests\\test92.rst", "");
 	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
-
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
-	//spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+
+	//m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
+	//m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\сценарий.scn").c_str());
+	//m_spRastr->Load(RG_REPL, stringutils::utf8_decode("D:\\Downloads\\Уват 55\\Уватнефть_корр35_ver15_корр_быстр5.rst").c_str(),
+	//	stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst").c_str());
+
+
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
+
 	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1", ""); 
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
@@ -288,8 +294,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test9_sc", ""); 
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\test9_qmin.rst", "");
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\cx195.rg2",L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\динамика.rst");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
-	//spRastr->NewFile(L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\сценарий.scn");
+	
 
 	
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");

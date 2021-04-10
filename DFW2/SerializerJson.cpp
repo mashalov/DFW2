@@ -274,12 +274,18 @@ void CSerializerJson::AddLinks(const SerializerPtr& Serializer, nlohmann::json& 
 		case DLM_MULTI:
 		{
 			// для мультисвязей выводим все
-			const CLinkPtrCount* pLinks = Serializer->GetDevice()->GetLink(link->nLinkIndex);
-			CDevice** ppDevice(nullptr);
-			// перебираем все устройства в мультисвязи и выводим
-			// сериалиазацию для каждого
-			while (pLinks->In(ppDevice))
-				AddLink(jsonLinks, *ppDevice, bMaster);
+			auto device = Serializer->GetDevice();
+			// сначала проверяем есть ли в контейнере связь, объявленная в свойствах контейнера.
+			// связи может не быть, если в модели нет устройств такого типа
+			if (device->GetContainer()->CheckLink(link->nLinkIndex))
+			{
+				const CLinkPtrCount* pLinks = device->GetLink(link->nLinkIndex);
+				CDevice** ppDevice(nullptr);
+				// перебираем все устройства в мультисвязи и выводим
+				// сериалиазацию для каждого
+				while (pLinks->In(ppDevice))
+					AddLink(jsonLinks, *ppDevice, bMaster);
+			}
 		}
 		break;
 		case DLM_SINGLE:
