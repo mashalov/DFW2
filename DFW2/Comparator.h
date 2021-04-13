@@ -18,7 +18,7 @@ namespace DFW2
 		CComparator(CDevice& Device, const OutputList& Output, const InputList& Input) :
 			CComparator(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CComparator() {}
+		virtual ~CComparator() = default;
 		bool Init(CDynaModel *pDynaModel) override;
 //		virtual const char* GetVerbalName() { return ""; }
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

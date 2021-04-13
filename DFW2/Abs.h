@@ -16,7 +16,7 @@ namespace DFW2
 			CAbs(Device, ORange(Output), IRange(Input)) { }
 
 
-		virtual ~CAbs() {}
+		virtual ~CAbs() = default;
 
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

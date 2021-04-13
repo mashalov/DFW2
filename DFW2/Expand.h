@@ -17,7 +17,7 @@ namespace DFW2
 		CExpand(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CExpand(Device, ORange(Output), IRange(Input)) { }
  
-		virtual ~CExpand() {}
+		virtual ~CExpand() = default;
 
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
@@ -40,7 +40,7 @@ namespace DFW2
 		CShrink(CDevice& Device, ORange Output, IRange Input) : CExpand(Device, Output, Input) {}
 		CShrink(CDevice& Device, const OutputList& Output, const InputList& Input) : CShrink(Device, ORange(Output), IRange(Input))  { }
 
-		virtual ~CShrink() {}
+		virtual ~CShrink() = default;
 
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;

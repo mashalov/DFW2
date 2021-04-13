@@ -13,11 +13,6 @@ CDynaNodeBase::CDynaNodeBase() : CDevice()
 {
 }
 
-
-CDynaNodeBase::~CDynaNodeBase() 
-{
-}
-
 // запоминает значение модуля напряжения с предыдущей итерации
 // и рассчитываем напряжение в декартовых координатах
 void CDynaNodeBase::UpdateVreVim()

@@ -203,7 +203,7 @@ namespace DFW2
 	{
 	public:
 		CRastrImport();
-		virtual ~CRastrImport();
+		virtual ~CRastrImport() = default;
 		void GetData(CDynaModel& Network);
 	protected:
 		IRastrPtr m_spRastr;

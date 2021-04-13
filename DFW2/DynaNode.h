@@ -23,7 +23,7 @@ namespace DFW2
 		double Mj = 0.0;						// суммарный момент инерции
 		bool m_bInfPower = false;				// признак наличия ШБМ
 		CSynchroZone();		
-		virtual ~CSynchroZone() {}
+		virtual ~CSynchroZone() = default;
 		bool m_bEnergized = false;				// признак наличия источника напряжения
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
@@ -120,7 +120,7 @@ namespace DFW2
 		CDynaLRC *m_pLRCGen = nullptr;	// СХН для генерации, которая не задана моделями генераторов
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		CDynaNodeBase();
-		virtual ~CDynaNodeBase();
+		virtual ~CDynaNodeBase() = default;
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex)  override;
@@ -211,7 +211,7 @@ namespace DFW2
 		VariableIndex S;
 		//double Sv, Dlt;
 		CDynaNode();
-		virtual ~CDynaNode() {}
+		virtual ~CDynaNode() = default;
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel)  override;

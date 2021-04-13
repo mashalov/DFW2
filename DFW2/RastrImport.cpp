@@ -16,12 +16,6 @@ CRastrImport::CRastrImport()
 {
 }
 
-
-CRastrImport::~CRastrImport()
-{
-
-}
-
 bool GetConstFromField(const ConstVarsInfo& VarsInfo)
 {
 	bool bRes = false;

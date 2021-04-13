@@ -25,7 +25,7 @@ namespace DFW2
 		double xd2, xq1, xq2;
 
 		CDynaGenerator3C();
-		virtual ~CDynaGenerator3C() {}
+		virtual ~CDynaGenerator3C() = default;
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

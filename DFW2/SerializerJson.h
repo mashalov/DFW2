@@ -425,7 +425,7 @@ namespace DFW2
 		std::filesystem::path m_Path;
 	public:
 		CSerializerJson() {}
-		virtual ~CSerializerJson() {}
+		virtual ~CSerializerJson() = default;
 		void AddDeviceTypeDescription(ptrdiff_t nType, std::string_view Name);
 		void CreateNewSerialization(const std::filesystem::path& path);
 		void Commit();

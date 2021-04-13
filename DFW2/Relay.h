@@ -22,7 +22,7 @@ namespace DFW2
 			CDynaPrimitiveBinaryOutput(Device, Output, Input) {}
 		CRelay(CDevice& Device, const OutputList& Output, const InputList& Input) : CRelay(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CRelay() {}
+		virtual ~CRelay() = default;
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

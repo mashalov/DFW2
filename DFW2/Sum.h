@@ -18,7 +18,7 @@ namespace DFW2
 			CSum(Device, ORange(Output), IRange(Input)) { }
 
 
-		virtual ~CSum() {}
+		virtual ~CSum() = default;
 		void SetK(double K1, double K2) { m_K1 = K1; m_K2 = K2; }
 		bool BuildEquations(CDynaModel *pDynaModel) override;
 		bool BuildRightHand(CDynaModel *pDynaModel) override;

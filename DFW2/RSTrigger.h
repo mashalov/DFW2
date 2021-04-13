@@ -16,7 +16,7 @@ namespace DFW2
 		CRSTrigger(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CRSTrigger(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CRSTrigger() {}
+		virtual ~CRSTrigger() = default;
 
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

@@ -29,7 +29,7 @@ namespace DFW2
 		double	Unom, Kdemp,xq, Mj, Pt, Pnom, cosPhinom;
 
 		CDynaGeneratorMotion();
-		virtual ~CDynaGeneratorMotion() {}
+		virtual ~CDynaGeneratorMotion() = default;
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;

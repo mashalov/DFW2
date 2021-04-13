@@ -13,7 +13,7 @@ namespace DFW2
 	public:
 
 		CDynaGeneratorMustang();
-		virtual ~CDynaGeneratorMustang() {}
+		virtual ~CDynaGeneratorMustang() = default;
 
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;

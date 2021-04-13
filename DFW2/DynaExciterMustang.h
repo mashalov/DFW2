@@ -16,7 +16,7 @@ namespace DFW2
 
 		double Kig, Kif, Imin, Imax;
 		CDynaExciterMustang();
-		virtual ~CDynaExciterMustang() {}
+		virtual ~CDynaExciterMustang() = default;
 
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;

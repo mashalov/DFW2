@@ -15,10 +15,6 @@ CCustomDevice::CCustomDevice()
 }
 
 
-CCustomDevice::~CCustomDevice()
-{
-}
-
 bool CCustomDevice::BuildStructure()
 {
 	// allocate block of double variables from the pool

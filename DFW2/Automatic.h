@@ -46,7 +46,7 @@ namespace DFW2
 	public:
 		inline ptrdiff_t GetId() { return m_nId; }
 		CAutomaticItem(long Type, ptrdiff_t Id, std::string_view Name);
-		virtual ~CAutomaticItem() {}
+		virtual ~CAutomaticItem() = default;
 	};
 
 	class CAutomaticAction : public CAutomaticItem
@@ -76,7 +76,7 @@ namespace DFW2
 
 		bool Do(CDynaModel *pDynaModel);
 		bool Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice);
-		virtual ~CAutomaticAction();
+		virtual ~CAutomaticAction() = default;
 
 		static const char* cszActionTemplate;
 	};

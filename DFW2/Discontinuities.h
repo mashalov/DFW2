@@ -220,7 +220,7 @@ namespace DFW2
 		STATEEVENTSET m_StateEvents;
 	public:
 		CDiscontinuities(CDynaModel *pDynaModel);
-		virtual ~CDiscontinuities();
+		virtual ~CDiscontinuities() = default;
 		bool AddEvent(double dTime, CModelAction* Action);
 		bool SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dTime);
 		bool RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject);

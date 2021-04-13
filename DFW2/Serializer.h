@@ -69,7 +69,7 @@ namespace DFW2
 
 		static constexpr const char* cszNotImplemented = "CSerializerAdapterBase: - Not implemented";
 
-		virtual ~CSerializerAdapterBase() {}
+		virtual ~CSerializerAdapterBase() = default;
 	};
 
 	class CDevice;
@@ -184,7 +184,7 @@ namespace DFW2
 		T* m_pLeft = nullptr;
 	public:
 		CSerializerAdapterBaseT(T& Left) noexcept : m_pLeft(&Left) {}
-		virtual ~CSerializerAdapterBaseT() {}
+		virtual ~CSerializerAdapterBaseT() = default;
 	};
 
 	using StringVector = std::vector<std::string>;
@@ -248,7 +248,7 @@ namespace DFW2
 																								 m_StringRepresentation(ppStringRepresentation),
 																								 m_nCount(nCount)
 																								 {}
-		virtual ~CSerializerAdapterEnumT() {}
+		virtual ~CSerializerAdapterEnumT() = default;
 	};
 
 	// сериализуемое значение с метаинформацией
@@ -290,7 +290,7 @@ namespace DFW2
 		virtual bool AddItem() { return false; }
 		virtual void UpdateSerializer(CSerializerBase* pSerializer) {}
 		virtual CDevice* GetDevice() const { return nullptr;}
-		virtual ~CSerializerDataSourceBase() {}
+		virtual ~CSerializerDataSourceBase() = default;
 	};
 
 	class CDeviceContainer;
@@ -520,7 +520,7 @@ namespace DFW2
 
 		const char* GetClassName();
 
-		virtual ~CSerializerBase() {}
+		virtual ~CSerializerBase() = default;
 		std::string GetVariableName(TypedSerializedValue* pValue) const;
 
 		void Update()

@@ -31,7 +31,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS m_ExternalStatus;
 
 		CCustomDevice();
-		virtual ~CCustomDevice();
+		virtual ~CCustomDevice() = default;
 		bool BuildStructure();
 		bool SetConstDefaultValues();
 		bool SetConstValue(size_t nIndex, double dValue);

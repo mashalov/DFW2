@@ -17,7 +17,7 @@ namespace DFW2
 		CDerlagContinuous(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CDerlagContinuous(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CDerlagContinuous() {}
+		virtual ~CDerlagContinuous() = default;
 		bool Init(CDynaModel *pDynaModel) override;
 		bool BuildEquations(CDynaModel *pDynaModel) override;
 		bool BuildRightHand(CDynaModel *pDynaModel) override;

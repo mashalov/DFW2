@@ -43,7 +43,7 @@ namespace DFW2
 		bool bVoltageDependent;
 		CDynaExciterBase();
 
-		virtual ~CDynaExciterBase() { }
+		virtual ~CDynaExciterBase() = default;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

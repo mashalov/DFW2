@@ -21,7 +21,7 @@ namespace DFW2
 		
 	public:
 		CDynaDECMustang();
-		virtual ~CDynaDECMustang() {}
+		virtual ~CDynaDECMustang() = default;
 
 
 		VariableIndexExternal Vnode;

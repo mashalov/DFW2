@@ -52,7 +52,7 @@ namespace DFW2
 		bool BuildIfromDQRightHand(CDynaModel *pDynaModel);
 		
 		CDynaGenerator1C();
-		virtual ~CDynaGenerator1C() {}
+		virtual ~CDynaGenerator1C() = default;
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

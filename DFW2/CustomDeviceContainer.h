@@ -91,7 +91,7 @@ namespace DFW2
 		void IncSize() { m_nSize++; }
 		virtual CDynaPrimitive* Create(CDevice& Device, const ORange& Output, const IRange& Input) = 0;
 		virtual void Allocate(size_t nDevicesCount) = 0;
-		virtual ~CPrimitivePoolBase() {};
+		virtual ~CPrimitivePoolBase() = default;
 	};
 
 	template<class T>

@@ -14,12 +14,6 @@ CDiscontinuities::CDiscontinuities(CDynaModel *pDynaModel) : m_pDynaModel(pDynaM
 {
 }
 
-
-CDiscontinuities::~CDiscontinuities()
-{
-	
-}
-
 CStaticEvent::CStaticEvent(double dTime) : m_dTime(dTime)
 {
 	

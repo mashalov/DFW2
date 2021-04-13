@@ -13,7 +13,7 @@ namespace DFW2
 		CAnd(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CAnd(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CAnd() {}
+		virtual ~CAnd() = default;
 
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
@@ -33,7 +33,7 @@ namespace DFW2
 			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(Input[1]) {}
 		COr(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			COr(Device, ORange(Output), IRange(Input)) { }
-		virtual ~COr() {}
+		virtual ~COr() = default;
 
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
@@ -51,7 +51,7 @@ namespace DFW2
 		CNot(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CNot(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CNot() {}
+		virtual ~CNot() = default;
 
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

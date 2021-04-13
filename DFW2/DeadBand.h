@@ -34,7 +34,7 @@ namespace DFW2
 		CDeadBand(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CDeadBand(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CDeadBand() {}
+		virtual ~CDeadBand() = default;
 
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

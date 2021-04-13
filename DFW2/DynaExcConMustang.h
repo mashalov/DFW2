@@ -38,7 +38,7 @@ namespace DFW2
 		VariableIndex Uf, Usum, Svt;
 
 		CDynaExcConMustang();
-		virtual ~CDynaExcConMustang() {}
+		virtual ~CDynaExcConMustang() = default;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;

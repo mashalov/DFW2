@@ -43,7 +43,7 @@ namespace DFW2
 			m_BranchState;
 
 		CDynaBranch();
-		virtual ~CDynaBranch() {}
+		virtual ~CDynaBranch() = default;
 		cplx GetYBranch(bool bFixNegativeZ = false);
 		bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom) override;
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr) override;

@@ -33,7 +33,7 @@ namespace DFW2
         JsonObjectTypes Type() const { return m_Type; };
         void ChangeType(JsonObjectTypes Type) { m_Type = Type; }
         const std::string_view Key() const { return m_Key; }
-        virtual ~JsonObject() {}
+        virtual ~JsonObject() = default;
     };
 
     // стек объектов json

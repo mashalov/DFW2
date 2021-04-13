@@ -15,7 +15,7 @@ namespace DFW2
 		CDynaGeneratorInfBusBase();
 		virtual double Xgen();
 		virtual cplx Igen(ptrdiff_t nIteration);
-		virtual ~CDynaGeneratorInfBusBase() {}
+		virtual ~CDynaGeneratorInfBusBase() = default;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		cplx GetEMF() override { return std::polar((double)Eqs, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;

@@ -230,7 +230,7 @@ namespace DFW2
 		CDevice *GetSingleLink(eDFW2DEVICETYPE eDevType);
 		void SetContainer(CDeviceContainer* pContainer);
 		CDeviceContainer* GetContainer();
-		virtual ~CDevice();
+		virtual ~CDevice() = default;
 		virtual bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		void IncrementLinkCounter(ptrdiff_t nLinkIndex);
 		ptrdiff_t m_nInContainerIndex;

@@ -15,7 +15,7 @@ namespace DFW2
 		CZCDetector(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CZCDetector(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CZCDetector() {}
+		virtual ~CZCDetector() = default;
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		const char* GetVerbalName() noexcept override { return "Пороговый элемент"; }

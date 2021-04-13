@@ -18,7 +18,7 @@ namespace DFW2
 		CLimitedLag(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CLimitedLag(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CLimitedLag() {}
+		virtual ~CLimitedLag() = default;
 		void SetMinMaxTK(CDynaModel *pDynaModel, double dMin, double dMax, double T, double K);
 		void ChangeMinMaxTK(CDynaModel *pDynaModel, double dMin, double dMax, double T, double K);
 		void ChangeTimeConstant(double TexcNew);

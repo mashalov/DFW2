@@ -36,11 +36,6 @@ CAutomaticAction::CAutomaticAction(long Type,
 
 	}
 
-CAutomaticAction::~CAutomaticAction()
-{
-
-}
-
 CAutomaticLogic::CAutomaticLogic(long Type,
 	ptrdiff_t Id,
 	std::string_view Name,

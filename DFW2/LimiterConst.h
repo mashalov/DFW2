@@ -16,7 +16,7 @@ namespace DFW2
 		CLimiterConst(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CLimiterConst(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CLimiterConst() {}
+		virtual ~CLimiterConst() = default;
 		bool Init(CDynaModel *pDynaModel) override;
 		bool BuildEquations(CDynaModel *pDynaModel) override;
 		bool BuildRightHand(CDynaModel *pDynaModel) override;

@@ -34,7 +34,7 @@ public:
 
     }
 
-    virtual ~CASTNodeBase() {}
+    virtual ~CASTNodeBase() = default;
     virtual ASTNodeType GetType() const = 0;
 
     template<typename... Types>

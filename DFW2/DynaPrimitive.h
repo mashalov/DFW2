@@ -126,7 +126,7 @@ namespace DFW2
 			m_Device.RegisterPrimitive(this);
 		}
 
-		virtual ~CDynaPrimitive() {}
+		virtual ~CDynaPrimitive() = default;
 
 		virtual bool BuildEquations(CDynaModel *pDynaModel) = 0;
 		virtual bool BuildRightHand(CDynaModel *pDynaModel) = 0;
@@ -193,7 +193,7 @@ namespace DFW2
 		CDynaPrimitiveLimited(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CDynaPrimitiveLimited(Device, ORange(Output), IRange(Input)) { }
 
-		virtual ~CDynaPrimitiveLimited() {}
+		virtual ~CDynaPrimitiveLimited() = default;
 		bool Init(CDynaModel *pDynaModel) override;
 		void StoreState() override { eSavedState = eCurrentState; }
 		void RestoreState() override { eCurrentState = eSavedState; }

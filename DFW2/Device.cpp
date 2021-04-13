@@ -13,12 +13,6 @@ CDevice::CDevice() : m_pContainer(nullptr),
 	
 }
 
-
-CDevice::~CDevice()
-{
-
-}
-
 // у устройства нет собственного типа. Тип задается из контейнера
 // к которому устройство принадлежит. Если контейнера нет - тип неизвестен
 eDFW2DEVICETYPE CDevice::GetType() const
