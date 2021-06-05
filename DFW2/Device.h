@@ -178,6 +178,7 @@ namespace DFW2
 		STATEPRIMITIVESLIST m_StatePrimitives;
 		PRIMITIVESVEC m_Primitives;
 		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
+		bool InitExternalVariable(VariableIndexExternalOptional& OptExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		const CSingleLink& GetSingleLinks() { return m_DeviceLinks; }
 

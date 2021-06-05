@@ -637,6 +637,17 @@ eDEVICEFUNCTIONSTATUS CDevice::DeviceFunctionResult(bool Status1)
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
+bool CDevice::InitExternalVariable(VariableIndexExternalOptional& OptExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType)
+{
+
+	if (eLimitDeviceType == DEVTYPE_MODEL || pFromDevice)
+		return InitExternalVariable(static_cast<VariableIndexExternal&>(OptExtVar), pFromDevice, Name, eLimitDeviceType);
+
+	if (!pFromDevice)
+		OptExtVar.MakeLocal();
+
+	return true;
+}
 
 bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType)
 {

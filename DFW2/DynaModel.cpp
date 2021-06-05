@@ -365,11 +365,18 @@ void CDynaModel::InitDevices()
 
 		if (!CDevice::IsFunctionStatusOK(Status) && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 		{
+			// инициализируем контейнеры
 			for (auto&& it : m_DeviceContainers)
 			{
-				Status = it->Init(this);
-				if (!CDevice::IsFunctionStatusOK(Status))
-					Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszDeviceContainerFailedToInit, it->GetTypeName(), Status));
+				// для каждого контейнера получаем статус
+				eDEVICEFUNCTIONSTATUS ContainerStatus  = it->Init(this);
+				// если статус - failed - выводим сообщение о контейнере
+				if (!CDevice::IsFunctionStatusOK(ContainerStatus))
+				{
+					Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszDeviceContainerFailedToInit, it->GetTypeName(), ContainerStatus));
+					// и обновляем общий статус инициализации на failed
+					Status = ContainerStatus;
+				}
 			}
 		}
 	}
@@ -377,9 +384,10 @@ void CDynaModel::InitDevices()
 	// Здесь делаем расчет шунтовой части нагрузки суперузлов,
 	// так как СХН генераторов становятся доступны после завершения 
 	// CDynaNodeBase::Init()
-	Nodes.CalculateShuntParts();
 	if (!CDevice::IsFunctionStatusOK(Status))
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
+	Nodes.CalculateShuntParts();
 }
 
 
