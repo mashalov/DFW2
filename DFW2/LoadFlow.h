@@ -20,6 +20,7 @@ namespace DFW2
 			double m_dVoltageNewtonStep = 0.3;			// максимальное относительное приращение шага Ньютона по напряжению
 			double m_dNodeAngleNewtonStep = 1.5;		// максимальное приращение шага Ньютона по углу узла
 			double m_dBranchAngleNewtonStep = 0.5;		// максимальное приращение шага Ньютона по углу связи
+			double ForceSwitchLambda = 1e-2;			// шаг Ньютона, меньше которого бэктрэк выключается и выполняется переключение типов узлов
 		};
 
 		CLoadFlow(CDynaModel *pDynaModel);

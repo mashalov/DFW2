@@ -946,6 +946,10 @@ void CLoadFlow::UpdatePQFromGenerators()
 		// проходим по генераторам, подключенным к узлу
 		CLinkPtrCount *pGenLink = pNode->GetLink(1);
 		CDevice **ppGen(nullptr);
+
+		// сбрасываем суммарные ограничения Q генераторов
+		pNode->LFQminGen = pNode->LFQmaxGen = 0.0;
+
 		if (pGenLink->m_nCount)
 		{
 			pNode->Pg = pNode->Qg = 0.0;
@@ -980,8 +984,11 @@ void CLoadFlow::UpdatePQFromGenerators()
 					// вводим Q генератора в диапазон
 					pGen->Q = (std::max)((std::min)(pGen->Q.Value, pGen->LFQmax), pGen->LFQmin);
 					pNode->Qg += pGen->Q;
-					pNode->LFQmin += pGen->LFQmin * pGen->Kgen;
-					pNode->LFQmax += pGen->LFQmax * pGen->Kgen;
+					// рассчитываем суммарные ограничения по генераторам
+					// в узлах остаются два ограничения - обычные (для суперузла - сумма)
+					// и ограничения по сумме генераторов (в суперузлы не суммируются и для каждого узла индивидуальные)
+					pNode->LFQminGen = pNode->LFQmin += pGen->LFQmin * pGen->Kgen;
+					pNode->LFQmaxGen = pNode->LFQmax += pGen->LFQmax * pGen->Kgen;
 				}
 			}
 		}
@@ -1026,6 +1033,14 @@ void CLoadFlow::UpdateQToGenerators()
 					{
 						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->m_nCount;
 						pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->m_nCount;
+					}
+					else if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+					{
+						double Qrange = pNode->LFQmaxGen - pNode->LFQminGen;
+						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQminGen));
+						Qgmin += pGen->LFQmin;
+						Qgmax += pGen->LFQmax;
+						_CheckNumber(pGen->Q);
 					}
 					else
 						pGen->Q = 0.0;
@@ -1163,7 +1178,6 @@ void CLoadFlow::Newton()
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
 	MATRIXINFO PV_PQmax, PV_PQmin, PQmax_PV, PQmin_PV;
 
-
 	PV_PQmax.reserve(klu.MatrixSize() / 2);
 	PV_PQmin.reserve(klu.MatrixSize() / 2);
 	PQmax_PV.reserve(klu.MatrixSize() / 2);
@@ -1250,15 +1264,17 @@ void CLoadFlow::Newton()
 			double gs1v = -CDynaModel::gs1(klu, m_Rh, klu.B());
 			// знак gs1v должен быть "-" ????
 			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
-			RestoreVDelta();
-			UpdateVDelta(lambda);
-			m_NewtonStepRatio.m_dRatio = lambda;
-			m_NewtonStepRatio.m_eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
-			continue;
+			// если шаг слишком мал и есть узлы для переключений,
+			// несмотря на не снижающийся небаланс переходим к переключениям узлов
+			if (lambda > m_Parameters.ForceSwitchLambda)
+			{
+				RestoreVDelta();
+				UpdateVDelta(lambda);
+				m_NewtonStepRatio.m_dRatio = lambda;
+				m_NewtonStepRatio.m_eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
+				continue;
+			}
 		}
-
-		lambda = 1.0;
-		g0 = g1;
 
 		// сохраняем исходные значения переменных
 		StoreVDelta();
@@ -1288,7 +1304,7 @@ void CLoadFlow::Newton()
 			}
 		}
 
-		if (std::abs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < 10.0 * m_Parameters.m_Imb)
+		if (std::abs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < 10.0 * m_Parameters.m_Imb || std::abs(lambda) <= m_Parameters.ForceSwitchLambda)
 		{
 			for (auto&& it : PV_PQmax)
 			{
@@ -1309,6 +1325,9 @@ void CLoadFlow::Newton()
 				}
 			}
 		}
+
+		lambda = 1.0;
+		g0 = g1;
 
 		BuildMatrix();
 		// сохраняем небаланс до итерации

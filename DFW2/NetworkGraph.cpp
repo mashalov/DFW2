@@ -814,7 +814,7 @@ _IterationControl& CDynaNodeContainer::IterationControl()
 
 std::string CDynaNodeContainer::GetIterationControlString()
 {
-	std::string retString = fmt::format("{:15f} {:>6} {:15f} {:>6} {:5.2f} {:>6} {:5.2f} {:>6} {:>4}",
+	std::string retString = fmt::format("{:15f} {:>11} {:15f} {:>11} {:5.2f} {:>11} {:5.2f} {:>11} {:>5}",
 		m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
 		m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
 		m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),

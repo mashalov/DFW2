@@ -267,15 +267,27 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
 
-	//m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
-	//m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\сценарий.scn").c_str());
-	//m_spRastr->Load(RG_REPL, stringutils::utf8_decode("D:\\Downloads\\Уват 55\\Уватнефть_корр35_ver15_корр_быстр5.rst").c_str(),
-	//	stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst").c_str());
+	// Уват
+	/*
+	m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
+	m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\сценарий.scn").c_str());
+	m_spRastr->Load(RG_REPL, stringutils::utf8_decode("D:\\Downloads\\Уват 55\\Уватнефть_корр35_ver15_корр_быстр5_nopms.rst").c_str(),
+		stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst").c_str());
+	*/
 
 
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1", ""); 
+	// СМЗУ Северо-Запад
+	//m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1", ""); 
+
+	// СМЗУ Сибирь
+	///*
+	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\18122019_14-00_simple_v7_clean_nosvc.rst", 
+		stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst").c_str()); 
+	m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
+	//*/
+
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
 	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
@@ -421,7 +433,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.GeneratorsMotion, "ModelType=3");
 	ReadTable(Network.Generators1C, "ModelType=4");
 	ReadTable(Network.Generators3C, "ModelType=5");
-	ReadTable(Network.GeneratorsMustang, "ModelType=6");
+	ReadTable(Network.GeneratorsMustang, "ModelType=6|ModelType=7");
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);

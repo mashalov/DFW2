@@ -119,6 +119,7 @@ namespace DFW2
 		CDynaLRC *m_pLRCLF = nullptr;	// указатель на СХН узла в УР
 		CDynaLRC *m_pLRCGen = nullptr;	// СХН для генерации, которая не задана моделями генераторов
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
+		double LFQminGen, LFQmaxGen;	// суммарные ограничения реактивной мощности генераторов в узле
 		CDynaNodeBase();
 		virtual ~CDynaNodeBase() = default;
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
