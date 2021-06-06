@@ -333,6 +333,8 @@ namespace DFW2
 					cszErrorMsg ? cszErrorMsg : "CDevice::CheckIndex", nIndex, Container.size()));
 		}
 
+		bool CheckLimits(double& Min, double& Max);
+
 
 #ifdef _DEBUG
 		static char UnknownVarIndex[80];

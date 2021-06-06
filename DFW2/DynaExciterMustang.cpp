@@ -94,17 +94,14 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
+
+		CheckLimits(Umin, Umax);
+		CheckLimits(Imin, Imax);
+
 		Kig *= Eqnom / Inom;
 		Imin *= Eqnom;
 		Imax *= Eqnom;
 		ExcLag.SetMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
-		/*
-		if (Imin == 0.0 && Imax == 0.0)
-		{
-			Imin = -1E6;
-			Imax = -Imin;
-		}
-		*/
 		EqLimit.SetMinMax(pDynaModel, Imin, Imax);
 		EqOutputValue = Eq0;
 		bool bRes = ExcLag.Init(pDynaModel);

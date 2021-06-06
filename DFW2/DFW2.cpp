@@ -35,7 +35,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_CrtSetBreakAlloc(31657);
 	//_CrtSetBreakAlloc(236965);
 	
-		//_CrtSetBreakAlloc(859880);
+	//_CrtSetBreakAlloc(504670);
 
 	/*
 	GraphCycle<int, int> gc;

@@ -65,6 +65,8 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 	if (!InitConstantVariable(Eqe0, pExciter, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
+	CheckLimits(Umin, Umax);
+
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		Lag.SetMinMaxTK(pDynaModel, Umin * Eqnom - Eqe0, Umax * Eqnom - Eqe0, Tr, 1.0);

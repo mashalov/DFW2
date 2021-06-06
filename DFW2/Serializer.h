@@ -166,6 +166,11 @@ namespace DFW2
 		// Возвращает тип в виде строки, "unknown" если для типа не найдено строкового описания
 		std::string_view GetTypeVerb() const;
 		static std::string_view GetTypeVerbByType(TypedSerializedValue::eValueType type);
+
+		// Возвращает true, если данный указатель соответствует типу переменной и равен 
+		// сохраненному в переменной указателю
+		template<typename T>
+		bool IsThatPointer(T* type);
 	protected:
 		// shortcut функция выбрасывает исключение при ошибке приведения типа
 		void NoConversion(eValueType fromType);
@@ -502,6 +507,21 @@ namespace DFW2
 				return it->second;
 			else
 				return nullptr;
+		}
+
+		// поиск значения по указателю
+		template<typename T>
+		std::optional<const SERIALIZERMAP::value_type> ByPointer(T* ptr)
+		{
+			// проходим по карте значений
+			for (const auto& mt : ValueMap)
+			{
+				// проверяем, равен ли данный указатель
+				// указателю значения, если да, возвращаем значение
+				if (mt.second->IsThatPointer(ptr))
+					return mt;
+			}
+			return {};
 		}
 
 		const SERIALIZERMAP GetUnsetValues() const;

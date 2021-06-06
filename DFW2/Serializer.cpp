@@ -313,3 +313,11 @@ template<> MetaSerializedValue* MetaSerializedValue::Set<const cplx&>(const cplx
 	return this;
 }
 
+// Возвращает true, если данный указатель соответствует типу переменной и равен 
+// сохраненному в переменной указателю
+
+// Специализация для double
+template<> bool TypedSerializedValue::IsThatPointer<double>(double* type)
+{
+	return ValueType == TypedSerializedValue::eValueType::VT_DBL && Value.pDbl == type;
+}

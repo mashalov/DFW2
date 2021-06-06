@@ -35,7 +35,7 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 
 		SetMinMax(pDynaModel, m_dMin, m_dMax);
 
-		if (m_Output > m_dMaxH || m_Output < m_dMinH)
+		if (( m_Output > m_dMaxH || m_Output < m_dMinH ) && m_Device.IsStateOn())
 		{
 			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, 
 																   GetVerbalName(), 

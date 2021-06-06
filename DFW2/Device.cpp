@@ -1177,6 +1177,45 @@ VariableIndex& CDevice::GetVariable(ptrdiff_t nVarIndex)
 		throw dfw2error("CDevice::GetVariable index ouf of range");
 }
 
+
+bool CDevice::CheckLimits(double& Min, double& Max)
+{
+	if (Max > Min) 
+		return true;
+	else
+	{
+		const auto serializer = GetSerializer();
+		const auto mtMin = serializer->ByPointer(&Min);
+		const auto mtMax = serializer->ByPointer(&Max);
+		std::string nameMin(mtMin.has_value() ? mtMin->first : CDFW2Messages::m_cszUnknown);
+		std::string nameMax(mtMax.has_value() ? mtMax->first : CDFW2Messages::m_cszUnknown);
+
+		if (Min > Max)
+		{
+			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongLimits,
+				nameMin,
+				nameMax,
+				Min,
+				Max,
+				GetVerbalName()));
+			return false;
+		}
+		if (Equal(Min, Max) && Equal(Min, 0.0))
+		{
+			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszEmptyLimits,
+				nameMin,
+				nameMax,
+				Min,
+				Max,
+				GetVerbalName()));
+
+			Min = -(std::numeric_limits<double>::max)();
+			Max =  (std::numeric_limits<double>::max)();
+		}
+		return true;
+	}
+}
+
 #ifdef _DEBUG
 	char CDevice::UnknownVarIndex[80];
 #endif

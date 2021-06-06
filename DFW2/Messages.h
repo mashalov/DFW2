@@ -156,6 +156,8 @@ namespace DFW2
 		static const char* m_cszJsonParserError;
 		static const char* m_cszFoundContainerData;
 		static const char* m_cszNoNodesOrBranchesForLF;
+		static const char* m_cszWrongLimits;
+		static const char* m_cszEmptyLimits;
 	};
 }
 

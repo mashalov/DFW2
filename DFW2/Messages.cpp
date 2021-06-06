@@ -146,5 +146,7 @@ const char* CDFW2Messages::m_cszLoadingJson = "Загрузка модели в 
 const char* CDFW2Messages::m_cszStdFileStreamError = "Ошибка работы с файлом - \"{}\"";
 const char* CDFW2Messages::m_cszJsonParserError = "Ошибка парсера json \"{}\"";
 const char* CDFW2Messages::m_cszFoundContainerData = "Найдены данные для ввода \"{}\". Количество объектов {}";
+const char* CDFW2Messages::m_cszWrongLimits = "Неправильно заданы ограничения [{};{}] = [{};{}] в устройстве \"{}\"";
+const char* CDFW2Messages::m_cszEmptyLimits = "Ограничения [{};{}] = [{};{}] в устройстве \"{}\". Ограничения не будут учитываться";
 
 
