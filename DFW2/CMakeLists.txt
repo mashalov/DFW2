@@ -4,10 +4,11 @@ set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_compile_definitions(DLONG)
+set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG "_DEBUG")
 
 
-set(DFW_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/include/"
-                 "${CMAKE_CURRENT_SOURCE_DIR}/../../njson/")
+set(DFW_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../fmt/include/"
+                 "${CMAKE_CURRENT_SOURCE_DIR}/../njson/")
 
 set(KLU_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU/Include" 
              "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/AMD/Include"
@@ -18,7 +19,7 @@ set(KLU_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU/Include"
 
 set(EMSSSOURCES 
     main.cpp 
-    ../../../fmt/src/format.cc 
+    ../../fmt/src/format.cc 
     Messages.cpp
     LoadFlow.cpp
     Device.cpp
