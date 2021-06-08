@@ -1,4 +1,5 @@
 ﻿#include "CompilerBase.h"
+#include <shlobj_core.h>
 #include <tchar.h>
 
 bool CompilerBase::SetProperty(std::string_view PropertyName, std::string_view Value)
@@ -61,6 +62,89 @@ public:
 	}
 };
 
+std::string CompilerBase::GetMSBuildPath()
+{
+	// используем vswhere из Visual Studio
+	PWSTR ppszPath;
+	if (FAILED(SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, KF_FLAG_DEFAULT, NULL, &ppszPath)))
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "SHGetKnownFolderPath - отказ получения пути к Program Files");
+	std::wstring MSBuildPath(ppszPath);
+	CoTaskMemFree(ppszPath);
+	MSBuildPath.append(L"\\Microsoft Visual Studio\\Installer\\vswhere.exe -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe");
+
+	DWORD dwCreationFlags = 0;
+	UniqueHandle<HANDLE> hStdWrite, hStdRead;
+	SECURITY_ATTRIBUTES stdSA;
+	ZeroMemory(&stdSA, sizeof(SECURITY_ATTRIBUTES));
+	stdSA.nLength = sizeof(SECURITY_ATTRIBUTES);
+	stdSA.bInheritHandle = TRUE;
+	stdSA.lpSecurityDescriptor = NULL;
+
+	PROCESS_INFORMATION pi;
+	STARTUPINFO si;
+	ZeroMemory(&si, sizeof(STARTUPINFO));
+	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+
+	if (!CreatePipe(hStdRead, hStdWrite, &stdSA, 0))
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Невозможно создание канала получения данных vswhere");
+
+	si.cb = sizeof(STARTUPINFO);
+	si.hStdError = hStdWrite;
+	si.hStdOutput = hStdWrite;
+	si.dwFlags |= STARTF_USESTDHANDLES;
+
+	UniqueHandle hProcess(pi.hProcess);
+	UniqueHandle hThread(pi.hThread);
+
+	if (!SetHandleInformation(hStdRead, HANDLE_FLAG_INHERIT, 0))
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Невозможно подключение канала получения данных vswhere");
+
+	auto wcmd = std::make_unique<wchar_t[]>(MSBuildPath.length() + 2);
+	_tcscpy_s(wcmd.get(), MSBuildPath.length() + 2, MSBuildPath.c_str());
+
+	if (!CreateProcess(NULL,
+		wcmd.get(),
+		NULL,
+		NULL,
+		TRUE,
+		dwCreationFlags,
+		NULL,
+		NULL,
+		&si,
+		&pi))
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка запуска процесса vswhere");
+
+	hStdWrite.Close();
+
+	DWORD dwRead(0);
+	const size_t BufSize = MAX_PATH;
+	auto chBuf = std::make_unique<char[]>(BufSize);
+	BOOL bSuccess = FALSE;
+	std::string strOut;
+
+	for (;;)
+	{
+		bSuccess = ReadFile(hStdRead, chBuf.get(), BufSize, &dwRead, NULL);
+		// процесс закроет хэндл hStdRead у себя когда закончит вывод
+		// так мы узнаем что процесс завершен
+		if (!bSuccess || dwRead == 0) break;
+		std::string strMsgLine(static_cast<const char*>(chBuf.get()), dwRead);
+		size_t nPos = std::string::npos;
+		while ((nPos = strMsgLine.find("\r\n")) != std::string::npos)
+			strMsgLine.replace(nPos, 2, "");
+		strOut = strMsgLine;
+	}
+
+	DWORD dwResult(0);
+	if (!GetExitCodeProcess(pi.hProcess, &dwResult))
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка при получении кода завершения работы процесса vswhere");
+
+	if (dwResult != 0)
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "vswhere завершен с ошибкой");
+
+	return strOut;// "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin\\msbuild.exe";
+}
+
 void CompilerBase::CompileWithMSBuild()
 {
 	std::list<std::string> listConsole;
@@ -97,7 +181,7 @@ void CompilerBase::CompileWithMSBuild()
 	std::filesystem::copy(pathRefDir, pathOutDir, std::filesystem::copy_options::overwrite_existing);
 	
 	// находим путь к msbuild
-	std::string MSBuildPath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin\\msbuild.exe";
+	std::string MSBuildPath(GetMSBuildPath());
 	// задаем платформу сборки
 	std::string Platform	= Properties[PropertyMap::szPropPlatform];
 	// имя dll берем по имени проекта

@@ -114,5 +114,6 @@ public:
     void Destroy() override { delete this; }
     bool NoRecompileNeeded(std::string_view SourceToCompile, std::filesystem::path& pathDLLOutput);
     void SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput);
+    std::string GetMSBuildPath();
 };
 
