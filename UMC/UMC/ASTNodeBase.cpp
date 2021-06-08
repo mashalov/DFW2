@@ -3,14 +3,14 @@
 
 CASTNodeBase* CASTNodeBase::GetParentOfType(const ASTNodeType ParentType)
 {
-    CASTNodeBase* pParent(pParent);
-    while (pParent)
+    CASTNodeBase* pCurrentParent(pParent);
+    while (pCurrentParent)
     {
-        if (pParent->CheckType(ParentType))
+        if (pCurrentParent->CheckType(ParentType))
             break;
-        pParent = pParent->pParent;
+        pCurrentParent = pCurrentParent->pParent;
     }
-    return pParent;
+    return pCurrentParent;
 }
 
 // если запрашивают родительское уравнение уравнения
