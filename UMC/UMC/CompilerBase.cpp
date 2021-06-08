@@ -62,16 +62,11 @@ public:
 	}
 };
 
-std::string CompilerBase::GetMSBuildPath()
-{
-	// используем vswhere из Visual Studio
-	PWSTR ppszPath;
-	if (FAILED(SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, KF_FLAG_DEFAULT, NULL, &ppszPath)))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "SHGetKnownFolderPath - отказ получения пути к Program Files");
-	std::wstring MSBuildPath(ppszPath);
-	CoTaskMemFree(ppszPath);
-	MSBuildPath.append(L"\\Microsoft Visual Studio\\Installer\\vswhere.exe -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe");
 
+DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, std::list<std::wstring>& listConsole)
+{
+
+	std::string CommandLineUTF8Version(utf8_encode(CommandLine));
 	DWORD dwCreationFlags = 0;
 	UniqueHandle<HANDLE> hStdWrite, hStdRead;
 	SECURITY_ATTRIBUTES stdSA;
@@ -86,7 +81,8 @@ std::string CompilerBase::GetMSBuildPath()
 	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
 
 	if (!CreatePipe(hStdRead, hStdWrite, &stdSA, 0))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Невозможно создание канала получения данных vswhere");
+		throw std::system_error(std::error_code(GetLastError(),std::system_category()), 
+			fmt::format("Невозможно создание канала получения данных для запуска {}", CommandLineUTF8Version));
 
 	si.cb = sizeof(STARTUPINFO);
 	si.hStdError = hStdWrite;
@@ -96,11 +92,12 @@ std::string CompilerBase::GetMSBuildPath()
 	UniqueHandle hProcess(pi.hProcess);
 	UniqueHandle hThread(pi.hThread);
 
-	if (!SetHandleInformation(hStdRead, HANDLE_FLAG_INHERIT, 0))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Невозможно подключение канала получения данных vswhere");
+	auto wcmd = std::make_unique<wchar_t[]>(CommandLine.length() + 2);
+	_tcscpy_s(wcmd.get(), CommandLine.length() + 2, CommandLine.c_str());
 
-	auto wcmd = std::make_unique<wchar_t[]>(MSBuildPath.length() + 2);
-	_tcscpy_s(wcmd.get(), MSBuildPath.length() + 2, MSBuildPath.c_str());
+	if (!SetHandleInformation(hStdRead, HANDLE_FLAG_INHERIT, 0))
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), 
+			fmt::format("Невозможно подключение канала получения данных {}", CommandLineUTF8Version));
 
 	if (!CreateProcess(NULL,
 		wcmd.get(),
@@ -109,19 +106,24 @@ std::string CompilerBase::GetMSBuildPath()
 		TRUE,
 		dwCreationFlags,
 		NULL,
-		NULL,
+		WorkingFolder.length() ? WorkingFolder.c_str() : NULL,
 		&si,
 		&pi))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка запуска процесса vswhere");
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), 
+			fmt::format("Ошибка запуска процесса {}", CommandLineUTF8Version));
 
+	// не нужно ждать завершения, если мы используем перенаправление вывода
+	// https://stackoverflow.com/questions/35969730/how-to-read-output-from-cmd-exe-using-createprocess-and-createpipe
+	/*if (WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка ожидания завершения работы процесса MSBuild");*/
+	// закрываем handle вывода в консоль, иначе ReadFile может зависнуть
 	hStdWrite.Close();
 
 	DWORD dwRead(0);
-	const size_t BufSize = MAX_PATH;
+	const size_t BufSize = 500;
 	auto chBuf = std::make_unique<char[]>(BufSize);
 	BOOL bSuccess = FALSE;
 	std::string strOut;
-
 	for (;;)
 	{
 		bSuccess = ReadFile(hStdRead, chBuf.get(), BufSize, &dwRead, NULL);
@@ -129,26 +131,63 @@ std::string CompilerBase::GetMSBuildPath()
 		// так мы узнаем что процесс завершен
 		if (!bSuccess || dwRead == 0) break;
 		std::string strMsgLine(static_cast<const char*>(chBuf.get()), dwRead);
-		size_t nPos = std::string::npos;
-		while ((nPos = strMsgLine.find("\r\n")) != std::string::npos)
-			strMsgLine.replace(nPos, 2, "");
-		strOut = strMsgLine;
+
+		// ищем в строке переводы строки и разбиваем ее на отдельные строки
+		size_t nFind = std::string::npos;
+		while ((nFind = strMsgLine.find("\r\n")) != std::string::npos)
+		{
+			// добавляем то, что прочитали до перевода строки 
+			// в текущую строку
+			strOut += strMsgLine.substr(0, nFind);
+			// и добавляем получившуюся строку в список
+			listConsole.push_back(utf8_decode(strOut));
+			// строку очищаем и ждем нового перевода строки
+			strOut.clear();
+			// из исходной строки удаляем перевод
+			strMsgLine.erase(0, nFind + 2);
+		}
+		// если после чтения в исходной строке что-то осталось
+		// это значит что строка из процессе еще не закончилась.
+		// добавляем остаток к текущей строке
+		if (strMsgLine.length() > 0)
+			strOut += strMsgLine.substr(0, nFind);
 	}
+
+	// если после обработки вывода что-то осталось в текущей
+	// строке - добавляем ее в список
+	if (!strOut.empty())
+		listConsole.push_back(utf8_decode(strOut));
 
 	DWORD dwResult(0);
 	if (!GetExitCodeProcess(pi.hProcess, &dwResult))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка при получении кода завершения работы процесса vswhere");
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), 
+			fmt::format("Ошибка при получении кода завершения работы процесса {}", CommandLineUTF8Version));
+
+	return dwResult;
+}
+
+std::wstring CompilerBase::GetMSBuildPath()
+{
+	// используем vswhere из Visual Studio
+	PWSTR ppszPath;
+	if (FAILED(SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, KF_FLAG_DEFAULT, NULL, &ppszPath)))
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "SHGetKnownFolderPath - отказ получения пути к Program Files");
+	std::wstring MSBuildPath(ppszPath);
+	CoTaskMemFree(ppszPath);
+	MSBuildPath.append(L"\\Microsoft Visual Studio\\Installer\\vswhere.exe -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe");
+
+	std::list<std::wstring> output;
+	DWORD dwResult(RunWindowsConsole(MSBuildPath,L"", output));
 
 	if (dwResult != 0)
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "vswhere завершен с ошибкой");
 
-	return strOut;// "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin\\msbuild.exe";
+	return output.size() ? output.front() : L"";// "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin\\msbuild.exe";
 }
+
 
 void CompilerBase::CompileWithMSBuild()
 {
-	std::list<std::string> listConsole;
-
 	// Pipeline
 	// 1. Создаем каталог для сборки модели OurDir\ProjectName (уже сделано в генерации исходника)
 	// 2. Копируем из референсного каталога ReferenceSources дополнительные исходники и vcxproj в каталог сборки
@@ -181,12 +220,12 @@ void CompilerBase::CompileWithMSBuild()
 	std::filesystem::copy(pathRefDir, pathOutDir, std::filesystem::copy_options::overwrite_existing);
 	
 	// находим путь к msbuild
-	std::string MSBuildPath(GetMSBuildPath());
+	std::wstring MSBuildPath(GetMSBuildPath());
 	// задаем платформу сборки
-	std::string Platform	= Properties[PropertyMap::szPropPlatform];
+	std::wstring Platform	= utf8_decode(Properties[PropertyMap::szPropPlatform]);
 	// имя dll берем по имени проекта
-	std::string TargetName  = Properties[PropertyMap::szPropProjectName];
-	std::string Configuration = Properties[PropertyMap::szPropConfiguration];
+	std::wstring TargetName  = utf8_decode(Properties[PropertyMap::szPropProjectName]);
+	std::wstring Configuration = utf8_decode(Properties[PropertyMap::szPropConfiguration]);
 	// формируем путь до vcxproj
 	std::filesystem::path pathVcxproj = pathOutDir;
 	pathVcxproj.append(CASTCodeGeneratorBase::CustomDeviceHeader).replace_extension("vcxproj");
@@ -205,119 +244,29 @@ void CompilerBase::CompileWithMSBuild()
 	std::filesystem::remove(pathPDB,ec);
 
 	// генерируем командную строку msbuild
-	std::string commandLine = fmt::format("\"{}\"", MSBuildPath);
+	std::wstring commandLine = fmt::format(L"\"{}\"", MSBuildPath);
 
-	std::string commandLineArgs = fmt::format(" /p:Platform={} /p:Configuration={} /p:TargetName={} /p:OutDir=\"{}\\\\\" /p:DFW2Include=\"{}\\\\\"  \"{}\"",
+	std::wstring commandLineArgs = fmt::format(L" /p:Platform={} /p:Configuration={} /p:TargetName={} /p:OutDir=\"{}\\\\\" /p:DFW2Include=\"{}\\\\\"  \"{}\"",
 		Platform,
 		Configuration,
 		TargetName,
-		pathDLLOutput.string(),
-		pathDFW2Include.string(),
-		pathVcxproj.string());
+		pathDLLOutput.wstring(),
+		pathDFW2Include.wstring(),
+		pathVcxproj.wstring());
 
 	commandLine += commandLineArgs;
 
 	// конвертируем пути для CreateProcess в wchar_t
-	std::wstring wCommandLine(utf8_decode(commandLine)), wArguments(utf8_decode(commandLineArgs));
-	auto wcmd = std::make_unique<wchar_t[]>(wCommandLine.length() + 2);
-	_tcscpy_s(wcmd.get(), wCommandLine.length() + 2, wCommandLine.c_str());
-	std::wstring WorkingDir = pathOutDir.generic_wstring();
-	
-	DWORD dwCreationFlags = 0;
-	UniqueHandle<HANDLE> hStdWrite, hStdRead;
-	SECURITY_ATTRIBUTES stdSA;
-	ZeroMemory(&stdSA, sizeof(SECURITY_ATTRIBUTES));
-	stdSA.nLength = sizeof(SECURITY_ATTRIBUTES);
-	stdSA.bInheritHandle = TRUE;
-	stdSA.lpSecurityDescriptor = NULL;
+	std::wstring WorkingFolder = pathOutDir.generic_wstring();
 
-	PROCESS_INFORMATION pi;
-	STARTUPINFO si;
-	ZeroMemory(&si, sizeof(STARTUPINFO));
-	ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
+	std::list<std::wstring> listConsole;
 
-	if (!CreatePipe(hStdRead, hStdWrite, &stdSA, 0))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Невозможно создание канала получения данных MSBuild");
-
-	si.cb = sizeof(STARTUPINFO);
-	si.hStdError = hStdWrite;
-	si.hStdOutput = hStdWrite;
-	si.dwFlags |= STARTF_USESTDHANDLES;
-
-	UniqueHandle hProcess(pi.hProcess);
-	UniqueHandle hThread(pi.hThread);
-
-	if (!SetHandleInformation(hStdRead, HANDLE_FLAG_INHERIT, 0))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Невозможно подключение канала получения данных MSBuild");
-
-	if (!CreateProcess(NULL,
-		wcmd.get(),
-		NULL,
-		NULL,
-		TRUE,
-		dwCreationFlags,
-		NULL,
-		WorkingDir.c_str(),
-		&si,
-		&pi))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка запуска процесса MSBuild");
-
-	// не нужно ждать завершения, если мы используем перенаправление вывода
-	// https://stackoverflow.com/questions/35969730/how-to-read-output-from-cmd-exe-using-createprocess-and-createpipe
-	/*if (WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка ожидания завершения работы процесса MSBuild");*/
-
-	// закрываем handle вывода в консоль, иначе ReadFile может зависнуть
-	hStdWrite.Close();
-
-	DWORD dwRead(0);
-	const size_t BufSize = 500;
-	auto chBuf = std::make_unique<char[]>(BufSize);
-	BOOL bSuccess = FALSE;
-	std::string strOut;
-
-	for (;;)
-	{
-		bSuccess = ReadFile(hStdRead, chBuf.get(), BufSize, &dwRead, NULL);
-		// процесс закроет хэндл hStdRead у себя когда закончит вывод
-		// так мы узнаем что процесс завершен
-		if (!bSuccess || dwRead == 0) break;
-		std::string strMsgLine(static_cast<const char*>(chBuf.get()), dwRead);
-
-		// ищем в строке переводы строки и разбиваем ее на отдельные строки
-		size_t nFind = std::string::npos;
-		while ((nFind = strMsgLine.find("\r\n")) != std::string::npos)
-		{
-			// добавляем то, что прочитали до перевода строки 
-			// в текущую строку
-			strOut += strMsgLine.substr(0, nFind);
-			// и добавляем получившуюся строку в список
-			listConsole.push_back(strOut);
-			// строку очищаем и ждем нового перевода строки
-			strOut.clear();
-			// из исходной строки удаляем перевод
-			strMsgLine.erase(0, nFind + 2);
-		}
-		// если после чтения в исходной строке что-то осталось
-		// это значит что строка из процессе еще не закончилась.
-		// добавляем остаток к текущей строке
-		if (strMsgLine.length() > 0)
-			strOut += strMsgLine.substr(0, nFind);
-	}
-
-	// если после обработки вывода что-то осталось в текущей
-	// строке - добавляем ее в список
-	if(!strOut.empty())
-		listConsole.push_back(strOut);
-
-	DWORD dwResult(0);
-	if (!GetExitCodeProcess(pi.hProcess, &dwResult))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка при получении кода завершения работы процесса MSBuild");
+	DWORD dwResult(RunWindowsConsole(commandLine, WorkingFolder, listConsole));
 
 	if (dwResult != 0)
 	{
 		for (auto& l : listConsole)
-			std::cout << l << std::endl;
+			std::cout << utf8_encode(l) << std::endl;
 		pTree->Error("Ошибка компиляции MSBuild");
 	}
 	else
