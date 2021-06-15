@@ -47,6 +47,7 @@ namespace DFW2
 		inline ptrdiff_t GetId() { return m_nId; }
 		CAutomaticItem(long Type, ptrdiff_t Id, std::string_view Name);
 		virtual ~CAutomaticItem() = default;
+		std::string GetVerbalName();
 	};
 
 	class CAutomaticAction : public CAutomaticItem

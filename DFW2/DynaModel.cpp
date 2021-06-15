@@ -227,7 +227,7 @@ bool CDynaModel::RunTransient()
 			// на первом шаге
 			SaveNordsiek();
 
-			Serialize("c:\\tmp\\serialization.json");
+			//Serialize("c:\\tmp\\serialization.json");
 
 			try
 			{
@@ -244,6 +244,8 @@ bool CDynaModel::RunTransient()
 						}
 					}
 					if(CancelProcessing())
+						break;
+					if (StabilityLost())
 						break;
 				}
 			}

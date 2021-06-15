@@ -425,6 +425,58 @@ bool CDynaModel::CancelProcessing()
 #endif
 }
 
+
+// https://stackoverflow.com/questions/1878907/how-can-i-find-the-difference-between-two-angles
+/*
+double GetAbsoluteDiff2Angles(const double x, const double y)
+{
+	// c can be PI (for radians) or 180.0 (for degrees);
+	return M_PI - std::fabs(std::fmod(std::fabs(x - y), 2.0 * M_PI) - M_PI);
+}
+*/
+
+double GetAbsoluteDiff2Angles(const double x, const double y)
+{
+	/*
+	* def f(x,y):
+	import math
+	return min(y-x, y-x+2*math.pi, y-x-2*math.pi, key=abs)
+	*/
+
+	std::array<double, 3> args { y - x , y - x + 2.0 * M_PI , y - x - 2 * M_PI };
+	return *std::min_element(args.begin(), args.end(), [](const auto& lhs, const auto& rhs) { return std::abs(lhs) < std::abs(rhs); });
+}
+
+bool CDynaModel::StabilityLost()
+{
+	bool bStabilityLost(false);
+	for (const auto& dev : Branches)
+	{
+		CDynaBranch* pBranch = static_cast<CDynaBranch*>(dev);
+		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+		{
+			
+			// считаем минимальный угол со знаком между углами напряжений по концам
+			const double deltaDiff(GetAbsoluteDiff2Angles(pBranch->m_pNodeIp->Delta,pBranch->m_pNodeIq->Delta));
+			const double limitAngle = 160 * M_PI / 180;
+			// предыдущий и текущий углы проверяем на близость к 180
+			// если знаки углов разные, значит пересекли 180
+			if (std::abs(pBranch->deltaDiff) >= limitAngle && std::abs(deltaDiff) >= limitAngle && pBranch->deltaDiff * deltaDiff < 0.0)
+			{
+				bStabilityLost = true;
+				// синтезируем угол для репорта: к предыдущему добавляем разность текущего и предыдущего, рассчитанную как минимальный угол со знаком
+				const double synthAngle(pBranch->deltaDiff + std::abs(GetAbsoluteDiff2Angles(deltaDiff, pBranch->deltaDiff)));
+				Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI, 
+					pBranch->GetVerbalName(), 
+					synthAngle * 180.0 / M_PI,
+					GetCurrentTime()));
+			}
+			pBranch->deltaDiff = deltaDiff;
+		}
+	}
+	return bStabilityLost;
+}
+
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
 								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1

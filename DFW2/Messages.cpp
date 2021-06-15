@@ -85,6 +85,7 @@ const char* CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink = "Объект н
 const char* CDFW2Messages::m_cszNoCompilerDLL = "Компилятор пользовательских моделей недоступен";
 const char* CDFW2Messages::m_cszActionNotFoundInDLL = "Действие {} не найдено в скомпилированной dll";
 const char* CDFW2Messages::m_cszLogicNotFoundInDLL = "Логика {} не найдена в скомпилированной dll";
+const char* CDFW2Messages::m_cszActionTypeNotFound = "Тип действия автоматики {} с номером \"{}\" не поддерживается";
 const char* CDFW2Messages::m_cszWrongActionInLogicList = "Неверный формат ссылки на действие \"{}\" в списке действий \"{}\" элемента логики L{}";
 const char* CDFW2Messages::m_cszDuplicateActionGroupInLogic = "Группа действий A{} задана в списке действий \"{}\" элемента логики L{} более одного раза";
 const char* CDFW2Messages::m_cszNoActionGroupFoundInLogic = "Группа действий A{}, указанная в списке \"{}\" элемента логики L{} не определена в действиях";
@@ -148,5 +149,6 @@ const char* CDFW2Messages::m_cszJsonParserError = "Ошибка парсера j
 const char* CDFW2Messages::m_cszFoundContainerData = "Найдены данные для ввода \"{}\". Количество объектов {}";
 const char* CDFW2Messages::m_cszWrongLimits = "Неправильно заданы ограничения [{};{}] = [{};{}] в устройстве \"{}\"";
 const char* CDFW2Messages::m_cszEmptyLimits = "Ограничения [{};{}] = [{};{}] в устройстве \"{}\". Ограничения не будут учитываться";
+const char* CDFW2Messages::m_cszBranchAngleExceedsPI = "Асинхронный режим по связи {}. Угол {} при t={}";
 
 

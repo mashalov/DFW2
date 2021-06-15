@@ -82,10 +82,17 @@ namespace DFW2
 		DFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	class CModelActionChangeBranchState : public CModelActionChangeVariable
+	class CModelActionChangeBranchParameterBase : public CModelActionChangeVariable
 	{
 	protected:
-		CDynaBranch *m_pDynaBranch;
+		CDynaBranch* m_pDynaBranch;
+	public:
+		CModelActionChangeBranchParameterBase(CDynaBranch* pBranch);
+	};
+
+	class CModelActionChangeBranchState : public CModelActionChangeBranchParameterBase
+	{
+	protected:
 		CDynaBranch::BranchState m_NewState;
 	public:
 		CModelActionChangeBranchState(CDynaBranch *pBranch, CDynaBranch::BranchState NewState);
@@ -93,12 +100,35 @@ namespace DFW2
 		virtual DFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue);
 	};
 
+	class CModelActionChangeBranchImpedance : public CModelActionChangeBranchParameterBase
+	{
+	protected:
+		cplx m_Impedance;
+	public:
+		CModelActionChangeBranchImpedance(CDynaBranch* pBranch, const cplx& Impedance);
+		DFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
+	};
+
+	class CModelActionChangeBranchR : public CModelActionChangeBranchImpedance
+	{
+	public:
+		CModelActionChangeBranchR(CDynaBranch* pBranch, double R);
+		DFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double R) override;
+	};
+
+	class CModelActionChangeBranchX : public CModelActionChangeBranchImpedance
+	{
+	public:
+		CModelActionChangeBranchX(CDynaBranch* pBranch, double X);
+		DFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double X) override;
+	};
+
 	class CModelActionChangeNodeParameterBase : public CModelAction
 	{
 	protected:
-		CDynaNode *m_pDynaNode;
+		CDynaNode* m_pDynaNode;
 	public:
-		CModelActionChangeNodeParameterBase(CDynaNode *pNode) : CModelAction(AT_CV), m_pDynaNode(pNode) {}
+		CModelActionChangeNodeParameterBase(CDynaNode *pNode) : CModelAction(AT_CV), m_pDynaNode(pNode)  {}
 	};
 
 	class CModelActionChangeNodeShunt : public CModelActionChangeNodeParameterBase

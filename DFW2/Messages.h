@@ -99,6 +99,7 @@ namespace DFW2
 		static const char* m_cszWrongActionInLogicList;
 		static const char* m_cszDuplicateActionGroupInLogic;
 		static const char* m_cszNoActionGroupFoundInLogic;
+		static const char* m_cszActionTypeNotFound;
 		static const char* m_cszDuplicatedVariableUnit;
 		static const char* m_cszDuplicatedDeviceType;
 		static const char* m_cszTooMuchDevicesInResult;
@@ -158,6 +159,7 @@ namespace DFW2
 		static const char* m_cszNoNodesOrBranchesForLF;
 		static const char* m_cszWrongLimits;
 		static const char* m_cszEmptyLimits;
+		static const char* m_cszBranchAngleExceedsPI;
 	};
 }
 

@@ -848,5 +848,6 @@ namespace DFW2
 
 		// возвращает true, если расчет нужно прекратить (отмена пользователем)
 		bool CancelProcessing();
+		bool StabilityLost();
 	};
 }

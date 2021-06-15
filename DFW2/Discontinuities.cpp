@@ -199,15 +199,58 @@ DFW2_ACTION_STATE CModelActionStop::Do(CDynaModel *pDynaModel)
 }
 
 
+CModelActionChangeBranchParameterBase::CModelActionChangeBranchParameterBase(CDynaBranch* pBranch) : CModelActionChangeVariable(nullptr, 0.0),
+																									 m_pDynaBranch(pBranch)
+{
+
+}
+
 CModelActionChangeBranchState::CModelActionChangeBranchState(CDynaBranch *pBranch, enum CDynaBranch::BranchState NewState) :
-																									CModelActionChangeVariable(NULL,0.0),
-																									m_pDynaBranch(pBranch),
+																									CModelActionChangeBranchParameterBase(pBranch),
 																									m_NewState(NewState)
 {
 	
 
 }
 
+CModelActionChangeBranchImpedance::CModelActionChangeBranchImpedance(CDynaBranch* pBranch, const cplx& Impedance) :
+	CModelActionChangeBranchParameterBase(pBranch),
+	m_Impedance(Impedance)
+{
+
+}
+DFW2_ACTION_STATE CModelActionChangeBranchImpedance::Do(CDynaModel* pDynaModel)
+{
+	DFW2_ACTION_STATE State = AS_DONE;
+	m_pDynaBranch->R = m_Impedance.real();
+	m_pDynaBranch->X = m_Impedance.imag();
+	pDynaModel->ProcessTopologyRequest();
+	return State;
+}
+
+
+CModelActionChangeBranchR::CModelActionChangeBranchR(CDynaBranch* pBranch, double R) :
+	CModelActionChangeBranchImpedance(pBranch, { R, pBranch->X })
+{
+
+}
+DFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double R)
+{
+	m_Impedance = { R, m_pDynaBranch->X };
+	return CModelActionChangeBranchImpedance::Do(pDynaModel);
+}
+
+CModelActionChangeBranchX::CModelActionChangeBranchX(CDynaBranch* pBranch, double X) :
+	CModelActionChangeBranchImpedance(pBranch, { pBranch->R, X })
+{
+
+}
+
+DFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double X)
+{
+	m_Impedance = { m_pDynaBranch->R, X };
+	return CModelActionChangeBranchImpedance::Do(pDynaModel);
+}
 
 DFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel)
 {
@@ -335,7 +378,7 @@ DFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
 }
 
 
-CModelActionChangeNodeLoad::CModelActionChangeNodeLoad(CDynaNode *pNode, cplx& LoadPower) : CModelActionChangeVariable(NULL, 0),
+CModelActionChangeNodeLoad::CModelActionChangeNodeLoad(CDynaNode *pNode, cplx& LoadPower) : CModelActionChangeVariable(nullptr, 0),
 																						    m_pDynaNode(pNode),
 																							m_newLoad(LoadPower)
 {

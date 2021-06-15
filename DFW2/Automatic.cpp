@@ -4,6 +4,12 @@
 
 using namespace DFW2;
 
+std::string CAutomaticItem::GetVerbalName()
+{
+	return fmt::format("{} - \"{}\"", m_nId, m_strName);
+}
+
+
 CAutomaticItem::CAutomaticItem(long Type, ptrdiff_t Id, std::string_view Name) :
 		m_nType(Type),
 		m_nId(Id),
@@ -346,7 +352,7 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 
 bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice)
 {
-	bool bRes = true;
+	bool bRes = false;
 	_ASSERTE(!m_pAction);
 	_ASSERTE(!m_pValue);
 	std::string strVarName = fmt::format(cszActionTemplate, m_nId);
@@ -355,7 +361,25 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 	{
 		switch (m_nType)
 		{
-			case 3:
+			case 1: // объект
+			{
+				CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
+				if (pDev)
+				{
+					if (m_strObjectProp == "r")
+					{
+						m_pAction = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+						bRes = true;
+					}
+					else if (m_strObjectProp == "x")
+					{
+						m_pAction = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+						bRes = true;
+					}
+				}
+				break;
+			}
+			case 3:	// состояние ветви
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasBranch;
 				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
@@ -366,7 +390,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 				}
 				break;
 			}
-			case 4:
+			case 4:	// g-шунт узла
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
 				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
@@ -377,7 +401,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 				}
 				break;
 			}
-			case 5:
+			case 5: // b-шунт узла
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
 				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
@@ -388,7 +412,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 				}
 				break;
 			}
-			case 6:
+			case 6:	// r-шунт узла
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
 				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
@@ -399,7 +423,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 				}
 				break;
 			}
-			case 7:
+			case 7:	// x-шунт узла
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
 				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
@@ -410,13 +434,13 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 				}
 				break;
 			}
+			default:
+				pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionTypeNotFound, GetVerbalName(), m_nType));
+				break;
 		}
 	}
 	else
-	{
 		pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotFoundInDLL, strVarName));
-		bRes = false;
-	}
 
 	return bRes;
 }

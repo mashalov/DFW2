@@ -283,11 +283,11 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	// СМЗУ Сибирь
 	///*
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\18122019_14-00_simple_v7_clean_nosvc.rst", 
+	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc.rst", 
 		stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst").c_str()); 
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\18122019_14-00_simple_v7_clean_nosvc.dfw",
-		stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
-	//m_spRastr->Load(NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
+	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw",
+		L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
 	//*/
 
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
