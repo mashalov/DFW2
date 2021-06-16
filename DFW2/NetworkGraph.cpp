@@ -236,7 +236,7 @@ void CDynaNodeContainer::BuildSynchroZones()
 				node->m_pSyncZone = pNewZone;
 				node->MarkZoneEnergized();
 			}
-			//pNewZone++; ?
+			pNewZone++;
 		}
 		EnergizeZones(nDeenergizedCount, nEnergizedCount);
 	}
@@ -247,7 +247,7 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 {
 	bool bRes = true;
 	nDeenergizedCount = nEnergizedCount = 0;
-	return;
+	//return;
 	// проходим по узлам
 	for (auto&& it : m_DevVec)
 	{
@@ -770,6 +770,11 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 				(pNode->m_VirtualBranchBegin + DupIndex)->Y += *pYkm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
 		}
 		pNode->m_VirtualBranchEnd = pCurrentBranch;
+		// проверяем есть ли включенные ветви для данного узла
+		// но лучше пользоваться синхронными зонами, которые почему-то были 
+		// отключены. Зоны восстановлены 16.06.2021
+		//if (pNode->m_VirtualBranchBegin == pNode->m_VirtualBranchEnd)
+		//	pNode->ChangeState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
 	}
 	// считаем проводимости и шунтовые части нагрузки
 	// для суперузлов выделенной функцией

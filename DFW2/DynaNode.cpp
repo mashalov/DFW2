@@ -452,6 +452,17 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = CDynaNodeBase::BuildEquations(pDynaModel);
 
+	// Копируем скольжение в слэйв-узлы суперузла
+	// (можно совместить с CDynaNodeBase::FromSuperNode()
+	// и сэкономить цикл
+	CLinkPtrCount* pLink = GetSuperLink(0);
+	CDevice** ppDevice(nullptr);
+	while (pLink->In(ppDevice))
+	{
+		CDynaNode* pSlaveNode = static_cast<CDynaNode*>(*ppDevice);
+		pSlaveNode->S = S;
+	}
+
 	double T = pDynaModel->GetFreqTimeConstant();
 	double w0 = pDynaModel->GetOmega0();
 
@@ -854,7 +865,6 @@ bool CDynaNodeContainer::LULF()
 			if (pNode->GetId() == 1067 && m_pDynaModel->GetCurrentTime() > 0.53 && nIteration > 4)
 				pNode->GetId();// pNode->BuildRightHand(m_pDynaModel);
 				*/
-
 
 			if (!pNode->m_bInMetallicSC)
 			{
