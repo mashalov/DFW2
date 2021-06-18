@@ -243,9 +243,11 @@ bool CDynaModel::RunTransient()
 							bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
 						}
 					}
-					if(CancelProcessing())
+					if (CancelProcessing())
 						break;
 					if (StabilityLost())
+						break;
+					if (OscillationsDecayed())
 						break;
 				}
 			}

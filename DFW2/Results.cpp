@@ -176,11 +176,28 @@ void CDynaModel::WriteResultsHeaderBinary()
 
 			long nIndex = 0;
 
-			// устанавливаем адреса, откуда ResultWrite будет забирать значения
-			// записываемых переменных
+			
+
 			for (auto&& it : m_DeviceContainers)
 			{
 				CDeviceContainer *pDevCon = it;
+
+				/*
+				// собираем углы генераторов для детектора затухания колебаний
+				if (pDevCon->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
+				{
+					ptrdiff_t deltaIndex(pDevCon->GetVariableIndex(CDynaNodeBase::m_cszDelta));
+					if (deltaIndex >= 0)
+						for (auto&& dit : *pDevCon)
+							m_OscDetector.add_value_pointer(dit->GetVariableConstPtr(deltaIndex));
+				}
+				*/
+
+
+				// устанавливаем адреса, откуда ResultWrite будет забирать значения
+				// записываемых переменных
+
+				// проверяем нужно ли писать данные от этого контейнера
 				if (!ApproveContainerToWriteResults(pDevCon)) continue;
 
 				for (auto&& dit : *pDevCon)
@@ -190,12 +207,15 @@ void CDynaModel::WriteResultsHeaderBinary()
 
 					long nVarIndex = 0;
 					for (auto&& vit : it->m_ContainerProps.m_VarMap)
+					{
 						if (vit.second.m_bOutput)
-							m_spResultWrite->SetChannel(static_cast<long>(dit->GetId()), 
-														static_cast<long>(dit->GetType()), 
-														nVarIndex++, 
-														dit->GetVariablePtr(vit.second.m_nIndex), 
-														nIndex++);
+							m_spResultWrite->SetChannel(static_cast<long>(dit->GetId()),
+								static_cast<long>(dit->GetType()),
+								nVarIndex++,
+								dit->GetVariablePtr(vit.second.m_nIndex),
+								nIndex++);
+
+					}
 				}
 			}
 		}

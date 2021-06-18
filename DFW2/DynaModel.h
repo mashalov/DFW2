@@ -7,6 +7,7 @@
 #include "Automatic.h"
 #include "KLUWrapper.h"
 #include "Results.h"
+#include "OscDetector.h"
 
 //#define USE_FMA
 namespace DFW2
@@ -588,6 +589,7 @@ namespace DFW2
 		double m_dTimeWritten;
 		const char* m_cszDampingName = nullptr;
 
+		COscDetectorBase m_OscDetector;
 
 		CDeviceContainer *m_pClosestZeroCrossingContainer = nullptr;
 
@@ -849,5 +851,6 @@ namespace DFW2
 		// возвращает true, если расчет нужно прекратить (отмена пользователем)
 		bool CancelProcessing();
 		bool StabilityLost();
+		bool OscillationsDecayed();
 	};
 }

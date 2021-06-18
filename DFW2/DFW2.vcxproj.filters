@@ -241,6 +241,9 @@
     <ClInclude Include="JsonWalkers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="OscDetector.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

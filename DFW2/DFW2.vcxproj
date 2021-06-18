@@ -225,6 +225,7 @@
     <ClInclude Include="LimiterConst.h" />
     <ClInclude Include="LoadFlow.h" />
     <ClInclude Include="Messages.h" />
+    <ClInclude Include="OscDetector.h" />
     <ClInclude Include="RastrImport.h" />
     <ClInclude Include="Relay.h" />
     <ClInclude Include="Results.h" />

@@ -394,7 +394,7 @@ void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
 CResultFileWriter::~CResultFileWriter()
 {
 	CloseFile();
-	printf("\n%zd", m_nPointsCount);
+	//printf("\n%zd", m_nPointsCount);
 }
 
 // завершает и закрывает поток записи

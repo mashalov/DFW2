@@ -477,6 +477,14 @@ bool CDynaModel::StabilityLost()
 	return bStabilityLost;
 }
 
+bool CDynaModel::OscillationsDecayed()
+{
+	bool bOscillationsDecayed(false);
+	//m_OscDetector.check_pointed_values(GetCurrentTime());
+	return bOscillationsDecayed;
+}
+
+
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
 								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
