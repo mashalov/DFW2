@@ -499,7 +499,11 @@ bool CDynaModel::StabilityLost()
 				if (pGen->InMatrix())
 				{
 					const double nodeDelta(static_cast<const CDynaNodeBase*>(pGen->GetSingleLink(0))->Delta);
-					const auto ret = CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff);
+					// угол генератора рассчитывается без периодизации и не подходит для CheckAnglesCrossedPi,
+					// поэтому мы должны удалить период. Имеем два варианта : atan2 (медленно но надежно) 
+					// и функция WrapPosNegPI (быстро и возможны проблемы)
+					//const auto ret(CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff));
+					const auto ret(CheckAnglesCrossedPi(CDynaModel::WrapPosNegPI(pGen->Delta), nodeDelta, pGen->deltaDiff));
 					if (ret.first)
 					{
 						bStabilityLost = true;
@@ -521,6 +525,56 @@ bool CDynaModel::OscillationsDecayed()
 	bool bOscillationsDecayed(false);
 	//m_OscDetector.check_pointed_values(GetCurrentTime());
 	return bOscillationsDecayed;
+}
+
+
+template<typename T> T CDynaModel::Mod(T x, T y)
+{
+	// https://stackoverflow.com/questions/4633177/c-how-to-wrap-a-float-to-the-interval-pi-pi
+
+	static_assert(!std::numeric_limits<T>::is_exact, "Mod: floating-point type expected");
+
+	if (0. == y)
+		return x;
+
+	double m = x - y * floor(x / y);
+
+	// handle boundary cases resulted from floating-point cut off:
+
+	if (y > 0)              // modulo range: [0..y)
+	{
+		if (m >= y)           // Mod(-1e-16             , 360.    ): m= 360.
+			return 0;
+
+		if (m < 0)
+		{
+			if (y + m == y)
+				return 0; // just in case...
+			else
+				return y + m; // Mod(106.81415022205296 , _TWO_PI ): m= -1.421e-14 
+		}
+	}
+	else                    // modulo range: (y..0]
+	{
+		if (m <= y)           // Mod(1e-16              , -360.   ): m= -360.
+			return 0;
+
+		if (m > 0)
+		{
+			if (y + m == y)
+				return 0; // just in case...
+			else
+				return y + m; // Mod(-106.81415022205296, -_TWO_PI): m= 1.421e-14 
+		}
+	}
+
+	return m;
+}
+
+// wrap [rad] angle to [-PI..PI)
+double CDynaModel::WrapPosNegPI(double fAng)
+{
+	return CDynaModel::Mod(fAng + M_PI, 2 * M_PI) - M_PI;
 }
 
 
