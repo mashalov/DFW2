@@ -150,5 +150,6 @@ const char* CDFW2Messages::m_cszFoundContainerData = "Найдены данны�
 const char* CDFW2Messages::m_cszWrongLimits = "Неправильно заданы ограничения [{};{}] = [{};{}] в устройстве \"{}\"";
 const char* CDFW2Messages::m_cszEmptyLimits = "Ограничения [{};{}] = [{};{}] в устройстве \"{}\". Ограничения не будут учитываться";
 const char* CDFW2Messages::m_cszBranchAngleExceedsPI = "Асинхронный режим по связи {}. Угол {} при t={}";
+const char* CDFW2Messages::m_cszGeneratorAngleExceedsPI = "Асинхронный режим по генератору {}. Угол {} при t={}";
 
 

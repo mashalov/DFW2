@@ -34,12 +34,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 {
 
 	// !!!!!! just for debug !!!!!!
+	/*
 	if (Equal(Pnom, 0.0))
 	{
 		Pnom = P;
 		if(!Equal(Pnom, 0.0))
 			Mj *= Pnom;
-	}
+	}*/
 
 	if (Kgen > 1)
 	{

@@ -26,7 +26,7 @@ namespace DFW2
 
 		VariableIndex s;
 
-		double	Unom, Kdemp,xq, Mj, Pt, Pnom, cosPhinom;
+		double	Unom, Kdemp, xq, Mj, Pt, Pnom, cosPhinom, deltaDiff = 0.0;
 
 		CDynaGeneratorMotion();
 		virtual ~CDynaGeneratorMotion() = default;

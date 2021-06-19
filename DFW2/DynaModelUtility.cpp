@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
+#include "DynaGeneratorMotion.h"
 #include "klu.h"
 #include "cs.h"
 using namespace DFW2;
@@ -447,33 +448,71 @@ double GetAbsoluteDiff2Angles(const double x, const double y)
 	return *std::min_element(args.begin(), args.end(), [](const auto& lhs, const auto& rhs) { return std::abs(lhs) < std::abs(rhs); });
 }
 
+std::pair<bool, double> CheckAnglesCrossedPi(const double Angle1, const double Angle2, double& PreviosAngleDifference)
+{
+	std::pair ret{ false, 0.0 };
+	// считаем минимальный угол со знаком между углами 
+	const double deltaDiff(GetAbsoluteDiff2Angles(Angle1, Angle2));
+	const double limitAngle = 160 * M_PI / 180;
+	// предыдущий и текущий углы проверяем на близость к 180
+	// если знаки углов разные, значит пересекли 180
+	if (std::abs(PreviosAngleDifference) >= limitAngle && std::abs(deltaDiff) >= limitAngle && PreviosAngleDifference * deltaDiff < 0.0)
+	{
+		const double synthAngle(std::abs(PreviosAngleDifference) + std::abs(GetAbsoluteDiff2Angles(deltaDiff, PreviosAngleDifference)));
+		ret.first = true;
+		ret.second = synthAngle * 180.0 / M_PI;
+	}
+	PreviosAngleDifference = deltaDiff;
+	return ret;
+}
+
 bool CDynaModel::StabilityLost()
 {
 	bool bStabilityLost(false);
+
 	for (const auto& dev : Branches)
 	{
-		CDynaBranch* pBranch = static_cast<CDynaBranch*>(dev);
+		CDynaBranch* pBranch(static_cast<CDynaBranch*>(dev));
 		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
 		{
-			
-			// считаем минимальный угол со знаком между углами напряжений по концам
-			const double deltaDiff(GetAbsoluteDiff2Angles(pBranch->m_pNodeIp->Delta,pBranch->m_pNodeIq->Delta));
-			const double limitAngle = 160 * M_PI / 180;
-			// предыдущий и текущий углы проверяем на близость к 180
-			// если знаки углов разные, значит пересекли 180
-			if (std::abs(pBranch->deltaDiff) >= limitAngle && std::abs(deltaDiff) >= limitAngle && pBranch->deltaDiff * deltaDiff < 0.0)
+			const auto ret = CheckAnglesCrossedPi(pBranch->m_pNodeIp->Delta, pBranch->m_pNodeIq->Delta, pBranch->deltaDiff);
+			if (ret.first)
 			{
 				bStabilityLost = true;
-				// синтезируем угол для репорта: к предыдущему добавляем разность текущего и предыдущего, рассчитанную как минимальный угол со знаком
-				const double synthAngle(pBranch->deltaDiff + std::abs(GetAbsoluteDiff2Angles(deltaDiff, pBranch->deltaDiff)));
-				Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI, 
-					pBranch->GetVerbalName(), 
-					synthAngle * 180.0 / M_PI,
+				Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
+					pBranch->GetVerbalName(),
+					ret.second,
 					GetCurrentTime()));
 			}
-			pBranch->deltaDiff = deltaDiff;
 		}
 	}
+
+	for (auto&& gencontainer : m_DeviceContainers)
+	{
+		// тут можно заранее отобрать контейнеры с генераторами
+
+		if (gencontainer->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
+		{
+			for (auto&& gen : *gencontainer)
+			{
+				CDynaGeneratorMotion* pGen(static_cast<CDynaGeneratorMotion*>(gen));
+				if (pGen->InMatrix())
+				{
+					const double nodeDelta(static_cast<const CDynaNodeBase*>(pGen->GetSingleLink(0))->Delta);
+					const auto ret = CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff);
+					if (ret.first)
+					{
+						bStabilityLost = true;
+						Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
+							pGen->GetVerbalName(),
+							ret.second,
+							GetCurrentTime()));
+					}
+				}
+			}
+		}
+	}
+
 	return bStabilityLost;
 }
 
