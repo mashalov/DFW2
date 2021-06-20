@@ -162,6 +162,10 @@ namespace DFW2
 		static const char* m_cszBranchAngleExceedsPI;
 		static const char* m_cszGeneratorAngleExceedsPI;
 		static const char* m_cszGeneratorPowerExceedsRated;
+		static const char* m_cszUnomMismatch;
+		static const char* m_cszWrongPnom;
+		static const char* m_cszGeneratorSuspiciousMj;
+
 	};
 }
 
