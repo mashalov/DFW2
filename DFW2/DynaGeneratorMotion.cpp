@@ -56,7 +56,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 
 	const CDynaNodeBase* pNode = static_cast<const CDynaNodeBase*>(GetSingleLink(0));
 
-	if(Unom > pNode->Unom * 1.15 || Unom < pNode->Unom * 0.85)
+	if(pNode && Unom > pNode->Unom * 1.15 || Unom < pNode->Unom * 0.85)
 		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUnomMismatch, GetVerbalName(), Unom, pNode->GetVerbalName(), pNode->Unom));
 
 	// !!!!!! just for debug !!!!!!
