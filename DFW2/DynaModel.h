@@ -8,6 +8,8 @@
 #include "KLUWrapper.h"
 #include "Results.h"
 #include "OscDetector.h"
+#include "FmtComplexFormat.h"
+
 
 //#define USE_FMA
 namespace DFW2

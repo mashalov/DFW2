@@ -151,5 +151,6 @@ const char* CDFW2Messages::m_cszWrongLimits = "Неправильно задан
 const char* CDFW2Messages::m_cszEmptyLimits = "Ограничения [{};{}] = [{};{}] в устройстве \"{}\". Ограничения не будут учитываться";
 const char* CDFW2Messages::m_cszBranchAngleExceedsPI = "Асинхронный режим по связи {}. Угол {} при t={}";
 const char* CDFW2Messages::m_cszGeneratorAngleExceedsPI = "Асинхронный режим по генератору {}. Угол {} при t={}";
+const char* CDFW2Messages::m_cszGeneratorPowerExceedsRated = "Мощность генератора {} |S={:.5g}|={:.5g} МВА превышает 1.05*Sном={:.5g}";
 
 

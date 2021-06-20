@@ -214,6 +214,7 @@
     <ClInclude Include="DynaPrimitive.h" />
     <ClInclude Include="DynaVoltageSource.h" />
     <ClInclude Include="DynaGeneratorMustang.h" />
+    <ClInclude Include="FmtComplexFormat.h" />
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="HRTimer.h" />

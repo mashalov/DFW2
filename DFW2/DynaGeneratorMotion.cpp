@@ -33,6 +33,13 @@ double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 {
 
+	const cplx Slf{ P, Q };
+	const double Srated = 1.05 * (Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom);
+	const double absSlf(std::abs(Slf));
+
+	if (absSlf > Srated)
+		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated, GetVerbalName(), Slf, absSlf, Srated));
+
 	// !!!!!! just for debug !!!!!!
 	/*
 	if (Equal(Pnom, 0.0))
