@@ -422,10 +422,12 @@ namespace DFW2
 			bool m_bUseRefactor = false;
 			bool m_bDisableResultsWriter = false;
 			ptrdiff_t m_nMinimumStepFailures = 1;
-			double m_dZeroBranchImpedance = 0.1;
+			double m_dZeroBranchImpedance = 4e-6;
 			double m_dAdamsDampingAlpha = 0.05;
 			ptrdiff_t m_nAdamsDampingSteps = 10;
 			bool m_bAllowUserOverrideStandardLRC = false;
+			bool m_bAllowDecayDetector = false;
+			ptrdiff_t m_nDecayDetectorCycles = 3;
 			Parameters() { }
 
 			SerializerPtr GetSerializer()
@@ -455,6 +457,8 @@ namespace DFW2
 				Serializer->AddProperty("AdamsDampingAlpha", m_dAdamsDampingAlpha);
 				Serializer->AddProperty("AdamsDampingSteps", m_nAdamsDampingSteps);
 				Serializer->AddProperty("AllowUserOverrideStandardLRC", m_bAllowUserOverrideStandardLRC);
+				Serializer->AddProperty("AllowDecayDetector", m_bAllowDecayDetector);
+				Serializer->AddProperty("DecayDetectorCycles", m_nDecayDetectorCycles);
 				return Serializer;
 			}
 		} 

@@ -251,7 +251,7 @@ bool CDynaModel::RunTransient()
 						break;
 				}
 			}
-			catch (dfw2error& err)
+			catch (const dfw2error& err)
 			{
 				if (bResultsNeedToBeFinished)
 				{
@@ -309,7 +309,7 @@ bool CDynaModel::RunTransient()
 		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Duration {}", static_cast<double>(CalcDuration.count()) / 1E3));
 	}
 
-	catch (dfw2error& err)
+	catch (const dfw2error& err)
 	{
 		Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Исключение : {}", err.what()));
 	}
@@ -1814,8 +1814,6 @@ bool CDynaModel::RunLoadFlow()
 {
 	bool bRes(false);
 
-	m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
-	
 	// внутри линка делается обработка СХН
 	if(!Link())
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);

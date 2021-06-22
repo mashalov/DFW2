@@ -525,9 +525,19 @@ bool CDynaModel::StabilityLost()
 
 bool CDynaModel::OscillationsDecayed()
 {
-	bool bOscillationsDecayed(false);
-	//m_OscDetector.check_pointed_values(GetCurrentTime());
-	return bOscillationsDecayed;
+	if (m_Parameters.m_bAllowDecayDetector)
+	{
+		m_OscDetector.check_pointed_values(GetCurrentTime(), GetRtol(), GetAtol());
+		if (m_OscDetector.has_decay(static_cast<size_t>(m_Parameters.m_nDecayDetectorCycles)))
+		{
+			Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszDecayDetected, GetCurrentTime()));
+			return true;
+		}
+		else
+			return false;
+	}
+	else
+		return false;
 }
 
 

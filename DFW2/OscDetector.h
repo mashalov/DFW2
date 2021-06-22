@@ -124,13 +124,13 @@ class COscDetectorBase
 			return *this;
 		}
 
-		void add(const time_point_type& timepoint)
+		void add(const time_point_type& timepoint, const double rtol, const double atol)
 		{
 			if (!check(timepoint))
 				return;
 
 			double newtime(timepoint.time), oldtime(time);
-			value.transform(timepoint.value, [&oldtime, &newtime](COscDetectorBase::value_state_type& vs, const COscDetectorBase::value_type& v)
+			value.transform(timepoint.value, [&oldtime, &newtime, rtol, atol](COscDetectorBase::value_state_type& vs, const COscDetectorBase::value_type& v)
 				{
 					double diff(vs.value - v);
 					switch (vs.state)
@@ -146,12 +146,24 @@ class COscDetectorBase
 						{
 							vs.state = eState::wait_min;
 							// если уже есть набранные точки, проверяем, чтобы
-// 							// найденный максимум был меньше сохраненного
-							// Если нет - то очищаем набранные точки
-							if (!vs.maxs.empty() && vs.maxs.back().value < vs.value)
-								vs.clear_min_max();
-							// добавляем в набранные точки текущую
-							vs.maxs.push_back({ oldtime, vs.value });
+ 							// найденный максимум не превышал сохраненный более чем на точность расчета
+							if (!vs.maxs.empty())
+							{
+								double d = (vs.maxs.back().value - vs.value) / (std::abs(vs.value) * rtol + atol);
+								if (d < -1.0)
+								{
+									// если отклонение более чем на точность расчета,
+									// сбрасываем накопленные максимумы и добавляем текущий
+									vs.clear_min_max();
+									vs.maxs.push_back({ oldtime, vs.value });
+								}
+								else if(d < 0.0) // если в пределах точности, просто обновляем сохраненный максимум
+									vs.maxs.back() = { oldtime, vs.value };
+								else
+									vs.maxs.push_back({ oldtime, vs.value });		// если макимум меньше, накапливаем его
+							}
+							else
+								vs.maxs.push_back({ oldtime, vs.value });		// добавляем максимум если максимумы пустые
 						}
 						break;
 					case eState::wait_min:
@@ -159,12 +171,23 @@ class COscDetectorBase
 						{
 							vs.state = eState::wait_max;
 							// если уже есть набранные точки, проверяем, чтобы
-// 							// найденный минимум был больше сохраненного
-							// Если нет - то очищаем набранные точки
-							if (!vs.mins.empty() && vs.mins.back().value > vs.value)
-								vs.clear_min_max();
-							// добавляем в набранные точки текущую
-							vs.mins.push_back({ oldtime, vs.value });
+// 							// найденный минимум не был меньше сохраненного на точность расчета
+							if (!vs.mins.empty())
+							{
+								double d = (vs.mins.back().value - vs.value) / (std::abs(vs.value) * rtol + atol);
+								if (d > 1.0)
+								{
+									// если отклонение более чем на точность, сбрасываем минимумы
+									vs.clear_min_max();
+									vs.mins.push_back({ oldtime, vs.value });
+								}
+								else if(d > 0.0)	// если в пределах точности - обновляем минимум
+									vs.mins.back() = { oldtime, vs.value };		
+								else
+									vs.mins.push_back({ oldtime, vs.value });	// если минимум больше - накапливаем его
+							}
+							else
+								vs.mins.push_back({ oldtime, vs.value });	// добавляем минимум если минимумы пусты
 						}
 						break;
 					}
@@ -177,12 +200,12 @@ class COscDetectorBase
 	time_point_state old_time_point;
 
 public:
-	void add(const time_point_type& timepoint)
+	void add(const time_point_type& timepoint, const double rtol, const double atol)
 	{
 		if (old_time_point.value.empty())
 			old_time_point = timepoint;
 		else
-			old_time_point.add(timepoint);
+			old_time_point.add(timepoint, rtol, atol);
 	}
 
 	void add_value_pointer(const double* value_ptr)
@@ -195,13 +218,41 @@ public:
 		return old_time_point.value;
 	}
 
-	bool check_pointed_values(double time)
+	bool check_pointed_values(double time, const double rtol, const double atol)
 	{
+		// TODO сделать прямой доступ к значениям на указателях без копирования
 		values_type vals;
 		std::transform(pointers.begin(), pointers.end(), std::back_inserter(vals), [](const auto& val) { return *val; });
 		const time_point_type timepoint(time,  vals);
-		add(timepoint);
+		// TODO сделать прямой доступ к значениям на указателях без копирования
+		add(timepoint, rtol, atol);
 		return true;
+	}
+
+	bool has_decay(size_t decay_check_cycles)
+	{
+		bool bHasDecay(false);
+		size_t Decayed(0);
+		for (const auto& channel : old_time_point.value)
+		{
+			// если есть канал с обнаруженным отклонением
+			if(channel.state != eState::wait_min_or_max)
+				if (channel.mins.size() > decay_check_cycles  && channel.maxs.size() > decay_check_cycles)
+				{
+					// и в канале накоплено более чем заданное количество минимумов и максимумов
+					// определяем затухание
+					bHasDecay = true;
+					Decayed++;
+				}
+				else
+				{
+					// если в канале нет нужного количества минимумов и максимумов, затухания нет
+					// и дальше проверять смысла нет
+					bHasDecay = false;
+					break;
+				}
+		}
+		return bHasDecay;
 	}
 };
 

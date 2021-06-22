@@ -61,7 +61,7 @@ int _tmain(int argc, _TCHAR* argv[])
 		{
 			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Ошибка : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
 		}
-		catch (dfw2error& err)
+		catch (const dfw2error& err)
 		{
 			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
 		}

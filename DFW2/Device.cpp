@@ -1106,7 +1106,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 								offstack.push(std::make_pair(*ppDevice, pOffDevice));
 						}
 					}
-					catch (dfw2error&) 
+					catch (const dfw2error&) 
 					{
 						// если заявленной в свойствах контейнера ссылки на связанный контейнер нет - просто ничего не делаем
 					}

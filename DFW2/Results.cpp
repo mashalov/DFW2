@@ -182,17 +182,14 @@ void CDynaModel::WriteResultsHeaderBinary()
 			{
 				CDeviceContainer *pDevCon = it;
 
-				/*
 				// собираем углы генераторов для детектора затухания колебаний
-				if (pDevCon->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
+				if (m_Parameters.m_bAllowDecayDetector && pDevCon->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
 				{
 					ptrdiff_t deltaIndex(pDevCon->GetVariableIndex(CDynaNodeBase::m_cszDelta));
 					if (deltaIndex >= 0)
 						for (auto&& dit : *pDevCon)
 							m_OscDetector.add_value_pointer(dit->GetVariableConstPtr(deltaIndex));
 				}
-				*/
-
 
 				// устанавливаем адреса, откуда ResultWrite будет забирать значения
 				// записываемых переменных

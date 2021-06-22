@@ -156,5 +156,6 @@ const char* CDFW2Messages::m_cszUnomMismatch = "Номинальное напр�
 const char* CDFW2Messages::m_cszWrongPnom = "Неверно задана номинальная мощность для \"{}\" Pnom={} МВт";
 const char* CDFW2Messages::m_cszGeneratorSuspiciousMj = "Значение Tj={} c для генератора \"{}\" подозрительно мало";
 const char* CDFW2Messages::m_cszNoRastrWin3FoundInRegistry = "Ошибка доступа к ключу/значению в реестре для поиска шаблонов RastrWin3";
+const char* CDFW2Messages::m_cszDecayDetected = "Зафиксирован критерий затухания переходного процесса при t={} с";
 
 

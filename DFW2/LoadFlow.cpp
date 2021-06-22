@@ -859,7 +859,7 @@ bool CLoadFlow::Run()
 		DumpNodes();
 		CheckFeasible();
 	}
-	catch (dfw2error&)
+	catch (const dfw2error&)
 	{
 		pNodes->SwitchLRCs(true);
 		throw;

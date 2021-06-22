@@ -166,6 +166,7 @@ namespace DFW2
 		static const char* m_cszWrongPnom;
 		static const char* m_cszGeneratorSuspiciousMj;
 		static const char* m_cszNoRastrWin3FoundInRegistry;
+		static const char* m_cszDecayDetected;
 
 	};
 }
