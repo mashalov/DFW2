@@ -428,6 +428,8 @@ namespace DFW2
 			bool m_bAllowUserOverrideStandardLRC = false;
 			bool m_bAllowDecayDetector = false;
 			ptrdiff_t m_nDecayDetectorCycles = 3;
+			bool m_bStopOnBranchOOS = false;
+			bool m_bStopOnGeneratorOOS = false;
 			Parameters() { }
 
 			SerializerPtr GetSerializer()
@@ -459,6 +461,8 @@ namespace DFW2
 				Serializer->AddProperty("AllowUserOverrideStandardLRC", m_bAllowUserOverrideStandardLRC);
 				Serializer->AddProperty("AllowDecayDetector", m_bAllowDecayDetector);
 				Serializer->AddProperty("DecayDetectorCycles", m_nDecayDetectorCycles);
+				Serializer->AddProperty("StopOnBranchOOS", m_bStopOnBranchOOS);
+				Serializer->AddProperty("StopOnGeneratorOOS", m_bStopOnGeneratorOOS);
 				return Serializer;
 			}
 		} 

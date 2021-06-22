@@ -473,47 +473,53 @@ bool CDynaModel::StabilityLost()
 {
 	bool bStabilityLost(false);
 
-	for (const auto& dev : Branches)
+	if (m_Parameters.m_bStopOnBranchOOS)
 	{
-		CDynaBranch* pBranch(static_cast<CDynaBranch*>(dev));
-		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+		for (const auto& dev : Branches)
 		{
-			const auto ret = CheckAnglesCrossedPi(pBranch->m_pNodeIp->Delta, pBranch->m_pNodeIq->Delta, pBranch->deltaDiff);
-			if (ret.first)
+			CDynaBranch* pBranch(static_cast<CDynaBranch*>(dev));
+			if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
 			{
-				bStabilityLost = true;
-				Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
-					pBranch->GetVerbalName(),
-					ret.second,
-					GetCurrentTime()));
+				const auto ret = CheckAnglesCrossedPi(pBranch->m_pNodeIp->Delta, pBranch->m_pNodeIq->Delta, pBranch->deltaDiff);
+				if (ret.first)
+				{
+					bStabilityLost = true;
+					Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
+						pBranch->GetVerbalName(),
+						ret.second,
+						GetCurrentTime()));
+				}
 			}
 		}
 	}
 
-	for (auto&& gencontainer : m_DeviceContainers)
+	if (m_Parameters.m_bStopOnGeneratorOOS)
 	{
-		// тут можно заранее отобрать контейнеры с генераторами
-
-		if (gencontainer->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
+		for (auto&& gencontainer : m_DeviceContainers)
 		{
-			for (auto&& gen : *gencontainer)
+			// тут можно заранее отобрать контейнеры с генераторами
+
+			if (gencontainer->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
 			{
-				CDynaGeneratorMotion* pGen(static_cast<CDynaGeneratorMotion*>(gen));
-				if (pGen->InMatrix())
+				for (auto&& gen : *gencontainer)
 				{
-					const double nodeDelta(static_cast<const CDynaNodeBase*>(pGen->GetSingleLink(0))->Delta);
-					// угол генератора рассчитывается без периодизации и не подходит для CheckAnglesCrossedPi,
-					// поэтому мы должны удалить период. Имеем два варианта : atan2 (медленно но надежно) 
-					// и функция WrapPosNegPI (быстро и возможны проблемы)
-					//const auto ret(CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff));
-					const auto ret(CheckAnglesCrossedPi(CDynaModel::WrapPosNegPI(pGen->Delta), nodeDelta, pGen->deltaDiff));
-					if (ret.first)
+					CDynaGeneratorMotion* pGen(static_cast<CDynaGeneratorMotion*>(gen));
+					if (pGen->InMatrix())
 					{
-						bStabilityLost = true;
-						Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
-							pGen->GetVerbalName(),
-							ret.second,
-							GetCurrentTime()));
+						const double nodeDelta(static_cast<const CDynaNodeBase*>(pGen->GetSingleLink(0))->Delta);
+						// угол генератора рассчитывается без периодизации и не подходит для CheckAnglesCrossedPi,
+						// поэтому мы должны удалить период. Имеем два варианта : atan2 (медленно но надежно) 
+						// и функция WrapPosNegPI (быстро и возможны проблемы)
+						//const auto ret(CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff));
+						const auto ret(CheckAnglesCrossedPi(CDynaModel::WrapPosNegPI(pGen->Delta), nodeDelta, pGen->deltaDiff));
+						if (ret.first)
+						{
+							bStabilityLost = true;
+							Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
+								pGen->GetVerbalName(),
+								ret.second,
+								GetCurrentTime()));
+						}
 					}
 				}
 			}
