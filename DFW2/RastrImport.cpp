@@ -262,20 +262,41 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 void CRastrImport::GetData(CDynaModel& Network)
 {
 	HRESULT hr = m_spRastr.CreateInstance(CLSID_Rastr);
-	HKEY hkeyRastrWin3(NULL);
+
+	struct RastrWinHandle
+	{
+		HKEY handle = NULL;
+		RastrWinHandle(const wchar_t* regPath)
+		{
+			if (RegOpenKey(HKEY_CURRENT_USER, regPath, &handle) != ERROR_SUCCESS)
+				throw dfw2error(CDFW2Messages::m_cszNoRastrWin3FoundInRegistry);
+		}
+		~RastrWinHandle()
+		{
+			if(handle)
+				RegCloseKey(handle);
+		}
+
+		operator HKEY& () 
+		{
+			return handle;
+		}
+	};
+
 	std::filesystem::path templatePath;
 	const auto cszUserFolder = L"UserFolder";
-	if (RegOpenKey(HKEY_CURRENT_USER, L"Software\\RastrWin3", &hkeyRastrWin3) == ERROR_SUCCESS)
-	{
-		DWORD size(0);
-		if (RegQueryValueEx(hkeyRastrWin3, cszUserFolder, NULL, NULL, NULL, &size) == ERROR_SUCCESS)
-		{
-			auto buffer = std::make_unique<wchar_t[]>(size * sizeof(wchar_t) / sizeof(BYTE)); 
-			if (RegQueryValueEx(hkeyRastrWin3, cszUserFolder, NULL, NULL, reinterpret_cast<BYTE*>(buffer.get()), &size) == ERROR_SUCCESS)
-				templatePath = buffer.get();
-		}
-		RegCloseKey(hkeyRastrWin3);
-	}
+
+	RastrWinHandle regRastrWin3(L"Software\\RastrWin3");
+	DWORD size(0);
+	if (RegQueryValueEx(regRastrWin3, cszUserFolder, NULL, NULL, NULL, &size) != ERROR_SUCCESS)
+		throw dfw2error(CDFW2Messages::m_cszNoRastrWin3FoundInRegistry);
+
+	auto buffer = std::make_unique<wchar_t[]>(size * sizeof(wchar_t) / sizeof(BYTE)); 
+	if (RegQueryValueEx(regRastrWin3, cszUserFolder, NULL, NULL, reinterpret_cast<BYTE*>(buffer.get()), &size) == ERROR_SUCCESS)
+		templatePath = buffer.get();
+	else
+		throw dfw2error(CDFW2Messages::m_cszNoRastrWin3FoundInRegistry);
+		
 	templatePath.append(L"shablon");
 	std::filesystem::path rstPath(templatePath);
 	std::filesystem::path dfwPath(templatePath);

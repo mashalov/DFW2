@@ -155,5 +155,6 @@ const char* CDFW2Messages::m_cszGeneratorPowerExceedsRated = "Мощность �
 const char* CDFW2Messages::m_cszUnomMismatch = "Номинальное напряжение \"{}\" Uном={:.5g} кВ отличается от номинального напряжения узла \"{}\" Unom={} кВ более чем на 15%";
 const char* CDFW2Messages::m_cszWrongPnom = "Неверно задана номинальная мощность для \"{}\" Pnom={} МВт";
 const char* CDFW2Messages::m_cszGeneratorSuspiciousMj = "Значение Tj={} c для генератора \"{}\" подозрительно мало";
+const char* CDFW2Messages::m_cszNoRastrWin3FoundInRegistry = "Ошибка доступа к ключу/значению в реестре для поиска шаблонов RastrWin3";
 
 
