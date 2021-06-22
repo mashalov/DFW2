@@ -262,17 +262,38 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 void CRastrImport::GetData(CDynaModel& Network)
 {
 	HRESULT hr = m_spRastr.CreateInstance(CLSID_Rastr);
+	HKEY hkeyRastrWin3(NULL);
+	std::filesystem::path templatePath;
+	const auto cszUserFolder = L"UserFolder";
+	if (RegOpenKey(HKEY_CURRENT_USER, L"Software\\RastrWin3", &hkeyRastrWin3) == ERROR_SUCCESS)
+	{
+		DWORD size(0);
+		if (RegQueryValueEx(hkeyRastrWin3, cszUserFolder, NULL, NULL, NULL, &size) == ERROR_SUCCESS)
+		{
+			auto buffer = std::make_unique<wchar_t[]>(size * sizeof(wchar_t) / sizeof(BYTE)); 
+			if (RegQueryValueEx(hkeyRastrWin3, cszUserFolder, NULL, NULL, reinterpret_cast<BYTE*>(buffer.get()), &size) == ERROR_SUCCESS)
+				templatePath = buffer.get();
+		}
+		RegCloseKey(hkeyRastrWin3);
+	}
+	templatePath.append(L"shablon");
+	std::filesystem::path rstPath(templatePath);
+	std::filesystem::path dfwPath(templatePath);
+	std::filesystem::path scnPath(templatePath);
+	rstPath.append(L"динамика.rst");
+	dfwPath.append(L"автоматика.dfw");
+	scnPath.append(L"сценарий.scn");
+
 
 	//spRastr->Load(RG_REPL, L"..\\tests\\test92.rst", "");
-	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
+	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", dfwPath.c_str());
 	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
 
 	// Уват
 	/*
-	m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
-	m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\сценарий.scn").c_str());
-	m_spRastr->Load(RG_REPL, stringutils::utf8_decode("D:\\Downloads\\Уват 55\\Уватнефть_корр35_ver15_корр_быстр5_nopms.rst").c_str(),
-		stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst").c_str());
+	m_spRastr->NewFile(dfwPath.c_str());
+	m_spRastr->NewFile(scnPath.c_str());
+	m_spRastr->Load(RG_REPL, stringutils::utf8_decode("D:\\Downloads\\Уват 55\\Уватнефть_корр35_ver15_корр_быстр5_nopms.rst").c_str(), rstPath.c_str());
 	*/
 
 
@@ -285,30 +306,17 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	// СМЗУ Сибирь
 	///*
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", 
-		stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst").c_str()); 
-	//m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw",
-	//	L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw",
-		L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
-	//m_spRastr->NewFile(stringutils::utf8_decode("C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw").c_str());
+	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str()); 
+	//m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw", dfwPath.c_str());
+	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
+	//m_spRastr->NewFile(dfwPath.c_str());
 	//*/
 
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
-	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
-	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
-	//m_spRastr->Load(RG_REPL, L"..\\tests\\lineflows.dfw", L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
-	//m_spRastr->Load(RG_REPL, L"D:\\Documents\\Работа\\Уват\\Исходные данные\\RastrWin\\режим Уват 2020.rg2", "C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\динамика.rst"); 
-	//m_spRastr->NewFile(L"C:\\Users\\masha\\Documents\\RastrWin3\\SHABLON\\автоматика.dfw");
-	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_unstable", "");
-	//spRastr->Load(RG_REPL, L"..\\tests\\oos", "");
-	//m_spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
-	//spRastr->Load(RG_REPL, L"..\\tests\\test9_sc", ""); 
-	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\test9_qmin.rst", "");
-	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\RastrWin3\\test-rastr\\cx195.rg2",L"C:\\Users\\Bug\\Documents\\RastrWin3\\SHABLON\\динамика.rst");
-	
-
-	
+	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", dfwPath.c_str());
+	//m_spRastr->NewFile(dfwPath.c_str());
+	//m_spRastr->Load(RG_REPL, dfwPath.c_str());
+	//m_spRastr->Load(RG_REPL, rstPath.c_str()); 
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 
 	ITablesPtr spTables = m_spRastr->Tables;
