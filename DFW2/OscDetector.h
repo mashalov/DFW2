@@ -39,11 +39,6 @@ class COscDetectorBase
 	// конверсия значения из некоторого типа в value_type
 	template<typename T>
 	static inline value_type Value(T);
-
-	// прямая конверсия из value_type
-	template<> inline value_type Value<value_type>(value_type value) { return value; }
-	// конверсия из указателя value_type
-	template<> inline value_type Value<const value_type*>(const value_type* value) { return *value; }
 	
 	// точка экстремума (минимума или максимума) с привязкой ко времени
 	struct extreme_point_type : point_time_type 
@@ -307,4 +302,10 @@ public:
 		return bHasDecay;
 	}
 };
+
+// прямая конверсия из value_type
+template<> inline COscDetectorBase::value_type COscDetectorBase::Value<COscDetectorBase::value_type>(COscDetectorBase::value_type value) { return value; }
+// конверсия из указателя value_type
+template<> inline COscDetectorBase::value_type COscDetectorBase::Value<const COscDetectorBase::value_type*>(const COscDetectorBase::value_type* value) { return *value; }
+
 
