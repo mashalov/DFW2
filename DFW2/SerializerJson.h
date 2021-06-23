@@ -232,8 +232,9 @@ namespace DFW2
         template<typename T>
         void Set(const T& value)
         {
-            if (auto input(m_pSerializer->at(currentKey)); input)
-                input->Set<const T&>(value);
+            if(m_pSerializer)
+                if (auto input(m_pSerializer->at(currentKey)); input)
+                    input->Set<const T&>(value);
         }
 
         // запоминает полученный из json ключ параметра
