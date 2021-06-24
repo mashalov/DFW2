@@ -25,7 +25,7 @@ namespace DFW2
 		DevicesPtrs  m_ppPointers;											// вектор указателей на связанные устройства
 		CDeviceContainer *m_pContainer = nullptr;							// внешний контейнер, с устройствами которого строится связь
 		std::vector<CLinkPtrCount> m_LinkInfo;								// вектор ссылок с количеством связей
-		size_t   m_nCount;													// количество возможных связей 
+		size_t   m_nCount = 0;												// количество возможных связей 
 		CMultiLink(CDeviceContainer* pContainer, size_t nCount) : m_pContainer(pContainer)
 		{
 			// память выделим под известное количество связей в AllocateLinks()
@@ -182,7 +182,7 @@ namespace DFW2
 		size_t Count() const;												// получить количество устройств в контейнере
 		inline DEVICEVECTORITR begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
 		inline DEVICEVECTORITR end() { return m_DevVec.end(); }
-		void Log(CDFW2Messages::DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);
+		void Log(DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);
 
 		LINKSVEC m_Links;													// вектор возможных связей. Элемент вектора - связь с определенным типом устройств
 		bool IsKindOfType(eDFW2DEVICETYPE eType);

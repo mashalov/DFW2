@@ -48,7 +48,7 @@ namespace DFW2
 		void UpdateVreVimSuper();
 		void UpdateVDeltaSuper();
 
-		enum eLFNodeType
+		enum class eLFNodeType
 		{
 			LFNT_BASE,
 			LFNT_PQ,
@@ -162,7 +162,7 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		CDynaNodeBase *m_pSuperNodeParent;
+		CDynaNodeBase* m_pSuperNodeParent = nullptr;
 		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
 
 		VirtualBranch	  *m_VirtualBranchBegin, *m_VirtualBranchEnd;
@@ -319,7 +319,7 @@ namespace DFW2
 		void DumpNetwork();
 		std::unique_ptr<VirtualBranch[]> m_pVirtualBranches;
 		std::unique_ptr<VirtualZeroBranch[]> m_pZeroBranches;
-		VirtualZeroBranch *m_pZeroBranchesEnd;
+		VirtualZeroBranch *m_pZeroBranchesEnd = nullptr;
 		CDeviceContainer *m_pSynchroZones = nullptr;
 		NodeSet m_TopologyCheck;
 	public:

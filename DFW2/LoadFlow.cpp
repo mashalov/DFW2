@@ -354,7 +354,7 @@ void CLoadFlow::AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue)
 
 void CLoadFlow::Seidell()
 {
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
+	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 
 	MATRIXINFO SeidellOrder;
 	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
@@ -901,12 +901,12 @@ bool CLoadFlow::CheckLF()
 		double dV = pNode->V / pNode->Unom;
 		if (dV > 2.0)
 		{
-			pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeVTooHigh, pNode->GetVerbalName(), dV));
+			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeVTooHigh, pNode->GetVerbalName(), dV));
 			bRes = false;
 		}
 		else if (dV < 0.5)
 		{
-			pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeVTooLow, pNode->GetVerbalName(), dV));
+			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeVTooLow, pNode->GetVerbalName(), dV));
 			bRes = false;
 		}
 
@@ -918,7 +918,7 @@ bool CLoadFlow::CheckLF()
 			{
 				bRes = false;
 				if (ReportedBranches.insert(NodePair(pNode, pBranch->pNode)).second)
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(
+					m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(
 							CDFW2Messages::m_cszLFBranchAngleExceeds90, 
 							pNode->GetVerbalName(), 
 							pBranch->pNode->GetVerbalName(), 
@@ -961,7 +961,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 				{
 					if (pGen->Kgen <= 0)
 					{
-						pGen->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongGeneratorsNumberFixed, 
+						pGen->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongGeneratorsNumberFixed,
 																			  pGen->GetVerbalName(), 
 																			  pGen->Kgen));
 						pGen->Kgen = 1.0;
@@ -971,7 +971,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 					// проверяем ограничения по реактивной мощности
 					if (pGen->LFQmin > pGen->LFQmax)
 					{
-						pGen->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongGeneratirQlimitsFixed,
+						pGen->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongGeneratirQlimitsFixed,
 							pGen->LFQmin,
 							pGen->LFQmax,
 							pGen->LFQmax));
@@ -1050,7 +1050,7 @@ void CLoadFlow::UpdateQToGenerators()
 			}
 			if (std::abs(pNode->Qg - Qspread) > m_Parameters.m_Imb)
 			{
-				pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForNode, 
+				pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForNode,
 																	 pNode->GetVerbalName(), 
 																	 pNode->Qg, 
 																	 Qgmin, 
@@ -1172,7 +1172,7 @@ void CLoadFlow::SolveLinearSystem()
 
 void CLoadFlow::Newton()
 {
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
+	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
 	int it(0);	// количество итераций
 
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
@@ -1437,7 +1437,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 				if (std::abs(Qspread - QgSource) > m_Parameters.m_Imb)
 				{
 					bAllOk = false;
-					pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForSuperNode,
+					pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForSuperNode,
 						pNode->GetVerbalName(),
 						QgSource,
 						pNode->LFQmin,
@@ -1622,13 +1622,13 @@ void CLoadFlow::CheckFeasible()
 				// которое, в свою очередь, было выбрано по узлу с наиболее широким диапазоном реактивной мощности внутри суперузла
 				double LFVref = pNode->m_pSuperNodeParent ? pNode->m_pSuperNodeParent->LFVref : pNode->LFVref;
 				if (pNode->V > LFVref && pNode->Qgr >= pNode->LFQmax + m_Parameters.m_Imb)
-					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
+					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 				if (pNode->V < LFVref && pNode->Qgr <= pNode->LFQmin - m_Parameters.m_Imb)
-					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
+					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 				if (pNode->Qgr < pNode->LFQmin - m_Parameters.m_Imb)
-					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
+					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 				if (pNode->Qgr > pNode->LFQmax + m_Parameters.m_Imb)
-					pNode->Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
+					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
 			}
 
 			pNode->SuperNodeLoadFlow(m_pDynaModel);
@@ -1657,7 +1657,7 @@ void CLoadFlow::UpdateSlackBusesImbalance()
 void CLoadFlow::DumpNewtonIterationControl()
 {
 	const char* causes[] = {"", "dV", "dD", "dB", "vV", "vD", "Bt"};
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, fmt::format("{} {:15f} {:6.2} {:4}", pNodes->GetIterationControlString(), 
+	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("{} {:15f} {:6.2} {:4}", pNodes->GetIterationControlString(),
 																	  pNodes->m_IterationControl.m_ImbRatio,
 																	  m_NewtonStepRatio.m_dRatio,
 																	  causes[static_cast<ptrdiff_t>(m_NewtonStepRatio.m_eStepCause)]));

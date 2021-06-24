@@ -6,25 +6,26 @@ namespace DFW2
 	class CDeadBand : public CDynaPrimitiveState
 	{
 	protected:
-		enum DFW2DEADBANDSTATES
+		enum class eDFW2DEADBANDSTATES
 		{
 			DBS_ZERO,
 			DBS_MAX,
 			DBS_MIN,
 			DBS_OFF
-		}
-			m_eDbState, m_eDbStateSaved;
+		};
 
-		double m_Db;
+		eDFW2DEADBANDSTATES	m_eDbState = eDFW2DEADBANDSTATES::DBS_ZERO;
+		eDFW2DEADBANDSTATES m_eDbStateSaved = eDFW2DEADBANDSTATES::DBS_ZERO;
 
-		double m_DbMax;
-		double m_DbMin;
+		double m_Db = 0.0;
+		double m_DbMax = 0.0;
+		double m_DbMin = 0.0;
 
 		double OnStateMin(CDynaModel *pDynaModel);
 		double OnStateMax(CDynaModel *pDynaModel);
 		double OnStateZero(CDynaModel *pDynaModel);
 
-		void SetCurrentState(DFW2DEADBANDSTATES CurrentState);
+		void SetCurrentState(eDFW2DEADBANDSTATES CurrentState);
 
 	public:
 

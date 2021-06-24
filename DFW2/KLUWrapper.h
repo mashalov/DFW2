@@ -210,8 +210,8 @@ namespace DFW2
 									 pb;		// вектор правой части
 		std::unique_ptr<ptrdiff_t[]> pAi,		// номера строк
 									 pAp;		// номера столбцов
-		ptrdiff_t m_nMatrixSize;
-		ptrdiff_t m_nNonZeroCount;
+		ptrdiff_t m_nMatrixSize = 0;
+		ptrdiff_t m_nNonZeroCount = 0;
 		ptrdiff_t m_nAnalyzingsCount = 0;
 		ptrdiff_t m_nFactorizationsCount = 0;
 		ptrdiff_t m_nRefactorizationsCount = 0;

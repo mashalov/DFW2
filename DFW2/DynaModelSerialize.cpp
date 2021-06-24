@@ -32,7 +32,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 {
 	try
 	{
-		Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingJson, path.generic_string()));
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingJson, path.generic_string()));
 
 		// создаем json-сериализатор
 		CSerializerJson jsonSerializer;
@@ -62,7 +62,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 			// находим контейнер в модели
 			if (auto pContainer(GetContainerByAlias(objkey)); pContainer)
 			{
-				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszFoundContainerData, objkey, objsize));
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszFoundContainerData, objkey, objsize));
 				// создаем заданное в json количество объектов
 				pContainer->CreateDevices(objsize);
 				// и отдаем сериализатор контейнера сериализатору json

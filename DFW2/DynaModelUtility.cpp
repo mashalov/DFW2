@@ -6,7 +6,7 @@
 using namespace DFW2;
 
 
-void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex)
+void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex)
 {
 	if (m_Parameters.m_bLogToConsole)
 	{
@@ -18,20 +18,20 @@ void CDynaModel::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view M
 
 		switch (Status)
 		{
-		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_FATAL:
+		case DFW2MessageStatus::DFW2LOG_FATAL:
 			SetConsoleTextAttribute(hCon, BACKGROUND_RED | FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN);
 			break;
-		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_ERROR:
+		case DFW2MessageStatus::DFW2LOG_ERROR:
 			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_INTENSITY);
 			break;
-		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_WARNING:
+		case DFW2MessageStatus::DFW2LOG_WARNING:
 			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
-		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_MESSAGE:
-		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_INFO:
+		case DFW2MessageStatus::DFW2LOG_MESSAGE:
+		case DFW2MessageStatus::DFW2LOG_INFO:
 			SetConsoleTextAttribute(hCon, FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN);
 			break;
-		case CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG:
+		case DFW2MessageStatus::DFW2LOG_DEBUG:
 			SetConsoleTextAttribute(hCon, FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
 		}
@@ -229,6 +229,7 @@ bool CDynaModel::UpdateExternalVariables()
 				break;
 			case eDEVICEFUNCTIONSTATUS::DFS_FAILED:
 				bRes = false;
+				break;
 			default:
 				continue;
 			}
@@ -287,7 +288,7 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 	while (nCount)
 	{
 		pVectorBegin = *ppSortOrder;
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, 
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG,
 					fmt::format("{:<6} {} {} Rtol {} Atol {}", 
 								   pVectorBegin->nErrorHits,
 								   pVectorBegin->pDevice->GetVerbalName(),
@@ -412,7 +413,7 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 	Methodl[3][3] = 1.0 / std::abs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
 	sc.RefactorMatrix();
 	Computehl0();
-	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping, 
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping,
 														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
 }
 
@@ -484,7 +485,7 @@ bool CDynaModel::StabilityLost()
 				if (ret.first)
 				{
 					bStabilityLost = true;
-					Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
+					Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
 						pBranch->GetVerbalName(),
 						ret.second,
 						GetCurrentTime()));
@@ -515,7 +516,7 @@ bool CDynaModel::StabilityLost()
 						if (ret.first)
 						{
 							bStabilityLost = true;
-							Log(CDFW2Messages::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
+							Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
 								pGen->GetVerbalName(),
 								ret.second,
 								GetCurrentTime()));
@@ -536,7 +537,7 @@ bool CDynaModel::OscillationsDecayed()
 		m_OscDetector.check_pointed_values(GetCurrentTime(), GetRtol(), GetAtol());
 		if (m_OscDetector.has_decay(static_cast<size_t>(m_Parameters.m_nDecayDetectorCycles)))
 		{
-			Log(CDFW2Messages::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszDecayDetected, GetCurrentTime()));
+			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszDecayDetected, GetCurrentTime()));
 			return true;
 		}
 		else

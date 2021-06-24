@@ -983,7 +983,7 @@ bool CDynaNodeContainer::LULF()
 
 		if (std::abs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
 		{
-			Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
+			Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
 			break;
 		}
 	}
@@ -1058,7 +1058,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Напряжение {} в узле {} выше порогового", V.Value, GetVerbalName()));
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Напряжение {} в узле {} выше порогового", V.Value, GetVerbalName()));
 		}
 	}
 	else
@@ -1067,7 +1067,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 		{
 			m_bLowVoltage = bLowVoltage;
 			if (IsStateOn())
-				Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format("Напряжение {} в узле {} ниже порогового", V.Value, GetVerbalName()));
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Напряжение {} в узле {} ниже порогового", V.Value, GetVerbalName()));
 		}
 	}
 }
@@ -1649,12 +1649,12 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 		{
 			pNode->m_pLRCLF = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCLoadFlowId));
 			if (!pNode->m_pLRCLF)
-				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCLoadFlowId, pNode->GetVerbalName()));
+				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCLoadFlowId, pNode->GetVerbalName()));
 		}
 
 		pNode->m_pLRC = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCTransientId));
 		if (!pNode->m_pLRC)
-			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCTransientId, pNode->GetVerbalName()));
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCTransientId, pNode->GetVerbalName()));
 			
 	}
 }

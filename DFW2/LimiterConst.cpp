@@ -11,11 +11,11 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 
 	switch (GetCurrentState())
 	{
-	case LS_MAX:
+	case eLIMITEDSTATES::LS_MAX:
 		m_Output = m_dMax;
 		dOdI = 0.0;
 		break;
-	case LS_MIN:
+	case eLIMITEDSTATES::LS_MIN:
 		m_Output = m_dMin;
 		dOdI = 0.0;
 		break;
@@ -37,11 +37,11 @@ bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 	{
 		switch (GetCurrentState())
 		{
-		case LS_MAX:
+		case eLIMITEDSTATES::LS_MAX:
 			m_Output = m_dMax;
 			dOdI = 0.0;
 			break;
-		case LS_MIN:
+		case eLIMITEDSTATES::LS_MIN:
 			m_Output = m_dMin;
 			dOdI = 0.0;
 			break;
@@ -68,10 +68,10 @@ double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMaxH - m_Input, m_Input, m_dMaxH, m_Input.Index, rH))
-		SetCurrentState(pDynaModel, LS_MAX);
-	if (GetCurrentState() == LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MAX);
+	if (GetCurrentState() == eLIMITEDSTATES::LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
 		if (CDynaPrimitive::ChangeState(pDynaModel, m_Input - m_dMinH, m_Input, m_dMinH, m_Input.Index, rH))
-			SetCurrentState(pDynaModel, LS_MIN);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MIN);
 	return rH;
 
 }
@@ -80,7 +80,7 @@ double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMin - m_Input, m_Input, m_dMin, m_Input.Index, rH))
-		SetCurrentState(pDynaModel, LS_MID);
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
 	return rH;
 }
 
@@ -88,7 +88,7 @@ double CLimiterConst::OnStateMax(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_Input - m_dMax, m_Input, m_dMax, m_Input.Index, rH))
-		SetCurrentState(pDynaModel, LS_MID);
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
 	return rH;
 }
 
@@ -106,17 +106,17 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 
 		if (CheckMax >= 0)
 		{
-			SetCurrentState(pDynaModel, LS_MAX);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MAX);
 			m_Output = m_dMax;
 		}
 		else if (CheckMin >= 0)
 		{
-			SetCurrentState(pDynaModel, LS_MIN);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MIN);
 			m_Output = m_dMin;
 		}
 		else
 		{
-			SetCurrentState(pDynaModel, LS_MID);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
 		}
 
 		if (OldState != GetCurrentState())

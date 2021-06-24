@@ -59,11 +59,11 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 		catch (_com_error& err)
 		{
-			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Ошибка : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
+			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
 		}
 		catch (const dfw2error& err)
 		{
-			Network.Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
 		}
 
 		//Network.Serialize("c:\\tmp\\lf.json");

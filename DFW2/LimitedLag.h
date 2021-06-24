@@ -6,8 +6,8 @@ namespace DFW2
 	class CLimitedLag : public CDynaPrimitiveLimited
 	{
 	protected:
-		double m_T;
-		double m_K;
+		double m_T = 1.0;
+		double m_K = 1.0;
 		double OnStateMax(CDynaModel *pDynaModel) override;
 		double OnStateMin(CDynaModel *pDynaModel) override;
 		double OnStateMid(CDynaModel *pDynaModel) override;

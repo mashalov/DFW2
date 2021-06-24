@@ -7,7 +7,7 @@ namespace DFW2
 	{
 	protected:
 		InputVariable m_Input1;
-		bool m_bResetPriority;
+		bool m_bResetPriority = true;
 	public:
 
 

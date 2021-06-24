@@ -106,7 +106,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				}
 				else
 				{
-					pBranch->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszBranchNodeNotFound, 
+					pBranch->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszBranchNodeNotFound,
 																		   NodeId, 
 																		   pBranch->Ip, 
 																		   pBranch->Iq, 
@@ -624,7 +624,7 @@ bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 
 	if (bDisconnected)
 	{
-		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszSwitchedOffBranch, 
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszSwitchedOffBranch,
 														m_pContainer->GetTypeName(), 
 														GetVerbalName(), 
 														pSwitchOffMode, 

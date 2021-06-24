@@ -21,11 +21,11 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 	bool bRes = CDynaPrimitive::Init(pDynaModel);
 	if (bRes)
 	{
-		eCurrentState = LS_MID;
+		eCurrentState = eLIMITEDSTATES::LS_MID;
 		
 		if (m_dMin > m_dMax)
 		{
-			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveLimits, 
+			m_Device.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveLimits,
 																   GetVerbalName(), 
 																   m_Device.GetVerbalName(), 
 																   m_dMin, 
@@ -37,7 +37,7 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 
 		if (( m_Output > m_dMaxH || m_Output < m_dMinH ) && m_Device.IsStateOn())
 		{
-			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveInitialConditions, 
+			m_Device.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveInitialConditions,
 																   GetVerbalName(), 
 																   m_Device.GetVerbalName(), 
 																   m_Output, m_dMin, m_dMax));
@@ -129,13 +129,13 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 	eLIMITEDSTATES oldCurrentState = eCurrentState;
 	switch (eCurrentState)
 	{
-	case LS_MID:
+	case eLIMITEDSTATES::LS_MID:
 		rH = OnStateMid(pDynaModel);
 		break;
-	case LS_MAX:
+	case eLIMITEDSTATES::LS_MAX:
 		rH = OnStateMax(pDynaModel);
 		break;
-	case LS_MIN:
+	case eLIMITEDSTATES::LS_MIN:
 		rH = OnStateMin(pDynaModel);
 		break;
 	}
@@ -143,7 +143,7 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 	// если состояние изменилось, запрашиваем обработку разрыва
 	if (oldCurrentState != eCurrentState)
 	{
-		pDynaModel->Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, 
+		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
 			fmt::format("t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}", 
 			pDynaModel->GetCurrentTime(), 
 			pDynaModel->GetIntegrationStepNumber(),
@@ -200,7 +200,7 @@ void CDynaPrimitiveLimited::SetMinMax(CDynaModel *pDynaModel, double dMin, doubl
 
 void CDynaPrimitiveBinary::InvertState(CDynaModel *pDynaModel)
 {
-	SetCurrentState(pDynaModel, GetCurrentState() == RS_ON ? RS_OFF : RS_ON);
+	SetCurrentState(pDynaModel, GetCurrentState() == eRELAYSTATES::RS_ON ? eRELAYSTATES::RS_OFF : eRELAYSTATES::RS_ON);
 }
 
 void CDynaPrimitiveBinary::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
@@ -222,10 +222,10 @@ double CDynaPrimitiveBinaryOutput::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 		switch (eCurrentState)
 		{
-		case RS_ON:
+		case eRELAYSTATES::RS_ON:
 			rH = OnStateOn(pDynaModel);
 			break;
-		case RS_OFF:
+		case eRELAYSTATES::RS_OFF:
 			rH = OnStateOff(pDynaModel);
 			break;
 		}

@@ -7,14 +7,14 @@ using namespace DFW2;
 bool CExpand::Init(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	eCurrentState = RS_OFF;
+	eCurrentState = eRELAYSTATES::RS_OFF;
 	bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 	return bRes;
 }
 
 CDynaPrimitiveBinary::eRELAYSTATES CExpand::GetInstantState()
 {
-	return m_Input > 0 ? RS_ON : RS_OFF;
+	return m_Input > 0 ? eRELAYSTATES::RS_ON : eRELAYSTATES::RS_OFF;
 }
 
 eDEVICEFUNCTIONSTATUS CExpand::ProcessDiscontinuity(CDynaModel* pDynaModel)
@@ -23,7 +23,7 @@ eDEVICEFUNCTIONSTATUS CExpand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		CRelay::eRELAYSTATES State = GetInstantState();
 		SetCurrentState(pDynaModel, State);
-		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+		m_Output = (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0;
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -33,15 +33,15 @@ void CExpand::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 {
 	switch (eCurrentState)
 	{
-	case RS_ON:
-		if (CurrentState == RS_OFF)
+	case eRELAYSTATES::RS_ON:
+		if (CurrentState == eRELAYSTATES::RS_OFF)
 		{
 			if (m_dDelay > 0.0 && !pDynaModel->CheckStateDiscontinuity(this))
 				eCurrentState = CurrentState;
 		}
 		break;
-	case RS_OFF:
-		if (CurrentState == RS_ON)
+	case eRELAYSTATES::RS_OFF:
+		if (CurrentState == eRELAYSTATES::RS_ON)
 		{
 			if (m_dDelay > 0.0)
 			{
@@ -76,7 +76,7 @@ bool CExpand::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& 
 
 bool CShrink::NotifyDelay(CDynaModel *pDynaModel)
 {
-	SetCurrentState(pDynaModel, RS_OFF);
+	SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
 	return true;
 }
 
@@ -87,7 +87,7 @@ eDEVICEFUNCTIONSTATUS CShrink::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		CRelay::eRELAYSTATES State = GetInstantState();
 		SetCurrentState(pDynaModel, State);
-		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+		m_Output = (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0;
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -97,15 +97,15 @@ void CShrink::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 {
 	switch (eCurrentState)
 	{
-	case RS_ON:
-		if (CurrentState == RS_OFF)
+	case eRELAYSTATES::RS_ON:
+		if (CurrentState == eRELAYSTATES::RS_OFF)
 		{
 			pDynaModel->RemoveStateDiscontinuity(this);
 			eCurrentState = CurrentState;
 		}
 		break;
-	case RS_OFF:
-		if (CurrentState == RS_ON)
+	case eRELAYSTATES::RS_OFF:
+		if (CurrentState == eRELAYSTATES::RS_ON)
 		{
 			RightVector *pRightVector = pDynaModel->GetRightVector(m_Input);
 			if (pRightVector->SavedNordsiek[0] <= 0)

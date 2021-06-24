@@ -187,7 +187,7 @@ bool CDynaLRC::CheckPtr(LRCDATA& LRC)
 			double q = std::prev(v)->Get(v->V);		// берем значение в конце предыдущего (в той же точке что и начало следующего)
 			if (!Equal(10.0 * DFW2_EPSILON * (s - q), 0.0))
 			{
-				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCDiscontinuityAt, GetVerbalName(), v->V, s, q));
+				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCDiscontinuityAt, GetVerbalName(), v->V, s, q));
 				bRes = false;
 			}
 		}
@@ -391,7 +391,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 
 	if (Vmin <= 0.0)
 	{
-		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCVminChanged, Vmin, 0.5));
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCVminChanged, Vmin, 0.5));
 		Vmin = 0.5;
 	}
 
@@ -433,10 +433,10 @@ void CDynaLRCContainer::CreateFromSerialized()
 		if (itLRC != constructMap.end())
 		{
 			// если СХН с данным Id есть сообщаем что она уже существует
-			this->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUserOverrideOfStandardLRC, Id));
+			this->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUserOverrideOfStandardLRC, Id));
 			// и если задан флаг - разрешаем заменить на новую
 			if (bForceStandardLRC)
-				this->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUserLRCChangedToStandard, Id));
+				this->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUserLRCChangedToStandard, Id));
 			else
 				bInsert = false;
 		}
@@ -494,7 +494,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 				// проверяем что СХН начинается с нуля
 				if (double& Vbeg = pq.front().V; Vbeg > 0.0)
 				{
-					Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCStartsNotFrom0, lrc.first, Vbeg));
+					Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCStartsNotFrom0, lrc.first, Vbeg));
 					Vbeg = 0.0;
 				}
 
@@ -508,7 +508,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 					{
 
 						if(CDynaLRCContainer::CompareLRCs(*it,*nextIt))
-							Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszAmbigousLRCSegment, 
+							Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszAmbigousLRCSegment,
 								lrc.first, 
 								it->V, 
 								it->a0, 

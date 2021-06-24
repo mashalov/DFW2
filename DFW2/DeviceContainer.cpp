@@ -180,7 +180,7 @@ bool CDeviceContainer::SetUpSearch()
 				if (AlreadyReported.find(it) == AlreadyReported.end())
 				{
 					// если про дубль устройства еще не сообщали - сообщаем и добавляем устройство в сет дублей
-					it->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDuplicateDevice, it->GetVerbalName()));
+					it->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDuplicateDevice, it->GetVerbalName()));
 					AlreadyReported.insert(it);
 				}
 				bRes = false;	// если обнаружены дубли - это ошибка
@@ -227,7 +227,7 @@ size_t CDeviceContainer::GetResultVariablesCount()
 }
 
 
-void CDeviceContainer::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDBIndex)
+void CDeviceContainer::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDBIndex)
 {
 	if (m_pDynaModel)
 		m_pDynaModel->Log(Status, Message, nDBIndex);

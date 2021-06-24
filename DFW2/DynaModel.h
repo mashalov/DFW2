@@ -155,13 +155,13 @@ namespace DFW2
 
 		struct StepControl
 		{
-			enum eIterationMode
+			enum class eIterationMode
 			{
 				NEWTON,
 				JN,
 				FUNCTIONAL
 			} 
-			IterationMode;
+			IterationMode = eIterationMode::NEWTON;
 
 			struct _OrderStatistics
 			{
@@ -174,35 +174,35 @@ namespace DFW2
 			};
 
 			bool m_bRefactorMatrix = false;
-			bool m_bFillConstantElements;
-			bool m_bNewtonConverged;
-			bool m_bNordsiekSaved;
-			bool m_bNewtonDisconverging;
-			bool m_bNewtonStepControl;
+			bool m_bFillConstantElements = true;
+			bool m_bNewtonConverged = false;
+			bool m_bNordsiekSaved = false;
+			bool m_bNewtonDisconverging = false;
+			bool m_bNewtonStepControl = false;
 			bool m_bDiscontinuityMode = false;
 			bool m_bZeroCrossingMode = false;
-			bool m_bRetryStep;
+			bool m_bRetryStep = false;
 			bool m_bStopCommandReceived = false;
 			bool m_bProcessTopology = false;
-			bool m_bDiscontinuityRequest;
+			bool m_bDiscontinuityRequest = false;
 			bool m_bEnforceOut = false;
 			bool m_bBeforeDiscontinuityWritten = false;				// флаг обработки момента времени до разрыва
-			double dFilteredStep;
-			double dFilteredOrder;
-			double dFilteredStepInner;								// фильтр минимального шага на серии шагов
-			double dFilteredOrderInner;
+			double dFilteredStep = 0.0;
+			double dFilteredOrder = 0.0;
+			double dFilteredStepInner =0.0;								// фильтр минимального шага на серии шагов
+			double dFilteredOrderInner =0.0;
 			double dRateGrowLimit = FLT_MAX;
-			ptrdiff_t nStepsCount;
+			ptrdiff_t nStepsCount = 0;
 			ptrdiff_t nNewtonIterationsCount = 0;
 			double dMaxConditionNumber = 0.0;
 			double dMaxConditionNumberTime = 0.0;
 			_OrderStatistics OrderStatistics[2];
 			ptrdiff_t nDiscontinuityNewtonFailures = 0;
 			ptrdiff_t nMinimumStepFailures = 0;
-			double m_dCurrentH;
+			double m_dCurrentH = 0.0;
 			double m_dOldH = -1.0;
-			double m_dStoredH;
-			ptrdiff_t q;
+			double m_dStoredH = 0.0;
+			ptrdiff_t q = 1;
 			double t = 0.0;
 			double t0 = 0.0;
 			// volatile нужен для гарантии корректного учета суммы кэхэна в расчете времени
@@ -212,13 +212,13 @@ namespace DFW2
 			ptrdiff_t nStepsToStepChangeParameter = 4;
 			ptrdiff_t nStepsToOrderChangeParameter = 4;
 			ptrdiff_t nStepsToFailParameter = 1;
-			ptrdiff_t nStepsToStepChange;
-			ptrdiff_t nStepsToOrderChange;
-			ptrdiff_t nStepsToFail;
+			ptrdiff_t nStepsToStepChange = 0;
+			ptrdiff_t nStepsToOrderChange = 0;
+			ptrdiff_t nStepsToFail = 0;
 			ptrdiff_t nSuccessfullStepsOfNewton = 0;
 			ptrdiff_t nStepsToEndRateGrow = 0;
-			ptrdiff_t nNewtonIteration;
-			double dRightHandNorm;
+			ptrdiff_t nNewtonIteration = 0;
+			double dRightHandNorm = 0;
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_ClockStart;
 			bool bAdamsDampingEnabled = false;
 			ptrdiff_t nNoRingingSteps = 0;
@@ -226,7 +226,7 @@ namespace DFW2
 
 			StepError Newton;
 			StepError Integrator;
-			double m_dLastRefactorH;
+			double m_dLastRefactorH = 0.0;
 			bool bRingingDetected = false;
 
 			StepControl()
@@ -830,7 +830,7 @@ namespace DFW2
 		void RebuildMatrix(bool bRebuild = true);
 		void AddZeroCrossingDevice(CDevice *pDevice);
 
-		void Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1);
+		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1);
 
 		double Methodl[4][4];
 		double Methodlh[4];

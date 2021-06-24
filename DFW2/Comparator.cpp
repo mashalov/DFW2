@@ -8,7 +8,7 @@ bool CComparator::Init(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
-	eCurrentState = RS_OFF;
+	eCurrentState = eRELAYSTATES::RS_OFF;
 	bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 
 	return bRes;
@@ -18,8 +18,8 @@ eDEVICEFUNCTIONSTATUS CComparator::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		SetCurrentState(pDynaModel, (m_Input > m_Input1) ? RS_ON : RS_OFF);
-		m_Output = (eCurrentState == RS_ON) ? 1.0 : 0.0;
+		SetCurrentState(pDynaModel, (m_Input > m_Input1) ? eRELAYSTATES::RS_ON : eRELAYSTATES::RS_OFF);
+		m_Output = (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0;
 	}
 	else
 		m_Output = 0.0;
@@ -41,19 +41,19 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 			double derr = std::abs(pRightVector1->GetWeightedError(dCheck, m_Input1));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
-				SetCurrentState(pDynaModel, RS_OFF);
+				SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
 				rH = 1.0;
 			}
 			else
 			{
 				if (pDynaModel->ZeroCrossingStepReached(rH))
-					SetCurrentState(pDynaModel, RS_OFF);
+					SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
 			}
 		}
 	}
 	else if (dCheck < 0)
 	{
-		SetCurrentState(pDynaModel, RS_OFF);
+		SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
 		rH = 1.0;
 		_ASSERTE(0); // корня нет, но знак изменился !
 	}
@@ -76,19 +76,19 @@ double CComparator::OnStateOff(CDynaModel *pDynaModel)
 			double derr = std::abs(pRightVector1->GetWeightedError(dCheck, m_Input));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
-				SetCurrentState(pDynaModel, RS_ON);
+				SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
 				rH = 1.0;
 			}
 			else
 			{
 				if (pDynaModel->ZeroCrossingStepReached(rH))
-					SetCurrentState(pDynaModel, RS_ON);
+					SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
 			}
 		}
 	}
 	else if (dCheck < 0)
 	{
-		SetCurrentState(pDynaModel, RS_ON);
+		SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
 		rH = 1.0;
 		_ASSERTE(0); // корня нет, но знак изменился !
 	}

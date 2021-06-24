@@ -12,11 +12,11 @@ bool CLimitedLag::BuildEquations(CDynaModel *pDynaModel)
 
 	switch (GetCurrentState())
 	{
-	case LS_MAX:
+	case eLIMITEDSTATES::LS_MAX:
 		on = 0.0;
 		m_Output = m_dMax;
 		break;
-	case LS_MIN:
+	case eLIMITEDSTATES::LS_MIN:
 		on = 0.0;
 		m_Output = m_dMin;
 		break;
@@ -39,11 +39,11 @@ bool CLimitedLag::BuildRightHand(CDynaModel *pDynaModel)
 		double dLag = (m_K * m_Input - m_Output) / m_T;
 		switch (GetCurrentState())
 		{
-		case LS_MAX:
+		case eLIMITEDSTATES::LS_MAX:
 			dLag = 0.0;
 			m_Output = m_dMax;
 			break;
-		case LS_MIN:
+		case eLIMITEDSTATES::LS_MIN:
 			dLag = 0.0;
 			m_Output = m_dMin;
 			break;
@@ -61,7 +61,7 @@ bool CLimitedLag::Init(CDynaModel *pDynaModel)
 	if (Equal(m_K, 0.0))
 	{
 		m_Output = m_dMin = m_dMax = 0.0;
-		SetCurrentState(pDynaModel, LS_MAX);
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MAX);
 	}
 	else
 	{
@@ -74,7 +74,7 @@ bool CLimitedLag::Init(CDynaModel *pDynaModel)
 	{
 		if (Equal(m_T,0.0))
 		{
-			m_Device.Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveTimeConstant, 
+			m_Device.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveTimeConstant,
 																   GetVerbalName(), 
 																   m_Device.GetVerbalName(), 
 																   m_T));
@@ -95,11 +95,11 @@ bool CLimitedLag::BuildDerivatives(CDynaModel *pDynaModel)
 		double dLag = (m_K * m_Input - m_Output) / m_T;
 		switch (GetCurrentState())
 		{
-		case LS_MAX:
+		case eLIMITEDSTATES::LS_MAX:
 			dLag = 0.0;
 			m_Output = m_dMax;
 			break;
-		case LS_MIN:
+		case eLIMITEDSTATES::LS_MIN:
 			dLag = 0.0;
 			m_Output = m_dMin;
 			break;
@@ -115,10 +115,10 @@ double CLimitedLag::OnStateMid(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMaxH - m_Output, m_Output, m_dMaxH, m_Output.Index, rH))
-		SetCurrentState(pDynaModel, LS_MAX);
-	if (GetCurrentState() == LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MAX);
+	if (GetCurrentState() == eLIMITEDSTATES::LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
 		if (CDynaPrimitive::ChangeState(pDynaModel, m_Output - m_dMinH, m_Output, m_dMinH, m_Output.Index, rH))
-			SetCurrentState(pDynaModel, LS_MIN);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MIN);
 	return rH;
 }
 
@@ -126,7 +126,7 @@ double CLimitedLag::OnStateMin(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_Output - m_K * m_Input, m_Output, m_Output / m_K, m_Input.Index, rH))
-		SetCurrentState(pDynaModel, LS_MID);
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
 	return rH;
 }
 
@@ -134,7 +134,7 @@ double CLimitedLag::OnStateMax(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_K * m_Input - m_Output, m_Output, m_Output / m_K, m_Input.Index, rH))
-		SetCurrentState(pDynaModel, LS_MID);
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
 	return rH;
 }
 
@@ -147,15 +147,15 @@ eDEVICEFUNCTIONSTATUS CLimitedLag::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		eLIMITEDSTATES OldState = GetCurrentState();
 		switch (OldState)
 		{
-		case LS_MIN:
+		case eLIMITEDSTATES::LS_MIN:
 			if (dLag > 0)
-				SetCurrentState(pDynaModel, LS_MID);
+				SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
 			else
 				m_Output = m_dMin;
 			break;
-		case LS_MAX:
+		case eLIMITEDSTATES::LS_MAX:
 			if (dLag < 0)
-				SetCurrentState(pDynaModel, LS_MID);
+				SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
 			else
 				m_Output = m_dMax;
 			break;
@@ -182,7 +182,7 @@ void CLimitedLag::ChangeMinMaxTK(CDynaModel *pDynaModel, double dMin, double dMa
 		m_Output = m_dMax;
 
 		if (dLag >= 0.0)
-			SetCurrentState(pDynaModel, LS_MAX);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MAX);
 	}
 	else
 		if (CheckMin >= 0.0)
@@ -190,10 +190,10 @@ void CLimitedLag::ChangeMinMaxTK(CDynaModel *pDynaModel, double dMin, double dMa
 			m_Output = m_dMin;
 
 			if (dLag <= 0.0)
-				SetCurrentState(pDynaModel, LS_MIN);
+				SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MIN);
 		}
 		else
-			SetCurrentState(pDynaModel, LS_MID);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
 }
 
 void CLimitedLag::SetMinMaxTK(CDynaModel *pDynaModel, double dMin, double dMax, double T, double K)

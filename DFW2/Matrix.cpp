@@ -65,7 +65,7 @@ void CDynaModel::EstimateMatrix()
 
 	// allocate KLU matrix in CCS form
 	klu.SetSize(m_nEstimatedMatrixSize, nNonZeroCount);
-	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszMatrixSize, m_nEstimatedMatrixSize, nNonZeroCount));
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszMatrixSize, m_nEstimatedMatrixSize, nNonZeroCount));
 	m_pMatrixRows->pApRow = klu.Ap();
 	m_pMatrixRows->pAxRow = klu.Ax();
 
@@ -144,10 +144,10 @@ void CDynaModel::BuildMatrix()
 
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = sc.m_dCurrentH;
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
 				"Рефакторизация матрицы {} / {}", klu.FactorizationsCount(), klu.RefactorizationsCount()));
 		if(sc.m_bFillConstantElements)
-			Log(CDFW2Messages::DFW2LOG_DEBUG, "Обновление констант");
+			Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Обновление констант");
 		if (!EstimateBuild())
 			sc.m_bFillConstantElements = false;
 	}
@@ -474,7 +474,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 			pVectorBegin++;
 		}
 		// продолжаем, пока есть необработанные уравнения
-		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "Marked = {}", nMarked);
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Marked = {}", nMarked);
 	} while (nMarked);
 
 }

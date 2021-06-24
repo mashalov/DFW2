@@ -163,7 +163,7 @@ namespace DFW2
 	public:
 
 		// возможные состояния примитива
-		enum eLIMITEDSTATES
+		enum class eLIMITEDSTATES
 		{
 			LS_MIN,		// на минимуме
 			LS_MID,		// вне ограничения
@@ -171,14 +171,17 @@ namespace DFW2
 		};
 
 	private:
-		eLIMITEDSTATES eCurrentState;		// текущее состояние примитива
-		eLIMITEDSTATES eSavedState;			// сохраненное состояние примитива
+		eLIMITEDSTATES eCurrentState = eLIMITEDSTATES::LS_MID;		// текущее состояние примитива
+		eLIMITEDSTATES eSavedState = eLIMITEDSTATES::LS_MID;			// сохраненное состояние примитива
 
 	protected:
 		void SetCurrentState(CDynaModel *pDynaModel, eLIMITEDSTATES CurrentState);
 
 		// численные значения ограничений и гистерезиса ограничений
-		double m_dMin, m_dMax, m_dMinH, m_dMaxH;
+		double m_dMin = 0.0;
+		double m_dMax = 0.0;
+		double m_dMinH = 0.0;
+		double m_dMaxH = 0.0;
 		// виртуальные функции обработки изменения входного сигнала в зависимости от текущего состояния примитива
 		virtual double OnStateMax(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateMin(CDynaModel *pDynaModel) { return 1.0; }
@@ -202,13 +205,13 @@ namespace DFW2
 	class CDynaPrimitiveBinary : public CDynaPrimitiveState
 	{
 	protected:
-		enum eRELAYSTATES
+		enum class eRELAYSTATES
 		{
 			RS_ON,
 			RS_OFF,
 		};
-		eRELAYSTATES eCurrentState;		// текущее состояние реле
-		eRELAYSTATES eSavedState;		// сохраненное состояние реле
+		eRELAYSTATES eCurrentState = eRELAYSTATES::RS_OFF;		// текущее состояние реле
+		eRELAYSTATES eSavedState = eRELAYSTATES::RS_OFF;		// сохраненное состояние реле
 		virtual inline eRELAYSTATES GetCurrentState() { return eCurrentState; }
 		virtual void RequestZCDiscontinuity(CDynaModel* pDynaModel);
 	public:

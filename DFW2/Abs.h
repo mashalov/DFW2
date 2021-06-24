@@ -6,8 +6,8 @@ namespace DFW2
 	class CAbs : public CDynaPrimitiveState
 	{
 	protected:
-		bool m_bPositive;		// текущее состояние
-		bool m_bPositiveSaved;	// cохраненное состояние
+		bool m_bPositive = true;			// текущее состояние
+		bool m_bPositiveSaved = true;		// cохраненное состояние
 	public:
 
 		CAbs(CDevice& Device, const ORange& Output, const IRange& Input) : 

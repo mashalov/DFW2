@@ -41,10 +41,10 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 	}
 
 	if (Pnom <= 0.0)
-		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongPnom, GetVerbalName(), Pnom));
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongPnom, GetVerbalName(), Pnom));
 	else
 		if (Mj / Pnom < 0.01)
-			Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorSuspiciousMj, GetVerbalName(), Mj / Pnom));
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorSuspiciousMj, GetVerbalName(), Mj / Pnom));
 
 
 	const cplx Slf{ P, Q };
@@ -52,12 +52,12 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 	const double absSlf(std::abs(Slf));
 
 	if (absSlf > Srated)
-		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated, GetVerbalName(), Slf, absSlf, Srated));
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated, GetVerbalName(), Slf, absSlf, Srated));
 
 	const CDynaNodeBase* pNode = static_cast<const CDynaNodeBase*>(GetSingleLink(0));
 
 	if(pNode && (Unom > pNode->Unom * 1.15 || Unom < pNode->Unom * 0.85))
-		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUnomMismatch, GetVerbalName(), Unom, pNode->GetVerbalName(), pNode->Unom));
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUnomMismatch, GetVerbalName(), Unom, pNode->GetVerbalName(), pNode->Unom));
 
 	// !!!!!! just for debug !!!!!!
 	/*

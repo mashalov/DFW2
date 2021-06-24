@@ -130,10 +130,10 @@ bool CCustomDeviceDLL::Init(std::string_view DLLFilePath)
 		if (!m_nGetProcAddresFailureCount)
 			m_bConnected = true;
 		else
-			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLFuncMissing, DLLFilePath));
+			m_pDeviceContainer->Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLFuncMissing, DLLFilePath));
 	}
 	else
-		m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format (CDFW2Messages::m_cszDLLLoadFailed, DLLFilePath));
+		m_pDeviceContainer->Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format (CDFW2Messages::m_cszDLLLoadFailed, DLLFilePath));
 
 	if (m_bConnected)
 	{
@@ -174,7 +174,7 @@ bool CCustomDeviceDLL::Init(std::string_view DLLFilePath)
 							}
 							else
 							{
-								m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszPrimitiveExternalOutput, DLLFilePath, m_BlockDescriptions[nIndex].Name));
+								m_pDeviceContainer->Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszPrimitiveExternalOutput, DLLFilePath, m_BlockDescriptions[nIndex].Name));
 								m_bConnected = false;
 							}
 						}
@@ -299,7 +299,7 @@ bool CCustomDeviceDLL::Init(std::string_view DLLFilePath)
 			m_pDeviceContainer->m_ContainerProps.SetClassName((m_pFnGetDeviceTypeName)(), "");
 		
 		if (!m_bConnected)
-			m_pDeviceContainer->Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, DLLFilePath));
+			m_pDeviceContainer->Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, DLLFilePath));
 	}
 
 	if (!m_bConnected)

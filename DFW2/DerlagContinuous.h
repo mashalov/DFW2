@@ -7,7 +7,8 @@ namespace DFW2
 	class CDerlagContinuous : public CDynaPrimitive
 	{
 	protected:
-		double m_K, m_T;
+		double m_K = 1.0;
+		double m_T = 1.0;
 		VariableIndex& m_Y2;
 	public:
 		// этот примитив пример примитива с двумя выходами. Второй выход соответсвует дополнительному второму алгебраическому уравнению

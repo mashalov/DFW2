@@ -196,7 +196,7 @@ namespace DFW2
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
 		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
 
-		void Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message);
+		void Log(DFW2MessageStatus Status, std::string_view Message);
 
 		// функция маппинга указателя на переменную к индексу переменной
 		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
@@ -319,7 +319,7 @@ namespace DFW2
 		inline static double ZeroDivGuard(double Nom, double Denom)
 		{
 			// если делитель - ноль, деление не выполняем
-			return (std::abs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
+			return (std::fabs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
 		}
 
 		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);

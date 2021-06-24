@@ -184,7 +184,7 @@ double CDevice::SetValue(std::string_view VarName, double Value)
 	return OldValue;
 }
 
-void CDevice::Log(CDFW2Messages::DFW2MessageStatus Status, std::string_view Message)
+void CDevice::Log(DFW2MessageStatus Status, std::string_view Message)
 {
 	// TODO - add device type information
 	if (m_pContainer)
@@ -265,7 +265,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 					{
 						// если устройство уже было сязано с каким-то и связь один к одному - выдаем ошибку
 						// указываея мастер, подчиенное и уже связанное
-						pDev->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDeviceAlreadyLinked, 
+						pDev->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDeviceAlreadyLinked,
 																			pDev->GetVerbalName(), 
 																			pLinkDev->GetVerbalName(), 
 																			pAlreadyLinked->GetVerbalName()));
@@ -276,7 +276,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 				else
 				{
 					// если устройство для связи по идентификатору не нашли - выдаем ошибку
-					pDev->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format (CDFW2Messages::m_cszDeviceForDeviceNotFound, 
+					pDev->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format (CDFW2Messages::m_cszDeviceForDeviceNotFound,
 																		 DevId, 
 																		 pDev->GetVerbalName()));
 					bRes = false;
@@ -699,7 +699,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 
 			if (!bRes)
 			{
-				Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszExtVarNotFoundInDevice, 
+				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszExtVarNotFoundInDevice,
 															  GetVerbalName(), 
 															  Name, 
 															  pInitialDevice->GetVerbalName()));
@@ -708,7 +708,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 		}
 		else
 		{
-			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszExtVarNoDeviceFor, 
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszExtVarNoDeviceFor,
 														  Name, 
 														  GetVerbalName()));
 			bRes = false;
@@ -760,7 +760,7 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::
 		}
 		if (!bRes)
 		{
-			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszConstVarNotFoundInDevice, 
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszConstVarNotFoundInDevice,
 														  GetVerbalName(), 
 														  Name, 
 														  pInitialDevice->GetVerbalName()));
@@ -769,7 +769,7 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::
 	}
 	else
 	{
-		Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszConstVarNoDeviceFor, 
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszConstVarNoDeviceFor,
 													  Name, 
 													  GetVerbalName()));
 		bRes = false;
@@ -790,7 +790,7 @@ bool CDevice::SetSingleLink(ptrdiff_t nIndex, CDevice *pDevice)
 {
 	if (!m_DeviceLinks.SetLink(nIndex, pDevice))
 	{
-		Log(CDFW2Messages::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszWrongSingleLinkIndex, 
+		Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszWrongSingleLinkIndex,
 													  nIndex, 
 													  GetVerbalName(), 
 													  m_pContainer->GetPossibleSingleLinksCount()));
@@ -1008,7 +1008,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 
 	if (m_StateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
 	{
-		Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotChangePermanentDeviceState, GetVerbalName()));
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotChangePermanentDeviceState, GetVerbalName()));
 		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}
 
@@ -1051,7 +1051,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 		if (pDeviceOff)
 		{
 			// если зафиксировано отключенное ведущее устройство - отказываем во включении данного устройства
-			Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszTurnOnDeviceImpossibleDueToMaster, 
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszTurnOnDeviceImpossibleDueToMaster,
 															GetVerbalName(), 
 															pDeviceOff->GetVerbalName()));
 			return eDEVICEFUNCTIONSTATUS::DFS_NOTREADY; // отказ отключения - модель не готова
@@ -1079,7 +1079,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 			// отключение ветвей делается в зависимости от состояния узла и логируется в перекрытой CDynaBranch::SetState
 			// поэтому здесь логирование отключения ветви обходим
 			if(pCauseDevice && pOffDevice->GetType() != DEVTYPE_BRANCH)
-				Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, 
+				Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice,
 																pOffDevice->GetVerbalName(), 
 																pCauseDevice->GetVerbalName()));
 
@@ -1192,7 +1192,7 @@ bool CDevice::CheckLimits(double& Min, double& Max)
 
 		if (Min > Max)
 		{
-			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongLimits,
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongLimits,
 				nameMin,
 				nameMax,
 				Min,
@@ -1202,7 +1202,7 @@ bool CDevice::CheckLimits(double& Min, double& Max)
 		}
 		if (Equal(Min, Max) && Equal(Min, 0.0))
 		{
-			Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszEmptyLimits,
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszEmptyLimits,
 				nameMin,
 				nameMax,
 				Min,

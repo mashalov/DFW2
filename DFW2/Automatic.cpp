@@ -255,7 +255,7 @@ void CAutomatic::Init()
 					{
 						if (!pLogicItem->AddActionGroupId(nId))
 						{
-							m_pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
+							m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
 																							nId, 
 																							strActions, 
 																							pLogicItem->GetId()));
@@ -263,7 +263,7 @@ void CAutomatic::Init()
 					}
 					else
 					{
-						m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
+						m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
 																					nId, 
 																					strActions, 
 																					pLogicItem->GetId()));
@@ -272,7 +272,7 @@ void CAutomatic::Init()
 				}
 				else
 				{
-					m_pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongActionInLogicList, 
+					m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongActionInLogicList,
 																	strAction, 
 																	strActions, 
 																	pLogic->GetId()));
@@ -343,7 +343,7 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 
 	if (m_pAction && m_pValue && m_nRunsCount)
 	{
-		bRes = (m_pAction->Do(pDynaModel, *m_pValue) != AS_ERROR);
+		bRes = (m_pAction->Do(pDynaModel, *m_pValue) != eDFW2_ACTION_STATE::AS_ERROR);
 		m_nRunsCount--;
 	}
 
@@ -435,12 +435,12 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 				break;
 			}
 			default:
-				pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionTypeNotFound, GetVerbalName(), m_nType));
+				pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionTypeNotFound, GetVerbalName(), m_nType));
 				break;
 		}
 	}
 	else
-		pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotFoundInDLL, strVarName));
+		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotFoundInDLL, strVarName));
 
 	return bRes;
 }

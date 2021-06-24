@@ -21,11 +21,9 @@ namespace DFW2
 	// пул памяти для хост-блоков
 	struct PrimitivePoolElement
 	{
-		unsigned char *m_pPrimitive;			// начало пула
-		unsigned char *m_pHead;					// текущая позиция в пуле
-		size_t nCount;							// количество элементов в пуле
-		PrimitivePoolElement() : m_pPrimitive(nullptr), 
-							     nCount(0) {}
+		unsigned char *m_pPrimitive = nullptr;			// начало пула
+		unsigned char* m_pHead = nullptr;				// текущая позиция в пуле
+		size_t nCount = 0;								// количество элементов в пуле
 	};
 
 	// описание хост-блока

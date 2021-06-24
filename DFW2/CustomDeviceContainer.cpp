@@ -84,7 +84,7 @@ bool CCustomDeviceContainer::BuildStructure()
 		}
 		else
 		{
-			Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveinDLL, m_DLL.GetModuleFilePath(), it->eType));
+			Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveinDLL, m_DLL.GetModuleFilePath(), it->eType));
 			bRes = false;
 		}
 	}

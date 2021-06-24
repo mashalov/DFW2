@@ -6,7 +6,7 @@ using namespace DFW2;
 
 void CLoadFlow::NewtonTanh()
 {
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
+	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
 	int it(0);	// количество итераций
 
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
@@ -96,7 +96,7 @@ void CLoadFlow::NewtonTanh()
 
 void CLoadFlow::SeidellTanh()
 {
-	m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
+	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 
 	MATRIXINFO SeidellOrder;
 	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());

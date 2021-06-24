@@ -30,7 +30,7 @@ bool CStaticEvent::ContainsStop() const
 {
 	bool bStopFound = false;
 	for (MODELACTIONITR it = m_Actions.begin(); it != m_Actions.end(); it++)
-		if ((*it)->Type() == AT_STOP)
+		if ((*it)->Type() == eDFW2_ACTION_TYPE::AT_STOP)
 		{
 			bStopFound = true;
 			break;
@@ -43,7 +43,7 @@ bool CStaticEvent::RemoveStateAction(CDiscreteDelay *pDelayObject) const
 	bool bRes = false;
 	MODELACTIONITR itFound = m_Actions.end();
 	for (MODELACTIONITR it = m_Actions.begin(); it != m_Actions.end(); it++)
-		if ((*it)->Type() == AT_STATE)
+		if ((*it)->Type() == eDFW2_ACTION_TYPE::AT_STATE)
 		{
 			if (static_cast<CModelActionState*>(*it)->GetDelayObject() == pDelayObject)
 			{
@@ -57,9 +57,9 @@ bool CStaticEvent::RemoveStateAction(CDiscreteDelay *pDelayObject) const
 	return bRes;
 }
 
-DFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
+eDFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 {
-	DFW2_ACTION_STATE State = AS_INACTIVE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_INACTIVE);
 
 	// внутри ModelAction::Do может быть вызывано удаление ивента
 	// которое вызовет сбой итерации. Поэтому мы копируем исходный список
@@ -68,7 +68,7 @@ DFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 
 	MODELACTIONLIST tempList = m_Actions;
 
-	for (MODELACTIONITR it = tempList.begin(); it != tempList.end() && State != AS_ERROR; it++)
+	for (MODELACTIONITR it = tempList.begin(); it != tempList.end() && State != eDFW2_ACTION_STATE::AS_ERROR; it++)
 	{
 		State = (*it)->Do(pDynaModel);
 	}
@@ -161,9 +161,9 @@ void CDiscontinuities::PassTime(double dTime)
 }
 
 
-DFW2_ACTION_STATE CDiscontinuities::ProcessStaticEvents()
+eDFW2_ACTION_STATE CDiscontinuities::ProcessStaticEvents()
 {
-	DFW2_ACTION_STATE State = AS_INACTIVE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_INACTIVE);
 
 	if (!m_StaticEvent.empty())
 	{
@@ -172,30 +172,30 @@ DFW2_ACTION_STATE CDiscontinuities::ProcessStaticEvents()
 	return State;
 }
 
-CModelActionChangeVariable::CModelActionChangeVariable(double *pVariable, double TargetValue) : CModelAction(AT_CV),
+CModelActionChangeVariable::CModelActionChangeVariable(double *pVariable, double TargetValue) : CModelAction(eDFW2_ACTION_TYPE::AT_CV),
 																								m_dTargetValue(TargetValue),
 																								m_pVariable(pVariable)
 {
 
 }
 
-DFW2_ACTION_STATE CModelActionChangeVariable::Do(CDynaModel *pDynaModel)
+eDFW2_ACTION_STATE CModelActionChangeVariable::Do(CDynaModel *pDynaModel)
 {
-	DFW2_ACTION_STATE State = AS_DONE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 	*m_pVariable = m_dTargetValue;
 	return State;
 }
 
 
-CModelActionStop::CModelActionStop() : CModelAction(AT_STOP)
+CModelActionStop::CModelActionStop() : CModelAction(eDFW2_ACTION_TYPE::AT_STOP)
 {
 
 }
 
-DFW2_ACTION_STATE CModelActionStop::Do(CDynaModel *pDynaModel) 
+eDFW2_ACTION_STATE CModelActionStop::Do(CDynaModel *pDynaModel) 
 { 
 	pDynaModel->StopProcess();
-	return AS_DONE; 
+	return eDFW2_ACTION_STATE::AS_DONE;
 }
 
 
@@ -219,9 +219,9 @@ CModelActionChangeBranchImpedance::CModelActionChangeBranchImpedance(CDynaBranch
 {
 
 }
-DFW2_ACTION_STATE CModelActionChangeBranchImpedance::Do(CDynaModel* pDynaModel)
+eDFW2_ACTION_STATE CModelActionChangeBranchImpedance::Do(CDynaModel* pDynaModel)
 {
-	DFW2_ACTION_STATE State = AS_DONE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 	m_pDynaBranch->R = m_Impedance.real();
 	m_pDynaBranch->X = m_Impedance.imag();
 	pDynaModel->ProcessTopologyRequest();
@@ -234,7 +234,7 @@ CModelActionChangeBranchR::CModelActionChangeBranchR(CDynaBranch* pBranch, doubl
 {
 
 }
-DFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double R)
+eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double R)
 {
 	m_Impedance = { R, m_pDynaBranch->X };
 	return CModelActionChangeBranchImpedance::Do(pDynaModel);
@@ -246,23 +246,23 @@ CModelActionChangeBranchX::CModelActionChangeBranchX(CDynaBranch* pBranch, doubl
 
 }
 
-DFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double X)
+eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double X)
 {
 	m_Impedance = { m_pDynaBranch->R, X };
 	return CModelActionChangeBranchImpedance::Do(pDynaModel);
 }
 
-DFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel)
+eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel)
 {
-	DFW2_ACTION_STATE State = AS_DONE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 
 	if (!CDevice::IsFunctionStatusOK(m_pDynaBranch->SetBranchState(m_NewState, eDEVICESTATECAUSE::DSC_EXTERNAL)))
-		State = AS_ERROR;
+		State = eDFW2_ACTION_STATE::AS_ERROR;
 
 	return State;
 }
 
-DFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, double dValue)
 {
 	int nState = static_cast<int>(dValue);
 	CDynaBranch::BranchState variants[4] =
@@ -291,9 +291,9 @@ CModelActionChangeNodeShunt::CModelActionChangeNodeShunt(CDynaNode *pNode, const
 	
 }
 
-DFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel *pDynaModel)
+eDFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel *pDynaModel)
 {
-	DFW2_ACTION_STATE State = AS_DONE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE:: AS_DONE);
 	cplx y = 1.0 / m_ShuntRX;
 	m_pDynaNode->Gshunt = y.real();
 	m_pDynaNode->Bshunt = y.imag();
@@ -307,7 +307,7 @@ CModelActionChangeNodeShuntR::CModelActionChangeNodeShuntR(CDynaNode *pNode, dou
 
 }
 
-DFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, double dValue)
 {
 	m_ShuntRX.real(dValue);
 	return CModelActionChangeNodeShunt::Do(pDynaModel);
@@ -319,7 +319,7 @@ CModelActionChangeNodeShuntX::CModelActionChangeNodeShuntX(CDynaNode *pNode, dou
 
 }
 
-DFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, double dValue)
 {
 	m_ShuntRX.imag(dValue);
 	return CModelActionChangeNodeShunt::Do(pDynaModel);
@@ -330,9 +330,9 @@ CModelActionChangeNodeShuntAdmittance::CModelActionChangeNodeShuntAdmittance(CDy
 																												{
 
 																												}
-DFW2_ACTION_STATE CModelActionChangeNodeShuntAdmittance::Do(CDynaModel *pDynaModel)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntAdmittance::Do(CDynaModel *pDynaModel)
 {
-	DFW2_ACTION_STATE State = AS_DONE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 	m_pDynaNode->Gshunt = m_ShuntGB.real();
 	m_pDynaNode->Bshunt = m_ShuntGB.imag();
 	pDynaModel->ProcessTopologyRequest();
@@ -345,7 +345,7 @@ CModelActionChangeNodeShuntG::CModelActionChangeNodeShuntG(CDynaNode *pNode, dou
 
 }
 
-DFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, double dValue)
 {
 	m_ShuntGB.real(dValue);
 	return CModelActionChangeNodeShuntAdmittance::Do(pDynaModel);
@@ -356,7 +356,7 @@ CModelActionChangeNodeShuntB::CModelActionChangeNodeShuntB(CDynaNode *pNode, dou
 
 }
 
-DFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, double dValue)
 {
 	m_ShuntGB.imag(dValue);
 	return CModelActionChangeNodeShuntAdmittance::Do(pDynaModel);
@@ -369,9 +369,9 @@ CModelActionRemoveNodeShunt::CModelActionRemoveNodeShunt(CDynaNode *pNode) : CMo
 
 }
 
-DFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
+eDFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
 {
-	DFW2_ACTION_STATE State = AS_DONE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 	m_pDynaNode->Gshunt = m_pDynaNode->Bshunt = 0.0;
 	m_pDynaNode->ProcessTopologyRequest();
 	return State;
@@ -385,9 +385,9 @@ CModelActionChangeNodeLoad::CModelActionChangeNodeLoad(CDynaNode *pNode, cplx& L
 	
 }
 
-DFW2_ACTION_STATE CModelActionChangeNodeLoad::Do(CDynaModel *pDynaModel)
+eDFW2_ACTION_STATE CModelActionChangeNodeLoad::Do(CDynaModel *pDynaModel)
 {
-	DFW2_ACTION_STATE State = AS_DONE;
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 	m_pDynaNode->Pn = m_newLoad.real();
 	m_pDynaNode->Qn = m_newLoad.imag();
 	m_pDynaNode->ProcessTopologyRequest();
@@ -395,16 +395,16 @@ DFW2_ACTION_STATE CModelActionChangeNodeLoad::Do(CDynaModel *pDynaModel)
 }
 
 
-CModelActionState::CModelActionState(CDiscreteDelay *pDiscreteDelay) : CModelAction(AT_STATE),
+CModelActionState::CModelActionState(CDiscreteDelay *pDiscreteDelay) : CModelAction(eDFW2_ACTION_TYPE::AT_STATE),
 																	   m_pDiscreteDelay(pDiscreteDelay)
 {
 
 }
 
 
-DFW2_ACTION_STATE CModelActionState::Do(CDynaModel *pDynaModel)
+eDFW2_ACTION_STATE CModelActionState::Do(CDynaModel *pDynaModel)
 { 
 	m_pDiscreteDelay->NotifyDelay(pDynaModel);
 	pDynaModel->DiscontinuityRequest();
-	return AS_INACTIVE; 
+	return eDFW2_ACTION_STATE::AS_INACTIVE;
 }

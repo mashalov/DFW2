@@ -79,7 +79,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 					{
 						if (nModelIndex >= nModelsCount)
 						{
-							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL()->GetModuleFilePath()));
+							Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL()->GetModuleFilePath()));
 							break;
 						}
 
@@ -97,7 +97,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 		}
 		catch (_com_error& err)
 		{
-			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
+			Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
 				CustomDeviceContainer.DLL()->GetModuleFilePath(),
 				static_cast<const char*>(err.Description())));
 		}
@@ -163,7 +163,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 					{
 						if (nModelIndex >= nModelsCount)
 						{
-							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+							Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 							break;
 						}
 
@@ -176,14 +176,14 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 							{
 								if (!pDevice->SetConstValue(cit->second, cit->first->GetZ(nTableIndex).dblVal))
 								{
-									Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+									Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 									break;
 								}
 							}
 						}
 						else
 						{
-							Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
+							Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
 							break;
 						}
 						nModelIndex++;
@@ -193,7 +193,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 		}
 		catch (_com_error &err)
 		{
-			Network.Log(DFW2::CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
+			Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
 																CustomDeviceContainer.DLL().GetModuleFilePath(), 
 																static_cast<const char*>(err.Description())));
 		}
@@ -251,7 +251,7 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 		case TypedSerializedValue::eValueType::VT_ADAPTER:
 			vt.ChangeType(VT_I4);
 			// если поле привязано к адаптеру, даем адаптеру int (недоделано)
-			mv.Adapter->SetInt(NodeTypeFromRastr(vt.lVal));
+			mv.Adapter->SetInt(static_cast<std::underlying_type<CDynaNodeBase::eLFNodeType>::type>(NodeTypeFromRastr(vt.lVal)));
 			break;
 		default:
 			throw dfw2error(fmt::format("CRastrImport::ReadRastrRow wrong serializer type {}", mv.ValueType));
@@ -322,16 +322,16 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	// СМЗУ Северо-Запад
 	///*
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1", ""); 
+	//m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1", ""); 
 	//*/
 
 	// СМЗУ Сибирь
-	/*
+	///*
 	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str()); 
 	//m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw", dfwPath.c_str());
 	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
 	//m_spRastr->NewFile(dfwPath.c_str());
-	*/
+	//*/
 
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", dfwPath.c_str());

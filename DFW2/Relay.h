@@ -6,11 +6,11 @@ namespace DFW2
 	class CRelay : public CDynaPrimitiveBinaryOutput
 	{
 	protected:
-		double m_dUpper;
-		double m_dLower;
-		double m_dUpperH;
-		double m_dLowerH;
-		bool m_bMaxRelay;
+		double m_dUpper = 0.0;
+		double m_dLower = 0.0;
+		double m_dUpperH = 0.0;
+		double m_dLowerH = 0.0;
+		bool m_bMaxRelay = true;
 
 	protected:
 		inline eRELAYSTATES GetCurrentState() override { return eCurrentState; }
@@ -35,7 +35,7 @@ namespace DFW2
 	class CDiscreteDelay
 	{
 	protected:
-		double m_dDelay;
+		double m_dDelay = 0.0;
 		ptrdiff_t m_nDiscontinuityId;
 	public:
 		CDiscreteDelay() : m_nDiscontinuityId(0) {}

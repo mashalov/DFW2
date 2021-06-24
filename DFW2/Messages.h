@@ -11,6 +11,18 @@ namespace DFW2
 	typedef std::map<ptrdiff_t, std::string> VARNAMEMAP;
 	typedef VARNAMEMAP::const_iterator VARNAMEITRCONST;
 
+
+	enum class DFW2MessageStatus
+	{
+		DFW2LOG_FATAL,
+		DFW2LOG_ERROR,
+		DFW2LOG_WARNING,
+		DFW2LOG_MESSAGE,
+		DFW2LOG_INFO,
+		DFW2LOG_DEBUG
+	};
+
+
 	// класс сообщений и логирования
 	class CDFW2Messages
 	{
@@ -18,16 +30,6 @@ namespace DFW2
 		// карта типов единиц измерения по сути глобальная
 		VARNAMEMAP m_VarNameMap;
 	public:
-		enum DFW2MessageStatus
-		{
-			DFW2LOG_FATAL,
-			DFW2LOG_ERROR,
-			DFW2LOG_WARNING,
-			DFW2LOG_MESSAGE,
-			DFW2LOG_INFO,
-			DFW2LOG_DEBUG
-		};
-
 		CDFW2Messages();
 
 		const VARNAMEMAP& VarNameMap() const noexcept { return m_VarNameMap; }
