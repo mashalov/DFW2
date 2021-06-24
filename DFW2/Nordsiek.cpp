@@ -180,7 +180,7 @@ bool CDynaModel::DetectAdamsRinging()
 		{
 			double newValue = pVectorBegin->Nordsiek[1] + pVectorBegin->Error * Methodl1[pVectorBegin->EquationType];
 			// если знак производной изменился - увеличиваем счетчик циклов
-			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && fabs(newValue) > pVectorBegin->Atol * sc.m_dCurrentH * 5.0)
+			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && std::abs(newValue) > pVectorBegin->Atol * sc.m_dCurrentH * 5.0)
 				pVectorBegin->nRingsCount++;
 			else
 				pVectorBegin->nRingsCount = 0;

@@ -119,13 +119,13 @@ void _MaxNodeDiff::UpdateMax(CDynaNodeBase* pNode, double Value)
 
 void _MaxNodeDiff::UpdateMaxAbs(CDynaNodeBase* pNode, double Value)
 {
-	UpdateOp(pNode, Value, [](double lhs, double rhs) noexcept -> bool { return fabs(lhs) > fabs(rhs); });
+	UpdateOp(pNode, Value, [](double lhs, double rhs) noexcept -> bool { return std::abs(lhs) > std::abs(rhs); });
 }
 
 
 bool _IterationControl::Converged(double m_dToleratedImb)
 {
-	return fabs(m_MaxImbP.GetDiff()) < m_dToleratedImb && fabs(m_MaxImbQ.GetDiff()) < m_dToleratedImb && m_nQviolated == 0;
+	return std::abs(m_MaxImbP.GetDiff()) < m_dToleratedImb && std::abs(m_MaxImbQ.GetDiff()) < m_dToleratedImb && m_nQviolated == 0;
 }
 
 void _IterationControl::Reset()

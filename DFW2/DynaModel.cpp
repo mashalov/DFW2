@@ -467,7 +467,7 @@ bool CDynaModel::NewtonUpdate()
 		pVectorBegin->Error += db;
 		pVectorBegin->b = db;
 
-		double dMaxErrorDevice = fabs(db);
+		double dMaxErrorDevice = std::abs(db);
 
 		if (sc.Newton.nMaxErrorVariableEquation < 0 || sc.Newton.dMaxErrorVariable < dMaxErrorDevice)
 		{
@@ -1049,7 +1049,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 #endif
 
 			double dError = pVectorBegin->GetWeightedError(dNewValue);
-			double dMaxError = fabs(dError);
+			double dMaxError = std::abs(dError);
 
 			if (sc.Integrator.nMaxErrorVariableEquation < 0 || sc.Integrator.dMaxErrorVariable < dMaxError)
 			{

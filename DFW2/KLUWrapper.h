@@ -376,11 +376,11 @@ namespace DFW2
 			if (m_nMatrixSize > 0)
 			{
 				nMaxIndex = 0;
-				bmax = std::fabs(*pbb);
+				bmax = std::abs(*pbb);
 				pbb++;
 				for (ptrdiff_t x = 1; x < m_nMatrixSize; x++, pbb++)
 				{
-					double absb = std::fabs(*pbb);
+					double absb = std::abs(*pbb);
 					if (bmax < absb)
 					{
 						nMaxIndex = x;
@@ -420,7 +420,7 @@ namespace DFW2
 						if (isnan(*pAx) || isinf(*pAx))
 							BadNumbers.insert(nRow);
 
-						if (fabs(*pAx) > 1E-7)
+						if (std::abs(*pAx) > 1E-7)
 						{
 							bAllZeros = false;
 							NonZeros[*pAi] = true;
@@ -500,7 +500,7 @@ namespace DFW2
 						if (nRow != nRows)
 						{
 							double Ratio = inner * inner / normj / normi;
-							if (fabs(Ratio - 1.0) < 1E-5)
+							if (std::abs(Ratio - 1.0) < 1E-5)
 							{
 								mts << "Linear dependent rows " << std::setw(10) << nRow << " " << std::setw(10) << nRows << " with " << Ratio << std::endl;
 								for (auto& it : RowI)

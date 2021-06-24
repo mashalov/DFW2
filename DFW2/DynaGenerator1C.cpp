@@ -14,7 +14,7 @@ CDynaGenerator1C::CDynaGenerator1C() : CDynaGeneratorMotion()
 eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 {
 
-	if (fabs(xq) < 1E-7) xq = xd1; // place to validation !!!
+	if (std::abs(xq) < 1E-7) xq = xd1; // place to validation !!!
 	if (xd <= 0) xd = xd1;
 	if (xq <= 0) xq = xd1;
 

@@ -43,7 +43,7 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		else
 			m_bPositive = false;
 
-		m_Output = fabs(m_Input);
+		m_Output = std::abs(m_Input);
 	}
 	else
 		m_Output = 0.0;

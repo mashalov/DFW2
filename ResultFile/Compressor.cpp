@@ -132,7 +132,7 @@ void CCompressorSingle::UpdatePredictor(double y)
 
 void CCompressorSingle::UpdatePredictor(double& y, double dTolerance)
 {
-	if (m_nPredictorOrder > 0 && fabs(y - ys[m_nPredictorOrder - 1]) < dTolerance)
+	if (m_nPredictorOrder > 0 && std::abs(y - ys[m_nPredictorOrder - 1]) < dTolerance)
 		y = ys[m_nPredictorOrder - 1];
 
 	UpdatePredictor(y);
@@ -147,7 +147,7 @@ double CCompressorSingle::Predict(double t)
 		bool bReset = false;
 		for (int j = 0; j < m_nPredictorOrder; j++)
 		{
-			if (Equal(t, ts[j]))
+			if (DFW2::Equal(t, ts[j]))
 			{
 				bReset = true;
 				break;
@@ -241,7 +241,7 @@ void CCompressorParallel::UpdatePredictor(double y, ptrdiff_t nPredictorOrder)
 
 void CCompressorParallel::UpdatePredictor(double& y, ptrdiff_t nPredictorOrder, double dTolerance)
 {
-	if (nPredictorOrder > 0 && fabs(y - ys[nPredictorOrder - 1]) < dTolerance)
+	if (nPredictorOrder > 0 && std::abs(y - ys[nPredictorOrder - 1]) < dTolerance)
 		y = ys[nPredictorOrder - 1];
 
 	UpdatePredictor(y, nPredictorOrder);

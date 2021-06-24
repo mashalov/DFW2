@@ -89,7 +89,7 @@ namespace DFW2
 			void AddErrorNeumaier(double dError)
 			{
 				volatile double t = dErrorSum + dError;
-				if (fabs(dErrorSum) >= fabs(dError))
+				if (std::abs(dErrorSum) >= std::abs(dError))
 					dKahanC += (dErrorSum - t) + dError;
 				else
 					dKahanC += (dError - t) + dErrorSum;
@@ -308,7 +308,7 @@ namespace DFW2
 				os.dTimePassedKahan = (temp - os.dTimePassed) - ky;
 				os.dTimePassed = temp;
 
-				_ASSERTE(fabs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t) < DFW2_EPSILON);
+				_ASSERTE(std::abs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t) < DFW2_EPSILON);
 			}
 
 			// рассчитывает текущее время перед выполнением шага, с возможностью возврата
@@ -806,7 +806,7 @@ namespace DFW2
 
 		inline double GetHysteresis(double dValue) const
 		{
-			return fabs(dValue) * GetRtol() * 0.01 + GetAtol() * 10.0;
+			return std::abs(dValue) * GetRtol() * 0.01 + GetAtol() * 10.0;
 		}
 
 		void StopProcess();

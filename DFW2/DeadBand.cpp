@@ -169,7 +169,7 @@ double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 
 	if (CheckMin < 0.0)
 	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMin, m_Input));
+		double derr = std::abs(pRightVector1->GetWeightedError(CheckMin, m_Input));
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(DBS_ZERO);
@@ -193,7 +193,7 @@ double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 
 	if (CheckMax < 0.0)
 	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, m_Input));
+		double derr = std::abs(pRightVector1->GetWeightedError(CheckMax, m_Input));
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(DBS_ZERO);
@@ -218,7 +218,7 @@ double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 
 	if (CheckMax >= 0.0)
 	{
-		double derr = fabs(pRightVector1->GetWeightedError(CheckMax, m_Input));
+		double derr = std::abs(pRightVector1->GetWeightedError(CheckMax, m_Input));
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(DBS_MAX);
@@ -235,7 +235,7 @@ double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 	else
 		if (CheckMin >= 0.0)
 		{
-			double derr = fabs(pRightVector1->GetWeightedError(CheckMin, m_Input));
+			double derr = std::abs(pRightVector1->GetWeightedError(CheckMin, m_Input));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				SetCurrentState(DBS_MIN);

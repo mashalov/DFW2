@@ -347,47 +347,47 @@ void CLoadFlow::CompareWithRastr()
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		if (pNode->IsStateOn())
 		{
-			double mx = fabs(pNode->V - pNode->Vrastr);
+			double mx = std::abs(pNode->V - pNode->Vrastr);
 			if (pNodeMaxV)
 			{
-				if (mx > fabs(pNodeMaxV->V - pNodeMaxV->Vrastr))
+				if (mx > std::abs(pNodeMaxV->V - pNodeMaxV->Vrastr))
 					pNodeMaxV = pNode;
 			}
 			else
 				pNodeMaxV = pNode;
 
-			mx = fabs(pNode->Delta - pNode->Deltarastr);
+			mx = std::abs(pNode->Delta - pNode->Deltarastr);
 			if (pNodeMaxDelta)
 			{
-				if (mx > fabs(pNodeMaxDelta->V - pNodeMaxDelta->Vrastr))
+				if (mx > std::abs(pNodeMaxDelta->V - pNodeMaxDelta->Vrastr))
 					pNodeMaxDelta = pNode;
 			}
 			else
 				pNodeMaxDelta = pNode;
 
 
-			mx = fabs(pNode->Qg - pNode->Qgrastr);
+			mx = std::abs(pNode->Qg - pNode->Qgrastr);
 			if (pNodeMaxQg)
 			{
-				if (mx > fabs(pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr))
+				if (mx > std::abs(pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr))
 					pNodeMaxQg = pNode;
 			}
 			else
 				pNodeMaxQg = pNode;
 
-			mx = fabs(pNode->Qnr - pNode->Qnrrastr);
+			mx = std::abs(pNode->Qnr - pNode->Qnrrastr);
 			if (pNodeMaxQnr)
 			{
-				if (mx > fabs(pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr))
+				if (mx > std::abs(pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr))
 					pNodeMaxQnr = pNode;
 			}
 			else
 				pNodeMaxQnr = pNode;
 
-			mx = fabs(pNode->Pnr - pNode->Pnrrastr);
+			mx = std::abs(pNode->Pnr - pNode->Pnrrastr);
 			if (pNodeMaxPnr)
 			{
-				if (mx > fabs(pNodeMaxPnr->Pnr - pNodeMaxQnr->Pnrrastr))
+				if (mx > std::abs(pNodeMaxPnr->Pnr - pNodeMaxQnr->Pnrrastr))
 					pNodeMaxPnr = pNode;
 			}
 			else

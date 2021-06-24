@@ -151,7 +151,7 @@ const char* CDFW2Messages::m_cszWrongLimits = "Неправильно задан
 const char* CDFW2Messages::m_cszEmptyLimits = "Ограничения [{};{}] = [{};{}] в устройстве \"{}\". Ограничения не будут учитываться";
 const char* CDFW2Messages::m_cszBranchAngleExceedsPI = "Асинхронный режим по связи \"{}\". Угол {} при t={}";
 const char* CDFW2Messages::m_cszGeneratorAngleExceedsPI = "Асинхронный режим по генератору \"{}\". Угол {} при t={}";
-const char* CDFW2Messages::m_cszGeneratorPowerExceedsRated = "Мощность генератора \"{}\" |S={:.5g}|={:.5g} МВА превышает 1.05*Sном={:.5g}";
+const char* CDFW2Messages::m_cszGeneratorPowerExceedsRated = "Мощность генератора \"{}\" |S={:.5g}|={:.5g} МВА превышает 1.05*Sном={:.5g} МВА";
 const char* CDFW2Messages::m_cszUnomMismatch = "Номинальное напряжение \"{}\" Uном={:.5g} кВ отличается от номинального напряжения узла \"{}\" Unom={} кВ более чем на 15%";
 const char* CDFW2Messages::m_cszWrongPnom = "Неверно задана номинальная мощность для \"{}\" Pnom={} МВт";
 const char* CDFW2Messages::m_cszGeneratorSuspiciousMj = "Значение Tj={} c для генератора \"{}\" подозрительно мало";

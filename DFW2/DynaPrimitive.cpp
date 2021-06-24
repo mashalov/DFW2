@@ -93,7 +93,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 	{
 		if (Diff < 0.0)
 		{
-			double derr = fabs(pRightVector->GetWeightedError(Diff, TolCheck));
+			double derr = std::abs(pRightVector->GetWeightedError(Diff, TolCheck));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				bChangeState = true;

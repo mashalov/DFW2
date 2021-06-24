@@ -375,11 +375,11 @@ void CDynaModel::DumpStateVector()
 		for (RightVector* pRv = pRightVector; pRv < pRightVector + klu.MatrixSize(); pRv++)
 		{
 			dump << fmt::format("{};", *pRv->pValue);
-			dump << fmt::format("{};", fabs(pRv->b));
+			dump << fmt::format("{};", std::abs(pRv->b));
 			dump << fmt::format("{} - {};", pRv->pDevice->GetVerbalName(), pRv->pDevice->VariableNameByPtr(pRv->pValue));
 			dump << fmt::format("{};{};{};", pRv->Nordsiek[0], pRv->Nordsiek[1], pRv->Nordsiek[2]);
-			dump << fmt::format("{};", fabs(pRv->Error));
-			dump << fmt::format("{};", fabs(pRv->GetWeightedError(pRv->b, *pRv->pValue)));
+			dump << fmt::format("{};", std::abs(pRv->Error));
+			dump << fmt::format("{};", std::abs(pRv->GetWeightedError(pRv->b, *pRv->pValue)));
 			dump << fmt::format("{};{};", pRv->Atol, pRv->Rtol);
 			dump << fmt::format("{};", pRv->EquationType);
 			dump << fmt::format("{};{};{};", pRv->SavedNordsiek[0], pRv->SavedNordsiek[1], pRv->SavedNordsiek[2]);
@@ -409,7 +409,7 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 	double Alpha = bEnable ? m_Parameters.m_dAdamsDampingAlpha : 0.0;
 	Methodl[3][0] = MethodlDefault[3][0] * (1.0 + Alpha);
 	// Вместо MethodDefault[3][3] можно использовать честную формулу для LTE (см. Docs)
-	Methodl[3][3] = 1.0 / fabs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
+	Methodl[3][3] = 1.0 / std::abs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
 	sc.RefactorMatrix();
 	Computehl0();
 	Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping, 
@@ -432,7 +432,7 @@ bool CDynaModel::CancelProcessing()
 double GetAbsoluteDiff2Angles(const double x, const double y)
 {
 	// c can be PI (for radians) or 180.0 (for degrees);
-	return M_PI - std::fabs(std::fmod(std::fabs(x - y), 2.0 * M_PI) - M_PI);
+	return M_PI - std::abs(std::fmod(std::abs(x - y), 2.0 * M_PI) - M_PI);
 }
 */
 

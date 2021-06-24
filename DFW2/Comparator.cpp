@@ -38,7 +38,7 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 	{
 		if (dCheck < 0)
 		{
-			double derr = fabs(pRightVector1->GetWeightedError(dCheck, m_Input1));
+			double derr = std::abs(pRightVector1->GetWeightedError(dCheck, m_Input1));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				SetCurrentState(pDynaModel, RS_OFF);
@@ -73,7 +73,7 @@ double CComparator::OnStateOff(CDynaModel *pDynaModel)
 	{
 		if (dCheck < 0)
 		{
-			double derr = fabs(pRightVector1->GetWeightedError(dCheck, m_Input));
+			double derr = std::abs(pRightVector1->GetWeightedError(dCheck, m_Input));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				SetCurrentState(pDynaModel, RS_ON);

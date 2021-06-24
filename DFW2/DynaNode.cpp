@@ -247,8 +247,8 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Vre, V, 0.0);
 		pDynaModel->SetElement(Vim, V, 0.0);
 
-		_ASSERTE(fabs(PgVre2) < DFW2_EPSILON && fabs(PgVim2) < DFW2_EPSILON);
-		_ASSERTE(fabs(QgVre2) < DFW2_EPSILON && fabs(QgVim2) < DFW2_EPSILON);
+		_ASSERTE(std::abs(PgVre2) < DFW2_EPSILON && std::abs(PgVim2) < DFW2_EPSILON);
+		_ASSERTE(std::abs(QgVre2) < DFW2_EPSILON && std::abs(QgVim2) < DFW2_EPSILON);
 	}
 	else
 	{
@@ -327,7 +327,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			double dP = S.real() - (Pnr - Pgr);
 			double dQ = S.imag() - (Qnr - Qgr);
 		
-			if (fabs(dP) > 0.1 || fabs(dQ) > 0.1)
+			if (std::abs(dP) > 0.1 || std::abs(dQ) > 0.1)
 			{
 				_ASSERTE(0);
 				//GetPnrQnrSuper();
@@ -372,7 +372,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		}
 #ifdef _DEBUG
 		else
-			_ASSERTE(fabs(Pnr - Pgr) < DFW2_EPSILON && fabs(Qnr - Qgr) < DFW2_EPSILON);
+			_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
 #endif
 	}
 
@@ -385,7 +385,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
-	dLRCVicinity = 5.0 * fabs(Vold - V) / Unom;
+	dLRCVicinity = 5.0 * std::abs(Vold - V) / Unom;
 	Vold = V;
 	CLinkPtrCount *pLink = GetSuperLink(0);
 	CDevice **ppDevice(nullptr);
@@ -422,7 +422,7 @@ void CDynaNode::Predict()
 {
 	dLRCVicinity = 0.0;
 	double newDelta = atan2(sin(Delta), cos(Delta));
-	if (fabs(newDelta - Delta) > DFW2_EPSILON)
+	if (std::abs(newDelta - Delta) > DFW2_EPSILON)
 	{
 		RightVector *pRvDelta = GetModel()->GetRightVector(Delta.Index);
 		RightVector *pRvLag = GetModel()->GetRightVector(Lag.Index);
@@ -971,7 +971,7 @@ bool CDynaNodeContainer::LULF()
 			pNode->UpdateVDeltaSuper();
 			// рассчитываем зону сглаживания СХН (также как для Ньютона)
 			/*if (pNode->m_pLRC)
-				pNode->dLRCVicinity = 30.0 * fabs(pNode->Vold - pNode->V) / pNode->Unom;
+				pNode->dLRCVicinity = 30.0 * std::abs(pNode->Vold - pNode->V) / pNode->Unom;
 			*/
 			// считаем изменение напряжения узла между итерациями и находим
 			// самый изменяющийся узел
@@ -981,7 +981,7 @@ bool CDynaNodeContainer::LULF()
 
 		DumpIterationControl();
 
-		if (fabs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
+		if (std::abs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
 		{
 			Log(CDFW2Messages::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
 			break;
@@ -1093,7 +1093,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 	double dVim1 = (pRvim->Nordsiek[1] + pRvim->Error * lm[1]) / h;
 	double dVre2 = (pRvre->Nordsiek[2] + pRvre->Error * lm[2]) / h / h;
 	double dVim2 = (pRvim->Nordsiek[2] + pRvim->Error * lm[2]) / h / h;
-	double derr = fabs(pRvre->GetWeightedError(fabs(Vcheck - Border), Border));
+	double derr = std::abs(pRvre->GetWeightedError(std::abs(Vcheck - Border), Border));
 
 	if (derr < pDynaModel->GetZeroCrossingTolerance())
 	{
@@ -1132,7 +1132,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 				// определение доли шага, так как на первых итерациях значение может значительно выходить
 				// за диапазон. Но можно попробовать контролировать диапазон не на первой, а на последующих итерациях
 
-				if (fabs(dt) < DFW2_EPSILON * 10.0)
+				if (std::abs(dt) < DFW2_EPSILON * 10.0)
 					break;
 
 				/*

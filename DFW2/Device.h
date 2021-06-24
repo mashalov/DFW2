@@ -153,14 +153,14 @@ namespace DFW2
 		double GetWeightedError(double dError, double dAbsValue)
 		{
 			_ASSERTE(Atol > 0.0);
-			return dError / (fabs(dAbsValue) * Rtol + Atol);
+			return dError / (std::abs(dAbsValue) * Rtol + Atol);
 		}
 
 		// расчет взвешенной ошибки по значению данной переменной
 		double GetWeightedError(double dAbsValue)
 		{
 			_ASSERTE(Atol > 0.0);
-			return Error / (fabs(dAbsValue) * Rtol + Atol);
+			return Error / (std::abs(dAbsValue) * Rtol + Atol);
 		}
 	};
 
@@ -319,7 +319,7 @@ namespace DFW2
 		inline static double ZeroDivGuard(double Nom, double Denom)
 		{
 			// если делитель - ноль, деление не выполняем
-			return (fabs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
+			return (std::abs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
 		}
 
 		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);

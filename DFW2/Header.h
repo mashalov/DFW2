@@ -46,8 +46,9 @@ namespace DFW2
 
 #define _CheckNumber(a) _ASSERTE(!std::isnan((a)) && !isinf((a)));
 
-
-#define Equal(x,y) (fabs((x)-(y)) < DFW2_EPSILON)
-
+	inline bool Equal(const double x, const double y)
+	{
+		return std::abs(x - y) < DFW2_EPSILON;
+	}
 }
 

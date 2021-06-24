@@ -151,7 +151,7 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 		if (m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 		{
 			// если у узла заданы пределы по реактивной мощности и хотя бы один из них ненулевой + задано напряжение
-			if (LFQmax > LFQmin && (fabs(LFQmax) > ImbTol || fabs(LFQmin) > ImbTol) && LFVref > 0.0)
+			if (LFQmax > LFQmin && (std::abs(LFQmax) > ImbTol || std::abs(LFQmin) > ImbTol) && LFVref > 0.0)
 			{
 				// узел является PV-узлом
 				m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
@@ -846,7 +846,7 @@ bool CLoadFlow::Run()
 				mx.pNode = pNode;
 				GetNodeImb(&mx);
 				mx.pNode = pNode;
-				_ASSERTE(fabs(mx.m_dImbP) < m_Parameters.m_Imb && fabs(mx.m_dImbQ) < m_Parameters.m_Imb);
+				_ASSERTE(std::abs(mx.m_dImbP) < m_Parameters.m_Imb && std::abs(mx.m_dImbQ) < m_Parameters.m_Imb);
 				pNode->GetPnrQnr();
 			}
 		}
@@ -1048,7 +1048,7 @@ void CLoadFlow::UpdateQToGenerators()
 					Qspread += pGen->Q;
 				}
 			}
-			if (fabs(pNode->Qg - Qspread) > m_Parameters.m_Imb)
+			if (std::abs(pNode->Qg - Qspread) > m_Parameters.m_Imb)
 			{
 				pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForNode, 
 																	 pNode->GetVerbalName(), 
@@ -1373,7 +1373,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 		if (!pNode->m_pSuperNodeParent)
 		{
 			GetNodeImb(pMatrixInfo);
-			_ASSERTE(fabs(pMatrixInfo->m_dImbP) < m_Parameters.m_Imb && fabs(pMatrixInfo->m_dImbQ) < m_Parameters.m_Imb);
+			_ASSERTE(std::abs(pMatrixInfo->m_dImbP) < m_Parameters.m_Imb && std::abs(pMatrixInfo->m_dImbQ) < m_Parameters.m_Imb);
 		}
 
 		switch (pNode->m_eLFNodeType)
@@ -1434,7 +1434,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 				if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
 					Qspread += pNode->Qgr = pNode->Qg = pMatrixInfo->LFQmin + (pMatrixInfo->LFQmax - pMatrixInfo->LFQmin) * Qrange;
 
-				if (fabs(Qspread - QgSource) > m_Parameters.m_Imb)
+				if (std::abs(Qspread - QgSource) > m_Parameters.m_Imb)
 				{
 					bAllOk = false;
 					pNode->Log(CDFW2Messages::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFWrongQrangeForSuperNode,
