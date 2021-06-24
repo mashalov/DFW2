@@ -3,16 +3,6 @@
 
 using namespace DFW2;
 
-CDevice::CDevice() : m_pContainer(nullptr),
-					 m_eInitStatus(eDEVICEFUNCTIONSTATUS::DFS_NOTREADY),
-					 m_State(eDEVICESTATE::DS_ON),
-					 m_StateCause(eDEVICESTATECAUSE::DSC_INTERNAL),
-					 m_nMatrixRow(0)
-
-{
-	
-}
-
 // у устройства нет собственного типа. Тип задается из контейнера
 // к которому устройство принадлежит. Если контейнера нет - тип неизвестен
 eDFW2DEVICETYPE CDevice::GetType() const

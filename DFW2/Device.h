@@ -168,13 +168,13 @@ namespace DFW2
 	class CDevice : public CDeviceId
 	{
 	protected:
-		CDeviceContainer *m_pContainer;										// контейнер устройства
-		CSingleLink m_DeviceLinks;											// связи устройств один к одному
-		eDEVICEFUNCTIONSTATUS m_eInitStatus;								// статус инициализации устройства (заполняется в Init)
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);			// инициализация устройства
-		ptrdiff_t m_nMatrixRow;												// строка в матрице с которой начинаются уравнения устройства
-		eDEVICESTATE m_State;												// состояние устройства
-		eDEVICESTATECAUSE m_StateCause;										// причина изменения состояния устройства
+		CDeviceContainer *m_pContainer = nullptr;										// контейнер устройства
+		CSingleLink m_DeviceLinks;														// связи устройств один к одному
+		eDEVICEFUNCTIONSTATUS m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;		// статус инициализации устройства (заполняется в Init)
+		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);						// инициализация устройства
+		ptrdiff_t m_nMatrixRow = 0;														// строка в матрице с которой начинаются уравнения устройства
+		eDEVICESTATE m_State = eDEVICESTATE::DS_ON;										// состояние устройства
+		eDEVICESTATECAUSE m_StateCause = eDEVICESTATECAUSE::DSC_INTERNAL;				// причина изменения состояния устройства
 		STATEPRIMITIVESLIST m_StatePrimitives;
 		PRIMITIVESVEC m_Primitives;
 		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
@@ -191,7 +191,6 @@ namespace DFW2
 
 		void DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber);
 	public:
-		CDevice();
 
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
 		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
@@ -234,7 +233,7 @@ namespace DFW2
 		virtual ~CDevice() = default;
 		virtual bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		void IncrementLinkCounter(ptrdiff_t nLinkIndex);
-		ptrdiff_t m_nInContainerIndex;
+		ptrdiff_t m_nInContainerIndex = -1;
 		// получить связи устроства из слоя nLinkIndex
 		CLinkPtrCount* GetLink(ptrdiff_t nLinkIndex);
 		void ResetVisited();

@@ -306,7 +306,6 @@ namespace DFW2
 		void SwitchOffDanglingNodes(NodeSet& Queue);
 		void CalcAdmittances(bool bFixNegativeZs);
 		void SwitchLRCs(bool bSwitchToDynamicLRC);
-		static bool BranchAndNodeConnected(CDynaNodeBase* pNode, CDynaBranch* pBranch);
 		_IterationControl m_IterationControl;
 		void DumpIterationControl();
 		std::string GetIterationControlString();

@@ -5,10 +5,8 @@ using namespace DFW2;
 
 // конструктор без параметров
 // по умолчанию Id и индекс в БД не установлены, что соответствует отрицательным значениям
-CDeviceId::CDeviceId() : m_Id(-1), m_DBIndex(-1)
-{
+CDeviceId::CDeviceId() {}
 
-}
 // конструктор с определением Id
 CDeviceId::CDeviceId(ptrdiff_t nId) : m_Id(nId)
 {
