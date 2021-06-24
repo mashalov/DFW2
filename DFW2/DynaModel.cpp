@@ -112,7 +112,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
 
 		//m_Parameters.m_dFrequencyTimeConstant = 1E-3;
-		m_Parameters.eFreqDampingType = APDT_NODE;
+		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 		m_Parameters.m_dOutStep = 1E-10;
 		//m_Parameters.eFreqDampingType = APDT_ISLAND;
 		//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
@@ -319,7 +319,7 @@ bool CDynaModel::RunTransient()
 void CDynaModel::InitDevices()
 {
 	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
-	m_cszDampingName = (GetFreqDampingType() == APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
+	m_cszDampingName = (GetFreqDampingType() == ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
 
 	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
 	if (!UpdateExternalVariables())

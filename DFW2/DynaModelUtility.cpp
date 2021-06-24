@@ -598,6 +598,125 @@ double CDynaModel::WrapPosNegPI(double fAng)
 }
 
 
+SerializerPtr CDynaModel::Parameters::GetSerializer()
+{
+	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
+	Serializer->SetClassName("Parameters");
+	Serializer->AddProperty("FrequencyTimeConstant", m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("LRCToShuntVmin", m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("ZeroCrossingTolerance", m_dZeroCrossingTolerance);
+	Serializer->AddProperty("DontCheckTolOnMinStep", m_bDontCheckTolOnMinStep);
+	Serializer->AddProperty("ConsiderDampingEquation", m_bConsiderDampingEquation);
+	Serializer->AddProperty("OutStep", m_dOutStep, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("VarSearchStackDepth", nVarSearchStackDepth);
+	Serializer->AddProperty("Atol", m_dAtol);
+	Serializer->AddProperty("Rtol", m_dRtol);
+	Serializer->AddProperty("RefactorByHRatio", m_dRefactorByHRatio);
+	Serializer->AddProperty("LogToConsole", m_bLogToConsole);
+	Serializer->AddProperty("LogToFile", m_bLogToFile);
+	Serializer->AddProperty("MustangDerivativeTimeConstant", m_dMustangDerivativeTimeConstant, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty("AdamsIndividualSuppressionCycles", m_nAdamsIndividualSuppressionCycles, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty("AdamsGlobalSuppressionStep", m_nAdamsGlobalSuppressionStep, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty("AdamsIndividualSuppressStepsRange", m_nAdamsIndividualSuppressStepsRange, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty("UseRefactor", m_bUseRefactor);
+	Serializer->AddProperty("DisableResultsWriter", m_bDisableResultsWriter);
+	Serializer->AddProperty("MinimumStepFailures", m_nMinimumStepFailures, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty("ZeroBranchImpedance", m_dZeroBranchImpedance, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty("AdamsDampingAlpha", m_dAdamsDampingAlpha);
+	Serializer->AddProperty("AdamsDampingSteps", m_nAdamsDampingSteps);
+	Serializer->AddProperty("AllowUserOverrideStandardLRC", m_bAllowUserOverrideStandardLRC);
+	Serializer->AddProperty("AllowDecayDetector", m_bAllowDecayDetector);
+	Serializer->AddProperty("DecayDetectorCycles", m_nDecayDetectorCycles);
+	Serializer->AddProperty("StopOnBranchOOS", m_bStopOnBranchOOS);
+	Serializer->AddProperty("StopOnGeneratorOOS", m_bStopOnGeneratorOOS);
+
+	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
+		new CSerializerAdapterEnumT<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames, std::size(m_cszAdamsRingingSuppressionNames)));
+
+	Serializer->AddEnumProperty("FreqDampingType",
+		new CSerializerAdapterEnumT<ACTIVE_POWER_DAMPING_TYPE>(eFreqDampingType, m_cszFreqDampingNames, std::size(m_cszFreqDampingNames)));
+
+	Serializer->AddEnumProperty("DiffEquationType",
+		new CSerializerAdapterEnumT<DEVICE_EQUATION_TYPE>(m_eDiffEquationType, m_cszDiffEquationTypeNames, std::size(m_cszDiffEquationTypeNames)));
+
+	return Serializer;
+}
+
+
+SerializerPtr CDynaModel::StepControl::GetSerializer()
+{
+	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
+	Serializer->SetClassName("StepControl");
+	Serializer->AddProperty("RefactorMatrix", m_bRefactorMatrix);
+	Serializer->AddProperty("FillConstantElements", m_bFillConstantElements);
+	Serializer->AddProperty("NewtonConverged", m_bNewtonConverged);
+	Serializer->AddProperty("NordsiekSaved", m_bNordsiekSaved);
+	Serializer->AddProperty("NewtonDisconverging", m_bNewtonDisconverging);
+	Serializer->AddProperty("NewtonStepControl", m_bNewtonStepControl);
+	Serializer->AddProperty("DiscontinuityMode", m_bDiscontinuityMode);
+	Serializer->AddProperty("ZeroCrossingMode", m_bZeroCrossingMode);
+	Serializer->AddProperty("RetryStep", m_bRetryStep);
+	Serializer->AddProperty("ProcessTopology", m_bProcessTopology);
+	Serializer->AddProperty("DiscontinuityRequest", m_bDiscontinuityRequest);
+	Serializer->AddProperty("EnforceOut", m_bEnforceOut);
+	Serializer->AddProperty("BeforeDiscontinuityWritten", m_bBeforeDiscontinuityWritten);
+	Serializer->AddProperty("FilteredStep", dFilteredStep);
+	Serializer->AddProperty("FilteredOrder", dFilteredOrder);
+	Serializer->AddProperty("FilteredStepInner", dFilteredStepInner);
+	Serializer->AddProperty("FilteredOrderInner", dFilteredOrderInner);
+	Serializer->AddProperty("RateGrowLimit", dRateGrowLimit);
+	Serializer->AddProperty("StepsCount", nStepsCount);
+	Serializer->AddProperty("NewtonIterationsCount", nNewtonIterationsCount);
+	Serializer->AddProperty("MaxConditionNumber", dMaxConditionNumber);
+	Serializer->AddProperty("MaxConditionNumberTime", dMaxConditionNumberTime);
+	Serializer->AddProperty("DiscontinuityNewtonFailures", nDiscontinuityNewtonFailures);
+	Serializer->AddProperty("MinimumStepFailures", nMinimumStepFailures);
+	Serializer->AddProperty("CurrentH", m_dCurrentH);
+	Serializer->AddProperty("OldH", m_dOldH);
+	Serializer->AddProperty("StoredH", m_dStoredH);
+	Serializer->AddProperty("q", q);
+	Serializer->AddProperty("t", t);
+	//Serializer->AddProperty("KahanC", KahanC);
+	Serializer->AddProperty("t0", t0);
+	Serializer->AddProperty("StepsToStepChangeParameter", nStepsToStepChangeParameter);
+	Serializer->AddProperty("StepsToOrderChangeParameter", nStepsToOrderChangeParameter);
+	Serializer->AddProperty("StepsToFailParameter", nStepsToFailParameter);
+	Serializer->AddProperty("StepsToStepChange", nStepsToStepChange);
+	Serializer->AddProperty("StepsToOrderChange", nStepsToOrderChange);
+	Serializer->AddProperty("StepsToFail", nStepsToFail);
+	Serializer->AddProperty("SuccessfullStepsOfNewton", nSuccessfullStepsOfNewton);
+	Serializer->AddProperty("StepsToEndRateGrow", nStepsToEndRateGrow);
+	Serializer->AddProperty("NewtonIteration", nNewtonIteration);
+	Serializer->AddProperty("RightHandNorm", dRightHandNorm);
+	Serializer->AddProperty("AdamsDampingEnabled", bAdamsDampingEnabled);
+	Serializer->AddProperty("NoRingingSteps", nNoRingingSteps);
+	Serializer->AddProperty("Hmin", Hmin);
+	Serializer->AddProperty("LastRefactorH", m_dLastRefactorH);
+	Serializer->AddProperty("RingingDetected", bRingingDetected);
+
+	Serializer->AddProperty("Order0Steps", OrderStatistics[0].nSteps);
+	Serializer->AddProperty("Order0Failures", OrderStatistics[0].nFailures);
+	Serializer->AddProperty("Order0NewtonFailures", OrderStatistics[0].nNewtonFailures);
+	Serializer->AddProperty("Order0ZeroCrossingsSteps", OrderStatistics[0].nZeroCrossingsSteps);
+	Serializer->AddProperty("Order0TimePassed", OrderStatistics[0].dTimePassed);
+	Serializer->AddProperty("Order0TimePassedKahan", OrderStatistics[0].dTimePassedKahan);
+
+	Serializer->AddProperty("Order1Steps", OrderStatistics[1].nSteps);
+	Serializer->AddProperty("Order1Failures", OrderStatistics[1].nFailures);
+	Serializer->AddProperty("Order1NewtonFailures", OrderStatistics[1].nNewtonFailures);
+	Serializer->AddProperty("Order1ZeroCrossingsSteps", OrderStatistics[1].nZeroCrossingsSteps);
+	Serializer->AddProperty("Order1TimePassed", OrderStatistics[1].dTimePassed);
+	Serializer->AddProperty("Order1TimePassedKahan", OrderStatistics[1].dTimePassedKahan);
+
+	return Serializer;
+}
+
+
+const char* CDynaModel::Parameters::m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
+const char* CDynaModel::Parameters::m_cszFreqDampingNames[2] = { "Node", "Island" };
+const char* CDynaModel::Parameters::m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
+
+
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
 								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1

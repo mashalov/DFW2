@@ -52,8 +52,9 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 
 
 		auto saxSerializer = std::make_unique<JsonSaxMainSerializer>();
+		const auto& acceptorObjects(acceptorCounter->Objects());
 
-		for (const auto& [objkey, objsize] : acceptorCounter->Objects())
+		for (const auto& [objkey, objsize] : acceptorObjects)
 		{
 			// если описатель контейнера есть, а данных нет, то второй проход 
 			// по нему не делаем
@@ -70,6 +71,14 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 			}
 		}
 
+		// ищем акцепторы для параметров и управления шагом, если такие акцепторы есть,
+		// добавляем сериализаторы
+		std::array<SerializerPtr, 2> parameters{ m_Parameters.GetSerializer() , sc.GetSerializer() };
+		for (auto&& param : parameters)
+		{
+			if (const auto name(param->GetClassName()); acceptorObjects.find(name) != acceptorObjects.end())
+				saxSerializer->AddSerializer(name, std::move(param));
+		}
 
 		// перематываем файл в начало для второго прохода
 		js.clear(); js.seekg(0);

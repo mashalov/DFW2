@@ -109,14 +109,14 @@ namespace DFW2
 	};
 
 	// способ учета демпфирования в генератора
-	enum ACTIVE_POWER_DAMPING_TYPE
+	enum class ACTIVE_POWER_DAMPING_TYPE
 	{
 		APDT_NODE,			// по скольжению узла
 		APDT_ISLAND			// по скольжению средневзвешенного узла синхронной зоны
 	};
 
 	// способ подавления рингинга метода Адамса 2-го порядка
-	enum ADAMS_RINGING_SUPPRESSION_MODE
+	enum class ADAMS_RINGING_SUPPRESSION_MODE
 	{
 		ARSM_NONE,			// подавление не используется
 		ARSM_GLOBAL,		// подавление для всех дифференциальных уравнений по кратности шага
