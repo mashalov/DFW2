@@ -183,6 +183,7 @@ class COscDetectorBase
 							vs.state = eState::wait_min;
 							// если уже есть набранные точки, проверяем, чтобы
  							// найденный максимум не превышал сохраненный более чем на точность расчета
+							COscDetectorBase::extreme_point_type newmax{ oldtime, vs.value };
 							if (!vs.maxs.empty())
 							{
 								// проверяем отличие сохраненного максимума от найденного с учетом допустимой точности расчета
@@ -192,15 +193,15 @@ class COscDetectorBase
 									// если отклонение более чем на точность расчета,
 									// сбрасываем накопленные максимумы и добавляем текущий
 									vs.clear_min_max();
-									vs.maxs.push_back({ oldtime, vs.value });
+									vs.maxs.push_back(newmax);
 								}
 								else if(d < 0.0) // если в пределах точности, просто обновляем сохраненный максимум
-									vs.maxs.back() = { oldtime, vs.value };
+									vs.maxs.back() = newmax;
 								else
-									vs.maxs.push_back({ oldtime, vs.value });		// если макимум меньше, накапливаем его
+									vs.maxs.push_back(newmax);		// если макимум меньше, накапливаем его
 							}
 							else
-								vs.maxs.push_back({ oldtime, vs.value });		// добавляем максимум если максимумы пустые
+								vs.maxs.push_back(newmax);			// добавляем максимум если максимумы пустые
 						}
 						break;
 					case eState::wait_min:
@@ -211,6 +212,7 @@ class COscDetectorBase
 							vs.state = eState::wait_max;
 							// если уже есть набранные точки, проверяем, чтобы
  							// найденный минимум не был меньше сохраненного на точность расчета
+							COscDetectorBase::extreme_point_type newmin{ oldtime, vs.value };
 							if (!vs.mins.empty())
 							{
 								// проверяем отличие сохраненного максимума от найденного с учетом допустимой точности расчета
@@ -219,15 +221,15 @@ class COscDetectorBase
 								{
 									// если отклонение более чем на точность, сбрасываем минимумы
 									vs.clear_min_max();
-									vs.mins.push_back({ oldtime, vs.value });
+									vs.mins.push_back(newmin);
 								}
 								else if(d > 0.0)	// если в пределах точности - обновляем минимум
-									vs.mins.back() = { oldtime, vs.value };		
+									vs.mins.back() = newmin;
 								else
-									vs.mins.push_back({ oldtime, vs.value });	// если минимум больше - накапливаем его
+									vs.mins.push_back(newmin);	// если минимум больше - накапливаем его
 							}
 							else
-								vs.mins.push_back({ oldtime, vs.value });	// добавляем минимум если минимумы пусты
+								vs.mins.push_back(newmin);		// добавляем минимум если минимумы пусты
 						}
 						break;
 					}
