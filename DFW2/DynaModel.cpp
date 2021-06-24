@@ -32,9 +32,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   AutomaticDevice(this),
 						   CustomDeviceCPP(this)
 {
-#ifdef _MSC_VER
-	m_hStopEvt = CreateEvent(NULL, TRUE, FALSE, L"DFW2STOP");
-#endif
+	//Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("{}",__DATE__));
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
 	// константы могут изменяться, например для демпфирования
 	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
@@ -80,10 +78,6 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 
 CDynaModel::~CDynaModel()
 {
-#ifdef _MSC_VER
-	if (m_hStopEvt)
-		CloseHandle(m_hStopEvt);
-#endif
 	LogFile.close();
 }
 
@@ -231,10 +225,10 @@ bool CDynaModel::RunTransient()
 
 			try
 			{
-				while (!sc.m_bStopCommandReceived && bRes)
+				while (!CancelProcessing() && bRes)
 				{
 					bRes = bRes && Step();
-					if (!sc.m_bStopCommandReceived)
+					if (!CancelProcessing())
 					{
 						if (bRes)
 						{
@@ -243,8 +237,6 @@ bool CDynaModel::RunTransient()
 							bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
 						}
 					}
-					if (CancelProcessing())
-						break;
 					if (StabilityLost())
 						break;
 					if (OscillationsDecayed())
@@ -881,11 +873,8 @@ bool CDynaModel::Step()
 	sc.CheckAdvance_t0();
 
 	// пока шаг нужно повторять, все в порядке и не получена команда останова
-	while (sc.m_bRetryStep && bRes && !sc.m_bStopCommandReceived)
+	while (sc.m_bRetryStep && bRes && !CancelProcessing())
 	{
-		if (CancelProcessing())
-			break;
-
 		Predict();		// делаем прогноз Nordsieck для следуюшего времени
 		bRes = bRes && SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
 

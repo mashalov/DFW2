@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <chrono>
 #include <algorithm>
+#include <atomic>
 #include <cfloat>
 #include "Discontinuities.h"
 #include "CustomDevice.h"
@@ -9,7 +10,6 @@
 #include "Results.h"
 #include "OscDetector.h"
 #include "FmtComplexFormat.h"
-
 
 //#define USE_FMA
 namespace DFW2
@@ -182,7 +182,6 @@ namespace DFW2
 			bool m_bDiscontinuityMode = false;
 			bool m_bZeroCrossingMode = false;
 			bool m_bRetryStep = false;
-			bool m_bStopCommandReceived = false;
 			bool m_bProcessTopology = false;
 			bool m_bDiscontinuityRequest = false;
 			bool m_bEnforceOut = false;
@@ -496,9 +495,10 @@ namespace DFW2
 
 #ifdef _MSC_VER
 		IResultWritePtr m_spResultWrite;
-		// TODO !!!!!  Заменить на std !!!!!
-		HANDLE m_hStopEvt;
 #endif
+
+		std::atomic<bool> bStopProcessing = false;
+
 		double m_dTimeWritten;
 		const char* m_cszDampingName = nullptr;
 
@@ -711,9 +711,7 @@ namespace DFW2
 		{
 			return std::abs(dValue) * GetRtol() * 0.01 + GetAtol() * 10.0;
 		}
-
 		void StopProcess();
-
 		void ProcessTopologyRequest();
 		void DiscontinuityRequest();
 		void ServeDiscontinuityRequest();
@@ -762,7 +760,10 @@ namespace DFW2
 		void DeSerialize(const std::filesystem::path path);
 
 		// возвращает true, если расчет нужно прекратить (отмена пользователем)
-		bool CancelProcessing();
+		inline bool CancelProcessing()
+		{
+			return bStopProcessing;
+		}
 		bool StabilityLost();
 		bool OscillationsDecayed();
 

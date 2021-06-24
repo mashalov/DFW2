@@ -19,11 +19,13 @@ CrtBreakAllocSetter g_crtBreakAllocSetter;
 
 */
 
+
+std::list<CDynaModel*> networks;
+
 BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 {
-	HANDLE hEvt = CreateEvent(NULL, TRUE, FALSE, L"DFW2STOP");
-	SetEvent(hEvt);
-	CloseHandle(hEvt);
+	for (auto&& nw : networks)
+		nw->StopProcess();
 	return TRUE;
 }
 
@@ -48,6 +50,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	CoInitialize(NULL);
 	{
 		CDynaModel Network;
+		networks.push_back(&Network);
 		CRastrImport ri;
 		try
 		{

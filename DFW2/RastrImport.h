@@ -206,8 +206,18 @@ namespace DFW2
 		virtual ~CRastrImport() = default;
 		void GetData(CDynaModel& Network);
 	protected:
+		void InitRastrWin();
 		IRastrPtr m_spRastr;
 		CRastrSynonyms m_rastrSynonyms;
+
+		std::filesystem::path rstPath;
+		std::filesystem::path dfwPath;
+		std::filesystem::path scnPath;
+
+		std::list<std::filesystem::path> LoadedFiles;
+
+		void LoadFile(std::filesystem::path FilePath, const std::filesystem::path& TemplatePath);
+		void LoadFile(std::filesystem::path FilePath);
 
 		//bool CreateLRCFromDBSLCS(CDynaModel& Network, DBSLC *pLRCBuffer, ptrdiff_t nLRCCount);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer);

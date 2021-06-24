@@ -114,8 +114,6 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 
 	// не нужно ждать завершения, если мы используем перенаправление вывода
 	// https://stackoverflow.com/questions/35969730/how-to-read-output-from-cmd-exe-using-createprocess-and-createpipe
-	/*if (WaitForSingleObject(pi.hProcess, INFINITE) != WAIT_OBJECT_0)
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "Ошибка ожидания завершения работы процесса MSBuild");*/
 	// закрываем handle вывода в консоль, иначе ReadFile может зависнуть
 	hStdWrite.Close();
 

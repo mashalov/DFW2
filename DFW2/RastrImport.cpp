@@ -14,6 +14,7 @@ using namespace DFW2;
 
 CRastrImport::CRastrImport()
 {
+	InitRastrWin();
 }
 
 bool GetConstFromField(const ConstVarsInfo& VarsInfo)
@@ -259,9 +260,10 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 	}
 }
 
-void CRastrImport::GetData(CDynaModel& Network)
+void CRastrImport::InitRastrWin()
 {
-	HRESULT hr = m_spRastr.CreateInstance(CLSID_Rastr);
+	if (FAILED(m_spRastr.CreateInstance(CLSID_Rastr)))
+		throw dfw2error(CDFW2Messages::m_cszCannotUseRastrWin3);
 
 	struct RastrWinHandle
 	{
@@ -273,11 +275,11 @@ void CRastrImport::GetData(CDynaModel& Network)
 		}
 		~RastrWinHandle()
 		{
-			if(handle)
+			if (handle)
 				RegCloseKey(handle);
 		}
 
-		operator HKEY& () 
+		operator HKEY& ()
 		{
 			return handle;
 		}
@@ -291,24 +293,38 @@ void CRastrImport::GetData(CDynaModel& Network)
 	if (RegQueryValueEx(regRastrWin3, cszUserFolder, NULL, NULL, NULL, &size) != ERROR_SUCCESS)
 		throw dfw2error(CDFW2Messages::m_cszNoRastrWin3FoundInRegistry);
 
-	auto buffer = std::make_unique<wchar_t[]>(size * sizeof(wchar_t) / sizeof(BYTE)); 
+	auto buffer = std::make_unique<wchar_t[]>(size * sizeof(wchar_t) / sizeof(BYTE));
 	if (RegQueryValueEx(regRastrWin3, cszUserFolder, NULL, NULL, reinterpret_cast<BYTE*>(buffer.get()), &size) == ERROR_SUCCESS)
 		templatePath = buffer.get();
 	else
 		throw dfw2error(CDFW2Messages::m_cszNoRastrWin3FoundInRegistry);
-		
+
 	templatePath.append(L"shablon");
-	std::filesystem::path rstPath(templatePath);
-	std::filesystem::path dfwPath(templatePath);
-	std::filesystem::path scnPath(templatePath);
+
+	rstPath = templatePath;
+	dfwPath = templatePath;
+	scnPath = templatePath;
+
 	rstPath.append(L"динамика.rst");
 	dfwPath.append(L"автоматика.dfw");
 	scnPath.append(L"сценарий.scn");
+}
 
+void CRastrImport::LoadFile(std::filesystem::path FilePath)
+{
+	LoadFile(FilePath, "");
+}
 
-	//spRastr->Load(RG_REPL, L"..\\tests\\test92.rst", "");
-	//spRastr->Load(RG_REPL, L"..\\tests\\lineoff.dfw", dfwPath.c_str());
-	//spRastr->Load(RG_REPL, L"C:\\Users\\Bug\\Documents\\Visual Studio 2013\\Projects\\DFW2\\tests\\test92.rst", "");
+void CRastrImport::LoadFile(std::filesystem::path FilePath, const std::filesystem::path& TemplatePath)
+{
+	m_spRastr->Load(RG_REPL, 
+		stringutils::utf8_decode(FilePath.string()).c_str(), TemplatePath.c_str());
+	LoadedFiles.push_back(FilePath);
+}
+
+void CRastrImport::GetData(CDynaModel& Network)
+{
+
 
 	// Уват
 	/*
@@ -321,17 +337,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 
 	// СМЗУ Северо-Запад
-	///*
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1", ""); 
-	//*/
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1");
 
 	// СМЗУ Сибирь
-	/*
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str()); 
-	//m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw", dfwPath.c_str());
-	m_spRastr->Load(RG_REPL, L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
-	//m_spRastr->NewFile(dfwPath.c_str());
-	*/
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str());
+	//LoadFile(L"C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw", dfwPath.c_str());
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
 
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", dfwPath.c_str());
@@ -459,8 +470,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameDECMustang, "Forcer");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
 
-
-	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingModelFormat, "RastrWin3", ""));
+	for(const auto& file: LoadedFiles)
+		Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingModelFormat, "RastrWin3", file.string()));
 
 	ReadLRCs(static_cast<CDynaLRCContainer&>(Network.LRCs));
 	ReadTable(Network.Nodes);

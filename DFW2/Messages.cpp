@@ -157,5 +157,7 @@ const char* CDFW2Messages::m_cszWrongPnom = "Неверно задана ном�
 const char* CDFW2Messages::m_cszGeneratorSuspiciousMj = "Значение Tj={} c для генератора \"{}\" подозрительно мало";
 const char* CDFW2Messages::m_cszNoRastrWin3FoundInRegistry = "Ошибка доступа к ключу/значению в реестре для поиска шаблонов RastrWin3";
 const char* CDFW2Messages::m_cszDecayDetected = "Зафиксирован критерий затухания переходного процесса при t={} с";
+const char* CDFW2Messages::m_cszCannotUseRastrWin3 = "Невозможно использование компонентов RastrWin3";
+const char* CDFW2Messages::m_cszStopCommandReceived = "Получена команда останова при t={} с";
 
 

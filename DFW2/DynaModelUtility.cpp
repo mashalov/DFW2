@@ -89,9 +89,14 @@ struct RightVector* CDynaModel::GetRightVector(const ptrdiff_t nRow)
 	return pRightVector + nRow;
 }
 
+
 void CDynaModel::StopProcess()
 {
-	sc.m_bStopCommandReceived = true;
+	if (!bStopProcessing)
+	{
+		Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(CDFW2Messages::m_cszStopCommandReceived, GetCurrentTime()));
+		bStopProcessing = true;
+	}
 }
 
 CDeviceContainer* CDynaModel::GetDeviceContainer(eDFW2DEVICETYPE Type)
@@ -416,17 +421,6 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping,
 														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
 }
-
-bool CDynaModel::CancelProcessing() 
-{
-	// TODO !!!!! сделать std !!!!!
-#ifdef _MSC_VER
-	return WaitForSingleObject(m_hStopEvt, 0) == WAIT_OBJECT_0;
-#else
-	return false;
-#endif
-}
-
 
 // https://stackoverflow.com/questions/1878907/how-can-i-find-the-difference-between-two-angles
 /*
