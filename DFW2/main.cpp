@@ -19,7 +19,7 @@ int main()
     }
     catch (dfw2error& err)
     {
-        Network.Log(DFW2::CDFW2Messages::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+        Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
         Network.Serialize("/home/eugene/projects/DFW2/DFW2/lf.json");
     }
  
