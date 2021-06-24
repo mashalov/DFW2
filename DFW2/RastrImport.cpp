@@ -460,6 +460,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
 
 
+	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingModelFormat, "RastrWin3", ""));
 
 	ReadLRCs(static_cast<CDynaLRCContainer&>(Network.LRCs));
 	ReadTable(Network.Nodes);

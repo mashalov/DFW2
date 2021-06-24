@@ -52,14 +52,14 @@ int _tmain(int argc, _TCHAR* argv[])
 		try
 		{
 			//Network.DeSerialize("c:\\tmp\\serialization.json");
-			Network.DeSerialize("c:\\tmp\\lf_test.json");
+			//Network.DeSerialize("c:\\tmp\\lf_test.json");
 			ri.GetData(Network);
 			//Network.RunLoadFlow();
 			Network.RunTransient();
 		}
 		catch (_com_error& err)
 		{
-			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
+			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
 		}
 		catch (const dfw2error& err)
 		{

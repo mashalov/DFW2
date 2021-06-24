@@ -154,7 +154,7 @@ namespace DFW2
 		static const char* m_cszUserOverrideOfStandardLRC;
 		static const char* m_cszLRCVminChanged;
 		static const char* m_cszLRCIdNotFound;
-		static const char* m_cszLoadingJson;
+		static const char* m_cszLoadingModelFormat;
 		static const char* m_cszStdFileStreamError;
 		static const char* m_cszJsonParserError;
 		static const char* m_cszFoundContainerData;

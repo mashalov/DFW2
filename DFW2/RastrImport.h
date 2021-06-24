@@ -218,7 +218,7 @@ namespace DFW2
 		void ReadLRCs(CDynaLRCContainer& container);
 
 		// Читаем контейнер из таблицы RastrWin
-		void ReadTable(CDeviceContainer& Container, const char* cszRastrSelection = "")
+		void ReadTable(CDeviceContainer& Container, std::string_view RastrSelection = "")
 		{
 			const auto containerClass = Container.m_ContainerProps.GetSystemClassName();
 			// находим синнонимы названий контейнера для Rastr
@@ -233,12 +233,24 @@ namespace DFW2
 				if (rastrTableIndex < 0) continue;
 				// таблица есть, читаем по выборке
 				ITablePtr spTable = m_spRastr->Tables->Item(rastrTableIndex);
-				spTable->SetSel(cszRastrSelection);
+				std::string selection(RastrSelection);
+				spTable->SetSel(selection.c_str());
 				int nSize = spTable->Count;		// определяем размер контейнера по размеру таблицы с выборкой
 				// даже если размер нулевой - делаем контейнер пустым	
 				Container.CreateDevices(nSize);
 				if (!nSize)
 					break;
+
+				if (!selection.empty())
+					selection.insert(selection.begin(), ':');
+
+				const std::string RastrWinDataSourceDescription(fmt::format("{}{}", synonym->name, selection));
+
+				Container.Log(DFW2MessageStatus::DFW2LOG_INFO, 
+					fmt::format(CDFW2Messages::m_cszFoundContainerData, 
+						RastrWinDataSourceDescription, 
+						Container.m_ContainerProps.GetVerbalClassName(), 
+						nSize));
 
 				IColsPtr spCols = spTable->Cols;
 
