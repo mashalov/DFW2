@@ -87,6 +87,7 @@ namespace ResultFileTest
                 DeviceTree.Nodes.Add(rootNode);
                 rootNode.Populate();
                 rootNode.Expand();
+                Text = $"Version {resultRead.Version} Channels {resultRead.Channels} Points {resultRead.Points} Ratio {resultRead.CompressionRatio}";
             }
             finally
             {
