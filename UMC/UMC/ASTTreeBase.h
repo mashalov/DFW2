@@ -134,9 +134,6 @@ public:
         return pNode;
     }
 
-    // special version for root creation in ASTTreeBase.cpp
-    template<> CASTRoot* CreateNode<CASTRoot>(CASTNodeBase* pParent);
-
     void DeleteNode(CASTNodeBase* pNode);
     void DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor);
     void DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor);
@@ -173,4 +170,8 @@ public:
     std::filesystem::path GetPropertyPath(std::string_view PropNamePath);
     const PropertyMap& GetProperties() const { return properties; }
 };
-    
+
+
+// special version for root creation in ASTTreeBase.cpp
+template<> CASTRoot* CASTTreeBase::CreateNode<CASTRoot>(CASTNodeBase* pParent);
+
