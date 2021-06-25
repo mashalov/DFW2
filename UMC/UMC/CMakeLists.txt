@@ -30,12 +30,14 @@ set(SOURCES
     ASTTrigonometry.cpp
     ASTTrivialEquations.cpp
     ASTVariable.cpp
-#    CompilerBase.cpp
+    CompilerBase.cpp
+    CompilerGCC.cpp
     dllmain.cpp
     EquationsOps.cpp
     UMC.cpp
     )             
 
-add_library(UMC SHARED ${SOURCES})
+#add_library(UMC SHARED ${SOURCES})
+add_executable(UMC  ${SOURCES})
 target_include_directories(UMC PRIVATE ${INCLUDES}) 
 

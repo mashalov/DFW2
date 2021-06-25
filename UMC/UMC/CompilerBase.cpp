@@ -26,7 +26,14 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 	// UTF-8 filename ?
 	std::ofstream OutputStream(pathSourceOutput);
 	if (!OutputStream.is_open())
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
+    {
+#ifdef _MSC_VER
+        int ec(GetLastError());
+#else
+        int ec(errno);
+#endif
+        throw std::system_error(std::error_code(ec, std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
+    }
 	OutputStream << SourceToCompile;
 	OutputStream.close();
 }
