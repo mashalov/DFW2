@@ -56,7 +56,7 @@ static inline std::string& rtrim(std::string& s)
 	static std::string utf8_encode(const wchar_t *wstr)
 	{
 #ifdef _MSC_VER
-		return stringutils::utf8_encode(std::wstring_view(wstr));
+		return utf8_encode(std::wstring_view(wstr));
 #else
 		return std::string(); // nothing to convert on linux
 #endif

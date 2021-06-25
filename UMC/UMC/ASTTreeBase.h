@@ -135,7 +135,7 @@ public:
     }
 
     // special version for root creation in ASTTreeBase.cpp
-    // template <> inline CASTRoot* CreateNode<CASTRoot>(CASTNodeBase* pParent);
+    template<> CASTRoot* CreateNode<CASTRoot>(CASTNodeBase* pParent);
 
     void DeleteNode(CASTNodeBase* pNode);
     void DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor);

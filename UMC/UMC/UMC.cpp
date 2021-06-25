@@ -4,11 +4,13 @@
 #include <stdlib.h>
 #ifdef _MSC_VER
 #include <crtdbg.h>
-#include<windows.h>
 #endif
 #include <iostream>
 #include "CompilerBase.h"
 
+#ifdef _MSC_VER
+#include<windows.h>
+#endif
 
 int main()
 {

@@ -189,7 +189,7 @@ void CASTTreeBase::Sort()
 }
 
 
-template<> inline CASTRoot* CASTTreeBase::CreateNode<CASTRoot>(CASTNodeBase* pParent)
+template<> CASTRoot* CASTTreeBase::CreateNode<CASTRoot>(CASTNodeBase* pParent)
 {
     if (pRoot)
         EXCEPTIONMSG("Root already defined");
