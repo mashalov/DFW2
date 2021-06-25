@@ -4,6 +4,7 @@
 #include "DeviceCollection.h"
 
 
+#ifdef _MSC_VER
 // CDeviceCollection
 
 STDMETHODIMP CDeviceCollection::InterfaceSupportsErrorInfo(REFIID riid)
@@ -20,3 +21,5 @@ STDMETHODIMP CDeviceCollection::InterfaceSupportsErrorInfo(REFIID riid)
 	}
 	return S_FALSE;
 }
+
+#endif

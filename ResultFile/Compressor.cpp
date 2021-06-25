@@ -450,7 +450,11 @@ eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, 
 
 uint32_t CCompressorBase::CLZ_LZcnt32(uint32_t x)
 {
+#ifdef _MSC_VER
 	return __lzcnt(x);
+#else
+	return __lzcnt32(x);
+#endif
 }
 
 
