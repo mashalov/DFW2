@@ -57,8 +57,8 @@ namespace DFW2
 
 		KLUWrapper<double>	klu;
 		std::unique_ptr<_MatrixInfo[]> m_pMatrixInfo;				// вектор узлов отнесенных к строкам матрицы якоби
-		_MatrixInfo *m_pMatrixInfoEnd;			// конец вектора узлов PV-PQ в якоби
-		_MatrixInfo *m_pMatrixInfoSlackEnd;		// конец вектора узлов с учетом базисных
+		_MatrixInfo *m_pMatrixInfoEnd = nullptr;					// конец вектора узлов PV-PQ в якоби
+		_MatrixInfo *m_pMatrixInfoSlackEnd = nullptr;				// конец вектора узлов с учетом базисных
 		
 		double m_dTanhBeta = 500.0;
 		ptrdiff_t m_nNodeTypeSwitchesDone;

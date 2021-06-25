@@ -1413,7 +1413,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 					sb->Pgr = sb->Pg = PgSource / SlackBuses.size();
 					sb->Qgr = sb->Qg = DropToSlack / SlackBuses.size();
 				}
-
+				break;
 			default:
 				// все остальные узлы - PV, PVQmin, PVQmax обрабатываем по общим правилам
 				Qrange = (Qrange > 0.0) ? (QgSource - pNode->LFQmin) / Qrange : 0.0;
