@@ -6,7 +6,7 @@
 #include <crtdbg.h>
 #endif
 #include <iostream>
-#include "CompilerBase.h"
+#include "CompilerMSBuild.h"
 
 #ifdef _MSC_VER
 #include<windows.h>
@@ -19,7 +19,7 @@ int main()
     _CrtSetDbgFlag(_CRTDBG_ALLOC_MEM_DF | _CRTDBG_LEAK_CHECK_DF);
     //_CrtSetBreakAlloc(485421);
 #endif    
-    auto compiler = std::make_unique<CompilerBase>();
+    auto compiler = std::make_unique<CCompilerMSBuild>();
     compiler->SetProperty(PropertyMap::szPropRebuild, "yes");
     compiler->Compile("..\\UMC\\original_andornot.txt");
 }

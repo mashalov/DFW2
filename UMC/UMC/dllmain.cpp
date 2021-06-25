@@ -1,5 +1,6 @@
-﻿#include "CompilerBase.h"
-#ifdef _MSC_VER
+﻿#ifdef _MSC_VER
+
+#include "CompilerMSBuild.h"
 #include <windows.h>
 
 
@@ -21,12 +22,13 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 extern "C" __declspec(dllexport) ICompiler*__cdecl CompilerFactory()
 {
-    return new CompilerBase();
+    return new CCompilerMSBuild();
 }
 #else
+#include "CompilerGCC.h"
  __attribute__((visibility("default"))) ICompiler* CompilerFactory()
 {
-    return new CompilerBase();
+    return new CCompilerGCC();
 }
 
 #endif

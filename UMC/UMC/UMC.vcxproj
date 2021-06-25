@@ -335,6 +335,8 @@
     <ClCompile Include="..\..\fmt\src\format.cc" />
     <ClCompile Include="AntlrASTErrorListener.cpp" />
     <ClCompile Include="AntlrASTVisitor.cpp" />
+    <ClCompile Include="CompilerGCC.cpp" />
+    <ClCompile Include="CompilerMSBuild.cpp" />
     <ClCompile Include="UMC.cpp" />
     <ClCompile Include="ASTNodeDeadBand.cpp" />
     <ClCompile Include="ASTEquation.cpp" />
@@ -403,6 +405,8 @@
     <ClInclude Include="ASTTreeBase.h" />
     <ClInclude Include="ASTCodeGeneratorBase.h" />
     <ClInclude Include="CompilerBase.h" />
+    <ClInclude Include="CompilerGCC.h" />
+    <ClInclude Include="CompilerMSBuild.h" />
     <ClInclude Include="Generated\EquationsBaseVisitor.h" />
     <ClInclude Include="Generated\EquationsLexer.h" />
     <ClInclude Include="Generated\EquationsParser.h" />
