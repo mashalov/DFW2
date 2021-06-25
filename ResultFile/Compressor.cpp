@@ -5,6 +5,7 @@
 #include <intrin.h>
 #else
 #include <x86intrin.h>
+#include <cpuid.h>
 #endif 
 
 // чтение double и его декодирование по предиктору
@@ -36,9 +37,15 @@ eFCResult CCompressorBase::ReadDouble(double& dValue, double& dPredictor, CBitSt
 // проверка доступности __lzcnt
 bool IsLzcntAvailable()
 {
+#ifdef _MSC_VER	
 	int cpufeats[4];
 	__cpuid(cpufeats, 0x80000001);
 	return cpufeats[2] & 0x20;
+#else
+	unsigned int eax(0), ebx(0), ecx(0), edx(0);
+	__get_cpuid(0x80000001, &eax, &ebx, &ecx, &edx);
+	return ecx & 0x20;
+#endif	
 }
 
 CCompressorBase::fnWriteDoublePtr CCompressorBase::AssignDoubleWriter()

@@ -76,20 +76,24 @@ namespace DFW2
 			stringutils::removecrlf(T::m_strMessage);
 		}
 
-	static std::string GetLastErrorMessage()
-	{
-		const DWORD dwError = ::GetLastError();
-		if (dwError != 0)
+		static std::string GetLastErrorMessage()
 		{
-			LPTSTR messageBuffer = nullptr;
-			const size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
-				NULL, dwError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&messageBuffer, 0, NULL);
-			std::wstring message(messageBuffer, size);
-			LocalFree(messageBuffer);
-			return stringutils::utf8_encode(message);
+#ifdef _MSC_VER
+			const DWORD dwError = ::GetLastError();
+			if (dwError != 0)
+			{
+				LPTSTR messageBuffer = nullptr;
+				const size_t size = FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+					NULL, dwError, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&messageBuffer, 0, NULL);
+				std::wstring message(messageBuffer, size);
+				LocalFree(messageBuffer);
+				return stringutils::utf8_encode(message);
+			}
+			return std::string("");
+#else
+			std::error_code code(errno, std::system_category());
+			return code.message();
+#endif
 		}
-		return std::string("");
-	}
 	};
-	
 }

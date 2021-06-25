@@ -67,7 +67,7 @@ eFCResult CBitStream::WriteBits(CBitStream& Source, size_t BitCount)
 		BITWORD wSource = *pSource;
 		// формируем маску для записываемого количества бит
 		// если записываемых бит меньше, чем доступно всего в слове - маску делаем сдвигом, если больше - маска все единицы слова
-		BITWORD mask = (nBitsToWrite < WordBitCount) ? (1ui64 << nBitsToWrite) - 1 : ~static_cast<BITWORD>(0);
+		BITWORD mask = (nBitsToWrite < WordBitCount) ? (((uint64_t)1) << nBitsToWrite) - 1 : ~static_cast<BITWORD>(0);
 		// смещаем маску на битовое смещение источника
 		mask <<= Source.m_nBitSeek;
 		// маскируем нужное количество бит в слове источника

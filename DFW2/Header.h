@@ -44,7 +44,7 @@ namespace DFW2
 #define DFW2_VERSION 1
 #define DFW2_RESULTFILE_VERSION 2
 
-#define _CheckNumber(a) _ASSERTE(!std::isnan((a)) && !isinf((a)));
+#define _CheckNumber(a) _ASSERTE(!std::isnan((a)) && !std::isinf((a)));
 
 	inline bool Equal(const double x, const double y)
 	{

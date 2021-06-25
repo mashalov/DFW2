@@ -2,7 +2,6 @@
 
 #pragma once
 #include "resource.h"       // main symbols
-#include "ResultFile_i.h"
 #include "Device.h"
 #include "GenericCollection.h"
 
