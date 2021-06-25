@@ -47,7 +47,7 @@ protected:
 	std::string strFilePath;
 	
 public:
-	HRESULT WriteCSV(std::string_view FilePath);
+	bool WriteCSV(std::string_view FilePath);
 	CCSVWriter(CResultFileReader& ResultFileReader);
 	~CCSVWriter();
 

@@ -144,41 +144,24 @@ void CCSVWriter::WriteVariableNames()
 }
 
 
-HRESULT CCSVWriter::WriteCSV(std::string_view FilePath)
+bool CCSVWriter::WriteCSV(std::string_view FilePath)
 {
-	HRESULT hRes = E_FAIL;
+	bool bRes(false);
 
 	nPointsCount = m_ResultFileReader.GetPointsCount();
 	nChannelsCount = m_ResultFileReader.GetChannelsCount() - 2;
 
-	/*
-	
-	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
-	FILE *pw = NULL;
-	fopen_s(&pw, "c:\\tmp\\binarydata", "wb+");
-
-	for (int c = 0; c < nChannelsCount; c++)
-	{
-		double *pData = m_ResultFileReader.ReadChannel(pChannel->eDeviceType, pChannel->DeviceId, pChannel->DeviceVarIndex);
-		fwrite(pData, sizeof(double), nPointsCount, pw);
-		pChannel++;
-	}
-	fclose(pw);
-	*/
-
 	CSVOut.open(FilePath, std::ios_base::out);
+	std::filesystem::path TempPath(std::filesystem::temp_directory_path());
+#ifdef _MSC_VER
+	const auto tmpname = std::make_unique<char[]>(MAX_PATH);
+	tmpnam_s(tmpname.get(), MAX_PATH);
+	TempPath.append(tmpname.get());
+#else
+	TempPath.append(tmpnam(nullptr));
+#endif
+	CSVFile.open(TempPath.string(), std::ios_base::out);
 
-	wchar_t TempPath[MAX_PATH];
-	if (!GetTempPath(MAX_PATH, TempPath))
-		throw CFileWriteException();
-
-	wchar_t TempFileName[MAX_PATH];
-	if(!GetTempFileName(TempPath, L"csv", 0, TempFileName))
-		throw CFileWriteException();
-
-	strFilePath = stringutils::utf8_encode(TempFileName);
-
-	CSVFile.open(strFilePath.c_str(), std::ios_base::out);
 	CSVFile << "t;h";
 
 	IndexChannels();
@@ -195,11 +178,10 @@ HRESULT CCSVWriter::WriteCSV(std::string_view FilePath)
 
 	CSVOut.close();
 	CSVFile.close();
+	std::filesystem::remove(TempPath);
 
-	DeleteFile(TempFileName);
-	
-	hRes = S_OK;
-	return hRes;
+	bRes = true;
+	return bRes;
 }
 
 void CCSVWriter::WriteColumn(const double *pData, size_t nColumn, bool bLastColumn)

@@ -223,7 +223,8 @@ STDMETHODIMP CResultRead::ExportCSV(BSTR PathName)
 	try
 	{
 		CCSVWriter CSVWriter(m_ResultFileReader);
-		hRes = CSVWriter.WriteCSV(stringutils::utf8_encode(PathName));
+		if (CSVWriter.WriteCSV(stringutils::utf8_encode(PathName)))
+			hRes = S_OK;
 	}
 
 	catch (CFileReadException& ex)
