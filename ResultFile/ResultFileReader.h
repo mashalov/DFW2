@@ -76,8 +76,8 @@ namespace DFW2
 		{
 			DeviceTypeInfo* m_pDevType;
 			std::string Name;
-			struct DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo);
-			struct DeviceInstanceInfo() : m_pDevType(nullptr) {}
+			DeviceInstanceInfo(DeviceTypeInfo* pDevTypeInfo);
+			DeviceInstanceInfo() : m_pDevType(nullptr) {}
 			void SetId(ptrdiff_t nIdIndex, ptrdiff_t nId);
 			virtual ptrdiff_t GetId(ptrdiff_t nIdIndex) const;
 			void SetParent(ptrdiff_t nParentIndex, ptrdiff_t eParentType, ptrdiff_t nParentId);
