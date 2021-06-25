@@ -326,7 +326,10 @@ bool CLoadFlow::SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs)
 	_ASSERTE(!lhs->pNode->IsLFTypePQ());
 	_ASSERTE(!lhs->pNode->IsLFTypePQ());
 	// сортируем по убыванию диапазона
-	return (lhs->pNode->LFQmax - lhs->pNode->LFQmin) > (rhs->pNode->LFQmax - rhs->pNode->LFQmin);
+	const double diffQ = (lhs->pNode->LFQmax - lhs->pNode->LFQmin) - (rhs->pNode->LFQmax - rhs->pNode->LFQmin);
+	if (diffQ == 0.0)
+		return lhs->pNode->GetId() > rhs->pNode->GetId();
+	return diffQ > 0.0;
 }
 
 // добавляет узел в очередь для Зейделя
@@ -474,7 +477,6 @@ void CLoadFlow::Seidell()
 						pNode->Qgr = pNode->LFQmin;
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 						pNodes->m_IterationControl.m_nQviolated++;
-						std::cout << pNode->GetId() << std::endl;
 						Qe = Q - pNode->Qgr;
 						cplx dU = I1 * cplx(Pe, -Qe);
 						pNode->Vre += dU.real();
@@ -486,7 +488,6 @@ void CLoadFlow::Seidell()
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 						pMatrixInfo->m_nPVSwitchCount++;
 						pNodes->m_IterationControl.m_nQviolated++;
-						std::cout << pNode->GetId() << std::endl;
 						pNode->Qgr = Q;
 						cplx dU = I1 * cplx(Pe, 0);
 						dU += Unode;
@@ -512,7 +513,6 @@ void CLoadFlow::Seidell()
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 						pNodes->m_IterationControl.m_nQviolated++;
-						std::cout << pNode->GetId() << std::endl;
 						pNode->Qgr = pNode->LFQmax;
 						Qe = Q - pNode->Qgr;
 						cplx dU = I1 * cplx(Pe, -Qe);
@@ -524,7 +524,6 @@ void CLoadFlow::Seidell()
 						// снимаем узел с ограничения
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 						pNodes->m_IterationControl.m_nQviolated++;
-						std::cout << pNode->GetId() << std::endl;
 						pMatrixInfo->m_nPVSwitchCount++;
 						pNode->Qgr = Q;
 						cplx dU = I1 * cplx(Pe, 0);
@@ -552,7 +551,6 @@ void CLoadFlow::Seidell()
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 						pNodes->m_IterationControl.m_nQviolated++;
-						std::cout << pNode->GetId() << std::endl;
 						pNode->Qgr = pNode->LFQmax;
 						Qe = Q - pNode->Qgr;
 					}
@@ -560,7 +558,6 @@ void CLoadFlow::Seidell()
 					{
 						pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 						pNodes->m_IterationControl.m_nQviolated++;
-						std::cout << pNode->GetId() << std::endl;
 						pNode->Qgr = pNode->LFQmin;
 						Qe = Q - pNode->Qgr;
 					}
