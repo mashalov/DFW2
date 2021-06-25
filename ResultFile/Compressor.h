@@ -1,5 +1,5 @@
 ﻿#pragma once
-#include "..\dfw2\Header.h"
+#include "../DFW2/Header.h"
 
 enum eFCResult
 {

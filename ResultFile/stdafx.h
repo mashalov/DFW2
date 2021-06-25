@@ -4,6 +4,8 @@
 
 #pragma once
 
+#ifdef _MSC_VER
+
 #ifndef STRICT
 #define STRICT
 #endif
@@ -23,3 +25,5 @@
 #include <atlbase.h>
 #include <atlcom.h>
 #include <atlctl.h>
+
+#endif

@@ -1,6 +1,10 @@
 ﻿#include "stdafx.h"
 #include "Compressor.h"
+#ifdef _MSV_VER
 #include <intrin.h>
+#else
+#include <x86intrin.h>
+#endif 
 
 // чтение double и его декодирование по предиктору
 eFCResult CCompressorBase::ReadDouble(double& dValue, double& dPredictor, CBitStream& Input)

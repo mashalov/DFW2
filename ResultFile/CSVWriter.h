@@ -1,7 +1,11 @@
 ﻿#pragma once
 
 #include "resource.h"       // main symbols
+
+#ifdef _MSC_VER
 #include "ResultFile_i.h"
+#endif
+
 #include "ResultFileReader.h"
 
 using namespace DFW2;

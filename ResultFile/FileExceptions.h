@@ -1,9 +1,11 @@
 ﻿#pragma once
 
-#include "..\DFW2\dfw2exception.h"
-#include "..\DFW2\Messages.h"
+#include "../DFW2/dfw2exception.h"
+#include "../DFW2/Messages.h"
 
+#ifdef _MSC_VER
 #include <windows.h>
+#endif
 
 #ifdef _DEBUG
 bool _trace(char* format, ...);

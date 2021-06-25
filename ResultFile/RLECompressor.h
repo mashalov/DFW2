@@ -1,5 +1,7 @@
 ﻿#pragma once
+#ifdef _MSC_VER
 #include <crtdbg.h>
+#endif
 
 class CRLECompressor
 {

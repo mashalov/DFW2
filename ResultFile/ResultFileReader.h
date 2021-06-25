@@ -1,13 +1,15 @@
 ﻿#pragma once
 
-#include "..\dfw2\Header.h"
-#include "..\dfw2\Messages.h"
+#include "../DFW2/Header.h"
+#include "../DFW2/Messages.h"
 #include "Compressor.h"
 #include "vector"
 #include "UnicodeSCSU.h"
-#include "Process.h"
+#ifdef _MSC_VER
+#include <io.h>
+#include <Process.h>
+#endif
 #include "SlowVariableItem.h"
-#include "io.h"
 #include "RLECompressor.h"
 
 namespace DFW2
