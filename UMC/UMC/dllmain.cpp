@@ -23,5 +23,10 @@ extern "C" __declspec(dllexport) ICompiler*__cdecl CompilerFactory()
 {
     return new CompilerBase();
 }
+#else
+ __attribute__((visibility("default"))) ICompiler* CompilerFactory()
+{
+    return new CompilerBase();
+}
 
 #endif

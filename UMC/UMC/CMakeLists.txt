@@ -36,6 +36,6 @@ set(SOURCES
     UMC.cpp
     )             
 
-add_library(UMC ${SOURCES})
+add_library(UMC SHARED ${SOURCES})
 target_include_directories(UMC PRIVATE ${INCLUDES}) 
 
