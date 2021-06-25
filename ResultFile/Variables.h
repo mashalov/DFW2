@@ -2,11 +2,6 @@
 
 #pragma once
 #include "resource.h"       // main symbols
-
-#ifdef _MSC_VER
-#include "ResultFile_i.h"
-#endif
-
 #include "Variable.h"
 #include "GenericCollection.h"
 
