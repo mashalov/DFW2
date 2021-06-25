@@ -1,4 +1,5 @@
 ﻿#include "CompilerBase.h"
+#ifdef _MSC_VER
 #include <windows.h>
 
 
@@ -18,8 +19,9 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
-
 extern "C" __declspec(dllexport) ICompiler*__cdecl CompilerFactory()
 {
     return new CompilerBase();
 }
+
+#endif

@@ -3,10 +3,12 @@
 #include<fstream>
 #include<filesystem>
 #include "ASTNodes.h"
-#include "..\CryptoPP\gzip.h"
-#include "..\CryptoPP\base64.h"
+#include "../CryptoPP/gzip.h"
+#include "../CryptoPP/base64.h"
 #define NOMINMAX
+#ifdef _MSC_VER
 #include "windows.h"
+#endif
 
 using StringViewList = std::list<std::string_view>;
 
@@ -527,7 +529,14 @@ public:
 		HeaderPath.append(CustomDeviceHeader);
 		OutputStream.open(HeaderPath);
 		if (!OutputStream.is_open())
-			throw std::system_error(std::error_code(GetLastError(),std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
+		{
+#ifdef _MSC_VER		
+			const int ec(GetLastError());
+#else
+			const int ec(errno);
+#endif 	
+			throw std::system_error(std::error_code(ec,std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
+		}		
 		GenerateHeader();
 		OutputStream.close();
 		pTree->PrintErrorsWarnings();

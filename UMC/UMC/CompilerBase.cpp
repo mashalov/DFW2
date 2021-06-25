@@ -1,6 +1,8 @@
 ﻿#include "CompilerBase.h"
+#ifdef _MSC_VER
 #include <shlobj_core.h>
 #include <tchar.h>
+#endif
 
 bool CompilerBase::SetProperty(std::string_view PropertyName, std::string_view Value)
 {

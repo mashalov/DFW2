@@ -189,7 +189,7 @@ void CASTTreeBase::Sort()
 }
 
 
-template<> CASTRoot* CASTTreeBase::CreateNode<CASTRoot>(CASTNodeBase* pParent)
+template<> inline CASTRoot* CASTTreeBase::CreateNode<CASTRoot>(CASTNodeBase* pParent)
 {
     if (pRoot)
         EXCEPTIONMSG("Root already defined");
@@ -509,7 +509,9 @@ void CASTTreeBase::CheckInitEquations()
 
 void CASTTreeBase::Warning(std::string_view warning)
 {
+#ifdef _MSC_VER    
     SetConsoleOutputCP(CP_UTF8);
+#endif    
     if (messageCallBacks.Warning)
         messageCallBacks.Warning(warning);
     else
@@ -519,7 +521,9 @@ void CASTTreeBase::Warning(std::string_view warning)
 
 void CASTTreeBase::Message(std::string_view message)
 {
+#ifdef _MSC_VER    
     SetConsoleOutputCP(CP_UTF8);
+#endif
     if (messageCallBacks.Info)
         messageCallBacks.Info(message);
     else
@@ -528,7 +532,9 @@ void CASTTreeBase::Message(std::string_view message)
 
 void CASTTreeBase::Error(std::string_view error)
 {
+#ifdef _MSC_VER    
     SetConsoleOutputCP(CP_UTF8);
+#endif    
     if (messageCallBacks.Error)
         messageCallBacks.Error(error);
     else
