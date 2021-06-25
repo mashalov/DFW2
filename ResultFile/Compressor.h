@@ -54,8 +54,8 @@ public:
 	typedef uint32_t(*fnCountZeros32Ptr)(uint32_t);										// прототип функции подсчета нулевых битов
 	eFCResult WriteDouble(double& dValue, double& dPredictor, CBitStream& Output);
 	eFCResult ReadDouble(double& dValue, double& dPredictor, CBitStream& Input);
-	eFCResult WriteLEB(unsigned __int64 Value, CBitStream& Output);
-	eFCResult ReadLEB(unsigned __int64& Value, CBitStream& Input);
+	eFCResult WriteLEB(uint64_t Value, CBitStream& Output);
+	eFCResult ReadLEB(uint64_t& Value, CBitStream& Input);
 	static void Xor(double& dValue, double& dPredictor);
 	static const fnWriteDoublePtr pFnWriteDouble;
 	static const fnCountZeros32Ptr pFnCountZeros32;

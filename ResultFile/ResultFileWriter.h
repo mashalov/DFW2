@@ -12,7 +12,7 @@ namespace DFW2
 	public:
 		CCompressorParallel m_Compressor;					// экземпляр предиктивного кодера
 		CBitStream m_Output;								// поток для записи битового потока
-		unsigned __int64 m_nPreviousSeek = 0;				// смещение последнего записанного предыдущего блока
+		uint64_t m_nPreviousSeek = 0;						// смещение последнего записанного предыдущего блока
 		size_t m_nCount = 0;								// количество сжатых double
 		size_t m_nUnwrittenSuperRLECount = 0;				// количество подсчитанных, но не записанных блоков SuperRLE
 		ptrdiff_t m_nVariableIndex;							// индекс переменной канала
@@ -38,7 +38,7 @@ namespace DFW2
 		size_t m_nBufferLength = 100;
 		size_t m_nBufferGroup = 100;
 		size_t m_nPointsCount = 0;
-		__int64 m_DataDirectoryOffset;
+		int64_t m_DataDirectoryOffset;
 
 		/// std threading stuff
 
@@ -51,7 +51,7 @@ namespace DFW2
 		double m_dTimeToWrite;
 		double m_dStepToWrite;
 		bool WriteResultsThreaded();
-		__int64 OffsetFromCurrent(__int64 AbsoluteOffset);
+		int64_t OffsetFromCurrent(int64_t AbsoluteOffset);
 		double m_dNoChangeTolerance = 0.0;
 		double ts[PREDICTOR_ORDER];
 		double ls[PREDICTOR_ORDER];

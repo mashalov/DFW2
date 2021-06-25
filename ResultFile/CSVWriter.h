@@ -27,8 +27,8 @@ protected:
 	CResultFileReader& m_ResultFileReader;
 	size_t nPointsCount;
 	size_t nChannelsCount;
-	__int64 nRowStep;
-	__int64 nOffset;
+	uint64_t nRowStep;
+	uint64_t nOffset;
 
 	void IndexChannels();
 	void WriteDeviceTypes();

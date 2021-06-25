@@ -11,7 +11,7 @@ CResultFileReader::~CResultFileReader()
 
 void CResultFileReader::ReadHeader(int& Version)
 {
-	unsigned __int64 Version64;
+	uint64_t Version64;
 	ReadLEB(Version64);
 	Version = static_cast<int>(Version64);
 	if (Version64 > DFW2_RESULTFILE_VERSION)
@@ -152,7 +152,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t eType, ptrdif
 }
 
 // строит список блоков данных канала от конца к началу
-void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset)
+void CResultFileReader::GetBlocksOrder(INT64LIST& Offsets, uint64_t LastBlockOffset)
 {
 	Offsets.clear();
 
@@ -240,7 +240,7 @@ void CResultFileReader::ReadModelData(std::unique_ptr<double[]>& pData, int nVar
 
 void CResultFileReader::ReadDirectoryEntries()
 {
-	unsigned __int64 nDirEntries;
+	uint64_t nDirEntries;
 	ReadLEB(nDirEntries);
 	m_nDirectoryEntriesCount = static_cast<size_t>(nDirEntries);
 	m_pDirectoryEntries = std::make_unique<DataDirectoryEntry[]>(m_nDirectoryEntriesCount);
@@ -386,7 +386,7 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 			printf("\n");
 			for (int Ids = 0; Ids < pDevTypeInfo->DeviceIdsCount; Ids++)
 			{
-				unsigned __int64 ReadInt64;
+				uint64_t ReadInt64;
 				ReadLEB(ReadInt64);
 				printf("Id[%d] %d ", Ids, static_cast<int>(ReadInt64));
 				pDevInst->SetId(Ids, static_cast<int>(ReadInt64));
@@ -396,8 +396,8 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 
 			for (int Ids = 0; Ids < pDevTypeInfo->DeviceParentIdsCount; Ids++)
 			{
-				unsigned __int64 nId = 0;
-				unsigned __int64 eType = 0;
+				uint64_t nId = 0;
+				uint64_t eType = 0;
 				ReadLEB(eType);
 				ReadLEB(nId);
 				printf("Link to %d of type %d ", static_cast<int>(nId), static_cast<int>(eType));
@@ -409,8 +409,8 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 
 	Reparent();
 
-	__int64 nChannelHeadersOffset = -1;
-	__int64 nSlowVarsOffset = -1;
+	uint64_t nChannelHeadersOffset = -1;
+	uint64_t nSlowVarsOffset = -1;
 	m_nCommentOffset = m_nCommentDirectoryOffset = -1;
 
 	for (size_t i = 0; i < m_nDirectoryEntriesCount; i++)
@@ -435,13 +435,13 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		}
 	}
 
-	__int64 nCompressedDataOffset = infile.tellg();
+	uint64_t nCompressedDataOffset = infile.tellg();
 
 	if (nChannelHeadersOffset < 0)
 		throw CFileReadException(infile);
 	infile.seekg(nChannelHeadersOffset, std::ios_base::beg);
 
-	unsigned __int64 ReadInt64;
+	uint64_t ReadInt64;
 	ReadLEB(ReadInt64);
 	m_PointsCount = static_cast<size_t>(ReadInt64);
 	ReadLEB(ReadInt64);
@@ -473,12 +473,12 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		
 	m_dRatio = static_cast<double>(nSlowVarsOffset - nCompressedDataOffset) / sizeof(double) / m_ChannelsCount / m_PointsCount;
 
-	unsigned __int64 nSlowVarsCount = 0;
+	uint64_t nSlowVarsCount = 0;
 	ReadLEB(nSlowVarsCount);
 	while (nSlowVarsCount)
 	{
-		unsigned __int64 nDeviceType = 0;
-		unsigned __int64 nKeysSize = 0;
+		uint64_t nDeviceType = 0;
+		uint64_t nKeysSize = 0;
 		std::string strVarName;
 
 		ReadLEB(nDeviceType);
@@ -488,7 +488,7 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		LONGVECTOR DeviceIds;
 		while (nKeysSize)
 		{
-			unsigned __int64 nId;
+			uint64_t nId;
 			ReadLEB(nId);
 			DeviceIds.push_back(static_cast<long>(nId));
 			nKeysSize--;
@@ -528,7 +528,7 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 
 void CResultFileReader::ReadString(std::string& String)
 {
-	unsigned __int64 nLen64 = 0;
+	uint64_t nLen64 = 0;
 	ReadLEB(nLen64);
 	if (nLen64 < 0xffff)
 	{
@@ -556,13 +556,13 @@ void CResultFileReader::ReadDouble(double& Value)
 
 int CResultFileReader::ReadLEBInt()
 {
-	unsigned __int64 IntToRead;
+	uint64_t IntToRead;
 	ReadLEB(IntToRead);
 	if (IntToRead > 0x7fffffff)	// для LEB разрешаем только 31-битное число 
 		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 	return static_cast<int>(IntToRead);
 }
-void CResultFileReader::ReadLEB(unsigned __int64 & nValue)
+void CResultFileReader::ReadLEB(uint64_t& nValue)
 {
 	nValue = 0;
 	ptrdiff_t shift = 0;
@@ -570,7 +570,7 @@ void CResultFileReader::ReadLEB(unsigned __int64 & nValue)
 	do
 	{
 		infile.read(&low, sizeof(low));
-		nValue |= ((static_cast<unsigned __int64>(low)& 0x7f) << shift);
+		nValue |= ((static_cast<uint64_t>(low)& 0x7f) << shift);
 		shift += 7;
 		if (shift > 64)
 			break;
@@ -578,13 +578,13 @@ void CResultFileReader::ReadLEB(unsigned __int64 & nValue)
 }
 
 
-__int64 CResultFileReader::OffsetFromCurrent()
+int64_t CResultFileReader::OffsetFromCurrent()
 {
-	__int64 nCurrentOffset = infile.tellg();
-	unsigned __int64 nRelativeOffset = 0;
+	int64_t nCurrentOffset = infile.tellg();
+	uint64_t nRelativeOffset = 0;
 	ReadLEB(nRelativeOffset);
 
-	if (static_cast<__int64>(nRelativeOffset) > nCurrentOffset)
+	if (static_cast<int64_t>(nRelativeOffset) > nCurrentOffset)
 		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 
 	if (nRelativeOffset)

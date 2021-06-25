@@ -19,7 +19,7 @@ namespace DFW2
 	protected:
 		CStreamedFile infile;
 	public:
-		void WriteLEB(unsigned __int64 nValue);
+		void WriteLEB(uint64_t nValue);
 		void WriteString(std::string_view cszString);
 		static const char m_cszSignature[6];
 	};
@@ -28,7 +28,7 @@ namespace DFW2
 	struct DataDirectoryEntry
 	{
 		int m_DataType;
-		__int64 m_Offset;
+		int64_t m_Offset;
 	};
 #pragma pack(pop)
 	
@@ -132,16 +132,16 @@ namespace DFW2
 		struct ChannelHeaderInfo
 		{
 			int eDeviceType;
-			unsigned __int64 DeviceId;
+			uint64_t DeviceId;
 			int DeviceVarIndex;
-			unsigned __int64 LastBlockOffset;
+			uint64_t LastBlockOffset;
 		};
 
 		struct ChannelHeaderComp
 		{
 			bool operator()(const ChannelHeaderInfo* lhs, const ChannelHeaderInfo* rhs) const
 			{
-				__int64 DevTypeDiff = lhs->eDeviceType - rhs->eDeviceType;
+				int64_t DevTypeDiff = lhs->eDeviceType - rhs->eDeviceType;
 				if (DevTypeDiff > 0) 	return true;
 				if (DevTypeDiff < 0) 	return false;
 				DevTypeDiff = lhs->DeviceId - rhs->DeviceId;
@@ -170,11 +170,11 @@ namespace DFW2
 
 		size_t m_PointsCount;
 		size_t m_ChannelsCount;
-		typedef std::list<__int64> INT64LIST;
+		typedef std::list<int64_t> INT64LIST;
 		int ReadBlockType();
-		void GetBlocksOrder(INT64LIST& Offsets, unsigned __int64 LastBlockOffset);
+		void GetBlocksOrder(INT64LIST& Offsets, uint64_t LastBlockOffset);
 		void ReadModelData(std::unique_ptr<double[]>& pData, int nVarIndex);
-		__int64 OffsetFromCurrent();
+		int64_t OffsetFromCurrent();
 		std::string m_strFilePath;
 		std::string m_strComment;
 		bool m_bHeaderLoaded = false;
@@ -188,9 +188,9 @@ namespace DFW2
 
 		CSlowVariablesSet m_setSlowVariables;
 
-		__int64 m_nCommentOffset;
-		__int64 m_nCommentDirectoryOffset;
-		__int64 m_DirectoryOffset;
+		int64_t m_nCommentOffset;
+		int64_t m_nCommentDirectoryOffset;
+		int64_t m_DirectoryOffset;
 
 		std::string m_strUserComment;
 
@@ -202,7 +202,7 @@ namespace DFW2
 		void OpenFile(std::string_view FilePath);
 		void Reparent();
 		void ReadHeader(int& Version);
-		void ReadLEB(unsigned __int64& nValue);
+		void ReadLEB(uint64_t& nValue);
 		int ReadLEBInt();
 		void ReadString(std::string& String);
 		void ReadDouble(double& Value);

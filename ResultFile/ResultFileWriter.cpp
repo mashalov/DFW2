@@ -4,7 +4,7 @@
 
 using namespace DFW2;
 
-void CResultFile::WriteLEB(unsigned __int64 Value)
+void CResultFile::WriteLEB(uint64_t Value)
 {
 	do
 	{
@@ -179,7 +179,7 @@ void CResultFileWriter::FlushSuperRLE(CChannelEncoder& Encoder)
 {
 	if (Encoder.m_nUnwrittenSuperRLECount)
 	{
-		__int64 nCurrentSeek = infile.tellg();
+		int64_t nCurrentSeek = infile.tellg();
 		WriteLEB(2);
 		WriteLEB(Encoder.m_nUnwrittenSuperRLECount);
 		infile.write(&Encoder.m_SuperRLEByte, sizeof(unsigned char));
@@ -234,7 +234,7 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 				{
 					// сбрасываем блок SuperRLE если был
 					FlushSuperRLE(Encoder);
-					__int64 nCurrentSeek = infile.tellg();
+					int64_t nCurrentSeek = infile.tellg();
 					WriteLEB(0);						// type of block 0 - RLE data
 					WriteLEB(Encoder.m_nCount);			// count of doubles
 					WriteLEB(nCompressedSize);			// byte length of RLE data
@@ -248,7 +248,7 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 			{
 				// сбрасываем блок SuperRLE если был
 				FlushSuperRLE(Encoder);
-				__int64 nCurrentSeek = infile.tellg();
+				int64_t nCurrentSeek = infile.tellg();
 				WriteLEB(1);						// type of block 1 - RAW compressed data
 				WriteLEB(Encoder.m_nCount);			// count of doubles
 				WriteLEB(Output.BytesWritten());	// byte length of block
@@ -604,11 +604,11 @@ unsigned int CResultFileWriter::WriterThread(void *pThis)
 
 // возвращает смещение относительно текущей позиции в файле
 // для относительного смещения нужно значительно меньше разрядов
-__int64 CResultFileWriter::OffsetFromCurrent(__int64 AbsoluteOffset)
+int64_t CResultFileWriter::OffsetFromCurrent(int64_t AbsoluteOffset)
 {
 	if (AbsoluteOffset)
 	{
-		__int64 nCurrentOffset = infile.tellg();
+		int64_t nCurrentOffset = infile.tellg();
 
 		if (AbsoluteOffset >= nCurrentOffset)
 			throw CFileWriteException(infile);

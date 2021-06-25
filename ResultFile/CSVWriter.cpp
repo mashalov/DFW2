@@ -209,7 +209,7 @@ void CCSVWriter::WriteColumn(const double *pData, size_t nColumn, bool bLastColu
 
 	while (pData < pDataEnd)
 	{
-		__int64 nOffs = nRowStep * (pData - pDataStart) + nColumn * MinFieldWidth + nOffset;
+		uint64_t nOffs = nRowStep * (pData - pDataStart) + nColumn * MinFieldWidth + nOffset;
 
 		CSVFile.seekg(nOffs, std::ios_base::beg);
 		

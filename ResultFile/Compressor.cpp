@@ -70,12 +70,12 @@ eFCResult CCompressorBase::WriteDouble(double& dValue, double& dPredictor, CBitS
 
 void CCompressorBase::Xor(double& dValue, double& dPredictor)
 {
-	__int64 *pv = static_cast<__int64*>(static_cast<void*>(&dValue));
-	__int64 *pd = static_cast<__int64*>(static_cast<void*>(&dPredictor));
+	uint64_t *pv = static_cast<uint64_t*>(static_cast<void*>(&dValue));
+	uint64_t *pd = static_cast<uint64_t*>(static_cast<void*>(&dPredictor));
 	*pv ^= *pd;
 }
 
-eFCResult CCompressorBase::WriteLEB(unsigned __int64 Value, CBitStream& Output)
+eFCResult CCompressorBase::WriteLEB(uint64_t Value, CBitStream& Output)
 {
 	eFCResult fcResult = Output.AlignTo(8);
 	if (fcResult == FC_OK)
@@ -94,7 +94,7 @@ eFCResult CCompressorBase::WriteLEB(unsigned __int64 Value, CBitStream& Output)
 	return fcResult;
 }
 
-eFCResult CCompressorBase::ReadLEB(unsigned __int64& Value, CBitStream& Input)
+eFCResult CCompressorBase::ReadLEB(uint64_t& Value, CBitStream& Input)
 {
 	eFCResult fcResult = Input.AlignTo(8);
 	if (fcResult == FC_OK)
@@ -114,7 +114,7 @@ eFCResult CCompressorBase::ReadLEB(unsigned __int64& Value, CBitStream& Input)
 			fcResult = Input.ReadByte(low);
 			if (fcResult != FC_OK)
 				break;
-			Value |= ((static_cast<unsigned __int64>(low)& 0x7f) << shift);
+			Value |= ((static_cast<uint64_t>(low)& 0x7f) << shift);
 			shift += 7;
 		} while (low & 0x80);
 	}
@@ -300,9 +300,9 @@ eFCResult CCompressorBase::WriteDoubleLZcnt64(double& dValue, double& dPredictor
 {
 	eFCResult Result = FC_OK;
 	Xor(dValue, dPredictor);
-	unsigned __int64 *pv = static_cast<unsigned __int64*>(static_cast<void*>(&dValue));
+	uint64_t *pv = static_cast<uint64_t*>(static_cast<void*>(&dValue));
 	// формируем буфер для записи количества нулевых битов
-	unsigned __int64 nZ4count(0);
+	uint64_t nZ4count(0);
 	BITWORD *pZ4(static_cast<BITWORD*>(static_cast<void*>(&nZ4count)));
 	CBitStream Source(pZ4, pZ4 + sizeof(BITWORD), 0);
 
@@ -333,7 +333,7 @@ eFCResult CCompressorBase::WriteDoubleLZcnt64(double& dValue, double& dPredictor
 			CBitStream SourceDbl(pvb, pve, 0);
 			// и записываем только ненулевые биты
 			// double в памяти лежит от младших битов к старшим, так что записываем ненулевые младшие
-			Result = Output.WriteBits(SourceDbl, sizeof(unsigned __int64) * 8 - ZeroBitsCount);
+			Result = Output.WriteBits(SourceDbl, sizeof(uint64_t) * 8 - ZeroBitsCount);
 		}
 		// если количество битов не записалось - возвращаем результат (ошибка или переполенение)
 	}
