@@ -400,23 +400,19 @@ CResultFileWriter::~CResultFileWriter()
 // завершает и закрывает поток записи
 void CResultFileWriter::TerminateWriterThread()
 {
-	if (m_hThread)
+	// если поток записи еще работает
+	if (threadWriter.joinable())
 	{
-		DWORD dwExitCode = 0;
-		if (GetExitCodeThread(m_hThread, &dwExitCode))
 		{
-			if (dwExitCode == STILL_ACTIVE)
-			{
-				m_bThreadRun = false;
-				if (m_hRunEvent)
-				{
-					SetEvent(m_hRunEvent);
-					WaitForSingleObject(m_hThread, INFINITE);
-					CloseHandle(m_hThread);
-					m_hThread = NULL;
-				}
-			}
+			// берем мьютекс доступа к данным
+			std::unique_lock<std::mutex> dataGuard(mutexData);
+			// убираем флаг работы потока
+			m_bThreadRun = false;
+			// снимаем поток с ожидания
+			conditionRun.notify_all();
 		}
+		// ждем завершения функции потока
+		threadWriter.join();
 	}
 }
 
@@ -434,25 +430,6 @@ void CResultFileWriter::CloseFile()
 		delete it;
 
 	m_BufferBegin.clear();
-
-	if (m_hRunEvent)
-	{
-		CloseHandle(m_hRunEvent);
-		m_hRunEvent = NULL;
-	}
-
-	if (m_hRunningEvent)
-	{
-		CloseHandle(m_hRunningEvent);
-		m_hRunningEvent = NULL;
-	}
-
-	if (m_hDataMutex)
-	{
-		CloseHandle(m_hDataMutex);
-		m_hDataMutex = NULL;
-	}
-
 }
 
 // создает файл результатов
@@ -465,20 +442,11 @@ void CResultFileWriter::CreateResultFile(std::string_view FilePath)
 	// запись версии (версия в define, соответствует исходнику)
 	WriteLEB(DFW2_RESULTFILE_VERSION);
 
-	// создаем объекты синхронизации для управления потоком записи
-	m_hRunEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	if (m_hRunEvent == NULL)
-		throw CFileWriteException(infile);
-	m_hRunningEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-	if (m_hRunningEvent == NULL)
-		throw CFileWriteException(infile);
-	m_hDataMutex = CreateMutex(NULL, FALSE, NULL);
-	if (m_hDataMutex == NULL)
-		throw CFileWriteException(infile);
 	// создаем поток для записи
-	m_hThread = (HANDLE)_beginthreadex(NULL, 0, CResultFileWriter::WriterThread, this, 0, NULL);
-	if (m_hThread == NULL)
+	threadWriter = std::thread(CResultFileWriter::WriterThread, this);
+	if(!threadWriter.joinable())
 		throw CFileWriteException(infile);
+
 	// раз создали файл результатов - потребуется финализация
 	m_bChannelsFlushed = false;
 }
@@ -503,53 +471,34 @@ void CResultFileWriter::AddDirectoryEntries(size_t nDirectoryEntriesCount)
 // запись результатов вне потока
 void CResultFileWriter::WriteResults(double dTime, double dStep)
 {
-	DWORD dwExitCode;
 	// проверяем активен ли поток записи
-	if (GetExitCodeThread(m_hThread, &dwExitCode))
+	if (threadWriter.joinable())
 	{
-		// если нет - это ошибка
-		if (dwExitCode != STILL_ACTIVE)
-			throw CFileWriteException(infile);
-
 		// ждем и забираем мьютекс доступа к данным
-		DWORD dwWaitRes = WaitForSingleObject(m_hDataMutex, INFINITE);
+		std::unique_lock<std::mutex> dataGuard(mutexData);
 
-		// если при ожидании произошла ошибка - заканчиваем
-		if (dwWaitRes == WAIT_FAILED || dwWaitRes == WAIT_ABANDONED)
-			throw CFileWriteException(infile);
-
-		if (dwWaitRes == WAIT_OBJECT_0)
+		try
 		{
-			__try
+			// сохраняем результаты из указателей во внутрениий буфер
+			CChannelEncoder *pEncoder = m_pEncoders.get();
+			CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
+			while (pEncoder < pEncoderEnd)
 			{
-				// сохраняем результаты из указателей во внутрениий буфер
-				CChannelEncoder *pEncoder = m_pEncoders.get();
-				CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
-				while (pEncoder < pEncoderEnd)
-				{
-					pEncoder->m_dValue = *pEncoder->m_pVariable;
-					pEncoder++;
-				}
-
-				m_dTimeToWrite = dTime;
-				m_dStepToWrite = dStep;
+				pEncoder->m_dValue = *pEncoder->m_pVariable;
+				pEncoder++;
 			}
-			__finally
-			{
-				// по завершению копирования результатов освобождаем данные
-				// и запускаем поток записи
-				//WriteResultsThreaded();
 
-				if (!ReleaseMutex(m_hDataMutex))
-					throw CFileWriteException(infile);
-				if (!SetEvent(m_hRunEvent))
-					throw CFileWriteException(infile);
-				if(WaitForSingleObject(m_hRunningEvent, INFINITE) != WAIT_OBJECT_0)
-					throw CFileWriteException(infile);
-			}
+			m_dTimeToWrite = dTime;
+			m_dStepToWrite = dStep;
 		}
-		else
+		catch (...)
+		{
 			throw CFileWriteException(infile);
+		}
+
+		// по завершению копирования результатов запускаем поток записи
+		conditionRun.notify_all();
+		// после освобождения мьютекса поток будет снят с wait
 	}
 	else
 		throw CFileWriteException(infile);
@@ -560,57 +509,45 @@ bool CResultFileWriter::WriteResultsThreaded()
 {
 	bool bRes = false;
 
-	// ожидаем и захватываем мьютекс доступа к данным (пока не записан предыдущий блок)
-	DWORD dwWaitRes = WaitForSingleObject(m_hDataMutex, INFINITE);
-
-	if (!SetEvent(m_hRunningEvent))
-		return bRes;
-
-	if (dwWaitRes == WAIT_OBJECT_0)
+	try
 	{
-		// если ожидание прошло без ошибок
-		__try
+		CChannelEncoder *pEncoder = m_pEncoders.get();
+		CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
+		// записываем время и шаг
+		WriteTime(m_dTimeToWrite, m_dStepToWrite);
+		// записываем текущий блок с помощью кодеков каналов
+		pEncoder = m_pEncoders.get();
+		while (pEncoder < pEncoderEnd)
 		{
-			CChannelEncoder *pEncoder = m_pEncoders.get();
-			CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
-			// записываем время и шаг
-			WriteTime(m_dTimeToWrite, m_dStepToWrite);
-			// записываем текущий блок с помощью кодеков каналов
-			pEncoder = m_pEncoders.get();
-			while (pEncoder < pEncoderEnd)
-			{
-				// WriteChannel сам решает - продолжать писать в буфер или сбрасывать на диск, если 
-				// буфер закончился
-				WriteChannel(pEncoder - m_pEncoders.get(), pEncoder->m_dValue);
-				pEncoder++;
-			}
-
-			if (m_nPredictorOrder < PREDICTOR_ORDER)
-			{
-				// если не набрали заданный порядок предиктора
-				// добавляем текущее время и увеличиваем порядок
-				ts[m_nPredictorOrder] = m_dSetTime;
-				m_nPredictorOrder++;
-			}
-			else
-			{
-				// если предиктор работает с заданным порядком,
-				// сдвигаем буфер точек времени на 1 влево и добавляем текущее время
-				std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
-				//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
-				ts[PREDICTOR_ORDER - 1] = m_dSetTime;
-			}
-
-			bRes = true;
+			// WriteChannel сам решает - продолжать писать в буфер или сбрасывать на диск, если 
+			// буфер закончился
+			WriteChannel(pEncoder - m_pEncoders.get(), pEncoder->m_dValue);
+			pEncoder++;
 		}
 
-		__finally
+		if (m_nPredictorOrder < PREDICTOR_ORDER)
 		{
-			// по завершению записи освобождаем мьютекс
-			if (!ReleaseMutex(m_hDataMutex))
-				bRes = false;
+			// если не набрали заданный порядок предиктора
+			// добавляем текущее время и увеличиваем порядок
+			ts[m_nPredictorOrder] = m_dSetTime;
+			m_nPredictorOrder++;
 		}
+		else
+		{
+			// если предиктор работает с заданным порядком,
+			// сдвигаем буфер точек времени на 1 влево и добавляем текущее время
+			std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
+			//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+			ts[PREDICTOR_ORDER - 1] = m_dSetTime;
+		}
+
+		bRes = true;
 	}
+	catch(...)
+	{
+		bRes = false;
+	}
+
 	return bRes;
 }
 
@@ -642,13 +579,11 @@ unsigned int CResultFileWriter::WriterThread(void *pThis)
 		// поток работает пока не сброшен флаг работы в параметрах
 		while (pthis->m_bThreadRun)
 		{
-			// ждем команды на запуск записи
-			DWORD dwWaitRes = WaitForSingleObject(pthis->m_hRunEvent, INFINITE);
-			// сбрасываем команду (приняли)
-			if (dwWaitRes == WAIT_OBJECT_0)
+			// ждем команды на запуск записи или останов
 			{
-				// если в процессе ожидания не возникло ошибки
-				// и не был сброше флаг работы
+				std::unique_lock<std::mutex> dataGuard(pthis->mutexData);
+				pthis->conditionRun.wait(dataGuard);
+
 				if (!pthis->m_bThreadRun)
 					break;
 
@@ -656,8 +591,6 @@ unsigned int CResultFileWriter::WriterThread(void *pThis)
 				if (!pthis->WriteResultsThreaded())
 					throw CFileWriteException(pthis->infile);
 			}
-			else
-				throw CFileWriteException(pthis->infile);
 		}
 	}
 	catch (CFileWriteException&)

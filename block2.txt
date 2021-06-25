@@ -17,6 +17,8 @@
 *.vsp
 *.7z
 *.ipch
+*.iobj
+*.ipdb
 *.sdf
 *.tlog
 *.pdf

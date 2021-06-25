@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include "ResultFileReader.h"
 #include "..\dfw2\HRTimer.h"
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace DFW2
 {
@@ -36,10 +39,13 @@ namespace DFW2
 		size_t m_nBufferGroup = 100;
 		size_t m_nPointsCount = 0;
 		__int64 m_DataDirectoryOffset;
-		HANDLE m_hThread = NULL;
-		HANDLE m_hRunEvent = NULL;
-		HANDLE m_hRunningEvent = NULL;
-		HANDLE m_hDataMutex = NULL;
+
+		/// std threading stuff
+
+		std::thread threadWriter;
+		std::mutex mutexData;
+		std::condition_variable conditionRun;
+
 		void TerminateWriterThread();
 		bool m_bThreadRun = true;
 		double m_dTimeToWrite;
