@@ -37,7 +37,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	//_CrtSetBreakAlloc(31657);
 	//_CrtSetBreakAlloc(236965);
 	
-	//_CrtSetBreakAlloc(504670);
+	//_CrtSetBreakAlloc(1229197);
 
 	/*
 	GraphCycle<int, int> gc;
@@ -45,18 +45,20 @@ int _tmain(int argc, _TCHAR* argv[])
 	gc.Test();
 	*/
 		
-	SetConsoleCtrlHandler(HandlerRoutine,TRUE);
-
 	CoInitialize(NULL);
 	{
 		CDynaModel Network;
 		networks.push_back(&Network);
+
+		SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+
 		CRastrImport ri;
 		try
 		{
 			//Network.DeSerialize("c:\\tmp\\serialization.json");
-			//Network.DeSerialize("c:\\tmp\\lf_test.json");
 			ri.GetData(Network);
+			//Network.Serialize("c:\\tmp\\lf_test.json"); 
+			//Network.DeSerialize("c:\\tmp\\lf_test.json");
 			//Network.RunLoadFlow();
 			Network.RunTransient();
 		}
@@ -70,7 +72,10 @@ int _tmain(int argc, _TCHAR* argv[])
 		}
 
 		//Network.Serialize("c:\\tmp\\lf.json");
+		SetConsoleCtrlHandler(NULL, TRUE);
+		networks.clear();
 	}
+	CoUninitialize();
 	_CrtDumpMemoryLeaks();
 
 	return 0;

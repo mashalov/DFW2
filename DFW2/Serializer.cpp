@@ -267,12 +267,16 @@ void MetaSerializedValue::SetString(std::string_view value)
 			bSet = true;
 		}
 		break;
-		case eValueType::VT_ADAPTER:
-			Adapter->SetString(value);
-			bSet = true;
-			break;
+	case eValueType::VT_ADAPTER:
+		Adapter->SetString(value);
+		bSet = true;
+		break;
+	case eValueType::VT_STRING:
+		*Value.pStr = value;
+		bSet = true;
+		break;
 	default:
-		NoConversion(eValueType::VT_NAME);
+		NoConversion(ValueType);
 	}
 }
 

@@ -204,7 +204,6 @@ namespace DFW2
 	protected:
 		double m_dTime;
 		mutable MODELACTIONLIST m_Actions;
-		mutable eDFW2_ACTION_TYPE m_ActionsResult;
 	public:
 		CStaticEvent(double dTime);
 		virtual ~CStaticEvent();

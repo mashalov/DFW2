@@ -623,6 +623,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("DecayDetectorCycles", m_nDecayDetectorCycles);
 	Serializer->AddProperty("StopOnBranchOOS", m_bStopOnBranchOOS);
 	Serializer->AddProperty("StopOnGeneratorOOS", m_bStopOnGeneratorOOS);
+	Serializer->AddProperty("UserModelsFolder", m_strUserModelsFolder);
 
 	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
 		new CSerializerAdapterEnumT<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames, std::size(m_cszAdamsRingingSuppressionNames)));

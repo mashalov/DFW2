@@ -19,11 +19,13 @@ namespace DFW2
 		ptrdiff_t *pInt;									// int (32/64)
 		bool *pBool;										// bool
 		cplx *pCplx;										// complex
+		std::string* pStr;									// string
 		// конструкторы для разных типов
 		uValue(double* pDouble) noexcept: pDbl(pDouble) {}
 		uValue(ptrdiff_t* pInteger) noexcept : pInt(pInteger) {}
 		uValue(bool* pBoolean) noexcept : pBool(pBoolean) {}
 		uValue(cplx* pComplex) noexcept : pCplx(pComplex) {}
+		uValue(std::string* pString) noexcept : pStr(pString) {}
 		uValue() noexcept {}
 	};
 
@@ -85,6 +87,7 @@ namespace DFW2
 			VT_INT,
 			VT_BOOL,
 			VT_CPLX,
+			VT_STRING,
 			VT_NAME,			// имя (дополнительное преобразование)
 			VT_STATE,			// состояние (дополнительное преобразование)
 			VT_ID,				// идентификатор (дополнительное преобразование)
@@ -98,6 +101,7 @@ namespace DFW2
 			"int",
 			"bool",
 			"complex",
+			"string",
 			"name",
 			"state",
 			"id",
@@ -143,6 +147,10 @@ namespace DFW2
 		TypedSerializedValue(CSerializerBase* pSerializer, cplx* pComplex) : m_pSerializer(pSerializer),
 																		     Value(pComplex), 
 																			 ValueType(eValueType::VT_CPLX) {}
+
+		TypedSerializedValue(CSerializerBase* pSerializer, std::string* pString) : m_pSerializer(pSerializer),
+																			       Value(pString),
+																			       ValueType(eValueType::VT_STRING) {}
 
 		// значение без значения, но с типом
 		TypedSerializedValue(CSerializerBase* pSerializer, eValueType Type) : m_pSerializer(pSerializer),
@@ -269,6 +277,7 @@ namespace DFW2
 		MetaSerializedValue(CSerializerBase* pSerializer, ptrdiff_t* pInteger) : TypedSerializedValue(pSerializer, pInteger) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, bool* pBoolean) : TypedSerializedValue(pSerializer, pBoolean) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, cplx* pComplex) : TypedSerializedValue(pSerializer, pComplex) {}
+		MetaSerializedValue(CSerializerBase* pSerializer, std::string* pString) : TypedSerializedValue(pSerializer, pString) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, TypedSerializedValue::eValueType Type) : TypedSerializedValue(pSerializer, Type) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, CSerializerBase* pNestedSerializer) : TypedSerializedValue(pSerializer, pNestedSerializer) {}
 		std::unique_ptr<CSerializedValueAuxDataBase> pAux;	// адаптер для внешней базы данных
@@ -367,7 +376,7 @@ namespace DFW2
 	public:
 
 		static constexpr const char* m_cszDupName = "CSerializerBase::AddProperty duplicated name \"{}\"";
-		static constexpr const char* m_cszState = TypedSerializedValue::m_cszTypeDecs[5];
+		static constexpr const char* m_cszState = TypedSerializedValue::m_cszTypeDecs[6];
 		static constexpr const char* m_cszStateCause = "cause";
 		static constexpr const char* m_cszType = "type";
 		static constexpr const char* m_cszDataType = "dataType";

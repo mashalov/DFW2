@@ -132,6 +132,9 @@ void CSerializerJson::SerializeData(CSerializerBase* pSerializer, nlohmann::json
 		case TypedSerializedValue::eValueType::VT_BOOL:
 			item[ValueName] = *mv.Value.pBool;
 			break;
+		case TypedSerializedValue::eValueType::VT_STRING:
+			item[ValueName] = *mv.Value.pStr;
+			break;
 		case TypedSerializedValue::eValueType::VT_CPLX:
 			item[ValueName] = {
 				{JsonComplexValue::cszRe, mv.Value.pCplx->real()},
@@ -259,7 +262,7 @@ void CSerializerJson::AddLink(nlohmann::json& jsonLinks, const CDevice* pLinkedD
 			jsonLinkDirection[szLinkDirection] = typeit->second;
 
 		// сериализуем идентификатор связанного устройства
-		jsonLinkDirection[TypedSerializedValue::m_cszTypeDecs[6]] = pLinkedDevice->GetId();
+		jsonLinkDirection[TypedSerializedValue::m_cszTypeDecs[7]] = pLinkedDevice->GetId();
 		jsonLinks.push_back(jsonLinkDirection);
 	}
 }

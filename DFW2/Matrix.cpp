@@ -185,7 +185,7 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 		throw dfw2error(fmt::format("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, m_nEstimatedMatrixSize));
 
 	MatrixRow *pRow = m_pMatrixRows + nRow;
-	ptrdiff_t nMethodIndx = (pRightVector + nCol)->EquationType * 2 + (sc.q - 1);
+	ptrdiff_t nMethodIndx = static_cast<ptrdiff_t>((pRightVector + nCol)->EquationType) * 2 + (sc.q - 1);
 	// в качестве типа уравнения используем __физический__ тип
 	// потому что у алгебраических и дифференциальных уравнений
 	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
@@ -250,7 +250,7 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 	CHECK_MATRIX_ELEMENT(nRow, nCol);
 
 	MatrixRow *pRow = m_pMatrixRows + nRow;
-	ptrdiff_t nMethodIndx = (pRightVector + nCol)->EquationType * 2 + (sc.q - 1);
+	ptrdiff_t nMethodIndx = static_cast<ptrdiff_t>((pRightVector + nCol)->EquationType) * 2 + (sc.q - 1);
 	// в качестве типа уравнения используем __физический__ тип
 	// потому что у алгебраических и дифференциальных уравнений
 	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
