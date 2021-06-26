@@ -4,7 +4,7 @@
 
 template<> struct UniqueHandleTraits<void*>
 {
-	static inline const void* invalid_value = NULL;
+	static inline  void* const invalid_value = NULL;
 	static const void Close(void* h) { dlclose(h); }
 };
 
@@ -17,7 +17,7 @@ void CCompilerGCC::BuildWithCompiler()
 std::optional<std::string> CCompilerGCC::GetSource(const std::filesystem::path& pathDLLOutput)
 {
 	// конвертируем путь в UNICODE
-	UniqueHandle dll(dlopen(pathDLLOutput.string()).c_str(), RTLD_LAZY);
+	UniqueHandle dll(dlopen(pathDLLOutput.string().c_str(), RTLD_LAZY));
 	if (static_cast<void*>(dll) != NULL)
 	{
 		using fnSourceType = const char* (*)();

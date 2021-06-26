@@ -23,6 +23,6 @@ int main()
 #else
     auto compiler = std::make_unique<CCompilerGCC>();
 #endif
-    compiler->SetProperty(PropertyMap::szPropRebuild, "yes");
+    //compiler->SetProperty(PropertyMap::szPropRebuild, "yes");
     compiler->Compile("automatic");
 }
