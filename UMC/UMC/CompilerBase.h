@@ -3,6 +3,7 @@
 #include "ASTCodeGeneratorBase.h"
 #include "ICompiler.h"
 #include <optional>
+#include "UniqueHandle.h"
 
 class CompilerBase : public ICompiler
 {

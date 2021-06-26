@@ -9,11 +9,6 @@ void CCompilerMSBuild::BuildWithCompiler()
 	CompileWithMSBuild();
 }
 
-template<typename T>
-struct UniqueHandleTraits
-{
-};
-
 template<> struct UniqueHandleTraits<HANDLE>
 {
 	static inline const HANDLE invalid_value = INVALID_HANDLE_VALUE;
@@ -25,32 +20,6 @@ template<> struct UniqueHandleTraits<HMODULE>
 	static inline const HMODULE invalid_value = NULL;
 	static const void Close(HMODULE h) { FreeLibrary(h); }
 };
-
-
-template<typename T, typename traits = UniqueHandleTraits<T> >
-class UniqueHandle
-{
-protected:
-	T handle = traits::invalid_value;
-	T& exthandle;
-public:
-	UniqueHandle() : exthandle(handle) {};
-	UniqueHandle(T& externalHandle) : exthandle(externalHandle) {}
-	UniqueHandle(T&& externalHandle) : handle(externalHandle), exthandle(handle) {}
-	constexpr operator T& () { return exthandle; }
-	constexpr operator T* () { return &exthandle; }
-	virtual ~UniqueHandle()
-	{
-		Close();
-	}
-	void Close()
-	{
-		if (exthandle != traits::invalid_value)
-			traits::Close(exthandle);
-		exthandle = traits::invalid_value;// ::INVALID_HANDLE_VALUE;
-	}
-};
-
 
 DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, std::list<std::wstring>& listConsole)
 {

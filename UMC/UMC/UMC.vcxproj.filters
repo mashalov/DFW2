@@ -190,5 +190,8 @@
     <ClInclude Include="CompilerGCC.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="UniqueHandle.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

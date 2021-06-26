@@ -414,6 +414,7 @@
     <ClInclude Include="ICompiler.h" />
     <ClInclude Include="MatchInfo.h" />
     <ClInclude Include="MessageCallbacks.h" />
+    <ClInclude Include="UniqueHandle.h" />
     <ClInclude Include="utils.h" />
     <ClInclude Include="Variables.h" />
   </ItemGroup>
