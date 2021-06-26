@@ -148,33 +148,6 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	// 1. Создаем каталог для сборки модели OurDir\ProjectName (уже сделано в генерации исходника)
 	// 2. Копируем из референсного каталога ReferenceSources дополнительные исходники и vcxproj в каталог сборки
 
-	// берем из параметров путь для вывода
-	std::filesystem::path pathOutDir = pTree->GetPropertyPath(PropertyMap::szPropOutputPath);
-	// добавляем к пути для вывода имя проекта
-	pathOutDir.append(Properties[PropertyMap::szPropProjectName]);
-	// формируем путь до CustomDevice.h, который должен быть сгенерирован в каталоге сборки
-	std::filesystem::path pathCustomDeviceHeader = pathOutDir;
-	pathCustomDeviceHeader.append("CustomDevice.h");
-	// проверяем, есть ли CustomDevice.h в каталоге сборки
-	if (!std::filesystem::exists(pathCustomDeviceHeader))
-	{
-		pTree->Error(fmt::format("В каталоге \"{}\" не найден файл скомпилированного пользовательского устройства \"{}\".",
-			pathOutDir.string(),
-			CASTCodeGeneratorBase::CustomDeviceHeader));
-		return;
-	}
-	// берем путь к референсному каталогу
-	std::filesystem::path pathRefDir = pTree->GetPropertyPath(PropertyMap::szPropReferenceSources);
-	// проверяем есть ли он
-	if (!std::filesystem::exists(pathRefDir))
-	{
-		pTree->Error(fmt::format("Не найден каталог исходных файлов для сборки пользовательской модели \"{}\".",
-			pathRefDir.string()));
-		return;
-	}
-	// если каталог есть - копируем референсные файлы в каталог сборки (только уровень каталога, без рекурсии)
-	std::filesystem::copy(pathRefDir, pathOutDir, std::filesystem::copy_options::overwrite_existing);
-
 	// находим путь к msbuild
 	std::wstring MSBuildPath(GetMSBuildPath());
 	// задаем платформу сборки

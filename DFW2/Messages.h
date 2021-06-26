@@ -171,6 +171,7 @@ namespace DFW2
 		static const char* m_cszDecayDetected;
 		static const char* m_cszCannotUseRastrWin3;
 		static const char* m_cszStopCommandReceived;
+		static const char* m_cszUserModelModuleLoaded;
 	};
 }
 

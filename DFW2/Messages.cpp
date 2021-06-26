@@ -159,5 +159,6 @@ const char* CDFW2Messages::m_cszNoRastrWin3FoundInRegistry = "Ошибка до�
 const char* CDFW2Messages::m_cszDecayDetected = "Зафиксирован критерий затухания переходного процесса при t={} с";
 const char* CDFW2Messages::m_cszCannotUseRastrWin3 = "Невозможно использование компонентов RastrWin3";
 const char* CDFW2Messages::m_cszStopCommandReceived = "Получена команда останова при t={} с";
+const char* CDFW2Messages::m_cszUserModelModuleLoaded = "Загружен модуль пользовательского устройства \"{}\"";
 
 

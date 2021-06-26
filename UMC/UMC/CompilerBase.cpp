@@ -85,7 +85,14 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         pTree = std::make_unique<CASTTreeBase>(Properties);
         pTree->SetMessageCallBacks(messageCallBacks);
         pathDLLOutput = pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath);
-        pathDLLOutput.append(Properties[PropertyMap::szPropProjectName]).replace_extension(".dll");
+
+        pathDLLOutput.append(Properties[PropertyMap::szPropProjectName]);
+
+#ifdef _MSC_VER
+        pathDLLOutput.replace_extension(".dll");
+#else
+        pathDLLOutput.replace_extension(".so");
+#endif
 
         pathSourceOutput = pTree->GetPropertyPath(PropertyMap::szPropOutputPath);
         pathSourceOutput.append(Properties[PropertyMap::szPropProjectName]);
@@ -128,6 +135,38 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         lexer.removeErrorListeners();
         CASTCodeGeneratorBase codegen(pTree.get(), input.toString());
         codegen.Generate();
+
+        // берем из параметров путь для вывода
+        pathOutDir = pTree->GetPropertyPath(PropertyMap::szPropOutputPath);
+        // добавляем к пути для вывода имя проекта
+        pathOutDir.append(Properties[PropertyMap::szPropProjectName]);
+        // формируем путь до CustomDevice.h, который должен быть сгенерирован в каталоге сборки
+        std::filesystem::path pathCustomDeviceHeader = pathOutDir;
+        pathCustomDeviceHeader.append("CustomDevice.h");
+        // проверяем, есть ли CustomDevice.h в каталоге сборки
+
+        if (!std::filesystem::exists(pathCustomDeviceHeader))
+        {
+            pTree->Error(fmt::format("В каталоге \"{}\" не найден файл скомпилированного пользовательского устройства \"{}\".",
+                pathOutDir.string(),
+                CASTCodeGeneratorBase::CustomDeviceHeader));
+
+            throw std::runtime_error(cszUMCFailed);
+        }
+
+        // берем путь к референсному каталогу
+        pathRefDir = pTree->GetPropertyPath(PropertyMap::szPropReferenceSources);
+        // проверяем есть ли он
+        if (!std::filesystem::exists(pathRefDir))
+        {
+            pTree->Error(fmt::format("Не найден каталог исходных файлов для сборки пользовательской модели \"{}\".",
+                pathRefDir.string()));
+
+            throw std::runtime_error(cszUMCFailed);
+        }
+        // если каталог есть - копируем референсные файлы в каталог сборки (только уровень каталога, без рекурсии)
+        std::filesystem::copy(pathRefDir, pathOutDir, std::filesystem::copy_options::overwrite_existing);
+
         // построить модуль с помощью выбранного компилятора
         BuildWithCompiler();
         bRes = true;

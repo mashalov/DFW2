@@ -8,6 +8,8 @@
 class CompilerBase : public ICompiler
 {
 protected:
+
+    static constexpr const char* cszUMCFailed = "Невозможна компиляция пользовательского устройства";
     PropertyMap Properties =
     {
         {PropertyMap::szPropOutputPath, "c:\\tmp\\"},
@@ -26,6 +28,9 @@ protected:
     // возвращает исходный текст из модуля по заданному пути
     virtual std::optional<std::string> GetSource(const std::filesystem::path& pathDLLOutput) = 0;
     MessageCallBacks messageCallBacks;
+
+    std::filesystem::path pathOutDir;
+    std::filesystem::path pathRefDir;
 public:
 
     void SetMessageCallBacks(const MessageCallBacks& MessageCallBackFunctions) override
