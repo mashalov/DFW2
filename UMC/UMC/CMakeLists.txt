@@ -8,6 +8,10 @@ set(INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/include/"
 
 set(SOURCES 
     ../../../fmt/src/format.cc 
+    Generated/EquationsBaseVisitor.cpp
+    Generated/EquationsLexer.cpp
+    Generated/EquationsParser.cpp
+    Generated/EquationsVisitor.cpp
     AntlrASTErrorListener.cpp
     AntlrASTVisitor.cpp
     ASTCodeGeneratorBase.cpp
@@ -37,7 +41,18 @@ set(SOURCES
     UMC.cpp
     )             
 
+#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/"
+# "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/build/")
+
+ #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/"
+ #"${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/build/")
+
 #add_library(UMC SHARED ${SOURCES})
 add_executable(UMC  ${SOURCES})
 target_include_directories(UMC PRIVATE ${INCLUDES}) 
+target_link_libraries(UMC 
+    "${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/libcryptopp.a"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/dist/libantlr4-runtime.a"
+    )
+
 
