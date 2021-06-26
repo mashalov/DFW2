@@ -159,7 +159,7 @@ public:
 	void GenerateHeader()
 	{
 		EmitLine("#pragma once");
-		EmitLine("#include\"..\\DFW2\\ICustomDevice.h\"");
+		EmitLine("#include\"../DFW2/ICustomDevice.h\"");
 		EmitLine("namespace DFW2\n{");
 		Indent++;
 		GenerateClass();

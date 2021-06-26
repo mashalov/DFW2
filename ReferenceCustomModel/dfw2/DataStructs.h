@@ -6,7 +6,6 @@
 #include <string>
 #include <algorithm>
 #include <variant>
-#include <tchar.h>
 #include "DeviceTypes.h"
 #include "DLLStructs.h"
 
@@ -138,7 +137,8 @@ namespace DFW2
 
 
 	// карта индексов переменных состояния
-	using VARINDEXMAP = std::map<std::string, CVarIndex>;
+	// компаратор для гетерогенного поиска : https://www.bfilipek.com/2019/05/heterogeneous-lookup-cpp14.html
+	using VARINDEXMAP = std::map<std::string, CVarIndex, std::less<>>;
 	using VARINDEXMAPITR = VARINDEXMAP::iterator;
 	using VARINDEXMAPCONSTITR = VARINDEXMAP::const_iterator;
 
@@ -185,9 +185,9 @@ namespace DFW2
 		{
 			strIdField.clear();
 		}
-		LinkDirectionTo(eDFW2DEVICELINKMODE LinkMode, eDFW2DEVICEDEPENDENCY Dependency, ptrdiff_t LinkIndex, const char* cszIdField) :
+		LinkDirectionTo(eDFW2DEVICELINKMODE LinkMode, eDFW2DEVICEDEPENDENCY Dependency, ptrdiff_t LinkIndex, std::string_view IdField) :
 			LinkDirectionFrom(LinkMode, Dependency, LinkIndex),
-			strIdField(cszIdField)
+			strIdField(IdField)
 		{}
 	};
 

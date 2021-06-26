@@ -1,7 +1,5 @@
 ﻿#ifndef _DLL_STRUCTS_
 #define _DLL_STRUCTS_
-
-#include "tchar.h"
 #include "DeviceTypes.h"
 #include "limits.h"
 
