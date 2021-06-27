@@ -163,8 +163,6 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	pathDLLOutput.append("dll");
 	// создаем ссылку на дополнительные include для сборки dll (они лежат в референсной папке)
 	std::filesystem::path pathDFW2Include = pathRefDir;
-	pathDFW2Include.append("DFW2");
-
 	// формируем путь к pdb
 	std::filesystem::path pathPDB = pathDLLOutput;
 	pathPDB.append(Properties[PropertyMap::szPropProjectName]).replace_extension(".pdb");

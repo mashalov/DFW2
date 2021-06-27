@@ -70,4 +70,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 
 	pathCustomModelsModules = std::filesystem::path(pathCustomModels).append(cszModules).append(Configuration()).append(strPlatform);
 	CheckPath(pathCustomModelsModules);
+
+	pathSourceReference = std::filesystem::path(pathRoot).append(std::string("Reference").append("/"));
+	CheckPath(pathSourceReference);
 }

@@ -132,6 +132,7 @@ void CAutomatic::CompileModels()
 		Compiler->SetProperty("OutputPath", m_pDynaModel->Platform().AutomaticBuild().string());
 		Compiler->SetProperty("DllLibraryPath", m_pDynaModel->Platform().AutomaticModules().string());
 		Compiler->SetProperty("ProjectName", m_pDynaModel->Platform().AutomaticModuleName());
+		Compiler->SetProperty("ReferenceSources", m_pDynaModel->Platform().SourceReference().string());
 
 		if (!Compiler->Compile(Sourceutf8stream))
 			throw dfw2error("Ошибка компиляции");
