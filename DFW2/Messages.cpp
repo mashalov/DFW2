@@ -22,6 +22,7 @@ CDFW2Messages::CDFW2Messages()
 	m_VarNameMap[VARUNIT_OHM]		= "Ом";
 }
 
+const char* CDFW2Messages::m_cszProjectName = "Raiden";
 const char* CDFW2Messages::m_cszBranchNodeNotFound = "Узел {} не найден для ветви {}-{} ({})";
 const char* CDFW2Messages::m_cszDuplicateDevice    = "Объект \"{}\" имеет неуникальный идентификатор";
 const char* CDFW2Messages::m_cszBranchLooped = "Ветвь начинается и заканчивается в узле {}";
@@ -160,5 +161,6 @@ const char* CDFW2Messages::m_cszDecayDetected = "Зафиксирован кри
 const char* CDFW2Messages::m_cszCannotUseRastrWin3 = "Невозможно использование компонентов RastrWin3";
 const char* CDFW2Messages::m_cszStopCommandReceived = "Получена команда останова при t={} с";
 const char* CDFW2Messages::m_cszUserModelModuleLoaded = "Загружен модуль пользовательского устройства \"{}\"";
+const char* CDFW2Messages::m_cszFailedToCreateFolder = "Невозможно создать каталог \"{}\"";
 
 

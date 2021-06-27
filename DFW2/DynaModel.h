@@ -10,6 +10,7 @@
 #include "Results.h"
 #include "OscDetector.h"
 #include "FmtComplexFormat.h"
+#include "PlatformFolders.h"
 
 //#define USE_FMA
 namespace DFW2
@@ -362,7 +363,7 @@ namespace DFW2
 			ptrdiff_t m_nDecayDetectorCycles = 3;
 			bool m_bStopOnBranchOOS = false;
 			bool m_bStopOnGeneratorOOS = false;
-			std::string m_strUserModelsFolder = "c:\\tmp\\UserModels\\";
+			std::string m_strWorkingFolder = "RaidenDev";
 			Parameters() { }
 			SerializerPtr GetSerializer();
 			static const char* m_cszAdamsRingingSuppressionNames[4];
@@ -371,6 +372,8 @@ namespace DFW2
 		} 
 			m_Parameters;
 
+
+		CPlatformFolders m_Platform;
 		void CheckMatrixElement(ptrdiff_t nRow, ptrdiff_t nCol);
 		void ResetCheckMatrixElement();
 
@@ -773,5 +776,12 @@ namespace DFW2
 		static T Mod(T x, T y);
 		// возврщает угол приведенный к диапазону [-pi;pi) (удаление периодов)
 		inline static double WrapPosNegPI(double fAng);
+
+		const CPlatformFolders& Platform() const
+		{
+			return m_Platform;
+		}
+
+		void CheckFolderStructure();
 	};
 }

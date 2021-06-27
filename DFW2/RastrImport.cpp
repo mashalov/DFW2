@@ -395,6 +395,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
 
+
+	Network.CheckFolderStructure();
+
 	ITablesPtr spTables = m_spRastr->Tables;
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
 	IColsPtr spASCols = spAutoStarters->Cols;

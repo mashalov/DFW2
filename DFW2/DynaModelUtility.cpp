@@ -623,7 +623,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("DecayDetectorCycles", m_nDecayDetectorCycles);
 	Serializer->AddProperty("StopOnBranchOOS", m_bStopOnBranchOOS);
 	Serializer->AddProperty("StopOnGeneratorOOS", m_bStopOnGeneratorOOS);
-	Serializer->AddProperty("UserModelsFolder", m_strUserModelsFolder);
+	Serializer->AddProperty("WorkingFolder", m_strWorkingFolder);
 
 	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
 		new CSerializerAdapterEnumT<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames, std::size(m_cszAdamsRingingSuppressionNames)));
@@ -704,6 +704,11 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 	Serializer->AddProperty("Order1TimePassedKahan", OrderStatistics[1].dTimePassedKahan);
 
 	return Serializer;
+}
+
+void CDynaModel::CheckFolderStructure()
+{
+	m_Platform.CheckFolderStructure(m_Parameters.m_strWorkingFolder);
 }
 
 

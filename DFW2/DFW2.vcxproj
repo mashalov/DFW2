@@ -227,6 +227,7 @@
     <ClInclude Include="LoadFlow.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="OscDetector.h" />
+    <ClInclude Include="PlatformFolders.h" />
     <ClInclude Include="RastrImport.h" />
     <ClInclude Include="Relay.h" />
     <ClInclude Include="Results.h" />
@@ -303,6 +304,7 @@
     <ClCompile Include="Messages.cpp" />
     <ClCompile Include="NetworkGraph.cpp" />
     <ClCompile Include="Nordsiek.cpp" />
+    <ClCompile Include="PlatformFolders.cpp" />
     <ClCompile Include="RastrImport.cpp">
       <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
     </ClCompile>

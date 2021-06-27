@@ -247,6 +247,9 @@
     <ClInclude Include="FmtComplexFormat.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="PlatformFolders.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -544,6 +547,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DynaModelSerialize.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="PlatformFolders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

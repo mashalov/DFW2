@@ -34,6 +34,7 @@ namespace DFW2
 
 		const VARNAMEMAP& VarNameMap() const noexcept { return m_VarNameMap; }
 
+		static const char* m_cszProjectName;
 		static const char* m_cszBranchNodeNotFound;
 		static const char* m_cszDuplicateDevice;
 		static const char* m_cszBranchLooped; 
@@ -172,6 +173,7 @@ namespace DFW2
 		static const char* m_cszCannotUseRastrWin3;
 		static const char* m_cszStopCommandReceived;
 		static const char* m_cszUserModelModuleLoaded;
+		static const char* m_cszFailedToCreateFolder;
 	};
 }
 

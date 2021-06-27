@@ -87,7 +87,12 @@ CAutomatic::~CAutomatic()
 void CAutomatic::CompileModels()
 {
 	std::ofstream src;
-	src.open("c:\\tmp\\auto.cmp", std::fstream::out);
+	const std::filesystem::path& root(m_pDynaModel->Platform().Automatic());
+	std::filesystem::path autoFile(root);
+	autoFile.append("auto.cmp");
+
+
+	src.open(autoFile, std::fstream::out);
 	if (src.is_open())
 	{
 		src << "main\n{\n" << source.str() << "}\n";
@@ -123,21 +128,10 @@ void CAutomatic::CompileModels()
 		*/
 
 		Sourceutf8stream <<"main\n{\n" << source.str() << "}\n";
-#ifdef _WIN64
-		Compiler->SetProperty("Platform", "x64");
-#else
-		Compiler->SetProperty("Platform", "Win32");
-#endif 
-#ifdef _DEBUG
-		Compiler->SetProperty("Configuration", "Debug");
-		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\debug\\");
-		Compiler->SetProperty("DllLibraryPath", "C:\\tmp\\CustomModels\\dll\\debug\\");
-#else
-		Compiler->SetProperty("Configuration", "Release");
-		Compiler->SetProperty("OutputPath", "c:\\tmp\\auto\\release\\");
-		Compiler->SetProperty("DllLibraryPath", "C:\\tmp\\CustomModels\\dll\\release\\");
-#endif
-		
+		Compiler->SetProperty("Platform", m_pDynaModel->Platform().Platform());
+		Compiler->SetProperty("Configuration", m_pDynaModel->Platform().Configuration());
+		Compiler->SetProperty("OutputPath", m_pDynaModel->Platform().AutomaticBuild().generic_string());
+		Compiler->SetProperty("DllLibraryPath", m_pDynaModel->Platform().AutomaticModules().generic_string());
 		Compiler->SetProperty("ProjectName", "automatic");
 
 		if (!Compiler->Compile(Sourceutf8stream))
