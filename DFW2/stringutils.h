@@ -73,6 +73,17 @@ public:
 		return std::string(); // nothing to convert on linux
 #endif
 	}
+#ifndef _MSC_VER	
+	static std::string utf8_encode(const char *str)
+	{
+		return std::string(str);
+	}
+
+	static std::string utf8_encode(const std::string& str)
+	{
+		return std::string(str);
+	}
+#endif	
 
 	static std::string acp_decode(const std::string_view& str)
 	{

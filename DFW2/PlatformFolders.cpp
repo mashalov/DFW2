@@ -69,5 +69,5 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 	CheckPath(pathCustomModelsBuild);
 
 	pathCustomModelsModules = std::filesystem::path(pathCustomModels).append(cszModules).append(Configuration()).append(strPlatform);
-	CheckPath(pathCustomModelsBuild);
+	CheckPath(pathCustomModelsModules);
 }

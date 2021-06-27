@@ -65,6 +65,18 @@ static inline std::string& rtrim(std::string& s)
 #endif
 	}
 
+#ifndef _MSC_VER
+	static std::string utf8_encode(const char *str)
+	{
+		return std::string(str); // nothing to convert on linux
+	}
+
+	static std::string utf8_encode(const std::string& str)
+	{
+		return std::string(str);
+	}
+#endif	
+
 	static std::string acp_decode(const std::string_view& str)
 	{
 #ifdef _MSC_VER

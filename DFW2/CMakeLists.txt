@@ -71,6 +71,7 @@ set(EMSSSOURCES
     ZCDetector.cpp
     DynaModelSerialize.cpp
     SerializerJson.cpp
+    PlatformFolders.cpp
     )             
 
 add_subdirectory("SuiteSparse/KLU")
