@@ -138,7 +138,6 @@ void CAutomatic::CompileModels()
 			throw dfw2error("Ошибка компиляции");
 
 		pathAutomaticModule = Compiler->CompiledModulePath();
-		//pathAutomaticDLL.append(Compiler->GetProperty("ProjectName")).replace_extension(m_pDynaModel->Platform().ModuleExtension());
 	}
 }
 

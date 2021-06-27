@@ -160,6 +160,7 @@ public:
 	{
 		EmitLine("#pragma once");
 		EmitLine("#include\"DFW2/ICustomDevice.h\"");
+		EmitLine("#include <math.h>");
 		EmitLine("namespace DFW2\n{");
 		Indent++;
 		GenerateClass();
