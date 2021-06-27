@@ -47,8 +47,9 @@ set(SOURCES
  #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/"
  #"${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/build/")
 
-#add_library(UMC SHARED ${SOURCES})
-add_executable(UMC  ${SOURCES})
+add_library(UMC SHARED ${SOURCES})
+
+#add_executable(UMC  ${SOURCES})
 target_include_directories(UMC PRIVATE ${INCLUDES}) 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
 target_link_libraries(UMC 

@@ -16,6 +16,7 @@ int main()
     {
         Network.DeSerialize("/home/eugene/projects/DFW2/DFW2/lf.json");
         Network.CheckFolderStructure();
+        Network.Automatic().CompileModels();
         Network.RunLoadFlow();
     }
     catch (dfw2error& err)

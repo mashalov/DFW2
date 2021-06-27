@@ -26,7 +26,7 @@ extern "C" __declspec(dllexport) ICompiler*__cdecl CompilerFactory()
 }
 #else
 #include "CompilerGCC.h"
- __attribute__((visibility("default"))) ICompiler* CompilerFactory()
+ extern "C" __attribute__((visibility("default"))) ICompiler* CompilerFactory()
 {
     return new CCompilerGCC();
 }

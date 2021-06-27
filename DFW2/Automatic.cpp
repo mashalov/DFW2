@@ -97,7 +97,7 @@ void CAutomatic::CompileModels()
 	{
 		src << "main\n{\n" << source.str() << "}\n";
 		src.close();
-		auto pCompiler = std::make_shared<CCompilerDLL>("UMC.dll", "CompilerFactory");
+		auto pCompiler = std::make_shared<CCompilerDLL>("/home/eugene/projects/DFW2/DFW2/build/libUMC.so", "CompilerFactory");
 		
 		std::stringstream Sourceutf8stream;
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);

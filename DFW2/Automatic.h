@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include <filesystem>
+#include <sstream>
 #include "Discontinuities.h"
 #include "Relay.h"
 #include "DLLWrapper.h"

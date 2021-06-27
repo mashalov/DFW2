@@ -72,6 +72,7 @@ set(EMSSSOURCES
     DynaModelSerialize.cpp
     SerializerJson.cpp
     PlatformFolders.cpp
+    DynaModelCompile.cpp
     )             
 
 add_subdirectory("SuiteSparse/KLU")

@@ -19,13 +19,13 @@ namespace DFW2
 #endif
 			m_hDLL = NULL;
 		}
-		void Init(std::filesystem::path DLLFilePath)
+		void Init(const std::filesystem::path& DLLFilePath)
 		{
 			// загружаем dll 
 #ifdef _MSC_VER
 			m_hDLL = LoadLibrary(DLLFilePath.c_str());
 #else
-			m_hDLL = dlopen(DLLFilePath.c_str(), RTLD_LAZY);
+			m_hDLL = dlopen(DLLFilePath.c_str(), RTLD_NOW);
 #endif
 			if (!m_hDLL)
 				throw dfw2errorGLE(fmt::format("Ошибка загрузки DLL \"{}\".", stringutils::utf8_encode(DLLFilePath.c_str())));
