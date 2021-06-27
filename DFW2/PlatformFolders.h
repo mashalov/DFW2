@@ -12,34 +12,45 @@ namespace DFW2
 		std::filesystem::path pathAutomatic;
 		std::filesystem::path pathAutomaticBuild;
 		std::filesystem::path pathAutomaticModules;
+		std::filesystem::path pathCustomModels;
+		std::filesystem::path pathCustomModelsBuild;
+		std::filesystem::path pathCustomModelsModules;
+
+		static constexpr const std::string_view automaticModuleName = "Automatic";
+
+#ifdef _MSC_VER
+		static constexpr const std::string_view moduleExtension = ".dll";
+#else
+		static constexpr const std::string_view moduleExtension = ".so";
+#endif
 
 #ifdef _MSC_VER
 #ifdef _WIN64
-		static constexpr const char* platform = "x64";
+		static constexpr const std::string_view platform = "x64";
 #else
-		static constexpr const char* platform = "Win32";
+		static constexpr const std::string_view platform = "Win32";
 #endif
 #else
 #ifdef __x86_64__ 
-		static constexpr const char* platform = "x64";
+		static constexpr const  std::string_view platform = "x64";
 #else
-		static constexpr const char* platform = "x86";
+		static constexpr const  std::string_view platform = "x86";
 #endif
 #endif
 
 #if defined(_DEBUG) || !defined(NDEBUG)
-		static constexpr const char* configuration = "Debug";
+		static constexpr const std::string_view configuration = "Debug";
 #else
-		static constexpr const char* configuration = "Release";
+		static constexpr const std::string_view configuration = "Release";
 #endif 
 	public:
 
-		constexpr const char* Platform() const
+		constexpr const  std::string_view& Platform() const
 		{
 			return CPlatformFolders::platform;
 		};
 
-		constexpr const char* Configuration() const
+		constexpr const std::string_view& Configuration() const
 		{
 			return CPlatformFolders::configuration;
 		}
@@ -64,6 +75,16 @@ namespace DFW2
 		const std::filesystem::path& AutomaticModules() const
 		{
 			return pathAutomaticModules;
+		}
+
+		constexpr const std::string_view& ModuleExtension() const
+		{
+			return CPlatformFolders::moduleExtension;
+		}
+
+		constexpr const std::string_view& AutomaticModuleName() const
+		{
+			return CPlatformFolders::automaticModuleName;
 		}
 	};
 }

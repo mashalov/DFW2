@@ -363,7 +363,7 @@ namespace DFW2
 			ptrdiff_t m_nDecayDetectorCycles = 3;
 			bool m_bStopOnBranchOOS = false;
 			bool m_bStopOnGeneratorOOS = false;
-			std::string m_strWorkingFolder = "RaidenDev";
+			std::string m_strWorkingFolder = "Русский тест";
 			Parameters() { }
 			SerializerPtr GetSerializer();
 			static const char* m_cszAdamsRingingSuppressionNames[4];

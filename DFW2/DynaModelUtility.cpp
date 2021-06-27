@@ -708,7 +708,7 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 
 void CDynaModel::CheckFolderStructure()
 {
-	m_Platform.CheckFolderStructure(m_Parameters.m_strWorkingFolder);
+	m_Platform.CheckFolderStructure(stringutils::utf8_decode(m_Parameters.m_strWorkingFolder));
 }
 
 

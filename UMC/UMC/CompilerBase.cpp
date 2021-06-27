@@ -18,6 +18,11 @@ std::string CompilerBase::GetProperty(std::string_view PropertyName)
 		return "";
 }
 
+const std::filesystem::path& CompilerBase::CompiledModulePath() const
+{
+    return compiledModulePath;
+}
+
 void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput)
 {
 	std::filesystem::path OutputPath(pathSourceOutput);
@@ -32,7 +37,7 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 #else
         int ec(errno);
 #endif
-        throw std::system_error(std::error_code(ec, std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
+        throw std::system_error(std::error_code(ec, std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", utf8_encode(OutputPath.c_str())));
     }
 	OutputStream << SourceToCompile;
 	OutputStream.close();
@@ -55,19 +60,19 @@ bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, std::file
 	}
 
 	if (bRes)
-		pTree->Message(fmt::format("Модуль \"{}\" не нуждается в повторной компиляции", pathDLLOutput.string()));
+		pTree->Message(fmt::format("Модуль \"{}\" не нуждается в повторной компиляции", utf8_encode(pathDLLOutput.c_str())));
 	else
-		pTree->Message(fmt::format("Необходима компиляция модуля \"{}\"", pathDLLOutput.string()));
+		pTree->Message(fmt::format("Необходима компиляция модуля \"{}\"", utf8_encode(pathDLLOutput.c_str())));
 
 	return bRes;
 }
 
 
-bool CompilerBase::Compile(std::string_view FilePath)
+bool CompilerBase::Compile(std::filesystem::path FilePath)
 {
     bool bRes(false);
     std::ifstream strm;
-    strm.open(std::string(FilePath));
+    strm.open(FilePath);
     if (strm.is_open())
     {
         bRes = Compile(strm);
@@ -78,20 +83,19 @@ bool CompilerBase::Compile(std::string_view FilePath)
 bool CompilerBase::Compile(std::istream& SourceStream)
 {
     bool bRes(false);
-    std::filesystem::path pathDLLOutput, pathSourceOutput;
+    std::filesystem::path pathSourceOutput;
     try
     {
         std::string Source((std::istreambuf_iterator<char>(SourceStream)), std::istreambuf_iterator<char>());
         pTree = std::make_unique<CASTTreeBase>(Properties);
         pTree->SetMessageCallBacks(messageCallBacks);
-        pathDLLOutput = pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath);
-
-        pathDLLOutput.append(Properties[PropertyMap::szPropProjectName]);
+        compiledModulePath = pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath);
+        compiledModulePath.append(Properties[PropertyMap::szPropProjectName]);
 
 #ifdef _MSC_VER
-        pathDLLOutput.replace_extension(".dll");
+        compiledModulePath.replace_extension(".dll");
 #else
-        pathDLLOutput.replace_extension(".so");
+        compiledModulePath.replace_extension(".so");
 #endif
 
         pathSourceOutput = pTree->GetPropertyPath(PropertyMap::szPropOutputPath);
@@ -101,7 +105,7 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         SaveSource(Source, pathSourceOutput);
 
 
-        if (NoRecompileNeeded(Source, pathDLLOutput))
+        if (NoRecompileNeeded(Source, compiledModulePath))
             return true;
 
         auto pRuleTree = std::make_unique<CASTTreeBase>(Properties);
@@ -150,7 +154,6 @@ bool CompilerBase::Compile(std::istream& SourceStream)
             pTree->Error(fmt::format("В каталоге \"{}\" не найден файл скомпилированного пользовательского устройства \"{}\".",
                 pathOutDir.string(),
                 CASTCodeGeneratorBase::CustomDeviceHeader));
-
             throw std::runtime_error(cszUMCFailed);
         }
 
@@ -177,9 +180,9 @@ bool CompilerBase::Compile(std::istream& SourceStream)
     }
 
     if (pTree->ErrorCount() == 0)
-        pTree->Message(fmt::format("Выполнена компиляция модуля \"{}\"", pathDLLOutput.filename().string()));
+        pTree->Message(fmt::format("Выполнена компиляция модуля \"{}\"", compiledModulePath.filename().generic_string()));
     else
-        pTree->Error(fmt::format("Ошибка компиляции модуля \"{}\"", pathDLLOutput.filename().string()));
+        pTree->Error(fmt::format("Ошибка компиляции модуля \"{}\"", compiledModulePath.filename().generic_string()));
 
     return pTree->ErrorCount() == 0;
 }

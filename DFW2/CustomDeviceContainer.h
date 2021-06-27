@@ -171,7 +171,7 @@ namespace DFW2
 		CCustomDeviceCPPContainer(CDynaModel* pDynaModel);
 		virtual ~CCustomDeviceCPPContainer();
 		void BuildStructure();
-		void ConnectDLL(std::string_view DLLFilePath);
+		void ConnectDLL(std::filesystem::path DLLFilePath);
 
 		CDynaPrimitive* CreatePrimitive(PrimitiveBlockType ePrimitiveType,
 			CDevice& Device,

@@ -32,7 +32,9 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 {
 	try
 	{
-		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingModelFormat, "json", path.generic_string()));
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingModelFormat, 
+			"json", 
+			stringutils::utf8_encode(path.c_str())));
 
 		// создаем json-сериализатор
 		CSerializerJson jsonSerializer;
@@ -92,6 +94,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 	}
 	catch (std::ofstream::failure&)
 	{
-		throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszStdFileStreamError, path.generic_string()));
+		throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszStdFileStreamError, 
+			stringutils::utf8_encode(path.c_str())));
 	}
 }

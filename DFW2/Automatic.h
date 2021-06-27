@@ -123,7 +123,7 @@ namespace DFW2
 		AUTOITEMSMAP m_mapLogics;
 		AUTOITEMGROUP m_AutoActionGroups;
 		std::ostringstream source;
-		std::filesystem::path pathAutomaticDLL;
+		std::filesystem::path pathAutomaticModule;
 	public:
 
 		bool AddStarter(long Type, 
@@ -155,7 +155,7 @@ namespace DFW2
 					   long OutputMode, 
 					   long RunsCount);
 
-		const std::filesystem::path& GetDLLPath() { return pathAutomaticDLL; }
+		const std::filesystem::path& GetModulePath() const { return pathAutomaticModule; }
 		void CompileModels();
 		CAutomatic(CDynaModel *pDynaModel);
 		virtual ~CAutomatic();

@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Header.h"
+#include <filesystem>
 
 namespace DFW2
 {
@@ -7,7 +8,7 @@ namespace DFW2
 	{
 	protected:
 		LIBMODULE m_hDLL = NULL;
-		std::string m_strModulePath;
+		std::filesystem::path m_ModulePath;
 		void CleanUp()
 		{
 			if (m_hDLL)
@@ -18,25 +19,25 @@ namespace DFW2
 #endif
 			m_hDLL = NULL;
 		}
-		void Init(std::string_view DLLFilePath)
+		void Init(std::filesystem::path DLLFilePath)
 		{
 			// загружаем dll 
 #ifdef _MSC_VER
-			m_hDLL = LoadLibrary(stringutils::utf8_decode(DLLFilePath).c_str());
+			m_hDLL = LoadLibrary(DLLFilePath.c_str());
 #else
-			m_hDLL = dlopen(std::string(DLLFilePath).c_str(), RTLD_LAZY);
+			m_hDLL = dlopen(DLLFilePath.c_str(), RTLD_LAZY);
 #endif
 			if (!m_hDLL)
-				throw dfw2errorGLE(fmt::format("Ошибка загрузки DLL \"{}\".", DLLFilePath));
-			m_strModulePath = DLLFilePath;
+				throw dfw2errorGLE(fmt::format("Ошибка загрузки DLL \"{}\".", stringutils::utf8_encode(DLLFilePath.c_str())));
+			m_ModulePath = DLLFilePath;
 		}
 	public:
 		virtual ~CDLLInstance() { CleanUp(); }
-		CDLLInstance(std::string_view DLLFilePath)
+		CDLLInstance(std::filesystem::path DLLFilePath)
 		{
 			Init(DLLFilePath);
 		}
-		std::string_view GetModuleFilePath() const { return m_strModulePath.c_str(); }
+		const std::filesystem::path GetModuleFilePath() const { return m_ModulePath; }
 	};
 
 	template<class Interface>
@@ -58,11 +59,12 @@ namespace DFW2
 			m_pfnFactory = reinterpret_cast<fnFactory>(dlsym(m_hDLL, strFactoryFn.c_str()));
 #endif
 			if (!m_pfnFactory)
-				throw dfw2error(fmt::format("Функция \"{}\" не найдена в DLL \"{}\"", strFactoryFn, m_strModulePath));
+				throw dfw2error(fmt::format("Функция \"{}\" не найдена в DLL \"{}\"", strFactoryFn, 
+					stringutils::utf8_encode(m_ModulePath.c_str())));
 		}
 	public:
 		using IntType = Interface;
-		CDLLInstanceFactory(std::string_view DLLFilePath, std::string_view FactoryFunction) : CDLLInstance(DLLFilePath)
+		CDLLInstanceFactory(std::filesystem::path DLLFilePath, std::string_view FactoryFunction) : CDLLInstance(DLLFilePath)
 		{
 			Init(FactoryFunction);
 		}

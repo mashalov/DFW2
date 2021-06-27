@@ -211,7 +211,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 std::optional<std::string> CCompilerMSBuild::GetSource(const std::filesystem::path& pathDLLOutput)
 {
 	// конвертируем путь в UNICODE
-	UniqueHandle dll(LoadLibrary(utf8_decode(pathDLLOutput.string()).c_str()));
+	UniqueHandle dll(LoadLibrary(pathDLLOutput.c_str()));
 	if (static_cast<HMODULE>(dll) != nullptr)
 	{
 		using fnSourceType = const char* (__cdecl*)();

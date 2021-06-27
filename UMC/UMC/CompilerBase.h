@@ -9,6 +9,7 @@ class CompilerBase : public ICompiler
 {
 protected:
 
+    std::filesystem::path compiledModulePath;
     static constexpr const char* cszUMCFailed = "Невозможна компиляция пользовательского устройства";
     PropertyMap Properties =
     {
@@ -39,7 +40,7 @@ public:
     }
 
     // компиляция исходного текста из файла
-    bool Compile(std::string_view FilePath) override;
+    bool Compile(std::filesystem::path FilePath) override;
     // компиляция исходого текста из потока
     bool Compile(std::istream& SourceStream) override;
     // задать свойство по имени
@@ -52,5 +53,8 @@ public:
     bool NoRecompileNeeded(std::string_view SourceToCompile, std::filesystem::path& pathDLLOutput);
     // сохраняет исходный текст в файл с заданным путем
     void SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput);
+    // возвращает полный путь к файлу скомпилированного модуля
+    const std::filesystem::path& CompiledModulePath() const override;
+
 };
 

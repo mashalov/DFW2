@@ -11,8 +11,9 @@ public:
 	virtual bool SetProperty(std::string_view PropertyName, std::string_view Value) = 0;
 	virtual std::string GetProperty(std::string_view PropertyName) = 0;
 	virtual bool Compile(std::istream& stream) = 0;
-	virtual bool Compile(std::string_view FilePath) = 0;
+	virtual bool Compile(std::filesystem::path FilePath) = 0;
 	virtual void SetMessageCallBacks(const MessageCallBacks& MessageCallBackFunctions) = 0;
+	virtual const std::filesystem::path& CompiledModulePath() const = 0;
 	virtual void Destroy() = 0;
 };
 

@@ -97,7 +97,6 @@ void CAutomatic::CompileModels()
 	{
 		src << "main\n{\n" << source.str() << "}\n";
 		src.close();
-
 		auto pCompiler = std::make_shared<CCompilerDLL>("UMC.dll", "CompilerFactory");
 		
 		std::stringstream Sourceutf8stream;
@@ -130,15 +129,15 @@ void CAutomatic::CompileModels()
 		Sourceutf8stream <<"main\n{\n" << source.str() << "}\n";
 		Compiler->SetProperty("Platform", m_pDynaModel->Platform().Platform());
 		Compiler->SetProperty("Configuration", m_pDynaModel->Platform().Configuration());
-		Compiler->SetProperty("OutputPath", m_pDynaModel->Platform().AutomaticBuild().generic_string());
-		Compiler->SetProperty("DllLibraryPath", m_pDynaModel->Platform().AutomaticModules().generic_string());
-		Compiler->SetProperty("ProjectName", "automatic");
+		Compiler->SetProperty("OutputPath", m_pDynaModel->Platform().AutomaticBuild().string());
+		Compiler->SetProperty("DllLibraryPath", m_pDynaModel->Platform().AutomaticModules().string());
+		Compiler->SetProperty("ProjectName", m_pDynaModel->Platform().AutomaticModuleName());
 
 		if (!Compiler->Compile(Sourceutf8stream))
 			throw dfw2error("Ошибка компиляции");
 
-		pathAutomaticDLL = Compiler->GetProperty("DllLibraryPath");
-		pathAutomaticDLL.append(Compiler->GetProperty("ProjectName")).replace_extension(".dll");
+		pathAutomaticModule = Compiler->CompiledModulePath();
+		//pathAutomaticDLL.append(Compiler->GetProperty("ProjectName")).replace_extension(m_pDynaModel->Platform().ModuleExtension());
 	}
 }
 

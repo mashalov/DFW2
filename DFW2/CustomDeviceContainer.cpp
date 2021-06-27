@@ -286,14 +286,15 @@ CCustomDeviceCPPContainer::~CCustomDeviceCPPContainer()
 }
 
 
-void CCustomDeviceCPPContainer::ConnectDLL(std::string_view DLLFilePath)
+void CCustomDeviceCPPContainer::ConnectDLL(std::filesystem::path DLLFilePath)
 {
 	m_pDLL = std::make_shared<CCustomDeviceCPPDLL>(DLLFilePath, "CustomDeviceFactory");
 	CCustomDeviceDLLWrapper pDevice(m_pDLL);
 	pDevice->GetDeviceProperties(m_ContainerProps);
 	for (const auto& prim : pDevice->GetPrimitives())
 		m_PrimitivePools.CountPrimitive(prim.eBlockType);
-	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszUserModelModuleLoaded, DLLFilePath));
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszUserModelModuleLoaded, 
+		stringutils::utf8_encode(DLLFilePath.c_str())));
 }
 
 

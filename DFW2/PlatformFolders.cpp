@@ -28,8 +28,13 @@ std::filesystem::path GetUserFolder()
 void CheckPath(const std::filesystem::path& path)
 {
 	if (!std::filesystem::is_directory(path))
-		if (!std::filesystem::create_directories(path))
-			throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszFailedToCreateFolder, path.generic_string()));
+	{
+		std::error_code ec;
+		if (!std::filesystem::create_directories(path, ec))
+			if(ec)
+				throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszFailedToCreateFolder, 
+					stringutils::utf8_encode(path.c_str())));
+	}
 }
 
 void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingFolder)
@@ -42,6 +47,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 	else
 		pathRoot = std::filesystem::path(GetUserFolder()).append(WorkingFolder.c_str());
 
+		
 	std::string strPlatform(Platform());
 	strPlatform.append("/");
 
@@ -57,4 +63,11 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 	pathAutomaticModules = std::filesystem::path(pathAutomatic).append(cszModules).append(Configuration()).append(strPlatform);
 	CheckPath(pathAutomaticModules);
 
+	pathCustomModels = std::filesystem::path(pathRoot).append("CustomModels");
+
+	pathCustomModelsBuild = std::filesystem::path(pathCustomModels).append(cszBuild).append(Configuration()).append(strPlatform);
+	CheckPath(pathCustomModelsBuild);
+
+	pathCustomModelsModules = std::filesystem::path(pathCustomModels).append(cszModules).append(Configuration()).append(strPlatform);
+	CheckPath(pathCustomModelsBuild);
 }

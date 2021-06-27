@@ -80,7 +80,8 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 					{
 						if (nModelIndex >= nModelsCount)
 						{
-							Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL()->GetModuleFilePath()));
+							Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, 
+								stringutils::utf8_encode(CustomDeviceContainer.DLL()->GetModuleFilePath().c_str())));
 							break;
 						}
 
@@ -99,7 +100,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 		catch (_com_error& err)
 		{
 			Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
-				CustomDeviceContainer.DLL()->GetModuleFilePath(),
+				stringutils::utf8_encode(CustomDeviceContainer.DLL()->GetModuleFilePath().c_str()),
 				static_cast<const char*>(err.Description())));
 		}
 	}
@@ -337,12 +338,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 
 	// СМЗУ Северо-Запад
-	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1");
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1");
 
 	// СМЗУ Сибирь
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str());
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str());
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw", dfwPath.c_str());
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
 
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", dfwPath.c_str());
@@ -473,7 +474,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	}
 
 	Network.Automatic().CompileModels();
-	Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetDLLPath().string());
+	Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetModulePath());
 	Network.AutomaticDevice.CreateDevices(1);
 	Network.AutomaticDevice.BuildStructure();
 	
