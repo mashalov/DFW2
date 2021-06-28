@@ -2,16 +2,26 @@
 #ifndef _MSC_VER
 #include <dlfcn.h>
 
-std::pair<std::string, int> exec(const char* cmd) {
+template<> struct UniqueHandleTraits<void*>
+{
+	static inline void* const invalid_value = NULL;
+	static const void Close(void* h) { dlclose(h);}
+};
+
+std::pair<std::string, int> exec(const char* cmd) 
+{
 	std::array<char, 128> buffer;
 	std::string result;
 	int return_code = -1;
-	auto pclose_wrapper = [&return_code](FILE* cmd) { return_code = pclose(cmd); };
+	auto pclose_wrapper = [&return_code](FILE* cmd) 
+	{ 
+		return_code = pclose(cmd); 
+	};
 
 	{ 
 		const std::unique_ptr<FILE, decltype(pclose_wrapper)> pipe(popen(cmd, "r"), pclose_wrapper);
 		if(!pipe)
-			throw std::system_error(std::error_code(GetLastError(), std::system_category()),
+			throw std::system_error(std::error_code(errno, std::system_category()),
 				fmt::format("Ошибка запуска компилятора {}", cmd));
 
 		size_t count(0);
@@ -27,14 +37,16 @@ std::pair<std::string, int> exec(const char* cmd) {
 
 void CCompilerGCC::CompileWithGCC()
 {
-	std::filesystem::path pathVcxproj = pathOutDir;
-	pathVcxproj.append(CASTCodeGeneratorBase::CustomDeviceHeader).replace_extension("vcxproj");
+	std::filesystem::path pathCustomDeviceCPP = pathOutDir;
+	pathCustomDeviceCPP.append("CustomDevice").replace_extension(".cpp");
+
 	// формируем путь к результирующей dll модели
 	std::filesystem::path pathSOOutput(pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath));
 	pathSOOutput.append(Properties[PropertyMap::szPropProjectName]).replace_extension(".so");
-	const std::string CommandLine(fmt::format("g++ -std=c++17 -fPIC -shared -s - O2 -I'{}' -o '{}' CustomDevice.cpp",
+	const std::string CommandLine(fmt::format("g++ -std=c++17 -fPIC -shared -s -O2 -I'{}' -o '{}' '{}'",
 		pathRefDir.string(),
-		pathSOOutput.string()));
+		pathSOOutput.string(),
+		pathCustomDeviceCPP.string()));
 
 	const auto Result(exec(CommandLine.c_str()));
 	if (Result.second != 0)

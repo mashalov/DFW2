@@ -168,8 +168,20 @@ bool CompilerBase::Compile(std::istream& SourceStream)
             throw std::runtime_error(cszUMCFailed);
         }
         // если каталог есть - копируем референсные файлы в каталог сборки (только уровень каталога, без рекурсии)
-        std::filesystem::copy(pathRefDir, pathOutDir, std::filesystem::copy_options::overwrite_existing);
-
+        std::error_code ec;
+        std::filesystem::copy(pathRefDir,
+            pathOutDir, 
+            std::filesystem::copy_options::overwrite_existing|std::filesystem::copy_options::recursive,
+            ec);
+        if(ec)
+        {
+            pTree->Error(fmt::format("Ошибка \"{}\" копирования файлов исходных текстов из \"{}\" в \"{}\"",
+                std::error_code(errno, std::system_category()).message(),
+                pathRefDir.string(),
+                pathOutDir.string()
+                ));
+            throw std::runtime_error(cszUMCFailed);
+        }
         // построить модуль с помощью выбранного компилятора
         BuildWithCompiler();
         bRes = true;

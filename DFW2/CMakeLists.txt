@@ -9,6 +9,8 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG "_DEBUG")
 
+add_subdirectory("../UMC/UMC" "${CMAKE_CURRENT_BINARY_DIR}/Build")
+
 
 set(DFW_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../fmt/include/"
                  "${CMAKE_CURRENT_SOURCE_DIR}/../njson/")
