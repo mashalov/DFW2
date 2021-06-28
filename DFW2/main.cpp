@@ -17,6 +17,10 @@ int main()
         Network.DeSerialize("/home/eugene/projects/DFW2/DFW2/lf.json");
         Network.CheckFolderStructure();
         Network.Automatic().CompileModels();
+        Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetModulePath());
+	    Network.AutomaticDevice.CreateDevices(1);
+	    Network.AutomaticDevice.BuildStructure();
+
         Network.RunLoadFlow();
     }
     catch (dfw2error& err)

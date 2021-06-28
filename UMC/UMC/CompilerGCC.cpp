@@ -43,7 +43,7 @@ void CCompilerGCC::CompileWithGCC()
 	// формируем путь к результирующей dll модели
 	std::filesystem::path pathSOOutput(pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath));
 	pathSOOutput.append(Properties[PropertyMap::szPropProjectName]).replace_extension(".so");
-	const std::string CommandLine(fmt::format("g++ -std=c++17 -fPIC -shared -s -O2 -I'{}' -o '{}' '{}'",
+	const std::string CommandLine(fmt::format("g++ -std=c++17 -fPIC -shared -s -O2 -I'{}' -o '{}' '{}' 2>&1",
 		pathRefDir.string(),
 		pathSOOutput.string(),
 		pathCustomDeviceCPP.string()));
@@ -51,8 +51,8 @@ void CCompilerGCC::CompileWithGCC()
 	const auto Result(exec(CommandLine.c_str()));
 	if (Result.second != 0)
 	{
-		std::cout << Result.first << std::endl;
 		pTree->Error("Ошибка компиляции GCC");
+		pTree->Error(Result.first);
 	}
 }
 
