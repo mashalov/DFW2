@@ -167,9 +167,9 @@ bool CompilerBase::Compile(std::istream& SourceStream)
 
             throw std::runtime_error(cszUMCFailed);
         }
-        // если каталог есть - копируем референсные файлы в каталог сборки (только уровень каталога, без рекурсии)
+        // если каталог есть - копируем референсные не *.h файлы в каталог сборки 
         std::error_code ec;
-        std::filesystem::copy(pathRefDir,
+        std::filesystem::copy(std::filesystem::path(pathRefDir).append("Source"),
             pathOutDir, 
             std::filesystem::copy_options::overwrite_existing|std::filesystem::copy_options::recursive,
             ec);

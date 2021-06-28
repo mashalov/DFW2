@@ -52,7 +52,7 @@ void CCompilerGCC::CompileWithGCC()
 	if (Result.second != 0)
 	{
 		std::cout << Result.first << std::endl;
-		pTree->Error("Ошибка компиляции MSBuild");
+		pTree->Error("Ошибка компиляции GCC");
 	}
 }
 
