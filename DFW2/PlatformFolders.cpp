@@ -73,4 +73,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 
 	pathSourceReference = std::filesystem::path(pathRoot).append(std::string("Reference").append("/"));
 	CheckPath(pathSourceReference);
+
+	pathLogs = std::filesystem::path(pathRoot).append("Logs/");
+	CheckPath(pathLogs);
 }

@@ -16,6 +16,7 @@ namespace DFW2
 		std::filesystem::path pathCustomModelsBuild;
 		std::filesystem::path pathCustomModelsModules;
 		std::filesystem::path pathSourceReference;
+		std::filesystem::path pathLogs;
 
 		static constexpr const std::string_view automaticModuleName = "Automatic";
 
@@ -81,6 +82,11 @@ namespace DFW2
 		const std::filesystem::path& SourceReference() const
 		{
 			return pathSourceReference;
+		}
+
+		const std::filesystem::path& Logs() const
+		{
+			return pathLogs;
 		}
 
 		constexpr const std::string_view& ModuleExtension() const

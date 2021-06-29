@@ -10,6 +10,7 @@ std::string CAutomaticItem::GetVerbalName()
 }
 
 
+
 CAutomaticItem::CAutomaticItem(ptrdiff_t Type, ptrdiff_t Id, std::string_view Name) :
 		m_nType(Type),
 		m_nId(Id),
@@ -18,42 +19,32 @@ CAutomaticItem::CAutomaticItem(ptrdiff_t Type, ptrdiff_t Id, std::string_view Na
 
 }
 
-CAutomaticAction::CAutomaticAction(long Type,
-		ptrdiff_t Id,
-	    std::string_view Name,
-		ptrdiff_t LinkType,
-		std::string_view ObjectClass,
-		std::string_view ObjectKey,
-		std::string_view ObjectProp,
-		ptrdiff_t ActionGroup,
-		ptrdiff_t OutputMode,
-	    ptrdiff_t RunsCount) :
-
-		CAutomaticItem(Type,Id,Name),
-		m_nLinkType(LinkType),
-		m_strObjectClass(ObjectClass),
-		m_strObjectKey(ObjectKey),
-		m_strObjectProp(ObjectProp),
-		m_nActionGroup(ActionGroup),
-		m_nOutputMode(OutputMode),
-		m_nRunsCount(RunsCount),
-		m_pValue(nullptr)
-	{
-
-	}
-
-CAutomaticLogic::CAutomaticLogic(ptrdiff_t Type,
-	ptrdiff_t Id,
-	std::string_view Name,
-	std::string_view Actions,
-	ptrdiff_t OutputMode) :
-
-	CAutomaticItem(Type, Id, Name),
-	m_nOutputMode(OutputMode),
-	m_strActions(Actions)
+void CAutomaticStarter::AddToSource(std::ostringstream& source)
 {
-
+	source << fmt::format("S{} = starter({}, {}[{}].{})\n", m_nId,
+		m_strExpression.empty() ? "V" : m_strExpression,
+		m_strObjectClass,
+		m_strObjectKey,
+		m_strObjectProp);
 }
+
+void CAutomaticLogic::AddToSource(std::ostringstream& source)
+{
+	source << fmt::format("L{} = {}\n", m_nId, m_strExpression);
+	source << fmt::format("LT{} = relay(L{}, 0.0, {})\n", m_nId, 
+		m_nId, 
+		m_strDelayExpression.empty() ? "0" : m_strDelayExpression);
+}
+
+void CAutomaticAction::AddToSource(std::ostringstream& source)
+{
+	source << fmt::format("A{} = action({}, {}[{}].{})\n", m_nId,
+		m_strExpression.empty() ? "V" : m_strExpression,
+		m_strObjectClass,
+		m_strObjectKey,
+		m_strObjectProp);
+}
+
 
 bool CAutomaticLogic::AddActionGroupId(ptrdiff_t nActionId)
 {
@@ -86,11 +77,21 @@ CAutomatic::~CAutomatic()
 
 void CAutomatic::CompileModels()
 {
+	std::array<const AUTOITEMS*, 3> automaticObjects { &m_lstStarters, &m_lstLogics, &m_lstActions };
+	for (const auto& automaticObject : automaticObjects)
+		for (const auto& automaticItem : *automaticObject)
+			automaticItem->AddToSource(source);
+
+	for(const auto& logic : m_lstLogics)
+		m_mapLogics.insert(std::make_pair(logic->GetId(), logic.get()));
+
+	for (const auto& action : m_lstActions)
+		m_AutoActionGroups[static_cast<CAutomaticAction*>(action.get())->m_nActionGroup].push_back(action.get());
+
 	std::ofstream src;
 	const std::filesystem::path& root(m_pDynaModel->Platform().Automatic());
 	std::filesystem::path autoFile(root);
 	autoFile.append("auto.cmp");
-
 
 	src.open(autoFile, std::fstream::out);
 	if (src.is_open())
@@ -148,21 +149,16 @@ void CAutomatic::CompileModels()
 
 #define COMSTR(a) std::string((a)).c_str()
 
-bool CAutomatic::AddStarter(long Type,
-							long Id,
+bool CAutomatic::AddStarter(ptrdiff_t Type,
+						    ptrdiff_t Id,
 							std::string_view Name,
 							std::string_view Expression,
-							long LinkType,
+							ptrdiff_t LinkType,
 							std::string_view ObjectClass,
 							std::string_view ObjectKey,
 						    std::string_view ObjectProp)
 {
-	source << fmt::format("S{} = starter({}, {}[{}].{})\n", Id, 
-		Expression.empty() ? "V" : Expression,
-		ObjectClass, 
-		ObjectKey, 
-		ObjectProp);
-
+	m_lstStarters.push_back(std::make_unique<CAutomaticStarter>(Type, Id, Name, Expression, ObjectClass, ObjectKey, ObjectProp));
 	return true;
 }
 
@@ -174,35 +170,23 @@ bool CAutomatic::AddLogic(ptrdiff_t Type,
 						  std::string_view DelayExpression,
 						  ptrdiff_t OutputMode)
 {
-	source << fmt::format("L{} = {}\n", Id, Expression);
-	source << fmt::format("LT{} = relay(L{}, 0.0, {})\n", Id, Id, DelayExpression.empty() ? "0" : DelayExpression);
-
-	m_lstLogics.push_back(std::make_unique<CAutomaticLogic>(Type, Id, Name, Actions, OutputMode));
-	m_mapLogics.insert(std::make_pair(Id, m_lstLogics.back().get()));
-
+	m_lstLogics.push_back(std::make_unique<CAutomaticLogic>(Type, Id, Name, Expression, DelayExpression, Actions, OutputMode));
 	return true;
 }
 
-bool CAutomatic::AddAction(long Type,
-						   long Id,
+bool CAutomatic::AddAction(ptrdiff_t Type,
+						   ptrdiff_t Id,
 						   std::string_view Name,
 						   std::string_view Expression,
-						   long LinkType,
+						   ptrdiff_t LinkType,
 						   std::string_view ObjectClass,
 						   std::string_view ObjectKey,
 						   std::string_view ObjectProp,
-						   long ActionGroup,
-						   long OutputMode,
-						   long RunsCount)
+						   ptrdiff_t ActionGroup,
+						   ptrdiff_t OutputMode,
+						   ptrdiff_t RunsCount)
 {
-	source << fmt::format("A{} = action({}, {}[{}].{})\n", Id,
-		Expression.empty() ? "V" : Expression,
-		ObjectClass,
-		ObjectKey,
-		ObjectProp);
-
-	m_lstActions.push_back(std::make_unique<CAutomaticAction>(Type, Id, Name, LinkType, ObjectClass, ObjectKey, ObjectProp, ActionGroup, OutputMode, RunsCount));
-	m_AutoActionGroups[ActionGroup].push_back(m_lstActions.back().get());
+	m_lstActions.push_back(std::make_unique<CAutomaticAction>(Type, Id, Name, Expression, LinkType, ObjectClass, ObjectKey, ObjectProp, ActionGroup, OutputMode, RunsCount));
 	return true;
 }
 
@@ -462,6 +446,7 @@ public:
 
 		CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::UpdateSerializer(pSerializer);
 		pSerializer->AddProperty("class", pAction->m_strObjectClass);
+		pSerializer->AddProperty("expression", pAction->m_strExpression);
 		pSerializer->AddProperty("key", pAction->m_strObjectKey);
 		pSerializer->AddProperty("prop", pAction->m_strObjectProp);
 		pSerializer->AddProperty("linkType", pAction->m_nLinkType);
@@ -469,6 +454,27 @@ public:
 		pSerializer->AddProperty("outputMode", pAction->m_nOutputMode);
 		pSerializer->AddProperty("runsCount", pAction->m_nRunsCount);
 		pAction->UpdateSerializer(pSerializer);
+	}
+};
+
+class CSerializerStarter : public CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>
+{
+	using CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::CSerializerDataSourceList;
+public:
+	void UpdateSerializer(CSerializerBase* pSerializer) override
+	{
+		std::unique_ptr<CAutomaticItem>& DataItem(CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::GetItem());
+		if (!DataItem)
+			DataItem = std::make_unique<CAutomaticStarter>();
+
+		CAutomaticStarter* pStarter(static_cast<CAutomaticStarter*>(DataItem.get()));
+
+		CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::UpdateSerializer(pSerializer);
+		pSerializer->AddProperty("class", pStarter->m_strObjectClass);
+		pSerializer->AddProperty("expression", pStarter->m_strExpression);
+		pSerializer->AddProperty("key", pStarter->m_strObjectKey);
+		pSerializer->AddProperty("prop", pStarter->m_strObjectProp);
+		pStarter->UpdateSerializer(pSerializer);
 	}
 };
 
@@ -486,6 +492,8 @@ public:
 		CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::UpdateSerializer(pSerializer);
 		pSerializer->AddProperty("outputMode", pLogic->m_nOutputMode);
 		pSerializer->AddProperty("actions", pLogic->m_strActions);
+		pSerializer->AddProperty("expression", pLogic->m_strExpression);
+		pSerializer->AddProperty("delayExpression", pLogic->m_strDelayExpression);
 		pLogic->UpdateSerializer(pSerializer);
 	}
 };
@@ -496,6 +504,7 @@ SerializerPtr CAutomatic::GetSerializer()
 	Serializer->SetClassName("Automatic");
 	Serializer->AddSerializer("Action", new CSerializerBase(new CSerializerAction(m_lstActions)));
 	Serializer->AddSerializer("Logic", new CSerializerBase(new CSerializerLogic(m_lstLogics)));
+	Serializer->AddSerializer("Starter", new CSerializerBase(new CSerializerStarter(m_lstStarters)));
 	return Serializer;
 }
 

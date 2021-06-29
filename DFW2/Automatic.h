@@ -56,6 +56,8 @@ namespace DFW2
 
 		}
 
+		virtual void AddToSource(std::ostringstream& source) {}
+
 		CAutomaticItem(ptrdiff_t Type, ptrdiff_t Id, std::string_view Name);
 		virtual ~CAutomaticItem() = default;
 		std::string GetVerbalName();
@@ -77,23 +79,35 @@ namespace DFW2
 		std::string m_strObjectClass;
 		std::string m_strObjectKey;
 		std::string m_strObjectProp;
+		std::string m_strExpression;
 
 		CAutomaticAction() {}
 
-		CAutomaticAction(long Type, 
-						 ptrdiff_t Id,
-					     std::string_view Name,
-						 ptrdiff_t LinkType,
-			             std::string_view  ObjectClass,
-			             std::string_view ObjectKey,
-			             std::string_view ObjectProp,
-						 ptrdiff_t ActionGroup,
-						 ptrdiff_t OutputMode,
-						 ptrdiff_t RunsCount);
+		CAutomaticAction(ptrdiff_t Type, ptrdiff_t Id, std::string_view Name,
+			std::string_view Expression,
+			ptrdiff_t LinkType,
+			std::string_view ObjectClass,
+			std::string_view ObjectKey,
+			std::string_view ObjectProp,
+			ptrdiff_t ActionGroup,
+			ptrdiff_t OutputMode,
+			ptrdiff_t RunsCount) :
+
+			CAutomaticItem(Type, Id, Name),
+			m_strExpression(Expression),
+			m_nLinkType(LinkType),
+			m_strObjectClass(ObjectClass),
+			m_strObjectKey(ObjectKey),
+			m_strObjectProp(ObjectProp),
+			m_nActionGroup(ActionGroup),
+			m_nOutputMode(OutputMode),
+			m_nRunsCount(RunsCount) {}
+
 
 		CAutomaticAction(CAutomaticAction&& other) noexcept :
 			CAutomaticItem(std::move(other)),
 			m_pAction(std::move(other.m_pAction)),
+			m_strExpression(std::move(other.m_strExpression)),
 			m_strObjectClass(std::move(other.m_strObjectClass)),
 			m_strObjectKey(std::move(other.m_strObjectKey)),
 			m_strObjectProp(std::move(other.m_strObjectProp)),
@@ -109,7 +123,7 @@ namespace DFW2
 		bool Do(CDynaModel *pDynaModel);
 		bool Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice);
 		virtual ~CAutomaticAction() = default;
-
+		void AddToSource(std::ostringstream& source) override;
 		static const char* cszActionTemplate;
 	};
 
@@ -125,18 +139,55 @@ namespace DFW2
 	public:
 		ptrdiff_t m_nOutputMode = 0;
 		std::string m_strActions;
+		std::string m_strExpression;
+  	    std::string m_strDelayExpression;
 
 		CAutomaticLogic() {}
 
-		CAutomaticLogic(ptrdiff_t Type,
-			ptrdiff_t Id,
-			std::string_view cszName,
-			std::string_view cszActions,
-			ptrdiff_t OutputMode);
+		CAutomaticLogic(ptrdiff_t Type, ptrdiff_t Id, std::string_view Name,
+			std::string_view Expression,
+			std::string_view DelayExpression,
+			std::string_view Actions,
+			ptrdiff_t OutputMode) :
+
+			CAutomaticItem(Type, Id, Name),
+			m_nOutputMode(OutputMode),
+			m_strActions(Actions),
+			m_strExpression(Expression),
+			m_strDelayExpression(DelayExpression) {}
+
 
 		const std::string& GetActions() { return m_strActions; }
 		bool AddActionGroupId(ptrdiff_t nActionId);
 		const INTLIST& GetGroupIds() const { return m_ActionGroupIds;  }
+		void AddToSource(std::ostringstream& source) override;
+	};
+
+
+	class CAutomaticStarter : public CAutomaticItem
+	{
+	public:
+		std::string m_strObjectClass;
+		std::string m_strObjectKey;
+		std::string m_strObjectProp;
+		std::string m_strExpression;
+
+		CAutomaticStarter() {}
+
+		CAutomaticStarter(ptrdiff_t Type,
+			ptrdiff_t Id,
+			std::string_view Name,
+			std::string_view Expression,
+			std::string_view ObjectClass,
+			std::string_view ObjectKey,
+			std::string_view ObjectProp) :
+			CAutomaticItem(Type, Id, Name),
+			m_strExpression(Expression),
+			m_strObjectClass(ObjectClass),
+			m_strObjectKey(ObjectKey),
+			m_strObjectProp(ObjectProp) {}
+
+		void AddToSource(std::ostringstream& source) override;
 	};
 
 	class CAutomatic
@@ -145,6 +196,7 @@ namespace DFW2
 		CDynaModel *m_pDynaModel;
 		AUTOITEMS m_lstActions;
 		AUTOITEMS m_lstLogics;
+		AUTOITEMS m_lstStarters;
 		AUTOITEMSMAP m_mapLogics;
 		AUTOITEMGROUP m_AutoActionGroups;
 		std::ostringstream source;
@@ -152,11 +204,11 @@ namespace DFW2
 
 	public:
 
-		bool AddStarter(long Type, 
-						long Id, 
-						std::string_view cszName,
-						std::string_view cszExpression,
-						long LinkType, 
+		bool AddStarter(ptrdiff_t Type, 
+						ptrdiff_t Id,
+						std::string_view Name,
+						std::string_view Expression,
+						ptrdiff_t LinkType,
 						std::string_view ObjectClass,
 						std::string_view ObjectKey,
 						std::string_view ObjectProp);
@@ -169,17 +221,17 @@ namespace DFW2
 					  std::string_view DelayExpression,
 					  ptrdiff_t OutputMode);
 
-		bool AddAction(long Type, 
-					   long Id, 
+		bool AddAction(ptrdiff_t Type,
+					   ptrdiff_t Id,
 					   std::string_view Name,
 					   std::string_view Expression,
-					   long LinkType, 
+					   ptrdiff_t LinkType,
 					   std::string_view ObjectClass,
 					   std::string_view ObjectKey,
 					   std::string_view ObjectProp,
-					   long ActionGroup, 
-					   long OutputMode, 
-					   long RunsCount);
+					   ptrdiff_t ActionGroup,
+					   ptrdiff_t OutputMode,
+					   ptrdiff_t RunsCount);
 
 		const std::filesystem::path& GetModulePath() const { return pathAutomaticModule; }
 		void CompileModels();

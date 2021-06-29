@@ -72,7 +72,8 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
-	LogFile.open("c:\\tmp\\dfw2.log", std::ios::out);
+	CheckFolderStructure();
+	LogFile.open(std::filesystem::path(Platform().Logs()).append("dfw2.log"), std::ios::out);
 }
 
 
@@ -83,6 +84,11 @@ CDynaModel::~CDynaModel()
 
 bool CDynaModel::RunTransient()
 {
+	Automatic().CompileModels();
+	AutomaticDevice.ConnectDLL(Automatic().GetModulePath());
+	AutomaticDevice.CreateDevices(1);
+	AutomaticDevice.BuildStructure();
+
 	bool bRes = true;
 #ifdef _WIN64
 	_set_FMA3_enable(1);

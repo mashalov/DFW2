@@ -338,11 +338,11 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 
 	// СМЗУ Северо-Запад
-	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1");
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1");
 
 	// СМЗУ Сибирь
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str());
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw", dfwPath.c_str());
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str());
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\уров.dfw", dfwPath.c_str());
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
 
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
@@ -395,9 +395,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
-
-
-	Network.CheckFolderStructure();
 
 	ITablesPtr spTables = m_spRastr->Tables;
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
@@ -472,11 +469,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 			spAAOutputMode->GetZ(i).lVal,
 			spAAORunsCount->GetZ(i).lVal);
 	}
-
-	Network.Automatic().CompileModels();
-	Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetModulePath());
-	Network.AutomaticDevice.CreateDevices(1);
-	Network.AutomaticDevice.BuildStructure();
 	
 	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
 		return;
