@@ -14,7 +14,7 @@ int main()
     
     try
     {
-        Network.DeSerialize("/home/eugene/Русский тест/Raiden/lf_7ku.json");
+        Network.DeSerialize("/home/eugene/Русский тест/Raiden/lf_1500.json");
 		Network.RunTransient();
     }
     catch (dfw2error& err)
