@@ -178,7 +178,11 @@ bool CDynaModel::DetectAdamsRinging()
 
 		while (pVectorBegin < pVectorEnd)
 		{
-			double newValue = pVectorBegin->Nordsiek[1] + pVectorBegin->Error * Methodl1[pVectorBegin->EquationType];
+#ifdef USE_FMA
+			double newValue = std::fma(pVectorBegin->Error, Methodl1[pVectorBegin->EquationType], pVectorBegin->Nordsiek[1]) ;
+#else 
+			double newValue = pVectorBegin->Error *  Methodl1[pVectorBegin->EquationType] +  pVectorBegin->Nordsiek[1];
+#endif
 			// если знак производной изменился - увеличиваем счетчик циклов
 			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && std::abs(newValue) > pVectorBegin->Atol * sc.m_dCurrentH * 5.0)
 				pVectorBegin->nRingsCount++;
@@ -272,9 +276,9 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 		const double *lm = LocalMethodl[pVectorBegin->EquationType];
 		double dError = pVectorBegin->Error;
 #ifdef USE_FMA
-		pVectorBegin->Nordsiek[0] = FMA(dError, *lm, pVectorBegin->Nordsiek[0]);	lm++;
-		pVectorBegin->Nordsiek[1] = FMA(dError, *lm, pVectorBegin->Nordsiek[1]);	lm++;
-		pVectorBegin->Nordsiek[2] = FMA(dError, *lm, pVectorBegin->Nordsiek[2]); 
+		pVectorBegin->Nordsiek[0] = std::fma(dError, *lm, pVectorBegin->Nordsiek[0]);	lm++;
+		pVectorBegin->Nordsiek[1] = std::fma(dError, *lm, pVectorBegin->Nordsiek[1]);	lm++;
+		pVectorBegin->Nordsiek[2] = std::fma(dError, *lm, pVectorBegin->Nordsiek[2]); 
 #else
 		pVectorBegin->Nordsiek[0] += dError * *lm;	lm++;
 		pVectorBegin->Nordsiek[1] += dError * *lm;	lm++;

@@ -741,12 +741,6 @@ namespace DFW2
 		double Methodlh[4];
 		static const double MethodlDefault[4][4];
 
-		static double FMA(double x, double y, double z)
-		{
-			//return x * y + z;
-			return std::fma(x, y, z);
-		}
-
 		static double gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double* Sol);
 
 		void PushVarSearchStack(CDevice*pDevice);

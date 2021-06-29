@@ -476,7 +476,7 @@ bool CDynaModel::NewtonUpdate()
 		}
 
 #ifdef USE_FMA
-		double dNewValue = FMA(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]);
+		double dNewValue = std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]);
 #else
 		double l0 = pVectorBegin->Error;
 		l0 *= Methodl0[pVectorBegin->EquationType];
@@ -1038,7 +1038,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 		{
 			// compute again to not asking device via pointer
 #ifdef USE_FMA
-			double dNewValue = FMA(pVectorBegin->Error, Methodl0[pVectorBegin->EquationType], pVectorBegin->Nordsiek[0]);
+			double dNewValue = std::fma(pVectorBegin->Error, Methodl0[pVectorBegin->EquationType], pVectorBegin->Nordsiek[0]);
 #else
 			double dNewValue = pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType];
 #endif

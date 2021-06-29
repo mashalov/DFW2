@@ -365,7 +365,11 @@ void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 	struct RightVector *pRv = GetRightVector(nRow);
 	_CheckNumber(dValue);
 	// ставим тип метода для уравнения по параметрам в исходных данных
+#ifdef USE_FMA
+	SetFunctionEqType(nRow, std::fma(GetH(), dValue, - pRv->Nordsiek[1] - pRv->Error), GetDiffEquationType());
+#else
 	SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
+#endif
 }
 
 void CDynaModel::SetFunction(const VariableIndexBase& Row, double dValue)

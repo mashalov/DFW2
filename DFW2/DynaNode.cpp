@@ -1081,8 +1081,8 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 	double  h = pDynaModel->GetH();
 	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
 #ifdef USE_FMA
-	double Vre1 = CDynaModel::FMA(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
-	double Vim1 = CDynaModel::FMA(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
+	double Vre1 = std::fma(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
+	double Vim1 = std::fma(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
 #else
 	double Vre1 = pRvre->Nordsiek[0] + pRvre->Error * lm[0];
 	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
@@ -1173,8 +1173,8 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
 
 #ifdef USE_FMA
-	double Vre1 = CDynaModel::FMA(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
-	double Vim1 = CDynaModel::FMA(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
+	double Vre1 = std::fma(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
+	double Vim1 = std::fma(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
 #else
 	double Vre1 = pRvre->Nordsiek[0] + pRvre->Error * lm[0];
 	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
