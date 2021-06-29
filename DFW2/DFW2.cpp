@@ -56,11 +56,11 @@ int _tmain(int argc, _TCHAR* argv[])
 		try
 		{
 			//Network.DeSerialize("c:\\tmp\\serialization.json");
-			ri.GetData(Network);
+			//ri.GetData(Network);
+			Network.DeSerialize("c:\\tmp\\lf_test.json");
 			//Network.Serialize("c:\\tmp\\lf_test.json"); 
-			//Network.DeSerialize("c:\\tmp\\lf_test.json");
-			//Network.RunLoadFlow();
-			Network.RunTransient();
+			Network.RunLoadFlow();
+			//Network.RunTransient();
 		}
 		catch (_com_error& err)
 		{

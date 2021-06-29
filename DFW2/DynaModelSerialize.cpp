@@ -24,6 +24,9 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 	for (auto&& container : m_DeviceContainers)
 		jsonSerializer.SerializeClass(container->GetSerializer());
 
+	// сериализуем автоматику
+	jsonSerializer.SerializeClass(Automatic().GetSerializer());
+
 	// завершаем сериализацию
 	jsonSerializer.Commit();
 }
@@ -75,7 +78,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 
 		// ищем акцепторы для параметров и управления шагом, если такие акцепторы есть,
 		// добавляем сериализаторы
-		std::array<SerializerPtr, 2> parameters{ m_Parameters.GetSerializer() , sc.GetSerializer() };
+		std::array<SerializerPtr, 3> parameters{ m_Parameters.GetSerializer() , sc.GetSerializer(), Automatic().GetSerializer() };
 		for (auto&& param : parameters)
 		{
 			if (const auto name(param->GetClassName()); acceptorObjects.find(name) != acceptorObjects.end())

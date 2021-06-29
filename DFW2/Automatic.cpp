@@ -10,7 +10,7 @@ std::string CAutomaticItem::GetVerbalName()
 }
 
 
-CAutomaticItem::CAutomaticItem(long Type, ptrdiff_t Id, std::string_view Name) :
+CAutomaticItem::CAutomaticItem(ptrdiff_t Type, ptrdiff_t Id, std::string_view Name) :
 		m_nType(Type),
 		m_nId(Id),
 		m_strName(Name)
@@ -21,13 +21,13 @@ CAutomaticItem::CAutomaticItem(long Type, ptrdiff_t Id, std::string_view Name) :
 CAutomaticAction::CAutomaticAction(long Type,
 		ptrdiff_t Id,
 	    std::string_view Name,
-		long LinkType,
+		ptrdiff_t LinkType,
 		std::string_view ObjectClass,
 		std::string_view ObjectKey,
 		std::string_view ObjectProp,
-		long ActionGroup,
-		long OutputMode,
-		long RunsCount) :
+		ptrdiff_t ActionGroup,
+		ptrdiff_t OutputMode,
+	    ptrdiff_t RunsCount) :
 
 		CAutomaticItem(Type,Id,Name),
 		m_nLinkType(LinkType),
@@ -42,11 +42,11 @@ CAutomaticAction::CAutomaticAction(long Type,
 
 	}
 
-CAutomaticLogic::CAutomaticLogic(long Type,
+CAutomaticLogic::CAutomaticLogic(ptrdiff_t Type,
 	ptrdiff_t Id,
 	std::string_view Name,
 	std::string_view Actions,
-	long OutputMode) :
+	ptrdiff_t OutputMode) :
 
 	CAutomaticItem(Type, Id, Name),
 	m_nOutputMode(OutputMode),
@@ -166,14 +166,13 @@ bool CAutomatic::AddStarter(long Type,
 	return true;
 }
 
-
-bool CAutomatic::AddLogic(long Type,
-						  long Id,
+bool CAutomatic::AddLogic(ptrdiff_t Type,
+						  ptrdiff_t Id,
 						  std::string_view Name,
 						  std::string_view Expression,
 						  std::string_view Actions,
 						  std::string_view DelayExpression,
-						  long OutputMode)
+						  ptrdiff_t OutputMode)
 {
 	source << fmt::format("L{} = {}\n", Id, Expression);
 	source << fmt::format("LT{} = relay(L{}, 0.0, {})\n", Id, Id, DelayExpression.empty() ? "0" : DelayExpression);
@@ -442,5 +441,62 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 	return bRes;
 }
 
+void CAutomaticItem::UpdateSerializer(CSerializerBase* pSerializer)
+{
+	pSerializer->AddProperty("Id", m_nId);
+	pSerializer->AddProperty("Type", m_nType);
+	pSerializer->AddProperty("Name", m_strName);
+}
+
+class CSerializerAction : public CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>
+{
+	using CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::CSerializerDataSourceList;
+public:
+	void UpdateSerializer(CSerializerBase* pSerializer) override
+	{
+		std::unique_ptr<CAutomaticItem>& DataItem(CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::GetItem());
+		if (!DataItem)
+			DataItem = std::make_unique<CAutomaticAction>();
+
+		CAutomaticAction* pAction(static_cast<CAutomaticAction*>(DataItem.get()));
+
+		CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::UpdateSerializer(pSerializer);
+		pSerializer->AddProperty("class", pAction->m_strObjectClass);
+		pSerializer->AddProperty("key", pAction->m_strObjectKey);
+		pSerializer->AddProperty("prop", pAction->m_strObjectProp);
+		pSerializer->AddProperty("linkType", pAction->m_nLinkType);
+		pSerializer->AddProperty("actionGroup", pAction->m_nActionGroup);
+		pSerializer->AddProperty("outputMode", pAction->m_nOutputMode);
+		pSerializer->AddProperty("runsCount", pAction->m_nRunsCount);
+		pAction->UpdateSerializer(pSerializer);
+	}
+};
+
+class CSerializerLogic : public CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>
+{
+	using CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::CSerializerDataSourceList;
+public:
+	void UpdateSerializer(CSerializerBase* pSerializer) override
+	{
+		std::unique_ptr<CAutomaticItem>& DataItem(CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::GetItem());
+		if (!DataItem)
+			DataItem = std::make_unique<CAutomaticLogic>();
+
+		CAutomaticLogic* pLogic(static_cast<CAutomaticLogic*>(DataItem.get()));
+		CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::UpdateSerializer(pSerializer);
+		pSerializer->AddProperty("outputMode", pLogic->m_nOutputMode);
+		pSerializer->AddProperty("actions", pLogic->m_strActions);
+		pLogic->UpdateSerializer(pSerializer);
+	}
+};
+
+SerializerPtr CAutomatic::GetSerializer()
+{
+	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
+	Serializer->SetClassName("Automatic");
+	Serializer->AddSerializer("Action", new CSerializerBase(new CSerializerAction(m_lstActions)));
+	Serializer->AddSerializer("Logic", new CSerializerBase(new CSerializerLogic(m_lstLogics)));
+	return Serializer;
+}
 
 const char* CAutomaticAction::cszActionTemplate = "A{}";

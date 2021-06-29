@@ -70,6 +70,8 @@ void CSerializerJson::SerializeProps(CSerializerBase* pSerializer, nlohmann::jso
 		if (mv.ValueType == TypedSerializedValue::eValueType::VT_SERIALIZER)
 		{
 			auto serializerType = nlohmann::json();
+			if (mv.m_pNestedSerializer->ItemsCount())
+				mv.m_pNestedSerializer->Update();
 			SerializeProps(mv.m_pNestedSerializer.get(), jsonType);
 		}
 	};
@@ -102,7 +104,8 @@ void CSerializerJson::SerializeProps(CSerializerBase* pSerializer, nlohmann::jso
 	}
 
 	// добавляем свойства в класс
-	Class["properties"] = ClassProps;
+	if(!ClassProps.is_null())
+		Class["properties"] = ClassProps;
 }
 
 void CSerializerJson::SerializeData(CSerializerBase* pSerializer, nlohmann::json& item)
@@ -236,7 +239,8 @@ void CSerializerJson::SerializeClass(const SerializerPtr& Serializer)
 				item["Links"] = jsonLinks;
 		}
 
-		items.push_back(item);
+		if(!item.is_null())
+			items.push_back(item);
 
 	} while (Serializer->NextItem());
 

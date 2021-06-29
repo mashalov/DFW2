@@ -86,7 +86,7 @@ namespace DFW2
 		void Create(std::shared_ptr<T>  pDLL) { m_pDLL = pDLL;  m_pInstance = m_pDLL->Create(); }
 		CDLLInstanceWrapper() {}
 		CDLLInstanceWrapper(std::shared_ptr<T>  pDLL) { Create(pDLL); }
-		~CDLLInstanceWrapper() { m_pInstance->Destroy(); }
+		~CDLLInstanceWrapper() { if(m_pInstance) m_pInstance->Destroy(); }
 		constexpr typename T::IntType* operator  -> () { return m_pInstance; }
 		constexpr operator typename T::IntType* () { return m_pInstance; }
 	};

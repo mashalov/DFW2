@@ -309,6 +309,7 @@ namespace DFW2
 
 	class CDeviceContainer;
 
+	// сериализатор для контейнера устройств
 	class CSerializerDataSourceContainer : public CSerializerDataSourceBase
 	{
 		CDeviceContainer* m_pContainer;
@@ -321,6 +322,7 @@ namespace DFW2
 		CDevice* GetDevice() const override;
 	};
 
+	// сериализатор для структур типа T, расположенных в векторе
 	template<class T>
 	class CSerializerDataSourceVector : public CSerializerDataSourceBase
 	{
@@ -362,6 +364,49 @@ namespace DFW2
 		}
 	};
 
+
+	// сериализатор для структур типа T, расположенных в списке
+	template<class T>
+	class CSerializerDataSourceList : public CSerializerDataSourceBase
+	{
+		using DataList = std::list<T>;
+	protected:
+		DataList& m_List;
+		std::list<T>::iterator Item = m_List.begin();
+
+		// возвращает ссылку на текущий элемент сериализатора или выдает
+		// исключение, если элемент недоступен
+		// используется для десериализации чего-то в массив
+		// для контейнеров не применяется
+
+		T& GetItem()
+		{
+			if (Item != m_List.end())
+				return *Item;
+			throw dfw2error("CSerializerDataSourceList::GetItem cannot return item from empty storage");
+		}
+	public:
+
+		CSerializerDataSourceList(DataList& lst) : m_List(lst) { }
+
+		ptrdiff_t ItemsCount() const override
+		{
+			return static_cast<ptrdiff_t>(m_List.size());
+		}
+
+		bool NextItem() override
+		{
+			Item++;
+			return Item != m_List.end();
+		}
+
+		bool AddItem() override
+		{
+			m_List.push_back({});
+			Item = std::prev(m_List.end());
+			return true;
+		}
+	};
 
 	// базовый сериализатор
 	class CSerializerBase
