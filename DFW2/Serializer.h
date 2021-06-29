@@ -366,13 +366,13 @@ namespace DFW2
 
 
 	// сериализатор для структур типа T, расположенных в списке
-	template<class T>
+	template<typename T>
 	class CSerializerDataSourceList : public CSerializerDataSourceBase
 	{
 		using DataList = std::list<T>;
 	protected:
 		DataList& m_List;
-		std::list<T>::iterator Item = m_List.begin();
+		typename std::list<T>::iterator Item = m_List.begin();
 
 		// возвращает ссылку на текущий элемент сериализатора или выдает
 		// исключение, если элемент недоступен

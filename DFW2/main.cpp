@@ -14,14 +14,8 @@ int main()
     
     try
     {
-        Network.DeSerialize("/home/eugene/projects/DFW2/DFW2/lf.json");
-        Network.CheckFolderStructure();
-        Network.Automatic().CompileModels();
-        Network.AutomaticDevice.ConnectDLL(Network.Automatic().GetModulePath());
-	    Network.AutomaticDevice.CreateDevices(1);
-	    Network.AutomaticDevice.BuildStructure();
-
-        Network.RunLoadFlow();
+        Network.DeSerialize("/home/eugene/Русский тест/Raiden/lf_7ku.json");
+		Network.RunTransient();
     }
     catch (dfw2error& err)
     {
