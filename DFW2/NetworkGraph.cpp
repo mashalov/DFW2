@@ -318,6 +318,11 @@ void CDynaNodeBase::MarkZoneEnergized()
 						m_pSyncZone->Mj += static_cast<CDynaGeneratorMotion*>(pGen)->Mj;
 			}
 		}
+
+		// если в зоне нет генераторов - обозначаем ее как зону с ШБМ
+		// (когда будут АД, нужно будет смотреть на них)
+		if (m_pSyncZone->m_LinkedGenerators.empty())
+			m_pSyncZone->m_bInfPower = true;
 	}
 }
 

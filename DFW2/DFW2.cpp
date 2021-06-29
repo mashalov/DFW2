@@ -56,10 +56,9 @@ int _tmain(int argc, _TCHAR* argv[])
 		try
 		{
 			//Network.DeSerialize("c:\\tmp\\serialization.json");
-			//ri.GetData(Network);
-			Network.DeSerialize("c:\\tmp\\lf_test.json");
-			Network.CheckFolderStructure();
-			//Network.Serialize("c:\\tmp\\lf_test.json"); 
+			ri.GetData(Network);
+			//Network.DeSerialize("c:\\tmp\\lf_test.json");
+			Network.Serialize("c:\\tmp\\lf_7ku.json"); 
 			//Network.RunLoadFlow();
 			Network.RunTransient();
 		}
