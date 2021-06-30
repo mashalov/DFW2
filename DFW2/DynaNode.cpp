@@ -1177,12 +1177,20 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 
 		if (rH < 0.0)
 		{
-			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at node \"{}\" at t={} order={}, V={} -> V={} Border={}",
+
+			const double h0 = h * rH - h;
+			if (q == 1)
+				dVre2 = dVim2 = 0.0;
+			const double checkVre = Vre1 + dVre1 * h0 + dVre2 * h0 * h0;
+			const double checkVim = Vim1 + dVim1 * h0 + dVim2 * h0 * h0;
+			const double Vh0 = std::sqrt(checkVre * checkVre + checkVim * checkVim);
+
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at node \"{}\" at t={} order={}, V={} <- V={} Border={}",
 				rH,
 				GetVerbalName(),
 				GetModel()->GetCurrentTime(),
 				q,
-				std::sqrt(pRvre->Nordsiek[0] * pRvre->Nordsiek[0] + pRvim->Nordsiek[0] * pRvim->Nordsiek[0]),
+				Vh0,
 				Vcheck,
 				Border
 			));
