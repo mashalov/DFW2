@@ -1076,10 +1076,13 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 {
 	double rH = 1.0;
 
-	double Border = LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst );
-
-	double  h = pDynaModel->GetH();
+	// выбираем границу сравгнения с гистерезисом - на снижение -, на повышение +
+	const double Border = LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst );
+	const double  h = pDynaModel->GetH();
 	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
+
+
+	// рассчитываем текущие напряжения по Нордсику (итоговые еще не рассчитаны в итерации)
 #ifdef USE_FMA
 	double Vre1 = std::fma(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
 	double Vim1 = std::fma(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
@@ -1088,26 +1091,47 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
 #endif
 
+	// текущий модуль напряжения
 	double Vcheck = sqrt(Vre1 * Vre1 + Vim1 * Vim1);
+	// коэффициенты первого порядка
 	double dVre1 = (pRvre->Nordsiek[1] + pRvre->Error * lm[1]) / h;
 	double dVim1 = (pRvim->Nordsiek[1] + pRvim->Error * lm[1]) / h;
+	// коэффициенты второго порядка
 	double dVre2 = (pRvre->Nordsiek[2] + pRvre->Error * lm[2]) / h / h;
 	double dVim2 = (pRvim->Nordsiek[2] + pRvim->Error * lm[2]) / h / h;
+
+	// функция значения переменной от шага
+	// Vre(h) = Vre1 + h * dVre1 + h^2 * dVre2
+	// Vim(h) = Vim1 + h * dVim1 + h^2 * dVim2
+
+	// (Vre1 + h * dVre1 + h^2 * dVre2)^2 + (Vim1 + h * dVim1 + h^2 * dVim2)^2 - Boder^2 = 0
+
+	// определяем разность границы и текущего напряжения и взвешиваем разность по выражению контроля погрешности
 	double derr = std::abs(pRvre->GetWeightedError(std::abs(Vcheck - Border), Border));
+	const ptrdiff_t q(pDynaModel->GetOrder());
 
 	if (derr < pDynaModel->GetZeroCrossingTolerance())
 	{
+		// если погрешность меньше заданной в параметрах
+		// ставим заданную фиксацию напряжения 
 		SetLowVoltage(bCheckForLow);
 		pDynaModel->DiscontinuityRequest();
 	}
 	else
 	{
-		if (pDynaModel->GetOrder() == 1)
+		// если погрешность больше - определяем коэффициент шага, на котором
+		// нужно проверить разность снова
+		if ( q == 1)
 		{
+			// для первого порядка решаем квадратное уравнение
+			// (Vre1 + h * dVre1)^2 + (Vim1 + h * dVim1)^2 - Boder^2 = 0
+			// Vre1^2 + 2 * Vre1 * h * dVre1 + dVre1^2 * h^2 + Vim1^2 + 2 * Vim1 * h * dVim1 + dVim1^2 * h^2 - Border^2 = 0
+
 			double a = dVre1 * dVre1 + dVim1 * dVim1;
 			double b = 2.0 * (Vre1 * dVre1 + Vim1 * dVim1);
 			double c = Vre1 * Vre1 + Vim1 * Vim1 - Border * Border;
 			rH = CDynaPrimitive::GetZCStepRatio(pDynaModel, a, b, c);
+
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 			{
 				SetLowVoltage(bCheckForLow);
@@ -1150,6 +1174,37 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 				pDynaModel->DiscontinuityRequest();
 			}
 		}
+
+		if (rH < 0.0)
+		{
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at node \"{}\" at t={} order={}, V={} -> V={} Border={}",
+				rH,
+				GetVerbalName(),
+				GetModel()->GetCurrentTime(),
+				q,
+				std::sqrt(pRvre->Nordsiek[0] * pRvre->Nordsiek[0] + pRvim->Nordsiek[0] * pRvim->Nordsiek[0]),
+				Vcheck,
+				Border
+			));
+
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Nordsieck Vre=[{};{};{}]->[{};{};{}]",
+				pRvre->Nordsiek[0],
+				pRvre->Nordsiek[1],
+				pRvre->Nordsiek[2],
+				Vre1,
+				dVre1 * h,
+				dVre2 * h * h
+			));
+
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Nordsieck Vim=[{};{};{}]->[{};{};{}]",
+				pRvim->Nordsiek[0],
+				pRvim->Nordsiek[1],
+				pRvim->Nordsiek[2],
+				Vim1,
+				dVim1 * h,
+				dVim2 * h * h
+			));
+		}
 	}
 
 	return rH;
@@ -1182,19 +1237,24 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 	double Vcheck = sqrt(Vre1 * Vre1 + Vim1 * Vim1);
 
+	/*
+	if (GetId() == 61112076 && GetModel()->GetCurrentTime() > 2.7)
+	{
+		const double Vold(std::sqrt(pRvre->Nordsiek[0] * pRvre->Nordsiek[0] + pRvim->Nordsiek[0] * pRvim->Nordsiek[0]));
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("{}->{}", Vold, Vcheck));
+	}
+	*/
+
 	if (m_bLowVoltage)
 	{
 		double Border = LOW_VOLTAGE + Hyst;
+
 		if (Vcheck > Border)
 			rH = FindVoltageZC(pDynaModel, pRvre, pRvim, Hyst, false);
 	}
 	else
 	{
 		double Border = LOW_VOLTAGE - Hyst;
-
-		if (GetId() == 2021 && pDynaModel->GetCurrentTime() > 9.67)
-			SetId(GetId());
-
 
 		if (Vcheck < Border)
 			rH = FindVoltageZC(pDynaModel, pRvre, pRvim, Hyst, true);
