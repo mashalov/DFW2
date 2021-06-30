@@ -385,6 +385,7 @@ namespace DFW2
 		#define RESET_CHECK_MATRIX_ELEMENT() ;
 #endif
 
+		CResultsWriterCOM m_ResultsWriter;
 		std::map<ptrdiff_t, std::set<ptrdiff_t>> m_MatrixChecker;
 
 
@@ -476,7 +477,6 @@ namespace DFW2
 		double CheckZeroCrossing();
 
 		void WriteResultsHeader();
-		void WriteResultsHeaderBinary();
 		void WriteResults();
 		void FinishWriteResults();
 
@@ -496,10 +496,6 @@ namespace DFW2
 		FILE* fResult;
 		std::ofstream LogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
-
-#ifdef _MSC_VER
-		IResultWritePtr m_spResultWrite;
-#endif
 
 		std::atomic<bool> bStopProcessing = false;
 

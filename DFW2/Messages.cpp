@@ -162,5 +162,6 @@ const char* CDFW2Messages::m_cszCannotUseRastrWin3 = "Невозможно ис�
 const char* CDFW2Messages::m_cszStopCommandReceived = "Получена команда останова при t={} с";
 const char* CDFW2Messages::m_cszUserModelModuleLoaded = "Загружен модуль пользовательского устройства \"{}\"";
 const char* CDFW2Messages::m_cszFailedToCreateFolder = "Невозможно создать каталог \"{}\"";
+const char* CDFW2Messages::m_cszFailedToCreateCOMResultsWriter = "Невозможно создание COM-модуля записи результатов";
 
 
