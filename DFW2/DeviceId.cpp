@@ -38,7 +38,7 @@ void CDeviceId::SetDBIndex(ptrdiff_t nIndex)
 	m_DBIndex = nIndex;
 }
 
-ptrdiff_t CDeviceId::GetDBIndex()
+ptrdiff_t CDeviceId::GetDBIndex() const
 {
 	return m_DBIndex;
 }

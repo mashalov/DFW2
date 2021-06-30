@@ -195,7 +195,7 @@ namespace DFW2
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
 		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
 
-		void Log(DFW2MessageStatus Status, std::string_view Message);
+		void Log(DFW2MessageStatus Status, std::string_view Message) const;
 
 		// функция маппинга указателя на переменную к индексу переменной
 		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
@@ -284,7 +284,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr);
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 
-		const char* VariableNameByPtr(double *pVariable);
+		const char* VariableNameByPtr(double *pVariable) const;
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
 
 		virtual void StoreStates();

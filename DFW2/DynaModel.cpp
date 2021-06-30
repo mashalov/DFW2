@@ -906,7 +906,10 @@ bool CDynaModel::Step()
 						// проверяем нет ли зерокроссинга
 						double rZeroCrossing = CheckZeroCrossing();
 
-						_ASSERTE(rZeroCrossing >= 0.0);
+						if (rZeroCrossing < 0)
+							Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}", 
+								rZeroCrossing,
+								GetCurrentTime()));
 
 						if (sc.m_bZeroCrossingMode)
 						{
@@ -1286,6 +1289,12 @@ double CDynaModel::CheckZeroCrossing()
 		{
 			Kh = Khi;
 			m_pClosestZeroCrossingContainer = it;
+			if (Kh < 0.0)
+				it->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at container \"{}\" at t={}",
+					Kh,
+					it->GetTypeName(),
+					GetCurrentTime()
+				));
 		}
 	}
 	return Kh;

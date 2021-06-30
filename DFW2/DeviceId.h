@@ -22,7 +22,7 @@ namespace DFW2
 		const char* GetName() const;			// получить имя без подробностей
 		void SetName(std::string_view Name);	// задать имя без подробностей
 		const char* GetVerbalName() const;		// получить имя с подробностями
-		ptrdiff_t GetDBIndex();					// получить индекс в БД
+		ptrdiff_t GetDBIndex() const;			// получить индекс в БД
 		void SetDBIndex(ptrdiff_t nIndex);		// задать индекс в БД
 	};
 

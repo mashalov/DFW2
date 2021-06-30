@@ -174,7 +174,7 @@ double CDevice::SetValue(std::string_view VarName, double Value)
 	return OldValue;
 }
 
-void CDevice::Log(DFW2MessageStatus Status, std::string_view Message)
+void CDevice::Log(DFW2MessageStatus Status, std::string_view Message) const
 {
 	// TODO - add device type information
 	if (m_pContainer)
@@ -515,7 +515,7 @@ eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE e
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-const char* CDevice::VariableNameByPtr(double *pVariable)
+const char* CDevice::VariableNameByPtr(double *pVariable) const
 {
 	_ASSERTE(m_pContainer);
 
@@ -915,6 +915,12 @@ double CDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
 	for (auto&& it : m_Primitives)
 	{
 		double rHcurrent = it->CheckZeroCrossing(pDynaModel);
+		if (rHcurrent < 0)
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at primitive \"{}\"",
+				rHcurrent,
+				it->GetVerboseName()
+			));
+
 		if (rHcurrent < rH)
 			rH = rHcurrent;
 	}

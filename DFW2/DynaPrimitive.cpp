@@ -85,13 +85,13 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 	// Constraint	- константа, относительно которой определяем пересечение
 
 	bool bChangeState = false;
+	rH = 1.0;
 
-	RightVector *pRightVector = pDynaModel->GetRightVector(ValueIndex);
-	rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
-
-	if (pDynaModel->GetZeroCrossingInRange(rH))
+	if (Diff < 0.0)
 	{
-		if (Diff < 0.0)
+		RightVector* pRightVector = pDynaModel->GetRightVector(ValueIndex);
+		rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
+		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{
 			double derr = std::abs(pRightVector->GetWeightedError(Diff, TolCheck));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
@@ -108,15 +108,13 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 				}
 			}
 		}
+		else
+		{
+			bChangeState = true;
+			_ASSERTE(0); // корня нет, но знак изменился !
+			rH = 1.0;
+		}
 	}
-	else if (Diff < 0.0)
-	{
-		bChangeState = true;
-		_ASSERTE(0); // корня нет, но знак изменился !
-		rH = 1.0;
-	}
-	else
-		rH = 1.0;
 
 	return bChangeState;
 }
@@ -177,7 +175,25 @@ double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVect
 	if (q == 2)
 		a = (pRightVector->Nordsiek[2] + dError * lm[2]) / h / h;
 	// возвращаем отношение зеро-кроссинга для полинома
-	return GetZCStepRatio(pDynaModel, a, b, c);
+	const double rH(GetZCStepRatio(pDynaModel, a, b, c));
+
+	if (rH <= 0.0)
+	{
+		if (pRightVector->pDevice)
+			pRightVector->pDevice->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(
+				"Negative ZC ratio {} in device {}, variable {} at t={}. "
+				"Nordsieck [{},{},{}], Constant = {}",
+				rH,
+				pRightVector->pDevice->GetVerbalName(),
+				pRightVector->pDevice->VariableNameByPtr(pRightVector->pValue),
+				pDynaModel->GetCurrentTime(),
+				pRightVector->Nordsiek[0],
+				pRightVector->Nordsiek[1],
+				pRightVector->Nordsiek[2],
+				dConst
+			));
+	}
+	return rH;
 }
 
 void CDynaPrimitiveLimited::SetCurrentState(CDynaModel* pDynaModel, eLIMITEDSTATES CurrentState)
@@ -254,15 +270,15 @@ bool CDynaPrimitiveBinary::BuildRightHand(CDynaModel *pDynaModel)
 	return true;
 }
 
-double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2)
+double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel* pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2)
 {
 	ptrdiff_t q = pDynaModel->GetOrder();
 	double h = pDynaModel->GetH();
 	double dError1 = pRightVector1->Error;
 	double dError2 = pRightVector2->Error;
 
-	const double *lm1 = pDynaModel->Methodl[pRightVector1->EquationType * 2 + q - 1];
-	const double *lm2 = pDynaModel->Methodl[pRightVector2->EquationType * 2 + q - 1];
+	const double* lm1 = pDynaModel->Methodl[pRightVector1->EquationType * 2 + q - 1];
+	const double* lm2 = pDynaModel->Methodl[pRightVector2->EquationType * 2 + q - 1];
 
 	double a = 0.0;
 	double b = (pRightVector1->Nordsiek[1] + dError1 * lm1[1] - (pRightVector2->Nordsiek[1] + dError2 * lm2[1])) / h;
@@ -270,7 +286,27 @@ double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel *pDyn
 	if (q == 2)
 		a = (pRightVector1->Nordsiek[2] + dError1 * lm1[2] - (pRightVector2->Nordsiek[2] + dError2 * lm2[2])) / h / h;
 
-	return GetZCStepRatio(pDynaModel, a, b, c);
+	const double rH(GetZCStepRatio(pDynaModel, a, b, c));
+
+	if (rH <= 0.0)
+	{
+		if (pRightVector1->pDevice)
+			pRightVector1->pDevice->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(
+				"Negative ZC ratio {} in device {}, variable {} at t={}. "
+				"Nordsieck1 [{},{},{}], Nordsieck2 [{},{},{}]",
+				rH,
+				pRightVector1->pDevice->GetVerbalName(),
+				pRightVector1->pDevice->VariableNameByPtr(pRightVector1->pValue),
+				pDynaModel->GetCurrentTime(),
+				pRightVector1->Nordsiek[0],
+				pRightVector1->Nordsiek[1],
+				pRightVector1->Nordsiek[2],
+				pRightVector2->Nordsiek[0],
+				pRightVector2->Nordsiek[1],
+				pRightVector2->Nordsiek[2]
+			));
+	}
+	return rH;
 }
 
 // возвращает отношение текущего шага к шагу до пересечения заданного a*t*t + b*t + c полинома
@@ -324,4 +360,15 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 	}
 
 	return rH;
+}
+
+std::string CDynaPrimitive::GetVerboseName()
+{
+	const auto pRightVector = m_Device.GetModel()->GetRightVector(m_Output);
+	const char* cszUnknown = "\"unknown\"";
+	return fmt::format("{} {} {} {}", 
+		GetVerbalName(), 
+		m_Device.GetVerbalName(), 
+		pRightVector ? m_Device.VariableNameByPtr(pRightVector->pValue) : cszUnknown,
+		pRightVector ? *pRightVector->pValue : 0.0);
 }

@@ -569,6 +569,12 @@ double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 		{
 			Kh = Khi;
 			m_pClosestZeroCrossingDevice = it;
+			if (Kh < 0.0)
+				it->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at device \"{}\" at t={}",
+					Kh,
+					it->GetVerbalName(),
+					GetModel()->GetCurrentTime()
+				));
 		}
 	}
 	return Kh;

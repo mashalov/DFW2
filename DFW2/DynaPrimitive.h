@@ -137,6 +137,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) { return eDEVICEFUNCTIONSTATUS::DFS_OK; }
 		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
 		virtual bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) { return true; }
+		std::string GetVerboseName();
 		static double GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c);
 		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst);
 	};

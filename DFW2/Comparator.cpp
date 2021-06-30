@@ -32,11 +32,12 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
 	RightVector *pRightVector2 = pDynaModel->GetRightVector(m_Input1);
 	double dCheck = m_Input - m_Input1;
-	double rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
+	double rH(1.0);
 
-	if (pDynaModel->GetZeroCrossingInRange(rH))
+	if (dCheck < 0)
 	{
-		if (dCheck < 0)
+		rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
+		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{
 			double derr = std::abs(pRightVector1->GetWeightedError(dCheck, m_Input1));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
@@ -47,18 +48,19 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 			else
 			{
 				if (pDynaModel->ZeroCrossingStepReached(rH))
+				{
 					SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
+					rH = 1.0;
+				}
 			}
 		}
+		else
+		{
+			SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
+			rH = 1.0;
+			_ASSERTE(0); // корня нет, но знак изменился !
+		}
 	}
-	else if (dCheck < 0)
-	{
-		SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
-		rH = 1.0;
-		_ASSERTE(0); // корня нет, но знак изменился !
-	}
-	else
-		rH = 1.0;
 
 	return rH;
 }
@@ -68,12 +70,14 @@ double CComparator::OnStateOff(CDynaModel *pDynaModel)
 	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
 	RightVector *pRightVector2 = pDynaModel->GetRightVector(m_Input1);
 	double dCheck = m_Input1 - m_Input;
-	double rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
-	if (pDynaModel->GetZeroCrossingInRange(rH))
+	double rH(1.0);
+
+	if (dCheck < 0)
 	{
-		if (dCheck < 0)
+		rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
+		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{
-			double derr = std::abs(pRightVector1->GetWeightedError(dCheck, m_Input));
+			double derr = std::abs(pRightVector1->GetWeightedError(dCheck, m_Input1));
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
@@ -82,17 +86,19 @@ double CComparator::OnStateOff(CDynaModel *pDynaModel)
 			else
 			{
 				if (pDynaModel->ZeroCrossingStepReached(rH))
+				{
 					SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
+					rH = 1.0;
+				}
 			}
 		}
+		else
+		{
+			SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
+			rH = 1.0;
+			_ASSERTE(0); // корня нет, но знак изменился !
+		}
 	}
-	else if (dCheck < 0)
-	{
-		SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
-		rH = 1.0;
-		_ASSERTE(0); // корня нет, но знак изменился !
-	}
-	else
-		rH = 1.0;
+
 	return rH;
 }
