@@ -17,42 +17,41 @@ void CDynaModel::WriteResultsHeader()
 			m_ResultsWriter.AddVariableUnit(vn.first, vn.second);
 
 
-		for (auto&& it : m_DeviceContainers)
+		for (const auto& container : m_DeviceContainers)
 		{
-			CDeviceContainer* pDevCon = it;
 			// проверяем, нужно ли записывать данные для такого типа контейнера
-			if (!ApproveContainerToWriteResults(pDevCon)) continue;
+			if (!ApproveContainerToWriteResults(container)) continue;
 			// если записывать надо - добавляем тип устройства контейнера
-			IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(it->GetType(), stringutils::utf8_decode(it->GetTypeName()).c_str());
+			IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(container->GetType(), stringutils::utf8_decode(container->GetTypeName()).c_str());
 
 			// по умолчанию у устройства один идентификатор и одно родительское устройство
 			long DeviceIdsCount = 1;
 			long ParentIdsCount = 1;
 
 			// у ветви - три идентификатора
-			if (pDevCon->GetType() == DEVTYPE_BRANCH)
+			if (container->GetType() == DEVTYPE_BRANCH)
 				DeviceIdsCount = 3;
 
-			CDeviceContainerProperties& Props = pDevCon->m_ContainerProps;
+			const CDeviceContainerProperties& Props = container->m_ContainerProps;
 			// количество родительских устройств равно количеству ссылок на ведущие устройства
 			ParentIdsCount = static_cast<long>(Props.m_Masters.size());
 
 			// у ветви два ведущих узла
-			if (pDevCon->GetType() == DEVTYPE_BRANCH)
+			if (container->GetType() == DEVTYPE_BRANCH)
 				ParentIdsCount = 2;
 
-			long nDevicesCount = static_cast<long>(std::count_if(pDevCon->begin(), pDevCon->end(), [](const CDevice* pDev)->bool {return !pDev->IsPermanentOff(); }));
+			long nDevicesCount = static_cast<long>(std::count_if(container->begin(), container->end(), [](const CDevice* pDev)->bool {return !pDev->IsPermanentOff(); }));
 
 			// добавляем описание устройства: количество идентификаторов, количество ведущих устройств и общее количество устройств данного типа
 			spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, nDevicesCount);
 
 			// добавляем описания перемнных данного контейнера
-			for (auto&& vit : pDevCon->m_ContainerProps.m_VarMap)
+			for (const auto& var : Props.m_VarMap)
 			{
-				if (vit.second.m_bOutput)
-					spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(vit.first).c_str(),
-						vit.second.m_Units,
-						vit.second.m_dMultiplier);
+				if (var.second.m_bOutput)
+					spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
+						var.second.m_Units,
+						var.second.m_dMultiplier);
 			}
 
 			variant_t DeviceIds, ParentIds, ParentTypes;
@@ -74,15 +73,15 @@ void CDynaModel::WriteResultsHeader()
 				ParentTypes.vt = VT_ARRAY | VT_I4;
 			}
 
-			for (auto&& dit : *pDevCon)
+			for (const auto& device : *container)
 			{
-				if (dit->IsPermanentOff())
+				if (device->IsPermanentOff())
 					continue;
 
-				if (pDevCon->GetType() == DEVTYPE_BRANCH)
+				if (device->GetType() == DEVTYPE_BRANCH)
 				{
 					// для ветвей передаем номер начала, конца и номер параллельной цепи
-					CDynaBranch* pBranch = static_cast<CDynaBranch*>(dit);
+					const CDynaBranch* pBranch = static_cast<const CDynaBranch*>(device);
 					int* pDataIds;
 					if (SUCCEEDED(SafeArrayAccessData(DeviceIds.parray, (void**)&pDataIds)))
 					{
@@ -114,7 +113,7 @@ void CDynaModel::WriteResultsHeader()
 				}
 				else
 				{
-					DeviceIds = dit->GetId();
+					DeviceIds = device->GetId();
 					if (ParentIdsCount > 1)
 					{
 						int* pParentIds, * pParentTypes;
@@ -122,9 +121,9 @@ void CDynaModel::WriteResultsHeader()
 						if (SUCCEEDED(SafeArrayAccessData(ParentIds.parray, (void**)&pParentIds)) &&
 							SUCCEEDED(SafeArrayAccessData(ParentTypes.parray, (void**)&pParentTypes)))
 						{
-							for (auto&& it1 : Props.m_Masters)
+							for (const auto& master : Props.m_Masters)
 							{
-								CDevice* pLinkDev = dit->GetSingleLink(it1->nLinkIndex);
+								CDevice* pLinkDev = device->GetSingleLink(master->nLinkIndex);
 								if (pLinkDev)
 								{
 									pParentTypes[nIndex] = static_cast<long>(pLinkDev->GetType());
@@ -144,7 +143,7 @@ void CDynaModel::WriteResultsHeader()
 					{
 						CDevice* pLinkDev(nullptr);
 						if (!Props.m_Masters.empty())
-							pLinkDev = dit->GetSingleLink(Props.m_Masters[0]->nLinkIndex);
+							pLinkDev = device->GetSingleLink(Props.m_Masters[0]->nLinkIndex);
 
 						if (pLinkDev)
 						{
@@ -160,7 +159,7 @@ void CDynaModel::WriteResultsHeader()
 					}
 				}
 
-				spDeviceType->AddDevice(stringutils::utf8_decode(dit->GetName()).c_str(),
+				spDeviceType->AddDevice(stringutils::utf8_decode(device->GetName()).c_str(),
 					DeviceIds,
 					ParentIds,
 					ParentTypes);
@@ -173,38 +172,36 @@ void CDynaModel::WriteResultsHeader()
 
 
 
-		for (auto&& it : m_DeviceContainers)
+		for (const auto& container : m_DeviceContainers)
 		{
-			CDeviceContainer* pDevCon = it;
-
 			// собираем углы генераторов для детектора затухания колебаний
-			if (m_Parameters.m_bAllowDecayDetector && pDevCon->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
+			if (m_Parameters.m_bAllowDecayDetector && container->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
 			{
-				ptrdiff_t deltaIndex(pDevCon->GetVariableIndex(CDynaNodeBase::m_cszDelta));
+				ptrdiff_t deltaIndex(container->GetVariableIndex(CDynaNodeBase::m_cszDelta));
 				if (deltaIndex >= 0)
-					for (auto&& dit : *pDevCon)
-						m_OscDetector.add_value_pointer(dit->GetVariableConstPtr(deltaIndex));
+					for (const auto& device : *container)
+						m_OscDetector.add_value_pointer(device->GetVariableConstPtr(deltaIndex));
 			}
 
 			// устанавливаем адреса, откуда ResultWrite будет забирать значения
 			// записываемых переменных
 
 			// проверяем нужно ли писать данные от этого контейнера
-			if (!ApproveContainerToWriteResults(pDevCon)) continue;
+			if (!ApproveContainerToWriteResults(container)) continue;
 
-			for (auto&& dit : *pDevCon)
+			for (const auto& device : *container)
 			{
-				if (dit->IsPermanentOff())
+				if (device->IsPermanentOff())
 					continue;
 
 				long nVarIndex = 0;
-				for (auto&& vit : it->m_ContainerProps.m_VarMap)
+				for (const auto& variable : container->m_ContainerProps.m_VarMap)
 				{
-					if (vit.second.m_bOutput)
-						m_spResultWrite->SetChannel(static_cast<long>(dit->GetId()),
-							static_cast<long>(dit->GetType()),
+					if (variable.second.m_bOutput)
+						m_spResultWrite->SetChannel(static_cast<long>(device->GetId()),
+							static_cast<long>(device->GetType()),
 							nVarIndex++,
-							dit->GetVariablePtr(vit.second.m_nIndex),
+							device->GetVariablePtr(variable.second.m_nIndex),
 							nIndex++);
 
 				}
@@ -273,12 +270,26 @@ void CResultsWriterCOM::WriteResultsHeader()
 
 void CResultsWriterCOM::CreateFile(std::filesystem::path path, ResultsInfo& Info)
 {
-	m_spResultWrite = spResults->Create(path.c_str());
-	m_spResultWrite->NoChangeTolerance = Info.NoChangeTolerance;
-	m_spResultWrite->Comment = stringutils::utf8_decode(Info.Comment).c_str();
+	try
+	{
+		m_spResultWrite = spResults->Create(path.c_str());
+		m_spResultWrite->NoChangeTolerance = Info.NoChangeTolerance;
+		m_spResultWrite->Comment = stringutils::utf8_decode(Info.Comment).c_str();
+	}
+	catch (_com_error& ex)
+	{
+		throw dfw2error(ex.Description());
+	}
 }
 
 void CResultsWriterCOM::AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName)
 {
-	m_spResultWrite->AddVariableUnit(static_cast<long>(nUnitType), stringutils::utf8_decode(UnitName).c_str());
+	try
+	{
+		m_spResultWrite->AddVariableUnit(static_cast<long>(nUnitType), stringutils::utf8_decode(UnitName).c_str());
+	}
+	catch (_com_error& ex)
+	{
+		throw dfw2error(ex.Description());
+	}
 }
