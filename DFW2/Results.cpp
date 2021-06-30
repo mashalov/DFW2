@@ -22,7 +22,7 @@ void CDynaModel::WriteResultsHeader()
 			// проверяем, нужно ли записывать данные для такого типа контейнера
 			if (!ApproveContainerToWriteResults(container)) continue;
 			// если записывать надо - добавляем тип устройства контейнера
-			IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(container->GetType(), stringutils::utf8_decode(container->GetTypeName()).c_str());
+			auto DeviceType = m_ResultsWriter.AddDeviceType(container->GetType(), container->GetTypeName());
 
 			// по умолчанию у устройства один идентификатор и одно родительское устройство
 			long DeviceIdsCount = 1;
@@ -166,7 +166,7 @@ void CDynaModel::WriteResultsHeader()
 			}
 		}
 
-		m_spResultWrite->WriteHeader();
+		m_ResultsWriter.WriteHeader();
 
 		long nIndex = 0;
 
@@ -198,12 +198,11 @@ void CDynaModel::WriteResultsHeader()
 				for (const auto& variable : container->m_ContainerProps.m_VarMap)
 				{
 					if (variable.second.m_bOutput)
-						m_spResultWrite->SetChannel(static_cast<long>(device->GetId()),
-							static_cast<long>(device->GetType()),
+						m_ResultsWriter.SetChannel(device->GetId(),
+							device->GetType(),
 							nVarIndex++,
 							device->GetVariablePtr(variable.second.m_nIndex),
 							nIndex++);
-
 				}
 			}
 		}
@@ -287,6 +286,51 @@ void CResultsWriterCOM::AddVariableUnit(ptrdiff_t nUnitType, const std::string_v
 	try
 	{
 		m_spResultWrite->AddVariableUnit(static_cast<long>(nUnitType), stringutils::utf8_decode(UnitName).c_str());
+	}
+	catch (_com_error& ex)
+	{
+		throw dfw2error(ex.Description());
+	}
+}
+
+
+CResultsWriterBase::DeviceType& CResultsWriterCOM::AddDeviceType(ptrdiff_t nDeviceType, const std::string_view DeviceTypeName)
+{
+	try
+	{
+		//IDeviceTypeWritePtr spDeviceType = 
+		m_spResultWrite->AddDeviceType(static_cast<long>(nDeviceType), stringutils::utf8_decode(DeviceTypeName).c_str());
+	}
+	catch (_com_error& ex)
+	{
+		throw dfw2error(ex.Description());
+	}
+}
+
+void CResultsWriterCOM::SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t VarIndex, double* ValuePtr, ptrdiff_t ChannelIndex)
+{
+	try
+	{
+		m_spResultWrite->SetChannel(
+			static_cast<long>(DeviceId),
+			static_cast<long>(DeviceType),
+			static_cast<long>(VarIndex),
+			ValuePtr,
+			static_cast<long>(ChannelIndex)
+		);
+
+	}
+	catch (_com_error& ex)
+	{
+		throw dfw2error(ex.Description());
+	}
+}
+
+void CResultsWriterCOM::WriteHeader()
+{
+	try
+	{
+		m_spResultWrite->WriteHeader();
 	}
 	catch (_com_error& ex)
 	{
