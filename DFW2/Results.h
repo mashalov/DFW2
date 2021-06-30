@@ -37,6 +37,7 @@ namespace DFW2
 		virtual void WriteResults(double Time, double Step) = 0;
 		virtual void FinishWriteResults() = 0;
 		virtual void CreateFile(std::filesystem::path path, ResultsInfo& Info) = 0;
+		virtual void AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName) = 0;
 	};
 
 	class CResultsWriterCOM : public CResultsWriterBase
@@ -50,6 +51,7 @@ namespace DFW2
 		void WriteResults(double Time, double Step) override;
 		void FinishWriteResults() override;
 		void CreateFile(std::filesystem::path path, ResultsInfo& Info) override;
+		void AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName) override;
 	};
 
 }

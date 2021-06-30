@@ -13,8 +13,8 @@ void CDynaModel::WriteResultsHeader()
 		m_ResultsWriter.CreateFile("c:\\tmp\\binresultCOM.rst", resultsInfo );
 
 		// добавляем описание единиц измерения переменных
-		for (auto&& vnmit : CDFW2Messages().VarNameMap())
-			m_spResultWrite->AddVariableUnit(static_cast<long>(vnmit.first), stringutils::utf8_decode(vnmit.second).c_str());
+		for (const auto& vn : CDFW2Messages().VarNameMap())
+			m_ResultsWriter.AddVariableUnit(vn.first, vn.second);
 
 
 		for (auto&& it : m_DeviceContainers)
@@ -276,4 +276,9 @@ void CResultsWriterCOM::CreateFile(std::filesystem::path path, ResultsInfo& Info
 	m_spResultWrite = spResults->Create(path.c_str());
 	m_spResultWrite->NoChangeTolerance = Info.NoChangeTolerance;
 	m_spResultWrite->Comment = stringutils::utf8_decode(Info.Comment).c_str();
+}
+
+void CResultsWriterCOM::AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName)
+{
+	m_spResultWrite->AddVariableUnit(static_cast<long>(nUnitType), stringutils::utf8_decode(UnitName).c_str());
 }
