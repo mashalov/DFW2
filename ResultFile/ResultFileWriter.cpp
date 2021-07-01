@@ -474,35 +474,96 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 	// проверяем активен ли поток записи
 	if (threadWriter.joinable())
 	{
-		// ждем и забираем мьютекс доступа к данным
-		std::unique_lock<std::mutex> dataGuard(mutexData);
-
-		try
 		{
-			// сохраняем результаты из указателей во внутрениий буфер
-			CChannelEncoder *pEncoder = m_pEncoders.get();
-			CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
-			while (pEncoder < pEncoderEnd)
+			// если число записей в энкодере меньше, чем число вызовов записи результатов
+			while (portionSent > portionReceived)
 			{
-				pEncoder->m_dValue = *pEncoder->m_pVariable;
-				pEncoder++;
+				// скорее всего поток записи не запустился при прошлом вызове
+				// запускаем его
+				std::unique_lock<std::mutex> doneGuard(mutexDone);
+				conditionRun.notify_all();
+				// и ждем возврата 10мс, после чего снова проверяем равенство записей (самый надежный и кондовый способ синхронизации)
+				conditionDone.wait_for(doneGuard, std::chrono::milliseconds(10), [this]() { return  this->portionSent == this->portionReceived; });
 			}
 
-			m_dTimeToWrite = dTime;
-			m_dStepToWrite = dStep;
-		}
-		catch (...)
-		{
-			throw CFileWriteException(infile);
+
+			// ждем освобождения данных
+			std::lock_guard<std::mutex> dataGuard(mutexData);
+
+			try
+			{
+				// сохраняем результаты из указателей во внутрениий буфер
+				CChannelEncoder* pEncoder = m_pEncoders.get();
+				CChannelEncoder* pEncoderEnd = pEncoder + m_nChannelsCount - 2;
+				while (pEncoder < pEncoderEnd)
+				{
+					pEncoder->m_dValue = *pEncoder->m_pVariable;
+					pEncoder++;
+				}
+
+				m_dTimeToWrite = dTime;
+				m_dStepToWrite = dStep;
+			}
+			catch (...)
+			{
+				throw CFileWriteException(infile);
+			}
+			// по завершению копирования результатов запускаем поток записи
 		}
 
-		// по завершению копирования результатов запускаем поток записи
+		// запускаем поток
 		conditionRun.notify_all();
-		// после освобождения мьютекса поток будет снят с wait
+		// считаем количество отданных в энкодер записей
+		portionSent++;
 	}
 	else
 		throw CFileWriteException(infile);
 }
+
+// поток записи результатов
+unsigned int CResultFileWriter::WriterThread(void* pThis)
+{
+	try
+	{
+		// получаем объект из параметра функции потока
+		CResultFileWriter* pthis = static_cast<CResultFileWriter*>(pThis);
+
+		if (!pthis)
+			throw CFileWriteException(nullptr);
+
+		// поток работает пока не сброшен флаг работы в параметрах
+		while (pthis->m_bThreadRun)
+		{
+			{
+				// ждем команды на запуск записи или останов
+				std::unique_lock<std::mutex> runGuard(pthis->mutexRun);
+				pthis->conditionRun.wait(runGuard);
+				std::lock_guard<std::mutex> dataGuard(pthis->mutexData);
+
+				// если останов - выходим
+				if (!pthis->m_bThreadRun)
+					break;
+
+				// записываем очередной блок результатов
+
+				if (!pthis->WriteResultsThreaded())
+					throw CFileWriteException(pthis->infile);
+
+			}
+			// считаем количество записей
+			pthis->portionReceived++; 
+			// выдаем ивент что закончили работу
+			pthis->conditionDone.notify_all();
+		}
+	}
+	catch (CFileWriteException&)
+	{
+		MessageBox(NULL, L"Result Write Error", L"ResultWriter", MB_OK);
+	}
+
+	return 0;
+}
+
 
 // запись результатов в потоке
 bool CResultFileWriter::WriteResultsThreaded()
@@ -564,43 +625,6 @@ void CResultFileWriter::SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, p
 	else
 		throw CFileWriteException(infile);
 }
-
-// поток записи результатов
-unsigned int CResultFileWriter::WriterThread(void *pThis)
-{
-	try
-	{
-		// получаем объект из параметра функции потока
-		CResultFileWriter *pthis = static_cast<CResultFileWriter*>(pThis);
-
-		if (!pthis)
-			throw CFileWriteException(nullptr);
-
-		// поток работает пока не сброшен флаг работы в параметрах
-		while (pthis->m_bThreadRun)
-		{
-			// ждем команды на запуск записи или останов
-			{
-				std::unique_lock<std::mutex> dataGuard(pthis->mutexData);
-				pthis->conditionRun.wait(dataGuard);
-
-				if (!pthis->m_bThreadRun)
-					break;
-
-				// записываем очередной блок результатов
-				if (!pthis->WriteResultsThreaded())
-					throw CFileWriteException(pthis->infile);
-			}
-		}
-	}
-	catch (CFileWriteException&)
-	{
-		MessageBox(NULL, L"Result Write Error", L"ResultWriter", MB_OK);
-	}
-
-	return 0;
-}
-
 
 // возвращает смещение относительно текущей позиции в файле
 // для относительного смещения нужно значительно меньше разрядов

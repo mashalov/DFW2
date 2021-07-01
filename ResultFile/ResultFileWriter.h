@@ -44,10 +44,14 @@ namespace DFW2
 
 		std::thread threadWriter;
 		std::mutex mutexData;
+		std::mutex mutexRun;
+		std::mutex mutexDone;
+		std::atomic<int> portionSent, portionReceived;
+		std::atomic_bool m_bThreadRun = true;
+		std::condition_variable conditionDone;
 		std::condition_variable conditionRun;
 
 		void TerminateWriterThread();
-		bool m_bThreadRun = true;
 		double m_dTimeToWrite;
 		double m_dStepToWrite;
 		bool WriteResultsThreaded();

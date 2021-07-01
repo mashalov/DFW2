@@ -28,8 +28,6 @@ void CDynaModel::WriteResultsHeader()
 
 	long nIndex = 0;
 
-	std::ofstream res("c:\\tmp\\diff.txt");
-
 	for (const auto& container : m_DeviceContainers)
 	{
 		// собираем углы генераторов для детектора затухания колебаний
@@ -62,13 +60,6 @@ void CDynaModel::WriteResultsHeader()
 						nVarIndex++,
 						device->GetVariablePtr(variable.second.m_nIndex),
 						nIndex++);
-
-					res << device->GetId() << ";";
-					res << device->GetVerbalName() << ";";
-					res << device->GetType() << ";";
-					res << nVarIndex << ";";
-					res << *device->GetVariablePtr(variable.second.m_nIndex) << ";";
-					res << nIndex << std::endl;
 				}
 			}
 		}
