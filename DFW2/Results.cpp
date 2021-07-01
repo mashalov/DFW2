@@ -7,212 +7,62 @@ void CDynaModel::WriteResultsHeader()
 	if (m_Parameters.m_bDisableResultsWriter)
 		return;
 
-	try
+	CResultsWriterBase::ResultsInfo resultsInfo {0.0, "Тестовая схема"};
+	m_ResultsWriter.CreateFile("c:\\tmp\\binresultCOM.rst", resultsInfo );
+
+	// добавляем описание единиц измерения переменных
+	CDFW2Messages vars;
+	for (const auto& vn : vars.VarNameMap())
+		m_ResultsWriter.AddVariableUnit(vn.first, vn.second);
+
+
+	for (const auto& container : m_DeviceContainers)
 	{
-		CResultsWriterBase::ResultsInfo resultsInfo {0.0, "Тестовая схема"};
-		m_ResultsWriter.CreateFile("c:\\tmp\\binresultCOM.rst", resultsInfo );
+		// проверяем, нужно ли записывать данные для такого типа контейнера
+		if (!ApproveContainerToWriteResults(container)) continue;
+		// если записывать надо - добавляем тип устройства контейнера
+		m_ResultsWriter.AddDeviceType(*container);
+	}
 
-		// добавляем описание единиц измерения переменных
-		for (const auto& vn : CDFW2Messages().VarNameMap())
-			m_ResultsWriter.AddVariableUnit(vn.first, vn.second);
+	m_ResultsWriter.FinishWriteHeader();
 
+	long nIndex = 0;
 
-		for (const auto& container : m_DeviceContainers)
+	for (const auto& container : m_DeviceContainers)
+	{
+		// собираем углы генераторов для детектора затухания колебаний
+		if (m_Parameters.m_bAllowDecayDetector && container->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
 		{
-			// проверяем, нужно ли записывать данные для такого типа контейнера
-			if (!ApproveContainerToWriteResults(container)) continue;
-			// если записывать надо - добавляем тип устройства контейнера
-			auto DeviceType = m_ResultsWriter.AddDeviceType(container->GetType(), container->GetTypeName());
-
-			// по умолчанию у устройства один идентификатор и одно родительское устройство
-			long DeviceIdsCount = 1;
-			long ParentIdsCount = 1;
-
-			// у ветви - три идентификатора
-			if (container->GetType() == DEVTYPE_BRANCH)
-				DeviceIdsCount = 3;
-
-			const CDeviceContainerProperties& Props = container->m_ContainerProps;
-			// количество родительских устройств равно количеству ссылок на ведущие устройства
-			ParentIdsCount = static_cast<long>(Props.m_Masters.size());
-
-			// у ветви два ведущих узла
-			if (container->GetType() == DEVTYPE_BRANCH)
-				ParentIdsCount = 2;
-
-			long nDevicesCount = static_cast<long>(std::count_if(container->begin(), container->end(), [](const CDevice* pDev)->bool {return !pDev->IsPermanentOff(); }));
-
-			// добавляем описание устройства: количество идентификаторов, количество ведущих устройств и общее количество устройств данного типа
-			spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, nDevicesCount);
-
-			// добавляем описания перемнных данного контейнера
-			for (const auto& var : Props.m_VarMap)
-			{
-				if (var.second.m_bOutput)
-					spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
-						var.second.m_Units,
-						var.second.m_dMultiplier);
-			}
-
-			variant_t DeviceIds, ParentIds, ParentTypes;
-
-			// если у устройства более одного идентификатора, передаем их в SAFERRAY
-			if (DeviceIdsCount > 1)
-			{
-				SAFEARRAYBOUND sabounds = { static_cast<ULONG>(DeviceIdsCount), 0 };
-				DeviceIds.parray = SafeArrayCreate(VT_I4, 1, &sabounds);
-				DeviceIds.vt = VT_ARRAY | VT_I4;
-			}
-			// если у устройства более одного ведущего, передаем их идентификаторы в SAFERRAY
-			if (ParentIdsCount > 1)
-			{
-				SAFEARRAYBOUND sabounds = { static_cast<ULONG>(ParentIdsCount), 0 };
-				ParentIds.parray = SafeArrayCreate(VT_I4, 1, &sabounds);
-				ParentIds.vt = VT_ARRAY | VT_I4;
-				ParentTypes.parray = SafeArrayCreate(VT_I4, 1, &sabounds);
-				ParentTypes.vt = VT_ARRAY | VT_I4;
-			}
-
-			for (const auto& device : *container)
-			{
-				if (device->IsPermanentOff())
-					continue;
-
-				if (device->GetType() == DEVTYPE_BRANCH)
-				{
-					// для ветвей передаем номер начала, конца и номер параллельной цепи
-					const CDynaBranch* pBranch = static_cast<const CDynaBranch*>(device);
-					int* pDataIds;
-					if (SUCCEEDED(SafeArrayAccessData(DeviceIds.parray, (void**)&pDataIds)))
-					{
-						pDataIds[0] = static_cast<long>(pBranch->Ip);
-						pDataIds[1] = static_cast<long>(pBranch->Iq);
-						pDataIds[2] = static_cast<long>(pBranch->Np);
-						SafeArrayUnaccessData(DeviceIds.parray);
-					}
-
-					int* pParentIds, * pParentTypes;
-					if (SUCCEEDED(SafeArrayAccessData(ParentIds.parray, (void**)&pParentIds)) &&
-						SUCCEEDED(SafeArrayAccessData(ParentTypes.parray, (void**)&pParentTypes)))
-					{
-						if (pBranch->m_pNodeIp)
-							pParentIds[0] = static_cast<long>(pBranch->m_pNodeIp->GetId());
-						else
-							pParentIds[0] = 0;
-
-						if (pBranch->m_pNodeIq)
-							pParentIds[1] = static_cast<long>(pBranch->m_pNodeIq->GetId());
-						else
-							pParentIds[1] = 0;
-
-						pParentTypes[0] = pParentTypes[1] = DEVTYPE_NODE;
-
-						SafeArrayUnaccessData(ParentIds.parray);
-						SafeArrayUnaccessData(ParentTypes.parray);
-					}
-				}
-				else
-				{
-					DeviceIds = device->GetId();
-					if (ParentIdsCount > 1)
-					{
-						int* pParentIds, * pParentTypes;
-						int nIndex = 0;
-						if (SUCCEEDED(SafeArrayAccessData(ParentIds.parray, (void**)&pParentIds)) &&
-							SUCCEEDED(SafeArrayAccessData(ParentTypes.parray, (void**)&pParentTypes)))
-						{
-							for (const auto& master : Props.m_Masters)
-							{
-								CDevice* pLinkDev = device->GetSingleLink(master->nLinkIndex);
-								if (pLinkDev)
-								{
-									pParentTypes[nIndex] = static_cast<long>(pLinkDev->GetType());
-									pParentIds[nIndex] = static_cast<long>(pLinkDev->GetId());
-								}
-								else
-								{
-									pParentTypes[nIndex] = pParentIds[nIndex] = 0;
-								}
-								nIndex++;
-							}
-							SafeArrayUnaccessData(ParentIds.parray);
-							SafeArrayUnaccessData(ParentTypes.parray);
-						}
-					}
-					else
-					{
-						CDevice* pLinkDev(nullptr);
-						if (!Props.m_Masters.empty())
-							pLinkDev = device->GetSingleLink(Props.m_Masters[0]->nLinkIndex);
-
-						if (pLinkDev)
-						{
-							ParentIds = pLinkDev->GetId();
-							ParentTypes = pLinkDev->GetType();
-						}
-						else
-						{
-							ParentIds = 0;
-							ParentTypes = 0;
-						}
-
-					}
-				}
-
-				spDeviceType->AddDevice(stringutils::utf8_decode(device->GetName()).c_str(),
-					DeviceIds,
-					ParentIds,
-					ParentTypes);
-			}
+			ptrdiff_t deltaIndex(container->GetVariableIndex(CDynaNodeBase::m_cszDelta));
+			if (deltaIndex >= 0)
+				for (const auto& device : *container)
+					m_OscDetector.add_value_pointer(device->GetVariableConstPtr(deltaIndex));
 		}
 
-		m_ResultsWriter.WriteHeader();
+		// устанавливаем адреса, откуда ResultWrite будет забирать значения
+		// записываемых переменных
 
-		long nIndex = 0;
+		// проверяем нужно ли писать данные от этого контейнера
+		if (!ApproveContainerToWriteResults(container)) continue;
 
-
-
-		for (const auto& container : m_DeviceContainers)
+		for (const auto& device : *container)
 		{
-			// собираем углы генераторов для детектора затухания колебаний
-			if (m_Parameters.m_bAllowDecayDetector && container->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
+			if (device->IsPermanentOff())
+				continue;
+
+			long nVarIndex = 0;
+			for (const auto& variable : container->m_ContainerProps.m_VarMap)
 			{
-				ptrdiff_t deltaIndex(container->GetVariableIndex(CDynaNodeBase::m_cszDelta));
-				if (deltaIndex >= 0)
-					for (const auto& device : *container)
-						m_OscDetector.add_value_pointer(device->GetVariableConstPtr(deltaIndex));
-			}
-
-			// устанавливаем адреса, откуда ResultWrite будет забирать значения
-			// записываемых переменных
-
-			// проверяем нужно ли писать данные от этого контейнера
-			if (!ApproveContainerToWriteResults(container)) continue;
-
-			for (const auto& device : *container)
-			{
-				if (device->IsPermanentOff())
-					continue;
-
-				long nVarIndex = 0;
-				for (const auto& variable : container->m_ContainerProps.m_VarMap)
-				{
-					if (variable.second.m_bOutput)
-						m_ResultsWriter.SetChannel(device->GetId(),
-							device->GetType(),
-							nVarIndex++,
-							device->GetVariablePtr(variable.second.m_nIndex),
-							nIndex++);
-				}
+				if (variable.second.m_bOutput)
+					m_ResultsWriter.SetChannel(device->GetId(),
+						device->GetType(),
+						nVarIndex++,
+						device->GetVariablePtr(variable.second.m_nIndex),
+						nIndex++);
 			}
 		}
 	}
-	catch (_com_error& ex)
-	{
-		throw dfw2error(ex.Description());
-	}
 
-	m_ResultsWriter.WriteResultsHeader();
 	m_dTimeWritten = 0.0;
 }
 
@@ -223,7 +73,7 @@ void CDynaModel::WriteResults()
 
 	if (sc.m_bEnforceOut || GetCurrentTime() >= m_dTimeWritten)
 	{
-		m_ResultsWriter.WriteResults(GetCurrentTime(), GetH());
+		m_ResultsWriter.WriteResults({ GetCurrentTime(), GetH() });
 		m_dTimeWritten = GetCurrentTime() + m_Parameters.m_dOutStep;
 		sc.m_bEnforceOut = false;
 	}
@@ -237,11 +87,11 @@ void CDynaModel::FinishWriteResults()
 	m_ResultsWriter.FinishWriteResults();
 }
 
-void CResultsWriterCOM::WriteResults(double Time, double Step)
+void CResultsWriterCOM::WriteResults(const WriteResultsInfo& WriteInfo)
 {
 	try
 	{
-		m_spResultWrite->WriteResults(Time, Step);
+		m_spResultWrite->WriteResults(WriteInfo.Time, WriteInfo.Step);
 	}
 	catch (_com_error& ex)
 	{
@@ -261,16 +111,12 @@ void CResultsWriterCOM::FinishWriteResults()
 	}
 }
 
-void CResultsWriterCOM::WriteResultsHeader()
-{
-	if (FAILED(spResults.CreateInstance(CLSID_Result)))
-		throw dfw2error(CDFW2Messages::m_cszFailedToCreateCOMResultsWriter);
-}
-
 void CResultsWriterCOM::CreateFile(std::filesystem::path path, ResultsInfo& Info)
 {
 	try
 	{
+		if (FAILED(spResults.CreateInstance(CLSID_Result)))
+			throw dfw2error(CDFW2Messages::m_cszFailedToCreateCOMResultsWriter);
 		m_spResultWrite = spResults->Create(path.c_str());
 		m_spResultWrite->NoChangeTolerance = Info.NoChangeTolerance;
 		m_spResultWrite->Comment = stringutils::utf8_decode(Info.Comment).c_str();
@@ -294,12 +140,105 @@ void CResultsWriterCOM::AddVariableUnit(ptrdiff_t nUnitType, const std::string_v
 }
 
 
-CResultsWriterBase::DeviceType& CResultsWriterCOM::AddDeviceType(ptrdiff_t nDeviceType, const std::string_view DeviceTypeName)
+void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 {
 	try
 	{
-		//IDeviceTypeWritePtr spDeviceType = 
-		m_spResultWrite->AddDeviceType(static_cast<long>(nDeviceType), stringutils::utf8_decode(DeviceTypeName).c_str());
+		IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(static_cast<long>(Container.GetType()), stringutils::utf8_decode(Container.GetTypeName()).c_str());
+		const CDeviceContainerProperties& Props = Container.m_ContainerProps;
+		for (const auto& var : Props.m_VarMap)
+		{
+			if (var.second.m_bOutput)
+				spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
+					var.second.m_Units,
+					var.second.m_dMultiplier);
+		}
+
+		// по умолчанию у устройства один идентификатор и одно родительское устройство
+		long DeviceIdsCount = 1;
+		long ParentIdsCount = static_cast<long>(Props.m_Masters.size());
+		// у ветви - три идентификатора
+		if (Container.GetType() == DEVTYPE_BRANCH)
+		{
+			DeviceIdsCount = 3;
+			ParentIdsCount = 2;
+		}
+		
+		spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, static_cast<long>(Container.CountNonPermanentOff()));
+
+		variant_t DeviceIds, ParentIds, ParentTypes;
+
+		auto MakeVariant = [](variant_t& variant, const std::vector<ptrdiff_t>& content)
+		{
+			variant.Clear();
+			if (content.size() > 1)
+			{
+				SAFEARRAYBOUND sabounds{ static_cast<ULONG>(content.size()), 0 };
+				variant.parray = SafeArrayCreate(VT_I4, 1, &sabounds);
+				if(!variant.parray)
+					throw dfw2error("MakeVariant - SafeArrayCreate failed");
+				variant.vt = VT_ARRAY | VT_I4;
+				int* pData(nullptr);
+				if (FAILED(SafeArrayAccessData(variant.parray, (void**)&pData)))
+					throw dfw2error("MakeVariant - SafeArrayAccessData failed");
+
+				for (const auto& val : content)
+				{
+					*pData = static_cast<long>(val);
+					pData++;
+				}
+
+				if(FAILED(SafeArrayUnaccessData(variant.parray)))
+					throw dfw2error("MakeVariant - SafeArrayUnaccessData failed");
+			}
+			else if (content.size() == 0)
+				variant = static_cast<long>(0);
+			else
+				variant = static_cast<long>(*content.begin());
+		};
+
+		// если у устройства более одного идентификатора, передаем их в SAFERRAY
+
+		for (const auto& device : Container)
+		{
+			if (device->IsPermanentOff())
+				continue;
+
+			if (device->GetType() == DEVTYPE_BRANCH)
+			{
+				// для ветвей передаем номер начала, конца и номер параллельной цепи
+				const CDynaBranch* pBranch = static_cast<const CDynaBranch*>(device);
+
+				MakeVariant(DeviceIds, { pBranch->Ip, pBranch->Iq, pBranch->Np });
+				MakeVariant(ParentIds, { 
+					pBranch->m_pNodeIp ? pBranch->m_pNodeIp->GetId() : 0,
+					pBranch->m_pNodeIq ? pBranch->m_pNodeIq->GetId() : 0,
+					});
+				MakeVariant(ParentTypes, { DEVTYPE_NODE, DEVTYPE_NODE });
+
+			}
+			else
+			{
+				MakeVariant(DeviceIds, { device->GetId() });
+				std::vector<ptrdiff_t> idsParents, typesParents;
+
+				for (const auto& master : Props.m_Masters)
+				{
+					CDevice* pLinkDev = device->GetSingleLink(master->nLinkIndex);
+					idsParents.push_back(pLinkDev ? pLinkDev->GetId() : 0);
+					typesParents.push_back(pLinkDev ? pLinkDev->GetType() : 0);
+				}
+
+				MakeVariant(ParentIds, idsParents);
+				MakeVariant(ParentTypes, typesParents);
+			}
+
+			spDeviceType->AddDevice(stringutils::utf8_decode(device->GetName()).c_str(),
+				DeviceIds,
+				ParentIds,
+				ParentTypes);
+		}
+
 	}
 	catch (_com_error& ex)
 	{
@@ -326,7 +265,7 @@ void CResultsWriterCOM::SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptr
 	}
 }
 
-void CResultsWriterCOM::WriteHeader()
+void CResultsWriterCOM::FinishWriteHeader()
 {
 	try
 	{

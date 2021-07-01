@@ -91,9 +91,9 @@ namespace DFW2
 		ptrdiff_t EquationsCount();											// количество уравнений одного устройства в данном контейнере
 
 		// тип устройства хранится в атрибутах контейнера. Устройство вне контейнера не знает своего типа
-		inline eDFW2DEVICETYPE GetType() { return m_ContainerProps.GetType(); }
+		inline eDFW2DEVICETYPE GetType() const { return m_ContainerProps.GetType(); }
 		// текстовое описание типа устройства
-		const char* GetTypeName() { return m_ContainerProps.GetVerbalClassName(); }
+		const char* GetTypeName() const { return m_ContainerProps.GetVerbalClassName(); }
 
 		CDeviceContainer(CDynaModel *pDynaModel);
 		virtual ~CDeviceContainer();
@@ -180,8 +180,13 @@ namespace DFW2
 		void RemoveDevice(ptrdiff_t nId);									// удалить устройство по идентификатору или индексу
 		void RemoveDeviceByIndex(ptrdiff_t nIndex); 
 		size_t Count() const;												// получить количество устройств в контейнере
+		size_t CountNonPermanentOff() const;								// получить количество устройств в конейнере без признака PermanentOff
 		inline DEVICEVECTORITR begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
 		inline DEVICEVECTORITR end() { return m_DevVec.end(); }
+
+		inline const DEVICEVECTORCONSTITR begin() const { return m_DevVec.begin(); }			// const-диапазон вектора устройств
+		inline const DEVICEVECTORCONSTITR end() const   { return m_DevVec.end(); }
+
 		void Log(DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);
 
 		LINKSVEC m_Links;													// вектор возможных связей. Элемент вектора - связь с определенным типом устройств

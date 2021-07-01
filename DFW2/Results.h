@@ -19,6 +19,8 @@
 namespace DFW2
 {
 	class CDynaModel;
+	class CDeviceContainer;
+
 
 	class CResultsWriterBase
 	{
@@ -32,20 +34,25 @@ namespace DFW2
 			std::string Comment;
 		};
 
+		struct WriteResultsInfo
+		{
+			double Time = 0;
+			double Step = 0;
+		};
+
 		class DeviceType
 		{
 
 		};
 
 		CResultsWriterBase(CDynaModel& Model) : model(Model) {}
-		virtual void WriteResultsHeader() = 0;
-		virtual void WriteResults(double Time, double Step) = 0;
+		virtual void WriteResults(const WriteResultsInfo& WriteInfo) = 0;
 		virtual void FinishWriteResults() = 0;
 		virtual void CreateFile(std::filesystem::path path, ResultsInfo& Info) = 0;
 		virtual void AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName) = 0;
-		virtual DeviceType& AddDeviceType(ptrdiff_t nDeviceType, const std::string_view DeviceTypeName) = 0;
+		virtual void AddDeviceType(const CDeviceContainer& Container) = 0;
 		virtual void SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t VarIndex, double* ValuePtr, ptrdiff_t ChannelIndex) = 0;
-		virtual void WriteHeader() = 0;
+		virtual void FinishWriteHeader() = 0;
 	};
 
 	class CResultsWriterCOM : public CResultsWriterBase
@@ -55,14 +62,13 @@ namespace DFW2
 		IResultPtr spResults;
 	public:
 		using CResultsWriterBase::CResultsWriterBase;
-		void WriteResultsHeader() override;
-		void WriteResults(double Time, double Step) override;
+		void WriteResults(const WriteResultsInfo& WriteInfo) override;
 		void FinishWriteResults() override;
 		void CreateFile(std::filesystem::path path, ResultsInfo& Info) override;
 		void AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName) override;
-		DeviceType& AddDeviceType(ptrdiff_t nDeviceType, const std::string_view DeviceTypeName) override;
+		void AddDeviceType(const CDeviceContainer& Container) override;
 		void SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t VarIndex, double* ValuePtr, ptrdiff_t ChannelIndex) override;
-		void WriteHeader() override;
+		void FinishWriteHeader() override;
 	};
 
 }

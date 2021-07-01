@@ -214,6 +214,11 @@ size_t CDeviceContainer::Count() const
 	return m_DevVec.size();
 }
 
+size_t CDeviceContainer::CountNonPermanentOff() const
+{
+	return std::count_if(m_DevVec.begin(), m_DevVec.end(), [](const CDevice* pDev)->bool {return !pDev->IsPermanentOff(); });
+}
+
 // получить количество переменных, которое нужно выводить в результаты
 size_t CDeviceContainer::GetResultVariablesCount()
 {
