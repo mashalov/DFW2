@@ -7,7 +7,7 @@ void CDynaModel::WriteResultsHeader()
 	if (m_Parameters.m_bDisableResultsWriter)
 		return;
 
-	CResultsWriterBase::ResultsInfo resultsInfo {0.0, "Тестовая схема"};
+	CResultsWriterBase::ResultsInfo resultsInfo {0.0, "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile("c:\\tmp\\binresultCOM.rst", resultsInfo );
 
 	// добавляем описание единиц измерения переменных
@@ -27,6 +27,8 @@ void CDynaModel::WriteResultsHeader()
 	m_ResultsWriter.FinishWriteHeader();
 
 	long nIndex = 0;
+
+	std::ofstream res("c:\\tmp\\diff.txt");
 
 	for (const auto& container : m_DeviceContainers)
 	{
@@ -54,11 +56,20 @@ void CDynaModel::WriteResultsHeader()
 			for (const auto& variable : container->m_ContainerProps.m_VarMap)
 			{
 				if (variable.second.m_bOutput)
+				{
 					m_ResultsWriter.SetChannel(device->GetId(),
 						device->GetType(),
 						nVarIndex++,
 						device->GetVariablePtr(variable.second.m_nIndex),
 						nIndex++);
+
+					res << device->GetId() << ";";
+					res << device->GetVerbalName() << ";";
+					res << device->GetType() << ";";
+					res << nVarIndex << ";";
+					res << *device->GetVariablePtr(variable.second.m_nIndex) << ";";
+					res << nIndex << std::endl;
+				}
 			}
 		}
 	}
@@ -146,14 +157,6 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 	{
 		IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(static_cast<long>(Container.GetType()), stringutils::utf8_decode(Container.GetTypeName()).c_str());
 		const CDeviceContainerProperties& Props = Container.m_ContainerProps;
-		for (const auto& var : Props.m_VarMap)
-		{
-			if (var.second.m_bOutput)
-				spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
-					var.second.m_Units,
-					var.second.m_dMultiplier);
-		}
-
 		// по умолчанию у устройства один идентификатор и одно родительское устройство
 		long DeviceIdsCount = 1;
 		long ParentIdsCount = static_cast<long>(Props.m_Masters.size());
@@ -163,8 +166,16 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 			DeviceIdsCount = 3;
 			ParentIdsCount = 2;
 		}
-		
-		spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, static_cast<long>(Container.CountNonPermanentOff()));
+
+  		spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, static_cast<long>(Container.CountNonPermanentOff()));
+
+		for (const auto& var : Props.m_VarMap)
+		{
+			if (var.second.m_bOutput)
+				spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
+					var.second.m_Units,
+					var.second.m_dMultiplier);
+		}
 
 		variant_t DeviceIds, ParentIds, ParentTypes;
 
@@ -194,7 +205,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 			else if (content.size() == 0)
 				variant = static_cast<long>(0);
 			else
-				variant = static_cast<long>(*content.begin());
+				variant = static_cast<long>(content.front());
 		};
 
 		// если у устройства более одного идентификатора, передаем их в SAFERRAY
