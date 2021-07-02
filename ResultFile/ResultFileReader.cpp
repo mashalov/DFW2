@@ -769,7 +769,3 @@ int CResultFileReader::ReadBlockType()
 	else
 		throw CFileReadException(infile, CDFW2Messages::m_cszResultFileWrongCompressedBlockType);
 }
-
-
-const char CResultFile::m_cszSignature[] = { 'R', 'a', 'i', 'd', 'e', 'n' };
-const char* CResultFileReader::m_cszUnknownUnits = "???";

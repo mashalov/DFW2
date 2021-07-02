@@ -145,6 +145,7 @@ void CResultFileWriter::FlushChannels()
 	infile.write(&de, sizeof(struct DataDirectoryEntry));
 	infile.seekg(de.m_Offset, std::ios_base::beg);
 
+#ifdef _MSC_VER
 	WriteLEB(m_setSlowVariables.size());
 	for (auto &di : m_setSlowVariables)
 	{
@@ -166,6 +167,9 @@ void CResultFileWriter::FlushChannels()
 			}
 		}
 	}
+#else
+	WriteLEB(0);
+#endif
 
 	de.m_DataType = 2;
 	de.m_Offset = infile.tellg();
@@ -454,7 +458,7 @@ void CResultFileWriter::CreateResultFile(std::filesystem::path FilePath)
 	WriteLEB(DFW2_RESULTFILE_VERSION);
 
 	// создаем поток для записи
-	threadWriter = std::thread(CResultFileWriter::WriterThread, this);
+	threadWriter = std::thread(CResultFileWriter::WriterThread, this); 
 	if(!threadWriter.joinable())
 		throw CFileWriteException(infile);
 

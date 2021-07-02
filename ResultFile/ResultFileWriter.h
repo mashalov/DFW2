@@ -61,7 +61,9 @@ namespace DFW2
 		double ts[PREDICTOR_ORDER];
 		double ls[PREDICTOR_ORDER];
 		ptrdiff_t m_nPredictorOrder = 0;
+#ifdef _MSC_VER		
 		CSlowVariablesSet m_setSlowVariables;
+#endif		
 		CRLECompressor	m_RLECompressor;
 		std::unique_ptr<unsigned char[]> m_pCompressedBuffer;
 		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
@@ -83,7 +85,9 @@ namespace DFW2
 		void WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
 		void AddDirectoryEntries(size_t nDirectoryEntriesCount);
 		static unsigned int WriterThread(void *pThis);
+#ifdef _MSC_VER		
 		CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
+#endif		
 		const std::string& GetComment() { return m_strComment; }
 
 		// ABI Interface

@@ -3,9 +3,21 @@
 #include "../DFW2/Header.h"
 #include "../DFW2/Messages.h"
 #include "IResultWriterABI.h"
+#include "Filewrapper.h"
 
 namespace DFW2
 {
+	class CResultFile
+	{
+	protected:
+		CStreamedFile infile;
+	public:
+		void WriteLEB(uint64_t nValue);
+		void WriteString(std::string_view cszString);
+		static constexpr const char m_cszSignature[6] = { 'R', 'a', 'i', 'd', 'e', 'n' };
+		static constexpr const char *m_cszUnknownUnits = "???";
+	};
+
 	struct VariableTypeInfo
 	{
 		std::string Name;

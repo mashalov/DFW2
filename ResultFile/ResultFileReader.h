@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #include "DeviceTypeInfo.h"
 #include "Compressor.h"
 #include "vector"
@@ -7,23 +6,13 @@
 #ifdef _MSC_VER
 #include <io.h>
 #include <Process.h>
-#endif
 #include "SlowVariableItem.h"
+#endif
 #include "RLECompressor.h"
 #include "IResultWriterABI.h"
 
 namespace DFW2
 {
-	class CResultFile
-	{
-	protected:
-		CStreamedFile infile;
-	public:
-		void WriteLEB(uint64_t nValue);
-		void WriteString(std::string_view cszString);
-		static const char m_cszSignature[6];
-	};
-
 #pragma pack(push,1)
 	struct DataDirectoryEntry
 	{
@@ -94,7 +83,9 @@ namespace DFW2
 
 		VARNAMEMAP m_VarNameMap;
 
+#ifdef _MSC_VER
 		CSlowVariablesSet m_setSlowVariables;
+#endif		
 
 		int64_t m_nCommentOffset;
 		int64_t m_nCommentDirectoryOffset;
@@ -136,7 +127,9 @@ namespace DFW2
 		const DEVTYPESET& GetTypesSet() const;
 		const ChannelHeaderInfo* GetChannelHeaders();
 		const char* GetUnitsName(ptrdiff_t eUnitsType);
+#ifdef _MSC_VER		
 		const CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
+#endif		
 		const char* GetUserComment();
 		void SetUserComment(std::string_view UserComment);
 		double GetCompressionRatio();
