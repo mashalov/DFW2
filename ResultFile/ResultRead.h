@@ -22,7 +22,7 @@ class ATL_NO_VTABLE CResultRead :
 {
 protected:
 	CResultFileReader m_ResultFileReader;
-	CResultFileReader::DeviceTypeInfo m_DeviceTypeInfo;
+	DeviceTypeInfo m_DeviceTypeInfo;
 public:
 	CResultRead()
 	{

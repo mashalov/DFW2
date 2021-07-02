@@ -19,8 +19,8 @@ CCSVWriter::~CCSVWriter()
 
 void CCSVWriter::IndexChannels()
 {
-	const CResultFileReader::DEVTYPESET &devtypeset = m_ResultFileReader.GetTypesSet();
-	CResultFileReader::DeviceTypeInfo devtypefind;
+	const DEVTYPESET &devtypeset = m_ResultFileReader.GetTypesSet();
+	DeviceTypeInfo devtypefind;
 	pChannelLink = std::make_unique<ChannelLink[]>(nChannelsCount);
 	const CResultFileReader::ChannelHeaderInfo *pChannel = m_ResultFileReader.GetChannelHeaders();
 	const CResultFileReader::ChannelHeaderInfo *pChannelsEnd = m_ResultFileReader.GetChannelHeaders() + nChannelsCount;
@@ -30,22 +30,22 @@ void CCSVWriter::IndexChannels()
 	while (pChannel < pChannelsEnd)
 	{
 		devtypefind.eDeviceType = pChannel->eDeviceType;
-		CResultFileReader::DEVTYPEITRCONST dit = devtypeset.find(&devtypefind);
+		DEVTYPEITRCONST dit = devtypeset.find(&devtypefind);
 
 		pC->pDevice = nullptr;
 		pC->pVariable = nullptr;
 
 		if (dit != devtypeset.end())
 		{
-			CResultFileReader::DeviceTypeInfo *pDevType = *dit;
-			CResultFileReader::DeviceInstanceInfo *pDev = pDevType->m_pDeviceInstances.get();
-			CResultFileReader::DeviceInstanceInfo *pDevEnd = pDevType->m_pDeviceInstances.get() + pDevType->DevicesCount;
+			DeviceTypeInfo *pDevType = *dit;
+			DeviceInstanceInfo *pDev = pDevType->m_pDeviceInstances.get();
+			DeviceInstanceInfo *pDevEnd = pDevType->m_pDeviceInstances.get() + pDevType->DevicesCount;
 			while (pDev < pDevEnd)
 			{
 				if (pDev->GetId(0) == pChannel->DeviceId && pDev->m_pDevType)
 				{
 					pC->pDevice = pDev;
-					CResultFileReader::VARTYPEITRCONST vit = pDevType->m_VarTypes.begin();
+					VARTYPEITRCONST vit = pDevType->m_VarTypes.begin();
 					while (vit != pDevType->m_VarTypes.end())
 					{
 						if (vit->nIndex == pChannel->DeviceVarIndex)

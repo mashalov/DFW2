@@ -141,57 +141,8 @@ STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VAR
 	return hRes;
 }
 
-void CDeviceTypeWrite::SetDeviceTypeInfo(CResultFileReader::DeviceTypeInfo *pDeviceTypeInfo)
+void CDeviceTypeWrite::SetDeviceTypeInfo(DeviceTypeInfo* pDeviceTypeInfo)
 {
 	m_pDeviceTypeInfo = pDeviceTypeInfo;
 }
-
-
-void CResultFileReader::DeviceTypeInfo::SetDeviceTypeMetrics(ptrdiff_t DeviceIdsCount, ptrdiff_t ParentIdsCount, ptrdiff_t DevicesCount)
-{
-	this->DeviceIdsCount = static_cast<int>(DeviceIdsCount);
-	this->DevicesCount = static_cast<int>(DevicesCount);
-	this->DeviceParentIdsCount = static_cast<int>(ParentIdsCount);
-	AllocateData();
-}
-
-void CResultFileReader::DeviceTypeInfo::AddDeviceTypeVariable(const std::string_view VariableName, ptrdiff_t UnitsId, double Multiplier)
-{
-	CResultFileReader::VariableTypeInfo VarTypeInfo;
-	VarTypeInfo.eUnits = static_cast<int>(UnitsId);
-	VarTypeInfo.Multiplier = Multiplier;
-	VarTypeInfo.Name = VariableName;
-	VarTypeInfo.nIndex = m_VarTypes.size();
-	if (m_VarTypes.insert(VarTypeInfo).second)
-		m_VarTypesList.push_back(VarTypeInfo);
-	else
-		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableName, VarTypeInfo.Name, strDevTypeName));
-}
-
-void CResultFileReader::DeviceTypeInfo::AddDevice(const std::string_view DeviceName,
-	const std::vector<ptrdiff_t>& DeviceIds,
-	const std::vector<ptrdiff_t>& ParentIds,
-	const std::vector<ptrdiff_t>& ParentTypes)
-{
-	auto CurrentDevice = m_pDeviceInstances.get() + CurrentInstanceIndex;
-	if (CurrentInstanceIndex < DevicesCount)
-	{
-		CurrentDevice->nIndex = static_cast<ptrdiff_t>(CurrentInstanceIndex);
-		CurrentDevice->Name = DeviceName;
-
-
-		for (int i = 0; i < (std::min)(DeviceIdsCount, static_cast<int>(DeviceIds.size())); i++)
-			CurrentDevice->SetId(i, DeviceIds[i]);
-
-		for (int i = 0; i < (std::min)(DeviceParentIdsCount, (std::min)(static_cast<int>(ParentIds.size()), static_cast<int>(ParentTypes.size()))); i++)
-			CurrentDevice->SetParent(i, ParentTypes[i], ParentIds[i]);
-
-		CurrentInstanceIndex++;
-	}
-	else
-		throw dfw2error(fmt::format(CDFW2Messages::m_cszTooMuchDevicesInResult,
-			CurrentInstanceIndex, DevicesCount));
-}
-
-
 

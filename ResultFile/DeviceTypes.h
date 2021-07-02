@@ -28,14 +28,14 @@ class ATL_NO_VTABLE CDeviceTypes :
 	public IDispatchImpl<CGenericCollection<IDeviceTypes, CDeviceType>, &IID_IDeviceTypes, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	const CResultFileReader::DEVTYPESET *m_pDevTypeSet;
+	const DEVTYPESET *m_pDevTypeSet;
 
 public:
 	CDeviceTypes()
 	{
 	}
 
-	void SetDeviceTypesInfo(const CResultFileReader::DEVTYPESET *pDevTypeSet)
+	void SetDeviceTypesInfo(const DEVTYPESET *pDevTypeSet)
 	{
 		m_pDevTypeSet = pDevTypeSet;
 	}

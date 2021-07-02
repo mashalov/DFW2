@@ -683,9 +683,9 @@ int CResultFileReader::GetVersion()
 	return m_nVersion;
 }
 
-CResultFileReader::DeviceInstanceInfo::DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo) : m_pDevType(pDevTypeInfo) {}
+DeviceInstanceInfo::DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo) : m_pDevType(pDevTypeInfo) {}
 
-void CResultFileReader::DeviceInstanceInfo::SetId(ptrdiff_t nIdIndex, ptrdiff_t nId)
+void DeviceInstanceInfo::SetId(ptrdiff_t nIdIndex, ptrdiff_t nId)
 {
 	if (nIdIndex >= 0 && nIdIndex < m_pDevType->DeviceIdsCount)
 	{
@@ -696,7 +696,7 @@ void CResultFileReader::DeviceInstanceInfo::SetId(ptrdiff_t nIdIndex, ptrdiff_t 
 		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
-ptrdiff_t CResultFileReader::DeviceInstanceInfo::GetId(ptrdiff_t nIdIndex) const
+ptrdiff_t DeviceInstanceInfo::GetId(ptrdiff_t nIdIndex) const
 {
 	if (nIdIndex >= 0 && nIdIndex < m_pDevType->DeviceIdsCount)
 		return m_pDevType->pIds[nIndex * m_pDevType->DeviceIdsCount + nIdIndex];
@@ -704,7 +704,7 @@ ptrdiff_t CResultFileReader::DeviceInstanceInfo::GetId(ptrdiff_t nIdIndex) const
 		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
-void CResultFileReader::DeviceInstanceInfo::SetParent(ptrdiff_t nParentIndex, ptrdiff_t eParentType, ptrdiff_t nParentId) 
+void DeviceInstanceInfo::SetParent(ptrdiff_t nParentIndex, ptrdiff_t eParentType, ptrdiff_t nParentId) 
 {
 	if (nParentIndex >= 0 && nParentIndex < m_pDevType->DeviceParentIdsCount)
 	{
@@ -717,7 +717,7 @@ void CResultFileReader::DeviceInstanceInfo::SetParent(ptrdiff_t nParentIndex, pt
 		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
-const CResultFileReader::DeviceLinkToParent* CResultFileReader::DeviceInstanceInfo::GetParent(ptrdiff_t nParentIndex) const
+const DeviceLinkToParent* DeviceInstanceInfo::GetParent(ptrdiff_t nParentIndex) const
 {
 	if (m_pDevType->DeviceParentIdsCount)
 	{
@@ -729,47 +729,9 @@ const CResultFileReader::DeviceLinkToParent* CResultFileReader::DeviceInstanceIn
 	else return nullptr;
 }
 
-const CResultFileReader::DEVTYPESET& CResultFileReader::GetTypesSet() const
+const DEVTYPESET& CResultFileReader::GetTypesSet() const
 {
 	return m_DevTypeSet;
-}
-
-void CResultFileReader::DeviceTypeInfo::IndexDevices()
-{
-	DeviceInstanceInfo *pb = m_pDeviceInstances.get();
-	DeviceInstanceInfo *pe = pb + DevicesCount;
-
-	while (pb < pe)
-	{
-		bool bInserted = m_DevSet.insert(pb).second;
-		_ASSERTE(bInserted);
-		pb++;
-	}
-}
-
-void CResultFileReader::DeviceTypeInfo::AllocateData()
-{
-	if (DevicesCount)
-	{
-		_ASSERTE(!pLinks);
-		if (DeviceParentIdsCount)
-			pLinks = std::make_unique<DeviceLinkToParent[]>(DeviceParentIdsCount * DevicesCount);
-
-		_ASSERTE(!pIds);
-		pIds = std::make_unique<ptrdiff_t[]>(DeviceIdsCount  * DevicesCount);
-
-		_ASSERTE(!m_pDeviceInstances);
-		m_pDeviceInstances = std::make_unique<DeviceInstanceInfo[]>(DevicesCount);
-
-		DeviceInstanceInfo *pb = m_pDeviceInstances.get();
-		DeviceInstanceInfo *pe = pb + DevicesCount;
-
-		while (pb < pe)
-		{
-			pb->m_pDevType = this;
-			pb++;
-		}
-	}
 }
 
 const CResultFileReader::ChannelHeaderInfo* CResultFileReader::GetChannelHeaders()

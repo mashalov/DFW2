@@ -25,13 +25,13 @@ class ATL_NO_VTABLE CDeviceType :
 	public IDispatchImpl<IDeviceType, &IID_IDeviceType, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	const CResultFileReader::DeviceTypeInfo *m_pDevTypeInfo;
+	const DeviceTypeInfo *m_pDevTypeInfo;
 public:
 	CDeviceType()
 	{
 	}
 
-	void SetDeviceTypeInfo(const CResultFileReader::DeviceTypeInfo* pDevTypeInfo)
+	void SetDeviceTypeInfo(const DeviceTypeInfo* pDevTypeInfo)
 	{
 		m_pDevTypeInfo = pDevTypeInfo;
 	}

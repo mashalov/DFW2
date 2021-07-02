@@ -81,23 +81,23 @@ STDMETHODIMP CDevice::get_Children(VARIANT* Children)
 			Children->vt = VT_DISPATCH;
 			Children->pdispVal = pChildrenCollection;
 
-			const CResultFileReader::DEVTYPESET& devset = m_pDeviceInfo->m_pDevType->m_pFileReader->GetTypesSet();
-			CResultFileReader::DEVTYPEITRCONST it = devset.begin();
-			CResultFileReader::DeviceTypeInfo *pThisType = m_pDeviceInfo->m_pDevType;
+			const DEVTYPESET& devset = m_pDeviceInfo->m_pDevType->m_pFileReader->GetTypesSet();
+			DEVTYPEITRCONST it = devset.begin();
+			DeviceTypeInfo *pThisType = m_pDeviceInfo->m_pDevType;
 
 			for (; it != devset.end(); it++)
 			{
-				CResultFileReader::DeviceTypeInfo *pDevTypeInfo = *it;
+				DeviceTypeInfo *pDevTypeInfo = *it;
 				int nParentsCount = pDevTypeInfo->DeviceParentIdsCount;
 				if (nParentsCount && pDevTypeInfo->eDeviceType != pThisType->eDeviceType)
 				{
 					for (int i = 0; i < pDevTypeInfo->DevicesCount; i++)
 					{
-						CResultFileReader::DeviceInstanceInfo *pDevInfo = pDevTypeInfo->m_pDeviceInstances.get() + i;
+						DeviceInstanceInfo *pDevInfo = pDevTypeInfo->m_pDeviceInstances.get() + i;
 
 						for (int p = 0; p < nParentsCount; p++)
 						{
-							const CResultFileReader::DeviceLinkToParent *pLink = pDevInfo->GetParent(p);
+							const DeviceLinkToParent *pLink = pDevInfo->GetParent(p);
 
 							if (pLink->m_eParentType == pThisType->eDeviceType)
 							{
@@ -140,12 +140,12 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 			Children->vt = VT_DISPATCH;
 			Children->pdispVal = pChildrenCollection;
 
-			const CResultFileReader::DEVTYPESET& devset = m_pDeviceInfo->m_pDevType->m_pFileReader->GetTypesSet();
-			CResultFileReader::DEVTYPEITRCONST it = devset.begin();
+			const DEVTYPESET& devset = m_pDeviceInfo->m_pDevType->m_pFileReader->GetTypesSet();
+			DEVTYPEITRCONST it = devset.begin();
 
 			for (; it != devset.end(); it++)
 			{
-				CResultFileReader::DeviceTypeInfo *pDevType = *it;
+				DeviceTypeInfo *pDevType = *it;
 
 				if (!pDevType->DeviceParentIdsCount)
 				{
@@ -164,8 +164,8 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 				{
 					for (int i = 0; i < pDevType->DevicesCount; i++)
 					{
-						CResultFileReader::DeviceInstanceInfo *pInst = pDevType->m_pDeviceInstances.get() + i;
-						const CResultFileReader::DeviceLinkToParent *pLink = pInst->GetParent(0);
+						DeviceInstanceInfo *pInst = pDevType->m_pDeviceInstances.get() + i;
+						const DeviceLinkToParent *pLink = pInst->GetParent(0);
 						if(pLink && pLink->m_eParentType == 0 && pLink->m_nId == 0)
 						{
 							CComObject<CDevice> *pDevice;
@@ -212,8 +212,8 @@ STDMETHODIMP CDevice::get_Variables(VARIANT* Variables)
 			Variables->vt = VT_DISPATCH;
 			Variables->pdispVal = pVariablesCollection;
 
-			CResultFileReader::VARTYPESET& VarTypes= m_pDeviceInfo->m_pDevType->m_VarTypes;
-			CResultFileReader::VARTYPEITRCONST it = VarTypes.begin();
+			VARTYPESET& VarTypes= m_pDeviceInfo->m_pDevType->m_VarTypes;
+			VARTYPEITRCONST it = VarTypes.begin();
 
 			for (; it != VarTypes.end(); it++)
 			{

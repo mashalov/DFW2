@@ -24,7 +24,7 @@ class ATL_NO_VTABLE CDeviceTypeWrite :
 	public IDispatchImpl<IDeviceTypeWrite, &IID_IDeviceTypeWrite, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	CResultFileReader::DeviceTypeInfo *m_pDeviceTypeInfo = nullptr;
+	DeviceTypeInfo *m_pDeviceTypeInfo = nullptr;
 	long GetParameterByIndex(VARIANT& vt, long nIndex);
 public:
 
@@ -54,5 +54,5 @@ public:
 	STDMETHOD(SetDeviceTypeMetrics)(LONG DeviceIdsCount, LONG ParentIdsCount, LONG DevicesCount);
 	STDMETHOD(AddDeviceTypeVariable)(BSTR VariableName, LONG UnitId, DOUBLE Multiplier);
 	STDMETHOD(AddDevice)(BSTR DeviceName, VARIANT DeviceIds, VARIANT ParentIds, VARIANT ParentTypes);
-	void SetDeviceTypeInfo(CResultFileReader::DeviceTypeInfo *pDeviceTypeInfo);
+	void SetDeviceTypeInfo(DeviceTypeInfo *pDeviceTypeInfo);
 };

@@ -19,8 +19,8 @@ protected:
 
 	struct ChannelLink
 	{
-		const CResultFileReader::DeviceInstanceInfo *pDevice;
-		const CResultFileReader::VariableTypeInfo *pVariable;
+		const DeviceInstanceInfo* pDevice = nullptr;
+		const VariableTypeInfo *pVariable = nullptr;
 	};
 
 	std::unique_ptr<ChannelLink[]> pChannelLink;

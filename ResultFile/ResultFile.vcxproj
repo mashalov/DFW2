@@ -258,6 +258,7 @@
     <ClCompile Include="Device.cpp" />
     <ClCompile Include="Devices.cpp" />
     <ClCompile Include="DeviceType.cpp" />
+    <ClCompile Include="DeviceTypeInfo.cpp" />
     <ClCompile Include="DeviceTypes.cpp" />
     <ClCompile Include="DeviceTypeWrite.cpp" />
     <ClCompile Include="dllmain.cpp">
@@ -321,6 +322,7 @@
     <ClInclude Include="DeviceCollection.h" />
     <ClInclude Include="Devices.h" />
     <ClInclude Include="DeviceType.h" />
+    <ClInclude Include="DeviceTypeInfo.h" />
     <ClInclude Include="DeviceTypes.h" />
     <ClInclude Include="DeviceTypeWrite.h" />
     <ClInclude Include="dllmain.h" />
