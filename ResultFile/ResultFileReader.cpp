@@ -700,7 +700,7 @@ const char* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType)
 	if (it != m_VarNameMap.end())
 		return it->second.c_str();
 	else
-		return m_cszUnknownUnits;
+		return CResultFile::m_cszUnknownUnits;
 }
 
 

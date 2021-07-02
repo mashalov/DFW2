@@ -133,6 +133,5 @@ namespace DFW2
 		const char* GetUserComment();
 		void SetUserComment(std::string_view UserComment);
 		double GetCompressionRatio();
-		static const char* m_cszUnknownUnits;
 	};
 }

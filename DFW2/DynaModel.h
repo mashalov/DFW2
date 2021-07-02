@@ -386,8 +386,8 @@ namespace DFW2
 #endif
 
 #ifdef _MSC_VER
-		//CResultsWriterCOM m_ResultsWriter;
-		CResultsWriterABI m_ResultsWriter;
+		CResultsWriterCOM m_ResultsWriter;
+		//CResultsWriterABI m_ResultsWriter;
 #else
 		CResultsWriterABI m_ResultsWriter;
 #endif		
