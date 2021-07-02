@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../fmt/include/" )
 
 set(SOURCES 
-    ../../fmt/src/format.cc 
+    ../../../fmt/src/format.cc 
     BitStream.cpp
     Compressor.cpp
 #    CSVWriter.cpp
@@ -34,10 +34,14 @@ set(SOURCES
     Variable.cpp
     Variables.cpp
     VariablesCollection.cpp
+    DeviceTypeInfo.cpp
+    ../DFW2/Messages.cpp
     )             
 
 add_library(ResultFile SHARED ${SOURCES})
 target_include_directories(ResultFile PRIVATE ${INCLUDES}) 
 
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
-target_link_libraries(ResultFile  dl)
+find_package(Threads REQUIRED)
+target_link_libraries(ResultFile  dl Threads::Threads)

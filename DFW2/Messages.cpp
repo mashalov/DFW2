@@ -163,5 +163,6 @@ const char* CDFW2Messages::m_cszStopCommandReceived = "Получена кома
 const char* CDFW2Messages::m_cszUserModelModuleLoaded = "Загружен модуль пользовательского устройства \"{}\"";
 const char* CDFW2Messages::m_cszFailedToCreateFolder = "Невозможно создать каталог \"{}\"";
 const char* CDFW2Messages::m_cszFailedToCreateCOMResultsWriter = "Невозможно создание COM-модуля записи результатов";
+const char* CDFW2Messages::m_cszModuleLoadError = "Ошибка загрузки динамической библиотеки \"{}\"";
 
 

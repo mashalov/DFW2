@@ -24,13 +24,13 @@ namespace DFW2
 			// загружаем dll 
 #ifdef _MSC_VER
 			m_hDLL = LoadLibrary(DLLFilePath.c_str());
+			if (!m_hDLL)
+				throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszModuleLoadError, stringutils::utf8_encode(DLLFilePath.c_str())));
 #else
 			m_hDLL = dlopen(DLLFilePath.c_str(), RTLD_NOW);
 			if(!m_hDLL)
-				throw dfw2error(dlerror());
+				throw dfw2error(fmt::format("{} \"{}\"", fmt::format(CDFW2Messages::m_cszModuleLoadError, DLLFilePath.string()), dlerror()));
 #endif
-			if (!m_hDLL)
-				throw dfw2errorGLE(fmt::format("Ошибка загрузки DLL \"{}\".", stringutils::utf8_encode(DLLFilePath.c_str())));
 			m_ModulePath = DLLFilePath;
 		}
 	public:
