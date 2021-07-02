@@ -43,7 +43,7 @@ STDMETHODIMP CResult::Load(BSTR PathName, VARIANT *ResultRead)
 			catch (CFileException& ex)
 			{
 				pResultRead->Release();
-				Error(ex.Message(), IID_IResult, hRes);
+				Error(ex.whatw(), IID_IResult, hRes);
 			}
 		}
 	}
@@ -69,7 +69,7 @@ STDMETHODIMP CResult::Create(BSTR PathName, VARIANT *ResultWrite)
 			catch (CFileException& ex)
 			{
 				pResultWrite->Release();
-				Error(ex.Message(), IID_IResult, hRes);
+				Error(ex.whatw(), IID_IResult, hRes);
 			}
 		}
 	}

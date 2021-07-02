@@ -16,7 +16,7 @@ namespace DFW2
 		{
 			std::fstream::seekg(off, way);
 			if (std::fstream::fail())
-				throw CFileExceptionGLE<CFileReadException>(*this);
+				throw CFileException(*this);
 			return *this;
 		}
 
@@ -25,7 +25,7 @@ namespace DFW2
 		{
 			std::fstream::write(static_cast<const char*>(static_cast<const void*>(s)), n);
 			if (std::fstream::fail())
-				throw CFileExceptionGLE<CFileWriteException>(*this);
+				throw CFileWriteException(*this);
 			return *this;
 		}
 
@@ -35,7 +35,7 @@ namespace DFW2
 		{
 			std::fstream::read(static_cast<char*>(static_cast<void*>(s)), n);
 			if (std::fstream::fail())
-				throw CFileExceptionGLE<CFileReadException>(*this);
+				throw CFileReadException(*this);
 			return *this;
 		}
 
@@ -66,9 +66,9 @@ namespace DFW2
 			std::fstream::open(stringutils::utf8_decode(filename), mode);
 			if (std::fstream::fail())
 				if(mode & std::ios_base::in)
-					throw CFileExceptionGLE<CFileReadException>(*this);
+					throw CFileReadException(*this);
 				else
-					throw CFileExceptionGLE<CFileWriteException>(*this);
+					throw CFileWriteException(*this);
 		}
 
 		void close() 
@@ -77,7 +77,7 @@ namespace DFW2
 				std::fstream::close(); 
 		}
 
-		std::string_view path()
+		std::string_view path() const
 		{
 			return filename;
 		}
@@ -90,7 +90,7 @@ namespace DFW2
 			}
 			catch (std::filesystem::filesystem_error&)
 			{
-				throw CFileExceptionGLE<CFileWriteException>(*this);
+				throw CFileWriteException(*this);
 			}
 		}
 	};

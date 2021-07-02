@@ -123,7 +123,7 @@ STDMETHODIMP CVariable::get_Plot(VARIANT* Plot)
 			}
 			catch (CFileReadException& ex)
 			{
-				Error(ex.Message(), IID_IVariable, hRes);
+				Error(ex.whatw(), IID_IVariable, hRes);
 			}
 		}
 

@@ -26,13 +26,9 @@ class ATL_NO_VTABLE CVariable :
 	public IDispatchImpl<IVariable, &IID_IVariable, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	const CResultFileReader::VariableTypeInfo* m_pVariableInfo;
-	CResultFileReader::DeviceInstanceInfo *m_pDeviceInstanceInfo;
+	const CResultFileReader::VariableTypeInfo* m_pVariableInfo = nullptr;
+	CResultFileReader::DeviceInstanceInfo* m_pDeviceInstanceInfo = nullptr;
 public:
-	CVariable() : m_pVariableInfo(nullptr),
-				  m_pDeviceInstanceInfo(nullptr)
-	{
-	}
 
 	void SetVariableInfo(const CResultFileReader::VariableTypeInfo* pVariableInfo, CResultFileReader::DeviceInstanceInfo *pDeviceInstanceInfo)
 	{

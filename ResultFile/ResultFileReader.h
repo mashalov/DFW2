@@ -11,6 +11,7 @@
 #endif
 #include "SlowVariableItem.h"
 #include "RLECompressor.h"
+#include "IResultWriterABI.h"
 
 namespace DFW2
 {
@@ -97,7 +98,7 @@ namespace DFW2
 		using DEVIDITRCONST = DEVICESSET::const_iterator;
 
 
-		struct DeviceTypeInfo
+		struct DeviceTypeInfo : public IDeviceTypeABI
 		{
 			int eDeviceType;
 			int DeviceIdsCount;
@@ -109,12 +110,20 @@ namespace DFW2
 			std::unique_ptr<ptrdiff_t[]> pIds;
 			std::unique_ptr<DeviceLinkToParent[]> pLinks;
 			std::unique_ptr<DeviceInstanceInfo[]> m_pDeviceInstances;
+			size_t CurrentInstanceIndex = 0;
 			CResultFileReader *m_pFileReader = nullptr;
 			DEVICESSET m_DevSet;
 			std::string strDevTypeName;
 
 			void AllocateData();
 			void IndexDevices();
+
+			void SetDeviceTypeMetrics(ptrdiff_t DeviceIdsCount, ptrdiff_t ParentIdsCount, ptrdiff_t DevicesCount) override;
+			void AddDeviceTypeVariable(const std::string_view VariableName, ptrdiff_t UnitsId, double Multiplier) override;
+			void AddDevice(const std::string_view DeviceName,
+				const std::vector<ptrdiff_t>& DeviceIds,
+				const std::vector<ptrdiff_t>& ParentIds,
+				const std::vector<ptrdiff_t>& ParentTypes) override;
 		};
 
 		struct DeviceTypesComp

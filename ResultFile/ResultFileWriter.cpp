@@ -122,13 +122,16 @@ void CResultFileWriter::FlushChannels()
 	CChannelEncoder *pEncoder = m_pEncoders.get();
 	CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
 
-	while (pEncoder < pEncoderEnd)
+	if (pEncoder)
 	{
-		WriteChannelHeader(pEncoder - m_pEncoders.get(), 
-						   pEncoder->m_nDeviceType, 
-						   pEncoder->m_nDeviceId, 
-						   pEncoder->m_nVariableIndex);
-		pEncoder++;
+		while (pEncoder < pEncoderEnd)
+		{
+			WriteChannelHeader(pEncoder - m_pEncoders.get(),
+				pEncoder->m_nDeviceType,
+				pEncoder->m_nDeviceId,
+				pEncoder->m_nVariableIndex);
+			pEncoder++;
+		}
 	}
 
 	WriteChannelHeader(m_nChannelsCount - 2, DEVTYPE_MODEL, 0, 0);
@@ -393,8 +396,16 @@ void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
 
 CResultFileWriter::~CResultFileWriter()
 {
-	CloseFile();
-	//printf("\n%zd", m_nPointsCount);
+	try
+	{
+		Close();
+	}
+	catch (...)  { }
+
+	for (auto& it : m_DevTypeSet)
+		delete it;
+
+	m_DevTypeSet.clear();
 }
 
 // завершает и закрывает поток записи
@@ -417,7 +428,7 @@ void CResultFileWriter::TerminateWriterThread()
 }
 
 // закрывает файл записываемых результатов
-void CResultFileWriter::CloseFile()
+void CResultFileWriter::Close()
 {
 	// сбрасываем каналы, если еще не были сброшены
 	FlushChannels();
@@ -433,9 +444,9 @@ void CResultFileWriter::CloseFile()
 }
 
 // создает файл результатов
-void CResultFileWriter::CreateResultFile(std::string_view FilePath)
+void CResultFileWriter::CreateResultFile(std::filesystem::path FilePath)
 {
-	infile.open(FilePath, std::ios_base::out|std::ios_base::binary);
+	infile.open(FilePath.string(), std::ios_base::out|std::ios_base::binary);
 	// запись сигнатуры
 	size_t nCountSignature = sizeof(m_cszSignature);
 	infile.write(m_cszSignature, nCountSignature);
@@ -612,7 +623,7 @@ bool CResultFileWriter::WriteResultsThreaded()
 	return bRes;
 }
 
-void CResultFileWriter::SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, ptrdiff_t nDeviceVarIndex, const double *pVariable, ptrdiff_t nVariableIndex)
+void CResultFileWriter::SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, ptrdiff_t nDeviceVarIndex, const double* pVariable, ptrdiff_t nVariableIndex)
 {
 	if (nVariableIndex >= 0 && nVariableIndex < static_cast<ptrdiff_t>(m_nChannelsCount - 2) && pVariable)
 	{
@@ -667,3 +678,104 @@ bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, un
 	return bRes;
 }
 
+void CResultFileWriter::FinishWriteHeader()
+{
+	// в начало заголовка записываем время создания файла результатов
+	SYSTEMTIME Now;
+	GetLocalTime(&Now);
+	double dCurrentDate = 0;
+	if (!SystemTimeToVariantTime(&Now, &dCurrentDate))
+		throw CFileWriteException(NULL);
+
+	WriteDouble(dCurrentDate);			// записываем время
+	WriteString(GetComment());			// записываем строку комментария
+	AddDirectoryEntries(3);				// описатели разделов
+	WriteLEB(m_VarNameMap.size());		// записываем количество единиц измерения
+
+	// записываем последовательность типов и названий единиц измерения переменных
+	for (auto&& vnmit : m_VarNameMap)
+	{
+		WriteLEB(vnmit.first);
+		WriteString(vnmit.second);
+	}
+	// записываем количество типов устройств
+	WriteLEB(m_DevTypeSet.size());
+
+	long nChannelsCount = 0;
+
+	// записываем устройства
+	for (auto& di : m_DevTypeSet)
+	{
+		// для каждого типа устройств
+		WriteLEB(di->eDeviceType);							// идентификатор типа устройства
+		WriteString(di->strDevTypeName);					// название типа устройства
+		WriteLEB(di->DeviceIdsCount);						// количество идентификаторов устройства (90% - 1, для ветвей, например - 3)
+		WriteLEB(di->DeviceParentIdsCount);					// количество родительских устройств
+		WriteLEB(di->DevicesCount);							// количество устройств данного типа
+		WriteLEB(di->m_VarTypes.size());					// количество переменных устройства
+
+		long nChannelsByDevice = 0;
+
+		// записываем описания переменных типа устройства
+		for (auto& vi : di->m_VarTypesList)
+		{
+			WriteString(vi.Name);							// имя переменной
+			WriteLEB(vi.eUnits);							// единицы измерения переменной
+			unsigned char BitFlags = 0x0;
+			// если у переменной есть множитель -
+			// добавляем битовый флаг
+			if (!Equal(vi.Multiplier, 1.0))
+				BitFlags |= 0x1;
+			WriteLEB(BitFlags);								// битовые флаги переменной
+			// если есть множитель
+			if (BitFlags & 0x1)
+				WriteDouble(vi.Multiplier);					// множитель переменной
+
+			// считаем количество каналов для данного типа устройства
+			nChannelsByDevice++;
+		}
+
+		// записываем описания устройств
+		for (CResultFileReader::DeviceInstanceInfo* pDev = di->m_pDeviceInstances.get(); pDev < di->m_pDeviceInstances.get() + di->DevicesCount; pDev++)
+		{
+			// для каждого устройства
+			// записываем последовательность идентификаторов
+			for (int i = 0; i < di->DeviceIdsCount; i++)
+				WriteLEB(pDev->GetId(i));
+			// записываем имя устройства
+			WriteString(pDev->Name);
+			// для каждого из родительских устройств
+			for (int i = 0; i < di->DeviceParentIdsCount; i++)
+			{
+				const CResultFileReader::DeviceLinkToParent* pDevLink = pDev->GetParent(i);
+				// записываем тип родительского устройства
+				WriteLEB(pDevLink->m_eParentType);
+				// и его идентификатор
+				WriteLEB(pDevLink->m_nId);
+			}
+			// считаем общее количество каналов
+			nChannelsCount += nChannelsByDevice;
+		}
+	}
+	// готовим компрессоры для рассчитанного количества каналов
+	PrepareChannelCompressor(nChannelsCount);
+}
+
+
+void CResultFileWriter::AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName)
+{
+	if (!m_VarNameMap.insert(std::make_pair(nUnitType, UnitName)).second)
+		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableUnit, nUnitType));
+}
+
+CResultFileReader::DeviceTypeInfo* CResultFileWriter::AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName)
+{
+	auto DeviceType = std::make_unique<CResultFileReader::DeviceTypeInfo>();
+	DeviceType->eDeviceType = static_cast<int>(nTypeId);
+	DeviceType->strDevTypeName = TypeName;
+	DeviceType->DeviceParentIdsCount = DeviceType->DeviceIdsCount = 1;
+	DeviceType->VariablesByDeviceCount = DeviceType->DevicesCount = 0;
+	if (!m_DevTypeSet.insert(DeviceType.get()).second)
+		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedDeviceType, nTypeId));
+	return DeviceType.release();
+}

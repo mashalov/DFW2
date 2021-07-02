@@ -295,6 +295,7 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ResultWrite.cpp" />
+    <ClCompile Include="ResultWriterABI.cpp" />
     <ClCompile Include="RLECompressor.cpp" />
     <ClCompile Include="SlowVariable.cpp" />
     <ClCompile Include="SlowVariableItem.cpp" />
@@ -313,7 +314,6 @@
     <ClInclude Include="..\DFW2\cex.h" />
     <ClInclude Include="..\DFW2\DeviceTypes.h" />
     <ClInclude Include="..\DFW2\Header.h" />
-    <ClInclude Include="..\DFW2\HRTimer.h" />
     <ClInclude Include="..\DFW2\Messages.h" />
     <ClInclude Include="Compressor.h" />
     <ClInclude Include="CSVWriter.h" />
@@ -327,6 +327,7 @@
     <ClInclude Include="FileExceptions.h" />
     <ClInclude Include="Filewrapper.h" />
     <ClInclude Include="GenericCollection.h" />
+    <ClInclude Include="IResultWriterABI.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="Result.h" />
     <ClInclude Include="ResultFileReader.h" />

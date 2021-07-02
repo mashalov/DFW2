@@ -26,11 +26,7 @@ STDMETHODIMP CDeviceTypeWrite::SetDeviceTypeMetrics(LONG DeviceIdsCount, LONG Pa
 	HRESULT hRes = E_FAIL;
 	if (m_pDeviceTypeInfo)
 	{
-		m_pDeviceTypeInfo->DeviceIdsCount = DeviceIdsCount;
-		m_pDeviceTypeInfo->DevicesCount = DevicesCount;
-		m_pDeviceTypeInfo->DeviceParentIdsCount = ParentIdsCount;
-		m_pDeviceTypeInfo->AllocateData();
-		m_pDeviceInstanceInfo = m_pDeviceTypeInfo->m_pDeviceInstances.get();
+		m_pDeviceTypeInfo->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, DevicesCount);
 		hRes = S_OK;
 	}
 	return hRes;
@@ -41,22 +37,15 @@ STDMETHODIMP CDeviceTypeWrite::AddDeviceTypeVariable(BSTR VariableName, LONG Uni
 	HRESULT hRes = E_FAIL;
 	if (m_pDeviceTypeInfo)
 	{
-		CResultFileReader::VariableTypeInfo VarTypeInfo;
-		VarTypeInfo.eUnits = UnitId;
-		VarTypeInfo.Multiplier = Multiplier;
-		VarTypeInfo.Name = stringutils::utf8_encode(VariableName);
-		VarTypeInfo.nIndex = m_pDeviceTypeInfo->m_VarTypes.size();
-		if (m_pDeviceTypeInfo->m_VarTypes.insert(VarTypeInfo).second)
+		try
 		{
-			m_pDeviceTypeInfo->m_VarTypesList.push_back(VarTypeInfo);
+			m_pDeviceTypeInfo->AddDeviceTypeVariable(stringutils::utf8_encode(VariableName), UnitId, Multiplier);
 			hRes = S_OK;
 		}
-		else
-			Error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableName, 
-											 VarTypeInfo.Name, 
-											 m_pDeviceTypeInfo->strDevTypeName).c_str(), 
-							IID_IDeviceTypeWrite, 
-							hRes);
+		catch (const dfw2error& er)
+		{
+			Error(er.whatw(), IID_IDeviceTypeWrite, hRes);
+		}
 	}
 	return hRes;
 }
@@ -97,37 +86,58 @@ STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VAR
 {
 	HRESULT hRes = E_FAIL;
 
-	try
+	if (m_pDeviceTypeInfo)
 	{
-		if (m_pDeviceTypeInfo)
+		try
 		{
-			ptrdiff_t nIndex = m_pDeviceInstanceInfo - m_pDeviceTypeInfo->m_pDeviceInstances.get();
-			if (nIndex < m_pDeviceTypeInfo->DevicesCount)
+			auto GetVariantVec = [](VARIANT& vt) -> std::vector<ptrdiff_t>
 			{
-				m_pDeviceInstanceInfo->nIndex = nIndex;
-				m_pDeviceInstanceInfo->Name = stringutils::utf8_encode(DeviceName);
+				std::vector<ptrdiff_t> retVec;
+				if ((vt.vt & VT_ARRAY) && (vt.vt & VT_I4) && SafeArrayGetDim(vt.parray) == 1)
+				{
+					long* pData(nullptr);
+					long lBound;
+					long uBound;
 
-				for (int i = 0; i < m_pDeviceTypeInfo->DeviceIdsCount; i++)
-					m_pDeviceInstanceInfo->SetId(i, GetParameterByIndex(DeviceIds, i));
+					if(FAILED(SafeArrayAccessData(vt.parray,(void**)&pData)))
+						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
 
-				for (int i = 0; i < m_pDeviceTypeInfo->DeviceParentIdsCount; i++)
-					m_pDeviceInstanceInfo->SetParent(i, GetParameterByIndex(ParentTypes, i), GetParameterByIndex(ParentIds, i));
+					if(FAILED(SafeArrayGetLBound(vt.parray,1,&lBound)))
+						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
 
-				m_pDeviceInstanceInfo++;
-				hRes = S_OK;
-			}
-			else
-				Error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableUnit, 
-								  m_pDeviceInstanceInfo - m_pDeviceTypeInfo->m_pDeviceInstances.get(), 
-								  m_pDeviceTypeInfo->DevicesCount).c_str(), 
-					  IID_IDeviceTypeWrite, 
-					  hRes);
+					if (FAILED(SafeArrayGetUBound(vt.parray, 1, &uBound)))
+						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
+
+					for (long ix = lBound; ix <= uBound; ix++)
+						retVec.push_back(pData[ix]);
+
+					if (FAILED(SafeArrayUnaccessData(vt.parray)))
+						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
+				}
+				else
+				{
+					if (SUCCEEDED(VariantChangeType(&vt, &vt, 0, VT_I4)))
+						retVec.push_back(vt.lVal);
+					else
+						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
+				}
+
+				return retVec;
+			};
+
+			m_pDeviceTypeInfo->AddDevice(stringutils::utf8_encode(DeviceName), 
+				GetVariantVec(DeviceIds),
+				GetVariantVec(ParentIds),
+				GetVariantVec(ParentTypes));
+
+			hRes = S_OK;
+		}
+		catch (const dfw2error& er)
+		{
+			Error(er.whatw(), IID_IDeviceTypeWrite, hRes);
 		}
 	}
-	catch (CFileException &ex)
-	{
-		Error(ex.Message(), IID_IDeviceTypeWrite, hRes);
-	}
+
 	return hRes;
 }
 
@@ -135,3 +145,53 @@ void CDeviceTypeWrite::SetDeviceTypeInfo(CResultFileReader::DeviceTypeInfo *pDev
 {
 	m_pDeviceTypeInfo = pDeviceTypeInfo;
 }
+
+
+void CResultFileReader::DeviceTypeInfo::SetDeviceTypeMetrics(ptrdiff_t DeviceIdsCount, ptrdiff_t ParentIdsCount, ptrdiff_t DevicesCount)
+{
+	this->DeviceIdsCount = static_cast<int>(DeviceIdsCount);
+	this->DevicesCount = static_cast<int>(DevicesCount);
+	this->DeviceParentIdsCount = static_cast<int>(ParentIdsCount);
+	AllocateData();
+}
+
+void CResultFileReader::DeviceTypeInfo::AddDeviceTypeVariable(const std::string_view VariableName, ptrdiff_t UnitsId, double Multiplier)
+{
+	CResultFileReader::VariableTypeInfo VarTypeInfo;
+	VarTypeInfo.eUnits = static_cast<int>(UnitsId);
+	VarTypeInfo.Multiplier = Multiplier;
+	VarTypeInfo.Name = VariableName;
+	VarTypeInfo.nIndex = m_VarTypes.size();
+	if (m_VarTypes.insert(VarTypeInfo).second)
+		m_VarTypesList.push_back(VarTypeInfo);
+	else
+		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableName, VarTypeInfo.Name, strDevTypeName));
+}
+
+void CResultFileReader::DeviceTypeInfo::AddDevice(const std::string_view DeviceName,
+	const std::vector<ptrdiff_t>& DeviceIds,
+	const std::vector<ptrdiff_t>& ParentIds,
+	const std::vector<ptrdiff_t>& ParentTypes)
+{
+	auto CurrentDevice = m_pDeviceInstances.get() + CurrentInstanceIndex;
+	if (CurrentInstanceIndex < DevicesCount)
+	{
+		CurrentDevice->nIndex = static_cast<ptrdiff_t>(CurrentInstanceIndex);
+		CurrentDevice->Name = DeviceName;
+
+
+		for (int i = 0; i < (std::min)(DeviceIdsCount, static_cast<int>(DeviceIds.size())); i++)
+			CurrentDevice->SetId(i, DeviceIds[i]);
+
+		for (int i = 0; i < (std::min)(DeviceParentIdsCount, (std::min)(static_cast<int>(ParentIds.size()), static_cast<int>(ParentTypes.size()))); i++)
+			CurrentDevice->SetParent(i, ParentTypes[i], ParentIds[i]);
+
+		CurrentInstanceIndex++;
+	}
+	else
+		throw dfw2error(fmt::format(CDFW2Messages::m_cszTooMuchDevicesInResult,
+			CurrentInstanceIndex, DevicesCount));
+}
+
+
+

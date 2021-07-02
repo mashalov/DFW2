@@ -218,7 +218,6 @@
     <ClInclude Include="FmtComplexFormat.h" />
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
-    <ClInclude Include="HRTimer.h" />
     <ClInclude Include="ICustomDevice.h" />
     <ClInclude Include="JsonWalkers.h" />
     <ClInclude Include="KLUWrapper.h" />
@@ -313,6 +312,8 @@
     <ClCompile Include="Results.cpp">
       <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
     </ClCompile>
+    <ClCompile Include="ResultsWriterABI.cpp" />
+    <ClCompile Include="ResultsWriterCOM.cpp" />
     <ClCompile Include="RSTrigger.cpp" />
     <ClCompile Include="Serializer.cpp" />
     <ClCompile Include="SerializerJson.cpp" />

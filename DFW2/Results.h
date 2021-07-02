@@ -16,6 +16,9 @@
 #endif
 #endif
 
+#include "../ResultFile/IResultWriterABI.h"
+#include "DLLWrapper.h"
+
 namespace DFW2
 {
 	class CDynaModel;
@@ -60,6 +63,24 @@ namespace DFW2
 	protected:
 		IResultWritePtr m_spResultWrite;
 		IResultPtr spResults;
+	public:
+		using CResultsWriterBase::CResultsWriterBase;
+		void WriteResults(const WriteResultsInfo& WriteInfo) override;
+		void FinishWriteResults() override;
+		void CreateFile(std::filesystem::path path, ResultsInfo& Info) override;
+		void AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName) override;
+		void AddDeviceType(const CDeviceContainer& Container) override;
+		void SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t VarIndex, double* ValuePtr, ptrdiff_t ChannelIndex) override;
+		void FinishWriteHeader() override;
+	};
+
+
+	class CResultsWriterABI : public CResultsWriterBase
+	{
+	protected:
+		using WriterDLL = CDLLInstanceFactory<IResultWriterABI>;
+		std::shared_ptr<WriterDLL> m_ABIWriterDLL;
+		CDLLInstanceWrapper<WriterDLL> m_ABIWriter;
 	public:
 		using CResultsWriterBase::CResultsWriterBase;
 		void WriteResults(const WriteResultsInfo& WriteInfo) override;

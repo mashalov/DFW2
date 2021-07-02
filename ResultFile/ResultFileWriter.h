@@ -1,9 +1,9 @@
 ﻿#pragma once
 #include "ResultFileReader.h"
-#include "..\dfw2\HRTimer.h"
 #include <thread>
 #include <mutex>
 #include <condition_variable>
+#include "IResultWriterABI.h"
 
 namespace DFW2
 {
@@ -26,7 +26,7 @@ namespace DFW2
 	using BUFFERBEGIN = std::vector<BITWORD*>;
 	using BUFFERBEGINITERATOR = BUFFERBEGIN::iterator;
 
-	class CResultFileWriter : public CResultFile
+	class CResultFileWriter : public CResultFile, public IResultWriterABI
 	{
 	protected:
 		std::unique_ptr<CChannelEncoder[]> m_pEncoders;
@@ -66,10 +66,13 @@ namespace DFW2
 		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
 		void FlushSuperRLE(CChannelEncoder& Encoder);
 		bool m_bChannelsFlushed = true;
+		std::string m_strComment;
+		VARNAMEMAP m_VarNameMap;
+		CResultFileReader::DEVTYPESET m_DevTypeSet;
 	public:
 		virtual ~CResultFileWriter();
-		void CreateResultFile(std::string_view FilePath);
-		void CloseFile();
+		CResultFileReader::DeviceTypeInfo* AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName) override;
+
 		void WriteDouble(const double &Value);
 		void WriteTime(double dTime, double dStep);
 		void WriteChannel(ptrdiff_t nIndex, double dValue);
@@ -78,10 +81,19 @@ namespace DFW2
 		void PrepareChannelCompressor(size_t nChannelsCount);
 		void WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
 		void AddDirectoryEntries(size_t nDirectoryEntriesCount);
-		void SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, ptrdiff_t nDeviceVarIndex, const double *pVariable, ptrdiff_t nVariableIndex);
-		void WriteResults(double dTime, double dStep);
-		void SetNoChangeTolerance(double dTolerance);
 		static unsigned int __stdcall WriterThread(void *pThis);
 		CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
+		const std::string& GetComment() { return m_strComment; }
+
+		// ABI Interface
+		void Destroy() override { delete this; }
+		void Close() override;
+		void FinishWriteHeader() override;
+		void CreateResultFile(const std::filesystem::path FilePath) override;
+		void SetNoChangeTolerance(double Tolerance) override;
+		void SetComment(const std::string_view Comment) override { m_strComment = Comment; }
+		void WriteResults(double Time, double Step) override;
+		void AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName) override;
+		void SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, ptrdiff_t nDeviceVarIndex, const double* pVariable, ptrdiff_t nVariableIndex) override;
 	};
 }

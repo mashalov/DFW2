@@ -175,9 +175,6 @@
     <ClInclude Include="DeviceContainerProperties.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="HRTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Comparator.h">
       <Filter>Header Files\Dynamic Primitives</Filter>
     </ClInclude>
@@ -550,6 +547,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="PlatformFolders.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResultsWriterABI.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ResultsWriterCOM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

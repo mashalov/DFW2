@@ -4,24 +4,22 @@
 
 using namespace DFW2;
 
-CFileException::CFileException(const std::string_view Description, CStreamedFile& file) : CDFW2Exception(Description)
+std::string CFileException::FileDescription(CStreamedFile& file)
 {
-	m_strMessage += fmt::format("\"{}\".", file.path());
-	if(file.is_open())
-		m_strMessage += fmt::format(CDFW2Messages::m_cszFilePostion, file.tellg());
+	std::string fileInfo(fmt::format("\"{}\"", file.path()));
+	if (file.is_open())
+		fileInfo += fmt::format(CDFW2Messages::m_cszFilePostion, file.tellg());
+	return fileInfo;
+}
+
+std::string CFileException::FileDescription(CStreamedFile& file, const std::string_view Description)
+{
+	return fmt::format("{} {}", Description, FileDescription(file));
+}
+
+std::string CFileException::FileDescription(const std::string_view Description)
+{
+	return std::string(Description);
 }
 
 
-bool _trace(TCHAR* format, ...)
-{
-	TCHAR buffer[1000];
-
-	va_list argptr;
-	va_start(argptr, format);
-	wvsprintf(buffer, format, argptr);
-	va_end(argptr);
-
-	OutputDebugString(buffer);
-
-	return true;
-}

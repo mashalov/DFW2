@@ -5,7 +5,8 @@
 #include "resource.h"
 #include "ResultFile_i.h"
 #include "dllmain.h"
-
+#include "ResultFileWriter.h"
+#include "IResultWriterABI.h"
 
 using namespace ATL;
 
@@ -66,4 +67,12 @@ STDAPI DllInstall(BOOL bInstall, _In_opt_  LPCWSTR pszCmdLine)
 	return hr;
 }
 
+#ifdef _MSC_VER
+extern "C" __declspec(dllexport) IResultWriterABI * __cdecl ResultWriterABIFactory()
+#else
+extern "C" __attribute__((visibility("default"))) ICustomDevice * ResultWriterABIFactory()
+#endif
 
+{
+	return new DFW2::CResultFileWriter();
+}

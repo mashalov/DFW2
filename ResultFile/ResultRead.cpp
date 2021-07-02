@@ -39,7 +39,7 @@ STDMETHODIMP CResultRead::get_Path(BSTR* PathName)
 	}
 	catch (CFileReadException& ex)
 	{
-		Error(ex.Message(), IID_IResultRead, hRes);
+		Error(ex.whatw(), IID_IResultRead, hRes);
 	}
 	return hRes;
 }
@@ -57,7 +57,7 @@ STDMETHODIMP CResultRead::get_Comment(BSTR* Comment)
 	}
 	catch (CFileReadException& ex)
 	{
-		Error(ex.Message(), IID_IResultRead, hRes);
+		Error(ex.whatw(), IID_IResultRead, hRes);
 	}
 	return hRes;
 }
@@ -75,7 +75,7 @@ STDMETHODIMP CResultRead::get_Version(LONG* Version)
 	}
 	catch (CFileReadException& ex)
 	{
-		Error(ex.Message(), IID_IResultRead, hRes);
+		Error(ex.whatw(), IID_IResultRead, hRes);
 	}
 	return hRes;
 }
@@ -110,7 +110,7 @@ STDMETHODIMP CResultRead::get_TimeScale(VARIANT* TimeScale)
 	}
 	catch (CFileReadException& ex)
 	{
-		Error(ex.Message(), IID_IResultRead, hRes);
+		Error(ex.whatw(), IID_IResultRead, hRes);
 	}
 	
 	if (FAILED(hRes) && pSA)
@@ -135,7 +135,7 @@ STDMETHODIMP CResultRead::get_TimeStep(VARIANT* TimeStep)
 		}
 		catch (CFileReadException& ex)
 		{
-			Error(ex.Message(), IID_IResultRead, hRes);
+			Error(ex.whatw(), IID_IResultRead, hRes);
 		}
 	}
 
@@ -161,7 +161,7 @@ STDMETHODIMP CResultRead::get_TimeCreated(VARIANT* FileTime)
 	}
 	catch (CFileReadException& ex)
 	{
-		Error(ex.Message(), IID_IResultRead, hRes);
+		Error(ex.whatw(), IID_IResultRead, hRes);
 	}
 	return hRes;
 }
@@ -229,7 +229,7 @@ STDMETHODIMP CResultRead::ExportCSV(BSTR PathName)
 
 	catch (CFileReadException& ex)
 	{
-		Error(ex.Message(), IID_IResultRead, hRes);
+		Error(ex.whatw(), IID_IResultRead, hRes);
 	}
 
 	return hRes;
@@ -258,7 +258,7 @@ STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableN
 		}
 		catch (CFileReadException& ex)
 		{
-			Error(ex.Message(), IID_IResultRead, hRes);
+			Error(ex.whatw(), IID_IResultRead, hRes);
 		}
 	}
 
@@ -286,7 +286,7 @@ STDMETHODIMP CResultRead::GetPlotByIndex(long nIndex, VARIANT *Plot)
 		}
 		catch (CFileReadException& ex)
 		{
-			Error(ex.Message(), IID_IResultRead, hRes);
+			Error(ex.whatw(), IID_IResultRead, hRes);
 		}
 	}
 
@@ -388,9 +388,9 @@ STDMETHODIMP CResultRead::put_UserComment(BSTR UserComment)
 		m_ResultFileReader.SetUserComment(stringutils::utf8_encode(UserComment));
 		hRes = S_OK;
 	}
-	catch (CFileReadException& ex)
+	catch (CFileWriteException& ex)
 	{
-		Error(ex.Message(), IID_IResultRead, hRes);
+		Error(ex.whatw(), IID_IResultRead, hRes);
 	}
 	return hRes;
 }
