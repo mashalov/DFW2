@@ -693,9 +693,8 @@ void CResultFileWriter::FinishWriteHeader()
 	GetLocalTime(&Now);
 	if (!SystemTimeToVariantTime(&Now, &dCurrentDate))
 		throw CFileWriteException(NULL);
-
+#else
 	auto now = std::chrono::system_clock::now();
-
 	std::tm tm
 	{
 		0,  // seconds after the minute - [0, 60] including leap second
@@ -703,22 +702,22 @@ void CResultFileWriter::FinishWriteHeader()
 		0,  // hours since midnight - [0, 23]
 		1,  // day of the month - [1, 31]
 		0,  // months since January - [0, 11]
-		0,  // years since 1900
+	    100,  // years since 1900 
 		0,  // days since Sunday - [0, 6]
 		0,  // days since January 1 - [0, 365]
-	   -1   // daylight savings time flag
+	    0   // daylight savings time flag
 	};
-
-	// !!!!!!!!!!!! TODO - правильно рассчитать variant time !!!!!!!!!!!!!!
-
+	// получаем текущее время
 	auto dateOrigin = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-	auto variantTime(now - dateOrigin);
-	auto days = std::chrono::duration_cast<std::chrono::duration<int, std::ratio<86400>>>(variantTime);
+	// рассчитывает разницу текущего времени и 01.01.2000 в секундах и добавляем секунды от 30.12.1899  + 14  дней (1 день текуший + 13 дней Грегорианский -> Юлианский)
+	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(now - dateOrigin) + std::chrono::seconds(3155846400);
+	// считаем разность в днях
+	auto days = std::chrono::duration_cast<std::chrono::duration<int,std::ratio<86400>>>(seconds);
 	dCurrentDate = days.count();
-
-#else
-
-#endif		
+	// считаем долю оставшихся после вычитания дней секунд от числа секунд в сутках
+	seconds -= std::chrono::duration_cast<std::chrono::seconds>(days);
+	dCurrentDate += seconds.count() / 86400.0;
+#endif
 
 	WriteDouble(dCurrentDate);			// записываем время
 	WriteString(GetComment());			// записываем строку комментария
