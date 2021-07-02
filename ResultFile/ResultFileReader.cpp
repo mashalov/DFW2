@@ -683,52 +683,6 @@ int CResultFileReader::GetVersion()
 	return m_nVersion;
 }
 
-DeviceInstanceInfo::DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo) : m_pDevType(pDevTypeInfo) {}
-
-void DeviceInstanceInfo::SetId(ptrdiff_t nIdIndex, ptrdiff_t nId)
-{
-	if (nIdIndex >= 0 && nIdIndex < m_pDevType->DeviceIdsCount)
-	{
-		_ASSERTE(nIndex * m_pDevType->DeviceIdsCount + nIdIndex < m_pDevType->DeviceIdsCount * m_pDevType->DevicesCount);
-		m_pDevType->pIds[nIndex * m_pDevType->DeviceIdsCount + nIdIndex] = nId;
-	}
-	else
-		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
-}
-
-ptrdiff_t DeviceInstanceInfo::GetId(ptrdiff_t nIdIndex) const
-{
-	if (nIdIndex >= 0 && nIdIndex < m_pDevType->DeviceIdsCount)
-		return m_pDevType->pIds[nIndex * m_pDevType->DeviceIdsCount + nIdIndex];
-	else
-		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
-}
-
-void DeviceInstanceInfo::SetParent(ptrdiff_t nParentIndex, ptrdiff_t eParentType, ptrdiff_t nParentId) 
-{
-	if (nParentIndex >= 0 && nParentIndex < m_pDevType->DeviceParentIdsCount)
-	{
-		DeviceLinkToParent *pLink = m_pDevType->pLinks.get() + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
-		_ASSERTE(pLink < m_pDevType->pLinks.get() + m_pDevType->DeviceParentIdsCount * m_pDevType->DevicesCount);
-		pLink->m_eParentType = eParentType;
-		pLink->m_nId = nParentId;
-	}
-	else
-		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
-}
-
-const DeviceLinkToParent* DeviceInstanceInfo::GetParent(ptrdiff_t nParentIndex) const
-{
-	if (m_pDevType->DeviceParentIdsCount)
-	{
-		if (nParentIndex >= 0 && nParentIndex < m_pDevType->DeviceParentIdsCount)
-			return m_pDevType->pLinks.get() + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
-		else
-			throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
-	}
-	else return nullptr;
-}
-
 const DEVTYPESET& CResultFileReader::GetTypesSet() const
 {
 	return m_DevTypeSet;
