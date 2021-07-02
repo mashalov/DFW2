@@ -32,11 +32,7 @@ namespace DFW2
 		int64_t m_Offset;
 	};
 #pragma pack(pop)
-	
-	class CResultFileReader : public CResultFile
-	{
 
-	public:
 
 		struct VariableTypeInfo
 		{
@@ -97,6 +93,7 @@ namespace DFW2
 		using DEVIDITR = DEVICESSET::iterator;
 		using DEVIDITRCONST = DEVICESSET::const_iterator;
 
+		class CResultFileReader;
 
 		struct DeviceTypeInfo : public IDeviceTypeABI
 		{
@@ -137,6 +134,11 @@ namespace DFW2
 		using DEVTYPESET = std::set<DeviceTypeInfo*, DeviceTypesComp>;
 		using DEVTYPEITR = DEVTYPESET::iterator;
 		using DEVTYPEITRCONST= DEVTYPESET::const_iterator;
+
+	class CResultFileReader : public CResultFile
+	{
+
+	public:
 
 		struct ChannelHeaderInfo
 		{
@@ -222,7 +224,9 @@ namespace DFW2
 		std::unique_ptr<double[]> GetTimeStep();
 		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
 		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, std::string_view VarName);
+#ifdef _MSC_VER		
 		SAFEARRAY* CreateSafeArray(std::unique_ptr<double[]>&& pChannelData);
+#endif		
 		double GetFileTime();
 		const char* GetFilePath();
 		const char* GetComment();

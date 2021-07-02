@@ -2,6 +2,7 @@
 #include "ResultFileReader.h"
 #include <thread>
 #include <mutex>
+#include <atomic>
 #include <condition_variable>
 #include "IResultWriterABI.h"
 
@@ -68,10 +69,10 @@ namespace DFW2
 		bool m_bChannelsFlushed = true;
 		std::string m_strComment;
 		VARNAMEMAP m_VarNameMap;
-		CResultFileReader::DEVTYPESET m_DevTypeSet;
+		DEVTYPESET m_DevTypeSet;
 	public:
 		virtual ~CResultFileWriter();
-		CResultFileReader::DeviceTypeInfo* AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName) override;
+		DeviceTypeInfo* AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName) override;
 
 		void WriteDouble(const double &Value);
 		void WriteTime(double dTime, double dStep);
@@ -81,7 +82,7 @@ namespace DFW2
 		void PrepareChannelCompressor(size_t nChannelsCount);
 		void WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
 		void AddDirectoryEntries(size_t nDirectoryEntriesCount);
-		static unsigned int __stdcall WriterThread(void *pThis);
+		static unsigned int WriterThread(void *pThis);
 		CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
 		const std::string& GetComment() { return m_strComment; }
 

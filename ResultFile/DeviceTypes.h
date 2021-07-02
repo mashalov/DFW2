@@ -1,6 +1,7 @@
 ﻿// DeviceTypes.h : Declaration of the CDeviceTypes
 
 #pragma once
+#ifdef _MSC_VER
 #include "resource.h"       // main symbols
 #include "ResultFile_i.h"
 #include "DeviceType.h"
@@ -63,7 +64,6 @@ END_COM_MAP()
 
 public:
 
-
-
 };
 
+#endif

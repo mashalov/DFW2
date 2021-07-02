@@ -1,6 +1,7 @@
 ﻿// Variables.cpp : Implementation of CVariablesCollection
 
 #include "stdafx.h"
+#ifdef _MSC_VER
 #include "Variables.h"
 
 
@@ -20,3 +21,5 @@ STDMETHODIMP CVariables::InterfaceSupportsErrorInfo(REFIID riid)
 	}
 	return S_FALSE;
 }
+
+#endif

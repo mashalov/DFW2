@@ -540,9 +540,8 @@ unsigned int CResultFileWriter::WriterThread(void* pThis)
 		CResultFileWriter* pthis = static_cast<CResultFileWriter*>(pThis);
 
 		if (!pthis)
-			throw CFileWriteException(nullptr);
-
-		// поток работает пока не сброшен флаг работы в параметрах
+			throw CFileWriteException("Threading problem");
+;
 		while (pthis->m_bThreadRun)
 		{
 			{
@@ -569,8 +568,11 @@ unsigned int CResultFileWriter::WriterThread(void* pThis)
 	}
 	catch (CFileWriteException&)
 	{
+#ifdef _MSC_VER		
 		MessageBox(NULL, L"Result Write Error", L"ResultWriter", MB_OK);
+#endif		
 	}
+
 
 	return 0;
 }
@@ -681,11 +683,13 @@ bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, un
 void CResultFileWriter::FinishWriteHeader()
 {
 	// в начало заголовка записываем время создания файла результатов
+	double dCurrentDate = 0;
+#ifdef _MSC_VER	
 	SYSTEMTIME Now;
 	GetLocalTime(&Now);
-	double dCurrentDate = 0;
 	if (!SystemTimeToVariantTime(&Now, &dCurrentDate))
 		throw CFileWriteException(NULL);
+#endif		
 
 	WriteDouble(dCurrentDate);			// записываем время
 	WriteString(GetComment());			// записываем строку комментария
@@ -736,7 +740,7 @@ void CResultFileWriter::FinishWriteHeader()
 		}
 
 		// записываем описания устройств
-		for (CResultFileReader::DeviceInstanceInfo* pDev = di->m_pDeviceInstances.get(); pDev < di->m_pDeviceInstances.get() + di->DevicesCount; pDev++)
+		for (DeviceInstanceInfo* pDev = di->m_pDeviceInstances.get(); pDev < di->m_pDeviceInstances.get() + di->DevicesCount; pDev++)
 		{
 			// для каждого устройства
 			// записываем последовательность идентификаторов
@@ -747,7 +751,7 @@ void CResultFileWriter::FinishWriteHeader()
 			// для каждого из родительских устройств
 			for (int i = 0; i < di->DeviceParentIdsCount; i++)
 			{
-				const CResultFileReader::DeviceLinkToParent* pDevLink = pDev->GetParent(i);
+				const DeviceLinkToParent* pDevLink = pDev->GetParent(i);
 				// записываем тип родительского устройства
 				WriteLEB(pDevLink->m_eParentType);
 				// и его идентификатор
@@ -768,9 +772,9 @@ void CResultFileWriter::AddVariableUnit(ptrdiff_t nUnitType, const std::string_v
 		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableUnit, nUnitType));
 }
 
-CResultFileReader::DeviceTypeInfo* CResultFileWriter::AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName)
+DeviceTypeInfo* CResultFileWriter::AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName)
 {
-	auto DeviceType = std::make_unique<CResultFileReader::DeviceTypeInfo>();
+	auto DeviceType = std::make_unique<DeviceTypeInfo>();
 	DeviceType->eDeviceType = static_cast<int>(nTypeId);
 	DeviceType->strDevTypeName = TypeName;
 	DeviceType->DeviceParentIdsCount = DeviceType->DeviceIdsCount = 1;

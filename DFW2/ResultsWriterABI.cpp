@@ -15,7 +15,11 @@ void CResultsWriterABI::FinishWriteResults()
 
 void CResultsWriterABI::CreateFile(std::filesystem::path path, ResultsInfo& Info)
 {
+#ifdef _MSC_VER	
 	m_ABIWriterDLL = std::make_shared<WriterDLL>("ResultFile.dll", "ResultWriterABIFactory");
+#else
+	m_ABIWriterDLL = std::make_shared<WriterDLL>("./Res/libResultFile.so", "ResultWriterABIFactory");
+#endif	
 	m_ABIWriter.Create(m_ABIWriterDLL);
 	m_ABIWriter->CreateResultFile(path);
 	m_ABIWriter->SetNoChangeTolerance(Info.NoChangeTolerance);

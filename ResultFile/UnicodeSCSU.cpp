@@ -185,7 +185,7 @@ int CUnicodeSCSU::ReadSCSUSymbol()
 
 void CUnicodeSCSU::ReadSCSU(std::wstring& String, size_t nLen)
 {
-	String.resize(nLen, _T('\x0'));
+	String.resize(nLen, '\x0');
 	for (unsigned int nSymbol = 0; nSymbol < nLen; nSymbol++)
 		String[nSymbol] = ReadSCSUSymbol();
 }

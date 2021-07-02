@@ -385,7 +385,12 @@ namespace DFW2
 		#define RESET_CHECK_MATRIX_ELEMENT() ;
 #endif
 
-		CResultsWriterCOM m_ResultsWriter;
+#ifdef _MSC_VER
+		//CResultsWriterCOM m_ResultsWriter;
+		CResultsWriteABI m_ResultsWriter;
+#else
+		CResultsWriterABI m_ResultsWriter;
+#endif		
 		std::map<ptrdiff_t, std::set<ptrdiff_t>> m_MatrixChecker;
 
 

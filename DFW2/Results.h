@@ -58,6 +58,7 @@ namespace DFW2
 		virtual void FinishWriteHeader() = 0;
 	};
 
+#ifdef _MSC_VER
 	class CResultsWriterCOM : public CResultsWriterBase
 	{
 	protected:
@@ -73,7 +74,7 @@ namespace DFW2
 		void SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t VarIndex, double* ValuePtr, ptrdiff_t ChannelIndex) override;
 		void FinishWriteHeader() override;
 	};
-
+#endif
 
 	class CResultsWriterABI : public CResultsWriterBase
 	{

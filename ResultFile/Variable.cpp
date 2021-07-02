@@ -1,6 +1,7 @@
 ﻿// Variable.cpp : Implementation of CVariable
 
 #include "stdafx.h"
+#ifdef _MSC_VER
 #include "Device.h"
 #include "Variable.h"
 
@@ -147,3 +148,4 @@ STDMETHODIMP CVariable::get_ChannelIndex(LONG* Index)
 
 	return hRes;
 }
+#endif

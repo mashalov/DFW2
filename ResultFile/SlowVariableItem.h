@@ -95,6 +95,8 @@ public:
 		for (auto &it : *this)
 			delete it;
 	}
+#ifdef _MSC_VER	
 	bool VariantToIds(VARIANT* pVar, LONGVECTOR& vec) const;
+#endif	
 };
 

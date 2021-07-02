@@ -55,6 +55,4 @@ public:
 	STDMETHOD(AddDeviceTypeVariable)(BSTR VariableName, LONG UnitId, DOUBLE Multiplier);
 	STDMETHOD(AddDevice)(BSTR DeviceName, VARIANT DeviceIds, VARIANT ParentIds, VARIANT ParentTypes);
 	void SetDeviceTypeInfo(CResultFileReader::DeviceTypeInfo *pDeviceTypeInfo);
-	
-
 };

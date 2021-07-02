@@ -26,6 +26,8 @@ namespace DFW2
 			m_hDLL = LoadLibrary(DLLFilePath.c_str());
 #else
 			m_hDLL = dlopen(DLLFilePath.c_str(), RTLD_NOW);
+			if(!m_hDLL)
+				throw dfw2error(dlerror());
 #endif
 			if (!m_hDLL)
 				throw dfw2errorGLE(fmt::format("Ошибка загрузки DLL \"{}\".", stringutils::utf8_encode(DLLFilePath.c_str())));

@@ -1,6 +1,7 @@
 ﻿// Result.h : Declaration of the CResult
 
 #pragma once
+#ifdef _MSC_VER
 #include "resource.h"       // main symbols
 #include "ResultFile_i.h"
 #include "Device.h"
@@ -84,3 +85,4 @@ public:
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(ResultRead), CResultRead)
+#endif

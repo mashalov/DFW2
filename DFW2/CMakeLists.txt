@@ -7,11 +7,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 add_compile_options(-march=native)
 add_compile_definitions(DLONG)
 
-message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
-
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG "_DEBUG")
-
 add_subdirectory("../UMC/UMC" "${CMAKE_CURRENT_BINARY_DIR}/Build")
+add_subdirectory("../ResultFile" "${CMAKE_CURRENT_BINARY_DIR}/Res")
 
 
 set(DFW_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../fmt/include/"
@@ -77,6 +75,7 @@ set(EMSSSOURCES
     SerializerJson.cpp
     PlatformFolders.cpp
     DynaModelCompile.cpp
+    ResultsWriterABI.cpp
     )             
 
 add_subdirectory("SuiteSparse/KLU")

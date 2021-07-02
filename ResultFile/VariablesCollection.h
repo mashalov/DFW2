@@ -2,6 +2,7 @@
 
 #pragma once
 #include "resource.h"       // main symbols
+#ifdef _MSC_VER
 #include "ResultFile_i.h"
 #include "Variable.h"
 #include "GenericCollection.h"
@@ -59,3 +60,5 @@ public:
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(VariablesCollection), CVariablesCollection)
+
+#endif

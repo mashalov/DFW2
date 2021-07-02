@@ -2,6 +2,7 @@
 
 
 #include "stdafx.h"
+#ifdef _MSC_VER
 #include "resource.h"
 #include "ResultFile_i.h"
 #include "dllmain.h"
@@ -66,13 +67,15 @@ STDAPI DllInstall(BOOL bInstall, _In_opt_  LPCWSTR pszCmdLine)
 
 	return hr;
 }
-
-#ifdef _MSC_VER
 extern "C" __declspec(dllexport) IResultWriterABI * __cdecl ResultWriterABIFactory()
-#else
-extern "C" __attribute__((visibility("default"))) ICustomDevice * ResultWriterABIFactory()
-#endif
-
 {
 	return new DFW2::CResultFileWriter();
 }
+#else
+#include "ResultFileWriter.h"
+#include "IResultWriterABI.h"
+extern "C" __attribute__((visibility("default"))) IResultWriterABI * ResultWriterABIFactory()
+{
+	return new DFW2::CResultFileWriter();
+}
+#endif

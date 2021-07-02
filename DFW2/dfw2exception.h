@@ -14,7 +14,9 @@ public:
 	dfw2error(std::string_view Message) : runtime_error(std::string(Message)) {}
 	dfw2error(const wchar_t* Message) : runtime_error(stringutils::utf8_encode(Message)) {}
 	dfw2error(dfw2error& err) : dfw2error(err.what()) {}
+#ifdef _MSC_VER	
 	const wchar_t* whatw() const { return stringutils::utf8_decode(what()).c_str(); }
+#endif	
 };
 
 // добавляет к строке исключение информацию от GetLastError

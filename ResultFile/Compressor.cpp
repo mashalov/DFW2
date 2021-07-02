@@ -453,7 +453,11 @@ uint32_t CCompressorBase::CLZ_LZcnt32(uint32_t x)
 #ifdef _MSC_VER
 	return __lzcnt(x);
 #else
+#ifdef __x86_64__
+	return __builtin_clz(x); 
+#else
 	return __lzcnt32(x);
+#endif
 #endif
 }
 

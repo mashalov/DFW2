@@ -1,9 +1,9 @@
 ﻿// Result2.h : Declaration of the CResult2
 
 #pragma once
+
+#ifdef _MSC_VER
 #include "resource.h"       // main symbols
-
-
 
 #include "ResultFile_i.h"
 
@@ -61,3 +61,5 @@ public:
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(Result), CResult)
+
+#endif

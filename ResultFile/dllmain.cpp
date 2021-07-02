@@ -1,6 +1,6 @@
 ﻿// dllmain.cpp : Implementation of DllMain.
-
 #include "stdafx.h"
+#ifdef _MSC_VER
 #include "resource.h"
 #include "ResultFile_i.h"
 #include "dllmain.h"
@@ -13,3 +13,4 @@ extern "C" BOOL WINAPI DllMain(HINSTANCE hInstance, DWORD dwReason, LPVOID lpRes
 	hInstance;
 	return _AtlModule.DllMain(dwReason, lpReserved); 
 }
+#endif

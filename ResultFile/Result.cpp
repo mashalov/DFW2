@@ -5,8 +5,7 @@
 #include "ResultRead.h"
 #include "ResultWrite.h"
 
-
-// CResult2
+#ifdef _MSC_VER
 
 STDMETHODIMP CResult::InterfaceSupportsErrorInfo(REFIID riid)
 {
@@ -76,3 +75,5 @@ STDMETHODIMP CResult::Create(BSTR PathName, VARIANT *ResultWrite)
 
 	return hRes;
 }
+
+#endif
