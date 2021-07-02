@@ -694,7 +694,7 @@ void CResultFileWriter::FinishWriteHeader()
 	if (!SystemTimeToVariantTime(&Now, &dCurrentDate))
 		throw CFileWriteException(NULL);
 #else
-	auto now = std::chrono::system_clock::now();
+	// задаем дату 01.01.2000
 	std::tm tm
 	{
 		0,  // seconds after the minute - [0, 60] including leap second
@@ -707,10 +707,12 @@ void CResultFileWriter::FinishWriteHeader()
 		0,  // days since January 1 - [0, 365]
 	    0   // daylight savings time flag
 	};
-	// получаем текущее время
-	auto dateOrigin = std::chrono::system_clock::from_time_t(std::mktime(&tm));
-	// рассчитывает разницу текущего времени и 01.01.2000 в секундах и добавляем секунды от 30.12.1899  + 14  дней (1 день текуший + 13 дней Грегорианский -> Юлианский)
-	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(now - dateOrigin) + std::chrono::seconds(3155846400);
+	// рассчитываем разницу текущего времени и 01.01.2000 в секундах и 
+	// добавляем секунды от 30.12.1899  + 14  дней (1 день текущий + 13 дней Грегорианский -> Юлианский)
+	auto seconds = std::chrono::duration_cast<std::chrono::seconds>(
+		std::chrono::system_clock::now() - 
+		std::chrono::system_clock::from_time_t(std::mktime(&tm))) +
+		std::chrono::seconds(3155846400);
 	// считаем разность в днях
 	auto days = std::chrono::duration_cast<std::chrono::duration<int,std::ratio<86400>>>(seconds);
 	dCurrentDate = days.count();
