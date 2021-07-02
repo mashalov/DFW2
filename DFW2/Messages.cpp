@@ -164,5 +164,5 @@ const char* CDFW2Messages::m_cszUserModelModuleLoaded = "Загружен мод
 const char* CDFW2Messages::m_cszFailedToCreateFolder = "Невозможно создать каталог \"{}\"";
 const char* CDFW2Messages::m_cszFailedToCreateCOMResultsWriter = "Невозможно создание COM-модуля записи результатов";
 const char* CDFW2Messages::m_cszModuleLoadError = "Ошибка загрузки динамической библиотеки \"{}\"";
-
+const char* CDFW2Messages::m_cszPathShouldBeFolder = "Путь \"{}\" должен оканчиваться символом каталога";
 

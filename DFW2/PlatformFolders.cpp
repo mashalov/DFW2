@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "PlatformFolders.h"
 #include "Messages.h"
+#include "DynaModel.h"
 
 #ifdef _MSC_VER
 #include <shlobj_core.h>
@@ -25,14 +26,26 @@ std::filesystem::path GetUserFolder()
 #endif
 }
 
-void CheckPath(const std::filesystem::path& path)
+CPlatformFolders::CPlatformFolders(CDynaModel& model) : m_Model(model)
+{
+
+}
+
+void CPlatformFolders::CheckPath(std::filesystem::path& path) const 
 {
 	if (!std::filesystem::is_directory(path))
 	{
+		path.replace_extension();
+		if (path.has_filename())
+		{
+			m_Model.Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszPathShouldBeFolder, stringutils::utf8_encode(path.c_str())));
+			path.append("/");
+		}
+		
 		std::error_code ec;
 		if (!std::filesystem::create_directories(path, ec))
-			if(ec)
-				throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszFailedToCreateFolder, 
+			if (ec)
+				throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszFailedToCreateFolder,
 					stringutils::utf8_encode(path.c_str())));
 	}
 }
@@ -76,4 +89,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 
 	pathLogs = std::filesystem::path(pathRoot).append("Logs/");
 	CheckPath(pathLogs);
+
+	pathResults = std::filesystem::path(pathRoot).append("Results/");
+	CheckPath(pathResults);
 }

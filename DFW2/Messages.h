@@ -176,6 +176,7 @@ namespace DFW2
 		static const char* m_cszFailedToCreateFolder;
 		static const char* m_cszFailedToCreateCOMResultsWriter;
 		static const char* m_cszModuleLoadError;
+		static const char* m_cszPathShouldBeFolder;
 	};
 }
 

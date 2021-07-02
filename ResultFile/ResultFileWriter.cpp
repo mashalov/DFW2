@@ -693,6 +693,31 @@ void CResultFileWriter::FinishWriteHeader()
 	GetLocalTime(&Now);
 	if (!SystemTimeToVariantTime(&Now, &dCurrentDate))
 		throw CFileWriteException(NULL);
+
+	auto now = std::chrono::system_clock::now();
+
+	std::tm tm
+	{
+		0,  // seconds after the minute - [0, 60] including leap second
+		0,  // minutes after the hour - [0, 59]
+		0,  // hours since midnight - [0, 23]
+		1,  // day of the month - [1, 31]
+		0,  // months since January - [0, 11]
+		0,  // years since 1900
+		0,  // days since Sunday - [0, 6]
+		0,  // days since January 1 - [0, 365]
+	   -1   // daylight savings time flag
+	};
+
+	// !!!!!!!!!!!! TODO - правильно рассчитать variant time !!!!!!!!!!!!!!
+
+	auto dateOrigin = std::chrono::system_clock::from_time_t(std::mktime(&tm));
+	auto variantTime(now - dateOrigin);
+	auto days = std::chrono::duration_cast<std::chrono::duration<int, std::ratio<86400>>>(variantTime);
+	dCurrentDate = days.count();
+
+#else
+
 #endif		
 
 	WriteDouble(dCurrentDate);			// записываем время

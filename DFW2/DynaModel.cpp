@@ -31,7 +31,8 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   BranchMeasures(this),
 						   AutomaticDevice(this),
 						   CustomDeviceCPP(this),
-						   m_ResultsWriter(*this)
+						   m_ResultsWriter(*this),
+						   m_Platform(*this)
 {
 	//Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("{}",__DATE__));
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели

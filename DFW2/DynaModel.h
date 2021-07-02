@@ -364,6 +364,7 @@ namespace DFW2
 			bool m_bStopOnBranchOOS = false;
 			bool m_bStopOnGeneratorOOS = false;
 			std::string m_strWorkingFolder = "Русский тест";
+			std::string m_strResultsFolder = "";
 			Parameters() { }
 			SerializerPtr GetSerializer();
 			static const char* m_cszAdamsRingingSuppressionNames[4];

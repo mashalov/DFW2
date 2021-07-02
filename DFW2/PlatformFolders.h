@@ -4,6 +4,8 @@
 
 namespace DFW2
 {
+	class CDynaModel;
+
 	class CPlatformFolders
 	{
 	protected:
@@ -17,6 +19,7 @@ namespace DFW2
 		std::filesystem::path pathCustomModelsModules;
 		std::filesystem::path pathSourceReference;
 		std::filesystem::path pathLogs;
+		std::filesystem::path pathResults;
 
 		static constexpr const std::string_view automaticModuleName = "Automatic";
 
@@ -45,7 +48,12 @@ namespace DFW2
 #else
 		static constexpr const std::string_view configuration = "Release";
 #endif 
+		CDynaModel& m_Model;
 	public:
+
+		CPlatformFolders(CDynaModel& model);
+
+		void CheckPath(std::filesystem::path& path) const;
 
 		constexpr const  std::string_view& Platform() const
 		{
@@ -99,5 +107,9 @@ namespace DFW2
 			return CPlatformFolders::automaticModuleName;
 		}
 
+		const std::filesystem::path Results() const
+		{
+			return pathResults;
+		}
 	};
 }

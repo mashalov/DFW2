@@ -7,8 +7,26 @@ void CDynaModel::WriteResultsHeader()
 	if (m_Parameters.m_bDisableResultsWriter)
 		return;
 
+	
+	auto resultPath(Platform().Results());
+	std::filesystem::path parametersResultPath(m_Parameters.m_strResultsFolder);
+
+	// если в параметрах задан абосолютный путь к каталогу
+	// результатов - используем его как есть,
+	// если путь относительный - достраиваем его к стандартному каталогу
+
+	if (parametersResultPath.is_absolute())
+		resultPath = parametersResultPath;
+	else
+		resultPath.append(m_Parameters.m_strResultsFolder);
+
+	// создаем каталог для вывода результатов
+	Platform().CheckPath(resultPath);
+
+	resultPath.append("binresultCOM.rst");
+
 	CResultsWriterBase::ResultsInfo resultsInfo {0.0, "Тестовая схема mdp_debug5 с КЗ"};
-	m_ResultsWriter.CreateFile("c:\\tmp\\binresultCOM.rst", resultsInfo );
+	m_ResultsWriter.CreateFile(resultPath, resultsInfo );
 
 	// добавляем описание единиц измерения переменных
 	CDFW2Messages vars;
