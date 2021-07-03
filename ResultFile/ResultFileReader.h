@@ -6,8 +6,8 @@
 #ifdef _MSC_VER
 #include <io.h>
 #include <Process.h>
-#include "SlowVariableItem.h"
 #endif
+#include "SlowVariableItem.h"
 #include "RLECompressor.h"
 #include "IResultWriterABI.h"
 

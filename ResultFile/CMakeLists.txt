@@ -28,7 +28,7 @@ set(SOURCES
 #    ResultWrite.cpp
     RLECompressor.cpp
 #    SlowVariable.cpp
-#    SlowVariableItem.cpp
+    SlowVariableItem.cpp
 #    SlowVariables.cpp
     UnicodeSCSU.cpp
     Variable.cpp
