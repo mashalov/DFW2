@@ -13,6 +13,16 @@
 #include "cs.h"
 using namespace DFW2;
 
+
+template <class _Ty, size_t _Size>
+_NODISCARD constexpr size_t size(const _Ty(&)[_Size]) noexcept {
+	return _Size;
+}
+
+template<std::size_t N, class T>
+constexpr std::size_t countof(T(&)[N]) { return N; }
+
+
 CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   m_Automatic(this),
 						   Nodes(this),
@@ -34,7 +44,6 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   m_ResultsWriter(*this),
 						   m_Platform(*this)
 {
-	//Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("{}",__DATE__));
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
 	// константы могут изменяться, например для демпфирования
 	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
@@ -76,7 +85,15 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&SynchroZones);
 	CheckFolderStructure();
 	LogFile.open(std::filesystem::path(Platform().Logs()).append("dfw2.log"), std::ios::out);
+	if (LogFile.is_open())
+	{
+		LogFile << fmt::format("{} {} log started in \"{}\" mode", 
+			CDFW2Messages::m_cszProjectName, 
+			__DATE__,
+			stringutils::enum_text(m_Parameters.m_eLogLevel, m_Parameters.m_cszLogLevelNames)) << std::endl;
+	}
 }
+
 
 
 CDynaModel::~CDynaModel()

@@ -627,16 +627,16 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("ResultsFolder", m_strResultsFolder);
 
 	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
-		new CSerializerAdapterEnumT<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames, std::size(m_cszAdamsRingingSuppressionNames)));
+		new CSerializerAdapterEnum(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
 
 	Serializer->AddEnumProperty("FreqDampingType",
-		new CSerializerAdapterEnumT<ACTIVE_POWER_DAMPING_TYPE>(eFreqDampingType, m_cszFreqDampingNames, std::size(m_cszFreqDampingNames)));
+		new CSerializerAdapterEnum(eFreqDampingType, m_cszFreqDampingNames));
 
 	Serializer->AddEnumProperty("DiffEquationType",
-		new CSerializerAdapterEnumT<DEVICE_EQUATION_TYPE>(m_eDiffEquationType, m_cszDiffEquationTypeNames, std::size(m_cszDiffEquationTypeNames)));
+		new CSerializerAdapterEnum(m_eDiffEquationType, m_cszDiffEquationTypeNames));
 
 	Serializer->AddEnumProperty("LogLevel",
-		new CSerializerAdapterEnumT<DFW2MessageStatus>(m_eLogLevel, m_cszLogLevelNames, std::size(m_cszLogLevelNames)));
+		new CSerializerAdapterEnum(m_eLogLevel, m_cszLogLevelNames));
 	
 
 	return Serializer;
@@ -715,12 +715,6 @@ void CDynaModel::CheckFolderStructure()
 {
 	m_Platform.CheckFolderStructure(stringutils::utf8_decode(m_Parameters.m_strWorkingFolder));
 }
-
-
-const char* CDynaModel::Parameters::m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
-const char* CDynaModel::Parameters::m_cszFreqDampingNames[2] = { "Node", "Island" };
-const char* CDynaModel::Parameters::m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
-const char* CDynaModel::Parameters::m_cszLogLevelNames[6] = { "fatal", "error", "warning", "message", "info", "debug" };
 
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq

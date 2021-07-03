@@ -203,11 +203,11 @@ namespace DFW2
 	using StringVector = std::vector<std::string>;
 
 	template<typename T>
-	class CSerializerAdapterEnumT : public CSerializerAdapterBaseT<T>
+	class CSerializerAdapterEnum : public CSerializerAdapterBaseT<T>
 	{
 	protected:
 		// текстовое представление значения
-		const char** m_StringRepresentation;
+		const char* const* m_StringRepresentation;
 		size_t m_nCount;
 	public:
 		ptrdiff_t GetInt() override
@@ -222,7 +222,7 @@ namespace DFW2
 		{
 			const ptrdiff_t nIndex = static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::m_pLeft);
 			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(m_nCount))
-				throw dfw2error(fmt::format("CSerializerAdapterEnumT::GetString - invalid enum index or string representation {}", nIndex));
+				throw dfw2error(fmt::format("CSerializerAdapterEnum::GetString - invalid enum index or string representation {}", nIndex));
 			return std::string(m_StringRepresentation[nIndex]);
 		}
 
@@ -251,17 +251,18 @@ namespace DFW2
 				}
 
 			if(nIndex == m_nCount)
-				throw dfw2error(fmt::format("CSerializerAdapterEnumT::SetString - enum string representation \"{}\" not found in enum {}", 
+				throw dfw2error(fmt::format("CSerializerAdapterEnum::SetString - enum string representation \"{}\" not found in enum {}", 
 					String,
 					GetEnumStrings()
 					));
 		}
 
-		CSerializerAdapterEnumT(T& Left, const char** ppStringRepresentation, size_t nCount) : CSerializerAdapterBaseT<T>(Left),
-																								 m_StringRepresentation(ppStringRepresentation),
-																								 m_nCount(nCount)
-																								 {}
-		virtual ~CSerializerAdapterEnumT() = default;
+		template<size_t N>
+		CSerializerAdapterEnum(T& Left, const char* const (&ppStringRepresentation)[N]) : CSerializerAdapterBaseT<T>(Left),
+																						   m_StringRepresentation(ppStringRepresentation),
+																						   m_nCount(N)
+																						   {}
+		virtual ~CSerializerAdapterEnum() = default;
 	};
 
 	// сериализуемое значение с метаинформацией

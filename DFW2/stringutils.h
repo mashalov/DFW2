@@ -115,5 +115,17 @@ public:
 	}
 #endif
 
+	// возвращает строку из массива строк strArray,
+	// соответствующую e из перечисления T или "???" если
+	// e >= size(strArray)
+	template <typename T, std::size_t N>
+	static const char* enum_text(const T e, const char* const (&strArray)[N])
+	{
+		auto nx = static_cast<std::underlying_type<T>::type>(e);
+		if (nx >= 0 && nx < N)
+			return strArray[nx];
+		else
+			return "???";
+	}
 };
 
