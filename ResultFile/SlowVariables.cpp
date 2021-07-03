@@ -2,6 +2,7 @@
 
 #include "stdafx.h"
 #include "SlowVariables.h"
+#include "DeviceTypeWrite.h"
 
 
 // CVariablesCollection
@@ -28,24 +29,19 @@ STDMETHODIMP CSlowVariables::Find(LONG DeviceTypeId, VARIANT DeviceIds, BSTR Var
 	if (m_pFileReader && SUCCEEDED(VariantClear(SlowVariable)))
 	{
 		const CSlowVariablesSet& SlowVariables = m_pFileReader->GetSlowVariables();
-		LONGVECTOR vecDeviceIds;
-		if (SlowVariables.VariantToIds(&DeviceIds, vecDeviceIds))
-		{
-			CSlowVariableItem FindItem(DeviceTypeId, vecDeviceIds, stringutils::utf8_encode(VariableName));
-			CSlowVariablesSet::const_iterator it = SlowVariables.find(&FindItem);
-			if (it != SlowVariables.end())
-			{
-				CComObject<CSlowVariable> *pSlowVariable;
-				if (SUCCEEDED(CComObject<CSlowVariable>::CreateInstance(&pSlowVariable)))
-				{
-					pSlowVariable->SetVariableInfo(*it);
-					pSlowVariable->AddRef();
-					SlowVariable->vt = VT_DISPATCH;
-					SlowVariable->pdispVal = pSlowVariable;
-				}
-			}
 
-			hRes = S_OK;
+		CSlowVariableItem FindItem(DeviceTypeId, CDeviceTypeWrite::GetVariantVec(DeviceIds), stringutils::utf8_encode(VariableName));
+		CSlowVariablesSet::const_iterator it = SlowVariables.find(&FindItem);
+		if (it != SlowVariables.end())
+		{
+			CComObject<CSlowVariable> *pSlowVariable;
+			if (SUCCEEDED(CComObject<CSlowVariable>::CreateInstance(&pSlowVariable)))
+			{
+				pSlowVariable->SetVariableInfo(*it);
+				pSlowVariable->AddRef();
+				SlowVariable->vt = VT_DISPATCH;
+				SlowVariable->pdispVal = pSlowVariable;
+			}
 		}
 	}
 	return hRes;

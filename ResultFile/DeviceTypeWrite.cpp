@@ -90,45 +90,11 @@ STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VAR
 	{
 		try
 		{
-			auto GetVariantVec = [](VARIANT& vt) -> std::vector<ptrdiff_t>
-			{
-				std::vector<ptrdiff_t> retVec;
-				if ((vt.vt & VT_ARRAY) && (vt.vt & VT_I4) && SafeArrayGetDim(vt.parray) == 1)
-				{
-					long* pData(nullptr);
-					long lBound;
-					long uBound;
-
-					if(FAILED(SafeArrayAccessData(vt.parray,(void**)&pData)))
-						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
-
-					if(FAILED(SafeArrayGetLBound(vt.parray,1,&lBound)))
-						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
-
-					if (FAILED(SafeArrayGetUBound(vt.parray, 1, &uBound)))
-						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
-
-					for (long ix = lBound; ix <= uBound; ix++)
-						retVec.push_back(pData[ix]);
-
-					if (FAILED(SafeArrayUnaccessData(vt.parray)))
-						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
-				}
-				else
-				{
-					if (SUCCEEDED(VariantChangeType(&vt, &vt, 0, VT_I4)))
-						retVec.push_back(vt.lVal);
-					else
-						throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
-				}
-
-				return retVec;
-			};
 
 			m_pDeviceTypeInfo->AddDevice(stringutils::utf8_encode(DeviceName), 
-				GetVariantVec(DeviceIds),
-				GetVariantVec(ParentIds),
-				GetVariantVec(ParentTypes));
+				CDeviceTypeWrite::GetVariantVec(DeviceIds),
+				CDeviceTypeWrite::GetVariantVec(ParentIds),
+				CDeviceTypeWrite::GetVariantVec(ParentTypes));
 
 			hRes = S_OK;
 		}
@@ -140,6 +106,41 @@ STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VAR
 
 	return hRes;
 }
+
+ResultIds CDeviceTypeWrite::GetVariantVec(VARIANT& vt)
+{
+	std::vector<ptrdiff_t> retVec;
+	if ((vt.vt & VT_ARRAY) && (vt.vt & VT_I4) && SafeArrayGetDim(vt.parray) == 1)
+	{
+		long* pData(nullptr);
+		long lBound;
+		long uBound;
+
+		if (FAILED(SafeArrayAccessData(vt.parray, (void**)&pData)))
+			throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
+
+		if (FAILED(SafeArrayGetLBound(vt.parray, 1, &lBound)))
+			throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
+
+		if (FAILED(SafeArrayGetUBound(vt.parray, 1, &uBound)))
+			throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
+
+		for (long ix = lBound; ix <= uBound; ix++)
+			retVec.push_back(pData[ix]);
+
+		if (FAILED(SafeArrayUnaccessData(vt.parray)))
+			throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
+	}
+	else
+	{
+		if (SUCCEEDED(VariantChangeType(&vt, &vt, 0, VT_I4)))
+			retVec.push_back(vt.lVal);
+		else
+			throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
+	}
+
+	return retVec;
+};
 
 void CDeviceTypeWrite::SetDeviceTypeInfo(DeviceTypeInfo* pDeviceTypeInfo)
 {

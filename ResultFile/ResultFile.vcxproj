@@ -296,7 +296,6 @@
       </PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ResultWrite.cpp" />
-    <ClCompile Include="ResultWriterABI.cpp" />
     <ClCompile Include="RLECompressor.cpp" />
     <ClCompile Include="SlowVariable.cpp" />
     <ClCompile Include="SlowVariableItem.cpp" />

@@ -49,19 +49,19 @@ STDMETHODIMP CResultWrite::WriteHeader()
 
 	catch (CFileWriteException& ex)
 	{
-		Error(ex.whatw(), IID_IResultWrite, hRes);
+		Error(ex.whatw(), IID_IResultWrite, hRes = E_FAIL);
 	}
 
 	catch (std::bad_alloc& badAllocEx)
 	{
 		std::string strc(badAllocEx.what());
 		std::string str(strc.begin(), strc.end());
-		Error(fmt::format(CDFW2Messages::m_cszMemoryAllocError, str).c_str(), IID_IResultWrite, hRes);
+		Error(fmt::format(CDFW2Messages::m_cszMemoryAllocError, str).c_str(), IID_IResultWrite, hRes = E_FAIL);
 	}
 
 	catch (...)
 	{
-		Error(CDFW2Messages::m_cszUnknownError, IID_IResultWrite, hRes);
+		Error(CDFW2Messages::m_cszUnknownError, IID_IResultWrite, hRes = E_FAIL);
 	}
 
 	return hRes;
@@ -77,8 +77,7 @@ STDMETHODIMP CResultWrite::AddVariableUnit(LONG UnitId, BSTR UnitName)
 	}
 	catch (const dfw2error& er)
 	{
-		hRes = E_INVALIDARG;
-		Error(stringutils::utf8_decode(er.what()).c_str(), IID_IResultWrite, hRes);
+		Error(stringutils::utf8_decode(er.what()).c_str(), IID_IResultWrite, hRes = E_INVALIDARG);
 	}
 
 	return hRes;
@@ -103,7 +102,7 @@ STDMETHODIMP CResultWrite::AddDeviceType(LONG DeviceTypeId, BSTR DeviceTypeName,
 	}
 	catch (const dfw2error& er)
 	{
-		Error(er.whatw(), IID_IResultWrite, hRes);
+		Error(er.whatw(), IID_IResultWrite, hRes = E_FAIL);
 	}
 	return hRes;
 }
@@ -118,8 +117,7 @@ STDMETHODIMP CResultWrite::SetChannel(LONG DeviceId, LONG DeviceType, LONG VarIn
 	}
 	catch (CFileWriteException& ex)
 	{
-		Error(ex.whatw(), IID_IResultWrite, hRes);
-		hRes = E_FAIL;
+		Error(ex.whatw(), IID_IResultWrite, hRes = E_FAIL);
 	}
 	return hRes;
 }
@@ -134,8 +132,7 @@ STDMETHODIMP CResultWrite::WriteResults(DOUBLE Time, DOUBLE Step)
 	}
 	catch (CFileWriteException& ex)
 	{
-		Error(ex.whatw(), IID_IResultWrite, hRes);
-		hRes = E_FAIL;
+		Error(ex.whatw(), IID_IResultWrite, hRes = E_FAIL);
 	}
 	return hRes;
 }
@@ -149,8 +146,7 @@ STDMETHODIMP CResultWrite::FlushChannels()
 	}
 	catch (CFileWriteException& ex)
 	{
-		Error(ex.whatw(), IID_IResultWrite, hRes);
-		hRes = E_FAIL;
+		Error(ex.whatw(), IID_IResultWrite, hRes = E_FAIL);
 	}
 	return hRes;
 }
@@ -175,19 +171,22 @@ CResultWrite::~CResultWrite()
 STDMETHODIMP CResultWrite::AddSlowVariable(LONG DeviceTypeId, VARIANT DeviceIds, BSTR VariableName, DOUBLE Time, DOUBLE Value, DOUBLE PreviousValue, BSTR ChangeDescription)
 {
 	HRESULT hRes = E_FAIL;
-	LONGVECTOR vecDeviceIds;
-
-	CSlowVariablesSet& SlowVariables = m_ResultFileWriter.GetSlowVariables();
-
-	if (SlowVariables.VariantToIds(&DeviceIds, vecDeviceIds))
-		if (SlowVariables.Add(DeviceTypeId, 
-							  vecDeviceIds, 
-						      stringutils::utf8_encode(VariableName), 
-							  Time, 
-							  Value, 
-							  PreviousValue, 
-							  stringutils::utf8_encode(ChangeDescription)))
-			hRes = S_OK;
+	try
+	{
+		m_ResultFileWriter.AddSlowVariable(DeviceTypeId,
+			CDeviceTypeWrite::GetVariantVec(DeviceIds),
+			stringutils::utf8_encode(VariableName),
+			Time,
+			Value,
+			PreviousValue,
+			stringutils::utf8_encode(ChangeDescription)
+		);
+		hRes = S_OK;
+	}
+	catch (const dfw2error& ex)
+	{
+		Error(ex.whatw(), IID_IResultWrite, hRes = E_FAIL);
+	}
 
 	return hRes;
 }

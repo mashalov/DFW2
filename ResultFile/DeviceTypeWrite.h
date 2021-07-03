@@ -55,4 +55,6 @@ public:
 	STDMETHOD(AddDeviceTypeVariable)(BSTR VariableName, LONG UnitId, DOUBLE Multiplier);
 	STDMETHOD(AddDevice)(BSTR DeviceName, VARIANT DeviceIds, VARIANT ParentIds, VARIANT ParentTypes);
 	void SetDeviceTypeInfo(DeviceTypeInfo *pDeviceTypeInfo);
+
+	static ResultIds GetVariantVec(VARIANT& vt);
 };

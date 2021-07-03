@@ -485,7 +485,8 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		ReadString(strVarName);
 		ReadLEB(nKeysSize);
 
-		LONGVECTOR DeviceIds;
+		ResultIds DeviceIds;
+
 		while (nKeysSize)
 		{
 			uint64_t nId;

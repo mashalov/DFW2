@@ -21,9 +21,6 @@ class ATL_NO_VTABLE CDevices:
 	public IDispatchImpl<CGenericCollection<IDevices, CDevice> , &IID_IDevices, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 public:
-	CDevices()
-	{
-	}
 
 BEGIN_COM_MAP(CDevices)
 	COM_INTERFACE_ENTRY(IDevices)

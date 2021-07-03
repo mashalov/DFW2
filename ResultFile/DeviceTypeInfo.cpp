@@ -26,9 +26,9 @@ void DeviceTypeInfo::AddDeviceTypeVariable(const std::string_view VariableName, 
 }
 
 void DeviceTypeInfo::AddDevice(const std::string_view DeviceName,
-	const std::vector<ptrdiff_t>& DeviceIds,
-	const std::vector<ptrdiff_t>& ParentIds,
-	const std::vector<ptrdiff_t>& ParentTypes)
+	const ResultIds& DeviceIds,
+	const ResultIds& ParentIds,
+	const ResultIds& ParentTypes)
 {
 	auto CurrentDevice = m_pDeviceInstances.get() + CurrentInstanceIndex;
 	if (CurrentInstanceIndex < DevicesCount)

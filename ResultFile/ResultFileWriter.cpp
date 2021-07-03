@@ -811,3 +811,22 @@ DeviceTypeInfo* CResultFileWriter::AddDeviceType(ptrdiff_t nTypeId, std::string_
 		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedDeviceType, nTypeId));
 	return DeviceType.release();
 }
+
+
+void CResultFileWriter::AddSlowVariable(ptrdiff_t nDeviceType,
+	const ResultIds& DeviceIds,
+	const std::string_view VariableName,
+	double Time,
+	double Value,
+	double PreviousValue,
+	const std::string_view ChangeDescription)
+{
+
+	GetSlowVariables().Add(nDeviceType,
+		DeviceIds,
+		VariableName,
+		Time,
+		Value,
+		PreviousValue,
+		ChangeDescription);
+}

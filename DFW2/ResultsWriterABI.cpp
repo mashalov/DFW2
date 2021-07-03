@@ -54,7 +54,7 @@ void CResultsWriterABI::AddDeviceType(const CDeviceContainer& Container)
 			pDeviceType->AddDeviceTypeVariable(var.first, var.second.m_Units, var.second.m_dMultiplier);
 	}
 
-	std::vector<ptrdiff_t> DeviceIds, ParentIds, ParentTypes;
+	ResultIds DeviceIds, ParentIds, ParentTypes;
 
 	for (const auto& device : Container)
 	{

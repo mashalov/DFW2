@@ -2,8 +2,8 @@
 #include "vector"
 #include "string"
 #include "set"
+#include "IResultWriterABI.h"
 
-typedef std::vector<long> LONGVECTOR;
 
 class CSlowVariableGraphItem
 {
@@ -29,32 +29,32 @@ typedef SLOWGRAPHSET::const_iterator SLOWGRAPHSETITRCONST;
 class CSlowVariableItem
 {
 public:
-	CSlowVariableItem(long DeviceTypeId, const LONGVECTOR& DeviceIds, std::string_view VarName);
-	long m_DeviceTypeId;
-	LONGVECTOR m_DeviceIds;
+	CSlowVariableItem(ptrdiff_t DeviceTypeId, const ResultIds& DeviceIds, std::string_view VarName);
+	ptrdiff_t m_DeviceTypeId;
+	const ResultIds m_DeviceIds;
 	std::string m_strVarName;
 	SLOWGRAPHSET m_Graph;
 	~CSlowVariableItem();
 
-	bool AddGraphPoint(double Time, double Value, double PreviousValue, std::string_view ChangeDescription);
+	void AddGraphPoint(double Time, double Value, double PreviousValue, std::string_view ChangeDescription);
 };
 
 struct SlowVarItemCompare
 {
 	bool operator()(const CSlowVariableItem* lhs, const CSlowVariableItem *rhs) const
 	{
-		long DevTypeDiff = lhs->m_DeviceTypeId - rhs->m_DeviceTypeId;
+		ptrdiff_t DevTypeDiff = lhs->m_DeviceTypeId - rhs->m_DeviceTypeId;
 		if (DevTypeDiff > 0) 	return true;
 		if (DevTypeDiff < 0) 	return false;
-		const LONGVECTOR& lk = lhs->m_DeviceIds;
-		const LONGVECTOR& rk = rhs->m_DeviceIds;
-		LONGVECTOR::const_iterator lit = lk.begin();
-		LONGVECTOR::const_iterator rit = rk.begin();
+		const ResultIds& lk = lhs->m_DeviceIds;
+		const ResultIds& rk = rhs->m_DeviceIds;
+		ResultIds::const_iterator lit = lk.begin();
+		ResultIds::const_iterator rit = rk.begin();
 
 		while (lit != lk.end() && rit != rk.end())
 		{
-			long lx = 0;
-			long rx = 0;
+			ptrdiff_t lx = 0;
+			ptrdiff_t rx = 0;
 
 			if (lit != lk.end())
 			{
@@ -83,8 +83,8 @@ class CSlowVariablesSet : public std::set <CSlowVariableItem*, SlowVarItemCompar
 	using ITERATOR = CSlowVariablesSet::iterator;
 public:
 
-	bool Add(long DeviceTypeId, 
-			 const LONGVECTOR& DeviceIds, 
+	void Add(ptrdiff_t DeviceTypeId, 
+			 const ResultIds& DeviceIds, 
 			 std::string_view VarName, 
 			 double Time, double Value, 
 			 double PreviousValue, 
@@ -95,8 +95,5 @@ public:
 		for (auto &it : *this)
 			delete it;
 	}
-#ifdef _MSC_VER	
-	bool VariantToIds(VARIANT* pVar, LONGVECTOR& vec) const;
-#endif	
 };
 

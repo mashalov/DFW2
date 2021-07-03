@@ -102,9 +102,9 @@ namespace DFW2
 		void SetDeviceTypeMetrics(ptrdiff_t DeviceIdsCount, ptrdiff_t ParentIdsCount, ptrdiff_t DevicesCount) override;
 		void AddDeviceTypeVariable(const std::string_view VariableName, ptrdiff_t UnitsId, double Multiplier) override;
 		void AddDevice(const std::string_view DeviceName,
-			const std::vector<ptrdiff_t>& DeviceIds,
-			const std::vector<ptrdiff_t>& ParentIds,
-			const std::vector<ptrdiff_t>& ParentTypes) override;
+			const ResultIds& DeviceIds,
+			const ResultIds& ParentIds,
+			const ResultIds& ParentTypes) override;
 	};
 
 	struct DeviceTypesComp

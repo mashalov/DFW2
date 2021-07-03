@@ -84,7 +84,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 
 		variant_t DeviceIds, ParentIds, ParentTypes;
 
-		auto MakeVariant = [](variant_t& variant, const std::vector<ptrdiff_t>& content)
+		auto MakeVariant = [](variant_t& variant, const ResultIds& content)
 		{
 			variant.Clear();
 			if (content.size() > 1)
@@ -136,7 +136,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 			else
 			{
 				MakeVariant(DeviceIds, { device->GetId() });
-				std::vector<ptrdiff_t> idsParents, typesParents;
+				ResultIds idsParents, typesParents;
 
 				for (const auto& master : Props.m_Masters)
 				{

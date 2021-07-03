@@ -61,9 +61,7 @@ namespace DFW2
 		double ts[PREDICTOR_ORDER];
 		double ls[PREDICTOR_ORDER];
 		ptrdiff_t m_nPredictorOrder = 0;
-#ifdef _MSC_VER		
 		CSlowVariablesSet m_setSlowVariables;
-#endif		
 		CRLECompressor	m_RLECompressor;
 		std::unique_ptr<unsigned char[]> m_pCompressedBuffer;
 		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
@@ -74,7 +72,6 @@ namespace DFW2
 		DEVTYPESET m_DevTypeSet;
 	public:
 		virtual ~CResultFileWriter();
-		DeviceTypeInfo* AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName) override;
 
 		void WriteDouble(const double &Value);
 		void WriteTime(double dTime, double dStep);
@@ -85,9 +82,7 @@ namespace DFW2
 		void WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
 		void AddDirectoryEntries(size_t nDirectoryEntriesCount);
 		static unsigned int WriterThread(void *pThis);
-#ifdef _MSC_VER		
 		CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
-#endif		
 		const std::string& GetComment() { return m_strComment; }
 
 		// ABI Interface
@@ -99,6 +94,14 @@ namespace DFW2
 		void SetComment(const std::string_view Comment) override { m_strComment = Comment; }
 		void WriteResults(double Time, double Step) override;
 		void AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName) override;
+		DeviceTypeInfo* AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName) override;
 		void SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, ptrdiff_t nDeviceVarIndex, const double* pVariable, ptrdiff_t nVariableIndex) override;
+		virtual void AddSlowVariable(ptrdiff_t nDeviceType,
+			const ResultIds& DeviceIds,
+			const std::string_view VariableName,
+			double Time,
+			double Value,
+			double PreviousValue,
+			const std::string_view ChangeDescription) override;
 	};
 }

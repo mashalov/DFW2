@@ -27,7 +27,7 @@ STDMETHODIMP CSlowVariable::get_DeviceType(LONG* Type)
 	HRESULT hRes = E_FAIL;
 	if (m_pItem && Type)
 	{
-		*Type = m_pItem->m_DeviceTypeId; 
+		*Type = static_cast<LONG>(m_pItem->m_DeviceTypeId); 
 		hRes = S_OK;
 	}
 	return hRes;
@@ -51,12 +51,12 @@ STDMETHODIMP CSlowVariable::get_DeviceIds(VARIANT *Ids)
 
 	if (m_pItem && Ids && SUCCEEDED(VariantClear(Ids)))
 	{
-		LONGVECTOR& vec = m_pItem->m_DeviceIds;
+		auto& vec = m_pItem->m_DeviceIds;
 
 		if (vec.size() == 1)
 		{
 			Ids->vt = VT_I4;
-			Ids->lVal = vec[0];
+			Ids->lVal = static_cast<LONG>(vec[0]);
 			hRes = S_OK;
 		}
 		else
@@ -69,8 +69,8 @@ STDMETHODIMP CSlowVariable::get_DeviceIds(VARIANT *Ids)
 				long *p;
 				if (SUCCEEDED(SafeArrayAccessData(Ids->parray, (void**)&p)))
 				{
-					for (LONGVECTOR::const_iterator it = vec.begin(); it != vec.end(); it++, p++)
-						*p = *it;
+					for (ResultIds::const_iterator it = vec.begin(); it != vec.end(); it++, p++)
+						*p = static_cast<LONG>(*it);
 
 					if (SUCCEEDED(SafeArrayUnaccessData(Ids->parray)))
 						hRes = S_OK;

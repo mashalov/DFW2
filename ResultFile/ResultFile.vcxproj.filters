@@ -100,9 +100,6 @@
     <ClCompile Include="FileExceptions.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ResultWriterABI.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="DeviceTypeInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
