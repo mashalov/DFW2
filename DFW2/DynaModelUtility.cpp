@@ -8,7 +8,7 @@ using namespace DFW2;
 
 void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex)
 {
-	if (m_Parameters.m_bLogToConsole)
+	if (m_Parameters.m_bLogToConsole || Status <= DFW2MessageStatus::DFW2LOG_ERROR)
 	{
 #ifdef _MSC_VER
 		// для Windows делаем разные цвета в консоли
@@ -45,7 +45,7 @@ void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff
 #endif
 	}
 
-	if (LogFile.is_open() && m_Parameters.m_bLogToFile)
+	if (LogFile.is_open() && m_Parameters.m_bLogToFile && Status <= m_Parameters.m_eLogLevel)
 		LogFile << Message << std::endl;
 }
 
@@ -635,6 +635,10 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddEnumProperty("DiffEquationType",
 		new CSerializerAdapterEnumT<DEVICE_EQUATION_TYPE>(m_eDiffEquationType, m_cszDiffEquationTypeNames, std::size(m_cszDiffEquationTypeNames)));
 
+	Serializer->AddEnumProperty("LogLevel",
+		new CSerializerAdapterEnumT<DFW2MessageStatus>(m_eLogLevel, m_cszLogLevelNames, std::size(m_cszLogLevelNames)));
+	
+
 	return Serializer;
 }
 
@@ -716,7 +720,7 @@ void CDynaModel::CheckFolderStructure()
 const char* CDynaModel::Parameters::m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
 const char* CDynaModel::Parameters::m_cszFreqDampingNames[2] = { "Node", "Island" };
 const char* CDynaModel::Parameters::m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
-
+const char* CDynaModel::Parameters::m_cszLogLevelNames[6] = { "fatal", "error", "warning", "message", "info", "debug" };
 
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq

@@ -333,6 +333,9 @@ namespace DFW2
 
 		struct Parameters
 		{
+			Parameters() { }
+			SerializerPtr GetSerializer();
+
 			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND;
 			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
@@ -365,11 +368,11 @@ namespace DFW2
 			bool m_bStopOnGeneratorOOS = false;
 			std::string m_strWorkingFolder = "Русский тест";
 			std::string m_strResultsFolder = "";
-			Parameters() { }
-			SerializerPtr GetSerializer();
+			static const char* m_cszDiffEquationTypeNames[2];
+			DFW2MessageStatus m_eLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
+			static const char* m_cszLogLevelNames[6];
 			static const char* m_cszAdamsRingingSuppressionNames[4];
 			static const char* m_cszFreqDampingNames[2];
-			static const char* m_cszDiffEquationTypeNames[2];
 		} 
 			m_Parameters;
 

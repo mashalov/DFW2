@@ -63,7 +63,7 @@ bool CDynaModel::Link()
 				if (pContLead == lt)
 				{
 					// если выбран внутренний контейнер
-					Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Связь {} <- {}", it->GetTypeName(), lt->GetTypeName()));
+					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Связь {} <- {}", it->GetTypeName(), lt->GetTypeName()));
 					// организуем связь внешгего контейнера с внутренним
 					bRes = it->CreateLink(lt) && bRes;
 					_ASSERTE(bRes);
@@ -346,9 +346,9 @@ void CDynaNodeContainer::DumpNodeIslands(NODEISLANDMAP& Islands)
 {
 	for (auto&& supernode : Islands)
 	{
-		m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszIslandOfSuperNode , supernode.first->GetVerbalName()));
+		m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandOfSuperNode , supernode.first->GetVerbalName()));
 		for (auto&& slavenode : supernode.second)
-			m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("--> {}", slavenode->GetVerbalName()));
+			m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("--> {}", slavenode->GetVerbalName()));
 	}
 }
 

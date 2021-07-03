@@ -211,7 +211,7 @@ bool CDynaModel::DetectAdamsRinging()
 				
 				if (pVectorBegin->nRingsSuppress)
 				{
-					Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Ringing {} {} last values {} {} {}",
+					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Ringing {} {} last values {} {} {}",
 						pVectorBegin->pDevice->GetVerbalName(),
 						pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
 						newValue,

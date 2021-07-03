@@ -90,7 +90,7 @@ bool CDynaModel::RunTransient()
 	AutomaticDevice.ConnectDLL(Automatic().GetModulePath());
 	AutomaticDevice.CreateDevices(1);
 	AutomaticDevice.BuildStructure();
-
+		
 	bool bRes = true;
 #ifdef _WIN64
 	_set_FMA3_enable(1);
@@ -732,7 +732,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("t={:15.012f} {} Converged in {:>3} iterations {} {} {} {} {} Saving {:.2}", GetCurrentTime(),
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged in {:>3} iterations {} {} {} {} {} Saving {:.2}", GetCurrentTime(),
 																				sc.nStepsCount,
 																				sc.nNewtonIteration,
 																				sc.Newton.dMaxErrorVariable, 
@@ -755,7 +755,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (!sc.m_bNewtonStepControl)
 				{
-					Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("t={:15.012f} {} Continue {:>3} iteration {} {} {} {} {}", GetCurrentTime(),
+					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Continue {:>3} iteration {} {} {} {} {}", GetCurrentTime(),
 						sc.nStepsCount,
 						sc.nNewtonIteration,
 						sc.Newton.dMaxErrorVariable,
@@ -1079,7 +1079,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = (std::max)(1.01, r);
 
-	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("t={:15.012f} {:>3} {}[{}] {} rSame {} RateLimit {} for {} steps", 
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {:>3} {}[{}] {} rSame {} RateLimit {} for {} steps", 
 		GetCurrentTime(), 
 		GetIntegrationStepNumber(),
 		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
@@ -1728,7 +1728,7 @@ bool CDynaModel::SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster)
 			{
 				// отключаем его и учитываем в количестве отключений
 				pDev->SetState(eDEVICESTATE::DS_OFF, pMaster->GetStateCause());
-				Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, pDev->GetVerbalName(), pMaster->GetVerbalName()));
+				Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(CDFW2Messages::m_cszTurningOffDeviceByMasterDevice, pDev->GetVerbalName(), pMaster->GetVerbalName()));
 				return true;
 			}
 			else
@@ -1749,7 +1749,7 @@ bool CDynaModel::SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster)
 		if (!pDev->IsPermanentOff())
 		{
 			pDev->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT);
-			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszTurningOffDeviceDueToNoMasterDevice, pDev->GetVerbalName()));
+			Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(CDFW2Messages::m_cszTurningOffDeviceDueToNoMasterDevice, pDev->GetVerbalName()));
 			return true;
 		}
 	}
