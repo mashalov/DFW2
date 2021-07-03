@@ -121,7 +121,7 @@ public:
 	template <typename T, std::size_t N>
 	static const char* enum_text(const T e, const char* const (&strArray)[N])
 	{
-		auto nx = static_cast<std::underlying_type<T>::type>(e);
+		auto nx = static_cast<typename std::underlying_type<T>::type>(e);
 		if (nx >= 0 && nx < N)
 			return strArray[nx];
 		else

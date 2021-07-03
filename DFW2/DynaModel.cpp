@@ -13,16 +13,6 @@
 #include "cs.h"
 using namespace DFW2;
 
-
-template <class _Ty, size_t _Size>
-_NODISCARD constexpr size_t size(const _Ty(&)[_Size]) noexcept {
-	return _Size;
-}
-
-template<std::size_t N, class T>
-constexpr std::size_t countof(T(&)[N]) { return N; }
-
-
 CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   m_Automatic(this),
 						   Nodes(this),
