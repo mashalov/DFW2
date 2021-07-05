@@ -7,7 +7,7 @@ set(INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/include/"
              "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/runtime/src/" )
 
 set(SOURCES 
-    ../../../fmt/src/format.cc 
+    ../../../fmt/src/format.cc
     Generated/EquationsBaseVisitor.cpp
     Generated/EquationsLexer.cpp
     Generated/EquationsParser.cpp
@@ -39,6 +39,7 @@ set(SOURCES
     dllmain.cpp
     EquationsOps.cpp
     UMC.cpp
+    ../../DFW2/Messages.cpp
     )             
 
 #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/"
