@@ -177,6 +177,15 @@ namespace DFW2
 		static const char* m_cszFailedToCreateCOMResultsWriter;
 		static const char* m_cszModuleLoadError;
 		static const char* m_cszPathShouldBeFolder;
+		static const char* m_cszNoUserModelInFolder;
+		static const char* m_cszNoUserModelReferenceFolder;
+		static const char* m_cszCouldNotCopyUserModelReference;
+		static const char* m_cszUserModelCompiled;
+		static const char* m_cszUserModelFailedToCompile;
+		static const char* m_cszUserModelFailedToOpenSource;
+		static const char* m_cszUserModelAlreadyCompiled;
+		static const char* m_cszUserModelShouldBeCompiled;
+		static const char* m_cszUserModelCannotSaveFile;
 	};
 }
 

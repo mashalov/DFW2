@@ -165,4 +165,15 @@ const char* CDFW2Messages::m_cszFailedToCreateFolder = "Невозможно с�
 const char* CDFW2Messages::m_cszFailedToCreateCOMResultsWriter = "Невозможно создание COM-модуля записи результатов";
 const char* CDFW2Messages::m_cszModuleLoadError = "Ошибка загрузки динамической библиотеки \"{}\"";
 const char* CDFW2Messages::m_cszPathShouldBeFolder = "Путь \"{}\" должен оканчиваться символом каталога";
+const char* CDFW2Messages::m_cszNoUserModelInFolder = "В каталоге \"{}\" не найден файл скомпилированного пользовательского устройства \"{}\"";
+const char* CDFW2Messages::m_cszNoUserModelReferenceFolder = "Не найден каталог исходных файлов для сборки пользовательской модели \"{}\"";
+const char* CDFW2Messages::m_cszCouldNotCopyUserModelReference = "Невозможно копирование файлов исходных текстов пользовательской модели из \"{}\" в \"{}\"";
+const char* CDFW2Messages::m_cszUserModelCompiled = "Выполнена компиляция модуля пользовательской модели \"{}\"";
+const char* CDFW2Messages::m_cszUserModelFailedToCompile = "Ошибка компиляции модуля пользовательской модели \"{}\"";
+const char* CDFW2Messages::m_cszUserModelFailedToOpenSource = "Ошибка доступа к файлу пользовательской модели \"{}\"";
+const char* CDFW2Messages::m_cszUserModelAlreadyCompiled = "Модуль пользовательской модели \"{}\" не нуждается в повторной компиляции";
+const char* CDFW2Messages::m_cszUserModelShouldBeCompiled = "Необходима компиляция модуля пользовательской модели \"{}\"";
+const char* CDFW2Messages::m_cszUserModelCannotSaveFile = "Невозможно сохранить промежуточный файл пользовательской модели \"{}\"";
+
+
 

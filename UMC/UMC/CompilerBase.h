@@ -40,11 +40,11 @@ public:
     }
 
     // компиляция исходного текста из файла
-    bool Compile(std::filesystem::path FilePath) override;
+    void Compile(std::filesystem::path FilePath) override;
     // компиляция исходого текста из потока
-    bool Compile(std::istream& SourceStream) override;
+    void Compile(std::istream& SourceStream) override;
     // задать свойство по имени
-    bool SetProperty(std::string_view PropertyName, std::string_view Value) override;
+    void SetProperty(std::string_view PropertyName, std::string_view Value) override;
     // получить свойство по имени
     std::string GetProperty(std::string_view PropertyName) override;
     // удаление компилятора

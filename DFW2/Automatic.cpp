@@ -139,8 +139,7 @@ void CAutomatic::CompileModels()
 		Compiler->SetProperty("ProjectName", m_pDynaModel->Platform().AutomaticModuleName());
 		Compiler->SetProperty("ReferenceSources", m_pDynaModel->Platform().SourceReference().string());
 
-		if (!Compiler->Compile(Sourceutf8stream))
-			throw dfw2error("Ошибка компиляции");
+		Compiler->Compile(Sourceutf8stream);
 
 		pathAutomaticModule = Compiler->CompiledModulePath();
 	}

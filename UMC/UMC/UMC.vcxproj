@@ -332,6 +332,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\DFW2\Messages.cpp" />
     <ClCompile Include="..\..\fmt\src\format.cc" />
     <ClCompile Include="AntlrASTErrorListener.cpp" />
     <ClCompile Include="AntlrASTVisitor.cpp" />
