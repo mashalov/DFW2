@@ -1,4 +1,5 @@
 ﻿#include "CompilerBase.h"
+#include "../../DFW2/dfw2exception.h"
 
 bool CompilerBase::SetProperty(std::string_view PropertyName, std::string_view Value)
 {
@@ -73,6 +74,8 @@ bool CompilerBase::Compile(std::filesystem::path FilePath)
     bool bRes(false);
     std::ifstream strm;
     strm.open(FilePath);
+
+    // !!!!!!!!!!!!!!!!!! TODO - общая обработка ошибок !!!!!!!!!!!!!!!!!! 
     if (strm.is_open())
     {
         bRes = Compile(strm);
@@ -151,22 +154,17 @@ bool CompilerBase::Compile(std::istream& SourceStream)
 
         if (!std::filesystem::exists(pathCustomDeviceHeader))
         {
-            pTree->Error(fmt::format("В каталоге \"{}\" не найден файл скомпилированного пользовательского устройства \"{}\".",
+            throw dfw2errorGLE(fmt::format("В каталоге \"{}\" не найден файл скомпилированного пользовательского устройства \"{}\".",
                 pathOutDir.string(),
                 CASTCodeGeneratorBase::CustomDeviceHeader));
-            throw std::runtime_error(cszUMCFailed);
         }
 
         // берем путь к референсному каталогу
         pathRefDir = pTree->GetPropertyPath(PropertyMap::szPropReferenceSources);
         // проверяем есть ли он
         if (!std::filesystem::exists(pathRefDir))
-        {
-            pTree->Error(fmt::format("Не найден каталог исходных файлов для сборки пользовательской модели \"{}\".",
-                pathRefDir.string()));
+            throw dfw2errorGLE(fmt::format("Не найден каталог исходных файлов для сборки пользовательской модели \"{}\".", pathRefDir.string()));
 
-            throw std::runtime_error(cszUMCFailed);
-        }
         // если каталог есть - копируем референсные не *.h файлы в каталог сборки 
         std::error_code ec;
         std::filesystem::copy(std::filesystem::path(pathRefDir).append("Source"),
@@ -175,12 +173,9 @@ bool CompilerBase::Compile(std::istream& SourceStream)
             ec);
         if(ec)
         {
-            pTree->Error(fmt::format("Ошибка \"{}\" копирования файлов исходных текстов из \"{}\" в \"{}\"",
-                std::error_code(errno, std::system_category()).message(),
+            throw dfw2errorGLE(fmt::format("Невозможно копирование файлов исходных текстов из \"{}\" в \"{}\"",
                 pathRefDir.string(),
-                pathOutDir.string()
-                ));
-            throw std::runtime_error(cszUMCFailed);
+                pathOutDir.string()));
         }
         // построить модуль с помощью выбранного компилятора
         BuildWithCompiler();
