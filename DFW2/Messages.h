@@ -186,6 +186,11 @@ namespace DFW2
 		static const char* m_cszUserModelAlreadyCompiled;
 		static const char* m_cszUserModelShouldBeCompiled;
 		static const char* m_cszUserModelCannotSaveFile;
+		static const char* m_cszDebug;
+		static const char* m_cszInfo;
+		static const char* m_cszMessage;
+		static const char* m_cszWarning;
+		static const char* m_cszError;
 	};
 }
 

@@ -3,6 +3,7 @@
 #include "ASTNodes.h"
 #include "MatchInfo.h"
 #include "ASTSimpleEquation.h"
+#include "../../DFW2/Messages.h"
 
 ASTFragmentInfo::ASTFragmentInfo(std::string_view Infix, ASTNodeSet& FragmentSet) : infix(Infix), fragmentset(FragmentSet), score(0)
 {
@@ -507,16 +508,35 @@ void CASTTreeBase::CheckInitEquations()
     }
 }
 
+std::string CASTTreeBase::ProjectMessage(const std::string_view& message) const
+{
+    if (const auto projNameIt = properties.find(PropertyMap::szPropProjectName); projNameIt != properties.end())
+        return fmt::format("{} : {}", projNameIt->second, message);
+    else
+        return std::string(message);
+}
+
 void CASTTreeBase::Warning(std::string_view warning)
 {
 #ifdef _MSC_VER    
     SetConsoleOutputCP(CP_UTF8);
 #endif    
     if (messageCallBacks.Warning)
-        messageCallBacks.Warning(warning);
+        messageCallBacks.Warning(ProjectMessage(warning));
     else
-        std::cout << "Предупреждение: " << warning << std::endl;
+        std::cout << DFW2::CDFW2Messages::m_cszWarning << warning << std::endl;
     nWarnings++;
+}
+
+void CASTTreeBase::Debug(std::string_view message)
+{
+#ifdef _MSC_VER    
+    SetConsoleOutputCP(CP_UTF8);
+#endif
+    if (messageCallBacks.Debug)
+        messageCallBacks.Debug(ProjectMessage(message));
+    else
+        std::cout << DFW2::CDFW2Messages::m_cszDebug << message << std::endl;
 }
 
 void CASTTreeBase::Message(std::string_view message)
@@ -525,9 +545,9 @@ void CASTTreeBase::Message(std::string_view message)
     SetConsoleOutputCP(CP_UTF8);
 #endif
     if (messageCallBacks.Info)
-        messageCallBacks.Info(message);
+        messageCallBacks.Info(ProjectMessage(message));
     else
-        std::cout << "Информация: " << message << std::endl;
+        std::cout << DFW2::CDFW2Messages::m_cszInfo << message << std::endl;
 }
 
 void CASTTreeBase::Error(std::string_view error)
@@ -536,9 +556,9 @@ void CASTTreeBase::Error(std::string_view error)
     SetConsoleOutputCP(CP_UTF8);
 #endif    
     if (messageCallBacks.Error)
-        messageCallBacks.Error(error);
+        messageCallBacks.Error(ProjectMessage(error));
     else
-        std::cout << "Ошибка: " << error << std::endl;
+        std::cout << DFW2::CDFW2Messages::m_cszError << error << std::endl;
     nErrors++;
 }
 

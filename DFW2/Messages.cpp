@@ -174,6 +174,11 @@ const char* CDFW2Messages::m_cszUserModelFailedToOpenSource = "Ошибка до
 const char* CDFW2Messages::m_cszUserModelAlreadyCompiled = "Модуль пользовательской модели \"{}\" не нуждается в повторной компиляции";
 const char* CDFW2Messages::m_cszUserModelShouldBeCompiled = "Необходима компиляция модуля пользовательской модели \"{}\"";
 const char* CDFW2Messages::m_cszUserModelCannotSaveFile = "Невозможно сохранить промежуточный файл пользовательской модели \"{}\"";
+const char* CDFW2Messages::m_cszDebug = "Отладка: ";
+const char* CDFW2Messages::m_cszInfo  = "Информация: ";
+const char* CDFW2Messages::m_cszMessage = "Сообщение: ";
+const char* CDFW2Messages::m_cszWarning = "Предупреждение: ";
+const char* CDFW2Messages::m_cszError = "Ошибка: ";
 
 
 

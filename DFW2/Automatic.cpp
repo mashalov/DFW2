@@ -107,29 +107,32 @@ void CAutomatic::CompileModels()
 		std::stringstream Sourceutf8stream;
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
 		CDynaModel* pDynaModel(m_pDynaModel);
-		
-		/*
+
 		Compiler->SetMessageCallBacks(
 				MessageCallBacks
 				{
 					[&pDynaModel](std::string_view message)
 					{
-						pDynaModel->Log(CDFW2Messages::DFW2LOG_ERROR, stringutils::utf8_decode(std::string(message)));
+						pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, message);
 						return true;
 					},
 					[&pDynaModel](std::string_view message)
 					{
-						pDynaModel->Log(CDFW2Messages::DFW2LOG_WARNING, stringutils::utf8_decode(std::string(message)));
+						pDynaModel->Log(DFW2MessageStatus::DFW2LOG_WARNING, message);
 						return true;
 					},
 					[&pDynaModel](std::string_view message)
 					{
-						pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, stringutils::utf8_decode(std::string(message)));
+						pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, message);
+						return true;
+					},
+					[&pDynaModel](std::string_view message)
+					{
+						pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, message);
 						return true;
 					}
 				}
 		);
-		*/
 
 		Sourceutf8stream <<"main\n{\n" << source.str() << "}\n";
 		Compiler->SetProperty("Platform", m_pDynaModel->Platform().Platform());

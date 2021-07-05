@@ -105,6 +105,7 @@ protected:
     void ProcessProxyFunction();
     void ProcessConstantArgument();
     void InitExternalBaseVariables();
+    std::string ProjectMessage(const std::string_view& message) const;
 
 public:
 
@@ -151,6 +152,7 @@ public:
     void Warning(std::string_view warning);
     void Error(std::string_view error);
     void Message(std::string_view message);
+    void Debug(std::string_view message);
     size_t ErrorCount() const;
     VariableInfo& GetVariableInfo(std::string_view VarName);
     VariableInfo* CheckVariableInfo(std::string_view VarName);

@@ -166,7 +166,7 @@ void CompilerBase::Compile(std::istream& SourceStream)
     BuildWithCompiler();
 
     if (pTree->ErrorCount() == 0)
-        pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelCompiled, stringutils::utf8_encode(compiledModulePath.filename().c_str())));
+        pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelCompiled, stringutils::utf8_encode(compiledModulePath.c_str())));
     else
-        throw dfw2error(fmt::format(DFW2::CDFW2Messages::m_cszUserModelFailedToCompile, stringutils::utf8_encode(compiledModulePath.filename().c_str())));
+        throw dfw2error(fmt::format(DFW2::CDFW2Messages::m_cszUserModelFailedToCompile, stringutils::utf8_encode(compiledModulePath.c_str())));
 }
