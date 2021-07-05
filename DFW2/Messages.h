@@ -191,6 +191,7 @@ namespace DFW2
 		static const char* m_cszMessage;
 		static const char* m_cszWarning;
 		static const char* m_cszError;
+		static const char* m_cszEvent;
 	};
 }
 

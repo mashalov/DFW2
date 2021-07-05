@@ -149,6 +149,9 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_dOutStep = 1E-5;
 		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 
+		//m_Parameters.m_bStopOnBranchOOS = true;
+		//m_Parameters.m_bStopOnGeneratorOOS = true;
+
 		bRes = bRes && Link();
 		TurnOffDevicesByOffMasters();
 

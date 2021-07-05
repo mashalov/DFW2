@@ -1198,7 +1198,7 @@ bool CDevice::CheckLimits(double& Min, double& Max)
 		}
 		if (Equal(Min, Max) && Equal(Min, 0.0))
 		{
-			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszEmptyLimits,
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszEmptyLimits,
 				nameMin,
 				nameMax,
 				Min,

@@ -14,6 +14,8 @@ CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(nullptr)
 void CDynaBranch::UpdateVerbalName()
 {
 	m_strVerbalName = fmt::format("{} - {}{} {}", Ip, Iq, (Np ? fmt::format(" ({})", Np) : ""), GetName());
+	if (m_pContainer)
+		m_strVerbalName = fmt::format("{} {}", m_pContainer->GetTypeName(), m_strVerbalName);
 }
 
 // Расчет проводимостей ветви для матрицы проводимостей
@@ -81,6 +83,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 		for (it = m_pContainer->begin(); it != m_pContainer->end(); it++)
 		{
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+			pBranch->UpdateVerbalName();
 
 			pBranch->m_pNodeIp = pBranch->m_pNodeIq = nullptr;
 

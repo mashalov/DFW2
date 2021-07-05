@@ -75,7 +75,7 @@ namespace ResultFileTest
         public void PopulateTree()
         {
             resultFile = new ResultFileLib.Result();
-            resultRead = resultFile.Load("c:\\tmp\\binresultcom.rst");
+            resultRead = resultFile.Load("C:\\Users\\masha\\Documents\\Русский тест\\Raiden\\Results\\binresultcom.rst");
             //resultRead = resultFile.Load("c:\\tmp\\000023.sna");
             root = resultRead.Root;
             Stack<DeviceTreeNode> stack = new Stack<DeviceTreeNode>();

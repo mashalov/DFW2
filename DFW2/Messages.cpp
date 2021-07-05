@@ -179,6 +179,7 @@ const char* CDFW2Messages::m_cszInfo  = "Информация: ";
 const char* CDFW2Messages::m_cszMessage = "Сообщение: ";
 const char* CDFW2Messages::m_cszWarning = "Предупреждение: ";
 const char* CDFW2Messages::m_cszError = "Ошибка: ";
+const char* CDFW2Messages::m_cszEvent = "Событие: ";
 
 
 

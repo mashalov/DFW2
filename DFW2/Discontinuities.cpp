@@ -4,6 +4,17 @@
 
 using namespace DFW2;
 
+void CModelAction::Log(CDynaModel* pDynaModel, std::string_view message)
+{
+	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format("{} t={} : {}",
+		CDFW2Messages::m_cszEvent,
+		pDynaModel->GetCurrentTime(),
+		message
+	));
+}
+
+
+
 CStaticEvent::~CStaticEvent()
 {
 	for (auto&& it : m_Actions)
@@ -19,6 +30,7 @@ CStaticEvent::CStaticEvent(double dTime) : m_dTime(dTime)
 	
 }
 
+
 bool CStaticEvent::AddAction(CModelAction* Action) const
 {
 	bool bRes = true;
@@ -29,8 +41,8 @@ bool CStaticEvent::AddAction(CModelAction* Action) const
 bool CStaticEvent::ContainsStop() const
 {
 	bool bStopFound = false;
-	for (MODELACTIONITR it = m_Actions.begin(); it != m_Actions.end(); it++)
-		if ((*it)->Type() == eDFW2_ACTION_TYPE::AT_STOP)
+	for (const auto& action : m_Actions)
+		if (action->Type() == eDFW2_ACTION_TYPE::AT_STOP)
 		{
 			bStopFound = true;
 			break;
@@ -236,6 +248,12 @@ CModelActionChangeBranchR::CModelActionChangeBranchR(CDynaBranch* pBranch, doubl
 }
 eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double R)
 {
+	Log(pDynaModel, fmt::format("{} R={} -> R={}",
+		m_pDynaBranch->GetVerbalName(),
+		m_pDynaBranch->R,
+		R
+		));
+
 	m_Impedance = { R, m_pDynaBranch->X };
 	return CModelActionChangeBranchImpedance::Do(pDynaModel);
 }
@@ -248,6 +266,12 @@ CModelActionChangeBranchX::CModelActionChangeBranchX(CDynaBranch* pBranch, doubl
 
 eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double X)
 {
+	Log(pDynaModel, fmt::format("{} X={} -> X={}",
+		m_pDynaBranch->GetVerbalName(),
+		m_pDynaBranch->X,
+		X
+	));
+
 	m_Impedance = { m_pDynaBranch->R, X };
 	return CModelActionChangeBranchImpedance::Do(pDynaModel);
 }
@@ -281,6 +305,11 @@ eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, dou
 	else
 		m_NewState = CDynaBranch::BranchState::BRANCH_OFF;
 
+	Log(pDynaModel, fmt::format("{} State=\"{}\"->State=\"{}\"",
+			m_pDynaBranch->GetVerbalName(),
+			stringutils::enum_text(m_pDynaBranch->m_BranchState, CDynaBranch::m_cszBranchStateNames),
+			stringutils::enum_text(m_NewState, CDynaBranch::m_cszBranchStateNames)));
+
 	return Do(pDynaModel);
 }
 
@@ -309,6 +338,11 @@ CModelActionChangeNodeShuntR::CModelActionChangeNodeShuntR(CDynaNode *pNode, dou
 
 eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, double dValue)
 {
+	Log(pDynaModel, fmt::format("{} R={}",
+			m_pDynaNode->GetVerbalName(),
+			dValue
+	));
+
 	m_ShuntRX.real(dValue);
 	return CModelActionChangeNodeShunt::Do(pDynaModel);
 }
@@ -321,6 +355,12 @@ CModelActionChangeNodeShuntX::CModelActionChangeNodeShuntX(CDynaNode *pNode, dou
 
 eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, double dValue)
 {
+	
+	Log(pDynaModel, fmt::format("{} X={}",
+		m_pDynaNode->GetVerbalName(),
+		dValue
+	));
+
 	m_ShuntRX.imag(dValue);
 	return CModelActionChangeNodeShunt::Do(pDynaModel);
 }
@@ -347,6 +387,11 @@ CModelActionChangeNodeShuntG::CModelActionChangeNodeShuntG(CDynaNode *pNode, dou
 
 eDFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, double dValue)
 {
+	Log(pDynaModel, fmt::format("{} G={}",
+		m_pDynaNode->GetVerbalName(),
+		dValue
+	));
+
 	m_ShuntGB.real(dValue);
 	return CModelActionChangeNodeShuntAdmittance::Do(pDynaModel);
 }
@@ -358,6 +403,11 @@ CModelActionChangeNodeShuntB::CModelActionChangeNodeShuntB(CDynaNode *pNode, dou
 
 eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, double dValue)
 {
+	Log(pDynaModel, fmt::format("{} B={}",
+		m_pDynaNode->GetVerbalName(),
+		dValue
+	));
+
 	m_ShuntGB.imag(dValue);
 	return CModelActionChangeNodeShuntAdmittance::Do(pDynaModel);
 }

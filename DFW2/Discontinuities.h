@@ -50,6 +50,7 @@ namespace DFW2
 		eDFW2_ACTION_TYPE Type() { return m_Type;  }
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) { return eDFW2_ACTION_STATE::AS_INACTIVE; }
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) { return Do(pDynaModel,0); }
+		void Log(CDynaModel* pDynaModel, std::string_view message);
 	};
 
 	class CModelActionStop : public CModelAction
