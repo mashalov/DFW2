@@ -38,13 +38,7 @@ namespace DFW2
 		{
 			bool operator()(const ChannelHeaderInfo* lhs, const ChannelHeaderInfo* rhs) const
 			{
-				int64_t DevTypeDiff = lhs->eDeviceType - rhs->eDeviceType;
-				if (DevTypeDiff > 0) 	return true;
-				if (DevTypeDiff < 0) 	return false;
-				DevTypeDiff = lhs->DeviceId - rhs->DeviceId;
-				if (DevTypeDiff > 0) 	return true;
-				if (DevTypeDiff < 0) 	return false;
-				return lhs->DeviceVarIndex < rhs->DeviceVarIndex;
+				return std::tie(lhs->eDeviceType, lhs->DeviceId) < std::tie(rhs->eDeviceType, rhs->DeviceId);
 			}
 		};
 
