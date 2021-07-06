@@ -205,7 +205,7 @@ void CResultsWriterCOM::AddSlowVariable(ptrdiff_t nDeviceType,
 	variant_t vtDeviceIds;
 	MakeVariant(vtDeviceIds, DeviceIds);
 
-	m_spResultWrite->AddSlowVariable(nDeviceType,
+	m_spResultWrite->AddSlowVariable(static_cast<long>(nDeviceType),
 		vtDeviceIds,
 		stringutils::utf8_decode(VariableName).c_str(),
 		Time,

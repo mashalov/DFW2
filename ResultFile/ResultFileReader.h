@@ -61,8 +61,8 @@ namespace DFW2
 
 		int m_nVersion = 0;
 		double m_dTimeCreated = 0.0;
-		int m_DevTypesCount;
-		size_t m_nDirectoryEntriesCount;
+		int m_DevTypesCount = 0;
+		size_t m_nDirectoryEntriesCount = 0;
 		
 
 		size_t m_PointsCount;

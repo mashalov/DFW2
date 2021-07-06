@@ -20,7 +20,7 @@ eFCResult CCompressorBase::ReadDouble(double& dValue, double& dPredictor, CBitSt
 	// читаем количетсво нулевых бит, деленное на 4 (4 бита)
 	eFCResult fcResult = NzCount.WriteBits(Input, 4);
 
-	if (fcResult == FC_OK)
+	if (fcResult == eFCResult::FC_OK)
 	{
 		// готовим буфер для чтения битов 
 		BITWORD *pd = static_cast<BITWORD*>(static_cast<void*>(&dValue));
@@ -28,7 +28,7 @@ eFCResult CCompressorBase::ReadDouble(double& dValue, double& dPredictor, CBitSt
 		// читаем ненулевые биты
 		fcResult = Dbl.WriteBits(Input, sizeof(double) * 8 - nz * 4);
 		// если нет ошибок - декодируем double
-		if (fcResult == FC_OK)
+		if (fcResult == eFCResult::FC_OK)
 			Xor(dValue, dPredictor);
 	}
 	return fcResult;
@@ -85,7 +85,7 @@ void CCompressorBase::Xor(double& dValue, double& dPredictor)
 eFCResult CCompressorBase::WriteLEB(uint64_t Value, CBitStream& Output)
 {
 	eFCResult fcResult = Output.AlignTo(8);
-	if (fcResult == FC_OK)
+	if (fcResult == eFCResult::FC_OK)
 	{
 		do
 		{
@@ -94,7 +94,7 @@ eFCResult CCompressorBase::WriteLEB(uint64_t Value, CBitStream& Output)
 			if (Value != 0)
 				low |= 0x80;
 			fcResult = Output.WriteByte(low);
-			if (fcResult != FC_OK)
+			if (fcResult != eFCResult::FC_OK)
 				break;
 		} while (Value != 0);
 	}
@@ -104,7 +104,7 @@ eFCResult CCompressorBase::WriteLEB(uint64_t Value, CBitStream& Output)
 eFCResult CCompressorBase::ReadLEB(uint64_t& Value, CBitStream& Input)
 {
 	eFCResult fcResult = Input.AlignTo(8);
-	if (fcResult == FC_OK)
+	if (fcResult == eFCResult::FC_OK)
 	{
 		Value = 0;
 		ptrdiff_t shift = 0;
@@ -114,18 +114,18 @@ eFCResult CCompressorBase::ReadLEB(uint64_t& Value, CBitStream& Input)
 			// limit byte count to 8
 			if (shift > 63)
 			{
-				fcResult = FC_ERROR;
+				fcResult = eFCResult::FC_ERROR;
 				break;
 			}
 
 			fcResult = Input.ReadByte(low);
-			if (fcResult != FC_OK)
+			if (fcResult != eFCResult::FC_OK)
 				break;
 			Value |= ((static_cast<uint64_t>(low)& 0x7f) << shift);
 			shift += 7;
 		} while (low & 0x80);
 	}
-	return FC_OK;
+	return eFCResult::FC_OK;
 }
 
 
@@ -305,7 +305,7 @@ double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nP
 // Запись сжатого double на системе с доступной командой __lzcnt64
 eFCResult CCompressorBase::WriteDoubleLZcnt64(double& dValue, double& dPredictor, CBitStream& Output)
 {
-	eFCResult Result = FC_OK;
+	eFCResult Result = eFCResult::FC_OK;
 	Xor(dValue, dPredictor);
 	uint64_t *pv = static_cast<uint64_t*>(static_cast<void*>(&dValue));
 	// формируем буфер для записи количества нулевых битов
@@ -332,7 +332,7 @@ eFCResult CCompressorBase::WriteDoubleLZcnt64(double& dValue, double& dPredictor
 		// записываем количество нулевых битов деленное на 4
 		Result = Output.WriteBits(Source, 4);
 		// если записалось нормально
-		if (Result == FC_OK)
+		if (Result == eFCResult::FC_OK)
 		{
 			// формируем буфер для записи double
 			BITWORD *pvb = static_cast<BITWORD*>(static_cast<void*>(pv));
@@ -349,7 +349,7 @@ eFCResult CCompressorBase::WriteDoubleLZcnt64(double& dValue, double& dPredictor
 		// если в буфере не было достаточно места для
 		// записи восстанавливаем исходный double и сбрасываем буфер
 		Xor(dValue, dPredictor);
-		Result = FC_BUFFEROVERFLOW;
+		Result = eFCResult::FC_BUFFEROVERFLOW;
 	}
 	return Result;
 }
@@ -357,7 +357,7 @@ eFCResult CCompressorBase::WriteDoubleLZcnt64(double& dValue, double& dPredictor
 
 eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, CBitStream& Output)
 {
-	eFCResult Result = FC_OK;
+	eFCResult Result = eFCResult::FC_OK;
 
 	Xor(dValue, dPredictor);
 	unsigned int *ppv = static_cast<unsigned int*>(static_cast<void*>(&dValue)) + 1;
@@ -387,7 +387,7 @@ eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, 
 			if (Output.BitsLeft() >= 68 - nZ4count * 4)
 			{
 				Result = Output.WriteBits(Source, 4);
-				if (Result == FC_OK)
+				if (Result == eFCResult::FC_OK)
 				{
 					CBitStream SourceDbl2(static_cast<BITWORD*>(static_cast<void*>(ppv - 1)), static_cast<BITWORD*>(static_cast<void*>(ppv)), 0);
 					Result = Output.WriteBits(SourceDbl2, sizeof(int) * 8 - (nZ4count - 8) * 4);
@@ -396,7 +396,7 @@ eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, 
 			else
 			{
 				Xor(dValue, dPredictor);
-				Result = FC_BUFFEROVERFLOW;
+				Result = eFCResult::FC_BUFFEROVERFLOW;
 			}
 		}
 		else
@@ -405,7 +405,7 @@ eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, 
 			if (Output.BitsLeft() >= 68 - nZ4count * 4)
 			{
 				Result = Output.WriteBits(Source, 4);
-				if (Result == FC_OK)
+				if (Result == eFCResult::FC_OK)
 				{
 					CBitStream SourceDbl2(static_cast<BITWORD*>(static_cast<void*>(ppv - 1)), static_cast<BITWORD*>(static_cast<void*>(ppv)), 0);
 					Result = Output.WriteBits(SourceDbl2, 4);
@@ -414,7 +414,7 @@ eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, 
 			else
 			{
 				Xor(dValue, dPredictor);
-				Result = FC_BUFFEROVERFLOW;
+				Result = eFCResult::FC_BUFFEROVERFLOW;
 			}
 		}
 	}
@@ -427,11 +427,11 @@ eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, 
 		if (Output.BitsLeft() >= 68 - nZ4count * 4)
 		{
 			Result = Output.WriteBits(Source, 4);
-			if (Result == FC_OK)
+			if (Result == eFCResult::FC_OK)
 			{
 				CBitStream SourceDbl1(static_cast<BITWORD*>(static_cast<void*>(ppv - 1)), static_cast<BITWORD*>(static_cast<void*>(ppv)), 0);
 				Result = Output.WriteBits(SourceDbl1, sizeof(int) * 8);
-				if (Result == FC_OK)
+				if (Result == eFCResult::FC_OK)
 				{
 					CBitStream SourceDbl2(static_cast<BITWORD*>(static_cast<void*>(ppv)), static_cast<BITWORD*>(static_cast<void*>(ppv + 1)), 0);
 					Result = Output.WriteBits(SourceDbl2, sizeof(int) * 8 - nZ4count * 4);
@@ -441,7 +441,7 @@ eFCResult CCompressorBase::WriteDoublePlain(double& dValue, double& dPredictor, 
 		else
 		{
 			Xor(dValue, dPredictor);
-			Result = FC_BUFFEROVERFLOW;
+			Result = eFCResult::FC_BUFFEROVERFLOW;
 		}
 	}
 

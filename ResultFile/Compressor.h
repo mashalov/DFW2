@@ -1,7 +1,7 @@
 ﻿#pragma once
 #include "../DFW2/Header.h"
 
-enum eFCResult
+enum class eFCResult
 {
 	FC_OK,
 	FC_ERROR,
@@ -48,7 +48,7 @@ public:
 class CCompressorBase
 {
 protected:
-	double ys[PREDICTOR_ORDER];
+	double ys[PREDICTOR_ORDER] = {};
 public:
 	typedef eFCResult(*fnWriteDoublePtr)(double&, double&, CBitStream&);				// прототип функции записи double
 	typedef uint32_t(*fnCountZeros32Ptr)(uint32_t);										// прототип функции подсчета нулевых битов
@@ -79,7 +79,7 @@ public:
 class CCompressorSingle : public CCompressorBase
 {
 protected:
-	double ts[PREDICTOR_ORDER];
+	double ts[PREDICTOR_ORDER] = {};
 	ptrdiff_t m_nPredictorOrder;
 public:
 	CCompressorSingle();

@@ -21,9 +21,9 @@ namespace DFW2
 	struct VariableTypeInfo
 	{
 		std::string Name;
-		double Multiplier;
-		int eUnits;
-		ptrdiff_t nIndex;
+		double Multiplier = 0.0;
+		int eUnits = 0;
+		ptrdiff_t nIndex = 0;
 		bool operator<(const VariableTypeInfo& other) const
 		{
 			return Name < other.Name;
@@ -46,7 +46,7 @@ namespace DFW2
 
 	struct DeviceInstanceInfoBase
 	{
-		ptrdiff_t nIndex;
+		ptrdiff_t nIndex = 0;
 		virtual ptrdiff_t GetId(ptrdiff_t nIdIndex) const
 		{
 			return nIndex;
@@ -81,11 +81,11 @@ namespace DFW2
 
 	struct DeviceTypeInfo : public IDeviceTypeABI
 	{
-		int eDeviceType;
-		int DeviceIdsCount;
-		int DeviceParentIdsCount;
-		int DevicesCount;
-		int VariablesByDeviceCount;
+		int eDeviceType = 0;
+		int DeviceIdsCount = 0;
+		int DeviceParentIdsCount = 0;
+		int DevicesCount = 0;
+		int VariablesByDeviceCount = 0;
 		VARTYPESET m_VarTypes;
 		VARTYPELIST m_VarTypesList;
 		std::unique_ptr<ptrdiff_t[]> pIds;

@@ -16,7 +16,7 @@ namespace DFW2
 		uint64_t m_nPreviousSeek = 0;						// смещение последнего записанного предыдущего блока
 		size_t m_nCount = 0;								// количество сжатых double
 		size_t m_nUnwrittenSuperRLECount = 0;				// количество подсчитанных, но не записанных блоков SuperRLE
-		ptrdiff_t m_nVariableIndex;							// индекс переменной канала
+		ptrdiff_t m_nVariableIndex = -1;					// индекс переменной канала
 		const double *m_pVariable = nullptr;				// адрес переменной канала
 		double m_dValue;									// значение для буферизации переданного на m_pVariable значения и записи в потоке
 		ptrdiff_t m_nDeviceId;								// идентификатор устройства канала
@@ -31,7 +31,7 @@ namespace DFW2
 	{
 	protected:
 		std::unique_ptr<CChannelEncoder[]> m_pEncoders;
-		size_t m_nChannelsCount;
+		size_t m_nChannelsCount = 0;
 		BUFFERBEGIN m_BufferBegin;
 		double m_dSetTime;
 		double m_dSetStep;

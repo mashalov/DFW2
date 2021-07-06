@@ -43,7 +43,7 @@ eFCResult CBitStream::WriteBits(CBitStream& Source, size_t BitCount)
 	//Source.MoveBitCount(0);
 	//MoveBitCount(0);
 
-	eFCResult fcResult = FC_OK;
+	eFCResult fcResult = eFCResult::FC_OK;
 	// пока не записали все биты
 	while (BitCount)
 	{
@@ -81,11 +81,11 @@ eFCResult CBitStream::WriteBits(CBitStream& Source, size_t BitCount)
 		BitCount -= nBitsToWrite;												
 		// смещаем приемник, проверяем все ли в порядке, если нет - выходим с результатом
 		fcResult = MoveBitCount(nBitsToWrite);									
-		if (fcResult != FC_OK)													
+		if (fcResult != eFCResult::FC_OK)
 			break;
 		// смещаем источник, проверяем все ли в порядке, если нет - выходим с результатом
 		fcResult = Source.MoveBitCount(nBitsToWrite);							
-		if (fcResult != FC_OK)
+		if (fcResult != eFCResult::FC_OK)
 			break;
 	}
 	return fcResult;
@@ -121,7 +121,7 @@ eFCResult CBitStream::WriteDouble(double &dValue)
 		return MoveBitCount(sizeof(double) * 8);
 	}
 	else
-		return FC_BUFFEROVERFLOW;
+		return eFCResult::FC_BUFFEROVERFLOW;
 }
 
 eFCResult CBitStream::WriteByte(unsigned char Byte)
@@ -163,11 +163,11 @@ eFCResult CBitStream::MoveBitCount(size_t BitCount)
 		m_pWord = m_pEnd - 1;
 		m_nBitSeek = 0;
 		// информируем о переполении
-		return FC_BUFFEROVERFLOW;
+		return eFCResult::FC_BUFFEROVERFLOW;
 	}
 	// если переполнения нет - считаем смещение битов
 	m_nBitSeek %= WordBitCount;
-	return FC_OK;
+	return eFCResult::FC_OK;
 }
 
 

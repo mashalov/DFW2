@@ -145,7 +145,6 @@ void CResultFileWriter::FlushChannels()
 	infile.write(&de, sizeof(struct DataDirectoryEntry));
 	infile.seekg(de.m_Offset, std::ios_base::beg);
 
-#ifdef _MSC_VER
 	WriteLEB(m_setSlowVariables.size());
 	for (auto &di : m_setSlowVariables)
 	{
@@ -167,9 +166,6 @@ void CResultFileWriter::FlushChannels()
 			}
 		}
 	}
-#else
-	WriteLEB(0);
-#endif
 
 	de.m_DataType = 2;
 	de.m_Offset = infile.tellg();
@@ -279,28 +275,28 @@ void CResultFileWriter::WriteChannel(ptrdiff_t nIndex, double dValue)
 		CCompressorParallel& FloatCompressor = Encoder.m_Compressor;
 		CBitStream& Output = Encoder.m_Output;
 
-		eFCResult Result = FC_OK;
+		eFCResult Result = eFCResult::FC_OK;
 
 		///*
 		if (static_cast<ptrdiff_t>(m_nChannelsCount - 2) <= nIndex)
 		{
 			
 			Result = Output.WriteDouble(dValue);
-			if (Result == FC_BUFFEROVERFLOW)
+			if (Result == eFCResult::FC_BUFFEROVERFLOW)
 			{
 				FlushChannel(nIndex);
 				Result = Output.WriteDouble(dValue);
-				if (Result == FC_ERROR)
+				if (Result == eFCResult::FC_ERROR)
 					throw CFileWriteException(infile);
 				else
-					if (Result == FC_OK)
+					if (Result == eFCResult::FC_OK)
 						Encoder.m_nCount++;
 			}
 			else
-				if (Result == FC_ERROR)
+				if (Result == eFCResult::FC_ERROR)
 					throw CFileWriteException(infile);
 				else
-					if (Result == FC_OK)
+					if (Result == eFCResult::FC_OK)
 						Encoder.m_nCount++;
 
 		}
@@ -324,21 +320,21 @@ void CResultFileWriter::WriteChannel(ptrdiff_t nIndex, double dValue)
 				Result = FloatCompressor.WriteDouble(dValue, pred, Output);
 			}
 
-			if (Result == FC_BUFFEROVERFLOW)
+			if (Result == eFCResult::FC_BUFFEROVERFLOW)
 			{
 				FlushChannel(nIndex);
 				Result = FloatCompressor.WriteDouble(dValue, pred, Output);
-				if (Result == FC_ERROR)
+				if (Result == eFCResult::FC_ERROR)
 					throw CFileWriteException(infile);
 				else
-					if (Result == FC_OK)
+					if (Result == eFCResult::FC_OK)
 						Encoder.m_nCount++;
 			}
 			else
-				if (Result == FC_ERROR)
+				if (Result == eFCResult::FC_ERROR)
 					throw CFileWriteException(infile);
 				else
-					if (Result == FC_OK)
+					if (Result == eFCResult::FC_OK)
 						Encoder.m_nCount++;
 		}
 	}

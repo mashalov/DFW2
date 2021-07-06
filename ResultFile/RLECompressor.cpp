@@ -2,16 +2,6 @@
 #include "RLECompressor.h"
 
 
-CRLECompressor::CRLECompressor()
-{
-}
-
-
-CRLECompressor::~CRLECompressor()
-{
-
-}
-
 bool CRLECompressor::OutSkip(const unsigned char *pBuffer, const unsigned char *pInput)
 {
 	bool bRes = OutCompressed(static_cast<unsigned char>(pInput - pBuffer));
