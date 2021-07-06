@@ -784,5 +784,12 @@ namespace DFW2
 		}
 
 		void CheckFolderStructure();
+
+		void WriteSlowVariable(ptrdiff_t nDeviceType,
+			const ResultIds& DeviceIds,
+			const std::string_view VariableName,
+			double Value,
+			double PreviousValue,
+			const std::string_view ChangeDescription);
 	};
 }

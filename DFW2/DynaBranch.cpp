@@ -13,7 +13,7 @@ CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(nullptr)
 // Обновляет имя ветви
 void CDynaBranch::UpdateVerbalName()
 {
-	m_strVerbalName = fmt::format("{} - {}{} {}", Ip, Iq, (Np ? fmt::format(" ({})", Np) : ""), GetName());
+	m_strVerbalName = fmt::format("{} - {}{} [{}]", Ip, Iq, (Np ? fmt::format(" ({})", Np) : ""), GetName());
 	if (m_pContainer)
 		m_strVerbalName = fmt::format("{} {}", m_pContainer->GetTypeName(), m_strVerbalName);
 }

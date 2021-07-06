@@ -51,6 +51,7 @@ namespace DFW2
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) { return eDFW2_ACTION_STATE::AS_INACTIVE; }
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) { return Do(pDynaModel,0); }
 		void Log(CDynaModel* pDynaModel, std::string_view message);
+		static bool isfinite(const cplx& value) { return std::isfinite(value.real()) && std::isfinite(value.imag()); }
 	};
 
 	class CModelActionStop : public CModelAction
@@ -87,8 +88,9 @@ namespace DFW2
 	{
 	protected:
 		CDynaBranch* m_pDynaBranch;
+		void WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view ChangeDescription);
 	public:
-		CModelActionChangeBranchParameterBase(CDynaBranch* pBranch);
+		CModelActionChangeBranchParameterBase(CDynaBranch* pBranch) : CModelActionChangeVariable(nullptr, 0.0), m_pDynaBranch(pBranch) {}
 	};
 
 	class CModelActionChangeBranchState : public CModelActionChangeBranchParameterBase
@@ -106,21 +108,25 @@ namespace DFW2
 	protected:
 		cplx m_Impedance;
 	public:
-		CModelActionChangeBranchImpedance(CDynaBranch* pBranch, const cplx& Impedance);
+		CModelActionChangeBranchImpedance(CDynaBranch* pBranch, const cplx& Impedance) : CModelActionChangeBranchParameterBase(pBranch), m_Impedance(Impedance) {}
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
 	};
 
-	class CModelActionChangeBranchR : public CModelActionChangeBranchImpedance
+	class CModelActionChangeBranchR : public CModelActionChangeBranchParameterBase
 	{
+	protected:
+		double m_BranchR;
 	public:
-		CModelActionChangeBranchR(CDynaBranch* pBranch, double R);
+		CModelActionChangeBranchR(CDynaBranch* pBranch, double R) : CModelActionChangeBranchParameterBase(pBranch), m_BranchR(R) {}
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double R) override;
 	};
 
-	class CModelActionChangeBranchX : public CModelActionChangeBranchImpedance
+	class CModelActionChangeBranchX : public CModelActionChangeBranchParameterBase
 	{
+	protected:
+		double m_BranchX;
 	public:
-		CModelActionChangeBranchX(CDynaBranch* pBranch, double X);
+		CModelActionChangeBranchX(CDynaBranch* pBranch, double X) : CModelActionChangeBranchParameterBase(pBranch), m_BranchX(X) {}
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double X) override;
 	};
 
@@ -128,8 +134,10 @@ namespace DFW2
 	{
 	protected:
 		CDynaNode* m_pDynaNode;
+		void WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view ChangeDescription);
 	public:
 		CModelActionChangeNodeParameterBase(CDynaNode *pNode) : CModelAction(eDFW2_ACTION_TYPE::AT_CV), m_pDynaNode(pNode)  {}
+
 	};
 
 	class CModelActionChangeNodeShunt : public CModelActionChangeNodeParameterBase
@@ -146,35 +154,43 @@ namespace DFW2
 	protected:
 		cplx m_ShuntGB;
 	public:
-		CModelActionChangeNodeShuntAdmittance(CDynaNode *pNode, const cplx& ShuntGB);
+		CModelActionChangeNodeShuntAdmittance(CDynaNode *pNode, const cplx& ShuntGB) : CModelActionChangeNodeParameterBase(pNode), m_ShuntGB(ShuntGB) {}
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	class CModelActionChangeNodeShuntR : public CModelActionChangeNodeShunt
+	class CModelActionChangeNodeShuntR : public CModelActionChangeNodeParameterBase
 	{
+	protected:
+		double m_NodeR;
 	public:
-		CModelActionChangeNodeShuntR(CDynaNode *pNode, double R);
+		CModelActionChangeNodeShuntR(CDynaNode* pNode, double R) : CModelActionChangeNodeParameterBase(pNode), m_NodeR(R) {}
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) override;
 	};
 
-	class CModelActionChangeNodeShuntX : public CModelActionChangeNodeShunt
+	class CModelActionChangeNodeShuntX : public CModelActionChangeNodeParameterBase
 	{
+	protected:
+		double m_NodeX;
 	public:
-		CModelActionChangeNodeShuntX(CDynaNode *pNode, double X);
+		CModelActionChangeNodeShuntX(CDynaNode *pNode, double X) : CModelActionChangeNodeParameterBase(pNode), m_NodeX(X) {}
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) override;
 	};
 
-	class CModelActionChangeNodeShuntG : public CModelActionChangeNodeShuntAdmittance
+	class CModelActionChangeNodeShuntG : public CModelActionChangeNodeParameterBase
 	{
+	protected:
+		double m_NodeG = 0.0;
 	public:
-		CModelActionChangeNodeShuntG(CDynaNode *pNode, double G);
+		CModelActionChangeNodeShuntG(CDynaNode* pNode, double G) : CModelActionChangeNodeParameterBase(pNode), m_NodeG(G) {}
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) override;
 	};
 
-	class CModelActionChangeNodeShuntB : public CModelActionChangeNodeShuntAdmittance
+	class CModelActionChangeNodeShuntB : public CModelActionChangeNodeParameterBase
 	{
+	protected:
+		double m_NodeB = 0.0;
 	public:
-		CModelActionChangeNodeShuntB(CDynaNode *pNode, double B);
+		CModelActionChangeNodeShuntB(CDynaNode* pNode, double B) : CModelActionChangeNodeParameterBase(pNode), m_NodeB(B) { }
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double dValue) override;
 	};
 		
@@ -191,7 +207,7 @@ namespace DFW2
 	class CModelActionRemoveNodeShunt : public CModelActionChangeNodeParameterBase
 	{
 	public:
-		CModelActionRemoveNodeShunt(CDynaNode *pNode);
+		CModelActionRemoveNodeShunt(CDynaNode* pNode) : CModelActionChangeNodeParameterBase(pNode) {}
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 

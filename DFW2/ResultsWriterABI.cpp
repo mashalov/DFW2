@@ -97,3 +97,20 @@ void CResultsWriterABI::FinishWriteHeader()
 {
 	m_ABIWriter->FinishWriteHeader();
 }
+
+void CResultsWriterABI::AddSlowVariable(ptrdiff_t nDeviceType,
+	const ResultIds& DeviceIds,
+	const std::string_view VariableName,
+	double Time,
+	double Value,
+	double PreviousValue,
+	const std::string_view ChangeDescription)
+{
+	m_ABIWriter->AddSlowVariable(nDeviceType,
+		DeviceIds,
+		VariableName,
+		Time,
+		Value,
+		PreviousValue,
+		ChangeDescription);
+}

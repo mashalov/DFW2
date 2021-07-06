@@ -25,7 +25,7 @@ void CDynaModel::WriteResultsHeader()
 
 	resultPath.append("binresultCOM.rst");
 
-	CResultsWriterBase::ResultsInfo resultsInfo {0.0, "Тестовая схема mdp_debug5 с КЗ"};
+	CResultsWriterBase::ResultsInfo resultsInfo {GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(resultPath, resultsInfo );
 
 	// добавляем описание единиц измерения переменных
@@ -107,3 +107,18 @@ void CDynaModel::FinishWriteResults()
 	m_ResultsWriter.FinishWriteResults();
 }
 
+void CDynaModel::WriteSlowVariable(ptrdiff_t nDeviceType,
+	const ResultIds& DeviceIds,
+	const std::string_view VariableName,
+	double Value,
+	double PreviousValue,
+	const std::string_view ChangeDescription)
+{
+	m_ResultsWriter.AddSlowVariable(nDeviceType,
+		DeviceIds,
+		VariableName,
+		GetCurrentTime(),
+		Value,
+		PreviousValue,
+		ChangeDescription);
+}

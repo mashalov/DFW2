@@ -56,6 +56,13 @@ namespace DFW2
 		virtual void AddDeviceType(const CDeviceContainer& Container) = 0;
 		virtual void SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t VarIndex, double* ValuePtr, ptrdiff_t ChannelIndex) = 0;
 		virtual void FinishWriteHeader() = 0;
+		virtual void AddSlowVariable(ptrdiff_t nDeviceType,
+			const ResultIds& DeviceIds,
+			const std::string_view VariableName,
+			double Time,
+			double Value,
+			double PreviousValue,
+			const std::string_view ChangeDescription) = 0;
 	};
 
 #ifdef _MSC_VER
@@ -73,6 +80,13 @@ namespace DFW2
 		void AddDeviceType(const CDeviceContainer& Container) override;
 		void SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t VarIndex, double* ValuePtr, ptrdiff_t ChannelIndex) override;
 		void FinishWriteHeader() override;
+		virtual void AddSlowVariable(ptrdiff_t nDeviceType,
+			const ResultIds& DeviceIds,
+			const std::string_view VariableName,
+			double Time,
+			double Value,
+			double PreviousValue,
+			const std::string_view ChangeDescription) override;
 	};
 #endif
 
@@ -91,6 +105,13 @@ namespace DFW2
 		void AddDeviceType(const CDeviceContainer& Container) override;
 		void SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t VarIndex, double* ValuePtr, ptrdiff_t ChannelIndex) override;
 		void FinishWriteHeader() override;
+		virtual void AddSlowVariable(ptrdiff_t nDeviceType,
+			const ResultIds& DeviceIds,
+			const std::string_view VariableName,
+			double Time,
+			double Value,
+			double PreviousValue,
+			const std::string_view ChangeDescription) override;
 	};
 
 }

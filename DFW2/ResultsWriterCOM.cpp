@@ -56,6 +56,36 @@ void CResultsWriterCOM::AddVariableUnit(ptrdiff_t nUnitType, const std::string_v
 }
 
 
+void MakeVariant(variant_t& variant, const ResultIds& content)
+{
+	variant.Clear();
+	if (content.size() > 1)
+	{
+		SAFEARRAYBOUND sabounds{ static_cast<ULONG>(content.size()), 0 };
+		variant.parray = SafeArrayCreate(VT_I4, 1, &sabounds);
+		if (!variant.parray)
+			throw dfw2error("MakeVariant - SafeArrayCreate failed");
+		variant.vt = VT_ARRAY | VT_I4;
+		int* pData(nullptr);
+		if (FAILED(SafeArrayAccessData(variant.parray, (void**)&pData)))
+			throw dfw2error("MakeVariant - SafeArrayAccessData failed");
+
+		for (const auto& val : content)
+		{
+			*pData = static_cast<long>(val);
+			pData++;
+		}
+
+		if (FAILED(SafeArrayUnaccessData(variant.parray)))
+			throw dfw2error("MakeVariant - SafeArrayUnaccessData failed");
+	}
+	else if (content.size() == 0)
+		variant = static_cast<long>(0);
+	else
+		variant = static_cast<long>(content.front());
+};
+
+
 void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 {
 	try
@@ -83,36 +113,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 		}
 
 		variant_t DeviceIds, ParentIds, ParentTypes;
-
-		auto MakeVariant = [](variant_t& variant, const ResultIds& content)
-		{
-			variant.Clear();
-			if (content.size() > 1)
-			{
-				SAFEARRAYBOUND sabounds{ static_cast<ULONG>(content.size()), 0 };
-				variant.parray = SafeArrayCreate(VT_I4, 1, &sabounds);
-				if (!variant.parray)
-					throw dfw2error("MakeVariant - SafeArrayCreate failed");
-				variant.vt = VT_ARRAY | VT_I4;
-				int* pData(nullptr);
-				if (FAILED(SafeArrayAccessData(variant.parray, (void**)&pData)))
-					throw dfw2error("MakeVariant - SafeArrayAccessData failed");
-
-				for (const auto& val : content)
-				{
-					*pData = static_cast<long>(val);
-					pData++;
-				}
-
-				if (FAILED(SafeArrayUnaccessData(variant.parray)))
-					throw dfw2error("MakeVariant - SafeArrayUnaccessData failed");
-			}
-			else if (content.size() == 0)
-				variant = static_cast<long>(0);
-			else
-				variant = static_cast<long>(content.front());
-		};
-
+		
 		// если у устройства более одного идентификатора, передаем их в SAFERRAY
 
 		for (const auto& device : Container)
@@ -191,4 +192,24 @@ void CResultsWriterCOM::FinishWriteHeader()
 	{
 		throw dfw2error(ex.Description());
 	}
+}
+
+void CResultsWriterCOM::AddSlowVariable(ptrdiff_t nDeviceType,
+	const ResultIds& DeviceIds,
+	const std::string_view VariableName,
+	double Time,
+	double Value,
+	double PreviousValue,
+	const std::string_view ChangeDescription)
+{
+	variant_t vtDeviceIds;
+	MakeVariant(vtDeviceIds, DeviceIds);
+
+	m_spResultWrite->AddSlowVariable(nDeviceType,
+		vtDeviceIds,
+		stringutils::utf8_decode(VariableName).c_str(),
+		Time,
+		Value,
+		PreviousValue,
+		stringutils::utf8_decode(ChangeDescription).c_str());
 }

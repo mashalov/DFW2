@@ -88,6 +88,22 @@ namespace ResultFileTest
                 rootNode.Populate();
                 rootNode.Expand();
                 Text = $"Version {resultRead.Version} Channels {resultRead.Channels} Points {resultRead.Points} Ratio {resultRead.CompressionRatio}";
+
+                foreach (ResultFileLib.SlowVariable slowVar in resultRead.SlowVariables)
+                {
+                    var Graph = slowVar.Plot;
+                    if(Graph is object[,])
+                    {
+                        object[,] table = (object[,])Graph;
+                        for (int i = 0; i < table.GetLength(0); i++)
+                        {
+                            double dTime = (double)table[i, 1];
+                            string strTimeDescr = $"{table[i, 2]}.{slowVar.Name}={table[i,0]}";
+                            if (dTime >= 0.0)
+                                rastrChart.AddMarker(slowVar.DeviceType, slowVar.DeviceType, 0, strTimeDescr, dTime);
+                        }
+                    }
+                }
             }
             finally
             {
