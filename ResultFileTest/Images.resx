@@ -121,6 +121,12 @@
   <data name="ButtonClearSmall" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\ButtonClearSmall.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="ButtonExit" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\ButtonExit.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
+  <data name="ButtonFileOpen" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>Resources\ButtonFileOpen.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
   <data name="ButtonFilterTreeAnd" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>Resources\ButtonFilterTreeAnd.png;System.Drawing.Bitmap, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>

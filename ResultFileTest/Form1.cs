@@ -135,8 +135,8 @@ namespace ResultFileTest
 
             rastrChart.DataDrop += OnChartDrop;
 
-            menuStrip.Items.Add("Открыть").Click += OnOpenFile; ;
-            menuStrip.Items.Add("Выход").Click += OnExit; ;
+            menuStrip.Items.Add(Images.ButtonFileOpen).Click += OnOpenFile; ;
+            menuStrip.Items.Add(Images.ButtonExit).Click += OnExit; ;
 
             PopulateTree("C:\\Users\\masha\\Documents\\Русский тест\\Raiden\\Results\\binresultcom.rst");
 
