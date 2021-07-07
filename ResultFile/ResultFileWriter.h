@@ -58,8 +58,8 @@ namespace DFW2
 		bool WriteResultsThreaded();
 		int64_t OffsetFromCurrent(int64_t AbsoluteOffset);
 		double m_dNoChangeTolerance = 0.0;
-		double ts[PREDICTOR_ORDER];
-		double ls[PREDICTOR_ORDER];
+		double ts[PREDICTOR_ORDER] = {};
+		double ls[PREDICTOR_ORDER] = {};
 		ptrdiff_t m_nPredictorOrder = 0;
 		CSlowVariablesSet m_setSlowVariables;
 		CRLECompressor	m_RLECompressor;
