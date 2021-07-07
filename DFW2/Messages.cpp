@@ -29,7 +29,7 @@ const char* CDFW2Messages::m_cszOS = "Windows x64";
 const char* CDFW2Messages::m_cszOS = "Windows x86";
 #endif
 #else
-#ifdef #ifdef __x86_64__
+#ifdef __x86_64__
 const char* CDFW2Messages::m_cszOS = "Linux x64";
 #else
 const char* CDFW2Messages::m_cszOS = "Linux x86";
