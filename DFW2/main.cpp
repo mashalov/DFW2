@@ -10,7 +10,10 @@ typedef long int __int64;
 
 int main()
 {
-    DFW2::CDynaModel Network;
+    DFW2::DynaModelParameters parameters;
+    parameters.m_bDisableResultsWriter = true;
+
+    DFW2::CDynaModel Network(parameters);
     
     try
     {
