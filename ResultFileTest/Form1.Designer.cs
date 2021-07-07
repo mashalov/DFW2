@@ -33,6 +33,7 @@
             this.DeviceTree = new System.Windows.Forms.TreeView();
             this.FilterBox = new ResultFileTest.ButtonTextBox();
             this.VarBox = new System.Windows.Forms.ListView();
+            menuStrip = new System.Windows.Forms.MenuStrip();
             ((System.ComponentModel.ISupportInitialize)(this.ChartContainer)).BeginInit();
             this.ChartContainer.Panel1.SuspendLayout();
             this.ChartContainer.SuspendLayout();
@@ -119,6 +120,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(621, 460);
             this.Controls.Add(this.ChartContainer);
+            this.Controls.Add(this.menuStrip);
+            this.MainMenuStrip = this.menuStrip;
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.OnLoad);
@@ -141,6 +144,7 @@
         private System.Windows.Forms.ListView VarBox;
         private System.Windows.Forms.SplitContainer TreeAndVarsContainer;
         private System.Windows.Forms.SplitContainer ChartContainer;
+        private System.Windows.Forms.MenuStrip menuStrip;
     }
 }
 
