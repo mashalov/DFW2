@@ -22,6 +22,20 @@ CDFW2Messages::CDFW2Messages()
 	m_VarNameMap[VARUNIT_OHM]		= "Ом";
 }
 
+#ifdef _MSC_VER
+#ifdef _WIN64
+const char* CDFW2Messages::m_cszOS = "Windows x64";
+#else
+const char* CDFW2Messages::m_cszOS = "Windows x86";
+#endif
+#else
+#ifdef #ifdef __x86_64__
+const char* CDFW2Messages::m_cszOS = "Linux x64";
+#else
+const char* CDFW2Messages::m_cszOS = "Linux x86";
+#endif
+#endif
+
 const char* CDFW2Messages::m_cszProjectName = "Raiden";
 const char* CDFW2Messages::m_cszBranchNodeNotFound = "Узел {} не найден для ветви {}-{} ({})";
 const char* CDFW2Messages::m_cszDuplicateDevice    = "Объект \"{}\" имеет неуникальный идентификатор";
@@ -180,4 +194,4 @@ const char* CDFW2Messages::m_cszMessage = "Сообщение: ";
 const char* CDFW2Messages::m_cszWarning = "Предупреждение: ";
 const char* CDFW2Messages::m_cszError = "Ошибка: ";
 const char* CDFW2Messages::m_cszEvent = "Событие: ";
-const char* CDFW2Messages::m_cszLogStarted = "{} {} от {}. Протокол запущен в режиме \"{}\"";
+const char* CDFW2Messages::m_cszLogStarted = "{} {} от {} на {}. Протокол запущен в режиме \"{}\"";

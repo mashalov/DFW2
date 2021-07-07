@@ -87,6 +87,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 				CDFW2Messages::m_cszProjectName,
 				version,
 				__DATE__,
+				CDFW2Messages::m_cszOS,
 				stringutils::enum_text(m_Parameters.m_eLogLevel, m_Parameters.m_cszLogLevelNames)) << std::endl;
 		}
 		else
@@ -147,7 +148,6 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_bUseRefactor = true;
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
-		m_Parameters.m_bDisableResultsWriter = false;
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга

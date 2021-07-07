@@ -114,6 +114,9 @@ void CDynaModel::WriteSlowVariable(ptrdiff_t nDeviceType,
 	double PreviousValue,
 	const std::string_view ChangeDescription)
 {
+	if (m_Parameters.m_bDisableResultsWriter)
+		return;
+
 	m_ResultsWriter.AddSlowVariable(nDeviceType,
 		DeviceIds,
 		VariableName,

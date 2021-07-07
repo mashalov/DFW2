@@ -193,6 +193,7 @@ namespace DFW2
 		static const char* m_cszError;
 		static const char* m_cszEvent;
 		static const char* m_cszLogStarted;
+		static const char* m_cszOS;
 	};
 }
 
