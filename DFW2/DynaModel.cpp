@@ -13,7 +13,8 @@
 #include "cs.h"
 using namespace DFW2;
 
-CDynaModel::CDynaModel() : m_Discontinuities(this),
+CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) : 
+						   m_Discontinuities(this),
 						   m_Automatic(this),
 						   Nodes(this),
 						   Branches(this),
@@ -34,6 +35,7 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 						   m_ResultsWriter(*this),
 						   m_Platform(*this)
 {
+	static_cast<DynaModelParameters&>(m_Parameters) = ExternalParameters;
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
 	// константы могут изменяться, например для демпфирования
 	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
@@ -74,13 +76,21 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
 	CheckFolderStructure();
-	LogFile.open(std::filesystem::path(Platform().Logs()).append("dfw2.log"), std::ios::out);
-	if (LogFile.is_open())
+
+	if (m_Parameters.m_bLogToFile)
 	{
-		LogFile << fmt::format("{} {} log started in \"{}\" mode", 
-			CDFW2Messages::m_cszProjectName, 
-			__DATE__,
-			stringutils::enum_text(m_Parameters.m_eLogLevel, m_Parameters.m_cszLogLevelNames)) << std::endl;
+		const auto logPath(std::filesystem::path(Platform().Logs()).append("dfw2.log"));
+		LogFile.open(logPath, std::ios::out);
+		if (LogFile.is_open())
+		{
+			LogFile << fmt::format(CDFW2Messages::m_cszLogStarted, 
+				CDFW2Messages::m_cszProjectName,
+				version,
+				__DATE__,
+				stringutils::enum_text(m_Parameters.m_eLogLevel, m_Parameters.m_cszLogLevelNames)) << std::endl;
+		}
+		else
+			throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszStdFileStreamError, stringutils::utf8_encode(logPath.c_str())));
 	}
 }
 
@@ -88,7 +98,8 @@ CDynaModel::CDynaModel() : m_Discontinuities(this),
 
 CDynaModel::~CDynaModel()
 {
-	LogFile.close();
+	if(LogFile.is_open())
+		LogFile.close();
 }
 
 bool CDynaModel::RunTransient()
@@ -136,9 +147,6 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_bUseRefactor = true;
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
-		m_Parameters.m_bLogToConsole = false;
-		m_Parameters.m_bLogToFile = true;
-
 		m_Parameters.m_bDisableResultsWriter = false;
 
 		// если в параметрах задан BDF для дифуров, отключаем

@@ -239,6 +239,7 @@
     <ClInclude Include="targetver.h" />
     <ClInclude Include="DynaExciterBase.h" />
     <ClInclude Include="Sum.h" />
+    <ClInclude Include="version.h" />
     <ClInclude Include="ZCDetector.h" />
     <ClInclude Include="Expand.h" />
   </ItemGroup>

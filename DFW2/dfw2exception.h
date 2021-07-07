@@ -32,9 +32,10 @@ public:
 	static std::string MessageFormat(std::string_view Message)
 	{
 		std::string message;
+		int Code(errno);
 #ifdef _MSC_VER
-		std::error_code code(::GetLastError(), std::system_category());
 		const DWORD dwError(::GetLastError());
+
 		if (dwError != 0)
 		{
 			LPTSTR messageBuffer = nullptr;
@@ -44,15 +45,19 @@ public:
 			LocalFree(messageBuffer);
 			message = stringutils::utf8_encode(wmessage);
 		}
-
+		else
+		{
+			std::error_code code(Code, std::system_category());
+			message = stringutils::acp_decode(code.message());
+		}
 #else
-		std::error_code code(errno, std::system_category());
-		message = stringutils::acp_decode(code.message());
+		std::error_code code(Code, std::system_category());
+		message = code.message();
 #endif 
 		// Описание ошибки от code приходит в CP_ACP, поэтому его декодируем с помощью
 		// утилиты acp_decode
 	    // https://blogs.msmvps.com/gdicanio/2017/08/16/what-is-the-encoding-used-by-the-error_code-message-string/
 		stringutils::removecrlf(message);
-		return fmt::format("{} Системная ошибка № {}: \"{}\"", Message, code.value(), message);
+		return fmt::format("{} Системная ошибка № {}: \"{}\"", Message, Code, message);
 	}
 };

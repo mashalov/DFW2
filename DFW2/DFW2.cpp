@@ -45,37 +45,45 @@ int _tmain(int argc, _TCHAR* argv[])
 	gc.Test();
 	*/
 		
-	CoInitialize(NULL);
+	if(SUCCEEDED(CoInitialize(NULL)))
 	{
-		CDynaModel Network;
-		networks.push_back(&Network);
 
-		SetConsoleCtrlHandler(HandlerRoutine, TRUE);
-
-		CRastrImport ri;
 		try
 		{
-			//Network.DeSerialize("c:\\tmp\\serialization.json");
-			ri.GetData(Network);
-			//Network.DeSerialize("c:\\tmp\\lf_test.json");
-			//Network.Serialize("c:\\tmp\\lf_7ku.json"); 
-			//Network.RunLoadFlow();
-			Network.RunTransient();
-		}
-		catch (_com_error& err)
-		{
-			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
+			DynaModelParameters parameters;
+			CDynaModel Network(parameters);
+
+			SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+			try
+			{
+				CRastrImport ri;
+				networks.push_back(&Network);
+				//Network.DeSerialize("c:\\tmp\\serialization.json");
+				ri.GetData(Network);
+				//Network.Serialize("c:\\tmp\\lf_test.json");
+				//Network.Serialize("c:\\tmp\\lf_7ku.json"); 
+				//Network.RunLoadFlow();
+				Network.RunTransient();
+			}
+			catch (_com_error& err)
+			{
+				Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
+			}
+			catch (const dfw2error& err)
+			{
+				Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+			}
 		}
 		catch (const dfw2error& err)
 		{
-			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+			std::cout << "Ошибка " << err.what() << std::endl;
 		}
 
 		//Network.Serialize("c:\\tmp\\lf.json");
 		SetConsoleCtrlHandler(NULL, TRUE);
 		networks.clear();
+		CoUninitialize();
 	}
-	CoUninitialize();
 	_CrtDumpMemoryLeaks();
 
 	return 0;
