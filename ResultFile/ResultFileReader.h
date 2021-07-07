@@ -38,7 +38,7 @@ namespace DFW2
 		{
 			bool operator()(const ChannelHeaderInfo* lhs, const ChannelHeaderInfo* rhs) const
 			{
-				return std::tie(lhs->eDeviceType, lhs->DeviceId) < std::tie(rhs->eDeviceType, rhs->DeviceId);
+				return std::tie(lhs->eDeviceType, lhs->DeviceId, lhs->DeviceVarIndex) < std::tie(rhs->eDeviceType, rhs->DeviceId, rhs->DeviceVarIndex);
 			}
 		};
 
