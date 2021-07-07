@@ -150,135 +150,6 @@ void CCompressorSingle::UpdatePredictor(double& y, double dTolerance)
 	UpdatePredictor(y);
 }
 
-#pragma GCC push options 
-#pragma GCC optimize ("O0")
-
-double CCompressorSingle::Predict(double t)
-{
-	if (m_nPredictorOrder > 0 )
-	{
-		bool bReset = false;
-		for (int j = 0; j < m_nPredictorOrder; j++)
-		{
-			if (DFW2::Equal(t, ts[j]))
-			{
-				bReset = true;
-				break;
-			}
-		}
-
-		if(bReset)
-		{
-			// Reset predictor
-			if (m_nPredictorOrder > 0)
-			{
-				if (m_nPredictorOrder >= PREDICTOR_ORDER)
-					ys[0] = ys[PREDICTOR_ORDER - 1];
-				else
-					ys[0] = ys[m_nPredictorOrder - 1];
-			}
-
-			// если текущее и предыдущее времена одинаковые, сбрасываем предиктор
-			m_nPredictorOrder = 0;
-
-			ts[0] = t;
-			// но вовзвращаем не ноль, а предыдущее значение
-			return ys[0];
-		}
-	}
-
-	if (m_nPredictorOrder >= PREDICTOR_ORDER)
-	{
-		// текущее и предыдущее времена разные
-		double Pred = 0.0;
-		bool bIdenctical = true;
-
-		for (int j = 0; j < PREDICTOR_ORDER; j++)
-		{
-			double l = 1;
-			for (int m = 0; m < PREDICTOR_ORDER; m++)
-			{
-				if (m != j)
-					l *= (t - ts[m]) / (ts[j] - ts[m]);
-				_CheckNumber(l);
-			}
-
-			Pred += ys[j] * l;
-
-			// try use modified lagrange or newton 
-			if (j < PREDICTOR_ORDER - 1 && bIdenctical)
-				if (memcmp(ys + j, ys + j + 1, sizeof(double)))
-					bIdenctical = false;
-		}
-
-		if (bIdenctical)
-			Pred = *ys;
-
-		std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
-		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
-		//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
-		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
-		ts[PREDICTOR_ORDER - 1] = t;
-		return Pred;
-	}
-	else
-	{
-		// порядок предиктора не достиг заданного
-		ts[m_nPredictorOrder] = t;
-
-		// если еще ничего не предсказывали, возвращаем ноль
-		// иначе - предыдущее значение
-		if (!m_nPredictorOrder)
-			return 0.0;
-		else
-			return ys[m_nPredictorOrder - 1];
-	}
-}
-
-double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nPredictorOrder, const double * const pts)
-{
-	if (nPredictorOrder >= PREDICTOR_ORDER)
-	{
-		double Pred = 0.0;
-		double dErr = 0.0;
-
-		bool bIdenctical = true;
-
-		for (int j = 0; j < PREDICTOR_ORDER; j++)
-		{
-			Pred += ys[j] * pts[j];
-
-			// try use modified lagrange or newton 
-			if(j < PREDICTOR_ORDER - 1 && bIdenctical)
-			if (memcmp(ys + j, ys + j + 1, sizeof(double)))
-				bIdenctical = false;
-		}
-
-		if (bIdenctical)
-			Pred = *ys;
-
-		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
-		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
-		return Pred;
-	}
-	else
-	{
-		// если порядок предиктора 0, но взведен флаг, 
-		// используем для предиктора запомненное значение, а не ноль.
-		if (bPredictorReset)
-			return ys[0];
-
-		// флага нет, значит сброса не было, и порядок предиктора действительно 0
-		// предыдущих значений нет, и возвращаем ноль
-		if (!nPredictorOrder)
-			return 0.0;
-		else
-			return ys[nPredictorOrder - 1];
-	}
-}
-
-#pragma GCC pop options
-
 void CCompressorParallel::ResetPredictor(ptrdiff_t nPredictorOrder)
 {
 	if (nPredictorOrder >= PREDICTOR_ORDER)
@@ -521,3 +392,145 @@ uint32_t CCompressorBase::CLZ1(uint32_t x)
 	}
 	return (uint32_t)clz_lkup[x >> n] - n;
 }
+
+
+#ifdef __GNUC__
+#pragma GCC push options 
+#pragma GCC optimize ("O0")
+#endif
+
+#ifdef _MSC_VER
+#pragma optimize("", off)
+#endif
+
+double CCompressorSingle::Predict(double t)
+{
+	if (m_nPredictorOrder > 0)
+	{
+		bool bReset = false;
+		for (int j = 0; j < m_nPredictorOrder; j++)
+		{
+			if (DFW2::Equal(t, ts[j]))
+			{
+				bReset = true;
+				break;
+			}
+		}
+
+		if (bReset)
+		{
+			// Reset predictor
+			if (m_nPredictorOrder > 0)
+			{
+				if (m_nPredictorOrder >= PREDICTOR_ORDER)
+					ys[0] = ys[PREDICTOR_ORDER - 1];
+				else
+					ys[0] = ys[m_nPredictorOrder - 1];
+			}
+
+			// если текущее и предыдущее времена одинаковые, сбрасываем предиктор
+			m_nPredictorOrder = 0;
+
+			ts[0] = t;
+			// но вовзвращаем не ноль, а предыдущее значение
+			return ys[0];
+		}
+	}
+
+	if (m_nPredictorOrder >= PREDICTOR_ORDER)
+	{
+		// текущее и предыдущее времена разные
+		double Pred = 0.0;
+		bool bIdenctical = true;
+
+		for (int j = 0; j < PREDICTOR_ORDER; j++)
+		{
+			double l = 1;
+			for (int m = 0; m < PREDICTOR_ORDER; m++)
+			{
+				if (m != j)
+					l *= (t - ts[m]) / (ts[j] - ts[m]);
+				_CheckNumber(l);
+			}
+
+			Pred += ys[j] * l;
+
+			// try use modified lagrange or newton 
+			if (j < PREDICTOR_ORDER - 1 && bIdenctical)
+				if (memcmp(ys + j, ys + j + 1, sizeof(double)))
+					bIdenctical = false;
+		}
+
+		if (bIdenctical)
+			Pred = *ys;
+
+		std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
+		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
+		//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		ts[PREDICTOR_ORDER - 1] = t;
+		return Pred;
+	}
+	else
+	{
+		// порядок предиктора не достиг заданного
+		ts[m_nPredictorOrder] = t;
+
+		// если еще ничего не предсказывали, возвращаем ноль
+		// иначе - предыдущее значение
+		if (!m_nPredictorOrder)
+			return 0.0;
+		else
+			return ys[m_nPredictorOrder - 1];
+	}
+	}
+
+double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nPredictorOrder, const double* const pts)
+{
+	if (nPredictorOrder >= PREDICTOR_ORDER)
+	{
+		double Pred = 0.0;
+		double dErr = 0.0;
+
+		bool bIdenctical = true;
+
+		for (int j = 0; j < PREDICTOR_ORDER; j++)
+		{
+			Pred += ys[j] * pts[j];
+
+			// try use modified lagrange or newton 
+			if (j < PREDICTOR_ORDER - 1 && bIdenctical)
+				if (memcmp(ys + j, ys + j + 1, sizeof(double)))
+					bIdenctical = false;
+		}
+
+		if (bIdenctical)
+			Pred = *ys;
+
+		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
+		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
+		return Pred;
+	}
+	else
+	{
+		// если порядок предиктора 0, но взведен флаг, 
+		// используем для предиктора запомненное значение, а не ноль.
+		if (bPredictorReset)
+			return ys[0];
+
+		// флага нет, значит сброса не было, и порядок предиктора действительно 0
+		// предыдущих значений нет, и возвращаем ноль
+		if (!nPredictorOrder)
+			return 0.0;
+		else
+			return ys[nPredictorOrder - 1];
+	}
+}
+
+#ifdef __GNUC__
+#pragma GCC pop options
+#endif
+
+#ifdef _MSC_VER
+#pragma optimize("", on)
+#endif
