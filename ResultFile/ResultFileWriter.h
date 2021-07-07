@@ -75,6 +75,7 @@ namespace DFW2
 
 		void WriteDouble(const double &Value);
 		void WriteTime(double dTime, double dStep);
+		void UpdateLagrangeCoefficients(double dTime);
 		void WriteChannel(ptrdiff_t nIndex, double dValue);
 		void FlushChannel(ptrdiff_t nIndex); 
 		void FlushChannels();

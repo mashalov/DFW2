@@ -150,7 +150,8 @@ void CCompressorSingle::UpdatePredictor(double& y, double dTolerance)
 	UpdatePredictor(y);
 }
 
-
+#pragma GCC push options 
+#pragma GCC optimize ("O0")
 
 double CCompressorSingle::Predict(double t)
 {
@@ -234,31 +235,6 @@ double CCompressorSingle::Predict(double t)
 	}
 }
 
-
-void CCompressorParallel::ResetPredictor(ptrdiff_t nPredictorOrder)
-{
-	if (nPredictorOrder >= PREDICTOR_ORDER)
-		ys[0] = ys[PREDICTOR_ORDER - 1];
-	else
-		ys[0] = ys[nPredictorOrder - 1];
-}
-
-void CCompressorParallel::UpdatePredictor(double y, ptrdiff_t nPredictorOrder)
-{
-	if (nPredictorOrder >= PREDICTOR_ORDER)
-		ys[PREDICTOR_ORDER - 1] = y;
-	else
-		ys[nPredictorOrder] = y;
-}
-
-void CCompressorParallel::UpdatePredictor(double& y, ptrdiff_t nPredictorOrder, double dTolerance)
-{
-	if (nPredictorOrder > 0 && std::abs(y - ys[nPredictorOrder - 1]) < dTolerance)
-		y = ys[nPredictorOrder - 1];
-
-	UpdatePredictor(y, nPredictorOrder);
-}
-
 double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nPredictorOrder, const double * const pts)
 {
 	if (nPredictorOrder >= PREDICTOR_ORDER)
@@ -299,6 +275,32 @@ double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nP
 		else
 			return ys[nPredictorOrder - 1];
 	}
+}
+
+#pragma GCC pop options
+
+void CCompressorParallel::ResetPredictor(ptrdiff_t nPredictorOrder)
+{
+	if (nPredictorOrder >= PREDICTOR_ORDER)
+		ys[0] = ys[PREDICTOR_ORDER - 1];
+	else
+		ys[0] = ys[nPredictorOrder - 1];
+}
+
+void CCompressorParallel::UpdatePredictor(double y, ptrdiff_t nPredictorOrder)
+{
+	if (nPredictorOrder >= PREDICTOR_ORDER)
+		ys[PREDICTOR_ORDER - 1] = y;
+	else
+		ys[nPredictorOrder] = y;
+}
+
+void CCompressorParallel::UpdatePredictor(double& y, ptrdiff_t nPredictorOrder, double dTolerance)
+{
+	if (nPredictorOrder > 0 && std::abs(y - ys[nPredictorOrder - 1]) < dTolerance)
+		y = ys[nPredictorOrder - 1];
+
+	UpdatePredictor(y, nPredictorOrder);
 }
 
 #ifdef _WIN64

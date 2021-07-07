@@ -37,6 +37,25 @@ void CResultFile::WriteString(std::string_view cszString)
 	}
 }
 
+#pragma GCC push options
+#pragma GCC optimize ("O0")
+void CResultFileWriter::UpdateLagrangeCoefficients(double dTime)
+{
+	if (m_nPredictorOrder >= PREDICTOR_ORDER)
+	{
+		for (int j = 0; j < PREDICTOR_ORDER; j++)
+		{
+			ls[j] = 1;
+			for (int m = 0; m < PREDICTOR_ORDER; m++)
+			{
+				if (m != j)
+					ls[j] *= (dTime - ts[m]) / (ts[j] - ts[m]);
+			}
+			_CheckNumber(ls[j]);
+		}
+	}
+}
+#pragma GCC pop options
 
 void CResultFileWriter::WriteTime(double dTime, double dStep)
 {
@@ -77,19 +96,7 @@ void CResultFileWriter::WriteTime(double dTime, double dStep)
 		}
 	}
 
-	if (m_nPredictorOrder >= PREDICTOR_ORDER)
-	{
-		for (int j = 0; j < PREDICTOR_ORDER; j++)
-		{
-			ls[j] = 1;
-			for (int m = 0; m < PREDICTOR_ORDER; m++)
-			{
-				if (m != j)
-					ls[j] *= (dTime - ts[m]) / (ts[j] - ts[m]);
-			}
-			_CheckNumber(ls[j]);
-		}
-	}
+	UpdateLagrangeCoefficients(dTime);
 
 	WriteChannel(m_nChannelsCount - 2, dTime);
 	WriteChannel(m_nChannelsCount - 1, dStep);
