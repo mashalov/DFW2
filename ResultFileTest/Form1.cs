@@ -72,16 +72,17 @@ namespace ResultFileTest
             }
         }
 
-        public void PopulateTree()
+        public void PopulateTree(string path)
         {
-            resultFile = new ResultFileLib.Result();
-            resultRead = resultFile.Load("C:\\Users\\masha\\Documents\\Русский тест\\Raiden\\Results\\binresultcom.rst");
-            //resultRead = resultFile.Load("c:\\tmp\\000023.sna");
-            root = resultRead.Root;
-            Stack<DeviceTreeNode> stack = new Stack<DeviceTreeNode>();
-
             try
             {
+                resultFile = new ResultFileLib.Result();
+                resultRead = resultFile.Load(path);
+                //resultRead = resultFile.Load("c:\\tmp\\000023.sna");
+                root = resultRead.Root;
+                Stack<DeviceTreeNode> stack = new Stack<DeviceTreeNode>();
+                DeviceTree.Nodes.Clear();
+
                 DeviceTree.BeginUpdate();
                 rootNode = nodePool.NewDeviceTreeNode(root);
                 DeviceTree.Nodes.Add(rootNode);
@@ -104,6 +105,10 @@ namespace ResultFileTest
                         }
                     }
                 }
+            }
+            catch(Exception e)
+            {
+                System.Windows.Forms.MessageBox.Show(e.Message);
             }
             finally
             {
@@ -130,9 +135,31 @@ namespace ResultFileTest
 
             rastrChart.DataDrop += OnChartDrop;
 
-            PopulateTree();
+            menuStrip.Items.Add("Открыть").Click += OnOpenFile; ;
+            menuStrip.Items.Add("Выход").Click += OnExit; ;
+
+            PopulateTree("C:\\Users\\masha\\Documents\\Русский тест\\Raiden\\Results\\binresultcom.rst");
 
           //  resultFile.ExportCSV("c:\\tmp\\result.csv");
+        }
+
+        private void OnOpenFile(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = "c:\\tmp\\";
+                openFileDialog.Filter = "rst files (*.rst)|*.rst|sna files (*.sna)|*.sna|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 2;
+                openFileDialog.RestoreDirectory = true;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                    PopulateTree(openFileDialog.FileName);
+            }
+        }
+
+        private void OnExit(object sender, EventArgs e)
+        {
+            this.Close();
         }
 
         private void OnTextChanged(object sender, EventArgs e)
