@@ -411,9 +411,6 @@ void CLoadFlow::Seidell()
 
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
-
-	//std::ofstream check("c:\\tmp\\checklf.txt");
-
 	double dPreviousImb = -1.0;
 	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
@@ -631,7 +628,6 @@ void CLoadFlow::Seidell()
 
 			pNode->UpdateVDeltaSuper();
 
-			//check << pNode->GetId() << " " << Pe << " " << Qe << "" << pNode->V << " " << pNode->Delta << std::endl;
 		}
 
 		if (!CheckLF())
@@ -1108,7 +1104,7 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase *pNode)
 
 void CLoadFlow::DumpNodes()
 {
-	std::ofstream dump(stringutils::utf8_decode("c:\\tmp\\resnodes.csv"));
+	std::ofstream dump(m_pDynaModel->Platform().ResultFile("resnodes.csv"));
 	if (dump.is_open())
 	{
 		dump << "N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Type;Qmin;Qmax;Vref;VR;DeltaR;QgR;QnR" << std::endl;

@@ -1000,7 +1000,7 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 
 void CDynaNodeContainer::DumpNetwork()
 {
-	std::ofstream dump(stringutils::utf8_decode(fmt::format("c:\\tmp\\network-{}.net", GetModel()->GetStepNumber())));
+	std::ofstream dump(GetModel()->Platform().ResultFile(fmt::format("network-{}.net", GetModel()->GetStepNumber())));
 	if (dump.is_open())
 	{
 		for (auto& node : m_DevVec)
@@ -1043,7 +1043,7 @@ void CDynaNodeContainer::DumpNetwork()
 				dump << fmt::format("\tVirtual Branch to node Id={}", pV->pNode->GetId()) << std::endl;
 		}
 	}
-	std::ofstream lulf(stringutils::utf8_decode(fmt::format("c:\\tmp\\nodes LULF-{}.csv", GetModel()->GetStepNumber())));
+	std::ofstream lulf(GetModel()->Platform().ResultFile(fmt::format("nodes LULF-{}.csv", GetModel()->GetStepNumber())));
 	if (lulf.is_open())
 	{
 		for (auto& node : m_DevVec)

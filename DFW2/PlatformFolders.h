@@ -111,5 +111,10 @@ namespace DFW2
 		{
 			return pathResults;
 		}
+
+		const std::filesystem::path ResultFile(std::string_view FileName) const
+		{
+			return std::filesystem::path(Results()).append(FileName);
+		}
 	};
 }

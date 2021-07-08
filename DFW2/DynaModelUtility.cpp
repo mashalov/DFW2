@@ -374,7 +374,7 @@ csi cs_gatxpy(const cs *A, const double *x, double *y)
 
 void CDynaModel::DumpStateVector()
 {
-	std::ofstream dump(stringutils::utf8_decode(fmt::format("c:\\tmp\\statevector_{}.csv", sc.nStepsCount)));
+	std::ofstream dump(Platform().ResultFile(fmt::format("statevector_{}.csv", sc.nStepsCount)));
 	if (dump.is_open())
 	{
 		dump << "Value; db; Device; N0; N1; N2; Error; WError; Atol; Rtol; EqType; SN0; SN1; SN2; SavError; Tminus2Val; PhysEqType; PrimBlockType; ErrorHits" << std::endl;

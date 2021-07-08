@@ -18,13 +18,13 @@ int main()
     
     try
     {
-        Network.DeSerialize("/home/eugene/Русский тест/Raiden/lf_1500.json");
+        Network.DeSerialize(Network.Platform().ResultFile("lf_1500.json"));
 		Network.RunTransient();
     }
     catch (dfw2error& err)
     {
         Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
-        Network.Serialize("/home/eugene/projects/DFW2/DFW2/lf.json");
+        //Network.Serialize("/home/eugene/projects/DFW2/DFW2/lf.json");
     }
  
     return 0;

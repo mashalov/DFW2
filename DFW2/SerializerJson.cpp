@@ -50,7 +50,7 @@ void CSerializerJson::Commit()
 	jsonModel["structure"] = jsonStructureObjects;
 	m_JsonDoc["powerSystemModel"] = jsonModel;
 
-	std::ofstream fjson(stringutils::utf8_decode(m_Path.string()));
+	std::ofstream fjson(m_Path.c_str());
 	if (fjson.is_open())
 		fjson << std::setw(4) << m_JsonDoc << std::endl;
 }

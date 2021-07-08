@@ -959,12 +959,12 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 		CDynaModel *pModel = GetModel();
 		if (pModel && GetId() == nId && pModel->GetIntegrationStepNumber() == nStepNumber)
 		{
-			std::string FileName = fmt::format("c:\\tmp\\{}_{}.csv", GetVerbalName(), nStepNumber);
+			const auto path = GetModel()->Platform().ResultFile(fmt::format("{}_{}.csv", GetVerbalName(), nStepNumber));
 
 			if (pModel->GetNewtonIterationNumber() == 1)
-				std::remove(FileName.c_str());
+				std::filesystem::remove(path.c_str());
 
-			std::ofstream flog(stringutils::utf8_decode(FileName), std::fstream::app | std::fstream::out);
+			std::ofstream flog(path.c_str(), std::fstream::app | std::fstream::out);
 
 			if (flog.is_open())
 			{

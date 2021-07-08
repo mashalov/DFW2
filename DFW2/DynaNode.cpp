@@ -804,8 +804,8 @@ bool CDynaNodeContainer::LULF()
 	ptrdiff_t *pAp = Ap;
 	ptrdiff_t *pAi = Ai;
 
-	std::ofstream fnode(stringutils::utf8_decode("c:\\tmp\\nodes.csv"));
-	std::ofstream fgen(stringutils::utf8_decode("c:\\tmp\\gens.csv"));
+	std::ofstream fnode(GetModel()->Platform().ResultFile("nodes.csv"));
+	std::ofstream fgen(GetModel()->Platform().ResultFile("gens.csv"));
 
 	fnode << ";";
 
