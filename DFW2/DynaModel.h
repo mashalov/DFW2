@@ -11,51 +11,55 @@
 #include "OscDetector.h"
 #include "FmtComplexFormat.h"
 #include "PlatformFolders.h"
+#include "LoadFlow.h"
 #include "version.h"
 
 //#define USE_FMA
 namespace DFW2
 {
-	struct DynaModelParameters
-	{
-		ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND;
-		DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
-		double m_dFrequencyTimeConstant = 0.02;
-		double m_dLRCToShuntVmin = 0.5;
-		double m_dZeroCrossingTolerance = 0.0;
-		bool m_bDontCheckTolOnMinStep = false;
-		bool m_bConsiderDampingEquation = false;
-		double m_dOutStep = 0.01;
-		ptrdiff_t nVarSearchStackDepth = 100;
-		double m_dAtol = DFW2_ATOL_DEFAULT;
-		double m_dRtol = DFW2_RTOL_DEFAULT;
-		double m_dRefactorByHRatio = 1.5;
-		bool m_bLogToConsole = false;
-		bool m_bLogToFile = true;
-		double m_dMustangDerivativeTimeConstant = 1E-6;
-		// режим подавления рингинга
-		ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;	
-		ptrdiff_t m_nAdamsIndividualSuppressionCycles = 3;			// количество перемен знака переменной для обнаружения рингинга
-		ptrdiff_t m_nAdamsGlobalSuppressionStep = 10;				// номер шага, на кратном которому работает глобальное подавление рингинга
-		ptrdiff_t m_nAdamsIndividualSuppressStepsRange = 5;			// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
-		bool m_bUseRefactor = false;
-		bool m_bDisableResultsWriter = false;
-		ptrdiff_t m_nMinimumStepFailures = 1;
-		double m_dZeroBranchImpedance = 4e-6;
-		double m_dAdamsDampingAlpha = 0.05;
-		ptrdiff_t m_nAdamsDampingSteps = 10;
-		bool m_bAllowUserOverrideStandardLRC = false;
-		bool m_bAllowDecayDetector = false;
-		ptrdiff_t m_nDecayDetectorCycles = 3;
-		bool m_bStopOnBranchOOS = false;
-		bool m_bStopOnGeneratorOOS = false;
-		std::string m_strWorkingFolder = "Русский тест";
-		std::string m_strResultsFolder = "";
-		DFW2MessageStatus m_eLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
-	};
 
 	class CDynaModel
 	{
+	public:
+
+		struct DynaModelParameters : public CLoadFlow::LoadFlowParameters
+		{
+			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND;
+			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
+			double m_dFrequencyTimeConstant = 0.02;
+			double m_dLRCToShuntVmin = 0.5;
+			double m_dZeroCrossingTolerance = 0.0;
+			bool m_bDontCheckTolOnMinStep = false;
+			bool m_bConsiderDampingEquation = false;
+			double m_dOutStep = 0.01;
+			ptrdiff_t nVarSearchStackDepth = 100;
+			double m_dAtol = DFW2_ATOL_DEFAULT;
+			double m_dRtol = DFW2_RTOL_DEFAULT;
+			double m_dRefactorByHRatio = 1.5;
+			bool m_bLogToConsole = false;
+			bool m_bLogToFile = true;
+			double m_dMustangDerivativeTimeConstant = 1E-6;
+			// режим подавления рингинга
+			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
+			ptrdiff_t m_nAdamsIndividualSuppressionCycles = 3;			// количество перемен знака переменной для обнаружения рингинга
+			ptrdiff_t m_nAdamsGlobalSuppressionStep = 10;				// номер шага, на кратном которому работает глобальное подавление рингинга
+			ptrdiff_t m_nAdamsIndividualSuppressStepsRange = 5;			// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
+			bool m_bUseRefactor = false;
+			bool m_bDisableResultsWriter = false;
+			ptrdiff_t m_nMinimumStepFailures = 1;
+			double m_dZeroBranchImpedance = 4e-6;
+			double m_dAdamsDampingAlpha = 0.05;
+			ptrdiff_t m_nAdamsDampingSteps = 10;
+			bool m_bAllowUserOverrideStandardLRC = false;
+			bool m_bAllowDecayDetector = false;
+			ptrdiff_t m_nDecayDetectorCycles = 3;
+			bool m_bStopOnBranchOOS = false;
+			bool m_bStopOnGeneratorOOS = false;
+			std::string m_strWorkingFolder = "Русский тест";
+			std::string m_strResultsFolder = "";
+			DFW2MessageStatus m_eLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
+		};
+
 		friend class CCustomDevice;
 	protected:
 		struct MatrixRow
@@ -789,6 +793,11 @@ namespace DFW2
 		}
 
 		void CheckFolderStructure();
+
+		const DynaModelParameters& Parameters() const
+		{
+			return m_Parameters;
+		}
 
 		void WriteSlowVariable(ptrdiff_t nDeviceType,
 			const ResultIds& DeviceIds,

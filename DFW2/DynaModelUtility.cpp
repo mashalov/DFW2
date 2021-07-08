@@ -637,7 +637,20 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 
 	Serializer->AddEnumProperty("LogLevel",
 		new CSerializerAdapterEnum(m_eLogLevel, m_cszLogLevelNames));
-	
+
+	// расчет УР
+
+	Serializer->AddProperty("LFImbalance", m_Imb);
+	Serializer->AddProperty("LFFlat", m_bFlat);
+	Serializer->AddProperty("LFStartup", m_bStartup);
+	Serializer->AddProperty("LFSeidellStep", m_dSeidellStep);
+	Serializer->AddProperty("LFSeidellIterations", m_nSeidellIterations);
+	Serializer->AddProperty("LFEnableSwitchIteration", m_nEnableSwitchIteration);
+	Serializer->AddProperty("LFMaxIterations", m_nMaxIterations);
+	Serializer->AddProperty("LFNewtonMaxVoltageStep", m_dVoltageNewtonStep);
+	Serializer->AddProperty("LFNewtonMaxNodeAngleStep", m_dNodeAngleNewtonStep);
+	Serializer->AddProperty("LFNewtonMaxBranchAngleStep", m_dBranchAngleNewtonStep);
+	Serializer->AddProperty("LFForceSwitchLambda", ForceSwitchLambda);
 
 	return Serializer;
 }

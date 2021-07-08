@@ -50,7 +50,7 @@ int _tmain(int argc, _TCHAR* argv[])
 
 		try
 		{
-			DynaModelParameters parameters;
+			CDynaModel::DynaModelParameters parameters;
 			CDynaModel Network(parameters);
 
 			SetConsoleCtrlHandler(HandlerRoutine, TRUE);
@@ -60,7 +60,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				networks.push_back(&Network);
 				//Network.DeSerialize("c:\\tmp\\serialization.json");
 				ri.GetData(Network);
-				//Network.Serialize("c:\\tmp\\lf_test.json");
+				Network.Serialize("c:\\tmp\\lf_test.json");
 				//Network.Serialize("c:\\tmp\\lf_7ku.json"); 
 				//Network.RunLoadFlow();
 				Network.RunTransient();

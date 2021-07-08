@@ -8,7 +8,7 @@ namespace DFW2
 	class CLoadFlow
 	{
 	public:
-		struct Parameters
+		struct LoadFlowParameters
 		{
 			double m_Imb = 1E-4;						// допустимый небаланс мощности
 			bool m_bFlat = false;						// плоский старт
@@ -63,7 +63,7 @@ namespace DFW2
 		double m_dTanhBeta = 500.0;
 		ptrdiff_t m_nNodeTypeSwitchesDone;
 
-		Parameters m_Parameters;
+		LoadFlowParameters m_Parameters;
 		// определение порядка PV узлов для Зейделя
 		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
 		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);

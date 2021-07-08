@@ -7,7 +7,10 @@
 
 using namespace DFW2;
 
-CLoadFlow::CLoadFlow(CDynaModel *pDynaModel) :	m_pDynaModel(pDynaModel) {}
+CLoadFlow::CLoadFlow(CDynaModel *pDynaModel) :	m_pDynaModel(pDynaModel) 
+{
+	m_Parameters = pDynaModel->Parameters();
+}
 
 bool CLoadFlow::NodeInMatrix(CDynaNodeBase *pNode)
 {
