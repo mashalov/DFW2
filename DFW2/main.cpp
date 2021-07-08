@@ -7,10 +7,11 @@ typedef long int __int64;
 #include "Header.h"
 #include "DynaModel.h"
 
+using namespace DFW2;
 
 int main()
 {
-    DFW2::DynaModelParameters parameters;
+    CDynaModel::DynaModelParameters parameters;
     parameters.m_bDisableResultsWriter = true;
 
     DFW2::CDynaModel Network(parameters);

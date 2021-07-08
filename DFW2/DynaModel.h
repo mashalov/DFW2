@@ -24,6 +24,9 @@ namespace DFW2
 
 		struct DynaModelParameters : public CLoadFlow::LoadFlowParameters
 		{
+			
+			DynaModelParameters() : CLoadFlow::LoadFlowParameters() {}
+
 			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND;
 			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
