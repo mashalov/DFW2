@@ -8,6 +8,14 @@ namespace DFW2
 	class CLoadFlow
 	{
 	public:
+
+		enum class eLoadFlowFormulation
+		{
+			Power,
+			Current,
+			Tanh
+		};
+
 		struct LoadFlowParameters
 		{
 			double m_Imb = 1E-4;						// допустимый небаланс мощности
@@ -21,6 +29,7 @@ namespace DFW2
 			double m_dNodeAngleNewtonStep = 1.5;		// максимальное приращение шага Ньютона по углу узла
 			double m_dBranchAngleNewtonStep = 0.5;		// максимальное приращение шага Ньютона по углу связи
 			double ForceSwitchLambda = 1e-2;			// шаг Ньютона, меньше которого бэктрэк выключается и выполняется переключение типов узлов
+			eLoadFlowFormulation m_LFFormulation = eLoadFlowFormulation::Current;	// способ представления модели УР
 		};
 
 		CLoadFlow(CDynaModel *pDynaModel);
@@ -37,7 +46,8 @@ namespace DFW2
 		void NewtonTanh();
 		double GetNewtonRatio();
 		void UpdateVDelta(double dStep = 1.0);
-		void BuildMatrix();
+		void BuildMatrixPower();
+		void BuildMatrixCurrent();
 		void BuildMatrixTanh();
 		void Start();
 		bool CheckLF();
@@ -61,7 +71,7 @@ namespace DFW2
 		_MatrixInfo *m_pMatrixInfoSlackEnd = nullptr;				// конец вектора узлов с учетом базисных
 		
 		double m_dTanhBeta = 500.0;
-		ptrdiff_t m_nNodeTypeSwitchesDone;
+		ptrdiff_t m_nNodeTypeSwitchesDone = 0;
 
 		LoadFlowParameters m_Parameters;
 		// определение порядка PV узлов для Зейделя

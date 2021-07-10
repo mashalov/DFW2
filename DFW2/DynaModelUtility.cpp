@@ -651,6 +651,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("LFNewtonMaxNodeAngleStep", m_dNodeAngleNewtonStep);
 	Serializer->AddProperty("LFNewtonMaxBranchAngleStep", m_dBranchAngleNewtonStep);
 	Serializer->AddProperty("LFForceSwitchLambda", ForceSwitchLambda);
+	Serializer->AddEnumProperty("LFFormulation", new CSerializerAdapterEnum(m_LFFormulation, m_cszLFFormulationTypeNames));
 
 	return Serializer;
 }

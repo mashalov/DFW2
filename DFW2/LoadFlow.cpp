@@ -642,7 +642,148 @@ void CLoadFlow::Seidell()
 	}
 }
 
-void CLoadFlow::BuildMatrix()
+// строит матрицу якоби и правую части в формулировке по токам - все уравнения
+// в мощностях разделены на модуль напряжения в узле
+
+void CLoadFlow::BuildMatrixCurrent()
+{
+	double* pb = klu.B();
+	double* pAx = klu.Ax();
+
+	// обходим только узлы в матрице
+	for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	{
+		// здесь считаем, что нагрузка СХН в Node::pnr/Node::qnr уже в расчете и анализе небалансов
+		CDynaNodeBase* pNode = pMatrixInfo->pNode;
+		GetPnrQnrSuper(pNode);
+		// учитываем неуправляемую генерацию в суперузле - UncontrolledP и
+		// далее UncontrolledQ
+		cplx Sneb;
+		// диагональные производные проще чем в мощностях, их досчитываем в конце
+		double dPdDelta(0.0), dQdDelta(0.0);
+		double dPdV(0.0), dQdV(1.0);
+		double* pAxSelf = pAx;
+		pAx += 2;
+		// обратная величина от модуля напряжения в узле
+		const double Vinv = 1.0 / pNode->V;
+		// комплексное напряжение в узле
+		const cplx Unode(pNode->Vre, pNode->Vim);
+		// сопряженное напряжение деленное на модуль
+		const cplx UnodeConjByV(std::conj(Unode) * Vinv);
+
+		if (pNode->IsLFTypePQ())
+		{
+			// для PQ-узлов формируем оба уравнения
+
+			for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
+			{
+				CDynaNodeBase* pOppNode = pBranch->pNode;
+				// вычисляем компоненты производных по комплексным напряжениям в узлах (Давыдов, стр. 75)
+				// при этом используем не напряжение в узле, а частное от напряжения и модуля (так как уравнения разделены на модуль)
+				cplx mult = UnodeConjByV * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+
+				// небаланс по ветвям
+				Sneb -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+
+				// компоненты диагональных производных по углу
+				dPdDelta -= mult.imag();
+				dQdDelta += -mult.real();
+
+				if (NodeInMatrix(pOppNode))
+				{
+					// внедиагональные производные (уже разделены на модуль, так как компоненты рассчитаны по UnodeConjByV
+					double dPdDeltaM = mult.imag();
+					double dPdVM = -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
+					double dQdDeltaM = mult.real();
+					double dQdVM = CDevice::ZeroDivGuard(mult.imag(), pOppNode->V);
+
+					_CheckNumber(dPdDeltaM);
+					_CheckNumber(dPdVM);
+					_CheckNumber(dQdDeltaM);
+					_CheckNumber(dQdVM);
+
+					*pAx = dPdDeltaM;
+					*(pAx + pMatrixInfo->nRowCount) = dQdDeltaM;
+					pAx++;
+					*pAx = dPdVM;
+					*(pAx + pMatrixInfo->nRowCount) = dQdVM;
+					pAx++;
+				}
+			}
+		}
+		else
+		{
+			// для PV-только уравнение для P
+			for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
+			{
+				CDynaNodeBase* pOppNode = pBranch->pNode;
+				cplx mult = UnodeConjByV * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+
+				Sneb -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+
+				dPdDelta -= mult.imag();
+
+				if (NodeInMatrix(pOppNode))
+				{
+					// внедиагональные производные (уже разделены на модуль, так как компоненты рассчитаны по UnodeConjByV
+					double dPdDeltaM = mult.imag();
+					double dPdVM = -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
+
+					_CheckNumber(dPdDeltaM);
+					_CheckNumber(dPdVM);
+
+					*pAx = dPdDeltaM;
+					*(pAx + pMatrixInfo->nRowCount) = 0.0;
+					pAx++;
+					*pAx = dPdVM;
+					*(pAx + pMatrixInfo->nRowCount) = 0.0;
+					pAx++;
+				}
+			}
+		}
+
+		// генерация в узле (включая неуправляемую из суперузлов)
+		const cplx NodeInjG(-pNode->Pgr - pMatrixInfo->UncontrolledP, -pNode->Qgr - pMatrixInfo->UncontrolledQ);
+		// расчетная по СХН нагрузка в узле 
+		const cplx NodeInjL(pNode->Pnr, pNode->Qnr);
+		// небаланс в узле
+		Sneb -= Unode * pNode->YiiSuper;
+		// небалансы в токах - поэтому делим мощности на модуль
+		Sneb = Vinv * (std::conj(Sneb) * Unode + NodeInjG + NodeInjL);
+
+		_CheckNumber(dPdDelta);
+		_CheckNumber(dPdV);
+		_CheckNumber(dQdDelta);
+		_CheckNumber(dQdV);
+
+		const double VinvSq(Vinv * Vinv);
+
+		// диагональные производные по напряжению
+		// в уравнении разность генерации и нагрузки, деленная на напряжение. Генерация не зависит от напряжения.
+		// Нагрузка с СХН - функция напряжения, поэтому генерацию просто делим на квадрат напряжения, а производную
+		// нагрузки считаем по правилу частного (см док)
+
+		dPdV =  (pNode->dLRCPn * pNode->V - pNode->Pnr - NodeInjG.real()) * VinvSq - pNode->YiiSuper.real();
+		if (pNode->IsLFTypePQ())
+			dQdV = (pNode->dLRCQn * pNode->V - pNode->Qnr - NodeInjG.imag()) * VinvSq + pNode->YiiSuper.imag();
+
+		*pAxSelf = dPdDelta;
+		*(pAxSelf + pMatrixInfo->nRowCount) = dQdDelta;
+		pAxSelf++;
+		*pAxSelf = dPdV;
+		*(pAxSelf + pMatrixInfo->nRowCount) = dQdV;
+
+		pAx += pMatrixInfo->nRowCount;
+
+		_CheckNumber(std::abs(Sneb));
+
+		*pb = Sneb.real(); pb++;
+		// Для PV узла обязательно обуляем уравнение
+		*pb = pNode->IsLFTypePQ() ? Sneb.imag() : 0.0;  pb++;
+	}
+}
+
+void CLoadFlow::BuildMatrixPower()
 {
 	double *pb = klu.B();
 	double *pAx = klu.Ax();
@@ -730,8 +871,9 @@ void CLoadFlow::BuildMatrix()
 			}
 		}
 
+		const cplx NodeInjection(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
 		Sneb -= std::conj(UnodeConj) * pNode->YiiSuper;
-		Sneb = std::conj(Sneb) * std::conj(UnodeConj) + cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
+		Sneb = std::conj(Sneb) * std::conj(UnodeConj) + NodeInjection;
 
 		_CheckNumber(dPdDelta);
 		_CheckNumber(dPdV);
@@ -1331,7 +1473,16 @@ void CLoadFlow::Newton()
 		lambda = 1.0;
 		g0 = g1;
 
-		BuildMatrix();
+		switch (m_Parameters.m_LFFormulation)
+		{
+		case eLoadFlowFormulation::Power:
+			BuildMatrixPower();
+			break;
+		case eLoadFlowFormulation::Current:
+			BuildMatrixCurrent();
+			break;
+		}
+		
 		// сохраняем небаланс до итерации
 		std::copy(klu.B(), klu.B() + klu.MatrixSize(), m_Rh.get());
 

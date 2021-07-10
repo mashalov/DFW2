@@ -151,7 +151,7 @@ namespace DFW2
 		inline double GetSelfImbPnotSuper() noexcept { return Pnr - Pgr - V * V * Yii.real(); }
 		inline double GetSelfImbQnotSuper() noexcept { return Qnr - Qgr + V * V * Yii.imag(); }
 
-		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn;	}
+		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn; }
 		inline double GetSelfdQdV() noexcept { return  2 * V * YiiSuper.imag() + dLRCQn; }
 
 		inline bool IsLFTypePQ() noexcept { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
