@@ -751,11 +751,6 @@ void CLoadFlow::BuildMatrixCurrent()
 		// небалансы в токах - поэтому делим мощности на модуль
 		Sneb = Vinv * (std::conj(Sneb) * Unode + NodeInjG + NodeInjL);
 
-		_CheckNumber(dPdDelta);
-		_CheckNumber(dPdV);
-		_CheckNumber(dQdDelta);
-		_CheckNumber(dQdV);
-
 		const double VinvSq(Vinv * Vinv);
 
 		// диагональные производные по напряжению
@@ -763,9 +758,18 @@ void CLoadFlow::BuildMatrixCurrent()
 		// Нагрузка с СХН - функция напряжения, поэтому генерацию просто делим на квадрат напряжения, а производную
 		// нагрузки считаем по правилу частного (см док)
 
-		dPdV =  (pNode->dLRCPn * pNode->V - pNode->Pnr - NodeInjG.real()) * VinvSq - pNode->YiiSuper.real();
+		dPdV =  pNode->dLRCPn * Vinv - (pNode->Pnr + NodeInjG.real()) * VinvSq - pNode->YiiSuper.real();
+
 		if (pNode->IsLFTypePQ())
-			dQdV = (pNode->dLRCQn * pNode->V - pNode->Qnr - NodeInjG.imag()) * VinvSq + pNode->YiiSuper.imag();
+			dQdV = pNode->dLRCQn * Vinv - (pNode->Qnr + NodeInjG.imag()) * VinvSq + pNode->YiiSuper.imag();
+		else
+			Sneb.imag(0.0);	// если узел не PQ - обнуляем уравнение
+
+
+		_CheckNumber(dPdDelta);
+		_CheckNumber(dPdV);
+		_CheckNumber(dQdDelta);
+		_CheckNumber(dQdV);
 
 		*pAxSelf = dPdDelta;
 		*(pAxSelf + pMatrixInfo->nRowCount) = dQdDelta;
@@ -779,7 +783,7 @@ void CLoadFlow::BuildMatrixCurrent()
 
 		*pb = Sneb.real(); pb++;
 		// Для PV узла обязательно обуляем уравнение
-		*pb = pNode->IsLFTypePQ() ? Sneb.imag() : 0.0;  pb++;
+		*pb = Sneb.imag(); pb++;
 	}
 }
 
