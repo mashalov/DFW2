@@ -268,7 +268,7 @@ namespace DFW2
 			std::chrono::time_point<std::chrono::high_resolution_clock> m_ClockStart;
 			bool bAdamsDampingEnabled = false;
 			ptrdiff_t nNoRingingSteps = 0;
-			double Hmin = 1E-8;
+			const double Hmin = 1E-8;
 
 			StepError Newton;
 			StepError Integrator;

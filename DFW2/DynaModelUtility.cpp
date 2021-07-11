@@ -704,7 +704,6 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 	Serializer->AddProperty("RightHandNorm", dRightHandNorm);
 	Serializer->AddProperty("AdamsDampingEnabled", bAdamsDampingEnabled);
 	Serializer->AddProperty("NoRingingSteps", nNoRingingSteps);
-	Serializer->AddProperty("Hmin", Hmin);
 	Serializer->AddProperty("LastRefactorH", m_dLastRefactorH);
 	Serializer->AddProperty("RingingDetected", bRingingDetected);
 
