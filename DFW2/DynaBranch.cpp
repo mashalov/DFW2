@@ -5,7 +5,7 @@
 
 using namespace DFW2;
 
-CDynaBranch::CDynaBranch() : CDevice(), m_pMeasure(nullptr)
+CDynaBranch::CDynaBranch() : CDevice()
 {
 
 }
@@ -56,7 +56,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 		// положительные
 		if (R <= 0)
 			Rf = 0.0;
-		if (X <= 0)
+		if (X < 0 || (X <= 0 && R == 0.0))
 			Xf = Xfictive;
 	}
 	else
@@ -288,7 +288,8 @@ bool CDynaBranch::IsZeroImpedance()
 	if (m_BranchState == CDynaBranch::BranchState::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
 	{
 		double Zmin = pModel->GetZeroBranchImpedance();
-		if (std::abs(cplx(R,X)) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin )
+		if (std::abs(R) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin &&
+			std::abs(X) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin)
 			return true;
 	}
 

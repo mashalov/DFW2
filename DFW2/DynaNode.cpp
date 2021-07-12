@@ -846,7 +846,9 @@ bool CDynaNodeContainer::LULF()
 
 	nNzCount = (pAx - Ax) / 2;		// рассчитываем получившееся количество ненулевых элементов (делим на 2 потому что комплекс)
 	Ap[nNodeCount] = nNzCount;
-	for (ptrdiff_t nIteration = 0; nIteration < 200; nIteration++)
+
+	ptrdiff_t& nIteration = m_IterationControl.Number;
+	for (nIteration = 0; nIteration < 200; nIteration++)
 	{
 		m_IterationControl.Reset();
 		ppDiags = pDiags.get();
@@ -1477,6 +1479,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 
 			CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
 			CDevice** ppDevice(nullptr);
+			// рассчитываем сумму потоков по инцидентным ветвям
 			cplx cIb, cIe, cSb, cSe;
 			while (pBranchLink->In(ppDevice))
 			{
@@ -1515,13 +1518,19 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	// по контурным уравнениям
 	for (auto&& edge : gc.Edges())
 	{
-		VirtualZeroBranch* pBranch = static_cast<VirtualZeroBranch*>(edge->m_IdBranch);
-		_ASSERTE(pBranch->pBranch->IsZeroImpedance());
+		VirtualZeroBranch* pVirtualBranch(static_cast<VirtualZeroBranch*>(edge->m_IdBranch));
+		CDynaBranch* pBranch(pVirtualBranch->pBranch);
+		_ASSERTE(pBranch->IsZeroImpedance());
 		// учитываем, что у ветвей могут быть параллельные. Поток будет разделен по параллельным
 		// ветвям. Для ветвей с ненулевым сопротивлением внутри суперузлов
 		// обычный расчет потока по напряжениям даст ноль, так как напряжения узлов одинаковые
-		pBranch->pBranch->Szero.real(*pB / pBranch->nParallelCount);	pB++;
-		pBranch->pBranch->Szero.imag(*pB / pBranch->nParallelCount);	pB++;
+		cplx sb(*pB / pVirtualBranch->nParallelCount);  pB++;
+		sb.imag(*pB / pVirtualBranch->nParallelCount);	pB++;
+		cplx ssb(pBranch->m_pNodeIp->V * pBranch->m_pNodeIp->V * cplx(pBranch->GIp, -pBranch->BIp));
+		cplx sse(pBranch->m_pNodeIq->V * pBranch->m_pNodeIq->V * cplx(pBranch->GIq, -pBranch->BIq));
+		// тут что-то странное со знаками
+		pBranch->Sb = sb - ssb;	
+		pBranch->Se = sb + sse;
 	}
 
 	// для ветвей с нулевым сопротивлением, параллельных основным ветвям копируем потоки основных,
@@ -1529,7 +1538,10 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	// с сопротивлениями ниже минимальных будут одинаковы. 
 
 	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchParallelsBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
-		pZb->pBranch->Szero = pZb->pParallelTo->Szero;
+	{
+		pZb->pBranch->Sb = pZb->pParallelTo->Sb;
+		pZb->pBranch->Se = pZb->pParallelTo->Se;
+	}
 
 	// умножение матрицы на вектор в комплексной форме
 	// учитывается что мнимая часть коэффициента матрицы равна нулю

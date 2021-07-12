@@ -130,7 +130,9 @@ bool _IterationControl::Converged(double m_dToleratedImb)
 
 void _IterationControl::Reset()
 {
+	const auto backNumber(Number);
 	*this = _IterationControl();
+	Number = backNumber;
 }
 
 void _IterationControl::Update(_MatrixInfo* pMatrixInfo)

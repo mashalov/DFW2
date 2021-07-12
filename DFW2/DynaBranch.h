@@ -17,7 +17,7 @@ namespace DFW2
 		void UpdateVerbalName() override;
 	public:
 
-		CDynaBranchMeasure *m_pMeasure;
+		CDynaBranchMeasure* m_pMeasure = nullptr;
 
 		ptrdiff_t Ip, Iq, Np;						// номера узлов начала и конца, номер парр. цепи
 		double R, X;								// сопротивление
@@ -31,7 +31,7 @@ namespace DFW2
 		cplx Yip, Yiq, Yips, Yiqs;					// компоненты взаимных и собственных проводимостей 
 													// для матрицы узловых проводимостей
 
-		cplx Szero;									// поток в ветви с нулевым сопротивлением
+		cplx Sb, Se;								// поток в ветви с нулевым сопротивлением
 
 		double deltaDiff = 0.0;						// разность углов по линии
 

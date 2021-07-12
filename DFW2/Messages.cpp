@@ -195,3 +195,4 @@ const char* CDFW2Messages::m_cszWarning = "Предупреждение: ";
 const char* CDFW2Messages::m_cszError = "Ошибка: ";
 const char* CDFW2Messages::m_cszEvent = "Событие: ";
 const char* CDFW2Messages::m_cszLogStarted = "{} {} от {} на {}. Протокол запущен в режиме \"{}\"";
+const char* CDFW2Messages::m_cszLFNodeImbalance = "Небаланс УР в узле {} : {}";

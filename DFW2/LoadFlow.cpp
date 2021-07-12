@@ -236,6 +236,12 @@ void CLoadFlow::Start()
 	// используется метод Зейделя или без устранения в противном случае
 	pNodes->CalculateSuperNodesAdmittances(m_Parameters.m_bStartup);
 
+	// в режиме отладки запоминаем что было в узлах после расчета Rastr для сравнения результатов
+#ifdef _DEBUG
+	for (auto&& it : *pNodes)
+		static_cast<CDynaNodeBase*>(it)->GrabRastrResult();
+#endif
+
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
 	UpdatePQFromGenerators();
 
@@ -243,10 +249,6 @@ void CLoadFlow::Start()
 	for (auto&& it : *pNodes)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
-		// в режиме отладки запоминаем что было в узлах после расчета Rastr для сравнения результатов
-#ifdef _DEBUG
-		pNode->GrabRastrResult();
-#endif
 		pNode->Pgr = pNode->Pg;
 		pNode->Qgr = pNode->Qg;
 		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
@@ -412,7 +414,10 @@ void CLoadFlow::Seidell()
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
 	double dPreviousImb = -1.0;
-	for (int nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
+
+	ptrdiff_t& nSeidellIterations = pNodes->m_IterationControl.Number;
+
+	for (nSeidellIterations = 0; nSeidellIterations < m_Parameters.m_nSeidellIterations; nSeidellIterations++)
 	{
 		// множитель для ускорения Зейделя
 		double dStep = m_Parameters.m_dSeidellStep;
@@ -743,13 +748,13 @@ void CLoadFlow::BuildMatrixCurrent()
 		}
 
 		// генерация в узле (включая неуправляемую из суперузлов)
-		const cplx NodeInjG(-pNode->Pgr - pMatrixInfo->UncontrolledP, -pNode->Qgr - pMatrixInfo->UncontrolledQ);
+		const cplx NodeInjG(pNode->Pgr + pMatrixInfo->UncontrolledP, pNode->Qgr + pMatrixInfo->UncontrolledQ);
 		// расчетная по СХН нагрузка в узле 
 		const cplx NodeInjL(pNode->Pnr, pNode->Qnr);
 		// небаланс в узле
 		Sneb -= Unode * pNode->YiiSuper;
 		// небалансы в токах - поэтому делим мощности на модуль
-		Sneb = Vinv * (std::conj(Sneb) * Unode + NodeInjG + NodeInjL);
+		Sneb = Vinv * (std::conj(Sneb) * Unode + NodeInjL - NodeInjG);
 
 		const double VinvSq(Vinv * Vinv);
 
@@ -758,10 +763,10 @@ void CLoadFlow::BuildMatrixCurrent()
 		// Нагрузка с СХН - функция напряжения, поэтому генерацию просто делим на квадрат напряжения, а производную
 		// нагрузки считаем по правилу частного (см док)
 
-		dPdV =  pNode->dLRCPn * Vinv - (pNode->Pnr + NodeInjG.real()) * VinvSq - pNode->YiiSuper.real();
+		dPdV =  pNode->dLRCPn * Vinv - (pNode->Pnr - NodeInjG.real()) * VinvSq - pNode->YiiSuper.real();
 
 		if (pNode->IsLFTypePQ())
-			dQdV = pNode->dLRCQn * Vinv - (pNode->Qnr + NodeInjG.imag()) * VinvSq + pNode->YiiSuper.imag();
+			dQdV = pNode->dLRCQn * Vinv - (pNode->Qnr - NodeInjG.imag()) * VinvSq + pNode->YiiSuper.imag();
 		else
 			Sneb.imag(0.0);	// если узел не PQ - обнуляем уравнение
 
@@ -1169,9 +1174,9 @@ void CLoadFlow::UpdateQToGenerators()
 				pGen->Q = 0.0;
 				if (pGen->IsStateOn())
 				{
+					
 					if (Qrange > 0.0)
 					{
-						double OldQ = pGen->Q;
 						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
 						Qgmin += pGen->LFQmin;
 						Qgmax += pGen->LFQmax;
@@ -1186,6 +1191,15 @@ void CLoadFlow::UpdateQToGenerators()
 					{
 						double Qrange = pNode->LFQmaxGen - pNode->LFQminGen;
 						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQminGen));
+						Qgmin += pGen->LFQmin;
+						Qgmax += pGen->LFQmax;
+						_CheckNumber(pGen->Q);
+					}
+					else if (Qrange < m_Parameters.m_Imb)
+					{
+						// если у генератора пустой диапазон,
+						// пишем в него его Qmin
+						pGen->Q = pGen->Kgen * pGen->LFQmin;
 						Qgmin += pGen->LFQmin;
 						Qgmax += pGen->LFQmax;
 						_CheckNumber(pGen->Q);
@@ -1321,8 +1335,7 @@ void CLoadFlow::SolveLinearSystem()
 void CLoadFlow::Newton()
 {
 	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
-	int it(0);	// количество итераций
-
+	ptrdiff_t& it = pNodes->m_IterationControl.Number;
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
 	MATRIXINFO PV_PQmax, PV_PQmin, PQmax_PV, PQmin_PV;
 
@@ -1334,13 +1347,14 @@ void CLoadFlow::Newton()
 	// квадраты небалансов до и после итерации
 	double g0(0.0), g1(0.1), lambda(1.0);
 	m_nNodeTypeSwitchesDone = 1;
+	it = 0;
 
 	while (1)
 	{
 		if (!CheckLF())
 			throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
 
-		if (++it > m_Parameters.m_nMaxIterations)
+		if (it > m_Parameters.m_nMaxIterations)
 			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
 
 		pNodes->m_IterationControl.Reset();
@@ -1404,6 +1418,8 @@ void CLoadFlow::Newton()
 			pNodes->m_IterationControl.m_ImbRatio = g1 / g0;
 
 		DumpNewtonIterationControl();
+		it++;
+
 		if (pNodes->m_IterationControl.Converged(m_Parameters.m_Imb))
 			break;
 
@@ -1483,7 +1499,7 @@ void CLoadFlow::Newton()
 			BuildMatrixPower();
 			break;
 		case eLoadFlowFormulation::Current:
-			BuildMatrixCurrent();
+			BuildMatrixPower();
 			break;
 		}
 		
@@ -1767,32 +1783,70 @@ double CLoadFlow::GetSquaredImb()
 
 void CLoadFlow::CheckFeasible()
 {
+	bool bRes(true);
+
 	for (auto&& it : *pNodes)
 	{
 		CDynaNodeBase* pNode(static_cast<CDynaNodeBase*>(it));
 		if (pNode->IsStateOn())
 		{
-			
 			if (!pNode->IsLFTypePQ())
 			{
 				// если узел входит в суперузел его заданное напряжение в расчете было равно заданному напряжению суперузла,
 				// которое, в свою очередь, было выбрано по узлу с наиболее широким диапазоном реактивной мощности внутри суперузла
 				double LFVref = pNode->m_pSuperNodeParent ? pNode->m_pSuperNodeParent->LFVref : pNode->LFVref;
 				if (pNode->V > LFVref && pNode->Qgr >= pNode->LFQmax + m_Parameters.m_Imb)
-					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
+				{
+					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} : V > Vref [{} > {}], Q >= Qmax [{} >= {}] ", 
+						pNode->GetVerbalName(),
+						pNode->V,
+						LFVref,
+						pNode->Qgr,
+						pNode->LFQmax
+						));
+					bRes = false;
+				}
 				if (pNode->V < LFVref && pNode->Qgr <= pNode->LFQmin - m_Parameters.m_Imb)
-					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
+				{
+					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} : V < Vref [{} < {}], Q <= Qmin [{} <= {}]", 
+						pNode->GetVerbalName(),
+						pNode->V,
+						LFVref,
+						pNode->Qgr,
+						pNode->LFQmin
+						));
+					bRes = false;
+				}
 				if (pNode->Qgr < pNode->LFQmin - m_Parameters.m_Imb)
-					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
+				{
+					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} Q < Qmin [{} < {}]", 
+						pNode->GetVerbalName(),
+						pNode->Qgr,
+						pNode->LFQmin));
+					bRes = false;
+				}
 				if (pNode->Qgr > pNode->LFQmax + m_Parameters.m_Imb)
-					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Infeasible {}", pNode->GetVerbalName()));
+				{
+					pNode->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} Q > Qmax [{} > {}]",
+						pNode->GetVerbalName(),
+						pNode->Qgr,
+						pNode->LFQmax));
+					bRes = false;
+				}
 			}
 
 			pNode->SuperNodeLoadFlow(m_pDynaModel);
 		}
 	}
 
-	CalculateBranchFlows();
+	if (bRes)
+	{
+		CalculateBranchFlows();
+		bRes = CheckNodeBalances();
+	}
+	
+	if (!bRes)
+		throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
 }
 
 void CLoadFlow::UpdateSlackBusesImbalance()
@@ -1821,12 +1875,49 @@ void CLoadFlow::CalculateBranchFlows()
 		// пропускаем ветви с нулевым сопротивлением, для них потоки 
 		// уже рассчитаны в SuperNodeLoadFlow
 		if (pBranch->IsZeroImpedance()) continue;
-		pBranch->Szero = { 0.0, 0.0 };
+		pBranch->Sb = pBranch->Se = { 0.0, 0.0 };
 		// в отключенных ветвях потоки просто обнуляем
 		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_OFF) continue;
 		cplx cIb, cIe, cSb, cSe;
-		CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, cSb, cSe);
+		CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, pBranch->Sb, pBranch->Se);
 	}
+}
+
+bool CLoadFlow::CheckNodeBalances()
+{
+	bool bRes(true);
+	for (auto&& dev : pNodes->m_DevVec)
+	{
+		CDynaNodeBase* pNode(static_cast<CDynaNodeBase*>(dev));
+		const auto imb(pNode->V * pNode->V * cplx(pNode->G, pNode->B));
+		pNode->dLRCPg = pNode->Pnr - pNode->Pgr + imb.real();
+		pNode->dLRCQg = pNode->Qnr - pNode->Qgr - imb.imag();
+	}
+
+	CDeviceContainer* pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
+	for (auto&& dev : *pBranchContainer)
+	{
+		CDynaBranch* pBranch(static_cast<CDynaBranch*>(dev));
+		pBranch->m_pNodeIp->dLRCPg -= pBranch->Sb.real();
+		pBranch->m_pNodeIp->dLRCQg -= pBranch->Sb.imag();
+		pBranch->m_pNodeIq->dLRCPg += pBranch->Se.real();
+		pBranch->m_pNodeIq->dLRCQg += pBranch->Se.imag();
+	}
+
+	for (const auto& dev : pNodes->m_DevVec)
+	{
+		CDynaNodeBase* pNode(static_cast<CDynaNodeBase*>(dev));
+		if (pNode->GetState() == eDEVICESTATE::DS_OFF) continue;
+		if (std::abs(pNode->dLRCPg) > m_Parameters.m_Imb ||
+			std::abs(pNode->dLRCQg) > m_Parameters.m_Imb)
+		{
+			bRes = false;
+			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeImbalance,
+				pNode->GetVerbalName(),
+				cplx(pNode->dLRCPg, pNode->dLRCQg)));
+		}
+	}
+	return bRes;
 }
 
 
