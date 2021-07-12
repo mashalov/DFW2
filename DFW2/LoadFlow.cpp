@@ -1499,7 +1499,7 @@ void CLoadFlow::Newton()
 			BuildMatrixPower();
 			break;
 		case eLoadFlowFormulation::Current:
-			BuildMatrixPower();
+			BuildMatrixCurrent();
 			break;
 		}
 		
