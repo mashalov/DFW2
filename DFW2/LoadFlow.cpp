@@ -1791,6 +1791,8 @@ void CLoadFlow::CheckFeasible()
 			pNode->SuperNodeLoadFlow(m_pDynaModel);
 		}
 	}
+
+	CalculateBranchFlows();
 }
 
 void CLoadFlow::UpdateSlackBusesImbalance()
@@ -1809,6 +1811,23 @@ void CLoadFlow::UpdateSlackBusesImbalance()
 	}
 }
 
+
+void CLoadFlow::CalculateBranchFlows()
+{
+	CDeviceContainer* pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
+	for (auto&& dev : *pBranchContainer)
+	{
+		CDynaBranch* pBranch(static_cast<CDynaBranch*>(dev));
+		// пропускаем ветви с нулевым сопротивлением, для них потоки 
+		// уже рассчитаны в SuperNodeLoadFlow
+		if (pBranch->IsZeroImpedance()) continue;
+		pBranch->Szero = { 0.0, 0.0 };
+		// в отключенных ветвях потоки просто обнуляем
+		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_OFF) continue;
+		cplx cIb, cIe, cSb, cSe;
+		CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, cSb, cSe);
+	}
+}
 
 
 void CLoadFlow::DumpNewtonIterationControl()

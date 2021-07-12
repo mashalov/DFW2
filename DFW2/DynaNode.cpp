@@ -1362,191 +1362,190 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	if (m_pSuperNodeParent)
 		return; // это не суперузел
 
-
 	CLinkPtrCount *pSuperNodeLink = GetSuperLink(0);
-	if (pSuperNodeLink->m_nCount)
+	if (!pSuperNodeLink->m_nCount)
+		return; // это суперузел, но у него нет связей
+
+	// Создаем граф с узлами ребрами от типов расчетных узлов и ветвей
+	using GraphType = GraphCycle<CDynaNodeBase*, VirtualZeroBranch*>;
+	using NodeType = GraphType::GraphNodeBase;
+	using EdgeType = GraphType::GraphEdgeBase;
+	// Создаем вектор внутренних узлов суперузла, включая узел представитель
+	std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
+	// Создаем вектор ребер за исключением параллельных ветвей
+	std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
+	CDevice **ppNodeEnd = pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount;
+	NodeType *pNode = pGraphNodes.get();
+	GraphType gc;
+	// Вводим узлы в граф. В качестве идентификатора узла используем адрес объекта
+	for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
+		gc.AddNode(pNode->SetId(static_cast<CDynaNodeBase*>(*ppDev)));
+	// добавляем узел представитель
+	gc.AddNode(pNode->SetId(this));
+
+	// Вводим в граф ребра
+	EdgeType *pEdge = pGraphEdges.get();
+	for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
+		gc.AddEdge(pEdge->SetIds(pZb->pBranch->m_pNodeIp, pZb->pBranch->m_pNodeIq, pZb));
+
+	GraphType::CyclesType Cycles;
+	// Определяем циклы
+	gc.GenerateCycles(Cycles);
+	if (!Cycles.empty())
 	{
-		// Создаем граф с узлами ребрами от типов расчетных узлов и ветвей
-		using GraphType = GraphCycle<CDynaNodeBase*, VirtualZeroBranch*>;
-		using NodeType = GraphType::GraphNodeBase;
-		using EdgeType = GraphType::GraphEdgeBase;
-		// Создаем вектор внутренних узлов суперузла, включая узел представитель
-		std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
-		// Создаем вектор ребер за исключением параллельных ветвей
-		std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
-		CDevice **ppNodeEnd = pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount;
-		NodeType *pNode = pGraphNodes.get();
-		GraphType gc;
-		// Вводим узлы в граф. В качестве идентификатора узла используем адрес объекта
-		for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
-			gc.AddNode(pNode->SetId(static_cast<CDynaNodeBase*>(*ppDev)));
-		// добавляем узел представитель
-		gc.AddNode(pNode->SetId(this));
-
-		// Вводим в граф ребра
-		EdgeType *pEdge = pGraphEdges.get();
-		for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
-			gc.AddEdge(pEdge->SetIds(pZb->pBranch->m_pNodeIp, pZb->pBranch->m_pNodeIq, pZb));
-
-		GraphType::CyclesType Cycles;
-		// Определяем циклы
-		gc.GenerateCycles(Cycles);
-		if (!Cycles.empty())
-		{
 			
-			/*pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, "Cycles");
-			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", GetVerbalName()));
-			for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
-				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", (*ppDev)->GetVerbalName()));
+		/*pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, "Cycles");
+		pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", GetVerbalName()));
+		for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
+			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", (*ppDev)->GetVerbalName()));
 
-			for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
-				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", pZb->pBranch->GetVerbalName()));
+		for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
+			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s", pZb->pBranch->GetVerbalName()));
 
-			for (auto&& cycle : Cycles)
-			{
-				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, "Cycle");
-				for (auto&& vb : cycle)
-				{
-					pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s %s", vb.m_bDirect ? "+" : "-", vb.m_pEdge->m_IdBranch->pBranch->GetVerbalName()));
-				}
-			}
-			*/
-		}
-
-		// Формируем матрицу для расчета токов в ветвях
-		// Количество уравнений равно количеству узлов - 1 + количество контуров = количество ветвей внутри суперузла
-
-		// исключаем из списка узлов узел с наибольшим числом связей (можно и первый попавшийся, KLU справится, но найти
-		// такой узел легко
-		const GraphType::GraphNodeBase* pMaxRangeNode = gc.GetMaxRankNode();
-		// количество ненулевых элементов равно количеству ребер * 2 - количество связей исключенного узла + количество ребер в циклах
-		ptrdiff_t nNz(gc.Edges().size() * 2 - pMaxRangeNode->Rank());
 		for (auto&& cycle : Cycles)
-			nNz += cycle.size();
+		{
+			pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, "Cycle");
+			for (auto&& vb : cycle)
+			{
+				pDynaModel->Log(CDFW2Messages::DFW2LOG_DEBUG, Cex("%s %s", vb.m_bDirect ? "+" : "-", vb.m_pEdge->m_IdBranch->pBranch->GetVerbalName()));
+			}
+		}
+		*/
+	}
 
-		KLUWrapper<std::complex<double>> klu;
-		klu.SetSize(gc.Edges().size(), nNz);
+	// Формируем матрицу для расчета токов в ветвях
+	// Количество уравнений равно количеству узлов - 1 + количество контуров = количество ветвей внутри суперузла
 
-		ptrdiff_t* pAi = klu.Ai();
-		ptrdiff_t* pAp = klu.Ap();
-		double* pAx = klu.Ax();
-		double* pB = klu.B();
+	// исключаем из списка узлов узел с наибольшим числом связей (можно и первый попавшийся, KLU справится, но найти
+	// такой узел легко
+	const GraphType::GraphNodeBase* pMaxRangeNode = gc.GetMaxRankNode();
+	// количество ненулевых элементов равно количеству ребер * 2 - количество связей исключенного узла + количество ребер в циклах
+	ptrdiff_t nNz(gc.Edges().size() * 2 - pMaxRangeNode->Rank());
+	for (auto&& cycle : Cycles)
+		nNz += cycle.size();
 
-		ptrdiff_t* cpAp = pAp;
-		ptrdiff_t* cpAi = pAi;
-		double* cpB = pB;
-		double* cpAx = pAx;
+	KLUWrapper<std::complex<double>> klu;
+	klu.SetSize(gc.Edges().size(), nNz);
+
+	ptrdiff_t* pAi = klu.Ai();
+	ptrdiff_t* pAp = klu.Ap();
+	double* pAx = klu.Ax();
+	double* pB = klu.B();
+
+	ptrdiff_t* cpAp = pAp;
+	ptrdiff_t* cpAi = pAi;
+	double* cpB = pB;
+	double* cpAx = pAx;
 
 		
-		*pAi = 0;	// первая строка начинается с индекса 0
+	*pAi = 0;	// первая строка начинается с индекса 0
 
-		// мнимую часть коэффициентов матрицы обнуляем
-		// вещественная будет -1, 0 или +1
-		double* pz = pAx + nNz * 2 - 1;
-		while (pz > pAx)
-		{
-			*pz = 0.0;
-			pz -= 2;
-		}
+	// мнимую часть коэффициентов матрицы обнуляем
+	// вещественная будет -1, 0 или +1
+	double* pz = pAx + nNz * 2 - 1;
+	while (pz > pAx)
+	{
+		*pz = 0.0;
+		pz -= 2;
+	}
 
-		// уравнения по I зК для узлов
-		for (auto&& node : gc.Nodes())
+	// уравнения по I зК для узлов
+	for (auto&& node : gc.Nodes())
+	{
+		// исключаем узел с максимальным числом связей
+		if (node != pMaxRangeNode)
 		{
-			// исключаем узел с максимальным числом связей
-			if (node != pMaxRangeNode)
+			ptrdiff_t nCurrentRow = *pAi;		// запоминаем начало текущей строки
+			pAi++;								// передвигаем указатель на следующую строку
+			for (EdgeType** edge = node->m_ppEdgesBegin; edge < node->m_ppEdgesEnd; edge++)
 			{
-				ptrdiff_t nCurrentRow = *pAi;		// запоминаем начало текущей строки
-				pAi++;								// передвигаем указатель на следующую строку
-				for (EdgeType** edge = node->m_ppEdgesBegin; edge < node->m_ppEdgesEnd; edge++)
-				{
-					*pAp = (*edge)->m_nIndex;							// формируем номер столбца для ребра узла
-					*pAx = (*edge)->m_pBegin == node ? 1.0 : -1.0;;		// формируем вещественный коэффициент в матрице по направлению ребра к узлу
-					pAx += 2;											// переходим к следущему вещественному коэффициенту
-					pAp++;
-				}
-				// считаем сколько ненулевых элементов в строке и формируем индекс следующей строки
-				*pAi = nCurrentRow + node->m_ppEdgesEnd - node->m_ppEdgesBegin;
-
-				// рассчитываем инъекцию в узле
-				// нагрузка по СХН
-				CDynaNodeBase* pInSuperNode = static_cast<CDynaNodeBase*>(node->m_Id);
-				pInSuperNode->GetPnrQnr();
-				cplx Unode(pInSuperNode->Vre, -pInSuperNode->Vim);
-
-				cplx S(pInSuperNode->GetSelfImbPnotSuper(), pInSuperNode->GetSelfImbQnotSuper());
-
-				CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
-				CDevice** ppDevice(nullptr);
-				cplx cIb, cIe, cSb, cSe;
-				while (pBranchLink->In(ppDevice))
-				{
-					CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
-					CDynaNodeBase* pOppNode = pBranch->GetOppositeNode(pInSuperNode);
-					CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, cSb, cSe);
-					cplx Sbranch = ((pBranch->m_pNodeIp == pInSuperNode) ? pBranch->Yip : pBranch->Yiq) * cplx(pOppNode->Vre, pOppNode->Vim) * Unode;
-					S -= conj(Sbranch);
-				}
-
-				*pB = S.real();			pB++;
-				*pB = S.imag();			pB++;
-			}
-		}
-
-		// уравнения для контуров
-		for (auto&& cycle : Cycles)
-		{
-			ptrdiff_t nCurrentRow = *pAi;
-			pAi++;
-			for (auto& edge : cycle)
-			{
-				*pAp = edge.m_pEdge->m_nIndex;				// формируем номер столбца для ребра в контуре
-				*pAx = edge.m_bDirect ? 1.0 : -1.0;			// формируем вещественный коэффициент в матрице по направлению ребра в контуре
-				pAx += 2;									// переходим к следующему вещественому коэффициенту
+				*pAp = (*edge)->m_nIndex;							// формируем номер столбца для ребра узла
+				*pAx = (*edge)->m_pBegin == node ? 1.0 : -1.0;;		// формируем вещественный коэффициент в матрице по направлению ребра к узлу
+				pAx += 2;											// переходим к следущему вещественному коэффициенту
 				pAp++;
 			}
-			*pAi = nCurrentRow + cycle.size();				// следующая строка матрицы начинается через количество элементов равное количеству ребер контура
-			*pB = 0.0;			pB++;
-			*pB = 0.0;			pB++;
-		}
-		klu.Solve();
+			// считаем сколько ненулевых элементов в строке и формируем индекс следующей строки
+			*pAi = nCurrentRow + node->m_ppEdgesEnd - node->m_ppEdgesBegin;
 
-		pB = klu.B();
-		// вводим в ветви с нулевым сопротивлением поток мощности, рассчитанный
-		// по контурным уравнениям
-		for (auto&& edge : gc.Edges())
-		{
-			VirtualZeroBranch* pBranch = static_cast<VirtualZeroBranch*>(edge->m_IdBranch);
-			_ASSERTE(pBranch->pBranch->IsZeroImpedance());
-			// учитываем, что у ветвей могут быть параллельные. Поток будет разделен по параллельным
-			// ветвям. Для ветвей с ненулевым сопротивлением внутри суперузлов
-			// обычный расчет потока по напряжениям даст ноль, так как напряжения узлов одинаковые
-			pBranch->pBranch->Szero.real(*pB / pBranch->nParallelCount);	pB++;
-			pBranch->pBranch->Szero.imag(*pB / pBranch->nParallelCount);	pB++;
-		}
+			// рассчитываем инъекцию в узле
+			// нагрузка по СХН
+			CDynaNodeBase* pInSuperNode = static_cast<CDynaNodeBase*>(node->m_Id);
+			pInSuperNode->GetPnrQnr();
+			cplx Unode(pInSuperNode->Vre, -pInSuperNode->Vim);
 
-		// для ветвей с нулевым сопротивлением, параллельных основным ветвям копируем потоки основных,
-		// так как потоки основных рассчитаны как доля параллельных потоков. Все потоки по паралелльным цепям
-		// с сопротивлениями ниже минимальных будут одинаковы. 
+			cplx S(pInSuperNode->GetSelfImbPnotSuper(), pInSuperNode->GetSelfImbQnotSuper());
 
-		for (VirtualZeroBranch* pZb = m_VirtualZeroBranchParallelsBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
-			pZb->pBranch->Szero = pZb->pParallelTo->Szero;
-
-		// умножение матрицы на вектор в комплексной форме
-		// учитывается что мнимая часть коэффициента матрицы равна нулю
-		// здесь используем для проверки решения, можно вынести в отдельную функцию типа gaxpy
-
-		for (ptrdiff_t nRow = 0; nRow < klu.MatrixSize(); nRow++)
-		{
-			cplx s;
-			for (ptrdiff_t c = klu.Ai()[nRow]; c < klu.Ai()[nRow + 1]; c++)
+			CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
+			CDevice** ppDevice(nullptr);
+			cplx cIb, cIe, cSb, cSe;
+			while (pBranchLink->In(ppDevice))
 			{
-				/*cplx coe(klu.Ax()[2 * c], klu.Ax()[2 * c + 1]);
-				cplx b(klu.B()[2 * klu.Ap()[c]], klu.B()[2 * klu.Ap()[c] + 1]);
-				s += coe * b;
-				*/
-				double* pB = klu.B() + 2 * klu.Ap()[c];
-				s += klu.Ax()[2 * c] * cplx(*pB, *(pB + 1));
+				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
+				CDynaNodeBase* pOppNode = pBranch->GetOppositeNode(pInSuperNode);
+				CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, cSb, cSe);
+				cplx Sbranch = ((pBranch->m_pNodeIp == pInSuperNode) ? pBranch->Yip : pBranch->Yiq) * cplx(pOppNode->Vre, pOppNode->Vim) * Unode;
+				S -= conj(Sbranch);
 			}
+
+			*pB = S.real();			pB++;
+			*pB = S.imag();			pB++;
+		}
+	}
+
+	// уравнения для контуров
+	for (auto&& cycle : Cycles)
+	{
+		ptrdiff_t nCurrentRow = *pAi;
+		pAi++;
+		for (auto& edge : cycle)
+		{
+			*pAp = edge.m_pEdge->m_nIndex;				// формируем номер столбца для ребра в контуре
+			*pAx = edge.m_bDirect ? 1.0 : -1.0;			// формируем вещественный коэффициент в матрице по направлению ребра в контуре
+			pAx += 2;									// переходим к следующему вещественому коэффициенту
+			pAp++;
+		}
+		*pAi = nCurrentRow + cycle.size();				// следующая строка матрицы начинается через количество элементов равное количеству ребер контура
+		*pB = 0.0;			pB++;
+		*pB = 0.0;			pB++;
+	}
+	klu.Solve();
+
+	pB = klu.B();
+	// вводим в ветви с нулевым сопротивлением поток мощности, рассчитанный
+	// по контурным уравнениям
+	for (auto&& edge : gc.Edges())
+	{
+		VirtualZeroBranch* pBranch = static_cast<VirtualZeroBranch*>(edge->m_IdBranch);
+		_ASSERTE(pBranch->pBranch->IsZeroImpedance());
+		// учитываем, что у ветвей могут быть параллельные. Поток будет разделен по параллельным
+		// ветвям. Для ветвей с ненулевым сопротивлением внутри суперузлов
+		// обычный расчет потока по напряжениям даст ноль, так как напряжения узлов одинаковые
+		pBranch->pBranch->Szero.real(*pB / pBranch->nParallelCount);	pB++;
+		pBranch->pBranch->Szero.imag(*pB / pBranch->nParallelCount);	pB++;
+	}
+
+	// для ветвей с нулевым сопротивлением, параллельных основным ветвям копируем потоки основных,
+	// так как потоки основных рассчитаны как доля параллельных потоков. Все потоки по паралелльным цепям
+	// с сопротивлениями ниже минимальных будут одинаковы. 
+
+	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchParallelsBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
+		pZb->pBranch->Szero = pZb->pParallelTo->Szero;
+
+	// умножение матрицы на вектор в комплексной форме
+	// учитывается что мнимая часть коэффициента матрицы равна нулю
+	// здесь используем для проверки решения, можно вынести в отдельную функцию типа gaxpy
+
+	for (ptrdiff_t nRow = 0; nRow < klu.MatrixSize(); nRow++)
+	{
+		cplx s;
+		for (ptrdiff_t c = klu.Ai()[nRow]; c < klu.Ai()[nRow + 1]; c++)
+		{
+			/*cplx coe(klu.Ax()[2 * c], klu.Ax()[2 * c + 1]);
+			cplx b(klu.B()[2 * klu.Ap()[c]], klu.B()[2 * klu.Ap()[c] + 1]);
+			s += coe * b;
+			*/
+			double* pB = klu.B() + 2 * klu.Ap()[c];
+			s += klu.Ax()[2 * c] * cplx(*pB, *(pB + 1));
 		}
 	}
 

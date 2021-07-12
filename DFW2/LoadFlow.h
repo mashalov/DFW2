@@ -58,6 +58,7 @@ namespace DFW2
 		void DumpNodes();
 		void CompareWithRastr();
 		double Qgtanh(CDynaNodeBase* pNode);
+		void CalculateBranchFlows();
 
 		// возвращает true если узел учитывается в матрице якоби
 		static bool NodeInMatrix(CDynaNodeBase *pNode);
