@@ -52,7 +52,15 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 	const double absSlf(std::abs(Slf));
 
 	if (absSlf > Srated)
-		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated, GetVerbalName(), Slf, absSlf, Srated));
+	{
+		const std::string perCents(Srated > 0 ? fmt::format("{:.1f}", absSlf / Srated * 100.0) : "???");
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated,
+			GetVerbalName(),
+			Slf,
+			absSlf,
+			Srated,
+			perCents));
+	}
 
 	const CDynaNodeBase* pNode = static_cast<const CDynaNodeBase*>(GetSingleLink(0));
 

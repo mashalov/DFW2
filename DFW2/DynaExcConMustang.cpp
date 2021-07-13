@@ -45,6 +45,16 @@ double* CDynaExcConMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
+void CDynaExcConMustang::ScaleGains(CDynaExcConMustang& excon)
+{
+	const auto& scale = CDynaExcConMustang::DefaultGains;
+	//const auto& scale = CDynaExcConMustang::UnityGains;
+	excon.K1u  *= scale.K1u;
+	excon.K0f  *= scale.K0f;
+	excon.K1f  *= scale.K1f;
+	excon.K1if *= scale.K1if;
+}
+
 eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 {
 	if (Tf <= 0)
@@ -70,12 +80,15 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		Lag.SetMinMaxTK(pDynaModel, Umin * Eqnom - Eqe0, Umax * Eqnom - Eqe0, Tr, 1.0);
-		K0u *= Eqnom / Unom;
-		K1u *= Eqnom / Unom * 0.72;
-		K0f *= Eqnom * pDynaModel->GetOmega0() * 1.3 / 2.0 / M_PI;
-		K1f *= Eqnom * pDynaModel->GetOmega0() * 0.5 / 2.0 / M_PI;
-		K1if *= 0.2;
 
+		K0u *= Eqnom / Unom;
+		K1u *= Eqnom / Unom;
+		K0f *= Eqnom * pDynaModel->GetOmega0() / 2.0 / M_PI;
+		K1f *= Eqnom * pDynaModel->GetOmega0() / 2.0 / M_PI;
+
+		// забавно - если умножить на машстабы до
+		// расчета о.е - изменяется количество шагов метода
+		CDynaExcConMustang::ScaleGains(*this);
 
 		dVdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1u);
 		dEqdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1if);

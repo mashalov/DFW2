@@ -1526,9 +1526,9 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		// обычный расчет потока по напряжениям даст ноль, так как напряжения узлов одинаковые
 		cplx sb(*pB / pVirtualBranch->nParallelCount);  pB++;
 		sb.imag(*pB / pVirtualBranch->nParallelCount);	pB++;
+		// считаем потоки в конце и в начале с учетом шунтов
 		cplx ssb(pBranch->m_pNodeIp->V * pBranch->m_pNodeIp->V * cplx(pBranch->GIp, -pBranch->BIp));
 		cplx sse(pBranch->m_pNodeIq->V * pBranch->m_pNodeIq->V * cplx(pBranch->GIq, -pBranch->BIq));
-		// тут что-то странное со знаками
 		pBranch->Sb = sb - ssb;	
 		pBranch->Se = sb + sse;
 	}

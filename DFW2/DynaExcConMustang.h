@@ -9,6 +9,25 @@ namespace DFW2
 	{
 
 	protected:
+
+		// Масштабы коэффициентов советских АРВ
+		struct GainScales
+		{
+			const double K1u = 0.72;
+			const double K1if = 0.2;
+			const double K0f = 1.3;
+			const double K1f = 0.5;
+		};
+
+		// Единичные масштабы (совместимость с нормальными АРВ)
+		static constexpr GainScales UnityGains = { 1.0, 1.0, 1.0, 1.0 };
+		// Станадартные масштабы для (совместимость с Мустанг)
+		static constexpr GainScales DefaultGains = {};
+
+
+		static void ScaleGains(CDynaExcConMustang& excon);
+
+
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		CLimitedLag Lag;
 
