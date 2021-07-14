@@ -275,6 +275,9 @@ namespace DFW2
 			double m_dLastRefactorH = 0.0;
 			bool bRingingDetected = false;
 
+			double m_dMaxBranchDelta = 0.0;
+			double m_dMaxGeneratorDelta = 0.0;
+
 			StepControl()
 			{
 				m_ClockStart = std::chrono::high_resolution_clock::now();

@@ -83,6 +83,8 @@ void CDynaModel::WriteResultsHeader()
 		}
 	}
 
+	sc.m_dMaxBranchDelta = sc.m_dMaxGeneratorDelta = 0.0;
+
 	m_dTimeWritten = 0.0;
 }
 
