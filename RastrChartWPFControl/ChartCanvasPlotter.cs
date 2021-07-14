@@ -11,6 +11,7 @@ using System.Windows.Shapes;
 using System.Windows.Input;
 using System.Windows.Resources;
 using System.Windows.Threading;
+using System.Windows.Media.TextFormatting;
 
 namespace RastrChartWPFControl
 {
@@ -306,6 +307,22 @@ namespace RastrChartWPFControl
             UpdateAxes();
         }
 
+        public void CleanUp()
+        {
+            RemoveAllChannels();
+            axisYBlock.TranslationChanged -= OnAxisTranslation;
+            axisX.TranslationChanged -= OnAxisXTranslationChanged;
+            axisX.ButtonRightClick -= OnAxisXRightClick;
+            axisYBlock.ButtonRightClick -= OnAxisXRightClick;
+            CanvasToPlot.SizeChanged -= OnCanvasSizeChanged;
+            CanvasToPlot.MouseMove -= OnMouseMove;
+            CanvasToPlot.LostMouseCapture -= OnLostMouseCapture;
+            CanvasToPlot.MouseWheel -= OnMouseWheel;
+            CanvasToPlot.MouseDown -= OnMouseDown;
+            CanvasToPlot.MouseUp -= OnMouseUp;
+            dispatcherTimer.Tick -= ScrollTimerTick;
+        }
+
         protected bool RemoveChannelUtility(ChartChannel channel)
         {
             bool bRes = true;
@@ -332,6 +349,17 @@ namespace RastrChartWPFControl
             legendArea.Children.Clear();
             foreach (ChartChannel chan in Channels) legendArea.Children.Add(chan.legendButton);
             Transform();
+        }
+
+        public void TidySinglePointed()
+        {
+            double MaxX = Channels.Max(c => c.OriginalPoints.Max(p => p.X));
+            foreach(var channel in Channels)
+            {
+                int size = channel.OriginalPoints.Length - 1;
+                if (channel.OriginalPoints.Max(p => p.X) < MaxX && size >= 0)
+                    channel.Points.Add(new Point(MaxX, channel.OriginalPoints[size].Y));
+            }
         }
 
 
@@ -1595,6 +1623,8 @@ namespace RastrChartWPFControl
                             {
                                 ChannelIndexes[cn]++;
                                 y = channel.PointAtIndex(ChannelIndexes[cn]).Y;
+                                if (ChannelIndexes[cn] > channel.OriginalPoints.Length)
+                                    break;
                             }
                         }
                         

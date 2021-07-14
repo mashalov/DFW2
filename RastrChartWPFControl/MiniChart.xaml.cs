@@ -93,6 +93,47 @@ namespace RastrChartWPFControl
             zoneFZ.ZoneParametersChanged += OnZoneParametersChanged;
             updateTimer.Tick += OnUpdateByTimer;
             ShowCrossMarks = true;
+
+            Unloaded += MiniChart_Unloaded;
+        }
+
+        private void MiniChart_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Unloaded -= MiniChart_Unloaded;
+            channels.Update -= OnUpdate;
+            channels.RangeChanged -= OnRangeChanged;
+            Graph.SizeChanged -= OnGraphSizeChanged;
+            LostMouseCapture -= OnLostMouseCapture;
+            Zone1.ZoneTypeChanged -= OnZoneTypeChanged;
+            Zone2.ZoneTypeChanged -= OnZoneTypeChanged;
+            Zone1.ZoneCombinationChanged -= OnZoneCombinationChanged;
+            Zone2.ZoneCombinationChanged -= OnZoneCombinationChanged;
+            Zone1.ZoneParametersChanged -= OnZoneParametersChanged;
+            Zone2.ZoneParametersChanged -= OnZoneParametersChanged;
+            PowerZone.ZoneParametersChanged -= OnZoneParametersChanged;
+            ZoneKPAM.ZoneParametersChanged -= OnZoneParametersChanged;
+            zoneFZ.ZoneTypeChanged -= OnZoneTypeChanged;
+            zoneFZ.ZoneCombinationChanged -= OnZoneCombinationChanged;
+            zoneFZ.ZoneParametersChanged -= OnZoneParametersChanged;
+            updateTimer.Tick -= OnUpdateByTimer;
+            channels.CleanUp();
+
+            foreach (var ruler in Rulers)
+            {
+                ruler.RulerAskCoordinates -= OnRulerAskCoordinates;
+                ruler.RulerPosition -= OnRulerChanged;
+            }
+
+            foreach (var marker in zoneCrossMarkers)
+                marker.CleanUp();
+
+            zoneFZ.CleanUp();
+            Zone1.CleanUp();
+            Zone2.CleanUp();
+            PowerZone.CleanUp();
+            ZoneKPAM.CleanUp();
+
+            Rulers.Clear();
         }
 
         private bool IsPan
@@ -551,7 +592,8 @@ namespace RastrChartWPFControl
             else
             {
                 foreach (MiniChannel mc in channels)
-                    Graph.Children.Add(mc.GetChannelPath(ZoomFactor, Offset));
+                    if(mc.Visible)
+                        Graph.Children.Add(mc.GetChannelPath(ZoomFactor, Offset));
             }
         }
 
@@ -972,6 +1014,9 @@ namespace RastrChartWPFControl
             {
                 foreach (MiniChannel mc in channels)
                 {
+                    if (!mc.Visible)
+                        continue;
+                    
                     if (!dupCheckList.Contains(mc.Legend))
                     {
                         dupCheckList.Add(mc.Legend);

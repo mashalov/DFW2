@@ -47,6 +47,7 @@ namespace RastrChartWPFControl
             plotter.SaveChartSet += OnSaveChartSet;
             plotter.ChannelDelete += OnChannelDelete;
             plotter.ChannelPropsChanged += OnChannelPropsChanged;
+            Unloaded += RastrChart_Unloaded;
 
             RoutedCommand AltC = new RoutedCommand();
             AltC.InputGestures.Add(new KeyGesture(Key.C, ModifierKeys.Alt));
@@ -56,6 +57,27 @@ namespace RastrChartWPFControl
             AltS.InputGestures.Add(new KeyGesture(Key.S, ModifierKeys.Alt));
             CommandBindings.Add(new CommandBinding(AltS, OnAltS));
 
+        }
+
+        private void RastrChart_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Unloaded -= RastrChart_Unloaded;
+            plotter.RenderBitmap -= OnRenderBitmap;
+            plotter.AskCopyToClipBoard -= OnClipboardCopyBitmap;
+            plotter.SetReferenceValue -= OnSetReferenceValue;
+            plotter.ChannelPin -= OnChannelPin;
+            plotter.ObtainFocus -= OnObtainFocus;
+            plotter.SaveChartSet -= OnSaveChartSet;
+            plotter.ChannelDelete -= OnChannelDelete;
+            plotter.ChannelPropsChanged -= OnChannelPropsChanged;
+            channels.RemoveAll();
+            ChannelCanvas.Children.Clear();
+            ZoomCanvas.Children.Clear();
+            MeasureCanvas.Children.Clear();
+            HorizontalAxis.Children.Clear();
+            VerticalAxis.Children.Clear();
+            LegendArea.Children.Clear();
+            plotter.CleanUp();
         }
 
         protected void OnClipboardCopyBitmap(object sender, EventArgs e)

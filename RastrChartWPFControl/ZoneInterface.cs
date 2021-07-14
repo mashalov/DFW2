@@ -20,6 +20,15 @@ namespace RastrChartWPFControl
             get { return zoneGeometry; }
         }
 
+        public void CleanUp()
+        {
+            if (zoneGeometry != null)
+            {
+                zoneGeometry.CleanUp();
+                zoneGeometry.ZoneParametersChanged += OnZoneParametersChanged;
+            }
+        }
+
         public ZoneType Type
         {
             get
@@ -321,6 +330,17 @@ namespace RastrChartWPFControl
             zoneCombinations.ZoneCombinationChanged += OnZoneCombinationChanged;
         }
 
+        public void CleanUp()
+        {
+            foreach (var zone in zones)
+            {
+                zone.ZoneTypeChanged -= OnZoneTypeChanged;
+                zone.ZoneParametersChanged -= OnZoneParametersChanged;
+                zone.CleanUp();
+            }
+
+        }
+
         public bool PointInZone(Point WorldPoint)
         {
             int [] ZoneHitResults = new int[4];
@@ -413,6 +433,13 @@ namespace RastrChartWPFControl
             get;
             set;
         }
+
+        public void CleanUp()
+        {
+            zone.ZoneParametersChanged -= OnZoneParametersChanged;
+            zone.CleanUp();
+        }
+
         public ZoneHalfPlaneSingleRelay()
         {
             zone = new Zone();
@@ -422,6 +449,7 @@ namespace RastrChartWPFControl
             sVector.StrokeThickness = 1;
             sVector.Stroke = Brushes.Gray;
         }
+
         public Zone Zone
         {
             get
@@ -429,6 +457,7 @@ namespace RastrChartWPFControl
                 return zone;
             }
         }
+
         protected void OnZoneParametersChanged(object sender, EventArgs e)
         {
             if (ZoneParametersChanged != null)
@@ -488,6 +517,14 @@ namespace RastrChartWPFControl
                         throw new Exception("ZoneKPA::Zone get - wrong index");
                 }
             }
+        }
+
+        public void CleanUp()
+        {
+            fineZone.ZoneParametersChanged -= OnZoneParametersChanged;
+            coarseZone.ZoneParametersChanged -= OnZoneParametersChanged;
+            fineZone.CleanUp();
+            coarseZone.CleanUp();
         }
 
         public ZoneKPA()

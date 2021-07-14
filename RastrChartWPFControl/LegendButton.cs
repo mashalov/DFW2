@@ -61,6 +61,17 @@ namespace RastrChartWPFControl
             legendText.MouseLeave += OnLabelMouseLeave;
             legendText.MouseLeftButtonDown += OnClick;
             legendText.MouseRightButtonDown += OnRightClick;
+            Unloaded += LegendButton_Unloaded;
+
+        }
+
+        private void LegendButton_Unloaded(object sender, RoutedEventArgs e)
+        {
+            legendText.MouseEnter -= OnLabelMouseEnter;
+            legendText.MouseLeave -= OnLabelMouseLeave;
+            legendText.MouseLeftButtonDown -= OnClick;
+            legendText.MouseRightButtonDown -= OnRightClick;
+            Unloaded -= LegendButton_Unloaded;
         }
 
         private void OnButtonOver(object Sender, EventArgs e)

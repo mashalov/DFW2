@@ -224,7 +224,6 @@ namespace RastrChartWPFControl
                 PointsChanged(this, new EventArgs());
         }
 
-
         public bool SetPoints(MiniPoint[] Points, bool bHodographMode)
         {
             bool bRes = true;
@@ -342,6 +341,7 @@ namespace RastrChartWPFControl
         Point availableRange;
         Color channelColor = Colors.Black;
         private bool hodographMode;
+        private bool visible = true;
         public event EventHandler ChannelChanged;
         public event RangeChangedEventHandler RangeChanged;
         
@@ -349,6 +349,18 @@ namespace RastrChartWPFControl
         {
             if (ChannelChanged != null)
                 ChannelChanged(this, new EventArgs());
+        }
+
+        public bool Visible
+        {
+            get { return visible; }
+            set {
+                    if (visible != value)
+                    {
+                        visible = value;
+                        OnChannelChanged();
+                    }
+                }
         }
 
         protected void OnRangeChanged()
@@ -501,6 +513,11 @@ namespace RastrChartWPFControl
             LinePath = new Path();
             LinePath.StrokeLineJoin = PenLineJoin.Bevel;
             hodographMode = false;
+        }
+
+        public void CleanUp()
+        {
+            points.PointsChanged -= OnPointsChanged;
         }
 
         public MiniPoints Points
@@ -748,6 +765,9 @@ namespace RastrChartWPFControl
             bool bFirst = true;
             foreach (MiniChannel mc in Channels)
             {
+                if (!mc.Visible)
+                    continue;
+
                 if (bFirst)
                 {
                     bFirst = false;
@@ -769,7 +789,11 @@ namespace RastrChartWPFControl
                 bool bFirst = true;
                 foreach (MiniChannel mc in Channels)
                 {
+                    if (!mc.Visible)
+                        continue;
+
                     mc.CalculateBounds();
+
                     if (bFirst)
                     {
                         bFirst = false;
@@ -824,6 +848,16 @@ namespace RastrChartWPFControl
                 }
             }
             return bRes;
+        }
+
+        public void CleanUp()
+        {
+            foreach (var channel in Channels)
+            {
+                channel.ChannelChanged -= OnChannelChanged;
+                channel.CleanUp();
+            }
+            Channels.Clear();
         }
 
     }

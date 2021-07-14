@@ -293,6 +293,15 @@ namespace RastrChartWPFControl
             AxisConstraints = new AxisConstraints();
             MouseRightButtonDown += OnRightClick;
             MouseWheel += OnMouseWheel;
+            Unloaded += AxisX_Unloaded;
+        }
+
+        private void AxisX_Unloaded(object sender, RoutedEventArgs e)
+        {
+            MouseWheel -= OnMouseWheel;
+            MouseRightButtonDown -= OnRightClick;
+            Unloaded -= AxisX_Unloaded;
+            Children.Clear();
         }
 
         public override AxisData WorldMinMax()
@@ -378,14 +387,17 @@ namespace RastrChartWPFControl
 
         public AxisY()
         {
+            MouseDownPoint = new Point();
+
             MouseWheel += OnMouseWheel;
             MouseLeftButtonDown += OnMouseLBDown;
             MouseLeftButtonUp += OnMouseLBUp;
             MouseMove += OnMouseMove;
             LostMouseCapture += OnLostMouseCapture;
-            MouseDownPoint = new Point();
             MouseEnter += OnMouseEnter;
             MouseLeave += OnMouseLeave;
+            Unloaded += AxisY_Unloaded;
+
             bDrag = false;
             MainAxis = false;
             units = new TextBlock();
@@ -396,6 +408,19 @@ namespace RastrChartWPFControl
             SetRight(units, 1);
             SetTop(units, 0);
             units.Text = "";
+        }
+
+        private void AxisY_Unloaded(object sender, RoutedEventArgs e)
+        {
+            MouseWheel -= OnMouseWheel;
+            MouseLeftButtonDown -= OnMouseLBDown;
+            MouseLeftButtonUp -= OnMouseLBUp;
+            MouseMove -= OnMouseMove;
+            LostMouseCapture -= OnLostMouseCapture;
+            MouseEnter -= OnMouseEnter;
+            MouseLeave -= OnMouseLeave;
+            Unloaded -= AxisY_Unloaded;
+            Children.Clear();
         }
 
         public bool MainAxis
@@ -617,6 +642,15 @@ namespace RastrChartWPFControl
             Orientation = System.Windows.Controls.Orientation.Horizontal;
             axes = new List<AxisY>();
             MouseRightButtonDown += OnRightClick;
+            Unloaded += AxisYBlock_Unloaded;
+        }
+
+        private void AxisYBlock_Unloaded(object sender, RoutedEventArgs e)
+        {
+            MouseRightButtonDown -= OnRightClick;
+            Unloaded -= AxisYBlock_Unloaded;
+            RemoveAllAxes();
+            Children.Clear();
         }
 
         internal AxisY GetMainAxis()

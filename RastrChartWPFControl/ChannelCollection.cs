@@ -58,5 +58,10 @@ namespace RastrChartWPFControl
         {
             plotter.SortChannelsByTags();
         }
+
+        public void TidySinglePointed()
+        {
+            plotter.TidySinglePointed();
+        }
     }
 }

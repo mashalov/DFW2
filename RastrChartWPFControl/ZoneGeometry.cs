@@ -94,6 +94,11 @@ namespace RastrChartWPFControl
             if (ZoneParametersChanged != null)
                 ZoneParametersChanged(this, new EventArgs());
         }
+
+        public virtual void CleanUp()
+        {
+            
+        }
    }
     
     internal static class StaticColors
@@ -153,6 +158,8 @@ namespace RastrChartWPFControl
     internal class ZoneCrossMarker
     {
         private MiniPoint worldInfo;
+        private Line LineL = null, LineR = null;
+        private MiniChart mc_ = null;
         internal ZoneCrossMarker(MiniPoint WorldInfo)
         {
             worldInfo = WorldInfo;
@@ -163,10 +170,20 @@ namespace RastrChartWPFControl
             get { return worldInfo; }
         }
 
+        public void CleanUp()
+        {
+            if (LineL != null)
+            {
+                LineL.ToolTipOpening -= mc_.OnCrossMarkToolTip;
+                LineR.ToolTipOpening -= mc_.OnCrossMarkToolTip;
+            }
+        }
+
         public void Place(Canvas PlaceCanvas, Point ZoomFactor, Point Offset, MiniChart mc)
         {
-            Line LineL = new Line();
-            Line LineR = new Line();
+            LineL = new Line();
+            LineR = new Line();
+            mc_ = mc;
             LineL.StrokeThickness = LineR.StrokeThickness = 3;
             LineL.Stroke = LineR.Stroke = StaticColors.ZoneCross;
             LineL.StrokeEndLineCap = LineL.StrokeStartLineCap = PenLineCap.Round;
@@ -175,6 +192,7 @@ namespace RastrChartWPFControl
             PlaceCanvas.Children.Add(LineR);
 
             double size = 0.5 * ZoomFactor.X;
+            size = Math.Min(Math.Max(1.0, size),10.0);
 
             Point worldPosition = new Point(worldInfo.X * ZoomFactor.X + Offset.X, -worldInfo.Y * ZoomFactor.Y + Offset.Y );
            
@@ -313,6 +331,14 @@ namespace RastrChartWPFControl
             cp1 = new ControlPoint(this);
             cp1.PositionChanged += OnCPPositionChanged;
         }
+
+
+        public override void CleanUp()
+        {
+            cp1.PositionChanged -= OnCPPositionChanged;
+            base.CleanUp();
+        }
+
         public override ControlPoint[] ControlPoints
         {
             get { return new ControlPoint[] { cp1 }; }
@@ -578,7 +604,12 @@ namespace RastrChartWPFControl
             }
             OnZoneParametersChanged();
         }
-               
+
+        public override void CleanUp()
+        {
+            cp2.PositionChanged -= OnCPPositionChanged;
+            base.CleanUp();
+        }
 
         public override ControlPoint[] ControlPoints
         {
@@ -688,6 +719,14 @@ namespace RastrChartWPFControl
             cpCenter.PositionChanged  += OnCPPositionChanged;
             cpYRadius.PositionChanged += OnCPPositionChanged;
             cpXRadius.PositionChanged += OnCPPositionChanged;   
+        }
+
+        public override void CleanUp()
+        {
+            cpCenter.PositionChanged -= OnCPPositionChanged;
+            cpYRadius.PositionChanged -= OnCPPositionChanged;
+            cpXRadius.PositionChanged -= OnCPPositionChanged;
+            base.CleanUp();
         }
 
         public double Z
@@ -1063,6 +1102,13 @@ namespace RastrChartWPFControl
             }
         }
 
+        public override void CleanUp()
+        {
+            foreach (var point in cps)
+                point.PositionChanged -= OnCPPositionChanged;
+            base.CleanUp();
+        }
+
         public bool RemoveControlPoint(ControlPoint ControlPointToRemove)
         {
             bool bRes = false;
@@ -1168,6 +1214,13 @@ namespace RastrChartWPFControl
             bProgrammaticChange = false;
             cpZr.PositionChanged += OnCPPositionChanged;
             cpZo.PositionChanged += OnCPPositionChanged;
+        }
+
+        public override void CleanUp()
+        {
+            cpZr.PositionChanged -= OnCPPositionChanged;
+            cpZo.PositionChanged -= OnCPPositionChanged;
+            base.CleanUp();
         }
         public double Zr
         {
@@ -1317,6 +1370,15 @@ namespace RastrChartWPFControl
             cpSideBot.PositionChanged += OnCPPositionChanged;
 
             PlaceControlPoints();
+        }
+
+        public override void CleanUp()
+        {
+            cpCenter.PositionChanged -= OnCPPositionChanged;
+            cpHAngle.PositionChanged -= OnCPPositionChanged;
+            cpSideTop.PositionChanged -= OnCPPositionChanged;
+            cpSideBot.PositionChanged -= OnCPPositionChanged;
+            base.CleanUp();
         }
 
         protected void PlaceControlPoints()
