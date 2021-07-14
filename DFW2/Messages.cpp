@@ -196,3 +196,5 @@ const char* CDFW2Messages::m_cszError = "Ошибка: ";
 const char* CDFW2Messages::m_cszEvent = "Событие: ";
 const char* CDFW2Messages::m_cszLogStarted = "{} {} от {} на {}. Протокол запущен в режиме \"{}\"";
 const char* CDFW2Messages::m_cszLFNodeImbalance = "Небаланс УР в узле {} : {}";
+const char* CDFW2Messages::m_cszMaxBranchAngle = "Максимальный угол по связи {:.3f} \"{}\" при t={}";
+const char* CDFW2Messages::m_cszMaxGeneratorAngle = "Максимальный угол по генератору {:.3f} \"{}\" при t={}";

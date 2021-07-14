@@ -473,17 +473,18 @@ bool CDynaModel::StabilityLost()
 		for (const auto& dev : Branches)
 		{
 			CDynaBranch* pBranch(static_cast<CDynaBranch*>(dev));
-			if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_ON) continue;
+			const auto ret = CheckAnglesCrossedPi(pBranch->m_pNodeIp->Delta, pBranch->m_pNodeIq->Delta, pBranch->deltaDiff);
+			sc.m_MaxBranchAngle.UpdateAbs(pBranch->deltaDiff, GetCurrentTime(), pBranch);
+			if (ret.first)
 			{
-				const auto ret = CheckAnglesCrossedPi(pBranch->m_pNodeIp->Delta, pBranch->m_pNodeIq->Delta, pBranch->deltaDiff);
-				if (ret.first)
-				{
-					bStabilityLost = true;
-					Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
-						pBranch->GetVerbalName(),
-						ret.second,
-						GetCurrentTime()));
-				}
+				bStabilityLost = true;
+				// если возник АР, максимальный угол уже не нужен
+				sc.m_MaxBranchAngle.Reset();
+				Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
+					pBranch->GetVerbalName(),
+					ret.second,
+					GetCurrentTime()));
 			}
 		}
 	}
@@ -499,26 +500,32 @@ bool CDynaModel::StabilityLost()
 				for (auto&& gen : *gencontainer)
 				{
 					CDynaGeneratorMotion* pGen(static_cast<CDynaGeneratorMotion*>(gen));
-					if (pGen->InMatrix())
+					if (!pGen->InMatrix()) continue;
+					const double nodeDelta(static_cast<const CDynaNodeBase*>(pGen->GetSingleLink(0))->Delta);
+					// угол генератора рассчитывается без периодизации и не подходит для CheckAnglesCrossedPi,
+					// поэтому мы должны удалить период. Имеем два варианта : atan2 (медленно но надежно) 
+					// и функция WrapPosNegPI (быстро и возможны проблемы)
+					//const auto ret(CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff));
+					const auto ret(CheckAnglesCrossedPi(CDynaModel::WrapPosNegPI(pGen->Delta), nodeDelta, pGen->deltaDiff));
+					sc.m_MaxGeneratorAngle.UpdateAbs(pGen->deltaDiff, GetCurrentTime(), pGen);
+					if (ret.first)
 					{
-						const double nodeDelta(static_cast<const CDynaNodeBase*>(pGen->GetSingleLink(0))->Delta);
-						// угол генератора рассчитывается без периодизации и не подходит для CheckAnglesCrossedPi,
-						// поэтому мы должны удалить период. Имеем два варианта : atan2 (медленно но надежно) 
-						// и функция WrapPosNegPI (быстро и возможны проблемы)
-						//const auto ret(CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff));
-						const auto ret(CheckAnglesCrossedPi(CDynaModel::WrapPosNegPI(pGen->Delta), nodeDelta, pGen->deltaDiff));
-						if (ret.first)
-						{
-							bStabilityLost = true;
-							Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
-								pGen->GetVerbalName(),
-								ret.second,
-								GetCurrentTime()));
-						}
+						bStabilityLost = true;
+						// если возник АР, максимальный угол уже не нужен
+						Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
+							pGen->GetVerbalName(),
+							ret.second,
+							GetCurrentTime()));
 					}
 				}
 			}
 		}
+	}
+
+	if (bStabilityLost)
+	{
+		sc.m_MaxGeneratorAngle.Reset();
+		sc.m_MaxBranchAngle.Reset();
 	}
 
 	return bStabilityLost;

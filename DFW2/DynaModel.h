@@ -13,6 +13,7 @@
 #include "PlatformFolders.h"
 #include "LoadFlow.h"
 #include "version.h"
+#include "Statistics.h"
 
 //#define USE_FMA
 namespace DFW2
@@ -275,8 +276,7 @@ namespace DFW2
 			double m_dLastRefactorH = 0.0;
 			bool bRingingDetected = false;
 
-			double m_dMaxBranchDelta = 0.0;
-			double m_dMaxGeneratorDelta = 0.0;
+			StatisticsMaxFinder m_MaxBranchAngle, m_MaxGeneratorAngle;
 
 			StepControl()
 			{

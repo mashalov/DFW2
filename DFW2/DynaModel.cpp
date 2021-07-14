@@ -148,6 +148,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_bUseRefactor = true;
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
+		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = true;
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга
@@ -156,9 +157,6 @@ bool CDynaModel::RunTransient()
 
 		//m_Parameters.m_dOutStep = 1E-5;
 		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
-
-		//m_Parameters.m_bStopOnBranchOOS = true;
-		//m_Parameters.m_bStopOnGeneratorOOS = true;
 
 		bRes = bRes && Link();
 		TurnOffDevicesByOffMasters();
@@ -321,6 +319,18 @@ bool CDynaModel::RunTransient()
 		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Max condition number {} at time {}",
 																	 sc.dMaxConditionNumber,
 																	 sc.dMaxConditionNumberTime));
+
+		if (m_Parameters.m_bStopOnBranchOOS && sc.m_MaxBranchAngle.Device())
+			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszMaxBranchAngle,
+				sc.m_MaxBranchAngle.Value() * 180.0 / M_PI,
+				sc.m_MaxBranchAngle.Device()->GetVerbalName(),
+				sc.m_MaxBranchAngle.Time()));
+
+		if (m_Parameters.m_bStopOnGeneratorOOS && sc.m_MaxGeneratorAngle.Device())
+			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszMaxGeneratorAngle,
+				sc.m_MaxGeneratorAngle.Value() * 180 / M_PI,
+				sc.m_MaxGeneratorAngle.Device()->GetVerbalName(),
+				sc.m_MaxGeneratorAngle.Time()));
 
 		GetWorstEquations(10);
 		std::chrono::milliseconds CalcDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - sc.m_ClockStart);

@@ -195,6 +195,8 @@ namespace DFW2
 		static const char* m_cszLogStarted;
 		static const char* m_cszOS;
 		static const char* m_cszLFNodeImbalance;
+		static const char* m_cszMaxBranchAngle;
+		static const char* m_cszMaxGeneratorAngle;
 	};
 }
 
