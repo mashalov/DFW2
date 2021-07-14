@@ -31,7 +31,7 @@ void DeviceTypeInfo::AddDevice(const std::string_view DeviceName,
 	const ResultIds& ParentTypes)
 {
 	auto CurrentDevice = m_pDeviceInstances.get() + CurrentInstanceIndex;
-	if (CurrentInstanceIndex < DevicesCount)
+	if (CurrentInstanceIndex < static_cast<size_t>(DevicesCount))
 	{
 		CurrentDevice->nIndex = static_cast<ptrdiff_t>(CurrentInstanceIndex);
 		CurrentDevice->Name = DeviceName;
