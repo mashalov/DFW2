@@ -2,11 +2,6 @@
 #include "DynaVoltageSource.h"
 using namespace DFW2;
 
-CDynaVoltageSource::CDynaVoltageSource() : CDynaPowerInjector()
-{
-
-}
-
 eDEVICEFUNCTIONSTATUS CDynaVoltageSource::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
 	return CDynaPowerInjector::UpdateExternalVariables(pDynaModel);

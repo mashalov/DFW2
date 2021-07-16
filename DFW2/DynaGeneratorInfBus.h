@@ -12,10 +12,10 @@ namespace DFW2
 		virtual cplx GetXofEqs() { return cplx(0,xd1); }
 		VariableIndex Delta, Eqs;
 		double xd1;
-		CDynaGeneratorInfBusBase();
+		using CDynaVoltageSource::CDynaVoltageSource;
+		virtual ~CDynaGeneratorInfBusBase() = default;
 		virtual double Xgen();
 		virtual cplx Igen(ptrdiff_t nIteration);
-		virtual ~CDynaGeneratorInfBusBase() = default;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		cplx GetEMF() override { return std::polar((double)Eqs, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;

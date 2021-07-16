@@ -6,11 +6,6 @@
 
 using namespace DFW2;
 
-CDynaGeneratorInfBusBase::CDynaGeneratorInfBusBase() : CDynaVoltageSource()
-{
-
-}
-
 bool CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
@@ -54,9 +49,6 @@ bool CDynaGeneratorInfBusBase::CalculatePower()
 {
 	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs().imag();
 	Iim = (Vre - Eqs * cos(Delta)) / GetXofEqs().imag();
-
-	P = 2.0 * P;
-
 	P =  Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
 	return true;

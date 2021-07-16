@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaGeneratorPark3C.h"
 
 using namespace DFW2;

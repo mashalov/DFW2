@@ -9,7 +9,6 @@ namespace DFW2
 	{
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		cplx GetXofEqs() override { return cplx(0, xq); };
 	public:
 
 		enum VARS
@@ -24,7 +23,7 @@ namespace DFW2
 		double Td0ss, Tq0ss;
 		double xd2, xq1, xq2;
 
-		CDynaGenerator3C();
+		using CDynaGenerator1C::CDynaGenerator1C;
 		virtual ~CDynaGenerator3C() = default;
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;

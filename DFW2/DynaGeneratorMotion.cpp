@@ -5,12 +5,6 @@
 
 using namespace DFW2;
 
-CDynaGeneratorMotion::CDynaGeneratorMotion() : CDynaGeneratorInfBusBase()
-{
-
-}
-
-
 VariableIndexRefVec& CDynaGeneratorMotion::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDynaGeneratorInfBusBase::GetVariables(JoinVariables({ s, Delta },ChildVec));

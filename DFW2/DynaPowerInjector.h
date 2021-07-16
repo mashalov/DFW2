@@ -35,7 +35,9 @@ namespace DFW2
 
 		double NodeId;
 
-		CDynaPowerInjector(); 
+		using CDevice::CDevice; 
+		virtual ~CDynaPowerInjector() = default;
+
 		virtual bool CalculatePower() { return true; }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;

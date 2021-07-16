@@ -9,10 +9,9 @@ namespace DFW2
 	{
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		cplx GetXofEqs() override { return cplx(0, xq); }
 	public:
 
-		CDynaGeneratorMustang();
+		using CDynaGenerator3C::CDynaGenerator3C;
 		virtual ~CDynaGeneratorMustang() = default;
 
 		bool BuildEquations(CDynaModel* pDynaModel) override;

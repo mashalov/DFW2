@@ -4,11 +4,6 @@
 #include "DynaModel.h"
 using namespace DFW2;
 
-CDynaPowerInjector::CDynaPowerInjector() : CDevice()
-{
-
-}
-
 double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
 	double *p(nullptr);

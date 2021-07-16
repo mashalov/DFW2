@@ -28,7 +28,7 @@ namespace DFW2
 
 		double	Unom, Kdemp, xq, Mj, Pt, Pnom, cosPhinom, deltaDiff = 0.0;
 
-		CDynaGeneratorMotion();
+		using CDynaGeneratorInfBusBase::CDynaGeneratorInfBusBase;
 		virtual ~CDynaGeneratorMotion() = default;
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;

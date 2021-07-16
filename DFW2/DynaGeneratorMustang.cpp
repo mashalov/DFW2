@@ -6,11 +6,6 @@
 
 using namespace DFW2;
 
-CDynaGeneratorMustang::CDynaGeneratorMustang() : CDynaGenerator3C()
-{
-
-}
-
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 {
 	xq1 = xq;
@@ -18,6 +13,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 	if (!pDynaModel->ConsiderDampingEquation())
 		Kdemp = 0.0;
 
+	r = 0.0;		/// в модели генератора Мустанг активного сопротивления статора нет
 
 	if (Kgen > 1)
 	{

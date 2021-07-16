@@ -6,10 +6,6 @@
 
 using namespace DFW2;
 
-CDynaGenerator3C::CDynaGenerator3C() : CDynaGenerator1C()
-{
-
-}
 
 eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
 {

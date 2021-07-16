@@ -6,11 +6,6 @@
 
 using namespace DFW2;
 
-CDynaGenerator1C::CDynaGenerator1C() : CDynaGeneratorMotion()
-{
-
-}
-
 eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 {
 
@@ -18,15 +13,13 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 	if (xd <= 0) xd = xd1;
 	if (xq <= 0) xq = xd1;
 
-	r = 0.0;		/// debug !!!!!
-
 	if (Kgen > 1)
 	{
 		xd /= Kgen;
 		r /= Kgen;
 	}
 
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorMotion::Init(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::Init(pDynaModel);
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -56,22 +49,14 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 	return Status;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGenerator1C::ProcessDiscontinuity(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGenerator1C::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorMotion::ProcessDiscontinuity(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel);
 	if (CDevice::IsFunctionStatusOK(eRes))
 	{
 		if (IsStateOn())
 		{
-			double DeltaGT = Delta - DeltaV;
-			double NodeV = V;
-			Vd = -NodeV * sin(DeltaGT);
-			Vq = NodeV * cos(DeltaGT);
-			double det = (Vd * Vd + Vq * Vq);
-			Id = (P * Vd - Q * Vq) / det;
-			Iq = (Q * Vd + P * Vq) / det;
 			Eq = Eqs - Id * (xd - xd1);
-			IfromDQ();
 		}
 		else
 		{
@@ -293,72 +278,15 @@ bool CDynaGenerator1C::BuildDerivatives(CDynaModel *pDynaModel)
 
 double* CDynaGenerator1C::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = CDynaGeneratorMotion::GetVariablePtr(nVarIndex);
+	double *p = CDynaGeneratorDQBase::GetVariablePtr(nVarIndex);
 	if (!p)
 	{
 		switch (nVarIndex)
 		{
 			MAP_VARIABLE(Eqs.Value, V_EQS)
-			MAP_VARIABLE(Vd.Value, V_VD)
-			MAP_VARIABLE(Vq.Value, V_VQ)
-			MAP_VARIABLE(Id.Value, V_ID)
-			MAP_VARIABLE(Iq.Value, V_IQ)
-			MAP_VARIABLE(Eq.Value, V_EQ)
 		}
 	}
 	return p;
-}
-
-
-double* CDynaGenerator1C::GetConstVariablePtr(ptrdiff_t nVarIndex)
-{
-	double *p = CDynaGeneratorMotion::GetConstVariablePtr(nVarIndex);
-	if (!p)
-	{
-		switch (nVarIndex)
-		{
-			MAP_VARIABLE(m_ExciterId, C_EXCITERID)
-			MAP_VARIABLE(Eqnom, C_EQNOM)
-			MAP_VARIABLE(Snom, C_SNOM)
-			MAP_VARIABLE(Qnom, C_QNOM)
-			MAP_VARIABLE(Inom, C_INOM)
-			MAP_VARIABLE(*ExtEqe.pValue, C_EQE)
-		}
-	}
-	return p;
-}
-
-eDEVICEFUNCTIONSTATUS CDynaGenerator1C::UpdateExternalVariables(CDynaModel *pDynaModel)
-{
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorMotion::UpdateExternalVariables(pDynaModel);
-	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtEqe, pExciter, m_cszEqe));
-	return eRes;
-}
-
-double CDynaGenerator1C::Xgen()
-{
-	return 0.5 * (xq + xd1);
-}
-
-cplx CDynaGenerator1C::Igen(ptrdiff_t nIteration)
-{
-	cplx YgInt = 1.0 / cplx(0.0, Xgen());
-
-	if (!nIteration)
-		m_Egen = GetEMF();
-	else
-	{
-		cplx Ig = (m_Egen - std::polar((double)V, (double)DeltaV)) * YgInt;
-		cplx Idq = Ig * std::polar(1.0, -Delta);
-		Id = Idq.imag();
-		Iq = Idq.real();
-	}
-	
-	//double Id0 = Id, Iq0 = Iq;
-	cplx Ig = CalculateEgen() * YgInt;
-	//Id = Id0; Iq = Iq0;
-	return Ig;
 }
 
 const cplx& CDynaGenerator1C::CalculateEgen()
@@ -395,104 +323,27 @@ bool CDynaGenerator1C::CalculatePower()
 
 void CDynaGenerator1C::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDynaGeneratorMotion::DeviceProperties(props);
+	CDynaGeneratorDQBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_1C);
-	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGenerator1C::m_cszExciterId);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator1C, CDeviceContainerProperties::m_cszSysNameGenerator1C);
-
 	props.nEquationsCount = CDynaGenerator1C::VARS::V_LAST;
-
 	props.m_VarMap.insert(std::make_pair("Eqs", CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEq, CVarIndex(CDynaGenerator1C::V_EQ, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair("Id", CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Iq", CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Vd", CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair("Vq", CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
-
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszExciterId, CConstVarIndex(CDynaGenerator1C::C_EXCITERID, eDVT_CONSTSOURCE)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqnom, CConstVarIndex(CDynaGenerator1C::C_EQNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszSnom, CConstVarIndex(CDynaGenerator1C::C_SNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszInom, CConstVarIndex(CDynaGenerator1C::C_INOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszQnom, CConstVarIndex(CDynaGenerator1C::C_QNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CConstVarIndex(CDynaGenerator1C::C_EQE, eDVT_INTERNALCONST)));
-
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGenerator1C>>();
-}
-
-void CDynaGenerator1C::IfromDQ()
-{
-	double co(cos(Delta)), si(sin(Delta));
-
-	Ire = Iq * co - Id * si;
-	Iim = Iq * si + Id * co;
-}
-
-
-// вводит в матрицу блок уравнении для преобразования
-// из dq в ri
-bool CDynaGenerator1C::BuildIfromDQEquations(CDynaModel *pDynaModel)
-{
-
-	double co(cos(Delta)), si(sin(Delta));
-
-	// dIre / dIre
-	pDynaModel->SetElement(Ire, Ire, 1.0);
-	// dIre / dId
-	pDynaModel->SetElement(Ire, Id, si);
-	// dIre / dIq
-	pDynaModel->SetElement(Ire, Iq, -co);
-	// dIre / dDeltaG
-	pDynaModel->SetElement(Ire, Delta, Iq * si + Id * co);
-
-	// dIim / dIim
-	pDynaModel->SetElement(Iim, Iim, 1.0);
-	// dIim / dId
-	pDynaModel->SetElement(Iim, Id, -co);
-	// dIim / dIq
-	pDynaModel->SetElement(Iim, Iq, -si);
-	// dIim / dDeltaG
-	pDynaModel->SetElement(Iim, Delta, Id * si - Iq * co);
-
-	return true;
-}
-
-// вводит в правую часть уравнения для преобразования 
-// из dq в ri
-bool CDynaGenerator1C::BuildIfromDQRightHand(CDynaModel *pDynaModel)
-{
-	double co(cos(Delta)), si(sin(Delta));
-	pDynaModel->SetFunction(Ire, Ire - Iq * co + Id * si);
-	pDynaModel->SetFunction(Iim, Iim - Iq * si - Id * co);
-
-	return true;
 }
 
 VariableIndexRefVec& CDynaGenerator1C::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDynaGeneratorMotion::GetVariables(JoinVariables({ Vd, Vq, Id, Iq, Eqs, Eq }, ChildVec));
+	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Eqs }, ChildVec));
 }
 
 void CDynaGenerator1C::UpdateSerializer(CSerializerBase* Serializer)
 {
 	// обновляем сериализатор базового класса
-	CDynaGeneratorMotion::UpdateSerializer(Serializer);
+	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
 	Serializer->AddProperty("td01", Td01, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty("xd", xd, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty("r", r, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_cszExciterId, m_ExciterId);
 	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState("zsq", zsq, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState("Egen", m_Egen, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Vd", Vd, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Vq", Vq, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Ids", Id, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddState("Iqs", Iq, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszEqe, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszSnom, Snom, eVARUNITS::VARUNIT_MVA);
-	Serializer->AddState(m_cszQnom, Qnom, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddState(m_cszInom, Inom, eVARUNITS::VARUNIT_KAMPERES);
 }
 
