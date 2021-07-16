@@ -253,6 +253,9 @@
     <ClInclude Include="Statistics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DynaGeneratorPark3C.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -560,6 +563,9 @@
     </ClCompile>
     <ClCompile Include="ResultsWriterCOM.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaGeneratorPark3C.cpp">
+      <Filter>Source Files\Generators</Filter>
     </ClCompile>
   </ItemGroup>
 </Project>
