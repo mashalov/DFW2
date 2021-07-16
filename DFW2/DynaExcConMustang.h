@@ -22,7 +22,7 @@ namespace DFW2
 		// Единичные масштабы (совместимость с нормальными АРВ)
 		static constexpr GainScales UnityGains = { 1.0, 1.0, 1.0, 1.0 };
 		// Станадартные масштабы для (совместимость с Мустанг)
-		static constexpr GainScales DefaultGains = {};
+		static constexpr GainScales DefaultGains = { 0.72, 0.2, 1.3, 0.5 };
 
 
 		static void ScaleGains(CDynaExcConMustang& excon);
