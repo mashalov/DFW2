@@ -107,11 +107,12 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 	cplx v = std::polar((double)V, (double)DeltaV);
 	_ASSERTE(abs(v) > 0.0);
 	cplx i = conj(S / v);
+	// тут еще надо учитывать сопротивление статора
 	cplx eQ = v + i * GetXofEqs();
 	Delta = arg(eQ);
 	Eqs = abs(eQ);
-	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs().imag();
-	Iim = (Vre - Eqs * cos(Delta)) / GetXofEqs().imag();
+	Ire = i.real();
+	Iim = i.imag();
 	return bRes;
 }
 
