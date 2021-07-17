@@ -96,24 +96,6 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		// dQ/dIq
 		pDynaModel->SetElement(Q, Iq, -Vd);
 
-		// dVd/dVd
-		pDynaModel->SetElement(Vd, Vd, 1);
-		// dVd/dVre
-		pDynaModel->SetElement(Vd, Vre, sing);
-		// dVd/dVim
-		pDynaModel->SetElement(Vd, Vim, -cosg);
-		// dVd/dDeltaG
-		pDynaModel->SetElement(Vd, Delta, Vre * cosg + Vim * sing);
-
-		// dVd/dVd
-		pDynaModel->SetElement(Vq, Vq, 1);
-		// dVd/dVre
-		pDynaModel->SetElement(Vq, Vre, -cosg);
-		// dVd/dVim
-		pDynaModel->SetElement(Vq, Vim, -sing);
-		// dVd/dDeltaG
-		pDynaModel->SetElement(Vq, Delta, Vre * sing - Vim * cosg);
-		
 		// dId/dId
 		pDynaModel->SetElement(Id, Id, 1);
 		// dId/dVq
@@ -183,8 +165,8 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		// dEq / dId
 		pDynaModel->SetElement(Eq, Id, xd - xd2);
 
-
-		bRes = bRes && BuildIfromDQEquations(pDynaModel);
+		// строит уравнения для Vd, Vq, Ire, Iim
+		bRes = bRes && BuildRIfromDQEquations(pDynaModel);
 	}
 	return true;
 }
@@ -197,7 +179,6 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 	if (bRes)
 	{
 		bRes = true;
-		double cosg(cos(Delta)), sing(sin(Delta));
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv);
 
@@ -206,8 +187,6 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 			sp1 = sp2 = 1.0;
 		}
 
-		pDynaModel->SetFunction(Vd, Vd + Vre * sing - Vim * cosg); 
-		pDynaModel->SetFunction(Vq, Vq - Vre * cosg - Vim * sing);
 		pDynaModel->SetFunction(P,  P - sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2)));
 		pDynaModel->SetFunction(Q,  Q - Vd * Iq + Vq * Id);
 
@@ -224,7 +203,9 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
 		pDynaModel->SetFunctionDiff(Eqss, eEqss);
 		pDynaModel->SetFunctionDiff(Edss, eEdss);
-		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
+
+		// строит уравнения для Vd, Vq, Ire, Iim
+		bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
 
 		//DumpIntegrationStep(97, 2028);
 	}

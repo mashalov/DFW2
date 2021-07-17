@@ -166,11 +166,10 @@ const cplx& CDynaGeneratorDQBase::CalculateEgen()
 }
 
 // вводит в матрицу блок уравнении для преобразования
-// из dq в ri
-bool CDynaGeneratorDQBase::BuildIfromDQEquations(CDynaModel* pDynaModel)
+// тока из dq в ri и напряжения из ri в dq
+bool CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 {
-
-	double co(cos(Delta)), si(sin(Delta));
+	const double co(cos(Delta)), si(sin(Delta));
 
 	// dIre / dIre
 	pDynaModel->SetElement(Ire, Ire, 1.0);
@@ -190,16 +189,36 @@ bool CDynaGeneratorDQBase::BuildIfromDQEquations(CDynaModel* pDynaModel)
 	// dIim / dDeltaG
 	pDynaModel->SetElement(Iim, Delta, Id * si - Iq * co);
 
+
+	// dVd/dVd
+	pDynaModel->SetElement(Vd, Vd, 1);
+	// dVd/dVre
+	pDynaModel->SetElement(Vd, Vre, si);
+	// dVd/dVim
+	pDynaModel->SetElement(Vd, Vim, -co);
+	// dVd/dDeltaG
+	pDynaModel->SetElement(Vd, Delta, Vre * co + Vim * si);
+
+	// dVd/dVd
+	pDynaModel->SetElement(Vq, Vq, 1);
+	// dVd/dVre
+	pDynaModel->SetElement(Vq, Vre, -co);
+	// dVd/dVim
+	pDynaModel->SetElement(Vq, Vim, -si);
+	// dVd/dDeltaG
+	pDynaModel->SetElement(Vq, Delta, Vre * si - Vim * co);
+
 	return true;
 }
 
 // вводит в правую часть уравнения для преобразования 
-// из dq в ri
-bool CDynaGeneratorDQBase::BuildIfromDQRightHand(CDynaModel* pDynaModel)
+// тока из dq в ri и напряжения из ri в dq
+bool CDynaGeneratorDQBase::BuildRIfromDQRightHand(CDynaModel* pDynaModel)
 {
-	double co(cos(Delta)), si(sin(Delta));
-	pDynaModel->SetFunction(Ire, Ire - Iq * co + Id * si);
-	pDynaModel->SetFunction(Iim, Iim - Iq * si - Id * co);
-
+	const double co(cos(Delta)), si(sin(Delta));
+	pDynaModel->SetFunction(Ire, Ire - Iq  * co + Id  * si);
+	pDynaModel->SetFunction(Iim, Iim - Iq  * si - Id  * co);
+	pDynaModel->SetFunction(Vd,  Vd  + Vre * si - Vim * co);
+	pDynaModel->SetFunction(Vq,  Vq  - Vre * co - Vim * si);
 	return true;
 }

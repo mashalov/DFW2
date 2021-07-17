@@ -72,18 +72,11 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 
 	if (bRes)
 	{
-		double NodeV  =	V;
-		double DeltaGT = Delta - DeltaV;
-
-		double cosDeltaGT = cos(DeltaGT);
-		double sinDeltaGT = sin(DeltaGT);
-
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv);
 
 		if (!IsStateOn())
 		{
-			NodeV = cosDeltaGT = sinDeltaGT = 0.0;
 			sp1 = sp2 = 1.0;
 		}
 
@@ -121,24 +114,6 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Q, Id, Vq);
 		// dQ/dIq
 		pDynaModel->SetElement(Q, Iq, -Vd);
-
-		// dVd/dVd
-		pDynaModel->SetElement(Vd, Vd, 1);
-		// dVd/dV
-		pDynaModel->SetElement(Vd, V, sinDeltaGT);
-		// dVd/dDeltaV
-		pDynaModel->SetElement(Vd, DeltaV, -NodeV * cosDeltaGT);
-		// dVd/dDeltaG
-		pDynaModel->SetElement(Vd, Delta, NodeV * cosDeltaGT);
-
-		// dVq/dVq
-		pDynaModel->SetElement(Vq, Vq, 1);
-		// dVq/dV
-		pDynaModel->SetElement(Vq, V, -cosDeltaGT);
-		// dVq/dDeltaV
-		pDynaModel->SetElement(Vq, DeltaV, -NodeV * sinDeltaGT);
-		// dVq/dDeltaG
-		pDynaModel->SetElement(Vq, Delta, NodeV * sinDeltaGT);
 
 		// dId/dId
 		pDynaModel->SetElement(Id, Id, 1);
@@ -194,7 +169,7 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		// dEq / dId
 		pDynaModel->SetElement(Eq, Id, xd - xd1);
 
-		bRes = bRes && BuildIfromDQEquations(pDynaModel);
+		bRes = bRes && BuildRIfromDQEquations(pDynaModel);
 
 	}
 
@@ -208,22 +183,16 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 
 	if (bRes)
 	{
-		double NodeV = V;
-		double DeltaGT = Delta - DeltaV;
-		double cosDeltaGT = cos(DeltaGT);
-		double sinDeltaGT = sin(DeltaGT);
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv);
 
 		if (!IsStateOn())
 		{
-			NodeV = cosDeltaGT = sinDeltaGT = 0.0;
 			sp1 = sp2 = 1.0;
 		}
 
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
-		pDynaModel->SetFunction(Vd, Vd + NodeV * sinDeltaGT);
-		pDynaModel->SetFunction(Vq, Vq - NodeV * cosDeltaGT);
+
 		pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
 		pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
 		pDynaModel->SetFunction(Id, Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
@@ -236,7 +205,7 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(Delta, eDelta);
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
 
-		bRes = bRes && BuildIfromDQRightHand(pDynaModel);
+		bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
 	}
 
 	return true;

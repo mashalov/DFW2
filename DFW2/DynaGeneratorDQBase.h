@@ -48,8 +48,10 @@ namespace DFW2
 		double Xgen() override;
 		cplx Igen(ptrdiff_t nIteration) override;
 		virtual const cplx& CalculateEgen();
-		bool BuildIfromDQEquations(CDynaModel* pDynaModel);
-		bool BuildIfromDQRightHand(CDynaModel* pDynaModel);
+
+		// блок матрицы и правая часть уравнения для тока ir<-dq и напряжения dq-<ri
+		bool BuildRIfromDQEquations(CDynaModel* pDynaModel);
+		bool BuildRIfromDQRightHand(CDynaModel* pDynaModel);
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

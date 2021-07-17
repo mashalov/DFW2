@@ -208,6 +208,7 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		
 		pDynaModel->SetFunction(Vd, Vd + NodeV * sinDeltaGT);
 		pDynaModel->SetFunction(Vq, Vq - NodeV * cosDeltaGT);
+
 		pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
 		pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
 		pDynaModel->SetFunction(Id, Id + zsq * (r * (Vd - Edss) + xq2 * (Eqss - Vq)));
