@@ -20,7 +20,7 @@ namespace DFW2
 		};
 
 		VariableIndex Psid, Psiq, Psifd;
-		double xd, xd2, xq1, xq2, xs;
+		double xd, xd2, xq1, xq2, xl, Td01, Tq01, Td02, Tq02;
 
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
@@ -28,6 +28,7 @@ namespace DFW2
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void CalculateFundamentalParameters();
 
 		/*
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
@@ -40,6 +41,9 @@ namespace DFW2
 		*/
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
+
+		static constexpr const char* m_cszxl	= "xl";
+		static constexpr const char* m_csztq01	= "tq01";
 
 	};
 }

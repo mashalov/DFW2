@@ -24,6 +24,43 @@ VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& Chi
 	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psid, Psiq, Psifd }, ChildVec));
 }
 
+void CDynaGeneratorPark3C::CalculateFundamentalParameters()
+{
+	// взаимные индуктивности без рассеивания [3.111 и 3.112]
+	const double xad(xd - xl), xaq(xq - xl);  
+	// сопротивление утечки обмотки возбуждения [4.29]
+	double denom = xad - xd1 + xl;
+	const double xlfd( Equal(denom,0.0) ? xad * (xd1 - xl) / denom : 1E6); 
+	denom = xaq - xq1 + xl;
+	// сопротивление утечки первой демпферной обмотки q [4.33]
+	const double xl1q(Equal(denom, 0.0) ? xaq * (xq1 - xl) / denom : 1E6);
+	// сопротивление утечки демпферной обмотки d [4.28]
+	denom = xad * xlfd - (xd2 - xl) * (xlfd + xad);
+	const double xl1d(Equal(denom, 0.0) ? xad * xlfd * (xd2 - xl) / denom : 1E6);
+	// сопротивление утечки второй демпферной обмотки q [4.32]
+	denom = xaq * xl1q - (xq2 - xl) * ( xl1q + xaq );
+	const double xl2q(Equal(denom, 0.0) ? xaq * xl1q * (xq2 - xl) / denom : 1E6);
+
+	const double xFd(xad + xlfd);		// сопротивление обмотки возбуждения
+	const double x1D(xad + xl1d);		// сопротивление демпферной обмотки d
+	const double x1Q(xaq + xl1q);		// сопротивление первой демпферной обмотки q
+	const double x2Q(xaq + xl2q);		// сопротивление второй демпферной обмотки q
+
+	// активное сопротивление обмотки возбуждения [4.15]
+	const double Rfd = xFd / Td01;
+	// активное сопротивление демпферной обмотки d [4.15]
+	const double R1d = (xad * xlfd / xFd + xl1d) / Td02;	
+	// активное сопротивление первой демпферной обмотки q [4.30]
+	const double R1q = x1Q / Tq01;	
+	// активное сопротивление второй демпферной обмотки q [4.33]
+	const double R2q = (xaq * xl1q / x1Q + xl1d) / Tq02;
+
+
+	
+
+
+}
+
 bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes(true);
@@ -81,4 +118,9 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(CDynaGenerator3C::m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(CDynaGenerator3C::m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztq01, Tq01, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(CDynaGenerator3C::m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
 }
