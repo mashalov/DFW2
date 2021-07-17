@@ -29,8 +29,7 @@ cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 	{
 		cplx Ig = (m_Egen - std::polar((double)V, (double)DeltaV)) * YgInt;
 		cplx Idq = Ig * std::polar(1.0, -Delta);
-		Id = Idq.imag();
-		Iq = Idq.real();
+		FromComplex(Iq, Id, Idq);
 	}
 
 	//double Id0 = Id, Iq0 = Iq;
@@ -119,7 +118,6 @@ void CDynaGeneratorDQBase::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorMotion::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
-	Serializer->AddProperty("r", r, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszExciterId, m_ExciterId);
 	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState("Egen", m_Egen, eVARUNITS::VARUNIT_KVOLTS);

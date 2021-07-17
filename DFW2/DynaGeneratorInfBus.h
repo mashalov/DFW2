@@ -12,6 +12,7 @@ namespace DFW2
 		virtual cplx GetXofEqs() { return cplx(0,xd1); }
 		VariableIndex Delta, Eqs;
 		double xd1;
+		double	r = 0.0;	// активное сопротивление статора
 		using CDynaVoltageSource::CDynaVoltageSource;
 		virtual ~CDynaGeneratorInfBusBase() = default;
 		virtual double Xgen();

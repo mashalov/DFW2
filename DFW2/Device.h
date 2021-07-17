@@ -321,6 +321,12 @@ namespace DFW2
 			return (std::fabs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
 		}
 
+		template<typename T>
+		inline static void FromComplex(T& Re, T& Im, const cplx& source)
+		{
+			Re = source.real();		Im = source.imag();
+		}
+
 		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);
 		void RegisterPrimitive(CDynaPrimitive *pPrimitive);
 

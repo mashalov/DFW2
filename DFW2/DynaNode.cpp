@@ -19,8 +19,7 @@ void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
 	const cplx VreVim(std::polar((double)V, (double)Delta));
-	Vre = VreVim.real();
-	Vim = VreVim.imag();
+	FromComplex(Vre, Vim, VreVim);
 }
 
 void CDynaNodeBase::UpdateVDelta()

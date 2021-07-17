@@ -108,11 +108,10 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 	_ASSERTE(abs(v) > 0.0);
 	cplx i = conj(S / v);
 	// тут еще надо учитывать сопротивление статора
-	cplx eQ = v + i * GetXofEqs();
+	cplx eQ = v + i * cplx(r, GetXofEqs().imag());
 	Delta = arg(eQ);
 	Eqs = abs(eQ);
-	Ire = i.real();
-	Iim = i.imag();
+	FromComplex(Ire, Iim, i);
 	return bRes;
 }
 
@@ -137,6 +136,7 @@ void CDynaGeneratorInfBusBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState("Eqs", Eqs, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(CDynaNodeBase::m_cszDelta, Delta, eVARUNITS::VARUNIT_RADIANS);
 	Serializer->AddProperty("xd1", xd1, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("r", r, eVARUNITS::VARUNIT_OHM);
 }
 
 void CDynaGeneratorInfBus::UpdateSerializer(CSerializerBase* Serializer)

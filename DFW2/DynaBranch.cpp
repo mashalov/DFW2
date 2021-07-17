@@ -667,12 +667,13 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 	m_pBranch->m_pNodeIp->UpdateVreVim();
 	cplx cIb, cIe, cSb, cSe;
 	CDynaBranchMeasure::CalculateFlows(m_pBranch, cIb, cIe, cSb, cSe);
-	Ibre = cIb.real();			Ibim = cIb.imag();
-	Iere = cIe.real();			Ieim = cIe.imag();
-	Ib = abs(cIb);				Ie = abs(cIe);
-	Pb = cSb.real();			Qb = cSb.imag();
-	Pe = cSe.real();			Qe = cSe.imag();
+
+	FromComplex(Ibre, Ibim, cIb);
+	FromComplex(Iere, Ieim, cIe);
+	FromComplex(Pb, Qb, cSb);
+	FromComplex(Pe, Qe, cSe);
 	Sb = abs(cSb);				Se = abs(cSe);
+	Ib = abs(cIb);				Ie = abs(cIe);
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 

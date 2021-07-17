@@ -248,9 +248,9 @@ eDFW2_ACTION_STATE CModelActionChangeBranchImpedance::Do(CDynaModel* pDynaModel)
 		cplx(m_pDynaBranch->R, m_pDynaBranch->X),
 		m_Impedance
 	));
+
+	CDevice::FromComplex(m_pDynaBranch->R, m_pDynaBranch->X, m_Impedance);
 	
-	m_pDynaBranch->R = m_Impedance.real();
-	m_pDynaBranch->X = m_Impedance.imag();
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
@@ -365,8 +365,9 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel* pDynaModel)
 		));
 
 	cplx y = 1.0 / m_ShuntRX;
-	m_pDynaNode->Gshunt = y.real();
-	m_pDynaNode->Bshunt = y.imag();
+
+	CDevice::FromComplex(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt,y);
+
 	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
@@ -395,8 +396,8 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, doub
 
 	rx.real(dValue);
 	rx = 1.0 / rx;
-	m_pDynaNode->Gshunt = rx.real();
-	m_pDynaNode->Bshunt = rx.imag();
+
+	CDevice::FromComplex(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt, rx);
 
 	pDynaModel->ProcessTopologyRequest();
 	return State;
@@ -426,8 +427,8 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, doub
 
 	rx.imag(dValue);
 	rx = 1.0 / rx;
-	m_pDynaNode->Gshunt = rx.real();
-	m_pDynaNode->Bshunt = rx.imag();
+
+	CDevice::FromComplex(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt, rx);
 
 	pDynaModel->ProcessTopologyRequest();
 	return State;
@@ -449,8 +450,8 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntAdmittance::Do(CDynaModel *pDynaMo
 			m_pDynaNode->GetVerbalName(),
 			m_ShuntGB));
 
-	m_pDynaNode->Gshunt = m_ShuntGB.real();
-	m_pDynaNode->Bshunt = m_ShuntGB.imag();
+	CDevice::FromComplex(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt, m_ShuntGB);
+
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
@@ -530,8 +531,9 @@ CModelActionChangeNodeLoad::CModelActionChangeNodeLoad(CDynaNode *pNode, cplx& L
 eDFW2_ACTION_STATE CModelActionChangeNodeLoad::Do(CDynaModel *pDynaModel)
 {
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
-	m_pDynaNode->Pn = m_newLoad.real();
-	m_pDynaNode->Qn = m_newLoad.imag();
+
+	CDevice::FromComplex(m_pDynaNode->Pn, m_pDynaNode->Qn,m_newLoad);
+
 	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }

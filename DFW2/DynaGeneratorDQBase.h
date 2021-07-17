@@ -23,8 +23,6 @@ namespace DFW2
 
 		double m_ExciterId, Eqnom, Snom, Qnom, Inom;
 
-		double	r = 0.0;												// активное сопротивление стетора
-
 		enum VARS
 		{
 			V_VD = CDynaGeneratorMotion::V_LAST,
