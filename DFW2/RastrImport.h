@@ -284,6 +284,11 @@ namespace DFW2
 						// вводим "глобальный" синоним
 						if (serializervalue.first == "state")
 							synonyms.insert("sta");
+						// и еще синоним идентификатора в верхнем регистре
+						// (проблема в том что ток Id совпадает с Id, поэтому для 
+						// названия идентификатора выбран "id")
+						if (serializervalue.first == CDeviceId::m_cszid)
+							synonyms.insert("Id");
 
 						for (const auto& synonym : synonyms)
 						{

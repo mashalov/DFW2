@@ -243,7 +243,7 @@ void CDynaExcConMustang::UpdateSerializer(CSerializerBase* Serializer)
 	CDevice::UpdateSerializer(Serializer);
 	AddStateProperty(Serializer);
 	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
-	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("Alpha", Alpha);
 	Serializer->AddProperty("Trv", Tr, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty("Ku", K0u);

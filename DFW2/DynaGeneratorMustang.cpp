@@ -23,8 +23,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 	}
 
 	double Tds = Td01 * xd1 / xd;
-	double Tdss = Td0ss * xd2 / xd1;
-	xd1 = (xd * (Tds - Td0ss + Tdss) - xd2 * Td0ss) / (Td01 - Td0ss);
+	double Tdss = Td02 * xd2 / xd1;
+	xd1 = (xd * (Tds - Td02 + Tdss) - xd2 * Td02) / (Td01 - Td02);
 
 
 	eDEVICEFUNCTIONSTATUS Status = CDynaGenerator3C::Init(pDynaModel);
@@ -144,19 +144,19 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 
 
 		// dEqss / dEqss
-		pDynaModel->SetElement(Eqss, Eqss, -1.0 / Td0ss);
+		pDynaModel->SetElement(Eqss, Eqss, -1.0 / Td02);
 		// dEqss / dEqs
-		pDynaModel->SetElement(Eqss, Eqs, -(1.0 / Td0ss - 1.0 / Td01));
+		pDynaModel->SetElement(Eqss, Eqs, -(1.0 / Td02 - 1.0 / Td01));
 		// dEqss / dId
-		pDynaModel->SetElement(Eqss, Id, -((xd1 - xd2) / Td0ss + (xd - xd1) / Td01));
+		pDynaModel->SetElement(Eqss, Id, -((xd1 - xd2) / Td02 + (xd - xd1) / Td01));
 		// dEqss / dEqe
 		if (ExtEqe.Indexed())
 			pDynaModel->SetElement(Eqss, ExtEqe, -1.0 / Td01);
 
 		// dEdss / dEdss
-		pDynaModel->SetElement(Edss, Edss, -1.0 / Tq0ss);
+		pDynaModel->SetElement(Edss, Edss, -1.0 / Tq02);
 		// dEdss / dIq
-		pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tq0ss);
+		pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tq02);
 
 		// dEq / dEq
 		pDynaModel->SetElement(Eq, Eq, 1.0);
@@ -196,8 +196,8 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		double eDelta = pDynaModel->GetOmega0() * s;
 		double eS = (Pt / sp1 - Kdemp  * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj;
 		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
-		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq0ss;
-		double eEqss = Eqs * (1.0 / Td0ss - 1.0 / Td01) + Id * ((xd1 - xd2) / Td0ss + (xd - xd1) / Td01) - Eqss / Td0ss + ExtEqe / Td01;
+		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
+		double eEqss = Eqs * (1.0 / Td02 - 1.0 / Td01) + Id * ((xd1 - xd2) / Td02 + (xd - xd1) / Td01) - Eqss / Td02 + ExtEqe / Td01;
 		pDynaModel->SetFunctionDiff(s, eS);
 		pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
@@ -222,8 +222,8 @@ bool CDynaGeneratorMustang::BuildDerivatives(CDynaModel *pDynaModel)
 		{
 			double sp1 = ZeroGuardSlip(1.0 + s);
 			double eS = (Pt / sp1 - Kdemp  * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj;
-			double eEqss = Eqs * (1.0 / Td0ss - 1.0 / Td01) + Id * ((xd1 - xd2) / Td0ss + (xd - xd1) / Td01) - Eqss / Td0ss + ExtEqe / Td01;
-			double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq0ss;
+			double eEqss = Eqs * (1.0 / Td02 - 1.0 / Td01) + Id * ((xd1 - xd2) / Td02 + (xd - xd1) / Td01) - Eqss / Td02 + ExtEqe / Td01;
+			double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
 			pDynaModel->SetDerivative(s, eS);
 			pDynaModel->SetDerivative(Edss, eEdss);
 			pDynaModel->SetDerivative(Eqss, eEqss);

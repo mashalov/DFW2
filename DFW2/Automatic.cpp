@@ -429,7 +429,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 
 void CAutomaticItem::UpdateSerializer(CSerializerBase* pSerializer)
 {
-	pSerializer->AddProperty("Id", m_nId);
+	pSerializer->AddProperty(CDeviceId::m_cszid, m_nId);
 	pSerializer->AddProperty("Type", m_nType);
 	pSerializer->AddProperty("Name", m_strName);
 }

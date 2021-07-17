@@ -310,8 +310,8 @@ void CDynaGenerator1C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
-	Serializer->AddProperty("td01", Td01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("xd", xd, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszxd, xd, eVARUNITS::VARUNIT_OHM);
 	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState("zsq", zsq, eVARUNITS::VARUNIT_PU);
 }

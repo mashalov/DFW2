@@ -34,6 +34,9 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
+
+		static constexpr const char* m_csztd01  = "td01";
+		static constexpr const char* m_cszxd	= "xd";
 	};
 }
 

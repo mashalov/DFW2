@@ -233,7 +233,7 @@ void CDynaExciterMustang::UpdateSerializer(CSerializerBase* Serializer)
 	CDynaExciterBase::UpdateSerializer(Serializer);
 	AddStateProperty(Serializer);
 	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
-	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("Texc", Texc, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty("Uf_min", Umin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty("Uf_max", Umax, eVARUNITS::VARUNIT_PU);

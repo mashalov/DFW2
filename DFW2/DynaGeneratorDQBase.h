@@ -63,6 +63,8 @@ namespace DFW2
 		static constexpr const char* m_cszEq = "Eq";
 		static constexpr const char* m_cszId = "Id";
 		static constexpr const char* m_cszIq = "Iq";
+		static constexpr const char* m_cszVd = "Vd";
+		static constexpr const char* m_cszVq = "Vq";
 		static constexpr const char* m_cszExciterId = "ExciterId";
 		static constexpr const char* m_cszEqnom = "Eqnom";
 		static constexpr const char* m_cszSnom = "Snom";

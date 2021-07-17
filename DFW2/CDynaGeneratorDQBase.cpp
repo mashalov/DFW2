@@ -119,12 +119,11 @@ void CDynaGeneratorDQBase::UpdateSerializer(CSerializerBase* Serializer)
 	CDynaGeneratorMotion::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
 	Serializer->AddProperty(m_cszExciterId, m_ExciterId);
-	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState("Egen", m_Egen, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Vd", Vd, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Vq", Vq, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Ids", Id, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddState("Iqs", Iq, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(m_cszVd, Vd, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszVq, Vq, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszId, Id, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(m_cszIq, Iq, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqe, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
@@ -142,10 +141,10 @@ void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.nEquationsCount = CDynaGeneratorDQBase::VARS::V_LAST;
 
 	props.m_VarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszEq, CVarIndex(CDynaGeneratorDQBase::V_EQ, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair("Id", CVarIndex(CDynaGeneratorDQBase::V_ID, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Iq", CVarIndex(CDynaGeneratorDQBase::V_IQ, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Vd", CVarIndex(CDynaGeneratorDQBase::V_VD, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair("Vq", CVarIndex(CDynaGeneratorDQBase::V_VQ, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(m_cszId, CVarIndex(CDynaGeneratorDQBase::V_ID, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(m_cszIq, CVarIndex(CDynaGeneratorDQBase::V_IQ, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(m_cszVd, CVarIndex(CDynaGeneratorDQBase::V_VD, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert(std::make_pair(m_cszVq, CVarIndex(CDynaGeneratorDQBase::V_VQ, VARUNIT_KVOLTS)));
 
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszExciterId, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, eDVT_CONSTSOURCE)));
 	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszEqnom, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, eDVT_INTERNALCONST)));

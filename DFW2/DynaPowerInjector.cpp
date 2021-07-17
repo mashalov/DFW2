@@ -63,7 +63,7 @@ void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
 	AddStateProperty(Serializer);
-	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
+	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("NodeId", NodeId, eVARUNITS::VARUNIT_NOTSET);
 	Serializer->AddProperty("P", P, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty("Q", Q, eVARUNITS::VARUNIT_MVAR);

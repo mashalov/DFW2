@@ -1,9 +1,44 @@
 ﻿#include "stdafx.h"
+#include "DynaGenerator3C.h"
 #include "DynaGeneratorPark3C.h"
 
 using namespace DFW2;
 
+double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
+{
+	double* p = CDynaGeneratorDQBase::GetVariablePtr(nVarIndex);
+	if (!p)
+	{
+		switch (nVarIndex)
+		{
+			MAP_VARIABLE(Psid.Value, V_PSI_D)
+			MAP_VARIABLE(Psiq.Value, V_PSI_Q)
+			MAP_VARIABLE(Psifd.Value, V_PSI_FD)
+		}
+	}
+	return p;
+}
 
+VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psid, Psiq, Psifd }, ChildVec));
+}
+
+bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
+{
+	bool bRes(true);
+
+	bRes = bRes && BuildRIfromDQEquations(pDynaModel);
+
+	return bRes;
+}
+bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
+{
+	bool bRes(true);
+
+	bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
+	return bRes;
+}
 
 void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)
 {
@@ -31,4 +66,19 @@ void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)
 	*/
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorPark3C>>();
+}
+
+void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
+{
+	// обновляем сериализатор базового класса
+	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
+
+	Serializer->AddState("Psid", Psid, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Psiq", Psiq, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Psifd", Psifd, eVARUNITS::VARUNIT_KVOLTS);
+	
+	Serializer->AddProperty(CDynaGenerator1C::m_cszxd,  xd, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(CDynaGenerator3C::m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
 }

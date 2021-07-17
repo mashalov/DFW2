@@ -165,16 +165,16 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(s, Iq, 1.0 / Mj * (Vq + 2 * Iq * r) / sp2);
 		
 		// dEqss / dEqss
-		pDynaModel->SetElement(Eqss, Eqss, -1.0 / Td0ss);
+		pDynaModel->SetElement(Eqss, Eqss, -1.0 / Td02);
 		// dEqss / dEqs
-		pDynaModel->SetElement(Eqss, Eqs, - 1.0 / Td0ss);
+		pDynaModel->SetElement(Eqss, Eqs, - 1.0 / Td02);
 		// dEqss / dId
-		pDynaModel->SetElement(Eqss, Id, -(xd1 - xd2) / Td0ss);
+		pDynaModel->SetElement(Eqss, Id, -(xd1 - xd2) / Td02);
 
 		// dEdss / dEdss
-		pDynaModel->SetElement(Edss, Edss, -1.0 / Tq0ss);
+		pDynaModel->SetElement(Edss, Edss, -1.0 / Tq02);
 		// dEdss / dIq
-		pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tq0ss);
+		pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tq02);
 
 
 		// dEq / dEq
@@ -220,8 +220,8 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 
-		double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Td0ss;
-		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq0ss;
+		double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Td02;
+		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
 
 		pDynaModel->SetFunctionDiff(s, eS);
 		pDynaModel->SetFunctionDiff(Delta, eDelta);
@@ -241,9 +241,9 @@ bool CDynaGenerator3C::BuildDerivatives(CDynaModel *pDynaModel)
 	{
 		if (IsStateOn())
 		{
-			double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Td0ss;
+			double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Td02;
 			pDynaModel->SetDerivative(Eqss, eEqss);
-			double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq0ss;
+			double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
 			pDynaModel->SetDerivative(Edss, eEdss);
 		}
 		else
@@ -341,11 +341,11 @@ void CDynaGenerator3C::UpdateSerializer(CSerializerBase* Serializer)
 	// добавляем перменные состояния трехконтурной модели в ЭДС
 	Serializer->AddState("Eqss", Eqss, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Edss", Edss, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty("td02", Td0ss, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("tq02", Tq0ss, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("xd2", xd2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty("xq2", xq2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty("xq1", xq1, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 }
 
 void CDynaGenerator3C::DeviceProperties(CDeviceContainerProperties& props)
