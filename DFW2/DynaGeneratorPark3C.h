@@ -13,13 +13,13 @@ namespace DFW2
 
 		enum VARS
 		{
-			V_PSI_D= CDynaGeneratorDQBase::V_LAST,
-			V_PSI_Q,
+			V_PSI_1D= CDynaGeneratorDQBase::V_LAST,
+			V_PSI_1Q,
 			V_PSI_FD,
 			V_LAST
 		};
 
-		VariableIndex Psid, Psiq, Psifd;
+		VariableIndex Psi1d, Psi1q, Psifd;
 		double xd, xd2, xq1, xq2, xl, Td01, Tq01, Td02, Tq02;
 
 

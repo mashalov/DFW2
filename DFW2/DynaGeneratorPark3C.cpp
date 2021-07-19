@@ -11,8 +11,8 @@ double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
 	{
 		switch (nVarIndex)
 		{
-			MAP_VARIABLE(Psid.Value, V_PSI_D)
-			MAP_VARIABLE(Psiq.Value, V_PSI_Q)
+			MAP_VARIABLE(Psi1d.Value, V_PSI_1D)
+			MAP_VARIABLE(Psi1q.Value, V_PSI_1Q)
 			MAP_VARIABLE(Psifd.Value, V_PSI_FD)
 		}
 	}
@@ -21,7 +21,7 @@ double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
 
 VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psid, Psiq, Psifd }, ChildVec));
+	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psi1d, Psi1q, Psifd }, ChildVec));
 }
 
 void CDynaGeneratorPark3C::CalculateFundamentalParameters()
@@ -110,8 +110,8 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 
-	Serializer->AddState("Psid", Psid, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Psiq", Psiq, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Psi1d", Psi1d, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState("Psi1q", Psi1q, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Psifd", Psifd, eVARUNITS::VARUNIT_KVOLTS);
 	
 	Serializer->AddProperty(CDynaGenerator1C::m_cszxd,  xd, eVARUNITS::VARUNIT_OHM);
