@@ -71,27 +71,36 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 
 	detd = 1.0 / detd;	detq = 1.0 / detq;
 
-	double Ed_Psi1q		= -laq * l2q * detq;
-	double Ed_Psi2q		= -laq * l1q * detq;
+	Ed_Psi1q	= -laq * l2q * detq;
+	Ed_Psi2q	= -laq * l1q * detq;
 
-	double Eq_Psifd		=  lad * l1d * detd;
-	double Eq_Psi1d		=  lad * lfd * detd;
+	Eq_Psifd	=  lad * l1d * detd;
+	Eq_Psi1d	=  lad * lfd * detd;
 
-	double Psifd_Psifd	= -Rfd * B * detd;
-	double Psifd_Psi1d	= -Rfd * C * detd;
-	double Psifd_id		= -Rfd * lad * l1d * detd;
+	Psifd_Psifd	= -Rfd * B * detd;
+	Psifd_Psi1d	= -Rfd * C * detd;
+	Psifd_id	= -Rfd * lad * l1d * detd;
 
-	double Psi1d_Psifd	= -R1d * C * detd;
-	double Psi1d_Psi1d	=  R1d * A * detd;
-	double Psi1d_id		= -R1d * lad * lfd * detd;
+	Psi1d_Psifd	= -R1d * C * detd;
+	Psi1d_Psi1d	=  R1d * A * detd;
+	Psi1d_id	= -R1d * lad * lfd * detd;
 
-	double Psi1q_Psi1q	=  R1q * F * detq;
-	double Psi1q_Psi2q  = -R1q * laq * detq;
-	double Psi1q_iq		= -R1q * laq * l2q * detq;
+	Psi1q_Psi1q	=  R1q * F * detq;
+	Psi1q_Psi2q = -R1q * laq * detq;
+	Psi1q_iq	= -R1q * laq * l2q * detq;
 
-	double Psi2q_Psi1q	= -R2q * laq * detq;
-	double Psi2q_Psi2q	=  R2q * D * detq;
-	double Psi2q_iq		= -R2q * laq * l1q * detq;
+	Psi2q_Psi1q	= -R2q * laq * detq;
+	Psi2q_Psi2q	=  R2q * D * detq;
+	Psi2q_iq	= -R2q * laq * l1q * detq;
+
+
+	Psid_id = (lad + xl) + lad * lad * (l1d + lfd) * detd;
+	Psid_Psifd = -lad * l1d * detd;
+	Psid_Psi1d = -lad * lfd * detd;
+
+	Psiq_iq = (laq + xl) + laq * laq * (l1q + l2q) * detq;
+	Psiq_Psi1q = -laq * l2q * detq;
+	Psiq_Psi2q = -laq * l1q * detq;
 
 	lq2 = xq2;
 	ld2 = xd2;
@@ -123,7 +132,7 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	const double omega2 = omega * omega;
 	const double zsq = ZeroDivGuard(1.0, r * r + omega2 * ld2 * lq2);
 
-	double id = zsq * (
+	const double id = zsq * (
 		-r * Vd
 		- omega * lq2 * Vq
 		+ omega2 * lq2 * Eq_Psifd * Psifd
@@ -132,7 +141,7 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 		+ r * omega * Ed_Psi2q * Psi2q
 	);
 
-	double iq = zsq * (
+	const double iq = zsq * (
 		-r * Vq
 		+ omega * ld2 * Vd
 		+ r * omega * Eq_Psifd * Psifd
@@ -141,6 +150,7 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 		- omega2 * ld2 * Ed_Psi2q * Psi2q
 	);
 
+	const double torque = (Psiq_iq * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id - (Psid_id * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq;
 		
 	pDynaModel->SetFunction(Id, Id - id);
 	pDynaModel->SetFunction(Iq, Iq - iq);

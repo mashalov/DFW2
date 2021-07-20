@@ -58,9 +58,11 @@ i2q = Laq/detq * Psi1q - D/detq * Psi2q + Laq*L1q/detq * iq;
 deltai1q = D*i1q + Laq*i2q - Psi1q + Laq*iq
 deltai2q = Laq*i1q + F*i2q - Psi2q + Laq*iq
 
+% напряжения на выводах в функциях от переменных состояния
 ed2 = -Ra * id + omega * (Laq^2*(L2q + L1q) / detq + Laq + Ll) * iq - omega * Laq * L2q /detq * Psi1q - omega * Laq * L1q / detq * Psi2q;
 eq2 = -Ra * iq - omega * (Lad^2*(Lfd + L1d) / detd + Lad + Ll) * id + omega * Lad * L1d / detd * Psifd + omega * Lad * Lfd / detd * Psi1d;
 
+% проверяем
 deltaed2 = ed2 - ed
 deltaeq2 = eq2 - eq
 
@@ -101,14 +103,48 @@ dPsi1q + R1q * i1q;
 dPsi2q = -R2q * Laq / detq * Psi1q + R2q * D / detq * Psi2q - R2q * Laq * L1q / detq * iq;
 dPsi2q + R2q * i2q;
 
+
+% токи в функциях от переменных состояния
 id3 = (-Ra * ed - omega * LQ * eq + omega^2 * LQ * Eq_Psifd * Psifd + omega^2 * LQ * Eq_Psi1d * Psi1d + Ra * omega * Ed_Psi1q * Psi1q + Ra * omega * Ed_Psi2q * Psi2q) / zsq
 iq3 = (-Ra * eq + omega * LD * ed + Ra * omega * Eq_Psifd * Psifd + Ra * omega * Eq_Psi1d * Psi1d - omega^2 * LD * Ed_Psi1q * Psi1q - omega^2 * LD * Ed_Psi2q * Psi2q) / zsq
 
+% проверяем
 deltaid3 = id -id3
 deltaiq3 = iq -iq3
 
-Te = Psiq * id3 - Psid * iq3
-Pair = Te * omega
-Pel = ed * id3 + eq * iq3
-Pel - Pair + Ra * (id3^2 + iq3^2)
+% момент и мощность в сети
+Te = Psiq * id - Psid * iq;
+Pair = Te * omega;
+Pel = ed * id3 + eq * iq3;
+Pel - Pair + Ra * (id3^2 + iq3^2);
+
+% потокосцепления для расчета момента
+Psid2 = ((Lad + Ll) + Lad^2 / detd * (L1d + Lfd)) * id - Lad / detd * L1d * Psifd - Lad / detd * Lfd * Psi1d;
+Psiq2 = ((Laq + Ll) + Laq^2 / detq * (L1q + L2q)) * iq - Laq / detq * L2q * Psi1q - Laq / detq * L1q * Psi2q;
+
+deltaPsid = Psid2 - Psid
+deltaPsiq = Psiq2 - Psiq
+
+Psid_id = ((Lad + Ll) + Lad^2 / detd * (L1d + Lfd))
+Psid_Psifd = - Lad / detd * L1d
+Psid_Psi1d = - Lad / detd * Lfd 
+
+Psiq_iq = ((Laq + Ll) + Laq^2 / detq * (L1q + L2q)) 
+Psiq_Psi1q = - Laq / detq * L2q 
+Psiq_Psi2q = - Laq / detq * L1q 
+
+
+Psid3 = Psid_id * id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d;
+Psiq3 = Psiq_iq * iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q;
+
+deltaPsid = Psid3 - Psid
+deltaPsiq = Psiq3 - Psiq
+
+% расчет момента
+Te2 = Psiq_iq * iq * id + Psiq_Psi1q * Psi1q * id + Psiq_Psi2q * Psi2q * id - Psid_id * id * iq - Psid_Psifd * Psifd * iq - Psid_Psi1d * Psi1d * iq;
+Te3 = (Psiq_iq * iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * id  - (Psid_id * id + Psid_Psifd * Psifd  + Psid_Psi1d * Psi1d ) * iq;
+    
+deltate = Te - Te2
+deltate = Te - Te3
+
 

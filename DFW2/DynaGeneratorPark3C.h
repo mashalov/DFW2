@@ -33,6 +33,9 @@ namespace DFW2
 		double Psi1q_Psi1q, Psi1q_Psi2q, Psi1q_iq;
 		double Psi2q_Psi1q, Psi2q_Psi2q, Psi2q_iq;
 
+		double Psid_id, Psid_Psifd, Psid_Psi1d;
+		double Psiq_iq, Psiq_Psi1q, Psiq_Psi2q;
+
 		double lq2, ld2;
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
