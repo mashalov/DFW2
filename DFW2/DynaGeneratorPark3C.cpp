@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DynaGenerator3C.h"
 #include "DynaGeneratorPark3C.h"
+#include "DynaModel.h"
 
 using namespace DFW2;
 
@@ -11,9 +12,10 @@ double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
 	{
 		switch (nVarIndex)
 		{
+			MAP_VARIABLE(Psifd.Value, V_PSI_FD)
 			MAP_VARIABLE(Psi1d.Value, V_PSI_1D)
 			MAP_VARIABLE(Psi1q.Value, V_PSI_1Q)
-			MAP_VARIABLE(Psifd.Value, V_PSI_FD)
+			MAP_VARIABLE(Psi2q.Value, V_PSI_2Q)
 		}
 	}
 	return p;
@@ -21,44 +23,78 @@ double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
 
 VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psi1d, Psi1q, Psifd }, ChildVec));
+	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psifd, Psi1d, Psi1q, Psi2q }, ChildVec));
 }
 
 void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 {
 	// взаимные индуктивности без рассеивания [3.111 и 3.112]
-	const double xad(xd - xl), xaq(xq - xl);  
+	const double lad(xd - xl), laq(xq - xl);  
 	// сопротивление утечки обмотки возбуждения [4.29]
-	double denom = xad - xd1 + xl;
-	const double xlfd( Equal(denom,0.0) ? xad * (xd1 - xl) / denom : 1E6); 
-	denom = xaq - xq1 + xl;
+	double denom = lad - xd1 + xl;
+	const double lfd( Equal(denom,0.0) ? lad * (xd1 - xl) / denom : 1E6); 
+	denom = laq - xq1 + xl;
 	// сопротивление утечки первой демпферной обмотки q [4.33]
-	const double xl1q(Equal(denom, 0.0) ? xaq * (xq1 - xl) / denom : 1E6);
+	const double l1q(Equal(denom, 0.0) ? laq * (xq1 - xl) / denom : 1E6);
 	// сопротивление утечки демпферной обмотки d [4.28]
-	denom = xad * xlfd - (xd2 - xl) * (xlfd + xad);
-	const double xl1d(Equal(denom, 0.0) ? xad * xlfd * (xd2 - xl) / denom : 1E6);
+	denom = lad * lfd - (xd2 - xl) * (lfd + lad);
+	const double l1d(Equal(denom, 0.0) ? lad * lfd * (xd2 - xl) / denom : 1E6);
 	// сопротивление утечки второй демпферной обмотки q [4.32]
-	denom = xaq * xl1q - (xq2 - xl) * ( xl1q + xaq );
-	const double xl2q(Equal(denom, 0.0) ? xaq * xl1q * (xq2 - xl) / denom : 1E6);
+	denom = laq * l1q - (xq2 - xl) * ( l1q + laq );
+	const double l2q(Equal(denom, 0.0) ? laq * l1q * (xq2 - xl) / denom : 1E6);
 
-	const double xFd(xad + xlfd);		// сопротивление обмотки возбуждения
-	const double x1D(xad + xl1d);		// сопротивление демпферной обмотки d
-	const double x1Q(xaq + xl1q);		// сопротивление первой демпферной обмотки q
-	const double x2Q(xaq + xl2q);		// сопротивление второй демпферной обмотки q
+
+	const double lrc = 0.0;
+
+	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
+	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
+	const double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
+	const double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
 
 	// активное сопротивление обмотки возбуждения [4.15]
-	const double Rfd = xFd / Td01;
+	const double Rfd = lFd / Td01;
 	// активное сопротивление демпферной обмотки d [4.15]
-	const double R1d = (xad * xlfd / xFd + xl1d) / Td02;	
+	const double R1d = (lad * lfd / lFd + l1d) / Td02;	
 	// активное сопротивление первой демпферной обмотки q [4.30]
-	const double R1q = x1Q / Tq01;	
-	// активное сопротивление второй демпферной обмотки q [4.33]
-	const double R2q = (xaq * xl1q / x1Q + xl1d) / Tq02;
+	const double R1q = l1Q / Tq01;	
+	// активное сопротивление второй демпферной обмотки q [4.31]
+	const double R2q = (laq * l1q / l1Q + l2q) / Tq02;
 
+	const double C(lad + lrc), A(C + lfd), B(C + l1d);
+	const double& D(l1Q), &F(l2Q);
+	double detd(C * C - A * B), detq(laq * laq - D * F);
 
-	
+	if (Equal(detd, 0.0))
+		throw dfw2error(fmt::format("detd == 0 for {}", GetVerbalName()));
+	if (Equal(detq, 0.0))
+		throw dfw2error(fmt::format("detq == 0 for {}", GetVerbalName()));
 
+	detd = 1.0 / detd;	detq = 1.0 / detq;
 
+	double Ed_Psi1q		= -laq * l2q * detq;
+	double Ed_Psi2q		= -laq * l1q * detq;
+
+	double Eq_Psifd		=  lad * l1d * detd;
+	double Eq_Psi1d		=  lad * lfd * detd;
+
+	double Psifd_Psifd	= -Rfd * B * detd;
+	double Psifd_Psi1d	= -Rfd * C * detd;
+	double Psifd_id		= -Rfd * lad * l1d * detd;
+
+	double Psi1d_Psifd	= -R1d * C * detd;
+	double Psi1d_Psi1d	=  R1d * A * detd;
+	double Psi1d_id		= -R1d * lad * lfd * detd;
+
+	double Psi1q_Psi1q	=  R1q * F * detq;
+	double Psi1q_Psi2q  = -R1q * laq * detq;
+	double Psi1q_iq		= -R1q * laq * l2q * detq;
+
+	double Psi2q_Psi1q	= -R2q * laq * detq;
+	double Psi2q_Psi2q	=  R2q * D * detq;
+	double Psi2q_iq		= -R2q * laq * l1q * detq;
+
+	lq2 = xq2;
+	ld2 = xd2;
 }
 
 bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
@@ -72,6 +108,42 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 {
 	bool bRes(true);
+
+	const double dPsifd = ExtEqe + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id;
+	const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * Id;
+	const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * Iq;
+	const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq;
+
+	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
+	pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
+	pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
+	pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
+
+	const double omega = (1.0 + s);
+	const double omega2 = omega * omega;
+	const double zsq = ZeroDivGuard(1.0, r * r + omega2 * ld2 * lq2);
+
+	double id = zsq * (
+		-r * Vd
+		- omega * lq2 * Vq
+		+ omega2 * lq2 * Eq_Psifd * Psifd
+		+ omega2 * lq2 * Eq_Psi1d * Psi1d
+		+ r * omega * Ed_Psi1q * Psi1q
+		+ r * omega * Ed_Psi2q * Psi2q
+	);
+
+	double iq = zsq * (
+		-r * Vq
+		+ omega * ld2 * Vd
+		+ r * omega * Eq_Psifd * Psifd
+		+ r * omega * Eq_Psi1d * Psi1d
+		- omega2 * ld2 * Ed_Psi1q * Psi1q
+		- omega2 * ld2 * Ed_Psi2q * Psi2q
+	);
+
+		
+	pDynaModel->SetFunction(Id, Id - id);
+	pDynaModel->SetFunction(Iq, Iq - iq);
 
 	bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
 	return bRes;
