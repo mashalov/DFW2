@@ -8,6 +8,7 @@ namespace DFW2
 	{
 	protected:
 		bool SetUpDelta();
+		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
 		virtual cplx GetXofEqs() { return cplx(0,xd1); }
 		VariableIndex Delta, Eqs;
@@ -17,7 +18,6 @@ namespace DFW2
 		virtual ~CDynaGeneratorInfBusBase() = default;
 		virtual double Xgen();
 		virtual cplx Igen(ptrdiff_t nIteration);
-		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		cplx GetEMF() override { return std::polar((double)Eqs, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
@@ -30,10 +30,11 @@ namespace DFW2
 	{
 	protected:
 		double EqsCos, EqsSin;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 	};
 }

@@ -342,6 +342,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	// Test-9
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park.rst");
 	//m_spRastr->NewFile(dfwPath.c_str());
 
 	// СМЗУ Сибирь
@@ -387,6 +388,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator1C, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator3C, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMustang, "Generator");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorPark3C, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExciterMustang, "Exciter");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameDECMustang, "Forcer");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
@@ -398,7 +400,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.GeneratorsMotion, "ModelType=3");
 	ReadTable(Network.Generators1C, "ModelType=4");
 	ReadTable(Network.Generators3C, "ModelType=5");
-	ReadTable(Network.GeneratorsMustang, "ModelType=6|ModelType=7");
+	ReadTable(Network.GeneratorsMustang, "ModelType=6");
+	ReadTable(Network.GeneratorsPark, "ModelType=7");
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);

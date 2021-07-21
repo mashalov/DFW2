@@ -58,9 +58,9 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 
 	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom, DEVTYPE_GEN_MOTION))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqnom, pExciter, CDynaGenerator1C::m_cszEqnom, DEVTYPE_GEN_1C))
+	if (!InitConstantVariable(Eqnom, pExciter, CDynaGeneratorDQBase::m_cszEqnom, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqe0, pExciter, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
+	if (!InitConstantVariable(Eqe0, pExciter, CDynaGeneratorDQBase::m_cszEqe, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	Udec = 0.0;

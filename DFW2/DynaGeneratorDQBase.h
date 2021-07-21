@@ -9,6 +9,8 @@ namespace DFW2
 	{
 	protected:
 		cplx GetXofEqs() override { return cplx(0, xq); };
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
 		enum CONSTVARS
 		{
@@ -21,7 +23,7 @@ namespace DFW2
 			C_LAST
 		};
 
-		double m_ExciterId, Eqnom, Snom, Qnom, Inom;
+		double m_ExciterId, Eqnom, Snom, Qnom, Inom, xd;
 
 		enum VARS
 		{
@@ -70,6 +72,7 @@ namespace DFW2
 		static constexpr const char* m_cszSnom = "Snom";
 		static constexpr const char* m_cszInom = "Inom";
 		static constexpr const char* m_cszQnom = "Qnom";
+		static constexpr const char* m_cszxd = "xd";
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};

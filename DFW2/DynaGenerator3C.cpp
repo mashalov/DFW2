@@ -6,23 +6,29 @@
 
 using namespace DFW2;
 
-
 eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
 {
 	xq1 = xq;
 
-	if (!pDynaModel->ConsiderDampingEquation())
-		Kdemp = 0.0;
-
-
 	if (Kgen > 1)
 	{
+		xd1 /= Kgen;
+		Pnom *= Kgen;
+		xq /= Kgen;
+		Mj *= Kgen;
+		xd /= Kgen;
+		r /= Kgen;
+		xq1 /= Kgen;
 		xd2 /= Kgen;
 		xq2 /= Kgen;
-		xq1 /= Kgen;
 	}
 
-	eDEVICEFUNCTIONSTATUS Status = CDynaGenerator1C::Init(pDynaModel);
+	return InitModel(pDynaModel);
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGenerator3C::InitModel(CDynaModel* pDynaModel)
+{
+	eDEVICEFUNCTIONSTATUS Status = CDynaGenerator1C::InitModel(pDynaModel);
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{

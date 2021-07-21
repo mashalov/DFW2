@@ -10,24 +10,32 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 {
 	xq1 = xq;
 
-	if (!pDynaModel->ConsiderDampingEquation())
-		Kdemp = 0.0;
-
 	r = 0.0;		/// в модели генератора Мустанг активного сопротивления статора нет
 
 	if (Kgen > 1)
 	{
+		xd1 /= Kgen;
+		Pnom *= Kgen;
+		xq /= Kgen;
+		Mj *= Kgen;
+		xd /= Kgen;
+		xq1 /= Kgen;
 		xd2 /= Kgen;
 		xq2 /= Kgen;
-		xq1 /= Kgen;
 	}
 
 	double Tds = Td01 * xd1 / xd;
 	double Tdss = Td02 * xd2 / xd1;
+
 	xd1 = (xd * (Tds - Td02 + Tdss) - xd2 * Td02) / (Td01 - Td02);
 
+	return InitModel(pDynaModel);
+}
 
-	eDEVICEFUNCTIONSTATUS Status = CDynaGenerator3C::Init(pDynaModel);
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::InitModel(CDynaModel* pDynaModel)
+{
+
+	eDEVICEFUNCTIONSTATUS Status = CDynaGenerator3C::InitModel(pDynaModel);
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{

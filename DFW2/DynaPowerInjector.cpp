@@ -33,18 +33,17 @@ double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
+eDEVICEFUNCTIONSTATUS CDynaPowerInjector::InitModel(CDynaModel* pDynaModel)
+{
+	if (!IsStateOn())
+		P = Q = Ire = Iim = 0.0;
+
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
-
-	if (!IsStateOn())
-	{
-		P = Q = Ire = Iim = 0.0;
-		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
-	}
-
-	return Status;
+	return InitModel(pDynaModel);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pDynaModel)

@@ -9,6 +9,7 @@ namespace DFW2
 	{
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
 
 		using CDynaGenerator3C::CDynaGenerator3C;

@@ -6,7 +6,8 @@ namespace DFW2
 	class CDynaGeneratorPark3C : public CDynaGeneratorDQBase
 	{
 	protected:
-		//eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
 		using  CDynaGeneratorDQBase::CDynaGeneratorDQBase;
 		virtual ~CDynaGeneratorPark3C() = default;

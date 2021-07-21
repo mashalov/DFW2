@@ -13,3 +13,8 @@ void CDynaVoltageSource::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_VOLTAGE_SOURCE);
 	props.nEquationsCount = CDynaVoltageSource::VARS::V_LAST;
 }
+
+eDEVICEFUNCTIONSTATUS CDynaVoltageSource::InitModel(CDynaModel* pDynaModel)
+{
+	return CDynaPowerInjector::InitModel(pDynaModel);
+}

@@ -70,9 +70,9 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqnom, pExciter, CDynaGenerator1C::m_cszEqnom))
+	if (!InitConstantVariable(Eqnom, pExciter, CDynaGeneratorDQBase::m_cszEqnom))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqe0, pExciter, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
+	if (!InitConstantVariable(Eqe0, pExciter, CDynaGeneratorDQBase::m_cszEqe, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	CheckLimits(Umin, Umax);
@@ -232,7 +232,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 	if (pExciter)
 	{
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dVdtIn, pExciter, CDynaNode::m_cszV, DEVTYPE_NODE));
-		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dEqdtIn, pExciter, CDynaGenerator1C::m_cszEq, DEVTYPE_GEN_1C));
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dEqdtIn, pExciter, CDynaGeneratorDQBase::m_cszEq, DEVTYPE_GEN_DQ));
 	}
 	return eRes;
 }

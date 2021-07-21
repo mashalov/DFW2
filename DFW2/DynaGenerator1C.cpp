@@ -6,47 +6,42 @@
 
 using namespace DFW2;
 
-eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGenerator1C::InitModel(CDynaModel* pDynaModel)
 {
-
-	if (std::abs(xq) < 1E-7) xq = xd1; // place to validation !!!
-	if (xd <= 0) xd = xd1;
-	if (xq <= 0) xq = xd1;
-
-	if (Kgen > 1)
-	{
-		xd /= Kgen;
-		r /= Kgen;
-	}
-
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::Init(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Snom = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
-		Qnom = Snom * sqrt(1.0 - cosPhinom * cosPhinom);
-		Inom = Snom / Unom / M_SQRT3;
-		Eqnom = (Unom * Unom * (Unom * Unom + Qnom * (xd + xq)) + Snom * Snom * xd * xq) / (Unom * sqrt(Unom * Unom * (Unom * Unom + 2.0 * Qnom * xq) + Snom * Snom * xq * xq));
-
 		switch (GetState())
 		{
 		case eDEVICESTATE::DS_ON:
-			zsq = 1.0 / (r*r + xd1 * xq);
+			zsq = 1.0 / (r * r + xd1 * xq);
 			CDynaGenerator1C::ProcessDiscontinuity(pDynaModel);
 			Eqs = Vq + r * Iq - xd1 * Id;
 			ExtEqe = Eqs - Id * (xd - xd1);
 			Eq = Eqs - Id * (xd - xd1); // repeat eq calc after eqs (first eq calc is in processdiscontinuity)
 			break;
 		case eDEVICESTATE::DS_OFF:
-			zsq = Id = Iq = Eq = 0.0;
-			Vd = -V;
-			Vq = V;
-			Eq = 0.0;
-			ExtEqe = 0.0;
+			zsq = 0.0;
 			break;
 		}
 	}
 	return Status;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
+{
+	if (Kgen > 1)
+	{
+		xd1 /= Kgen;
+		Pnom *= Kgen;
+		xq /= Kgen;
+		Mj *= Kgen;
+		xd /= Kgen;
+		r /= Kgen;
+	}
+
+	return InitModel(pDynaModel);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGenerator1C::ProcessDiscontinuity(CDynaModel* pDynaModel)
@@ -311,7 +306,6 @@ void CDynaGenerator1C::UpdateSerializer(CSerializerBase* Serializer)
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
 	Serializer->AddProperty(m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_cszxd, xd, eVARUNITS::VARUNIT_OHM);
 	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState("zsq", zsq, eVARUNITS::VARUNIT_PU);
 }

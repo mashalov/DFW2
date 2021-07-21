@@ -1,0 +1,77 @@
+Set scnAction = Rastr.Tables("DFWAutoActionScn")
+Set autAction = Rastr.Tables("DFWAutoAction")
+
+Set scnActState = scnAction.Cols("State")
+Set scnActId = scnAction.Cols("Id")
+Set scnActParent = scnAction.Cols("ParentId")
+Set scnActType = scnAction.Cols("Type")
+Set scnActName = scnAction.Cols("Name")
+Set scnActFormula = scnAction.Cols("Formula")
+Set scnActObjectClass = scnAction.Cols("ObjectClass")
+Set scnActObjectProp = scnAction.Cols("ObjectProp")
+Set scnActObjectKey = scnAction.Cols("ObjectKey")
+Set scnActOutputMode = scnAction.Cols("OutputMode")
+Set scnActRunsCount = scnAction.Cols("RunsCount")
+
+
+Set autActState = autAction.Cols("State")
+Set autActId = autAction.Cols("Id")
+Set autActParent = autAction.Cols("ParentId")
+Set autActType = autAction.Cols("Type")
+Set autActName = autAction.Cols("Name")
+Set autActFormula = autAction.Cols("Formula")
+Set autActObjectClass = autAction.Cols("ObjectClass")
+Set autActObjectProp = autAction.Cols("ObjectProp")
+Set autActObjectKey = autAction.Cols("ObjectKey")
+Set autActOutputMode = autAction.Cols("OutputMode")
+Set autActRunsCount = autAction.Cols("RunsCount")
+
+
+Set scnLogic = Rastr.Tables("DFWAutoLogicScn")
+Set autLogic = Rastr.Tables("DFWAutoLogic")
+
+
+Set scnLogState = scnLogic.Cols("Id")
+Set scnLogParent = scnLogic.Cols("ParentId")
+Set scnLogName = scnLogic.Cols("Name")
+Set scnLogType = scnLogic.Cols("Type")
+Set scnLogFormula = scnLogic.Cols("Formula")
+Set scnLogActions = scnLogic.Cols("Actions")
+Set scnLogDelay = scnLogic.Cols("Delay")
+
+Set autLogState = autLogic.Cols("Id")
+Set autLogParent = autLogic.Cols("ParentId")
+Set autLogName = autLogic.Cols("Name")
+Set autLogType = autLogic.Cols("Type")
+Set autLogFormula = autLogic.Cols("Formula")
+Set autLogActions = autLogic.Cols("Actions")
+Set autLogDelay = autLogic.Cols("Delay")
+
+
+autAction.DelRows
+for row = 0 to scnAction.Size - 1
+    autAction.AddRow
+    autActState.Z(row) = scnActState.Z(row)
+    autActId.Z(row) = scnActId.Z(row)
+    autActParent.Z(row) = scnActParent.Z(row)
+    autActName.Z(row) = scnActName.Z(row)
+    autActFormula.Z(row) = scnActFormula.Z(row)
+    autActObjectClass.Z(row) = scnActObjectClass.Z(row)
+    autActObjectProp.Z(row) = scnActObjectProp.Z(row)
+    autActObjectKey.Z(row) = scnActObjectKey.Z(row)
+    autActOutputMode.Z(row) = scnActOutputMode.Z(row)
+    autActRunsCount.Z(row) = scnActRunsCount.Z(row)
+next
+
+autLogic.DelRows
+for row = 0 to scnLogic.Size - 1
+    autLogic.AddRow
+    autLogState.Z(row) = scnLogState.Z(row)
+    autLogParent.Z(row) = scnLogParent.Z(row)
+    autLogName.Z(row) = scnLogName.Z(row)
+    autLogType.Z(row) = scnLogType.Z(row)
+    autLogFormula.Z(row) = scnLogFormula.Z(row)
+    autLogActions.Z(row) = scnLogActions.Z(row)
+    autLogDelay.Z(row) = scnLogDelay.Z(row)
+
+next

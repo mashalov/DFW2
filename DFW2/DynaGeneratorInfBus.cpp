@@ -64,12 +64,9 @@ bool CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 	return true;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::InitModel(CDynaModel* pDynaModel)
 {
-	if (Kgen > 1)
-		xd1 /= Kgen;
-
-	eDEVICEFUNCTIONSTATUS Status = CDynaVoltageSource::Init(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status = CDynaVoltageSource::InitModel(pDynaModel);
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -90,7 +87,15 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorInfBusBase::Init(pDynaModel);
+	if (Kgen > 1)
+		xd1 /= Kgen;
+
+	return InitModel(pDynaModel);
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::InitModel(CDynaModel* pDynaModel)
+{
+	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorInfBusBase::InitModel(pDynaModel);
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		EqsCos = Eqs * cos(Delta);

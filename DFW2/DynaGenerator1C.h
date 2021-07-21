@@ -9,6 +9,7 @@ namespace DFW2
 	{
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		double zsq;
 	public:
 
@@ -18,7 +19,7 @@ namespace DFW2
 			V_LAST
 		};
 
-		double	Td01, xd;
+		double	Td01;
 
 		const cplx& CalculateEgen() override;
 		bool CalculatePower() override;
@@ -36,7 +37,6 @@ namespace DFW2
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static constexpr const char* m_csztd01  = "td01";
-		static constexpr const char* m_cszxd	= "xd";
 	};
 }
 

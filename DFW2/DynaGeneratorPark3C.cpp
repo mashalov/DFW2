@@ -5,6 +5,31 @@
 
 using namespace DFW2;
 
+eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
+{
+	return InitModel(pDynaModel);
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
+{
+	xq1 = xq;
+
+	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
+
+	if (CDevice::IsFunctionStatusOK(Status))
+	{
+		switch (GetState())
+		{
+		case eDEVICESTATE::DS_ON:
+			break;
+		case eDEVICESTATE::DS_OFF:
+			break;
+		}
+	}
+
+	return Status;
+}
+
 double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double* p = CDynaGeneratorDQBase::GetVariablePtr(nVarIndex);
@@ -161,8 +186,9 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 
 void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)
 {
-	CDynaGeneratorMotion::DeviceProperties(props);
+	CDynaGeneratorDQBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_PARK3C);
+	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark3C, CDeviceContainerProperties::m_cszSysNameGeneratorPark3C);
 	/*
 	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGenerator1C::m_cszExciterId);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator1C, CDeviceContainerProperties::m_cszSysNameGenerator1C);
@@ -195,8 +221,6 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState("Psi1d", Psi1d, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Psi1q", Psi1q, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Psifd", Psifd, eVARUNITS::VARUNIT_KVOLTS);
-	
-	Serializer->AddProperty(CDynaGenerator1C::m_cszxd,  xd, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);

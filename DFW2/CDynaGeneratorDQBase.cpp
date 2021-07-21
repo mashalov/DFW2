@@ -13,7 +13,6 @@ void CDynaGeneratorDQBase::IfromDQ()
 	Iim = Iq * si + Id * co;
 }
 
-
 double CDynaGeneratorDQBase::Xgen()
 {
 	return 0.5 * (xq + xd1);
@@ -36,6 +35,57 @@ cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 	cplx Ig = CalculateEgen() * YgInt;
 	//Id = Id0; Iq = Iq0;
 	return Ig;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::Init(CDynaModel* pDynaModel)
+{
+	if (Kgen > 1)
+	{
+		xd1 /= Kgen;
+		Pnom *= Kgen;
+		xq /= Kgen;
+		Mj *= Kgen;
+		xd /= Kgen;
+		r /= Kgen;
+	}
+
+	if (std::abs(xq) < 1E-7) xq = xd1; // place to validation !!!
+	if (xd <= 0) xd = xd1;
+	if (xq <= 0) xq = xd1;
+
+
+	return InitModel(pDynaModel);
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
+{
+
+	if (!pDynaModel->ConsiderDampingEquation())
+		Kdemp = 0.0;
+
+	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorMotion::InitModel(pDynaModel);
+
+	if (CDevice::IsFunctionStatusOK(Status))
+	{
+		Snom = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
+		Qnom = Snom * sqrt(1.0 - cosPhinom * cosPhinom);
+		Inom = Snom / Unom / M_SQRT3;
+		Eqnom = (Unom * Unom * (Unom * Unom + Qnom * (xd + xq)) + Snom * Snom * xd * xq) / (Unom * sqrt(Unom * Unom * (Unom * Unom + 2.0 * Qnom * xq) + Snom * Snom * xq * xq));
+
+		switch (GetState())
+		{
+		case eDEVICESTATE::DS_ON:
+			CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel);
+			break;
+		case eDEVICESTATE::DS_OFF:
+			Vd = -V;
+			Vq = V;
+			Eq = 0.0;
+			ExtEqe = 0.0;
+			break;
+		}
+	}
+	return Status;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::ProcessDiscontinuity(CDynaModel* pDynaModel)
@@ -120,6 +170,7 @@ void CDynaGeneratorDQBase::UpdateSerializer(CSerializerBase* Serializer)
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
 	Serializer->AddProperty(m_cszExciterId, m_ExciterId);
 	Serializer->AddState("Egen", m_Egen, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(m_cszxd, xd, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddState(m_cszVd, Vd, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszVq, Vq, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszId, Id, eVARUNITS::VARUNIT_KAMPERES);

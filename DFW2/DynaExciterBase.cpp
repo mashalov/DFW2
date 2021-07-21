@@ -14,10 +14,10 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 	eDEVICEFUNCTIONSTATUS Status(eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 	double Eqnom;
-	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_1C);
-	if (!InitConstantVariable(Eqnom, pGen, CDynaGenerator1C::m_cszEqnom, DEVTYPE_GEN_1C))
+	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_DQ);
+	if (!InitConstantVariable(Eqnom, pGen, CDynaGeneratorDQBase::m_cszEqnom, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqe0, pGen, CDynaGenerator1C::m_cszEqe, DEVTYPE_GEN_1C))
+	if (!InitConstantVariable(Eqe0, pGen, CDynaGeneratorDQBase::m_cszEqe, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (CDevice::IsFunctionStatusOK(Status))
@@ -79,11 +79,11 @@ double* CDynaExciterBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 
 eDEVICEFUNCTIONSTATUS CDynaExciterBase::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_1C);
-	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(GenId, pGen, CDynaGeneratorDQBase::m_cszId, DEVTYPE_GEN_1C));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(GenIq, pGen, CDynaGeneratorDQBase::m_cszIq, DEVTYPE_GEN_1C));
+	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_DQ);
+	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(GenId, pGen, CDynaGeneratorDQBase::m_cszId, DEVTYPE_GEN_DQ));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(GenIq, pGen, CDynaGeneratorDQBase::m_cszIq, DEVTYPE_GEN_DQ));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVg, pGen, CDynaNodeBase::m_cszV, DEVTYPE_NODE));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGenerator1C::m_cszEq));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGeneratorDQBase::m_cszEq));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, GetSingleLink(DEVTYPE_EXCCON), CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, GetSingleLink(DEVTYPE_DEC), CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG));
 	return eRes;
@@ -94,7 +94,7 @@ void CDynaExciterBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_EXCITER);
 	props.SetType(DEVTYPE_EXCITER_MUSTANG);
 
-	props.AddLinkFrom(DEVTYPE_GEN_1C, DLM_SINGLE, DPD_MASTER);
+	props.AddLinkFrom(DEVTYPE_GEN_DQ, DLM_SINGLE, DPD_MASTER);
 	props.AddLinkTo(DEVTYPE_DEC, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::m_cszDECId);
 	props.AddLinkTo(DEVTYPE_EXCCON, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::m_cszExcConId);
 	
