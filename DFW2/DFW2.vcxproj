@@ -826,6 +826,9 @@
     <ClCompile Include="ZCDetector.cpp" />
     <ClCompile Include="Expand.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="dfw2.natvis" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

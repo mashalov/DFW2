@@ -574,4 +574,7 @@
       <Filter>Source Files\Generators</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Natvis Include="dfw2.natvis" />
+  </ItemGroup>
 </Project>

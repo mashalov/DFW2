@@ -12,9 +12,15 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 {
-	xq1 = xq;
+	CalculateFundamentalParameters();
 
 	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
+
+	const double omega(1 + s);
+	const double Psiq = -(Vd + r * Id) / omega;
+	const double Psid =  (r * Iq + Vq) / omega;
+	const double ifd = (Psid - xd * Id) / (xd - xl);
+	Eq = ExtEqe = Rfd * ifd;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -57,16 +63,16 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	const double lad(xd - xl), laq(xq - xl);  
 	// сопротивление утечки обмотки возбуждения [4.29]
 	double denom = lad - xd1 + xl;
-	const double lfd( Equal(denom,0.0) ? lad * (xd1 - xl) / denom : 1E6); 
+	const double lfd( Equal(denom,0.0) ? 1E6 : lad * (xd1 - xl) / denom); 
 	denom = laq - xq1 + xl;
 	// сопротивление утечки первой демпферной обмотки q [4.33]
-	const double l1q(Equal(denom, 0.0) ? laq * (xq1 - xl) / denom : 1E6);
+	const double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq1 - xl) / denom);
 	// сопротивление утечки демпферной обмотки d [4.28]
 	denom = lad * lfd - (xd2 - xl) * (lfd + lad);
-	const double l1d(Equal(denom, 0.0) ? lad * lfd * (xd2 - xl) / denom : 1E6);
+	const double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
 	// сопротивление утечки второй демпферной обмотки q [4.32]
 	denom = laq * l1q - (xq2 - xl) * ( l1q + laq );
-	const double l2q(Equal(denom, 0.0) ? laq * l1q * (xq2 - xl) / denom : 1E6);
+	const double l2q(Equal(denom, 0.0) ? 1E6 : laq * l1q * (xq2 - xl) / denom);
 
 
 	const double lrc = 0.0;
@@ -77,7 +83,7 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	const double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
 
 	// активное сопротивление обмотки возбуждения [4.15]
-	const double Rfd = lFd / Td01;
+	Rfd = lFd / Td01;
 	// активное сопротивление демпферной обмотки d [4.15]
 	const double R1d = (lad * lfd / lFd + l1d) / Td02;	
 	// активное сопротивление первой демпферной обмотки q [4.30]
