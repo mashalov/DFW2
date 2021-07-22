@@ -236,6 +236,12 @@ void CDynaNodeContainer::BuildSynchroZones()
 				node->m_pSyncZone = pNewZone;
 				node->MarkZoneEnergized();
 			}
+
+			// если в зоне нет генераторов - обозначаем ее как зону с ШБМ
+			// (когда будут АД, нужно будет смотреть на них)
+			if (pNewZone->m_LinkedGenerators.empty())
+				pNewZone->m_bInfPower = true;
+
 			pNewZone++;
 		}
 		EnergizeZones(nDeenergizedCount, nEnergizedCount);
@@ -258,8 +264,9 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 		// и она под напряжением
 		if (pNode->m_pSyncZone->m_bEnergized)
 		{
-			// если узел отключен
-			if (!pNode->IsStateOn())
+			// если узел отключен и имеет включенные связи
+			// !!!!!!! Тут скорее всего придется включать острова по связям, так же как мы отключаем острова !!!!!!
+			if (!pNode->IsStateOn() && !pNode->IsDangling())
 			{
 				// и он был отключен внутренней командной фреймворка (например был в зоне со снятым напряжением)
 				if (pNode->GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL)
@@ -318,11 +325,6 @@ void CDynaNodeBase::MarkZoneEnergized()
 						m_pSyncZone->Mj += static_cast<CDynaGeneratorMotion*>(pGen)->Mj;
 			}
 		}
-
-		// если в зоне нет генераторов - обозначаем ее как зону с ШБМ
-		// (когда будут АД, нужно будет смотреть на них)
-		if (m_pSyncZone->m_LinkedGenerators.empty())
-			m_pSyncZone->m_bInfPower = true;
 	}
 }
 
@@ -857,8 +859,15 @@ void CDynaNodeContainer::ProcessTopologyInitial()
 // функция обработки топологии, вызывается в процессе расчета динамики
 void CDynaNodeContainer::ProcessTopology()
 {
-	CreateSuperNodes();
+	// Было 
+	//CreateSuperNodes();
+	//BuildSynchroZones();
+	// Стало - сначала создаем структуру суперузлов
+	CreateSuperNodesStructure();
+	// потом включаем или выключаем узлы по зонам
 	BuildSynchroZones();
+	// и только потом считаем проводимости узлов
+	CalculateSuperNodesAdmittances();
 	m_pDynaModel->RebuildMatrix(true);
 }
 
@@ -961,13 +970,7 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 	if (pNode->GetState() == eDEVICESTATE::DS_ON)
 	{
 		// проверяем есть ли хотя бы одна включенная ветвь к этому узлу
-		while (pLink->In(ppDevice))
-		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
-			if(pBranch->BranchAndNodeConnected(pNode))
-				break; // ветвь есть
-		}
-		if (!ppDevice)
+		if (pNode->IsDangling())
 		{
 			// все ветви отключены, отключаем узел
 			m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszSwitchedOffNode, pNode->GetVerbalName()));

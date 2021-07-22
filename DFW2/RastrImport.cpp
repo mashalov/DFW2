@@ -338,11 +338,11 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 
 	// СМЗУ Северо-Запад
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1");
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1");
 
 	// Test-9
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
-	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park.rst");
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park.rst");
 	//m_spRastr->NewFile(dfwPath.c_str());
 
 	// СМЗУ Сибирь
@@ -401,7 +401,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.Generators1C, "ModelType=4");
 	ReadTable(Network.Generators3C, "ModelType=5");
 	ReadTable(Network.GeneratorsMustang, "ModelType=6");
-	ReadTable(Network.GeneratorsPark, "ModelType=7|ModelType=8");
+	//ReadTable(Network.GeneratorsPark, "ModelType=7|ModelType=8");
+	ReadTable(Network.GeneratorsPark, "ModelType=7");
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);

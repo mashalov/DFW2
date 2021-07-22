@@ -246,8 +246,15 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Vre, V, 0.0);
 		pDynaModel->SetElement(Vim, V, 0.0);
 
-		_ASSERTE(std::abs(PgVre2) < DFW2_EPSILON && std::abs(PgVim2) < DFW2_EPSILON);
-		_ASSERTE(std::abs(QgVre2) < DFW2_EPSILON && std::abs(QgVim2) < DFW2_EPSILON);
+#ifdef _DEBUG
+		// ассерты могут работать на неподготовленные данные на эстимейте
+		if (!pDynaModel->EstimateBuild())
+		{
+			_ASSERTE(std::abs(PgVre2) < DFW2_EPSILON && std::abs(PgVim2) < DFW2_EPSILON);
+			_ASSERTE(std::abs(QgVre2) < DFW2_EPSILON && std::abs(QgVim2) < DFW2_EPSILON);
+		}
+#endif
+
 	}
 	else
 	{
@@ -820,7 +827,6 @@ bool CDynaNodeContainer::LULF()
 		// первый элемент строки используем под диагональ
 		// и запоминаем указатель на него
 		*ppDiags = pAx;
-		// если узел отключен, в матрице он все равно будет но с единичным диагональным элементом
 		*pAx = 1.0; pAx++;
 		*pAx = 0.0; pAx++;
 		ppDiags++;
@@ -1357,6 +1363,18 @@ void CDynaNodeBase::TidyZeroBranches()
 
 }
 
+// Проверяет оторван ли узел от связей
+bool CDynaNodeBase::IsDangling()
+{
+	CLinkPtrCount* pLink = GetLink(0);
+	CDevice** ppDevice(nullptr);
+	// ищем хотя бы одну включенную ветвь
+	while (pLink->In(ppDevice))
+		if (static_cast<CDynaBranch*>(*ppDevice)->BranchAndNodeConnected(this))
+			break; // включенная ветвь есть
+
+	return !ppDevice;
+}
 
 void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 {
