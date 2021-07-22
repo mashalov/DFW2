@@ -3,10 +3,10 @@ L1d = 2;
 Lfd = 3;
 Lrc = 0.5;
 Ll =  0.1;
-id = 5.33;
+id = -76.858735143957801;
 i1d = 3;
-ifd = 2;
-iq = 3.317;
+ifd = 2.78;
+iq = 42.480447772255637;
 i1q = 2.5;
 i2q = 3.1;
 Laq = .74;
@@ -14,7 +14,7 @@ L1q = 2.1;
 L2q = 2.3;
 omega = 3.14;
 Ra = .32;
-Rfd = .37;
+Rfd = 0.080040073172612830;
 R1d = .41;
 R1q = .11;
 R2q = .23;
@@ -40,14 +40,15 @@ A = Lad + Lrc + Lfd;
 B = Lad + Lrc + L1d;
 C = Lad + Lrc;
 detd = C^2 - A*B;
-ifd = -B/detd * Psifd + C/detd * Psi1d + L1d*Lad/detd * id;
-i1d =  C/detd * Psifd - A/detd * Psi1d + Lfd*Lad/detd * id;
+ifd2 = -B/detd * Psifd + C/detd * Psi1d + L1d*Lad/detd * id;
+i1d2 =  C/detd * Psifd - A/detd * Psi1d + Lfd*Lad/detd * id;
+
 % проверяем
-deltaifd = A*ifd + C*i1d - Psifd + Lad * id
-deltai1d = C*ifd + B*i1d - Psi1d + Lad * id
+deltaifd = ifd2 - ifd
+deltai1d = i1d2 - i1d
 
 % выражаем i1q и i2q через Psi1q, Psi2q и iq
-D = Laq + L1q;
+    `D = Laq + L1q;
 F = Laq + L2q;
 detq = Laq^2 - D*F;
 
@@ -73,8 +74,8 @@ Eq_Psifd =  -Lad * L1d / detd;
 Eq_Psi1d =  -Lad * Lfd / detd;
 
 
-LQ = (Laq^2*(L2q + L1q) / detq + Laq + Ll);
-LD = (Lad^2*(Lfd + L1d) / detd + Lad + Ll);
+LQ = Laq^2*(L2q + L1q) / detq + Laq + Ll;
+LD = Lad^2*(Lfd + L1d) / detd + Lad + Ll;
 
 ed3 = -Ra * id - omega * LQ * iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q;
 eq3 = -Ra * iq + omega * LD * id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d;
@@ -142,9 +143,7 @@ deltaPsiq = Psiq3 - Psiq
 
 % расчет момента
 Te2 = Psiq_iq * iq * id + Psiq_Psi1q * Psi1q * id + Psiq_Psi2q * Psi2q * id - Psid_id * id * iq - Psid_Psifd * Psifd * iq - Psid_Psi1d * Psi1d * iq;
-Te3 = (Psiq_iq * iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * id  - (Psid_id * id + Psid_Psifd * Psifd  + Psid_Psi1d * Psi1d ) * iq;
-    
 deltate = Te - Te2
-deltate = Te - Te3
+
 
 

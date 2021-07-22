@@ -29,7 +29,7 @@ namespace DFW2
 
 		// коэффициенты уравнений
 
-		double Rfd;
+		double lad, laq, lrc, lfd, Rfd;
 
 		double Ed_Psi1q, Ed_Psi2q;
 		double Eq_Psifd, Eq_Psi1d;

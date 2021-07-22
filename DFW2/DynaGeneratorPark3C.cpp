@@ -16,11 +16,18 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 
 	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
 
-	const double omega(1 + s);
-	const double Psiq = -(Vd + r * Id) / omega;
-	const double Psid =  (r * Iq + Vq) / omega;
-	const double ifd = (Psid - xd * Id) / (xd - xl);
-	Eq = ExtEqe = Rfd * ifd;
+	const double omega(1.0 + s);
+	const double Psiq = -(Vd + r * Id) / omega;		// (7)
+	const double Psid =  (Vq + r * Iq) / omega;		// (8)
+	const double ifd = (Psid - xd * Id) / lad;		// (1)
+	Eq = ifd;
+	//const double Mdv(xd - xl);
+	ExtEqe = Rfd * ifd;								// (9)
+	Psifd = lad * Id + (lad + lrc + lfd) * ifd;		// (2)
+	Psi1d = lad * Id + (lad + lrc) * ifd;			// (3)
+	Psi1q = Psi2q = laq * Iq;
+
+	BuildRightHand(pDynaModel);
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -60,10 +67,11 @@ VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& Chi
 void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 {
 	// взаимные индуктивности без рассеивания [3.111 и 3.112]
-	const double lad(xd - xl), laq(xq - xl);  
+	lad = xd - xl; 
+	laq = xq - xl;
 	// сопротивление утечки обмотки возбуждения [4.29]
 	double denom = lad - xd1 + xl;
-	const double lfd( Equal(denom,0.0) ? 1E6 : lad * (xd1 - xl) / denom); 
+	lfd = Equal(denom,0.0) ? 1E6 : lad * (xd1 - xl) / denom; 
 	denom = laq - xq1 + xl;
 	// сопротивление утечки первой демпферной обмотки q [4.33]
 	const double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq1 - xl) / denom);
@@ -75,7 +83,7 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	const double l2q(Equal(denom, 0.0) ? 1E6 : laq * l1q * (xq2 - xl) / denom);
 
 
-	const double lrc = 0.0;
+	lrc = 0.0;
 
 	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
 	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
@@ -102,13 +110,13 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 
 	detd = 1.0 / detd;	detq = 1.0 / detq;
 
-	Ed_Psi1q	= -laq * l2q * detq;
-	Ed_Psi2q	= -laq * l1q * detq;
+	Ed_Psi1q	= laq * l2q * detq;
+	Ed_Psi2q	= laq * l1q * detq;
 
-	Eq_Psifd	=  lad * l1d * detd;
-	Eq_Psi1d	=  lad * lfd * detd;
+	Eq_Psifd	= -lad * l1d * detd;
+	Eq_Psi1d	= -lad * lfd * detd;
 
-	Psifd_Psifd	= -Rfd * B * detd;
+	Psifd_Psifd	=  Rfd * B * detd;
 	Psifd_Psi1d	= -Rfd * C * detd;
 	Psifd_id	= -Rfd * lad * l1d * detd;
 
@@ -154,37 +162,43 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * Iq;
 	const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq;
 
-	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
-	pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
-	pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
-	pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
-
 	const double omega = (1.0 + s);
 	const double omega2 = omega * omega;
 	const double zsq = ZeroDivGuard(1.0, r * r + omega2 * ld2 * lq2);
 
 	const double id = zsq * (
 		-r * Vd
-		- omega * lq2 * Vq
-		+ omega2 * lq2 * Eq_Psifd * Psifd
-		+ omega2 * lq2 * Eq_Psi1d * Psi1d
+		+ omega * lq2 * Vq
+		- omega2 * lq2 * Eq_Psifd * Psifd
+		- omega2 * lq2 * Eq_Psi1d * Psi1d
 		+ r * omega * Ed_Psi1q * Psi1q
 		+ r * omega * Ed_Psi2q * Psi2q
 	);
 
 	const double iq = zsq * (
 		-r * Vq
-		+ omega * ld2 * Vd
+		- omega * ld2 * Vd
 		+ r * omega * Eq_Psifd * Psifd
 		+ r * omega * Eq_Psi1d * Psi1d
-		- omega2 * ld2 * Ed_Psi1q * Psi1q
-		- omega2 * ld2 * Ed_Psi2q * Psi2q
+		+ omega2 * ld2 * Ed_Psi1q * Psi1q
+		+ omega2 * ld2 * Ed_Psi2q * Psi2q
 	);
 
-	const double torque = (Psiq_iq * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id - (Psid_id * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq;
-		
+
+	const double te = (Psid_id * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq -
+					  (Psiq_iq * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;// - r * (Id * Id + Iq * Iq);
+
+	const double pe = Vd * Id + Vq * Iq;
+	const double pet = te - r * (Id * Id  + Iq * Iq);
+
 	pDynaModel->SetFunction(Id, Id - id);
 	pDynaModel->SetFunction(Iq, Iq - iq);
+
+	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
+	pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
+	pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
+	pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
+
 
 	bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
 	return bRes;
