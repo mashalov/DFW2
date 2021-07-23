@@ -329,6 +329,11 @@ bool CDynaGenerator3C::CalculatePower()
 	return true;
 }
 
+cplx CDynaGenerator3C::GetEMF()
+{
+	return cplx(Eqss, Edss) * std::polar(1.0, (double)Delta);
+}
+
 const cplx& CDynaGenerator3C::CalculateEgen()
 {
 	double xgen = Xgen();

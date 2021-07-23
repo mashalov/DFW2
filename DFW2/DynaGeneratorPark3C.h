@@ -52,6 +52,7 @@ namespace DFW2
 		void CalculateFundamentalParameters();
 		bool BuildDerivatives(CDynaModel* pDynaModel) override;
 		bool CalculatePower() override;
+		cplx GetEMF() override;
 		const cplx& CalculateEgen() override;
 		double Xgen() const override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
