@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?> 
 <AutoVisualizer xmlns="http://schemas.microsoft.com/vstudio/debugger/natvis/2010">
   <Type Name="DFW2::VariableIndex">
-    <DisplayString>{{ {Value} }}</DisplayString>
+    <DisplayString>{Value}</DisplayString>
     <Expand>
       <Item Name="[Value]" ExcludeView="simple">Value</Item>
       <Item Name="[Index]" ExcludeView="simple">Index</Item>
@@ -9,8 +9,8 @@
   </Type>
 
   <Type Name="DFW2::VariableIndexExternalOptional">
-    <DisplayString Condition="pValue==0">{{ loc={Value}}}</DisplayString>
-    <DisplayString Condition="pValue!=0">{{ ext={*pValue}}}</DisplayString>
+    <DisplayString Condition="pValue==0">loc={Value}</DisplayString>
+    <DisplayString Condition="pValue!=0">ext={*pValue}</DisplayString>
     <Expand>
       <Item Name="[ext]" ExcludeView="simple" Condition="pValue!=0">*pValue</Item>
       <Item Name="[loc]" ExcludeView="simple" Condition="pValue==0">Value</Item>

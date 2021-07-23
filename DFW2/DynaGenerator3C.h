@@ -37,7 +37,7 @@ namespace DFW2
 		cplx GetEMF() override { return cplx(Eqss, Edss) * std::polar(1.0, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
-		double Xgen();
+		double Xgen() const override;
 		const cplx& CalculateEgen() override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);

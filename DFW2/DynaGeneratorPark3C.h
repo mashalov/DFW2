@@ -8,6 +8,7 @@ namespace DFW2
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
+		cplx GetIdIq() const;
 	public:
 		using  CDynaGeneratorDQBase::CDynaGeneratorDQBase;
 		virtual ~CDynaGeneratorPark3C() = default;
@@ -49,15 +50,15 @@ namespace DFW2
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void CalculateFundamentalParameters();
+		bool BuildDerivatives(CDynaModel* pDynaModel) override;
+		bool CalculatePower() override;
+		const cplx& CalculateEgen() override;
+		double Xgen() const override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
 		/*
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
-		bool BuildDerivatives(CDynaModel * pDynaModel) override;
-		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel * pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel * pDynaModel) override;
-		bool CalculatePower() override;
-		const cplx& CalculateEgen() override;
-		static void DeviceProperties(CDeviceContainerProperties & properties);
 		*/
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);

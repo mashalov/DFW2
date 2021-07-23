@@ -16,7 +16,7 @@ namespace DFW2
 		double	r = 0.0;	// активное сопротивление статора
 		using CDynaVoltageSource::CDynaVoltageSource;
 		virtual ~CDynaGeneratorInfBusBase() = default;
-		virtual double Xgen();
+		virtual double Xgen() const;
 		virtual cplx Igen(ptrdiff_t nIteration);
 		cplx GetEMF() override { return std::polar((double)Eqs, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;

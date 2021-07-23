@@ -120,7 +120,7 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 	return bRes;
 }
 
-double CDynaGeneratorInfBusBase::Xgen()
+double CDynaGeneratorInfBusBase::Xgen() const
 {
 	return xd1;
 }

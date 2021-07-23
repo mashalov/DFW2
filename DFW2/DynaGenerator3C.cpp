@@ -335,7 +335,7 @@ const cplx& CDynaGenerator3C::CalculateEgen()
 	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, (double)Delta);
 }
 
-double CDynaGenerator3C::Xgen()
+double CDynaGenerator3C::Xgen() const
 {
 	return 0.5 * (xd2 + xq2);
 }

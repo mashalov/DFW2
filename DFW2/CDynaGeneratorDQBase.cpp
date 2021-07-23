@@ -13,7 +13,7 @@ void CDynaGeneratorDQBase::IfromDQ()
 	Iim = Iq * si + Id * co;
 }
 
-double CDynaGeneratorDQBase::Xgen()
+double CDynaGeneratorDQBase::Xgen() const
 {
 	return 0.5 * (xq + xd1);
 }
@@ -31,9 +31,8 @@ cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 		FromComplex(Iq, Id, Idq);
 	}
 
-	//double Id0 = Id, Iq0 = Iq;
 	cplx Ig = CalculateEgen() * YgInt;
-	//Id = Id0; Iq = Iq0;
+
 	return Ig;
 }
 

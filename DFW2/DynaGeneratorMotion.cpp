@@ -199,14 +199,16 @@ bool CDynaGeneratorMotion::BuildDerivatives(CDynaModel *pDynaModel)
 		double sp1 = 1.0 + s;
 		double sp2 = 1.0 + Sv;
 
-		if (!IsStateOn())
-			sp1 = sp2 = 1.0;
-
-		double eDelta = pDynaModel->GetOmega0() * s;
-		double eS = (Pt / sp1 - Kdemp  * s - P / sp2) / Mj;
-
-		pDynaModel->SetDerivative(s, eS);
-		pDynaModel->SetDerivative(Delta , eDelta);
+		if (IsStateOn())
+		{
+			pDynaModel->SetDerivative(s, (Pt / sp1 - Kdemp * s - P / sp2) / Mj);
+			pDynaModel->SetDerivative(Delta, pDynaModel->GetOmega0() * s);
+		}
+		else
+		{
+			pDynaModel->SetDerivative(s, 0);
+			pDynaModel->SetDerivative(Delta, 0);
+		}
 	}
 	return true;
 }
