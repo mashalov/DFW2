@@ -207,12 +207,12 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	// ds / Psi2q
 	pDynaModel->SetElement(s, Psi2q, -Id * Psiq_Psi2q / Mj);
 	// ds / ds
-	pDynaModel->SetElement(s, s, (Kdemp + Pt / omega2) / Mj);
+	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega2) / Mj);
 
 	// dDeltaG / dS
 	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 	// dDeltaG / dDeltaG
-	pDynaModel->SetElement(Delta, Delta, 1.0);
+	pDynaModel->SetElement(Delta, Delta, 0.0);
 
 	// dP/dP
 	pDynaModel->SetElement(P, P, 1.0);

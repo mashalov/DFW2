@@ -152,11 +152,12 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		// dDeltaG / dS
 		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(Delta, Delta, 1.0);
+		pDynaModel->SetElement(Delta, Delta, 0.0);
 
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv);
 		// dS / dS
+
 		pDynaModel->SetElement(s, s, 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
 		// dS / dNodeS

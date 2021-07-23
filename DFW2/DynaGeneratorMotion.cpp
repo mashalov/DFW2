@@ -133,7 +133,7 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		// dDeltaG / dS
 		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(Delta, Delta, 1.0);
+		pDynaModel->SetElement(Delta, Delta, 0.0);
 
 		// dS / dS
 		pDynaModel->SetElement(s, s, - 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));

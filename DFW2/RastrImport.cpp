@@ -338,7 +338,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 
 	// СМЗУ Северо-Запад
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1");
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
 
 	// Test-9
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());

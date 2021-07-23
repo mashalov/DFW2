@@ -191,7 +191,7 @@ bool CDynaModel::RunTransient()
 
 		if (bRes)
 		{
-			m_Discontinuities.AddEvent(150.0, new CModelActionStop());
+			m_Discontinuities.AddEvent(1500.0, new CModelActionStop());
 
 	#ifdef SMZU
 
@@ -260,6 +260,7 @@ bool CDynaModel::RunTransient()
 					{
 						if (GetCurrentTime() > 0.01)
 							static_cast<CDynaGeneratorPark3C*>(*GeneratorsPark.begin())->Pt = 1650;
+							//static_cast<CDynaGeneratorMustang*>(*GeneratorsMustang.begin())->Pt = 1650;
 						if (bRes)
 						{
 							// если ошибок не было, пишем результаты
