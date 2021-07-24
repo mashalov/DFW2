@@ -137,8 +137,7 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
 		pDynaModel->SetElement(Delta, Delta, 0.0);
-
-
+		
 		// dS / dS
 		pDynaModel->SetElement(s, s, 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
 		// dS / Eqss
@@ -201,7 +200,6 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(Id, Id + zsq * (sp2 * Eqss - Vq) * xq2);
 		pDynaModel->SetFunction(Iq, Iq + zsq * (Vd - sp2 * Edss) * xd2);
 		pDynaModel->SetFunction(Eq, Eq - Eqss + Id * (xd - xd2));
-		double eDelta = pDynaModel->GetOmega0() * s;
 		double eS = (Pt / sp1 - Kdemp  * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj;
 		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
 		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;

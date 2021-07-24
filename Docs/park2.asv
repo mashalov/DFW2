@@ -80,7 +80,6 @@ LD = Lad^2*(Lfd + L1d) / detd + Lad + Ll;
 ed3 = -Ra * id - omega * LQ * iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q;
 eq3 = -Ra * iq + omega * LD * id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d;
 
-
 deltaed3 = ed3 - ed
 deltaeq3 = eq3 - eq
 
@@ -95,34 +94,36 @@ iq2 = (Ra *(Eqb - eq) + omega * LD * (Edb - ed)) / zsq;
 deltaid2 = id - id2
 deltaiq2 = iq - iq2
 
-Psifd_Psifd	=  Rfd * B / detd;
-Psifd_Psi1d	= -Rfd * C / detd;
-Psifd_id	= -Rfd * Lad * L1d / detd;
+Ed_Psi1q	= laq * l2q * detq;
+Ed_Psi2q	= laq * l1q * detq;
 
-Psi1d_Psifd	= -R1d * C / detd;
-Psi1d_Psi1d	=  R1d * A / detd;
-Psi1d_id	= -R1d * Lad * Lfd / detd;
+Eq_Psifd	= -lad * l1d * detd;
+Eq_Psi1d	= -lad * lfd * detd;
 
-Psi1q_Psi1q	=  R1q * F / detq;
-Psi1q_Psi2q = -R1q * Laq / detq;
-Psi1q_iq	= -R1q * Laq * L2q / detq;
+Psifd_Psifd	=  Rfd * B * detd;
+Psifd_Psi1d	= -Rfd * C * detd;
+Psifd_id	= -Rfd * lad * l1d * detd;
 
-Psi2q_Psi1q	= -R2q * Laq / detq;
-Psi2q_Psi2q	=  R2q * D / detq;
-Psi2q_iq	= -R2q * Laq * L1q / detq;
+Psi1d_Psifd	= -R1d * C * detd;
+Psi1d_Psi1d	=  R1d * A * detd;
+Psi1d_id	= -R1d * lad * lfd * detd;
+
+Psi1q_Psi1q	=  R1q * F * detq;
+Psi1q_Psi2q = -R1q * laq * detq;
+Psi1q_iq	= -R1q * laq * l2q * detq;
+
+Psi2q_Psi1q	= -R2q * laq * detq;
+Psi2q_Psi2q	=  R2q * D * detq;
+Psi2q_iq	= -R2q * laq * l1q * detq;
 
 
-
-dPsifd = Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * id;
+dPsifd = Rfd * B / detd * Psifd - Rfd * C / detd * Psi1d - Rfd * L1d * Lad / detd * id;
 d_Psifd = dPsifd + Rfd * ifd
-
-dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * id;
+dPsi1d = -R1d * C / detd * Psifd + R1d * A / detd * Psi1d - R1d * Lfd * Lad / detd * id;
 d_Psi1d = dPsi1d + R1d * i1d
-
-dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * iq;
+dPsi1q = R1q * F / detq * Psi1q - R1q * Laq / detq * Psi2q - R1q * Laq * L2q / detq * iq;
 d_Psi1q = dPsi1q + R1q * i1q
-
-dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * iq;
+dPsi2q = -R2q * Laq / detq * Psi1q + R2q * D / detq * Psi2q - R2q * Laq * L1q / detq * iq;
 d_Psi2q = dPsi2q + R2q * i2q
 
 % токи в функциях от переменных состояния

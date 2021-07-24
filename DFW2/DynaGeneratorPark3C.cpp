@@ -151,121 +151,65 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	bool bRes(true);
 
 	const double omega = ZeroGuardSlip(1.0 + s);
-	const double omega2 = omega * omega;
-	const double zsq = ZeroDivGuard(1.0, r * r + omega2 * ld2 * lq2);
 
+	pDynaModel->SetElement(Id, Id, -r);
+	pDynaModel->SetElement(Id, Iq, -lq2 * omega);
+	pDynaModel->SetElement(Id, Vd, -1);
+	pDynaModel->SetElement(Id, Psi1q, Ed_Psi1q * omega);
+	pDynaModel->SetElement(Id, Psi2q, Ed_Psi2q * omega);
+	pDynaModel->SetElement(Id, s, Ed_Psi1q * Psi1q - Iq * lq2 + Ed_Psi2q * Psi2q);
 
+	pDynaModel->SetElement(Iq, Id, ld2 * omega);
+	pDynaModel->SetElement(Iq, Iq, -r);
+	pDynaModel->SetElement(Iq, Vq, -1);
+	pDynaModel->SetElement(Iq, Psifd, Eq_Psifd * omega);
+	pDynaModel->SetElement(Iq, Psi1d, Eq_Psi1d * omega);
+	pDynaModel->SetElement(Iq, s, Id * ld2 + Eq_Psi1d * Psi1d + Eq_Psifd * Psifd);
 
-	// dId / dId
-	pDynaModel->SetElement(Id, Id, 1);
-	// dId / dVd
-	pDynaModel->SetElement(Id, Vd, r * zsq);
-	// dId / dVq
-	pDynaModel->SetElement(Id, Vq, -lq2 * omega * zsq);
-	// dId / dPsifd
-	pDynaModel->SetElement(Id, Psifd, Eq_Psifd * lq2 * omega2 * zsq);
-	// dId / dPsi1d
-	pDynaModel->SetElement(Id, Psi1d, Eq_Psi1d * lq2 * omega2 * zsq);
-	// dId / dPsi1q
-	pDynaModel->SetElement(Id, Psi1q, -Ed_Psi1q * r * omega * zsq);
-	// dId / dPsi2q
-	pDynaModel->SetElement(Id, Psi2q, -Ed_Psi2q * r * omega * zsq);
-	// dId / ds
-	pDynaModel->SetElement(Id, s,
-		-(Vq * lq2 + Ed_Psi1q * Psi1q * r + Ed_Psi2q * Psi2q * r - 2.0 * Eq_Psi1d * Psi1d * lq2 * omega - 2.0 * Eq_Psifd * Psifd * lq2 * (omega)) * zsq
-		- (2.0 * ld2 * lq2 * omega * (Vd * r - Vq * lq2 * omega - Ed_Psi1q * Psi1q * r * omega - Ed_Psi2q * Psi2q * r * omega + Eq_Psi1d * Psi1d * lq2 * omega2 + Eq_Psifd * Psifd * lq2 * omega2)) * zsq * zsq);
-
-	// dIq / dIq
-	pDynaModel->SetElement(Iq, Iq, 1);
-	// dIq / dVd
-	pDynaModel->SetElement(Iq, Vd, ld2 * omega * zsq);
-	// dIq / dVd
-	pDynaModel->SetElement(Iq, Vq, r *  zsq);
-	// dIq / dPsifd
-	pDynaModel->SetElement(Iq, Psifd, -Eq_Psifd * r * omega * zsq);
-	// dIq / dPsi1d
-	pDynaModel->SetElement(Iq, Psi1d, -Eq_Psi1d * r * omega * zsq);
-	// dIq / dPsi1q
-	pDynaModel->SetElement(Iq, Psi1q, -Ed_Psi1q * ld2 * omega2 * zsq);
-	// dIq / dPsi2q
-	pDynaModel->SetElement(Iq, Psi2q, -Ed_Psi2q * ld2 * omega2 * zsq);
-	// dIq / ds
-	pDynaModel->SetElement(Iq, s, 
-			(2.0 * ld2 * lq2 * omega * (Eq_Psi1d * Psi1d * r * omega - Vd * ld2 * omega - Vq * r + Eq_Psifd * Psifd * r * omega + Ed_Psi1q * Psi1q * ld2 * omega2 + Ed_Psi2q * Psi2q * ld2 * omega2)) * zsq * zsq 
-			- (Eq_Psi1d * Psi1d * r - Vd * ld2 + Eq_Psifd * Psifd * r + 2.0 * Ed_Psi1q * Psi1q * ld2 * omega + 2.0 * Ed_Psi2q * Psi2q * ld2 * omega) * zsq);
-
-	// ds / dId
 	pDynaModel->SetElement(s, Id,  -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * Psid_id + Iq * Psiq_iq) / Mj);
-	// ds / dIq
 	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * Psid_id - Id * Psiq_iq) / Mj);
-	// ds / Psifd
 	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
-	// ds / Psi1d
 	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
-	// ds / Psi1q
 	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
-	// ds / Psi2q
 	pDynaModel->SetElement(s, Psi2q, -Id * Psiq_Psi2q / Mj);
-	// ds / ds
-	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega2) / Mj);
+	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
 
-	// dDeltaG / dS
+
 	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
-	// dDeltaG / dDeltaG
 	pDynaModel->SetElement(Delta, Delta, 0.0);
 
-	// dP/dP
 	pDynaModel->SetElement(P, P, 1.0);
-	// dP/dVd
+	/*
 	pDynaModel->SetElement(P, Vd, -Id);
-	// dP/dVq
 	pDynaModel->SetElement(P, Vq, -Iq);
-	// dP/dId
 	pDynaModel->SetElement(P, Id, -Vd);
-	// dP/dIq
 	pDynaModel->SetElement(P, Iq, -Vq);
+	*/
 
 	
-	// dQ/dQ
 	pDynaModel->SetElement(Q, Q, 1.0);
-	// dQ/dVd
+	/*
 	pDynaModel->SetElement(Q, Vd, -Iq);
-	// dQ/dVq
 	pDynaModel->SetElement(Q, Vq, Id);
-	// dQ/dId
 	pDynaModel->SetElement(Q, Id, Vq);
-	// dQ/dIq
 	pDynaModel->SetElement(Q, Iq, -Vd);
-
-	// d_Psifd / dId
+	*/
 	pDynaModel->SetElement(Psifd, Id, -Psifd_id);
-	// d_Psifd / dPsifd
 	pDynaModel->SetElement(Psifd, Psifd, Psifd_Psifd);
-	// d_Psifd / dPsi1d
 	pDynaModel->SetElement(Psifd, Psi1d, -Psifd_Psi1d);
-	// d_Psifd/ dExtEque
 	if (ExtEqe.Indexed())
 		pDynaModel->SetElement(Psifd, ExtEqe, -1.0);
 
-	// d_Psi1d / dId
 	pDynaModel->SetElement(Psi1d, Id, -Psi1d_id);
-	// d_Psi1d / dPsifd
 	pDynaModel->SetElement(Psi1d, Psifd, -Psi1d_Psifd);
-	// d_Psi1d / dPsi1d
 	pDynaModel->SetElement(Psi1d, Psi1d, Psi1d_Psi1d);
 
-	// d_Psi1q / dIq
 	pDynaModel->SetElement(Psi1q, Iq, -Psi1q_iq);
-	// d_Psi1q / dPsi1q
 	pDynaModel->SetElement(Psi1q, Psi1q, Psi1q_Psi1q);
-	// d_Psi1q / dPsi2q
 	pDynaModel->SetElement(Psi1q, Psi2q, -Psi1q_Psi2q);
-
-	// d_Psi2q / dIq
+		
 	pDynaModel->SetElement(Psi2q, Iq, -Psi2q_iq);
-	// d_Psi2q / dPsi1q
 	pDynaModel->SetElement(Psi2q, Psi1q, -Psi2q_Psi1q);
-	// d_Psi2q / dPsi2q
 	pDynaModel->SetElement(Psi2q, Psi2q, Psi1q_Psi2q);
 
 	bRes = bRes && BuildRIfromDQEquations(pDynaModel);
@@ -315,20 +259,19 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	const double omega = ZeroGuardSlip(1.0 + s);
 
 
-	const double psid = Psid_id * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d;
-	const double psiq = Psiq_iq * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q;
+	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q - Vd;
+	const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
 
 	const double Te = (Psid_id * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq
 					 -(Psiq_iq * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
-
-
+		
 	double eDelta = pDynaModel->GetOmega0() * s;
 	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
 
-	pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
-	pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
-	pDynaModel->SetFunction(Id, Id - idiq.real());
-	pDynaModel->SetFunction(Iq, Iq - idiq.imag());
+	pDynaModel->SetFunction(P, 0 * (P - Vd * Id - Vq * Iq));
+	pDynaModel->SetFunction(Q, 0 * (Q - Vd * Iq + Vq * Id));
+	pDynaModel->SetFunction(Id, dId);
+	pDynaModel->SetFunction(Iq, dIq);
 	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
 	pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
 	pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
@@ -411,6 +354,7 @@ bool CDynaGeneratorPark3C::CalculatePower()
 	FromComplex(Id,Iq, GetIdIq());
 	P = Vd * Id + Vq * Iq;
 	Q = Vd * Iq - Vq * Id;
+	IfromDQ();
 	return true;
 }
 
@@ -452,28 +396,10 @@ void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_GEN_PARK3C);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark3C, CDeviceContainerProperties::m_cszSysNameGeneratorPark3C);
 	props.nEquationsCount = CDynaGeneratorPark3C::VARS::V_LAST;
-
-	/*
-	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGenerator1C::m_cszExciterId);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator1C, CDeviceContainerProperties::m_cszSysNameGenerator1C);
-
-
-
-	props.m_VarMap.insert(std::make_pair("Eqs", CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEq, CVarIndex(CDynaGenerator1C::V_EQ, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair("Id", CVarIndex(CDynaGenerator1C::V_ID, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Iq", CVarIndex(CDynaGenerator1C::V_IQ, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Vd", CVarIndex(CDynaGenerator1C::V_VD, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair("Vq", CVarIndex(CDynaGenerator1C::V_VQ, VARUNIT_KVOLTS)));
-
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszExciterId, CConstVarIndex(CDynaGenerator1C::C_EXCITERID, eDVT_CONSTSOURCE)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqnom, CConstVarIndex(CDynaGenerator1C::C_EQNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszSnom, CConstVarIndex(CDynaGenerator1C::C_SNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszInom, CConstVarIndex(CDynaGenerator1C::C_INOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszQnom, CConstVarIndex(CDynaGenerator1C::C_QNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CConstVarIndex(CDynaGenerator1C::C_EQE, eDVT_INTERNALCONST)));
-	*/
-
+	props.m_VarMap.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(m_cszPsi2q, CVarIndex(V_PSI_2Q, VARUNIT_KAMPERES)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorPark3C>>();
 }
 
@@ -482,9 +408,10 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 
-	Serializer->AddState("Psi1d", Psi1d, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Psi1q", Psi1q, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState("Psifd", Psifd, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszPsifd, Psifd, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszPsi1d, Psi1d, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszPsi1q, Psi1q, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszPsi2q, Psi2q, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);

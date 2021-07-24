@@ -66,6 +66,10 @@ namespace DFW2
 
 		static constexpr const char* m_cszxl	= "xl";
 		static constexpr const char* m_csztq01	= "tq01";
+		static constexpr const char* m_cszPsifd = "Psifd";
+		static constexpr const char* m_cszPsi1d = "Psi1d";
+		static constexpr const char* m_cszPsi1q = "Psi1q";
+		static constexpr const char* m_cszPsi2q = "Psi2q";
 
 	};
 }
