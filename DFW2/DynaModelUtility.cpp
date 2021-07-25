@@ -293,14 +293,20 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 	while (nCount)
 	{
 		pVectorBegin = *ppSortOrder;
-		Log(DFW2MessageStatus::DFW2LOG_DEBUG,
-					fmt::format("{:<6} {} {} Rtol {} Atol {}", 
-								   pVectorBegin->nErrorHits,
-								   pVectorBegin->pDevice->GetVerbalName(),
-								   pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
-								   pVectorBegin->Rtol,
-								   pVectorBegin->Atol)
-		   );
+
+		// если нет переменных с ошибками - выходим
+		if (!pVectorBegin->nErrorHits)
+			break;
+
+			Log(DFW2MessageStatus::DFW2LOG_DEBUG,
+				fmt::format("{:<6} {} {} Rtol {} Atol {}",
+					pVectorBegin->nErrorHits,
+					pVectorBegin->pDevice->GetVerbalName(),
+					pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
+					pVectorBegin->Rtol,
+					pVectorBegin->Atol)
+			);
+
 		ppSortOrder++;
 		nCount--;
 	}

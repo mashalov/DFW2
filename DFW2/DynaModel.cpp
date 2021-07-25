@@ -261,6 +261,7 @@ bool CDynaModel::RunTransient()
 						if (GetCurrentTime() > 0.01)
 							static_cast<CDynaGeneratorPark3C*>(*GeneratorsPark.begin())->Pt = 1650;
 							//static_cast<CDynaGeneratorMustang*>(*GeneratorsMustang.begin())->Pt = 1650;
+						
 						if (bRes)
 						{
 							// если ошибок не было, пишем результаты

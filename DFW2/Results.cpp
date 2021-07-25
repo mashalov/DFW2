@@ -25,7 +25,7 @@ void CDynaModel::WriteResultsHeader()
 
 	resultPath.append("binresultCOM.rst");
 
-	CResultsWriterBase::ResultsInfo resultsInfo {GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
+	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(resultPath, resultsInfo );
 
 	// добавляем описание единиц измерения переменных

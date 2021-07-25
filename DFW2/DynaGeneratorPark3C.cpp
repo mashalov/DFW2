@@ -7,7 +7,6 @@ using namespace DFW2;
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
 {
-	r = 0;
 	return InitModel(pDynaModel);
 }
 
@@ -166,8 +165,8 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iq, Psi1d, Eq_Psi1d * omega);
 	pDynaModel->SetElement(Iq, s, Id * ld2 + Eq_Psi1d * Psi1d + Eq_Psifd * Psifd);
 
-	pDynaModel->SetElement(s, Id,  -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * Psid_id + Iq * Psiq_iq) / Mj);
-	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * Psid_id - Id * Psiq_iq) / Mj);
+	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * Psid_id + Iq * Psiq_iq) / Mj);
+	pDynaModel->SetElement(s, Iq,  (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * Psid_id - Id * Psiq_iq) / Mj);
 	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
 	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
 	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
@@ -179,21 +178,18 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Delta, Delta, 0.0);
 
 	pDynaModel->SetElement(P, P, 1.0);
-	/*
 	pDynaModel->SetElement(P, Vd, -Id);
 	pDynaModel->SetElement(P, Vq, -Iq);
 	pDynaModel->SetElement(P, Id, -Vd);
 	pDynaModel->SetElement(P, Iq, -Vq);
-	*/
 
 	
 	pDynaModel->SetElement(Q, Q, 1.0);
-	/*
 	pDynaModel->SetElement(Q, Vd, -Iq);
 	pDynaModel->SetElement(Q, Vq, Id);
 	pDynaModel->SetElement(Q, Id, Vq);
 	pDynaModel->SetElement(Q, Iq, -Vd);
-	*/
+
 	pDynaModel->SetElement(Psifd, Id, -Psifd_id);
 	pDynaModel->SetElement(Psifd, Psifd, Psifd_Psifd);
 	pDynaModel->SetElement(Psifd, Psi1d, -Psifd_Psi1d);
@@ -268,8 +264,8 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	double eDelta = pDynaModel->GetOmega0() * s;
 	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
 
-	pDynaModel->SetFunction(P, 0 * (P - Vd * Id - Vq * Iq));
-	pDynaModel->SetFunction(Q, 0 * (Q - Vd * Iq + Vq * Id));
+	pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
+	pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
 	pDynaModel->SetFunction(Id, dId);
 	pDynaModel->SetFunction(Iq, dIq);
 	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
@@ -396,10 +392,10 @@ void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_GEN_PARK3C);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark3C, CDeviceContainerProperties::m_cszSysNameGeneratorPark3C);
 	props.nEquationsCount = CDynaGeneratorPark3C::VARS::V_LAST;
-	props.m_VarMap.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(m_cszPsi2q, CVarIndex(V_PSI_2Q, VARUNIT_KAMPERES)));
+	props.m_VarMap.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
+	props.m_VarMap.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
+	props.m_VarMap.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));
+	props.m_VarMap.insert(std::make_pair(m_cszPsi2q, CVarIndex(V_PSI_2Q, eVARUNITS::VARUNIT_WB)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorPark3C>>();
 }
 
@@ -408,16 +404,16 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 
-	Serializer->AddState(m_cszPsifd, Psifd, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszPsi1d, Psi1d, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszPsi1q, Psi1q, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszPsi2q, Psi2q, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(m_cszPsifd, Psifd, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(m_cszPsi1d, Psi1d, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(m_cszPsi1q, Psi1q, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(m_cszPsi2q, Psi2q, eVARUNITS::VARUNIT_WB);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(CDynaGenerator3C::m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_csztq01, Tq01, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(CDynaGenerator3C::m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
 }
