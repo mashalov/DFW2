@@ -206,7 +206,7 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 		
 	pDynaModel->SetElement(Psi2q, Iq, -Psi2q_iq);
 	pDynaModel->SetElement(Psi2q, Psi1q, -Psi2q_Psi1q);
-	pDynaModel->SetElement(Psi2q, Psi2q, Psi1q_Psi2q);
+	pDynaModel->SetElement(Psi2q, Psi2q, Psi2q_Psi2q);
 
 	bRes = bRes && BuildRIfromDQEquations(pDynaModel);
 
