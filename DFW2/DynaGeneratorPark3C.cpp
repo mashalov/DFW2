@@ -177,19 +177,6 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 	pDynaModel->SetElement(Delta, Delta, 0.0);
 
-	pDynaModel->SetElement(P, P, 1.0);
-	pDynaModel->SetElement(P, Vd, -Id);
-	pDynaModel->SetElement(P, Vq, -Iq);
-	pDynaModel->SetElement(P, Id, -Vd);
-	pDynaModel->SetElement(P, Iq, -Vq);
-
-	
-	pDynaModel->SetElement(Q, Q, 1.0);
-	pDynaModel->SetElement(Q, Vd, -Iq);
-	pDynaModel->SetElement(Q, Vq, Id);
-	pDynaModel->SetElement(Q, Id, Vq);
-	pDynaModel->SetElement(Q, Iq, -Vd);
-
 	pDynaModel->SetElement(Psifd, Id, -Psifd_id);
 	pDynaModel->SetElement(Psifd, Psifd, Psifd_Psifd);
 	pDynaModel->SetElement(Psifd, Psi1d, -Psifd_Psi1d);
@@ -264,8 +251,6 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	double eDelta = pDynaModel->GetOmega0() * s;
 	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
 
-	pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
-	pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
 	pDynaModel->SetFunction(Id, dId);
 	pDynaModel->SetFunction(Iq, dIq);
 	pDynaModel->SetFunctionDiff(Psifd, dPsifd);

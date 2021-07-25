@@ -108,39 +108,18 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 			sp1 = sp2 = 1.0;
 		}
 
-		// dP / dP
-		pDynaModel->SetElement(P, P, 1.0);
-		// dP / dVre
-		pDynaModel->SetElement(P, Vre, -Ire);
-		// dP / dVim
-		pDynaModel->SetElement(P, Vim, -Iim);
-		// dP / dIre
-		pDynaModel->SetElement(P, Ire, -Vre);
-		// dP / dIim
-		pDynaModel->SetElement(P, Iim, -Vim);
-
-		// dQ / dP
-		pDynaModel->SetElement(Q, Q, 1.0);
-		// dQ / dVre
-		pDynaModel->SetElement(Q, Vre, Iim);
-		// dQ / dVim
-		pDynaModel->SetElement(Q, Vim, -Ire);
-		// dQ / dIre
-		pDynaModel->SetElement(Q, Ire, -Vim);
-		// dQ / dIim
-		pDynaModel->SetElement(Q, Iim, Vre);
 
 		// dDeltaG / dS
 		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 		// dDeltaG / dDeltaG
 		pDynaModel->SetElement(Delta, Delta, 0.0);
 
-		// dS / dS
-		pDynaModel->SetElement(s, s, - 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
-		// dS / dP
-		pDynaModel->SetElement(s, P, 1.0 / Mj / sp2);
-		// dS / dNodeS
-		pDynaModel->SetElement(s, Sv, -1.0 / Mj * P / sp2 / sp2);
+		pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1)/ Mj );
+		pDynaModel->SetElement(s, Vre, Ire / Mj / sp2);
+		pDynaModel->SetElement(s, Vim, Iim / Mj / sp2);
+		pDynaModel->SetElement(s, Ire, Vre / Mj / sp2);
+		pDynaModel->SetElement(s, Iim, Vim / Mj / sp2);
+		pDynaModel->SetElement(s, Sv, -(Iim * Vim + Ire * Vre) / Mj / sp2 / sp2);
 
 		// dIre / dIre
 		pDynaModel->SetElement(Ire, Ire, 1.0);
@@ -176,15 +155,11 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 			sp1 = sp2 = 1.0;
 		}
 
-		pDynaModel->SetFunction(P, P - dVre * Ire - dVim * Iim);
-		pDynaModel->SetFunction(Q, Q + dVre * Iim - dVim * Ire);
 		pDynaModel->SetFunction(Ire, Ire - (Eqs * sin(Delta) - dVim) / xd1);
 		pDynaModel->SetFunction(Iim, Iim - (dVre - Eqs * cos(Delta)) / xd1);
-
-		double eDelta = pDynaModel->GetOmega0() * s;
-		double eS = (Pt / sp1 - Kdemp  * s - P / sp2) / Mj;
+		double eS = (Pt / sp1 - Kdemp  * s - (dVre * Ire + dVim * Iim) / sp2) / Mj;
 		pDynaModel->SetFunctionDiff(s, eS);
-		pDynaModel->SetFunctionDiff(Delta, eDelta);
+		pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
 	}
 
 	return true;
@@ -258,7 +233,7 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 	props.m_VarMap.insert(std::make_pair("S", CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
 	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, eDVT_CONSTSOURCE)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorMotion>>();
 

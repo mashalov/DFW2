@@ -1173,6 +1173,11 @@ VariableIndex& CDevice::GetVariable(ptrdiff_t nVarIndex)
 		throw dfw2error("CDevice::GetVariable index ouf of range");
 }
 
+void CDevice::FinishStep()
+{
+	return;
+}
+
 
 bool CDevice::CheckLimits(double& Min, double& Max)
 {

@@ -88,15 +88,14 @@ namespace DFW2
 	};
 
 	// описание константы
-	class CConstVarIndex : public CVarIndexBase
+	class CConstVarIndex : public CVarIndex
 	{
 	public:
 		eDEVICEVARIABLETYPE m_DevVarType;
-		CConstVarIndex(ptrdiff_t nIndex, eDEVICEVARIABLETYPE eDevVarType) : CVarIndexBase(nIndex),
-			m_DevVarType(eDevVarType)
-		{
-
-		}
+		CConstVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits, eDEVICEVARIABLETYPE eDevVarType) : CVarIndex(nIndex, false, eVarUnits),
+			m_DevVarType(eDevVarType) { }
+		CConstVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits, bool bOutput, eDEVICEVARIABLETYPE eDevVarType) : CVarIndex(nIndex, bOutput, eVarUnits),
+			m_DevVarType(eDevVarType) { }
 	};
 
 	// описание внешней переменной

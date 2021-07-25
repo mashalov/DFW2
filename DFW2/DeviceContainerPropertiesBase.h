@@ -54,6 +54,7 @@ namespace DFW2
 		bool bCheckZeroCrossing = false;									// нужен ли контейнеру вызов ZeroCrossing
 		bool bPredict = false;												// нужен ли контейнеру вызов предиктора
 		bool bVolatile = false;												// устройства в контейнере могут создаваться и удаляться динамически во время расчета
+		bool bFinishStep = false;											// нужен ли контейнеру расчет независимых переменных после завершения шага
 		ptrdiff_t nPossibleLinksCount = 0;									// возможное для устройства в контейнере количество ссылок на другие устройства
 		ptrdiff_t nEquationsCount = 0;										// количество уравнений устройства в контейнере
 		eDFW2DEVICETYPE	eDeviceType = DEVTYPE_UNKNOWN;

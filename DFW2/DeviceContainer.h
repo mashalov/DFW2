@@ -157,7 +157,7 @@ namespace DFW2
 		// константы и переменные состояния обрабатываются по разному, т.к. для констант нет уравнений
 		// и они в процессе расчета не изменяются
 		bool RegisterVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits);
-		bool RegisterConstVariable(std::string_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType);
+		bool RegisterConstVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits, eDEVICEVARIABLETYPE eDevVarType);
 		// управление выводом переменной в результаты
 		bool VariableOutputEnable(std::string_view VarName, bool bOutputEnable);
 
@@ -219,6 +219,7 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel);					// проверить zerocrossing и вернуть долю текущего шага до zerocrossing
 		CDevice *GetZeroCrossingDevice();
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
+		void FinishStep();													// завершить шаг и рассчитать зависимые переменные
 		CDynaModel* GetModel();
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);

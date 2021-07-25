@@ -75,8 +75,6 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 			sp1 = sp2 = 1.0;
 		}
 
-		// P
-		// Q
 		// S
 		// DELTA
 		// EQS
@@ -85,30 +83,6 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		// I_D
 		// I_Q
 		// EQ
-
-
-
-		// dP/dP
-		pDynaModel->SetElement(P, P, 1.0);
-		// dP/dVd
-		pDynaModel->SetElement(P, Vd, -Id);
-		// dP/dVq
-		pDynaModel->SetElement(P, Vq, -Iq);
-		// dP/dId
-		pDynaModel->SetElement(P, Id, -Vd);
-		// dP/dIq
-		pDynaModel->SetElement(P, Iq, -Vq);
-
-		// dQ/dQ
-		pDynaModel->SetElement(Q, Q, 1.0);
-		// dQ/dVd
-		pDynaModel->SetElement(Q, Vd, -Iq);
-		// dQ/dVq
-		pDynaModel->SetElement(Q, Vq, Id);
-		// dQ/dId
-		pDynaModel->SetElement(Q, Id, Vq);
-		// dQ/dIq
-		pDynaModel->SetElement(Q, Iq, -Vd);
 
 		// dId/dId
 		pDynaModel->SetElement(Id, Id, 1);
@@ -188,8 +162,6 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
 
-		pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
-		pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
 		pDynaModel->SetFunction(Id, Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
 		pDynaModel->SetFunction(Iq, Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
 		pDynaModel->SetFunction(Eq, Eq - Eqs + Id * (xd - xd1));

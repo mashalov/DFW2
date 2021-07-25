@@ -10,28 +10,6 @@ bool CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
 
-	// dP / dP
-	pDynaModel->SetElement(P, P, 1.0);
-	// dP / dVre
-	pDynaModel->SetElement(P, Vre, -Ire);
-	// dP / dVim
-	pDynaModel->SetElement(P, Vim, -Iim);
-	// dP / dIre
-	pDynaModel->SetElement(P, Ire, -Vre);
-	// dP / dIim
-	pDynaModel->SetElement(P, Iim, -Vim);
-
-	// dQ / dP
-	pDynaModel->SetElement(Q, Q, 1.0);
-	// dQ / dVre
-	pDynaModel->SetElement(Q, Vre, Iim);
-	// dQ / dVim
-	pDynaModel->SetElement(Q, Vim, -Ire);
-	// dQ / dIre
-	pDynaModel->SetElement(Q, Ire, -Vim);
-	// dQ / dIim
-	pDynaModel->SetElement(Q, Iim, Vre);
-	   	
 	// dIre / dIre
 	pDynaModel->SetElement(Ire, Ire, 1.0);
 	// dIre / dVim
@@ -57,8 +35,6 @@ bool CDynaGeneratorInfBusBase::CalculatePower()
 
 bool CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 {
-	pDynaModel->SetFunction(P, P - Vre * Ire - Vim * Iim);
-	pDynaModel->SetFunction(Q, Q + Vre * Iim - Vim * Ire);
 	pDynaModel->SetFunction(Ire, Ire - (EqsSin - Vim) / xd1);
 	pDynaModel->SetFunction(Iim, Iim - (Vre - EqsCos) / xd1);
 	return true;

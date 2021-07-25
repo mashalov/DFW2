@@ -14,8 +14,6 @@ namespace DFW2
 	public:
 		enum VARS
 		{
-			V_P,
-			V_Q,
 			V_IRE,
 			V_IIM,
 			V_LAST
@@ -24,11 +22,15 @@ namespace DFW2
 		enum CONSTVARS
 		{
 			C_NODEID,
+			C_P,
+			C_Q,
 			C_LAST
 		};
 
 
-		VariableIndex P, Q, Ire, Iim;
+		VariableIndex Ire, Iim;
+
+		double P, Q;
 
 		double Kgen;
 		double LFQmin;
@@ -40,12 +42,17 @@ namespace DFW2
 		virtual ~CDynaPowerInjector() = default;
 
 		virtual bool CalculatePower() { return true; }
+		void FinishStep() override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
-		static const char* m_cszNodeId;
+		static constexpr const char* m_cszP = "P";
+		static constexpr const char* m_cszQ = "Q";
+		static constexpr const char* m_cszIre = "Ire";
+		static constexpr const char* m_cszIim = "Iim";
+		static constexpr const char* m_cszNodeId = "NodeId";
 	};
 }

@@ -196,12 +196,12 @@ void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.m_VarMap.insert(std::make_pair(m_cszVd, CVarIndex(CDynaGeneratorDQBase::V_VD, VARUNIT_KVOLTS)));
 	props.m_VarMap.insert(std::make_pair(m_cszVq, CVarIndex(CDynaGeneratorDQBase::V_VQ, VARUNIT_KVOLTS)));
 
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszExciterId, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, eDVT_CONSTSOURCE)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszEqnom, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszSnom, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszInom, CConstVarIndex(CDynaGeneratorDQBase::C_INOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszQnom, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszEqe, CConstVarIndex(CDynaGeneratorDQBase::C_EQE, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszExciterId, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
+	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszEqnom, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
+	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszSnom, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
+	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszInom, CConstVarIndex(CDynaGeneratorDQBase::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
+	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszQnom, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
+	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszEqe, CConstVarIndex(CDynaGeneratorDQBase::C_EQE, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
 
 	// запрещаем явное использование фабрики данного класса
 	props.DeviceFactory = nullptr;

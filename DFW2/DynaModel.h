@@ -427,6 +427,7 @@ namespace DFW2
 		DEVICECONTAINERS m_DeviceContainers;
 		DEVICECONTAINERS m_DeviceContainersNewtonUpdate;
 		DEVICECONTAINERS m_DeviceContainersPredict;
+		DEVICECONTAINERS m_DeviceContainersFinishStep;
 
 		CDevice **m_ppVarSearchStackTop;
 		std::unique_ptr<CDevice*[]> m_ppVarSearchStackBase;
@@ -500,6 +501,7 @@ namespace DFW2
 		void BuildMatrix();
 		void BuildRightHand();
 		double CheckZeroCrossing();
+		void FinishStep();
 
 		void WriteResultsHeader();
 		void WriteResults();

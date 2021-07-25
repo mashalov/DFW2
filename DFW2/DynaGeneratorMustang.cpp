@@ -80,30 +80,6 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		// EQSS
 		// EDSS
 
-		// dP/dP
-		pDynaModel->SetElement(P, P, 1.0);
-		// dP/dEqss
-		pDynaModel->SetElement(P, Eqss, -sp2 * Iq);
-		// dP/dEdss
-		pDynaModel->SetElement(P, Edss, -sp2 * Id);
-		// dP/dId
-		pDynaModel->SetElement(P, Id, -sp2 * (Edss + Iq * (xd2 - xq2)));
-		// dP/dIq
-		pDynaModel->SetElement(P, Iq, -sp2 * (Eqss + Id * (xd2 - xq2)));
-		// dP/dSv
-		pDynaModel->SetElement(P, Sv, -(Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2)));
-
-		// dQ/dQ
-		pDynaModel->SetElement(Q, Q, 1.0);
-		// dQ/dVd
-		pDynaModel->SetElement(Q, Vd, -Iq);
-		// dQ/dVq
-		pDynaModel->SetElement(Q, Vq, Id);
-		// dQ/dId
-		pDynaModel->SetElement(Q, Id, Vq);
-		// dQ/dIq
-		pDynaModel->SetElement(Q, Iq, -Vd);
-
 		// dId/dId
 		pDynaModel->SetElement(Id, Id, 1);
 		// dId/dVq
@@ -193,9 +169,6 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		{
 			sp1 = sp2 = 1.0;
 		}
-
-		pDynaModel->SetFunction(P,  P - sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2)));
-		pDynaModel->SetFunction(Q,  Q - Vd * Iq + Vq * Id);
 
 		pDynaModel->SetFunction(Id, Id + zsq * (sp2 * Eqss - Vq) * xq2);
 		pDynaModel->SetFunction(Iq, Iq + zsq * (Vd - sp2 * Edss) * xd2);

@@ -78,28 +78,6 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		// EQSS
 		// EDSS
 
-		// dP/dP
-		pDynaModel->SetElement(P, P, 1.0);
-		// dP/dVd
-		pDynaModel->SetElement(P, Vd, -Id);
-		// dP/dVq
-		pDynaModel->SetElement(P, Vq, -Iq);
-		// dP/dId
-		pDynaModel->SetElement(P, Id, -Vd);
-		// dP/dIq
-		pDynaModel->SetElement(P, Iq, -Vq);
-
-		// dQ/dQ
-		pDynaModel->SetElement(Q, Q, 1.0);
-		// dQ/dVd
-		pDynaModel->SetElement(Q, Vd, -Iq);
-		// dQ/dVq
-		pDynaModel->SetElement(Q, Vq, Id);
-		// dQ/dId
-		pDynaModel->SetElement(Q, Id, Vq);
-		// dQ/dIq
-		pDynaModel->SetElement(Q, Iq, -Vd);
-
 		// dVd/dVd
 		pDynaModel->SetElement(Vd, Vd, 1);
 		// dVd/dV
@@ -215,9 +193,6 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		
 		pDynaModel->SetFunction(Vd, Vd + NodeV * sinDeltaGT);
 		pDynaModel->SetFunction(Vq, Vq - NodeV * cosDeltaGT);
-
-		pDynaModel->SetFunction(P, P - Vd * Id - Vq * Iq);
-		pDynaModel->SetFunction(Q, Q - Vd * Iq + Vq * Id);
 		pDynaModel->SetFunction(Id, Id + zsq * (r * (Vd - Edss) + xq2 * (Eqss - Vq)));
 		pDynaModel->SetFunction(Iq, Iq + zsq * (r * (Vq - Eqss) + xd2 * (Vd - Edss)));
 		pDynaModel->SetFunction(Eq, Eq - Eqss + Id * (xd - xd2));

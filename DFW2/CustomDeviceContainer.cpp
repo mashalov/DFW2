@@ -34,11 +34,17 @@ bool CCustomDeviceContainer::ConnectDLL(std::string_view DLLFilePath)
 	{
 		// копируем в контейнер описания констант
 		for (const auto& it : m_DLL.GetConstsInfo())
-			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(it.VarInfo.Name, CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_CONSTSOURCE)));
+			m_ContainerProps.m_ConstVarMap.insert({ it.VarInfo.Name,
+					CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(),
+						static_cast<eVARUNITS>(it.VarInfo.eUnits),
+						eDVT_CONSTSOURCE) });
 
 		// копируем в контейнер описания уставок
 		for (const auto& it : m_DLL.GetSetPointsInfo())
-			m_ContainerProps.m_ConstVarMap.insert(std::make_pair(it.Name, CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), eDVT_INTERNALCONST)));
+			m_ContainerProps.m_ConstVarMap.insert({ it.Name,
+				CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), 
+					static_cast<eVARUNITS>(it.eUnits),
+					eDVT_INTERNALCONST) });
 
 		// копируем в контейнер описания внутренних переменных
 		for (const auto& it : m_DLL.GetInternalsInfo())

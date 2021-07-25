@@ -10,13 +10,15 @@ double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(NodeId, C_NODEID)
+		MAP_VARIABLE(P, C_P)
+		MAP_VARIABLE(Q, C_Q)
 	}
 	return p;
 }
 
 VariableIndexRefVec& CDynaPowerInjector::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDevice::GetVariables(JoinVariables({ P, Q, Ire, Iim },ChildVec));
+	return CDevice::GetVariables(JoinVariables({ Ire, Iim },ChildVec));
 }
 
 double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -25,8 +27,6 @@ double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 
 	switch (nVarIndex)
 	{
-		MAP_VARIABLE(P.Value, V_P)
-		MAP_VARIABLE(Q.Value, V_Q)
 		MAP_VARIABLE(Ire.Value, V_IRE)
 		MAP_VARIABLE(Iim.Value, V_IIM)
 	}
@@ -56,6 +56,12 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pD
 	return eRes;
 }
 
+void CDynaPowerInjector::FinishStep()
+{
+	const double dVre(Vre), dVim(Vim), dIre(Ire), dIim(Iim);
+	P = dVre * dIre + dVim * dIim;
+	Q = dVim * dIre - dVre * dIim;
+}
 
 void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 {
@@ -64,10 +70,10 @@ void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 	AddStateProperty(Serializer);
 	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("NodeId", NodeId, eVARUNITS::VARUNIT_NOTSET);
-	Serializer->AddProperty("P", P, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty("Q", Q, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddState("Ire", Ire, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddState("Iim", Iim, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddProperty(m_cszP, P, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(m_cszQ, Q, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState(m_cszIre, Ire, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(m_cszIim, Iim, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddProperty("Qmin", LFQmin, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty("Qmax", LFQmax, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty("Kgen", Kgen, eVARUNITS::VARUNIT_PIECES);
@@ -78,18 +84,18 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_POWER_INJECTOR);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, CDynaPowerInjector::m_cszNodeId);
 
-	props.m_VarMap.insert(std::make_pair("Ire", CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Iim", CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("P", CVarIndex(CDynaPowerInjector::V_P, VARUNIT_MW)));
-	props.m_VarMap.insert(std::make_pair("Q", CVarIndex(CDynaPowerInjector::V_Q, VARUNIT_MVAR)));
+	props.m_VarMap.insert({ m_cszIre, CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES) });
+	props.m_VarMap.insert({ m_cszIim, CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES) });
 
-	props.m_ConstVarMap.insert(std::make_pair(CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, eDVT_CONSTSOURCE)));
+	props.m_ConstVarMap.insert({ CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
+	props.m_ConstVarMap.insert({ m_cszP, CConstVarIndex(CDynaPowerInjector::C_P, VARUNIT_MW, true, eDVT_CONSTSOURCE) });
+	props.m_ConstVarMap.insert({ m_cszQ, CConstVarIndex(CDynaPowerInjector::C_Q, VARUNIT_MVAR, true, eDVT_CONSTSOURCE) });
 
 	props.nEquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
 
+	props.bFinishStep = true;	// нужно рассчитывать мощности после выполнения шага
+
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaPowerInjector>>();
 
 }
-
-const char* CDynaPowerInjector::m_cszNodeId = "NodeId";

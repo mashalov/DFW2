@@ -925,7 +925,7 @@ bool CDynaNodeContainer::LULF()
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
 
-					fgen << pVsource->P.Value << ";";
+					fgen << pVsource->P << ";";
 				}
 
 				// рассчитываем задающий ток узла от нагрузки
@@ -1654,8 +1654,8 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaNode>>();
 
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasNode);
-	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST)));
 }
 
 void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)

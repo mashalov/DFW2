@@ -258,9 +258,11 @@ bool CDynaModel::RunTransient()
 					bRes = bRes && Step();
 					if (!CancelProcessing())
 					{
+						/*
 						if (GetCurrentTime() > 0.01)
 							static_cast<CDynaGeneratorPark3C*>(*GeneratorsPark.begin())->Pt = 1650;
 							//static_cast<CDynaGeneratorMustang*>(*GeneratorsMustang.begin())->Pt = 1650;
+							*/
 						
 						if (bRes)
 						{
@@ -1351,6 +1353,8 @@ void CDynaModel::GoodStep(double rSame)
 	sc.RefactorMatrix(false);		// отказываемся от рефакторизации Якоби
 	sc.nSuccessfullStepsOfNewton++;
 	sc.nMinimumStepFailures = 0;
+
+	FinishStep();	// рассчитываем независимые переменные, которые не входят в систему уравнения
 
 	// рассчитываем количество успешных шагов и пройденного времени для каждого порядка
 	sc.OrderStatistics[sc.q - 1].nSteps++;

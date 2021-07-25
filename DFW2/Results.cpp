@@ -68,7 +68,7 @@ void CDynaModel::WriteResultsHeader()
 			if (device->IsPermanentOff())
 				continue;
 
-			long nVarIndex = 0;
+			long nVarIndex(0);
 			for (const auto& variable : container->m_ContainerProps.m_VarMap)
 			{
 				if (variable.second.m_bOutput)
@@ -77,6 +77,18 @@ void CDynaModel::WriteResultsHeader()
 						device->GetType(),
 						nVarIndex++,
 						device->GetVariablePtr(variable.second.m_nIndex),
+						nIndex++);
+				}
+			}
+
+			for (const auto& variable : container->m_ContainerProps.m_ConstVarMap)
+			{
+				if (variable.second.m_bOutput)
+				{
+					m_ResultsWriter.SetChannel(device->GetId(),
+						device->GetType(),
+						nVarIndex++,
+						device->GetConstVariablePtr(variable.second.m_nIndex),
 						nIndex++);
 				}
 			}

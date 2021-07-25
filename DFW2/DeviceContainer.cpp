@@ -93,9 +93,9 @@ bool CDeviceContainer::RegisterVariable(std::string_view VarName, ptrdiff_t nVar
 
 // добавление перменной константы устройства (константа - параметр не изменяемый в процессе расчета и пользуемый при инициализации)
 // Требуются имя, индекс и тип константы. Индексы у констант и переменных состояния разные
-bool CDeviceContainer::RegisterConstVariable(std::string_view VarName, ptrdiff_t nVarIndex, eDEVICEVARIABLETYPE eDevVarType)
+bool CDeviceContainer::RegisterConstVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits, eDEVICEVARIABLETYPE eDevVarType)
 {
-	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(VarName, CConstVarIndex(nVarIndex, eDevVarType))).second;
+	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(VarName, CConstVarIndex(nVarIndex, eVarUnits, eDevVarType))).second;
 	return bInserted;
 }
 
@@ -489,6 +489,12 @@ void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 				m_DevInMatrix.push_back(it);
 		}
 	}
+}
+
+void CDeviceContainer::FinishStep()
+{
+	for (auto&& dit : m_DevInMatrix)
+		dit->FinishStep();
 }
 
 void CDeviceContainer::BuildBlock(CDynaModel* pDynaModel)

@@ -54,6 +54,12 @@ void CResultsWriterABI::AddDeviceType(const CDeviceContainer& Container)
 			pDeviceType->AddDeviceTypeVariable(var.first, var.second.m_Units, var.second.m_dMultiplier);
 	}
 
+	for (const auto& var : Props.m_ConstVarMap)
+	{
+		if (var.second.m_bOutput)
+			pDeviceType->AddDeviceTypeVariable(var.first, var.second.m_Units, var.second.m_dMultiplier);
+	}
+
 	ResultIds DeviceIds, ParentIds, ParentTypes;
 
 	for (const auto& device : Container)

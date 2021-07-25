@@ -112,6 +112,14 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 					var.second.m_dMultiplier);
 		}
 
+		for (const auto& var : Props.m_ConstVarMap)
+		{
+			if (var.second.m_bOutput)
+				spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
+					var.second.m_Units,
+					var.second.m_dMultiplier);
+		}
+
 		variant_t DeviceIds, ParentIds, ParentTypes;
 		
 		// если у устройства более одного идентификатора, передаем их в SAFERRAY

@@ -79,6 +79,8 @@ bool CDynaModel::Link()
 			m_DeviceContainersNewtonUpdate.push_back(it);
 		if (it->m_ContainerProps.bPredict)
 			m_DeviceContainersPredict.push_back(it);
+		if (it->m_ContainerProps.bFinishStep)
+			m_DeviceContainersFinishStep.push_back(it);
 	}
 
 	return bRes;
