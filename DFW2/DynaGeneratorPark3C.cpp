@@ -7,7 +7,6 @@ using namespace DFW2;
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
 {
-	r = 0;
 	return InitModel(pDynaModel);
 }
 
@@ -20,9 +19,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 	const double Psiq = -(Vd + r * Id) / omega;		// (7)
 	const double Psid =  (Vq + r * Iq) / omega;		// (8)
 	const double ifd = (Psid - xd * Id) / lad;		// (1)
-	Eq = ifd;
-	//const double Mdv(xd - xl);
-	ExtEqe = Rfd * ifd;								// (9)
+	// масштабы ЭДС и тока ротора для АРВ не понятны 
+	// Исходные значения одинаковые, но ток идет в масштабе lad, а ЭДС - Rfd / lad;
+	ExtEqe = Eq = ifd * lad;
 	Psifd = lad * Id + (lad + lrc + lfd) * ifd;		// (2)
 	Psi1d = lad * Id + (lad + lrc) * ifd;			// (3)
 	Psi1q = Psi2q = laq * Iq;
@@ -202,7 +201,7 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Psifd, Psifd, Psifd_Psifd);
 	pDynaModel->SetElement(Psifd, Psi1d, -Psifd_Psi1d);
 	if (ExtEqe.Indexed())
-		pDynaModel->SetElement(Psifd, ExtEqe, -1.0);
+		pDynaModel->SetElement(Psifd, ExtEqe, -Rfd / lad);
 
 	pDynaModel->SetElement(Psi1d, Id, -Psi1d_id);
 	pDynaModel->SetElement(Psi1d, Psifd, -Psi1d_Psifd);
@@ -219,6 +218,9 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	bRes = bRes && BuildRIfromDQEquations(pDynaModel);
 
 	pDynaModel->SetElement(Eq, Eq, 1);
+	pDynaModel->SetElement(Eq, Psifd, Psifd_Psifd * lad / Rfd);
+	pDynaModel->SetElement(Eq, Psi1d, Psifd_Psi1d * lad / Rfd);
+	pDynaModel->SetElement(Eq, Id, Psifd_id * lad / Rfd);
 
 	return bRes;
 }
@@ -254,10 +256,13 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 {
 	bool bRes(true);
 
-	const double dPsifd = ExtEqe + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id;
+	const double rIfd = Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id;
+
+	const double dPsifd = Rfd * ExtEqe / lad + rIfd;
 	const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * Id;
 	const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * Iq;
 	const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq;
+	const double dEq = Eq + rIfd * lad / Rfd;
 
 	const cplx idiq(GetIdIq());
 	const double omega = ZeroGuardSlip(1.0 + s);
@@ -280,8 +285,7 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
 	pDynaModel->SetFunctionDiff(s, eS);
 	pDynaModel->SetFunctionDiff(Delta, eDelta);
-
-	pDynaModel->SetFunction(Eq, 0);
+	pDynaModel->SetFunction(Eq, dEq);
 
 
 	bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
@@ -299,7 +303,7 @@ bool CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
 		{
 			const cplx idiq(GetIdIq());
 
-			const double dPsifd = ExtEqe + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * idiq.real();
+			const double dPsifd = Rfd * ExtEqe / lad + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * idiq.real();
 			const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * idiq.real();
 			const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * idiq.imag();
 			const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * idiq.imag();
@@ -312,7 +316,6 @@ bool CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
 
 			double eDelta = pDynaModel->GetOmega0() * s;
 			double eS = (Pt / omega - Kdemp * s - Te) / Mj;
-
 
 			pDynaModel->SetFunctionDiff(Psifd, dPsifd);
 			pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
@@ -341,6 +344,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::ProcessDiscontinuity(CDynaModel* pDy
 	if (CDevice::IsFunctionStatusOK(eRes) && IsStateOn())
 	{
 		CalculatePower();
+		Eq = -lad * (Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id) / Rfd;
 	}
 	return eRes;
 }
