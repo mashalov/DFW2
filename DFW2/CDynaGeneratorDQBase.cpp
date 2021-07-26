@@ -13,14 +13,9 @@ void CDynaGeneratorDQBase::IfromDQ()
 	Iim = Iq * si + Id * co;
 }
 
-double CDynaGeneratorDQBase::Xgen() const
-{
-	return 0.5 * (xq + xd1);
-}
-
 cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 {
-	cplx YgInt = 1.0 / cplx(0.0, Xgen());
+	cplx YgInt = 1.0 / Zgen();
 
 	if (!nIteration)
 		m_Egen = GetEMF();
@@ -47,6 +42,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::Init(CDynaModel* pDynaModel)
 		xd /= Kgen;
 		r /= Kgen;
 	}
+
+	m_Zgen = { r , 0.5 * (xq + xd1) };
 
 	if (std::abs(xq) < 1E-7) xq = xd1; // place to validation !!!
 	if (xd <= 0) xd = xd1;

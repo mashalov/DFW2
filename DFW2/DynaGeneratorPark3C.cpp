@@ -7,16 +7,13 @@ using namespace DFW2;
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
 {
+	r = 0;
 	return InitModel(pDynaModel);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 {
-
-	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!! debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!
-	xq2 = xd2;
 	CalculateFundamentalParameters();
-
 	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
 
 	const double omega(1.0 + s);
@@ -45,18 +42,24 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 		}
 	}
 
-	cplx V{ Vre, Vim };
-	cplx I{ Iq, Id };
-	cplx rot = std::polar(1.0, Delta.Value);
-	double Ed = Eq_Psifd * Psifd + Eq_Psi1d * Psi1d;
-	double Eq = Ed_Psi1q * Psi1q + Ed_Psi2q * Psi2q;
+	m_Zgen = { r , 0.5 * (lq2 + ld2) };
 
-	cplx ef{ Eq, Ed };
+	//cplx V{ Vre, Vim };
+	//cplx I{ Iq, Id };
 
-	double Vr = -r * I.real() + ef.imag() - xd2 * I.imag();
-	double Vi = -r * I.imag() - ef.real() + xd2 * I.real();
+	//emf *= std::polar(1.0, -Delta.Value);
 
+	//double vq = -r * Iq + omega * ld2 * Id + emf.real();
+	//double vd = -r * Id - omega * lq2 * Iq + emf.imag();
 
+	//ef *= std::polar(1.0, Delta.Value);
+	//I *= std::polar(1.0, Delta.Value);
+
+//	double vq = -r * Iq + xd2 * Id + Ed;
+//	double vd = -r * Id - xd2 * Iq + Eq;
+
+//	double Vr = -r * I.real() + ef.real() + xd2 * I.imag();
+//	double Vi = -r * I.imag() + ef.imag() - xd2 * I.real();
 
 	return Status;
 }
@@ -359,34 +362,19 @@ bool CDynaGeneratorPark3C::CalculatePower()
 
 cplx CDynaGeneratorPark3C::GetEMF()
 {
-
-	const double omega(1.0 + s);
-	return { omega * (Eq_Psifd * Psifd + Eq_Psi1d * Psi1d),   omega * (Ed_Psi1q * Psi1d + Ed_Psi2q * Psi2q) };
+	cplx emf{ Eq_Psifd * Psifd + Eq_Psi1d * Psi1d, Ed_Psi1q * Psi1q + Ed_Psi2q * Psi2q };
+	emf *= (1.0 + s);
+	emf *= std::polar(1.0, Delta.Value);
+	return emf;
 }
 
 const cplx& CDynaGeneratorPark3C::CalculateEgen()
 {
-	double xgen = Xgen();
-	/*
-	Er_q = (h_f * Psi_f + h_D * Psi_D),
-		Er_d = -(h_1Q * Psi_1Q + h_2Q * Psi_2Q);
 
-
-	{
-		efq = (1. + su22) * Er_q + (Xdss - X_mid) * Id;
-		efd = (1. + su22) * Er_d - (Xqss - X_mid) * Iq;
-	}
-	//	else 
-	{
-		//	efd=Edss; efq=Eqss;
-	}*/
-
-	return CDynaGeneratorDQBase::CalculateEgen();//m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq * (xgen - xq2)) * std::polar(1.0, (double)Delta);
-}
-
-double CDynaGeneratorPark3C::Xgen() const
-{
-	return 0.5 * (xd2 + xq2);
+	double xgen = Zgen().imag();
+	cplx emf(GetEMF() * std::polar(1.0, -Delta.Value));
+	const double omega = ZeroGuardSlip(1.0 + Sv);
+	return m_Egen = cplx(emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen)) * std::polar(1.0, (double)Delta);
 }
 
 void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)

@@ -54,7 +54,6 @@ namespace DFW2
 		bool CalculatePower() override;
 		cplx GetEMF() override;
 		const cplx& CalculateEgen() override;
-		double Xgen() const override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
 		/*

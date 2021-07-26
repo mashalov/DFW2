@@ -63,6 +63,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::InitModel(CDynaModel* pDynaModel
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
 {
+	m_Zgen = { 0 , xd1 };
+
 	if (Kgen > 1)
 		xd1 /= Kgen;
 
@@ -96,9 +98,9 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 	return bRes;
 }
 
-double CDynaGeneratorInfBusBase::Xgen() const
+const cplx& CDynaGeneratorInfBusBase::Zgen() const
 {
-	return xd1;
+	return m_Zgen;
 }
 
 cplx CDynaGeneratorInfBusBase::Igen(ptrdiff_t nIteration)

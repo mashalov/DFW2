@@ -227,7 +227,7 @@ double* CDynaGenerator1C::GetVariablePtr(ptrdiff_t nVarIndex)
 
 const cplx& CDynaGenerator1C::CalculateEgen()
 {
-	double xgen = Xgen();
+	double xgen = Zgen().imag();
 	return m_Egen = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, (double)Delta);
 }
 

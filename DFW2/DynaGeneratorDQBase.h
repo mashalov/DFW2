@@ -45,7 +45,6 @@ namespace DFW2
 		virtual ~CDynaGeneratorDQBase() = default;
 
 		void IfromDQ();												// расчет токов в осях RI из токов в DQ
-		double Xgen() const override;
 		cplx Igen(ptrdiff_t nIteration) override;
 		virtual const cplx& CalculateEgen();
 

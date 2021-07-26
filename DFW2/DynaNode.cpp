@@ -917,7 +917,7 @@ bool CDynaNodeContainer::LULF()
 					{
 						CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(pVsource);
 						// в диагональ матрицы добавляем проводимость генератора
-						Y -= 1.0 / cplx(0.0, pGen->Xgen());
+						Y -= 1.0 / pGen->Zgen();
 						I -= pGen->Igen(nIteration);
 					}
 

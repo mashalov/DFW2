@@ -23,6 +23,10 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
 		xq2 /= Kgen;
 	}
 
+	m_Zgen = { 0, 0.5 * (xd2 + xq2) };
+
+
+
 	return InitModel(pDynaModel);
 }
 
@@ -312,13 +316,8 @@ cplx CDynaGenerator3C::GetEMF()
 
 const cplx& CDynaGenerator3C::CalculateEgen()
 {
-	double xgen = Xgen();
+	double xgen = Zgen().imag();
 	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, (double)Delta);
-}
-
-double CDynaGenerator3C::Xgen() const
-{
-	return 0.5 * (xd2 + xq2);
 }
 
 void CDynaGenerator3C::UpdateSerializer(CSerializerBase* Serializer)
