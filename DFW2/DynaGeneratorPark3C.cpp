@@ -12,6 +12,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 {
+
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!! debug !!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	xq2 = xd2;
 	CalculateFundamentalParameters();
 
 	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
@@ -41,6 +44,19 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 			break;
 		}
 	}
+
+	cplx V{ Vre, Vim };
+	cplx I{ Iq, Id };
+	cplx rot = std::polar(1.0, Delta.Value);
+	double Ed = Eq_Psifd * Psifd + Eq_Psi1d * Psi1d;
+	double Eq = Ed_Psi1q * Psi1q + Ed_Psi2q * Psi2q;
+
+	cplx ef{ Eq, Ed };
+
+	double Vr = -r * I.real() + ef.imag() - xd2 * I.imag();
+	double Vi = -r * I.imag() - ef.real() + xd2 * I.real();
+
+
 
 	return Status;
 }
