@@ -27,6 +27,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 	Psi1d = lad * Id + (lad + lrc) * ifd;			// (3)
 	Psi1q = Psi2q = laq * Iq;
 
+	cplx emf(GetEMF());
+
 	Pt = (P + r * (Id * Id + Iq * Iq)) * omega;
 
 	if (CDevice::IsFunctionStatusOK(Status))

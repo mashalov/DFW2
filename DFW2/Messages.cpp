@@ -20,6 +20,7 @@ CDFW2Messages::CDFW2Messages()
 	m_VarNameMap[VARUNIT_PIECES]	= "Шт";
 	m_VarNameMap[VARUNIT_SECONDS]   = "с";
 	m_VarNameMap[VARUNIT_OHM]		= "Ом";
+	m_VarNameMap[VARUNIT_WB]		= "Вб";
 }
 
 #ifdef _MSC_VER
