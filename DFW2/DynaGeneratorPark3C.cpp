@@ -42,24 +42,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 	}
 
 	m_Zgen = { r , 0.5 * (lq2 + ld2) };
-
-	//cplx V{ Vre, Vim };
-	//cplx I{ Iq, Id };
-
-	//emf *= std::polar(1.0, -Delta.Value);
-
-	//double vq = -r * Iq + omega * ld2 * Id + emf.real();
-	//double vd = -r * Id - omega * lq2 * Iq + emf.imag();
-
-	//ef *= std::polar(1.0, Delta.Value);
-	//I *= std::polar(1.0, Delta.Value);
-
-//	double vq = -r * Iq + xd2 * Id + Ed;
-//	double vd = -r * Id - xd2 * Iq + Eq;
-
-//	double Vr = -r * I.real() + ef.real() + xd2 * I.imag();
-//	double Vi = -r * I.imag() + ef.imag() - xd2 * I.real();
-
+	
 	return Status;
 }
 
@@ -193,6 +176,16 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(s, Psi2q, -Id * Psiq_Psi2q / Mj);
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
 
+	/* 
+	Вариант уравнения движения с расчетом момента от частоты тока 
+	pDynaModel->SetElement(s, Id, (Vd - 2 * Id * r) / (Mj * (Sv + 1)));
+	pDynaModel->SetElement(s, Iq, (Vq - 2 * Iq * r) / (Mj * (Sv + 1)));
+	pDynaModel->SetElement(s, Vd, Id / (Mj * (Sv + 1)));
+	pDynaModel->SetElement(s, Vq, Iq / (Mj * (Sv + 1)));
+	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
+	pDynaModel->SetElement(s, Sv, -(Id * Vd - r * (Id * Id + Iq *Iq) + Iq * Vq) / (Mj * (Sv + 1) * (Sv + 1)));
+	*/
+
 
 	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 	pDynaModel->SetElement(Delta, Delta, 0.0);
@@ -277,6 +270,9 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	double eDelta = pDynaModel->GetOmega0() * s;
 	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
 
+	// Вариант уравнения движения с расчетом момента от частоты тока
+	//double eS2 = (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id*Id + Iq*Iq) * r) / (1 + Sv)) / Mj;
+
 	pDynaModel->SetFunction(Id, dId);
 	pDynaModel->SetFunction(Iq, dIq);
 	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
@@ -284,6 +280,8 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
 	pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
 	pDynaModel->SetFunctionDiff(s, eS);
+
+
 	pDynaModel->SetFunctionDiff(Delta, eDelta);
 	pDynaModel->SetFunction(Eq, dEq);
 
