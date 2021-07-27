@@ -1,4 +1,11 @@
-﻿#include "stdafx.h"
+﻿/*
+* Raiden - программа для моделирования длительных электромеханических переходных процессов в энергосистеме
+* (С) 2018 - 2021 Евгений Машалов
+* Raiden - long-term power system transient stability simulation module
+* (C) 2018 - 2021 Eugene Mashalov
+*/
+
+#include "stdafx.h"
 #include "DynaModel.h"
 #include "DynaGeneratorMustang.h"
 #include "DynaGeneratorPark3C.h"
