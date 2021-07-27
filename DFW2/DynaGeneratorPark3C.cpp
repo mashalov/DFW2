@@ -135,17 +135,14 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	Psi2q_Psi2q	=  R2q * D * detq;
 	Psi2q_iq	= -R2q * laq * l1q * detq;
 
+	lq2 = xq2;
+	ld2 = xd2;
 
-	Psid_id = (lad + xl) + lad * lad * (l1d + lfd) * detd;
 	Psid_Psifd = -lad * l1d * detd;
 	Psid_Psi1d = -lad * lfd * detd;
-
-	Psiq_iq = (laq + xl) + laq * laq * (l1q + l2q) * detq;
 	Psiq_Psi1q = -laq * l2q * detq;
 	Psiq_Psi2q = -laq * l1q * detq;
 
-	lq2 = xq2;
-	ld2 = xd2;
 }
 
 bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
@@ -168,8 +165,8 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iq, Psi1d, Eq_Psi1d * omega);
 	pDynaModel->SetElement(Iq, s, Id * ld2 + Eq_Psi1d * Psi1d + Eq_Psifd * Psifd);
 
-	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * Psid_id + Iq * Psiq_iq) / Mj);
-	pDynaModel->SetElement(s, Iq,  (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * Psid_id - Id * Psiq_iq) / Mj);
+	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * ld2 + Iq * lq2) / Mj);
+	pDynaModel->SetElement(s, Iq,  (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
 	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
 	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
 	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
@@ -264,8 +261,8 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q - Vd;
 	const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
 
-	const double Te = (Psid_id * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq
-					 -(Psiq_iq * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
+	const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq
+					 -(lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
 		
 	double eDelta = pDynaModel->GetOmega0() * s;
 	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
@@ -308,8 +305,8 @@ bool CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
 
 			const double omega = ZeroGuardSlip(1.0 + s);
 
-			const double Te = (Psid_id * idiq.real() + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * idiq.imag()
-				- (Psiq_iq * idiq.imag() + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * idiq.real();
+			const double Te = (ld2 * idiq.real() + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * idiq.imag()
+				- (lq2 * idiq.imag() + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * idiq.real();
 
 
 			double eDelta = pDynaModel->GetOmega0() * s;
