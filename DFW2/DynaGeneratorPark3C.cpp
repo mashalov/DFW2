@@ -93,9 +93,9 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	// активное сопротивление обмотки возбуждения [4.15]
 	Rfd = lFd / Td01;
 	// активное сопротивление демпферной обмотки d [4.15]
-	const double R1d = (lad * lfd / lFd + l1d) / Td02;	
+	double R1d = (lad * lfd / lFd + l1d) / Td02;	
 	// активное сопротивление первой демпферной обмотки q [4.42]
-	const double R1q = l1Q / Tq02;	
+	double R1q = l1Q / Tq02;	
 
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
 	double detd(C * C - A * B);
@@ -104,6 +104,16 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 		throw dfw2error(fmt::format("detd == 0 for {}", GetVerbalName()));
 	if (Equal(l1Q, 0.0))
 		throw dfw2error(fmt::format("l1Q == 0 for {}", GetVerbalName()));
+
+	// Пересчет постоянных времени им. НИИПТ
+	const double T2(Td01 + Td02), det(0.25 * T2 * T2 - Td01 * Td02 / (1.0 - lad * lad / lFd / l1D));
+	if (det >= 0)
+	{
+		const double Td0 = 0.5 * T2 + std::sqrt(det);
+		Rfd = lFd / Td0;
+		R1d = l1D / (T2 - Td0);
+	}
+	
 
 	detd = 1.0 / detd;
 
@@ -250,8 +260,7 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 
 	pDynaModel->SetFunctionDiff(Delta, eDelta);
 	pDynaModel->SetFunction(Eq, dEq);
-
-
+	
 	bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
 	return bRes;
 }

@@ -164,6 +164,8 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
 		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = true;
+		//m_Parameters.m_bDisableResultsWriter = true;
+
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга
@@ -940,6 +942,8 @@ bool CDynaModel::Step()
 			if (sc.m_bNewtonConverged)
 			{
 				// если Ньютон сошелся
+				FinishStep();	// рассчитываем независимые переменные, которые не входят в систему уравнения
+
 				if (!sc.m_bDiscontinuityMode)
 				{
 					DetectAdamsRinging();
@@ -1363,9 +1367,6 @@ void CDynaModel::GoodStep(double rSame)
 	sc.RefactorMatrix(false);		// отказываемся от рефакторизации Якоби
 	sc.nSuccessfullStepsOfNewton++;
 	sc.nMinimumStepFailures = 0;
-
-	FinishStep();	// рассчитываем независимые переменные, которые не входят в систему уравнения
-
 	// рассчитываем количество успешных шагов и пройденного времени для каждого порядка
 	sc.OrderStatistics[sc.q - 1].nSteps++;
 	// переходим к новому рассчитанному времени с обновлением суммы Кэхэна
