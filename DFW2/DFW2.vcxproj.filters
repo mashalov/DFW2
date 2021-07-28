@@ -253,10 +253,13 @@
     <ClInclude Include="Statistics.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="DynaGeneratorPark3C.h">
+    <ClInclude Include="DynaGeneratorPark4C.h">
       <Filter>Header Files\Generators</Filter>
     </ClInclude>
     <ClInclude Include="DynaGeneratorDQBase.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
+    <ClInclude Include="DynaGeneratorPark3C.h">
       <Filter>Header Files\Generators</Filter>
     </ClInclude>
   </ItemGroup>
@@ -567,10 +570,13 @@
     <ClCompile Include="ResultsWriterCOM.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DynaGeneratorPark3C.cpp">
+    <ClCompile Include="DynaGeneratorPark4C.cpp">
       <Filter>Source Files\Generators</Filter>
     </ClCompile>
     <ClCompile Include="CDynaGeneratorDQBase.cpp">
+      <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaGeneratorPark3C.cpp">
       <Filter>Source Files\Generators</Filter>
     </ClCompile>
   </ItemGroup>

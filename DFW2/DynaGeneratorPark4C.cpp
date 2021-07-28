@@ -1,17 +1,17 @@
 ﻿#include "stdafx.h"
 #include "DynaGenerator3C.h"
-#include "DynaGeneratorPark3C.h"
+#include "DynaGeneratorPark4C.h"
 #include "DynaModel.h"
 
 using namespace DFW2;
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::Init(CDynaModel* pDynaModel)
 {
 	r = 0;
 	return InitModel(pDynaModel);
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::InitModel(CDynaModel* pDynaModel)
 {
 	CalculateFundamentalParameters();
 	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
@@ -25,7 +25,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 	ExtEqe = Eq = ifd * lad;
 	Psifd = lad * Id + (lad + lrc + lfd) * ifd;		// (2)
 	Psi1d = lad * Id + (lad + lrc) * ifd;			// (3)
-	Psi1q = laq * Iq;
+	Psi1q = Psi2q = laq * Iq;
 
 	cplx emf(GetEMF());
 
@@ -47,7 +47,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 	return Status;
 }
 
-double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
+double* CDynaGeneratorPark4C::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double* p = CDynaGeneratorDQBase::GetVariablePtr(nVarIndex);
 	if (!p)
@@ -57,17 +57,18 @@ double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
 			MAP_VARIABLE(Psifd.Value, V_PSI_FD)
 			MAP_VARIABLE(Psi1d.Value, V_PSI_1D)
 			MAP_VARIABLE(Psi1q.Value, V_PSI_1Q)
+			MAP_VARIABLE(Psi2q.Value, V_PSI_2Q)
 		}
 	}
 	return p;
 }
 
-VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& ChildVec)
+VariableIndexRefVec& CDynaGeneratorPark4C::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psifd, Psi1d, Psi1q }, ChildVec));
+	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psifd, Psi1d, Psi1q, Psi2q }, ChildVec));
 }
 
-void CDynaGeneratorPark3C::CalculateFundamentalParameters()
+void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 {
 	// взаимные индуктивности без рассеивания [3.111 и 3.112]
 	lad = xd - xl; 
@@ -75,39 +76,46 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	// сопротивление утечки обмотки возбуждения [4.29]
 	double denom = lad - xd1 + xl;
 	lfd = Equal(denom,0.0) ? 1E6 : lad * (xd1 - xl) / denom; 
-	denom = laq - xq2 + xl;
-	// для трехконтурной СМ используются другое соотношение между l1q и xq2,
-	// в отличие от четырехкотурной
-	// сопротивление утечки первой демпферной обмотки q [4.42]
-	const double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq2 - xl) / denom);
+	denom = laq - xq1 + xl;
+	// сопротивление утечки первой демпферной обмотки q [4.33]
+	const double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq1 - xl) / denom);
 	// сопротивление утечки демпферной обмотки d [4.28]
 	denom = lad * lfd - (xd2 - xl) * (lfd + lad);
 	const double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
+	// сопротивление утечки второй демпферной обмотки q [4.32]
+	denom = laq * l1q - (xq2 - xl) * ( l1q + laq );
+	const double l2q(Equal(denom, 0.0) ? 1E6 : laq * l1q * (xq2 - xl) / denom);
+
 
 	lrc = 0.0;
 
 	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
 	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
 	const double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
+	const double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
 
 	// активное сопротивление обмотки возбуждения [4.15]
 	Rfd = lFd / Td01;
 	// активное сопротивление демпферной обмотки d [4.15]
 	const double R1d = (lad * lfd / lFd + l1d) / Td02;	
-	// активное сопротивление первой демпферной обмотки q [4.42]
-	const double R1q = l1Q / Tq02;	
+	// активное сопротивление первой демпферной обмотки q [4.30]
+	const double R1q = l1Q / Tq01;	
+	// активное сопротивление второй демпферной обмотки q [4.31]
+	const double R2q = (laq * l1q / l1Q + l2q) / Tq02;
 
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
-	double detd(C * C - A * B);
+	const double& D(l1Q), &F(l2Q);
+	double detd(C * C - A * B), detq(laq * laq - D * F);
 
 	if (Equal(detd, 0.0))
 		throw dfw2error(fmt::format("detd == 0 for {}", GetVerbalName()));
-	if (Equal(l1Q, 0.0))
-		throw dfw2error(fmt::format("l1Q == 0 for {}", GetVerbalName()));
+	if (Equal(detq, 0.0))
+		throw dfw2error(fmt::format("detq == 0 for {}", GetVerbalName()));
 
-	detd = 1.0 / detd;
+	detd = 1.0 / detd;	detq = 1.0 / detq;
 
-	Ed_Psi1q	= -laq / l1Q;
+	Ed_Psi1q	= laq * l2q * detq;
+	Ed_Psi2q	= laq * l1q * detq;
 
 	Eq_Psifd	= -lad * l1d * detd;
 	Eq_Psi1d	= -lad * lfd * detd;
@@ -120,18 +128,25 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	Psi1d_Psi1d	=  R1d * A * detd;
 	Psi1d_id	= -R1d * lad * lfd * detd;
 
-	Psi1q_Psi1q	= -R1q / l1Q;
-	Psi1q_iq =     R1q * laq / l1Q;
+	Psi1q_Psi1q	=  R1q * F * detq;
+	Psi1q_Psi2q = -R1q * laq * detq;
+	Psi1q_iq	= -R1q * laq * l2q * detq;
+
+	Psi2q_Psi1q	= -R2q * laq * detq;
+	Psi2q_Psi2q	=  R2q * D * detq;
+	Psi2q_iq	= -R2q * laq * l1q * detq;
 
 	lq2 = xq2;
 	ld2 = xd2;
 
 	Psid_Psifd = -lad * l1d * detd;
 	Psid_Psi1d = -lad * lfd * detd;
-	Psiq_Psi1q =  laq / l1Q;
+	Psiq_Psi1q = -laq * l2q * detq;
+	Psiq_Psi2q = -laq * l1q * detq;
+
 }
 
-bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
+bool CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes(true);
 
@@ -141,7 +156,8 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Id, Iq, -lq2 * omega);
 	pDynaModel->SetElement(Id, Vd, -1);
 	pDynaModel->SetElement(Id, Psi1q, Ed_Psi1q * omega);
-	pDynaModel->SetElement(Id, s, Ed_Psi1q * Psi1q - Iq * lq2);
+	pDynaModel->SetElement(Id, Psi2q, Ed_Psi2q * omega);
+	pDynaModel->SetElement(Id, s, Ed_Psi1q * Psi1q - Iq * lq2 + Ed_Psi2q * Psi2q);
 
 	pDynaModel->SetElement(Iq, Id, ld2 * omega);
 	pDynaModel->SetElement(Iq, Iq, -r);
@@ -150,12 +166,12 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iq, Psi1d, Eq_Psi1d * omega);
 	pDynaModel->SetElement(Iq, s, Id * ld2 + Eq_Psi1d * Psi1d + Eq_Psifd * Psifd);
 
-
-	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q - Iq * ld2 + Iq * lq2) / Mj);
+	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * ld2 + Iq * lq2) / Mj);
 	pDynaModel->SetElement(s, Iq,  (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
 	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
 	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
 	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
+	pDynaModel->SetElement(s, Psi2q, -Id * Psiq_Psi2q / Mj);
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
 
 	/* 
@@ -168,13 +184,13 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(s, Sv, -(Id * Vd - r * (Id * Id + Iq *Iq) + Iq * Vq) / (Mj * (Sv + 1) * (Sv + 1)));
 	*/
 
+
 	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 	pDynaModel->SetElement(Delta, Delta, 0.0);
 
 	pDynaModel->SetElement(Psifd, Id, -Psifd_id);
 	pDynaModel->SetElement(Psifd, Psifd, Psifd_Psifd);
 	pDynaModel->SetElement(Psifd, Psi1d, -Psifd_Psi1d);
-
 	if (ExtEqe.Indexed())
 		pDynaModel->SetElement(Psifd, ExtEqe, -Rfd / lad);
 
@@ -184,6 +200,11 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 
 	pDynaModel->SetElement(Psi1q, Iq, -Psi1q_iq);
 	pDynaModel->SetElement(Psi1q, Psi1q, Psi1q_Psi1q);
+	pDynaModel->SetElement(Psi1q, Psi2q, -Psi1q_Psi2q);
+		
+	pDynaModel->SetElement(Psi2q, Iq, -Psi2q_iq);
+	pDynaModel->SetElement(Psi2q, Psi1q, -Psi2q_Psi1q);
+	pDynaModel->SetElement(Psi2q, Psi2q, Psi2q_Psi2q);
 
 	bRes = bRes && BuildRIfromDQEquations(pDynaModel);
 
@@ -195,7 +216,7 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	return bRes;
 }
 
-cplx CDynaGeneratorPark3C::GetIdIq() const
+cplx CDynaGeneratorPark4C::GetIdIq() const
 {
 	const double omega = ZeroGuardSlip(1.0 + s);
 	const double omega2 = omega * omega;
@@ -207,6 +228,7 @@ cplx CDynaGeneratorPark3C::GetIdIq() const
 		- omega2 * lq2 * Eq_Psifd * Psifd
 		- omega2 * lq2 * Eq_Psi1d * Psi1d
 		+ r * omega * Ed_Psi1q * Psi1q
+		+ r * omega * Ed_Psi2q * Psi2q
 		);
 
 	const double iq = zsq * (
@@ -215,12 +237,13 @@ cplx CDynaGeneratorPark3C::GetIdIq() const
 		+ r * omega * Eq_Psifd * Psifd
 		+ r * omega * Eq_Psi1d * Psi1d
 		+ omega2 * ld2 * Ed_Psi1q * Psi1q
+		+ omega2 * ld2 * Ed_Psi2q * Psi2q
 		);
 
 	return { id,iq };
 }
 
-bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
+bool CDynaGeneratorPark4C::BuildRightHand(CDynaModel* pDynaModel)
 {
 	bool bRes(true);
 
@@ -228,14 +251,20 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 
 	const double dPsifd = Rfd * ExtEqe / lad + rIfd;
 	const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * Id;
-	const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_iq * Iq;
+	const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * Iq;
+	const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq;
 	const double dEq = Eq + rIfd * lad / Rfd;
+
 	const double omega = ZeroGuardSlip(1.0 + s);
-	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q - Vd;
+
+	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q - Vd;
 	const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
-	const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q) * Id;
-	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
+
+	const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq
+					 -(lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
+		
 	double eDelta = pDynaModel->GetOmega0() * s;
+	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
 
 	// Вариант уравнения движения с расчетом момента от частоты тока
 	//double eS2 = (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id*Id + Iq*Iq) * r) / (1 + Sv)) / Mj;
@@ -245,6 +274,7 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
 	pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
 	pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
+	pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
 	pDynaModel->SetFunctionDiff(s, eS);
 
 
@@ -258,7 +288,7 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 
 
 
-bool CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
+bool CDynaGeneratorPark4C::BuildDerivatives(CDynaModel* pDynaModel)
 {
 	bool bRes = CDynaGeneratorDQBase::BuildDerivatives(pDynaModel);
 	if (bRes)
@@ -269,9 +299,14 @@ bool CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
 
 			const double dPsifd = Rfd * ExtEqe / lad + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * idiq.real();
 			const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * idiq.real();
-			const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_iq * idiq.imag();
+			const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * idiq.imag();
+			const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * idiq.imag();
+
 			const double omega = ZeroGuardSlip(1.0 + s);
-			const double Te = (ld2 * idiq.real() + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * idiq.imag() - (lq2 * idiq.imag() + Psiq_Psi1q * Psi1q) * idiq.real();
+
+			const double Te = (ld2 * idiq.real() + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * idiq.imag()
+				- (lq2 * idiq.imag() + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * idiq.real();
+
 
 			double eDelta = pDynaModel->GetOmega0() * s;
 			double eS = (Pt / omega - Kdemp * s - Te) / Mj;
@@ -279,6 +314,7 @@ bool CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
 			pDynaModel->SetFunctionDiff(Psifd, dPsifd);
 			pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
 			pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
+			pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
 			pDynaModel->SetFunctionDiff(s, eS);
 			pDynaModel->SetFunctionDiff(Delta, eDelta);
 
@@ -288,13 +324,15 @@ bool CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
 			pDynaModel->SetFunctionDiff(Psifd, 0);
 			pDynaModel->SetFunctionDiff(Psi1d, 0);
 			pDynaModel->SetFunctionDiff(Psi1q, 0);
+			pDynaModel->SetFunctionDiff(Psi2q, 0);
+
 		}
 	}
 	return true;
 }
 
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::ProcessDiscontinuity(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel);
 	if (CDevice::IsFunctionStatusOK(eRes) && IsStateOn())
@@ -305,7 +343,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::ProcessDiscontinuity(CDynaModel* pDy
 	return eRes;
 }
 
-bool CDynaGeneratorPark3C::CalculatePower()
+bool CDynaGeneratorPark4C::CalculatePower()
 {
 	double NodeV = V;
 	double DeltaGT = Delta - DeltaV;
@@ -320,15 +358,15 @@ bool CDynaGeneratorPark3C::CalculatePower()
 	return true;
 }
 
-cplx CDynaGeneratorPark3C::GetEMF()
+cplx CDynaGeneratorPark4C::GetEMF()
 {
-	cplx emf{ Eq_Psifd * Psifd + Eq_Psi1d * Psi1d, Ed_Psi1q * Psi1q };
+	cplx emf{ Eq_Psifd * Psifd + Eq_Psi1d * Psi1d, Ed_Psi1q * Psi1q + Ed_Psi2q * Psi2q };
 	emf *= (1.0 + s);
 	emf *= std::polar(1.0, Delta.Value);
 	return emf;
 }
 
-const cplx& CDynaGeneratorPark3C::CalculateEgen()
+const cplx& CDynaGeneratorPark4C::CalculateEgen()
 {
 
 	double xgen = Zgen().imag();
@@ -337,19 +375,20 @@ const cplx& CDynaGeneratorPark3C::CalculateEgen()
 	return m_Egen = cplx(emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen)) * std::polar(1.0, (double)Delta);
 }
 
-void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)
+void CDynaGeneratorPark4C::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaGeneratorDQBase::DeviceProperties(props);
-	props.SetType(DEVTYPE_GEN_PARK3C);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark3C, CDeviceContainerProperties::m_cszSysNameGeneratorPark3C);
-	props.nEquationsCount = CDynaGeneratorPark3C::VARS::V_LAST;
+	props.SetType(DEVTYPE_GEN_PARK4C);
+	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark4C, CDeviceContainerProperties::m_cszSysNameGeneratorPark4C);
+	props.nEquationsCount = CDynaGeneratorPark4C::VARS::V_LAST;
 	props.m_VarMap.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
 	props.m_VarMap.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
 	props.m_VarMap.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));
-	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorPark3C>>();
+	props.m_VarMap.insert(std::make_pair(m_cszPsi2q, CVarIndex(V_PSI_2Q, eVARUNITS::VARUNIT_WB)));
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorPark4C>>();
 }
 
-void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
+void CDynaGeneratorPark4C::UpdateSerializer(CSerializerBase* Serializer)
 {
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
@@ -357,6 +396,7 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState(m_cszPsifd, Psifd, eVARUNITS::VARUNIT_WB);
 	Serializer->AddState(m_cszPsi1d, Psi1d, eVARUNITS::VARUNIT_WB);
 	Serializer->AddState(m_cszPsi1q, Psi1q, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(m_cszPsi2q, Psi2q, eVARUNITS::VARUNIT_WB);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);

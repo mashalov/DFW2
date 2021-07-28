@@ -554,7 +554,8 @@ namespace DFW2
 		CDeviceContainer LRCs;
 		CDeviceContainer Generators3C; 
 		CDeviceContainer GeneratorsMustang;
-		CDeviceContainer GeneratorsPark;
+		CDeviceContainer GeneratorsPark3C;
+		CDeviceContainer GeneratorsPark4C;
 		CDeviceContainer Generators1C;
 		CDeviceContainer GeneratorsMotion;
 		CDeviceContainer GeneratorsInfBus;

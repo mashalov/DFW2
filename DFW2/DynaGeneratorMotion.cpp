@@ -89,6 +89,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 		Mj *= Kgen;
 	}
 
+	m_Zgen = { 0 , xd1 };
+
 	return InitModel(pDynaModel);
 }
 
