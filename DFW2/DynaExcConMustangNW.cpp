@@ -1,63 +1,62 @@
-﻿#include "stdafx.h"
-#include "DynaExcConMustang.h"
+﻿#pragma once
+#include "stdafx.h"
+#include "DynaExcConMustangNW.h"
 #include "DynaModel.h"
 #include "DerlagContinuous.h"
 
 using namespace DFW2;
 
-CDynaExcConMustang::CDynaExcConMustang() : CDevice(),
-	Limiter(*this, { UsumLmt }, { Usum }),
-	dVdt(*this,  { dVdtOut, dVdtOut1   }, { dVdtIn }),
+CDynaExcConMustangNonWindup::CDynaExcConMustangNonWindup() : CDevice(),
+	Lag(*this, { Uf }, { Usum }),
+	dVdt(*this, { dVdtOut, dVdtOut1 }, { dVdtIn }),
 	dEqdt(*this, { dEqdtOut, dEqdtOut1 }, { dEqdtIn }),
-	dSdt(*this,  { dSdtOut, dSdtOut1   }, { dSdtIn })
+	dSdt(*this, { dSdtOut, dSdtOut1 }, { dSdtIn })
 {
 }
 
-VariableIndexRefVec& CDynaExcConMustang::GetVariables(VariableIndexRefVec& ChildVec)
+VariableIndexRefVec& CDynaExcConMustangNonWindup::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDevice::GetVariables(JoinVariables({ Uf,
 												 Usum,
-												 UsumLmt,
-												 Svt, 
+												 Svt,
 												 dVdtOut,
 												 dVdtOut1,
 												 dEqdtOut,
 												 dEqdtOut1,
 												 dSdtOut,
 												 dSdtOut1
-												}, ChildVec));
+		}, ChildVec));
 }
 
-double* CDynaExcConMustang::GetVariablePtr(ptrdiff_t nVarIndex)
+double* CDynaExcConMustangNonWindup::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p(nullptr);
+	double* p(nullptr);
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Uf.Value, V_UF)
-		MAP_VARIABLE(UsumLmt.Value, V_USUMLMT)
-		MAP_VARIABLE(Usum.Value, V_USUM)
-		MAP_VARIABLE(Svt.Value, V_SVT)
-		MAP_VARIABLE(dVdtOut.Value, V_DVDT)
-		MAP_VARIABLE(dEqdtOut.Value, V_EQDT)
-		MAP_VARIABLE(dSdtOut.Value, V_SDT)
-		MAP_VARIABLE(dVdtOut1.Value, V_DVDT + 1)
-		MAP_VARIABLE(dEqdtOut1.Value, V_EQDT + 1)
-		MAP_VARIABLE(dSdtOut1.Value, V_SDT + 1)
+			MAP_VARIABLE(Usum.Value, V_USUM)
+			MAP_VARIABLE(Svt.Value, V_SVT)
+			MAP_VARIABLE(dVdtOut.Value, V_DVDT)
+			MAP_VARIABLE(dEqdtOut.Value, V_EQDT)
+			MAP_VARIABLE(dSdtOut.Value, V_SDT)
+			MAP_VARIABLE(dVdtOut1.Value, V_DVDT + 1)
+			MAP_VARIABLE(dEqdtOut1.Value, V_EQDT + 1)
+			MAP_VARIABLE(dSdtOut1.Value, V_SDT + 1)
 	}
 	return p;
 }
 
-void CDynaExcConMustang::ScaleGains(CDynaExcConMustang& excon)
+void CDynaExcConMustangNonWindup::ScaleGains(CDynaExcConMustangNonWindup& excon)
 {
-	const auto& scale = CDynaExcConMustang::DefaultGains;
-	//const auto& scale = CDynaExcConMustang::UnityGains;
-	excon.K1u  *= scale.K1u;
-	excon.K0f  *= scale.K0f;
-	excon.K1f  *= scale.K1f;
+	const auto& scale = CDynaExcConMustangNonWindup::DefaultGains;
+	//const auto& scale = CDynaExcConMustangNonWindup::UnityGains;
+	excon.K1u *= scale.K1u;
+	excon.K0f *= scale.K0f;
+	excon.K1f *= scale.K1f;
 	excon.K1if *= scale.K1if;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaExcConMustangNonWindup::Init(CDynaModel* pDynaModel)
 {
 	if (Tf <= 0)
 		Tf = 0.1;
@@ -65,10 +64,10 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	dVdtOut = dEqdtOut = dSdtOut = 0.0;
-	Svt = Uf = Usum = UsumLmt = 0.0;
+	Svt = Uf = Usum = 0.0;
 	double Eqnom, Unom, Eqe0;
 
-	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
+	CDevice* pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
 	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
@@ -81,7 +80,8 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Limiter.SetMinMax(pDynaModel, Umin * Eqnom - Eqe0, Umax * Eqnom - Eqe0);
+		Lag.SetMinMaxTK(pDynaModel, Umin * Eqnom - Eqe0, Umax * Eqnom - Eqe0, Tr, 1.0);
+
 		K0u *= Eqnom / Unom;
 		K1u *= Eqnom / Unom;
 		K0f *= Eqnom * pDynaModel->GetOmega0() / 2.0 / M_PI;
@@ -89,7 +89,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 		// забавно - если умножить на машстабы до
 		// расчета о.е - изменяется количество шагов метода
-		CDynaExcConMustang::ScaleGains(*this);
+		CDynaExcConMustangNonWindup::ScaleGains(*this);
 
 		dVdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1u);
 		dEqdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1if);
@@ -105,14 +105,14 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 		{
 			bool bRes = true;
 			Vref = dVdtIn;
-			bRes = Limiter.Init(pDynaModel);
+			bRes = Lag.Init(pDynaModel);
 			Status = bRes ? eDEVICEFUNCTIONSTATUS::DFS_OK : eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 		}
 		break;
 		case eDEVICESTATE::DS_OFF:
 			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
-			Vref = Usum = UsumLmt = 0.0;
-			Limiter.Init(pDynaModel);
+			Vref = Usum = 0.0;
+			Lag.Init(pDynaModel);
 			break;
 		}
 	}
@@ -120,7 +120,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 }
 
 
-bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
+bool CDynaExcConMustangNonWindup::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes = true;
 
@@ -145,10 +145,6 @@ bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(Svt, Svt, -1.0 / Tf);
 		//dSvt / dSv
 		pDynaModel->SetElement(Svt, dSdtIn, -1.0 / Tf);
-
-		pDynaModel->SetElement(Uf, UsumLmt, -1.0 / Tr);
-		pDynaModel->SetElement(Uf, Uf, -1.0 / Tr);
-
 	}
 	else
 	{
@@ -158,23 +154,21 @@ bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(Usum, dVdtOut, 0.0);
 		pDynaModel->SetElement(Usum, dEqdtOut, 0.0);
 		pDynaModel->SetElement(Usum, dSdtOut, 0.0);
-		pDynaModel->SetElement(Svt, Svt, 0.0);
+		pDynaModel->SetElement(Svt, Svt, 1.0);
 		pDynaModel->SetElement(Svt, dSdtIn, 0.0);
-		pDynaModel->SetElement(Uf, UsumLmt, 0);
-		pDynaModel->SetElement(Uf, Uf, 0.0);
 	}
-		
+
 	bRes = bRes && CDevice::BuildEquations(pDynaModel);
 
 	return true;
 }
 
-bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
+bool CDynaExcConMustangNonWindup::BuildRightHand(CDynaModel* pDynaModel)
 {
 	if (IsStateOn())
 	{
 		double dSum = Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) - K0f * (dSdtIn - Svt) + dVdtOut + dEqdtOut - dSdtOut;
-		RightVector *pRV = pDynaModel->GetRightVector(Usum);
+		RightVector* pRV = pDynaModel->GetRightVector(Usum);
 		/*
 		if ((m_Id == 16) && pDynaModel->GetStepNumber() >= 399)
 		{
@@ -183,37 +177,29 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 		*/
 		pDynaModel->SetFunction(Usum, dSum);
 		pDynaModel->SetFunctionDiff(Svt, (dSdtIn - Svt) / Tf);
-		pDynaModel->SetFunctionDiff(Uf, (UsumLmt - Uf) / Tr);
 	}
 	else
 	{
 		pDynaModel->SetFunction(Usum, 0.0);
 		pDynaModel->SetFunctionDiff(Svt, 0.0);
-		pDynaModel->SetFunctionDiff(Uf, 0.0);
 	}
 
 	CDevice::BuildRightHand(pDynaModel);
 	return true;
 }
 
-bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
+bool CDynaExcConMustangNonWindup::BuildDerivatives(CDynaModel* pDynaModel)
 {
 	bool bRes = CDevice::BuildDerivatives(pDynaModel);
 	if (IsStateOn())
-	{
 		pDynaModel->SetDerivative(Svt, (dSdtIn - Svt) / Tf);
-		pDynaModel->SetFunctionDiff(Uf, (UsumLmt - Uf) / Tr);
-	}
 	else
-	{
 		pDynaModel->SetDerivative(Svt, 0.0);
-		pDynaModel->SetDerivative(Uf, 0.0);
-	}
 	return true;
 }
 
 
-eDEVICEFUNCTIONSTATUS CDynaExcConMustang::ProcessDiscontinuity(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaExcConMustangNonWindup::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 	_ASSERTE(CDevice::IsFunctionStatusOK(GetSingleLink(DEVTYPE_EXCITER)->DiscontinuityProcessed()));
@@ -230,7 +216,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::ProcessDiscontinuity(CDynaModel* pDyna
 }
 
 
-double CDynaExcConMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
+double CDynaExcConMustangNonWindup::CheckZeroCrossing(CDynaModel* pDynaModel)
 {
 	double rH = 1.0;
 	if (IsStateOn())
@@ -238,12 +224,12 @@ double CDynaExcConMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return rH;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaExcConMustangNonWindup::UpdateExternalVariables(CDynaModel* pDynaModel)
 {
 	// производную частоты всегда брать из РДЗ узла (подумать надо ли ее во всех узлах или только в тех, которые под генераторами)
 	// или может быть считать ее вообще вне узла - только в АРВ или еще там где нужно
 	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(dSdtIn, GetSingleLink(DEVTYPE_EXCITER), CDynaNode::m_cszS, DEVTYPE_NODE));
-	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
+	CDevice* pExciter = GetSingleLink(DEVTYPE_EXCITER);
 	if (pExciter)
 	{
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dVdtIn, pExciter, CDynaNode::m_cszV, DEVTYPE_NODE));
@@ -253,7 +239,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 }
 
 
-void CDynaExcConMustang::UpdateSerializer(CSerializerBase* Serializer)
+void CDynaExcConMustangNonWindup::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	AddStateProperty(Serializer);
@@ -271,31 +257,30 @@ void CDynaExcConMustang::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("Urv_max", Umax, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Vref", Vref, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Usum", Usum, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState("UsumLmt", UsumLmt, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Uf", Uf, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Svt", Svt, eVARUNITS::VARUNIT_PU);
 }
 
-void CDynaExcConMustang::DeviceProperties(CDeviceContainerProperties& props)
+void CDynaExcConMustangNonWindup::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_EXCCON);
 	props.SetType(DEVTYPE_EXCCON_MUSTANG);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameExcConMustang, CDeviceContainerProperties::m_cszSysNameExcConMustang);
 	props.AddLinkFrom(DEVTYPE_EXCITER, DLM_SINGLE, DPD_MASTER);
 
-	props.nEquationsCount = CDynaExcConMustang::VARS::V_LAST;
-	
+	props.nEquationsCount = CDynaExcConMustangNonWindup::VARS::V_LAST;
 
-	props.m_VarMap.insert(std::make_pair("Uf", CVarIndex(CDynaExcConMustang::V_UF, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("Usum", CVarIndex(CDynaExcConMustang::V_USUM, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("UsumLmt", CVarIndex(CDynaExcConMustang::V_USUMLMT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("Svt", CVarIndex(CDynaExcConMustang::V_SVT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dVdt", CVarIndex(CDynaExcConMustang::V_DVDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dEqdt", CVarIndex(CDynaExcConMustang::V_EQDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dSdt", CVarIndex(CDynaExcConMustang::V_SDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dVdtLag", CVarIndex(CDynaExcConMustang::V_DVDT + 1, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dEqdtLag", CVarIndex(CDynaExcConMustang::V_EQDT + 1, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dSdtLag", CVarIndex(CDynaExcConMustang::V_SDT + 1, VARUNIT_PU)));
 
-	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExcConMustang>>();
+	props.m_VarMap.insert(std::make_pair("Uf", CVarIndex(CDynaExcConMustangNonWindup::V_UF, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("Usum", CVarIndex(CDynaExcConMustangNonWindup::V_USUM, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("Svt", CVarIndex(CDynaExcConMustangNonWindup::V_SVT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dVdt", CVarIndex(CDynaExcConMustangNonWindup::V_DVDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dEqdt", CVarIndex(CDynaExcConMustangNonWindup::V_EQDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dSdt", CVarIndex(CDynaExcConMustangNonWindup::V_SDT, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dVdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_DVDT + 1, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dEqdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_EQDT + 1, VARUNIT_PU)));
+	props.m_VarMap.insert(std::make_pair("dSdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_SDT + 1, VARUNIT_PU)));
+
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExcConMustangNonWindup>>();
 }
+

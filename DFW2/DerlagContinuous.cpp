@@ -138,6 +138,25 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaM
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
+
+// Вариант функции для РДЗ с подавлением разрыва на выходе
+eDEVICEFUNCTIONSTATUS CDerlagContinuousSmooth::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	if (m_Device.IsStateOn())
+	{
+		if (Equal(m_K, 0.0))
+			m_Y2 = 0.0;
+		else
+		{
+			// рассчитываем выход лага с условием сохранения значения на выходе РДЗ
+			m_Y2 = (m_Input * m_K * m_T - m_Output) / m_K / m_T;
+			double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
+			dOut++;
+		}
+	}
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
 bool CDerlagContinuous::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
 	double T1(1E-4), T2(1.0);

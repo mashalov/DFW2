@@ -1,16 +1,14 @@
 ﻿#pragma once
 #include "DynaExciterBase.h"
 #include "DerlagContinuous.h"
-#include "LimiterConst.h"
 
 namespace DFW2
 {
-	// Версия АРВ Мустанг - точная копия модели из Мустанг
-	// с ограничениями перед апериодическим звеном
+	// Версия АРВ Мустанг с апериодическим звеном с ограничениями
+	// обладает более быстрой и адекватной реакцией по сранвению с оригиналом
 
-	class CDynaExcConMustang : public CDevice
+	class CDynaExcConMustangNonWindup : public CDevice
 	{
-
 	protected:
 
 		// Масштабы коэффициентов советских АРВ
@@ -28,15 +26,15 @@ namespace DFW2
 		static constexpr GainScales DefaultGains = { 0.72, 0.2, 1.3, 0.5 };
 
 
-		static void ScaleGains(CDynaExcConMustang& excon);
+		static void ScaleGains(CDynaExcConMustangNonWindup& excon);
 
 
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		CLimiterConst Limiter;
+		CLimitedLag Lag;
 
-		CDerlagContinuousSmooth dVdt;
-		CDerlagContinuousSmooth dEqdt;
-		CDerlagContinuousSmooth dSdt;
+		CDerlag dVdt;
+		CDerlag dEqdt;
+		CDerlag dSdt;
 
 		VariableIndexExternal dVdtIn, dEqdtIn, dSdtIn;
 		VariableIndex dVdtOut, dEqdtOut, dSdtOut;
@@ -48,7 +46,6 @@ namespace DFW2
 		{
 			V_UF,
 			V_USUM,
-			V_USUMLMT,
 			V_SVT,
 			V_DVDT,
 			V_EQDT = V_DVDT + 2,
@@ -58,21 +55,21 @@ namespace DFW2
 
 		double K0u, K1u, Alpha, K1if, K0f, K1f, Umin, Umax, Tf, Tr;
 		double Vref;
-		VariableIndex Uf, Usum, UsumLmt, Svt;
+		VariableIndex Uf, Usum, Svt;
 
-		CDynaExcConMustang();
-		virtual ~CDynaExcConMustang() = default;
+		CDynaExcConMustangNonWindup();
+		virtual ~CDynaExcConMustangNonWindup() = default;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
-		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		bool BuildDerivatives(CDynaModel* pDynaModel) override;
+		double CheckZeroCrossing(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
-
+		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 }
+
 

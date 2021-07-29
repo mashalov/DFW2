@@ -160,16 +160,18 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iq, Psi1d, Eq_Psi1d * omega);
 	pDynaModel->SetElement(Iq, s, Id * ld2 + Eq_Psi1d * Psi1d + Eq_Psifd * Psifd);
 
-
+	///*
+	// Вариант уравнения движения с электромагнитным моментом
 	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q - Iq * ld2 + Iq * lq2) / Mj);
 	pDynaModel->SetElement(s, Iq,  (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
 	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
 	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
 	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
+	//*/
 
 	/* 
-	Вариант уравнения движения с расчетом момента от частоты тока 
+	// Вариант уравнения движения с расчетом момента от частоты тока 
 	pDynaModel->SetElement(s, Id, (Vd - 2 * Id * r) / (Mj * (Sv + 1)));
 	pDynaModel->SetElement(s, Iq, (Vq - 2 * Iq * r) / (Mj * (Sv + 1)));
 	pDynaModel->SetElement(s, Vd, Id / (Mj * (Sv + 1)));
@@ -248,7 +250,7 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	double eDelta = pDynaModel->GetOmega0() * s;
 
 	// Вариант уравнения движения с расчетом момента от частоты тока
-	//double eS2 = (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id*Id + Iq*Iq) * r) / (1 + Sv)) / Mj;
+	// eS = (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id*Id + Iq*Iq) * r) / (1 + Sv)) / Mj;
 
 	pDynaModel->SetFunction(Id, dId);
 	pDynaModel->SetFunction(Iq, dIq);

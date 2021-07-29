@@ -262,6 +262,9 @@
     <ClInclude Include="DynaGeneratorPark3C.h">
       <Filter>Header Files\Generators</Filter>
     </ClInclude>
+    <ClInclude Include="DynaExcConMustangNW.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -578,6 +581,9 @@
     </ClCompile>
     <ClCompile Include="DynaGeneratorPark3C.cpp">
       <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaExcConMustangNW.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

@@ -15,7 +15,7 @@ namespace DFW2
 
 		CDerlagContinuous(CDevice& Device, const ORange& Output, const IRange& Input) :
 			CDynaPrimitive(Device, Output, Input), m_Y2(Output[1]) {}
-		CDerlagContinuous(CDevice& Device, const OutputList& Output, const InputList& Input) : 
+		CDerlagContinuous(CDevice& Device, const OutputList& Output, const InputList& Input) :
 			CDerlagContinuous(Device, ORange(Output), IRange(Input)) { }
 
 		virtual ~CDerlagContinuous() = default;
@@ -30,6 +30,21 @@ namespace DFW2
 		static size_t PrimitiveSize() { return sizeof(CDerlagContinuous); }
 		static long EquationsCount()  { return 2; }
 	};
+
+	// Версия РДЗ с полным подавлением разрыва на выходе
+	// имитирует поведение РДЗ в Мустанг, что совершенно неправильно,
+	// но необходимо для совместимости с
+	
+	class CDerlagContinuousSmooth : public CDerlagContinuous
+	{
+	public:
+		using CDerlagContinuous::CDerlagContinuous;
+		virtual ~CDerlagContinuousSmooth() = default;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		const char* GetVerbalName() override { return "РДЗ со сглаживанием без разрыва"; }
+	};
+
+
 
 	/*
 	class CDerlagNordsieck : public CDynaPrimitive

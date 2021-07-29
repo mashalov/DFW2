@@ -203,6 +203,10 @@
     <ClInclude Include="DynaBranch.h" />
     <ClInclude Include="DynaDECMustang.h" />
     <ClInclude Include="DynaExcConMustang.h" />
+    <ClCompile Include="DynaExcConMustangNW.cpp">
+      <FileType>CppHeader</FileType>
+    </ClCompile>
+    <ClInclude Include="DynaExcConMustangNW.h" />
     <ClInclude Include="DynaExciterMustang.h" />
     <ClInclude Include="DynaGenerator1C.h" />
     <ClInclude Include="DynaGenerator3C.h" />
