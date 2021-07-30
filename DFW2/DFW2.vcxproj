@@ -272,7 +272,7 @@
     <ClCompile Include="Automatic.cpp">
       <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
     </ClCompile>
-    <ClCompile Include="CDynaGeneratorDQBase.cpp" />
+    <ClCompile Include="DynaGeneratorDQBase.cpp" />
     <ClCompile Include="Comparator.cpp" />
     <ClCompile Include="CustomDevice.cpp" />
     <ClCompile Include="CustomDeviceContainer.cpp" />

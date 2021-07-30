@@ -576,7 +576,7 @@
     <ClCompile Include="DynaGeneratorPark4C.cpp">
       <Filter>Source Files\Generators</Filter>
     </ClCompile>
-    <ClCompile Include="CDynaGeneratorDQBase.cpp">
+    <ClCompile Include="DynaGeneratorDQBase.cpp">
       <Filter>Source Files\Generators</Filter>
     </ClCompile>
     <ClCompile Include="DynaGeneratorPark3C.cpp">
