@@ -1,5 +1,4 @@
-﻿#pragma once
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaExcConMustangNW.h"
 #include "DynaModel.h"
 #include "DerlagContinuous.h"
