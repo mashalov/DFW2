@@ -166,28 +166,6 @@ bool CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iq, Psi1d, Eq_Psi1d * omega);
 	pDynaModel->SetElement(Iq, s, Id * ld2 + Eq_Psi1d * Psi1d + Eq_Psifd * Psifd);
 
-	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * ld2 + Iq * lq2) / Mj);
-	pDynaModel->SetElement(s, Iq,  (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
-	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
-	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
-	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
-	pDynaModel->SetElement(s, Psi2q, -Id * Psiq_Psi2q / Mj);
-	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
-
-	/* 
-	Вариант уравнения движения с расчетом момента от частоты тока 
-	pDynaModel->SetElement(s, Id, (Vd - 2 * Id * r) / (Mj * (Sv + 1)));
-	pDynaModel->SetElement(s, Iq, (Vq - 2 * Iq * r) / (Mj * (Sv + 1)));
-	pDynaModel->SetElement(s, Vd, Id / (Mj * (Sv + 1)));
-	pDynaModel->SetElement(s, Vq, Iq / (Mj * (Sv + 1)));
-	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
-	pDynaModel->SetElement(s, Sv, -(Id * Vd - r * (Id * Id + Iq *Iq) + Iq * Vq) / (Mj * (Sv + 1) * (Sv + 1)));
-	*/
-
-
-	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
-	pDynaModel->SetElement(Delta, Delta, 0.0);
-
 	pDynaModel->SetElement(Psifd, Id, -Psifd_id);
 	pDynaModel->SetElement(Psifd, Psifd, Psifd_Psifd);
 	pDynaModel->SetElement(Psifd, Psi1d, -Psifd_Psi1d);
@@ -206,12 +184,14 @@ bool CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Psi2q, Psi1q, -Psi2q_Psi1q);
 	pDynaModel->SetElement(Psi2q, Psi2q, Psi2q_Psi2q);
 
-	bRes = bRes && BuildRIfromDQEquations(pDynaModel);
-
 	pDynaModel->SetElement(Eq, Eq, 1);
 	pDynaModel->SetElement(Eq, Psifd, Psifd_Psifd * lad / Rfd);
 	pDynaModel->SetElement(Eq, Psi1d, Psifd_Psi1d * lad / Rfd);
 	pDynaModel->SetElement(Eq, Id, Psifd_id * lad / Rfd);
+
+	BuildRIfromDQEquations(pDynaModel);
+	BuildMotionEquationBlock(pDynaModel);
+
 
 	return bRes;
 }
@@ -260,29 +240,16 @@ bool CDynaGeneratorPark4C::BuildRightHand(CDynaModel* pDynaModel)
 	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q - Vd;
 	const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
 
-	const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq
-					 -(lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
-		
-	double eDelta = pDynaModel->GetOmega0() * s;
-	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
-
-	// Вариант уравнения движения с расчетом момента от частоты тока
-	//double eS2 = (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id*Id + Iq*Iq) * r) / (1 + Sv)) / Mj;
-
 	pDynaModel->SetFunction(Id, dId);
 	pDynaModel->SetFunction(Iq, dIq);
 	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
 	pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
 	pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
 	pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
-	pDynaModel->SetFunctionDiff(s, eS);
-
-
-	pDynaModel->SetFunctionDiff(Delta, eDelta);
 	pDynaModel->SetFunction(Eq, dEq);
 
-
-	bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
+	BuildMotionEquationRightHand(pDynaModel);
+	BuildRIfromDQRightHand(pDynaModel);
 	return bRes;
 }
 
@@ -301,7 +268,7 @@ bool CDynaGeneratorPark4C::BuildDerivatives(CDynaModel* pDynaModel)
 			const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * idiq.real();
 			const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * idiq.imag();
 			const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * idiq.imag();
-
+			
 			const double omega = ZeroGuardSlip(1.0 + s);
 
 			const double Te = (ld2 * idiq.real() + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * idiq.imag()
@@ -310,21 +277,20 @@ bool CDynaGeneratorPark4C::BuildDerivatives(CDynaModel* pDynaModel)
 
 			double eDelta = pDynaModel->GetOmega0() * s;
 			double eS = (Pt / omega - Kdemp * s - Te) / Mj;
-
-			pDynaModel->SetFunctionDiff(Psifd, dPsifd);
-			pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
-			pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
-			pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
-			pDynaModel->SetFunctionDiff(s, eS);
-			pDynaModel->SetFunctionDiff(Delta, eDelta);
-
+			
+			pDynaModel->SetDerivative(Psifd, dPsifd);
+			pDynaModel->SetDerivative(Psi1d, dPsi1d);
+			pDynaModel->SetDerivative(Psi1q, dPsi1q);
+			pDynaModel->SetDerivative(Psi2q, dPsi2q);
+			pDynaModel->SetDerivative(s, eS);
+			pDynaModel->SetDerivative(Delta, eDelta);
 		}
 		else
 		{
-			pDynaModel->SetFunctionDiff(Psifd, 0);
-			pDynaModel->SetFunctionDiff(Psi1d, 0);
-			pDynaModel->SetFunctionDiff(Psi1q, 0);
-			pDynaModel->SetFunctionDiff(Psi2q, 0);
+			pDynaModel->SetDerivative(Psifd, 0);
+			pDynaModel->SetDerivative(Psi1d, 0);
+			pDynaModel->SetDerivative(Psi1q, 0);
+			pDynaModel->SetDerivative(Psi2q, 0);
 
 		}
 	}
@@ -405,4 +371,30 @@ void CDynaGeneratorPark4C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaGenerator3C::m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_csztq01, Tq01, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(CDynaGenerator3C::m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+}
+
+// блок матрицы и правая части уравнения движения
+void CDynaGeneratorPark4C::BuildMotionEquationBlock(CDynaModel* pDynaModel)
+{
+	// Вариант уравнения движения с электромагнитным моментом
+	const double omega(ZeroGuardSlip(1.0 + s));
+	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * ld2 + Iq * lq2) / Mj);
+	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
+	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
+	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
+	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
+	pDynaModel->SetElement(s, Psi2q, -Id * Psiq_Psi2q / Mj);
+	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
+	BuildAngleEquationBlock(pDynaModel);
+	//CDynaGeneratorDQBase::BuildMotionEquationBlock(pDynaModel);
+}
+
+void CDynaGeneratorPark4C::BuildMotionEquationRightHand(CDynaModel* pDynaModel)
+{
+	const double omega(ZeroGuardSlip(1.0 + s));
+	const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
+	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
+	pDynaModel->SetFunctionDiff(s, eS);
+	BuildAngleEquationRightHand(pDynaModel);
+	//CDynaGeneratorDQBase::BuildMotionEquationRightHand(pDynaModel);
 }

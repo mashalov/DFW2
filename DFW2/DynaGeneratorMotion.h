@@ -41,7 +41,8 @@ namespace DFW2
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
-
+		void BuildAngleEquationBlock(CDynaModel* pDynaModel);
+		void BuildAngleEquationRightHand(CDynaModel* pDynaModel);
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static const char* m_cszUnom;

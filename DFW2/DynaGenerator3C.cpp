@@ -131,11 +131,6 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Td01);
 
 
-		// dDeltaG / dS
-		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
-		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(Delta, Delta, 0.0);
-
 		double sp1 = ZeroGuardSlip(1.0 + s);
 		double sp2 = ZeroGuardSlip(1.0 + Sv);
 		// dS / dS
@@ -172,6 +167,8 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Eq, Eqss, -1.0);
 		// dEq / dId
 		pDynaModel->SetElement(Eq, Id, xd - xd2);
+
+		BuildAngleEquationBlock(pDynaModel);
 	}
 
 	return true;
@@ -202,7 +199,6 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(Eq, Eq - Eqss + Id * (xd - xd2));
 
 
-		double eDelta = pDynaModel->GetOmega0() * s;
 		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 
@@ -210,10 +206,11 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
 
 		pDynaModel->SetFunctionDiff(s, eS);
-		pDynaModel->SetFunctionDiff(Delta, eDelta);
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
 		pDynaModel->SetFunctionDiff(Eqss, eEqss);
 		pDynaModel->SetFunctionDiff(Edss, eEdss);
+
+		BuildAngleEquationRightHand(pDynaModel);
 	}
 
 	return true;

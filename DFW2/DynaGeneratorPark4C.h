@@ -56,6 +56,10 @@ namespace DFW2
 		const cplx& CalculateEgen() override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
+		// блок матрицы и правая части уравнения движения
+		void BuildMotionEquationBlock(CDynaModel* pDynaModel);
+		void BuildMotionEquationRightHand(CDynaModel* pDynaModel);
+
 		/*
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel * pDynaModel) override;

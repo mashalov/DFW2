@@ -211,7 +211,7 @@ const cplx& CDynaGeneratorDQBase::CalculateEgen()
 
 // вводит в матрицу блок уравнении для преобразования
 // тока из dq в ri и напряжения из ri в dq
-bool CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
+void CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 {
 	const double co(cos(Delta)), si(sin(Delta));
 
@@ -251,18 +251,38 @@ bool CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Vq, Vim, -si);
 	// dVd/dDeltaG
 	pDynaModel->SetElement(Vq, Delta, Vre * si - Vim * co);
-
-	return true;
 }
 
 // вводит в правую часть уравнения для преобразования 
 // тока из dq в ri и напряжения из ri в dq
-bool CDynaGeneratorDQBase::BuildRIfromDQRightHand(CDynaModel* pDynaModel)
+void CDynaGeneratorDQBase::BuildRIfromDQRightHand(CDynaModel* pDynaModel)
 {
 	const double co(cos(Delta)), si(sin(Delta));
 	pDynaModel->SetFunction(Ire, Ire - Iq  * co + Id  * si);
 	pDynaModel->SetFunction(Iim, Iim - Iq  * si - Id  * co);
 	pDynaModel->SetFunction(Vd,  Vd  + Vre * si - Vim * co);
 	pDynaModel->SetFunction(Vq,  Vq  - Vre * co - Vim * si);
-	return true;
+}
+
+
+void CDynaGeneratorDQBase::BuildMotionEquationBlock(CDynaModel* pDynaModel)
+{
+	// Вариант уравнения движения с расчетом момента от частоты тока
+	const double omega(ZeroGuardSlip(1.0 + s)), omegav(ZeroGuardSlip(1.0 + Sv)), MjOmegav(Mj * omegav);
+	pDynaModel->SetElement(s, Id, (Vd - 2.0 * Id * r) / MjOmegav);
+	pDynaModel->SetElement(s, Iq, (Vq - 2.0 * Iq * r) / MjOmegav);
+	pDynaModel->SetElement(s, Vd, Id / MjOmegav);
+	pDynaModel->SetElement(s, Vq, Iq / MjOmegav);
+	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
+	pDynaModel->SetElement(s, Sv, -(Id * Vd + Iq * Vq - r * (Id * Id + Iq * Iq)) / MjOmegav / omegav);
+	BuildAngleEquationBlock(pDynaModel);
+}
+
+void CDynaGeneratorDQBase::BuildMotionEquationRightHand(CDynaModel* pDynaModel)
+{
+	// Вариант уравнения движения с расчетом момента от частоты тока
+	const double omega(ZeroGuardSlip(1.0 + s));
+	const double eS ((Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id*Id + Iq*Iq) * r) / (1.0 + Sv)) / Mj);
+	pDynaModel->SetFunctionDiff(s, eS);
+	BuildAngleEquationRightHand(pDynaModel);
 }

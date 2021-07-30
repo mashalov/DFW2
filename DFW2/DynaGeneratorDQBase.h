@@ -49,8 +49,12 @@ namespace DFW2
 		virtual const cplx& CalculateEgen();
 
 		// блок матрицы и правая часть уравнения для тока ir<-dq и напряжения dq-<ri
-		bool BuildRIfromDQEquations(CDynaModel* pDynaModel);
-		bool BuildRIfromDQRightHand(CDynaModel* pDynaModel);
+		void BuildRIfromDQEquations(CDynaModel* pDynaModel);
+		void BuildRIfromDQRightHand(CDynaModel* pDynaModel);
+
+		// блок матрицы и правая части уравнения движения
+		void BuildMotionEquationBlock(CDynaModel* pDynaModel);
+		void BuildMotionEquationRightHand(CDynaModel* pDynaModel);
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

@@ -111,11 +111,6 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 
 		// m_pExciter->A(CDynaExciterBase::V_EQE)
 
-		// dDeltaG / dS
-		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
-		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(Delta, Delta, 0.0);
-		
 		// dS / dS
 		pDynaModel->SetElement(s, s, 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
 		// dS / Eqss
@@ -151,7 +146,8 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Eq, Id, xd - xd2);
 
 		// строит уравнения для Vd, Vq, Ire, Iim
-		bRes = bRes && BuildRIfromDQEquations(pDynaModel);
+		BuildRIfromDQEquations(pDynaModel);
+		BuildAngleEquationBlock(pDynaModel);
 	}
 	return true;
 }
@@ -180,13 +176,13 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
 		double eEqss = Eqs * (1.0 / Td02 - 1.0 / Td01) + Id * ((xd1 - xd2) / Td02 + (xd - xd1) / Td01) - Eqss / Td02 + ExtEqe / Td01;
 		pDynaModel->SetFunctionDiff(s, eS);
-		pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
 		pDynaModel->SetFunctionDiff(Eqss, eEqss);
 		pDynaModel->SetFunctionDiff(Edss, eEdss);
 
 		// строит уравнения для Vd, Vq, Ire, Iim
-		bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
+		BuildRIfromDQRightHand(pDynaModel);
+		BuildAngleEquationRightHand(pDynaModel);
 
 		//DumpIntegrationStep(97, 2028);
 	}

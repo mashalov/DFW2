@@ -109,13 +109,7 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		// dEqs/dEqe
 		if (ExtEqe.Indexed())
 			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Td01);
-
-		
-		// dDeltaG / dS
-		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
-		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(Delta , Delta, 1.0);
-		
+	
 
 		// dS / dS
 		pDynaModel->SetElement(s, s, 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1) );
@@ -138,7 +132,8 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		// dEq / dId
 		pDynaModel->SetElement(Eq, Id, xd - xd1);
 
-		bRes = bRes && BuildRIfromDQEquations(pDynaModel);
+		BuildAngleEquationBlock(pDynaModel);
+		BuildRIfromDQEquations(pDynaModel);
 
 	}
 
@@ -165,14 +160,13 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(Id, Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
 		pDynaModel->SetFunction(Iq, Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
 		pDynaModel->SetFunction(Eq, Eq - Eqs + Id * (xd - xd1));
-		double eDelta = pDynaModel->GetOmega0() * s;
 		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 		pDynaModel->SetFunctionDiff(s, eS);
-		pDynaModel->SetFunctionDiff(Delta, eDelta);
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
 
-		bRes = bRes && BuildRIfromDQRightHand(pDynaModel);
+		BuildAngleEquationRightHand(pDynaModel);
+		BuildRIfromDQRightHand(pDynaModel);
 	}
 
 	return true;

@@ -110,12 +110,7 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 			sp1 = sp2 = 1.0;
 		}
 
-
-		// dDeltaG / dS
-		pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
-		// dDeltaG / dDeltaG
-		pDynaModel->SetElement(Delta, Delta, 0.0);
-
+	
 		pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1)/ Mj );
 		pDynaModel->SetElement(s, Vre, Ire / Mj / sp2);
 		pDynaModel->SetElement(s, Vim, Iim / Mj / sp2);
@@ -136,6 +131,8 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Iim, Vre, -1.0 / xd1);
 		// dIim / dDeltaG
 		pDynaModel->SetElement(Iim, Delta, -Eqs * sin(Delta) / xd1);
+
+		BuildAngleEquationBlock(pDynaModel);
 
 	}
 	return true;
@@ -161,7 +158,7 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(Iim, Iim - (dVre - Eqs * cos(Delta)) / xd1);
 		double eS = (Pt / sp1 - Kdemp  * s - (dVre * Ire + dVim * Iim) / sp2) / Mj;
 		pDynaModel->SetFunctionDiff(s, eS);
-		pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
+		BuildAngleEquationRightHand(pDynaModel);
 	}
 
 	return true;
@@ -239,6 +236,17 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorMotion>>();
 
+}
+
+void CDynaGeneratorMotion::BuildAngleEquationBlock(CDynaModel* pDynaModel)
+{
+	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
+	pDynaModel->SetElement(Delta, Delta, 0.0);
+}
+
+void CDynaGeneratorMotion::BuildAngleEquationRightHand(CDynaModel* pDynaModel)
+{
+	pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
 }
 
 const char* CDynaGeneratorMotion::m_cszUnom = "Unom";
