@@ -278,11 +278,17 @@ void CDynaGeneratorDQBase::BuildMotionEquationBlock(CDynaModel* pDynaModel)
 	BuildAngleEquationBlock(pDynaModel);
 }
 
-void CDynaGeneratorDQBase::BuildMotionEquationRightHand(CDynaModel* pDynaModel)
+void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
 {
-	// Вариант уравнения движения с расчетом момента от частоты тока
-	const double omega(ZeroGuardSlip(1.0 + s));
-	const double eS ((Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id*Id + Iq*Iq) * r) / (1.0 + Sv)) / Mj);
-	pDynaModel->SetFunctionDiff(s, eS);
-	BuildAngleEquationRightHand(pDynaModel);
+	if (IsStateOn())
+	{
+		const double omega(1.0 + s);
+		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id * Id + Iq * Iq) * r) / (1.0 + Sv)) / Mj);
+	}
+	else
+	{
+		(pDynaModel->*fn)(Delta, 0);
+		(pDynaModel->*fn)(s, 0);
+	}
 }

@@ -10,6 +10,7 @@ namespace DFW2
 	protected:
 		 eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		 eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
+		 void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
 	public:
 		enum VARS
 		{
@@ -23,8 +24,7 @@ namespace DFW2
 			C_UNOM = CDynaGeneratorInfBusBase::CONSTVARS::C_LAST,
 			C_LAST
 		};
-
-
+		
 		VariableIndex s;
 
 		double	Unom, Kdemp, xq, Mj, Pt, Pnom, cosPhinom, deltaDiff = 0.0;
@@ -42,7 +42,6 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void BuildAngleEquationBlock(CDynaModel* pDynaModel);
-		void BuildAngleEquationRightHand(CDynaModel* pDynaModel);
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static const char* m_cszUnom;

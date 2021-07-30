@@ -210,7 +210,7 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(Eqss, eEqss);
 		pDynaModel->SetFunctionDiff(Edss, eEdss);
 
-		BuildAngleEquationRightHand(pDynaModel);
+		pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
 	}
 
 	return true;

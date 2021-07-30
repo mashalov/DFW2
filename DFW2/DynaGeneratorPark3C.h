@@ -9,6 +9,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		cplx GetIdIq() const;
+		void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
 	public:
 		using  CDynaGeneratorDQBase::CDynaGeneratorDQBase;
 		virtual ~CDynaGeneratorPark3C() = default;
@@ -53,10 +54,6 @@ namespace DFW2
 		cplx GetEMF() override;
 		const cplx& CalculateEgen() override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-
-		// блок матрицы и правая части уравнения движения
-		void BuildMotionEquationBlock(CDynaModel* pDynaModel);
-		void BuildMotionEquationRightHand(CDynaModel* pDynaModel);
 
 		/*
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

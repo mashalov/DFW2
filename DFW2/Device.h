@@ -249,6 +249,15 @@ namespace DFW2
 		// расчет значений производных дифференциальных уравнений
 		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
 		// функция обновления данных после итерации Ньютона (если надо)
+
+
+
+		using fnDerivative = void(CDynaModel::*)(const VariableIndexBase& variable, double Value);
+
+		virtual void CalculateDerivatives(CDynaModel* pDynaModel, fnDerivative fn) {};
+		void SetFunctionsDiff(CDynaModel *pDynaModel);
+		void SetDerivatives(CDynaModel* pDynaModel);
+
 		virtual void NewtonUpdateEquation(CDynaModel *pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS Initialized() { return m_eInitStatus; }
@@ -327,6 +336,13 @@ namespace DFW2
 		inline static void FromComplex(T& Re, T& Im, const cplx& source)
 		{
 			Re = source.real();		Im = source.imag();
+		}
+
+		template<typename T>
+		inline static void ToComplex(const T& Re, const T& Im, cplx& dest)
+		{
+			dest.real(static_cast<cplx::_Ty>(Re));			
+			dest.imag(static_cast<cplx::_Ty>(Im));
 		}
 
 		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);

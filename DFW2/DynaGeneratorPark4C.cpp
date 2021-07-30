@@ -7,7 +7,6 @@ using namespace DFW2;
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::Init(CDynaModel* pDynaModel)
 {
-	r = 0;
 	return InitModel(pDynaModel);
 }
 
@@ -146,6 +145,39 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 
 }
 
+void CDynaGeneratorPark4C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
+{
+	if (IsStateOn())
+	{
+		const double omega(1.0 + s);
+		const double dPsifd = Rfd * ExtEqe / lad + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id;
+		const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * Id;
+		const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * Iq;
+		const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq;
+
+#ifdef USE_VOLTAGE_FREQ_DAMPING
+		CDynaGeneratorDQBase::CalculateDerivatives(pDynaModel, fn);
+#else
+		const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
+		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - Te) / Mj);
+#endif
+		(pDynaModel->*fn)(Psifd, dPsifd);
+		(pDynaModel->*fn)(Psi1d, dPsi1d);
+		(pDynaModel->*fn)(Psi1q, dPsi1q);
+		(pDynaModel->*fn)(Psi2q, dPsi2q);
+	}
+	else
+	{
+		(pDynaModel->*fn)(Delta, 0);
+		(pDynaModel->*fn)(s, 0);
+		(pDynaModel->*fn)(Psifd, 0);
+		(pDynaModel->*fn)(Psi1d, 0);
+		(pDynaModel->*fn)(Psi1q, 0);
+		(pDynaModel->*fn)(Psi2q, 0);
+	}
+}
+
 bool CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes(true);
@@ -190,9 +222,19 @@ bool CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Eq, Id, Psifd_id * lad / Rfd);
 
 	BuildRIfromDQEquations(pDynaModel);
-	BuildMotionEquationBlock(pDynaModel);
 
-
+#ifdef USE_VOLTAGE_FREQ_DAMPING
+	CDynaGeneratorDQBase::BuildMotionEquationBlock(pDynaModel);
+#else
+	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * ld2 + Iq * lq2) / Mj);
+	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
+	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
+	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
+	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
+	pDynaModel->SetElement(s, Psi2q, -Id * Psiq_Psi2q / Mj);
+	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
+	BuildAngleEquationBlock(pDynaModel);
+#endif
 	return bRes;
 }
 
@@ -227,73 +269,22 @@ bool CDynaGeneratorPark4C::BuildRightHand(CDynaModel* pDynaModel)
 {
 	bool bRes(true);
 
-	const double rIfd = Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id;
-
-	const double dPsifd = Rfd * ExtEqe / lad + rIfd;
-	const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * Id;
-	const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * Iq;
-	const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq;
-	const double dEq = Eq + rIfd * lad / Rfd;
-
-	const double omega = ZeroGuardSlip(1.0 + s);
-
+	const double omega(1.0 + s);
+	const double dEq = Eq + (Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id) * lad / Rfd;
 	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q - Vd;
 	const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
-
 	pDynaModel->SetFunction(Id, dId);
 	pDynaModel->SetFunction(Iq, dIq);
-	pDynaModel->SetFunctionDiff(Psifd, dPsifd);
-	pDynaModel->SetFunctionDiff(Psi1d, dPsi1d);
-	pDynaModel->SetFunctionDiff(Psi1q, dPsi1q);
-	pDynaModel->SetFunctionDiff(Psi2q, dPsi2q);
 	pDynaModel->SetFunction(Eq, dEq);
-
-	BuildMotionEquationRightHand(pDynaModel);
+	SetFunctionsDiff(pDynaModel);
 	BuildRIfromDQRightHand(pDynaModel);
 	return bRes;
 }
 
 
-
 bool CDynaGeneratorPark4C::BuildDerivatives(CDynaModel* pDynaModel)
 {
-	bool bRes = CDynaGeneratorDQBase::BuildDerivatives(pDynaModel);
-	if (bRes)
-	{
-		if (IsStateOn())
-		{
-			const cplx idiq(GetIdIq());
-
-			const double dPsifd = Rfd * ExtEqe / lad + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * idiq.real();
-			const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * idiq.real();
-			const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * idiq.imag();
-			const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * idiq.imag();
-			
-			const double omega = ZeroGuardSlip(1.0 + s);
-
-			const double Te = (ld2 * idiq.real() + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * idiq.imag()
-				- (lq2 * idiq.imag() + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * idiq.real();
-
-
-			double eDelta = pDynaModel->GetOmega0() * s;
-			double eS = (Pt / omega - Kdemp * s - Te) / Mj;
-			
-			pDynaModel->SetDerivative(Psifd, dPsifd);
-			pDynaModel->SetDerivative(Psi1d, dPsi1d);
-			pDynaModel->SetDerivative(Psi1q, dPsi1q);
-			pDynaModel->SetDerivative(Psi2q, dPsi2q);
-			pDynaModel->SetDerivative(s, eS);
-			pDynaModel->SetDerivative(Delta, eDelta);
-		}
-		else
-		{
-			pDynaModel->SetDerivative(Psifd, 0);
-			pDynaModel->SetDerivative(Psi1d, 0);
-			pDynaModel->SetDerivative(Psi1q, 0);
-			pDynaModel->SetDerivative(Psi2q, 0);
-
-		}
-	}
+	SetDerivatives(pDynaModel);
 	return true;
 }
 
@@ -373,28 +364,3 @@ void CDynaGeneratorPark4C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaGenerator3C::m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
 }
 
-// блок матрицы и правая части уравнения движения
-void CDynaGeneratorPark4C::BuildMotionEquationBlock(CDynaModel* pDynaModel)
-{
-	// Вариант уравнения движения с электромагнитным моментом
-	const double omega(ZeroGuardSlip(1.0 + s));
-	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * ld2 + Iq * lq2) / Mj);
-	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
-	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
-	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
-	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
-	pDynaModel->SetElement(s, Psi2q, -Id * Psiq_Psi2q / Mj);
-	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
-	BuildAngleEquationBlock(pDynaModel);
-	//CDynaGeneratorDQBase::BuildMotionEquationBlock(pDynaModel);
-}
-
-void CDynaGeneratorPark4C::BuildMotionEquationRightHand(CDynaModel* pDynaModel)
-{
-	const double omega(ZeroGuardSlip(1.0 + s));
-	const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
-	double eS = (Pt / omega - Kdemp * s - Te) / Mj;
-	pDynaModel->SetFunctionDiff(s, eS);
-	BuildAngleEquationRightHand(pDynaModel);
-	//CDynaGeneratorDQBase::BuildMotionEquationRightHand(pDynaModel);
-}

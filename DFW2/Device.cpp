@@ -1220,3 +1220,14 @@ bool CDevice::CheckLimits(double& Min, double& Max)
 #ifdef _DEBUG
 	char CDevice::UnknownVarIndex[80];
 #endif
+
+
+void CDevice::SetFunctionsDiff(CDynaModel* pDynaModel)
+{
+	CalculateDerivatives(pDynaModel, &CDynaModel::SetFunctionDiff);
+}
+
+void CDevice::SetDerivatives(CDynaModel* pDynaModel)
+{
+	CalculateDerivatives(pDynaModel, &CDynaModel::SetDerivative);
+}

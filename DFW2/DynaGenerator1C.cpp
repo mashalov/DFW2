@@ -164,8 +164,7 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 		pDynaModel->SetFunctionDiff(s, eS);
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
-
-		BuildAngleEquationRightHand(pDynaModel);
+		pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
 		BuildRIfromDQRightHand(pDynaModel);
 	}
 

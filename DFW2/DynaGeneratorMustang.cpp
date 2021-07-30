@@ -171,47 +171,37 @@ bool CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(Id, Id + zsq * (sp2 * Eqss - Vq) * xq2);
 		pDynaModel->SetFunction(Iq, Iq + zsq * (Vd - sp2 * Edss) * xd2);
 		pDynaModel->SetFunction(Eq, Eq - Eqss + Id * (xd - xd2));
-		double eS = (Pt / sp1 - Kdemp  * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj;
-		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
-		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
-		double eEqss = Eqs * (1.0 / Td02 - 1.0 / Td01) + Id * ((xd1 - xd2) / Td02 + (xd - xd1) / Td01) - Eqss / Td02 + ExtEqe / Td01;
-		pDynaModel->SetFunctionDiff(s, eS);
-		pDynaModel->SetFunctionDiff(Eqs, eEqs);
-		pDynaModel->SetFunctionDiff(Eqss, eEqss);
-		pDynaModel->SetFunctionDiff(Edss, eEdss);
-
+		SetFunctionsDiff(pDynaModel);
 		// строит уравнения для Vd, Vq, Ire, Iim
 		BuildRIfromDQRightHand(pDynaModel);
-		BuildAngleEquationRightHand(pDynaModel);
-
 		//DumpIntegrationStep(97, 2028);
 	}
 	return true;
 }
 
+void CDynaGeneratorMustang::CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
+{
+	if (IsStateOn())
+	{
+		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+		(pDynaModel->*fn)(s, (Pt / ( 1.0 + s ) - Kdemp * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj);
+		(pDynaModel->*fn)(Eqs, (ExtEqe - Eqs + Id * (xd - xd1)) / Td01);
+		(pDynaModel->*fn)(Edss, (-Edss - Iq * (xq1 - xq2)) / Tq02);
+		(pDynaModel->*fn)(Eqss, Eqs * (1.0 / Td02 - 1.0 / Td01) + Id * ((xd1 - xd2) / Td02 + (xd - xd1) / Td01) - Eqss / Td02 + ExtEqe / Td01);
+	}
+	else
+	{
+		(pDynaModel->*fn)(Delta, 0);
+		(pDynaModel->*fn)(s, 0);
+		(pDynaModel->*fn)(Eqs, 0);
+		(pDynaModel->*fn)(Edss, 0);
+		(pDynaModel->*fn)(Eqss, 0);
+	}
+}
 
 bool CDynaGeneratorMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = CDynaGenerator3C::BuildDerivatives(pDynaModel);
-	if (bRes)
-	{
-		if (IsStateOn())
-		{
-			double sp1 = ZeroGuardSlip(1.0 + s);
-			double eS = (Pt / sp1 - Kdemp  * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj;
-			double eEqss = Eqs * (1.0 / Td02 - 1.0 / Td01) + Id * ((xd1 - xd2) / Td02 + (xd - xd1) / Td01) - Eqss / Td02 + ExtEqe / Td01;
-			double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
-			pDynaModel->SetDerivative(s, eS);
-			pDynaModel->SetDerivative(Edss, eEdss);
-			pDynaModel->SetDerivative(Eqss, eEqss);
-		}
-		else
-		{
-			pDynaModel->SetDerivative(s, 0.0);
-			pDynaModel->SetDerivative(Eqss, 0.0);
-			pDynaModel->SetDerivative(Edss, 0.0);
-		}
-	}
+	SetDerivatives(pDynaModel);
 	return true;
 }
 

@@ -5,12 +5,16 @@
 
 namespace DFW2
 {
+
+//#define USE_VOLTAGE_FREQ_DAMPING
+
 	class CDynaGeneratorDQBase : public CDynaGeneratorMotion
 	{
 	protected:
 		cplx GetXofEqs() override { return cplx(0, xq); };
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
+		void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
 	public:
 		enum CONSTVARS
 		{
@@ -52,9 +56,8 @@ namespace DFW2
 		void BuildRIfromDQEquations(CDynaModel* pDynaModel);
 		void BuildRIfromDQRightHand(CDynaModel* pDynaModel);
 
-		// блок матрицы и правая части уравнения движения
+		// блок матрицы уравнения движения
 		void BuildMotionEquationBlock(CDynaModel* pDynaModel);
-		void BuildMotionEquationRightHand(CDynaModel* pDynaModel);
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

@@ -146,44 +146,32 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 	{
 		double NodeSv = Sv;
 		double dVre(Vre), dVim(Vim);
-		double sp1 = ZeroGuardSlip(1.0 + s);
-		double sp2 = ZeroGuardSlip(1.0 + NodeSv);
-
-		if (!IsStateOn())
-		{
-			sp1 = sp2 = 1.0;
-		}
-
 		pDynaModel->SetFunction(Ire, Ire - (Eqs * sin(Delta) - dVim) / xd1);
 		pDynaModel->SetFunction(Iim, Iim - (dVre - Eqs * cos(Delta)) / xd1);
-		double eS = (Pt / sp1 - Kdemp  * s - (dVre * Ire + dVim * Iim) / sp2) / Mj;
-		pDynaModel->SetFunctionDiff(s, eS);
-		BuildAngleEquationRightHand(pDynaModel);
+		SetFunctionsDiff(pDynaModel);
 	}
 
 	return true;
 }
 
+void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
+{
+	if (IsStateOn())
+	{
+		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1 + s) - Kdemp * s - ZeroDivGuard(Vre * Ire + Vim * Iim, 1+ Sv)) / Mj);
+	}
+	else
+	{
+		(pDynaModel->*fn)(Delta, 0);
+		(pDynaModel->*fn)(s, 0);
+	}
+}
 
 bool CDynaGeneratorMotion::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
-	if (bRes)
-	{
-		double sp1 = 1.0 + s;
-		double sp2 = 1.0 + Sv;
-
-		if (IsStateOn())
-		{
-			pDynaModel->SetDerivative(s, (Pt / sp1 - Kdemp * s - P / sp2) / Mj);
-			pDynaModel->SetDerivative(Delta, pDynaModel->GetOmega0() * s);
-		}
-		else
-		{
-			pDynaModel->SetDerivative(s, 0);
-			pDynaModel->SetDerivative(Delta, 0);
-		}
-	}
+	SetDerivatives(pDynaModel);
 	return true;
 }
 
@@ -242,11 +230,6 @@ void CDynaGeneratorMotion::BuildAngleEquationBlock(CDynaModel* pDynaModel)
 {
 	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
 	pDynaModel->SetElement(Delta, Delta, 0.0);
-}
-
-void CDynaGeneratorMotion::BuildAngleEquationRightHand(CDynaModel* pDynaModel)
-{
-	pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
 }
 
 const char* CDynaGeneratorMotion::m_cszUnom = "Unom";
