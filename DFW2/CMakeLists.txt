@@ -77,6 +77,8 @@ set(EMSSSOURCES
     DynaModelCompile.cpp
     ResultsWriterABI.cpp
     DynaGeneratorPark3C.cpp
+    DynaGeneratorDQBase.cpp
+    DynaGeneratorPark4C.cpp
     )             
 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)

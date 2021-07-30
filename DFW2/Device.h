@@ -341,8 +341,8 @@ namespace DFW2
 		template<typename T>
 		inline static void ToComplex(const T& Re, const T& Im, cplx& dest)
 		{
-			dest.real(static_cast<cplx::_Ty>(Re));			
-			dest.imag(static_cast<cplx::_Ty>(Im));
+			dest.real(Re);			
+			dest.imag(Im);
 		}
 
 		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);
