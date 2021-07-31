@@ -58,6 +58,7 @@ namespace DFW2
 
 		// блок матрицы уравнения движения
 		void BuildMotionEquationBlock(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

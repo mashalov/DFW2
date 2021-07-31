@@ -31,7 +31,7 @@ cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 	return Ig;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 {
 	if (Kgen > 1)
 	{
@@ -49,7 +49,12 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::Init(CDynaModel* pDynaModel)
 	if (xd <= 0) xd = xd1;
 	if (xq <= 0) xq = xd1;
 
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::Init(CDynaModel* pDynaModel)
+{
 	return InitModel(pDynaModel);
 }
 

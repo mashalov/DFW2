@@ -591,6 +591,23 @@ double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return Kh;
 }
 
+eDEVICEFUNCTIONSTATUS CDeviceContainer::PreInit(CDynaModel* pDynaModel)
+{
+	m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	
+	for (auto&& dev : m_DevVec)
+		m_eDeviceFunctionStatus  = CDevice::DeviceFunctionResult(m_eDeviceFunctionStatus, dev->PreInit(pDynaModel));
+
+	if (m_eDeviceFunctionStatus == eDEVICEFUNCTIONSTATUS::DFS_OK && m_DevVec.size())
+	{
+		CSerializerValidator Validator(pDynaModel, GetSerializer(), (*m_DevVec.begin())->GetValidator());
+		m_eDeviceFunctionStatus = Validator.Validate();
+	}
+
+	return m_eDeviceFunctionStatus;
+}
+
+
 
 eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 {
@@ -600,7 +617,7 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 	if (GetType() == DEVTYPE_BRANCH)
 		return m_eDeviceFunctionStatus;
 
-
+	
 	DEVICEVECTORITR it = begin();
 	
 	// обходим устройства в векторе 

@@ -6,7 +6,7 @@
 
 using namespace DFW2;
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::PreInit(CDynaModel* pDynaModel)
 {
 	xq1 = xq;
 
@@ -31,16 +31,17 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 
 	m_Zgen = { 0, 0.5 * (xd2 + xq2) };
 
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
+{
 	return InitModel(pDynaModel);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::InitModel(CDynaModel* pDynaModel)
 {
-	CSerializerValidator validator(pDynaModel, GetSerializer(), GetValidator());
-	eDEVICEFUNCTIONSTATUS Status(validator.Validate());
-
-
-	Status = CDynaGenerator3C::InitModel(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status(CDynaGenerator3C::InitModel(pDynaModel));
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{

@@ -6,7 +6,7 @@
 
 using namespace DFW2;
 
-eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGenerator3C::PreInit(CDynaModel* pDynaModel)
 {
 	xq1 = xq;
 
@@ -25,8 +25,11 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
 
 	m_Zgen = { 0, 0.5 * (xd2 + xq2) };
 
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
 
-
+eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
+{
 	return InitModel(pDynaModel);
 }
 

@@ -5,6 +5,9 @@
 
 namespace DFW2
 {
+	class CValidationRuleGeneratorUnom;
+	class CValidationRuleGeneratorMj;
+	class CValidationRuleGeneratorPnom;
 	class CDynaGeneratorMotion : public CDynaGeneratorInfBusBase
 	{
 	protected:
@@ -41,10 +44,87 @@ namespace DFW2
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		void BuildAngleEquationBlock(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static const char* m_cszUnom;
+		static constexpr const char* m_cszKdemp = "Kdemp";
+		static constexpr const char* m_cszxq = "xq";
+		static constexpr const char* m_cszMj = "Mj";
+		static constexpr const char* m_cszPnom = "Pnom";
+		static constexpr const char* m_cszUnom = "Unom";
+		static constexpr const char* m_cszcosPhinom = "cosPhinom";
+
+		static CValidationRuleGeneratorUnom ValidatorUnom;
+		static CValidationRuleGeneratorPnom ValidatorPnom;
+		static CValidationRuleGeneratorMj ValidatorMj;
+		static CValidationRuleRange ValidatorCos;
+	};
+
+
+	class CValidationRuleGeneratorUnom : public CValidationRuleBase
+	{
+	public:
+
+		using CValidationRuleBase::CValidationRuleBase;
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			const CDynaNodeBase* pNode = static_cast<const CDynaNodeBase*>(device->GetSingleLink(0));
+			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
+
+			if (pNode && (pGen->Unom > pNode->Unom * 1.15 || pGen->Unom < pNode->Unom * 0.85))
+			{
+				message = fmt::format(CDFW2Messages::m_cszUnomMismatch, pGen->GetVerbalName(), pGen->Unom, pNode->GetVerbalName(), pNode->Unom);
+				return ValidationResult::Warning;
+			}
+			return ValidationResult::Ok;
+		}
+	};
+
+	class CValidationRuleGeneratorMj : public CValidationRuleBase
+	{
+	public:
+
+		using CValidationRuleBase::CValidationRuleBase;
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
+			if (pGen->Pnom > 0)
+			{
+				if (pGen->Mj / pGen->Pnom < 0.01)
+				{
+					message = fmt::format(CDFW2Messages::m_cszValidationSuspiciousLow);
+					return ValidationResult::Warning;
+				}
+			}
+			return ValidationResult::Ok;
+		}
+	};
+
+	class CValidationRuleGeneratorPnom : public CValidationRuleBase
+	{
+	public:
+
+		using CValidationRuleBase::CValidationRuleBase;
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
+			const cplx Slf{ pGen->P, pGen->Q };
+			const double Srated = 1.05 * (Equal(pGen->cosPhinom, 0.0) ? pGen->Pnom : pGen->Pnom / pGen->cosPhinom);
+			const double absSlf(std::abs(Slf));
+
+			if (absSlf > Srated)
+			{
+				const std::string perCents(Srated > 0 ? fmt::format("{:.1f}", absSlf / Srated * 100.0) : "???");
+				message = fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated, Slf, absSlf, Srated,perCents);
+				return ValidationResult::Warning;
+			}
+			return ValidationResult::Ok;
+		}
 	};
 }
 

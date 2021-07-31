@@ -431,7 +431,7 @@ void CAutomaticItem::UpdateSerializer(CSerializerBase* pSerializer)
 {
 	pSerializer->AddProperty(CDeviceId::m_cszid, m_nId);
 	pSerializer->AddProperty("Type", m_nType);
-	pSerializer->AddProperty("Name", m_strName);
+	pSerializer->AddProperty(CDevice::m_cszName, m_strName);
 }
 
 class CSerializerAction : public CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>

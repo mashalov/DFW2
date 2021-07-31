@@ -8,6 +8,7 @@ namespace DFW2
 	// Версия АРВ Мустанг - точная копия модели из Мустанг
 	// с ограничениями перед апериодическим звеном
 
+	class CValidationRuleExcControlTf;
 	class CDynaExcConMustang : public CDevice
 	{
 
@@ -70,9 +71,44 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
-
 		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
+
+		static constexpr const char* m_cszAlpha = "Alpha";
+		static constexpr const char* m_cszTrv = "Trv";
+		static constexpr const char* m_cszKu = "Ku";
+		static constexpr const char* m_cszKu1 = "Ku1";
+		static constexpr const char* m_cszKif1 = "Kif1";
+		static constexpr const char* m_cszKf = "Kf";
+		static constexpr const char* m_cszKf1 = "Kf1";
+		static constexpr const char* m_cszTf = "Tf";
+		static constexpr const char* m_cszUrv_min = "Urv_min";
+		static constexpr const char* m_cszUrv_max = "Urv_max";
+
+		static CValidationRuleRange ValidatorAlpha;
+		static CValidationRuleExcControlTf ValidatorTf;
+	};
+
+	class CValidationRuleExcControlTf : public CValidationRuleBase
+	{
+	public:
+
+		CValidationRuleExcControlTf() : CValidationRuleBase()
+		{
+			replaceValue = 0.9;
+		}
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			const CDynaExcConMustang* pExcCon = static_cast<const CDynaExcConMustang*>(device);
+			if(pExcCon->K0f > 0 && value->Double() <= 0.0)
+			{
+				message = fmt::format(CDFW2Messages::m_cszValidationTfOfMustangExcCon, pExcCon->K0f);
+				return ReplaceValue(value);
+			}
+			return ValidationResult::Ok;
+		}
 	};
 }
 

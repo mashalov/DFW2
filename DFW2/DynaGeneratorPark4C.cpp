@@ -5,6 +5,11 @@
 
 using namespace DFW2;
 
+eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::PreInit(CDynaModel* pDynaModel)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::Init(CDynaModel* pDynaModel)
 {
 	return InitModel(pDynaModel);
@@ -364,3 +369,15 @@ void CDynaGeneratorPark4C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaGenerator3C::m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
 }
 
+void CDynaGeneratorPark4C::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDynaGeneratorDQBase::UpdateValidator(Validator);
+	Validator->AddRule({ CDynaGenerator3C::m_cszxd2,
+						 CDynaGenerator3C::m_cszxq1,
+						 CDynaGenerator3C::m_cszxq2,
+						 m_cszxl,
+						 CDynaGenerator3C::m_csztd01,
+						 CDynaGenerator3C::m_csztd02,
+						 m_csztq01,
+						 CDynaGenerator3C::m_csztq02 }, &CSerializerValidatorRules::BiggerThanZero);
+}

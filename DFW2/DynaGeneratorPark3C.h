@@ -48,12 +48,14 @@ namespace DFW2
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		void CalculateFundamentalParameters();
 		bool BuildDerivatives(CDynaModel* pDynaModel) override;
 		bool CalculatePower() override;
 		cplx GetEMF() override;
 		const cplx& CalculateEgen() override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 
 		/*
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

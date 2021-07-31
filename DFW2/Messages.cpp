@@ -168,10 +168,9 @@ const char* CDFW2Messages::m_cszWrongLimits = "Неправильно задан
 const char* CDFW2Messages::m_cszEmptyLimits = "Ограничения [{};{}] = [{};{}] в устройстве \"{}\". Ограничения не будут учитываться";
 const char* CDFW2Messages::m_cszBranchAngleExceedsPI = "Асинхронный режим по связи \"{}\". Угол {} при t={}";
 const char* CDFW2Messages::m_cszGeneratorAngleExceedsPI = "Асинхронный режим по генератору \"{}\". Угол {} при t={}";
-const char* CDFW2Messages::m_cszGeneratorPowerExceedsRated = "\"{}\" мощность генератора |S={:.5g}|={:.5g} МВА превышает 1.05*Sном={:.5g} МВА {}%";
+const char* CDFW2Messages::m_cszGeneratorPowerExceedsRated = "мощность генератора в УР |S={:.5g}|={:.5g} МВА превышает 1.05*Sном={:.5g} МВА {}%";
 const char* CDFW2Messages::m_cszUnomMismatch = "\"{}\" номинальное напряжение Uном={:.5g} кВ отличается от номинального напряжения узла \"{}\" Unom={} кВ более чем на 15%";
-const char* CDFW2Messages::m_cszWrongPnom = "\"{}\" неверно задана номинальная мощность Pnom={} МВт";
-const char* CDFW2Messages::m_cszGeneratorSuspiciousMj = "\"{}\" Значение Tj={} c подозрительно мало";
+const char* CDFW2Messages::m_cszValidationSuspiciousLow = "значение подозрительно мало";
 const char* CDFW2Messages::m_cszNoRastrWin3FoundInRegistry = "Ошибка доступа к ключу/значению в реестре для поиска шаблонов RastrWin3";
 const char* CDFW2Messages::m_cszDecayDetected = "Зафиксирован критерий затухания переходного процесса при t={} с";
 const char* CDFW2Messages::m_cszCannotUseRastrWin3 = "Невозможно использование компонентов RastrWin3";
@@ -201,4 +200,7 @@ const char* CDFW2Messages::m_cszLFNodeImbalance = "Небаланс УР в уз
 const char* CDFW2Messages::m_cszMaxBranchAngle = "Максимальный угол по связи {:.3f} \"{}\" при t={}";
 const char* CDFW2Messages::m_cszMaxGeneratorAngle = "Максимальный угол по генератору {:.3f} \"{}\" при t={}";
 const char* CDFW2Messages::m_cszValidationBiggerThanZero = "должно быть больше нуля";
+const char* CDFW2Messages::m_cszValidationNonNegative = "должно быть неотрицательным";
 const char* CDFW2Messages::m_cszValidationChangedTo = "Значение изменено на ";
+const char* CDFW2Messages::m_cszValidationRange = "должно быть в диапазоне [{};{}]";
+const char* CDFW2Messages::m_cszValidationTfOfMustangExcCon = " должно быть больше нуля при Kf = {}";

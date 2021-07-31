@@ -218,6 +218,7 @@ namespace DFW2
 		void UnprocessDiscontinuity();
 		double CheckZeroCrossing(CDynaModel *pDynaModel);					// проверить zerocrossing и вернуть долю текущего шага до zerocrossing
 		CDevice *GetZeroCrossingDevice();
+		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);				// предварительно инициализировать и проверить параметры устройств
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
 		void FinishStep();													// завершить шаг и рассчитать зависимые переменные
 		CDynaModel* GetModel();

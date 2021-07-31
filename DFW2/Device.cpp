@@ -498,6 +498,11 @@ eDEVICEFUNCTIONSTATUS CDevice::Init(CDynaModel* pDynaModel)
 	return eStatus;
 }
 
+eDEVICEFUNCTIONSTATUS CDevice::PreInit(CDynaModel* pDynaModel)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
 eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice)
 {
 	m_State = eState;

@@ -17,20 +17,26 @@ namespace DFW2
 	class CValidationRuleBase
 	{
 	protected:
-		std::string message;
 		ValidationResult DefaultResult = ValidationResult::Error;
 		std::optional<double> replaceValue;
 	public:
-		CValidationRuleBase(std::string_view Message) : message(Message) {}
 		virtual ~CValidationRuleBase() = default;
-		virtual ValidationResult Validate(MetaSerializedValue* value) const
+		virtual ValidationResult Validate(MetaSerializedValue* value, CDevice *device, std::string& message) const
 		{
 			return ValidationResult::Ok;
 		}
-		virtual const std::string& Message() const
+
+		ValidationResult ReplaceValue(MetaSerializedValue* value) const
 		{
-			return message;
+			if (replaceValue.has_value())
+			{
+				value->SetDouble(ReplaceValue());
+				return ValidationResult::Replaced;
+			}
+			else
+				return DefaultResult;
 		}
+
 		double ReplaceValue() const
 		{
 			if (!replaceValue.has_value())
@@ -43,19 +49,55 @@ namespace DFW2
 	class CValidationRuleBiggerThanZero : public CValidationRuleBase
 	{
 	public:
-		CValidationRuleBiggerThanZero() : CValidationRuleBase(CDFW2Messages::m_cszValidationBiggerThanZero) 
-		{
-			DefaultResult = ValidationResult::Warning;
-		}
-		ValidationResult Validate(MetaSerializedValue* value) const override
+		using CValidationRuleBase::CValidationRuleBase;
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
 		{
 			ValidationResult res(value->Double() > 0.0 ? ValidationResult::Ok : DefaultResult);
-			if (res != ValidationResult::Ok && replaceValue.has_value())
+			if (res != ValidationResult::Ok)
 			{
-				value->SetDouble(ReplaceValue());
-				res = ValidationResult::Replaced;
+				message = CDFW2Messages::m_cszValidationBiggerThanZero;
+				res = ReplaceValue(value);
 			}
 			return res;
+		}
+	};
+
+	class CValidationRuleNonNegative : public CValidationRuleBase
+	{
+	public:
+		using CValidationRuleBase::CValidationRuleBase;
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			ValidationResult res(value->Double() >= 0.0 ? ValidationResult::Ok : DefaultResult);
+			if (res != ValidationResult::Ok)
+			{
+				message = CDFW2Messages::m_cszValidationBiggerThanZero;
+				res = ReplaceValue(value);
+			}
+			return res;
+		}
+	};
+
+
+	class CValidationRuleRange: public CValidationRuleBase
+	{
+	protected:
+		double m_Min, m_Max;
+	public:
+
+		CValidationRuleRange(double Min, double Max) : CValidationRuleBase(), m_Min(Min), m_Max(Max) {}
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			const double val(value->Double());
+			if (val > m_Max || val < m_Min)
+			{
+				message = fmt::format(CDFW2Messages::m_cszValidationRange, m_Min, m_Max);
+				return ReplaceValue(value);
+			}
+			return ValidationResult::Ok;
 		}
 	};
 
@@ -94,6 +136,7 @@ namespace DFW2
 		VarRuleMapT::const_iterator end()   { return m_RulesMap.end(); }
 
 		static inline CValidationRuleBiggerThanZero BiggerThanZero;
+		static inline CValidationRuleNonNegative NonNegative;
 	};
 
 	using SerializerValidatorRulesPtr = std::unique_ptr<CSerializerValidatorRules>;

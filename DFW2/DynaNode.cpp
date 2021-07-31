@@ -1671,7 +1671,7 @@ void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty("name", TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(CDevice::m_cszname, TypedSerializedValue::eValueType::VT_NAME);
 	AddStateProperty(Serializer);
 	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum(m_eLFNodeType, m_cszLFNodeTypeNames));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);

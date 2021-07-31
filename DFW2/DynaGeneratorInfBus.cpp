@@ -61,13 +61,18 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::InitModel(CDynaModel* pDynaModel
 	return Status;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::PreInit(CDynaModel* pDynaModel)
 {
-	m_Zgen = { 0 , xd1 };
-
 	if (Kgen > 1)
 		xd1 /= Kgen;
 
+	m_Zgen = { 0 , xd1 };
+
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
+{
 	return InitModel(pDynaModel);
 }
 

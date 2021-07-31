@@ -29,7 +29,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::InitModel(CDynaModel* pDynaModel)
 	return Status;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGenerator1C::PreInit(CDynaModel* pDynaModel)
 {
 	if (Kgen > 1)
 	{
@@ -41,6 +41,11 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 		r /= Kgen;
 	}
 
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
+{
 	return InitModel(pDynaModel);
 }
 

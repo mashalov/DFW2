@@ -259,6 +259,8 @@ namespace DFW2
 		void SetDerivatives(CDynaModel* pDynaModel);
 
 		virtual void NewtonUpdateEquation(CDynaModel *pDynaModel);
+		// предварительная однократная инициалиация устройства
+		virtual eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);	
 		eDEVICEFUNCTIONSTATUS CheckInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS Initialized() { return m_eInitStatus; }
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
@@ -367,6 +369,9 @@ namespace DFW2
 		static char UnknownVarIndex[80];
 #endif
 		static const ptrdiff_t nIndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();
+
+		static constexpr const char* m_cszName = "Name";
+		static constexpr const char* m_cszname = "name";
 	};
 
 using DEVICEVECTOR = std::vector<CDevice*>;

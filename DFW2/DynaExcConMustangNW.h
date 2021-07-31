@@ -7,6 +7,7 @@ namespace DFW2
 	// Версия АРВ Мустанг с апериодическим звеном с ограничениями
 	// обладает более быстрой и адекватной реакцией по сранвению с оригиналом
 
+	class CValidationRuleExcControlNwTf;
 	class CDynaExcConMustangNonWindup : public CDevice
 	{
 	protected:
@@ -68,7 +69,32 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
+
+		static CValidationRuleExcControlNwTf ValidatorTf;
+	};
+
+
+	class CValidationRuleExcControlNwTf : public CValidationRuleBase
+	{
+	public:
+
+		CValidationRuleExcControlNwTf() : CValidationRuleBase()
+		{
+			replaceValue = 0.9;
+		}
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			const CDynaExcConMustangNonWindup* pExcCon = static_cast<const CDynaExcConMustangNonWindup*>(device);
+			if (pExcCon->K0f > 0 && pExcCon->Tf <= 0.0)
+			{
+				message = fmt::format(CDFW2Messages::m_cszValidationTfOfMustangExcCon, pExcCon->K0f);
+				return ReplaceValue(value);
+			}
+			return ValidationResult::Ok;
+		}
 	};
 }
 

@@ -33,6 +33,7 @@ namespace DFW2
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 

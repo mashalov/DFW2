@@ -59,9 +59,6 @@ void CDynaExcConMustang::ScaleGains(CDynaExcConMustang& excon)
 
 eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 {
-	if (Tf <= 0)
-		Tf = 0.1;
-
 	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
 	dVdtOut = dEqdtOut = dSdtOut = 0.0;
@@ -257,23 +254,36 @@ void CDynaExcConMustang::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	AddStateProperty(Serializer);
-	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(CDevice::m_cszName, TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty("Alpha", Alpha);
-	Serializer->AddProperty("Trv", Tr, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("Ku", K0u);
-	Serializer->AddProperty("Ku1", K1u);
-	Serializer->AddProperty("Kif1", K1if);
-	Serializer->AddProperty("Kf", K0f);
-	Serializer->AddProperty("Kf1", K1f);
-	Serializer->AddProperty("Tf", Tf, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("Urv_min", Umin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Urv_max", Umax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszAlpha, Alpha);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszTrv, Tr, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszKu, K0u);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszKu1, K1u);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszKif1, K1if);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszKf, K0f);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszKf1, K1f);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszTf, Tf, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszUrv_min, Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(CDynaExcConMustang::m_cszUrv_max, Umax, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Vref", Vref, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Usum", Usum, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("UsumLmt", UsumLmt, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Uf", Uf, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Svt", Svt, eVARUNITS::VARUNIT_PU);
+}
+
+void CDynaExcConMustang::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDevice::UpdateValidator(Validator);
+	Validator->AddRule({ CDynaExcConMustang::m_cszAlpha }, &CDynaExcConMustang::ValidatorAlpha);
+	Validator->AddRule(CDynaExcConMustang::m_cszTf, &CDynaExcConMustang::ValidatorTf);
+	Validator->AddRule( CDynaExcConMustang::m_cszTrv, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ CDynaExcConMustang::m_cszKu,
+						 CDynaExcConMustang::m_cszKu1,
+						 CDynaExcConMustang::m_cszKif1,
+						 CDynaExcConMustang::m_cszKf,
+						 CDynaExcConMustang::m_cszKf1 }, &CSerializerValidatorRules::NonNegative);
 }
 
 void CDynaExcConMustang::DeviceProperties(CDeviceContainerProperties& props)
@@ -299,3 +309,7 @@ void CDynaExcConMustang::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExcConMustang>>();
 }
+
+
+CValidationRuleRange CDynaExcConMustang::ValidatorAlpha(0,1);
+CValidationRuleExcControlTf CDynaExcConMustang::ValidatorTf;

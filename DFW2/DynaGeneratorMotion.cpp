@@ -26,32 +26,6 @@ double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 {
-	if (Pnom <= 0.0)
-		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongPnom, GetVerbalName(), Pnom));
-	else
-		if (Mj / Pnom < 0.01)
-			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorSuspiciousMj, GetVerbalName(), Mj / Pnom));
-
-	const cplx Slf{ P, Q };
-	const double Srated = 1.05 * (Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom);
-	const double absSlf(std::abs(Slf));
-
-	if (absSlf > Srated)
-	{
-		const std::string perCents(Srated > 0 ? fmt::format("{:.1f}", absSlf / Srated * 100.0) : "???");
-		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated,
-			GetVerbalName(),
-			Slf,
-			absSlf,
-			Srated,
-			perCents));
-	}
-
-	const CDynaNodeBase* pNode = static_cast<const CDynaNodeBase*>(GetSingleLink(0));
-
-	if (pNode && (Unom > pNode->Unom * 1.15 || Unom < pNode->Unom * 0.85))
-		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszUnomMismatch, GetVerbalName(), Unom, pNode->GetVerbalName(), pNode->Unom));
-
 	// !!!!!! just for debug !!!!!!
 	/*
 	if (Equal(Pnom, 0.0))
@@ -77,9 +51,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 	return Status;
 }
 
-
-eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 {
+	xq = 1.0;
 
 	if (Kgen > 1)
 	{
@@ -91,6 +65,11 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 
 	m_Zgen = { 0 , xd1 };
 
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
+{
 	return InitModel(pDynaModel);
 }
 
@@ -199,15 +178,25 @@ void CDynaGeneratorMotion::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели генератора в уравнении движения
-	Serializer->AddProperty("Kdemp", Kdemp, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddProperty("xq", xq, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty("Mj", Mj, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Pnom", Pnom, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty("Unom", Unom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty("cosPhinom", cosPhinom, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(m_cszKdemp, Kdemp, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(m_cszxq, xq, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszMj, Mj, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszPnom, Pnom, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(m_cszUnom, Unom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(m_cszcosPhinom, cosPhinom, eVARUNITS::VARUNIT_UNITLESS);
 	// добавляем переменные состояния
 	Serializer->AddState("Pt", Pt, eVARUNITS::VARUNIT_MW);
 	Serializer->AddState("s", s, eVARUNITS::VARUNIT_PU);
+}
+
+void CDynaGeneratorMotion::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDynaGeneratorInfBusBase::UpdateValidator(Validator);
+	Validator->AddRule({ m_cszKdemp, m_cszxq, m_cszPnom }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszcosPhinom, &CDynaGeneratorMotion::ValidatorCos);
+	Validator->AddRule(m_cszUnom, &CDynaGeneratorMotion::ValidatorUnom);
+	Validator->AddRule(m_cszMj, &CDynaGeneratorMotion::ValidatorMj);
+	Validator->AddRule(m_cszPnom, &CDynaGeneratorMotion::ValidatorPnom);
 }
 
 void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
@@ -232,4 +221,8 @@ void CDynaGeneratorMotion::BuildAngleEquationBlock(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Delta, Delta, 0.0);
 }
 
-const char* CDynaGeneratorMotion::m_cszUnom = "Unom";
+
+CValidationRuleGeneratorUnom CDynaGeneratorMotion::ValidatorUnom;
+CValidationRuleGeneratorMj CDynaGeneratorMotion::ValidatorMj;
+CValidationRuleGeneratorPnom CDynaGeneratorMotion::ValidatorPnom;
+CValidationRuleRange CDynaGeneratorMotion::ValidatorCos(-1, 1);

@@ -5,6 +5,11 @@
 
 using namespace DFW2;
 
+eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::PreInit(CDynaModel* pDynaModel)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
 {
 	return InitModel(pDynaModel);
@@ -336,11 +341,20 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState(m_cszPsi1d, Psi1d, eVARUNITS::VARUNIT_WB);
 	Serializer->AddState(m_cszPsi1q, Psi1q, eVARUNITS::VARUNIT_WB);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(CDynaGenerator3C::m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(CDynaGenerator3C::m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztq01, Tq01, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(CDynaGenerator3C::m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+}
+
+void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDynaGeneratorDQBase::UpdateValidator(Validator);
+	Validator->AddRule({ CDynaGenerator3C::m_cszxd2,
+						 CDynaGenerator3C::m_cszxq2, 
+						 m_cszxl, 
+						 CDynaGenerator3C::m_csztd01,
+						 CDynaGenerator3C::m_csztd02,
+						 CDynaGenerator3C::m_csztq02 }, &CSerializerValidatorRules::BiggerThanZero);
 }

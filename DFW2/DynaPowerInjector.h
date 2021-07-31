@@ -5,6 +5,8 @@
 
 namespace DFW2
 {
+	class CValidationRuleGeneratorKgen;
+
 	class CDynaPowerInjector : public CDevice
 	{
 	protected:
@@ -56,5 +58,18 @@ namespace DFW2
 		static constexpr const char* m_cszIim = "Iim";
 		static constexpr const char* m_cszNodeId = "NodeId";
 		static constexpr const char* m_cszKgen = "Kgen";
+
+		static CValidationRuleGeneratorKgen ValidatorKgen;
+	};
+
+	class CValidationRuleGeneratorKgen : public CValidationRuleBiggerThanZero
+	{
+	public:
+		CValidationRuleGeneratorKgen() : CValidationRuleBiggerThanZero()
+		{
+			DefaultResult = ValidationResult::Warning;
+			replaceValue = 1.0;
+		}
 	};
 }
+

@@ -20,6 +20,7 @@ namespace DFW2
 		bool BuildRightHand(CDynaModel* pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;
 		const cplx& CalculateEgen() override;

@@ -177,8 +177,7 @@ namespace DFW2
 		static const char* m_cszGeneratorAngleExceedsPI;
 		static const char* m_cszGeneratorPowerExceedsRated;
 		static const char* m_cszUnomMismatch;
-		static const char* m_cszWrongPnom;
-		static const char* m_cszGeneratorSuspiciousMj;
+		static const char* m_cszValidationSuspiciousLow;
 		static const char* m_cszNoRastrWin3FoundInRegistry;
 		static const char* m_cszDecayDetected;
 		static const char* m_cszCannotUseRastrWin3;
@@ -209,7 +208,10 @@ namespace DFW2
 		static const char* m_cszMaxBranchAngle;
 		static const char* m_cszMaxGeneratorAngle;
 		static const char* m_cszValidationBiggerThanZero;
+		static const char* m_cszValidationNonNegative;
 		static const char* m_cszValidationChangedTo;
+		static const char* m_cszValidationRange;
+		static const char* m_cszValidationTfOfMustangExcCon;
 	};
 }
 

@@ -66,13 +66,14 @@ void CDynaPowerInjector::FinishStep()
 void CDynaPowerInjector::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDevice::UpdateValidator(Validator);
-	Validator->AddRule({ m_cszKgen, m_cszNodeId }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszNodeId, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszKgen, &CDynaPowerInjector::ValidatorKgen);
 }
 
 void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(CDevice::m_cszName, TypedSerializedValue::eValueType::VT_NAME, eVARUNITS::VARUNIT_UNITLESS);
 	AddStateProperty(Serializer);
 	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID, eVARUNITS::VARUNIT_UNITLESS);
 	Serializer->AddProperty(m_cszNodeId, NodeId, eVARUNITS::VARUNIT_UNITLESS);
@@ -105,3 +106,7 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaPowerInjector>>();
 
 }
+
+
+CValidationRuleGeneratorKgen CDynaPowerInjector::ValidatorKgen;
+

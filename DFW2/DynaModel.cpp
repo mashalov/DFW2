@@ -370,7 +370,15 @@ bool CDynaModel::RunTransient()
 
 void CDynaModel::InitDevices()
 {
-	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	for (auto&& container : m_DeviceContainers)
+		Status = CDevice::DeviceFunctionResult(Status, container->PreInit(this));
+
+	if (!CDevice::IsFunctionStatusOK(Status))
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
+	Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
+
 	m_cszDampingName = (GetFreqDampingType() == ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
 
 	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
