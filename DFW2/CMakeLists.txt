@@ -80,6 +80,7 @@ set(EMSSSOURCES
     DynaGeneratorDQBase.cpp
     DynaGeneratorPark4C.cpp
     DynaExcConMustangNW.cpp
+    SerializerValidation.cpp
     )             
 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
