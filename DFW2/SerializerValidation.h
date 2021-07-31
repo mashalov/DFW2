@@ -20,6 +20,8 @@ namespace DFW2
 		ValidationResult DefaultResult = ValidationResult::Error;
 		std::optional<double> replaceValue;
 	public:
+		CValidationRuleBase() {}
+		CValidationRuleBase(std::optional<double> Replace) : replaceValue(Replace) {}
 		virtual ~CValidationRuleBase() = default;
 		virtual ValidationResult Validate(MetaSerializedValue* value, CDevice *device, std::string& message) const
 		{
@@ -50,7 +52,6 @@ namespace DFW2
 	{
 	public:
 		using CValidationRuleBase::CValidationRuleBase;
-
 		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
 		{
 			ValidationResult res(value->Double() > 0.0 ? ValidationResult::Ok : DefaultResult);
@@ -66,7 +67,6 @@ namespace DFW2
 	class CValidationRuleNonNegative : public CValidationRuleBase
 	{
 	public:
-		using CValidationRuleBase::CValidationRuleBase;
 
 		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
 		{

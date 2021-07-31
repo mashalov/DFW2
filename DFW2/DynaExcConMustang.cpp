@@ -309,7 +309,3 @@ void CDynaExcConMustang::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExcConMustang>>();
 }
-
-
-CValidationRuleRange CDynaExcConMustang::ValidatorAlpha(0,1);
-CValidationRuleExcControlTf CDynaExcConMustang::ValidatorTf;

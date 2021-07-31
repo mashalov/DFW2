@@ -8,7 +8,6 @@ namespace DFW2
 	// Версия АРВ Мустанг - точная копия модели из Мустанг
 	// с ограничениями перед апериодическим звеном
 
-	class CValidationRuleExcControlTf;
 	class CDynaExcConMustang : public CDevice
 	{
 
@@ -86,29 +85,8 @@ namespace DFW2
 		static constexpr const char* m_cszUrv_min = "Urv_min";
 		static constexpr const char* m_cszUrv_max = "Urv_max";
 
-		static CValidationRuleRange ValidatorAlpha;
-		static CValidationRuleExcControlTf ValidatorTf;
-	};
-
-	class CValidationRuleExcControlTf : public CValidationRuleBase
-	{
-	public:
-
-		CValidationRuleExcControlTf() : CValidationRuleBase()
-		{
-			replaceValue = 0.9;
-		}
-
-		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
-		{
-			const CDynaExcConMustang* pExcCon = static_cast<const CDynaExcConMustang*>(device);
-			if(pExcCon->K0f > 0 && value->Double() <= 0.0)
-			{
-				message = fmt::format(CDFW2Messages::m_cszValidationTfOfMustangExcCon, pExcCon->K0f);
-				return ReplaceValue(value);
-			}
-			return ValidationResult::Ok;
-		}
+		static inline CValidationRuleRange ValidatorAlpha = CValidationRuleRange(-1,1);
+		static inline CValidationRuleBiggerThanZero ValidatorTf = CValidationRuleBiggerThanZero(0.9);
 	};
 }
 

@@ -239,7 +239,7 @@ void CDynaExcConMustangNonWindup::UpdateValidator(CSerializerValidatorRules* Val
 {
 	CDevice::UpdateValidator(Validator);
 	Validator->AddRule({ CDynaExcConMustang::m_cszAlpha }, &CDynaExcConMustang::ValidatorAlpha);
-	Validator->AddRule(CDynaExcConMustang::m_cszTf, &CDynaExcConMustangNonWindup::ValidatorTf);
+	Validator->AddRule(CDynaExcConMustang::m_cszTf, &CDynaExcConMustang::ValidatorTf);
 	Validator->AddRule(CDynaExcConMustang::m_cszTrv, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule({ CDynaExcConMustang::m_cszKu, 
 						 CDynaExcConMustang::m_cszKu1, 
@@ -292,5 +292,3 @@ void CDynaExcConMustangNonWindup::DeviceProperties(CDeviceContainerProperties& p
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExcConMustangNonWindup>>();
 }
-
-CValidationRuleExcControlNwTf CDynaExcConMustangNonWindup::ValidatorTf;
