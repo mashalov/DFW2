@@ -63,20 +63,26 @@ void CDynaPowerInjector::FinishStep()
 	Q = dVim * dIre - dVre * dIim;
 }
 
+void CDynaPowerInjector::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDevice::UpdateValidator(Validator);
+	Validator->AddRule({ m_cszKgen, m_cszNodeId }, &CSerializerValidatorRules::BiggerThanZero);
+}
+
 void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME, eVARUNITS::VARUNIT_UNITLESS);
 	AddStateProperty(Serializer);
-	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty("NodeId", NodeId, eVARUNITS::VARUNIT_NOTSET);
+	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(m_cszNodeId, NodeId, eVARUNITS::VARUNIT_UNITLESS);
 	Serializer->AddProperty(m_cszP, P, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty(m_cszQ, Q, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddState(m_cszIre, Ire, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState(m_cszIim, Iim, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddProperty("Qmin", LFQmin, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty("Qmax", LFQmax, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty("Kgen", Kgen, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty(m_cszKgen, Kgen, eVARUNITS::VARUNIT_PIECES);
 }
 
 void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
@@ -87,7 +93,7 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.m_VarMap.insert({ m_cszIre, CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES) });
 	props.m_VarMap.insert({ m_cszIim, CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES) });
 
-	props.m_ConstVarMap.insert({ CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
+	props.m_ConstVarMap.insert({ CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_UNITLESS, eDVT_CONSTSOURCE) });
 	props.m_ConstVarMap.insert({ m_cszP, CConstVarIndex(CDynaPowerInjector::C_P, VARUNIT_MW, true, eDVT_CONSTSOURCE) });
 	props.m_ConstVarMap.insert({ m_cszQ, CConstVarIndex(CDynaPowerInjector::C_Q, VARUNIT_MVAR, true, eDVT_CONSTSOURCE) });
 

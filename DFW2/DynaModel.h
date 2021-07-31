@@ -528,7 +528,7 @@ namespace DFW2
 		bool LoadFlow();
 		void DumpStateVector();
 		FILE* fResult;
-		std::ofstream LogFile;
+		mutable std::ofstream LogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
 
 		std::atomic<bool> bStopProcessing = false;
@@ -769,7 +769,7 @@ namespace DFW2
 		void RebuildMatrix(bool bRebuild = true);
 		void AddZeroCrossingDevice(CDevice *pDevice);
 
-		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1);
+		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const;
 
 		double Methodl[4][4];
 		double Methodlh[4];

@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "Serializer.h"
 #include "DeviceContainer.h"
+#include "FmtComplexFormat.h"
 using namespace DFW2;
 
 
@@ -99,6 +100,14 @@ MetaSerializedValue* MetaSerializedValue::Update(TypedSerializedValue&& value)
 }
 
 CDevice* TypedSerializedValue::GetDevice()
+{
+	if (m_pSerializer)
+		return m_pSerializer->GetDevice();
+	else
+		return nullptr;
+}
+
+const CDevice* TypedSerializedValue::GetDevice() const
 {
 	if (m_pSerializer)
 		return m_pSerializer->GetDevice();
@@ -324,4 +333,60 @@ template<> MetaSerializedValue* MetaSerializedValue::Set<const cplx&>(const cplx
 template<> bool TypedSerializedValue::IsThatPointer<double>(double* type)
 {
 	return ValueType == TypedSerializedValue::eValueType::VT_DBL && Value.pDbl == type;
+}
+
+double TypedSerializedValue::Double() const
+{
+	switch (ValueType)
+	{
+	case eValueType::VT_DBL:
+		return *Value.pDbl;
+	case eValueType::VT_INT:
+		return static_cast<double>(*Value.pInt);
+	case eValueType::VT_BOOL:
+		return *Value.pBool ? 1.0 : 0.0;
+	case eValueType::VT_STATE:
+		if (const auto device(GetDevice()); device)
+			return device->GetState() == eDEVICESTATE::DS_ON ? 1.0 : 0.0;
+	case eValueType::VT_ID:
+		if (const auto device(GetDevice()); device)
+			return static_cast<double>(device->GetId());
+	case eValueType::VT_ADAPTER:
+		return Adapter->GetDouble();
+	}
+
+	throw dfw2error(fmt::format("TypedSerializedValue::Double() - unexpected value type {}, device not available or bad adapter",
+		static_cast<std::underlying_type<TypedSerializedValue::eValueType>::type>(ValueType)));
+}
+
+std::string TypedSerializedValue::String() const
+{
+	constexpr const char* braces = "{}";
+	switch (ValueType)
+	{
+	case eValueType::VT_DBL:
+		return fmt::format(braces, *Value.pDbl);
+	case eValueType::VT_INT:
+		return fmt::format(braces, *Value.pInt);
+	case eValueType::VT_BOOL:
+		return fmt::format(braces, *Value.pBool ? "true": "false");
+	case eValueType::VT_CPLX:
+		return fmt::format(braces, *Value.pCplx);
+	case eValueType::VT_STRING:
+		return *Value.pStr;
+	case eValueType::VT_NAME:
+		if (const auto device(GetDevice()); device)
+			return fmt::format(braces, device->GetName());
+	case eValueType::VT_STATE:
+		if (const auto device(GetDevice()); device)
+			return fmt::format(braces, device->GetState());
+	case eValueType::VT_ID:
+		if (const auto device(GetDevice()); device)
+			return fmt::format(braces, device->GetId());
+	case eValueType::VT_ADAPTER:
+		return fmt::format(braces, Adapter->GetString());
+	}
+
+	throw dfw2error(fmt::format("TypedSerializedValue::String() - unexpected value type {}, device not available or bad adapter",
+		static_cast<std::underlying_type<TypedSerializedValue::eValueType>::type>(ValueType)));
 }

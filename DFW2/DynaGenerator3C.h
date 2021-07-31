@@ -39,6 +39,7 @@ namespace DFW2
 		bool CalculatePower() override;
 		const cplx& CalculateEgen() override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static constexpr const char* m_csztd02 = "td02";

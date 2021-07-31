@@ -179,6 +179,8 @@ namespace DFW2
 		// сохраненному в переменной указателю
 		template<typename T>
 		bool IsThatPointer(T* type);
+		std::string String() const;
+		double Double() const;
 	protected:
 		// shortcut функция выбрасывает исключение при ошибке приведения типа
 		void NoConversion(eValueType fromType);
@@ -186,6 +188,7 @@ namespace DFW2
 		CSerializerBase* m_pSerializer = nullptr;
 		// возвращает указатель на устройство, связанное с сериализатором
 		CDevice* GetDevice();
+		const CDevice* GetDevice() const;
 	};
 
 	class CSerializedValueAuxDataBase {};
@@ -457,13 +460,14 @@ namespace DFW2
 		}
 
 		// добавление свойства
-		MetaSerializedValue* AddProperty(std::string_view Name, TypedSerializedValue::eValueType Type)
+		MetaSerializedValue* AddProperty(std::string_view Name, TypedSerializedValue::eValueType Type, eVARUNITS Units = eVARUNITS::VARUNIT_NOTSET)
 		{
 			if (IsCreate())
 			{
 				// создаем новое свойство 
 				// в список свойств добавляем новое значение с метаинформацией
 				MetaSerializedValue* mv = ValueList.emplace(ValueList.end(), std::make_unique<MetaSerializedValue>(this, Type))->get();
+				mv->Units = Units;
 				// добавляем свойство в список значений
 				return AddValue(Name, mv);
 			}

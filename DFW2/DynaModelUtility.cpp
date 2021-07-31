@@ -6,7 +6,7 @@
 using namespace DFW2;
 
 
-void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex)
+void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex) const
 {
 	if (m_Parameters.m_bLogToConsole || Status <= DFW2MessageStatus::DFW2LOG_ERROR)
 	{

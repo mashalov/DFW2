@@ -61,7 +61,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 			Mj *= Pnom;
 	}*/
 
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorInfBusBase::InitModel(pDynaModel);
+	auto Status = CDynaGeneratorInfBusBase::InitModel(pDynaModel);
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -199,12 +199,12 @@ void CDynaGeneratorMotion::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели генератора в уравнении движения
-	Serializer->AddProperty("Kdemp", Kdemp, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty("Kdemp", Kdemp, eVARUNITS::VARUNIT_UNITLESS);
 	Serializer->AddProperty("xq", xq, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty("Mj", Mj, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty("Pnom", Pnom, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty("Unom", Unom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty("cosPhinom", cosPhinom, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty("cosPhinom", cosPhinom, eVARUNITS::VARUNIT_UNITLESS);
 	// добавляем переменные состояния
 	Serializer->AddState("Pt", Pt, eVARUNITS::VARUNIT_MW);
 	Serializer->AddState("s", s, eVARUNITS::VARUNIT_PU);

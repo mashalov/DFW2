@@ -8,7 +8,18 @@ namespace DFW2
 	// карта типов единиц измерения к названиям
 	// названия нужны только для взаимодействия с пользователем,
 	// поэтому названия единиц измерения вводим в описании классов сообщений
-	typedef std::map<ptrdiff_t, std::string> VARNAMEMAP;
+	class VARNAMEMAP : public std::map<ptrdiff_t, std::string>
+	{
+		static inline std::string empty = "???";
+	public:
+		const std::string& VerbalUnits(ptrdiff_t Unit) const
+		{
+			if (const auto it = find(Unit); it != end())
+				return it->second;
+			else
+				return VARNAMEMAP::empty;
+		}
+	};
 	typedef VARNAMEMAP::const_iterator VARNAMEITRCONST;
 
 
@@ -197,6 +208,8 @@ namespace DFW2
 		static const char* m_cszLFNodeImbalance;
 		static const char* m_cszMaxBranchAngle;
 		static const char* m_cszMaxGeneratorAngle;
+		static const char* m_cszValidationBiggerThanZero;
+		static const char* m_cszValidationChangedTo;
 	};
 }
 

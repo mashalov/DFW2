@@ -1,6 +1,6 @@
 ﻿#pragma once
 #include "DeviceId.h"
-#include "Serializer.h"
+#include "SerializerValidation.h"
 
 namespace DFW2
 {
@@ -303,8 +303,12 @@ namespace DFW2
 
 		// возвращает сериализатор для данного типа устройств
 		SerializerPtr GetSerializer();
+		// возвращает валидатор для данного типа устройств
+		SerializerValidatorRulesPtr GetValidator();
 		// обновляет сериализатор для данного типа устройств
 		virtual void UpdateSerializer(CSerializerBase* Serializer);
+		// обновляет валидатор для данного типа устройств
+		virtual void UpdateValidator(CSerializerValidatorRules* Validator);
 		// shortcut добавляет в сериализатор свойство состояния
 		void AddStateProperty(CSerializerBase* Serializer);
 

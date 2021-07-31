@@ -265,6 +265,9 @@
     <ClInclude Include="DynaExcConMustangNW.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SerializerValidation.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -583,6 +586,9 @@
       <Filter>Source Files\Generators</Filter>
     </ClCompile>
     <ClCompile Include="DynaExcConMustangNW.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SerializerValidation.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

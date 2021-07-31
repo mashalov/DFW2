@@ -48,11 +48,13 @@ namespace DFW2
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		static constexpr const char* m_cszP = "P";
 		static constexpr const char* m_cszQ = "Q";
 		static constexpr const char* m_cszIre = "Ire";
 		static constexpr const char* m_cszIim = "Iim";
 		static constexpr const char* m_cszNodeId = "NodeId";
+		static constexpr const char* m_cszKgen = "Kgen";
 	};
 }

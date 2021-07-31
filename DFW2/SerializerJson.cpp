@@ -96,10 +96,7 @@ void CSerializerJson::SerializeProps(CSerializerBase* pSerializer, nlohmann::jso
 			ClassProp[CSerializerBase::m_cszState] = true;
 
 		// задаем единицы измерения
-		const auto& it = units.VarNameMap().find(static_cast<ptrdiff_t>(mv.Units));
-		if (units.VarNameMap().end() != it)
-			ClassProp["units"] = it->second;
-
+		ClassProp["units"] = units.VarNameMap().VerbalUnits(mv.Units);
 		ClassProps[value.first] = ClassProp;
 	}
 

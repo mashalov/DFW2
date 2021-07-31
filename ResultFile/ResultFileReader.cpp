@@ -697,11 +697,7 @@ const CResultFileReader::ChannelHeaderInfo* CResultFileReader::GetChannelHeaders
 // возвращает название единиц измерения по заданному типу
 const char* CResultFileReader::GetUnitsName(ptrdiff_t eUnitsType)
 {
-	VARNAMEITRCONST it = m_VarNameMap.find(eUnitsType);
-	if (it != m_VarNameMap.end())
-		return it->second.c_str();
-	else
-		return CResultFile::m_cszUnknownUnits;
+	return m_VarNameMap.VerbalUnits(eUnitsType).c_str();
 }
 
 

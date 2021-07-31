@@ -1133,6 +1133,14 @@ SerializerPtr CDevice::GetSerializer()
 	return extSerializer;
 }
 
+// возвращает валидатор для данного типа устройств
+SerializerValidatorRulesPtr CDevice::GetValidator()
+{
+	auto Validator = std::make_unique<CSerializerValidatorRules>();
+	UpdateValidator(Validator.get());
+	return Validator;
+}
+
 // идея UpdateSerializer состоит в том, что
 // для данного экземпляра устройства функция заполняет
 // переданный Serializer значениями, необходимыми устройству 
@@ -1143,9 +1151,14 @@ void CDevice::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->BeginUpdate(this);
 }
 
+void CDevice::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+
+}
+
 void CDevice::AddStateProperty(CSerializerBase* Serializer)
 {
-	Serializer->AddProperty("state", TypedSerializedValue::eValueType::VT_STATE);
+	Serializer->AddProperty("state", TypedSerializedValue::eValueType::VT_STATE, eVARUNITS::VARUNIT_UNITLESS);
 }
 
 VariableIndexRefVec& CDevice::GetVariables(VariableIndexRefVec& ChildVec)

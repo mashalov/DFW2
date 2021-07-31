@@ -15,7 +15,6 @@ namespace DFW2
 		void WriteLEB(uint64_t nValue);
 		void WriteString(std::string_view cszString);
 		static constexpr const char m_cszSignature[6] = { 'R', 'a', 'i', 'd', 'e', 'n' };
-		static constexpr const char *m_cszUnknownUnits = "???";
 	};
 
 	struct VariableTypeInfo

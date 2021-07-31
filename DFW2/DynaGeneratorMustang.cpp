@@ -36,8 +36,11 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::InitModel(CDynaModel* pDynaModel)
 {
+	CSerializerValidator validator(pDynaModel, GetSerializer(), GetValidator());
+	eDEVICEFUNCTIONSTATUS Status(validator.Validate());
 
-	eDEVICEFUNCTIONSTATUS Status = CDynaGenerator3C::InitModel(pDynaModel);
+
+	Status = CDynaGenerator3C::InitModel(pDynaModel);
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{

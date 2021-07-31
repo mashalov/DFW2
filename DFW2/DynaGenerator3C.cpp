@@ -317,6 +317,12 @@ const cplx& CDynaGenerator3C::CalculateEgen()
 	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, (double)Delta);
 }
 
+void CDynaGenerator3C::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDynaGenerator1C::UpdateValidator(Validator);
+	Validator->AddRule({ m_csztd02, m_csztq02, m_cszxd2, m_cszxq2, m_cszxq1 }, &CSerializerValidatorRules::BiggerThanZero);
+}
+
 void CDynaGenerator3C::UpdateSerializer(CSerializerBase* Serializer)
 {
 	// обновляем сериализатор базового класса
