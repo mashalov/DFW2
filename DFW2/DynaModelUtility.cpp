@@ -266,6 +266,39 @@ bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
 	return pDevCon->Count() && !pDevCon->m_ContainerProps.bVolatile && pDevCon->GetType() != DEVTYPE_BRANCH;
 }
 
+// Выводит статистику по топ-устройствам, которые выдавали zero-crossing
+void CDynaModel::GetMostZeroCrossings(ptrdiff_t nCount)
+{
+	// создаем мультисет устройств, отсортированный по количеству ZC
+	auto comp = [](const CDevice* lhs, const CDevice* rhs) { return lhs->GetZeroCrossings() > rhs->GetZeroCrossings(); };
+	std::multiset<const CDevice*, decltype(comp)> ZeroCrossingsSet(comp);
+	ptrdiff_t nTotalZcCount(0);
+	// перебираем контейнеры с устройствами
+	for (const auto& container : m_DeviceContainers)
+		for (const auto& dev : *container)
+		{
+			if (auto nZc(dev->GetZeroCrossings()); nZc)
+			{
+				nTotalZcCount += nZc;
+				// если в мультисете меньше устройств, чем задано, просто вставляем
+				if (static_cast<ptrdiff_t>(ZeroCrossingsSet.size()) < nCount)
+					ZeroCrossingsSet.insert(dev);
+				else if (auto rb(*ZeroCrossingsSet.rbegin()); rb->GetZeroCrossings() < nZc)
+				{
+					// если устройств больше, чем нужно, проверяем
+					// последнее устройство в мультисете, и если его zc меньше
+					// чем zc текущего устройства, удаляем последнее и вставляем текущее
+					ZeroCrossingsSet.erase(rb);
+						ZeroCrossingsSet.insert(dev);
+				}
+			}
+		}
+
+	for (const auto& dev : ZeroCrossingsSet)
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG,
+			fmt::format("{:<6} {}", dev->GetZeroCrossings(), dev->GetVerbalName()));
+}
+
 void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 {
 	UpdateTotalRightVector();

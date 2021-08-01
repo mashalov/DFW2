@@ -357,6 +357,7 @@ bool CDynaModel::RunTransient()
 				sc.m_MaxGeneratorAngle.Time()));
 
 		GetWorstEquations(10);
+		GetMostZeroCrossings(10);
 		std::chrono::milliseconds CalcDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - sc.m_ClockStart);
 		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Duration {}", static_cast<double>(CalcDuration.count()) / 1E3));
 	}

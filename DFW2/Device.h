@@ -188,8 +188,8 @@ namespace DFW2
 		static CheckMasterDeviceFunction CheckMasterDeviceInit;
 		static CheckMasterDeviceFunction CheckMasterDeviceDiscontinuity;
 		eDEVICEFUNCTIONSTATUS MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice);
-
 		void DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber);
+		ptrdiff_t m_nZeroCrossings = 0;								// количество zero-crossings, короторе вызвало устройство
 	public:
 
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
@@ -369,6 +369,11 @@ namespace DFW2
 		static char UnknownVarIndex[80];
 #endif
 		static const ptrdiff_t nIndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();
+
+		// Инкремент zero-crossing
+		void IncrementZeroCrossings() { m_nZeroCrossings++; }
+		// Ввернуть накопленное значение zero-crossing
+		ptrdiff_t GetZeroCrossings() const { return m_nZeroCrossings; }
 
 		static constexpr const char* m_cszName = "Name";
 		static constexpr const char* m_cszname = "name";

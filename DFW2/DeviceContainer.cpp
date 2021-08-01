@@ -573,9 +573,17 @@ CDevice* CDeviceContainer::GetZeroCrossingDevice()
 double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double Kh = 1.0;
+
+	m_pClosestZeroCrossingDevice = nullptr;
+
 	for (auto&& it : m_DevInMatrix)
 	{
 		double Khi = it->CheckZeroCrossing(pDynaModel);
+
+		// если устройство имеет zerocrossing - считаем его в статистику
+		if(Khi < 1.0)
+			it->IncrementZeroCrossings();
+
 		if (Khi < Kh)
 		{
 			Kh = Khi;
@@ -588,6 +596,7 @@ double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 				));
 		}
 	}
+
 	return Kh;
 }
 

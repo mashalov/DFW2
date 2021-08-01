@@ -786,7 +786,10 @@ namespace DFW2
 		CDeviceContainer *GetContainerByAlias(std::string_view Alias);
 		CAutomatic& Automatic();
 
+		// выдать в лог топ-nCount переменных по количеству ошибок
 		void GetWorstEquations(ptrdiff_t nCount);
+		// выдать в лог топ-nCount устройств, вызывавших zero-crossing
+		void GetMostZeroCrossings(ptrdiff_t nCount);
 
 		void Serialize(const std::filesystem::path path);
 		void DeSerialize(const std::filesystem::path path);
