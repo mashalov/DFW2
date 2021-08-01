@@ -212,6 +212,7 @@ namespace DFW2
 		static const char* m_cszValidationChangedTo;
 		static const char* m_cszValidationRange;
 		static const char* m_cszValidationTfOfMustangExcCon;
+		static const char* m_cszValidationBiggerThanNamed;
 	};
 }
 

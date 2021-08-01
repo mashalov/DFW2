@@ -25,6 +25,11 @@ namespace DFW2
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		void UpdateValidator(CSerializerValidatorRules* Validator) override;
+
+		static constexpr const char* m_cszr = "r";
+		static constexpr const char* m_cszxd1 = "xd1";
+		static constexpr const char* m_cszEqs = "Eqs";
 	};
 
 	class CDynaGeneratorInfBus : public CDynaGeneratorInfBusBase

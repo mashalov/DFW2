@@ -24,10 +24,16 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::PreInit(CDynaModel* pDynaModel)
 		xq2 /= Kgen;
 	}
 
-	double Tds = Td01 * xd1 / xd;
-	double Tdss = Td02 * xd2 / xd1;
-
-	xd1 = (xd * (Tds - Td02 + Tdss) - xd2 * Td02) / (Td01 - Td02);
+	// здесь пытаемся вычислить коррекцию до валидации параметров
+	// если придется делить на ноль - ничего не делаем.
+	// валидация должна далее найти некорректные данные и показать
+	if (xd > 0 && xd1 > 0)
+	{
+		double Tds = Td01 * xd1 / xd;
+		double Tdss = Td02 * xd2 / xd1;
+		if(Td01 > Td02)
+			xd1 = (xd * (Tds - Td02 + Tdss) - xd2 * Td02) / (Td01 - Td02);
+	}
 
 	m_Zgen = { 0, 0.5 * (xd2 + xq2) };
 

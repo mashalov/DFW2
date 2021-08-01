@@ -121,10 +121,17 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::UpdateExternalVariables(CDynaMod
 void CDynaGeneratorInfBusBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDynaVoltageSource::UpdateSerializer(Serializer);
-	Serializer->AddState("Eqs", Eqs, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(m_cszEqs, Eqs, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(CDynaNodeBase::m_cszDelta, Delta, eVARUNITS::VARUNIT_RADIANS);
-	Serializer->AddProperty("xd1", xd1, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("r", r, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszxd1, xd1, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszr, r, eVARUNITS::VARUNIT_OHM);
+}
+
+void CDynaGeneratorInfBusBase::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDynaVoltageSource::UpdateValidator(Validator);
+	Validator->AddRule(m_cszxd1, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszr, &CSerializerValidatorRules::NonNegative);
 }
 
 void CDynaGeneratorInfBus::UpdateSerializer(CSerializerBase* Serializer)

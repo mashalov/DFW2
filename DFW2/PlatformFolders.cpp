@@ -39,7 +39,7 @@ void CPlatformFolders::CheckPath(std::filesystem::path& path) const
 		if (path.has_filename())
 		{
 			m_Model.Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszPathShouldBeFolder, stringutils::utf8_encode(path.c_str())));
-			path.append("/");
+			path += "/";
 		}
 		
 		std::error_code ec;
@@ -62,7 +62,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 
 		
 	std::string strPlatform(Platform());
-	strPlatform.append("/");
+	strPlatform += "/";
 
 	pathRoot.append(CDFW2Messages::m_cszProjectName);
 	CheckPath(pathRoot);

@@ -232,16 +232,23 @@ void CDynaExciterMustang::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDynaExciterBase::UpdateSerializer(Serializer);
 	AddStateProperty(Serializer);
-	Serializer->AddProperty("Name", TypedSerializedValue::eValueType::VT_NAME);
+	Serializer->AddProperty(CDevice::m_cszName, TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty("Texc", Texc, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("Uf_min", Umin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Uf_max", Umax, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("If_min", Imin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("If_max", Imax, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Kif", Kif, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Kig", Kig, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("ForcerId", DECId);
-	Serializer->AddProperty("ExcControlId", RegId);
-	Serializer->AddProperty("Type_rg", bVoltageDependent);
+	Serializer->AddProperty(m_cszTexc, Texc, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszUf_min, Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszUf_max, Umax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszIf_min, Imin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszIf_max, Imax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszKif, Kif, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszKig, Kig, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszDECId, DECId);
+	Serializer->AddProperty(m_cszExcControlId, RegId);
+	Serializer->AddProperty(m_cszType_rg, bVoltageDependent);
+}
+
+void CDynaExciterMustang::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDynaExciterBase::UpdateValidator(Validator);
+	Validator->AddRule({ m_cszKig, m_cszKif }, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(m_cszTexc, &CSerializerValidatorRules::BiggerThanZero);
 }

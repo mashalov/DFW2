@@ -173,16 +173,16 @@ void CDynaDECMustang::UpdateSerializer(CSerializerBase* Serializer)
 	AddStateProperty(Serializer);
 	Serializer->AddProperty(CDevice::m_cszName, TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(m_cszid, TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty("Ubf", VEnfOn, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Uef", VEnfOff, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Ubrf", VDefOn, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Uerf", VDefOff, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("Rf", EnfRatio);
-	Serializer->AddProperty("Rrf", DefRatio);
-	Serializer->AddProperty("Texc_f", EnfTexc, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("Texc_rf", DefTexc, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("Tz_in", TdelOn, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("Tz_out", TdelOff, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszUbf, VEnfOn, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszUef, VEnfOff, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszUbrf, VDefOn, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszUerf, VDefOff, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszRf, EnfRatio, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(m_cszRrf, DefRatio, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(m_cszTexc_f, EnfTexc, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(m_cszTexc_rf, DefTexc, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(m_cszTz_in, TdelOn, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszTz_out, TdelOff, eVARUNITS::VARUNIT_SECONDS);
 
 	// добавляем переменные состояния форсировки
 	Serializer->AddState("EnforceOnValue", EnforceOnOut, eVARUNITS::VARUNIT_PU);
@@ -197,6 +197,16 @@ void CDynaDECMustang::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState("Texc", Texc, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Umin", Umin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Umax", Umax, eVARUNITS::VARUNIT_PU);
+}
+
+void CDynaDECMustang::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDevice::UpdateValidator(Validator);
+	Validator->AddRule({ m_cszTexc_f, m_cszTexc_rf }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ m_cszTz_in, m_cszTz_out }, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule({ m_cszUef }, &CDynaDECMustang::ValidatorVenfOff);
+	Validator->AddRule({ m_cszUbrf }, &CDynaDECMustang::ValidatorVdefOn);
+	Validator->AddRule({ m_cszUerf }, &CDynaDECMustang::ValidatorVdefOff);
 }
 
 void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
@@ -221,3 +231,7 @@ void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaDECMustang>>();
 }
+
+CValidationRuleVenfOff CDynaDECMustang::ValidatorVenfOff;
+CValidationRuleVdefOn CDynaDECMustang::ValidatorVdefOn;
+CValidationRuleVdefOff CDynaDECMustang::ValidatorVdefOff;

@@ -19,6 +19,11 @@ namespace DFW2
 	protected:
 		ValidationResult DefaultResult = ValidationResult::Error;
 		std::optional<double> replaceValue;
+		void CheckDevice(const CDevice* device) const
+		{
+			if(!device)
+				throw dfw2error("CValidationRuleCompareBase::Validate - no device available");
+		}
 	public:
 		CValidationRuleBase() {}
 		CValidationRuleBase(std::optional<double> Replace) : replaceValue(Replace) {}

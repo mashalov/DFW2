@@ -71,12 +71,14 @@ namespace DFW2
 
 		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
 		{
+			CheckDevice(device);
 			const CDynaNodeBase* pNode = static_cast<const CDynaNodeBase*>(device->GetSingleLink(0));
+			CheckDevice(pNode);
 			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
 
 			if (pNode && (pGen->Unom > pNode->Unom * 1.15 || pGen->Unom < pNode->Unom * 0.85))
 			{
-				message = fmt::format(CDFW2Messages::m_cszUnomMismatch, pGen->GetVerbalName(), pGen->Unom, pNode->GetVerbalName(), pNode->Unom);
+				message = fmt::format(CDFW2Messages::m_cszUnomMismatch, pNode->GetVerbalName(), pNode->Unom);
 				return ValidationResult::Warning;
 			}
 			return ValidationResult::Ok;
@@ -91,6 +93,7 @@ namespace DFW2
 
 		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
 		{
+			CheckDevice(device);
 			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
 			if (pGen->Pnom > 0)
 			{
@@ -112,6 +115,7 @@ namespace DFW2
 
 		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
 		{
+			CheckDevice(device);
 			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
 			const cplx Slf{ pGen->P, pGen->Q };
 			const double Srated = 1.05 * (Equal(pGen->cosPhinom, 0.0) ? pGen->Pnom : pGen->Pnom / pGen->cosPhinom);
