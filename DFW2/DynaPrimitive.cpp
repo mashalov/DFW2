@@ -89,30 +89,49 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 
 	if (Diff < 0.0)
 	{
-		RightVector* pRightVector = pDynaModel->GetRightVector(ValueIndex);
-		rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
-		if (pDynaModel->GetZeroCrossingInRange(rH))
+		// обращаемся к устройству с запросом
+		// на уточнение зеро-кроссинга
+		if (m_Device.DetectZeroCrossingFine(this))
 		{
-			double derr = std::abs(pRightVector->GetWeightedError(Diff, TolCheck));
-			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			RightVector* pRightVector = pDynaModel->GetRightVector(ValueIndex);
+			// определяем расстояние до точки zero-crossing в долях от текущего шага
+			rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
+			if (pDynaModel->GetZeroCrossingInRange(rH))
 			{
-				bChangeState = true;
-				rH = 1.0;
-			}
-			else
-			{
-				if (pDynaModel->ZeroCrossingStepReached(rH))
+				// проверяем погрешность зеро-кроссинга по значению со взвешиванием
+				// так же как в контроле точности шага
+				double derr = std::abs(pRightVector->GetWeightedError(Diff, TolCheck));
+				if (derr < pDynaModel->GetZeroCrossingTolerance())
 				{
+					// если точность удовлетворительная, изменяем состояние
+					// примитива и шаг не уменьшаем
 					bChangeState = true;
 					rH = 1.0;
 				}
+				else
+				{
+					// если точность зеро-кроссинга не достигнута,
+					// проверяем можно ли еще снизить шаг
+					if (pDynaModel->ZeroCrossingStepReached(rH))
+					{
+						// если нет - меняем состояние
+						bChangeState = true;
+						rH = 1.0;
+					}
+				}
+			}
+			else
+			{
+				bChangeState = true;
+				_ASSERTE(0); // корня нет, но знак изменился !
+				rH = 1.0;
 			}
 		}
 		else
 		{
+			// если устройство не разрешило уточнение 
+			// времени зеро-кроссинга - меняем состояние
 			bChangeState = true;
-			_ASSERTE(0); // корня нет, но знак изменился !
-			rH = 1.0;
 		}
 	}
 

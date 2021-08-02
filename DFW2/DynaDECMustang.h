@@ -53,6 +53,7 @@ namespace DFW2
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+		bool DetectZeroCrossingFine(const CDynaPrimitive* primitive) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 
 		void UpdateSerializer(CSerializerBase* Serializer) override;

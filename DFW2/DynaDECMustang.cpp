@@ -117,6 +117,24 @@ double CDynaDECMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return rH;
 }
 
+bool CDynaDECMustang::DetectZeroCrossingFine(const CDynaPrimitive* primitive)
+{
+	/*
+	if (primitive == &DeforceOff)
+	{
+		return DeforceTrigOut > 0.0;
+	}
+	else if (primitive == &EnforceOff)
+	{
+		return EnforceTrigOut > 0.0;
+	}
+	else
+	*/
+		return true;
+
+
+}
+
 eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;

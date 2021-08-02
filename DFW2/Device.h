@@ -168,7 +168,7 @@ namespace DFW2
 	class CDevice : public CDeviceId
 	{
 	protected:
-		CDeviceContainer *m_pContainer = nullptr;										// контейнер устройства
+		CDeviceContainer* m_pContainer = nullptr;										// контейнер устройства
 		CSingleLink m_DeviceLinks;														// связи устройств один к одному
 		eDEVICEFUNCTIONSTATUS m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;		// статус инициализации устройства (заполняется в Init)
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);						// инициализация устройства
@@ -184,7 +184,7 @@ namespace DFW2
 
 		// формирование подробного имени устройства. По умолчанию учитывается описание типа устройства
 		void UpdateVerbalName() override;
-		typedef eDEVICEFUNCTIONSTATUS(CheckMasterDeviceFunction)(CDevice*, LinkDirectionFrom const *);
+		typedef eDEVICEFUNCTIONSTATUS(CheckMasterDeviceFunction)(CDevice*, LinkDirectionFrom const*);
 		static CheckMasterDeviceFunction CheckMasterDeviceInit;
 		static CheckMasterDeviceFunction CheckMasterDeviceDiscontinuity;
 		eDEVICEFUNCTIONSTATUS MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice);
@@ -225,29 +225,29 @@ namespace DFW2
 		double GetValue(std::string_view VarName) const;
 		double SetValue(std::string_view VarName, double Value);
 
-		bool SetSingleLink(ptrdiff_t nIndex, CDevice *pDevice);
+		bool SetSingleLink(ptrdiff_t nIndex, CDevice* pDevice);
 		CDevice* GetSingleLink(ptrdiff_t nIndex);
-		CDevice *GetSingleLink(eDFW2DEVICETYPE eDevType);
+		CDevice* GetSingleLink(eDFW2DEVICETYPE eDevType);
 		void SetContainer(CDeviceContainer* pContainer);
 		CDeviceContainer* GetContainer();
 		virtual ~CDevice() = default;
-		virtual bool LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
+		virtual bool LinkToContainer(CDeviceContainer* pContainer, CDeviceContainer* pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		void IncrementLinkCounter(ptrdiff_t nLinkIndex);
 		ptrdiff_t m_nInContainerIndex = -1;
 		// получить связи устроства из слоя nLinkIndex
 		CLinkPtrCount* GetLink(ptrdiff_t nLinkIndex);
 		void ResetVisited();
-		ptrdiff_t CheckAddVisited(CDevice *pDevice);
-		void SetSingleLinkStart(CDevice **ppLinkStart);
+		ptrdiff_t CheckAddVisited(CDevice* pDevice);
+		void SetSingleLinkStart(CDevice** ppLinkStart);
 
 		CDynaModel* GetModel();
 
 		// построение блока уравнения в Якоби
-		virtual bool BuildEquations(CDynaModel *pDynaModel);
+		virtual bool BuildEquations(CDynaModel* pDynaModel);
 		// построение правой части уравнений
-		virtual bool BuildRightHand(CDynaModel *pDynaModel);
+		virtual bool BuildRightHand(CDynaModel* pDynaModel);
 		// расчет значений производных дифференциальных уравнений
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel);
+		virtual bool BuildDerivatives(CDynaModel* pDynaModel);
 		// функция обновления данных после итерации Ньютона (если надо)
 
 
@@ -255,25 +255,25 @@ namespace DFW2
 		using fnDerivative = void(CDynaModel::*)(const VariableIndexBase& variable, double Value);
 
 		virtual void CalculateDerivatives(CDynaModel* pDynaModel, fnDerivative fn) {};
-		void SetFunctionsDiff(CDynaModel *pDynaModel);
+		void SetFunctionsDiff(CDynaModel* pDynaModel);
 		void SetDerivatives(CDynaModel* pDynaModel);
 
-		virtual void NewtonUpdateEquation(CDynaModel *pDynaModel);
+		virtual void NewtonUpdateEquation(CDynaModel* pDynaModel);
 		// предварительная однократная инициалиация устройства
-		virtual eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);	
+		virtual eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS Initialized() { return m_eInitStatus; }
-		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel);
+		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() { return m_eInitStatus; }
 		// ставит статус обработки в "неготово", для того чтобы различать устройства с обработанными разрывами
-		void UnprocessDiscontinuity() { m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;  }
+		void UnprocessDiscontinuity() { m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY; }
 
 		// функция ремапа номера уравнения устройства в номер уравнения в Якоби
-		inline ptrdiff_t A(ptrdiff_t nOffset) 
-		{ 
+		inline ptrdiff_t A(ptrdiff_t nOffset)
+		{
 			if (!AssignedToMatrix())
 				throw dfw2error("CDevice::A - access to device not in matrix");
-			return m_nMatrixRow + nOffset; 
+			return m_nMatrixRow + nOffset;
 		}
 
 		// возвращает true если для устройства есть уравнения в системе
@@ -284,22 +284,22 @@ namespace DFW2
 		virtual void InitNordsiek(CDynaModel* pDynaModel);
 		virtual void Predict() {};
 		virtual bool InMatrix();
-		void EstimateEquations(CDynaModel *pDynaModel);
+		void EstimateEquations(CDynaModel* pDynaModel);
 		virtual bool LeaveDiscontinuityMode(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		// вызывается после успешного выполнения шага для расчета зависимых переменных
 		virtual void FinishStep();
 		virtual eDEVICESTATE GetState() const { return m_State; }
-		bool IsStateOn() const { return GetState() == eDEVICESTATE::DS_ON;  }
+		bool IsStateOn() const { return GetState() == eDEVICESTATE::DS_ON; }
 		bool IsPermanentOff() const { return GetState() == eDEVICESTATE::DS_OFF && GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT; }
 		eDEVICESTATECAUSE GetStateCause() const { return m_StateCause; }
-		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr);
+		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr);
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 
-		const char* VariableNameByPtr(double *pVariable) const;
-		virtual double CheckZeroCrossing(CDynaModel *pDynaModel);
-
+		const char* VariableNameByPtr(double* pVariable) const;
+		virtual double CheckZeroCrossing(CDynaModel* pDynaModel);
+		virtual bool DetectZeroCrossingFine(const CDynaPrimitive* primitive) { return true; }
 		virtual void StoreStates();
 		virtual void RestoreStates();
 
