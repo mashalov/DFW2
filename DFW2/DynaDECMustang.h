@@ -5,10 +5,6 @@
 
 namespace DFW2
 {
-	class CValidationRuleVenfOff;
-	class CValidationRuleVdefOn;
-	class CValidationRuleVdefOff;
-
 	class CDynaDECMustang : public CDevice
 	{
 	protected:
@@ -71,77 +67,9 @@ namespace DFW2
 		static constexpr const char* m_cszTz_in = "Tz_in";
 		static constexpr const char* m_cszTz_out = "Tz_out";
 
-		static CValidationRuleVenfOff ValidatorVenfOff;
-		static CValidationRuleVdefOn ValidatorVdefOn;
-		static CValidationRuleVdefOff ValidatorVdefOff;
-	
+		static inline CValidationRuleBiggerT<CDynaDECMustang, &CDynaDECMustang::VEnfOn> ValidatorVenfOff = { CDynaDECMustang::m_cszUbf };
+		static inline CValidationRuleBiggerT<CDynaDECMustang, &CDynaDECMustang::VDefOff> ValidatorVdefOn = { CDynaDECMustang::m_cszUerf };
+		static inline CValidationRuleBiggerT<CDynaDECMustang, &CDynaDECMustang::VEnfOff> ValidatorVdefOff = { CDynaDECMustang::m_cszUef };
 	};
-
-	// VdefOn
-	// VdefOff
-	// VenfOff
-	// VenfOn
-
-	// проверяем напряжение снятия форсировки больше чем напряжение ввода
-	class CValidationRuleVenfOff: public CValidationRuleBase
-	{
-	public:
-
-		using CValidationRuleBase::CValidationRuleBase;
-
-		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
-		{
-			CheckDevice(device);
-			const CDynaDECMustang* pDEC = static_cast<const CDynaDECMustang*>(device);
-
-			if (value->Double() < pDEC->VEnfOn)
-			{
-				message = fmt::format(CDFW2Messages::m_cszValidationBiggerThanNamed, CDynaDECMustang::m_cszUbf, pDEC->VEnfOn);
-				return ValidationResult::Error;
-			}
-			return ValidationResult::Ok;
-		}
-	};
-
-	// проверяем напряжение ввода расфорсировки больше напряжения снятия расфорсировки
-	class CValidationRuleVdefOn : public CValidationRuleBase
-	{
-	public:
-
-		using CValidationRuleBase::CValidationRuleBase;
-
-		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
-		{
-			CheckDevice(device);
-			const CDynaDECMustang* pDEC = static_cast<const CDynaDECMustang*>(device);
-			if (value->Double() < pDEC->VDefOff)
-			{
-				message = fmt::format(CDFW2Messages::m_cszValidationBiggerThanNamed, CDynaDECMustang::m_cszUerf, pDEC->VDefOff);
-				return ValidationResult::Error;
-			}
-			return ValidationResult::Ok;
-		}
-	};
-
-	// проверяем напряжение снятия расфорсировки больше напряжения снятия форсировки
-	class CValidationRuleVdefOff: public CValidationRuleBase
-	{
-	public:
-
-		using CValidationRuleBase::CValidationRuleBase;
-
-		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
-		{
-			CheckDevice(device);
-			const CDynaDECMustang* pDEC = static_cast<const CDynaDECMustang*>(device);
-			if (value->Double() < pDEC->VEnfOff)
-			{
-				message = fmt::format(CDFW2Messages::m_cszValidationBiggerThanNamed, CDynaDECMustang::m_cszUef, pDEC->VEnfOff);
-				return ValidationResult::Error;
-			}
-			return ValidationResult::Ok;
-		}
-	};
-
 }
 

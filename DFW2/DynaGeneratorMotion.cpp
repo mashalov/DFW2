@@ -225,4 +225,3 @@ void CDynaGeneratorMotion::BuildAngleEquationBlock(CDynaModel* pDynaModel)
 CValidationRuleGeneratorUnom CDynaGeneratorMotion::ValidatorUnom;
 CValidationRuleGeneratorMj CDynaGeneratorMotion::ValidatorMj;
 CValidationRuleGeneratorPnom CDynaGeneratorMotion::ValidatorPnom;
-CValidationRuleRange CDynaGeneratorMotion::ValidatorCos(-1, 1);

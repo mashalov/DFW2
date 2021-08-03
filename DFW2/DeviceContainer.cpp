@@ -604,12 +604,17 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::PreInit(CDynaModel* pDynaModel)
 {
 	m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	
+	// делаем предварительную инициализацию устройств, чтобы они смогли привести в порядок свои параметры
+	// (например генераторы учтут заданное их количество)
 	for (auto&& dev : m_DevVec)
 		m_eDeviceFunctionStatus  = CDevice::DeviceFunctionResult(m_eDeviceFunctionStatus, dev->PreInit(pDynaModel));
 
 	if (m_eDeviceFunctionStatus == eDEVICEFUNCTIONSTATUS::DFS_OK && m_DevVec.size())
 	{
+		// делаем валидацию исходных данных
+		// для этого берем экземпляр правил валидаци у первого устройства контейнера
 		CSerializerValidator Validator(pDynaModel, GetSerializer(), (*m_DevVec.begin())->GetValidator());
+		// и отдаем валидатору
 		m_eDeviceFunctionStatus = Validator.Validate();
 	}
 

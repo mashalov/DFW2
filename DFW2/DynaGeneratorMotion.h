@@ -59,8 +59,9 @@ namespace DFW2
 		static CValidationRuleGeneratorUnom ValidatorUnom;
 		static CValidationRuleGeneratorPnom ValidatorPnom;
 		static CValidationRuleGeneratorMj ValidatorMj;
-		static CValidationRuleRange ValidatorCos;
+		static inline CValidationRuleRange ValidatorCos = { -1, 1 };
 	};
+
 
 
 	class CValidationRuleGeneratorUnom : public CValidationRuleBase

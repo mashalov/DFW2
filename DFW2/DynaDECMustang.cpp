@@ -249,6 +249,3 @@ void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaDECMustang>>();
 }
 
-CValidationRuleVenfOff CDynaDECMustang::ValidatorVenfOff;
-CValidationRuleVdefOn CDynaDECMustang::ValidatorVdefOn;
-CValidationRuleVdefOff CDynaDECMustang::ValidatorVdefOff;
