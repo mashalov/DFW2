@@ -1122,7 +1122,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 		// если погрешность меньше заданной в параметрах
 		// ставим заданную фиксацию напряжения 
 		SetLowVoltage(bCheckForLow);
-		pDynaModel->DiscontinuityRequest();
+		pDynaModel->DiscontinuityRequest(*this);
 	}
 	else
 	{
@@ -1142,7 +1142,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 			{
 				SetLowVoltage(bCheckForLow);
-				pDynaModel->DiscontinuityRequest();
+				pDynaModel->DiscontinuityRequest(*this);
 			}
 		}
 		else
@@ -1178,7 +1178,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 			{
 				SetLowVoltage(bCheckForLow);
-				pDynaModel->DiscontinuityRequest();
+				pDynaModel->DiscontinuityRequest(*this);
 			}
 		}
 

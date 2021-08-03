@@ -548,7 +548,12 @@ CModelActionState::CModelActionState(CDiscreteDelay *pDiscreteDelay) : CModelAct
 
 eDFW2_ACTION_STATE CModelActionState::Do(CDynaModel *pDynaModel)
 { 
+	CDevice* device(m_pDiscreteDelay->GetDevice());
+
+	if (!device)
+		device = pDynaModel->AutomaticDevice.GetDeviceByIndex(0);
+
 	m_pDiscreteDelay->NotifyDelay(pDynaModel);
-	pDynaModel->DiscontinuityRequest();
+	pDynaModel->DiscontinuityRequest(*device);
 	return eDFW2_ACTION_STATE::AS_INACTIVE;
 }

@@ -156,7 +156,7 @@ void CRelayDelay::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentSt
 				pDynaModel->RemoveStateDiscontinuity(this);
 
 				if (m_Output > 0.0)
-					pDynaModel->DiscontinuityRequest();
+					pDynaModel->DiscontinuityRequest(m_Device);
 			}
 			break;
 		case eRELAYSTATES::RS_OFF:
@@ -192,7 +192,7 @@ eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 void CRelayDelay::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (Equal(m_dDelay, 0.0))
-		pDynaModel->DiscontinuityRequest();
+		pDynaModel->DiscontinuityRequest(m_Device);
 }
 
 bool CRelayDelay::NotifyDelay(CDynaModel *pDynaModel)

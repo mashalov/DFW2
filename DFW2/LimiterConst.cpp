@@ -120,7 +120,7 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 		}
 
 		if (OldState != GetCurrentState())
-			pDynaModel->DiscontinuityRequest();
+			pDynaModel->DiscontinuityRequest(m_Device);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

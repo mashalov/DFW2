@@ -121,8 +121,10 @@ void CDynaModel::ProcessTopologyRequest()
 	sc.UpdateConstElements();
 }
 
-void CDynaModel::DiscontinuityRequest()
+void CDynaModel::DiscontinuityRequest(CDevice& device)
 {
+	device.IncrementDiscontinuityRequests();
+	sc.m_pDiscontinuityDevice = &device;
 	sc.m_bDiscontinuityRequest = true;
 }
 
@@ -157,7 +159,14 @@ void CDynaModel::ServeDiscontinuityRequest()
 {
 	if (sc.m_bDiscontinuityRequest)
 	{
+		std::string DeviceInfo(sc.m_pDiscontinuityDevice ? sc.m_pDiscontinuityDevice->GetVerbalName() : "");
+		if (DeviceInfo.empty())
+			DeviceInfo = "???";
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszDiscontinuityProcessing, 
+			GetCurrentTime(), DeviceInfo));
+
 		sc.m_bDiscontinuityRequest = false;
+		sc.m_pDiscontinuityDevice = nullptr;
 		EnterDiscontinuityMode();
 		ProcessDiscontinuity();
 	}
@@ -267,7 +276,7 @@ bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
 }
 
 // Выводит статистику по топ-устройствам, которые выдавали zero-crossing
-void CDynaModel::GetMostZeroCrossings(ptrdiff_t nCount)
+void CDynaModel::GetTopZeroCrossings(ptrdiff_t nCount)
 {
 	// создаем мультисет устройств, отсортированный по количеству ZC
 	auto comp = [](const CDevice* lhs, const CDevice* rhs) { return lhs->GetZeroCrossings() > rhs->GetZeroCrossings(); };
@@ -296,7 +305,40 @@ void CDynaModel::GetMostZeroCrossings(ptrdiff_t nCount)
 
 	for (const auto& dev : ZeroCrossingsSet)
 		Log(DFW2MessageStatus::DFW2LOG_DEBUG,
-			fmt::format("{:<6} {}", dev->GetZeroCrossings(), dev->GetVerbalName()));
+			fmt::format("{:<6} {} zero-crossings", dev->GetZeroCrossings(), dev->GetVerbalName()));
+}
+
+// выдать в лог топ устройств, запрашивавших обработку разрывов
+void CDynaModel::GetTopDiscontinuityRequesters(ptrdiff_t nCount)
+{
+	// создаем мультисет устройств, отсортированный по количеству ZC
+	auto comp = [](const CDevice* lhs, const CDevice* rhs) { return lhs->GetDiscontinuityRequests() > rhs->GetDiscontinuityRequests(); };
+	std::multiset<const CDevice*, decltype(comp)> DiscontinuityRequesters(comp);
+	ptrdiff_t nTotalRequests(0);
+	// перебираем контейнеры с устройствами
+	for (const auto& container : m_DeviceContainers)
+	for (const auto& dev : *container)
+	{
+		if (auto nDr(dev->GetDiscontinuityRequests()); nDr)
+		{
+			nTotalRequests += nDr;
+			// если в мультисете меньше устройств, чем задано, просто вставляем
+			if (static_cast<ptrdiff_t>(DiscontinuityRequesters.size()) < nCount)
+				DiscontinuityRequesters.insert(dev);
+			else if (auto rb(*DiscontinuityRequesters.rbegin()); rb->GetDiscontinuityRequests() < nDr)
+			{
+				// если устройств больше, чем нужно, проверяем
+				// последнее устройство в мультисете, и если его zc меньше
+				// чем zc текущего устройства, удаляем последнее и вставляем текущее
+				DiscontinuityRequesters.erase(rb);
+				DiscontinuityRequesters.insert(dev);
+			}
+		}
+	}
+
+	for (const auto& dev : DiscontinuityRequesters)
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG,
+		fmt::format("{:<6} {} discontinuity requests", dev->GetDiscontinuityRequests(), dev->GetVerbalName()));
 }
 
 void CDynaModel::GetWorstEquations(ptrdiff_t nCount)

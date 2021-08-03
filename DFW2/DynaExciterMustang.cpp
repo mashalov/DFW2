@@ -142,7 +142,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDyn
 			// when state of Eq limiter changed, change lag limits
 			SetUpEqLimits(pDynaModel, EqLimitStateInitial, EqLimitStateResulting);
 			if (EqLimitStateInitial != EqLimitStateResulting)
-				pDynaModel->DiscontinuityRequest();
+				pDynaModel->DiscontinuityRequest(*this);
 
 			// and then process disco of lag
 			Status = CDynaExciterBase::ProcessDiscontinuity(pDynaModel);

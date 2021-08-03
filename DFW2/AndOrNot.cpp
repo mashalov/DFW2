@@ -41,7 +41,7 @@ eDEVICEFUNCTIONSTATUS CAnd::ProcessDiscontinuity(CDynaModel* pDynaModel)
 			m_Output = 0.0;
 
 		if (dOldOut != m_Output)
-			pDynaModel->DiscontinuityRequest();
+			pDynaModel->DiscontinuityRequest(m_Device);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -59,7 +59,7 @@ eDEVICEFUNCTIONSTATUS COr::ProcessDiscontinuity(CDynaModel* pDynaModel)
 			m_Output = 0.0;
 
 		if (dOldOut != m_Output)
-			pDynaModel->DiscontinuityRequest();
+			pDynaModel->DiscontinuityRequest(m_Device);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -77,7 +77,7 @@ eDEVICEFUNCTIONSTATUS CNot::ProcessDiscontinuity(CDynaModel* pDynaModel)
 			m_Output = 1.0;
 
 		if (dOldOut != m_Output)
-			pDynaModel->DiscontinuityRequest();
+			pDynaModel->DiscontinuityRequest(m_Device);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

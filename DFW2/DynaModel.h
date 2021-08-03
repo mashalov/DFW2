@@ -239,6 +239,7 @@ namespace DFW2
 			bool m_bRetryStep = false;
 			bool m_bProcessTopology = false;
 			bool m_bDiscontinuityRequest = false;
+			const CDevice* m_pDiscontinuityDevice = nullptr;
 			bool m_bEnforceOut = false;
 			bool m_bBeforeDiscontinuityWritten = false;				// флаг обработки момента времени до разрыва
 			double dFilteredStep = 0.0;
@@ -751,7 +752,7 @@ namespace DFW2
 		}
 		void StopProcess();
 		void ProcessTopologyRequest();
-		void DiscontinuityRequest();
+		void DiscontinuityRequest(CDevice& device);
 		void ServeDiscontinuityRequest();
 		bool SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dDelay);
 		bool RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject);
@@ -789,7 +790,9 @@ namespace DFW2
 		// выдать в лог топ-nCount переменных по количеству ошибок
 		void GetWorstEquations(ptrdiff_t nCount);
 		// выдать в лог топ-nCount устройств, вызывавших zero-crossing
-		void GetMostZeroCrossings(ptrdiff_t nCount);
+		void GetTopZeroCrossings(ptrdiff_t nCount);
+		// выдать в лог топ устройств, запрашивавших обработку разрывов
+		void GetTopDiscontinuityRequesters(ptrdiff_t nCount);
 
 		void Serialize(const std::filesystem::path path);
 		void DeSerialize(const std::filesystem::path path);

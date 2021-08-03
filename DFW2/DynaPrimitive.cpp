@@ -169,7 +169,7 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 			/*static_cast<const double>*/m_Output, 
 			m_dMin, m_dMax, 
 			oldCurrentState, eCurrentState));
-		pDynaModel->DiscontinuityRequest();
+		pDynaModel->DiscontinuityRequest(m_Device);
 	}
 
 	return rH;
@@ -219,7 +219,7 @@ void CDynaPrimitiveLimited::SetCurrentState(CDynaModel* pDynaModel, eLIMITEDSTAT
 {
 	if (eCurrentState != CurrentState)
 	{
-		pDynaModel->DiscontinuityRequest();
+		pDynaModel->DiscontinuityRequest(m_Device);
 	}
 	
 	eCurrentState = CurrentState;
@@ -242,7 +242,8 @@ void CDynaPrimitiveBinary::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES 
 {
 	if (eCurrentState != CurrentState)
 	{
-		pDynaModel->DiscontinuityRequest();
+		//if(m_Device.DetectZeroCrossingFine(this))
+		pDynaModel->DiscontinuityRequest(m_Device);
 	}
 	eCurrentState = CurrentState;
 }
@@ -273,7 +274,7 @@ double CDynaPrimitiveBinaryOutput::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 void CDynaPrimitiveBinary::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 {
-	pDynaModel->DiscontinuityRequest();
+	pDynaModel->DiscontinuityRequest(m_Device);
 }
 
 bool CDynaPrimitiveBinary::BuildEquations(CDynaModel *pDynaModel)

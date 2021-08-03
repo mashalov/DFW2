@@ -40,6 +40,7 @@ namespace DFW2
 	public:
 		CDiscreteDelay() : m_nDiscontinuityId(0) {}
 		virtual bool NotifyDelay(CDynaModel *pDynaModel) = 0;
+		virtual CDevice* GetDevice() { return nullptr; };
 		bool Init(CDynaModel *pDynaModel);
 		void SetDiscontinuityId(ptrdiff_t nDiscontinuityId) noexcept { m_nDiscontinuityId = nDiscontinuityId; }
 		ptrdiff_t GetDiscontinuityId() const noexcept { return m_nDiscontinuityId; }
@@ -58,6 +59,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
+		CDevice* GetDevice() override { return &m_Device; };
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelay); }

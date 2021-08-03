@@ -190,6 +190,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice);
 		void DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber);
 		ptrdiff_t m_nZeroCrossings = 0;								// количество zero-crossings, короторе вызвало устройство
+		ptrdiff_t m_nDiscontinuityRequests = 0;						// количество запросов на обработку разрыва
 	public:
 
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
@@ -374,6 +375,11 @@ namespace DFW2
 		void IncrementZeroCrossings() { m_nZeroCrossings++; }
 		// Ввернуть накопленное значение zero-crossing
 		ptrdiff_t GetZeroCrossings() const { return m_nZeroCrossings; }
+
+		// Инкремент запросов обработки разрывов
+		void IncrementDiscontinuityRequests() { m_nDiscontinuityRequests++; }
+		// Ввернуть накопленное значение zero-crossing
+		ptrdiff_t GetDiscontinuityRequests() const { return m_nDiscontinuityRequests; }
 
 		static constexpr const char* m_cszName = "Name";
 		static constexpr const char* m_cszname = "name";
