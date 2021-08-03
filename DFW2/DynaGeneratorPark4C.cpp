@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaGenerator3C.h"
+#include "DynaGeneratorPark3C.h"
 #include "DynaGeneratorPark4C.h"
 #include "DynaModel.h"
 
@@ -85,7 +86,7 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 	const double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq1 - xl) / denom);
 	// сопротивление утечки демпферной обмотки d [4.28]
 	denom = lad * lfd - (xd2 - xl) * (lfd + lad);
-	const double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
+	double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
 	// сопротивление утечки второй демпферной обмотки q [4.32]
 	denom = laq * l1q - (xq2 - xl) * ( l1q + laq );
 	const double l2q(Equal(denom, 0.0) ? 1E6 : laq * l1q * (xq2 - xl) / denom);
@@ -101,11 +102,70 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 	// активное сопротивление обмотки возбуждения [4.15]
 	Rfd = lFd / Td01;
 	// активное сопротивление демпферной обмотки d [4.15]
-	const double R1d = (lad * lfd / lFd + l1d) / Td02;	
+	double R1d = (lad * lfd / lFd + l1d) / Td02;	
 	// активное сопротивление первой демпферной обмотки q [4.30]
-	const double R1q = l1Q / Tq01;	
+	double R1q = l1Q / Tq01;	
 	// активное сопротивление второй демпферной обмотки q [4.31]
-	const double R2q = (laq * l1q / l1Q + l2q) / Tq02;
+	double R2q = (laq * l1q / l1Q + l2q) / Tq02;
+
+
+
+	/*
+	// Canay тест
+	Xd = 1.77;% синхронное сопротивление
+	Xl = 0.17;% общее сопротивление утечки
+	Xad = Xd - Xl;% сопротивление по оси
+	Td01 = 4.316475;% постояная времени ротора на ХХ
+	Td1 = 0.828745;% постоянная времени ротора на КЗ
+	X1s = 0.13;% сопротивление утечки первого контура
+	r1 = 0.0011 % активное сопротивление первого контура
+	Td02 = 0.374677;
+	Td2 = 0.054969;
+	% сопротивления второго контура
+	X2s = 0.035;
+	r2 = 0.012;
+	Xrc = 0.06;% сопротивление Canay
+	Td01 = 4.316475;
+	Td02 = 0.374677;
+	lad = 1.77 - 0.17;
+	lfd = 0.13;
+	l1d = 0.035;
+	lrc = 0.06;
+	Td01 = 4.316475;
+	Td02 = 0.374677;
+	lad = 1.77 - 0.17;
+	lfd = 0.13;
+	l1d = 0.035;
+	lrc = 0.06;
+*/
+
+
+	double cTd01(Td01), cTd02(Td02);
+	if (CDynaGeneratorPark3C::GetCanayTimeConstants(lad, lfd, l1d, lrc, cTd01, cTd02))
+	{
+		Rfd = lad / cTd01;
+		R1d = (lad * lfd / lFd + l1d) / cTd02;
+	}
+	double cTq01(Tq01), cTq02(Tq02);
+	if (CDynaGeneratorPark3C::GetCanayTimeConstants(laq, l1q, l2q, lrc, cTq01, cTq02))
+	{
+		R1q = l1Q / cTq01;
+		R2q = (laq * l1q / l1Q + l2q) / cTq02;
+	}
+
+	double nTd01(Td01), nTd02(Td02);
+	if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTd01, nTd02))
+	{
+		Rfd = lad / nTd01;
+		R1d = (lad * lfd / lFd + l1d) / nTd02;
+	}
+
+	double nTq01(Tq01), nTq02(Tq02);
+	if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(laq, l1q, l2q, nTq01, nTq02))
+	{
+		R1q = l1Q / nTq01;
+		R2q = (laq * l1q / l1Q + l2q) / nTq02;
+	}
 
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
 	const double& D(l1Q), &F(l2Q);
@@ -147,7 +207,6 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 	Psid_Psi1d = -lad * lfd * detd;
 	Psiq_Psi1q = -laq * l2q * detq;
 	Psiq_Psi2q = -laq * l1q * detq;
-
 }
 
 void CDynaGeneratorPark4C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn)

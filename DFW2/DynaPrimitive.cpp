@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DynaPrimitive.h"
 #include "DynaModel.h"
+#include "MathUtils.h"
 
 using namespace DFW2;
 
@@ -349,24 +350,10 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 	else
 	{
 		// если квадратичный член ненулевой - решаем квадратичное уравнение
-		double d = b * b - 4.0 * a * c;
+		double h1(0.0), h2(0.0);
 
-		if (d >= 0)
+		if (MathUtils::CSquareSolver::Roots(a, b, c, h1, h2))
 		{
-			d = sqrt(d);
-
-			double h1 = (-b + d) / 2.0 / a;
-			double h2 = (-b - d) / 2.0 / a;
-
-			// use stable formulas to avoid
-			// precision loss by numerical cancellation 
-			// "What Every Computer Scientist Should Know About Floating-Point Arithmetic" by DAVID GOLDBERG p.10
-
-			if ((b*b - a*c) > 1E3 && b > 0)
-				h1 = 2.0 * c / (-b - d);
-			else
-				h2 = 2.0 * c / (-b + d);
-
 			_ASSERTE(!(Equal(h1, FLT_MAX) && Equal(h2, FLT_MAX)));
 
 			if (h1 > 0.0 || h1 < -h) h1 = FLT_MAX;
@@ -374,8 +361,6 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 
 			// возвращаем наименьший из действительных корней
 			rH = (h + (std::min)(h1, h2)) / h;
-
-			//_ASSERTE(rH >= 0);
 		}
 	}
 

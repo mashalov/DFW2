@@ -232,6 +232,7 @@
     <ClInclude Include="LimitedLag.h" />
     <ClInclude Include="LimiterConst.h" />
     <ClInclude Include="LoadFlow.h" />
+    <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Messages.h" />
     <ClInclude Include="OscDetector.h" />
     <ClInclude Include="PlatformFolders.h" />

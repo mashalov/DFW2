@@ -2,6 +2,7 @@
 #include "DynaGenerator3C.h"
 #include "DynaGeneratorPark3C.h"
 #include "DynaModel.h"
+#include "MathUtils.h"
 
 using namespace DFW2;
 
@@ -109,15 +110,21 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	if (Equal(l1Q, 0.0))
 		throw dfw2error(fmt::format("l1Q == 0 for {}", GetVerbalName()));
 
-	// Пересчет постоянных времени им. НИИПТ
-	const double T2(Td01 + Td02), det(0.25 * T2 * T2 - Td01 * Td02 / (1.0 - lad * lad / lFd / l1D));
-	if (det >= 0)
+	double nTd01(Td01), nTd02(Td02);
+	if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTd01, nTd02))
 	{
-		const double Td0 = 0.5 * T2 + std::sqrt(det);
-		Rfd = lFd / Td0;
-		R1d = l1D / (T2 - Td0);
+		Rfd = lFd / nTd01;
+		R1d = l1D / nTd02;
 	}
-	
+
+	/*
+	double cTd01(Td01), cTd02(Td02);
+	if (CDynaGeneratorPark3C::GetCanayTimeConstants(lad, lfd, l1d, lrc, cTd01, cTd02))
+	{
+		Rfd = lad / cTd01;
+		R1d = (lad * lfd / lFd + l1d) / cTd02;
+	}
+	*/
 
 	detd = 1.0 / detd;
 
@@ -357,4 +364,47 @@ void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
 						 CDynaGenerator3C::m_csztd01,
 						 CDynaGenerator3C::m_csztd02,
 						 CDynaGenerator3C::m_csztq02 }, &CSerializerValidatorRules::BiggerThanZero);
+}
+
+
+bool CDynaGeneratorPark3C::GetCanayTimeConstants(double Xa, double X1s, double X2s, double Xrc, double& T1, double& T2)
+{
+	auto K12 = [](double Xa, double X1s, double X2s, double X12)
+	{
+		std::optional<double> ret;
+		const double Mult((Xa + X1s) * (Xa + X2s));
+		if (!Equal(Mult, 0.0))
+			ret = 1.0 / Mult * (Mult - X12 * X12);
+		return ret;
+	};
+
+	if (const auto k12(K12(Xa, Xrc + X1s, Xrc + X2s, Xa + Xrc)); k12.has_value())
+	{
+		const double A0(T1 + T2), B0(k12.value() * T1 * T2);
+		double r1(0.0), r2(0.0);
+		if (MathUtils::CSquareSolver::Roots(B0, A0, 1.0, r1, r2))
+		{
+			if (std::abs(r1) > std::abs(r2))
+				std::swap(r1, r2);
+
+			T1 = -1.0 / r1;
+			T2 = -1.0 / r2;
+
+			return true;
+		}
+	}
+	return false;
+}
+
+// Пересчет постоянных времени им. НИИПТ
+bool CDynaGeneratorPark3C::GetNIIPTTimeConstants(double Xa, double X1s, double X2s, double& T1, double& T2)
+{
+	const double Ts(T1 + T2), det(0.25 * Ts * Ts - T1 * T2 / (1.0 - Xa * Xa / (Xa + X1s) / (Xa + X2s)));
+	if (det >= 0)
+	{
+		T1 = 0.5 * Ts + std::sqrt(det);
+		T2 = Ts - T1;
+		return true;
+	}
+	return false;
 }

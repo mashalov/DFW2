@@ -64,6 +64,9 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
+		static bool GetCanayTimeConstants(double Xa, double X1s, double X2s, double Xrc, double& T1, double& T2);
+		static bool GetNIIPTTimeConstants(double Xa, double X1s, double X2s, double& T1, double& T2);
+
 		static constexpr const char* m_cszxl	= "xl";
 		static constexpr const char* m_csztq01	= "tq01";
 		static constexpr const char* m_cszPsifd = "Psifd";
