@@ -28,6 +28,7 @@ namespace DFW2
 		};
 
 		double m_ExciterId, Eqnom, Snom, Qnom, Inom, xd;
+		double xd2, xq1, xq2, xl, Td01, Tq01, Td02, Tq02;
 
 		enum VARS
 		{
@@ -80,8 +81,18 @@ namespace DFW2
 		static constexpr const char* m_cszInom = "Inom";
 		static constexpr const char* m_cszQnom = "Qnom";
 		static constexpr const char* m_cszxd = "xd";
-
+		static constexpr const char* m_csztd01 = "td01";
+		static constexpr const char* m_csztd02 = "td02";
+		static constexpr const char* m_csztq01 = "tq01";
+		static constexpr const char* m_csztq02 = "tq02";
+		static constexpr const char* m_cszxd2 = "xd2";
+		static constexpr const char* m_cszxq1 = "xq1";
+		static constexpr const char* m_cszxq2 = "xq2";
 		static void DeviceProperties(CDeviceContainerProperties& properties);
+
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Td02> ValidatorTd01 = { CDynaGeneratorDQBase::m_csztd02 };
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tq02> ValidatorTq01 = { CDynaGeneratorDQBase::m_csztq02 };
+		static inline CValidationRuleBiggerT<CDynaGeneratorInfBusBase, &CDynaGeneratorInfBusBase::xd1> ValidatorXd = { CDynaGeneratorInfBusBase::m_cszxd1 };
 	};
 }
 

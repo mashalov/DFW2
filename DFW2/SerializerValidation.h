@@ -86,6 +86,34 @@ namespace DFW2
 	};
 
 
+	template<class T, double T::*member>
+	class CValidationRuleMemberT : public CValidationRuleBase
+	{
+	protected:
+		const char* m_cszName;
+	public:
+		CValidationRuleMemberT(const char* cszName) : CValidationRuleBase(), m_cszName(cszName) {}
+	};
+
+	template<class T, double T::*member>
+	class CValidationRuleBiggerT : public CValidationRuleMemberT<T, member>
+	{
+	public:
+		using CValidationRuleMemberT<T, member>::CValidationRuleMemberT;
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			CValidationRuleBase::CheckDevice(device);
+			const T* pDev = static_cast<const T*>(device);
+			if (value->Double() < pDev->*member)
+			{
+				message = fmt::format(CDFW2Messages::m_cszValidationBiggerThanNamed, CValidationRuleMemberT<T, member>::m_cszName, pDev->*member);
+				return ValidationResult::Error;
+			}
+			return ValidationResult::Ok;
+		}
+	};
+
+
 	class CValidationRuleRange: public CValidationRuleBase
 	{
 	protected:

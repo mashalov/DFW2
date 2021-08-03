@@ -350,9 +350,9 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(CDynaGenerator3C::m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(CDynaGenerator3C::m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(CDynaGenerator3C::m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
 }
 
 void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
@@ -364,6 +364,9 @@ void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
 						 CDynaGenerator3C::m_csztd01,
 						 CDynaGenerator3C::m_csztd02,
 						 CDynaGenerator3C::m_csztq02 }, &CSerializerValidatorRules::BiggerThanZero);
+
+	Validator->AddRule(m_csztd01, &CDynaGeneratorDQBase::ValidatorTd01);
+	Validator->AddRule(m_cszxd, &CDynaGeneratorDQBase::ValidatorXd);
 }
 
 
@@ -407,4 +410,37 @@ bool CDynaGeneratorPark3C::GetNIIPTTimeConstants(double Xa, double X1s, double X
 		return true;
 	}
 	return false;
+}
+
+// Расчет внутренних параметров Umans-Mallick 
+bool CDynaGeneratorPark3C::GetAxisParametersUmans(double Xd,
+	double Xl,
+	double X1,
+	double X2,
+	double Td01,
+	double Td02,
+	double& r1,
+	double& l1,
+	double& r2,
+	double& l2)
+{
+	const double Td1(Td01 * X1 / Xd);
+	const double Td2(Td02 * X2 / X1);
+	const double Md(Xd - Xl);
+	const double Tdiff = (Td01 + Td02 - Td1 - Td2);
+	const double A = Md * Md / (Xd * Tdiff);
+	const double a = (Xd * (Td1 + Td2) - Xl * (Td01 + Td02)) / Md;
+	const double b = (Xd * Td1 * Td2 - Xl * Td01 * Td02) / Md;
+	const double c = (Td01 * Td02 - Td1 * Td2) / Tdiff;
+	double det = a * a - 4.0 * b;
+	if (det >= 0.0)
+	{
+		det = std::sqrt(det);
+		r1 = 2.0 * A * det / (a - 2.0 * c + det);
+		l1 = r1 * (a + det) / 2.0;
+		r2 = 2.0 * A * det / (2 * c - a + det);
+		l2 = r2 * (a - det) / 2.0;
+	}
+
+	return true;
 }

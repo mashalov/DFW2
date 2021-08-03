@@ -204,6 +204,6 @@ const char* CDFW2Messages::m_cszValidationNonNegative = "должно быть �
 const char* CDFW2Messages::m_cszValidationChangedTo = "Значение изменено на ";
 const char* CDFW2Messages::m_cszValidationRange = "должно быть в диапазоне [{};{}]";
 const char* CDFW2Messages::m_cszValidationTfOfMustangExcCon = " должно быть больше нуля при Kf = {}";
-const char* CDFW2Messages::m_cszValidationBiggerThanNamed = " должно быть больше {}={}";
+const char* CDFW2Messages::m_cszValidationBiggerThanNamed = " должно быть больше {} = {}";
 const char* CDFW2Messages::m_cszDiscontinuityProcessing = "t={:15.012f} обработка разрыва устройства {}";
 const char* CDFW2Messages::m_cszAutomaticScenario = "Автоматика/сценарий";

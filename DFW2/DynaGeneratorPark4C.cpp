@@ -83,13 +83,13 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 	lfd = Equal(denom,0.0) ? 1E6 : lad * (xd1 - xl) / denom; 
 	denom = laq - xq1 + xl;
 	// сопротивление утечки первой демпферной обмотки q [4.33]
-	const double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq1 - xl) / denom);
+	double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq1 - xl) / denom);
 	// сопротивление утечки демпферной обмотки d [4.28]
 	denom = lad * lfd - (xd2 - xl) * (lfd + lad);
 	double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
 	// сопротивление утечки второй демпферной обмотки q [4.32]
 	denom = laq * l1q - (xq2 - xl) * ( l1q + laq );
-	const double l2q(Equal(denom, 0.0) ? 1E6 : laq * l1q * (xq2 - xl) / denom);
+	double l2q(Equal(denom, 0.0) ? 1E6 : laq * l1q * (xq2 - xl) / denom);
 
 
 	lrc = 0.0;
@@ -166,6 +166,9 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 		R1q = l1Q / nTq01;
 		R2q = (laq * l1q / l1Q + l2q) / nTq02;
 	}
+
+	//CDynaGeneratorPark3C::GetAxisParametersUmans(xd, xl, xd1, xd2, Td01, Td02, Rfd, lfd, R1d, l1d);
+	//CDynaGeneratorPark3C::GetAxisParametersUmans(xq, xl, xq1, xq2, Tq01, Tq02, R1q, l1q, R2q, l2q);
 
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
 	const double& D(l1Q), &F(l2Q);
@@ -418,25 +421,28 @@ void CDynaGeneratorPark4C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState(m_cszPsi1d, Psi1d, eVARUNITS::VARUNIT_WB);
 	Serializer->AddState(m_cszPsi1q, Psi1q, eVARUNITS::VARUNIT_WB);
 	Serializer->AddState(m_cszPsi2q, Psi2q, eVARUNITS::VARUNIT_WB);
-	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(CDynaGenerator3C::m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(CDynaGenerator3C::m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(CDynaGenerator3C::m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_csztq01, Tq01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(CDynaGenerator3C::m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
 }
 
 void CDynaGeneratorPark4C::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaGeneratorDQBase::UpdateValidator(Validator);
-	Validator->AddRule({ CDynaGenerator3C::m_cszxd2,
-						 CDynaGenerator3C::m_cszxq1,
-						 CDynaGenerator3C::m_cszxq2,
+	Validator->AddRule({ m_cszxd2,
+						 m_cszxq1,
+						 m_cszxq2,
 						 m_cszxl,
-						 CDynaGenerator3C::m_csztd01,
-						 CDynaGenerator3C::m_csztd02,
+						 m_csztd01,
+						 m_csztd02,
 						 m_csztq01,
-						 CDynaGenerator3C::m_csztq02 }, &CSerializerValidatorRules::BiggerThanZero);
+						 m_csztq02 }, &CSerializerValidatorRules::BiggerThanZero);
+
+	Validator->AddRule(m_csztd01, &CDynaGeneratorDQBase::ValidatorTd01);
+	Validator->AddRule(m_csztq01, &CDynaGeneratorDQBase::ValidatorTq01);
 }

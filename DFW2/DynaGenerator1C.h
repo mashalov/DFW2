@@ -19,8 +19,6 @@ namespace DFW2
 			V_LAST
 		};
 
-		double	Td01;
-
 		const cplx& CalculateEgen() override;
 		bool CalculatePower() override;
 
@@ -36,8 +34,6 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
-
-		static constexpr const char* m_csztd01  = "td01";
 	};
 }
 

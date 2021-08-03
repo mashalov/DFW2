@@ -24,10 +24,6 @@ namespace DFW2
 		};
 
 		VariableIndex Psifd, Psi1d, Psi1q, Psi2q;
-		double xd2, xq1, xq2, xl, Td01, Tq01, Td02, Tq02;
-
-
-
 
 		// коэффициенты уравнений
 
