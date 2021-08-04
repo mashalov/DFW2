@@ -63,6 +63,7 @@ namespace DFW2
 		static bool GetCanayTimeConstants(double Xa, double X1s, double X2s, double Xrc, double& T1, double& T2);
 		static bool GetNIIPTTimeConstants(double Xa, double X1s, double X2s, double& T1, double& T2);
 		static bool GetAxisParametersUmans(double Xd, double Xl, double X1, double X2, double Td01, double Td02, double& r1, double& l1, double& r2, double& l2);
+		static bool GetAxisParametersCanay(double Xd, double Xl, double X1, double X2, double Td01, double Td02, double& r1, double& l1, double& r2, double& l2);
 
 		static constexpr const char* m_cszxl	= "xl";
 		static constexpr const char* m_cszPsifd = "Psifd";

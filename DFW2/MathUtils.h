@@ -36,5 +36,13 @@ namespace MathUtils
 			else
 				return 0;
 		}
+
+		static int RootsSortedByAbs(double a, double b, double c, double& r1, double& r2)
+		{
+			int nRoots(Roots(a, b, c, r1, r2));
+			if (nRoots && std::abs(r1) > std::abs(r2))
+				std::swap(r1, r2);
+			return nRoots;
+		}
 	};
 };

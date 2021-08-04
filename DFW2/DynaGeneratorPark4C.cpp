@@ -91,13 +91,12 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 	denom = laq * l1q - (xq2 - xl) * ( l1q + laq );
 	double l2q(Equal(denom, 0.0) ? 1E6 : laq * l1q * (xq2 - xl) / denom);
 
-
 	lrc = 0.0;
 
-	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
-	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
-	const double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
-	const double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
+	double lFd(lad + lfd);		// сопротивление обмотки возбуждения
+	double l1D(lad + l1d);		// сопротивление демпферной обмотки d
+	double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
+	double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
 
 	// активное сопротивление обмотки возбуждения [4.15]
 	Rfd = lFd / Td01;
@@ -108,51 +107,7 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 	// активное сопротивление второй демпферной обмотки q [4.31]
 	double R2q = (laq * l1q / l1Q + l2q) / Tq02;
 
-
-
-	/*
-	// Canay тест
-	Xd = 1.77;% синхронное сопротивление
-	Xl = 0.17;% общее сопротивление утечки
-	Xad = Xd - Xl;% сопротивление по оси
-	Td01 = 4.316475;% постояная времени ротора на ХХ
-	Td1 = 0.828745;% постоянная времени ротора на КЗ
-	X1s = 0.13;% сопротивление утечки первого контура
-	r1 = 0.0011 % активное сопротивление первого контура
-	Td02 = 0.374677;
-	Td2 = 0.054969;
-	% сопротивления второго контура
-	X2s = 0.035;
-	r2 = 0.012;
-	Xrc = 0.06;% сопротивление Canay
-	Td01 = 4.316475;
-	Td02 = 0.374677;
-	lad = 1.77 - 0.17;
-	lfd = 0.13;
-	l1d = 0.035;
-	lrc = 0.06;
-	Td01 = 4.316475;
-	Td02 = 0.374677;
-	lad = 1.77 - 0.17;
-	lfd = 0.13;
-	l1d = 0.035;
-	lrc = 0.06;
-*/
-
-
-	double cTd01(Td01), cTd02(Td02);
-	if (CDynaGeneratorPark3C::GetCanayTimeConstants(lad, lfd, l1d, lrc, cTd01, cTd02))
-	{
-		Rfd = lad / cTd01;
-		R1d = (lad * lfd / lFd + l1d) / cTd02;
-	}
-	double cTq01(Tq01), cTq02(Tq02);
-	if (CDynaGeneratorPark3C::GetCanayTimeConstants(laq, l1q, l2q, lrc, cTq01, cTq02))
-	{
-		R1q = l1Q / cTq01;
-		R2q = (laq * l1q / l1Q + l2q) / cTq02;
-	}
-
+	// методика НИИПТ сводится к расчету новых значений постоянных времени на ХХ
 	double nTd01(Td01), nTd02(Td02);
 	if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTd01, nTd02))
 	{
@@ -167,8 +122,53 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 		R2q = (laq * l1q / l1Q + l2q) / nTq02;
 	}
 
-	//CDynaGeneratorPark3C::GetAxisParametersUmans(xd, xl, xd1, xd2, Td01, Td02, Rfd, lfd, R1d, l1d);
-	//CDynaGeneratorPark3C::GetAxisParametersUmans(xq, xl, xq1, xq2, Tq01, Tq02, R1q, l1q, R2q, l2q);
+	/*
+	// Test
+	xd = 1.77;
+	xl = 0.17;
+	xd1 = 0.329;
+	xd2 = 0.253;
+	Td01 = 0.859;
+	Td02 = 0.0247;
+	double Td1 = 0.859;
+	double Td2 = 0.0247;
+	Td01 = Td1 * xd / xd1;
+	Td02 = Td2 * xd1 / xd2;
+	*/
+
+	// Методики Umans&Mallick и Canay дают фундаментальные параметры из стандартных
+
+	struct ParkParameters 
+	{
+		double r1, l1, r2, l2;
+	}
+		NiiptD{ Rfd, lfd, R1d, l1d }, NiiptQ{ R1q, l1q, R2q, l2q },
+		UmansD, UmansQ,
+		CanayD, CanayQ;
+
+	CDynaGeneratorPark3C::GetAxisParametersUmans(xd, xl, xd1, xd2, Td01, Td02, UmansD.r1, UmansD.l1, UmansD.r2, UmansD.l2);
+	CDynaGeneratorPark3C::GetAxisParametersUmans(xq, xl, xq1, xq2, Tq01, Tq02, UmansQ.r1, UmansQ.l1, UmansQ.r2, UmansQ.l2);
+	CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Td01, Td02, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2);
+	CDynaGeneratorPark3C::GetAxisParametersCanay(xq, xl, xq1, xq2, Tq01, Tq02, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
+
+	std::array<ParkParameters, 6> Axes = { NiiptD, UmansD, CanayD, NiiptQ, UmansQ, CanayQ };
+	std::array<std::string, 6> AxesNames = { "NiiptD", "UmansD", "CanayD", "NiiptQ", "UmansQ", "CanayQ" };
+	for (size_t j = 0 ; j < Axes.size() ; j++)
+	{
+		//std::array<std::string, 4> names = {"r1", "l1", "r2", "l2"};
+		std::array<const double*, 4> ptr = { &Axes[j].r1, &Axes[j].l1, &Axes[j].r2, &Axes[j].l2 };
+		std::string res(AxesNames[j]);
+		for (size_t i = 0 ; i < ptr.size() ; i++)
+			res += fmt::format(";{}", *ptr[i]);
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
+	}
+
+
+	lFd = (lad + lfd);		// сопротивление обмотки возбуждения
+	l1D = (lad + l1d);		// сопротивление демпферной обмотки d
+	l1Q = (laq + l1q);		// сопротивление первой демпферной обмотки q
+	l2Q = (laq + l2q);		// сопротивление второй демпферной обмотки q
+
 
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
 	const double& D(l1Q), &F(l2Q);

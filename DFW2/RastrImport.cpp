@@ -338,13 +338,13 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 
 	// СМЗУ Северо-Запад
-	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
 
 	// Test-9
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park_noexc.rst");
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park3c.rst");
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park4c.rst");
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park4c.rst");
 	//m_spRastr->NewFile(dfwPath.c_str());
 
 	// СМЗУ Сибирь

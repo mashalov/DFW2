@@ -415,7 +415,10 @@ bool CDynaGeneratorPark3C::GetNIIPTTimeConstants(double Xa, double X1s, double X
 	return false;
 }
 
-// Расчет внутренних параметров Umans-Mallick 
+// Расчет фундаментальных  параметров Umans-Mallick 
+// D.Umans, J.A.Mallickand G.L.Wilson, "Modeling of Solid Rotor Turbo-Generators - Part II - Example of Model Derivation and Use in Digital Simulation", 
+// IEEE Transaction on PAS, vol.PAS - 97, no. 1, Jan. / Feb. 1978.
+
 bool CDynaGeneratorPark3C::GetAxisParametersUmans(double Xd,
 	double Xl,
 	double X1,
@@ -443,7 +446,66 @@ bool CDynaGeneratorPark3C::GetAxisParametersUmans(double Xd,
 		l1 = r1 * (a + det) / 2.0;
 		r2 = 2.0 * A * det / (2 * c - a + det);
 		l2 = r2 * (a - det) / 2.0;
-	}
 
-	return true;
+		// в качестве параметров обмотки возбуждения принимаем
+		// параметры с наибольшей постоянной времени. Должно использоваться
+		// для оси d, но здесь этот же тест используется и для оси q
+		if (std::abs(Xd / r1) < std::abs(Xd / r2))
+		{
+			std::swap(r1, r2);
+			std::swap(l1, l2);
+		}
+
+		return true;
+	}
+	return false;
+}
+
+// Расчет фундаментальных параметров Canay
+// I.M. Canay "Modelling of alternating-current machines having multiple rotor circuits", 
+// IEEE Transaction on Energy Conversion, Vol. 9, No. 2, June 1993
+
+bool CDynaGeneratorPark3C::GetAxisParametersCanay(double Xd, 
+	double Xl, 
+	double X1, 
+	double X2, 
+	double Td01, 
+	double Td02, 
+	double& r1, 
+	double& l1, 
+	double& r2, 
+	double& l2)
+{
+	const double Td1(Td01 * X1 / Xd);
+	const double Td2(Td02 * X2 / X1);
+
+	const double A0 = Xd / X1 * Td1 + (Xd / X2 - Xd / X1 + 1) * Td2;
+	const double B0 = Xd / X2 * Td1 * Td2;
+	double root1(0), root2(0);
+	if (MathUtils::CSquareSolver::RootsSortedByAbs(B0, A0, 1, root1, root2))
+	{
+		Td01 = -1 / root1;
+		Td02 = -1 / root2;
+
+		const double Xe(-Xl);
+		const double A = Td1 + Td2;
+		const double Ae = 1 / (Xd + Xe) * (Xd * A + Xe * A0);
+		const double Be = (X2 + Xe) / (Xd + Xe) * B0;
+
+		if (MathUtils::CSquareSolver::RootsSortedByAbs(Be, Ae, 1, root1, root2))
+		{
+			const double Tde01 = -1 / root1;
+			const double Tde02 = -1 / root2;
+			const double xde1 = (Xd + Xe) / (1 - (Tde01 - Td01) * (Tde01 - Td02) / (Tde01 * (Tde01 - Tde02)));
+			const double xde2 = (Xd + Xe) * Tde01 * Tde02 / Td01 / Td02;
+			const double deltay1 = 1 / xde1 - 1 / (Xd + Xe);
+			const double deltay2 = 1 / xde2 - 1 / xde1;
+			l1 = 1 / deltay1;	
+			l2 = 1 / deltay2;
+			r1 = l1 / Tde01;
+			r2 = l2 / Tde02;
+			return true;
+		}
+	}
+	return false;
 }
