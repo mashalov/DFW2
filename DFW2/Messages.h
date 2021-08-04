@@ -214,6 +214,7 @@ namespace DFW2
 		static const char* m_cszValidationTfOfMustangExcCon;
 		static const char* m_cszValidationBiggerThanNamed;
 		static const char* m_cszValidationBiggerOrEqualThanNamed;
+		static const char* m_cszValidationLessOrEqualThanNamed;
 		static const char* m_cszDiscontinuityProcessing;
 		static const char* m_cszAutomaticScenario;
 	};

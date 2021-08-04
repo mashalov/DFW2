@@ -206,5 +206,6 @@ const char* CDFW2Messages::m_cszValidationRange = "должно быть в ди
 const char* CDFW2Messages::m_cszValidationTfOfMustangExcCon = " должно быть больше нуля при Kf = {}";
 const char* CDFW2Messages::m_cszValidationBiggerThanNamed = " должно быть больше {} = {}";
 const char* CDFW2Messages::m_cszValidationBiggerOrEqualThanNamed = " должно быть больше или равно {} = {}";
+const char* CDFW2Messages::m_cszValidationLessOrEqualThanNamed = " должно быть меньше или равно {} = {}";
 const char* CDFW2Messages::m_cszDiscontinuityProcessing = "t={:15.012f} обработка разрыва устройства {}";
 const char* CDFW2Messages::m_cszAutomaticScenario = "Автоматика/сценарий";
