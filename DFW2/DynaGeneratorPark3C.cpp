@@ -430,8 +430,13 @@ bool CDynaGeneratorPark3C::GetAxisParametersUmans(double Xd,
 	double& r2,
 	double& l2)
 {
-	const double Td1(Td01 * X1 / Xd);
-	const double Td2(Td02 * X2 / X1);
+	double Td1(Td01 * X1 / Xd);
+	double Td2(Td02 * X2 / X1);
+
+
+	CDynaGeneratorPark3C::GetShortCircuitTimeConstants(Xd, X1, X2, Td01, Td02, Td1, Td2);
+
+
 	const double Md(Xd - Xl);
 	const double Tdiff = (Td01 + Td02 - Td1 - Td2);
 	const double A = Md * Md / (Xd * Tdiff);
@@ -476,8 +481,11 @@ bool CDynaGeneratorPark3C::GetAxisParametersCanay(double Xd,
 	double& r2, 
 	double& l2)
 {
-	const double Td1(Td01 * X1 / Xd);
-	const double Td2(Td02 * X2 / X1);
+	double Td1(Td01 * X1 / Xd);
+	double Td2(Td02 * X2 / X1);
+
+
+	CDynaGeneratorPark3C::GetShortCircuitTimeConstants(Xd, X1, X2, Td01, Td02, Td1, Td2);
 
 	const double A0 = Xd / X1 * Td1 + (Xd / X2 - Xd / X1 + 1) * Td2;
 	const double B0 = Xd / X2 * Td1 * Td2;
@@ -508,4 +516,27 @@ bool CDynaGeneratorPark3C::GetAxisParametersCanay(double Xd,
 		}
 	}
 	return false;
+}
+
+// Расчет постоянных времени КЗ из постоянных времени ХХ
+// I.M. Canay, Determination of model parameters of synchronous machines
+// IEEPROC, Vol. 130, Pt. B, No. 2, MARCH 1983
+
+bool CDynaGeneratorPark3C::GetShortCircuitTimeConstants(double Xd, double X1, double X2, double Td01, double Td02, double& Td1, double& Td2)
+{
+	const double A (1 - Xd / X1 + Xd / X2);
+	const double B(-Td01 - Td02);
+	const double C(Td01 * Td02 * X2 / X1);
+	// мы ожидаем что Td2 < Td1, поэтому берем первый корень из
+	// отсортированных по модулю по возрастанию в качестве T2
+	if (MathUtils::CSquareSolver::RootsSortedByAbs(A, B, C, Td2, Td1))
+	{
+		Td1 = Td01 * Td02 * X2 / Td2 / Xd;
+		// проверяем
+		_ASSERTE(Equal(Td01 + Td02 - Xd / X1 * Td1 - (1 - Xd / X1 + Xd / X2) * Td2, 0.0));
+		_ASSERTE(Equal(Td01 * Td02 - Td1 * Td2 * Xd / X2, 0.0));
+		return true;
+	}
+	else
+		return false;
 }
