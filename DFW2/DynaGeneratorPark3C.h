@@ -64,7 +64,11 @@ namespace DFW2
 		static bool GetNIIPTTimeConstants(double Xa, double X1s, double X2s, double& T1, double& T2);
 		static bool GetAxisParametersUmans(double Xd, double Xl, double X1, double X2, double Td01, double Td02, double& r1, double& l1, double& r2, double& l2);
 		static bool GetAxisParametersCanay(double Xd, double Xl, double X1, double X2, double Td01, double Td02, double& r1, double& l1, double& r2, double& l2);
+		static bool GetAxisParametersCanay(double Xd, double Xl, double X2, double Td02, double& r1, double& l1);
 		static bool GetShortCircuitTimeConstants(double Xd, double X1, double X2, double Td01, double Td02, double& Td1, double& Td2);
+
+
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXqXq2 = { CDynaGeneratorDQBase::m_cszxq2 };
 
 		static constexpr const char* m_cszxl	= "xl";
 		static constexpr const char* m_cszPsifd = "Psifd";

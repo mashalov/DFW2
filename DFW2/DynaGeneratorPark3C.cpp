@@ -84,16 +84,16 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	// для трехконтурной СМ используются другое соотношение между l1q и xq2,
 	// в отличие от четырехкотурной
 	// сопротивление утечки первой демпферной обмотки q [4.42]
-	const double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq2 - xl) / denom);
+	double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq2 - xl) / denom);
 	// сопротивление утечки демпферной обмотки d [4.28]
 	denom = lad * lfd - (xd2 - xl) * (lfd + lad);
-	const double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
+	double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
 
 	lrc = 0.0;
 
-	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
-	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
-	const double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
+	double lFd(lad + lfd);		// сопротивление обмотки возбуждения
+	double l1D(lad + l1d);		// сопротивление демпферной обмотки d
+	double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
 
 	// активное сопротивление обмотки возбуждения [4.15]
 	Rfd = lFd / Td01;
@@ -102,20 +102,19 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	// активное сопротивление первой демпферной обмотки q [4.42]
 	double R1q = l1Q / Tq02;	
 
-	const double C(lad + lrc), A(C + lfd), B(C + l1d);
-	double detd(C * C - A * B);
-
-	if (Equal(detd, 0.0))
-		throw dfw2error(fmt::format("detd == 0 for {}", GetVerbalName()));
-	if (Equal(l1Q, 0.0))
-		throw dfw2error(fmt::format("l1Q == 0 for {}", GetVerbalName()));
-
 	double nTd01(Td01), nTd02(Td02);
 	if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTd01, nTd02))
 	{
 		Rfd = lFd / nTd01;
 		R1d = l1D / nTd02;
 	}
+
+	//CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Td01, Td02, Rfd, lfd, R1d, l1d);
+
+
+	lFd = lad + lfd;	// сопротивление обмотки возбуждения
+	l1D = lad + l1d;	// сопротивление демпферной обмотки d
+	l1Q = laq + l1q;	// сопротивление первой демпферной обмотки q
 
 	/*
 	double cTd01(Td01), cTd02(Td02);
@@ -125,6 +124,15 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 		R1d = (lad * lfd / lFd + l1d) / cTd02;
 	}
 	*/
+
+	const double C(lad + lrc), A(C + lfd), B(C + l1d);
+	double detd(C * C - A * B);
+
+	if (Equal(detd, 0.0))
+		throw dfw2error(fmt::format("detd == 0 for {}", GetVerbalName()));
+	if (Equal(l1Q, 0.0))
+		throw dfw2error(fmt::format("l1Q == 0 for {}", GetVerbalName()));
+
 
 	detd = 1.0 / detd;
 
@@ -368,7 +376,7 @@ void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
 	Validator->AddRule(m_csztd01, &CDynaGeneratorDQBase::ValidatorTd01);
 	Validator->AddRule(m_cszxd, &CDynaGeneratorDQBase::ValidatorXd);
 	Validator->AddRule(m_cszxq, &CDynaGeneratorDQBase::ValidatorXq);
-	//Validator->AddRule(m_cszxq1, &CDynaGeneratorDQBase::ValidatorXq1);
+	Validator->AddRule(m_cszxq, &CDynaGeneratorPark3C::ValidatorXqXq2);
 	Validator->AddRule(m_cszxd1, &CDynaGeneratorPark3C::ValidatorXd1);
 	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXd);
 	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq);
@@ -519,6 +527,20 @@ bool CDynaGeneratorPark3C::GetAxisParametersCanay(double Xd,
 		}
 	}
 	return false;
+}
+
+bool CDynaGeneratorPark3C::GetAxisParametersCanay(double Xd, double Xl, double X1, double Td01, double& r1, double& l1)
+{
+	const double Xe(-Xl);
+	const double Td1(Td01 * X1 / Xd);
+	const double Tde1 = 1 / (Xd + Xe) * (Xd * Td1 + Xe * Td01);
+	const double xde1 = (Xd + Xe) * Tde1 / Td01;
+	const double deltay1 = 1 / xde1 - 1 / (Xd + Xe);
+	l1 = 1 / deltay1;
+	r1 = l1 / Tde1;
+	_CheckNumber(l1);
+	_CheckNumber(r1);
+	return true;
 }
 
 // Расчет постоянных времени КЗ из постоянных времени ХХ
