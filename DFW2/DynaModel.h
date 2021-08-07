@@ -69,6 +69,7 @@ namespace DFW2
 			std::string m_strWorkingFolder = "Русский тест";
 			std::string m_strResultsFolder = "";
 			DFW2MessageStatus m_eLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
+			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Niipt;
 		};
 
 		friend class CCustomDevice;
@@ -396,6 +397,7 @@ namespace DFW2
 			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
 			static constexpr const char* m_cszLogLevelNames[6] = { "fatal", "error", "warning", "message", "info", "debug" };
 			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
+			static constexpr const char* m_cszParkParametersDeterminationMethodNames[3] = { "Kundur", "Niipt", "Canay" };
 			static constexpr const char* m_cszFreqDampingNames[2] = { "Node", "Island" };
 		} 
 			m_Parameters;

@@ -726,6 +726,9 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddEnumProperty("LogLevel",
 		new CSerializerAdapterEnum(m_eLogLevel, m_cszLogLevelNames));
 
+	Serializer->AddEnumProperty("ParkParametersDetermination",
+		new CSerializerAdapterEnum(m_eParkParametersDetermination, m_cszParkParametersDeterminationMethodNames));
+
 	// расчет УР
 
 	Serializer->AddProperty("LFImbalance", m_Imb);

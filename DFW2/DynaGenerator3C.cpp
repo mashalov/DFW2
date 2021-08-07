@@ -126,12 +126,12 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Iq, Eqss, -r * zsq);
 
 		// dEqs/dEqs
-		pDynaModel->SetElement(Eqs, Eqs, 1.0 / Td01);
+		pDynaModel->SetElement(Eqs, Eqs, 1.0 / Tdo1);
 		// dEqs/dId
-		pDynaModel->SetElement(Eqs, Id, -1.0 / Td01 * (xd - xd1));
+		pDynaModel->SetElement(Eqs, Id, -1.0 / Tdo1 * (xd - xd1));
 		// dEqs/dEqe
 		if (ExtEqe.Indexed())
-			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Td01);
+			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Tdo1);
 
 
 		double sp1 = ZeroGuardSlip(1.0 + s);
@@ -152,16 +152,16 @@ bool CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(s, Iq, 1.0 / Mj * (Vq + 2 * Iq * r) / sp2);
 		
 		// dEqss / dEqss
-		pDynaModel->SetElement(Eqss, Eqss, -1.0 / Td02);
+		pDynaModel->SetElement(Eqss, Eqss, -1.0 / Tdo2);
 		// dEqss / dEqs
-		pDynaModel->SetElement(Eqss, Eqs, - 1.0 / Td02);
+		pDynaModel->SetElement(Eqss, Eqs, - 1.0 / Tdo2);
 		// dEqss / dId
-		pDynaModel->SetElement(Eqss, Id, -(xd1 - xd2) / Td02);
+		pDynaModel->SetElement(Eqss, Id, -(xd1 - xd2) / Tdo2);
 
 		// dEdss / dEdss
-		pDynaModel->SetElement(Edss, Edss, -1.0 / Tq02);
+		pDynaModel->SetElement(Edss, Edss, -1.0 / Tqo2);
 		// dEdss / dIq
-		pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tq02);
+		pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tqo2);
 
 
 		// dEq / dEq
@@ -202,11 +202,11 @@ bool CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(Eq, Eq - Eqss + Id * (xd - xd2));
 
 
-		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
+		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 
-		double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Td02;
-		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
+		double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Tdo2;
+		double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tqo2;
 
 		pDynaModel->SetFunctionDiff(s, eS);
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
@@ -227,9 +227,9 @@ bool CDynaGenerator3C::BuildDerivatives(CDynaModel *pDynaModel)
 	{
 		if (IsStateOn())
 		{
-			double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Td02;
+			double eEqss = (Eqs - Eqss + Id * (xd1 - xd2)) / Tdo2;
 			pDynaModel->SetDerivative(Eqss, eEqss);
-			double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tq02;
+			double eEdss = (-Edss - Iq * (xq1 - xq2)) / Tqo2;
 			pDynaModel->SetDerivative(Edss, eEdss);
 		}
 		else
@@ -323,7 +323,7 @@ const cplx& CDynaGenerator3C::CalculateEgen()
 void CDynaGenerator3C::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaGenerator1C::UpdateValidator(Validator);
-	Validator->AddRule({ m_csztd02, m_csztq02, m_cszxd2, m_cszxq2, m_cszxq1 }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ m_csztdo2, m_csztqo2, m_cszxd2, m_cszxq2, m_cszxq1 }, &CSerializerValidatorRules::BiggerThanZero);
 }
 
 void CDynaGenerator3C::UpdateSerializer(CSerializerBase* Serializer)
@@ -333,8 +333,8 @@ void CDynaGenerator3C::UpdateSerializer(CSerializerBase* Serializer)
 	// добавляем перменные состояния трехконтурной модели в ЭДС
 	Serializer->AddState("Eqss", Eqss, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Edss", Edss, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztdo2, Tdo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztqo2, Tqo2, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);

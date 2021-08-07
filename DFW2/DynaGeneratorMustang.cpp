@@ -29,10 +29,10 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::PreInit(CDynaModel* pDynaModel)
 	// валидация должна далее найти некорректные данные и показать
 	if (xd > 0 && xd1 > 0)
 	{
-		double Tds = Td01 * xd1 / xd;
-		double Tdss = Td02 * xd2 / xd1;
-		if(Td01 > Td02)
-			xd1 = (xd * (Tds - Td02 + Tdss) - xd2 * Td02) / (Td01 - Td02);
+		double Tds = Tdo1 * xd1 / xd;
+		double Tdss = Tdo2 * xd2 / xd1;
+		if(Tdo1 > Tdo2)
+			xd1 = (xd * (Tds - Tdo2 + Tdss) - xd2 * Tdo2) / (Tdo1 - Tdo2);
 	}
 
 	m_Zgen = { 0, 0.5 * (xd2 + xq2) };
@@ -112,12 +112,12 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 
 
 		// dEqs/dEqs
-		pDynaModel->SetElement(Eqs, Eqs, -1.0 / Td01);
+		pDynaModel->SetElement(Eqs, Eqs, -1.0 / Tdo1);
 		// dEqs/dId
-		pDynaModel->SetElement(Eqs, Id, -(xd - xd1) / Td01);
+		pDynaModel->SetElement(Eqs, Id, -(xd - xd1) / Tdo1);
 		// dEqs/dEqe
 		if (ExtEqe.Indexed())
-			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Td01);
+			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Tdo1);
 
 		// m_pExciter->A(CDynaExciterBase::V_EQE)
 
@@ -134,19 +134,19 @@ bool CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 
 
 		// dEqss / dEqss
-		pDynaModel->SetElement(Eqss, Eqss, -1.0 / Td02);
+		pDynaModel->SetElement(Eqss, Eqss, -1.0 / Tdo2);
 		// dEqss / dEqs
-		pDynaModel->SetElement(Eqss, Eqs, -(1.0 / Td02 - 1.0 / Td01));
+		pDynaModel->SetElement(Eqss, Eqs, -(1.0 / Tdo2 - 1.0 / Tdo1));
 		// dEqss / dId
-		pDynaModel->SetElement(Eqss, Id, -((xd1 - xd2) / Td02 + (xd - xd1) / Td01));
+		pDynaModel->SetElement(Eqss, Id, -((xd1 - xd2) / Tdo2 + (xd - xd1) / Tdo1));
 		// dEqss / dEqe
 		if (ExtEqe.Indexed())
-			pDynaModel->SetElement(Eqss, ExtEqe, -1.0 / Td01);
+			pDynaModel->SetElement(Eqss, ExtEqe, -1.0 / Tdo1);
 
 		// dEdss / dEdss
-		pDynaModel->SetElement(Edss, Edss, -1.0 / Tq02);
+		pDynaModel->SetElement(Edss, Edss, -1.0 / Tqo2);
 		// dEdss / dIq
-		pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tq02);
+		pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tqo2);
 
 		// dEq / dEq
 		pDynaModel->SetElement(Eq, Eq, 1.0);
@@ -195,9 +195,9 @@ void CDynaGeneratorMustang::CalculateDerivatives(CDynaModel* pDynaModel, CDevice
 	{
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
 		(pDynaModel->*fn)(s, (Pt / ( 1.0 + s ) - Kdemp * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj);
-		(pDynaModel->*fn)(Eqs, (ExtEqe - Eqs + Id * (xd - xd1)) / Td01);
-		(pDynaModel->*fn)(Edss, (-Edss - Iq * (xq1 - xq2)) / Tq02);
-		(pDynaModel->*fn)(Eqss, Eqs * (1.0 / Td02 - 1.0 / Td01) + Id * ((xd1 - xd2) / Td02 + (xd - xd1) / Td01) - Eqss / Td02 + ExtEqe / Td01);
+		(pDynaModel->*fn)(Eqs, (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1);
+		(pDynaModel->*fn)(Edss, (-Edss - Iq * (xq1 - xq2)) / Tqo2);
+		(pDynaModel->*fn)(Eqss, Eqs * (1.0 / Tdo2 - 1.0 / Tdo1) + Id * ((xd1 - xd2) / Tdo2 + (xd - xd1) / Tdo1) - Eqss / Tdo2 + ExtEqe / Tdo1);
 	}
 	else
 	{

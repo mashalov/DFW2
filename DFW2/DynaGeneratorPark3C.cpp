@@ -18,7 +18,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 {
-	CalculateFundamentalParameters();
+	if (!CalculateFundamentalParameters(pDynaModel->Parameters().m_eParkParametersDetermination))
+		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+
 	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
 
 	const double omega(1.0 + s);
@@ -72,8 +74,10 @@ VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& Chi
 	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psifd, Psi1d, Psi1q }, ChildVec));
 }
 
-void CDynaGeneratorPark3C::CalculateFundamentalParameters()
+bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method)
 {
+	bool bRes(true);
+
 	// взаимные индуктивности без рассеивания [3.111 и 3.112]
 	lad = xd - xl; 
 	laq = xq - xl;
@@ -96,68 +100,130 @@ void CDynaGeneratorPark3C::CalculateFundamentalParameters()
 	double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
 
 	// активное сопротивление обмотки возбуждения [4.15]
-	Rfd = lFd / Td01;
+	Rfd = lFd / Tdo1;
 	// активное сопротивление демпферной обмотки d [4.15]
-	double R1d = (lad * lfd / lFd + l1d) / Td02;	
+	double R1d = (lad * lfd / lFd + l1d) / Tdo2;	
 	// активное сопротивление первой демпферной обмотки q [4.42]
-	double R1q = l1Q / Tq02;	
+	double R1q = l1Q / Tqo2;	
 
-	double nTd01(Td01), nTd02(Td02);
-	if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTd01, nTd02))
+	if(Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
 	{
-		Rfd = lFd / nTd01;
-		R1d = l1D / nTd02;
+		double nTdo1(Tdo1), nTdo2(Tdo2);
+		if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTdo1, nTdo2))
+		{
+			Rfd = lFd / nTdo1;
+			R1d = l1D / nTdo2;
+		}
 	}
 
-	//CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Td01, Td02, Rfd, lfd, R1d, l1d);
+	struct ParkParameters
+	{
+		double r1, l1, r2, l2;
+	}
+	NiiptD{ Rfd, lfd, R1d, l1d }, CanayD{ Rfd, lfd, R1d, l1d }, CanayD2{ Rfd, lfd, R1d, l1d };
 
+	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
+	{
+		bRes = false;
+		double Td1(Tdo1), Td2(Tdo2);
+		if (GetShortCircuitTimeConstants_d(Td1, Td2))
+		{
+			if (CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Td1, Td2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
+				bRes = true;
+		}
+	}
+
+	//CDynaGeneratorPark3C::GetAxisParametersCanay(xq, xl, xq1, xq2, Tq01, Tq02, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
+
+	/*
+	// Canay 1983 d-axis
+
+	const double xc = xl;
+	const double xad(xd - xl);
+	const double xdc = xd - xc;
+	const double xdc2 = xd2 - xc;
+
+	Td1 = Tdo1;
+	Td2 = Tdo2;
+
+	if (CDynaGeneratorPark3C::GetShortCircuitTimeConstants(xd, xd1, xd2, Tdo1, Tdo2, Td1, Td2))
+	{
+		double Tdc1(Td1), Tdc2(Td2);
+		double Ac = xdc;
+		double Bc = xc * (Tdo1 + Tdo2) - xd * (Td1 + Td2);
+		double Cc = Tdo1 * Tdo2 * xdc2;
+		MathUtils::CSquareSolver::RootsSortedByAbs(Ac, Bc, Cc, Tdc2, Tdc1);
+		Tdc1 = Tdo1 * Tdo2 * xdc2 / xdc / Tdc2;
+		const double xadxdc(xad / xdc);
+		const double xrc((xc - xl)* xadxdc);
+		const double xdc1 = xdc * (Tdc1 - Tdc2) / (Tdo1 + Tdo2 - (1 + xdc / xdc2) * Tdc2);
+		CanayD2.l2 = xdc1 * xdc2 / (xdc1 - xdc2) * xadxdc * xadxdc;
+		CanayD2.l1 = xdc * xdc1 / (xdc - xdc1) * xadxdc * xadxdc;
+		CanayD2.r1 = CanayD2.l1 / Tdc1;
+		CanayD2.r2 = CanayD2.l2 / Tdc2;
+	}
+
+	std::array<ParkParameters, 3> Axes = { NiiptD, CanayD, CanayD2 };
+	std::array<std::string, 3> AxesNames = { "NiiptD", "CanayD", "CanayD2"};
+	std::string res(GetVerbalName());
+	for (size_t j = 0; j < Axes.size(); j++)
+	{
+		res += ";";
+		res += AxesNames[j];
+		std::array<const double*, 4> ptr = { &Axes[j].r1, &Axes[j].l1, &Axes[j].r2, &Axes[j].l2 };
+		for (size_t i = 0; i < ptr.size(); i++)
+			res += fmt::format(";{}", *ptr[i]);
+	}
+	//Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
+	*/
 
 	lFd = lad + lfd;	// сопротивление обмотки возбуждения
 	l1D = lad + l1d;	// сопротивление демпферной обмотки d
 	l1Q = laq + l1q;	// сопротивление первой демпферной обмотки q
 
-	/*
-	double cTd01(Td01), cTd02(Td02);
-	if (CDynaGeneratorPark3C::GetCanayTimeConstants(lad, lfd, l1d, lrc, cTd01, cTd02))
-	{
-		Rfd = lad / cTd01;
-		R1d = (lad * lfd / lFd + l1d) / cTd02;
-	}
-	*/
-
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
 	double detd(C * C - A * B);
 
 	if (Equal(detd, 0.0))
-		throw dfw2error(fmt::format("detd == 0 for {}", GetVerbalName()));
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParametersForAxisd, GetVerbalName(), detd));
+		bRes = false;
+	}
 	if (Equal(l1Q, 0.0))
-		throw dfw2error(fmt::format("l1Q == 0 for {}", GetVerbalName()));
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetPark3СParametersForAxisq, GetVerbalName(), l1Q));
+		bRes = false;
+	}
 
+	if (bRes)
+	{
+		detd = 1.0 / detd;
 
-	detd = 1.0 / detd;
+		Ed_Psi1q = -laq / l1Q;
 
-	Ed_Psi1q	= -laq / l1Q;
+		Eq_Psifd = -lad * l1d * detd;
+		Eq_Psi1d = -lad * lfd * detd;
 
-	Eq_Psifd	= -lad * l1d * detd;
-	Eq_Psi1d	= -lad * lfd * detd;
+		Psifd_Psifd = Rfd * B * detd;
+		Psifd_Psi1d = -Rfd * C * detd;
+		Psifd_id = -Rfd * lad * l1d * detd;
 
-	Psifd_Psifd	=  Rfd * B * detd;
-	Psifd_Psi1d	= -Rfd * C * detd;
-	Psifd_id	= -Rfd * lad * l1d * detd;
+		Psi1d_Psifd = -R1d * C * detd;
+		Psi1d_Psi1d = R1d * A * detd;
+		Psi1d_id = -R1d * lad * lfd * detd;
 
-	Psi1d_Psifd	= -R1d * C * detd;
-	Psi1d_Psi1d	=  R1d * A * detd;
-	Psi1d_id	= -R1d * lad * lfd * detd;
+		Psi1q_Psi1q = -R1q / l1Q;
+		Psi1q_iq = R1q * laq / l1Q;
 
-	Psi1q_Psi1q	= -R1q / l1Q;
-	Psi1q_iq =     R1q * laq / l1Q;
+		lq2 = xq2;
+		ld2 = xd2;
 
-	lq2 = xq2;
-	ld2 = xd2;
+		Psid_Psifd = -lad * l1d * detd;
+		Psid_Psi1d = -lad * lfd * detd;
+		Psiq_Psi1q = laq / l1Q;
+	}
 
-	Psid_Psifd = -lad * l1d * detd;
-	Psid_Psi1d = -lad * lfd * detd;
-	Psiq_Psi1q =  laq / l1Q;
+	return bRes;
 }
 
 bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
@@ -358,9 +424,9 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztdo1, Tdo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztdo2, Tdo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztqo2, Tqo2, eVARUNITS::VARUNIT_SECONDS);
 }
 
 void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
@@ -369,11 +435,11 @@ void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
 	Validator->AddRule({ CDynaGenerator3C::m_cszxd2,
 						 CDynaGenerator3C::m_cszxq2, 
 						 m_cszxl, 
-						 CDynaGenerator3C::m_csztd01,
-						 CDynaGenerator3C::m_csztd02,
-						 CDynaGenerator3C::m_csztq02 }, &CSerializerValidatorRules::BiggerThanZero);
+						 CDynaGenerator3C::m_csztdo1,
+						 CDynaGenerator3C::m_csztdo2,
+						 CDynaGenerator3C::m_csztqo2 }, &CSerializerValidatorRules::BiggerThanZero);
 
-	Validator->AddRule(m_csztd01, &CDynaGeneratorDQBase::ValidatorTd01);
+	Validator->AddRule(m_csztdo1, &CDynaGeneratorDQBase::ValidatorTdo1);
 	Validator->AddRule(m_cszxd, &CDynaGeneratorDQBase::ValidatorXd);
 	Validator->AddRule(m_cszxq, &CDynaGeneratorDQBase::ValidatorXq);
 	Validator->AddRule(m_cszxq, &CDynaGeneratorPark3C::ValidatorXqXq2);
@@ -481,87 +547,70 @@ bool CDynaGeneratorPark3C::GetAxisParametersUmans(double Xd,
 // I.M. Canay "Modelling of alternating-current machines having multiple rotor circuits", 
 // IEEE Transaction on Energy Conversion, Vol. 9, No. 2, June 1993
 
-bool CDynaGeneratorPark3C::GetAxisParametersCanay(double Xd, 
-	double Xl, 
-	double X1, 
-	double X2, 
-	double Td01, 
-	double Td02, 
+bool CDynaGeneratorPark3C::GetAxisParametersCanay(double x, 
+	double xl, 
+	double x1, 
+	double x2, 
+	double T1, 
+	double T2, 
 	double& r1, 
 	double& l1, 
 	double& r2, 
 	double& l2)
 {
-	double Td1(Td01 * X1 / Xd);
-	double Td2(Td02 * X2 / X1);
-
-
-	CDynaGeneratorPark3C::GetShortCircuitTimeConstants(Xd, X1, X2, Td01, Td02, Td1, Td2);
-
-	const double A0 = Xd / X1 * Td1 + (Xd / X2 - Xd / X1 + 1) * Td2;
-	const double B0 = Xd / X2 * Td1 * Td2;
+	const double A0 = x / x1 * T1 + (x / x2 - x / x1 + 1) * T2;
+	const double B0 = x / x2 * T1 * T2;
 	double root1(0), root2(0);
 	if (MathUtils::CSquareSolver::RootsSortedByAbs(B0, A0, 1, root1, root2))
 	{
-		Td01 = -1 / root1;
-		Td02 = -1 / root2;
+		const double To1 = -1 / root1;
+		const double To2 = -1 / root2;
 
-		const double Xe(-Xl);
-		const double A = Td1 + Td2;
-		const double Ae = 1 / (Xd + Xe) * (Xd * A + Xe * A0);
-		const double Be = (X2 + Xe) / (Xd + Xe) * B0;
+		const double xe(-xl);
+		const double A = T1 + T2;
+		const double Ae = 1 / (x + xe) * (x * A + xe * A0);
+		const double Be = (x2 + xe) / (x + xe) * B0;
 
 		if (MathUtils::CSquareSolver::RootsSortedByAbs(Be, Ae, 1, root1, root2))
 		{
-			const double Tde01 = -1 / root1;
-			const double Tde02 = -1 / root2;
-			const double xde1 = (Xd + Xe) / (1 - (Tde01 - Td01) * (Tde01 - Td02) / (Tde01 * (Tde01 - Tde02)));
-			const double xde2 = (Xd + Xe) * Tde01 * Tde02 / Td01 / Td02;
-			const double deltay1 = 1 / xde1 - 1 / (Xd + Xe);
-			const double deltay2 = 1 / xde2 - 1 / xde1;
-			l1 = 1 / deltay1;	
-			l2 = 1 / deltay2;
-			r1 = l1 / Tde01;
-			r2 = l2 / Tde02;
-			return true;
+			const double Teo1 = -1 / root1;
+			const double Teo2 = -1 / root2;
+			const double xe1 = (x + xe) / (1 - (Teo1 - To1) * (Teo1 - To2) / (Teo1 * (Teo1 - Teo2)));
+			const double xe2 = (x + xe) * Teo1 * Teo2 / To1 / To2;
+			const double deltay1 = 1 / xe1 - 1 / (x + xe);
+			const double deltay2 = 1 / xe2 - 1 / xe1;
+			const double newl1(1 / deltay1), newl2(1 / deltay2), newr1(newl1 / Teo1), newr2(newl2 / Teo2);
+
+			l1 = newl1;
+			l2 = newl2;
+			r1 = newr1;
+			r2 = newr2;
+
+
+			if (std::abs(newr1 - r1) / r1 < 0.2 && std::abs(newr2 - r2) / r2 < 0.2 &&
+				std::abs(newl1 - l1) / l1 < 0.2 && std::abs(newl2 - l2) / l2 < 0.2)
+			{
+				return true;
+			}
+			else
+				return false;
 		}
 	}
 	return false;
 }
 
-bool CDynaGeneratorPark3C::GetAxisParametersCanay(double Xd, double Xl, double X1, double Td01, double& r1, double& l1)
+bool CDynaGeneratorPark3C::GetAxisParametersCanay(double x, double xl, double x1, double T1, double& r1, double& l1)
 {
-	const double Xe(-Xl);
-	const double Td1(Td01 * X1 / Xd);
-	const double Tde1 = 1 / (Xd + Xe) * (Xd * Td1 + Xe * Td01);
-	const double xde1 = (Xd + Xe) * Tde1 / Td01;
-	const double deltay1 = 1 / xde1 - 1 / (Xd + Xe);
+	const double xe(-xl);
+	const double To1(T1 * x / x1);
+	const double Te1 = 1 / (x + xe) * (x * T1 + xe * To1);
+	const double xde1 = (x + xe) * Te1 / To1;
+	const double deltay1 = 1 / xde1 - 1 / (x + xe);
 	l1 = 1 / deltay1;
-	r1 = l1 / Tde1;
+	r1 = l1 / Te1;
 	_CheckNumber(l1);
 	_CheckNumber(r1);
 	return true;
 }
 
-// Расчет постоянных времени КЗ из постоянных времени ХХ
-// I.M. Canay, Determination of model parameters of synchronous machines
-// IEEPROC, Vol. 130, Pt. B, No. 2, MARCH 1983
 
-bool CDynaGeneratorPark3C::GetShortCircuitTimeConstants(double Xd, double X1, double X2, double Td01, double Td02, double& Td1, double& Td2)
-{
-	const double A (1 - Xd / X1 + Xd / X2);
-	const double B(-Td01 - Td02);
-	const double C(Td01 * Td02 * X2 / X1);
-	// мы ожидаем что Td2 < Td1, поэтому берем первый корень из
-	// отсортированных по модулю по возрастанию в качестве T2
-	if (MathUtils::CSquareSolver::RootsSortedByAbs(A, B, C, Td2, Td1))
-	{
-		Td1 = Td01 * Td02 * X2 / Td2 / Xd;
-		// проверяем
-		_ASSERTE(Equal(Td01 + Td02 - Xd / X1 * Td1 - (1 - Xd / X1 + Xd / X2) * Td2, 0.0));
-		_ASSERTE(Equal(Td01 * Td02 - Td1 * Td2 * Xd / X2, 0.0));
-		return true;
-	}
-	else
-		return false;
-}

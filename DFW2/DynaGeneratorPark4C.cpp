@@ -18,7 +18,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::InitModel(CDynaModel* pDynaModel)
 {
-	CalculateFundamentalParameters();
+	if (!CalculateFundamentalParameters(pDynaModel->Parameters().m_eParkParametersDetermination))
+		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+
 	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
 
 	const double omega(1.0 + s);
@@ -73,8 +75,10 @@ VariableIndexRefVec& CDynaGeneratorPark4C::GetVariables(VariableIndexRefVec& Chi
 	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psifd, Psi1d, Psi1q, Psi2q }, ChildVec));
 }
 
-void CDynaGeneratorPark4C::CalculateFundamentalParameters()
+bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method)
 {
+	bool bRes(true);
+
 	// взаимные индуктивности без рассеивания [3.111 и 3.112]
 	lad = xd - xl; 
 	laq = xq - xl;
@@ -99,27 +103,30 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 	double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
 
 	// активное сопротивление обмотки возбуждения [4.15]
-	Rfd = lFd / Td01;
+	Rfd = lFd / Tdo1;
 	// активное сопротивление демпферной обмотки d [4.15]
-	double R1d = (lad * lfd / lFd + l1d) / Td02;	
+	double R1d = (lad * lfd / lFd + l1d) / Tdo2;	
 	// активное сопротивление первой демпферной обмотки q [4.30]
-	double R1q = l1Q / Tq01;	
+	double R1q = l1Q / Tqo1;	
 	// активное сопротивление второй демпферной обмотки q [4.31]
-	double R2q = (laq * l1q / l1Q + l2q) / Tq02;
+	double R2q = (laq * l1q / l1Q + l2q) / Tqo2;
 
-	// методика НИИПТ сводится к расчету новых значений постоянных времени на ХХ
-	double nTd01(Td01), nTd02(Td02);
-	if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTd01, nTd02))
+	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
 	{
-		Rfd = lad / nTd01;
-		R1d = (lad * lfd / lFd + l1d) / nTd02;
-	}
+		// методика НИИПТ сводится к расчету новых значений постоянных времени на ХХ
+		double nTd01(Tdo1), nTd02(Tdo2);
+		if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTd01, nTd02))
+		{
+			Rfd = lad / nTd01;
+			R1d = (lad * lfd / lFd + l1d) / nTd02;
+		}
 
-	double nTq01(Tq01), nTq02(Tq02);
-	if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(laq, l1q, l2q, nTq01, nTq02))
-	{
-		R1q = l1Q / nTq01;
-		R2q = (laq * l1q / l1Q + l2q) / nTq02;
+		double nTqo1(Tqo1), nTqo2(Tqo2);
+		if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(laq, l1q, l2q, nTqo1, nTqo2))
+		{
+			R1q = l1Q / nTqo1;
+			R2q = (laq * l1q / l1Q + l2q) / nTqo2;
+		}
 	}
 
 	/*
@@ -143,13 +150,15 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 		double r1, l1, r2, l2;
 	}
 		NiiptD{ Rfd, lfd, R1d, l1d }, NiiptQ{ R1q, l1q, R2q, l2q },
-		UmansD, UmansQ,
+		/*UmansD, UmansQ,*/
 		CanayD, CanayQ;
 
-	CDynaGeneratorPark3C::GetAxisParametersUmans(xd, xl, xd1, xd2, Td01, Td02, UmansD.r1, UmansD.l1, UmansD.r2, UmansD.l2);
-	CDynaGeneratorPark3C::GetAxisParametersUmans(xq, xl, xq1, xq2, Tq01, Tq02, UmansQ.r1, UmansQ.l1, UmansQ.r2, UmansQ.l2);
-	CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Td01, Td02, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2);
-	CDynaGeneratorPark3C::GetAxisParametersCanay(xq, xl, xq1, xq2, Tq01, Tq02, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
+
+	/*
+	CDynaGeneratorPark3C::GetAxisParametersUmans(xd, xl, xd1, xd2, Tdo1, Tdo2, UmansD.r1, UmansD.l1, UmansD.r2, UmansD.l2);
+	CDynaGeneratorPark3C::GetAxisParametersUmans(xq, xl, xq1, xq2, Tqo1, Tqo2, UmansQ.r1, UmansQ.l1, UmansQ.r2, UmansQ.l2);
+	CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2);
+	CDynaGeneratorPark3C::GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
 
 	std::array<ParkParameters, 6> Axes = { NiiptD, UmansD, CanayD, NiiptQ, UmansQ, CanayQ };
 	std::array<std::string, 6> AxesNames = { "NiiptD", "UmansD", "CanayD", "NiiptQ", "UmansQ", "CanayQ" };
@@ -161,6 +170,28 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 		for (size_t i = 0 ; i < ptr.size() ; i++)
 			res += fmt::format(";{}", *ptr[i]);
 		Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
+	}
+	*/
+
+	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
+	{
+		bRes = false;
+		double Td1(Tdo1), Td2(Tdo2);
+		if (GetShortCircuitTimeConstants_d(Td1, Td2))
+		{
+			if (CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Td1, Td2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
+				bRes = true;
+		}
+		if (bRes)
+		{
+			bRes = false;
+			double Tq1(Tqo1), Tq2(Tqo2);
+			if (GetShortCircuitTimeConstants_q(Tq1, Tq2))
+			{
+				if (CDynaGeneratorPark3C::GetAxisParametersCanay(xq, xl, xq1, xq2, Tq1, Tq2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2))
+					bRes = true;
+			}
+		}
 	}
 
 
@@ -175,41 +206,52 @@ void CDynaGeneratorPark4C::CalculateFundamentalParameters()
 	double detd(C * C - A * B), detq(laq * laq - D * F);
 
 	if (Equal(detd, 0.0))
-		throw dfw2error(fmt::format("detd == 0 for {}", GetVerbalName()));
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParametersForAxisd, GetVerbalName(), detd));
+		bRes = false;
+	}
 	if (Equal(detq, 0.0))
-		throw dfw2error(fmt::format("detq == 0 for {}", GetVerbalName()));
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParametersForAxisq, GetVerbalName(), detq));
+		bRes = false;
+	}
 
-	detd = 1.0 / detd;	detq = 1.0 / detq;
+	if (bRes)
+	{
+		detd = 1.0 / detd;	detq = 1.0 / detq;
 
-	Ed_Psi1q	= laq * l2q * detq;
-	Ed_Psi2q	= laq * l1q * detq;
+		Ed_Psi1q = laq * l2q * detq;
+		Ed_Psi2q = laq * l1q * detq;
 
-	Eq_Psifd	= -lad * l1d * detd;
-	Eq_Psi1d	= -lad * lfd * detd;
+		Eq_Psifd = -lad * l1d * detd;
+		Eq_Psi1d = -lad * lfd * detd;
 
-	Psifd_Psifd	=  Rfd * B * detd;
-	Psifd_Psi1d	= -Rfd * C * detd;
-	Psifd_id	= -Rfd * lad * l1d * detd;
+		Psifd_Psifd = Rfd * B * detd;
+		Psifd_Psi1d = -Rfd * C * detd;
+		Psifd_id = -Rfd * lad * l1d * detd;
 
-	Psi1d_Psifd	= -R1d * C * detd;
-	Psi1d_Psi1d	=  R1d * A * detd;
-	Psi1d_id	= -R1d * lad * lfd * detd;
+		Psi1d_Psifd = -R1d * C * detd;
+		Psi1d_Psi1d = R1d * A * detd;
+		Psi1d_id = -R1d * lad * lfd * detd;
 
-	Psi1q_Psi1q	=  R1q * F * detq;
-	Psi1q_Psi2q = -R1q * laq * detq;
-	Psi1q_iq	= -R1q * laq * l2q * detq;
+		Psi1q_Psi1q = R1q * F * detq;
+		Psi1q_Psi2q = -R1q * laq * detq;
+		Psi1q_iq = -R1q * laq * l2q * detq;
 
-	Psi2q_Psi1q	= -R2q * laq * detq;
-	Psi2q_Psi2q	=  R2q * D * detq;
-	Psi2q_iq	= -R2q * laq * l1q * detq;
+		Psi2q_Psi1q = -R2q * laq * detq;
+		Psi2q_Psi2q = R2q * D * detq;
+		Psi2q_iq = -R2q * laq * l1q * detq;
 
-	lq2 = xq2;
-	ld2 = xd2;
+		lq2 = xq2;
+		ld2 = xd2;
 
-	Psid_Psifd = -lad * l1d * detd;
-	Psid_Psi1d = -lad * lfd * detd;
-	Psiq_Psi1q = -laq * l2q * detq;
-	Psiq_Psi2q = -laq * l1q * detq;
+		Psid_Psifd = -lad * l1d * detd;
+		Psid_Psi1d = -lad * lfd * detd;
+		Psiq_Psi1q = -laq * l2q * detq;
+		Psiq_Psi2q = -laq * l1q * detq;
+	}
+
+	return bRes;
 }
 
 void CDynaGeneratorPark4C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
@@ -425,10 +467,10 @@ void CDynaGeneratorPark4C::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztd02, Td02, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztq01, Tq01, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztq02, Tq02, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztdo1, Tdo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztdo2, Tdo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztqo1, Tqo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztqo2, Tqo2, eVARUNITS::VARUNIT_SECONDS);
 }
 
 void CDynaGeneratorPark4C::UpdateValidator(CSerializerValidatorRules* Validator)
@@ -438,11 +480,11 @@ void CDynaGeneratorPark4C::UpdateValidator(CSerializerValidatorRules* Validator)
 						 m_cszxq1,
 						 m_cszxq2,
 						 m_cszxl,
-						 m_csztd01,
-						 m_csztd02,
-						 m_csztq01,
-						 m_csztq02 }, &CSerializerValidatorRules::BiggerThanZero);
+						 m_csztdo1,
+						 m_csztdo2,
+						 m_csztqo1,
+						 m_csztqo2 }, &CSerializerValidatorRules::BiggerThanZero);
 
-	Validator->AddRule(m_csztd01, &CDynaGeneratorDQBase::ValidatorTd01);
-	Validator->AddRule(m_csztq01, &CDynaGeneratorDQBase::ValidatorTq01);
+	Validator->AddRule(m_csztdo1, &CDynaGeneratorDQBase::ValidatorTdo1);
+	Validator->AddRule(m_csztqo1, &CDynaGeneratorDQBase::ValidatorTqo1);
 }

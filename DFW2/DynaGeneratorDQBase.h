@@ -28,7 +28,7 @@ namespace DFW2
 		};
 
 		double m_ExciterId, Eqnom, Snom, Qnom, Inom, xd;
-		double xd2, xq1, xq2, xl, Td01, Tq01, Td02, Tq02;
+		double xd2, xq1, xq2, xl, Tdo1, Tqo1, Tdo2, Tqo2;
 
 		enum VARS
 		{
@@ -81,17 +81,25 @@ namespace DFW2
 		static constexpr const char* m_cszInom = "Inom";
 		static constexpr const char* m_cszQnom = "Qnom";
 		static constexpr const char* m_cszxd = "xd";
-		static constexpr const char* m_csztd01 = "td01";
-		static constexpr const char* m_csztd02 = "td02";
-		static constexpr const char* m_csztq01 = "tq01";
-		static constexpr const char* m_csztq02 = "tq02";
+		static constexpr const char* m_csztdo1 = "td01";
+		static constexpr const char* m_csztdo2 = "td02";
+		static constexpr const char* m_csztqo1 = "tq01";
+		static constexpr const char* m_csztqo2 = "tq02";
+		static constexpr const char* m_csztd1 = "Td1";
+		static constexpr const char* m_csztd2 = "Td2";
+		static constexpr const char* m_csztq1 = "Tq1";
+		static constexpr const char* m_csztq2 = "Tq2";
 		static constexpr const char* m_cszxd2 = "xd2";
 		static constexpr const char* m_cszxq1 = "xq1";
 		static constexpr const char* m_cszxq2 = "xq2";
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Td02> ValidatorTd01 = { CDynaGeneratorDQBase::m_csztd02 };
-		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tq02> ValidatorTq01 = { CDynaGeneratorDQBase::m_csztq02 };
+		bool GetShortCircuitTimeConstants_d(double& Td1, double& Td2);
+		bool GetShortCircuitTimeConstants_q(double& Tq1, double& Tq2);
+		static bool GetShortCircuitTimeConstants(double x, double x1, double x2, double To1, double To2, double& T1, double& T2);
+		bool CheckTimeConstants(const char* cszTo1, const char* cszT1, const char* cszTo2, const char* cszT2, double To1, double T1, double To2, double T2) const;
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tdo2> ValidatorTdo1 = { CDynaGeneratorDQBase::m_csztdo2 };
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tqo2> ValidatorTqo1 = { CDynaGeneratorDQBase::m_csztqo2 };
 		static inline CValidationRuleBiggerOrEqualT<CDynaGeneratorInfBusBase, &CDynaGeneratorInfBusBase::xd1> ValidatorXd = { CDynaGeneratorInfBusBase::m_cszxd1 };
 		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd2> ValidatorXd1 = { CDynaGeneratorDQBase::m_cszxd2 };
 		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq1> ValidatorXq = { CDynaGeneratorDQBase::m_cszxq1 };

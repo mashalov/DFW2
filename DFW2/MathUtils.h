@@ -1,5 +1,6 @@
 #pragma once
-#include <cmath>
+#include "Header.h"
+
 namespace MathUtils
 {
 	class CSquareSolver
@@ -30,6 +31,9 @@ namespace MathUtils
 					r1 = 2.0 * c / (-b - d);
 				else
 					r2 = 2.0 * c / (-b + d);
+
+				//_ASSERTE(DFW2::Equal(a * r1 * r1 + b * r1 + c, 0.0));
+				//_ASSERTE(DFW2::Equal(a * r2 * r2 + b * r2 + c, 0.0));
 
 				return (d == 0) ? 1 : 2;
 			}

@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DynaGeneratorDQBase.h"
 #include "DynaModel.h"
+#include "MathUtils.h"
 
 using namespace DFW2;
 
@@ -296,4 +297,107 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 		(pDynaModel->*fn)(Delta, 0);
 		(pDynaModel->*fn)(s, 0);
 	}
+}
+
+
+bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants_q(double& Tq1, double& Tq2)
+{
+	if (!CDynaGeneratorDQBase::GetShortCircuitTimeConstants(xq, xq1, xq2, Tqo1, Tqo2, Tq1, Tq2))
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
+			GetVerbalName(),
+			CDynaGeneratorDQBase::m_csztq1,
+			CDynaGeneratorDQBase::m_csztq2,
+			Tq1,
+			Tq2));
+		return false;
+	}
+	return CheckTimeConstants(m_csztqo1, m_csztq1, m_csztqo2, m_csztq2, Tqo1, Tq1, Tqo2, Tq2);
+}
+
+bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants_d(double& Td1, double& Td2)
+{
+	if (!CDynaGeneratorDQBase::GetShortCircuitTimeConstants(xd, xd1, xd2, Tdo1, Tdo2, Td1, Td2))
+	{
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
+			GetVerbalName(),
+			CDynaGeneratorDQBase::m_csztd1,
+			CDynaGeneratorDQBase::m_csztd2,
+			Td1,
+			Td2));
+	}
+	return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, Tdo1, Td1, Tdo2, Td2);
+}
+
+
+// Расчет постоянных времени КЗ из постоянных времени ХХ
+// I.M. Canay, Determination of model parameters of synchronous machines
+// IEEPROC, Vol. 130, Pt. B, No. 2, MARCH 1983
+
+bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(double x, double x1, double x2, double To1, double To2, double& T1, double& T2)
+{
+	_ASSERTE(To1 > To2);
+
+	// по умолчанию рассчитываем аппроксимации постоянных времени
+	// классическим методом
+	T1 = To1 * x1 / x;
+	T2 = To2 * x2 / x1;
+
+	// далее пытаемся уточнить полученные значения
+	// точным методом
+	const double A(1 - x / x1 + x / x2);
+	const double B(-To1 - To2);
+	const double C(To1 * To2 * x2 / x1);
+	// мы ожидаем что Td2 < Td1, поэтому берем первый корень из
+	// отсортированных по модулю по возрастанию в качестве T2
+
+	if (MathUtils::CSquareSolver::RootsSortedByAbs(A, B, C, T2, T1))
+	{
+		// корни есть
+		T1 = To1 * To2 * x2 / T2 / x;
+		// проверяем
+		_ASSERTE(Equal(To1 + To2 - x / x1 * T1 - (1 - x / x1 + x / x2) * T2, 0.0));
+		_ASSERTE(Equal(To1 * To2 - T1 * T2 * x / x2, 0.0));
+		// проверять T1 > T2 будем снаружи
+		return true;
+	}
+	else
+		return false;	// корней нет, можно попытаться работать с аппроксимациями
+}
+
+bool CDynaGeneratorDQBase::CheckTimeConstants(
+	const char* cszTo1,
+	const char* cszT1,
+	const char* cszTo2,
+	const char* cszT2,
+	double To1,
+	double T1,
+	double To2,
+	double T2) const
+{
+	std::array<const char*, 4> names = { cszTo1, cszT1, cszTo2, cszT2 };
+	std::array<const double*, 4> values = { &To1, &T1, &To2, &T2 };
+	std::list<int> badindexes;
+	for (int i = 0; i < names.size() - 1; i++)
+	{
+		if (*values[i] <= *values[i + 1])
+			badindexes.push_back(i);
+	}
+
+	if (badindexes.empty())
+		return true;
+
+	std::string badnames;
+	for (const auto& i : badindexes)
+	{
+		if (!badnames.empty())
+			badnames.append(", ");
+		badnames.append(fmt::format("{}={} <= {}={}", 
+			names[i],
+			*values[i],
+			names[i+1],
+			*values[i+1]));
+	}
+	Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongTimeConstants, GetVerbalName(), fmt::join(names, " > "), badnames));
+	return false;
 }

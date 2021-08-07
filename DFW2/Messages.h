@@ -217,6 +217,11 @@ namespace DFW2
 		static const char* m_cszValidationLessOrEqualThanNamed;
 		static const char* m_cszDiscontinuityProcessing;
 		static const char* m_cszAutomaticScenario;
+		static const char* m_cszCannotConvertShortCircuitConstants;
+		static const char* m_cszWrongTimeConstants;
+		static const char* m_cszCannotGetParkParametersForAxisd;
+		static const char* m_cszCannotGetPark3СParametersForAxisq;
+		static const char* m_cszCannotGetParkParametersForAxisq;
 	};
 }
 

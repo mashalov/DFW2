@@ -108,12 +108,12 @@ bool CDynaGenerator1C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Iq, Eqs,  -r * zsq);
 
 		// dEqs/dEqs
-		pDynaModel->SetElement(Eqs, Eqs, -1.0 / Td01);
+		pDynaModel->SetElement(Eqs, Eqs, -1.0 / Tdo1);
 		// dEqs/dId
-		pDynaModel->SetElement(Eqs, Id, -1.0 / Td01 * (xd - xd1));
+		pDynaModel->SetElement(Eqs, Id, -1.0 / Tdo1 * (xd - xd1));
 		// dEqs/dEqe
 		if (ExtEqe.Indexed())
-			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Td01);
+			pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Tdo1);
 	
 
 		// dS / dS
@@ -165,7 +165,7 @@ bool CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(Id, Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
 		pDynaModel->SetFunction(Iq, Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
 		pDynaModel->SetFunction(Eq, Eq - Eqs + Id * (xd - xd1));
-		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
+		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 		pDynaModel->SetFunctionDiff(s, eS);
 		pDynaModel->SetFunctionDiff(Eqs, eEqs);
@@ -195,7 +195,7 @@ bool CDynaGenerator1C::BuildDerivatives(CDynaModel *pDynaModel)
 
 		double Pairgap = P + (Id*Id + Iq*Iq) * r;
 		double eDelta = pDynaModel->GetOmega0() * s;
-		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Td01;
+		double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1;
 		double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
 		pDynaModel->SetDerivative(s, eS);
 		pDynaModel->SetDerivative(Delta, eDelta);
@@ -275,7 +275,7 @@ void CDynaGenerator1C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
-	Serializer->AddProperty(m_csztd01, Td01, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_csztdo1, Tdo1, eVARUNITS::VARUNIT_SECONDS);
 	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState("zsq", zsq, eVARUNITS::VARUNIT_PU);
 }

@@ -47,7 +47,7 @@ namespace DFW2
 		bool BuildEquations(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
-		void CalculateFundamentalParameters();
+		bool CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method);
 		bool BuildDerivatives(CDynaModel* pDynaModel) override;
 		bool CalculatePower() override;
 		cplx GetEMF() override;

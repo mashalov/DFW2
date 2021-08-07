@@ -124,6 +124,14 @@ namespace DFW2
 		ARSM_DAMPALPHA		// подавление путем коррекции коэффициентов Адамса
 	};
 
+	// метод расчета параметров моделей генераторов Парк
+	enum class PARK_PARAMETERS_DETERMINATION_METHOD
+	{
+		Kundur,
+		Niipt,
+		Canay
+	};
+
 	struct RightVectorTotal
 	{
 		double *pValue;													// значение переменной состояния
