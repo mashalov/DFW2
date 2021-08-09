@@ -300,41 +300,11 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 }
 
 
-bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants_q(double& Tq1, double& Tq2)
-{
-	if (!CDynaGeneratorDQBase::GetShortCircuitTimeConstants(xq, xq1, xq2, Tqo1, Tqo2, Tq1, Tq2))
-	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
-			GetVerbalName(),
-			CDynaGeneratorDQBase::m_csztq1,
-			CDynaGeneratorDQBase::m_csztq2,
-			Tq1,
-			Tq2));
-		return false;
-	}
-	return CheckTimeConstants(m_csztqo1, m_csztq1, m_csztqo2, m_csztq2, Tqo1, Tq1, Tqo2, Tq2);
-}
-
-bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants_d(double& Td1, double& Td2)
-{
-	if (!CDynaGeneratorDQBase::GetShortCircuitTimeConstants(xd, xd1, xd2, Tdo1, Tdo2, Td1, Td2))
-	{
-		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
-			GetVerbalName(),
-			CDynaGeneratorDQBase::m_csztd1,
-			CDynaGeneratorDQBase::m_csztd2,
-			Td1,
-			Td2));
-	}
-	return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, Tdo1, Td1, Tdo2, Td2);
-}
-
-
 // Расчет постоянных времени КЗ из постоянных времени ХХ
 // I.M. Canay, Determination of model parameters of synchronous machines
 // IEEPROC, Vol. 130, Pt. B, No. 2, MARCH 1983
 
-bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(double x, double x1, double x2, double To1, double To2, double& T1, double& T2)
+bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double x1, double x2, double To1, double To2, double& T1, double& T2)
 {
 	_ASSERTE(To1 > To2);
 
@@ -358,11 +328,38 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(double x, double x1, dou
 		// проверяем
 		_ASSERTE(Equal(To1 + To2 - x / x1 * T1 - (1 - x / x1 + x / x2) * T2, 0.0));
 		_ASSERTE(Equal(To1 * To2 - T1 * T2 * x / x2, 0.0));
-		// проверять T1 > T2 будем снаружи
-		return true;
 	}
 	else
-		return false;	// корней нет, можно попытаться работать с аппроксимациями
+	{
+		if (&x == &xd)
+		{
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
+				GetVerbalName(),
+				CDynaGeneratorDQBase::m_csztd1,
+				CDynaGeneratorDQBase::m_csztd2,
+				T1,
+				T2));
+		}
+		else
+		{
+			_ASSERTE(&x == &xq);
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
+				GetVerbalName(),
+				CDynaGeneratorDQBase::m_csztq1,
+				CDynaGeneratorDQBase::m_csztq2,
+				T1,
+				T2));
+		}
+		
+	}
+
+	if(&x == &xd)
+		return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, To1, T1, To2, T2);
+	else
+	{
+		_ASSERTE(&x == &xq);
+		return CheckTimeConstants(m_csztqo1, m_csztq1, m_csztqo2, m_csztq2, To1, T1, To2, T2);
+	}
 }
 
 bool CDynaGeneratorDQBase::CheckTimeConstants(
@@ -401,3 +398,163 @@ bool CDynaGeneratorDQBase::CheckTimeConstants(
 	Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongTimeConstants, GetVerbalName(), fmt::join(names, " > "), badnames));
 	return false;
 }
+
+bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& X,
+	double Xl,
+	double X1,
+	double X2,
+	double To1,
+	double To2,
+	double& r1,
+	double& l1,
+	double& r2,
+	double& l2)
+{
+	bool bRes(true);
+
+	const double la = X - Xl;
+	double denom = la - X1 + Xl;
+	if (Equal(denom, 0.0))
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
+		return false;
+	}
+
+	l1 = la * (X1 - Xl) / denom;
+
+	denom = la * l1 - (X2 - Xl) * (l1 + la);
+
+	if (Equal(denom, 0.0))
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la * l1 - (x2 - xl) * (l1 + la)", denom));
+		return false;
+	}
+
+	l2 = la * l1 * (X2 - Xl) / denom;
+
+	const double L1(la + l1), L2(la + l2);
+
+	r1 = L1 / To1;
+	r2 = (la * l1 / L1 + l2) / To2;
+
+	double nTo1(To1), nTo2(To2);
+
+	const double Ts(To1 + To2), det(0.25 * Ts * Ts - To1 * To2 / (1.0 - la * la/ (la + l1) / (la + l2)));
+	if (det >= 0)
+	{
+		nTo1 = 0.5 * Ts + std::sqrt(det);
+		r1 = L1 / nTo1;
+		r2 = L2 / (Ts - nTo1);
+	}
+	else
+	{
+		/*
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszParkParametersNiiptMethodFailed,
+			GetVerbalName(),
+			"0.25 * Ts * Ts - To1 * To2 / (1.0 - la * la/ (la + l1) / (la + l2))",
+			det));
+		if (CDynaGeneratorDQBase::GetShortCircuitTimeConstants(X, X1, X2, To1, To2, nTo1, nTo2))
+		{
+			r1 = (l1 + la * Xl / X) / nTo1;
+			r2 = (l2 + la * l1 * Xl / (la * l1 + l1 * Xl + la * Xl)) / nTo2;
+		}
+		else
+		{
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
+		}
+		*/
+	}
+	return bRes;
+}
+
+bool CDynaGeneratorDQBase::GetAxisParametersNiipt(double X, double Xl, double X1, double To1, double& r1, double& l1)
+{
+	bool bRes(true);
+	const double la = X - Xl;
+	double denom = la - X1 + Xl;
+	if (Equal(denom, 0.0))
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
+		return false;
+	}
+
+	l1 = la * (X1 - Xl) / denom;
+	r1 = (la + l1) / To1;
+	return bRes;
+}
+
+// Расчет фундаментальных параметров Canay
+// I.M. Canay "Modelling of alternating-current machines having multiple rotor circuits", 
+// IEEE Transaction on Energy Conversion, Vol. 9, No. 2, June 1993
+
+bool CDynaGeneratorDQBase::GetAxisParametersCanay(const double& x,
+	double xl,
+	double x1,
+	double x2,
+	double To1,
+	double To2,
+	double& r1,
+	double& l1,
+	double& r2,
+	double& l2)
+{
+
+	double T1(To1), T2(To2);
+	if (!GetShortCircuitTimeConstants(x, x1, x2, To1, To2, T1, T2))
+		return false;
+	
+	const double A0 = x / x1 * T1 + (x / x2 - x / x1 + 1) * T2;
+	const double B0 = x / x2 * T1 * T2;
+	double root1(0), root2(0);
+	if (MathUtils::CSquareSolver::RootsSortedByAbs(B0, A0, 1, root1, root2))
+	{
+		const double To1 = -1 / root1;
+		const double To2 = -1 / root2;
+
+		const double xe(-xl);
+		const double A = T1 + T2;
+		const double Ae = 1 / (x + xe) * (x * A + xe * A0);
+		const double Be = (x2 + xe) / (x + xe) * B0;
+
+		if (MathUtils::CSquareSolver::RootsSortedByAbs(Be, Ae, 1, root1, root2))
+		{
+			const double Teo1 = -1 / root1;
+			const double Teo2 = -1 / root2;
+			const double xe1 = (x + xe) / (1 - (Teo1 - To1) * (Teo1 - To2) / (Teo1 * (Teo1 - Teo2)));
+			const double xe2 = (x + xe) * Teo1 * Teo2 / To1 / To2;
+			const double deltay1 = 1 / xe1 - 1 / (x + xe);
+			const double deltay2 = 1 / xe2 - 1 / xe1;
+			const double newl1(1 / deltay1), newl2(1 / deltay2), newr1(newl1 / Teo1), newr2(newl2 / Teo2);
+
+			l1 = newl1;
+			l2 = newl2;
+			r1 = newr1;
+			r2 = newr2;
+
+
+			if (std::abs(newr1 - r1) / r1 < 0.2 && std::abs(newr2 - r2) / r2 < 0.2 &&
+				std::abs(newl1 - l1) / l1 < 0.2 && std::abs(newl2 - l2) / l2 < 0.2)
+			{
+				return true;
+			}
+			else
+				return false;
+		}
+	}
+	return false;
+}
+
+bool CDynaGeneratorDQBase::GetAxisParametersCanay(double x, double xl, double x1, double T1, double& r1, double& l1)
+{
+	const double xe(-xl);
+	const double To1(T1 * x / x1);
+	const double Te1 = 1 / (x + xe) * (x * T1 + xe * To1);
+	const double xde1 = (x + xe) * Te1 / To1;
+	const double deltay1 = 1 / xde1 - 1 / (x + xe);
+	l1 = 1 / deltay1;
+	r1 = l1 / Te1;
+	_CheckNumber(l1);
+	_CheckNumber(r1);
+	return true;
+}
+

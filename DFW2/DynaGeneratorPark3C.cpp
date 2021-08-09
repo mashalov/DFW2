@@ -77,65 +77,37 @@ VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& Chi
 bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method)
 {
 	bool bRes(true);
-
-	// взаимные индуктивности без рассеивания [3.111 и 3.112]
-	lad = xd - xl; 
-	laq = xq - xl;
-	// сопротивление утечки обмотки возбуждения [4.29]
-	double denom = lad - xd1 + xl;
-	lfd = Equal(denom,0.0) ? 1E6 : lad * (xd1 - xl) / denom; 
-	denom = laq - xq2 + xl;
-	// для трехконтурной СМ используются другое соотношение между l1q и xq2,
-	// в отличие от четырехкотурной
-	// сопротивление утечки первой демпферной обмотки q [4.42]
-	double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq2 - xl) / denom);
-	// сопротивление утечки демпферной обмотки d [4.28]
-	denom = lad * lfd - (xd2 - xl) * (lfd + lad);
-	double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
-
+	lad = xd - xl;	laq = xq - xl;
+	
 	lrc = 0.0;
 
-	double lFd(lad + lfd);		// сопротивление обмотки возбуждения
-	double l1D(lad + l1d);		// сопротивление демпферной обмотки d
-	double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
-
-	// активное сопротивление обмотки возбуждения [4.15]
-	Rfd = lFd / Tdo1;
-	// активное сопротивление демпферной обмотки d [4.15]
-	double R1d = (lad * lfd / lFd + l1d) / Tdo2;	
-	// активное сопротивление первой демпферной обмотки q [4.42]
-	double R1q = l1Q / Tqo2;	
-
-	if(Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
+	double R1d(0), R1q(0), l1d(0), l1q(0);
+	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
 	{
-		double nTdo1(Tdo1), nTdo2(Tdo2);
-		if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTdo1, nTdo2))
-		{
-			Rfd = lFd / nTdo1;
-			R1d = l1D / nTdo2;
-		}
+		if (!GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
+			return false;
+		if (!GetAxisParametersNiipt(xq, xl, xq2, Tqo2, R1q, l1q))
+			return false;
 	}
 
 	struct ParkParameters
 	{
 		double r1, l1, r2, l2;
 	}
-	NiiptD{ Rfd, lfd, R1d, l1d }, CanayD{ Rfd, lfd, R1d, l1d }, CanayD2{ Rfd, lfd, R1d, l1d };
+		NiiptD{ Rfd, lfd, R1d, l1d }, 
+		NiiptQ{ R1q, l1q, R1q, l1q },
+		CanayD{ Rfd, lfd, R1d, l1d }, 
+		CanayD2{ Rfd, lfd, R1d, l1d }, 
+		CanayQ{ R1q, l1q, R1q, l1q};
 
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
 	{
-		bRes = false;
-		double Td1(Tdo1), Td2(Tdo2);
-		if (GetShortCircuitTimeConstants_d(Td1, Td2))
-		{
-			if (CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Td1, Td2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
-				bRes = true;
-		}
+		if(!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
+			return false;
+		if (!GetAxisParametersCanay(xq, xl, xq2, Tqo2, CanayQ.r1, CanayQ.l1))
+			return false;
 	}
 
-	//CDynaGeneratorPark3C::GetAxisParametersCanay(xq, xl, xq1, xq2, Tq01, Tq02, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
-
-	/*
 	// Canay 1983 d-axis
 
 	const double xc = xl;
@@ -143,8 +115,8 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	const double xdc = xd - xc;
 	const double xdc2 = xd2 - xc;
 
-	Td1 = Tdo1;
-	Td2 = Tdo2;
+	double Td1 = Tdo1;
+	double Td2 = Tdo2;
 
 	if (CDynaGeneratorPark3C::GetShortCircuitTimeConstants(xd, xd1, xd2, Tdo1, Tdo2, Td1, Td2))
 	{
@@ -174,24 +146,23 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 		for (size_t i = 0; i < ptr.size(); i++)
 			res += fmt::format(";{}", *ptr[i]);
 	}
-	//Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
-	*/
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
 
-	lFd = lad + lfd;	// сопротивление обмотки возбуждения
-	l1D = lad + l1d;	// сопротивление демпферной обмотки d
-	l1Q = laq + l1q;	// сопротивление первой демпферной обмотки q
+	double lFd(lad + lfd);		// сопротивление обмотки возбуждения
+	double l1D(lad + l1d);		// сопротивление демпферной обмотки d
+	double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
 
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
 	double detd(C * C - A * B);
 
 	if (Equal(detd, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParametersForAxisd, GetVerbalName(), detd));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, CDynaGeneratorDQBase::m_cszBadCoeeficients, GetVerbalName(), detd));
 		bRes = false;
 	}
 	if (Equal(l1Q, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetPark3СParametersForAxisq, GetVerbalName(), l1Q));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetPark3СParameters, GetVerbalName(), "laq + l1q", l1Q));
 		bRes = false;
 	}
 
@@ -478,139 +449,3 @@ bool CDynaGeneratorPark3C::GetCanayTimeConstants(double Xa, double X1s, double X
 	}
 	return false;
 }
-
-// Пересчет постоянных времени им. НИИПТ
-bool CDynaGeneratorPark3C::GetNIIPTTimeConstants(double Xa, double X1s, double X2s, double& T1, double& T2)
-{
-	const double Ts(T1 + T2), det(0.25 * Ts * Ts - T1 * T2 / (1.0 - Xa * Xa / (Xa + X1s) / (Xa + X2s)));
-	if (det >= 0)
-	{
-		T1 = 0.5 * Ts + std::sqrt(det);
-		T2 = Ts - T1;
-		return true;
-	}
-	return false;
-}
-
-// Расчет фундаментальных  параметров Umans-Mallick 
-// D.Umans, J.A.Mallickand G.L.Wilson, "Modeling of Solid Rotor Turbo-Generators - Part II - Example of Model Derivation and Use in Digital Simulation", 
-// IEEE Transaction on PAS, vol.PAS - 97, no. 1, Jan. / Feb. 1978.
-
-bool CDynaGeneratorPark3C::GetAxisParametersUmans(double Xd,
-	double Xl,
-	double X1,
-	double X2,
-	double Td01,
-	double Td02,
-	double& r1,
-	double& l1,
-	double& r2,
-	double& l2)
-{
-	double Td1(Td01 * X1 / Xd);
-	double Td2(Td02 * X2 / X1);
-
-
-	CDynaGeneratorPark3C::GetShortCircuitTimeConstants(Xd, X1, X2, Td01, Td02, Td1, Td2);
-
-
-	const double Md(Xd - Xl);
-	const double Tdiff = (Td01 + Td02 - Td1 - Td2);
-	const double A = Md * Md / (Xd * Tdiff);
-	const double a = (Xd * (Td1 + Td2) - Xl * (Td01 + Td02)) / Md;
-	const double b = (Xd * Td1 * Td2 - Xl * Td01 * Td02) / Md;
-	const double c = (Td01 * Td02 - Td1 * Td2) / Tdiff;
-	double det = a * a - 4.0 * b;
-	if (det >= 0.0)
-	{
-		det = std::sqrt(det);
-		r1 = 2.0 * A * det / (a - 2.0 * c + det);
-		l1 = r1 * (a + det) / 2.0;
-		r2 = 2.0 * A * det / (2 * c - a + det);
-		l2 = r2 * (a - det) / 2.0;
-
-		// в качестве параметров обмотки возбуждения принимаем
-		// параметры с наибольшей постоянной времени. Должно использоваться
-		// для оси d, но здесь этот же тест используется и для оси q
-		if (std::abs(Xd / r1) < std::abs(Xd / r2))
-		{
-			std::swap(r1, r2);
-			std::swap(l1, l2);
-		}
-
-		return true;
-	}
-	return false;
-}
-
-// Расчет фундаментальных параметров Canay
-// I.M. Canay "Modelling of alternating-current machines having multiple rotor circuits", 
-// IEEE Transaction on Energy Conversion, Vol. 9, No. 2, June 1993
-
-bool CDynaGeneratorPark3C::GetAxisParametersCanay(double x, 
-	double xl, 
-	double x1, 
-	double x2, 
-	double T1, 
-	double T2, 
-	double& r1, 
-	double& l1, 
-	double& r2, 
-	double& l2)
-{
-	const double A0 = x / x1 * T1 + (x / x2 - x / x1 + 1) * T2;
-	const double B0 = x / x2 * T1 * T2;
-	double root1(0), root2(0);
-	if (MathUtils::CSquareSolver::RootsSortedByAbs(B0, A0, 1, root1, root2))
-	{
-		const double To1 = -1 / root1;
-		const double To2 = -1 / root2;
-
-		const double xe(-xl);
-		const double A = T1 + T2;
-		const double Ae = 1 / (x + xe) * (x * A + xe * A0);
-		const double Be = (x2 + xe) / (x + xe) * B0;
-
-		if (MathUtils::CSquareSolver::RootsSortedByAbs(Be, Ae, 1, root1, root2))
-		{
-			const double Teo1 = -1 / root1;
-			const double Teo2 = -1 / root2;
-			const double xe1 = (x + xe) / (1 - (Teo1 - To1) * (Teo1 - To2) / (Teo1 * (Teo1 - Teo2)));
-			const double xe2 = (x + xe) * Teo1 * Teo2 / To1 / To2;
-			const double deltay1 = 1 / xe1 - 1 / (x + xe);
-			const double deltay2 = 1 / xe2 - 1 / xe1;
-			const double newl1(1 / deltay1), newl2(1 / deltay2), newr1(newl1 / Teo1), newr2(newl2 / Teo2);
-
-			l1 = newl1;
-			l2 = newl2;
-			r1 = newr1;
-			r2 = newr2;
-
-
-			if (std::abs(newr1 - r1) / r1 < 0.2 && std::abs(newr2 - r2) / r2 < 0.2 &&
-				std::abs(newl1 - l1) / l1 < 0.2 && std::abs(newl2 - l2) / l2 < 0.2)
-			{
-				return true;
-			}
-			else
-				return false;
-		}
-	}
-	return false;
-}
-
-bool CDynaGeneratorPark3C::GetAxisParametersCanay(double x, double xl, double x1, double T1, double& r1, double& l1)
-{
-	const double xe(-xl);
-	const double To1(T1 * x / x1);
-	const double Te1 = 1 / (x + xe) * (x * T1 + xe * To1);
-	const double xde1 = (x + xe) * Te1 / To1;
-	const double deltay1 = 1 / xde1 - 1 / (x + xe);
-	l1 = 1 / deltay1;
-	r1 = l1 / Te1;
-	_CheckNumber(l1);
-	_CheckNumber(r1);
-	return true;
-}
-
-

@@ -211,6 +211,7 @@ const char* CDFW2Messages::m_cszDiscontinuityProcessing = "t={:15.012f} обра
 const char* CDFW2Messages::m_cszAutomaticScenario = "Автоматика/сценарий";
 const char* CDFW2Messages::m_cszCannotConvertShortCircuitConstants = "{} : невозможен точный расчет постоянных времени {} и {}. Попытка использовать приближенные значения {} и {}";
 const char* CDFW2Messages::m_cszWrongTimeConstants = "\"{}\" : не выполняется условие \"{}\" для значений: {}";
-const char* CDFW2Messages::m_cszCannotGetParkParametersForAxisd = "\"{}\" : невозможно определение параметров модели Парка 4К: (lad + lrc)^2 - (lad + lrc + lfd) * (lad + lrc + l1d) = {}";
-const char* CDFW2Messages::m_cszCannotGetParkParametersForAxisq = "\"{}\" : невозможно определение параметров модели Парка 4К: laq^2 - (laq + l1q) * (laq + l2q) = {}";
-const char* CDFW2Messages::m_cszCannotGetPark3СParametersForAxisq = "\"{}\" : невозможно определение параметров модели Парка 3К: laq + l1q = {}";
+const char* CDFW2Messages::m_cszCannotGetParkParameters = "\"{}\" : невозможно определение параметров модели Парка 4К: {} = {}";
+const char* CDFW2Messages::m_cszCannotGetPark3СParameters = "\"{}\" : невозможно определение параметров модели Парка 3К: {} = {}";
+const char* CDFW2Messages::m_cszParkParametersNiiptMethodFailed = "\"{}\" : метод определения параметров модели Парка 4К НИИПТ неприменим {} = {} < 0";
+const char* CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed = "\"{}\" : метод определения параметров модели Парка 4К НИИПТ+ неприменим";

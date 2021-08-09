@@ -113,20 +113,10 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
 	{
-		// методика НИИПТ сводится к расчету новых значений постоянных времени на ХХ
-		double nTd01(Tdo1), nTd02(Tdo2);
-		if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(lad, lfd, l1d, nTd01, nTd02))
-		{
-			Rfd = lad / nTd01;
-			R1d = (lad * lfd / lFd + l1d) / nTd02;
-		}
-
-		double nTqo1(Tqo1), nTqo2(Tqo2);
-		if (CDynaGeneratorPark3C::GetNIIPTTimeConstants(laq, l1q, l2q, nTqo1, nTqo2))
-		{
-			R1q = l1Q / nTqo1;
-			R2q = (laq * l1q / l1Q + l2q) / nTqo2;
-		}
+		if (GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
+			return false;
+		if (GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R1q, l1q))
+			return false;
 	}
 
 	/*
@@ -175,23 +165,8 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
 	{
-		bRes = false;
-		double Td1(Tdo1), Td2(Tdo2);
-		if (GetShortCircuitTimeConstants_d(Td1, Td2))
-		{
-			if (CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Td1, Td2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
-				bRes = true;
-		}
-		if (bRes)
-		{
-			bRes = false;
-			double Tq1(Tqo1), Tq2(Tqo2);
-			if (GetShortCircuitTimeConstants_q(Tq1, Tq2))
-			{
-				if (CDynaGeneratorPark3C::GetAxisParametersCanay(xq, xl, xq1, xq2, Tq1, Tq2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2))
-					bRes = true;
-			}
-		}
+		GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2);
+		GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
 	}
 
 
@@ -207,12 +182,12 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (Equal(detd, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParametersForAxisd, GetVerbalName(), detd));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), CDynaGeneratorDQBase::m_cszBadCoeeficients, detd));
 		bRes = false;
 	}
 	if (Equal(detq, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParametersForAxisq, GetVerbalName(), detq));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "laq^2 - (laq + l1q) * (laq + l2q)", detq));
 		bRes = false;
 	}
 

@@ -92,12 +92,18 @@ namespace DFW2
 		static constexpr const char* m_cszxd2 = "xd2";
 		static constexpr const char* m_cszxq1 = "xq1";
 		static constexpr const char* m_cszxq2 = "xq2";
+
+		static constexpr const char* m_cszBadCoeeficients = "(lad + lrc)^2 - (lad + lrc + lfd) * (lad + lrc + l1d)";
+
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		bool GetShortCircuitTimeConstants_d(double& Td1, double& Td2);
-		bool GetShortCircuitTimeConstants_q(double& Tq1, double& Tq2);
-		static bool GetShortCircuitTimeConstants(double x, double x1, double x2, double To1, double To2, double& T1, double& T2);
+		bool GetAxisParametersNiipt(const double& X, double Xl, double X1, double X2, double To1, double To2, double& r1, double& l1, double& r2, double& l2);
+		bool GetAxisParametersNiipt(double X, double xl, double x2, double To2, double& r1, double& l1);
+		bool GetAxisParametersCanay(const double& x, double xl, double x1, double x2, double To1, double To2, double& r1, double& l1, double& r2, double& l2);
+		bool GetAxisParametersCanay(double X, double xl, double x2, double To2, double& r1, double& l1);
+		bool GetShortCircuitTimeConstants(const double& x, double x1, double x2, double To1, double To2, double& T1, double& T2);
 		bool CheckTimeConstants(const char* cszTo1, const char* cszT1, const char* cszTo2, const char* cszT2, double To1, double T1, double To2, double T2) const;
+
 		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tdo2> ValidatorTdo1 = { CDynaGeneratorDQBase::m_csztdo2 };
 		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tqo2> ValidatorTqo1 = { CDynaGeneratorDQBase::m_csztqo2 };
 		static inline CValidationRuleBiggerOrEqualT<CDynaGeneratorInfBusBase, &CDynaGeneratorInfBusBase::xd1> ValidatorXd = { CDynaGeneratorInfBusBase::m_cszxd1 };
