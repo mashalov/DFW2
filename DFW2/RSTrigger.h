@@ -24,6 +24,9 @@ namespace DFW2
 		const char* GetVerbalName() noexcept  override { return "RS-Триггер"; }
 		static size_t PrimitiveSize() noexcept { return sizeof(CRSTrigger); }
 		static long EquationsCount()  noexcept { return 1; }
+		bool UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR& Parameters) override;
+		bool GetResetPriority() const;
+		void SetResetPriority(bool bResetPriority);
 	};
 }
 

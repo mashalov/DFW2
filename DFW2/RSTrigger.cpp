@@ -44,3 +44,22 @@ eDEVICEFUNCTIONSTATUS CRSTrigger::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
+
+bool CRSTrigger::UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR& Parameters)
+{
+	double dResetPriority(1.0);
+	// по умолчанию приоритет имеет вход Reset
+	CDynaPrimitive::UnserializeParameters({ { dResetPriority, 1.0 } }, Parameters);
+	m_bResetPriority = dResetPriority > 0;
+	return true;
+}
+
+bool CRSTrigger::GetResetPriority() const
+{
+	return m_bResetPriority;
+}
+
+void CRSTrigger::SetResetPriority(bool bResetPriority)
+{
+	m_bResetPriority = bResetPriority;
+}

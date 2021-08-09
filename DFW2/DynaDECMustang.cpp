@@ -15,7 +15,12 @@ CDynaDECMustang::CDynaDECMustang() : CDevice(),
 	EnfTrigger(*this, { EnforceTrigOut }, { EnforceOffOut, EnforceOnOut }),
 	DefTrigger(*this, { DeforceTrigOut }, { DeforceOffOut, DeforceOnOut })
 {
+	// для триггеров ставим приоритет на Set, так как через него
+	// работает реле запуска форсировки/дефорсировки. При одинаковых
+	// уставках ввода/снятия это позволяет правильно выбирать режим работы
 
+	EnfTrigger.SetResetPriority(false);
+	DefTrigger.SetResetPriority(false);
 }
 
 
