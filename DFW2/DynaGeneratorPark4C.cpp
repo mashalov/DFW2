@@ -78,44 +78,16 @@ VariableIndexRefVec& CDynaGeneratorPark4C::GetVariables(VariableIndexRefVec& Chi
 bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method)
 {
 	bool bRes(true);
-
-	// взаимные индуктивности без рассеивания [3.111 и 3.112]
-	lad = xd - xl; 
-	laq = xq - xl;
-	// сопротивление утечки обмотки возбуждения [4.29]
-	double denom = lad - xd1 + xl;
-	lfd = Equal(denom,0.0) ? 1E6 : lad * (xd1 - xl) / denom; 
-	denom = laq - xq1 + xl;
-	// сопротивление утечки первой демпферной обмотки q [4.33]
-	double l1q(Equal(denom, 0.0) ?  1E6 :laq * (xq1 - xl) / denom);
-	// сопротивление утечки демпферной обмотки d [4.28]
-	denom = lad * lfd - (xd2 - xl) * (lfd + lad);
-	double l1d(Equal(denom, 0.0) ? 1E6 : lad * lfd * (xd2 - xl) / denom );
-	// сопротивление утечки второй демпферной обмотки q [4.32]
-	denom = laq * l1q - (xq2 - xl) * ( l1q + laq );
-	double l2q(Equal(denom, 0.0) ? 1E6 : laq * l1q * (xq2 - xl) / denom);
+	lad = xd - xl;	laq = xq - xl;
 
 	lrc = 0.0;
 
-	double lFd(lad + lfd);		// сопротивление обмотки возбуждения
-	double l1D(lad + l1d);		// сопротивление демпферной обмотки d
-	double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
-	double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
-
-	// активное сопротивление обмотки возбуждения [4.15]
-	Rfd = lFd / Tdo1;
-	// активное сопротивление демпферной обмотки d [4.15]
-	double R1d = (lad * lfd / lFd + l1d) / Tdo2;	
-	// активное сопротивление первой демпферной обмотки q [4.30]
-	double R1q = l1Q / Tqo1;	
-	// активное сопротивление второй демпферной обмотки q [4.31]
-	double R2q = (laq * l1q / l1Q + l2q) / Tqo2;
-
+	double R1d(0), l1d(0), R1q(0), R2q(0), l1q(0), l2q(0);
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
 	{
-		if (GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
+		if(!GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
 			return false;
-		if (GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R1q, l1q))
+		if(!GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R2q, l2q))
 			return false;
 	}
 
@@ -165,15 +137,17 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
 	{
-		GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2);
-		GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
+		if(!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
+			return false;
+		if(!GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2))
+			return false;
 	}
 
 
-	lFd = (lad + lfd);		// сопротивление обмотки возбуждения
-	l1D = (lad + l1d);		// сопротивление демпферной обмотки d
-	l1Q = (laq + l1q);		// сопротивление первой демпферной обмотки q
-	l2Q = (laq + l2q);		// сопротивление второй демпферной обмотки q
+	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
+	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
+	const double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
+	const double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
 
 
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);

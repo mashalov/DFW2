@@ -104,35 +104,8 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	{
 		if(!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
 			return false;
-		if (!GetAxisParametersCanay(xq, xl, xq2, Tqo2, CanayQ.r1, CanayQ.l1))
+		if(!GetAxisParametersCanay(xq, xl, xq2, Tqo2, CanayQ.r1, CanayQ.l1))
 			return false;
-	}
-
-	// Canay 1983 d-axis
-
-	const double xc = xl;
-	const double xad(xd - xl);
-	const double xdc = xd - xc;
-	const double xdc2 = xd2 - xc;
-
-	double Td1 = Tdo1;
-	double Td2 = Tdo2;
-
-	if (CDynaGeneratorPark3C::GetShortCircuitTimeConstants(xd, xd1, xd2, Tdo1, Tdo2, Td1, Td2))
-	{
-		double Tdc1(Td1), Tdc2(Td2);
-		double Ac = xdc;
-		double Bc = xc * (Tdo1 + Tdo2) - xd * (Td1 + Td2);
-		double Cc = Tdo1 * Tdo2 * xdc2;
-		MathUtils::CSquareSolver::RootsSortedByAbs(Ac, Bc, Cc, Tdc2, Tdc1);
-		Tdc1 = Tdo1 * Tdo2 * xdc2 / xdc / Tdc2;
-		const double xadxdc(xad / xdc);
-		const double xrc((xc - xl)* xadxdc);
-		const double xdc1 = xdc * (Tdc1 - Tdc2) / (Tdo1 + Tdo2 - (1 + xdc / xdc2) * Tdc2);
-		CanayD2.l2 = xdc1 * xdc2 / (xdc1 - xdc2) * xadxdc * xadxdc;
-		CanayD2.l1 = xdc * xdc1 / (xdc - xdc1) * xadxdc * xadxdc;
-		CanayD2.r1 = CanayD2.l1 / Tdc1;
-		CanayD2.r2 = CanayD2.l2 / Tdc2;
 	}
 
 	std::array<ParkParameters, 3> Axes = { NiiptD, CanayD, CanayD2 };
@@ -148,9 +121,9 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	}
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
 
-	double lFd(lad + lfd);		// сопротивление обмотки возбуждения
-	double l1D(lad + l1d);		// сопротивление демпферной обмотки d
-	double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
+	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
+	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
+	const double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
 
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
 	double detd(C * C - A * B);
@@ -449,3 +422,33 @@ bool CDynaGeneratorPark3C::GetCanayTimeConstants(double Xa, double X1s, double X
 	}
 	return false;
 }
+
+
+/*
+// Canay 1983 d-axis
+
+const double xc = xl;
+const double xad(xd - xl);
+const double xdc = xd - xc;
+const double xdc2 = xd2 - xc;
+
+double Td1 = Tdo1;
+double Td2 = Tdo2;
+
+if (CDynaGeneratorPark3C::GetShortCircuitTimeConstants(xd, xd1, xd2, Tdo1, Tdo2, Td1, Td2))
+{
+	double Tdc1(Td1), Tdc2(Td2);
+	double Ac = xdc;
+	double Bc = xc * (Tdo1 + Tdo2) - xd * (Td1 + Td2);
+	double Cc = Tdo1 * Tdo2 * xdc2;
+	MathUtils::CSquareSolver::RootsSortedByAbs(Ac, Bc, Cc, Tdc2, Tdc1);
+	Tdc1 = Tdo1 * Tdo2 * xdc2 / xdc / Tdc2;
+	const double xadxdc(xad / xdc);
+	const double xrc((xc - xl)* xadxdc);
+	const double xdc1 = xdc * (Tdc1 - Tdc2) / (Tdo1 + Tdo2 - (1 + xdc / xdc2) * Tdc2);
+	CanayD2.l2 = xdc1 * xdc2 / (xdc1 - xdc2) * xadxdc * xadxdc;
+	CanayD2.l1 = xdc * xdc1 / (xdc - xdc1) * xadxdc * xadxdc;
+	CanayD2.r1 = CanayD2.l1 / Tdc1;
+	CanayD2.r2 = CanayD2.l2 / Tdc2;
+}
+*/
