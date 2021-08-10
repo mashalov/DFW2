@@ -81,35 +81,59 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	
 	lrc = 0.0;
 
-	double R1d(0), R1q(0), l1d(0), l1q(0);
-	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
-	{
-		if (!GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
-			return false;
-		if (!GetAxisParametersNiipt(xq, xl, xq2, Tqo2, R1q, l1q))
-			return false;
-	}
-
 	struct ParkParameters
 	{
 		double r1, l1, r2, l2;
 	}
-		NiiptD{ Rfd, lfd, R1d, l1d }, 
-		NiiptQ{ R1q, l1q, R1q, l1q },
-		CanayD{ Rfd, lfd, R1d, l1d }, 
-		CanayD2{ Rfd, lfd, R1d, l1d }, 
-		CanayQ{ R1q, l1q, R1q, l1q};
+	NiiptD{}, NiiptQ{}, CanayD{}, CanayQ{};
+
+
+	double R1d(0), R1q(0), l1d(0), l1q(0);
+	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
+	{
+		if (!GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, NiiptD.r1, NiiptD.l1, NiiptD.r2, NiiptD.l2))
+			return false;
+		if (!GetAxisParametersNiipt(xq, xl, xq2, Tqo2, NiiptQ.r1, NiiptQ.l1))
+			return false;
+
+		Rfd = CanayD.r1;
+		lfd = CanayD.l1;
+		R1d = CanayD.r1;
+		l1d = CanayD.l2;
+		R1q = CanayQ.r1;
+		l1q = CanayQ.l1;
+	}
 
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
 	{
+		
+		/*
+		xd = 1.77;
+		xl = 0.17;
+		xd1 = 0.329;
+		xd2 = 0.253;
+		Tdo1 = 4.316475;
+		Tdo2 = 0.374677;
+		Td1 = 0.828745;
+		Td2 = 0.054969;
+		*/
+
 		if(!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
 			return false;
 		if(!GetAxisParametersCanay(xq, xl, xq2, Tqo2, CanayQ.r1, CanayQ.l1))
 			return false;
+
+		Rfd = CanayD.r1;
+		lfd = CanayD.l1;
+		R1d = CanayD.r1;
+		l1d = CanayD.l2;
+		R1q = CanayQ.r1;
+		l1q = CanayQ.l1;
+
 	}
 
-	std::array<ParkParameters, 3> Axes = { NiiptD, CanayD, CanayD2 };
-	std::array<std::string, 3> AxesNames = { "NiiptD", "CanayD", "CanayD2"};
+	std::array<ParkParameters, 4> Axes = { NiiptD, CanayD, NiiptQ, CanayQ};
+	std::array<std::string, 4> AxesNames = { "NiiptD", "CanayD", "NiiptQ", "CanayQ"};
 	std::string res(GetVerbalName());
 	for (size_t j = 0; j < Axes.size(); j++)
 	{
@@ -392,37 +416,6 @@ void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
 	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq);
 	Validator->AddRule(m_cszr, &CSerializerValidatorRules::NonNegative);
 }
-
-
-bool CDynaGeneratorPark3C::GetCanayTimeConstants(double Xa, double X1s, double X2s, double Xrc, double& T1, double& T2)
-{
-	auto K12 = [](double Xa, double X1s, double X2s, double X12)
-	{
-		std::optional<double> ret;
-		const double Mult((Xa + X1s) * (Xa + X2s));
-		if (!Equal(Mult, 0.0))
-			ret = 1.0 / Mult * (Mult - X12 * X12);
-		return ret;
-	};
-
-	if (const auto k12(K12(Xa, Xrc + X1s, Xrc + X2s, Xa + Xrc)); k12.has_value())
-	{
-		const double A0(T1 + T2), B0(k12.value() * T1 * T2);
-		double r1(0.0), r2(0.0);
-		if (MathUtils::CSquareSolver::Roots(B0, A0, 1.0, r1, r2))
-		{
-			if (std::abs(r1) > std::abs(r2))
-				std::swap(r1, r2);
-
-			T1 = -1.0 / r1;
-			T2 = -1.0 / r2;
-
-			return true;
-		}
-	}
-	return false;
-}
-
 
 /*
 // Canay 1983 d-axis

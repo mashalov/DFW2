@@ -300,11 +300,84 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 }
 
 
+bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, double x1, double x2, double xrc, double& To1, double& To2, double& T1, double& T2)
+{
+	bool bRes(false);
+	auto K12 = [](double xa, double x1, double x2, double x12)
+	{
+		std::optional<double> ret;
+		const double Mult((xa + x1) * (xa + x2));
+		if (!Equal(Mult, 0.0))
+			ret = 1.0 / Mult * (Mult - x12 * x12);
+		return ret;
+	};
+
+	double xa(x - xl);
+
+	if (const auto k12(K12(xa, xrc + x1, xrc + x2, xa + xrc)); k12.has_value())
+	{
+		double A0(To1 + To2), B0(k12.value() * To1 * To2);
+		double r1(0.0), r2(0.0);
+		if (MathUtils::CSquareSolver::RootsSortedByAbs(B0, A0, 1.0, r1, r2))
+		{
+			To1 = -1.0 / r1;
+			To2 = -1.0 / r2;
+
+			xa *= xl / x;
+			if (const auto k12(K12(xa, xrc + x1, xrc + x2, xa + xrc)); k12.has_value())
+			{
+				A0 = T1 + T2;
+				B0 = k12.value() * T1 * T2;
+				if (MathUtils::CSquareSolver::RootsSortedByAbs(B0, A0, 1.0, r1, r2))
+				{
+					T1 = -1.0 / r1;
+					T2 = -1.0 / r2;
+					bRes = true;
+				}
+			}
+		}
+	}
+
+	if (bRes)
+	{
+		if (&x == &xd)
+			return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, To1, T1, To2, T2);
+		else
+		{
+			_ASSERTE(&x == &xq);
+			return CheckTimeConstants(m_csztqo1, m_csztq1, m_csztqo2, m_csztq2, To1, T1, To2, T2);
+		}
+	}
+	else 
+		if (&x == &xd)
+		{
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
+				GetVerbalName(),
+				CDynaGeneratorDQBase::m_csztd1,
+				CDynaGeneratorDQBase::m_csztd2,
+				T1,
+				T2));
+		}
+		else
+		{
+			_ASSERTE(&x == &xq);
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
+				GetVerbalName(),
+				CDynaGeneratorDQBase::m_csztq1,
+				CDynaGeneratorDQBase::m_csztq2,
+				T1,
+				T2));
+		}
+
+
+	return bRes;
+}
+
 // Расчет постоянных времени КЗ из постоянных времени ХХ
 // I.M. Canay, Determination of model parameters of synchronous machines
 // IEEPROC, Vol. 130, Pt. B, No. 2, MARCH 1983
 
-bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double x1, double x2, double To1, double To2, double& T1, double& T2)
+bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double xl, double x1, double x2, double To1, double To2, double& T1, double& T2)
 {
 	_ASSERTE(To1 > To2);
 
@@ -352,7 +425,7 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 		}
 		
 	}
-
+	
 	if(&x == &xd)
 		return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, To1, T1, To2, T2);
 	else
@@ -399,10 +472,10 @@ bool CDynaGeneratorDQBase::CheckTimeConstants(
 	return false;
 }
 
-bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& X,
-	double Xl,
-	double X1,
-	double X2,
+bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
+	double xl,
+	double x1,
+	double x2,
 	double To1,
 	double To2,
 	double& r1,
@@ -412,17 +485,17 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& X,
 {
 	bool bRes(true);
 
-	const double la = X - Xl;
-	double denom = la - X1 + Xl;
+	const double la = x - xl;
+	double denom = la - x1 + xl;
 	if (Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
 		return false;
 	}
 
-	l1 = la * (X1 - Xl) / denom;
+	l1 = la * (x1 - xl) / denom;
 
-	denom = la * l1 - (X2 - Xl) * (l1 + la);
+	denom = la * l1 - (x2 - xl) * (l1 + la);
 
 	if (Equal(denom, 0.0))
 	{
@@ -430,7 +503,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& X,
 		return false;
 	}
 
-	l2 = la * l1 * (X2 - Xl) / denom;
+	l2 = la * l1 * (x2 - xl) / denom;
 
 	const double L1(la + l1), L2(la + l2);
 
@@ -453,32 +526,33 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& X,
 			GetVerbalName(),
 			"0.25 * Ts * Ts - To1 * To2 / (1.0 - la * la/ (la + l1) / (la + l2))",
 			det));
-		if (CDynaGeneratorDQBase::GetShortCircuitTimeConstants(X, X1, X2, To1, To2, nTo1, nTo2))
+		if (CDynaGeneratorDQBase::GetShortCircuitTimeConstants(x, xl, x1, x2, To1, To2, nTo1, nTo2))
 		{
-			r1 = (l1 + la * Xl / X) / nTo1;
-			r2 = (l2 + la * l1 * Xl / (la * l1 + l1 * Xl + la * Xl)) / nTo2;
+			r1 = (l1 + la * xl / x) / nTo1;
+			r2 = (l2 + la * l1 * xl / (la * l1 + l1 * xl + la * xl)) / nTo2;
 		}
 		else
 		{
 			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
 		}
 		*/
+		
 	}
 	return bRes;
 }
 
-bool CDynaGeneratorDQBase::GetAxisParametersNiipt(double X, double Xl, double X1, double To1, double& r1, double& l1)
+bool CDynaGeneratorDQBase::GetAxisParametersNiipt(double x, double xl, double x1, double To1, double& r1, double& l1)
 {
 	bool bRes(true);
-	const double la = X - Xl;
-	double denom = la - X1 + Xl;
+	const double la = x - xl;
+	double denom = la - x1 + xl;
 	if (Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
 		return false;
 	}
 
-	l1 = la * (X1 - Xl) / denom;
+	l1 = la * (x1 - xl) / denom;
 	r1 = (la + l1) / To1;
 	return bRes;
 }
@@ -500,8 +574,12 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(const double& x,
 {
 
 	double T1(To1), T2(To2);
-	if (!GetShortCircuitTimeConstants(x, x1, x2, To1, To2, T1, T2))
+	
+	if (!GetShortCircuitTimeConstants(x, xl, x1, x2, To1, To2, T1, T2))
 		return false;
+
+	/*if (!GetCanayTimeConstants(x, xl, x1, x2, xrc, To1, To2, T1, T2))
+		return false;*/
 	
 	const double A0 = x / x1 * T1 + (x / x2 - x / x1 + 1) * T2;
 	const double B0 = x / x2 * T1 * T2;
