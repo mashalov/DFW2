@@ -75,6 +75,7 @@ VariableIndexRefVec& CDynaGeneratorPark4C::GetVariables(VariableIndexRefVec& Chi
 	return CDynaGeneratorDQBase::GetVariables(JoinVariables({ Psifd, Psi1d, Psi1q, Psi2q }, ChildVec));
 }
 
+
 bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method)
 {
 	bool bRes(true);
@@ -107,41 +108,16 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	// Методики Umans&Mallick и Canay дают фундаментальные параметры из стандартных
 
-	struct ParkParameters 
-	{
-		double r1, l1, r2, l2;
-	}
-		NiiptD{ Rfd, lfd, R1d, l1d }, NiiptQ{ R1q, l1q, R2q, l2q },
-		/*UmansD, UmansQ,*/
-		CanayD, CanayQ;
-
-
-	/*
-	CDynaGeneratorPark3C::GetAxisParametersUmans(xd, xl, xd1, xd2, Tdo1, Tdo2, UmansD.r1, UmansD.l1, UmansD.r2, UmansD.l2);
-	CDynaGeneratorPark3C::GetAxisParametersUmans(xq, xl, xq1, xq2, Tqo1, Tqo2, UmansQ.r1, UmansQ.l1, UmansQ.r2, UmansQ.l2);
-	CDynaGeneratorPark3C::GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2);
-	CDynaGeneratorPark3C::GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
-
-	std::array<ParkParameters, 6> Axes = { NiiptD, UmansD, CanayD, NiiptQ, UmansQ, CanayQ };
-	std::array<std::string, 6> AxesNames = { "NiiptD", "UmansD", "CanayD", "NiiptQ", "UmansQ", "CanayQ" };
-	for (size_t j = 0 ; j < Axes.size() ; j++)
-	{
-		//std::array<std::string, 4> names = {"r1", "l1", "r2", "l2"};
-		std::array<const double*, 4> ptr = { &Axes[j].r1, &Axes[j].l1, &Axes[j].r2, &Axes[j].l2 };
-		std::string res(AxesNames[j]);
-		for (size_t i = 0 ; i < ptr.size() ; i++)
-			res += fmt::format(";{}", *ptr[i]);
-		Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
-	}
-	*/
 
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
 	{
-		if(!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
+		if(!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
 			return false;
-		if(!GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2))
+		if(!GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R2q, l2q))
 			return false;
 	}
+
+	CompareParksParameterCalculation();
 
 
 	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения

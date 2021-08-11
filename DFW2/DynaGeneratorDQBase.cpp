@@ -636,3 +636,42 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(double x, double xl, double x1
 	return true;
 }
 
+void CDynaGeneratorDQBase::CompareParksParameterCalculation()
+{
+	struct ParkParameters
+	{
+		double r1 = 0, l1 = 0, r2 = 0, l2 = 0;
+	}
+	NiiptD{}, NiiptQ{ }, CanayD{}, CanayQ{};
+
+	GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, NiiptD.r1, NiiptD.l1, NiiptD.r2, NiiptD.l2);
+	GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2);
+
+	switch (GetType())
+	{
+	case eDFW2DEVICETYPE::DEVTYPE_GEN_PARK3C:
+		GetAxisParametersNiipt(xq, xl, xq2, Tqo2, NiiptQ.r1, NiiptQ.l1);
+		GetAxisParametersCanay(xq, xl, xq2, Tqo2, NiiptQ.r1, NiiptQ.l1);
+		break;
+	case eDFW2DEVICETYPE::DEVTYPE_GEN_PARK4C:
+		GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, NiiptQ.r1, NiiptQ.l1, NiiptQ.r2, NiiptQ.l2);
+		GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
+		break;
+	default:
+		_ASSERTE(0);
+		break;
+	}
+
+	std::array<ParkParameters, 4> Axes = { NiiptD, CanayD, NiiptQ, CanayQ };
+	std::array<std::string, 4> AxesNames = { "NiiptD", "CanayD", "NiiptQ", "CanayQ" };
+	std::string res(GetVerbalName());
+	for (size_t j = 0; j < Axes.size(); j++)
+	{
+		res += ";";
+		res += AxesNames[j];
+		std::array<const double*, 4> ptr = { &Axes[j].r1, &Axes[j].l1, &Axes[j].r2, &Axes[j].l2 };
+		for (size_t i = 0; i < ptr.size(); i++)
+			res += fmt::format(";{}", *ptr[i]);
+	}
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
+}

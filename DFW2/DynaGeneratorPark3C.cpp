@@ -81,69 +81,25 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	
 	lrc = 0.0;
 
-	struct ParkParameters
-	{
-		double r1, l1, r2, l2;
-	}
-	NiiptD{}, NiiptQ{}, CanayD{}, CanayQ{};
-
 
 	double R1d(0), R1q(0), l1d(0), l1q(0);
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
 	{
-		if (!GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, NiiptD.r1, NiiptD.l1, NiiptD.r2, NiiptD.l2))
+		if (!GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
 			return false;
-		if (!GetAxisParametersNiipt(xq, xl, xq2, Tqo2, NiiptQ.r1, NiiptQ.l1))
+		if (!GetAxisParametersNiipt(xq, xl, xq2, Tqo2, R1q, l1q))
 			return false;
-
-		Rfd = CanayD.r1;
-		lfd = CanayD.l1;
-		R1d = CanayD.r1;
-		l1d = CanayD.l2;
-		R1q = CanayQ.r1;
-		l1q = CanayQ.l1;
 	}
 
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
 	{
-		
-		/*
-		xd = 1.77;
-		xl = 0.17;
-		xd1 = 0.329;
-		xd2 = 0.253;
-		Tdo1 = 4.316475;
-		Tdo2 = 0.374677;
-		Td1 = 0.828745;
-		Td2 = 0.054969;
-		*/
-
-		if(!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2))
+		if (!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
 			return false;
-		if(!GetAxisParametersCanay(xq, xl, xq2, Tqo2, CanayQ.r1, CanayQ.l1))
+		if (!GetAxisParametersCanay(xq, xl, xq2, Tqo2, R1q, l1q))
 			return false;
-
-		Rfd = CanayD.r1;
-		lfd = CanayD.l1;
-		R1d = CanayD.r1;
-		l1d = CanayD.l2;
-		R1q = CanayQ.r1;
-		l1q = CanayQ.l1;
-
 	}
-
-	std::array<ParkParameters, 4> Axes = { NiiptD, CanayD, NiiptQ, CanayQ};
-	std::array<std::string, 4> AxesNames = { "NiiptD", "CanayD", "NiiptQ", "CanayQ"};
-	std::string res(GetVerbalName());
-	for (size_t j = 0; j < Axes.size(); j++)
-	{
-		res += ";";
-		res += AxesNames[j];
-		std::array<const double*, 4> ptr = { &Axes[j].r1, &Axes[j].l1, &Axes[j].r2, &Axes[j].l2 };
-		for (size_t i = 0; i < ptr.size(); i++)
-			res += fmt::format(";{}", *ptr[i]);
-	}
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, res);
+	
+	CompareParksParameterCalculation();
 
 	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
 	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d

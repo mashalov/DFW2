@@ -15,6 +15,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
+		void CompareParksParameterCalculation();
 	public:
 		enum CONSTVARS
 		{
