@@ -340,6 +340,10 @@ bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, dou
 
 	if (bRes)
 	{
+		// финт - определяем по какой оси работает функция
+		// путем определения x = CDynaGeneratorDQBase::xd или x = CDynaGeneratorDQBase::xq
+		// нужно только для логирования
+
 		if (&x == &xd)
 			return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, To1, T1, To2, T2);
 		else
@@ -348,7 +352,12 @@ bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, dou
 			return CheckTimeConstants(m_csztqo1, m_csztq1, m_csztqo2, m_csztq2, To1, T1, To2, T2);
 		}
 	}
-	else 
+	else
+
+		// финт - определяем по какой оси работает функция
+		// путем определения x = CDynaGeneratorDQBase::xd или x = CDynaGeneratorDQBase::xq
+		// нужно только для логирования
+
 		if (&x == &xd)
 		{
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
@@ -404,6 +413,10 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 	}
 	else
 	{
+		// финт - определяем по какой оси работает функция
+		// путем определения x = CDynaGeneratorDQBase::xd или x = CDynaGeneratorDQBase::xq
+		// нужно только для логирования
+
 		if (&x == &xd)
 		{
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
@@ -425,6 +438,10 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 		}
 		
 	}
+
+	// финт - определяем по какой оси работает функция
+	// путем определения x = CDynaGeneratorDQBase::xd или x = CDynaGeneratorDQBase::xq
+	// нужно только для логирования
 	
 	if(&x == &xd)
 		return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, To1, T1, To2, T2);
@@ -434,6 +451,8 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 		return CheckTimeConstants(m_csztqo1, m_csztq1, m_csztqo2, m_csztq2, To1, T1, To2, T2);
 	}
 }
+
+// Проверка убывания ряда постоянных времени оси
 
 bool CDynaGeneratorDQBase::CheckTimeConstants(
 	const char* cszTo1,
@@ -445,17 +464,26 @@ bool CDynaGeneratorDQBase::CheckTimeConstants(
 	double To2,
 	double T2) const
 {
+	// имена и значения постоянных времени
 	std::array<const char*, 4> names = { cszTo1, cszT1, cszTo2, cszT2 };
 	std::array<const double*, 4> values = { &To1, &T1, &To2, &T2 };
+	// список постоянных с нарушениями
 	std::list<int> badindexes;
+
+	// проверяем убывание
 	for (int i = 0; i < names.size() - 1; i++)
 	{
+		// если следующая постоянная больше предыдущей, добавляем
+		// предыдущую в список нарушений
 		if (*values[i] <= *values[i + 1])
 			badindexes.push_back(i);
 	}
 
 	if (badindexes.empty())
 		return true;
+
+	// если список нарушений не пустой,
+	// выводим его в лог и репортим ошибку
 
 	std::string badnames;
 	for (const auto& i : badindexes)
@@ -468,9 +496,13 @@ bool CDynaGeneratorDQBase::CheckTimeConstants(
 			names[i+1],
 			*values[i+1]));
 	}
+
 	Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongTimeConstants, GetVerbalName(), fmt::join(names, " > "), badnames));
 	return false;
 }
+
+// Расчет параметров на оси с двумя обмотками по формулам из Kundur
+// и уточнением постоянных времени по методике НИИПТ
 
 bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 	double xl,
@@ -485,7 +517,9 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 {
 	bool bRes(true);
 
-	const double la = x - xl;
+	double la = x - xl;
+
+	// l1 - Kundur (4.29)
 	double denom = la - x1 + xl;
 	if (Equal(denom, 0.0))
 	{
@@ -495,6 +529,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 
 	l1 = la * (x1 - xl) / denom;
 
+	// l2 - Kundur (4.28)
 	denom = la * l1 - (x2 - xl) * (l1 + la);
 
 	if (Equal(denom, 0.0))
@@ -507,17 +542,45 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 
 	const double L1(la + l1), L2(la + l2);
 
-	r1 = L1 / To1;
+	// пытаемся определить активные сопротивления грубо по заданным 
+	// разомкнутым постоянным - Kundur (Table 4.1, 4.41 Lpl = 0.0)
+	r1 = L1 / To1;							
 	r2 = (la * l1 / L1 + l2) / To2;
 
 	double nTo1(To1), nTo2(To2);
 
-	const double Ts(To1 + To2), det(0.25 * Ts * Ts - To1 * To2 / (1.0 - la * la / (la + l1) / (la + l2)));
+	// рассчитываем постоянные времени первой и второй обмоток - НИИПТ/Вольдек
+	double Ts(To1 + To2), det(0.25 * Ts * Ts - To1 * To2 / (1.0 - la * la / (la + l1) / (la + l2)));
 	if (det >= 0)
 	{
 		nTo1 = 0.5 * Ts + std::sqrt(det);
 		r1 = L1 / nTo1;
 		r2 = L2 / (Ts - nTo1);
+
+		/*
+		if (CDynaGeneratorDQBase::GetShortCircuitTimeConstants(x, xl, x1, x2, To1, To2, nTo1, nTo2))
+		{
+			//r1 = (l1 + la * xl / x) / nTo1;
+			//r2 = (l2 + la * l1 * xl / (la * l1 + l1 * xl + la * xl)) / nTo2;
+
+			Ts = nTo1 + nTo2;
+			la = la * xl / (la + xl);
+			det = 0.25 * Ts * Ts - nTo1 * nTo2 / (1.0 - la * la / (la + l1) / (la + l2));
+			if (det >= 0)
+			{
+				nTo1 = 0.5 * Ts + std::sqrt(det);
+				double ar1 = (la + l1) / nTo1;
+				double ar2 = (la + l2) / (Ts - nTo1);
+
+				ar1 = (r1 - ar1) / r1 * 100.0;
+				ar2 = (r2 - ar2) / r2 * 100.0;
+				
+				ar1 = ar1 + ar2;
+
+			}
+		}
+		*/
+		
 	}
 	else
 	{
@@ -531,16 +594,31 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 
 		if (CDynaGeneratorDQBase::GetShortCircuitTimeConstants(x, xl, x1, x2, To1, To2, nTo1, nTo2))
 		{
-			r1 = (l1 + la * xl / x) / nTo1;
-			r2 = (l2 + la * l1 * xl / (la * l1 + l1 * xl + la * xl)) / nTo2;
+			//r1 = (l1 + la * xl / x) / nTo1;
+			//r2 = (l2 + la * l1 * xl / (la * l1 + l1 * xl + la * xl)) / nTo2;
+			// для замкнутых постоянных работает то же выражение что и для разомкнутых (Вольдек с. 679)
+			Ts = nTo1 + nTo2;
+			la = xl * la / (xl + la);		// рассчитываем Lad' - Lad и xl параллельно
+			det = 0.25 * Ts * Ts - nTo1 * nTo2 / (1.0 - la * la / (la + l1) / (la + l2));
+			if (det >= 0)
+			{
+				nTo1 = 0.5 * Ts + std::sqrt(det);
+				r1 = (la + l1) / nTo1;
+				r2 = (la + l2) / (Ts - nTo1);
+			}
 		}
 		else
 		{
+			// в этой точке r1 и r2 определены грубо - по Кундуру без коррекции
+			// Выдаем в лог ошибку, но работу продолжаем
 			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
 		}
 	}
 	return bRes;
 }
+
+
+// Методика НИИПТ для одной обмотки на оси
 
 bool CDynaGeneratorDQBase::GetAxisParametersNiipt(double x, double xl, double x1, double To1, double& r1, double& l1)
 {
@@ -558,7 +636,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(double x, double xl, double x1
 	return bRes;
 }
 
-// Расчет фундаментальных параметров Canay
+// Расчет фундаментальных параметров Canay для двух обмоток на оси
 // I.M. Canay "Modelling of alternating-current machines having multiple rotor circuits", 
 // IEEE Transaction on Energy Conversion, Vol. 9, No. 2, June 1993
 
@@ -610,18 +688,23 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(const double& x,
 			r1 = newr1;
 			r2 = newr2;
 
+			// тут была идея проверять соответствие грубых и точных параметров, но они
+			// сильно гуляют в зависимости от параметров СМ
 
-			if (std::abs(newr1 - r1) / r1 < 0.2 && std::abs(newr2 - r2) / r2 < 0.2 &&
+			/*if (std::abs(newr1 - r1) / r1 < 0.2 && std::abs(newr2 - r2) / r2 < 0.2 &&
 				std::abs(newl1 - l1) / l1 < 0.2 && std::abs(newl2 - l2) / l2 < 0.2)
 			{
 				return true;
 			}
 			else
 				return false;
+			*/
 		}
 	}
 	return false;
 }
+
+// Методика определения Canay для одной обмотки по сверхпереходным параметрам
 
 bool CDynaGeneratorDQBase::GetAxisParametersCanay(double x, double xl, double x2, double To2, double& r1, double& l1)
 {
@@ -637,6 +720,8 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(double x, double xl, double x2
 	return true;
 }
 
+// Сравнение и логирование Парковских параметров, рассчитанных по разным методикам
+
 void CDynaGeneratorDQBase::CompareParksParameterCalculation()
 {
 	struct ParkParameters
@@ -651,6 +736,7 @@ void CDynaGeneratorDQBase::CompareParksParameterCalculation()
 	switch (GetType())
 	{
 	case eDFW2DEVICETYPE::DEVTYPE_GEN_PARK3C:
+		// для трехконтурной модели используем полиморфы для одной обмотке на q
 		GetAxisParametersNiipt(xq, xl, xq2, Tqo2, NiiptQ.r1, NiiptQ.l1);
 		GetAxisParametersCanay(xq, xl, xq2, Tqo2, CanayQ.r1, CanayQ.l1);
 		break;
