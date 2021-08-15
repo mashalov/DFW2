@@ -79,6 +79,8 @@ Tde01 = -1 / roots(1);
 Tde02 = -1 / roots(2);
 
 xde1 = (Xd + xe) / (1 - (Tde01 - cTd01) * (Tde01 - cTd02)/(Tde01*(Tde01 - Tde02)))
+
+xde11 = (Xd + xe)*Tde01*(Tde01-Tde02)/(Tde01*(cTd01+cTd02-Tde02)-cTd01*cTd02)
 xde2 = (Xd + xe) * Tde01 * Tde02 / cTd01 / cTd02
 
 deltay1 = 1 / xde1 - 1 / (Xd + xe);
