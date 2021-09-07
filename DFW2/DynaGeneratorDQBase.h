@@ -6,7 +6,9 @@
 namespace DFW2
 {
 
-//#define USE_VOLTAGE_FREQ_DAMPING
+// дефайн который определяет какие уравнения движения используются
+// для уравнений Парка
+#define USE_VOLTAGE_FREQ_DAMPING
 
 	class CDynaGeneratorDQBase : public CDynaGeneratorMotion
 	{
@@ -94,7 +96,7 @@ namespace DFW2
 		static constexpr const char* m_cszxq1 = "xq1";
 		static constexpr const char* m_cszxq2 = "xq2";
 
-		static constexpr const char* m_cszBadCoeeficients = "(lad + lrc)^2 - (lad + lrc + lfd) * (lad + lrc + l1d)";
+		static constexpr const char* m_cszBadCoeficients = "(lad + lrc)^2 - (lad + lrc + lfd) * (lad + lrc + l1d)";
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 

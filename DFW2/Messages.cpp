@@ -213,5 +213,5 @@ const char* CDFW2Messages::m_cszCannotConvertShortCircuitConstants = "{} : не�
 const char* CDFW2Messages::m_cszWrongTimeConstants = "\"{}\" : не выполняется условие \"{}\" для значений: {}";
 const char* CDFW2Messages::m_cszCannotGetParkParameters = "\"{}\" : невозможно определение параметров модели Парка 4К: {} = {}";
 const char* CDFW2Messages::m_cszCannotGetPark3СParameters = "\"{}\" : невозможно определение параметров модели Парка 3К: {} = {}";
-const char* CDFW2Messages::m_cszParkParametersNiiptMethodFailed = "\"{}\" : метод определения параметров модели Парка 4К НИИПТ неприменим {} = {} < 0";
-const char* CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed = "\"{}\" : метод определения параметров модели Парка 4К НИИПТ+ неприменим";
+const char* CDFW2Messages::m_cszParkParametersNiiptMethodFailed = "\"{}\" : метод определения параметров модели Парка НИИПТ неприменим {} = {} < 0";
+const char* CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed = "\"{}\" : метод определения параметров модели Парка НИИПТ+ неприменим";

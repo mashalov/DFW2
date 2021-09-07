@@ -110,7 +110,7 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (Equal(detd, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, CDynaGeneratorDQBase::m_cszBadCoeeficients, GetVerbalName(), detd));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, CDynaGeneratorDQBase::m_cszBadCoeficients, GetVerbalName(), detd));
 		bRes = false;
 	}
 	if (Equal(l1Q, 0.0))
@@ -191,8 +191,11 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	BuildRIfromDQEquations(pDynaModel);
 
 #ifdef USE_VOLTAGE_FREQ_DAMPING
+	// используем вариант уравнения движения с демпфированием от частоты напряжения
 	CDynaGeneratorDQBase::BuildMotionEquationBlock(pDynaModel);
 #else
+	// используем стандартное уравнение движения с демпфированием только от
+	// скольжения генератора. Момент рассчитывается по потокосцеплениям.
 	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q - Iq * ld2 + Iq * lq2) / Mj);
 	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
 	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
@@ -245,7 +248,10 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	return bRes;
 }
 
-
+// Так как одни и те же производные нужны и для BuildRightHand и для BuildDerivatives
+// они рассчитываются в CalcDerivatives, которая получает в качестве параметра функцию ввода значения.
+// В зависимости от переданной функции значение производной попадает либо в правую часть уравнений, либо 
+// в вектор производных
 void CDynaGeneratorPark3C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
 {
 	if (IsStateOn())
@@ -255,8 +261,11 @@ void CDynaGeneratorPark3C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 		const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * Id;
 		const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_iq * Iq;
 #ifdef USE_VOLTAGE_FREQ_DAMPING
+		// используем вариант уравнения движения с демпфированием от частоты напряжения
 		CDynaGeneratorDQBase::CalculateDerivatives(pDynaModel, fn);
 #else
+		// используем стандартное уравнение движения с демпфированием только от
+		// скольжения генератора. Момент рассчитывается по потокосцеплениям.
 		const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q) * Id;
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
 		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - Te) / Mj);

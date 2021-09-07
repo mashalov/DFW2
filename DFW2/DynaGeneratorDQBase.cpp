@@ -274,6 +274,7 @@ void CDynaGeneratorDQBase::BuildRIfromDQRightHand(CDynaModel* pDynaModel)
 void CDynaGeneratorDQBase::BuildMotionEquationBlock(CDynaModel* pDynaModel)
 {
 	// Вариант уравнения движения с расчетом момента от частоты тока
+	// Момент рассчитывается от электрической мощности путем деления на скольжение
 	const double omega(ZeroGuardSlip(1.0 + s)), omegav(ZeroGuardSlip(1.0 + Sv)), MjOmegav(Mj * omegav);
 	pDynaModel->SetElement(s, Id, (Vd - 2.0 * Id * r) / MjOmegav);
 	pDynaModel->SetElement(s, Iq, (Vq - 2.0 * Iq * r) / MjOmegav);

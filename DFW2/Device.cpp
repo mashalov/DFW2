@@ -1239,11 +1239,18 @@ bool CDevice::CheckLimits(double& Min, double& Max)
 	char CDevice::UnknownVarIndex[80];
 #endif
 
+// Вызывает расчет производных и с помощью функции
+// вводит значения в правую часть уравнений. 
+// Предназначена для использования в BuildRightHand
 
 void CDevice::SetFunctionsDiff(CDynaModel* pDynaModel)
 {
 	CalculateDerivatives(pDynaModel, &CDynaModel::SetFunctionDiff);
 }
+
+// Вызывает расчет производных и с помощью функциии 
+// вводит значения в вектор производных. 
+// Предназначена для использования в BuildDerivatives
 
 void CDevice::SetDerivatives(CDynaModel* pDynaModel)
 {

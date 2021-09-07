@@ -263,8 +263,11 @@ namespace DFW2
 
 		using fnDerivative = void(CDynaModel::*)(const VariableIndexBase& variable, double Value);
 
+		// функция расчета производных модели. Должна быть перекрыта в наследованном классе
 		virtual void CalculateDerivatives(CDynaModel* pDynaModel, fnDerivative fn) {};
+		// функция ввода производных в правую часть уравнений (BuildRightHand). Вызывает CalculateDerivatives
 		void SetFunctionsDiff(CDynaModel* pDynaModel);
+		// функция ввода производных в вектор производных (BuildDerivatives). Вызывает CalculateDerivatives
 		void SetDerivatives(CDynaModel* pDynaModel);
 
 		virtual void NewtonUpdateEquation(CDynaModel* pDynaModel);

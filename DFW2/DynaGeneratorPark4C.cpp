@@ -132,7 +132,7 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (Equal(detd, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), CDynaGeneratorDQBase::m_cszBadCoeeficients, detd));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), CDynaGeneratorDQBase::m_cszBadCoeficients, detd));
 		bRes = false;
 	}
 	if (Equal(detq, 0.0))
@@ -190,8 +190,11 @@ void CDynaGeneratorPark4C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 		const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq;
 
 #ifdef USE_VOLTAGE_FREQ_DAMPING
+		// используем вариант уравнения движения с демпфированием от частоты напряжения
 		CDynaGeneratorDQBase::CalculateDerivatives(pDynaModel, fn);
 #else
+		// используем стандартное уравнение движения с демпфированием только от
+		// скольжения генератора. Момент рассчитывается по потокосцеплениям.
 		const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
 		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - Te) / Mj);
@@ -260,6 +263,8 @@ bool CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 #ifdef USE_VOLTAGE_FREQ_DAMPING
 	CDynaGeneratorDQBase::BuildMotionEquationBlock(pDynaModel);
 #else
+	// используем стандартное уравнение движения с демпфированием только от
+	// скольжения генератора. Момент рассчитывается по потокосцеплениям.
 	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q + Psi2q * Psiq_Psi2q - Iq * ld2 + Iq * lq2) / Mj);
 	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
 	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
