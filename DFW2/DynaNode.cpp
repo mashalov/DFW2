@@ -644,9 +644,29 @@ void CDynaNodeBase::CalculateShuntParts()
 	dLRCShuntPartQ /= V02;
 }
 
+// Собирает проводимость узла на землю
+// из заданной в узле, включенных реакторов и шунта КЗ
+
+void CDynaNodeBase::GetGroundAdmittance(cplx& y)
+{
+
+	y.real(G + Gshunt);
+	y.imag(B + Bshunt);
+	for (const auto& reactor : reactors)
+	{
+		if (reactor->IsStateOn())
+			y += cplx(reactor->g, reactor->b);
+	}
+}
+
 void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 {
-	Yii = -cplx(G + Gshunt, B + Bshunt);
+	// собственную проводимость начинаем с проводимости на землю
+	// с обратным знаком
+	GetGroundAdmittance(Yii);
+	Yii.real(-Yii.real());
+	Yii.imag(-Yii.imag());
+
 	m_bInMetallicSC = !(std::isfinite(Yii.real()) && std::isfinite(Yii.imag()));
 
 	if (m_bInMetallicSC || !IsStateOn())
@@ -1733,6 +1753,27 @@ VariableIndexRefVec& CDynaNode::GetVariables(VariableIndexRefVec& ChildVec)
 }
 
 
+void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)
+{
+	for (const auto& reactor : containerReactors)
+	{
+		const CDynaReactor* pReactor = static_cast<const CDynaReactor*>(reactor);
+
+		// отбираем шинные реакторы
+		if (pReactor->Type == 0)
+		{
+			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(GetDevice(pReactor->HeadNode));
+			if (pNode)
+				pNode->reactors.push_back(pReactor);
+			else
+			{
+				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNodeNotFoundForReactor,
+					pReactor->HeadNode,
+					reactor->GetVerbalName()));
+			}
+		}
+	}
+}
 
 void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 {

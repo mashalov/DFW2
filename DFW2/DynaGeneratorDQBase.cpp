@@ -276,12 +276,12 @@ void CDynaGeneratorDQBase::BuildMotionEquationBlock(CDynaModel* pDynaModel)
 	// Вариант уравнения движения с расчетом момента от частоты тока
 	// Момент рассчитывается от электрической мощности путем деления на скольжение
 	const double omega(ZeroGuardSlip(1.0 + s)), omegav(ZeroGuardSlip(1.0 + Sv)), MjOmegav(Mj * omegav);
-	pDynaModel->SetElement(s, Id, (Vd - 2.0 * Id * r) / MjOmegav);
-	pDynaModel->SetElement(s, Iq, (Vq - 2.0 * Iq * r) / MjOmegav);
+	pDynaModel->SetElement(s, Id, (Vd + 2.0 * Id * r) / MjOmegav);
+	pDynaModel->SetElement(s, Iq, (Vq + 2.0 * Iq * r) / MjOmegav);
 	pDynaModel->SetElement(s, Vd, Id / MjOmegav);
 	pDynaModel->SetElement(s, Vq, Iq / MjOmegav);
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
-	pDynaModel->SetElement(s, Sv, -(Id * Vd + Iq * Vq - r * (Id * Id + Iq * Iq)) / MjOmegav / omegav);
+	pDynaModel->SetElement(s, Sv, -(Id * Vd + Iq * Vq + r * (Id * Id + Iq * Iq)) / MjOmegav / omegav);
 	BuildAngleEquationBlock(pDynaModel);
 }
 
@@ -291,7 +291,9 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 	{
 		const double omega(1.0 + s);
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
-		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq - (Id * Id + Iq * Iq) * r) / (1.0 + Sv)) / Mj);
+//		double Pairgap = Vd * Id + Vq * Iq;
+//		Pairgap += (Id * Id + Iq * Iq) * r;
+		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq + (Id * Id + Iq * Iq) * r) / (1.0 + Sv)) / Mj);
 	}
 	else
 	{

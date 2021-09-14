@@ -62,6 +62,8 @@ namespace DFW2
 		const char* GetSystemClassName() const;
 		static const char* m_cszNameGenerator1C, *m_cszSysNameGenerator1C;
 		static const char* m_cszNameGenerator3C, *m_cszSysNameGenerator3C;
+		static const char* m_cszNameGeneratorPark3C, * m_cszSysNameGeneratorPark3C;
+		static const char* m_cszNameGeneratorPark4C, * m_cszSysNameGeneratorPark4C;
 		static const char* m_cszNameGeneratorMustang, *m_cszSysNameGeneratorMustang;
 		static const char* m_cszNameGeneratorInfPower, *m_cszSysNameGeneratorInfPower;
 		static const char* m_cszNameGeneratorMotion, *m_cszSysNameGeneratorMotion;
@@ -72,6 +74,7 @@ namespace DFW2
 		static const char* m_cszNameBranch, *m_cszSysNameBranch;
 		static const char* m_cszNameBranchMeasure, *m_cszSysNameBranchMeasure;
 		static const char* m_cszNameLRC, * m_cszSysNameLRC;
+		static const char* m_cszNameReactor, * m_cszSysNameReactor;
 		static const char* m_cszAliasNode;
 		static const char* m_cszAliasBranch;
 		static const char* m_cszAliasGenerator;

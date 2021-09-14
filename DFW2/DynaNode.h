@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "DeviceContainer.h"
 #include "DynaLRC.h"
+#include "DynaReactor.h"
 #include "IterationControl.h"
 #include "queue"
 #include "stack"
@@ -118,6 +119,9 @@ namespace DFW2
 		CDynaLRC *m_pLRC = nullptr;		// указатель на СХН узла в динамике
 		CDynaLRC *m_pLRCLF = nullptr;	// указатель на СХН узла в УР
 		CDynaLRC *m_pLRCGen = nullptr;	// СХН для генерации, которая не задана моделями генераторов
+
+		DynaReactors reactors;			// список реакторов
+
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		double LFQminGen, LFQmaxGen;	// суммарные ограничения реактивной мощности генераторов в узле
 		CDynaNodeBase();
@@ -135,6 +139,7 @@ namespace DFW2
 		void MarkZoneEnergized();
 		void ProcessTopologyRequest();
 		void CalcAdmittances(bool bFixNegativeZs);
+		void GetGroundAdmittance(cplx& y);
 		void CalculateShuntParts();
 		// инициализация узла для расчета УР
 		void StartLF(bool bFlatStart, double ImbTol);
@@ -341,6 +346,7 @@ namespace DFW2
 		void ResetTopologyCheck();
 		bool m_bDynamicLRC = true;
 		void LinkToLRCs(CDeviceContainer& containerLRC);
+		void LinkToReactors(CDeviceContainer& containerReactors);
 	};
 }
 

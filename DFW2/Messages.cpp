@@ -215,3 +215,4 @@ const char* CDFW2Messages::m_cszCannotGetParkParameters = "\"{}\" : невозм
 const char* CDFW2Messages::m_cszCannotGetPark3СParameters = "\"{}\" : невозможно определение параметров модели Парка 3К: {} = {}";
 const char* CDFW2Messages::m_cszParkParametersNiiptMethodFailed = "\"{}\" : метод определения параметров модели Парка НИИПТ неприменим {} = {} < 0";
 const char* CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed = "\"{}\" : метод определения параметров модели Парка НИИПТ+ неприменим";
+const char* CDFW2Messages::m_cszNodeNotFoundForReactor = "Узел №={} не найден для связи с реактором {}";

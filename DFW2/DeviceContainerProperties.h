@@ -74,6 +74,7 @@ namespace DFW2
 		static const char* m_cszNameBranch, *m_cszSysNameBranch;
 		static const char* m_cszNameBranchMeasure, *m_cszSysNameBranchMeasure;
 		static const char* m_cszNameLRC, * m_cszSysNameLRC;
+		static const char* m_cszNameReactor, * m_cszSysNameReactor;
 		static const char* m_cszAliasNode;
 		static const char* m_cszAliasBranch;
 		static const char* m_cszAliasGenerator;

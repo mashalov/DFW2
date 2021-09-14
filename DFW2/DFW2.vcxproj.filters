@@ -271,6 +271,9 @@
     <ClInclude Include="MathUtils.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DynaReactor.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -592,6 +595,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SerializerValidation.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaReactor.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

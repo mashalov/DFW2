@@ -220,6 +220,7 @@
     <ClInclude Include="DynaNode.h" />
     <ClInclude Include="DynaPowerInjector.h" />
     <ClInclude Include="DynaPrimitive.h" />
+    <ClInclude Include="DynaReactor.h" />
     <ClInclude Include="DynaVoltageSource.h" />
     <ClInclude Include="DynaGeneratorMustang.h" />
     <ClInclude Include="FmtComplexFormat.h" />
@@ -307,6 +308,7 @@
     <ClCompile Include="DynaNode.cpp" />
     <ClCompile Include="DynaPowerInjector.cpp" />
     <ClCompile Include="DynaPrimitive.cpp" />
+    <ClCompile Include="DynaReactor.cpp" />
     <ClCompile Include="DynaVoltageSource.cpp" />
     <ClCompile Include="DynaGeneratorMustang.cpp" />
     <ClCompile Include="IterationControl.cpp" />

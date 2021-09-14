@@ -8,6 +8,7 @@ bool CDynaModel::Link()
 	bool bRes = true;
 
 	Nodes.LinkToLRCs(LRCs);
+	Nodes.LinkToReactors(Reactors);
 
 	// делаем отдельные списки ссылок устройств контейнера для ведущих устройств, ведомых устройств 
 	// и без учета направления

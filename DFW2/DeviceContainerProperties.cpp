@@ -33,6 +33,7 @@ const char* CDeviceContainerProperties::m_cszNameNode = "Узел";
 const char* CDeviceContainerProperties::m_cszNameBranch = "Ветвь";
 const char* CDeviceContainerProperties::m_cszNameBranchMeasure = "Измерения ветви";
 const char* CDeviceContainerProperties::m_cszNameLRC = "СХН";
+const char* CDeviceContainerProperties::m_cszNameReactor = "Реактор";
 
 const char* CDeviceContainerProperties::m_cszSysNameGenerator1C = "Generator1C";
 const char* CDeviceContainerProperties::m_cszSysNameGenerator3C = "Generator3C";
@@ -48,6 +49,7 @@ const char* CDeviceContainerProperties::m_cszSysNameNode = "Node";
 const char* CDeviceContainerProperties::m_cszSysNameBranch = "Branch";
 const char* CDeviceContainerProperties::m_cszSysNameBranchMeasure = "BranchMeasure";
 const char* CDeviceContainerProperties::m_cszSysNameLRC = "LRC";
+const char* CDeviceContainerProperties::m_cszSysNameReactor = "Reactor";
 
 const char* CDeviceContainerProperties::m_cszAliasNode = "node";
 const char* CDeviceContainerProperties::m_cszAliasBranch = "vetv";

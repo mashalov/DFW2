@@ -36,6 +36,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   GeneratorsMotion(this),
 						   GeneratorsInfBus(this),
 						   LRCs(this),
+						   Reactors(this),
 						   SynchroZones(this),
 						   ExcitersMustang(this),
 						   DECsMustang(this),
@@ -56,6 +57,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CSynchroZone::DeviceProperties(SynchroZones.m_ContainerProps);
 	CDynaBranch::DeviceProperties(Branches.m_ContainerProps);
 	CDynaLRC::DeviceProperties(LRCs.m_ContainerProps);
+	CDynaReactor::DeviceProperties(Reactors.m_ContainerProps);
 	CDynaGeneratorInfBus::DeviceProperties(GeneratorsInfBus.m_ContainerProps);
 	CDynaGeneratorMotion::DeviceProperties(GeneratorsMotion.m_ContainerProps);
 	CDynaGenerator1C::DeviceProperties(Generators1C.m_ContainerProps);
@@ -64,8 +66,8 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaGeneratorPark3C::DeviceProperties(GeneratorsPark3C.m_ContainerProps);
 	CDynaGeneratorPark4C::DeviceProperties(GeneratorsPark4C.m_ContainerProps);
 	CDynaDECMustang::DeviceProperties(DECsMustang.m_ContainerProps);
-	CDynaExcConMustang::DeviceProperties(ExcConMustang.m_ContainerProps);
-	//CDynaExcConMustangNonWindup::DeviceProperties(ExcConMustang.m_ContainerProps);
+	//CDynaExcConMustang::DeviceProperties(ExcConMustang.m_ContainerProps);
+	CDynaExcConMustangNonWindup::DeviceProperties(ExcConMustang.m_ContainerProps);
 	CDynaExciterMustang::DeviceProperties(ExcitersMustang.m_ContainerProps);
 	CDynaBranchMeasure::DeviceProperties(BranchMeasures.m_ContainerProps);
 
@@ -76,6 +78,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 
 	m_DeviceContainers.push_back(&Nodes);
 	m_DeviceContainers.push_back(&LRCs);
+	m_DeviceContainers.push_back(&Reactors);
 	m_DeviceContainers.push_back(&ExcitersMustang);
 	m_DeviceContainers.push_back(&DECsMustang);
 	m_DeviceContainers.push_back(&ExcConMustang);
@@ -150,7 +153,7 @@ bool CDynaModel::RunTransient()
 	{
 		m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
 
-		m_Parameters.m_dFrequencyTimeConstant = 0.04;
+		m_Parameters.m_dFrequencyTimeConstant = 0.1;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 		m_Parameters.m_dOutStep = 1E-10;
 		//m_Parameters.eFreqDampingType = APDT_ISLAND;
@@ -178,6 +181,7 @@ bool CDynaModel::RunTransient()
 
 		//m_Parameters.m_dOutStep = 1E-5;
 		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
+		bRes = bRes && (Reactors.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 		bRes = bRes && Link();
 		TurnOffDevicesByOffMasters();
@@ -1893,6 +1897,9 @@ bool CDynaModel::RunLoadFlow()
 	// Поэтому Init СХН с pNext/pPrev делаем после линка
 
 	if (LRCs.Init(this) != eDEVICEFUNCTIONSTATUS::DFS_OK)
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
+	if (Reactors.Init(this) != eDEVICEFUNCTIONSTATUS::DFS_OK)
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
 
 	TurnOffDevicesByOffMasters();

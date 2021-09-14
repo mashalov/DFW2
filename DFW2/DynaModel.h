@@ -555,6 +555,7 @@ namespace DFW2
 		CDynaNodeContainer Nodes;
 		CDeviceContainer Branches;
 		CDeviceContainer LRCs;
+		CDeviceContainer Reactors;
 		CDeviceContainer Generators3C; 
 		CDeviceContainer GeneratorsMustang;
 		CDeviceContainer GeneratorsPark3C;

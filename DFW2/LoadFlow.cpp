@@ -1886,10 +1886,14 @@ void CLoadFlow::CalculateBranchFlows()
 bool CLoadFlow::CheckNodeBalances()
 {
 	bool bRes(true);
+	cplx y;
 	for (auto&& dev : pNodes->m_DevVec)
 	{
 		CDynaNodeBase* pNode(static_cast<CDynaNodeBase*>(dev));
-		const auto imb(pNode->V * pNode->V * cplx(pNode->G, pNode->B));
+		// проводимость узла собираем из шунта узла и реакторов
+		// вообще еще добавится шунт КЗ, но он при расчете УР равен нулю
+		static_cast<CDynaNodeBase*>(dev)->GetGroundAdmittance(y);
+		const auto imb(pNode->V * pNode->V * y);
 		pNode->dLRCPg = pNode->Pnr - pNode->Pgr + imb.real();
 		pNode->dLRCQg = pNode->Qnr - pNode->Qgr - imb.imag();
 	}

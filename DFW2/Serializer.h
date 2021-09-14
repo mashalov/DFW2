@@ -427,7 +427,8 @@ namespace DFW2
 		static constexpr const char* m_cszDupName = "CSerializerBase::AddProperty duplicated name \"{}\"";
 		static constexpr const char* m_cszState = TypedSerializedValue::m_cszTypeDecs[6];
 		static constexpr const char* m_cszStateCause = "cause";
-		static constexpr const char* m_cszType = "type";
+		static constexpr const char* m_csztype = "type";
+		static constexpr const char* m_cszType = "Type";
 		static constexpr const char* m_cszDataType = "dataType";
 		static constexpr const char* m_cszSerializerType = "serializerType";
 
