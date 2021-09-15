@@ -134,7 +134,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 				// для ветвей передаем номер начала, конца и номер параллельной цепи
 				const CDynaBranch* pBranch = static_cast<const CDynaBranch*>(device);
 
-				MakeVariant(DeviceIds, { pBranch->Ip, pBranch->Iq, pBranch->Np });
+				MakeVariant(DeviceIds, { pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np });
 				MakeVariant(ParentIds, {
 					pBranch->m_pNodeIp ? pBranch->m_pNodeIp->GetId() : 0,
 					pBranch->m_pNodeIq ? pBranch->m_pNodeIq->GetId() : 0,

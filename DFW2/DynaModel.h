@@ -20,6 +20,7 @@
 #include "PlatformFolders.h"
 #include "LoadFlow.h"
 #include "version.h"
+#include "DynaBranch.h"
 #include "Statistics.h"
 
 //#define USE_FMA
@@ -553,7 +554,7 @@ namespace DFW2
 
 	public:
 		CDynaNodeContainer Nodes;
-		CDeviceContainer Branches;
+		CDynaBranchContainer Branches;
 		CDeviceContainer LRCs;
 		CDeviceContainer Reactors;
 		CDeviceContainer Generators3C; 

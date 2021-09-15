@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "DeviceContainer.h"
+#include "DynaReactor.h"
 #include "DynaNode.h"
 
 
@@ -19,10 +20,16 @@ namespace DFW2
 
 		CDynaBranchMeasure* m_pMeasure = nullptr;
 
-		ptrdiff_t Ip, Iq, Np;						// номера узлов начала и конца, номер парр. цепи
+		struct Key 
+		{
+			ptrdiff_t Ip, Iq, Np;						// номера узлов начала и конца, номер парр. цепи
+		};
+
+		Key key;
 		double R, X;								// сопротивление
 		double Ktr, Kti;							// комплексный коэффициент трансформации
 		double G, B, GrIp, GrIq, BrIp, BrIq;		// проводимость ветви, проводимости реакторов в начали и в конце
+		DynaReactors reactors;						// список реакторов
 		ptrdiff_t NrIp, NrIq;						// количество реакторов в начале и в конце
 		CDynaNodeBase *m_pNodeIp, *m_pNodeIq;		// узлы начала и конца
 		CDynaNodeBase *m_pNodeSuperIp, 
@@ -67,6 +74,16 @@ namespace DFW2
 		static const char* m_cszBranchStateNames[4];
 	};
 
+	struct BranchComp
+	{
+		bool operator()(const CDynaBranch* lhs, const CDynaBranch* rhs) const
+		{
+			return std::tie(lhs->key.Ip, lhs->key.Iq, lhs->key.Np) < 
+					std::tie(rhs->key.Ip, rhs->key.Iq, rhs->key.Np);
+		}
+	};
+
+
 	// Блок расчета параметров потоков по ветви. Добавляется в Якоби для ветви,
 	// по которой необходимы эти параметры
 	class CDynaBranchMeasure : public CDevice
@@ -103,5 +120,17 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		static void CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, cplx& cIe, cplx& cSb, cplx& cSe);
+	};
+
+
+	class CDynaBranchContainer : public CDeviceContainer
+	{
+	protected:
+		std::set<CDynaBranch*, BranchComp> BranchKeyMap;
+	public:
+		void IndexBranchIds();
+		CDynaBranch* GetByKey(const CDynaBranch::Key& key);
+		using CDeviceContainer::CDeviceContainer;
+		void LinkToReactors(CDeviceContainer& containerReactors);
 	};
 }

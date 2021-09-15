@@ -1641,18 +1641,11 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::strin
 #endif
 			if (nKeysCount > 1)
 			{
-				for (DEVICEVECTORITR it = pContainer->begin(); it != pContainer->end(); it++)
-				{
-					CDynaBranch *pDevice = static_cast<CDynaBranch*>(*it);
-					if ((nKeysCount == 3 && pDevice->Np == nNp) || nKeysCount == 2)
-					{
-						if ( (pDevice->Ip == nIp && pDevice->Iq == nIq) || (pDevice->Ip == nIq && pDevice->Iq == nIp))
-						{
-							pFoundDevice = pDevice;
-							break;
-						}
-					}
-				}
+				// ищем ветвь в прямом, если не нашли - в обратном направлении
+				// здесь надо бы ставить какой-то флаг что ветвь в реверсе
+				pFoundDevice = Branches.GetByKey({nIp, nIq, nNp});
+				if(!pFoundDevice)
+					pFoundDevice = Branches.GetByKey({ nIq, nIp, nNp });
 			}
 			else
 				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));

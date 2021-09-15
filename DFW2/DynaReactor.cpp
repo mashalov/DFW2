@@ -21,6 +21,8 @@ void CDynaReactor::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("ParallelBranch", ParrBranch, eVARUNITS::VARUNIT_UNITLESS);	// номер параллельной цепи
 	Serializer->AddProperty(CSerializerBase::m_cszType, Type, eVARUNITS::VARUNIT_UNITLESS);	// тип (0 - шинный / 1 - линейный)
 	Serializer->AddProperty("Placement", Placement, eVARUNITS::VARUNIT_UNITLESS);	// установка (0 - до выключателя / 1 - после выключателя )
+	// "до выключателя" - при отключении ветви реактор уходит на шину. Реально он и так фактически на шине. Положение влияет на расчет потоков ветви
+	// "после выключателя" - при отключении остается на ветви, видимо может шунтировать открытый конец
 	Serializer->AddProperty("B", b, eVARUNITS::VARUNIT_SIEMENS, -1.0);		// реактивная проводимость
 	Serializer->AddProperty("G", g, eVARUNITS::VARUNIT_SIEMENS);		// активная проводимость
 }

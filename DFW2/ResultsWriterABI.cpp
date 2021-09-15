@@ -75,7 +75,7 @@ void CResultsWriterABI::AddDeviceType(const CDeviceContainer& Container)
 		{
 			// для ветвей передаем номер начала, конца и номер параллельной цепи
 			const CDynaBranch* pBranch = static_cast<const CDynaBranch*>(device);
-			DeviceIds = { pBranch->Ip, pBranch->Iq, pBranch->Np };
+			DeviceIds = { pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np };
 			ParentIds = { pBranch->m_pNodeIp ? pBranch->m_pNodeIp->GetId() : 0,  pBranch->m_pNodeIq ? pBranch->m_pNodeIq->GetId() : 0 };
 			ParentTypes = { DEVTYPE_NODE, DEVTYPE_NODE };
 		}

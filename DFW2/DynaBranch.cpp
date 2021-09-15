@@ -13,7 +13,7 @@ CDynaBranch::CDynaBranch() : CDevice()
 // Обновляет имя ветви
 void CDynaBranch::UpdateVerbalName()
 {
-	m_strVerbalName = fmt::format("{} - {}{} [{}]", Ip, Iq, (Np ? fmt::format(" ({})", Np) : ""), GetName());
+	m_strVerbalName = fmt::format("{} - {}{} [{}]", key.Ip, key.Iq, (key.Np ? fmt::format(" ({})", key.Np) : ""), GetName());
 	if (m_pContainer)
 		m_strVerbalName = fmt::format("{} {}", m_pContainer->GetTypeName(), m_strVerbalName);
 }
@@ -92,7 +92,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			for (int i = 0; i < 2; i++)
 			{
 				CDynaNodeBase *pNode;
-				ptrdiff_t NodeId = i ? pBranch->Ip : pBranch->Iq;
+				ptrdiff_t NodeId = i ? pBranch->key.Ip : pBranch->key.Iq;
 
 				// ищем узел по номеру
 				if (pContainer->GetDevice(NodeId, pNode))
@@ -111,9 +111,9 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				{
 					pBranch->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszBranchNodeNotFound,
 																		   NodeId, 
-																		   pBranch->Ip, 
-																		   pBranch->Iq, 
-																		   pBranch->Np));
+																		   pBranch->key.Ip, 
+																		   pBranch->key.Iq,
+																		   pBranch->key.Np));
 					bRes = false;
 					_ASSERTE(bRes);
 				}
@@ -126,7 +126,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				pBranch->SetName(fmt::format("{} - {} {}",
 					pBranch->m_pNodeIp->GetName(),
 					pBranch->m_pNodeIq->GetName(),
-					pBranch->Np ? fmt::format(" цепь {}", pBranch->Np) : ""));
+					pBranch->key.Np ? fmt::format(" цепь {}", pBranch->key.Np) : ""));
 			}
 		}
 
@@ -300,9 +300,9 @@ bool CDynaBranch::IsZeroImpedance()
 void CDynaBranch::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
-	Serializer->AddProperty("ip", Ip);
-	Serializer->AddProperty("iq", Iq);
-	Serializer->AddProperty("np", Np);
+	Serializer->AddProperty("ip", key.Ip);
+	Serializer->AddProperty("iq", key.Iq);
+	Serializer->AddProperty("np", key.Np);
 	Serializer->AddProperty("r", R, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty("x", X, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty("ktr", Ktr, eVARUNITS::VARUNIT_PU);
@@ -712,6 +712,52 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 
 	// измерения создаются индивидуально с ветвью в конструкторе
 	//props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();
+}
+
+void CDynaBranchContainer::IndexBranchIds()
+{
+	BranchKeyMap.clear();
+	for (auto&& branch : m_DevVec)
+	{
+		CDynaBranch* pBranch = static_cast<CDynaBranch*>(branch);
+		BranchKeyMap.insert(pBranch);
+	}
+}
+
+CDynaBranch* CDynaBranchContainer::GetByKey(const CDynaBranch::Key& key)
+{
+	CDynaBranch search;
+	search.key = key;
+	const auto& branch = BranchKeyMap.find(&search);
+	if (branch != BranchKeyMap.end())
+		return *branch;
+	return nullptr;
+}
+
+void CDynaBranchContainer::LinkToReactors(CDeviceContainer& containerReactors)
+{
+	for (const auto& reactor : containerReactors)
+	{
+		const CDynaReactor* pReactor = static_cast<const CDynaReactor*>(reactor);
+
+		// отбираем линейные реакторы
+		if (pReactor->Type == 1)
+		{
+			CDynaBranch* pBranch = GetByKey({ pReactor->HeadNode, pReactor->TailNode, pReactor->ParrBranch });
+			if (pBranch)
+			{
+
+			}
+			else
+			{
+				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszBranchNotFoundForReactor,
+					pReactor->HeadNode,
+					pReactor->TailNode,
+					pReactor->ParrBranch,
+					reactor->GetVerbalName()));
+			}
+		}
+	}
 }
 
 const char* CDynaBranch::m_cszBranchStateNames[4] = { "On", "Off", "Htrip", "Ttrip", };

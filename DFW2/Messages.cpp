@@ -216,3 +216,4 @@ const char* CDFW2Messages::m_cszCannotGetPark3СParameters = "\"{}\" : нево�
 const char* CDFW2Messages::m_cszParkParametersNiiptMethodFailed = "\"{}\" : метод определения параметров модели Парка НИИПТ неприменим {} = {} < 0";
 const char* CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed = "\"{}\" : метод определения параметров модели Парка НИИПТ+ неприменим";
 const char* CDFW2Messages::m_cszNodeNotFoundForReactor = "Узел №={} не найден для связи с реактором {}";
+const char* CDFW2Messages::m_cszBranchNotFoundForReactor = "Ветвь c ({},{},{}) не найдена для связи с реактором {}";

@@ -167,6 +167,7 @@ namespace DFW2
 		static const char* m_cszLRCVminChanged;
 		static const char* m_cszLRCIdNotFound;
 		static const char* m_cszNodeNotFoundForReactor;
+		static const char* m_cszBranchNotFoundForReactor;
 		static const char* m_cszLoadingModelFormat;
 		static const char* m_cszStdFileStreamError;
 		static const char* m_cszJsonParserError;

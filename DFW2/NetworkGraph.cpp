@@ -9,6 +9,8 @@ bool CDynaModel::Link()
 
 	Nodes.LinkToLRCs(LRCs);
 	Nodes.LinkToReactors(Reactors);
+	Branches.IndexBranchIds();
+	Branches.LinkToReactors(Reactors);
 
 	// делаем отдельные списки ссылок устройств контейнера для ведущих устройств, ведомых устройств 
 	// и без учета направления
@@ -142,10 +144,10 @@ void CDynaModel::PrepareNetworkElements()
 	{
 		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
 		// проверяем не самозамкнута ли ветвь
-		if (pBranch->Iq == pBranch->Ip)
+		if (pBranch->key.Iq == pBranch->key.Ip)
 		{
 			// если ветвь самозамкнута, выключаем ее навсегда
-			pBranch->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszBranchLooped, pBranch->Ip));
+			pBranch->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszBranchLooped, pBranch->key.Ip));
 			pBranch->SetBranchState(CDynaBranch::BranchState::BRANCH_OFF, eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT);
 			continue;
 
@@ -1024,7 +1026,7 @@ void CDynaNodeContainer::DumpNetwork()
 			{
 				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
 				dump << fmt::format("\tOriginal Branch %{}-%{}-({}) r={} x={} state={}",
-					pBranch->Ip, pBranch->Iq, pBranch->Np,
+					pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np,
 					pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
 			}
 
@@ -1041,7 +1043,7 @@ void CDynaNodeContainer::DumpNetwork()
 				{
 					CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDeviceBranch);
 					dump << fmt::format("\t\t\tOriginal Branch %{}-%{}-({}) r={} x={} state={}", 
-						pBranch->Ip, pBranch->Iq, pBranch->Np, 
+						pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np,
 						pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
 				}
 			}

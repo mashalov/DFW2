@@ -214,7 +214,7 @@ eDFW2_ACTION_STATE CModelActionStop::Do(CDynaModel *pDynaModel)
 void CModelActionChangeBranchParameterBase::WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view Description)
 {
 	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->Ip, m_pDynaBranch->Iq, m_pDynaBranch->Np },
+		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
 		VariableName,
 		Value,
 		PreviousValue,
@@ -260,7 +260,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double 
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 
 	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->Ip, m_pDynaBranch->Iq, m_pDynaBranch->Np },
+		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
 		"R",
 		m_pDynaBranch->R,
 		R,
@@ -283,7 +283,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double 
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 
 	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->Ip, m_pDynaBranch->Iq, m_pDynaBranch->Np },
+		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
 		"X",
 		m_pDynaBranch->X,
 		X,
