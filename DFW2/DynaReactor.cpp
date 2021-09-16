@@ -19,7 +19,7 @@ void CDynaReactor::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("HeadNode", HeadNode, eVARUNITS::VARUNIT_UNITLESS);	// узел или узел начала
 	Serializer->AddProperty("TailNode", TailNode, eVARUNITS::VARUNIT_UNITLESS);	// узел конца
 	Serializer->AddProperty("ParallelBranch", ParrBranch, eVARUNITS::VARUNIT_UNITLESS);	// номер параллельной цепи
-	Serializer->AddProperty(CSerializerBase::m_cszType, Type, eVARUNITS::VARUNIT_UNITLESS);	// тип (0 - шинный / 1 - линейный)
+	Serializer->AddProperty(CSerializerBase::m_cszType, Type, eVARUNITS::VARUNIT_UNITLESS);	// тип (0 - шинный / 1 - линейный в начале / 2 - линейный в конце)
 	Serializer->AddProperty("Placement", Placement, eVARUNITS::VARUNIT_UNITLESS);	// установка (0 - до выключателя / 1 - после выключателя )
 	// "до выключателя" - при отключении ветви реактор уходит на шину. Реально он и так фактически на шине. Положение влияет на расчет потоков ветви
 	// "после выключателя" - при отключении остается на ветви, видимо может шунтировать открытый конец

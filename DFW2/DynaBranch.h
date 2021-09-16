@@ -29,12 +29,13 @@ namespace DFW2
 		double R, X;								// сопротивление
 		double Ktr, Kti;							// комплексный коэффициент трансформации
 		double G, B, GrIp, GrIq, BrIp, BrIq;		// проводимость ветви, проводимости реакторов в начали и в конце
-		DynaReactors reactors;						// список реакторов
+		DynaReactors reactorsHead, reactorsTail;	// список отключаемых реакторов в начале и конце
 		ptrdiff_t NrIp, NrIq;						// количество реакторов в начале и в конце
 		CDynaNodeBase *m_pNodeIp, *m_pNodeIq;		// узлы начала и конца
 		CDynaNodeBase *m_pNodeSuperIp, 
 					  *m_pNodeSuperIq;				// суперузлы начала и конца
-		double GIp, BIp, GIq, BIq;					// расчетные проводимости в начале и в конце
+		double GIp0, BIp0, GIq0, BIq0;				// статические расчетные проводимости в начале и в конце, учитывающие проводимости ветви и статические реакторы
+		double GIp, BIp, GIq, BIq;					// расчетные проводимости в начале и в конце, статические проводимости и отключаемые реакторы
 		cplx Yip, Yiq, Yips, Yiqs;					// компоненты взаимных и собственных проводимостей 
 													// для матрицы узловых проводимостей
 

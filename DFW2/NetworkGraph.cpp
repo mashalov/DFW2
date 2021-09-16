@@ -157,22 +157,22 @@ void CDynaModel::PrepareNetworkElements()
 		{
 			// если ветвь не трансформатор, схема замещения "П"
 			pBranch->Ktr = 1.0;
-			pBranch->GIp = pBranch->GIq = pBranch->G / 2.0;
-			pBranch->BIp = pBranch->BIq = pBranch->B / 2.0;
+			pBranch->GIp0 = pBranch->GIq0 = pBranch->G / 2.0;
+			pBranch->BIp0 = pBranch->BIq0 = pBranch->B / 2.0;
 		}
 		else
 		{
 			// если трансформатор, схема замещения "Г"
-			pBranch->GIp = pBranch->G;
-			pBranch->BIp = pBranch->B;
-			pBranch->GIq = pBranch->BIq = 0.0;
+			pBranch->GIp0 = pBranch->G;
+			pBranch->BIp0 = pBranch->B;
+			pBranch->GIq0 = pBranch->BIq0 = 0.0;
 		}
 
 		// учитываем реакторы в начале и в конце
-		pBranch->GIp += pBranch->NrIp * pBranch->GrIp;
-		pBranch->GIq += pBranch->NrIq * pBranch->GrIq;
-		pBranch->BIp += pBranch->NrIp * pBranch->BrIp;
-		pBranch->BIq += pBranch->NrIq * pBranch->BrIq;
+		pBranch->GIp0 += pBranch->NrIp * pBranch->GrIp;
+		pBranch->GIq0 += pBranch->NrIq * pBranch->GrIq;
+		pBranch->BIp0 += pBranch->NrIp * pBranch->BrIp;
+		pBranch->BIq0 += pBranch->NrIq * pBranch->BrIq;
 	}
 
 	if (!bOk)

@@ -219,6 +219,26 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 	cplx Ybranch = GetYBranch(bFixNegativeZs);
 	cplx Ktrx(Ktr, Kti);
 
+	// постоянная часть проводимостей на землю от собственных шунтов ветви и старых реакторов не изменяется 
+	// рассчитана заранее
+	GIp = GIp0;		BIp = BIp0;		GIq = GIq0;		BIq = BIq0;
+
+	// текущую проводимость на землю рассчитываем как сумму постоянной и включенных реакторов
+	// в начале и в конце
+	for(const auto& reactor : reactorsHead)
+		if (reactor->IsStateOn())
+		{
+			GIp += reactor->g;
+			BIp += reactor->b;
+		}
+
+	for (const auto& reactor : reactorsTail)
+		if (reactor->IsStateOn())
+		{
+			GIq += reactor->g;
+			BIq += reactor->b;
+		}
+
 	switch (m_BranchState)
 	{
 	case CDynaBranch::BranchState::BRANCH_OFF:
@@ -740,13 +760,30 @@ void CDynaBranchContainer::LinkToReactors(CDeviceContainer& containerReactors)
 	{
 		const CDynaReactor* pReactor = static_cast<const CDynaReactor*>(reactor);
 
-		// отбираем линейные реакторы
-		if (pReactor->Type == 1)
+		// отбираем линейные реакторы, которые подключены после выключателя
+		if ((pReactor->Type == 1 || pReactor->Type == 2) && pReactor->Placement == 1)
 		{
+			// ищем заданную в реакторе ветвь (поиск работает в обоих направлениях)
 			CDynaBranch* pBranch = GetByKey({ pReactor->HeadNode, pReactor->TailNode, pReactor->ParrBranch });
 			if (pBranch)
 			{
-
+				// если ветвь найдена, проверяем, мы ее нашли в прямом или в обратном направлении
+				if (pBranch->key.Ip == pReactor->HeadNode)
+				{
+					// нашли в прямом, реакторы в начале подключаем к началу, реакторы в конце - к концу
+					if (pReactor->Type == 1)
+						pBranch->reactorsHead.push_back(pReactor);
+					else
+						pBranch->reactorsTail.push_back(pReactor);
+				}
+				else
+				{
+					// нашли в обратном направлении, реакторы в начале подключаем к концу, реакторы в конце - к началу
+					if (pReactor->Type == 1)
+						pBranch->reactorsTail.push_back(pReactor);
+					else
+						pBranch->reactorsHead.push_back(pReactor);
+				}
 			}
 			else
 			{

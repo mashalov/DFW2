@@ -1755,6 +1755,8 @@ VariableIndexRefVec& CDynaNode::GetVariables(VariableIndexRefVec& ChildVec)
 
 void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)
 {
+	CDynaBranchContainer* pBranchContainer = static_cast<CDynaBranchContainer*>(GetModel()->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_BRANCH));
+
 	for (const auto& reactor : containerReactors)
 	{
 		const CDynaReactor* pReactor = static_cast<const CDynaReactor*>(reactor);
@@ -1769,6 +1771,27 @@ void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)
 			{
 				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNodeNotFoundForReactor,
 					pReactor->HeadNode,
+					reactor->GetVerbalName()));
+			}
+		}
+		else if (pReactor->Placement == 0) // а также добавляем реакторы с ветвей, подключенные до выключателя
+		{
+			// проверяем наличие ветви, заданной в реакторе
+			CDynaBranch* pBranch = pBranchContainer->GetByKey({ pReactor->HeadNode, pReactor->TailNode, pReactor->ParrBranch });
+			// если ветвь найдена
+			if (pBranch)
+			{
+				// добавляем реактор к узлу начала или конца в зависимости от типа реактора
+				CDynaNodeBase * pNode = static_cast<CDynaNodeBase*>(GetDevice(pReactor->Type == 1 ? pReactor->HeadNode : pReactor->TailNode));
+				if (pNode)
+					pNode->reactors.push_back(pReactor);
+			}
+			else
+			{
+				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszBranchNotFoundForReactor,
+					pReactor->HeadNode,
+					pReactor->TailNode,
+					pReactor->ParrBranch,
 					reactor->GetVerbalName()));
 			}
 		}
