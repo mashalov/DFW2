@@ -115,7 +115,7 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	}
 	if (Equal(l1Q, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetPark3СParameters, GetVerbalName(), "laq + l1q", l1Q));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetPark3CParameters, GetVerbalName(), "laq + l1q", l1Q));
 		bRes = false;
 	}
 

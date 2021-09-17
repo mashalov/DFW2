@@ -222,7 +222,7 @@ namespace DFW2
 		static const char* m_cszCannotConvertShortCircuitConstants;
 		static const char* m_cszWrongTimeConstants;
 		static const char* m_cszCannotGetParkParameters;
-		static const char* m_cszCannotGetPark3СParameters;
+		static const char* m_cszCannotGetPark3CParameters;
 		static const char* m_cszParkParametersNiiptMethodFailed;
 		static const char* m_cszParkParametersNiiptPlusMethodFailed;
 	};
