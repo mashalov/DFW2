@@ -15,6 +15,7 @@ void CDynaReactor::DeviceProperties(CDeviceContainerProperties& props)
 void CDynaReactor::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
+	AddStateProperty(Serializer);
 	Serializer->AddProperty("Id", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("HeadNode", HeadNode, eVARUNITS::VARUNIT_UNITLESS);	// узел или узел начала
 	Serializer->AddProperty("TailNode", TailNode, eVARUNITS::VARUNIT_UNITLESS);	// узел конца
