@@ -87,7 +87,8 @@ namespace DFW2
 		void UpdateSlackBusesImbalance();
 		double GetSquaredImb();
 		void CheckFeasible();
-		void DumpNewtonIterationControl();
+		void DumpNewtonIterationControl() const;
+		void DumpViolated(std::string_view title, const MATRIXINFO& matrixInfo) const;
 		LFNewtonStepRatio m_NewtonStepRatio;
 
 		std::unique_ptr<double[]> m_Vbackup;

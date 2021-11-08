@@ -1017,17 +1017,32 @@ bool CDynaNodeContainer::LULF()
 	return bRes;
 }
 
+// Для перехода от расчета динамики к расчету УР
+// меняем местами нагрузку и расчетную нагрузку узла, СХН и 
+// номинальное напряжение с расчетным
+// Для возврата к динамике делаем еще один обмен
+// Возможно придется отказаться от этих обменов: просто
+// забирать из исходных данных номинальную нагрузку и считать УР
+// самостоятельно
+
 void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 {
 	if (bSwitchToDynamicLRC != m_bDynamicLRC)
 	{
 		m_bDynamicLRC = bSwitchToDynamicLRC;
-		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
+		for (auto&& node : m_DevVec)
 		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+			// меняем местами СХН УР и динамики
 			std::swap(pNode->m_pLRCLF, pNode->m_pLRC);
+			// меняем местами расчетную и номинальную 
+			// нагрузки
 			std::swap(pNode->Pn, pNode->Pnr);
 			std::swap(pNode->Qn, pNode->Qnr);
+			// если СХН для УР - номинальное напряжение СХН
+			// равно номинальному напряжению узла
+			// если СХН для динамики - номинальное напряжение СХН
+			// равно расчетному
 			if (!m_bDynamicLRC)
 				pNode->V0 = pNode->Unom;
 			else

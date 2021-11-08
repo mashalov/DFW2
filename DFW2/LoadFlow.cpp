@@ -971,11 +971,11 @@ bool CLoadFlow::Run()
 #ifdef _DEBUG
 		CompareWithRastr();
 #endif
-
+		// выводим сравнение с Растр до обмена СХН
+		DumpNodes();
 		pNodes->SwitchLRCs(true);
 
 //#ifdef _DEBUG
-
 
 		for (auto&& it : pNodes->m_DevVec)
 		{
@@ -1009,7 +1009,6 @@ bool CLoadFlow::Run()
 
 
 		UpdateQToGenerators();
-		DumpNodes();
 		CheckFeasible();
 	}
 	catch (const dfw2error&)
@@ -1378,7 +1377,7 @@ void CLoadFlow::Newton()
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
 				if (pMatrixInfo->NodeViolation < 0.0)
 				{
-					PQmax_PV.push_back(pMatrixInfo);
+					PQmin_PV.push_back(pMatrixInfo);
 					pMatrixInfo->m_nPVSwitchCount++;
 				}
 				break;
@@ -1386,7 +1385,7 @@ void CLoadFlow::Newton()
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
 				if (pMatrixInfo->NodeViolation > 0.0)
 				{
-					PQmin_PV.push_back(pMatrixInfo);
+					PQmax_PV.push_back(pMatrixInfo);
 					pMatrixInfo->m_nPVSwitchCount++;
 				}
 				break;
@@ -1445,31 +1444,37 @@ void CLoadFlow::Newton()
 
 		m_nNodeTypeSwitchesDone = 0;
 
-		for (auto&& it : PQmax_PV)
+		// функция возврата узла из ограничения Q в PV
+		const auto fnToPv = [this](auto& node)
 		{
-			CDynaNodeBase*& pNode = it->pNode;
+			CDynaNodeBase*& pNode = node->pNode;
 			pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
 			pNode->V = pNode->LFVref;
 			pNode->UpdateVreVimSuper();
 			// считаем количество переключений типов узлов
 			// чтобы исключить выбор шага по g1 > g0
 			m_nNodeTypeSwitchesDone++;
+		};
+
+		// Сначала снимаем узлы с минимумов Q, чтобы избежать
+		// дефицита реактивной мощности
+		DumpViolated("PQmin-PV", PQmin_PV);
+
+		for (auto&& it : PQmin_PV)
+			fnToPv(it);
+
+		// если узлов на минимуме нет - снимаем узлы с максимумов Q
+		if (PQmin_PV.empty())
+		{
+			DumpViolated("PQmax-PV", PQmax_PV);
+			for (auto&& it : PQmax_PV)
+				fnToPv(it);
 		}
 
-		if (PQmax_PV.empty())
+		if (std::abs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < 10.0 *  m_Parameters.m_Imb || std::abs(lambda) <= m_Parameters.ForceSwitchLambda)
 		{
-			for (auto&& it : PQmin_PV)
-			{
-				CDynaNodeBase*& pNode = it->pNode;
-				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-				pNode->V = pNode->LFVref;
-				pNode->UpdateVreVimSuper();
-				m_nNodeTypeSwitchesDone++;
-			}
-		}
+			DumpViolated("PV-PQmax", PV_PQmax);
 
-		if (std::abs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < 10.0 * m_Parameters.m_Imb || std::abs(lambda) <= m_Parameters.ForceSwitchLambda)
-		{
 			for (auto&& it : PV_PQmax)
 			{
 				CDynaNodeBase*& pNode = it->pNode;
@@ -1480,6 +1485,8 @@ void CLoadFlow::Newton()
 
 			if (PV_PQmax.empty())
 			{
+				DumpViolated("PV-PQmin", PV_PQmin);
+
 				for (auto&& it : PV_PQmin)
 				{
 					CDynaNodeBase*& pNode = it->pNode;
@@ -1924,8 +1931,19 @@ bool CLoadFlow::CheckNodeBalances()
 	return bRes;
 }
 
+void CLoadFlow::DumpViolated(std::string_view title, const MATRIXINFO& matrixInfo) const
+{
+	if (!matrixInfo.empty())
+	{
+		m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, title);
+		for (const auto& mi : matrixInfo)
+			m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} {}", 
+				mi->pNode->GetId(), 
+				mi->m_nPVSwitchCount));
+	}
+}
 
-void CLoadFlow::DumpNewtonIterationControl()
+void CLoadFlow::DumpNewtonIterationControl() const
 {
 	const char* causes[] = {"", "dV", "dD", "dB", "vV", "vD", "Bt"};
 	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("{} {:15f} {:6.2} {:4}", pNodes->GetIterationControlString(),
