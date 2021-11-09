@@ -202,8 +202,8 @@ namespace DFW2
 				return empty;
 		}
 
-		VarRuleMapT::const_iterator begin() { return m_RulesMap.begin(); }
-		VarRuleMapT::const_iterator end()   { return m_RulesMap.end(); }
+		inline VarRuleMapT::const_iterator begin() { return m_RulesMap.begin(); }
+		inline VarRuleMapT::const_iterator end()   { return m_RulesMap.end(); }
 
 		static inline CValidationRuleBiggerThanZero BiggerThanZero;
 		static inline CValidationRuleNonNegative NonNegative;

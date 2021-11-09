@@ -397,8 +397,6 @@ namespace DFW2
 	};
 
 using DEVICEVECTOR = std::vector<CDevice*>;
-using DEVICEVECTORITR = DEVICEVECTOR::iterator;
-using DEVICEVECTORCONSTITR = DEVICEVECTOR::const_iterator;
 
 // макрос для упрощения связи имени и идентификатора переменной, используется в switch CDevice::GetVariablePtr
 #define MAP_VARIABLE(VarName, VarId)  case VarId: p = &VarName; break; 

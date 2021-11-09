@@ -40,7 +40,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex)
 		GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
 
 		// проходим блоки в обратном порядке от начала к концу
-		INT64LIST::reverse_iterator it = Offsets.rbegin();
+		auto it = Offsets.rbegin();
 		while (it != Offsets.rend())
 		{
 			infile.seekg(*it, std::ios_base::beg);
@@ -114,12 +114,12 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, std
 
 	DeviceTypeInfo findType;
 	findType.eDeviceType = static_cast<int>(eType);
-	DEVTYPEITRCONST it = m_DevTypeSet.find(&findType);
+	auto it = m_DevTypeSet.find(&findType);
 	if (it != m_DevTypeSet.end())
 	{
 		VariableTypeInfo findVar; 
 		findVar.Name = VarName;
-		VARTYPEITRCONST vit = (*it)->m_VarTypes.find(findVar);
+		auto vit = (*it)->m_VarTypes.find(findVar);
 		if (vit != (*it)->m_VarTypes.end())
 			return GetChannelIndex(eType, nId, vit->nIndex);
 	}
@@ -134,7 +134,7 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptr
 	findChannel.DeviceId = nId;
 	findChannel.DeviceVarIndex = static_cast<int>(nVarIndex);
 	findChannel.eDeviceType = static_cast<int>(eType);
-	CHANNELSETITRCONST it = m_ChannelSet.find(&findChannel);
+	auto it = m_ChannelSet.find(&findChannel);
 	if (it != m_ChannelSet.end())
 		return *it - m_pChannelHeaders.get();
 	else
@@ -218,7 +218,7 @@ void CResultFileReader::ReadModelData(std::unique_ptr<double[]>& pData, int nVar
 		GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
 
 		// проходим блоки в обратном порядке от начала к концу
-		INT64LIST::reverse_iterator it = Offsets.rbegin();
+		auto it = Offsets.rbegin();
 		while (it != Offsets.rend())
 		{
 			infile.seekg(*it, std::ios_base::beg);
@@ -250,9 +250,9 @@ void CResultFileReader::ReadDirectoryEntries()
 
 void CResultFileReader::Reparent()
 {
-	for (DEVTYPEITRCONST it = m_DevTypeSet.begin(); it != m_DevTypeSet.end(); it++)
+	for (const auto& it : m_DevTypeSet)
 	{
-		DeviceTypeInfo *pDevType = *it;
+		DeviceTypeInfo *pDevType = it;
 
 		if (pDevType->DeviceParentIdsCount == 0) continue;
 
@@ -266,7 +266,7 @@ void CResultFileReader::Reparent()
 			{
 				DeviceTypeInfo findType;
 				findType.eDeviceType = static_cast<int>(pLink->m_eParentType);
-				DEVTYPEITRCONST ftypeit = m_DevTypeSet.find(&findType);
+				auto ftypeit = m_DevTypeSet.find(&findType);
 				if (ftypeit != m_DevTypeSet.end())
 				{
 					DeviceTypeInfo *pParentTypeInfo = *ftypeit;

@@ -339,16 +339,6 @@ void CDynaNodeContainer::ProcessTopologyRequest()
 	m_pDynaModel->ProcessTopologyRequest();
 }
 
-NODEISLANDMAPITRCONST CDynaNodeContainer::GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands)
-{
-	for (NODEISLANDMAPITRCONST it = Islands.begin() ; it != Islands.end() ; it++)
-	{
-		if (it->second.find(pNode) != it->second.end())
-			return it;
-	}
-	return Islands.end();
-}
-
 void CDynaNodeContainer::DumpNodeIslands(NODEISLANDMAP& Islands)
 {
 	for (auto&& supernode : Islands)
@@ -499,10 +489,10 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
 	for (int pass = 0; pass < 2; pass++)
 	{
-		for (DEVICEVECTORITR it = pBranchContainer->begin(); it != pBranchContainer->end(); it++)
+		for (auto&& it : *pBranchContainer)
 		{
 			// учитываем только включенные ветви (по идее можно фильтровать и ветви с нулевым сопротивлением)
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
 				
 			// Здесь включаем все ветви: и включенные и отключенные, иначе надо всякий раз перестраивать матрицу
 			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_ON)

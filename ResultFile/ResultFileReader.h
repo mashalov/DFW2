@@ -44,8 +44,6 @@ namespace DFW2
 
 
 		using CHANNELSET = std::set<ChannelHeaderInfo*, ChannelHeaderComp>;
-		using CHANNELSETITR = CHANNELSET::iterator;
-		using CHANNELSETITRCONST = CHANNELSET::const_iterator;
 
 	protected:
 

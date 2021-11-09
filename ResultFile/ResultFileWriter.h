@@ -25,7 +25,6 @@ namespace DFW2
 	};
 
 	using BUFFERBEGIN = std::vector<BITWORD*>;
-	using BUFFERBEGINITERATOR = BUFFERBEGIN::iterator;
 
 	class CResultFileWriter : public CResultFile, public IResultWriterABI
 	{

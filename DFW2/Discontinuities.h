@@ -211,10 +211,7 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	typedef std::list<CModelAction*> MODELACTIONLIST;
-	typedef MODELACTIONLIST::iterator MODELACTIONITR;
-
-
+	using MODELACTIONLIST =  std::list<CModelAction*>;
 
 	class CStaticEvent
 	{
@@ -252,11 +249,8 @@ namespace DFW2
 		}
 	};
 
-	typedef std::set<CStaticEvent> STATICEVENTSET;
-	typedef STATICEVENTSET::iterator STATICEVENTITR;
-	typedef std::set<CStateObjectIdToTime> STATEEVENTSET;
-	typedef STATEEVENTSET::iterator STATEEVENTITR;
-	
+	using STATICEVENTSET = std::set<CStaticEvent>;
+	using STATEEVENTSET = std::set<CStateObjectIdToTime>;
 
 	class CDiscontinuities
 	{

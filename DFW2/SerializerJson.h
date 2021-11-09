@@ -8,9 +8,6 @@ namespace DFW2
     // Сериализатор второго прохода, который реально читает данные в контейнеры
 
     using SerializerMap = std::map<std::string, SerializerPtr, std::less<> >;
-    using SerializerMapItr = SerializerMap::iterator;
-
-    
 
     // акцептор для расчета количества элементов
     // в массиве и построения картны названий массивов и их размерностей

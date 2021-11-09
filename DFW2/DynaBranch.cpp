@@ -77,12 +77,10 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 	{
 		bRes = true;
 
-		DEVICEVECTORITR it;
-
 		// идем по контейнеру ветвей
-		for (it = m_pContainer->begin(); it != m_pContainer->end(); it++)
+		for (auto&& it : *m_pContainer)
 		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+			CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
 			pBranch->UpdateVerbalName();
 
 			pBranch->m_pNodeIp = pBranch->m_pNodeIq = nullptr;
@@ -135,9 +133,9 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			// формируем буфер под ссылки в контейнере узлов
 			pContainer->AllocateLinks(ptrdiff_t(0));
 			// проходим по контейнеру ветвей
-			for (it = m_pContainer->begin(); it != m_pContainer->end(); it++)
+			for (auto&& it : *m_pContainer)
 			{
-				CDynaBranch *pBranch = static_cast<CDynaBranch*>(*it);
+				CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
 				// и добавляем к узлам в контейнере связи с ветвями
 				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIp->m_nInContainerIndex, pBranch);
 				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIq->m_nInContainerIndex, pBranch);

@@ -42,7 +42,7 @@ namespace DFW2
 			RastrTable& AddFieldSynonyms(std::string_view field, Args... synonyms)
 			{
 				// находим или создаем новый пустой синоним по имени
-				FieldSynonyms::iterator it = m_FieldSynonyms.find(field);
+				auto it = m_FieldSynonyms.find(field);
 				if (it == m_FieldSynonyms.end())
 					it = m_FieldSynonyms.insert(std::make_pair(field, StringSet())).first;
 				// добавляем синонимы в сет имени

@@ -193,16 +193,15 @@ STDMETHODIMP CResultRead::get_Types(VARIANT* Types)
 		if (SUCCEEDED(CComObject<CDeviceTypes>::CreateInstance(&pDeviceTypes)))
 		{
 			const DEVTYPESET& devset = m_ResultFileReader.GetTypesSet();
-			DEVTYPEITRCONST it = devset.begin();
 
 			pDeviceTypes->SetDeviceTypesInfo(&devset);
 
-			for (; it != devset.end(); it++)
+			for (const auto& it : devset)
 			{
 				CComObject<CDeviceType> *pDeviceType;
 				if (SUCCEEDED(CComObject<CDeviceType>::CreateInstance(&pDeviceType)))
 				{
-					pDeviceType->SetDeviceTypeInfo(*it);
+					pDeviceType->SetDeviceTypeInfo(it);
 					pDeviceType->AddRef();
 					pDeviceTypes->Add(pDeviceType);
 				}

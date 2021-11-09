@@ -7,11 +7,8 @@ namespace DFW2
 	class CDynaModel;
 	// для поиска устройств по идентификаторам используем сет
 	using DEVSEARCHSET = std::set<CDeviceId*, CDeviceIdComparator> ;
-	using DEVSEARCHSETITR = DEVSEARCHSET::iterator;
-	using DEVSEARCHSETCONSTITR = DEVSEARCHSET::const_iterator;
 	// для хранения уникальных указателей
 	using DEVICEPTRSET = std::set<CDevice*> ;
-	using DEVICEPTRSETITR = DEVICEPTRSET::iterator;
 
 	class CDeviceContainer;
 
@@ -44,7 +41,6 @@ namespace DFW2
 
 	// вектор "векторов" связей с устройствами различных типов
 	using LINKSVEC = std::vector<CMultiLink>;
-	using LINKSVECITR = LINKSVEC::iterator;
 
 	// контейнер устройств
 	// Идея контейнера в том, чтобы исключить из экземпляров устройств общую для них информацию:
@@ -162,12 +158,12 @@ namespace DFW2
 		bool VariableOutputEnable(std::string_view VarName, bool bOutputEnable);
 
 		// диапазон карты переменных состояния
-		VARINDEXMAPCONSTITR VariablesBegin();
-		VARINDEXMAPCONSTITR VariablesEnd();
+		inline VARINDEXMAP::const_iterator VariablesBegin() { return m_ContainerProps.m_VarMap.begin(); }
+		inline VARINDEXMAP::const_iterator VariablesEnd() { return m_ContainerProps.m_VarMap.end(); }
 
 		// диапазон карты констант
-		CONSTVARINDEXMAPCONSTITR ConstVariablesBegin();
-		CONSTVARINDEXMAPCONSTITR ConstVariablesEnd();
+		inline CONSTVARINDEXMAP::const_iterator ConstVariablesBegin() { return m_ContainerProps.m_ConstVarMap.begin(); }
+		inline CONSTVARINDEXMAP::const_iterator ConstVariablesEnd() { return m_ContainerProps.m_ConstVarMap.end(); }
 
 		
 		ptrdiff_t GetVariableIndex(std::string_view VarName)	  const;	// получить индекс переменной состояния по имени
@@ -181,11 +177,11 @@ namespace DFW2
 		void RemoveDeviceByIndex(ptrdiff_t nIndex); 
 		size_t Count() const;												// получить количество устройств в контейнере
 		size_t CountNonPermanentOff() const;								// получить количество устройств в конейнере без признака PermanentOff
-		inline DEVICEVECTORITR begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
-		inline DEVICEVECTORITR end() { return m_DevVec.end(); }
+		inline DEVICEVECTOR::iterator begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
+		inline DEVICEVECTOR::iterator end() { return m_DevVec.end(); }
 
-		inline const DEVICEVECTORCONSTITR begin() const { return m_DevVec.begin(); }			// const-диапазон вектора устройств
-		inline const DEVICEVECTORCONSTITR end() const   { return m_DevVec.end(); }
+		inline const DEVICEVECTOR::const_iterator begin() const { return m_DevVec.begin(); }			// const-диапазон вектора устройств
+		inline const DEVICEVECTOR::const_iterator end() const   { return m_DevVec.end(); }
 
 		void Log(DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);
 
@@ -234,6 +230,5 @@ namespace DFW2
 	};
 
 	using DEVICECONTAINERS = std::vector<CDeviceContainer*>;
-	using DEVICECONTAINERITR = DEVICECONTAINERS::iterator;
 };
 

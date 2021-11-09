@@ -23,8 +23,7 @@ public:
 	}
 };
 
-typedef std::set<CSlowVariableGraphItem> SLOWGRAPHSET;
-typedef SLOWGRAPHSET::const_iterator SLOWGRAPHSETITRCONST;
+using SLOWGRAPHSET = std::set<CSlowVariableGraphItem> ;
 
 class CSlowVariableItem
 {
@@ -80,7 +79,7 @@ struct SlowVarItemCompare
 
 class CSlowVariablesSet : public std::set <CSlowVariableItem*, SlowVarItemCompare>
 {
-	using ITERATOR = CSlowVariablesSet::iterator;
+
 public:
 
 	void Add(ptrdiff_t DeviceTypeId, 

@@ -82,12 +82,12 @@ STDMETHODIMP CDevice::get_Children(VARIANT* Children)
 			Children->pdispVal = pChildrenCollection;
 
 			const DEVTYPESET& devset = m_pDeviceInfo->m_pDevType->m_pFileReader->GetTypesSet();
-			DEVTYPEITRCONST it = devset.begin();
+
 			DeviceTypeInfo *pThisType = m_pDeviceInfo->m_pDevType;
 
-			for (; it != devset.end(); it++)
+			for (const auto& it : devset)
 			{
-				DeviceTypeInfo *pDevTypeInfo = *it;
+				DeviceTypeInfo *pDevTypeInfo = it;
 				int nParentsCount = pDevTypeInfo->DeviceParentIdsCount;
 				if (nParentsCount && pDevTypeInfo->eDeviceType != pThisType->eDeviceType)
 				{
@@ -112,7 +112,7 @@ STDMETHODIMP CDevice::get_Children(VARIANT* Children)
 									CComObject<CDevice> *pDevice;
 									if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
 									{
-										pDevice->SetDeviceInfo((*it)->m_pDeviceInstances.get() + i);
+										pDevice->SetDeviceInfo(it->m_pDeviceInstances.get() + i);
 										pDevice->AddRef();
 										pChildrenCollection->Add(pDevice);
 									}
@@ -141,11 +141,10 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 			Children->pdispVal = pChildrenCollection;
 
 			const DEVTYPESET& devset = m_pDeviceInfo->m_pDevType->m_pFileReader->GetTypesSet();
-			DEVTYPEITRCONST it = devset.begin();
 
-			for (; it != devset.end(); it++)
+			for (const auto& it : devset)
 			{
-				DeviceTypeInfo *pDevType = *it;
+				DeviceTypeInfo *pDevType = it;
 
 				if (!pDevType->DeviceParentIdsCount)
 				{
@@ -213,14 +212,13 @@ STDMETHODIMP CDevice::get_Variables(VARIANT* Variables)
 			Variables->pdispVal = pVariablesCollection;
 
 			VARTYPESET& VarTypes= m_pDeviceInfo->m_pDevType->m_VarTypes;
-			VARTYPEITRCONST it = VarTypes.begin();
 
-			for (; it != VarTypes.end(); it++)
+			for (const auto& it : VarTypes)
 			{
 				CComObject<CVariable> *pVariable;
 				if (SUCCEEDED(CComObject<CVariable>::CreateInstance(&pVariable)))
 				{
-					pVariable->SetVariableInfo(&*it, m_pDeviceInfo);
+					pVariable->SetVariableInfo(&it, m_pDeviceInfo);
 					pVariable->AddRef();
 					pVariablesCollection->Add(pVariable);
 				}

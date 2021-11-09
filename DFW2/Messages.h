@@ -20,8 +20,6 @@ namespace DFW2
 				return VARNAMEMAP::empty;
 		}
 	};
-	typedef VARNAMEMAP::const_iterator VARNAMEITRCONST;
-
 
 	enum class DFW2MessageStatus
 	{

@@ -53,8 +53,8 @@ bool CStaticEvent::ContainsStop() const
 bool CStaticEvent::RemoveStateAction(CDiscreteDelay *pDelayObject) const
 {
 	bool bRes = false;
-	MODELACTIONITR itFound = m_Actions.end();
-	for (MODELACTIONITR it = m_Actions.begin(); it != m_Actions.end(); it++)
+	auto itFound = m_Actions.end();
+	for (auto it = m_Actions.begin(); it != m_Actions.end(); it++)
 		if ((*it)->Type() == eDFW2_ACTION_TYPE::AT_STATE)
 		{
 			if (static_cast<CModelActionState*>(*it)->GetDelayObject() == pDelayObject)
@@ -80,9 +80,11 @@ eDFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 
 	MODELACTIONLIST tempList = m_Actions;
 
-	for (MODELACTIONITR it = tempList.begin(); it != tempList.end() && State != eDFW2_ACTION_STATE::AS_ERROR; it++)
+	for (auto&& it : tempList)
 	{
-		State = (*it)->Do(pDynaModel);
+		if (State == eDFW2_ACTION_STATE::AS_ERROR)
+			break;
+		State = it->Do(pDynaModel);
 	}
 	return State;
 }
@@ -91,7 +93,7 @@ bool CDiscontinuities::AddEvent(double dTime, CModelAction* Action)
 {
 	bool bRes = true;
 	CStaticEvent newEvent(dTime);
-	std::pair<STATICEVENTITR, bool> checkInsert = m_StaticEvent.insert(newEvent);
+	auto checkInsert = m_StaticEvent.insert(newEvent);
 	checkInsert.first->AddAction(Action);
 	return bRes;
 }
@@ -100,7 +102,7 @@ bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, doubl
 {
 	bool bRes = true;
 	CStateObjectIdToTime newObject(pDelayObject, dTime);
-	STATEEVENTITR it = m_StateEvents.find(pDelayObject);
+	auto it = m_StateEvents.find(pDelayObject);
 	if (it == m_StateEvents.end())
 	{
 		m_StateEvents.insert(newObject);
@@ -119,7 +121,7 @@ bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, doubl
 bool CDiscontinuities::CheckStateDiscontinuity(CDiscreteDelay *pDelayObject)
 {
 	CStateObjectIdToTime newObject(pDelayObject, 0.0);
-	STATEEVENTITR it = m_StateEvents.find(newObject);
+	auto it = m_StateEvents.find(newObject);
 	return it != m_StateEvents.end();
 }
 
@@ -127,10 +129,10 @@ bool CDiscontinuities::RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject)
 {
 	bool bRes = true;
 	CStateObjectIdToTime newObject(pDelayObject, 0.0);
-	STATEEVENTITR it = m_StateEvents.find(newObject);
+	auto it = m_StateEvents.find(newObject);
 	if (it != m_StateEvents.end())
 	{
-		STATICEVENTITR itEvent = m_StaticEvent.lower_bound(it->Time());
+		auto itEvent = m_StaticEvent.lower_bound(it->Time());
 		if (itEvent != m_StaticEvent.end())
 		{
 			itEvent->RemoveStateAction(pDelayObject);
@@ -163,7 +165,7 @@ void CDiscontinuities::PassTime(double dTime)
 {
 	if (!m_pDynaModel->IsInDiscontinuityMode())
 	{
-		STATICEVENTITR itEvent = m_StaticEvent.lower_bound(CStaticEvent(dTime));
+		auto itEvent = m_StaticEvent.lower_bound(CStaticEvent(dTime));
 		if (itEvent != m_StaticEvent.end())
 		{
 			if (itEvent != m_StaticEvent.begin())

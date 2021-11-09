@@ -401,9 +401,12 @@ void CDynaModel::InitDevices()
 	{
 		ptrdiff_t nOKInits = 0;
 
-		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED; it++)
+		for (auto&& it : m_DeviceContainers)
 		{
-			switch ((*it)->Init(this))
+			if (Status == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
+				break;
+
+			switch (it->Init(this))
 			{
 			case eDEVICEFUNCTIONSTATUS::DFS_OK:
 			case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
@@ -1289,9 +1292,12 @@ bool CDynaModel::ProcessDiscontinuity()
 				// пока статус "неготово"
 				ptrdiff_t nOKPds = 0;
 				// обрабатываем разрывы для всех устройств во всех контейнерах
-				for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED; it++)
+				for (auto&& it : m_DeviceContainers)
 				{
-					switch ((*it)->ProcessDiscontinuity(this))
+					if (Status == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
+						break;
+
+					switch (it->ProcessDiscontinuity(this))
 					{
 					case eDEVICEFUNCTIONSTATUS::DFS_OK:
 					case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:

@@ -288,7 +288,6 @@ namespace DFW2
 	using NodeQueue = std::queue<CDynaNodeBase*>;
 	using NodeSet = std::set<CDynaNodeBase*>;
 	using NODEISLANDMAP = std::map<CDynaNodeBase*, NodeSet> ;
-	using NODEISLANDMAPITRCONST = std::map<CDynaNodeBase*, NodeSet>::const_iterator;
 	using DEVICETODEVICEMAP = std::map<CDevice*, CDevice*>;
 	using ORIGINALLINKSVEC = std::vector<std::unique_ptr<DEVICETODEVICEMAP>>;
 
@@ -333,7 +332,6 @@ namespace DFW2
 		void CalculateShuntParts();
 		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		void GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
-		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);
 		_IterationControl& IterationControl();
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();

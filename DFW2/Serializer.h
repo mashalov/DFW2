@@ -551,8 +551,8 @@ namespace DFW2
 		}
 
 		// поддержка range для карты значений
-		SERIALIZERMAP::const_iterator begin() { return ValueMap.begin(); }
-		SERIALIZERMAP::const_iterator end()   { return ValueMap.end();   }
+		inline SERIALIZERMAP::const_iterator begin() { return ValueMap.begin(); }
+		inline SERIALIZERMAP::const_iterator end()   { return ValueMap.end();   }
 
 		// поиск значения по ключу
 		MetaSerializedValue* operator[](std::string_view Name ) 

@@ -96,12 +96,12 @@ STDMETHODIMP CSlowVariable::get_Plot(VARIANT *Plot)
 		{
 			VARIANT *pTime = pVals + sa->cElements;
 			VARIANT *pDesc = pTime + sa->cElements;
-			for (SLOWGRAPHSETITRCONST it = Graph.begin(); it != Graph.end(); it++)
+			for (const auto& it : Graph)
 			{
-				pVals->vt = VT_R8;	pVals->dblVal = it->m_dValue;
-				pTime->vt = VT_R8;	pTime->dblVal = it->m_dTime;
+				pVals->vt = VT_R8;	pVals->dblVal = it.m_dValue;
+				pTime->vt = VT_R8;	pTime->dblVal = it.m_dTime;
 				pDesc->vt = VT_BSTR;
-				pDesc->bstrVal = SysAllocString(stringutils::utf8_decode(it->m_strDescription).c_str());
+				pDesc->bstrVal = SysAllocString(stringutils::utf8_decode(it.m_strDescription).c_str());
 
 				pVals++;
 				pTime++;
