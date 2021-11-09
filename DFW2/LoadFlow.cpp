@@ -1470,8 +1470,13 @@ void CLoadFlow::Newton()
 			for (auto&& it : PQmax_PV)
 				fnToPv(it);
 		}
-
-		if (std::abs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < 10.0 *  m_Parameters.m_Imb || std::abs(lambda) <= m_Parameters.ForceSwitchLambda)
+		// разрешаем переключать узлы PV в случае, если 
+		// 1. небаланс по P снизился до заданного порога
+		// 2. снижение небаланса относительно мало
+		// 3. шаг сильно ограничен из-за бэктрэка
+		if (std::abs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < 100.0 *  m_Parameters.m_Imb || 
+			std::abs(pNodes->m_IterationControl.m_ImbRatio) > 0.9  ||
+			std::abs(lambda) <= m_Parameters.ForceSwitchLambda)
 		{
 			DumpViolated("PV-PQmax", PV_PQmax);
 
