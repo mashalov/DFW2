@@ -117,7 +117,7 @@ void CDynaModel::PrepareNetworkElements()
 	// и проверяем значение Uном
 	for (auto&& it : Nodes)
 	{
-		CDynaNode* pNode = static_cast<CDynaNode*>(it);
+		const auto& pNode{ static_cast<CDynaNode*>(it) };
 		// задаем V0 для узла. Оно потребуется временно, для холстого расчета шунтовых
 		// нагрузок в CreateSuperNodes
 		if (pNode->Unom < DFW2_EPSILON)
@@ -142,7 +142,7 @@ void CDynaModel::PrepareNetworkElements()
 
 	for (auto&& it : Branches)
 	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
+		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
 		// проверяем не самозамкнута ли ветвь
 		if (pBranch->key.Iq == pBranch->key.Ip)
 		{
@@ -262,7 +262,7 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 	// проходим по узлам
 	for (auto&& it : m_DevVec)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 		// если в узле есть синхронная зона
 		if (!pNode->m_pSyncZone)
 			throw dfw2error("CDynaNodeContainer::EnergizeZones SyncZone not assigned");
@@ -313,7 +313,7 @@ void CDynaNodeBase::MarkZoneEnergized()
 		CDevice  **ppGen(nullptr);
 		while (pLink->In(ppGen))
 		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
 			// если генератор есть и он включен
 			if (pGen->IsKindOfType(DEVTYPE_VOLTAGE_SOURCE) && pGen->IsStateOn())
 			{
@@ -439,7 +439,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	ptrdiff_t nZeroBranchCount(0);
 	for (auto&& it : *pBranchContainer)
 	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
+		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
 		// по умолчанию суперузлы ветви равны исходным узлам
 		pBranch->m_pNodeSuperIp = pBranch->m_pNodeIp;
 		pBranch->m_pNodeSuperIq = pBranch->m_pNodeIq;
@@ -676,7 +676,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	VirtualZeroBranch* pCurrentZeroBranch = m_pZeroBranches.get();
 	for (auto&& node : m_DevVec)
 	{
-		CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
+		const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 		// формируем диапазоны ветвей с нулевым сопротивлением для узлов (просто инициализация)
 		pNode->m_VirtualZeroBranchBegin = pNode->m_VirtualZeroBranchEnd = pCurrentZeroBranch;
 		// если у нас есть ветви с нулевым сопротивлением строим их списки
@@ -699,7 +699,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			CDevice** ppDevice(nullptr);
 			while (pBranchLink->In(ppDevice))
 			{
-				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
+				const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 				pCurrentZeroBranch = pNode->AddZeroBranch(pBranch);
 			}
 			// достаем из суперссылки на узлы следующий узел суперузла
@@ -744,7 +744,7 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 	VirtualBranch* pCurrentBranch = m_pVirtualBranches.get();
 	for (auto&& node : m_DevVec)
 	{
-		CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
+		const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 		// если узел входит в суперузел - для него виртуальные ветви отсутствуют
 		pNode->m_VirtualBranchBegin = pNode->m_VirtualBranchEnd = pCurrentBranch;
 		if (pNode->m_pSuperNodeParent)
@@ -754,9 +754,9 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 		CDevice** ppDevice(nullptr);
 		while (pBranchLink->In(ppDevice))
 		{
-			CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
+			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			// обходим включенные ветви также как и для подсчета размерностей выше
-			CDynaNodeBase* pOppNode = pBranch->GetOppositeSuperNode(pNode);
+			const auto& pOppNode = pBranch->GetOppositeSuperNode(pNode);
 			// получаем проводимость к оппозитному узлу
 			cplx* pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
 			// проверяем, уже прошли данный оппозитный узел для просматриваемого узла или нет
@@ -904,14 +904,14 @@ void CDynaNodeContainer::GetTopologySynchroZones(NODEISLANDMAP& NodeIslands)
 	// сначала вводим в список узлов все включенные, чтобы в списке оказались все узлы, даже без связей с базой
 	for (auto&& it : *pNodeContainer)
 	{
-		CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(it);
+		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 		if (pNode->GetState() == eDEVICESTATE::DS_ON)
 			JoinableNodes.insert(std::make_pair(pNode, NodeSet()));
 	}
 
 	for (auto&& it : *pBranchContainer)
 	{
-		CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
+		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
 		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
 		{
 			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
@@ -985,11 +985,11 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 		// отключаем все ветви к этому узлу 
 		while (pLink->In(ppDevice))
 		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppDevice);
+			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			if (pBranch->DisconnectBranchFromNode(pNode))
 			{
 				// состояние ветви изменилось, узел с другой стороны ставим в очередь на проверку
-				CDynaNodeBase* pOppNode = pBranch->GetOppositeNode(pNode);
+				const auto& pOppNode{ pBranch->GetOppositeNode(pNode) };
 				if (pOppNode->GetState() == eDEVICESTATE::DS_ON)
 					Queue.insert(pOppNode);
 			}
@@ -1004,7 +1004,7 @@ void CDynaNodeContainer::DumpNetwork()
 	{
 		for (auto& node : m_DevVec)
 		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 			dump << fmt::format("Node Id={} DBIndex={} V {} / {}", pNode->GetId(), pNode->GetDBIndex(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
 			if(pNode->m_pSuperNodeParent)
 				dump << fmt::format(" belongs to supernode Id={}", pNode->m_pSuperNodeParent->GetId());
@@ -1014,7 +1014,7 @@ void CDynaNodeContainer::DumpNetwork()
 			CDevice** ppDevice(nullptr);
 			while (pBranchLink->In(ppDevice))
 			{
-				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
+				const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 				dump << fmt::format("\tOriginal Branch %{}-%{}-({}) r={} x={} state={}",
 					pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np,
 					pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
@@ -1024,14 +1024,14 @@ void CDynaNodeContainer::DumpNetwork()
 			ppDevice = nullptr;
 			while (pSuperNodeLink->In(ppDevice))
 			{
-				CDynaNodeBase* pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 				dump << fmt::format("\t\tSlave Node Id={} DBIndex={}", pSlaveNode->GetId(), pSlaveNode->GetDBIndex()) << std::endl;
 
 				CLinkPtrCount* pBranchLink = pSlaveNode->GetLink(0);
 				CDevice** ppDeviceBranch(nullptr);
 				while (pBranchLink->In(ppDeviceBranch))
 				{
-					CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDeviceBranch);
+					const auto& pBranch{ static_cast<CDynaBranch*>(*ppDeviceBranch) };
 					dump << fmt::format("\t\t\tOriginal Branch %{}-%{}-({}) r={} x={} state={}", 
 						pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np,
 						pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
@@ -1047,7 +1047,7 @@ void CDynaNodeContainer::DumpNetwork()
 	{
 		for (auto& node : m_DevVec)
 		{
-			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(node);
+			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 			lulf << fmt::format("{};{};{}", pNode->GetId(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0) << std::endl;
 		}
 	}
