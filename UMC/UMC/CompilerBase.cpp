@@ -22,32 +22,41 @@ const std::filesystem::path& CompilerBase::CompiledModulePath() const
     return compiledModulePath;
 }
 
+// сохраняет исходный текст в файл
 void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput)
 {
-	std::filesystem::path OutputPath(pathSourceOutput);
+	// создаем каталог для вывода исходного текста
+    std::filesystem::path OutputPath(pathSourceOutput);
 	OutputPath.remove_filename();
 	std::filesystem::create_directories(OutputPath);
 	// UTF-8 filename ?
 	std::ofstream OutputStream(pathSourceOutput);
 	if (!OutputStream.is_open())
         throw dfw2errorGLE(fmt::format(DFW2::CDFW2Messages::m_cszUserModelCannotSaveFile, utf8_encode(OutputPath.c_str())));
-
+    // выводим исходный текст в файл
 	OutputStream << SourceToCompile;
 	OutputStream.close();
 }
 
+// возвращает true, если повторная рекомпиляция модуля таргета не требуется
 bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, std::filesystem::path& pathDLLOutput)
 {
 	bool bRes(false);
+    // проверяем режим ребилда, если он задан - игнорируем 
+    // исходный текст в модуле и требуем рекомпиляции
 	if (!GetProperty(PropertyMap::szPropRebuild).empty())
 		return bRes;
 
-	if (auto source(GetSource(pathDLLOutput)); source.has_value())
+	// достаем исходный текст из модуля
+    if (auto source(GetSource(pathDLLOutput)); source.has_value())
 	{
+        // если исходный текст в модуле есть, разжимаем его из base64 и потом из gzip
 		std::string Gzip;
 		CryptoPP::StringSource d64(source.value(), true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(Gzip)));
 		source.value().clear();
 		CryptoPP::StringSource gzip(Gzip, true, new CryptoPP::Gunzip(new CryptoPP::StringSink(source.value()), 1));
+        // сравниваем компилируемый исходный текст с тем, который извлечен из модуля, 
+        // если они совпадают - отказываемся от рекомпиляции
 		if (source.value() == SourceToCompile)
 			bRes = true;
 	}
@@ -55,6 +64,7 @@ bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, std::file
     static const char* m_cszUserModelAlreadyCompiled;
     static const char* m_cszUserModelShouldBeCompiled;
 
+    // формируем текст сообщения о результате проверки рекомпиляции
 	if (bRes)
 		pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelAlreadyCompiled, utf8_encode(pathDLLOutput.c_str())));
 	else
@@ -78,57 +88,77 @@ void CompilerBase::Compile(std::filesystem::path FilePath)
 void CompilerBase::Compile(std::istream& SourceStream)
 {
     std::filesystem::path pathSourceOutput;
+    // получаем стрим в строку
     std::string Source((std::istreambuf_iterator<char>(SourceStream)), std::istreambuf_iterator<char>());
+    // создаем свойства AST-дерева
     pTree = std::make_unique<CASTTreeBase>(Properties);
+    // устанавливаем обработчики ошибок парсера
     pTree->SetMessageCallBacks(messageCallBacks);
+    // к пути из свойств компилятора
     compiledModulePath = pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath);
+    // добавляем имя проекта
     compiledModulePath.append(Properties[PropertyMap::szPropProjectName]);
 
+    // формируем расширение таргета в зависимости от платформы
 #ifdef _MSC_VER
     compiledModulePath.replace_extension(".dll");
 #else
     compiledModulePath.replace_extension(".so");
 #endif
 
+    // формируем путь для сохранения исходного текста из стрима
     pathSourceOutput = pTree->GetPropertyPath(PropertyMap::szPropOutputPath);
     pathSourceOutput.append(Properties[PropertyMap::szPropProjectName]);
     pathSourceOutput.append(Properties[PropertyMap::szPropProjectName]);
 
+    // сохраняем исходный текст из стрима
     SaveSource(Source, pathSourceOutput);
 
-
+    // проверяем, нужна повторная компиляция модуля таргета
     if (NoRecompileNeeded(Source, compiledModulePath))
         return;
 
+    // создаем дерево правил
     auto pRuleTree = std::make_unique<CASTTreeBase>(Properties);
+    // выполняем лексер и парсер
     antlr4::ANTLRInputStream input(Source);
     EquationsLexer lexer(&input);
     antlr4::CommonTokenStream tokens(&lexer);
     EquationsParser parser(&tokens);
     auto errorListener = std::make_unique<AntlrASTErrorListener>(pTree.get(), input.toString());
+    // ставим обработчики ошибок в лексер и парсер
     parser.removeErrorListeners();
     parser.addErrorListener(errorListener.get());
     lexer.removeErrorListeners();
     lexer.addErrorListener(errorListener.get());
     antlr4::tree::ParseTree* tree = parser.input();
+    // создаем правила преобразований AST-дерева
     pRuleTree->CreateRules();
+    // обходим дерево в режиме visitor
     AntlrASTVisitor visitor(pTree.get());
     visitor.visit(tree);
+    // выполняем проверку после обработки visitor
     pTree->PostParseCheck();
     if (!pTree->ErrorCount())
     {
+        // если не было ошибок, делаем flatten/collect 
+        // с промежуточными сортировками
+
         pTree->PrintInfix();
         pTree->Flatten();
         pTree->Sort();
         pTree->Collect();
         pTree->Sort();
+        // применяем правила
         //pTree->Match(pRuleTree->GetRule());
         pTree->PrintInfix();
+        // создаем уравнения
         pTree->GenerateEquations();
         pTree->PrintInfix();
     }
     parser.removeErrorListeners();
     lexer.removeErrorListeners();
+    // генерируем код на C++
     CASTCodeGeneratorBase codegen(pTree.get(), input.toString());
     codegen.Generate();
 

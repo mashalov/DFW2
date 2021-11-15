@@ -200,16 +200,24 @@ template<> CASTRoot* CASTTreeBase::CreateNode<CASTRoot>(CASTNodeBase* pParent)
     return pNewRoot;
 }
 
+// создает правила преобразований AST-дерева
 void CASTTreeBase::CreateRules()
 {
+    // все правила располагаются внутри дерева, каждый узел
+    // которого сопоставляется с узлом обрабатываемого дерева
+
+    // дерево правил начинается к корня
     CASTNodeBase* pRoot   = CreateNode<CASTRoot>(nullptr);
+    // правила применяются внутри системы уравнений
     CASTNodeBase* pSystem = pRoot->CreateChild<CASTEquationSystem>();
-    CASTNodeBase* pRule1  = pSystem->CreateChild<CASTEquation>();
+   
+    
+    // правило общего множителя a*b + a*c = a*(b+c) для уравнения
+    CASTNodeBase* pRule1 = pSystem->CreateChild<CASTEquation>();
     CASTNodeBase* pSum   = pRule1->CreateChild<CASTSum>();
     CASTNodeBase *pMult1 = pSum->CreateChild<CASTMul>();
     CASTNodeBase* pMult2 = pSum->CreateChild<CASTMul>();
     pMult1->CreateChild<CASTAny>("");
-    //pMult1->CreateChild<CASTNumeric>();
     pMult1->CreateChild<CASTAny>("");
     pMult2->CreateChild<CASTAny>("");
     pMult2->CreateChild<CASTAny>("");
@@ -219,7 +227,7 @@ void CASTTreeBase::CreateRules()
     pSum3->CreateChild<CASTAny>("");
     pSum3->CreateChild<CASTAny>("");
 
-
+    // тест правила суммы квадратов - пока замаплен в ноль
     CASTNodeBase* pRule2 = pSystem->CreateChild<CASTEquation>();
     CASTNodeBase* pSumR2 = pRule2->CreateChild<CASTSum>();
     pRule2->CreateChild<CASTNumeric>("0");
@@ -230,13 +238,15 @@ void CASTTreeBase::CreateRules()
     pPow2->CreateChild<CASTAny>("b");
     pPow2->CreateChild<CASTNumeric>("2");
 
+
     CASTNodeBase* pMinus = pSumR2->CreateChild<CASTUminus>();
     CASTNodeBase* pMul2ab = pMinus->CreateChild<CASTMul>();
     pMul2ab->CreateChild<CASTNumeric>("2");
     pMul2ab->CreateChild<CASTAny>("a");
     pMul2ab->CreateChild<CASTAny>("b");
 
-    pRoot->CreateChild<CASTNumeric>("0"); // заглушка чтобы было 2 требуемых дочерних узла
+    // заглушка чтобы было 2 требуемых дочерних узла у корня правил
+    pRoot->CreateChild<CASTNumeric>("0"); 
     //pRoot->PrintInfix();
 }
 
@@ -666,22 +676,31 @@ CASTJacobian* CASTTreeBase::GetJacobian()
     return pJacobian;
 }
 
+// генерирует матрицу Якоби для системы уравнений
 void CASTTreeBase::GenerateJacobian(CASTEquationSystem* pSystem)
 {
+    // если есть ошибки в дереве - отказываемся работать
     if (ErrorCount() > 0) return;
 
+    // создаем дочерний узел системы - Якобиан
     pJacobian = pSystem->CreateChild<CASTJacobian>();
+    // проходим по уравнениям системы
     for (auto& eq : pSystem->ChildNodes())
     {
+        // обрабатываем только уравнения
         if (!eq->CheckType(ASTNodeType::Equation)) continue;
         CASTEquation* pSourceEquation = static_cast<CASTEquation*>(eq);
+        // если уравнение содержит хост-блок - пропускаем
         if (pSourceEquation->pHostBlock != nullptr) continue;
-        // еще надо проверять переменные на то, что они являются константами
+        // для остальных уравнений формируем выражения для расчета частных производных
+        // от всех переменных уравенения
         for (auto& v : pSourceEquation->Vars)
         {
+            // еще надо проверять переменные на то, что они являются константами
             CASTJacobiElement* pJacobiElement = CreateDerivative(pJacobian, pSourceEquation, v);
         }
     }
+    // упрощаем выражения в дереве (в том числе и в якобиане, но можно стоит только якобиан, чтобы не терзать уравнения)
     Collect();
 }
 
