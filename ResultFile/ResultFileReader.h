@@ -86,7 +86,7 @@ namespace DFW2
 		std::string m_strUserComment;
 
 		CRLECompressor m_RLECompressor;
-		double m_dRatio = -1.0;
+		double m_dRatio = 0.0;
 
 	public:
 		virtual ~CResultFileReader();

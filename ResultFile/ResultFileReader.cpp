@@ -287,7 +287,7 @@ void CResultFileReader::Reparent()
 
 void CResultFileReader::OpenFile(std::string_view FilePath)
 {
-	m_dRatio = -1.0;
+	m_dRatio = 0.0;
 
 	m_strFilePath = FilePath;
 
@@ -471,7 +471,10 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		throw CFileReadException(infile);
 	infile.seekg(nSlowVarsOffset, std::ios_base::beg);
 		
-	m_dRatio = static_cast<double>(nSlowVarsOffset - nCompressedDataOffset) / sizeof(double) / m_ChannelsCount / m_PointsCount;
+	// рассчитываем коэффициент сжатия если исходный размер ненулевой
+	m_dRatio = static_cast<double>(m_ChannelsCount * m_PointsCount * sizeof(double));
+	if(m_dRatio > 0.0)
+		m_dRatio = static_cast<double>(nSlowVarsOffset - nCompressedDataOffset) / m_dRatio;
 
 	uint64_t nSlowVarsCount = 0;
 	ReadLEB(nSlowVarsCount);
@@ -602,7 +605,7 @@ void CResultFileReader::Close()
 	infile.close();
 
 	m_DevTypeSet.clear();
-	m_dRatio = -1.0;
+	m_dRatio = 0.0;
 
 }
 
