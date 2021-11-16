@@ -71,6 +71,8 @@ namespace DFW2
 			std::string m_strResultsFolder = "";
 			DFW2MessageStatus m_eLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
 			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Niipt;
+			double m_dLRCMinSlope = -1E6;
+			double m_dLRCMaxSlope = 1E6;
 		};
 
 		friend class CCustomDevice;

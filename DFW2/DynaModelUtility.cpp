@@ -713,6 +713,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("StopOnGeneratorOOS", m_bStopOnGeneratorOOS);
 	Serializer->AddProperty("WorkingFolder", m_strWorkingFolder);
 	Serializer->AddProperty("ResultsFolder", m_strResultsFolder);
+	Serializer->AddProperty("LRCMinSlope", m_dLRCMinSlope);
+	Serializer->AddProperty("LRCMaxSlope", m_dLRCMaxSlope);
 
 	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
 		new CSerializerAdapterEnum(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));

@@ -168,14 +168,13 @@ bool CDynaLRC::Check()
 
 	sort(P.begin(), P.end(), fnCompare);
 	sort(Q.begin(), Q.end(), fnCompare);
-
-	return CheckDiscontinuity(P) && CheckDiscontinuity(Q) && CheckUnityAndSlope(-1E6, 1E6);
+	return CheckDiscontinuity(P) && CheckDiscontinuity(Q) && CheckUnityAndSlope();
 }
 
 // Проверяет крутизну при V = 1.0
-bool CDynaLRC::CheckUnityAndSlope(double MinSlope, double MaxSlope)
+bool CDynaLRC::CheckUnityAndSlope()
 {
-	const auto fnSlopeCheck = [this, MinSlope, MaxSlope](double (CDynaLRC::*fn)(double, double&, double))
+	const auto fnSlopeCheck = [this](double (CDynaLRC::*fn)(double, double&, double))
 	{
 		double d{ 0.0 };
 		const auto v{ (this->*fn)(1.0, d, 0.0) };
@@ -184,9 +183,14 @@ bool CDynaLRC::CheckUnityAndSlope(double MinSlope, double MaxSlope)
 			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCNonUnity, GetVerbalName(), v));
 			return false;
 		}
-		if (d > MaxSlope || d < MinSlope)
+		const auto& Parameters = GetModel()->Parameters();
+		if (d > Parameters.m_dLRCMaxSlope || d < Parameters.m_dLRCMinSlope)
 		{
-			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCSlopeViolated, GetVerbalName(), MinSlope, MaxSlope, d));
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCSlopeViolated, 
+				GetVerbalName(), 
+				Parameters.m_dLRCMinSlope,
+				Parameters.m_dLRCMaxSlope, 
+				d));
 			return false;
 		}
 		return true;
