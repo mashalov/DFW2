@@ -1,3 +1,4 @@
+
 Set scnAction = Rastr.Tables("DFWAutoActionScn")
 Set autAction = Rastr.Tables("DFWAutoAction")
 
@@ -47,6 +48,10 @@ Set autLogFormula = autLogic.Cols("Formula")
 Set autLogActions = autLogic.Cols("Actions")
 Set autLogDelay = autLogic.Cols("Delay")
 
+'Откл|Объект|Сост узла|Сост ветви|Узел Gш|Узел Bш|Узел Rш|Узел Xш|Узел Pn|Узел Qn|ЭГП|Якоби|Узел PnQn|Узел PnQn0|ГРАМ|РТ|Стоп|Ветвь КЗ
+ActObjects = Array("", "", "node", "vetv", "node", "node", "node", "node", "node", "node", "egp", "jacobi", "node", "node","gram", "rt", "stop", "vetv")
+ActProps = Array("", "", "sta", "sta", "g", "b", "r", "x", "pn", "qn", "egp", "jacobi", "pn0", "qn0", "gram", "rt", "stop", "vetvkz")
+ 
 
 autAction.DelRows
 for row = 0 to scnAction.Size - 1
@@ -61,6 +66,11 @@ for row = 0 to scnAction.Size - 1
     autActObjectKey.Z(row) = scnActObjectKey.Z(row)
     autActOutputMode.Z(row) = scnActOutputMode.Z(row)
     autActRunsCount.Z(row) = scnActRunsCount.Z(row)
+    autActType.Z(row) = scnActType.Z(row)
+    lookUpObject = ActObjects(autActType.Z(row))
+    lookUpProp = ActProps(autActType.Z(row))
+    if lookUpObject <> "" Then autActObjectClass.Z(row) = lookUpObject 
+    if lookUpProp <> "" Then autActObjectProp.Z(row) = lookUpProp 
 next
 
 autLogic.DelRows
@@ -73,5 +83,4 @@ for row = 0 to scnLogic.Size - 1
     autLogFormula.Z(row) = scnLogFormula.Z(row)
     autLogActions.Z(row) = scnLogActions.Z(row)
     autLogDelay.Z(row) = scnLogDelay.Z(row)
-
 next
