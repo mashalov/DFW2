@@ -56,7 +56,8 @@ namespace DFW2
 	protected:
 		bool CollectConstantData(LRCDATA& LRC);
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		bool CheckPtr(LRCDATA& LRC);
+		bool CheckDiscontinuity(LRCDATA& LRC);
+		bool CheckUnityAndSlope(double MinSlope, double MaxSlope);
 		double GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC);
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 	};

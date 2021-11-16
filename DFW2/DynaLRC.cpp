@@ -169,11 +169,34 @@ bool CDynaLRC::Check()
 	sort(P.begin(), P.end(), fnCompare);
 	sort(Q.begin(), Q.end(), fnCompare);
 
-	return CheckPtr(P) && CheckPtr(Q);
+	return CheckDiscontinuity(P) && CheckDiscontinuity(Q) && CheckUnityAndSlope(-1E6, 1E6);
+}
+
+// Проверяет крутизну при V = 1.0
+bool CDynaLRC::CheckUnityAndSlope(double MinSlope, double MaxSlope)
+{
+	const auto fnSlopeCheck = [this, MinSlope, MaxSlope](double (CDynaLRC::*fn)(double, double&, double))
+	{
+		double d{ 0.0 };
+		const auto v{ (this->*fn)(1.0, d, 0.0) };
+		if (!Equal(v, 1.0))
+		{
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCNonUnity, GetVerbalName(), v));
+			return false;
+		}
+		if (d > MaxSlope || d < MinSlope)
+		{
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCSlopeViolated, GetVerbalName(), MinSlope, MaxSlope, d));
+			return false;
+		}
+		return true;
+	};
+
+	return fnSlopeCheck(&CDynaLRC::GetPdP) && fnSlopeCheck(&CDynaLRC::GetQdQ);
 }
 
 // Проверяет разрывы на границах сегментов СХН
-bool CDynaLRC::CheckPtr(LRCDATA& LRC)
+bool CDynaLRC::CheckDiscontinuity(LRCDATA& LRC)
 {
 	bool bRes(true);
 

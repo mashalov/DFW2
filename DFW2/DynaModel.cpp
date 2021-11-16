@@ -183,7 +183,12 @@ bool CDynaModel::RunTransient()
 		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 		bRes = bRes && (Reactors.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 
-		bRes = bRes && Link();
+		if (!bRes)
+			throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
+		if(!Link())
+			throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
 		TurnOffDevicesByOffMasters();
 
 		// записывать заголовок нужно сразу после линковки и отключения устройств без ведущих навсегда

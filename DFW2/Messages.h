@@ -67,6 +67,8 @@ namespace DFW2
 		static const char* m_cszNodeRiseDueToZone;
 		static const char* m_cszUnknown;
 		static const char* m_cszLRCDiscontinuityAt;
+		static const char* m_cszLRCSlopeViolated;
+		static const char* m_cszLRCNonUnity;
 		static const char* m_cszAmbigousLRCSegment;
 		static const char* m_cszLRCStartsNotFrom0;
 		static const char* m_cszLRC1And2Reserved;
