@@ -1254,10 +1254,18 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase *pNode)
 
 	if (pNode->m_pLRC)
 	{
-		pNode->Pnr *= pNode->m_pLRC->GetPdP(VdVnom, pNode->dLRCPn, pNode->dLRCVicinity);
-		pNode->Qnr *= pNode->m_pLRC->GetQdQ(VdVnom, pNode->dLRCQn, pNode->dLRCVicinity);
-		pNode->dLRCPn *= pNode->Pn / pNode->V0;
-		pNode->dLRCQn *= pNode->Qn / pNode->V0;
+		// для узлов с отрицательными нагрузками СХН не рассчитываем
+		// если такие СХН не разрешены в параметрах
+		if (m_Parameters.m_bAllowNegativeLRC || pNode->Pn > 0.0)
+		{
+			pNode->Pnr *= pNode->m_pLRC->GetPdP(VdVnom, pNode->dLRCPn, pNode->dLRCVicinity);
+			pNode->dLRCPn *= pNode->Pn / pNode->V0;
+		}
+		if (m_Parameters.m_bAllowNegativeLRC || pNode->Qn > 0.0)
+		{
+			pNode->Qnr *= pNode->m_pLRC->GetQdQ(VdVnom, pNode->dLRCQn, pNode->dLRCVicinity);
+			pNode->dLRCQn *= pNode->Qn / pNode->V0;
+		}
 	}
 }
 

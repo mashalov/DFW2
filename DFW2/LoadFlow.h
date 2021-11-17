@@ -30,6 +30,7 @@ namespace DFW2
 			double m_dBranchAngleNewtonStep = 0.5;		// максимальное приращение шага Ньютона по углу связи
 			double ForceSwitchLambda = 1e-2;			// шаг Ньютона, меньше которого бэктрэк выключается и выполняется переключение типов узлов
 			eLoadFlowFormulation m_LFFormulation = eLoadFlowFormulation::Current;	// способ представления модели УР
+			bool m_bAllowNegativeLRC = true;			// разрешить учет СХН для узлов с отрицательной нагрузкой
 		};
 
 		CLoadFlow(CDynaModel *pDynaModel);

@@ -168,58 +168,75 @@ bool CDynaLRC::Check()
 
 	sort(P.begin(), P.end(), fnCompare);
 	sort(Q.begin(), Q.end(), fnCompare);
-	return CheckDiscontinuity(P) && CheckDiscontinuity(Q) && CheckUnityAndSlope();
+	return CheckDiscontinuity() && 
+		   CheckUnityAndSlope();
 }
 
 // Проверяет крутизну при V = 1.0
 bool CDynaLRC::CheckUnityAndSlope()
 {
-	const auto fnSlopeCheck = [this](double (CDynaLRC::*fn)(double, double&, double))
+	const auto fnSlopeCheck = [this](double (CDynaLRC::*fn)(double, double&, double), const char* cszType)
 	{
+		bool bRes{ true };
+		const auto& Parameters = GetModel()->Parameters();
 		double d{ 0.0 };
 		const auto v{ (this->*fn)(1.0, d, 0.0) };
-		if (!Equal(v, 1.0))
+		// тут вопрос как контролировать равенство коэффициентов единице
+		// пока решено использовать 1% от небаланса УР
+		if (0.01 * std::abs(v - 1.0) > Parameters.m_Imb )
 		{
-			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCNonUnity, GetVerbalName(), v));
-			return false;
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCNonUnity, 
+				GetVerbalName(), 
+				cszType,
+				v));
+			bRes = false;
 		}
-		const auto& Parameters = GetModel()->Parameters();
 		if (d > Parameters.m_dLRCMaxSlope || d < Parameters.m_dLRCMinSlope)
 		{
 			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCSlopeViolated, 
-				GetVerbalName(), 
+				GetVerbalName(),
+				cszType,
 				Parameters.m_dLRCMinSlope,
 				Parameters.m_dLRCMaxSlope, 
 				d));
-			return false;
+			bRes = false;
+		}
+		return bRes;
+	};
+
+	return fnSlopeCheck(&CDynaLRC::GetPdP, CDynaLRC::m_cszP) && 
+		   fnSlopeCheck(&CDynaLRC::GetQdQ, CDynaLRC::m_cszQ);
+}
+
+// Проверяет разрывы на границах сегментов СХН
+bool CDynaLRC::CheckDiscontinuity()
+{
+	const auto fnCheckDiscontinuity = [this](LRCDATA& LRC, const char* cszType)
+	{
+		// проверяем только в случае, если в СХН несколько сегментов
+		if (LRC.size() > 1)
+		{
+			// обходим со второго до последнего
+			for (auto v = std::next(LRC.begin()); v != LRC.end(); ++v)
+			{
+				double s = v->Get(v->V);				// берем значение в начале следующего
+				double q = std::prev(v)->Get(v->V);		// берем значение в конце предыдущего (в той же точке что и начало следующего)
+				if (!Equal(10.0 * DFW2_EPSILON * (s - q), 0.0))
+				{
+					Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCDiscontinuityAt, 
+						GetVerbalName(), 
+						cszType,
+						v->V, 
+						s, q));
+					return false;
+				}
+			}
 		}
 		return true;
 	};
 
-	return fnSlopeCheck(&CDynaLRC::GetPdP) && fnSlopeCheck(&CDynaLRC::GetQdQ);
-}
-
-// Проверяет разрывы на границах сегментов СХН
-bool CDynaLRC::CheckDiscontinuity(LRCDATA& LRC)
-{
-	bool bRes(true);
-
-	// проверяем только в случае, если в СХН несколько сегментов
-	if (LRC.size() > 1)
-	{
-		// обходим со второго до последнего
-		for (auto v = std::next(LRC.begin()); v != LRC.end(); ++v)
-		{
-			double s = v->Get(v->V);				// берем значение в начале следующего
-			double q = std::prev(v)->Get(v->V);		// берем значение в конце предыдущего (в той же точке что и начало следующего)
-			if (!Equal(10.0 * DFW2_EPSILON * (s - q), 0.0))
-			{
-				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCDiscontinuityAt, GetVerbalName(), v->V, s, q));
-				bRes = false;
-			}
-		}
-	}
-	return bRes;
+	return fnCheckDiscontinuity(P, CDynaLRC::m_cszP) && 
+		   fnCheckDiscontinuity(Q, CDynaLRC::m_cszQ);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaLRC::Init(CDynaModel* pDynaModel)
