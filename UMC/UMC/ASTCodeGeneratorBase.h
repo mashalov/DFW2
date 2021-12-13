@@ -70,7 +70,9 @@ public:
 			else if (v.second.External)
 			{
 				if (v.second.VarInstances.size() == 0)
-					pTree->Warning(fmt::format("Переменная \"{}\" объявлена как внешняя, но не используется в модели", v.first));
+					pTree->Warning(fmt::format("Переменная \"{}\" = \"{}\" объявлена как внешняя, но не используется в модели", 
+						v.first,
+						v.second.ModelLink));
 				else
 				{
 					_ASSERTE(v.second.IsExternal());

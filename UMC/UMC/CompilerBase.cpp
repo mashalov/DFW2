@@ -55,7 +55,7 @@ bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, std::file
 		std::string Gzip;
 		CryptoPP::StringSource d64(source.value(), true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(Gzip)));
 		source.value().clear();
-		CryptoPP::StringSource gzip(Gzip, true, new CryptoPP::Gunzip(new CryptoPP::StringSink(source.value()), 1));
+		CryptoPP::StringSource gzip(Gzip, true, new CryptoPP::Gunzip(new CryptoPP::StringSink(source.value()), false));
         // сравниваем компилируемый исходный текст с тем, который извлечен из модуля, 
         // если они совпадают - отказываемся от рекомпиляции
 		if (source.value() == SourceToCompile)
