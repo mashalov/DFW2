@@ -79,5 +79,19 @@ namespace DFW2
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelayLogic); }
 	};
+
+	// минимальное реле логики сценария и автоматики
+	class CRelayMinDelayLogic : public CRelayDelayLogic
+	{
+	public:
+		using CRelayDelayLogic::CRelayDelayLogic;
+		bool Init(CDynaModel* pDynaModel) override
+		{
+			// Перед Init меняем флаг максимального реле на false
+			m_bMaxRelay = false;
+			return CRelayDelayLogic::Init(pDynaModel);
+		}
+		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelayLogic); }
+	};
 }
 

@@ -99,7 +99,7 @@ bool CCustomDevice::BuildStructure()
 			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(*this, { Output }, { inputs[1] });
 			break;
 		case PBT_RELAYMINDELAYLOGIC:
-			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(*this, { Output }, { inputs[1] });
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayMinDelayLogic(*this, { Output }, { inputs[1] });
 			break;
 		case PBT_RSTRIGGER:
 			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(*this, { Output }, { inputs[1], inputs[2] });

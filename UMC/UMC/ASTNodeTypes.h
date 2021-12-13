@@ -17,7 +17,7 @@ enum class ASTNodeType
 	FnSin,
 	FnCos,
 	FnRelay,
-	FnRelayD,
+	FnRelayMin,
 	FnAbs,
 	FnProxyVariable,
 	FnHigher,
