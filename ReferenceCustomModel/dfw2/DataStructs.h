@@ -88,15 +88,14 @@ namespace DFW2
 	};
 
 	// описание константы
-	class CConstVarIndex : public CVarIndexBase
+	class CConstVarIndex : public CVarIndex
 	{
 	public:
 		eDEVICEVARIABLETYPE m_DevVarType;
-		CConstVarIndex(ptrdiff_t nIndex, eDEVICEVARIABLETYPE eDevVarType) : CVarIndexBase(nIndex),
-			m_DevVarType(eDevVarType)
-		{
-
-		}
+		CConstVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits, eDEVICEVARIABLETYPE eDevVarType) : CVarIndex(nIndex, false, eVarUnits),
+			m_DevVarType(eDevVarType) { }
+		CConstVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits, bool bOutput, eDEVICEVARIABLETYPE eDevVarType) : CVarIndex(nIndex, bOutput, eVarUnits),
+			m_DevVarType(eDevVarType) { }
 	};
 
 	// описание внешней переменной
@@ -139,22 +138,12 @@ namespace DFW2
 	// карта индексов переменных состояния
 	// компаратор для гетерогенного поиска : https://www.bfilipek.com/2019/05/heterogeneous-lookup-cpp14.html
 	using VARINDEXMAP = std::map<std::string, CVarIndex, std::less<>>;
-	using VARINDEXMAPITR = VARINDEXMAP::iterator;
-	using VARINDEXMAPCONSTITR = VARINDEXMAP::const_iterator;
-
 	// карта индексов констант
 	using CONSTVARINDEXMAP = std::map<std::string, CConstVarIndex>;
-	using CONSTVARINDEXMAPITR = CONSTVARINDEXMAP::iterator;
-	using CONSTVARINDEXMAPCONSTITR = CONSTVARINDEXMAP::const_iterator;
-
 	// карта индексов внешних переменных
 	using EXTVARINDEXMAP = std::map<std::string, CExtVarIndex>;
-	using EXTVARINDEXMAPITR = EXTVARINDEXMAP::iterator;
-	using EXTVARINDEXMAPCONSTITR = EXTVARINDEXMAP::const_iterator;
-
 	// множество типов устройств
 	using TYPEINFOSET = std::set<ptrdiff_t>;
-	using TYPEINFOSETITR = TYPEINFOSET::iterator;
 
 	using DOUBLEVECTOR = std::vector<double>;
 	using VARIABLEVECTOR = std::vector<VariableIndex>;

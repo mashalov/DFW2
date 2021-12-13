@@ -1086,8 +1086,73 @@ public:
     CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
 };
 
-
+// реле с коэффициентом возврата без выдержки времени
 class CASTfnRelay : public CASTHostBlockBase
+{
+    static inline const HostBlockInfo hbInfo = {
+                                                    {
+                                                        CASTFunctionBase::FunctionInfo::VariableOnly,   // вход
+                                                        CASTFunctionBase::FunctionInfo::ConstantOnly,   // уставка
+                                                        CASTFunctionBase::FunctionInfo::ConstantOnly,   // коэффициент возврата
+                                                    },
+                                                    "PBT_RELAY",
+                                                    1
+    };
+public:
+    using CASTHostBlockBase::CASTHostBlockBase;
+    static inline constexpr std::string_view static_text = "relay";
+    ASTNodeType GetType() const override { return ASTNodeType::FnRelay; }
+    ptrdiff_t DesignedChildrenCount() const override { return 1; }
+    const std::string_view GetText() const override { return CASTfnRelay::static_text; }
+    const HostBlockInfo& GetHostBlockInfo() const override { return CASTfnRelay::hbInfo; }
+    CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
+
+    void FoldConstants() override
+    {
+        CheckChildCount();
+        CASTNodeBase* pVal = ChildNodes().front();
+        CASTNodeBase* pRef = GetConstantArgument(1);
+        CASTNodeBase* pCoe = GetConstantArgument(2);
+        // если вход можно вычислить
+        if (IsNumeric(pVal) && IsNumeric(pRef) && IsNumeric(pCoe))
+            GetParent()->ReplaceChild<CASTNumeric>(this, (NumericValue(pVal) > NumericValue(pRef) * NumericValue(pCoe)) ? 1.0 : 0.0);
+    }
+};
+
+// минимальное реле с коэффициентом возврата без выдержки времени
+class CASTfnRelayMin : public CASTHostBlockBase
+{
+    static inline const HostBlockInfo hbInfo = {
+                                                    {
+                                                        CASTFunctionBase::FunctionInfo::VariableOnly,   // вход
+                                                        CASTFunctionBase::FunctionInfo::ConstantOnly,   // уставка
+                                                        CASTFunctionBase::FunctionInfo::ConstantOnly,   // коэффициент возврата
+                                                    },
+                                                    "PBT_RELAYMIN",
+                                                    1
+    };
+public:
+    using CASTHostBlockBase::CASTHostBlockBase;
+    static inline constexpr std::string_view static_text = "relayd";
+    ASTNodeType GetType() const override { return ASTNodeType::FnRelayMin; }
+    ptrdiff_t DesignedChildrenCount() const override { return 1; }
+    const std::string_view GetText() const override { return CASTfnRelayMin::static_text; }
+    const HostBlockInfo& GetHostBlockInfo() const override { return CASTfnRelayMin::hbInfo; }
+    CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
+
+    void FoldConstants() override
+    {
+        CheckChildCount();
+        CASTNodeBase* pVal = ChildNodes().front();
+        CASTNodeBase* pRef = GetConstantArgument(1);
+        CASTNodeBase* pCoe = GetConstantArgument(2);
+        // если вход можно вычислить
+        if (IsNumeric(pVal) && IsNumeric(pRef) && IsNumeric(pCoe))
+            GetParent()->ReplaceChild<CASTNumeric>(this, (NumericValue(pVal) < NumericValue(pRef) * NumericValue(pCoe)) ? 1.0 : 0.0);
+    }
+};
+
+class CASTfnRelayDelay : public CASTHostBlockBase
 {
     static inline const HostBlockInfo hbInfo = { 
                                                     { 
@@ -1100,10 +1165,10 @@ class CASTfnRelay : public CASTHostBlockBase
                                                };
 public:
     using CASTHostBlockBase::CASTHostBlockBase;
-    static inline constexpr std::string_view static_text = "relay";
+    static inline constexpr std::string_view static_text = "relaydelay";
     ASTNodeType GetType() const override { return ASTNodeType::FnRelay; }
     ptrdiff_t DesignedChildrenCount() const override { return 1; }
-    const std::string_view GetText() const override { return CASTfnRelay::static_text; }
+    const std::string_view GetText() const override { return CASTfnRelayDelay ::static_text; }
     const HostBlockInfo& GetHostBlockInfo() const override  { return hbInfo; }
     CASTNodeBase* Clone(CASTNodeBase* pParent) override {  return CloneImpl(pParent, this); }
     static void FoldRelay(CASTFunctionBase* pNode)
@@ -1128,7 +1193,7 @@ public:
     }
 };
 
-class CASTfnRelayMin : public CASTHostBlockBase
+class CASTfnRelayMinDelay : public CASTHostBlockBase
 {
     static inline const HostBlockInfo hbInfo = {
                                                     {
@@ -1141,15 +1206,15 @@ class CASTfnRelayMin : public CASTHostBlockBase
     };
 public:
     using CASTHostBlockBase::CASTHostBlockBase;
-    static inline constexpr std::string_view static_text = "relayd";
-    ASTNodeType GetType() const override { return ASTNodeType::FnRelayMin; }
+    static inline constexpr std::string_view static_text = "relaymindelay";
+    ASTNodeType GetType() const override { return ASTNodeType::FnRelayMinDelay; }
     ptrdiff_t DesignedChildrenCount() const override { return 1; }
-    const std::string_view GetText() const override { return CASTfnRelayMin::static_text; }
+    const std::string_view GetText() const override { return CASTfnRelayMinDelay::static_text; }
     const HostBlockInfo& GetHostBlockInfo() const override { return hbInfo; }
     CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
     void FoldConstants() override
     {
-        CASTfnRelay::FoldRelay(this);
+        CASTfnRelayDelay::FoldRelay(this);
     }
 };
 
