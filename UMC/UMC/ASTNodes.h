@@ -1124,6 +1124,25 @@ public:
     }
 };
 
+class CASTfnRelayD : public CASTfnRelay
+{
+    static inline const HostBlockInfo hbInfo = {
+                                                    {
+                                                        CASTFunctionBase::FunctionInfo::VariableOnly,
+                                                        CASTFunctionBase::FunctionInfo::ConstantOnly,
+                                                        CASTFunctionBase::FunctionInfo::ConstantOnly,
+                                                    },
+                                                    "PBT_RELAYMINDELAYLOGIC",
+                                                    1
+    };
+public:
+    using CASTfnRelay::CASTfnRelay;
+    static inline constexpr std::string_view static_text = "relayd";
+    ASTNodeType GetType() const override { return ASTNodeType::FnRelayD; }
+    const std::string_view GetText() const override { return CASTfnRelayD::static_text; }
+    CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
+};
+
 class CASTHigher : public CASTHostBlockBase
 {
     static inline const HostBlockInfo hbInfo = {

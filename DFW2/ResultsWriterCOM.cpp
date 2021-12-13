@@ -11,7 +11,7 @@ void CResultsWriterCOM::WriteResults(const WriteResultsInfo& WriteInfo)
 	}
 	catch (_com_error& ex)
 	{
-		throw dfw2error(ex.Description());
+		throw dfw2error(static_cast<const char*>(ex.Description()));
 	}
 }
 
@@ -23,7 +23,7 @@ void CResultsWriterCOM::FinishWriteResults()
 	}
 	catch (_com_error& ex)
 	{
-		throw dfw2error(ex.Description());
+		throw dfw2error(static_cast<const wchar_t*>(ex.Description()));
 	}
 }
 
@@ -39,7 +39,7 @@ void CResultsWriterCOM::CreateFile(std::filesystem::path path, ResultsInfo& Info
 	}
 	catch (_com_error& ex)
 	{
-		throw dfw2error(ex.Description());
+		throw dfw2error(static_cast<const wchar_t*>(ex.Description()));
 	}
 }
 
@@ -51,7 +51,7 @@ void CResultsWriterCOM::AddVariableUnit(ptrdiff_t nUnitType, const std::string_v
 	}
 	catch (_com_error& ex)
 	{
-		throw dfw2error(ex.Description());
+		throw dfw2error(static_cast<const wchar_t*>(ex.Description()));
 	}
 }
 
@@ -167,7 +167,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 	}
 	catch (_com_error& ex)
 	{
-		throw dfw2error(ex.Description());
+		throw dfw2error(static_cast<const wchar_t*>(ex.Description()));
 	}
 }
 
@@ -186,7 +186,7 @@ void CResultsWriterCOM::SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptr
 	}
 	catch (_com_error& ex)
 	{
-		throw dfw2error(ex.Description());
+		throw dfw2error(static_cast<const wchar_t*>(ex.Description()));
 	}
 }
 
@@ -198,7 +198,7 @@ void CResultsWriterCOM::FinishWriteHeader()
 	}
 	catch (_com_error& ex)
 	{
-		throw dfw2error(ex.Description());
+		throw dfw2error(static_cast<const wchar_t*>(ex.Description()));
 	}
 }
 

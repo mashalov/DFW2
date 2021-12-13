@@ -149,6 +149,7 @@ void CASTTreeBase::RemoveTrivialEquations(CASTEquationSystem* pSystem)
             }
         );
 
+        //Message(substitution.pEquation->GetInfix());
         pSystem->DeleteChild(substitution.pEquation);
         Collect();
     }

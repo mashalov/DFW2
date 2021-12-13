@@ -199,6 +199,8 @@ public:
             Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnCos>()));
         else if (ctx->VARIABLE()->getText() == "relay")
             Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnRelay>(pTree->GetHostBlocks().size())));
+        else if (ctx->VARIABLE()->getText() == "relayd")
+            Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnRelayD>(pTree->GetHostBlocks().size())));
         else if (ctx->VARIABLE()->getText() == "abs")
             Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnAbs>(pTree->GetHostBlocks().size())));
         else if (ctx->VARIABLE()->getText() == "laglim")
