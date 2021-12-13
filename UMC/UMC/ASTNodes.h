@@ -1075,6 +1075,28 @@ public:
     CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
 };
 
+// Класс для замены flat-функции OR на хост-блок
+class CASTfnOrHost : public CASTHostBlockBase
+{
+    static inline const HostBlockInfo hbInfo = {
+                                                    {
+                                                        CASTFunctionBase::FunctionInfo::VariableOnly,   // вход 1 
+                                                        CASTFunctionBase::FunctionInfo::VariableOnly,   // вход 1
+                                                        CASTFunctionBase::FunctionInfo::OptionalList    // остальные входы
+                                                    },
+                                                    "PBT_OR",
+                                                    1
+    };
+public:
+    using CASTHostBlockBase::CASTHostBlockBase;
+    static inline constexpr std::string_view static_text = "Or";
+    ASTNodeType GetType() const override { return ASTNodeType::FnOr; }
+    const std::string_view GetText() const override { return CASTfnOrHost::static_text; }
+    const HostBlockInfo& GetHostBlockInfo() const override { return CASTfnOrHost::hbInfo; }
+    CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
+    ptrdiff_t DesignedChildrenCount() const override { return -1; }
+};
+
 class CASTfnAnd : public CASTfnAndOrBase
 {
     using CASTfnAndOrBase::CASTfnAndOrBase;

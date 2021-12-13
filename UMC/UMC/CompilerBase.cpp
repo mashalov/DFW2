@@ -160,6 +160,7 @@ bool CompilerBase::Compile(std::istream& SourceStream)
             // применяем правила
             //pTree->Match(pRuleTree->GetRule());
             pTree->PrintInfix();
+            pTree->ApplyHostBlocks();
             // создаем уравнения
             pTree->GenerateEquations();
             pTree->PrintInfix();

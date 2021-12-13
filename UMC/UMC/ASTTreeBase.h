@@ -148,6 +148,7 @@ public:
     const CASTNodeBase* GetRule();
     size_t Score();
     void PrintInfix();
+    void ApplyHostBlocks();
     void PrintErrorsWarnings() const;
     void Warning(std::string_view warning);
     void Error(std::string_view error);

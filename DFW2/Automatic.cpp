@@ -33,7 +33,7 @@ void CAutomaticLogic::AddToSource(std::ostringstream& source)
 	source << fmt::format("L{} = {}\n", m_nId, m_strExpression);
 	// выражение логики вводим через реле с уставкой 0 и выдержкой времени
 	source << fmt::format("LT{} = relaydelay(L{}, 0.0, {})\n", m_nId, 
-		m_nId, 
+		m_nId,
 		m_strDelayExpression.empty() ? "0" : m_strDelayExpression);
 }
 

@@ -60,7 +60,7 @@ namespace DFW2
 	using OutputList = std::initializer_list<std::reference_wrapper<VariableIndex>>;
 	using InputList = std::initializer_list<InputVariable>;
 	using InputVariableVec = std::vector<InputVariable>;
-
+	
 	// адаптер диапазона для конструкторов примитивов
 	// принимает contiguous контейнер с range, запоминает итераторы диапазона
 	// дает доступ по индексу
@@ -70,19 +70,23 @@ namespace DFW2
 	template<typename T>
 	struct IORangeT
 	{
-		typename T::const_iterator begin, end;
+		typename T::const_iterator Begin, End;
+		const T& Range;
 
-		IORangeT(const T& rng) : begin(rng.begin()), end(rng.end()) {}
+		IORangeT(const T& rng) : Range(rng), Begin(rng.begin()), End(rng.end()) {}
 
 		typename T::value_type operator[] (const int index) const
 		{
-			if (end - begin > index)
-				return *(begin + index);
+			if (End - Begin > index)
+				return *(Begin + index);
 			else
 				throw dfw2error("IORange Iterator out of range");
 		}
-	};
 
+		typename T::const_iterator begin() const { return Begin; }
+		typename T::const_iterator end() const { return End; }
+	};
+		
 	// специализация для входных и выходных переменных примитива
 	using IRange = IORangeT<InputVariableVec>;
 	using ORange = IORangeT<VariableIndexRefVec>;
@@ -242,5 +246,14 @@ namespace DFW2
 
 		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
+	};
+
+	// класс для поддержки примитивов с множеством входов
+	class CDynaPrimitiveMultiInput
+	{
+	protected:
+		InputVariableVec m_Inputs;
+	public:
+		CDynaPrimitiveMultiInput(IRange Input) : m_Inputs(Input.begin(), Input.end()) {}
 	};
 }

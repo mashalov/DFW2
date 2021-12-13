@@ -1059,3 +1059,36 @@ std::filesystem::path CASTTreeBase::GetPropertyPath(std::string_view PropNamePat
     }
     return Path;
 }
+
+
+// Для части блоков которые могут быть Flat (|, &) и при разборе
+// были представлены функциями нескольких аргументов нужна
+// замена функций на хост-блоки, связанная с необходимостью определять
+// разрывы
+
+void CASTTreeBase::ApplyHostBlocks()
+{
+    // находим блоки, которые должны быть заменены на хост-блоки (Or/And)
+    ASTNodeList ChangeBlocks;
+    std::copy_if(NodeList.begin(), NodeList.end(), std::back_inserter(ChangeBlocks), [](const CASTNodeBase* pNode)
+        {
+            return pNode->CheckType(ASTNodeType::FnOr, ASTNodeType::FnAnd) && !pNode->Deleted();
+        });
+
+    // для всех найденных блоков
+    for (auto& node : ChangeBlocks)
+    {
+        if (node->CheckType(ASTNodeType::FnOr))
+        {
+            // создаем хост-блок, идентичный по назначению
+            auto hostOr = CreateNode<CASTfnOrHost>(node->GetParent(), GetHostBlocks().size());
+            // переключаем дочерние узлы из исходного узла на хост-блок
+            ASTNodeList OrChildren;
+            node->ExtractChildren(OrChildren);
+            hostOr->AppendChildren(OrChildren);
+            // заменяем исходный узел на новый хост-блок
+            node->GetParent()->ReplaceChild(node, hostOr);
+        }
+    }
+
+};

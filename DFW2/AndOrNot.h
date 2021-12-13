@@ -23,14 +23,14 @@ namespace DFW2
 		static long EquationsCount()  { return 1; }
 	};
 
-	class COr : public CDynaPrimitiveBinary
+	// OR может иметь любое количество входов, поэтому
+	// наследуем его от MultiInput
+	class COr : public CDynaPrimitiveBinary, CDynaPrimitiveMultiInput
 	{
-	protected:
-		InputVariable m_Input1;
 	public:
 
-		COr(CDevice& Device, const ORange& Output, const IRange& Input) : 
-			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(Input[1]) {}
+		COr(CDevice& Device, const ORange& Output, const IRange& Input) :
+			CDynaPrimitiveBinary(Device, Output, Input), CDynaPrimitiveMultiInput(Input) {}
 		COr(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			COr(Device, ORange(Output), IRange(Input)) { }
 		virtual ~COr() = default;

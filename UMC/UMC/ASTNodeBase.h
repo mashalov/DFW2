@@ -496,7 +496,6 @@ public:
     }
 
 
-
     // возвращает ближайший родительский узел данного типа
     CASTNodeBase* GetParentOfType(const ASTNodeType ParentType);
 
