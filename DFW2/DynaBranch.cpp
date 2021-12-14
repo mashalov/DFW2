@@ -715,18 +715,20 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_BRANCHMEASURE);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranchMeasure, CDeviceContainerProperties::m_cszSysNameBranchMeasure);
 	props.nEquationsCount = CDynaBranchMeasure::VARS::V_LAST;
-	props.m_VarMap.insert(std::make_pair("Ibre", CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Ibim", CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Iere", CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Ieim", CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Ib",	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Ie",	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair("Pb",	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW)));
-	props.m_VarMap.insert(std::make_pair("Qb",	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR)));
-	props.m_VarMap.insert(std::make_pair("Pe",	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW)));
-	props.m_VarMap.insert(std::make_pair("Qe",	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR)));
-	props.m_VarMap.insert(std::make_pair("Sb",	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA)));
-	props.m_VarMap.insert(std::make_pair("Se",	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA)));
+	props.m_VarMap.insert({ m_cszIbre,  CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES) });
+	props.m_VarMap.insert({ m_cszIbim,  CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES) });
+	props.m_VarMap.insert({ m_cszIere,  CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES) });
+	props.m_VarMap.insert({ m_cszIeim,  CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES) });
+	props.m_VarMap.insert({ m_cszIb,	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES) });
+	props.m_VarMap.insert({ m_cszIe,	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES) });
+	props.m_VarMap.insert({ m_cszPb,	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW) });
+	props.m_VarMap.insert({ m_cszQb,	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR) });
+	props.m_VarMap.insert({ m_cszPe,	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW) });
+	props.m_VarMap.insert({ m_cszQe,	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR) });
+	props.m_VarMap.insert({ m_cszSb,	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA) });
+	props.m_VarMap.insert({ m_cszSe,	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA) });
+
+	props.m_VarAliasMap.insert({ { "ib", m_cszIb }, { "ie", m_cszIe } });
 
 	// измерения создаются индивидуально с ветвью в конструкторе
 	//props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();

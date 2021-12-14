@@ -63,7 +63,8 @@ namespace DFW2
 		enum CONSTVARS
 		{
 			C_GSH,
-			C_BSH
+			C_BSH,
+			C_PLOAD
 		};
 
 		enum VARS
@@ -182,13 +183,14 @@ namespace DFW2
 
 		void AddToTopologyCheck();
 
-		static const char* m_cszV;
-		static const char* m_cszDelta;
-		static const char* m_cszVre;
-		static const char* m_cszVim;
-		static const char* m_cszGsh;
-		static const char* m_cszBsh;
-		static const char* m_cszLFNodeTypeNames[5];
+		static constexpr const char* m_cszV = "V";
+		static constexpr const char* m_cszDelta = "Delta";
+		static constexpr const char* m_cszVre = "Vre";
+		static constexpr const char* m_cszVim = "Vim";
+		static constexpr const char* m_cszGsh = "gsh";
+		static constexpr const char* m_cszBsh = "bsh";
+		static constexpr const char* m_cszPload = "pn";
+		static constexpr const char* m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };
 
 	protected:
 		void FromSuperNode();
@@ -232,8 +234,9 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static const char *m_cszS;
-		static const char *m_cszSz;
+
+		static constexpr const char* m_cszS = "S";
+		static constexpr const char* m_cszSz = "Sz";
 	};
 
 	// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько

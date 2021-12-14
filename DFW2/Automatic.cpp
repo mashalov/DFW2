@@ -418,6 +418,12 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 				}
 				break;
 			}
+			case 13: // PnQn0 - узел
+			{
+				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
+				bRes = true;
+				break;
+			}
 			default:
 				pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionTypeNotFound, GetVerbalName(), m_nType));
 				break;

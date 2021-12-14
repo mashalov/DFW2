@@ -50,7 +50,7 @@ Set autLogDelay = autLogic.Cols("Delay")
 
 'Откл|Объект|Сост узла|Сост ветви|Узел Gш|Узел Bш|Узел Rш|Узел Xш|Узел Pn|Узел Qn|ЭГП|Якоби|Узел PnQn|Узел PnQn0|ГРАМ|РТ|Стоп|Ветвь КЗ
 ActObjects = Array("", "", "node", "vetv", "node", "node", "node", "node", "node", "node", "egp", "jacobi", "node", "node","gram", "rt", "stop", "vetv")
-ActProps = Array("", "", "sta", "sta", "g", "b", "r", "x", "pn", "qn", "egp", "jacobi", "pn0", "qn0", "gram", "rt", "stop", "vetvkz")
+ActProps = Array("", "", "sta", "sta", "g", "b", "r", "x", "pn", "qn", "egp", "jacobi", "pn", "pn", "gram", "rt", "stop", "vetvkz")
 
 
 Set scnStarter = Rastr.Tables("DFWAutoStarterScn")

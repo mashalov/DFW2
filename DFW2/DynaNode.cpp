@@ -562,6 +562,7 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	{
 		MAP_VARIABLE(Bshunt, C_BSH)
 		MAP_VARIABLE(Gshunt, C_GSH)
+		MAP_VARIABLE(Pn, C_PLOAD)
 	}
 	return p;
 }
@@ -1667,9 +1668,10 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.nEquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert({ CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS) });
+	props.m_VarMap.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
+	props.m_VarMap.insert({ CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS) });
+	props.m_VarAliasMap.insert({ "vras", { CDynaNodeBase::m_cszV }});
 }
 
 void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
@@ -1677,8 +1679,8 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	CDynaNodeBase::DeviceProperties(props);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
 	props.nEquationsCount = CDynaNode::VARS::V_LAST;
-	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS)));
+	props.m_VarMap.insert({ CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU) });
+	props.m_VarMap.insert({ CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS) });
 
 	/*
 	props.m_VarMap.insert(make_pair("Sip", CVarIndex(V_SIP, VARUNIT_PU)));
@@ -1689,8 +1691,9 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaNode>>();
 
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasNode);
-	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert({ CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.m_ConstVarMap.insert({ CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.m_ConstVarMap.insert({ CDynaNode::m_cszPload, CConstVarIndex(CDynaNode::C_PLOAD, VARUNIT_MW, eDVT_INTERNALCONST) });
 }
 
 void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
@@ -1833,14 +1836,3 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 			
 	}
 }
-
-const char* CDynaNodeBase::m_cszV = "V";
-const char* CDynaNodeBase::m_cszDelta = "Delta";
-const char* CDynaNodeBase::m_cszVre = "Vre";
-const char* CDynaNodeBase::m_cszVim = "Vim";
-const char* CDynaNodeBase::m_cszGsh = "gsh";
-const char* CDynaNodeBase::m_cszBsh = "bsh";
-const char* CDynaNode::m_cszS = "S";
-const char* CDynaNode::m_cszSz = "Sz";
-
-const char* CDynaNodeBase::m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };

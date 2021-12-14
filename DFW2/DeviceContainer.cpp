@@ -117,19 +117,40 @@ bool CDeviceContainer::VariableOutputEnable(std::string_view VarName, bool bOutp
 // получить индекс переменной устройства по названию
 ptrdiff_t CDeviceContainer::GetVariableIndex(std::string_view VarName) const
 {
-	// используем быстрый поиск по карте (тут зачем-то из string_view надо делать string)
-	if (auto it{ m_ContainerProps.m_VarMap.find(VarName) }; it != m_ContainerProps.m_VarMap.end())
-		return it->second.m_nIndex;
-	else
-		return -1;
+	auto fnFind = [this](std::string_view VarName) -> ptrdiff_t
+	{
+		if (auto it{ m_ContainerProps.m_VarMap.find(VarName) }; it != m_ContainerProps.m_VarMap.end())
+			return it->second.m_nIndex;
+		else
+			return -1;
+	};
+
+	ptrdiff_t nIndex{ fnFind(VarName) };
+	// если переменную не нашли по заданному имени, ищем по алиасам
+	if (nIndex < 0)
+		if(auto it { m_ContainerProps.m_VarAliasMap.find(VarName) }; it != m_ContainerProps.m_VarAliasMap.end())
+			nIndex = fnFind(it->second);
+	
+	return nIndex;
 }
 // получить индекс константной переменной по названию
 ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::string_view VarName) const
 {
-	if (auto it{ m_ContainerProps.m_ConstVarMap.find(std::string(VarName)) }; it != m_ContainerProps.m_ConstVarMap.end())
-		return it->second.m_nIndex;
-	else
-		return -1;
+	auto fnFind = [this](std::string_view VarName) -> ptrdiff_t
+	{
+		if (auto it{ m_ContainerProps.m_ConstVarMap.find(VarName) }; it != m_ContainerProps.m_ConstVarMap.end())
+			return it->second.m_nIndex;
+		else
+			return -1;
+	};
+
+	ptrdiff_t nIndex{ fnFind(VarName) };
+	// если переменную не нашли по заданному имени, ищем по алиасам
+	if(nIndex < 0)
+		if (auto it{ m_ContainerProps.m_VarAliasMap.find(VarName) }; it != m_ContainerProps.m_VarAliasMap.end())
+			nIndex = fnFind(it->second);
+
+	return nIndex;
 }
 
 CDevice* CDeviceContainer::GetDeviceByIndex(ptrdiff_t nIndex)

@@ -139,11 +139,13 @@ namespace DFW2
 	// компаратор для гетерогенного поиска : https://www.bfilipek.com/2019/05/heterogeneous-lookup-cpp14.html
 	using VARINDEXMAP = std::map<std::string, CVarIndex, std::less<>>;
 	// карта индексов констант
-	using CONSTVARINDEXMAP = std::map<std::string, CConstVarIndex>;
+	using CONSTVARINDEXMAP = std::map<std::string, CConstVarIndex, std::less<>>;
 	// карта индексов внешних переменных
 	using EXTVARINDEXMAP = std::map<std::string, CExtVarIndex>;
 	// множество типов устройств
 	using TYPEINFOSET = std::set<ptrdiff_t>;
+	// карта псеводонимов переменных
+	using ALIASMAP = std::map<std::string, std::string, std::less<>>;
 
 	using DOUBLEVECTOR = std::vector<double>;
 	using VARIABLEVECTOR = std::vector<VariableIndex>;

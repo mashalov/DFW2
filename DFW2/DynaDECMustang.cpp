@@ -24,6 +24,19 @@ CDynaDECMustang::CDynaDECMustang() : CDevice(),
 }
 
 
+eDEVICEFUNCTIONSTATUS CDynaDECMustang::PreInit(CDynaModel* pDynaModel)
+{
+	// если не заданы уставки расфорсировки - ставим их выше номинала в 100 раз
+	if (Equal(VDefOff, 0.0) && Equal(VDefOn, 0.0))
+		VDefOff = VDefOn = 100.0;
+	// если не заданы уставки форсировки - ставим их отрицательными
+	if (Equal(VEnfOff, 0.0) && Equal(VEnfOn, 0.0))
+		VEnfOff = VEnfOn = -100.0;
+
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+
 VariableIndexRefVec& CDynaDECMustang::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDevice::GetVariables(JoinVariables({ EnforceOnOut,
