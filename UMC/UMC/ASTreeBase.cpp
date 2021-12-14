@@ -27,9 +27,16 @@ CASTTreeBase::~CASTTreeBase()
 
 void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 {
-    ASTNodeStack stack;
-    ASTNodeConstSet visited;
+    // увеличиваем текущий номер обхода
+    m_DFSLevel++;
+
+    // резервируем стек и список посещенных узлов
+    CDFSStack stack(NodeList.size() * 2);
+    ASTNodeVec visited;
+    visited.reserve(NodeList.size() * 2);
+    
     stack.push(Root);
+
     while (!stack.empty())
     {
         auto v = stack.top();
@@ -38,21 +45,34 @@ void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
             EXCEPTIONMSG("Processing deleted node");
 
         stack.pop();
-        if (!visited.Contains(v))
+        if (!v->Visited(m_DFSLevel))
         {
-            visited.insert(v);
+            v->Visit(m_DFSLevel);
+            visited.push_back(v);
             if (!(Visitor)(v))
-                return;
+                break;
             for (auto c : v->ChildNodes())
                 stack.push(c);
         }
     }
+
+    // Возвращаем номер обхода
+    m_DFSLevel--;
+    // и восстанавливаем исходные посещения у посещенных в данном обходе узлов
+    for (auto&& node : visited)
+        node->Visit(m_DFSLevel);
 }
 
 void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 {
-    ASTNodeStack stack;
-    ASTNodeConstSet visited;
+    // увеличиваем текущий номер обхода
+    m_DFSLevel++;
+
+    // резервируем стек и список посещенных узлов
+    CDFSStack stack(NodeList.size() * 2);
+    ASTNodeVec visited;
+    visited.reserve(NodeList.size() * 2);
+
     stack.push(Root);
 
     while (!stack.empty())
@@ -62,9 +82,10 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
         if (v->Deleted())
             EXCEPTIONMSG("Processing deleted node");
 
-        if (!visited.Contains(v))
+        if (!v->Visited(m_DFSLevel))
         {
-            visited.insert(v);
+            v->Visit(m_DFSLevel);
+            visited.push_back(v);
             for (auto c : v->ChildNodes())
                 stack.push(c);
         }
@@ -75,9 +96,15 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
                 v->ChildNodes().size() != v->DesignedChildrenCount())
                 EXCEPTIONMSG("Designed child count mismatch");
             if (!(Visitor)(v))
-                return;
+                break;
         }
     }
+
+    // Возвращаем номер обхода
+    m_DFSLevel--;
+    // и восстанавливаем исходные посещения у посещенных в данном обходе узлов
+    for (auto&& node : visited)
+        node->Visit(m_DFSLevel);
 }
 
 

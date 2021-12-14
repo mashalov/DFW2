@@ -52,7 +52,30 @@ bool CASTTreeBase::IsEquationTrivial(CASTEquation* pEquation, SimpleEquation& su
             IsHostBlockChildVariable(substitution.left.pNode->GetText()))
             return false;
 
-        for (auto& h : HostBlocks)
+
+        // нужно найти нет ли связи переменной с хост-блоками:
+        // для ускорения перебора хост-блоков находим цепочки связей переменной от хост-блоков
+        ASTHostBlocksSet AffectedHostBlocks;
+        // проверяем что хотят заменить переменную
+        if (substitution.left.pNode->CheckType(ASTNodeType::Variable))
+        {
+            // проходим по инстансам переменной
+            for (const auto& varinstance : static_cast<CASTVariable*>(substitution.left.pNode)->Info().VarInstances)
+            {
+                // для каждого инстанса проходим до родителя, который является хост-блоком
+                CASTNodeBase* pCurrentParent(varinstance->GetParent());
+                while (pCurrentParent)
+                {
+                    // если хост-блок в цепочке зависимостей найден - добавляем его в список хост-блоков
+                    if (pCurrentParent->IsHostBlock())
+                        AffectedHostBlocks.insert(static_cast<CASTHostBlockBase*>(pCurrentParent));
+                    pCurrentParent = pCurrentParent->GetParent();
+                }
+            }
+        }
+
+        // здесь обрабатываем только те хост-блоки, в связях которых есть обрабатываемая переменная
+        for (auto& h : AffectedHostBlocks)
         {
             // дальше проверяем выходную переменную
             // нужно чтобы уравнение имело вид Var = HostBlock, или Var - HostBlock = 0

@@ -47,8 +47,6 @@ struct ASTFragmentInfo
     ASTFragmentInfo(std::string_view Infix, ASTNodeSet& FragmentSet);
 };
 using ASTFragmentsList = std::list<ASTFragmentInfo>;
-
-using ASTNodeStack = std::stack<CASTNodeBase*>;
 using ASTNodeConstStack = std::stack<const CASTNodeBase*>;
 using DFSVisitorFunction = std::function<bool(CASTNodeBase*)>;
 
@@ -76,6 +74,7 @@ protected:
     ASTEquationsSet Equations;                      // сет уравнений в дереве
     ASTHostBlocksSet HostBlocks;                    // сет хост-блоков
 
+    ptrdiff_t m_DFSLevel = 0;                       // номер DFS-обхода (для вложенных обходов)
 
     using VarItList = std::list<VarInfoMap::iterator>;
 
@@ -178,3 +177,33 @@ public:
 // special version for root creation in ASTTreeBase.cpp
 template<> CASTRoot* CASTTreeBase::CreateNode<CASTRoot>(CASTNodeBase* pParent);
 
+// реализация стека на резервированном векторе 
+// без лишних аллокаций
+using ASTNodeVec = std::vector<CASTNodeBase*>;
+class CDFSStack : protected ASTNodeVec
+{
+protected:
+    //size_t nMaxTop = 0; // наибольшая вершина стека
+public:
+    CDFSStack(size_t nCount)
+    {
+        ASTNodeVec::reserve(nCount);
+    }
+    void push(CASTNodeBase* pNode)
+    {
+        ASTNodeVec::push_back(pNode);
+        //nMaxTop = (std::max)(nMaxTop, ASTNodeVec::size());
+    }
+    void pop()
+    {
+        ASTNodeVec::pop_back();
+    }
+    CASTNodeBase* top()
+    {
+        return ASTNodeVec::back();
+    }
+    bool empty() const
+    {
+        return ASTNodeVec::empty();
+    }
+};
