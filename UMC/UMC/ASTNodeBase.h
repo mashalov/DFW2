@@ -151,6 +151,7 @@ public:
         {
             OnDelete();
             bDeleted = true;
+            pParent = nullptr;
         }
     }
 
@@ -325,7 +326,13 @@ public:
     void ExtractChildren(ASTNodeList& extractedChildren)
     {
         extractedChildren.clear();
-        extractedChildren.insert(extractedChildren.end(), Children.begin(), Children.end());
+        std::transform(Children.begin(), Children.end(), std::back_inserter(extractedChildren),
+            [](CASTNodeBase* pNode)
+            {
+                pNode->pParent = nullptr;
+                return pNode;
+            });
+        //extractedChildren.insert(extractedChildren.end(), Children.begin(), Children.end());
         if(!Children.empty())
             pTree->Change();
         Children.clear();
@@ -348,8 +355,10 @@ public:
             pTree->Change();
         }
 
-        if(!pNode)
+        if (!pNode)
             EXCEPTIONMSG("Node has not been extracted")
+        else
+            pNode->pParent = nullptr;
 
         return pNode;
     }
@@ -646,12 +655,7 @@ public:
         return (IsNumeric(pNode) && NumericValue(pNode) == 1.0);
     }
 
-    static double NumericValue(const CASTNodeBase* pNode)
-    {
-        if (!IsNumeric(pNode))
-            EXCEPTIONMSG("Node is not numeric");
-        return std::stod(std::string(pNode->GetText()));
-    }
+    static double NumericValue(const CASTNodeBase* pNode);
 
     static bool IsFlatOperator(const CASTNodeBase* pNode)
     {

@@ -191,23 +191,36 @@ public:
 
 class CASTNumeric : public CASTNodeTextBase
 {
+protected:
+    double m_dValue = 0.0;
 public:
     CASTNumeric(CASTTreeBase* Tree,
         CASTNodeBase* Parent,
-        std::string_view Text = std::string_view("")) : CASTNodeTextBase(Tree, Parent, Text)
+        std::string_view Text = std::string_view("")) : CASTNodeTextBase(Tree, Parent, Text),
+        m_dValue(std::stod(std::string(Text)))
     {
         Constant = true;
     }
-
     CASTNumeric(CASTTreeBase* Parser,
         CASTNodeBase* Parent,
-        double Value) : CASTNodeTextBase(Parser, Parent, to_string(Value)) {}
+        double Value) : CASTNodeTextBase(Parser, Parent, std::to_string(Value)), m_dValue(Value) {}
 
     ASTNodeType GetType() const override { return ASTNodeType::Numeric; }
     ptrdiff_t DesignedChildrenCount() const override { return 0; }
     void ToInfix() override
     {
         infix = GetText();
+    }
+
+    double GetNumeric() const
+    {
+        return m_dValue;
+    }
+
+    void SetNumeric(double dValue)
+    {
+        m_dValue = dValue;
+        SetText(std::to_string(dValue));
     }
 
     // производная зависит от контекста
@@ -929,7 +942,7 @@ public:
             CASTNodeBase* pNewLeft = CreateChild<CASTSum>();
             pNewLeft->CreateChild(pLeftHand);
             pNewLeft->CreateChild<CASTUminus>()->CreateChild(pRightHand);
-            CASTNodeBase* pNumericZero = CreateChild<CASTNumeric>("0");
+            CASTNodeBase* pNumericZero = CreateChild<CASTNumeric>(0.0);
         }
     }
 

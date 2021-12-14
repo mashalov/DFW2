@@ -61,17 +61,22 @@ std::string& CASTNodeBase::ChildrenSplitByToInfix(std::string_view Delimiter)
     return infix;
 }
 
-
+// определяем максимальную степень среди
+// дочерних узлов данного узла
 double CASTNodeBase::MaxSortPower()
 {
     sortPower = 0.0;
     auto c = Children.begin();
     if (c != Children.end())
     {
+        // берем первый дочерний узел
+        // и определяем степень по нему
         sortPower = (*c)->SortPower();
         c++;
+        // обходим оставшиеся дочерние узлы
         while (c != Children.end())
         {
+            // и определяем максимальную степень среди них
             if (std::abs(sortPower) < std::abs((*c)->SortPower()))
                 sortPower = (*c)->SortPower();
             c++;
@@ -237,4 +242,13 @@ bool CASTNodeBase::TrasformNodeToOperator(CASTNodeBase* pNode)
                 return true;                                    // формируем уравнение
     }
     return false;
+}
+
+
+double CASTNodeBase::NumericValue(const CASTNodeBase* pNode)
+{
+    if (!IsNumeric(pNode))
+        EXCEPTIONMSG("Node is not numeric");
+    return static_cast<const CASTNumeric*>(pNode)->GetNumeric();
+    //return std::stod(std::string(pNode->GetText()));
 }

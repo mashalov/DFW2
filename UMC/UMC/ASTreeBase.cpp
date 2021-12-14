@@ -90,12 +90,16 @@ void CASTTreeBase::DeleteNode(CASTNodeBase* pNode)
     if (nodesToDelete.empty())
         Change();
 
-    DFS(pRoot, [&nodesToDelete](CASTNodeBase* p) 
-        { 
-            if (nodesToDelete.Contains(p) || nodesToDelete.Contains(p->GetParent()))
-                EXCEPTIONMSG("Node or its parent has been already deleted");
-            return true;
-        });
+    for(const auto& node : NodeList)
+        if(!node->Deleted() && (nodesToDelete.Contains(node) || nodesToDelete.Contains(node->GetParent())))
+            EXCEPTIONMSG("Node or its parent has been already deleted");
+
+    //DFS(pRoot, [&nodesToDelete](CASTNodeBase* p) 
+    //    { 
+    //        if (nodesToDelete.Contains(p) || nodesToDelete.Contains(p->GetParent()))
+    //            EXCEPTIONMSG("Node or its parent has been already deleted");
+    //        return true;
+    //    });
 }
 
 void CASTTreeBase::Flatten()
@@ -144,15 +148,22 @@ void CASTTreeBase::Collect()
         Flatten();
         DFSPost(pRoot, [](CASTNodeBase* p)
             {
-                p->UpdateScore();
+                // обновляем скоринг узла
+                p->UpdateScore();   
+                // обновляем макимальную степень
                 p->MaxSortPower();
+                // если оператор плоский
                 if (CASTNodeBase::IsFlatOperator(p))
                 {
+                    // сортируем его
                     static_cast<CASTFlatOperator*>(p)->Sort();
+                    // и внутри делаем Collect
                     static_cast<CASTFlatOperator*>(p)->Collect();
                 }
-
+                // делаем оператор плоским
                 p->Flatten();
+                // если оператор не был удален
+                // собираем константы
                 if(!p->Deleted())
                     p->FoldConstants();
 
@@ -230,23 +241,23 @@ void CASTTreeBase::CreateRules()
     // тест правила суммы квадратов - пока замаплен в ноль
     CASTNodeBase* pRule2 = pSystem->CreateChild<CASTEquation>();
     CASTNodeBase* pSumR2 = pRule2->CreateChild<CASTSum>();
-    pRule2->CreateChild<CASTNumeric>("0");
+    pRule2->CreateChild<CASTNumeric>(0.0);
     CASTNodeBase* pPow1 = pSumR2->CreateChild<CASTPow>();
     pPow1->CreateChild<CASTAny>("a");
-    pPow1->CreateChild<CASTNumeric>("2");
+    pPow1->CreateChild<CASTNumeric>(2.0);
     CASTNodeBase* pPow2 = pSumR2->CreateChild<CASTPow>();
     pPow2->CreateChild<CASTAny>("b");
-    pPow2->CreateChild<CASTNumeric>("2");
+    pPow2->CreateChild<CASTNumeric>(2.0);
 
 
     CASTNodeBase* pMinus = pSumR2->CreateChild<CASTUminus>();
     CASTNodeBase* pMul2ab = pMinus->CreateChild<CASTMul>();
-    pMul2ab->CreateChild<CASTNumeric>("2");
+    pMul2ab->CreateChild<CASTNumeric>(2.0);
     pMul2ab->CreateChild<CASTAny>("a");
     pMul2ab->CreateChild<CASTAny>("b");
 
     // заглушка чтобы было 2 требуемых дочерних узла у корня правил
-    pRoot->CreateChild<CASTNumeric>("0"); 
+    pRoot->CreateChild<CASTNumeric>(0.0); 
     //pRoot->PrintInfix();
 }
 

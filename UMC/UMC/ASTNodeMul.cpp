@@ -228,7 +228,7 @@ void CASTMul::Collect()
             else
             {
                 // если родитель - само умножение, показатель степени 1 добавляем к сумме
-                pSum->CreateChild<CASTNumeric>("1");
+                pSum->CreateChild<CASTNumeric>(1.0);
                 // если заглушка новой степени еще на месте - заменяем ее на множитель
                 if (!pDummy->Deleted())
                     pNewPow->ReplaceChild(pDummy, ExtractChild(p.pChild));
