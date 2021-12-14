@@ -39,7 +39,7 @@ void CASTMul::FoldUnaryMinuses()
             ReplaceChild(*um, pum->ExtractChild(pum->ChildNodes().begin()));
             break;
         case ASTNodeType::Numeric:
-            pum->SetText(-NumericValue(pum));
+            static_cast<CASTNumeric*>(pum)->SetNumeric(-NumericValue(pum));
             break;
         }
     }

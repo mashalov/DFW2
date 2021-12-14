@@ -273,10 +273,10 @@ public:
         EXCEPTIONMSG("No SetText functionality in CASTNodeBase");
     }
 
-    void SetText(double Value)
+    /*void SetText(double Value)
     {
         SetText(to_string(Value));
-    }
+    }*/
 
     // возвращает итератор на дочерний узел по указателю
     ASTNodeList::iterator TryFindChild(const CASTNodeBase* pNode)

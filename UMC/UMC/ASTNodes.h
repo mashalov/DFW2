@@ -333,6 +333,7 @@ public:
 class CASTFlatOperator : public CASTInfixBase
 {
 protected:
+    // удаляет незначащие операнды (0 из суммы, 1 из умножения)
     void DeleteIdentities(double Identity)
     {
         auto c = Children.begin();
@@ -344,11 +345,15 @@ protected:
                 c++;
         }
     }
+    // пытаемся объединить численные операнды
     void CollectNumericTerms(std::function<double(double, double)> Operand, double Identity)
     {
+        // удаляем незначащие операнды
         DeleteIdentities(Identity);
         std::list<ASTNodeList::iterator> Numerics;
         double Val(Identity);
+        // проходим по дочерним узлам, если они численныее, объединяем их операцией
+        // и удаяем
         for (auto c = Children.begin(); c != Children.end(); c++)
             if (IsNumeric(*c))
             {
@@ -358,7 +363,8 @@ protected:
 
         if (Numerics.size() > 1)
         {
-            (*Numerics.front())->SetText(Val);
+            // результат операции помещаем в первый численный дочерний узел
+            static_cast<CASTNumeric*>(*Numerics.front())->SetNumeric(Val);
             Numerics.pop_front();
             for (auto dc : Numerics)
                 DeleteChild(dc);
