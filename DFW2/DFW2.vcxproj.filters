@@ -274,6 +274,9 @@
     <ClInclude Include="DynaReactor.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="BranchMeasures.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -598,6 +601,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="DynaReactor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="BranchMeasures.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

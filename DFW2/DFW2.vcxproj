@@ -182,6 +182,7 @@
     <ClInclude Include="Abs.h" />
     <ClInclude Include="AndOrNot.h" />
     <ClInclude Include="Automatic.h" />
+    <ClInclude Include="BranchMeasures.h" />
     <ClInclude Include="Comparator.h" />
     <ClInclude Include="CustomDevice.h" />
     <ClInclude Include="CustomDeviceContainer.h" />
@@ -203,6 +204,7 @@
     <ClInclude Include="DynaBranch.h" />
     <ClInclude Include="DynaDECMustang.h" />
     <ClInclude Include="DynaExcConMustang.h" />
+    <ClCompile Include="BranchMeasures.cpp" />
     <ClCompile Include="DynaExcConMustangNW.cpp">
       <FileType>CppHeader</FileType>
     </ClCompile>

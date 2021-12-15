@@ -55,6 +55,8 @@ public:
     // ! TODO можно вставить отладочный ASSERT !
     bool Visited(ptrdiff_t Level)
     {
+        if (m_nVisited > Level)
+            EXCEPTIONMSG("CASTNodeBase::Visited - Level mismatch !");
         return m_nVisited == Level;
     }
 

@@ -4,6 +4,7 @@
 #include "DynaModel.h"
 #include "DynaPowerInjector.h"
 #include "limits"
+#include "BranchMeasures.h"
 
 using namespace DFW2;
 

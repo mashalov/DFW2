@@ -16,6 +16,7 @@
 #include "DynaExcConMustang.h"
 #include "DynaExcConMustangNW.h"
 #include "DynaBranch.h"
+#include "BranchMeasures.h"
 
 #define _LFINFO_
 

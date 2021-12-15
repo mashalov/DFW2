@@ -3,6 +3,7 @@
 #include "DynaModel.h"
 #include "GraphCycle.h"
 #include "DynaGeneratorMotion.h"
+#include "BranchMeasures.h"
 
 using namespace DFW2;
 
