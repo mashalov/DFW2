@@ -225,6 +225,7 @@ namespace DFW2
 		static const char* m_cszCannotGetPark3CParameters;
 		static const char* m_cszParkParametersNiiptMethodFailed;
 		static const char* m_cszParkParametersNiiptPlusMethodFailed;
+		static const char* m_cszActionNotInitialized;
 	};
 }
 

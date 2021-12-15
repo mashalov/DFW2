@@ -125,6 +125,7 @@ namespace DFW2
 		virtual ~CAutomaticAction() = default;
 		void AddToSource(std::ostringstream& source) override;
 		static const char* cszActionTemplate;
+		std::string GetSymbolicModelLink() const;
 	};
 
 	using AUTOITEMS = std::list<std::unique_ptr<CAutomaticItem>>;

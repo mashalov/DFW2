@@ -37,31 +37,32 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 		return cplx(0.0);
 #endif 
 
-	double Rf = R;
-	double Xf = X;
+	double Rf{ R }, Xf{ X };
 	// Для ветвей с малым или отрицательным сопротивлением
 	// задаем сопротивление в о.е. относительно напряжения
-	double Xfictive = m_pNodeIp->Unom;
-	Xfictive *= Xfictive;
-	Xfictive *= 0.000004;
-	
-	if (bFixNegativeZ)
+	const double Xfictive{ m_pNodeIp->Unom * 110.0 * 0.000004 };
+
+	// если у ветви малое активное сопротивление
+	if (std::abs(Rf) < Xfictive)
 	{
-		// если нужно убрать отрицательные сопротивления - меняем отрицательные и нулевые на 
-		// положительные
-		if (R <= 0)
-			Rf = 0.0;
-		if (X < 0 || (X <= 0 && R == 0.0))
+		// если оно положительное и не превышает минимальное, ставим минимальное
+		if (Xf >= 0 && Xf < Xfictive)
 			Xf = Xfictive;
-	}
-	else
-	{
-		// если нет - только заменяем нулевые на минимальные. Нулевые заменяются только для ветвей вне суперузлов (идеальные трансформаторы)
-		if (R == 0.0 && X == 0.0)
-			Xf = Xfictive;
+		// если отрицательное не меньше минимального по модулю, ставим отрицательное минимальнео
+		else if(Xf <= 0 && Xf > -Xfictive)
+			Xf = -Xfictive;
 	}
 
-	return 1.0 / cplx(Rf, Xf);
+	cplx y { 1.0 / cplx(Rf, Xf) };
+	
+	// для Зейделя отрицательные реактивные проводимости заменяем на минимальне положительные
+	if (bFixNegativeZ)
+	{
+		if (y.imag() > 0.0)
+			y.imag(-2.0 / Xfictive);
+	}
+	
+	return y;
 }
 
 

@@ -156,7 +156,7 @@ bool CDynaModel::RunTransient()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
+		m_Parameters.m_dZeroBranchImpedance = -4.0E-6;
 
 		m_Parameters.m_dFrequencyTimeConstant = 0.1;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;

@@ -269,7 +269,18 @@ namespace DFW2
 		bool bVisited = false;													// признак просмотра для графовых алгоритмов
 		double LFQmin;															// исходные ограничения реактивной мощности до ввода в суперузел
 		double LFQmax;
-		double NodeViolation;													// отклонение параметра от ограничения или уставки
+		double m_NodeVoltageViolation;											// отклонение напряжения от уставки
+		double m_NodePowerViolation;											// отклонение мощности от ограничения
+
+		double NodeVoltageViolation()
+		{
+			if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE ||
+				pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_PQ)
+				throw dfw2error(fmt::format("Attempt to get node voltage violation from non generator node {}", pNode->GetVerbalName()));
+
+			return m_NodeVoltageViolation = (pNode->V - pNode->LFVref) / pNode->LFVref;
+		}
+
 		CDynaNodeBase::eLFNodeType LFNodeType;									// исходный тип узла до ввода в суперузел
 		double UncontrolledP = 0.0;
 		double UncontrolledQ = 0.0;												// постоянные значения активной и реактивной генерации в суперузле

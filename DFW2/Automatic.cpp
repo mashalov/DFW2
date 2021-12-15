@@ -6,7 +6,7 @@ using namespace DFW2;
 
 std::string CAutomaticItem::GetVerbalName()
 {
-	return fmt::format("{} - \"{}\"", m_nId, m_strName);
+	return m_strName.empty() ? fmt::format("{}", m_nId) : fmt::format("{} - \"{}\"", m_nId, m_strName);
 }
 
 
@@ -39,13 +39,18 @@ void CAutomaticLogic::AddToSource(std::ostringstream& source)
 
 void CAutomaticAction::AddToSource(std::ostringstream& source)
 {
-	source << fmt::format("A{} = action({}, {}[{}].{})\n", m_nId,
+	source << fmt::format("A{} = action({}, {})\n", m_nId,
 		m_strExpression.empty() ? "V" : m_strExpression,
+		GetSymbolicModelLink());
+}
+
+std::string CAutomaticAction::GetSymbolicModelLink() const
+{
+	return fmt::format("{}[{}].{}",
 		m_strObjectClass,
 		m_strObjectKey,
 		m_strObjectProp);
 }
-
 
 bool CAutomaticLogic::AddActionGroupId(ptrdiff_t nActionId)
 {
@@ -203,7 +208,7 @@ void CAutomatic::Init()
 	if (!pCustomDevice)
 		throw dfw2error("CAutomatic::Init CustomDevice for automatic not available");
 
-	bool bRes = true;
+	bool bRes{ true };
 	STRINGLIST ActionList;
 
 	for (auto&& it : m_lstLogics)
@@ -270,7 +275,12 @@ void CAutomatic::Init()
 	{
 		CAutomaticAction *pAction = static_cast<CAutomaticAction*>(it.get());
 		if (!pAction->Init(m_pDynaModel, pCustomDevice))
+		{
+			m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotInitialized,
+				pAction->GetVerbalName(),
+				pAction->GetSymbolicModelLink()));
 			bRes = false;
+		}
 	}
 
 	if (!bRes)
