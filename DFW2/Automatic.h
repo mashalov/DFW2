@@ -12,31 +12,33 @@ namespace DFW2
 	class CDynaModel;
 	class CCustomDevice;
 
-	/*
-	class CCompilerDLL : public CDLLInstance
-	{
-	protected:
-		fnCompilerFactory m_pfnFactory;
-	public:
-		void Init(std::wstring_view DLLFilePath) override
-		{
-			CDLLInstance::Init(DLLFilePath);
-			m_pfnFactory = reinterpret_cast<fnCompilerFactory>(::GetProcAddress(m_hDLL, "CompilerFactory"));
-			if (!m_pfnFactory)
-				throw dfw2error(fmt::format("Функция создания компилятора недоступна {}", DLLFilePath));
-		}
+	using CCompilerDLL = CDLLInstanceFactory<ICompiler>;
 
-		ICompiler* CreateCompiler()
+	struct CAutoModelLink
+	{
+		std::string m_strObjectClass;
+		std::string m_strObjectKey;
+		std::string m_strObjectProp;
+		CAutoModelLink() {}
+
+		CAutoModelLink(std::string_view ObjectClass, std::string_view ObjectKey, std::string_view ObjectProp) :
+			m_strObjectClass(ObjectClass),
+			m_strObjectKey(ObjectKey),
+			m_strObjectProp(ObjectProp) { }
+
+		CAutoModelLink(const CAutoModelLink&& other) :
+			m_strObjectClass(std::move(other.m_strObjectClass)),
+			m_strObjectKey(std::move(other.m_strObjectKey)),
+			m_strObjectProp(std::move(other.m_strObjectProp)) {}
+
+		std::string String() const
 		{
-			ICompiler* pCompiler(nullptr);
-			if (!m_hDLL || !m_pfnFactory)
-				throw dfw2error("CreateCompiler - no dll loaded");
-			return m_pfnFactory();
+			return fmt::format("{}[{}].{}",
+				m_strObjectClass,
+				m_strObjectKey,
+				m_strObjectProp);
 		}
 	};
-	*/
-
-	using CCompilerDLL = CDLLInstanceFactory<ICompiler>;
 		
 	class CAutomaticItem
 	{
@@ -65,7 +67,7 @@ namespace DFW2
 		void UpdateSerializer(CSerializerBase* pSerializer);
 	};
 
-	class CAutomaticAction : public CAutomaticItem
+	class CAutomaticAction : public CAutomaticItem, public CAutoModelLink
 	{
 	protected:
 		std::unique_ptr<CModelAction> m_pAction;
@@ -76,14 +78,14 @@ namespace DFW2
 		ptrdiff_t m_nActionGroup = 0;
 		ptrdiff_t m_nOutputMode = 0;
 		ptrdiff_t m_nRunsCount = 1;
-		std::string m_strObjectClass;
-		std::string m_strObjectKey;
-		std::string m_strObjectProp;
+	
 		std::string m_strExpression;
 
 		CAutomaticAction() {}
 
-		CAutomaticAction(ptrdiff_t Type, ptrdiff_t Id, std::string_view Name,
+		CAutomaticAction(ptrdiff_t Type, 
+			ptrdiff_t Id, 
+			std::string_view Name,
 			std::string_view Expression,
 			ptrdiff_t LinkType,
 			std::string_view ObjectClass,
@@ -96,9 +98,7 @@ namespace DFW2
 			CAutomaticItem(Type, Id, Name),
 			m_strExpression(Expression),
 			m_nLinkType(LinkType),
-			m_strObjectClass(ObjectClass),
-			m_strObjectKey(ObjectKey),
-			m_strObjectProp(ObjectProp),
+			CAutoModelLink(ObjectClass, ObjectKey, ObjectProp),
 			m_nActionGroup(ActionGroup),
 			m_nOutputMode(OutputMode),
 			m_nRunsCount(RunsCount) {}
@@ -108,9 +108,7 @@ namespace DFW2
 			CAutomaticItem(std::move(other)),
 			m_pAction(std::move(other.m_pAction)),
 			m_strExpression(std::move(other.m_strExpression)),
-			m_strObjectClass(std::move(other.m_strObjectClass)),
-			m_strObjectKey(std::move(other.m_strObjectKey)),
-			m_strObjectProp(std::move(other.m_strObjectProp)),
+			CAutoModelLink(std::move(other)),
 			m_nLinkType(std::exchange(other.m_nLinkType, 0)),
 			m_nActionGroup(std::exchange(other.m_nActionGroup, 0)),
 			m_nOutputMode(std::exchange(other.m_nOutputMode, 0)),
@@ -125,7 +123,6 @@ namespace DFW2
 		virtual ~CAutomaticAction() = default;
 		void AddToSource(std::ostringstream& source) override;
 		static const char* cszActionTemplate;
-		std::string GetSymbolicModelLink() const;
 	};
 
 	using AUTOITEMS = std::list<std::unique_ptr<CAutomaticItem>>;
@@ -165,14 +162,11 @@ namespace DFW2
 	};
 
 
-	class CAutomaticStarter : public CAutomaticItem
+	class CAutomaticStarter : public CAutomaticItem, public CAutoModelLink
 	{
 	public:
-		std::string m_strObjectClass;
-		std::string m_strObjectKey;
-		std::string m_strObjectProp;
-		std::string m_strExpression;
 
+		std::string m_strExpression;
 		CAutomaticStarter() {}
 
 		CAutomaticStarter(ptrdiff_t Type,
@@ -184,9 +178,7 @@ namespace DFW2
 			std::string_view ObjectProp) :
 			CAutomaticItem(Type, Id, Name),
 			m_strExpression(Expression),
-			m_strObjectClass(ObjectClass),
-			m_strObjectKey(ObjectKey),
-			m_strObjectProp(ObjectProp) {}
+			CAutoModelLink(ObjectClass, ObjectKey, ObjectProp) {}
 
 		void AddToSource(std::ostringstream& source) override;
 	};

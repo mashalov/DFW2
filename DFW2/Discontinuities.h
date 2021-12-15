@@ -130,6 +130,15 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double X) override;
 	};
 
+	class CModelActionChangeBranchB : public CModelActionChangeBranchParameterBase
+	{
+	protected:
+		double m_BranchB;
+	public:
+		CModelActionChangeBranchB(CDynaBranch* pBranch, double B) : CModelActionChangeBranchParameterBase(pBranch), m_BranchB(B) {}
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double B) override;
+	};
+
 	class CModelActionChangeNodeParameterBase : public CModelAction
 	{
 	protected:

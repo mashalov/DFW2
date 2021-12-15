@@ -302,6 +302,30 @@ eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double 
 	return State;
 }
 
+eDFW2_ACTION_STATE CModelActionChangeBranchB::Do(CDynaModel* pDynaModel, double B)
+{
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+
+	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
+		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
+		"B",
+		m_pDynaBranch->B,
+		B,
+		"");
+
+	Log(pDynaModel, fmt::format("{} X={} -> X={}",
+		m_pDynaBranch->GetVerbalName(),
+		m_pDynaBranch->B,
+		B
+	));
+
+	m_pDynaBranch->B = B;
+	pDynaModel->ProcessTopologyRequest();
+	return State;
+}
+
+
+
 eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel)
 {
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);

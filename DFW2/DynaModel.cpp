@@ -1642,10 +1642,11 @@ void CDynaModel::RepeatZeroCrossing()
 CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::string_view Keys, std::string_view SymLink)
 {
 	CDevice *pFoundDevice(nullptr);
-
+	// определяем конейтер по имени
 	CDeviceContainer *pContainer = GetContainerByAlias(Object);
 	if (pContainer)
 	{
+		// для ветви отдельная обработка, так как требуется до трех ключей
 		if (pContainer->GetType() == DEVTYPE_BRANCH)
 		{
 			ptrdiff_t nIp(0), nIq(0), nNp(0);
@@ -1668,6 +1669,7 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::strin
 		}
 		else
 		{
+			// контейнер с одним ключом
 			ptrdiff_t nId(0);
 #ifdef _MSC_VER
 			if (sscanf_s(std::string(Keys).c_str(), "%td", &nId) == 1)
