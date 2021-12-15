@@ -17,6 +17,7 @@
 #include "DynaExcConMustangNW.h"
 #include "DynaBranch.h"
 #include "BranchMeasures.h"
+#include "NodeMeasures.h"
 
 #define _LFINFO_
 
@@ -44,6 +45,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   ExcConMustang(this),
 						   CustomDevice(this),
 						   BranchMeasures(this),
+						   NodeMeasures(this),
 						   AutomaticDevice(this),
 						   CustomDeviceCPP(this),
 						   m_ResultsWriter(*this),
@@ -71,6 +73,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaExcConMustangNonWindup::DeviceProperties(ExcConMustang.m_ContainerProps);
 	CDynaExciterMustang::DeviceProperties(ExcitersMustang.m_ContainerProps);
 	CDynaBranchMeasure::DeviceProperties(BranchMeasures.m_ContainerProps);
+	CDynaNodeMeasure::DeviceProperties(NodeMeasures.m_ContainerProps);
 
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
 	AutomaticDevice.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
@@ -95,6 +98,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	//m_DeviceContainers.push_back(&CustomDeviceCPP);
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
+	m_DeviceContainers.push_back(&NodeMeasures);
 	m_DeviceContainers.push_back(&SynchroZones);
 	CheckFolderStructure();
 
@@ -1727,11 +1731,10 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 					ExtVar.Index = DFW2_NON_STATE_INDEX;
 					bRes = true;
 				}
-				else
-				if (pFoundDevice->GetType() == DEVTYPE_BRANCH)
+				else if (pFoundDevice->GetType() == DEVTYPE_BRANCH)
 				{
-					//ptrdiff_t nIp;
-					//_stscanf_s(std::string(Keys).c_str(), "%td", &nIp);
+					// если не нашли параметр и тип объекта - "ветвь"
+					// создаем для ветви блок измерений и пытаемся забрать параметр из блока
 					CDynaBranch *pBranch = static_cast<CDynaBranch*>(pFoundDevice);
 					if (!pBranch->m_pMeasure)
 					{
@@ -1744,6 +1747,32 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 					}
 
 					ExtVar = pBranch->m_pMeasure->GetExternalVariable(Prop);
+
+					if (ExtVar.pValue)
+					{
+						// смещение больше не нужно - работаем в абсолютных индексах
+						//ExtVar.Index -= pFromDevice->A(0);
+						bRes = true;
+					}
+					else
+						Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, Prop, Name));
+				}
+				else if (pFoundDevice->GetType() == DEVTYPE_NODE)
+				{
+					// если не нашли параметр и тип объекта - "узел"
+					// создаем блок измерений для узла и пытаемся забрать параметр из блока
+					CDynaNode* pNode = static_cast<CDynaNode*>(pFoundDevice);
+					if (!pNode->m_pMeasure)
+					{
+						CDynaNodeMeasure* pNodeMeasure = new CDynaNodeMeasure(pNode);
+						pNodeMeasure->SetId(NodeMeasures.Count() + 1);
+						pNodeMeasure->SetName(pNode->GetVerbalName());
+						pNodeMeasure->Init(this);
+						NodeMeasures.AddDevice(pNodeMeasure);
+						pNode->m_pMeasure = pNodeMeasure;
+					}
+
+					ExtVar = pNode->m_pMeasure->GetExternalVariable(Prop);
 
 					if (ExtVar.pValue)
 					{

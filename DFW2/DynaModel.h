@@ -571,6 +571,7 @@ namespace DFW2
 		CDeviceContainer DECsMustang;
 		CDeviceContainer ExcConMustang;
 		CDeviceContainer BranchMeasures;
+		CDeviceContainer NodeMeasures;
 		CCustomDeviceContainer CustomDevice;
 		CCustomDeviceCPPContainer AutomaticDevice;
 		CAutomatic m_Automatic;

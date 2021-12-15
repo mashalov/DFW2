@@ -563,7 +563,6 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	{
 		MAP_VARIABLE(Bshunt, C_BSH)
 		MAP_VARIABLE(Gshunt, C_GSH)
-		MAP_VARIABLE(Pn, C_PLOAD)
 	}
 	return p;
 }
@@ -1694,7 +1693,6 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasNode);
 	props.m_ConstVarMap.insert({ CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
 	props.m_ConstVarMap.insert({ CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
-	props.m_ConstVarMap.insert({ CDynaNode::m_cszPload, CConstVarIndex(CDynaNode::C_PLOAD, VARUNIT_MW, eDVT_INTERNALCONST) });
 }
 
 void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)

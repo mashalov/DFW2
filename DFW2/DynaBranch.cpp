@@ -424,4 +424,80 @@ void CDynaBranchContainer::LinkToReactors(CDeviceContainer& containerReactors)
 	}
 }
 
+
+bool CDynaBranch::BranchAndNodeConnected(CDynaNodeBase* pNode)
+{
+
+	if (pNode == m_pNodeIp)
+	{
+		return m_BranchState == CDynaBranch::BranchState::BRANCH_ON || m_BranchState == CDynaBranch::BranchState::BRANCH_TRIPIQ;
+	}
+	else if (pNode == m_pNodeIq)
+	{
+		return m_BranchState == CDynaBranch::BranchState::BRANCH_ON || m_BranchState == CDynaBranch::BranchState::BRANCH_TRIPIP;
+	}
+	else
+		_ASSERTE(!"CDynaNodeContainer::BranchAndNodeConnected - branch and node mismatch");
+
+	return false;
+}
+
+bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
+{
+	bool bDisconnected(false);
+	_ASSERTE(pNode->GetState() == eDEVICESTATE::DS_OFF);
+
+	const char* pSwitchOffMode(CDFW2Messages::m_cszSwitchedOffBranchComplete);
+
+	if (pNode == m_pNodeIp)
+	{
+		switch (m_BranchState)
+		{
+			// если ветвь включена - отключаем ее со стороны отключенного узла
+		case CDynaBranch::BranchState::BRANCH_ON:
+
+			pSwitchOffMode = CDFW2Messages::m_cszSwitchedOffBranchHead;
+			m_BranchState = CDynaBranch::BranchState::BRANCH_TRIPIP;
+			bDisconnected = true;
+			break;
+			// если ветвь отключена с обратной стороны - отключаем полностью
+		case CDynaBranch::BranchState::BRANCH_TRIPIQ:
+			m_BranchState = CDynaBranch::BranchState::BRANCH_OFF;
+			bDisconnected = true;
+			break;
+		}
+	}
+	else if (pNode == m_pNodeIq)
+	{
+		switch (m_BranchState)
+		{
+			// если ветвь включена - отключаем ее со стороны отключенного узла
+		case CDynaBranch::BranchState::BRANCH_ON:
+			pSwitchOffMode = CDFW2Messages::m_cszSwitchedOffBranchTail;
+			m_BranchState = CDynaBranch::BranchState::BRANCH_TRIPIQ;
+			bDisconnected = true;
+			break;
+			// если ветвь отключена с обратной стороны - отключаем полностью
+		case CDynaBranch::BranchState::BRANCH_TRIPIP:
+			m_BranchState = CDynaBranch::BranchState::BRANCH_OFF;
+			bDisconnected = true;
+			break;
+		}
+	}
+	else
+		_ASSERTE(!"CDynaNodeContainer::DisconnectBranchFromNode - branch and node mismatch");
+
+	if (bDisconnected)
+	{
+		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszSwitchedOffBranch,
+			m_pContainer->GetTypeName(),
+			GetVerbalName(),
+			pSwitchOffMode,
+			pNode->GetVerbalName()));
+	}
+
+	return bDisconnected;
+}
+
+
 const char* CDynaBranch::m_cszBranchStateNames[4] = { "On", "Off", "Htrip", "Ttrip", };

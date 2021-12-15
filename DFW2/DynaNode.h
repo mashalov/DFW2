@@ -63,8 +63,7 @@ namespace DFW2
 		enum CONSTVARS
 		{
 			C_GSH,
-			C_BSH,
-			C_PLOAD
+			C_BSH
 		};
 
 		enum VARS
@@ -199,6 +198,8 @@ namespace DFW2
 
 	};
 
+	class CDynaNodeMeasure;
+
 	class CDynaNode : public CDynaNodeBase
 	{
 	public:
@@ -213,6 +214,8 @@ namespace DFW2
 	//		V_SV,
 			V_LAST
 		};
+
+		CDynaNodeMeasure* m_pMeasure = nullptr;
 
 		VariableIndex Lag;
 		//double Sip;

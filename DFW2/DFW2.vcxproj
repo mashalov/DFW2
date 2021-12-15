@@ -237,6 +237,7 @@
     <ClInclude Include="LoadFlow.h" />
     <ClInclude Include="MathUtils.h" />
     <ClInclude Include="Messages.h" />
+    <ClInclude Include="NodeMeasures.h" />
     <ClInclude Include="OscDetector.h" />
     <ClInclude Include="PlatformFolders.h" />
     <ClInclude Include="RastrImport.h" />
@@ -321,6 +322,7 @@
     <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="Messages.cpp" />
     <ClCompile Include="NetworkGraph.cpp" />
+    <ClCompile Include="NodeMeasures.cpp" />
     <ClCompile Include="Nordsiek.cpp" />
     <ClCompile Include="PlatformFolders.cpp" />
     <ClCompile Include="RastrImport.cpp">
