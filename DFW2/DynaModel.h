@@ -792,6 +792,7 @@ namespace DFW2
 		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name);
 		CDevice* GetDeviceBySymbolicLink(std::string_view Object, std::string_view Keys, std::string_view SymLink);
 		CDeviceContainer *GetContainerByAlias(std::string_view Alias);
+		DEVICECONTAINERS GetContainersByAlias(std::string_view Alias);
 		CAutomatic& Automatic();
 
 		// выдать в лог топ-nCount переменных по количеству ошибок

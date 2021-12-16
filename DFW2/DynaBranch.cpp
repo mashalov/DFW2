@@ -329,7 +329,7 @@ void CDynaBranch::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("br_iq", BrIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddProperty("nr_ip", NrIp, eVARUNITS::VARUNIT_PIECES);
 	Serializer->AddProperty("nr_iq", NrIq, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddEnumProperty("sta", new CSerializerAdapterEnum(m_BranchState, m_cszBranchStateNames));
+	Serializer->AddEnumProperty(CDevice::m_cszSta, new CSerializerAdapterEnum(m_BranchState, m_cszBranchStateNames));
 	Serializer->AddState("Gip", GIp, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Giq", GIq, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Bip", BIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
@@ -499,6 +499,3 @@ bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 
 	return bDisconnected;
 }
-
-
-const char* CDynaBranch::m_cszBranchStateNames[4] = { "On", "Off", "Htrip", "Ttrip", };

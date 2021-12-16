@@ -9,6 +9,7 @@ namespace DFW2
 	{
 	protected:
 		CDynaNode* m_pNode;				// ветвь, для которой выполняеются расчеты потоков
+		eDEVICEFUNCTIONSTATUS  ProcessDiscontinuityImpl(CDynaModel* pDynaModel);
 	public:
 		enum VARS
 		{

@@ -859,9 +859,14 @@ CDynaModel* CDeviceContainer::GetModel()
 	return m_pDynaModel; 
 }
 
-bool  CDeviceContainer::HasAlias(std::string_view Alias)
+const char* CDeviceContainer::GetSystemClassName() const
 {
-	STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
+	return m_ContainerProps.GetSystemClassName();
+}
+
+bool CDeviceContainer::HasAlias(std::string_view Alias) const
+{
+	const STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
 	return std::find(Aliases.begin(), Aliases.end(), Alias) != Aliases.end();
 }
 
@@ -872,7 +877,7 @@ void CDeviceContainer::SetMemoryManagement(ContainerMemoryManagementType Managem
 		m_MemoryManagement = ManagementType;
 	else
 		if (m_MemoryManagement != ManagementType)
-			throw dfw2error(fmt::format("Attempt to mix memory management types for Container {}", m_ContainerProps.GetSystemClassName()));
+			throw dfw2error(fmt::format("Attempt to mix memory management types for Container {}", GetSystemClassName()));
 }
 
 

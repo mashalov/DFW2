@@ -261,12 +261,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double 
 {
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 
-	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
-		"R",
-		m_pDynaBranch->R,
-		R,
-		"");
+	WriteSlowVariable(pDynaModel, "R", R, m_pDynaBranch->R, m_pDynaBranch->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} R={} -> R={}",
 		m_pDynaBranch->GetVerbalName(),
@@ -284,12 +279,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double 
 {
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 
-	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
-		"X",
-		m_pDynaBranch->X,
-		X,
-		"");
+	WriteSlowVariable(pDynaModel, "X", X, m_pDynaBranch->X, m_pDynaBranch->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} X={} -> X={}",
 		m_pDynaBranch->GetVerbalName(),
@@ -306,14 +296,9 @@ eDFW2_ACTION_STATE CModelActionChangeBranchB::Do(CDynaModel* pDynaModel, double 
 {
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 
-	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
-		"B",
-		m_pDynaBranch->B,
-		B,
-		"");
+	WriteSlowVariable(pDynaModel, "B", B, m_pDynaBranch->B, m_pDynaBranch->GetVerbalName());
 
-	Log(pDynaModel, fmt::format("{} X={} -> X={}",
+	Log(pDynaModel, fmt::format("{} B={} -> B={}",
 		m_pDynaBranch->GetVerbalName(),
 		m_pDynaBranch->B,
 		B
@@ -355,11 +340,17 @@ eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, dou
 	else
 		m_NewState = CDynaBranch::BranchState::BRANCH_OFF;
 
-	WriteSlowVariable(pDynaModel, "State", dValue, static_cast<double>(m_pDynaBranch->m_BranchState), m_pDynaBranch->GetVerbalName());
+	WriteSlowVariable(pDynaModel, 
+		CDevice::m_cszState, 
+		dValue, 
+		static_cast<double>(m_pDynaBranch->m_BranchState), 
+		m_pDynaBranch->GetVerbalName());
 
-	Log(pDynaModel, fmt::format("{} State=\"{}\"->State=\"{}\"",
+	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
 			m_pDynaBranch->GetVerbalName(),
+			CDevice::m_cszState,
 			stringutils::enum_text(m_pDynaBranch->m_BranchState, CDynaBranch::m_cszBranchStateNames),
+			CDevice::m_cszState,
 			stringutils::enum_text(m_NewState, CDynaBranch::m_cszBranchStateNames)));
 
 	return Do(pDynaModel);
@@ -397,6 +388,35 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel* pDynaModel)
 	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
+
+CModelActionChangeNodePQLoad::CModelActionChangeNodePQLoad(CDynaNode* pNode, double Pload) : CModelActionChangeNodeParameterBase(pNode),
+																						m_Pload(Pload),
+																						m_InitialLoad{pNode->Pn, pNode->Qn}
+{
+
+}
+
+eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, double dValue)
+{
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	const cplx Sload{ m_pDynaNode->Pn, m_pDynaNode->Qn };
+	double newQ = Sload.imag();
+	if (!Equal(m_InitialLoad.real(), 0.0))
+		newQ = m_InitialLoad.imag() / m_InitialLoad.real() * dValue;
+	const cplx SloadNew{ dValue, newQ };
+
+	Log(pDynaModel, fmt::format("{} Sload={} -> Sload={}",
+		m_pDynaNode->GetVerbalName(),
+		Sload,
+		SloadNew
+	));
+
+	CDevice::FromComplex(m_pDynaNode->Pn, m_pDynaNode->Qn, SloadNew);
+
+	m_pDynaNode->ProcessTopologyRequest();
+	return State;
+}
+
 
 eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, double dValue)
 {
@@ -583,3 +603,47 @@ eDFW2_ACTION_STATE CModelActionState::Do(CDynaModel *pDynaModel)
 	pDynaModel->DiscontinuityRequest(*device);
 	return eDFW2_ACTION_STATE::AS_INACTIVE;
 }
+
+
+CModelActionChangeDeviceState::CModelActionChangeDeviceState(CDevice* pDevice, eDEVICESTATE NewState) : CModelActionChangeVariable(nullptr,0),
+																							    m_pDevice(pDevice),
+																								m_NewState(NewState)
+{
+
+}
+
+eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel)
+{
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	if (!CDevice::IsFunctionStatusOK(m_pDevice->SetState(m_NewState, eDEVICESTATECAUSE::DSC_EXTERNAL)))
+		State = eDFW2_ACTION_STATE::AS_ERROR;
+	return State;
+}
+
+eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel, double dValue)
+{
+	int nState = static_cast<int>(dValue);
+
+	if (nState > 0)
+		m_NewState = eDEVICESTATE::DS_ON;
+	else
+		m_NewState = eDEVICESTATE::DS_OFF;
+
+	pDynaModel->WriteSlowVariable(m_pDevice->GetType(),
+								{ m_pDevice->GetId() },
+								CDevice::m_cszState,
+								static_cast<double>(m_NewState),
+								static_cast<double>(m_pDevice->GetState()),
+								m_pDevice->GetVerbalName());
+
+	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
+		m_pDevice->GetVerbalName(),
+		CDevice::m_cszState,
+		stringutils::enum_text(m_pDevice->GetState(), CDevice::m_cszStates),
+		CDevice::m_cszState,
+		stringutils::enum_text(m_pDevice->GetState(), CDevice::m_cszStates)));
+
+	return Do(pDynaModel);
+}
+
+

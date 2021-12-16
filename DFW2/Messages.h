@@ -104,6 +104,7 @@ namespace DFW2
 		static const char* m_cszResultRoot;
 		static const char* m_cszWrongSymbolicLink;
 		static const char* m_cszObjectNotFoundByAlias;
+		static const char* m_cszAmbigousObjectsFoundByAlias;
 		static const char* m_cszWrongKeyForSymbolicLink;
 		static const char* m_cszObjectNotFoundBySymbolicLink;
 		static const char* m_cszObjectHasNoPropBySymbolicLink; 

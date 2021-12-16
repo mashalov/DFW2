@@ -34,7 +34,7 @@ bool CDynaNodeMeasure::BuildRightHand(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaNodeMeasure::Init(CDynaModel* pDynaModel)
 {
-	return ProcessDiscontinuity(pDynaModel);
+	return ProcessDiscontinuityImpl(pDynaModel);
 }
 
 VariableIndexRefVec& CDynaNodeMeasure::GetVariables(VariableIndexRefVec& ChildVec)
@@ -42,11 +42,18 @@ VariableIndexRefVec& CDynaNodeMeasure::GetVariables(VariableIndexRefVec& ChildVe
 	return CDevice::GetVariables(JoinVariables({ Pload, Qload }, ChildVec));
 }
 
-eDEVICEFUNCTIONSTATUS CDynaNodeMeasure::ProcessDiscontinuity(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaNodeMeasure::ProcessDiscontinuityImpl(CDynaModel* pDynaModel)
 {
+	m_pNode->GetPnrQnrSuper();
 	Pload = m_pNode->Pnr;
 	Qload = m_pNode->Qnr;
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaNodeMeasure::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	_ASSERTE(CDevice::IsFunctionStatusOK(m_pNode->DiscontinuityProcessed()));
+	return ProcessDiscontinuityImpl(pDynaModel);
 }
 
 // описание переменных расчетных параметров узла

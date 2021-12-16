@@ -96,10 +96,11 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	m_DeviceContainers.push_back(&GeneratorsInfBus);
 	//m_DeviceContainers.push_back(&CustomDevice);
 	//m_DeviceContainers.push_back(&CustomDeviceCPP);
-	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&NodeMeasures);
-	m_DeviceContainers.push_back(&SynchroZones);
+	m_DeviceContainers.push_back(&AutomaticDevice);
+	m_DeviceContainers.push_back(&SynchroZones);		// синхрозоны должны идти последними
+
 	CheckFolderStructure();
 
 	if (m_Parameters.m_bLogToFile)
@@ -1636,55 +1637,6 @@ void CDynaModel::RepeatZeroCrossing()
 																				GetIntegrationStepNumber(), 
 																				GetH(), 
 																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName()));
-}
-
-
-CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::string_view Keys, std::string_view SymLink)
-{
-	CDevice *pFoundDevice(nullptr);
-	// определяем конейтер по имени
-	CDeviceContainer *pContainer = GetContainerByAlias(Object);
-	if (pContainer)
-	{
-		// для ветви отдельная обработка, так как требуется до трех ключей
-		if (pContainer->GetType() == DEVTYPE_BRANCH)
-		{
-			ptrdiff_t nIp(0), nIq(0), nNp(0);
-			bool bReverse = false;
-#ifdef _MSC_VER
-			ptrdiff_t nKeysCount = sscanf_s(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
-#else
-			ptrdiff_t nKeysCount = sscanf(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
-#endif
-			if (nKeysCount > 1)
-			{
-				// ищем ветвь в прямом, если не нашли - в обратном направлении
-				// здесь надо бы ставить какой-то флаг что ветвь в реверсе
-				pFoundDevice = Branches.GetByKey({nIp, nIq, nNp});
-				if(!pFoundDevice)
-					pFoundDevice = Branches.GetByKey({ nIq, nIp, nNp });
-			}
-			else
-				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
-		}
-		else
-		{
-			// контейнер с одним ключом
-			ptrdiff_t nId(0);
-#ifdef _MSC_VER
-			if (sscanf_s(std::string(Keys).c_str(), "%td", &nId) == 1)
-#else
-			if (sscanf(std::string(Keys).c_str(), "%td", &nId) == 1)
-#endif
-				pFoundDevice = pContainer->GetDevice(nId);
-			else
-				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
-		}
-	}
-	else
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundByAlias, Object, SymLink));
-
-	return pFoundDevice;
 }
 
 bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name)

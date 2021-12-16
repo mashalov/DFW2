@@ -123,7 +123,7 @@ namespace DFW2
 			SetMemoryManagement(ContainerMemoryManagementType::BySolid);
 			// проверяем есть ли встроенная фабрика устройств
 			if (!m_ContainerProps.DeviceFactory)
-				throw dfw2error(fmt::format("CDynaNodeContainer::CreateDevice - DeviceFactory not defined for \"{}\"", m_ContainerProps.GetSystemClassName()));
+				throw dfw2error(fmt::format("CDynaNodeContainer::CreateDevice - DeviceFactory not defined for \"{}\"", GetSystemClassName()));
 			// создаем устройства с помощью фабрики
 			m_ContainerProps.DeviceFactory->Create(nCount, m_DevVec);
 			// и привязываем их к контейнеру
@@ -224,7 +224,8 @@ namespace DFW2
 		virtual ptrdiff_t GetPossibleSingleLinksCount();
 		CDeviceContainer* DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		size_t GetResultVariablesCount();									// получить количество переменных, которое нужно выводить в результаты
-		bool HasAlias(std::string_view Alias);								// соответствует ли тип устройства заданному псевдониму
+		bool HasAlias(std::string_view Alias) const;						// соответствует ли тип устройства заданному псевдониму
+		const char* GetSystemClassName() const;
 		ptrdiff_t GetSingleLinkIndex(eDFW2DEVICETYPE eDevType);				// получить индекс ссылки один-к-одному по типу устройства
 		SerializerPtr GetSerializer();
 	};

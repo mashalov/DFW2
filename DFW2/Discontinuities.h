@@ -158,6 +158,16 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
+	class CModelActionChangeNodePQLoad : public CModelActionChangeNodeParameterBase
+	{
+	protected:
+		cplx m_InitialLoad;
+		double m_Pload;
+	public:
+		CModelActionChangeNodePQLoad(CDynaNode* pNode, double Pload);
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double dValue) override;
+	};
+
 	class CModelActionChangeNodeShuntAdmittance : public CModelActionChangeNodeParameterBase
 	{
 	protected:
@@ -218,6 +228,17 @@ namespace DFW2
 	public:
 		CModelActionRemoveNodeShunt(CDynaNode* pNode) : CModelActionChangeNodeParameterBase(pNode) {}
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
+	};
+
+	class CModelActionChangeDeviceState : public CModelActionChangeVariable
+	{
+	protected:
+		CDevice* m_pDevice;
+		eDEVICESTATE m_NewState;
+	public:
+		CModelActionChangeDeviceState(CDevice* pDevice, eDEVICESTATE NewState);
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
+		virtual eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double dValue);
 	};
 
 	using MODELACTIONLIST =  std::list<CModelAction*>;

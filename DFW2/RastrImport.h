@@ -230,7 +230,7 @@ namespace DFW2
 		// Читаем контейнер из таблицы RastrWin
 		void ReadTable(CDeviceContainer& Container, std::string_view RastrSelection = "")
 		{
-			const auto containerClass = Container.m_ContainerProps.GetSystemClassName();
+			const auto containerClass = Container.GetSystemClassName();
 			// находим синнонимы названий контейнера для Rastr
 			auto tableSynonyms = m_rastrSynonyms.GetTable(containerClass);
 			auto synSet = tableSynonyms.GetRastrSynonyms();
@@ -282,8 +282,8 @@ namespace DFW2
 						// в почти всех контейнерах и таблицах
 						// есть состояния, поэтому для всех
 						// вводим "глобальный" синоним
-						if (serializervalue.first == "state")
-							synonyms.insert("sta");
+						if (serializervalue.first == CDevice::m_csz_state)
+							synonyms.insert(CDevice::m_cszSta);
 						// и еще синоним идентификатора в верхнем регистре
 						// (проблема в том что ток Id совпадает с Id, поэтому для 
 						// названия идентификатора выбран "id")

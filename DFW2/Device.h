@@ -394,6 +394,10 @@ namespace DFW2
 
 		static constexpr const char* m_cszName = "Name";
 		static constexpr const char* m_cszname = "name";
+		static constexpr const char* m_cszSta = "sta";
+		static constexpr const char* m_cszState = "State";
+		static constexpr const char* m_csz_state = "state";
+		static constexpr const char* m_cszStates[4] = { "On", "Off", "Ready", "Determine", };
 	};
 
 using DEVICEVECTOR = std::vector<CDevice*>;

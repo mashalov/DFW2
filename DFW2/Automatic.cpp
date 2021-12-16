@@ -348,48 +348,52 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 		{
 			case 1: // объект
 			{
-				const auto Container{ pDynaModel->GetContainerByAlias(m_strObjectClass) };
 
-				switch (Container->GetType())
+				// получаем устройство по классу и ключу
+				CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
+				if (pDev)
 				{
-				case eDFW2DEVICETYPE::DEVTYPE_NODE:
+					// если устройство найдено, проверяем его тип по наследованию
+					// до известного автоматике типа
+					if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_NODE))
 					{
 						m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-						CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
 						if (pDev)
 						{
-							
+
 						}
-					}
-					break;
-				case eDFW2DEVICETYPE::DEVTYPE_BRANCH:
+					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_BRANCH))
 					{
-						m_strObjectClass = CDeviceContainerProperties::m_cszAliasBranch;
-						CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
-						if (pDev)
+						if (m_strObjectProp == CDevice::m_cszSta)
 						{
-							if (m_strObjectProp == "sta")
-							{
-								m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
-								bRes = true;
-							} else if (m_strObjectProp == "r")
-							{
-								m_pAction = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *m_pValue);
-								bRes = true;
-							}
-							else if (m_strObjectProp == "x")
-							{
-								m_pAction = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *m_pValue);
-								bRes = true;
-							}
-							else if (m_strObjectProp == "b")
-							{
-								m_pAction = std::make_unique<CModelActionChangeBranchB>(static_cast<CDynaBranch*>(pDev), *m_pValue);
-								bRes = true;
-							}
+							m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
+							bRes = true;
+						}
+						else if (m_strObjectProp == "r")
+						{
+							m_pAction = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							bRes = true;
+						}
+						else if (m_strObjectProp == "x")
+						{
+							m_pAction = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							bRes = true;
+						}
+						else if (m_strObjectProp == "b")
+						{
+							m_pAction = std::make_unique<CModelActionChangeBranchB>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							bRes = true;
+						}
+					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER))
+					{
+						// для генератора отдельное состояние, но вообще можно состояния
+						// всех устройств с обычными состояниями eDEVICESTATE обрабатывать одинаков
+						if (m_strObjectProp == CDevice::m_cszSta)
+						{
+							m_pAction = std::make_unique<CModelActionChangeDeviceState>(pDev, eDEVICESTATE::DS_OFF);
+							bRes = true;
 						}
 					}
-					break;
 				}
 				break;
 			}
@@ -451,7 +455,12 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 13: // PnQn0 - узел
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				//bRes = true;
+				CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
+				if (pDev)
+				{
+					m_pAction = std::make_unique<CModelActionChangeNodePQLoad>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					bRes = true;
+				}
 				break;
 			}
 			default:
