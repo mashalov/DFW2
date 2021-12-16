@@ -100,7 +100,7 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		bool GetAxisParametersNiipt(const double& x, double xl, double x1, double x2, double To1, double To2, double& r1, double& l1, double& r2, double& l2);
+		bool GetAxisParametersNiipt(const double& x, double xl, double x1, double x2, double To1, double To2, double& r1, double& l1, double& r2, double& l2, bool bUseTd);
 		bool GetAxisParametersNiipt(double x, double xl, double x2, double To2, double& r1, double& l1);
 		bool GetAxisParametersCanay(const double& x, double xl, double x1, double x2, double To1, double To2, double& r1, double& l1, double& r2, double& l2);
 		bool GetAxisParametersCanay(double x, double xl, double x2, double To2, double& r1, double& l1);
@@ -116,6 +116,9 @@ namespace DFW2
 		static inline CValidationRuleBiggerOrEqualT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXq1 = { CDynaGeneratorDQBase::m_cszxq2 };
 		static inline CValidationRuleLessOrEqualT<CDynaGeneratorMotion, &CDynaGeneratorMotion::xq> ValidatorXlXq = { CDynaGeneratorMotion::m_cszxq };
 		static inline CValidationRuleLessOrEqualT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd> ValidatorXlXd = { CDynaGeneratorDQBase::m_cszxd };
+		static inline CValidationRuleLess<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd2> ValidatorXlXd2 = { CDynaGeneratorDQBase::m_cszxd2 };
+		static inline CValidationRuleLess<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXlXq2 = { CDynaGeneratorDQBase::m_cszxq2 };
+		
 	};
 }
 

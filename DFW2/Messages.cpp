@@ -204,6 +204,7 @@ const char* CDFW2Messages::m_cszLFNodeImbalance = "Небаланс УР в уз
 const char* CDFW2Messages::m_cszMaxBranchAngle = "Максимальный угол по связи {:.3f} \"{}\" при t={}";
 const char* CDFW2Messages::m_cszMaxGeneratorAngle = "Максимальный угол по генератору {:.3f} \"{}\" при t={}";
 const char* CDFW2Messages::m_cszValidationBiggerThanZero = "должно быть больше нуля";
+const char* CDFW2Messages::m_cszValidationNegative = "должно быть меньше нуля";
 const char* CDFW2Messages::m_cszValidationNonNegative = "должно быть неотрицательным";
 const char* CDFW2Messages::m_cszValidationChangedTo = "Значение изменено на ";
 const char* CDFW2Messages::m_cszValidationRange = "должно быть в диапазоне [{};{}]";
@@ -211,6 +212,7 @@ const char* CDFW2Messages::m_cszValidationTfOfMustangExcCon = " должно б�
 const char* CDFW2Messages::m_cszValidationBiggerThanNamed = " должно быть больше {} = {}";
 const char* CDFW2Messages::m_cszValidationBiggerOrEqualThanNamed = " должно быть больше или равно {} = {}";
 const char* CDFW2Messages::m_cszValidationLessOrEqualThanNamed = " должно быть меньше или равно {} = {}";
+const char* CDFW2Messages::m_cszValidationLessThanNamed = " должно быть меньше {} = {}";
 const char* CDFW2Messages::m_cszDiscontinuityProcessing = "t={:15.012f} обработка разрыва устройства \"{}\"";
 const char* CDFW2Messages::m_cszAutomaticScenario = "Автоматика/сценарий";
 const char* CDFW2Messages::m_cszCannotConvertShortCircuitConstants = "{} : невозможен точный расчет постоянных времени {} и {}. Попытка использовать приближенные значения {} и {}";

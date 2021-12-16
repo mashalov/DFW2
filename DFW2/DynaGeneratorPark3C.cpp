@@ -83,21 +83,22 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 
 	double R1d(0), R1q(0), l1d(0), l1q(0);
-	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
+		
+	switch (Method)
 	{
-		if (!GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
-			return false;
-		if (!GetAxisParametersNiipt(xq, xl, xq2, Tqo2, R1q, l1q))
-			return false;
+		case PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo:
+		case PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd:
+			bRes = GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d, PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd == Method) &&
+				   GetAxisParametersNiipt(xq, xl, xq2, Tqo2, R1q, l1q);
+			break;
+		case PARK_PARAMETERS_DETERMINATION_METHOD::Canay:
+			bRes = GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d) &&
+				   GetAxisParametersCanay(xq, xl, xq2, Tqo2, R1q, l1q);
+			break;
 	}
 
-	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
-	{
-		if (!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
-			return false;
-		if (!GetAxisParametersCanay(xq, xl, xq2, Tqo2, R1q, l1q))
-			return false;
-	}
+	if (!bRes)
+		return bRes;
 	
 	CompareParksParameterCalculation();
 
@@ -379,6 +380,8 @@ void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
 	Validator->AddRule(m_cszxd1, &CDynaGeneratorPark3C::ValidatorXd1);
 	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXd);
 	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq);
+	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXd2);
+	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq2);
 	Validator->AddRule(m_cszr, &CSerializerValidatorRules::NonNegative);
 }
 

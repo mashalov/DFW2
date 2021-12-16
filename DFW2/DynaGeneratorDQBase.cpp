@@ -516,7 +516,8 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 	double& r1,
 	double& l1,
 	double& r2,
-	double& l2)
+	double& l2,
+	bool bUseTd)	// bUseTd - пытаемся применить метод НИИПТ на замкнутых постоянных времени, если не получится на разомкнутых
 {
 	bool bRes(true);
 
@@ -559,62 +560,40 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 		nTo1 = 0.5 * Ts + std::sqrt(det);
 		r1 = L1 / nTo1;
 		r2 = L2 / (Ts - nTo1);
-
-		/*
-		if (CDynaGeneratorDQBase::GetShortCircuitTimeConstants(x, xl, x1, x2, To1, To2, nTo1, nTo2))
-		{
-			//r1 = (l1 + la * xl / x) / nTo1;
-			//r2 = (l2 + la * l1 * xl / (la * l1 + l1 * xl + la * xl)) / nTo2;
-
-			Ts = nTo1 + nTo2;
-			la = la * xl / (la + xl);
-			det = 0.25 * Ts * Ts - nTo1 * nTo2 / (1.0 - la * la / (la + l1) / (la + l2));
-			if (det >= 0)
-			{
-				nTo1 = 0.5 * Ts + std::sqrt(det);
-				double ar1 = (la + l1) / nTo1;
-				double ar2 = (la + l2) / (Ts - nTo1);
-
-				ar1 = (r1 - ar1) / r1 * 100.0;
-				ar2 = (r2 - ar2) / r2 * 100.0;
-				
-				ar1 = ar1 + ar2;
-
-			}
-		}
-		*/
-		
 	}
 	else
 	{
-		// если у НИИПТ не получилось рассчитать по разомкнутым постоянным, считаем замкнутые и 
-		// рассчитываем по ним
-
 		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszParkParametersNiiptMethodFailed,
 			GetVerbalName(),
 			"0.25 * (To1 + To2)^2 - To1 * To2 / (1.0 - la^2 / (la + l1) / (la + l2))",
 			det));
 
-		if (CDynaGeneratorDQBase::GetShortCircuitTimeConstants(x, xl, x1, x2, To1, To2, nTo1, nTo2))
+		if (bUseTd)
 		{
-			//r1 = (l1 + la * xl / x) / nTo1;
-			//r2 = (l2 + la * l1 * xl / (la * l1 + l1 * xl + la * xl)) / nTo2;
-			// для замкнутых постоянных работает то же выражение что и для разомкнутых (Вольдек с. 679)
-			Ts = nTo1 + nTo2;
-			la = xl * la / (xl + la);		// рассчитываем Lad' - Lad и xl параллельно
-			det = 0.25 * Ts * Ts - nTo1 * nTo2 / (1.0 - la * la / (la + l1) / (la + l2));
-			if (det >= 0)
+			// если у НИИПТ не получилось рассчитать по разомкнутым постоянным, считаем замкнутые и 
+			// рассчитываем по ним
+
+			if (CDynaGeneratorDQBase::GetShortCircuitTimeConstants(x, xl, x1, x2, To1, To2, nTo1, nTo2))
 			{
-				nTo1 = 0.5 * Ts + std::sqrt(det);
-				r1 = (la + l1) / nTo1;
-				r2 = (la + l2) / (Ts - nTo1);
+				//r1 = (l1 + la * xl / x) / nTo1;
+				//r2 = (l2 + la * l1 * xl / (la * l1 + l1 * xl + la * xl)) / nTo2;
+				// для замкнутых постоянных работает то же выражение что и для разомкнутых (Вольдек с. 679)
+				Ts = nTo1 + nTo2;
+				la = xl * la / (xl + la);		// рассчитываем Lad' - Lad и xl параллельно
+				det = 0.25 * Ts * Ts - nTo1 * nTo2 / (1.0 - la * la / (la + l1) / (la + l2));
+				if (det >= 0)
+				{
+					nTo1 = 0.5 * Ts + std::sqrt(det);
+					r1 = (la + l1) / nTo1;
+					r2 = (la + l2) / (Ts - nTo1);
+				}
 			}
-		}
-		else
-		{
-			// в этой точке r1 и r2 определены грубо - по Кундуру без коррекции
-			// Выдаем в лог ошибку, но работу продолжаем
-			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
+			else
+			{
+				// в этой точке r1 и r2 определены грубо - по Кундуру без коррекции
+				// Выдаем в лог ошибку, но работу продолжаем
+				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
+			}
 		}
 	}
 	return bRes;
@@ -727,13 +706,15 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(double x, double xl, double x2
 
 void CDynaGeneratorDQBase::CompareParksParameterCalculation()
 {
+	return;
+
 	struct ParkParameters
 	{
 		double r1 = 0, l1 = 0, r2 = 0, l2 = 0;
 	}
 	NiiptD{}, NiiptQ{ }, CanayD{}, CanayQ{};
 
-	GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, NiiptD.r1, NiiptD.l1, NiiptD.r2, NiiptD.l2);
+	GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, NiiptD.r1, NiiptD.l1, NiiptD.r2, NiiptD.l2, true);
 	GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2);
 
 	switch (GetType())
@@ -744,7 +725,7 @@ void CDynaGeneratorDQBase::CompareParksParameterCalculation()
 		GetAxisParametersCanay(xq, xl, xq2, Tqo2, CanayQ.r1, CanayQ.l1);
 		break;
 	case eDFW2DEVICETYPE::DEVTYPE_GEN_PARK4C:
-		GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, NiiptQ.r1, NiiptQ.l1, NiiptQ.r2, NiiptQ.l2);
+		GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, NiiptQ.r1, NiiptQ.l1, NiiptQ.r2, NiiptQ.l2, true);
 		GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2);
 		break;
 	default:

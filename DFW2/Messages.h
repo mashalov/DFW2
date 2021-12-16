@@ -211,6 +211,7 @@ namespace DFW2
 		static const char* m_cszMaxBranchAngle;
 		static const char* m_cszMaxGeneratorAngle;
 		static const char* m_cszValidationBiggerThanZero;
+		static const char* m_cszValidationNegative;
 		static const char* m_cszValidationNonNegative;
 		static const char* m_cszValidationChangedTo;
 		static const char* m_cszValidationRange;
@@ -218,6 +219,7 @@ namespace DFW2
 		static const char* m_cszValidationBiggerThanNamed;
 		static const char* m_cszValidationBiggerOrEqualThanNamed;
 		static const char* m_cszValidationLessOrEqualThanNamed;
+		static const char* m_cszValidationLessThanNamed;
 		static const char* m_cszDiscontinuityProcessing;
 		static const char* m_cszAutomaticScenario;
 		static const char* m_cszCannotConvertShortCircuitConstants;

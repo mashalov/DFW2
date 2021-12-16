@@ -128,7 +128,8 @@ namespace DFW2
 	enum class PARK_PARAMETERS_DETERMINATION_METHOD
 	{
 		Kundur,
-		Niipt,
+		NiiptTo,
+		NiiptToTd,
 		Canay
 	};
 

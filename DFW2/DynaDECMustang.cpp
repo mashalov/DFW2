@@ -180,8 +180,8 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 		else
 			if (DeforceTrigOut > 0.0)
 			{
-			Udec = m_dDeforceValue;
-			pExciter->SetLagTimeConstantRatio(DefTexc);
+				Udec = m_dDeforceValue;
+				pExciter->SetLagTimeConstantRatio(DefTexc);
 			}
 
 		if (!Equal(dOldDec, Udec))
@@ -237,7 +237,8 @@ void CDynaDECMustang::UpdateSerializer(CSerializerBase* Serializer)
 void CDynaDECMustang::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDevice::UpdateValidator(Validator);
-	Validator->AddRule({ m_cszTexc_f, m_cszTexc_rf }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ m_cszTexc_f, m_cszTexc_rf, m_cszRf }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ m_cszRrf }, &CSerializerValidatorRules::Negative);
 	Validator->AddRule({ m_cszTz_in, m_cszTz_out }, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule({ m_cszUef }, &CDynaDECMustang::ValidatorVenfOff);
 	Validator->AddRule({ m_cszUbrf }, &CDynaDECMustang::ValidatorVdefOn);

@@ -1433,17 +1433,13 @@ void CLoadFlow::Newton()
 				break;
 				// если узел PV, но реактивная генерация вне диапазона, делаем его PQ
 			case CDynaNodeBase::eLFNodeType::LFNT_PV:
+				pNode->Qgr = Qg;	// если реактивная генерация в пределах - обновляем ее значение в узле
 				// рассчитываем нарушение ограничения по генерации реактивной мощности
 				if ((pMatrixInfo->m_NodePowerViolation = Qg - pNode->LFQmax) > m_Parameters.m_Imb)
-				{
 					PV_PQmax.push_back(pMatrixInfo);
-				}
 				else if ((pMatrixInfo->m_NodePowerViolation = Qg - pNode->LFQmin) < -m_Parameters.m_Imb)
-				{
 					PV_PQmin.push_back(pMatrixInfo);
-				}
-				else
-					pNode->Qgr = Qg;	// если реактивная генерация в пределах - обновляем ее значение в узле
+					
 				break;
 			}
 		}
@@ -1531,7 +1527,7 @@ void CLoadFlow::Newton()
 		{
 			for (auto&& it : PV_PQmax)
 			{
-				LogNodeSwitch(it, "PV-PQmax");
+				LogNodeSwitch(it, "PV->PQmax");
 				CDynaNodeBase*& pNode = it->pNode;
 				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 				pNode->Qgr = pNode->LFQmax;
@@ -1542,7 +1538,7 @@ void CLoadFlow::Newton()
 			{
 				for (auto&& it : PV_PQmin)
 				{
-					LogNodeSwitch(it, "PV-PQmin");
+					LogNodeSwitch(it, "PV->PQmin");
 					CDynaNodeBase*& pNode = it->pNode;
 					pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 					pNode->Qgr = pNode->LFQmin;
