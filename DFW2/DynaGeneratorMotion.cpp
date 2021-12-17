@@ -192,7 +192,8 @@ void CDynaGeneratorMotion::UpdateSerializer(CSerializerBase* Serializer)
 void CDynaGeneratorMotion::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaGeneratorInfBusBase::UpdateValidator(Validator);
-	Validator->AddRule({ m_cszKdemp, m_cszxq, m_cszPnom }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszKdemp, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule({ m_cszxq, m_cszPnom }, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszcosPhinom, &CDynaGeneratorMotion::ValidatorCos);
 	Validator->AddRule(m_cszUnom, &CDynaGeneratorMotion::ValidatorUnom);
 	Validator->AddRule(m_cszMj, &CDynaGeneratorMotion::ValidatorMj);

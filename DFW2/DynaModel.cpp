@@ -175,7 +175,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_bUseRefactor = true;
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
-		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = true;
+		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bDisableResultsWriter = true;
 
@@ -223,7 +223,7 @@ bool CDynaModel::RunTransient()
 
 		if (bRes)
 		{
-			m_Discontinuities.AddEvent(150.0, new CModelActionStop());
+			m_Discontinuities.AddEvent(5.0, new CModelActionStop());
 
 	#ifdef SMZU
 
