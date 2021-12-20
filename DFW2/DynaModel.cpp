@@ -1692,9 +1692,8 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 					CDynaBranch *pBranch = static_cast<CDynaBranch*>(pFoundDevice);
 					if (!pBranch->m_pMeasure)
 					{
-						CDynaBranchMeasure *pBranchMeasure = new CDynaBranchMeasure(pBranch);
-						pBranchMeasure->SetId(BranchMeasures.Count() + 1);
-						pBranchMeasure->SetName(pBranch->GetVerbalName());
+						CDynaBranchMeasure *pBranchMeasure = new CDynaBranchMeasure();
+						pBranchMeasure->SetBranch(pBranch);
 						pBranchMeasure->Init(this);
 						BranchMeasures.AddDevice(pBranchMeasure);
 						pBranch->m_pMeasure = pBranchMeasure;

@@ -95,5 +95,6 @@ namespace DFW2
 		CDynaBranch* GetByKey(const CDynaBranch::Key& key);
 		using CDeviceContainer::CDeviceContainer;
 		void LinkToReactors(CDeviceContainer& containerReactors);
+		void CreateMeasures(CDeviceContainer& containerBranchMeasures);
 	};
 }

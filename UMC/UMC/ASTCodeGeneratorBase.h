@@ -77,7 +77,10 @@ public:
 				{
 					_ASSERTE(v.second.IsExternal());
 					// добавляем внешнюю перменную в список внешних переменных
-					extVars.push_back(fmt::format("{{ \"{}\", {{ {}, DEVTYPE_MODEL }} }}", v.second.ModelLink, nExtVarIndex));
+					extVars.push_back(fmt::format("{{ \"{}\", {{ {}, DEVTYPE_MODEL }} /* {} */}}", 
+						v.second.ModelLink,		// символическая ссылка
+						nExtVarIndex,			// индекс внешней переменной в m_ExternalVariables
+						v.first));				// комментарий - имя переменной в исходном тексте
 				}
 				nExtVarIndex++;
 			}

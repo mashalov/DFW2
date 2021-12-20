@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaBranch.h"
+#include "BranchMeasures.h"
 #include "DynaModel.h"
 
 
@@ -508,4 +509,15 @@ bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 	}
 
 	return bDisconnected;
+}
+
+void CDynaBranchContainer::CreateMeasures(CDeviceContainer& containerBranchMeasures)
+{
+	if (containerBranchMeasures.GetType() != DEVTYPE_BRANCHMEASURE)
+		throw dfw2error("CDynaBranchContainer::CreateMeasures given container is not CDynaBranchBranchMeasures container");
+	containerBranchMeasures.CreateDevices(Count());
+	auto itBranch = begin();
+	auto itMeasure = containerBranchMeasures.begin();
+	for (; itBranch != end(); itBranch++, itMeasure++)
+		static_cast<CDynaBranchMeasure*>(*itMeasure)->SetBranch(static_cast<CDynaBranch*>(*itBranch));
 }

@@ -85,7 +85,7 @@ bool CDynaModel::Link()
 		if (it->m_ContainerProps.bFinishStep)
 			m_DeviceContainersFinishStep.push_back(it);
 	}
-
+	Branches.CreateMeasures(BranchMeasures);
 	return bRes;
 }
 

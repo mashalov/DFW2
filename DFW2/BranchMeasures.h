@@ -8,7 +8,7 @@ namespace DFW2
 	class CDynaBranchMeasure : public CDevice
 	{
 	protected:
-		CDynaBranch* m_pBranch;			// ветвь, для которой выполняеются расчеты потоков
+		CDynaBranch* m_pBranch = nullptr;			// ветвь, для которой выполняеются расчеты потоков
 	public:
 		enum VARS
 		{
@@ -28,7 +28,9 @@ namespace DFW2
 		};
 
 		VariableIndex Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pe, Qe, Sb, Se;
-		CDynaBranchMeasure(CDynaBranch* pBranch) : CDevice(), m_pBranch(pBranch) {}
+		CDynaBranchMeasure() : CDevice() {}
+		void SetBranch(CDynaBranch* pBranch);
+
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
