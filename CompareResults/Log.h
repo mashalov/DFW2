@@ -5,7 +5,7 @@
 class CLog
 {
 public:
-	void Log(std::string_view log)
+	void Log(std::string_view log) const
 	{
 		std::cout << log << std::endl;
 	}
