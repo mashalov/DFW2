@@ -4,6 +4,8 @@
 
 using namespace DFW2;
 
+#define ABS_GUARD 0.0 // идея - добавить к вычислению производной от модуля небольшую константу, чтобы гарантированно не делить на ноль
+
 double* CDynaBranchMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double* p(nullptr);
@@ -169,7 +171,7 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 		// dQe / dIeim
 		pDynaModel->SetElement(Qe, Ieim, Vq * Cosq);
 
-		absIb = sqrt(Pb * Pb + Qb * Qb);
+		absIb = std::sqrt(Pb * Pb + Qb * Qb + ABS_GUARD);
 
 		// dSb / dSb
 		pDynaModel->SetElement(Sb, Sb, 1.0);
@@ -178,7 +180,7 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 		// dSb / dQb
 		pDynaModel->SetElement(Sb, Qb, -CDevice::ZeroDivGuard(Qb, absIb));
 
-		absIb = sqrt(Pe * Pe + Qe * Qe);
+		absIb = std::sqrt(Pe * Pe + Qe * Qe + ABS_GUARD);
 
 		if (absIb < DFW2_EPSILON)
 			absIb = DFW2_EPSILON;
@@ -231,14 +233,14 @@ bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 		pDynaModel->SetFunction(Ibim, Ibim - cIb.imag());
 		pDynaModel->SetFunction(Iere, Iere - cIe.real());
 		pDynaModel->SetFunction(Ieim, Ieim - cIe.imag());
-		pDynaModel->SetFunction(Ib, Ib - abs(cIb));
-		pDynaModel->SetFunction(Ie, Ie - abs(cIe));
+		pDynaModel->SetFunction(Ib, Ib - std::sqrt(Ibre * Ibre + Ibim * Ibim + ABS_GUARD));
+		pDynaModel->SetFunction(Ie, Ie - std::sqrt(Iere * Iere + Ieim * Ieim + ABS_GUARD));
 		pDynaModel->SetFunction(Pb, Pb - cSb.real());
 		pDynaModel->SetFunction(Qb, Qb - cSb.imag());
 		pDynaModel->SetFunction(Pe, Pe - cSe.real());
 		pDynaModel->SetFunction(Qe, Qe - cSe.imag());
-		pDynaModel->SetFunction(Sb, Sb - abs(cSb));
-		pDynaModel->SetFunction(Se, Se - abs(cSe));
+		pDynaModel->SetFunction(Sb, Sb - std::sqrt(Pb * Pb + Qb * Qb + ABS_GUARD));
+		pDynaModel->SetFunction(Se, Se - std::sqrt(Pe * Pe + Qe * Qe + ABS_GUARD));
 	}
 	else
 	{
@@ -296,8 +298,10 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 	FromComplex(Iere, Ieim, cIe);
 	FromComplex(Pb, Qb, cSb);
 	FromComplex(Pe, Qe, cSe);
-	Sb = abs(cSb);				Se = abs(cSe);
-	Ib = abs(cIb);				Ie = abs(cIe);
+	Sb = std::sqrt(Pb * Pb + Qb * Qb + ABS_GUARD);
+	Se = std::sqrt(Pe * Pe + Qe * Qe + ABS_GUARD);
+	Ib = std::sqrt(Ibre * Ibre + Ibim * Ibim + ABS_GUARD);
+	Ie = std::sqrt(Iere * Iere + Ieim * Ieim + ABS_GUARD);
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
