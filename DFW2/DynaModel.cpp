@@ -16,6 +16,8 @@
 #include "DynaExcConMustang.h"
 #include "DynaExcConMustangNW.h"
 #include "DynaBranch.h"
+#include "BranchMeasures.h"
+#include "NodeMeasures.h"
 
 #define _LFINFO_
 
@@ -43,6 +45,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   ExcConMustang(this),
 						   CustomDevice(this),
 						   BranchMeasures(this),
+						   NodeMeasures(this),
 						   AutomaticDevice(this),
 						   CustomDeviceCPP(this),
 						   m_ResultsWriter(*this),
@@ -66,10 +69,11 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaGeneratorPark3C::DeviceProperties(GeneratorsPark3C.m_ContainerProps);
 	CDynaGeneratorPark4C::DeviceProperties(GeneratorsPark4C.m_ContainerProps);
 	CDynaDECMustang::DeviceProperties(DECsMustang.m_ContainerProps);
-	//CDynaExcConMustang::DeviceProperties(ExcConMustang.m_ContainerProps);
-	CDynaExcConMustangNonWindup::DeviceProperties(ExcConMustang.m_ContainerProps);
+	CDynaExcConMustang::DeviceProperties(ExcConMustang.m_ContainerProps);
+	//CDynaExcConMustangNonWindup::DeviceProperties(ExcConMustang.m_ContainerProps);
 	CDynaExciterMustang::DeviceProperties(ExcitersMustang.m_ContainerProps);
 	CDynaBranchMeasure::DeviceProperties(BranchMeasures.m_ContainerProps);
+	CDynaNodeMeasure::DeviceProperties(NodeMeasures.m_ContainerProps);
 
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
 	AutomaticDevice.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
@@ -92,9 +96,11 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	m_DeviceContainers.push_back(&GeneratorsInfBus);
 	//m_DeviceContainers.push_back(&CustomDevice);
 	//m_DeviceContainers.push_back(&CustomDeviceCPP);
-	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&BranchMeasures);
-	m_DeviceContainers.push_back(&SynchroZones);
+	m_DeviceContainers.push_back(&NodeMeasures);
+	m_DeviceContainers.push_back(&AutomaticDevice);
+	m_DeviceContainers.push_back(&SynchroZones);		// синхрозоны должны идти последними
+
 	CheckFolderStructure();
 
 	if (m_Parameters.m_bLogToFile)
@@ -151,9 +157,9 @@ bool CDynaModel::RunTransient()
 
 	try
 	{
-		m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
+		m_Parameters.m_dZeroBranchImpedance = -4.0E-6;
 
-		m_Parameters.m_dFrequencyTimeConstant = 0.1;
+		m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 		m_Parameters.m_dOutStep = 1E-10;
 		//m_Parameters.eFreqDampingType = APDT_ISLAND;
@@ -169,7 +175,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_bUseRefactor = true;
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
-		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = true;
+		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bDisableResultsWriter = true;
 
@@ -183,7 +189,12 @@ bool CDynaModel::RunTransient()
 		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 		bRes = bRes && (Reactors.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 
-		bRes = bRes && Link();
+		if (!bRes)
+			throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
+		if(!Link())
+			throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
 		TurnOffDevicesByOffMasters();
 
 		// записывать заголовок нужно сразу после линковки и отключения устройств без ведущих навсегда
@@ -212,7 +223,7 @@ bool CDynaModel::RunTransient()
 
 		if (bRes)
 		{
-			m_Discontinuities.AddEvent(150.0, new CModelActionStop());
+			m_Discontinuities.AddEvent(5.0, new CModelActionStop());
 
 	#ifdef SMZU
 
@@ -401,9 +412,12 @@ void CDynaModel::InitDevices()
 	{
 		ptrdiff_t nOKInits = 0;
 
-		for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED; it++)
+		for (auto&& it : m_DeviceContainers)
 		{
-			switch ((*it)->Init(this))
+			if (Status == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
+				break;
+
+			switch (it->Init(this))
 			{
 			case eDEVICEFUNCTIONSTATUS::DFS_OK:
 			case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
@@ -1289,9 +1303,12 @@ bool CDynaModel::ProcessDiscontinuity()
 				// пока статус "неготово"
 				ptrdiff_t nOKPds = 0;
 				// обрабатываем разрывы для всех устройств во всех контейнерах
-				for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED; it++)
+				for (auto&& it : m_DeviceContainers)
 				{
-					switch ((*it)->ProcessDiscontinuity(this))
+					if (Status == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
+						break;
+
+					switch (it->ProcessDiscontinuity(this))
 					{
 					case eDEVICEFUNCTIONSTATUS::DFS_OK:
 					case eDEVICEFUNCTIONSTATUS::DFS_DONTNEED:
@@ -1622,53 +1639,6 @@ void CDynaModel::RepeatZeroCrossing()
 																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName()));
 }
 
-
-CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::string_view Keys, std::string_view SymLink)
-{
-	CDevice *pFoundDevice(nullptr);
-
-	CDeviceContainer *pContainer = GetContainerByAlias(Object);
-	if (pContainer)
-	{
-		if (pContainer->GetType() == DEVTYPE_BRANCH)
-		{
-			ptrdiff_t nIp(0), nIq(0), nNp(0);
-			bool bReverse = false;
-#ifdef _MSC_VER
-			ptrdiff_t nKeysCount = sscanf_s(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
-#else
-			ptrdiff_t nKeysCount = sscanf(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
-#endif
-			if (nKeysCount > 1)
-			{
-				// ищем ветвь в прямом, если не нашли - в обратном направлении
-				// здесь надо бы ставить какой-то флаг что ветвь в реверсе
-				pFoundDevice = Branches.GetByKey({nIp, nIq, nNp});
-				if(!pFoundDevice)
-					pFoundDevice = Branches.GetByKey({ nIq, nIp, nNp });
-			}
-			else
-				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
-		}
-		else
-		{
-			ptrdiff_t nId(0);
-#ifdef _MSC_VER
-			if (sscanf_s(std::string(Keys).c_str(), "%td", &nId) == 1)
-#else
-			if (sscanf(std::string(Keys).c_str(), "%td", &nId) == 1)
-#endif
-				pFoundDevice = pContainer->GetDevice(nId);
-			else
-				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
-		}
-	}
-	else
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundByAlias, Object, SymLink));
-
-	return pFoundDevice;
-}
-
 bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name)
 {
 	bool bRes(false);
@@ -1715,23 +1685,47 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 					ExtVar.Index = DFW2_NON_STATE_INDEX;
 					bRes = true;
 				}
-				else
-				if (pFoundDevice->GetType() == DEVTYPE_BRANCH)
+				else if (pFoundDevice->GetType() == DEVTYPE_BRANCH)
 				{
-					//ptrdiff_t nIp;
-					//_stscanf_s(std::string(Keys).c_str(), "%td", &nIp);
+					// если не нашли параметр и тип объекта - "ветвь"
+					// создаем для ветви блок измерений и пытаемся забрать параметр из блока
 					CDynaBranch *pBranch = static_cast<CDynaBranch*>(pFoundDevice);
 					if (!pBranch->m_pMeasure)
 					{
-						CDynaBranchMeasure *pBranchMeasure = new CDynaBranchMeasure(pBranch);
-						pBranchMeasure->SetId(BranchMeasures.Count() + 1);
-						pBranchMeasure->SetName(pBranch->GetVerbalName());
+						CDynaBranchMeasure *pBranchMeasure = new CDynaBranchMeasure();
+						pBranchMeasure->SetBranch(pBranch);
 						pBranchMeasure->Init(this);
 						BranchMeasures.AddDevice(pBranchMeasure);
 						pBranch->m_pMeasure = pBranchMeasure;
 					}
 
 					ExtVar = pBranch->m_pMeasure->GetExternalVariable(Prop);
+
+					if (ExtVar.pValue)
+					{
+						// смещение больше не нужно - работаем в абсолютных индексах
+						//ExtVar.Index -= pFromDevice->A(0);
+						bRes = true;
+					}
+					else
+						Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink, Prop, Name));
+				}
+				else if (pFoundDevice->GetType() == DEVTYPE_NODE)
+				{
+					// если не нашли параметр и тип объекта - "узел"
+					// создаем блок измерений для узла и пытаемся забрать параметр из блока
+					CDynaNode* pNode = static_cast<CDynaNode*>(pFoundDevice);
+					if (!pNode->m_pMeasure)
+					{
+						CDynaNodeMeasure* pNodeMeasure = new CDynaNodeMeasure(pNode);
+						pNodeMeasure->SetId(NodeMeasures.Count() + 1);
+						pNodeMeasure->SetName(pNode->GetVerbalName());
+						pNodeMeasure->Init(this);
+						NodeMeasures.AddDevice(pNodeMeasure);
+						pNode->m_pMeasure = pNodeMeasure;
+					}
+
+					ExtVar = pNode->m_pMeasure->GetExternalVariable(Prop);
 
 					if (ExtVar.pValue)
 					{

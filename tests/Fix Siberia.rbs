@@ -1,0 +1,27 @@
+Set spForcer = Rastr.Tables("Forcer")
+spForcer.SetSel "Texc_rf=0"
+spForcer.Cols("Texc_rf").Calc "1"
+spForcer.SetSel "Texc_f=0"
+spForcer.Cols("Texc_f").Calc "1"
+spForcer.SetSel "Rf<=0"
+spForcer.Cols("Rf").Calc "2"
+spForcer.SetSel "Rrf>=0"
+spForcer.Cols("Rrf").Calc "-2"
+
+spForcer.SetSel "Ubrf<=0"
+spForcer.Cols("Ubrf").Calc "1.15"
+spForcer.SetSel "Uerf<=0"
+spForcer.Cols("Uerf").Calc "1.05"
+
+Set spExcControl = Rastr.Tables("ExcControl")
+spExcControl.SetSel("Tf=0")
+spExcControl.Cols("Tf").Calc("0.9")
+
+Set spGenerator = Rastr.Tables("Generator")
+spGenerator.SetSel "xl>=xd1" 
+spGenerator.Cols("xl").Calc("xd2*0.8")
+spGenerator.SetSel "xl>=xd2" 
+spGenerator.Cols("xl").Calc("xd2*0.8")
+spGenerator.SetSel "xl>=xq2" 
+spGenerator.Cols("xl").Calc("xq2*0.8")
+

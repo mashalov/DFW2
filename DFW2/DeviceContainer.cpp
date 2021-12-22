@@ -32,7 +32,7 @@ void CDeviceContainer::RemoveDeviceByIndex(ptrdiff_t nIndex)
 {
 	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_DevVec.size()))
 	{
-		DEVICEVECTORITR it = m_DevVec.begin() + nIndex;
+		auto it = m_DevVec.begin() + nIndex;
 		// если в контейнера индивидуальные устройства - удаляем прямо устройство
 		// если под управлением вектор из фабрики - просто удаляем из вектора указатель
 		if(m_MemoryManagement == ContainerMemoryManagementType::ByPieces)
@@ -103,7 +103,7 @@ bool CDeviceContainer::RegisterConstVariable(std::string_view VarName, ptrdiff_t
 bool CDeviceContainer::VariableOutputEnable(std::string_view VarName, bool bOutputEnable)
 {
 	// ищем переменную по имени в карте переменных контейнера
-	VARINDEXMAPITR it = m_ContainerProps.m_VarMap.find(VarName);
+	auto it = m_ContainerProps.m_VarMap.find(VarName);
 	if (it != m_ContainerProps.m_VarMap.end())
 	{
 		// если нашли - ставим заданный атрибут вывода 
@@ -117,39 +117,40 @@ bool CDeviceContainer::VariableOutputEnable(std::string_view VarName, bool bOutp
 // получить индекс переменной устройства по названию
 ptrdiff_t CDeviceContainer::GetVariableIndex(std::string_view VarName) const
 {
-	// используем быстрый поиск по карте (тут зачем-то из string_view надо делать string)
-	VARINDEXMAPCONSTITR it = m_ContainerProps.m_VarMap.find(VarName);
-	if (it != m_ContainerProps.m_VarMap.end())
-		return it->second.m_nIndex;
-	else
-		return -1;
+	auto fnFind = [this](std::string_view VarName) -> ptrdiff_t
+	{
+		if (auto it{ m_ContainerProps.m_VarMap.find(VarName) }; it != m_ContainerProps.m_VarMap.end())
+			return it->second.m_nIndex;
+		else
+			return -1;
+	};
+
+	ptrdiff_t nIndex{ fnFind(VarName) };
+	// если переменную не нашли по заданному имени, ищем по алиасам
+	if (nIndex < 0)
+		if(auto it { m_ContainerProps.m_VarAliasMap.find(VarName) }; it != m_ContainerProps.m_VarAliasMap.end())
+			nIndex = fnFind(it->second);
+	
+	return nIndex;
 }
 // получить индекс константной переменной по названию
 ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::string_view VarName) const
 {
-	CONSTVARINDEXMAPCONSTITR it = m_ContainerProps.m_ConstVarMap.find(std::string(VarName));
-	if (it != m_ContainerProps.m_ConstVarMap.end())
-		return it->second.m_nIndex;
-	else
-		return -1;
-}
+	auto fnFind = [this](std::string_view VarName) -> ptrdiff_t
+	{
+		if (auto it{ m_ContainerProps.m_ConstVarMap.find(VarName) }; it != m_ContainerProps.m_ConstVarMap.end())
+			return it->second.m_nIndex;
+		else
+			return -1;
+	};
 
-VARINDEXMAPCONSTITR CDeviceContainer::VariablesBegin()
-{
-	return m_ContainerProps.m_VarMap.begin();
-}
-VARINDEXMAPCONSTITR CDeviceContainer::VariablesEnd()
-{
-	return m_ContainerProps.m_VarMap.end();
-}
+	ptrdiff_t nIndex{ fnFind(VarName) };
+	// если переменную не нашли по заданному имени, ищем по алиасам
+	if(nIndex < 0)
+		if (auto it{ m_ContainerProps.m_VarAliasMap.find(VarName) }; it != m_ContainerProps.m_VarAliasMap.end())
+			nIndex = fnFind(it->second);
 
-CONSTVARINDEXMAPCONSTITR CDeviceContainer::ConstVariablesBegin()
-{
-	return m_ContainerProps.m_ConstVarMap.begin();
-}
-CONSTVARINDEXMAPCONSTITR CDeviceContainer::ConstVariablesEnd()
-{
-	return m_ContainerProps.m_ConstVarMap.end();
+	return nIndex;
 }
 
 CDevice* CDeviceContainer::GetDeviceByIndex(ptrdiff_t nIndex)
@@ -195,8 +196,7 @@ CDevice* CDeviceContainer::GetDevice(CDeviceId* pDeviceId)
 	CDevice *pRes(nullptr);
 	if (SetUpSearch())
 	{
-		DEVSEARCHSETITR it = m_DevSet.find(pDeviceId);
-		if (it != m_DevSet.end())
+		if (auto it{ m_DevSet.find(pDeviceId) }; it != m_DevSet.end())
 			pRes = static_cast<CDevice*>(*it);
 	}
 	return pRes;
@@ -374,7 +374,7 @@ CMultiLink& CDeviceContainer::GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDevi
 {
 	if (!CheckLink(nLinkIndex, LinksVec))
 		throw dfw2error("CDeviceContainer::GetCheckLink - LinkIndex out of range");
-	LINKSVECITR it = LinksVec.begin() + nLinkIndex;
+	auto it = LinksVec.begin() + nLinkIndex;
 	if (nDeviceIndex >= static_cast<ptrdiff_t>(it->m_LinkInfo.size()))
 		throw dfw2error("CDeviceContainer::GetCheckLink - DeviceIndex out of range");
 	return *it;
@@ -538,8 +538,6 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::ProcessDiscontinuity(CDynaModel* pDynaMo
 	if (GetType() == DEVTYPE_BRANCH)
 		return m_eDeviceFunctionStatus;
 
-	DEVICEVECTORITR it = begin();
-
 	for (auto&& it : m_DevVec)
 	{
 		if (it->IsPermanentOff())
@@ -630,9 +628,6 @@ eDEVICEFUNCTIONSTATUS CDeviceContainer::Init(CDynaModel* pDynaModel)
 	// ветви хотя и тоже устройства, но мы их не инициализируем
 	if (GetType() == DEVTYPE_BRANCH)
 		return m_eDeviceFunctionStatus;
-
-	
-	DEVICEVECTORITR it = begin();
 	
 	// обходим устройства в векторе 
 	for (auto&& it : m_DevVec)
@@ -662,7 +657,7 @@ ptrdiff_t CDeviceContainer::GetLinkIndex(CDeviceContainer* pLinkContainer)
 {
 	ptrdiff_t nRet = -1;
 	// обходим вектор ссылок
-	for (LINKSVECITR it = m_Links.begin(); it != m_Links.end(); it++)
+	for (auto it = m_Links.begin(); it != m_Links.end(); it++)
 		if (it->m_pContainer == pLinkContainer)
 		{
 			// если заданный контейнер входит в набор возможных ссылок 
@@ -678,7 +673,7 @@ ptrdiff_t CDeviceContainer::GetLinkIndex(eDFW2DEVICETYPE eDeviceType)
 {
 	ptrdiff_t nRet = -1;
 	// обходим вектор ссылок
-	for (LINKSVECITR it = m_Links.begin(); it != m_Links.end(); it++)
+	for (auto it = m_Links.begin(); it != m_Links.end(); it++)
 		if (it->m_pContainer->IsKindOfType(eDeviceType))
 		{
 			// если заданный тип входит в дерево наследования контейнера 
@@ -864,9 +859,14 @@ CDynaModel* CDeviceContainer::GetModel()
 	return m_pDynaModel; 
 }
 
-bool  CDeviceContainer::HasAlias(std::string_view Alias)
+const char* CDeviceContainer::GetSystemClassName() const
 {
-	STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
+	return m_ContainerProps.GetSystemClassName();
+}
+
+bool CDeviceContainer::HasAlias(std::string_view Alias) const
+{
+	const STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
 	return std::find(Aliases.begin(), Aliases.end(), Alias) != Aliases.end();
 }
 
@@ -877,7 +877,7 @@ void CDeviceContainer::SetMemoryManagement(ContainerMemoryManagementType Managem
 		m_MemoryManagement = ManagementType;
 	else
 		if (m_MemoryManagement != ManagementType)
-			throw dfw2error(fmt::format("Attempt to mix memory management types for Container {}", m_ContainerProps.GetSystemClassName()));
+			throw dfw2error(fmt::format("Attempt to mix memory management types for Container {}", GetSystemClassName()));
 }
 
 

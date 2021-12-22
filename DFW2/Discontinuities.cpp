@@ -53,8 +53,8 @@ bool CStaticEvent::ContainsStop() const
 bool CStaticEvent::RemoveStateAction(CDiscreteDelay *pDelayObject) const
 {
 	bool bRes = false;
-	MODELACTIONITR itFound = m_Actions.end();
-	for (MODELACTIONITR it = m_Actions.begin(); it != m_Actions.end(); it++)
+	auto itFound = m_Actions.end();
+	for (auto it = m_Actions.begin(); it != m_Actions.end(); it++)
 		if ((*it)->Type() == eDFW2_ACTION_TYPE::AT_STATE)
 		{
 			if (static_cast<CModelActionState*>(*it)->GetDelayObject() == pDelayObject)
@@ -80,9 +80,11 @@ eDFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 
 	MODELACTIONLIST tempList = m_Actions;
 
-	for (MODELACTIONITR it = tempList.begin(); it != tempList.end() && State != eDFW2_ACTION_STATE::AS_ERROR; it++)
+	for (auto&& it : tempList)
 	{
-		State = (*it)->Do(pDynaModel);
+		if (State == eDFW2_ACTION_STATE::AS_ERROR)
+			break;
+		State = it->Do(pDynaModel);
 	}
 	return State;
 }
@@ -91,7 +93,7 @@ bool CDiscontinuities::AddEvent(double dTime, CModelAction* Action)
 {
 	bool bRes = true;
 	CStaticEvent newEvent(dTime);
-	std::pair<STATICEVENTITR, bool> checkInsert = m_StaticEvent.insert(newEvent);
+	auto checkInsert = m_StaticEvent.insert(newEvent);
 	checkInsert.first->AddAction(Action);
 	return bRes;
 }
@@ -100,7 +102,7 @@ bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, doubl
 {
 	bool bRes = true;
 	CStateObjectIdToTime newObject(pDelayObject, dTime);
-	STATEEVENTITR it = m_StateEvents.find(pDelayObject);
+	auto it = m_StateEvents.find(pDelayObject);
 	if (it == m_StateEvents.end())
 	{
 		m_StateEvents.insert(newObject);
@@ -119,7 +121,7 @@ bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, doubl
 bool CDiscontinuities::CheckStateDiscontinuity(CDiscreteDelay *pDelayObject)
 {
 	CStateObjectIdToTime newObject(pDelayObject, 0.0);
-	STATEEVENTITR it = m_StateEvents.find(newObject);
+	auto it = m_StateEvents.find(newObject);
 	return it != m_StateEvents.end();
 }
 
@@ -127,10 +129,10 @@ bool CDiscontinuities::RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject)
 {
 	bool bRes = true;
 	CStateObjectIdToTime newObject(pDelayObject, 0.0);
-	STATEEVENTITR it = m_StateEvents.find(newObject);
+	auto it = m_StateEvents.find(newObject);
 	if (it != m_StateEvents.end())
 	{
-		STATICEVENTITR itEvent = m_StaticEvent.lower_bound(it->Time());
+		auto itEvent = m_StaticEvent.lower_bound(it->Time());
 		if (itEvent != m_StaticEvent.end())
 		{
 			itEvent->RemoveStateAction(pDelayObject);
@@ -163,7 +165,7 @@ void CDiscontinuities::PassTime(double dTime)
 {
 	if (!m_pDynaModel->IsInDiscontinuityMode())
 	{
-		STATICEVENTITR itEvent = m_StaticEvent.lower_bound(CStaticEvent(dTime));
+		auto itEvent = m_StaticEvent.lower_bound(CStaticEvent(dTime));
 		if (itEvent != m_StaticEvent.end())
 		{
 			if (itEvent != m_StaticEvent.begin())
@@ -259,12 +261,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double 
 {
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 
-	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
-		"R",
-		m_pDynaBranch->R,
-		R,
-		"");
+	WriteSlowVariable(pDynaModel, "R", R, m_pDynaBranch->R, m_pDynaBranch->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} R={} -> R={}",
 		m_pDynaBranch->GetVerbalName(),
@@ -282,12 +279,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double 
 {
 	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
 
-	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
-		"X",
-		m_pDynaBranch->X,
-		X,
-		"");
+	WriteSlowVariable(pDynaModel, "X", X, m_pDynaBranch->X, m_pDynaBranch->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} X={} -> X={}",
 		m_pDynaBranch->GetVerbalName(),
@@ -299,6 +291,25 @@ eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double 
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
+
+eDFW2_ACTION_STATE CModelActionChangeBranchB::Do(CDynaModel* pDynaModel, double B)
+{
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+
+	WriteSlowVariable(pDynaModel, "B", B, m_pDynaBranch->B, m_pDynaBranch->GetVerbalName());
+
+	Log(pDynaModel, fmt::format("{} B={} -> B={}",
+		m_pDynaBranch->GetVerbalName(),
+		m_pDynaBranch->B,
+		B
+	));
+
+	m_pDynaBranch->B = B;
+	pDynaModel->ProcessTopologyRequest();
+	return State;
+}
+
+
 
 eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel)
 {
@@ -329,11 +340,17 @@ eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, dou
 	else
 		m_NewState = CDynaBranch::BranchState::BRANCH_OFF;
 
-	WriteSlowVariable(pDynaModel, "State", dValue, static_cast<double>(m_pDynaBranch->m_BranchState), m_pDynaBranch->GetVerbalName());
+	WriteSlowVariable(pDynaModel, 
+		CDevice::m_cszState, 
+		dValue, 
+		static_cast<double>(m_pDynaBranch->m_BranchState), 
+		m_pDynaBranch->GetVerbalName());
 
-	Log(pDynaModel, fmt::format("{} State=\"{}\"->State=\"{}\"",
+	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
 			m_pDynaBranch->GetVerbalName(),
+			CDevice::m_cszState,
 			stringutils::enum_text(m_pDynaBranch->m_BranchState, CDynaBranch::m_cszBranchStateNames),
+			CDevice::m_cszState,
 			stringutils::enum_text(m_NewState, CDynaBranch::m_cszBranchStateNames)));
 
 	return Do(pDynaModel);
@@ -371,6 +388,35 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel* pDynaModel)
 	m_pDynaNode->ProcessTopologyRequest();
 	return State;
 }
+
+CModelActionChangeNodePQLoad::CModelActionChangeNodePQLoad(CDynaNode* pNode, double Pload) : CModelActionChangeNodeParameterBase(pNode),
+																						m_Pload(Pload),
+																						m_InitialLoad{pNode->Pn, pNode->Qn}
+{
+
+}
+
+eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, double dValue)
+{
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	const cplx Sload{ m_pDynaNode->Pn, m_pDynaNode->Qn };
+	double newQ = Sload.imag();
+	if (!Equal(m_InitialLoad.real(), 0.0))
+		newQ = m_InitialLoad.imag() / m_InitialLoad.real() * dValue;
+	const cplx SloadNew{ dValue, newQ };
+
+	Log(pDynaModel, fmt::format("{} Sload={} -> Sload={}",
+		m_pDynaNode->GetVerbalName(),
+		Sload,
+		SloadNew
+	));
+
+	CDevice::FromComplex(m_pDynaNode->Pn, m_pDynaNode->Qn, SloadNew);
+
+	m_pDynaNode->ProcessTopologyRequest();
+	return State;
+}
+
 
 eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, double dValue)
 {
@@ -557,3 +603,47 @@ eDFW2_ACTION_STATE CModelActionState::Do(CDynaModel *pDynaModel)
 	pDynaModel->DiscontinuityRequest(*device);
 	return eDFW2_ACTION_STATE::AS_INACTIVE;
 }
+
+
+CModelActionChangeDeviceState::CModelActionChangeDeviceState(CDevice* pDevice, eDEVICESTATE NewState) : CModelActionChangeVariable(nullptr,0),
+																							    m_pDevice(pDevice),
+																								m_NewState(NewState)
+{
+
+}
+
+eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel)
+{
+	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	if (!CDevice::IsFunctionStatusOK(m_pDevice->SetState(m_NewState, eDEVICESTATECAUSE::DSC_EXTERNAL)))
+		State = eDFW2_ACTION_STATE::AS_ERROR;
+	return State;
+}
+
+eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel, double dValue)
+{
+	int nState = static_cast<int>(dValue);
+
+	if (nState > 0)
+		m_NewState = eDEVICESTATE::DS_ON;
+	else
+		m_NewState = eDEVICESTATE::DS_OFF;
+
+	pDynaModel->WriteSlowVariable(m_pDevice->GetType(),
+								{ m_pDevice->GetId() },
+								CDevice::m_cszState,
+								static_cast<double>(m_NewState),
+								static_cast<double>(m_pDevice->GetState()),
+								m_pDevice->GetVerbalName());
+
+	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
+		m_pDevice->GetVerbalName(),
+		CDevice::m_cszState,
+		stringutils::enum_text(m_pDevice->GetState(), CDevice::m_cszStates),
+		CDevice::m_cszState,
+		stringutils::enum_text(m_pDevice->GetState(), CDevice::m_cszStates)));
+
+	return Do(pDynaModel);
+}
+
+

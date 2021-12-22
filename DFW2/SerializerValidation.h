@@ -69,6 +69,22 @@ namespace DFW2
 		}
 	};
 
+	class CValidationRuleNegative : public CValidationRuleBase
+	{
+	public:
+		using CValidationRuleBase::CValidationRuleBase;
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			ValidationResult res(value->Double() < 0.0 ? ValidationResult::Ok : DefaultResult);
+			if (res != ValidationResult::Ok)
+			{
+				message = CDFW2Messages::m_cszValidationNegative;
+				res = ReplaceValue(value);
+			}
+			return res;
+		}
+	};
+
 	class CValidationRuleNonNegative : public CValidationRuleBase
 	{
 	public:
@@ -150,6 +166,24 @@ namespace DFW2
 		}
 	};
 
+	template<class T, double T::* member>
+	class CValidationRuleLess : public CValidationRuleMemberT<T, member>
+	{
+	public:
+		using CValidationRuleMemberT<T, member>::CValidationRuleMemberT;
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			CValidationRuleBase::CheckDevice(device);
+			const T* pDev = static_cast<const T*>(device);
+			if (value->Double() >= pDev->*member)
+			{
+				message = fmt::format(CDFW2Messages::m_cszValidationLessThanNamed, CValidationRuleMemberT<T, member>::m_cszName, pDev->*member);
+				return ValidationResult::Error;
+			}
+			return ValidationResult::Ok;
+		}
+	};
+
 
 	class CValidationRuleRange: public CValidationRuleBase
 	{
@@ -202,11 +236,12 @@ namespace DFW2
 				return empty;
 		}
 
-		VarRuleMapT::const_iterator begin() { return m_RulesMap.begin(); }
-		VarRuleMapT::const_iterator end()   { return m_RulesMap.end(); }
+		inline VarRuleMapT::const_iterator begin() { return m_RulesMap.begin(); }
+		inline VarRuleMapT::const_iterator end()   { return m_RulesMap.end(); }
 
 		static inline CValidationRuleBiggerThanZero BiggerThanZero;
 		static inline CValidationRuleNonNegative NonNegative;
+		static inline CValidationRuleNegative Negative;
 	};
 
 	using SerializerValidatorRulesPtr = std::unique_ptr<CSerializerValidatorRules>;

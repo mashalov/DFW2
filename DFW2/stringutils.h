@@ -4,7 +4,6 @@
 #include "string"
 
 typedef std::list<std::string> STRINGLIST;
-typedef STRINGLIST::iterator STRINGLISTITR;
 
 class stringutils
 {

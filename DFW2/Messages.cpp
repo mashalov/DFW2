@@ -61,7 +61,9 @@ const char* CDFW2Messages::m_cszAllNodesOff = "Все узлы отключен�
 const char* CDFW2Messages::m_cszNodeTripDueToZone = "Узел \"{}\" отключен, так как находится в зоне без источников напряжения";
 const char* CDFW2Messages::m_cszNodeRiseDueToZone = "Узел \"{}\" включен под напряжение, так как находится в зоне с его источником";
 const char* CDFW2Messages::m_cszUnknown = "Неизвестно";
-const char* CDFW2Messages::m_cszLRCDiscontinuityAt = "Обнаружен разрыв СХН {} при напряжении {} [о.е]. Значения  {} и {}";
+const char* CDFW2Messages::m_cszLRCDiscontinuityAt = "Обнаружен разрыв СХН {} \"{}\" при напряжении{}[о.е].Значения{} и{}";
+const char* CDFW2Messages::m_cszLRCSlopeViolated = "Крутизна {} \"{}\" находится вне допустимого диапазона[{}, {}] : {}";
+const char* CDFW2Messages::m_cszLRCNonUnity = "Сумма коэффициентов {} \"{}\" не равна 1.0 : {}";
 const char* CDFW2Messages::m_cszAmbigousLRCSegment = "В СХН {} обнаружено более одного сегмента для напряжения {}. Будет использоваться первый сегмент {}+{}V+{}VV";
 const char* CDFW2Messages::m_cszLRCStartsNotFrom0 = "СХН {} начинается не с нулевого напряжения {}. Начальный сегмент будет \"продолжен\" до нуля";
 const char* CDFW2Messages::m_cszLRC1And2Reserved = "СХН {}, заданная пользователем игнорирована. Номера СХН 1 и 2 зарезервированы под стандартные характеристики";
@@ -96,6 +98,7 @@ const char* CDFW2Messages::m_cszResultFileNotLoadedProperly = "Файл резу
 const char* CDFW2Messages::m_cszResultRoot = "Модель";
 const char* CDFW2Messages::m_cszWrongSymbolicLink = "Неверный формат символической ссылки: \"{}\"";
 const char* CDFW2Messages::m_cszObjectNotFoundByAlias = "Не найден объект типа \"{}\" по символической ссылке \"{}\"";
+const char* CDFW2Messages::m_cszAmbigousObjectsFoundByAlias = "Для типа объекта \"{}\" с символической ссылкой \"{}\" найдены несколько объектов: {}";
 const char* CDFW2Messages::m_cszWrongKeyForSymbolicLink = "Неверный формат ключа \"{}\" в символической ссылке \"{}\"";
 const char* CDFW2Messages::m_cszObjectNotFoundBySymbolicLink = "Объект не найден по символической ссылке \"{}\"";
 const char* CDFW2Messages::m_cszObjectHasNoPropBySymbolicLink = "Объект не имеет свойства \"{}\", указанного в символической ссылке \"{}\"";
@@ -150,6 +153,7 @@ const char* CDFW2Messages::m_cszTurningOffDeviceDueToNoMasterDevice = "Устр�
 const char* CDFW2Messages::m_cszMatrixSize = "Размерность матрицы {}, количество ненулевых элементов {}";
 const char* CDFW2Messages::m_cszTurnOnDeviceImpossibleDueToMaster = "Невозможно включить устройство \"{}\", так как отключено по крайней мере одно ведущее устройство \"{}\"";
 const char* CDFW2Messages::m_cszAutomaticOrScenarioFailedToInitialize = "При инициализации автоматики или сценария обнаружены ошибки";
+const char* CDFW2Messages::m_cszActionNotInitialized = "Действие {} со ссылкой \"{}\" не может быть связано с моделью";
 const char* CDFW2Messages::m_cszLFWrongQrangeForNode = "Для узла \"{}\" невозможно распределение реактивной мощности {} по генераторам c суммарным диапазоном [{};{}]";
 const char* CDFW2Messages::m_cszLFWrongQrangeForSuperNode = "Для суперузла \"{}\" невозможно распределение реактивной мощности {} по узлам c суммарным диапазоном [{};{}]";
 const char* CDFW2Messages::m_cszLFError = "Ошибка при расчете УР";
@@ -200,6 +204,7 @@ const char* CDFW2Messages::m_cszLFNodeImbalance = "Небаланс УР в уз
 const char* CDFW2Messages::m_cszMaxBranchAngle = "Максимальный угол по связи {:.3f} \"{}\" при t={}";
 const char* CDFW2Messages::m_cszMaxGeneratorAngle = "Максимальный угол по генератору {:.3f} \"{}\" при t={}";
 const char* CDFW2Messages::m_cszValidationBiggerThanZero = "должно быть больше нуля";
+const char* CDFW2Messages::m_cszValidationNegative = "должно быть меньше нуля";
 const char* CDFW2Messages::m_cszValidationNonNegative = "должно быть неотрицательным";
 const char* CDFW2Messages::m_cszValidationChangedTo = "Значение изменено на ";
 const char* CDFW2Messages::m_cszValidationRange = "должно быть в диапазоне [{};{}]";
@@ -207,6 +212,7 @@ const char* CDFW2Messages::m_cszValidationTfOfMustangExcCon = " должно б�
 const char* CDFW2Messages::m_cszValidationBiggerThanNamed = " должно быть больше {} = {}";
 const char* CDFW2Messages::m_cszValidationBiggerOrEqualThanNamed = " должно быть больше или равно {} = {}";
 const char* CDFW2Messages::m_cszValidationLessOrEqualThanNamed = " должно быть меньше или равно {} = {}";
+const char* CDFW2Messages::m_cszValidationLessThanNamed = " должно быть меньше {} = {}";
 const char* CDFW2Messages::m_cszDiscontinuityProcessing = "t={:15.012f} обработка разрыва устройства \"{}\"";
 const char* CDFW2Messages::m_cszAutomaticScenario = "Автоматика/сценарий";
 const char* CDFW2Messages::m_cszCannotConvertShortCircuitConstants = "{} : невозможен точный расчет постоянных времени {} и {}. Попытка использовать приближенные значения {} и {}";

@@ -6,7 +6,6 @@ namespace DFW2
 	// атрибуты контейнера устройств
 	// Атрибуты контейнера можно "наследовать" в рантайме - брать некий атрибут и изменять его для другого типа устройств,
 	// а далее по нему специфицировать контейнер устройств
-
 	class CDeviceContainerPropertiesBase
 	{
 	public:
@@ -27,11 +26,11 @@ namespace DFW2
 		// данная функция кроме всего предыдущего принимает еще имя константы во внешнем устройстве, в которой задан номер из этого контейнера
 		// связи контейнеров двух типов a и b должны быть взаимными - a.From b, b.To a, в зависимости от того, в каком контейнере есть константа идентификатора для связи
 		// eDFW2DEVICEDEPENDENCY должны быть комплиментарны - Master - Slave.
-		void AddLinkTo(eDFW2DEVICETYPE eDevType, eDFW2DEVICELINKMODE eLinkMode, eDFW2DEVICEDEPENDENCY Dependency, const char* cszstrIdField)
+		void AddLinkTo(eDFW2DEVICETYPE eDevType, eDFW2DEVICELINKMODE eLinkMode, eDFW2DEVICEDEPENDENCY Dependency, std::string_view strIdField)
 		{
 			if (m_LinksTo.find(eDevType) == m_LinksTo.end())
 			{
-				m_LinksTo.insert(std::make_pair(eDevType, LinkDirectionTo(eLinkMode, Dependency, m_LinksTo.size() + m_LinksFrom.size(), cszstrIdField)));
+				m_LinksTo.insert(std::make_pair(eDevType, LinkDirectionTo(eLinkMode, Dependency, m_LinksTo.size() + m_LinksFrom.size(), strIdField)));
 				if (eLinkMode == DLM_SINGLE)
 					nPossibleLinksCount++;
 			}
@@ -55,6 +54,7 @@ namespace DFW2
 		bool bCheckZeroCrossing = false;									// нужен ли контейнеру вызов ZeroCrossing
 		bool bPredict = false;												// нужен ли контейнеру вызов предиктора
 		bool bVolatile = false;												// устройства в контейнере могут создаваться и удаляться динамически во время расчета
+		bool bFinishStep = false;											// нужен ли контейнеру расчет независимых переменных после завершения шага
 		ptrdiff_t nPossibleLinksCount = 0;									// возможное для устройства в контейнере количество ссылок на другие устройства
 		ptrdiff_t nEquationsCount = 0;										// количество уравнений устройства в контейнере
 		eDFW2DEVICETYPE	eDeviceType = DEVTYPE_UNKNOWN;
@@ -65,8 +65,9 @@ namespace DFW2
 		LINKSFROMMAP m_LinksFrom;
 		LINKSTOMAP  m_LinksTo;
 		std::list<std::string> m_lstAliases;								// возможные псевдонимы типа устройства (типа "Node","node")
+		ALIASMAP m_VarAliasMap;												// карта псевдонимов переменных
 	protected:
-		std::string m_strClassName;										// имя типа устройства
+		std::string m_strClassName;											// имя типа устройства
 		std::string m_strClassSysName;										// системное имя имя типа устройства для сериализации
 	};
 }

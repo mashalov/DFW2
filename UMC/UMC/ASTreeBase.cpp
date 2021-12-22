@@ -27,9 +27,16 @@ CASTTreeBase::~CASTTreeBase()
 
 void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 {
-    ASTNodeStack stack;
-    ASTNodeConstSet visited;
+    // увеличиваем текущий номер обхода
+    m_DFSLevel++;
+
+    // резервируем стек и список посещенных узлов
+    CDFSStack stack(NodeList.size() * 2);
+    ASTNodeVec visited;
+    visited.reserve(NodeList.size() * 2);
+    
     stack.push(Root);
+
     while (!stack.empty())
     {
         auto v = stack.top();
@@ -38,21 +45,34 @@ void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
             EXCEPTIONMSG("Processing deleted node");
 
         stack.pop();
-        if (!visited.Contains(v))
+        if (!v->Visited(m_DFSLevel))
         {
-            visited.insert(v);
+            v->Visit(m_DFSLevel);
+            visited.push_back(v);
             if (!(Visitor)(v))
-                return;
+                break;
             for (auto c : v->ChildNodes())
                 stack.push(c);
         }
     }
+
+    // Возвращаем номер обхода
+    m_DFSLevel--;
+    // и восстанавливаем исходные посещения у посещенных в данном обходе узлов
+    for (auto&& node : visited)
+        node->Visit(m_DFSLevel);
 }
 
 void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 {
-    ASTNodeStack stack;
-    ASTNodeConstSet visited;
+    // увеличиваем текущий номер обхода
+    m_DFSLevel++;
+
+    // резервируем стек и список посещенных узлов
+    CDFSStack stack(NodeList.size() * 2);
+    ASTNodeVec visited;
+    visited.reserve(NodeList.size() * 2);
+
     stack.push(Root);
 
     while (!stack.empty())
@@ -62,9 +82,10 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
         if (v->Deleted())
             EXCEPTIONMSG("Processing deleted node");
 
-        if (!visited.Contains(v))
+        if (!v->Visited(m_DFSLevel))
         {
-            visited.insert(v);
+            v->Visit(m_DFSLevel);
+            visited.push_back(v);
             for (auto c : v->ChildNodes())
                 stack.push(c);
         }
@@ -75,9 +96,15 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
                 v->ChildNodes().size() != v->DesignedChildrenCount())
                 EXCEPTIONMSG("Designed child count mismatch");
             if (!(Visitor)(v))
-                return;
+                break;
         }
     }
+
+    // Возвращаем номер обхода
+    m_DFSLevel--;
+    // и восстанавливаем исходные посещения у посещенных в данном обходе узлов
+    for (auto&& node : visited)
+        node->Visit(m_DFSLevel);
 }
 
 
@@ -90,12 +117,16 @@ void CASTTreeBase::DeleteNode(CASTNodeBase* pNode)
     if (nodesToDelete.empty())
         Change();
 
-    DFS(pRoot, [&nodesToDelete](CASTNodeBase* p) 
-        { 
-            if (nodesToDelete.Contains(p) || nodesToDelete.Contains(p->GetParent()))
-                EXCEPTIONMSG("Node or its parent has been already deleted");
-            return true;
-        });
+    for(const auto& node : NodeList)
+        if(!node->Deleted() && (nodesToDelete.Contains(node) || nodesToDelete.Contains(node->GetParent())))
+            EXCEPTIONMSG("Node or its parent has been already deleted");
+
+    //DFS(pRoot, [&nodesToDelete](CASTNodeBase* p) 
+    //    { 
+    //        if (nodesToDelete.Contains(p) || nodesToDelete.Contains(p->GetParent()))
+    //            EXCEPTIONMSG("Node or its parent has been already deleted");
+    //        return true;
+    //    });
 }
 
 void CASTTreeBase::Flatten()
@@ -144,15 +175,22 @@ void CASTTreeBase::Collect()
         Flatten();
         DFSPost(pRoot, [](CASTNodeBase* p)
             {
-                p->UpdateScore();
+                // обновляем скоринг узла
+                p->UpdateScore();   
+                // обновляем макимальную степень
                 p->MaxSortPower();
+                // если оператор плоский
                 if (CASTNodeBase::IsFlatOperator(p))
                 {
+                    // сортируем его
                     static_cast<CASTFlatOperator*>(p)->Sort();
+                    // и внутри делаем Collect
                     static_cast<CASTFlatOperator*>(p)->Collect();
                 }
-
+                // делаем оператор плоским
                 p->Flatten();
+                // если оператор не был удален
+                // собираем константы
                 if(!p->Deleted())
                     p->FoldConstants();
 
@@ -200,16 +238,24 @@ template<> CASTRoot* CASTTreeBase::CreateNode<CASTRoot>(CASTNodeBase* pParent)
     return pNewRoot;
 }
 
+// создает правила преобразований AST-дерева
 void CASTTreeBase::CreateRules()
 {
+    // все правила располагаются внутри дерева, каждый узел
+    // которого сопоставляется с узлом обрабатываемого дерева
+
+    // дерево правил начинается к корня
     CASTNodeBase* pRoot   = CreateNode<CASTRoot>(nullptr);
+    // правила применяются внутри системы уравнений
     CASTNodeBase* pSystem = pRoot->CreateChild<CASTEquationSystem>();
-    CASTNodeBase* pRule1  = pSystem->CreateChild<CASTEquation>();
+   
+    
+    // правило общего множителя a*b + a*c = a*(b+c) для уравнения
+    CASTNodeBase* pRule1 = pSystem->CreateChild<CASTEquation>();
     CASTNodeBase* pSum   = pRule1->CreateChild<CASTSum>();
     CASTNodeBase *pMult1 = pSum->CreateChild<CASTMul>();
     CASTNodeBase* pMult2 = pSum->CreateChild<CASTMul>();
     pMult1->CreateChild<CASTAny>("");
-    //pMult1->CreateChild<CASTNumeric>();
     pMult1->CreateChild<CASTAny>("");
     pMult2->CreateChild<CASTAny>("");
     pMult2->CreateChild<CASTAny>("");
@@ -219,24 +265,26 @@ void CASTTreeBase::CreateRules()
     pSum3->CreateChild<CASTAny>("");
     pSum3->CreateChild<CASTAny>("");
 
-
+    // тест правила суммы квадратов - пока замаплен в ноль
     CASTNodeBase* pRule2 = pSystem->CreateChild<CASTEquation>();
     CASTNodeBase* pSumR2 = pRule2->CreateChild<CASTSum>();
-    pRule2->CreateChild<CASTNumeric>("0");
+    pRule2->CreateChild<CASTNumeric>(0.0);
     CASTNodeBase* pPow1 = pSumR2->CreateChild<CASTPow>();
     pPow1->CreateChild<CASTAny>("a");
-    pPow1->CreateChild<CASTNumeric>("2");
+    pPow1->CreateChild<CASTNumeric>(2.0);
     CASTNodeBase* pPow2 = pSumR2->CreateChild<CASTPow>();
     pPow2->CreateChild<CASTAny>("b");
-    pPow2->CreateChild<CASTNumeric>("2");
+    pPow2->CreateChild<CASTNumeric>(2.0);
+
 
     CASTNodeBase* pMinus = pSumR2->CreateChild<CASTUminus>();
     CASTNodeBase* pMul2ab = pMinus->CreateChild<CASTMul>();
-    pMul2ab->CreateChild<CASTNumeric>("2");
+    pMul2ab->CreateChild<CASTNumeric>(2.0);
     pMul2ab->CreateChild<CASTAny>("a");
     pMul2ab->CreateChild<CASTAny>("b");
 
-    pRoot->CreateChild<CASTNumeric>("0"); // заглушка чтобы было 2 требуемых дочерних узла
+    // заглушка чтобы было 2 требуемых дочерних узла у корня правил
+    pRoot->CreateChild<CASTNumeric>(0.0); 
     //pRoot->PrintInfix();
 }
 
@@ -666,22 +714,31 @@ CASTJacobian* CASTTreeBase::GetJacobian()
     return pJacobian;
 }
 
+// генерирует матрицу Якоби для системы уравнений
 void CASTTreeBase::GenerateJacobian(CASTEquationSystem* pSystem)
 {
+    // если есть ошибки в дереве - отказываемся работать
     if (ErrorCount() > 0) return;
 
+    // создаем дочерний узел системы - Якобиан
     pJacobian = pSystem->CreateChild<CASTJacobian>();
+    // проходим по уравнениям системы
     for (auto& eq : pSystem->ChildNodes())
     {
+        // обрабатываем только уравнения
         if (!eq->CheckType(ASTNodeType::Equation)) continue;
         CASTEquation* pSourceEquation = static_cast<CASTEquation*>(eq);
+        // если уравнение содержит хост-блок - пропускаем
         if (pSourceEquation->pHostBlock != nullptr) continue;
-        // еще надо проверять переменные на то, что они являются константами
+        // для остальных уравнений формируем выражения для расчета частных производных
+        // от всех переменных уравенения
         for (auto& v : pSourceEquation->Vars)
         {
+            // еще надо проверять переменные на то, что они являются константами
             CASTJacobiElement* pJacobiElement = CreateDerivative(pJacobian, pSourceEquation, v);
         }
     }
+    // упрощаем выражения в дереве (в том числе и в якобиане, но можно стоит только якобиан, чтобы не терзать уравнения)
     Collect();
 }
 
@@ -1040,3 +1097,36 @@ std::filesystem::path CASTTreeBase::GetPropertyPath(std::string_view PropNamePat
     }
     return Path;
 }
+
+
+// Для части блоков которые могут быть Flat (|, &) и при разборе
+// были представлены функциями нескольких аргументов нужна
+// замена функций на хост-блоки, связанная с необходимостью определять
+// разрывы
+
+void CASTTreeBase::ApplyHostBlocks()
+{
+    // находим блоки, которые должны быть заменены на хост-блоки (Or/And)
+    ASTNodeList ChangeBlocks;
+    std::copy_if(NodeList.begin(), NodeList.end(), std::back_inserter(ChangeBlocks), [](const CASTNodeBase* pNode)
+        {
+            return pNode->CheckType(ASTNodeType::FnOr, ASTNodeType::FnAnd) && !pNode->Deleted();
+        });
+
+    // для всех найденных блоков
+    for (auto& node : ChangeBlocks)
+    {
+        if (node->CheckType(ASTNodeType::FnOr))
+        {
+            // создаем хост-блок, идентичный по назначению
+            auto hostOr = CreateNode<CASTfnOrHost>(node->GetParent(), GetHostBlocks().size());
+            // переключаем дочерние узлы из исходного узла на хост-блок
+            ASTNodeList OrChildren;
+            node->ExtractChildren(OrChildren);
+            hostOr->AppendChildren(OrChildren);
+            // заменяем исходный узел на новый хост-блок
+            node->GetParent()->ReplaceChild(node, hostOr);
+        }
+    }
+
+};

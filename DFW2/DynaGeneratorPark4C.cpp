@@ -84,13 +84,23 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	lrc = 0.0;
 
 	double R1d(0), l1d(0), R1q(0), R2q(0), l1q(0), l2q(0);
-	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Niipt)
+
+
+	switch (Method)
 	{
-		if(!GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
-			return false;
-		if(!GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R2q, l2q))
-			return false;
+	case PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo:
+	case PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd:
+		bRes = GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d, PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd == Method) &&
+			   GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R2q, l2q, PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd == Method);
+		break;
+	case PARK_PARAMETERS_DETERMINATION_METHOD::Canay:
+		bRes = GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d) &&
+			   GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R2q, l2q);
+		break;
 	}
+
+	if (!bRes)
+		return bRes;
 
 	/*
 	// Test
@@ -106,19 +116,7 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	Td02 = Td2 * xd1 / xd2;
 	*/
 
-	// Методики Umans&Mallick и Canay дают фундаментальные параметры из стандартных
-
-
-	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::Canay)
-	{
-		if(!GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d))
-			return false;
-		if(!GetAxisParametersCanay(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R2q, l2q))
-			return false;
-	}
-
 	CompareParksParameterCalculation();
-
 
 	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
 	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
@@ -417,4 +415,6 @@ void CDynaGeneratorPark4C::UpdateValidator(CSerializerValidatorRules* Validator)
 
 	Validator->AddRule(m_csztdo1, &CDynaGeneratorDQBase::ValidatorTdo1);
 	Validator->AddRule(m_csztqo1, &CDynaGeneratorDQBase::ValidatorTqo1);
+	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXd2);
+	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq2);
 }

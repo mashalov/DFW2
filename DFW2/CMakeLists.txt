@@ -82,6 +82,8 @@ set(EMSSSOURCES
     DynaExcConMustangNW.cpp
     SerializerValidation.cpp
     DynaReactor.cpp
+    NodeMeasures.cpp
+    BranchMeasures.cpp
     )             
 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)

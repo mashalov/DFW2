@@ -24,6 +24,19 @@ CDynaDECMustang::CDynaDECMustang() : CDevice(),
 }
 
 
+eDEVICEFUNCTIONSTATUS CDynaDECMustang::PreInit(CDynaModel* pDynaModel)
+{
+	// если не заданы уставки расфорсировки - ставим их выше номинала в 100 раз
+	if (Equal(VDefOff, 0.0) && Equal(VDefOn, 0.0))
+		VDefOff = VDefOn = 100.0;
+	// если не заданы уставки форсировки - ставим их отрицательными
+	if (Equal(VEnfOff, 0.0) && Equal(VEnfOn, 0.0))
+		VEnfOff = VEnfOn = -100.0;
+
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+
 VariableIndexRefVec& CDynaDECMustang::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	return CDevice::GetVariables(JoinVariables({ EnforceOnOut,
@@ -167,8 +180,8 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 		else
 			if (DeforceTrigOut > 0.0)
 			{
-			Udec = m_dDeforceValue;
-			pExciter->SetLagTimeConstantRatio(DefTexc);
+				Udec = m_dDeforceValue;
+				pExciter->SetLagTimeConstantRatio(DefTexc);
 			}
 
 		if (!Equal(dOldDec, Udec))
@@ -224,7 +237,8 @@ void CDynaDECMustang::UpdateSerializer(CSerializerBase* Serializer)
 void CDynaDECMustang::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDevice::UpdateValidator(Validator);
-	Validator->AddRule({ m_cszTexc_f, m_cszTexc_rf }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ m_cszTexc_f, m_cszTexc_rf, m_cszRf }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ m_cszRrf }, &CSerializerValidatorRules::Negative);
 	Validator->AddRule({ m_cszTz_in, m_cszTz_out }, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule({ m_cszUef }, &CDynaDECMustang::ValidatorVenfOff);
 	Validator->AddRule({ m_cszUbrf }, &CDynaDECMustang::ValidatorVdefOn);

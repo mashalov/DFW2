@@ -197,8 +197,14 @@ public:
             Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnSin>()));
         else if (ctx->VARIABLE()->getText() == "cos")
             Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnCos>()));
+        else if (ctx->VARIABLE()->getText() == "relaydelay")
+            Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnRelayDelay>(pTree->GetHostBlocks().size())));
+        else if (ctx->VARIABLE()->getText() == "relaymindelay")
+            Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnRelayMinDelay> (pTree->GetHostBlocks().size())));
         else if (ctx->VARIABLE()->getText() == "relay")
             Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnRelay>(pTree->GetHostBlocks().size())));
+        else if (ctx->VARIABLE()->getText() == "relayd" || ctx->VARIABLE()->getText() == "relaymin")
+            Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnRelayMin>(pTree->GetHostBlocks().size())));
         else if (ctx->VARIABLE()->getText() == "abs")
             Parents.insert(std::make_pair(ctx, Parent->CreateChild<CASTfnAbs>(pTree->GetHostBlocks().size())));
         else if (ctx->VARIABLE()->getText() == "laglim")

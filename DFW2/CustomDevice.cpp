@@ -92,11 +92,17 @@ bool CCustomDevice::BuildStructure()
 		case PBT_RELAY:
 			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelay(*this, { Output }, { inputs[1] });
 			break;
+		case PBT_RELAYMIN:
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayMin(*this, { Output }, { inputs[1] });
+			break;
 		case PBT_RELAYDELAY:
 			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelay(*this, { Output }, { inputs[1] });
 			break;
 		case PBT_RELAYDELAYLOGIC:
 			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayDelayLogic(*this, { Output }, { inputs[1] });
+			break;
+		case PBT_RELAYMINDELAYLOGIC:
+			pDummy = new(Container()->NewPrimitive(bit->eType)) CRelayMinDelayLogic(*this, { Output }, { inputs[1] });
 			break;
 		case PBT_RSTRIGGER:
 			pDummy = new(Container()->NewPrimitive(bit->eType)) CRSTrigger(*this, { Output }, { inputs[1], inputs[2] });
@@ -459,12 +465,11 @@ CCustomDeviceCPP::CCustomDeviceCPP()
 void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
 {
 	m_pDevice.Create(Container.DLL());
-	//VariableIndexRefVec& VarVec = m_pDevice->GetVariables();
-	//EXTVARIABLEVECTOR& ExtVec = m_pDevice->GetExternalVariables();
 
+	// проходим по примитивам устройства
 	for (const auto& prim : m_pDevice->GetPrimitives())
 	{
-
+		// проверяем количество входов и выходов
 		const PrimitivePinVec& Inputs = prim.Inputs;
 		if (Inputs.empty())
 			throw dfw2error("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive inputs");
@@ -473,6 +478,7 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 		if (Outputs.empty())
 			throw dfw2error("CCustomDeviceCPP::CreateDLLDeviceInstance - no primitive output");
 
+		// собираем и проверяем выходы
 		VariableIndexRefVec outputs;
 		for (auto& vo : Outputs)
 		{
@@ -481,6 +487,7 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 			outputs.emplace_back(std::get<0>(vo.Variable));
 		}
 
+		// собираем и проверяем входы
 		InputVariableVec inputs;
 		for (auto& vi : Inputs)
 		{
@@ -494,6 +501,7 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 				inputs.emplace_back(std::get<1>(vi.Variable));
 			}
 		}
+		// создаем примитив из пула
 		Container.CreatePrimitive(prim.eBlockType, *this, ORange(outputs), IRange(inputs));
 	}
 }

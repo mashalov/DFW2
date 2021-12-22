@@ -9,5 +9,5 @@ void CASTDiv::FoldConstants()
     pNewMul->CreateChild(pLeft);
     CASTPow* pNewPow = pNewMul->CreateChild<CASTPow>();
     pNewPow->CreateChild(pRight);
-    pNewPow->CreateChild<CASTNumeric>("-1");
+    pNewPow->CreateChild<CASTNumeric>(-1.0);
 }

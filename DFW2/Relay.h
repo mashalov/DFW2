@@ -6,11 +6,11 @@ namespace DFW2
 	class CRelay : public CDynaPrimitiveBinaryOutput
 	{
 	protected:
-		double m_dUpper = 0.0;
-		double m_dLower = 0.0;
-		double m_dUpperH = 0.0;
-		double m_dLowerH = 0.0;
-		bool m_bMaxRelay = true;
+		double m_dUpper = 0.0;		// уставка на повышение
+		double m_dLower = 0.0;		// уставка на понижение
+		double m_dUpperH = 0.0;		// уставка на повышение с учетом коэффициента возврата
+		double m_dLowerH = 0.0;		// уставка на понижение с учетом коэффициента возврата
+		bool m_bMaxRelay = true;	// true - максимальное реле, false - минимальное
 
 	protected:
 		inline eRELAYSTATES GetCurrentState() override { return eCurrentState; }
@@ -23,13 +23,21 @@ namespace DFW2
 		CRelay(CDevice& Device, const OutputList& Output, const InputList& Input) : CRelay(Device, ORange(Output), IRange(Input)) { }
 
 		virtual ~CRelay() = default;
-		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);
+		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);				// задать уставки и режим работы
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		const char* GetVerbalName() noexcept override { return "Реле"; }
-		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
+		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;	// десериализация параметров
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelay); }
 		static long EquationsCount()  noexcept { return 1; }
+	};
+
+	class CRelayMin : public CRelay
+	{
+	public:
+		using CRelay::CRelay;
+		bool UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR& Parameters) override;	// десериализация параметров
+		static size_t PrimitiveSize() noexcept { return sizeof(CRelayMin); }
 	};
 
 	class CDiscreteDelay
@@ -66,6 +74,14 @@ namespace DFW2
 		static long EquationsCount()  noexcept { return 1; }
 	};
 
+	class CRelayMinDelay : public CRelayDelay
+	{
+	public:
+		using CRelayDelay::CRelayDelay;
+		bool UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR& Parameters) override;
+		static size_t PrimitiveSize() noexcept { return sizeof(CRelayMinDelay); }
+	};
+
 	class CRelayDelayLogic : public CRelayDelay
 	{
 	public:
@@ -78,6 +94,21 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelayLogic); }
+	};
+
+	// минимальное реле логики сценария и автоматики
+	class CRelayMinDelayLogic : public CRelayDelayLogic
+	{
+	public:
+		using CRelayDelayLogic::CRelayDelayLogic;
+		// для минимального реле после десериализации уставок меняем режим реле
+		bool UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR& Parameters) override
+		{
+			const bool bRes{ CRelayDelayLogic::UnserializeParameters(pDynaModel, Parameters) };
+			m_bMaxRelay = false;
+			return bRes;
+		}
+		static size_t PrimitiveSize() noexcept { return sizeof(CRelayMinDelayLogic); }
 	};
 }
 

@@ -6,7 +6,7 @@ using namespace DFW2;
 
 std::string CAutomaticItem::GetVerbalName()
 {
-	return fmt::format("{} - \"{}\"", m_nId, m_strName);
+	return m_strName.empty() ? fmt::format("{}", m_nId) : fmt::format("{} - \"{}\"", m_nId, m_strName);
 }
 
 
@@ -21,28 +21,25 @@ CAutomaticItem::CAutomaticItem(ptrdiff_t Type, ptrdiff_t Id, std::string_view Na
 
 void CAutomaticStarter::AddToSource(std::ostringstream& source)
 {
-	source << fmt::format("S{} = starter({}, {}[{}].{})\n", m_nId,
-		m_strExpression.empty() ? "V" : m_strExpression,
-		m_strObjectClass,
-		m_strObjectKey,
-		m_strObjectProp);
+	source << fmt::format("S{} = starter({}, {})\n", m_nId,
+		m_strExpression.empty() ? "V" : m_strExpression, 
+		CAutoModelLink::String());
 }
 
 void CAutomaticLogic::AddToSource(std::ostringstream& source)
 {
 	source << fmt::format("L{} = {}\n", m_nId, m_strExpression);
-	source << fmt::format("LT{} = relay(L{}, 0.0, {})\n", m_nId, 
-		m_nId, 
+	// выражение логики вводим через реле с уставкой 0 и выдержкой времени
+	source << fmt::format("LT{} = relaydelay(L{}, 0.0, {})\n", m_nId, 
+		m_nId,
 		m_strDelayExpression.empty() ? "0" : m_strDelayExpression);
 }
 
 void CAutomaticAction::AddToSource(std::ostringstream& source)
 {
-	source << fmt::format("A{} = action({}, {}[{}].{})\n", m_nId,
+	source << fmt::format("A{} = action({}, {})\n", m_nId,
 		m_strExpression.empty() ? "V" : m_strExpression,
-		m_strObjectClass,
-		m_strObjectKey,
-		m_strObjectProp);
+		CAutoModelLink::String());
 }
 
 
@@ -142,7 +139,8 @@ void CAutomatic::CompileModels()
 		Compiler->SetProperty("ProjectName", m_pDynaModel->Platform().AutomaticModuleName());
 		Compiler->SetProperty("ReferenceSources", m_pDynaModel->Platform().SourceReference().string());
 
-		Compiler->Compile(Sourceutf8stream);
+		if (!Compiler->Compile(Sourceutf8stream))
+			throw dfw2error(DFW2::CDFW2Messages::m_cszWrongSourceData);
 
 		pathAutomaticModule = Compiler->CompiledModulePath();
 	}
@@ -201,7 +199,7 @@ void CAutomatic::Init()
 	if (!pCustomDevice)
 		throw dfw2error("CAutomatic::Init CustomDevice for automatic not available");
 
-	bool bRes = true;
+	bool bRes{ true };
 	STRINGLIST ActionList;
 
 	for (auto&& it : m_lstLogics)
@@ -268,7 +266,12 @@ void CAutomatic::Init()
 	{
 		CAutomaticAction *pAction = static_cast<CAutomaticAction*>(it.get());
 		if (!pAction->Init(m_pDynaModel, pCustomDevice))
+		{
+			m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotInitialized,
+				pAction->GetVerbalName(),
+				pAction->String()));
 			bRes = false;
+		}
 	}
 
 	if (!bRes)
@@ -345,18 +348,51 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 		{
 			case 1: // объект
 			{
-				CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
+
+				// получаем устройство по классу и ключу
+				CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
 				if (pDev)
 				{
-					if (m_strObjectProp == "r")
+					// если устройство найдено, проверяем его тип по наследованию
+					// до известного автоматике типа
+					if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_NODE))
 					{
-						m_pAction = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *m_pValue);
-						bRes = true;
-					}
-					else if (m_strObjectProp == "x")
+						m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
+						if (pDev)
+						{
+
+						}
+					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_BRANCH))
 					{
-						m_pAction = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *m_pValue);
-						bRes = true;
+						if (m_strObjectProp == CDevice::m_cszSta)
+						{
+							m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
+							bRes = true;
+						}
+						else if (m_strObjectProp == "r")
+						{
+							m_pAction = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							bRes = true;
+						}
+						else if (m_strObjectProp == "x")
+						{
+							m_pAction = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							bRes = true;
+						}
+						else if (m_strObjectProp == "b")
+						{
+							m_pAction = std::make_unique<CModelActionChangeBranchB>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							bRes = true;
+						}
+					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER))
+					{
+						// для генератора отдельное состояние, но вообще можно состояния
+						// всех устройств с обычными состояниями eDEVICESTATE обрабатывать одинаков
+						if (m_strObjectProp == CDevice::m_cszSta)
+						{
+							m_pAction = std::make_unique<CModelActionChangeDeviceState>(pDev, eDEVICESTATE::DS_OFF);
+							bRes = true;
+						}
 					}
 				}
 				break;
@@ -364,7 +400,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 3:	// состояние ветви
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasBranch;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
@@ -375,7 +411,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 4:	// g-шунт узла
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeNodeShuntG>(static_cast<CDynaNode*>(pDev), *m_pValue);
@@ -386,7 +422,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 5: // b-шунт узла
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeNodeShuntB>(static_cast<CDynaNode*>(pDev), *m_pValue);
@@ -397,7 +433,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 6:	// r-шунт узла
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeNodeShuntR>(static_cast<CDynaNode*>(pDev), *m_pValue);
@@ -408,10 +444,21 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			case 7:	// x-шунт узла
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, m_strObjectProp);
+				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
 				if (pDev)
 				{
 					m_pAction = std::make_unique<CModelActionChangeNodeShuntX>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					bRes = true;
+				}
+				break;
+			}
+			case 13: // PnQn0 - узел
+			{
+				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
+				CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
+				if (pDev)
+				{
+					m_pAction = std::make_unique<CModelActionChangeNodePQLoad>(static_cast<CDynaNode*>(pDev), *m_pValue);
 					bRes = true;
 				}
 				break;

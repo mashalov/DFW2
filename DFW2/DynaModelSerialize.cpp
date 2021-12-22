@@ -18,7 +18,7 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 
 	// обходим контейнеры устройств и регистрируем перечисление типов устройств
 	for (auto&& container : m_DeviceContainers)
-		jsonSerializer.AddDeviceTypeDescription(container->GetType(), container->m_ContainerProps.GetSystemClassName());
+		jsonSerializer.AddDeviceTypeDescription(container->GetType(), container->GetSystemClassName());
 
 	// обходим контейнеры снова
 	for (auto&& container : m_DeviceContainers)

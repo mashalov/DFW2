@@ -35,7 +35,7 @@ void CSerializerDataSourceContainer::UpdateSerializer(CSerializerBase* pSerializ
 const char* CSerializerBase::GetClassName()
 {
 	if (m_pDevice)
-		return m_pDevice->GetContainer()->m_ContainerProps.GetSystemClassName();
+		return m_pDevice->GetContainer()->GetSystemClassName();
 	else
 		return m_strClassName.c_str();
 }

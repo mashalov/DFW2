@@ -30,7 +30,7 @@ void CCSVWriter::IndexChannels()
 	while (pChannel < pChannelsEnd)
 	{
 		devtypefind.eDeviceType = pChannel->eDeviceType;
-		DEVTYPEITRCONST dit = devtypeset.find(&devtypefind);
+		auto dit = devtypeset.find(&devtypefind);
 
 		pC->pDevice = nullptr;
 		pC->pVariable = nullptr;
@@ -45,7 +45,7 @@ void CCSVWriter::IndexChannels()
 				if (pDev->GetId(0) == pChannel->DeviceId && pDev->m_pDevType)
 				{
 					pC->pDevice = pDev;
-					VARTYPEITRCONST vit = pDevType->m_VarTypes.begin();
+					auto vit = pDevType->m_VarTypes.begin();
 					while (vit != pDevType->m_VarTypes.end())
 					{
 						if (vit->nIndex == pChannel->DeviceVarIndex)

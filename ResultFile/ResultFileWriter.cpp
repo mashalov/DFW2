@@ -401,6 +401,7 @@ void CResultFileWriter::TerminateWriterThread()
 	// если поток записи еще работает
 	if (threadWriter.joinable())
 	{
+		while(m_bThreadRun)
 		{
 			// берем мьютекс доступа к данным
 			std::unique_lock<std::mutex> dataGuard(mutexData);
@@ -408,9 +409,12 @@ void CResultFileWriter::TerminateWriterThread()
 			m_bThreadRun = false;
 			// снимаем поток с ожидания
 			conditionRun.notify_all();
+			conditionDone.wait_for(dataGuard, std::chrono::milliseconds(10), [this]() { return  this->portionSent == this->portionReceived; });
 		}
+
 		// ждем завершения функции потока
-		threadWriter.join();
+		if(threadWriter.joinable())
+			threadWriter.join();
 	}
 }
 

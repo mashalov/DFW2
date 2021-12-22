@@ -262,12 +262,23 @@ CDeviceContainer* CDynaModel::GetContainerByAlias(std::string_view Alias)
 
 	auto it = std::find_if(m_DeviceContainers.begin(), 
 						   m_DeviceContainers.end(), 
-						  [&Alias](const auto& cont) { return cont->m_ContainerProps.GetSystemClassName() == Alias || cont->HasAlias(Alias); });
+						  [&Alias](const auto& cont) { return cont->GetSystemClassName() == Alias || cont->HasAlias(Alias); });
+
 
 	if (it != m_DeviceContainers.end())
 		return *it;
 
 	return nullptr;
+}
+
+DEVICECONTAINERS CDynaModel::GetContainersByAlias(std::string_view Alias)
+{
+	DEVICECONTAINERS ret;
+	std::copy_if(m_DeviceContainers.begin(), m_DeviceContainers.end(), std::back_inserter(ret), [&Alias](const CDeviceContainer* pContainer)
+		{
+			return pContainer->HasAlias(Alias) || pContainer->GetSystemClassName() == Alias;
+		});
+	return ret;
 }
 
 bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
@@ -713,6 +724,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("StopOnGeneratorOOS", m_bStopOnGeneratorOOS);
 	Serializer->AddProperty("WorkingFolder", m_strWorkingFolder);
 	Serializer->AddProperty("ResultsFolder", m_strResultsFolder);
+	Serializer->AddProperty("LRCMinSlope", m_dLRCMinSlope);
+	Serializer->AddProperty("LRCMaxSlope", m_dLRCMaxSlope);
 
 	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
 		new CSerializerAdapterEnum(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
@@ -820,10 +833,85 @@ void CDynaModel::CheckFolderStructure()
 	m_Platform.CheckFolderStructure(stringutils::utf8_decode(m_Parameters.m_strWorkingFolder));
 }
 
+
+CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::string_view Keys, std::string_view SymLink)
+{
+	std::list<CDevice*> FoundDevices;
+	// определяем контейнеры по имени
+	DEVICECONTAINERS Containers = GetContainersByAlias(Object);
+	if (!Containers.empty())
+	{
+		// получен список контейнеров, соответствующих алиасу или системному имени
+		for (auto&& container : Containers)
+		{
+			// для ветви отдельная обработка, так как требуется до трех ключей
+			CDevice* pFindDevice{ nullptr };
+			if (container->GetType() == DEVTYPE_BRANCH)
+			{
+				ptrdiff_t nIp(0), nIq(0), nNp(0);
+				bool bReverse = false;
+#ifdef _MSC_VER
+				ptrdiff_t nKeysCount = sscanf_s(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
+#else
+				ptrdiff_t nKeysCount = sscanf(std::string(Keys).c_str(), "%td,%td,%td", &nIp, &nIq, &nNp);
+#endif
+				if (nKeysCount > 1)
+				{
+					// ищем ветвь в прямом, если не нашли - в обратном направлении
+					// здесь надо бы ставить какой-то флаг что ветвь в реверсе
+					pFindDevice = Branches.GetByKey({ nIp, nIq, nNp }) ;
+					if (!pFindDevice)
+						pFindDevice = Branches.GetByKey({ nIq, nIp, nNp });
+					if (pFindDevice)
+						FoundDevices.push_back(pFindDevice);
+				}
+			}
+			else
+			{
+				// контейнер с одним ключом
+				ptrdiff_t nId(0);
+#ifdef _MSC_VER
+				if (sscanf_s(std::string(Keys).c_str(), "%td", &nId) == 1)
+#else
+				if (sscanf(std::string(Keys).c_str(), "%td", &nId) == 1)
+#endif
+				pFindDevice = container->GetDevice(nId);
+				if (pFindDevice)
+					FoundDevices.push_back(pFindDevice);
+			}
+		}
+
+		if (FoundDevices.empty())
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongKeyForSymbolicLink, Keys, SymLink));
+	}
+	else
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszObjectNotFoundByAlias, Object, SymLink));
+
+	if (FoundDevices.empty())
+		return nullptr;
+	if (FoundDevices.size() == 1)
+		return FoundDevices.front();
+	else 
+	{
+		STRINGLIST lst;
+		std::transform(FoundDevices.begin(), FoundDevices.end(), std::back_inserter(lst), [](const CDevice* pDev)
+			{
+				return pDev->GetVerbalName();
+			});
+
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszAmbigousObjectsFoundByAlias, 
+				Object, 
+				SymLink, 
+				fmt::join(lst,",")));
+
+		return nullptr;
+	}
+}
+
+
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
 								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
 									 { 2.0 / 3.0,	1.0,		1.0 /3.0,   4.5 },				//  BDF-2
 									 { 1.0,			1.0,		0.0,		2.0 },				//  ADAMS-1
 									 { 0.5,			1.0,		0.5,		12.0 } };			//  ADAMS-2
-

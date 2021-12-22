@@ -1,10 +1,22 @@
 HKCR
 {
+	ResultFile.Raiden.1 = s 'Result File Class'
+	{
+		CLSID = s '{84514F7F-A427-4DFC-880A-B113B5BA4ABF}'
+	}
+	ResultFile.Raiden = s 'Result File Class'
+	{
+		CLSID = s '{84514F7F-A427-4DFC-880A-B113B5BA4ABF}'
+		CurVer = s 'ResultFile.Raiden'
+	}
+
 	NoRemove CLSID
 	{
-		ForceRemove {84514F7F-A427-4DFC-880A-B113B5BA4ABF} = s 'Result Class'
+		ForceRemove {84514F7F-A427-4DFC-880A-B113B5BA4ABF} = s 'Result File Class'
 		{
 			ForceRemove Programmable
+			ProgID = s 'ResultFile.Raiden.1'
+			VersionIndependentProgID = s 'ResultFile.Raiden'
 			InprocServer32 = s '%MODULE%'
 			{
 				val ThreadingModel = s 'Both'

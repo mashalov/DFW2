@@ -53,10 +53,15 @@ eDEVICEFUNCTIONSTATUS COr::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		double dOldOut = m_Output;
 
-		if (m_Input  > 0 || m_Input1 > 0)
-			m_Output = 1.0;
-		else
-			m_Output = 0.0;
+		m_Output = 0.0;
+		for (auto& inp : m_Inputs)
+		{
+			if (inp > 0)
+			{
+				m_Output = 1.0;
+				break;
+			}
+		}
 
 		if (dOldOut != m_Output)
 			pDynaModel->DiscontinuityRequest(m_Device);

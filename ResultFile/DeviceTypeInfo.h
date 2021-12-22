@@ -30,10 +30,7 @@ namespace DFW2
 	};
 
 	using VARTYPESET = std::set<VariableTypeInfo>;
-	using VARTYPEITR = VARTYPESET::iterator;
-	using VARTYPEITRCONST = VARTYPESET::const_iterator;
 	using VARTYPELIST = std::list<VariableTypeInfo>;
-	using VARTYPELISTITRCONST = VARTYPELIST::const_iterator;
 
 	struct DeviceLinkToParent
 	{
@@ -73,8 +70,6 @@ namespace DFW2
 	};
 
 	using DEVICESSET = std::set<DeviceInstanceInfoBase*, DeviceInstanceCompare>;
-	using DEVIDITR = DEVICESSET::iterator;
-	using DEVIDITRCONST = DEVICESSET::const_iterator;
 
 	class CResultFileReader;
 
@@ -115,7 +110,4 @@ namespace DFW2
 	};
 
 	using DEVTYPESET = std::set<DeviceTypeInfo*, DeviceTypesComp>;
-	using DEVTYPEITR = DEVTYPESET::iterator;
-	using DEVTYPEITRCONST = DEVTYPESET::const_iterator;
-
 }

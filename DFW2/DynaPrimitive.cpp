@@ -239,11 +239,13 @@ void CDynaPrimitiveBinary::InvertState(CDynaModel *pDynaModel)
 	SetCurrentState(pDynaModel, GetCurrentState() == eRELAYSTATES::RS_ON ? eRELAYSTATES::RS_OFF : eRELAYSTATES::RS_ON);
 }
 
+// изменить состояние примитива
 void CDynaPrimitiveBinary::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 {
 	if (eCurrentState != CurrentState)
 	{
-		//if(m_Device.DetectZeroCrossingFine(this))
+		// если текущее состояние не соответствует заданному
+		// запрашиваем обработку разрыва
 		pDynaModel->DiscontinuityRequest(m_Device);
 	}
 	eCurrentState = CurrentState;

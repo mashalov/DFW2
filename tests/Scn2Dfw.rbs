@@ -1,3 +1,4 @@
+
 Set scnAction = Rastr.Tables("DFWAutoActionScn")
 Set autAction = Rastr.Tables("DFWAutoAction")
 
@@ -31,7 +32,7 @@ Set scnLogic = Rastr.Tables("DFWAutoLogicScn")
 Set autLogic = Rastr.Tables("DFWAutoLogic")
 
 
-Set scnLogState = scnLogic.Cols("Id")
+Set scnLogId = scnLogic.Cols("Id")
 Set scnLogParent = scnLogic.Cols("ParentId")
 Set scnLogName = scnLogic.Cols("Name")
 Set scnLogType = scnLogic.Cols("Type")
@@ -39,13 +40,37 @@ Set scnLogFormula = scnLogic.Cols("Formula")
 Set scnLogActions = scnLogic.Cols("Actions")
 Set scnLogDelay = scnLogic.Cols("Delay")
 
-Set autLogState = autLogic.Cols("Id")
+Set autLogId = autLogic.Cols("Id")
 Set autLogParent = autLogic.Cols("ParentId")
 Set autLogName = autLogic.Cols("Name")
 Set autLogType = autLogic.Cols("Type")
 Set autLogFormula = autLogic.Cols("Formula")
 Set autLogActions = autLogic.Cols("Actions")
 Set autLogDelay = autLogic.Cols("Delay")
+
+'Откл|Объект|Сост узла|Сост ветви|Узел Gш|Узел Bш|Узел Rш|Узел Xш|Узел Pn|Узел Qn|ЭГП|Якоби|Узел PnQn|Узел PnQn0|ГРАМ|РТ|Стоп|Ветвь КЗ
+ActObjects = Array("", "", "node", "vetv", "node", "node", "node", "node", "node", "node", "egp", "jacobi", "node", "node","gram", "rt", "stop", "vetv")
+ActProps = Array("", "", "sta", "sta", "g", "b", "r", "x", "pn", "qn", "egp", "jacobi", "pn", "pn", "gram", "rt", "stop", "vetvkz")
+
+
+Set scnStarter = Rastr.Tables("DFWAutoStarterScn")
+Set autStarter = Rastr.Tables("DFWAutoStarter")
+
+Set scnStartId = scnStarter.Cols("Id")
+Set scnStartType = scnStarter.Cols("Type")
+Set scnStartName = scnStarter.Cols("Name")
+Set scnStartFormula = scnStarter.Cols("Formula")
+Set scnStartObjectClass = scnStarter.Cols("ObjectClass")
+Set scnStartObjectProp = scnStarter.Cols("ObjectProp")
+Set scnStartObjectKey = scnStarter.Cols("ObjectKey")
+
+Set autStartId = autStarter.Cols("Id")
+Set autStartType = autStarter.Cols("Type")
+Set autStartName = autStarter.Cols("Name")
+Set autStartFormula = autStarter.Cols("Formula")
+Set autStartObjectClass = autStarter.Cols("ObjectClass")
+Set autStartObjectProp = autStarter.Cols("ObjectProp")
+Set autStartObjectKey = autStarter.Cols("ObjectKey")
 
 
 autAction.DelRows
@@ -61,17 +86,36 @@ for row = 0 to scnAction.Size - 1
     autActObjectKey.Z(row) = scnActObjectKey.Z(row)
     autActOutputMode.Z(row) = scnActOutputMode.Z(row)
     autActRunsCount.Z(row) = scnActRunsCount.Z(row)
+    autActType.Z(row) = scnActType.Z(row)
+    lookUpObject = ActObjects(autActType.Z(row))
+    lookUpProp = ActProps(autActType.Z(row))
+    if lookUpObject <> "" Then autActObjectClass.Z(row) = lookUpObject 
+    if lookUpProp <> "" Then autActObjectProp.Z(row) = lookUpProp 
 next
 
 autLogic.DelRows
 for row = 0 to scnLogic.Size - 1
     autLogic.AddRow
-    autLogState.Z(row) = scnLogState.Z(row)
+    autLogId.Z(row) = scnLogId.Z(row)
     autLogParent.Z(row) = scnLogParent.Z(row)
     autLogName.Z(row) = scnLogName.Z(row)
     autLogType.Z(row) = scnLogType.Z(row)
     autLogFormula.Z(row) = scnLogFormula.Z(row)
     autLogActions.Z(row) = scnLogActions.Z(row)
     autLogDelay.Z(row) = scnLogDelay.Z(row)
-
 next
+
+autStarter.DelRows
+for row = 0 to scnStarter.Size - 1
+    autStarter.AddRow
+    autStartId.Z(row) = scnStartId.Z(row) 
+    autStartType.Z(row) = scnStartType.Z(row)
+    autStartName.Z(row) = scnStartName.Z(row)
+    autStartFormula.Z(row) = scnStartFormula.Z(row)
+    autStartObjectClass.Z(row) = scnStartObjectClass.Z(row)
+    autStartObjectProp.Z(row) = scnStartObjectProp.Z(row)
+    autStartObjectKey.Z(row) = scnStartObjectKey.Z(row)
+next
+
+
+

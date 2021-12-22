@@ -17,6 +17,7 @@ protected:
     size_t score = 0;               // скоринг узла
     bool Constant = false;          // флаг константного выражения в узле
     bool IsError = false;           // флаг ошибки в узле
+    ptrdiff_t m_nVisited = 0;       // номер посещения при DFS обходах
 public:
     CASTNodeBase(CASTTreeBase* Tree, 
                  CASTNodeBase* Parent, 
@@ -47,6 +48,23 @@ public:
     bool CheckType(ASTNodeType type) const
     {
         return GetType() == type;
+    }
+
+    // возвращает true, если узел был посещен
+    // при текущем обходе Level
+    // ! TODO можно вставить отладочный ASSERT !
+    bool Visited(ptrdiff_t Level)
+    {
+        if (m_nVisited > Level)
+            EXCEPTIONMSG("CASTNodeBase::Visited - Level mismatch !");
+        return m_nVisited == Level;
+    }
+
+    // устанавливает номер посещения
+    // ! TODO можно вставить отладочный ASSERT !
+    void Visit(ptrdiff_t Level)
+    {
+        m_nVisited = Level;
     }
     
 
@@ -151,6 +169,7 @@ public:
         {
             OnDelete();
             bDeleted = true;
+            pParent = nullptr;
         }
     }
 
@@ -272,10 +291,10 @@ public:
         EXCEPTIONMSG("No SetText functionality in CASTNodeBase");
     }
 
-    void SetText(double Value)
+    /*void SetText(double Value)
     {
         SetText(to_string(Value));
-    }
+    }*/
 
     // возвращает итератор на дочерний узел по указателю
     ASTNodeList::iterator TryFindChild(const CASTNodeBase* pNode)
@@ -325,7 +344,13 @@ public:
     void ExtractChildren(ASTNodeList& extractedChildren)
     {
         extractedChildren.clear();
-        extractedChildren.insert(extractedChildren.end(), Children.begin(), Children.end());
+        std::transform(Children.begin(), Children.end(), std::back_inserter(extractedChildren),
+            [](CASTNodeBase* pNode)
+            {
+                pNode->pParent = nullptr;
+                return pNode;
+            });
+        //extractedChildren.insert(extractedChildren.end(), Children.begin(), Children.end());
         if(!Children.empty())
             pTree->Change();
         Children.clear();
@@ -348,8 +373,10 @@ public:
             pTree->Change();
         }
 
-        if(!pNode)
+        if (!pNode)
             EXCEPTIONMSG("Node has not been extracted")
+        else
+            pNode->pParent = nullptr;
 
         return pNode;
     }
@@ -494,7 +521,6 @@ public:
         Children.push_back(pNewNode);
         return pNewNode;
     }
-
 
 
     // возвращает ближайший родительский узел данного типа
@@ -647,12 +673,7 @@ public:
         return (IsNumeric(pNode) && NumericValue(pNode) == 1.0);
     }
 
-    static double NumericValue(const CASTNodeBase* pNode)
-    {
-        if (!IsNumeric(pNode))
-            EXCEPTIONMSG("Node is not numeric");
-        return std::stod(std::string(pNode->GetText()));
-    }
+    static double NumericValue(const CASTNodeBase* pNode);
 
     static bool IsFlatOperator(const CASTNodeBase* pNode)
     {

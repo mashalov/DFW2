@@ -21,7 +21,7 @@ namespace DFW2
 			double m_Imb = 1E-4;						// допустимый небаланс мощности
 			bool m_bFlat = false;						// плоский старт
 			bool m_bStartup = true;						// стартовый метод Зейделя
-			double m_dSeidellStep = 1.05;				// шаг ускорения метода Зейделя	
+			double m_dSeidellStep = 1.0;				// шаг ускорения метода Зейделя	
 			ptrdiff_t m_nSeidellIterations = 17;		// количество итераций Зейделем
 			ptrdiff_t m_nEnableSwitchIteration = 2;		// номер итерации, с которой разрешается переключение PV-PQ
 			ptrdiff_t m_nMaxIterations = 100;			// максимальное количество итераций Ньютоном
@@ -30,6 +30,8 @@ namespace DFW2
 			double m_dBranchAngleNewtonStep = 0.5;		// максимальное приращение шага Ньютона по углу связи
 			double ForceSwitchLambda = 1e-2;			// шаг Ньютона, меньше которого бэктрэк выключается и выполняется переключение типов узлов
 			eLoadFlowFormulation m_LFFormulation = eLoadFlowFormulation::Current;	// способ представления модели УР
+			bool m_bAllowNegativeLRC = true;			// разрешить учет СХН для узлов с отрицательной нагрузкой
+			double m_dVdifference = 1E-4;				// порог сравнения модуля напряжения
 		};
 
 		CLoadFlow(CDynaModel *pDynaModel);
@@ -87,9 +89,9 @@ namespace DFW2
 		void UpdateSlackBusesImbalance();
 		double GetSquaredImb();
 		void CheckFeasible();
-		void DumpNewtonIterationControl();
+		void DumpNewtonIterationControl() const;
+		void LogNodeSwitch(_MatrixInfo* pNode, std::string_view Title);
 		LFNewtonStepRatio m_NewtonStepRatio;
-
 		std::unique_ptr<double[]> m_Vbackup;
 		std::unique_ptr<double[]> m_Dbackup;
 		std::unique_ptr<double[]> m_Rh;		// невязки до итерации

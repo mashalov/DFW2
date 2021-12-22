@@ -193,7 +193,6 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 	if (m_pContainer && pContLead)
 	{
 		bRes = true;
-		DEVICEVECTORITR it;
 		// выбирает подчиненный контейнер по pContLead
 		// если pContLead совпадает с внешним контейнером - подчиненный - контейнер данного устройства
 		// если совпадает в контейнером данного устройства - подчиненный - внешний контейнер
@@ -202,10 +201,10 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 		// заранее определяем индекс константы, в которой лежит номер связываемого устройства
 		ptrdiff_t nIdFieldIndex = pContLead->GetConstVariableIndex(LinkTo.strIdField.c_str());
 
-		for (it = pContLead->begin(); it != pContLead->end(); it++)
+		for (auto&& it : *pContLead)
 		{
 			// проходим по устройствам мастер-контейнера
-			CDevice *pDev = *it;
+			CDevice *pDev = it;
 			CDevice *pLinkDev(nullptr);
 
 			// пытаемся получить идентификатор устройства, с которым должно быть связано устройство из мастер-контейнера
@@ -281,9 +280,9 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 			// размечаем мультисвязи в связываемом контейнере
 			pContSlave->AllocateLinks(LinkFrom.nLinkIndex);
 			// для каждого из устройств мастер-контейнера
-			for (it = pContLead->begin(); it != pContLead->end(); it++)
+			for (auto&& it : *pContLead)
 			{
-				CDevice *pDev = *it;
+				CDevice *pDev = it;
 				// извлекаем связанное устройство данного типа из мастер-устройства
 				CDevice *pDevLinked = pDev->GetSingleLink(LinkTo.nLinkIndex);
 
@@ -532,7 +531,7 @@ const char* CDevice::VariableNameByPtr(double *pVariable) const
 		const double *pVar = GetVariableConstPtr(i);
 		if (pVar == pVariable)
 		{
-			VARINDEXMAPCONSTITR it = m_pContainer->VariablesBegin();
+			auto it = m_pContainer->VariablesBegin();
 			for ( ; it != m_pContainer->VariablesEnd(); it++)
 			{
 				if (it->second.m_nIndex == i)
@@ -1163,7 +1162,7 @@ void CDevice::UpdateValidator(CSerializerValidatorRules* Validator)
 
 void CDevice::AddStateProperty(CSerializerBase* Serializer)
 {
-	Serializer->AddProperty("state", TypedSerializedValue::eValueType::VT_STATE, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(CDevice::m_csz_state, TypedSerializedValue::eValueType::VT_STATE, eVARUNITS::VARUNIT_UNITLESS);
 }
 
 VariableIndexRefVec& CDevice::GetVariables(VariableIndexRefVec& ChildVec)

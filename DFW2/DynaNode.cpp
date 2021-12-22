@@ -3,6 +3,7 @@
 #include "DynaModel.h"
 #include "GraphCycle.h"
 #include "DynaGeneratorMotion.h"
+#include "BranchMeasures.h"
 
 using namespace DFW2;
 
@@ -67,7 +68,7 @@ bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest, double Vmin)
 	CDevice **ppDevice(nullptr);
 	while (pLink->In(ppDevice) && bRes)
 	{
-		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 		bRes = (Vmin - pSlaveNode->dLRCVicinity) > Vtest / pSlaveNode->V0;
 	}
 	return bRes;
@@ -82,7 +83,7 @@ void CDynaNodeBase::GetPnrQnrSuper()
 	CDevice **ppDevice(nullptr);
 	while (pLink->In(ppDevice))
 	{
-		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 		pSlaveNode->FromSuperNode();
 
 		pSlaveNode->GetPnrQnr();
@@ -191,7 +192,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		{
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
 			pDynaModel->SetElement(Vre, pGen->Ire, dGenMatrixCoe);
 			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe);
 		}
@@ -351,7 +352,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 		while (pGenLink->InMatrix(ppGen))
 		{
-			CDynaPowerInjector *pGen = static_cast<CDynaPowerInjector*>(*ppGen);
+			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
 			Ire -= pGen->Ire;
 			Iim -= pGen->Iim;
 		}
@@ -465,7 +466,7 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	CDevice** ppDevice(nullptr);
 	while (pLink->In(ppDevice))
 	{
-		CDynaNode* pSlaveNode = static_cast<CDynaNode*>(*ppDevice);
+		const auto& pSlaveNode{ static_cast<CDynaNode*>(*ppDevice) };
 		pSlaveNode->S = S;
 	}
 
@@ -602,7 +603,7 @@ void CDynaNodeContainer::CalculateShuntParts()
 	// затем суммируем шунтовые нагрузки в суперузлы
 	for (auto&& node : m_DevVec)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
+		const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 		pNode->YiiSuper = pNode->Yii;
 		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
 		if (pLink->m_nCount)
@@ -611,7 +612,7 @@ void CDynaNodeContainer::CalculateShuntParts()
 			// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
 			while (pLink->In(ppDevice))
 			{
-				CDynaNodeBase *pSlaveNode(static_cast<CDynaNodeBase*>(*ppDevice));
+				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 				pNode->YiiSuper += pSlaveNode->Yii;
 				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
 				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
@@ -680,7 +681,7 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 		CLinkPtrCount *pLink = GetLink(0);
 		while (pLink->In(ppBranch))
 		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
+			const auto& pBranch{ static_cast<CDynaBranch*>(*ppBranch) };
 			// проводимости ветви будут рассчитаны с учетом того,
 			// что она могла быть отнесена внутрь суперузла
 			pBranch->CalcAdmittances(bFixNegativeZs);
@@ -767,7 +768,7 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 		{
 			if(it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
-				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(it);
+				const auto& pGenMj{ static_cast<CDynaGeneratorMotion*>(it) };
 				pDynaModel->SetElement(S, pGenMj->s, -pGenMj->Mj / Mj);
 			}
 		}
@@ -789,7 +790,7 @@ bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 		{
 			if (it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
-				CDynaGeneratorMotion *pGenMj = static_cast<CDynaGeneratorMotion*>(it);
+				const auto& pGenMj{ static_cast<CDynaGeneratorMotion*>(it) };
 				dS -= pGenMj->Mj * pGenMj->s / Mj;
 			}
 		}
@@ -840,7 +841,7 @@ bool CDynaNodeContainer::LULF()
 		_ASSERTE(pAx < Ax + nNzCount * 2);
 		_ASSERTE(pAi < Ai + nNzCount);
 		_ASSERTE(pAp < Ap + nNodeCount);
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 		pNode->dLRCVicinity = 0.0;		// зона сглаживания СХН для начала нулевая - без сглаживания
 		*pAp = (pAx - Ax) / 2;    pAp++;
 		*pAi = pNode->A(0) / EquationsCount();		  pAi++;
@@ -914,7 +915,7 @@ bool CDynaNodeContainer::LULF()
 				// проходим по генераторам
 				while (pLink->InMatrix(ppDeivce))
 				{
-					CDynaVoltageSource *pVsource = static_cast<CDynaVoltageSource*>(*ppDeivce);
+					const auto& pVsource{ static_cast<CDynaVoltageSource*>(*ppDeivce) };
 					// если в узле есть хотя бы один генератор, то обнуляем мощность генерации узла
 					// если в узле нет генераторов но есть мощность генерации - то она будет учитываться
 					// задающим током
@@ -935,7 +936,7 @@ bool CDynaNodeContainer::LULF()
 					}
 					else
 					{
-						CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(pVsource);
+						const auto& pGen{ static_cast<CDynaGeneratorInfBus*>(pVsource) };
 						// в диагональ матрицы добавляем проводимость генератора
 						Y -= 1.0 / pGen->Zgen();
 						I -= pGen->Igen(nIteration);
@@ -989,7 +990,7 @@ bool CDynaNodeContainer::LULF()
 
 		for (auto&& it: m_DevInMatrix)
 		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+			const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 			// напряжение после решения системы в векторе задающий токов
 			pNode->Vre = *pB;		pB++;
 			pNode->Vim = *pB;		pB++;
@@ -1017,17 +1018,32 @@ bool CDynaNodeContainer::LULF()
 	return bRes;
 }
 
+// Для перехода от расчета динамики к расчету УР
+// меняем местами нагрузку и расчетную нагрузку узла, СХН и 
+// номинальное напряжение с расчетным
+// Для возврата к динамике делаем еще один обмен
+// Возможно придется отказаться от этих обменов: просто
+// забирать из исходных данных номинальную нагрузку и считать УР
+// самостоятельно
+
 void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 {
 	if (bSwitchToDynamicLRC != m_bDynamicLRC)
 	{
 		m_bDynamicLRC = bSwitchToDynamicLRC;
-		for (DEVICEVECTORITR it = m_DevVec.begin(); it != m_DevVec.end(); it++)
+		for (auto&& node : m_DevVec)
 		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*it);
+			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
+			// меняем местами СХН УР и динамики
 			std::swap(pNode->m_pLRCLF, pNode->m_pLRC);
+			// меняем местами расчетную и номинальную 
+			// нагрузки
 			std::swap(pNode->Pn, pNode->Pnr);
 			std::swap(pNode->Qn, pNode->Qnr);
+			// если СХН для УР - номинальное напряжение СХН
+			// равно номинальному напряжению узла
+			// если СХН для динамики - номинальное напряжение СХН
+			// равно расчетному
 			if (!m_bDynamicLRC)
 				pNode->V0 = pNode->Unom;
 			else
@@ -1508,7 +1524,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 
 			// рассчитываем инъекцию в узле
 			// нагрузка по СХН
-			CDynaNodeBase* pInSuperNode = static_cast<CDynaNodeBase*>(node->m_Id);
+			const auto& pInSuperNode{ static_cast<CDynaNodeBase*>(node->m_Id) };
 			pInSuperNode->GetPnrQnr();
 			cplx Unode(pInSuperNode->Vre, -pInSuperNode->Vim);
 
@@ -1520,8 +1536,8 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 			cplx cIb, cIe, cSb, cSe;
 			while (pBranchLink->In(ppDevice))
 			{
-				CDynaBranch* pBranch = static_cast<CDynaBranch*>(*ppDevice);
-				CDynaNodeBase* pOppNode = pBranch->GetOppositeNode(pInSuperNode);
+				const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
+				const auto& pOppNode{ pBranch->GetOppositeNode(pInSuperNode) };
 				CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, cSb, cSe);
 				cplx Sbranch = ((pBranch->m_pNodeIp == pInSuperNode) ? pBranch->Yip : pBranch->Yiq) * cplx(pOppNode->Vre, pOppNode->Vim) * Unode;
 				S -= conj(Sbranch);
@@ -1556,7 +1572,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	for (auto&& edge : gc.Edges())
 	{
 		VirtualZeroBranch* pVirtualBranch(static_cast<VirtualZeroBranch*>(edge->m_IdBranch));
-		CDynaBranch* pBranch(pVirtualBranch->pBranch);
+		const auto& pBranch{ pVirtualBranch->pBranch };
 		_ASSERTE(pBranch->IsZeroImpedance());
 		// учитываем, что у ветвей могут быть параллельные. Поток будет разделен по параллельным
 		// ветвям. Для ветвей с ненулевым сопротивлением внутри суперузлов
@@ -1652,9 +1668,10 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.nEquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS)));
+	props.m_VarMap.insert({ CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS) });
+	props.m_VarMap.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
+	props.m_VarMap.insert({ CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS) });
+	props.m_VarAliasMap.insert({ "vras", { CDynaNodeBase::m_cszV }});
 }
 
 void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
@@ -1662,8 +1679,8 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	CDynaNodeBase::DeviceProperties(props);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
 	props.nEquationsCount = CDynaNode::VARS::V_LAST;
-	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS)));
+	props.m_VarMap.insert({ CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU) });
+	props.m_VarMap.insert({ CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS) });
 
 	/*
 	props.m_VarMap.insert(make_pair("Sip", CVarIndex(V_SIP, VARUNIT_PU)));
@@ -1674,8 +1691,8 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaNode>>();
 
 	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasNode);
-	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST)));
-	props.m_ConstVarMap.insert(std::make_pair(CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST)));
+	props.m_ConstVarMap.insert({ CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.m_ConstVarMap.insert({ CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
 }
 
 void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
@@ -1759,12 +1776,12 @@ void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)
 
 	for (const auto& reactor : containerReactors)
 	{
-		const CDynaReactor* pReactor = static_cast<const CDynaReactor*>(reactor);
+		const auto& pReactor{ static_cast<const CDynaReactor*>(reactor) };
 
 		// отбираем шинные реакторы
 		if (pReactor->Type == 0)
 		{
-			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(GetDevice(pReactor->HeadNode));
+			const auto& pNode{ static_cast<CDynaNodeBase*>(GetDevice(pReactor->HeadNode)) };
 			if (pNode)
 				pNode->reactors.push_back(pReactor);
 			else
@@ -1777,12 +1794,12 @@ void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)
 		else if (pReactor->Placement == 0) // а также добавляем реакторы с ветвей, подключенные до выключателя
 		{
 			// проверяем наличие ветви, заданной в реакторе
-			CDynaBranch* pBranch = pBranchContainer->GetByKey({ pReactor->HeadNode, pReactor->TailNode, pReactor->ParrBranch });
+			const auto& pBranch{ pBranchContainer->GetByKey({ pReactor->HeadNode, pReactor->TailNode, pReactor->ParrBranch }) };
 			// если ветвь найдена
 			if (pBranch)
 			{
 				// добавляем реактор к узлу начала или конца в зависимости от типа реактора
-				CDynaNodeBase * pNode = static_cast<CDynaNodeBase*>(GetDevice(pReactor->Type == 1 ? pReactor->HeadNode : pReactor->TailNode));
+				const auto& pNode{ static_cast<CDynaNodeBase*>(GetDevice(pReactor->Type == 1 ? pReactor->HeadNode : pReactor->TailNode)) };
 				if (pNode)
 					pNode->reactors.push_back(pReactor);
 			}
@@ -1804,7 +1821,7 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 
 	for (auto&& dev : m_DevVec)
 	{
-		auto pNode = static_cast<CDynaNode*>(dev);
+		const auto& pNode = static_cast<CDynaNode*>(dev);
 		if (pNode->LRCLoadFlowId > 0)
 		{
 			pNode->m_pLRCLF = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCLoadFlowId));
@@ -1818,14 +1835,3 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 			
 	}
 }
-
-const char* CDynaNodeBase::m_cszV = "V";
-const char* CDynaNodeBase::m_cszDelta = "Delta";
-const char* CDynaNodeBase::m_cszVre = "Vre";
-const char* CDynaNodeBase::m_cszVim = "Vim";
-const char* CDynaNodeBase::m_cszGsh = "gsh";
-const char* CDynaNodeBase::m_cszBsh = "bsh";
-const char* CDynaNode::m_cszS = "S";
-const char* CDynaNode::m_cszSz = "Sz";
-
-const char* CDynaNodeBase::m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };

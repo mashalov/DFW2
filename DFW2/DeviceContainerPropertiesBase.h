@@ -65,6 +65,7 @@ namespace DFW2
 		LINKSFROMMAP m_LinksFrom;
 		LINKSTOMAP  m_LinksTo;
 		std::list<std::string> m_lstAliases;								// возможные псевдонимы типа устройства (типа "Node","node")
+		ALIASMAP m_VarAliasMap;												// карта псевдонимов переменных
 	protected:
 		std::string m_strClassName;											// имя типа устройства
 		std::string m_strClassSysName;										// системное имя имя типа устройства для сериализации

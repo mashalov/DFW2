@@ -20,8 +20,6 @@ namespace DFW2
 				return VARNAMEMAP::empty;
 		}
 	};
-	typedef VARNAMEMAP::const_iterator VARNAMEITRCONST;
-
 
 	enum class DFW2MessageStatus
 	{
@@ -69,6 +67,8 @@ namespace DFW2
 		static const char* m_cszNodeRiseDueToZone;
 		static const char* m_cszUnknown;
 		static const char* m_cszLRCDiscontinuityAt;
+		static const char* m_cszLRCSlopeViolated;
+		static const char* m_cszLRCNonUnity;
 		static const char* m_cszAmbigousLRCSegment;
 		static const char* m_cszLRCStartsNotFrom0;
 		static const char* m_cszLRC1And2Reserved;
@@ -104,6 +104,7 @@ namespace DFW2
 		static const char* m_cszResultRoot;
 		static const char* m_cszWrongSymbolicLink;
 		static const char* m_cszObjectNotFoundByAlias;
+		static const char* m_cszAmbigousObjectsFoundByAlias;
 		static const char* m_cszWrongKeyForSymbolicLink;
 		static const char* m_cszObjectNotFoundBySymbolicLink;
 		static const char* m_cszObjectHasNoPropBySymbolicLink; 
@@ -210,6 +211,7 @@ namespace DFW2
 		static const char* m_cszMaxBranchAngle;
 		static const char* m_cszMaxGeneratorAngle;
 		static const char* m_cszValidationBiggerThanZero;
+		static const char* m_cszValidationNegative;
 		static const char* m_cszValidationNonNegative;
 		static const char* m_cszValidationChangedTo;
 		static const char* m_cszValidationRange;
@@ -217,6 +219,7 @@ namespace DFW2
 		static const char* m_cszValidationBiggerThanNamed;
 		static const char* m_cszValidationBiggerOrEqualThanNamed;
 		static const char* m_cszValidationLessOrEqualThanNamed;
+		static const char* m_cszValidationLessThanNamed;
 		static const char* m_cszDiscontinuityProcessing;
 		static const char* m_cszAutomaticScenario;
 		static const char* m_cszCannotConvertShortCircuitConstants;
@@ -225,6 +228,7 @@ namespace DFW2
 		static const char* m_cszCannotGetPark3CParameters;
 		static const char* m_cszParkParametersNiiptMethodFailed;
 		static const char* m_cszParkParametersNiiptPlusMethodFailed;
+		static const char* m_cszActionNotInitialized;
 	};
 }
 

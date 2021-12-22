@@ -39,7 +39,7 @@ void CASTMul::FoldUnaryMinuses()
             ReplaceChild(*um, pum->ExtractChild(pum->ChildNodes().begin()));
             break;
         case ASTNodeType::Numeric:
-            pum->SetText(-NumericValue(pum));
+            static_cast<CASTNumeric*>(pum)->SetNumeric(-NumericValue(pum));
             break;
         }
     }
@@ -228,7 +228,7 @@ void CASTMul::Collect()
             else
             {
                 // если родитель - само умножение, показатель степени 1 добавляем к сумме
-                pSum->CreateChild<CASTNumeric>("1");
+                pSum->CreateChild<CASTNumeric>(1.0);
                 // если заглушка новой степени еще на месте - заменяем ее на множитель
                 if (!pDummy->Deleted())
                     pNewPow->ReplaceChild(pDummy, ExtractChild(p.pChild));

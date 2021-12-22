@@ -51,6 +51,7 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		bool DetectZeroCrossingFine(const CDynaPrimitive* primitive) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
@@ -72,6 +73,7 @@ namespace DFW2
 		static inline CValidationRuleBiggerOrEqualT<CDynaDECMustang, &CDynaDECMustang::VDefOff> ValidatorVdefOn = { CDynaDECMustang::m_cszUerf };
 		// полосы форсировки/расфорсировки не должны пересекаться
 		static inline CValidationRuleBiggerT<CDynaDECMustang, &CDynaDECMustang::VEnfOff> ValidatorVdefOff = { CDynaDECMustang::m_cszUef };
+
 	};
 }
 

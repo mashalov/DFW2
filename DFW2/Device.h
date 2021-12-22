@@ -128,7 +128,8 @@ namespace DFW2
 	enum class PARK_PARAMETERS_DETERMINATION_METHOD
 	{
 		Kundur,
-		Niipt,
+		NiiptTo,
+		NiiptToTd,
 		Canay
 	};
 
@@ -394,11 +395,13 @@ namespace DFW2
 
 		static constexpr const char* m_cszName = "Name";
 		static constexpr const char* m_cszname = "name";
+		static constexpr const char* m_cszSta = "sta";
+		static constexpr const char* m_cszState = "State";
+		static constexpr const char* m_csz_state = "state";
+		static constexpr const char* m_cszStates[4] = { "On", "Off", "Ready", "Determine", };
 	};
 
 using DEVICEVECTOR = std::vector<CDevice*>;
-using DEVICEVECTORITR = DEVICEVECTOR::iterator;
-using DEVICEVECTORCONSTITR = DEVICEVECTOR::const_iterator;
 
 // макрос для упрощения связи имени и идентификатора переменной, используется в switch CDevice::GetVariablePtr
 #define MAP_VARIABLE(VarName, VarId)  case VarId: p = &VarName; break; 

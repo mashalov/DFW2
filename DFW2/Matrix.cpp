@@ -113,8 +113,8 @@ void CDynaModel::EstimateMatrix()
 
 void CDynaModel::BuildRightHand()
 {
-	for (DEVICECONTAINERITR it = m_DeviceContainers.begin(); it != m_DeviceContainers.end() ; it++)
-		(*it)->BuildRightHand(this);
+	for (auto&& it : m_DeviceContainers)
+		it->BuildRightHand(this);
 
 	sc.dRightHandNorm = 0.0;
 	double *pBb = klu.B(), *pBe = pBb + m_nEstimatedMatrixSize;

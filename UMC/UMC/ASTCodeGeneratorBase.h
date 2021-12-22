@@ -32,17 +32,22 @@ public:
 
 	void GenerateGetDeviceProperties()
 	{
+		// объявление функции
 		EmitLine("void GetDeviceProperties(CDeviceContainerPropertiesBase & DeviceProps) override");
 		EmitLine("{");
 		Indent++;
 
+		// тип устройства
 		EmitLine("DeviceProps.SetType(DEVTYPE_AUTOMATIC);");
+		// вербальное имя класса устройства
 		EmitLine("DeviceProps.SetClassName(\"Automatic & scenario\", \"Automatic\");");
+		// описание связей и их режимов
 		EmitLine("DeviceProps.AddLinkFrom(DEVTYPE_MODEL, DLM_SINGLE, DPD_MASTER);");
 
 		size_t nConstVarIndex(0), nExtVarIndex(0), nStateVarIndex(0);
 		std::list<std::string> stateVars, extVars, constVars;
 
+		// обходим переменные AST-дерева
 		for (auto& v : pTree->GetVariables())
 		{
 			// если ссылок на переменную с данными именем нет, то переменную не вводим в список
@@ -57,6 +62,7 @@ public:
 				else
 				{
 					_ASSERTE(v.second.IsNamedConstant());
+					// добавляем константу в список констант
 					constVars.push_back(fmt::format("{{ \"{}\", {{ {}, eDVT_CONSTSOURCE }} }}", v.first, nConstVarIndex));
 				}
 				nConstVarIndex++;
@@ -64,24 +70,33 @@ public:
 			else if (v.second.External)
 			{
 				if (v.second.VarInstances.size() == 0)
-					pTree->Warning(fmt::format("Переменная \"{}\" объявлена как внешняя, но не используется в модели", v.first));
+					pTree->Warning(fmt::format("Переменная \"{}\" = \"{}\" объявлена как внешняя, но не используется в модели", 
+						v.first,
+						v.second.ModelLink));
 				else
 				{
 					_ASSERTE(v.second.IsExternal());
-					extVars.push_back(fmt::format("{{ \"{}\", {{ {}, DEVTYPE_MODEL }} }}", v.second.ModelLink, nExtVarIndex));
+					// добавляем внешнюю перменную в список внешних переменных
+					extVars.push_back(fmt::format("{{ \"{}\", {{ {}, DEVTYPE_MODEL }} /* {} */}}", 
+						v.second.ModelLink,		// символическая ссылка
+						nExtVarIndex,			// индекс внешней переменной в m_ExternalVariables
+						v.first));				// комментарий - имя переменной в исходном тексте
 				}
 				nExtVarIndex++;
 			}
 			else
 			{
 				if (v.second.IsMainStateVariable())
+					// добавляем переменную состояния в список переменных состояния
 					stateVars.push_back(fmt::format("{{ \"{}\", {{ {}, VARUNIT_NOTSET }} }}", v.first, nStateVarIndex++));
 			}
 		}
 
+		// генерируем векторы переменных состояния, внешних и констант
 		GenerateVariables("DeviceProps.m_VarMap      = { ", stateVars, " };", true);
 		GenerateVariables("DeviceProps.m_ExtVarMap   = { ", extVars, " };", true);
 		GenerateVariables("DeviceProps.m_ConstVarMap = { ", constVars, " };", true);
+		// формируем количество уравнений
 		EmitLine("DeviceProps.nEquationsCount = DeviceProps.m_VarMap.size();");
 		Indent--;
 		EmitLine("}");
@@ -151,6 +166,7 @@ public:
 		}
 	}
 
+	// вывесьт строку исходного текста C++ с текущим отступом
 	void EmitLine(std::string_view Line)
 	{		
 		OutputStream << std::string(Indent * 4, ' ') << Line << std::endl;
@@ -158,44 +174,64 @@ public:
 
 	void GenerateHeader()
 	{
+		// обертка для класса
 		EmitLine("#pragma once");
 		EmitLine("#include\"DFW2/ICustomDevice.h\"");
 		EmitLine("#include <math.h>");
 		EmitLine("namespace DFW2\n{");
+		// отступ вправо
 		Indent++;
+		// генерируем класс
 		GenerateClass();
 
-		//GenerateDLLFunctions();
+		// возврат отступа
 		Indent--;
 		EmitLine("}");
 	}
 
+	// генерирут строку вектора ссылок на переменные
 	template<typename T>
 	void GenerateVariables(std::string_view Pre, T& VarList, std::string_view Post, bool UsePrePost = false)
 	{
-		std::string Line(Pre);
+		std::string Line(Pre);	// результирующая строка начинается с пролога
 		size_t counter = VarList.size();
 		size_t varsinline = 0;
 		size_t indent = Line.length();
 
+		// проходим по списку переменных
 		for (auto& var : VarList)
 		{
+			// добавляем переменную к строке
 			Line += var;
+			// считаем количество переменных в строке
 			varsinline++;
+			// если переменная не последняя, вводим разделитель ","
 			if(counter > 1 && counter <= VarList.size()) Line += ", ";
 
+			// контролируем длину строки исходника, если 
+			// превышено ограничение - переносим на следующую
+			// строку
 			if (Line.length() > MaxLineLentgh)
 			{
+				// отмечаем, что было разбиение строки
 				UsePrePost = false;
+				// если вывели все переменные - добавляем эпилог
 				if (counter == 1)
-					Line += Post;
+					Line += Post;	
+				// выводим строку
 				EmitLine(Line);
+				// следующая строка начинается с отступа, 
+				// размер которого равен прологу
 				Line = std::string(indent, ' ');
+				// все переменные их текущей строки выведены
 				varsinline = 0;
 			}
 			counter--;
 		}
 
+		// если остались еще не обработанные 
+		// переменные в строке или форсирован эпилог -
+		// добавляем строку в исходник
 		if (varsinline > 0 || UsePrePost)
 		{
 			Line += Post;
@@ -317,8 +353,11 @@ public:
 
 	void GenerateGetVariablesAndPrimitives()
 	{
+		// переменные состояния
 		EmitLine("const VariableIndexRefVec& GetVariables() override { return m_StateVariables;}");
+		// внешние переменные
 		EmitLine("const VariableIndexExternalRefVec& GetExternalVariables() override { return m_ExternalVariables;}");
+		// примитивы (хост-блоки)
 		EmitLine("const PRIMITIVEVECTOR& GetPrimitives() override { return m_Primitives;}");
 	}
 
@@ -444,22 +483,24 @@ public:
 
 	void GenerateBuildEquations()
 	{
+		// функция построения матрицы Якоби
 		EmitLine("void BuildEquations(CCustomDeviceData& CustomDeviceData) override");
 		EmitLine("{");
 		Indent++;
 
-		
+		// проходим по якобиану дерева
 		for (auto& v : pTree->GetJacobian()->ChildNodes())
 		{
+			// для каждого элемента якобиана
 			CASTJacobiElement* pJe = static_cast<CASTJacobiElement*>(v);
+			// добавляем SetElement
 			EmitLine(fmt::format("CustomDeviceData.SetElement({}, {}, {});   // {} by {}",
-				pJe->pequation->itResolvedBy->first,
-				pJe->var->first,
-				ctrim(pJe->ChildNodes().front()->GetInfix()),
-				ctrim(pJe->pequation->GetInfix()),
-				pJe->var->first));
+				pJe->pequation->itResolvedBy->first,			// строка элемента якобиана
+				pJe->var->first,								// столбец элемента якобина
+				ctrim(pJe->ChildNodes().front()->GetInfix()),	// функция вычисления элемента якобиана
+				ctrim(pJe->pequation->GetInfix()),				// комментарий: уравнение, от которого берется частная производная
+				pJe->var->first));								// комментарие: переменная, по которой берется частная производная
 		}
-
 		Indent--;
 		EmitLine("}");
 	}
@@ -495,13 +536,17 @@ public:
 
 	void GenerateClass()
 	{
+		// объявление класса
 		EmitLine("class CCustomDevice : public ICustomDevice");
 		EmitLine("{");
+		// отступ вправо
 		Indent++;
+		// переменные и хост-блоки
 		EmitLine("protected:");
 		GenerateVariablesDeclaration();
 		GenerateHostBlocks();
 		EmitLine("public:");
+		// функции класса
 		GenerateGetVariablesAndPrimitives();
 		GenerateGetDeviceProperties();
 		GenerateSetSourceConstant();
@@ -514,17 +559,19 @@ public:
 		GenerateProcessDiscontinuity();
 		GenerateDestroy();
 		GenerateEncodedSource();
+		// возврат отступа
 		Indent--;
 		EmitLine("};");
 	}
 
 	void Generate()
 	{
+		// если в дереве есть ошибки - отказываемся генерировать код
 		if (pTree->ErrorCount() != 0) return;
-
+		// формируем имя файла с исходником на c++
 		std::filesystem::path OutputPath = pTree->GetPropertyPath(PropertyMap::szPropOutputPath);
 		OutputPath.append(pTree->GetProperties().at(PropertyMap::szPropProjectName));
-
+		// создаем выходной каталог
 		std::filesystem::create_directories(OutputPath);
 		std::filesystem::path HeaderPath = OutputPath;
 		HeaderPath.append(CustomDeviceHeader);
@@ -538,6 +585,8 @@ public:
 #endif 	
 			throw std::system_error(std::error_code(ec,std::system_category()), fmt::format("Невозможно открыть файл \"{}\"", OutputPath.string()));
 		}		
+		// генерируем текст на C++ в виде 
+		// единственного h-файла
 		GenerateHeader();
 		OutputStream.close();
 		pTree->PrintErrorsWarnings();

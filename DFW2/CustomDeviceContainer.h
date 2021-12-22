@@ -121,8 +121,11 @@ namespace DFW2
 									  std::make_unique< CPrimitivePoolT<CLimitedLag>>(),
 									  std::make_unique< CPrimitivePoolT<CLimiterConst>>(),
 									  std::make_unique< CPrimitivePoolT<CRelay>>(),
+									  std::make_unique< CPrimitivePoolT<CRelayMin>>(),
 									  std::make_unique< CPrimitivePoolT<CRelayDelay>>(),
+									  std::make_unique< CPrimitivePoolT<CRelayMinDelay>>(),
 									  std::make_unique< CPrimitivePoolT<CRelayDelayLogic>>(),
+									  std::make_unique< CPrimitivePoolT<CRelayMinDelayLogic>>(),
 									  std::make_unique< CPrimitivePoolT<CRSTrigger>>(),
 									  std::make_unique< CPrimitivePoolT<CComparator>>(),
 									  std::make_unique< CPrimitivePoolT<CComparator>>(),
@@ -137,6 +140,7 @@ namespace DFW2
 									}
 		{
 		}
+
 		void CountPrimitive(PrimitiveBlockType ePrimitiveType)
 		{
 			CDevice::CheckIndex(m_Pools, ePrimitiveType);

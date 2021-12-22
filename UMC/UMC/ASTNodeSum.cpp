@@ -216,7 +216,7 @@ void CASTSum::Collect()
                 // если после извлечения слагаемого в умножении остался 1 множитель или в унарном минусе - 0 аргументов
                 // добавляем единицу
                 if (m.pMul->ChildNodes().size() < 2)
-                    m.pMul->CreateChild<CASTNumeric>("1");
+                    m.pMul->CreateChild<CASTNumeric>(1.0);
 
                 if (m.pMul->CheckType(ASTNodeType::Mul) && IsUminus(m.pMul->GetParent()))
                 {
@@ -234,7 +234,7 @@ void CASTSum::Collect()
             else
             {
                 // если родитель - само умножение, множитель 1 добавляем к сумме
-                pSum->CreateChild<CASTNumeric>("1");
+                pSum->CreateChild<CASTNumeric>(1.0);
                 // если заглушка нового умножения еще на месте - заменяем ее на слагаемое
                 if (!pDummy->Deleted())
                     pNewMul->ReplaceChild(pDummy, ExtractChild(m.pChild));

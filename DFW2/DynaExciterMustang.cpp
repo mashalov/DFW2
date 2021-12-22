@@ -52,16 +52,26 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 	//dEqsum / dEq
 	pDynaModel->SetElement(Eqsum, EqInput, -Kif);
 
-	double  V = Ug0;
-	if (bVoltageDependent)
-		V = ExtVg;
-
 	//dEqe / dEqe
 	pDynaModel->SetElement(Eqe, Eqe, 1.0);
-	//dEqe / dEqeV
-	pDynaModel->SetElement(Eqe, ExcLag, -ZeroDivGuard(V, Ug0));
-	//dEqe / dV
-	pDynaModel->SetElement(Eqe, ExtVg, -ZeroDivGuard(ExcLag, Ug0));
+
+	if (bVoltageDependent)
+	{
+		// зависимый возбудитель
+		// имеет дополительный элемент матрицы к напряжению узла
+		
+		//dEqe / dEqeV
+		pDynaModel->SetElement(Eqe, ExcLag, -ExtVg / Ug0);
+		//dEqe / dV
+		pDynaModel->SetElement(Eqe, ExtVg, -ExcLag / Ug0);
+	}
+	else
+	{
+		// независимый возбудитель 
+		 
+		//dEqe / dEqeV
+		pDynaModel->SetElement(Eqe, ExcLag, -1.0);
+	}
 	bRes = bRes && CDynaExciterBase::BuildEquations(pDynaModel);
 	return true;
 }
@@ -70,12 +80,15 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
 	double dEqsum = Eqsum - (Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec);
-	double  V = Ug0;
+	// Для зависимого возбудителя рассчитываем отношение текущего
+	// напряжения к исходному. Для независимого отношение 1.0
 	if (bVoltageDependent)
-		V = ExtVg;
+		pDynaModel->SetFunction(Eqe, Eqe - ExcLag * ExtVg / Ug0);
+	else
+		pDynaModel->SetFunction(Eqe, Eqe - ExcLag);
 
 	pDynaModel->SetFunction(Eqsum, dEqsum);
-	pDynaModel->SetFunction(Eqe, Eqe - ExcLag * ZeroDivGuard(V, Ug0));
+
 	CDevice::BuildRightHand(pDynaModel);
 	return true;
 }

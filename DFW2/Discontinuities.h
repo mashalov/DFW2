@@ -130,6 +130,15 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double X) override;
 	};
 
+	class CModelActionChangeBranchB : public CModelActionChangeBranchParameterBase
+	{
+	protected:
+		double m_BranchB;
+	public:
+		CModelActionChangeBranchB(CDynaBranch* pBranch, double B) : CModelActionChangeBranchParameterBase(pBranch), m_BranchB(B) {}
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double B) override;
+	};
+
 	class CModelActionChangeNodeParameterBase : public CModelAction
 	{
 	protected:
@@ -147,6 +156,16 @@ namespace DFW2
 	public:
 		CModelActionChangeNodeShunt(CDynaNode *pNode, const cplx& ShuntRX);
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
+	};
+
+	class CModelActionChangeNodePQLoad : public CModelActionChangeNodeParameterBase
+	{
+	protected:
+		cplx m_InitialLoad;
+		double m_Pload;
+	public:
+		CModelActionChangeNodePQLoad(CDynaNode* pNode, double Pload);
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double dValue) override;
 	};
 
 	class CModelActionChangeNodeShuntAdmittance : public CModelActionChangeNodeParameterBase
@@ -211,10 +230,18 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
 	};
 
-	typedef std::list<CModelAction*> MODELACTIONLIST;
-	typedef MODELACTIONLIST::iterator MODELACTIONITR;
+	class CModelActionChangeDeviceState : public CModelActionChangeVariable
+	{
+	protected:
+		CDevice* m_pDevice;
+		eDEVICESTATE m_NewState;
+	public:
+		CModelActionChangeDeviceState(CDevice* pDevice, eDEVICESTATE NewState);
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel) override;
+		virtual eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double dValue);
+	};
 
-
+	using MODELACTIONLIST =  std::list<CModelAction*>;
 
 	class CStaticEvent
 	{
@@ -252,11 +279,8 @@ namespace DFW2
 		}
 	};
 
-	typedef std::set<CStaticEvent> STATICEVENTSET;
-	typedef STATICEVENTSET::iterator STATICEVENTITR;
-	typedef std::set<CStateObjectIdToTime> STATEEVENTSET;
-	typedef STATEEVENTSET::iterator STATEEVENTITR;
-	
+	using STATICEVENTSET = std::set<CStaticEvent>;
+	using STATEEVENTSET = std::set<CStateObjectIdToTime>;
 
 	class CDiscontinuities
 	{

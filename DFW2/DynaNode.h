@@ -182,13 +182,14 @@ namespace DFW2
 
 		void AddToTopologyCheck();
 
-		static const char* m_cszV;
-		static const char* m_cszDelta;
-		static const char* m_cszVre;
-		static const char* m_cszVim;
-		static const char* m_cszGsh;
-		static const char* m_cszBsh;
-		static const char* m_cszLFNodeTypeNames[5];
+		static constexpr const char* m_cszV = "V";
+		static constexpr const char* m_cszDelta = "Delta";
+		static constexpr const char* m_cszVre = "Vre";
+		static constexpr const char* m_cszVim = "Vim";
+		static constexpr const char* m_cszGsh = "gsh";
+		static constexpr const char* m_cszBsh = "bsh";
+		static constexpr const char* m_cszPload = "pn";
+		static constexpr const char* m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };
 
 	protected:
 		void FromSuperNode();
@@ -196,6 +197,8 @@ namespace DFW2
 		double FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow);
 
 	};
+
+	class CDynaNodeMeasure;
 
 	class CDynaNode : public CDynaNodeBase
 	{
@@ -211,6 +214,8 @@ namespace DFW2
 	//		V_SV,
 			V_LAST
 		};
+
+		CDynaNodeMeasure* m_pMeasure = nullptr;
 
 		VariableIndex Lag;
 		//double Sip;
@@ -232,8 +237,9 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static const char *m_cszS;
-		static const char *m_cszSz;
+
+		static constexpr const char* m_cszS = "S";
+		static constexpr const char* m_cszSz = "Sz";
 	};
 
 	// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько
@@ -263,7 +269,18 @@ namespace DFW2
 		bool bVisited = false;													// признак просмотра для графовых алгоритмов
 		double LFQmin;															// исходные ограничения реактивной мощности до ввода в суперузел
 		double LFQmax;
-		double NodeViolation;													// отклонение параметра от ограничения или уставки
+		double m_NodeVoltageViolation;											// отклонение напряжения от уставки
+		double m_NodePowerViolation;											// отклонение мощности от ограничения
+
+		double NodeVoltageViolation()
+		{
+			if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE ||
+				pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_PQ)
+				throw dfw2error(fmt::format("Attempt to get node voltage violation from non generator node {}", pNode->GetVerbalName()));
+
+			return m_NodeVoltageViolation = (pNode->V - pNode->LFVref) / pNode->LFVref;
+		}
+
 		CDynaNodeBase::eLFNodeType LFNodeType;									// исходный тип узла до ввода в суперузел
 		double UncontrolledP = 0.0;
 		double UncontrolledQ = 0.0;												// постоянные значения активной и реактивной генерации в суперузле
@@ -288,7 +305,6 @@ namespace DFW2
 	using NodeQueue = std::queue<CDynaNodeBase*>;
 	using NodeSet = std::set<CDynaNodeBase*>;
 	using NODEISLANDMAP = std::map<CDynaNodeBase*, NodeSet> ;
-	using NODEISLANDMAPITRCONST = std::map<CDynaNodeBase*, NodeSet>::const_iterator;
 	using DEVICETODEVICEMAP = std::map<CDevice*, CDevice*>;
 	using ORIGINALLINKSVEC = std::vector<std::unique_ptr<DEVICETODEVICEMAP>>;
 
@@ -333,7 +349,6 @@ namespace DFW2
 		void CalculateShuntParts();
 		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		void GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
-		NODEISLANDMAPITRCONST GetNodeIsland(CDynaNodeBase* const pNode, const NODEISLANDMAP& Islands);
 		_IterationControl& IterationControl();
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();

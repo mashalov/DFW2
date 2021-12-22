@@ -32,6 +32,7 @@ const char* CDeviceContainerProperties::m_cszNameDECMustang = "Форсиров�
 const char* CDeviceContainerProperties::m_cszNameNode = "Узел";
 const char* CDeviceContainerProperties::m_cszNameBranch = "Ветвь";
 const char* CDeviceContainerProperties::m_cszNameBranchMeasure = "Измерения ветви";
+const char* CDeviceContainerProperties::m_cszNameNodeMeasure = "Измерения узла";
 const char* CDeviceContainerProperties::m_cszNameLRC = "СХН";
 const char* CDeviceContainerProperties::m_cszNameReactor = "Реактор";
 
@@ -48,6 +49,7 @@ const char* CDeviceContainerProperties::m_cszSysNameDECMustang = "DecMustang";
 const char* CDeviceContainerProperties::m_cszSysNameNode = "Node";
 const char* CDeviceContainerProperties::m_cszSysNameBranch = "Branch";
 const char* CDeviceContainerProperties::m_cszSysNameBranchMeasure = "BranchMeasure";
+const char* CDeviceContainerProperties::m_cszSysNameNodeMeasure = "NodeMeasure";
 const char* CDeviceContainerProperties::m_cszSysNameLRC = "LRC";
 const char* CDeviceContainerProperties::m_cszSysNameReactor = "Reactor";
 

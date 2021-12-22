@@ -11,10 +11,11 @@ class dfw2error : public std::runtime_error
 protected:
 	mutable std::wstring _whatw;
 public:
-	dfw2error(std::string& Message) : runtime_error(Message) {}
-	dfw2error(std::string_view Message) : runtime_error(std::string(Message)) {}
+	dfw2error(const std::string& Message) : runtime_error(Message) {}
+	dfw2error(const char * Message) : runtime_error(Message) {}
+	dfw2error(const std::string_view Message) : runtime_error(std::string(Message)) {}
 	dfw2error(const wchar_t* Message) : runtime_error(stringutils::utf8_encode(Message)) {}
-	dfw2error(dfw2error& err) : dfw2error(err.what()) {}
+	dfw2error(const dfw2error& err) : runtime_error(err.what()) {}
 #ifdef _MSC_VER	
 	const wchar_t* whatw() const {	return (_whatw = stringutils::utf8_decode(what())).c_str();  }
 #endif	
@@ -24,10 +25,11 @@ public:
 class dfw2errorGLE : public dfw2error
 {
 public:
-	dfw2errorGLE(std::string& Message) : dfw2error(MessageFormat(Message)) {}
-	dfw2errorGLE(std::string_view Message) : dfw2error(MessageFormat(Message)) {}
+	dfw2errorGLE(const std::string& Message) : dfw2error(MessageFormat(Message)) {}
+	dfw2errorGLE(const char* Message) : dfw2error(MessageFormat(Message)) {}
+	dfw2errorGLE(const std::string_view Message) : dfw2error(MessageFormat(Message)) {}
 	dfw2errorGLE(const wchar_t* Message) : dfw2error(MessageFormat(stringutils::utf8_encode(Message))) {}
-	dfw2errorGLE(dfw2error& err) : dfw2error(err.what()) {}
+	dfw2errorGLE(const dfw2error& err) : dfw2error(std::string(err.what())) {}
 
 	static std::string MessageFormat(std::string_view Message)
 	{

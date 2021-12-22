@@ -40,7 +40,7 @@ std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t nIndex)
 		GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
 
 		// проходим блоки в обратном порядке от начала к концу
-		INT64LIST::reverse_iterator it = Offsets.rbegin();
+		auto it = Offsets.rbegin();
 		while (it != Offsets.rend())
 		{
 			infile.seekg(*it, std::ios_base::beg);
@@ -114,12 +114,12 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, std
 
 	DeviceTypeInfo findType;
 	findType.eDeviceType = static_cast<int>(eType);
-	DEVTYPEITRCONST it = m_DevTypeSet.find(&findType);
+	auto it = m_DevTypeSet.find(&findType);
 	if (it != m_DevTypeSet.end())
 	{
 		VariableTypeInfo findVar; 
 		findVar.Name = VarName;
-		VARTYPEITRCONST vit = (*it)->m_VarTypes.find(findVar);
+		auto vit = (*it)->m_VarTypes.find(findVar);
 		if (vit != (*it)->m_VarTypes.end())
 			return GetChannelIndex(eType, nId, vit->nIndex);
 	}
@@ -134,7 +134,7 @@ ptrdiff_t CResultFileReader::GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptr
 	findChannel.DeviceId = nId;
 	findChannel.DeviceVarIndex = static_cast<int>(nVarIndex);
 	findChannel.eDeviceType = static_cast<int>(eType);
-	CHANNELSETITRCONST it = m_ChannelSet.find(&findChannel);
+	auto it = m_ChannelSet.find(&findChannel);
 	if (it != m_ChannelSet.end())
 		return *it - m_pChannelHeaders.get();
 	else
@@ -218,7 +218,7 @@ void CResultFileReader::ReadModelData(std::unique_ptr<double[]>& pData, int nVar
 		GetBlocksOrder(Offsets, pChannel->LastBlockOffset);
 
 		// проходим блоки в обратном порядке от начала к концу
-		INT64LIST::reverse_iterator it = Offsets.rbegin();
+		auto it = Offsets.rbegin();
 		while (it != Offsets.rend())
 		{
 			infile.seekg(*it, std::ios_base::beg);
@@ -250,9 +250,9 @@ void CResultFileReader::ReadDirectoryEntries()
 
 void CResultFileReader::Reparent()
 {
-	for (DEVTYPEITRCONST it = m_DevTypeSet.begin(); it != m_DevTypeSet.end(); it++)
+	for (const auto& it : m_DevTypeSet)
 	{
-		DeviceTypeInfo *pDevType = *it;
+		DeviceTypeInfo *pDevType = it;
 
 		if (pDevType->DeviceParentIdsCount == 0) continue;
 
@@ -266,7 +266,7 @@ void CResultFileReader::Reparent()
 			{
 				DeviceTypeInfo findType;
 				findType.eDeviceType = static_cast<int>(pLink->m_eParentType);
-				DEVTYPEITRCONST ftypeit = m_DevTypeSet.find(&findType);
+				auto ftypeit = m_DevTypeSet.find(&findType);
 				if (ftypeit != m_DevTypeSet.end())
 				{
 					DeviceTypeInfo *pParentTypeInfo = *ftypeit;
@@ -287,7 +287,7 @@ void CResultFileReader::Reparent()
 
 void CResultFileReader::OpenFile(std::string_view FilePath)
 {
-	m_dRatio = -1.0;
+	m_dRatio = 0.0;
 
 	m_strFilePath = FilePath;
 
@@ -309,7 +309,7 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		throw CFileReadException(infile, CDFW2Messages::m_cszWrongResultFile);
 
 	std::string strDateTime(stringutils::utf8_encode(vt.bstrVal));
-	printf("\nCreated %s ", strDateTime.c_str());
+	//printf("\nCreated %s ", strDateTime.c_str());
 
 	ReadString(m_strComment);
 	ReadDirectoryEntries();
@@ -338,15 +338,15 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		pDevTypeInfo->m_pFileReader = this;
 		pDevTypeInfo->eDeviceType = ReadLEBInt();
 		ReadString(pDevTypeInfo->strDevTypeName);
-		printf("\nType %d ", pDevTypeInfo->eDeviceType);
+		//printf("\nType %d ", pDevTypeInfo->eDeviceType);
 		pDevTypeInfo->DeviceIdsCount = ReadLEBInt();
-		printf("IdsCount %d ", pDevTypeInfo->DeviceIdsCount);
+		//printf("IdsCount %d ", pDevTypeInfo->DeviceIdsCount);
 		pDevTypeInfo->DeviceParentIdsCount = ReadLEBInt();
-		printf("ParentIdsCount %d ", pDevTypeInfo->DeviceParentIdsCount);
+		//printf("ParentIdsCount %d ", pDevTypeInfo->DeviceParentIdsCount);
 		pDevTypeInfo->DevicesCount = ReadLEBInt();
-		printf("DevCount %d ", pDevTypeInfo->DevicesCount);
+		//printf("DevCount %d ", pDevTypeInfo->DevicesCount);
 		pDevTypeInfo->VariablesByDeviceCount = ReadLEBInt();
-		printf("VarsCount %d", pDevTypeInfo->VariablesByDeviceCount);
+		//printf("VarsCount %d", pDevTypeInfo->VariablesByDeviceCount);
 
 
 		VariableTypeInfo VarTypeInfo;
@@ -354,14 +354,14 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		for (int iVar = 0; iVar < pDevTypeInfo->VariablesByDeviceCount; iVar++)
 		{
 			ReadString(VarTypeInfo.Name);
-			printf("\nVar %s ", VarTypeInfo.Name.c_str());
+			//printf("\nVar %s ", VarTypeInfo.Name.c_str());
 			VarTypeInfo.eUnits = ReadLEBInt();
-			printf("Units %d ", VarTypeInfo.eUnits);
+			//printf("Units %d ", VarTypeInfo.eUnits);
 			int nBitFlags = ReadLEBInt();
 			if (nBitFlags & 0x01)
 			{
 				ReadDouble(VarTypeInfo.Multiplier);
-				printf("Mult %g ", VarTypeInfo.Multiplier);
+				//printf("Mult %g ", VarTypeInfo.Multiplier);
 			}
 			else
 				VarTypeInfo.Multiplier = 1.0;
@@ -383,12 +383,12 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		{
 			pDevInst->nIndex = iDev;
 
-			printf("\n");
+			//printf("\n");
 			for (int Ids = 0; Ids < pDevTypeInfo->DeviceIdsCount; Ids++)
 			{
 				uint64_t ReadInt64;
 				ReadLEB(ReadInt64);
-				printf("Id[%d] %d ", Ids, static_cast<int>(ReadInt64));
+				//printf("Id[%d] %d ", Ids, static_cast<int>(ReadInt64));
 				pDevInst->SetId(Ids, static_cast<int>(ReadInt64));
 			}
 
@@ -400,7 +400,7 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 				uint64_t eType = 0;
 				ReadLEB(eType);
 				ReadLEB(nId);
-				printf("Link to %d of type %d ", static_cast<int>(nId), static_cast<int>(eType));
+				//printf("Link to %d of type %d ", static_cast<int>(nId), static_cast<int>(eType));
 				pDevInst->SetParent(Ids, static_cast<int>(eType), static_cast<int>(nId));
 			}
 		}
@@ -471,7 +471,10 @@ void CResultFileReader::OpenFile(std::string_view FilePath)
 		throw CFileReadException(infile);
 	infile.seekg(nSlowVarsOffset, std::ios_base::beg);
 		
-	m_dRatio = static_cast<double>(nSlowVarsOffset - nCompressedDataOffset) / sizeof(double) / m_ChannelsCount / m_PointsCount;
+	// рассчитываем коэффициент сжатия если исходный размер ненулевой
+	m_dRatio = static_cast<double>(m_ChannelsCount * m_PointsCount * sizeof(double));
+	if(m_dRatio > 0.0)
+		m_dRatio = static_cast<double>(nSlowVarsOffset - nCompressedDataOffset) / m_dRatio;
 
 	uint64_t nSlowVarsCount = 0;
 	ReadLEB(nSlowVarsCount);
@@ -602,7 +605,7 @@ void CResultFileReader::Close()
 	infile.close();
 
 	m_DevTypeSet.clear();
-	m_dRatio = -1.0;
+	m_dRatio = 0.0;
 
 }
 
