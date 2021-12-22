@@ -348,12 +348,25 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//m_spRastr->NewFile(dfwPath.c_str());
 
 	// СМЗУ Сибирь
-	LoadFile("d:\\downloads\\4_18122019_14-00_simple_v7_clean_nosvc_fixpunom - утяж УР.os", rstPath.c_str());
+	//LoadFile("d:\\downloads\\4_18122019_14-00_simple_v7_clean_nosvc_fixpunom - утяж УР.os", rstPath.c_str());
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\K1 уров.dfw", dfwPath.c_str());
+	//LoadFile("d:\\downloads\\last_version_mdp_debug_1_New_calc2\\last_version_mdp_debug_1_New_calc2");
+	//LoadFile("d:\\downloads\\5_check_mdp_debug_1\\5_check_mdp_debug_4");
+	LoadFile("d:\\downloads\\8_check_mdp_debug_1\\8_check_mdp_debug_1");
+
+
+
 	//LoadFile("d:\\downloads\\!упрощ кор 16122020_01-00_itog+Урал_откл СЭ (нов) зам.УШР.rst", rstPath.c_str());
 	//LoadFile("d:\\downloads\\mustang", rstPath.c_str());
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str());
-	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\K1 уров.dfw", dfwPath.c_str());
+	
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
+
+
+	// СМЗУ Сибирь 16.11.2021
+	//LoadFile("c:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia_20211116\\16.11.2021 to_dynamic_check");
+	//LoadFile("c:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia_20211116\\1. 2ф КЗ на землю СМЗУ.dfw", dfwPath.c_str());
+	//LoadFile("c:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia_20211116\\2. 1ф КЗ на землю+УРОВ СМЗУ.dfw", dfwPath.c_str());
 	
 	
 

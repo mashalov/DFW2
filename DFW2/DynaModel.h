@@ -70,7 +70,9 @@ namespace DFW2
 			std::string m_strWorkingFolder = "Русский тест";
 			std::string m_strResultsFolder = "";
 			DFW2MessageStatus m_eLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
-			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Niipt;
+			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo;
+			double m_dLRCMinSlope = 0.0;
+			double m_dLRCMaxSlope = 5.0;
 		};
 
 		friend class CCustomDevice;
@@ -398,7 +400,7 @@ namespace DFW2
 			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
 			static constexpr const char* m_cszLogLevelNames[6] = { "fatal", "error", "warning", "message", "info", "debug" };
 			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
-			static constexpr const char* m_cszParkParametersDeterminationMethodNames[3] = { "Kundur", "Niipt", "Canay" };
+			static constexpr const char* m_cszParkParametersDeterminationMethodNames[4] = { "Kundur", "NiiptTo", "NiiptToTd", "Canay" };
 			static constexpr const char* m_cszFreqDampingNames[2] = { "Node", "Island" };
 		} 
 			m_Parameters;
@@ -569,6 +571,7 @@ namespace DFW2
 		CDeviceContainer DECsMustang;
 		CDeviceContainer ExcConMustang;
 		CDeviceContainer BranchMeasures;
+		CDeviceContainer NodeMeasures;
 		CCustomDeviceContainer CustomDevice;
 		CCustomDeviceCPPContainer AutomaticDevice;
 		CAutomatic m_Automatic;
@@ -789,6 +792,7 @@ namespace DFW2
 		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name);
 		CDevice* GetDeviceBySymbolicLink(std::string_view Object, std::string_view Keys, std::string_view SymLink);
 		CDeviceContainer *GetContainerByAlias(std::string_view Alias);
+		DEVICECONTAINERS GetContainersByAlias(std::string_view Alias);
 		CAutomatic& Automatic();
 
 		// выдать в лог топ-nCount переменных по количеству ошибок
