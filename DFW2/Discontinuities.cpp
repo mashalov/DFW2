@@ -600,7 +600,7 @@ eDFW2_ACTION_STATE CModelActionState::Do(CDynaModel *pDynaModel)
 		device = pDynaModel->AutomaticDevice.GetDeviceByIndex(0);
 
 	m_pDiscreteDelay->NotifyDelay(pDynaModel);
-	pDynaModel->DiscontinuityRequest(*device);
+	pDynaModel->DiscontinuityRequest(*device, DiscontinuityLevel::Hard);
 	return eDFW2_ACTION_STATE::AS_INACTIVE;
 }
 

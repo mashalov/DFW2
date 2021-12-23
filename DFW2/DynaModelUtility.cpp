@@ -121,11 +121,12 @@ void CDynaModel::ProcessTopologyRequest()
 	sc.UpdateConstElements();
 }
 
-void CDynaModel::DiscontinuityRequest(CDevice& device)
+void CDynaModel::DiscontinuityRequest(CDevice& device, const DiscontinuityLevel Level)
 {
 	device.IncrementDiscontinuityRequests();
 	sc.m_pDiscontinuityDevice = &device;
-	sc.m_bDiscontinuityRequest = true;
+	if(sc.m_eDiscontinuityLevel < Level)
+		sc.m_eDiscontinuityLevel = Level;
 }
 
 double CDynaModel::GetWeightedNorm(double *pVector)
@@ -157,7 +158,7 @@ double CDynaModel::GetNorm(double *pVector)
 
 void CDynaModel::ServeDiscontinuityRequest()
 {
-	if (sc.m_bDiscontinuityRequest)
+	if (sc.m_eDiscontinuityLevel != DiscontinuityLevel::None)
 	{
 		std::string DeviceInfo(sc.m_pDiscontinuityDevice ? sc.m_pDiscontinuityDevice->GetVerbalName() : "");
 		if (DeviceInfo.empty())
@@ -165,7 +166,7 @@ void CDynaModel::ServeDiscontinuityRequest()
 		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszDiscontinuityProcessing, 
 			GetCurrentTime(), DeviceInfo));
 
-		sc.m_bDiscontinuityRequest = false;
+		sc.m_eDiscontinuityLevel = DiscontinuityLevel::None;
 		sc.m_pDiscontinuityDevice = nullptr;
 		EnterDiscontinuityMode();
 		ProcessDiscontinuity();
@@ -775,7 +776,7 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 	Serializer->AddProperty("ZeroCrossingMode", m_bZeroCrossingMode);
 	Serializer->AddProperty("RetryStep", m_bRetryStep);
 	Serializer->AddProperty("ProcessTopology", m_bProcessTopology);
-	Serializer->AddProperty("DiscontinuityRequest", m_bDiscontinuityRequest);
+	Serializer->AddEnumProperty("DiscontinuityRequest", new CSerializerAdapterEnum(m_eDiscontinuityLevel, m_cszDiscontinuityLevelTypeNames));
 	Serializer->AddProperty("EnforceOut", m_bEnforceOut);
 	Serializer->AddProperty("BeforeDiscontinuityWritten", m_bBeforeDiscontinuityWritten);
 	Serializer->AddProperty("FilteredStep", dFilteredStep);

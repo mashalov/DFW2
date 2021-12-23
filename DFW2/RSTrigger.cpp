@@ -39,7 +39,7 @@ eDEVICEFUNCTIONSTATUS CRSTrigger::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		}
 
 		if (dOldOut != m_Output)
-			pDynaModel->DiscontinuityRequest(m_Device);
+			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

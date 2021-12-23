@@ -185,7 +185,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 			}
 
 		if (!Equal(dOldDec, Udec))
-			pDynaModel->DiscontinuityRequest(*this);
+			pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 	}
 	else
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;

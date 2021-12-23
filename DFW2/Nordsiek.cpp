@@ -7,8 +7,23 @@ using namespace DFW2;
 // рассчитывает прогноз Nordsieck для заданного шага
 void CDynaModel::Predict()
 {
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	struct RightVector* pVectorBegin{ pRightVector };
+	struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
+
+#define DBG_CHECK_PREDICTION
+
+#ifdef DBG_CHECK_PREDICTION
+	std::vector<RightVector> RightVectorBefore(pRightVector, pRightVector + klu.MatrixSize());
+	struct RightVector* pCheckVectorBegin{ pRightVector };
+	auto itCheck{ RightVectorBefore.begin() };
+	while (pCheckVectorBegin < pVectorEnd)
+	{
+		itCheck->Nordsiek[0] = *pCheckVectorBegin->pValue;
+		pCheckVectorBegin++;
+		itCheck++;
+	}
+	
+#endif
 
 	// Алгоритм расчета [Lsode 2.61]
 	while (pVectorBegin < pVectorEnd)
@@ -28,6 +43,23 @@ void CDynaModel::Predict()
 		pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
 		pVectorBegin++;
 	}
+
+#ifdef DBG_CHECK_PREDICTION
+	pCheckVectorBegin = pRightVector;
+	itCheck = RightVectorBefore.begin() ;
+	while (pCheckVectorBegin < pVectorEnd)
+	{
+		itCheck->Nordsiek[0] -= pCheckVectorBegin->Nordsiek[0];
+		pCheckVectorBegin++;
+		itCheck++;
+	}
+
+	std::sort(RightVectorBefore.begin(), RightVectorBefore.end(), [](const RightVector& lhs, const RightVector& rhs)
+		{ 
+			return std::abs(lhs.Nordsiek[0]) > std::abs(rhs.Nordsiek[0]);
+		});
+	pCheckVectorBegin = pRightVector;
+#endif
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::ResetIterations);
 
@@ -373,7 +405,7 @@ void CDynaModel::SaveNordsiek()
 }
 
 // масштабирование Nordsieck на заданный коэффициент изменения шага
-void CDynaModel::RescaleNordsiek(double r)
+void CDynaModel::RescaleNordsiek(const double r)
 {
 	struct RightVector *pVectorBegin = pRightVector;
 	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
@@ -382,7 +414,7 @@ void CDynaModel::RescaleNordsiek(double r)
 	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
 	while (pVectorBegin < pVectorEnd)
 	{
-		double R = 1.0;
+		double R{ 1.0 };
 		for (ptrdiff_t j = 1; j < sc.q + 1; j++)
 		{
 			R *= r;

@@ -162,7 +162,7 @@ eDEVICEFUNCTIONSTATUS CLimitedLag::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		}
 
 		if (OldState != GetCurrentState())
-			pDynaModel->DiscontinuityRequest(m_Device);
+			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

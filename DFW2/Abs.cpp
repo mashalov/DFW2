@@ -65,7 +65,7 @@ double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 		if (CDynaPrimitive::ChangeState(pDynaModel, m_Input + dHyst, m_Input + dHyst, -dHyst, m_Input.Index, rH))
 		{
 			m_bPositive = false;
-			pDynaModel->DiscontinuityRequest(m_Device);
+			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
 		}
 	}
 	else
@@ -73,7 +73,7 @@ double CAbs::CheckZeroCrossing(CDynaModel *pDynaModel)
 		if (CDynaPrimitive::ChangeState(pDynaModel, dHyst - m_Input, dHyst - m_Input, dHyst, m_Input.Index, rH))
 		{
 			m_bPositive = true;
-			pDynaModel->DiscontinuityRequest(m_Device);
+			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
 		}
 	}
 

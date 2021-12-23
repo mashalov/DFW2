@@ -539,7 +539,7 @@ bool CDynaModel::NewtonUpdate()
 	// first check Newton convergence
 	sc.Newton.Reset();
 
-	// констатны метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
+	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
 	const double Methodl0[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	double *pB = klu.B();
@@ -921,7 +921,7 @@ bool CDynaModel::Step()
 							bRes = bRes && UpdateExternalVariables();
 						}
 						// проверяем, не возникло ли новых запросов на обработку разрыва при обработке разрыва
-						if (!sc.m_bDiscontinuityRequest)
+						if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
 							sc.m_bBeforeDiscontinuityWritten = false;		// если запросов нет - больше записывать до разрыва нечего
 					}
 					else
@@ -938,7 +938,7 @@ bool CDynaModel::Step()
 		}
 	}
 
-	if (sc.m_bDiscontinuityRequest)
+	if (sc.m_eDiscontinuityLevel != DiscontinuityLevel::None)
 	{
 		// если был запрос на обработку разрыва
 		if (sc.m_bBeforeDiscontinuityWritten)
@@ -1005,7 +1005,7 @@ bool CDynaModel::Step()
 								// если нашли время зерокроссинга выходим из режима зерокроссинга
 								sc.m_bZeroCrossingMode = false;
 
-								if (!sc.m_bDiscontinuityRequest)
+								if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
 								{
 									// если не возникло запросов на обработку разрыва
 									// обнуляем коэффициент шага, чтобы он не изменился
@@ -1036,7 +1036,7 @@ bool CDynaModel::Step()
 								// режим зерокроссинга отменяем
 								sc.m_bZeroCrossingMode = false;
 
-								if (!sc.m_bDiscontinuityRequest)
+								if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
 								{
 									// если не было запросов обработки разрыва признаем шаг успешным
 									GoodStep(rSame);
@@ -1290,7 +1290,7 @@ bool CDynaModel::ProcessDiscontinuity()
 			// начинают обработку заново
 			UnprocessDiscontinuity();
 			// запрос на обработку разрыва сбрасываем
-			sc.m_bDiscontinuityRequest = false;
+			sc.m_eDiscontinuityLevel = DiscontinuityLevel::None;
 			sc.m_pDiscontinuityDevice = nullptr;
 
 			ChangeOrder(1);
@@ -1345,7 +1345,7 @@ bool CDynaModel::ProcessDiscontinuity()
 			}
 
 			// если все ОК, но в процессе обработки разрыва был(и) запрос(ы) на обработку разрывов - повторяем цикл обработки
-			if (!sc.m_bDiscontinuityRequest)
+			if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
 				break;
 		}
 		// инициализируем Нордсик

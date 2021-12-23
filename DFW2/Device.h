@@ -133,6 +133,13 @@ namespace DFW2
 		Canay
 	};
 
+	enum class DiscontinuityLevel
+	{
+		None,
+		Light,
+		Hard
+	};
+
 	struct RightVectorTotal
 	{
 		double *pValue;													// значение переменной состояния

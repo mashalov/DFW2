@@ -242,7 +242,7 @@ namespace DFW2
 			bool m_bZeroCrossingMode = false;
 			bool m_bRetryStep = false;
 			bool m_bProcessTopology = false;
-			bool m_bDiscontinuityRequest = false;
+			DiscontinuityLevel m_eDiscontinuityLevel = DiscontinuityLevel::None;
 			const CDevice* m_pDiscontinuityDevice = nullptr;
 			bool m_bEnforceOut = false;
 			bool m_bBeforeDiscontinuityWritten = false;				// флаг обработки момента времени до разрыва
@@ -390,6 +390,8 @@ namespace DFW2
 				t0 = t;
 			}
 			SerializerPtr GetSerializer();
+
+			static constexpr const char* m_cszDiscontinuityLevelTypeNames[3] = { "none", "light", "hard" };
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -502,7 +504,7 @@ namespace DFW2
 		void InitDevicesNordsiek();
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
 		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
-		void RescaleNordsiek(double r);
+		void RescaleNordsiek(const double r);
 		void UpdateNordsiek(bool bAllowSuppression = false);
 		bool DetectAdamsRinging();
 		void SaveNordsiek();
@@ -759,7 +761,7 @@ namespace DFW2
 		}
 		void StopProcess();
 		void ProcessTopologyRequest();
-		void DiscontinuityRequest(CDevice& device);
+		void DiscontinuityRequest(CDevice& device, const DiscontinuityLevel Level);
 		void ServeDiscontinuityRequest();
 		bool SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dDelay);
 		bool RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject);

@@ -143,7 +143,7 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 											OldState, 
 											m_eDbState)
 							);
-			pDynaModel->DiscontinuityRequest(m_Device);
+			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
 		}
 	}
 
