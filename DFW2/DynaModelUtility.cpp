@@ -909,6 +909,56 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::strin
 	}
 }
 
+void CDynaModel::SnapshotRightVector()
+{
+	// и обновляем в нем значения переменных на текущие
+	m_RightVectorSnapshot.resize(klu.MatrixSize());
+	struct RightVector* pCheckVectorBegin{ pRightVector };
+	const struct RightVector* pCheckVectorEnd{ pRightVector + klu.MatrixSize()};
+	auto itCheck{ m_RightVectorSnapshot.begin() };
+	while (pCheckVectorBegin < pCheckVectorEnd)
+	{
+		*itCheck = *pCheckVectorBegin;
+		itCheck->Error = *pCheckVectorBegin->pValue;
+		pCheckVectorBegin++;
+		itCheck++;
+	}
+}
+
+void CDynaModel::CompareRightVector()
+{
+	struct RightVector* pCheckVectorBegin{ pRightVector };
+	const struct RightVector* pCheckVectorEnd{ pRightVector + (std::min)(klu.MatrixSize(), static_cast<ptrdiff_t>(m_RightVectorSnapshot.size())) };
+
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Right vector compare");
+
+	auto itCheck{ m_RightVectorSnapshot.begin() };
+	while (pCheckVectorBegin < pCheckVectorEnd)
+	{
+		itCheck->Error -= *pCheckVectorBegin->pValue;
+		itCheck->b = itCheck->GetWeightedError(*itCheck->pValue);
+		pCheckVectorBegin++;
+		itCheck++;
+	}
+	// сортируем по модулю разности
+	std::sort(m_RightVectorSnapshot.begin(), m_RightVectorSnapshot.end(), [this](const RightVector& lhs, const RightVector& rhs)
+		{
+			return lhs.b  > rhs.b;
+		});
+	// и смотрим какие переменные отклонились наиболее значительно
+	for (size_t i{ 0 }; i < m_RightVectorSnapshot.size(); i++)
+	{
+		const auto& rv{ m_RightVectorSnapshot[i] };
+		if (rv.b < 1.0) break;
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Diff {} Weighted {} Variable {} Value {} Device {}",
+			rv.Error,
+			rv.b,
+			rv.pDevice->VariableNameByPtr(rv.pValue),
+			*rv.pValue,
+			rv.pDevice->GetVerbalName())
+		);
+	}
+}
 
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq

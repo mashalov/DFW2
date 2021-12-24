@@ -287,6 +287,7 @@ namespace DFW2
 			StepError Integrator;
 			double m_dLastRefactorH = 0.0;
 			bool bRingingDetected = false;
+			double dNewtonGradient = 0.0;
 
 			StatisticsMaxFinder m_MaxBranchAngle, m_MaxGeneratorAngle;
 
@@ -427,7 +428,7 @@ namespace DFW2
 		CResultsWriterABI m_ResultsWriter;
 #endif		
 		std::map<ptrdiff_t, std::set<ptrdiff_t>> m_MatrixChecker;
-
+		std::vector<RightVector> m_RightVectorSnapshot;
 
 		KLUWrapper<double> klu;
 		CDynaLRC *m_pLRCGen		= nullptr;		// СХН для генераторных узлов без генераторов
@@ -451,7 +452,7 @@ namespace DFW2
 		ptrdiff_t m_nEstimatedMatrixSize;
 		ptrdiff_t m_nTotalVariablesCount;
 		double *pbRightHand;
-		std::unique_ptr<double[]> pRightHandBackup;
+		std::unique_ptr<double[]> pRightHandBackup, pNewtonGradient;
 		
 
 
@@ -786,6 +787,7 @@ namespace DFW2
 		static const double MethodlDefault[4][4];
 
 		static double gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double* Sol);
+		double GradientNorm(KLUWrapper<double>& klu, const double* Sol);
 
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
@@ -839,5 +841,9 @@ namespace DFW2
 			double Value,
 			double PreviousValue,
 			const std::string_view ChangeDescription);
+
+		void SnapshotRightVector();
+		void CompareRightVector();
+
 	};
 }

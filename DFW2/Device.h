@@ -166,14 +166,14 @@ namespace DFW2
 
 		// расчет взвешенной ошибки по значению снаружи
 		// но с допустимыми погрешностями для этой переменной
-		double GetWeightedError(double dError, double dAbsValue)
+		double GetWeightedError(const double dError, const double dAbsValue) const
 		{
 			_ASSERTE(Atol > 0.0);
 			return dError / (std::abs(dAbsValue) * Rtol + Atol);
 		}
 
 		// расчет взвешенной ошибки по значению данной переменной
-		double GetWeightedError(double dAbsValue)
+		double GetWeightedError(const double dAbsValue) const
 		{
 			_ASSERTE(Atol > 0.0);
 			return Error / (std::abs(dAbsValue) * Rtol + Atol);

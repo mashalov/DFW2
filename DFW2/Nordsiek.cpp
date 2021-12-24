@@ -10,19 +10,10 @@ void CDynaModel::Predict()
 	struct RightVector* pVectorBegin{ pRightVector };
 	struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
 
-#define DBG_CHECK_PREDICTION
+//#define DBG_CHECK_PREDICTION
 
 #ifdef DBG_CHECK_PREDICTION
-	std::vector<RightVector> RightVectorBefore(pRightVector, pRightVector + klu.MatrixSize());
-	struct RightVector* pCheckVectorBegin{ pRightVector };
-	auto itCheck{ RightVectorBefore.begin() };
-	while (pCheckVectorBegin < pVectorEnd)
-	{
-		itCheck->Nordsiek[0] = *pCheckVectorBegin->pValue;
-		pCheckVectorBegin++;
-		itCheck++;
-	}
-	
+	SnapshotRightVector();
 #endif
 
 	// Алгоритм расчета [Lsode 2.61]
@@ -45,20 +36,9 @@ void CDynaModel::Predict()
 	}
 
 #ifdef DBG_CHECK_PREDICTION
-	pCheckVectorBegin = pRightVector;
-	itCheck = RightVectorBefore.begin() ;
-	while (pCheckVectorBegin < pVectorEnd)
-	{
-		itCheck->Nordsiek[0] -= pCheckVectorBegin->Nordsiek[0];
-		pCheckVectorBegin++;
-		itCheck++;
-	}
-
-	std::sort(RightVectorBefore.begin(), RightVectorBefore.end(), [](const RightVector& lhs, const RightVector& rhs)
-		{ 
-			return std::abs(lhs.Nordsiek[0]) > std::abs(rhs.Nordsiek[0]);
-		});
-	pCheckVectorBegin = pRightVector;
+	// после выполнения прогноза рассчитываем разность
+	// между спрогнозированным значением и исходным
+	CompareRightVector();
 #endif
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::ResetIterations);

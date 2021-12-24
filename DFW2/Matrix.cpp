@@ -35,6 +35,7 @@ void CDynaModel::EstimateMatrix()
 		pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		pRightVector = pRightVectorUniq.get();
 		pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
+		pNewtonGradient = std::make_unique<double[]>(m_nEstimatedMatrixSize);
 		UpdateNewRightVector();
 	}
 	else
@@ -43,6 +44,7 @@ void CDynaModel::EstimateMatrix()
 		pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		pRightVector = pRightVectorUniq.get();
 		pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
+		pNewtonGradient = std::make_unique<double[]>(m_nEstimatedMatrixSize);
 	}
 
 	// substitute element setter to counter (not actually setting values, just count)
@@ -156,6 +158,9 @@ void CDynaModel::BuildMatrix()
 void CDynaModel::BuildDerivatives()
 {
 	ResetElement();
+	// похоже что производные дифуров при нулевых
+	// производных алгебры только мешают Ньютону
+	return; 
 	for (auto&& it : m_DeviceContainers)
 		it->BuildDerivatives(this);
 }
@@ -440,7 +445,8 @@ void CDynaModel::SetDifferentiatorsTolerance()
 			{
 				// уравнение отмечено как уравнение РДЗ, меняем отметку, чтобы указать, что это уравнение уже прошли
 				pVectorBegin->PrimitiveBlock = PBT_LAST;
-				pVectorBegin->Atol = 1E-2;
+				//pVectorBegin->Atol = 1E-2;
+				//pVectorBegin->Rtol = 1E-5;
 
 				ptrdiff_t nDerLagEqIndex = pVectorBegin - pRightVector;
 				MatrixRow *pRowBase = m_pMatrixRows;

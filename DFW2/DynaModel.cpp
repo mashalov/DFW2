@@ -589,8 +589,19 @@ bool CDynaModel::NewtonUpdate()
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetConvergenceRatio);
 
-	if (ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
-		ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck)
+	sc.dNewtonGradient = 0.0;
+
+	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
+							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck;
+
+	if (bConvCheckConverged)
+	{
+		sc.dNewtonGradient = GradientNorm(klu, pB);
+		if (sc.dNewtonGradient > 0.05)
+			bConvCheckConverged = false;
+	}
+
+	if ( bConvCheckConverged )
 	{
 		sc.m_bNewtonConverged = true;
 	}
@@ -643,12 +654,12 @@ bool CDynaModel::NewtonUpdate()
 			{
 				if (bLineSearch)
 				{
-					std::unique_ptr<double[]> pRh = std::make_unique<double[]>(klu.MatrixSize());
-					std::unique_ptr<double[]> pRb = std::make_unique<double[]>(klu.MatrixSize());
-					std::copy(pRightHandBackup.get(), pRightHandBackup.get() + klu.MatrixSize(), pRh.get()); // невязки до итерации
-					std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRb.get());								 // решение на данной итерации
+					std::unique_ptr<double[]> pRh = std::make_unique<double[]>(klu.MatrixSize());			 // невязки до итерации	
+					std::unique_ptr<double[]> pRb = std::make_unique<double[]>(klu.MatrixSize());			 // невязки после итерации
+					std::copy(pRightHandBackup.get(), pRightHandBackup.get() + klu.MatrixSize(), pRh.get()); // копируем невязки до итерации
+					std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRb.get());								 // копируем невязки после итерации
 					double g0 = sc.dRightHandNorm;															 // норма небаланса до итерации
-					BuildRightHand();																		 // невязки после итерации
+					BuildRightHand();																		 // рассчитываем невязки после итерации
 					double g1 = sc.dRightHandNorm;															 // норма небаланса после итерации
 
 					if (g0 < g1)
@@ -814,15 +825,16 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged in {:>3} iterations {} {} {} {} {} Saving {:.2}", GetCurrentTime(),
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged in {:>3} iterations MaxErr {} {} {} = {} Predict {} Saving {:.2} grad {}", GetCurrentTime(),
 																				sc.nStepsCount,
 																				sc.nNewtonIteration,
 																				sc.Newton.dMaxErrorVariable, 
 																				sc.Newton.pMaxErrorDevice->GetVerbalName(),
+																				sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
 																				*sc.Newton.pMaxErrorVariable, 
 																				pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
-																				sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
-																				1.0 - static_cast<double>(klu.FactorizationsCount()) / sc.nNewtonIterationsCount));
+																				1.0 - static_cast<double>(klu.FactorizationsCount()) / sc.nNewtonIterationsCount,
+																				sc.dNewtonGradient));
 						
 #endif
 
@@ -837,14 +849,15 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (!sc.m_bNewtonStepControl)
 				{
-					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Continue {:>3} iteration {} {} {} {} {}", GetCurrentTime(),
+					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Continue {:>3} iteration MaxErr {} {} {} = {} Predict {} grad {}", GetCurrentTime(),
 						sc.nStepsCount,
 						sc.nNewtonIteration,
 						sc.Newton.dMaxErrorVariable,
 						sc.Newton.pMaxErrorDevice->GetVerbalName(),
+						sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
 						*sc.Newton.pMaxErrorVariable,
 						pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
-						sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable)));
+						sc.dNewtonGradient));
 				}
 			}
 
@@ -965,8 +978,31 @@ bool CDynaModel::Step()
 	// пока шаг нужно повторять, все в порядке и не получена команда останова
 	while (sc.m_bRetryStep && bRes && !CancelProcessing())
 	{
+		/*if (GetIntegrationStepNumber() == 3516)
+			SnapshotRightVector();*/
+
 		Predict();		// делаем прогноз Nordsieck для следуюшего времени
+
+		/*if (GetIntegrationStepNumber() == 3516)
+		{
+			CompareRightVector();
+			SnapshotRightVector();
+		}*/
+
 		bRes = bRes && SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
+
+		/*if (GetIntegrationStepNumber() == 3514)
+		{
+			SnapshotRightVector();
+			bRes = bRes && SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
+			CompareRightVector();
+			SnapshotRightVector();
+			bRes = bRes && SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
+			CompareRightVector();
+		}*/
+
+		/*if (GetIntegrationStepNumber() == 3516)
+			CompareRightVector();*/
 
 		if (bRes)
 		{
@@ -1163,12 +1199,15 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = (std::max)(1.01, r);
 
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {:>3} {}[{}] {} rSame {} RateLimit {} for {} steps", 
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {:>3} {}[{}] Error {} Value {} Predicted {} rSame {} RateLimit {} for {} steps", 
 		GetCurrentTime(), 
 		GetIntegrationStepNumber(),
 		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
 		sc.Integrator.pMaxErrorDevice->VariableNameByPtr(sc.Integrator.pMaxErrorVariable),
-		sc.Integrator.dMaxErrorVariable, r,
+		sc.Integrator.dMaxErrorVariable, 
+		*sc.Integrator.pMaxErrorVariable,
+		pRightVector[sc.Integrator.nMaxErrorVariableEquation].Nordsiek[0],
+		r,
 		sc.dRateGrowLimit < FLT_MAX ? sc.dRateGrowLimit : 0.0,
 		sc.nStepsToEndRateGrow - sc.nStepsCount));
 
@@ -1749,11 +1788,13 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 	return bRes;
 }
 
-
+// расчет градиента функции оптимального шага g(f(x+lambda*dx))
 double CDynaModel::gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double *pSol)
 {
-	// если небаланс увеличился
+	// вектор результата умножения матрицы Якоби на вектор невязок
 	std::unique_ptr<double[]> yv = std::make_unique<double[]>(klu.MatrixSize());
+
+	// формируем матрицу в виде пригодном для умножения на вектор
 	cs Aj;
 	Aj.i = klu.Ap();
 	Aj.p = klu.Ai();
@@ -1770,6 +1811,51 @@ double CDynaModel::gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, 
 		gs1v += yv[s] * pSol[s];
 
 	return gs1v;
+}
+
+double CDynaModel::GradientNorm(KLUWrapper<double>& klu, const double* Sol)
+{
+	// формируем матрицу в виде пригодном для умножения на вектор
+	cs Aj;
+	Aj.i = klu.Ap();
+	Aj.p = klu.Ai();
+	Aj.x = klu.Ax();
+	Aj.m = Aj.n = klu.MatrixSize();
+	Aj.nz = -1;
+
+	// считаем градиент до итерации - умножаем матрицу якоби на вектор невязок до итерации
+	double* pb{ pNewtonGradient.get() };
+	double* pe{ pNewtonGradient.get() + klu.MatrixSize() };
+	std::fill(pb, pe, 0.0);
+	cs_gatxpy(&Aj, Sol, pb);
+	double Norm{ 0.0 };
+	RightVector* pMaxGradient{ nullptr };
+	while (pb < pe)
+	{
+		RightVector* pRv{ pRightVector + (pb - pNewtonGradient.get()) };
+		if (pRv->Atol > 0.0)
+		{
+			const double WeightedNorm{ pRv->GetWeightedError(*pb, *pRv->pValue) };
+			if (Norm < WeightedNorm)
+			{
+				Norm = WeightedNorm;
+				pMaxGradient = pRv;
+			}
+		}
+
+		//Norm += (*pb) * (*pb);
+		pb++;
+	}
+
+	if (pMaxGradient)
+	{
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Max grad {} at {} \"{}\"",
+			Norm,
+			pMaxGradient->pDevice->GetVerbalName(),
+			pMaxGradient->pDevice->VariableNameByPtr(pMaxGradient->pValue)));
+	}
+
+	return Norm;
 }
 
 // отключает ведомое устройство если ведущего нет или оно отключено

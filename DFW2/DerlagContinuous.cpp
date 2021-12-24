@@ -151,7 +151,6 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuousSmooth::ProcessDiscontinuity(CDynaModel* 
 			// рассчитываем выход лага с условием сохранения значения на выходе РДЗ
 			m_Y2 = (m_Input * m_K * m_T - m_Output) / m_K / m_T;
 			double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
-			dOut++;
 		}
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

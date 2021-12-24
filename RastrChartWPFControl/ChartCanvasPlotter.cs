@@ -1567,12 +1567,12 @@ namespace RastrChartWPFControl
                 {
                     if (bCopyTime)
                     {
-                        tabbedText.Append(Quot + pt.X.ToString("E") + Quot + Tab);
-                        csvText.Append(Quot + pt.X.ToString("E") + Quot + ListSeparator);
+                        tabbedText.Append(Quot + pt.X.ToString("R") + Quot + Tab);
+                        csvText.Append(Quot + pt.X.ToString("R") + Quot + ListSeparator);
                     }
 
-                    tabbedText.Append(Quot + pt.Y.ToString("E") + Quot + Tab);
-                    csvText.Append(Quot + pt.Y.ToString("E") + Quot + ListSeparator);
+                    tabbedText.Append(Quot + pt.Y.ToString("R") + Quot + Tab);
+                    csvText.Append(Quot + pt.Y.ToString("R") + Quot + ListSeparator);
 
                     tabbedText.Append(Environment.NewLine);
                     csvText.Append(Environment.NewLine);
@@ -1596,8 +1596,8 @@ namespace RastrChartWPFControl
 
                     if (bCopyTime)
                     {
-                        tabbedText.Append(Quot + x.ToString("E") + Quot);
-                        csvText.Append(Quot + x.ToString("E") + Quot);
+                        tabbedText.Append(Quot + x.ToString("R") + Quot);
+                        csvText.Append(Quot + x.ToString("R") + Quot);
                         bFirst = false;
                     }
                     
@@ -1630,8 +1630,8 @@ namespace RastrChartWPFControl
                         
                     
                         
-                        tabbedText.Append(Quot + y.ToString("E") + Quot);
-                        csvText.Append(Quot + y.ToString("E") + Quot);
+                        tabbedText.Append(Quot + y.ToString("R") + Quot);
+                        csvText.Append(Quot + y.ToString("R") + Quot);
 
                         cn++;
                     }
