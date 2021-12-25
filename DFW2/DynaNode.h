@@ -115,6 +115,8 @@ namespace DFW2
 		ptrdiff_t Nr;
 		cplx Yii;						// собственная проводимость
 		cplx YiiSuper;					// собственная проводимость суперузла
+		cplx Iconst;					// постоянный ток в узле
+		cplx IconstSuper;				// постоянный ток в суперузле
 		double Vold;					// модуль напряжения на предыдущей итерации
 		CDynaLRC *m_pLRC = nullptr;		// указатель на СХН узла в динамике
 		CDynaLRC *m_pLRCLF = nullptr;	// указатель на СХН узла в УР

@@ -353,13 +353,12 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//LoadFile("d:\\downloads\\last_version_mdp_debug_1_New_calc2\\last_version_mdp_debug_1_New_calc2");
 	//LoadFile("d:\\downloads\\5_check_mdp_debug_1\\5_check_mdp_debug_4");
 	LoadFile("d:\\downloads\\8_check_mdp_debug_1\\8_check_mdp_debug_1");
-
+	
 
 
 	//LoadFile("d:\\downloads\\!упрощ кор 16122020_01-00_itog+Урал_откл СЭ (нов) зам.УШР.rst", rstPath.c_str());
 	//LoadFile("d:\\downloads\\mustang", rstPath.c_str());
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\18122019_14-00_simple_v7_clean_nosvc_fixpunom.rst", rstPath.c_str());
-	
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia\\кз.dfw", dfwPath.c_str());
 
 

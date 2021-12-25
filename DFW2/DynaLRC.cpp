@@ -526,6 +526,16 @@ void CDynaLRCContainer::CreateFromSerialized()
 		lrcConstP.PQ[1].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
 	}
 
+	// СХН на постоянный ток для динамики
+	if (CheckUserLRC(-2, true))
+	{
+		auto& lrcConstI = constructMap[-2];
+		clearPQ(lrcConstI);
+		lrcConstI.PQ[0].push_back({ 0.0, 1.0, 0.0, 1.0, 0.0 });
+		lrcConstI.PQ[1].push_back({ 0.0, 1.0, 0.0, 1.0, 0.0 });
+	}
+
+	
 	auto SortLRC = [](const auto& lhs, const auto& rhs) { return lhs.V < rhs.V; };
 
 	for (auto&& lrc : constructMap)

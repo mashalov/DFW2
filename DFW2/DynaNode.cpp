@@ -131,7 +131,7 @@ void CDynaNodeBase::GetPnrQnr()
 
 bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
+	bool bRes = true;	
 
 	double Vre2 = Vre * Vre;
 	double Vim2 = Vim * Vim;
@@ -309,7 +309,8 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
 	GetPnrQnrSuper();
 
-	double Ire(0.0), Iim(0.0);
+	// в узле может быть уже известный постоянный ток
+	double Ire(IconstSuper.real()), Iim(IconstSuper.imag());
 	double dV(0.0);
 
 	if (!m_bInMetallicSC)
@@ -330,7 +331,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
 			Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
 #ifdef _DEBUG
-			cplx S = cplx(Ire, -Iim) * cplx(Vre, Vim);
+			cplx S = std::conj(cplx(Ire, Iim) - IconstSuper) * cplx(Vre, Vim);
 			double dP = S.real() - (Pnr - Pgr);
 			double dQ = S.imag() - (Qnr - Qgr);
 		
@@ -411,7 +412,15 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 	else if (Equal(Pg, 0.0) && Equal(Qg, 0.0))		// если генераторы не подключены, и мощность генерации равна нулю - СХН генераторов не нужна
 		Pgr = Qgr = 0.0;
 	else
+	{
 		m_pLRCGen = pDynaModel->GetLRCGen();		// если есть генерация но нет генераторов - нужна СХН генераторов
+		// альтернативный вариант - генераторация в узле 
+		// представляется током
+		// рассчитываем и сохраняем постоянный ток по мощности и напряжению
+		Iconst = -std::conj(cplx(Pgr, Qgr) / cplx(Vre, Vim));
+		// обнуляем генерацию в узле
+		Pg = Qg = Pgr = Qgr = 0.0;;
+	}
 
 	// если в узле нет СХН для динамики, подставляем СХН по умолчанию
 	if (!m_pLRC)
@@ -604,7 +613,10 @@ void CDynaNodeContainer::CalculateShuntParts()
 	for (auto&& node : m_DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
+		// собираем проводимость
 		pNode->YiiSuper = pNode->Yii;
+		// собираем постоянный ток
+		pNode->IconstSuper = pNode->Iconst;
 		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
 		if (pLink->m_nCount)
 		{
@@ -614,6 +626,7 @@ void CDynaNodeContainer::CalculateShuntParts()
 			{
 				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 				pNode->YiiSuper += pSlaveNode->Yii;
+				pNode->IconstSuper += pSlaveNode->Iconst;
 				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
 				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
 			}
@@ -900,8 +913,8 @@ bool CDynaNodeContainer::LULF()
 
 				cplx Unode(pNode->Vre, pNode->Vim);
 
-				cplx I = 0.0;					// обнуляем узел
-				cplx Y = pNode->YiiSuper;		// диагональ матрицы по умолчанию собственная проводимость узла
+				cplx I{ pNode->IconstSuper };
+				cplx Y{ pNode->YiiSuper };		// диагональ матрицы по умолчанию собственная проводимость узла
 
 				pNode->Vold = pNode->V;			// запоминаем напряжение до итерации для анализа сходимости
 
