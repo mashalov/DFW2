@@ -585,6 +585,10 @@ namespace DFW2
 		bool RunTransient();
 		bool RunLoadFlow();
 
+		// выполняет предварительную инициализацию устройств: 
+		// расчет внутренних констант, которые не зависят от связанных устройств
+		// и валидация
+		void PreInitDevices();
 		void InitDevices();
 		bool InitEquations();
 

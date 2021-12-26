@@ -13,7 +13,7 @@ namespace DFW2
 	class CDynaGeneratorDQBase : public CDynaGeneratorMotion
 	{
 	protected:
-		cplx GetXofEqs() override { return cplx(0, xq); };
+		double GetXofEqs() const override { return xq; };
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;

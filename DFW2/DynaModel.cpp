@@ -203,6 +203,9 @@ bool CDynaModel::RunTransient()
 
 		PrepareNetworkElements();
 		LoadFlow();
+		// выполняем предварительную инициализацию устройств
+		// (расчет констант и валидация , не связанные с другими устройствами
+		PreInitDevices();
 		// Здесь вызываем особый вариант ProcessTopology, который проверяет
 		// наличие созданных суперузлов, и если они уже есть - то не создает их
 		// но создает все остальное (синхронные зоны и все что еще понадобится)
@@ -387,16 +390,19 @@ bool CDynaModel::RunTransient()
 	return bRes;
 }
 
-void CDynaModel::InitDevices()
+void CDynaModel::PreInitDevices()
 {
-	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
 	for (auto&& container : m_DeviceContainers)
 		Status = CDevice::DeviceFunctionResult(Status, container->PreInit(this));
 
 	if (!CDevice::IsFunctionStatusOK(Status))
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+}
 
-	Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
+void CDynaModel::InitDevices()
+{
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_NOTREADY };
 
 	m_cszDampingName = (GetFreqDampingType() == ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
 

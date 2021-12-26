@@ -845,8 +845,10 @@ void CDynaNodeContainer::ProcessTopologyInitial()
 {
 	// если суперузлы отсутствуют, строим суперузлы
 	// если есть считаем что они построены в УР
-	if(m_SuperLinks.empty())
+	if (m_SuperLinks.empty())
 		CreateSuperNodes();
+	else
+		CalculateSuperNodesAdmittances();
 	BuildSynchroZones();
 	m_pDynaModel->RebuildMatrix(true);
 }	
@@ -854,12 +856,8 @@ void CDynaNodeContainer::ProcessTopologyInitial()
 // функция обработки топологии, вызывается в процессе расчета динамики
 void CDynaNodeContainer::ProcessTopology()
 {
-	// Было 
-	//CreateSuperNodes();
-	//BuildSynchroZones();
-	// Стало - сначала создаем структуру суперузлов
 	CreateSuperNodesStructure();
-	// потом включаем или выключаем узлы по зонам
+	// включаем или выключаем узлы по зонам
 	BuildSynchroZones();
 	// и только потом считаем проводимости узлов
 	CalculateSuperNodesAdmittances();

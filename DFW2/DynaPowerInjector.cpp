@@ -56,9 +56,19 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pD
 	return eRes;
 }
 
+bool CDynaPowerInjector::CalculatePower()
+{
+	return true;
+}
+
 void CDynaPowerInjector::FinishStep()
 {
-	const double dVre(Vre), dVim(Vim), dIre(Ire), dIim(Iim);
+	const double dVre{ Vre }, dVim{ Vim };
+	double dIre{ Ire }, dIim{ Iim };
+	// если в модели инжектора учитывается шунт Нортона,
+	// рассчитываем токи в шунте и добавляем к току инжектора
+	if (std::abs(m_Ynorton) > DFW2_EPSILON)
+		FromComplex(dIre, dIim, cplx(dIre, dIim) - cplx(dVre,dVim) * m_Ynorton);
 	P = dVre * dIre + dVim * dIim;
 	Q = dVim * dIre - dVre * dIim;
 }

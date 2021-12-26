@@ -64,6 +64,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 	}
 
 	m_Zgen = { 0 , xd1 };
+	// шунт Нортона
+	m_Ynorton = 1.0 / m_Zgen;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -99,15 +101,11 @@ bool CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 
 		// dIre / dIre
 		pDynaModel->SetElement(Ire, Ire, 1.0);
-		// dIre / dVim
-		pDynaModel->SetElement(Ire, Vim, 1.0 / xd1);
 		// dIre / dDeltaG
 		pDynaModel->SetElement(Ire, Delta, -Eqs * cos(Delta) / xd1);
 
 		// dIim / dIim
 		pDynaModel->SetElement(Iim, Iim, 1.0);
-		// dIim / dVre
-		pDynaModel->SetElement(Iim, Vre, -1.0 / xd1);
 		// dIim / dDeltaG
 		pDynaModel->SetElement(Iim, Delta, -Eqs * sin(Delta) / xd1);
 
@@ -124,9 +122,10 @@ bool CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 	if (bRes)
 	{
 		double NodeSv = Sv;
-		double dVre(Vre), dVim(Vim);
-		pDynaModel->SetFunction(Ire, Ire - (Eqs * sin(Delta) - dVim) / xd1);
-		pDynaModel->SetFunction(Iim, Iim - (dVre - Eqs * cos(Delta)) / xd1);
+		// в уравнение входит только составляющая тока генератора
+		// от ЭДС
+		pDynaModel->SetFunction(Ire, Ire - Eqs * sin(Delta) / xd1);
+		pDynaModel->SetFunction(Iim, Iim + Eqs * cos(Delta) / xd1);
 		SetFunctionsDiff(pDynaModel);
 	}
 
@@ -138,7 +137,8 @@ void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 	if (IsStateOn())
 	{
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
-		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1 + s) - Kdemp * s - ZeroDivGuard(Vre * Ire + Vim * Iim, 1+ Sv)) / Mj);
+		// интересно, что мощность от токов ЭДС равна мощности от полных токов ?! 
+		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1.0 + s) - Kdemp * s - ZeroDivGuard(Vre * Ire + Vim * Iim, 1 + Sv)) / Mj);
 	}
 	else
 	{

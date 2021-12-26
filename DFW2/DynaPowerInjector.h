@@ -13,6 +13,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		virtual eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel);
 		VariableIndexExternal V, DeltaV, Vre, Vim, Sv;
+		cplx m_Ynorton;
 	public:
 		enum VARS
 		{
@@ -43,8 +44,12 @@ namespace DFW2
 		using CDevice::CDevice; 
 		virtual ~CDynaPowerInjector() = default;
 
-		virtual bool CalculatePower() { return true; }
+		virtual bool CalculatePower();
 		void FinishStep() override;
+
+		// комплекс шунта Нортона в узле подключения	
+		virtual cplx Ynorton() const { return m_Ynorton; }
+
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

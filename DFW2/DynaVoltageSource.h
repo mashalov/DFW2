@@ -8,7 +8,7 @@ namespace DFW2
 		using CDynaPowerInjector::CDynaPowerInjector;
 		virtual ~CDynaVoltageSource() = default;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
-		virtual cplx GetEMF() = 0;
+		virtual cplx GetEMF() = 0;		// комплекс ЭДС источника напряжения
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};

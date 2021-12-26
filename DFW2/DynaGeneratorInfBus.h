@@ -11,7 +11,7 @@ namespace DFW2
 		cplx m_Zgen;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
-		virtual cplx GetXofEqs() { return cplx(0,xd1); }
+		virtual double GetXofEqs() const{ return xd1; }
 		VariableIndex Delta, Eqs;
 		double xd1;
 		double	r = 0.0;	// активное сопротивление статора

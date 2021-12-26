@@ -45,6 +45,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 	}
 
 	m_Zgen = { r , 0.5 * (xq + xd1) };
+	// В генераторах с dq преобразованием нельзя
+	// использовать шунт Нортона, поэтому он обнуляется
+	m_Ynorton = 0.0;
 
 	if (std::abs(xq) < 1E-7) xq = xd1; // place to validation !!!
 	if (xd <= 0) xd = xd1;

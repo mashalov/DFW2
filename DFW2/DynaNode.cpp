@@ -671,6 +671,21 @@ void CDynaNodeBase::GetGroundAdmittance(cplx& y)
 		if (reactor->IsStateOn())
 			y += cplx(reactor->g, reactor->b);
 	}
+
+	// добавляем к проводимости на землю
+	// шунты Нортона от генераторов. Для тех генераторов
+	// которые не работают в схеме Нортона его значение равно нулю
+	// !!!!!! Также не следует рассчитываеть Нортона в генераторах
+	// до расчета динамики. Для УР это неприемлемо !!!!!!
+	CDevice** ppDevice{ nullptr };
+	CLinkPtrCount* pLink{ GetLink(1) };
+	while (pLink->In(ppDevice))
+	{
+		const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppDevice) };
+		if (pGen->IsStateOn())
+			y += pGen->Ynorton();
+	}
+
 }
 
 void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
@@ -690,11 +705,11 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 	}
 	else
 	{
-		CDevice **ppBranch(nullptr);
+		CDevice **ppDevice(nullptr);
 		CLinkPtrCount *pLink = GetLink(0);
-		while (pLink->In(ppBranch))
+		while (pLink->In(ppDevice))
 		{
-			const auto& pBranch{ static_cast<CDynaBranch*>(*ppBranch) };
+			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			// проводимости ветви будут рассчитаны с учетом того,
 			// что она могла быть отнесена внутрь суперузла
 			pBranch->CalcAdmittances(bFixNegativeZs);
@@ -702,7 +717,7 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 			// проводимости узла. Слагаемые сами по себе рассчитаны с учетом состояния ветви
 			Yii -= (this == pBranch->m_pNodeIp) ? pBranch->Yips : pBranch->Yiqs;
 		}
-
+		
 		if (V < DFW2_EPSILON)
 		{
 			Vre = V = Unom;
@@ -938,23 +953,13 @@ bool CDynaNodeContainer::LULF()
 
 					pVsource->CalculatePower();
 
-					if (0)
-					{
-						//Альтернативный вариант с расчетом подключения к сети через мощность. Что-то нестабильный
-						cplx Sg(pVsource->P, pVsource->Q);
-						cplx E = pVsource->GetEMF();
-						cplx Yg = conj(Sg / Unode) / (E - Unode);
-						I -= E * Yg;
-						Y -= Yg;
-					}
-					else
-					{
-						const auto& pGen{ static_cast<CDynaGeneratorInfBus*>(pVsource) };
-						// в диагональ матрицы добавляем проводимость генератора
-						Y -= 1.0 / pGen->Zgen();
-						I -= pGen->Igen(nIteration);
-					}
-
+					const auto& pGen{ static_cast<CDynaGeneratorInfBus*>(pVsource) };
+					// в диагональ матрицы добавляем проводимость генератора
+					// и вычитаем шунт Нортона, так как он уже добавлен в диагональ
+					// матрицы. Это работает для генераторов у которых есть Нортон (он
+					// обратен Zgen), и нет Нортона (он равен нулю)
+					Y -= 1.0 / pGen->Zgen() - pGen->Ynorton();
+					I -= pGen->Igen(nIteration);
 
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
