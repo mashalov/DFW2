@@ -11,6 +11,11 @@ namespace DFW2
 
 	// Instantiate KLU function wrappers based on matrix element type
 
+	struct KLUMinMaxDiagonals
+	{
+		std::pair<double, ptrdiff_t> Min, Max;
+	};
+
 #ifdef DLONG
 
 	template<> struct KLUFunctions<double>
@@ -270,16 +275,19 @@ namespace DFW2
 			pSymbolic.reset();
 			pNumeric.reset();
 		}
-		inline ptrdiff_t MatrixSize() { return m_nMatrixSize; }
+		inline ptrdiff_t MatrixSize() const { return m_nMatrixSize; }
 		ptrdiff_t NonZeroCount() { return m_nNonZeroCount; }
 		ptrdiff_t AnalyzingsCount() { return m_nAnalyzingsCount; }
 		ptrdiff_t FactorizationsCount() { return m_nFactorizationsCount; }
 		ptrdiff_t RefactorizationsCount() { return m_nRefactorizationsCount; }
 		ptrdiff_t RefactorizationFailuresCount() { return m_nRefactorizationFailures; }
 		inline double* Ax() { return pAx.get(); }
+		inline const double* Ax() const { return pAx.get(); }
 		inline double* B() { return pb.get(); }
 		inline ptrdiff_t* Ai() { return pAi.get(); }
 		inline ptrdiff_t* Ap() { return pAp.get(); }
+		inline const ptrdiff_t* Ai() const { return pAi.get(); }
+		inline const ptrdiff_t* Ap() const { return pAp.get(); }
 		KLU_symbolic* Symbolic() { return pSymbolic->GetKLUObject(); }
 		KLU_common* Common() { return &pCommon; }
 		void Analyze()
@@ -389,6 +397,38 @@ namespace DFW2
 				}
 			}
 			return bmax;
+		}
+
+		KLUMinMaxDiagonals MinMaxDiagonals() const
+		{
+			KLUMinMaxDiagonals minmax{ {0.0, -1},{0.0, -1} };
+			ptrdiff_t nRow{ 0 };
+			const ptrdiff_t* pAi{ Ap() };
+			const double* pAx{ Ax() };
+			for (const ptrdiff_t* pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
+			{
+				const ptrdiff_t* pAiend = pAi + *(pAp + 1) - *pAp;
+				while (pAi < pAiend)
+				{
+					if (nRow == *pAi)
+					{
+						const double val{ std::abs(*pAx) };
+						if (minmax.Min.second < 0 || minmax.Min.first > val)
+						{
+							minmax.Min.second = nRow;
+							minmax.Min.first = val;
+						}
+						if (minmax.Max.second < 0 || minmax.Max.first < val)
+						{
+							minmax.Max.second = nRow;
+							minmax.Max.first = val;
+						}
+					}
+					pAx++; pAi++;
+				}
+			}
+
+			return minmax;
 		}
 
 		// todo - complex version
