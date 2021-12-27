@@ -100,16 +100,23 @@ void CDynaModel::PrepareNetworkElements()
 
 	bool bOk(true);
 
-	// убеждаемся в том, что в исходных данных есть СХН с постоянной мощностью
-	if (!(m_pLRCGen = static_cast<CDynaLRC*>(LRCs.GetDevice(-1))))
+	// убеждаемся в том, что в исходных данных есть СХН, соотвествующая параметрам
+	ptrdiff_t LRCId{ -2 };
+	switch (m_Parameters.m_eGeneratorLessLRC)
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, CDFW2Messages::m_cszMustBeConstPowerLRC);
+	case GeneratorLessLRC::Iconst:  LRCId = -2; break;
+	case GeneratorLessLRC::Sconst:  LRCId = -1; break;
+	}
+	if (!(m_pLRCGen = static_cast<CDynaLRC*>(LRCs.GetDevice(LRCId))))
+	{
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszMustBeEmbeddedLRC, LRCId));
 		bOk = false;
 	}
-	// убеждаемся в том, что в исходных данных есть СХН для постоянной генерации в динамике
-	if (!(m_pLRCLoad = static_cast<CDynaLRC*>(LRCs.GetDevice((ptrdiff_t)0))))
+	// убеждаемся в том, что в исходных данных есть СХН для шунта
+	LRCId = 0;
+	if (!(m_pLRCLoad = static_cast<CDynaLRC*>(LRCs.GetDevice(LRCId))))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, CDFW2Messages::m_cszMustBeConstPowerLRC);
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszMustBeEmbeddedLRC, LRCId));
 		bOk = false;
 	}
 

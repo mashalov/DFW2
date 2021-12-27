@@ -743,6 +743,9 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddEnumProperty("ParkParametersDetermination",
 		new CSerializerAdapterEnum(m_eParkParametersDetermination, m_cszParkParametersDeterminationMethodNames));
 
+	Serializer->AddEnumProperty("GeneratorLessLRC",
+		new CSerializerAdapterEnum(m_eGeneratorLessLRC, m_cszGeneratorLessLRCNames));
+
 	// расчет УР
 
 	Serializer->AddProperty("LFImbalance", m_Imb);

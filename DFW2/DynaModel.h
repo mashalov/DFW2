@@ -73,6 +73,7 @@ namespace DFW2
 			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo;
 			double m_dLRCMinSlope = 0.0;
 			double m_dLRCMaxSlope = 5.0;
+			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 		};
 
 		friend class CCustomDevice;
@@ -429,6 +430,7 @@ namespace DFW2
 			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
 			static constexpr const char* m_cszParkParametersDeterminationMethodNames[4] = { "Kundur", "NiiptTo", "NiiptToTd", "Canay" };
 			static constexpr const char* m_cszFreqDampingNames[2] = { "Node", "Island" };
+			static constexpr const char* m_cszGeneratorLessLRCNames[2] = { "S","I" };
 		} 
 			m_Parameters;
 

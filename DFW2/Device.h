@@ -132,6 +132,13 @@ namespace DFW2
 		NiiptToTd,
 		Canay
 	};
+	// Представление генерации в узле без генераторов
+	// с помощью СХН
+	enum class GeneratorLessLRC
+	{
+		Sconst,	// постоянная мощность
+		Iconst	// постоянный ток
+	};
 
 	enum class DiscontinuityLevel
 	{
