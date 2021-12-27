@@ -35,7 +35,6 @@ void CDynaModel::EstimateMatrix()
 		pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		pRightVector = pRightVectorUniq.get();
 		pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
-		pNewtonGradient = std::make_unique<double[]>(m_nEstimatedMatrixSize);
 		UpdateNewRightVector();
 	}
 	else
@@ -44,7 +43,6 @@ void CDynaModel::EstimateMatrix()
 		pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
 		pRightVector = pRightVectorUniq.get();
 		pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
-		pNewtonGradient = std::make_unique<double[]>(m_nEstimatedMatrixSize);
 	}
 
 	// substitute element setter to counter (not actually setting values, just count)

@@ -348,7 +348,7 @@ bool CDynaModel::RunTransient()
 																		sc.OrderStatistics[1].nZeroCrossingsSteps,
 																		sc.OrderStatistics[1].dTimePassed));
 
-		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Factors count {} / ({} + {} failures) Analyzings count {}", 
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Factors count {} / (Refactors {} + {} failures) Analyzings count {}", 
 																															klu.FactorizationsCount(), 
 																															klu.RefactorizationsCount(), 
 																															klu.RefactorizationFailuresCount(),
@@ -540,7 +540,7 @@ bool CDynaModel::NewtonUpdate()
 	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
 	double ConvCheck = 0.1 / (sc.q + 2);
 
-	double dOldMaxAbsError = sc.Newton.dMaxErrorVariable;
+	double dOldMaxAbsError = sc.Newton.Absolute.dMaxError;
 
 	// first check Newton convergence
 	sc.Newton.Reset();
@@ -555,15 +555,7 @@ bool CDynaModel::NewtonUpdate()
 		pVectorBegin->Error += db;
 		pVectorBegin->b = db;
 
-		double dMaxErrorDevice = std::abs(db);
-
-		if (sc.Newton.nMaxErrorVariableEquation < 0 || sc.Newton.dMaxErrorVariable < dMaxErrorDevice)
-		{
-			sc.Newton.pMaxErrorDevice = pVectorBegin->pDevice;
-			sc.Newton.pMaxErrorVariable = pVectorBegin->pValue;
-			sc.Newton.dMaxErrorVariable = dMaxErrorDevice;
-			sc.Newton.nMaxErrorVariableEquation = pVectorBegin - pRightVector;
-		}
+		sc.Newton.Absolute.Update(pVectorBegin, std::abs(db));
 
 #ifdef USE_FMA
 		double dNewValue = std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]);
@@ -580,6 +572,7 @@ bool CDynaModel::NewtonUpdate()
 		if (pVectorBegin->Atol > 0)
 		{
 			double dError = pVectorBegin->GetWeightedError(db, dOldValue);
+			sc.Newton.Weighted.Update(pVectorBegin, dError);
 			_CheckNumber(dError);
 			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
 #ifdef _DEBUG
@@ -587,7 +580,7 @@ bool CDynaModel::NewtonUpdate()
 			if (std::isnan(dError))
 				dError *= dError;
 #endif
-			pCt->AddError(dError * dError);
+			pCt->AddError(dError);
 		}
 		pVectorBegin++;
 	}
@@ -595,17 +588,9 @@ bool CDynaModel::NewtonUpdate()
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetConvergenceRatio);
 
-	sc.dNewtonGradient = 0.0;
-
-	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
-							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck;
-
-	if (bConvCheckConverged)
-	{
-		sc.dNewtonGradient = GradientNorm(klu, pB);
-		if (sc.dNewtonGradient > 0.05)
-			bConvCheckConverged = false;
-	}
+	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck&&
+							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck&&
+							   sc.Newton.Weighted.dMaxError < 1.0;
 
 	if ( bConvCheckConverged )
 	{
@@ -652,7 +637,7 @@ bool CDynaModel::NewtonUpdate()
 				// прерываем итерации Ньютона: проще снизить шаг чем пытаться пройти Ньютоном
 				if(sc.nNewtonIteration > 5)
 					sc.m_bNewtonDisconverging = true;
-				else if(sc.nNewtonIteration > 2 && sc.Newton.dMaxErrorVariable > 1.0)
+				else if(sc.nNewtonIteration > 2 && sc.Newton.Absolute.dMaxError > 1.0)
 					sc.m_bNewtonDisconverging = true;
 			}
 
@@ -831,16 +816,12 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged in {:>3} iterations MaxErr {} {} {} = {} Predict {} Saving {:.2} grad {}", GetCurrentTime(),
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged in {:>3} iterations {} MaxWeight {} Saving {:.2}", GetCurrentTime(),
 																				sc.nStepsCount,
 																				sc.nNewtonIteration,
-																				sc.Newton.dMaxErrorVariable, 
-																				sc.Newton.pMaxErrorDevice->GetVerbalName(),
-																				sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
-																				*sc.Newton.pMaxErrorVariable, 
-																				pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
-																				1.0 - static_cast<double>(klu.FactorizationsCount()) / sc.nNewtonIterationsCount,
-																				sc.dNewtonGradient));
+																				sc.Newton.Absolute.Info(),
+																				sc.Newton.Weighted.dMaxError,
+																				1.0 - static_cast<double>(klu.FactorizationsCount() + klu.RefactorizationsCount()) / sc.nNewtonIterationsCount));
 						
 #endif
 
@@ -855,15 +836,11 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (!sc.m_bNewtonStepControl)
 				{
-					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Continue {:>3} iteration MaxErr {} {} {} = {} Predict {} grad {}", GetCurrentTime(),
+					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Continue {:>3} iteration {} MaxWeight {}", GetCurrentTime(),
 						sc.nStepsCount,
 						sc.nNewtonIteration,
-						sc.Newton.dMaxErrorVariable,
-						sc.Newton.pMaxErrorDevice->GetVerbalName(),
-						sc.Newton.pMaxErrorDevice->VariableNameByPtr(sc.Newton.pMaxErrorVariable),
-						*sc.Newton.pMaxErrorVariable,
-						pRightVector[sc.Newton.nMaxErrorVariableEquation].Nordsiek[0],
-						sc.dNewtonGradient));
+						sc.Newton.Absolute.Info(),
+						sc.Newton.Weighted.dMaxError));
 				}
 			}
 
@@ -885,8 +862,8 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 	if (!sc.m_bNewtonConverged)
 	{
-		if (sc.Newton.nMaxErrorVariableEquation >= 0)
-			(pRightVector + sc.Newton.nMaxErrorVariableEquation)->nErrorHits++;
+		if (sc.Newton.Absolute.pVector)
+			sc.Newton.Absolute.pVector->nErrorHits++;
 	}
 
 	return bRes;
@@ -1138,7 +1115,7 @@ void CDynaModel::ConvergenceTest::AddError(double dError)
 {
 	// Три варианта расчета суммы погрешностей
 	nVarsCount++;
-	AddErrorStraight(dError);
+	AddErrorStraight(dError * dError);
 	//AddErrorKahan(dError);
 	//AddErrorNeumaier(dError);		// если используется Neumaier - в  FinalizeSum должна быть раскомментирована сумма ошибки с корректором
 }
@@ -1175,18 +1152,11 @@ double CDynaModel::GetRatioForCurrentOrder()
 #endif
 
 			double dError = pVectorBegin->GetWeightedError(dNewValue);
-			double dMaxError = std::abs(dError);
 
-			if (sc.Integrator.nMaxErrorVariableEquation < 0 || sc.Integrator.dMaxErrorVariable < dMaxError)
-			{
-				sc.Integrator.dMaxErrorVariable = dMaxError;
-				sc.Integrator.pMaxErrorDevice = pVectorBegin->pDevice;
-				sc.Integrator.pMaxErrorVariable = pVectorBegin->pValue;
-				sc.Integrator.nMaxErrorVariableEquation = pVectorBegin - pRightVector;
-			}
+			sc.Integrator.Weighted.Update(pVectorBegin, dError);
 
 			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
-			pCt->AddError(dError * dError);
+			pCt->AddError(dError);
 		}
 		pVectorBegin++;
 	}
@@ -1205,20 +1175,16 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = (std::max)(1.01, r);
 
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {:>3} {}[{}] Error {} Value {} Predicted {} rSame {} RateLimit {} for {} steps", 
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {:>3} {} rSame {} RateLimit {} for {} steps", 
 		GetCurrentTime(), 
 		GetIntegrationStepNumber(),
-		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
-		sc.Integrator.pMaxErrorDevice->VariableNameByPtr(sc.Integrator.pMaxErrorVariable),
-		sc.Integrator.dMaxErrorVariable, 
-		*sc.Integrator.pMaxErrorVariable,
-		pRightVector[sc.Integrator.nMaxErrorVariableEquation].Nordsiek[0],
+		sc.Integrator.Weighted.Info(),
 		r,
 		sc.dRateGrowLimit < FLT_MAX ? sc.dRateGrowLimit : 0.0,
 		sc.nStepsToEndRateGrow - sc.nStepsCount));
 
-	if (sc.Integrator.nMaxErrorVariableEquation >= 0)
-		(pRightVector + sc.Integrator.nMaxErrorVariableEquation)->nErrorHits++;
+	if (sc.Integrator.Weighted.pVector)
+		sc.Integrator.Weighted.pVector->nErrorHits++;
 
 	return r;
 }
@@ -1243,7 +1209,7 @@ double CDynaModel::GetRatioForHigherOrder()
 			double dNewValue = *pVectorBegin->pValue;
 			// method consts lq can be 1 only
 			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Error - pVectorBegin->SavedError, dNewValue) * Methodl1[pVectorBegin->EquationType];
-			pCt->AddError(dError * dError);
+			pCt->AddError(dError);
 		}
 		pVectorBegin++;
 	}
@@ -1279,7 +1245,7 @@ double CDynaModel::GetRatioForLowerOrder()
 			double dNewValue = *pVectorBegin->pValue;
 			// method consts lq can be 1 only
 			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Nordsiek[2], dNewValue);
-			pCt->AddError(dError * dError);
+			pCt->AddError(dError);
 		}
 		pVectorBegin++;
 	}
@@ -1547,12 +1513,7 @@ void CDynaModel::BadStep()
 
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError, GetCurrentTime(), GetIntegrationStepNumber(),
 		GetH() < sc.Hmin ? sc.Hmin : GetH(), 
-		sc.Integrator.dMaxErrorVariable,
-		sc.Integrator.pMaxErrorDevice->GetVerbalName(),
-		*sc.Integrator.pMaxErrorVariable,
-		sc.Integrator.pMaxErrorDevice->VariableNameByPtr(sc.Integrator.pMaxErrorVariable),
-		pRightVector[sc.Integrator.nMaxErrorVariableEquation].Nordsiek[0],
-		pRightVector[sc.Integrator.nMaxErrorVariableEquation].Nordsiek[1]));
+		sc.Integrator.Weighted.Info()));
 
 	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
 	sc.OrderStatistics[sc.q - 1].nFailures++;
@@ -1819,6 +1780,7 @@ double CDynaModel::gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, 
 	return gs1v;
 }
 
+/*
 double CDynaModel::GradientNorm(KLUWrapper<double>& klu, const double* Sol)
 {
 	// формируем матрицу в виде пригодном для умножения на вектор
@@ -1863,6 +1825,7 @@ double CDynaModel::GradientNorm(KLUWrapper<double>& klu, const double* Sol)
 
 	return Norm;
 }
+*/
 
 // отключает ведомое устройство если ведущего нет или оно отключено
 bool CDynaModel::SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster)

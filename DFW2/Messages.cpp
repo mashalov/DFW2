@@ -54,7 +54,7 @@ const char* CDFW2Messages::m_cszStepAndOrderChanged = "t={:15.012f} {:>3} Пор
 const char* CDFW2Messages::m_cszStepChanged = "t={:15.012f} {:>3} Шаг метода изменен : шаг {} с ({}), порядок {}";
 const char* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = "t={:15.012f} {:>3} Порядок и шаг метода изменен по Ньютону: порядок {} шаг {} с";
 const char* CDFW2Messages::m_cszZeroCrossingStep = "t={:15.012f} {:>3} Шаг метода изменен для поиска ограничения: шаг {} с в устройстве {}";
-const char* CDFW2Messages::m_cszStepChangedOnError = "t={:15.012f} {:>3} Шаг метода изменен по корректору: шаг {} с, ошибка {} в {} от {} \"{}\" Nordsiek[{};{}]";
+const char* CDFW2Messages::m_cszStepChangedOnError = "t={:15.012f} {:>3} Шаг метода изменен по корректору: шаг {} с, {}";
 const char* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = "t={:15.012f} {:>3} Шаг метода изменен для обработки события: шаг {}";
 const char* CDFW2Messages::m_cszSynchroZoneCountChanged = "Обновлено количество синхронных зон : {}";
 const char* CDFW2Messages::m_cszAllNodesOff = "Все узлы отключены";

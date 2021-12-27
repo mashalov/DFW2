@@ -171,7 +171,6 @@ namespace DFW2
 			void AddError(double dError);
 			void FinalizeSum();
 
-
 			// обработка диапазона тестов сходимости в массиве
 
 			typedef ConvergenceTest ConvergenceTestVec[2];
@@ -191,24 +190,50 @@ namespace DFW2
 
 		struct StepError
 		{
-			CDevice *pMaxErrorDevice;
-			double *pMaxErrorVariable;
-			double dMaxErrorVariable;
-			ptrdiff_t nMaxErrorVariableEquation;
+			struct Error
+			{
+				RightVector *pVector = nullptr;
+				double dMaxError = 0.0;
+
+				void Reset()
+				{
+					pVector = nullptr;
+					dMaxError = 0.0;
+				}
+
+				void Update(RightVector* pRightVector, double dError)
+				{
+					if (pVector == nullptr || dError > dMaxError)
+					{
+						dMaxError = dError;
+						pVector = pRightVector;
+					}
+				}
+
+				std::string Info()
+				{
+					if (pVector)
+					{
+						return fmt::format("Error {} at {} \"{}\" = {} predicted = [{};{}]", 
+							dMaxError, 
+							pVector->pDevice ? pVector->pDevice->GetVerbalName() : "???",
+							pVector->pDevice ? pVector->pDevice->VariableNameByPtr(pVector->pValue) : "???",
+							*pVector->pValue,
+							pVector->Nordsiek[0],
+							pVector->Nordsiek[1]);
+					}
+					else
+						return fmt::format("Error {} Vector ???", dMaxError);
+				}
+
+			} 
+				Absolute, Weighted;
 
 			void Reset()
 			{
-				pMaxErrorDevice = nullptr;
-				pMaxErrorVariable = nullptr;
-				dMaxErrorVariable = 0.0;
-				nMaxErrorVariableEquation = -1;
+				Absolute.Reset();
+				Weighted.Reset();
 			}
-
-			StepError()
-			{
-				Reset();
-			}
-				 
 		};
 		
 
@@ -287,7 +312,6 @@ namespace DFW2
 			StepError Integrator;
 			double m_dLastRefactorH = 0.0;
 			bool bRingingDetected = false;
-			double dNewtonGradient = 0.0;
 
 			StatisticsMaxFinder m_MaxBranchAngle, m_MaxGeneratorAngle;
 
@@ -452,7 +476,7 @@ namespace DFW2
 		ptrdiff_t m_nEstimatedMatrixSize;
 		ptrdiff_t m_nTotalVariablesCount;
 		double *pbRightHand;
-		std::unique_ptr<double[]> pRightHandBackup, pNewtonGradient;
+		std::unique_ptr<double[]> pRightHandBackup;
 		
 
 
@@ -791,7 +815,6 @@ namespace DFW2
 		static const double MethodlDefault[4][4];
 
 		static double gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double* Sol);
-		double GradientNorm(KLUWrapper<double>& klu, const double* Sol);
 
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
