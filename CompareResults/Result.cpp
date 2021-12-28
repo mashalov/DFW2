@@ -97,11 +97,11 @@ CPlot CResult::ConstructFromPlot(_variant_t Input, const CompareRange& range) co
 
 void CResult::Compare(const CResult& other, const CompareRange& range) const
 {
-	//CompareDevices(other, 3, "V", 6 * 1000000 + 4, "vras", range);	// узлы
-	CompareDevices(other, 16, "Delta", 1 * 1000000 + 9, "Delta", range); // генераторы
-	CompareDevices(other, 16, "P", 1 * 1000000 + 9, "P", range); // генераторы
-	CompareDevices(other, 16, "Q", 1 * 1000000 + 9, "Q", range); // генераторы
-	CompareDevices(other, 16, "S", 1 * 1000000 + 9, "S", range); // генераторы
+	CompareDevices(other, 3, "V", 6 * 1000000 + 4, "vras", range);	// узлы
+	//CompareDevices(other, 16, "Delta", 1 * 1000000 + 9, "Delta", range); // генераторы
+	//CompareDevices(other, 16, "P", 1 * 1000000 + 9, "P", range); // генераторы
+	//CompareDevices(other, 16, "Q", 1 * 1000000 + 9, "Q", range); // генераторы
+	//CompareDevices(other, 16, "S", 1 * 1000000 + 9, "S", range); // генераторы
 }
 
 void CResult::CompareDevices(const CResult& other, long DeviceType1, std::string_view PropName1, long DeviceType2, std::string_view PropName2, const CompareRange& range) const
@@ -133,6 +133,8 @@ void CResult::CompareDevices(const CResult& other, long DeviceType1, std::string
 		ResultFileLib::IVariablePtr var1{ CResult::GetVariable(vars1, PropName1) };
 		if (var1 == nullptr)
 			continue;
+
+		long id = dev1->GetId();
 		// ищем устройство с номером первого устройства во вторых результатах
 		ResultFileLib::IDevicePtr device2{ CResult::GetDevice(devices2, dev1->GetId()) };
 

@@ -86,9 +86,10 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 		
 	switch (Method)
 	{
+		case PARK_PARAMETERS_DETERMINATION_METHOD::Kundur:
 		case PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo:
 		case PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd:
-			bRes = GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d, PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd == Method) &&
+			bRes = GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d, Method) &&
 				   GetAxisParametersNiipt(xq, xl, xq2, Tqo2, R1q, l1q);
 			break;
 		case PARK_PARAMETERS_DETERMINATION_METHOD::Canay:
@@ -116,7 +117,7 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	}
 	if (Equal(l1Q, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetPark3CParameters, GetVerbalName(), "laq + l1q", l1Q));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "laq + l1q", l1Q));
 		bRes = false;
 	}
 

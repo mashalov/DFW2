@@ -5,6 +5,7 @@ CPlot::CPlot(size_t PointCount, const double* pt, const double* pv, const Compar
 	if (PointCount)
 	{
 		data.reserve(PointCount);
+		const double* ptOriginal{ pt };
 		const double* pte{ pt + PointCount };
 		
 		// если задано минимальное ограничение диапазона
@@ -14,11 +15,14 @@ CPlot::CPlot(size_t PointCount, const double* pt, const double* pv, const Compar
 			while (pt < pte)
 			{
 				if (*pt < range.min)
+				{
 					pt++;
+				}
 				else
 					break;
 			}
 
+		pv = pv + (pt - ptOriginal);
 		Point point{ *pt, *pv };
 		// первую точку добавляем в сет
 		data.push_back(point);

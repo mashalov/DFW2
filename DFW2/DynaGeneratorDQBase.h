@@ -8,7 +8,7 @@ namespace DFW2
 
 // дефайн который определяет какие уравнения движения используются
 // для уравнений Парка
-// #define USE_VOLTAGE_FREQ_DAMPING
+//#define USE_VOLTAGE_FREQ_DAMPING
 
 	class CDynaGeneratorDQBase : public CDynaGeneratorMotion
 	{
@@ -100,7 +100,7 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		bool GetAxisParametersNiipt(const double& x, double xl, double x1, double x2, double To1, double To2, double& r1, double& l1, double& r2, double& l2, bool bUseTd);
+		bool GetAxisParametersNiipt(const double& x, double xl, double x1, double x2, double To1, double To2, double& r1, double& l1, double& r2, double& l2, PARK_PARAMETERS_DETERMINATION_METHOD Method);
 		bool GetAxisParametersNiipt(double x, double xl, double x2, double To2, double& r1, double& l1);
 		bool GetAxisParametersCanay(const double& x, double xl, double x1, double x2, double To1, double To2, double& r1, double& l1, double& r2, double& l2);
 		bool GetAxisParametersCanay(double x, double xl, double x2, double To2, double& r1, double& l1);

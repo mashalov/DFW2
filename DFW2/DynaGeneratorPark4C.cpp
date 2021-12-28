@@ -88,10 +88,11 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	switch (Method)
 	{
+	case PARK_PARAMETERS_DETERMINATION_METHOD::Kundur:
 	case PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo:
 	case PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd:
-		bRes = GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d, PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd == Method) &&
-			   GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R2q, l2q, PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd == Method);
+		bRes = GetAxisParametersNiipt(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d, Method) &&
+			   GetAxisParametersNiipt(xq, xl, xq1, xq2, Tqo1, Tqo2, R1q, l1q, R2q, l2q, Method);
 		break;
 	case PARK_PARAMETERS_DETERMINATION_METHOD::Canay:
 		bRes = GetAxisParametersCanay(xd, xl, xd1, xd2, Tdo1, Tdo2, Rfd, lfd, R1d, l1d) &&

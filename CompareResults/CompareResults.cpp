@@ -10,8 +10,8 @@ int main()
         CLog log;
         CResult result1(log), result2(log);
         result1.Load("c:\\users\\masha\\documents\\Русский тест\\Raiden\\Results\\binresultcom.rst");
-        result2.Load("c:\\tmp\\000026.sna");
-        result1.Compare(result2, { 0, 1.35 });
+        result2.Load("c:\\tmp\\000002.sna");
+        result1.Compare(result2, { 4.8, 5.0 });
 
     }
     catch (dfw2error& err)

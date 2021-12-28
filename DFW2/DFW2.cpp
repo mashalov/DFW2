@@ -61,7 +61,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				//Network.DeSerialize(Network.Platform().ResultFile("serialization.json"));
 				ri.GetData(Network);
 				//Network.Serialize(Network.Platform().ResultFile("lf_test.json"));
-				Network.Serialize(Network.Platform().ResultFile("lf_7ku.json")); 
+				//Network.Serialize(Network.Platform().ResultFile("lf_7ku.json")); 
 				//Network.RunLoadFlow();
 				Network.RunTransient();
 			}
