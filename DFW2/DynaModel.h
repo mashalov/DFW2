@@ -281,6 +281,8 @@ namespace DFW2
 			ptrdiff_t nNewtonIterationsCount = 0;
 			double dMaxConditionNumber = 0.0;
 			double dMaxConditionNumberTime = 0.0;
+			double dMaxSLEResidual = 0.0;
+			double dMaxSLEResidualTime = 0.0;
 			_OrderStatistics OrderStatistics[2];
 			ptrdiff_t nDiscontinuityNewtonFailures = 0;
 			ptrdiff_t nMinimumStepFailures = 0;
@@ -488,6 +490,8 @@ namespace DFW2
 		void ConvertToCCSMatrix();
 		void SolveLinearSystem();
 		void SolveRcond();
+		void SolveRefine();
+		void UpdateRcond();
 		void SetDifferentiatorsTolerance();
 		bool NewtonUpdate();
 		bool SolveNewton(ptrdiff_t nMaxIts);

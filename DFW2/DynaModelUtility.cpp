@@ -1,8 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
 #include "DynaGeneratorMotion.h"
-#include "klu.h"
-#include "cs.h"
+
 using namespace DFW2;
 
 
@@ -443,26 +442,6 @@ bool CDynaModel::StepControl::FilterOrder(double dStep)
 	// возвращаем true, если отфильтрованный порядок на серии шагов
 	// должен увеличиться
 	return (--nStepsToOrderChange <= 0) && dFilteredOrder > 1.0;
-}
-
-csi cs_gatxpy(const cs *A, const double *x, double *y)
-{
-	csi p, j, n, *Ap, *Ai;
-	double *Ax;
-	if (!CS_CSC(A) || !x || !y) return (0);       /* check inputs */
-	n = A->n; Ap = A->p; Ai = A->i; Ax = A->x;
-	for (j = 0; j < n; j++)
-	{
-		for (p = Ap[j]; p < Ap[j + 1]; p++)
-		{
-			//y[Ai[p]] += Ax[p] * x[j];
-
-			y[j] += Ax[p] * x[Ai[p]];
-
-			_ASSERTE(Ai[p] < n);
-		}
-	}
-	return (1);
 }
 
 void CDynaModel::DumpStateVector()

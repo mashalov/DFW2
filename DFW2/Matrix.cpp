@@ -518,16 +518,36 @@ void CDynaModel::SolveLinearSystem()
 		SolveRcond();
 }
 
-void CDynaModel::SolveRcond()
+
+
+void CDynaModel::SolveRefine()
 {
-	klu.Solve();
-	double rCond = 1.0 / klu.Rcond();
+	const double maxresidual{ klu.SolveRefine( GetAtol() * GetAtol() * GetAtol()) };
+	if (maxresidual > sc.dMaxSLEResidual)
+	{
+		sc.dMaxSLEResidual = maxresidual;
+		sc.dMaxSLEResidualTime = sc.t;
+	}
+	UpdateRcond();
+
+}
+
+void CDynaModel::UpdateRcond()
+{
+	const double rCond{ 1.0 / klu.Rcond() };
 	//double Cond = klu.Condest();
 	if (rCond > sc.dMaxConditionNumber)
 	{
 		sc.dMaxConditionNumber = rCond;
 		sc.dMaxConditionNumberTime = sc.t;
 	}
+}
+
+void CDynaModel::SolveRcond()
+{
+	klu.Solve();
+	UpdateRcond();
+	
 }
 
 void CDynaModel::ScaleAlgebraicEquations()

@@ -363,6 +363,11 @@ bool CDynaModel::RunTransient()
 																	 sc.dMaxConditionNumber,
 																	 sc.dMaxConditionNumberTime));
 
+		if(sc.dMaxSLEResidual > 0.0)
+			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Max SLE residual {} at time {}",
+				sc.dMaxSLEResidual,
+				sc.dMaxSLEResidualTime));
+
 		if (m_Parameters.m_bStopOnBranchOOS && sc.m_MaxBranchAngle.Device())
 			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszMaxBranchAngle,
 				sc.m_MaxBranchAngle.Value() * 180.0 / M_PI,
@@ -519,9 +524,6 @@ bool CDynaModel::InitEquations()
 	}
 	return bRes;
 }
-
-
-csi cs_gatxpy(const cs *A, const double *x, double *y);
 
 bool CDynaModel::NewtonUpdate()
 {
@@ -1760,16 +1762,8 @@ double CDynaModel::gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, 
 	// вектор результата умножения матрицы Якоби на вектор невязок
 	std::unique_ptr<double[]> yv = std::make_unique<double[]>(klu.MatrixSize());
 
-	// формируем матрицу в виде пригодном для умножения на вектор
-	cs Aj;
-	Aj.i = klu.Ap();
-	Aj.p = klu.Ai();
-	Aj.x = klu.Ax();
-	Aj.m = Aj.n = klu.MatrixSize();
-	Aj.nz = -1;
-
 	// считаем градиент до итерации - умножаем матрицу якоби на вектор невязок до итерации
-	cs_gatxpy(&Aj, Imb.get(), yv.get());
+	klu.Multiply(Imb.get(), yv.get());
 
 	// умножаем градиент на решение
 	double gs1v(0.0);

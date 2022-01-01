@@ -212,7 +212,9 @@ namespace DFW2
 	{
 	protected:
 		std::unique_ptr<double[]>	 pAx,		// данные матрицы якоби
-									 pb;		// вектор правой части
+									 pb,		// вектор правой части
+									 pRefine;	// вектор уточнения
+
 		std::unique_ptr<ptrdiff_t[]> pAi,		// номера строк
 									 pAp;		// номера столбцов
 		ptrdiff_t m_nMatrixSize = 0;
@@ -228,6 +230,23 @@ namespace DFW2
 		std::unique_ptr<KLUSymbolic> pSymbolic;
 		std::unique_ptr<KLUNumeric>  pNumeric;
 		KLU_common pCommon;
+
+		csi cs_gatxpy(const cs* A, const double* x, double* y)
+		{
+			csi p, j, n, * Ap, * Ai;
+			double* Ax;
+			if (!CS_CSC(A) || !x || !y) return (0);       /* check inputs */
+			n = A->n; Ap = A->p; Ai = A->i; Ax = A->x;
+			for (j = 0; j < n; j++)
+			{
+				for (p = Ap[j]; p < Ap[j + 1]; p++)
+				{
+					y[j] += Ax[p] * x[Ai[p]];
+					_ASSERTE(Ai[p] < n);
+				}
+			}
+			return (1);
+		}
 
 		const char* KLUErrorDescription()
 		{
@@ -269,9 +288,14 @@ namespace DFW2
 			m_nMatrixSize = nMatrixSize;
 			m_nNonZeroCount = nNonZeroCount;
 			pAx = std::make_unique<double[]>(m_nNonZeroCount * doubles_count<T>::count);			// числа матрицы
-			pb = std::make_unique<double[]>(m_nMatrixSize * doubles_count<T>::count);			// вектор правой части
-			pAi = std::make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);								// строки матрицы
-			pAp = std::make_unique<ptrdiff_t[]>(m_nNonZeroCount);								// столбцы матрицы
+			pb = std::make_unique<double[]>(m_nMatrixSize * doubles_count<T>::count);				// вектор правой части
+
+			// вектор уточнения 
+			// если уже был получен ранее - обновляем его размерность
+			if(pRefine)
+				pRefine = std::make_unique<double[]>(3 * m_nMatrixSize * doubles_count<T>::count);		
+			pAi = std::make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);									// строки матрицы
+			pAp = std::make_unique<ptrdiff_t[]>(m_nNonZeroCount);									// столбцы матрицы
 			pSymbolic.reset();
 			pNumeric.reset();
 		}
@@ -343,6 +367,69 @@ namespace DFW2
 				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
+		// Решение СЛУ с итерационным уточнением
+		// https://en.wikipedia.org/wiki/Iterative_refinement
+		double SolveRefine(double Tolerance = 0.0)
+		{
+			double* pbEnd{ pb.get() + MatrixSize() };
+
+			// если не был получен - создаем
+			if(!pRefine)
+				pRefine = std::make_unique<double[]>(3 * m_nMatrixSize * doubles_count<T>::count);
+
+			double* pR1{ pRefine.get() };			// правая часть СЛУ (b)
+			double* pR2{ pR1 + MatrixSize() };		// исходное решение СЛУ (x)
+			double* pR3{ pR2 + MatrixSize() };		// невязки СЛУ (r)
+
+			double* pbb{ pb.get() };
+			// сохраняем правую часть в pR1
+			std::copy(pbb, pbEnd, pR1);
+			// решаем Ax = b - решение x -> b
+			Solve();
+			// сохраняем исходное решение в pR2
+			std::copy(pbb, pbEnd, pR2);
+
+			double r{ 0.0 };
+			ptrdiff_t nMaxIndex{ 0 };
+			
+			for (ptrdiff_t m = 0; m < 5; m++)
+			{
+				pR1 = pRefine.get();
+				pR2 = pR1 + MatrixSize();
+				pR3 = pR2 + MatrixSize();
+				pbb = pb.get();
+
+				// Рассчитываем pR3 = Ax
+				Multiply(pbb, pR3);
+				// рассчитываем r = b - Ax
+				while (pbb < pbEnd)
+				{
+					*pbb = *pR1 - *pR3;
+					pR1++;  pR3++;  pbb++;
+				}
+				r = (std::max)(FindMaxB(nMaxIndex), r);
+				// если невязки меньше чем заданное значение
+				if (r < Tolerance)
+				{
+					// отдаем значение с последней итерации
+					std::copy(pR2, pR2 + MatrixSize(), pb.get());
+					break;
+				}
+				// решаем Ac = r
+				Solve();
+				// рассчитываем x_{m+1} = x_{m} + c_{m}
+				pbb = pb.get();
+				while (pbb < pbEnd)
+				{
+					*pbb += *pR2;
+					*pR2 = *pbb;
+					pbb++; pR2++;
+				}
+			}
+
+			return r;
+		}
+
 		void FactorSolve()
 		{
 			if (!Analyzed())
@@ -378,9 +465,9 @@ namespace DFW2
 
 		double FindMaxB(ptrdiff_t& nMaxIndex)
 		{
-			double bmax(0.0);
+			double bmax{ 0.0 };
 			nMaxIndex = -1;
-			double *pbb = pb.get();
+			double* pbb{ pb.get() };
 			if (m_nMatrixSize > 0)
 			{
 				nMaxIndex = 0;
@@ -397,6 +484,19 @@ namespace DFW2
 				}
 			}
 			return bmax;
+		}
+
+		csi Multiply(const double *x, double* b)
+		{
+			// формируем матрицу в виде пригодном для умножения на вектор
+			cs Aj;
+			Aj.i = Ap();
+			Aj.p = Ai();
+			Aj.x = Ax();
+			Aj.m = Aj.n = MatrixSize();
+			Aj.nz = -1;
+			std::fill(b, b + Aj.n, 0.0);
+			return cs_gatxpy(&Aj, x, b);
 		}
 
 		KLUMinMaxDiagonals MinMaxDiagonals() const
