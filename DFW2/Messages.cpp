@@ -50,12 +50,12 @@ const char* CDFW2Messages::m_cszKLUIntOverflow = "KLU - Переполнение
 const char* CDFW2Messages::m_cszKLUUnknownError = "KLU - Неизвестная ошибка с кодом {}";
 const char* CDFW2Messages::m_cszInitLoopedInfinitely = "При инициализации устройств обнаружен бесконечный цикл";
 const char* CDFW2Messages::m_cszDeviceContainerFailedToInit = "Отказ инициализации для устройств типа {} код {}";
-const char* CDFW2Messages::m_cszStepAndOrderChanged = "t={:15.012f} {:>3} Порядок и шаг метода изменен : порядок {} шаг {} с";
-const char* CDFW2Messages::m_cszStepChanged = "t={:15.012f} {:>3} Шаг метода изменен : шаг {} с ({}), порядок {}";
-const char* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = "t={:15.012f} {:>3} Порядок и шаг метода изменен по Ньютону: порядок {} шаг {} с";
-const char* CDFW2Messages::m_cszZeroCrossingStep = "t={:15.012f} {:>3} Шаг метода изменен для поиска ограничения: шаг {} с в устройстве {}";
-const char* CDFW2Messages::m_cszStepChangedOnError = "t={:15.012f} {:>3} Шаг метода изменен по корректору: шаг {} с, {}";
-const char* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = "t={:15.012f} {:>3} Шаг метода изменен для обработки события: шаг {}";
+const char* CDFW2Messages::m_cszStepAndOrderChanged = "t={:15.012f} {} Порядок и шаг метода изменен : порядок {} шаг {} с";
+const char* CDFW2Messages::m_cszStepChanged = "t={:15.012f} {} Шаг метода изменен : шаг {} с ({}), порядок {}";
+const char* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = "t={:15.012f} {} Порядок и шаг метода изменен по Ньютону: порядок {} шаг {} с";
+const char* CDFW2Messages::m_cszZeroCrossingStep = "t={:15.012f} {} Шаг метода изменен для поиска ограничения: шаг {} с в устройстве {}";
+const char* CDFW2Messages::m_cszStepChangedOnError = "t={:15.012f} {} Шаг метода изменен по корректору: шаг {} с, {}";
+const char* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = "t={:15.012f} {} Шаг метода изменен для обработки события: шаг {}";
 const char* CDFW2Messages::m_cszSynchroZoneCountChanged = "Обновлено количество синхронных зон : {}";
 const char* CDFW2Messages::m_cszAllNodesOff = "Все узлы отключены";
 const char* CDFW2Messages::m_cszNodeTripDueToZone = "Узел \"{}\" отключен, так как находится в зоне без источников напряжения";
@@ -125,7 +125,7 @@ const char* CDFW2Messages::m_cszLFNodeVTooLow = CDFW2Messages::m_cszLFNodeVTooHi
 const char* CDFW2Messages::m_cszLFBranchAngleExceeds90 = "Угол по связи {} - {} превысил 90 град - {}";
 const char* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = "Количество генераторов для \"{}\" задано неверно - {:.0f}, установлено значение 1";
 const char* CDFW2Messages::m_cszWrongGeneratirQlimitsFixed = "Ограничения реактивной мощности для генератора \"{}\" задано неверно {} > {}. Установлено Qmin=Qmax={}";
-const char* CDFW2Messages::m_cszFailureAtMinimalStep = "Необходимая точность решения не может быть достигнута на минимальном шаге t={} {:>3} порядок {} шаг={}";
+const char* CDFW2Messages::m_cszFailureAtMinimalStep = "Необходимая точность решения не может быть достигнута на минимальном шаге t={} {} порядок {} шаг={}";
 const char* CDFW2Messages::m_cszMustBeEmbeddedLRC = "Не найдена типовая встроенная СХН с номером {}";
 const char* CDFW2Messages::m_cszMustBeDefaultDynamicLRC = "Не найдена типовая СХН нагрузки в динамике с номером 0";
 const char* CDFW2Messages::m_cszResultFileWrongCompressedBlockType = "Неверный тип сжатого блока данных в файле результатов";

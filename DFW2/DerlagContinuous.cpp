@@ -70,7 +70,8 @@ bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 	if (m_Device.IsStateOn())
 	{
 		double dY2 = (m_Input - m_Y2) * m_T;
-		double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
+		//double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
+		double dOut = m_Output - m_K * dY2;
 
 		if (pDynaModel->IsInDiscontinuityMode())
 		{

@@ -157,6 +157,8 @@ bool CDynaModel::RunTransient()
 
 	try
 	{
+		//m_Parameters.m_bConsiderDampingEquation = true;
+		//m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Sconst;
 		m_Parameters.m_dZeroBranchImpedance = -4.0E-6;
 		m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
@@ -817,7 +819,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged in {:>3} iterations {} MaxWeight {} Saving {:.2}", GetCurrentTime(),
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged{:>3} iteration {} MaxWeight {} Saving {:.2}", GetCurrentTime(),
 																				sc.nStepsCount,
 																				sc.nNewtonIteration,
 																				sc.Newton.Absolute.Info(),
@@ -1176,7 +1178,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = (std::max)(1.01, r);
 
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {:>3} {} rSame {} RateLimit {} for {} steps", 
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} {} rSame {} RateLimit {} for {} steps", 
 		GetCurrentTime(), 
 		GetIntegrationStepNumber(),
 		sc.Integrator.Weighted.Info(),
