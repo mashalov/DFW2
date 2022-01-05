@@ -157,7 +157,9 @@ bool CDynaModel::RunTransient()
 
 	try
 	{
-		//m_Parameters.m_bConsiderDampingEquation = true;
+		//m_Parameters.m_bConsiderDampingEquation = false;
+		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
+
 		//m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Sconst;
 		m_Parameters.m_dZeroBranchImpedance = -4.0E-6;
 		m_Parameters.m_dFrequencyTimeConstant = 0.04;

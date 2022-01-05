@@ -16,20 +16,18 @@ void CDynaGeneratorDQBase::IfromDQ()
 
 cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 {
-	cplx YgInt = 1.0 / Zgen();
+	cplx YgInt{ 1.0 / Zgen() };
 
 	if (!nIteration)
 		m_Egen = GetEMF();
 	else
 	{
-		cplx Ig = (m_Egen - std::polar((double)V, (double)DeltaV)) * YgInt;
-		cplx Idq = Ig * std::polar(1.0, -Delta);
+		const cplx Ig{ (m_Egen - std::polar((double)V, (double)DeltaV)) * YgInt };
+		const cplx Idq{ Ig * std::polar(1.0, -Delta) };
 		FromComplex(Iq, Id, Idq);
 	}
 
-	cplx Ig = CalculateEgen() * YgInt;
-
-	return Ig;
+	return CalculateEgen() * YgInt;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
@@ -100,11 +98,10 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::ProcessDiscontinuity(CDynaModel* pDy
 	{
 		if (IsStateOn())
 		{
-			double DeltaGT = Delta - DeltaV;
-			double NodeV = V;
+			double DeltaGT{ Delta - DeltaV }, NodeV{ V };
 			Vd = -NodeV * sin(DeltaGT);
 			Vq = NodeV * cos(DeltaGT);
-			double det = (Vd * Vd + Vq * Vq);
+			double det{ Vd * Vd + Vq * Vq };
 			Id = (P * Vd - Q * Vq) / det;
 			Iq = (Q * Vd + P * Vq) / det;
 			IfromDQ();
@@ -222,7 +219,7 @@ const cplx& CDynaGeneratorDQBase::CalculateEgen()
 // тока из dq в ri и напряжения из ri в dq
 void CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 {
-	const double co(cos(Delta)), si(sin(Delta));
+	const double co{ cos(Delta) }, si{ sin(Delta) };
 
 	// dIre / dIre
 	pDynaModel->SetElement(Ire, Ire, 1.0);
@@ -266,7 +263,7 @@ void CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 // тока из dq в ri и напряжения из ri в dq
 void CDynaGeneratorDQBase::BuildRIfromDQRightHand(CDynaModel* pDynaModel)
 {
-	const double co(cos(Delta)), si(sin(Delta));
+	const double co{ cos(Delta) }, si{ sin(Delta) };
 	pDynaModel->SetFunction(Ire, Ire - Iq  * co + Id  * si);
 	pDynaModel->SetFunction(Iim, Iim - Iq  * si - Id  * co);
 	pDynaModel->SetFunction(Vd,  Vd  + Vre * si - Vim * co);
@@ -278,7 +275,7 @@ void CDynaGeneratorDQBase::BuildMotionEquationBlock(CDynaModel* pDynaModel)
 {
 	// Вариант уравнения движения с расчетом момента от частоты тока
 	// Момент рассчитывается от электрической мощности путем деления на скольжение
-	const double omega(ZeroGuardSlip(1.0 + s)), omegav(ZeroGuardSlip(1.0 + Sv)), MjOmegav(Mj * omegav);
+	const double omega{ ZeroGuardSlip(1.0 + s) }, omegav{ ZeroGuardSlip(1.0 + Sv) }, MjOmegav{ Mj * omegav };
 	pDynaModel->SetElement(s, Id, (Vd + 2.0 * Id * r) / MjOmegav);
 	pDynaModel->SetElement(s, Iq, (Vq + 2.0 * Iq * r) / MjOmegav);
 	pDynaModel->SetElement(s, Vd, Id / MjOmegav);
@@ -292,7 +289,7 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 {
 	if (IsStateOn())
 	{
-		const double omega(1.0 + s);
+		const double omega{ 1.0 + s };
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
 //		double Pairgap = Vd * Id + Vq * Iq;
 //		Pairgap += (Id * Id + Iq * Iq) * r;
@@ -308,29 +305,29 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 
 bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, double x1, double x2, double xrc, double& To1, double& To2, double& T1, double& T2)
 {
-	bool bRes(false);
+	bool bRes{ false };
 	auto K12 = [](double xa, double x1, double x2, double x12)
 	{
 		std::optional<double> ret;
-		const double Mult((xa + x1) * (xa + x2));
+		const double Mult{ (xa + x1) * (xa + x2) };
 		if (!Equal(Mult, 0.0))
 			ret = 1.0 / Mult * (Mult - x12 * x12);
 		return ret;
 	};
 
-	double xa(x - xl);
+	double xa{ x - xl };
 
-	if (const auto k12(K12(xa, xrc + x1, xrc + x2, xa + xrc)); k12.has_value())
+	if (const auto k12{ K12(xa, xrc + x1, xrc + x2, xa + xrc) }; k12.has_value())
 	{
-		double A0(To1 + To2), B0(k12.value() * To1 * To2);
-		double r1(0.0), r2(0.0);
+		double A0{ To1 + To2 }, B0{ k12.value() * To1 * To2 };
+		double r1{ 0.0 }, r2{ 0.0 };
 		if (MathUtils::CSquareSolver::RootsSortedByAbs(B0, A0, 1.0, r1, r2))
 		{
 			To1 = -1.0 / r1;
 			To2 = -1.0 / r2;
 
 			xa *= xl / x;
-			if (const auto k12(K12(xa, xrc + x1, xrc + x2, xa + xrc)); k12.has_value())
+			if (const auto k12{ K12(xa, xrc + x1, xrc + x2, xa + xrc) }; k12.has_value())
 			{
 				A0 = T1 + T2;
 				B0 = k12.value() * T1 * T2;
@@ -403,9 +400,9 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 
 	// далее пытаемся уточнить полученные значения
 	// точным методом
-	const double A(1 - x / x1 + x / x2);
-	const double B(-To1 - To2);
-	const double C(To1 * To2 * x2 / x1);
+	const double A{ 1 - x / x1 + x / x2 };
+	const double B{ -To1 - To2 };
+	const double C{ To1 * To2 * x2 / x1 };
 	// мы ожидаем что Td2 < Td1, поэтому берем первый корень из
 	// отсортированных по модулю по возрастанию в качестве T2
 
@@ -442,7 +439,6 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 				T1,
 				T2));
 		}
-		
 	}
 
 	// финт - определяем по какой оси работает функция
@@ -529,10 +525,10 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 		Method != PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd)
 		throw dfw2error("CDynaGeneratorDQBase::GetAxisParametersNiipt - wrong method passed");
 
-	double la = x - xl;
+	double la{ x - xl };
 
 	// l1 - Kundur (4.29)
-	double denom = la - x1 + xl;
+	double denom{ la - x1 + xl };
 	if (Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
@@ -552,7 +548,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 
 	l2 = la * l1 * (x2 - xl) / denom;
 
-	const double L1(la + l1), L2(la + l2);
+	const double L1{ la + l1 }, L2{ la + l2 };
 
 	// пытаемся определить активные сопротивления грубо по заданным 
 	// разомкнутым постоянным - Kundur (Table 4.1, 4.41 Lpl = 0.0)
@@ -562,23 +558,21 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo ||
 		Method == PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd)
 	{
-		double nTo1(To1), nTo2(To2);
+		bRes = false;
+
+		double nTo1{ To1 }, nTo2{ To2 };
 
 		// рассчитываем постоянные времени первой и второй обмоток - НИИПТ/Вольдек
-		double Ts(To1 + To2), det(0.25 * Ts * Ts - To1 * To2 / (1.0 - la * la / (la + l1) / (la + l2)));
+		double Ts{ To1 + To2 }, det{ 0.25 * Ts * Ts - To1 * To2 / (1.0 - la * la / (la + l1) / (la + l2)) };
 		if (det >= 0)
 		{
 			nTo1 = 0.5 * Ts + std::sqrt(det);
 			r1 = L1 / nTo1;
 			r2 = L2 / (Ts - nTo1);
+			bRes = true;
 		}
 		else
 		{
-			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszParkParametersNiiptMethodFailed,
-				GetVerbalName(),
-				"0.25 * (To1 + To2)^2 - To1 * To2 / (1.0 - la^2 / (la + l1) / (la + l2))",
-				det));
-
 			if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd)
 			{
 				// если у НИИПТ не получилось рассчитать по разомкнутым постоянным, считаем замкнутые и 
@@ -597,15 +591,17 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 						nTo1 = 0.5 * Ts + std::sqrt(det);
 						r1 = (la + l1) / nTo1;
 						r2 = (la + l2) / (Ts - nTo1);
+						bRes = true;
 					}
-				}
-				else
-				{
-					// в этой точке r1 и r2 определены грубо - по Кундуру без коррекции
-					// Выдаем в лог ошибку, но работу продолжаем
-					Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
+					else
+						Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
 				}
 			}
+			else
+				Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszParkParametersNiiptMethodFailed,
+					GetVerbalName(),
+					"0.25 * (To1 + To2)^2 - To1 * To2 / (1.0 - la^2 / (la + l1) / (la + l2))",
+					det));
 		}
 	}
 	return bRes;
@@ -616,9 +612,9 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 
 bool CDynaGeneratorDQBase::GetAxisParametersNiipt(double x, double xl, double x1, double To1, double& r1, double& l1)
 {
-	bool bRes(true);
-	const double la = x - xl;
-	double denom = la - x1 + xl;
+	bool bRes{ true };
+	const double la{ x - xl };
+	const double denom{ la - x1 + xl };
 	if (Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
@@ -646,7 +642,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(const double& x,
 	double& l2)
 {
 
-	double T1(To1), T2(To2);
+	double T1{ To1 }, T2{ To2 };
 	
 	if (!GetShortCircuitTimeConstants(x, xl, x1, x2, To1, To2, T1, T2))
 		return false;
@@ -654,33 +650,35 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(const double& x,
 	/*if (!GetCanayTimeConstants(x, xl, x1, x2, xrc, To1, To2, T1, T2))
 		return false;*/
 	
-	const double A0 = x / x1 * T1 + (x / x2 - x / x1 + 1) * T2;
-	const double B0 = x / x2 * T1 * T2;
-	double root1(0), root2(0);
+	const double A0{ x / x1 * T1 + (x / x2 - x / x1 + 1) * T2 };
+	const double B0{ x / x2 * T1 * T2 };
+	double root1{ 0.0 }, root2{ 0.0 };
 	if (MathUtils::CSquareSolver::RootsSortedByAbs(B0, A0, 1, root1, root2))
 	{
-		const double To1 = -1 / root1;
-		const double To2 = -1 / root2;
+		const double To1{ -1 / root1 };
+		const double To2{ -1 / root2 };
 
-		const double xe(-xl);
-		const double A = T1 + T2;
-		const double Ae = 1 / (x + xe) * (x * A + xe * A0);
-		const double Be = (x2 + xe) / (x + xe) * B0;
+		const double xe{ -xl };
+		const double A{ T1 + T2 };
+		const double Ae{ 1 / (x + xe) * (x * A + xe * A0) };
+		const double Be{ (x2 + xe) / (x + xe) * B0 };
 
 		if (MathUtils::CSquareSolver::RootsSortedByAbs(Be, Ae, 1, root1, root2))
 		{
-			const double Teo1 = -1 / root1;
-			const double Teo2 = -1 / root2;
-			const double xe1 = (x + xe) / (1 - (Teo1 - To1) * (Teo1 - To2) / (Teo1 * (Teo1 - Teo2)));
-			const double xe2 = (x + xe) * Teo1 * Teo2 / To1 / To2;
-			const double deltay1 = 1 / xe1 - 1 / (x + xe);
-			const double deltay2 = 1 / xe2 - 1 / xe1;
-			const double newl1(1 / deltay1), newl2(1 / deltay2), newr1(newl1 / Teo1), newr2(newl2 / Teo2);
+			const double Teo1{ -1 / root1 };
+			const double Teo2{ -1 / root2 };
+			const double xe1{ (x + xe) / (1 - (Teo1 - To1) * (Teo1 - To2) / (Teo1 * (Teo1 - Teo2))) };
+			const double xe2{ (x + xe) * Teo1 * Teo2 / To1 / To2 };
+			const double deltay1{ 1 / xe1 - 1 / (x + xe) };
+			const double deltay2{ 1 / xe2 - 1 / xe1 };
+			const double newl1{ 1 / deltay1 }, newl2{ 1 / deltay2 }, newr1{ newl1 / Teo1 }, newr2{ newl2 / Teo2 };
 
 			l1 = newl1;
 			l2 = newl2;
 			r1 = newr1;
 			r2 = newr2;
+
+			return true;
 
 			// тут была идея проверять соответствие грубых и точных параметров, но они
 			// сильно гуляют в зависимости от параметров СМ
@@ -695,18 +693,21 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(const double& x,
 			*/
 		}
 	}
-	return false;
+
+	Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersCanayMethodFailed, GetVerbalName()));
+	// если не получилось у Canay, пробуем Kundur
+	return GetAxisParametersNiipt(x, xl, x1, x2, To1, To2, r1, l1, r2, l2, PARK_PARAMETERS_DETERMINATION_METHOD::Kundur);
 }
 
 // Методика определения Canay для одной обмотки по сверхпереходным параметрам
 
 bool CDynaGeneratorDQBase::GetAxisParametersCanay(double x, double xl, double x2, double To2, double& r1, double& l1)
 {
-	const double xe(-xl);
-	const double T2(To2 * x2 / x);		// рассчитываем постоянную замкнутую постоянную
-	const double Te1 = 1 / (x + xe) * (x * T2+ xe * To2);
-	const double xde1 = (x + xe) * Te1 / To2;
-	const double deltay1 = 1 / xde1 - 1 / (x + xe);
+	const double xe{ -xl };
+	const double T2{ To2 * x2 / x };		// рассчитываем постоянную замкнутую постоянную
+	const double Te1{ 1 / (x + xe) * (x * T2 + xe * To2) };
+	const double xde1{ (x + xe) * Te1 / To2 };
+	const double deltay1{ 1 / xde1 - 1 / (x + xe) };
 	l1 = 1 / deltay1;
 	r1 = l1 / Te1;
 	_CheckNumber(l1);
@@ -722,7 +723,7 @@ void CDynaGeneratorDQBase::CompareParksParameterCalculation()
 
 	struct ParkParameters
 	{
-		double r1 = 0, l1 = 0, r2 = 0, l2 = 0;
+		double r1{ 0.0 }, l1{ 0.0 }, r2{ 0.0 }, l2{ 0.0 };
 	}
 	NiiptD{}, NiiptQ{ }, CanayD{}, CanayQ{};
 
