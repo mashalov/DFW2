@@ -50,6 +50,16 @@ class CPlot
 			return WeightedDifference(value, Rtol, Atol) < 1.0;
 		}
 
+		bool CompareValue(const Point& point) const
+		{
+			return point.t == t && point.v == v;
+		}
+
+		bool CompareValue(const Point& point, double Rtol, double Atol) const
+		{
+			return point.t == t && CompareValue(point.v, Rtol, Atol);
+		}
+
 		double WeightedDifference(const double& value, double Rtol, double Atol) const
 		{
 			return std::abs((v - value) / (Rtol * (std::min)(std::abs(v),std::abs(value)) + Atol));

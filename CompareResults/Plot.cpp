@@ -224,17 +224,35 @@ CPlot CPlot::DenseOutput(double Step)
 
 		auto rangesize = std::distance(p, range);
 
+		// добавляем точку в выходной вектор если 
+		// она отличается от последней
+		auto push = [this, &outplot](const Point& pt)
+		{
+			if (outplot.data.empty() || !outplot.data.back().CompareValue(pt, m_Rtol, m_Atol))
+				outplot.data.push_back(pt);
+		};
+
+		// здесь диапазон точек, которые нужно записать
 		for (auto pr = p; pr != range; pr++)
 		{
+			// смотрим следующую точку от текущей
 			auto pnext = std::next(pr);
-			if (pnext->t - pr->t > Point::minstep)
+			// если это конец исходных данных - просто записываем текущую точку
+			if (pnext != data.end())
 			{
-				const double v2{ (range->v - p->v) / (range->t - p->t) * (t - p->t) + p->v };
-				outplot.data.push_back({ t, v2 });
+				// если следующая точка есть - проверяем интервал времени
+				// если он больше минимального шага - интерполируем
+				if (pnext->t - pr->t > Point::minstep)
+					push({ t, (pnext->v - pr->v) / (pnext->t - pr->t) * (t - pr->t) + pr->v });
+				else
+				{
+					// если интервал меньше минимального шага - записываем две точки - это излом
+					push({ t, pr->v });
+					push({ t, pnext->v });
+				}
 			}
 			else
-				outplot.data.push_back({ t, pr->v });
-
+				push({ t, pr->v });
 		}
 
 		t += Step;

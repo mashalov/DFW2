@@ -17,6 +17,7 @@ int main()
         auto plot{ result1.GetPlot(16, 10, "P") };
         auto denseplot{ plot.DenseOutput(0.01) };
         denseplot.WriteCSV("c:\\tmp\\testcsv.csv");
+        plot.WriteCSV("c:\\tmp\\testcsv2.csv");
 
     }
     catch (dfw2error& err)
