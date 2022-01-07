@@ -10,8 +10,13 @@ int main()
         CLog log;
         CResult result1(log), result2(log);
         result1.Load("c:\\users\\masha\\documents\\Русский тест\\Raiden\\Results\\binresultcom.rst");
+        //result1.Load("c:\\tmp\\000001.sna");
         result2.Load("c:\\tmp\\000002.sna");
         result1.Compare(result2, { 4.8, 5.0 });
+
+        auto plot{ result1.GetPlot(16, 10, "P") };
+        auto denseplot{ plot.DenseOutput(0.01) };
+        denseplot.WriteCSV("c:\\tmp\\testcsv.csv");
 
     }
     catch (dfw2error& err)

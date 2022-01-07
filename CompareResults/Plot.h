@@ -1,6 +1,9 @@
 ﻿#pragma once
 #include "Log.h"
 #include <vector>
+#include <locale>
+#include <filesystem>
+#include <fstream>
 
 
 struct PointDifference
@@ -20,6 +23,18 @@ struct CompareRange
 {
 	double min = -1.0;
 	double max = -1.0;
+};
+
+
+class DecimalSeparator : public std::numpunct<char>
+{
+public:
+	using numpunct<char>::numpunct;
+protected:
+	char do_decimal_point() const override
+	{
+		return ',';
+	}
 };
 
 
@@ -61,6 +76,13 @@ public:
 	{
 		data = std::move(other.data);
 	}
+	CPlot() {};
+
+	CPlot& operator= (CPlot&& other)
+	{
+		data = std::move(other.data);
+		return *this;
+	}
 
 	double tmin() const
 	{
@@ -78,6 +100,9 @@ public:
 			return data.rbegin()->t;
 	}
 
+	void WriteCSV(std::filesystem::path csvpath) const;
+
 	PointDifference Compare(const CPlot& plot);
+	CPlot DenseOutput(double Step);
 };
 

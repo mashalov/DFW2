@@ -104,6 +104,18 @@ void CResult::Compare(const CResult& other, const CompareRange& range) const
 	//CompareDevices(other, 16, "S", 1 * 1000000 + 9, "S", range); // генераторы
 }
 
+CPlot CResult::GetPlot(ptrdiff_t DeviceType, ptrdiff_t DeviceId, std::string_view Variable)
+{
+	CPlot plot;
+	if (auto device{ CResult::GetDevice(GetDevices(DeviceType), DeviceId) }; device)
+	{
+		ResultFileLib::IVariablesPtr variables{ device->GetVariables() };
+		if (auto variable{ CResult::GetVariable(variables, Variable) }; variable)
+			plot = ConstructFromPlot(variable->GetPlot());
+	}
+	return plot;
+}
+
 void CResult::CompareDevices(const CResult& other, long DeviceType1, std::string_view PropName1, long DeviceType2, std::string_view PropName2, const CompareRange& range) const
 {
 	auto devices1{ GetDevices(DeviceType1) };
@@ -198,7 +210,7 @@ ResultFileLib::IVariablePtr CResult::GetVariable(ResultFileLib::IVariablesPtr& V
 	return nullptr;
 }
 
-ResultFileLib::IDevicePtr CResult::GetDevice(const DEVICELIST& Devices, LONG Id)
+ResultFileLib::IDevicePtr CResult::GetDevice(const DEVICELIST& Devices, ptrdiff_t Id)
 {
 	for (const auto& dev : Devices)
 		if (dev->GetId() == Id)

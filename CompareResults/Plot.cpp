@@ -23,9 +23,7 @@ CPlot::CPlot(size_t PointCount, const double* pt, const double* pv, const Compar
 			}
 
 		pv = pv + (pt - ptOriginal);
-		Point point{ *pt, *pv };
-		// первую точку добавляем в сет
-		data.push_back(point);
+		data.push_back({ *pt, *pv });
 		pt++; pv++;
 
 		while (pt < pte)
@@ -34,35 +32,8 @@ CPlot::CPlot(size_t PointCount, const double* pt, const double* pv, const Compar
 			// добавляем только точки, попадающие в диапазон
 			if (range.max >= 0.0 && *pt > range.max)
 				break;
-			
-			// проверяем, отличается ли следующая точка от предыдущей
-			const bool bEqual{ point.CompareValue(*pv, m_Rtol, m_Atol) };
-			point.t = *pt;
-			// если не отличается, считаем
-			// что изменилось только время
-			if (!bEqual)
-			{
-				// если отличается
-				//  проверяем, предыдущая точка отстоит от текущей 
-				// по времени больше чем на минимальный шаг
-
-				if (point.t - *(pt - 1) < 1E-8)
-					data.push_back({ *(pt - 1), *(pv - 1) });
-				
-				// обновляем предыдущую точку
-				// добавляем ее в сет
-				point.v = *pv;
-				data.push_back(point);
-			}
+			data.push_back({ *pt, *pv });
 			pt++; pv++;
-		}
-		// если время последней точки сета 
-		// не равно времени последней точки графика
-		// добавляем последнюю точку
-		if (data.rbegin()->t != point.t)
-		{
-			point.v = *(pv - 1);
-			data.push_back(point);
 		}
 	}
 }
@@ -114,15 +85,11 @@ PointDifference CPlot::Compare(const CPlot& plot)
 			// просматриваем второй график вправо
 			auto p2next = std::next(p2);
 			// если график закончился, интервал закрывается end()
-			if (p2next == plot.data.end())
-				break;
-
 			// если следующая точка имеет время больше, чем
 			// точка первого интервала, то возвращаем предыдущую точку
-			if (p2next->t < p1->t)
-				p2 = p2next;
-			else
+			if (p2next != plot.data.end() && p2next->t > p1->t)
 				break;
+			p2 = p2next;
 		}
 
 		// находим точку во втором графике, время которой не меньше
@@ -207,4 +174,81 @@ PointDifference CPlot::Compare(const CPlot& plot)
 	}
 
 	return PointDiff;
+}
+
+
+CPlot CPlot::DenseOutput(double Step)
+{
+	CPlot outplot;
+	double t{ 0.0 };
+
+	auto p{ data.begin() };
+
+	// идем по графику
+	while (p != data.end())
+	{
+		// ищем ближайшую точку к заданному времени слева
+		while (p != data.end())
+		{
+			auto pnext = std::next(p);
+			if (pnext != data.end() && pnext->t > t)
+				break;
+			p = pnext;
+		}
+
+		// возвращаемся назад до тех пор, пока точки идут
+		// с минимальным шагом
+
+		if (p != data.end())
+		{
+			while (p != data.begin())
+			{
+				auto pprev = std::prev(p);
+				if (p->t - pprev->t <= Point::minstep)
+					p = pprev;
+				else
+					break;
+			}
+		}
+
+		// ищем точку справа до тех пор, пока они
+		// идут с минимальным шагом
+		auto range = p;
+		while (range != data.end())
+		{
+			if (range->t - p->t <= Point::minstep)
+				range++;
+			else
+				break;
+		}
+
+		auto rangesize = std::distance(p, range);
+
+		for (auto pr = p; pr != range; pr++)
+		{
+			auto pnext = std::next(pr);
+			if (pnext->t - pr->t > Point::minstep)
+			{
+				const double v2{ (range->v - p->v) / (range->t - p->t) * (t - p->t) + p->v };
+				outplot.data.push_back({ t, v2 });
+			}
+			else
+				outplot.data.push_back({ t, pr->v });
+
+		}
+
+		t += Step;
+	}
+
+	return outplot;
+}
+
+void CPlot::WriteCSV(std::filesystem::path csvpath) const
+{
+	std::ofstream csvfile(csvpath);
+	csvfile.imbue(std::locale(std::cout.getloc(), new DecimalSeparator));
+
+	if (csvfile.is_open())
+		for (const auto& point : data)
+			csvfile << point.t << ";" << point.v << std::endl;
 }
