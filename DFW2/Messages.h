@@ -229,6 +229,7 @@ namespace DFW2
 		static const char* m_cszParkParametersNiiptPlusMethodFailed;
 		static const char* m_cszParkParametersCanayMethodFailed;
 		static const char* m_cszActionNotInitialized;
+		static const char* m_cszProgressCaption;
 	};
 }
 

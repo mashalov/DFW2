@@ -672,6 +672,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("ResultsFolder", m_strResultsFolder);
 	Serializer->AddProperty("LRCMinSlope", m_dLRCMinSlope);
 	Serializer->AddProperty("LRCMaxSlope", m_dLRCMaxSlope);
+	Serializer->AddProperty("ProcessDuration", m_dProcessDuration);
 
 	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
 		new CSerializerAdapterEnum(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
@@ -906,6 +907,31 @@ void CDynaModel::CompareRightVector()
 			rv.pDevice->GetVerbalName())
 		);
 	}
+}
+
+void CDynaModel::StartProgress()
+{
+	m_LastProgress = std::chrono::high_resolution_clock::now();
+	if (m_pProgress)
+		m_pProgress->StartProgress(fmt::format(CDFW2Messages::m_cszProgressCaption, sc.t), 0, 100);
+}
+
+void CDynaModel::UpdateProgress()
+{
+	const auto now = std::chrono::high_resolution_clock::now();
+	if (std::chrono::duration_cast<std::chrono::seconds>(now - m_LastProgress).count() >= 1.0)
+	{
+		m_LastProgress = now;
+		if (m_pProgress)
+			m_pProgress->UpdateProgress(fmt::format(CDFW2Messages::m_cszProgressCaption, sc.t), 
+				static_cast<long>(sc.t / m_Parameters.m_dProcessDuration * 100.0));
+	}
+}
+
+void CDynaModel::EndProgress()
+{
+	if (m_pProgress)
+		m_pProgress->EndProgress();
 }
 
 const double CDynaModel::MethodlDefault[4][4] = 

@@ -348,6 +348,37 @@ namespace DFW2
 			m_spStage->Log(LOG_INFO, stringutils::utf8_decode(Message).c_str());
 		}
 	};
+
+	class CProgressRastrWin : public CProgress
+	{
+	protected:
+		IRastrPtr m_spRastr;
+	public:
+		CProgressRastrWin(IRastrPtr spRastr) : m_spRastr(spRastr) {}
+		void StartProgress(std::string_view Caption, int RangeMin, int RangeMax) override
+		{
+			m_spRastr->SendCommandMain(COMM_PROGRESS, 
+				L"i", 
+				stringutils::utf8_decode(Caption).c_str(), 
+				0);
+		}
+
+		void UpdateProgress(std::string_view Caption, int Progress) override
+		{
+			m_spRastr->SendCommandMain(COMM_PROGRESS,
+				L"%",
+				stringutils::utf8_decode(Caption).c_str(),
+				static_cast<LONG>(Progress));
+		}
+
+		void EndProgress() override
+		{
+			m_spRastr->SendCommandMain(COMM_PROGRESS,
+				L"s",
+				L"",
+				100);
+		}
+	};
 }
 
 

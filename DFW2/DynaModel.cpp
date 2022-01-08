@@ -291,9 +291,11 @@ bool CDynaModel::RunTransient()
 
 			try
 			{
+				StartProgress();
 				while (!CancelProcessing() && bRes)
 				{
 					bRes = bRes && Step();
+					UpdateProgress();
 					if (!CancelProcessing())
 					{
 						/*
@@ -323,6 +325,7 @@ bool CDynaModel::RunTransient()
 				}
 				Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка в цикле расчета : {}", err.what()));
 			}
+			EndProgress();
 		}
 
 		if (bResultsNeedToBeFinished)

@@ -223,3 +223,4 @@ const char* CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed = "\"{}\" : 
 const char* CDFW2Messages::m_cszParkParametersCanayMethodFailed = "\"{}\" : метод определения параметров модели Парка Canay неприменим";
 const char* CDFW2Messages::m_cszNodeNotFoundForReactor = "Узел №={} не найден для связи с реактором {}";
 const char* CDFW2Messages::m_cszBranchNotFoundForReactor = "Ветвь c ({},{},{}) не найдена для связи с реактором {}";
+const char* CDFW2Messages::m_cszProgressCaption = "Расчет динамики {}";

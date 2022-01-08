@@ -75,6 +75,7 @@ namespace DFW2
 			double m_dLRCMinSlope = 0.0;
 			double m_dLRCMaxSlope = 5.0;
 			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
+			double m_dProcessDuration = 150.0;
 		};
 
 		friend class CCustomDevice;
@@ -484,6 +485,8 @@ namespace DFW2
 		std::unique_ptr<double[]> pRightHandBackup;
 		
 		std::unique_ptr<CLogger> m_pLogger = std::make_unique<CLoggerConsole>();
+		std::unique_ptr<CProgress> m_pProgress = std::make_unique<CProgress>();
+		std::chrono::time_point<std::chrono::high_resolution_clock> m_LastProgress;
 
 		bool m_bEstimateBuild;
 		bool m_bRebuildMatrixFlag;
@@ -815,7 +818,12 @@ namespace DFW2
 		void RebuildMatrix(bool bRebuild = true);
 		void AddZeroCrossingDevice(CDevice *pDevice);
 
-		void SetLogger(std::unique_ptr<CLogger> pLogger) {	m_pLogger = std::move(pLogger);		}
+		void SetLogger(std::unique_ptr<CLogger> pLogger) {	m_pLogger = std::move(pLogger);	}
+		void SetProgress(std::unique_ptr<CProgress> pProgress) { m_pProgress = std::move(pProgress); }
+
+		void StartProgress();
+		void UpdateProgress();
+		void EndProgress();
 
 		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const;
 
