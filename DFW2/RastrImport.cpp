@@ -12,8 +12,9 @@ using namespace DFW2;
 //cl /LD /EHsc -DUNICODE -D_UNICODE customdevice.cpp dllmain.cpp
 
 
-CRastrImport::CRastrImport()
+CRastrImport::CRastrImport(IRastrPtr spRastr)
 {
+	m_spRastr = spRastr;
 	InitRastrWin();
 }
 
@@ -263,6 +264,7 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 
 void CRastrImport::InitRastrWin()
 {
+	if(!m_spRastr)
 	if (FAILED(m_spRastr.CreateInstance(CLSID_Rastr)))
 		throw dfw2error(CDFW2Messages::m_cszCannotUseRastrWin3);
 

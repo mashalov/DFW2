@@ -22,6 +22,7 @@
 #include "version.h"
 #include "DynaBranch.h"
 #include "Statistics.h"
+#include "Logger.h"
 
 //#define USE_FMA
 namespace DFW2
@@ -482,7 +483,7 @@ namespace DFW2
 		double *pbRightHand;
 		std::unique_ptr<double[]> pRightHandBackup;
 		
-
+		std::unique_ptr<CLogger> m_pLogger = std::make_unique<CLoggerConsole>();
 
 		bool m_bEstimateBuild;
 		bool m_bRebuildMatrixFlag;
@@ -813,6 +814,8 @@ namespace DFW2
 		ptrdiff_t GetStepNumber() {  return sc.nStepsCount;  }
 		void RebuildMatrix(bool bRebuild = true);
 		void AddZeroCrossingDevice(CDevice *pDevice);
+
+		void SetLogger(std::unique_ptr<CLogger> pLogger) {	m_pLogger = std::move(pLogger);		}
 
 		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const;
 

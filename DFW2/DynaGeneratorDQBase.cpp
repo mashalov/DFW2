@@ -558,7 +558,10 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 	if (Method == PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo ||
 		Method == PARK_PARAMETERS_DETERMINATION_METHOD::NiiptToTd)
 	{
-		bRes = false;
+		// считаем что отказ методик НИИПТ не является ошибкой,
+		// так как мы уже рассчитали параметры по Кундуру
+		
+		//bRes = false;
 
 		double nTo1{ To1 }, nTo2{ To2 };
 
@@ -569,7 +572,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 			nTo1 = 0.5 * Ts + std::sqrt(det);
 			r1 = L1 / nTo1;
 			r2 = L2 / (Ts - nTo1);
-			bRes = true;
+			//bRes = true;
 		}
 		else
 		{

@@ -202,7 +202,7 @@ namespace DFW2
 	class CRastrImport
 	{
 	public:
-		CRastrImport();
+		CRastrImport(IRastrPtr spRastr = nullptr);
 		virtual ~CRastrImport() = default;
 		void GetData(CDynaModel& Network);
 	protected:
@@ -332,7 +332,24 @@ namespace DFW2
 		CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType);
 		static const CDynaNodeBase::eLFNodeType RastrTypesMap[5];
 	};
+
+	class CLoggerRastrWin : public CLogger
+	{
+	protected:
+		IRastrPtr m_spRastr;
+		IStagePtr m_spStage;
+	public:
+		CLoggerRastrWin(IRastrPtr spRastr) : m_spRastr(spRastr) 
+		{
+			m_spStage = spRastr->GetStage(CDFW2Messages::m_cszProjectName);
+		}
+		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const override
+		{
+			m_spStage->Log(LOG_INFO, stringutils::utf8_decode(Message).c_str());
+		}
+	};
 }
+
 
 
 /*
