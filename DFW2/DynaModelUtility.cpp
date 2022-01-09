@@ -636,16 +636,24 @@ double CDynaModel::WrapPosNegPI(double fAng)
 	return CDynaModel::Mod(fAng + M_PI, 2 * M_PI) - M_PI;
 }
 
+SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
+{
+	auto Validator = std::make_unique<CSerializerValidatorRules>();
+	Validator->AddRule(m_cszProcessDuration, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszFrequencyTimeConstant, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLRCToShuntVmin, &ValidatorRange01);
+	return Validator;
+}
 
 SerializerPtr CDynaModel::Parameters::GetSerializer()
 {
 	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
 	Serializer->SetClassName("Parameters");
-	Serializer->AddProperty("FrequencyTimeConstant", m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("LRCToShuntVmin", m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszFrequencyTimeConstant, m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszLRCToShuntVmin, m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(m_cszConsiderDampingEquation, m_bConsiderDampingEquation);
 	Serializer->AddProperty("ZeroCrossingTolerance", m_dZeroCrossingTolerance);
 	Serializer->AddProperty("DontCheckTolOnMinStep", m_bDontCheckTolOnMinStep);
-	Serializer->AddProperty("ConsiderDampingEquation", m_bConsiderDampingEquation);
 	Serializer->AddProperty("OutStep", m_dOutStep, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty("VarSearchStackDepth", nVarSearchStackDepth);
 	Serializer->AddProperty("Atol", m_dAtol);
@@ -672,7 +680,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("ResultsFolder", m_strResultsFolder);
 	Serializer->AddProperty("LRCMinSlope", m_dLRCMinSlope);
 	Serializer->AddProperty("LRCMaxSlope", m_dLRCMaxSlope);
-	Serializer->AddProperty("ProcessDuration", m_dProcessDuration);
+	Serializer->AddProperty(m_cszProcessDuration, m_dProcessDuration);
 
 	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
 		new CSerializerAdapterEnum(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
@@ -686,7 +694,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddEnumProperty("LogLevel",
 		new CSerializerAdapterEnum(m_eLogLevel, m_cszLogLevelNames));
 
-	Serializer->AddEnumProperty("ParkParametersDetermination",
+	Serializer->AddEnumProperty(m_cszParkParametersDetermination,
 		new CSerializerAdapterEnum(m_eParkParametersDetermination, m_cszParkParametersDeterminationMethodNames));
 
 	Serializer->AddEnumProperty("GeneratorLessLRC",
@@ -706,7 +714,6 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty("LFNewtonMaxBranchAngleStep", m_dBranchAngleNewtonStep);
 	Serializer->AddProperty("LFForceSwitchLambda", ForceSwitchLambda);
 	Serializer->AddEnumProperty("LFFormulation", new CSerializerAdapterEnum(m_LFFormulation, m_cszLFFormulationTypeNames));
-
 	return Serializer;
 }
 
@@ -919,7 +926,7 @@ void CDynaModel::StartProgress()
 CProgress::ProgressStatus CDynaModel::UpdateProgress()
 {
 	CProgress::ProgressStatus retStatus{ CProgress::ProgressStatus::Continue };
-	const auto now = std::chrono::high_resolution_clock::now();
+	const auto now{ std::chrono::high_resolution_clock::now() };
 	if (std::chrono::duration_cast<std::chrono::seconds>(now - m_LastProgress).count() >= 1.0)
 	{
 		m_LastProgress = now;

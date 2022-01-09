@@ -510,6 +510,23 @@ void CRastrImport::GetData(CDynaModel& Network)
 			spAAOutputMode->GetZ(i).lVal,
 			spAAORunsCount->GetZ(i).lVal);
 	}
+
+	ITablePtr spParameters = spTables->Item("com_dynamics");
+	IColsPtr spParCols = spParameters->Cols;
+	IColPtr spDuration = spParCols->Item(L"Tras");
+	IColPtr spLTC2Y = spParCols->Item(L"frSXNtoY");
+	IColPtr spFreqT = spParCols->Item(L"Tf");
+	IColPtr spParkParams = spParCols->Item(L"corrT");
+	IColPtr spDamping = spParCols->Item(L"IsDemp");
+
+	auto ps{ Network.GetParametersSerializer() };
+	ps->at(CDynaModel::Parameters::m_cszProcessDuration)->SetDouble(spDuration->GetZ(0).dblVal);
+	ps->at(CDynaModel::Parameters::m_cszLRCToShuntVmin)->SetDouble(spLTC2Y->GetZ(0).dblVal);
+	ps->at(CDynaModel::Parameters::m_cszFrequencyTimeConstant)->SetDouble(spFreqT->GetZ(0).dblVal);
+	ps->at(CDynaModel::Parameters::m_cszConsiderDampingEquation)->SetBool(spDamping->GetZ(0).lVal ? true : false);
+	ps->at(CDynaModel::Parameters::m_cszParkParametersDetermination)->SetInt(spParkParams->GetZ(0).lVal ? 0 : 1);
+
+		
 	
 	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
 		return;

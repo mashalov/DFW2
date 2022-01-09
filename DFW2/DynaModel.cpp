@@ -295,7 +295,10 @@ bool CDynaModel::RunTransient()
 				while (!CancelProcessing() && bRes)
 				{
 					bRes = bRes && Step();
+					// внутри UpdateProgress проверяется команда останова
+					// пользователем и на нее выдается StopProcess
 					UpdateProgress();
+					// проверка StopProcess
 					if (!CancelProcessing())
 					{
 						/*
@@ -403,7 +406,10 @@ bool CDynaModel::RunTransient()
 
 void CDynaModel::PreInitDevices()
 {
-	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
+	// выполняем валидацию параметров расчета
+	CSerializerValidator Validator(this, m_Parameters.GetSerializer(), m_Parameters.GetValidator());
+	eDEVICEFUNCTIONSTATUS Status{ Validator.Validate() };
+
 	for (auto&& container : m_DeviceContainers)
 		Status = CDevice::DeviceFunctionResult(Status, container->PreInit(this));
 

@@ -78,6 +78,30 @@ namespace DFW2
 			double m_dProcessDuration = 150.0;
 		};
 
+		struct Parameters : public DynaModelParameters
+		{
+			Parameters() { }
+			// сериализатор и валидатор
+			SerializerPtr GetSerializer();
+			SerializerValidatorRulesPtr GetValidator();
+
+			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Power", "Current", "Tanh" };
+			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
+			static constexpr const char* m_cszLogLevelNames[6] = { "fatal", "error", "warning", "message", "info", "debug" };
+			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
+			static constexpr const char* m_cszParkParametersDeterminationMethodNames[4] = { "Kundur", "NiiptTo", "NiiptToTd", "Canay" };
+			static constexpr const char* m_cszFreqDampingNames[2] = { "Node", "Island" };
+			static constexpr const char* m_cszGeneratorLessLRCNames[2] = { "S","I" };
+
+			static constexpr const char* m_cszProcessDuration = "ProcessDuration";
+			static constexpr const char* m_cszFrequencyTimeConstant = "FrequencyTimeConstant";
+			static constexpr const char* m_cszLRCToShuntVmin = "LRCToShuntVmin";
+			static constexpr const char* m_cszConsiderDampingEquation = "ConsiderDampingEquation";
+			static constexpr const char* m_cszParkParametersDetermination = "ParkParametersDetermination";
+
+			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
+		};
+
 		friend class CCustomDevice;
 	protected:
 		struct MatrixRow
@@ -424,19 +448,8 @@ namespace DFW2
 			static constexpr const char* m_cszDiscontinuityLevelTypeNames[3] = { "none", "light", "hard" };
 		};
 
-		struct Parameters : public DynaModelParameters
-		{
-			Parameters() { }
-			SerializerPtr GetSerializer();
-			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Power", "Current", "Tanh" };
-			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
-			static constexpr const char* m_cszLogLevelNames[6] = { "fatal", "error", "warning", "message", "info", "debug" };
-			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
-			static constexpr const char* m_cszParkParametersDeterminationMethodNames[4] = { "Kundur", "NiiptTo", "NiiptToTd", "Canay" };
-			static constexpr const char* m_cszFreqDampingNames[2] = { "Node", "Island" };
-			static constexpr const char* m_cszGeneratorLessLRCNames[2] = { "S","I" };
-		} 
-			m_Parameters;
+		
+		Parameters	m_Parameters;
 
 
 		CPlatformFolders m_Platform;
@@ -875,6 +888,11 @@ namespace DFW2
 		const DynaModelParameters& Parameters() const
 		{
 			return m_Parameters;
+		}
+
+		SerializerPtr GetParametersSerializer()
+		{
+			return m_Parameters.GetSerializer();
 		}
 
 		void WriteSlowVariable(ptrdiff_t nDeviceType,
