@@ -18,8 +18,14 @@ namespace DFW2
 	class CProgress
 	{
 	public:
+		enum class ProgressStatus
+		{
+			Stop,
+			Pause,
+			Continue
+		};
 		virtual void StartProgress(std::string_view Caption, int RangeMin, int RangeMax) {}
-		virtual void UpdateProgress(std::string_view Caption, int Progress) {}
+		virtual ProgressStatus UpdateProgress(std::string_view Caption, int Progress) { return ProgressStatus::Continue; }
 		virtual void EndProgress() {}
 	};
 }

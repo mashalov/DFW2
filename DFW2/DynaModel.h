@@ -589,8 +589,6 @@ namespace DFW2
 		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
 		void SetDerivative(ptrdiff_t nRow, double dValue);
 
-		static constexpr const VersionInfo version = { { 1, 0, 0, 1 } };
-
 	public:
 		CDynaNodeContainer Nodes;
 		CDynaBranchContainer Branches;
@@ -822,7 +820,7 @@ namespace DFW2
 		void SetProgress(std::unique_ptr<CProgress> pProgress) { m_pProgress = std::move(pProgress); }
 
 		void StartProgress();
-		void UpdateProgress();
+		CProgress::ProgressStatus UpdateProgress();
 		void EndProgress();
 
 		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const;
@@ -888,6 +886,8 @@ namespace DFW2
 
 		void SnapshotRightVector();
 		void CompareRightVector();
+
+		static constexpr const VersionInfo version = { { 1, 0, 0, 1 } };
 
 	};
 }

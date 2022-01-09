@@ -341,11 +341,33 @@ namespace DFW2
 	public:
 		CLoggerRastrWin(IRastrPtr spRastr) : m_spRastr(spRastr) 
 		{
-			m_spStage = spRastr->GetStage(CDFW2Messages::m_cszProjectName);
+			m_spStage = spRastr->GetStage(stringutils::utf8_decode(
+				fmt::format("{} {}", 
+					CDFW2Messages::m_cszProjectName, 
+					CDynaModel::version)).c_str());
 		}
 		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const override
 		{
-			m_spStage->Log(LOG_INFO, stringutils::utf8_decode(Message).c_str());
+			switch (Status)
+			{
+			case DFW2MessageStatus::DFW2LOG_DEBUG:
+				break;
+			case DFW2MessageStatus::DFW2LOG_ERROR:
+				m_spStage->Log(LOG_ERROR, stringutils::utf8_decode(Message).c_str());
+				break;
+			case DFW2MessageStatus::DFW2LOG_FATAL:
+				m_spStage->Log(LOG_FAILED, stringutils::utf8_decode(Message).c_str());
+				break;
+			case DFW2MessageStatus::DFW2LOG_INFO:
+				m_spStage->Log(LOG_INFO, stringutils::utf8_decode(Message).c_str());
+				break;
+			case DFW2MessageStatus::DFW2LOG_MESSAGE:
+				m_spStage->Log(LOG_MESSAGE, stringutils::utf8_decode(Message).c_str());
+				break;
+			case DFW2MessageStatus::DFW2LOG_WARNING:
+				m_spStage->Log(LOG_WARNING, stringutils::utf8_decode(Message).c_str());
+				break;
+			}
 		}
 	};
 
@@ -363,12 +385,20 @@ namespace DFW2
 				0);
 		}
 
-		void UpdateProgress(std::string_view Caption, int Progress) override
+		ProgressStatus UpdateProgress(std::string_view Caption, int Progress) override
 		{
+			ProgressStatus retStatus{ ProgressStatus::Continue };
+
 			m_spRastr->SendCommandMain(COMM_PROGRESS,
 				L"%",
 				stringutils::utf8_decode(Caption).c_str(),
 				static_cast<LONG>(Progress));
+
+			if (auto hStop{ reinterpret_cast<HANDLE>(static_cast<ptrdiff_t>(m_spRastr->GetStopEventHandle())) }; hStop)
+				if (WaitForSingleObject(hStop, 0) == WAIT_OBJECT_0)
+					retStatus = ProgressStatus::Stop;
+
+			return retStatus;
 		}
 
 		void EndProgress() override

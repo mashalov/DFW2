@@ -281,7 +281,7 @@ void CDynaModel::GetTopZeroCrossings(ptrdiff_t nCount)
 		}
 
 	for (const auto& dev : ZeroCrossingsSet)
-		Log(DFW2MessageStatus::DFW2LOG_DEBUG,
+		Log(DFW2MessageStatus::DFW2LOG_INFO,
 			fmt::format("{:<6} {} zero-crossings", dev->GetZeroCrossings(), dev->GetVerbalName()));
 }
 
@@ -314,7 +314,7 @@ void CDynaModel::GetTopDiscontinuityRequesters(ptrdiff_t nCount)
 	}
 
 	for (const auto& dev : DiscontinuityRequesters)
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG,
+	Log(DFW2MessageStatus::DFW2LOG_INFO,
 		fmt::format("{:<6} {} discontinuity requests", dev->GetDiscontinuityRequests(), dev->GetVerbalName()));
 }
 
@@ -350,7 +350,7 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 		if (!pVectorBegin->nErrorHits)
 			break;
 
-			Log(DFW2MessageStatus::DFW2LOG_DEBUG,
+			Log(DFW2MessageStatus::DFW2LOG_INFO,
 				fmt::format("{:<6} {} {} Rtol {} Atol {}",
 					pVectorBegin->nErrorHits,
 					pVectorBegin->pDevice->GetVerbalName(),
@@ -916,16 +916,22 @@ void CDynaModel::StartProgress()
 		m_pProgress->StartProgress(fmt::format(CDFW2Messages::m_cszProgressCaption, sc.t), 0, 100);
 }
 
-void CDynaModel::UpdateProgress()
+CProgress::ProgressStatus CDynaModel::UpdateProgress()
 {
+	CProgress::ProgressStatus retStatus{ CProgress::ProgressStatus::Continue };
 	const auto now = std::chrono::high_resolution_clock::now();
 	if (std::chrono::duration_cast<std::chrono::seconds>(now - m_LastProgress).count() >= 1.0)
 	{
 		m_LastProgress = now;
 		if (m_pProgress)
-			m_pProgress->UpdateProgress(fmt::format(CDFW2Messages::m_cszProgressCaption, sc.t), 
-				static_cast<long>(sc.t / m_Parameters.m_dProcessDuration * 100.0));
+			retStatus = m_pProgress->UpdateProgress(fmt::format(CDFW2Messages::m_cszProgressCaption, sc.t),
+				static_cast<int>(sc.t / m_Parameters.m_dProcessDuration * 100.0));
 	}
+
+	if(retStatus == CProgress::ProgressStatus::Stop)
+		StopProcess();
+
+	return retStatus;
 }
 
 void CDynaModel::EndProgress()
