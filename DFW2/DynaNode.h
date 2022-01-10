@@ -331,7 +331,9 @@ namespace DFW2
 		void CalcAdmittances(bool bFixNegativeZs);
 		void SwitchLRCs(bool bSwitchToDynamicLRC);
 		_IterationControl m_IterationControl;
-		void DumpIterationControl();
+		// вывод данных о ходе итерационного процесса (УР или YU) с возможностью выбрать уровень вывода:
+		// для УР - информация, для YU - отладка
+		void DumpIterationControl(DFW2MessageStatus OutputStatus = DFW2MessageStatus::DFW2LOG_INFO);
 		std::string GetIterationControlString();
 		friend class CLoadFlow;
 		LINKSVEC m_SuperLinks;

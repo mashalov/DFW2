@@ -1030,7 +1030,7 @@ bool CDynaNodeContainer::LULF()
 				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, CDevice::ZeroDivGuard(pNode->V - pNode->Vold, pNode->Vold));
 		}
 
-		DumpIterationControl();
+		DumpIterationControl(DFW2MessageStatus::DFW2LOG_DEBUG);
 
 		if (std::abs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
 		{

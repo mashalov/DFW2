@@ -839,9 +839,9 @@ std::string CDynaNodeContainer::GetIterationControlString()
 	return retString;
 }
 
-void CDynaNodeContainer::DumpIterationControl()
+void CDynaNodeContainer::DumpIterationControl(DFW2MessageStatus OutputStatus)
 {
-	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, GetIterationControlString());
+	m_pDynaModel->Log(OutputStatus, GetIterationControlString());
 }
 
 // функция готовит топологию к дианамике в первый раз

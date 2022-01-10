@@ -325,10 +325,8 @@ void CRastrImport::LoadFile(std::filesystem::path FilePath, const std::filesyste
 	LoadedFiles.push_back(FilePath);
 }
 
-void CRastrImport::GetData(CDynaModel& Network)
+void CRastrImport::GetFileData(CDynaModel& Network)
 {
-
-
 	// Уват
 	/*
 	m_spRastr->NewFile(dfwPath.c_str());
@@ -340,7 +338,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
 
 	// СМЗУ Северо-Запад
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
+	LoadFile("C:\\Users\\mashalov\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
 
 	// Test-9
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
@@ -355,9 +353,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//LoadFile("d:\\downloads\\last_version_mdp_debug_1_New_calc2\\last_version_mdp_debug_1_New_calc2");
 	//LoadFile("d:\\downloads\\5_check_mdp_debug_1\\5_check_mdp_debug_4");
 	//LoadFile("d:\\downloads\\8_check_mdp_debug_1\\8_check_mdp_debug_1");
-	LoadFile("d:\\downloads\\схемы\\10_check_mdp_debug_1_stable");
+	//LoadFile("d:\\downloads\\схемы\\10_check_mdp_debug_1_stable");
 	//LoadFile("d:\\downloads\\схемы\\9_check_mdp_debug_1_unstable");
-	
+
 
 
 	//LoadFile("d:\\downloads\\!упрощ кор 16122020_01-00_itog+Урал_откл СЭ (нов) зам.УШР.rst", rstPath.c_str());
@@ -370,8 +368,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//LoadFile("c:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia_20211116\\16.11.2021 to_dynamic_check");
 	//LoadFile("c:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia_20211116\\1. 2ф КЗ на землю СМЗУ.dfw", dfwPath.c_str());
 	//LoadFile("c:\\Users\\masha\\source\\repos\\DFW2\\tests\\Siberia_20211116\\2. 1ф КЗ на землю+УРОВ СМЗУ.dfw", dfwPath.c_str());
-	
-	
+
+
 
 	//m_spRastr->Load(RG_REPL, L"D:\\temp\\1", L"");
 	//m_spRastr->Load(RG_REPL, L"..\\tests\\original.dfw", dfwPath.c_str());
@@ -380,10 +378,14 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//m_spRastr->Load(RG_REPL, rstPath.c_str()); 
 	//spRastr->Load(RG_REPL, L"..\\tests\\mdp_debug_5", "");
 
-
 	for (const auto& file : LoadedFiles)
 		Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingModelFormat, "RastrWin3", file.string()));
 
+	GetData(Network);
+}
+
+void CRastrImport::GetData(CDynaModel& Network)
+{
 
 	m_rastrSynonyms
 		.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameLRC, "polin")
