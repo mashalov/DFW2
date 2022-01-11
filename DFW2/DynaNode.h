@@ -150,6 +150,7 @@ namespace DFW2
 		bool InMatrix() override;
 		void InitNordsiek(CDynaModel* pDynaModel) override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
+		void SuperNodeLoadFlowYU(CDynaModel* pDynaModel);
 		bool IsDangling();
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() noexcept { return Pnr - Pgr - V * V * YiiSuper.real();	}

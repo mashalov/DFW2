@@ -1435,8 +1435,30 @@ bool CDynaNodeBase::IsDangling()
 	return !ppDevice;
 }
 
+void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
+{
+	if (m_pSuperNodeParent)
+		return;
+	CLinkPtrCount* pSuperNodeLink = GetSuperLink(0);
+	if (!pSuperNodeLink->m_nCount)
+		return; // это суперузел, но у него нет связей
+
+	const ptrdiff_t nNz{ 2 * (m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin) };
+
+	//for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
+
+	KLUWrapper<std::complex<double>> klu;
+	klu.SetSize(pSuperNodeLink->m_nCount + 1, nNz);
+
+	//for (CDevice** ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
+
+}
+
 void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 {
+	//SuperNodeLoadFlowYU(pDynaModel);
+	//return;
+
 	if (m_pSuperNodeParent)
 		return; // это не суперузел
 
@@ -1452,7 +1474,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
 	// Создаем вектор ребер за исключением параллельных ветвей
 	std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
-	CDevice **ppNodeEnd = pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount;
+	CDevice** ppNodeEnd{ pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount };
 	NodeType *pNode = pGraphNodes.get();
 	GraphType gc;
 	// Вводим узлы в граф. В качестве идентификатора узла используем адрес объекта
@@ -1496,7 +1518,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 
 	// исключаем из списка узлов узел с наибольшим числом связей (можно и первый попавшийся, KLU справится, но найти
 	// такой узел легко
-	const GraphType::GraphNodeBase* pMaxRangeNode = gc.GetMaxRankNode();
+	const GraphType::GraphNodeBase* pMaxRangeNode{ gc.GetMaxRankNode() };
 	// количество ненулевых элементов равно количеству ребер * 2 - количество связей исключенного узла + количество ребер в циклах
 	ptrdiff_t nNz(gc.Edges().size() * 2 - pMaxRangeNode->Rank());
 	for (auto&& cycle : Cycles)
@@ -1556,12 +1578,10 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 			CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
 			CDevice** ppDevice(nullptr);
 			// рассчитываем сумму потоков по инцидентным ветвям
-			cplx cIb, cIe, cSb, cSe;
 			while (pBranchLink->In(ppDevice))
 			{
 				const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 				const auto& pOppNode{ pBranch->GetOppositeNode(pInSuperNode) };
-				CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, cSb, cSe);
 				cplx Sbranch = ((pBranch->m_pNodeIp == pInSuperNode) ? pBranch->Yip : pBranch->Yiq) * cplx(pOppNode->Vre, pOppNode->Vim) * Unode;
 				S -= conj(Sbranch);
 			}
@@ -1602,22 +1622,38 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		// обычный расчет потока по напряжениям даст ноль, так как напряжения узлов одинаковые
 		cplx sb(*pB / pVirtualBranch->nParallelCount);  pB++;
 		sb.imag(*pB / pVirtualBranch->nParallelCount);	pB++;
-		// считаем потоки в конце и в начале с учетом шунтов
-		cplx ssb(pBranch->m_pNodeIp->V * pBranch->m_pNodeIp->V * cplx(pBranch->GIp, -pBranch->BIp));
-		cplx sse(pBranch->m_pNodeIq->V * pBranch->m_pNodeIq->V * cplx(pBranch->GIq, -pBranch->BIq));
-		pBranch->Sb = sb - ssb;	
-		pBranch->Se = sb + sse;
+		// считаем потоки в конце и в начале с учетом без учета шунтов
+		pBranch->Sb = pBranch->Se = sb;
 	}
 
 	// для ветвей с нулевым сопротивлением, параллельных основным ветвям копируем потоки основных,
 	// так как потоки основных рассчитаны как доля параллельных потоков. Все потоки по паралелльным цепям
-	// с сопротивлениями ниже минимальных будут одинаковы. 
+	// с сопротивлениями ниже минимальных будут одинаковы
 
 	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchParallelsBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
 	{
-		pZb->pBranch->Sb = pZb->pParallelTo->Sb;
-		pZb->pBranch->Se = pZb->pParallelTo->Se;
+		const auto& pBranch{ pZb->pBranch };
+		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+			pBranch->Sb = pBranch->Se = pZb->pParallelTo->Sb;
+		else
+			pBranch->Sb = pBranch->Se = 0.0;
 	}
+
+	// Далее добавляем потоки от шунтов для всех ветвей, включая параллельные
+	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
+	{
+		const auto& pBranch{ pZb->pBranch };
+		cplx ssb(pBranch->m_pNodeIp->V * pBranch->m_pNodeIp->V * cplx(pBranch->GIp, -pBranch->BIp));
+		cplx sse(pBranch->m_pNodeIq->V * pBranch->m_pNodeIq->V * cplx(pBranch->GIq, -pBranch->BIq));
+		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+		{
+			pZb->pBranch->Sb -= ssb;
+			pZb->pBranch->Se += sse;
+		}
+	}
+
+
+
 
 	// умножение матрицы на вектор в комплексной форме
 	// учитывается что мнимая часть коэффициента матрицы равна нулю
@@ -1628,55 +1664,12 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		cplx s;
 		for (ptrdiff_t c = klu.Ai()[nRow]; c < klu.Ai()[nRow + 1]; c++)
 		{
-			/*cplx coe(klu.Ax()[2 * c], klu.Ax()[2 * c + 1]);
-			cplx b(klu.B()[2 * klu.Ap()[c]], klu.B()[2 * klu.Ap()[c] + 1]);
-			s += coe * b;
-			*/
 			double* pB = klu.B() + 2 * klu.Ap()[c];
 			s += klu.Ax()[2 * c] * cplx(*pB, *(pB + 1));
 		}
+
+		s += 1E-6;
 	}
-
-
-	/*
-	bool bLRCShunt = (pDynaModel->GetLRCToShuntVmin() - dLRCVicinity) > V / Unom;
-	CLinkPtrCount *pSlaveNodesLink = GetSuperLink(0);
-	CDevice **ppSlave(nullptr);
-	while (pSlaveNodesLink->In(ppSlave))
-	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(*ppSlave);
-		double Ire(0.0), Iim(0.0);
-		Ire +=  Yii.real() * Vre + Yii.imag() * Vim;
-		Iim += -Yii.imag() * Vre - Yii.real() * Vim;
-
-		CLinkPtrCount *pBranchesLink = pNode->GetLink(0);
-		CDevice **ppBranch(nullptr);
-
-		while (pBranchesLink->In(ppBranch))
-		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(*ppBranch);
-			CDynaNodeBase *pOppNode = pBranch->GetOppositeNode(pNode);
-			cplx& Ykm = (pOppNode == pNode) ? pBranch->Yip : pBranch->Yiq;
-			Ire += -Ykm.real() * pOppNode->Vre + Ykm.imag() * pOppNode->Vim;
-			Iim += -Ykm.imag() * pOppNode->Vre - Ykm.real() * pOppNode->Vim;
-		}
-
-		if (bLRCShunt)
-		{
-			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
-			Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
-		}
-		else
-		{
-			pNode->GetPnrQnr();
-			double Pk = pNode->Pnr - pNode->Pgr;
-			double Qk = pNode->Qnr - pNode->Qgr;
-			double V2 = V * V;
-			Ire += (Pk * Vre + Qk * Vim) / V2;
-			Iim += (Pk * Vim - Qk * Vre) / V2;
-		}
-	}
-	*/
 }
 
 void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)

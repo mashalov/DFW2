@@ -764,19 +764,25 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			// обходим включенные ветви также как и для подсчета размерностей выше
 			const auto& pOppNode = pBranch->GetOppositeSuperNode(pNode);
+
 			// получаем проводимость к оппозитному узлу
-			cplx* pYkm = pBranch->m_pNodeIp == pNode ? &pBranch->Yip : &pBranch->Yiq;
+			_ASSERTE((pBranch->m_pNodeSuperIp == pNode && pBranch->m_pNodeSuperIq != pNode) || 
+					 (pBranch->m_pNodeSuperIq == pNode && pBranch->m_pNodeSuperIp != pNode));
+
+			// определяем направление ветви не по адресу узла, а по адресу суперузла,
+			// так как нас интересует направление непереадресованных ветвей между суперузлами
+			const cplx& Ykm{ pBranch->m_pNodeSuperIp == pNode ? pBranch->Yip : pBranch->Yiq };
 			// проверяем, уже прошли данный оппозитный узел для просматриваемого узла или нет
 			ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
 			if (DupIndex < 0)
 			{
 				// если нет - добавляем ветвь в список данного узла
-				pCurrentBranch->Y = *pYkm;
+				pCurrentBranch->Y = Ykm;
 				pCurrentBranch->pNode = pOppNode;
 				pCurrentBranch++;
 			}
 			else
-				(pNode->m_VirtualBranchBegin + DupIndex)->Y += *pYkm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
+				(pNode->m_VirtualBranchBegin + DupIndex)->Y += Ykm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
 		}
 		pNode->m_VirtualBranchEnd = pCurrentBranch;
 		// проверяем есть ли включенные ветви для данного узла
