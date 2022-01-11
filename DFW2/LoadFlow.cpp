@@ -932,7 +932,8 @@ void CLoadFlow::GetNodeImb(_MatrixInfo* pMatrixInfo)
 	for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 	{
 		const auto& pOppNode{ pBranch->pNode };
-		cplx sx{ std::conj(cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y) * Vnode };
+		// в отладке можем посмотреть мощность перетока по ветви
+		//cplx sx{ std::conj(cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y) * Vnode };
 		i -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 	}
 

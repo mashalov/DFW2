@@ -1612,6 +1612,9 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	pB = klu.B();
 	// вводим в ветви с нулевым сопротивлением поток мощности, рассчитанный
 	// по контурным уравнениям
+
+	// !!!!!!!!!!!!!!!!!!!!!! Надо что-то придумать для односторонних отключений !!!!!!!!!!!!!!!!!!!!!!!
+
 	for (auto&& edge : gc.Edges())
 	{
 		VirtualZeroBranch* pVirtualBranch(static_cast<VirtualZeroBranch*>(edge->m_IdBranch));
