@@ -65,7 +65,19 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS SetBranchState(BranchState eBranchState, eDEVICESTATECAUSE eStateCause);
 		void CalcAdmittances(bool bFixNegativeZs);
 		bool IsZeroImpedance();
-
+		inline const cplx& OppositeY(const CDynaNodeBase* pOriginNode) const
+		{
+			_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
+			return (m_pNodeIp == pOriginNode) ? Yip : Yiq;
+		}
+		inline const cplx CurrentFrom(const CDynaNodeBase* pOriginNode) const
+		{
+			_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
+			if (m_pNodeIp == pOriginNode)
+				return cplx(m_pNodeIq->Vre, m_pNodeIq->Vim) * Yip;
+			else
+				return cplx(m_pNodeIp->Vre, m_pNodeIp->Vim) * Yiq;
+		}
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 
 		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);

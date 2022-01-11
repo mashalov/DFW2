@@ -1439,10 +1439,12 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 {
 	if (m_pSuperNodeParent)
 		return;
-	CLinkPtrCount* pSuperNodeLink = GetSuperLink(0);
+	const CLinkPtrCount* pSuperNodeLink{ GetSuperLink(0) };
+
 	if (!pSuperNodeLink->m_nCount)
 		return; // это суперузел, но у него нет связей
 
+	CDevice** ppNodeEnd{ pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount };
 	const ptrdiff_t nNz{ 2 * (m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin) };
 
 	//for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
@@ -1450,7 +1452,23 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	KLUWrapper<std::complex<double>> klu;
 	klu.SetSize(pSuperNodeLink->m_nCount + 1, nNz);
 
-	//for (CDevice** ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
+	for (CDevice** ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++)
+	{
+		const auto& pInSuperNode{ static_cast<CDynaNodeBase*>(*ppDev) };
+		const cplx Unode{ pInSuperNode->Vre, -pInSuperNode->Vim };
+		CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
+		CDevice** ppDevice{ nullptr };
+
+		// рассчитываем сумму потоков по инцидентным ветвям
+
+		cplx S;
+		while (pBranchLink->In(ppDevice))
+		{
+			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
+			const cplx Sbranch{ pBranch->CurrentFrom(pInSuperNode) * Unode };
+			S -= conj(Sbranch);
+		}
+	}
 
 }
 
@@ -1553,42 +1571,43 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	for (auto&& node : gc.Nodes())
 	{
 		// исключаем узел с максимальным числом связей
-		if (node != pMaxRangeNode)
+		if (node == pMaxRangeNode)
+			continue;
+
+		ptrdiff_t nCurrentRow = *pAi;		// запоминаем начало текущей строки
+		pAi++;								// передвигаем указатель на следующую строку
+		for (EdgeType** edge = node->m_ppEdgesBegin; edge < node->m_ppEdgesEnd; edge++)
 		{
-			ptrdiff_t nCurrentRow = *pAi;		// запоминаем начало текущей строки
-			pAi++;								// передвигаем указатель на следующую строку
-			for (EdgeType** edge = node->m_ppEdgesBegin; edge < node->m_ppEdgesEnd; edge++)
-			{
-				*pAp = (*edge)->m_nIndex;							// формируем номер столбца для ребра узла
-				*pAx = (*edge)->m_pBegin == node ? 1.0 : -1.0;;		// формируем вещественный коэффициент в матрице по направлению ребра к узлу
-				pAx += 2;											// переходим к следущему вещественному коэффициенту
-				pAp++;
-			}
-			// считаем сколько ненулевых элементов в строке и формируем индекс следующей строки
-			*pAi = nCurrentRow + node->m_ppEdgesEnd - node->m_ppEdgesBegin;
-
-			// рассчитываем инъекцию в узле
-			// нагрузка по СХН
-			const auto& pInSuperNode{ static_cast<CDynaNodeBase*>(node->m_Id) };
-			pInSuperNode->GetPnrQnr();
-			cplx Unode(pInSuperNode->Vre, -pInSuperNode->Vim);
-
-			cplx S(pInSuperNode->GetSelfImbPnotSuper(), pInSuperNode->GetSelfImbQnotSuper());
-
-			CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
-			CDevice** ppDevice(nullptr);
-			// рассчитываем сумму потоков по инцидентным ветвям
-			while (pBranchLink->In(ppDevice))
-			{
-				const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
-				const auto& pOppNode{ pBranch->GetOppositeNode(pInSuperNode) };
-				cplx Sbranch = ((pBranch->m_pNodeIp == pInSuperNode) ? pBranch->Yip : pBranch->Yiq) * cplx(pOppNode->Vre, pOppNode->Vim) * Unode;
-				S -= conj(Sbranch);
-			}
-
-			*pB = S.real();			pB++;
-			*pB = S.imag();			pB++;
+			*pAp = (*edge)->m_nIndex;							// формируем номер столбца для ребра узла
+			*pAx = (*edge)->m_pBegin == node ? 1.0 : -1.0;;		// формируем вещественный коэффициент в матрице по направлению ребра к узлу
+			pAx += 2;											// переходим к следущему вещественному коэффициенту
+			pAp++;
 		}
+		// считаем сколько ненулевых элементов в строке и формируем индекс следующей строки
+		*pAi = nCurrentRow + node->m_ppEdgesEnd - node->m_ppEdgesBegin;
+
+		// рассчитываем инъекцию в узле
+		// нагрузка по СХН
+		const auto& pInSuperNode{ static_cast<CDynaNodeBase*>(node->m_Id) };
+		pInSuperNode->GetPnrQnr();
+		const cplx Unode{ pInSuperNode->Vre, -pInSuperNode->Vim };
+
+		cplx S{ pInSuperNode->GetSelfImbPnotSuper(), pInSuperNode->GetSelfImbQnotSuper() };
+
+		CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
+		CDevice** ppDevice(nullptr);
+		// рассчитываем сумму потоков по инцидентным ветвям
+		while (pBranchLink->In(ppDevice))
+		{
+			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
+			//const auto& pOppNode{ pBranch->GetOppositeNode(pInSuperNode) };
+			//const cplx Sbranch{ ((pBranch->m_pNodeIp == pInSuperNode) ? pBranch->Yip : pBranch->Yiq) * cplx(pOppNode->Vre, pOppNode->Vim) * Unode };
+			const cplx Sbranch{ pBranch->CurrentFrom(pInSuperNode) * Unode };
+			S -= conj(Sbranch);
+		}
+
+		*pB = S.real();			pB++;
+		*pB = S.imag();			pB++;
 	}
 
 	// уравнения для контуров
@@ -1636,27 +1655,21 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchParallelsBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
+		pBranch->Sb = pBranch->Se = 0.0;
 		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
 			pBranch->Sb = pBranch->Se = pZb->pParallelTo->Sb;
-		else
-			pBranch->Sb = pBranch->Se = 0.0;
 	}
 
 	// Далее добавляем потоки от шунтов для всех ветвей, включая параллельные
 	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
-		cplx ssb(pBranch->m_pNodeIp->V * pBranch->m_pNodeIp->V * cplx(pBranch->GIp, -pBranch->BIp));
-		cplx sse(pBranch->m_pNodeIq->V * pBranch->m_pNodeIq->V * cplx(pBranch->GIq, -pBranch->BIq));
 		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
 		{
-			pZb->pBranch->Sb -= ssb;
-			pZb->pBranch->Se += sse;
+			pZb->pBranch->Sb -= cplx(pBranch->m_pNodeIp->V * pBranch->m_pNodeIp->V * cplx(pBranch->GIp, -pBranch->BIp));
+			pZb->pBranch->Se += cplx(pBranch->m_pNodeIq->V * pBranch->m_pNodeIq->V * cplx(pBranch->GIq, -pBranch->BIq));
 		}
 	}
-
-
-
 
 	// умножение матрицы на вектор в комплексной форме
 	// учитывается что мнимая часть коэффициента матрицы равна нулю
