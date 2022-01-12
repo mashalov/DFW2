@@ -151,6 +151,7 @@ namespace DFW2
 		void InitNordsiek(CDynaModel* pDynaModel) override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
 		void SuperNodeLoadFlowYU(CDynaModel* pDynaModel);
+		inline CDynaNodeBase* GetSuperNode() { return m_pSuperNodeParent ? m_pSuperNodeParent : this; }
 		bool IsDangling();
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		inline double GetSelfImbP() noexcept { return Pnr - Pgr - V * V * YiiSuper.real();	}
@@ -171,6 +172,9 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
+		// индекс узла в матрице потокораспределения суперузла
+		ptrdiff_t m_nSuperNodeLFIndex = 0;		
+		// указатель на родительский суперузел
 		CDynaNodeBase* m_pSuperNodeParent = nullptr;
 		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
 

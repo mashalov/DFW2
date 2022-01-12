@@ -439,7 +439,11 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	ClearSuperLinks();
 	// обнуляем ссылки подчиненных узлов на суперузлы
 	for (auto&& nit : m_DevVec)
-		static_cast<CDynaNodeBase*>(nit)->m_pSuperNodeParent = nullptr;
+	{
+		const auto& pNode{ static_cast<CDynaNodeBase*>(nit) };
+		pNode->m_pSuperNodeParent = nullptr;
+		pNode->m_nSuperNodeLFIndex = 0;
+	}
 
 	NODEISLANDMAP JoinableNodes, SuperNodes;
 	// строим список связности по включенным ветвям с нулевым сопротивлением
@@ -482,7 +486,6 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 					else
 						IncrementLinkCounter(pNodeSuperLink, nit.first->m_nInContainerIndex);
 				}
-
 		if (pass)
 			RestoreLinks(pNodeSuperLink);	// на втором проходе финализируем ссылки
 		else
@@ -737,6 +740,68 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 		}
 	}
 	*/
+
+	// строим индексы узлов внутри суперузла для потокораспределения
+	// по нулевым сопротивлениям и создаем отдельные суперсвязи для 
+	// узлов внутри суперузла в нужном порядке
+
+	m_SuperLinks.emplace_back(this, Count());
+	CMultiLink& pZeroSuperNode(m_SuperLinks.back());
+
+	for (int pass = 0; pass < 2; pass++)
+	{
+		for (auto&& node : m_DevVec)
+		{
+			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
+			const CLinkPtrCount* pSuperNodeLink{ pNode->GetSuperLink(0) };
+			if (!pSuperNodeLink->m_nCount)
+				continue;
+
+			CDevice** ppNodeEnd{ pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount };
+			// ищем узел с максимальным количеством связей
+			std::pair<CDynaNodeBase*, size_t>  pMaxRankNode{ pNode, pNode->GetLink(0)->m_nCount };
+			ptrdiff_t nIndex{ 0 };
+
+			// на втором проходе если у супеузла не максимальное количество связей, добавляем его в
+			// список узлов потокораспределения первым
+			if (pass && pNode->m_nSuperNodeLFIndex == 0)
+			{
+				AddLink(pZeroSuperNode, pNode->m_nInContainerIndex, pNode);
+				nIndex++;
+			}
+
+			for (CDevice** ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++)
+			{
+				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDev) };
+				if (pass)
+				{
+					if (pSlaveNode->m_nSuperNodeLFIndex == 0)
+					{
+						AddLink(pZeroSuperNode, pNode->m_nInContainerIndex, pSlaveNode);
+						pSlaveNode->m_nSuperNodeLFIndex = nIndex++;
+					}
+				}
+				else
+				{
+					if (size_t nLinkCount{ pSlaveNode->GetLink(0)->m_nCount }; pMaxRankNode.second < nLinkCount)
+						pMaxRankNode = { pSlaveNode, nLinkCount };
+					IncrementLinkCounter(pZeroSuperNode, pNode->m_nInContainerIndex);
+				}
+			}
+			
+			if (!pass)
+			{
+				// знаем узел с максимальным количеством связей
+				// он не должен попасть в список узлов для потокораспределения
+				pMaxRankNode.first->m_nSuperNodeLFIndex = -1;
+			}
+		}
+
+		if (pass)
+			RestoreLinks(pZeroSuperNode);
+		else
+			AllocateLinks(pZeroSuperNode);
+	}
 }
 
 
