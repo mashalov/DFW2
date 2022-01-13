@@ -1451,8 +1451,8 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	if (pSuperNodeLink->m_pPointer == ppNodeEnd)
 		return;
 
-	// создаем данные для построения Y
-	ZeroLF.LFMatrix = std::make_unique<ZeroLFData::LFMatrixType>();
+	// создаем данные для построения Y : сначала создаем вектор строк матрицы
+	ZeroLF.LFMatrix.reserve(ppNodeEnd - pSuperNodeLink->m_pPointer);
 
 	// отыщем узел с максимальным количеством связей
 	// поиск начинаем с узла-представителя суперзула
@@ -1478,7 +1478,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	{
 		if (pMaxRankNode.first != pNode)
 		{
-			ZeroLF.LFMatrix->push_back({ pNode });
+			ZeroLF.LFMatrix.push_back({ pNode });
 			pNode->ZeroLF.m_nSuperNodeLFIndex = nRowIndex++;
 		}
 	};
@@ -1493,7 +1493,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		const auto& pBranch{ pZb->pBranch };
 		const ptrdiff_t& head{ pBranch->m_pNodeIp->ZeroLF.m_nSuperNodeLFIndex }, & tail{ pBranch->m_pNodeIq->ZeroLF.m_nSuperNodeLFIndex };
 
-		const auto& Matrix{ *ZeroLF.LFMatrix };
+		const auto& Matrix{ ZeroLF.LFMatrix };
 		// рассчитываем диагональные элементы (собственные "проводимости")
 		if (head >= 0)
 			Matrix[head].pNode->ZeroLF.Yii += 1.0;
@@ -1507,6 +1507,81 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		if (pZb->pBranch->m_pNodeIq == pMaxRankNode.first)
 			Matrix[head].pNode->ZeroLF.SlackInjection += 1.0;
 	}
+
+	// считаем общее количество ветвей из данного суперузла
+	// включая параллельные (с запасом)
+	size_t nBranchesCount{ 0 };
+
+	for (auto&& node : ZeroLF.LFMatrix)
+	{
+		const auto& pNode{ node.pNode };
+		CLinkPtrCount* pBranchLink = pNode->GetLink(0);
+		CDevice** ppDevice(nullptr);
+		// ищем ветви соединяющие разные суперузлы
+		while (pBranchLink->In(ppDevice))
+		{
+			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
+			if (pBranch->m_pNodeSuperIp != pBranch->m_pNodeSuperIq)
+				nBranchesCount++;
+		}
+	}
+
+	// здесь имеем общее количество ветвей суперзула в другие суперузлы
+	// реальное их количество может быть меньше за счет эквивалентирования
+	// параллельных ветвей
+	// используем простой общий массив из-за того, что его аллокация/деаллокация
+	// быстрее чем а/д для контейнеров для каждого узла. Кроме того, ветви
+	// внутри общего массива разделены парами указателей. Для вектора пришлось
+	// бы использовать неинициализированные итераторы
+
+	ZeroLF.m_VirtualBranches = std::make_unique<VirtualBranch[]>(nBranchesCount);
+	VirtualBranch* pHead{ ZeroLF.m_VirtualBranches.get() };
+
+	// заполняем списки ветвей для каждого из узлов суперузла
+	for (auto&& node : ZeroLF.LFMatrix)
+	{
+		const auto& pNode{ node.pNode };
+		CLinkPtrCount* pBranchLink = pNode->GetLink(0);
+		CDevice** ppDevice(nullptr);
+		// между этими указателями список виртуальных ветей данного узла
+		node.pBranchesBegin = node.pBranchesEnd = pHead;
+
+		// ищем ветви, соединяющие текущий узел с другими суперузлами
+		while (pBranchLink->In(ppDevice))
+		{
+			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
+			if (pBranch->m_pNodeSuperIp != pBranch->m_pNodeSuperIq)
+			{
+				// если суперузлы разные, получаем оппозитный узел и проводимость 
+				// с нужного конца ветви
+				const auto& pOppNode = pBranch->GetOppositeNode(pNode);
+				const auto& Ykm = pBranch->m_pNodeIp == pNode ? pBranch->Yip : pBranch->Yiq;
+
+				// ищем не было ли уже добавлено виртуальной ветви на этот узел
+				VirtualBranch* pDup{ nullptr };
+				for (VirtualBranch* vb = node.pBranchesBegin; vb < node.pBranchesEnd; vb++)
+				{
+					if (vb->pNode == pOppNode)
+					{
+						pDup = vb;
+						break;
+					}
+				}
+
+				// если ветвь на такой суперузел уже была добавлена, добавляем проводимость к существующей
+				if (pDup)
+					pDup->Y += Ykm;
+				else
+				{
+					// если ветви не было добавлено - добавляем новую
+					node.pBranchesEnd->pNode = pOppNode;
+					node.pBranchesEnd->Y= Ykm;
+					node.pBranchesEnd++;
+				}
+			}
+		}
+		pHead = node.pBranchesEnd;
+	}
 }
 
 
@@ -1515,11 +1590,11 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 {
 	
 	CreateZeroLoadFlowData();
-	if (!ZeroLF.LFMatrix)
+	if (ZeroLF.LFMatrix.empty())
 		return;
 
-	const auto& Matrix{ *ZeroLF.LFMatrix };
-	const ptrdiff_t nBlockSize{ static_cast<ptrdiff_t>(ZeroLF.LFMatrix->size()) };
+	const auto& Matrix{ ZeroLF.LFMatrix };
+	const ptrdiff_t nBlockSize{ static_cast<ptrdiff_t>(ZeroLF.LFMatrix.size()) };
 	ptrdiff_t nNz{ nBlockSize };
 
 	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
@@ -1567,9 +1642,8 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 
 		ptrdiff_t* nextAp = posAp + Step;										// столбцы следующей строки
 		*posAp = node.pNode->ZeroLF.m_nSuperNodeLFIndex;						// ставим номер столбца диагонального элемента
-		posAp++;
-
 		data.pCol = posAp;
+		data.pCol++;
 		posAp = nextAp;															// начало столбцов данной строки
 		*pAi = *(pAi - 1) + Step;
 		pAi++;
@@ -1597,6 +1671,7 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 		SetElement(tail, head);
 	}
 
+	/*
 	for (const auto& node : *ZeroLF.LFMatrix)
 	{
 		const auto& pNode{ node.pNode };
@@ -1621,6 +1696,60 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 		*pB = -S.real();		pB++;
 		*pB = -S.imag();		pB++;
 	}
+	*/
+	
+	pB = klu.B();
+
+	for (const auto& node : ZeroLF.LFMatrix)
+	{
+		const auto& pNode{ node.pNode };
+		pNode->GetPnrQnr();
+		// собираем мощность на собственной проводимости
+		auto& P{ pB[2 * pNode->ZeroLF.m_nSuperNodeLFIndex] };
+		auto& Q{ pB[2 * pNode->ZeroLF.m_nSuperNodeLFIndex + 1] };
+		P = -pNode->GetSelfImbPnotSuper();
+		Q = -pNode->GetSelfImbQnotSuper();
+		// добавляем предварительно рассчитанную 
+		// инъекцию от связей с базисным узлом
+		P += pNode->ZeroLF.SlackInjection;
+
+		// собираем сумму перетоков по виртуальным ветвям узла
+		// ветви находятся в общем для всего узла векторе и разделены
+		// вилками указателей pBranchesBegin <  pBranchesEnd
+		cplx I;
+		for(const VirtualBranch* vb = node.pBranchesBegin ; vb < node.pBranchesEnd; vb++)
+			I += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
+		I = std::conj(I) * cplx(pNode->Vre, pNode->Vim);
+
+		P += I.real();
+		Q += I.imag();
+	}
+
+	/*
+	for (VirtualBranch* pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
+	{
+		const auto& pBranch{ pV->pPrototypeBranch };
+		const ptrdiff_t& head{ pBranch->m_pNodeIp->ZeroLF.m_nSuperNodeLFIndex }, & tail{ pBranch->m_pNodeIq->ZeroLF.m_nSuperNodeLFIndex };
+		if (head >= 0 && pBranch->m_pNodeIp->GetSuperNode() == this)
+		{
+			auto& P{ pB[2 * head] };
+			auto& Q{ pB[2 * head + 1] };
+			cplx I = std::conj(pV->Y * cplx(pV->pNode->Vre, pV->pNode->Vim)) * cplx(pBranch->m_pNodeIp->Vre, pBranch->m_pNodeIp->Vim);
+			P += I.real();
+			Q += I.imag();
+		}
+		if (tail >= 0 && pBranch->m_pNodeIq->GetSuperNode() == this)
+		{
+			auto& P{ pB[2 * tail] };
+			auto& Q{ pB[2 * tail + 1] };
+			cplx I = std::conj(pV->Y * cplx(pV->pNode->Vre, pV->pNode->Vim)) * cplx(pBranch->m_pNodeIq->Vre, pBranch->m_pNodeIq->Vim);
+			P += I.real();
+			Q += I.imag();
+		}
+	}
+	*/
+
+
 
 	pB = klu.B();
 

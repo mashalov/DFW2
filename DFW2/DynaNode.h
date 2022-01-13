@@ -172,6 +172,9 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
+		// структура данных для описания потокораспределения
+		// внутри суперузла по ветвям с нулевыми сопротивлениями
+
 		struct ZeroLFData
 		{
 			// индекс узла в матрице потокораспределения суперузла
@@ -184,16 +187,24 @@ namespace DFW2
 			double* pData = nullptr;
 			// указатель номеров столбцов в строке KLU
 			ptrdiff_t* pCol = nullptr;
+			// вектор всех ветвей, связывающих узлы суперузла
+			// с другими суперузлами - вектор ветвей с сопротивлениями
+			// в этом векторе параллельные ветви будут эквивалентированы
+			std::unique_ptr<VirtualBranch[]>  m_VirtualBranches;
 
+			// структура строки матрицы
 			struct LFMatrixRow
 			{
-				CDynaNodeBase* pNode = nullptr;
+				CDynaNodeBase* pNode = nullptr;				// узел, которому соответствует строка
+				VirtualBranch* pBranchesBegin = nullptr;	// диапазон виртуальных ветвей, инцидентных узлу
+				VirtualBranch* pBranchesEnd = nullptr;
 			};
 
 			using LFMatrixType = std::vector<LFMatrixRow>;
-			std::unique_ptr<LFMatrixType> LFMatrix;
+			// строки матрицы собраны в векторе. Вектор завернут с unique_ptr,
+			LFMatrixType LFMatrix;
 		} 
-			ZeroLF;
+		ZeroLF;
 
 		// Создать постоянные данные для расчета потокораспределения с нулевыми сопротивлениями
 		void CreateZeroLoadFlowData();
