@@ -172,8 +172,31 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		// индекс узла в матрице потокораспределения суперузла
-		ptrdiff_t m_nSuperNodeLFIndex = 0;		
+		struct ZeroLFData
+		{
+			// индекс узла в матрице потокораспределения суперузла
+			ptrdiff_t m_nSuperNodeLFIndex = 0;
+			// диагональный элемент Y
+			double Yii = 0.0;
+			// инъекция из базисного узла
+			double SlackInjection = 0.0;
+			// указатель данных элементов строки для KLU
+			double* pData = nullptr;
+			// указатель номеров столбцов в строке KLU
+			ptrdiff_t* pCol = nullptr;
+
+			struct LFMatrixRow
+			{
+				CDynaNodeBase* pNode = nullptr;
+			};
+
+			using LFMatrixType = std::vector<LFMatrixRow>;
+			std::unique_ptr<LFMatrixType> LFMatrix;
+		} 
+			ZeroLF;
+
+		// Создать постоянные данные для расчета потокораспределения с нулевыми сопротивлениями
+		void CreateZeroLoadFlowData();
 		// указатель на родительский суперузел
 		CDynaNodeBase* m_pSuperNodeParent = nullptr;
 		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
@@ -199,10 +222,14 @@ namespace DFW2
 		static constexpr const char* m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };
 
 	protected:
+		// Рассчитать полную информацию о потоках в ветвях по рассчитанным взаимным потокам
+		void CalculateZeroLFBranches();
+		// Обновить данные из родительского суперузла
 		void FromSuperNode();
+		// Вывести данные об изменении модуля напряжения выше/ниже порогового
 		void SetLowVoltage(bool bLowVoltage);
+		// Рассчитать шаг до изменения модуля напряжения узла выше/ниже порогового
 		double FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow);
-
 	};
 
 	class CDynaNodeMeasure;

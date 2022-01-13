@@ -442,7 +442,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(nit) };
 		pNode->m_pSuperNodeParent = nullptr;
-		pNode->m_nSuperNodeLFIndex = 0;
+		pNode->ZeroLF.m_nSuperNodeLFIndex = 0;
 	}
 
 	NODEISLANDMAP JoinableNodes, SuperNodes;
@@ -508,8 +508,8 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_ON)
 				continue;
 
-			CDynaNodeBase *pNodeIp(pBranch->m_pNodeIp);
-			CDynaNodeBase *pNodeIq(pBranch->m_pNodeIq);
+			const auto& pNodeIp(pBranch->m_pNodeIp);
+			const auto& pNodeIq(pBranch->m_pNodeIq);
 
 			if (pNodeIp->m_pSuperNodeParent == pNodeIq->m_pSuperNodeParent)
 			{
@@ -539,19 +539,11 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			else
 			{
 				// суперузлы в начале и в конце разные
-				CDynaNodeBase *pNodeIpSuper(pNodeIp);
-				CDynaNodeBase *pNodeIqSuper(pNodeIq);
-
 				// если у узлов есть суперузел - связываем ветвь не с узлом, а с его
 				// суперузлом
-				if (pNodeIpSuper->m_pSuperNodeParent)
-					pNodeIpSuper = pNodeIpSuper->m_pSuperNodeParent;
 
-				if (pNodeIqSuper->m_pSuperNodeParent)
-					pNodeIqSuper = pNodeIqSuper->m_pSuperNodeParent;
-
-				pBranch->m_pNodeSuperIp = pNodeIpSuper;
-				pBranch->m_pNodeSuperIq = pNodeIqSuper;
+				const auto& pNodeIpSuper{ pBranch->m_pNodeSuperIp = pNodeIp->GetSuperNode() };
+				const auto& pNodeIqSuper{ pBranch->m_pNodeSuperIq = pNodeIq->GetSuperNode() };
 
 				// если суперузел у узлов ветви не общий
 				if (pNodeIpSuper != pNodeIqSuper)
@@ -604,6 +596,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 		CMultiLink& pSuperLink(m_SuperLinks.back());
 		// для хранения оригинальных связей устройств с узлами используем карту устройство-устройство
 		m_OriginalLinks.push_back(std::make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
+
 
 		// обрабатываем связь в два прохода : подсчет + выделение памяти и добавление ссылок
 		for (int pass = 0; pass < 2; pass++)
@@ -683,124 +676,44 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	m_pZeroBranches = std::make_unique<VirtualZeroBranch[]>(nZeroBranchCount);
 	m_pZeroBranchesEnd = m_pZeroBranches.get() + nZeroBranchCount;
 
-	VirtualZeroBranch* pCurrentZeroBranch = m_pZeroBranches.get();
-	for (auto&& node : m_DevVec)
+	if (nZeroBranchCount)
 	{
-		const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
-		// формируем диапазоны ветвей с нулевым сопротивлением для узлов (просто инициализация)
-		pNode->m_VirtualZeroBranchBegin = pNode->m_VirtualZeroBranchEnd = pCurrentZeroBranch;
-		// если у нас есть ветви с нулевым сопротивлением строим их списки
-		// если узел входит в суперузел - его нулевые ветви нам не нужны, 
-		// они будут учтены с узла представителя суперузла
-		// если ветвей с нулевым сопротивлением нет вообще - пропускаем обработку
-		// (цикл не обходим чтобы инициализировать m_VirtualZeroBranchBegin = m_VirtualZeroBranchEnd
-		if (!nZeroBranchCount || pNode->m_pSuperNodeParent)
-			continue;
-
-		CDynaNodeBase* pSlaveNode = pNode;
-		CLinkPtrCount* pSlaveNodeLink = pNode->GetSuperLink(0);
-		CDevice** ppSlaveNode(nullptr);
-
-		// сначала обрабатываем узел-представитель суперузла
-		// затем выбираем входящие в суперузел узлы
-		while (pSlaveNode)
-		{
-			CLinkPtrCount* pBranchLink = pSlaveNode->GetLink(0);
-			CDevice** ppDevice(nullptr);
-			while (pBranchLink->In(ppDevice))
-			{
-				const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
-				pCurrentZeroBranch = pNode->AddZeroBranch(pBranch);
-			}
-			// достаем из суперссылки на узлы следующий узел суперузла
-			pSlaveNode = pSlaveNodeLink->In(ppSlaveNode) ? static_cast<CDynaNodeBase*>(*ppSlaveNode) : nullptr;
-		}
-
-		// приводим ссылки на нулевые ветви к нужному формату для последующей обработки в циклах
-		pNode->TidyZeroBranches();
-	}
-
-	/*
-	// восстановление внешних одиночных ссылок
-	for (auto&& node : m_DevVec)
-	{
-		// для всех устройств, на которые изначально ссылался
-		// узел записываем в одиночную ссылку на узел адрес узла
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(node);
-		// проходим по исходным ссылкам,
-		// они заменяют ссылки на суперузлы
-		for (auto&& link : m_Links)
-		{
-			CDevice **ppDevice(nullptr);
-			pNode->ResetVisited();
-			CLinkPtrCount *pLink = link->GetLink(pNode->m_nInContainerIndex);
-			ptrdiff_t nLinkIndex = link->m_pContainer->GetSingleLinkIndex(DEVTYPE_NODE);
-			while (pLink->In(ppDevice))
-				(*ppDevice)->SetSingleLink(nLinkIndex, pNode);	
-		}
-	}
-	*/
-
-	// строим индексы узлов внутри суперузла для потокораспределения
-	// по нулевым сопротивлениям и создаем отдельные суперсвязи для 
-	// узлов внутри суперузла в нужном порядке
-
-	m_SuperLinks.emplace_back(this, Count());
-	CMultiLink& pZeroSuperNode(m_SuperLinks.back());
-
-	for (int pass = 0; pass < 2; pass++)
-	{
+		VirtualZeroBranch* pCurrentZeroBranch = m_pZeroBranches.get();
 		for (auto&& node : m_DevVec)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
-			const CLinkPtrCount* pSuperNodeLink{ pNode->GetSuperLink(0) };
-			if (!pSuperNodeLink->m_nCount)
+			// формируем диапазоны ветвей с нулевым сопротивлением для узлов (просто инициализация)
+			pNode->m_VirtualZeroBranchBegin = pNode->m_VirtualZeroBranchEnd = pCurrentZeroBranch;
+			// если у нас есть ветви с нулевым сопротивлением строим их списки
+			// если узел входит в суперузел - его нулевые ветви нам не нужны, 
+			// они будут учтены с узла представителя суперузла
+			// если ветвей с нулевым сопротивлением нет вообще - пропускаем обработку
+			// (цикл не обходим чтобы инициализировать m_VirtualZeroBranchBegin = m_VirtualZeroBranchEnd
+			if (pNode->m_pSuperNodeParent)
 				continue;
 
-			CDevice** ppNodeEnd{ pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount };
-			// ищем узел с максимальным количеством связей
-			std::pair<CDynaNodeBase*, size_t>  pMaxRankNode{ pNode, pNode->GetLink(0)->m_nCount };
-			ptrdiff_t nIndex{ 0 };
+			CDynaNodeBase* pSlaveNode = pNode;
+			CLinkPtrCount* pSlaveNodeLink = pNode->GetSuperLink(0);
+			CDevice** ppSlaveNode(nullptr);
 
-			// на втором проходе если у супеузла не максимальное количество связей, добавляем его в
-			// список узлов потокораспределения первым
-			if (pass && pNode->m_nSuperNodeLFIndex == 0)
+			// сначала обрабатываем узел-представитель суперузла
+			// затем выбираем входящие в суперузел узлы
+			while (pSlaveNode)
 			{
-				AddLink(pZeroSuperNode, pNode->m_nInContainerIndex, pNode);
-				nIndex++;
+				CLinkPtrCount* pBranchLink = pSlaveNode->GetLink(0);
+				CDevice** ppDevice(nullptr);
+				while (pBranchLink->In(ppDevice))
+				{
+					const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
+					pCurrentZeroBranch = pNode->AddZeroBranch(pBranch);
+				}
+				// достаем из суперссылки на узлы следующий узел суперузла
+				pSlaveNode = pSlaveNodeLink->In(ppSlaveNode) ? static_cast<CDynaNodeBase*>(*ppSlaveNode) : nullptr;
 			}
 
-			for (CDevice** ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++)
-			{
-				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDev) };
-				if (pass)
-				{
-					if (pSlaveNode->m_nSuperNodeLFIndex == 0)
-					{
-						AddLink(pZeroSuperNode, pNode->m_nInContainerIndex, pSlaveNode);
-						pSlaveNode->m_nSuperNodeLFIndex = nIndex++;
-					}
-				}
-				else
-				{
-					if (size_t nLinkCount{ pSlaveNode->GetLink(0)->m_nCount }; pMaxRankNode.second < nLinkCount)
-						pMaxRankNode = { pSlaveNode, nLinkCount };
-					IncrementLinkCounter(pZeroSuperNode, pNode->m_nInContainerIndex);
-				}
-			}
-			
-			if (!pass)
-			{
-				// знаем узел с максимальным количеством связей
-				// он не должен попасть в список узлов для потокораспределения
-				pMaxRankNode.first->m_nSuperNodeLFIndex = -1;
-			}
+			// приводим ссылки на нулевые ветви к нужному формату для последующей обработки в циклах
+			pNode->TidyZeroBranches();
 		}
-
-		if (pass)
-			RestoreLinks(pZeroSuperNode);
-		else
-			AllocateLinks(pZeroSuperNode);
 	}
 }
 
