@@ -34,7 +34,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	if(bZ2||bZ1)
 		return cplx(0.0);
 #else
-	if(m_pNodeSuperIp == m_pNodeSuperIq)
+	if(InSuperNode())
 		return cplx(0.0);
 #endif 
 

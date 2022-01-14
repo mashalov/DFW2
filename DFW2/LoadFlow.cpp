@@ -142,7 +142,7 @@ void CLoadFlow::Estimate()
 	for (auto&& it : *pBranchContainer)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
-		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON && !pBranch->IsZeroImpedance())
+		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON && !pBranch->InSuperNode())
 			m_BranchAngleCheck.push_back(pBranch);
 	}
 }

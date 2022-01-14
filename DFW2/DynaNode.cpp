@@ -1521,7 +1521,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		while (pBranchLink->In(ppDevice))
 		{
 			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
-			if (pBranch->m_pNodeSuperIp != pBranch->m_pNodeSuperIq)
+			if (!pBranch->InSuperNode())
 				nBranchesCount++;
 		}
 	}
@@ -1550,12 +1550,12 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		while (pBranchLink->In(ppDevice))
 		{
 			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
-			if (pBranch->m_pNodeSuperIp != pBranch->m_pNodeSuperIq)
+			if (!pBranch->InSuperNode())
 			{
 				// если суперузлы разные, получаем оппозитный узел и проводимость 
 				// с нужного конца ветви
 				const auto& pOppNode = pBranch->GetOppositeNode(pNode);
-				const auto& Ykm = pBranch->m_pNodeIp == pNode ? pBranch->Yip : pBranch->Yiq;
+				const auto& Ykm = pBranch->OppositeY(pNode);
 
 				// ищем не было ли уже добавлено виртуальной ветви на этот узел
 				VirtualBranch* pDup{ nullptr };
@@ -1575,7 +1575,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 				{
 					// если ветви не было добавлено - добавляем новую
 					node.pBranchesEnd->pNode = pOppNode;
-					node.pBranchesEnd->Y= Ykm;
+					node.pBranchesEnd->Y = Ykm;
 					node.pBranchesEnd++;
 				}
 			}

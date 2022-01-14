@@ -39,7 +39,7 @@ namespace DFW2
 		cplx Yip, Yiq, Yips, Yiqs;					// компоненты взаимных и собственных проводимостей 
 													// для матрицы узловых проводимостей
 
-		cplx Sb, Se;								// поток в ветви с нулевым сопротивлением
+		cplx Sb, Se;								// поток в ветви
 
 		double deltaDiff = 0.0;						// разность углов по линии
 
@@ -65,11 +65,13 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS SetBranchState(BranchState eBranchState, eDEVICESTATECAUSE eStateCause);
 		void CalcAdmittances(bool bFixNegativeZs);
 		bool IsZeroImpedance();
+		// возвращает продольную проводимость относительно заданного узла
 		inline const cplx& OppositeY(const CDynaNodeBase* pOriginNode) const
 		{
 			_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
 			return (m_pNodeIp == pOriginNode) ? Yip : Yiq;
 		}
+		// возвращает ток от заданного узла
 		inline const cplx CurrentFrom(const CDynaNodeBase* pOriginNode) const
 		{
 			_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
@@ -80,8 +82,12 @@ namespace DFW2
 		}
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 
+		// возвращает узел с обратного конца ветви относительно заданого
 		CDynaNodeBase* GetOppositeNode(CDynaNodeBase* pOriginNode);
+		// возвращает суперузел с обратного конца ветви относительно заданного
 		CDynaNodeBase* GetOppositeSuperNode(CDynaNodeBase* pOriginNode);
+		// возвращает true если ветвь внутри суперузла (суперузлы с обоих концов одинаковые, и ненулевые)
+		inline bool InSuperNode() const { return (m_pNodeSuperIp == m_pNodeSuperIq) && m_pNodeSuperIp; }
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
