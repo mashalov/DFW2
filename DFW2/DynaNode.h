@@ -183,12 +183,6 @@ namespace DFW2
 			double Yii = 0.0;
 			// инъекция из базисного узла
 			double SlackInjection = 0.0;
-			// указатель данных элементов строки для KLU
-			double* pData = nullptr;
-			// указатель номеров столбцов в строке KLU
-			ptrdiff_t* pCol = nullptr;
-			// структура строки матрицы
-
 			// переменные состояния индикаторов "напряжений" суперузлов
 			VariableIndex vRe, vIm;
 			// диапазон виртуальных ветвей, инцидентных узлу
@@ -210,6 +204,7 @@ namespace DFW2
 				std::unique_ptr<VirtualBranch[]>  m_VirtualBranches, m_VirtualZeroBranches;
 				// строки матрицы собраны в векторе
 				LFMatrixType LFMatrix;
+				ptrdiff_t nZcount = 0;
 			};
 			std::unique_ptr<ZeroSuperNodeData> ZeroSupeNode;
 		} 

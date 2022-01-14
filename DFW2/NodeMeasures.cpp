@@ -122,13 +122,25 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		const auto& pNode{ *ppNode };
 		auto& ZeroLF{ pNode->ZeroLF };
 
+		// сначала рассчитываем составляющую в настоящей мощности
+		// нагрузка и проводимость на землю
 		pNode->GetPnrQnr();
-		cplx S{ -pNode->GetSelfImbPnotSuper() + ZeroLF.SlackInjection, -pNode->GetSelfImbPnotSuper() };
+		cplx S{ -pNode->GetSelfImbPnotSuper() + ZeroLF.SlackInjection, -pNode->GetSelfImbQnotSuper() };
 
+		// перетоки по связям
 		cplx I;
 		for(const VirtualBranch* vb = pNode->ZeroLF.pVirtualBranchesBegin ; vb < pNode->ZeroLF.pVirtualBranchesEnd; vb++)
 			I += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim); 
+
+		// преобразуем ток в мощности
 		I = std::conj(I) * cplx(pNode->Vre, pNode->Vim);
+
+		// далее добавляем "мощности" от индикаторов напряжения
+		I -= pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
+		for (const VirtualBranch* vb = pNode->ZeroLF.pVirtualZeroBranchesBegin; vb < ZeroLF.pVirtualZeroBranchesEnd; vb++)
+			I += vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
+
+		// итоговый баланс мощности
 		S += I;
 
 		pDynaModel->SetFunction(ZeroLF.vRe, 0.0);

@@ -1474,7 +1474,9 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	// узел с максимальным количеством связей не входит в Y
 	// его индекс в Y делаем отрицательным
 	pMaxRankNode.first->ZeroLF.m_nSuperNodeLFIndex = -1;
-
+	// а индикатор напряжения ставим единичным
+	pMaxRankNode.first->ZeroLF.vRe = 1.0;
+	pMaxRankNode.first->ZeroLF.vIm = 0.0;
 
 	// добавляем в Y узлы кроме узла с максимальным количеством связей и нумеруем их
 	ptrdiff_t nRowIndex{ 0 };
@@ -1533,6 +1535,8 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		return nullptr;
 	};
 
+	// начинаем считать количество ненулевых элементов матрицы
+	pZeroSuperNode->nZcount = pZeroSuperNode->LFMatrix.size();
 	// заполняем списки ветвей для каждого из узлов суперузла
 	for (auto&& node : pZeroSuperNode->LFMatrix)
 	{
@@ -1550,6 +1554,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		{
 			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			const auto& pOppNode = pBranch->GetOppositeNode(node);
+
 			if (!pBranch->InSuperNode())
 			{
 				// если ветвь не в данном суперузле, добавляем ее в список виртуальных ветвей 
@@ -1569,23 +1574,31 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 			}
 			else
 			{
-				// если ветвь в суперузле, добавляем ее в список нулевых виртуальных ветвей
-				VirtualBranch* pDup{ FindParallel(ZeroLF.pVirtualZeroBranchesBegin, ZeroLF.pVirtualZeroBranchesEnd, pOppNode) };
-				if (pDup)
-					pDup->Y += 1.0;
+				// ветвь внутри суперузла
+				// учитываем ветвь в собственной проводимости
+				ZeroLF.Yii += 1.0;
+
+				// если ветвь приходит от базисного узла
+				if (pOppNode == pMaxRankNode.first)
+				{
+					// учитываем инъекцию от базисного узла
+					ZeroLF.SlackInjection += 1.0;
+				}
 				else
 				{
-					ZeroLF.pVirtualZeroBranchesEnd->pNode = pOppNode;
-					ZeroLF.pVirtualZeroBranchesEnd->Y = 1.0;
-					ZeroLF.pVirtualZeroBranchesEnd++;
-
-					// для ветвей внутри суперузла рассчитываем 
-					// "собственные проводимости"
-					ZeroLF.Yii += 1.0;
-
-					// и инъекции из базисного узла
-					if (pOppNode == pMaxRankNode.first)
-						ZeroLF.SlackInjection += 1.0;
+					// если ветвь в суперузле но не от базисного узла, добавляем ее в список нулевых виртуальных ветвей
+					VirtualBranch* pDup{ FindParallel(ZeroLF.pVirtualZeroBranchesBegin, ZeroLF.pVirtualZeroBranchesEnd, pOppNode) };
+					// учитываем, если ветвь параллельная
+					if (pDup)
+						pDup->Y += 1.0;
+					else
+					{
+						ZeroLF.pVirtualZeroBranchesEnd->pNode = pOppNode;
+						ZeroLF.pVirtualZeroBranchesEnd->Y = 1.0;
+						ZeroLF.pVirtualZeroBranchesEnd++;
+						// и учитываем в количестве ненулевых элементов
+						pZeroSuperNode->nZcount++;
+					}
 				}
 			}
 		}
@@ -1610,24 +1623,9 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 
 	const auto& Matrix{ ZeroLF.ZeroSupeNode->LFMatrix };
 	const ptrdiff_t nBlockSize{ static_cast<ptrdiff_t>(Matrix.size()) };
-	ptrdiff_t nNz{ nBlockSize };
-
-	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
-	{
-		const auto& pBranch{ pZb->pBranch };
-		const ptrdiff_t &head{ pBranch->m_pNodeIp->ZeroLF.m_nSuperNodeLFIndex }, &tail{ pBranch->m_pNodeIq->ZeroLF.m_nSuperNodeLFIndex };
-
-		if (head < 0 || tail < 0)
-			continue;
-
-		Matrix[head]->ZeroLF.pData++;
-		Matrix[tail]->ZeroLF.pData++;
-
-		nNz += 2;
-	}
 
 	KLUWrapper<std::complex<double>> klu;
-	klu.SetSize(nBlockSize, nNz);
+	klu.SetSize(nBlockSize, ZeroLF.ZeroSupeNode->nZcount);
 
 	ptrdiff_t* pAi = klu.Ai();	// строки
 	ptrdiff_t* pAp = klu.Ap();	// столбцы
@@ -1639,51 +1637,21 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	const double* cpAx{ pAx };
 	const double* cpB{ pB };
 
-	*pAi = 0;	pAi++;
-	ptrdiff_t* pApRowBegin{ pAp };
-
-	double* posAx{ pAx };
-	ptrdiff_t* posAp{ pAp };
-
+	*pAi = 0;
+	pAi++;
 	for (auto&& node : Matrix)
 	{
-		auto& data{ node->ZeroLF };
-		const ptrdiff_t Step{ data.pData - static_cast<double*>(nullptr) + 1 };	// количество элементов в строке, включая диагональ
-		double* nextData = posAx + 2 * Step;									// следующая строка данных (умножаем на два т.к. комплексные элементы)
-		data.pData = posAx;														// начало данных строки
-		*data.pData = data.Yii;													// вводим сформированную для узла диагональ
-		data.pData += 2;														// смещаем указатель данных строки на следующий за диагональю элемент
-		posAx = nextData;														// перемещаемся к следующей строке данных
+		const auto& ZeroLF{ node->ZeroLF };
 
-		ptrdiff_t* nextAp = posAp + Step;										// столбцы следующей строки
-		*posAp = data.m_nSuperNodeLFIndex;										// ставим номер столбца диагонального элемента
-		data.pCol = posAp;
-		data.pCol++;
-		posAp = nextAp;															// начало столбцов данной строки
-		*pAi = *(pAi - 1) + Step;
-		pAi++;
-	}
-
-	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
-	{
-		const auto& pBranch{ pZb->pBranch };
-		const ptrdiff_t& head{ pBranch->m_pNodeIp->ZeroLF.m_nSuperNodeLFIndex }, &tail{ pBranch->m_pNodeIq->ZeroLF.m_nSuperNodeLFIndex };
-		
-		if (head < 0 || tail < 0)
-			continue;
-
-		const auto SetElement = [&Matrix](ptrdiff_t row, ptrdiff_t col)
+		*pAx = ZeroLF.Yii;	pAx += 2;
+		*pAp = ZeroLF.m_nSuperNodeLFIndex;	pAp++;
+		for (const VirtualBranch* pV = ZeroLF.pVirtualZeroBranchesBegin; pV < ZeroLF.pVirtualZeroBranchesEnd; pV++)
 		{
-			auto& data{ Matrix[row]->ZeroLF.pData };
-			*data = -1.0;
-			data += 2;
-			auto& pcol{ Matrix[row]->ZeroLF.pCol };
-			*pcol = col;
-			pcol++;
-		};
-
-		SetElement(head, tail);
-		SetElement(tail, head);
+			*pAx = -pV->Y.real();	pAx += 2;
+			*pAp = pV->pNode->ZeroLF.m_nSuperNodeLFIndex;	pAp++;
+		}
+		*pAi = *(pAi - 1) + (ZeroLF.pVirtualZeroBranchesEnd - ZeroLF.pVirtualZeroBranchesBegin) + 1;
+		pAi++;
 	}
 	
 	pB = klu.B();
@@ -1723,16 +1691,15 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 		node->ZeroLF.vRe = *pB; pB++;
 		node->ZeroLF.vIm = *pB; pB++;
 	}
-	
-	pB = klu.B();
-	const cplx Vbase{ 1.0, 0.0 };
-	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
+
+	// рассчитываем потоки в ветвях
+
+	for (const VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
-		const ptrdiff_t& head{ pBranch->m_pNodeIp->ZeroLF.m_nSuperNodeLFIndex }, &tail{ pBranch->m_pNodeIq->ZeroLF.m_nSuperNodeLFIndex };
-		cplx V1{ head < 0 ? Vbase : cplx(pB[2 * head], pB[2 * head + 1]) };
-		cplx V2{ tail < 0 ? Vbase : cplx(pB[2 * tail], pB[2 * tail + 1]) };
-		pBranch->Se = pBranch->Sb = (V2 - V1) / cplx(static_cast<double>(pZb->nParallelCount));
+		const auto& pNode1{ pBranch->m_pNodeIp->ZeroLF };
+		const auto& pNode2{ pBranch->m_pNodeIq->ZeroLF };
+		pBranch->Se = pBranch->Sb = cplx(pNode2.vRe - pNode1.vRe, pNode2.vIm - pNode1.vIm);
 	}
 
 	CalculateZeroLFBranches();
