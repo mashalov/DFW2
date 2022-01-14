@@ -181,6 +181,8 @@ namespace DFW2
 			ptrdiff_t m_nSuperNodeLFIndex = 0;
 			// диагональный элемент Y
 			double Yii = 0.0;
+			// комплексный индикатор "напряжения" в узле
+			VariableIndex ViRe, ViIm;
 			// инъекция из базисного узла
 			double SlackInjection = 0.0;
 			// указатель данных элементов строки для KLU
@@ -190,8 +192,6 @@ namespace DFW2
 			// вектор всех ветвей, связывающих узлы суперузла
 			// с другими суперузлами - вектор ветвей с сопротивлениями
 			// в этом векторе параллельные ветви будут эквивалентированы
-			std::unique_ptr<VirtualBranch[]>  m_VirtualBranches;
-
 			// структура строки матрицы
 			struct LFMatrixRow
 			{
@@ -199,15 +199,24 @@ namespace DFW2
 				VirtualBranch* pBranchesBegin = nullptr;	// диапазон виртуальных ветвей, инцидентных узлу
 				VirtualBranch* pBranchesEnd = nullptr;
 			};
-
 			using LFMatrixType = std::vector<LFMatrixRow>;
-			// строки матрицы собраны в векторе. Вектор завернут с unique_ptr,
-			LFMatrixType LFMatrix;
+
+			// все динамические данные для расчета потокораспредения
+			// внутри суперузла упаковываем в смартпойинтер для минимизации c/d
+			struct ZeroSuperNodeData
+			{
+				std::unique_ptr<VirtualBranch[]>  m_VirtualBranches;
+				// строки матрицы собраны в векторе
+				LFMatrixType LFMatrix;
+			};
+			std::unique_ptr<ZeroSuperNodeData> ZeroSupeNode;
 		} 
 		ZeroLF;
 
 		// Создать постоянные данные для расчета потокораспределения с нулевыми сопротивлениями
 		void CreateZeroLoadFlowData();
+		// Включить суперузел в расчет потокораспределения с нулевыми сопротивлениями
+		void RequireSuperNodeLF();
 		// указатель на родительский суперузел
 		CDynaNodeBase* m_pSuperNodeParent = nullptr;
 		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
@@ -389,9 +398,10 @@ namespace DFW2
 		std::unique_ptr<VirtualZeroBranch[]> m_pZeroBranches;
 		VirtualZeroBranch *m_pZeroBranchesEnd = nullptr;
 		CDeviceContainer *m_pSynchroZones = nullptr;
-		NodeSet m_TopologyCheck;
+		NodeSet m_TopologyCheck, m_ZeroLFSet;
 	public:
 		const VirtualZeroBranch* GetZeroBranchesEnd() const noexcept { return m_pZeroBranchesEnd; }
+		const NodeSet& GetZeroLFSet() const { return m_ZeroLFSet; }
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
 		void CalculateShuntParts();
 		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
@@ -409,6 +419,7 @@ namespace DFW2
 		bool m_bDynamicLRC = true;
 		void LinkToLRCs(CDeviceContainer& containerLRC);
 		void LinkToReactors(CDeviceContainer& containerReactors);
+		void RequireSuperNodeLF(CDynaNodeBase *pNode);
 	};
 }
 

@@ -9,6 +9,7 @@ namespace DFW2
 	{
 	protected:
 		CDynaBranch* m_pBranch = nullptr;			// ветвь, для которой выполняеются расчеты потоков
+		CDynaNodeBase* m_pZeroLFNode = nullptr;		// суперузел, в который входит ветвь с нулевым сопротивлением
 	public:
 		enum VARS
 		{

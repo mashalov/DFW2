@@ -496,6 +496,8 @@ void CDynaModel::InitDevices()
 	if (!CDevice::IsFunctionStatusOK(Status))
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
 
+	CreateZeroLoadFlow();
+
 	Nodes.CalculateShuntParts();
 }
 

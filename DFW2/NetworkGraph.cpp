@@ -445,6 +445,9 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 		pNode->ZeroLF.m_nSuperNodeLFIndex = 0;
 	}
 
+	// очищаем список суперузлов для расчета потокораспределения с нулевыми сопротивлениями
+	m_ZeroLFSet.clear();
+
 	NODEISLANDMAP JoinableNodes, SuperNodes;
 	// строим список связности по включенным ветвям с нулевым сопротивлением
 	ptrdiff_t nZeroBranchCount(0);

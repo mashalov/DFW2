@@ -1451,8 +1451,13 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	if (pSuperNodeLink->m_pPointer == ppNodeEnd)
 		return;
 
+	// создаем данные суперузла
+	ZeroLF.ZeroSupeNode = std::make_unique<CDynaNodeBase::ZeroLFData::ZeroSuperNodeData>();
+
+	CDynaNodeBase::ZeroLFData::ZeroSuperNodeData *pZeroSuperNode{ ZeroLF.ZeroSupeNode.get() };
+
 	// создаем данные для построения Y : сначала создаем вектор строк матрицы
-	ZeroLF.LFMatrix.reserve(ppNodeEnd - pSuperNodeLink->m_pPointer);
+	pZeroSuperNode->LFMatrix.reserve(ppNodeEnd - pSuperNodeLink->m_pPointer);
 
 	// отыщем узел с максимальным количеством связей
 	// поиск начинаем с узла-представителя суперзула
@@ -1478,7 +1483,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	{
 		if (pMaxRankNode.first != pNode)
 		{
-			ZeroLF.LFMatrix.push_back({ pNode });
+			ZeroLF.ZeroSupeNode->LFMatrix.push_back({ pNode });
 			pNode->ZeroLF.m_nSuperNodeLFIndex = nRowIndex++;
 		}
 	};
@@ -1493,7 +1498,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		const auto& pBranch{ pZb->pBranch };
 		const ptrdiff_t& head{ pBranch->m_pNodeIp->ZeroLF.m_nSuperNodeLFIndex }, & tail{ pBranch->m_pNodeIq->ZeroLF.m_nSuperNodeLFIndex };
 
-		const auto& Matrix{ ZeroLF.LFMatrix };
+		const auto& Matrix{ ZeroLF.ZeroSupeNode->LFMatrix };
 		// рассчитываем диагональные элементы (собственные "проводимости")
 		if (head >= 0)
 			Matrix[head].pNode->ZeroLF.Yii += 1.0;
@@ -1512,7 +1517,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	// включая параллельные (с запасом)
 	size_t nBranchesCount{ 0 };
 
-	for (auto&& node : ZeroLF.LFMatrix)
+	for (auto&& node : pZeroSuperNode->LFMatrix)
 	{
 		const auto& pNode{ node.pNode };
 		CLinkPtrCount* pBranchLink = pNode->GetLink(0);
@@ -1534,11 +1539,11 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	// внутри общего массива разделены парами указателей. Для вектора пришлось
 	// бы использовать неинициализированные итераторы
 
-	ZeroLF.m_VirtualBranches = std::make_unique<VirtualBranch[]>(nBranchesCount);
-	VirtualBranch* pHead{ ZeroLF.m_VirtualBranches.get() };
+	pZeroSuperNode->m_VirtualBranches = std::make_unique<VirtualBranch[]>(nBranchesCount);
+	VirtualBranch* pHead{ pZeroSuperNode->m_VirtualBranches.get() };
 
 	// заполняем списки ветвей для каждого из узлов суперузла
-	for (auto&& node : ZeroLF.LFMatrix)
+	for (auto&& node : pZeroSuperNode->LFMatrix)
 	{
 		const auto& pNode{ node.pNode };
 		CLinkPtrCount* pBranchLink = pNode->GetLink(0);
@@ -1584,17 +1589,22 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	}
 }
 
-
+void CDynaNodeBase::RequireSuperNodeLF()
+{
+	if (m_pSuperNodeParent)
+		throw dfw2error(fmt::format("CDynaNodeBase::RequireSuperNodeLF - node {} is not super node", GetVerbalName()));
+	static_cast<CDynaNodeContainer*>(m_pContainer)->RequireSuperNodeLF(this);
+}
 
 void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 {
 	
 	CreateZeroLoadFlowData();
-	if (ZeroLF.LFMatrix.empty())
+	if (!ZeroLF.ZeroSupeNode)
 		return;
 
-	const auto& Matrix{ ZeroLF.LFMatrix };
-	const ptrdiff_t nBlockSize{ static_cast<ptrdiff_t>(ZeroLF.LFMatrix.size()) };
+	const auto& Matrix{ ZeroLF.ZeroSupeNode->LFMatrix };
+	const ptrdiff_t nBlockSize{ static_cast<ptrdiff_t>(Matrix.size()) };
 	ptrdiff_t nNz{ nBlockSize };
 
 	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
@@ -1700,7 +1710,7 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	
 	pB = klu.B();
 
-	for (const auto& node : ZeroLF.LFMatrix)
+	for (const auto& node : Matrix)
 	{
 		const auto& pNode{ node.pNode };
 		pNode->GetPnrQnr();
@@ -2160,4 +2170,11 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCTransientId, pNode->GetVerbalName()));
 			
 	}
+}
+
+void CDynaNodeContainer::RequireSuperNodeLF(CDynaNodeBase *pSuperNode)
+{
+	if (pSuperNode->m_pSuperNodeParent)
+		throw dfw2error(fmt::format("CDynaNodeBase::RequireSuperNodeLF - node {} is not super node", pSuperNode->GetVerbalName()));
+	m_ZeroLFSet.insert(pSuperNode);
 }

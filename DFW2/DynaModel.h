@@ -905,6 +905,8 @@ namespace DFW2
 		void SnapshotRightVector();
 		void CompareRightVector();
 
+		void CreateZeroLoadFlow();
+
 		static constexpr const VersionInfo version = { { 1, 0, 0, 1 } };
 
 	};

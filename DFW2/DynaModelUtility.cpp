@@ -947,6 +947,12 @@ void CDynaModel::EndProgress()
 		m_pProgress->EndProgress();
 }
 
+
+void CDynaModel::CreateZeroLoadFlow()
+{
+	const auto& ZeroLFSet = Nodes.GetZeroLFSet();
+}
+
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
 								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1

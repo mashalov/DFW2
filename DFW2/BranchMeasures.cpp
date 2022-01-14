@@ -339,5 +339,15 @@ void CDynaBranchMeasure::SetBranch(CDynaBranch* pBranch)
 	SetId(pBranch->GetId());
 	SetName(pBranch->GetVerbalName());
 	m_pBranch = pBranch;
+	// если ветвь находится внутри суперузла
+	// нам потребуется расчет потокораспределения внутри
+	// суперузла
+	if (m_pBranch->InSuperNode())
+	{
+		m_pZeroLFNode = m_pBranch->m_pNodeSuperIp;
+		// сообщаем контейнеру узлов, что нам нужно потокораспределение
+		// внутри суперузла, в котором находится данная ветвь
+		m_pZeroLFNode->RequireSuperNodeLF();
+	}
 	pBranch->m_pMeasure = this;
 }
