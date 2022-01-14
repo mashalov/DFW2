@@ -91,14 +91,14 @@ VariableIndexRefVec& CDynaNodeZeroLoadFlow::GetVariables(VariableIndexRefVec& Ch
 
 bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 {
-	MatrixRow* pRow{ m_MatrixRows.get() };
-	const MatrixRow* pMatrixRowsEnd{ pRow + m_nSize };
+	CDynaNodeBase **pNode{ m_MatrixRows.get() },  **pNodeEnd{ m_MatrixRows.get() + m_nSize };
 
-	while (pRow < pMatrixRowsEnd)
+	while (pNode < pNodeEnd)
 	{
-		pDynaModel->SetElement(pRow->Vre, pRow->Vre, 1.0);
-		pDynaModel->SetElement(pRow->Vim, pRow->Vim, 1.0);
-		pRow++;
+		const auto& node{(*pNode)->ZeroLF};
+		pDynaModel->SetElement(node.vRe, node.vRe, 1.0);
+		pDynaModel->SetElement(node.vIm, node.vIm, 1.0);
+		pNode++;
 	}
 	return true;
 }
@@ -115,14 +115,14 @@ eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::ProcessDiscontinuity(CDynaModel* pD
 
 bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 {
-	MatrixRow* pRow{ m_MatrixRows.get() };
-	const MatrixRow* pMatrixRowsEnd{ pRow + m_nSize };
+	CDynaNodeBase** pNode{ m_MatrixRows.get() }, ** pNodeEnd{ m_MatrixRows.get() + m_nSize };
 
-	while (pRow < pMatrixRowsEnd)
+	while (pNode < pNodeEnd)
 	{
-		pDynaModel->SetFunction(pRow->Vre, 0.0);
-		pDynaModel->SetFunction(pRow->Vim, 0.0);
-		pRow++;
+		auto& node{ (*pNode)->ZeroLF };
+		pDynaModel->SetFunction(node.vRe, 0.0);
+		pDynaModel->SetFunction(node.vIm, 0.0);
+		pNode++;
 	}
 
 	return true;
@@ -136,7 +136,7 @@ void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet(const NodeSet& ZeroLFNodes)
 	// задан сет суперузлов
 	for (const auto& ZeroSuperNode : ZeroLFNodes)
 	{
-		const auto& ZeroSuperNodeData{ ZeroSuperNode->ZeroLF.ZeroSupeNode };
+		auto& ZeroSuperNodeData{ ZeroSuperNode->ZeroLF.ZeroSupeNode };
 		// считаем количество переменных по количеству узлов в суперузлах
 		m_nSize += ZeroSuperNodeData->LFMatrix.size();
 	}
@@ -148,21 +148,22 @@ void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet(const NodeSet& ZeroLFNodes)
 	// размерность вектора выбираем на все узлы, чтобы не менять адреса переменных
 	// после обновления сета суперузлов
 	if(!m_MatrixRows)
-		m_MatrixRows = std::make_unique<MatrixRow[]>((*ZeroLFNodes.begin())->GetContainer()->Count());
+		m_MatrixRows = std::make_unique<CDynaNodeBase*[]>((*ZeroLFNodes.begin())->GetContainer()->Count());
 
 	// для доступа к переменным снаружи собираем их в стандартный вектор ссылок
 	m_Vars.reserve(2 * m_nSize);
 
-	MatrixRow* pRow{ m_MatrixRows.get() };
+	CDynaNodeBase** pNode{ m_MatrixRows.get() };
 	for (const auto& ZeroSuperNode : ZeroLFNodes)
 	{
 		const auto& ZeroSuperNodeData{ ZeroSuperNode->ZeroLF.ZeroSupeNode };
 		for (const auto& ZeroNode : ZeroSuperNodeData->LFMatrix)
 		{
-			pRow->pNode = ZeroNode.pNode;
-			m_Vars.push_back(pRow->Vre);
-			m_Vars.push_back(pRow->Vim);
-			pRow++;
+			*pNode = ZeroNode.pNode;
+			auto& node{ ZeroNode.pNode->ZeroLF };
+			m_Vars.push_back(node.vRe);
+			m_Vars.push_back(node.vIm);
+			pNode++;
 		}
 	}
 }

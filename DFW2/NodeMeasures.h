@@ -36,14 +36,8 @@ namespace DFW2
 
 	class CDynaNodeZeroLoadFlow : public CDevice
 	{
-		struct MatrixRow
-		{
-			CDynaNodeBase* pNode;
-			VariableIndex Vre, Vim;
-		};
-
 	protected:
-		std::unique_ptr<MatrixRow[]> m_MatrixRows;
+		std::unique_ptr<CDynaNodeBase*[]> m_MatrixRows;
 		VariableIndexRefVec m_Vars;
 		ptrdiff_t m_nSize;
 	public:

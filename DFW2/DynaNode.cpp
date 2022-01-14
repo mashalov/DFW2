@@ -1762,9 +1762,17 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 
 
 	pB = klu.B();
-
 	klu.Solve();
+
+	// результат решения потокораспределения
+	// вводим в узлы суперузла
+	for (const auto& node : Matrix)
+	{
+		node.pNode->ZeroLF.vRe = *pB; pB++;
+		node.pNode->ZeroLF.vIm = *pB; pB++;
+	}
 	
+	pB = klu.B();
 	const cplx Vbase{ 1.0, 0.0 };
 	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
 	{
