@@ -32,11 +32,6 @@ void CDevice::SetContainer(CDeviceContainer* pContainer)
 	m_pContainer = pContainer;
 }
 
-CDeviceContainer* CDevice::GetContainer()
-{
-	return m_pContainer;
-}
-
 // получить указатель на переменную устройства по имени
 double* CDevice::GetVariablePtr(std::string_view VarName)
 {

@@ -764,12 +764,13 @@ ptrdiff_t CDeviceContainer::GetPossibleSingleLinksCount()
 	return m_ContainerProps.nPossibleLinksCount;
 }
 
-
-ptrdiff_t CDeviceContainer::EquationsCount()
+// базовая реализация возвращает константу из свойств
+// в перекрытии можно возвращать любое количество уравнений
+// но при этом в свойствах контейнера должно быть bVolatile = true
+ptrdiff_t CDeviceContainer::EquationsCount() const
 {
 	return m_ContainerProps.nEquationsCount;
 }
-
 
 CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom)
 {

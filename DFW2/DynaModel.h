@@ -23,6 +23,7 @@
 #include "DynaBranch.h"
 #include "Statistics.h"
 #include "Logger.h"
+#include "NodeMeasures.h"
 
 //#define USE_FMA
 namespace DFW2
@@ -620,6 +621,7 @@ namespace DFW2
 		CDeviceContainer ExcConMustang;
 		CDeviceContainer BranchMeasures;
 		CDeviceContainer NodeMeasures;
+		CDynaNodeZeroLoadFlowContainer ZeroLoadFlow;
 		CCustomDeviceContainer CustomDevice;
 		CCustomDeviceCPPContainer AutomaticDevice;
 		CAutomatic m_Automatic;

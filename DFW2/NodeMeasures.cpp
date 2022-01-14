@@ -72,3 +72,105 @@ void CDynaNodeMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	// измерения создаются индивидуально с узлом в конструкторе
 	//props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();
 }
+
+double* CDynaNodeZeroLoadFlow::GetVariablePtr(ptrdiff_t nVarIndex)
+{
+	// все переменные уже собраны в вектор в конструкторе
+	// поэтому просто возвращаем их по индексам
+	if (nVarIndex < static_cast<ptrdiff_t>(m_Vars.size()))
+		return &m_Vars[nVarIndex].get().Value;
+	else
+		throw dfw2error("CDynaNodeZeroLoadFlow::GetVariablePtr - variable index out of range");
+}
+
+VariableIndexRefVec& CDynaNodeZeroLoadFlow::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	// вектор переменных уже собран в конструкторе
+	return CDevice::GetVariables(JoinVariables(m_Vars, ChildVec));
+}
+
+bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
+{
+	MatrixRow* pRow{ m_MatrixRows.get() };
+	const MatrixRow* pMatrixRowsEnd{ pRow + m_nSize };
+
+	while (pRow < pMatrixRowsEnd)
+	{
+		pDynaModel->SetElement(pRow->Vre, pRow->Vre, 1.0);
+		pDynaModel->SetElement(pRow->Vim, pRow->Vim, 1.0);
+		pRow++;
+	}
+	return true;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::Init(CDynaModel* pDynaModel)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
+{
+	MatrixRow* pRow{ m_MatrixRows.get() };
+	const MatrixRow* pMatrixRowsEnd{ pRow + m_nSize };
+
+	while (pRow < pMatrixRowsEnd)
+	{
+		pDynaModel->SetFunction(pRow->Vre, 0.0);
+		pDynaModel->SetFunction(pRow->Vim, 0.0);
+		pRow++;
+	}
+
+	return true;
+}
+
+void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet(const NodeSet& ZeroLFNodes)
+{
+	// рассчитываем количество переменных (индикаторов напряжения)
+	// необходимых для формирования системы YU
+	m_nSize = 0;
+	// задан сет суперузлов
+	for (const auto& ZeroSuperNode : ZeroLFNodes)
+	{
+		const auto& ZeroSuperNodeData{ ZeroSuperNode->ZeroLF.ZeroSupeNode };
+		// считаем количество переменных по количеству узлов в суперузлах
+		m_nSize += ZeroSuperNodeData->LFMatrix.size();
+	}
+	// значения переменных храним в векторе
+
+	if (!m_nSize)
+		return;
+
+	// размерность вектора выбираем на все узлы, чтобы не менять адреса переменных
+	// после обновления сета суперузлов
+	if(!m_MatrixRows)
+		m_MatrixRows = std::make_unique<MatrixRow[]>((*ZeroLFNodes.begin())->GetContainer()->Count());
+
+	// для доступа к переменным снаружи собираем их в стандартный вектор ссылок
+	m_Vars.reserve(2 * m_nSize);
+
+	MatrixRow* pRow{ m_MatrixRows.get() };
+	for (const auto& ZeroSuperNode : ZeroLFNodes)
+	{
+		const auto& ZeroSuperNodeData{ ZeroSuperNode->ZeroLF.ZeroSupeNode };
+		for (const auto& ZeroNode : ZeroSuperNodeData->LFMatrix)
+		{
+			pRow->pNode = ZeroNode.pNode;
+			m_Vars.push_back(pRow->Vre);
+			m_Vars.push_back(pRow->Vim);
+			pRow++;
+		}
+	}
+}
+
+void CDynaNodeZeroLoadFlow::DeviceProperties(CDeviceContainerProperties& props)
+{
+	props.SetType(DEVTYPE_ZEROLOADFLOW);
+	props.SetClassName(CDeviceContainerProperties::m_cszNameZeroLoadFlow, CDeviceContainerProperties::m_cszSysNameZeroLoadFlow);
+	props.nEquationsCount = 0;
+	props.bVolatile = true;
+}

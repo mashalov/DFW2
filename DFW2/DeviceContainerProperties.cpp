@@ -33,6 +33,7 @@ const char* CDeviceContainerProperties::m_cszNameNode = "Узел";
 const char* CDeviceContainerProperties::m_cszNameBranch = "Ветвь";
 const char* CDeviceContainerProperties::m_cszNameBranchMeasure = "Измерения ветви";
 const char* CDeviceContainerProperties::m_cszNameNodeMeasure = "Измерения узла";
+const char* CDeviceContainerProperties::m_cszNameZeroLoadFlow = "Потокораспределение суперузлов";
 const char* CDeviceContainerProperties::m_cszNameLRC = "СХН";
 const char* CDeviceContainerProperties::m_cszNameReactor = "Реактор";
 
@@ -50,6 +51,7 @@ const char* CDeviceContainerProperties::m_cszSysNameNode = "Node";
 const char* CDeviceContainerProperties::m_cszSysNameBranch = "Branch";
 const char* CDeviceContainerProperties::m_cszSysNameBranchMeasure = "BranchMeasure";
 const char* CDeviceContainerProperties::m_cszSysNameNodeMeasure = "NodeMeasure";
+const char* CDeviceContainerProperties::m_cszSysNameZeroLoadFlow = "ZeroLoadFlow";
 const char* CDeviceContainerProperties::m_cszSysNameLRC = "LRC";
 const char* CDeviceContainerProperties::m_cszSysNameReactor = "Reactor";
 

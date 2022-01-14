@@ -33,4 +33,41 @@ namespace DFW2
 		static constexpr const char* m_cszPload = "Pn";
 		static constexpr const char* m_cszQload = "Qn";
 	};
+
+	class CDynaNodeZeroLoadFlow : public CDevice
+	{
+		struct MatrixRow
+		{
+			CDynaNodeBase* pNode;
+			VariableIndex Vre, Vim;
+		};
+
+	protected:
+		std::unique_ptr<MatrixRow[]> m_MatrixRows;
+		VariableIndexRefVec m_Vars;
+		ptrdiff_t m_nSize;
+	public:
+		static void DeviceProperties(CDeviceContainerProperties& properties);
+		CDynaNodeZeroLoadFlow(const NodeSet& ZeroLFNodes) : CDevice()  { UpdateSuperNodeSet(ZeroLFNodes); };
+		void UpdateSuperNodeSet(const NodeSet& ZeroLFNodes);
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		bool BuildEquations(CDynaModel* pDynaModel) override;
+		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		ptrdiff_t EquationsCount() const { return 2 * m_nSize; }
+	};
+
+	class CDynaNodeZeroLoadFlowContainer : public CDeviceContainer
+	{
+	public:
+		using CDeviceContainer::CDeviceContainer;
+		ptrdiff_t EquationsCount() const override
+		{
+			if (m_DevVec.size() != 1)
+				throw dfw2error("CDynaNodeZeroLoadFlowContainer::EquationsCount - container must contain exactly 1 device");
+			return static_cast<const CDynaNodeZeroLoadFlow*>(m_DevVec.front())->EquationsCount();
+		}
+	};
 }

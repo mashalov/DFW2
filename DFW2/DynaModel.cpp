@@ -46,6 +46,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   CustomDevice(this),
 						   BranchMeasures(this),
 						   NodeMeasures(this),
+						   ZeroLoadFlow(this),
 						   AutomaticDevice(this),
 						   CustomDeviceCPP(this),
 						   m_ResultsWriter(*this),
@@ -74,6 +75,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaExciterMustang::DeviceProperties(ExcitersMustang.m_ContainerProps);
 	CDynaBranchMeasure::DeviceProperties(BranchMeasures.m_ContainerProps);
 	CDynaNodeMeasure::DeviceProperties(NodeMeasures.m_ContainerProps);
+	CDynaNodeZeroLoadFlow::DeviceProperties(ZeroLoadFlow.m_ContainerProps);
 
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
 	AutomaticDevice.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
@@ -99,6 +101,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&NodeMeasures);
 	m_DeviceContainers.push_back(&AutomaticDevice);
+	m_DeviceContainers.push_back(&ZeroLoadFlow);
 	m_DeviceContainers.push_back(&SynchroZones);		// синхрозоны должны идти последними
 
 	CheckFolderStructure();
@@ -426,6 +429,10 @@ void CDynaModel::InitDevices()
 	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
 	if (!UpdateExternalVariables())
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+	
+	// создаем блок уравнений потокораспределения
+	// в суперузлах
+	CreateZeroLoadFlow();
 
 	klu.Common()->ordering = 0; // используем amd (0) или colamd (1). 0 - лучше для userefactor = true, 1 - для userefactor = false
 
@@ -495,8 +502,6 @@ void CDynaModel::InitDevices()
 	// CDynaNodeBase::Init()
 	if (!CDevice::IsFunctionStatusOK(Status))
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
-
-	CreateZeroLoadFlow();
 
 	Nodes.CalculateShuntParts();
 }
@@ -929,6 +934,9 @@ bool CDynaModel::Step()
 						if (m_bRebuildMatrixFlag)
 						{
 							// строим ее заново
+							// создаем новый вариант систем уравнений 
+							// потокораспределения суперузлов
+							CreateZeroLoadFlow();
 							EstimateMatrix();
 							bRes = bRes && UpdateExternalVariables();
 						}
@@ -1663,9 +1671,9 @@ void CDynaModel::RepeatZeroCrossing()
 
 bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name)
 {
-	bool bRes(false);
-	const size_t nSourceLength(Name.size());
-	const char cszSpace(' ');
+	bool bRes{ false };
+	const size_t nSourceLength{ Name.size() };
+	const char cszSpace{ ' ' };
 	std::string Object(nSourceLength, cszSpace),
 				 Keys(nSourceLength, cszSpace),
 				 Prop(nSourceLength, cszSpace);
@@ -1714,12 +1722,14 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 					CDynaBranch *pBranch = static_cast<CDynaBranch*>(pFoundDevice);
 					if (!pBranch->m_pMeasure)
 					{
-						CDynaBranchMeasure *pBranchMeasure = new CDynaBranchMeasure();
+						CDynaBranchMeasure* pBranchMeasure = new CDynaBranchMeasure();
 						pBranchMeasure->SetBranch(pBranch);
 						pBranchMeasure->Init(this);
 						BranchMeasures.AddDevice(pBranchMeasure);
 						pBranch->m_pMeasure = pBranchMeasure;
 					}
+					else
+						pBranch->m_pMeasure->Init(this);
 
 					ExtVar = pBranch->m_pMeasure->GetExternalVariable(Prop);
 

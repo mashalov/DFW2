@@ -181,8 +181,6 @@ namespace DFW2
 			ptrdiff_t m_nSuperNodeLFIndex = 0;
 			// диагональный элемент Y
 			double Yii = 0.0;
-			// комплексный индикатор "напряжения" в узле
-			VariableIndex ViRe, ViIm;
 			// инъекция из базисного узла
 			double SlackInjection = 0.0;
 			// указатель данных элементов строки для KLU

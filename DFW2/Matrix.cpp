@@ -5,7 +5,7 @@ using namespace DFW2;
 
 void CDynaModel::EstimateMatrix()
 {
-	ptrdiff_t nOriginalMatrixSize = klu.MatrixSize();
+	const ptrdiff_t nOriginalMatrixSize{ klu.MatrixSize() };
 	// если RightVector уже есть - ставим флаг сохранения данных в новый вектор
 	bool bSaveRightVector = pRightVector != nullptr;
 	m_nEstimatedMatrixSize = 0;

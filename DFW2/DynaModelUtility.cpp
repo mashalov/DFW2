@@ -947,10 +947,23 @@ void CDynaModel::EndProgress()
 		m_pProgress->EndProgress();
 }
 
+// создает контейнер с единственным устройством для расчета 
+// потокораспределения внутри суперузлов. Все нужные суперузлы
+// рассчитываются в одном устройстве
 
 void CDynaModel::CreateZeroLoadFlow()
 {
-	const auto& ZeroLFSet = Nodes.GetZeroLFSet();
+	// создаем устройство для расчета суперузлов по списку суперузлов, которые
+	// необходимы для расчета потоков в ветвях (CDynaBranchMeasure)
+
+	const size_t nCount{ ZeroLoadFlow.Count() };
+
+	if (!nCount)
+		ZeroLoadFlow.AddDevice(new CDynaNodeZeroLoadFlow(Nodes.GetZeroLFSet()));
+	else if (nCount == 1)
+		static_cast<CDynaNodeZeroLoadFlow*>(ZeroLoadFlow.GetDeviceByIndex(0))->UpdateSuperNodeSet(Nodes.GetZeroLFSet());
+	else
+		throw dfw2error("CDynaModel::CreateZeroLoadFlow - ZeroLoadFlow must contain 0 or 1 device");
 }
 
 const double CDynaModel::MethodlDefault[4][4] = 
