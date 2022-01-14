@@ -192,8 +192,11 @@ namespace DFW2
 			// переменные состояния индикаторов "напряжений" суперузлов
 			VariableIndex vRe, vIm;
 			// диапазон виртуальных ветвей, инцидентных узлу
-			VirtualBranch* pBranchesBegin = nullptr;	
-			VirtualBranch* pBranchesEnd = nullptr;
+			VirtualBranch* pVirtualBranchesBegin = nullptr;	
+			VirtualBranch* pVirtualBranchesEnd = nullptr;
+			VirtualBranch* pVirtualZeroBranchesBegin = nullptr;
+			VirtualBranch* pVirtualZeroBranchesEnd = nullptr;
+
 			using LFMatrixType = std::vector<CDynaNodeBase*>;
 
 			// все динамические данные для расчета потокораспредения
@@ -204,7 +207,7 @@ namespace DFW2
 				// вектор всех ветвей, связывающих узлы суперузла
 				// с другими суперузлами - вектор ветвей с сопротивлениями
 				// в этом векторе параллельные ветви будут эквивалентированы
-				std::unique_ptr<VirtualBranch[]>  m_VirtualBranches;
+				std::unique_ptr<VirtualBranch[]>  m_VirtualBranches, m_VirtualZeroBranches;
 				// строки матрицы собраны в векторе
 				LFMatrixType LFMatrix;
 			};

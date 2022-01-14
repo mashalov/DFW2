@@ -126,7 +126,7 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		cplx S{ -pNode->GetSelfImbPnotSuper() + ZeroLF.SlackInjection, -pNode->GetSelfImbPnotSuper() };
 
 		cplx I;
-		for(auto vb = pNode->ZeroLF.pBranchesBegin ; vb < pNode->ZeroLF.pBranchesEnd; vb++)
+		for(const VirtualBranch* vb = pNode->ZeroLF.pVirtualBranchesBegin ; vb < pNode->ZeroLF.pVirtualBranchesEnd; vb++)
 			I += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim); 
 		I = std::conj(I) * cplx(pNode->Vre, pNode->Vim);
 		S += I;
