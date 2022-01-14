@@ -115,14 +115,27 @@ eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::ProcessDiscontinuity(CDynaModel* pD
 
 bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 {
-	CDynaNodeBase** pNode{ m_MatrixRows.get() }, ** pNodeEnd{ m_MatrixRows.get() + m_nSize };
+	CDynaNodeBase** ppNode{ m_MatrixRows.get() }, ** ppNodeEnd{ m_MatrixRows.get() + m_nSize };
 
-	while (pNode < pNodeEnd)
+	while (ppNode < ppNodeEnd)
 	{
-		auto& node{ (*pNode)->ZeroLF };
-		pDynaModel->SetFunction(node.vRe, 0.0);
-		pDynaModel->SetFunction(node.vIm, 0.0);
-		pNode++;
+		const auto& pNode{ *ppNode };
+		auto& ZeroLF{ pNode->ZeroLF };
+
+		pNode->GetPnrQnr();
+		cplx S{ -pNode->GetSelfImbPnotSuper() + ZeroLF.SlackInjection, -pNode->GetSelfImbPnotSuper() };
+
+		cplx I;
+		for(auto vb = pNode->ZeroLF.pBranchesBegin ; vb < pNode->ZeroLF.pBranchesEnd; vb++)
+			I += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim); 
+		I = std::conj(I) * cplx(pNode->Vre, pNode->Vim);
+		S += I;
+
+		pDynaModel->SetFunction(ZeroLF.vRe, 0.0);
+		pDynaModel->SetFunction(ZeroLF.vIm, 0.0);
+
+
+		ppNode++;
 	}
 
 	return true;
@@ -159,8 +172,8 @@ void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet(const NodeSet& ZeroLFNodes)
 		const auto& ZeroSuperNodeData{ ZeroSuperNode->ZeroLF.ZeroSupeNode };
 		for (const auto& ZeroNode : ZeroSuperNodeData->LFMatrix)
 		{
-			*pNode = ZeroNode.pNode;
-			auto& node{ ZeroNode.pNode->ZeroLF };
+			*pNode = ZeroNode;
+			auto& node{ ZeroNode->ZeroLF };
 			m_Vars.push_back(node.vRe);
 			m_Vars.push_back(node.vIm);
 			pNode++;

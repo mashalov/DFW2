@@ -187,26 +187,23 @@ namespace DFW2
 			double* pData = nullptr;
 			// указатель номеров столбцов в строке KLU
 			ptrdiff_t* pCol = nullptr;
-			// вектор всех ветвей, связывающих узлы суперузла
-			// с другими суперузлами - вектор ветвей с сопротивлениями
-			// в этом векторе параллельные ветви будут эквивалентированы
 			// структура строки матрицы
 
 			// переменные состояния индикаторов "напряжений" суперузлов
 			VariableIndex vRe, vIm;
-
-			struct LFMatrixRow
-			{
-				CDynaNodeBase* pNode = nullptr;				// узел, которому соответствует строка
-				VirtualBranch* pBranchesBegin = nullptr;	// диапазон виртуальных ветвей, инцидентных узлу
-				VirtualBranch* pBranchesEnd = nullptr;
-			};
-			using LFMatrixType = std::vector<LFMatrixRow>;
+			// диапазон виртуальных ветвей, инцидентных узлу
+			VirtualBranch* pBranchesBegin = nullptr;	
+			VirtualBranch* pBranchesEnd = nullptr;
+			using LFMatrixType = std::vector<CDynaNodeBase*>;
 
 			// все динамические данные для расчета потокораспредения
 			// внутри суперузла упаковываем в смартпойинтер для минимизации c/d
 			struct ZeroSuperNodeData
 			{
+				
+				// вектор всех ветвей, связывающих узлы суперузла
+				// с другими суперузлами - вектор ветвей с сопротивлениями
+				// в этом векторе параллельные ветви будут эквивалентированы
 				std::unique_ptr<VirtualBranch[]>  m_VirtualBranches;
 				// строки матрицы собраны в векторе
 				LFMatrixType LFMatrix;
