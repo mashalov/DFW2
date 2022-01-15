@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
 #include "DynaGeneratorMotion.h"
+#include "BranchMeasures.h"
 
 using namespace DFW2;
 
@@ -955,6 +956,9 @@ void CDynaModel::CreateZeroLoadFlow()
 {
 	// создаем устройство для расчета суперузлов по списку суперузлов, которые
 	// необходимы для расчета потоков в ветвях (CDynaBranchMeasure)
+
+	for (auto&& bm : BranchMeasures)
+		static_cast<CDynaBranchMeasure*>(bm)->TopologyUpdated();
 
 	const size_t nCount{ ZeroLoadFlow.Count() };
 

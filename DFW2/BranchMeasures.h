@@ -31,6 +31,7 @@ namespace DFW2
 		VariableIndex Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pe, Qe, Sb, Se;
 		CDynaBranchMeasure() : CDevice() {}
 		void SetBranch(CDynaBranch* pBranch);
+		void TopologyUpdated();
 
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;

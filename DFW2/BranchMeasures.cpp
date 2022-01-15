@@ -30,13 +30,16 @@ double* CDynaBranchMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
 
 bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
-
-	const auto& pNodeIp{ m_pBranch->m_pNodeIp };
-	const auto& pNodeIq{ m_pBranch->m_pNodeIq };
+	// если измерение внутри суперузла, выбираем исходные узлы начала и конца,
+    // если измерение между суперузлами - выбираем суперузлы начала и конца
+	const auto& pNodeIp{ m_pZeroLFNode ? m_pBranch->m_pNodeIp : m_pBranch->m_pNodeSuperIp };
+	const auto& pNodeIq{ m_pZeroLFNode ? m_pBranch->m_pNodeIq : m_pBranch->m_pNodeSuperIq };
 
 	if (m_pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
 	{
+		// если измерение внутри суперузла - берем не исходное напряжение
+		// в ограничивающих узлах, а напряжение суперузла для расчета поперечных потерь
+
 		const auto& Vip{ m_pZeroLFNode ? m_pZeroLFNode->V : pNodeIp->V };
 		const auto& Viq{ m_pZeroLFNode ? m_pZeroLFNode->V : pNodeIq->V };
 		const auto& Dip{ m_pZeroLFNode ? m_pZeroLFNode->Delta : pNodeIp->Delta };
@@ -50,15 +53,64 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 
 		if (m_pZeroLFNode)
 		{
-			const auto& vIpre{ pNodeIp->ZeroLF.vRe };
-			const auto& vIpim{ pNodeIp->ZeroLF.vIm };
-			const auto& vIqre{ pNodeIq->ZeroLF.vRe };
-			const auto& vIqim{ pNodeIq->ZeroLF.vIm };
+			const auto& vbRe{ pNodeIp->ZeroLF.vRe };
+			const auto& vbIm{ pNodeIp->ZeroLF.vIm };
+			const auto& veRe{ pNodeIq->ZeroLF.vRe };
+			const auto& veIm{ pNodeIq->ZeroLF.vIm };
 
+			// проводимости в начале и в конце ветви с нулевым сопротивлением, при условии,
+			// что напряжения в конце и в начале одинаковы
+			const double gsb{ g - gips },  bsb{ b - bips },  gse{ ge - giqs }, bse{ be - biqs };
+
+			// dIbre / dIbre
 			pDynaModel->SetElement(Ibre, Ibre, 1.0);
+			// dIbre / dVp
+			pDynaModel->SetElement(Ibre, Vip, -gsb * Cosp + bsb * Sinp);
+			// dIbre / dDeltaP
+			pDynaModel->SetElement(Ibre, Dip, Vip * (gsb * Sinp + bsb * Cosp));
+						
+			// индикаторы могут быть неиндексированы, если узел индикатора
+			// был выбран в качестве базисного, в этом случае просто пропускаем
+			// элемент матрицы
+			// dIbre / dveRe
+			if(veRe.Index >= 0) pDynaModel->SetElement(Ibre, veRe, -1.0);
+			// dIbre / dvbRe 
+			if(vbRe.Index >= 0) pDynaModel->SetElement(Ibre, vbRe, 1.0);
+
+			
+			// dIbim / dIbim
 			pDynaModel->SetElement(Ibim, Ibim, 1.0);
+			// dIbim / dVp
+			pDynaModel->SetElement(Ibim, Vip, -gsb * Sinp - bsb * Cosp);
+			// dIbim / dDeltaP
+			pDynaModel->SetElement(Ibim, Dip, Vip * (bsb * Sinp - gsb * Cosp));
+			// dIbim / dveIm
+			if(veIm.Index >= 0) pDynaModel->SetElement(Ibim, veIm, -1.0);
+			// dIbim / dvbIm
+			if(vbIm.Index >= 0) pDynaModel->SetElement(Ibim, vbIm, 1.0);
+
+			// dIere / dIere
 			pDynaModel->SetElement(Iere, Iere, 1.0);
+			// dIere / dVp
+			pDynaModel->SetElement(Iere, Vip, -gse * Cosp + bse * Sinp);
+			// dIere / dDeltaP
+			pDynaModel->SetElement(Iere, Dip, Vip * (gse * Sinp + bse * Cosp));
+			// dIere / dveIm
+			if (veRe.Index >= 0) pDynaModel->SetElement(Iere, veIm, -1.0);
+			// dIere / dvbIm
+			if (vbRe.Index >= 0) pDynaModel->SetElement(Iere, vbIm, 1.0);
+
+
+			// dIeim / dIeim
 			pDynaModel->SetElement(Ieim, Ieim, 1.0);
+			// dIbim / dVp
+			pDynaModel->SetElement(Ieim, Vip, -gse * Sinp - bse * Cosp);
+			// dIbim / dDeltaP
+			pDynaModel->SetElement(Ieim, Dip, -Vip * (gse * Cosp - bse * Sinp));
+			// dIbim / dveIm
+			if (veIm.Index >= 0) pDynaModel->SetElement(Ieim, veIm, -1.0);
+			// dIbim / dvbIm
+			if (vbIm.Index >= 0) pDynaModel->SetElement(Ieim, vbIm, 1.0);
 		}
 		else
 		{
@@ -358,13 +410,8 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();
 }
 
-void CDynaBranchMeasure::SetBranch(CDynaBranch* pBranch)
+void CDynaBranchMeasure::TopologyUpdated()
 {
-	if (m_pBranch)
-		throw dfw2error("CDynaBranchMeasure::SetBranch - branch already set");
-	SetId(pBranch->GetId());
-	SetName(pBranch->GetVerbalName());
-	m_pBranch = pBranch;
 	m_pZeroLFNode = nullptr;
 	// если ветвь находится внутри суперузла
 	// нам потребуется расчет потокораспределения внутри
@@ -376,5 +423,15 @@ void CDynaBranchMeasure::SetBranch(CDynaBranch* pBranch)
 		// внутри суперузла, в котором находится данная ветвь
 		m_pZeroLFNode->RequireSuperNodeLF();
 	}
+}
+
+void CDynaBranchMeasure::SetBranch(CDynaBranch* pBranch)
+{
+	if (m_pBranch)
+		throw dfw2error("CDynaBranchMeasure::SetBranch - branch already set");
+	SetId(pBranch->GetId());
+	SetName(pBranch->GetVerbalName());
+	m_pBranch = pBranch;
+	TopologyUpdated();
 	pBranch->m_pMeasure = this;
 }

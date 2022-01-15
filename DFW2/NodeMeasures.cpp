@@ -173,6 +173,7 @@ void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet(const NodeSet& ZeroLFNodes)
 		m_MatrixRows = std::make_unique<CDynaNodeBase*[]>((*ZeroLFNodes.begin())->GetContainer()->Count());
 
 	// для доступа к переменным снаружи собираем их в стандартный вектор ссылок
+	m_Vars.clear();
 	m_Vars.reserve(2 * m_nSize);
 
 	CDynaNodeBase** pNode{ m_MatrixRows.get() };
