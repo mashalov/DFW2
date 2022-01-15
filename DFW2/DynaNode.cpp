@@ -1672,9 +1672,8 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 		for (const VirtualBranch* vb = node->ZeroLF.pVirtualBranchesBegin; vb < node->ZeroLF.pVirtualBranchesEnd; vb++)
 			Is += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
 
-		pB[2 * node->ZeroLF.m_nSuperNodeLFIndex]     = Is.real();
-		pB[2 * node->ZeroLF.m_nSuperNodeLFIndex + 1] = Is.imag();
-
+		*pB = Is.real();	pB++;
+		*pB = Is.imag();	pB++;
 	}
 
 	pB = klu.B();
@@ -1685,8 +1684,8 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 
 	for (const auto& node : Matrix)
 	{
-		node->ZeroLF.vRe = *pB; pB++;
-		node->ZeroLF.vIm = *pB; pB++;
+		node->ZeroLF.vRe = *pB;		pB++;
+		node->ZeroLF.vIm = *pB;		pB++;
 	}
 
 	// рассчитываем потоки в ветвях

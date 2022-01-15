@@ -12,17 +12,17 @@ double* CDynaBranchMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Ibre.Value, V_IBRE)
-			MAP_VARIABLE(Ibim.Value, V_IBIM)
-			MAP_VARIABLE(Iere.Value, V_IERE)
-			MAP_VARIABLE(Ieim.Value, V_IEIM)
-			MAP_VARIABLE(Ib.Value, V_IB)
-			MAP_VARIABLE(Ie.Value, V_IE)
-			MAP_VARIABLE(Pb.Value, V_PB)
-			MAP_VARIABLE(Qb.Value, V_QB)
-			MAP_VARIABLE(Pe.Value, V_PE)
-			MAP_VARIABLE(Qe.Value, V_QE)
-			MAP_VARIABLE(Sb.Value, V_SB)
-			MAP_VARIABLE(Se.Value, V_SE)
+		MAP_VARIABLE(Ibim.Value, V_IBIM)
+		MAP_VARIABLE(Iere.Value, V_IERE)
+		MAP_VARIABLE(Ieim.Value, V_IEIM)
+		MAP_VARIABLE(Ib.Value, V_IB)
+		MAP_VARIABLE(Ie.Value, V_IE)
+		MAP_VARIABLE(Pb.Value, V_PB)
+		MAP_VARIABLE(Qb.Value, V_QB)
+		MAP_VARIABLE(Pe.Value, V_PE)
+		MAP_VARIABLE(Qe.Value, V_QE)
+		MAP_VARIABLE(Sb.Value, V_SB)
+		MAP_VARIABLE(Se.Value, V_SE)
 	}
 	return p;
 }
@@ -35,75 +35,80 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 	const auto& pNodeIp{ m_pBranch->m_pNodeIp };
 	const auto& pNodeIq{ m_pBranch->m_pNodeIq };
 
-	if (pNodeIp->InMatrix() && pNodeIq->InMatrix() && m_pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
+	if (m_pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
 	{
-		double Cosq = cos(m_pBranch->m_pNodeIq->Delta);
-		double Cosp = cos(m_pBranch->m_pNodeIp->Delta);
-		double Sinq = sin(m_pBranch->m_pNodeIq->Delta);
-		double Sinp = sin(m_pBranch->m_pNodeIp->Delta);
+		const auto& Vip{ m_pZeroLFNode ? m_pZeroLFNode->V : pNodeIp->V };
+		const auto& Viq{ m_pZeroLFNode ? m_pZeroLFNode->V : pNodeIq->V };
+		const auto& Dip{ m_pZeroLFNode ? m_pZeroLFNode->Delta : pNodeIp->Delta };
+		const auto& Diq{ m_pZeroLFNode ? m_pZeroLFNode->Delta : pNodeIq->Delta };
+		
+		const double Cosq{ cos(Diq) }, Cosp{ cos(Dip) }, Sinq{ sin(Diq) }, Sinp{ sin(Dip) };
+		const double g{ m_pBranch->Yip.real() }, b{ m_pBranch->Yip.imag() };
+		const double ge{ m_pBranch->Yiq.real() }, be{ m_pBranch->Yiq.imag() };
+		const double gips{ m_pBranch->Yips.real() }, bips{ m_pBranch->Yips.imag() };
+		const double giqs{ m_pBranch->Yiqs.real() }, biqs{ m_pBranch->Yiqs.imag() };
 
-		double& Vq = m_pBranch->m_pNodeIq->V;
-		double& Vp = m_pBranch->m_pNodeIp->V;
+		if (m_pZeroLFNode)
+		{
+			const auto& vIpre{ pNodeIp->ZeroLF.vRe };
+			const auto& vIpim{ pNodeIp->ZeroLF.vIm };
+			const auto& vIqre{ pNodeIq->ZeroLF.vRe };
+			const auto& vIqim{ pNodeIq->ZeroLF.vIm };
 
-		double g = m_pBranch->Yip.real();
-		double b = m_pBranch->Yip.imag();
-
-		double ge = m_pBranch->Yiq.real();
-		double be = m_pBranch->Yiq.imag();
-
-		double gips = m_pBranch->Yips.real();
-		double bips = m_pBranch->Yips.imag();
-
-		double giqs = m_pBranch->Yiqs.real();
-		double biqs = m_pBranch->Yiqs.imag();
-
-
-		// dIbre / dIbre
-		pDynaModel->SetElement(Ibre, Ibre, 1.0);
-		// dIbre / dVq
-		pDynaModel->SetElement(Ibre, pNodeIq->V, b * Sinq - g * Cosq);
-		// dIbre / dDeltaQ
-		pDynaModel->SetElement(Ibre, pNodeIq->Delta, Vq * b * Cosq + Vq * g * Sinq);
-		// dIbre / dVp
-		pDynaModel->SetElement(Ibre, pNodeIp->V, gips * Cosp - bips * Sinp);
-		// dIbre / dDeltaP
-		pDynaModel->SetElement(Ibre, pNodeIp->Delta, -Vp * bips * Cosp - Vp * gips * Sinp);
-
-
-		// dIbim / dIbim
-		pDynaModel->SetElement(Ibim, Ibim, 1.0);
-		// dIbim / dVq
-		pDynaModel->SetElement(Ibim, pNodeIq->V, -b * Cosq - g * Sinq);
-		// dIbim / dDeltaQ
-		pDynaModel->SetElement(Ibim, pNodeIq->Delta, Vq * b * Sinq - Vq * g * Cosq);
-		// dIbim / dVp
-		pDynaModel->SetElement(Ibim, pNodeIp->V, bips * Cosp + gips * Sinp);
-		// dIbim / dDeltaP
-		pDynaModel->SetElement(Ibim, pNodeIp->Delta, Vp * gips * Cosp - Vp * bips * Sinp);
+			pDynaModel->SetElement(Ibre, Ibre, 1.0);
+			pDynaModel->SetElement(Ibim, Ibim, 1.0);
+			pDynaModel->SetElement(Iere, Iere, 1.0);
+			pDynaModel->SetElement(Ieim, Ieim, 1.0);
+		}
+		else
+		{
+			// dIbre / dIbre
+			pDynaModel->SetElement(Ibre, Ibre, 1.0);
+			// dIbre / dVq
+			pDynaModel->SetElement(Ibre, Viq, b * Sinq - g * Cosq);
+			// dIbre / dDeltaQ
+			pDynaModel->SetElement(Ibre, Diq, Viq * (b * Cosq + g * Sinq));
+			// dIbre / dVp
+			pDynaModel->SetElement(Ibre, Vip, gips * Cosp - bips * Sinp);
+			// dIbre / dDeltaP
+			pDynaModel->SetElement(Ibre, Dip, -Vip * (bips * Cosp + gips * Sinp));
 
 
-		// dIere / dIere
-		pDynaModel->SetElement(Iere, Iere, 1.0);
-		// dIere / dVq
-		pDynaModel->SetElement(Iere, pNodeIq->V, biqs * Sinq - giqs * Cosq);
-		// dIere / dDeltaQ
-		pDynaModel->SetElement(Iere, pNodeIq->Delta, Vq * biqs * Cosq + Vq * giqs * Sinq);
-		// dIere / dVp
-		pDynaModel->SetElement(Iere, pNodeIp->V, ge * Cosp - be * Sinp);
-		// dIere / dDeltaP
-		pDynaModel->SetElement(Iere, pNodeIp->Delta, -Vp * be * Cosp - Vp * ge * Sinp);
+			// dIbim / dIbim
+			pDynaModel->SetElement(Ibim, Ibim, 1.0);
+			// dIbim / dVq
+			pDynaModel->SetElement(Ibim, Viq, -b * Cosq - g * Sinq);
+			// dIbim / dDeltaQ
+			pDynaModel->SetElement(Ibim, Diq, Viq * (b * Sinq - g * Cosq));
+			// dIbim / dVp
+			pDynaModel->SetElement(Ibim, Vip, bips * Cosp + gips * Sinp);
+			// dIbim / dDeltaP
+			pDynaModel->SetElement(Ibim, Dip, Vip * (gips * Cosp - bips * Sinp));
 
 
-		// dIeim / dIeim
-		pDynaModel->SetElement(Ieim, Ieim, 1.0);
-		// dIeim / dVq
-		pDynaModel->SetElement(Ieim, pNodeIq->V, -biqs * Cosq - giqs * Sinq);
-		// dIeim / dDeltaQ
-		pDynaModel->SetElement(Ieim, pNodeIq->Delta, Vq * biqs * Sinq - Vq * giqs * Cosq);
-		// dIeim / dVp
-		pDynaModel->SetElement(Ieim, pNodeIp->V, be * Cosp + ge * Sinp);
-		// dIeim / dDeltaP
-		pDynaModel->SetElement(Ieim, pNodeIp->Delta, Vp * ge * Cosp - Vp * be * Sinp);
+			// dIere / dIere
+			pDynaModel->SetElement(Iere, Iere, 1.0);
+			// dIere / dVq
+			pDynaModel->SetElement(Iere, Viq, biqs * Sinq - giqs * Cosq);
+			// dIere / dDeltaQ
+			pDynaModel->SetElement(Iere, Diq, Viq * (biqs * Cosq + giqs * Sinq));
+			// dIere / dVp
+			pDynaModel->SetElement(Iere, Vip, ge * Cosp - be * Sinp);
+			// dIere / dDeltaP
+			pDynaModel->SetElement(Iere, Dip, -Vip * (be * Cosp + ge * Sinp));
+
+
+			// dIeim / dIeim
+			pDynaModel->SetElement(Ieim, Ieim, 1.0);
+			// dIeim / dVq
+			pDynaModel->SetElement(Ieim, Viq, -biqs * Cosq - giqs * Sinq);
+			// dIeim / dDeltaQ
+			pDynaModel->SetElement(Ieim, Diq, Viq * (biqs * Sinq - giqs * Cosq));
+			// dIeim / dVp
+			pDynaModel->SetElement(Ieim, Vip, be * Cosp + ge * Sinp);
+			// dIeim / dDeltaP
+			pDynaModel->SetElement(Ieim, Dip, Vip * (ge * Cosp - be * Sinp));
+		}
 
 
 		double absIb = sqrt(Ibre * Ibre + Ibim * Ibim);
@@ -128,48 +133,48 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 		// dPb / dPb
 		pDynaModel->SetElement(Pb, Pb, 1.0);
 		// dPb / dVp
-		pDynaModel->SetElement(Pb, pNodeIp->V, -Ibre * Cosp - Ibim * Sinp);
+		pDynaModel->SetElement(Pb, Vip, -Ibre * Cosp - Ibim * Sinp);
 		// dPb / dDeltaP
-		pDynaModel->SetElement(Pb, pNodeIp->Delta, Ibre * Vp * Sinp - Ibim * Vp * Cosp);
+		pDynaModel->SetElement(Pb, Dip, Vip * (Ibre * Sinp - Ibim * Cosp));
 		// dPb / dIbre
-		pDynaModel->SetElement(Pb, Ibre, -Vp * Cosp);
+		pDynaModel->SetElement(Pb, Ibre, -Vip * Cosp);
 		// dPb / dIbim
-		pDynaModel->SetElement(Pb, Ibim, -Vp * Sinp);
+		pDynaModel->SetElement(Pb, Ibim, -Vip * Sinp);
 
 
 		// dQb / dQb
 		pDynaModel->SetElement(Qb, Qb, 1.0);
 		// dQb / dVp
-		pDynaModel->SetElement(Qb, pNodeIp->V, Ibim * Cosp - Ibre * Sinp);
+		pDynaModel->SetElement(Qb, Vip, Ibim * Cosp - Ibre * Sinp);
 		// dQb / dDeltaP
-		pDynaModel->SetElement(Qb, pNodeIp->Delta, -Ibre * Vp * Cosp - Ibim * Vp * Sinp);
+		pDynaModel->SetElement(Qb, Dip, -Vip * (Ibre * Cosp + Ibim * Sinp));
 		// dQb / dIbre
-		pDynaModel->SetElement(Qb, Ibre, -Vp * Sinp);
+		pDynaModel->SetElement(Qb, Ibre, -Vip * Sinp);
 		// dQb / dIbim
-		pDynaModel->SetElement(Qb, Ibim, Vp * Cosp);
+		pDynaModel->SetElement(Qb, Ibim, Vip * Cosp);
 
 
 		// dPe / dPe
 		pDynaModel->SetElement(Pe, Pe, 1.0);
 		// dPe / dVq
-		pDynaModel->SetElement(Pe, pNodeIq->V, -Iere * Cosq - Ieim * Sinq);
+		pDynaModel->SetElement(Pe, Viq, -Iere * Cosq - Ieim * Sinq);
 		// dPe / dDeltaQ
-		pDynaModel->SetElement(Pe, pNodeIq->Delta, Iere * Vq * Sinq - Ieim * Vq * Cosq);
+		pDynaModel->SetElement(Pe, Diq, Viq * (Iere * Sinq - Ieim * Cosq));
 		// dPe / dIere
-		pDynaModel->SetElement(Pe, Iere, -Vq * Cosq);
+		pDynaModel->SetElement(Pe, Iere, -Viq * Cosq);
 		// dPe / dIeim
-		pDynaModel->SetElement(Pe, Ieim, -Vq * Sinq);
+		pDynaModel->SetElement(Pe, Ieim, -Viq * Sinq);
 
 		// dQe / dQe
 		pDynaModel->SetElement(Qe, Qe, 1.0);
 		// dQe / dVq
-		pDynaModel->SetElement(Qe, pNodeIq->V, Ieim * Cosq - Iere * Sinq);
+		pDynaModel->SetElement(Qe, Viq, Ieim * Cosq - Iere * Sinq);
 		// dQe / dDeltaQ
-		pDynaModel->SetElement(Qe, pNodeIq->Delta, -Iere * Vq * Cosq - Ieim * Vq * Sinq);
+		pDynaModel->SetElement(Qe, Diq, -Viq * (Iere * Cosq + Ieim * Sinq));
 		// dQe / dIere
-		pDynaModel->SetElement(Qe, Iere, -Vq * Sinq);
+		pDynaModel->SetElement(Qe, Iere, -Viq * Sinq);
 		// dQe / dIeim
-		pDynaModel->SetElement(Qe, Ieim, Vq * Cosq);
+		pDynaModel->SetElement(Qe, Ieim, Viq * Cosq);
 
 		absIb = std::sqrt(Pb * Pb + Qb * Qb + ABS_GUARD);
 
@@ -219,15 +224,25 @@ bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 	const auto& pNodeIq{ m_pBranch->m_pNodeIq };
 	pNodeIp->UpdateVreVim();	pNodeIq->UpdateVreVim();
 
-	if (pNodeIp->InMatrix() && pNodeIq->InMatrix() && m_pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
+	if (m_pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
 	{
-		const cplx& Ue = cplx(pNodeIq->Vre, pNodeIq->Vim);
-		const cplx& Ub = cplx(pNodeIp->Vre, pNodeIp->Vim);
+		const cplx Ue{ pNodeIq->Vre, pNodeIq->Vim };
+		const cplx Ub{ pNodeIp->Vre, pNodeIp->Vim };
 
-		cplx cIb = -m_pBranch->Yips * Ub + m_pBranch->Yip * Ue;
-		cplx cIe = -m_pBranch->Yiq * Ub + m_pBranch->Yiqs * Ue;
-		cplx cSb = Ub * conj(cIb);
-		cplx cSe = Ue * conj(cIe);
+		cplx cIb{ -m_pBranch->Yips * Ub + m_pBranch->Yip * Ue };
+		cplx cIe{ -m_pBranch->Yiq * Ub + m_pBranch->Yiqs * Ue };
+		cplx cSb{ Ub * conj(cIb) };
+		cplx cSe{ Ue * conj(cIe) };
+
+		if (m_pZeroLFNode)
+		{
+			const auto& pNode1{ m_pBranch->m_pNodeIp->ZeroLF };
+			const auto& pNode2{ m_pBranch->m_pNodeIq->ZeroLF };
+			cplx Current{ pNode2.vRe - pNode1.vRe, pNode2.vIm - pNode1.vIm };
+			cIb += Current;		cIe += Current;
+			Current = std::conj(Current) * Ub;
+			cSb += Current;		cSe += Current;
+		}
 
 		pDynaModel->SetFunction(Ibre, Ibre - cIb.real());
 		pDynaModel->SetFunction(Ibim, Ibim - cIb.imag());
@@ -271,8 +286,8 @@ void CDynaBranchMeasure::CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, c
 	// !!!!!!!!!!!!!   здесь рассчитываем на то, что для узлов начала и конца были сделаны UpdateVreVim !!!!!!!!!!!!!!
 	if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
 	{
-		const cplx& Ue = cplx(pBranch->m_pNodeIq->Vre, pBranch->m_pNodeIq->Vim);
-		const cplx& Ub = cplx(pBranch->m_pNodeIp->Vre, pBranch->m_pNodeIp->Vim);
+		const cplx Ue{ pBranch->m_pNodeIq->Vre, pBranch->m_pNodeIq->Vim };
+		const cplx Ub{ pBranch->m_pNodeIp->Vre, pBranch->m_pNodeIp->Vim };
 		cIb = -pBranch->Yips * Ub + pBranch->Yip * Ue;
 		cIe = -pBranch->Yiq * Ub + pBranch->Yiqs * Ue;
 		cSb = Ub * conj(cIb);
@@ -294,6 +309,17 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 	pNodeIq->UpdateVreVim();	pNodeIp->UpdateVreVim();
 	cplx cIb, cIe, cSb, cSe;
 	CDynaBranchMeasure::CalculateFlows(m_pBranch, cIb, cIe, cSb, cSe);
+	if (m_pZeroLFNode)
+	{
+		const auto& pNode1{ m_pBranch->m_pNodeIp->ZeroLF };
+		const auto& pNode2{ m_pBranch->m_pNodeIq->ZeroLF };
+		cplx Current{ pNode2.vRe - pNode1.vRe, pNode2.vIm - pNode1.vIm };
+		cIb += Current;
+		cIe += Current;
+		Current = std::conj(Current) * cplx(m_pBranch->m_pNodeIp->Vre, m_pBranch->m_pNodeIq->Vim);
+		cSb += Current;
+		cSe += Current;
+	}
 	FromComplex(Ibre, Ibim, cIb);
 	FromComplex(Iere, Ieim, cIe);
 	FromComplex(Pb, Qb, cSb);
@@ -339,6 +365,7 @@ void CDynaBranchMeasure::SetBranch(CDynaBranch* pBranch)
 	SetId(pBranch->GetId());
 	SetName(pBranch->GetVerbalName());
 	m_pBranch = pBranch;
+	m_pZeroLFNode = nullptr;
 	// если ветвь находится внутри суперузла
 	// нам потребуется расчет потокораспределения внутри
 	// суперузла
