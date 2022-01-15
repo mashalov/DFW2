@@ -1659,25 +1659,22 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	for (const auto& node : Matrix)
 	{
 		node->GetPnrQnr();
-		// собираем мощность на собственной проводимости
-		auto& P{ pB[2 * node->ZeroLF.m_nSuperNodeLFIndex] };
-		auto& Q{ pB[2 * node->ZeroLF.m_nSuperNodeLFIndex + 1] };
-		P = -node->GetSelfImbPnotSuper();
-		Q = -node->GetSelfImbQnotSuper();
+
+		cplx Is{ -node->GetSelfImbInotSuper() };
+
 		// добавляем предварительно рассчитанную 
 		// инъекцию от связей с базисным узлом
-		P += node->ZeroLF.SlackInjection;
-
+		Is += node->ZeroLF.SlackInjection;
+				
 		// собираем сумму перетоков по виртуальным ветвям узла
 		// ветви находятся в общем для всего узла векторе и разделены
 		// вилками указателей pBranchesBegin <  pBranchesEnd
-		cplx I;
-		for(const VirtualBranch* vb = node->ZeroLF.pVirtualBranchesBegin ; vb < node->ZeroLF.pVirtualBranchesEnd; vb++)
-			I += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
-		I = std::conj(I) * cplx(node->Vre, node->Vim);
+		for (const VirtualBranch* vb = node->ZeroLF.pVirtualBranchesBegin; vb < node->ZeroLF.pVirtualBranchesEnd; vb++)
+			Is += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
 
-		P += I.real();
-		Q += I.imag();
+		pB[2 * node->ZeroLF.m_nSuperNodeLFIndex]     = Is.real();
+		pB[2 * node->ZeroLF.m_nSuperNodeLFIndex + 1] = Is.imag();
+
 	}
 
 	pB = klu.B();
@@ -1693,16 +1690,25 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	}
 
 	// рассчитываем потоки в ветвях
-
-	for (const VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++)
+	// 
+	// комплекс напряжения в суперузле - просто напряжение одного из узлов
+	// используется для расчета токов в шунтах и мощностей
+	cplx Vs{ Vre, Vim };
+	for (const VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
 		const auto& pNode1{ pBranch->m_pNodeIp->ZeroLF };
 		const auto& pNode2{ pBranch->m_pNodeIq->ZeroLF };
-		pBranch->Se = pBranch->Sb = cplx(pNode2.vRe - pNode1.vRe, pNode2.vIm - pNode1.vIm);
-	}
 
-	CalculateZeroLFBranches();
+		// рассчитываем ток ветви по индикаторам
+		pBranch->Se = pBranch->Sb = cplx(pNode2.vRe - pNode1.vRe, pNode2.vIm - pNode1.vIm);
+		// добавляем токи от шунтов с учетом односторонних отключений
+		pBranch->Sb += (pBranch->Yip  - pBranch->Yips) * Vs;
+		pBranch->Se += (pBranch->Yiqs - pBranch->Yiq ) * Vs;
+		// рассчитываем мощности в начале и в конце
+		pBranch->Sb = std::conj(pBranch->Sb) * Vs;
+		pBranch->Se = std::conj(pBranch->Se) * Vs;
+	}
 }
 
 void CDynaNodeBase::CalculateZeroLFBranches()

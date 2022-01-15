@@ -158,8 +158,20 @@ namespace DFW2
 		inline double GetSelfImbQ() noexcept { return Qnr - Qgr + V * V * YiiSuper.imag(); }
 
 		// небаланс узла без привязки к суперузлу
-		inline double GetSelfImbPnotSuper() noexcept { return Pnr - Pgr - V * V * Yii.real(); }
-		inline double GetSelfImbQnotSuper() noexcept { return Qnr - Qgr + V * V * Yii.imag(); }
+		inline double GetSelfImbPnotSuper() const noexcept { return Pnr - Pgr - V * V * Yii.real(); }
+		inline double GetSelfImbQnotSuper() const noexcept { return Qnr - Qgr + V * V * Yii.imag(); }
+
+		// небаланс тока без привязки у суперузлу
+		inline double GetSelfImbIreNotSuper() const noexcept { return ((Pnr - Pgr) * Vre + (Qnr - Qgr) * Vim) / V / V + Yii.imag() * Vim - Yii.real() * Vre; }
+		inline double GetSelfImbIimNotSuper() const noexcept { return ((Qnr - Qgr) * Vre - (Pnr - Pgr) * Vim) / V / V + Yii.real() * Vim + Yii.imag() * Vre; }
+
+		cplx GetSelfImbInotSuper() const
+		{
+			double P{ Pnr - Pgr }, Q(Qnr - Qgr), V2(Vre * Vre + Vim * Vim);
+			P /= V2;			Q /= V2;
+			P -= Yii.real();	Q += Yii.imag();
+			return cplx(P * Vre + Q * Vim,  P * Vim - Q * Vre);
+		}
 
 		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn; }
 		inline double GetSelfdQdV() noexcept { return  2 * V * YiiSuper.imag() + dLRCQn; }

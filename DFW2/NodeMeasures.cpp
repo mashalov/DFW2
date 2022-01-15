@@ -125,27 +125,24 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		// сначала рассчитываем составляющую в настоящей мощности
 		// нагрузка и проводимость на землю
 		pNode->GetPnrQnr();
-		cplx S{ -pNode->GetSelfImbPnotSuper() + ZeroLF.SlackInjection, -pNode->GetSelfImbQnotSuper() };
 
-		// перетоки по связям
-		cplx I;
+		// получаем ток узла от настоящего шунта и нагрузки
+		cplx Is{ -pNode->GetSelfImbInotSuper() };
+		// добавляем инъекцию тока от базисного узла
+		Is += ZeroLF.SlackInjection;
+
+		// перетоки по настоящим связям от внешних суперузлов
 		for(const VirtualBranch* vb = pNode->ZeroLF.pVirtualBranchesBegin ; vb < pNode->ZeroLF.pVirtualBranchesEnd; vb++)
-			I += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim); 
+			Is += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim); 
 
-		// преобразуем ток в мощности
-		I = std::conj(I) * cplx(pNode->Vre, pNode->Vim);
-
-		// далее добавляем "мощности" от индикаторов напряжения
-		I -= pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
+		// инъекция от "шунта" индикатора
+		Is -= pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
+		// далее добавляем "токи" от индикаторов напряжения
 		for (const VirtualBranch* vb = pNode->ZeroLF.pVirtualZeroBranchesBegin; vb < ZeroLF.pVirtualZeroBranchesEnd; vb++)
-			I += vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
-
-		// итоговый баланс мощности
-		S += I;
+			Is += vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
 
 		pDynaModel->SetFunction(ZeroLF.vRe, 0.0);
 		pDynaModel->SetFunction(ZeroLF.vIm, 0.0);
-
 
 		ppNode++;
 	}
