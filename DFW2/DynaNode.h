@@ -94,12 +94,13 @@ namespace DFW2
 		double Pn,Qn,Pg,Qg,Pnr,Qnr,Pgr,Qgr;
 		double G,B, Gr0, Br0;
 		double dLRCShuntPartP, dLRCShuntPartQ;
+		double dLRCShuntPartPSuper, dLRCShuntPartQSuper;
 		double Gshunt, Bshunt;
 		double Unom;					// номинальное напряжение
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
 		bool m_bInMetallicSC = false;
-		bool m_bLowVoltage;				// признак низкого модуля напряжения
-		bool m_bSavedLowVoltage;		// сохраненный признак низкого напряжения для возврата на предыдущий шаг
+		bool m_bLowVoltage = false;		// признак низкого модуля напряжения
+		bool m_bSavedLowVoltage = false;// сохраненный признак низкого напряжения для возврата на предыдущий шаг
 		double dLRCVicinity = 0.0;		// окрестность сглаживания СХН
 
 		ptrdiff_t LRCLoadFlowId  = 0;	// идентификаторы СХН и ДСХН
@@ -154,25 +155,10 @@ namespace DFW2
 		inline CDynaNodeBase* GetSuperNode() { return m_pSuperNodeParent ? m_pSuperNodeParent : this; }
 		bool IsDangling();
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		inline double GetSelfImbP() noexcept { return Pnr - Pgr - V * V * YiiSuper.real();	}
-		inline double GetSelfImbQ() noexcept { return Qnr - Qgr + V * V * YiiSuper.imag(); }
-
-		// небаланс узла без привязки к суперузлу
-		inline double GetSelfImbPnotSuper() const noexcept { return Pnr - Pgr - V * V * Yii.real(); }
-		inline double GetSelfImbQnotSuper() const noexcept { return Qnr - Qgr + V * V * Yii.imag(); }
 				
 		// возвращает ток узла от нагрузки/генерации/шунтов
-		cplx GetSelfImbInotSuper() const
-		{
-			// инъекции и квадрат напряжения
-			double P{ Pnr - Pgr }, Q(Qnr - Qgr), V2(Vre * Vre + Vim * Vim);
-			// рассчитываем из инъеции шунт
-			P /= V2;			Q /= V2;
-			// добавляем собственный шунт
-			P -= Yii.real();	Q += Yii.imag();
-			// рассчитываем ток с учетом заданного постоянного тока от генератора УР
-			return cplx(P * Vre + Q * Vim + Iconst.real(),  P * Vim - Q * Vre + Iconst.imag());
-		}
+		cplx GetSelfImbInotSuper(const double Vmin, double& Vsq);
+		cplx GetSelfImbISuper(const double Vmin, double& Vsq);
 
 		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn; }
 		inline double GetSelfdQdV() noexcept { return  2 * V * YiiSuper.imag() + dLRCQn; }

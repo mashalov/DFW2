@@ -155,20 +155,17 @@ eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::ProcessDiscontinuity(CDynaModel* pD
 bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase** ppNode{ m_MatrixRows.get() }, ** ppNodeEnd{ m_MatrixRows.get() + m_nSize };
+	const double Vmin{ pDynaModel->GetLRCToShuntVmin() };
 
 	while (ppNode < ppNodeEnd)
 	{
 
 		const auto& pNode{ *ppNode };
 		auto& ZeroNode{ pNode->ZeroLF };
-
-		// сначала рассчитываем составляющую в настоящей мощности
-		// нагрузка и проводимость на землю
-		pNode->GetPnrQnr();
-
+		double Vsq{ 0.0 };
 		// получаем ток узла от настоящего шунта, инъекции и тока
 		// генератора УР
-		cplx Is{ -pNode->GetSelfImbInotSuper() };
+		cplx Is{ -pNode->GetSelfImbInotSuper(Vmin, Vsq) };
 		// добавляем инъекцию тока от базисного узла
 		Is += ZeroNode.SlackInjection;
 

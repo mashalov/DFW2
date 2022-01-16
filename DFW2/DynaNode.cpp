@@ -44,6 +44,116 @@ void CDynaNodeBase::UpdateVreVimSuper()
 	}
 }
 
+// возвращает ток узла от нагрузки/генерации/шунтов
+cplx CDynaNodeBase::GetSelfImbInotSuper(const double Vmin, double& Vsq)
+{
+	GetPnrQnr();
+	double Ire{ Iconst.real() }, Iim{ Iconst.imag() };
+	const double V2{ Vre * Vre + Vim * Vim };
+	Vsq = std::sqrt(V2);
+
+	if (!m_bInMetallicSC)
+	{
+		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию, заданные в узле
+
+		// если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
+		// чтобы исключить мощность из уравнений полностью
+		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
+		// Uсхн_min стандартное cглаживание СХН
+
+		if ((0.5 * Vmin - dLRCVicinity) > Vsq / V0)
+		{
+			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
+			Iim -= dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
+
+#ifdef _DEBUG
+			// проверка
+			cplx S{ std::conj(cplx(Ire, Iim) - Iconst) * cplx(Vre, Vim) };
+			cplx dS{ S - cplx(Pnr - Pgr,Qnr - Qgr) };
+			if (std::abs(dS.real()) > 0.1 || std::abs(dS.imag()) > 0.1)
+			{
+				_ASSERTE(0);
+				//GetPnrQnrSuper();
+			}
+#endif
+			Pgr = Qgr = Pnr = Qnr = 0.0;
+			// нагрузки и генерации в мощности больше нет, они перенесены в ток
+		}
+	}
+
+	// добавляем токи собственной проводимости и токи ветвей
+	Ire -= Yii.real() * Vre - Yii.imag() * Vim;
+	Iim -= Yii.imag() * Vre + Yii.real() * Vim;
+
+	if (!m_bLowVoltage)
+	{
+		// добавляем токи от нагрузки (если напряжение не очень низкое)
+		// считаем невязки модуля и угла, иначе оставляем нулями
+		const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
+		Ire += (Pk * Vre + Qk * Vim) / V2;
+		Iim += (Pk * Vim - Qk * Vre) / V2;
+	}
+#ifdef _DEBUG
+	else
+		_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
+#endif
+	return cplx(Ire, Iim);
+}
+
+cplx CDynaNodeBase::GetSelfImbISuper(const double Vmin, double& Vsq)
+{
+	GetPnrQnrSuper();
+	double Ire{ IconstSuper.real() }, Iim{ IconstSuper.imag() };
+	const double V2{ Vre * Vre + Vim * Vim };
+	Vsq = std::sqrt(V2);
+
+	if (!m_bInMetallicSC)
+	{
+		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию, заданные в узле
+		// если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
+		// чтобы исключить мощность из уравнений полностью
+		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
+		// Uсхн_min стандартное cглаживание СХН
+
+		if (AllLRCsInShuntPart(Vsq, Vmin))
+		{
+			Ire -= -dLRCShuntPartPSuper * Vre - dLRCShuntPartQSuper * Vim;
+			Iim -=  dLRCShuntPartQSuper * Vre - dLRCShuntPartPSuper * Vim;
+
+#ifdef _DEBUG
+			// проверка
+			cplx S{ std::conj(cplx(Ire, Iim) - IconstSuper) * cplx(Vre, Vim) };
+			cplx dS{ S - cplx(Pnr - Pgr,Qnr - Qgr) };
+			if (std::abs(dS.real()) > 0.1 || std::abs(dS.imag()) > 0.1)
+			{
+				_ASSERTE(0);
+				//GetPnrQnrSuper();
+			}
+#endif
+			Pgr = Qgr = Pnr = Qnr = 0.0;
+			// нагрузки и генерации в мощности больше нет, они перенесены в ток
+		}
+	}
+
+	// добавляем токи собственной проводимости и токи ветвей
+	Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
+	Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
+
+	if (!m_bLowVoltage)
+	{
+		// добавляем токи от нагрузки (если напряжение не очень низкое)
+		// считаем невязки модуля и угла, иначе оставляем нулями
+		const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
+		Ire += (Pk * Vre + Qk * Vim) / V2;
+		Iim += (Pk * Vim - Qk * Vre) / V2;
+	}
+#ifdef _DEBUG
+	else
+		_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
+#endif
+	return cplx(Ire, Iim);
+}
+
 void CDynaNodeBase::UpdateVDeltaSuper()
 {
 	UpdateVDelta();
@@ -158,10 +268,10 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		if (AllLRCsInShuntPart(V2sq, pDynaModel->GetLRCToShuntVmin()))
 		{
 			_ASSERTE(m_pLRC);
-			dIredVre +=  dLRCShuntPartP;
-			dIredVim +=  dLRCShuntPartQ;
-			dIimdVre += -dLRCShuntPartQ;
-			dIimdVim +=  dLRCShuntPartP;
+			dIredVre +=  dLRCShuntPartPSuper;
+			dIredVim +=  dLRCShuntPartQSuper;
+			dIimdVre += -dLRCShuntPartQSuper;
+			dIimdVim +=  dLRCShuntPartPSuper;
 			dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
 			dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
 		}
@@ -307,49 +417,23 @@ void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
 
 bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
-	GetPnrQnrSuper();
-
+	//GetPnrQnrSuper();
 	// в узле может быть уже известный постоянный ток
-	double Ire(IconstSuper.real()), Iim(IconstSuper.imag());
-	double dV(0.0);
+	double Ire(IconstSuper.real()), Iim(IconstSuper.imag()), dV(0.0);
 
 	if (!m_bInMetallicSC)
 	{
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию,
 		// заданные в узле
+		double V2sq{ 0.0 };
+		FromComplex(Ire, Iim, GetSelfImbISuper(pDynaModel->GetLRCToShuntVmin(), V2sq));
 
-		double V2 = Vre * Vre + Vim * Vim;
-		double V2sq = sqrt(V2);
-
-		// если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
-		// чтобы исключить мощность из уравнений полностью
-		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
-		// Uсхн_min стандартное cглаживание СХН
-
-		if (AllLRCsInShuntPart(V2sq, pDynaModel->GetLRCToShuntVmin()))
-		{
-			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
-			Iim -=  dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
-#ifdef _DEBUG
-			cplx S = std::conj(cplx(Ire, Iim) - IconstSuper) * cplx(Vre, Vim);
-			double dP = S.real() - (Pnr - Pgr);
-			double dQ = S.imag() - (Qnr - Qgr);
-		
-			if (std::abs(dP) > 0.1 || std::abs(dQ) > 0.1)
-			{
-				_ASSERTE(0);
-				//GetPnrQnrSuper();
-			}
-#endif
-			Pgr = Qgr = 0.0;
-			Pnr = Qnr = 0.0;
-			// нагрузки и генерации в мощности больше нет, они перенесены в ток
-		}
+		if (!m_bLowVoltage)
+			dV = V - V2sq;
 
 		// обходим генераторы
-		CLinkPtrCount *pBranchLink = GetSuperLink(1);
 		CLinkPtrCount *pGenLink = GetSuperLink(2);
-		CDevice **ppBranch(nullptr), **ppGen(nullptr);
+		CDevice **ppGen(nullptr);
 
 		while (pGenLink->InMatrix(ppGen))
 		{
@@ -358,30 +442,11 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			Iim -= pGen->Iim;
 		}
 
-		// добавляем токи собственной проводимости и токи ветвей
-		Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
-		Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
 		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 		{
 			Ire -= pV->Y.real() * pV->pNode->Vre - pV->Y.imag() * pV->pNode->Vim;
 			Iim -= pV->Y.imag() * pV->pNode->Vre + pV->Y.real() * pV->pNode->Vim;
 		}
-
-
-		if (!m_bLowVoltage)
-		{
-			// добавляем токи от нагрузки (если напряжение не очень низкое)
-			// считаем невязки модуля и угла, иначе оставляем нулями
-			double Pk = Pnr - Pgr;
-			double Qk = Qnr - Qgr;
-			Ire += (Pk * Vre + Qk * Vim) / V2;
-			Iim += (Pk * Vim - Qk * Vre) / V2;
-			dV = V - V2sq;
-		}
-#ifdef _DEBUG
-		else
-			_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
-#endif
 	}
 
 	pDynaModel->SetFunction(V, dV);
@@ -622,6 +687,8 @@ void CDynaNodeContainer::CalculateShuntParts()
 		pNode->YiiSuper = pNode->Yii;
 		// собираем постоянный ток
 		pNode->IconstSuper = pNode->Iconst;
+		pNode->dLRCShuntPartPSuper = pNode->dLRCShuntPartP;
+		pNode->dLRCShuntPartQSuper = pNode->dLRCShuntPartQ;
 		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
 		if (pLink->m_nCount)
 		{
@@ -632,8 +699,8 @@ void CDynaNodeContainer::CalculateShuntParts()
 				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 				pNode->YiiSuper += pSlaveNode->Yii;
 				pNode->IconstSuper += pSlaveNode->Iconst;
-				pNode->dLRCShuntPartP += pSlaveNode->dLRCShuntPartP;
-				pNode->dLRCShuntPartQ += pSlaveNode->dLRCShuntPartQ;
+				pNode->dLRCShuntPartPSuper += pSlaveNode->dLRCShuntPartP;
+				pNode->dLRCShuntPartQSuper += pSlaveNode->dLRCShuntPartQ;
 			}
 		}
 	}
@@ -1629,6 +1696,7 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	if (!ZeroLF.ZeroSupeNode)
 		return;
 
+	const double Vmin{ pDynaModel->GetLRCToShuntVmin() };
 	const auto& Matrix{ ZeroLF.ZeroSupeNode->LFMatrix };
 	const ptrdiff_t nBlockSize{ static_cast<ptrdiff_t>(Matrix.size()) };
 
@@ -1664,11 +1732,10 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	
 	pB = klu.B();
 
+	double Vsq{ 0.0 };
 	for (const auto& node : Matrix)
 	{
-		node->GetPnrQnr();
-
-		cplx Is{ -node->GetSelfImbInotSuper() };
+		cplx Is{ -node->GetSelfImbInotSuper(Vmin, Vsq) };
 
 		// добавляем предварительно рассчитанную 
 		// инъекцию от связей с базисным узлом
@@ -1870,8 +1937,9 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		const auto& pInSuperNode{ static_cast<CDynaNodeBase*>(node->m_Id) };
 		pInSuperNode->GetPnrQnr();
 		const cplx Unode{ pInSuperNode->Vre, pInSuperNode->Vim };
-
-		cplx S{ pInSuperNode->GetSelfImbPnotSuper(), pInSuperNode->GetSelfImbQnotSuper() };
+		const double Vs2{ pInSuperNode->V * pInSuperNode->V };
+		cplx S{ pInSuperNode->Pnr - pInSuperNode->Pgr - Vs2 * pInSuperNode->Yii.real(),
+				pInSuperNode->Qnr - pInSuperNode->Qgr + Vs2 * pInSuperNode->Yii.imag() };
 
 		CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
 		CDevice** ppDevice(nullptr);
@@ -2013,6 +2081,8 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState("qgr", Vim, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddState("LRCShuntPartP", dLRCShuntPartP, eVARUNITS::VARUNIT_MW);
 	Serializer->AddState("LRCShuntPartQ", dLRCShuntPartQ, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState("LRCShuntPartPSuper", dLRCShuntPartPSuper, eVARUNITS::VARUNIT_MW);
+	Serializer->AddState("LRCShuntPartQSuper", dLRCShuntPartQSuper, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddState("Gshunt", Gshunt, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Bshunt", Bshunt, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("InMetallicSC", m_bInMetallicSC);
