@@ -35,21 +35,19 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 	const auto& pNodeIp{ m_pZeroLFNode ? m_pBranch->m_pNodeIp : m_pBranch->m_pNodeSuperIp };
 	const auto& pNodeIq{ m_pZeroLFNode ? m_pBranch->m_pNodeIq : m_pBranch->m_pNodeSuperIq };
 
+	const double gips{ m_pBranch->Yips.real() }, bips{ m_pBranch->Yips.imag() };
+	const double giqs{ m_pBranch->Yiqs.real() }, biqs{ m_pBranch->Yiqs.imag() };
+	const double gip{ m_pBranch->Yip.real() }, bip{ m_pBranch->Yip.imag() };
+	const double giq{ m_pBranch->Yiq.real() }, biq{ m_pBranch->Yiq.imag() };
+
 	if (m_pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
 	{
 		// если измерение внутри суперузла - берем не исходное напряжение
 		// в ограничивающих узлах, а напряжение суперузла для расчета поперечных потерь
-
-		const auto& Vip{ m_pZeroLFNode ? m_pZeroLFNode->V : pNodeIp->V };
-		const auto& Viq{ m_pZeroLFNode ? m_pZeroLFNode->V : pNodeIq->V };
-		const auto& Dip{ m_pZeroLFNode ? m_pZeroLFNode->Delta : pNodeIp->Delta };
-		const auto& Diq{ m_pZeroLFNode ? m_pZeroLFNode->Delta : pNodeIq->Delta };
-		
-		const double Cosq{ cos(Diq) }, Cosp{ cos(Dip) }, Sinq{ sin(Diq) }, Sinp{ sin(Dip) };
-		const double g{ m_pBranch->Yip.real() }, b{ m_pBranch->Yip.imag() };
-		const double ge{ m_pBranch->Yiq.real() }, be{ m_pBranch->Yiq.imag() };
-		const double gips{ m_pBranch->Yips.real() }, bips{ m_pBranch->Yips.imag() };
-		const double giqs{ m_pBranch->Yiqs.real() }, biqs{ m_pBranch->Yiqs.imag() };
+		const auto& Vbre{ m_pZeroLFNode ? m_pZeroLFNode->Vre : pNodeIp->Vre };
+		const auto& Vbim{ m_pZeroLFNode ? m_pZeroLFNode->Vim : pNodeIp->Vim };
+		const auto& Vere{ m_pZeroLFNode ? m_pZeroLFNode->Vre : pNodeIq->Vre };
+		const auto& Veim{ m_pZeroLFNode ? m_pZeroLFNode->Vim : pNodeIq->Vim };
 
 		if (m_pZeroLFNode)
 		{
@@ -60,15 +58,17 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 
 			// проводимости в начале и в конце ветви с нулевым сопротивлением, при условии,
 			// что напряжения в конце и в начале одинаковы
-			const double gsb{ g - gips },  bsb{ b - bips },  gse{ ge - giqs }, bse{ be - biqs };
+			const double gsb{ gips - gip }, bsb{ bips - bip }, gse{ giq - giqs }, bse{ biqs - biq };
 
+			// Ibre + gsb * Vbre - bsb * Vbim - veRe + vbRe = 0
+			// Ibim + bsb * Vbre + gsb * Vbim - veIm + vbIm = 0
+					
 			// dIbre / dIbre
 			pDynaModel->SetElement(Ibre, Ibre, 1.0);
-			// dIbre / dVp
-			pDynaModel->SetElement(Ibre, Vip, -gsb * Cosp + bsb * Sinp);
-			// dIbre / dDeltaP
-			pDynaModel->SetElement(Ibre, Dip, Vip * (gsb * Sinp + bsb * Cosp));
-						
+			// dIbre / dVbre
+			pDynaModel->SetElement(Ibre, Vbre, gsb);
+			// dIbre / dVbim
+			pDynaModel->SetElement(Ibre, Vbim, -bsb);
 			// индикаторы могут быть неиндексированы, если узел индикатора
 			// был выбран в качестве базисного, в этом случае просто пропускаем
 			// элемент матрицы
@@ -77,24 +77,27 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 			// dIbre / dvbRe 
 			if(vbRe.Index >= 0) pDynaModel->SetElement(Ibre, vbRe, 1.0);
 
-			
 			// dIbim / dIbim
 			pDynaModel->SetElement(Ibim, Ibim, 1.0);
-			// dIbim / dVp
-			pDynaModel->SetElement(Ibim, Vip, -gsb * Sinp - bsb * Cosp);
-			// dIbim / dDeltaP
-			pDynaModel->SetElement(Ibim, Dip, Vip * (bsb * Sinp - gsb * Cosp));
+			// dIbim / dVbre
+			pDynaModel->SetElement(Ibim, Vbre, bsb);
+			// dIbim / dVbim
+			pDynaModel->SetElement(Ibim, Vbim, gsb);
 			// dIbim / dveIm
 			if(veIm.Index >= 0) pDynaModel->SetElement(Ibim, veIm, -1.0);
 			// dIbim / dvbIm
 			if(vbIm.Index >= 0) pDynaModel->SetElement(Ibim, vbIm, 1.0);
 
+
+			// Iere + gse * Vbre + bse * Vbim - veRe + vbRe = 0
+			// Ieim - bse * Vbre + gse * Vbim - veRe + vbRe = 0
+
 			// dIere / dIere
 			pDynaModel->SetElement(Iere, Iere, 1.0);
-			// dIere / dVp
-			pDynaModel->SetElement(Iere, Vip, -gse * Cosp + bse * Sinp);
-			// dIere / dDeltaP
-			pDynaModel->SetElement(Iere, Dip, Vip * (gse * Sinp + bse * Cosp));
+			// dIere / dVbre
+			pDynaModel->SetElement(Iere, Vbre, gse);
+			// dIere / dVbim
+			pDynaModel->SetElement(Iere, Vbim, bse);
 			// dIere / dveIm
 			if (veRe.Index >= 0) pDynaModel->SetElement(Iere, veIm, -1.0);
 			// dIere / dvbIm
@@ -103,10 +106,10 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 
 			// dIeim / dIeim
 			pDynaModel->SetElement(Ieim, Ieim, 1.0);
-			// dIbim / dVp
-			pDynaModel->SetElement(Ieim, Vip, -gse * Sinp - bse * Cosp);
-			// dIbim / dDeltaP
-			pDynaModel->SetElement(Ieim, Dip, -Vip * (gse * Cosp - bse * Sinp));
+			// dIbim / dVbre
+			pDynaModel->SetElement(Ieim, Vbre, -bse);
+			// dIbim / dVbim
+			pDynaModel->SetElement(Ieim, Vbim, gse);
 			// dIbim / dveIm
 			if (veIm.Index >= 0) pDynaModel->SetElement(Ieim, veIm, -1.0);
 			// dIbim / dvbIm
@@ -114,54 +117,59 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 		}
 		else
 		{
+			// Ibre + gips * Vbre - bips * Vbim - gip * Vere + bip * Veim = 0
+			// 
 			// dIbre / dIbre
 			pDynaModel->SetElement(Ibre, Ibre, 1.0);
-			// dIbre / dVq
-			pDynaModel->SetElement(Ibre, Viq, b * Sinq - g * Cosq);
-			// dIbre / dDeltaQ
-			pDynaModel->SetElement(Ibre, Diq, Viq * (b * Cosq + g * Sinq));
-			// dIbre / dVp
-			pDynaModel->SetElement(Ibre, Vip, gips * Cosp - bips * Sinp);
-			// dIbre / dDeltaP
-			pDynaModel->SetElement(Ibre, Dip, -Vip * (bips * Cosp + gips * Sinp));
+			// dIbre / dVbre
+			pDynaModel->SetElement(Ibre, Vbre, gips);
+			// dIbre / dVbim
+			pDynaModel->SetElement(Ibre, Vbim, -bips);
+			// dIbre / dVere
+			pDynaModel->SetElement(Ibre, Vere, -gip);
+			// dIbre / dVeim
+			pDynaModel->SetElement(Ibre, Veim, bip);
 
-
+			// Ibim + bips * Vbre + gips * Vbim - bip * Vere - gip * Veim = 0
+			// 
 			// dIbim / dIbim
 			pDynaModel->SetElement(Ibim, Ibim, 1.0);
-			// dIbim / dVq
-			pDynaModel->SetElement(Ibim, Viq, -b * Cosq - g * Sinq);
-			// dIbim / dDeltaQ
-			pDynaModel->SetElement(Ibim, Diq, Viq * (b * Sinq - g * Cosq));
-			// dIbim / dVp
-			pDynaModel->SetElement(Ibim, Vip, bips * Cosp + gips * Sinp);
-			// dIbim / dDeltaP
-			pDynaModel->SetElement(Ibim, Dip, Vip * (gips * Cosp - bips * Sinp));
+			// dIbim / dVbre
+			pDynaModel->SetElement(Ibim, Vbre, bips);
+			// dIbim / dVbim
+			pDynaModel->SetElement(Ibim, Vbim, gips);
+			// dIbim / dVere
+			pDynaModel->SetElement(Ibim, Vere, -bip);
+			// dIbim / dVeim
+			pDynaModel->SetElement(Ibim, Veim, -gip);
 
-
+			// Iere + giq * Vbre - biq * Vbim - giqs * Vere + biqs * Veim = 0
+			// 
 			// dIere / dIere
 			pDynaModel->SetElement(Iere, Iere, 1.0);
-			// dIere / dVq
-			pDynaModel->SetElement(Iere, Viq, biqs * Sinq - giqs * Cosq);
-			// dIere / dDeltaQ
-			pDynaModel->SetElement(Iere, Diq, Viq * (biqs * Cosq + giqs * Sinq));
-			// dIere / dVp
-			pDynaModel->SetElement(Iere, Vip, ge * Cosp - be * Sinp);
-			// dIere / dDeltaP
-			pDynaModel->SetElement(Iere, Dip, -Vip * (be * Cosp + ge * Sinp));
+			// dIere / dVbre
+			pDynaModel->SetElement(Iere, Vbre, giq);
+			// dIere / dVbim
+			pDynaModel->SetElement(Iere, Vbim, -biq);
+			// dIere / dVere
+			pDynaModel->SetElement(Iere, Vere, -giqs);
+			// dIere / dVeim
+			pDynaModel->SetElement(Iere, Veim, biqs);
 
 
+			// Ieim + biq * Vbre + giq * Vbim - biqs * Vere - giqs * Veim = 0
+			// 
 			// dIeim / dIeim
 			pDynaModel->SetElement(Ieim, Ieim, 1.0);
-			// dIeim / dVq
-			pDynaModel->SetElement(Ieim, Viq, -biqs * Cosq - giqs * Sinq);
-			// dIeim / dDeltaQ
-			pDynaModel->SetElement(Ieim, Diq, Viq * (biqs * Sinq - giqs * Cosq));
-			// dIeim / dVp
-			pDynaModel->SetElement(Ieim, Vip, be * Cosp + ge * Sinp);
-			// dIeim / dDeltaP
-			pDynaModel->SetElement(Ieim, Dip, Vip * (ge * Cosp - be * Sinp));
+			// dIeim / dVbre
+			pDynaModel->SetElement(Ieim, Vbre, biq);
+			// dIeim / dVbim
+			pDynaModel->SetElement(Ieim, Vbim, giq);
+			// dIeim / dVere
+			pDynaModel->SetElement(Ieim, Vere, -biqs);
+			// dIeim / dVeim
+			pDynaModel->SetElement(Ieim, Veim, -giqs);
 		}
-
 
 		double absIb = sqrt(Ibre * Ibre + Ibim * Ibim);
 
@@ -182,51 +190,57 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(Ie, Ieim, -CDevice::ZeroDivGuard(Ieim, absIb));
 
 
+		// Pb - Vbre * Ibre - Vbim * Ibim = 0
+		// 
 		// dPb / dPb
 		pDynaModel->SetElement(Pb, Pb, 1.0);
-		// dPb / dVp
-		pDynaModel->SetElement(Pb, Vip, -Ibre * Cosp - Ibim * Sinp);
-		// dPb / dDeltaP
-		pDynaModel->SetElement(Pb, Dip, Vip * (Ibre * Sinp - Ibim * Cosp));
+		// dPb / dVbre
+		pDynaModel->SetElement(Pb, Vbre, -Ibre);
+		// dPb / dVbim
+		pDynaModel->SetElement(Pb, Vbim, -Ibim);
 		// dPb / dIbre
-		pDynaModel->SetElement(Pb, Ibre, -Vip * Cosp);
+		pDynaModel->SetElement(Pb, Ibre, -Vbre);
 		// dPb / dIbim
-		pDynaModel->SetElement(Pb, Ibim, -Vip * Sinp);
+		pDynaModel->SetElement(Pb, Ibim, -Vbim);
 
-
+		// Qb - Vbim * Ibre + Vbre * Ibim = 0
+		// 
 		// dQb / dQb
 		pDynaModel->SetElement(Qb, Qb, 1.0);
-		// dQb / dVp
-		pDynaModel->SetElement(Qb, Vip, Ibim * Cosp - Ibre * Sinp);
-		// dQb / dDeltaP
-		pDynaModel->SetElement(Qb, Dip, -Vip * (Ibre * Cosp + Ibim * Sinp));
+		// dQb / dVbre
+		pDynaModel->SetElement(Qb, Vbre,  Ibim);
+		// dQb / dVbim
+		pDynaModel->SetElement(Qb, Vbim, -Ibre);
 		// dQb / dIbre
-		pDynaModel->SetElement(Qb, Ibre, -Vip * Sinp);
+		pDynaModel->SetElement(Qb, Ibre, -Vbim);
 		// dQb / dIbim
-		pDynaModel->SetElement(Qb, Ibim, Vip * Cosp);
+		pDynaModel->SetElement(Qb, Ibim,  Vbre);
 
-
+		// Pe - Vere * Iere - Veim * Ieim = 0
+		// 
 		// dPe / dPe
 		pDynaModel->SetElement(Pe, Pe, 1.0);
-		// dPe / dVq
-		pDynaModel->SetElement(Pe, Viq, -Iere * Cosq - Ieim * Sinq);
-		// dPe / dDeltaQ
-		pDynaModel->SetElement(Pe, Diq, Viq * (Iere * Sinq - Ieim * Cosq));
+		// dPe / dVere
+		pDynaModel->SetElement(Pe, Vere, -Iere);
+		// dPe / dVeim
+		pDynaModel->SetElement(Pe, Veim, -Ieim);
 		// dPe / dIere
-		pDynaModel->SetElement(Pe, Iere, -Viq * Cosq);
+		pDynaModel->SetElement(Pe, Iere, -Vere);
 		// dPe / dIeim
-		pDynaModel->SetElement(Pe, Ieim, -Viq * Sinq);
+		pDynaModel->SetElement(Pe, Ieim, -Veim);
 
+		// Qe - Veim * Iere + Vere * Ieim = 0
+		// 
 		// dQe / dQe
 		pDynaModel->SetElement(Qe, Qe, 1.0);
-		// dQe / dVq
-		pDynaModel->SetElement(Qe, Viq, Ieim * Cosq - Iere * Sinq);
-		// dQe / dDeltaQ
-		pDynaModel->SetElement(Qe, Diq, -Viq * (Iere * Cosq + Ieim * Sinq));
+		// dQe / dVere
+		pDynaModel->SetElement(Qe, Vere,  Ieim);
+		// dQe / dVeim
+		pDynaModel->SetElement(Qe, Veim, -Iere);
 		// dQe / dIere
-		pDynaModel->SetElement(Qe, Iere, -Viq * Sinq);
+		pDynaModel->SetElement(Qe, Iere, -Veim);
 		// dQe / dIeim
-		pDynaModel->SetElement(Qe, Ieim, Viq * Cosq);
+		pDynaModel->SetElement(Qe, Ieim,  Vere);
 
 		absIb = std::sqrt(Pb * Pb + Qb * Qb + ABS_GUARD);
 

@@ -164,13 +164,18 @@ namespace DFW2
 		// небаланс тока без привязки у суперузлу
 		inline double GetSelfImbIreNotSuper() const noexcept { return ((Pnr - Pgr) * Vre + (Qnr - Qgr) * Vim) / V / V + Yii.imag() * Vim - Yii.real() * Vre; }
 		inline double GetSelfImbIimNotSuper() const noexcept { return ((Qnr - Qgr) * Vre - (Pnr - Pgr) * Vim) / V / V + Yii.real() * Vim + Yii.imag() * Vre; }
-
+		
+		// возвращает ток узла от нагрузки/генерации/шунтов
 		cplx GetSelfImbInotSuper() const
 		{
+			// инъекции и квадрат напряжения
 			double P{ Pnr - Pgr }, Q(Qnr - Qgr), V2(Vre * Vre + Vim * Vim);
+			// рассчитываем из инъеции шунт
 			P /= V2;			Q /= V2;
+			// добавляем собственный шунт
 			P -= Yii.real();	Q += Yii.imag();
-			return cplx(P * Vre + Q * Vim,  P * Vim - Q * Vre);
+			// рассчитываем ток с учетом заданного постоянного тока от генератора УР
+			return cplx(P * Vre + Q * Vim + Iconst.real(),  P * Vim - Q * Vre + Iconst.imag());
 		}
 
 		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn; }
