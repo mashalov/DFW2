@@ -93,49 +93,87 @@ VariableIndexRefVec& CDynaNodeZeroLoadFlow::GetVariables(VariableIndexRefVec& Ch
 bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase **ppNode{ m_MatrixRows.get() },  **ppNodeEnd{ m_MatrixRows.get() + m_nSize };
+	const double Vmin{ pDynaModel->GetLRCToShuntVmin() };
 
 	while (ppNode < ppNodeEnd)
 	{
 		const auto& pNode{ *ppNode };
 		const auto& ZeroNode{ pNode->ZeroLF };
 		const auto& vRe{ ZeroNode.vRe }, vIm{ ZeroNode.vIm };
+		const double V2{ pNode->Vre * pNode->Vre + pNode->Vim * pNode->Vim };
+		const double Vsq{ std::sqrt(V2) };
+		double dIredVre(1.0), dIredVim(0.0), dIimdVre(0.0), dIimdVim(1.0);
 
-		// собственная проводимость от индикаторов
-		pDynaModel->SetElement(vRe, ZeroNode.vRe, -ZeroNode.Yii);
-		pDynaModel->SetElement(vIm, ZeroNode.vIm, -ZeroNode.Yii);
+		// добавляем токи собственной проводимости и токи ветвей
+		dIredVre = -pNode->Yii.real();
+		dIredVim = pNode->Yii.imag();
+		dIimdVre = -pNode->Yii.imag();
+		dIimdVim = -pNode->Yii.real();
+
+
+		if (!pNode->m_bLowVoltage)
+		{
+			const double Pk{ (pNode->Pnr - pNode->Pgr) / V2 }, Qk{ (pNode->Qnr - pNode->Qgr) / V2 };
+
+			dIredVre += Pk;
+			dIredVim += Qk;
+			dIimdVre += Pk;
+			dIimdVim -= Qk;
+		}
+
+		if ((0.5 * Vmin - pNode->dLRCVicinity) > Vsq / pNode->V0)
+		{
+			_ASSERTE(pNode->m_pLRC);
+			dIredVre += pNode->dLRCShuntPartP;
+			dIredVim += pNode->dLRCShuntPartQ;
+			dIimdVre += -pNode->dLRCShuntPartQ;
+			dIimdVim += pNode->dLRCShuntPartP;
+			pNode->dLRCPg = pNode->dLRCQg = pNode->Pgr = pNode->Qgr = 0.0;
+			pNode->dLRCPn = pNode->dLRCQn = pNode->Pnr = pNode->Qnr = 0.0;
+		}
 
 		// токи от генераторов
 		CDevice** ppGen(nullptr);
 		CLinkPtrCount* pGenLink = pNode->GetLink(1);
+		double dGenMatrixCoe{ pNode->m_bInMetallicSC ? 0.0 : -1.0 };
 		while (pGenLink->InMatrix(ppGen))
 		{
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
-			pDynaModel->SetElement(vRe, pGen->Ire, 1.0);
-			pDynaModel->SetElement(vIm, pGen->Iim, 1.0);
+			pDynaModel->SetElement(vRe, pGen->Ire, dGenMatrixCoe);
+			pDynaModel->SetElement(vIm, pGen->Iim, dGenMatrixCoe);
 		}
 		
 		// потоки от ветвей между суперузлами
 		for (const VirtualBranch* vb = ZeroNode.pVirtualBranchesBegin; vb < ZeroNode.pVirtualBranchesEnd; vb++)
 		{
-			//Re += vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
-			//Im += vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
+			//Re -= vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
+			//Im -= vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
 			const auto& OppNode{ vb->pNode };
-			pDynaModel->SetElement(vRe, OppNode->Vre, vb->Y.real());
-			pDynaModel->SetElement(vRe, OppNode->Vim, -vb->Y.imag());
-			pDynaModel->SetElement(vIm, OppNode->Vre, vb->Y.imag());
-			pDynaModel->SetElement(vIm, OppNode->Vim, vb->Y.real());
+			pDynaModel->SetElement(vRe, OppNode->Vre, -vb->Y.real());
+			pDynaModel->SetElement(vRe, OppNode->Vim, vb->Y.imag());
+			pDynaModel->SetElement(vIm, OppNode->Vre, -vb->Y.imag());
+			pDynaModel->SetElement(vIm, OppNode->Vim, -vb->Y.real());
 		}
 
 		// потоки от ветвей внутри суперузла
 		for (const VirtualBranch* vb = ZeroNode.pVirtualZeroBranchesBegin; vb < ZeroNode.pVirtualZeroBranchesEnd; vb++)
 		{
-			//Re += vb->Y.real() * vb->pNode->ZeroLF.vRe;
-			//Im += vb->Y.real() * vb->pNode->ZeroLF.vIm;
+			//Re -= vb->Y.real() * vb->pNode->ZeroLF.vRe;
+			//Im -= vb->Y.real() * vb->pNode->ZeroLF.vIm;
 
-			pDynaModel->SetElement(vRe, vb->pNode->ZeroLF.vRe, vb->Y.real());
-			pDynaModel->SetElement(vIm, vb->pNode->ZeroLF.vIm, vb->Y.real());
+			pDynaModel->SetElement(vRe, vb->pNode->ZeroLF.vRe, -vb->Y.real());
+			pDynaModel->SetElement(vIm, vb->pNode->ZeroLF.vIm, -vb->Y.real());
 		}
-	
+
+		const auto& pSuperNode{ pNode->GetSuperNode() };
+
+		pDynaModel->SetElement(vRe, pSuperNode->Vre, dIredVre);
+		pDynaModel->SetElement(vRe, pSuperNode->Vim, dIredVim);
+		pDynaModel->SetElement(vIm, pSuperNode->Vre, dIimdVre);
+		pDynaModel->SetElement(vIm, pSuperNode->Vim, dIimdVim);
+		// собственная проводимость от индикаторов
+		pDynaModel->SetElement(vRe, ZeroNode.vRe, ZeroNode.Yii);
+		pDynaModel->SetElement(vIm, ZeroNode.vIm, ZeroNode.Yii);
 
 		ppNode++;
 	}
@@ -165,9 +203,12 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		double Vsq{ 0.0 };
 		// получаем ток узла от настоящего шунта, инъекции и тока
 		// генератора УР
-		cplx Is{ -pNode->GetSelfImbInotSuper(Vmin, Vsq) };
+		cplx Is{ pNode->GetSelfImbInotSuper(Vmin, Vsq) };
+		double Re{ Is.real() }, Im{ Is.imag() };
+
 		// добавляем инъекцию тока от базисного узла
-		Is += ZeroNode.SlackInjection;
+		Is -= ZeroNode.SlackInjection;
+		Re -= ZeroNode.SlackInjection;
 
 
 		// добавляем токи от генераторов
@@ -176,40 +217,40 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		while (pGenLink->InMatrix(ppGen))
 		{
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
-			Is += cplx(pGen->Ire, pGen->Iim);
+			Is -= cplx(pGen->Ire, pGen->Iim);
+			Re -= pGen->Ire;
+			Im -= pGen->Iim;
 		}
-
-		double Re{ Is.real() }, Im{ Is.imag() };
 
 		// перетоки по настоящим связям от внешних суперузлов
 		for (const VirtualBranch* vb = ZeroNode.pVirtualBranchesBegin; vb < ZeroNode.pVirtualBranchesEnd; vb++)
 		{
-			Is += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
-			Re += vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
-			Im += vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
+			Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
+			Re -= vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
+			Im -= vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
 		}
 
 		// инъекция от "шунта" индикатора
-		Is -= pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
+		Is += pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
 		// далее добавляем "токи" от индикаторов напряжения
 
 
-		Re += -pNode->ZeroLF.vRe * pNode->ZeroLF.Yii;
-		Im += -pNode->ZeroLF.vIm * pNode->ZeroLF.Yii;
+		Re += pNode->ZeroLF.vRe * pNode->ZeroLF.Yii;
+		Im += pNode->ZeroLF.vIm * pNode->ZeroLF.Yii;
 
 		for (const VirtualBranch* vb = ZeroNode.pVirtualZeroBranchesBegin; vb < ZeroNode.pVirtualZeroBranchesEnd; vb++)
 		{
-			Is += vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
-			Re += vb->Y.real() * vb->pNode->ZeroLF.vRe;
-			Im += vb->Y.real() * vb->pNode->ZeroLF.vIm;
+			Is -= vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
+			Re -= vb->Y.real() * vb->pNode->ZeroLF.vRe;
+			Im -= vb->Y.real() * vb->pNode->ZeroLF.vIm;
 		}
 
 
 		//_ASSERTE(std::abs(Re) < DFW2_EPSILON && std::abs(Im) < DFW2_EPSILON);
 		_ASSERTE(std::abs(Re - Is.real()) < DFW2_EPSILON && std::abs(Im - Is.imag()) < DFW2_EPSILON);
 
-		pDynaModel->SetFunction(ZeroNode.vRe, 0.0);
-		pDynaModel->SetFunction(ZeroNode.vIm, 0.0);
+		pDynaModel->SetFunction(ZeroNode.vRe, Re);
+		pDynaModel->SetFunction(ZeroNode.vIm, Im);
 
 		ppNode++;
 	}

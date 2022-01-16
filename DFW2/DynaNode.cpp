@@ -63,7 +63,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(const double Vmin, double& Vsq)
 
 		if ((0.5 * Vmin - dLRCVicinity) > Vsq / V0)
 		{
-			Ire -= -dLRCShuntPartP * Vre - dLRCShuntPartQ * Vim;
+			Ire += dLRCShuntPartP * Vre + dLRCShuntPartQ * Vim;
 			Iim -= dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
 
 #ifdef _DEBUG
@@ -88,7 +88,6 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(const double Vmin, double& Vsq)
 	if (!m_bLowVoltage)
 	{
 		// добавляем токи от нагрузки (если напряжение не очень низкое)
-		// считаем невязки модуля и угла, иначе оставляем нулями
 		const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
 		Ire += (Pk * Vre + Qk * Vim) / V2;
 		Iim += (Pk * Vim - Qk * Vre) / V2;
@@ -142,7 +141,6 @@ cplx CDynaNodeBase::GetSelfImbISuper(const double Vmin, double& Vsq)
 	if (!m_bLowVoltage)
 	{
 		// добавляем токи от нагрузки (если напряжение не очень низкое)
-		// считаем невязки модуля и угла, иначе оставляем нулями
 		const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
 		Ire += (Pk * Vre + Qk * Vim) / V2;
 		Iim += (Pk * Vim - Qk * Vre) / V2;
@@ -1573,7 +1571,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		while (pBranchLink->In(ppDevice))
 		{
 			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
-			if (!pBranch->InSuperNode())
+			if (!pBranch->IsZeroImpedance())
 				nBranchesCount++;
 		}
 	}
@@ -1626,7 +1624,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 			{
 				const auto& pOppNode{ pBranch->GetOppositeNode(node) };
 
-				if (!pBranch->InSuperNode())
+				if (!pBranch->IsZeroImpedance())
 				{
 					// если ветвь не в данном суперузле, добавляем ее в список виртуальных ветвей 
 					const auto& Ykm = pBranch->OppositeY(node);
@@ -1650,6 +1648,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 				{
 					// ветвь внутри суперузла
 					// учитываем ветвь в собственной проводимости
+
 					ZeroLF.Yii += 1.0;
 
 					// если ветвь приходит от базисного узла
