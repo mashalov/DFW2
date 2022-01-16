@@ -160,11 +160,7 @@ namespace DFW2
 		// небаланс узла без привязки к суперузлу
 		inline double GetSelfImbPnotSuper() const noexcept { return Pnr - Pgr - V * V * Yii.real(); }
 		inline double GetSelfImbQnotSuper() const noexcept { return Qnr - Qgr + V * V * Yii.imag(); }
-
-		// небаланс тока без привязки у суперузлу
-		inline double GetSelfImbIreNotSuper() const noexcept { return ((Pnr - Pgr) * Vre + (Qnr - Qgr) * Vim) / V / V + Yii.imag() * Vim - Yii.real() * Vre; }
-		inline double GetSelfImbIimNotSuper() const noexcept { return ((Qnr - Qgr) * Vre - (Pnr - Pgr) * Vim) / V / V + Yii.real() * Vim + Yii.imag() * Vre; }
-		
+				
 		// возвращает ток узла от нагрузки/генерации/шунтов
 		cplx GetSelfImbInotSuper() const
 		{

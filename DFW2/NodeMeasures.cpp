@@ -98,21 +98,44 @@ bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 	{
 		const auto& pNode{ *ppNode };
 		const auto& ZeroNode{ pNode->ZeroLF };
-		pDynaModel->SetElement(ZeroNode.vRe, ZeroNode.vRe, 1.0);
-		pDynaModel->SetElement(ZeroNode.vIm, ZeroNode.vIm, 1.0);
+		const auto& vRe{ ZeroNode.vRe }, vIm{ ZeroNode.vIm };
 
+		// собственная проводимость от индикаторов
+		pDynaModel->SetElement(vRe, ZeroNode.vRe, -ZeroNode.Yii);
+		pDynaModel->SetElement(vIm, ZeroNode.vIm, -ZeroNode.Yii);
 
-		for (const VirtualBranch* vb = ZeroNode.pVirtualBranchesBegin; vb < ZeroNode.pVirtualBranchesEnd; vb++)
+		// токи от генераторов
+		CDevice** ppGen(nullptr);
+		CLinkPtrCount* pGenLink = pNode->GetLink(1);
+		while (pGenLink->InMatrix(ppGen))
 		{
-			//Is += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
-			//pDynaModel->SetElement(pNode->Vre, vb->pNode->Vre, 1.0);
-		}
-
-		for (const VirtualBranch* vb = ZeroNode.pVirtualZeroBranchesBegin; vb < ZeroNode.pVirtualZeroBranchesEnd; vb++)
-		{
-			//Is += vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
+			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
+			pDynaModel->SetElement(vRe, pGen->Ire, 1.0);
+			pDynaModel->SetElement(vIm, pGen->Iim, 1.0);
 		}
 		
+		// потоки от ветвей между суперузлами
+		for (const VirtualBranch* vb = ZeroNode.pVirtualBranchesBegin; vb < ZeroNode.pVirtualBranchesEnd; vb++)
+		{
+			//Re += vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
+			//Im += vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
+			const auto& OppNode{ vb->pNode };
+			pDynaModel->SetElement(vRe, OppNode->Vre, vb->Y.real());
+			pDynaModel->SetElement(vRe, OppNode->Vim, -vb->Y.imag());
+			pDynaModel->SetElement(vIm, OppNode->Vre, vb->Y.imag());
+			pDynaModel->SetElement(vIm, OppNode->Vim, vb->Y.real());
+		}
+
+		// потоки от ветвей внутри суперузла
+		for (const VirtualBranch* vb = ZeroNode.pVirtualZeroBranchesBegin; vb < ZeroNode.pVirtualZeroBranchesEnd; vb++)
+		{
+			//Re += vb->Y.real() * vb->pNode->ZeroLF.vRe;
+			//Im += vb->Y.real() * vb->pNode->ZeroLF.vIm;
+
+			pDynaModel->SetElement(vRe, vb->pNode->ZeroLF.vRe, vb->Y.real());
+			pDynaModel->SetElement(vIm, vb->pNode->ZeroLF.vIm, vb->Y.real());
+		}
+	
 
 		ppNode++;
 	}

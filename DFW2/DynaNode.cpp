@@ -1553,51 +1553,59 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		while (pBranchLink->In(ppDevice))
 		{
 			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
-			const auto& pOppNode = pBranch->GetOppositeNode(node);
 
-			if (!pBranch->InSuperNode())
+			// интересуют только включенные ветви - так или иначе связывающие узлы 
+			if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
 			{
-				// если ветвь не в данном суперузле, добавляем ее в список виртуальных ветвей 
-				const auto& Ykm = pBranch->OppositeY(node);
-				// ищем не было ли уже добавлено виртуальной ветви на этот узел
-				VirtualBranch* pDup{ FindParallel(ZeroLF.pVirtualBranchesBegin, ZeroLF.pVirtualBranchesEnd, pOppNode) };
-				// если ветвь на такой суперузел уже была добавлена, добавляем проводимость к существующей
-				if (pDup)
-					pDup->Y += Ykm;
-				else
-				{
-					// если ветви не было добавлено - добавляем новую
-					ZeroLF.pVirtualBranchesEnd->pNode = pOppNode;
-					ZeroLF.pVirtualBranchesEnd->Y = Ykm;
-					ZeroLF.pVirtualBranchesEnd++;
-				}
-			}
-			else
-			{
-				// ветвь внутри суперузла
-				// учитываем ветвь в собственной проводимости
-				ZeroLF.Yii += 1.0;
+				const auto& pOppNode{ pBranch->GetOppositeNode(node) };
 
-				// если ветвь приходит от базисного узла
-				if (pOppNode == pMaxRankNode.first)
+				if (!pBranch->InSuperNode())
 				{
-					// учитываем инъекцию от базисного узла
-					ZeroLF.SlackInjection += 1.0;
-				}
-				else
-				{
-					// если ветвь в суперузле но не от базисного узла, добавляем ее в список нулевых виртуальных ветвей
-					VirtualBranch* pDup{ FindParallel(ZeroLF.pVirtualZeroBranchesBegin, ZeroLF.pVirtualZeroBranchesEnd, pOppNode) };
-					// учитываем, если ветвь параллельная
+					// если ветвь не в данном суперузле, добавляем ее в список виртуальных ветвей 
+					const auto& Ykm = pBranch->OppositeY(node);
+					// нам нужны связи между суперузлами, так как только они индексированы в матрице
+					// поэтому все связи эквивалентируем к связям между суперузлами
+					const auto& pOppSuperNode{ pOppNode->GetSuperNode() };
+					// ищем не было ли уже добавлено виртуальной ветви на этот узел от выбранного суперзула
+					VirtualBranch* pDup{ FindParallel(ZeroLF.pVirtualBranchesBegin, ZeroLF.pVirtualBranchesEnd, pOppSuperNode) };
+					// если ветвь на такой суперузел уже была добавлена, добавляем проводимость к существующей
 					if (pDup)
-						pDup->Y += 1.0;
+						pDup->Y += Ykm;
 					else
 					{
-						ZeroLF.pVirtualZeroBranchesEnd->pNode = pOppNode;
-						ZeroLF.pVirtualZeroBranchesEnd->Y = 1.0;
-						ZeroLF.pVirtualZeroBranchesEnd++;
-						// и учитываем в количестве ненулевых элементов
-						pZeroSuperNode->nZcount++;
+						// если ветви не было добавлено - добавляем новую
+						ZeroLF.pVirtualBranchesEnd->pNode = pOppSuperNode;
+						ZeroLF.pVirtualBranchesEnd->Y = Ykm;
+						ZeroLF.pVirtualBranchesEnd++;
+					}
+				}
+				else
+				{
+					// ветвь внутри суперузла
+					// учитываем ветвь в собственной проводимости
+					ZeroLF.Yii += 1.0;
+
+					// если ветвь приходит от базисного узла
+					if (pOppNode == pMaxRankNode.first)
+					{
+						// учитываем инъекцию от базисного узла
+						ZeroLF.SlackInjection += 1.0;
+					}
+					else
+					{
+						// если ветвь в суперузле но не от базисного узла, добавляем ее в список нулевых виртуальных ветвей
+						VirtualBranch* pDup{ FindParallel(ZeroLF.pVirtualZeroBranchesBegin, ZeroLF.pVirtualZeroBranchesEnd, pOppNode) };
+						// учитываем, если ветвь параллельная
+						if (pDup)
+							pDup->Y += 1.0;
+						else
+						{
+							ZeroLF.pVirtualZeroBranchesEnd->pNode = pOppNode;
+							ZeroLF.pVirtualZeroBranchesEnd->Y = 1.0;
+							ZeroLF.pVirtualZeroBranchesEnd++;
+							// и учитываем в количестве ненулевых элементов
+							pZeroSuperNode->nZcount++;
+						}
 					}
 				}
 			}
