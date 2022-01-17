@@ -164,7 +164,8 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 
 		//m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Sconst;
-		m_Parameters.m_dZeroBranchImpedance = 4.0E-3;
+		m_Parameters.m_dZeroBranchImpedance = 4.0E-4;
+		m_Parameters.m_dProcessDuration = 150;
 		m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 		m_Parameters.m_dOutStep = 1E-10;

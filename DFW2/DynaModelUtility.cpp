@@ -965,7 +965,7 @@ void CDynaModel::CreateZeroLoadFlow()
 	if (!nCount)
 		ZeroLoadFlow.AddDevice(new CDynaNodeZeroLoadFlow(Nodes.GetZeroLFSet()));
 	else if (nCount == 1)
-		static_cast<CDynaNodeZeroLoadFlow*>(ZeroLoadFlow.GetDeviceByIndex(0))->UpdateSuperNodeSet(Nodes.GetZeroLFSet());
+		static_cast<CDynaNodeZeroLoadFlow*>(ZeroLoadFlow.GetDeviceByIndex(0))->UpdateSuperNodeSet();
 	else
 		throw dfw2error("CDynaModel::CreateZeroLoadFlow - ZeroLoadFlow must contain 0 or 1 device");
 }

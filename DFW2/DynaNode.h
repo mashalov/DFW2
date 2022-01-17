@@ -134,6 +134,8 @@ namespace DFW2
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex)  override;
 		void GetPnrQnr();
 		void GetPnrQnrSuper();
+		void GetPnrQnr(double Vnode);
+		void GetPnrQnrSuper(double Vnode);
 		bool AllLRCsInShuntPart(double V, double Vmin);
 		bool BuildEquations(CDynaModel* pDynaModel)  override;
 		bool BuildRightHand(CDynaModel* pDynaModel) override;

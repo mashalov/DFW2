@@ -40,10 +40,14 @@ namespace DFW2
 		std::unique_ptr<CDynaNodeBase*[]> m_MatrixRows;
 		VariableIndexRefVec m_Vars;
 		ptrdiff_t m_nSize;
+		const NodeSet& m_ZeroSuperNodes;
 	public:
 		static void DeviceProperties(CDeviceContainerProperties& properties);
-		CDynaNodeZeroLoadFlow(const NodeSet& ZeroLFNodes) : CDevice()  { UpdateSuperNodeSet(ZeroLFNodes); };
-		void UpdateSuperNodeSet(const NodeSet& ZeroLFNodes);
+		CDynaNodeZeroLoadFlow(const NodeSet& ZeroLFNodes) : CDevice(), m_ZeroSuperNodes(ZeroLFNodes)
+		{
+			UpdateSuperNodeSet();
+		};
+		void UpdateSuperNodeSet();
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		bool BuildEquations(CDynaModel* pDynaModel) override;

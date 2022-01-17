@@ -518,32 +518,32 @@ const char* CDevice::VariableNameByPtr(double *pVariable) const
 {
 	_ASSERTE(m_pContainer);
 
-	const char *pName = CDFW2Messages::m_cszUnknown;
-	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
+	const char* pName{ CDFW2Messages::m_cszUnknown };
+	const ptrdiff_t nEquationsCount{ m_pContainer->EquationsCount() };
 
 	for (ptrdiff_t i = 0; i < nEquationsCount ; i++)
 	{
-		const double *pVar = GetVariableConstPtr(i);
-		if (pVar == pVariable)
+		
+		if (const double* pVar{ GetVariableConstPtr(i) }; pVar == pVariable)
 		{
-			auto it = m_pContainer->VariablesBegin();
-			for ( ; it != m_pContainer->VariablesEnd(); it++)
-			{
-				if (it->second.m_nIndex == i)
+			auto it = std::find_if(m_pContainer->VariablesBegin(), m_pContainer->VariablesEnd(), [&i](const auto& element)
 				{
-					pName = static_cast<const char*>(it->first.c_str());
-					break;
+					return element.second.m_nIndex == i;
 				}
+			);
+			if (it != m_pContainer->VariablesEnd())
+			{
+				pName = static_cast<const char*>(it->first.c_str());
+				break;
 			}
 #ifdef _DEBUG
-			if (it == m_pContainer->VariablesEnd())
+			else
 			{
 				std::string UnknownVar(fmt::format("Unknown name Index - {}", i));
 				strncpy_s(UnknownVarIndex, 80, UnknownVar.c_str(), 80);
 				pName = static_cast<char*>(UnknownVarIndex);
 			}
 #endif
-
 		}
 	}
 	return pName;

@@ -100,8 +100,15 @@ bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 		const auto& pNode{ *ppNode };
 		const auto& ZeroNode{ pNode->ZeroLF };
 		const auto& vRe{ ZeroNode.vRe }, vIm{ ZeroNode.vIm };
-		const double V2{ pNode->Vre * pNode->Vre + pNode->Vim * pNode->Vim };
-		const double Vsq{ std::sqrt(V2) };
+		const auto& pSuperNode{ pNode->GetSuperNode() };
+
+		// вариант с напряжением из модуля суперузла
+		const double Vsq{ pSuperNode->V };
+		const double V2{ Vsq * Vsq };
+		// вариант с напряжением из составляющих суперузла
+		//const double V2{ pSuperNode->Vre * pSuperNode->Vre + pSuperNode->Vim * pSuperNode->Vim };
+		//const double Vsq{ std::sqrt(V2) };
+
 		double dIredVre(1.0), dIredVim(0.0), dIimdVre(0.0), dIimdVim(1.0);
 
 		// добавляем токи собственной проводимости и токи ветвей
@@ -110,16 +117,43 @@ bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 		dIimdVre = -pNode->Yii.imag();
 		dIimdVim = -pNode->Yii.real();
 
+		
+
+		pNode->GetPnrQnr();
+
+		double dIredV{ 0.0 }, dIimdV{ 0.0 };
 
 		if (!pNode->m_bLowVoltage)
 		{
-			const double Pk{ (pNode->Pnr - pNode->Pgr) / V2 }, Qk{ (pNode->Qnr - pNode->Qgr) / V2 };
+			double Pk{ pNode->Pnr - pNode->Pgr }, Qk{ pNode->Qnr - pNode->Qgr };
+
+			Pk /= V2;
+			Qk /= V2;
+
+			dIredVre += Pk;
+			dIredVim += Qk;
+			dIimdVre -= Qk;
+			dIimdVim += Pk;
+
+			pNode->dLRCPn -= pNode->dLRCPg;	
+			pNode->dLRCQn -= pNode->dLRCQg;
+			pNode->dLRCPn /= Vsq;
+			pNode->dLRCQn /= Vsq;
+
+			const double dPdV{ (pNode->dLRCPn - 2.0 * Pk) / Vsq };
+			const double dQdV{ (pNode->dLRCQn - 2.0 * Qk) / Vsq };
+
+			dIredV = dPdV * pSuperNode->Vre + dQdV * pSuperNode->Vim;
+			dIimdV = dPdV * pSuperNode->Vim - dQdV * pSuperNode->Vre;
 
 			dIredVre += Pk;
 			dIredVim += Qk;
 			dIimdVre += Pk;
 			dIimdVim -= Qk;
 		}
+
+		pDynaModel->SetElement(vRe, pSuperNode->V, dIredV);
+		pDynaModel->SetElement(vIm, pSuperNode->V, dIimdV);
 
 		if ((0.5 * Vmin - pNode->dLRCVicinity) > Vsq / pNode->V0)
 		{
@@ -165,8 +199,6 @@ bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 			pDynaModel->SetElement(vIm, vb->pNode->ZeroLF.vIm, -vb->Y.real());
 		}
 
-		const auto& pSuperNode{ pNode->GetSuperNode() };
-
 		pDynaModel->SetElement(vRe, pSuperNode->Vre, dIredVre);
 		pDynaModel->SetElement(vRe, pSuperNode->Vim, dIredVim);
 		pDynaModel->SetElement(vIm, pSuperNode->Vre, dIimdVre);
@@ -187,6 +219,8 @@ eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
+	for (auto&& node : m_ZeroSuperNodes)
+		node->SuperNodeLoadFlowYU(pDynaModel);
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
@@ -207,7 +241,7 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		double Re{ Is.real() }, Im{ Is.imag() };
 
 		// добавляем инъекцию тока от базисного узла
-		Is -= ZeroNode.SlackInjection;
+		// Is -= ZeroNode.SlackInjection;
 		Re -= ZeroNode.SlackInjection;
 
 
@@ -217,7 +251,7 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		while (pGenLink->InMatrix(ppGen))
 		{
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
-			Is -= cplx(pGen->Ire, pGen->Iim);
+			//Is -= cplx(pGen->Ire, pGen->Iim);
 			Re -= pGen->Ire;
 			Im -= pGen->Iim;
 		}
@@ -225,29 +259,26 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		// перетоки по настоящим связям от внешних суперузлов
 		for (const VirtualBranch* vb = ZeroNode.pVirtualBranchesBegin; vb < ZeroNode.pVirtualBranchesEnd; vb++)
 		{
-			Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
+			//Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
 			Re -= vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
 			Im -= vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
 		}
 
 		// инъекция от "шунта" индикатора
-		Is += pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
-		// далее добавляем "токи" от индикаторов напряжения
-
-
+		///Is += pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
 		Re += pNode->ZeroLF.vRe * pNode->ZeroLF.Yii;
 		Im += pNode->ZeroLF.vIm * pNode->ZeroLF.Yii;
 
+		// далее добавляем "токи" от индикаторов напряжения
 		for (const VirtualBranch* vb = ZeroNode.pVirtualZeroBranchesBegin; vb < ZeroNode.pVirtualZeroBranchesEnd; vb++)
 		{
-			Is -= vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
+			//Is -= vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
 			Re -= vb->Y.real() * vb->pNode->ZeroLF.vRe;
 			Im -= vb->Y.real() * vb->pNode->ZeroLF.vIm;
 		}
 
-
 		//_ASSERTE(std::abs(Re) < DFW2_EPSILON && std::abs(Im) < DFW2_EPSILON);
-		_ASSERTE(std::abs(Re - Is.real()) < DFW2_EPSILON && std::abs(Im - Is.imag()) < DFW2_EPSILON);
+		//_ASSERTE(std::abs(Re - Is.real()) < DFW2_EPSILON && std::abs(Im - Is.imag()) < DFW2_EPSILON);
 
 		pDynaModel->SetFunction(ZeroNode.vRe, Re);
 		pDynaModel->SetFunction(ZeroNode.vIm, Im);
@@ -258,13 +289,13 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 	return true;
 }
 
-void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet(const NodeSet& ZeroLFNodes)
+void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet()
 {
 	// рассчитываем количество переменных (индикаторов напряжения)
 	// необходимых для формирования системы YU
 	m_nSize = 0;
 	// задан сет суперузлов
-	for (const auto& ZeroSuperNode : ZeroLFNodes)
+	for (const auto& ZeroSuperNode : m_ZeroSuperNodes)
 	{
 		auto& ZeroSuperNodeData{ ZeroSuperNode->ZeroLF.ZeroSupeNode };
 		// считаем количество переменных по количеству узлов в суперузлах
@@ -278,14 +309,14 @@ void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet(const NodeSet& ZeroLFNodes)
 	// размерность вектора выбираем на все узлы, чтобы не менять адреса переменных
 	// после обновления сета суперузлов
 	if(!m_MatrixRows)
-		m_MatrixRows = std::make_unique<CDynaNodeBase*[]>((*ZeroLFNodes.begin())->GetContainer()->Count());
+		m_MatrixRows = std::make_unique<CDynaNodeBase*[]>((*m_ZeroSuperNodes.begin())->GetContainer()->Count());
 
 	// для доступа к переменным снаружи собираем их в стандартный вектор ссылок
 	m_Vars.clear();
 	m_Vars.reserve(2 * m_nSize);
 
 	CDynaNodeBase** pNode{ m_MatrixRows.get() };
-	for (const auto& ZeroSuperNode : ZeroLFNodes)
+	for (const auto& ZeroSuperNode : m_ZeroSuperNodes)
 	{
 		const auto& ZeroSuperNodeData{ ZeroSuperNode->ZeroLF.ZeroSupeNode };
 		for (const auto& ZeroNode : ZeroSuperNodeData->LFMatrix)

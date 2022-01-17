@@ -47,16 +47,19 @@ void CDynaNodeBase::UpdateVreVimSuper()
 // возвращает ток узла от нагрузки/генерации/шунтов
 cplx CDynaNodeBase::GetSelfImbInotSuper(const double Vmin, double& Vsq)
 {
-	GetPnrQnr();
-	double Ire{ Iconst.real() }, Iim{ Iconst.imag() };
-	const double V2{ Vre * Vre + Vim * Vim };
+	// рассчитываем модуль напряжения по составляющим,
+	// так как модуль из уравнения может неточно соответствовать
+	// сумме составляющих пока Ньютон не сошелся
+	double V2{ Vre * Vre + Vim * Vim };
 	Vsq = std::sqrt(V2);
+	// рассчитываем нагрузку/генерацию по СХН по заданному модулю
+	GetPnrQnr(Vsq);
+	double Ire{ Iconst.real() }, Iim{ Iconst.imag() };
 
 	if (!m_bInMetallicSC)
 	{
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию, заданные в узле
-
-		// если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
+ 	    // если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
 		// чтобы исключить мощность из уравнений полностью
 		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
 		// Uсхн_min стандартное cглаживание СХН
@@ -85,7 +88,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(const double Vmin, double& Vsq)
 	Ire -= Yii.real() * Vre - Yii.imag() * Vim;
 	Iim -= Yii.imag() * Vre + Yii.real() * Vim;
 
-	if (!m_bLowVoltage)
+	if (!GetSuperNode()->m_bLowVoltage)
 	{
 		// добавляем токи от нагрузки (если напряжение не очень низкое)
 		const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
@@ -101,10 +104,14 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(const double Vmin, double& Vsq)
 
 cplx CDynaNodeBase::GetSelfImbISuper(const double Vmin, double& Vsq)
 {
-	GetPnrQnrSuper();
-	double Ire{ IconstSuper.real() }, Iim{ IconstSuper.imag() };
-	const double V2{ Vre * Vre + Vim * Vim };
+	// рассчитываем модуль напряжения по составляющим,
+	// так как модуль из уравнения может неточно соответствовать
+	// сумме составляющих пока Ньютон не сошелся
+	double V2{ Vre * Vre + Vim * Vim };
 	Vsq = std::sqrt(V2);
+	// рассчитываем нагрузку/генерацию по СХН по заданному модулю
+	GetPnrQnrSuper(Vsq);
+	double Ire{ IconstSuper.real() }, Iim{ IconstSuper.imag() };
 
 	if (!m_bInMetallicSC)
 	{
@@ -126,7 +133,8 @@ cplx CDynaNodeBase::GetSelfImbISuper(const double Vmin, double& Vsq)
 			if (std::abs(dS.real()) > 0.1 || std::abs(dS.imag()) > 0.1)
 			{
 				_ASSERTE(0);
-				//GetPnrQnrSuper();
+				double Vx = std::sqrt(Vre * Vre + Vim * Vim);
+				GetPnrQnrSuper();
 			}
 #endif
 			Pgr = Qgr = Pnr = Qnr = 0.0;
@@ -184,9 +192,18 @@ bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest, double Vmin)
 
 // рассчитывает нагрузку узла с учетом СХН
 // и суммирует все узлы, входящие в суперузел
+// использует модуль напряжения из узла
 void CDynaNodeBase::GetPnrQnrSuper()
 {
-	GetPnrQnr();
+	GetPnrQnrSuper(V);
+}
+
+// рассчитывает нагрузку узла с учетом СХН
+// и суммирует все узлы, входящие в суперузел
+// использует заданный модуль напряжения
+void CDynaNodeBase::GetPnrQnrSuper(double Vnode)
+{
+	GetPnrQnr(Vnode);
 	CLinkPtrCount *pLink = GetSuperLink(0);
 	CDevice **ppDevice(nullptr);
 	while (pLink->In(ppDevice))
@@ -205,14 +222,22 @@ void CDynaNodeBase::GetPnrQnrSuper()
 		dLRCQg += pSlaveNode->dLRCQg;
 	}
 }
+
 // рассчитывает нагрузку узла с учетом СХН
+// использует модуль напряжения из узла
 void CDynaNodeBase::GetPnrQnr()
+{
+	GetPnrQnr(V);
+}
+// рассчитывает нагрузку узла с учетом СХН
+// использует заданный модуль напряжения
+void CDynaNodeBase::GetPnrQnr(double Vnode)
 {
 	// по умолчанию нагрузка равна заданной в УР
 	Pnr = Pn;	Qnr = Qn;
 	// генерация в узле также равна заданной в УР
 	Pgr = Pg;	Qgr = Qg;
-	double VdVnom = V / V0;
+	double VdVnom = Vnode / V0;
 
 	dLRCPg = dLRCQg = dLRCPn = dLRCQn = 0.0;
 
@@ -241,12 +266,12 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
 	bool bRes = true;	
 
-	double Vre2 = Vre * Vre;
-	double Vim2 = Vim * Vim;
-	double V2 = Vre2 + Vim2;
-	double V2sq = sqrt(V2);
+	const double Vre2{ Vre * Vre };
+	const double Vim2{ Vim * Vim };
+	double V2{ Vre2 + Vim2 };
+	const double V2sq{ std::sqrt(V2) };
 
-	GetPnrQnrSuper();
+	GetPnrQnrSuper(V2sq);
 
 	double dIredVre(1.0), dIredVim(0.0), dIimdVre(0.0), dIimdVim(1.0);
 
@@ -278,15 +303,14 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	CLinkPtrCount *pGenLink = GetSuperLink(2);
 	CDevice **ppGen(nullptr);
 	
-	double Pgsum = Pnr - Pgr;
-	double Qgsum = Qnr - Qgr;
+	double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
 
 	double V4 = V2 * V2;
 	double VreVim2 = 2.0 * Vre * Vim;
-	double PgVre2 = Pgsum * Vre2;
-	double PgVim2 = Pgsum * Vim2;
-	double QgVre2 = Qgsum * Vre2;
-	double QgVim2 = Qgsum * Vim2;
+	double PgVre2 = Pk * Vre2;
+	double PgVim2 = Pk * Vim2;
+	double QgVre2 = Qk * Vre2;
+	double QgVim2 = Qk * Vim2;
 		
 	if (pDynaModel->FillConstantElements())
 	{
@@ -370,8 +394,35 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(V, Vre, -Vre / V2sq);
 		pDynaModel->SetElement(V, Vim, -Vim / V2sq);
 
-		double d1 = (PgVre2 - PgVim2 + VreVim2 * Qgsum) / V4;
-		double d2 = (QgVre2 - QgVim2 - VreVim2 * Pgsum) / V4;
+		const double Vn{ V2sq };
+		const double Vn2{ Vn * Vn };
+
+		//const double Vn{ V };
+		//const double Vn2{ V * V };
+
+		Pk /= Vn2;
+		Qk /= Vn2;
+
+		dIredVre += Pk;
+		dIredVim += Qk;
+		dIimdVre -= Qk;
+		dIimdVim += Pk;
+
+		dLRCPn -= dLRCPg;	dLRCQn -= dLRCQg;
+		dLRCPn /= Vn;
+		dLRCQn /= Vn;
+
+		const double dPdV{ (dLRCPn - 2.0 * Pk) / Vn };
+		const double dQdV{ (dLRCQn - 2.0 * Qk) / Vn };
+
+		pDynaModel->SetElement(Vre, V, dPdV * Vre + dQdV * Vim);
+		pDynaModel->SetElement(Vim, V, dPdV * Vim - dQdV * Vre);
+
+
+
+		/*
+		double d1 = (PgVre2 - PgVim2 + VreVim2 * Qk) / V4;
+		double d2 = (QgVre2 - QgVim2 - VreVim2 * Pk) / V4;
 
 		dIredVre -= d1;
 		dIredVim += d2;
@@ -386,6 +437,7 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		dLRCPn -= dLRCPg;		dLRCQn -= dLRCQg;
 		pDynaModel->SetElement(Vre, V, dLRCPn * VreV2 + dLRCQn * VimV2);
 		pDynaModel->SetElement(Vim, V, dLRCPn * VimV2 - dLRCQn * VreV2);
+		*/
 	}
 
 	pDynaModel->SetElement(Vre, Vre, dIredVre);
@@ -1613,6 +1665,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		// между этими указателями список виртуальных ветей данного узла
 		ZeroLF.pVirtualBranchesBegin = ZeroLF.pVirtualBranchesEnd = pHead;
 		ZeroLF.pVirtualZeroBranchesBegin = ZeroLF.pVirtualZeroBranchesEnd = pZeroHead;
+		ZeroLF.SlackInjection = ZeroLF.Yii = 0.0;
 
 		// ищем ветви, соединяющие текущий узел с другими суперузлами
 		while (pBranchLink->In(ppDevice))
@@ -1734,20 +1787,30 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	double Vsq{ 0.0 };
 	for (const auto& node : Matrix)
 	{
-		cplx Is{ -node->GetSelfImbInotSuper(Vmin, Vsq) };
+		cplx Is{ node->GetSelfImbInotSuper(Vmin, Vsq) };
 
 		// добавляем предварительно рассчитанную 
 		// инъекцию от связей с базисным узлом
-		Is += node->ZeroLF.SlackInjection;
+		Is -= node->ZeroLF.SlackInjection;
 				
 		// собираем сумму перетоков по виртуальным ветвям узла
 		// ветви находятся в общем для всего узла векторе и разделены
 		// вилками указателей pBranchesBegin <  pBranchesEnd
 		for (const VirtualBranch* vb = node->ZeroLF.pVirtualBranchesBegin; vb < node->ZeroLF.pVirtualBranchesEnd; vb++)
-			Is += vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
+			Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
 
-		*pB = Is.real();	pB++;
-		*pB = Is.imag();	pB++;
+		CDevice** ppGen{ nullptr };
+		CLinkPtrCount* pGenLink{ node->GetLink(1) };
+		while (pGenLink->InMatrix(ppGen))
+		{
+			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
+			Is -= cplx(pGen->Ire, pGen->Iim);
+		}
+
+
+
+		*pB = -Is.real();	pB++;
+		*pB = -Is.imag();	pB++;
 	}
 
 	pB = klu.B();
