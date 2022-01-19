@@ -20,20 +20,32 @@
 
 namespace DFW2
 {
-
+	// базовый класс трансформатора данных RastrWin
+	class CRastrValueTransformerBase
+	{
+	public:
+		virtual variant_t Transform(variant_t Input) const
+		{
+			return Input;
+		}
+	};
 
 	// Словарь синонимов названий контейнеров и их полей с таблицами и полями Rastr
 	class CRastrSynonyms 
 	{
 	protected:
-		using StringSet = std::set<std::string, std::less<> >;					// сет строк с возможностью искать string_view (std::less<>)
-		using FieldSynonyms = std::map<std::string, StringSet, std::less<> >;	// карта соответствия имени поля контейнера полям Rastr
+		// сет строк с возможностью искать string_view (std::less<>)
+		using StringSet = std::set<std::string, std::less<> >;					
+		// карта соответствия имени поля контейнера полям Rastr
+		using FieldSynonyms = std::map<std::string, StringSet, std::less<> >;	
+		// карта трансформаторов значений полей
+		using FieldTransformers = std::map<std::string, std::unique_ptr<CRastrValueTransformerBase>, std::less<> >;
 
 		// Таблица Rastr
 		struct RastrTable 
 		{
-			std::string name;				// название таблицы
-			FieldSynonyms m_FieldSynonyms;	// словарь синонимов полей
+			std::string name;							// название таблицы
+			FieldSynonyms m_FieldSynonyms;				// словарь синонимов полей
 
 			RastrTable(std::string_view Name) : name(Name) {}
 
@@ -70,9 +82,6 @@ namespace DFW2
 			}
 		};
 
-
-		
-
 		using RastrTables = std::set<std::unique_ptr<RastrTable>, RastrTableComparer>;
 		using RastrTablesPtrs = std::set<RastrTable*>;
 
@@ -81,9 +90,14 @@ namespace DFW2
 		RastrTables rastrTables;
 
 		// синонимы контейнера
+	public:
 		struct ContainerSynonym 
 		{
+			// используем unique_ptr в мембер карте - копирование невозможно
+			ContainerSynonym(const ContainerSynonym&) = delete;
+
 			std::string name;
+			FieldTransformers m_FieldTransformers;		// словарь трансформаторов
 
 			ContainerSynonym(std::string_view Name) : name(Name) {}
 
@@ -121,6 +135,14 @@ namespace DFW2
 				for (auto&& rastrSyn : rastrSynonyms)
 					rastrSyn->AddFieldSynonyms(field, synonyms...);
 				// возвращаем этот же объект для цепочечного вызова .AddFieldSynonums()
+				return *this;
+			}
+
+			// Добавляем трансформатор данных для поля с заданным именем
+			ContainerSynonym& AddFieldTransformer(std::string_view field, CRastrValueTransformerBase* pTransformer)
+			{
+				if (auto it{ m_FieldTransformers.find(field) }; it == m_FieldTransformers.end())
+					m_FieldTransformers.emplace(field, pTransformer).first;
 				return *this;
 			}
 		};
@@ -195,8 +217,16 @@ namespace DFW2
 	{
 	public:
 		IColPtr m_spCol; // указатель на поле БД
-		// конструктор по полю БД
-		CSerializedValueAuxDataRastr(IColPtr spCol) : m_spCol(spCol) { }
+		CRastrValueTransformerBase* m_pTransformer = nullptr;
+
+		CSerializedValueAuxDataRastr(IColPtr spCol, CRastrValueTransformerBase* pTransformer) : 
+			m_spCol(spCol),
+			m_pTransformer(pTransformer)
+		{ }
+
+		CSerializedValueAuxDataRastr(IColPtr spCol) :
+			m_spCol(spCol)
+		{ }
 	};
 
 	class CRastrImport
@@ -234,7 +264,7 @@ namespace DFW2
 		{
 			const auto containerClass = Container.GetSystemClassName();
 			// находим синнонимы названий контейнера для Rastr
-			auto tableSynonyms = m_rastrSynonyms.GetTable(containerClass);
+			const auto& tableSynonyms{ m_rastrSynonyms.GetTable(containerClass) };
 			auto synSet = tableSynonyms.GetRastrSynonyms();
 			long rastrTableIndex = -1;
 
@@ -296,7 +326,9 @@ namespace DFW2
 						{
 							if (long index = spCols->GetFind(synonym.c_str()); index >= 0)
 							{
-								serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(index));
+								auto transformer{tableSynonyms.m_FieldTransformers.find(synonym.c_str())};
+								serializervalue.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(index), 
+								 transformer != tableSynonyms.m_FieldTransformers.end() ? transformer->second.get() : nullptr);
 								break;
 							}
 						}
@@ -408,6 +440,31 @@ namespace DFW2
 				L"",
 				100);
 		}
+	};
+
+	// сериализатор перечисления типов узлов из Rastr
+	class CRastrNodeTypeEnumTransformer : public CRastrValueTransformerBase
+	{
+	public:
+		using CRastrValueTransformerBase::CRastrValueTransformerBase;
+		variant_t Transform(variant_t Input) const override
+		{
+			return variant_t{ static_cast<std::underlying_type<CDynaNodeBase::eLFNodeType>::type>(CRastrNodeTypeEnumTransformer::NodeTypeFromRastr(static_cast<long>(Input))) };
+		}
+		static CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType)
+		{
+			if (RastrType >= 0 && RastrType < _countof(RastrTypesMap))
+				return RastrTypesMap[RastrType];
+
+			_ASSERTE(RastrType >= 0 && RastrType < _countof(RastrTypesMap));
+			return CDynaNodeBase::eLFNodeType::LFNT_PQ;
+		}
+		static constexpr const CDynaNodeBase::eLFNodeType RastrTypesMap[5] = {  CDynaNodeBase::eLFNodeType::LFNT_BASE,
+																				CDynaNodeBase::eLFNodeType::LFNT_PQ,
+																				CDynaNodeBase::eLFNodeType::LFNT_PV,
+																				CDynaNodeBase::eLFNodeType::LFNT_PVQMAX,
+																				CDynaNodeBase::eLFNodeType::LFNT_PVQMIN
+																			 };
 	};
 }
 

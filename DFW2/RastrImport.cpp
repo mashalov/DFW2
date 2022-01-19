@@ -234,7 +234,8 @@ void CRastrImport::ReadRastrRowData(SerializerPtr& Serializer, long Row)
 		if (!mv.pAux)
 			continue;
 		//получаем вариант со значением из столбца таблицы, привязанного к сериализатору
-		variant_t vt = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row);
+		const auto& dataProp{static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())};
+		variant_t vt = { dataProp->m_spCol->GetZ(Row) };
 		// конвертируем вариант из таблицы в нужный тип значения сериализатора
 		// с необходимыми преобразованиями по метаданным
 		switch (mv.ValueType)
@@ -267,6 +268,10 @@ void CRastrImport::ReadRastrRowData(SerializerPtr& Serializer, long Row)
 			Serializer->GetDevice()->SetId(vt.lVal);
 			break;
 		case TypedSerializedValue::eValueType::VT_ADAPTER:
+			// если у поля есть трансформатор, используем его
+			// для преобразования варианта
+			if (dataProp->m_pTransformer)
+				vt = dataProp->m_pTransformer->Transform(vt);
 			vt.ChangeType(VT_I4);
 			// если поле привязано к адаптеру, даем адаптеру int
 			// и если нужно адаптер должен перекодировать int во что-то нужное
@@ -419,7 +424,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms
 		.AddRastrSynonym("Node", "node")
 		.AddFieldSynonyms("LRCLFId", "nsx")
-		.AddFieldSynonyms("LRCTransId", "dnsx");
+		.AddFieldSynonyms("LRCTransId", "dnsx")
+		.AddFieldTransformer("tip", new CRastrNodeTypeEnumTransformer()); // задаем трансформатор типа узла
 
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameBranch, "vetv");
 	m_rastrSynonyms
@@ -445,6 +451,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExciterMustang, "Exciter");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameDECMustang, "Forcer");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
+
 
 	ReadLRCs(static_cast<CDynaLRCContainer&>(Network.LRCs));
 	ReadTable(Network.Reactors);
@@ -555,7 +562,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		// и оставляем значение по умолчанию
 		for (auto&& field : *ps)
 			if (long index = spCols->GetFind(field.first.c_str()); index >= 0)
-				field.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(index));
+				field.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(index), nullptr);
 		// читаем данные из собранных адаптеров
 		ReadRastrRowData(ps, 0);
 	}

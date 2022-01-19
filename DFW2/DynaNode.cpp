@@ -2128,44 +2128,12 @@ void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CSynchroZone>>();
 }
 
-// сериализатор перечисления типов узлов из Rastr
-// сразу его подсовываем сериализатору узла для чтения целых с маппингом значений енума
-// строковые енумы сериализатор будет обрабатывать как обычно без преобразований
-class CRastrNodeTypeSerializer : public CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>
-{
-public:
-	CRastrNodeTypeSerializer(CDynaNodeBase::eLFNodeType& eNodeType) : 
-		CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>(eNodeType, CDynaNodeBase::m_cszLFNodeTypeNames) {}
-	void SetInt(ptrdiff_t vInt) noexcept override
-	{
-		CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>::SetInt(static_cast<std::underlying_type<CDynaNodeBase::eLFNodeType>::type>(NodeTypeFromRastr(static_cast<long>(vInt))));
-	}
-
-	static CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType)
-	{
-		if (RastrType >= 0 && RastrType < _countof(RastrTypesMap))
-			return RastrTypesMap[RastrType];
-
-		_ASSERTE(RastrType >= 0 && RastrType < _countof(RastrTypesMap));
-		return CDynaNodeBase::eLFNodeType::LFNT_PQ;
-	}
-
-	static constexpr const CDynaNodeBase::eLFNodeType RastrTypesMap[5] =	{	CDynaNodeBase::eLFNodeType::LFNT_BASE,
-																				CDynaNodeBase::eLFNodeType::LFNT_PQ,
-																				CDynaNodeBase::eLFNodeType::LFNT_PV,
-																				CDynaNodeBase::eLFNodeType::LFNT_PVQMAX,
-																				CDynaNodeBase::eLFNodeType::LFNT_PVQMIN
-																			};
-
-};
-
-
 void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty(CDevice::m_cszname, TypedSerializedValue::eValueType::VT_NAME);
 	AddStateProperty(Serializer);
-	Serializer->AddEnumProperty("tip", new CRastrNodeTypeSerializer(m_eLFNodeType));
+	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum(m_eLFNodeType, CDynaNodeBase::m_cszLFNodeTypeNames));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);
