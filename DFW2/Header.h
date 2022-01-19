@@ -38,11 +38,22 @@ namespace DFW2
 	typedef std::complex<double> cplx;
 
 #define DFW2_EPSILON 1E-10
-#define DFW2_ATOL_DEFAULT 1E-7
+#define DFW2_ATOL_DEFAULT 1E-4
 #define DFW2_RTOL_DEFAULT 1E-4
 #define M_SQRT3 1.7320508075688772935274463415059
 #define DFW2_VERSION 1
 #define DFW2_RESULTFILE_VERSION 2
+
+//#define USE_FMA_FULL
+//#define USE_FMA
+
+#if defined USE_FMA_FULL
+#define USE_FMA
+#endif 
+
+#if defined USE_FMA || defined USE_FMA_FULL
+#define FP_FAST_FMA 
+#endif
 
 #define _CheckNumber(a) _ASSERTE(!std::isnan((a)) && !std::isinf((a)));
 

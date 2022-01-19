@@ -32,6 +32,8 @@ namespace DFW2
 			eLoadFlowFormulation m_LFFormulation = eLoadFlowFormulation::Current;	// способ представления модели УР
 			bool m_bAllowNegativeLRC = true;			// разрешить учет СХН для узлов с отрицательной нагрузкой
 			double m_dVdifference = 1E-4;				// порог сравнения модуля напряжения
+			double m_dLRCMinSlope = 0.0;				// минимальная крутизна СХН
+			double m_dLRCMaxSlope = 5.0;				// максимальная крутизна СХН
 		};
 
 		CLoadFlow(CDynaModel *pDynaModel);

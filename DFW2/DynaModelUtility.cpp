@@ -643,6 +643,32 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 	Validator->AddRule(m_cszProcessDuration, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszFrequencyTimeConstant, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszLRCToShuntVmin, &ValidatorRange01);
+	Validator->AddRule(m_cszFrequencyTimeConstant, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLRCToShuntVmin, &ValidatorRange01);
+	Validator->AddRule(m_cszZeroCrossingTolerance, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(m_cszOutStep, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszAtol, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszRtol, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszRefactorByHRatio, &CSerializerValidatorRules::BiggerThanUnity);
+	Validator->AddRule(m_cszMustangDerivativeTimeConstant, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszAdamsIndividualSuppressionCycles, &CSerializerValidatorRules::BiggerThanUnity);
+	Validator->AddRule(m_cszAdamsGlobalSuppressionStep, &CSerializerValidatorRules::BiggerThanUnity);
+	Validator->AddRule(m_cszAdamsIndividualSuppressStepsRange, &CSerializerValidatorRules::BiggerThanUnity);
+	Validator->AddRule(m_cszMinimumStepFailures, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszAdamsDampingSteps, &CSerializerValidatorRules::BiggerThanUnity);
+	Validator->AddRule(m_cszAdamsDampingAlpha, &ValidatorRange01);
+	Validator->AddRule(m_cszProcessDuration, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszDecayDetectorCycles, &CSerializerValidatorRules::BiggerThanUnity);
+	Validator->AddRule(m_cszLFImbalance, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLFSeidellIterations, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLFEnableSwitchIteration, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLFEnableSwitchIteration, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(m_cszLFMaxIterations, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLFNewtonMaxVoltageStep, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLFNewtonMaxNodeAngleStep, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLFNewtonMaxBranchAngleStep, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLFForceSwitchLambda, &CSerializerValidatorRules::BiggerThanZero);
+
 	return Validator;
 }
 
@@ -653,68 +679,70 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszFrequencyTimeConstant, m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_cszLRCToShuntVmin, m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszConsiderDampingEquation, m_bConsiderDampingEquation);
-	Serializer->AddProperty("ZeroCrossingTolerance", m_dZeroCrossingTolerance);
-	Serializer->AddProperty("DontCheckTolOnMinStep", m_bDontCheckTolOnMinStep);
-	Serializer->AddProperty("OutStep", m_dOutStep, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszZeroCrossingTolerance, m_dZeroCrossingTolerance);
+	Serializer->AddProperty(m_cszDontCheckTolOnMinStep, m_bDontCheckTolOnMinStep);
+	Serializer->AddProperty(m_cszOutStep, m_dOutStep, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty("VarSearchStackDepth", nVarSearchStackDepth);
-	Serializer->AddProperty("Atol", m_dAtol);
-	Serializer->AddProperty("Rtol", m_dRtol);
-	Serializer->AddProperty("RefactorByHRatio", m_dRefactorByHRatio);
-	Serializer->AddProperty("LogToConsole", m_bLogToConsole);
-	Serializer->AddProperty("LogToFile", m_bLogToFile);
-	Serializer->AddProperty("MustangDerivativeTimeConstant", m_dMustangDerivativeTimeConstant, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("AdamsIndividualSuppressionCycles", m_nAdamsIndividualSuppressionCycles, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddProperty("AdamsGlobalSuppressionStep", m_nAdamsGlobalSuppressionStep, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddProperty("AdamsIndividualSuppressStepsRange", m_nAdamsIndividualSuppressStepsRange, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddProperty("UseRefactor", m_bUseRefactor);
-	Serializer->AddProperty("DisableResultsWriter", m_bDisableResultsWriter);
-	Serializer->AddProperty("MinimumStepFailures", m_nMinimumStepFailures, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddProperty("ZeroBranchImpedance", m_dZeroBranchImpedance, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty("AdamsDampingAlpha", m_dAdamsDampingAlpha);
-	Serializer->AddProperty("AdamsDampingSteps", m_nAdamsDampingSteps);
-	Serializer->AddProperty("AllowUserOverrideStandardLRC", m_bAllowUserOverrideStandardLRC);
-	Serializer->AddProperty("AllowDecayDetector", m_bAllowDecayDetector);
-	Serializer->AddProperty("DecayDetectorCycles", m_nDecayDetectorCycles);
-	Serializer->AddProperty("StopOnBranchOOS", m_bStopOnBranchOOS);
-	Serializer->AddProperty("StopOnGeneratorOOS", m_bStopOnGeneratorOOS);
-	Serializer->AddProperty("WorkingFolder", m_strWorkingFolder);
-	Serializer->AddProperty("ResultsFolder", m_strResultsFolder);
-	Serializer->AddProperty("LRCMinSlope", m_dLRCMinSlope);
-	Serializer->AddProperty("LRCMaxSlope", m_dLRCMaxSlope);
+	Serializer->AddProperty(m_cszAtol, m_dAtol);
+	Serializer->AddProperty(m_cszRtol, m_dRtol);
+	Serializer->AddProperty(m_cszRefactorByHRatio, m_dRefactorByHRatio);
+	Serializer->AddProperty(m_cszLogToConsole, m_bLogToConsole);
+	Serializer->AddProperty(m_cszLogToFile, m_bLogToFile);
+	Serializer->AddProperty(m_cszMustangDerivativeTimeConstant, m_dMustangDerivativeTimeConstant, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszAdamsIndividualSuppressionCycles, m_nAdamsIndividualSuppressionCycles, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty(m_cszAdamsGlobalSuppressionStep, m_nAdamsGlobalSuppressionStep, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty(m_cszAdamsIndividualSuppressStepsRange, m_nAdamsIndividualSuppressStepsRange, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty(m_cszUseRefactor, m_bUseRefactor);
+	Serializer->AddProperty(m_cszDisableResultsWriter, m_bDisableResultsWriter);
+	Serializer->AddProperty(m_cszMinimumStepFailures, m_nMinimumStepFailures, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty(m_cszZeroBranchImpedance, m_dZeroBranchImpedance, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(m_cszAdamsDampingAlpha, m_dAdamsDampingAlpha);
+	Serializer->AddProperty(m_cszAdamsDampingSteps, m_nAdamsDampingSteps);
+	Serializer->AddProperty(m_cszAllowUserOverrideStandardLRC, m_bAllowUserOverrideStandardLRC);
+	Serializer->AddProperty(m_cszAllowDecayDetector, m_bAllowDecayDetector);
+	Serializer->AddProperty(m_cszDecayDetectorCycles, m_nDecayDetectorCycles);
+	Serializer->AddProperty(m_cszStopOnBranchOOS, m_bStopOnBranchOOS);
+	Serializer->AddProperty(m_cszStopOnGeneratorOOS, m_bStopOnGeneratorOOS);
+	Serializer->AddProperty(m_cszWorkingFolder, m_strWorkingFolder);
+	Serializer->AddProperty(m_cszResultsFolder, m_strResultsFolder);
 	Serializer->AddProperty(m_cszProcessDuration, m_dProcessDuration);
 
-	Serializer->AddEnumProperty("AdamsRingingSuppressionMode", 
+	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
 
-	Serializer->AddEnumProperty("FreqDampingType",
+	Serializer->AddEnumProperty(m_cszFreqDampingType,
 		new CSerializerAdapterEnum(eFreqDampingType, m_cszFreqDampingNames));
 
 	Serializer->AddEnumProperty("DiffEquationType",
 		new CSerializerAdapterEnum(m_eDiffEquationType, m_cszDiffEquationTypeNames));
 
-	Serializer->AddEnumProperty("LogLevel",
+	Serializer->AddEnumProperty(m_cszLogLevel,
 		new CSerializerAdapterEnum(m_eLogLevel, m_cszLogLevelNames));
 
 	Serializer->AddEnumProperty(m_cszParkParametersDetermination,
 		new CSerializerAdapterEnum(m_eParkParametersDetermination, m_cszParkParametersDeterminationMethodNames));
 
-	Serializer->AddEnumProperty("GeneratorLessLRC",
+	Serializer->AddEnumProperty(m_cszGeneratorLessLRC,
 		new CSerializerAdapterEnum(m_eGeneratorLessLRC, m_cszGeneratorLessLRCNames));
 
 	// расчет УР
 
-	Serializer->AddProperty("LFImbalance", m_Imb);
-	Serializer->AddProperty("LFFlat", m_bFlat);
-	Serializer->AddProperty("LFStartup", m_bStartup);
-	Serializer->AddProperty("LFSeidellStep", m_dSeidellStep);
-	Serializer->AddProperty("LFSeidellIterations", m_nSeidellIterations);
-	Serializer->AddProperty("LFEnableSwitchIteration", m_nEnableSwitchIteration);
-	Serializer->AddProperty("LFMaxIterations", m_nMaxIterations);
-	Serializer->AddProperty("LFNewtonMaxVoltageStep", m_dVoltageNewtonStep);
-	Serializer->AddProperty("LFNewtonMaxNodeAngleStep", m_dNodeAngleNewtonStep);
-	Serializer->AddProperty("LFNewtonMaxBranchAngleStep", m_dBranchAngleNewtonStep);
-	Serializer->AddProperty("LFForceSwitchLambda", ForceSwitchLambda);
-	Serializer->AddEnumProperty("LFFormulation", new CSerializerAdapterEnum(m_LFFormulation, m_cszLFFormulationTypeNames));
+	Serializer->AddProperty(m_cszLFImbalance, m_Imb);
+	Serializer->AddProperty(m_cszLFFlat, m_bFlat);
+	Serializer->AddProperty(m_cszLFStartup, m_bStartup);
+	Serializer->AddProperty(m_cszLFSeidellStep, m_dSeidellStep);
+	Serializer->AddProperty(m_cszLFSeidellIterations, m_nSeidellIterations);
+	Serializer->AddProperty(m_cszLFEnableSwitchIteration, m_nEnableSwitchIteration);
+	Serializer->AddProperty(m_cszLFMaxIterations, m_nMaxIterations);
+	Serializer->AddProperty(m_cszLFNewtonMaxVoltageStep, m_dVoltageNewtonStep);
+	Serializer->AddProperty(m_cszLFNewtonMaxNodeAngleStep, m_dNodeAngleNewtonStep);
+	Serializer->AddProperty(m_cszLFNewtonMaxBranchAngleStep, m_dBranchAngleNewtonStep);
+	Serializer->AddProperty(m_cszLFForceSwitchLambda, ForceSwitchLambda);
+	Serializer->AddEnumProperty(m_cszLFFormulation, new CSerializerAdapterEnum(m_LFFormulation, m_cszLFFormulationTypeNames));
+	Serializer->AddProperty(m_cszLFAllowNegativeLRC, m_bAllowNegativeLRC);
+	Serializer->AddProperty(m_cszLFLRCMinSlope, m_dLRCMinSlope);
+	Serializer->AddProperty(m_cszLFLRCMaxSlope, m_dLRCMaxSlope);
+
 	return Serializer;
 }
 

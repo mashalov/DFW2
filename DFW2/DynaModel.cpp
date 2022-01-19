@@ -164,7 +164,7 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 
 		//m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Sconst;
-		m_Parameters.m_dZeroBranchImpedance = 4.0E-4;
+		m_Parameters.m_dZeroBranchImpedance = 4.0E-5;
 		m_Parameters.m_dProcessDuration = 150;
 		m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
@@ -179,9 +179,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
 		m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
 
-		m_Parameters.m_bUseRefactor = true;
 		m_Parameters.m_dAtol = 1E-4;
-		m_Parameters.m_dMustangDerivativeTimeConstant = 1E-4;
 		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bDisableResultsWriter = true;

@@ -69,6 +69,22 @@ namespace DFW2
 		}
 	};
 
+	class CValidationRuleBiggerThanUnity : public CValidationRuleBase
+	{
+	public:
+		using CValidationRuleBase::CValidationRuleBase;
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			ValidationResult res(value->Double() > 1.0 ? ValidationResult::Ok : DefaultResult);
+			if (res != ValidationResult::Ok)
+			{
+				message = CDFW2Messages::m_cszValidationBiggerThanZero;
+				res = ReplaceValue(value);
+			}
+			return res;
+		}
+	};
+
 	class CValidationRuleNegative : public CValidationRuleBase
 	{
 	public:
@@ -239,6 +255,7 @@ namespace DFW2
 		inline VarRuleMapT::const_iterator begin() { return m_RulesMap.begin(); }
 		inline VarRuleMapT::const_iterator end()   { return m_RulesMap.end(); }
 
+		static inline CValidationRuleBiggerThanUnity BiggerThanUnity;
 		static inline CValidationRuleBiggerThanZero BiggerThanZero;
 		static inline CValidationRuleNonNegative NonNegative;
 		static inline CValidationRuleNegative Negative;

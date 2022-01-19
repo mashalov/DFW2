@@ -134,7 +134,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(const double Vmin, double& Vsq)
 			{
 				_ASSERTE(0);
 				double Vx = std::sqrt(Vre * Vre + Vim * Vim);
-				GetPnrQnrSuper();
+				GetPnrQnrSuper(Vsq);
 			}
 #endif
 			Pgr = Qgr = Pnr = Qnr = 0.0;
@@ -211,7 +211,7 @@ void CDynaNodeBase::GetPnrQnrSuper(double Vnode)
 		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 		pSlaveNode->FromSuperNode();
 
-		pSlaveNode->GetPnrQnr();
+		pSlaveNode->GetPnrQnr(Vnode);
 		Pnr += pSlaveNode->Pnr;
 		Qnr += pSlaveNode->Qnr;
 		Pgr += pSlaveNode->Pgr;
@@ -412,11 +412,19 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		dLRCPn /= Vn;
 		dLRCQn /= Vn;
 
+		
+
+#ifdef USE_FMA
+		const double dPdV{ std::fma(-2.0, Pk, dLRCPn) / Vn };
+		const double dQdV{ std::fma(-2.0, Qk, dLRCQn) / Vn };
+		pDynaModel->SetElement(Vre, V, std::fma(dPdV, Vre, dQdV * Vim));
+		pDynaModel->SetElement(Vim, V, std::fma(dPdV, Vim, -dQdV * Vre));
+#else
 		const double dPdV{ (dLRCPn - 2.0 * Pk) / Vn };
 		const double dQdV{ (dLRCQn - 2.0 * Qk) / Vn };
-
 		pDynaModel->SetElement(Vre, V, dPdV * Vre + dQdV * Vim);
 		pDynaModel->SetElement(Vim, V, dPdV * Vim - dQdV * Vre);
+#endif
 
 
 
@@ -494,8 +502,13 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 		{
+#ifdef USE_FMA
+			Ire = std::fma(-pV->Y.real(), pV->pNode->Vre, std::fma(pV->Y.imag(), pV->pNode->Vim, Ire));
+			Iim = std::fma(-pV->Y.imag(), pV->pNode->Vre, std::fma(-pV->Y.real(), pV->pNode->Vim, Iim));
+#else
 			Ire -= pV->Y.real() * pV->pNode->Vre - pV->Y.imag() * pV->pNode->Vim;
 			Iim -= pV->Y.imag() * pV->pNode->Vre + pV->Y.real() * pV->pNode->Vim;
+#endif
 		}
 	}
 
@@ -773,8 +786,13 @@ void CDynaNodeBase::CalculateShuntParts()
 	if (m_pLRCGen)
 	{
 		// рассчитываем шунтовую часть СХН генерации в узле для низких напряжений
+#ifdef USE_FMA
+		dLRCShuntPartP = std::fma(-Pg, m_pLRCGen->P.begin()->a2, dLRCShuntPartP);
+		dLRCShuntPartQ = std::fma(-Qg, m_pLRCGen->Q.begin()->a2, dLRCShuntPartQ);
+#else
 		dLRCShuntPartP -= Pg * m_pLRCGen->P.begin()->a2;
 		dLRCShuntPartQ -= Qg * m_pLRCGen->Q.begin()->a2;
+#endif
 	}
 	dLRCShuntPartP /= V02;
 	dLRCShuntPartQ /= V02;
@@ -2110,13 +2128,44 @@ void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CSynchroZone>>();
 }
 
+// сериализатор перечисления типов узлов из Rastr
+// сразу его подсовываем сериализатору узла для чтения целых с маппингом значений енума
+// строковые енумы сериализатор будет обрабатывать как обычно без преобразований
+class CRastrNodeTypeSerializer : public CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>
+{
+public:
+	CRastrNodeTypeSerializer(CDynaNodeBase::eLFNodeType& eNodeType) : 
+		CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>(eNodeType, CDynaNodeBase::m_cszLFNodeTypeNames) {}
+	void SetInt(ptrdiff_t vInt) noexcept override
+	{
+		CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>::SetInt(static_cast<std::underlying_type<CDynaNodeBase::eLFNodeType>::type>(NodeTypeFromRastr(static_cast<long>(vInt))));
+	}
+
+	static CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType)
+	{
+		if (RastrType >= 0 && RastrType < _countof(RastrTypesMap))
+			return RastrTypesMap[RastrType];
+
+		_ASSERTE(RastrType >= 0 && RastrType < _countof(RastrTypesMap));
+		return CDynaNodeBase::eLFNodeType::LFNT_PQ;
+	}
+
+	static constexpr const CDynaNodeBase::eLFNodeType RastrTypesMap[5] =	{	CDynaNodeBase::eLFNodeType::LFNT_BASE,
+																				CDynaNodeBase::eLFNodeType::LFNT_PQ,
+																				CDynaNodeBase::eLFNodeType::LFNT_PV,
+																				CDynaNodeBase::eLFNodeType::LFNT_PVQMAX,
+																				CDynaNodeBase::eLFNodeType::LFNT_PVQMIN
+																			};
+
+};
+
 
 void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty(CDevice::m_cszname, TypedSerializedValue::eValueType::VT_NAME);
 	AddStateProperty(Serializer);
-	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum(m_eLFNodeType, m_cszLFNodeTypeNames));
+	Serializer->AddEnumProperty("tip", new CRastrNodeTypeSerializer(m_eLFNodeType));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);
@@ -2250,3 +2299,4 @@ void CDynaNodeContainer::RequireSuperNodeLF(CDynaNodeBase *pSuperNode)
 		throw dfw2error(fmt::format("CDynaNodeBase::RequireSuperNodeLF - node {} is not super node", pSuperNode->GetVerbalName()));
 	m_ZeroLFSet.insert(pSuperNode);
 }
+

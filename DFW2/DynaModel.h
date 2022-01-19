@@ -25,7 +25,6 @@
 #include "Logger.h"
 #include "NodeMeasures.h"
 
-//#define USE_FMA
 namespace DFW2
 {
 
@@ -52,13 +51,13 @@ namespace DFW2
 			double m_dRefactorByHRatio = 1.5;
 			bool m_bLogToConsole = false;
 			bool m_bLogToFile = true;
-			double m_dMustangDerivativeTimeConstant = 1E-6;
+			double m_dMustangDerivativeTimeConstant = 1E-4;
 			// режим подавления рингинга
 			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
 			ptrdiff_t m_nAdamsIndividualSuppressionCycles = 3;			// количество перемен знака переменной для обнаружения рингинга
 			ptrdiff_t m_nAdamsGlobalSuppressionStep = 10;				// номер шага, на кратном которому работает глобальное подавление рингинга
 			ptrdiff_t m_nAdamsIndividualSuppressStepsRange = 5;			// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
-			bool m_bUseRefactor = false;
+			bool m_bUseRefactor = true;
 			bool m_bDisableResultsWriter = false;
 			ptrdiff_t m_nMinimumStepFailures = 1;
 			double m_dZeroBranchImpedance = 4e-6;
@@ -73,8 +72,6 @@ namespace DFW2
 			std::string m_strResultsFolder = "";
 			DFW2MessageStatus m_eLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
 			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo;
-			double m_dLRCMinSlope = 0.0;
-			double m_dLRCMaxSlope = 5.0;
 			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 			double m_dProcessDuration = 150.0;
 		};
@@ -99,6 +96,52 @@ namespace DFW2
 			static constexpr const char* m_cszLRCToShuntVmin = "LRCToShuntVmin";
 			static constexpr const char* m_cszConsiderDampingEquation = "ConsiderDampingEquation";
 			static constexpr const char* m_cszParkParametersDetermination = "ParkParametersDetermination";
+			static constexpr const char* m_cszZeroCrossingTolerance = "ZeroCrossingTolerance";
+			static constexpr const char* m_cszDontCheckTolOnMinStep = "DontCheckTolOnMinStep";
+			static constexpr const char* m_cszOutStep = "OutStep";
+
+
+			static constexpr const char* m_cszAtol = "Atol";
+			static constexpr const char* m_cszRtol = "Rtol";
+			static constexpr const char* m_cszRefactorByHRatio = "RefactorByHRatio";
+			static constexpr const char* m_cszLogToConsole = "LogToConsole";
+			static constexpr const char* m_cszLogToFile = "LogToFile";
+			static constexpr const char* m_cszMustangDerivativeTimeConstant = "MustangDerivativeTimeConstant";
+			static constexpr const char* m_cszAdamsIndividualSuppressionCycles = "AdamsIndividualSuppressionCycles";
+			static constexpr const char* m_cszAdamsGlobalSuppressionStep = "AdamsGlobalSuppressionStep";
+			static constexpr const char* m_cszAdamsIndividualSuppressStepsRange = "AdamsIndividualSuppressStepsRange";
+			static constexpr const char* m_cszUseRefactor = "UseRefactor";
+			static constexpr const char* m_cszDisableResultsWriter = "bDisableResultsWriter";
+			static constexpr const char* m_cszMinimumStepFailures = "MinimumStepFailures";
+			static constexpr const char* m_cszZeroBranchImpedance = "ZeroBranchImpedance";
+			static constexpr const char* m_cszAdamsDampingAlpha = "AdamsDampingAlpha";
+			static constexpr const char* m_cszAdamsDampingSteps = "AdamsDampingSteps";
+			static constexpr const char* m_cszAllowUserOverrideStandardLRC = "AllowUserOverrideStandardLRC";
+			static constexpr const char* m_cszAllowDecayDetector ="AllowDecayDetector";
+			static constexpr const char* m_cszDecayDetectorCycles = "DecayDetectorCycles";
+			static constexpr const char* m_cszStopOnBranchOOS = "StopOnBranchOOS";
+			static constexpr const char* m_cszStopOnGeneratorOOS = "StopOnGeneratorOOS";
+			static constexpr const char* m_cszWorkingFolder = "WorkingFolder";
+			static constexpr const char* m_cszResultsFolder = "ResultsFolder";
+			static constexpr const char* m_cszAdamsRingingSuppressionMode = "AdamsRingingSuppressionMode";
+			static constexpr const char* m_cszFreqDampingType = "FreqDampingType";
+			static constexpr const char* m_cszLogLevel = "LogLevel";
+			static constexpr const char* m_cszGeneratorLessLRC = "GeneratorLessLRC";
+			static constexpr const char* m_cszLFImbalance = "LFImbalance";
+			static constexpr const char* m_cszLFFlat = "LFFlat";
+			static constexpr const char* m_cszLFStartup = "Startup";
+			static constexpr const char* m_cszLFSeidellStep = "SeidellStep";
+			static constexpr const char* m_cszLFSeidellIterations = "SeidellIterations";
+			static constexpr const char* m_cszLFEnableSwitchIteration = "EnableSwitchIteration";
+			static constexpr const char* m_cszLFMaxIterations = "MaxIterations";
+			static constexpr const char* m_cszLFNewtonMaxVoltageStep = "VoltageNewtonStep";
+			static constexpr const char* m_cszLFNewtonMaxNodeAngleStep = "NodeAngleNewtonStep";
+			static constexpr const char* m_cszLFNewtonMaxBranchAngleStep = "BranchAngleNewtonStep";
+			static constexpr const char* m_cszLFForceSwitchLambda = "ForceSwitchLambda";
+			static constexpr const char* m_cszLFFormulation = "LFFormulation";
+			static constexpr const char* m_cszLFAllowNegativeLRC = "AllowNegativeLRC";
+			static constexpr const char* m_cszLFLRCMinSlope = "LRCMinSlope";
+			static constexpr const char* m_cszLFLRCMaxSlope = "dLRCMaxSlope";
 
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};

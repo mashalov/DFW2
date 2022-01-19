@@ -176,14 +176,22 @@ namespace DFW2
 		double GetWeightedError(const double dError, const double dAbsValue) const
 		{
 			_ASSERTE(Atol > 0.0);
+#ifdef USE_FMA_FULL
+			return dError / std::fma(std::abs(dAbsValue), Rtol, Atol);
+#else
 			return dError / (std::abs(dAbsValue) * Rtol + Atol);
+#endif
 		}
 
 		// расчет взвешенной ошибки по значению данной переменной
 		double GetWeightedError(const double dAbsValue) const
 		{
 			_ASSERTE(Atol > 0.0);
+#ifdef USE_FMA_FULL
+			return Error / std::fma(std::abs(dAbsValue), Rtol, Atol);
+#else
 			return Error / (std::abs(dAbsValue) * Rtol + Atol);
+#endif
 		}
 	};
 
@@ -363,7 +371,7 @@ namespace DFW2
 		inline static double ZeroDivGuard(double Nom, double Denom)
 		{
 			// если делитель - ноль, деление не выполняем
-			return (std::fabs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
+			return (std::abs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
 		}
 
 		template<typename T>

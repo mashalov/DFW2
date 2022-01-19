@@ -224,6 +224,7 @@ namespace DFW2
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer);
 		bool GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceCPPContainer& CustomDeviceContainer);
 		void ReadRastrRow(SerializerPtr& Serializer, long Row);
+		void ReadRastrRowData(SerializerPtr& Serializer, long Row);
 
 
 		void ReadLRCs(CDynaLRCContainer& container);
@@ -329,9 +330,7 @@ namespace DFW2
 				throw dfw2error(fmt::format("RastrImport::ReadTable - container \"{}\" has no readable synonyms for Rastr tables",
 					containerClass));
 		}
-		
-		CDynaNodeBase::eLFNodeType NodeTypeFromRastr(long RastrType);
-		static const CDynaNodeBase::eLFNodeType RastrTypesMap[5];
+	
 	};
 
 	class CLoggerRastrWin : public CLogger

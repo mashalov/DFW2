@@ -204,6 +204,7 @@ const char* CDFW2Messages::m_cszLFNodeImbalance = "Небаланс УР в уз
 const char* CDFW2Messages::m_cszMaxBranchAngle = "Максимальный угол по связи {:.3f} \"{}\" при t={}";
 const char* CDFW2Messages::m_cszMaxGeneratorAngle = "Максимальный угол по генератору {:.3f} \"{}\" при t={}";
 const char* CDFW2Messages::m_cszValidationBiggerThanZero = "должно быть больше нуля";
+const char* CDFW2Messages::m_cszValidationBiggerThanUnity = "должно быть больше единицы";
 const char* CDFW2Messages::m_cszValidationNegative = "должно быть меньше нуля";
 const char* CDFW2Messages::m_cszValidationNonNegative = "должно быть неотрицательным";
 const char* CDFW2Messages::m_cszValidationChangedTo = "Значение изменено на ";

@@ -204,12 +204,23 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 	return bRes;
 }
 
+
 // читаем в сериализатор строку с заднным номером из таблицы RastrWin
+// полагая что в сериализаторе устройство
 void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 {
 	// ставим устройству в сериализаторе индекс в БД и идентификатор
 	Serializer->GetDevice()->SetDBIndex(Row);
 	Serializer->GetDevice()->SetId(Row); // если идентификатора нет или он сложный - ставим порядковый номер в качестве идентификатора
+	ReadRastrRowData(Serializer, Row);
+}
+
+// читаем в сериализатор строку с заднным номером из таблицы RastrWin
+// полагая что в сериализаторе просто поля
+// разделение функций нужно для того чтобы читать из RastrWin
+// данные, не отнесенные к устрйоствам
+void CRastrImport::ReadRastrRowData(SerializerPtr& Serializer, long Row)
+{
 
 	// проходим по значениям сериализатора
 	for (auto&& sv : *Serializer)
@@ -217,6 +228,10 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 		MetaSerializedValue& mv = *sv.second;
 		// пропускаем переменные состояния
 		if (mv.bState)
+			continue;
+		// если поле не найден (нет адаптера) - пропускаем поле
+		// ошибку надо было выдавать до ReadRastrRowData при формировании адаптеров
+		if (!mv.pAux)
 			continue;
 		//получаем вариант со значением из столбца таблицы, привязанного к сериализатору
 		variant_t vt = static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())->m_spCol->GetZ(Row);
@@ -253,8 +268,15 @@ void CRastrImport::ReadRastrRow(SerializerPtr& Serializer, long Row)
 			break;
 		case TypedSerializedValue::eValueType::VT_ADAPTER:
 			vt.ChangeType(VT_I4);
+			// если поле привязано к адаптеру, даем адаптеру int
+			// и если нужно адаптер должен перекодировать int во что-то нужное
+			// в данном типе поля
+			mv.Adapter->SetInt(vt.lVal);
+			break;
+		case TypedSerializedValue::eValueType::VT_STRING:
+			vt.ChangeType(VT_BSTR);
 			// если поле привязано к адаптеру, даем адаптеру int (недоделано)
-			mv.Adapter->SetInt(static_cast<std::underlying_type<CDynaNodeBase::eLFNodeType>::type>(NodeTypeFromRastr(vt.lVal)));
+			mv.SetString(stringutils::utf8_encode(vt.bstrVal));
 			break;
 		default:
 			throw dfw2error(fmt::format("CRastrImport::ReadRastrRow wrong serializer type {}", mv.ValueType));
@@ -522,13 +544,28 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spDamping = spParCols->Item(L"IsDemp");
 
 	auto ps{ Network.GetParametersSerializer() };
+
+	// пытаемся прочитать параметры Raiden из таблицы RastrWin
+	if (long nTableIndex{ spTables->GetFind("RaidenParameters") }; nTableIndex >= 0)
+	{
+		ITablePtr spRaidenParameters{ spTables->Item(nTableIndex) };
+		IColsPtr spCols{ spRaidenParameters->Cols };
+		// заполняем адаптеры полей RastrWin по названиям полей
+		// если нужного поля в таблице RastrWin нет - молча пропускаем
+		// и оставляем значение по умолчанию
+		for (auto&& field : *ps)
+			if (long index = spCols->GetFind(field.first.c_str()); index >= 0)
+				field.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(index));
+		// читаем данные из собранных адаптеров
+		ReadRastrRowData(ps, 0);
+	}
+
+	// принимаем основные параметры от RUSTab
 	ps->at(CDynaModel::Parameters::m_cszProcessDuration)->SetDouble(spDuration->GetZ(0).dblVal);
 	ps->at(CDynaModel::Parameters::m_cszLRCToShuntVmin)->SetDouble(spLTC2Y->GetZ(0).dblVal);
 	ps->at(CDynaModel::Parameters::m_cszFrequencyTimeConstant)->SetDouble(spFreqT->GetZ(0).dblVal);
 	ps->at(CDynaModel::Parameters::m_cszConsiderDampingEquation)->SetBool(spDamping->GetZ(0).lVal ? true : false);
 	ps->at(CDynaModel::Parameters::m_cszParkParametersDetermination)->SetInt(spParkParams->GetZ(0).lVal ? 0 : 1);
-
-		
 	
 	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
 		return;
@@ -597,24 +634,6 @@ void CRastrImport::ReadLRCs(CDynaLRCContainer& container)
 	}
 
 }
-
-
-CDynaNodeBase::eLFNodeType CRastrImport::NodeTypeFromRastr(long RastrType)
-{
-	if (RastrType >= 0 && RastrType < _countof(RastrTypesMap))
-		return RastrTypesMap[RastrType];
-
-	_ASSERTE(RastrType >= 0 && RastrType < _countof(RastrTypesMap));
-	return CDynaNodeBase::eLFNodeType::LFNT_PQ;
-}
-
-const CDynaNodeBase::eLFNodeType CRastrImport::RastrTypesMap[5] = { CDynaNodeBase::eLFNodeType::LFNT_BASE,
-																	  CDynaNodeBase::eLFNodeType::LFNT_PQ,
-																	  CDynaNodeBase::eLFNodeType::LFNT_PV,
-																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMAX,
-																	  CDynaNodeBase::eLFNodeType::LFNT_PVQMIN
-};
-
 
 
 /*

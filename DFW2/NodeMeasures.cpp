@@ -260,21 +260,36 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		for (const VirtualBranch* vb = ZeroNode.pVirtualBranchesBegin; vb < ZeroNode.pVirtualBranchesEnd; vb++)
 		{
 			//Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
+#ifdef USE_FMA
+			Re = std::fma(-vb->Y.real(), vb->pNode->Vre, std::fma( vb->Y.imag(), vb->pNode->Vim, Re));
+			Im = std::fma(-vb->Y.imag(), vb->pNode->Vre, std::fma(-vb->Y.real(), vb->pNode->Vim, Im));
+#else
 			Re -= vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
 			Im -= vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
+#endif
 		}
 
 		// инъекция от "шунта" индикатора
 		///Is += pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
+#ifdef USE_FMA
+		Re = std::fma(pNode->ZeroLF.vRe, pNode->ZeroLF.Yii, Re);
+		Im = std::fma(pNode->ZeroLF.vIm, pNode->ZeroLF.Yii, Im);
+#else
 		Re += pNode->ZeroLF.vRe * pNode->ZeroLF.Yii;
 		Im += pNode->ZeroLF.vIm * pNode->ZeroLF.Yii;
+#endif
 
 		// далее добавляем "токи" от индикаторов напряжения
 		for (const VirtualBranch* vb = ZeroNode.pVirtualZeroBranchesBegin; vb < ZeroNode.pVirtualZeroBranchesEnd; vb++)
 		{
 			//Is -= vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
+#ifdef USE_FMA
+			Re = std::fma(-vb->Y.real(), vb->pNode->ZeroLF.vRe, Re);
+			Im = std::fma(-vb->Y.real(), vb->pNode->ZeroLF.vIm, Im);
+#else
 			Re -= vb->Y.real() * vb->pNode->ZeroLF.vRe;
 			Im -= vb->Y.real() * vb->pNode->ZeroLF.vIm;
+#endif
 		}
 
 		//_ASSERTE(std::abs(Re) < DFW2_EPSILON && std::abs(Im) < DFW2_EPSILON);
