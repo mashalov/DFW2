@@ -23,6 +23,7 @@ namespace DFW2
 
 	enum class DFW2MessageStatus
 	{
+		DFW2LOG_NONE,
 		DFW2LOG_FATAL,
 		DFW2LOG_ERROR,
 		DFW2LOG_WARNING,

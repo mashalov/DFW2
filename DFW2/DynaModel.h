@@ -49,8 +49,6 @@ namespace DFW2
 			double m_dAtol = DFW2_ATOL_DEFAULT;
 			double m_dRtol = DFW2_RTOL_DEFAULT;
 			double m_dRefactorByHRatio = 1.5;
-			bool m_bLogToConsole = false;
-			bool m_bLogToFile = true;
 			double m_dMustangDerivativeTimeConstant = 1E-4;
 			// режим подавления рингинга
 			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
@@ -70,7 +68,8 @@ namespace DFW2
 			bool m_bStopOnGeneratorOOS = false;
 			std::string m_strWorkingFolder = "Русский тест";
 			std::string m_strResultsFolder = "";
-			DFW2MessageStatus m_eLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
+			DFW2MessageStatus m_eConsoleLogLevel = DFW2MessageStatus::DFW2LOG_ERROR;
+			DFW2MessageStatus m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
 			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo;
 			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 			double m_dProcessDuration = 150.0;
@@ -85,7 +84,7 @@ namespace DFW2
 
 			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Power", "Current", "Tanh" };
 			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
-			static constexpr const char* m_cszLogLevelNames[6] = { "fatal", "error", "warning", "message", "info", "debug" };
+			static constexpr const char* m_cszLogLevelNames[7] = { "none", "fatal", "error", "warning", "message", "info", "debug" };
 			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
 			static constexpr const char* m_cszParkParametersDeterminationMethodNames[4] = { "Kundur", "NiiptTo", "NiiptToTd", "Canay" };
 			static constexpr const char* m_cszFreqDampingNames[2] = { "Node", "Island" };
@@ -104,14 +103,12 @@ namespace DFW2
 			static constexpr const char* m_cszAtol = "Atol";
 			static constexpr const char* m_cszRtol = "Rtol";
 			static constexpr const char* m_cszRefactorByHRatio = "RefactorByHRatio";
-			static constexpr const char* m_cszLogToConsole = "LogToConsole";
-			static constexpr const char* m_cszLogToFile = "LogToFile";
 			static constexpr const char* m_cszMustangDerivativeTimeConstant = "MustangDerivativeTimeConstant";
 			static constexpr const char* m_cszAdamsIndividualSuppressionCycles = "AdamsIndividualSuppressionCycles";
 			static constexpr const char* m_cszAdamsGlobalSuppressionStep = "AdamsGlobalSuppressionStep";
 			static constexpr const char* m_cszAdamsIndividualSuppressStepsRange = "AdamsIndividualSuppressStepsRange";
 			static constexpr const char* m_cszUseRefactor = "UseRefactor";
-			static constexpr const char* m_cszDisableResultsWriter = "bDisableResultsWriter";
+			static constexpr const char* m_cszDisableResultsWriter = "DisableResultsWriter";
 			static constexpr const char* m_cszMinimumStepFailures = "MinimumStepFailures";
 			static constexpr const char* m_cszZeroBranchImpedance = "ZeroBranchImpedance";
 			static constexpr const char* m_cszAdamsDampingAlpha = "AdamsDampingAlpha";
@@ -125,7 +122,8 @@ namespace DFW2
 			static constexpr const char* m_cszResultsFolder = "ResultsFolder";
 			static constexpr const char* m_cszAdamsRingingSuppressionMode = "AdamsRingingSuppressionMode";
 			static constexpr const char* m_cszFreqDampingType = "FreqDampingType";
-			static constexpr const char* m_cszLogLevel = "LogLevel";
+			static constexpr const char* m_cszConsoleLogLevel = "ConsoleLogLevel";
+			static constexpr const char* m_cszFileLogLevel = "FileLogLevel";
 			static constexpr const char* m_cszGeneratorLessLRC = "GeneratorLessLRC";
 			static constexpr const char* m_cszLFImbalance = "LFImbalance";
 			static constexpr const char* m_cszLFFlat = "LFFlat";

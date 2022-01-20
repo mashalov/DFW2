@@ -106,7 +106,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 
 	CheckFolderStructure();
 
-	if (m_Parameters.m_bLogToFile)
+	if (m_Parameters.m_eFileLogLevel != DFW2MessageStatus::DFW2LOG_NONE)
 	{
 		const auto logPath(std::filesystem::path(Platform().Logs()).append("dfw2.log"));
 		LogFile.open(logPath, std::ios::out);
@@ -117,7 +117,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 				version,
 				__DATE__,
 				CDFW2Messages::m_cszOS,
-				stringutils::enum_text(m_Parameters.m_eLogLevel, m_Parameters.m_cszLogLevelNames)) << std::endl;
+				stringutils::enum_text(m_Parameters.m_eFileLogLevel, m_Parameters.m_cszLogLevelNames)) << std::endl;
 		}
 		else
 			throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszStdFileStreamError, stringutils::utf8_encode(logPath.c_str())));

@@ -414,6 +414,44 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 void CRastrImport::GetData(CDynaModel& Network)
 {
 
+	ITablesPtr spTables{ m_spRastr->Tables };
+
+	auto ps{ Network.GetParametersSerializer() };
+
+	// пытаемся прочитать параметры Raiden из таблицы RastrWin
+	if (long nTableIndex{ spTables->GetFind("RaidenParameters") }; nTableIndex >= 0)
+	{
+		ITablePtr spRaidenParameters{ spTables->Item(nTableIndex) };
+		IColsPtr spCols{ spRaidenParameters->Cols };
+		// заполняем адаптеры полей RastrWin по названиям полей
+		// если нужного поля в таблице RastrWin нет - молча пропускаем
+		// и оставляем значение по умолчанию
+		for (auto&& field : *ps)
+			if (long index = spCols->GetFind(field.first.c_str()); index >= 0)
+				field.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(index), nullptr);
+		// читаем данные из собранных адаптеров
+		ReadRastrRowData(ps, 0);
+	}
+
+	// принимаем основные параметры от RUSTab
+	ITablePtr spParameters{ spTables->Item("com_dynamics") };
+	IColsPtr spParCols{ spParameters->Cols };
+	IColPtr spDuration{ spParCols->Item(L"Tras") };
+	IColPtr spLTC2Y{ spParCols->Item(L"frSXNtoY") };
+	IColPtr spFreqT{ spParCols->Item(L"Tf") };
+	IColPtr spParkParams{ spParCols->Item(L"corrT") };
+	IColPtr spDamping{ spParCols->Item(L"IsDemp") };
+
+	ps->at(CDynaModel::Parameters::m_cszProcessDuration)->SetDouble(spDuration->GetZ(0).dblVal);
+	ps->at(CDynaModel::Parameters::m_cszLRCToShuntVmin)->SetDouble(spLTC2Y->GetZ(0).dblVal);
+	ps->at(CDynaModel::Parameters::m_cszFrequencyTimeConstant)->SetDouble(spFreqT->GetZ(0).dblVal);
+	ps->at(CDynaModel::Parameters::m_cszConsiderDampingEquation)->SetBool(spDamping->GetZ(0).lVal ? true : false);
+	ps->at(CDynaModel::Parameters::m_cszParkParametersDetermination)->SetInt(spParkParams->GetZ(0).lVal ? 0 : 1);
+
+	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
+		return;
+		*/
+
 	m_rastrSynonyms
 		.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameLRC, "polin")
 		.AddFieldSynonyms("LRCId", "nsx")
@@ -468,7 +506,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
 
-	ITablesPtr spTables = m_spRastr->Tables;
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
 	IColsPtr spASCols = spAutoStarters->Cols;
 	IColPtr spASId			= spASCols->Item(L"Id");
@@ -542,47 +579,14 @@ void CRastrImport::GetData(CDynaModel& Network)
 			spAAORunsCount->GetZ(i).lVal);
 	}
 
-	ITablePtr spParameters = spTables->Item("com_dynamics");
-	IColsPtr spParCols = spParameters->Cols;
-	IColPtr spDuration = spParCols->Item(L"Tras");
-	IColPtr spLTC2Y = spParCols->Item(L"frSXNtoY");
-	IColPtr spFreqT = spParCols->Item(L"Tf");
-	IColPtr spParkParams = spParCols->Item(L"corrT");
-	IColPtr spDamping = spParCols->Item(L"IsDemp");
-
-	auto ps{ Network.GetParametersSerializer() };
-
-	// пытаемся прочитать параметры Raiden из таблицы RastrWin
-	if (long nTableIndex{ spTables->GetFind("RaidenParameters") }; nTableIndex >= 0)
-	{
-		ITablePtr spRaidenParameters{ spTables->Item(nTableIndex) };
-		IColsPtr spCols{ spRaidenParameters->Cols };
-		// заполняем адаптеры полей RastrWin по названиям полей
-		// если нужного поля в таблице RastrWin нет - молча пропускаем
-		// и оставляем значение по умолчанию
-		for (auto&& field : *ps)
-			if (long index = spCols->GetFind(field.first.c_str()); index >= 0)
-				field.second->pAux = std::make_unique<CSerializedValueAuxDataRastr>(spCols->Item(index), nullptr);
-		// читаем данные из собранных адаптеров
-		ReadRastrRowData(ps, 0);
-	}
-
-	// принимаем основные параметры от RUSTab
-	ps->at(CDynaModel::Parameters::m_cszProcessDuration)->SetDouble(spDuration->GetZ(0).dblVal);
-	ps->at(CDynaModel::Parameters::m_cszLRCToShuntVmin)->SetDouble(spLTC2Y->GetZ(0).dblVal);
-	ps->at(CDynaModel::Parameters::m_cszFrequencyTimeConstant)->SetDouble(spFreqT->GetZ(0).dblVal);
-	ps->at(CDynaModel::Parameters::m_cszConsiderDampingEquation)->SetBool(spDamping->GetZ(0).lVal ? true : false);
-	ps->at(CDynaModel::Parameters::m_cszParkParametersDetermination)->SetInt(spParkParams->GetZ(0).lVal ? 0 : 1);
-	
-	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
-		return;
-		*/
-
 	Network.CustomDeviceCPP.ConnectDLL("CustomDeviceCPP.dll");
 
 	CustomDeviceConnectInfo ci("ExcControl",2);
-	ITablePtr spExAddXcomp = m_spRastr->Tables->Item(L"ExcControl");
-	spExAddXcomp->Cols->Add(L"Xcomp", PR_REAL);
+	ITablePtr spExAddXTable{ m_spRastr->Tables->Item(L"ExcControl") };
+	IColsPtr spExAddCols{ spExAddXTable->Cols };
+	const _bstr_t cszXcomp{ L"Xcomp" };
+	if(spExAddCols->GetFind(cszXcomp) < 0)
+		spExAddCols->Add(cszXcomp, PR_REAL);
 
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
 	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);

@@ -8,10 +8,10 @@ using namespace DFW2;
 
 void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex) const
 {
-	if (m_pLogger && m_Parameters.m_bLogToConsole)
+	if (m_pLogger && Status <= m_Parameters.m_eConsoleLogLevel)
 		m_pLogger->Log(Status, Message, nDbIndex);
 
-	if (LogFile.is_open() && m_Parameters.m_bLogToFile && Status <= m_Parameters.m_eLogLevel)
+	if (LogFile.is_open() && Status <= m_Parameters.m_eFileLogLevel)
 		LogFile << Message << std::endl;
 }
 
@@ -686,8 +686,6 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszAtol, m_dAtol);
 	Serializer->AddProperty(m_cszRtol, m_dRtol);
 	Serializer->AddProperty(m_cszRefactorByHRatio, m_dRefactorByHRatio);
-	Serializer->AddProperty(m_cszLogToConsole, m_bLogToConsole);
-	Serializer->AddProperty(m_cszLogToFile, m_bLogToFile);
 	Serializer->AddProperty(m_cszMustangDerivativeTimeConstant, m_dMustangDerivativeTimeConstant, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_cszAdamsIndividualSuppressionCycles, m_nAdamsIndividualSuppressionCycles, eVARUNITS::VARUNIT_PIECES);
 	Serializer->AddProperty(m_cszAdamsGlobalSuppressionStep, m_nAdamsGlobalSuppressionStep, eVARUNITS::VARUNIT_PIECES);
@@ -716,8 +714,11 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddEnumProperty("DiffEquationType",
 		new CSerializerAdapterEnum(m_eDiffEquationType, m_cszDiffEquationTypeNames));
 
-	Serializer->AddEnumProperty(m_cszLogLevel,
-		new CSerializerAdapterEnum(m_eLogLevel, m_cszLogLevelNames));
+	Serializer->AddEnumProperty(m_cszConsoleLogLevel,
+		new CSerializerAdapterEnum(m_eConsoleLogLevel, m_cszLogLevelNames));
+
+	Serializer->AddEnumProperty(m_cszFileLogLevel,
+		new CSerializerAdapterEnum(m_eFileLogLevel, m_cszLogLevelNames));
 
 	Serializer->AddEnumProperty(m_cszParkParametersDetermination,
 		new CSerializerAdapterEnum(m_eParkParametersDetermination, m_cszParkParametersDeterminationMethodNames));

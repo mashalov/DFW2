@@ -25,7 +25,6 @@ extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr)
 	try
 	{
 		CDynaModel::DynaModelParameters parameters;
-		parameters.m_bLogToConsole = true;
 		CDynaModel Network(parameters);
 		Network.SetLogger(std::make_unique<CLoggerRastrWin>(spRastr));
 		Network.SetProgress(std::make_unique<CProgressRastrWin>(spRastr));
