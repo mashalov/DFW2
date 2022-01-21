@@ -8,7 +8,7 @@ using namespace DFW2;
 void CDynaModel::Predict()
 {
 	struct RightVector* pVectorBegin{ pRightVector };
-	struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
+	const struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 //#define DBG_CHECK_PREDICTION
 
@@ -16,23 +16,36 @@ void CDynaModel::Predict()
 	SnapshotRightVector();
 #endif
 
-	// Алгоритм расчета [Lsode 2.61]
-	while (pVectorBegin < pVectorEnd)
+	if (sc.m_bNordsiekReset)
 	{
-		pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
-
-		for (ptrdiff_t k = 0; k < sc.q; k++)
+		// если Нордсик был сброшен нет смысла выполнять предиктор
+		while (pVectorBegin < pVectorEnd)
 		{
-			for (ptrdiff_t j = sc.q; j >= k + 1; j--)
-			{
-				pVectorBegin->Nordsiek[j - 1] += pVectorBegin->Nordsiek[j];
-			}
+			pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
+			pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
+			pVectorBegin++;
 		}
+	}
+	else
+	{
+		// Алгоритм расчета [Lsode 2.61]
+		while (pVectorBegin < pVectorEnd)
+		{
+			pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
 
-		// прогнозное значение переменной состояния обновляем по Nordsieck
-		*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-		pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
-		pVectorBegin++;
+			for (ptrdiff_t k = 0; k < sc.q; k++)
+			{
+				for (ptrdiff_t j = sc.q; j >= k + 1; j--)
+				{
+					pVectorBegin->Nordsiek[j - 1] += pVectorBegin->Nordsiek[j];
+				}
+			}
+
+			// прогнозное значение переменной состояния обновляем по Nordsieck
+			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
+			pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
+			pVectorBegin++;
+		}
 	}
 
 #ifdef DBG_CHECK_PREDICTION
@@ -97,6 +110,10 @@ void CDynaModel::ResetNordsiek()
 	}
 	sc.OrderChanged();
 	sc.StepChanged();
+	// ставим флаг ресета Нордсика, чтобы не
+	// контролировать соответствие предиктора-корректору
+	// на стартап-шаге
+	sc.m_bNordsiekReset = true;
 }
 
 // построение Nordsieck после того, как обнаружено что текущая история
@@ -338,6 +355,10 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 
 	sc.m_dOldH = sc.m_dCurrentH;
 	sc.m_bNordsiekSaved = true;
+	// после того как Нордсик обновлен,
+	// сбрасываем флаг ресета, начинаем работу предиктора
+	// и контроль соответствия предиктора корректору
+	sc.m_bNordsiekReset = false;
 
 	for (auto&& it : m_DeviceContainers)
 		for (auto&& dit : *it)

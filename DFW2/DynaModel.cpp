@@ -162,9 +162,9 @@ bool CDynaModel::RunTransient()
 	{
 		//m_Parameters.m_bConsiderDampingEquation = false;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
-
+		//m_Parameters.m_bUseRefactor = false;
 		//m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Sconst;
-		m_Parameters.m_dZeroBranchImpedance = 4.0E-5;
+		m_Parameters.m_dZeroBranchImpedance = -4.0E-6;
 		m_Parameters.m_dProcessDuration = 150;
 		m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
@@ -552,8 +552,8 @@ bool CDynaModel::NewtonUpdate()
 	sc.m_bNewtonDisconverging = false;
 	sc.m_bNewtonStepControl = false;
 
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	struct RightVector* pVectorBegin{ pRightVector };
+	const struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
@@ -566,7 +566,7 @@ bool CDynaModel::NewtonUpdate()
 	sc.Newton.Reset();
 
 	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
-	const double Methodl0[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
+	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	double *pB = klu.B();
 	while (pVectorBegin < pVectorEnd)
@@ -608,8 +608,8 @@ bool CDynaModel::NewtonUpdate()
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetConvergenceRatio);
 
-	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck&&
-							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck&&
+	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
+							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
 							   sc.Newton.Weighted.dMaxError < 1.0;
 
 	if ( bConvCheckConverged )
@@ -726,7 +726,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 	if (sc.m_bProcessTopology)
 	{
-		bRes = bRes && Nodes.Seidell();
+		bRes = bRes && Nodes.LULF();
 		bRes = bRes && ProcessDiscontinuity();
 		sc.m_bProcessTopology = false;
 		_ASSERTE(sc.m_bDiscontinuityMode);
@@ -836,12 +836,13 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged{:>3} iteration {} MaxWeight {} Saving {:.2}", GetCurrentTime(),
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged{:>3} iteration {} MaxWeight {} Saving {:.2} Rcond {}", GetCurrentTime(),
 																				sc.nStepsCount,
 																				sc.nNewtonIteration,
 																				sc.Newton.Absolute.Info(),
 																				sc.Newton.Weighted.dMaxError,
-																				1.0 - static_cast<double>(klu.FactorizationsCount() + klu.RefactorizationsCount()) / sc.nNewtonIterationsCount));
+																				1.0 - static_cast<double>(klu.FactorizationsCount() + klu.RefactorizationsCount()) / sc.nNewtonIterationsCount,
+																				sc.dLastConditionNumber));
 						
 #endif
 
@@ -856,11 +857,12 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (!sc.m_bNewtonStepControl)
 				{
-					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Continue {:>3} iteration {} MaxWeight {}", GetCurrentTime(),
+					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Continue {:>3} iteration {} MaxWeight {} Rcond {}", GetCurrentTime(),
 						sc.nStepsCount,
 						sc.nNewtonIteration,
 						sc.Newton.Absolute.Info(),
-						sc.Newton.Weighted.dMaxError));
+						sc.Newton.Weighted.dMaxError,
+						sc.dLastConditionNumber));
 				}
 			}
 
@@ -1023,19 +1025,31 @@ bool CDynaModel::Step()
 					DetectAdamsRinging();
 
 					// и мы не находились в режиме обработки разрыва
-					double rSame = GetRatioForCurrentOrder();	// рассчитываем возможный шаг для текущего порядка метода
-
-					// this call before accuracy makes limits
-					// work correct
-
-					if (rSame > 1.0)
+					double rSame{ 0.0 };
+					// рассчитываем возможный шаг для текущего порядка метода
+					// если сделанный шаг не был сделан без предиктора
+					if (sc.m_bNordsiekReset)
 					{
+						// если нордсик был сброшен не конторолируем предиктор
+						Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} startup step",
+							GetCurrentTime(),
+							GetIntegrationStepNumber()));
+					}
+					else
+						rSame = GetRatioForCurrentOrder(); // если нордиск не был сброшен выбираем шаг по соответствию предиктору
+
+					// шаг выполнен успешно если это был стартап-шаг
+					// после сброса предиктора или корректор и предиктор
+					// дали возможность не уменьшать шаг
+					if (rSame > 1.0 || sc.m_bNordsiekReset)
+					{
+
 						// если шаг можно увеличить
 						// проверяем нет ли зерокроссинга
 						double rZeroCrossing = CheckZeroCrossing();
 
 						if (rZeroCrossing < 0)
-							Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}", 
+							Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}",
 								rZeroCrossing,
 								GetCurrentTime()));
 
@@ -1152,16 +1166,16 @@ void CDynaModel::ConvergenceTest::FinalizeSum()
 
 double CDynaModel::GetRatioForCurrentOrder()
 {
-	double r = 0.0;
+	double r{ 0.0 };
 
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	struct RightVector* pVectorBegin{ pRightVector };
+	const struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
 	sc.Integrator.Reset();
 
-	const double Methodl0[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
+	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -1188,10 +1202,10 @@ double CDynaModel::GetRatioForCurrentOrder()
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
 		
-	double DqSame0 = ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[sc.q - 1][3];
-	double DqSame1 = ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[sc.q + 1][3];
-	double rSame0 = pow(DqSame0, -1.0 / (sc.q + 1));
-	double rSame1 = pow(DqSame1, -1.0 / (sc.q + 1));
+	const double DqSame0{ ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[sc.q - 1][3] };
+	const double DqSame1{ ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[sc.q + 1][3] };
+	const double rSame0{ pow(DqSame0, -1.0 / (sc.q + 1)) };
+	const double rSame1{ pow(DqSame1, -1.0 / (sc.q + 1)) };
 
 	r = (std::min)(rSame0, rSame1);
 
@@ -1478,7 +1492,7 @@ void CDynaModel::GoodStep(double rSame)
 		case 2:
 		{
 			// если были на втором порядке, пробуем шаг для первого порядка
-			double rLower = GetRatioForLowerOrder() / 1.3;
+			const double rLower{ GetRatioForLowerOrder() / 1.3 };
 			// call before step change
 			UpdateNordsiek();
 

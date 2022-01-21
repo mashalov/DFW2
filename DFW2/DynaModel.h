@@ -347,6 +347,7 @@ namespace DFW2
 			double dRateGrowLimit = FLT_MAX;
 			ptrdiff_t nStepsCount = 0;
 			ptrdiff_t nNewtonIterationsCount = 0;
+			double dLastConditionNumber = 1.0;
 			double dMaxConditionNumber = 0.0;
 			double dMaxConditionNumberTime = 0.0;
 			double dMaxSLEResidual = 0.0;
@@ -383,6 +384,7 @@ namespace DFW2
 			StepError Integrator;
 			double m_dLastRefactorH = 0.0;
 			bool bRingingDetected = false;
+			bool m_bNordsiekReset = true;		// флаг сброса Нордсика - производные равны нулю, контроль предиктора не выполняется
 
 			StatisticsMaxFinder m_MaxBranchAngle, m_MaxGeneratorAngle;
 
@@ -548,7 +550,6 @@ namespace DFW2
 		std::vector<CDevice*> ZeroCrossingDevices;
 		void ConvertToCCSMatrix();
 		void SolveLinearSystem();
-		void SolveRcond();
 		void SolveRefine();
 		void UpdateRcond();
 		void SetDifferentiatorsTolerance();

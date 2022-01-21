@@ -542,7 +542,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 	else
 	{
 		m_pLRCGen = pDynaModel->GetLRCGen();		// если есть генерация но нет генераторов - нужна СХН генераторов
-		if (m_pLRCGen->GetId() == -2) // если задана СХН Iconst - меняем СХН на постоянный ток в системе уравнений
+		if (m_pLRCGen->GetId() == -2 && false) // если задана СХН Iconst - меняем СХН на постоянный ток в системе уравнений
 		{
 			// альтернативный вариант - генерация в узле 
 			// представляется током
@@ -1208,11 +1208,6 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 				pNode->V0 = pNode->V;
 		}
 	}
-}
-
-bool CDynaNodeContainer::Seidell()
-{
-	return LULF();
 }
 
 VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::string_view VarName)

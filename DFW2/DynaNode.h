@@ -409,7 +409,6 @@ namespace DFW2
 		virtual ~CDynaNodeContainer();
 		void ProcessTopology();
 		void ProcessTopologyInitial();
-		bool Seidell(); 
 		bool LULF();
 		void ProcessTopologyRequest();
 		void AddToTopologyCheck(CDynaNodeBase* pNode);

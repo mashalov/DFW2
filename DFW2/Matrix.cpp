@@ -403,7 +403,7 @@ bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATIO
 
 double CDynaModel::GetFunction(ptrdiff_t nRow)
 {
-	double dVal = NAN;
+	double dVal{ std::numeric_limits<double>::quiet_NaN() };
 
 	if (nRow >= 0 && nRow < m_nEstimatedMatrixSize)
 		dVal = klu.B()[nRow];
@@ -504,18 +504,28 @@ void CDynaModel::SolveLinearSystem()
 		if (klu.Factored())
 		{
 			// если в KLU нет факторизации
-			if (m_Parameters.m_bUseRefactor) // делаем вторую и более итерацию Ньютона и разрешен рефактор
+
+			bool bFullFactor{ !m_Parameters.m_bUseRefactor };
+			if (!bFullFactor) // делаем вторую и более итерацию Ньютона и разрешен рефактор
 			{
-				if (!klu.TryRefactor())
-					klu.Factor();
+				const double dLastRcond{ sc.dLastConditionNumber };			// запоминаем предыдущее число обусловленности
+				bFullFactor = !klu.TryRefactor();							// делаем рефакторизацию
+				if (!bFullFactor)											// получилось, считаем отношение нового числа обусловленности к старому
+					bFullFactor = (1.0 / klu.Rcond()) / dLastRcond > 1E4;	// если рост значительный - делаем полную факторизацию
 			}
-			else
+
+			if (bFullFactor)
+			{
 				klu.Factor();
+				// обновляем число обусловленности
+				// и определяем максимальное за весь расчет
+				UpdateRcond();
+			}
 		}
-		SolveRcond();
+		klu.Solve();
 	}
 	else
-		SolveRcond();
+		klu.Solve();
 }
 
 
@@ -536,18 +546,12 @@ void CDynaModel::UpdateRcond()
 {
 	const double rCond{ 1.0 / klu.Rcond() };
 	//double Cond = klu.Condest();
+	sc.dLastConditionNumber = rCond;
 	if (rCond > sc.dMaxConditionNumber)
 	{
 		sc.dMaxConditionNumber = rCond;
 		sc.dMaxConditionNumberTime = sc.t;
 	}
-}
-
-void CDynaModel::SolveRcond()
-{
-	klu.Solve();
-	UpdateRcond();
-	
 }
 
 void CDynaModel::ScaleAlgebraicEquations()

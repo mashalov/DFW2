@@ -797,6 +797,8 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 	Serializer->AddProperty("NoRingingSteps", nNoRingingSteps);
 	Serializer->AddProperty("LastRefactorH", m_dLastRefactorH);
 	Serializer->AddProperty("RingingDetected", bRingingDetected);
+	Serializer->AddProperty("LastConditionNumber", dLastConditionNumber);
+	Serializer->AddProperty("NordsiekReset", m_bNordsiekReset);
 
 	Serializer->AddProperty("Order0Steps", OrderStatistics[0].nSteps);
 	Serializer->AddProperty("Order0Failures", OrderStatistics[0].nFailures);
