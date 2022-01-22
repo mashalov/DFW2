@@ -716,6 +716,11 @@ namespace DFW2
 			return sc.m_dCurrentH;
 		}
 
+		inline bool IsNordsiekReset() const
+		{
+			return sc.m_bNordsiekReset;
+		}
+
 		inline void SetH(double h)
 		{
 			sc.m_dCurrentH = h;

@@ -46,32 +46,42 @@ namespace DFW2
 
 
 
-	/*
 	class CDerlagNordsieck : public CDynaPrimitive
 	{
 	protected:
 		double m_K, m_T;
 	public:
-		VariableIndex 
-		CDerlagNordsieck(CDevice *pDevice, VariableIndex& OutputVariable, std::initializer_list<PrimitiveVariableBase*> Input) :
-			CDynaPrimitive(pDevice, OutputVariable, Input), m_Dummy1(pOutput + 1), m_Dummy2(pOutput + 2) {}
+		VariableIndex& m_Y2;
+		CDerlagNordsieck(CDevice& Device, const ORange& Output, const IRange& Input) :
+			CDynaPrimitive(Device, Output, Input), m_Y2(Output[1]) {}
+		CDerlagNordsieck(CDevice& Device, const OutputList& Output, const InputList& Input) :
+			CDerlagNordsieck(Device, ORange(Output), IRange(Input)) { }
+
 		virtual ~CDerlagNordsieck() {}
 		bool Init(CDynaModel *pDynaModel) override;
 		bool BuildEquations(CDynaModel *pDynaModel) override;
 		bool BuildRightHand(CDynaModel *pDynaModel) override;
 		bool BuildDerivatives(CDynaModel *pDynaModel) override;
-		//virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		void SetTK(double T, double K) { m_K = K;  m_T = T; }
 		const char* GetVerbalName() override { return "ДЗ Nordsieck"; }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() { return sizeof(CDerlagNordsieck); }
 		static long EquationsCount() { return 3; }
 	};
-	*/
 
+#define DERLAG_CONTINUOUS
+//#define DERLAG_CONTINUOUSMOOTH
+//#define DERLAG_NORDSIEK
 
+#if defined DERLAG_CONTINUOUS
 #define CDerlag CDerlagContinuous
-//#define CDerlag CDerlagNordsieck
+#elif defined DERLAG_CONTINUOUSMOOTH
+#define CDerlag CDerlagContinuousSmooth
+#elif defined DERLAG_NORDSIEK
+#define CDerlag CDerlagNordsieck
+#define CDerlagContinuousSmooth CDerlagNordsieck
+#endif
 
 }
 

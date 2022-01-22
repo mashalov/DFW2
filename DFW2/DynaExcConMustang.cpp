@@ -171,13 +171,15 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 	if (IsStateOn())
 	{
 		double dSum = Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) - K0f * (dSdtIn - Svt) + dVdtOut + dEqdtOut - dSdtOut;
-		RightVector *pRV = pDynaModel->GetRightVector(Usum);
+
 		/*
-		if ((m_Id == 16) && pDynaModel->GetStepNumber() >= 399)
+		if (GetId() == 115)
 		{
-			ATLTRACE("\nId=%d V=%g dSdtIn=%g Svt=%g dVdt=%g dEqdt=%g dSdt=%g NordUsum=%g", m_Id, NodeV, dSdtIn.Value(), Svt, *dVdtOutValue, *dEqdtOutValue, *dSdtOutValue, pRV->Nordsiek[0]);
+			pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("V={} S={} Eq={}", dVdtIn, dSdtIn, dEqdtIn));
+			pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("dV={} dS={} dEq={}", dVdtOut, dSdtOut, dEqdtOut));
 		}
 		*/
+		
 		pDynaModel->SetFunction(Usum, dSum);
 		pDynaModel->SetFunctionDiff(Svt, (dSdtIn - Svt) / Tf);
 		pDynaModel->SetFunctionDiff(Uf, (UsumLmt - Uf) / Tr);
