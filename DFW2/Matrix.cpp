@@ -434,8 +434,8 @@ void CDynaModel::SetDifferentiatorsTolerance()
 	do
 	{
 		nMarked = 0;
-		RightVector *pVectorBegin = pRightVector;
-		RightVector *pVectorEnd = pRightVector + m_nEstimatedMatrixSize;
+		RightVector* pVectorBegin{ pRightVector };
+		RightVector* const pVectorEnd{ pRightVector + m_nEstimatedMatrixSize };
 
 		while (pVectorBegin < pVectorEnd)
 		{
@@ -556,8 +556,8 @@ void CDynaModel::UpdateRcond()
 
 void CDynaModel::ScaleAlgebraicEquations()
 {
-	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + m_nEstimatedMatrixSize;
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + m_nEstimatedMatrixSize };
 	double h = GetH();
 
 	if (h <= 0)

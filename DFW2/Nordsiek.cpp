@@ -7,8 +7,8 @@ using namespace DFW2;
 // рассчитывает прогноз Nordsieck для заданного шага
 void CDynaModel::Predict()
 {
-	struct RightVector* pVectorBegin{ pRightVector };
-	const struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 //#define DBG_CHECK_PREDICTION
 
@@ -74,8 +74,8 @@ void CDynaModel::InitNordsiek()
 {
 	InitDevicesNordsiek();
 
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -91,8 +91,8 @@ void CDynaModel::InitNordsiek()
 // сброс элементов Нордиска (уничтожение истории)
 void CDynaModel::ResetNordsiek()
 {
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	if (sc.m_bNordsiekSaved)
 	{
@@ -120,8 +120,8 @@ void CDynaModel::ResetNordsiek()
 // ненадежна
 void CDynaModel::ReInitializeNordsiek()
 {
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	if (sc.m_bNordsiekSaved)
 	{
@@ -152,8 +152,8 @@ void CDynaModel::ReInitializeNordsiek()
 void CDynaModel::RestoreNordsiek()
 {
 
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	if (sc.m_bNordsiekSaved)
 	{
@@ -201,9 +201,9 @@ bool CDynaModel::DetectAdamsRinging()
 		m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL) &&
 		sc.q == 2 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
 	{
-		const double Methodl1[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
-		struct RightVector *pVectorBegin = pRightVector;
-		struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+		const double Methodl1[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
+		RightVector* pVectorBegin{ pRightVector };
+		RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 		while (pVectorBegin < pVectorEnd)
 		{
@@ -264,8 +264,8 @@ bool CDynaModel::DetectAdamsRinging()
 // обновляение Nordsieck после выполнения шага
 void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 {
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	double alpha = sc.m_dCurrentH / sc.m_dOldH > 0.0 ? sc.m_dOldH : 1.0;
 	double alphasq = alpha * alpha;
@@ -382,8 +382,8 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 // сохранение копии Nordsieck перед выполнением шага
 void CDynaModel::SaveNordsiek()
 {
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	while (pVectorBegin < pVectorEnd)
 	{
@@ -408,8 +408,8 @@ void CDynaModel::SaveNordsiek()
 // масштабирование Nordsieck на заданный коэффициент изменения шага
 void CDynaModel::RescaleNordsiek(const double r)
 {
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 	
 	// расчет выполняется путем умножения текущего Nordsieck на диагональную матрицу C[q+1;q+1]
 	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
@@ -440,8 +440,8 @@ void CDynaModel::RescaleNordsiek(const double r)
 
 void CDynaModel::ConstructNordsiekOrder()
 {
-	struct RightVector *pVectorBegin = pRightVector;
-	struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	while (pVectorBegin < pVectorEnd)
 	{

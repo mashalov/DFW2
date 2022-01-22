@@ -97,8 +97,8 @@ void CDynaModel::DiscontinuityRequest(CDevice& device, const DiscontinuityLevel 
 
 double CDynaModel::GetWeightedNorm(double *pVector)
 {
-	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 	double *pb = pVector;
 	double dSum = 0.0;
 	for (; pVectorBegin < pVectorEnd; pVectorBegin++, pb++)
@@ -324,9 +324,9 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 	UpdateTotalRightVector();
 
 	std::unique_ptr<const RightVectorTotal*[]> pSortOrder = std::make_unique<const RightVectorTotal*[]>(m_nTotalVariablesCount);
-	const RightVectorTotal *pVectorBegin  = pRightVectorTotal.get();
-	const RightVectorTotal *pVectorEnd = pVectorBegin + m_nTotalVariablesCount;
-	const RightVectorTotal **ppSortOrder = pSortOrder.get();
+	const RightVectorTotal* pVectorBegin{ pRightVectorTotal.get() };
+	const RightVectorTotal* const pVectorEnd{ pVectorBegin + m_nTotalVariablesCount };
+	const RightVectorTotal** ppSortOrder{ pSortOrder.get() };
 
 	while (pVectorBegin < pVectorEnd)
 	{

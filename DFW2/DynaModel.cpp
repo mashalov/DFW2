@@ -513,8 +513,8 @@ bool CDynaModel::InitEquations()
 	bool bRes = UpdateExternalVariables(); 
 	if (bRes)
 	{
-		struct RightVector *pVectorBegin = pRightVector;
-		struct RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+		RightVector* pVectorBegin{ pRightVector };
+		RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 		while (pVectorBegin < pVectorEnd)
 		{
@@ -524,7 +524,7 @@ bool CDynaModel::InitEquations()
 			pVectorBegin++;
 		}
 
-		double dCurrentH = sc.m_dCurrentH;
+		double dCurrentH{ sc.m_dCurrentH };
 		SetH(0.0);
 		sc.m_bDiscontinuityMode = true;
 
@@ -546,14 +546,14 @@ bool CDynaModel::InitEquations()
 
 bool CDynaModel::NewtonUpdate()
 {
-	bool bRes = true;
+	bool bRes{ true };
 
 	sc.m_bNewtonConverged = false;
 	sc.m_bNewtonDisconverging = false;
 	sc.m_bNewtonStepControl = false;
 
-	struct RightVector* pVectorBegin{ pRightVector };
-	const struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
@@ -580,21 +580,21 @@ bool CDynaModel::NewtonUpdate()
 #ifdef USE_FMA
 		double dNewValue = std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]);
 #else
-		double l0 = pVectorBegin->Error;
+		double l0{ pVectorBegin->Error };
 		l0 *= Methodl0[pVectorBegin->EquationType];
-		double dNewValue = pVectorBegin->Nordsiek[0] + l0;
+		double dNewValue{ pVectorBegin->Nordsiek[0] + l0 };
 #endif
 
 
-		double dOldValue = *pVectorBegin->pValue;
+		double dOldValue{ *pVectorBegin->pValue };
 		*pVectorBegin->pValue = dNewValue;
 
 		if (pVectorBegin->Atol > 0)
 		{
-			double dError = pVectorBegin->GetWeightedError(db, dOldValue);
+			double dError{ pVectorBegin->GetWeightedError(db, dOldValue) };
 			sc.Newton.Weighted.Update(pVectorBegin, dError);
 			_CheckNumber(dError);
-			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
+			ConvergenceTest* pCt{ ConvTest + pVectorBegin->EquationType };
 #ifdef _DEBUG
 			// breakpoint place for nans
 			if (std::isnan(dError))
@@ -623,8 +623,8 @@ bool CDynaModel::NewtonUpdate()
 		{
 			sc.RefactorMatrix();
 
-			double lambdamin = 0.1;
-			bool bLineSearch = false;
+			double lambdamin{ 0.1 };
+			bool bLineSearch{ false };
 
 			
 			/*
@@ -1168,8 +1168,8 @@ double CDynaModel::GetRatioForCurrentOrder()
 {
 	double r{ 0.0 };
 
-	struct RightVector* pVectorBegin{ pRightVector };
-	const struct RightVector* pVectorEnd{ pRightVector + klu.MatrixSize() };
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
@@ -1231,8 +1231,8 @@ double CDynaModel::GetRatioForHigherOrder()
 	double rUp = 0.0;
 	_ASSERTE(sc.q == 1);
 
-	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 	
@@ -1269,8 +1269,8 @@ double CDynaModel::GetRatioForLowerOrder()
 {
 	double rDown = 0.0;
 	_ASSERTE(sc.q == 2);
-	RightVector *pVectorBegin = pRightVector;
-	RightVector *pVectorEnd = pRightVector + klu.MatrixSize();
+	RightVector* pVectorBegin{ pRightVector };
+	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 

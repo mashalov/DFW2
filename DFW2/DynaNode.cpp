@@ -570,11 +570,11 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 void CDynaNode::Predict()
 {
 	dLRCVicinity = 0.0;
-	double newDelta = atan2(sin(Delta), cos(Delta));
+	const double newDelta{ std::atan2(std::sin(Delta), std::cos(Delta)) };
 	if (std::abs(newDelta - Delta) > DFW2_EPSILON)
 	{
-		RightVector *pRvDelta = GetModel()->GetRightVector(Delta.Index);
-		RightVector *pRvLag = GetModel()->GetRightVector(Lag.Index);
+		RightVector* const pRvDelta{ GetModel()->GetRightVector(Delta.Index) };
+		RightVector* const pRvLag{ GetModel()->GetRightVector(Lag.Index) };
 		double dDL = Delta - Lag;
 		Delta = newDelta;
 		Lag = Delta - dDL;
@@ -656,18 +656,18 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase::BuildRightHand(pDynaModel);
 
-	double T = pDynaModel->GetFreqTimeConstant();
-	double w0 = pDynaModel->GetOmega0();
-	double dLag = (Delta - Lag) / T;
-	double dS = S - (Delta - Lag) / T / w0;
+	const double T{ pDynaModel->GetFreqTimeConstant() };
+	const double w0{ pDynaModel->GetOmega0() };
+	const double dLag{ (Delta - Lag) / T };
+	double dS{ S - (Delta - Lag) / T / w0 };
 
-	double dDelta(0.0);
+	double dDelta{ 0.0 };
 
 	if (pDynaModel->IsInDiscontinuityMode()) 
 		dS = 0.0;
 
 	if (!m_bLowVoltage)
-		dDelta = Delta - atan2(Vim, Vre);
+		dDelta = Delta - std::atan2(Vim, Vre);
 	
 	pDynaModel->SetFunctionDiff(Lag, dLag);
 	pDynaModel->SetFunction(S, dS);
@@ -682,7 +682,7 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = CDynaNodeBase::Init(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status{ CDynaNodeBase::Init(pDynaModel) };
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		S = 0.0;
@@ -700,7 +700,7 @@ double* CDynaNodeBase::GetVariablePtr(ptrdiff_t nVarIndex)
 // константы узла - проводимость шунта
 double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p(nullptr);
+	double* p{ nullptr };
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Bshunt, C_BSH)
@@ -773,7 +773,7 @@ void CDynaNodeContainer::CalculateShuntParts()
 void CDynaNodeBase::CalculateShuntParts()
 {
 	// TODO - надо разобраться с инициализацией V0 __до__ вызова этой функции
-	double V02 = V0 * V0;
+	double V02{ V0 * V0 };
 	if (m_pLRC)
 	{
 		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
@@ -845,8 +845,8 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 	}
 	else
 	{
-		CDevice **ppDevice(nullptr);
-		CLinkPtrCount *pLink = GetLink(0);
+		CDevice** ppDevice{ nullptr };
+		CLinkPtrCount* pLink{ GetLink(0) };
 		while (pLink->In(ppDevice))
 		{
 			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
@@ -871,8 +871,8 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 
 eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice)
 {
-	eDEVICESTATE OldState = GetState();
-	eDEVICEFUNCTIONSTATUS Status = CDevice::SetState(eState, eStateCause);
+	eDEVICESTATE OldState{ GetState() };
+	eDEVICEFUNCTIONSTATUS Status{ CDevice::SetState(eState, eStateCause) };
 
 	if (OldState != eState)
 	{
@@ -924,7 +924,6 @@ double* CSynchroZone::GetVariablePtr(ptrdiff_t nVarIndex)
 
 bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
 	if (m_bInfPower)
 	{
 		pDynaModel->SetElement(S, S, 1.0);
@@ -947,7 +946,7 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 
 bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 {
-	double dS = S;
+	double dS{ S };
 	if (m_bInfPower)
 	{
 		pDynaModel->SetFunction(S, 0.0);
@@ -976,28 +975,28 @@ eDEVICEFUNCTIONSTATUS CSynchroZone::Init(CDynaModel* pDynaModel)
 
 bool CDynaNodeContainer::LULF()
 {
-	bool bRes = true;
+	bool bRes{ true };
 
 	KLUWrapper<std::complex<double>> klu;
-	size_t nNodeCount = m_DevInMatrix.size();
-	size_t nBranchesCount = m_pDynaModel->Branches.Count();
+	size_t nNodeCount{ m_DevInMatrix.size() };
+	size_t nBranchesCount{ m_pDynaModel->Branches.Count() };
 	// оценка количества ненулевых элементов
-	size_t nNzCount = nNodeCount + 2 * nBranchesCount;
+	size_t nNzCount{ nNodeCount + 2 * nBranchesCount };
 
 	klu.SetSize(nNodeCount, nNzCount);
-	double *Ax = klu.Ax();
-	double *B  = klu.B();
-	ptrdiff_t *Ap = klu.Ai();
-	ptrdiff_t *Ai = klu.Ap();
+	double* const Ax{ klu.Ax() };
+	double* const B{ klu.B() };
+	ptrdiff_t* Ap{ klu.Ai() };
+	ptrdiff_t* Ai{ klu.Ap() };
 
 	// вектор указателей на диагональ матрицы
-	auto pDiags = std::make_unique<double*[]>(nNodeCount);
-	double **ppDiags = pDiags.get();
-	double *pB = B;
+	auto pDiags{ std::make_unique<double* []>(nNodeCount) };
+	double** ppDiags{ pDiags.get() };
+	double* pB{ B };
 
-	double *pAx = Ax;
-	ptrdiff_t *pAp = Ap;
-	ptrdiff_t *pAi = Ai;
+	double* pAx{ Ax };
+	ptrdiff_t* pAp{ Ap };
+	ptrdiff_t* pAi{ Ai };
 
 	std::ofstream fnode(GetModel()->Platform().ResultFile("nodes.csv"));
 	std::ofstream fgen(GetModel()->Platform().ResultFile("gens.csv"));
