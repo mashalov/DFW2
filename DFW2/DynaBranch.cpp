@@ -27,8 +27,8 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	// ветви меньше минимального, либо связь параллельна такой ветви
 
 #ifdef _DEBUG
-	bool bZ1 = m_pNodeSuperIp == m_pNodeSuperIq;
-	bool bZ2 = IsZeroImpedance();
+	bool bZ1{ m_pNodeSuperIp == m_pNodeSuperIq };
+	bool bZ2{ IsZeroImpedance() };
 	// Ассертит случай, когда ветвь в суперузле но имеет большее чем пороговое сопротивление
 	//_ASSERTE(bZ1 == bZ2);
 	if(bZ2||bZ1)
@@ -79,7 +79,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 
 bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom)
 {
-	bool bRes = false;
+	bool bRes{ false };
 	if (m_pContainer)
 	{
 		bRes = true;
@@ -87,7 +87,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 		// идем по контейнеру ветвей
 		for (auto&& it : *m_pContainer)
 		{
-			CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
+			CDynaBranch* pBranch{ static_cast<CDynaBranch*>(it) };
 			pBranch->UpdateVerbalName();
 
 			pBranch->m_pNodeIp = pBranch->m_pNodeIq = nullptr;
@@ -158,7 +158,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 // изменяет состояние ветви на заданное
 eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBranchState, eDEVICESTATECAUSE eStateCause)
 {
-	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
 	if (eBranchState != m_BranchState)
 	{
 		// если заданное состояние ветви не 
@@ -175,7 +175,8 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBran
 eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice)
 {
 	// при отключении ветви два режима
-	BranchState eBranchState(m_BranchState);
+	BranchState eBranchState{ m_BranchState };
+
 	if (pCauseDevice && pCauseDevice->GetType() == DEVTYPE_NODE && eState == eDEVICESTATE::DS_OFF)
 	{
 		// если передан узел, из-за которого должно измениться состояние ветви
@@ -201,7 +202,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAU
 // shortcut для получения состояния ветви в терминах CDevice
 eDEVICESTATE CDynaBranch::GetState() const
 {
-	eDEVICESTATE State = eDEVICESTATE::DS_ON;
+	eDEVICESTATE State{ eDEVICESTATE::DS_ON };
 	if (m_BranchState == BranchState::BRANCH_OFF)
 		State = eDEVICESTATE::DS_OFF;
 	return State;
@@ -221,7 +222,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 	// с учетом шунтов (Yips/Yiqs) при этом будут пригодны для расчета балансовых соотношений
 	// в суперузле
 
-	cplx Ybranch = GetYBranch(bFixNegativeZs);
+	cplx Ybranch{ GetYBranch(bFixNegativeZs) };
 	cplx Ktrx(Ktr, Kti);
 
 	// постоянная часть проводимостей на землю от собственных шунтов ветви и старых реакторов не изменяется 
@@ -308,11 +309,11 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 // функция не контролирует, находится ли ветвь в параллели к ветви с нулевым сопротивлением
 bool CDynaBranch::IsZeroImpedance()
 {
-	const CDynaModel *pModel = GetModel();
+	const CDynaModel* pModel{ GetModel() };
 
 	if (m_BranchState == CDynaBranch::BranchState::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
 	{
-		double Zmin = pModel->GetZeroBranchImpedance();
+		double Zmin{ pModel->GetZeroBranchImpedance() };
 		if (std::abs(R) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin &&
 			std::abs(X) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin)
 			return true;
@@ -456,10 +457,10 @@ bool CDynaBranch::BranchAndNodeConnected(CDynaNodeBase* pNode)
 
 bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 {
-	bool bDisconnected(false);
+	bool bDisconnected{ false };
 	_ASSERTE(pNode->GetState() == eDEVICESTATE::DS_OFF);
 
-	const char* pSwitchOffMode(CDFW2Messages::m_cszSwitchedOffBranchComplete);
+	const char* pSwitchOffMode{ CDFW2Messages::m_cszSwitchedOffBranchComplete };
 
 	if (pNode == m_pNodeIp)
 	{
@@ -516,8 +517,8 @@ void CDynaBranchContainer::CreateMeasures(CDeviceContainer& containerBranchMeasu
 	if (containerBranchMeasures.GetType() != DEVTYPE_BRANCHMEASURE)
 		throw dfw2error("CDynaBranchContainer::CreateMeasures given container is not CDynaBranchBranchMeasures container");
 	containerBranchMeasures.CreateDevices(Count());
-	auto itBranch = begin();
-	auto itMeasure = containerBranchMeasures.begin();
+	auto itBranch{ begin() };
+	auto itMeasure{ containerBranchMeasures.begin() };
 	for (; itBranch != end(); itBranch++, itMeasure++)
 		static_cast<CDynaBranchMeasure*>(*itMeasure)->SetBranch(static_cast<CDynaBranch*>(*itBranch));
 }

@@ -23,13 +23,13 @@ namespace DFW2
 
 		double dMaxRadius;
 
-		double Get(double VdivVnom)
+		double Get(double VdivVnom) const
 		{
 			VdivVnom = (std::max)(VdivVnom, 0.0);
 			return a0 + (a1 + a2 * VdivVnom) * VdivVnom;
 		}
 
-		double GetBoth(double VdivVnom, double &dLRC)
+		double GetBoth(double VdivVnom, double &dLRC) const
 		{
 			VdivVnom = (std::max)(VdivVnom, 0.0);
 			dLRC = a1 + a2 * 2.0 * VdivVnom;
@@ -46,10 +46,10 @@ namespace DFW2
 
 		bool SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ);
 		bool Check();
-		double GetP(double VdivVnom, double dVicinity);
-		double GetQ(double VdivVnom, double dVicinity);
-		double GetPdP(double VdivVnom, double &dP, double dVicinity);
-		double GetQdQ(double VdivVnom, double &dQ, double dVicinity);
+		double GetP(double VdivVnom, double dVicinity) const;
+		double GetQ(double VdivVnom, double dVicinity) const;
+		double GetPdP(double VdivVnom, double &dP, double dVicinity) const;
+		double GetQdQ(double VdivVnom, double &dQ, double dVicinity) const;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		LRCDATA P, Q;
 		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");
@@ -58,7 +58,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		bool CheckDiscontinuity();
 		bool CheckUnityAndSlope();
-		double GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC);
+		double GetBothInterpolatedHermite(const CLRCData* const pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC) const;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static constexpr const char* m_cszP = "P";
 		static constexpr const char* m_cszQ = "Q";

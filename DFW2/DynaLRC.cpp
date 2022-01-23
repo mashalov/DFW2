@@ -7,34 +7,31 @@ using namespace DFW2;
 
 bool CDynaLRC::SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ)
 {
-	bool bRes(false);
 	if (nPcsP >= 0 && nPcsQ >= 0)
 	{
 		P.resize(nPcsP);
 		Q.resize(nPcsQ);
-		bRes = true;
+		return true;
 	}
-	return bRes;
+
+	return false;
 }
 
-
-
-double CDynaLRC::GetP(double VdivVnom, double dVicinity)
+double CDynaLRC::GetP(double VdivVnom, double dVicinity) const
 {
-	CLRCData *v = &P.front();
+	const CLRCData* const v{ &P.front() };
 
 	if (P.size() == 1)
-	{
 		return v->Get(VdivVnom);
-	}
-	double dP = 0.0;
+
+	double dP{ 0.0 };
 	return GetBothInterpolatedHermite(v, P.size(), VdivVnom, dVicinity, dP);
 }
 
-double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC)
+double CDynaLRC::GetBothInterpolatedHermite(const CLRCData* const pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC) const
 {
 	// По умолчанию считаем что напряжение находится в последнем сегменте
-	CLRCData* pHitV{ pBase + nCount - 1 }, *v{ pBase };
+	const CLRCData* pHitV{ pBase + nCount - 1 }, *v{ pBase };
 	VdivVnom = (std::max)(0.0, VdivVnom);
 
 	// ищем сегмент у которого напряжение больше заданного
@@ -49,7 +46,6 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 	}
 
 	bool bLeft{ false }, bRight{ false };
-
 
 	if (pHitV->pPrev)
 	{
@@ -78,7 +74,6 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 				bRight = false;
 		}
 	}
-
 
 	//bLeft = bRight = false;
 
@@ -121,37 +116,35 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 			return P;
 		}
 	}
+
 	return pHitV->GetBoth(VdivVnom, dLRC);
 }
 
-double CDynaLRC::GetPdP(double VdivVnom, double &dP, double dVicinity)
+double CDynaLRC::GetPdP(double VdivVnom, double &dP, double dVicinity) const
 {
-	CLRCData *v = &P.front();
+	const CLRCData* const v{ &P.front() };
 	if (P.size() == 1)
-	{
 		return v->GetBoth(VdivVnom, dP);
-	}
+
 	return GetBothInterpolatedHermite(v, P.size(), VdivVnom, dVicinity, dP);
 }
 
-double CDynaLRC::GetQdQ(double VdivVnom, double &dQ, double dVicinity)
+double CDynaLRC::GetQdQ(double VdivVnom, double &dQ, double dVicinity) const
 {
-	CLRCData *v = &Q.front();
+	const CLRCData* const v{ &Q.front() };
 	if (Q.size() == 1)
-	{
 		return v->GetBoth(VdivVnom, dQ);
-	}
+
 	return GetBothInterpolatedHermite(v, Q.size(), VdivVnom, dVicinity, dQ);
 }
 
-double CDynaLRC::GetQ(double VdivVnom, double dVicinity)
+double CDynaLRC::GetQ(double VdivVnom, double dVicinity) const
 {
-	CLRCData *v = &Q.front();
+	const CLRCData* const v{ &Q.front() };
 	if (Q.size() == 1)
-	{
 		return v->Get(VdivVnom);
-	}
-	double dQ = 0.0;
+
+	double dQ{ 0.0 };
 	return GetBothInterpolatedHermite(v, Q.size(), VdivVnom, dVicinity, dQ);
 }
 
@@ -171,7 +164,7 @@ bool CDynaLRC::Check()
 // Проверяет крутизну при V = 1.0
 bool CDynaLRC::CheckUnityAndSlope()
 {
-	const auto fnSlopeCheck = [this](double (CDynaLRC::*fn)(double, double&, double), const char* cszType)
+	const auto fnSlopeCheck = [this](double (CDynaLRC::*fn)(double, double&, double) const, const char* cszType)
 	{
 		bool bRes{ true };
 		const auto& Parameters = GetModel()->Parameters();
@@ -237,7 +230,7 @@ bool CDynaLRC::CheckDiscontinuity()
 
 eDEVICEFUNCTIONSTATUS CDynaLRC::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_FAILED };
 
 	if (Check() && CollectConstantData(P) && CollectConstantData(Q))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -247,13 +240,11 @@ eDEVICEFUNCTIONSTATUS CDynaLRC::Init(CDynaModel* pDynaModel)
 
 bool CDynaLRC::CollectConstantData(LRCDATA& LRC)
 {
-	bool bRes(true);
 	// строим связный список сегментов
-
 	for (auto&& v = LRC.begin(); v != LRC.end(); ++v)
 	{
 		v->pPrev = (v == LRC.begin()) ? nullptr : &*std::prev(v);
-		auto next = std::next(v);
+		auto next{ std::next(v) };
 		v->pNext = (next == LRC.end()) ? nullptr: &*next;
 	}
 
@@ -270,7 +261,7 @@ bool CDynaLRC::CollectConstantData(LRCDATA& LRC)
 			v.dMaxRadius = (std::min)(0.5 * (v.pNext->V - v.V), v.dMaxRadius);
 	}
 
-	return bRes;
+	return true;
 }
 
 void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
@@ -382,11 +373,11 @@ void CDynaLRC::TestDump(const char* cszPathName)
 	std::ofstream dump(stringutils::utf8_decode(cszPathName));
 	if (dump.is_open())
 	{
-		double dP(0.0), dQ(0.0), dV(0.3);
+		double dP{ 0.0 }, dQ{ 0.0 }, dV{ 0.3 };
 		for (double v = 0.0; v < 1.5; v += 0.01)
 		{
-			double P = GetPdP(v, dP, dV);
-			double Q = GetQdQ(v, dQ, dV);
+			double P{ GetPdP(v, dP, dV) };
+			double Q{ GetQdQ(v, dQ, dV) };
 			dump << fmt::format("{};{};{};{};{}", v, P, dP, Q, dQ) << std::endl;
 		}
 	}
@@ -421,13 +412,12 @@ void CDynaLRC::UpdateSerializer(CSerializerBase* Serializer)
 
 void CDynaLRCContainer::CreateFromSerialized()
 {
-	double Vmin = GetModel()->GetLRCToShuntVmin();
+	double Vmin{ GetModel()->GetLRCToShuntVmin() };
 
 	struct DualLRC { std::array<std::list<CLRCData>,2> PQ; };
 	using LRCConstructmMap = std::map<ptrdiff_t, DualLRC>;
 
 	LRCConstructmMap constructMap;
-
 
 	if (Vmin <= 0.0)
 	{
@@ -438,10 +428,10 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// проходим по десериализованным СХН
 	for (auto&& dev : m_DevVec)
 	{
-		auto lrc = static_cast<CDynaLRC*>(dev);
+		auto lrc{ static_cast<CDynaLRC*>(dev) };
 
 		// собираем сегменты СХН в карту по идентификаторам
-		auto& pqFromId = constructMap[dev->GetId()].PQ;
+		auto& pqFromId{ constructMap[dev->GetId()].PQ };
 
 		// копируем непустые сериализованные СХН в настоящие СХН
 		for (ptrdiff_t x = 0; x < 2; x++)
@@ -458,7 +448,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// добавляем типовые и служебные СХН
 	// типовые СХН Rastr 1 и 2
 
-	bool bForceStandardLRC = !GetModel()->AllowUserToOverrideStandardLRC();
+	bool bForceStandardLRC{ !GetModel()->AllowUserToOverrideStandardLRC() };
 	
 	// удаляем все сегменты по p и q
 	auto clearPQ = [](DualLRC& dualLRC)
@@ -468,8 +458,8 @@ void CDynaLRCContainer::CreateFromSerialized()
 
 	auto CheckUserLRC = [this,&constructMap](ptrdiff_t Id, bool bForceStandardLRC) -> bool
 	{
-		bool bInsert = true;
-		auto itLRC = constructMap.find(Id);
+		bool bInsert{ true };
+		auto itLRC{ constructMap.find(Id) };
 		if (itLRC != constructMap.end())
 		{
 			// если СХН с данным Id есть сообщаем что она уже существует
@@ -486,7 +476,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// проверяем и добавляем/заменяем стандартные СХН
 	if (CheckUserLRC(1, bForceStandardLRC))
 	{
-		auto& lrc = constructMap[1];
+		auto& lrc{ constructMap[1] };
 		clearPQ(lrc);
 		lrc.PQ[0].push_back({ 0.0,		1.0,	0.83,		-0.3,		0.47 });
 		lrc.PQ[1].push_back({ 0.0,		1.0,	0.721,		0.15971,	0.0 });
@@ -496,7 +486,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 
 	if (CheckUserLRC(2, bForceStandardLRC))
 	{
-		auto& lrc = constructMap[2];
+		auto& lrc{ constructMap[2] };
 		clearPQ(lrc);
 		lrc.PQ[0].push_back({ 0.0,		1.0,	0.83,		-0.3,		0.47 });
 		lrc.PQ[1].push_back({ 0.0,		1.0,	0.657,		0.159135,	0.0 });
@@ -507,7 +497,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// СХН на шунт для динамики
 	if (CheckUserLRC(0, true))
 	{
-		auto& lrcShunt = constructMap[0];
+		auto& lrcShunt{ constructMap[0] };
 		clearPQ(lrcShunt);
 		lrcShunt.PQ[0].push_back({ 0.0, 1.0, 0.0, 0.0, 1.0 });
 		lrcShunt.PQ[1].push_back({ 0.0, 1.0, 0.0, 0.0, 1.0 });
@@ -516,7 +506,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// СХН на постоянную мощность для УР
 	if (CheckUserLRC(-1, true))
 	{
-		auto& lrcConstP = constructMap[-1];
+		auto& lrcConstP{ constructMap[-1] };
 		clearPQ(lrcConstP);
 		lrcConstP.PQ[0].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
 		lrcConstP.PQ[1].push_back({ 0.0, 1.0, 1.0, 0.0, 0.0 });
@@ -525,7 +515,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// СХН на постоянный ток для динамики
 	if (CheckUserLRC(-2, true))
 	{
-		auto& lrcConstI = constructMap[-2];
+		auto& lrcConstI{ constructMap[-2] };
 		clearPQ(lrcConstI);
 		lrcConstI.PQ[0].push_back({ 0.0, 1.0, 0.0, 1.0, 0.0 });
 		lrcConstI.PQ[1].push_back({ 0.0, 1.0, 0.0, 1.0, 0.0 });
@@ -549,10 +539,10 @@ void CDynaLRCContainer::CreateFromSerialized()
 				}
 
 				// проверяем наличие сегментов с одинаковым напряжением
-				auto it = pq.begin();
+				auto it{ pq.begin() };
 				while (it != pq.end())
 				{
-					auto nextIt = std::next(it);
+					auto nextIt{ std::next(it) };
 
 					if (nextIt != pq.end() && Equal(it->V, nextIt->V)) 
 					{
@@ -574,15 +564,15 @@ void CDynaLRCContainer::CreateFromSerialized()
 				// вставляем сегмент от 0 до Vmin
 
 				// ищем последний сегмент в отсортированном списке с напряжением меньше минимального
-				auto rit = std::find_if(pq.rbegin(), pq.rend(), [&Vmin](const CLRCData& lrc) { return lrc.V < Vmin; });
+				auto rit{ std::find_if(pq.rbegin(), pq.rend(), [&Vmin](const CLRCData& lrc) { return lrc.V < Vmin; }) };
 				if (rit != pq.rend())
 				{
 					// если нашли получаем значение при Vmin
-					double LRCatV = rit->Get(Vmin);
+					const double LRCatV{ rit->Get(Vmin) };
 					// ставим найденному сегменту Vmin (обрезаем СХН до Vmin)
 					rit->V = Vmin;
 					// удаляем все сегменты до Vmin
-					auto revRit = std::prev(rit.base());
+					auto revRit{ std::prev(rit.base()) };
 					
 					pq.erase(pq.begin(), revRit);
 					// добавляем шунтовой сегмент от нуля до Vmin в точку предыдущего сегмента
@@ -593,7 +583,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 				it = pq.begin();
 				while (it != pq.end())
 				{
-					auto nextIt = std::next(it);
+					auto nextIt{ std::next(it) };
 					if (nextIt != pq.end() && CDynaLRCContainer::CompareLRCs(*it, *nextIt))
 						nextIt = pq.erase(nextIt);
 					it = nextIt;
@@ -603,7 +593,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// все собрали и обработали в constructMap
 	// теперь создаем настоящие СХН
 
-	CDynaLRC* pLRC = CreateDevices<CDynaLRC>(constructMap.size());
+	CDynaLRC* pLRC{ CreateDevices<CDynaLRC>(constructMap.size()) };
 
 	for (auto&& lrc : constructMap)
 	{
