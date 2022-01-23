@@ -1,6 +1,11 @@
 ﻿#pragma once
 #include "DynaPrimitive.h"
 
+
+#define DERLAG_CONTINUOUS
+//#define DERLAG_CONTINUOUSMOOTH
+//#define DERLAG_NORDSIEK
+
 namespace DFW2
 {
 	// реально-дифференцирующее звено
@@ -45,7 +50,7 @@ namespace DFW2
 	};
 
 
-
+#if defined DERLAG_NORDSIEK
 	class CDerlagNordsieck : public CDynaPrimitive
 	{
 	protected:
@@ -69,10 +74,7 @@ namespace DFW2
 		static size_t PrimitiveSize() { return sizeof(CDerlagNordsieck); }
 		static long EquationsCount() { return 3; }
 	};
-
-#define DERLAG_CONTINUOUS
-//#define DERLAG_CONTINUOUSMOOTH
-//#define DERLAG_NORDSIEK
+#endif
 
 #if defined DERLAG_CONTINUOUS
 #define CDerlag CDerlagContinuous

@@ -169,6 +169,8 @@ bool CDerlagContinuous::UnserializeParameters(CDynaModel *pDynaModel, const DOUB
 
 // ----------------------------- Derlag Nordsieck --------------------------------------
 
+#if defined DERLAG_NORDSIEK
+
 bool CDerlagNordsieck::Init(CDynaModel *pDynaModel)
 {
 	if (Equal(m_K, 0.0))
@@ -229,8 +231,6 @@ bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, const DOUBL
 	return true;
 }
 
-
-#if defined DERLAG_NORDSIEK
 eDEVICEFUNCTIONSTATUS CDerlagNordsieck::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
@@ -248,7 +248,6 @@ eDEVICEFUNCTIONSTATUS CDerlagNordsieck::ProcessDiscontinuity(CDynaModel* pDynaMo
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
-#endif
 
 bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 {
@@ -286,3 +285,4 @@ bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 	return true;
 }
 
+#endif
