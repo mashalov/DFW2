@@ -34,9 +34,7 @@ double CDynaLRC::GetP(double VdivVnom, double dVicinity)
 double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC)
 {
 	// По умолчанию считаем что напряжение находится в последнем сегменте
-	CLRCData *pHitV = pBase + nCount - 1;
-
-	CLRCData *v = pBase;
+	CLRCData* pHitV{ pBase + nCount - 1 }, *v{ pBase };
 	VdivVnom = (std::max)(0.0, VdivVnom);
 
 	// ищем сегмент у которого напряжение больше заданного
@@ -50,8 +48,7 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 		v++;
 	}
 
-	bool bLeft = false;
-	bool bRight = false;
+	bool bLeft{ false }, bRight{ false };
 
 
 	if (pHitV->pPrev)
@@ -89,7 +86,7 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 	{
 		_ASSERTE(!(bLeft && bRight));
 
-		double x1, x2, y1, y2, k1 = 0.0, k2 = 0.0;
+		double x1, x2, y1, y2, k1{ 0.0 }, k2{ 0.0 };
 
 		// https://en.wikipedia.org/wiki/Spline_interpolation
 		
@@ -111,17 +108,16 @@ double CDynaLRC::GetBothInterpolatedHermite(CLRCData *pBase, ptrdiff_t nCount, d
 			y2 = pHitV->pNext->GetBoth(x2, k2);
 		}
 
-		double x2x1 = x2 - x1;
-		double y2y1 = y2 - y1;
+		const double x2x1{ x2 - x1 }, t{ (VdivVnom - x1) / x2x1 };
 
-		double a = k1 * x2x1- y2y1;
-		double b = -k2 * x2x1 + y2y1;
-		double t = (VdivVnom - x1) / x2x1;
 		if (t >= 0 && t <= 1.0)
 		{
-			double P = (1.0 - t) * y1 + t * y2 + t * (1.0 - t) * (a* (1.0 - t) + b * t);
+			const double t1{ 1.0 - t }, y2y1{ y2 - y1 }, a{ k1 * x2x1 - y2y1 }, b{ -k2 * x2x1 + y2y1 };
+
+			const double P{ t1 * y1 + t * y2 + t * t1 * (a * t1 + b * t) };
 			//dLRC = ((y2 - y1) + (1.0 - 2 * t) * (a * (1.0 - t) + b *t) + t * (1.0 - t) * (b - a)) / x2x1;
 			dLRC = (a - y1 + y2 - (4.0 * a - 2.0 * b - 3.0 * t * (a - b)) * t) / x2x1;
+			//_ASSERTE(Equal(dLRC,((y2 - y1) + (1.0 - 2 * t) * (a * (1.0 - t) + b * t) + t * (1.0 - t) * (b - a)) / x2x1));
 			return P;
 		}
 	}

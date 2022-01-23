@@ -238,7 +238,7 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 	// генерация в узле также равна заданной в УР
 	Pgr = Pg;	Qgr = Qg;
 	double VdVnom = Vnode / V0;
-
+	
 	dLRCPg = dLRCQg = dLRCPn = dLRCQn = 0.0;
 
 	// если есть СХН нагрузки, рассчитываем
@@ -521,7 +521,7 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
-	dLRCVicinity = 5.0 * std::abs(Vold - V) / Unom;
+	//dLRCVicinity = 5.0 * std::abs(Vold - V) / Unom;
 	Vold = V;
 	CLinkPtrCount *pLink = GetSuperLink(0);
 	CDevice **ppDevice(nullptr);
@@ -569,7 +569,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 // итерационным процессом решения сети
 void CDynaNode::Predict()
 {
-	dLRCVicinity = 0.0;
+	dLRCVicinity = 0.05;
 	const double newDelta{ std::atan2(std::sin(Delta), std::cos(Delta)) };
 	if (std::abs(newDelta - Delta) > DFW2_EPSILON)
 	{
