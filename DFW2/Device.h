@@ -274,7 +274,6 @@ namespace DFW2
 		void SetSingleLinkStart(CDevice** ppLinkStart);
 
 		CDynaModel* GetModel();
-		const CDynaModel* GetModel() const;
 
 		// построение блока уравнения в Якоби
 		virtual bool BuildEquations(CDynaModel* pDynaModel);

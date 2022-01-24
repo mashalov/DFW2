@@ -246,8 +246,8 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 
 	_ASSERTE(m_pLRC);
 
-	Pnr *= m_pLRC->P()->GetBoth(VdVnom, dLRCPn, dLRCVicinity);
-	Qnr *= m_pLRC->Q()->GetBoth(VdVnom, dLRCQn, dLRCVicinity);
+	Pnr *= m_pLRC->GetPdP(VdVnom, dLRCPn, dLRCVicinity);
+	Qnr *= m_pLRC->GetQdQ(VdVnom, dLRCQn, dLRCVicinity);
 	dLRCPn *= Pn / V0;
 	dLRCQn *= Qn / V0;
 
@@ -255,8 +255,8 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 	// рассчитываем расчетную генерацию
 	if (m_pLRCGen)
 	{
-		Pgr *= m_pLRCGen->P()->GetBoth(VdVnom, dLRCPg, dLRCVicinity); 
-		Qgr *= m_pLRCGen->Q()->GetBoth(VdVnom, dLRCQg, dLRCVicinity);
+		Pgr *= m_pLRCGen->GetPdP(VdVnom, dLRCPg, dLRCVicinity); 
+		Qgr *= m_pLRCGen->GetQdQ(VdVnom, dLRCQg, dLRCVicinity);
 		dLRCPg *= Pg / V0;
 		dLRCQg *= Qg / V0;
 	}
@@ -777,8 +777,8 @@ void CDynaNodeBase::CalculateShuntParts()
 	if (m_pLRC)
 	{
 		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
-		dLRCShuntPartP = Pn * m_pLRC->P()->P.begin()->a2;
-		dLRCShuntPartQ = Qn * m_pLRC->Q()->P.begin()->a2;
+		dLRCShuntPartP = Pn * m_pLRC->P.begin()->a2;
+		dLRCShuntPartQ = Qn * m_pLRC->Q.begin()->a2;
 	}
 	else
 		dLRCShuntPartP = dLRCShuntPartQ = 0.0;
@@ -790,8 +790,8 @@ void CDynaNodeBase::CalculateShuntParts()
 		dLRCShuntPartP = std::fma(-Pg, m_pLRCGen->P.begin()->a2, dLRCShuntPartP);
 		dLRCShuntPartQ = std::fma(-Qg, m_pLRCGen->Q.begin()->a2, dLRCShuntPartQ);
 #else
-		dLRCShuntPartP -= Pg * m_pLRCGen->P()->P.begin()->a2;
-		dLRCShuntPartQ -= Qg * m_pLRCGen->Q()->P.begin()->a2;
+		dLRCShuntPartP -= Pg * m_pLRCGen->P.begin()->a2;
+		dLRCShuntPartQ -= Qg * m_pLRCGen->Q.begin()->a2;
 #endif
 	}
 	dLRCShuntPartP /= V02;
