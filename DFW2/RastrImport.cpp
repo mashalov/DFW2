@@ -629,7 +629,7 @@ void CRastrImport::ReadLRCs(CDynaLRCContainer& container)
 			lrcpolynom& source;
 		};
 
-		std::array<polynoms, 2> pq{ { { &lrc->P, pcols }, { &lrc->Q, qcols }  } };
+		std::array<polynoms, 2> pq{ { { &lrc->P()->P, pcols }, { &lrc->Q()->P, qcols }  } };
 
 		for (auto&& power : pq)
 		{

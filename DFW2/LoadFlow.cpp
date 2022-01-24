@@ -1292,12 +1292,12 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 		// если такие СХН не разрешены в параметрах
 		if (m_Parameters.m_bAllowNegativeLRC || pNode->Pn > 0.0)
 		{
-			pNode->Pnr *= pNode->m_pLRC->GetPdP(VdVnom, pNode->dLRCPn, pNode->dLRCVicinity);
+			pNode->Pnr *= pNode->m_pLRC->P()->GetBoth(VdVnom, pNode->dLRCPn, pNode->dLRCVicinity);
 			pNode->dLRCPn *= pNode->Pn / pNode->V0;
 		}
 		if (m_Parameters.m_bAllowNegativeLRC || pNode->Qn > 0.0)
 		{
-			pNode->Qnr *= pNode->m_pLRC->GetQdQ(VdVnom, pNode->dLRCQn, pNode->dLRCVicinity);
+			pNode->Qnr *= pNode->m_pLRC->Q()->GetBoth(VdVnom, pNode->dLRCQn, pNode->dLRCVicinity);
 			pNode->dLRCQn *= pNode->Qn / pNode->V0;
 		}
 	}

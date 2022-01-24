@@ -35,30 +35,48 @@ namespace DFW2
 			dLRC = a1 + a2 * 2.0 * VdivVnom;
 			return a0 + (a1 + a2 * VdivVnom) * VdivVnom;
 		}
+
+		bool operator < (const CLRCData& other) const
+		{
+			return V < other.V;
+		}
 	};
 
 	using LRCDATA = std::vector<CLRCData>;
+	using LRCDATASET = std::set<CLRCData>;
+
+	class CDynaLRCChannel
+	{
+	public:
+		LRCDATA P;
+		LRCDATASET Ps;
+		CDynaLRCChannel(const char* Type) : cszType(Type) {}
+		double Get(double VdivVnom, double dVicinity) const;
+		double GetBoth(double VdivVnom, double& dP, double dVicinity) const;
+		bool Check(const CDevice* pDevice);
+		void SetSize(size_t nSize);
+		bool CollectConstantData();
+	protected:
+		double GetBothInterpolatedHermite(const CLRCData* const pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double& dLRC) const;
+		const char* cszType;
+	};
 
 	class CDynaLRC : public CDevice
 	{
 	public:
 		using CDevice::CDevice;
-
-		bool SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ);
+		void SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ);
 		bool Check();
-		double GetP(double VdivVnom, double dVicinity) const;
-		double GetQ(double VdivVnom, double dVicinity) const;
-		double GetPdP(double VdivVnom, double &dP, double dVicinity) const;
-		double GetQdQ(double VdivVnom, double &dQ, double dVicinity) const;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
-		LRCDATA P, Q;
 		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");
+		const CDynaLRCChannel* P() const { return &m_P; }
+		const CDynaLRCChannel* Q() const { return &m_Q; }
+		CDynaLRCChannel* P() { return &m_P; }
+		CDynaLRCChannel* Q() { return &m_Q; }
 	protected:
-		bool CollectConstantData(LRCDATA& LRC);
+		//friend class CDynaLRCContainer;
+		CDynaLRCChannel m_P{ CDynaLRC::m_cszP }, m_Q{ CDynaLRC::m_cszQ };
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
-		bool CheckDiscontinuity();
-		bool CheckUnityAndSlope();
-		double GetBothInterpolatedHermite(const CLRCData* const pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dLRC) const;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static constexpr const char* m_cszP = "P";
 		static constexpr const char* m_cszQ = "Q";
