@@ -231,6 +231,11 @@ size_t CDeviceContainer::GetResultVariablesCount()
 	return nCount;
 }
 
+void CDeviceContainer::DebugLog(const std::string_view Message)
+{
+	if (m_pDynaModel)
+		m_pDynaModel->DebugLog(Message);
+}
 
 void CDeviceContainer::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDBIndex)
 {

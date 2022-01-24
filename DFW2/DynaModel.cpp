@@ -108,8 +108,10 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 
 	if (m_Parameters.m_eFileLogLevel != DFW2MessageStatus::DFW2LOG_NONE)
 	{
-		const auto logPath(std::filesystem::path(Platform().Logs()).append("dfw2.log"));
+		const auto logPath{ std::filesystem::path(Platform().Logs()).append("dfw2.log") };
+		const auto debugLogPath{ std::filesystem::path(Platform().Logs()).append("debug.log") };
 		LogFile.open(logPath, std::ios::out);
+		DebugLogFile.open(debugLogPath, std::ios::out);
 		if (LogFile.is_open())
 		{
 			LogFile << fmt::format(CDFW2Messages::m_cszLogStarted, 
@@ -130,6 +132,8 @@ CDynaModel::~CDynaModel()
 {
 	if(LogFile.is_open())
 		LogFile.close();
+	if (DebugLogFile.is_open())
+		DebugLogFile.close();
 }
 
 bool CDynaModel::RunTransient()
@@ -165,7 +169,7 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_bUseRefactor = false;
 		m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 		m_Parameters.m_dLRCToShuntVmin = 0.7;
-		m_Parameters.m_dZeroBranchImpedance = -4.0E-6;
+		m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
 		m_Parameters.m_dProcessDuration = 150;
 		m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
@@ -180,7 +184,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
 		m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
 
-		m_Parameters.m_dAtol = 1E-4;
+		m_Parameters.m_dAtol = 1E-2;
 		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = true;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bDisableResultsWriter = true;
@@ -817,9 +821,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			DumpStateVector();
 			DumpMatrix();
 		}
-		*/
-
-//		DumpMatrix(true);
+  	    */
 
 		bmax = klu.FindMaxB(imax);
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "%g %d", bmax, imax);
@@ -1562,6 +1564,9 @@ void CDynaModel::BadStep()
 	// если шаг снизился до минимума
 	if (sc.m_dCurrentH < sc.Hmin)
 	{
+		//klu.DumpMatrix(true);
+		//DumpStateVector();
+
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 
@@ -1597,9 +1602,6 @@ void CDynaModel::BadStep()
 
 void CDynaModel::NewtonFailed()
 {
-	if (GetIntegrationStepNumber() == 2052)
-		DumpStateVector();
-
 	// обновляем подсчет ошибок Ньютона
 	if (!sc.m_bDiscontinuityMode)
 	{

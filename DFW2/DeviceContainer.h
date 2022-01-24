@@ -189,6 +189,7 @@ namespace DFW2
 		inline const DEVICEVECTOR::const_iterator end() const   { return m_DevVec.end(); }
 
 		void Log(DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);
+		void DebugLog(const std::string_view Message);
 
 		LINKSVEC m_Links;													// вектор возможных связей. Элемент вектора - связь с определенным типом устройств
 		bool IsKindOfType(eDFW2DEVICETYPE eType);

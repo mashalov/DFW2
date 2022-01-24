@@ -228,6 +228,7 @@ namespace DFW2
 		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
 
 		void Log(DFW2MessageStatus Status, std::string_view Message) const;
+		void DebugLog(std::string_view Message) const;
 
 		// функция маппинга указателя на переменную к индексу переменной
 		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice

@@ -171,9 +171,14 @@ double CDevice::SetValue(std::string_view VarName, double Value)
 
 void CDevice::Log(DFW2MessageStatus Status, std::string_view Message) const
 {
-	// TODO - add device type information
 	if (m_pContainer)
 		m_pContainer->Log(Status, Message, GetDBIndex());
+}
+
+void CDevice::DebugLog(std::string_view Message) const
+{
+	if (m_pContainer)
+		m_pContainer->DebugLog(Message);
 }
 
 // связь экземпляров устройств по информации из из контейнеров

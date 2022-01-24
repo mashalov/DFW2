@@ -627,7 +627,7 @@ namespace DFW2
 		bool LoadFlow();
 		void DumpStateVector();
 		FILE* fResult;
-		mutable std::ofstream LogFile;
+		mutable std::ofstream LogFile, DebugLogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
 
 		std::atomic<bool> bStopProcessing = false;
@@ -886,6 +886,7 @@ namespace DFW2
 		void EndProgress();
 
 		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const;
+		void DebugLog(std::string_view Message) const;
 
 		double Methodl[4][4];
 		double Methodlh[4];

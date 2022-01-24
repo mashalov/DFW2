@@ -5,6 +5,11 @@
 
 using namespace DFW2;
 
+void CDynaModel::DebugLog(std::string_view Message) const
+{
+	if (DebugLogFile.is_open())
+		DebugLogFile << Message << std::endl;
+}
 
 void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex) const
 {
