@@ -996,6 +996,12 @@ CDynaModel* CDevice::GetModel()
 	return m_pContainer->GetModel();
 }
 
+const CDynaModel* CDevice::GetModel() const
+{
+	_ASSERTE(m_pContainer && m_pContainer->GetModel());
+	return m_pContainer->GetModel();
+}
+
 eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
 {
 	if (eState == m_State)
