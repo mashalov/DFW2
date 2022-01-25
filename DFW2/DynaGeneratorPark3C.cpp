@@ -189,22 +189,6 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	// dIq_ds = (ld2 * lq2 * (2 * s + 2) * (Eq_Psi1d * Psi1d * r * (s + 1) - Vd * ld2 * (s + 1) - Vq * r + Eq_Psifd * Psifd * r * (s + 1) + Ed_Psi1q * Psi1q * ld2 * (s + 1) ^ 2)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2) ^ 2 - (Eq_Psi1d * Psi1d * r - Vd * ld2 + Eq_Psifd * Psifd * r + Ed_Psi1q * Psi1q * ld2 * (2 * s + 2)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
 	pDynaModel->SetElement(Iq, s, (2.0 * ld2 * lq2 * omega * (Eq_Psi1d * Psi1d * r * omega - Vd * ld2 * omega - Vq * r + Eq_Psifd * Psifd * r * omega + Ed_Psi1q * Psi1q * ld2 * omega2)) * zsq * zsq - (Eq_Psi1d * Psi1d * r - Vd * ld2 + Eq_Psifd * Psifd * r + 2.0 * Ed_Psi1q * Psi1q * ld2 * omega) * zsq);
 
-
-
-	/*
-	pDynaModel->SetElement(Id, Iq, -lq2 * omega);
-	pDynaModel->SetElement(Id, Vd, -1);
-	pDynaModel->SetElement(Id, Psi1q, Ed_Psi1q * omega);
-	pDynaModel->SetElement(Id, s, Ed_Psi1q * Psi1q - Iq * lq2);
-
-	pDynaModel->SetElement(Iq, Id, ld2 * omega);
-	pDynaModel->SetElement(Iq, Iq, -r);
-	pDynaModel->SetElement(Iq, Vq, -1);
-	pDynaModel->SetElement(Iq, Psifd, Eq_Psifd * omega);
-	pDynaModel->SetElement(Iq, Psi1d, Eq_Psi1d * omega);
-	pDynaModel->SetElement(Iq, s, Id * ld2 + Eq_Psi1d * Psi1d + Eq_Psifd * Psifd);
-	*/
-
 	pDynaModel->SetElement(Psifd, Id, -Psifd_id);
 	pDynaModel->SetElement(Psifd, Psifd, Psifd_Psifd);
 	pDynaModel->SetElement(Psifd, Psi1d, -Psifd_Psi1d);
@@ -271,41 +255,14 @@ cplx CDynaGeneratorPark3C::GetIdIq() const
 
 bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 {
-	bool bRes(true);
-	const double omega(1.0 + s);
-	const double dEq = Eq + (Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id) * lad / Rfd;
-	//const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q - Vd;
-	//const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
-
-
-	const double omega2 = omega * omega;
-	const double zsq = ZeroDivGuard(1.0, r * r + omega2 * ld2 * lq2);
-
-	const double dId = Id 
-		- zsq * (
-			-r * Vd
-			+ omega * lq2 * Vq
-			- omega2 * lq2 * Eq_Psifd * Psifd
-			- omega2 * lq2 * Eq_Psi1d * Psi1d
-			+ r * omega * Ed_Psi1q * Psi1q
-			);
-
-	const double dIq = Iq 
-		- zsq * (
-			-r * Vq
-			- omega * ld2 * Vd
-			+ r * omega * Eq_Psifd * Psifd
-			+ r * omega * Eq_Psi1d * Psi1d
-			+ omega2 * ld2 * Ed_Psi1q * Psi1q
-			);
-
-
-	pDynaModel->SetFunction(Id, dId);
-	pDynaModel->SetFunction(Iq, dIq);
+	const double dEq{ Eq + (Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id) * lad / Rfd };
+	cplx cI{ GetIdIq() };
+	pDynaModel->SetFunction(Id, Id - cI.real());
+	pDynaModel->SetFunction(Iq, Iq - cI.imag());
 	pDynaModel->SetFunction(Eq, dEq);
 	SetFunctionsDiff(pDynaModel);
 	BuildRIfromDQRightHand(pDynaModel);
-	return bRes;
+	return true;
 }
 
 // Так как одни и те же производные нужны и для BuildRightHand и для BuildDerivatives
