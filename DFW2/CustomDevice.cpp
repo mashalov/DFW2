@@ -198,7 +198,7 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CDynaModel* pDynaModel)
 			bRes = bRes && InitConstantVariable(m_pConstVars[nConstIndex++], this, it.VarInfo.Name, static_cast<eDFW2DEVICETYPE>(it.eDeviceType));
 	}
 
-	bRes = bRes && ConstructDLLParameters(pDynaModel);
+	ConstructDLLParameters(pDynaModel);
 	m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	bRes = bRes && Container()->InitDLLEquations(&m_DLLArgs);
 
@@ -208,33 +208,21 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::Init(CDynaModel* pDynaModel)
 	return m_ExternalStatus;
 }
 
-bool CCustomDevice::BuildEquations(CDynaModel *pDynaModel)
+void CCustomDevice::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = ConstructDLLParameters(pDynaModel);
-	bRes = Container()->BuildDLLEquations(&m_DLLArgs) && bRes;
-
-	bRes = bRes && CDevice::BuildEquations(pDynaModel);
-
-	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
-		bRes = (*it)->BuildEquations(pDynaModel) && bRes;*/
-
-	return bRes;
+	ConstructDLLParameters(pDynaModel);
+	Container()->BuildDLLEquations(&m_DLLArgs);
+	CDevice::BuildEquations(pDynaModel);
 }
 
-bool CCustomDevice::BuildRightHand(CDynaModel *pDynaModel)
+void CCustomDevice::BuildRightHand(CDynaModel *pDynaModel)
 {
-	bool bRes = ConstructDLLParameters(pDynaModel);
-	bRes = Container()->BuildDLLRightHand(&m_DLLArgs) && bRes;
-
-	bRes = bRes && CDevice::BuildRightHand(pDynaModel);
-
-	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
-		bRes = (*it)->BuildRightHand(pDynaModel) && bRes;*/
-
-	return bRes;
+	ConstructDLLParameters(pDynaModel);
+	Container()->BuildDLLRightHand(&m_DLLArgs);
+	CDevice::BuildRightHand(pDynaModel);
 }
 
-bool CCustomDevice::ConstructDLLParameters(CDynaModel *pDynaModel)
+void CCustomDevice::ConstructDLLParameters(CDynaModel *pDynaModel)
 {
 	m_DLLArgs.pEquations = static_cast<DLLVariableIndex*>(static_cast<void*>(m_pVars));
 	m_DLLArgs.pConsts    = m_pConstVars;
@@ -244,21 +232,13 @@ bool CCustomDevice::ConstructDLLParameters(CDynaModel *pDynaModel)
 	m_DLLArgs.BuildObjects.pDevice = this;
 	m_DLLArgs.Omega = pDynaModel->GetOmega0();
 	m_DLLArgs.t = pDynaModel->GetCurrentTime();
-	return true;
 }
 
-bool CCustomDevice::BuildDerivatives(CDynaModel *pDynaModel)
+void CCustomDevice::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = ConstructDLLParameters(pDynaModel);
-	bRes = Container()->BuildDLLDerivatives(&m_DLLArgs) && bRes;
-
-	
-	bRes = bRes && CDevice::BuildDerivatives(pDynaModel);
-
-	/*for (PRIMITIVEBLOCKITR it = m_Primitives.begin(); it != m_Primitives.end(); it++)
-		bRes = (*it)->BuildDerivatives(pDynaModel) && bRes;*/
-
-	return bRes;
+	ConstructDLLParameters(pDynaModel);
+	Container()->BuildDLLDerivatives(&m_DLLArgs);
+	CDevice::BuildDerivatives(pDynaModel);
 }
 
 double CCustomDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
@@ -283,7 +263,7 @@ eDEVICEFUNCTIONSTATUS CCustomDevice::ProcessDiscontinuity(CDynaModel* pDynaModel
 	if (IsStateOn())
 	{
 		m_ExternalStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
-		bool bRes = ConstructDLLParameters(pDynaModel);
+		ConstructDLLParameters(pDynaModel);
 		Container()->ProcessDLLDiscontinuity(&m_DLLArgs);
 	}
 	else
@@ -535,22 +515,20 @@ double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
 }
 
 
-bool CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
+void CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	PrepareCustomDeviceData(pDynaModel);
 	m_pDevice->BuildRightHand(CustomDeviceData);
 	CDevice::BuildRightHand(pDynaModel);
-	return true;
 }
 
-bool CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
+void CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
 {
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	PrepareCustomDeviceData(pDynaModel);
 	m_pDevice->BuildEquations(CustomDeviceData);
 	CDevice::BuildEquations(pDynaModel);
-	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::Init(CDynaModel* pDynaModel)

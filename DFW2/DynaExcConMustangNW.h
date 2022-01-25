@@ -62,9 +62,9 @@ namespace DFW2
 		virtual ~CDynaExcConMustangNonWindup() = default;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		bool BuildEquations(CDynaModel* pDynaModel) override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		bool BuildDerivatives(CDynaModel* pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel* pDynaModel) override;
 		double CheckZeroCrossing(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel) override;

@@ -60,10 +60,10 @@ namespace DFW2
 		virtual ~CCustomDeviceContainer();
 		bool BuildStructure();
 		bool InitDLLEquations(BuildEquationsArgs *pArgs);
-		bool BuildDLLEquations(BuildEquationsArgs *pArgs);
-		bool BuildDLLRightHand(BuildEquationsArgs *pArgs);
-		bool BuildDLLDerivatives(BuildEquationsArgs *pArgs);
-		bool ProcessDLLDiscontinuity(BuildEquationsArgs *pArgs);
+		void BuildDLLEquations(BuildEquationsArgs *pArgs);
+		void BuildDLLRightHand(BuildEquationsArgs *pArgs);
+		void BuildDLLDerivatives(BuildEquationsArgs *pArgs);
+		void ProcessDLLDiscontinuity(BuildEquationsArgs *pArgs);
 
 		PrimitiveInfo GetPrimitiveInfo(PrimitiveBlockType eType);
 		size_t PrimitiveSize(PrimitiveBlockType eType);

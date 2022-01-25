@@ -214,11 +214,9 @@ void CDynaGeneratorPark4C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 	}
 }
 
-bool CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
+void CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes(true);
-
-	const double omega = ZeroGuardSlip(1.0 + s);
+	const double omega{ ZeroGuardSlip(1.0 + s) };
 
 	pDynaModel->SetElement(Id, Id, -r);
 	pDynaModel->SetElement(Id, Iq, -lq2 * omega);
@@ -273,7 +271,6 @@ bool CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
 	BuildAngleEquationBlock(pDynaModel);
 #endif
-	return bRes;
 }
 
 cplx CDynaGeneratorPark4C::GetIdIq() const
@@ -303,10 +300,8 @@ cplx CDynaGeneratorPark4C::GetIdIq() const
 	return { id,iq };
 }
 
-bool CDynaGeneratorPark4C::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaGeneratorPark4C::BuildRightHand(CDynaModel* pDynaModel)
 {
-	bool bRes(true);
-
 	const double omega(1.0 + s);
 	const double dEq = Eq + (Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id) * lad / Rfd;
 	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q - Vd;
@@ -316,14 +311,12 @@ bool CDynaGeneratorPark4C::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunction(Eq, dEq);
 	SetFunctionsDiff(pDynaModel);
 	BuildRIfromDQRightHand(pDynaModel);
-	return bRes;
 }
 
 
-bool CDynaGeneratorPark4C::BuildDerivatives(CDynaModel* pDynaModel)
+void CDynaGeneratorPark4C::BuildDerivatives(CDynaModel* pDynaModel)
 {
 	SetDerivatives(pDynaModel);
-	return true;
 }
 
 

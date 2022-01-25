@@ -21,9 +21,9 @@ namespace DFW2
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
-		bool BuildEquations(CDynaModel* pDynaModel) override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;

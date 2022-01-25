@@ -278,11 +278,11 @@ namespace DFW2
 		const CDynaModel* GetModel() const;
 
 		// построение блока уравнения в Якоби
-		virtual bool BuildEquations(CDynaModel* pDynaModel);
+		virtual void BuildEquations(CDynaModel* pDynaModel);
 		// построение правой части уравнений
-		virtual bool BuildRightHand(CDynaModel* pDynaModel);
+		virtual void BuildRightHand(CDynaModel* pDynaModel);
 		// расчет значений производных дифференциальных уравнений
-		virtual bool BuildDerivatives(CDynaModel* pDynaModel);
+		virtual void BuildDerivatives(CDynaModel* pDynaModel);
 		// функция обновления данных после итерации Ньютона (если надо)
 
 

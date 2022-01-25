@@ -104,27 +104,24 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 	return Status;
 }
 
-bool CDynaDECMustang::BuildEquations(CDynaModel* pDynaModel)
+void CDynaDECMustang::BuildEquations(CDynaModel* pDynaModel)
 {
 	pDynaModel->SetElement(Udec, Udec, 1.0);
 	// строим уравнения для примитивов
-	bool bRes = CDevice::BuildEquations(pDynaModel);
-	return true;
+	CDevice::BuildEquations(pDynaModel);
 }
 
 
-bool CDynaDECMustang::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaDECMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
-	bool bRes = CDevice::BuildRightHand(pDynaModel);
+	CDevice::BuildRightHand(pDynaModel);
 	pDynaModel->SetFunction(Udec, 0.0);
-	return true;
 }
 
 
-bool CDynaDECMustang::BuildDerivatives(CDynaModel *pDynaModel)
+void CDynaDECMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = CDevice::BuildDerivatives(pDynaModel);
-	return bRes;
+	CDevice::BuildDerivatives(pDynaModel);
 }
 
 double CDynaDECMustang::CheckZeroCrossing(CDynaModel *pDynaModel)

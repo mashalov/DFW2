@@ -28,7 +28,7 @@ double* CDynaBranchMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
 }
 
 
-bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
+void CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 {
 	// если измерение внутри суперузла, выбираем исходные узлы начала и конца,
     // если измерение между суперузлами - выбираем суперузлы начала и конца
@@ -171,7 +171,7 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 			pDynaModel->SetElement(Ieim, Veim, -giqs);
 		}
 
-		double absIb = sqrt(Ibre * Ibre + Ibim * Ibim);
+		double absIb{ sqrt(Ibre * Ibre + Ibim * Ibim) };
 
 		// dIb / dIb
 		pDynaModel->SetElement(Ib, Ib, 1.0);
@@ -278,13 +278,10 @@ bool CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(Sb, Sb, 1.0);
 		pDynaModel->SetElement(Se, Se, 1.0);
 	}
-
-
-	return true;
 }
 
 
-bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 {
 	const auto& pNodeIp{ m_pBranch->m_pNodeIp };
 	const auto& pNodeIq{ m_pBranch->m_pNodeIq };
@@ -338,8 +335,6 @@ bool CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 		pDynaModel->SetFunction(Sb, 0.0);
 		pDynaModel->SetFunction(Se, 0.0);
 	}
-
-	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::Init(CDynaModel* pDynaModel)

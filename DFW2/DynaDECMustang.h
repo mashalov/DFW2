@@ -44,9 +44,9 @@ namespace DFW2
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		bool BuildEquations(CDynaModel* pDynaModel) override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		bool DetectZeroCrossingFine(const CDynaPrimitive* primitive) override;

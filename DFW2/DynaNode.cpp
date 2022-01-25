@@ -262,10 +262,8 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 	}
 }
 
-bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
+void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;	
-
 	const double Vre2{ Vre * Vre };
 	const double Vim2{ Vim * Vim };
 	double V2{ Vre2 + Vim2 };
@@ -452,8 +450,6 @@ bool CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	pDynaModel->SetElement(Vre, Vim, dIredVim);
 	pDynaModel->SetElement(Vim, Vre, dIimdVre);
 	pDynaModel->SetElement(Vim, Vim, dIimdVim);
-
-	return true;
 }
 
 void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
@@ -473,7 +469,7 @@ void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
 }
 
 
-bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
+void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
 	//GetPnrQnrSuper();
 	// в узле может быть уже известный постоянный ток
@@ -515,8 +511,6 @@ bool CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	pDynaModel->SetFunction(V, dV);
 	pDynaModel->SetFunction(Vre, Ire);
 	pDynaModel->SetFunction(Vim, Iim);
-
-	return true;
 }
 
 void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
@@ -588,18 +582,16 @@ CDynaNode::CDynaNode() : CDynaNodeBase()
 {
 }
 
-bool CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
+void CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
-	double T = pDynaModel->GetFreqTimeConstant();
+	const double T{ pDynaModel->GetFreqTimeConstant() };
 	pDynaModel->SetDerivative(Lag, (Delta - Lag) / T);
-	return true;
 }
 
 
-bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
+void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes = CDynaNodeBase::BuildEquations(pDynaModel);
+	CDynaNodeBase::BuildEquations(pDynaModel);
 
 	// Копируем скольжение в слэйв-узлы суперузла
 	// (можно совместить с CDynaNodeBase::FromSuperNode()
@@ -649,10 +641,9 @@ bool CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(S, Lag, 0.0);
 		pDynaModel->SetElement(S, S, 1.0);
 	}
-	return true;
 }
 
-bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase::BuildRightHand(pDynaModel);
 
@@ -676,8 +667,6 @@ bool CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	//DumpIntegrationStep(2021, 2031);
 	//DumpIntegrationStep(2143, 2031);
 	//DumpIntegrationStep(2141, 2031);
-
-	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNode::Init(CDynaModel* pDynaModel)
@@ -922,7 +911,7 @@ double* CSynchroZone::GetVariablePtr(ptrdiff_t nVarIndex)
 	return &GetVariable(nVarIndex).Value;
 }
 
-bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
+void CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 {
 	if (m_bInfPower)
 	{
@@ -940,11 +929,10 @@ bool CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 			}
 		}
 	}
-	return true;
 }
 
 
-bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
+void CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 {
 	double dS{ S };
 	if (m_bInfPower)
@@ -963,7 +951,6 @@ bool CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 		}
 		pDynaModel->SetFunction(S, dS);
 	}
-	return true;
 }
 
 

@@ -148,32 +148,28 @@ bool CCustomDeviceContainer::InitDLLEquations(BuildEquationsArgs* pArgs)
 	return bRes;
 }
 
-bool CCustomDeviceContainer::BuildDLLEquations(BuildEquationsArgs* pArgs)
+void CCustomDeviceContainer::BuildDLLEquations(BuildEquationsArgs* pArgs)
 {
-	bool bRes = true;
-	bRes = m_DLL.BuildEquations(pArgs);
-	return bRes;
+	if (!m_DLL.BuildEquations(pArgs))
+		throw dfw2error(fmt::format("CCustomDeviceContainer::BuildDLLEquations - failed for {}", m_DLL.GetModuleFilePath()));
 }
 
-bool CCustomDeviceContainer::BuildDLLRightHand(BuildEquationsArgs* pArgs)
+void CCustomDeviceContainer::BuildDLLRightHand(BuildEquationsArgs* pArgs)
 {
-	bool bRes = true;
-	bRes = m_DLL.BuildRightHand(pArgs);
-	return bRes;
+	if(!m_DLL.BuildRightHand(pArgs))
+		throw dfw2error(fmt::format("CCustomDeviceContainer::BuildDLLRightHand - failed for {}", m_DLL.GetModuleFilePath()));
 }
 
-bool CCustomDeviceContainer::BuildDLLDerivatives(BuildEquationsArgs* pArgs)
+void CCustomDeviceContainer::BuildDLLDerivatives(BuildEquationsArgs* pArgs)
 {
-	bool bRes = true;
-	bRes = m_DLL.BuildDerivatives(pArgs);
-	return bRes;
+	if(!m_DLL.BuildDerivatives(pArgs))
+		throw dfw2error(fmt::format("CCustomDeviceContainer::BuildDLLDerivatives - failed for {}", m_DLL.GetModuleFilePath()));
 }
 
-bool CCustomDeviceContainer::ProcessDLLDiscontinuity(BuildEquationsArgs* pArgs)
+void CCustomDeviceContainer::ProcessDLLDiscontinuity(BuildEquationsArgs* pArgs)
 {
-	bool bRes = true;
-	bRes = m_DLL.ProcessDiscontinuity(pArgs);
-	return bRes;
+	if(!m_DLL.ProcessDiscontinuity(pArgs))
+		throw dfw2error(fmt::format("CCustomDeviceContainer::ProcessDLLDiscontinuity - failed for {}", m_DLL.GetModuleFilePath()));
 }
 
 

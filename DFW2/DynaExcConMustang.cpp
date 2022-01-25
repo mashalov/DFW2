@@ -117,10 +117,8 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 }
 
 
-bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
+void CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
-
 	// dUsum / dUsum
 	pDynaModel->SetElement(Usum, Usum, 1.0);
 
@@ -161,16 +159,14 @@ bool CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(Uf, Uf, 0.0);
 	}
 		
-	bRes = bRes && CDevice::BuildEquations(pDynaModel);
-
-	return true;
+	CDevice::BuildEquations(pDynaModel);
 }
 
-bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
 	if (IsStateOn())
 	{
-		double dSum = Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) - K0f * (dSdtIn - Svt) + dVdtOut + dEqdtOut - dSdtOut;
+		const double dSum{ Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) - K0f * (dSdtIn - Svt) + dVdtOut + dEqdtOut - dSdtOut };
 
 		/*
 		if (m_Id == 115)
@@ -203,12 +199,11 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 	}
 
 	CDevice::BuildRightHand(pDynaModel);
-	return true;
 }
 
-bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
+void CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = CDevice::BuildDerivatives(pDynaModel);
+	CDevice::BuildDerivatives(pDynaModel);
 	if (IsStateOn())
 	{
 		pDynaModel->SetDerivative(Svt, (dSdtIn - Svt) / Tf);
@@ -219,7 +214,6 @@ bool CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
 		pDynaModel->SetDerivative(Svt, 0.0);
 		pDynaModel->SetDerivative(Uf, 0.0);
 	}
-	return true;
 }
 
 

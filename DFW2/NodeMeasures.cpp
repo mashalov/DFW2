@@ -17,20 +17,17 @@ double* CDynaNodeMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
 }
 
 
-bool CDynaNodeMeasure::BuildEquations(CDynaModel* pDynaModel)
+void CDynaNodeMeasure::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes{ true };
 	pDynaModel->SetElement(Pload, Pload, 1.0);
 	pDynaModel->SetElement(Qload, Qload, 1.0);
-	return true;
 }
 
 
-bool CDynaNodeMeasure::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaNodeMeasure::BuildRightHand(CDynaModel* pDynaModel)
 {
 	pDynaModel->SetFunction(Pload, 0.0);
 	pDynaModel->SetFunction(Qload, 0.0);
-	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNodeMeasure::Init(CDynaModel* pDynaModel)
@@ -90,7 +87,7 @@ VariableIndexRefVec& CDynaNodeZeroLoadFlow::GetVariables(VariableIndexRefVec& Ch
 	return CDevice::GetVariables(JoinVariables(m_Vars, ChildVec));
 }
 
-bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
+void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase **ppNode{ m_MatrixRows.get() },  **ppNodeEnd{ m_MatrixRows.get() + m_nSize };
 	const double Vmin{ pDynaModel->GetLRCToShuntVmin() };
@@ -209,7 +206,6 @@ bool CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 
 		ppNode++;
 	}
-	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::Init(CDynaModel* pDynaModel)
@@ -224,7 +220,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::ProcessDiscontinuity(CDynaModel* pD
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase** ppNode{ m_MatrixRows.get() }, ** ppNodeEnd{ m_MatrixRows.get() + m_nSize };
 	const double Vmin{ pDynaModel->GetLRCToShuntVmin() };
@@ -300,8 +296,6 @@ bool CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 
 		ppNode++;
 	}
-
-	return true;
 }
 
 void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet()

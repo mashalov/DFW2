@@ -18,11 +18,8 @@ double* CDynaExciterMustang::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
+void CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
-
-
 	if (ExtUf.Indexed())
 	{
 		//dEqsum / dUexc
@@ -35,7 +32,7 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(Eqsum, ExtUdec, 1.0);
 	}
 
-	double Ig = GetIg();
+	double Ig{ GetIg() };
 	if (Ig > 0)
 		Ig = Kig / Ig;
 
@@ -72,14 +69,13 @@ bool CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 		//dEqe / dEqeV
 		pDynaModel->SetElement(Eqe, ExcLag, -1.0);
 	}
-	bRes = bRes && CDynaExciterBase::BuildEquations(pDynaModel);
-	return true;
+	CDynaExciterBase::BuildEquations(pDynaModel);
 }
 
 
-bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
-	double dEqsum = Eqsum - (Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec);
+	const double dEqsum{ Eqsum - (Eqe0 + ExtUf + Kig * (GetIg() - Ig0) + Kif * (EqInput - Eq0) + ExtUdec) };
 	// Для зависимого возбудителя рассчитываем отношение текущего
 	// напряжения к исходному. Для независимого отношение 1.0
 	if (bVoltageDependent)
@@ -90,7 +86,6 @@ bool CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunction(Eqsum, dEqsum);
 
 	CDevice::BuildRightHand(pDynaModel);
-	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
@@ -127,10 +122,9 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 }
 
 
-bool CDynaExciterMustang::BuildDerivatives(CDynaModel *pDynaModel)
+void CDynaExciterMustang::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = CDynaExciterBase::BuildDerivatives(pDynaModel);
-	return bRes;
+	CDynaExciterBase::BuildDerivatives(pDynaModel);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDynaModel)

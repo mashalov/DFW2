@@ -152,10 +152,8 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	return bRes;
 }
 
-bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
+void CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes(true);
-
 	const double omega{ 1.0 + s };
 	const double omega2{ omega * omega };
 	const double zsq{ 1.0 / (r * r + omega2 * ld2 * lq2) };
@@ -224,8 +222,6 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
 	BuildAngleEquationBlock(pDynaModel);
 #endif
-
-	return bRes;
 }
 
 cplx CDynaGeneratorPark3C::GetIdIq() const
@@ -253,7 +249,7 @@ cplx CDynaGeneratorPark3C::GetIdIq() const
 	return { id,iq };
 }
 
-bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 {
 	const double dEq{ Eq + (Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id) * lad / Rfd };
 	cplx cI{ GetIdIq() };
@@ -262,7 +258,6 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunction(Eq, dEq);
 	SetFunctionsDiff(pDynaModel);
 	BuildRIfromDQRightHand(pDynaModel);
-	return true;
 }
 
 // Так как одни и те же производные нужны и для BuildRightHand и для BuildDerivatives
@@ -301,10 +296,9 @@ void CDynaGeneratorPark3C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 	}
 }
 
-bool CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
+void CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
 {
 	SetDerivatives(pDynaModel);
-	return true;
 }
 
 

@@ -409,29 +409,22 @@ void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 	}
 }
 
-bool CDevice::BuildEquations(CDynaModel *pDynaModel)
+void CDevice::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	for (auto&& it : m_Primitives)
-		bRes = bRes && it->BuildEquations(pDynaModel);
-	return bRes;
+		it->BuildEquations(pDynaModel);
 }
 
-bool CDevice::BuildRightHand(CDynaModel *pDynaModel)
+void CDevice::BuildRightHand(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
 	for (auto&& it : m_Primitives)
-		bRes = bRes && it->BuildRightHand(pDynaModel);
-	return bRes;
-
+		it->BuildRightHand(pDynaModel);
 }
 
-bool CDevice::BuildDerivatives(CDynaModel *pDynaModel)
+void CDevice::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	for (auto&& it : m_Primitives)
-		bRes = bRes && it->BuildDerivatives(pDynaModel);
-	return bRes;
+		it->BuildDerivatives(pDynaModel);
 }
 
 void CDevice::NewtonUpdateEquation(CDynaModel *pDynaModel)

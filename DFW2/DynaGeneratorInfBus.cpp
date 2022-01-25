@@ -6,17 +6,14 @@
 
 using namespace DFW2;
 
-bool CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
+void CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 {
-	bool bRes = true;
-
 	// ток от ЭДС ШБМ является постоянным
 	// изменяется только составляющая тока на шунте Нортона
 	// dIre / dIre
 	pDynaModel->SetElement(Ire, Ire, 1.0);
 	// dIim / dIim
 	pDynaModel->SetElement(Iim, Iim, 1.0);
-	return true;
 }
 
 bool CDynaGeneratorInfBusBase::CalculatePower()
@@ -35,13 +32,12 @@ bool CDynaGeneratorInfBusBase::CalculatePower()
 }
 
 
-bool CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 {
 	// ток от ЭДС ШБМ является постоянным
 	// изменяется только составляющая тока на шунте Нортона
 	pDynaModel->SetFunction(Ire, 0.0);
 	pDynaModel->SetFunction(Iim, 0.0);
-	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::InitModel(CDynaModel* pDynaModel)

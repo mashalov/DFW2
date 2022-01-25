@@ -41,12 +41,12 @@ namespace DFW2
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		bool BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		bool CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method);
-		bool BuildDerivatives(CDynaModel* pDynaModel) override;
 		bool CalculatePower() override;
 		cplx GetEMF() override;
 		const cplx& CalculateEgen() override;

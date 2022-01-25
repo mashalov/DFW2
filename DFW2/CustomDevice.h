@@ -15,7 +15,7 @@ namespace DFW2
 		DLLExternalVariable*m_pExternals = nullptr;
 		BuildEquationsArgs m_DLLArgs;
 
-		bool ConstructDLLParameters(CDynaModel *pDynaModel);
+		void ConstructDLLParameters(CDynaModel *pDynaModel);
 
 		static long DLLEntrySetElement(BuildEquationsObjects *pBEObjs, ptrdiff_t nRow, ptrdiff_t nCol, double dValue, int bAddToPreviois);
 		static long DLLEntrySetFunction(BuildEquationsObjects *pBEObjs, ptrdiff_t nRow, double dValue);
@@ -39,9 +39,9 @@ namespace DFW2
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		bool BuildEquations(CDynaModel *pDynaModel) override;
-		bool BuildRightHand(CDynaModel *pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		void BuildEquations(CDynaModel *pDynaModel) override;
+		void BuildRightHand(CDynaModel *pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
@@ -82,8 +82,8 @@ namespace DFW2
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel) override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		bool BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static void DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);

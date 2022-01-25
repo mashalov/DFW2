@@ -36,8 +36,8 @@ namespace DFW2
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		bool BuildEquations(CDynaModel* pDynaModel) override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 

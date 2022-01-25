@@ -29,8 +29,8 @@ namespace DFW2
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		bool BuildEquations(CDynaModel* pDynaModel)  override;
-		bool BuildRightHand(CDynaModel* pDynaModel)  override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
@@ -137,8 +137,8 @@ namespace DFW2
 		void GetPnrQnr(double Vnode);
 		void GetPnrQnrSuper(double Vnode);
 		bool AllLRCsInShuntPart(double V, double Vmin);
-		bool BuildEquations(CDynaModel* pDynaModel)  override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel)  override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
 		void NewtonUpdateEquation(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		void MarkZoneEnergized();
@@ -276,11 +276,11 @@ namespace DFW2
 		//double Sv, Dlt;
 		CDynaNode();
 		virtual ~CDynaNode() = default;
-		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
+		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		bool BuildEquations(CDynaModel* pDynaModel)  override;
-		bool BuildRightHand(CDynaModel* pDynaModel)  override;
-		bool BuildDerivatives(CDynaModel *pDynaModel)  override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		void Predict()  override;			// допонительная обработка прогноза
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;

@@ -38,9 +38,9 @@ namespace DFW2
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : DFW2_EPSILON; }
-		bool BuildEquations(CDynaModel* pDynaModel) override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;

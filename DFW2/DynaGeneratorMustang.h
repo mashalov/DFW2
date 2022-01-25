@@ -16,9 +16,9 @@ namespace DFW2
 		using CDynaGenerator3C::CDynaGenerator3C;
 		virtual ~CDynaGeneratorMustang() = default;
 
-		bool BuildEquations(CDynaModel* pDynaModel) override;
-		bool BuildRightHand(CDynaModel* pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
