@@ -615,7 +615,7 @@ bool CDynaModel::NewtonUpdate()
 
 	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
 							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
-							   sc.Newton.Weighted.dMaxError < 0.01;
+							   sc.Newton.Weighted.dMaxError < 1.0;
 
 	if ( bConvCheckConverged )
 	{
@@ -815,13 +815,15 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		memcpy(bwatch, y, sizeof(double) * klu.MatrixSize());
 		*/
 
+		
 		/*
 		if (sc.nStepsCount == 398)
 		{
 			DumpStateVector();
-			DumpMatrix();
+			klu.DumpMatrix(true);
 		}
-  	    */
+		*/
+  	    
 
 		bmax = klu.FindMaxB(imax);
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "%g %d", bmax, imax);

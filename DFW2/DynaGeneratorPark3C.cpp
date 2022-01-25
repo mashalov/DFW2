@@ -156,9 +156,42 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 {
 	bool bRes(true);
 
-	const double omega(1.0 + s);
+	const double omega{ 1.0 + s };
+	const double omega2{ omega * omega };
+	const double zsq{ 1.0 / (r * r + omega2 * ld2 * lq2) };
 
-	pDynaModel->SetElement(Id, Id, -r);
+	pDynaModel->SetElement(Id, Id, 1);
+	// dId_dPsifd =  (Eq_Psifd * lq2 * (s + 1) ^ 2) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Id, Psifd, Eq_Psifd * lq2 * omega2 * zsq);
+	// dId_dPsi1d = (Eq_Psi1d * lq2 * (s + 1) ^ 2) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Id, Psi1d, Eq_Psi1d * lq2 * omega2 * zsq);
+	// dId_dPsi1q = -(Ed_Psi1q * r * (s + 1)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Id, Psi1q, -Ed_Psi1q * r * omega * zsq);
+	// dId_dVd = r / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Id, Vd, r * zsq);
+	// dId_dVq = -(lq2 * (s + 1)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Id, Vq, -lq2 * omega * zsq);
+	// dId_ds = -(Vq * lq2 + Ed_Psi1q * Psi1q * r - Eq_Psi1d * Psi1d * lq2 * (2 * s + 2) - Eq_Psifd * Psifd * lq2 * (2 * s + 2)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2) - (ld2 * lq2 * (2 * s + 2) * (Vd * r - Vq * lq2 * (s + 1) - Ed_Psi1q * Psi1q * r * (s + 1) + Eq_Psi1d * Psi1d * lq2 * (s + 1) ^ 2 + Eq_Psifd * Psifd * lq2 * (s + 1) ^ 2)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2) ^ 2
+	pDynaModel->SetElement(Id, s, -(Vq * lq2 + Ed_Psi1q * Psi1q * r - Eq_Psi1d * Psi1d * lq2 * 2.0 * omega - 2.0 * omega * Eq_Psifd * Psifd * lq2) * zsq - (2.0 * omega * ld2 * lq2 * (Vd * r - Vq * lq2 * omega - Ed_Psi1q * Psi1q * r * omega + Eq_Psi1d * Psi1d * lq2 * omega2 + Eq_Psifd * Psifd * lq2 * omega2)) * zsq * zsq);
+	
+
+	pDynaModel->SetElement(Iq, Iq, 1);
+	// dIq_dPsifd = -(Eq_Psifd * r * (s + 1)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Iq, Psifd, -Eq_Psifd * r * omega * zsq);
+	// dIq_dPsi1d = -(Eq_Psi1d * r * (s + 1)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Iq, Psi1d, -Eq_Psi1d * r * omega * zsq);
+	// dIq_dPsi1q = -(Ed_Psi1q * ld2 * (s + 1) ^ 2) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Iq, Psi1q, -Ed_Psi1q * ld2 *omega2 * zsq);
+	// dIq_dVd = (ld2 * (s + 1)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Iq, Vd, ld2 * omega * zsq);
+	// dIq_dVq = r / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Iq, Vq, r * zsq);
+	// dIq_ds = (ld2 * lq2 * (2 * s + 2) * (Eq_Psi1d * Psi1d * r * (s + 1) - Vd * ld2 * (s + 1) - Vq * r + Eq_Psifd * Psifd * r * (s + 1) + Ed_Psi1q * Psi1q * ld2 * (s + 1) ^ 2)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2) ^ 2 - (Eq_Psi1d * Psi1d * r - Vd * ld2 + Eq_Psifd * Psifd * r + Ed_Psi1q * Psi1q * ld2 * (2 * s + 2)) / (r ^ 2 + ld2 * lq2 * (s + 1) ^ 2)
+	pDynaModel->SetElement(Iq, s, (2.0 * ld2 * lq2 * omega * (Eq_Psi1d * Psi1d * r * omega - Vd * ld2 * omega - Vq * r + Eq_Psifd * Psifd * r * omega + Ed_Psi1q * Psi1q * ld2 * omega2)) * zsq * zsq - (Eq_Psi1d * Psi1d * r - Vd * ld2 + Eq_Psifd * Psifd * r + 2.0 * Ed_Psi1q * Psi1q * ld2 * omega) * zsq);
+
+
+
+	/*
 	pDynaModel->SetElement(Id, Iq, -lq2 * omega);
 	pDynaModel->SetElement(Id, Vd, -1);
 	pDynaModel->SetElement(Id, Psi1q, Ed_Psi1q * omega);
@@ -170,6 +203,7 @@ bool CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iq, Psifd, Eq_Psifd * omega);
 	pDynaModel->SetElement(Iq, Psi1d, Eq_Psi1d * omega);
 	pDynaModel->SetElement(Iq, s, Id * ld2 + Eq_Psi1d * Psi1d + Eq_Psifd * Psifd);
+	*/
 
 	pDynaModel->SetElement(Psifd, Id, -Psifd_id);
 	pDynaModel->SetElement(Psifd, Psifd, Psifd_Psifd);
@@ -240,8 +274,32 @@ bool CDynaGeneratorPark3C::BuildRightHand(CDynaModel* pDynaModel)
 	bool bRes(true);
 	const double omega(1.0 + s);
 	const double dEq = Eq + (Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id) * lad / Rfd;
-	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q - Vd;
-	const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
+	//const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q - Vd;
+	//const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
+
+
+	const double omega2 = omega * omega;
+	const double zsq = ZeroDivGuard(1.0, r * r + omega2 * ld2 * lq2);
+
+	const double dId = Id 
+		- zsq * (
+			-r * Vd
+			+ omega * lq2 * Vq
+			- omega2 * lq2 * Eq_Psifd * Psifd
+			- omega2 * lq2 * Eq_Psi1d * Psi1d
+			+ r * omega * Ed_Psi1q * Psi1q
+			);
+
+	const double dIq = Iq 
+		- zsq * (
+			-r * Vq
+			- omega * ld2 * Vd
+			+ r * omega * Eq_Psifd * Psifd
+			+ r * omega * Eq_Psi1d * Psi1d
+			+ omega2 * ld2 * Ed_Psi1q * Psi1q
+			);
+
+
 	pDynaModel->SetFunction(Id, dId);
 	pDynaModel->SetFunction(Iq, dIq);
 	pDynaModel->SetFunction(Eq, dEq);
