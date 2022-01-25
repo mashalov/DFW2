@@ -14,14 +14,6 @@ namespace DFW2
 		double a2;
 		// double a3;
 		// double a4;
-	};
-
-	struct CLRCData : public LRCRawData
-	{
-		CLRCData *pPrev;
-		CLRCData *pNext;
-
-		double dMaxRadius;
 
 		double Get(double VdivVnom) const
 		{
@@ -29,21 +21,87 @@ namespace DFW2
 			return a0 + (a1 + a2 * VdivVnom) * VdivVnom;
 		}
 
-		double GetBoth(double VdivVnom, double &dLRC) const
+		double GetBoth(double VdivVnom, double& dLRC) const
 		{
 			VdivVnom = (std::max)(VdivVnom, 0.0);
 			dLRC = a1 + a2 * 2.0 * VdivVnom;
 			return a0 + (a1 + a2 * VdivVnom) * VdivVnom;
 		}
+	};
 
-		bool operator < (const CLRCData& other) const
+	struct CLRCData : public LRCRawData
+	{
+		CLRCData *pPrev;
+		CLRCData *pNext;
+		double dMaxRadius;
+	};
+
+	// структура для сегмента данных СХН с интерполяцией
+	// содержит либо указатель на обычный сегмент СХН,
+	// либо строит интерполяцию между сегментами с заданным радиусом dVicinity
+	struct CLRCDataInterpolated 
+	{
+		// параметры интерполяции
+		// https://en.wikipedia.org/wiki/Spline_interpolation
+		double a, b, x2x1, y1, y2, y2y1;
+		// указатель на обычный сегмент СХН
+		const LRCRawData * const m_pRawLRC = nullptr;
+		// напряжение сегмента (может не совпадать с m_pRawLRC->V)
+		double V;
+		// конcтруктор для поиска в сете
+		CLRCDataInterpolated(double VdivVnom) : V(VdivVnom) {}
+		// конструктор для варианта с использованием обычного сегмента СХН
+		CLRCDataInterpolated(double VdivVnom, const LRCRawData& rawData) : V(VdivVnom), m_pRawLRC { &rawData } {}
+		// конструктор интерполяции между двумя сегментами
+		CLRCDataInterpolated(const LRCRawData& left, const LRCRawData& right, double dVicinity) : V(right.V - dVicinity)
+		{
+			double k1{ 0.0 }, k2{ 0.0 };
+			// вместо x1 используем V
+			y1 = left.GetBoth(V, k1);
+			y2 = right.GetBoth(right.V + dVicinity, k2);
+			x2x1 = 2 * dVicinity;
+			y2y1 = y2 - y1;
+			a = k1 * x2x1 - y2y1;
+			b = -k2 * x2x1 + y2y1;
+		}
+
+		// оператор сортировки
+		bool operator < (const CLRCDataInterpolated& other) const
 		{
 			return V < other.V;
+		}
+
+		double Get(double VdivVnom) const
+		{
+			// если в сегменте обычная СХН - возвращаем от нее
+			if (m_pRawLRC)
+				return m_pRawLRC->Get(VdivVnom);
+			else
+			{
+				// если интерполяция - рассчитываем 
+				VdivVnom = (std::max)(VdivVnom, 0.0);
+				const double t{ (VdivVnom - V) / x2x1 }, t1{ 1.0 - t };
+				return  t1 * y1 + t * y2 + t * t1 * (a * t1 + b * t);
+			}
+		}
+
+		double GetBoth(double VdivVnom, double& dLRC) const
+		{
+			// если в сегменте обычная СХН - возвращаем от нее
+			if (m_pRawLRC)
+				return m_pRawLRC->GetBoth(VdivVnom, dLRC);
+			{
+				// если интерполяция - рассчитываем 
+				VdivVnom = (std::max)(VdivVnom, 0.0);
+				const double t{ (VdivVnom - V) / x2x1 }, t1{ 1.0 - t };
+				dLRC = (a - y1 + y2 - (4.0 * a - 2.0 * b - 3.0 * t * (a - b)) * t) / x2x1;
+				return  t1 * y1 + t * y2 + t * t1 * (a * t1 + b * t) ;
+			}
 		}
 	};
 
 	using LRCDATA = std::vector<CLRCData>;
-	using LRCDATASET = std::set<CLRCData>;
+	using LRCDATASET = std::set<CLRCDataInterpolated>;
 
 	class CDynaLRCChannel
 	{
@@ -55,7 +113,7 @@ namespace DFW2
 		double GetBoth(double VdivVnom, double& dP, double dVicinity) const;
 		bool Check(const CDevice* pDevice);
 		void SetSize(size_t nSize);
-		bool CollectConstantData();
+		bool CollectConstantData(const CDevice* pDevice);
 	protected:
 		double GetBothInterpolatedHermite(const CLRCData* const pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double& dLRC) const;
 		const char* cszType;
@@ -69,10 +127,10 @@ namespace DFW2
 		bool Check();
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");
-		const CDynaLRCChannel* P() const { return &m_P; }
-		const CDynaLRCChannel* Q() const { return &m_Q; }
-		CDynaLRCChannel* P() { return &m_P; }
-		CDynaLRCChannel* Q() { return &m_Q; }
+		inline const CDynaLRCChannel* P() const { return &m_P; }
+		inline const CDynaLRCChannel* Q() const { return &m_Q; }
+		inline CDynaLRCChannel* P() { return &m_P; }
+		inline CDynaLRCChannel* Q() { return &m_Q; }
 	protected:
 		//friend class CDynaLRCContainer;
 		CDynaLRCChannel m_P{ CDynaLRC::m_cszP }, m_Q{ CDynaLRC::m_cszQ };

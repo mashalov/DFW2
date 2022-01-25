@@ -97,7 +97,8 @@ CPlot CResult::ConstructFromPlot(_variant_t Input, const CompareRange& range) co
 
 void CResult::Compare(const CResult& other, const CompareRange& range) const
 {
-	CompareDevices(other, 3, "V", 6 * 1000000 + 4, "vras", range);	// узлы
+	CompareDevices(other, 3, "V", 3 , "V", range);	// узлы
+	//CompareDevices(other, 3, "V", 6 * 1000000 + 4, "vras", range);	// узлы
 	//CompareDevices(other, 16, "Delta", 1 * 1000000 + 9, "Delta", range); // генераторы
 	//CompareDevices(other, 16, "P", 1 * 1000000 + 9, "P", range); // генераторы
 	//CompareDevices(other, 16, "Q", 1 * 1000000 + 9, "Q", range); // генераторы

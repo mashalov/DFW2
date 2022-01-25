@@ -41,6 +41,7 @@ namespace DFW2
 			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
 			double m_dLRCToShuntVmin = 0.5;
+			double m_dLRCSmoothingRange = 0.05;
 			double m_dZeroCrossingTolerance = 0.0;
 			bool m_bDontCheckTolOnMinStep = false;
 			bool m_bConsiderDampingEquation = false;
@@ -48,6 +49,7 @@ namespace DFW2
 			ptrdiff_t nVarSearchStackDepth = 100;
 			double m_dAtol = DFW2_ATOL_DEFAULT;
 			double m_dRtol = DFW2_RTOL_DEFAULT;
+			double m_dNewtonMaxNorm = 1.0;								// дополнительный контроль абсолютной ошибки Ньютона
 			double m_dRefactorByHRatio = 1.5;
 			double m_dMustangDerivativeTimeConstant = 1E-4;
 			// режим подавления рингинга
@@ -140,6 +142,8 @@ namespace DFW2
 			static constexpr const char* m_cszLFAllowNegativeLRC = "AllowNegativeLRC";
 			static constexpr const char* m_cszLFLRCMinSlope = "LRCMinSlope";
 			static constexpr const char* m_cszLFLRCMaxSlope = "dLRCMaxSlope";
+			static constexpr const char* m_cszLRCSmoothingRange = "LRCSmoothingRange";
+			static constexpr const char* m_cszNewtonMaxNorm = "NewtonMaxNorm";
 
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};

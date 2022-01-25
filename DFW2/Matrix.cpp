@@ -117,15 +117,14 @@ void CDynaModel::BuildRightHand()
 		it->BuildRightHand(this);
 
 	sc.dRightHandNorm = 0.0;
-	double *pBb = klu.B(), *pBe = pBb + m_nEstimatedMatrixSize;
+	const double* pBb{ klu.B() };
+	const double* const pBe{ pBb + m_nEstimatedMatrixSize };
 	while (pBb < pBe)
 	{
 		sc.dRightHandNorm += *pBb * *pBb;
 		pBb++;
 	}
 	std::copy(klu.B(), klu.B() + m_nEstimatedMatrixSize, pRightHandBackup.get());
-	//memcpy(pRightHandBackup.get(), klu.B(), sizeof(double) * m_nEstimatedMatrixSize);
-	//sc.dRightHandNorm *= 0.5;
 }
 
 void CDynaModel::BuildMatrix()

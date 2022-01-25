@@ -165,6 +165,7 @@ namespace DFW2
 		static const char* m_cszWrongUnom;
 		static const char* m_cszWrongSourceData;
 		static const char* m_cszUserLRCChangedToStandard;
+		static const char* m_cszLRCSmoothingTooBigFor;
 		static const char* m_cszUserOverrideOfStandardLRC;
 		static const char* m_cszLRCVminChanged;
 		static const char* m_cszLRCIdNotFound;

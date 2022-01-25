@@ -673,6 +673,8 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 	Validator->AddRule(m_cszLFNewtonMaxNodeAngleStep, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszLFNewtonMaxBranchAngleStep, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszLFForceSwitchLambda, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszNewtonMaxNorm, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszLRCSmoothingRange, &ValidatorRange01);
 
 	return Validator;
 }
@@ -748,6 +750,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszLFAllowNegativeLRC, m_bAllowNegativeLRC);
 	Serializer->AddProperty(m_cszLFLRCMinSlope, m_dLRCMinSlope);
 	Serializer->AddProperty(m_cszLFLRCMaxSlope, m_dLRCMaxSlope);
+	Serializer->AddProperty(m_cszLRCSmoothingRange, m_dLRCSmoothingRange);
+	Serializer->AddProperty(m_cszNewtonMaxNorm, m_dNewtonMaxNorm);
 
 	return Serializer;
 }

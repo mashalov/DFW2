@@ -11,28 +11,6 @@ void CDynaLRC::SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ)
 	m_Q.SetSize(nPcsQ);
 }
 
-/*
-double CDynaLRC::GetP(double VdivVnom, double dVicinity) const
-{
-	return m_P.Get(VdivVnom, dVicinity);
-}
-
-double CDynaLRC::GetPdP(double VdivVnom, double &dP, double dVicinity) const
-{
-	return m_P.GetBoth(VdivVnom, dP, dVicinity);
-}
-
-double CDynaLRC::GetQ(double VdivVnom, double dVicinity) const
-{
-	return m_Q.Get(VdivVnom, dVicinity);
-}
-
-double CDynaLRC::GetQdQ(double VdivVnom, double &dQ, double dVicinity) const
-{
-	return m_Q.GetBoth(VdivVnom, dQ, dVicinity);
-}
-*/
-
 bool CDynaLRC::Check()
 {
 	return m_P.Check(this) && m_Q.Check(this);
@@ -42,8 +20,10 @@ eDEVICEFUNCTIONSTATUS CDynaLRC::Init(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_FAILED };
 
-	if (Check() && m_P.CollectConstantData() && m_Q.CollectConstantData())
-		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	if (Check() && 
+		m_P.CollectConstantData(this) && 
+		m_Q.CollectConstantData(this))
+			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	return Status;
 	
 }
@@ -55,109 +35,12 @@ void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaLRC>>();
 }
 
-/*
-double CDynaLRC::GetBothInterpolatedHermite(double *pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double &dP)
-{
-double *pNextV = NULL;
-double *pHitV = NULL;
-
-double *pP1  = NULL;
-double *pP2  = NULL;
-double *pMid = NULL;
-
-double *v = pBase;
-double Vdmin = VdivVnom - dVicinity;
-double Vdmax = VdivVnom + dVicinity;
-
-while (v < pBase + 4 * nCount)
-{
-if (*v > Vdmin && !pP1)
-{
-pP1 = v - 4;
-}
-
-if (*v > Vdmax && !pP2)
-{
-pP2 = v - 4;
-break;
-}
-
-if (*v > VdivVnom && !pMid)
-{
-pMid = v - 4;
-}
-
-if (*v > VdivVnom && !pHitV)
-{
-pHitV = v - 4;
-double dDistanceToNext = *v - VdivVnom;
-double dDistanceToPrev = VdivVnom - *pHitV;
-
-if (dDistanceToNext < dVicinity)
-pNextV = v;
-
-if (dDistanceToPrev < dVicinity &&
-dDistanceToPrev < dDistanceToNext &&
-pHitV - 4 > pBase)
-{
-pNextV = pHitV - 4;
-}
-break;
-}
-v += 4;
-}
-
-// if VdivVnom > max of V - then use last curve
-if (!pHitV)
-{
-pHitV = v - 4;
-if (VdivVnom - *pHitV < dVicinity && pHitV - 4 >= pBase)
-pNextV = pHitV - 4;
-}
-
-if (pNextV)
-{
-double x1, y1, x2, y2, k1, k2;
-
-if(pNextV > pHitV)
-{
-x1 = *pNextV - dVicinity;
-x2 = x1 + 2.0 * dVicinity;
-y1 = Get(pHitV, x1);
-y2 = Get(pNextV, x2);
-k1 = Getd(pHitV, x1);
-k2 = Getd(pNextV, x2);
-}
-else
-{
-x1 = *pHitV - dVicinity;
-x2 = x1 + 2.0 * dVicinity;
-y1 = Get(pNextV, x1);
-y2 = Get(pHitV, x2);
-k1 = Getd(pNextV, x1);
-k2 = Getd(pHitV, x2);
-}
-
-double a = k1 * (x2 - x1) - (y2 - y1);
-double b = -k2 * (x2 - x1) + (y2 - y1);
-
-double t = (VdivVnom - x1) / (x2 - x1);
-
-double P = (1.0 - t) * y1 + t * y2 + t * (1.0 - t) * (a* (1.0 - t) + b * t);
-dP = (y2 - y1) / (x2 - x1) + (1.0 - 2 * t) * (a * (1.0 - t) + b *t) / (x2 - x1) + t * (1.0 - t) * (b - a) / (x2 - x1);
-return P;
-}
-
-return GetBoth(pHitV, VdivVnom, dP);
-}
-*/
-
 void CDynaLRC::TestDump(const char* cszPathName)
 {
 	std::ofstream dump(stringutils::utf8_decode(cszPathName));
 	if (dump.is_open())
 	{
-		double dP{ 0.0 }, dQ{ 0.0 }, dV{ 0.3 };
+		double dP{ 0.0 }, dQ{ 0.0 }, dV{ 0.05 };
 		for (double v = 0.0; v < 1.5; v += 0.01)
 		{
 			double P{ m_P.GetBoth(v, dP, dV) };
@@ -428,6 +311,14 @@ double CDynaLRCChannel::Get(double VdivVnom, double dVicinity) const
 
 double CDynaLRCChannel::GetBoth(double VdivVnom, double& dP, double dVicinity) const
 {
+	/*
+	if (!Ps.empty())
+	{
+		auto itSegment{ std::prev(std::upper_bound(Ps.begin(), Ps.end(), CLRCDataInterpolated(VdivVnom))) };
+		return itSegment->GetBoth(VdivVnom, dP);
+	}
+	*/
+
 	const CLRCData* const v{ &P.front() };
 	if (P.size() == 1)
 		return v->GetBoth(VdivVnom, dP);
@@ -584,7 +475,7 @@ bool CDynaLRCChannel::Check(const CDevice *pDevice)
 	return bRes;
 }
 
-bool CDynaLRCChannel::CollectConstantData()
+bool CDynaLRCChannel::CollectConstantData(const CDevice* pDevice)
 {
 	// строим связный список сегментов
 	for (auto&& v = P.begin(); v != P.end(); ++v)
@@ -598,7 +489,7 @@ bool CDynaLRCChannel::CollectConstantData()
 	// для каждого из сегментов
 	// как половину от его ширины по напряжению
 
-	double dLRCVicinity{ 0.05 };
+	const double dLRCVicinity{ pDevice->GetModel()->Parameters().m_dLRCSmoothingRange };
 	double dMaxLRCVicinity{ dLRCVicinity };
 
 	if (P.size() > 1)
@@ -613,54 +504,28 @@ bool CDynaLRCChannel::CollectConstantData()
 
 			dMaxLRCVicinity = (std::min)(dMaxLRCVicinity, v.dMaxRadius);
 		}
+	}
 
-		/*
+	if (dLRCVicinity > 0.0)
+	{
+		if(dLRCVicinity > dMaxLRCVicinity)
+			pDevice->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLRCSmoothingTooBigFor,
+				pDevice->GetVerbalName(),
+				cszType,
+				dLRCVicinity,
+				dMaxLRCVicinity));
+
 		for (auto it = P.begin(); it != P.end(); it++)
 		{
 			auto next{ std::next(it) };
-
-			if (it == P.begin())
-			{
-				// первый сегмент
-				if (next == P.end())
-				{
-					// следующего сегмента нет, просто вставляем
-					Ps.insert(*it);
-				}
-				else
-				{
-					// следующий сегмент есть, обрезаем текущий сегмент до next->V - dMaxLRCVicinity
-					Ps.insert(*it);
-					CLRCData s(*next);
-					// вставляем сегмент сглаживаия V - dMaxLRCVicinity -> V + dMaxLRCVicinity
-					s.V -= dMaxLRCVicinity;
-					Ps.insert(s);
-				}
-			}
-			else
-			{
-				CLRCData s(*it);
-				// не первый сегмент
-				if (next == P.end())
-				{
-					// следующего сегмента нет, обрезаем текущий сегмент слева от V + dMaxLRCVicinity
-					s.V += dMaxLRCVicinity;
-					Ps.insert(s);
-				}
-				else
-				{
-					// следующий сегмент есть, обрезаем текущий сегмент слева и справа в 
-					// диапазон V + dMaxLRCVicinity до next->V - dMaxLRCVicinity
-					s = *it;
-					s.V += dMaxLRCVicinity;
-					Ps.insert(s);
-					s = *next;
-					// вставляем сегмент сглаживания 
-					s.V -= dMaxLRCVicinity;
-				}
-			}
+			// вставляем текущий сегмент. Если он первый, вставляем как есть, если нет - сдвигаем его область
+			// вправо на величину области сглаживания
+			Ps.insert(CLRCDataInterpolated(it->V + (it == P.begin() ? 0.0 : dMaxLRCVicinity), *it));
+			// если есть следующий сегмент - вставляем сегмент сглаживания между
+			// текущим и следующим
+			if (next != P.end())
+				Ps.insert(CLRCDataInterpolated(*it, *next, dMaxLRCVicinity));
 		}
-		*/
 	}
 
 	return true;
