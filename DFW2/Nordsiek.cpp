@@ -431,10 +431,10 @@ void CDynaModel::RescaleNordsiek(const double r)
 	sc.OrderChanged();
 
 	// рассчитываем коэффициент изменения шага
-	double dRefactorRatio = sc.m_dCurrentH / sc.m_dLastRefactorH;
+	const double dRefactorRatio{ sc.m_dCurrentH / sc.m_dLastRefactorH };
 	// если шаг изменился более в заданное количество раз - взводим флаг рефакторизации Якоби
 	// sc.m_dLastRefactorH обновляется после рефакторизации
-	if (dRefactorRatio > m_Parameters.m_dRefactorByHRatio || dRefactorRatio < 1.0 / m_Parameters.m_dRefactorByHRatio)
+	if (dRefactorRatio > m_Parameters.m_dRefactorByHRatio || 1.0 / dRefactorRatio > m_Parameters.m_dRefactorByHRatio)
 		sc.RefactorMatrix(true);
 }
 

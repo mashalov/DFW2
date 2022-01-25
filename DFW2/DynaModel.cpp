@@ -184,7 +184,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
 		m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
 
-		m_Parameters.m_dAtol = 1E-2;
+		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = true;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bDisableResultsWriter = true;
@@ -615,7 +615,7 @@ bool CDynaModel::NewtonUpdate()
 
 	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
 							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
-							   sc.Newton.Weighted.dMaxError < 1.0;
+							   sc.Newton.Weighted.dMaxError < 0.01;
 
 	if ( bConvCheckConverged )
 	{
@@ -901,9 +901,6 @@ bool CDynaModel::Step()
 	// запоминаем текущее значение времени
 	sc.Assign_t0();
 
-	if (GetIntegrationStepNumber() == 7960)
-		sc.Assign_t0();
-
 	if (!sc.m_bDiscontinuityMode)
 	{
 		// если мы были вне режима обработки разрыва
@@ -992,16 +989,14 @@ bool CDynaModel::Step()
 	// пока шаг нужно повторять, все в порядке и не получена команда останова
 	while (sc.m_bRetryStep && bRes && !CancelProcessing())
 	{
-		/*if (GetIntegrationStepNumber() == 3516)
-			SnapshotRightVector();*/
 
 		Predict();		// делаем прогноз Nordsieck для следуюшего времени
 
-		/*if (GetIntegrationStepNumber() == 3516)
-		{
-			CompareRightVector();
+		/*if (GetIntegrationStepNumber() == 1354)
 			SnapshotRightVector();
-		}*/
+		if(GetIntegrationStepNumber() == 1356)
+			CompareRightVector();
+		*/
 
 		bRes = bRes && SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
 

@@ -172,12 +172,24 @@ bool CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 	{
 		double dSum = Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) - K0f * (dSdtIn - Svt) + dVdtOut + dEqdtOut - dSdtOut;
 
-		if(m_Id == 115)
-			DebugLog(fmt::format("Step: {}, V={}, S={}, Eq={}",
+		/*
+		if (m_Id == 115)
+		{
+			if (pDynaModel->GetIntegrationStepNumber() == 0)
+				DebugLog(fmt::format("Step;V;S;Eq;dV;dS;dEq;Usum;dSLag"));
+
+			DebugLog(fmt::format("{};{};{};{};{};{};{};{};{};",
 				pDynaModel->GetIntegrationStepNumber(),
 				dVdtIn,
 				dSdtIn,
-				dEqdtIn));
+				dEqdtIn,
+				dVdtOut,
+				dSdtOut,
+				dEqdtOut,
+				Usum,
+				dSdtOut1));
+		}
+		*/
 		
 		pDynaModel->SetFunction(Usum, dSum);
 		pDynaModel->SetFunctionDiff(Svt, (dSdtIn - Svt) / Tf);
