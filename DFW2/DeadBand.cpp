@@ -4,10 +4,8 @@
 
 using namespace DFW2;
 
-bool CDeadBand::BuildEquations(CDynaModel *pDynaModel)
+void CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
-
 	switch (m_eDbState)
 	{
 	case eDFW2DEADBANDSTATES::DBS_MAX:
@@ -21,11 +19,9 @@ bool CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 	}
 
 	pDynaModel->SetElement(m_Output, m_Output, 1.0);
-
-	return true;
 }
 
-bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
+void CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
@@ -36,7 +32,7 @@ bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 			break;
 		case eDFW2DEADBANDSTATES::DBS_ZERO:
 			pDynaModel->SetFunction(m_Output, 0.0);
-			m_Output = 0.0;
+			pDynaModel->SetVariableNordsiek(m_Output, 0.0);
 			break;
 		case eDFW2DEADBANDSTATES::DBS_OFF:
 			pDynaModel->SetFunction(m_Output, m_Output - m_Input);
@@ -48,8 +44,6 @@ bool CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 	}
 	else
 		pDynaModel->SetFunction(m_Output, 0.0);
-
-	return true;
 }
 
 
@@ -82,24 +76,24 @@ eDEVICEFUNCTIONSTATUS CDeadBand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	{
 		if (m_eDbState != eDFW2DEADBANDSTATES::DBS_OFF)
 		{
-			m_Output = 0.0;
+			pDynaModel->SetVariableNordsiek(m_Output, 0.0);
 
 			m_eDbState = eDFW2DEADBANDSTATES::DBS_ZERO;
 
 			if (m_Input >= m_Db)
 			{
-				m_Output = m_Input - m_Db;
+				pDynaModel->SetVariableNordsiek(m_Output, m_Input - m_Db);
 				m_eDbState = eDFW2DEADBANDSTATES::DBS_MAX;
 			}
 			else
 				if (m_Input <= -m_Db)
 				{
-					m_Output = m_Input + m_Db;
+					pDynaModel->SetVariableNordsiek(m_Output, m_Input + m_Db);
 					m_eDbState = eDFW2DEADBANDSTATES::DBS_MIN;
 				}
 		}
 		else
-			m_Output = m_Input;
+			pDynaModel->CopyVariableNordsiek(m_Output, m_Input);
 	}
 	else
 		m_Output = 0.0;

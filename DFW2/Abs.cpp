@@ -6,14 +6,13 @@ using namespace DFW2;
 
 
 
-bool CAbs::BuildEquations(CDynaModel *pDynaModel)
+void CAbs::BuildEquations(CDynaModel *pDynaModel)
 {
 	pDynaModel->SetElement(m_Output, m_Input, m_bPositive ? 1.0 : -1.0);
 	pDynaModel->SetElement(m_Output, m_Output, 1.0);
-	return true;
 }
 
-bool CAbs::BuildRightHand(CDynaModel *pDynaModel)
+void CAbs::BuildRightHand(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
@@ -21,15 +20,13 @@ bool CAbs::BuildRightHand(CDynaModel *pDynaModel)
 	}
 	else
 		pDynaModel->SetFunction(m_Output, 0.0);
-
-	return true;
 }
 
 
 
 bool CAbs::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = CDynaPrimitive::Init(pDynaModel);
+	bool bRes{ CDynaPrimitive::Init(pDynaModel) };
 	bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 	return bRes;
 }
@@ -43,10 +40,11 @@ eDEVICEFUNCTIONSTATUS CAbs::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		else
 			m_bPositive = false;
 
+		pDynaModel->CopyVariableNordsiek(m_Output, m_Input);
 		m_Output = std::abs(m_Input);
 	}
 	else
-		m_Output = 0.0;
+		pDynaModel->SetVariableNordsiek(m_Output, 0.0);
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }

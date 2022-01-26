@@ -23,9 +23,9 @@ namespace DFW2
 		void ChangeMinMaxTK(CDynaModel *pDynaModel, double dMin, double dMax, double T, double K);
 		void ChangeTimeConstant(double TexcNew);
 		bool Init(CDynaModel *pDynaModel) override;
-		bool BuildEquations(CDynaModel *pDynaModel) override;
-		bool BuildRightHand(CDynaModel *pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		void BuildEquations(CDynaModel *pDynaModel) override;
+		void BuildRightHand(CDynaModel *pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		const char* GetVerbalName() override { return "Апериодическое звено с ограничениями"; }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;

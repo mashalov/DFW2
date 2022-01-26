@@ -6,10 +6,8 @@ using namespace DFW2;
 
 bool CExpand::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	eCurrentState = eRELAYSTATES::RS_OFF;
-	bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
-	return bRes;
+	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));;
 }
 
 CDynaPrimitiveBinary::eRELAYSTATES CExpand::GetInstantState()
@@ -21,9 +19,9 @@ eDEVICEFUNCTIONSTATUS CExpand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		CRelay::eRELAYSTATES State = GetInstantState();
+		const CRelay::eRELAYSTATES State{ GetInstantState() };
 		SetCurrentState(pDynaModel, State);
-		m_Output = (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0;
+		pDynaModel->SetVariableNordsiek(m_Output, (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0);
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -49,7 +47,7 @@ void CExpand::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 				pDynaModel->SetStateDiscontinuity(this, m_dDelay);
 			}
 			eCurrentState = CurrentState;
-			m_Output = 1.0;
+			pDynaModel->SetVariableNordsiek(m_Output, 1.0);
 		}
 		break;
 	}
@@ -63,8 +61,7 @@ void CExpand::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 
 bool CExpand::NotifyDelay(CDynaModel *pDynaModel)
 {
-	pDynaModel->RemoveStateDiscontinuity(this);
-	return true;
+	return pDynaModel->RemoveStateDiscontinuity(this);;
 }
 
 bool CExpand::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
@@ -85,9 +82,9 @@ eDEVICEFUNCTIONSTATUS CShrink::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		CRelay::eRELAYSTATES State = GetInstantState();
+		const CRelay::eRELAYSTATES State{ GetInstantState() };
 		SetCurrentState(pDynaModel, State);
-		m_Output = (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0;
+		pDynaModel->SetVariableNordsiek(m_Output, (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0);
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -107,12 +104,12 @@ void CShrink::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 	case eRELAYSTATES::RS_OFF:
 		if (CurrentState == eRELAYSTATES::RS_ON)
 		{
-			RightVector *pRightVector = pDynaModel->GetRightVector(m_Input);
+			const RightVector* pRightVector{ pDynaModel->GetRightVector(m_Input) };
 			if (pRightVector->SavedNordsiek[0] <= 0)
 			{
 				pDynaModel->SetStateDiscontinuity(this, m_dDelay);
 				eCurrentState = CurrentState;
-				m_Output = 1.0;
+				pDynaModel->SetVariableNordsiek(m_Output, 1.0);
 			}
 		}
 		break;

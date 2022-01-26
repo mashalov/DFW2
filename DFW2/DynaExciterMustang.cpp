@@ -200,13 +200,13 @@ bool CDynaExciterMustang::SetUpEqLimits(CDynaModel *pDynaModel, CDynaPrimitiveLi
 
 		switch (EqLimitStateResulting)
 		{
-		case CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MAX:
+		case CDynaPrimitiveLimited::eLIMITEDSTATES::Max:
 			ExcLag.ChangeMinMaxTK(pDynaModel, Umin, Imax, Texc, 1.0);
 			break;
-		case CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MIN:
+		case CDynaPrimitiveLimited::eLIMITEDSTATES::Min:
 			ExcLag.ChangeMinMaxTK(pDynaModel, Imin, Umax, Texc, 1.0);
 			break;
-		case CDynaPrimitiveLimited::eLIMITEDSTATES::LS_MID:
+		case CDynaPrimitiveLimited::eLIMITEDSTATES::Mid:
 			ExcLag.ChangeMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
 			break;
 		}

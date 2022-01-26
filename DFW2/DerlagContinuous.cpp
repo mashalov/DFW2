@@ -3,10 +3,9 @@
 #include "DynaModel.h"
 using namespace DFW2;
 
-bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
+void CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
-	double T = m_T;
+	double T{ m_T };
 
 	if (pDynaModel->EstimateBuild())
 	{
@@ -60,18 +59,15 @@ bool CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 	// dY2 / dInput
 	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -hb0 * m_T);
 	pDynaModel->SetElement(m_Y2, m_Input, -T);
-
-	return true;
 }
 
-bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
+void CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 {
-
 	if (m_Device.IsStateOn())
 	{
-		double dY2 = (m_Input - m_Y2) * m_T;
+		const double dY2{ (m_Input - m_Y2) * m_T };
 		//double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
-		double dOut = m_Output - m_K * dY2;
+		double dOut{ m_Output - m_K * dY2 };
 
 		if (pDynaModel->IsInDiscontinuityMode())
 		{
@@ -87,8 +83,6 @@ bool CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunction(m_Output, 0.0);
 		pDynaModel->SetFunctionDiff(m_Y2, 0.0);
 	}
-
-	return true;
 }
 
 bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
@@ -107,19 +101,17 @@ bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
 }
 
 
-bool CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
+void CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dY2 = (m_Input - m_Y2) * m_T;
+		const double dY2{ (m_Input - m_Y2) * m_T };
 		pDynaModel->SetDerivative(m_Y2, dY2);
 	}
 	else
 	{
 		pDynaModel->SetDerivative(m_Y2, 0.0);
 	}
-
-	return true;
 }
 
 eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaModel)
@@ -184,9 +176,8 @@ bool CDerlagNordsieck::Init(CDynaModel *pDynaModel)
 	return true;
 }
 
-bool CDerlagNordsieck::BuildRightHand(CDynaModel *pDynaModel)
+void CDerlagNordsieck::BuildRightHand(CDynaModel *pDynaModel)
 {
-
 	if (m_Device.IsStateOn())
 	{
 		const RightVector* pRightVector{ pDynaModel->GetRightVector(m_Input.Index) };
@@ -209,18 +200,15 @@ bool CDerlagNordsieck::BuildRightHand(CDynaModel *pDynaModel)
 		pDynaModel->SetFunctionDiff(m_Output, 0.0);
 		pDynaModel->SetFunction(m_Y2, 0.0);
 	}
-
-	return true;
 }
 
-bool CDerlagNordsieck::BuildDerivatives(CDynaModel *pDynaModel)
+void CDerlagNordsieck::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
 		const RightVector* pRightVector{ pDynaModel->GetRightVector(m_Input.Index) };
 		pDynaModel->SetDerivative(m_Output, (pRightVector->Nordsiek[1] / pDynaModel->GetH() * m_K - m_Output) * m_T);
 	}
-	return true;
 }
 
 bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
@@ -249,10 +237,8 @@ eDEVICEFUNCTIONSTATUS CDerlagNordsieck::ProcessDiscontinuity(CDynaModel* pDynaMo
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
+void CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
-
 	if (m_Device.IsStateOn())
 	{
 
@@ -281,8 +267,6 @@ bool CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(m_Output, m_Output, 1.0);
 		pDynaModel->SetElement(m_Y2, m_Y2, 1.0);
 	}
-
-	return true;
 }
 
 #endif

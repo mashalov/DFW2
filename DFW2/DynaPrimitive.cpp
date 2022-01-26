@@ -5,13 +5,6 @@
 
 using namespace DFW2;
 
-/*
-ptrdiff_t CDynaPrimitive::A(ptrdiff_t nOffset)
-{ 
-	return m_pDevice->A(nOffset); 
-}
-*/
-
 bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 {
 	return true;
@@ -22,7 +15,7 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 	bool bRes = CDynaPrimitive::Init(pDynaModel);
 	if (bRes)
 	{
-		eCurrentState = eLIMITEDSTATES::LS_MID;
+		eCurrentState = eLIMITEDSTATES::Mid;
 		
 		if (m_dMin > m_dMax)
 		{
@@ -147,13 +140,13 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 	eLIMITEDSTATES oldCurrentState = eCurrentState;
 	switch (eCurrentState)
 	{
-	case eLIMITEDSTATES::LS_MID:
+	case eLIMITEDSTATES::Mid:
 		rH = OnStateMid(pDynaModel);
 		break;
-	case eLIMITEDSTATES::LS_MAX:
+	case eLIMITEDSTATES::Max:
 		rH = OnStateMax(pDynaModel);
 		break;
-	case eLIMITEDSTATES::LS_MIN:
+	case eLIMITEDSTATES::Min:
 		rH = OnStateMin(pDynaModel);
 		break;
 	}
@@ -280,36 +273,32 @@ void CDynaPrimitiveBinary::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 	pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
 }
 
-bool CDynaPrimitiveBinary::BuildEquations(CDynaModel *pDynaModel)
+void CDynaPrimitiveBinary::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	pDynaModel->SetElement(m_Output, m_Output, 1.0);
-	return true;
 }
 
-bool CDynaPrimitiveBinary::BuildRightHand(CDynaModel *pDynaModel)
+void CDynaPrimitiveBinary::BuildRightHand(CDynaModel *pDynaModel)
 {
 	pDynaModel->SetFunction(m_Output, 0.0);
-	return true;
 }
 
-double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel* pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2)
+double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel* pDynaModel, const RightVector* pRightVector1, const RightVector* pRightVector2)
 {
-	ptrdiff_t q = pDynaModel->GetOrder();
-	double h = pDynaModel->GetH();
-	double dError1 = pRightVector1->Error;
-	double dError2 = pRightVector2->Error;
+	const ptrdiff_t q{ pDynaModel->GetOrder() };
+	const double h{ pDynaModel->GetH() }, dError1{ pRightVector1->Error }, dError2{ pRightVector2->Error };
 
-	const double* lm1 = pDynaModel->Methodl[pRightVector1->EquationType * 2 + q - 1];
-	const double* lm2 = pDynaModel->Methodl[pRightVector2->EquationType * 2 + q - 1];
+	const double* lm1{ pDynaModel->Methodl[pRightVector1->EquationType * 2 + q - 1] };
+	const double* lm2{ pDynaModel->Methodl[pRightVector2->EquationType * 2 + q - 1] };
 
-	double a = 0.0;
-	double b = (pRightVector1->Nordsiek[1] + dError1 * lm1[1] - (pRightVector2->Nordsiek[1] + dError2 * lm2[1])) / h;
-	double c = (pRightVector1->Nordsiek[0] + dError1 * lm1[0] - (pRightVector2->Nordsiek[0] + dError2 * lm2[0]));
+	double a{ 0.0 };
+	double b{ (pRightVector1->Nordsiek[1] + dError1 * lm1[1] - (pRightVector2->Nordsiek[1] + dError2 * lm2[1])) / h };
+	double c{ (pRightVector1->Nordsiek[0] + dError1 * lm1[0] - (pRightVector2->Nordsiek[0] + dError2 * lm2[0])) };
+
 	if (q == 2)
 		a = (pRightVector1->Nordsiek[2] + dError1 * lm1[2] - (pRightVector2->Nordsiek[2] + dError2 * lm2[2])) / h / h;
 
-	const double rH(GetZCStepRatio(pDynaModel, a, b, c));
+	const double rH{ GetZCStepRatio(pDynaModel, a, b, c) };
 
 	if (rH <= 0.0)
 	{
@@ -337,14 +326,14 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 {
 	// по умолчанию зеро-кроссинга нет - отношение 1.0
 	double rH = 1.0;
-	double h = pDynaModel->GetH();
+	const double h{ pDynaModel->GetH() };
 
 	if (Equal(a, 0.0))
 	{
 		// если квадратичный член равен нулю - просто решаем линейное уравнение
 		//if (!Equal(b, 0.0))
 		{
-			double h1 = -c / b;
+			const double h1{ -c / b };
 			rH = (h + h1) / h;
 			//_ASSERTE(rH >= 0);
 		}
@@ -371,7 +360,7 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 
 std::string CDynaPrimitive::GetVerboseName()
 {
-	const auto pRightVector = m_Device.GetModel()->GetRightVector(m_Output);
+	const auto pRightVector{ m_Device.GetModel()->GetRightVector(m_Output) };
 	const char* cszUnknown = "\"unknown\"";
 	return fmt::format("{} {} {} {}", 
 		GetVerbalName(), 

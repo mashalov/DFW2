@@ -22,9 +22,9 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 
 
-		bool BuildEquations(CDynaModel *pDynaModel) override;
-		bool BuildRightHand(CDynaModel *pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override { return true; }
+		void BuildEquations(CDynaModel *pDynaModel) override;
+		void BuildRightHand(CDynaModel *pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override { }
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 
 		const char* GetVerbalName() override { return "Модуль"; }

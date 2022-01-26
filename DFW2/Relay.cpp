@@ -7,21 +7,18 @@ using namespace DFW2;
 // инициализация реле
 bool CRelay::Init(CDynaModel *pDynaModel)
 {
-	bool bRes{ true };
 	// задаем уставки
 	SetRefs(pDynaModel, m_dUpper, m_dLower, m_bMaxRelay);
 	// получаем исходное состояние
 	eCurrentState = GetInstantState();
-	// обрабатываем разрыв
-	bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
-	return bRes;
+	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));;
 }
 
 // отслеживание состояния в несработанном состоянии
 double CRelay::OnStateOff(CDynaModel *pDynaModel)
 {
-	double OnBound = m_dUpperH;
-	double Check = m_dUpperH - m_Input;
+	double OnBound{ m_dUpperH };
+	double Check{ m_dUpperH - m_Input };
 
 	if (!m_bMaxRelay)
 	{
@@ -29,7 +26,7 @@ double CRelay::OnStateOff(CDynaModel *pDynaModel)
 		Check = m_Input - m_dLowerH;
 	}
 
-	double rH = 1.0;
+	double rH{ 1.0 };
 	if (CDynaPrimitive::ChangeState(pDynaModel, Check, m_Input, OnBound, m_Input.Index, rH))
 		SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
 
@@ -107,7 +104,7 @@ eDEVICEFUNCTIONSTATUS CRelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		// ставим полученное состояние
 		SetCurrentState(pDynaModel, State);
 		// транслируем состояние из enum в 0/1 на выход
-		m_Output = (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0;
+		pDynaModel->SetVariableNordsiek(m_Output, (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0);
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -230,9 +227,7 @@ eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		SetCurrentState(pDynaModel, State);
 
 		if ((m_dDelay > 0 && !pDynaModel->CheckStateDiscontinuity(this)) || m_dDelay == 0)
-		{
-			m_Output = (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0;
-		}
+			pDynaModel->SetVariableNordsiek(m_Output, (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0);
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -247,14 +242,13 @@ void CRelayDelay::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 bool CRelayDelay::NotifyDelay(CDynaModel *pDynaModel)
 {
 	pDynaModel->RemoveStateDiscontinuity(this);
-	m_Output = (GetCurrentState() == eRELAYSTATES::RS_ON) ? 1.0 : 0.0;
+	pDynaModel->SetVariableNordsiek(m_Output, (GetCurrentState() == eRELAYSTATES::RS_ON) ? 1.0 : 0.0);
 	return true;
 }
 
-
 bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = CRelayDelay::Init(pDynaModel);
+	bool bRes{ CRelayDelay::Init(pDynaModel) };
 	if (bRes)
 	{
 		if (m_Device.IsStateOn())
@@ -263,7 +257,7 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 			{
 				pDynaModel->SetStateDiscontinuity(this, m_dDelay);
 				eCurrentState = eRELAYSTATES::RS_OFF;
-				m_Output = 0;
+				pDynaModel->SetVariableNordsiek(m_Output, 0.0);
 			}
 		}
 	}
@@ -272,7 +266,7 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 
 bool CRelayDelayLogic::NotifyDelay(CDynaModel *pDynaModel)
 {
-	double dOldOut = m_Output;
+	const double dOldOut{ m_Output };
 	CRelayDelay::NotifyDelay(pDynaModel);
 	if (m_Output != dOldOut)
 		pDynaModel->NotifyRelayDelay(this);

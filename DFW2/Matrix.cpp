@@ -348,6 +348,47 @@ void CDynaModel::SetDerivative(ptrdiff_t nRow, double dValue)
 	pRv->Nordsiek[1] = dValue * GetH();
 }
 
+// копирует значение переменной и компонентов ее Нордсика из источника
+void CDynaModel::CopyVariableNordsiek(const VariableIndex& Variable, const InputVariable& Source)
+{
+	// если переменная индексирована
+	if (Variable.Indexed())
+	{
+		// достаем вектор
+		auto rv{ GetRightVector(Variable.Index) };
+
+		// задаем значение самой переменной и нулевого компонента Нордсика
+		*rv->pValue = rv->Nordsiek[0] = Source;
+		// если переменная-источник индексирована
+		if (Source.Indexed())
+		{
+			// достаем вектор переменной-истоничка
+			auto rvs{ GetRightVector(Source.Index) };
+			// и копируем высшие компоненты нордсика
+			rv->Nordsiek[1] = rvs->Nordsiek[1];
+			rv->Nordsiek[2] = rvs->Nordsiek[2];
+		}
+		else // если переменная-инсточник неидексирована, скоре всего она константа
+			rv->Nordsiek[1] = rv->Nordsiek[2] = 0;
+	}
+}
+
+// устанавливает значение переменной и компонентов Нордиска
+void CDynaModel::SetVariableNordsiek(const VariableIndex& Variable, double v0, double v1, double v2)
+{
+	// если переменная индексирована
+	if (Variable.Indexed())
+	{
+		// достаем вектор
+		auto rv{ GetRightVector(Variable.Index) };
+		// задаем значение самой переменной, нулевого компонента Нордиска
+		*rv->pValue = rv->Nordsiek[0] = v0;
+		// и высших компонентов Нордсика
+		rv->Nordsiek[1] = v1;
+		rv->Nordsiek[2] = v2;
+	}
+}
+
 void CDynaModel::CorrectNordsiek(ptrdiff_t nRow, double dValue)
 {
 	RightVector *pRightVector = GetRightVector(nRow);

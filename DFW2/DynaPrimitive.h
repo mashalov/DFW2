@@ -55,6 +55,7 @@ namespace DFW2
 		constexpr operator const double& () const { return *pValue; }
 		// значение double можно присвоить
 		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
+		constexpr bool Indexed() const { return Index >= 0; }
 	};
 
 	using OutputList = std::initializer_list<std::reference_wrapper<VariableIndex>>;
@@ -132,9 +133,9 @@ namespace DFW2
 
 		virtual ~CDynaPrimitive() = default;
 
-		virtual bool BuildEquations(CDynaModel *pDynaModel) = 0;
-		virtual bool BuildRightHand(CDynaModel *pDynaModel) = 0;
-		virtual bool BuildDerivatives(CDynaModel *pDynaModel) = 0;
+		virtual void BuildEquations(CDynaModel *pDynaModel) = 0;
+		virtual void BuildRightHand(CDynaModel *pDynaModel) = 0;
+		virtual void BuildDerivatives(CDynaModel *pDynaModel) = 0;
 
 		virtual bool Init(CDynaModel *pDynaModel);
 		virtual const char* GetVerbalName() { return ""; }
@@ -170,14 +171,14 @@ namespace DFW2
 		// возможные состояния примитива
 		enum class eLIMITEDSTATES
 		{
-			LS_MIN,		// на минимуме
-			LS_MID,		// вне ограничения
-			LS_MAX		// на максимуме
+			Min,		// на минимуме
+			Mid,		// вне ограничения
+			Max			// на максимуме
 		};
 
 	private:
-		eLIMITEDSTATES eCurrentState = eLIMITEDSTATES::LS_MID;		// текущее состояние примитива
-		eLIMITEDSTATES eSavedState = eLIMITEDSTATES::LS_MID;			// сохраненное состояние примитива
+		eLIMITEDSTATES eCurrentState = eLIMITEDSTATES::Mid;			// текущее состояние примитива
+		eLIMITEDSTATES eSavedState = eLIMITEDSTATES::Mid;			// сохраненное состояние примитива
 
 	protected:
 		void SetCurrentState(CDynaModel *pDynaModel, eLIMITEDSTATES CurrentState);
@@ -227,9 +228,9 @@ namespace DFW2
 
 		void InvertState(CDynaModel *pDynaModel);
 		virtual void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState);
-		bool BuildEquations(CDynaModel *pDynaModel) override;
-		bool BuildRightHand(CDynaModel *pDynaModel)  override;
-		bool BuildDerivatives(CDynaModel *pDynaModel)  override { return true; }
+		void BuildEquations(CDynaModel *pDynaModel) override;
+		void BuildRightHand(CDynaModel *pDynaModel)  override;
+		void BuildDerivatives(CDynaModel *pDynaModel)  override {  }
 		void StoreState() override { eSavedState = eCurrentState; }
 		void RestoreState() override { eCurrentState = eSavedState; }
 	};
@@ -244,7 +245,7 @@ namespace DFW2
 		CDynaPrimitiveBinaryOutput(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CDynaPrimitiveBinaryOutput(Device, ORange(Output), IRange(Input)) { }
 
-		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, RightVector* pRightVector1, RightVector* pRightVector2);
+		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, const RightVector* pRightVector1, const RightVector* pRightVector2);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 	};
 

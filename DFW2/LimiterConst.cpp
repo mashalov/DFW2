@@ -4,19 +4,18 @@
 
 using namespace DFW2;
 
-bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
+void CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
-	double dOdI = -1.0;
+	double dOdI{ -1.0 };
 
 	switch (GetCurrentState())
 	{
-	case eLIMITEDSTATES::LS_MAX:
-		m_Output = m_dMax;
+	case eLIMITEDSTATES::Max:
+		pDynaModel->SetVariableNordsiek(m_Output, m_dMax);
 		dOdI = 0.0;
 		break;
-	case eLIMITEDSTATES::LS_MIN:
-		m_Output = m_dMin;
+	case eLIMITEDSTATES::Min:
+		pDynaModel->SetVariableNordsiek(m_Output, m_dMin);
 		dOdI = 0.0;
 		break;
 	}
@@ -26,23 +25,32 @@ bool CLimiterConst::BuildEquations(CDynaModel *pDynaModel)
 
 	pDynaModel->SetElement(m_Output, m_Output, 1.0);
 	pDynaModel->SetElement(m_Output, m_Input, dOdI);
-	return true;
 }
 
-bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
+void CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 {
-	double dOdI = m_Output - m_Input;
+	double dOdI{ m_Output - m_Input };
+
+	/*if (m_Device.GetId() == 115 && pDynaModel->GetIntegrationStepNumber() == 38320)
+	{
+		const auto prv{ pDynaModel->GetRightVector(m_Output.Index) };
+		m_Device.DebugLog(fmt::format("t={} / {} I={} O={} State={} {} {} {}",
+			pDynaModel->GetCurrentTime(),
+			pDynaModel->GetIntegrationStepNumber(),
+			m_Input, m_Output, GetCurrentState(), prv->Nordsiek[0], prv->Nordsiek[1], prv->Nordsiek[2]));
+	}
+	*/
 
 	if (m_Device.IsStateOn())
 	{
 		switch (GetCurrentState())
 		{
-		case eLIMITEDSTATES::LS_MAX:
-			m_Output = m_dMax;
+		case eLIMITEDSTATES::Max:
+			pDynaModel->SetVariableNordsiek(m_Output, m_dMax);
 			dOdI = 0.0;
 			break;
-		case eLIMITEDSTATES::LS_MIN:
-			m_Output = m_dMin;
+		case eLIMITEDSTATES::Min:
+			pDynaModel->SetVariableNordsiek(m_Output, m_dMin);
 			dOdI = 0.0;
 			break;
 		}
@@ -50,11 +58,7 @@ bool CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 	}
 	else
 		pDynaModel->SetFunction(m_Output, 0.0);
-
-	return true;
 }
-
-
 
 bool CLimiterConst::Init(CDynaModel *pDynaModel)
 {
@@ -66,29 +70,29 @@ bool CLimiterConst::Init(CDynaModel *pDynaModel)
 // контроль зерокроссинга для состояния вне ограничения
 double CLimiterConst::OnStateMid(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMaxH - m_Input, m_Input, m_dMaxH, m_Input.Index, rH))
-		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MAX);
-	if (GetCurrentState() == eLIMITEDSTATES::LS_MID && !pDynaModel->GetZeroCrossingInRange(rH))
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::Max);
+	if (GetCurrentState() == eLIMITEDSTATES::Mid && !pDynaModel->GetZeroCrossingInRange(rH))
 		if (CDynaPrimitive::ChangeState(pDynaModel, m_Input - m_dMinH, m_Input, m_dMinH, m_Input.Index, rH))
-			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MIN);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::Min);
 	return rH;
 
 }
 
 double CLimiterConst::OnStateMin(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_dMin - m_Input, m_Input, m_dMin, m_Input.Index, rH))
-		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::Mid);
 	return rH;
 }
 
 double CLimiterConst::OnStateMax(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 	if (CDynaPrimitive::ChangeState(pDynaModel, m_Input - m_dMax, m_Input, m_dMax, m_Input.Index, rH))
-		SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
+		SetCurrentState(pDynaModel, eLIMITEDSTATES::Mid);
 	return rH;
 }
 
@@ -96,9 +100,9 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 {
 	if (m_Device.IsStateOn())
 	{
-		double CheckMax = m_Input - m_dMax;
-		double CheckMin = m_dMin - m_Input;
-		m_Output = m_Input;
+		const double CheckMax{ m_Input - m_dMax }, CheckMin{ m_dMin - m_Input };
+
+		pDynaModel->CopyVariableNordsiek(m_Output, m_Input);
 
 		// Bigger or Equal - very important !
 
@@ -106,17 +110,17 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 
 		if (CheckMax >= 0)
 		{
-			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MAX);
-			m_Output = m_dMax;
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::Max);
+			pDynaModel->SetVariableNordsiek(m_Output, m_dMax);
 		}
 		else if (CheckMin >= 0)
 		{
-			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MIN);
-			m_Output = m_dMin;
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::Min);
+			pDynaModel->SetVariableNordsiek(m_Output, m_dMin);
 		}
 		else
 		{
-			SetCurrentState(pDynaModel, eLIMITEDSTATES::LS_MID);
+			SetCurrentState(pDynaModel, eLIMITEDSTATES::Mid);
 		}
 
 		if (OldState != GetCurrentState())

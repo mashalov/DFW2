@@ -25,9 +25,9 @@ namespace DFW2
 
 		virtual ~CDerlagContinuous() = default;
 		bool Init(CDynaModel *pDynaModel) override;
-		bool BuildEquations(CDynaModel *pDynaModel) override;
-		bool BuildRightHand(CDynaModel *pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		void BuildEquations(CDynaModel *pDynaModel) override;
+		void BuildRightHand(CDynaModel *pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		void SetTK(double T, double K)  { m_K = K;  m_T = T; }
 		const char* GetVerbalName() override { return "РДЗ со сглаживанием"; }
@@ -64,9 +64,9 @@ namespace DFW2
 
 		virtual ~CDerlagNordsieck() {}
 		bool Init(CDynaModel *pDynaModel) override;
-		bool BuildEquations(CDynaModel *pDynaModel) override;
-		bool BuildRightHand(CDynaModel *pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override;
+		void BuildEquations(CDynaModel *pDynaModel) override;
+		void BuildRightHand(CDynaModel *pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		void SetTK(double T, double K) { m_K = K;  m_T = T; }
 		const char* GetVerbalName() override { return "ДЗ Nordsieck"; }

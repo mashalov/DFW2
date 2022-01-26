@@ -40,9 +40,9 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 	
-		bool BuildEquations(CDynaModel *pDynaModel) override;
-		bool BuildRightHand(CDynaModel *pDynaModel) override;
-		bool BuildDerivatives(CDynaModel *pDynaModel) override { return true; }
+		void BuildEquations(CDynaModel *pDynaModel) override;
+		void BuildRightHand(CDynaModel *pDynaModel) override;
+		void BuildDerivatives(CDynaModel *pDynaModel) override { }
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 

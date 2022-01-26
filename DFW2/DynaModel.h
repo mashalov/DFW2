@@ -698,6 +698,11 @@ namespace DFW2
 
 
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
+		// Задает значение для переменной, и компонентов Нордиска. 
+		// Используется, в основном, для ввода ограничения переменной
+		void SetVariableNordsiek(const VariableIndex& Variable, double v0, double v1 = 0.0, double v2 = 0.0);
+		// Копирует переменную вместе с компонентами Нордсика
+		void CopyVariableNordsiek(const VariableIndex& Variable, const InputVariable& Source);
 
 		// возвращает значение правой части системы уравнений
 		double GetFunction(ptrdiff_t nRow);

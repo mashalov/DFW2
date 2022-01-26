@@ -14,7 +14,7 @@ namespace DFW2
 	struct VariableIndexBase
 	{
 		ptrdiff_t Index = -100000;
-		constexpr bool Indexed() { return Index >= 0; }
+		constexpr bool Indexed() const { return Index >= 0; }
 	};
 
 	struct VariableIndex : VariableIndexBase

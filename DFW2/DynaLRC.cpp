@@ -302,6 +302,12 @@ void CDynaLRCChannel::SetSize(size_t nSize)
 
 double CDynaLRCChannel::Get(double VdivVnom, double dVicinity) const
 {
+	if (!Ps.empty())
+	{
+		auto itSegment{ std::prev(std::upper_bound(Ps.begin(), Ps.end(), CLRCDataInterpolated(VdivVnom))) };
+		return itSegment->Get(VdivVnom);
+	}
+
 	const CLRCData* const v{ &P.front() };
 	if (P.size() == 1)
 		return v->Get(VdivVnom);
@@ -311,13 +317,11 @@ double CDynaLRCChannel::Get(double VdivVnom, double dVicinity) const
 
 double CDynaLRCChannel::GetBoth(double VdivVnom, double& dP, double dVicinity) const
 {
-	/*
 	if (!Ps.empty())
 	{
 		auto itSegment{ std::prev(std::upper_bound(Ps.begin(), Ps.end(), CLRCDataInterpolated(VdivVnom))) };
 		return itSegment->GetBoth(VdivVnom, dP);
 	}
-	*/
 
 	const CLRCData* const v{ &P.front() };
 	if (P.size() == 1)

@@ -6,26 +6,20 @@ using namespace DFW2;
 
 bool CAnd::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	m_Output = 0.0;
-	ProcessDiscontinuity(pDynaModel);
-	return bRes;
+	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 }
 
 bool COr::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	m_Output = 0.0;
-	ProcessDiscontinuity(pDynaModel);
-	return bRes;
+	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 }
 
 bool CNot::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
 	m_Output = 0.0;
-	ProcessDiscontinuity(pDynaModel);
-	return bRes;
+	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 }
 
 
@@ -33,12 +27,12 @@ eDEVICEFUNCTIONSTATUS CAnd::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dOldOut = m_Output;
+		const double dOldOut{ m_Output };
 
 		if (m_Input > 0 && m_Input1 > 0)
-			m_Output = 1.0;
+			pDynaModel->SetVariableNordsiek(m_Output, 1.0);
 		else
-			m_Output = 0.0;
+			pDynaModel->SetVariableNordsiek(m_Output, 0.0);
 
 		if (dOldOut != m_Output)
 			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
@@ -51,14 +45,14 @@ eDEVICEFUNCTIONSTATUS COr::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dOldOut = m_Output;
+		const double dOldOut{ m_Output };
 
-		m_Output = 0.0;
+		pDynaModel->SetVariableNordsiek(m_Output, 0.0);
 		for (auto& inp : m_Inputs)
 		{
 			if (inp > 0)
 			{
-				m_Output = 1.0;
+				pDynaModel->SetVariableNordsiek(m_Output, 1.0);
 				break;
 			}
 		}
@@ -74,12 +68,12 @@ eDEVICEFUNCTIONSTATUS CNot::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (m_Device.IsStateOn())
 	{
-		double dOldOut = m_Output;
+		const double dOldOut{ m_Output };
 
 		if (m_Input > 0 )
-			m_Output = 0.0;
+			pDynaModel->SetVariableNordsiek(m_Output, 0.0);
 		else
-			m_Output = 1.0;
+			pDynaModel->SetVariableNordsiek(m_Output, 1.0);
 
 		if (dOldOut != m_Output)
 			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
