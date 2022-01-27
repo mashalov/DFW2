@@ -625,7 +625,7 @@ void CRastrImport::ReadLRCs(CDynaLRCContainer& container)
 
 		struct polynoms
 		{
-			LRCDATA* target;
+			LRCRAWDATA* target;
 			lrcpolynom& source;
 		};
 

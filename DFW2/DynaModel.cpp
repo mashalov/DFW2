@@ -196,7 +196,7 @@ bool CDynaModel::RunTransient()
 			m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 
 		//m_Parameters.m_dOutStep = 1E-5;
-		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
+		//bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 		bRes = bRes && (Reactors.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 		if (!bRes)
