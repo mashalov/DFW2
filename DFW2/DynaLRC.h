@@ -90,6 +90,7 @@ namespace DFW2
 				return m_pRawLRC->GetBoth(VdivVnom, dLRC);
 			{
 				// если интерполяция - рассчитываем 
+				_ASSERTE(VdivVnom >= V  && VdivVnom <= V + x2x1);
 				VdivVnom = (std::max)(VdivVnom, 0.0);
 				const double t{ (VdivVnom - V) / x2x1 }, t1{ 1.0 - t };
 				dLRC = (a - y1 + y2 - (4.0 * a - 2.0 * b - 3.0 * t * (a - b)) * t) / x2x1;
