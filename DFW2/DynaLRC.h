@@ -132,7 +132,6 @@ namespace DFW2
 		inline CDynaLRCChannel* Q() { return &m_Q; }
 	protected:
 		CDynaLRCChannel m_P{ CDynaLRC::m_cszP }, m_Q{ CDynaLRC::m_cszQ };
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static constexpr const char* m_cszP = "P";
 		static constexpr const char* m_cszQ = "Q";

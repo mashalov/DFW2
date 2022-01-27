@@ -22,19 +22,6 @@ bool CDynaLRC::UpdateSet()
 	return m_P.BuildLRCSet(this, dVicinity) && m_Q.BuildLRCSet(this, dVicinity);
 }
 
-eDEVICEFUNCTIONSTATUS CDynaLRC::Init(CDynaModel* pDynaModel)
-{
-	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_FAILED };
-
-	const double dLRCVicinity{ GetModel()->Parameters().m_dLRCSmoothingRange };
-
-	if (Check() && 
-		m_P.BuildLRCSet(this, dLRCVicinity) &&
-		m_Q.BuildLRCSet(this, dLRCVicinity))
-			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
-	return Status;
-}
-
 void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_LRC);
