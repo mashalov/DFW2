@@ -31,8 +31,6 @@ namespace DFW2
 
 	struct CLRCData : public LRCRawData
 	{
-		CLRCData *pPrev;
-		CLRCData *pNext;
 		double dMaxRadius;
 	};
 
@@ -45,15 +43,15 @@ namespace DFW2
 		// https://en.wikipedia.org/wiki/Spline_interpolation
 		double a, b, x2x1, y1, y2, y2y1;
 		// указатель на обычный сегмент СХН
-		const LRCRawData * const m_pRawLRC = nullptr;
+		const CLRCData * const m_pRawLRC = nullptr;
 		// напряжение сегмента (может не совпадать с m_pRawLRC->V)
 		double V;
 		// конcтруктор для поиска в сете
 		CLRCDataInterpolated(double VdivVnom) : V(VdivVnom) {}
 		// конструктор для варианта с использованием обычного сегмента СХН
-		CLRCDataInterpolated(double VdivVnom, const LRCRawData& rawData) : V(VdivVnom), m_pRawLRC { &rawData } {}
+		CLRCDataInterpolated(double VdivVnom, const CLRCData& rawData) : V(VdivVnom), m_pRawLRC { &rawData } {}
 		// конструктор интерполяции между двумя сегментами
-		CLRCDataInterpolated(const LRCRawData& left, const LRCRawData& right, double dVicinity) : V(right.V - dVicinity)
+		CLRCDataInterpolated(const CLRCData& left, const CLRCData& right, double dVicinity) : V(right.V - dVicinity)
 		{
 			double k1{ 0.0 }, k2{ 0.0 };
 			// вместо x1 используем V
@@ -92,6 +90,7 @@ namespace DFW2
 				return m_pRawLRC->GetBoth(VdivVnom, dLRC);
 			{
 				// если интерполяция - рассчитываем 
+				_ASSERTE(VdivVnom >= V  && VdivVnom <= V + x2x1);
 				VdivVnom = (std::max)(VdivVnom, 0.0);
 				const double t{ (VdivVnom - V) / x2x1 }, t1{ 1.0 - t };
 				dLRC = (a - y1 + y2 - (4.0 * a - 2.0 * b - 3.0 * t * (a - b)) * t) / x2x1;
@@ -100,22 +99,22 @@ namespace DFW2
 		}
 	};
 
-	using LRCDATA = std::vector<CLRCData>;
+	using LRCRAWDATA = std::vector<CLRCData>;
 	using LRCDATASET = std::set<CLRCDataInterpolated>;
 
 	class CDynaLRCChannel
 	{
 	public:
-		LRCDATA P;
+		LRCRAWDATA P;
 		LRCDATASET Ps;
 		CDynaLRCChannel(const char* Type) : cszType(Type) {}
 		double Get(double VdivVnom, double dVicinity) const;
 		double GetBoth(double VdivVnom, double& dP, double dVicinity) const;
 		bool Check(const CDevice* pDevice);
 		void SetSize(size_t nSize);
-		bool CollectConstantData(const CDevice* pDevice);
+		bool BuildLRCSet(const CDevice* pDevice, const double dVicinity);
 	protected:
-		double GetBothInterpolatedHermite(const CLRCData* const pBase, ptrdiff_t nCount, double VdivVnom, double dVicinity, double& dLRC) const;
+		double GetBothInterpolatedHermite(double VdivVnom, double dVicinity, double& dLRC) const;
 		const char* cszType;
 	};
 
@@ -125,6 +124,7 @@ namespace DFW2
 		using CDevice::CDevice;
 		void SetNpcs(ptrdiff_t nPcsP, ptrdiff_t  nPcsQ);
 		bool Check();
+		bool UpdateSet();
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		void TestDump(const char* cszPathName = "c:\\tmp\\lrctest.csv");
 		inline const CDynaLRCChannel* P() const { return &m_P; }
@@ -132,9 +132,7 @@ namespace DFW2
 		inline CDynaLRCChannel* P() { return &m_P; }
 		inline CDynaLRCChannel* Q() { return &m_Q; }
 	protected:
-		//friend class CDynaLRCContainer;
 		CDynaLRCChannel m_P{ CDynaLRC::m_cszP }, m_Q{ CDynaLRC::m_cszQ };
-		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static constexpr const char* m_cszP = "P";
 		static constexpr const char* m_cszQ = "Q";
