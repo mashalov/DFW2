@@ -5,7 +5,10 @@ using namespace DFW2;
 void CDynaModel::WriteResultsHeader()
 {
 	if (m_Parameters.m_bDisableResultsWriter)
+	{
+		Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszResultWriterDisabled);
 		return;
+	}
 
 	
 	auto resultPath(Platform().Results());
@@ -27,6 +30,7 @@ void CDynaModel::WriteResultsHeader()
 
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(resultPath, resultsInfo );
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, stringutils::utf8_encode(resultPath.c_str())));
 
 	// добавляем описание единиц измерения переменных
 	CDFW2Messages vars;
