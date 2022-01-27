@@ -168,7 +168,7 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bUseRefactor = false;
 		m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
-		m_Parameters.m_dLRCToShuntVmin = 0.7;
+		m_Parameters.m_dLRCToShuntVmin = 0.5;
 		m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
 		m_Parameters.m_dProcessDuration = 150;
 		m_Parameters.m_dFrequencyTimeConstant = 0.04;
@@ -183,7 +183,6 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA;
 		m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
 		m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
-
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
@@ -196,7 +195,7 @@ bool CDynaModel::RunTransient()
 			m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 
 		//m_Parameters.m_dOutStep = 1E-5;
-		bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
+		//bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 		bRes = bRes && (Reactors.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 		if (!bRes)
@@ -210,8 +209,6 @@ bool CDynaModel::RunTransient()
 		// записывать заголовок нужно сразу после линковки и отключения устройств без ведущих навсегда
 		// иначе устройства могут изменить родителей после топологического анализа
 		WriteResultsHeader();
-
-		//CDynaLRC* pLRC { static_cast<CDynaLRC*>(LRCs.GetDevice(1)) };
 
 		PrepareNetworkElements();
 
