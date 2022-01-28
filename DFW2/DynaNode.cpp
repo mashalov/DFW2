@@ -45,43 +45,48 @@ void CDynaNodeBase::UpdateVreVimSuper()
 }
 
 // возвращает ток узла от нагрузки/генерации/шунтов
-cplx CDynaNodeBase::GetSelfImbInotSuper(const double Vmin, double& Vsq)
+cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 {
 	// рассчитываем модуль напряжения по составляющим,
 	// так как модуль из уравнения может неточно соответствовать
 	// сумме составляющих пока Ньютон не сошелся
 	double V2{ Vre * Vre + Vim * Vim };
 	Vsq = std::sqrt(V2);
-	// рассчитываем нагрузку/генерацию по СХН по заданному модулю
-	GetPnrQnr(Vsq);
+	
 	double Ire{ Iconst.real() }, Iim{ Iconst.imag() };
 
 	if (!m_bInMetallicSC)
 	{
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию, заданные в узле
- 	    // если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
-		// чтобы исключить мощность из уравнений полностью
-		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
-		// Uсхн_min стандартное cглаживание СХН
-
-		if ((0.5 * Vmin - dLRCVicinity) > Vsq / V0)
+ 	    // если напряжение меньше VshuntPartBelow переходим на шунт и обнуляем
+		// расчетные нагрузку и генерацию чтобы исключить мощность из уравнений полностью
+		// Проверяем напряжение с учетом радиуса сглаживания,
+		// радиус сглаживания выражаем в именованных  единицах относительно
+		// номинального напряжения СХН
+		if ((Vsq + dLRCVicinity * V0) < VshuntPartBelow)
 		{
 			Ire += dLRCShuntPartP * Vre + dLRCShuntPartQ * Vim;
 			Iim -= dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
 
 #ifdef _DEBUG
 			// проверка
+			GetPnrQnr(Vsq);
+			const auto& Atol{ GetModel()->Parameters().m_dAtol };
 			cplx S{ std::conj(cplx(Ire, Iim) - Iconst) * cplx(Vre, Vim) };
 			cplx dS{ S - cplx(Pnr - Pgr,Qnr - Qgr) };
-			if (std::abs(dS.real()) > 0.1 || std::abs(dS.imag()) > 0.1)
+			if (std::abs(dS.real()) > Atol || std::abs(dS.imag()) > Atol)
 			{
 				_ASSERTE(0);
-				//GetPnrQnrSuper();
+				GetPnrQnrSuper();
 			}
 #endif
 			Pgr = Qgr = Pnr = Qnr = 0.0;
 			// нагрузки и генерации в мощности больше нет, они перенесены в ток
 		}
+		else
+			// если напряжение выше чем переход на шунт
+			// рассчитываем нагрузку/генерацию по СХН по заданному модулю
+			GetPnrQnr(Vsq);
 	}
 
 	// добавляем токи собственной проводимости и токи ветвей
@@ -102,35 +107,37 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(const double Vmin, double& Vsq)
 	return cplx(Ire, Iim);
 }
 
-cplx CDynaNodeBase::GetSelfImbISuper(const double Vmin, double& Vsq)
+cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 {
 	// рассчитываем модуль напряжения по составляющим,
 	// так как модуль из уравнения может неточно соответствовать
 	// сумме составляющих пока Ньютон не сошелся
 	double V2{ Vre * Vre + Vim * Vim };
 	Vsq = std::sqrt(V2);
-	// рассчитываем нагрузку/генерацию по СХН по заданному модулю
-	GetPnrQnrSuper(Vsq);
+
 	double Ire{ IconstSuper.real() }, Iim{ IconstSuper.imag() };
 
 	if (!m_bInMetallicSC)
 	{
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию, заданные в узле
-		// если напряжение меньше 0.5*Uном*Uсхн_min переходим на шунт
-		// чтобы исключить мощность из уравнений полностью
-		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
-		// Uсхн_min стандартное cглаживание СХН
-
-		if (AllLRCsInShuntPart(Vsq, Vmin))
+		// если напряжение меньше VshuntPartBelow переходим на шунт и обнуляем
+		// расчетные нагрузку и генерацию чтобы исключить мощность из уравнений полностью
+		// Проверяем напряжение с учетом радиуса сглаживания,
+		// радиус сглаживания выражаем в именованных  единицах относительно
+		// номинального напряжения СХН
+		
+		if ((Vsq + dLRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
 			Ire -= -dLRCShuntPartPSuper * Vre - dLRCShuntPartQSuper * Vim;
 			Iim -=  dLRCShuntPartQSuper * Vre - dLRCShuntPartPSuper * Vim;
 
 #ifdef _DEBUG
 			// проверка
+			GetPnrQnrSuper(Vsq);
 			cplx S{ std::conj(cplx(Ire, Iim) - IconstSuper) * cplx(Vre, Vim) };
 			cplx dS{ S - cplx(Pnr - Pgr,Qnr - Qgr) };
-			if (std::abs(dS.real()) > 0.1 || std::abs(dS.imag()) > 0.1)
+			const auto& Atol{ GetModel()->Parameters().m_dAtol };
+			if (std::abs(dS.real()) > Atol || std::abs(dS.imag()) > Atol)
 			{
 				_ASSERTE(0);
 				double Vx = std::sqrt(Vre * Vre + Vim * Vim);
@@ -140,6 +147,8 @@ cplx CDynaNodeBase::GetSelfImbISuper(const double Vmin, double& Vsq)
 			Pgr = Qgr = Pnr = Qnr = 0.0;
 			// нагрузки и генерации в мощности больше нет, они перенесены в ток
 		}
+		else // рассчитываем нагрузку/генерацию по СХН по заданному модулю
+			GetPnrQnrSuper(Vsq);
 	}
 
 	// добавляем токи собственной проводимости и токи ветвей
@@ -176,16 +185,15 @@ void CDynaNodeBase::UpdateVDeltaSuper()
 
 // Проверяет для всех узлов суперузла напряжения перехода с СХН на шунт
 // если они меньше напряжения перехода минус окрестность сглаживания - возвращает true
-bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest, double Vmin)
+bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest)
 {
-	Vmin *= 0.5;
-	bool bRes = (Vmin - dLRCVicinity) > Vtest / V0;
+	bool bRes{ (Vtest + dLRCVicinity * V0) < VshuntPartBelow };
 	CLinkPtrCount *pLink = GetSuperLink(0);
 	CDevice **ppDevice(nullptr);
 	while (pLink->In(ppDevice) && bRes)
 	{
 		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
-		bRes = (Vmin - pSlaveNode->dLRCVicinity) > Vtest / pSlaveNode->V0;
+		bRes = (Vtest + pSlaveNode->dLRCVicinity * pSlaveNode->V0 ) < pSlaveNode->VshuntPartBelow;
 	}
 	return bRes;
 }
@@ -269,8 +277,6 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	double V2{ Vre2 + Vim2 };
 	const double V2sq{ std::sqrt(V2) };
 
-	GetPnrQnrSuper(V2sq);
-
 	double dIredVre(1.0), dIredVim(0.0), dIimdVre(0.0), dIimdVim(1.0);
 
 	if (!m_bInMetallicSC)
@@ -286,7 +292,7 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
 		// Uсхн_min стандартное cглаживание СХН
 
-		if (AllLRCsInShuntPart(V2sq, pDynaModel->GetLRCToShuntVmin()))
+		if ((V2sq + dLRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
 			_ASSERTE(m_pLRC);
 			dIredVre +=  dLRCShuntPartPSuper;
@@ -296,6 +302,8 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
 			dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
 		}
+		else
+			GetPnrQnrSuper(V2sq);
 	}
 
 	CLinkPtrCount *pGenLink = GetSuperLink(2);
@@ -480,7 +488,7 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию,
 		// заданные в узле
 		double V2sq{ 0.0 };
-		FromComplex(Ire, Iim, GetSelfImbISuper(pDynaModel->GetLRCToShuntVmin(), V2sq));
+		FromComplex(Ire, Iim, GetSelfImbISuper(V2sq));
 
 		if (!m_bLowVoltage)
 			dV = V - V2sq;
@@ -741,6 +749,8 @@ void CDynaNodeContainer::CalculateShuntParts()
 		pNode->IconstSuper = pNode->Iconst;
 		pNode->dLRCShuntPartPSuper = pNode->dLRCShuntPartP;
 		pNode->dLRCShuntPartQSuper = pNode->dLRCShuntPartQ;
+		pNode->VshuntPartBelowSuper = pNode->VshuntPartBelow;
+		pNode->V0Super = pNode->V0;
 		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
 		if (pLink->m_nCount)
 		{
@@ -753,6 +763,11 @@ void CDynaNodeContainer::CalculateShuntParts()
 				pNode->IconstSuper += pSlaveNode->Iconst;
 				pNode->dLRCShuntPartPSuper += pSlaveNode->dLRCShuntPartP;
 				pNode->dLRCShuntPartQSuper += pSlaveNode->dLRCShuntPartQ;
+				// напряжение шунта выбираем как минимальное от всех узлов суперузла
+				pNode->VshuntPartBelowSuper = (std::min)(pNode->VshuntPartBelowSuper, pSlaveNode->VshuntPartBelow);
+				// номинальное напряжение СХН выбираем как максимальное от всех узлов суперузла,
+				// чтобы рассчитать границу dLRCVicinity c перекрытием
+				pNode->V0Super = (std::max)(pNode->V0Super, pSlaveNode->V0);
 			}
 		}
 	}
@@ -763,14 +778,16 @@ void CDynaNodeBase::CalculateShuntParts()
 {
 	// TODO - надо разобраться с инициализацией V0 __до__ вызова этой функции
 	double V02{ V0 * V0 };
+
+	dLRCShuntPartP = dLRCShuntPartQ = 0.0;
+
 	if (m_pLRC)
 	{
 		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
 		dLRCShuntPartP = Pn * m_pLRC->P()->P.begin()->a2;
 		dLRCShuntPartQ = Qn * m_pLRC->Q()->P.begin()->a2;
+		VshuntPartBelow = m_pLRC->VshuntBelow();
 	}
-	else
-		dLRCShuntPartP = dLRCShuntPartQ = 0.0;
 
 	if (m_pLRCGen)
 	{
@@ -781,8 +798,11 @@ void CDynaNodeBase::CalculateShuntParts()
 #else
 		dLRCShuntPartP -= Pg * m_pLRCGen->P()->P.begin()->a2;
 		dLRCShuntPartQ -= Qg * m_pLRCGen->Q()->P.begin()->a2;
+		VshuntPartBelow = (std::min)(m_pLRCGen->VshuntBelow(), VshuntPartBelow);
 #endif
 	}
+
+	VshuntPartBelow *= V0;
 	dLRCShuntPartP /= V02;
 	dLRCShuntPartQ /= V02;
 }
@@ -1747,7 +1767,6 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	if (!ZeroLF.ZeroSupeNode)
 		return;
 
-	const double Vmin{ pDynaModel->GetLRCToShuntVmin() };
 	const auto& Matrix{ ZeroLF.ZeroSupeNode->LFMatrix };
 	const ptrdiff_t nBlockSize{ static_cast<ptrdiff_t>(Matrix.size()) };
 
@@ -1786,7 +1805,7 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	double Vsq{ 0.0 };
 	for (const auto& node : Matrix)
 	{
-		cplx Is{ node->GetSelfImbInotSuper(Vmin, Vsq) };
+		cplx Is{ node->GetSelfImbInotSuper(Vsq) };
 
 		// добавляем предварительно рассчитанную 
 		// инъекцию от связей с базисным узлом

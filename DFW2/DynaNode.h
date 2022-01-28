@@ -95,9 +95,12 @@ namespace DFW2
 		double G,B, Gr0, Br0;
 		double dLRCShuntPartP, dLRCShuntPartQ;
 		double dLRCShuntPartPSuper, dLRCShuntPartQSuper;
+		// напряжения, ниже которых в СХН чисто шунтовая характеристика
+		double VshuntPartBelow, VshuntPartBelowSuper;
 		double Gshunt, Bshunt;
 		double Unom;					// номинальное напряжение
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
+		double  V0Super;				// максимальное V0 в узлах суперузла для расчета границы шунта СХН (скорее всего не понадобится)
 		bool m_bInMetallicSC = false;
 		bool m_bLowVoltage = false;		// признак низкого модуля напряжения
 		bool m_bSavedLowVoltage = false;// сохраненный признак низкого напряжения для возврата на предыдущий шаг
@@ -136,7 +139,7 @@ namespace DFW2
 		void GetPnrQnrSuper();
 		void GetPnrQnr(double Vnode);
 		void GetPnrQnrSuper(double Vnode);
-		bool AllLRCsInShuntPart(double V, double Vmin);
+		bool AllLRCsInShuntPart(double Vtest);
 		void BuildEquations(CDynaModel* pDynaModel)  override;
 		void BuildRightHand(CDynaModel* pDynaModel) override;
 		void NewtonUpdateEquation(CDynaModel* pDynaModel) override;
@@ -159,8 +162,8 @@ namespace DFW2
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 				
 		// возвращает ток узла от нагрузки/генерации/шунтов
-		cplx GetSelfImbInotSuper(const double Vmin, double& Vsq);
-		cplx GetSelfImbISuper(const double Vmin, double& Vsq);
+		cplx GetSelfImbInotSuper(double& Vsq);
+		cplx GetSelfImbISuper(double& Vsq);
 
 		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn; }
 		inline double GetSelfdQdV() noexcept { return  2 * V * YiiSuper.imag() + dLRCQn; }

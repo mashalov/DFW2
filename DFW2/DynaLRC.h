@@ -32,6 +32,9 @@ namespace DFW2
 	struct CLRCData : public LRCRawData
 	{
 		double dMaxRadius;
+		// проверяем сегмент СХН на чистый шунт
+		// если будут еще степени - нужно будет добавить проверок
+		bool IsShunt() const { return a0 == 0.0 && a1 == 0.0 && a2 != 0.0; }
 	};
 
 	// структура для сегмента данных СХН с интерполяцией
@@ -112,7 +115,8 @@ namespace DFW2
 		double GetBoth(double VdivVnom, double& dP, double dVicinity) const;
 		bool Check(const CDevice* pDevice);
 		void SetSize(size_t nSize);
-		bool BuildLRCSet(const CDevice* pDevice, const double dVicinity);
+		// возвращает напряжение в о.е., ниже которого СХН представлена чистым шунтом
+		double BuildLRCSet(const CDevice* pDevice, const double dVicinity);
 	protected:
 		double GetBothInterpolatedHermite(double VdivVnom, double dVicinity, double& dLRC) const;
 		const char* cszType;
@@ -131,7 +135,11 @@ namespace DFW2
 		inline const CDynaLRCChannel* Q() const { return &m_Q; }
 		inline CDynaLRCChannel* P() { return &m_P; }
 		inline CDynaLRCChannel* Q() { return &m_Q; }
+		// возвращает напряжение, ниже которого готовая 
+		// СХН представлена чистым шунтом
+		inline double VshuntBelow() const { return m_VshuntBelow; }
 	protected:
+		double m_VshuntBelow;
 		CDynaLRCChannel m_P{ CDynaLRC::m_cszP }, m_Q{ CDynaLRC::m_cszQ };
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static constexpr const char* m_cszP = "P";

@@ -223,7 +223,6 @@ eDEVICEFUNCTIONSTATUS CDynaNodeZeroLoadFlow::ProcessDiscontinuity(CDynaModel* pD
 void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase** ppNode{ m_MatrixRows.get() }, ** ppNodeEnd{ m_MatrixRows.get() + m_nSize };
-	const double Vmin{ pDynaModel->GetLRCToShuntVmin() };
 
 	while (ppNode < ppNodeEnd)
 	{
@@ -233,7 +232,7 @@ void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		double Vsq{ 0.0 };
 		// получаем ток узла от настоящего шунта, инъекции и тока
 		// генератора УР
-		cplx Is{ pNode->GetSelfImbInotSuper(Vmin, Vsq) };
+		cplx Is{ pNode->GetSelfImbInotSuper(Vsq) };
 		double Re{ Is.real() }, Im{ Is.imag() };
 
 		// добавляем инъекцию тока от базисного узла

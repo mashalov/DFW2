@@ -19,7 +19,9 @@ bool CDynaLRC::Check()
 bool CDynaLRC::UpdateSet()
 {
 	const double dVicinity{ GetModel()->Parameters().m_dLRCSmoothingRange };
-	return m_P.BuildLRCSet(this, dVicinity) && m_Q.BuildLRCSet(this, dVicinity);
+	// напряжение, ниже которого в СХН идет шунт отдает BuildLRCSet
+	m_VshuntBelow = (std::min)(m_P.BuildLRCSet(this, dVicinity), m_Q.BuildLRCSet(this, dVicinity));
+	return true;
 }
 
 void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
@@ -487,7 +489,9 @@ bool CDynaLRCChannel::Check(const CDevice *pDevice)
 	return bRes;
 }
 
-bool CDynaLRCChannel::BuildLRCSet(const CDevice* pDevice, const double dVicinity)
+// возвращает напряжение, ниже которого СХН имеет только шунтовой сегмент
+
+double CDynaLRCChannel::BuildLRCSet(const CDevice* pDevice, const double dVicinity)
 {
 	double dMaxLRCVicinity{ dVicinity };
 
@@ -539,5 +543,24 @@ bool CDynaLRCChannel::BuildLRCSet(const CDevice* pDevice, const double dVicinity
 			Ps.insert(CLRCDataInterpolated(lrc.V, lrc));
 	}
 
-	return true;
+	// определяем минимальное напряжение СХН, ниже которого начинается чистый шунт
+	double Vshunt{ 0.0 };
+
+	for (auto it = Ps.begin()  ; it != Ps.end(); it++)
+	{
+		const auto itNext{ std::next(it) };
+		// сегмент без интерполяции и содержит только шунтовой компонент СХН
+		if (it->m_pRawLRC && it->m_pRawLRC->IsShunt())
+		{
+			// если следующего сегмента нет - шунт до бесконечности
+			if (itNext == Ps.end())
+				Vshunt = (std::numeric_limits<double>::max)();
+			else // если  есть следующий сегмент - то  пока считаем что шунт до следующего сегмента
+				Vshunt = itNext->V - dMaxLRCVicinity;
+		}
+		else
+			break;
+	}
+
+	return Vshunt;
 }
