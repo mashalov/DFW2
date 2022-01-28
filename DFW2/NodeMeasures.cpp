@@ -256,8 +256,8 @@ void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		{
 			Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
 #ifdef USE_FMA
-			Re = std::fma(-vb->Y.real(), vb->pNode->Vre, std::fma( vb->Y.imag(), vb->pNode->Vim, Re));
-			Im = std::fma(-vb->Y.imag(), vb->pNode->Vre, std::fma(-vb->Y.real(), vb->pNode->Vim, Im));
+			//Re = std::fma(-vb->Y.real(), vb->pNode->Vre, std::fma( vb->Y.imag(), vb->pNode->Vim, Re));
+			//Im = std::fma(-vb->Y.imag(), vb->pNode->Vre, std::fma(-vb->Y.real(), vb->pNode->Vim, Im));
 #else
 			//Re -= vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
 			//Im -= vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
