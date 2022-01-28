@@ -265,7 +265,7 @@ namespace DFW2
 		{
 			struct Error
 			{
-				RightVector *pVector = nullptr;
+				RightVector* pVector = nullptr;
 				double dMaxError = 0.0;
 
 				void Reset()

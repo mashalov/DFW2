@@ -361,11 +361,8 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	m_spRastr->Load(RG_REPL, stringutils::utf8_decode("D:\\Downloads\\Уват 55\\Уватнефть_корр35_ver15_корр_быстр5_nopms.rst").c_str(), rstPath.c_str());
 	*/
 
-
-	//spRastr->Load(RG_REPL, L"..\\tests\\test93.rst", "");
-
 	// СМЗУ Северо-Запад
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
+	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
 
 	// Test-9
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
@@ -380,7 +377,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("d:\\downloads\\last_version_mdp_debug_1_New_calc2\\last_version_mdp_debug_1_New_calc2");
 	//LoadFile("d:\\downloads\\5_check_mdp_debug_1\\5_check_mdp_debug_4");
 	//LoadFile("d:\\downloads\\8_check_mdp_debug_1\\8_check_mdp_debug_1");
-	LoadFile("d:\\downloads\\схемы\\10_check_mdp_debug_1_stable");
+	//LoadFile("d:\\downloads\\схемы\\10_check_mdp_debug_1_stable");
 	//LoadFile("d:\\downloads\\схемы\\9_check_mdp_debug_1_unstable");
 
 

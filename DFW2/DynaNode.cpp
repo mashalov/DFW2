@@ -52,8 +52,9 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 	// сумме составляющих пока Ньютон не сошелся
 	double V2{ Vre * Vre + Vim * Vim };
 	Vsq = std::sqrt(V2);
+	cplx  cI{ Iconst }, cV{ Vre, Vim };
 	
-	double Ire{ Iconst.real() }, Iim{ Iconst.imag() };
+	//double Ire{ Iconst.real() }, Iim{ Iconst.imag() };
 
 	if (!m_bInMetallicSC)
 	{
@@ -65,14 +66,15 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 		// номинального напряжения СХН
 		if ((Vsq + dLRCVicinity * V0) < VshuntPartBelow)
 		{
-			Ire += dLRCShuntPartP * Vre + dLRCShuntPartQ * Vim;
-			Iim -= dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
+			cI += cplx(dLRCShuntPartP, -dLRCShuntPartQ) * cV;
+			//Ire += dLRCShuntPartP * Vre + dLRCShuntPartQ * Vim;
+			//Iim -= dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
 
 #ifdef _DEBUG
 			// проверка
 			GetPnrQnr(Vsq);
 			const auto& Atol{ GetModel()->Parameters().m_dAtol };
-			cplx S{ std::conj(cplx(Ire, Iim) - Iconst) * cplx(Vre, Vim) };
+			cplx S{ std::conj(cI - Iconst) * cV };
 			cplx dS{ S - cplx(Pnr - Pgr,Qnr - Qgr) };
 			if (std::abs(dS.real()) > Atol || std::abs(dS.imag()) > Atol)
 			{
@@ -90,21 +92,26 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 	}
 
 	// добавляем токи собственной проводимости и токи ветвей
-	Ire -= Yii.real() * Vre - Yii.imag() * Vim;
-	Iim -= Yii.imag() * Vre + Yii.real() * Vim;
+	cI -= Yii * cV;
+	//Ire -= Yii.real() * Vre - Yii.imag() * Vim;
+	//Iim -= Yii.imag() * Vre + Yii.real() * Vim;
 
 	if (!GetSuperNode()->m_bLowVoltage)
 	{
 		// добавляем токи от нагрузки (если напряжение не очень низкое)
-		const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
-		Ire += (Pk * Vre + Qk * Vim) / V2;
-		Iim += (Pk * Vim - Qk * Vre) / V2;
+		//const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
+		//Ire += (Pk * Vre + Qk * Vim) / V2;
+		//Iim += (Pk * Vim - Qk * Vre) / V2;
+		cplx cS{ Pnr - Pgr, Qgr - Qnr };
+		cS /= V2;
+		cI += cS * cV;
 	}
 #ifdef _DEBUG
 	else
 		_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
 #endif
-	return cplx(Ire, Iim);
+	//_ASSERTE(Equal(Ire, cI.real()) && Equal(Iim, cI.imag()));
+	return cI;
 }
 
 cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
@@ -114,8 +121,9 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 	// сумме составляющих пока Ньютон не сошелся
 	double V2{ Vre * Vre + Vim * Vim };
 	Vsq = std::sqrt(V2);
+	cplx  cI{ Iconst }, cV{ Vre, Vim };
 
-	double Ire{ IconstSuper.real() }, Iim{ IconstSuper.imag() };
+	//double Ire{ IconstSuper.real() }, Iim{ IconstSuper.imag() };
 
 	if (!m_bInMetallicSC)
 	{
@@ -128,14 +136,15 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 		
 		if ((Vsq + dLRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
-			Ire -= -dLRCShuntPartPSuper * Vre - dLRCShuntPartQSuper * Vim;
-			Iim -=  dLRCShuntPartQSuper * Vre - dLRCShuntPartPSuper * Vim;
+			cI += cplx(dLRCShuntPartPSuper, -dLRCShuntPartQSuper ) * cV;
+			//Ire -= -dLRCShuntPartPSuper * Vre - dLRCShuntPartQSuper * Vim;
+			//Iim -=  dLRCShuntPartQSuper * Vre - dLRCShuntPartPSuper * Vim;
 
 #ifdef _DEBUG
 			// проверка
 			GetPnrQnrSuper(Vsq);
-			cplx S{ std::conj(cplx(Ire, Iim) - IconstSuper) * cplx(Vre, Vim) };
-			cplx dS{ S - cplx(Pnr - Pgr,Qnr - Qgr) };
+			cplx S{ std::conj(cI - IconstSuper) * cV };
+			cplx dS{ S - cplx(Pnr - Pgr, Qnr - Qgr) };
 			const auto& Atol{ GetModel()->Parameters().m_dAtol };
 			if (std::abs(dS.real()) > Atol || std::abs(dS.imag()) > Atol)
 			{
@@ -152,21 +161,26 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 	}
 
 	// добавляем токи собственной проводимости и токи ветвей
-	Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
-	Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
+	cI -= YiiSuper * cV;
+	//Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
+	//Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
 
 	if (!m_bLowVoltage)
 	{
 		// добавляем токи от нагрузки (если напряжение не очень низкое)
-		const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
-		Ire += (Pk * Vre + Qk * Vim) / V2;
-		Iim += (Pk * Vim - Qk * Vre) / V2;
+		cplx cS{ Pnr - Pgr, Qgr - Qnr };
+		cS /= V2;
+		cI += cS * cV;
+		//const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
+		//Ire += (Pk * Vre + Qk * Vim) / V2;
+		//Iim += (Pk * Vim - Qk * Vre) / V2;
 	}
 #ifdef _DEBUG
 	else
 		_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
 #endif
-	return cplx(Ire, Iim);
+	//_ASSERTE(Equal(Ire, cI.real()) && Equal(Iim, cI.imag()));
+	return cI;
 }
 
 void CDynaNodeBase::UpdateVDeltaSuper()
@@ -479,16 +493,20 @@ void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
 
 void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
-	//GetPnrQnrSuper();
 	// в узле может быть уже известный постоянный ток
 	double Ire(IconstSuper.real()), Iim(IconstSuper.imag()), dV(0.0);
+
+	cplx cI{ Iconst };
 
 	if (!m_bInMetallicSC)
 	{
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию,
 		// заданные в узле
 		double V2sq{ 0.0 };
-		FromComplex(Ire, Iim, GetSelfImbISuper(V2sq));
+
+		cI += GetSelfImbISuper(V2sq);
+
+		FromComplex(Ire, Iim, cI);
 
 		if (!m_bLowVoltage)
 			dV = V - V2sq;
@@ -500,6 +518,7 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		while (pGenLink->InMatrix(ppGen))
 		{
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
+			cI -= cplx(pGen->Ire, pGen->Iim);
 			Ire -= pGen->Ire;
 			Iim -= pGen->Iim;
 		}
@@ -512,9 +531,12 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 #else
 			Ire -= pV->Y.real() * pV->pNode->Vre - pV->Y.imag() * pV->pNode->Vim;
 			Iim -= pV->Y.imag() * pV->pNode->Vre + pV->Y.real() * pV->pNode->Vim;
+			cI -= pV->Y * cplx(pV->pNode->Vre, pV->pNode->Vim);
 #endif
 		}
 	}
+
+	_ASSERTE(Equal(Ire, cI.real()) && Equal(Iim, cI.imag()));
 
 	pDynaModel->SetFunction(V, dV);
 	pDynaModel->SetFunction(Vre, Ire);
@@ -1824,8 +1846,6 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
 			Is -= cplx(pGen->Ire, pGen->Iim);
 		}
-
-
 
 		*pB = -Is.real();	pB++;
 		*pB = -Is.imag();	pB++;

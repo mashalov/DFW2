@@ -170,10 +170,18 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	std::error_code ec;
 	std::filesystem::remove(pathPDB, ec);
 
+	// если есть слэши в конце пути, убираем их
+	// иначе msbuild неправильно понимает последовательность \"
+
+	if (!pathDFW2Include.has_filename())
+		pathDFW2Include = pathDFW2Include.parent_path();
+	if (!pathDLLOutput.has_filename())
+		pathDLLOutput = pathDLLOutput.parent_path();
+
 	// генерируем командную строку msbuild
 	std::wstring commandLine = fmt::format(L"\"{}\"", MSBuildPath);
 
-	std::wstring commandLineArgs = fmt::format(L" /p:Platform={} /p:Configuration={} /p:TargetName={} /p:OutDir=\"{}\\\\\" /p:DFW2Include=\"{}\\\\\"  \"{}\"",
+	std::wstring commandLineArgs = fmt::format(L" /p:Platform={} /p:Configuration={} /p:TargetName={} /p:OutDir=\"{}\" /p:DFW2Include=\"{}\"  \"{}\"",
 		Platform,
 		Configuration,
 		TargetName,
@@ -187,6 +195,8 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	std::wstring WorkingFolder = pathOutDir.generic_wstring();
 
 	std::list<std::wstring> listConsole;
+
+	//std::cout << utf8_encode(commandLine);
 
 	DWORD dwResult(RunWindowsConsole(commandLine, WorkingFolder, listConsole));
 

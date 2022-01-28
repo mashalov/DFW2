@@ -572,37 +572,36 @@ bool CDynaModel::NewtonUpdate()
 	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
 	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
-	double *pB = klu.B();
+	const double* const pB{ klu.B() };
 	while (pVectorBegin < pVectorEnd)
 	{
-		double& db = *(pB + (pVectorBegin - pRightVector));
+		const double& db = *(pB + (pVectorBegin - pRightVector));
 		pVectorBegin->Error += db;
 		pVectorBegin->b = db;
 
 		sc.Newton.Absolute.Update(pVectorBegin, std::abs(db));
 
 #ifdef USE_FMA
-		double dNewValue = std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]);
+		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
 #else
 		double l0{ pVectorBegin->Error };
 		l0 *= Methodl0[pVectorBegin->EquationType];
-		double dNewValue{ pVectorBegin->Nordsiek[0] + l0 };
+		const double dNewValue{ pVectorBegin->Nordsiek[0] + l0 };
 #endif
 
+		const double dOldValue{ *pVectorBegin->pValue };
 
-		double dOldValue{ *pVectorBegin->pValue };
 		*pVectorBegin->pValue = dNewValue;
 
 		if (pVectorBegin->Atol > 0)
 		{
-			double dError{ pVectorBegin->GetWeightedError(db, dOldValue) };
+			const double dError{ pVectorBegin->GetWeightedError(db, dOldValue) };
 			sc.Newton.Weighted.Update(pVectorBegin, dError);
 			_CheckNumber(dError);
 			ConvergenceTest* pCt{ ConvTest + pVectorBegin->EquationType };
 #ifdef _DEBUG
 			// breakpoint place for nans
-			if (std::isnan(dError))
-				dError *= dError;
+			_ASSERTE(!std::isnan(dError));
 #endif
 			pCt->AddError(dError);
 		}
@@ -1221,7 +1220,8 @@ double CDynaModel::GetRatioForCurrentOrder()
 		sc.dRateGrowLimit < FLT_MAX ? sc.dRateGrowLimit : 0.0,
 		sc.nStepsToEndRateGrow - sc.nStepsCount));
 
-	if (sc.Integrator.Weighted.pVector)
+	// считаем ошибку в уравнении если шаг придется уменьшить
+	if (r <= 1.0 && sc.Integrator.Weighted.pVector)
 		sc.Integrator.Weighted.pVector->nErrorHits++;
 
 	return r;

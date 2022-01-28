@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "PlatformFolders.h"
 #include "Messages.h"
 #include "DynaModel.h"

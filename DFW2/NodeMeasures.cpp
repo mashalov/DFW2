@@ -233,11 +233,11 @@ void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		// получаем ток узла от настоящего шунта, инъекции и тока
 		// генератора УР
 		cplx Is{ pNode->GetSelfImbInotSuper(Vsq) };
-		double Re{ Is.real() }, Im{ Is.imag() };
+		//double Re{ Is.real() }, Im{ Is.imag() };
 
 		// добавляем инъекцию тока от базисного узла
-		// Is -= ZeroNode.SlackInjection;
-		Re -= ZeroNode.SlackInjection;
+		Is -= ZeroNode.SlackInjection;
+		//Re -= ZeroNode.SlackInjection;
 
 
 		// добавляем токи от генераторов
@@ -246,52 +246,51 @@ void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 		while (pGenLink->InMatrix(ppGen))
 		{
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
-			//Is -= cplx(pGen->Ire, pGen->Iim);
-			Re -= pGen->Ire;
-			Im -= pGen->Iim;
+			Is -= cplx(pGen->Ire, pGen->Iim);
+			//Re -= pGen->Ire;
+			//Im -= pGen->Iim;
 		}
 
 		// перетоки по настоящим связям от внешних суперузлов
 		for (const VirtualBranch* vb = ZeroNode.pVirtualBranchesBegin; vb < ZeroNode.pVirtualBranchesEnd; vb++)
 		{
-			//Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
+			Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
 #ifdef USE_FMA
 			Re = std::fma(-vb->Y.real(), vb->pNode->Vre, std::fma( vb->Y.imag(), vb->pNode->Vim, Re));
 			Im = std::fma(-vb->Y.imag(), vb->pNode->Vre, std::fma(-vb->Y.real(), vb->pNode->Vim, Im));
 #else
-			Re -= vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
-			Im -= vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
+			//Re -= vb->Y.real() * vb->pNode->Vre - vb->Y.imag() * vb->pNode->Vim;
+			//Im -= vb->Y.imag() * vb->pNode->Vre + vb->Y.real() * vb->pNode->Vim;
 #endif
 		}
 
 		// инъекция от "шунта" индикатора
-		///Is += pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
+		Is += pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
 #ifdef USE_FMA
 		Re = std::fma(pNode->ZeroLF.vRe, pNode->ZeroLF.Yii, Re);
 		Im = std::fma(pNode->ZeroLF.vIm, pNode->ZeroLF.Yii, Im);
 #else
-		Re += pNode->ZeroLF.vRe * pNode->ZeroLF.Yii;
-		Im += pNode->ZeroLF.vIm * pNode->ZeroLF.Yii;
+		//Re += pNode->ZeroLF.vRe * pNode->ZeroLF.Yii;
+		//Im += pNode->ZeroLF.vIm * pNode->ZeroLF.Yii;
 #endif
 
 		// далее добавляем "токи" от индикаторов напряжения
 		for (const VirtualBranch* vb = ZeroNode.pVirtualZeroBranchesBegin; vb < ZeroNode.pVirtualZeroBranchesEnd; vb++)
 		{
-			//Is -= vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
+			Is -= vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
 #ifdef USE_FMA
 			Re = std::fma(-vb->Y.real(), vb->pNode->ZeroLF.vRe, Re);
 			Im = std::fma(-vb->Y.real(), vb->pNode->ZeroLF.vIm, Im);
 #else
-			Re -= vb->Y.real() * vb->pNode->ZeroLF.vRe;
-			Im -= vb->Y.real() * vb->pNode->ZeroLF.vIm;
+			//Re -= vb->Y.real() * vb->pNode->ZeroLF.vRe;
+			//Im -= vb->Y.real() * vb->pNode->ZeroLF.vIm;
 #endif
 		}
 
-		//_ASSERTE(std::abs(Re) < DFW2_EPSILON && std::abs(Im) < DFW2_EPSILON);
 		//_ASSERTE(std::abs(Re - Is.real()) < DFW2_EPSILON && std::abs(Im - Is.imag()) < DFW2_EPSILON);
 
-		pDynaModel->SetFunction(ZeroNode.vRe, Re);
-		pDynaModel->SetFunction(ZeroNode.vIm, Im);
+		pDynaModel->SetFunction(ZeroNode.vRe, Is.real());
+		pDynaModel->SetFunction(ZeroNode.vIm, Is.imag());
 
 		ppNode++;
 	}
