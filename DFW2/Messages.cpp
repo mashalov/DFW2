@@ -227,4 +227,4 @@ const char* CDFW2Messages::m_cszNodeNotFoundForReactor = "Узел №={} не �
 const char* CDFW2Messages::m_cszBranchNotFoundForReactor = "Ветвь c ({},{},{}) не найдена для связи с реактором {}";
 const char* CDFW2Messages::m_cszProgressCaption = "Расчет динамики {:.2f} с";
 const char* CDFW2Messages::m_cszResultWriterDisabled = "Запись результатов отключена";
-const char* CDFW2Messages::m_cszResultFileCreated  = "Создан файл результатов расчета {}";
+const char* CDFW2Messages::m_cszResultFileCreated  = "Создан файл результатов расчета \"{}\"";

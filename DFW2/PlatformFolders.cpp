@@ -33,13 +33,14 @@ CPlatformFolders::CPlatformFolders(CDynaModel& model) : m_Model(model)
 
 void CPlatformFolders::CheckPath(std::filesystem::path& path) const 
 {
+	path = path.make_preferred();
 	if (!std::filesystem::is_directory(path))
 	{
 		path.replace_extension();
 		if (path.has_filename())
 		{
 			m_Model.Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszPathShouldBeFolder, stringutils::utf8_encode(path.c_str())));
-			path += "/";
+			path += std::filesystem::path::preferred_separator;
 		}
 		
 		std::error_code ec;
@@ -62,7 +63,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 
 		
 	std::string strPlatform(Platform());
-	strPlatform += "/";
+	strPlatform += std::filesystem::path::preferred_separator;
 
 	pathRoot.append(CDFW2Messages::m_cszProjectName);
 	CheckPath(pathRoot);
@@ -84,7 +85,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 	pathCustomModelsModules = std::filesystem::path(pathCustomModels).append(cszModules).append(Configuration()).append(strPlatform);
 	CheckPath(pathCustomModelsModules);
 
-	pathSourceReference = std::filesystem::path(pathRoot).append(std::string("Reference").append("/"));
+	pathSourceReference = std::filesystem::path(pathRoot).append("Reference/");
 	CheckPath(pathSourceReference);
 
 	pathLogs = std::filesystem::path(pathRoot).append("Logs/");

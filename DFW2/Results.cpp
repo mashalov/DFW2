@@ -10,7 +10,6 @@ void CDynaModel::WriteResultsHeader()
 		return;
 	}
 
-	
 	auto resultPath(Platform().Results());
 	std::filesystem::path parametersResultPath(m_Parameters.m_strResultsFolder);
 
