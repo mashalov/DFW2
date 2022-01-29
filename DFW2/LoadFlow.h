@@ -25,6 +25,8 @@ namespace DFW2
 			ptrdiff_t m_nSeidellIterations = 17;		// количество итераций Зейделем
 			ptrdiff_t m_nEnableSwitchIteration = 2;		// номер итерации, с которой разрешается переключение PV-PQ
 			ptrdiff_t m_nMaxIterations = 100;			// максимальное количество итераций Ньютоном
+			ptrdiff_t m_nMaxPVPQSwitches = 5;			// максимальное количество переключений PV-PQ
+			ptrdiff_t m_nPVPQSwitchPerIt = 10;			// количество переключений типов узлов на одной итерации
 			double m_dVoltageNewtonStep = 0.3;			// максимальное относительное приращение шага Ньютона по напряжению
 			double m_dNodeAngleNewtonStep = 1.5;		// максимальное приращение шага Ньютона по углу узла
 			double m_dBranchAngleNewtonStep = 0.5;		// максимальное приращение шага Ньютона по углу связи
@@ -66,7 +68,7 @@ namespace DFW2
 		bool CheckNodeBalances();
 
 		// возвращает true если узел учитывается в матрице якоби
-		static bool NodeInMatrix(CDynaNodeBase *pNode);
+		static bool NodeInMatrix(const CDynaNodeBase* pNode);
 				
 		CDynaModel *m_pDynaModel = nullptr;
 		CDynaNodeContainer *pNodes = nullptr;
@@ -79,7 +81,7 @@ namespace DFW2
 		double m_dTanhBeta = 500.0;
 		ptrdiff_t m_nNodeTypeSwitchesDone = 0;
 
-		LoadFlowParameters m_Parameters;
+		const LoadFlowParameters& m_Parameters;
 		// определение порядка PV узлов для Зейделя
 		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
 		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);
@@ -98,6 +100,7 @@ namespace DFW2
 		std::unique_ptr<double[]> m_Dbackup;
 		std::unique_ptr<double[]> m_Rh;		// невязки до итерации
 		std::vector<CDynaBranch*> m_BranchAngleCheck;
+		std::set<CDynaNodeBase*> m_FailedPVPQNodes;
 	};
 }
 

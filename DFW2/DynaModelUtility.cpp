@@ -739,6 +739,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszLFLRCMaxSlope, m_dLRCMaxSlope);
 	Serializer->AddProperty(m_cszLRCSmoothingRange, m_dLRCSmoothingRange);
 	Serializer->AddProperty(m_cszNewtonMaxNorm, m_dNewtonMaxNorm);
+	Serializer->AddProperty(m_cszMaxPVPQSwitches, m_nMaxPVPQSwitches);
+	Serializer->AddProperty(m_cszPVPQSwitchPerIt, m_nPVPQSwitchPerIt);
 
 	return Serializer;
 }

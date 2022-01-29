@@ -144,6 +144,8 @@ namespace DFW2
 			static constexpr const char* m_cszLFLRCMaxSlope = "dLRCMaxSlope";
 			static constexpr const char* m_cszLRCSmoothingRange = "LRCSmoothingRange";
 			static constexpr const char* m_cszNewtonMaxNorm = "NewtonMaxNorm";
+			static constexpr const char* m_cszMaxPVPQSwitches = "MaxPVPQSwitches";
+			static constexpr const char* m_cszPVPQSwitchPerIt = "PVPQSwitchesPerIteration";
 
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
