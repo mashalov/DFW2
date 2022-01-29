@@ -2,6 +2,7 @@
 #include "DynaModel.h"
 #include "DynaGeneratorMotion.h"
 #include "BranchMeasures.h"
+#include "MathUtils.h"
 
 using namespace DFW2;
 
@@ -475,32 +476,18 @@ double GetAbsoluteDiff2Angles(const double x, const double y)
 }
 */
 
-double GetAbsoluteDiff2Angles(const double x, const double y)
-{
-	// https://stackoverflow.com/questions/1878907/how-can-i-find-the-difference-between-two-angles
-
-	/*
-	def f(x,y):
-	import math
-	return min(y-x, y-x+2*math.pi, y-x-2*math.pi, key=abs)
-	*/
-
-	std::array<double, 3> args { y - x , y - x + 2.0 * M_PI , y - x - 2 * M_PI };
-	return *std::min_element(args.begin(), args.end(), [](const auto& lhs, const auto& rhs) { return std::abs(lhs) < std::abs(rhs); });
-}
-
 std::pair<bool, double> CheckAnglesCrossedPi(const double Angle1, const double Angle2, double& PreviosAngleDifference)
 {
 	std::pair ret{ false, 0.0 };
 	// считаем минимальный угол со знаком между углами 
-	const double deltaDiff(GetAbsoluteDiff2Angles(Angle1, Angle2));
+	const double deltaDiff{ MathUtils::CAngleRoutines::GetAbsoluteDiff2Angles(Angle1, Angle2) };
 	// предыдущий и текущий углы проверяем на близость к 180 (для начала зону проверки задаем 160)
-	const double limitAngle = 160.0 * M_PI / 180.0;
+	const double limitAngle{ 160.0 * M_PI / 180.0 };
 	// если знаки углов разные, значит пересекли 180
 	if (std::abs(PreviosAngleDifference) >= limitAngle && std::abs(deltaDiff) >= limitAngle && PreviosAngleDifference * deltaDiff < 0.0)
 	{
 		// синтезируем угол в момент проверки путем добавления к предыдущему углы минимальной разности предыдущего и текущего углов
-		const double synthAngle(std::abs(PreviosAngleDifference) + std::abs(GetAbsoluteDiff2Angles(deltaDiff, PreviosAngleDifference)));
+		const double synthAngle{ std::abs(PreviosAngleDifference) + std::abs(MathUtils::CAngleRoutines::GetAbsoluteDiff2Angles(deltaDiff, PreviosAngleDifference)) };
 		ret.first = true;
 		ret.second = synthAngle * 180.0 / M_PI;
 	}

@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "Header.h"
 
 namespace MathUtils
@@ -47,6 +47,25 @@ namespace MathUtils
 			if (nRoots && std::abs(r1) > std::abs(r2))
 				std::swap(r1, r2);
 			return nRoots;
+		}
+	};
+
+	class CAngleRoutines
+	{
+	public:
+		// возвращает минимальный угол в радианах между углами y и x со знаком
+		static double GetAbsoluteDiff2Angles(const double x, const double y)
+		{
+			// https://stackoverflow.com/questions/1878907/how-can-i-find-the-difference-between-two-angles
+
+			/*
+			def f(x,y):
+			import math
+			return min(y-x, y-x+2*math.pi, y-x-2*math.pi, key=abs)
+			*/
+
+			std::array<double, 3> args{ y - x , y - x + 2.0 * M_PI , y - x - 2 * M_PI };
+			return *std::min_element(args.begin(), args.end(), [](const auto& lhs, const auto& rhs) { return std::abs(lhs) < std::abs(rhs); });
 		}
 	};
 };

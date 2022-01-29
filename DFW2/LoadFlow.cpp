@@ -5,6 +5,7 @@
 #include "DynaPowerInjector.h"
 #include "limits"
 #include "BranchMeasures.h"
+#include "MathUtils.h"
 
 using namespace DFW2;
 
@@ -458,8 +459,7 @@ void CLoadFlow::Seidell()
 			pMatrixInfo = it;
 			const auto& pNode{ pMatrixInfo->pNode };
 			// рассчитываем нагрузку по СХН
-			double& Pe = pMatrixInfo->m_dImbP;
-			double& Qe = pMatrixInfo->m_dImbQ;
+			double& Pe{ pMatrixInfo->m_dImbP }, &Qe{ pMatrixInfo->m_dImbQ };
 			// рассчитываем небалансы
 			GetNodeImb(pMatrixInfo);
 			cplx Unode(pNode->Vre, pNode->Vim);
@@ -927,25 +927,23 @@ void CLoadFlow::GetNodeImb(_MatrixInfo* pMatrixInfo)
 	GetPnrQnrSuper(pNode);
 	//  в небалансе учитываем неконтролируемую генерацию в суперузлах
 	pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
-	cplx i, Vnode(pNode->Vre, pNode->Vim);
+	cplx Vnode(pNode->Vre, pNode->Vim);
+	cplx I{ -Vnode * pNode->YiiSuper };
 
 	for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 	{
 		const auto& pOppNode{ pBranch->pNode };
 		// в отладке можем посмотреть мощность перетока по ветви
 		//cplx sx{ std::conj(cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y) * Vnode };
-		i -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+		I -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
 	}
 
 	
-	i -= Vnode * pNode->YiiSuper;
-	i = std::conj(i) * Vnode;
-	i += cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
-
-	pMatrixInfo->m_dImbP = i.real();
-	pMatrixInfo->m_dImbQ = i.imag();
-
+	I = std::conj(I) * Vnode;
+	I += cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
+	CDevice::FromComplex(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ, I);
 }
+
 bool CLoadFlow::Run()
 {
 	m_Parameters.m_bFlat = true;
@@ -1454,11 +1452,8 @@ void CLoadFlow::Newton()
 
 		g1 = GetSquaredImb();
 
-		pNodes->m_IterationControl.m_ImbRatio = g1;
-
 		// отношение квадратов невязок
-		if (g0 > 0.0)
-			pNodes->m_IterationControl.m_ImbRatio = g1 / g0;
+		pNodes->m_IterationControl.m_ImbRatio = g0 > 0.0 ? g1 / g0 : 0.0;
 
 		DumpNewtonIterationControl();
 		it++;
@@ -1525,7 +1520,7 @@ void CLoadFlow::Newton()
 		// 3. шаг Ньютона ограничен до уровня m_Parameters.ForceSwitchLambda из-за бэктрэка
 
 		if (std::abs(pNodes->m_IterationControl.m_MaxImbP.GetDiff()) < 100.0 * m_Parameters.m_Imb ||
-			std::abs(pNodes->m_IterationControl.m_ImbRatio) > 0.9 ||
+			std::abs(pNodes->m_IterationControl.m_ImbRatio) > 0.95 ||
 			std::abs(lambda) <= m_Parameters.ForceSwitchLambda)
 		{
 			for (auto&& it : PV_PQmax)
@@ -1690,26 +1685,27 @@ double CLoadFlow::GetNewtonRatio()
 {
 	m_NewtonStepRatio.Reset();
 
-	_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get();
-	double* b = klu.B();
+	const _MatrixInfo* pMatrixInfo{ m_pMatrixInfo.get() };
+	double* b{ klu.B() };
 
 	// проходим по всем узлам
 	for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		const auto& pNode{ pMatrixInfo->pNode };
-		double* pb = b + pNode->A(0);
+		double* pb{ b + pNode->A(0) };
 		// рассчитываем новый угол в узле
-		double newDelta = pNode->Delta - *pb;
+		const double newDelta{ pNode->Delta - *pb };
 
 		// поиск ограничения шага по углу узла
-		double Dstep = std::abs(*pb);
+		const double Dstep{ std::abs(MathUtils::CAngleRoutines::GetAbsoluteDiff2Angles(*pb, 0.0)) };
+
 		if (Dstep > m_Parameters.m_dNodeAngleNewtonStep)
-			m_NewtonStepRatio.UpdateNodeAngle(std::abs(m_Parameters.m_dNodeAngleNewtonStep / Dstep), pNode);
+			m_NewtonStepRatio.UpdateNodeAngle(m_Parameters.m_dNodeAngleNewtonStep / Dstep, pNode);
 
 		// рассчитываем новый модуль напряжения в узле
 		pb++;
-		double newV = pNode->V - *pb;
-		double Ratio = newV / pNode->Unom;
+		const double newV{ pNode->V - *pb };
+		const double Ratio{ newV / pNode->Unom };
 
 		// поиск ограничения по модулю напряжения
 		for (const double d : {0.5, 2.0})
@@ -1719,7 +1715,7 @@ double CLoadFlow::GetNewtonRatio()
 		}
 
 		// поиск ограничения шага по напряжению
-		double VstepPU = std::abs(*pb) / pNode->Unom;
+		const double VstepPU{ std::abs(*pb) / pNode->Unom };
 		if (VstepPU > m_Parameters.m_dVoltageNewtonStep)
 			m_NewtonStepRatio.UpdateVoltage(m_Parameters.m_dVoltageNewtonStep / VstepPU, pNode);
 	}
@@ -1728,14 +1724,19 @@ double CLoadFlow::GetNewtonRatio()
 	for (auto&& it : m_BranchAngleCheck)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
-		const auto& pNodeIp{ pBranch->m_pNodeIp };
-		const auto& pNodeIq{ pBranch->m_pNodeIq };
+		const auto& pNodeIp{ pBranch->m_pNodeIp }, &pNodeIq{ pBranch->m_pNodeIq };
 		// текущий взаимный угол
-		double CurrentDelta = pNodeIp->Delta - pNodeIq->Delta;
-		double DeltaDiff = *(b + pNodeIp->A(0)) - *(b + pNodeIq->A(0));
+		const double CurrentDelta{ pNodeIp->Delta - pNodeIq->Delta };
+		// приращения углов для узлов, которые в матрице или нули, если не в матрице
+		const double dIpDelta{ NodeInMatrix(pNodeIp) ? *(b + pNodeIp->A(0)) : 0.0 };
+		const double dIqDelta{ NodeInMatrix(pNodeIq) ? *(b + pNodeIq->A(0)) : 0.0 };
+
+		const double DeltaDiff{ MathUtils::CAngleRoutines::GetAbsoluteDiff2Angles(dIqDelta, dIpDelta) };
+		//_ASSERTE(Equal(DeltaDiff, dIpDelta - dIqDelta));
+
 		// новый взаимный угол
-		double NewDelta = CurrentDelta + DeltaDiff;
-		double AbsDeltaDiff = std::abs(DeltaDiff);
+		const double NewDelta{ CurrentDelta + DeltaDiff };
+		const double AbsDeltaDiff{ std::abs(DeltaDiff) };
 
 		// проверяем новый взаимный угол на ограничения в 90 градусов
 		if (std::abs(NewDelta) > M_PI_2)
@@ -1759,9 +1760,10 @@ void CLoadFlow::UpdateVDelta(double dStep)
 	for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 	{
 		const auto& pNode{ pMatrixInfo->pNode };
-		double* pb = b + pNode->A(0);
-		double newDelta = pNode->Delta - *pb * dStep;		pb++;
-		double newV = pNode->V - *pb * dStep;
+		const double* pb{ b + pNode->A(0) };
+		const double newDelta{ pNode->Delta - *pb * dStep };		
+		pb++;
+		const double newV{ pNode->V - *pb * dStep };
 
 		/*
 		// Не даем узлам на ограничениях реактивной мощности отклоняться от уставки более чем на 10%
@@ -1786,6 +1788,7 @@ void CLoadFlow::UpdateVDelta(double dStep)
 			break;
 		}
 		*/
+
 		pNode->Delta = newDelta;
 		pNode->V = newV;
 		pNode->UpdateVreVimSuper();
