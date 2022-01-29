@@ -235,6 +235,7 @@ namespace DFW2
 		static const char* m_cszProgressCaption;
 		static const char* m_cszResultWriterDisabled;
 		static const char* m_cszResultFileCreated;
+		static const char* m_cszTopologyNodesCreated;
 	};
 }
 

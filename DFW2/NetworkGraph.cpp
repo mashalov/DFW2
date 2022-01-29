@@ -495,6 +495,17 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			AllocateLinks(pNodeSuperLink);	// на первом проходe размечаем ссылки по узлам
 	}
 
+	const ptrdiff_t nSuperNodesCount{ std::count_if(m_DevVec.begin(), m_DevVec.end(), [](const CDevice* pDev)
+		{
+			return static_cast<const CDynaNodeBase*>(pDev)->m_pSuperNodeParent == nullptr;
+		})
+	};
+
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszTopologyNodesCreated,
+		nSuperNodesCount,
+		Count(),
+		Count() > 0 ? 100.0 * nSuperNodesCount / Count() : 0.0));
+
 	// перестраиваем связи суперузлов с ветвями:
 	m_SuperLinks.emplace_back(m_Links[0].m_pContainer, Count());
 	CMultiLink& pBranchSuperLink(m_SuperLinks.back());
