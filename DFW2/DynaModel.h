@@ -705,7 +705,7 @@ namespace DFW2
 		void CopyVariableNordsiek(const VariableIndex& Variable, const InputVariable& Source);
 
 		// возвращает значение правой части системы уравнений
-		double GetFunction(ptrdiff_t nRow);
+		double GetFunction(ptrdiff_t nRow) const;
 		struct RightVector* GetRightVector(const ptrdiff_t nRow);
 		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
 		struct RightVector* GetRightVector(const InputVariable& Variable);

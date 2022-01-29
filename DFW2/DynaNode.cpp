@@ -10,10 +10,6 @@ using namespace DFW2;
 #define LOW_VOLTAGE 0.1
 #define LOW_VOLTAGE_HYST LOW_VOLTAGE * 0.1
 
-CDynaNodeBase::CDynaNodeBase() : CDevice()
-{
-}
-
 // запоминает значение модуля напряжения с предыдущей итерации
 // и рассчитываем напряжение в декартовых координатах
 void CDynaNodeBase::UpdateVreVim()
@@ -26,18 +22,18 @@ void CDynaNodeBase::UpdateVreVim()
 void CDynaNodeBase::UpdateVDelta()
 {
 	const cplx VreVim(Vre, Vim);
-	V = abs(VreVim);
-	Delta = arg(VreVim);
+	V = std::abs(VreVim);
+	Delta = std::arg(VreVim);
 }
 
 void CDynaNodeBase::UpdateVreVimSuper()
 {
 	UpdateVreVim();
-	CLinkPtrCount *pLink = GetSuperLink(0);
-	CDevice **ppDevice(nullptr);
+	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
+	CDevice** ppDevice{ nullptr };
 	while (pLink->In(ppDevice))
 	{
-		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 		pSlaveNode->V = V;
 		pSlaveNode->Delta = Delta;
 		pSlaveNode->UpdateVreVim();
@@ -186,11 +182,11 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 void CDynaNodeBase::UpdateVDeltaSuper()
 {
 	UpdateVDelta();
-	CLinkPtrCount *pLink = GetSuperLink(0);
-	CDevice **ppDevice(nullptr);
+	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
+	CDevice** ppDevice{ nullptr };
 	while (pLink->In(ppDevice))
 	{
-		CDynaNodeBase *pSlaveNode = static_cast<CDynaNodeBase*>(*ppDevice);
+		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 		pSlaveNode->Vre = Vre;
 		pSlaveNode->Vim = Vim;
 		pSlaveNode->UpdateVDelta();
@@ -202,8 +198,8 @@ void CDynaNodeBase::UpdateVDeltaSuper()
 bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest)
 {
 	bool bRes{ (Vtest + dLRCVicinity * V0) < VshuntPartBelow };
-	CLinkPtrCount *pLink = GetSuperLink(0);
-	CDevice **ppDevice(nullptr);
+	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
+	CDevice** ppDevice{ nullptr };
 	while (pLink->In(ppDevice) && bRes)
 	{
 		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
@@ -226,8 +222,8 @@ void CDynaNodeBase::GetPnrQnrSuper()
 void CDynaNodeBase::GetPnrQnrSuper(double Vnode)
 {
 	GetPnrQnr(Vnode);
-	CLinkPtrCount *pLink = GetSuperLink(0);
-	CDevice **ppDevice(nullptr);
+	const CLinkPtrCount* const pLink = GetSuperLink(0);
+	CDevice** ppDevice{ nullptr };
 	while (pLink->In(ppDevice))
 	{
 		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
@@ -320,8 +316,8 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			GetPnrQnrSuper(V2sq);
 	}
 
-	CLinkPtrCount *pGenLink = GetSuperLink(2);
-	CDevice **ppGen(nullptr);
+	const CLinkPtrCount* const pGenLink = GetSuperLink(2);
+	CDevice** ppGen{ nullptr };
 	
 	double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
 
@@ -513,8 +509,8 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			dV = V - V2sq;
 
 		// обходим генераторы
-		CLinkPtrCount *pGenLink = GetSuperLink(2);
-		CDevice **ppGen(nullptr);
+		const CLinkPtrCount* const pGenLink = GetSuperLink(2);
+		CDevice** ppGen{ nullptr };
 
 		while (pGenLink->InMatrix(ppGen))
 		{
@@ -548,8 +544,8 @@ void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
 	//dLRCVicinity = 5.0 * std::abs(Vold - V) / Unom;
 	Vold = V;
-	CLinkPtrCount *pLink = GetSuperLink(0);
-	CDevice **ppDevice(nullptr);
+	const CLinkPtrCount* const pLink = GetSuperLink(0);
+	CDevice** ppDevice{ nullptr };
 	while (pLink->In(ppDevice))
 		static_cast<CDynaNodeBase*>(*ppDevice)->FromSuperNode();
 }
@@ -627,8 +623,8 @@ void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	// Копируем скольжение в слэйв-узлы суперузла
 	// (можно совместить с CDynaNodeBase::FromSuperNode()
 	// и сэкономить цикл
-	CLinkPtrCount* pLink = GetSuperLink(0);
-	CDevice** ppDevice(nullptr);
+	const CLinkPtrCount* const pLink = GetSuperLink(0);
+	CDevice** ppDevice{ nullptr };
 	while (pLink->In(ppDevice))
 	{
 		const auto& pSlaveNode{ static_cast<CDynaNode*>(*ppDevice) };
@@ -774,7 +770,7 @@ void CDynaNodeContainer::CalculateShuntParts()
 		pNode->dLRCShuntPartQSuper = pNode->dLRCShuntPartQ;
 		pNode->VshuntPartBelowSuper = pNode->VshuntPartBelow;
 		pNode->V0Super = pNode->V0;
-		CLinkPtrCount *pLink = m_SuperLinks[0].GetLink(node->m_nInContainerIndex);
+		const CLinkPtrCount* const pLink{ m_SuperLinks[0].GetLink(node->m_nInContainerIndex) };
 		if (pLink->m_nCount)
 		{
 			CDevice **ppDevice(nullptr);
@@ -849,8 +845,8 @@ void CDynaNodeBase::GetGroundAdmittance(cplx& y)
 	// которые не работают в схеме Нортона его значение равно нулю
 	// !!!!!! Также не следует рассчитываеть Нортона в генераторах
 	// до расчета динамики. Для УР это неприемлемо !!!!!!
+	const CLinkPtrCount* const pLink{ GetLink(1) };
 	CDevice** ppDevice{ nullptr };
-	CLinkPtrCount* pLink{ GetLink(1) };
 	while (pLink->In(ppDevice))
 	{
 		const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppDevice) };
@@ -877,8 +873,8 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 	}
 	else
 	{
+		const CLinkPtrCount* const pLink{ GetLink(0) };
 		CDevice** ppDevice{ nullptr };
-		CLinkPtrCount* pLink{ GetLink(0) };
 		while (pLink->In(ppDevice))
 		{
 			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
@@ -1106,8 +1102,8 @@ bool CDynaNodeContainer::LULF()
 
 				// Generators
 
-				CDevice **ppDeivce(nullptr);
-				CLinkPtrCount *pLink = pNode->GetSuperLink(2);
+				const CLinkPtrCount* const pLink{ pNode->GetSuperLink(2) };
+				CDevice** ppDeivce{ nullptr };
 
 				// проходим по генераторам
 				while (pLink->InMatrix(ppDeivce))
@@ -1584,8 +1580,8 @@ void CDynaNodeBase::TidyZeroBranches()
 // Проверяет оторван ли узел от связей
 bool CDynaNodeBase::IsDangling()
 {
-	CLinkPtrCount* pLink = GetLink(0);
-	CDevice** ppDevice(nullptr);
+	const CLinkPtrCount* const pLink{ GetLink(0) };
+	CDevice** ppDevice{ nullptr };
 	// ищем хотя бы одну включенную ветвь
 	while (pLink->In(ppDevice))
 		if (static_cast<CDynaBranch*>(*ppDevice)->BranchAndNodeConnected(this))
@@ -1603,7 +1599,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	if (m_pSuperNodeParent)
 		return;
 
-	const CLinkPtrCount* pSuperNodeLink{ GetSuperLink(0) };
+	const CLinkPtrCount* const pSuperNodeLink{ GetSuperLink(0) };
 	CDevice** ppNodeEnd{ pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount };
 
 	// не выполняем также и для суперзулов, в которых нет узлов
@@ -1659,8 +1655,8 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 
 	for (auto&& node : pZeroSuperNode->LFMatrix)
 	{
-		CLinkPtrCount* pBranchLink = node->GetLink(0);
-		CDevice** ppDevice(nullptr);
+		const CLinkPtrCount* const pBranchLink{ node->GetLink(0) };
+		CDevice** ppDevice{ nullptr };
 		// ищем ветви соединяющие разные суперузлы
 		while (pBranchLink->In(ppDevice))
 		{
@@ -1699,8 +1695,8 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	// заполняем списки ветвей для каждого из узлов суперузла
 	for (auto&& node : pZeroSuperNode->LFMatrix)
 	{
-		CLinkPtrCount* pBranchLink = node->GetLink(0);
-		CDevice** ppDevice(nullptr);
+		const CLinkPtrCount* const pBranchLink{ node->GetLink(0) };
+		CDevice** ppDevice{ nullptr };
 
 		auto& ZeroLF{ node->ZeroLF };
 
@@ -1840,8 +1836,9 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 		for (const VirtualBranch* vb = node->ZeroLF.pVirtualBranchesBegin; vb < node->ZeroLF.pVirtualBranchesEnd; vb++)
 			Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
 
+		const CLinkPtrCount* const pGenLink{ node->GetLink(1) };
 		CDevice** ppGen{ nullptr };
-		CLinkPtrCount* pGenLink{ node->GetLink(1) };
+
 		while (pGenLink->InMatrix(ppGen))
 		{
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
@@ -1926,7 +1923,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	if (m_pSuperNodeParent)
 		return; // это не суперузел
 
-	CLinkPtrCount *pSuperNodeLink = GetSuperLink(0);
+	const CLinkPtrCount* const pSuperNodeLink{ GetSuperLink(0) };
 	if (!pSuperNodeLink->m_nCount)
 		return; // это суперузел, но у него нет связей
 
@@ -2042,8 +2039,8 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		cplx S{ pInSuperNode->Pnr - pInSuperNode->Pgr - Vs2 * pInSuperNode->Yii.real(),
 				pInSuperNode->Qnr - pInSuperNode->Qgr + Vs2 * pInSuperNode->Yii.imag() };
 
-		CLinkPtrCount* pBranchLink = pInSuperNode->GetLink(0);
-		CDevice** ppDevice(nullptr);
+		const CLinkPtrCount* const pBranchLink{ pInSuperNode->GetLink(0) };
+		CDevice** ppDevice{ nullptr };
 		// рассчитываем сумму потоков по инцидентным ветвям
 		cplx I;
 		while (pBranchLink->In(ppDevice))

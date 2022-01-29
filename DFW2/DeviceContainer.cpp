@@ -462,7 +462,7 @@ void CDeviceContainer::AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDe
 void CDeviceContainer::AddLink(CMultiLink& pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice)
 {
 	// извлекаем данные связи данного устройства
-	CLinkPtrCount *pLinkPtr = pLink.GetLink(nDeviceIndex);
+	CLinkPtrCount* const pLinkPtr{ pLink.GetAddLink(nDeviceIndex) };
 	// в текущий указатель связей вводим указатель на связываемое устройство
 	*pLinkPtr->m_pPointer = pDevice;
 	// переходим к следующей связи

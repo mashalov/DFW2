@@ -97,7 +97,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			for (int i = 0; i < 2; i++)
 			{
 				CDynaNodeBase *pNode;
-				ptrdiff_t NodeId = i ? pBranch->key.Ip : pBranch->key.Iq;
+				const ptrdiff_t NodeId{ i ? pBranch->key.Ip : pBranch->key.Iq };
 
 				// ищем узел по номеру
 				if (pContainer->GetDevice(NodeId, pNode))
@@ -142,7 +142,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			// проходим по контейнеру ветвей
 			for (auto&& it : *m_pContainer)
 			{
-				CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
+				const auto& pBranch{ static_cast<CDynaBranch*>(it) };
 				// и добавляем к узлам в контейнере связи с ветвями
 				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIp->m_nInContainerIndex, pBranch);
 				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIq->m_nInContainerIndex, pBranch);
@@ -222,8 +222,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 	// с учетом шунтов (Yips/Yiqs) при этом будут пригодны для расчета балансовых соотношений
 	// в суперузле
 
-	cplx Ybranch{ GetYBranch(bFixNegativeZs) };
-	cplx Ktrx(Ktr, Kti);
+	const cplx Ybranch{ GetYBranch(bFixNegativeZs) }, Ktrx(Ktr, Kti);
 
 	// постоянная часть проводимостей на землю от собственных шунтов ветви и старых реакторов не изменяется 
 	// рассчитана заранее
@@ -266,8 +265,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 		Yip = Yiq = Yips = 0.0;		// взаимные и собственная со стороны узла начала - 0
 		Yiqs = cplx(GIq, BIq);
 
-		cplx Yip1(GIp, BIp);
-		cplx Ysum = Yip1 + Ybranch;
+		const cplx Yip1(GIp, BIp), Ysum{ Yip1 + Ybranch };
 
 		_ASSERTE(!Equal(abs(Ysum), 0.0));
 
@@ -282,10 +280,10 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 		Yiq = Yip = Yiqs = 0.0;		// взаимные и собственная со стороны узла конца - 0
 		Yips = cplx(GIp, BIp);
 
-		cplx Yip1(GIq, BIq);
+		const cplx Yip1(GIq, BIq);
 
 		// собственная со стороны узла начала
-		cplx Ysum = Yip1 / norm(Ktrx) + Ybranch;
+		const cplx Ysum{ Yip1 / norm(Ktrx) + Ybranch };
 
 		_ASSERTE(!Equal(abs(Ysum), 0.0));
 
@@ -313,7 +311,7 @@ bool CDynaBranch::IsZeroImpedance()
 
 	if (m_BranchState == CDynaBranch::BranchState::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
 	{
-		double Zmin{ pModel->GetZeroBranchImpedance() };
+		const  double Zmin{ pModel->GetZeroBranchImpedance() };
 		if (std::abs(R) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin &&
 			std::abs(X) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin)
 			return true;
@@ -398,7 +396,7 @@ void CDynaBranchContainer::LinkToReactors(CDeviceContainer& containerReactors)
 {
 	for (const auto& reactor : containerReactors)
 	{
-		const CDynaReactor* pReactor = static_cast<const CDynaReactor*>(reactor);
+		const auto& pReactor{ static_cast<const CDynaReactor*>(reactor) };
 
 		// отбираем линейные реакторы, которые подключены после выключателя
 		if ((pReactor->Type == 1 || pReactor->Type == 2) && pReactor->Placement == 1)

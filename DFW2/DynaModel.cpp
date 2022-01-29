@@ -1938,8 +1938,8 @@ void CDynaModel::TurnOffDevicesByOffMasters()
 					if (masterdevice->eLinkMode == DLM_MULTI)
 					{
 						// просматриваем мультиссылки на ведущие
-						CLinkPtrCount *pLink(dit->GetLink(masterdevice->nLinkIndex));
-						CDevice **ppDevice(nullptr);
+						const CLinkPtrCount* const pLink{ dit->GetLink(masterdevice->nLinkIndex) };
+						CDevice** ppDevice{ nullptr };
 						while (pLink->In(ppDevice))
 						{
 							if(SetDeviceStateByMaster(dit,*ppDevice))

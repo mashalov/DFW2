@@ -23,7 +23,7 @@ namespace DFW2
 		CDevice  **m_pPointer = nullptr;		// вектор указателей на связанные устройства
 		size_t	 m_nCount = 0;					// количество связанных устройств
 		bool In(CDevice ** & p) const;			// последовательное получение очередного связанного устройства из вектора
-		bool InMatrix(CDevice**& p);			// последовательное получение очередного связанного устройства _включенного_в_матрицу
+		bool InMatrix(CDevice**& p) const;		// последовательное получение очередного связанного устройства _включенного_в_матрицу
 	};
 
 	// элемент для хранения/передачи списка связанных устройств одного типа
@@ -269,7 +269,7 @@ namespace DFW2
 		void IncrementLinkCounter(ptrdiff_t nLinkIndex);
 		ptrdiff_t m_nInContainerIndex = -1;
 		// получить связи устроства из слоя nLinkIndex
-		CLinkPtrCount* GetLink(ptrdiff_t nLinkIndex);
+		const  CLinkPtrCount* const GetLink(ptrdiff_t nLinkIndex);
 		void ResetVisited();
 		ptrdiff_t CheckAddVisited(CDevice* pDevice);
 		void SetSingleLinkStart(CDevice** ppLinkStart);

@@ -308,6 +308,7 @@ namespace DFW2
 		inline double* Ax() { return pAx.get(); }
 		inline const double* Ax() const { return pAx.get(); }
 		inline double* B() { return pb.get(); }
+		inline const double*  const B() const { return pb.get(); }
 		inline ptrdiff_t* Ai() { return pAi.get(); }
 		inline ptrdiff_t* Ap() { return pAp.get(); }
 		inline const ptrdiff_t* Ai() const { return pAi.get(); }

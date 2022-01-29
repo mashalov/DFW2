@@ -164,8 +164,8 @@ void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 		}
 
 		// токи от генераторов
-		CDevice** ppGen(nullptr);
-		CLinkPtrCount* pGenLink = pNode->GetLink(1);
+		const CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
+		CDevice** ppGen{ nullptr };
 		double dGenMatrixCoe{ pNode->m_bInMetallicSC ? 0.0 : -1.0 };
 		while (pGenLink->InMatrix(ppGen))
 		{
@@ -241,8 +241,8 @@ void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 
 
 		// добавляем токи от генераторов
-		CDevice** ppGen(nullptr);
-		CLinkPtrCount* pGenLink = pNode->GetLink(1);
+		const CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
+		CDevice** ppGen{ nullptr };
 		while (pGenLink->InMatrix(ppGen))
 		{
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };

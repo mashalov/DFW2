@@ -441,7 +441,7 @@ bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATIO
 }
 
 
-double CDynaModel::GetFunction(ptrdiff_t nRow)
+double CDynaModel::GetFunction(ptrdiff_t nRow)  const
 {
 	double dVal{ std::numeric_limits<double>::quiet_NaN() };
 

@@ -18,6 +18,13 @@ namespace DFW2
 	// контейнер для связей устройства
 	class CMultiLink
 	{
+	protected:
+		inline CLinkPtrCount* GetLinkInternal(ptrdiff_t nDeviceInContainerIndex)
+		{
+			if (nDeviceInContainerIndex >= static_cast<ptrdiff_t>(m_LinkInfo.size()))
+				throw dfw2error("CLinkPtrCount::GetLink - Device index out of range");
+			return &m_LinkInfo[nDeviceInContainerIndex];
+		}
 	public:
 		DevicesPtrs  m_ppPointers;											// вектор указателей на связанные устройства
 		CDeviceContainer *m_pContainer = nullptr;							// внешний контейнер, с устройствами которого строится связь
@@ -31,11 +38,14 @@ namespace DFW2
 		// конструктор копирования нет. Для создания CMultiLink в контейнере нужно использовать emplace
 		void Join(CMultiLink& pLink);
 
-		inline CLinkPtrCount* GetLink(ptrdiff_t nDeviceInContainerIndex)
+		inline const CLinkPtrCount* const GetLink(ptrdiff_t nDeviceInContainerIndex)
 		{
-			if (nDeviceInContainerIndex >= static_cast<ptrdiff_t>(m_LinkInfo.size()))
-				throw dfw2error("CLinkPtrCount::GetLink - Device index out of range");
-			return &m_LinkInfo[nDeviceInContainerIndex];
+			return GetLinkInternal(nDeviceInContainerIndex);
+		}
+
+		inline CLinkPtrCount* const GetAddLink(ptrdiff_t nDeviceInContainerIndex)
+		{
+			return GetLinkInternal(nDeviceInContainerIndex);
 		}
 	};
 

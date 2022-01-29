@@ -261,7 +261,7 @@ void CLoadFlow::Start()
 	for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
 	{
 		CDynaNodeBase*& pNode = pMatrixInfo->pNode;
-		CLinkPtrCount* pNodeLink = pNode->GetSuperLink(0);
+		const CLinkPtrCount* const pNodeLink{ pNode->GetSuperLink(0) };
 		CDevice** ppDevice(nullptr);
 		double QrangeMax = -1.0;
 		while (pNodeLink->In(ppDevice))
@@ -1130,8 +1130,8 @@ void CLoadFlow::UpdatePQFromGenerators()
 			continue;
 
 		// проходим по генераторам, подключенным к узлу
-		CLinkPtrCount* pGenLink = pNode->GetLink(1);
-		CDevice** ppGen(nullptr);
+		const  CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
+		CDevice** ppGen{ nullptr };
 
 		// сбрасываем суммарные ограничения Q генераторов
 		pNode->LFQminGen = pNode->LFQmaxGen = 0.0;
@@ -1195,8 +1195,8 @@ void CLoadFlow::UpdateQToGenerators()
 		if (!pNode->IsStateOn())
 			continue;
 
-		CLinkPtrCount* pGenLink = pNode->GetLink(1);
-		CDevice** ppGen(nullptr);
+		const  CLinkPtrCount* const  pGenLink{ pNode->GetLink(1) };
+		CDevice** ppGen{ nullptr };
 		if (pGenLink->m_nCount)
 		{
 			double Qrange = pNode->LFQmax - pNode->LFQmin;
@@ -1261,7 +1261,7 @@ void CLoadFlow::UpdateQToGenerators()
 void CLoadFlow::GetPnrQnrSuper(CDynaNodeBase* pNode)
 {
 	GetPnrQnr(pNode);
-	CLinkPtrCount* pLink = pNode->GetSuperLink(0);
+	const CLinkPtrCount* const pLink{ pNode->GetSuperLink(0) };
 	CDevice** ppDevice(nullptr);
 	while (pLink->In(ppDevice))
 	{
@@ -1599,7 +1599,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 		// диапазон реактивной мощности узла
 		double Qrange{ pNode->LFQmax - pNode->LFQmin };
 		double Qspread{ 0.0 }, PgSource{ pNode->Pgr }, QgSource{ pNode->Qgr }, DropToSlack{ 0.0 };
-		CLinkPtrCount* pLink = pNode->GetSuperLink(0);
+		const CLinkPtrCount* const pLink{ pNode->GetSuperLink(0) };
 		CDevice** ppDevice{ nullptr };
 		std::list<CDynaNodeBase*> SlackBuses;
 

@@ -43,6 +43,7 @@ namespace DFW2
 	class CDynaNodeBase : public CDevice
 	{
 	public:
+		using CDevice::CDevice;
 
 		void UpdateVreVim();
 		void UpdateVDelta();
@@ -130,7 +131,6 @@ namespace DFW2
 
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		double LFQminGen, LFQmaxGen;	// суммарные ограничения реактивной мощности генераторов в узле
-		CDynaNodeBase();
 		virtual ~CDynaNodeBase() = default;
 		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
@@ -220,7 +220,7 @@ namespace DFW2
 		void RequireSuperNodeLF();
 		// указатель на родительский суперузел
 		CDynaNodeBase* m_pSuperNodeParent = nullptr;
-		CLinkPtrCount* GetSuperLink(ptrdiff_t nLinkIndex);
+		const CLinkPtrCount* const GetSuperLink(ptrdiff_t nLinkIndex);
 
 		VirtualBranch	  *m_VirtualBranchBegin, *m_VirtualBranchEnd;
 		VirtualZeroBranch *m_VirtualZeroBranchBegin, *m_VirtualZeroBranchEnd, *m_VirtualZeroBranchParallelsBegin;
