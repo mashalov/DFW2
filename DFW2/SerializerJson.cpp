@@ -283,12 +283,12 @@ void CSerializerJson::AddLinks(const SerializerPtr& Serializer, nlohmann::json& 
 			// связи может не быть, если в модели нет устройств такого типа
 			if (device->GetContainer()->CheckLink(link->nLinkIndex))
 			{
-				const CLinkPtrCount* pLinks = device->GetLink(link->nLinkIndex);
-				CDevice** ppDevice(nullptr);
+				const CLinkPtrCount* const pLinks{ device->GetLink(link->nLinkIndex) };
+				LinkWalker<CDevice> pDevice;
 				// перебираем все устройства в мультисвязи и выводим
 				// сериалиазацию для каждого
-				while (pLinks->In(ppDevice))
-					AddLink(jsonLinks, *ppDevice, bMaster);
+				while (pLinks->In(pDevice))
+					AddLink(jsonLinks, pDevice, bMaster);
 			}
 		}
 		break;

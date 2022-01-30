@@ -1943,10 +1943,10 @@ void CDynaModel::TurnOffDevicesByOffMasters()
 					{
 						// просматриваем мультиссылки на ведущие
 						const CLinkPtrCount* const pLink{ dit->GetLink(masterdevice->nLinkIndex) };
-						CDevice** ppDevice{ nullptr };
-						while (pLink->In(ppDevice))
+						LinkWalker<CDevice> pDevice;
+						while (pLink->In(pDevice))
 						{
-							if(SetDeviceStateByMaster(dit,*ppDevice))
+							if(SetDeviceStateByMaster(dit, pDevice))
 								nOffCount++;
 						}
 						// здесь надо принять решение - отключать навсегда при условии что хотя бы одно ведущее отсутствует или должны отсутствовать все

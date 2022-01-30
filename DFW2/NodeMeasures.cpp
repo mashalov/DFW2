@@ -165,11 +165,11 @@ void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 
 		// токи от генераторов
 		const CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
-		CDevice** ppGen{ nullptr };
+		LinkWalker<CDynaPowerInjector> pGen;
+
 		double dGenMatrixCoe{ pNode->m_bInMetallicSC ? 0.0 : -1.0 };
-		while (pGenLink->InMatrix(ppGen))
+		while (pGenLink->InMatrix(pGen))
 		{
-			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
 			pDynaModel->SetElement(vRe, pGen->Ire, dGenMatrixCoe);
 			pDynaModel->SetElement(vIm, pGen->Iim, dGenMatrixCoe);
 		}
@@ -242,14 +242,11 @@ void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 
 		// добавляем токи от генераторов
 		const CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
-		CDevice** ppGen{ nullptr };
-		while (pGenLink->InMatrix(ppGen))
-		{
-			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
+		LinkWalker<CDynaPowerInjector> pGen;
+		while (pGenLink->InMatrix(pGen))
 			Is -= cplx(pGen->Ire, pGen->Iim);
 			//Re -= pGen->Ire;
 			//Im -= pGen->Iim;
-		}
 
 		// перетоки по настоящим связям от внешних суперузлов
 		for (const VirtualBranch* vb = ZeroNode.pVirtualBranchesBegin; vb < ZeroNode.pVirtualBranchesEnd; vb++)

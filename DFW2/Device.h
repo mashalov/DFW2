@@ -15,6 +15,18 @@ namespace DFW2
 	using STATEPRIMITIVESLIST = std::list<CDynaPrimitiveState*>;
 	using PRIMITIVESVEC = std::vector<CDynaPrimitive*>;
 
+	template<typename T>
+	class LinkWalker
+	{
+	friend class CLinkPtrCount;
+	protected:
+		T** pointer = nullptr;
+	public:
+		inline T* operator->() { return *pointer; }
+		inline bool empty() const { return pointer == nullptr; }
+		inline operator T* () { return *pointer; };
+	};
+
 	// класс для хранения связей устройства
 	// с помощью него можно обходить связанные с данным устройства
 	class CLinkPtrCount
@@ -22,8 +34,56 @@ namespace DFW2
 	public:
 		CDevice  **m_pPointer = nullptr;		// вектор указателей на связанные устройства
 		size_t	 m_nCount = 0;					// количество связанных устройств
-		bool In(CDevice ** & p) const;			// последовательное получение очередного связанного устройства из вектора
-		bool InMatrix(CDevice**& p) const;		// последовательное получение очередного связанного устройства _включенного_в_матрицу
+
+		// последовательное получение очередного связанного устройства _включенного_в_матрицу
+		template<typename T>
+		bool InMatrix(LinkWalker<T>& p) const
+		{
+			while (In(p))
+			{
+				if (p->InMatrix())
+					return true;
+			}
+			return false;
+		}
+
+		// функция обхода связей устройства (типа обход ветвей узла, генераторов узла и т.п.)
+		// на входе указатель на указатель устройства, с которым связь. Каждый следующий
+		// вызов In() возвращает очередную связь и true, или false - если связи закончились
+		// начало последовательности требует чтобы на вход был передан указатель на null
+		template<typename T>
+		bool In(LinkWalker<T>& p) const
+		{
+			if (!p.pointer)
+			{
+				// если передан указатель на null
+				if (m_nCount)
+				{
+					// если связи есть - возвращаем первую
+					p.pointer = reinterpret_cast<T**>(m_pPointer);
+					return true;
+				}
+				else
+				{
+					// если связей нет - завершаем обход
+					p.pointer = nullptr;
+					return false;
+				}
+			}
+
+			// если передан указатель не на null, это
+			// означает, что мы уже начали обходить связи
+			// переходм к следующей
+			p.pointer++;
+
+			// проверяем, не достили ли конца списка связей
+			if (reinterpret_cast<CDevice**>(p.pointer) < m_pPointer + m_nCount)
+				return true;
+
+			// если достигли - завершаем обход
+			p.pointer = nullptr;
+			return false;
+		}
 	};
 
 	// элемент для хранения/передачи списка связанных устройств одного типа

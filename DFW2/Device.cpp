@@ -319,55 +319,6 @@ const CLinkPtrCount* const CDevice::GetLink(ptrdiff_t nLinkIndex)
 	return pMultiLink.GetLink(m_nInContainerIndex);
 }
 
-
-// функция обхода связей устройства (типа обход ветвей узла, генераторов узла и т.п.)
-// на входе указатель на указатель устройства, с которым связь. Каждый следующий
-// вызов In() возвращает очередную связь и true, или false - если связи закончились
-// начало последовательности требует чтобы на вход был передан указатель на null
-bool CLinkPtrCount::In(CDevice ** & p) const
-{
-	if (!p)
-	{
-		// если передан указатель на null
-		if (m_nCount)
-		{
-			// если связи есть - возвращаем первую
-			p = m_pPointer;
-			return true;
-		}
-		else
-		{
-			// если связей нет - завершаем обход
-			p = nullptr;
-			return false;
-		}
-	}
-
-	// если передан указатель не на null, это
-	// означает, что мы уже начали обходить связи
-	// переходм к следующей
-	p++;
-
-	// проверяем, не достили ли конца списка связей
-	if (p < m_pPointer + m_nCount)
-		return true;
-
-	// если достигли - завершаем обход
-	p = nullptr;
-	return false;
-}
-
-// возвращаем только связанные устройства, которые включены в матрицу
-bool CLinkPtrCount::InMatrix(CDevice**& p) const
-{
-	while (In(p))
-	{
-		if ((*p)->InMatrix()) 
-			return true;
-	}
-	return false;
-}
-
 // Определяет нужны ли уравнения для этого устройства
 bool CDevice::InMatrix()
 {
@@ -1027,12 +978,12 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 			{
 				// если есть хотя бы одно отключенное устройство - фиксируем его и выходим из мультиссылки
 				const CLinkPtrCount* const pLink{ GetLink(masterdevice->nLinkIndex) };
-				CDevice **ppDevice(nullptr);
-				while (pLink->In(ppDevice))
+				LinkWalker<CDevice> pDevice;
+				while (pLink->In(pDevice))
 				{
-					if (!(*ppDevice)->IsStateOn())
+					if (!pDevice->IsStateOn())
 					{
-						pDeviceOff = *ppDevice;
+						pDeviceOff = pDevice;
 						break;
 					}
 				}
@@ -1099,12 +1050,12 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 					try
 					{
 						const CLinkPtrCount* const pLink{ pOffDevice->GetLink(slavedevice->nLinkIndex) };
-						CDevice** ppDevice(nullptr);
-						while (pLink->In(ppDevice))
+						LinkWalker<CDevice> pDevice;
+						while (pLink->In(pDevice))
 						{
-							if ((*ppDevice)->IsStateOn())
+							if (pDevice->IsStateOn())
 								// если есть включенное ведомое - помещаем в стек для отключения и дальнейшего просмотра графа связей
-								offstack.push(std::make_pair(*ppDevice, pOffDevice));
+								offstack.push(std::make_pair(pDevice, pOffDevice));
 						}
 					}
 					catch (const dfw2error&) 

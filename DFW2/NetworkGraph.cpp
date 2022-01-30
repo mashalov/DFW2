@@ -317,10 +317,9 @@ void CDynaNodeBase::MarkZoneEnergized()
 	{
 		// проходим по связям с генераторами
 		const CLinkPtrCount* const pLink{ GetLink(1) };
-		CDevice** ppGen(nullptr);
-		while (pLink->In(ppGen))
+		LinkWalker<CDynaPowerInjector> pGen;
+		while (pLink->In(pGen))
 		{
-			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
 			// если генератор есть и он включен
 			if (pGen->IsKindOfType(DEVTYPE_VOLTAGE_SOURCE) && pGen->IsStateOn())
 			{
@@ -334,7 +333,7 @@ void CDynaNodeBase::MarkZoneEnergized()
 				else
 					// иначе считаем общий момент инерации зоны (если у генератора есть уравнение движения)
 					if (pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
-						m_pSyncZone->Mj += static_cast<CDynaGeneratorMotion*>(pGen)->Mj;
+						m_pSyncZone->Mj += static_cast<CDynaGeneratorMotion*>(static_cast<CDynaPowerInjector*>(pGen))->Mj;
 			}
 		}
 	}
@@ -637,20 +636,20 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 					pSuperNode = pNode->m_pSuperNodeParent;
 				// достаем из узла мультиссылку на текущий тип связи
 				const  CLinkPtrCount* const  pLink{ multilink.GetLink(pNode->m_nInContainerIndex) };
-				CDevice** ppDevice{ nullptr };
+				LinkWalker<CDevice> pDevice;
 				// идем по мультиссылке
-				while (pLink->In(ppDevice))
+				while (pLink->In(pDevice))
 				{
 					if (pass)
 					{
 						// добавляем к суперузлу ссылку на внешее устройство
-						AddLink(pSuperLink, pSuperNode->m_nInContainerIndex, *ppDevice);
+						AddLink(pSuperLink, pSuperNode->m_nInContainerIndex, pDevice);
 						// указатель на прежний узел в устройстве, которое сязано с узлом
-						CDevice *pOldDev = (*ppDevice)->GetSingleLink(nLinkIndex);
+						CDevice *pOldDev = pDevice->GetSingleLink(nLinkIndex);
 						// заменяем ссылку на старый узел ссылкой на суперузел
-						(*ppDevice)->SetSingleLink(nLinkIndex, pSuperNode);
+						pDevice->SetSingleLink(nLinkIndex, pSuperNode);
 						// сохраняем оригинальную связь устройства с узлом в карте
-						m_OriginalLinks.back()->insert(std::make_pair(*ppDevice, pOldDev));
+						m_OriginalLinks.back()->insert(std::make_pair(pDevice, pOldDev));
 						//*
 						//string strName(pOldDev ? pOldDev->GetVerbalName() : "");
 						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Change link of object %s from node %s to supernode %s",
@@ -717,23 +716,21 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			if (pNode->m_pSuperNodeParent)
 				continue;
 
-			CDynaNodeBase* pSlaveNode{ pNode };
+			CDynaNodeBase* pSlave{ pNode };
 			const CLinkPtrCount* const pSlaveNodeLink{ pNode->GetSuperLink(0) };
-			CDevice** ppSlaveNode{ nullptr };
+			LinkWalker<CDynaNodeBase> pSlaveNode;
 
 			// сначала обрабатываем узел-представитель суперузла
 			// затем выбираем входящие в суперузел узлы
-			while (pSlaveNode)
+			while (pSlave)
 			{
-				const CLinkPtrCount* const pBranchLink{ pSlaveNode->GetLink(0) };
-				CDevice** ppDevice{ nullptr };
-				while (pBranchLink->In(ppDevice))
-				{
-					const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
+				const CLinkPtrCount* const pBranchLink{ pSlave->GetLink(0) };
+				LinkWalker<CDynaBranch> pBranch;
+				while (pBranchLink->In(pBranch))
 					pCurrentZeroBranch = pNode->AddZeroBranch(pBranch);
-				}
+
 				// достаем из суперссылки на узлы следующий узел суперузла
-				pSlaveNode = pSlaveNodeLink->In(ppSlaveNode) ? static_cast<CDynaNodeBase*>(*ppSlaveNode) : nullptr;
+				pSlave = pSlaveNodeLink->In(pSlaveNode) ? pSlaveNode : nullptr;
 			}
 
 			// приводим ссылки на нулевые ветви к нужному формату для последующей обработки в циклах
@@ -761,10 +758,9 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 			continue;
 		const CLinkPtrCount* const pBranchLink{ pNode->GetSuperLink(1) };
 		pNode->ResetVisited();
-		CDevice** ppDevice{ nullptr };
-		while (pBranchLink->In(ppDevice))
+		LinkWalker<CDynaBranch> pBranch;
+		while (pBranchLink->In(pBranch))
 		{
-			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			// обходим включенные ветви также как и для подсчета размерностей выше
 			const auto& pOppNode = pBranch->GetOppositeSuperNode(pNode);
 
@@ -974,8 +970,6 @@ void CDynaNodeContainer::PrepareLFTopology()
 
 void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Queue)
 {
-	const CLinkPtrCount* const pLink{ pNode->GetLink(0) };
-	CDevice** ppDevice{ nullptr };
 	if (pNode->GetState() == eDEVICESTATE::DS_ON)
 	{
 		// проверяем есть ли хотя бы одна включенная ветвь к этому узлу
@@ -997,9 +991,10 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 	else
 	{
 		// отключаем все ветви к этому узлу 
-		while (pLink->In(ppDevice))
+		const CLinkPtrCount* const pLink{ pNode->GetLink(0) };
+		LinkWalker<CDynaBranch> pBranch;
+		while (pLink->In(pBranch))
 		{
-			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			if (pBranch->DisconnectBranchFromNode(pNode))
 			{
 				// состояние ветви изменилось, узел с другой стороны ставим в очередь на проверку
@@ -1025,30 +1020,29 @@ void CDynaNodeContainer::DumpNetwork()
 			dump << std::endl;
 
 			const CLinkPtrCount* const pBranchLink{ pNode->GetLink(0) };
-			CDevice** ppDevice{ nullptr };
-			while (pBranchLink->In(ppDevice))
+			LinkWalker<CDynaBranch> pBranch;
+			while (pBranchLink->In(pBranch))
 			{
-				const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 				dump << fmt::format("\tOriginal Branch %{}-%{}-({}) r={} x={} state={}",
 					pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np,
 					pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
 			}
 
 			const CLinkPtrCount* const pSuperNodeLink{ pNode->GetSuperLink(0) };
-			ppDevice = nullptr;
-			while (pSuperNodeLink->In(ppDevice))
+
+			LinkWalker<CDynaNodeBase> pSlaveNode;
+			while (pSuperNodeLink->In(pSlaveNode))
 			{
-				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 				dump << fmt::format("\t\tSlave Node Id={} DBIndex={}", pSlaveNode->GetId(), pSlaveNode->GetDBIndex()) << std::endl;
 
 				const CLinkPtrCount* const  pBranchLink{ pSlaveNode->GetLink(0) };
-				CDevice** ppDeviceBranch{ nullptr };
-				while (pBranchLink->In(ppDeviceBranch))
+				LinkWalker<CDynaBranch> pDeviceBranch;
+
+				while (pBranchLink->In(pDeviceBranch))
 				{
-					const auto& pBranch{ static_cast<CDynaBranch*>(*ppDeviceBranch) };
 					dump << fmt::format("\t\t\tOriginal Branch %{}-%{}-({}) r={} x={} state={}", 
-						pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np,
-						pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
+						pDeviceBranch->key.Ip, pDeviceBranch->key.Iq, pDeviceBranch->key.Np,
+						pDeviceBranch->R, pDeviceBranch->X, pDeviceBranch->m_BranchState) << std::endl;
 				}
 			}
 

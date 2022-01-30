@@ -263,12 +263,12 @@ void CLoadFlow::Start()
 	{
 		const auto& pNode{ pMatrixInfo->pNode };
 		const CLinkPtrCount* const pNodeLink{ pNode->GetSuperLink(0) };
+		LinkWalker<CDynaNodeBase> pSlaveNode;
 		CDevice** ppDevice{ nullptr };
 		double QrangeMax{ pNode->LFQmax - pNode->LFQmin };
 
-		while (pNodeLink->In(ppDevice))
+		while (pNodeLink->In(pSlaveNode))
 		{
-			const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 			// в суперузел суммируем все мощности входящих узлов
 			pNode->Pgr += pSlaveNode->Pgr;
 			pNode->Qgr += pSlaveNode->Qgr;
@@ -1123,7 +1123,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 
 		// проходим по генераторам, подключенным к узлу
 		const  CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
-		CDevice** ppGen{ nullptr };
+		LinkWalker< CDynaPowerInjector> pGen;
 
 		// сбрасываем суммарные ограничения Q генераторов
 		pNode->LFQminGen = pNode->LFQmaxGen = 0.0;
@@ -1132,9 +1132,8 @@ void CLoadFlow::UpdatePQFromGenerators()
 		{
 			pNode->Pg = pNode->Qg = 0.0;
 			pNode->LFQmin = pNode->LFQmax = 0.0;
-			while (pGenLink->In(ppGen))
+			while (pGenLink->In(pGen))
 			{
-				CDynaPowerInjector* pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 				if (pGen->IsStateOn())
 				{
 					if (pGen->Kgen <= 0)
@@ -1188,14 +1187,14 @@ void CLoadFlow::UpdateQToGenerators()
 			continue;
 
 		const  CLinkPtrCount* const  pGenLink{ pNode->GetLink(1) };
-		CDevice** ppGen{ nullptr };
+		LinkWalker<CDynaPowerInjector> pGen;
 		if (pGenLink->m_nCount)
 		{
-			double Qrange = pNode->LFQmax - pNode->LFQmin;
+			const double Qrange{ pNode->LFQmax - pNode->LFQmin };
 			double Qspread(0.0), Qgmin(0.0), Qgmax(0.0);
-			while (pGenLink->In(ppGen))
+
+			while (pGenLink->In(pGen))
 			{
-				CDynaPowerInjector* pGen = static_cast<CDynaPowerInjector*>(*ppGen);
 				pGen->Q = 0.0;
 				if (pGen->IsStateOn())
 				{
@@ -1254,10 +1253,9 @@ void CLoadFlow::GetPnrQnrSuper(CDynaNodeBase* pNode)
 {
 	GetPnrQnr(pNode);
 	const CLinkPtrCount* const pLink{ pNode->GetSuperLink(0) };
-	CDevice** ppDevice(nullptr);
-	while (pLink->In(ppDevice))
+	LinkWalker<CDynaNodeBase> pSlaveNode;
+	while (pLink->In(pSlaveNode))
 	{
-		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 		GetPnrQnr(pSlaveNode);
 		pNode->Pnr += pSlaveNode->Pnr;
 		pNode->Qnr += pSlaveNode->Qnr;
@@ -1619,7 +1617,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 		double Qrange{ pNode->LFQmax - pNode->LFQmin };
 		double Qspread{ 0.0 }, PgSource{ pNode->Pgr }, QgSource{ pNode->Qgr }, DropToSlack{ 0.0 };
 		const CLinkPtrCount* const pLink{ pNode->GetSuperLink(0) };
-		CDevice** ppDevice{ nullptr };
+		LinkWalker<CDynaNodeBase> pSlaveNode;
 		std::list<CDynaNodeBase*> SlackBuses;
 
 		if (!pNode->m_pSuperNodeParent)
@@ -1638,9 +1636,8 @@ void CLoadFlow::UpdateSupernodesPQ()
 			if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 				SlackBuses.push_back(pNode);
 
-			while (pLink->In(ppDevice))
+			while (pLink->In(pSlaveNode))
 			{
-				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 				// распределяем реактивную мощность по ненагрузочным узлам
 				if (pSlaveNode->IsStateOn())
 				{

@@ -30,10 +30,9 @@ void CDynaNodeBase::UpdateVreVimSuper()
 {
 	UpdateVreVim();
 	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
-	CDevice** ppDevice{ nullptr };
-	while (pLink->In(ppDevice))
+	LinkWalker<CDynaNodeBase> pSlaveNode;
+	while (pLink->In(pSlaveNode))
 	{
-		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 		pSlaveNode->V = V;
 		pSlaveNode->Delta = Delta;
 		pSlaveNode->UpdateVreVim();
@@ -183,10 +182,9 @@ void CDynaNodeBase::UpdateVDeltaSuper()
 {
 	UpdateVDelta();
 	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
-	CDevice** ppDevice{ nullptr };
-	while (pLink->In(ppDevice))
+	LinkWalker<CDynaNodeBase> pSlaveNode;
+	while (pLink->In(pSlaveNode))
 	{
-		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 		pSlaveNode->Vre = Vre;
 		pSlaveNode->Vim = Vim;
 		pSlaveNode->UpdateVDelta();
@@ -199,12 +197,11 @@ bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest)
 {
 	bool bRes{ (Vtest + dLRCVicinity * V0) < VshuntPartBelow };
 	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
-	CDevice** ppDevice{ nullptr };
-	while (pLink->In(ppDevice) && bRes)
-	{
-		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
+	LinkWalker<CDynaNodeBase> pSlaveNode;
+
+	while (pLink->In(pSlaveNode) && bRes)
 		bRes = (Vtest + pSlaveNode->dLRCVicinity * pSlaveNode->V0 ) < pSlaveNode->VshuntPartBelow;
-	}
+
 	return bRes;
 }
 
@@ -223,12 +220,11 @@ void CDynaNodeBase::GetPnrQnrSuper(double Vnode)
 {
 	GetPnrQnr(Vnode);
 	const CLinkPtrCount* const pLink = GetSuperLink(0);
-	CDevice** ppDevice{ nullptr };
-	while (pLink->In(ppDevice))
-	{
-		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
-		pSlaveNode->FromSuperNode();
+	LinkWalker<CDynaNodeBase> pSlaveNode;
 
+	while (pLink->In(pSlaveNode))
+	{
+		pSlaveNode->FromSuperNode();
 		pSlaveNode->GetPnrQnr(Vnode);
 		Pnr += pSlaveNode->Pnr;
 		Qnr += pSlaveNode->Qnr;
@@ -317,6 +313,8 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	}
 
 	const CLinkPtrCount* const pGenLink = GetSuperLink(2);
+	LinkWalker<CDynaPowerInjector> pGen;
+
 	CDevice** ppGen{ nullptr };
 	
 	double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
@@ -336,11 +334,10 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		// обходим генераторы и формируем производные от токов генераторов
 		// если узел в металлическом КЗ производные равны нулю
 		double dGenMatrixCoe = m_bInMetallicSC ? 0.0 :-1.0;
-		while (pGenLink->InMatrix(ppGen))
+		while (pGenLink->InMatrix(pGen))
 		{
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
-			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
 			pDynaModel->SetElement(Vre, pGen->Ire, dGenMatrixCoe);
 			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe);
 		}
@@ -509,16 +506,13 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			dV = V - V2sq;
 
 		// обходим генераторы
-		const CLinkPtrCount* const pGenLink = GetSuperLink(2);
-		CDevice** ppGen{ nullptr };
+		const CLinkPtrCount* const pGenLink{ GetSuperLink(2) };
+		LinkWalker<CDynaPowerInjector> pGen;
 
-		while (pGenLink->InMatrix(ppGen))
-		{
-			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
+		while (pGenLink->InMatrix(pGen))
 			cI -= cplx(pGen->Ire, pGen->Iim);
 			//Ire -= pGen->Ire;
 			//Iim -= pGen->Iim;
-		}
 
 		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 		{
@@ -544,10 +538,10 @@ void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
 	//dLRCVicinity = 5.0 * std::abs(Vold - V) / Unom;
 	Vold = V;
-	const CLinkPtrCount* const pLink = GetSuperLink(0);
-	CDevice** ppDevice{ nullptr };
-	while (pLink->In(ppDevice))
-		static_cast<CDynaNodeBase*>(*ppDevice)->FromSuperNode();
+	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
+	LinkWalker<CDynaNodeBase> pSlaveNode;
+	while (pLink->In(pSlaveNode))
+		pSlaveNode->FromSuperNode();
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
@@ -623,20 +617,13 @@ void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	// Копируем скольжение в слэйв-узлы суперузла
 	// (можно совместить с CDynaNodeBase::FromSuperNode()
 	// и сэкономить цикл
-	const CLinkPtrCount* const pLink = GetSuperLink(0);
-	CDevice** ppDevice{ nullptr };
-	while (pLink->In(ppDevice))
-	{
-		const auto& pSlaveNode{ static_cast<CDynaNode*>(*ppDevice) };
+	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
+	LinkWalker<CDynaNode> pSlaveNode;
+	while (pLink->In(pSlaveNode))
 		pSlaveNode->S = S;
-	}
 
-	double T = pDynaModel->GetFreqTimeConstant();
-	double w0 = pDynaModel->GetOmega0();
-
-	double Vre2 = Vre * Vre;
-	double Vim2 = Vim * Vim;
-	double V2 = Vre2 + Vim2;
+	const double T{ pDynaModel->GetFreqTimeConstant() }, w0{ pDynaModel->GetOmega0() };
+	const double Vre2{ Vre * Vre }, Vim2{ Vim * Vim }, V2{ Vre2 + Vim2 };
 
 	pDynaModel->SetElement(V, V, 1.0);
 	pDynaModel->SetElement(Delta, Delta, 1.0);
@@ -770,11 +757,10 @@ void CDynaNodeContainer::CalculateShuntParts()
 		pNode->VshuntPartBelowSuper = pNode->VshuntPartBelow;
 		pNode->V0Super = pNode->V0;
 		const CLinkPtrCount* const pLink{ m_SuperLinks[0].GetLink(node->m_nInContainerIndex) };
-		CDevice** ppDevice{ nullptr };
+		LinkWalker<CDynaNodeBase> pSlaveNode;
 		// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
-		while (pLink->In(ppDevice))
+		while (pLink->In(pSlaveNode))
 		{
-			const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
 			pNode->YiiSuper += pSlaveNode->Yii;
 			pNode->IconstSuper += pSlaveNode->Iconst;
 			pNode->LRCShuntPartSuper += pSlaveNode->LRCShuntPart;
@@ -838,10 +824,9 @@ void CDynaNodeBase::GetGroundAdmittance(cplx& y)
 	// !!!!!! Также не следует рассчитываеть Нортона в генераторах
 	// до расчета динамики. Для УР это неприемлемо !!!!!!
 	const CLinkPtrCount* const pLink{ GetLink(1) };
-	CDevice** ppDevice{ nullptr };
-	while (pLink->In(ppDevice))
+	LinkWalker<CDynaPowerInjector> pGen;
+	while (pLink->In(pGen))
 	{
-		const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppDevice) };
 		if (pGen->IsStateOn())
 			y += pGen->Ynorton();
 	}
@@ -866,10 +851,9 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 	else
 	{
 		const CLinkPtrCount* const pLink{ GetLink(0) };
-		CDevice** ppDevice{ nullptr };
-		while (pLink->In(ppDevice))
+		LinkWalker<CDynaBranch> pBranch;
+		while (pLink->In(pBranch))
 		{
-			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			// проводимости ветви будут рассчитаны с учетом того,
 			// что она могла быть отнесена внутрь суперузла
 			pBranch->CalcAdmittances(bFixNegativeZs);
@@ -1095,12 +1079,10 @@ bool CDynaNodeContainer::LULF()
 				// Generators
 
 				const CLinkPtrCount* const pLink{ pNode->GetSuperLink(2) };
-				CDevice** ppDeivce{ nullptr };
-
+				LinkWalker<CDynaVoltageSource> pVsource;
 				// проходим по генераторам
-				while (pLink->InMatrix(ppDeivce))
+				while (pLink->InMatrix(pVsource))
 				{
-					const auto& pVsource{ static_cast<CDynaVoltageSource*>(*ppDeivce) };
 					// если в узле есть хотя бы один генератор, то обнуляем мощность генерации узла
 					// если в узле нет генераторов но есть мощность генерации - то она будет учитываться
 					// задающим током
@@ -1110,13 +1092,18 @@ bool CDynaNodeContainer::LULF()
 
 					pVsource->CalculatePower();
 
-					const auto& pGen{ static_cast<CDynaGeneratorInfBus*>(pVsource) };
-					// в диагональ матрицы добавляем проводимость генератора
-					// и вычитаем шунт Нортона, так как он уже добавлен в диагональ
-					// матрицы. Это работает для генераторов у которых есть Нортон (он
-					// обратен Zgen), и нет Нортона (он равен нулю)
-					Y -= 1.0 / pGen->Zgen() - pGen->Ynorton();
-					I -= pGen->Igen(nIteration);
+					if (pVsource->IsKindOfType(DEVTYPE_GEN_INFPOWER))
+					{
+						const auto& pGen{ static_cast<CDynaGeneratorInfBus*>(static_cast<CDynaVoltageSource*>(pVsource)) };
+
+						// в диагональ матрицы добавляем проводимость генератора
+						// и вычитаем шунт Нортона, так как он уже добавлен в диагональ
+						// матрицы. Это работает для генераторов у которых есть Нортон (он
+						// обратен Zgen), и нет Нортона (он равен нулю)
+						Y -= 1.0 / pGen->Zgen() - pGen->Ynorton();
+						I -= pGen->Igen(nIteration);
+
+					}
 
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
@@ -1572,14 +1559,22 @@ void CDynaNodeBase::TidyZeroBranches()
 // Проверяет оторван ли узел от связей
 bool CDynaNodeBase::IsDangling()
 {
-	const CLinkPtrCount* const pLink{ GetLink(0) };
+	/*
+
 	CDevice** ppDevice{ nullptr };
 	// ищем хотя бы одну включенную ветвь
 	while (pLink->In(ppDevice))
 		if (static_cast<CDynaBranch*>(*ppDevice)->BranchAndNodeConnected(this))
 			break; // включенная ветвь есть
+	*/
 
-	return !ppDevice;
+	const CLinkPtrCount* const pLink{ GetLink(0) };
+	LinkWalker<CDynaBranch> ppb;
+	while (pLink->In(ppb))
+		if (ppb->BranchAndNodeConnected(this))
+			break;
+
+	return ppb.empty();
 }
 
 void CDynaNodeBase::CreateZeroLoadFlowData()
@@ -1648,11 +1643,10 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	for (auto&& node : pZeroSuperNode->LFMatrix)
 	{
 		const CLinkPtrCount* const pBranchLink{ node->GetLink(0) };
-		CDevice** ppDevice{ nullptr };
+		LinkWalker<CDynaBranch> pBranch;
 		// ищем ветви соединяющие разные суперузлы
-		while (pBranchLink->In(ppDevice))
+		while (pBranchLink->In(pBranch))
 		{
-			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
 			if (!pBranch->IsZeroImpedance())
 				nBranchesCount++;
 		}
@@ -1688,7 +1682,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	for (auto&& node : pZeroSuperNode->LFMatrix)
 	{
 		const CLinkPtrCount* const pBranchLink{ node->GetLink(0) };
-		CDevice** ppDevice{ nullptr };
+		LinkWalker<CDynaBranch> pBranch;
 
 		auto& ZeroLF{ node->ZeroLF };
 
@@ -1698,10 +1692,8 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		ZeroLF.SlackInjection = ZeroLF.Yii = 0.0;
 
 		// ищем ветви, соединяющие текущий узел с другими суперузлами
-		while (pBranchLink->In(ppDevice))
+		while (pBranchLink->In(pBranch))
 		{
-			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
-
 			// интересуют только включенные ветви - так или иначе связывающие узлы 
 			if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
 			{
@@ -1829,13 +1821,10 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 			Is -= vb->Y * cplx(vb->pNode->Vre, vb->pNode->Vim);
 
 		const CLinkPtrCount* const pGenLink{ node->GetLink(1) };
-		CDevice** ppGen{ nullptr };
+		LinkWalker<CDynaPowerInjector> pGen;
 
-		while (pGenLink->InMatrix(ppGen))
-		{
-			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
+		while (pGenLink->InMatrix(pGen))
 			Is -= cplx(pGen->Ire, pGen->Iim);
-		}
 
 		*pB = -Is.real();	pB++;
 		*pB = -Is.imag();	pB++;
@@ -2032,14 +2021,12 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 				pInSuperNode->Qnr - pInSuperNode->Qgr + Vs2 * pInSuperNode->Yii.imag() };
 
 		const CLinkPtrCount* const pBranchLink{ pInSuperNode->GetLink(0) };
-		CDevice** ppDevice{ nullptr };
+		LinkWalker<CDynaBranch> pBranch;
 		// рассчитываем сумму потоков по инцидентным ветвям
 		cplx I;
-		while (pBranchLink->In(ppDevice))
-		{
-			const auto& pBranch{ static_cast<CDynaBranch*>(*ppDevice) };
+		while (pBranchLink->In(pBranch))
 			I += pBranch->CurrentFrom(pInSuperNode);
-		}
+
 		S -= std::conj(I) * Unode;
 
 		*pB = S.real();			pB++;
