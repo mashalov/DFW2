@@ -63,7 +63,7 @@ int _tmain(int argc, _TCHAR* argv[])
 				//Network.Serialize(Network.Platform().ResultFile("lf_test.json"));
 				//Network.Serialize(Network.Platform().ResultFile("lf_7ku.json")); 
 				//Network.RunLoadFlow();
-				Network.Serialize(Network.Platform().ResultFile("siberia.json")); 
+				//Network.Serialize(Network.Platform().ResultFile("siberia.json")); 
 				Network.RunTransient();
 			}
 			catch (_com_error& err)

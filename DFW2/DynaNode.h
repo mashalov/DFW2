@@ -255,7 +255,7 @@ namespace DFW2
 		// Вывести данные об изменении модуля напряжения выше/ниже порогового
 		void SetLowVoltage(bool bLowVoltage);
 		// Рассчитать шаг до изменения модуля напряжения узла выше/ниже порогового
-		double FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow);
+		double FindVoltageZC(CDynaModel *pDynaModel, const RightVector *pRvre, const RightVector *pRvim, double Hyst, bool bCheckForLow);
 	};
 
 	class CDynaNodeMeasure;

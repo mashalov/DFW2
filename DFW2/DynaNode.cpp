@@ -427,19 +427,10 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 		
 
-#ifdef USE_FMA
-		const double dPdV{ std::fma(-2.0, Pk, dLRCPn) / Vn };
-		const double dQdV{ std::fma(-2.0, Qk, dLRCQn) / Vn };
-		pDynaModel->SetElement(Vre, V, std::fma(dPdV, Vre, dQdV * Vim));
-		pDynaModel->SetElement(Vim, V, std::fma(dPdV, Vim, -dQdV * Vre));
-#else
 		const double dPdV{ (dLRCPn - 2.0 * Pk) / Vn };
 		const double dQdV{ (dLRCQn - 2.0 * Qk) / Vn };
 		pDynaModel->SetElement(Vre, V, dPdV * Vre + dQdV * Vim);
 		pDynaModel->SetElement(Vim, V, dPdV * Vim - dQdV * Vre);
-#endif
-
-
 
 		/*
 		double d1 = (PgVre2 - PgVim2 + VreVim2 * Qk) / V4;
@@ -517,13 +508,8 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 		{
 			cI -= pV->Y * cplx(pV->pNode->Vre, pV->pNode->Vim);
-#ifdef USE_FMA
-			//Ire = std::fma(-pV->Y.real(), pV->pNode->Vre, std::fma(pV->Y.imag(), pV->pNode->Vim, Ire));
-			//Iim = std::fma(-pV->Y.imag(), pV->pNode->Vre, std::fma(-pV->Y.real(), pV->pNode->Vim, Iim));
-#else
 			//Ire -= pV->Y.real() * pV->pNode->Vre - pV->Y.imag() * pV->pNode->Vim;
 			//Iim -= pV->Y.imag() * pV->pNode->Vre + pV->Y.real() * pV->pNode->Vim;
-#endif
 		}
 	}
 
@@ -791,13 +777,8 @@ void CDynaNodeBase::CalculateShuntParts()
 	if (m_pLRCGen)
 	{
 		// рассчитываем шунтовую часть СХН генерации в узле для низких напряжений
-#ifdef USE_FMA
-		dLRCShuntPartP = std::fma(-Pg, m_pLRCGen->P.begin()->a2, dLRCShuntPartP);
-		dLRCShuntPartQ = std::fma(-Qg, m_pLRCGen->Q.begin()->a2, dLRCShuntPartQ);
-#else
 		LRCShuntPart -= cplx(Pg * m_pLRCGen->P()->P.begin()->a2, Qg * m_pLRCGen->Q()->P.begin()->a2);
 		VshuntPartBelow = (std::min)(m_pLRCGen->VshuntBelow(), VshuntPartBelow);
-#endif
 	}
 
 	VshuntPartBelow *= V0;
@@ -1272,33 +1253,28 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 	}
 }
 
-double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, RightVector *pRvim, double Hyst, bool bCheckForLow)
+double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *pRvre, const RightVector *pRvim, double Hyst, bool bCheckForLow)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 
 	// выбираем границу сравгнения с гистерезисом - на снижение -, на повышение +
-	const double Border = LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst );
-	const double  h = pDynaModel->GetH();
-	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
+	const double Border{ LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst) };
+	const double  h{ pDynaModel->GetH() };
+	const double* lm{ pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1] };
 
+	const ptrdiff_t q(pDynaModel->GetOrder());
 
 	// рассчитываем текущие напряжения по Нордсику (итоговые еще не рассчитаны в итерации)
-#ifdef USE_FMA
-	double Vre1 = std::fma(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
-	double Vim1 = std::fma(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
-#else
-	double Vre1 = pRvre->Nordsiek[0] + pRvre->Error * lm[0];
-	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
-#endif
-
+	const double Vre1{ pRvre->Nordsiek[0] + pRvre->Error * lm[0] };
+	const double Vim1{ pRvim->Nordsiek[0] + pRvim->Error * lm[0] };
 	// текущий модуль напряжения
-	double Vcheck = sqrt(Vre1 * Vre1 + Vim1 * Vim1);
+	const double Vcheck{ sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
 	// коэффициенты первого порядка
-	double dVre1 = (pRvre->Nordsiek[1] + pRvre->Error * lm[1]) / h;
-	double dVim1 = (pRvim->Nordsiek[1] + pRvim->Error * lm[1]) / h;
+	const double dVre1{ (pRvre->Nordsiek[1] + pRvre->Error * lm[1]) / h };
+	const double dVim1{ (pRvim->Nordsiek[1] + pRvim->Error * lm[1]) / h };
 	// коэффициенты второго порядка
-	double dVre2 = (pRvre->Nordsiek[2] + pRvre->Error * lm[2]) / h / h;
-	double dVim2 = (pRvim->Nordsiek[2] + pRvim->Error * lm[2]) / h / h;
+	const double dVre2{ (q == 2) ? (pRvre->Nordsiek[2] + pRvre->Error * lm[2]) / h / h : 0.0 };
+	const double dVim2{ (q == 2) ? (pRvim->Nordsiek[2] + pRvim->Error * lm[2]) / h / h : 0.0 };
 
 	// функция значения переменной от шага
 	// Vre(h) = Vre1 + h * dVre1 + h^2 * dVre2
@@ -1307,8 +1283,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 	// (Vre1 + h * dVre1 + h^2 * dVre2)^2 + (Vim1 + h * dVim1 + h^2 * dVim2)^2 - Boder^2 = 0
 
 	// определяем разность границы и текущего напряжения и взвешиваем разность по выражению контроля погрешности
-	double derr = std::abs(pRvre->GetWeightedError(std::abs(Vcheck - Border), Border));
-	const ptrdiff_t q(pDynaModel->GetOrder());
+	const double derr{ std::abs(pRvre->GetWeightedError(std::abs(Vcheck - Border), Border)) };
 
 	if (derr < pDynaModel->GetZeroCrossingTolerance())
 	{
@@ -1327,9 +1302,10 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 			// (Vre1 + h * dVre1)^2 + (Vim1 + h * dVim1)^2 - Boder^2 = 0
 			// Vre1^2 + 2 * Vre1 * h * dVre1 + dVre1^2 * h^2 + Vim1^2 + 2 * Vim1 * h * dVim1 + dVim1^2 * h^2 - Border^2 = 0
 
-			double a = dVre1 * dVre1 + dVim1 * dVim1;
-			double b = 2.0 * (Vre1 * dVre1 + Vim1 * dVim1);
-			double c = Vre1 * Vre1 + Vim1 * Vim1 - Border * Border;
+			const double a{ dVre1 * dVre1 + dVim1 * dVim1 };
+			const double b{ 2.0 * (Vre1 * dVre1 + Vim1 * dVim1) };
+			const double c{ Vre1 * Vre1 + Vim1 * Vim1 - Border * Border };
+
 			rH = CDynaPrimitive::GetZCStepRatio(pDynaModel, a, b, c);
 
 			if (pDynaModel->ZeroCrossingStepReached(rH))
@@ -1340,12 +1316,12 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 		}
 		else
 		{
-			double a = dVre2 * dVre2 + dVim2 * dVim2;														// (xs2^2 + ys2^2)*t^4 
-			double b = 2.0 * (dVre1 * dVre2 + dVim1 * dVim1);												// (2*xs1*xs2 + 2*ys1*ys2)*t^3 
-			double c = (dVre1 * dVre1 + dVim1 * dVim1 + 2.0 * Vre1 * dVre2 + 2.0 * Vim1 * dVim2);			// (xs1^2 + ys1^2 + 2*x1*xs2 + 2*y1*ys2)*t^2 
-			double d = (2.0 * Vre1 * dVre1 + 2.0 * Vim1 * dVim1);											// (2*x1*xs1 + 2*y1*ys1)*t 
-			double e = Vre1 * Vre1 + Vim1 * Vim1 - Border * Border;											// x1^2 + y1^2 - e
-			double t = -0.5 * h;
+			const double a{ dVre2 * dVre2 + dVim2 * dVim2 };												// (xs2^2 + ys2^2)*t^4 
+			const double b{ 2.0 * (dVre1 * dVre2 + dVim1 * dVim1) };										// (2*xs1*xs2 + 2*ys1*ys2)*t^3 
+			const double c{ (dVre1 * dVre1 + dVim1 * dVim1 + 2.0 * Vre1 * dVre2 + 2.0 * Vim1 * dVim2) };	// (xs1^2 + ys1^2 + 2*x1*xs2 + 2*y1*ys2)*t^2 
+			const double d{ (2.0 * Vre1 * dVre1 + 2.0 * Vim1 * dVim1) };									// (2*x1*xs1 + 2*y1*ys1)*t 
+			const double e{ Vre1 * Vre1 + Vim1 * Vim1 - Border * Border };									// x1^2 + y1^2 - e
+			double t{ -0.5 * h };
 
 			for (int i = 0; i < 5; i++)
 			{
@@ -1378,12 +1354,10 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, RightVector *pRvre, 
 		if (rH < 0.0)
 		{
 
-			const double h0 = h * rH - h;
-			if (q == 1)
-				dVre2 = dVim2 = 0.0;
-			const double checkVre = Vre1 + dVre1 * h0 + dVre2 * h0 * h0;
-			const double checkVim = Vim1 + dVim1 * h0 + dVim2 * h0 * h0;
-			const double Vh0 = std::sqrt(checkVre * checkVre + checkVim * checkVim);
+			const double h0{ h * rH - h };
+			const double checkVre{ Vre1 + dVre1 * h0 + dVre2 * h0 * h0 };
+			const double checkVim{ Vim1 + dVim1 * h0 + dVim2 * h0 * h0 };
+			const double Vh0{ std::sqrt(checkVre * checkVre + checkVim * checkVim) };
 
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at node \"{}\" at t={} order={}, V={} <- V={} Border={}",
 				rH,
@@ -1430,20 +1404,15 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH = 1.0;
 
-	double Hyst = LOW_VOLTAGE_HYST;
-	RightVector *pRvre = pDynaModel->GetRightVector(Vre.Index);
-	RightVector *pRvim = pDynaModel->GetRightVector(Vim.Index);
-	const double *lm = pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1];
+	const double Hyst{ LOW_VOLTAGE_HYST };
+	const RightVector* pRvre{ pDynaModel->GetRightVector(Vre.Index) };
+	const RightVector* pRvim{ pDynaModel->GetRightVector(Vim.Index) };
+	const double* lm{ pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1] };
 
-#ifdef USE_FMA
-	double Vre1 = std::fma(pRvre->Error, lm[0], pRvre->Nordsiek[0]);
-	double Vim1 = std::fma(pRvim->Error, lm[0], pRvim->Nordsiek[0]);
-#else
-	double Vre1 = pRvre->Nordsiek[0] + pRvre->Error * lm[0];
-	double Vim1 = pRvim->Nordsiek[0] + pRvim->Error * lm[0];
-#endif
+	const double Vre1{ pRvre->Nordsiek[0] + pRvre->Error * lm[0] };
+	const double Vim1{ pRvim->Nordsiek[0] + pRvim->Error * lm[0] };
 
-	double Vcheck = sqrt(Vre1 * Vre1 + Vim1 * Vim1);
+	const double Vcheck{ std::sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
 
 	/*
 	if (GetId() == 61112076 && GetModel()->GetCurrentTime() > 2.7)
@@ -1455,14 +1424,14 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 	if (m_bLowVoltage)
 	{
-		double Border = LOW_VOLTAGE + Hyst;
+		const double Border{ LOW_VOLTAGE + Hyst };
 
 		if (Vcheck > Border)
 			rH = FindVoltageZC(pDynaModel, pRvre, pRvim, Hyst, false);
 	}
 	else
 	{
-		double Border = LOW_VOLTAGE - Hyst;
+		const double Border{ LOW_VOLTAGE - Hyst };
 
 		if (Vcheck < Border)
 			rH = FindVoltageZC(pDynaModel, pRvre, pRvim, Hyst, true);
@@ -1492,9 +1461,9 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 			throw dfw2error("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun");
 
 		// если ветвь имеет сопротивление ниже минимального 
-		bool bAdd(true);
+		bool bAdd{ true };
 		// проверяем 1) - не добавлена ли она уже; 2) - нет ли параллельной ветви
-		VirtualZeroBranch *pParallelFound(nullptr);
+		VirtualZeroBranch* pParallelFound{ nullptr };
 		for (VirtualZeroBranch *pVb = m_VirtualZeroBranchBegin; pVb < m_VirtualZeroBranchEnd; pVb++)
 		{
 			if (pVb->pBranch == pBranch)
@@ -1508,7 +1477,7 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 			if (!pVb->pParallelTo)
 			{
 				// проверяем есть ли параллельная впрямую
-				bool bParr = pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIq;
+				bool bParr{ pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIq };
 				// и если нет - проверяем параллельную в обратную
 				bParr = bParr ? bParr : pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIq;
 				if (bParr)
@@ -1569,12 +1538,12 @@ bool CDynaNodeBase::IsDangling()
 	*/
 
 	const CLinkPtrCount* const pLink{ GetLink(0) };
-	LinkWalker<CDynaBranch> ppb;
-	while (pLink->In(ppb))
-		if (ppb->BranchAndNodeConnected(this))
+	LinkWalker<CDynaBranch> pBranch;
+	while (pLink->In(pBranch))
+		if (pBranch->BranchAndNodeConnected(this))
 			break;
 
-	return ppb.empty();
+	return pBranch.empty();
 }
 
 void CDynaNodeBase::CreateZeroLoadFlowData()
