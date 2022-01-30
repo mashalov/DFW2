@@ -372,24 +372,27 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 
 	Islands.clear();	// очищаем результат
 	std::stack<CDynaNodeBase*> Stack;
-
-	auto FindSlack = [](const auto& itr)->bool {return itr.first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE; };
-
-	std::set<CDynaNodeBase*> Slacks;
-	for (auto&& it : JoinableNodes)
-	{
-		if(FindSlack(it))
-			Slacks.insert(it.first);
-	}
+	
 	// вырабатываем сет заданных узлов
 	while (!JoinableNodes.empty())
 	{
 		// ищем первый узел, предопочитаем базисный
+		// если нет - то PV
 		auto Slack = JoinableNodes.begin();
-		if (!Slacks.empty())
+		// ищем узел для построения суперузла в порядке базисный, PV, PQ
+		for (auto it = JoinableNodes.begin() ; it != JoinableNodes.end() ; it++)
 		{
-			Slack = JoinableNodes.find(*Slacks.begin());
-			Slacks.erase(Slack->first);
+			// пропускаем нагрузочные (первый уже есть)
+			if (it->first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_PQ)
+				continue; 
+			else if (it->first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+			{
+				// если нашли базисный - сразу берем его
+				Slack = it;
+				break;
+			}
+			else // остались только PV-узлы, выбираем текущий но ждем базисного
+				Slack = it;
 		}
 
 		// вставляем первый узел как основу для острова

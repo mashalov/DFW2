@@ -286,6 +286,8 @@ void CLoadFlow::Start()
 				pMatrixInfo->UncontrolledQ += pSlaveNode->Qgr;
 				break;
 			default:
+				// генераторный узел не может входить в PQ-суперузел
+				_ASSERTE(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ);
 				// если в суперузел входит генераторный - учитываем его активную генерацию как неуправляемую
 				pMatrixInfo->UncontrolledP += pSlaveNode->Pgr;
 				// считаем диапазон реактивной мощности суперзула
