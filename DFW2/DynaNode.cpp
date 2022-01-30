@@ -62,7 +62,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 		// номинального напряжения СХН
 		if ((Vsq + dLRCVicinity * V0) < VshuntPartBelow)
 		{
-			cI += cplx(dLRCShuntPartP, -dLRCShuntPartQ) * cV;
+			cI += std::conj(LRCShuntPart) * cV;
 			//Ire += dLRCShuntPartP * Vre + dLRCShuntPartQ * Vim;
 			//Iim -= dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
 
@@ -132,7 +132,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 		
 		if ((Vsq + dLRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
-			cI += cplx(dLRCShuntPartPSuper, -dLRCShuntPartQSuper ) * cV;
+			cI += std::conj(LRCShuntPartSuper) * cV;
 			//Ire -= -dLRCShuntPartPSuper * Vre - dLRCShuntPartQSuper * Vim;
 			//Iim -=  dLRCShuntPartQSuper * Vre - dLRCShuntPartPSuper * Vim;
 
@@ -305,10 +305,10 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		if ((V2sq + dLRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
 			_ASSERTE(m_pLRC);
-			dIredVre +=  dLRCShuntPartPSuper;
-			dIredVim +=  dLRCShuntPartQSuper;
-			dIimdVre += -dLRCShuntPartQSuper;
-			dIimdVim +=  dLRCShuntPartPSuper;
+			dIredVre +=  LRCShuntPartSuper.real();
+			dIredVim +=  LRCShuntPartSuper.imag();
+			dIimdVre += -LRCShuntPartSuper.imag();
+			dIimdVim +=  LRCShuntPartSuper.real();
 			dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
 			dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
 		}
@@ -766,28 +766,23 @@ void CDynaNodeContainer::CalculateShuntParts()
 		pNode->YiiSuper = pNode->Yii;
 		// собираем постоянный ток
 		pNode->IconstSuper = pNode->Iconst;
-		pNode->dLRCShuntPartPSuper = pNode->dLRCShuntPartP;
-		pNode->dLRCShuntPartQSuper = pNode->dLRCShuntPartQ;
+		pNode->LRCShuntPartSuper = pNode->LRCShuntPart;
 		pNode->VshuntPartBelowSuper = pNode->VshuntPartBelow;
 		pNode->V0Super = pNode->V0;
 		const CLinkPtrCount* const pLink{ m_SuperLinks[0].GetLink(node->m_nInContainerIndex) };
-		if (pLink->m_nCount)
+		CDevice** ppDevice{ nullptr };
+		// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
+		while (pLink->In(ppDevice))
 		{
-			CDevice **ppDevice(nullptr);
-			// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
-			while (pLink->In(ppDevice))
-			{
-				const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
-				pNode->YiiSuper += pSlaveNode->Yii;
-				pNode->IconstSuper += pSlaveNode->Iconst;
-				pNode->dLRCShuntPartPSuper += pSlaveNode->dLRCShuntPartP;
-				pNode->dLRCShuntPartQSuper += pSlaveNode->dLRCShuntPartQ;
-				// напряжение шунта выбираем как минимальное от всех узлов суперузла
-				pNode->VshuntPartBelowSuper = (std::min)(pNode->VshuntPartBelowSuper, pSlaveNode->VshuntPartBelow);
-				// номинальное напряжение СХН выбираем как максимальное от всех узлов суперузла,
-				// чтобы рассчитать границу dLRCVicinity c перекрытием
-				pNode->V0Super = (std::max)(pNode->V0Super, pSlaveNode->V0);
-			}
+			const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppDevice) };
+			pNode->YiiSuper += pSlaveNode->Yii;
+			pNode->IconstSuper += pSlaveNode->Iconst;
+			pNode->LRCShuntPartSuper += pSlaveNode->LRCShuntPart;
+			// напряжение шунта выбираем как минимальное от всех узлов суперузла
+			pNode->VshuntPartBelowSuper = (std::min)(pNode->VshuntPartBelowSuper, pSlaveNode->VshuntPartBelow);
+			// номинальное напряжение СХН выбираем как максимальное от всех узлов суперузла,
+			// чтобы рассчитать границу dLRCVicinity c перекрытием
+			pNode->V0Super = (std::max)(pNode->V0Super, pSlaveNode->V0);
 		}
 	}
 }
@@ -798,13 +793,12 @@ void CDynaNodeBase::CalculateShuntParts()
 	// TODO - надо разобраться с инициализацией V0 __до__ вызова этой функции
 	double V02{ V0 * V0 };
 
-	dLRCShuntPartP = dLRCShuntPartQ = 0.0;
+	LRCShuntPart = 0.0;
 
 	if (m_pLRC)
 	{
 		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
-		dLRCShuntPartP = Pn * m_pLRC->P()->P.begin()->a2;
-		dLRCShuntPartQ = Qn * m_pLRC->Q()->P.begin()->a2;
+		LRCShuntPart = { Pn * m_pLRC->P()->P.begin()->a2, Qn * m_pLRC->Q()->P.begin()->a2 };
 		VshuntPartBelow = m_pLRC->VshuntBelow();
 	}
 
@@ -815,15 +809,13 @@ void CDynaNodeBase::CalculateShuntParts()
 		dLRCShuntPartP = std::fma(-Pg, m_pLRCGen->P.begin()->a2, dLRCShuntPartP);
 		dLRCShuntPartQ = std::fma(-Qg, m_pLRCGen->Q.begin()->a2, dLRCShuntPartQ);
 #else
-		dLRCShuntPartP -= Pg * m_pLRCGen->P()->P.begin()->a2;
-		dLRCShuntPartQ -= Qg * m_pLRCGen->Q()->P.begin()->a2;
+		LRCShuntPart -= cplx(Pg * m_pLRCGen->P()->P.begin()->a2, Qg * m_pLRCGen->Q()->P.begin()->a2);
 		VshuntPartBelow = (std::min)(m_pLRCGen->VshuntBelow(), VshuntPartBelow);
 #endif
 	}
 
 	VshuntPartBelow *= V0;
-	dLRCShuntPartP /= V02;
-	dLRCShuntPartQ /= V02;
+	LRCShuntPart /= V02;
 }
 
 // Собирает проводимость узла на землю
@@ -2176,10 +2168,8 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState("Vim", Vim, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("pgr", Vim, eVARUNITS::VARUNIT_MW);
 	Serializer->AddState("qgr", Vim, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddState("LRCShuntPartP", dLRCShuntPartP, eVARUNITS::VARUNIT_MW);
-	Serializer->AddState("LRCShuntPartQ", dLRCShuntPartQ, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddState("LRCShuntPartPSuper", dLRCShuntPartPSuper, eVARUNITS::VARUNIT_MW);
-	Serializer->AddState("LRCShuntPartQSuper", dLRCShuntPartQSuper, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState("LRCShuntPart", LRCShuntPart, eVARUNITS::VARUNIT_MW);
+	Serializer->AddState("LRCShuntPartSuper", LRCShuntPartSuper, eVARUNITS::VARUNIT_MW);
 	Serializer->AddState("Gshunt", Gshunt, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Bshunt", Bshunt, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("InMetallicSC", m_bInMetallicSC);

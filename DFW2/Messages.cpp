@@ -125,7 +125,7 @@ const char* CDFW2Messages::m_cszLFNodeVTooHigh = "Недопустимое на�
 const char* CDFW2Messages::m_cszLFNodeVTooLow = CDFW2Messages::m_cszLFNodeVTooHigh;
 const char* CDFW2Messages::m_cszLFBranchAngleExceeds90 = "Угол по связи {} - {} превысил 90 град - {}";
 const char* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = "Количество генераторов для \"{}\" задано неверно - {:.0f}, установлено значение 1";
-const char* CDFW2Messages::m_cszWrongGeneratirQlimitsFixed = "Ограничения реактивной мощности для генератора \"{}\" задано неверно {} > {}. Установлено Qmin=Qmax={}";
+const char* CDFW2Messages::m_cszWrongGeneratorQlimitsFixed = "Ограничения реактивной мощности для генератора \"{}\" задано неверно {} > {}. Установлено Qmin=Qmax={}";
 const char* CDFW2Messages::m_cszFailureAtMinimalStep = "Необходимая точность решения не может быть достигнута на минимальном шаге t={} {} порядок {} шаг={}";
 const char* CDFW2Messages::m_cszMustBeEmbeddedLRC = "Не найдена типовая встроенная СХН с номером {}";
 const char* CDFW2Messages::m_cszMustBeDefaultDynamicLRC = "Не найдена типовая СХН нагрузки в динамике с номером 0";

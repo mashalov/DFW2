@@ -131,7 +131,7 @@ namespace DFW2
 		static const char* m_cszLFNodeVTooLow;
 		static const char* m_cszLFBranchAngleExceeds90;
 		static const char* m_cszWrongGeneratorsNumberFixed;
-		static const char* m_cszWrongGeneratirQlimitsFixed;
+		static const char* m_cszWrongGeneratorQlimitsFixed;
 		static const char* m_cszFailureAtMinimalStep;
 		static const char* m_cszMustBeEmbeddedLRC;
 		static const char* m_cszMustBeDefaultDynamicLRC;

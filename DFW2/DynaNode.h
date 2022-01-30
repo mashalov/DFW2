@@ -94,8 +94,7 @@ namespace DFW2
 				
 		double Pn,Qn,Pg,Qg,Pnr,Qnr,Pgr,Qgr;
 		double G,B, Gr0, Br0;
-		double dLRCShuntPartP, dLRCShuntPartQ;
-		double dLRCShuntPartPSuper, dLRCShuntPartQSuper;
+		cplx LRCShuntPart, LRCShuntPartSuper;
 		// напряжения, ниже которых в СХН чисто шунтовая характеристика
 		double VshuntPartBelow, VshuntPartBelowSuper;
 		double Gshunt, Bshunt;
@@ -165,10 +164,16 @@ namespace DFW2
 		cplx GetSelfImbInotSuper(double& Vsq);
 		cplx GetSelfImbISuper(double& Vsq);
 
-		inline double GetSelfdPdV() noexcept { return -2 * V * YiiSuper.real() + dLRCPn; }
-		inline double GetSelfdQdV() noexcept { return  2 * V * YiiSuper.imag() + dLRCQn; }
+		inline double GetSelfdPdV() { return -2 * V * YiiSuper.real() + dLRCPn; }
+		inline double GetSelfdQdV() { return  2 * V * YiiSuper.imag() + dLRCQn; }
 
-		inline bool IsLFTypePQ() noexcept { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
+		inline bool IsLFTypePQ() const { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
+		inline bool IsLFTypePV() const 
+		{ 
+			return m_eLFNodeType == eLFNodeType::LFNT_PV || 
+				   m_eLFNodeType == eLFNodeType::LFNT_PVQMAX || 
+				   m_eLFNodeType == eLFNodeType::LFNT_PVQMIN;
+		}
 
 		void SetMatrixRow(ptrdiff_t nMatrixRow) noexcept { m_nMatrixRow = nMatrixRow; }
 

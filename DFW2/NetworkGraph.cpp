@@ -297,11 +297,11 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 			// и узел включен
 			if (pNode->IsStateOn())
 			{
-				// отключаем узел с признаком, что его состояние изменилось внутренней командой фреймворка
-				pNode->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
-				pNode->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszNodeTripDueToZone, pNode->GetVerbalName()));
-				// считаем количество отключенных узлов
-				nDeenergizedCount++;
+			// отключаем узел с признаком, что его состояние изменилось внутренней командой фреймворка
+			pNode->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+			pNode->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszNodeTripDueToZone, pNode->GetVerbalName()));
+			// считаем количество отключенных узлов
+			nDeenergizedCount++;
 			}
 		}
 	}
@@ -317,7 +317,7 @@ void CDynaNodeBase::MarkZoneEnergized()
 	{
 		// проходим по связям с генераторами
 		const CLinkPtrCount* const pLink{ GetLink(1) };
-		CDevice  **ppGen(nullptr);
+		CDevice** ppGen(nullptr);
 		while (pLink->In(ppGen))
 		{
 			const auto& pGen{ static_cast<CDynaPowerInjector*>(*ppGen) };
@@ -350,7 +350,7 @@ void CDynaNodeContainer::DumpNodeIslands(NODEISLANDMAP& Islands)
 {
 	for (auto&& supernode : Islands)
 	{
-		m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandOfSuperNode , supernode.first->GetVerbalName()));
+		m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandOfSuperNode, supernode.first->GetVerbalName()));
 		for (auto&& slavenode : supernode.second)
 			m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("--> {}", slavenode->GetVerbalName()));
 	}
@@ -372,7 +372,7 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 
 	Islands.clear();	// очищаем результат
 	std::stack<CDynaNodeBase*> Stack;
-	
+
 	// вырабатываем сет заданных узлов
 	while (!JoinableNodes.empty())
 	{
@@ -380,19 +380,27 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 		// если нет - то PV
 		auto Slack = JoinableNodes.begin();
 		// ищем узел для построения суперузла в порядке базисный, PV, PQ
-		for (auto it = JoinableNodes.begin() ; it != JoinableNodes.end() ; it++)
+		for (auto it = JoinableNodes.begin(); it != JoinableNodes.end(); it++)
 		{
 			// пропускаем нагрузочные (первый уже есть)
 			if (it->first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_PQ)
-				continue; 
+				continue;
 			else if (it->first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			{
 				// если нашли базисный - сразу берем его
 				Slack = it;
 				break;
 			}
-			else // остались только PV-узлы, выбираем текущий но ждем базисного
-				Slack = it;
+			else // остались только PV-узлы, выбираем текущий по наиболее широкому диапазону
+			{
+				if (Slack->first->IsLFTypePV())
+				{
+					if ((Slack->first->LFQmax - Slack->first->LFQmin) < (it->first->LFQmax - it->first->LFQmin))
+						Slack = it;
+				}
+				else
+					Slack = it;
+			}
 		}
 
 		// вставляем первый узел как основу для острова

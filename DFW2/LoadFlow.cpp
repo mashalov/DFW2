@@ -264,7 +264,7 @@ void CLoadFlow::Start()
 		const auto& pNode{ pMatrixInfo->pNode };
 		const CLinkPtrCount* const pNodeLink{ pNode->GetSuperLink(0) };
 		CDevice** ppDevice{ nullptr };
-		double QrangeMax{ -1.0 };
+		double QrangeMax{ pNode->LFQmax - pNode->LFQmin };
 
 		while (pNodeLink->In(ppDevice))
 		{
@@ -301,9 +301,9 @@ void CLoadFlow::Start()
 				}
 				else
 				{
-					double Qrange = pSlaveNode->LFQmax - pSlaveNode->LFQmin;
+					const double Qrange{ pSlaveNode->LFQmax - pSlaveNode->LFQmin };
 					// выбираем заданное напряжение по узлу с максимальным диапазоном Qmin/Qmax
-					if (QrangeMax < 0 || QrangeMax < Qrange)
+					if (QrangeMax < Qrange)
 					{
 						pNode->LFVref = pSlaveNode->LFVref;
 						QrangeMax = Qrange;
@@ -314,6 +314,23 @@ void CLoadFlow::Start()
 		// инициализируем суперузел
 		pNode->StartLF(m_Parameters.m_bFlat, m_Parameters.m_Imb);
 		// корректируем неуправляемую генерацию
+
+		pNode->DebugLog(fmt::format("{} G[{},{}] L[{},{}] Qlim[{},{}] Vref {} Uncontrolled[{},{}]",
+			pNode->GetId(),
+			pNode->Pgr, pNode->Qgr,
+			pNode->Pnr, pNode->Qnr,
+			pNode->LFQmin, pNode->LFQmax,
+			pNode->LFVref,
+			pMatrixInfo->UncontrolledP, pMatrixInfo->UncontrolledQ
+		));
+
+		for (VirtualBranch* pBranch{ pNode->m_VirtualBranchBegin }; pBranch < pNode->m_VirtualBranchEnd; pBranch++)
+		{
+			const auto& pOppNode{ pBranch->pNode };
+			pNode->DebugLog(fmt::format("{} y={}", pBranch->pNode->GetId(), pBranch->Y));
+		}
+
+
 		switch (pNode->m_eLFNodeType)
 		{
 		case CDynaNodeBase::eLFNodeType::LFNT_BASE:
@@ -468,9 +485,6 @@ void CLoadFlow::Seidell()
 			GetNodeImb(pMatrixInfo);
 			cplx Unode(pNode->Vre, pNode->Vim);
 
-			// для всех узлов кроме БУ обновляем статистику итерации
-			pNodes->m_IterationControl.Update(pMatrixInfo);
-
 			double Q{ Qe + pNode->Qgr };	// расчетная генерация в узле
 
 			cplx I1{ dStep / std::conj(Unode) / pNode->YiiSuper };
@@ -478,6 +492,8 @@ void CLoadFlow::Seidell()
 			switch (pNode->m_eLFNodeType)
 			{
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
+				pNodes->m_IterationControl.Update(pMatrixInfo);
+
 				// если узел на верхнем пределе и напряжение больше заданного
 				if (it->NodeVoltageViolation() > m_Parameters.m_dVdifference)
 				{
@@ -519,6 +535,8 @@ void CLoadFlow::Seidell()
 				}
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
+				pNodes->m_IterationControl.Update(pMatrixInfo);
+
 				// если узел на нижнем пределе и напряжение меньше заданного
 				if (it->NodeVoltageViolation() < -m_Parameters.m_dVdifference)
 				{
@@ -561,6 +579,7 @@ void CLoadFlow::Seidell()
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PV:
 			{
+				pNodes->m_IterationControl.Update(pMatrixInfo);
 				if (bPVPQSwitchEnabled)
 				{
 					// PV-узлы переключаем если есть разрешение (на первых итерациях переключение блокируется, можно блокировать по небалансу)
@@ -615,31 +634,10 @@ void CLoadFlow::Seidell()
 			break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
 			{
-				/*
-				double dP = 0.0;// pNode->Pnr - pNode->Pgr - pNode->V * pNode->V * pNode->YiiSuper.real() - pMatrixInfo->UncontrolledP;
-				double dQ = 0.0;// pNode->Qnr - pNode->Qgr + pNode->V * pNode->V * pNode->YiiSuper.imag() - pMatrixInfo->UncontrolledQ;
-				cplx Unode(pNode->Vre, pNode->Vim);
-				for (VirtualBranch *pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
-				{
-					CDynaNodeBase *pOppNode = pBranch->pNode;
-					cplx mult = cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
-					dP += mult.real();
-					dQ += mult.imag();
-				}
-				cplx Sl = cplx(pNode->Pnr, -pNode->Qnr);
-				cplx Ysl = Sl / conj(Unode) / Unode;
-				cplx newU = (cplx(- pNode->Pgr - pMatrixInfo->UncontrolledP, -(- pNode->Qgr - pMatrixInfo->UncontrolledQ)));
-				newU /= conj(Unode);
-				newU -= cplx(dP, dQ);
-				newU /= (pNode->YiiSuper - Ysl);
-				pNode->Vre = newU.real();
-				pNode->Vim = newU.imag();
-				*/
-
-				cplx dU = I1 * cplx(Pe, -Qe);
+				pNodes->m_IterationControl.Update(pMatrixInfo);
+				cplx dU{ I1 * cplx(Pe, -Qe) };
 				pNode->Vre += dU.real();
 				pNode->Vim += dU.imag();
-
 			}
 			break;
 			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
@@ -1151,7 +1149,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 					// проверяем ограничения по реактивной мощности
 					if (pGen->LFQmin > pGen->LFQmax)
 					{
-						pGen->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongGeneratirQlimitsFixed,
+						pGen->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszWrongGeneratorQlimitsFixed,
 							pGen->LFQmin,
 							pGen->LFQmax,
 							pGen->LFQmax));

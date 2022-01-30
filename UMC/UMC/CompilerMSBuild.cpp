@@ -181,7 +181,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	// генерируем командную строку msbuild
 	std::wstring commandLine = fmt::format(L"\"{}\"", MSBuildPath);
 
-	std::wstring commandLineArgs = fmt::format(L" /p:Platform={} /p:Configuration={} /p:TargetName={} /p:OutDir=\"{}\" /p:DFW2Include=\"{}\"  \"{}\"",
+	std::wstring commandLineArgs = fmt::format(L" /p:Platform={} /p:Configuration={} /p:TargetName={} /p:OutDir=\"{}\\\\\" /p:DFW2Include=\"{}\\\\\"  \"{}\"",
 		Platform,
 		Configuration,
 		TargetName,
@@ -196,14 +196,20 @@ void CCompilerMSBuild::CompileWithMSBuild()
 
 	std::list<std::wstring> listConsole;
 
-	//std::cout << utf8_encode(commandLine);
+	if (messageCallBacks.Debug)
+		messageCallBacks.Debug(fmt::format("MSBuild using : {}", utf8_encode(commandLine)));
 
 	DWORD dwResult(RunWindowsConsole(commandLine, WorkingFolder, listConsole));
 
 	if (dwResult != 0)
 	{
 		for (auto& l : listConsole)
-			std::cout << utf8_encode(l) << std::endl;
+		{
+			const std::string utf8message{ utf8_encode(l) };
+			std::cout << utf8message << std::endl;
+			if (messageCallBacks.Debug)
+				messageCallBacks.Debug(utf8message);
+		}
 		pTree->Error("Ошибка компиляции MSBuild");
 	}
 	else
