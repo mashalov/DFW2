@@ -7,6 +7,22 @@
 #include "iomanip"
 namespace DFW2
 {
+	template<typename T, std::size_t Align>
+	struct aligned_unique_ptr : public std::unique_ptr<T, void(*)(T*)>
+	{
+		using ptrT = std::unique_ptr<T, void(*)(T*)>;
+		aligned_unique_ptr() : ptrT(nullptr, aligned_unique_ptr::destroy) { }
+		aligned_unique_ptr(std::size_t len) : ptrT(reinterpret_cast<T*>(_mm_malloc(sizeof(T) * len, Align)), aligned_unique_ptr::destroy)
+		{
+			const auto p{ ptrT::get() };
+			std::fill(p, p + len, T{});
+		}
+		static void destroy(T* p)
+		{
+			_mm_free(p);
+		}
+	};
+
 	template <typename T> class KLUFunctions;
 
 	// Instantiate KLU function wrappers based on matrix element type
@@ -211,12 +227,15 @@ namespace DFW2
 	class KLUWrapper
 	{
 	protected:
-		std::unique_ptr<double[]>	 pAx,		// данные матрицы якоби
-									 pb,		// вектор правой части
+		using vector_aligned_double = aligned_unique_ptr<double, 128>;
+
+		std::unique_ptr<double[]>	 pAx;		// данные матрицы якоби
+		vector_aligned_double		 pb,		// вектор правой части
 									 pRefine;	// вектор уточнения
 
+
 		std::unique_ptr<ptrdiff_t[]> pAi,		// номера строк
-									 pAp;		// номера столбцов
+								     pAp;		// номера столбцов
 		ptrdiff_t m_nMatrixSize = 0;
 		ptrdiff_t m_nNonZeroCount = 0;
 		ptrdiff_t m_nAnalyzingsCount = 0;
@@ -288,12 +307,12 @@ namespace DFW2
 			m_nMatrixSize = nMatrixSize;
 			m_nNonZeroCount = nNonZeroCount;
 			pAx = std::make_unique<double[]>(m_nNonZeroCount * doubles_count<T>::count);			// числа матрицы
-			pb = std::make_unique<double[]>(m_nMatrixSize * doubles_count<T>::count);				// вектор правой части
+			pb = vector_aligned_double(m_nMatrixSize * doubles_count<T>::count);					// вектор правой части
 
 			// вектор уточнения 
 			// если уже был получен ранее - обновляем его размерность
-			if(pRefine)
-				pRefine = std::make_unique<double[]>(3 * m_nMatrixSize * doubles_count<T>::count);		
+			if (pRefine)
+				pRefine = vector_aligned_double(3 * m_nMatrixSize * doubles_count<T>::count);
 			pAi = std::make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);									// строки матрицы
 			pAp = std::make_unique<ptrdiff_t[]>(m_nNonZeroCount);									// столбцы матрицы
 			pSymbolic.reset();
@@ -308,7 +327,7 @@ namespace DFW2
 		inline double* Ax() { return pAx.get(); }
 		inline const double* Ax() const { return pAx.get(); }
 		inline double* B() { return pb.get(); }
-		inline const double*  const B() const { return pb.get(); }
+		inline const double* const B() const { return pb.get(); }
 		inline ptrdiff_t* Ai() { return pAi.get(); }
 		inline ptrdiff_t* Ap() { return pAp.get(); }
 		inline const ptrdiff_t* Ai() const { return pAi.get(); }
@@ -330,7 +349,7 @@ namespace DFW2
 		{
 			if (!Analyzed())
 				Analyze();
-			pNumeric = std::make_unique<KLUNumeric>(KLUFunctions<T>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon) , pCommon);
+			pNumeric = std::make_unique<KLUNumeric>(KLUFunctions<T>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon), pCommon);
 			if (!Factored())
 				throw dfw2error(fmt::format("{}::KLU_factor {}", KLUWrapperName(), KLUErrorDescription()));
 			m_nFactorizationsCount++;
@@ -362,9 +381,9 @@ namespace DFW2
 		{
 			if (!Analyzed())
 				Analyze();
-			if(!Factored())
+			if (!Factored())
 				Factor();
-			if(!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
+			if (!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
@@ -375,8 +394,8 @@ namespace DFW2
 			double* pbEnd{ pb.get() + MatrixSize() };
 
 			// если не был получен - создаем
-			if(!pRefine)
-				pRefine = std::make_unique<double[]>(3 * m_nMatrixSize * doubles_count<T>::count);
+			if (!pRefine)
+				pRefine = vector_aligned_double(3 * m_nMatrixSize * doubles_count<T>::count);
 
 			double* pR1{ pRefine.get() };			// правая часть СЛУ (b)
 			double* pR2{ pR1 + MatrixSize() };		// исходное решение СЛУ (x)
@@ -392,7 +411,7 @@ namespace DFW2
 
 			double r{ 0.0 };
 			ptrdiff_t nMaxIndex{ 0 };
-			
+
 			for (ptrdiff_t m = 0; m < 5; m++)
 			{
 				pR1 = pRefine.get();
@@ -449,7 +468,7 @@ namespace DFW2
 
 		double Rcond()
 		{
-			if(!KLUFunctions<T>::TKLU_rcond(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
+			if (!KLUFunctions<T>::TKLU_rcond(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_rcond {}", KLUWrapperName(), KLUErrorDescription()));
 			return pCommon.rcond;
 		}
@@ -487,7 +506,7 @@ namespace DFW2
 			return bmax;
 		}
 
-		csi Multiply(const double *x, double* b)
+		csi Multiply(const double* x, double* b)
 		{
 			// формируем матрицу в виде пригодном для умножения на вектор
 			cs Aj;
