@@ -221,10 +221,10 @@ namespace DFW2
 	// правая часть уравнения
 	struct RightVector : RightVectorTotal
 	{
-		double Nordsiek[3];												// вектор Nordsieck по переменной до 2 порядка
+		alignas (32) double Nordsiek[4];								// вектор Nordsieck по переменной до 2 порядка
 		double b;														// ошибка на итерации Ньютона
 		double Error;													// ошибка корректора
-		double SavedNordsiek[3];										// сохраненные перед шагом Nordsieck и ошибка 
+		alignas (32) double SavedNordsiek[3];							// сохраненные перед шагом Nordsieck и ошибка 
 		double SavedError;												// предыдущего шага
 		double Tminus2Value;											// значение на пред-предыдыущем шаге для реинита Nordsieck
 		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть

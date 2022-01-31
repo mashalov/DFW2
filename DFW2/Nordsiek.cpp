@@ -1,5 +1,9 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
+#include <immintrin.h>
+
+
+#define _AVX2
 
 
 using namespace DFW2;
@@ -161,12 +165,16 @@ void CDynaModel::RestoreNordsiek()
 		// в текущий
 		while (pVectorBegin < pVectorEnd)
 		{
-			double *pN = pVectorBegin->Nordsiek;
-			double *pS = pVectorBegin->SavedNordsiek;
-			*pN = *pS; pS++; pN++;
-			*pN = *pS; pS++; pN++;
-			*pN = *pS; pS++; pN++;
 
+#ifdef _AVX2
+			_mm256_store_pd(pVectorBegin->Nordsiek, _mm256_load_pd(pVectorBegin->SavedNordsiek));
+#else
+			double* pN = pVectorBegin->Nordsiek;
+			double* pS = pVectorBegin->SavedNordsiek;
+			*pN = *pS; pS++; pN++;
+			*pN = *pS; pS++; pN++;
+			*pN = *pS; pS++; pN++;
+#endif
 			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
 			pVectorBegin->Error = pVectorBegin->SavedError;
 
@@ -295,7 +303,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	// обновление по [Lsode 2.76]
 
 	// делаем локальную копию коэффициентов метода для текущего порядка
-	double LocalMethodl[2][3];
+	alignas(32) double LocalMethodl[2][3];
 	std::copy(&Methodl[sc.q - 1][0], &Methodl[sc.q - 1][3], &LocalMethodl[0][0]);
 	std::copy(&Methodl[sc.q + 1][0], &Methodl[sc.q + 1][3], &LocalMethodl[1][0]);
 
@@ -303,17 +311,24 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	{
 		// выбираем коэффициент метода по типу уравнения EquationType
 		const double *lm = LocalMethodl[pVectorBegin->EquationType];
-		double dError = pVectorBegin->Error;
+		const double dError{ pVectorBegin->Error };
+
+#ifdef _AVX2
+		const __m256d err = _mm256_set1_pd(dError);
+		__m256d lmms = _mm256_load_pd(lm);
+		__m256d nord = _mm256_load_pd(pVectorBegin->Nordsiek);
 #ifdef USE_FMA
-		pVectorBegin->Nordsiek[0] = std::fma(dError, *lm, pVectorBegin->Nordsiek[0]);	lm++;
-		pVectorBegin->Nordsiek[1] = std::fma(dError, *lm, pVectorBegin->Nordsiek[1]);	lm++;
-		pVectorBegin->Nordsiek[2] = std::fma(dError, *lm, pVectorBegin->Nordsiek[2]); 
+		nord = _mm256_fmadd_pd(err, lmms, nord);
+#else
+		lmms = _mm256_mul_pd(lmms, err);
+		nord = _mm256_add_pd(nord, lmms);
+#endif
+		_mm256_store_pd(pVectorBegin->Nordsiek, nord);
 #else
 		pVectorBegin->Nordsiek[0] += dError * *lm;	lm++;
 		pVectorBegin->Nordsiek[1] += dError * *lm;	lm++;
 		pVectorBegin->Nordsiek[2] += dError * *lm;	
 #endif
-
 		// подавление рингинга
 		if (bSuprressRinging)
 		{
@@ -344,9 +359,13 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 		pVectorBegin->Tminus2Value = pVectorBegin->SavedNordsiek[0];
 
 		// и сохраняем текущее значение переменных состояния перед новым шагом
+#ifdef _AVX2
+		_mm256_store_pd(pVectorBegin->SavedNordsiek, _mm256_load_pd(pVectorBegin->Nordsiek));
+#else
 		pVectorBegin->SavedNordsiek[0] = pVectorBegin->Nordsiek[0];
 		pVectorBegin->SavedNordsiek[1] = pVectorBegin->Nordsiek[1];
 		pVectorBegin->SavedNordsiek[2] = pVectorBegin->Nordsiek[2];
+#endif
 
 		pVectorBegin->SavedError = dError;
 
@@ -409,18 +428,25 @@ void CDynaModel::SaveNordsiek()
 void CDynaModel::RescaleNordsiek(const double r)
 {
 	RightVector* pVectorBegin{ pRightVector };
-	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
+	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 	
 	// расчет выполняется путем умножения текущего Nordsieck на диагональную матрицу C[q+1;q+1]
 	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
+
+	const double crs[4] = { 1.0, r, (sc.q == 2) ? r * r : 1.0 , 1.0 };
+#ifdef _AVX2
+	const __m256d rs = _mm256_load_pd(crs);
+#endif
 	while (pVectorBegin < pVectorEnd)
 	{
-		double R{ 1.0 };
+#ifdef _AVX2
+		__m256d nord = _mm256_load_pd(pVectorBegin->Nordsiek);
+		nord = _mm256_mul_pd(nord, rs);
+		_mm256_store_pd(pVectorBegin->Nordsiek,nord);
+#else
 		for (ptrdiff_t j = 1; j < sc.q + 1; j++)
-		{
-			R *= r;
-			pVectorBegin->Nordsiek[j] *= R;
-		}
+			pVectorBegin->Nordsiek[j] *= crs[j];
+#endif
 		pVectorBegin++;
 	}
 
