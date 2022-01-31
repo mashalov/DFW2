@@ -5,6 +5,9 @@
 #include "cs.h"
 #include "fstream"
 #include "iomanip"
+#ifndef _MSC_VER
+#include "mm_malloc.h"
+#endif
 namespace DFW2
 {
 	template<typename T, std::size_t Align>

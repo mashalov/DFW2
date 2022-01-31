@@ -730,7 +730,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 					pCurrentZeroBranch = pNode->AddZeroBranch(pBranch);
 
 				// достаем из суперссылки на узлы следующий узел суперузла
-				pSlave = pSlaveNodeLink->In(pSlaveNode) ? pSlaveNode : nullptr;
+				pSlave = pSlaveNodeLink->In(pSlaveNode) ? static_cast<CDynaNodeBase*>(pSlaveNode) : nullptr;
 			}
 
 			// приводим ссылки на нулевые ветви к нужному формату для последующей обработки в циклах
