@@ -263,25 +263,15 @@ void CDynaNodeZeroLoadFlow::BuildRightHand(CDynaModel* pDynaModel)
 
 		// инъекция от "шунта" индикатора
 		Is += pNode->ZeroLF.Yii * cplx(pNode->ZeroLF.vRe, pNode->ZeroLF.vIm);
-#ifdef USE_FMA
-		Re = std::fma(pNode->ZeroLF.vRe, pNode->ZeroLF.Yii, Re);
-		Im = std::fma(pNode->ZeroLF.vIm, pNode->ZeroLF.Yii, Im);
-#else
 		//Re += pNode->ZeroLF.vRe * pNode->ZeroLF.Yii;
 		//Im += pNode->ZeroLF.vIm * pNode->ZeroLF.Yii;
-#endif
 
 		// далее добавляем "токи" от индикаторов напряжения
 		for (const VirtualBranch* vb = ZeroNode.pVirtualZeroBranchesBegin; vb < ZeroNode.pVirtualZeroBranchesEnd; vb++)
 		{
 			Is -= vb->Y * cplx(vb->pNode->ZeroLF.vRe, vb->pNode->ZeroLF.vIm);
-#ifdef USE_FMA
-			Re = std::fma(-vb->Y.real(), vb->pNode->ZeroLF.vRe, Re);
-			Im = std::fma(-vb->Y.real(), vb->pNode->ZeroLF.vIm, Im);
-#else
 			//Re -= vb->Y.real() * vb->pNode->ZeroLF.vRe;
 			//Im -= vb->Y.real() * vb->pNode->ZeroLF.vIm;
-#endif
 		}
 
 		//_ASSERTE(std::abs(Re - Is.real()) < DFW2_EPSILON && std::abs(Im - Is.imag()) < DFW2_EPSILON);
