@@ -68,4 +68,66 @@ namespace MathUtils
 			return *std::min_element(args.begin(), args.end(), [](const auto& lhs, const auto& rhs) { return std::abs(lhs) < std::abs(rhs); });
 		}
 	};
+
+	class StraightSummation
+	{
+	protected:
+		double m_sum = 0.0;
+	public:
+		void Reset()
+		{
+			m_sum = 0.0;
+		}
+		void Add(double value)
+		{
+			m_sum += value;
+		}
+		double Finalize() 
+		{
+			return m_sum;
+		}
+	};
+
+	class KahanSummation : public StraightSummation
+	{
+	protected:
+		volatile double m_kahan = 0.0;
+	public:
+		void Reset()
+		{
+			StraightSummation::Reset();
+			m_kahan = 0.0;
+		}
+		void Add(double value)
+		{
+			volatile double y{ value - m_kahan };
+			volatile double t{ m_sum + y };
+			m_kahan = (t - m_sum) - y;
+			m_sum = t;
+		}
+	};
+
+	class NeumaierSummation : public StraightSummation
+	{
+	protected:
+		volatile double m_neumaier = 0.0;
+	public:
+		void Reset()
+		{
+			StraightSummation::Reset();
+			m_neumaier = 0.0;
+		}
+		void Add(double value)
+		{
+			volatile double t{ m_sum + value };
+			m_neumaier += (std::abs(m_sum) >= std::abs(value)) ? ((m_sum - t) + value) : ((value - t) + m_sum);
+			m_sum = t;
+		}
+		double Finalize()
+		{
+			m_sum += m_neumaier;
+			m_neumaier = 0.0;
+			return m_sum;
+		}
+	};
 };

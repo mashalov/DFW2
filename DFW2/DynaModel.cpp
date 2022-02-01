@@ -521,15 +521,13 @@ bool CDynaModel::InitEquations()
 	bool bRes = UpdateExternalVariables(); 
 	if (bRes)
 	{
-		RightVector* pVectorBegin{ pRightVector };
-		RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
+		const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
-		while (pVectorBegin < pVectorEnd)
+		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 		{
 			//pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
 			pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0] = *pVectorBegin->pValue;
 			PrepareNordsiekElement(pVectorBegin);
-			pVectorBegin++;
 		}
 
 		double dCurrentH{ sc.m_dCurrentH };
@@ -560,8 +558,7 @@ bool CDynaModel::NewtonUpdate()
 	sc.m_bNewtonDisconverging = false;
 	sc.m_bNewtonStepControl = false;
 
-	RightVector* pVectorBegin{ pRightVector };
-	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
+	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
@@ -577,7 +574,8 @@ bool CDynaModel::NewtonUpdate()
 	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	const double* const pB{ klu.B() };
-	while (pVectorBegin < pVectorEnd)
+
+	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 	{
 		const double& db = *(pB + (pVectorBegin - pRightVector));
 		pVectorBegin->Error += db;
@@ -609,7 +607,6 @@ bool CDynaModel::NewtonUpdate()
 #endif
 			pCt->AddError(dError);
 		}
-		pVectorBegin++;
 	}
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
@@ -691,8 +688,7 @@ bool CDynaModel::NewtonUpdate()
 
 						if (lambda > lambdamin && lambda < 1.0)
 						{
-							pVectorBegin = pRightVector;
-							while (pVectorBegin < pVectorEnd)
+							for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 							{
 								double& db = pRb[pVectorBegin - pRightVector];
 								pVectorBegin->Error -= db;
@@ -700,7 +696,6 @@ bool CDynaModel::NewtonUpdate()
 								double l0 = pVectorBegin->Error;
 								l0 *= Methodl0[pVectorBegin->EquationType];
 								*pVectorBegin->pValue = pVectorBegin->Nordsiek[0] + l0;
-								pVectorBegin++;
 							}
 						}
 						else
@@ -1152,36 +1147,18 @@ bool CDynaModel::Step()
 
 }
 
-void CDynaModel::ConvergenceTest::AddError(double dError)
-{
-	// Три варианта расчета суммы погрешностей
-	nVarsCount++;
-	AddErrorStraight(dError * dError);
-	//AddErrorKahan(dError);
-	//AddErrorNeumaier(dError);		// если используется Neumaier - в  FinalizeSum должна быть раскомментирована сумма ошибки с корректором
-}
-
-void CDynaModel::ConvergenceTest::FinalizeSum()
-{
-	//dErrorSum += dKahanC;
-}
-
-
-
 double CDynaModel::GetRatioForCurrentOrder()
 {
 	double r{ 0.0 };
 
-	RightVector* pVectorBegin{ pRightVector };
-	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-
+	const  RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
 	sc.Integrator.Reset();
 
 	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
-	while (pVectorBegin < pVectorEnd)
+	for(RightVector* pVectorBegin = pRightVector ; pVectorBegin < pVectorEnd; pVectorBegin++)
 	{
 		if (pVectorBegin->Atol > 0)
 		{
@@ -1189,19 +1166,15 @@ double CDynaModel::GetRatioForCurrentOrder()
 #ifdef USE_FMA
 			double dNewValue = std::fma(pVectorBegin->Error, Methodl0[pVectorBegin->EquationType], pVectorBegin->Nordsiek[0]);
 #else
-			double dNewValue = pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType];
+			const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
 #endif
-
-			double dError = pVectorBegin->GetWeightedError(dNewValue);
-
+			const double dError{ pVectorBegin->GetWeightedError(dNewValue) };
 			sc.Integrator.Weighted.Update(pVectorBegin, dError);
-
-			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
+			struct ConvergenceTest* const pCt{ ConvTest + pVectorBegin->EquationType };
 			pCt->AddError(dError);
 		}
-		pVectorBegin++;
 	}
-	// Neumaier addition final phase
+
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
@@ -1233,17 +1206,16 @@ double CDynaModel::GetRatioForCurrentOrder()
 
 double CDynaModel::GetRatioForHigherOrder()
 {
-	double rUp = 0.0;
+	double rUp{ 0.0 };
 	_ASSERTE(sc.q == 1);
 
-	RightVector* pVectorBegin{ pRightVector };
-	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
+	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 	
 	const double Methodl1[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
 
-	while (pVectorBegin < pVectorEnd)
+	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 	{
 		if (pVectorBegin->Atol > 0) 
 		{
@@ -1253,17 +1225,16 @@ double CDynaModel::GetRatioForHigherOrder()
 			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Error - pVectorBegin->SavedError, dNewValue) * Methodl1[pVectorBegin->EquationType];
 			pCt->AddError(dError);
 		}
-		pVectorBegin++;
 	}
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
 
-	double DqUp0 = ConvTest[DET_ALGEBRAIC].dErrorSum    / Methodl[1][3];		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
-	double DqUp1 = ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[3][3];		// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
+	const double DqUp0{ ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[1][3] };		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
+	const double DqUp1{ ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[3][3] };		// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
 
-	double rUp0 = pow(DqUp0, -1.0 / (sc.q + 2));
-	double rUp1 = pow(DqUp1, -1.0 / (sc.q + 2));
+	const double rUp0{ pow(DqUp0, -1.0 / (sc.q + 2)) };
+	const double rUp1{ pow(DqUp1, -1.0 / (sc.q + 2)) };
 
 	rUp = (std::min)(rUp0, rUp1);
 
@@ -1272,34 +1243,32 @@ double CDynaModel::GetRatioForHigherOrder()
 
 double CDynaModel::GetRatioForLowerOrder()
 {
-	double rDown = 0.0;
+	double rDown{ 0.0 };
 	_ASSERTE(sc.q == 2);
-	RightVector* pVectorBegin{ pRightVector };
-	RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
+	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
-	while (pVectorBegin < pVectorEnd)
+	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 	{
 		if (pVectorBegin->Atol > 0)
 		{
-			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
-			double dNewValue = *pVectorBegin->pValue;
+			struct ConvergenceTest* const pCt{ ConvTest + pVectorBegin->EquationType };
+			const double dNewValue{ *pVectorBegin->pValue };
 			// method consts lq can be 1 only
-			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Nordsiek[2], dNewValue);
+			const double dError{ pVectorBegin->GetWeightedError(pVectorBegin->Nordsiek[2], dNewValue) };
 			pCt->AddError(dError);
 		}
-		pVectorBegin++;
 	}
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
 
-	double DqDown0 = ConvTest[DET_ALGEBRAIC].dErrorSum;
-	double DqDown1 = ConvTest[DET_DIFFERENTIAL].dErrorSum;
+	const double DqDown0{ ConvTest[DET_ALGEBRAIC].dErrorSum };
+	const double DqDown1{ ConvTest[DET_DIFFERENTIAL].dErrorSum };
 
-	double rDown0 = pow(DqDown0, -1.0 / sc.q);
-	double rDown1 = pow(DqDown1, -1.0 / sc.q);
+	const double rDown0{ pow(DqDown0, -1.0 / sc.q) };
+	const double rDown1{ pow(DqDown1, -1.0 / sc.q) };
 
 	rDown = (std::min)(rDown0, rDown1);
 	return rDown;
@@ -1424,10 +1393,10 @@ void CDynaModel::LeaveDiscontinuityMode()
 
 double CDynaModel::CheckZeroCrossing()
 {
-	double Kh = 1.0;
+	double Kh{ 1.0 };
 	for (auto&& it : m_DeviceContainers)
 	{
-		double Khi = it->CheckZeroCrossing(this);
+		double Khi{ it->CheckZeroCrossing(this) };
 		if (Khi < Kh)
 		{
 			Kh = Khi;
@@ -1471,8 +1440,7 @@ void CDynaModel::GoodStep(double rSame)
 		case 1:
 		{
 			// если были на первом порядке, пробуем шаг для второго порядка
-			double rHigher = GetRatioForHigherOrder() / 1.4;
-
+			const double rHigher{ GetRatioForHigherOrder() / 1.4 };
 			// call before step change
 			UpdateNordsiek();
 
@@ -1527,7 +1495,7 @@ void CDynaModel::GoodStep(double rSame)
 			// запоминаем коэффициент увеличения только для репорта
 			// потому что sc.dFilteredStep изменится в последующем 
 			// RescaleNordsiek
-			double k = sc.dFilteredStep;
+			const double k{ sc.dFilteredStep };
 			// рассчитываем новый шаг
 			SetH(sc.m_dCurrentH * sc.dFilteredStep);
 			// пересчитываем Nordsieck на новый шаг

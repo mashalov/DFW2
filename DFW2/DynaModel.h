@@ -24,6 +24,7 @@
 #include "Statistics.h"
 #include "Logger.h"
 #include "NodeMeasures.h"
+#include "MathUtils.h"
 
 namespace DFW2
 {
@@ -167,6 +168,8 @@ namespace DFW2
 
 		CDiscontinuities m_Discontinuities;
 
+		using summatorT = MathUtils::StraightSummation;
+
 		struct ConvergenceTest
 		{
 			ptrdiff_t nVarsCount;
@@ -176,13 +179,13 @@ namespace DFW2
 			double dCms;
 			double dOldCm;
 			double dErrorSums;
-			volatile double dKahanC;
+
+			summatorT summator;
 
 			void Reset()
 			{
-				dErrorSum = 0.0;
+				summator.Reset();
 				nVarsCount = 0;
-				dKahanC = 0.0;
 			}
 
 			void GetConvergenceRatio()
@@ -220,31 +223,16 @@ namespace DFW2
 				dOldCm = dCm;
 			}
 
-			void AddErrorNeumaier(double dError)
+			void AddError(double dError) 
 			{
-				volatile double t = dErrorSum + dError;
-				if (std::abs(dErrorSum) >= std::abs(dError))
-					dKahanC += (dErrorSum - t) + dError;
-				else
-					dKahanC += (dError - t) + dErrorSum;
-				dErrorSum = t;
+				nVarsCount++;
+				summator.Add(dError * dError);
 			}
 
-			void AddErrorKahan(double dError)
+			void FinalizeSum()
 			{
-				volatile double y = dError - dKahanC;
-				volatile double t = dErrorSum + y;
-				dKahanC = (t - dErrorSum) - y;
-				dErrorSum = t;
+				dErrorSum = summator.Finalize();
 			}
-
-			void AddErrorStraight(double dError)
-			{
-				dErrorSum += dError;
-			}
-
-			void AddError(double dError);
-			void FinalizeSum();
 
 			// обработка диапазона тестов сходимости в массиве
 
@@ -463,7 +451,7 @@ namespace DFW2
 				volatile double ky = m_dCurrentH - KahanC;
 				volatile double temp = t0 + ky;
 				// предополагается, что шаг не может быть отменен
-				// и поэтому сумма Кэхэна обновляется
+				// и поэтому сумма Кэхэна обновляет ся
 				KahanC = (temp - t0) - ky;
 				t = temp;
 
