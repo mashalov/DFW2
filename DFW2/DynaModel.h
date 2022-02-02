@@ -130,7 +130,7 @@ namespace DFW2
 			static constexpr const char* m_cszGeneratorLessLRC = "GeneratorLessLRC";
 			static constexpr const char* m_cszLFImbalance = "LFImbalance";
 			static constexpr const char* m_cszLFFlat = "LFFlat";
-			static constexpr const char* m_cszLFStartup = "Startup";
+			static constexpr const char* m_cszLFStartup = "LFStartup";
 			static constexpr const char* m_cszLFSeidellStep = "SeidellStep";
 			static constexpr const char* m_cszLFSeidellIterations = "SeidellIterations";
 			static constexpr const char* m_cszLFEnableSwitchIteration = "EnableSwitchIteration";
@@ -147,6 +147,7 @@ namespace DFW2
 			static constexpr const char* m_cszNewtonMaxNorm = "NewtonMaxNorm";
 			static constexpr const char* m_cszMaxPVPQSwitches = "MaxPVPQSwitches";
 			static constexpr const char* m_cszPVPQSwitchPerIt = "PVPQSwitchesPerIteration";
+			static constexpr const char* m_cszLFStartupNames[3] = { "None","Seidell", "Tanh"};
 
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};

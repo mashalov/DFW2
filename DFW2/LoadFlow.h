@@ -16,11 +16,18 @@ namespace DFW2
 			Tanh
 		};
 
+		enum class eLoadFlowStartupMethod
+		{
+			None,
+			Seidell,
+			Tanh
+		};
+
 		struct LoadFlowParameters
 		{
 			double m_Imb = 1E-4;						// допустимый небаланс мощности
 			bool m_bFlat = false;						// плоский старт
-			bool m_bStartup = true;						// стартовый метод Зейделя
+			eLoadFlowStartupMethod m_Startup;			// стартовый метод 
 			double m_dSeidellStep = 1.0;				// шаг ускорения метода Зейделя	
 			ptrdiff_t m_nSeidellIterations = 17;		// количество итераций Зейделем
 			ptrdiff_t m_nEnableSwitchIteration = 2;		// номер итерации, с которой разрешается переключение PV-PQ
@@ -69,6 +76,7 @@ namespace DFW2
 		double Qgtanh(CDynaNodeBase* pNode);
 		void CalculateBranchFlows();
 		bool CheckNodeBalances();
+		void RestoreSuperNodes();
 
 		// возвращает true если узел учитывается в матрице якоби
 		static bool NodeInMatrix(const CDynaNodeBase* pNode);

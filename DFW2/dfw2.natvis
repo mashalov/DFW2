@@ -17,4 +17,12 @@
       <Item Name="[Index]" ExcludeView="simple">Index</Item>
     </Expand>
   </Type>
+
+  <Type Name="DFW2::LinkWalker&lt;*&gt;">
+    <DisplayString>{pointer}</DisplayString>
+    <Expand>
+      <ExpandedItem>*pointer</ExpandedItem>
+    </Expand>
+  </Type>
+  
 </AutoVisualizer>

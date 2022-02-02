@@ -189,9 +189,9 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_bDisableResultsWriter = true;
 
 		m_Parameters.m_bFlat = true;
-		m_Parameters.m_bStartup = true;
+		m_Parameters.m_Startup = CLoadFlow::eLoadFlowStartupMethod::Seidell;
 		m_Parameters.m_nEnableSwitchIteration = 5;
-		m_Parameters.m_Imb = 0.1 * GetAtol();
+		m_Parameters.m_Imb = 0.05 * GetAtol();
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга

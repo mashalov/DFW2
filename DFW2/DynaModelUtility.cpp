@@ -724,7 +724,10 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 
 	Serializer->AddProperty(m_cszLFImbalance, m_Imb);
 	Serializer->AddProperty(m_cszLFFlat, m_bFlat);
-	Serializer->AddProperty(m_cszLFStartup, m_bStartup);
+
+	Serializer->AddEnumProperty(m_cszLFStartup,
+		new CSerializerAdapterEnum(m_Startup, m_cszLFStartupNames));
+		
 	Serializer->AddProperty(m_cszLFSeidellStep, m_dSeidellStep);
 	Serializer->AddProperty(m_cszLFSeidellIterations, m_nSeidellIterations);
 	Serializer->AddProperty(m_cszLFEnableSwitchIteration, m_nEnableSwitchIteration);

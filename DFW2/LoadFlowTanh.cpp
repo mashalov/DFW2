@@ -7,13 +7,13 @@ using namespace DFW2;
 void CLoadFlow::NewtonTanh()
 {
 	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
-	int it(0);	// количество итераций
+	ptrdiff_t& it = pNodes->m_IterationControl.Number;
 
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
 
 	double g0(0.0), g1(0.1), lambda(1.0);
 
-	m_dTanhBeta = 50.0;
+	m_dTanhBeta = 5000.0;
 	m_NewtonStepRatio.m_dRatio = 0.0;
 
 	while (1)
@@ -26,12 +26,13 @@ void CLoadFlow::NewtonTanh()
 
 		pNodes->m_IterationControl.Reset();
 
+		_MatrixInfo* pMaxV{ nullptr };
 		// считаем небаланс по всем узлам кроме БУ
 		_MatrixInfo *pMatrixInfo = m_pMatrixInfo.get();
 		for (; pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
 		{
 			CDynaNodeBase *pNode = pMatrixInfo->pNode;
-			if(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
+			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
 				pNode->Qgr = Qgtanh(pNode);
 			GetNodeImb(pMatrixInfo);	// небаланс считается с учетом СХН
 			pNodes->m_IterationControl.Update(pMatrixInfo);

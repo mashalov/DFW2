@@ -236,7 +236,7 @@ void CLoadFlow::Start()
 	pNodes->CreateSuperNodesStructure();
 	// Рассчитываем проводимости узлов с устранением отрицательных сопротивлений, если
 	// используется метод Зейделя или без устранения в противном случае
-	pNodes->CalculateSuperNodesAdmittances(m_Parameters.m_bStartup);
+	pNodes->CalculateSuperNodesAdmittances(m_Parameters.m_Startup == CLoadFlow::eLoadFlowStartupMethod::Seidell);
 
 	// в режиме отладки запоминаем что было в узлах после расчета Rastr для сравнения результатов
 #ifdef _DEBUG
@@ -264,7 +264,6 @@ void CLoadFlow::Start()
 		const auto& pNode{ pMatrixInfo->pNode };
 		const CLinkPtrCount* const pNodeLink{ pNode->GetSuperLink(0) };
 		LinkWalker<CDynaNodeBase> pSlaveNode;
-		CDevice** ppDevice{ nullptr };
 		double QrangeMax{ pNode->LFQmax - pNode->LFQmin };
 
 		while (pNodeLink->In(pSlaveNode))
@@ -1063,50 +1062,40 @@ bool CLoadFlow::Run()
 		Start();
 		Estimate();
 
-		if (m_Parameters.m_bStartup)
-			Seidell();
-
-		if (0)
+		switch (m_Parameters.m_Startup)
 		{
+		case CLoadFlow::eLoadFlowStartupMethod::Seidell:
+			Seidell();
+			pNodes->CalculateSuperNodesAdmittances(false);
+			break;
+		case CLoadFlow::eLoadFlowStartupMethod::Tanh:
 			NewtonTanh();
-			CheckFeasible();
-			for (auto&& it : *pNodes)
-				static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
+			for (auto&& it : *pNodes) static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
+			break;
 		}
 
-		// если использовался стартовый метод, была коррекция 
-		// отрицательных сопротивлений, поэтому восстанавливаем
-		// исходные сопротивления
-		if (m_Parameters.m_bStartup)
-			pNodes->CalculateSuperNodesAdmittances(false);
-
-
-
-#ifdef _DEBUG
 		try
 		{
 			Newton();
+			RestoreSuperNodes();
+#ifdef _DEBUG
 			CompareWithRastr();
+#endif
 			// выводим сравнение с Растр до обмена СХН
 			DumpNodes();
 		}
 		catch (dfw2error&)
 		{
+			RestoreSuperNodes();
+#ifdef _DEBUG
 			CompareWithRastr();
+#endif
 			// выводим сравнение с Растр до обмена СХН
 			DumpNodes();
 			throw;
 		}
-#else
-		Newton();
-		// выводим сравнение с Растр до обмена СХН
-		DumpNodes();
-#endif
-
 
 		pNodes->SwitchLRCs(true);
-
-		//#ifdef _DEBUG
 
 		for (auto&& it : pNodes->m_DevVec)
 		{
@@ -1134,10 +1123,6 @@ bool CLoadFlow::Run()
 				pNode->GetPnrQnr();
 			}
 		}
-		//#endif
-
-
-
 
 		UpdateQToGenerators();
 		CheckFeasible();
@@ -1786,23 +1771,22 @@ void CLoadFlow::UpdateSupernodesPQ()
 					pNode->LFQmax));
 			}
 		}
-		pMatrixInfo->Restore();
 	}
 
 	if (!bAllOk)
 		throw dfw2error(CDFW2Messages::m_cszLFError);
+}
+
+void CLoadFlow::RestoreSuperNodes()
+{
+	for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoSlackEnd; pMatrixInfo++)
+		pMatrixInfo->Restore();
 
 	for (auto&& it : pNodes->m_DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 		if (!pNode->m_pSuperNodeParent)
-		{
-			/*// если узел не нагрузочный, обновляем расчетное значение реактивной мощности
-			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
-				pNode->Qg = pNode->IsStateOn() ? pNode->Qgr : 0.0;*/
-				// восстанавливаем исходные значения расчетной генерации и нагрузки по сохраненным Pg,Qg,Pn,Qn
 			GetPnrQnr(pNode);
-		}
 	}
 }
 
