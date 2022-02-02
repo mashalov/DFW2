@@ -362,10 +362,11 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	*/
 
 	// СМЗУ Северо-Запад
-	LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
+	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
 
 	// Test-9
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
+	//m_spRastr->NewFile(dfwPath.c_str());
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park_noexc.rst");
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park3c.rst");
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park4c.rst");
@@ -377,7 +378,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("d:\\downloads\\last_version_mdp_debug_1_New_calc2\\last_version_mdp_debug_1_New_calc2");
 	//LoadFile("d:\\downloads\\5_check_mdp_debug_1\\5_check_mdp_debug_4");
 	//LoadFile("d:\\downloads\\8_check_mdp_debug_1\\8_check_mdp_debug_1");
-	//LoadFile("d:\\downloads\\схемы\\10_check_mdp_debug_1_stable");
+	LoadFile("d:\\downloads\\схемы\\10_check_mdp_debug_1_stable");
 	//LoadFile("d:\\downloads\\схемы\\9_check_mdp_debug_1_unstable");
 
 

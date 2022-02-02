@@ -14,7 +14,7 @@ CLoadFlow::CLoadFlow(CDynaModel* pDynaModel) : m_pDynaModel(pDynaModel), m_Param
 bool CLoadFlow::NodeInMatrix(const CDynaNodeBase* pNode)
 {
 	// если тип узла не базисный и узел включен - узел должен войти в матрицу Якоби
-	return pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE && pNode->IsStateOn();
+	return (!pNode->IsLFTypeSlack()) && pNode->IsStateOn();
 }
 
 bool CDynaModel::LoadFlow()
@@ -45,7 +45,7 @@ void CLoadFlow::AllocateSupernodes()
 		// обновляем VreVim узла
 		pNode->UpdateVreVim();
 		// добавляем БУ в список БУ для дальнейшей обработки
-		if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+		if (pNode->IsLFTypeSlack())
 			SlackBuses.push_back(pNode);
 
 		// для узлов которые в матрице считаем количество ветвей
@@ -153,7 +153,7 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 	// для всех включенных и небазисных узлов
 	if (IsStateOn())
 	{
-		if (m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+		if (!IsLFTypeSlack())
 		{
 			// если у узла заданы пределы по реактивной мощности и хотя бы один из них ненулевой + задано напряжение
 			if (LFQmax > LFQmin && (std::abs(LFQmax) > ImbTol || std::abs(LFQmin) > ImbTol) && LFVref > 0.0)
@@ -293,7 +293,7 @@ void CLoadFlow::Start()
 				// считаем диапазон реактивной мощности суперзула
 				pNode->LFQmin += pSlaveNode->LFQmin;
 				pNode->LFQmax += pSlaveNode->LFQmax;
-				if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+				if (pNode->IsLFTypeSlack())
 				{
 					// если генераторный узел входит в базисный суперузел
 					// уставка по напряжению равна напряжению базисного узла
@@ -359,36 +359,129 @@ bool CLoadFlow::SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs)
 	return diffQ > 0.0;
 }
 
-// добавляет узел в очередь для Зейделя
-void CLoadFlow::AddToQueue(_MatrixInfo* pMatrixInfo, QUEUE& queue)
+void CLoadFlow::BuildSeidellOrder2(MATRIXINFO& SeidellOrder)
 {
-	// просматриваем список ветвей узла
-	for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
+	const ptrdiff_t NodeCount{ m_pMatrixInfoSlackEnd - m_pMatrixInfo.get() };
+	SeidellOrder.reserve(NodeCount);
+	QUEUE queue;
+
+	_MatrixInfo* pMatrixInfo;
+
+	for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo <= m_pMatrixInfoEnd; pMatrixInfo++)
+		pMatrixInfo->bVisited = false;
+
+	// в начало добавляем БУ
+	for (pMatrixInfo = m_pMatrixInfoSlackEnd - 1; pMatrixInfo >= m_pMatrixInfoEnd; pMatrixInfo--)
 	{
-		const auto& pOppNode{ pBranch->pNode };
-		// мы обходим узлы, но кроме данных узлов нам нужны данные матрицы, чтобы просматривать
-		// признак посещения
-		if (pOppNode->IsLFTypePQ() && pOppNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+		pMatrixInfo->bVisited = true;
+		queue.push_back(pMatrixInfo);
+		SeidellOrder.push_back(pMatrixInfo);
+	}
+
+	std::vector<VirtualBranch*> branches;
+	branches.reserve(NodeCount);
+
+	const auto OppMatrixInfo = [this](const CDynaNodeBase* pNode)
+	{
+		return &m_pMatrixInfo[pNode->A(0) / 2];
+	};
+
+	const auto SortOrder = [](const VirtualBranch* b1, const VirtualBranch* b2)
+	{
+		const auto& node1{ b1->pNode }, node2{ b2->pNode };
+
+		_ASSERTE(!node1->IsLFTypeSlack());
+		_ASSERTE(!node2->IsLFTypeSlack());
+
+		ptrdiff_t n1Weight{ node1->IsLFTypePV() ? 1 : 0 }, n2Weight{ node2->IsLFTypePV() ? 1: 0 };
+
+		n1Weight -= n2Weight;
+		if(n1Weight != 0)
+			return n1Weight > 0;
+
+		_ASSERTE(node1->m_eLFNodeType == node2->m_eLFNodeType);
+
+		// узлы имеют одинаковые типы
+		if (n2Weight)
 		{
-			_MatrixInfo* pOppMatrixInfo = &m_pMatrixInfo[pOppNode->A(0) / 2]; // находим оппозитный узел в матрице
-			_ASSERTE(pOppMatrixInfo->pNode == pOppNode);
-			// если оппозитный узел еще не был посещен, добавляем его в очередь и помечаем как посещенный
-			if (!pOppMatrixInfo->bVisited)
-			{
-				queue.push_back(pOppMatrixInfo);
-				pOppMatrixInfo->bVisited = true;
-			}
+			// оба PV
+			const double rangeDiff{ node1->LFQmax - node2->LFQmax - node1->LFQmin + node2->LFQmin };
+			if (rangeDiff != 0.0)
+				return rangeDiff > 0.0;
+		}
+
+		const double ydiff{ std::abs(b1->Y) - std::abs(b2->Y) };
+
+		if (ydiff != 0.0)
+			return ydiff > 0.0;
+
+		return node1->GetId() > node2->GetId();
+	};
+
+	while (!queue.empty())
+	{
+		branches.clear();
+
+		pMatrixInfo = queue.front();
+		queue.pop_front();
+
+		for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
+		{
+			if (pBranch->pNode->IsLFTypeSlack() || OppMatrixInfo(pBranch->pNode)->bVisited)
+				continue;
+			branches.push_back(pBranch);
+		}
+
+		std::sort(branches.begin(), branches.end(), SortOrder);
+
+
+
+		pMatrixInfo->pNode->DebugLog(fmt::format("{}----", pMatrixInfo->pNode->GetId()));
+		for (auto&& branch : branches)
+		{
+			pMatrixInfo->pNode->DebugLog(fmt::format("{} Vref={}, Qlim=[{};{}] Y={}",
+				branch->pNode->GetId(),
+				branch->pNode->LFVref,
+				branch->pNode->LFQmax, branch->pNode->LFQmin,
+				std::abs(branch->Y)));
+
+			auto matrixInfo{ OppMatrixInfo(branch->pNode) };
+			matrixInfo->bVisited = true;
+			queue.push_back(matrixInfo);
+			SeidellOrder.push_back(pMatrixInfo);
 		}
 	}
 }
 
-void CLoadFlow::Seidell()
+void CLoadFlow::BuildSeidellOrder(MATRIXINFO& SeidellOrder)
 {
-	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
-
-	MATRIXINFO SeidellOrder;
 	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
+
+	// добавляет узел в очередь для Зейделя
+	const auto AddToQueue = [this](_MatrixInfo* pMatrixInfo, QUEUE& queue)
+	{
+		// просматриваем список ветвей узла
+		for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
+		{
+			const auto& pOppNode{ pBranch->pNode };
+			// мы обходим узлы, но кроме данных узлов нам нужны данные матрицы, чтобы просматривать
+			// признак посещения
+			if (pOppNode->IsLFTypePQ() && (!pOppNode->IsLFTypeSlack()))
+			{
+				_MatrixInfo* pOppMatrixInfo = &m_pMatrixInfo[pOppNode->A(0) / 2]; // находим оппозитный узел в матрице
+				_ASSERTE(pOppMatrixInfo->pNode == pOppNode);
+				// если оппозитный узел еще не был посещен, добавляем его в очередь и помечаем как посещенный
+				if (!pOppMatrixInfo->bVisited)
+				{
+					queue.push_back(pOppMatrixInfo);
+					pOppMatrixInfo->bVisited = true;
+				}
+			}
+		}
+	};
+
 	_MatrixInfo* pMatrixInfo;
+
 	for (pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo <= m_pMatrixInfoEnd; pMatrixInfo++)
 		pMatrixInfo->bVisited = false;
 
@@ -402,8 +495,7 @@ void CLoadFlow::Seidell()
 	// затем PV узлы
 	for (; pMatrixInfo >= m_pMatrixInfo.get(); pMatrixInfo--)
 	{
-		const auto& pNode{ pMatrixInfo->pNode };
-		if (!pNode->IsLFTypePQ())
+		if (!pMatrixInfo->pNode->IsLFTypePQ())
 		{
 			SeidellOrder.push_back(pMatrixInfo);
 			pMatrixInfo->bVisited = true;
@@ -432,6 +524,15 @@ void CLoadFlow::Seidell()
 		// и добавляем оппозитные узлы добавленного узла
 		AddToQueue(pMatrixInfo, queue);
 	}
+}
+
+void CLoadFlow::Seidell()
+{
+	//Gauss();
+	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
+
+	MATRIXINFO SeidellOrder;
+	BuildSeidellOrder(SeidellOrder);
 
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
@@ -446,11 +547,12 @@ void CLoadFlow::Seidell()
 
 		if (nSeidellIterations > 2)
 		{
+			dPreviousImbQ = 0.3 * std::abs(pNodes->m_IterationControl.m_MaxImbQ.GetDiff());
+
 			// если сделали более 2-х итераций начинаем анализировать небалансы
 			if (dPreviousImb < 0.0)
 			{
 				// первый небаланс, если еще не рассчитывали
-				dPreviousImbQ = std::abs(pNodes->m_IterationControl.m_MaxImbQ.GetDiff());
 				dPreviousImb = ImbNorm(pNodes->m_IterationControl.m_MaxImbP.GetDiff(), dPreviousImbQ);
 			}
 			else
@@ -475,9 +577,12 @@ void CLoadFlow::Seidell()
 		// определяем можно ли выполнять переключение типов узлов (по количеству итераций)
 		bool bPVPQSwitchEnabled = nSeidellIterations >= m_Parameters.m_nEnableSwitchIteration;
 		// для всех узлов в порядке обработки Зейделя
+
+		
+
 		for (auto&& it : SeidellOrder)
 		{
-			pMatrixInfo = it;
+			_MatrixInfo* pMatrixInfo{ it };
 			const auto& pNode{ pMatrixInfo->pNode };
 			// рассчитываем нагрузку по СХН
 			double& Pe{ pMatrixInfo->m_dImbP }, &Qe{ pMatrixInfo->m_dImbQ };
@@ -583,7 +688,7 @@ void CLoadFlow::Seidell()
 				if (bPVPQSwitchEnabled)
 				{
 					// PV-узлы переключаем если есть разрешение (на первых итерациях переключение блокируется, можно блокировать по небалансу)
-					if (Q > pNode->LFQmax + m_Parameters.m_Imb + 0.1 * dPreviousImbQ)
+					if (Q > pNode->LFQmax + m_Parameters.m_Imb + dPreviousImbQ)
 					{
 						pNode->Qgr = Q;
 						LogNodeSwitch(it, "PV->PQmax");
@@ -592,7 +697,7 @@ void CLoadFlow::Seidell()
 						pNode->Qgr = pNode->LFQmax;
 						Qe = Q - pNode->Qgr;
 					}
-					else if (Q < pNode->LFQmin - m_Parameters.m_Imb - 0.1 * dPreviousImbQ)
+					else if (Q < pNode->LFQmin - m_Parameters.m_Imb - dPreviousImbQ)
 					{
 						pNode->Qgr = Q;
 						LogNodeSwitch(it, "PV->PQmin");
@@ -1211,7 +1316,7 @@ void CLoadFlow::UpdateQToGenerators()
 						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->m_nCount;
 						pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->m_nCount;
 					}
-					else if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+					else if (pNode->IsLFTypeSlack())
 					{
 						double Qrange = pNode->LFQmaxGen - pNode->LFQminGen;
 						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQminGen));
@@ -1633,7 +1738,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 			Qrange = (Qrange > 0.0) ? (QgSource - pNode->LFQmin) / Qrange : 0.0;
 
 			// если узел базисный, вносим его в список базисных узлов данного суперузла
-			if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+			if (pNode->IsLFTypeSlack())
 				SlackBuses.push_back(pNode);
 
 			while (pLink->In(pSlaveNode))
@@ -1661,7 +1766,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 					pSlaveNode->Qg = pSlaveNode->Qgr = 0.0;
 			}
 
-			if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_BASE)
+			if (!pNode->IsLFTypeSlack())
 				Qspread += pNode->Qgr = pNode->Qg = pMatrixInfo->LFQmin + (pMatrixInfo->LFQmax - pMatrixInfo->LFQmin) * Qrange;
 
 			for (auto&& sb : SlackBuses)
@@ -2052,4 +2157,136 @@ void CLoadFlow::LogNodeSwitch(_MatrixInfo* pNode, std::string_view Title)
 			pNode->pNode->LFQmin,
 			pNode->pNode->LFQmax,
 			pNode->m_nPVSwitchCount));
+}
+
+
+void CLoadFlow::Gauss()
+{
+	KLUWrapper<std::complex<double>> klu;
+	ptrdiff_t nNodeCount{ m_pMatrixInfoEnd - m_pMatrixInfo.get() };
+	size_t nBranchesCount{ m_pDynaModel->Branches.Count() };
+	// оценка количества ненулевых элементов
+	size_t nNzCount{ nNodeCount + 2 * nBranchesCount };
+
+	klu.SetSize(nNodeCount, nNzCount);
+	double* const Ax{ klu.Ax() };
+	double* const B{ klu.B() };
+	ptrdiff_t* Ap{ klu.Ai() };
+	ptrdiff_t* Ai{ klu.Ap() };
+
+	// вектор указателей на диагональ матрицы
+	auto pDiags{ std::make_unique<double* []>(nNodeCount) };
+	double** ppDiags{ pDiags.get() };
+	double* pB{ B };
+
+	double* pAx{ Ax };
+	ptrdiff_t* pAp{ Ap };
+	ptrdiff_t* pAi{ Ai };
+	
+	for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+	{
+		_ASSERTE(pAx < Ax + nNzCount * 2);
+		_ASSERTE(pAi < Ai + nNzCount);
+		_ASSERTE(pAp < Ap + nNodeCount);
+		const auto& pNode{ static_cast<CDynaNodeBase*>(pMatrixInfo->pNode) };
+
+		*pAp = (pAx - Ax) / 2;    pAp++;
+		*pAi = pNode->A(0) / 2;	  pAi++;
+		// первый элемент строки используем под диагональ
+		// и запоминаем указатель на него
+		*ppDiags = pAx;
+		*pAx = 1.0; pAx++;
+		*pAx = 0.0; pAx++;
+		ppDiags++;
+
+		for (VirtualBranch* pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
+		{
+			*pAx = pV->Y.real();   pAx++;
+			*pAx = pV->Y.imag();   pAx++;
+			*pAi = pV->pNode->A(0) / 2 ; pAi++;
+		}
+	}
+
+	nNzCount = (pAx - Ax) / 2;		// рассчитываем получившееся количество ненулевых элементов (делим на 2 потому что комплекс)
+	Ap[nNodeCount] = nNzCount;
+
+	ptrdiff_t& nIteration = pNodes->m_IterationControl.Number;
+
+	for (nIteration = 0; nIteration < 20; nIteration++)
+	{
+		pNodes->m_IterationControl.Reset();
+
+		ppDiags = pDiags.get();
+		pB = B;
+
+		// проходим по узлам вне зависимости от их состояния, параллельно идем по диагонали матрицы
+		for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		{
+			CDynaNodeBase* pNode = static_cast<CDynaNodeBase*>(pMatrixInfo->pNode);
+
+			GetNodeImb(pMatrixInfo);
+			pNodes->m_IterationControl.Update(pMatrixInfo);
+
+			_ASSERTE(pB < B + nNodeCount * 2);
+
+			// для всех узлов которые включены и вне металлического КЗ
+
+			cplx Unode(pNode->Vre, pNode->Vim);
+
+			cplx I{ pNode->IconstSuper };
+			cplx Y{ pNode->YiiSuper };		// диагональ матрицы по умолчанию собственная проводимость узла
+
+			// рассчитываем задающий ток узла от нагрузки
+			// можно посчитать ток, а можно посчитать добавку в диагональ
+			I += std::conj(cplx(pNode->Pnr - pNode->Pg, pNode->Qnr - pNode->Qg) / Unode);
+
+			//if (pNode->V > 0.0)
+			//	Y += std::conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V.Value / pNode->V.Value);
+			//Y -= conj(cplx(Pnr, Qnr) / pNode->V / pNode->V);
+
+			_CheckNumber(I.real());
+			_CheckNumber(I.imag());
+			_CheckNumber(Y.real());
+			_CheckNumber(Y.imag());
+
+			// и заполняем вектор комплексных токов
+			*pB = I.real(); pB++;
+			*pB = I.imag(); pB++;
+			// диагональ матрицы формируем по Y узла
+			**ppDiags = Y.real();
+			*(*ppDiags + 1) = Y.imag();
+
+			ppDiags++;
+		}
+
+		pNodes->DumpIterationControl();
+
+		ptrdiff_t iMax(0);
+		double maxb = klu.FindMaxB(iMax);
+
+		klu.FactorSolve();
+
+		maxb = klu.FindMaxB(iMax);
+
+		// KLU может делать повторную факторизацию матрицы с начальным пивотингом
+		// это быстро, но при изменении пивотов может вызывать численную неустойчивость.
+		// У нас есть два варианта факторизации/рефакторизации на итерации LULF
+		double* pB = B;
+
+		for (_MatrixInfo* pMatrixInfo = m_pMatrixInfo.get(); pMatrixInfo < m_pMatrixInfoEnd; pMatrixInfo++)
+		{
+			const auto& pNode{ static_cast<CDynaNodeBase*>(pMatrixInfo->pNode) };
+			// напряжение после решения системы в векторе задающий токов
+			if (pNode->IsLFTypePQ())
+			{
+				pNode->Vre = *pB;		pB++;
+				pNode->Vim = *pB;		pB++;
+			}
+			else
+				pB += 2;
+
+			pNode->UpdateVDeltaSuper();
+		
+		}
+	}
 }

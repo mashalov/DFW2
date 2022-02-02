@@ -230,7 +230,7 @@ namespace DFW2
 	class KLUWrapper
 	{
 	protected:
-		using vector_aligned_double = aligned_unique_ptr<double, 128>;
+		using vector_aligned_double = aligned_unique_ptr<double, 32>;
 
 		std::unique_ptr<double[]>	 pAx;		// данные матрицы якоби
 		vector_aligned_double		 pb,		// вектор правой части

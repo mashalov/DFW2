@@ -1122,7 +1122,6 @@ bool CDynaNodeContainer::LULF()
 			}
 			ppDiags++;
 		}
-		ptrdiff_t refactorOK = 1;
 
 		klu.FactorSolve();
 

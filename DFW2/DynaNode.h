@@ -174,6 +174,7 @@ namespace DFW2
 				   m_eLFNodeType == eLFNodeType::LFNT_PVQMAX || 
 				   m_eLFNodeType == eLFNodeType::LFNT_PVQMIN;
 		}
+		inline bool IsLFTypeSlack() const { return m_eLFNodeType == eLFNodeType::LFNT_BASE; }
 
 		void SetMatrixRow(ptrdiff_t nMatrixRow) noexcept { m_nMatrixRow = nMatrixRow; }
 

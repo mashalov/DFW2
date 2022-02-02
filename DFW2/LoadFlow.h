@@ -47,6 +47,9 @@ namespace DFW2
 		void AllocateSupernodes();
 		void Estimate();
 		void Seidell();
+		void BuildSeidellOrder(MATRIXINFO& SeidellOrder);
+		void BuildSeidellOrder2(MATRIXINFO& SeidellOrder);
+		void Gauss();
 		void SeidellTanh();
 		void Newton();
 		void NewtonTanh();
@@ -84,7 +87,6 @@ namespace DFW2
 		const LoadFlowParameters& m_Parameters;
 		// определение порядка PV узлов для Зейделя
 		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
-		void AddToQueue(_MatrixInfo *pMatrixInfo, QUEUE& queue);
 		void GetNodeImb(_MatrixInfo *pMatrixInfo);
 		static double ImbNorm(double x, double y);
 

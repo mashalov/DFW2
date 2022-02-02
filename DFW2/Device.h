@@ -367,7 +367,7 @@ namespace DFW2
 		void UnprocessDiscontinuity() { m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY; }
 
 		// функция ремапа номера уравнения устройства в номер уравнения в Якоби
-		inline ptrdiff_t A(ptrdiff_t nOffset)
+		inline ptrdiff_t A(ptrdiff_t nOffset) const
 		{
 			if (!AssignedToMatrix())
 				throw dfw2error("CDevice::A - access to device not in matrix");
@@ -375,7 +375,7 @@ namespace DFW2
 		}
 
 		// возвращает true если для устройства есть уравнения в системе
-		inline bool AssignedToMatrix()
+		inline bool AssignedToMatrix() const
 		{
 			return m_nMatrixRow != nIndexUnassigned;
 		}

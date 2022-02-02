@@ -99,50 +99,7 @@ void CLoadFlow::SeidellTanh()
 	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 
 	MATRIXINFO SeidellOrder;
-	SeidellOrder.reserve(m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
-
-	_MatrixInfo* pMatrixInfo(m_pMatrixInfoSlackEnd - 1);
-
-	// в начало добавляем БУ
-	for (; pMatrixInfo >= m_pMatrixInfoEnd; pMatrixInfo--)
-	{
-		SeidellOrder.push_back(pMatrixInfo);
-		pMatrixInfo->bVisited = true;
-	}
-
-	// затем PV узлы
-	for (; pMatrixInfo >= m_pMatrixInfo.get(); pMatrixInfo--)
-	{
-		CDynaNodeBase *pNode = pMatrixInfo->pNode;
-		if (pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ)
-		{
-			SeidellOrder.push_back(pMatrixInfo);
-			pMatrixInfo->bVisited = true;
-		}
-	}
-
-	// сортируем PV узлы по убыванию диапазона реактивной мощности
-	sort(SeidellOrder.begin() + (m_pMatrixInfoSlackEnd - m_pMatrixInfoEnd), SeidellOrder.end(), SortPV);
-
-	// добавляем узлы в порядок обработки Зейделем с помощью очереди
-	// очередь строим от базисных и PV-узлов по связям. Порядок очереди 
-	// определяем по мере удаления от узлов базисных и PV-узлов 
-	QUEUE queue;
-	for (auto&& it : SeidellOrder)
-		AddToQueue(it, queue);
-
-
-	// пока в очереди есть узлы
-	while (!queue.empty())
-	{
-		// достаем узел из очереди
-		pMatrixInfo = queue.front();
-		queue.pop_front();
-		// добавляем узел в очередь Зейделя
-		SeidellOrder.push_back(pMatrixInfo);
-		// и добавляем оппозитные узлы добавленного узла
-		AddToQueue(pMatrixInfo, queue);
-	}
+	BuildSeidellOrder(SeidellOrder);
 
 	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
 
@@ -187,7 +144,7 @@ void CLoadFlow::SeidellTanh()
 		// для всех узлов в порядке обработки Зейделя
 		for (auto&& it : SeidellOrder)
 		{
-			pMatrixInfo = it;
+			_MatrixInfo* pMatrixInfo{ it };
 			CDynaNodeBase* pNode = pMatrixInfo->pNode;
 			// рассчитываем нагрузку по СХН
 			double& Pe = pMatrixInfo->m_dImbP;
