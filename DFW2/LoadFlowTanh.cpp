@@ -13,7 +13,7 @@ void CLoadFlow::NewtonTanh()
 
 	double g0(0.0), g1(0.1), lambda(1.0);
 
-	m_dTanhBeta = 5000.0;
+	m_dTanhBeta = 150.0;
 	m_NewtonStepRatio.m_dRatio = 0.0;
 
 	while (1)
@@ -93,6 +93,7 @@ void CLoadFlow::NewtonTanh()
 
 	// обновляем реактивную генерацию в суперузлах
 	UpdateSupernodesPQ();
+	for (auto&& it : *pNodes) static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
 }
 
 void CLoadFlow::SeidellTanh()

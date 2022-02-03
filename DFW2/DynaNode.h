@@ -109,11 +109,7 @@ namespace DFW2
 		ptrdiff_t LRCLoadFlowId  = 0;	// идентификаторы СХН и ДСХН
 		ptrdiff_t LRCTransientId = 0;
 
-		double dLRCPn;					// расчетные значения прозводных СХН по напряжению
-		double dLRCQn;
-		double dLRCPg;
-		double dLRCQg;
-
+	
 		CSynchroZone *m_pSyncZone = nullptr;		// синхронная зона, к которой принадлежит узел
 		eLFNodeType m_eLFNodeType;
 		ptrdiff_t Nr;
@@ -122,6 +118,7 @@ namespace DFW2
 		cplx Iconst;					// постоянный ток в узле
 		cplx IconstSuper;				// постоянный ток в суперузле
 		double Vold;					// модуль напряжения на предыдущей итерации
+		cplx dLRCLoad, dLRCGen;			// расчетные значения прозводных СХН по напряжению
 		CDynaLRC *m_pLRC = nullptr;		// указатель на СХН узла в динамике
 		CDynaLRC *m_pLRCLF = nullptr;	// указатель на СХН узла в УР
 		CDynaLRC *m_pLRCGen = nullptr;	// СХН для генерации, которая не задана моделями генераторов
@@ -164,8 +161,8 @@ namespace DFW2
 		cplx GetSelfImbInotSuper(double& Vsq);
 		cplx GetSelfImbISuper(double& Vsq);
 
-		inline double GetSelfdPdV() { return -2 * V * YiiSuper.real() + dLRCPn; }
-		inline double GetSelfdQdV() { return  2 * V * YiiSuper.imag() + dLRCQn; }
+		inline double GetSelfdPdV() { return -2 * V * YiiSuper.real() + dLRCLoad.real(); }
+		inline double GetSelfdQdV() { return  2 * V * YiiSuper.imag() + dLRCLoad.imag(); }
 
 		inline bool IsLFTypePQ() const { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
 		inline bool IsLFTypePV() const 

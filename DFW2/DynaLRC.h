@@ -138,6 +138,7 @@ namespace DFW2
 		// возвращает напряжение, ниже которого готовая 
 		// СХН представлена чистым шунтом
 		inline double VshuntBelow() const { return m_VshuntBelow; }
+		std::tuple<double, double, cplx> Get(double VdivVnom, double dLRCVicinity = 0.0) const;
 	protected:
 		double m_VshuntBelow;
 		CDynaLRCChannel m_P{ CDynaLRC::m_cszP }, m_Q{ CDynaLRC::m_cszQ };

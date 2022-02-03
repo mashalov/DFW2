@@ -24,6 +24,13 @@ bool CDynaLRC::UpdateSet()
 	return true;
 }
 
+std::tuple<double, double, cplx> CDynaLRC::Get(double VdivVnom, double dLRCVicinity) const
+{
+	double dp, dq;
+	return { m_P.GetBoth(VdivVnom, dp, dLRCVicinity), m_Q.GetBoth(VdivVnom, dq, dLRCVicinity), cplx(dp,dq) };
+}
+
+
 void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_LRC);

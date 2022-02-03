@@ -132,13 +132,11 @@ void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 			dIimdVre -= Qk;
 			dIimdVim += Pk;
 
-			pNode->dLRCPn -= pNode->dLRCPg;	
-			pNode->dLRCQn -= pNode->dLRCQg;
-			pNode->dLRCPn /= Vsq;
-			pNode->dLRCQn /= Vsq;
+			pNode->dLRCLoad -= pNode->dLRCGen;
+			pNode->dLRCLoad /= Vsq;
 
-			const double dPdV{ (pNode->dLRCPn - 2.0 * Pk) / Vsq };
-			const double dQdV{ (pNode->dLRCQn - 2.0 * Qk) / Vsq };
+			const double dPdV{ (pNode->dLRCLoad.real() - 2.0 * Pk) / Vsq };
+			const double dQdV{ (pNode->dLRCLoad.imag() - 2.0 * Qk) / Vsq };
 
 			dIredV = dPdV * pSuperNode->Vre + dQdV * pSuperNode->Vim;
 			dIimdV = dPdV * pSuperNode->Vim - dQdV * pSuperNode->Vre;
@@ -159,8 +157,8 @@ void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 			dIredVim += pNode->LRCShuntPart.imag();
 			dIimdVre += -pNode->LRCShuntPart.imag();
 			dIimdVim += pNode->LRCShuntPart.real();
-			pNode->dLRCPg = pNode->dLRCQg = pNode->Pgr = pNode->Qgr = 0.0;
-			pNode->dLRCPn = pNode->dLRCQn = pNode->Pnr = pNode->Qnr = 0.0;
+			pNode->dLRCGen = pNode->dLRCLoad = 0.0;
+			pNode->Pnr = pNode->Qnr = pNode->Pgr = pNode->Qgr = 0.0;
 		}
 
 		// токи от генераторов

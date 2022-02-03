@@ -881,10 +881,10 @@ void CLoadFlow::BuildMatrixCurrent()
 		// Нагрузка с СХН - функция напряжения, поэтому генерацию просто делим на квадрат напряжения, а производную
 		// нагрузки считаем по правилу частного (см док)
 
-		dPdV = pNode->dLRCPn * Vinv - (pNode->Pnr - NodeInjG.real()) * VinvSq - pNode->YiiSuper.real();
+		dPdV = pNode->dLRCLoad.real() * Vinv - (pNode->Pnr - NodeInjG.real()) * VinvSq - pNode->YiiSuper.real();
 
 		if (pNode->IsLFTypePQ())
-			dQdV = pNode->dLRCQn * Vinv - (pNode->Qnr - NodeInjG.imag()) * VinvSq + pNode->YiiSuper.imag();
+			dQdV = pNode->dLRCLoad.imag() * Vinv - (pNode->Qnr - NodeInjG.imag()) * VinvSq + pNode->YiiSuper.imag();
 		else
 			Sneb.imag(0.0);	// если узел не PQ - обнуляем уравнение
 
@@ -1070,7 +1070,6 @@ bool CLoadFlow::Run()
 			break;
 		case CLoadFlow::eLoadFlowStartupMethod::Tanh:
 			NewtonTanh();
-			for (auto&& it : *pNodes) static_cast<CDynaNodeBase*>(it)->StartLF(false, m_Parameters.m_Imb);
 			break;
 		}
 
@@ -1349,8 +1348,7 @@ void CLoadFlow::GetPnrQnrSuper(CDynaNodeBase* pNode)
 		GetPnrQnr(pSlaveNode);
 		pNode->Pnr += pSlaveNode->Pnr;
 		pNode->Qnr += pSlaveNode->Qnr;
-		pNode->dLRCPn += pSlaveNode->dLRCPn;
-		pNode->dLRCQn += pSlaveNode->dLRCQn;
+		pNode->dLRCLoad += pSlaveNode->dLRCLoad;
 	}
 }
 
@@ -1361,7 +1359,7 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 	pNode->Qnr = pNode->Qn;
 	double VdVnom = pNode->V / pNode->V0;
 
-	pNode->dLRCPn = pNode->dLRCQn = 0.0;
+	pNode->dLRCLoad = 0.0;
 
 	// если есть СХН нагрузки, рассчитываем
 	// комплексную мощность и производные по напряжению
@@ -1370,15 +1368,18 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 	{
 		// для узлов с отрицательными нагрузками СХН не рассчитываем
 		// если такие СХН не разрешены в параметрах
+
+		double d{ 0.0 };
 		if (m_Parameters.m_bAllowNegativeLRC || pNode->Pn > 0.0)
 		{
-			pNode->Pnr *= pNode->m_pLRC->P()->GetBoth(VdVnom, pNode->dLRCPn, pNode->dLRCVicinity);
-			pNode->dLRCPn *= pNode->Pn / pNode->V0;
+			pNode->Pnr *= pNode->m_pLRC->P()->GetBoth(VdVnom, d, pNode->dLRCVicinity);
+			pNode->dLRCLoad.real(d * pNode->Pn / pNode->V0);
 		}
+
 		if (m_Parameters.m_bAllowNegativeLRC || pNode->Qn > 0.0)
 		{
-			pNode->Qnr *= pNode->m_pLRC->Q()->GetBoth(VdVnom, pNode->dLRCQn, pNode->dLRCVicinity);
-			pNode->dLRCQn *= pNode->Qn / pNode->V0;
+			pNode->Qnr *= pNode->m_pLRC->Q()->GetBoth(VdVnom, d, pNode->dLRCVicinity);
+			pNode->dLRCLoad.imag(d * pNode->Qn / pNode->V0);
 		}
 	}
 }
@@ -2063,31 +2064,28 @@ bool CLoadFlow::CheckNodeBalances()
 		// вообще еще добавится шунт КЗ, но он при расчете УР равен нулю
 		static_cast<CDynaNodeBase*>(dev)->GetGroundAdmittance(y);
 		const auto imb{ pNode->V * pNode->V * y };
-		pNode->dLRCPg = pNode->Pnr - pNode->Pgr + imb.real();
-		pNode->dLRCQg = pNode->Qnr - pNode->Qgr - imb.imag();
+		pNode->dLRCGen = { pNode->Pnr - pNode->Pgr + imb.real() , pNode->Qnr - pNode->Qgr - imb.imag()};
 	}
 
 	CDeviceContainer* pBranchContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH);
 	for (auto&& dev : *pBranchContainer)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(dev) };
-		pBranch->m_pNodeIp->dLRCPg -= pBranch->Sb.real();
-		pBranch->m_pNodeIp->dLRCQg -= pBranch->Sb.imag();
-		pBranch->m_pNodeIq->dLRCPg += pBranch->Se.real();
-		pBranch->m_pNodeIq->dLRCQg += pBranch->Se.imag();
+		pBranch->m_pNodeIp->dLRCGen -= pBranch->Sb;
+		pBranch->m_pNodeIq->dLRCGen += pBranch->Se;
 	}
 
 	for (const auto& dev : pNodes->m_DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(dev) };
 		if (pNode->GetState() == eDEVICESTATE::DS_OFF) continue;
-		if (std::abs(pNode->dLRCPg) > m_Parameters.m_Imb ||
-			std::abs(pNode->dLRCQg) > m_Parameters.m_Imb)
+		if (std::abs(pNode->dLRCGen.real()) > m_Parameters.m_Imb ||
+			std::abs(pNode->dLRCGen.imag()) > m_Parameters.m_Imb)
 		{
 			bRes = false;
 			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeImbalance,
 				pNode->GetVerbalName(),
-				cplx(pNode->dLRCPg, pNode->dLRCQg)));
+				cplx(pNode->dLRCGen.real(), pNode->dLRCGen.imag())));
 		}
 	}
 	return bRes;

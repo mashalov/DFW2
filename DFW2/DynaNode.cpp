@@ -230,10 +230,8 @@ void CDynaNodeBase::GetPnrQnrSuper(double Vnode)
 		Qnr += pSlaveNode->Qnr;
 		Pgr += pSlaveNode->Pgr;
 		Qgr += pSlaveNode->Qgr;
-		dLRCPn += pSlaveNode->dLRCPn;
-		dLRCQn += pSlaveNode->dLRCQn;
-		dLRCPg += pSlaveNode->dLRCPg;
-		dLRCQg += pSlaveNode->dLRCQg;
+		dLRCLoad += pSlaveNode->dLRCLoad;
+		dLRCGen += pSlaveNode->dLRCGen;
 	}
 }
 
@@ -253,26 +251,27 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 	Pgr = Pg;	Qgr = Qg;
 	double VdVnom = Vnode / V0;
 	
-	dLRCPg = dLRCQg = dLRCPn = dLRCQn = 0.0;
+	dLRCLoad = dLRCGen = 0.0;
 
 	// если есть СХН нагрузки, рассчитываем
 	// комплексную мощность и производные по напряжению
 
 	_ASSERTE(m_pLRC);
 
-	Pnr *= m_pLRC->P()->GetBoth(VdVnom, dLRCPn, dLRCVicinity);
-	Qnr *= m_pLRC->Q()->GetBoth(VdVnom, dLRCQn, dLRCVicinity);
-	dLRCPn *= Pn / V0;
-	dLRCQn *= Qn / V0;
+	double d{ 0.0 };
+	Pnr *= m_pLRC->P()->GetBoth(VdVnom, d, dLRCVicinity);
+	dLRCLoad.real(d * Pn / V0);
+	Qnr *= m_pLRC->Q()->GetBoth(VdVnom, d, dLRCVicinity);
+	dLRCLoad.imag(d * Qn / V0);
 
 	// если есть СХН генерации (нет привязанных генераторов, но есть заданная в УР генерация)
 	// рассчитываем расчетную генерацию
 	if (m_pLRCGen)
 	{
-		Pgr *= m_pLRCGen->P()->GetBoth(VdVnom, dLRCPg, dLRCVicinity); 
-		Qgr *= m_pLRCGen->Q()->GetBoth(VdVnom, dLRCQg, dLRCVicinity);
-		dLRCPg *= Pg / V0;
-		dLRCQg *= Qg / V0;
+		Pgr *= m_pLRCGen->P()->GetBoth(VdVnom, d, dLRCVicinity); 
+		dLRCGen.real(d * Pg / V0);
+		Qgr *= m_pLRCGen->Q()->GetBoth(VdVnom, d, dLRCVicinity);
+		dLRCGen.imag(d * Qg / V0);
 	}
 }
 
@@ -305,8 +304,8 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			dIredVim +=  LRCShuntPartSuper.imag();
 			dIimdVre += -LRCShuntPartSuper.imag();
 			dIimdVim +=  LRCShuntPartSuper.real();
-			dLRCPg = dLRCQg = Pgr = Qgr = 0.0;
-			dLRCPn = dLRCQn = Pnr = Qnr = 0.0;
+			Pgr = Qgr = Pnr = Qnr = 0.0;
+			dLRCLoad = dLRCGen = 0.0;
 		}
 		else
 			GetPnrQnrSuper(V2sq);
@@ -421,14 +420,11 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		dIimdVre -= Qk;
 		dIimdVim += Pk;
 
-		dLRCPn -= dLRCPg;	dLRCQn -= dLRCQg;
-		dLRCPn /= Vn;
-		dLRCQn /= Vn;
+		dLRCLoad -= dLRCGen;
+		dLRCLoad /= Vn;
 
-		
-
-		const double dPdV{ (dLRCPn - 2.0 * Pk) / Vn };
-		const double dQdV{ (dLRCQn - 2.0 * Qk) / Vn };
+		const double dPdV{ (dLRCLoad.real() - 2.0 * Pk) / Vn };
+		const double dQdV{ (dLRCLoad.imag() - 2.0 * Qk) / Vn };
 		pDynaModel->SetElement(Vre, V, dPdV * Vre + dQdV * Vim);
 		pDynaModel->SetElement(Vim, V, dPdV * Vim - dQdV * Vre);
 
@@ -2131,10 +2127,8 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState("InLowVoltage", m_bLowVoltage);
 	Serializer->AddState("SavedInLowVoltage", m_bSavedLowVoltage);
 	Serializer->AddState("LRCVicinity", dLRCVicinity);
-	Serializer->AddState("dLRCPn", dLRCPn);
-	Serializer->AddState("dLRCQn", dLRCQn);
-	Serializer->AddState("dLRCPg", dLRCPg);
-	Serializer->AddState("dLRCQg", dLRCQg);
+	Serializer->AddState("dLRCLoad", dLRCLoad);
+	Serializer->AddState("dLRCGen", dLRCGen);
 	Serializer->AddState("Vold", Vold, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Yii", Yii, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("YiiSuper", YiiSuper, eVARUNITS::VARUNIT_SIEMENS);
