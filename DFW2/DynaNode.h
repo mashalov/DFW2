@@ -94,6 +94,9 @@ namespace DFW2
 				
 		double Pn,Qn,Pg,Qg,Pnr,Qnr,Pgr,Qgr;
 		double G,B, Gr0, Br0;
+
+		alignas(16) cplx VreVim;
+
 		cplx LRCShuntPart, LRCShuntPartSuper;
 		// напряжения, ниже которых в СХН чисто шунтовая характеристика
 		double VshuntPartBelow, VshuntPartBelowSuper;
@@ -305,7 +308,7 @@ namespace DFW2
 	// чтобы рассчитать небаланс узла и производные для смежных узлов
 	struct VirtualBranch
 	{
-		cplx Y;
+		alignas(16) cplx Y;
 		CDynaNodeBase *pNode;
 	};
 

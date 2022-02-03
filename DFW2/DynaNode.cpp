@@ -4,6 +4,7 @@
 #include "GraphCycle.h"
 #include "DynaGeneratorMotion.h"
 #include "BranchMeasures.h"
+#include <immintrin.h>
 
 using namespace DFW2;
 
@@ -15,13 +16,13 @@ using namespace DFW2;
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
-	const cplx VreVim(std::polar((double)V, (double)Delta));
+	VreVim = std::polar((double)V, (double)Delta);
 	FromComplex(Vre, Vim, VreVim);
 }
 
 void CDynaNodeBase::UpdateVDelta()
 {
-	const cplx VreVim(Vre, Vim);
+	VreVim = { Vre, Vim };
 	V = std::abs(VreVim);
 	Delta = std::arg(VreVim);
 }
@@ -47,7 +48,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 	// сумме составляющих пока Ньютон не сошелся
 	double V2{ Vre * Vre + Vim * Vim };
 	Vsq = std::sqrt(V2);
-	cplx  cI{ Iconst }, cV{ Vre, Vim };
+	cplx  cI{ Iconst };
 	
 	//double Ire{ Iconst.real() }, Iim{ Iconst.imag() };
 
@@ -61,7 +62,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 		// номинального напряжения СХН
 		if ((Vsq + dLRCVicinity * V0) < VshuntPartBelow)
 		{
-			cI += std::conj(LRCShuntPart) * cV;
+			cI += std::conj(LRCShuntPart) * VreVim;
 			//Ire += dLRCShuntPartP * Vre + dLRCShuntPartQ * Vim;
 			//Iim -= dLRCShuntPartQ * Vre - dLRCShuntPartP * Vim;
 
@@ -69,7 +70,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 			// проверка
 			GetPnrQnr(Vsq);
 			const auto& Atol{ GetModel()->Parameters().m_dAtol };
-			cplx S{ std::conj(cI - Iconst) * cV };
+			cplx S{ std::conj(cI - Iconst) * VreVim };
 			cplx dS{ S - cplx(Pnr - Pgr,Qnr - Qgr) };
 			if (std::abs(dS.real()) > Atol || std::abs(dS.imag()) > Atol)
 			{
@@ -87,7 +88,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 	}
 
 	// добавляем токи собственной проводимости и токи ветвей
-	cI -= Yii * cV;
+	cI -= Yii * VreVim;
 	//Ire -= Yii.real() * Vre - Yii.imag() * Vim;
 	//Iim -= Yii.imag() * Vre + Yii.real() * Vim;
 
@@ -99,7 +100,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 		//Iim += (Pk * Vim - Qk * Vre) / V2;
 		cplx cS{ Pnr - Pgr, Qgr - Qnr };
 		cS /= V2;
-		cI += cS * cV;
+		cI += cS * VreVim;
 	}
 #ifdef _DEBUG
 	else
@@ -116,7 +117,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 	// сумме составляющих пока Ньютон не сошелся
 	double V2{ Vre * Vre + Vim * Vim };
 	Vsq = std::sqrt(V2);
-	cplx  cI{ IconstSuper }, cV{ Vre, Vim };
+	cplx  cI{ IconstSuper };
 
 	//double Ire{ IconstSuper.real() }, Iim{ IconstSuper.imag() };
 
@@ -131,14 +132,14 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 		
 		if ((Vsq + dLRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
-			cI += std::conj(LRCShuntPartSuper) * cV;
+			cI += std::conj(LRCShuntPartSuper) * VreVim;
 			//Ire -= -dLRCShuntPartPSuper * Vre - dLRCShuntPartQSuper * Vim;
 			//Iim -=  dLRCShuntPartQSuper * Vre - dLRCShuntPartPSuper * Vim;
 
 #ifdef _DEBUG
 			// проверка
 			GetPnrQnrSuper(Vsq);
-			cplx S{ std::conj(cI - IconstSuper) * cV };
+			cplx S{ std::conj(cI - IconstSuper) * VreVim };
 			cplx dS{ S - cplx(Pnr - Pgr, Qnr - Qgr) };
 			const auto& Atol{ GetModel()->Parameters().m_dAtol };
 			if (std::abs(dS.real()) > Atol || std::abs(dS.imag()) > Atol)
@@ -156,7 +157,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 	}
 
 	// добавляем токи собственной проводимости и токи ветвей
-	cI -= YiiSuper * cV;
+	cI -= YiiSuper * VreVim;
 	//Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
 	//Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
 
@@ -165,7 +166,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 		// добавляем токи от нагрузки (если напряжение не очень низкое)
 		cplx cS{ Pnr - Pgr, Qgr - Qnr };
 		cS /= V2;
-		cI += cS * cV;
+		cI += cS * VreVim;
 		//const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
 		//Ire += (Pk * Vre + Qk * Vim) / V2;
 		//Iim += (Pk * Vim - Qk * Vre) / V2;
@@ -258,20 +259,29 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 
 	_ASSERTE(m_pLRC);
 
-	double d{ 0.0 };
-	Pnr *= m_pLRC->P()->GetBoth(VdVnom, d, dLRCVicinity);
-	dLRCLoad.real(d * Pn / V0);
-	Qnr *= m_pLRC->Q()->GetBoth(VdVnom, d, dLRCVicinity);
-	dLRCLoad.imag(d * Qn / V0);
+	double& re{ reinterpret_cast<double(&)[2]>(dLRCLoad)[0] };
+	double& im{ reinterpret_cast<double(&)[2]>(dLRCLoad)[1] };
+
+	Pnr *= m_pLRC->P()->GetBoth(VdVnom, re, dLRCVicinity);
+	re *= Pn;
+	Qnr *= m_pLRC->Q()->GetBoth(VdVnom, im, dLRCVicinity);
+	im *= Qn;
+
+	dLRCLoad /= V0;
 
 	// если есть СХН генерации (нет привязанных генераторов, но есть заданная в УР генерация)
 	// рассчитываем расчетную генерацию
 	if (m_pLRCGen)
 	{
-		Pgr *= m_pLRCGen->P()->GetBoth(VdVnom, d, dLRCVicinity); 
-		dLRCGen.real(d * Pg / V0);
-		Qgr *= m_pLRCGen->Q()->GetBoth(VdVnom, d, dLRCVicinity);
-		dLRCGen.imag(d * Qg / V0);
+		double& re{ reinterpret_cast<double(&)[2]>(dLRCGen)[0] };
+		double& im{ reinterpret_cast<double(&)[2]>(dLRCGen)[1] };
+
+
+		Pgr *= m_pLRCGen->P()->GetBoth(VdVnom, re, dLRCVicinity); 
+		re *= Pg;
+		Qgr *= m_pLRCGen->Q()->GetBoth(VdVnom, im, dLRCVicinity);
+		im *= Qg;
+		dLRCGen /= V0;
 	}
 }
 
@@ -477,7 +487,7 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	//double Ire(IconstSuper.real()), Iim(IconstSuper.imag()), 
 	double dV{0.0};
 
-	cplx cI{ IconstSuper };
+	alignas(32) cplx cI{ IconstSuper };
 
 	if (!m_bInMetallicSC)
 	{
@@ -501,12 +511,30 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			//Ire -= pGen->Ire;
 			//Iim -= pGen->Iim;
 
+
+		__m128d sI = _mm_load_pd(reinterpret_cast<double(&)[2]>(cI));
+		__m128d neg = _mm_setr_pd(1.0, -1.0);
+
+
 		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 		{
-			cI -= pV->Y * cplx(pV->pNode->Vre, pV->pNode->Vim);
+			__m128d yb = _mm_load_pd(reinterpret_cast<double(&)[2]>(pV->Y));
+			__m128d ov = _mm_load_pd(reinterpret_cast<double(&)[2]>(pV->pNode->VreVim));
+
+			__m128d vec3 = _mm_mul_pd(yb, ov);	// Multiply vec1and vec2
+			ov = _mm_permute_pd(ov, 0x5);		// Switch the real and imaginary elements of vec2
+			ov = _mm_mul_pd(ov, neg);			// Negate the imaginary elements of vec2 
+			__m128d vec4 = _mm_mul_pd(yb, ov);	// Multiply vec1 and the modified vec2
+			yb = _mm_hsub_pd(vec3, vec4);		// Horizontally subtract the elements in vec3 and vec4
+			sI = _mm_sub_pd(sI, yb);
+			
+			//cI -= pV->Y * cplx(pV->pNode->Vre, pV->pNode->Vim);
+			//cI -= pV->Y * pV->pNode->VreVim;
 			//Ire -= pV->Y.real() * pV->pNode->Vre - pV->Y.imag() * pV->pNode->Vim;
 			//Iim -= pV->Y.imag() * pV->pNode->Vre + pV->Y.real() * pV->pNode->Vim;
 		}
+
+		_mm_store_pd(reinterpret_cast<double(&)[2]>(cI), sI);
 	}
 
 	//_ASSERTE(Equal(Ire, cI.real()) && Equal(Iim, cI.imag()));
@@ -520,6 +548,7 @@ void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 {
 	//dLRCVicinity = 5.0 * std::abs(Vold - V) / Unom;
 	Vold = V;
+	VreVim = { Vre, Vim };
 	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
 	LinkWalker<CDynaNodeBase> pSlaveNode;
 	while (pLink->In(pSlaveNode))
@@ -544,7 +573,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 			// альтернативный вариант - генерация в узле 
 			// представляется током
 			// рассчитываем и сохраняем постоянный ток по мощности и напряжению
-			Iconst = -std::conj(cplx(Pgr, Qgr) / cplx(Vre, Vim));
+			Iconst = -std::conj(cplx(Pgr, Qgr) / VreVim);
 			// обнуляем генерацию в узле
 			Pg = Qg = Pgr = Qgr = 0.0;;
 			// и обнуляем СХН, так как она больше не нужна
@@ -566,6 +595,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 // итерационным процессом решения сети
 void CDynaNode::Predict()
 {
+	VreVim = { Vre, Vim };
 	dLRCVicinity = 0.05;
 	const double newDelta{ std::atan2(std::sin(Delta), std::cos(Delta)) };
 	if (std::abs(newDelta - Delta) > DFW2_EPSILON)
@@ -1222,6 +1252,7 @@ void CDynaNodeBase::FromSuperNode()
 	Delta = m_pSuperNodeParent->Delta;
 	Vre = m_pSuperNodeParent->Vre;
 	Vim = m_pSuperNodeParent->Vim;
+	VreVim = m_pSuperNodeParent->VreVim;
 	dLRCVicinity = m_pSuperNodeParent->dLRCVicinity;
 	m_bLowVoltage = m_pSuperNodeParent->m_bLowVoltage;
 }
