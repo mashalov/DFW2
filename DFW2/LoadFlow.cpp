@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include <immintrin.h>
 #include <algorithm>
 #include "LoadFlow.h"
 #include "DynaModel.h"

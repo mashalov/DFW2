@@ -27,6 +27,7 @@ set(EMSSSOURCES
     ../../fmt/src/format.cc 
     Messages.cpp
     LoadFlow.cpp
+    LoadFlowTanh.cpp
     Device.cpp
     DeviceContainer.cpp
     DynaNode.cpp
