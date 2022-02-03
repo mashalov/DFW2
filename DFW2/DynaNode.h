@@ -91,11 +91,17 @@ namespace DFW2
 			Qnrrastr = Qnr;
 		}
 #endif
-				
-		double Pn,Qn,Pg,Qg,Pnr,Qnr,Pgr,Qgr;
+		
+
+		double Pn,Qn,Pg,Qg;
 		double G,B, Gr0, Br0;
 
+		alignas(16) double Pnr;
+		alignas(8) double Qnr;
+		alignas(16) double Pgr;
+		alignas(8) double Qgr;
 		alignas(16) cplx VreVim;
+		alignas(16) cplx YiiSuper;		// собственная проводимость суперузла
 
 		cplx LRCShuntPart, LRCShuntPartSuper;
 		// напряжения, ниже которых в СХН чисто шунтовая характеристика
@@ -117,7 +123,6 @@ namespace DFW2
 		eLFNodeType m_eLFNodeType;
 		ptrdiff_t Nr;
 		cplx Yii;						// собственная проводимость
-		cplx YiiSuper;					// собственная проводимость суперузла
 		cplx Iconst;					// постоянный ток в узле
 		cplx IconstSuper;				// постоянный ток в суперузле
 		double Vold;					// модуль напряжения на предыдущей итерации
@@ -326,7 +331,8 @@ namespace DFW2
 		size_t nRowCount = 0;													// количество элементов в строке матрицы
 		CDynaNodeBase *pNode;													// узел, к которому относится данное Info
 		ptrdiff_t m_nPVSwitchCount = 0;											// счетчик переключений PV-PQ
-		double m_dImbP, m_dImbQ;												// небалансы по P и Q
+		alignas(16) double m_dImbP;
+		alignas(8) double  m_dImbQ;												// небалансы по P и Q
 		bool bVisited = false;													// признак просмотра для графовых алгоритмов
 		double LFQmin;															// исходные ограничения реактивной мощности до ввода в суперузел
 		double LFQmax;
@@ -343,8 +349,8 @@ namespace DFW2
 		}
 
 		CDynaNodeBase::eLFNodeType LFNodeType;									// исходный тип узла до ввода в суперузел
-		double UncontrolledP = 0.0;
-		double UncontrolledQ = 0.0;												// постоянные значения активной и реактивной генерации в суперузле
+		alignas(16) double UncontrolledP = 0.0;
+		alignas(8)  double UncontrolledQ = 0.0;									// постоянные значения активной и реактивной генерации в суперузле
 
 		void Store(CDynaNodeBase *pStoreNode) noexcept
 		{

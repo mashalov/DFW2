@@ -496,6 +496,7 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		double V2sq{ 0.0 };
 
 		cI = GetSelfImbISuper(V2sq);
+		__m128d sI = _mm_load_pd(reinterpret_cast<double(&)[2]>(cI));
 
 		//FromComplex(Ire, Iim, cI);
 
@@ -507,25 +508,29 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 		LinkWalker<CDynaPowerInjector> pGen;
 
 		while (pGenLink->InMatrix(pGen))
-			cI -= cplx(pGen->Ire, pGen->Iim);
+		{
+			sI = _mm_sub_pd(sI, _mm_set_pd(pGen->Iim, pGen->Ire));
+			//cI -= cplx(pGen->Ire, pGen->Iim);
 			//Ire -= pGen->Ire;
 			//Iim -= pGen->Iim;
+		}
 
 
-		__m128d sI = _mm_load_pd(reinterpret_cast<double(&)[2]>(cI));
-		__m128d neg = _mm_setr_pd(1.0, -1.0);
-
+		__m128d neg = _mm_setr_pd(0.0, -0.0);
 
 		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
 		{
 			__m128d yb = _mm_load_pd(reinterpret_cast<double(&)[2]>(pV->Y));
 			__m128d ov = _mm_load_pd(reinterpret_cast<double(&)[2]>(pV->pNode->VreVim));
 
-			__m128d vec3 = _mm_mul_pd(yb, ov);	// Multiply vec1and vec2
-			ov = _mm_permute_pd(ov, 0x5);		// Switch the real and imaginary elements of vec2
-			ov = _mm_mul_pd(ov, neg);			// Negate the imaginary elements of vec2 
-			__m128d vec4 = _mm_mul_pd(yb, ov);	// Multiply vec1 and the modified vec2
-			yb = _mm_hsub_pd(vec3, vec4);		// Horizontally subtract the elements in vec3 and vec4
+			// v1 = a + jb ; v2 = c +jd; v1*v2 = (a*c - b*d) + j(a*d + b*c)
+
+			__m128d v3 = _mm_mul_pd(yb, ov);	// multiply v1 * v2	 |a*c|b*d|
+			yb = _mm_permute_pd(yb, 0x5);		// shuffle v1 |b|a|
+			ov = _mm_xor_pd(ov, neg);			// conjugate v2 |c|-d|
+			__m128d v4 = _mm_mul_pd(yb, ov);	// multiply modified v1 and v2 |b*c|-a*d|
+			yb = _mm_hsub_pd(v3, v4);			// horizontally subtract the elements in v3 and v4 |a*c-b*d|b*c+a*d|
+
 			sI = _mm_sub_pd(sI, yb);
 			
 			//cI -= pV->Y * cplx(pV->pNode->Vre, pV->pNode->Vim);

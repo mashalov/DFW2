@@ -96,6 +96,7 @@ namespace DFW2
 		// определение порядка PV узлов для Зейделя
 		static bool SortPV(const _MatrixInfo* lhs, const _MatrixInfo* rhs);
 		void GetNodeImb(_MatrixInfo *pMatrixInfo);
+		void GetNodeImbSSE(_MatrixInfo* pMatrixInfo);
 		static double ImbNorm(double x, double y);
 
 		void StoreVDelta();

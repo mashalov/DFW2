@@ -186,7 +186,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_dAtol = 1E-4;
 		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
-		m_Parameters.m_bDisableResultsWriter = true;
+		m_Parameters.m_bDisableResultsWriter = false;
 
 		m_Parameters.m_bFlat = true;
 		m_Parameters.m_Startup = CLoadFlow::eLoadFlowStartupMethod::Seidell;

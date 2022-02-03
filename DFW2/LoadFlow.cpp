@@ -1020,16 +1020,83 @@ void CLoadFlow::BuildMatrixPower()
 	}
 }
 
-// расчет небаланса в узле
-void CLoadFlow::GetNodeImb(_MatrixInfo* pMatrixInfo)
+// расчет небаланса в узле полностью на SSE
+void CLoadFlow::GetNodeImbSSE(_MatrixInfo* pMatrixInfo)
 {
 	const auto& pNode{ pMatrixInfo->pNode };
 	// нагрузка по СХН
 	GetPnrQnrSuper(pNode);
-	//  в небалансе учитываем неконтролируемую генерацию в суперузлах
-	pMatrixInfo->m_dImbP = pMatrixInfo->m_dImbQ = 0.0;
-	cplx Vnode(pNode->Vre, pNode->Vim);
-	cplx I{ -Vnode * pNode->YiiSuper };
+
+	__m128d neg = _mm_setr_pd(0.0, -0.0);
+
+	//-pNode->VreVim * pNode->YiiSuper
+
+	__m128d sV0 = _mm_load_pd(reinterpret_cast<double(&)[2]>(pNode->VreVim));
+	__m128d sYs = _mm_load_pd(reinterpret_cast<double(&)[2]>(pNode->YiiSuper));
+
+	__m128d sV1 = sV0;	// сохраняем VreVim, так как далее мы его испортим в умножении
+
+	__m128d sI = _mm_xor_pd(sV1, sV1);
+	{
+		__m128d v3 = _mm_mul_pd(sV1, sYs);
+		sV1 = _mm_permute_pd(sV1, 0x5);
+		sYs = _mm_xor_pd(sYs, neg);
+		__m128d v4 = _mm_mul_pd(sV1, sYs);
+		sYs = _mm_hsub_pd(v3, v4);
+		sI = _mm_sub_pd(sI, sYs);
+	}
+	
+
+	for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
+	{
+		const auto& pOppNode{ pBranch->pNode };
+
+		//I -= pOppNode->VreVim * pBranch->Y;
+
+		__m128d yb = _mm_load_pd(reinterpret_cast<double(&)[2]>(pBranch->Y));
+		__m128d ov = _mm_load_pd(reinterpret_cast<double(&)[2]>(pBranch->pNode->VreVim));
+		__m128d v3 = _mm_mul_pd(yb, ov);
+		yb = _mm_permute_pd(yb, 0x5);
+		ov = _mm_xor_pd(ov, neg);
+		__m128d v4 = _mm_mul_pd(yb, ov);
+		yb = _mm_hsub_pd(v3, v4);
+		sI = _mm_sub_pd(sI, yb);
+	}
+
+
+	//I = std::conj(I) * pNode->VreVim;
+
+	sV1 = sV0;
+	{
+		__m128d sIconj = _mm_xor_pd(sI, neg);		// сопряжение тока
+		__m128d v3 = _mm_mul_pd(sIconj, sV1);
+		sIconj = _mm_permute_pd(sIconj, 0x5);
+		sV1 = _mm_xor_pd(sV1, neg);
+		__m128d v4 = _mm_mul_pd(sIconj, sV1);
+		sI = _mm_hsub_pd(v3, v4);
+	}
+
+	//I += cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
+
+	sV1 = _mm_load_pd(&pNode->Pnr);
+	sV1 = _mm_sub_pd(sV1, _mm_load_pd(&pNode->Pgr));
+	sV1 = _mm_sub_pd(sV1, _mm_load_pd(&pMatrixInfo->UncontrolledP));
+	sI = _mm_add_pd(sI, sV1);
+
+	_mm_store_pd(&pMatrixInfo->m_dImbP, sI);
+}
+
+
+// расчет небаланса в узле
+void CLoadFlow::GetNodeImb(_MatrixInfo* pMatrixInfo)
+{
+	GetNodeImbSSE(pMatrixInfo);
+	return;
+	const auto& pNode{ pMatrixInfo->pNode };
+	// нагрузка по СХН
+	GetPnrQnrSuper(pNode);
+
+	alignas(16) cplx I { -pNode->VreVim * pNode->YiiSuper };
 
 	for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 	{
@@ -1038,8 +1105,8 @@ void CLoadFlow::GetNodeImb(_MatrixInfo* pMatrixInfo)
 		//cplx sx{ std::conj(cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y) * Vnode };
 		I -= pOppNode->VreVim * pBranch->Y;
 	}
-	
-	I = std::conj(I) * Vnode;
+
+	I = std::conj(I) * pNode->VreVim;
 	I += cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
 	CDevice::FromComplex(pMatrixInfo->m_dImbP, pMatrixInfo->m_dImbQ, I);
 }
