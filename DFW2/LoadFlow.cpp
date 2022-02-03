@@ -587,11 +587,10 @@ void CLoadFlow::Seidell()
 			double& Pe{ pMatrixInfo->m_dImbP }, &Qe{ pMatrixInfo->m_dImbQ };
 			// рассчитываем небалансы
 			GetNodeImb(pMatrixInfo);
-			cplx Unode(pNode->Vre, pNode->Vim);
 
 			double Q{ Qe + pNode->Qgr };	// расчетная генерация в узле
 
-			cplx I1{ dStep / std::conj(Unode) / pNode->YiiSuper };
+			cplx I1{ dStep / std::conj(pNode->VreVim) / pNode->YiiSuper };
 
 			switch (pNode->m_eLFNodeType)
 			{
@@ -623,7 +622,7 @@ void CLoadFlow::Seidell()
 						pNodes->m_IterationControl.m_nQviolated++;
 						pNode->Qgr = Q;
 						cplx dU = I1 * cplx(Pe, 0);
-						dU += Unode;
+						dU += pNode->VreVim;
 						dU = pNode->LFVref * dU / std::abs(dU);
 						pNode->Vre = dU.real();
 						pNode->Vim = dU.imag();
@@ -666,7 +665,7 @@ void CLoadFlow::Seidell()
 						pMatrixInfo->m_nPVSwitchCount++;
 						pNode->Qgr = Q;
 						cplx dU = I1 * cplx(Pe, 0);
-						dU += Unode;
+						dU += pNode->VreVim;
 						dU = pNode->LFVref * dU / std::abs(dU);
 						pNode->Vre = dU.real();
 						pNode->Vim = dU.imag();
@@ -712,7 +711,7 @@ void CLoadFlow::Seidell()
 					}
 					cplx dU = I1 * cplx(Pe, -Qe);
 
-					dU += Unode;
+					dU += pNode->VreVim;
 					dU = pNode->LFVref * dU / std::abs(dU);
 					pNode->Vre = dU.real();
 					pNode->Vim = dU.imag();
@@ -728,7 +727,7 @@ void CLoadFlow::Seidell()
 					*/
 					///*
 					cplx dU = I1 * cplx(Pe, -Qe);
-					dU += Unode;
+					dU += pNode->VreVim;
 					dU = pNode->LFVref * dU / std::abs(dU);
 					pNode->Vre = dU.real();
 					pNode->Vim = dU.imag();
@@ -1037,9 +1036,8 @@ void CLoadFlow::GetNodeImb(_MatrixInfo* pMatrixInfo)
 		const auto& pOppNode{ pBranch->pNode };
 		// в отладке можем посмотреть мощность перетока по ветви
 		//cplx sx{ std::conj(cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y) * Vnode };
-		I -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+		I -= pOppNode->VreVim * pBranch->Y;
 	}
-
 	
 	I = std::conj(I) * Vnode;
 	I += cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ);
@@ -1369,18 +1367,22 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 		// для узлов с отрицательными нагрузками СХН не рассчитываем
 		// если такие СХН не разрешены в параметрах
 
-		double d{ 0.0 };
+		double& re{ reinterpret_cast<double(&)[2]>(pNode->dLRCLoad)[0] };
+		double& im{ reinterpret_cast<double(&)[2]>(pNode->dLRCLoad)[1] };
+
 		if (m_Parameters.m_bAllowNegativeLRC || pNode->Pn > 0.0)
 		{
-			pNode->Pnr *= pNode->m_pLRC->P()->GetBoth(VdVnom, d, pNode->dLRCVicinity);
-			pNode->dLRCLoad.real(d * pNode->Pn / pNode->V0);
+			pNode->Pnr *= pNode->m_pLRC->P()->GetBoth(VdVnom, re, pNode->dLRCVicinity);
+			re *= pNode->Pn;
 		}
 
 		if (m_Parameters.m_bAllowNegativeLRC || pNode->Qn > 0.0)
 		{
-			pNode->Qnr *= pNode->m_pLRC->Q()->GetBoth(VdVnom, d, pNode->dLRCVicinity);
-			pNode->dLRCLoad.imag(d * pNode->Qn / pNode->V0);
+			pNode->Qnr *= pNode->m_pLRC->Q()->GetBoth(VdVnom, im, pNode->dLRCVicinity);
+			im *=  pNode->Qn;
 		}
+
+		pNode->dLRCLoad /= pNode->V0;
 	}
 }
 
