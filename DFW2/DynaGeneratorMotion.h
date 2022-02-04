@@ -125,7 +125,7 @@ namespace DFW2
 			if (absSlf > Srated)
 			{
 				const std::string perCents(Srated > 0 ? fmt::format("{:.1f}", absSlf / Srated * 100.0) : "???");
-				message = fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated, Slf, absSlf, Srated,perCents);
+				message = fmt::format(CDFW2Messages::m_cszGeneratorPowerExceedsRated, Slf, absSlf, Srated, perCents);
 				return ValidationResult::Warning;
 			}
 			return ValidationResult::Ok;

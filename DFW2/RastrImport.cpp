@@ -380,6 +380,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("d:\\downloads\\8_check_mdp_debug_1\\8_check_mdp_debug_1");
 	LoadFile("d:\\downloads\\схемы\\10_check_mdp_debug_1_stable");
 	//LoadFile("d:\\downloads\\схемы\\9_check_mdp_debug_1_unstable");
+	//LoadFile("d:\\downloads\\d1\\d1");
 
 
 

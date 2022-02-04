@@ -1,0 +1,13 @@
+Set spLRCTable = Rastr.Tables("polin")
+Set spLRCId = spLRCTable.Cols("nsx")
+Set spNodeTable = Rastr.Tables("node")
+Set spNodeLRC = spNodeTable.Cols("nsx")
+spLRCTable.SetSel "sta"
+nextOffLRC = spLRCTable.FindNextSel(-1)
+while(nextOffLRC >= 0)
+
+    spNodeTable.SetSel "nsx=" & spLRCId.Z(nextOffLRC)
+    spNodeLRC.Calc("0")
+    nextOffLRC = spLRCTable.FindNextSel(nextOffLRC)
+wend
+spLRCTable.DelRows
