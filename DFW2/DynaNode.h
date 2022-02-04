@@ -95,13 +95,21 @@ namespace DFW2
 
 		double Pn,Qn,Pg,Qg;
 		double G,B, Gr0, Br0;
-
-		alignas(16) double Pnr;
-		alignas(8) double Qnr;
-		alignas(16) double Pgr;
-		alignas(8) double Qgr;
-		alignas(16) cplx VreVim;
+		// переменные, используемые для SSE выравниваем на 16 байт
+		// и выстраиваем последовательно. К отдельным значениям доступ
+		// организуем через ссылки
+		alignas(16) double Sload[2],  Sgen[2];
+		double& Pnr{ Sload[0] };
+		double& Qnr{ Sload[1] };
+		double& Pgr{ Sgen[0] };
+		double& Qgr{ Sgen[1] };
+		// у комплексных чисел вещественная и мнимая части последовательно в векторе по стандарту
+		alignas(16) cplx VreVim;		// комплексное напряжение для работы SSE и упрощения выражений
+										// это значение синхронизируется с переменными состояния Vre и Vim
+										// в Update... и Predict...
 		alignas(16) cplx YiiSuper;		// собственная проводимость суперузла
+
+		
 
 		cplx LRCShuntPart, LRCShuntPartSuper;
 		// напряжения, ниже которых в СХН чисто шунтовая характеристика
@@ -239,7 +247,7 @@ namespace DFW2
 		VirtualZeroBranch* AddZeroBranch(CDynaBranch* pBranch);
 		void TidyZeroBranches();
 		// выбирает исходное напряжение либо равное расчетному, либо (если расчетное равно почему-то нулю), номинальному
-		inline void PickV0() noexcept { V0 = (V > 0) ? V : Unom; }
+		inline void PickV0() noexcept { V0 = (V > 0) ? static_cast<double>(V) : Unom; }
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 
 		void AddToTopologyCheck();
@@ -284,9 +292,9 @@ namespace DFW2
 		CDynaNodeMeasure* m_pMeasure = nullptr;
 
 		VariableIndex Lag;
+		VariableIndex S;
 		//double Sip;
 		//double Cop;
-		VariableIndex S;
 		//double Sv, Dlt;
 		CDynaNode();
 		virtual ~CDynaNode() = default;
@@ -331,8 +339,9 @@ namespace DFW2
 		size_t nRowCount = 0;													// количество элементов в строке матрицы
 		CDynaNodeBase *pNode;													// узел, к которому относится данное Info
 		ptrdiff_t m_nPVSwitchCount = 0;											// счетчик переключений PV-PQ
-		alignas(16) double m_dImbP;
-		alignas(8) double  m_dImbQ;												// небалансы по P и Q
+		alignas(16) double m_dImbS[2];											// небалансы по P и Q
+		double& m_dImbP{ m_dImbS[0] };
+		double& m_dImbQ{ m_dImbS[1] };
 		bool bVisited = false;													// признак просмотра для графовых алгоритмов
 		double LFQmin;															// исходные ограничения реактивной мощности до ввода в суперузел
 		double LFQmax;

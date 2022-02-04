@@ -217,8 +217,10 @@ namespace DFW2
 		{
 			return static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::m_pLeft);
 		}
-		void SetInt(ptrdiff_t vInt) noexcept override
+		void SetInt(ptrdiff_t vInt) override
 		{
+			if (vInt <  0 || vInt >= static_cast<ptrdiff_t>(m_nCount))
+				throw dfw2error(fmt::format("CSerializerAdapterEnum::SetInt - value out of range {}", vInt));
 			*CSerializerAdapterBaseT<T>::m_pLeft = static_cast<T>(vInt);
 		}
 		std::string GetString() override
