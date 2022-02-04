@@ -85,7 +85,7 @@ namespace DFW2
 			SerializerPtr GetSerializer();
 			SerializerValidatorRulesPtr GetValidator();
 
-			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Power", "Current", "Tanh" };
+			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Current", "Power", "Tanh" };
 			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
 			static constexpr const char* m_cszLogLevelNames[7] = { "none", "fatal", "error", "warning", "message", "info", "debug" };
 			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };

@@ -789,10 +789,8 @@ void CLoadFlow::BuildMatrixCurrent()
 		pAx += 2;
 		// обратная величина от модуля напряжения в узле
 		const double Vinv = 1.0 / pNode->V;
-		// комплексное напряжение в узле
-		const cplx Unode(pNode->Vre, pNode->Vim);
 		// сопряженное напряжение деленное на модуль
-		const cplx UnodeConjByV(std::conj(Unode) * Vinv);
+		const cplx UnodeConjByV(std::conj(pNode->VreVim) * Vinv);
 
 		if (pNode->IsLFTypePQ())
 		{
@@ -803,10 +801,10 @@ void CLoadFlow::BuildMatrixCurrent()
 				const auto& pOppNode{ pBranch->pNode };
 				// вычисляем компоненты производных по комплексным напряжениям в узлах (Давыдов, стр. 75)
 				// при этом используем не напряжение в узле, а частное от напряжения и модуля (так как уравнения разделены на модуль)
-				cplx mult = UnodeConjByV * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				const cplx mult{ UnodeConjByV * pOppNode->VreVim * pBranch->Y };
 
 				// небаланс по ветвям
-				Sneb -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				Sneb -= pOppNode->VreVim * pBranch->Y;
 
 				// компоненты диагональных производных по углу
 				dPdDelta -= mult.imag();
@@ -840,9 +838,9 @@ void CLoadFlow::BuildMatrixCurrent()
 			for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 			{
 				const auto& pOppNode{ pBranch->pNode };
-				cplx mult = UnodeConjByV * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				const cplx mult{ UnodeConjByV * pOppNode->VreVim * pBranch->Y };
 
-				Sneb -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				Sneb -= pOppNode->VreVim * pBranch->Y;
 
 				dPdDelta -= mult.imag();
 
@@ -870,9 +868,9 @@ void CLoadFlow::BuildMatrixCurrent()
 		// расчетная по СХН нагрузка в узле 
 		const cplx NodeInjL(pNode->Pnr, pNode->Qnr);
 		// небаланс в узле
-		Sneb -= Unode * pNode->YiiSuper;
+		Sneb -= pNode->VreVim * pNode->YiiSuper;
 		// небалансы в токах - поэтому делим мощности на модуль
-		Sneb = Vinv * (std::conj(Sneb) * Unode + NodeInjL - NodeInjG);
+		Sneb = Vinv * (std::conj(Sneb) * pNode->VreVim + NodeInjL - NodeInjG);
 
 		const double VinvSq(Vinv * Vinv);
 
@@ -926,7 +924,9 @@ void CLoadFlow::BuildMatrixPower()
 		double dPdV = pNode->GetSelfdPdV(), dQdV(1.0);
 		double* pAxSelf = pAx;
 		pAx += 2;
-		cplx UnodeConj(pNode->Vre, -pNode->Vim);
+
+		const cplx UnodeConj(std::conj(pNode->VreVim));
+
 		if (pNode->IsLFTypePQ())
 		{
 			// для PQ-узлов формируем оба уравнения
@@ -935,9 +935,9 @@ void CLoadFlow::BuildMatrixPower()
 			for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 			{
 				const auto& pOppNode{ pBranch->pNode };
-				cplx mult = UnodeConj * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				const cplx mult{ UnodeConj * pOppNode->VreVim * pBranch->Y };
 
-				Sneb -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				Sneb -= pOppNode->VreVim * pBranch->Y;
 
 				dPdDelta -= mult.imag();
 				dPdV += -CDevice::ZeroDivGuard(mult.real(), pNode->V);
@@ -971,9 +971,9 @@ void CLoadFlow::BuildMatrixPower()
 			for (VirtualBranch* pBranch = pMatrixInfo->pNode->m_VirtualBranchBegin; pBranch < pMatrixInfo->pNode->m_VirtualBranchEnd; pBranch++)
 			{
 				const auto& pOppNode{ pBranch->pNode };
-				cplx mult = UnodeConj * cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				const cplx mult{ UnodeConj * pOppNode->VreVim * pBranch->Y };
 
-				Sneb -= cplx(pOppNode->Vre, pOppNode->Vim) * pBranch->Y;
+				Sneb -= pOppNode->VreVim * pBranch->Y;
 
 				dPdDelta -= mult.imag();
 				dPdV += -CDevice::ZeroDivGuard(mult.real(), pNode->V);

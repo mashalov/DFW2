@@ -11,8 +11,8 @@ namespace DFW2
 
 		enum class eLoadFlowFormulation
 		{
-			Power,
 			Current,
+			Power,
 			Tanh
 		};
 
