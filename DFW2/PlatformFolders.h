@@ -107,7 +107,7 @@ namespace DFW2
 			return CPlatformFolders::automaticModuleName;
 		}
 
-		const std::filesystem::path Results() const
+		const std::filesystem::path& Results() const
 		{
 			return pathResults;
 		}

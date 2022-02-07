@@ -53,8 +53,8 @@ void CPlatformFolders::CheckPath(std::filesystem::path& path) const
 
 void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingFolder)
 {
-	const char* cszBuild = "Build";
-	const char* cszModules = "Modules";
+	const char* cszBuild{ "Build" };
+	const char* cszModules{ "Modules" };
 	
 	if (WorkingFolder.is_absolute())
 		pathRoot = WorkingFolder;

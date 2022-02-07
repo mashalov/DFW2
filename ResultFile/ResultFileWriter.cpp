@@ -679,7 +679,7 @@ void CResultFileWriter::FinishWriteHeader()
 	SYSTEMTIME Now;
 	GetLocalTime(&Now);
 	if (!SystemTimeToVariantTime(&Now, &dCurrentDate))
-		throw CFileWriteException(NULL);
+		throw CFileWriteException();
 #else
 	// задаем дату 01.01.2000
 	std::tm tm

@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio Version 16
-VisualStudioVersion = 16.0.30114.105
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.32112.339
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DFW2", "DFW2\DFW2.vcxproj", "{3F83480D-B24E-487E-895E-E4F7FA099A87}"
 	ProjectSection(ProjectDependencies) = postProject
@@ -34,6 +34,9 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Rastr2Json", "Rastr2Json\Rastr2Json.vcxproj", "{598573D3-ECF6-41AD-A698-3D632B7CC6FC}"
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CompareResults", "CompareResults\CompareResults.vcxproj", "{A61DA5FC-8BED-45AB-9718-34FC019A5236}"
+	ProjectSection(ProjectDependencies) = postProject
+		{10A29A20-D54F-465D-8A51-EF34EA3D9DD7} = {10A29A20-D54F-465D-8A51-EF34EA3D9DD7}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
