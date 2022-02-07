@@ -45,6 +45,8 @@ class CPlot
 		double t;
 		double v;
 
+		Point(double time, double value) : t(time), v(value) {}
+
 		bool CompareValue(const double& value, double Rtol, double Atol) const
 		{
 			return WeightedDifference(value, Rtol, Atol) < 1.0;

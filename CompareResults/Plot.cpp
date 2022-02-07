@@ -23,7 +23,7 @@ CPlot::CPlot(size_t PointCount, const double* pt, const double* pv, const Compar
 			}
 
 		pv = pv + (pt - ptOriginal);
-		data.push_back({ *pt, *pv });
+		data.emplace_back(*pt, *pv) ;
 		pt++; pv++;
 
 		while (pt < pte)
@@ -32,7 +32,7 @@ CPlot::CPlot(size_t PointCount, const double* pt, const double* pv, const Compar
 			// добавляем только точки, попадающие в диапазон
 			if (range.max >= 0.0 && *pt > range.max)
 				break;
-			data.push_back({ *pt, *pv });
+			data.emplace_back(*pt, *pv);
 			pt++; pv++;
 		}
 	}
@@ -176,17 +176,21 @@ PointDifference CPlot::Compare(const CPlot& plot)
 	return PointDiff;
 }
 
+// возвращает график с заданным шагом. В точках дискретных изменений
+// добавляются дополнительные точки времени для воспроизведения изломов
 
 CPlot CPlot::DenseOutput(double Step)
 {
 	CPlot outplot;
-	double t{ 0.0 };
-
 	auto p{ data.begin() };
+	// отсчитываем время как целое чтобы не
+	// прибегать к компенсации сложения
+	ptrdiff_t IntegerT{ 0 };	
 
 	// идем по графику
 	while (p != data.end())
 	{
+		double t{ IntegerT * Step };
 		// ищем ближайшую точку к заданному времени слева
 		while (p != data.end())
 		{
@@ -254,8 +258,7 @@ CPlot CPlot::DenseOutput(double Step)
 			else
 				push({ t, pr->v });
 		}
-
-		t += Step;
+		IntegerT++;
 	}
 
 	return outplot;
