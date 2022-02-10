@@ -69,7 +69,7 @@ protected:
     CASTJacobian* pJacobian = nullptr;
     CASTEquationSystem* pExternalBaseInit = nullptr; // дополнительная система уравнений для инициализации Base переменных
     void MatchAtRuleEntry(const CASTNodeBase* pRuleEntry, const CASTNodeBase* pRule);
-    size_t nErrors = 0, nWarnings = 0;
+    mutable size_t nErrors = 0, nWarnings = 0;      // функции репортинга делаем const, но счетчики хотим инкрементировать
     VarInfoMap Vars;                                // карта переменных дерева
     ASTEquationsSet Equations;                      // сет уравнений в дереве
     ASTHostBlocksSet HostBlocks;                    // сет хост-блоков
@@ -149,10 +149,11 @@ public:
     void PrintInfix();
     void ApplyHostBlocks();
     void PrintErrorsWarnings() const;
-    void Warning(std::string_view warning);
-    void Error(std::string_view error);
-    void Message(std::string_view message);
-    void Debug(std::string_view message);
+    void Error(std::string_view error) const;
+    void Warning(std::string_view warning) const;
+    void Message(std::string_view message) const;
+    void Information(std::string_view message) const;
+    void Debug(std::string_view message) const;
     size_t ErrorCount() const;
     VariableInfo& GetVariableInfo(std::string_view VarName);
     VariableInfo* CheckVariableInfo(std::string_view VarName);

@@ -8,6 +8,7 @@ struct MessageCallBacks
 {
     fnMessageCallBack Error;
     fnMessageCallBack Warning;
+    fnMessageCallBack Message;
     fnMessageCallBack Info;
     fnMessageCallBack Debug;
 };

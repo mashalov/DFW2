@@ -638,7 +638,7 @@ public:
 
     void PrintInfix()
     {
-        std::cout << GetInfix() << std::endl;
+        pTree->Debug(GetInfix());
     }
 
     std::string& ChildrenSplitByToInfix(std::string_view Delimiter);

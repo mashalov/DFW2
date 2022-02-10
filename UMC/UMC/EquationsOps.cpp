@@ -60,7 +60,7 @@ ASTEquationsList::iterator CASTTreeBase::TieBreak(ASTEquationsList& eqs)
         {
             // если нашли - то разрешаем эту переменную относительно этого уравнения
             itMax->second.pResovledByEquation = *itMaxEq;
-            std::cout << "tiebreak on " << itMax->first << " " << itMax->second.pResovledByEquation->GetInfix() << std::endl;
+            Debug(fmt::format("tiebreak on {} {}", itMax->first, itMax->second.pResovledByEquation->GetInfix()));
             itEq = std::find(eqs.begin(), eqs.end(), *itMaxEq);
             // отмечаем, что уравнение был разорвано по переменной itMax
             (*itMaxEq)->itTieBrokenBy = itMax;
@@ -98,7 +98,7 @@ ASTEquationsList::iterator CASTTreeBase::ResolveEquation(ASTEquationsList& eqs)
         {
             // отмечаем, что переменная разрешается данным уравнением
             CASTEquation*& pResolvedBy = (*itUnresolved)->second.pResovledByEquation;
-            std::cout << "Resolved " << (*itUnresolved)->first << " from " << eq->GetInfix() << std::endl;
+            Debug(fmt::format("Resolved {} from {}", (*itUnresolved)->first, eq->GetInfix()));
             _ASSERTE(!pResolvedBy);
             pResolvedBy = eq;
             itResolveEq = itEq;

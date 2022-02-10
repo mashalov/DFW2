@@ -120,6 +120,11 @@ void CAutomatic::CompileModels()
 					},
 					[&pDynaModel](std::string_view message)
 					{
+						pDynaModel->Log(DFW2MessageStatus::DFW2LOG_MESSAGE, message);
+						return true;
+					},
+					[&pDynaModel](std::string_view message)
+					{
 						pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, message);
 						return true;
 					},

@@ -206,7 +206,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 		for (auto& l : listConsole)
 		{
 			const std::string utf8message{ utf8_encode(l) };
-			std::cout << utf8message << std::endl;
+			//std::cout << utf8message << std::endl;
 			if (messageCallBacks.Debug)
 				messageCallBacks.Debug(utf8message);
 		}

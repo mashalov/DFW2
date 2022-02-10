@@ -183,6 +183,13 @@ CPlot CPlot::DenseOutput(double Step)
 {
 	CPlot outplot;
 	auto p{ data.begin() };
+
+	if (Step <= 0.0)
+		throw std::runtime_error("CPlot::DenseOutput - step must be positive");
+
+	if (!data.empty())
+		outplot.data.reserve(static_cast<size_t>(1.2 * data.back().t / Step));
+	
 	// отсчитываем время как целое чтобы не
 	// прибегать к компенсации сложения
 	ptrdiff_t IntegerT{ 0 };	

@@ -146,13 +146,13 @@ void CASTTreeBase::Flatten()
 
 void CASTTreeBase::PrintErrorsWarnings() const
 {
-    std::cout << fmt::format("Ошибок : {}, Предупреждений: {}", nErrors, nWarnings) << std::endl;
+    Information(fmt::format("Ошибок : {}, Предупреждений: {}", nErrors, nWarnings));
 }
 
 void CASTTreeBase::PrintInfix()
 {
-    std::cout << pRoot->GetInfix() << std::endl;
-    std::cout << fmt::format("Score : {} ", Score())  << std::endl;
+    Debug(pRoot->GetInfix());
+    Debug(fmt::format("Score : {} ", Score()));
     PrintErrorsWarnings();
 }
 
@@ -564,7 +564,19 @@ std::string CASTTreeBase::ProjectMessage(const std::string_view& message) const
         return std::string(message);
 }
 
-void CASTTreeBase::Warning(std::string_view warning)
+void CASTTreeBase::Error(std::string_view error) const
+{
+#ifdef _MSC_VER    
+    SetConsoleOutputCP(CP_UTF8);
+#endif    
+    if (messageCallBacks.Error)
+        messageCallBacks.Error(ProjectMessage(error));
+    else
+        std::cout << DFW2::CDFW2Messages::m_cszError << error << std::endl;
+    nErrors++;
+}
+
+void CASTTreeBase::Warning(std::string_view warning) const
 {
 #ifdef _MSC_VER    
     SetConsoleOutputCP(CP_UTF8);
@@ -576,7 +588,29 @@ void CASTTreeBase::Warning(std::string_view warning)
     nWarnings++;
 }
 
-void CASTTreeBase::Debug(std::string_view message)
+void CASTTreeBase::Message(std::string_view message) const
+{
+#ifdef _MSC_VER    
+    SetConsoleOutputCP(CP_UTF8);
+#endif
+    if (messageCallBacks.Message)
+        messageCallBacks.Message(ProjectMessage(message));
+    else
+        std::cout << DFW2::CDFW2Messages::m_cszInfo << message << std::endl;
+}
+
+void CASTTreeBase::Information(std::string_view error) const
+{
+#ifdef _MSC_VER    
+    SetConsoleOutputCP(CP_UTF8);
+#endif    
+    if (messageCallBacks.Info)
+        messageCallBacks.Info(ProjectMessage(error));
+    else
+        std::cout << DFW2::CDFW2Messages::m_cszError << error << std::endl;
+}
+
+void CASTTreeBase::Debug(std::string_view message) const
 {
 #ifdef _MSC_VER    
     SetConsoleOutputCP(CP_UTF8);
@@ -585,29 +619,6 @@ void CASTTreeBase::Debug(std::string_view message)
         messageCallBacks.Debug(ProjectMessage(message));
     else
         std::cout << DFW2::CDFW2Messages::m_cszDebug << message << std::endl;
-}
-
-void CASTTreeBase::Message(std::string_view message)
-{
-#ifdef _MSC_VER    
-    SetConsoleOutputCP(CP_UTF8);
-#endif
-    if (messageCallBacks.Info)
-        messageCallBacks.Info(ProjectMessage(message));
-    else
-        std::cout << DFW2::CDFW2Messages::m_cszInfo << message << std::endl;
-}
-
-void CASTTreeBase::Error(std::string_view error)
-{
-#ifdef _MSC_VER    
-    SetConsoleOutputCP(CP_UTF8);
-#endif    
-    if (messageCallBacks.Error)
-        messageCallBacks.Error(ProjectMessage(error));
-    else
-        std::cout << DFW2::CDFW2Messages::m_cszError << error << std::endl;
-    nErrors++;
 }
 
 size_t CASTTreeBase::ErrorCount() const
