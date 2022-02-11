@@ -1,8 +1,12 @@
 ﻿/*
 * Raiden - программа для моделирования длительных электромеханических переходных процессов в энергосистеме
-* (С) 2018 - 2021 Евгений Машалов
+* (С) 2018 - Н.В. Евгений Машалов
+* Свидетельство о государственной регистрации программы для ЭВМ №2021663231 
+* https://fips.ru/EGD/c7c3d928-893a-4f47-a218-51f3c5686860
+* 
 * Raiden - long-term power system transient stability simulation module
-* (C) 2018 - 2021 Eugene Mashalov
+* (C) 2018 - present Eugene Mashalov
+* pat. RU №2021663231
 */
 
 #pragma once
