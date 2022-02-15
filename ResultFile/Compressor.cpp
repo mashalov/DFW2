@@ -1,4 +1,19 @@
-﻿#include "stdafx.h"
+﻿/*
+* Модуль сжатия результатов расчета электромеханических переходных процессов
+* (С) 2018 - Н.В. Евгений Машалов
+* Свидетельство о государственной регистрации программы для ЭВМ №2021663231
+* https://fips.ru/EGD/c7c3d928-893a-4f47-a218-51f3c5686860
+*
+* Transient stability simulation results compression library
+* (C) 2018 - present Eugene Mashalov
+* pat. RU №2021663231
+*
+* Реализует предиктивный энкодер для вещественных чисел
+* https://www.elibrary.ru/item.asp?id=32269427 (C) Евгений Машалов, 2017
+*
+*/
+
+#include "stdafx.h"
 #include "Compressor.h"
 
 #ifdef _MSC_VER
@@ -18,12 +33,12 @@ eFCResult CCompressorBase::ReadDouble(double& Value, double& Predictor, CBitStre
 	// готовим буфер для чтения количества нулевых бит
 	CBitStream NzCount(&nz, &nz + 1, 0);
 	// читаем количетсво нулевых бит, деленное на 4 (4 бита)
-	eFCResult fcResult = NzCount.WriteBits(Input, 4);
+	eFCResult fcResult{ NzCount.WriteBits(Input, 4) };
 
 	if (fcResult == eFCResult::FC_OK)
 	{
 		// готовим буфер для чтения битов 
-		BITWORD *pd = static_cast<BITWORD*>(static_cast<void*>(&Value));
+		BITWORD* pd{ static_cast<BITWORD*>(static_cast<void*>(&Value)) };
 		CBitStream Dbl(pd, pd + sizeof(double) / sizeof(BITWORD), 0);
 		// читаем ненулевые биты
 		fcResult = Dbl.WriteBits(Input, sizeof(double) * 8 - nz * 4);
@@ -84,12 +99,12 @@ void CCompressorBase::Xor(double& Value, double& Predictor)
 
 eFCResult CCompressorBase::WriteLEB(uint64_t Value, CBitStream& Output)
 {
-	eFCResult fcResult = Output.AlignTo(8);
+	eFCResult fcResult{ Output.AlignTo(8) };
 	if (fcResult == eFCResult::FC_OK)
 	{
 		do
 		{
-			unsigned char low = Value & 0x7f;
+			unsigned char low{ Value & 0x7f };
 			Value >>= 7;
 			if (Value != 0)
 				low |= 0x80;
@@ -103,11 +118,11 @@ eFCResult CCompressorBase::WriteLEB(uint64_t Value, CBitStream& Output)
 
 eFCResult CCompressorBase::ReadLEB(uint64_t& Value, CBitStream& Input)
 {
-	eFCResult fcResult = Input.AlignTo(8);
+	eFCResult fcResult{ Input.AlignTo(8) };
 	if (fcResult == eFCResult::FC_OK)
 	{
 		Value = 0;
-		ptrdiff_t shift = 0;
+		ptrdiff_t shift{ 0 };
 		unsigned char low;
 		do
 		{
@@ -142,36 +157,36 @@ void CCompressorSingle::UpdatePredictor(double y)
 	}
 }
 
-void CCompressorSingle::UpdatePredictor(double& y, double dTolerance)
+void CCompressorSingle::UpdatePredictor(double& y, double Tolerance)
 {
-	if (PredictorOrder_ > 0 && std::abs(y - ys[PredictorOrder_ - 1]) < dTolerance)
+	if (PredictorOrder_ > 0 && std::abs(y - ys[PredictorOrder_ - 1]) < Tolerance)
 		y = ys[PredictorOrder_ - 1];
 
 	UpdatePredictor(y);
 }
 
-void CCompressorParallel::ResetPredictor(ptrdiff_t nPredictorOrder)
+void CCompressorParallel::ResetPredictor(ptrdiff_t PredictorOrder)
 {
-	if (nPredictorOrder >= PREDICTOR_ORDER)
+	if (PredictorOrder >= PREDICTOR_ORDER)
 		ys[0] = ys[PREDICTOR_ORDER - 1];
 	else
-		ys[0] = ys[nPredictorOrder - 1];
+		ys[0] = ys[PredictorOrder - 1];
 }
 
-void CCompressorParallel::UpdatePredictor(double y, ptrdiff_t nPredictorOrder)
+void CCompressorParallel::UpdatePredictor(double y, ptrdiff_t PredictorOrder)
 {
-	if (nPredictorOrder >= PREDICTOR_ORDER)
+	if (PredictorOrder >= PREDICTOR_ORDER)
 		ys[PREDICTOR_ORDER - 1] = y;
 	else
-		ys[nPredictorOrder] = y;
+		ys[PredictorOrder] = y;
 }
 
-void CCompressorParallel::UpdatePredictor(double& y, ptrdiff_t nPredictorOrder, double dTolerance)
+void CCompressorParallel::UpdatePredictor(double& y, ptrdiff_t PredictorOrder, double Tolerance)
 {
-	if (nPredictorOrder > 0 && std::abs(y - ys[nPredictorOrder - 1]) < dTolerance)
-		y = ys[nPredictorOrder - 1];
+	if (PredictorOrder > 0 && std::abs(y - ys[PredictorOrder - 1]) < Tolerance)
+		y = ys[PredictorOrder - 1];
 
-	UpdatePredictor(y, nPredictorOrder);
+	UpdatePredictor(y, PredictorOrder);
 }
 
 #ifdef _WIN64
@@ -196,7 +211,7 @@ eFCResult CCompressorBase::WriteDoubleLZcnt64(double& Value, double& Predictor, 
 	if (nZ4count == 16)
 		nZ4count--;
 	// считаем количество нулевых битов, округленное до 4
-	size_t ZeroBitsCount = nZ4count << 2;
+	size_t ZeroBitsCount{ nZ4count << 2 };
 	
 	// если в буфере осталось место для записи ненулевых битов
 	// 64 + 4 = 68 - максимальное количество бит
@@ -208,8 +223,8 @@ eFCResult CCompressorBase::WriteDoubleLZcnt64(double& Value, double& Predictor, 
 		if (Result == eFCResult::FC_OK)
 		{
 			// формируем буфер для записи double
-			BITWORD *pvb = static_cast<BITWORD*>(static_cast<void*>(pv));
-			BITWORD *pve = static_cast<BITWORD*>(static_cast<void*>(pv+1));
+			BITWORD* pvb{ static_cast<BITWORD*>(static_cast<void*>(pv)) };
+			BITWORD* pve{ static_cast<BITWORD*>(static_cast<void*>(pv + 1)) };
 			CBitStream SourceDbl(pvb, pve, 0);
 			// и записываем только ненулевые биты
 			// double в памяти лежит от младших битов к старшим, так что записываем ненулевые младшие
@@ -230,8 +245,7 @@ eFCResult CCompressorBase::WriteDoubleLZcnt64(double& Value, double& Predictor, 
 
 eFCResult CCompressorBase::WriteDoublePlain(double& Value, double& Predictor, CBitStream& Output)
 {
-	eFCResult Result = eFCResult::FC_OK;
-
+	eFCResult Result{ eFCResult::FC_OK };
 	Xor(Value, Predictor);
 	unsigned int* ppv{ static_cast<unsigned int*>(static_cast<void*>(&Value)) + 1 };
 	unsigned int pv{ *ppv };
@@ -407,7 +421,7 @@ double CCompressorSingle::Predict(double t)
 {
 	if (PredictorOrder_ > 0)
 	{
-		bool bReset = false;
+		bool bReset{ false };
 		for (int j = 0; j < PredictorOrder_; j++)
 		{
 			if (DFW2::Equal(t, ts[j]))
@@ -440,12 +454,12 @@ double CCompressorSingle::Predict(double t)
 	if (PredictorOrder_ >= PREDICTOR_ORDER)
 	{
 		// текущее и предыдущее времена разные
-		double Pred = 0.0;
-		bool bIdenctical = true;
+		double Pred{ 0.0 };
+		bool bIdenctical{ true };
 
 		for (int j = 0; j < PREDICTOR_ORDER; j++)
 		{
-			double l = 1;
+			double l{ 1 };
 			for (int m = 0; m < PREDICTOR_ORDER; m++)
 			{
 				if (m != j)
@@ -466,8 +480,6 @@ double CCompressorSingle::Predict(double t)
 
 		std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
 		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
-		//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
-		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 		ts[PREDICTOR_ORDER - 1] = t;
 		return Pred;
 	}
@@ -485,14 +497,12 @@ double CCompressorSingle::Predict(double t)
 	}
 	}
 
-double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nPredictorOrder, const double* const pts)
+double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t PredictorOrder, const double* const pts)
 {
-	if (nPredictorOrder >= PREDICTOR_ORDER)
+	if (PredictorOrder >= PREDICTOR_ORDER)
 	{
-		double Pred = 0.0;
-		double dErr = 0.0;
-
-		bool bIdenctical = true;
+		double Pred{ 0.0 }, dErr{ 0.0 };
+		bool bIdenctical{ true };
 
 		for (int j = 0; j < PREDICTOR_ORDER; j++)
 		{
@@ -508,7 +518,6 @@ double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nP
 			Pred = *ys;
 
 		std::copy(ys + 1, ys + PREDICTOR_ORDER, ys);
-		//memcpy(ys, ys + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
 		return Pred;
 	}
 	else
@@ -520,10 +529,10 @@ double CCompressorParallel::Predict(double t, bool bPredictorReset, ptrdiff_t nP
 
 		// флага нет, значит сброса не было, и порядок предиктора действительно 0
 		// предыдущих значений нет, и возвращаем ноль
-		if (!nPredictorOrder)
+		if (!PredictorOrder)
 			return 0.0;
 		else
-			return ys[nPredictorOrder - 1];
+			return ys[PredictorOrder - 1];
 	}
 }
 

@@ -192,18 +192,18 @@ public:
 class CASTNumeric : public CASTNodeTextBase
 {
 protected:
-    double m_dValue = 0.0;
+    double Value_ = 0.0;
 public:
     CASTNumeric(CASTTreeBase* Tree,
         CASTNodeBase* Parent,
         std::string_view Text = std::string_view("")) : CASTNodeTextBase(Tree, Parent, Text),
-        m_dValue(std::stod(std::string(Text)))
+        Value_(std::stod(std::string(Text)))
     {
         Constant = true;
     }
     CASTNumeric(CASTTreeBase* Parser,
         CASTNodeBase* Parent,
-        double Value) : CASTNodeTextBase(Parser, Parent, std::to_string(Value)), m_dValue(Value) {}
+        double Value) : CASTNodeTextBase(Parser, Parent, std::to_string(Value)), Value_(Value) {}
 
     ASTNodeType GetType() const override { return ASTNodeType::Numeric; }
     ptrdiff_t DesignedChildrenCount() const override { return 0; }
@@ -214,12 +214,12 @@ public:
 
     double GetNumeric() const
     {
-        return m_dValue;
+        return Value_;
     }
 
     void SetNumeric(double dValue)
     {
-        m_dValue = dValue;
+        Value_ = dValue;
         SetText(std::to_string(dValue));
     }
 

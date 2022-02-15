@@ -1,4 +1,13 @@
-﻿#pragma once
+﻿/*
+* Классы исключений для операций файлового ввода/вывода
+* (С) 2018 - Н.В. Евгений Машалов
+*
+* Exception classes for file IO
+* (C) 2018 - present Eugene Mashalov
+* 
+*/
+
+#pragma once
 
 #include "../DFW2/dfw2exception.h"
 #include "../DFW2/Messages.h"

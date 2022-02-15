@@ -1,4 +1,19 @@
-﻿#pragma once
+﻿/*
+* UMC - модуль оптимизируюещего компилятора моделей оборудования для проекта Raiden
+* (С) 2018 - Н.В. Евгений Машалов
+* Свидетельство о государственной регистрации программы для ЭВМ №2021663231
+* https://fips.ru/EGD/c7c3d928-893a-4f47-a218-51f3c5686860
+*
+* UMC - user model compiler for Raiden project
+* (C) 2018 - present Eugene Mashalov
+* pat. RU №2021663231
+*
+* Реализует метод трансляции описания модели 
+* https://www.elibrary.ru/item.asp?id=44384350 (C) 2020 Евгений Машалов
+* 
+*/
+
+#pragma once
 #include <list>
 #include <set>
 #include <stack>
@@ -74,7 +89,7 @@ protected:
     ASTEquationsSet Equations;                      // сет уравнений в дереве
     ASTHostBlocksSet HostBlocks;                    // сет хост-блоков
 
-    ptrdiff_t m_DFSLevel = 0;                       // номер DFS-обхода (для вложенных обходов)
+    ptrdiff_t DFSLevel_ = 0;                        // номер DFS-обхода (для вложенных обходов)
 
     using VarItList = std::list<VarInfoMap::iterator>;
 

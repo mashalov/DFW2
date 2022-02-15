@@ -1,4 +1,19 @@
-﻿#include <numeric>
+﻿/*
+* UMC - модуль оптимизируюещего компилятора моделей оборудования для проекта Raiden
+* (С) 2018 - Н.В. Евгений Машалов
+* Свидетельство о государственной регистрации программы для ЭВМ №2021663231
+* https://fips.ru/EGD/c7c3d928-893a-4f47-a218-51f3c5686860
+*
+* UMC - user model compiler for Raiden project
+* (C) 2018 - present Eugene Mashalov
+* pat. RU №2021663231
+*
+* Реализует метод трансляции описания модели
+* https://www.elibrary.ru/item.asp?id=44384350 (C) 2020 Евгений Машалов
+*
+*/
+
+#include <numeric>
 #include "ASTTreeBase.h"
 #include "ASTNodes.h"
 #include "MatchInfo.h"
@@ -28,7 +43,7 @@ CASTTreeBase::~CASTTreeBase()
 void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 {
     // увеличиваем текущий номер обхода
-    m_DFSLevel++;
+    DFSLevel_++;
 
     // резервируем стек и список посещенных узлов
     CDFSStack stack(NodeList.size() * 2);
@@ -45,9 +60,9 @@ void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
             EXCEPTIONMSG("Processing deleted node");
 
         stack.pop();
-        if (!v->Visited(m_DFSLevel))
+        if (!v->Visited(DFSLevel_))
         {
-            v->Visit(m_DFSLevel);
+            v->Visit(DFSLevel_);
             visited.push_back(v);
             if (!(Visitor)(v))
                 break;
@@ -57,16 +72,16 @@ void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
     }
 
     // Возвращаем номер обхода
-    m_DFSLevel--;
+    DFSLevel_--;
     // и восстанавливаем исходные посещения у посещенных в данном обходе узлов
     for (auto&& node : visited)
-        node->Visit(m_DFSLevel);
+        node->Visit(DFSLevel_);
 }
 
 void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 {
     // увеличиваем текущий номер обхода
-    m_DFSLevel++;
+    DFSLevel_++;
 
     // резервируем стек и список посещенных узлов
     CDFSStack stack(NodeList.size() * 2);
@@ -82,9 +97,9 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
         if (v->Deleted())
             EXCEPTIONMSG("Processing deleted node");
 
-        if (!v->Visited(m_DFSLevel))
+        if (!v->Visited(DFSLevel_))
         {
-            v->Visit(m_DFSLevel);
+            v->Visit(DFSLevel_);
             visited.push_back(v);
             for (auto c : v->ChildNodes())
                 stack.push(c);
@@ -101,10 +116,10 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
     }
 
     // Возвращаем номер обхода
-    m_DFSLevel--;
+    DFSLevel_--;
     // и восстанавливаем исходные посещения у посещенных в данном обходе узлов
     for (auto&& node : visited)
-        node->Visit(m_DFSLevel);
+        node->Visit(DFSLevel_);
 }
 
 

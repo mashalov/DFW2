@@ -7,6 +7,7 @@
 * Raiden - long-term power system transient stability simulation module
 * (C) 2018 - present Eugene Mashalov
 * pat. RU №2021663231
+* 
 */
 
 #pragma once

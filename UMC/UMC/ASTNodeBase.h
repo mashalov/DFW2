@@ -17,7 +17,7 @@ protected:
     size_t score = 0;               // скоринг узла
     bool Constant = false;          // флаг константного выражения в узле
     bool IsError = false;           // флаг ошибки в узле
-    ptrdiff_t m_nVisited = 0;       // номер посещения при DFS обходах
+    ptrdiff_t Visited_ = 0;       // номер посещения при DFS обходах
 public:
     CASTNodeBase(CASTTreeBase* Tree, 
                  CASTNodeBase* Parent, 
@@ -55,16 +55,16 @@ public:
     // ! TODO можно вставить отладочный ASSERT !
     bool Visited(ptrdiff_t Level)
     {
-        if (m_nVisited > Level)
+        if (Visited_ > Level)
             EXCEPTIONMSG("CASTNodeBase::Visited - Level mismatch !");
-        return m_nVisited == Level;
+        return Visited_ == Level;
     }
 
     // устанавливает номер посещения
     // ! TODO можно вставить отладочный ASSERT !
     void Visit(ptrdiff_t Level)
     {
-        m_nVisited = Level;
+        Visited_ = Level;
     }
     
 

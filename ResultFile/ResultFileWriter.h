@@ -1,4 +1,15 @@
-﻿#pragma once
+﻿/*
+* Модуль сжатия результатов расчета электромеханических переходных процессов
+* (С) 2018 - Н.В. Евгений Машалов
+* Свидетельство о государственной регистрации программы для ЭВМ №2021663231
+* https://fips.ru/EGD/c7c3d928-893a-4f47-a218-51f3c5686860
+*
+* Transient stability simulation results compression library
+* (C) 2018 - present Eugene Mashalov
+* pat. RU №2021663231
+*/
+
+#pragma once
 #include "ResultFileReader.h"
 #include <thread>
 #include <mutex>

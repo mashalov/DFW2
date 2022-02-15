@@ -1,10 +1,20 @@
-﻿#include "stdafx.h"
-#include "RLECompressor.h"
+﻿/*
+* Модуль сжатия результатов расчета электромеханических переходных процессов
+* (С) 2018 - Н.В. Евгений Машалов
+* Свидетельство о государственной регистрации программы для ЭВМ №2021663231
+* https://fips.ru/EGD/c7c3d928-893a-4f47-a218-51f3c5686860
+*
+* Transient stability simulation results compression library
+* (C) 2018 - present Eugene Mashalov
+* pat. RU №2021663231
+*/
 
+#include "stdafx.h"
+#include "RLECompressor.h"
 
 bool CRLECompressor::OutSkip(const unsigned char *pBuffer, const unsigned char *pInput)
 {
-	bool bRes = OutCompressed(static_cast<unsigned char>(pInput - pBuffer));
+	bool bRes{ OutCompressed(static_cast<unsigned char>(pInput - pBuffer)) };
 	while (pBuffer < pInput && bRes)
 	{
 		bRes = OutCompressed(*pBuffer);
@@ -15,7 +25,7 @@ bool CRLECompressor::OutSkip(const unsigned char *pBuffer, const unsigned char *
 
 bool CRLECompressor::OutRepeat(const unsigned char *pBuffer, const unsigned char *pInput)
 {
-	bool bRes = OutCompressed(static_cast<unsigned char>(pInput - pBuffer)|0x80);
+	bool bRes{ OutCompressed(static_cast<unsigned char>(pInput - pBuffer) | 0x80) };
 	bRes = bRes && OutCompressed(*pBuffer) ;
 	return bRes;
 }
@@ -46,7 +56,6 @@ bool CRLECompressor::OutDecompressed(const unsigned char Byte)
 bool CRLECompressor::Compress(const unsigned char* pBuffer, size_t Size, unsigned char *pCompressedBuffer, size_t& ComprSize, bool& AllBytesEqual)
 {
 	bool bRes{ true };
-
 	const unsigned char* pInput{ pBuffer }, *pInputEnd{ pBuffer + Size };
 	pCompr_ = pCompressedBuffer;
 	pWriteBufferEnd_ = pCompressedBuffer + ComprSize;

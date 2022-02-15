@@ -56,10 +56,6 @@ namespace DFW2
 			return std::fstream::rdbuf();
 		}
 
-
-
-
-
 		void open(std::string_view FileName, ios_base::openmode mode = ios_base::in | ios_base::out)
 		{
 			filename = FileName;

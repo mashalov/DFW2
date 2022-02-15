@@ -1,4 +1,19 @@
-﻿#pragma once
+﻿/*
+* Модуль сжатия результатов расчета электромеханических переходных процессов
+* (С) 2018 - Н.В. Евгений Машалов
+* Свидетельство о государственной регистрации программы для ЭВМ №2021663231
+* https://fips.ru/EGD/c7c3d928-893a-4f47-a218-51f3c5686860
+*
+* Transient stability simulation results compression library
+* (C) 2018 - present Eugene Mashalov
+* pat. RU №2021663231
+* 
+* Реализует предиктивный энкодер для вещественных чисел 
+* https://www.elibrary.ru/item.asp?id=32269427 (C) 2018 Евгений Машалов
+* 
+*/
+
+#pragma once
 #include "../DFW2/Header.h"
 
 enum class eFCResult
@@ -84,7 +99,7 @@ protected:
 public:
 	CCompressorSingle();
 	virtual double Predict(double t);
-	void UpdatePredictor(double& y, double dTolerance);
+	void UpdatePredictor(double& y, double Tolerance);
 	void UpdatePredictor(double y);
 };
 
@@ -92,8 +107,8 @@ public:
 class CCompressorParallel : public CCompressorBase
 {
 public:
-	virtual double Predict(double t, bool bPredictorReset, ptrdiff_t nPredictorOrder, const double * const pts);
-	void UpdatePredictor(double y, ptrdiff_t nPredictorOrder);
-	void UpdatePredictor(double& y, ptrdiff_t nPredictorOrder, double dTolerance);
-	void ResetPredictor(ptrdiff_t nPredictorOrder);
+	virtual double Predict(double t, bool bPredictorReset, ptrdiff_t PredictorOrder, const double * const pts);
+	void UpdatePredictor(double y, ptrdiff_t PredictorOrder);
+	void UpdatePredictor(double& y, ptrdiff_t PredictorOrder, double Tolerance);
+	void ResetPredictor(ptrdiff_t PredictorOrder);
 };

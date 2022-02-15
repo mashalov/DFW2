@@ -376,9 +376,9 @@ void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 	pEncoders_[ChannelsCount_ - 2].Compressor_.UpdatePredictor(0, 0);
 }
 
-void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
+void CResultFileWriter::SetNoChangeTolerance(double Tolerance)
 {
-	NoChangeTolerance_ = dTolerance;
+	NoChangeTolerance_ = Tolerance;
 }
 
 CResultFileWriter::~CResultFileWriter()
