@@ -18,11 +18,11 @@ void DeviceTypeInfo::AddDeviceTypeVariable(const std::string_view VariableName, 
 	VarTypeInfo.eUnits = static_cast<int>(UnitsId);
 	VarTypeInfo.Multiplier = Multiplier;
 	VarTypeInfo.Name = VariableName;
-	VarTypeInfo.nIndex = m_VarTypes.size();
-	if (m_VarTypes.insert(VarTypeInfo).second)
-		m_VarTypesList.push_back(VarTypeInfo);
+	VarTypeInfo.Index = VarTypes_.size();
+	if (VarTypes_.insert(VarTypeInfo).second)
+		VarTypesList_.push_back(VarTypeInfo);
 	else
-		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableName, VarTypeInfo.Name, strDevTypeName));
+		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableName, VarTypeInfo.Name, DevTypeName_));
 }
 
 void DeviceTypeInfo::AddDevice(const std::string_view DeviceName,
@@ -30,10 +30,10 @@ void DeviceTypeInfo::AddDevice(const std::string_view DeviceName,
 	const ResultIds& ParentIds,
 	const ResultIds& ParentTypes)
 {
-	auto CurrentDevice = m_pDeviceInstances.get() + CurrentInstanceIndex;
+	auto CurrentDevice{ pDeviceInstances_.get() + CurrentInstanceIndex };
 	if (CurrentInstanceIndex < static_cast<size_t>(DevicesCount))
 	{
-		CurrentDevice->nIndex = static_cast<ptrdiff_t>(CurrentInstanceIndex);
+		CurrentDevice->Index_ = static_cast<ptrdiff_t>(CurrentInstanceIndex);
 		CurrentDevice->Name = DeviceName;
 
 
@@ -52,12 +52,12 @@ void DeviceTypeInfo::AddDevice(const std::string_view DeviceName,
 
 void DeviceTypeInfo::IndexDevices()
 {
-	DeviceInstanceInfo* pb = m_pDeviceInstances.get();
-	DeviceInstanceInfo* pe = pb + DevicesCount;
+	DeviceInstanceInfo* pb{ pDeviceInstances_.get() };
+	const DeviceInstanceInfo* const pe{ pb + DevicesCount };
 
 	while (pb < pe)
 	{
-		bool bInserted = m_DevSet.insert(pb).second;
+		bool bInserted = DevSet_.insert(pb).second;
 		_ASSERTE(bInserted);
 		pb++;
 	}
@@ -74,60 +74,60 @@ void DeviceTypeInfo::AllocateData()
 		_ASSERTE(!pIds);
 		pIds = std::make_unique<ptrdiff_t[]>(DeviceIdsCount * DevicesCount);
 
-		_ASSERTE(!m_pDeviceInstances);
-		m_pDeviceInstances = std::make_unique<DeviceInstanceInfo[]>(DevicesCount);
+		_ASSERTE(!pDeviceInstances_);
+		pDeviceInstances_ = std::make_unique<DeviceInstanceInfo[]>(DevicesCount);
 
-		DeviceInstanceInfo* pb = m_pDeviceInstances.get();
-		DeviceInstanceInfo* pe = pb + DevicesCount;
+		DeviceInstanceInfo* pb{ pDeviceInstances_.get() };
+		const DeviceInstanceInfo* const pe{ pb + DevicesCount };
 
 		while (pb < pe)
 		{
-			pb->m_pDevType = this;
+			pb->pDevType_= this;
 			pb++;
 		}
 	}
 }
 
-DeviceInstanceInfo::DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo) : m_pDevType(pDevTypeInfo) {}
+DeviceInstanceInfo::DeviceInstanceInfo(struct DeviceTypeInfo* pDevTypeInfo) : pDevType_(pDevTypeInfo) {}
 
-void DeviceInstanceInfo::SetId(ptrdiff_t nIdIndex, ptrdiff_t nId)
+void DeviceInstanceInfo::SetId(ptrdiff_t IdIndex, ptrdiff_t Id)
 {
-	if (nIdIndex >= 0 && nIdIndex < m_pDevType->DeviceIdsCount)
+	if (IdIndex >= 0 && IdIndex < pDevType_->DeviceIdsCount)
 	{
-		_ASSERTE(nIndex * m_pDevType->DeviceIdsCount + nIdIndex < m_pDevType->DeviceIdsCount* m_pDevType->DevicesCount);
-		m_pDevType->pIds[nIndex * m_pDevType->DeviceIdsCount + nIdIndex] = nId;
+		_ASSERTE(Index_ * pDevType_->DeviceIdsCount + IdIndex < pDevType_->DeviceIdsCount* pDevType_->DevicesCount);
+		pDevType_->pIds[Index_ * pDevType_->DeviceIdsCount + IdIndex] = Id;
 	}
 	else
 		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
-ptrdiff_t DeviceInstanceInfo::GetId(ptrdiff_t nIdIndex) const
+ptrdiff_t DeviceInstanceInfo::GetId(ptrdiff_t IdIndex) const
 {
-	if (nIdIndex >= 0 && nIdIndex < m_pDevType->DeviceIdsCount)
-		return m_pDevType->pIds[nIndex * m_pDevType->DeviceIdsCount + nIdIndex];
+	if (IdIndex >= 0 && IdIndex < pDevType_->DeviceIdsCount)
+		return pDevType_->pIds[Index_ * pDevType_->DeviceIdsCount + IdIndex];
 	else
 		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
-void DeviceInstanceInfo::SetParent(ptrdiff_t nParentIndex, ptrdiff_t eParentType, ptrdiff_t nParentId)
+void DeviceInstanceInfo::SetParent(ptrdiff_t ParentIndex, ptrdiff_t eParentType, ptrdiff_t ParentId)
 {
-	if (nParentIndex >= 0 && nParentIndex < m_pDevType->DeviceParentIdsCount)
+	if (ParentIndex >= 0 && ParentIndex < pDevType_->DeviceParentIdsCount)
 	{
-		DeviceLinkToParent* pLink = m_pDevType->pLinks.get() + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
-		_ASSERTE(pLink < m_pDevType->pLinks.get() + m_pDevType->DeviceParentIdsCount * m_pDevType->DevicesCount);
-		pLink->m_eParentType = eParentType;
-		pLink->m_nId = nParentId;
+		DeviceLinkToParent* pLink{ pDevType_->pLinks.get() + Index_ * pDevType_->DeviceParentIdsCount + ParentIndex };
+		_ASSERTE(pLink < pDevType_->pLinks.get() + pDevType_->DeviceParentIdsCount * pDevType_->DevicesCount);
+		pLink->eParentType = eParentType;
+		pLink->Id = ParentId;
 	}
 	else
 		throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 }
 
-const DeviceLinkToParent* DeviceInstanceInfo::GetParent(ptrdiff_t nParentIndex) const
+const DeviceLinkToParent* DeviceInstanceInfo::GetParent(ptrdiff_t ParentIndex) const
 {
-	if (m_pDevType->DeviceParentIdsCount)
+	if (pDevType_->DeviceParentIdsCount)
 	{
-		if (nParentIndex >= 0 && nParentIndex < m_pDevType->DeviceParentIdsCount)
-			return m_pDevType->pLinks.get() + nIndex * m_pDevType->DeviceParentIdsCount + nParentIndex;
+		if (ParentIndex >= 0 && ParentIndex < pDevType_->DeviceParentIdsCount)
+			return pDevType_->pLinks.get() + Index_ * pDevType_->DeviceParentIdsCount + ParentIndex;
 		else
 			throw CFileReadException(CDFW2Messages::m_cszWrongResultFile);
 	}

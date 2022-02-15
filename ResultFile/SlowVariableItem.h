@@ -8,17 +8,17 @@
 class CSlowVariableGraphItem
 {
 public:
-	double m_dTime;
-	mutable double m_dValue;
-	mutable std::string m_strDescription;
-	CSlowVariableGraphItem(double dTime, double dValue, std::string_view ChangeDescription) : 
-															m_dTime(dTime), 
-															m_dValue(dValue),
-															m_strDescription(ChangeDescription)
+	double Time_;
+	mutable double Value_;
+	mutable std::string Description_;
+	CSlowVariableGraphItem(double Time, double Value, std::string_view ChangeDescription) : 
+															Time_(Time), 
+															Value_(Value),
+															Description_(ChangeDescription)
 	{ }
 	bool operator < (const CSlowVariableGraphItem& sg) const
 	{
-		if (m_dTime < sg.m_dTime) return true;
+		if (Time_ < sg.Time_) return true;
 		return false;
 	}
 };
@@ -29,11 +29,11 @@ class CSlowVariableItem
 {
 public:
 	CSlowVariableItem(ptrdiff_t DeviceTypeId, const ResultIds& DeviceIds, std::string_view VarName);
-	ptrdiff_t m_DeviceTypeId;
-	const ResultIds m_DeviceIds;
-	std::string m_strVarName;
-	SLOWGRAPHSET m_Graph;
-	~CSlowVariableItem();
+	ptrdiff_t DeviceTypeId_;
+	const ResultIds DeviceIds_;
+	std::string VarName_;
+	SLOWGRAPHSET Graph_;
+	virtual ~CSlowVariableItem() = default;
 
 	void AddGraphPoint(double Time, double Value, double PreviousValue, std::string_view ChangeDescription);
 };
@@ -42,18 +42,17 @@ struct SlowVarItemCompare
 {
 	bool operator()(const CSlowVariableItem* lhs, const CSlowVariableItem *rhs) const
 	{
-		ptrdiff_t DevTypeDiff = lhs->m_DeviceTypeId - rhs->m_DeviceTypeId;
+		ptrdiff_t DevTypeDiff{ lhs->DeviceTypeId_- rhs->DeviceTypeId_ };
 		if (DevTypeDiff > 0) 	return true;
 		if (DevTypeDiff < 0) 	return false;
-		const ResultIds& lk = lhs->m_DeviceIds;
-		const ResultIds& rk = rhs->m_DeviceIds;
-		ResultIds::const_iterator lit = lk.begin();
-		ResultIds::const_iterator rit = rk.begin();
+		const ResultIds& lk{ lhs->DeviceIds_ };
+		const ResultIds& rk{ rhs->DeviceIds_ };
+		ResultIds::const_iterator lit{ lk.begin() };
+		ResultIds::const_iterator rit{ rk.begin() };
 
 		while (lit != lk.end() && rit != rk.end())
 		{
-			ptrdiff_t lx = 0;
-			ptrdiff_t rx = 0;
+			ptrdiff_t lx{ 0 }, rx{ 0 };
 
 			if (lit != lk.end())
 			{
@@ -61,7 +60,7 @@ struct SlowVarItemCompare
 				lit++;
 			}
 
-			if (rit != rhs->m_DeviceIds.end())
+			if (rit != rhs->DeviceIds_.end())
 			{
 				rx = *rit;
 				rit++;
@@ -73,7 +72,7 @@ struct SlowVarItemCompare
 			if (lx < 0) return false;
 		}
 
-		return lhs->m_strVarName > rhs->m_strVarName;
+		return lhs->VarName_ > rhs->VarName_;
 	}
 };
 

@@ -23,10 +23,10 @@ bool CRLECompressor::OutRepeat(const unsigned char *pBuffer, const unsigned char
 
 bool CRLECompressor::OutCompressed(const unsigned char Byte)
 {
-	if (m_pCompr < m_pWriteBufferEnd)
+	if (pCompr_ < pWriteBufferEnd_)
 	{
-		*m_pCompr = Byte;
-		m_pCompr++;
+		*pCompr_ = Byte;
+		pCompr_++;
 		return true;
 	}
 	return false;
@@ -34,32 +34,31 @@ bool CRLECompressor::OutCompressed(const unsigned char Byte)
 
 bool CRLECompressor::OutDecompressed(const unsigned char Byte)
 {
-	if (m_pDecompr < m_pWriteBufferEnd)
+	if (pDecompr_ < pWriteBufferEnd_)
 	{
-		*m_pDecompr = Byte;
-		m_pDecompr++;
+		*pDecompr_= Byte;
+		pDecompr_++;
 		return true;
 	}
 	return false;
 }
 
-bool CRLECompressor::Compress(const unsigned char* pBuffer, size_t nSize, unsigned char *pCompressedBuffer, size_t& nComprSize, bool& bAllBytesEqual)
+bool CRLECompressor::Compress(const unsigned char* pBuffer, size_t Size, unsigned char *pCompressedBuffer, size_t& ComprSize, bool& AllBytesEqual)
 {
-	bool bRes = true;
+	bool bRes{ true };
 
-	const unsigned char *pInput = pBuffer;
-	const unsigned char *pInputEnd = pBuffer + nSize;
-	m_pCompr = pCompressedBuffer;
-	m_pWriteBufferEnd = pCompressedBuffer + nComprSize;
-	bAllBytesEqual = true;
+	const unsigned char* pInput{ pBuffer }, *pInputEnd{ pBuffer + Size };
+	pCompr_ = pCompressedBuffer;
+	pWriteBufferEnd_ = pCompressedBuffer + ComprSize;
+	AllBytesEqual = true;
 
 	// сжимаем блок от заданного указателя до конца исходного буфера
 	// или до обнаружения ошибки
 	while (pInput < pInputEnd && bRes)
 	{
-		const unsigned char *pScan = pInput;
-		unsigned char Last = *pInput;
-		const unsigned char *pRepeatStart(nullptr);
+		const unsigned char* pScan{ pInput };
+		unsigned char Last{ *pInput };
+		const unsigned char* pRepeatStart{ nullptr };
 		pScan++;	// просматриваем следующий байт до тех пор, пока не дошли до конца буфера
 		while (pScan < pInputEnd)
 		{
@@ -86,12 +85,12 @@ bool CRLECompressor::Compress(const unsigned char* pBuffer, size_t nSize, unsign
 			// допустимого значения счетчика. Если превышает - выходим
 			if (pRepeatStart)
 			{
-				if (static_cast<size_t>(pScan - pRepeatStart) >= m_nMaxBlockSize)
+				if (static_cast<size_t>(pScan - pRepeatStart) >= MaxBlockSize_)
 					break;
 			}
 			else
 			{
-				if (static_cast<size_t>(pScan - pInput) >= m_nMaxBlockSize)
+				if (static_cast<size_t>(pScan - pInput) >= MaxBlockSize_)
 					break;
 			}
 		}
@@ -103,7 +102,7 @@ bool CRLECompressor::Compress(const unsigned char* pBuffer, size_t nSize, unsign
 			if (pRepeatStart > pInput)
 			{
 				bRes = bRes && OutSkip(pInput, pRepeatStart);
-				bAllBytesEqual = false; // есть неповторяющиеся байты
+				AllBytesEqual = false; // есть неповторяющиеся байты
 			}
 			// записываем повторы
 			bRes = bRes && OutRepeat(pRepeatStart, pScan);
@@ -111,29 +110,28 @@ bool CRLECompressor::Compress(const unsigned char* pBuffer, size_t nSize, unsign
 		else
 		{
 			bRes = bRes && OutSkip(pInput, pScan);	// если повторов нет - записываем последовательность без повторов
-			bAllBytesEqual = false; // есть неповторяющиеся байты
+			AllBytesEqual = false; // есть неповторяющиеся байты
 		}
 		pInput = pScan;
 	}
-	nComprSize = m_pCompr - pCompressedBuffer;
+	ComprSize = pCompr_ - pCompressedBuffer;
 	return bRes;
 }
 
 
-bool CRLECompressor::Decompress(const unsigned char *pBuffer, size_t nSize, unsigned char *pDecompressedBuffer, size_t& nDecomprSize)
+bool CRLECompressor::Decompress(const unsigned char *pBuffer, size_t Size, unsigned char *pDecompressedBuffer, size_t& DecomprSize)
 {
-	bool bRes = true;
-	const unsigned char *pInput = pBuffer;
-	const unsigned char *pInputEnd = pBuffer + nSize;
-	m_pDecompr = pDecompressedBuffer;
-	m_pWriteBufferEnd = pDecompressedBuffer + nDecomprSize;
+	bool bRes{ true };
+	const unsigned char* pInput{ pBuffer }, * pInputEnd{ pBuffer + Size };
+	pDecompr_ = pDecompressedBuffer;
+	pWriteBufferEnd_ = pDecompressedBuffer + DecomprSize;
 
 	while (pInput < pInputEnd && bRes)
 	{
-		unsigned char pByte = *pInput;
+		unsigned char pByte{ *pInput };
 		if (pByte & 0x80)
 		{
-			size_t nCount = pByte & 0x7f;
+			size_t nCount( pByte & 0x7f );
 			pInput++;
 			pByte = *pInput;
 			while (nCount && bRes)
@@ -155,8 +153,8 @@ bool CRLECompressor::Decompress(const unsigned char *pBuffer, size_t nSize, unsi
 		}
 	}
 
-	nDecomprSize = m_pDecompr - pDecompressedBuffer;
+	DecomprSize = pDecompr_ - pDecompressedBuffer;
 	return bRes;
 }
 
-const size_t CRLECompressor::m_nMaxBlockSize = 127;
+const size_t CRLECompressor::MaxBlockSize_ = 127;

@@ -26,10 +26,10 @@ STDMETHODIMP CDevice::InterfaceSupportsErrorInfo(REFIID riid)
 
 STDMETHODIMP CDevice::get_Id(LONG* Id)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Id && m_pDeviceInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Id && pDeviceInfo_)
 	{
-		*Id = static_cast<LONG>(m_pDeviceInfo->GetId(0));
+		*Id = static_cast<LONG>(pDeviceInfo_->GetId(0));
 		hRes = S_OK;
 	}
 	return hRes;
@@ -37,10 +37,10 @@ STDMETHODIMP CDevice::get_Id(LONG* Id)
 
 STDMETHODIMP CDevice::get_Name(BSTR* Name)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Name && m_pDeviceInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Name && pDeviceInfo_)
 	{
-		*Name = SysAllocString(stringutils::utf8_decode(m_pDeviceInfo->Name).c_str());
+		*Name = SysAllocString(stringutils::utf8_decode(pDeviceInfo_->Name).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -48,10 +48,10 @@ STDMETHODIMP CDevice::get_Name(BSTR* Name)
 
 STDMETHODIMP CDevice::get_TypeName(BSTR* TypeName)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (TypeName && m_pDeviceInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (TypeName && pDeviceInfo_)
 	{
-		*TypeName = SysAllocString(stringutils::utf8_decode(m_pDeviceInfo->m_pDevType->strDevTypeName).c_str());
+		*TypeName = SysAllocString(stringutils::utf8_decode(pDeviceInfo_->pDevType_->DevTypeName_).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -59,10 +59,10 @@ STDMETHODIMP CDevice::get_TypeName(BSTR* TypeName)
 
 STDMETHODIMP CDevice::get_Type(LONG* Type)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Type && m_pDeviceInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Type && pDeviceInfo_)
 	{
-		*Type = m_pDeviceInfo->m_pDevType->eDeviceType;
+		*Type = pDeviceInfo_->pDevType_->eDeviceType;
 		hRes = S_OK;
 	}
 	return hRes;
@@ -81,30 +81,29 @@ STDMETHODIMP CDevice::get_Children(VARIANT* Children)
 			Children->vt = VT_DISPATCH;
 			Children->pdispVal = pChildrenCollection;
 
-			const DEVTYPESET& devset = m_pDeviceInfo->m_pDevType->m_pFileReader->GetTypesSet();
-
-			DeviceTypeInfo *pThisType = m_pDeviceInfo->m_pDevType;
+			const DEVTYPESET& devset{ pDeviceInfo_->pDevType_->pFileReader_->GetTypesSet() };
+			const DeviceTypeInfo* pThisType{ pDeviceInfo_->pDevType_ };
 
 			for (const auto& it : devset)
 			{
-				DeviceTypeInfo *pDevTypeInfo = it;
-				int nParentsCount = pDevTypeInfo->DeviceParentIdsCount;
+				DeviceTypeInfo* pDevTypeInfo{ it };
+				int nParentsCount{ pDevTypeInfo->DeviceParentIdsCount };
 				if (nParentsCount && pDevTypeInfo->eDeviceType != pThisType->eDeviceType)
 				{
 					for (int i = 0; i < pDevTypeInfo->DevicesCount; i++)
 					{
-						DeviceInstanceInfo *pDevInfo = pDevTypeInfo->m_pDeviceInstances.get() + i;
+						DeviceInstanceInfo *pDevInfo = pDevTypeInfo->pDeviceInstances_.get() + i;
 
 						for (int p = 0; p < nParentsCount; p++)
 						{
 							const DeviceLinkToParent *pLink = pDevInfo->GetParent(p);
 
-							if (pLink->m_eParentType == pThisType->eDeviceType)
+							if (pLink->eParentType == pThisType->eDeviceType)
 							{
-								int ids = 0;
+								int ids{ 0 };
 								for (; ids < pThisType->DeviceIdsCount; ids++)
 								{
-									if (pLink->m_nId == m_pDeviceInfo->GetId(ids))
+									if (pLink->Id == pDeviceInfo_->GetId(ids))
 										break;
 								}
 								if (ids < pThisType->DeviceIdsCount)
@@ -112,7 +111,7 @@ STDMETHODIMP CDevice::get_Children(VARIANT* Children)
 									CComObject<CDevice> *pDevice;
 									if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
 									{
-										pDevice->SetDeviceInfo(it->m_pDeviceInstances.get() + i);
+										pDevice->SetDeviceInfo(it->pDeviceInstances_.get() + i);
 										pDevice->AddRef();
 										pChildrenCollection->Add(pDevice);
 									}
@@ -140,11 +139,11 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 			Children->vt = VT_DISPATCH;
 			Children->pdispVal = pChildrenCollection;
 
-			const DEVTYPESET& devset = m_pDeviceInfo->m_pDevType->m_pFileReader->GetTypesSet();
+			const DEVTYPESET& devset{ pDeviceInfo_->pDevType_->pFileReader_->GetTypesSet() };
 
 			for (const auto& it : devset)
 			{
-				DeviceTypeInfo *pDevType = it;
+				DeviceTypeInfo* pDevType{ it };
 
 				if (!pDevType->DeviceParentIdsCount)
 				{
@@ -153,7 +152,7 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 						CComObject<CDevice> *pDevice;
 						if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
 						{
-							pDevice->SetDeviceInfo(pDevType->m_pDeviceInstances.get() + i);
+							pDevice->SetDeviceInfo(pDevType->pDeviceInstances_.get() + i);
 							pDevice->AddRef();
 							pChildrenCollection->Add(pDevice);
 						}
@@ -163,9 +162,9 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 				{
 					for (int i = 0; i < pDevType->DevicesCount; i++)
 					{
-						DeviceInstanceInfo *pInst = pDevType->m_pDeviceInstances.get() + i;
-						const DeviceLinkToParent *pLink = pInst->GetParent(0);
-						if(pLink && pLink->m_eParentType == 0 && pLink->m_nId == 0)
+						DeviceInstanceInfo* pInst{ pDevType->pDeviceInstances_.get() + i };
+						const DeviceLinkToParent* pLink{ pInst->GetParent(0) };
+						if(pLink && pLink->eParentType == 0 && pLink->Id == 0)
 						{
 							CComObject<CDevice> *pDevice;
 							if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
@@ -187,11 +186,11 @@ STDMETHODIMP CRootDevice::get_Children(VARIANT* Children)
 
 STDMETHODIMP CDevice::get_HasVariables(VARIANT_BOOL* HasVariables)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (HasVariables && m_pDeviceInfo
-			 		 && m_pDeviceInfo->m_pDevType)
+	HRESULT hRes{ E_INVALIDARG };
+	if (HasVariables && pDeviceInfo_
+			 		 && pDeviceInfo_->pDevType_)
 	{
-		*HasVariables = m_pDeviceInfo->m_pDevType->m_VarTypes.size() > 0;
+		*HasVariables = pDeviceInfo_->pDevType_->VarTypes_.size() > 0;
 		hRes = S_OK;
 	}
 	return hRes;
@@ -200,10 +199,10 @@ STDMETHODIMP CDevice::get_HasVariables(VARIANT_BOOL* HasVariables)
 
 STDMETHODIMP CDevice::get_Variables(VARIANT* Variables)
 {
-	HRESULT hRes = E_INVALIDARG;
+	HRESULT hRes{ E_INVALIDARG };
 	CComObject<CVariables> *pVariablesCollection;
-	if (SUCCEEDED(VariantClear(Variables)) && m_pDeviceInfo 
-										   && m_pDeviceInfo->m_pDevType)
+	if (SUCCEEDED(VariantClear(Variables)) && pDeviceInfo_
+										   && pDeviceInfo_->pDevType_)
 	{
 		if (SUCCEEDED(CComObject<CVariables>::CreateInstance(&pVariablesCollection)))
 		{
@@ -211,14 +210,14 @@ STDMETHODIMP CDevice::get_Variables(VARIANT* Variables)
 			Variables->vt = VT_DISPATCH;
 			Variables->pdispVal = pVariablesCollection;
 
-			VARTYPESET& VarTypes= m_pDeviceInfo->m_pDevType->m_VarTypes;
+			VARTYPESET& VarTypes{ pDeviceInfo_->pDevType_->VarTypes_ };
 
 			for (const auto& it : VarTypes)
 			{
 				CComObject<CVariable> *pVariable;
 				if (SUCCEEDED(CComObject<CVariable>::CreateInstance(&pVariable)))
 				{
-					pVariable->SetVariableInfo(&it, m_pDeviceInfo);
+					pVariable->SetVariableInfo(&it, pDeviceInfo_);
 					pVariable->AddRef();
 					pVariablesCollection->Add(pVariable);
 				}

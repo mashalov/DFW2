@@ -23,11 +23,9 @@ class ATL_NO_VTABLE CSlowVariable :
 	public IDispatchImpl<ISlowVariable, &IID_ISlowVariable, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	CSlowVariableItem *m_pItem;
+	CSlowVariableItem *pItem_ = nullptr;
 public:
-	CSlowVariable() : m_pItem(nullptr)
-	{
-	}
+	CSlowVariable() = default;
 
 	BEGIN_COM_MAP(CSlowVariable)
 		COM_INTERFACE_ENTRY(ISlowVariable)

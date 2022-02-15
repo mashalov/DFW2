@@ -21,20 +21,20 @@ class ATL_NO_VTABLE CResultRead :
 	public IDispatchImpl<IResultRead, &IID_IResultRead, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	CResultFileReader m_ResultFileReader;
-	DeviceTypeInfo m_DeviceTypeInfo;
+	CResultFileReader ResultFileReader_;
+	DeviceTypeInfo DeviceTypeInfo_;
 public:
 	CResultRead()
 	{
-		m_DeviceTypeInfo.m_pFileReader = &m_ResultFileReader;
-		m_DeviceTypeInfo.DevicesCount = 1;
-		m_DeviceTypeInfo.DeviceParentIdsCount = 0;
-		m_DeviceTypeInfo.DeviceIdsCount = 1;
-		m_DeviceTypeInfo.eDeviceType = 0;
-		m_DeviceTypeInfo.AllocateData();
-		m_DeviceTypeInfo.m_pDeviceInstances.get()->nIndex = 0;
-		m_DeviceTypeInfo.m_pDeviceInstances.get()->SetId(0, 0);
-		m_DeviceTypeInfo.m_pDeviceInstances.get()->Name = CDFW2Messages::m_cszResultRoot;
+		DeviceTypeInfo_.pFileReader_ = &ResultFileReader_;
+		DeviceTypeInfo_.DevicesCount = 1;
+		DeviceTypeInfo_.DeviceParentIdsCount = 0;
+		DeviceTypeInfo_.DeviceIdsCount = 1;
+		DeviceTypeInfo_.eDeviceType = 0;
+		DeviceTypeInfo_.AllocateData();
+		DeviceTypeInfo_.pDeviceInstances_.get()->Index_ = 0;
+		DeviceTypeInfo_.pDeviceInstances_.get()->SetId(0, 0);
+		DeviceTypeInfo_.pDeviceInstances_.get()->Name = CDFW2Messages::m_cszResultRoot;
 	}
 
 DECLARE_REGISTRY_RESOURCEID(IDR_RESULT)
@@ -59,7 +59,7 @@ END_COM_MAP()
 
 	void FinalRelease()
 	{
-		m_ResultFileReader.Close();
+		ResultFileReader_.Close();
 	}
 
 public:
@@ -73,7 +73,7 @@ public:
 	STDMETHOD(get_Types)(VARIANT* Types);
 	STDMETHOD(ExportCSV)(BSTR PathName);
 	STDMETHOD(get_SlowVariables)(VARIANT *SlowVariables);
-	STDMETHOD(GetPlotByIndex)(long nIndex, VARIANT *Plot);
+	STDMETHOD(GetPlotByIndex)(long Index, VARIANT *Plot);
 	STDMETHOD(get_Points)(LONG *PointsCount);
 	STDMETHOD(get_Channels)(LONG* ChannelsCount);
 	STDMETHOD(GetPlot)(LONG DeviceType, LONG DeviceId, BSTR VariableName, VARIANT *Plot);

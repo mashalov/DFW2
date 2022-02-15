@@ -24,26 +24,26 @@ STDMETHODIMP CResultWrite::InterfaceSupportsErrorInfo(REFIID riid)
 // устанавливает комментарий к файлу результатов
 STDMETHODIMP CResultWrite::put_Comment(BSTR Comment)
 {
-	HRESULT hRes = S_OK;
-	m_ResultFileWriter.SetComment(stringutils::utf8_encode(Comment));
+	HRESULT hRes{ S_OK };
+	ResultFileWriter_.SetComment(stringutils::utf8_encode(Comment));
 	return hRes;
 }
 
 // устанавливает пороговое значение для игнорирования изменений значений переменных
 STDMETHODIMP CResultWrite::put_NoChangeTolerance(DOUBLE Tolerance)
 {
-	HRESULT hRes = S_OK;
-	m_ResultFileWriter.SetNoChangeTolerance(Tolerance);
+	HRESULT hRes{ S_OK };
+	ResultFileWriter_.SetNoChangeTolerance(Tolerance);
 	return hRes;
 }
 
 // запись заголовка результатов
 STDMETHODIMP CResultWrite::WriteHeader()
 {
-	HRESULT hRes = E_FAIL;
+	HRESULT hRes{ E_FAIL };
 	try
 	{
-		m_ResultFileWriter.FinishWriteHeader();
+		ResultFileWriter_.FinishWriteHeader();
 		hRes = S_OK;
 	}
 
@@ -70,10 +70,10 @@ STDMETHODIMP CResultWrite::WriteHeader()
 // добавляет в карту тип и название единиц измерения
 STDMETHODIMP CResultWrite::AddVariableUnit(LONG UnitId, BSTR UnitName)
 {
-	HRESULT hRes = S_OK;
+	HRESULT hRes{ S_OK };
 	try
 	{
-		m_ResultFileWriter.AddVariableUnit(UnitId, stringutils::utf8_encode(UnitName));
+		ResultFileWriter_.AddVariableUnit(UnitId, stringutils::utf8_encode(UnitName));
 	}
 	catch (const dfw2error& er)
 	{
@@ -85,11 +85,11 @@ STDMETHODIMP CResultWrite::AddVariableUnit(LONG UnitId, BSTR UnitName)
 
 STDMETHODIMP CResultWrite::AddDeviceType(LONG DeviceTypeId, BSTR DeviceTypeName, VARIANT* DeviceType)
 {
-	HRESULT hRes = E_FAIL;
+	HRESULT hRes{ E_FAIL };
 
 	try
 	{
-		auto pDeviceType = m_ResultFileWriter.AddDeviceType(DeviceTypeId, stringutils::utf8_encode(DeviceTypeName));
+		auto pDeviceType{ ResultFileWriter_.AddDeviceType(DeviceTypeId, stringutils::utf8_encode(DeviceTypeName)) };
 		CComObject<CDeviceTypeWrite>* pDeviceTypeWrite;
 		if (SUCCEEDED(CComObject<CDeviceTypeWrite>::CreateInstance(&pDeviceTypeWrite)))
 		{
@@ -110,10 +110,10 @@ STDMETHODIMP CResultWrite::AddDeviceType(LONG DeviceTypeId, BSTR DeviceTypeName,
 // задает адрес значения double, которое будет использоваться для записи заданного устройства 
 STDMETHODIMP CResultWrite::SetChannel(LONG DeviceId, LONG DeviceType, LONG VarIndex, DOUBLE *ValuePtr, LONG ChannelIndex)
 {
-	HRESULT hRes = S_OK;
+	HRESULT hRes{ S_OK };
 	try
 	{
-		m_ResultFileWriter.SetChannel(DeviceId, DeviceType, VarIndex, ValuePtr, ChannelIndex);
+		ResultFileWriter_.SetChannel(DeviceId, DeviceType, VarIndex, ValuePtr, ChannelIndex);
 	}
 	catch (CFileWriteException& ex)
 	{
@@ -125,10 +125,10 @@ STDMETHODIMP CResultWrite::SetChannel(LONG DeviceId, LONG DeviceType, LONG VarIn
 // запись результатов для заданного времени. Дополнительно записывает шаг интегрирования
 STDMETHODIMP CResultWrite::WriteResults(DOUBLE Time, DOUBLE Step)
 {
-	HRESULT hRes = S_OK;
+	HRESULT hRes{ S_OK };
 	try
 	{
-		m_ResultFileWriter.WriteResults(Time, Step);
+		ResultFileWriter_.WriteResults(Time, Step);
 	}
 	catch (CFileWriteException& ex)
 	{
@@ -139,10 +139,10 @@ STDMETHODIMP CResultWrite::WriteResults(DOUBLE Time, DOUBLE Step)
 
 STDMETHODIMP CResultWrite::FlushChannels()
 {
-	HRESULT hRes = S_OK;
+	HRESULT hRes{ S_OK };
 	try
 	{
-		m_ResultFileWriter.FlushChannels();
+		ResultFileWriter_.FlushChannels();
 	}
 	catch (CFileWriteException& ex)
 	{
@@ -154,12 +154,12 @@ STDMETHODIMP CResultWrite::FlushChannels()
 
 void CResultWrite::CreateFile(std::string_view PathName)
 {
-	m_ResultFileWriter.CreateResultFile(PathName);
+	ResultFileWriter_.CreateResultFile(PathName);
 }
 
 STDMETHODIMP CResultWrite::Close()
 {
-	m_ResultFileWriter.Close();
+	ResultFileWriter_.Close();
 	return S_OK;
 }
 
@@ -170,10 +170,10 @@ CResultWrite::~CResultWrite()
 
 STDMETHODIMP CResultWrite::AddSlowVariable(LONG DeviceTypeId, VARIANT DeviceIds, BSTR VariableName, DOUBLE Time, DOUBLE Value, DOUBLE PreviousValue, BSTR ChangeDescription)
 {
-	HRESULT hRes = E_FAIL;
+	HRESULT hRes{ E_FAIL };
 	try
 	{
-		m_ResultFileWriter.AddSlowVariable(DeviceTypeId,
+		ResultFileWriter_.AddSlowVariable(DeviceTypeId,
 			CDeviceTypeWrite::GetVariantVec(DeviceIds),
 			stringutils::utf8_encode(VariableName),
 			Time,

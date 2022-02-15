@@ -2,31 +2,29 @@
 #include "SlowVariableItem.h"
 
 CSlowVariableItem::CSlowVariableItem(ptrdiff_t DeviceTypeId, const ResultIds& DeviceIds, std::string_view VarName) :
-								m_DeviceTypeId(DeviceTypeId),
-								m_DeviceIds(DeviceIds),
-								m_strVarName(VarName)
+								DeviceTypeId_(DeviceTypeId),
+								DeviceIds_(DeviceIds),
+								VarName_(VarName)
 {
 }
 
 
-CSlowVariableItem::~CSlowVariableItem()
-{
-}
+
 
 void CSlowVariableItem::AddGraphPoint(double Time, double Value, double PreviousValue, std::string_view ChangeDescription)
 {
-	if (m_Graph.empty())
+	if (Graph_.empty())
 	{
 		CSlowVariableGraphItem test(-0.1, PreviousValue, ChangeDescription);
-		m_Graph.insert(test);
+		Graph_.insert(test);
 	}
 
 	CSlowVariableGraphItem test(Time, Value, ChangeDescription);
-	if (test.m_dTime >= 0)
+	if (test.Time_ >= 0)
 	{
-		auto its = m_Graph.insert(test);
+		auto its{ Graph_.insert(test) };
 		if (!its.second)
-			its.first->m_dValue = Value;
+			its.first->Value_ = Value;
 	}
 }
 

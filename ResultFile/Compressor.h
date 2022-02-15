@@ -18,24 +18,24 @@ protected:
 	// сколько бит осталось в слове
 	inline size_t WordBitsLeft() const
 	{
-		return WordBitCount - m_nBitSeek;
+		return WordBitCount - BitSeek_;
 	}
 	eFCResult MoveBitCount(size_t BitCount);			// сдвинуть битовое смещение, выбрать новое слово, если нужно, проверить переполнение
-	ptrdiff_t m_nTotalBitsWritten;						// количество записанных битов
-	BITWORD *m_pWord;									// указатель на текущее слово
-	BITWORD *m_pWordInitial;							// указатель на начало буфера
-	BITWORD *m_pEnd;									// указатель на конец буфера
-	ptrdiff_t m_nBitSeek;								// битовое смещение относительно слова
+	ptrdiff_t TotalBitsWritten_;						// количество записанных битов
+	BITWORD *pWord_;									// указатель на текущее слово
+	BITWORD *pWordInitial_;								// указатель на начало буфера
+	BITWORD *pEnd_;										// указатель на конец буфера
+	ptrdiff_t BitSeek_;									// битовое смещение относительно слова
 public:
-	CBitStream(BITWORD *Buffer, BITWORD *BufferEnd, size_t BitSeek);
+	CBitStream(BITWORD *pBuffer, BITWORD *pBufferEnd, size_t BitSeek);
 	CBitStream();
-	void Init(BITWORD *Buffer, BITWORD *BufferEnd, size_t BitSeek);
+	void Init(BITWORD *pBuffer, BITWORD *pBufferEnd, size_t BitSeek);
 	void Reset();										// сбросить смещение, слово и количество записанных битов, очистить буфер
 	void Rewind();										// то же что Reset, но без очистки буфера
 
 	eFCResult WriteBits(CBitStream& Source, size_t BitCount);
 	eFCResult WriteByte(unsigned char Byte);
-	eFCResult WriteDouble(double &dValue);
+	eFCResult WriteDouble(double &Value);
 	eFCResult ReadByte(unsigned char& Byte);
 	eFCResult AlignTo(size_t nAlignTo);					// выровнять битовое смещение кратно заданному
 	size_t BytesWritten();								// количество записанных байт
@@ -52,15 +52,15 @@ protected:
 public:
 	typedef eFCResult(*fnWriteDoublePtr)(double&, double&, CBitStream&);				// прототип функции записи double
 	typedef uint32_t(*fnCountZeros32Ptr)(uint32_t);										// прототип функции подсчета нулевых битов
-	eFCResult WriteDouble(double& dValue, double& dPredictor, CBitStream& Output);
-	eFCResult ReadDouble(double& dValue, double& dPredictor, CBitStream& Input);
+	eFCResult WriteDouble(double& Value, double& Predictor, CBitStream& Output);
+	eFCResult ReadDouble(double& Value, double& Predictor, CBitStream& Input);
 	eFCResult WriteLEB(uint64_t Value, CBitStream& Output);
 	eFCResult ReadLEB(uint64_t& Value, CBitStream& Input);
-	static void Xor(double& dValue, double& dPredictor);
+	static void Xor(double& Value, double& Predictor);
 	static const fnWriteDoublePtr pFnWriteDouble;
 	static const fnCountZeros32Ptr pFnCountZeros32;
 	// платформонезависимая запись сжатого double 
-	static eFCResult WriteDoublePlain(double& dValue, double& dPredictor, CBitStream& Output);
+	static eFCResult WriteDoublePlain(double& Value, double& Predictor, CBitStream& Output);
 	// подсчет нулевых битов по таблице
 	static uint32_t CLZ1(uint32_t x);
 	// подсчет нулевых битов инструкцией CPU
@@ -71,7 +71,7 @@ public:
 	static fnCountZeros32Ptr AssignZeroCounter();
 #ifdef _WIN64
 	// запись double для x64-процессора с поддержкой __lzcnt64
-	static eFCResult WriteDoubleLZcnt64(double& dValue, double& dPredictor, CBitStream& Output);
+	static eFCResult WriteDoubleLZcnt64(double& Value, double& Predictor, CBitStream& Output);
 #endif
 };
 
@@ -80,7 +80,7 @@ class CCompressorSingle : public CCompressorBase
 {
 protected:
 	double ts[PREDICTOR_ORDER] = {};
-	ptrdiff_t m_nPredictorOrder;
+	ptrdiff_t PredictorOrder_;
 public:
 	CCompressorSingle();
 	virtual double Predict(double t);

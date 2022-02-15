@@ -25,7 +25,7 @@ class ATL_NO_VTABLE CResultWrite :
 	public IDispatchImpl<IResultWrite, &IID_IResultWrite, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	CResultFileWriter m_ResultFileWriter;
+	CResultFileWriter ResultFileWriter_;
 public:
 	CResultWrite()
 	{

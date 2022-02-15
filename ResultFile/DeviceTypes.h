@@ -28,13 +28,13 @@ class ATL_NO_VTABLE CDeviceTypes :
 	public IDispatchImpl<CGenericCollection<IDeviceTypes, CDeviceType>, &IID_IDeviceTypes, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	const DEVTYPESET* m_pDevTypeSet = nullptr;
+	const DEVTYPESET* pDevTypeSet_ = nullptr;
 
 public:
 
 	void SetDeviceTypesInfo(const DEVTYPESET *pDevTypeSet)
 	{
-		m_pDevTypeSet = pDevTypeSet;
+		pDevTypeSet_ = pDevTypeSet;
 	}
 
 BEGIN_COM_MAP(CDeviceTypes)

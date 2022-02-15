@@ -26,10 +26,10 @@ STDMETHODIMP CVariable::InterfaceSupportsErrorInfo(REFIID riid)
 
 STDMETHODIMP CVariable::get_Name(BSTR* Name)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Name && m_pVariableInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Name && pVariableInfo_)
 	{
-		*Name = SysAllocString(stringutils::utf8_decode(m_pVariableInfo->Name).c_str());
+		*Name = SysAllocString(stringutils::utf8_decode(pVariableInfo_->Name).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -37,10 +37,10 @@ STDMETHODIMP CVariable::get_Name(BSTR* Name)
 
 STDMETHODIMP CVariable::get_Index(LONG* Index)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Index && m_pVariableInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Index && pVariableInfo_)
 	{
-		*Index = static_cast<LONG>(m_pVariableInfo->nIndex);
+		*Index = static_cast<LONG>(pVariableInfo_->Index);
 		hRes = S_OK;
 	}
 	return hRes;
@@ -48,10 +48,10 @@ STDMETHODIMP CVariable::get_Index(LONG* Index)
 
 STDMETHODIMP CVariable::get_Units(LONG* Units)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Units && m_pVariableInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Units && pVariableInfo_)
 	{
-		*Units = m_pVariableInfo->eUnits;
+		*Units = pVariableInfo_->eUnits;
 		hRes = S_OK;
 	}
 	return hRes;
@@ -60,11 +60,11 @@ STDMETHODIMP CVariable::get_Units(LONG* Units)
 
 STDMETHODIMP CVariable::get_UnitsName(BSTR* UnitsName)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (UnitsName && m_pVariableInfo && m_pDeviceInstanceInfo && m_pDeviceInstanceInfo->m_pDevType)
+	HRESULT hRes{ E_INVALIDARG };
+	if (UnitsName && pVariableInfo_ && pDeviceInstanceInfo_ && pDeviceInstanceInfo_->pDevType_)
 	{
-		CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
-		*UnitsName = SysAllocString(stringutils::utf8_decode(pFileReader->GetUnitsName(m_pVariableInfo->eUnits)).c_str());
+		CResultFileReader* pFileReader{ pDeviceInstanceInfo_->pDevType_->pFileReader_ };
+		*UnitsName = SysAllocString(stringutils::utf8_decode(pFileReader->GetUnitsName(pVariableInfo_->eUnits)).c_str()) ;
 		hRes = S_OK;
 	}
 	return hRes;
@@ -73,14 +73,14 @@ STDMETHODIMP CVariable::get_UnitsName(BSTR* UnitsName)
 
 STDMETHODIMP CVariable::get_Device(VARIANT* Device)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (SUCCEEDED(VariantClear(Device)) && m_pVariableInfo && m_pDeviceInstanceInfo && m_pDeviceInstanceInfo->m_pDevType)
+	HRESULT hRes{ E_INVALIDARG };
+	if (SUCCEEDED(VariantClear(Device)) && pVariableInfo_ && pDeviceInstanceInfo_ && pDeviceInstanceInfo_->pDevType_)
 	{
 
 		CComObject<CDevice> *pDevice;
 		if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
 		{
-			pDevice->SetDeviceInfo(m_pDeviceInstanceInfo);
+			pDevice->SetDeviceInfo(pDeviceInstanceInfo_);
 			pDevice->AddRef();
 			Device->vt = VT_DISPATCH;
 			Device->pdispVal = pDevice;
@@ -93,10 +93,10 @@ STDMETHODIMP CVariable::get_Device(VARIANT* Device)
 
 STDMETHODIMP CVariable::get_Multiplier(DOUBLE* Multiplier)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Multiplier && m_pVariableInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Multiplier && pVariableInfo_)
 	{
-		*Multiplier = m_pVariableInfo->Multiplier;
+		*Multiplier = pVariableInfo_->Multiplier;
 		hRes = S_OK;
 	}
 	return hRes;
@@ -104,18 +104,23 @@ STDMETHODIMP CVariable::get_Multiplier(DOUBLE* Multiplier)
 
 STDMETHODIMP CVariable::get_Plot(VARIANT* Plot)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (m_pVariableInfo && 
-		m_pDeviceInstanceInfo && 
-		m_pDeviceInstanceInfo->m_pDevType &&
-		m_pDeviceInstanceInfo->m_pDevType->m_pFileReader)
+	HRESULT hRes{ E_INVALIDARG };
+	if (pVariableInfo_ && 
+		pDeviceInstanceInfo_ && 
+		pDeviceInstanceInfo_->pDevType_ &&
+		pDeviceInstanceInfo_->pDevType_->pFileReader_)
 	{
-		CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
+		CResultFileReader* pFileReader{ pDeviceInstanceInfo_->pDevType_->pFileReader_ };
 		if (Plot && SUCCEEDED(VariantClear(Plot)))
 		{
 			try
 			{
-				Plot->parray = pFileReader->CreateSafeArray(pFileReader->ReadChannel(m_pDeviceInstanceInfo->m_pDevType->eDeviceType, m_pDeviceInstanceInfo->GetId(0), m_pVariableInfo->nIndex));
+				Plot->parray = pFileReader->CreateSafeArray(pFileReader->ReadChannel(
+					pDeviceInstanceInfo_->pDevType_->eDeviceType, 
+					pDeviceInstanceInfo_->GetId(0), 
+					pVariableInfo_->Index)
+				);
+
 				if (Plot->parray)
 				{
 					Plot->vt = VT_R8 | VT_ARRAY;
@@ -137,12 +142,16 @@ STDMETHODIMP CVariable::get_Plot(VARIANT* Plot)
 
 STDMETHODIMP CVariable::get_ChannelIndex(LONG* Index)
 {
-	HRESULT hRes = S_OK;
+	HRESULT hRes{ S_OK };
 
-	CResultFileReader *pFileReader = m_pDeviceInstanceInfo->m_pDevType->m_pFileReader;
+	CResultFileReader* pFileReader{ pDeviceInstanceInfo_->pDevType_->pFileReader_ };
 
-	if (Index && m_pVariableInfo)
-		*Index = static_cast<LONG>(pFileReader->GetChannelIndex(m_pDeviceInstanceInfo->m_pDevType->eDeviceType, m_pDeviceInstanceInfo->GetId(0), m_pVariableInfo->nIndex));
+	if (Index && pVariableInfo_)
+		*Index = static_cast<LONG>(pFileReader->GetChannelIndex(
+			pDeviceInstanceInfo_->pDevType_->eDeviceType, 
+			pDeviceInstanceInfo_->GetId(0), 
+			pVariableInfo_->Index)
+			);
 	else
 		hRes = E_INVALIDARG;
 

@@ -28,14 +28,14 @@ class ATL_NO_VTABLE CVariable :
 	public IDispatchImpl<IVariable, &IID_IVariable, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	const VariableTypeInfo* m_pVariableInfo = nullptr;
-	DeviceInstanceInfo* m_pDeviceInstanceInfo = nullptr;
+	const VariableTypeInfo* pVariableInfo_ = nullptr;
+	DeviceInstanceInfo* pDeviceInstanceInfo_ = nullptr;
 public:
 
 	void SetVariableInfo(const VariableTypeInfo* pVariableInfo, DeviceInstanceInfo *pDeviceInstanceInfo)
 	{
-		m_pVariableInfo = pVariableInfo;
-		m_pDeviceInstanceInfo = pDeviceInstanceInfo;
+		pVariableInfo_ = pVariableInfo;
+		pDeviceInstanceInfo_ = pDeviceInstanceInfo;
 	}
 
 BEGIN_COM_MAP(CVariable)

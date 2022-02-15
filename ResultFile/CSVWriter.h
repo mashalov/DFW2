@@ -24,7 +24,7 @@ protected:
 	};
 
 	std::unique_ptr<ChannelLink[]> pChannelLink;
-	CResultFileReader& m_ResultFileReader;
+	CResultFileReader& ResultFileReader_;
 	size_t nPointsCount;
 	size_t nChannelsCount;
 	uint64_t nRowStep;

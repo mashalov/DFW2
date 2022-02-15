@@ -37,18 +37,18 @@ void CResultFile::WriteString(std::string_view cszString)
 	}
 }
 
-void CResultFileWriter::WriteTime(double dTime, double dStep)
+void CResultFileWriter::WriteTime(double Time, double Step)
 {
-	m_dSetTime = dTime; 
-	m_dSetStep = dStep;
-	m_bPredictorReset = false;
+	SetTime_ = Time; 
+	SetStep_ = Step;
+	bPredictorReset_ = false;
 
-	if (m_nPredictorOrder > 0)
+	if (PredictorOrder_ > 0)
 	{
 		bool bReset = false;
-		for (int j = 0; j < m_nPredictorOrder; j++)
+		for (int j = 0; j < PredictorOrder_; j++)
 		{
-			if (Equal(dTime, ts[j]))
+			if (Equal(Time, ts[j]))
 			{
 				bReset = true;
 				break;
@@ -57,12 +57,12 @@ void CResultFileWriter::WriteTime(double dTime, double dStep)
 
 		if (bReset)
 		{
-			CChannelEncoder *pEncoder = m_pEncoders.get();
-			CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
+			CChannelEncoder* pEncoder{ pEncoders_.get() };
+			const CChannelEncoder* const pEncoderEnd{ pEncoder + ChannelsCount_ - 2 };
 
 			while (pEncoder < pEncoderEnd)
 			{
-				pEncoder->m_Compressor.ResetPredictor(m_nPredictorOrder);
+				pEncoder->Compressor_.ResetPredictor(PredictorOrder_);
 				pEncoder++;
 			}
 
@@ -71,182 +71,181 @@ void CResultFileWriter::WriteTime(double dTime, double dStep)
 			// который нужен для того, чтобы использовать для предиктора последнее
 			// значение, а не ноль (см. Predict)
 
-			m_nPredictorOrder = 0;
-			m_bPredictorReset = true;
+			PredictorOrder_ = 0;
+			bPredictorReset_ = true;
 		}
 	}
 
-	UpdateLagrangeCoefficients(dTime);
+	UpdateLagrangeCoefficients(Time);
 
-	WriteChannel(m_nChannelsCount - 2, dTime);
-	WriteChannel(m_nChannelsCount - 1, dStep);
-	m_nPointsCount++;
+	WriteChannel(ChannelsCount_ - 2, Time);
+	WriteChannel(ChannelsCount_ - 1, Step);
+	PointsCount_++;
 }
 
 void CResultFileWriter::FlushChannels()
 { 
 	// если каналы уже были сброшены - выходим
-	if (m_bChannelsFlushed)
+	if (bChannelsFlushed_)
 		return;
 	TerminateWriterThread();
 
-	for (size_t nChannel = 0; nChannel < m_nChannelsCount; nChannel++)
+	for (size_t nChannel = 0; nChannel < ChannelsCount_; nChannel++)
 	{
 		FlushChannel(nChannel);
 		// сбрасываем SuperRLE каналы, в которых на всех точках были одинаковые значения
-		FlushSuperRLE(m_pEncoders[nChannel]);
+		FlushSuperRLE(pEncoders_[nChannel]);
 	}
 
 	struct DataDirectoryEntry de = { 0, 0 };
 
-	de.m_Offset = infile.tellg();
-	infile.seekg(m_DataDirectoryOffset, std::ios_base::beg);
+	de.Offset = infile.tellg();
+	infile.seekg(DataDirectoryOffset_, std::ios_base::beg);
 	infile.write(&de, sizeof(struct DataDirectoryEntry));
-	infile.seekg(de.m_Offset, std::ios_base::beg);
-	WriteLEB(m_nPointsCount);
-	WriteLEB(m_nChannelsCount);
+	infile.seekg(de.Offset, std::ios_base::beg);
+	WriteLEB(PointsCount_);
+	WriteLEB(ChannelsCount_);
 
-	CChannelEncoder *pEncoder = m_pEncoders.get();
-	CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
+	CChannelEncoder* pEncoder{ pEncoders_.get() };
+	const CChannelEncoder* const pEncoderEnd{ pEncoder + ChannelsCount_ - 2 };
 
 	if (pEncoder)
 	{
 		while (pEncoder < pEncoderEnd)
 		{
-			WriteChannelHeader(pEncoder - m_pEncoders.get(),
-				pEncoder->m_nDeviceType,
-				pEncoder->m_nDeviceId,
-				pEncoder->m_nVariableIndex);
+			WriteChannelHeader(pEncoder - pEncoders_.get(),
+				pEncoder->DeviceType_,
+				pEncoder->DeviceId_,
+				pEncoder->VariableIndex_);
 			pEncoder++;
 		}
 	}
 
-	WriteChannelHeader(m_nChannelsCount - 2, DEVTYPE_MODEL, 0, 0);
-	WriteChannelHeader(m_nChannelsCount - 1, DEVTYPE_MODEL, 0, 1);
+	WriteChannelHeader(ChannelsCount_ - 2, DEVTYPE_MODEL, 0, 0);
+	WriteChannelHeader(ChannelsCount_ - 1, DEVTYPE_MODEL, 0, 1);
 
 	
 	// write slow variables
-	de.m_DataType = 1;
-	de.m_Offset = infile.tellg();
-	infile.seekg(m_DataDirectoryOffset + sizeof(struct DataDirectoryEntry), std::ios_base::beg);
+	de.DataType = 1;
+	de.Offset = infile.tellg();
+	infile.seekg(DataDirectoryOffset_ + sizeof(struct DataDirectoryEntry), std::ios_base::beg);
 	infile.write(&de, sizeof(struct DataDirectoryEntry));
-	infile.seekg(de.m_Offset, std::ios_base::beg);
+	infile.seekg(de.Offset, std::ios_base::beg);
 
-	WriteLEB(m_setSlowVariables.size());
-	for (auto &di : m_setSlowVariables)
+	WriteLEB(SlowVariables_.size());
+	for (auto &di : SlowVariables_)
 	{
-		if (!di->m_Graph.empty())
+		if (!di->Graph_.empty())
 		{
-			WriteLEB(di->m_DeviceTypeId);
-			WriteString(di->m_strVarName);
-			WriteLEB(di->m_DeviceIds.size());
+			WriteLEB(di->DeviceTypeId_);
+			WriteString(di->VarName_);
+			WriteLEB(di->DeviceIds_.size());
 
-			for (auto &idi : di->m_DeviceIds)
+			for (auto &idi : di->DeviceIds_)
 				WriteLEB(idi);
-			WriteLEB(di->m_Graph.size());
+			WriteLEB(di->Graph_.size());
 
-			for (auto &gi : di->m_Graph)
+			for (auto &gi : di->Graph_)
 			{
-				WriteDouble(gi.m_dTime);
-				WriteDouble(gi.m_dValue);
-				WriteString(gi.m_strDescription);
+				WriteDouble(gi.Time_);
+				WriteDouble(gi.Value_);
+				WriteString(gi.Description_);
 			}
 		}
 	}
 
-	de.m_DataType = 2;
-	de.m_Offset = infile.tellg();
+	de.DataType = 2;
+	de.Offset = infile.tellg();
 	WriteString("");
 
-	infile.seekg(m_DataDirectoryOffset + sizeof(struct DataDirectoryEntry) * 2, std::ios_base::beg);
+	infile.seekg(DataDirectoryOffset_ + sizeof(struct DataDirectoryEntry) * 2, std::ios_base::beg);
 	infile.write(&de, sizeof(struct DataDirectoryEntry));
 
 	// ставим признак сброса каналов
-	m_bChannelsFlushed = true;
+	bChannelsFlushed_ = true;
 }
 
 void CResultFileWriter::FlushSuperRLE(CChannelEncoder& Encoder)
 {
-	if (Encoder.m_nUnwrittenSuperRLECount)
+	if (Encoder.UnwrittenSuperRLECount_)
 	{
-		int64_t nCurrentSeek = infile.tellg();
+		int64_t CurrentSeek (infile.tellg());
 		WriteLEB(2);
-		WriteLEB(Encoder.m_nUnwrittenSuperRLECount);
-		infile.write(&Encoder.m_SuperRLEByte, sizeof(unsigned char));
-		WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
-		Encoder.m_nPreviousSeek = nCurrentSeek;
-		Encoder.m_nUnwrittenSuperRLECount = 0;
+		WriteLEB(Encoder.UnwrittenSuperRLECount_);
+		infile.write(&Encoder.SuperRLEByte_, sizeof(unsigned char));
+		WriteLEB(OffsetFromCurrent(Encoder.PreviousSeek_));
+		Encoder.PreviousSeek_ = CurrentSeek;
+		Encoder.UnwrittenSuperRLECount_ = 0;
 	}
 }
 
-void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
+void CResultFileWriter::FlushChannel(ptrdiff_t Index)
 {
-	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_nChannelsCount))
+	if (Index >= 0 && Index < static_cast<ptrdiff_t>(ChannelsCount_))
 	{
-		CChannelEncoder &Encoder = m_pEncoders[nIndex];
-		CCompressorParallel& FloatCompressor = Encoder.m_Compressor;
-		CBitStream& Output = Encoder.m_Output;
+		CChannelEncoder& Encoder{ pEncoders_[Index] };
+		CCompressorParallel& FloatCompressor{ Encoder.Compressor_ };
+		CBitStream& Output{ Encoder.Output_ };
 
-		if (Encoder.m_nCount)
+		if (Encoder.Count_)
 		{
-			size_t nCompressedSize(m_nBufferLength * sizeof(BITWORD));
-			bool bAllBytesEqual(false);
-			if (nIndex < static_cast<ptrdiff_t>(m_nChannelsCount - 2) &&
-				EncodeRLE(Output.BytesBuffer(), Output.BytesWritten(), m_pCompressedBuffer.get(), nCompressedSize, bAllBytesEqual))
+			size_t CompressedSize(BufferLength_ * sizeof(BITWORD));
+			bool bAllBytesEqual{ false };
+			if (Index < static_cast<ptrdiff_t>(ChannelsCount_ - 2) &&
+				EncodeRLE(Output.BytesBuffer(), Output.BytesWritten(), pCompressedBuffer_.get(), CompressedSize, bAllBytesEqual))
 			{	
 				if (bAllBytesEqual)
 				{
 					// все байты во входном буфере RLE одинаковые
-					if (Encoder.m_nUnwrittenSuperRLECount > 0)
+					if (Encoder.UnwrittenSuperRLECount_ > 0)
 					{
 						// уже есть блок данных с одинаковыми байтами
 						// проверяем, это были те же байты, что пришли сейчас ?
-						if(Encoder.m_SuperRLEByte == *Output.BytesBuffer())
-							Encoder.m_nUnwrittenSuperRLECount += Encoder.m_nCount;	// если да, просто увеличиваем счетчик байтов
+						if(Encoder.SuperRLEByte_ == *Output.BytesBuffer())
+							Encoder.UnwrittenSuperRLECount_ += Encoder.Count_;	// если да, просто увеличиваем счетчик байтов
 						else
 						{
 							// накопленные байты отличаются от тех, что пришли,
 							// поэтому сбрасываем старый RLE блок и начинаем записывать новый
 							FlushSuperRLE(Encoder);
-							Encoder.m_nPreviousSeek = infile.tellg();
-							Encoder.m_nUnwrittenSuperRLECount = Encoder.m_nCount;
-							Encoder.m_SuperRLEByte = *Output.BytesBuffer();
+							Encoder.PreviousSeek_ = infile.tellg();
+							Encoder.UnwrittenSuperRLECount_ = Encoder.Count_;
+							Encoder.SuperRLEByte_ = *Output.BytesBuffer();
 						}
 					}
 					else
 					{
 						// блока с одинаковыми данными не было, начинаем его записывать
-						Encoder.m_nUnwrittenSuperRLECount = Encoder.m_nCount;
-						Encoder.m_SuperRLEByte = *Output.BytesBuffer();
+						Encoder.UnwrittenSuperRLECount_ = Encoder.Count_;
+						Encoder.SuperRLEByte_ = *Output.BytesBuffer();
 					}
 				}
 				else
 				{
 					// сбрасываем блок SuperRLE если был
 					FlushSuperRLE(Encoder);
-					int64_t nCurrentSeek = infile.tellg();
+					int64_t CurrentSeek (infile.tellg());
 					WriteLEB(0);						// type of block 0 - RLE data
-					WriteLEB(Encoder.m_nCount);			// count of doubles
-					WriteLEB(nCompressedSize);			// byte length of RLE data
-					infile.write(m_pCompressedBuffer.get(), nCompressedSize);
-					WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
-					Encoder.m_nPreviousSeek = nCurrentSeek;
-
+					WriteLEB(Encoder.Count_);			// count of doubles
+					WriteLEB(CompressedSize);			// byte length of RLE data
+					infile.write(pCompressedBuffer_.get(), CompressedSize);
+					WriteLEB(OffsetFromCurrent(Encoder.PreviousSeek_));
+					Encoder.PreviousSeek_ = CurrentSeek;
 				}
 			}
 			else
 			{
 				// сбрасываем блок SuperRLE если был
 				FlushSuperRLE(Encoder);
-				int64_t nCurrentSeek = infile.tellg();
+				int64_t CurrentSeek (infile.tellg());
 				WriteLEB(1);						// type of block 1 - RAW compressed data
-				WriteLEB(Encoder.m_nCount);			// count of doubles
+				WriteLEB(Encoder.Count_);			// count of doubles
 				WriteLEB(Output.BytesWritten());	// byte length of block
 				infile.write(Output.Buffer(), Output.BytesWritten());
-				WriteLEB(OffsetFromCurrent(Encoder.m_nPreviousSeek));
-				Encoder.m_nPreviousSeek = nCurrentSeek;
+				WriteLEB(OffsetFromCurrent(Encoder.PreviousSeek_));
+				Encoder.PreviousSeek_ = CurrentSeek;
 			}
-			Encoder.m_nCount = 0;
+			Encoder.Count_ = 0;
 			Output.Reset();
 		}
 	}
@@ -254,89 +253,89 @@ void CResultFileWriter::FlushChannel(ptrdiff_t nIndex)
 		throw CFileWriteException(infile);
 }
 
-void CResultFileWriter::WriteChannel(ptrdiff_t nIndex, double dValue)
+void CResultFileWriter::WriteChannel(ptrdiff_t Index, double Value)
 {
-	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_nChannelsCount))
+	if (Index >= 0 && Index < static_cast<ptrdiff_t>(ChannelsCount_))
 	{
-		CChannelEncoder &Encoder = m_pEncoders[nIndex];
-		CCompressorParallel& FloatCompressor = Encoder.m_Compressor;
-		CBitStream& Output = Encoder.m_Output;
+		CChannelEncoder &Encoder = pEncoders_[Index];
+		CCompressorParallel& FloatCompressor = Encoder.Compressor_;
+		CBitStream& Output = Encoder.Output_;
 
-		eFCResult Result = eFCResult::FC_OK;
+		eFCResult Result{ eFCResult::FC_OK };
 
 		///*
-		if (static_cast<ptrdiff_t>(m_nChannelsCount - 2) <= nIndex)
+		if (static_cast<ptrdiff_t>(ChannelsCount_ - 2) <= Index)
 		{
 			
-			Result = Output.WriteDouble(dValue);
+			Result = Output.WriteDouble(Value);
 			if (Result == eFCResult::FC_BUFFEROVERFLOW)
 			{
-				FlushChannel(nIndex);
-				Result = Output.WriteDouble(dValue);
+				FlushChannel(Index);
+				Result = Output.WriteDouble(Value);
 				if (Result == eFCResult::FC_ERROR)
 					throw CFileWriteException(infile);
 				else
 					if (Result == eFCResult::FC_OK)
-						Encoder.m_nCount++;
+						Encoder.Count_++;
 			}
 			else
 				if (Result == eFCResult::FC_ERROR)
 					throw CFileWriteException(infile);
 				else
 					if (Result == eFCResult::FC_OK)
-						Encoder.m_nCount++;
+						Encoder.Count_++;
 
 		}
 		else
 		//*/
 		{
 
-			double pred = 0.0;
+			double pred{ 0.0 };
 			/*
 			if (static_cast<ptrdiff_t>(m_nChannelsCount - 2) <= nIndex)
 			{
 				pred = FloatCompressor.Predict(m_dSetTime, false, 1, ls);
-				FloatCompressor.UpdatePredictor(dValue, 0, 0);
-				Result = FloatCompressor.WriteDouble(dValue, pred, Output);
+				FloatCompressor.UpdatePredictor(Value, 0, 0);
+				Result = FloatCompressor.WriteDouble(Value, pred, Output);
 			}
 			else
 			*/
 			{
-				pred = FloatCompressor.Predict(m_dSetTime, m_bPredictorReset, m_nPredictorOrder, ls);
-				FloatCompressor.UpdatePredictor(dValue, m_nPredictorOrder, m_dNoChangeTolerance);
-				Result = FloatCompressor.WriteDouble(dValue, pred, Output);
+				pred = FloatCompressor.Predict(SetTime_, bPredictorReset_, PredictorOrder_, ls);
+				FloatCompressor.UpdatePredictor(Value, PredictorOrder_, NoChangeTolerance_);
+				Result = FloatCompressor.WriteDouble(Value, pred, Output);
 			}
 
 			if (Result == eFCResult::FC_BUFFEROVERFLOW)
 			{
-				FlushChannel(nIndex);
-				Result = FloatCompressor.WriteDouble(dValue, pred, Output);
+				FlushChannel(Index);
+				Result = FloatCompressor.WriteDouble(Value, pred, Output);
 				if (Result == eFCResult::FC_ERROR)
 					throw CFileWriteException(infile);
 				else
 					if (Result == eFCResult::FC_OK)
-						Encoder.m_nCount++;
+						Encoder.Count_++;
 			}
 			else
 				if (Result == eFCResult::FC_ERROR)
 					throw CFileWriteException(infile);
 				else
 					if (Result == eFCResult::FC_OK)
-						Encoder.m_nCount++;
+						Encoder.Count_++;
 		}
 	}
 	else
 		throw CFileWriteException(infile);
 }
 
-void CResultFileWriter::WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t Type, ptrdiff_t nId, ptrdiff_t nVarIndex)
+void CResultFileWriter::WriteChannelHeader(ptrdiff_t Index, ptrdiff_t Type, ptrdiff_t Id, ptrdiff_t nVarIndex)
 {
-	if (nIndex >= 0 && nIndex < static_cast<ptrdiff_t>(m_nChannelsCount))
+	if (Index >= 0 && Index < static_cast<ptrdiff_t>(ChannelsCount_))
 	{
 		WriteLEB(Type);
-		WriteLEB(nId);
+		WriteLEB(Id);
 		WriteLEB(nVarIndex);
-		WriteLEB(OffsetFromCurrent(m_pEncoders[nIndex].m_nPreviousSeek));
+		WriteLEB(OffsetFromCurrent(pEncoders_[Index].PreviousSeek_));
 	}
 	else
 		throw CFileWriteException(infile);
@@ -344,41 +343,42 @@ void CResultFileWriter::WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t Type, ptr
 
 void CResultFileWriter::PrepareChannelCompressor(size_t nChannelsCount)
 {
-	m_pEncoders = std::make_unique<CChannelEncoder[]>(m_nChannelsCount = nChannelsCount + 2);
-	m_nBufferLength *= sizeof(double) / sizeof(BITWORD);
-	m_pCompressedBuffer = std::make_unique<unsigned char[]>(m_nBufferLength * sizeof(BITWORD));
+	pEncoders_ = std::make_unique<CChannelEncoder[]>(ChannelsCount_ = nChannelsCount + 2);
+	BufferLength_ *= sizeof(double) / sizeof(BITWORD);
+	pCompressedBuffer_ = std::make_unique<unsigned char[]>(BufferLength_ * sizeof(BITWORD));
 	
-	size_t nBufferGroup = m_nBufferGroup;
-	size_t nSeek = 0;
+	size_t BufferGroup{ BufferGroup_ };
+	size_t Seek{ 0 };
 	
 	BITWORD *pBuffer(nullptr);
 
-	for (size_t nChannel = 0; nChannel < m_nChannelsCount; nChannel++)
+	for (size_t nChannel = 0; nChannel < ChannelsCount_; nChannel++)
 	{
-		if (nBufferGroup == m_nBufferGroup)
+		if (BufferGroup == BufferGroup_)
 		{
-			size_t nAllocSize = m_nBufferGroup;
-			if (m_nChannelsCount - nChannel < m_nBufferGroup)
-				nAllocSize = m_nChannelsCount - nChannel;
-			pBuffer = new BITWORD[m_nBufferLength * nAllocSize]();
-			m_BufferBegin.push_back(pBuffer);
-			nSeek = 0;
+			size_t nAllocSize{ BufferGroup_ };
+			if (ChannelsCount_ - nChannel < BufferGroup_)
+				nAllocSize = ChannelsCount_ - nChannel;
+
+			pBuffer = new BITWORD[BufferLength_ * nAllocSize]();
+			BufferBegin_.push_back(pBuffer);
+			Seek = 0;
 		}
-		m_pEncoders[nChannel].m_Output.Init(pBuffer + nSeek, pBuffer + nSeek + m_nBufferLength, 0);
-		m_pEncoders[nChannel].m_Output.Reset();
-		nBufferGroup--;
-		if (!nBufferGroup)
-			nBufferGroup = m_nBufferGroup;
-		nSeek += m_nBufferLength;
+		pEncoders_[nChannel].Output_.Init(pBuffer + Seek, pBuffer + Seek + BufferLength_, 0);
+		pEncoders_[nChannel].Output_.Reset();
+		BufferGroup--;
+		if (!BufferGroup)
+			BufferGroup = BufferGroup_;
+		Seek += BufferLength_;
 	}
 
-	m_pEncoders[m_nChannelsCount - 1].m_Compressor.UpdatePredictor(0, 0);
-	m_pEncoders[m_nChannelsCount - 2].m_Compressor.UpdatePredictor(0, 0);
+	pEncoders_[ChannelsCount_ - 1].Compressor_.UpdatePredictor(0, 0);
+	pEncoders_[ChannelsCount_ - 2].Compressor_.UpdatePredictor(0, 0);
 }
 
 void CResultFileWriter::SetNoChangeTolerance(double dTolerance)
 {
-	m_dNoChangeTolerance = dTolerance;
+	NoChangeTolerance_ = dTolerance;
 }
 
 CResultFileWriter::~CResultFileWriter()
@@ -389,10 +389,10 @@ CResultFileWriter::~CResultFileWriter()
 	}
 	catch (...)  { }
 
-	for (auto& it : m_DevTypeSet)
+	for (auto& it : DevTypeSet_)
 		delete it;
 
-	m_DevTypeSet.clear();
+	DevTypeSet_.clear();
 }
 
 // завершает и закрывает поток записи
@@ -401,12 +401,12 @@ void CResultFileWriter::TerminateWriterThread()
 	// если поток записи еще работает
 	if (threadWriter.joinable())
 	{
-		while(m_bThreadRun)
+		while(bThreadRun_)
 		{
 			// берем мьютекс доступа к данным
 			std::unique_lock<std::mutex> dataGuard(mutexData);
 			// убираем флаг работы потока
-			m_bThreadRun = false;
+			bThreadRun_ = false;
 			// снимаем поток с ожидания
 			conditionRun.notify_all();
 			conditionDone.wait_for(dataGuard, std::chrono::milliseconds(10), [this]() { return  this->portionSent == this->portionReceived; });
@@ -428,10 +428,10 @@ void CResultFileWriter::Close()
 
 	infile.close();
 
-	for (auto&& it : m_BufferBegin)
+	for (auto&& it : BufferBegin_)
 		delete it;
 
-	m_BufferBegin.clear();
+	BufferBegin_.clear();
 }
 
 // создает файл результатов
@@ -450,7 +450,7 @@ void CResultFileWriter::CreateResultFile(std::filesystem::path FilePath)
 		throw CFileWriteException(infile);
 
 	// раз создали файл результатов - потребуется финализация
-	m_bChannelsFlushed = false;
+	bChannelsFlushed_ = false;
 }
 
 // записывает double без сжатия
@@ -464,14 +464,14 @@ void CResultFileWriter::AddDirectoryEntries(size_t nDirectoryEntriesCount)
 {
 	WriteLEB(nDirectoryEntriesCount);							// записываем количество разделов
 	struct DataDirectoryEntry DirEntry = { 0, 0LL };			// создаем пустой раздел
-	m_DataDirectoryOffset = infile.tellg();						//	запоминаем позицию начала разделов в файле
+	DataDirectoryOffset_ = infile.tellg();						//	запоминаем позицию начала разделов в файле
 	// записываем заданное количество пустых разделов
 	for (size_t i = 0; i < nDirectoryEntriesCount; i++)
 		infile.write(&DirEntry, sizeof(struct DataDirectoryEntry));
 }
 
 // запись результатов вне потока
-void CResultFileWriter::WriteResults(double dTime, double dStep)
+void CResultFileWriter::WriteResults(double Time, double Step)
 {
 	// проверяем активен ли поток записи
 	if (threadWriter.joinable())
@@ -495,16 +495,16 @@ void CResultFileWriter::WriteResults(double dTime, double dStep)
 			try
 			{
 				// сохраняем результаты из указателей во внутрениий буфер
-				CChannelEncoder* pEncoder = m_pEncoders.get();
-				CChannelEncoder* pEncoderEnd = pEncoder + m_nChannelsCount - 2;
+				CChannelEncoder* pEncoder{ pEncoders_.get() };
+				const CChannelEncoder* const pEncoderEnd{ pEncoder + ChannelsCount_ - 2 };
 				while (pEncoder < pEncoderEnd)
 				{
-					pEncoder->m_dValue = *pEncoder->m_pVariable;
+					pEncoder->Value_ = *pEncoder->pVariable_;
 					pEncoder++;
 				}
 
-				m_dTimeToWrite = dTime;
-				m_dStepToWrite = dStep;
+				TimeToWrite_ = Time;
+				StepToWrite_ = Step;
 			}
 			catch (...)
 			{
@@ -533,7 +533,7 @@ unsigned int CResultFileWriter::WriterThread(void* pThis)
 		if (!pthis)
 			throw CFileWriteException("Threading problem");
 ;
-		while (pthis->m_bThreadRun)
+		while (pthis->bThreadRun_)
 		{
 			{
 				// ждем команды на запуск записи или останов
@@ -542,7 +542,7 @@ unsigned int CResultFileWriter::WriterThread(void* pThis)
 				std::lock_guard<std::mutex> dataGuard(pthis->mutexData);
 
 				// если останов - выходим
-				if (!pthis->m_bThreadRun)
+				if (!pthis->bThreadRun_)
 					break;
 
 				// записываем очередной блок результатов
@@ -576,26 +576,26 @@ bool CResultFileWriter::WriteResultsThreaded()
 
 	try
 	{
-		CChannelEncoder *pEncoder = m_pEncoders.get();
-		CChannelEncoder *pEncoderEnd = pEncoder + m_nChannelsCount - 2;
+		CChannelEncoder* pEncoder{ pEncoders_.get() };
+		const CChannelEncoder * const pEncoderEnd{ pEncoder + ChannelsCount_ - 2 };
 		// записываем время и шаг
-		WriteTime(m_dTimeToWrite, m_dStepToWrite);
+		WriteTime(TimeToWrite_, StepToWrite_);
 		// записываем текущий блок с помощью кодеков каналов
-		pEncoder = m_pEncoders.get();
+		pEncoder = pEncoders_.get();
 		while (pEncoder < pEncoderEnd)
 		{
 			// WriteChannel сам решает - продолжать писать в буфер или сбрасывать на диск, если 
 			// буфер закончился
-			WriteChannel(pEncoder - m_pEncoders.get(), pEncoder->m_dValue);
+			WriteChannel(pEncoder - pEncoders_.get(), pEncoder->Value_);
 			pEncoder++;
 		}
 
-		if (m_nPredictorOrder < PREDICTOR_ORDER)
+		if (PredictorOrder_ < PREDICTOR_ORDER)
 		{
 			// если не набрали заданный порядок предиктора
 			// добавляем текущее время и увеличиваем порядок
-			ts[m_nPredictorOrder] = m_dSetTime;
-			m_nPredictorOrder++;
+			ts[PredictorOrder_] = SetTime_;
+			PredictorOrder_++;
 		}
 		else
 		{
@@ -603,7 +603,7 @@ bool CResultFileWriter::WriteResultsThreaded()
 			// сдвигаем буфер точек времени на 1 влево и добавляем текущее время
 			std::copy(ts + 1, ts + PREDICTOR_ORDER, ts);
 			//memcpy(ts, ts + 1, sizeof(double) * (PREDICTOR_ORDER - 1));
-			ts[PREDICTOR_ORDER - 1] = m_dSetTime;
+			ts[PREDICTOR_ORDER - 1] = SetTime_;
 		}
 
 		bRes = true;
@@ -616,15 +616,15 @@ bool CResultFileWriter::WriteResultsThreaded()
 	return bRes;
 }
 
-void CResultFileWriter::SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, ptrdiff_t nDeviceVarIndex, const double* pVariable, ptrdiff_t nVariableIndex)
+void CResultFileWriter::SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t DeviceVarIndex, const double* pVariable, ptrdiff_t VariableIndex)
 {
-	if (nVariableIndex >= 0 && nVariableIndex < static_cast<ptrdiff_t>(m_nChannelsCount - 2) && pVariable)
+	if (VariableIndex >= 0 && VariableIndex < static_cast<ptrdiff_t>(ChannelsCount_ - 2) && pVariable)
 	{
-		CChannelEncoder &Encoder = m_pEncoders[nVariableIndex];
-		Encoder.m_nDeviceId   = nDeviceId;
-		Encoder.m_nDeviceType = nDeviceType;
-		Encoder.m_pVariable = pVariable;
-		Encoder.m_nVariableIndex = nDeviceVarIndex;
+		CChannelEncoder& Encoder{ pEncoders_[VariableIndex] };
+		Encoder.DeviceId_		= DeviceId;
+		Encoder.DeviceType_		= DeviceType;
+		Encoder.pVariable_		= pVariable;
+		Encoder.VariableIndex_	= DeviceVarIndex;
 	}
 	else
 		throw CFileWriteException(infile);
@@ -647,14 +647,14 @@ int64_t CResultFileWriter::OffsetFromCurrent(int64_t AbsoluteOffset)
 }
 
 // выполняет кодирование заданного буфера с помошью RLE
-bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual)
+bool CResultFileWriter::EncodeRLE(unsigned char* pBuffer, size_t BufferSize, unsigned char* pCompressedBuffer, size_t& CompressedSize, bool& bAllBytesEqual)
 {
-	bool bRes = m_RLECompressor.Compress(pBuffer, nBufferSize, pCompressedBuffer, nCompressedSize, bAllBytesEqual);
+	bool bRes{ RLECompressor_.Compress(pBuffer, BufferSize, pCompressedBuffer, CompressedSize, bAllBytesEqual) };
 	if (bRes)
 	{
 		// если удалось сжать, или все байты одинаковые и размер сжатого равен размеру исходного - возвращаем 
 		// тип блока - RLE
-		if (nCompressedSize < nBufferSize || (bAllBytesEqual && nCompressedSize <= nBufferSize) )
+		if (CompressedSize < BufferSize || (bAllBytesEqual && CompressedSize <= BufferSize) )
 		{
 			// debug RLE
 			/* 
@@ -711,34 +711,34 @@ void CResultFileWriter::FinishWriteHeader()
 	WriteDouble(dCurrentDate);			// записываем время
 	WriteString(GetComment());			// записываем строку комментария
 	AddDirectoryEntries(3);				// описатели разделов
-	WriteLEB(m_VarNameMap.size());		// записываем количество единиц измерения
+	WriteLEB(VarNameMap_.size());		// записываем количество единиц измерения
 
 	// записываем последовательность типов и названий единиц измерения переменных
-	for (auto&& vnmit : m_VarNameMap)
+	for (auto&& vnmit : VarNameMap_)
 	{
 		WriteLEB(vnmit.first);
 		WriteString(vnmit.second);
 	}
 	// записываем количество типов устройств
-	WriteLEB(m_DevTypeSet.size());
+	WriteLEB(DevTypeSet_.size());
 
 	long nChannelsCount = 0;
 
 	// записываем устройства
-	for (auto& di : m_DevTypeSet)
+	for (auto& di : DevTypeSet_)
 	{
 		// для каждого типа устройств
 		WriteLEB(di->eDeviceType);							// идентификатор типа устройства
-		WriteString(di->strDevTypeName);					// название типа устройства
+		WriteString(di->DevTypeName_);						// название типа устройства
 		WriteLEB(di->DeviceIdsCount);						// количество идентификаторов устройства (90% - 1, для ветвей, например - 3)
 		WriteLEB(di->DeviceParentIdsCount);					// количество родительских устройств
 		WriteLEB(di->DevicesCount);							// количество устройств данного типа
-		WriteLEB(di->m_VarTypes.size());					// количество переменных устройства
+		WriteLEB(di->VarTypes_.size());						// количество переменных устройства
 
 		long nChannelsByDevice = 0;
 
 		// записываем описания переменных типа устройства
-		for (auto& vi : di->m_VarTypesList)
+		for (auto& vi : di->VarTypesList_)
 		{
 			WriteString(vi.Name);							// имя переменной
 			WriteLEB(vi.eUnits);							// единицы измерения переменной
@@ -757,7 +757,7 @@ void CResultFileWriter::FinishWriteHeader()
 		}
 
 		// записываем описания устройств
-		for (DeviceInstanceInfo* pDev = di->m_pDeviceInstances.get(); pDev < di->m_pDeviceInstances.get() + di->DevicesCount; pDev++)
+		for (DeviceInstanceInfo* pDev = di->pDeviceInstances_.get(); pDev < di->pDeviceInstances_.get() + di->DevicesCount; pDev++)
 		{
 			// для каждого устройства
 			// записываем последовательность идентификаторов
@@ -770,9 +770,9 @@ void CResultFileWriter::FinishWriteHeader()
 			{
 				const DeviceLinkToParent* pDevLink = pDev->GetParent(i);
 				// записываем тип родительского устройства
-				WriteLEB(pDevLink->m_eParentType);
+				WriteLEB(pDevLink->eParentType);
 				// и его идентификатор
-				WriteLEB(pDevLink->m_nId);
+				WriteLEB(pDevLink->Id);
 			}
 			// считаем общее количество каналов
 			nChannelsCount += nChannelsByDevice;
@@ -785,7 +785,7 @@ void CResultFileWriter::FinishWriteHeader()
 
 void CResultFileWriter::AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName)
 {
-	if (!m_VarNameMap.insert(std::make_pair(nUnitType, UnitName)).second)
+	if (!VarNameMap_.insert(std::make_pair(nUnitType, UnitName)).second)
 		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedVariableUnit, nUnitType));
 }
 
@@ -793,10 +793,10 @@ DeviceTypeInfo* CResultFileWriter::AddDeviceType(ptrdiff_t nTypeId, std::string_
 {
 	auto DeviceType = std::make_unique<DeviceTypeInfo>();
 	DeviceType->eDeviceType = static_cast<int>(nTypeId);
-	DeviceType->strDevTypeName = TypeName;
+	DeviceType->DevTypeName_= TypeName;
 	DeviceType->DeviceParentIdsCount = DeviceType->DeviceIdsCount = 1;
 	DeviceType->VariablesByDeviceCount = DeviceType->DevicesCount = 0;
-	if (!m_DevTypeSet.insert(DeviceType.get()).second)
+	if (!DevTypeSet_.insert(DeviceType.get()).second)
 		throw dfw2error(fmt::format(CDFW2Messages::m_cszDuplicatedDeviceType, nTypeId));
 	return DeviceType.release();
 }
@@ -830,9 +830,9 @@ void CResultFileWriter::AddSlowVariable(ptrdiff_t nDeviceType,
 #pragma optimize("", off)
 #endif
 
-void CResultFileWriter::UpdateLagrangeCoefficients(double dTime)
+void CResultFileWriter::UpdateLagrangeCoefficients(double Time)
 {
-	if (m_nPredictorOrder >= PREDICTOR_ORDER)
+	if (PredictorOrder_ >= PREDICTOR_ORDER)
 	{
 		for (int j = 0; j < PREDICTOR_ORDER; j++)
 		{
@@ -840,7 +840,7 @@ void CResultFileWriter::UpdateLagrangeCoefficients(double dTime)
 			for (int m = 0; m < PREDICTOR_ORDER; m++)
 			{
 				if (m != j)
-					ls[j] *= (dTime - ts[m]) / (ts[j] - ts[m]);
+					ls[j] *= (Time - ts[m]) / (ts[j] - ts[m]);
 			}
 			_CheckNumber(ls[j]);
 		}

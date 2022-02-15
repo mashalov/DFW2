@@ -25,13 +25,13 @@ STDMETHODIMP CSlowVariables::InterfaceSupportsErrorInfo(REFIID riid)
 
 STDMETHODIMP CSlowVariables::Find(LONG DeviceTypeId, VARIANT DeviceIds, BSTR VariableName, VARIANT *SlowVariable)
 {
-	HRESULT hRes = E_FAIL;
-	if (m_pFileReader && SUCCEEDED(VariantClear(SlowVariable)))
+	HRESULT hRes{ E_FAIL };
+	if (pFileReader_ && SUCCEEDED(VariantClear(SlowVariable)))
 	{
-		const CSlowVariablesSet& SlowVariables = m_pFileReader->GetSlowVariables();
+		const CSlowVariablesSet& SlowVariables{ pFileReader_->GetSlowVariables() };
 
 		CSlowVariableItem FindItem(DeviceTypeId, CDeviceTypeWrite::GetVariantVec(DeviceIds), stringutils::utf8_encode(VariableName));
-		CSlowVariablesSet::const_iterator it = SlowVariables.find(&FindItem);
+		CSlowVariablesSet::const_iterator it{ SlowVariables.find(&FindItem) };
 		if (it != SlowVariables.end())
 		{
 			CComObject<CSlowVariable> *pSlowVariable;

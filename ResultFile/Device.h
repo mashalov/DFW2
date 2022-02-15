@@ -30,12 +30,12 @@ class ATL_NO_VTABLE CDevice :
 	public IDispatchImpl<IDevice, &IID_IDevice, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	DeviceInstanceInfo* m_pDeviceInfo = nullptr;
+	DeviceInstanceInfo* pDeviceInfo_ = nullptr;
 public:
 
 	void SetDeviceInfo(DeviceInstanceInfo* pDeviceInfo)
 	{
-		m_pDeviceInfo = pDeviceInfo;
+		pDeviceInfo_ = pDeviceInfo;
 	}
 
 BEGIN_COM_MAP(CDevice)

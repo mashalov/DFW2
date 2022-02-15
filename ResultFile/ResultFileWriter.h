@@ -11,17 +11,17 @@ namespace DFW2
 	class CChannelEncoder
 	{
 	public:
-		CCompressorParallel m_Compressor;					// экземпляр предиктивного кодера
-		CBitStream m_Output;								// поток для записи битового потока
-		uint64_t m_nPreviousSeek = 0;						// смещение последнего записанного предыдущего блока
-		size_t m_nCount = 0;								// количество сжатых double
-		size_t m_nUnwrittenSuperRLECount = 0;				// количество подсчитанных, но не записанных блоков SuperRLE
-		ptrdiff_t m_nVariableIndex = -1;					// индекс переменной канала
-		const double *m_pVariable = nullptr;				// адрес переменной канала
-		double m_dValue;									// значение для буферизации переданного на m_pVariable значения и записи в потоке
-		ptrdiff_t m_nDeviceId;								// идентификатор устройства канала
-		ptrdiff_t m_nDeviceType;							// тип устройства канала
-		unsigned char m_SuperRLEByte;						// байт SuperRLE
+		CCompressorParallel Compressor_;					// экземпляр предиктивного кодера
+		CBitStream Output_;									// поток для записи битового потока
+		uint64_t PreviousSeek_ = 0;							// смещение последнего записанного предыдущего блока
+		size_t Count_ = 0;									// количество сжатых double
+		size_t UnwrittenSuperRLECount_ = 0;					// количество подсчитанных, но не записанных блоков SuperRLE
+		ptrdiff_t VariableIndex_ = -1;						// индекс переменной канала
+		const double *pVariable_ = nullptr;					// адрес переменной канала
+		double Value_;										// значение для буферизации переданного на m_pVariable значения и записи в потоке
+		ptrdiff_t DeviceId_;								// идентификатор устройства канала
+		ptrdiff_t DeviceType_;								// тип устройства канала
+		unsigned char SuperRLEByte_;						// байт SuperRLE
 	};
 
 	using BUFFERBEGIN = std::vector<BITWORD*>;
@@ -29,16 +29,16 @@ namespace DFW2
 	class CResultFileWriter : public CResultFile, public IResultWriterABI
 	{
 	protected:
-		std::unique_ptr<CChannelEncoder[]> m_pEncoders;
-		size_t m_nChannelsCount = 0;
-		BUFFERBEGIN m_BufferBegin;
-		double m_dSetTime;
-		double m_dSetStep;
-		bool m_bPredictorReset;
-		size_t m_nBufferLength = 100;
-		size_t m_nBufferGroup = 100;
-		size_t m_nPointsCount = 0;
-		int64_t m_DataDirectoryOffset;
+		std::unique_ptr<CChannelEncoder[]> pEncoders_;
+		size_t ChannelsCount_ = 0;
+		BUFFERBEGIN BufferBegin_;
+		double SetTime_;
+		double SetStep_;
+		bool bPredictorReset_;
+		size_t BufferLength_ = 100;
+		size_t BufferGroup_ = 100;
+		size_t PointsCount_ = 0;
+		int64_t DataDirectoryOffset_;
 
 		/// std threading stuff
 
@@ -47,43 +47,43 @@ namespace DFW2
 		std::mutex mutexRun;
 		std::mutex mutexDone;
 		std::atomic<int> portionSent, portionReceived;
-		std::atomic_bool m_bThreadRun = true;
+		std::atomic_bool bThreadRun_ = true;
 		std::condition_variable conditionDone;
 		std::condition_variable conditionRun;
 
 		void TerminateWriterThread();
-		double m_dTimeToWrite;
-		double m_dStepToWrite;
+		double TimeToWrite_;
+		double StepToWrite_;
 		bool WriteResultsThreaded();
 		int64_t OffsetFromCurrent(int64_t AbsoluteOffset);
-		double m_dNoChangeTolerance = 0.0;
+		double NoChangeTolerance_ = 0.0;
 		double ts[PREDICTOR_ORDER] = {};
 		double ls[PREDICTOR_ORDER] = {};
-		ptrdiff_t m_nPredictorOrder = 0;
-		CSlowVariablesSet m_setSlowVariables;
-		CRLECompressor	m_RLECompressor;
-		std::unique_ptr<unsigned char[]> m_pCompressedBuffer;
-		bool EncodeRLE(unsigned char* pBuffer, size_t nBufferSize, unsigned char* pCompressedBuffer, size_t& nCompressedSize, bool& bAllBytesEqual);
+		ptrdiff_t PredictorOrder_ = 0;
+		CSlowVariablesSet SlowVariables_;
+		CRLECompressor	RLECompressor_;
+		std::unique_ptr<unsigned char[]> pCompressedBuffer_;
+		bool EncodeRLE(unsigned char* pBuffer, size_t BufferSize, unsigned char* pCompressedBuffer, size_t& CompressedSize, bool& bAllBytesEqual);
 		void FlushSuperRLE(CChannelEncoder& Encoder);
-		bool m_bChannelsFlushed = true;
-		std::string m_strComment;
-		VARNAMEMAP m_VarNameMap;
-		DEVTYPESET m_DevTypeSet;
+		bool bChannelsFlushed_ = true;
+		std::string Comment_;
+		VARNAMEMAP VarNameMap_;
+		DEVTYPESET DevTypeSet_;
 	public:
 		virtual ~CResultFileWriter();
 
 		void WriteDouble(const double &Value);
-		void WriteTime(double dTime, double dStep);
-		void UpdateLagrangeCoefficients(double dTime);
-		void WriteChannel(ptrdiff_t nIndex, double dValue);
-		void FlushChannel(ptrdiff_t nIndex); 
+		void WriteTime(double Time, double Step);
+		void UpdateLagrangeCoefficients(double Time);
+		void WriteChannel(ptrdiff_t Index, double Value);
+		void FlushChannel(ptrdiff_t Index); 
 		void FlushChannels();
-		void PrepareChannelCompressor(size_t nChannelsCount);
-		void WriteChannelHeader(ptrdiff_t nIndex, ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
+		void PrepareChannelCompressor(size_t ChannelsCount);
+		void WriteChannelHeader(ptrdiff_t Index, ptrdiff_t eType, ptrdiff_t Id, ptrdiff_t VarIndex);
 		void AddDirectoryEntries(size_t nDirectoryEntriesCount);
 		static unsigned int WriterThread(void *pThis);
-		CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
-		const std::string& GetComment() { return m_strComment; }
+		CSlowVariablesSet& GetSlowVariables() { return SlowVariables_; }
+		const std::string& GetComment() { return Comment_; }
 
 		// ABI Interface
 		void Destroy() override { delete this; }
@@ -91,12 +91,12 @@ namespace DFW2
 		void FinishWriteHeader() override;
 		void CreateResultFile(const std::filesystem::path FilePath) override;
 		void SetNoChangeTolerance(double Tolerance) override;
-		void SetComment(const std::string_view Comment) override { m_strComment = Comment; }
+		void SetComment(const std::string_view Comment) override { Comment_ = Comment; }
 		void WriteResults(double Time, double Step) override;
-		void AddVariableUnit(ptrdiff_t nUnitType, const std::string_view UnitName) override;
-		DeviceTypeInfo* AddDeviceType(ptrdiff_t nTypeId, std::string_view TypeName) override;
-		void SetChannel(ptrdiff_t nDeviceId, ptrdiff_t nDeviceType, ptrdiff_t nDeviceVarIndex, const double* pVariable, ptrdiff_t nVariableIndex) override;
-		virtual void AddSlowVariable(ptrdiff_t nDeviceType,
+		void AddVariableUnit(ptrdiff_t UnitType, const std::string_view UnitName) override;
+		DeviceTypeInfo* AddDeviceType(ptrdiff_t TypeId, std::string_view TypeName) override;
+		void SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptrdiff_t DeviceVarIndex, const double* pVariable, ptrdiff_t VariableIndex) override;
+		virtual void AddSlowVariable(ptrdiff_t DeviceType,
 			const ResultIds& DeviceIds,
 			const std::string_view VariableName,
 			double Time,

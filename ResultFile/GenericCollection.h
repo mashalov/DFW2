@@ -6,7 +6,7 @@ class CGenericCollection : public TInterface
 {
 protected:
 	typedef std::vector< CComObject<TObject> *> OBJVECTOR;
-	OBJVECTOR m_ObjVector;
+	OBJVECTOR ObjVector_;
 
 public:
 	STDMETHOD(Item)(LONG Index, VARIANT *Item)
@@ -15,11 +15,11 @@ public:
 
 		if (SUCCEEDED(VariantClear(Item)))
 		{
-			if (Index >= 0 && Index < static_cast<LONG>(m_ObjVector.size()))
+			if (Index >= 0 && Index < static_cast<LONG>(ObjVector_.size()))
 			{
 				Item->vt = VT_DISPATCH;
-				Item->pdispVal = m_ObjVector[Index];
-				m_ObjVector[Index]->AddRef();
+				Item->pdispVal = ObjVector_[Index];
+				ObjVector_[Index]->AddRef();
 				hRes = S_OK;
 			}
 		}
@@ -27,18 +27,18 @@ public:
 	}
 	STDMETHOD(get_Count)(LONG *Count)
 	{
-		*Count = static_cast<LONG>(m_ObjVector.size());
+		*Count = static_cast<LONG>(ObjVector_.size());
 		return S_OK;
 	}
 
 	STDMETHOD(get__NewEnum)(LPUNKNOWN *pVal)
 	{
-		size_t size = m_ObjVector.size(); 
+		const size_t size{ ObjVector_.size() };
 		std::unique_ptr<VARIANT[]> pVar = std::make_unique<VARIANT[]>(size);
 		for (size_t i = 0; i < size; i++)
 		{
 			pVar[i].vt = VT_DISPATCH;
-			pVar[i].pdispVal = m_ObjVector[i];
+			pVar[i].pdispVal = ObjVector_[i];
 		}
 		typedef CComObject<CComEnum< IEnumVARIANT, &IID_IEnumVARIANT, VARIANT, _Copy< VARIANT> > > enumVar;
 		enumVar *pEnumVar = new enumVar;
@@ -48,13 +48,13 @@ public:
 
 	bool Add(CComObject<TObject> *pObject)
 	{
-		m_ObjVector.push_back(pObject);
+		ObjVector_.push_back(pObject);
 		return true;
 	}
 
 	void CollectionFinalRelease()
 	{
-		for (auto&& it : m_ObjVector)
+		for (auto&& it : ObjVector_)
 			it->Release();
 	}
 

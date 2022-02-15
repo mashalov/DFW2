@@ -16,8 +16,8 @@ namespace DFW2
 #pragma pack(push,1)
 	struct DataDirectoryEntry
 	{
-		int m_DataType;
-		int64_t m_Offset;
+		int DataType;
+		int64_t Offset;
 	};
 #pragma pack(pop)
 
@@ -34,6 +34,12 @@ namespace DFW2
 			uint64_t LastBlockOffset;
 		};
 
+		struct ChannelHeadersRange
+		{
+			CResultFileReader::ChannelHeaderInfo* begin = nullptr;
+			CResultFileReader::ChannelHeaderInfo* end = nullptr;
+		};
+
 		struct ChannelHeaderComp
 		{
 			bool operator()(const ChannelHeaderInfo* lhs, const ChannelHeaderInfo* rhs) const
@@ -47,46 +53,46 @@ namespace DFW2
 
 	protected:
 
-		std::unique_ptr<ChannelHeaderInfo[]> m_pChannelHeaders;
-		std::unique_ptr<DataDirectoryEntry[]> m_pDirectoryEntries;
-		std::unique_ptr<double[]> m_pTime, m_pStep;
+		std::unique_ptr<ChannelHeaderInfo[]> pChannelHeaders_;
+		std::unique_ptr<DataDirectoryEntry[]> pDirectoryEntries_;
+		std::unique_ptr<double[]> pTime_, pStep_;
+		ChannelHeadersRange ChannelHeadersRange_;
 
-		int m_nVersion = 0;
-		double m_dTimeCreated = 0.0;
-		int m_DevTypesCount = 0;
-		size_t m_nDirectoryEntriesCount = 0;
-		
+		int Version_ = 0;
+		double TimeCreated_ = 0.0;
+		int DevTypesCount_ = 0;
+		size_t DirectoryEntriesCount_ = 0;
+		size_t PointsCount_;
+		size_t ChannelsCount_;
 
-		size_t m_PointsCount;
-		size_t m_ChannelsCount;
 		typedef std::list<int64_t> INT64LIST;
 		int ReadBlockType();
 		void GetBlocksOrder(INT64LIST& Offsets, uint64_t LastBlockOffset);
 		void ReadModelData(std::unique_ptr<double[]>& pData, int nVarIndex);
 		int64_t OffsetFromCurrent();
-		std::string m_strFilePath;
-		std::string m_strComment;
-		bool m_bHeaderLoaded = false;
+		std::string FilePath_;
+		std::string Comment_;
+		bool bHeaderLoaded_ = false;
 
-		DEVTYPESET m_DevTypeSet;
-		CHANNELSET m_ChannelSet;
+		DEVTYPESET DevTypeSet_;
+		CHANNELSET ChannelSet_;
 
-		std::unique_ptr<DeviceTypeInfo[]> m_pDeviceTypeInfo;
+		std::unique_ptr<DeviceTypeInfo[]> pDeviceTypeInfo_;
 
-		VARNAMEMAP m_VarNameMap;
+		VARNAMEMAP VarNameMap_;
 
 #ifdef _MSC_VER
-		CSlowVariablesSet m_setSlowVariables;
+		CSlowVariablesSet SlowVariables_;
 #endif		
 
-		int64_t m_nCommentOffset;
-		int64_t m_nCommentDirectoryOffset;
-		int64_t m_DirectoryOffset;
+		int64_t CommentOffset_;
+		int64_t CommentDirectoryOffset_;
+		int64_t DirectoryOffset_;
 
-		std::string m_strUserComment;
+		std::string UserComment_;
 
-		CRLECompressor m_RLECompressor;
-		double m_dRatio = 0.0;
+		CRLECompressor RLECompressor_;
+		double Ratio_ = 0.0;
 
 	public:
 		virtual ~CResultFileReader();
@@ -98,12 +104,12 @@ namespace DFW2
 		void ReadString(std::string& String);
 		void ReadDouble(double& Value);
 		void ReadDirectoryEntries();
-		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, std::string_view VarName);
-		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
-		std::unique_ptr<double[]> ReadChannel(ptrdiff_t nIndex);
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t Id, std::string_view VarName);
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t eType, ptrdiff_t Id, ptrdiff_t VarIndex);
+		std::unique_ptr<double[]> ReadChannel(ptrdiff_t Index);
 		std::unique_ptr<double[]> GetTimeStep();
-		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, ptrdiff_t nVarIndex);
-		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t nId, std::string_view VarName);
+		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t Id, ptrdiff_t VarIndex);
+		ptrdiff_t GetChannelIndex(ptrdiff_t eType, ptrdiff_t Id, std::string_view VarName);
 #ifdef _MSC_VER		
 		SAFEARRAY* CreateSafeArray(std::unique_ptr<double[]>&& pChannelData);
 #endif		
@@ -119,8 +125,9 @@ namespace DFW2
 		const DEVTYPESET& GetTypesSet() const;
 		const ChannelHeaderInfo* GetChannelHeaders();
 		const char* GetUnitsName(ptrdiff_t eUnitsType);
+		ChannelHeadersRange GetChannelHeadersRange() const;
 #ifdef _MSC_VER		
-		const CSlowVariablesSet& GetSlowVariables() { return m_setSlowVariables; }
+		const CSlowVariablesSet& GetSlowVariables() { return SlowVariables_; }
 #endif		
 		const char* GetUserComment();
 		void SetUserComment(std::string_view UserComment);

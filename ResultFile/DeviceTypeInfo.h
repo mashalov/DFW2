@@ -22,7 +22,7 @@ namespace DFW2
 		std::string Name;
 		double Multiplier = 0.0;
 		int eUnits = 0;
-		ptrdiff_t nIndex = 0;
+		ptrdiff_t Index = 0;
 		bool operator<(const VariableTypeInfo& other) const
 		{
 			return Name < other.Name;
@@ -34,31 +34,31 @@ namespace DFW2
 
 	struct DeviceLinkToParent
 	{
-		ptrdiff_t m_eParentType;
-		ptrdiff_t m_nId;
+		ptrdiff_t eParentType;
+		ptrdiff_t Id;
 	};
 
 	struct DeviceTypeInfo;
 
 	struct DeviceInstanceInfoBase
 	{
-		ptrdiff_t nIndex = 0;
-		virtual ptrdiff_t GetId(ptrdiff_t nIdIndex) const
+		ptrdiff_t Index_ = 0;
+		virtual ptrdiff_t GetId(ptrdiff_t IdIndex) const
 		{
-			return nIndex;
+			return Index_;
 		}
 	};
 
 	struct DeviceInstanceInfo : public DeviceInstanceInfoBase
 	{
-		DeviceTypeInfo* m_pDevType;
+		DeviceTypeInfo* pDevType_;
 		std::string Name;
 		DeviceInstanceInfo(DeviceTypeInfo* pDevTypeInfo);
-		DeviceInstanceInfo() : m_pDevType(nullptr) {}
-		void SetId(ptrdiff_t nIdIndex, ptrdiff_t nId);
-		virtual ptrdiff_t GetId(ptrdiff_t nIdIndex) const;
-		void SetParent(ptrdiff_t nParentIndex, ptrdiff_t eParentType, ptrdiff_t nParentId);
-		const struct DeviceLinkToParent* GetParent(ptrdiff_t nParentIndex) const;
+		DeviceInstanceInfo() : pDevType_(nullptr) {}
+		void SetId(ptrdiff_t IdIndex, ptrdiff_t Id);
+		virtual ptrdiff_t GetId(ptrdiff_t IdIndex) const;
+		void SetParent(ptrdiff_t ParentIndex, ptrdiff_t eParentType, ptrdiff_t ParentId);
+		const struct DeviceLinkToParent* GetParent(ptrdiff_t ParentIndex) const;
 	};
 
 	struct DeviceInstanceCompare
@@ -80,15 +80,15 @@ namespace DFW2
 		int DeviceParentIdsCount = 0;
 		int DevicesCount = 0;
 		int VariablesByDeviceCount = 0;
-		VARTYPESET m_VarTypes;
-		VARTYPELIST m_VarTypesList;
+		VARTYPESET VarTypes_;
+		VARTYPELIST VarTypesList_;
 		std::unique_ptr<ptrdiff_t[]> pIds;
 		std::unique_ptr<DeviceLinkToParent[]> pLinks;
-		std::unique_ptr<DeviceInstanceInfo[]> m_pDeviceInstances;
+		std::unique_ptr<DeviceInstanceInfo[]> pDeviceInstances_;
 		size_t CurrentInstanceIndex = 0;
-		CResultFileReader* m_pFileReader = nullptr;
-		DEVICESSET m_DevSet;
-		std::string strDevTypeName;
+		CResultFileReader* pFileReader_ = nullptr;
+		DEVICESSET DevSet_;
+		std::string DevTypeName_;
 
 		void AllocateData();
 		void IndexDevices();

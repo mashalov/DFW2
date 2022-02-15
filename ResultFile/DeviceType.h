@@ -25,12 +25,12 @@ class ATL_NO_VTABLE CDeviceType :
 	public IDispatchImpl<IDeviceType, &IID_IDeviceType, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	const DeviceTypeInfo* m_pDevTypeInfo = nullptr;
+	const DeviceTypeInfo* pDevTypeInfo_ = nullptr;
 public:
 
 	void SetDeviceTypeInfo(const DeviceTypeInfo* pDevTypeInfo)
 	{
-		m_pDevTypeInfo = pDevTypeInfo;
+		pDevTypeInfo_ = pDevTypeInfo;
 	}
 
 BEGIN_COM_MAP(CDeviceType)

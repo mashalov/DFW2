@@ -33,7 +33,7 @@ STDMETHODIMP CResultRead::get_Path(BSTR* PathName)
 	{
 		if (PathName)
 		{
-			*PathName = SysAllocString(stringutils::utf8_decode(m_ResultFileReader.GetFilePath()).c_str());
+			*PathName = SysAllocString(stringutils::utf8_decode(ResultFileReader_.GetFilePath()).c_str());
 			hRes = S_OK;
 		}
 	}
@@ -51,7 +51,7 @@ STDMETHODIMP CResultRead::get_Comment(BSTR* Comment)
 	{
 		if (Comment)
 		{
-			*Comment = SysAllocString(stringutils::utf8_decode(m_ResultFileReader.GetComment()).c_str());
+			*Comment = SysAllocString(stringutils::utf8_decode(ResultFileReader_.GetComment()).c_str());
 			hRes = S_OK;
 		}
 	}
@@ -69,7 +69,7 @@ STDMETHODIMP CResultRead::get_Version(LONG* Version)
 	{
 		if (Version)
 		{
-			*Version = m_ResultFileReader.GetVersion();
+			*Version = ResultFileReader_.GetVersion();
 			hRes = S_OK;
 		}
 	}
@@ -88,16 +88,16 @@ STDMETHODIMP CResultRead::get_TimeScale(VARIANT* TimeScale)
 	{
 		if (TimeScale && SUCCEEDED(VariantClear(TimeScale)))
 		{
-			size_t nPointsCount = m_ResultFileReader.GetPointsCount();
-			SAFEARRAYBOUND sabounds = { static_cast<ULONG>(nPointsCount), 0 };
+			size_t nPointsCount{ ResultFileReader_.GetPointsCount() };
+			SAFEARRAYBOUND sabounds = { static_cast<ULONG>(nPointsCount), 0 } ;
 
 			pSA = SafeArrayCreate(VT_R8, 1, &sabounds);
 			if (pSA)
 			{
-				void *pData;
+				void *pData {nullptr};
 				if (SUCCEEDED(SafeArrayAccessData(pSA, &pData)))
 				{
-					m_ResultFileReader.GetTimeScale(static_cast<double*>(pData), nPointsCount);
+					ResultFileReader_.GetTimeScale(static_cast<double*>(pData), nPointsCount);
 					if (SUCCEEDED(SafeArrayUnaccessData(pSA)))
 					{
 						TimeScale->vt = VT_R8 | VT_ARRAY;
@@ -126,7 +126,7 @@ STDMETHODIMP CResultRead::get_TimeStep(VARIANT* TimeStep)
 	{
 		try
 		{
-			TimeStep->parray = m_ResultFileReader.CreateSafeArray(m_ResultFileReader.GetTimeStep());
+			TimeStep->parray = ResultFileReader_.CreateSafeArray(ResultFileReader_.GetTimeStep());
 			if (TimeStep->parray)
 			{
 				TimeStep->vt = VT_R8 | VT_ARRAY;
@@ -155,7 +155,7 @@ STDMETHODIMP CResultRead::get_TimeCreated(VARIANT* FileTime)
 		if (FileTime && SUCCEEDED(VariantClear(FileTime)))
 		{
 			FileTime->vt = VT_DATE;
-			FileTime->date = m_ResultFileReader.GetFileTime();
+			FileTime->date = ResultFileReader_.GetFileTime();
 			hRes = S_OK;
 		}
 	}
@@ -168,13 +168,13 @@ STDMETHODIMP CResultRead::get_TimeCreated(VARIANT* FileTime)
 
 STDMETHODIMP CResultRead::get_Root(VARIANT* Root)
 {
-	HRESULT hRes = E_INVALIDARG;
+	HRESULT hRes{ E_INVALIDARG };
 	CComObject<CRootDevice> *pRootDevice;
 	if (SUCCEEDED(VariantClear(Root)))
 	{
 		if (SUCCEEDED(CComObject<CRootDevice>::CreateInstance(&pRootDevice)))
 		{
-			pRootDevice->SetDeviceInfo(m_DeviceTypeInfo.m_pDeviceInstances.get());
+			pRootDevice->SetDeviceInfo(DeviceTypeInfo_.pDeviceInstances_.get());
 			pRootDevice->AddRef();
 			Root->vt = VT_DISPATCH;
 			Root->pdispVal = pRootDevice;
@@ -186,13 +186,13 @@ STDMETHODIMP CResultRead::get_Root(VARIANT* Root)
 
 STDMETHODIMP CResultRead::get_Types(VARIANT* Types)
 {
-	HRESULT hRes = E_INVALIDARG;
+	HRESULT hRes{ E_INVALIDARG };
 	CComObject<CDeviceTypes> *pDeviceTypes;
 	if (SUCCEEDED(VariantClear(Types)))
 	{
 		if (SUCCEEDED(CComObject<CDeviceTypes>::CreateInstance(&pDeviceTypes)))
 		{
-			const DEVTYPESET& devset = m_ResultFileReader.GetTypesSet();
+			const DEVTYPESET& devset = ResultFileReader_.GetTypesSet();
 
 			pDeviceTypes->SetDeviceTypesInfo(&devset);
 
@@ -218,10 +218,10 @@ STDMETHODIMP CResultRead::get_Types(VARIANT* Types)
 
 STDMETHODIMP CResultRead::ExportCSV(BSTR PathName)
 {
-	HRESULT hRes = E_FAIL;
+	HRESULT hRes{ E_FAIL };
 	try
 	{
-		CCSVWriter CSVWriter(m_ResultFileReader);
+		CCSVWriter CSVWriter(ResultFileReader_);
 		if (CSVWriter.WriteCSV(stringutils::utf8_encode(PathName)))
 			hRes = S_OK;
 	}
@@ -237,8 +237,8 @@ STDMETHODIMP CResultRead::ExportCSV(BSTR PathName)
 
 void CResultRead::OpenFile(std::string_view PathName)
 {
-	m_ResultFileReader.Close();
-	m_ResultFileReader.OpenFile(PathName);
+	ResultFileReader_.Close();
+	ResultFileReader_.OpenFile(PathName);
 }
 
 STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableName, VARIANT *Plot)
@@ -248,7 +248,7 @@ STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableN
 	{
 		try
 		{
-			Plot->parray = m_ResultFileReader.CreateSafeArray(m_ResultFileReader.ReadChannel(DeviceType, DeviceId, stringutils::utf8_encode(VariableName)));
+			Plot->parray = ResultFileReader_.CreateSafeArray(ResultFileReader_.ReadChannel(DeviceType, DeviceId, stringutils::utf8_encode(VariableName)));
 			if (Plot->parray)
 			{
 				Plot->vt = VT_R8 | VT_ARRAY;
@@ -268,7 +268,7 @@ STDMETHODIMP CResultRead::GetPlot(LONG DeviceType, LONG DeviceId, BSTR VariableN
 	return hRes;
 }
 
-STDMETHODIMP CResultRead::GetPlotByIndex(long nIndex, VARIANT *Plot)
+STDMETHODIMP CResultRead::GetPlotByIndex(long Index, VARIANT *Plot)
 {
 	HRESULT hRes = E_INVALIDARG;
 
@@ -276,7 +276,7 @@ STDMETHODIMP CResultRead::GetPlotByIndex(long nIndex, VARIANT *Plot)
 	{
 		try
 		{
-			Plot->parray = m_ResultFileReader.CreateSafeArray(m_ResultFileReader.ReadChannel(nIndex));
+			Plot->parray = ResultFileReader_.CreateSafeArray(ResultFileReader_.ReadChannel(Index));
 			if (Plot->parray)
 			{
 				Plot->vt = VT_R8 | VT_ARRAY;
@@ -304,8 +304,8 @@ STDMETHODIMP CResultRead::get_SlowVariables(VARIANT *SlowVariables)
 	{
 		if (SUCCEEDED(CComObject<CSlowVariables>::CreateInstance(&pSlowVariables)))
 		{
-			const CSlowVariablesSet& slowset = m_ResultFileReader.GetSlowVariables();
-			CSlowVariablesSet::const_iterator it = slowset.begin();
+			const CSlowVariablesSet& slowset{ ResultFileReader_.GetSlowVariables() };
+			CSlowVariablesSet::const_iterator it{ slowset.begin() };
 
 			for (; it != slowset.end(); it++)
 			{
@@ -329,10 +329,10 @@ STDMETHODIMP CResultRead::get_SlowVariables(VARIANT *SlowVariables)
 
 STDMETHODIMP CResultRead::get_Points(LONG *PointsCount)
 {
-	HRESULT hRes = S_OK;
+	HRESULT hRes{ S_OK };
 
 	if (PointsCount)
-		*PointsCount = static_cast<LONG>(m_ResultFileReader.GetPointsCount());
+		*PointsCount = static_cast<LONG>(ResultFileReader_.GetPointsCount());
 	else
 		hRes = E_INVALIDARG;
 
@@ -341,10 +341,10 @@ STDMETHODIMP CResultRead::get_Points(LONG *PointsCount)
 
 STDMETHODIMP CResultRead::get_Channels(LONG* ChannelsCount)
 {
-	HRESULT hRes = S_OK;
+	HRESULT hRes{ S_OK };
 
 	if (ChannelsCount)
-		*ChannelsCount = static_cast<LONG>(m_ResultFileReader.GetChannelsCount());
+		*ChannelsCount = static_cast<LONG>(ResultFileReader_.GetChannelsCount());
 	else
 		hRes = E_INVALIDARG;
 
@@ -353,16 +353,16 @@ STDMETHODIMP CResultRead::get_Channels(LONG* ChannelsCount)
 
 STDMETHODIMP CResultRead::Close()
 {
-	m_ResultFileReader.Close();
+	ResultFileReader_.Close();
 	return S_OK;
 }
 
 STDMETHODIMP CResultRead::get_UserComment(BSTR* UserComment)
 {
-	HRESULT hRes = E_INVALIDARG;
+	HRESULT hRes{ E_INVALIDARG };
 	if (UserComment)
 	{
-		*UserComment = SysAllocString(stringutils::utf8_decode(m_ResultFileReader.GetUserComment()).c_str());
+		*UserComment = SysAllocString(stringutils::utf8_decode(ResultFileReader_.GetUserComment()).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -370,10 +370,10 @@ STDMETHODIMP CResultRead::get_UserComment(BSTR* UserComment)
 
 STDMETHODIMP CResultRead::get_CompressionRatio(DOUBLE *pRatio)
 {
-	HRESULT hRes = E_INVALIDARG;
+	HRESULT hRes{ E_INVALIDARG };
 	if (pRatio)
 	{
-		*pRatio = m_ResultFileReader.GetCompressionRatio();
+		*pRatio = ResultFileReader_.GetCompressionRatio();
 		hRes = S_OK;
 	}
 	return hRes;
@@ -381,10 +381,10 @@ STDMETHODIMP CResultRead::get_CompressionRatio(DOUBLE *pRatio)
 
 STDMETHODIMP CResultRead::put_UserComment(BSTR UserComment)
 {
-	HRESULT hRes = E_FAIL;
+	HRESULT hRes{ E_FAIL };
 	try
 	{
-		m_ResultFileReader.SetUserComment(stringutils::utf8_encode(UserComment));
+		ResultFileReader_.SetUserComment(stringutils::utf8_encode(UserComment));
 		hRes = S_OK;
 	}
 	catch (CFileWriteException& ex)

@@ -1,9 +1,9 @@
 ﻿#include "stdafx.h"
 #include "Compressor.h"
 
-CBitStream::CBitStream(BITWORD *Buffer, BITWORD *BufferEnd, size_t BitSeek)
+CBitStream::CBitStream(BITWORD *pBuffer, BITWORD *pBufferEnd, size_t BitSeek)
 {
-	Init(Buffer, BufferEnd, BitSeek);
+	Init(pBuffer, pBufferEnd, BitSeek);
 }
 
 CBitStream::CBitStream()
@@ -11,26 +11,26 @@ CBitStream::CBitStream()
 	Init(0, 0, 0);
 }
 
-void CBitStream::Init(BITWORD *Buffer, BITWORD *BufferEnd, size_t BitSeek)
+void CBitStream::Init(BITWORD *pBuffer, BITWORD *pBufferEnd, size_t BitSeek)
 {
-	m_pWordInitial = m_pWord = Buffer;
-	m_pEnd = BufferEnd;
-	m_nBitSeek = BitSeek;
-	m_nTotalBitsWritten = 0;
+	pWordInitial_ = pWord_ = pBuffer;
+	pEnd_ = pBufferEnd;
+	BitSeek_ = BitSeek;
+	TotalBitsWritten_ = 0;
 }
 
 void CBitStream::Rewind()
 {
-	m_pWord = m_pWordInitial;
-	m_nBitSeek = 0;
-	m_nTotalBitsWritten = 0;
+	pWord_ = pWordInitial_;
+	BitSeek_ = 0;
+	TotalBitsWritten_ = 0;
 }
 
 void CBitStream::Reset()
 {
 	Rewind();
-	BITWORD *p = m_pWordInitial;
-	while (p < m_pEnd)
+	BITWORD *p = pWordInitial_;
+	while (p < pEnd_)
 	{
 		*p = 0;
 		p++;
@@ -43,18 +43,17 @@ eFCResult CBitStream::WriteBits(CBitStream& Source, size_t BitCount)
 	//Source.MoveBitCount(0);
 	//MoveBitCount(0);
 
-	eFCResult fcResult = eFCResult::FC_OK;
+	eFCResult fcResult{ eFCResult::FC_OK };
 	// пока не записали все биты
 	while (BitCount)
 	{
 		// берем слова приемника и источника
-		BITWORD *pDest = m_pWord;
-		BITWORD *pSource = Source.m_pWord;
+		auto pDest{ pWord_ };
+		auto pSource{ Source.pWord_ };
 		
-		
-		size_t nBitsToWriteFromCurrentWord = Source.WordBitsLeft();	// сколько бит осталось записать из слова источника
-		size_t nBitsToWriteToCurrentWord = WordBitsLeft();			// сколько бит осталось записать в слово приемника
-		size_t nBitsToWrite = BitCount;								// по умолчанию хотим записать все запрошенные биты
+		const size_t nBitsToWriteFromCurrentWord{ Source.WordBitsLeft() };	// сколько бит осталось записать из слова источника
+		const size_t nBitsToWriteToCurrentWord{ WordBitsLeft() };			// сколько бит осталось записать в слово приемника
+		size_t nBitsToWrite{ BitCount };									// по умолчанию хотим записать все запрошенные биты
 
 		// если количество битов в слове источника меньше требуемого - ограничиваем требуемое
 		if (nBitsToWrite > nBitsToWriteFromCurrentWord)			
@@ -64,17 +63,17 @@ eFCResult CBitStream::WriteBits(CBitStream& Source, size_t BitCount)
 			nBitsToWrite = nBitsToWriteToCurrentWord;
 
 		// берем слово из источника
-		BITWORD wSource = *pSource;
+		auto wSource{ *pSource };
 		// формируем маску для записываемого количества бит
 		// если записываемых бит меньше, чем доступно всего в слове - маску делаем сдвигом, если больше - маска все единицы слова
 		BITWORD mask = (nBitsToWrite < WordBitCount) ? (((uint64_t)1) << nBitsToWrite) - 1 : ~static_cast<BITWORD>(0);
 		// смещаем маску на битовое смещение источника
-		mask <<= Source.m_nBitSeek;
+		mask <<= Source.BitSeek_;
 		// маскируем нужное количество бит в слове источника
 		wSource &= mask;
 		// двумя сдвигами подгоняем блок битов к смещению приемника
-		wSource <<= m_nBitSeek;													
-		wSource >>= Source.m_nBitSeek;
+		wSource <<= BitSeek_;													
+		wSource >>= Source.BitSeek_;
 		// дописываем биты в приемник
 		*pDest |= wSource;
 		// осталось дописать меньше битов
@@ -98,26 +97,26 @@ bool CBitStream::Check()
 
 size_t CBitStream::BytesWritten()
 {
-	return m_nTotalBitsWritten / 8 + ((m_nTotalBitsWritten % 8) ? 1 : 0);
+	return TotalBitsWritten_ / 8 + ((TotalBitsWritten_ % 8) ? 1 : 0);
 }
 
 size_t CBitStream::BitsLeft()
 {
-	return (m_pEnd - m_pWordInitial) * sizeof(BITWORD) * 8 - m_nTotalBitsWritten;
+	return (pEnd_ - pWordInitial_) * sizeof(BITWORD) * 8 - TotalBitsWritten_;
 }
 
 eFCResult CBitStream::AlignTo(size_t nAlignTo)
 {
 	_ASSERTE(!(nAlignTo % 8));
-	return MoveBitCount(m_nBitSeek % nAlignTo);
+	return MoveBitCount(BitSeek_ % nAlignTo);
 }
 
-eFCResult CBitStream::WriteDouble(double &dValue)
+eFCResult CBitStream::WriteDouble(double &Value)
 {
-	_ASSERTE(!(m_nBitSeek % 8));
+	_ASSERTE(!(BitSeek_ % 8));
 	if (BitsLeft() >= sizeof(double) * 8)
 	{
-		*static_cast<double*>(static_cast<void*>(m_pWord)) = dValue;
+		*static_cast<double*>(static_cast<void*>(pWord_)) = Value;
 		return MoveBitCount(sizeof(double) * 8);
 	}
 	else
@@ -126,19 +125,19 @@ eFCResult CBitStream::WriteDouble(double &dValue)
 
 eFCResult CBitStream::WriteByte(unsigned char Byte)
 {
-	_ASSERTE(!(m_nBitSeek % 8));
-	BITWORD *pDest = m_pWord;
-	BITWORD Src = Byte;
-	Src <<= m_nBitSeek;
+	_ASSERTE(!(BitSeek_ % 8));
+	auto pDest{ pWord_ };
+	auto Src{ Byte };
+	Src <<= BitSeek_;
 	*pDest |= Src;
 	return MoveBitCount(8);
 }
 
 eFCResult CBitStream::ReadByte(unsigned char& Byte)
 {
-	_ASSERTE(!(m_nBitSeek % 8));
-	BITWORD wSource = *m_pWord;
-	Byte = (wSource >> m_nBitSeek) & 0xff;
+	_ASSERTE(!(BitSeek_ % 8));
+	auto wSource{ *pWord_ };
+	Byte = (wSource >> BitSeek_) & 0xff;
 	return MoveBitCount(8);
 }
 
@@ -147,38 +146,38 @@ eFCResult CBitStream::ReadByte(unsigned char& Byte)
 eFCResult CBitStream::MoveBitCount(size_t BitCount)
 {
 	// добавляем к смещению битов заданное количество
-	m_nBitSeek += BitCount;
+	BitSeek_ += BitCount;
 	// корректируем общее количество записанных бит
-	m_nTotalBitsWritten += BitCount;
+	TotalBitsWritten_ += BitCount;
 	// считаем смещение указателя на слово
-	ptrdiff_t nMovePtr = m_nBitSeek / WordBitCount;
-	// если m_nBitSeek оказался больше WordBitCount то
+	ptrdiff_t nMovePtr = BitSeek_ / WordBitCount;
+	// если BitSeek_ оказался больше WordBitCount то
 	// указатель на слово смещается
-	m_pWord += nMovePtr;
+	pWord_ += nMovePtr;
 	// проверяем не достигнут ли конец буфера записи
-	if (m_pWord > m_pEnd)
+	if (pWord_ > pEnd_)
 	{
 		// если да - то ограничиваем указатель на слово
 		// размерами буфера
-		m_pWord = m_pEnd - 1;
-		m_nBitSeek = 0;
+		pWord_ = pEnd_ - 1;
+		BitSeek_ = 0;
 		// информируем о переполении
 		return eFCResult::FC_BUFFEROVERFLOW;
 	}
 	// если переполнения нет - считаем смещение битов
-	m_nBitSeek %= WordBitCount;
+	BitSeek_ %= WordBitCount;
 	return eFCResult::FC_OK;
 }
 
 
 unsigned char* CBitStream::BytesBuffer()
 {
-	return static_cast<unsigned char*>(static_cast<void*>(m_pWordInitial));
+	return static_cast<unsigned char*>(static_cast<void*>(pWordInitial_));
 }
 
 BITWORD* CBitStream::Buffer()
 {
-	return m_pWordInitial;
+	return pWordInitial_;
 }
 
 const size_t CBitStream::WordBitCount = (sizeof(BITWORD) * 8);

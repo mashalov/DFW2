@@ -24,10 +24,10 @@ STDMETHODIMP CSlowVariable::InterfaceSupportsErrorInfo(REFIID riid)
 
 STDMETHODIMP CSlowVariable::get_DeviceType(LONG* Type)
 {
-	HRESULT hRes = E_FAIL;
-	if (m_pItem && Type)
+	HRESULT hRes{ E_FAIL };
+	if (pItem_ && Type)
 	{
-		*Type = static_cast<LONG>(m_pItem->m_DeviceTypeId); 
+		*Type = static_cast<LONG>(pItem_->DeviceTypeId_); 
 		hRes = S_OK;
 	}
 	return hRes;
@@ -35,10 +35,10 @@ STDMETHODIMP CSlowVariable::get_DeviceType(LONG* Type)
 
 STDMETHODIMP CSlowVariable::get_Name(BSTR* Name)
 {
-	HRESULT hRes = E_FAIL;
-	if (m_pItem)
+	HRESULT hRes{ E_FAIL };
+	if (pItem_)
 	{
-		*Name = SysAllocString(stringutils::utf8_decode(m_pItem->m_strVarName).c_str());
+		*Name = SysAllocString(stringutils::utf8_decode(pItem_->VarName_).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -47,11 +47,11 @@ STDMETHODIMP CSlowVariable::get_Name(BSTR* Name)
 
 STDMETHODIMP CSlowVariable::get_DeviceIds(VARIANT *Ids)
 {
-	HRESULT hRes = E_FAIL;
+	HRESULT hRes{ E_FAIL };
 
-	if (m_pItem && Ids && SUCCEEDED(VariantClear(Ids)))
+	if (pItem_ && Ids && SUCCEEDED(VariantClear(Ids)))
 	{
-		auto& vec = m_pItem->m_DeviceIds;
+		auto& vec{ pItem_->DeviceIds_ };
 
 		if (vec.size() == 1)
 		{
@@ -66,7 +66,7 @@ STDMETHODIMP CSlowVariable::get_DeviceIds(VARIANT *Ids)
 			Ids->parray = SafeArrayCreate(VT_I4, 1, &sabounds);
 			if (Ids->parray)
 			{
-				long *p;
+				long* p{ nullptr };
 				if (SUCCEEDED(SafeArrayAccessData(Ids->parray, (void**)&p)))
 				{
 					for (ResultIds::const_iterator it = vec.begin(); it != vec.end(); it++, p++)
@@ -84,24 +84,23 @@ STDMETHODIMP CSlowVariable::get_DeviceIds(VARIANT *Ids)
 
 STDMETHODIMP CSlowVariable::get_Plot(VARIANT *Plot)
 {
-	HRESULT hRes = E_FAIL;
-	if (m_pItem && SUCCEEDED(VariantClear(Plot)))
+	HRESULT hRes{ E_FAIL };
+	if (pItem_ && SUCCEEDED(VariantClear(Plot)))
 	{
 		Plot->vt = VT_ARRAY | VT_VARIANT;
-		SLOWGRAPHSET& Graph = m_pItem->m_Graph;
+		const SLOWGRAPHSET& Graph{ pItem_->Graph_ };
 		SAFEARRAYBOUND sa[2] = { { static_cast<ULONG>(Graph.size()), 0 }, { 3, 0 } };
 		Plot->parray = SafeArrayCreate(VT_VARIANT, 2, sa);
 		VARIANT *pVals;
 		if (Plot->parray && SUCCEEDED(SafeArrayAccessData(Plot->parray, (void**)&pVals)))
 		{
-			VARIANT *pTime = pVals + sa->cElements;
-			VARIANT *pDesc = pTime + sa->cElements;
+			VARIANT* pTime{ pVals + sa->cElements }, * pDesc{ pTime + sa->cElements };
 			for (const auto& it : Graph)
 			{
-				pVals->vt = VT_R8;	pVals->dblVal = it.m_dValue;
-				pTime->vt = VT_R8;	pTime->dblVal = it.m_dTime;
+				pVals->vt = VT_R8;	pVals->dblVal = it.Value_;
+				pTime->vt = VT_R8;	pTime->dblVal = it.Time_;
 				pDesc->vt = VT_BSTR;
-				pDesc->bstrVal = SysAllocString(stringutils::utf8_decode(it.m_strDescription).c_str());
+				pDesc->bstrVal = SysAllocString(stringutils::utf8_decode(it.Description_).c_str());
 
 				pVals++;
 				pTime++;
@@ -117,5 +116,5 @@ STDMETHODIMP CSlowVariable::get_Plot(VARIANT *Plot)
 void CSlowVariable::SetVariableInfo(CSlowVariableItem *pItem)
 {
 	_ASSERTE(pItem);
-	m_pItem = pItem;
+	pItem_ = pItem;
 }

@@ -24,8 +24,8 @@ class ATL_NO_VTABLE CDeviceTypeWrite :
 	public IDispatchImpl<IDeviceTypeWrite, &IID_IDeviceTypeWrite, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	DeviceTypeInfo *m_pDeviceTypeInfo = nullptr;
-	long GetParameterByIndex(VARIANT& vt, long nIndex);
+	DeviceTypeInfo *pDeviceTypeInfo_ = nullptr;
+	long GetParameterByIndex(VARIANT& vt, long Index);
 public:
 
 BEGIN_COM_MAP(CDeviceTypeWrite)

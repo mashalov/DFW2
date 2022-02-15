@@ -25,10 +25,10 @@ STDMETHODIMP CDeviceType::InterfaceSupportsErrorInfo(REFIID riid)
 
 STDMETHODIMP CDeviceType::get_Id(LONG* Id)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Id && m_pDevTypeInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Id && pDevTypeInfo_)
 	{
-		*Id = static_cast<LONG>(m_pDevTypeInfo->eDeviceType);
+		*Id = static_cast<LONG>(pDevTypeInfo_->eDeviceType);
 		hRes = S_OK;
 	}
 	return hRes;
@@ -36,10 +36,10 @@ STDMETHODIMP CDeviceType::get_Id(LONG* Id)
 
 STDMETHODIMP CDeviceType::get_Name(BSTR* Name)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Name && m_pDevTypeInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Name && pDevTypeInfo_)
 	{
-		*Name = SysAllocString(stringutils::utf8_decode(m_pDevTypeInfo->strDevTypeName).c_str());
+		*Name = SysAllocString(stringutils::utf8_decode(pDevTypeInfo_->DevTypeName_).c_str());
 		hRes = S_OK;
 	}
 	return hRes;
@@ -47,8 +47,8 @@ STDMETHODIMP CDeviceType::get_Name(BSTR* Name)
 
 STDMETHODIMP CDeviceType::get_Devices(VARIANT* Devices)
 {
-	HRESULT hRes = E_INVALIDARG;
-	if (Devices && m_pDevTypeInfo)
+	HRESULT hRes{ E_INVALIDARG };
+	if (Devices && pDevTypeInfo_)
 	{
 		CComObject<CDevices> *pChildrenCollection;
 		if (SUCCEEDED(VariantClear(Devices)))
@@ -59,12 +59,12 @@ STDMETHODIMP CDeviceType::get_Devices(VARIANT* Devices)
 				Devices->vt = VT_DISPATCH;
 				Devices->pdispVal = pChildrenCollection;
 
-				for (int i = 0; i < m_pDevTypeInfo->DevicesCount; i++)
+				for (int i = 0; i < pDevTypeInfo_->DevicesCount; i++)
 				{
 					CComObject<CDevice> *pDevice;
 					if (SUCCEEDED(CComObject<CDevice>::CreateInstance(&pDevice)))
 					{
-						pDevice->SetDeviceInfo(m_pDevTypeInfo->m_pDeviceInstances.get() + i);
+						pDevice->SetDeviceInfo(pDevTypeInfo_->pDeviceInstances_.get() + i);
 						pDevice->AddRef();
 						pChildrenCollection->Add(pDevice);
 					}
@@ -76,4 +76,3 @@ STDMETHODIMP CDeviceType::get_Devices(VARIANT* Devices)
 	}
 	return hRes;
 }
-

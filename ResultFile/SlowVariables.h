@@ -25,9 +25,9 @@ class ATL_NO_VTABLE CSlowVariables:
 	public IDispatchImpl<CGenericCollection<ISlowVariables, CSlowVariable>, &IID_IVariables, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	CResultFileReader *m_pFileReader;
+	CResultFileReader *pFileReader_;
 public:
-	CSlowVariables() : m_pFileReader(nullptr)
+	CSlowVariables() : pFileReader_(nullptr)
 	{
 	}
 
@@ -56,7 +56,7 @@ public:
 	void SetResultFileReader(CResultFileReader *pReader)
 	{
 		_ASSERTE(pReader);
-		m_pFileReader = pReader;
+		pFileReader_ = pReader;
 	}
 	STDMETHOD(Find)(LONG DeviceTypeId, VARIANT DeviceIds, BSTR VariableName, VARIANT *SlowVariable);
 

@@ -24,9 +24,9 @@ STDMETHODIMP CDeviceTypeWrite::InterfaceSupportsErrorInfo(REFIID riid)
 STDMETHODIMP CDeviceTypeWrite::SetDeviceTypeMetrics(LONG DeviceIdsCount, LONG ParentIdsCount, LONG DevicesCount)
 {
 	HRESULT hRes = E_FAIL;
-	if (m_pDeviceTypeInfo)
+	if (pDeviceTypeInfo_)
 	{
-		m_pDeviceTypeInfo->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, DevicesCount);
+		pDeviceTypeInfo_->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, DevicesCount);
 		hRes = S_OK;
 	}
 	return hRes;
@@ -35,11 +35,11 @@ STDMETHODIMP CDeviceTypeWrite::SetDeviceTypeMetrics(LONG DeviceIdsCount, LONG Pa
 STDMETHODIMP CDeviceTypeWrite::AddDeviceTypeVariable(BSTR VariableName, LONG UnitId, DOUBLE Multiplier)
 {
 	HRESULT hRes = E_FAIL;
-	if (m_pDeviceTypeInfo)
+	if (pDeviceTypeInfo_)
 	{
 		try
 		{
-			m_pDeviceTypeInfo->AddDeviceTypeVariable(stringutils::utf8_encode(VariableName), UnitId, Multiplier);
+			pDeviceTypeInfo_->AddDeviceTypeVariable(stringutils::utf8_encode(VariableName), UnitId, Multiplier);
 			hRes = S_OK;
 		}
 		catch (const dfw2error& er)
@@ -50,23 +50,23 @@ STDMETHODIMP CDeviceTypeWrite::AddDeviceTypeVariable(BSTR VariableName, LONG Uni
 	return hRes;
 }
 
-long CDeviceTypeWrite::GetParameterByIndex(VARIANT& vt, long nIndex)
+long CDeviceTypeWrite::GetParameterByIndex(VARIANT& vt, long Index)
 {
-	long nResult = -1;
+	long nResult{ -1 };
 	
-	if (m_pDeviceTypeInfo)
+	if (pDeviceTypeInfo_)
 	{
 		if ((vt.vt & VT_ARRAY) && (vt.vt & VT_I4) && SafeArrayGetDim(vt.parray) == 1)
 		{
-			int nElement;
-			if (SUCCEEDED(SafeArrayGetElement(vt.parray, &nIndex, &nElement)))
+			int Element;
+			if (SUCCEEDED(SafeArrayGetElement(vt.parray, &Index, &Element)))
 			{
-				nResult = nElement;
+				nResult = Element;
 			}
 			else
 				throw CFileWriteException(CDFW2Messages::m_cszWrongParameter);
 		}
-		else if (!nIndex)
+		else if (!Index)
 		{
 			if (SUCCEEDED(VariantChangeType(&vt, &vt, 0, VT_I4)))
 				nResult = vt.lVal;
@@ -84,14 +84,14 @@ long CDeviceTypeWrite::GetParameterByIndex(VARIANT& vt, long nIndex)
 
 STDMETHODIMP CDeviceTypeWrite::AddDevice(BSTR DeviceName, VARIANT DeviceIds, VARIANT ParentIds, VARIANT ParentTypes)
 {
-	HRESULT hRes = E_FAIL;
+	HRESULT hRes{ E_FAIL };
 
-	if (m_pDeviceTypeInfo)
+	if (pDeviceTypeInfo_)
 	{
 		try
 		{
 
-			m_pDeviceTypeInfo->AddDevice(stringutils::utf8_encode(DeviceName), 
+			pDeviceTypeInfo_->AddDevice(stringutils::utf8_encode(DeviceName), 
 				CDeviceTypeWrite::GetVariantVec(DeviceIds),
 				CDeviceTypeWrite::GetVariantVec(ParentIds),
 				CDeviceTypeWrite::GetVariantVec(ParentTypes));
@@ -144,6 +144,6 @@ ResultIds CDeviceTypeWrite::GetVariantVec(VARIANT& vt)
 
 void CDeviceTypeWrite::SetDeviceTypeInfo(DeviceTypeInfo* pDeviceTypeInfo)
 {
-	m_pDeviceTypeInfo = pDeviceTypeInfo;
+	pDeviceTypeInfo_ = pDeviceTypeInfo;
 }
 
