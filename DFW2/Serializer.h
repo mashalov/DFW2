@@ -113,52 +113,52 @@ namespace DFW2
 		bool bSet = false;									// флаг изменения
 
 		std::unique_ptr<CSerializerAdapterBase> Adapter;		// адаптер для типа eValueType::VT_ADAPTER
-		std::unique_ptr<CSerializerBase> m_pNestedSerializer;	// вложенный сериализатор
+		std::unique_ptr<CSerializerBase> pNestedSerializer_;	// вложенный сериализатор
 
 		// конструкторы для разных типов принимают указатели на значения 
 
 		// переменная состояния
-		TypedSerializedValue(CSerializerBase* pSerializer, VariableIndex* pVariable) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, VariableIndex* pVariable) : pSerializer_(pSerializer),
 																					   Value(&pVariable->Value), 
 																					   ValueType(eValueType::VT_DBL) {}
 		// внешняя переменная
-		TypedSerializedValue(CSerializerBase* pSerializer, VariableIndexExternalOptional* pVariable) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, VariableIndexExternalOptional* pVariable) : pSerializer_(pSerializer),
 																									   // если указатель внутри переменной nullptr
 																									   // забираем локальную переменную
 																									   Value(pVariable->pValue ? pVariable->pValue : &pVariable->Value),
 																									   ValueType(eValueType::VT_DBL) {}
 		// адаптер
-		TypedSerializedValue(CSerializerBase* pSerializer, CSerializerAdapterBase *pAdapter) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, CSerializerAdapterBase *pAdapter) : pSerializer_(pSerializer),
 																							   Adapter(pAdapter), 
 																							   ValueType(eValueType::VT_ADAPTER) {}
 
-		TypedSerializedValue(CSerializerBase* pSerializer, double* pDouble) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, double* pDouble) : pSerializer_(pSerializer),
 																			  Value(pDouble), 
 																			  ValueType(eValueType::VT_DBL) {}
 
-		TypedSerializedValue(CSerializerBase* pSerializer, ptrdiff_t* pInteger) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, ptrdiff_t* pInteger) : pSerializer_(pSerializer),
 																				  Value(pInteger), 
 																				  ValueType(eValueType::VT_INT) {}
 
-		TypedSerializedValue(CSerializerBase* pSerializer, bool* pBoolean) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, bool* pBoolean) : pSerializer_(pSerializer),
 																			 Value(pBoolean), 
 																			 ValueType(eValueType::VT_BOOL) {}
 
-		TypedSerializedValue(CSerializerBase* pSerializer, cplx* pComplex) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, cplx* pComplex) : pSerializer_(pSerializer),
 																		     Value(pComplex), 
 																			 ValueType(eValueType::VT_CPLX) {}
 
-		TypedSerializedValue(CSerializerBase* pSerializer, std::string* pString) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, std::string* pString) : pSerializer_(pSerializer),
 																			       Value(pString),
 																			       ValueType(eValueType::VT_STRING) {}
 
 		// значение без значения, но с типом
-		TypedSerializedValue(CSerializerBase* pSerializer, eValueType Type) : m_pSerializer(pSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, eValueType Type) : pSerializer_(pSerializer),
 																			  Value(), 
 																			  ValueType(Type) {}
 		
-		TypedSerializedValue(CSerializerBase* pSerializer, CSerializerBase* pNestedSerializer) : m_pSerializer(pSerializer),
-			m_pNestedSerializer(pNestedSerializer),
+		TypedSerializedValue(CSerializerBase* pSerializer, CSerializerBase* pNestedSerializer) : pSerializer_(pSerializer),
+			pNestedSerializer_(pNestedSerializer),
 			ValueType(eValueType::VT_SERIALIZER) {}
 
 		// Проверяет значение на значение по-умолчанию
@@ -185,7 +185,7 @@ namespace DFW2
 		// shortcut функция выбрасывает исключение при ошибке приведения типа
 		void NoConversion(eValueType fromType);
 		// сериализатор, связанный с данным сериазуемым значением
-		CSerializerBase* m_pSerializer = nullptr;
+		CSerializerBase* pSerializer_ = nullptr;
 		// возвращает указатель на устройство, связанное с сериализатором
 		CDevice* GetDevice();
 		const CDevice* GetDevice() const;
@@ -197,9 +197,9 @@ namespace DFW2
 	class CSerializerAdapterBaseT : public CSerializerAdapterBase
 	{
 	protected:
-		T* m_pLeft = nullptr;
+		T* pLeft_ = nullptr;
 	public:
-		CSerializerAdapterBaseT(T& Left) noexcept : m_pLeft(&Left) {}
+		CSerializerAdapterBaseT(T& Left) noexcept : pLeft_(&Left) {}
 		virtual ~CSerializerAdapterBaseT() = default;
 	};
 
@@ -210,36 +210,36 @@ namespace DFW2
 	{
 	protected:
 		// текстовое представление значения
-		const char* const* m_StringRepresentation;
-		size_t m_nCount;
+		const char* const* StringRepresentation_;
+		size_t Count_;
 	public:
 		ptrdiff_t GetInt() override
 		{
-			return static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::m_pLeft);
+			return static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::pLeft_);
 		}
 		void SetInt(ptrdiff_t vInt) override
 		{
-			if (vInt <  0 || vInt >= static_cast<ptrdiff_t>(m_nCount))
+			if (vInt <  0 || vInt >= static_cast<ptrdiff_t>(Count_))
 				throw dfw2error(fmt::format("CSerializerAdapterEnum::SetInt - value out of range {}", vInt));
-			*CSerializerAdapterBaseT<T>::m_pLeft = static_cast<T>(vInt);
+			*CSerializerAdapterBaseT<T>::pLeft_ = static_cast<T>(vInt);
 		}
 		std::string GetString() override
 		{
-			const ptrdiff_t nIndex = static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::m_pLeft);
-			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(m_nCount))
+			const ptrdiff_t nIndex{ static_cast<ptrdiff_t>(*CSerializerAdapterBaseT<T>::pLeft_) };
+			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(Count_))
 				throw dfw2error(fmt::format("CSerializerAdapterEnum::GetString - invalid enum index or string representation {}", nIndex));
-			return std::string(m_StringRepresentation[nIndex]);
+			return std::string(StringRepresentation_[nIndex]);
 		}
 
 		std::string GetEnumStrings()
 		{
 			std::string enumStrings = "[";
-			for (ptrdiff_t nIndex = 0; nIndex < static_cast<ptrdiff_t>(m_nCount); nIndex++)
+			for (ptrdiff_t nIndex = 0; nIndex < static_cast<ptrdiff_t>(Count_); nIndex++)
 			{
 				if (nIndex > 0)
 					enumStrings += ',';
 
-				enumStrings += m_StringRepresentation[nIndex];
+				enumStrings += StringRepresentation_[nIndex];
 			}
 			enumStrings += "]";
 			return enumStrings;
@@ -247,15 +247,15 @@ namespace DFW2
 
 		void SetString(const std::string_view String) override
 		{
-			ptrdiff_t nIndex(0);
-			for ( ; nIndex < static_cast<ptrdiff_t>(m_nCount); nIndex++)
-				if (String == m_StringRepresentation[nIndex])
+			ptrdiff_t Index{ 0 };
+			for ( ; Index < static_cast<ptrdiff_t>(Count_); Index++)
+				if (String == StringRepresentation_[Index])
 				{
-					SetInt(nIndex);
+					SetInt(Index);
 					break;
 				}
 
-			if(nIndex == m_nCount)
+			if(Index == Count_)
 				throw dfw2error(fmt::format("CSerializerAdapterEnum::SetString - enum string representation \"{}\" not found in enum {}", 
 					String,
 					GetEnumStrings()
@@ -264,8 +264,8 @@ namespace DFW2
 
 		template<size_t N>
 		CSerializerAdapterEnum(T& Left, const char* const (&ppStringRepresentation)[N]) : CSerializerAdapterBaseT<T>(Left),
-																						   m_StringRepresentation(ppStringRepresentation),
-																						   m_nCount(N)
+																						   StringRepresentation_(ppStringRepresentation),
+																						   Count_(N)
 																						   {}
 		virtual ~CSerializerAdapterEnum() = default;
 	};
@@ -334,7 +334,7 @@ namespace DFW2
 	{
 		using DataVector = std::vector<T>;
 	protected:
-		DataVector& m_Vec;
+		DataVector& Vec_;
 		ptrdiff_t nItemIndex = 0;
 
 		// возвращает ссылку на текущий элемент сериализатора или выдает
@@ -345,16 +345,16 @@ namespace DFW2
 		T& GetItem()
 		{
 			if (nItemIndex < ItemsCount())
-				return m_Vec[nItemIndex];
+				return Vec_[nItemIndex];
 			throw dfw2error("CSerializerDataSourceVector::GetItem cannot return item from empty storage");
 		}
 	public:
 
-		CSerializerDataSourceVector(DataVector& vec) : m_Vec(vec)  { }
+		CSerializerDataSourceVector(DataVector& vec) : Vec_(vec)  { }
 
 		ptrdiff_t ItemsCount() const override
 		{
-			return static_cast<ptrdiff_t>(m_Vec.size());
+			return static_cast<ptrdiff_t>(Vec_.size());
 		}
 
 		bool NextItem() override
@@ -365,7 +365,7 @@ namespace DFW2
 
 		bool AddItem() override
 		{
-			m_Vec.push_back({});
+			Vec_.push_back({});
 			return true;
 		}
 	};
@@ -377,8 +377,8 @@ namespace DFW2
 	{
 		using DataList = std::list<T>;
 	protected:
-		DataList& m_List;
-		typename std::list<T>::iterator Item = m_List.begin();
+		DataList& List_;
+		typename std::list<T>::iterator Item = List_.begin();
 
 		// возвращает ссылку на текущий элемент сериализатора или выдает
 		// исключение, если элемент недоступен
@@ -387,29 +387,29 @@ namespace DFW2
 
 		T& GetItem()
 		{
-			if (Item != m_List.end())
+			if (Item != List_.end())
 				return *Item;
 			throw dfw2error("CSerializerDataSourceList::GetItem cannot return item from empty storage");
 		}
 	public:
 
-		CSerializerDataSourceList(DataList& lst) : m_List(lst) { }
+		CSerializerDataSourceList(DataList& lst) : List_(lst) { }
 
 		ptrdiff_t ItemsCount() const override
 		{
-			return static_cast<ptrdiff_t>(m_List.size());
+			return static_cast<ptrdiff_t>(List_.size());
 		}
 
 		bool NextItem() override
 		{
 			Item++;
-			return Item != m_List.end();
+			return Item != List_.end();
 		}
 
 		bool AddItem() override
 		{
-			m_List.push_back({});
-			Item = std::prev(m_List.end());
+			List_.push_back({});
+			Item = std::prev(List_.end());
 			return true;
 		}
 	};
@@ -420,10 +420,10 @@ namespace DFW2
 	protected:
 		SERIALIZERLIST ValueList;			// список значений
 		SERIALIZERMAP ValueMap;				// карта "имя"->"значение"
-		std::unique_ptr<CSerializerDataSourceBase> m_DataSource;
-		CDevice* m_pDevice = nullptr;
+		std::unique_ptr<CSerializerDataSourceBase> DataSource_;
+		CDevice* pDevice_ = nullptr;
 		SERIALIZERLIST::iterator UpdateIterator;
-		std::string m_strClassName;	// имя сериализуемого класса 
+		std::string ClassName_;	// имя сериализуемого класса 
 	public:
 
 		static constexpr const char* m_cszDupName = "CSerializerBase::AddProperty duplicated name \"{}\"";
@@ -435,14 +435,14 @@ namespace DFW2
 		static constexpr const char* m_cszSerializerType = "serializerType";
 
 		// количество полей в сериализаторе
-		ptrdiff_t ValuesCount() noexcept
+		ptrdiff_t ValuesCount() const 
 		{
 			return ValueMap.size();
 		}
 
 		// возвращает указатель на устройство, связанное с данным сериализатором
 		// нужено для работы VT_STATE, VT_NAME и т.п. 
-		virtual CDevice* GetDevice() { return m_pDevice; }
+		virtual CDevice* GetDevice() { return pDevice_; }
 
 		// начало обновления сериализатора с заданного устройства
 		void BeginUpdate()
@@ -459,7 +459,7 @@ namespace DFW2
 
 		void SetClassName(std::string_view ClassName)
 		{
-			m_strClassName = ClassName;
+			ClassName_ = ClassName;
 		}
 
 		// добавление свойства
@@ -588,15 +588,15 @@ namespace DFW2
 
 		const SERIALIZERMAP GetUnsetValues() const;
 
-		CSerializerBase(CSerializerDataSourceBase* pDataSource) : m_DataSource(pDataSource),
-																  m_pDevice(m_DataSource->GetDevice()),
+		CSerializerBase(CSerializerDataSourceBase* pDataSource) : DataSource_(pDataSource),
+																  pDevice_(DataSource_->GetDevice()),
 																  UpdateIterator(ValueList.end()) {}
 
 		// начало обновления сериализатора с заданного устройства
 		void BeginUpdate(CDevice* pDevice)
 		{
 			// запоминаем устройство
-			m_pDevice = pDevice;
+			pDevice_= pDevice;
 			CSerializerBase::BeginUpdate();
 		}
 
@@ -610,12 +610,12 @@ namespace DFW2
 			// инициализируем итератор полей
 			BeginUpdate();
 			// вводим элемент из источника данных
-			m_DataSource->UpdateSerializer(this);
+			DataSource_->UpdateSerializer(this);
 		}
 
 		virtual bool AddItem()
 		{
-			if (m_DataSource->AddItem())
+			if (DataSource_->AddItem())
 			{
 				Update();
 				return true;
@@ -625,7 +625,7 @@ namespace DFW2
 
 		virtual bool NextItem()
 		{
-			if (m_DataSource->NextItem())
+			if (DataSource_->NextItem())
 			{
 				Update();
 				return true;
@@ -635,7 +635,7 @@ namespace DFW2
 
 		ptrdiff_t ItemsCount() 
 		{
-			return m_DataSource->ItemsCount();
+			return DataSource_->ItemsCount();
 		}
 
 	protected:

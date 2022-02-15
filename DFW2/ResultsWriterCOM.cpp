@@ -7,7 +7,7 @@ void CResultsWriterCOM::WriteResults(const WriteResultsInfo& WriteInfo)
 {
 	try
 	{
-		m_spResultWrite->WriteResults(WriteInfo.Time, WriteInfo.Step);
+		spResultWrite->WriteResults(WriteInfo.Time, WriteInfo.Step);
 	}
 	catch (_com_error& ex)
 	{
@@ -19,7 +19,7 @@ void CResultsWriterCOM::FinishWriteResults()
 {
 	try
 	{
-		m_spResultWrite->Close();
+		spResultWrite->Close();
 	}
 	catch (_com_error& ex)
 	{
@@ -33,9 +33,9 @@ void CResultsWriterCOM::CreateFile(std::filesystem::path path, ResultsInfo& Info
 	{
 		if (FAILED(spResults.CreateInstance(CLSID_Result)))
 			throw dfw2error(CDFW2Messages::m_cszFailedToCreateCOMResultsWriter);
-		m_spResultWrite = spResults->Create(path.c_str());
-		m_spResultWrite->NoChangeTolerance = Info.NoChangeTolerance;
-		m_spResultWrite->Comment = stringutils::utf8_decode(Info.Comment).c_str();
+		spResultWrite = spResults->Create(path.c_str());
+		spResultWrite->NoChangeTolerance = Info.NoChangeTolerance;
+		spResultWrite->Comment = stringutils::utf8_decode(Info.Comment).c_str();
 	}
 	catch (_com_error& ex)
 	{
@@ -47,7 +47,7 @@ void CResultsWriterCOM::AddVariableUnit(ptrdiff_t nUnitType, const std::string_v
 {
 	try
 	{
-		m_spResultWrite->AddVariableUnit(static_cast<long>(nUnitType), stringutils::utf8_decode(UnitName).c_str());
+		spResultWrite->AddVariableUnit(static_cast<long>(nUnitType), stringutils::utf8_decode(UnitName).c_str());
 	}
 	catch (_com_error& ex)
 	{
@@ -90,8 +90,8 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 {
 	try
 	{
-		IDeviceTypeWritePtr spDeviceType = m_spResultWrite->AddDeviceType(static_cast<long>(Container.GetType()), stringutils::utf8_decode(Container.GetTypeName()).c_str());
-		const CDeviceContainerProperties& Props = Container.m_ContainerProps;
+		IDeviceTypeWritePtr spDeviceType = spResultWrite->AddDeviceType(static_cast<long>(Container.GetType()), stringutils::utf8_decode(Container.GetTypeName()).c_str());
+		const CDeviceContainerProperties& Props{ Container.ContainerProps()};
 		// по умолчанию у устройства один идентификатор и одно родительское устройство
 		long DeviceIdsCount = 1;
 		long ParentIdsCount = static_cast<long>(Props.m_Masters.size());
@@ -175,7 +175,7 @@ void CResultsWriterCOM::SetChannel(ptrdiff_t DeviceId, ptrdiff_t DeviceType, ptr
 {
 	try
 	{
-		m_spResultWrite->SetChannel(
+		spResultWrite->SetChannel(
 			static_cast<long>(DeviceId),
 			static_cast<long>(DeviceType),
 			static_cast<long>(VarIndex),
@@ -194,7 +194,7 @@ void CResultsWriterCOM::FinishWriteHeader()
 {
 	try
 	{
-		m_spResultWrite->WriteHeader();
+		spResultWrite->WriteHeader();
 	}
 	catch (_com_error& ex)
 	{
@@ -213,7 +213,7 @@ void CResultsWriterCOM::AddSlowVariable(ptrdiff_t nDeviceType,
 	variant_t vtDeviceIds;
 	MakeVariant(vtDeviceIds, DeviceIds);
 
-	m_spResultWrite->AddSlowVariable(static_cast<long>(nDeviceType),
+	spResultWrite->AddSlowVariable(static_cast<long>(nDeviceType),
 		vtDeviceIds,
 		stringutils::utf8_decode(VariableName).c_str(),
 		Time,

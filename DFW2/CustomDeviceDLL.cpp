@@ -247,7 +247,7 @@ bool CCustomDeviceDLL::Init(std::string_view DLLFilePath)
 				{
 					while (nTypesCount)
 					{
-						m_pDeviceContainer->m_ContainerProps.SetType(static_cast<eDFW2DEVICETYPE>(*pTypes));
+						m_pDeviceContainer->ContainerProps().SetType(static_cast<eDFW2DEVICETYPE>(*pTypes));
 						pTypes++;
 						nTypesCount--;
 					}
@@ -275,11 +275,11 @@ bool CCustomDeviceDLL::Init(std::string_view DLLFilePath)
 					{
 						// распределяем данные о связях в контейнере в соответствии с типов связи (to-from)
 						if (pLinks->eLinkType == eLINKTYPE::eLINK_FROM)
-							m_pDeviceContainer->m_ContainerProps.AddLinkFrom(static_cast<eDFW2DEVICETYPE>(pLinks->eDeviceType), 
+							m_pDeviceContainer->ContainerProps().AddLinkFrom(static_cast<eDFW2DEVICETYPE>(pLinks->eDeviceType),
 																			 static_cast<eDFW2DEVICELINKMODE>(pLinks->eLinkMode), 
 																			 static_cast<eDFW2DEVICEDEPENDENCY>(pLinks->eDependency));
 						else
-							m_pDeviceContainer->m_ContainerProps.AddLinkTo(static_cast<eDFW2DEVICETYPE>(pLinks->eDeviceType),
+							m_pDeviceContainer->ContainerProps().AddLinkTo(static_cast<eDFW2DEVICETYPE>(pLinks->eDeviceType),
 																		   static_cast<eDFW2DEVICELINKMODE>(pLinks->eLinkMode),
 																		   static_cast<eDFW2DEVICEDEPENDENCY>(pLinks->eDependency),
 																		   pLinks->LinkField);
@@ -296,7 +296,7 @@ bool CCustomDeviceDLL::Init(std::string_view DLLFilePath)
 
 		// задаем имя типа устройства в свойствах контейнера
 		if (m_bConnected)
-			m_pDeviceContainer->m_ContainerProps.SetClassName((m_pFnGetDeviceTypeName)(), "");
+			m_pDeviceContainer->ContainerProps().SetClassName((m_pFnGetDeviceTypeName)(), "");
 		
 		if (!m_bConnected)
 			m_pDeviceContainer->Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, DLLFilePath));

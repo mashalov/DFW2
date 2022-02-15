@@ -91,10 +91,11 @@ namespace DFW2
 			for (auto&& it : m_DevVec)
 				SettleDevice(it, nIndex++);
 		}
-	public:
-
 		// описание статических атрибутов контейнера: тип и связи с другими устройствами
-		CDeviceContainerProperties m_ContainerProps;
+		CDeviceContainerProperties ContainerProps_;
+	public:
+		inline CDeviceContainerProperties& ContainerProps() { return ContainerProps_; }
+		inline const CDeviceContainerProperties& ContainerProps() const { return ContainerProps_; }
 		// количество уравнений одного устройства в данном контейнере
 		// функция виртуальная, так как для ряда устройств количество переменных не постоянное
 		// количество таких устройств в контейнере всегда одно. В свойствах контейнера 
@@ -102,9 +103,9 @@ namespace DFW2
 		virtual ptrdiff_t EquationsCount() const;							
 
 		// тип устройства хранится в атрибутах контейнера. Устройство вне контейнера не знает своего типа
-		inline eDFW2DEVICETYPE GetType() const { return m_ContainerProps.GetType(); }
+		inline eDFW2DEVICETYPE GetType() const { return ContainerProps_.GetType(); }
 		// текстовое описание типа устройства
-		const char* GetTypeName() const { return m_ContainerProps.GetVerbalClassName(); }
+		const char* GetTypeName() const { return ContainerProps_.GetVerbalClassName(); }
 
 		CDeviceContainer(CDynaModel *pDynaModel);
 		virtual ~CDeviceContainer();
@@ -123,7 +124,7 @@ namespace DFW2
 			// создаем вектор устройств
 			T* ptr = factory->CreateRet(nCount, m_DevVec);
 			// оставляем фабрику устройств в свойствах устройства (??? может оставлять старую ?)
-			m_ContainerProps.DeviceFactory = std::move(factory);
+			ContainerProps_.DeviceFactory = std::move(factory);
 			// указатели на отдельные устройства теперь в m_DevVec, а
 			// вектор устройств остался в фабрике под ее контролем
 			// привязываем устройства к контейнеру
@@ -137,10 +138,10 @@ namespace DFW2
 			// ставим тип управления памятью
 			SetMemoryManagement(ContainerMemoryManagementType::BySolid);
 			// проверяем есть ли встроенная фабрика устройств
-			if (!m_ContainerProps.DeviceFactory)
+			if (!ContainerProps_.DeviceFactory)
 				throw dfw2error(fmt::format("CDynaNodeContainer::CreateDevice - DeviceFactory not defined for \"{}\"", GetSystemClassName()));
 			// создаем устройства с помощью фабрики
-			m_ContainerProps.DeviceFactory->Create(nCount, m_DevVec);
+			ContainerProps_.DeviceFactory->Create(nCount, m_DevVec);
 			// и привязываем их к контейнеру
 			SettleDevicesFromSolid();
 		}
@@ -170,15 +171,15 @@ namespace DFW2
 		bool RegisterVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits);
 		bool RegisterConstVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits, eDEVICEVARIABLETYPE eDevVarType);
 		// управление выводом переменной в результаты
-		bool VariableOutputEnable(std::string_view VarName, bool bOutputEnable);
+		bool VariableOutputEnable(std::string_view VarName, bool OutputEnable);
 
 		// диапазон карты переменных состояния
-		inline VARINDEXMAP::const_iterator VariablesBegin() { return m_ContainerProps.m_VarMap.begin(); }
-		inline VARINDEXMAP::const_iterator VariablesEnd() { return m_ContainerProps.m_VarMap.end(); }
+		inline VARINDEXMAP::const_iterator VariablesBegin() { return ContainerProps_.m_VarMap.begin(); }
+		inline VARINDEXMAP::const_iterator VariablesEnd() { return ContainerProps_.m_VarMap.end(); }
 
 		// диапазон карты констант
-		inline CONSTVARINDEXMAP::const_iterator ConstVariablesBegin() { return m_ContainerProps.m_ConstVarMap.begin(); }
-		inline CONSTVARINDEXMAP::const_iterator ConstVariablesEnd() { return m_ContainerProps.m_ConstVarMap.end(); }
+		inline CONSTVARINDEXMAP::const_iterator ConstVariablesBegin() { return ContainerProps_.m_ConstVarMap.begin(); }
+		inline CONSTVARINDEXMAP::const_iterator ConstVariablesEnd() { return ContainerProps_.m_ConstVarMap.end(); }
 
 		
 		ptrdiff_t GetVariableIndex(std::string_view VarName)	  const;	// получить индекс переменной состояния по имени

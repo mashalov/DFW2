@@ -16,7 +16,7 @@ bool CDynaModel::Link()
 	// и без учета направления
 	for (auto&& it : m_DeviceContainers)
 	{
-		CDeviceContainerProperties &Props = it->m_ContainerProps;
+		CDeviceContainerProperties &Props = it->ContainerProps();
 		// отдельные ссылки без направления для ведущих и ведомых
 		Props.m_Slaves.reserve(Props.m_LinksFrom.size() + Props.m_LinksTo.size());
 		Props.m_Masters.reserve(Props.m_Slaves.capacity());
@@ -78,11 +78,11 @@ bool CDynaModel::Link()
 	// обновления после итерации Ньютона и после прогноза, чтобы не проверять эти атрибуты в основных циклах
 	for (auto&& it : m_DeviceContainers)
 	{
-		if (it->m_ContainerProps.bNewtonUpdate)
+		if (it->ContainerProps().bNewtonUpdate)
 			m_DeviceContainersNewtonUpdate.push_back(it);
-		if (it->m_ContainerProps.bPredict)
+		if (it->ContainerProps().bPredict)
 			m_DeviceContainersPredict.push_back(it);
-		if (it->m_ContainerProps.bFinishStep)
+		if (it->ContainerProps().bFinishStep)
 			m_DeviceContainersFinishStep.push_back(it);
 	}
 	//Branches.CreateMeasures(BranchMeasures);

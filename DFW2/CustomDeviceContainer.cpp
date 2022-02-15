@@ -34,25 +34,25 @@ bool CCustomDeviceContainer::ConnectDLL(std::string_view DLLFilePath)
 	{
 		// копируем в контейнер описания констант
 		for (const auto& it : m_DLL.GetConstsInfo())
-			m_ContainerProps.m_ConstVarMap.insert({ it.VarInfo.Name,
-					CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(),
+			ContainerProps_.m_ConstVarMap.insert({ it.VarInfo.Name,
+					CConstVarIndex(ContainerProps_.m_ConstVarMap.size(),
 						static_cast<eVARUNITS>(it.VarInfo.eUnits),
 						eDVT_CONSTSOURCE) });
 
 		// копируем в контейнер описания уставок
 		for (const auto& it : m_DLL.GetSetPointsInfo())
-			m_ContainerProps.m_ConstVarMap.insert({ it.Name,
-				CConstVarIndex(m_ContainerProps.m_ConstVarMap.size(), 
+			ContainerProps_.m_ConstVarMap.insert({ it.Name,
+				CConstVarIndex(ContainerProps_.m_ConstVarMap.size(), 
 					static_cast<eVARUNITS>(it.eUnits),
 					eDVT_INTERNALCONST) });
 
 		// копируем в контейнер описания внутренних переменных
 		for (const auto& it : m_DLL.GetInternalsInfo())
-			m_ContainerProps.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
+			ContainerProps_.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
 
 		// копируем в контейнер описания выходных переменных
 		for (const auto& it : m_DLL.GetOutputsInfo())
-			m_ContainerProps.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
+			ContainerProps_.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
 
 		bRes = true;
 	}
@@ -117,11 +117,11 @@ bool CCustomDeviceContainer::BuildStructure()
 		// создаем пул для входных переменных
 		m_VariableIndexExternalPool.reserve(m_nExternalVarsCount * nCount);
 		// количество уравнений пользовательского устройства равно количеству уравнений для хост-блоков + количество уравнений внутренних переменных
-		m_ContainerProps.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
+		ContainerProps_.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
 		// общее количество double на 1 устройство = константы + уставки
 		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount();
 		//  количество уравнений VariableIndexesCount
-		m_nVariableIndexesCount = m_ContainerProps.nEquationsCount;
+		m_nVariableIndexesCount = ContainerProps_.nEquationsCount;
 		// создаем пул для переменных типа double
 		m_DoubleVarsPool.reserve(m_nDoubleVarsCount * nCount);
 		// создаем пул для внешних переменных
@@ -293,7 +293,7 @@ void CCustomDeviceCPPContainer::ConnectDLL(std::filesystem::path DLLFilePath)
 {
 	m_pDLL = std::make_shared<CCustomDeviceCPPDLL>(DLLFilePath, "CustomDeviceFactory");
 	CCustomDeviceDLLWrapper pDevice(m_pDLL);
-	pDevice->GetDeviceProperties(m_ContainerProps);
+	pDevice->GetDeviceProperties(ContainerProps_);
 	for (const auto& prim : pDevice->GetPrimitives())
 		m_PrimitivePools.CountPrimitive(prim.eBlockType);
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszUserModelModuleLoaded, 

@@ -22,7 +22,7 @@ bool CDevice::IsKindOfType(eDFW2DEVICETYPE eType)
 
 	if (pContainer_)
 	{
-		TYPEINFOSET& TypeInfoSet = pContainer_->m_ContainerProps.m_TypeInfoSet;
+		const TYPEINFOSET& TypeInfoSet{ pContainer_->ContainerProps().m_TypeInfoSet };
 		return TypeInfoSet.find(eType) != TypeInfoSet.end();
 	}
 	return false;
@@ -768,8 +768,8 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 	{
 		// по информации из атрибутов контейнера определяем индекс
 		// связи, соответствующий типу
-		auto& FromLinks{ pContainer_->m_ContainerProps.m_LinksFrom };
-		auto&& itFrom{ FromLinks.find(eDevType) };
+		const auto& FromLinks{ pContainer_->ContainerProps().m_LinksFrom};
+		const auto&& itFrom{ FromLinks.find(eDevType) };
 		if (itFrom != FromLinks.end())
 			pRetDev = GetSingleLink(itFrom->second.nLinkIndex);
 	
@@ -778,7 +778,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 
 #ifdef _DEBUG
 		CDevice *pRetDevTo(nullptr);
-		LINKSTOMAP& ToLinks = pContainer_->m_ContainerProps.m_LinksTo;
+		const LINKSTOMAP& ToLinks{ pContainer_->ContainerProps().m_LinksTo };
 		const auto& itTo = ToLinks.find(eDevType);
 
 		// в режиме отладки проверяем однозначность определения связи
@@ -793,7 +793,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 #else
 		if(!pRetDev)
 		{
-			const LINKSTOMAP& ToLinks{ pContainer_->m_ContainerProps.m_LinksTo };
+			const LINKSTOMAP& ToLinks{ pContainer_->ContainerProps().m_LinksTo};
 			auto&& itTo{ ToLinks.find(eDevType) };
 			if (itTo != ToLinks.end())
 				pRetDev = GetSingleLink(itTo->second.nLinkIndex);
@@ -847,7 +847,7 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, 
 eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice)
 {
 	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };	// по умолчанию все хорошо
-	const  CDeviceContainerProperties& Props{ pContainer_->m_ContainerProps };
+	const CDeviceContainerProperties& Props{ pContainer_->ContainerProps()};
 
 	// use links to masters, prepared in CDynaModel::Link() instead of original links
 
@@ -973,7 +973,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 	{
 		// если устройство хотят включить - нужно проверить, все ли его masters включены. Если да - то включить, если нет - предупреждение и состояние не изменять
 		CDevice *pDeviceOff(nullptr);
-		for (auto&& masterdevice : pContainer_->m_ContainerProps.m_Masters)
+		for (auto&& masterdevice : pContainer_->ContainerProps().m_Masters)
 		{
 			// если было найдено отключенное ведущее устройство - выходим
 			if (pDeviceOff)
@@ -1047,7 +1047,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 			eStateCause = eDEVICESTATECAUSE::DSC_INTERNAL;
 
 			// перебираем все ведомые устройства текущего устройства из стека
-			for (auto&& slavedevice : pOffDevice->pContainer_->m_ContainerProps.m_Slaves)
+			for (auto&& slavedevice : pOffDevice->pContainer_->ContainerProps().m_Slaves)
 			{
 				if (slavedevice->eLinkMode == DLM_MULTI)
 				{

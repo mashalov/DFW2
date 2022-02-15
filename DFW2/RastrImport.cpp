@@ -46,11 +46,11 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 
 			using COLVECTOR = std::vector<std::pair<IColPtr, ptrdiff_t>>;
 			COLVECTOR Cols;
-			Cols.reserve(CustomDeviceContainer.m_ContainerProps.m_ConstVarMap.size());
+			Cols.reserve(CustomDeviceContainer.ContainerProps().m_ConstVarMap.size());
 			IColPtr spColId = spSourceCols->Item(L"Id");
 			IColPtr spColName = spSourceCols->Item(L"Name");
 			IColPtr spColState = spSourceCols->Item(L"sta");
-			for (const auto& col : CustomDeviceContainer.m_ContainerProps.m_ConstVarMap)
+			for (const auto& col : CustomDeviceContainer.ContainerProps().m_ConstVarMap)
 				if (GetConstFromField(col.second))
 					Cols.push_back(std::make_pair(spSourceCols->Item(col.first.c_str()), col.second.Index_));
 

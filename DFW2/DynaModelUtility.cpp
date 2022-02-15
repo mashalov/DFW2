@@ -256,7 +256,7 @@ DEVICECONTAINERS CDynaModel::GetContainersByAlias(std::string_view Alias)
 
 bool CDynaModel::ApproveContainerToWriteResults(CDeviceContainer *pDevCon)
 {
-	return pDevCon->Count() && !pDevCon->m_ContainerProps.bVolatile && pDevCon->GetType() != DEVTYPE_BRANCH;
+	return pDevCon->Count() && !pDevCon->ContainerProps().bVolatile && pDevCon->GetType() != DEVTYPE_BRANCH;
 }
 
 // Выводит статистику по топ-устройствам, которые выдавали zero-crossing

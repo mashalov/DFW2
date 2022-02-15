@@ -57,30 +57,30 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	// константы могут изменяться, например для демпфирования
 	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
 
-	CDynaNode::DeviceProperties(Nodes.m_ContainerProps);
-	CSynchroZone::DeviceProperties(SynchroZones.m_ContainerProps);
-	CDynaBranch::DeviceProperties(Branches.m_ContainerProps);
-	CDynaLRC::DeviceProperties(LRCs.m_ContainerProps);
-	CDynaReactor::DeviceProperties(Reactors.m_ContainerProps);
-	CDynaGeneratorInfBus::DeviceProperties(GeneratorsInfBus.m_ContainerProps);
-	CDynaGeneratorMotion::DeviceProperties(GeneratorsMotion.m_ContainerProps);
-	CDynaGenerator1C::DeviceProperties(Generators1C.m_ContainerProps);
-	CDynaGenerator3C::DeviceProperties(Generators3C.m_ContainerProps);
-	CDynaGeneratorMustang::DeviceProperties(GeneratorsMustang.m_ContainerProps);
-	CDynaGeneratorPark3C::DeviceProperties(GeneratorsPark3C.m_ContainerProps);
-	CDynaGeneratorPark4C::DeviceProperties(GeneratorsPark4C.m_ContainerProps);
-	CDynaDECMustang::DeviceProperties(DECsMustang.m_ContainerProps);
-	CDynaExcConMustang::DeviceProperties(ExcConMustang.m_ContainerProps);
+	CDynaNode::DeviceProperties(Nodes.ContainerProps());
+	CSynchroZone::DeviceProperties(SynchroZones.ContainerProps());
+	CDynaBranch::DeviceProperties(Branches.ContainerProps());
+	CDynaLRC::DeviceProperties(LRCs.ContainerProps());
+	CDynaReactor::DeviceProperties(Reactors.ContainerProps());
+	CDynaGeneratorInfBus::DeviceProperties(GeneratorsInfBus.ContainerProps());
+	CDynaGeneratorMotion::DeviceProperties(GeneratorsMotion.ContainerProps());
+	CDynaGenerator1C::DeviceProperties(Generators1C.ContainerProps());
+	CDynaGenerator3C::DeviceProperties(Generators3C.ContainerProps());
+	CDynaGeneratorMustang::DeviceProperties(GeneratorsMustang.ContainerProps());
+	CDynaGeneratorPark3C::DeviceProperties(GeneratorsPark3C.ContainerProps());
+	CDynaGeneratorPark4C::DeviceProperties(GeneratorsPark4C.ContainerProps());
+	CDynaDECMustang::DeviceProperties(DECsMustang.ContainerProps());
+	CDynaExcConMustang::DeviceProperties(ExcConMustang.ContainerProps());
 	//CDynaExcConMustangNonWindup::DeviceProperties(ExcConMustang.m_ContainerProps);
-	CDynaExciterMustang::DeviceProperties(ExcitersMustang.m_ContainerProps);
-	CDynaBranchMeasure::DeviceProperties(BranchMeasures.m_ContainerProps);
-	CDynaNodeMeasure::DeviceProperties(NodeMeasures.m_ContainerProps);
-	CDynaNodeZeroLoadFlow::DeviceProperties(ZeroLoadFlow.m_ContainerProps);
+	CDynaExciterMustang::DeviceProperties(ExcitersMustang.ContainerProps());
+	CDynaBranchMeasure::DeviceProperties(BranchMeasures.ContainerProps());
+	CDynaNodeMeasure::DeviceProperties(NodeMeasures.ContainerProps());
+	CDynaNodeZeroLoadFlow::DeviceProperties(ZeroLoadFlow.ContainerProps());
 
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
-	AutomaticDevice.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
-	CustomDevice.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDevice>>();
-	CustomDeviceCPP.m_ContainerProps.DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
+	AutomaticDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
+	CustomDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDevice>>();
+	CustomDeviceCPP.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
 
 	m_DeviceContainers.push_back(&Nodes);
 	m_DeviceContainers.push_back(&LRCs);
@@ -1892,7 +1892,7 @@ void CDynaModel::TurnOffDevicesByOffMasters()
 		nOffCount = 0;
 		for (auto&& it : m_DeviceContainers)
 		{
-			CDeviceContainerProperties &Props = it->m_ContainerProps;
+			const CDeviceContainerProperties& Props{ it->ContainerProps() };
 			if (Props.eDeviceType == eDFW2DEVICETYPE::DEVTYPE_BRANCH)
 				continue;
 					   

@@ -34,10 +34,10 @@ void CSerializerDataSourceContainer::UpdateSerializer(CSerializerBase* pSerializ
 
 const char* CSerializerBase::GetClassName()
 {
-	if (m_pDevice)
-		return m_pDevice->GetContainer()->GetSystemClassName();
+	if (pDevice_)
+		return pDevice_->GetContainer()->GetSystemClassName();
 	else
-		return m_strClassName.c_str();
+		return ClassName_.c_str();
 }
 
 std::string CSerializerBase::GetVariableName(TypedSerializedValue* pValue) const
@@ -95,22 +95,22 @@ MetaSerializedValue* MetaSerializedValue::Update(TypedSerializedValue&& value)
 {
 	Value = value.Value;
 	Adapter = std::move(value.Adapter);
-	m_pNestedSerializer = std::move(value.m_pNestedSerializer);
+	pNestedSerializer_ = std::move(value.pNestedSerializer_);
 	return this;
 }
 
 CDevice* TypedSerializedValue::GetDevice()
 {
-	if (m_pSerializer)
-		return m_pSerializer->GetDevice();
+	if (pSerializer_)
+		return pSerializer_->GetDevice();
 	else
 		return nullptr;
 }
 
 const CDevice* TypedSerializedValue::GetDevice() const
 {
-	if (m_pSerializer)
-		return m_pSerializer->GetDevice();
+	if (pSerializer_)
+		return pSerializer_->GetDevice();
 	else
 		return nullptr;
 }
@@ -124,11 +124,11 @@ void TypedSerializedValue::NoConversion(eValueType fromType)
 	);
 
 
-	if (m_pSerializer)
+	if (pSerializer_)
 	{
 		auto add = fmt::format(" for variable \"{}\" in container \"{}\"",
-			m_pSerializer->GetVariableName(this),
-			m_pSerializer->GetClassName()
+			pSerializer_->GetVariableName(this),
+			pSerializer_->GetClassName()
 		);
 		msg += add;
 	}

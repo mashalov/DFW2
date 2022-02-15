@@ -86,7 +86,7 @@ void CDeviceContainer::AddDevice(CDevice* pDevice)
 // если переменная с таким именем уже есть возвращает false
 bool CDeviceContainer::RegisterVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits)
 {
-	bool bInserted = m_ContainerProps.m_VarMap.insert(std::make_pair(VarName, CVarIndex(nVarIndex, eVarUnits))).second;
+	bool bInserted{ ContainerProps_.m_VarMap.insert(std::make_pair(VarName, CVarIndex(nVarIndex, eVarUnits))).second };
 	return bInserted;
 }
 
@@ -94,19 +94,19 @@ bool CDeviceContainer::RegisterVariable(std::string_view VarName, ptrdiff_t nVar
 // Требуются имя, индекс и тип константы. Индексы у констант и переменных состояния разные
 bool CDeviceContainer::RegisterConstVariable(std::string_view VarName, ptrdiff_t nVarIndex, eVARUNITS eVarUnits, eDEVICEVARIABLETYPE eDevVarType)
 {
-	bool bInserted = m_ContainerProps.m_ConstVarMap.insert(std::make_pair(VarName, CConstVarIndex(nVarIndex, eVarUnits, eDevVarType))).second;
+	bool bInserted{ ContainerProps_.m_ConstVarMap.insert(std::make_pair(VarName, CConstVarIndex(nVarIndex, eVarUnits, eDevVarType))).second };
 	return bInserted;
 }
 
 // управление выводом переменной в результаты
-bool CDeviceContainer::VariableOutputEnable(std::string_view VarName, bool bOutputEnable)
+bool CDeviceContainer::VariableOutputEnable(std::string_view VarName, bool OutputEnable)
 {
 	// ищем переменную по имени в карте переменных контейнера
-	auto it = m_ContainerProps.m_VarMap.find(VarName);
-	if (it != m_ContainerProps.m_VarMap.end())
+	auto it{ ContainerProps_.m_VarMap.find(VarName) };
+	if (it != ContainerProps_.m_VarMap.end())
 	{
 		// если нашли - ставим заданный атрибут вывода 
-		it->second.Output_ = bOutputEnable;
+		it->second.Output_ = OutputEnable;
 		return true;
 	}
 	else
@@ -118,7 +118,7 @@ ptrdiff_t CDeviceContainer::GetVariableIndex(std::string_view VarName) const
 {
 	auto fnFind = [this](std::string_view VarName) -> ptrdiff_t
 	{
-		if (auto it{ m_ContainerProps.m_VarMap.find(VarName) }; it != m_ContainerProps.m_VarMap.end())
+		if (auto it{ ContainerProps_.m_VarMap.find(VarName) }; it != ContainerProps_.m_VarMap.end())
 			return it->second.Index_;
 		else
 			return -1;
@@ -127,7 +127,7 @@ ptrdiff_t CDeviceContainer::GetVariableIndex(std::string_view VarName) const
 	ptrdiff_t nIndex{ fnFind(VarName) };
 	// если переменную не нашли по заданному имени, ищем по алиасам
 	if (nIndex < 0)
-		if(auto it { m_ContainerProps.m_VarAliasMap.find(VarName) }; it != m_ContainerProps.m_VarAliasMap.end())
+		if(auto it { ContainerProps_.m_VarAliasMap.find(VarName) }; it != ContainerProps_.m_VarAliasMap.end())
 			nIndex = fnFind(it->second);
 	
 	return nIndex;
@@ -137,7 +137,7 @@ ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::string_view VarName) cons
 {
 	auto fnFind = [this](std::string_view VarName) -> ptrdiff_t
 	{
-		if (auto it{ m_ContainerProps.m_ConstVarMap.find(VarName) }; it != m_ContainerProps.m_ConstVarMap.end())
+		if (auto it{ ContainerProps_.m_ConstVarMap.find(VarName) }; it != ContainerProps_.m_ConstVarMap.end())
 			return it->second.Index_;
 		else
 			return -1;
@@ -146,7 +146,7 @@ ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::string_view VarName) cons
 	ptrdiff_t nIndex{ fnFind(VarName) };
 	// если переменную не нашли по заданному имени, ищем по алиасам
 	if(nIndex < 0)
-		if (auto it{ m_ContainerProps.m_VarAliasMap.find(VarName) }; it != m_ContainerProps.m_VarAliasMap.end())
+		if (auto it{ ContainerProps_.m_VarAliasMap.find(VarName) }; it != ContainerProps_.m_VarAliasMap.end())
 			nIndex = fnFind(it->second);
 
 	return nIndex;
@@ -223,7 +223,7 @@ size_t CDeviceContainer::GetResultVariablesCount()
 {
 	size_t nCount = 0;
 	// определяем простым подсчетом переменных состояния с признаком вывода
-	for (auto&& vit : m_ContainerProps.m_VarMap)
+	for (auto&& vit : ContainerProps_.m_VarMap)
 		if (vit.second.Output_)
 			nCount++;
 
@@ -266,7 +266,7 @@ bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 				eDFW2DEVICETYPE TreatAs = DEVTYPE_UNKNOWN; // search device type to create link according to link map
 				// просматриваем связи _к_ данному устройству и ищем номер связи, соответствующиий определенной выше LinkFrom
 				// если будет найдена связь - внешний контейнер будет трактоваться как соответсвующий типу этой связи
-				for (auto && it : m_ContainerProps.m_LinksFrom)
+				for (auto && it : ContainerProps_.m_LinksFrom)
 					if (it.second.nLinkIndex == LinkFrom.nLinkIndex)
 					{
 						TreatAs = it.first;	// если нашли - запоминаем
@@ -330,7 +330,7 @@ bool CDeviceContainer::IsKindOfType(eDFW2DEVICETYPE eType)
 	// если запрашиваемый тип и есть тип устройства - оно подходит
 	if (GetType() == eType) return true;
 	// если нет - ищем заданный тип в списке типов наследования
-	TYPEINFOSET& TypeInfoSet = m_ContainerProps.m_TypeInfoSet;
+	const TYPEINFOSET& TypeInfoSet{ ContainerProps_.m_TypeInfoSet };
 	// и если находим - возвращаем true - "да, это устройство может быть трактовано как требуемое"
 	return TypeInfoSet.find(eType) != TypeInfoSet.end();
 }
@@ -766,7 +766,7 @@ void CDeviceContainer::ResetStack()
 
 ptrdiff_t CDeviceContainer::GetPossibleSingleLinksCount()
 {
-	return m_ContainerProps.nPossibleLinksCount;
+	return ContainerProps_.nPossibleLinksCount;
 }
 
 // базовая реализация возвращает константу из свойств
@@ -774,7 +774,7 @@ ptrdiff_t CDeviceContainer::GetPossibleSingleLinksCount()
 // но при этом в свойствах контейнера должно быть bVolatile = true
 ptrdiff_t CDeviceContainer::EquationsCount() const
 {
-	return m_ContainerProps.nEquationsCount;
+	return ContainerProps_.nEquationsCount;
 }
 
 CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom)
@@ -782,7 +782,7 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 	CDeviceContainer *pRetContainer(nullptr);
 
 	// просматриваем возможные связи _из_ внешнего контейнер
-	for (auto&& extlinkstoit : pExtContainer->m_ContainerProps.m_LinksTo)
+	for (auto&& extlinkstoit : pExtContainer->ContainerProps_.m_LinksTo)
 	{
 		if (IsKindOfType(extlinkstoit.first))
 		{
@@ -791,7 +791,7 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 			// возвращаем внешний контейнер и подтверждаем что готовы быть с ним связаны
 			pRetContainer = pExtContainer;
 			// дополнительно просматриваема связи _из_ контенера 
-			for (auto&& linksfrom : m_ContainerProps.m_LinksFrom)
+			for (auto&& linksfrom : ContainerProps_.m_LinksFrom)
 			{
 				if (pExtContainer->IsKindOfType(linksfrom.first))
 				{
@@ -809,7 +809,7 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 		// если из внешнего контейнера к данном связь не найдена
 		// просматриваем возможные связи _из_ данного контейнера
 
-		for (auto&& linkstoit : m_ContainerProps.m_LinksTo)
+		for (auto&& linkstoit : ContainerProps_.m_LinksTo)
 		{
 			if (pExtContainer->IsKindOfType(linkstoit.first))
 			{
@@ -818,7 +818,7 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 				// возвращаем данный контейнер и подтверждаем что он готов с связи с внешним
 				pRetContainer = this;
 				// дополнительно просматриваем связи _из_ внешнего контейнера
-				for (auto&& linksfrom : pExtContainer->m_ContainerProps.m_LinksFrom)
+				for (auto&& linksfrom : pExtContainer->ContainerProps_.m_LinksFrom)
 				{
 					if (IsKindOfType(linksfrom.first))
 					{
@@ -841,7 +841,7 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 	ptrdiff_t nRet(-1);
 	// по информации из атрибутов контейнера определяем индекс
 	// связи, соответствующий типу
-	LINKSFROMMAP& FromLinks = m_ContainerProps.m_LinksFrom;
+	const LINKSFROMMAP& FromLinks{ ContainerProps_.m_LinksFrom };
 	auto&& itFrom  = FromLinks.find(eDevType);
 	if (itFrom != FromLinks.end())
 		nRet = itFrom->second.nLinkIndex;
@@ -851,7 +851,7 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 
 	if (nRet < 0)
 	{
-		LINKSTOMAP& ToLinks = m_ContainerProps.m_LinksTo;
+		const LINKSTOMAP& ToLinks{ ContainerProps_.m_LinksTo };
 		auto&& itTo = ToLinks.find(eDevType);
 		if (itTo != ToLinks.end())
 			nRet = itTo->second.nLinkIndex;
@@ -867,12 +867,12 @@ CDynaModel* CDeviceContainer::GetModel()
 
 const char* CDeviceContainer::GetSystemClassName() const
 {
-	return m_ContainerProps.GetSystemClassName();
+	return ContainerProps_.GetSystemClassName();
 }
 
 bool CDeviceContainer::HasAlias(std::string_view Alias) const
 {
-	const STRINGLIST& Aliases = m_ContainerProps.m_lstAliases;
+	const STRINGLIST& Aliases = ContainerProps_.m_lstAliases;
 	return std::find(Aliases.begin(), Aliases.end(), Alias) != Aliases.end();
 }
 

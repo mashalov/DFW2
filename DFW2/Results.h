@@ -69,7 +69,7 @@ namespace DFW2
 	class CResultsWriterCOM : public CResultsWriterBase
 	{
 	protected:
-		IResultWritePtr m_spResultWrite;
+		IResultWritePtr spResultWrite;
 		IResultPtr spResults;
 	public:
 		using CResultsWriterBase::CResultsWriterBase;
@@ -94,8 +94,8 @@ namespace DFW2
 	{
 	protected:
 		using WriterDLL = CDLLInstanceFactory<IResultWriterABI>;
-		std::shared_ptr<WriterDLL> m_ABIWriterDLL;
-		CDLLInstanceWrapper<WriterDLL> m_ABIWriter;
+		std::shared_ptr<WriterDLL> ABIWriterDLL;
+		CDLLInstanceWrapper<WriterDLL> ABIWriter;
 	public:
 		using CResultsWriterBase::CResultsWriterBase;
 		void WriteResults(const WriteResultsInfo& WriteInfo) override;

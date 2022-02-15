@@ -25,7 +25,7 @@ bool JsonSerializerObject::ConfirmAccept(const AcceptorPtr& acceptor, const Json
 		// для параметра, который представляет собой сериализатор разрешаем вложенный JsonSerializerArray
 		if (input->ValueType == TypedSerializedValue::eValueType::VT_SERIALIZER && acceptor.get() == nestedSerializer)
 		{
-			nestedSerializer->SetSerializer(input->m_pNestedSerializer.get());
+			nestedSerializer->SetSerializer(input->pNestedSerializer_.get());
 			return true;
 		}
 	}
@@ -70,9 +70,9 @@ void CSerializerJson::SerializeProps(CSerializerBase* pSerializer, nlohmann::jso
 		if (mv.ValueType == TypedSerializedValue::eValueType::VT_SERIALIZER)
 		{
 			auto serializerType = nlohmann::json();
-			if (mv.m_pNestedSerializer->ItemsCount())
-				mv.m_pNestedSerializer->Update();
-			SerializeProps(mv.m_pNestedSerializer.get(), jsonType);
+			if (mv.pNestedSerializer_->ItemsCount())
+				mv.pNestedSerializer_->Update();
+			SerializeProps(mv.pNestedSerializer_.get(), jsonType);
 		}
 	};
 
@@ -162,21 +162,21 @@ void CSerializerJson::SerializeData(CSerializerBase* pSerializer, nlohmann::json
 		case TypedSerializedValue::eValueType::VT_SERIALIZER:
 			{
 				// если вложенный сериализатор не пустой
-				if (mv.m_pNestedSerializer->ItemsCount())
+				if (mv.pNestedSerializer_->ItemsCount())
 				{
 					// создаем массив
 					auto items = nlohmann::json::array();
 					// обновляем сериализатор с первого элемента источника данных
-					mv.m_pNestedSerializer->Update();
+					mv.pNestedSerializer_->Update();
 					do
 					{
 						// и сериализуем первый и последующие элементы
 						// в массив
 						auto data = nlohmann::json();
-						SerializeData(mv.m_pNestedSerializer.get(), data);
+						SerializeData(mv.pNestedSerializer_.get(), data);
 						items.push_back(data);
 					}
-					while (mv.m_pNestedSerializer->NextItem());
+					while (mv.pNestedSerializer_->NextItem());
 
 					// массив вводим под именем сериализатора
 					item[ValueName] = items;
@@ -225,7 +225,7 @@ void CSerializerJson::SerializeClass(const SerializerPtr& Serializer)
 		{
 			// и сериализуем связи данного экземпляра устройства
 			// по свойствам контейнера
-			const CDeviceContainerProperties& Props = pContainer->m_ContainerProps;
+			const CDeviceContainerProperties& Props{ pContainer->ContainerProps()};
 			auto jsonLinks = nlohmann::json::array();
 			// добавляем связи от ведущих и ведомых
 			AddLinks(Serializer, jsonLinks, Props.m_Masters, true);

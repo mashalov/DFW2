@@ -291,7 +291,7 @@ namespace DFW2
 				Container.Log(DFW2MessageStatus::DFW2LOG_INFO, 
 					fmt::format(CDFW2Messages::m_cszFoundContainerData, 
 						RastrWinDataSourceDescription, 
-						Container.m_ContainerProps.GetVerbalClassName(), 
+						Container.ContainerProps().GetVerbalClassName(),
 						nSize));
 
 				IColsPtr spCols = spTable->Cols;

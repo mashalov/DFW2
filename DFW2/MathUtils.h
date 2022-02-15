@@ -72,62 +72,62 @@ namespace MathUtils
 	class StraightSummation
 	{
 	protected:
-		double m_sum = 0.0;
+		double sum_ = 0.0;
 	public:
 		void Reset()
 		{
-			m_sum = 0.0;
+			sum_ = 0.0;
 		}
 		void Add(double value)
 		{
-			m_sum += value;
+			sum_ += value;
 		}
 		double Finalize() 
 		{
-			return m_sum;
+			return sum_;
 		}
 	};
 
 	class KahanSummation : public StraightSummation
 	{
 	protected:
-		volatile double m_kahan = 0.0;
+		volatile double kahan_ = 0.0;
 	public:
 		void Reset()
 		{
 			StraightSummation::Reset();
-			m_kahan = 0.0;
+			kahan_ = 0.0;
 		}
 		void Add(double value)
 		{
-			volatile double y{ value - m_kahan };
-			volatile double t{ m_sum + y };
-			m_kahan = (t - m_sum) - y;
-			m_sum = t;
+			volatile double y{ value - kahan_ };
+			volatile double t{ sum_ + y };
+			kahan_ = (t - sum_) - y;
+			sum_ = t;
 		}
 	};
 
 	class NeumaierSummation : public StraightSummation
 	{
 	protected:
-		volatile double m_neumaier = 0.0;
+		volatile double neumaier_ = 0.0;
 	public:
 		void Reset()
 		{
 			StraightSummation::Reset();
-			m_neumaier = 0.0;
+			neumaier_ = 0.0;
 		}
 		void Add(double value)
 		{
-			volatile double t{ m_sum + value };
-			m_neumaier += (std::abs(m_sum) >= std::abs(value)) ? ((m_sum - t) + value) : ((value - t) + m_sum);
-			m_sum = t;
+			volatile double t{ sum_ + value };
+			neumaier_ += (std::abs(sum_) >= std::abs(value)) ? ((sum_ - t) + value) : ((value - t) + sum_);
+			sum_ = t;
 		}
 		double Finalize()
 		{
-			m_sum += m_neumaier;
-			m_neumaier = 0.0;
-			return m_sum;
+			sum_ += neumaier_;
+			neumaier_ = 0.0;
+			return sum_;
 		}
 	};
 };

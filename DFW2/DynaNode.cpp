@@ -740,7 +740,7 @@ CDynaNodeContainer::CDynaNodeContainer(CDynaModel *pDynaModel) :
 {
 	// в контейнере требуем особой функции прогноза и обновления после
 	// ньютоновской итерации
-	m_ContainerProps.bNewtonUpdate = m_ContainerProps.bPredict = true;
+	ContainerProps_.bNewtonUpdate = ContainerProps_.bPredict = true;
 }
 
 CDynaNodeContainer::~CDynaNodeContainer()

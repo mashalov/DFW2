@@ -645,9 +645,9 @@ void CDynaModel::CreateTotalRightVector()
 	for (auto&& cit : m_DeviceContainers)
 	{
 		// для volatile устройств зон в TotalRightVector не оставляем места
-		if (cit->m_ContainerProps.bVolatile)
+		if (cit->ContainerProps().bVolatile)
 			continue;
-		m_nTotalVariablesCount += cit->m_ContainerProps.nEquationsCount * cit->Count();
+		m_nTotalVariablesCount += cit->ContainerProps().nEquationsCount * cit->Count();
 	}
 	// забираем полный вектор для всех переменных
 	pRightVectorTotal = std::make_unique<RightVectorTotal[]>(m_nTotalVariablesCount);
@@ -655,7 +655,7 @@ void CDynaModel::CreateTotalRightVector()
 
 	for (auto&& cit : m_DeviceContainers)
 	{
-		if (cit->m_ContainerProps.bVolatile)
+		if (cit->ContainerProps().bVolatile)
 			continue;
 
 		// запоминаем в полном векторе адреса всех переменных и всех устройств
@@ -677,7 +677,7 @@ void CDynaModel::UpdateNewRightVector()
 	// логика синхронизации векторов такая же как в UpdateTotalRightVector
 	for (auto&& cit : m_DeviceContainers)
 	{
-		if (cit->m_ContainerProps.bVolatile)
+		if (cit->ContainerProps().bVolatile)
 		{
 			pRv += cit->Count() * cit->EquationsCount();
 			continue;
@@ -722,7 +722,7 @@ void CDynaModel::DebugCheckRightVectorSync()
 	// логика синхронизации векторов такая же как в UpdateTotalRightVector
 	for (auto&& cit : m_DeviceContainers)
 	{
-		if (cit->m_ContainerProps.bVolatile)
+		if (cit->ContainerProps().bVolatile)
 		{
 			pRv += cit->Count() * cit->EquationsCount();
 			continue;
@@ -760,7 +760,7 @@ void CDynaModel::UpdateTotalRightVector()
 	// устройств без уравнений, для всех остальных копируем то что посчитано в RightVector в RightVectorTotal
 	for (auto&& cit : m_DeviceContainers)
 	{
-		if (cit->m_ContainerProps.bVolatile)
+		if (cit->ContainerProps().bVolatile)
 		{
 			// если встретили volatile конетейнер (например - синхронные зоны) - пропускаем его в RightVector,
 			// потому что в RightVectorTotal их нет

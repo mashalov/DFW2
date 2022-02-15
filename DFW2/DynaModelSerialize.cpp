@@ -68,7 +68,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 			// находим контейнер в модели
 			if (auto pContainer(GetContainerByAlias(objkey)); pContainer)
 			{
-				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszFoundContainerData, objkey, pContainer->m_ContainerProps.GetVerbalClassName(), objsize));
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszFoundContainerData, objkey, pContainer->ContainerProps().GetVerbalClassName(), objsize));
 				// создаем заданное в json количество объектов
 				pContainer->CreateDevices(objsize);
 				// и отдаем сериализатор контейнера сериализатору json
