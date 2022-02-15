@@ -662,7 +662,7 @@ ptrdiff_t CDeviceContainer::GetLinkIndex(CDeviceContainer* pLinkContainer)
 	ptrdiff_t nRet = -1;
 	// обходим вектор ссылок
 	for (auto it = m_Links.begin(); it != m_Links.end(); it++)
-		if (it->m_pContainer == pLinkContainer)
+		if (it->pContainer_ == pLinkContainer)
 		{
 			// если заданный контейнер входит в набор возможных ссылок 
 			// возвращаем его индекс в векторе ссылок
@@ -678,7 +678,7 @@ ptrdiff_t CDeviceContainer::GetLinkIndex(eDFW2DEVICETYPE eDeviceType)
 	ptrdiff_t nRet = -1;
 	// обходим вектор ссылок
 	for (auto it = m_Links.begin(); it != m_Links.end(); it++)
-		if (it->m_pContainer->IsKindOfType(eDeviceType))
+		if (it->pContainer_->IsKindOfType(eDeviceType))
 		{
 			// если заданный тип входит в дерево наследования контейнера 
 			// возвращаем его индекс в векторе ссылок

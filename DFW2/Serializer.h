@@ -318,10 +318,10 @@ namespace DFW2
 	// сериализатор для контейнера устройств
 	class CSerializerDataSourceContainer : public CSerializerDataSourceBase
 	{
-		CDeviceContainer* m_pContainer;
+		CDeviceContainer* pContainer_;
 		ptrdiff_t nItemIndex = 0;
 	public:
-		CSerializerDataSourceContainer(CDeviceContainer* pContainer) : m_pContainer(pContainer) {}
+		CSerializerDataSourceContainer(CDeviceContainer* pContainer) : pContainer_(pContainer) {}
 		ptrdiff_t ItemsCount() const override;
 		bool NextItem() override;
 		void UpdateSerializer(CSerializerBase* pSerializer) override;

@@ -27,10 +27,10 @@ namespace DFW2
 		}
 	public:
 		DevicesPtrs  m_ppPointers;											// вектор указателей на связанные устройства
-		CDeviceContainer *m_pContainer = nullptr;							// внешний контейнер, с устройствами которого строится связь
+		CDeviceContainer *pContainer_ = nullptr;							// внешний контейнер, с устройствами которого строится связь
 		std::vector<CLinkPtrCount> m_LinkInfo;								// вектор ссылок с количеством связей
 		size_t   m_nCount = 0;												// количество возможных связей 
-		CMultiLink(CDeviceContainer* pContainer, size_t nCount) : m_pContainer(pContainer)
+		CMultiLink(CDeviceContainer* pContainer, size_t nCount) : pContainer_(pContainer)
 		{
 			// память выделим под известное количество связей в AllocateLinks()
 			m_LinkInfo.resize(nCount);

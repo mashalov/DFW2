@@ -7,7 +7,7 @@ using namespace DFW2;
 
 ptrdiff_t CSerializerDataSourceContainer::ItemsCount() const
 {
-	return m_pContainer->Count();
+	return pContainer_->Count();
 }
 
 bool CSerializerDataSourceContainer::NextItem()
@@ -21,15 +21,15 @@ bool CSerializerDataSourceContainer::NextItem()
 
 CDevice* CSerializerDataSourceContainer::GetDevice() const
 {
-	if (m_pContainer->Count())
-		return m_pContainer->GetDeviceByIndex(0);
+	if (pContainer_->Count())
+		return pContainer_->GetDeviceByIndex(0);
 	else
 		return CSerializerDataSourceBase::GetDevice();
 }
 
 void CSerializerDataSourceContainer::UpdateSerializer(CSerializerBase* pSerializer)
 {
-	m_pContainer->GetDeviceByIndex(nItemIndex)->UpdateSerializer(pSerializer);
+	pContainer_->GetDeviceByIndex(nItemIndex)->UpdateSerializer(pSerializer);
 }
 
 const char* CSerializerBase::GetClassName()

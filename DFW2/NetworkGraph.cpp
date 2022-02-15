@@ -517,7 +517,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 		Count() > 0 ? 100.0 * nSuperNodesCount / Count() : 0.0));
 
 	// перестраиваем связи суперузлов с ветвями:
-	m_SuperLinks.emplace_back(m_Links[0].m_pContainer, Count());
+	m_SuperLinks.emplace_back(m_Links[0].pContainer_, Count());
 	CMultiLink& pBranchSuperLink(m_SuperLinks.back());
 
 	// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
@@ -609,14 +609,14 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	for (auto&& multilink : m_Links)
 	{
 		// если ссылка на контейнер ветвей - пропускаем (обработали выше отдельно)
-		if (multilink.m_pContainer->GetType() == DEVTYPE_BRANCH)
+		if (multilink.pContainer_->GetType() == DEVTYPE_BRANCH)
 			continue;
 		// определяем индекс ссылки один-к-одному в контейнере, с которым связаны узлы
 		// для поиска индекса контейнер запрашиваем по типу связи "Узел"
-		ptrdiff_t nLinkIndex = multilink.m_pContainer->GetSingleLinkIndex(DEVTYPE_NODE);
+		ptrdiff_t nLinkIndex = multilink.pContainer_->GetSingleLinkIndex(DEVTYPE_NODE);
 
 		// создаем дополнительную мультисвязь и добавляем в список связей суперузлов
-		m_SuperLinks.emplace_back(multilink.m_pContainer, Count());
+		m_SuperLinks.emplace_back(multilink.pContainer_, Count());
 		CMultiLink& pSuperLink(m_SuperLinks.back());
 		// для хранения оригинальных связей устройств с узлами используем карту устройство-устройство
 		m_OriginalLinks.push_back(std::make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));

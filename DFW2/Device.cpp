@@ -793,7 +793,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 #else
 		if(!pRetDev)
 		{
-			const LINKSTOMAP& ToLinks{ m_pContainer->m_ContainerProps.m_LinksTo };
+			const LINKSTOMAP& ToLinks{ pContainer_->m_ContainerProps.m_LinksTo };
 			auto&& itTo{ ToLinks.find(eDevType) };
 			if (itTo != ToLinks.end())
 				pRetDev = GetSingleLink(itTo->second.nLinkIndex);
