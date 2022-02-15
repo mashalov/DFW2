@@ -8,13 +8,13 @@ using namespace DFW2;
 CDeviceId::CDeviceId() {}
 
 // конструктор с определением Id
-CDeviceId::CDeviceId(ptrdiff_t nId) : m_Id(nId)
+CDeviceId::CDeviceId(ptrdiff_t nId) : Id_(nId)
 {
 }
 
 const char* CDeviceId::GetVerbalName() const
 {
-	return m_strVerbalName.c_str();
+	return VerbalName_.c_str();
 		
 }
 
@@ -23,35 +23,35 @@ void CDeviceId::UpdateVerbalName()
 {
 	// если имя не пустое, формируется подробное имя в формате Id - [Имя]
 	// если имя пустое - просто Id
-	m_strVerbalName = (m_strName.length() ? fmt::format("{}-[{}]", m_Id, m_strName) : fmt::format("{}", m_Id));
+	VerbalName_ = (Name_.length() ? fmt::format("{}-[{}]", Id_, Name_) : fmt::format("{}", Id_));
 }
 
 void CDeviceId::SetName(std::string_view Name)
 {
 	// при изменении имени перестраиваем подробное имя
-	m_strName = Name;
+	Name_ = Name;
 	UpdateVerbalName();
 }
 
 void CDeviceId::SetDBIndex(ptrdiff_t nIndex)
 {
-	m_DBIndex = nIndex;
+	DBIndex_ = nIndex;
 }
 
 ptrdiff_t CDeviceId::GetDBIndex() const
 {
-	return m_DBIndex;
+	return DBIndex_;
 }
 
 
 ptrdiff_t CDeviceId::GetId() const
 {
-	return m_Id;
+	return Id_;
 }
 
 const char* CDeviceId::GetName() const
 {
-	return m_strName.c_str();
+	return Name_.c_str();
 }
 
 void CDeviceId::SetId(ptrdiff_t nId)
@@ -59,6 +59,6 @@ void CDeviceId::SetId(ptrdiff_t nId)
 	// при изменении идентификатора перестраиваем подробное имя
 	// эта функция может нарушить сортировку в контейнере !
 	// не вызывать после сборки контейнера !
-	m_Id = nId;
+	Id_ = nId;
 	UpdateVerbalName();
 }

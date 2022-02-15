@@ -29,7 +29,7 @@ bool GetConstFromField(const ConstVarsInfo& VarsInfo)
 bool GetConstFromField(const CConstVarIndex& VarInfo )
 {
 	bool bRes = false;
-	if (VarInfo.m_DevVarType == eDEVICEVARIABLETYPE::eDVT_CONSTSOURCE)
+	if (VarInfo.DevVarType_ == eDEVICEVARIABLETYPE::eDVT_CONSTSOURCE)
 		bRes = true;
 	return bRes;
 }
@@ -52,7 +52,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 			IColPtr spColState = spSourceCols->Item(L"sta");
 			for (const auto& col : CustomDeviceContainer.m_ContainerProps.m_ConstVarMap)
 				if (GetConstFromField(col.second))
-					Cols.push_back(std::make_pair(spSourceCols->Item(col.first.c_str()), col.second.m_nIndex));
+					Cols.push_back(std::make_pair(spSourceCols->Item(col.first.c_str()), col.second.Index_));
 
 			// count model types in storage
 

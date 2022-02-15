@@ -24,7 +24,7 @@ namespace DFW2
 		static long DLLProcessBlockDiscontinuity(BuildEquationsObjects *pBEObjs, long nBlockIndex);
 		static long DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockIndex);
 
-		CCustomDeviceContainer *Container() { return static_cast<CCustomDeviceContainer*>(m_pContainer); }
+		CCustomDeviceContainer *Container() { return static_cast<CCustomDeviceContainer*>(pContainer_); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 
 	public:

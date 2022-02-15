@@ -59,29 +59,29 @@ namespace DFW2
 	class CVarIndexBase
 	{
 	public:
-		ptrdiff_t m_nIndex;
-		CVarIndexBase(ptrdiff_t nIndex) : m_nIndex(nIndex) { };
+		ptrdiff_t Index_;
+		explicit CVarIndexBase(ptrdiff_t Index) : Index_(Index) { };
 	};
 
 	// описание переменной состояния
 	class CVarIndex : public CVarIndexBase
 	{
 	public:
-		bool m_bOutput;														// признак вывода переменной в результаты
-		double m_dMultiplier;												// множитель переменной
-		eVARUNITS m_Units;													// единицы измерения переменной
-		CVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits) : CVarIndexBase(nIndex),
-			m_bOutput(true),
-			m_dMultiplier(1.0),
-			m_Units(eVarUnits)
+		bool Output_;													// признак вывода переменной в результаты
+		double Multiplier_;												// множитель переменной
+		eVARUNITS Units_;												// единицы измерения переменной
+		CVarIndex(ptrdiff_t Index, eVARUNITS eVarUnits) : CVarIndexBase(Index),
+			Output_(true),
+			Multiplier_(1.0),
+			Units_(eVarUnits)
 		{
 
 		};
 
-		CVarIndex(ptrdiff_t nIndex, bool bOutput, eVARUNITS eVarUnits) : CVarIndexBase(nIndex),
-			m_bOutput(bOutput),
-			m_dMultiplier(1.0),
-			m_Units(eVarUnits)
+		CVarIndex(ptrdiff_t Index, bool Output, eVARUNITS eVarUnits) : CVarIndexBase(Index),
+			Output_(Output),
+			Multiplier_(1.0),
+			Units_(eVarUnits)
 		{
 
 		};
@@ -91,20 +91,20 @@ namespace DFW2
 	class CConstVarIndex : public CVarIndex
 	{
 	public:
-		eDEVICEVARIABLETYPE m_DevVarType;
-		CConstVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits, eDEVICEVARIABLETYPE eDevVarType) : CVarIndex(nIndex, false, eVarUnits),
-			m_DevVarType(eDevVarType) { }
-		CConstVarIndex(ptrdiff_t nIndex, eVARUNITS eVarUnits, bool bOutput, eDEVICEVARIABLETYPE eDevVarType) : CVarIndex(nIndex, bOutput, eVarUnits),
-			m_DevVarType(eDevVarType) { }
+		eDEVICEVARIABLETYPE DevVarType_;
+		CConstVarIndex(ptrdiff_t Index, eVARUNITS eVarUnits, eDEVICEVARIABLETYPE eDevVarType) : CVarIndex(Index, false, eVarUnits),
+			DevVarType_(eDevVarType) { }
+		CConstVarIndex(ptrdiff_t Index, eVARUNITS eVarUnits, bool Output, eDEVICEVARIABLETYPE eDevVarType) : CVarIndex(Index, Output, eVarUnits),
+			DevVarType_(eDevVarType) { }
 	};
 
 	// описание внешней переменной
 	class CExtVarIndex : public CVarIndexBase
 	{
 	public:
-		eDFW2DEVICETYPE m_DeviceToSearch;
+		eDFW2DEVICETYPE DeviceToSearch_;
 		CExtVarIndex(ptrdiff_t nIndex, eDFW2DEVICETYPE eDeviceToSearch) : CVarIndexBase(nIndex),
-			m_DeviceToSearch(eDeviceToSearch)
+			DeviceToSearch_(eDeviceToSearch)
 		{
 
 		}

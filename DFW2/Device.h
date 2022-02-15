@@ -31,9 +31,12 @@ namespace DFW2
 	// с помощью него можно обходить связанные с данным устройства
 	class CLinkPtrCount
 	{
+	friend class CDeviceContainer;
+	friend class CMultiLink;
+	protected:
+		CDevice  **pPointer_ = nullptr;		// вектор указателей на связанные устройства
+		size_t	 Count_ = 0;				// количество связанных устройств
 	public:
-		CDevice  **m_pPointer = nullptr;		// вектор указателей на связанные устройства
-		size_t	 m_nCount = 0;					// количество связанных устройств
 
 		// последовательное получение очередного связанного устройства _включенного_в_матрицу
 		template<typename T>
@@ -57,10 +60,10 @@ namespace DFW2
 			if (!p.pointer)
 			{
 				// если передан указатель на null
-				if (m_nCount)
+				if (Count_)
 				{
 					// если связи есть - возвращаем первую
-					p.pointer = reinterpret_cast<T**>(m_pPointer);
+					p.pointer = reinterpret_cast<T**>(pPointer_);
 					return true;
 				}
 				else
@@ -77,26 +80,39 @@ namespace DFW2
 			p.pointer++;
 
 			// проверяем, не достили ли конца списка связей
-			if (reinterpret_cast<CDevice**>(p.pointer) < m_pPointer + m_nCount)
+			if (reinterpret_cast<CDevice**>(p.pointer) < end())
 				return true;
 
 			// если достигли - завершаем обход
 			p.pointer = nullptr;
 			return false;
 		}
+
+		inline size_t Count() const { return Count_; }
+
+		inline CDevice** begin() const { return pPointer_; }
+		inline CDevice** end() const { return pPointer_ + Count(); }
 	};
 
 	// элемент для хранения/передачи списка связанных устройств одного типа
 	struct SingleLinksRange
 	{
-		CDevice **m_ppLinkStart = nullptr;		// начало и конец списка устройств
-		CDevice **m_ppLinkEnd   = nullptr;
+	protected:
+		CDevice **ppLinkStart_ = nullptr;		// начало и конец списка устройств
+		CDevice **ppLinkEnd_   = nullptr;
+	public:
+
 		SingleLinksRange() {}
 		// конструктор с заданием вектора начала и конца
-		SingleLinksRange(CDevice **ppStart, CDevice **ppEnd) : m_ppLinkStart(ppStart), m_ppLinkEnd(ppEnd)
+		SingleLinksRange(CDevice **ppStart, CDevice **ppEnd) : ppLinkStart_(ppStart), ppLinkEnd_(ppEnd)
 		{
-			_ASSERTE(m_ppLinkStart <= m_ppLinkEnd);
+			_ASSERTE(ppLinkStart_ <= ppLinkEnd_);
 		}
+
+		inline ptrdiff_t Count() const { return ppLinkEnd_ - ppLinkStart_; }
+		inline CDevice** begin() const { return ppLinkStart_; }
+		inline CDevice** end() const { return ppLinkStart_ + Count(); }
+
 	};
 
 	// класс связей устройства
@@ -117,39 +133,39 @@ namespace DFW2
 	class CSingleLink
 	{
 	protected:
-		SingleLinksRange m_LinkRange;		// список связей
+		SingleLinksRange LinkRange_;		// список связей
 	public:
 		void SetRange(SingleLinksRange&& LinkRange)
 		{
-			m_LinkRange = LinkRange;
+			LinkRange_ = LinkRange;
 		}
 		const SingleLinksRange& GetLinksRange() const
 		{
-			return m_LinkRange;
+			return LinkRange_;
 		}
 
 		// задать связь с индексом
-		bool SetLink(ptrdiff_t nIndex, CDevice *pDevice) const
+		bool SetLink(ptrdiff_t Index, CDevice *pDevice) const
 		{
 			// проверка на корректность индекса в отладке и в релизе
 			// потому что вызовов в процессе расчета нет
-			if (nIndex >= 0 && nIndex < m_LinkRange.m_ppLinkEnd - m_LinkRange.m_ppLinkStart)
+			if (Index >= 0 && Index < LinkRange_.Count())
 			{
-				*(m_LinkRange.m_ppLinkStart + nIndex) = pDevice;
+				*(LinkRange_.begin() + Index) = pDevice;
 				return true;
 			}
 			return false;
 		}
 
 		// получить связь с индексом
-		CDevice* GetLink(ptrdiff_t nIndex) const
+		CDevice* GetLink(ptrdiff_t Index) const
 		{
 #ifdef _DEBUG
-			if (nIndex >= 0 && nIndex < m_LinkRange.m_ppLinkEnd - m_LinkRange.m_ppLinkStart)
+			if (Index >= 0 && Index < LinkRange_.Count())
 			{
 #endif
 				// проверка на корректность индекса только в отладке для производительности
-				return *(m_LinkRange.m_ppLinkStart + nIndex);
+				return *(LinkRange_.begin() + Index);
 #ifdef _DEBUG
 			}
 			else
@@ -259,19 +275,19 @@ namespace DFW2
 	class CDevice : public CDeviceId
 	{
 	protected:
-		CDeviceContainer* m_pContainer = nullptr;										// контейнер устройства
-		CSingleLink m_DeviceLinks;														// связи устройств один к одному
-		eDEVICEFUNCTIONSTATUS m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;		// статус инициализации устройства (заполняется в Init)
+		CDeviceContainer* pContainer_ = nullptr;										// контейнер устройства
+		CSingleLink DeviceLinks_;														// связи устройств один к одному
+		eDEVICEFUNCTIONSTATUS eInitStatus_ = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;		// статус инициализации устройства (заполняется в Init)
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);						// инициализация устройства
-		ptrdiff_t m_nMatrixRow = 0;														// строка в матрице с которой начинаются уравнения устройства
-		eDEVICESTATE m_State = eDEVICESTATE::DS_ON;										// состояние устройства
-		eDEVICESTATECAUSE m_StateCause = eDEVICESTATECAUSE::DSC_INTERNAL;				// причина изменения состояния устройства
-		STATEPRIMITIVESLIST m_StatePrimitives;
-		PRIMITIVESVEC m_Primitives;
+		ptrdiff_t MatrixRow_ = 0;														// строка в матрице с которой начинаются уравнения устройства
+		eDEVICESTATE State_ = eDEVICESTATE::DS_ON;										// состояние устройства
+		eDEVICESTATECAUSE StateCause_ = eDEVICESTATECAUSE::DSC_INTERNAL;				// причина изменения состояния устройства
+		STATEPRIMITIVESLIST StatePrimitives_;
+		PRIMITIVESVEC Primitives_;
 		bool InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		bool InitExternalVariable(VariableIndexExternalOptional& OptExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
 		bool InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType = DEVTYPE_UNKNOWN);
-		const CSingleLink& GetSingleLinks() { return m_DeviceLinks; }
+		const CSingleLink& GetSingleLinks() { return DeviceLinks_; }
 
 		// формирование подробного имени устройства. По умолчанию учитывается описание типа устройства
 		void UpdateVerbalName() override;
@@ -280,8 +296,9 @@ namespace DFW2
 		static CheckMasterDeviceFunction CheckMasterDeviceDiscontinuity;
 		eDEVICEFUNCTIONSTATUS MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice);
 		void DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber);
-		ptrdiff_t m_nZeroCrossings = 0;								// количество zero-crossings, короторе вызвало устройство
-		ptrdiff_t m_nDiscontinuityRequests = 0;						// количество запросов на обработку разрыва
+		ptrdiff_t ZeroCrossings_ = 0;								// количество zero-crossings, короторе вызвало устройство
+		ptrdiff_t DiscontinuityRequests_ = 0;						// количество запросов на обработку разрыва
+		ptrdiff_t InContainerIndex_ = -1;
 	public:
 
 		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
@@ -293,10 +310,10 @@ namespace DFW2
 		// функция маппинга указателя на переменную к индексу переменной
 		// Должна быть перекрыта во всех устройствах, которые наследованы от CDevice
 		// внутри этой функции также делается "наследование" переменных
-		virtual double* GetVariablePtr(ptrdiff_t nVarIndex);
+		virtual double* GetVariablePtr(ptrdiff_t VarIndex);
 		double* GetVariablePtr(std::string_view VarName);
 		virtual VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec);
-		VariableIndex& GetVariable(ptrdiff_t nVarIndex);
+		VariableIndex& GetVariable(ptrdiff_t VarIndex);
 		// Объединяет заданный список переменных данного устройства, список переменных примитивов и дочерние переменные
 		VariableIndexRefVec& JoinVariables(const VariableIndexRefVec& ThisVars, VariableIndexRefVec& ChildVec);
 		// функция маппинга указателя на переменную к индексу переменной
@@ -318,16 +335,16 @@ namespace DFW2
 		double GetValue(std::string_view VarName) const;
 		double SetValue(std::string_view VarName, double Value);
 
-		bool SetSingleLink(ptrdiff_t nIndex, CDevice* pDevice);
-		CDevice* GetSingleLink(ptrdiff_t nIndex);
+		bool SetSingleLink(ptrdiff_t Index, CDevice* pDevice);
+		CDevice* GetSingleLink(ptrdiff_t Index);
 		CDevice* GetSingleLink(eDFW2DEVICETYPE eDevType);
-		void SetContainer(CDeviceContainer* pContainer);
-		CDeviceContainer* GetContainer() { return m_pContainer; }
-		const CDeviceContainer* GetContainer() const { return m_pContainer; }
+		void SetContainer(CDeviceContainer* pContainer, ptrdiff_t Index);
+		inline ptrdiff_t InContainerIndex() const { return InContainerIndex_; }
+		CDeviceContainer* GetContainer() { return pContainer_; }
+		const CDeviceContainer* GetContainer() const { return pContainer_; }
 		virtual ~CDevice() = default;
 		virtual bool LinkToContainer(CDeviceContainer* pContainer, CDeviceContainer* pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		void IncrementLinkCounter(ptrdiff_t nLinkIndex);
-		ptrdiff_t m_nInContainerIndex = -1;
 		// получить связи устроства из слоя nLinkIndex
 		const  CLinkPtrCount* const GetLink(ptrdiff_t nLinkIndex);
 		void ResetVisited();
@@ -360,24 +377,24 @@ namespace DFW2
 		// предварительная однократная инициалиация устройства
 		virtual eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckInit(CDynaModel* pDynaModel);
-		eDEVICEFUNCTIONSTATUS Initialized() { return m_eInitStatus; }
+		eDEVICEFUNCTIONSTATUS Initialized() { return eInitStatus_; }
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel);
-		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() { return m_eInitStatus; }
+		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() { return eInitStatus_; }
 		// ставит статус обработки в "неготово", для того чтобы различать устройства с обработанными разрывами
-		void UnprocessDiscontinuity() { m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY; }
+		void UnprocessDiscontinuity() { eInitStatus_ = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY; }
 
 		// функция ремапа номера уравнения устройства в номер уравнения в Якоби
 		inline ptrdiff_t A(ptrdiff_t nOffset) const
 		{
 			if (!AssignedToMatrix())
 				throw dfw2error("CDevice::A - access to device not in matrix");
-			return m_nMatrixRow + nOffset;
+			return MatrixRow_ + nOffset;
 		}
 
 		// возвращает true если для устройства есть уравнения в системе
 		inline bool AssignedToMatrix() const
 		{
-			return m_nMatrixRow != nIndexUnassigned;
+			return MatrixRow_ != IndexUnassigned;
 		}
 		virtual void InitNordsiek(CDynaModel* pDynaModel);
 		virtual void Predict() {};
@@ -388,10 +405,10 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		// вызывается после успешного выполнения шага для расчета зависимых переменных
 		virtual void FinishStep();
-		virtual eDEVICESTATE GetState() const { return m_State; }
+		virtual eDEVICESTATE GetState() const { return State_; }
 		bool IsStateOn() const { return GetState() == eDEVICESTATE::DS_ON; }
 		bool IsPermanentOff() const { return GetState() == eDEVICESTATE::DS_OFF && GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT; }
-		eDEVICESTATECAUSE GetStateCause() const { return m_StateCause; }
+		eDEVICESTATECAUSE GetStateCause() const { return StateCause_; }
 		virtual eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr);
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 
@@ -453,11 +470,11 @@ namespace DFW2
 		void RegisterPrimitive(CDynaPrimitive *pPrimitive);
 
 		template<typename T>
-		static void CheckIndex(const T& Container, ptrdiff_t nIndex, const char* cszErrorMsg = nullptr)
+		static void CheckIndex(const T& Container, ptrdiff_t Index, const char* cszErrorMsg = nullptr)
 		{
-			if (nIndex < 0 || nIndex >= static_cast<ptrdiff_t>(Container.size()))
+			if (Index < 0 || Index >= static_cast<ptrdiff_t>(Container.size()))
 				throw dfw2error(fmt::format("{} - index check failed: index {} container size {}",
-					cszErrorMsg ? cszErrorMsg : "CDevice::CheckIndex", nIndex, Container.size()));
+					cszErrorMsg ? cszErrorMsg : "CDevice::CheckIndex", Index, Container.size()));
 		}
 
 		bool CheckLimits(double& Min, double& Max);
@@ -466,17 +483,17 @@ namespace DFW2
 #ifdef _DEBUG
 		static char UnknownVarIndex[80];
 #endif
-		static const ptrdiff_t nIndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();
+		static const ptrdiff_t IndexUnassigned = (std::numeric_limits<ptrdiff_t>::max)();
 
 		// Инкремент zero-crossing
-		void IncrementZeroCrossings() { m_nZeroCrossings++; }
+		void IncrementZeroCrossings() { ZeroCrossings_++; }
 		// Ввернуть накопленное значение zero-crossing
-		ptrdiff_t GetZeroCrossings() const { return m_nZeroCrossings; }
+		ptrdiff_t GetZeroCrossings() const { return ZeroCrossings_; }
 
 		// Инкремент запросов обработки разрывов
-		void IncrementDiscontinuityRequests() { m_nDiscontinuityRequests++; }
+		void IncrementDiscontinuityRequests() { DiscontinuityRequests_++; }
 		// Ввернуть накопленное значение zero-crossing
-		ptrdiff_t GetDiscontinuityRequests() const { return m_nDiscontinuityRequests; }
+		ptrdiff_t GetDiscontinuityRequests() const { return DiscontinuityRequests_; }
 
 		static constexpr const char* m_cszName = "Name";
 		static constexpr const char* m_cszname = "name";

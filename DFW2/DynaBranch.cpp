@@ -9,9 +9,9 @@ using namespace DFW2;
 // Обновляет имя ветви
 void CDynaBranch::UpdateVerbalName()
 {
-	m_strVerbalName = fmt::format("{} - {}{} [{}]", key.Ip, key.Iq, (key.Np ? fmt::format(" ({})", key.Np) : ""), GetName());
-	if (m_pContainer)
-		m_strVerbalName = fmt::format("{} {}", m_pContainer->GetTypeName(), m_strVerbalName);
+	VerbalName_ = fmt::format("{} - {}{} [{}]", key.Ip, key.Iq, (key.Np ? fmt::format(" ({})", key.Np) : ""), GetName());
+	if (pContainer_)
+		VerbalName_ = fmt::format("{} {}", pContainer_->GetTypeName(), VerbalName_);
 }
 
 // Расчет проводимостей ветви для матрицы проводимостей
@@ -80,12 +80,12 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom)
 {
 	bool bRes{ false };
-	if (m_pContainer)
+	if (pContainer_)
 	{
 		bRes = true;
 
 		// идем по контейнеру ветвей
-		for (auto&& it : *m_pContainer)
+		for (auto&& it : *pContainer_)
 		{
 			CDynaBranch* pBranch{ static_cast<CDynaBranch*>(it) };
 			pBranch->UpdateVerbalName();
@@ -140,12 +140,12 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			// формируем буфер под ссылки в контейнере узлов
 			pContainer->AllocateLinks(ptrdiff_t(0));
 			// проходим по контейнеру ветвей
-			for (auto&& it : *m_pContainer)
+			for (auto&& it : *pContainer_)
 			{
 				const auto& pBranch{ static_cast<CDynaBranch*>(it) };
 				// и добавляем к узлам в контейнере связи с ветвями
-				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIp->m_nInContainerIndex, pBranch);
-				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIq->m_nInContainerIndex, pBranch);
+				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIp->InContainerIndex(), pBranch);
+				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIq->InContainerIndex(), pBranch);
 			}
 			// сбрасываем счетчики ссылок (заканчиваем связывание)
 			pContainer->RestoreLinks(ptrdiff_t(0));
@@ -501,7 +501,7 @@ bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 	if (bDisconnected)
 	{
 		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszSwitchedOffBranch,
-			m_pContainer->GetTypeName(),
+			pContainer_->GetTypeName(),
 			GetVerbalName(),
 			pSwitchOffMode,
 			pNode->GetVerbalName()));

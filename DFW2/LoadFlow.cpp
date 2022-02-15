@@ -1283,7 +1283,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 		// сбрасываем суммарные ограничения Q генераторов
 		pNode->LFQminGen = pNode->LFQmaxGen = 0.0;
 
-		if (pGenLink->m_nCount)
+		if (pGenLink->Count())
 		{
 			pNode->Pg = pNode->Qg = 0.0;
 			pNode->LFQmin = pNode->LFQmax = 0.0;
@@ -1343,7 +1343,7 @@ void CLoadFlow::UpdateQToGenerators()
 
 		const  CLinkPtrCount* const  pGenLink{ pNode->GetLink(1) };
 		LinkWalker<CDynaPowerInjector> pGen;
-		if (pGenLink->m_nCount)
+		if (pGenLink->Count())
 		{
 			const double Qrange{ pNode->LFQmax - pNode->LFQmin };
 			double Qspread(0.0), Qgmin(0.0), Qgmax(0.0);
@@ -1363,8 +1363,8 @@ void CLoadFlow::UpdateQToGenerators()
 					}
 					else if (pGen->GetType() == eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER)
 					{
-						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->m_nCount;
-						pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->m_nCount;
+						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->Count();
+						pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->Count();
 					}
 					else if (pNode->IsLFTypeSlack())
 					{

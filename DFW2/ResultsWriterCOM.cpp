@@ -106,18 +106,18 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 
 		for (const auto& var : Props.m_VarMap)
 		{
-			if (var.second.m_bOutput)
+			if (var.second.Output_)
 				spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
-					var.second.m_Units,
-					var.second.m_dMultiplier);
+					var.second.Units_,
+					var.second.Multiplier_);
 		}
 
 		for (const auto& var : Props.m_ConstVarMap)
 		{
-			if (var.second.m_bOutput)
+			if (var.second.Output_)
 				spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
-					var.second.m_Units,
-					var.second.m_dMultiplier);
+					var.second.Units_,
+					var.second.Multiplier_);
 		}
 
 		variant_t DeviceIds, ParentIds, ParentTypes;

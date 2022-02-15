@@ -59,13 +59,12 @@ void CDeviceContainer::RemoveDevice(ptrdiff_t nId)
 	}
 }
 
-void CDeviceContainer::SettleDevice(CDevice *pDevice, ptrdiff_t nIndex)
+void CDeviceContainer::SettleDevice(CDevice *pDevice, ptrdiff_t Index)
 {
 	// отмечаем в устройстве его индекс в контейнере
 	// этот индекс необходим для связи уравненеий устройств
-	pDevice->m_nInContainerIndex = nIndex;
 	// сообщаем устройству что оно в контейнере
-	pDevice->SetContainer(this);
+	pDevice->SetContainer(this, Index);
 	// очищаем сет для поиска, так как идет добавление устройств
 	// и сет в конце этого процесса должен быть перестроен заново
 	m_DevSet.clear();
@@ -107,7 +106,7 @@ bool CDeviceContainer::VariableOutputEnable(std::string_view VarName, bool bOutp
 	if (it != m_ContainerProps.m_VarMap.end())
 	{
 		// если нашли - ставим заданный атрибут вывода 
-		it->second.m_bOutput = bOutputEnable;
+		it->second.Output_ = bOutputEnable;
 		return true;
 	}
 	else
@@ -120,7 +119,7 @@ ptrdiff_t CDeviceContainer::GetVariableIndex(std::string_view VarName) const
 	auto fnFind = [this](std::string_view VarName) -> ptrdiff_t
 	{
 		if (auto it{ m_ContainerProps.m_VarMap.find(VarName) }; it != m_ContainerProps.m_VarMap.end())
-			return it->second.m_nIndex;
+			return it->second.Index_;
 		else
 			return -1;
 	};
@@ -139,7 +138,7 @@ ptrdiff_t CDeviceContainer::GetConstVariableIndex(std::string_view VarName) cons
 	auto fnFind = [this](std::string_view VarName) -> ptrdiff_t
 	{
 		if (auto it{ m_ContainerProps.m_ConstVarMap.find(VarName) }; it != m_ContainerProps.m_ConstVarMap.end())
-			return it->second.m_nIndex;
+			return it->second.Index_;
 		else
 			return -1;
 	};
@@ -225,7 +224,7 @@ size_t CDeviceContainer::GetResultVariablesCount()
 	size_t nCount = 0;
 	// определяем простым подсчетом переменных состояния с признаком вывода
 	for (auto&& vit : m_ContainerProps.m_VarMap)
-		if (vit.second.m_bOutput)
+		if (vit.second.Output_)
 			nCount++;
 
 	return nCount;
@@ -402,7 +401,7 @@ void CDeviceContainer::IncrementLinkCounter(CMultiLink& pLink, ptrdiff_t nDevice
 {
 	if (nDeviceIndex >= static_cast<ptrdiff_t>(pLink.m_LinkInfo.size()))
 		throw dfw2error("CDeviceContainer::IncrementLinkCounter - DeviceIndex out of range");
-	pLink.m_LinkInfo[nDeviceIndex].m_nCount++;
+	pLink.m_LinkInfo[nDeviceIndex].Count_++;
 }
 
 // распределяет память под мультисвязи для выбранного индексом типа связей
@@ -418,7 +417,7 @@ void CDeviceContainer::AllocateLinks(CMultiLink& pLink)
 	size_t nLinksSize = 0;
 
 	for (auto&& it : pLink.m_LinkInfo)
-		nLinksSize += it.m_nCount;
+		nLinksSize += it.Count_;
 
 	// выделяем память под нужное количество связей
 	pLink.m_ppPointers = std::make_unique<DevicePtr>(pLink.m_nCount = nLinksSize);
@@ -429,9 +428,9 @@ void CDeviceContainer::AllocateLinks(CMultiLink& pLink)
 	{
 		// для связей каждого из устройств
 		// задаем адрес начала его связей
-		it.m_pPointer = ppLink;
+		it.pPointer_ = ppLink;
 		// и резервируем место под конкретное количество связей этого устройства
-		ppLink += it.m_nCount;
+		ppLink += it.Count_;
 	}
 }
 
@@ -449,7 +448,7 @@ void CDeviceContainer::RestoreLinks(CMultiLink& pLink)
 	// обходим все связи
 	// указатель смещаем в начальное значение просто вычитая количество добавленных элементов
 	for (auto && it : pLink.m_LinkInfo)
-		it.m_pPointer -= it.m_nCount;
+		it.pPointer_ -= it.Count_;
 }
 
 // добавляет новую связь заданного типа для выбранного индексом устройства
@@ -464,9 +463,9 @@ void CDeviceContainer::AddLink(CMultiLink& pLink, ptrdiff_t nDeviceIndex, CDevic
 	// извлекаем данные связи данного устройства
 	CLinkPtrCount* const pLinkPtr{ pLink.GetAddLink(nDeviceIndex) };
 	// в текущий указатель связей вводим указатель на связываемое устройство
-	*pLinkPtr->m_pPointer = pDevice;
+	*pLinkPtr->pPointer_ = pDevice;
 	// переходим к следующей связи
-	pLinkPtr->m_pPointer++;
+	pLinkPtr->pPointer_++;
 }
 
 void CDeviceContainer::InitNordsieck(CDynaModel *pDynaModel)
@@ -716,8 +715,9 @@ void CMultiLink::Join(CMultiLink& pLink)
 	// для каждого устройства в мультисвязи
 	while (pLeft < pLeftEnd)
 	{
-		CDevice **ppB = pLeft->m_pPointer;
-		CDevice **ppE = pLeft->m_pPointer + pLeft->m_nCount;
+		CDevice* const* ppB{ pLeft->begin() };
+		CDevice* const* ppE{ pLeft->end() };
+
 		CDevice **ppNewPtrInitial = ppNewPtr;
 
 		// обходим устройства, связанные с pLeft
@@ -728,8 +728,8 @@ void CMultiLink::Join(CMultiLink& pLink)
 			ppNewPtr++;
 		}
 
-		ppB = pRight->m_pPointer;
-		ppE = pRight->m_pPointer + pRight->m_nCount;
+		ppB = pRight->begin();
+		ppE = pRight->end();
 
 		// обходим устройства из объединяемой мультисвязи
 		while (ppB < ppE)
@@ -739,8 +739,8 @@ void CMultiLink::Join(CMultiLink& pLink)
 			ppNewPtr++;
 		}
 
-		pLeft->m_pPointer = ppNewPtrInitial;		// обновляем параметры мультисвязи текущего устройства :
-		pLeft->m_nCount += pRight->m_nCount;		// указатель на начало и количество связанных устройств
+		pLeft->pPointer_ = ppNewPtrInitial;			// обновляем параметры мультисвязи текущего устройства :
+		pLeft->Count_ += pRight->Count();			// указатель на начало и количество связанных устройств
 
 		pLeft++;									// переходим к следующим устройствам в мультизсвязи
 		pRight++;									// размерности основной и объединяемой мультисвязей одинаковы

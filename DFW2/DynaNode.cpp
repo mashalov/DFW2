@@ -466,9 +466,8 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 	struct RightVector* pRv = pDynaModel->GetRightVector(A(0));
-	ptrdiff_t nEquationsCount = m_pContainer->EquationsCount();
 
 	VariableIndexRefVec seed;
 	for (auto&& var : GetVariables(seed))
@@ -566,7 +565,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 	m_bLowVoltage = V < (LOW_VOLTAGE - LOW_VOLTAGE_HYST);
 	PickV0();
 
-	if (GetLink(1)->m_nCount > 0)					// если к узлу подключены генераторы, то СХН генераторов не нужна и мощности генерации 0
+	if (GetLink(1)->Count() > 0)						// если к узлу подключены генераторы, то СХН генераторов не нужна и мощности генерации 0
 		Pg = Qg = Pgr = Qgr = 0.0;
 	else if (Equal(Pg, 0.0) && Equal(Qg, 0.0))		// если генераторы не подключены, и мощность генерации равна нулю - СХН генераторов не нужна
 		Pgr = Qgr = 0.0;
@@ -773,7 +772,7 @@ void CDynaNodeContainer::CalculateShuntParts()
 		pNode->LRCShuntPartSuper = pNode->LRCShuntPart;
 		pNode->VshuntPartBelowSuper = pNode->VshuntPartBelow;
 		pNode->V0Super = pNode->V0;
-		const CLinkPtrCount* const pLink{ m_SuperLinks[0].GetLink(node->m_nInContainerIndex) };
+		const CLinkPtrCount* const pLink{ m_SuperLinks[0].GetLink(node->InContainerIndex()) };
 		LinkWalker<CDynaNodeBase> pSlaveNode;
 		// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
 		while (pLink->In(pSlaveNode))
@@ -1474,8 +1473,8 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 void CDynaNodeBase::ProcessTopologyRequest()
 {
-	if (m_pContainer)
-		static_cast<CDynaNodeContainer*>(m_pContainer)->ProcessTopologyRequest();
+	if (pContainer_)
+		static_cast<CDynaNodeContainer*>(pContainer_)->ProcessTopologyRequest();
 }
 
 // добавляет ветвь в список ветвей с нулевым сопротивлением суперузла
@@ -1488,7 +1487,7 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 
 	if (pBranch->IsZeroImpedance())
 	{
-		if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(m_pContainer)->GetZeroBranchesEnd())
+		if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(pContainer_)->GetZeroBranchesEnd())
 			throw dfw2error("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun");
 
 		// если ветвь имеет сопротивление ниже минимального 
@@ -1587,10 +1586,10 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		return;
 
 	const CLinkPtrCount* const pSuperNodeLink{ GetSuperLink(0) };
-	CDevice** ppNodeEnd{ pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount };
+	const auto ppNodeEnd{ pSuperNodeLink->end() };
 
 	// не выполняем также и для суперзулов, в которых нет узлов
-	if (pSuperNodeLink->m_pPointer == ppNodeEnd)
+	if (!pSuperNodeLink->Count())
 		return;
 
 	// создаем данные суперузла
@@ -1599,17 +1598,17 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	CDynaNodeBase::ZeroLFData::ZeroSuperNodeData *pZeroSuperNode{ ZeroLF.ZeroSupeNode.get() };
 
 	// создаем данные для построения Y : сначала создаем вектор строк матрицы
-	pZeroSuperNode->LFMatrix.reserve(ppNodeEnd - pSuperNodeLink->m_pPointer);
+	pZeroSuperNode->LFMatrix.reserve(ppNodeEnd - pSuperNodeLink->begin());
 
 	// отыщем узел с максимальным количеством связей
 	// поиск начинаем с узла-представителя суперзула
-	std::pair<CDynaNodeBase*, size_t>  pMaxRankNode{ this, GetLink(0)->m_nCount };
+	std::pair<CDynaNodeBase*, size_t>  pMaxRankNode{ this, GetLink(0)->Count() };
 
 	// находим узел с максимальным числом связей
-	for (CDevice** ppSlaveDev = pSuperNodeLink->m_pPointer; ppSlaveDev < ppNodeEnd; ppSlaveDev++)
+	for (CDevice* const* ppSlaveDev = pSuperNodeLink->begin(); ppSlaveDev < ppNodeEnd; ppSlaveDev++)
 	{
 		const auto& pSlaveNode{ static_cast<CDynaNodeBase*>(*ppSlaveDev) };
-		if (size_t nLinkCount{ pSlaveNode->GetLink(0)->m_nCount }; pMaxRankNode.second < nLinkCount)
+		if (size_t nLinkCount{ pSlaveNode->GetLink(0)->Count() }; pMaxRankNode.second < nLinkCount)
 			pMaxRankNode = { pSlaveNode, nLinkCount };
 	}
 
@@ -1633,7 +1632,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	};
 
 	AddAndIndexNode(this);
-	for (CDevice** ppSlaveDev = pSuperNodeLink->m_pPointer; ppSlaveDev < ppNodeEnd; ppSlaveDev++)
+	for (CDevice* const* ppSlaveDev = pSuperNodeLink->begin(); ppSlaveDev < ppNodeEnd; ppSlaveDev++)
 		AddAndIndexNode(static_cast<CDynaNodeBase*>(*ppSlaveDev));
 
 	// считаем общее количество ветвей из данного суперузла
@@ -1760,7 +1759,7 @@ void CDynaNodeBase::RequireSuperNodeLF()
 {
 	if (m_pSuperNodeParent)
 		throw dfw2error(fmt::format("CDynaNodeBase::RequireSuperNodeLF - node {} is not super node", GetVerbalName()));
-	static_cast<CDynaNodeContainer*>(m_pContainer)->RequireSuperNodeLF(this);
+	static_cast<CDynaNodeContainer*>(pContainer_)->RequireSuperNodeLF(this);
 }
 
 void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
@@ -1905,7 +1904,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		return; // это не суперузел
 
 	const CLinkPtrCount* const pSuperNodeLink{ GetSuperLink(0) };
-	if (!pSuperNodeLink->m_nCount)
+	if (!pSuperNodeLink->Count())
 		return; // это суперузел, но у него нет связей
 
 	// Создаем граф с узлами ребрами от типов расчетных узлов и ветвей
@@ -1913,14 +1912,14 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	using NodeType = GraphType::GraphNodeBase;
 	using EdgeType = GraphType::GraphEdgeBase;
 	// Создаем вектор внутренних узлов суперузла, включая узел представитель
-	std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(pSuperNodeLink->m_nCount + 1);
+	std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(pSuperNodeLink->Count() + 1);
 	// Создаем вектор ребер за исключением параллельных ветвей
 	std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
-	CDevice** ppNodeEnd{ pSuperNodeLink->m_pPointer + pSuperNodeLink->m_nCount };
+	const auto ppNodeEnd{ pSuperNodeLink->end() };
 	NodeType *pNode = pGraphNodes.get();
 	GraphType gc;
 	// Вводим узлы в граф. В качестве идентификатора узла используем адрес объекта
-	for (CDevice **ppDev = pSuperNodeLink->m_pPointer; ppDev < ppNodeEnd; ppDev++, pNode++)
+	for (CDevice* const* ppDev = pSuperNodeLink->begin(); ppDev < ppNodeEnd; ppDev++, pNode++)
 		gc.AddNode(pNode->SetId(static_cast<CDynaNodeBase*>(*ppDev)));
 	// добавляем узел представитель
 	gc.AddNode(pNode->SetId(this));

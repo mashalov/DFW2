@@ -7,10 +7,10 @@ using namespace DFW2;
 // к которому устройство принадлежит. Если контейнера нет - тип неизвестен
 eDFW2DEVICETYPE CDevice::GetType() const
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
-	if (m_pContainer)
-		return m_pContainer->GetType();
+	if (pContainer_)
+		return pContainer_->GetType();
 	else
 		return eDFW2DEVICETYPE::DEVTYPE_UNKNOWN;
 }
@@ -18,31 +18,33 @@ eDFW2DEVICETYPE CDevice::GetType() const
 // например - Генератор Мустанг наследован от ШБМ
 bool CDevice::IsKindOfType(eDFW2DEVICETYPE eType)
 {
-	_ASSERTE(m_pContainer);
-	if (m_pContainer)
+	_ASSERTE(pContainer_);
+
+	if (pContainer_)
 	{
-		TYPEINFOSET& TypeInfoSet = m_pContainer->m_ContainerProps.m_TypeInfoSet;
+		TYPEINFOSET& TypeInfoSet = pContainer_->m_ContainerProps.m_TypeInfoSet;
 		return TypeInfoSet.find(eType) != TypeInfoSet.end();
 	}
 	return false;
 }
 
-void CDevice::SetContainer(CDeviceContainer* pContainer)
+void CDevice::SetContainer(CDeviceContainer* pContainer, ptrdiff_t Index)
 {
-	m_pContainer = pContainer;
+	pContainer_ = pContainer;
+	InContainerIndex_ = Index;
 }
 
 // получить указатель на переменную устройства по имени
 double* CDevice::GetVariablePtr(std::string_view VarName)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	// имена переменных хранятся в контейнере
 	double* pRes{ nullptr };
 	// если устройство привязано к контейнеру - то можно получить от него индекс
 	// переменной, а по нему уже указатель
-	if (m_pContainer)
-		pRes = GetVariablePtr(m_pContainer->GetVariableIndex(VarName));
+	if (pContainer_)
+		pRes = GetVariablePtr(pContainer_->GetVariableIndex(VarName));
 	return pRes;
 }
 
@@ -51,22 +53,22 @@ double* CDevice::GetVariablePtr(std::string_view VarName)
 
 double* CDevice::GetConstVariablePtr(std::string_view VarName)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	double* pRes{ nullptr };
-	if (m_pContainer)
-		pRes = GetConstVariablePtr(m_pContainer->GetConstVariableIndex(VarName));
+	if (pContainer_)
+		pRes = GetConstVariablePtr(pContainer_->GetConstVariableIndex(VarName));
 	return pRes;
 }
 
 // получить описание внешней переменной по имени
 VariableIndexExternal CDevice::GetExternalVariable(std::string_view VarName)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	VariableIndexExternal ExtVar;
 	// в контейнере находим индекс переменной по имени
-	ExtVar.Index = m_pContainer->GetVariableIndex(VarName);
+	ExtVar.Index = pContainer_->GetVariableIndex(VarName);
 
 	if (ExtVar.Index >= 0)
 	{
@@ -74,7 +76,7 @@ VariableIndexExternal CDevice::GetExternalVariable(std::string_view VarName)
 		ExtVar.pValue = GetVariablePtr(ExtVar.Index);
 		// извлекаем номер строки в Якоби
 		// если устройство не в матрице, возвращаем индекс "не привязано"
-		ExtVar.Index = AssignedToMatrix() ? A(ExtVar.Index) : ExtVar.Index = CDevice::nIndexUnassigned;
+		ExtVar.Index = AssignedToMatrix() ? A(ExtVar.Index) : ExtVar.Index = CDevice::IndexUnassigned;
 	}
 	else
 		ExtVar.pValue = nullptr;
@@ -107,21 +109,21 @@ const double* CDevice::GetConstVariableConstPtr(ptrdiff_t nVarIndex) const
 
 const double* CDevice::GetVariableConstPtr(std::string_view VarName) const
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	double* pRes{ nullptr };
-	if (m_pContainer)
-		pRes = const_cast<CDevice*>(this)->GetVariablePtr(m_pContainer->GetVariableIndex(VarName));
+	if (pContainer_)
+		pRes = const_cast<CDevice*>(this)->GetVariablePtr(pContainer_->GetVariableIndex(VarName));
 	return pRes;
 }
 
 const double* CDevice::GetConstVariableConstPtr(std::string_view VarName) const
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	double* pRes{ nullptr };
-	if (m_pContainer)
-		pRes = const_cast<CDevice*>(this)->GetConstVariablePtr(m_pContainer->GetConstVariableIndex(VarName));
+	if (pContainer_)
+		pRes = const_cast<CDevice*>(this)->GetConstVariablePtr(pContainer_->GetConstVariableIndex(VarName));
 	return pRes;
 }
 
@@ -171,14 +173,14 @@ double CDevice::SetValue(std::string_view VarName, double Value)
 
 void CDevice::Log(DFW2MessageStatus Status, std::string_view Message) const
 {
-	if (m_pContainer)
-		m_pContainer->Log(Status, Message, GetDBIndex());
+	if (pContainer_)
+		pContainer_->Log(Status, Message, GetDBIndex());
 }
 
 void CDevice::DebugLog(std::string_view Message) const
 {
-	if (m_pContainer)
-		m_pContainer->DebugLog(Message);
+	if (pContainer_)
+		pContainer_->DebugLog(Message);
 }
 
 // связь экземпляров устройств по информации из из контейнеров
@@ -188,15 +190,15 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 	// pContLead - контейнер по данным которого надо делать связи
 	bool bRes{ false };
 
-	_ASSERTE(m_pContainer && pContLead);
+	_ASSERTE(pContainer_ && pContLead);
 
-	if (m_pContainer && pContLead)
+	if (pContainer_ && pContLead)
 	{
 		bRes = true;
 		// выбирает подчиненный контейнер по pContLead
 		// если pContLead совпадает с внешним контейнером - подчиненный - контейнер данного устройства
 		// если совпадает в контейнером данного устройства - подчиненный - внешний контейнер
-		CDeviceContainer* pContSlave{ (pContLead == pContainer) ? m_pContainer : pContainer };
+		CDeviceContainer* pContSlave{ (pContLead == pContainer) ? pContainer_ : pContainer };
 
 		// заранее определяем индекс константы, в которой лежит номер связываемого устройства
 		const  ptrdiff_t nIdFieldIndex{ pContLead->GetConstVariableIndex(LinkTo.strIdField.c_str()) };
@@ -288,7 +290,7 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 
 				// и добавляем связь с мастер-устройством в мультисвязь подчиненного устройства
 				if (pDevLinked)
-					pContSlave->AddLink(LinkFrom.nLinkIndex, pDevLinked->m_nInContainerIndex, pDev);
+					pContSlave->AddLink(LinkFrom.nLinkIndex, pDevLinked->InContainerIndex_, pDev);
 			}
 			// после добавления связей восстанавливаем внутренние указатели связей
 			pContSlave->RestoreLinks(LinkFrom.nLinkIndex);
@@ -301,8 +303,8 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 // добавляет элемент связи для хранения связи с очередным устройством
 void CDevice::IncrementLinkCounter(ptrdiff_t nLinkIndex)
 {
-	_ASSERTE(m_pContainer);
-	m_pContainer->IncrementLinkCounter(nLinkIndex, m_nInContainerIndex);
+	_ASSERTE(pContainer_);
+	pContainer_->IncrementLinkCounter(nLinkIndex, InContainerIndex_);
 }
 
 // устройство может быть связано с несколькими типами разных устройств,
@@ -311,12 +313,12 @@ void CDevice::IncrementLinkCounter(ptrdiff_t nLinkIndex)
 // индекса слоя связей
 const CLinkPtrCount* const CDevice::GetLink(ptrdiff_t nLinkIndex)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 	// возвращаем объект, в котором есть список ссылок данного устройства
 	// ссылки хранятся в контейнере
 	// извлекаем список ссылок по заданному типу и индексу текущего устройства
-	CMultiLink& pMultiLink{ m_pContainer->GetCheckLink(nLinkIndex, m_nInContainerIndex) };
-	return pMultiLink.GetLink(m_nInContainerIndex);
+	CMultiLink& pMultiLink{ pContainer_->GetCheckLink(nLinkIndex, InContainerIndex_) };
+	return pMultiLink.GetLink(InContainerIndex_);
 }
 
 // Определяет нужны ли уравнения для этого устройства
@@ -331,14 +333,14 @@ void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 {
 	if (InMatrix())
 	{
-		m_nMatrixRow = pDynaModel->AddMatrixSize(m_pContainer->EquationsCount());
-		ptrdiff_t nRow{ m_nMatrixRow };
+		MatrixRow_ = pDynaModel->AddMatrixSize(pContainer_->EquationsCount());
+		ptrdiff_t nRow{ MatrixRow_ };
 		VariableIndexRefVec seed;
 		for (auto&& var : GetVariables(seed))
 			var.get().Index = nRow++;
 	}
 	else 
-		m_nMatrixRow = nIndexUnassigned;
+		MatrixRow_ = IndexUnassigned;
 }
 
 // базовая функция инициализации Nordsieck
@@ -346,12 +348,12 @@ void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 // участвует в CDynaModel::InitNordsieck() для инициализации правой части уравнений
 void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 	struct RightVector* pRv{ pDynaModel->GetRightVector(A(0)) };
-	const ptrdiff_t nEquationsCount{ m_pContainer->EquationsCount() };
+	const ptrdiff_t EquationsCount{ pContainer_->EquationsCount() };
 
 	// инициализация заключается в обходе всех переменных устройства и:
-	for (ptrdiff_t z = 0; z < nEquationsCount ; z++)
+	for (ptrdiff_t z = 0; z < EquationsCount ; z++)
 	{
 		pRv->pValue = GetVariablePtr(z);	// передачи значения переменной устройства в структуру вектора правой части
 		_ASSERTE(pRv->pValue);
@@ -362,19 +364,19 @@ void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 
 void CDevice::BuildEquations(CDynaModel *pDynaModel)
 {
-	for (auto&& it : m_Primitives)
+	for (auto&& it : Primitives_)
 		it->BuildEquations(pDynaModel);
 }
 
 void CDevice::BuildRightHand(CDynaModel* pDynaModel)
 {
-	for (auto&& it : m_Primitives)
+	for (auto&& it : Primitives_)
 		it->BuildRightHand(pDynaModel);
 }
 
 void CDevice::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	for (auto&& it : m_Primitives)
+	for (auto&& it : Primitives_)
 		it->BuildDerivatives(pDynaModel);
 }
 
@@ -385,31 +387,31 @@ void CDevice::NewtonUpdateEquation(CDynaModel *pDynaModel)
 // сбрасывает указатель просмотренных ссылок устройства
 void CDevice::ResetVisited()
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 	// если списка просмотра нет - создаем его
-	if (!m_pContainer->m_ppDevicesAux)
-		m_pContainer->m_ppDevicesAux = std::make_unique<DevicePtr>(m_pContainer->Count());
+	if (!pContainer_->m_ppDevicesAux)
+		pContainer_->m_ppDevicesAux = std::make_unique<DevicePtr>(pContainer_->Count());
 	// обнуляем счетчик просмотренных ссылок
-	m_pContainer->m_nVisitedCount = 0;
+	pContainer_->m_nVisitedCount = 0;
 }
 
 ptrdiff_t CDevice::CheckAddVisited(CDevice* pDevice)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
-	CDevice** ppDevice{ m_pContainer->m_ppDevicesAux.get() };
-	CDevice** const ppEnd{ ppDevice + m_pContainer->m_nVisitedCount };
+	CDevice** ppDevice{ pContainer_->m_ppDevicesAux.get() };
+	CDevice** const ppEnd{ ppDevice + pContainer_->m_nVisitedCount };
 
 	// просматриваем список просмотренных
 	for (; ppDevice < ppEnd; ppDevice++)
 		if (*ppDevice == pDevice)
-			return ppDevice - m_pContainer->m_ppDevicesAux.get() ;	// если нашли заданное устройство - выходим и возвращаем номер
+			return ppDevice - pContainer_->m_ppDevicesAux.get() ;	// если нашли заданное устройство - выходим и возвращаем номер
 																	// с которым это устройство уже было добавлено
 	// если дошли до конца списка и не нашли запрошенного устройства
 	// добавляем его в список просмотренных
 	*ppDevice = pDevice;
 	// и счетчик просмотренных увеличиваем
-	m_pContainer->m_nVisitedCount++;
+	pContainer_->m_nVisitedCount++;
 	// возвращаем -1, так как устройство не было найдено
 	return -1;
 }
@@ -417,18 +419,18 @@ ptrdiff_t CDevice::CheckAddVisited(CDevice* pDevice)
 // проверка инициализации/инициализация устройства
 eDEVICEFUNCTIONSTATUS CDevice::CheckInit(CDynaModel* pDynaModel)
 {
-	if (m_eInitStatus != eDEVICEFUNCTIONSTATUS::DFS_OK)
+	if (eInitStatus_ != eDEVICEFUNCTIONSTATUS::DFS_OK)
 	{
 		// если успешной инициализации еще не выполнено
 		// проверяем что с инициализацией ведущих устройств
-		m_eInitStatus = MastersReady(&CDevice::CheckMasterDeviceInit);
-		if(m_eInitStatus == eDEVICEFUNCTIONSTATUS::DFS_OK)
-			m_eInitStatus = Init(pDynaModel);		// пытаемся инициализировать устройство
+		eInitStatus_ = MastersReady(&CDevice::CheckMasterDeviceInit);
+		if(eInitStatus_ == eDEVICEFUNCTIONSTATUS::DFS_OK)
+			eInitStatus_ = Init(pDynaModel);		// пытаемся инициализировать устройство
 		// если устройство не нуждается в инициализации
-		if (m_eInitStatus == eDEVICEFUNCTIONSTATUS::DFS_DONTNEED)
-			m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;					// делаем вид что инициализация прошла успешно
+		if (eInitStatus_ == eDEVICEFUNCTIONSTATUS::DFS_DONTNEED)
+			eInitStatus_ = eDEVICEFUNCTIONSTATUS::DFS_OK;					// делаем вид что инициализация прошла успешно
 	}
-	return m_eInitStatus;
+	return eInitStatus_;
 }
 
 eDEVICEFUNCTIONSTATUS CDevice::UpdateExternalVariables(CDynaModel *pDynaModel)
@@ -449,39 +451,39 @@ eDEVICEFUNCTIONSTATUS CDevice::PreInit(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice)
 {
-	m_State = eState;
+	State_ = eState;
 	// если устройство было отключено навсегда - попытка изменения его состояния (даже отключение) вызывает исключение
 	// по крайней мере для отладки
-	if (m_StateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
+	if (StateCause_ == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
 		throw dfw2error(fmt::format(CDFW2Messages::m_cszCannotChangePermanentDeviceState, GetVerbalName()));
 
-	m_StateCause = eStateCause;
+	StateCause_ = eStateCause;
 	// если устройство отключается навсегда - обнуляем все его переменные, чтобы не было мусора
 	// в результатах (мы такие устройства и так не пишем, но на всякий случай
 	if (eStateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
-		for (int i = 0; i < m_pContainer->EquationsCount(); *GetVariablePtr(i++) = 0.0);
+		for (int i = 0; i < pContainer_->EquationsCount(); *GetVariablePtr(i++) = 0.0);
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 const char* CDevice::VariableNameByPtr(double *pVariable) const
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	const char* pName{ CDFW2Messages::m_cszUnknown };
-	const ptrdiff_t nEquationsCount{ m_pContainer->EquationsCount() };
+	const ptrdiff_t nEquationsCount{ pContainer_->EquationsCount() };
 
 	for (ptrdiff_t i = 0; i < nEquationsCount ; i++)
 	{
 		
 		if (const double* pVar{ GetVariableConstPtr(i) }; pVar == pVariable)
 		{
-			auto it = std::find_if(m_pContainer->VariablesBegin(), m_pContainer->VariablesEnd(), [&i](const auto& element)
+			auto it = std::find_if(pContainer_->VariablesBegin(), pContainer_->VariablesEnd(), [&i](const auto& element)
 				{
-					return element.second.m_nIndex == i;
+					return element.second.Index_ == i;
 				}
 			);
-			if (it != m_pContainer->VariablesEnd())
+			if (it != pContainer_->VariablesEnd())
 			{
 				pName = static_cast<const char*>(it->first.c_str());
 				break;
@@ -507,22 +509,22 @@ bool CDevice::LeaveDiscontinuityMode(CDynaModel* pDynaModel)
 // обработка разрыва устройства
 eDEVICEFUNCTIONSTATUS CDevice::CheckProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_eInitStatus != eDEVICEFUNCTIONSTATUS::DFS_OK)
+	if (eInitStatus_ != eDEVICEFUNCTIONSTATUS::DFS_OK)
 	{
 		// проверяем готовы ли ведущие устройства
-		m_eInitStatus = MastersReady(&CheckMasterDeviceDiscontinuity);
+		eInitStatus_ = MastersReady(&CheckMasterDeviceDiscontinuity);
 
 		// если ведущие готовы, обрабатываем разрыв устройства
-		if (m_eInitStatus == eDEVICEFUNCTIONSTATUS::DFS_OK)
-			m_eInitStatus = ProcessDiscontinuity(pDynaModel);
+		if (eInitStatus_ == eDEVICEFUNCTIONSTATUS::DFS_OK)
+			eInitStatus_ = ProcessDiscontinuity(pDynaModel);
 
 		// если устройство не требует обработки - считаем что обработано успешно
-		if (m_eInitStatus == eDEVICEFUNCTIONSTATUS::DFS_DONTNEED)
-			m_eInitStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
+		if (eInitStatus_ == eDEVICEFUNCTIONSTATUS::DFS_DONTNEED)
+			eInitStatus_ = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	}
 
-	_ASSERTE(m_eInitStatus != eDEVICEFUNCTIONSTATUS::DFS_FAILED);
-	return m_eInitStatus;
+	_ASSERTE(eInitStatus_ != eDEVICEFUNCTIONSTATUS::DFS_FAILED);
+	return eInitStatus_;
 }
 
 // функция обработки разрыва по умолчанию
@@ -531,7 +533,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	// обрабатываем разрывы в примитивах
 	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
 
-	for (auto&& it : m_Primitives)
+	for (auto&& it : Primitives_)
 	{
 		switch (it->ProcessDiscontinuity(pDynaModel))
 		{
@@ -590,7 +592,7 @@ bool CDevice::InitExternalVariable(VariableIndexExternalOptional& OptExtVar, CDe
 
 bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	bool bRes{ false };
 	ExtVar.Index = -1;
@@ -604,9 +606,9 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 		if (pFromDevice)
 		{
 			CDevice* pInitialDevice{ pFromDevice };
-			m_pContainer->ResetStack();
-			m_pContainer->PushVarSearchStack(pFromDevice);
-			while (m_pContainer->PopVarSearchStack(pFromDevice))
+			pContainer_->ResetStack();
+			pContainer_->PushVarSearchStack(pFromDevice);
+			while (pContainer_->PopVarSearchStack(pFromDevice))
 			{
 				bool bTryGet{ true };
 				if (eLimitDeviceType != DEVTYPE_UNKNOWN)
@@ -625,11 +627,13 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 
 				if (!bRes)
 				{
-					const SingleLinksRange& LinkRange = pFromDevice->GetSingleLinks().GetLinksRange();
-					for (CDevice **ppStart = LinkRange.m_ppLinkStart; ppStart < LinkRange.m_ppLinkEnd; ppStart++)
+					const SingleLinksRange& LinkRange{ pFromDevice->GetSingleLinks().GetLinksRange() };
+					const auto ppLinkEnd{ LinkRange.end() };
+
+					for (CDevice **ppStart = LinkRange.begin(); ppStart < ppLinkEnd; ppStart++)
 					{
 						if (*ppStart != pInitialDevice)
-							m_pContainer->PushVarSearchStack(*ppStart);
+							pContainer_->PushVarSearchStack(*ppStart);
 					}
 				}
 				else
@@ -659,16 +663,16 @@ bool CDevice::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFrom
 
 bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::string_view Name, eDFW2DEVICETYPE eLimitDeviceType)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	bool bRes{ false };
-	m_pContainer->ResetStack();
+	pContainer_->ResetStack();
 	if (pFromDevice)
 	{
 		CDevice* pInitialDevice{ pFromDevice };
-		m_pContainer->ResetStack();
-		m_pContainer->PushVarSearchStack(pFromDevice);
-		while (m_pContainer->PopVarSearchStack(pFromDevice))
+		pContainer_->ResetStack();
+		pContainer_->PushVarSearchStack(pFromDevice);
+		while (pContainer_->PopVarSearchStack(pFromDevice))
 		{
 			bool bTryGet{ true };
 			if (eLimitDeviceType != DEVTYPE_UNKNOWN)
@@ -688,10 +692,11 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::
 			if (!bRes)
 			{
 				const SingleLinksRange& LinkRange{ pFromDevice->GetSingleLinks().GetLinksRange() };
-				for (CDevice **ppStart = LinkRange.m_ppLinkStart; ppStart < LinkRange.m_ppLinkEnd; ppStart++)
+				const auto ppLinkEnd{ LinkRange.end() };
+				for (CDevice **ppStart = LinkRange.begin(); ppStart < ppLinkEnd; ppStart++)
 				{
 					if (*ppStart != pInitialDevice)
-						m_pContainer->PushVarSearchStack(*ppStart);
+						pContainer_->PushVarSearchStack(*ppStart);
 				}
 			}
 			else
@@ -721,18 +726,18 @@ bool CDevice::InitConstantVariable(double& ConstVar, CDevice* pFromDevice, std::
 // адреса связанных устройств
 void CDevice::SetSingleLinkStart(CDevice **ppLinkStart)
 {
-	_ASSERTE(m_pContainer);
-	m_DeviceLinks.SetRange(SingleLinksRange(ppLinkStart, ppLinkStart + m_pContainer->GetPossibleSingleLinksCount()));
+	_ASSERTE(pContainer_);
+	DeviceLinks_.SetRange(SingleLinksRange(ppLinkStart, ppLinkStart + pContainer_->GetPossibleSingleLinksCount()));
 }
 
-bool CDevice::SetSingleLink(ptrdiff_t nIndex, CDevice *pDevice)
+bool CDevice::SetSingleLink(ptrdiff_t Index, CDevice *pDevice)
 {
-	if (!m_DeviceLinks.SetLink(nIndex, pDevice))
+	if (!DeviceLinks_.SetLink(Index, pDevice))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszWrongSingleLinkIndex,
-													  nIndex, 
+													  Index, 
 													  GetVerbalName(), 
-													  m_pContainer->GetPossibleSingleLinksCount()));
+													  pContainer_->GetPossibleSingleLinksCount()));
 		return false;
 	}
 	return true;
@@ -742,28 +747,28 @@ bool CDevice::SetSingleLink(ptrdiff_t nIndex, CDevice *pDevice)
 void CDevice::UpdateVerbalName()
 {
 	CDeviceId::UpdateVerbalName();
-	if (m_pContainer)
-		m_strVerbalName = fmt::format("{} {}", m_pContainer->GetTypeName(), m_strVerbalName);
+	if (pContainer_)
+		VerbalName_ = fmt::format("{} {}", pContainer_->GetTypeName(), VerbalName_);
 }
 
 // получить связанное устройство по индексу связи
-CDevice* CDevice::GetSingleLink(ptrdiff_t nIndex)
+CDevice* CDevice::GetSingleLink(ptrdiff_t Index)
 {
-	return m_DeviceLinks.GetLink(nIndex);
+	return DeviceLinks_.GetLink(Index);
 }
 
 // получить связанное устройство по типу связанного устройства
 CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 {
-	_ASSERTE(m_pContainer);
+	_ASSERTE(pContainer_);
 
 	CDevice* pRetDev{ nullptr };
 
-	if (m_pContainer)
+	if (pContainer_)
 	{
 		// по информации из атрибутов контейнера определяем индекс
 		// связи, соответствующий типу
-		auto& FromLinks{ m_pContainer->m_ContainerProps.m_LinksFrom };
+		auto& FromLinks{ pContainer_->m_ContainerProps.m_LinksFrom };
 		auto&& itFrom{ FromLinks.find(eDevType) };
 		if (itFrom != FromLinks.end())
 			pRetDev = GetSingleLink(itFrom->second.nLinkIndex);
@@ -773,7 +778,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 
 #ifdef _DEBUG
 		CDevice *pRetDevTo(nullptr);
-		LINKSTOMAP& ToLinks = m_pContainer->m_ContainerProps.m_LinksTo;
+		LINKSTOMAP& ToLinks = pContainer_->m_ContainerProps.m_LinksTo;
 		const auto& itTo = ToLinks.find(eDevType);
 
 		// в режиме отладки проверяем однозначность определения связи
@@ -842,7 +847,7 @@ eDEVICEFUNCTIONSTATUS CDevice::CheckMasterDeviceDiscontinuity(CDevice *pDevice, 
 eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckMasterDevice)
 {
 	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };	// по умолчанию все хорошо
-	const  CDeviceContainerProperties& Props{ m_pContainer->m_ContainerProps };
+	const  CDeviceContainerProperties& Props{ pContainer_->m_ContainerProps };
 
 	// use links to masters, prepared in CDynaModel::Link() instead of original links
 
@@ -861,7 +866,7 @@ eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckM
 double CDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH{ 1.0 };
-	for (auto&& it : m_Primitives)
+	for (auto&& it : Primitives_)
 	{
 		double rHcurrent{ it->CheckZeroCrossing(pDynaModel) };
 		if (rHcurrent < 0)
@@ -880,30 +885,30 @@ double CDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 void CDevice::RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive)
 {
-	m_StatePrimitives.push_back(pPrimitive);
+	StatePrimitives_.push_back(pPrimitive);
 }
 
 void CDevice::RegisterPrimitive(CDynaPrimitive *pPrimitive)
 {
-	m_Primitives.push_back(pPrimitive);
+	Primitives_.push_back(pPrimitive);
 }
 
 void CDevice::StoreStates()
 {
-	for (auto&& it : m_StatePrimitives)
+	for (auto&& it : StatePrimitives_)
 		it->StoreState();
 }
 
 void CDevice::RestoreStates()
 {
-	for (auto&& it : m_StatePrimitives)
+	for (auto&& it : StatePrimitives_)
 		it->RestoreState();
 }
 
 
 void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 {
-	if (m_pContainer)
+	if (pContainer_)
 	{
 		const CDynaModel* pModel{ GetModel() };
 
@@ -921,20 +926,20 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 				if (pModel->GetNewtonIterationNumber() == 1)
 				{
 					// для первой итерации добавляем заголовок с именами переменных контейнера
-					for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+					for (auto&& var = pContainer_->VariablesBegin(); var != pContainer_->VariablesEnd(); var++)
 						flog << var->first;
 					// и именами приращений - "d_переменная"
-					for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
+					for (auto&& var = pContainer_->VariablesBegin(); var != pContainer_->VariablesEnd(); var++)
 						flog << fmt::format("d_{}",var->first);
 					flog << std::endl;
 				}
 
 				// для всех итераций добавляем текущее значение переменной
-				for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-					flog << *GetVariablePtr(var->second.m_nIndex);
+				for (auto&& var = pContainer_->VariablesBegin(); var != pContainer_->VariablesEnd(); var++)
+					flog << *GetVariablePtr(var->second.Index_);
 				// и приращение на итерации из правой части
-				for (auto&& var = m_pContainer->VariablesBegin(); var != m_pContainer->VariablesEnd(); var++)
-					flog << pModel->GetFunction(A(var->second.m_nIndex));
+				for (auto&& var = pContainer_->VariablesBegin(); var != pContainer_->VariablesEnd(); var++)
+					flog << pModel->GetFunction(A(var->second.Index_));
 				flog << std::endl;
 			}
 		}
@@ -943,22 +948,22 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 
 CDynaModel* CDevice::GetModel()
 {
-	_ASSERTE(m_pContainer && m_pContainer->GetModel());
-	return m_pContainer->GetModel();
+	_ASSERTE(pContainer_ && pContainer_->GetModel());
+	return pContainer_->GetModel();
 }
 
 const CDynaModel* CDevice::GetModel() const
 {
-	_ASSERTE(m_pContainer && m_pContainer->GetModel());
-	return m_pContainer->GetModel();
+	_ASSERTE(pContainer_ && pContainer_->GetModel());
+	return pContainer_->GetModel();
 }
 
 eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause)
 {
-	if (eState == m_State)
+	if (eState == State_)
 		return eDEVICEFUNCTIONSTATUS::DFS_DONTNEED;	// если устройство уже находится в заданном состоянии - выходим, с индикацией отсутствия необходимости
 
-	if (m_StateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
+	if (StateCause_ == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
 	{
 		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotChangePermanentDeviceState, GetVerbalName()));
 		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
@@ -968,7 +973,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 	{
 		// если устройство хотят включить - нужно проверить, все ли его masters включены. Если да - то включить, если нет - предупреждение и состояние не изменять
 		CDevice *pDeviceOff(nullptr);
-		for (auto&& masterdevice : m_pContainer->m_ContainerProps.m_Masters)
+		for (auto&& masterdevice : pContainer_->m_ContainerProps.m_Masters)
 		{
 			// если было найдено отключенное ведущее устройство - выходим
 			if (pDeviceOff)
@@ -1042,7 +1047,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 			eStateCause = eDEVICESTATECAUSE::DSC_INTERNAL;
 
 			// перебираем все ведомые устройства текущего устройства из стека
-			for (auto&& slavedevice : pOffDevice->m_pContainer->m_ContainerProps.m_Slaves)
+			for (auto&& slavedevice : pOffDevice->pContainer_->m_ContainerProps.m_Slaves)
 			{
 				if (slavedevice->eLinkMode == DLM_MULTI)
 				{

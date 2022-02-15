@@ -495,9 +495,9 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 				{
 					sit->m_pSuperNodeParent = nit.first;
 					if (pass)
-						AddLink(pNodeSuperLink, nit.first->m_nInContainerIndex, sit);
+						AddLink(pNodeSuperLink, nit.first->InContainerIndex(), sit);
 					else
-						IncrementLinkCounter(pNodeSuperLink, nit.first->m_nInContainerIndex);
+						IncrementLinkCounter(pNodeSuperLink, nit.first->InContainerIndex());
 				}
 		if (pass)
 			RestoreLinks(pNodeSuperLink);	// на втором проходе финализируем ссылки
@@ -544,14 +544,14 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 					if (pass)
 					{
 						// на втором проходе добавляем ссылки
-						AddLink(pBranchSuperLink, pNodeIp->m_nInContainerIndex, pBranch);
-						AddLink(pBranchSuperLink, pNodeIq->m_nInContainerIndex, pBranch);
+						AddLink(pBranchSuperLink, pNodeIp->InContainerIndex(), pBranch);
+						AddLink(pBranchSuperLink, pNodeIq->InContainerIndex(), pBranch);
 					}
 					else
 					{
 						// на первом проходе считаем количество ссылок
-						IncrementLinkCounter(pBranchSuperLink, pNodeIp->m_nInContainerIndex);
-						IncrementLinkCounter(pBranchSuperLink, pNodeIq->m_nInContainerIndex);
+						IncrementLinkCounter(pBranchSuperLink, pNodeIp->InContainerIndex());
+						IncrementLinkCounter(pBranchSuperLink, pNodeIq->InContainerIndex());
 					}
 					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Branch %s connects supernodes %s and %s", pBranch->GetVerbalName(), pNodeIp->GetVerbalName(), pNodeIq->GetVerbalName()));
 				}
@@ -574,15 +574,15 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 				{
 					if (pass)
 					{
-						AddLink(pBranchSuperLink, pNodeIpSuper->m_nInContainerIndex, pBranch);
-						AddLink(pBranchSuperLink, pNodeIqSuper->m_nInContainerIndex, pBranch);
+						AddLink(pBranchSuperLink, pNodeIpSuper->InContainerIndex(), pBranch);
+						AddLink(pBranchSuperLink, pNodeIqSuper->InContainerIndex(), pBranch);
 						// в ветви нет одиночных связей, но есть два адреса узлов начала и конца.
 						// их меняем на адреса суперузлов
 					}
 					else
 					{
-						IncrementLinkCounter(pBranchSuperLink, pNodeIpSuper->m_nInContainerIndex);
-						IncrementLinkCounter(pBranchSuperLink, pNodeIqSuper->m_nInContainerIndex);
+						IncrementLinkCounter(pBranchSuperLink, pNodeIpSuper->InContainerIndex());
+						IncrementLinkCounter(pBranchSuperLink, pNodeIqSuper->InContainerIndex());
 					}
 				}
 				/*
@@ -635,7 +635,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 				if (pNode->m_pSuperNodeParent)
 					pSuperNode = pNode->m_pSuperNodeParent;
 				// достаем из узла мультиссылку на текущий тип связи
-				const  CLinkPtrCount* const  pLink{ multilink.GetLink(pNode->m_nInContainerIndex) };
+				const  CLinkPtrCount* const  pLink{ multilink.GetLink(pNode->InContainerIndex()) };
 				LinkWalker<CDevice> pDevice;
 				// идем по мультиссылке
 				while (pLink->In(pDevice))
@@ -643,7 +643,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 					if (pass)
 					{
 						// добавляем к суперузлу ссылку на внешее устройство
-						AddLink(pSuperLink, pSuperNode->m_nInContainerIndex, pDevice);
+						AddLink(pSuperLink, pSuperNode->InContainerIndex(), pDevice);
 						// указатель на прежний узел в устройстве, которое сязано с узлом
 						CDevice *pOldDev = pDevice->GetSingleLink(nLinkIndex);
 						// заменяем ссылку на старый узел ссылкой на суперузел
@@ -657,7 +657,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 						//		strName.c_str(),SuperNodeBlock.first->GetVerbalName()));
 					}
 					else
-						IncrementLinkCounter(pSuperLink, pSuperNode->m_nInContainerIndex); // на первом проходе просто считаем количество связей
+						IncrementLinkCounter(pSuperLink, pSuperNode->InContainerIndex()); // на первом проходе просто считаем количество связей
 				}
 			}
 
@@ -815,15 +815,15 @@ CDynaNodeBase* CDynaNodeContainer::FindGeneratorNodeInSuperNode(CDevice *pGen)
 	return pRet;
 }
 
-const CLinkPtrCount* const CDynaNodeBase::GetSuperLink(ptrdiff_t nLinkIndex)
+const CLinkPtrCount* const CDynaNodeBase::GetSuperLink(ptrdiff_t LinkIndex)
 {
-	_ASSERTE(m_pContainer);
-	return static_cast<CDynaNodeContainer*>(m_pContainer)->GetCheckSuperLink(nLinkIndex, m_nInContainerIndex).GetLink(m_nInContainerIndex);
+	_ASSERTE(pContainer_);
+	return static_cast<CDynaNodeContainer*>(pContainer_)->GetCheckSuperLink(LinkIndex, InContainerIndex_).GetLink(InContainerIndex_);
 }
 
-CMultiLink& CDynaNodeContainer::GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex)
+CMultiLink& CDynaNodeContainer::GetCheckSuperLink(ptrdiff_t LinkIndex, ptrdiff_t DeviceIndex)
 {
-	return GetCheckLink(nLinkIndex, nDeviceIndex, m_SuperLinks);
+	return GetCheckLink(LinkIndex, DeviceIndex, m_SuperLinks);
 }
 
 _IterationControl& CDynaNodeContainer::IterationControl()
@@ -878,8 +878,8 @@ void CDynaNodeContainer::ProcessTopology()
 
 void CDynaNodeBase::AddToTopologyCheck()
 {
-	if (m_pContainer)
-		static_cast<CDynaNodeContainer*>(m_pContainer)->AddToTopologyCheck(this);
+	if (pContainer_)
+		static_cast<CDynaNodeContainer*>(pContainer_)->AddToTopologyCheck(this);
 }
 
 void CDynaNodeContainer::AddToTopologyCheck(CDynaNodeBase *pNode)

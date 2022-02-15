@@ -9,7 +9,7 @@ using namespace DFW2;
 CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
 	EqLimit(*this, { EqOutputValue }, { EqInput })
 {
-	m_Primitives.pop_back();
+	Primitives_.pop_back();
 }
 
 double* CDynaExciterMustang::GetVariablePtr(ptrdiff_t nVarIndex)
