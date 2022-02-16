@@ -50,7 +50,7 @@ namespace MathUtils
 		}
 	};
 
-	class CAngleRoutines
+	class AngleRoutines
 	{
 	public:
 		// возвращает минимальный угол в радианах между углами y и x со знаком
@@ -66,6 +66,58 @@ namespace MathUtils
 
 			std::array<double, 3> args{ y - x , y - x + 2.0 * M_PI , y - x - 2 * M_PI };
 			return *std::min_element(args.begin(), args.end(), [](const auto& lhs, const auto& rhs) { return std::abs(lhs) < std::abs(rhs); });
+		}
+
+		
+		// возврщает угол приведенный к диапазону [-pi;pi) (удаление периодов)
+		inline static double WrapPosNegPI(double fAng)
+		{
+			return AngleRoutines::Mod(fAng + M_PI, 2 * M_PI) - M_PI;
+		}
+
+		// кастомное деление по модулю для периодизации угла
+		template<typename T> 
+		static T Mod(T x, T y)
+		{
+			// https://stackoverflow.com/questions/4633177/c-how-to-wrap-a-float-to-the-interval-pi-pi
+
+			static_assert(!std::numeric_limits<T>::is_exact, "Mod: floating-point type expected");
+
+			if (0. == y)
+				return x;
+
+			const double m{ x - y * floor(x / y) };
+
+			// handle boundary cases resulted from floating-point cut off:
+
+			if (y > 0)              // modulo range: [0..y)
+			{
+				if (m >= y)           // Mod(-1e-16             , 360.    ): m= 360.
+					return 0;
+
+				if (m < 0)
+				{
+					if (y + m == y)
+						return 0; // just in case...
+					else
+						return y + m; // Mod(106.81415022205296 , _TWO_PI ): m= -1.421e-14 
+				}
+			}
+			else                    // modulo range: (y..0]
+			{
+				if (m <= y)           // Mod(1e-16              , -360.   ): m= -360.
+					return 0;
+
+				if (m > 0)
+				{
+					if (y + m == y)
+						return 0; // just in case...
+					else
+						return y + m; // Mod(-106.81415022205296, -_TWO_PI): m= 1.421e-14 
+				}
+			}
+
+			return m;
 		}
 	};
 

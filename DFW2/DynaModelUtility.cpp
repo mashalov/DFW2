@@ -480,14 +480,14 @@ std::pair<bool, double> CheckAnglesCrossedPi(const double Angle1, const double A
 {
 	std::pair ret{ false, 0.0 };
 	// считаем минимальный угол со знаком между углами 
-	const double deltaDiff{ MathUtils::CAngleRoutines::GetAbsoluteDiff2Angles(Angle1, Angle2) };
+	const double deltaDiff{ MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(Angle1, Angle2) };
 	// предыдущий и текущий углы проверяем на близость к 180 (для начала зону проверки задаем 160)
 	const double limitAngle{ 160.0 * M_PI / 180.0 };
 	// если знаки углов разные, значит пересекли 180
 	if (std::abs(PreviosAngleDifference) >= limitAngle && std::abs(deltaDiff) >= limitAngle && PreviosAngleDifference * deltaDiff < 0.0)
 	{
 		// синтезируем угол в момент проверки путем добавления к предыдущему углы минимальной разности предыдущего и текущего углов
-		const double synthAngle{ std::abs(PreviosAngleDifference) + std::abs(MathUtils::CAngleRoutines::GetAbsoluteDiff2Angles(deltaDiff, PreviosAngleDifference)) };
+		const double synthAngle{ std::abs(PreviosAngleDifference) + std::abs(MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(deltaDiff, PreviosAngleDifference)) };
 		ret.first = true;
 		ret.second = synthAngle * 180.0 / M_PI;
 	}
@@ -537,7 +537,7 @@ bool CDynaModel::StabilityLost()
 					// поэтому мы должны удалить период. Имеем два варианта : atan2 (медленно но надежно) 
 					// и функция WrapPosNegPI (быстро и возможны проблемы)
 					//const auto ret(CheckAnglesCrossedPi(std::atan2(std::sin(pGen->Delta), std::cos(pGen->Delta)), nodeDelta, pGen->deltaDiff));
-					const auto ret(CheckAnglesCrossedPi(CDynaModel::WrapPosNegPI(pGen->Delta), nodeDelta, pGen->deltaDiff));
+					const auto ret(CheckAnglesCrossedPi(MathUtils::AngleRoutines::WrapPosNegPI(pGen->Delta), nodeDelta, pGen->deltaDiff));
 					sc.m_MaxGeneratorAngle.UpdateAbs(pGen->deltaDiff, GetCurrentTime(), pGen);
 					if (ret.first)
 					{
@@ -577,56 +577,6 @@ bool CDynaModel::OscillationsDecayed()
 	}
 	else
 		return false;
-}
-
-
-template<typename T> T CDynaModel::Mod(T x, T y)
-{
-	// https://stackoverflow.com/questions/4633177/c-how-to-wrap-a-float-to-the-interval-pi-pi
-
-	static_assert(!std::numeric_limits<T>::is_exact, "Mod: floating-point type expected");
-
-	if (0. == y)
-		return x;
-
-	double m = x - y * floor(x / y);
-
-	// handle boundary cases resulted from floating-point cut off:
-
-	if (y > 0)              // modulo range: [0..y)
-	{
-		if (m >= y)           // Mod(-1e-16             , 360.    ): m= 360.
-			return 0;
-
-		if (m < 0)
-		{
-			if (y + m == y)
-				return 0; // just in case...
-			else
-				return y + m; // Mod(106.81415022205296 , _TWO_PI ): m= -1.421e-14 
-		}
-	}
-	else                    // modulo range: (y..0]
-	{
-		if (m <= y)           // Mod(1e-16              , -360.   ): m= -360.
-			return 0;
-
-		if (m > 0)
-		{
-			if (y + m == y)
-				return 0; // just in case...
-			else
-				return y + m; // Mod(-106.81415022205296, -_TWO_PI): m= 1.421e-14 
-		}
-	}
-
-	return m;
-}
-
-// wrap [rad] angle to [-PI..PI)
-double CDynaModel::WrapPosNegPI(double fAng)
-{
-	return CDynaModel::Mod(fAng + M_PI, 2 * M_PI) - M_PI;
 }
 
 SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()

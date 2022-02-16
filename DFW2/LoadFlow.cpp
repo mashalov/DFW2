@@ -1879,7 +1879,7 @@ double CLoadFlow::GetNewtonRatio()
 		const double newDelta{ pNode->Delta - *pb };
 
 		// поиск ограничения шага по углу узла
-		const double Dstep{ std::abs(MathUtils::CAngleRoutines::GetAbsoluteDiff2Angles(*pb, 0.0)) };
+		const double Dstep{ std::abs(MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(*pb, 0.0)) };
 
 		if (Dstep > m_Parameters.m_dNodeAngleNewtonStep)
 			m_NewtonStepRatio.UpdateNodeAngle(m_Parameters.m_dNodeAngleNewtonStep / Dstep, pNode);
@@ -1913,7 +1913,7 @@ double CLoadFlow::GetNewtonRatio()
 		const double dIpDelta{ NodeInMatrix(pNodeIp) ? *(b + pNodeIp->A(0)) : 0.0 };
 		const double dIqDelta{ NodeInMatrix(pNodeIq) ? *(b + pNodeIq->A(0)) : 0.0 };
 
-		const double DeltaDiff{ MathUtils::CAngleRoutines::GetAbsoluteDiff2Angles(dIqDelta, dIpDelta) };
+		const double DeltaDiff{ MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(dIqDelta, dIpDelta) };
 		//_ASSERTE(Equal(DeltaDiff, dIpDelta - dIqDelta));
 
 		// новый взаимный угол

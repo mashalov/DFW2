@@ -927,12 +927,6 @@ namespace DFW2
 		bool StabilityLost();
 		bool OscillationsDecayed();
 
-		// кастомное деление по модулю для периодизации угла
-		template<typename T>
-		static T Mod(T x, T y);
-		// возврщает угол приведенный к диапазону [-pi;pi) (удаление периодов)
-		inline static double WrapPosNegPI(double fAng);
-
 		const CPlatformFolders& Platform() const
 		{
 			return m_Platform;
