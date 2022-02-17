@@ -471,7 +471,7 @@ bool CDynaLRCChannel::Check(const CDevice *pDevice)
 
 	// тут вопрос как контролировать равенство коэффициентов единице
 	// пока решено использовать 1% от небаланса УР
-	if (0.01 * std::abs(v - 1.0) > Parameters.m_Imb)
+	if (0.01 * std::abs(v - 1.0) > Parameters.Imb)
 	{
 		pDevice->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCNonUnity,
 			pDevice->GetVerbalName(),
@@ -481,13 +481,13 @@ bool CDynaLRCChannel::Check(const CDevice *pDevice)
 		bRes = false;
 	}
 
-	if (d > Parameters.m_dLRCMaxSlope || d < Parameters.m_dLRCMinSlope)
+	if (d > Parameters.LRCMaxSlope || d < Parameters.LRCMinSlope)
 	{
 		pDevice->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCSlopeViolated,
 			pDevice->GetVerbalName(),
 			cszType,
-			Parameters.m_dLRCMinSlope,
-			Parameters.m_dLRCMaxSlope,
+			Parameters.LRCMinSlope,
+			Parameters.LRCMaxSlope,
 			d));
 
 		bRes = false;

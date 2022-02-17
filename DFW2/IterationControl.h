@@ -19,10 +19,10 @@ namespace DFW2
 			Backtrack
 		};
 
-		double m_dRatio = 1.0;
-		eStepLimitCause m_eStepCause = eStepLimitCause::None;
-		CDynaNodeBase *m_pNode = nullptr,
-					  *m_pNodeBranch = nullptr;
+		double Ratio_ = 1.0;
+		eStepLimitCause eStepCause = eStepLimitCause::None;
+		CDynaNodeBase *pNode_ = nullptr,
+					  *pNodeBranch_ = nullptr;
 
 		void Reset();
 		void UpdateVoltage(double Ratio, CDynaNodeBase* pNode);
@@ -37,14 +37,14 @@ namespace DFW2
 	struct _MaxNodeDiff
 	{
 	protected:
-		CDynaNodeBase* m_pNode;
-		double m_dDiff;
+		CDynaNodeBase* pNode_;
+		double Diff;
 		typedef bool (OperatorFunc)(double lhs, double rhs);
 
-		void UpdateOp(CDynaNodeBase* pNode, double dValue, OperatorFunc OpFunc) noexcept;
+		void UpdateOp(CDynaNodeBase* pNode, double Value, OperatorFunc OpFunc) noexcept;
 	public:
-		_MaxNodeDiff() noexcept : m_pNode(nullptr),
-			m_dDiff(0.0)
+		_MaxNodeDiff() noexcept : pNode_(nullptr),
+			Diff(0.0)
 		{}
 
 		ptrdiff_t GetId();
@@ -56,13 +56,13 @@ namespace DFW2
 
 	struct _IterationControl
 	{
-		_MaxNodeDiff m_MaxImbP;
-		_MaxNodeDiff m_MaxImbQ;
-		_MaxNodeDiff m_MaxV;
-		_MaxNodeDiff m_MinV;
+		_MaxNodeDiff MaxImbP;
+		_MaxNodeDiff MaxImbQ;
+		_MaxNodeDiff MaxV;
+		_MaxNodeDiff MinV;
 		ptrdiff_t Number = 0;
-		ptrdiff_t m_nQviolated = 0;
-		double m_ImbRatio = 0.0;
+		ptrdiff_t QviolatedCount = 0;
+		double ImbRatio = 0.0;
 		bool Converged(double m_dToleratedImb);
 		void Reset();
 		void Update(_MatrixInfo* pMatrixInfo);

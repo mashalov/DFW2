@@ -5,18 +5,18 @@ using namespace DFW2;
 
 void LFNewtonStepRatio::Reset()
 {
-	m_dRatio = 1.0;
-	m_eStepCause = eStepLimitCause::None;
-	m_pNode = nullptr;
-	m_pNodeBranch = nullptr;
+	Ratio_ = 1.0;
+	eStepCause = eStepLimitCause::None;
+	pNode_ = nullptr;
+	pNodeBranch_ = nullptr;
 }
 
 void LFNewtonStepRatio::UpdateVoltage(double Ratio, CDynaNodeBase* pNode)
 {
 	if (UpdateRatio(Ratio))
 	{
-		m_eStepCause = eStepLimitCause::Voltage;
-		m_pNode = pNode;
+		eStepCause = eStepLimitCause::Voltage;
+		pNode_ = pNode;
 	}
 }
 
@@ -24,8 +24,8 @@ void LFNewtonStepRatio::UpdateNodeAngle(double Ratio, CDynaNodeBase* pNode)
 {
 	if (UpdateRatio(Ratio))
 	{
-		m_eStepCause = eStepLimitCause::NodeAngle;
-		m_pNode = pNode;
+		eStepCause = eStepLimitCause::NodeAngle;
+		pNode_ = pNode;
 	}
 }
 
@@ -33,8 +33,8 @@ void LFNewtonStepRatio::UpdateVoltageOutOfRange(double Ratio, CDynaNodeBase* pNo
 {
 	if (UpdateRatio(Ratio))
 	{
-		m_eStepCause = eStepLimitCause::VoltageOutOfRange;
-		m_pNode = pNode;
+		eStepCause = eStepLimitCause::VoltageOutOfRange;
+		pNode_ = pNode;
 	}
 }
 
@@ -42,9 +42,9 @@ void LFNewtonStepRatio::UpdateBranchAngleOutOfRange(double Ratio, CDynaNodeBase*
 {
 	if (UpdateRatio(Ratio))
 	{
-		m_eStepCause = eStepLimitCause::BrancheAngleOutOfRange;
-		m_pNode = pNode;
-		m_pNodeBranch = pNodeBranch;
+		eStepCause = eStepLimitCause::BrancheAngleOutOfRange;
+		pNode_ = pNode;
+		pNodeBranch_ = pNodeBranch;
 	}
 }
 
@@ -52,18 +52,18 @@ void LFNewtonStepRatio::UpdateBranchAngle(double Ratio, CDynaNodeBase* pNode, CD
 {
 	if (UpdateRatio(Ratio))
 	{
-		m_eStepCause = eStepLimitCause::BranchAngle;
-		m_pNode = pNode;
-		m_pNodeBranch = pNodeBranch;
+		eStepCause = eStepLimitCause::BranchAngle;
+		pNode_ = pNode;
+		pNodeBranch_ = pNodeBranch;
 	}
 }
 
 bool LFNewtonStepRatio::UpdateRatio(double Ratio)
 {
 	_ASSERTE(Ratio >= 0.0);
-	if (Ratio < m_dRatio)
+	if (Ratio < Ratio_)
 	{
-		m_dRatio = Ratio * 0.95;
+		Ratio_ = Ratio * 0.95;
 		return true;
 	}
 	else
@@ -74,18 +74,18 @@ void _MaxNodeDiff::UpdateOp(CDynaNodeBase* pNode, double dValue, OperatorFunc Op
 {
 	if (pNode)
 	{
-		if (m_pNode)
+		if (pNode_)
 		{
-			if (OpFunc(dValue, m_dDiff))
+			if (OpFunc(dValue, Diff))
 			{
-				m_pNode = pNode;
-				m_dDiff = dValue;
+				pNode_ = pNode;
+				Diff = dValue;
 			}
 		}
 		else
 		{
-			m_pNode = pNode;
-			m_dDiff = dValue;
+			pNode_ = pNode;
+			Diff = dValue;
 		}
 	}
 	else
@@ -95,15 +95,15 @@ void _MaxNodeDiff::UpdateOp(CDynaNodeBase* pNode, double dValue, OperatorFunc Op
 
 ptrdiff_t _MaxNodeDiff::GetId()
 {
-	if (m_pNode)
-		return m_pNode->GetId();
+	if (pNode_)
+		return pNode_->GetId();
 	return -1;
 }
 
 double _MaxNodeDiff::GetDiff()
 {
 	if (GetId() >= 0)
-		return m_dDiff;
+		return Diff;
 	return 0.0;
 }
 
@@ -125,12 +125,12 @@ void _MaxNodeDiff::UpdateMaxAbs(CDynaNodeBase* pNode, double Value)
 
 bool _IterationControl::Converged(double m_dToleratedImb)
 {
-	return std::abs(m_MaxImbP.GetDiff()) < m_dToleratedImb && std::abs(m_MaxImbQ.GetDiff()) < m_dToleratedImb && m_nQviolated == 0;
+	return std::abs(MaxImbP.GetDiff()) < m_dToleratedImb && std::abs(MaxImbQ.GetDiff()) < m_dToleratedImb && QviolatedCount == 0;
 }
 
 void _IterationControl::Reset()
 {
-	const auto backNumber(Number);
+	const auto backNumber{ Number };
 	*this = _IterationControl();
 	Number = backNumber;
 }
@@ -139,16 +139,13 @@ void _IterationControl::Update(_MatrixInfo* pMatrixInfo)
 {
 	if (pMatrixInfo && pMatrixInfo->pNode)
 	{
-		CDynaNodeBase* pNode = pMatrixInfo->pNode;
-		m_MaxImbP.UpdateMaxAbs(pNode, pMatrixInfo->m_dImbP);
-		m_MaxImbQ.UpdateMaxAbs(pNode, pMatrixInfo->m_dImbQ);
-		const double VdVnom = pNode->V / pNode->Unom;
-		m_MaxV.UpdateMax(pNode, VdVnom);
-		m_MinV.UpdateMin(pNode, VdVnom);
+		const auto& pNode{ pMatrixInfo->pNode };
+		MaxImbP.UpdateMaxAbs(pNode, pMatrixInfo->ImbP);
+		MaxImbQ.UpdateMaxAbs(pNode, pMatrixInfo->ImbQ);
+		const double VdVnom{ pNode->V / pNode->Unom };
+		MaxV.UpdateMax(pNode, VdVnom);
+		MinV.UpdateMin(pNode, VdVnom);
 	}
 	else
 		_ASSERTE(pMatrixInfo && pMatrixInfo->pNode);
 }
-
-
-

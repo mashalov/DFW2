@@ -18,14 +18,14 @@ namespace DFW2
 			V_LAST
 		};
 
-		DEVICEVECTOR m_LinkedGenerators;
+		DEVICEVECTOR LinkedGenerators;
 		VariableIndex S;						// переменная состояния - скольжение
 
 		double Mj = 0.0;						// суммарный момент инерции
-		bool m_bInfPower = false;				// признак наличия ШБМ
+		bool InfPower = false;					// признак наличия ШБМ
 		CSynchroZone();		
 		virtual ~CSynchroZone() = default;
-		bool m_bEnergized = false;				// признак наличия источника напряжения
+		bool Energized = false;					// признак наличия источника напряжения
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
@@ -118,26 +118,26 @@ namespace DFW2
 		double Unom;					// номинальное напряжение
 		double V0;						// напряжение в начальных условиях (используется для "подтяжки" СХН к исходному режиму)
 		double  V0Super;				// максимальное V0 в узлах суперузла для расчета границы шунта СХН (скорее всего не понадобится)
-		bool m_bInMetallicSC = false;
-		bool m_bLowVoltage = false;		// признак низкого модуля напряжения
-		bool m_bSavedLowVoltage = false;// сохраненный признак низкого напряжения для возврата на предыдущий шаг
-		double dLRCVicinity = 0.0;		// окрестность сглаживания СХН
+		bool InMetallicSC = false;
+		bool LowVoltage = false;		// признак низкого модуля напряжения
+		bool SavedLowVoltage = false;	// сохраненный признак низкого напряжения для возврата на предыдущий шаг
+		double LRCVicinity = 0.0;		// окрестность сглаживания СХН
 
 		ptrdiff_t LRCLoadFlowId  = 0;	// идентификаторы СХН и ДСХН
 		ptrdiff_t LRCTransientId = 0;
 
 	
-		CSynchroZone *m_pSyncZone = nullptr;		// синхронная зона, к которой принадлежит узел
-		eLFNodeType m_eLFNodeType;
+		CSynchroZone *pSyncZone = nullptr;		// синхронная зона, к которой принадлежит узел
+		eLFNodeType eLFNodeType_;
 		ptrdiff_t Nr;
 		cplx Yii;						// собственная проводимость
 		cplx Iconst;					// постоянный ток в узле
 		cplx IconstSuper;				// постоянный ток в суперузле
 		double Vold;					// модуль напряжения на предыдущей итерации
 		cplx dLRCLoad, dLRCGen;			// расчетные значения прозводных СХН по напряжению
-		CDynaLRC *m_pLRC = nullptr;		// указатель на СХН узла в динамике
-		CDynaLRC *m_pLRCLF = nullptr;	// указатель на СХН узла в УР
-		CDynaLRC *m_pLRCGen = nullptr;	// СХН для генерации, которая не задана моделями генераторов
+		CDynaLRC *pLRC = nullptr;		// указатель на СХН узла в динамике
+		CDynaLRC *pLRCLF = nullptr;		// указатель на СХН узла в УР
+		CDynaLRC *pLRCGen = nullptr;	// СХН для генерации, которая не задана моделями генераторов
 
 		DynaReactors reactors;			// список реакторов
 
@@ -169,7 +169,7 @@ namespace DFW2
 		void InitNordsiek(CDynaModel* pDynaModel) override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
 		void SuperNodeLoadFlowYU(CDynaModel* pDynaModel);
-		inline CDynaNodeBase* GetSuperNode() { return m_pSuperNodeParent ? m_pSuperNodeParent : this; }
+		inline CDynaNodeBase* GetSuperNode() { return pSuperNodeParent ? pSuperNodeParent : this; }
 		bool IsDangling();
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 				
@@ -180,14 +180,14 @@ namespace DFW2
 		inline double GetSelfdPdV() { return -2 * V * YiiSuper.real() + dLRCLoad.real(); }
 		inline double GetSelfdQdV() { return  2 * V * YiiSuper.imag() + dLRCLoad.imag(); }
 
-		inline bool IsLFTypePQ() const { return m_eLFNodeType != eLFNodeType::LFNT_PV; }
+		inline bool IsLFTypePQ() const { return eLFNodeType_ != eLFNodeType::LFNT_PV; }
 		inline bool IsLFTypePV() const 
 		{ 
-			return m_eLFNodeType == eLFNodeType::LFNT_PV || 
-				   m_eLFNodeType == eLFNodeType::LFNT_PVQMAX || 
-				   m_eLFNodeType == eLFNodeType::LFNT_PVQMIN;
+			return eLFNodeType_ == eLFNodeType::LFNT_PV || 
+				   eLFNodeType_ == eLFNodeType::LFNT_PVQMAX || 
+				   eLFNodeType_ == eLFNodeType::LFNT_PVQMIN;
 		}
-		inline bool IsLFTypeSlack() const { return m_eLFNodeType == eLFNodeType::LFNT_BASE; }
+		inline bool IsLFTypeSlack() const { return eLFNodeType_ == eLFNodeType::LFNT_BASE; }
 
 		void SetMatrixRow(ptrdiff_t MatrixRow) noexcept { MatrixRow_ = MatrixRow; }
 
@@ -201,7 +201,7 @@ namespace DFW2
 		struct ZeroLFData
 		{
 			// индекс узла в матрице потокораспределения суперузла
-			ptrdiff_t m_nSuperNodeLFIndex = 0;
+			ptrdiff_t SuperNodeLFIndex = 0;
 			// диагональный элемент Y
 			double Yii = 0.0;
 			// инъекция из базисного узла
@@ -224,7 +224,7 @@ namespace DFW2
 				// вектор всех ветвей, связывающих узлы суперузла
 				// с другими суперузлами - вектор ветвей с сопротивлениями
 				// в этом векторе параллельные ветви будут эквивалентированы
-				std::unique_ptr<VirtualBranch[]>  m_VirtualBranches, m_VirtualZeroBranches;
+				std::unique_ptr<VirtualBranch[]>  pVirtualBranches, pVirtualZeroBranches;
 				// строки матрицы собраны в векторе
 				LFMatrixType LFMatrix;
 				ptrdiff_t nZcount = 0;
@@ -238,11 +238,11 @@ namespace DFW2
 		// Включить суперузел в расчет потокораспределения с нулевыми сопротивлениями
 		void RequireSuperNodeLF();
 		// указатель на родительский суперузел
-		CDynaNodeBase* m_pSuperNodeParent = nullptr;
+		CDynaNodeBase* pSuperNodeParent = nullptr;
 		const CLinkPtrCount* const GetSuperLink(ptrdiff_t nLinkIndex);
 
-		VirtualBranch	  *m_VirtualBranchBegin, *m_VirtualBranchEnd;
-		VirtualZeroBranch *m_VirtualZeroBranchBegin, *m_VirtualZeroBranchEnd, *m_VirtualZeroBranchParallelsBegin;
+		VirtualBranch	  *pVirtualBranchBegin_, *pVirtualBranchEnd_;
+		VirtualZeroBranch *pVirtualZeroBranchBegin_, *pVirtualZeroBranchEnd_, *pVirtualZeroBranchParallelsBegin_;
 
 		VirtualZeroBranch* AddZeroBranch(CDynaBranch* pBranch);
 		void TidyZeroBranches();
@@ -289,7 +289,7 @@ namespace DFW2
 			V_LAST
 		};
 
-		CDynaNodeMeasure* m_pMeasure = nullptr;
+		CDynaNodeMeasure* pMeasure = nullptr;
 
 		VariableIndex Lag;
 		VariableIndex S;
@@ -338,23 +338,24 @@ namespace DFW2
 	{
 		size_t nRowCount = 0;													// количество элементов в строке матрицы
 		CDynaNodeBase *pNode;													// узел, к которому относится данное Info
-		ptrdiff_t m_nPVSwitchCount = 0;											// счетчик переключений PV-PQ
-		alignas(16) double m_dImbS[2];											// небалансы по P и Q
-		double& m_dImbP{ m_dImbS[0] };
-		double& m_dImbQ{ m_dImbS[1] };
+		ptrdiff_t PVSwitchCount = 0;											// счетчик переключений PV-PQ
+		alignas(16) double ImbS[2];												// небалансы по P и Q
+		double& ImbP{ ImbS[0] };
+		double& ImbQ{ ImbS[1] };
+		double ImbSquare = 0.0;													// квадрат модуля небаланса
 		bool bVisited = false;													// признак просмотра для графовых алгоритмов
 		double LFQmin;															// исходные ограничения реактивной мощности до ввода в суперузел
 		double LFQmax;
-		double m_NodeVoltageViolation;											// отклонение напряжения от уставки
-		double m_NodePowerViolation;											// отклонение мощности от ограничения
+		double NodeVoltageViolation_;											// отклонение напряжения от уставки
+		double NodePowerViolation_;												// отклонение мощности от ограничения
 
 		double NodeVoltageViolation()
 		{
-			if (pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE ||
-				pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_PQ)
+			if (pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_BASE ||
+				pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PQ)
 				throw dfw2error(fmt::format("Attempt to get node voltage violation from non generator node {}", pNode->GetVerbalName()));
 
-			return m_NodeVoltageViolation = (pNode->V - pNode->LFVref) / pNode->LFVref;
+			return NodeVoltageViolation_ = (pNode->V - pNode->LFVref) / pNode->LFVref;
 		}
 
 		CDynaNodeBase::eLFNodeType LFNodeType;									// исходный тип узла до ввода в суперузел
@@ -366,13 +367,13 @@ namespace DFW2
 			pNode = pStoreNode;
 			LFQmin = pNode->LFQmin;
 			LFQmax = pNode->LFQmax;
-			LFNodeType = pNode->m_eLFNodeType;
+			LFNodeType = pNode->eLFNodeType_;
 		}
 		void Restore() noexcept
 		{
 			pNode->LFQmin = LFQmin;
 			pNode->LFQmax = LFQmax;
-			pNode->m_eLFNodeType = LFNodeType;
+			pNode->eLFNodeType_ = LFNodeType;
 		}
 	};
 
@@ -404,31 +405,31 @@ namespace DFW2
 		void SwitchOffDanglingNodes(NodeSet& Queue);
 		void CalcAdmittances(bool bFixNegativeZs);
 		void SwitchLRCs(bool bSwitchToDynamicLRC);
-		_IterationControl m_IterationControl;
+		_IterationControl IterationControl_;
 		// вывод данных о ходе итерационного процесса (УР или YU) с возможностью выбрать уровень вывода:
 		// для УР - информация, для YU - отладка
 		void DumpIterationControl(DFW2MessageStatus OutputStatus = DFW2MessageStatus::DFW2LOG_INFO);
 		std::string GetIterationControlString();
 		friend class CLoadFlow;
-		LINKSVEC m_SuperLinks;
-		ORIGINALLINKSVEC m_OriginalLinks;
-		std::unique_ptr<BranchNodes[]> m_pOriginalBranchNodes;
+		LINKSVEC SuperLinks;
+		ORIGINALLINKSVEC OriginalLinks;
+		std::unique_ptr<BranchNodes[]> pOriginalBranchNodes;
 		void ClearSuperLinks();
 		void DumpNodeIslands(NODEISLANDMAP& Islands);
 		void DumpNetwork();
-		std::unique_ptr<VirtualBranch[]> m_pVirtualBranches;
-		std::unique_ptr<VirtualZeroBranch[]> m_pZeroBranches;
-		VirtualZeroBranch *m_pZeroBranchesEnd = nullptr;
-		CDeviceContainer *m_pSynchroZones = nullptr;
-		NodeSet m_TopologyCheck, m_ZeroLFSet;
+		std::unique_ptr<VirtualBranch[]> pVirtualBranches;
+		std::unique_ptr<VirtualZeroBranch[]> pZeroBranches;
+		VirtualZeroBranch *pZeroBranchesEnd_ = nullptr;
+		CDeviceContainer *pSynchroZones = nullptr;
+		NodeSet TopologyCheck, ZeroLFSet;
 	public:
-		const VirtualZeroBranch* GetZeroBranchesEnd() const noexcept { return m_pZeroBranchesEnd; }
-		const NodeSet& GetZeroLFSet() const { return m_ZeroLFSet; }
+		const VirtualZeroBranch* GetZeroBranchesEnd() const noexcept { return pZeroBranchesEnd_; }
+		const NodeSet& GetZeroLFSet() const { return ZeroLFSet; }
 		CDynaNodeBase* FindGeneratorNodeInSuperNode(CDevice *pGen);
 		void CalculateShuntParts();
 		CMultiLink& GetCheckSuperLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
 		void GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLANDMAP& Islands);
-		_IterationControl& IterationControl();
+		inline _IterationControl& IterationControl() { return IterationControl_; }
 		CDynaNodeContainer(CDynaModel *pDynaModel);
 		virtual ~CDynaNodeContainer();
 		void ProcessTopology();
@@ -437,7 +438,7 @@ namespace DFW2
 		void ProcessTopologyRequest();
 		void AddToTopologyCheck(CDynaNodeBase* pNode);
 		void ResetTopologyCheck();
-		bool m_bDynamicLRC = true;
+		bool DynamicLRC = true;
 		void LinkToLRCs(CDeviceContainer& containerLRC);
 		void LinkToReactors(CDeviceContainer& containerReactors);
 		void RequireSuperNodeLF(CDynaNodeBase *pNode);

@@ -189,9 +189,9 @@ void CDynaModel::PrepareNetworkElements()
 // строит синхронные зоны по топологии и определяет их состояния
 void CDynaNodeContainer::BuildSynchroZones()
 {
-	if (!m_pSynchroZones)
-		m_pSynchroZones = m_pDynaModel->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_SYNCZONE);
-	if (!m_pSynchroZones)
+	if (!pSynchroZones)
+		pSynchroZones = m_pDynaModel->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_SYNCZONE);
+	if (!pSynchroZones)
 		throw dfw2error("CDynaNodeContainer::ProcessTopology - SynchroZone container not found");
 
 	// проверяем, есть ли отключенные узлы
@@ -217,7 +217,7 @@ void CDynaNodeContainer::BuildSynchroZones()
 		// дополнительная зона для отключенных узлов
 		size_t nZonesCount = NodeIslands.size() + (bGotOffNodes ? 1 : 0);
 
-		auto pSyncZones = m_pSynchroZones->CreateDevices<CSynchroZone>(nZonesCount); /// ???????
+		auto pSyncZones{ pSynchroZones->CreateDevices<CSynchroZone>(nZonesCount) }; /// ???????
 
 		if (bGotOffNodes)
 		{
@@ -230,29 +230,29 @@ void CDynaNodeContainer::BuildSynchroZones()
 			// и ставим эту зону для всех отключенных узлов
 			for (auto&& it : m_DevVec)
 				if(!it->IsStateOn())
-					static_cast<CDynaNodeBase*>(it)->m_pSyncZone = pOffZone;
+					static_cast<CDynaNodeBase*>(it)->pSyncZone = pOffZone;
 		}
 
-		CSynchroZone *pNewZone = pSyncZones;
+		CSynchroZone* pNewZone{ pSyncZones };
 
 		// для всех зон узлы связываем с зонами
 		for (auto&& zone : NodeIslands)
 		{
 			// готовим место для списка генераторов
-			pNewZone->m_LinkedGenerators.reserve(3 * Count());
+			pNewZone->LinkedGenerators.reserve(3 * Count());
 			// придумываем идентификатор и имя
 			pNewZone->SetId(pNewZone - pSyncZones + 1);
 			pNewZone->SetName("SyncZone");
 			for (auto&& node : zone.second)
 			{
-				node->m_pSyncZone = pNewZone;
+				node->pSyncZone = pNewZone;
 				node->MarkZoneEnergized();
 			}
 
 			// если в зоне нет генераторов - обозначаем ее как зону с ШБМ
 			// (когда будут АД, нужно будет смотреть на них)
-			if (pNewZone->m_LinkedGenerators.empty())
-				pNewZone->m_bInfPower = true;
+			if (pNewZone->LinkedGenerators.empty())
+				pNewZone->InfPower = true;
 
 			pNewZone++;
 		}
@@ -271,10 +271,10 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 		// если в узле есть синхронная зона
-		if (!pNode->m_pSyncZone)
+		if (!pNode->pSyncZone)
 			throw dfw2error("CDynaNodeContainer::EnergizeZones SyncZone not assigned");
 		// и она под напряжением
-		if (pNode->m_pSyncZone->m_bEnergized)
+		if (pNode->pSyncZone->Energized)
 		{
 			// если узел отключен и имеет включенные связи
 			// !!!!!!! Тут скорее всего придется включать острова по связям, так же как мы отключаем острова !!!!!!
@@ -310,7 +310,7 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 // ставит признак зоны узла - под напряжением или со снятым напряжением
 void CDynaNodeBase::MarkZoneEnergized()
 {
-	if (!m_pSyncZone)
+	if (!pSyncZone)
 		throw dfw2error("CDynaNodeBase::MarkZoneEnergized SyncZone not assigned");
 
 	if (IsStateOn())
@@ -324,16 +324,16 @@ void CDynaNodeBase::MarkZoneEnergized()
 			if (pGen->IsKindOfType(DEVTYPE_VOLTAGE_SOURCE) && pGen->IsStateOn())
 			{
 				// зону ставим под напряжение
-				m_pSyncZone->m_bEnergized = true;
+				pSyncZone->Energized = true;
 				// добавляем генератор в список зоны
-				m_pSyncZone->m_LinkedGenerators.push_back(pGen);
+				pSyncZone->LinkedGenerators.push_back(pGen);
 				// если к тому же генератор ШБМ, то ставим признак зоны ШБМ
 				if (pGen->GetType() == DEVTYPE_GEN_INFPOWER)
-					m_pSyncZone->m_bInfPower = true;
+					pSyncZone->InfPower = true;
 				else
 					// иначе считаем общий момент инерации зоны (если у генератора есть уравнение движения)
 					if (pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
-						m_pSyncZone->Mj += static_cast<CDynaGeneratorMotion*>(static_cast<CDynaPowerInjector*>(pGen))->Mj;
+						pSyncZone->Mj += static_cast<CDynaGeneratorMotion*>(static_cast<CDynaPowerInjector*>(pGen))->Mj;
 			}
 		}
 	}
@@ -382,9 +382,9 @@ void CDynaNodeContainer::GetNodeIslands(NODEISLANDMAP& JoinableNodes, NODEISLAND
 		for (auto it = JoinableNodes.begin(); it != JoinableNodes.end(); it++)
 		{
 			// пропускаем нагрузочные (первый уже есть)
-			if (it->first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_PQ)
+			if (it->first->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PQ)
 				continue;
-			else if (it->first->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+			else if (it->first->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_BASE)
 			{
 				// если нашли базисный - сразу берем его
 				Slack = it;
@@ -451,12 +451,12 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	for (auto&& nit : m_DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(nit) };
-		pNode->m_pSuperNodeParent = nullptr;
-		pNode->ZeroLF.m_nSuperNodeLFIndex = 0;
+		pNode->pSuperNodeParent = nullptr;
+		pNode->ZeroLF.SuperNodeLFIndex = 0;
 	}
 
 	// очищаем список суперузлов для расчета потокораспределения с нулевыми сопротивлениями
-	m_ZeroLFSet.clear();
+	ZeroLFSet.clear();
 
 	NODEISLANDMAP JoinableNodes, SuperNodes;
 	// строим список связности по включенным ветвям с нулевым сопротивлением
@@ -484,8 +484,8 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	DumpNodeIslands(SuperNodes);
 
 		
-	m_SuperLinks.emplace_back(this, Count()); // используем конструктор CMultiLink
-	CMultiLink& pNodeSuperLink(m_SuperLinks.back());
+	SuperLinks.emplace_back(this, Count()); // используем конструктор CMultiLink
+	CMultiLink& pNodeSuperLink(SuperLinks.back());
 	// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
 	for (int pass = 0; pass < 2; pass++)
 	{
@@ -493,7 +493,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			for (auto&& sit : nit.second)
 				if (nit.first != sit)
 				{
-					sit->m_pSuperNodeParent = nit.first;
+					sit->pSuperNodeParent = nit.first;
 					if (pass)
 						AddLink(pNodeSuperLink, nit.first->InContainerIndex(), sit);
 					else
@@ -507,7 +507,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 
 	const ptrdiff_t nSuperNodesCount{ std::count_if(m_DevVec.begin(), m_DevVec.end(), [](const CDevice* pDev)
 		{
-			return static_cast<const CDynaNodeBase*>(pDev)->m_pSuperNodeParent == nullptr;
+			return static_cast<const CDynaNodeBase*>(pDev)->pSuperNodeParent == nullptr;
 		})
 	};
 
@@ -517,8 +517,8 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 		Count() > 0 ? 100.0 * nSuperNodesCount / Count() : 0.0));
 
 	// перестраиваем связи суперузлов с ветвями:
-	m_SuperLinks.emplace_back(m_Links[0].pContainer_, Count());
-	CMultiLink& pBranchSuperLink(m_SuperLinks.back());
+	SuperLinks.emplace_back(m_Links[0].pContainer_, Count());
+	CMultiLink& pBranchSuperLink(SuperLinks.back());
 
 	// заполняем список в два прохода: на первом считаем количество, на втором - заполняем ссылки
 	for (int pass = 0; pass < 2; pass++)
@@ -535,10 +535,10 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			const auto& pNodeIp(pBranch->m_pNodeIp);
 			const auto& pNodeIq(pBranch->m_pNodeIq);
 
-			if (pNodeIp->m_pSuperNodeParent == pNodeIq->m_pSuperNodeParent)
+			if (pNodeIp->pSuperNodeParent == pNodeIq->pSuperNodeParent)
 			{
 				// суперузлы в начале и в конце одинаковые
-				if (!pNodeIp->m_pSuperNodeParent)
+				if (!pNodeIp->pSuperNodeParent)
 				{
 					// суперузлы отсуствуют - ветвь между двумя обычными узлами или суперузлами
 					if (pass)
@@ -557,7 +557,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 				}
 				else
 					// иначе суперузел есть - и ветвь внутри него
-					pBranch->m_pNodeSuperIp = pBranch->m_pNodeSuperIq = pNodeIp->m_pSuperNodeParent;
+					pBranch->m_pNodeSuperIp = pBranch->m_pNodeSuperIq = pNodeIp->pSuperNodeParent;
 					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Branch %s in super node %s", pBranch->GetVerbalName(), pNodeIp->m_pSuperNodeParent->GetVerbalName()));
 			}
 			else
@@ -616,10 +616,10 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 		ptrdiff_t nLinkIndex = multilink.pContainer_->GetSingleLinkIndex(DEVTYPE_NODE);
 
 		// создаем дополнительную мультисвязь и добавляем в список связей суперузлов
-		m_SuperLinks.emplace_back(multilink.pContainer_, Count());
-		CMultiLink& pSuperLink(m_SuperLinks.back());
+		SuperLinks.emplace_back(multilink.pContainer_, Count());
+		CMultiLink& pSuperLink(SuperLinks.back());
 		// для хранения оригинальных связей устройств с узлами используем карту устройство-устройство
-		m_OriginalLinks.push_back(std::make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
+		OriginalLinks.push_back(std::make_unique<DEVICETODEVICEMAP>(DEVICETODEVICEMAP()));
 
 
 		// обрабатываем связь в два прохода : подсчет + выделение памяти и добавление ссылок
@@ -632,8 +632,8 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 				CDynaNodeBase *pSuperNode = pNode;
 				// если у узла есть суперузел, то берем его указатель
 				// иначе узел сам себе суперузел
-				if (pNode->m_pSuperNodeParent)
-					pSuperNode = pNode->m_pSuperNodeParent;
+				if (pNode->pSuperNodeParent)
+					pSuperNode = pNode->pSuperNodeParent;
 				// достаем из узла мультиссылку на текущий тип связи
 				const  CLinkPtrCount* const  pLink{ multilink.GetLink(pNode->InContainerIndex()) };
 				LinkWalker<CDevice> pDevice;
@@ -649,7 +649,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 						// заменяем ссылку на старый узел ссылкой на суперузел
 						pDevice->SetSingleLink(nLinkIndex, pSuperNode);
 						// сохраняем оригинальную связь устройства с узлом в карте
-						m_OriginalLinks.back()->insert(std::make_pair(pDevice, pOldDev));
+						OriginalLinks.back()->insert(std::make_pair(pDevice, pOldDev));
 						//*
 						//string strName(pOldDev ? pOldDev->GetVerbalName() : "");
 						//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Change link of object %s from node %s to supernode %s",
@@ -692,28 +692,28 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 
 	//  Создаем виртуальные ветви
 	// Количество виртуальных ветвей не превышает количества ссылок суперузлов на ветви
-	m_pVirtualBranches = std::make_unique<VirtualBranch[]>(m_SuperLinks[1].m_nCount);
+	pVirtualBranches = std::make_unique<VirtualBranch[]>(SuperLinks[1].m_nCount);
 	// Создаем список ветвей с нулевым сопротивлением внутри суперузла
 	// Ветви с нулевым сопротивлением хранятся в общем векторе контейнера
 	// узлы имеют три указателя на этот вектор - начало и конец для всех ветвей
 	// и указатель на список параллельных ветвей (см. TidyZeroBranches)
-	m_pZeroBranches = std::make_unique<VirtualZeroBranch[]>(nZeroBranchCount);
-	m_pZeroBranchesEnd = m_pZeroBranches.get() + nZeroBranchCount;
+	pZeroBranches = std::make_unique<VirtualZeroBranch[]>(nZeroBranchCount);
+	pZeroBranchesEnd_ = pZeroBranches.get() + nZeroBranchCount;
 
 	if (nZeroBranchCount)
 	{
-		VirtualZeroBranch* pCurrentZeroBranch = m_pZeroBranches.get();
+		VirtualZeroBranch* pCurrentZeroBranch{ pZeroBranches.get() };
 		for (auto&& node : m_DevVec)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 			// формируем диапазоны ветвей с нулевым сопротивлением для узлов (просто инициализация)
-			pNode->m_VirtualZeroBranchBegin = pNode->m_VirtualZeroBranchEnd = pCurrentZeroBranch;
+			pNode->pVirtualZeroBranchBegin_ = pNode->pVirtualZeroBranchEnd_ = pCurrentZeroBranch;
 			// если у нас есть ветви с нулевым сопротивлением строим их списки
 			// если узел входит в суперузел - его нулевые ветви нам не нужны, 
 			// они будут учтены с узла представителя суперузла
 			// если ветвей с нулевым сопротивлением нет вообще - пропускаем обработку
 			// (цикл не обходим чтобы инициализировать m_VirtualZeroBranchBegin = m_VirtualZeroBranchEnd
-			if (pNode->m_pSuperNodeParent)
+			if (pNode->pSuperNodeParent)
 				continue;
 
 			CDynaNodeBase* pSlave{ pNode };
@@ -748,13 +748,13 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 	// порогового. Такие ветви можно определить по тому, что они отнесены к одному и 
 	// тому же суперзлу. При этом не нужно искать параллельные нулевые ветви
 	CalcAdmittances(bFixNegativeZs);
-	VirtualBranch* pCurrentBranch = m_pVirtualBranches.get();
+	VirtualBranch* pCurrentBranch{ pVirtualBranches.get() };
 	for (auto&& node : m_DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 		// если узел входит в суперузел - для него виртуальные ветви отсутствуют
-		pNode->m_VirtualBranchBegin = pNode->m_VirtualBranchEnd = pCurrentBranch;
-		if (pNode->m_pSuperNodeParent)
+		pNode->pVirtualBranchBegin_ = pNode->pVirtualBranchEnd_ = pCurrentBranch;
+		if (pNode->pSuperNodeParent)
 			continue;
 		const CLinkPtrCount* const pBranchLink{ pNode->GetSuperLink(1) };
 		pNode->ResetVisited();
@@ -781,9 +781,9 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 				pCurrentBranch++;
 			}
 			else
-				(pNode->m_VirtualBranchBegin + DupIndex)->Y += Ykm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
+				(pNode->pVirtualBranchBegin_ + DupIndex)->Y += Ykm; // если оппозитный узел уже прошли, ветвь не добавляем, а суммируем ее проводимость параллельно с уже пройденной ветвью
 		}
-		pNode->m_VirtualBranchEnd = pCurrentBranch;
+		pNode->pVirtualBranchEnd_ = pCurrentBranch;
 		// проверяем есть ли включенные ветви для данного узла
 		// но лучше пользоваться синхронными зонами, которые почему-то были 
 		// отключены. Зоны восстановлены 16.06.2021
@@ -797,17 +797,17 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 
 void CDynaNodeContainer::ClearSuperLinks()
 {
-	m_SuperLinks.clear();
-	m_OriginalLinks.clear();
+	SuperLinks.clear();
+	OriginalLinks.clear();
 }
 
 CDynaNodeBase* CDynaNodeContainer::FindGeneratorNodeInSuperNode(CDevice *pGen)
 {
 	CDynaNodeBase *pRet(nullptr);
 	// ищем генератор в карте сохраненных связей и возвращаем оригинальный узел
-	if (pGen && m_OriginalLinks.size() > 0)
+	if (pGen && OriginalLinks.size() > 0)
 	{
-		const auto& GenMap = m_OriginalLinks[0];
+		const auto& GenMap = OriginalLinks[0];
 		const auto& itGen = GenMap->find(pGen);
 		if (itGen != GenMap->end())
 			pRet = static_cast<CDynaNodeBase*>(itGen->second);
@@ -823,24 +823,22 @@ const CLinkPtrCount* const CDynaNodeBase::GetSuperLink(ptrdiff_t LinkIndex)
 
 CMultiLink& CDynaNodeContainer::GetCheckSuperLink(ptrdiff_t LinkIndex, ptrdiff_t DeviceIndex)
 {
-	return GetCheckLink(LinkIndex, DeviceIndex, m_SuperLinks);
+	return GetCheckLink(LinkIndex, DeviceIndex, SuperLinks);
 }
 
-_IterationControl& CDynaNodeContainer::IterationControl()
-{
-	return m_IterationControl;
-}
+
 
 std::string CDynaNodeContainer::GetIterationControlString()
 {
+	
 	std::string retString = fmt::format("{:4} {:15f} {:>11} {:15f} {:>11} {:5.2f} {:>11} {:5.2f} {:>11} {:>5}",
-		m_IterationControl.Number,
-		m_IterationControl.m_MaxImbP.GetDiff(), m_IterationControl.m_MaxImbP.GetId(),
-		m_IterationControl.m_MaxImbQ.GetDiff(), m_IterationControl.m_MaxImbQ.GetId(),
-		m_IterationControl.m_MaxV.GetDiff(), m_IterationControl.m_MaxV.GetId(),
-		m_IterationControl.m_MinV.GetDiff(), m_IterationControl.m_MinV.GetId(),
-		m_IterationControl.m_nQviolated,
-		m_IterationControl.m_ImbRatio);
+		IterationControl_.Number,
+		IterationControl_.MaxImbP.GetDiff(), IterationControl_.MaxImbP.GetId(),
+		IterationControl_.MaxImbQ.GetDiff(), IterationControl_.MaxImbQ.GetId(),
+		IterationControl_.MaxV.GetDiff(), IterationControl_.MaxV.GetId(),
+		IterationControl_.MinV.GetDiff(), IterationControl_.MinV.GetId(),
+		IterationControl_.QviolatedCount,
+		IterationControl_.ImbRatio);
 	return retString;
 }
 
@@ -857,7 +855,7 @@ void CDynaNodeContainer::ProcessTopologyInitial()
 {
 	// если суперузлы отсутствуют, строим суперузлы
 	// если есть считаем что они построены в УР
-	if (m_SuperLinks.empty())
+	if (SuperLinks.empty())
 		CreateSuperNodes();
 	else
 		CalculateSuperNodesAdmittances();
@@ -884,12 +882,12 @@ void CDynaNodeBase::AddToTopologyCheck()
 
 void CDynaNodeContainer::AddToTopologyCheck(CDynaNodeBase *pNode)
 {
-	m_TopologyCheck.insert(pNode);
+	TopologyCheck.insert(pNode);
 }
 
 void CDynaNodeContainer::ResetTopologyCheck()
 {
-	m_TopologyCheck.clear();
+	TopologyCheck.clear();
 }
 
 void CDynaNodeContainer::SwitchOffDanglingNodes(NodeSet& Queue)
@@ -949,7 +947,7 @@ void CDynaNodeContainer::PrepareLFTopology()
 	{
 		// для каждого острова считаем количество базисных узлов
 		ptrdiff_t nSlacks = std::count_if(island.second.begin(), island.second.end(), [](CDynaNodeBase* pNode) -> bool { 
-				return pNode->m_eLFNodeType == CDynaNodeBase::eLFNodeType::LFNT_BASE;
+				return pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_BASE;
 		});
 		m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandSlackBusesCount, island.second.size(), nSlacks));
 		if (!nSlacks)
@@ -984,7 +982,7 @@ void CDynaNodeContainer::SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Qu
 			// и этот узел ставим в очередь на повторную проверку отключения ветвей
 			Queue.insert(pNode);
 			// в очередь также ставим все узлы, которые были инцидентны данному и состояния ветвей до которых изменились
-			Queue.insert(m_TopologyCheck.begin(), m_TopologyCheck.end());
+			Queue.insert(TopologyCheck.begin(), TopologyCheck.end());
 			// после ChangeState ветви, инцидентные узлу изменят состояние, поэтому надо проверить узлы на концах изменивших состояние ветвей
 		}
 	}
@@ -1015,8 +1013,8 @@ void CDynaNodeContainer::DumpNetwork()
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 			dump << fmt::format("Node Id={} DBIndex={} V {} / {}", pNode->GetId(), pNode->GetDBIndex(), pNode->V.Value, pNode->Delta.Value / M_PI * 180.0);
-			if(pNode->m_pSuperNodeParent)
-				dump << fmt::format(" belongs to supernode Id={}", pNode->m_pSuperNodeParent->GetId());
+			if(pNode->pSuperNodeParent)
+				dump << fmt::format(" belongs to supernode Id={}", pNode->pSuperNodeParent->GetId());
 			dump << std::endl;
 
 			const CLinkPtrCount* const pBranchLink{ pNode->GetLink(0) };
@@ -1046,7 +1044,7 @@ void CDynaNodeContainer::DumpNetwork()
 				}
 			}
 
-			for (VirtualBranch* pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
+			for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
 				dump << fmt::format("\tVirtual Branch to node Id={}", pV->pNode->GetId()) << std::endl;
 		}
 	}

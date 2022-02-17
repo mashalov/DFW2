@@ -672,28 +672,28 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 
 	// расчет УР
 
-	Serializer->AddProperty(m_cszLFImbalance, m_Imb);
-	Serializer->AddProperty(m_cszLFFlat, m_bFlat);
+	Serializer->AddProperty(m_cszLFImbalance, Imb);
+	Serializer->AddProperty(m_cszLFFlat, Flat);
 
 	Serializer->AddEnumProperty(m_cszLFStartup,
-		new CSerializerAdapterEnum(m_Startup, m_cszLFStartupNames));
+		new CSerializerAdapterEnum(Startup, m_cszLFStartupNames));
 		
-	Serializer->AddProperty(m_cszLFSeidellStep, m_dSeidellStep);
-	Serializer->AddProperty(m_cszLFSeidellIterations, m_nSeidellIterations);
-	Serializer->AddProperty(m_cszLFEnableSwitchIteration, m_nEnableSwitchIteration);
-	Serializer->AddProperty(m_cszLFMaxIterations, m_nMaxIterations);
-	Serializer->AddProperty(m_cszLFNewtonMaxVoltageStep, m_dVoltageNewtonStep);
-	Serializer->AddProperty(m_cszLFNewtonMaxNodeAngleStep, m_dNodeAngleNewtonStep);
-	Serializer->AddProperty(m_cszLFNewtonMaxBranchAngleStep, m_dBranchAngleNewtonStep);
+	Serializer->AddProperty(m_cszLFSeidellStep, SeidellStep);
+	Serializer->AddProperty(m_cszLFSeidellIterations, SeidellIterations);
+	Serializer->AddProperty(m_cszLFEnableSwitchIteration, EnableSwitchIteration);
+	Serializer->AddProperty(m_cszLFMaxIterations, MaxIterations);
+	Serializer->AddProperty(m_cszLFNewtonMaxVoltageStep, VoltageNewtonStep);
+	Serializer->AddProperty(m_cszLFNewtonMaxNodeAngleStep, NodeAngleNewtonStep);
+	Serializer->AddProperty(m_cszLFNewtonMaxBranchAngleStep, BranchAngleNewtonStep);
 	Serializer->AddProperty(m_cszLFForceSwitchLambda, ForceSwitchLambda);
-	Serializer->AddEnumProperty(m_cszLFFormulation, new CSerializerAdapterEnum(m_LFFormulation, m_cszLFFormulationTypeNames));
-	Serializer->AddProperty(m_cszLFAllowNegativeLRC, m_bAllowNegativeLRC);
-	Serializer->AddProperty(m_cszLFLRCMinSlope, m_dLRCMinSlope);
-	Serializer->AddProperty(m_cszLFLRCMaxSlope, m_dLRCMaxSlope);
+	Serializer->AddEnumProperty(m_cszLFFormulation, new CSerializerAdapterEnum(LFFormulation, m_cszLFFormulationTypeNames));
+	Serializer->AddProperty(m_cszLFAllowNegativeLRC, AllowNegativeLRC);
+	Serializer->AddProperty(m_cszLFLRCMinSlope, LRCMinSlope);
+	Serializer->AddProperty(m_cszLFLRCMaxSlope, LRCMaxSlope);
 	Serializer->AddProperty(m_cszLRCSmoothingRange, m_dLRCSmoothingRange);
 	Serializer->AddProperty(m_cszNewtonMaxNorm, m_dNewtonMaxNorm);
-	Serializer->AddProperty(m_cszMaxPVPQSwitches, m_nMaxPVPQSwitches);
-	Serializer->AddProperty(m_cszPVPQSwitchPerIt, m_nPVPQSwitchPerIt);
+	Serializer->AddProperty(m_cszMaxPVPQSwitches, MaxPVPQSwitches);
+	Serializer->AddProperty(m_cszPVPQSwitchPerIt, PVPQSwitchPerIt);
 
 	return Serializer;
 }

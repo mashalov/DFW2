@@ -52,7 +52,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 	
 	//double Ire{ Iconst.real() }, Iim{ Iconst.imag() };
 
-	if (!m_bInMetallicSC)
+	if (!InMetallicSC)
 	{
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию, заданные в узле
  	    // если напряжение меньше VshuntPartBelow переходим на шунт и обнуляем
@@ -60,7 +60,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 		// Проверяем напряжение с учетом радиуса сглаживания,
 		// радиус сглаживания выражаем в именованных  единицах относительно
 		// номинального напряжения СХН
-		if ((Vsq + dLRCVicinity * V0) < VshuntPartBelow)
+		if ((Vsq + LRCVicinity * V0) < VshuntPartBelow)
 		{
 			cI += std::conj(LRCShuntPart) * VreVim;
 			//Ire += dLRCShuntPartP * Vre + dLRCShuntPartQ * Vim;
@@ -92,7 +92,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 	//Ire -= Yii.real() * Vre - Yii.imag() * Vim;
 	//Iim -= Yii.imag() * Vre + Yii.real() * Vim;
 
-	if (!GetSuperNode()->m_bLowVoltage)
+	if (!GetSuperNode()->LowVoltage)
 	{
 		// добавляем токи от нагрузки (если напряжение не очень низкое)
 		//const double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
@@ -121,7 +121,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 
 	//double Ire{ IconstSuper.real() }, Iim{ IconstSuper.imag() };
 
-	if (!m_bInMetallicSC)
+	if (!InMetallicSC)
 	{
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию, заданные в узле
 		// если напряжение меньше VshuntPartBelow переходим на шунт и обнуляем
@@ -130,7 +130,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 		// радиус сглаживания выражаем в именованных  единицах относительно
 		// номинального напряжения СХН
 		
-		if ((Vsq + dLRCVicinity * V0Super) < VshuntPartBelowSuper)
+		if ((Vsq + LRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
 			cI += std::conj(LRCShuntPartSuper) * VreVim;
 			//Ire -= -dLRCShuntPartPSuper * Vre - dLRCShuntPartQSuper * Vim;
@@ -161,7 +161,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 	//Ire -= YiiSuper.real() * Vre - YiiSuper.imag() * Vim;
 	//Iim -= YiiSuper.imag() * Vre + YiiSuper.real() * Vim;
 
-	if (!m_bLowVoltage)
+	if (!LowVoltage)
 	{
 		// добавляем токи от нагрузки (если напряжение не очень низкое)
 		cplx cS{ Pnr - Pgr, Qgr - Qnr };
@@ -196,12 +196,12 @@ void CDynaNodeBase::UpdateVDeltaSuper()
 // если они меньше напряжения перехода минус окрестность сглаживания - возвращает true
 bool CDynaNodeBase::AllLRCsInShuntPart(double Vtest)
 {
-	bool bRes{ (Vtest + dLRCVicinity * V0) < VshuntPartBelow };
+	bool bRes{ (Vtest + LRCVicinity * V0) < VshuntPartBelow };
 	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
 	LinkWalker<CDynaNodeBase> pSlaveNode;
 
 	while (pLink->In(pSlaveNode) && bRes)
-		bRes = (Vtest + pSlaveNode->dLRCVicinity * pSlaveNode->V0 ) < pSlaveNode->VshuntPartBelow;
+		bRes = (Vtest + pSlaveNode->LRCVicinity * pSlaveNode->V0 ) < pSlaveNode->VshuntPartBelow;
 
 	return bRes;
 }
@@ -262,24 +262,24 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 	double& re{ reinterpret_cast<double(&)[2]>(dLRCLoad)[0] };
 	double& im{ reinterpret_cast<double(&)[2]>(dLRCLoad)[1] };
 
-	Pnr *= m_pLRC->P()->GetBoth(VdVnom, re, dLRCVicinity);
+	Pnr *= pLRC->P()->GetBoth(VdVnom, re, LRCVicinity);
 	re *= Pn;
-	Qnr *= m_pLRC->Q()->GetBoth(VdVnom, im, dLRCVicinity);
+	Qnr *= pLRC->Q()->GetBoth(VdVnom, im, LRCVicinity);
 	im *= Qn;
 
 	dLRCLoad /= V0;
 
 	// если есть СХН генерации (нет привязанных генераторов, но есть заданная в УР генерация)
 	// рассчитываем расчетную генерацию
-	if (m_pLRCGen)
+	if (pLRCGen)
 	{
 		double& re{ reinterpret_cast<double(&)[2]>(dLRCGen)[0] };
 		double& im{ reinterpret_cast<double(&)[2]>(dLRCGen)[1] };
 
 
-		Pgr *= m_pLRCGen->P()->GetBoth(VdVnom, re, dLRCVicinity); 
+		Pgr *= pLRCGen->P()->GetBoth(VdVnom, re, LRCVicinity); 
 		re *= Pg;
-		Qgr *= m_pLRCGen->Q()->GetBoth(VdVnom, im, dLRCVicinity);
+		Qgr *= pLRCGen->Q()->GetBoth(VdVnom, im, LRCVicinity);
 		im *= Qg;
 		dLRCGen /= V0;
 	}
@@ -294,7 +294,7 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 	double dIredVre(1.0), dIredVim(0.0), dIimdVre(0.0), dIimdVim(1.0);
 
-	if (!m_bInMetallicSC)
+	if (!InMetallicSC)
 	{
 		// если не в металлическом кз, считаем производные от нагрузки и генерации, заданных в узле
 		dIredVre = -YiiSuper.real();
@@ -307,7 +307,7 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		// выбираем точку в 0.5 ниже чем Uсхн_min чтобы использовать вблизи
 		// Uсхн_min стандартное cглаживание СХН
 
-		if ((V2sq + dLRCVicinity * V0Super) < VshuntPartBelowSuper)
+		if ((V2sq + LRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
 			_ASSERTE(m_pLRC);
 			dIredVre +=  LRCShuntPartSuper.real();
@@ -342,7 +342,7 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 		// обходим генераторы и формируем производные от токов генераторов
 		// если узел в металлическом КЗ производные равны нулю
-		double dGenMatrixCoe = m_bInMetallicSC ? 0.0 :-1.0;
+		double dGenMatrixCoe{ InMetallicSC ? 0.0 : -1.0 };
 		while (pGenLink->InMatrix(pGen))
 		{
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
@@ -351,10 +351,10 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe);
 		}
 
-		if (m_bInMetallicSC)
+		if (InMetallicSC)
 		{
 			// если в металлическом КЗ, то производные от токов ветвей равны нулю (в строке единицы только от Vre и Vim)
-			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
+			for (VirtualBranch *pV = pVirtualBranchBegin_; pV < pVirtualBranchEnd_; pV++)
 			{
 				// dIre /dVre
 				pDynaModel->SetElement(Vre, pV->pNode->Vre, 0.0);
@@ -369,7 +369,7 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		else
 		{
 			// если не в металлическом КЗ, то производные от токов ветвей формируем как положено
-			for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
+			for (VirtualBranch *pV = pVirtualBranchBegin_; pV < pVirtualBranchEnd_; pV++)
 			{
 				// dIre /dVre
 				pDynaModel->SetElement(Vre, pV->pNode->Vre, -pV->Y.real());
@@ -394,7 +394,7 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	}
 
 	// check low voltage
-	if (m_bLowVoltage)
+	if (LowVoltage)
 	{
 		pDynaModel->SetElement(V, Vre, 0.0);
 		pDynaModel->SetElement(V, Vim, 0.0);
@@ -488,7 +488,7 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 	alignas(32) cplx cI{ IconstSuper };
 
-	if (!m_bInMetallicSC)
+	if (!InMetallicSC)
 	{
 		// если не в металлическом КЗ, обрабатываем нагрузку и генерацию,
 		// заданные в узле
@@ -499,7 +499,7 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 		//FromComplex(Ire, Iim, cI);
 
-		if (!m_bLowVoltage)
+		if (!LowVoltage)
 			dV = V - V2sq;
 
 		// обходим генераторы
@@ -517,7 +517,7 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 		__m128d neg = _mm_setr_pd(0.0, -0.0);
 
-		for (VirtualBranch *pV = m_VirtualBranchBegin; pV < m_VirtualBranchEnd; pV++)
+		for (VirtualBranch *pV = pVirtualBranchBegin_; pV < pVirtualBranchEnd_; pV++)
 		{
 			__m128d yb = _mm_load_pd(reinterpret_cast<double(&)[2]>(pV->Y));
 			__m128d ov = _mm_load_pd(reinterpret_cast<double(&)[2]>(pV->pNode->VreVim));
@@ -562,7 +562,7 @@ void CDynaNodeBase::NewtonUpdateEquation(CDynaModel* pDynaModel)
 eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 {
 	UpdateVreVim();
-	m_bLowVoltage = V < (LOW_VOLTAGE - LOW_VOLTAGE_HYST);
+	LowVoltage = V < (LOW_VOLTAGE - LOW_VOLTAGE_HYST);
 	PickV0();
 
 	if (GetLink(1)->Count() > 0)						// если к узлу подключены генераторы, то СХН генераторов не нужна и мощности генерации 0
@@ -571,8 +571,8 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 		Pgr = Qgr = 0.0;
 	else
 	{
-		m_pLRCGen = pDynaModel->GetLRCGen();		// если есть генерация но нет генераторов - нужна СХН генераторов
-		if (m_pLRCGen->GetId() == -2 && false) // если задана СХН Iconst - меняем СХН на постоянный ток в системе уравнений
+		pLRCGen = pDynaModel->GetLRCGen();		// если есть генерация но нет генераторов - нужна СХН генераторов
+		if (pLRCGen->GetId() == -2 && false) // если задана СХН Iconst - меняем СХН на постоянный ток в системе уравнений
 		{
 			// альтернативный вариант - генерация в узле 
 			// представляется током
@@ -581,13 +581,13 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 			// обнуляем генерацию в узле
 			Pg = Qg = Pgr = Qgr = 0.0;;
 			// и обнуляем СХН, так как она больше не нужна
-			m_pLRCGen = nullptr;
+			pLRCGen = nullptr;
 		}
 	}
 
 	// если в узле нет СХН для динамики, подставляем СХН по умолчанию
-	if (!m_pLRC)
-		m_pLRC = pDynaModel->GetLRCDynamicDefault();
+	if (!pLRC)
+		pLRC = pDynaModel->GetLRCDynamicDefault();
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -600,7 +600,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 void CDynaNode::Predict()
 {
 	VreVim = { Vre, Vim };
-	dLRCVicinity = 0.05;
+	LRCVicinity = 0.05;
 	const double newDelta{ std::atan2(std::sin(Delta), std::cos(Delta)) };
 	if (std::abs(newDelta - Delta) > DFW2_EPSILON)
 	{
@@ -648,7 +648,7 @@ void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Lag, Lag, -1.0 / T);
 
 
-	if (m_bLowVoltage)
+	if (LowVoltage)
 	{
 		pDynaModel->SetElement(Delta, Vre, 0.0);
 		pDynaModel->SetElement(Delta, Vim, 0.0);
@@ -687,7 +687,7 @@ void CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	if (pDynaModel->IsInDiscontinuityMode()) 
 		dS = 0.0;
 
-	if (!m_bLowVoltage)
+	if (!LowVoltage)
 		dDelta = Delta - std::atan2(Vim, Vre);
 	
 	pDynaModel->SetFunctionDiff(Lag, dLag);
@@ -772,7 +772,7 @@ void CDynaNodeContainer::CalculateShuntParts()
 		pNode->LRCShuntPartSuper = pNode->LRCShuntPart;
 		pNode->VshuntPartBelowSuper = pNode->VshuntPartBelow;
 		pNode->V0Super = pNode->V0;
-		const CLinkPtrCount* const pLink{ m_SuperLinks[0].GetLink(node->InContainerIndex()) };
+		const CLinkPtrCount* const pLink{ SuperLinks[0].GetLink(node->InContainerIndex()) };
 		LinkWalker<CDynaNodeBase> pSlaveNode;
 		// суммируем собственные проводимости и шунтовые части СХН нагрузки и генерации в узле
 		while (pLink->In(pSlaveNode))
@@ -797,18 +797,18 @@ void CDynaNodeBase::CalculateShuntParts()
 
 	LRCShuntPart = 0.0;
 
-	if (m_pLRC)
+	if (pLRC)
 	{
 		// рассчитываем шунтовую часть СХН нагрузки в узле для низких напряжений
-		LRCShuntPart = { Pn * m_pLRC->P()->P.begin()->a2, Qn * m_pLRC->Q()->P.begin()->a2 };
-		VshuntPartBelow = m_pLRC->VshuntBelow();
+		LRCShuntPart = { Pn * pLRC->P()->P.begin()->a2, Qn * pLRC->Q()->P.begin()->a2 };
+		VshuntPartBelow = pLRC->VshuntBelow();
 	}
 
-	if (m_pLRCGen)
+	if (pLRCGen)
 	{
 		// рассчитываем шунтовую часть СХН генерации в узле для низких напряжений
-		LRCShuntPart -= cplx(Pg * m_pLRCGen->P()->P.begin()->a2, Qg * m_pLRCGen->Q()->P.begin()->a2);
-		VshuntPartBelow = (std::min)(m_pLRCGen->VshuntBelow(), VshuntPartBelow);
+		LRCShuntPart -= cplx(Pg * pLRCGen->P()->P.begin()->a2, Qg * pLRCGen->Q()->P.begin()->a2);
+		VshuntPartBelow = (std::min)(pLRCGen->VshuntBelow(), VshuntPartBelow);
 	}
 
 	VshuntPartBelow *= V0;
@@ -852,9 +852,9 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 	Yii.real(-Yii.real());
 	Yii.imag(-Yii.imag());
 
-	m_bInMetallicSC = !(std::isfinite(Yii.real()) && std::isfinite(Yii.imag()));
+	InMetallicSC = !(std::isfinite(Yii.real()) && std::isfinite(Yii.imag()));
 
-	if (m_bInMetallicSC || !IsStateOn())
+	if (InMetallicSC || !IsStateOn())
 	{
 		Vre = Vim = 0.0;
 		V = Delta = 0.0;
@@ -939,14 +939,14 @@ double* CSynchroZone::GetVariablePtr(ptrdiff_t nVarIndex)
 
 void CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 {
-	if (m_bInfPower)
+	if (InfPower)
 	{
 		pDynaModel->SetElement(S, S, 1.0);
 	}
 	else
 	{
 		pDynaModel->SetElement(S, S, 1.0);
-		for (auto&& it : m_LinkedGenerators)
+		for (auto&& it : LinkedGenerators)
 		{
 			if(it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
@@ -961,13 +961,13 @@ void CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 void CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
 {
 	double dS{ S };
-	if (m_bInfPower)
+	if (InfPower)
 	{
 		pDynaModel->SetFunction(S, 0.0);
 	}
 	else
 	{
-		for (auto&& it : m_LinkedGenerators)
+		for (auto&& it : LinkedGenerators)
 		{
 			if (it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
@@ -1022,7 +1022,7 @@ bool CDynaNodeContainer::LULF()
 		_ASSERTE(pAi < Ai + nNzCount);
 		_ASSERTE(pAp < Ap + nNodeCount);
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
-		pNode->dLRCVicinity = 0.0;		// зона сглаживания СХН для начала нулевая - без сглаживания
+		pNode->LRCVicinity = 0.0;		// зона сглаживания СХН для начала нулевая - без сглаживания
 		*pAp = (pAx - Ax) / 2;    pAp++;
 		*pAi = pNode->A(0) / EquationsCount();		  pAi++;
 		// первый элемент строки используем под диагональ
@@ -1032,7 +1032,7 @@ bool CDynaNodeContainer::LULF()
 		*pAx = 0.0; pAx++;
 		ppDiags++;
 
-		if (!pNode->m_bInMetallicSC)
+		if (!pNode->InMetallicSC)
 		{
 			// стартуем с плоского
 			pNode->Vre = pNode->V = pNode->Unom;
@@ -1041,7 +1041,7 @@ bool CDynaNodeContainer::LULF()
 			fnode << pNode->GetId() << ";";
 			// Branches
 
-			for (VirtualBranch *pV = pNode->m_VirtualBranchBegin; pV < pNode->m_VirtualBranchEnd; pV++)
+			for (VirtualBranch *pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
 			{
 				*pAx = pV->Y.real();   pAx++;
 				*pAx = pV->Y.imag();   pAx++;
@@ -1053,10 +1053,10 @@ bool CDynaNodeContainer::LULF()
 	nNzCount = (pAx - Ax) / 2;		// рассчитываем получившееся количество ненулевых элементов (делим на 2 потому что комплекс)
 	Ap[nNodeCount] = nNzCount;
 
-	ptrdiff_t& nIteration = m_IterationControl.Number;
+	ptrdiff_t& nIteration = IterationControl_.Number;
 	for (nIteration = 0; nIteration < 200; nIteration++)
 	{
-		m_IterationControl.Reset();
+		IterationControl_.Reset();
 		ppDiags = pDiags.get();
 		pB = B;
 
@@ -1074,7 +1074,7 @@ bool CDynaNodeContainer::LULF()
 				pNode->GetId();// pNode->BuildRightHand(m_pDynaModel);
 				*/
 
-			if (!pNode->m_bInMetallicSC)
+			if (!pNode->InMetallicSC)
 			{
 				// для всех узлов которые включены и вне металлического КЗ
 
@@ -1175,15 +1175,15 @@ bool CDynaNodeContainer::LULF()
 			*/
 			// считаем изменение напряжения узла между итерациями и находим
 			// самый изменяющийся узел
-			if (!pNode->m_bInMetallicSC)
-				m_IterationControl.m_MaxV.UpdateMaxAbs(pNode, CDevice::ZeroDivGuard(pNode->V - pNode->Vold, pNode->Vold));
+			if (!pNode->InMetallicSC)
+				IterationControl_.MaxV.UpdateMaxAbs(pNode, CDevice::ZeroDivGuard(pNode->V - pNode->Vold, pNode->Vold));
 		}
 
 		DumpIterationControl(DFW2MessageStatus::DFW2LOG_DEBUG);
 
-		if (std::abs(m_IterationControl.m_MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
+		if (std::abs(IterationControl_.MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
 		{
-			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLULFConverged, m_IterationControl.m_MaxV.GetDiff(), nIteration));
+			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLULFConverged, IterationControl_.MaxV.GetDiff(), nIteration));
 			break;
 		}
 	}
@@ -1200,14 +1200,14 @@ bool CDynaNodeContainer::LULF()
 
 void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 {
-	if (bSwitchToDynamicLRC != m_bDynamicLRC)
+	if (bSwitchToDynamicLRC != DynamicLRC)
 	{
-		m_bDynamicLRC = bSwitchToDynamicLRC;
+		DynamicLRC = bSwitchToDynamicLRC;
 		for (auto&& node : m_DevVec)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 			// меняем местами СХН УР и динамики
-			std::swap(pNode->m_pLRCLF, pNode->m_pLRC);
+			std::swap(pNode->pLRCLF, pNode->pLRC);
 			// меняем местами расчетную и номинальную 
 			// нагрузки
 			std::swap(pNode->Pn, pNode->Pnr);
@@ -1216,7 +1216,7 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 			// равно номинальному напряжению узла
 			// если СХН для динамики - номинальное напряжение СХН
 			// равно расчетному
-			if (!m_bDynamicLRC)
+			if (!DynamicLRC)
 				pNode->V0 = pNode->Unom;
 			else
 				pNode->V0 = pNode->V;
@@ -1230,8 +1230,8 @@ VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::string_view VarNam
 	{
 		VariableIndexExternal ExtVar = { -1, nullptr };
 
-		if (m_pSyncZone)
-			ExtVar = m_pSyncZone->GetExternalVariable(CDynaNode::m_cszS);
+		if (pSyncZone)
+			ExtVar = pSyncZone->GetExternalVariable(CDynaNode::m_cszS);
 		return ExtVar;
 	}
 	else
@@ -1241,33 +1241,33 @@ VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::string_view VarNam
 
 void CDynaNodeBase::StoreStates()
 {
-	m_bSavedLowVoltage = m_bLowVoltage;
+	SavedLowVoltage = LowVoltage;
 }
 
 void CDynaNodeBase::RestoreStates()
 {
-	m_bLowVoltage = m_bSavedLowVoltage;
+	LowVoltage = SavedLowVoltage;
 }
 
 void CDynaNodeBase::FromSuperNode()
 {
 	_ASSERTE(m_pSuperNodeParent);
-	V = m_pSuperNodeParent->V;
-	Delta = m_pSuperNodeParent->Delta;
-	Vre = m_pSuperNodeParent->Vre;
-	Vim = m_pSuperNodeParent->Vim;
-	VreVim = m_pSuperNodeParent->VreVim;
-	dLRCVicinity = m_pSuperNodeParent->dLRCVicinity;
-	m_bLowVoltage = m_pSuperNodeParent->m_bLowVoltage;
+	V = pSuperNodeParent->V;
+	Delta = pSuperNodeParent->Delta;
+	Vre = pSuperNodeParent->Vre;
+	Vim = pSuperNodeParent->Vim;
+	VreVim = pSuperNodeParent->VreVim;
+	LRCVicinity = pSuperNodeParent->LRCVicinity;
+	LowVoltage = pSuperNodeParent->LowVoltage;
 }
 
 void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 {
-	if (m_bLowVoltage)
+	if (LowVoltage)
 	{
 		if (!bLowVoltage)
 		{
-			m_bLowVoltage = bLowVoltage;
+			LowVoltage = bLowVoltage;
 			if (IsStateOn())
 				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Напряжение {} в узле {} выше порогового", V.Value, GetVerbalName()));
 		}
@@ -1276,7 +1276,7 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 	{
 		if (bLowVoltage)
 		{
-			m_bLowVoltage = bLowVoltage;
+			LowVoltage = bLowVoltage;
 			if (IsStateOn())
 				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Напряжение {} в узле {} ниже порогового", V.Value, GetVerbalName()));
 		}
@@ -1424,7 +1424,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 // узел не должен быть в матрице, если он отключен или входит в суперузел
 bool CDynaNodeBase::InMatrix()
 {
-	if (m_pSuperNodeParent || !IsStateOn())
+	if (pSuperNodeParent || !IsStateOn())
 		return false;
 	else
 		return true;
@@ -1452,7 +1452,7 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	}
 	*/
 
-	if (m_bLowVoltage)
+	if (LowVoltage)
 	{
 		const double Border{ LOW_VOLTAGE + Hyst };
 
@@ -1487,14 +1487,14 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 
 	if (pBranch->IsZeroImpedance())
 	{
-		if (m_VirtualZeroBranchEnd >= static_cast<CDynaNodeContainer*>(pContainer_)->GetZeroBranchesEnd())
+		if (pVirtualZeroBranchEnd_>= static_cast<CDynaNodeContainer*>(pContainer_)->GetZeroBranchesEnd())
 			throw dfw2error("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun");
 
 		// если ветвь имеет сопротивление ниже минимального 
 		bool bAdd{ true };
 		// проверяем 1) - не добавлена ли она уже; 2) - нет ли параллельной ветви
 		VirtualZeroBranch* pParallelFound{ nullptr };
-		for (VirtualZeroBranch *pVb = m_VirtualZeroBranchBegin; pVb < m_VirtualZeroBranchEnd; pVb++)
+		for (VirtualZeroBranch *pVb = pVirtualZeroBranchBegin_; pVb < pVirtualZeroBranchEnd_; pVb++)
 		{
 			if (pVb->pBranch == pBranch)
 			{
@@ -1520,32 +1520,35 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 			// если ветвь добавляем
 			// то сначала проверяем есть ли место
 			// сдвигаем указатель на конец списка ветвей с нулевым сопротивлением для данного узла
-			m_VirtualZeroBranchEnd->pBranch = pBranch;
+			pVirtualZeroBranchEnd_->pBranch = pBranch;
 			if (pParallelFound)
 			{
-				m_VirtualZeroBranchEnd->pParallelTo = pParallelFound->pBranch;
+				pVirtualZeroBranchEnd_->pParallelTo = pParallelFound->pBranch;
 				pParallelFound->nParallelCount++;
 			}
 			// а в основной ветви увеличиваем счетчик параллельных
-			m_VirtualZeroBranchEnd++;
+			pVirtualZeroBranchEnd_++;
 		}
 	}
 
 	// возвращаем конец списка ветвей с нулевым сопротивлением
-	return m_VirtualZeroBranchEnd;
+	return pVirtualZeroBranchEnd_;
 }
 
 void CDynaNodeBase::TidyZeroBranches()
 {
 	// сортируем нулевые ветви так, чтобы вначале были основные, в конце параллельные основным
-	std::sort(m_VirtualZeroBranchBegin, m_VirtualZeroBranchEnd, [](const VirtualZeroBranch& lhs, const VirtualZeroBranch& rhs)->bool { return lhs.pParallelTo < rhs.pParallelTo; });
-	m_VirtualZeroBranchParallelsBegin = m_VirtualZeroBranchBegin;
-	m_VirtualZeroBranchParallelsBegin = m_VirtualZeroBranchBegin;
+	std::sort(pVirtualZeroBranchBegin_, pVirtualZeroBranchEnd_, [](const VirtualZeroBranch& lhs, const VirtualZeroBranch& rhs)->bool 
+		{ 
+			return lhs.pParallelTo < rhs.pParallelTo; 
+		});
+	pVirtualZeroBranchParallelsBegin_ = pVirtualZeroBranchBegin_;
+
 	// находим начало параллельных цепей
-	while (m_VirtualZeroBranchParallelsBegin < m_VirtualZeroBranchEnd)
+	while (pVirtualZeroBranchParallelsBegin_ < pVirtualZeroBranchEnd_)
 	{
-		if (!m_VirtualZeroBranchParallelsBegin->pParallelTo)
-			m_VirtualZeroBranchParallelsBegin++;
+		if (!pVirtualZeroBranchParallelsBegin_->pParallelTo)
+			pVirtualZeroBranchParallelsBegin_++;
 		else
 			break;
 	}
@@ -1582,7 +1585,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	// суперузла
 
 	// Для обычных (не супер) узлов не выполняем
-	if (m_pSuperNodeParent)
+	if (pSuperNodeParent)
 		return;
 
 	const CLinkPtrCount* const pSuperNodeLink{ GetSuperLink(0) };
@@ -1614,7 +1617,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 
 	// узел с максимальным количеством связей не входит в Y
 	// его индекс в Y делаем отрицательным
-	pMaxRankNode.first->ZeroLF.m_nSuperNodeLFIndex = -1;
+	pMaxRankNode.first->ZeroLF.SuperNodeLFIndex = -1;
 	// а индикатор напряжения ставим единичным
 	pMaxRankNode.first->ZeroLF.vRe = 1.0;
 	pMaxRankNode.first->ZeroLF.vIm = 0.0;
@@ -1627,7 +1630,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		if (pMaxRankNode.first != pNode)
 		{
 			ZeroLF.ZeroSupeNode->LFMatrix.push_back({ pNode });
-			pNode->ZeroLF.m_nSuperNodeLFIndex = nRowIndex++;
+			pNode->ZeroLF.SuperNodeLFIndex = nRowIndex++;
 		}
 	};
 
@@ -1658,12 +1661,12 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 	// быстрее чем а/д для контейнеров для каждого узла. Кроме того, ветви
 	// внутри общего массива разделены парами указателей. Для вектора пришлось
 	// бы использовать неинициализированные итераторы
-	pZeroSuperNode->m_VirtualBranches = std::make_unique<VirtualBranch[]>(nBranchesCount);
+	pZeroSuperNode->pVirtualBranches = std::make_unique<VirtualBranch[]>(nBranchesCount);
 	// вектор списков узлов, связанных связями с нулевыми сопротивлениями
-	pZeroSuperNode->m_VirtualZeroBranches = std::make_unique<VirtualBranch[]>(2 * (m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin));
+	pZeroSuperNode->pVirtualZeroBranches = std::make_unique<VirtualBranch[]>(2 * (pVirtualZeroBranchParallelsBegin_ - pVirtualZeroBranchBegin_));
 
-	VirtualBranch* pHead{ pZeroSuperNode->m_VirtualBranches.get() };
-	VirtualBranch* pZeroHead{ pZeroSuperNode->m_VirtualZeroBranches.get() };
+	VirtualBranch* pHead{ pZeroSuperNode->pVirtualBranches.get() };
+	VirtualBranch* pZeroHead{ pZeroSuperNode->pVirtualZeroBranches.get() };
 	
 
 	const auto FindParallel = [](VirtualBranch* pBegin, VirtualBranch* pEnd, const CDynaNodeBase* pNode) -> VirtualBranch* 
@@ -1757,7 +1760,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 
 void CDynaNodeBase::RequireSuperNodeLF()
 {
-	if (m_pSuperNodeParent)
+	if (pSuperNodeParent)
 		throw dfw2error(fmt::format("CDynaNodeBase::RequireSuperNodeLF - node {} is not super node", GetVerbalName()));
 	static_cast<CDynaNodeContainer*>(pContainer_)->RequireSuperNodeLF(this);
 }
@@ -1792,11 +1795,11 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 		const auto& ZeroLF{ node->ZeroLF };
 
 		*pAx = ZeroLF.Yii;	pAx += 2;
-		*pAp = ZeroLF.m_nSuperNodeLFIndex;	pAp++;
+		*pAp = ZeroLF.SuperNodeLFIndex;	pAp++;
 		for (const VirtualBranch* pV = ZeroLF.pVirtualZeroBranchesBegin; pV < ZeroLF.pVirtualZeroBranchesEnd; pV++)
 		{
 			*pAx = -pV->Y.real();	pAx += 2;
-			*pAp = pV->pNode->ZeroLF.m_nSuperNodeLFIndex;	pAp++;
+			*pAp = pV->pNode->ZeroLF.SuperNodeLFIndex;	pAp++;
 		}
 		*pAi = *(pAi - 1) + (ZeroLF.pVirtualZeroBranchesEnd - ZeroLF.pVirtualZeroBranchesBegin) + 1;
 		pAi++;
@@ -1846,7 +1849,7 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	// комплекс напряжения в суперузле - просто напряжение одного из узлов
 	// используется для расчета токов в шунтах и мощностей
 	cplx Vs{ Vre, Vim };
-	for (const VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
+	for (const VirtualZeroBranch* pZb = pVirtualZeroBranchBegin_; pZb < pVirtualZeroBranchEnd_; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
 		const auto& pNode1{ pBranch->m_pNodeIp->ZeroLF };
@@ -1865,14 +1868,14 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 
 void CDynaNodeBase::CalculateZeroLFBranches()
 {
-	if (m_pSuperNodeParent)
+	if (pSuperNodeParent)
 		return;
 
 	// для ветвей с нулевым сопротивлением, параллельных основным ветвям копируем потоки основных,
 	// так как потоки основных рассчитаны как доля параллельных потоков. Все потоки по паралелльным цепям
 	// с сопротивлениями ниже минимальных будут одинаковы
 
-	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchParallelsBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
+	for (VirtualZeroBranch* pZb = pVirtualZeroBranchParallelsBegin_; pZb < pVirtualZeroBranchEnd_; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
 		pBranch->Sb = pBranch->Se = 0.0;
@@ -1881,7 +1884,7 @@ void CDynaNodeBase::CalculateZeroLFBranches()
 	}
 
 	// Далее добавляем потоки от шунтов для всех ветвей, включая параллельные
-	for (VirtualZeroBranch* pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchEnd; pZb++)
+	for (VirtualZeroBranch* pZb = pVirtualZeroBranchBegin_; pZb < pVirtualZeroBranchEnd_; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
 		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
@@ -1900,7 +1903,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 		return;
 	}
 
-	if (m_pSuperNodeParent)
+	if (pSuperNodeParent)
 		return; // это не суперузел
 
 	const CLinkPtrCount* const pSuperNodeLink{ GetSuperLink(0) };
@@ -1914,7 +1917,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	// Создаем вектор внутренних узлов суперузла, включая узел представитель
 	std::unique_ptr<NodeType[]> pGraphNodes = std::make_unique<NodeType[]>(pSuperNodeLink->Count() + 1);
 	// Создаем вектор ребер за исключением параллельных ветвей
-	std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(m_VirtualZeroBranchParallelsBegin - m_VirtualZeroBranchBegin);
+	std::unique_ptr<EdgeType[]> pGraphEdges = std::make_unique<EdgeType[]>(pVirtualZeroBranchParallelsBegin_ - pVirtualZeroBranchBegin_);
 	const auto ppNodeEnd{ pSuperNodeLink->end() };
 	NodeType *pNode = pGraphNodes.get();
 	GraphType gc;
@@ -1926,7 +1929,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 
 	// Вводим в граф ребра
 	EdgeType *pEdge = pGraphEdges.get();
-	for (VirtualZeroBranch *pZb = m_VirtualZeroBranchBegin; pZb < m_VirtualZeroBranchParallelsBegin; pZb++, pEdge++)
+	for (VirtualZeroBranch *pZb = pVirtualZeroBranchBegin_; pZb < pVirtualZeroBranchParallelsBegin_; pZb++, pEdge++)
 		gc.AddEdge(pEdge->SetIds(pZb->pBranch->m_pNodeIp, pZb->pBranch->m_pNodeIq, pZb));
 
 	GraphType::CyclesType Cycles;
@@ -2129,7 +2132,7 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty(CDevice::m_cszname, TypedSerializedValue::eValueType::VT_NAME);
 	AddStateProperty(Serializer);
-	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum(m_eLFNodeType, CDynaNodeBase::m_cszLFNodeTypeNames));
+	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum(eLFNodeType_, CDynaNodeBase::m_cszLFNodeTypeNames));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);
@@ -2158,10 +2161,10 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState("LRCShuntPartSuper", LRCShuntPartSuper, eVARUNITS::VARUNIT_MW);
 	Serializer->AddState("Gshunt", Gshunt, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Bshunt", Bshunt, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddState("InMetallicSC", m_bInMetallicSC);
-	Serializer->AddState("InLowVoltage", m_bLowVoltage);
-	Serializer->AddState("SavedInLowVoltage", m_bSavedLowVoltage);
-	Serializer->AddState("LRCVicinity", dLRCVicinity);
+	Serializer->AddState("InMetallicSC", InMetallicSC);
+	Serializer->AddState("InLowVoltage", LowVoltage);
+	Serializer->AddState("SavedInLowVoltage", SavedLowVoltage);
+	Serializer->AddState("LRCVicinity", LRCVicinity);
 	Serializer->AddState("dLRCLoad", dLRCLoad);
 	Serializer->AddState("dLRCGen", dLRCGen);
 	Serializer->AddState("Vold", Vold, eVARUNITS::VARUNIT_KVOLTS);
@@ -2241,13 +2244,13 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 		const auto& pNode = static_cast<CDynaNode*>(dev);
 		if (pNode->LRCLoadFlowId > 0)
 		{
-			pNode->m_pLRCLF = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCLoadFlowId));
-			if (!pNode->m_pLRCLF)
+			pNode->pLRCLF = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCLoadFlowId));
+			if (!pNode->pLRCLF)
 				Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCLoadFlowId, pNode->GetVerbalName()));
 		}
 
-		pNode->m_pLRC = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCTransientId));
-		if (!pNode->m_pLRC)
+		pNode->pLRC = static_cast<CDynaLRC*>(containerLRC.GetDevice(pNode->LRCTransientId));
+		if (!pNode->pLRC)
 			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCIdNotFound, pNode->LRCTransientId, pNode->GetVerbalName()));
 			
 	}
@@ -2255,8 +2258,8 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 
 void CDynaNodeContainer::RequireSuperNodeLF(CDynaNodeBase *pSuperNode)
 {
-	if (pSuperNode->m_pSuperNodeParent)
+	if (pSuperNode->pSuperNodeParent)
 		throw dfw2error(fmt::format("CDynaNodeBase::RequireSuperNodeLF - node {} is not super node", pSuperNode->GetVerbalName()));
-	m_ZeroLFSet.insert(pSuperNode);
+	ZeroLFSet.insert(pSuperNode);
 }
 

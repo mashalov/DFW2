@@ -120,7 +120,7 @@ void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 
 		double dIredV{ 0.0 }, dIimdV{ 0.0 };
 
-		if (!pNode->m_bLowVoltage)
+		if (!pNode->LowVoltage)
 		{
 			double Pk{ pNode->Pnr - pNode->Pgr }, Qk{ pNode->Qnr - pNode->Qgr };
 
@@ -150,7 +150,7 @@ void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(vRe, pSuperNode->V, dIredV);
 		pDynaModel->SetElement(vIm, pSuperNode->V, dIimdV);
 
-		if ((0.5 * Vmin - pNode->dLRCVicinity) > Vsq / pNode->V0)
+		if ((0.5 * Vmin - pNode->LRCVicinity) > Vsq / pNode->V0)
 		{
 			_ASSERTE(pNode->m_pLRC);
 			dIredVre += pNode->LRCShuntPart.real();
@@ -165,7 +165,7 @@ void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 		const CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
 		LinkWalker<CDynaPowerInjector> pGen;
 
-		double dGenMatrixCoe{ pNode->m_bInMetallicSC ? 0.0 : -1.0 };
+		double dGenMatrixCoe{ pNode->InMetallicSC ? 0.0 : -1.0 };
 		while (pGenLink->InMatrix(pGen))
 		{
 			pDynaModel->SetElement(vRe, pGen->Ire, dGenMatrixCoe);

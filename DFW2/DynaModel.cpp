@@ -188,10 +188,10 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		m_Parameters.m_bDisableResultsWriter = false;
 
-		m_Parameters.m_bFlat = true;
-		m_Parameters.m_Startup = CLoadFlow::eLoadFlowStartupMethod::Seidell;
-		m_Parameters.m_nEnableSwitchIteration = 5;
-		m_Parameters.m_Imb = 0.05 * GetAtol();
+		m_Parameters.Flat = true;
+		m_Parameters.Startup = CLoadFlow::eLoadFlowStartupMethod::Seidell;
+		m_Parameters.EnableSwitchIteration = 5;
+		m_Parameters.Imb = 0.05 * GetAtol();
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга
@@ -1733,17 +1733,17 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 					// если не нашли параметр и тип объекта - "узел"
 					// создаем блок измерений для узла и пытаемся забрать параметр из блока
 					CDynaNode* pNode = static_cast<CDynaNode*>(pFoundDevice);
-					if (!pNode->m_pMeasure)
+					if (!pNode->pMeasure)
 					{
 						CDynaNodeMeasure* pNodeMeasure = new CDynaNodeMeasure(pNode);
 						pNodeMeasure->SetId(NodeMeasures.Count() + 1);
 						pNodeMeasure->SetName(pNode->GetVerbalName());
 						pNodeMeasure->Init(this);
 						NodeMeasures.AddDevice(pNodeMeasure);
-						pNode->m_pMeasure = pNodeMeasure;
+						pNode->pMeasure = pNodeMeasure;
 					}
 
-					ExtVar = pNode->m_pMeasure->GetExternalVariable(Prop);
+					ExtVar = pNode->pMeasure->GetExternalVariable(Prop);
 
 					if (ExtVar.pValue)
 					{
