@@ -257,7 +257,7 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 	// если есть СХН нагрузки, рассчитываем
 	// комплексную мощность и производные по напряжению
 
-	_ASSERTE(m_pLRC);
+	_ASSERTE(pLRC);
 
 	double& re{ reinterpret_cast<double(&)[2]>(dLRCLoad)[0] };
 	double& im{ reinterpret_cast<double(&)[2]>(dLRCLoad)[1] };
@@ -309,7 +309,7 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 		if ((V2sq + LRCVicinity * V0Super) < VshuntPartBelowSuper)
 		{
-			_ASSERTE(m_pLRC);
+			_ASSERTE(pLRC);
 			dIredVre +=  LRCShuntPartSuper.real();
 			dIredVim +=  LRCShuntPartSuper.imag();
 			dIimdVre += -LRCShuntPartSuper.imag();
@@ -1251,7 +1251,7 @@ void CDynaNodeBase::RestoreStates()
 
 void CDynaNodeBase::FromSuperNode()
 {
-	_ASSERTE(m_pSuperNodeParent);
+	_ASSERTE(pSuperNodeParent);
 	V = pSuperNodeParent->V;
 	Delta = pSuperNodeParent->Delta;
 	Vre = pSuperNodeParent->Vre;

@@ -103,7 +103,7 @@ void CLoadFlow::SeidellTanh()
 	MATRIXINFO SeidellOrder;
 	BuildSeidellOrder(SeidellOrder);
 
-	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
+	_ASSERTE(SeidellOrder.size() == pMatrixInfoSlackEnd - pMatrixInfo_.get());
 
 	// TODO !!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
 	//pNodes->CalcAdmittances(true);
@@ -354,12 +354,12 @@ void CLoadFlow::CompareWithRastr()
 		//ATLTRACE("\n %20f %20f %20f %20f %20f %20f", pNode->V, pNode->Delta * 180 / M_PI, pNode->Pg, pNode->Qg, pNode->Pnr, pNode->Qnr);
 		fprintf(s, "%td;%20g;%20g\n", pNode->GetId(), pNode->V.Value, pNode->Delta.Value * 180 / M_PI);
 	}
-	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Rastr differences");
-	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("V     {} {}", pNodeMaxV->V - pNodeMaxV->Vrastr, pNodeMaxV->GetVerbalName()));
-	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Delta {} {}", pNodeMaxDelta->Delta - pNodeMaxDelta->Deltarastr, pNodeMaxDelta->GetVerbalName()));
-	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Qg    {} {}", pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr, pNodeMaxQg->GetVerbalName()));
-	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Pnr   {} {}", pNodeMaxPnr->Pnr - pNodeMaxPnr->Pnrrastr, pNodeMaxPnr->GetVerbalName()));
-	m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Qnr   {} {}", pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr, pNodeMaxQnr->GetVerbalName()));
+	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Rastr differences");
+	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("V     {} {}", pNodeMaxV->V - pNodeMaxV->Vrastr, pNodeMaxV->GetVerbalName()));
+	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Delta {} {}", pNodeMaxDelta->Delta - pNodeMaxDelta->Deltarastr, pNodeMaxDelta->GetVerbalName()));
+	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Qg    {} {}", pNodeMaxQg->Qg - pNodeMaxQg->Qgrastr, pNodeMaxQg->GetVerbalName()));
+	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Pnr   {} {}", pNodeMaxPnr->Pnr - pNodeMaxPnr->Pnrrastr, pNodeMaxPnr->GetVerbalName()));
+	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Qnr   {} {}", pNodeMaxQnr->Qnr - pNodeMaxQnr->Qnrrastr, pNodeMaxQnr->GetVerbalName()));
 	fclose(s);
 }
 #endif

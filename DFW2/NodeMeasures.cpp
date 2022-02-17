@@ -152,7 +152,7 @@ void CDynaNodeZeroLoadFlow::BuildEquations(CDynaModel* pDynaModel)
 
 		if ((0.5 * Vmin - pNode->LRCVicinity) > Vsq / pNode->V0)
 		{
-			_ASSERTE(pNode->m_pLRC);
+			_ASSERTE(pNode->pLRC);
 			dIredVre += pNode->LRCShuntPart.real();
 			dIredVim += pNode->LRCShuntPart.imag();
 			dIimdVre += -pNode->LRCShuntPart.imag();

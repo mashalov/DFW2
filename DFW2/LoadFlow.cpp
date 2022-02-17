@@ -278,7 +278,7 @@ void CLoadFlow::Start()
 			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
 				// если в суперузле базисный узел - узел представитель тоже должен быть
 				// базисным, потому что так должны строиться суперузлы в CreateSuperNodes
-				_ASSERTE(pNode->m_eLFNodeType == pSlaveNode->m_eLFNodeType);
+				_ASSERTE(pNode->eLFNodeType_ == pSlaveNode->eLFNodeType_);
 				break;
 			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
 				// если в суперузел входит нагрузочный - учитываем его генерацию как неуправляемую
@@ -287,7 +287,7 @@ void CLoadFlow::Start()
 				break;
 			default:
 				// генераторный узел не может входить в PQ-суперузел
-				_ASSERTE(pNode->m_eLFNodeType != CDynaNodeBase::eLFNodeType::LFNT_PQ);
+				_ASSERTE(pNode->eLFNodeType_ != CDynaNodeBase::eLFNodeType::LFNT_PQ);
 				// если в суперузел входит генераторный - учитываем его активную генерацию как неуправляемую
 				pMatrixInfo->UncontrolledP += pSlaveNode->Pgr;
 				// считаем диапазон реактивной мощности суперзула
@@ -399,7 +399,7 @@ void CLoadFlow::BuildSeidellOrder2(MATRIXINFO& SeidellOrder)
 		if(n1Weight != 0)
 			return n1Weight > 0;
 
-		_ASSERTE(node1->m_eLFNodeType == node2->m_eLFNodeType);
+		_ASSERTE(node1->eLFNodeType_ == node2->eLFNodeType_);
 
 		// узлы имеют одинаковые типы
 		if (n2Weight)
@@ -534,7 +534,7 @@ void CLoadFlow::Seidell()
 	MATRIXINFO SeidellOrder;
 	BuildSeidellOrder(SeidellOrder);
 
-	_ASSERTE(SeidellOrder.size() == m_pMatrixInfoSlackEnd - m_pMatrixInfo.get());
+	_ASSERTE(SeidellOrder.size() == pMatrixInfoSlackEnd - pMatrixInfo_.get());
 
 	double dPreviousImb{ -1.0 }, dPreviousImbQ{ -1.0 };
 
@@ -1194,7 +1194,7 @@ bool CLoadFlow::Run()
 				mx.pNode = pNode;
 				GetNodeImb(&mx);
 				mx.pNode = pNode;
-				_ASSERTE(std::abs(mx.m_dImbP) < m_Parameters.m_Imb && std::abs(mx.m_dImbQ) < m_Parameters.m_Imb);
+				_ASSERTE(std::abs(mx.ImbP) < Parameters.Imb && std::abs(mx.ImbQ) < Parameters.Imb);
 				pNode->GetPnrQnr();
 			}
 		}
@@ -1485,7 +1485,7 @@ void CLoadFlow::DumpNodes()
 				pNode->Pg,
 				pNode->Qg,
 				pNode->Qgr,
-				pNode->m_eLFNodeType,
+				pNode->eLFNodeType_,
 				pNode->LFQmin,
 				pNode->LFQmax,
 				pNode->LFVref,
@@ -1794,7 +1794,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 		if (!pNode->pSuperNodeParent)
 		{
 			GetNodeImb(pMatrixInfo);
-			_ASSERTE(std::abs(pMatrixInfo->m_dImbP) < m_Parameters.m_Imb && std::abs(pMatrixInfo->m_dImbQ) < m_Parameters.m_Imb);
+			_ASSERTE(std::abs(pMatrixInfo->ImbP) < Parameters.Imb && std::abs(pMatrixInfo->ImbQ) < Parameters.Imb);
 		}
 
 		// если узел нагрузочный в нем ничего не может измениться
