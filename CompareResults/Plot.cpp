@@ -139,7 +139,7 @@ PointDifference CPlot::Compare(const CPlot& plot)
 				}
 				// интерполируем точку в интервале второго графика по времени точки первого графика
 				const double v2{ (range2->v - p2->v) / (range2->t - p2->t) * (p1->t - p2->t) + p2->v };
-				const double diff{ p1->WeightedDifference(v2, m_Rtol, m_Atol) };
+				const double diff{ p1->WeightedDifference(v2, Rtol_, Atol_) };
 				if (PointDiff.diff < diff)
 					PointDiff = PointDifference(diff, p1->t, p1->v, v2);
 			}
@@ -153,8 +153,8 @@ PointDifference CPlot::Compare(const CPlot& plot)
 				const auto max2{ std::min_element(p2, range2, [](const Point& lhs, const Point& rhs) { return rhs.v < lhs.v; }) };
 
 				// сравниваем найденные точки - минимальную с минимальной, максимальную с максимальной
-				double mindiff{ min1->WeightedDifference(min2->v, m_Rtol, m_Atol) };
-				const double maxdiff{ max1->WeightedDifference(max2->v, m_Rtol, m_Atol) };
+				double mindiff{ min1->WeightedDifference(min2->v, Rtol_, Atol_) };
+				const double maxdiff{ max1->WeightedDifference(max2->v, Rtol_, Atol_) };
 
 				// определяем минимальную разность 
 
@@ -239,7 +239,7 @@ CPlot CPlot::DenseOutput(double Step)
 		// она отличается от последней
 		auto push = [this, &outplot](const Point& pt)
 		{
-			if (outplot.data.empty() || !outplot.data.back().CompareValue(pt, m_Rtol, m_Atol))
+			if (outplot.data.empty() || !outplot.data.back().CompareValue(pt, Rtol_, Atol_))
 				outplot.data.push_back(pt);
 		};
 

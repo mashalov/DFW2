@@ -80,8 +80,8 @@ class CPlot
 	using PLOT = std::vector<Point>;
 protected:
 	PLOT data;
-	double m_Rtol = 1E-4;
-	double m_Atol = 1E-4;
+	double Rtol_ = 1E-4;
+	double Atol_ = 1E-4;
 public:
 	CPlot(size_t PointCount, const double* pt, const double* pv, const CompareRange& range = {});
 	CPlot(CPlot&& other)
