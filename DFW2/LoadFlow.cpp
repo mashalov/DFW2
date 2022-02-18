@@ -1418,13 +1418,25 @@ void CLoadFlow::GetPnrQnrSuper(CDynaNodeBase* pNode)
 {
 	GetPnrQnr(pNode);
 	const CLinkPtrCount* const pLink{ pNode->GetSuperLink(0) };
-	LinkWalker<CDynaNodeBase> pSlaveNode;
-	while (pLink->In(pSlaveNode))
+
+	if (pLink->Count())
 	{
-		GetPnrQnr(pSlaveNode);
-		pNode->Pnr += pSlaveNode->Pnr;
-		pNode->Qnr += pSlaveNode->Qnr;
-		pNode->dLRCLoad += pSlaveNode->dLRCLoad;
+		__m128d load = _mm_load_pd(&pNode->Pnr);
+		__m128d lrc = _mm_load_pd(reinterpret_cast<double(&)[2]>(pNode->dLRCLoad));
+
+		LinkWalker<CDynaNodeBase> pSlaveNode;
+		while (pLink->In(pSlaveNode))
+		{
+			GetPnrQnr(pSlaveNode);
+
+			// pNode->Pnr += pSlaveNode->Pnr;
+			// pNode->Qnr += pSlaveNode->Qnr;
+			load = _mm_add_pd(load, _mm_load_pd(&pSlaveNode->Pnr));
+			// pNode->dLRCLoad += pSlaveNode->dLRCLoad;
+			lrc = _mm_add_pd(lrc, _mm_load_pd(reinterpret_cast<double(&)[2]>(pSlaveNode->dLRCLoad)));
+		}
+		_mm_store_pd(&pNode->Pnr, load);
+		_mm_store_pd(reinterpret_cast<double(&)[2]>(pNode->dLRCLoad), lrc);
 	}
 }
 

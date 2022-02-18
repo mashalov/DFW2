@@ -220,19 +220,37 @@ void CDynaNodeBase::GetPnrQnrSuper()
 void CDynaNodeBase::GetPnrQnrSuper(double Vnode)
 {
 	GetPnrQnr(Vnode);
-	const CLinkPtrCount* const pLink = GetSuperLink(0);
-	LinkWalker<CDynaNodeBase> pSlaveNode;
+	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
 
-	while (pLink->In(pSlaveNode))
+	if (pLink->Count())
 	{
-		pSlaveNode->FromSuperNode();
-		pSlaveNode->GetPnrQnr(Vnode);
-		Pnr += pSlaveNode->Pnr;
-		Qnr += pSlaveNode->Qnr;
-		Pgr += pSlaveNode->Pgr;
-		Qgr += pSlaveNode->Qgr;
-		dLRCLoad += pSlaveNode->dLRCLoad;
-		dLRCGen += pSlaveNode->dLRCGen;
+		__m128d load = _mm_load_pd(&Pnr);
+		__m128d gen = _mm_load_pd(&Pgr);
+		__m128d lrcload = _mm_load_pd(reinterpret_cast<double(&)[2]>(dLRCLoad));
+		__m128d lrcgen = _mm_load_pd(reinterpret_cast<double(&)[2]>(dLRCGen));
+
+		LinkWalker<CDynaNodeBase> pSlaveNode;
+		while (pLink->In(pSlaveNode))
+		{
+			pSlaveNode->FromSuperNode();
+			pSlaveNode->GetPnrQnr(Vnode);
+
+			// Pnr += pSlaveNode->Pnr;
+			// Qnr += pSlaveNode->Qnr;
+			load = _mm_add_pd(load, _mm_load_pd(&pSlaveNode->Pnr));
+			// Pgr += pSlaveNode->Pgr;
+			// Qgr += pSlaveNode->Qgr;
+			gen = _mm_add_pd(gen, _mm_load_pd(&pSlaveNode->Pgr));
+			// dLRCLoad += pSlaveNode->dLRCLoad;
+			// dLRCGen += pSlaveNode->dLRCGen;
+			lrcload = _mm_add_pd(lrcload, _mm_load_pd(reinterpret_cast<double(&)[2]>(pSlaveNode->dLRCLoad)));
+			lrcgen = _mm_add_pd(lrcgen, _mm_load_pd(reinterpret_cast<double(&)[2]>(pSlaveNode->dLRCGen)));
+		}
+
+		_mm_store_pd(&Pnr, load);
+		_mm_store_pd(&Pgr, gen);
+		_mm_store_pd(reinterpret_cast<double(&)[2]>(dLRCLoad), lrcload);
+		_mm_store_pd(reinterpret_cast<double(&)[2]>(dLRCGen), lrcgen);
 	}
 }
 
