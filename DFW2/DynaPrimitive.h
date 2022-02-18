@@ -97,22 +97,22 @@ namespace DFW2
 	class CDynaPrimitive
 	{
 	protected:
-		InputVariable  m_Input;			// одна входная переменная
-		VariableIndex& m_Output;		// одна выходная переменная, которая должна быть снаружи
-		CDevice& m_Device;				// ссылка на устройство, к которому принадлежит примитив
+		InputVariable  Input_;			// одна входная переменная
+		VariableIndex& Output_;			// одна выходная переменная, которая должна быть снаружи
+		CDevice& Device_;				// ссылка на устройство, к которому принадлежит примитив
 		bool ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH);
 		bool UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters);
 		bool UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters);
 	public:
 		// возвращает значение выхода
-		constexpr operator double& () { return m_Output.Value; }
-		constexpr operator const double& () const { return m_Output.Value; }
-		constexpr operator double* () { return &m_Output.Value; }
+		constexpr operator double& () { return Output_.Value; }
+		constexpr operator const double& () const { return Output_.Value; }
+		constexpr operator double* () { return &Output_.Value; }
 		// присваивает значение связанной выходной переменной
-		constexpr double& operator= (double value) { m_Output.Value = value;  return m_Output.Value; }
+		constexpr double& operator= (double value) { Output_.Value = value;  return Output_.Value; }
 		// возвращает ссылки на выходную переменную
-		constexpr operator VariableIndex& () { return m_Output; }
-		constexpr operator const VariableIndex& () const { return m_Output; }
+		constexpr operator VariableIndex& () { return Output_; }
+		constexpr operator const VariableIndex& () const { return Output_; }
 
 		// примитив может иметь несколько входов и выходов (количество выходов соответствует порядку примитива)
 		// поэтому конструктор принимает список входных переменных, одну обязательную выходную переменную
@@ -123,12 +123,12 @@ namespace DFW2
 			const InputList& Input) : CDynaPrimitive(Device, ORange(Output), IRange(Input)) {}
 
 		CDynaPrimitive(CDevice& Device, const ORange& Output, const IRange& Input) :
-			m_Device(Device),
-			m_Output(Output[0]),
-			m_Input(Input[0])
+			Device_(Device),
+			Output_(Output[0]),
+			Input_(Input[0])
 		{
-			m_Output = 0.0;
-			m_Device.RegisterPrimitive(this);
+			Output_ = 0.0;
+			Device_.RegisterPrimitive(this);
 		}
 
 		virtual ~CDynaPrimitive() = default;
@@ -154,7 +154,7 @@ namespace DFW2
 
 		CDynaPrimitiveState(CDevice& Device, const ORange& Output, const IRange& Input) : CDynaPrimitive(Device, Output, Input)
 		{
-			m_Device.RegisterStatePrimitive(this);
+			Device_.RegisterStatePrimitive(this);
 		}
 		CDynaPrimitiveState(CDevice& Device, const OutputList& Output, const InputList& Input) :
 			CDynaPrimitiveState(Device, ORange(Output), IRange(Input)) { }
@@ -184,10 +184,10 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eLIMITEDSTATES CurrentState);
 
 		// численные значения ограничений и гистерезиса ограничений
-		double m_dMin = 0.0;
-		double m_dMax = 0.0;
-		double m_dMinH = 0.0;
-		double m_dMaxH = 0.0;
+		double Min_ = 0.0;
+		double Max_ = 0.0;
+		double MinH_ = 0.0;
+		double MaxH_ = 0.0;
 		// виртуальные функции обработки изменения входного сигнала в зависимости от текущего состояния примитива
 		virtual double OnStateMax(CDynaModel *pDynaModel) { return 1.0; }
 		virtual double OnStateMin(CDynaModel *pDynaModel) { return 1.0; }
@@ -253,8 +253,8 @@ namespace DFW2
 	class CDynaPrimitiveMultiInput
 	{
 	protected:
-		InputVariableVec m_Inputs;
+		InputVariableVec Inputs_;
 	public:
-		CDynaPrimitiveMultiInput(IRange Input) : m_Inputs(Input.begin(), Input.end()) {}
+		CDynaPrimitiveMultiInput(IRange Input) : Inputs_(Input.begin(), Input.end()) {}
 	};
 }

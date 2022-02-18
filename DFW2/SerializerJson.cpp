@@ -228,8 +228,8 @@ void CSerializerJson::SerializeClass(const SerializerPtr& Serializer)
 			const CDeviceContainerProperties& Props{ pContainer->ContainerProps()};
 			auto jsonLinks = nlohmann::json::array();
 			// добавляем связи от ведущих и ведомых
-			AddLinks(Serializer, jsonLinks, Props.m_Masters, true);
-			AddLinks(Serializer, jsonLinks, Props.m_Slaves, false);
+			AddLinks(Serializer, jsonLinks, Props.Masters, true);
+			AddLinks(Serializer, jsonLinks, Props.Slaves, false);
 			// если что-то добавилось в ссылки - добавляем их в данные объекта
 			// пустые ссылки не добавляем
 			if (!jsonLinks.empty())

@@ -6,15 +6,15 @@ using namespace DFW2;
 
 void CSum::BuildEquations(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetElement(m_Output, m_Input, m_K1);
-	pDynaModel->SetElement(m_Output, m_Input1, m_K2);
-	pDynaModel->SetElement(m_Output, m_Output, -1.0);
+	pDynaModel->SetElement(Output_, Input_, K1_);
+	pDynaModel->SetElement(Output_, Input1_, K2_);
+	pDynaModel->SetElement(Output_, Output_, -1.0);
 }
 
 
 void CSum::BuildRightHand(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetFunction(m_Output, m_K1 * m_Input + m_K2 * m_Input1 - m_Output);
+	pDynaModel->SetFunction(Output_, K1_ * Input_ + K2_ * Input1_ - Output_);
 }
 
 

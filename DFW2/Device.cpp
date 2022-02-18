@@ -850,7 +850,7 @@ eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckM
 
 	// если у устройсва есть ведущие устройства, проверяем, готовы ли они
 
-	for (const auto& it : Props.m_Masters)
+	for (const auto& it : Props.Masters)
 	{
 		Status = CDevice::DeviceFunctionResult(Status, (*pFnCheckMasterDevice)(this, it));
 		if (!CDevice::IsFunctionStatusOK(Status)) return Status;
@@ -970,7 +970,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 	{
 		// если устройство хотят включить - нужно проверить, все ли его masters включены. Если да - то включить, если нет - предупреждение и состояние не изменять
 		CDevice *pDeviceOff(nullptr);
-		for (auto&& masterdevice : pContainer_->ContainerProps().m_Masters)
+		for (auto&& masterdevice : pContainer_->ContainerProps().Masters)
 		{
 			// если было найдено отключенное ведущее устройство - выходим
 			if (pDeviceOff)
@@ -1044,7 +1044,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 			eStateCause = eDEVICESTATECAUSE::DSC_INTERNAL;
 
 			// перебираем все ведомые устройства текущего устройства из стека
-			for (auto&& slavedevice : pOffDevice->pContainer_->ContainerProps().m_Slaves)
+			for (auto&& slavedevice : pOffDevice->pContainer_->ContainerProps().Slaves)
 			{
 				if (slavedevice->eLinkMode == DLM_MULTI)
 				{

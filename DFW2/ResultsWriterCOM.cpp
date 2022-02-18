@@ -94,7 +94,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 		const CDeviceContainerProperties& Props{ Container.ContainerProps()};
 		// по умолчанию у устройства один идентификатор и одно родительское устройство
 		long DeviceIdsCount = 1;
-		long ParentIdsCount = static_cast<long>(Props.m_Masters.size());
+		long ParentIdsCount = static_cast<long>(Props.Masters.size());
 		// у ветви - три идентификатора
 		if (Container.GetType() == DEVTYPE_BRANCH)
 		{
@@ -136,8 +136,8 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 
 				MakeVariant(DeviceIds, { pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np });
 				MakeVariant(ParentIds, {
-					pBranch->m_pNodeIp ? pBranch->m_pNodeIp->GetId() : 0,
-					pBranch->m_pNodeIq ? pBranch->m_pNodeIq->GetId() : 0,
+					pBranch->pNodeIp_ ? pBranch->pNodeIp_->GetId() : 0,
+					pBranch->pNodeIq_ ? pBranch->pNodeIq_->GetId() : 0,
 					});
 				MakeVariant(ParentTypes, { DEVTYPE_NODE, DEVTYPE_NODE });
 
@@ -147,7 +147,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 				MakeVariant(DeviceIds, { device->GetId() });
 				ResultIds idsParents, typesParents;
 
-				for (const auto& master : Props.m_Masters)
+				for (const auto& master : Props.Masters)
 				{
 					CDevice* pLinkDev = device->GetSingleLink(master->nLinkIndex);
 					idsParents.push_back(pLinkDev ? pLinkDev->GetId() : 0);

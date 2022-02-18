@@ -17,24 +17,24 @@ bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 	{
 		eCurrentState = eLIMITEDSTATES::Mid;
 		
-		if (m_dMin > m_dMax)
+		if (Min_ > Max_)
 		{
-			m_Device.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveLimits,
+			Device_.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveLimits,
 																   GetVerbalName(), 
-																   m_Device.GetVerbalName(), 
-																   m_dMin, 
-																   m_dMax));
+																   Device_.GetVerbalName(), 
+																   Min_, 
+																   Max_));
 			bRes = false;
 		}
 
-		SetMinMax(pDynaModel, m_dMin, m_dMax);
+		SetMinMax(pDynaModel, Min_, Max_);
 
-		if (( m_Output > m_dMaxH || m_Output < m_dMinH ) && m_Device.IsStateOn())
+		if ((Output_ > MaxH_ || Output_ < MinH_ ) && Device_.IsStateOn())
 		{
-			m_Device.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveInitialConditions,
+			Device_.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveInitialConditions,
 																   GetVerbalName(), 
-																   m_Device.GetVerbalName(), 
-																   m_Output, m_dMin, m_dMax));
+																   Device_.GetVerbalName(), 
+																   Output_, Min_, Max_));
 			bRes = false;
 		}
 	}
@@ -60,7 +60,7 @@ bool CDynaPrimitive::UnserializeParameters(DOUBLEREFVEC ParametersList, const DO
 
 bool CDynaPrimitive::UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters)
 {
-	auto src = Parameters.begin();
+	auto src{ Parameters.begin() };
 	for (auto& dest : ParametersList)
 		if (src != Parameters.end())
 		{
@@ -78,14 +78,14 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 	// TolCheck		- значение для контроля относительной погрешности
 	// Constraint	- константа, относительно которой определяем пересечение
 
-	bool bChangeState = false;
+	bool bChangeState{ false };
 	rH = 1.0;
 
 	if (Diff < 0.0)
 	{
 		// обращаемся к устройству с запросом
 		// на уточнение зеро-кроссинга
-		if (m_Device.DetectZeroCrossingFine(this))
+		if (Device_.DetectZeroCrossingFine(this))
 		{
 			RightVector* pRightVector = pDynaModel->GetRightVector(ValueIndex);
 			// определяем расстояние до точки zero-crossing в долях от текущего шага
@@ -94,7 +94,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 			{
 				// проверяем погрешность зеро-кроссинга по значению со взвешиванием
 				// так же как в контроле точности шага
-				double derr = std::abs(pRightVector->GetWeightedError(Diff, TolCheck));
+				const double derr{ std::abs(pRightVector->GetWeightedError(Diff, TolCheck)) };
 				if (derr < pDynaModel->GetZeroCrossingTolerance())
 				{
 					// если точность удовлетворительная, изменяем состояние
@@ -136,7 +136,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 
 double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 	eLIMITEDSTATES oldCurrentState = eCurrentState;
 	switch (eCurrentState)
 	{
@@ -159,11 +159,11 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 			pDynaModel->GetCurrentTime(), 
 			pDynaModel->GetIntegrationStepNumber(),
 			GetVerbalName(), 
-			m_Device.GetVerbalName(),
-			/*static_cast<const double>*/m_Output, 
-			m_dMin, m_dMax, 
+			Device_.GetVerbalName(),
+			Output_,
+			Min_, Max_, 
 			oldCurrentState, eCurrentState));
-		pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+		pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 	}
 
 	return rH;
@@ -171,24 +171,24 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst)
 {
-	ptrdiff_t q = pDynaModel->GetOrder();
-	double h = pDynaModel->GetH();
+	const ptrdiff_t q{ pDynaModel->GetOrder() };
+	const double h{ pDynaModel->GetH() };
 
-	double dError = pRightVector->Error;
+	const double dError{ pRightVector->Error };
 
 	// получаем константу метода интегрирования
-	const double *lm = pDynaModel->Methodl[pRightVector->EquationType * 2 + q - 1];
+	const double* lm{ pDynaModel->Methodl[pRightVector->EquationType * 2 + q - 1] };
 	// рассчитываем коэффициенты полинома, описывающего изменение переменной
-	double a = 0.0;		// если порядок метода 1 - квадратичный член равен нулю
+	double a{ 0.0 };		// если порядок метода 1 - квадратичный член равен нулю
 	// линейный член
-	double b = (pRightVector->Nordsiek[1] + dError * lm[1]) / h;
+	double b{ (pRightVector->Nordsiek[1] + dError * lm[1]) / h };
 	// постоянный член
-	double c = (pRightVector->Nordsiek[0] + dError * lm[0]) - dConst;
+	double c{ (pRightVector->Nordsiek[0] + dError * lm[0]) - dConst };
 	// если порядок метода 2 - то вводим квадратичный коэффициент
 	if (q == 2)
 		a = (pRightVector->Nordsiek[2] + dError * lm[2]) / h / h;
 	// возвращаем отношение зеро-кроссинга для полинома
-	const double rH(GetZCStepRatio(pDynaModel, a, b, c));
+	const double rH{ GetZCStepRatio(pDynaModel, a, b, c) };
 
 	if (rH <= 0.0)
 	{
@@ -213,7 +213,7 @@ void CDynaPrimitiveLimited::SetCurrentState(CDynaModel* pDynaModel, eLIMITEDSTAT
 {
 	if (eCurrentState != CurrentState)
 	{
-		pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+		pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 	}
 	
 	eCurrentState = CurrentState;
@@ -221,10 +221,10 @@ void CDynaPrimitiveLimited::SetCurrentState(CDynaModel* pDynaModel, eLIMITEDSTAT
 
 void CDynaPrimitiveLimited::SetMinMax(CDynaModel *pDynaModel, double dMin, double dMax)
 {
-	m_dMin = dMin;
-	m_dMax = dMax;
-	m_dMinH = m_dMin - pDynaModel->GetHysteresis(m_dMin);
-	m_dMaxH = m_dMax + pDynaModel->GetHysteresis(m_dMax);
+	Min_ = dMin;
+	Max_ = dMax;
+	MinH_ = Min_ - pDynaModel->GetHysteresis(Min_);
+	MaxH_ = Max_ + pDynaModel->GetHysteresis(Max_);
 }
 
 void CDynaPrimitiveBinary::InvertState(CDynaModel *pDynaModel)
@@ -239,16 +239,16 @@ void CDynaPrimitiveBinary::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES 
 	{
 		// если текущее состояние не соответствует заданному
 		// запрашиваем обработку разрыва
-		pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+		pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 	}
 	eCurrentState = CurrentState;
 }
 
 double CDynaPrimitiveBinaryOutput::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
 		eRELAYSTATES oldCurrentState = eCurrentState;
 
@@ -270,17 +270,17 @@ double CDynaPrimitiveBinaryOutput::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 void CDynaPrimitiveBinary::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 {
-	pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+	pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 }
 
 void CDynaPrimitiveBinary::BuildEquations(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetElement(m_Output, m_Output, 1.0);
+	pDynaModel->SetElement(Output_, Output_, 1.0);
 }
 
 void CDynaPrimitiveBinary::BuildRightHand(CDynaModel *pDynaModel)
 {
-	pDynaModel->SetFunction(m_Output, 0.0);
+	pDynaModel->SetFunction(Output_, 0.0);
 }
 
 double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel* pDynaModel, const RightVector* pRightVector1, const RightVector* pRightVector2)
@@ -325,7 +325,7 @@ double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel* pDyn
 double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c)
 {
 	// по умолчанию зеро-кроссинга нет - отношение 1.0
-	double rH = 1.0;
+	double rH{ 1.0 };
 	const double h{ pDynaModel->GetH() };
 
 	if (Equal(a, 0.0))
@@ -360,11 +360,11 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 
 std::string CDynaPrimitive::GetVerboseName()
 {
-	const auto pRightVector{ m_Device.GetModel()->GetRightVector(m_Output) };
+	const auto pRightVector{ Device_.GetModel()->GetRightVector(Output_) };
 	const char* cszUnknown = "\"unknown\"";
 	return fmt::format("{} {} {} {}", 
 		GetVerbalName(), 
-		m_Device.GetVerbalName(), 
-		pRightVector ? m_Device.VariableNameByPtr(pRightVector->pValue) : cszUnknown,
+		Device_.GetVerbalName(), 
+		pRightVector ? Device_.VariableNameByPtr(pRightVector->pValue) : cszUnknown,
 		pRightVector ? *pRightVector->pValue : 0.0);
 }

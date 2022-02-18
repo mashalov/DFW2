@@ -8,7 +8,7 @@ CCustomDevice::CCustomDevice()
 	CDeviceContainerPropertiesBase props;
 	GetDeviceProperties(props);
 	m_Consts.resize(props.ConstVarMap_.size());
-	m_Variables.resize(props.nEquationsCount);
+	m_Variables.resize(props.EquationsCount);
 	m_StateVariablesRefs = VariableIndexRefVec(m_Variables.begin(), m_Variables.end());
 	m_ExtVariables.resize(props.ExtVarMap_.size());
 	m_ExternalVariablesRefs = VariableIndexExternalRefVec(m_ExtVariables.begin(), m_ExtVariables.end());
@@ -256,7 +256,7 @@ void CCustomDevice::GetDeviceProperties(CDeviceContainerPropertiesBase& DevicePr
 	DeviceProps.VarMap_.insert(std::make_pair("LT2", CVarIndex(17, VARUNIT_NOTSET)));
 	DeviceProps.VarMap_.insert(std::make_pair("LT3", CVarIndex(18, VARUNIT_NOTSET)));
 	DeviceProps.VarMap_.insert(std::make_pair("LT4", CVarIndex(19, VARUNIT_NOTSET)));
-	DeviceProps.nEquationsCount = DeviceProps.VarMap_.size();
+	DeviceProps.EquationsCount = DeviceProps.VarMap_.size();
 
 
 

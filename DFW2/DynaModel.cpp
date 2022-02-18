@@ -1706,18 +1706,18 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 					// если не нашли параметр и тип объекта - "ветвь"
 					// создаем для ветви блок измерений и пытаемся забрать параметр из блока
 					CDynaBranch *pBranch = static_cast<CDynaBranch*>(pFoundDevice);
-					if (!pBranch->m_pMeasure)
+					if (!pBranch->pMeasure_)
 					{
 						CDynaBranchMeasure* pBranchMeasure = new CDynaBranchMeasure();
 						pBranchMeasure->SetBranch(pBranch);
 						pBranchMeasure->Init(this);
 						BranchMeasures.AddDevice(pBranchMeasure);
-						pBranch->m_pMeasure = pBranchMeasure;
+						pBranch->pMeasure_ = pBranchMeasure;
 					}
 					else
-						pBranch->m_pMeasure->Init(this);
+						pBranch->pMeasure_->Init(this);
 
-					ExtVar = pBranch->m_pMeasure->GetExternalVariable(Prop);
+					ExtVar = pBranch->pMeasure_->GetExternalVariable(Prop);
 
 					if (ExtVar.pValue)
 					{
@@ -1903,7 +1903,7 @@ void CDynaModel::TurnOffDevicesByOffMasters()
 					continue;
 
 				// идем по всем ссылкам на ведущие устройства
-				for (auto&& masterdevice : Props.m_Masters)
+				for (auto&& masterdevice : Props.Masters)
 				{
 					// нужно проверить, есть ли вообще ведущие устройства у данного устройства,
 					// если нет - нужное его перевести в DS_OFF DSC_INTERNAL_PERMANENT

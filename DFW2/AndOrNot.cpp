@@ -6,36 +6,36 @@ using namespace DFW2;
 
 bool CAnd::Init(CDynaModel *pDynaModel)
 {
-	m_Output = 0.0;
+	Output_ = 0.0;
 	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 }
 
 bool COr::Init(CDynaModel *pDynaModel)
 {
-	m_Output = 0.0;
+	Output_ = 0.0;
 	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 }
 
 bool CNot::Init(CDynaModel *pDynaModel)
 {
-	m_Output = 0.0;
+	Output_ = 0.0;
 	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 }
 
 
 eDEVICEFUNCTIONSTATUS CAnd::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		const double dOldOut{ m_Output };
+		const double dOldOut{ Output_ };
 
-		if (m_Input > 0 && m_Input1 > 0)
-			pDynaModel->SetVariableNordsiek(m_Output, 1.0);
+		if (Input_ > 0 && Input1_ > 0)
+			pDynaModel->SetVariableNordsiek(Output_, 1.0);
 		else
-			pDynaModel->SetVariableNordsiek(m_Output, 0.0);
+			pDynaModel->SetVariableNordsiek(Output_, 0.0);
 
-		if (dOldOut != m_Output)
-			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+		if (dOldOut != Output_)
+			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -43,22 +43,22 @@ eDEVICEFUNCTIONSTATUS CAnd::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS COr::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		const double dOldOut{ m_Output };
+		const double dOldOut{ Output_ };
 
-		pDynaModel->SetVariableNordsiek(m_Output, 0.0);
-		for (auto& inp : m_Inputs)
+		pDynaModel->SetVariableNordsiek(Output_, 0.0);
+		for (auto& inp : Inputs_)
 		{
 			if (inp > 0)
 			{
-				pDynaModel->SetVariableNordsiek(m_Output, 1.0);
+				pDynaModel->SetVariableNordsiek(Output_, 1.0);
 				break;
 			}
 		}
 
-		if (dOldOut != m_Output)
-			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+		if (dOldOut != Output_)
+			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -66,17 +66,17 @@ eDEVICEFUNCTIONSTATUS COr::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CNot::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		const double dOldOut{ m_Output };
+		const double dOldOut{ Output_ };
 
-		if (m_Input > 0 )
-			pDynaModel->SetVariableNordsiek(m_Output, 0.0);
+		if (Input_ > 0 )
+			pDynaModel->SetVariableNordsiek(Output_, 0.0);
 		else
-			pDynaModel->SetVariableNordsiek(m_Output, 1.0);
+			pDynaModel->SetVariableNordsiek(Output_, 1.0);
 
-		if (dOldOut != m_Output)
-			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+		if (dOldOut != Output_)
+			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

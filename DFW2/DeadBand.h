@@ -14,12 +14,12 @@ namespace DFW2
 			DBS_OFF
 		};
 
-		eDFW2DEADBANDSTATES	m_eDbState = eDFW2DEADBANDSTATES::DBS_ZERO;
-		eDFW2DEADBANDSTATES m_eDbStateSaved = eDFW2DEADBANDSTATES::DBS_ZERO;
+		eDFW2DEADBANDSTATES	eDbState_ = eDFW2DEADBANDSTATES::DBS_ZERO;
+		eDFW2DEADBANDSTATES eDbStateSaved_ = eDFW2DEADBANDSTATES::DBS_ZERO;
 
-		double m_Db = 0.0;
-		double m_DbMax = 0.0;
-		double m_DbMin = 0.0;
+		double Db_ = 0.0;
+		double DbMax_ = 0.0;
+		double DbMin_ = 0.0;
 
 		double OnStateMin(CDynaModel *pDynaModel);
 		double OnStateMax(CDynaModel *pDynaModel);
@@ -49,7 +49,7 @@ namespace DFW2
 		const char* GetVerbalName() override { return "Мертвая зона"; }
 		static size_t PrimitiveSize() { return sizeof(CDeadBand); }
 		static long EquationsCount()  { return 1; }
-		void StoreState() override { m_eDbStateSaved = m_eDbState; }
-		void RestoreState() override { m_eDbState = m_eDbStateSaved; }
+		void StoreState() override { eDbStateSaved_ = eDbState_; }
+		void RestoreState() override { eDbState_ = eDbStateSaved_; }
 	};
 }

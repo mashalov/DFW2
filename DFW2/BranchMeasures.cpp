@@ -32,24 +32,24 @@ void CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 {
 	// если измерение внутри суперузла, выбираем исходные узлы начала и конца,
     // если измерение между суперузлами - выбираем суперузлы начала и конца
-	const auto& pNodeIp{ m_pZeroLFNode ? m_pBranch->m_pNodeIp : m_pBranch->m_pNodeSuperIp };
-	const auto& pNodeIq{ m_pZeroLFNode ? m_pBranch->m_pNodeIq : m_pBranch->m_pNodeSuperIq };
+	const auto& pNodeIp{ pZeroLFNode_ ? pBranch_->pNodeIp_ : pBranch_->pNodeSuperIp_ };
+	const auto& pNodeIq{ pZeroLFNode_ ? pBranch_->pNodeIq_ : pBranch_->pNodeSuperIq_ };
 
-	const double gips{ m_pBranch->Yips.real() }, bips{ m_pBranch->Yips.imag() };
-	const double giqs{ m_pBranch->Yiqs.real() }, biqs{ m_pBranch->Yiqs.imag() };
-	const double gip{ m_pBranch->Yip.real() }, bip{ m_pBranch->Yip.imag() };
-	const double giq{ m_pBranch->Yiq.real() }, biq{ m_pBranch->Yiq.imag() };
+	const double gips{ pBranch_->Yips.real() }, bips{ pBranch_->Yips.imag() };
+	const double giqs{ pBranch_->Yiqs.real() }, biqs{ pBranch_->Yiqs.imag() };
+	const double gip{ pBranch_->Yip.real() }, bip{ pBranch_->Yip.imag() };
+	const double giq{ pBranch_->Yiq.real() }, biq{ pBranch_->Yiq.imag() };
 
-	if (m_pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
+	if (pBranch_->BranchState_ != CDynaBranch::BranchState::BRANCH_OFF)
 	{
 		// если измерение внутри суперузла - берем не исходное напряжение
 		// в ограничивающих узлах, а напряжение суперузла для расчета поперечных потерь
-		const auto& Vbre{ m_pZeroLFNode ? m_pZeroLFNode->Vre : pNodeIp->Vre };
-		const auto& Vbim{ m_pZeroLFNode ? m_pZeroLFNode->Vim : pNodeIp->Vim };
-		const auto& Vere{ m_pZeroLFNode ? m_pZeroLFNode->Vre : pNodeIq->Vre };
-		const auto& Veim{ m_pZeroLFNode ? m_pZeroLFNode->Vim : pNodeIq->Vim };
+		const auto& Vbre{ pZeroLFNode_ ? pZeroLFNode_->Vre : pNodeIp->Vre };
+		const auto& Vbim{ pZeroLFNode_ ? pZeroLFNode_->Vim : pNodeIp->Vim };
+		const auto& Vere{ pZeroLFNode_ ? pZeroLFNode_->Vre : pNodeIq->Vre };
+		const auto& Veim{ pZeroLFNode_ ? pZeroLFNode_->Vim : pNodeIq->Vim };
 
-		if (m_pZeroLFNode)
+		if (pZeroLFNode_)
 		{
 			const auto& vbRe{ pNodeIp->ZeroLF.vRe };
 			const auto& vbIm{ pNodeIp->ZeroLF.vIm };
@@ -283,24 +283,24 @@ void CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 
 void CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 {
-	const auto& pNodeIp{ m_pBranch->m_pNodeIp };
-	const auto& pNodeIq{ m_pBranch->m_pNodeIq };
+	const auto& pNodeIp{ pBranch_->pNodeIp_ };
+	const auto& pNodeIq{ pBranch_->pNodeIq_ };
 	pNodeIp->UpdateVreVim();	pNodeIq->UpdateVreVim();
 
-	if (m_pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
+	if (pBranch_->BranchState_ != CDynaBranch::BranchState::BRANCH_OFF)
 	{
 		const cplx Ue{ pNodeIq->Vre, pNodeIq->Vim };
 		const cplx Ub{ pNodeIp->Vre, pNodeIp->Vim };
 
-		cplx cIb{ -m_pBranch->Yips * Ub + m_pBranch->Yip * Ue };
-		cplx cIe{ -m_pBranch->Yiq * Ub + m_pBranch->Yiqs * Ue };
+		cplx cIb{ -pBranch_->Yips * Ub + pBranch_->Yip * Ue };
+		cplx cIe{ -pBranch_->Yiq * Ub + pBranch_->Yiqs * Ue };
 		cplx cSb{ Ub * conj(cIb) };
 		cplx cSe{ Ue * conj(cIe) };
 
-		if (m_pZeroLFNode)
+		if (pZeroLFNode_)
 		{
-			const auto& pNode1{ m_pBranch->m_pNodeIp->ZeroLF };
-			const auto& pNode2{ m_pBranch->m_pNodeIq->ZeroLF };
+			const auto& pNode1{ pBranch_->pNodeIp_->ZeroLF };
+			const auto& pNode2{ pBranch_->pNodeIq_->ZeroLF };
 			cplx Current{ pNode2.vRe - pNode1.vRe, pNode2.vIm - pNode1.vIm };
 			cIb += Current;		cIe += Current;
 			Current = std::conj(Current) * Ub;
@@ -345,10 +345,10 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::Init(CDynaModel* pDynaModel)
 void CDynaBranchMeasure::CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, cplx& cIe, cplx& cSb, cplx& cSe)
 {
 	// !!!!!!!!!!!!!   здесь рассчитываем на то, что для узлов начала и конца были сделаны UpdateVreVim !!!!!!!!!!!!!!
-	if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_OFF)
+	if (pBranch->BranchState_ != CDynaBranch::BranchState::BRANCH_OFF)
 	{
-		const cplx Ue{ pBranch->m_pNodeIq->Vre, pBranch->m_pNodeIq->Vim };
-		const cplx Ub{ pBranch->m_pNodeIp->Vre, pBranch->m_pNodeIp->Vim };
+		const cplx Ue{ pBranch->pNodeIq_->Vre, pBranch->pNodeIq_->Vim };
+		const cplx Ub{ pBranch->pNodeIp_->Vre, pBranch->pNodeIp_->Vim };
 		cIb = -pBranch->Yips * Ub + pBranch->Yip * Ue;
 		cIe = -pBranch->Yiq * Ub + pBranch->Yiqs * Ue;
 		cSb = Ub * conj(cIb);
@@ -365,19 +365,19 @@ VariableIndexRefVec& CDynaBranchMeasure::GetVariables(VariableIndexRefVec& Child
 
 eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	const auto& pNodeIp{ m_pBranch->m_pNodeIp };
-	const auto& pNodeIq{ m_pBranch->m_pNodeIq };
+	const auto& pNodeIp{ pBranch_->pNodeIp_ };
+	const auto& pNodeIq{ pBranch_->pNodeIq_ };
 	pNodeIq->UpdateVreVim();	pNodeIp->UpdateVreVim();
 	cplx cIb, cIe, cSb, cSe;
-	CDynaBranchMeasure::CalculateFlows(m_pBranch, cIb, cIe, cSb, cSe);
-	if (m_pZeroLFNode)
+	CDynaBranchMeasure::CalculateFlows(pBranch_, cIb, cIe, cSb, cSe);
+	if (pZeroLFNode_)
 	{
-		const auto& pNode1{ m_pBranch->m_pNodeIp->ZeroLF };
-		const auto& pNode2{ m_pBranch->m_pNodeIq->ZeroLF };
+		const auto& pNode1{ pBranch_->pNodeIp_->ZeroLF };
+		const auto& pNode2{ pBranch_->pNodeIq_->ZeroLF };
 		cplx Current{ pNode2.vRe - pNode1.vRe, pNode2.vIm - pNode1.vIm };
 		cIb += Current;
 		cIe += Current;
-		Current = std::conj(Current) * cplx(m_pBranch->m_pNodeIp->Vre, m_pBranch->m_pNodeIq->Vim);
+		Current = std::conj(Current) * cplx(pBranch_->pNodeIp_->Vre, pBranch_->pNodeIq_->Vim);
 		cSb += Current;
 		cSe += Current;
 	}
@@ -399,7 +399,7 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	// правил связывания не нужно
 	props.SetType(DEVTYPE_BRANCHMEASURE);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranchMeasure, CDeviceContainerProperties::m_cszSysNameBranchMeasure);
-	props.nEquationsCount = CDynaBranchMeasure::VARS::V_LAST;
+	props.EquationsCount = CDynaBranchMeasure::VARS::V_LAST;
 	props.VarMap_.insert({ m_cszIbre,  CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES) });
 	props.VarMap_.insert({ m_cszIbim,  CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES) });
 	props.VarMap_.insert({ m_cszIere,  CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES) });
@@ -421,26 +421,26 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 
 void CDynaBranchMeasure::TopologyUpdated()
 {
-	m_pZeroLFNode = nullptr;
+	pZeroLFNode_ = nullptr;
 	// если ветвь находится внутри суперузла
 	// нам потребуется расчет потокораспределения внутри
 	// суперузла
-	if (m_pBranch->InSuperNode())
+	if (pBranch_->InSuperNode())
 	{
-		m_pZeroLFNode = m_pBranch->m_pNodeSuperIp;
+		pZeroLFNode_ = pBranch_->pNodeSuperIp_;
 		// сообщаем контейнеру узлов, что нам нужно потокораспределение
 		// внутри суперузла, в котором находится данная ветвь
-		m_pZeroLFNode->RequireSuperNodeLF();
+		pZeroLFNode_->RequireSuperNodeLF();
 	}
 }
 
 void CDynaBranchMeasure::SetBranch(CDynaBranch* pBranch)
 {
-	if (m_pBranch)
+	if (pBranch_)
 		throw dfw2error("CDynaBranchMeasure::SetBranch - branch already set");
 	SetId(pBranch->GetId());
 	SetName(pBranch->GetVerbalName());
-	m_pBranch = pBranch;
+	pBranch_ = pBranch;
 	TopologyUpdated();
-	pBranch->m_pMeasure = this;
+	pBranch->pMeasure_ = this;
 }

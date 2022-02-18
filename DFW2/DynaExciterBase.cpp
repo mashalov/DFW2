@@ -98,7 +98,7 @@ void CDynaExciterBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.AddLinkTo(DEVTYPE_DEC, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::m_cszDECId);
 	props.AddLinkTo(DEVTYPE_EXCCON, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::m_cszExcConId);
 	
-	props.nEquationsCount = CDynaExciterBase::VARS::V_LAST;
+	props.EquationsCount = CDynaExciterBase::VARS::V_LAST;
 
 	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::m_cszExcConId, CConstVarIndex(CDynaExciterBase::C_REGID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
 	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::m_cszDECId, CConstVarIndex(CDynaExciterBase::C_DECID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));

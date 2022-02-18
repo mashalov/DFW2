@@ -504,8 +504,8 @@ bool CDynaModel::StabilityLost()
 		for (const auto& dev : Branches)
 		{
 			CDynaBranch* pBranch(static_cast<CDynaBranch*>(dev));
-			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_ON) continue;
-			const auto ret = CheckAnglesCrossedPi(pBranch->m_pNodeIp->Delta, pBranch->m_pNodeIq->Delta, pBranch->deltaDiff);
+			if (pBranch->BranchState_ != CDynaBranch::BranchState::BRANCH_ON) continue;
+			const auto ret = CheckAnglesCrossedPi(pBranch->pNodeIp_->Delta, pBranch->pNodeIq_->Delta, pBranch->deltaDiff);
 			sc.m_MaxBranchAngle.UpdateAbs(pBranch->deltaDiff, GetCurrentTime(), pBranch);
 			if (ret.first)
 			{

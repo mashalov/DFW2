@@ -12,14 +12,14 @@ namespace DFW2
 	class CDerlagContinuous : public CDynaPrimitive
 	{
 	protected:
-		double m_K = 1.0;
-		double m_T = 1.0;
-		VariableIndex& m_Y2;
+		double K_ = 1.0;
+		double T_ = 1.0;
+		VariableIndex& Y2_;
 	public:
 		// этот примитив пример примитива с двумя выходами. Второй выход соответсвует дополнительному второму алгебраическому уравнению
 
 		CDerlagContinuous(CDevice& Device, const ORange& Output, const IRange& Input) :
-			CDynaPrimitive(Device, Output, Input), m_Y2(Output[1]) {}
+			CDynaPrimitive(Device, Output, Input), Y2_(Output[1]) {}
 		CDerlagContinuous(CDevice& Device, const OutputList& Output, const InputList& Input) :
 			CDerlagContinuous(Device, ORange(Output), IRange(Input)) { }
 
@@ -29,7 +29,7 @@ namespace DFW2
 		void BuildRightHand(CDynaModel *pDynaModel) override;
 		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		void SetTK(double T, double K)  { m_K = K;  m_T = T; }
+		void SetTK(double T, double K)  { K_ = K;  T_ = T; }
 		const char* GetVerbalName() override { return "РДЗ со сглаживанием"; }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() { return sizeof(CDerlagContinuous); }

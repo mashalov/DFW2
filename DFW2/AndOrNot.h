@@ -6,10 +6,10 @@ namespace DFW2
 	class CAnd: public CDynaPrimitiveBinary
 	{
 	protected:
-		InputVariable m_Input1;
+		InputVariable Input1_;
 	public:
 		CAnd(CDevice& Device, const ORange& Output, const IRange& Input) : 
-			CDynaPrimitiveBinary(Device, Output, Input), m_Input1(Input[1]) {}
+			CDynaPrimitiveBinary(Device, Output, Input), Input1_(Input[1]) {}
 		CAnd(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CAnd(Device, ORange(Output), IRange(Input)) { }
 

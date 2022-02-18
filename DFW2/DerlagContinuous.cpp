@@ -5,34 +5,34 @@ using namespace DFW2;
 
 void CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 {
-	double T{ m_T };
+	double T{ T_ };
 
 	if (pDynaModel->EstimateBuild())
 	{
-		RightVector *pRightVector = pDynaModel->GetRightVector(m_Output);
+		RightVector *pRightVector = pDynaModel->GetRightVector(Output_);
 		pRightVector->PrimitiveBlock = PBT_DERLAG;
 	}
 
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
 		//if (!pDynaModel->IsInDiscontinuityMode())
 		{
 			// dOutput/ dOutput
-			pDynaModel->SetElement(m_Output, m_Output, 1.0);
+			pDynaModel->SetElement(Output_, Output_, 1.0);
 
 			if (pDynaModel->IsInDiscontinuityMode())
 			{
 				// dOutput / dY2
-				pDynaModel->SetElement(m_Output, m_Y2, 0.0);
+				pDynaModel->SetElement(Output_, Y2_, 0.0);
 				// dOutput / dInput
-				pDynaModel->SetElement(m_Output, m_Input, 0.0);
+				pDynaModel->SetElement(Output_, Input_, 0.0);
 			}
 			else
 			{
 				// dOutput / dY2
-				pDynaModel->SetElement(m_Output, m_Y2, m_T * m_K);
+				pDynaModel->SetElement(Output_, Y2_, T_ * K_);
 				// dOutput / dInput
-				pDynaModel->SetElement(m_Output, m_Input, -m_K * m_T);
+				pDynaModel->SetElement(Output_, Input_, -K_ * T_);
 			}
 		}
 		//else
@@ -47,27 +47,27 @@ void CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		pDynaModel->SetElement(m_Output, m_Output, 1.0);
-		pDynaModel->SetElement(m_Output, m_Y2, 0.0);
-		pDynaModel->SetElement(m_Output, m_Input, 0.0);
+		pDynaModel->SetElement(Output_, Output_, 1.0);
+		pDynaModel->SetElement(Output_, Y2_, 0.0);
+		pDynaModel->SetElement(Output_, Input_, 0.0);
 		T = 0.0;
 	}
 
 	// dY2 / dY2
 	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_OutputEquationIndex + 1), 1.0 + hb0 * m_T);
-	pDynaModel->SetElement(m_Y2, m_Y2, -T);
+	pDynaModel->SetElement(Y2_, Y2_, -T);
 	// dY2 / dInput
 	//pDynaModel->SetElement(A(m_OutputEquationIndex + 1), A(m_Input->Index()), -hb0 * m_T);
-	pDynaModel->SetElement(m_Y2, m_Input, -T);
+	pDynaModel->SetElement(Y2_, Input_, -T);
 }
 
 void CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		const double dY2{ (m_Input - m_Y2) * m_T };
+		const double dY2{ (Input_ - Y2_) * T_ };
 		//double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
-		double dOut{ m_Output - m_K * dY2 };
+		double dOut{ Output_ - K_ * dY2 };
 
 		if (pDynaModel->IsInDiscontinuityMode())
 		{
@@ -75,56 +75,56 @@ void CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 			dOut = 0.0;
 		}
 
-		pDynaModel->SetFunction(m_Output, dOut);
-		pDynaModel->SetFunctionDiff(m_Y2, dY2);
+		pDynaModel->SetFunction(Output_, dOut);
+		pDynaModel->SetFunctionDiff(Y2_, dY2);
 	}
 	else
 	{
-		pDynaModel->SetFunction(m_Output, 0.0);
-		pDynaModel->SetFunctionDiff(m_Y2, 0.0);
+		pDynaModel->SetFunction(Output_, 0.0);
+		pDynaModel->SetFunctionDiff(Y2_, 0.0);
 	}
 }
 
 bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = true;
-	if (Equal(m_K, 0.0))
-		m_T = 0.0;
+	bool bRes{ true };
+	if (Equal(K_, 0.0))
+		T_ = 0.0;
 	else
 	{
-		_ASSERTE(!Equal(m_T, 0.0));
-		m_T = 1.0 / m_T;
+		_ASSERTE(!Equal(T_, 0.0));
+		T_ = 1.0 / T_;
 	}
-	m_Y2 = m_Input;
-	m_Output = 0.0;
+	Y2_ = Input_;
+	Output_ = 0.0;
 	return bRes;
 }
 
 
 void CDerlagContinuous::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		const double dY2{ (m_Input - m_Y2) * m_T };
-		pDynaModel->SetDerivative(m_Y2, dY2);
+		const double dY2{ (Input_ - Y2_) * T_ };
+		pDynaModel->SetDerivative(Y2_, dY2);
 	}
 	else
 	{
-		pDynaModel->SetDerivative(m_Y2, 0.0);
+		pDynaModel->SetDerivative(Y2_, 0.0);
 	}
 }
 
 eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		if (Equal(m_K, 0.0))
-			m_Y2 = 0.0;
+		if (Equal(K_, 0.0))
+			Y2_ = 0.0;
 		else
 		{
 			// Пока не ясно, надо делать на РДЗ скачок на выходе,
 			// или пытаться подогнать лаг ко входу
-			m_Y2 = m_Input - m_Output / m_T / m_K;			// подгонка лага ко входу
+			Y2_ = Input_ - Output_ / T_ / K_;			// подгонка лага ко входу
 			//m_Output = m_K * m_T * (m_Input - m_Y2);		// выход по входу
 		}
 	}
@@ -135,15 +135,15 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaM
 #if defined DERLAG_CONTINUOUSMOOTH || defined DERLAG_CONTINUOUS
 eDEVICEFUNCTIONSTATUS CDerlagContinuousSmooth::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		if (Equal(m_K, 0.0))
-			m_Y2 = 0.0;
+		if (Equal(K_, 0.0))
+			Y2_ = 0.0;
 		else
 		{
 			// рассчитываем выход лага с условием сохранения значения на выходе РДЗ
-			m_Y2 = m_Input  - m_Output / m_K / m_T;
-			double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
+			Y2_ = Input_  - Output_ / K_ / T_;
+			double dOut = Output_ + K_ * T_ * (Y2_ - Input_);
 		}
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

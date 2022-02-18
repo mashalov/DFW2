@@ -117,11 +117,11 @@ bool CCustomDeviceContainer::BuildStructure()
 		// создаем пул для входных переменных
 		m_VariableIndexExternalPool.reserve(m_nExternalVarsCount * nCount);
 		// количество уравнений пользовательского устройства равно количеству уравнений для хост-блоков + количество уравнений внутренних переменных
-		ContainerProps_.nEquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
+		ContainerProps_.EquationsCount = m_nBlockEquationsCount + m_DLL.GetInternalsInfo().size();
 		// общее количество double на 1 устройство = константы + уставки
 		m_nDoubleVarsCount = GetConstsCount() + GetSetPointsCount();
 		//  количество уравнений VariableIndexesCount
-		m_nVariableIndexesCount = ContainerProps_.nEquationsCount;
+		m_nVariableIndexesCount = ContainerProps_.EquationsCount;
 		// создаем пул для переменных типа double
 		m_DoubleVarsPool.reserve(m_nDoubleVarsCount * nCount);
 		// создаем пул для внешних переменных

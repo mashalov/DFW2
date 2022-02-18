@@ -224,7 +224,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::UpdateExternalVariables(CDynaModel *p
 void CDynaExciterMustang::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaExciterBase::DeviceProperties(props);
-	props.nEquationsCount = CDynaExciterMustang::VARS::V_LAST;
+	props.EquationsCount = CDynaExciterMustang::VARS::V_LAST;
 	props.SetClassName(CDeviceContainerProperties::m_cszNameExciterMustang, CDeviceContainerProperties::m_cszSysNameExciterMustang);
 
 	props.VarMap_.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));

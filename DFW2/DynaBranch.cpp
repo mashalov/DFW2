@@ -27,7 +27,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	// ветви меньше минимального, либо связь параллельна такой ветви
 
 #ifdef _DEBUG
-	bool bZ1{ m_pNodeSuperIp == m_pNodeSuperIq };
+	bool bZ1{ pNodeSuperIp_ == pNodeSuperIq_ };
 	bool bZ2{ IsZeroImpedance() };
 	// Ассертит случай, когда ветвь в суперузле но имеет большее чем пороговое сопротивление
 	//_ASSERTE(bZ1 == bZ2);
@@ -41,7 +41,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	double Rf{ R }, Xf{ X };
 	// Для ветвей с малым или отрицательным сопротивлением
 	// задаем сопротивление в о.е. относительно напряжения
-	const double Xfictive{ m_pNodeIp->Unom * 110.0 * 0.000004 };
+	const double Xfictive{ pNodeIp_->Unom * 110.0 * 0.000004 };
 
 #define ZMIN_RASTRWIN
 
@@ -90,7 +90,7 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			CDynaBranch* pBranch{ static_cast<CDynaBranch*>(it) };
 			pBranch->UpdateVerbalName();
 
-			pBranch->m_pNodeIp = pBranch->m_pNodeIq = nullptr;
+			pBranch->pNodeIp_ = pBranch->pNodeIq_ = nullptr;
 
 			// оба узла ветви обрабатываем в последовательных
 			// итерациях цикла
@@ -108,9 +108,9 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 
 					// жестко связываем ветвь и узлы
 					if (i)
-						pBranch->m_pNodeIp = pNode;
+						pBranch->pNodeIp_ = pNode;
 					else
-						pBranch->m_pNodeIq = pNode;
+						pBranch->pNodeIq_ = pNode;
 				}
 				else
 				{
@@ -124,13 +124,13 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				}
 			}
 
-			if (pBranch->m_pNodeIp && pBranch->m_pNodeIq)
+			if (pBranch->pNodeIp_ && pBranch->pNodeIq_)
 			{
 				// если оба узла найдены
 				// формируем имя ветви по найденным узлам
 				pBranch->SetName(fmt::format("{} - {} {}",
-					pBranch->m_pNodeIp->GetName(),
-					pBranch->m_pNodeIq->GetName(),
+					pBranch->pNodeIp_->GetName(),
+					pBranch->pNodeIq_->GetName(),
 					pBranch->key.Np ? fmt::format(" цепь {}", pBranch->key.Np) : ""));
 			}
 		}
@@ -144,8 +144,8 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 			{
 				const auto& pBranch{ static_cast<CDynaBranch*>(it) };
 				// и добавляем к узлам в контейнере связи с ветвями
-				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIp->InContainerIndex(), pBranch);
-				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIq->InContainerIndex(), pBranch);
+				pContainer->AddLink(ptrdiff_t(0), pBranch->pNodeIp_->InContainerIndex(), pBranch);
+				pContainer->AddLink(ptrdiff_t(0), pBranch->pNodeIq_->InContainerIndex(), pBranch);
 			}
 		}
 	}
@@ -157,14 +157,14 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBranchState, eDEVICESTATECAUSE eStateCause)
 {
 	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
-	if (eBranchState != m_BranchState)
+	if (eBranchState != BranchState_)
 	{
 		// если заданное состояние ветви не 
 		// совпадает с текущим
-		m_BranchState = eBranchState;
+		BranchState_ = eBranchState;
 		// информируем модель о необходимости 
 		// обработки разрыва
-		m_pNodeIp->ProcessTopologyRequest();
+		pNodeIp_->ProcessTopologyRequest();
 	}
 	return Status;
 }
@@ -173,7 +173,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBran
 eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice)
 {
 	// при отключении ветви два режима
-	BranchState eBranchState{ m_BranchState };
+	BranchState eBranchState{ BranchState_ };
 
 	if (pCauseDevice && pCauseDevice->GetType() == DEVTYPE_NODE && eState == eDEVICESTATE::DS_OFF)
 	{
@@ -182,10 +182,10 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAU
 		DisconnectBranchFromNode(static_cast<CDynaNodeBase*>(pCauseDevice));
 		// если состояние ветви изменилось - добавляем оппозитный узел в список проверки,
 		// который может понадобиться для каскадного отключения узлов
-		if (eBranchState != m_BranchState)
+		if (eBranchState != BranchState_)
 		{
 			GetOppositeNode(static_cast<CDynaNodeBase*>(pCauseDevice))->AddToTopologyCheck();
-			eBranchState = m_BranchState;
+			eBranchState = BranchState_;
 		}
 	}
 	else
@@ -201,7 +201,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetState(eDEVICESTATE eState, eDEVICESTATECAU
 eDEVICESTATE CDynaBranch::GetState() const
 {
 	eDEVICESTATE State{ eDEVICESTATE::DS_ON };
-	if (m_BranchState == BranchState::BRANCH_OFF)
+	if (BranchState_ == BranchState::BRANCH_OFF)
 		State = eDEVICESTATE::DS_OFF;
 	return State;
 }
@@ -242,7 +242,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 			BIq += reactor->b;
 		}
 
-	switch (m_BranchState)
+	switch (BranchState_)
 	{
 	case CDynaBranch::BranchState::BRANCH_OFF:
 		// ветвь полностью отключена
@@ -307,11 +307,11 @@ bool CDynaBranch::IsZeroImpedance()
 {
 	const CDynaModel* pModel{ GetModel() };
 
-	if (m_BranchState == CDynaBranch::BranchState::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
+	if (BranchState_ == CDynaBranch::BranchState::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
 	{
 		const  double Zmin{ pModel->GetZeroBranchImpedance() };
-		if (std::abs(R) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin &&
-			std::abs(X) / m_pNodeIp->Unom / m_pNodeIq->Unom < Zmin)
+		if (std::abs(R) / pNodeIp_->Unom / pNodeIq_->Unom < Zmin &&
+			std::abs(X) / pNodeIp_->Unom / pNodeIq_->Unom < Zmin)
 			return true;
 	}
 
@@ -337,7 +337,7 @@ void CDynaBranch::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("br_iq", BrIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddProperty("nr_ip", NrIp, eVARUNITS::VARUNIT_PIECES);
 	Serializer->AddProperty("nr_iq", NrIq, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddEnumProperty(CDevice::m_cszSta, new CSerializerAdapterEnum(m_BranchState, m_cszBranchStateNames));
+	Serializer->AddEnumProperty(CDevice::m_cszSta, new CSerializerAdapterEnum(BranchState_, m_cszBranchStateNames));
 	Serializer->AddState("Gip", GIp, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Giq", GIq, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Bip", BIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
@@ -350,14 +350,14 @@ void CDynaBranch::UpdateSerializer(CSerializerBase* Serializer)
 
 CDynaNodeBase* CDynaBranch::GetOppositeNode(CDynaNodeBase* pOriginNode)
 {
-	_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
-	return m_pNodeIp == pOriginNode ? m_pNodeIq : m_pNodeIp;
+	_ASSERTE(pOriginNode == pNodeIq_ || pOriginNode == pNodeIp_);
+	return pNodeIp_ == pOriginNode ? pNodeIq_ : pNodeIp_;
 }
 
 CDynaNodeBase* CDynaBranch::GetOppositeSuperNode(CDynaNodeBase* pOriginNode)
 {
-	_ASSERTE(pOriginNode == m_pNodeSuperIq || pOriginNode == m_pNodeSuperIp);
-	return m_pNodeSuperIp == pOriginNode ? m_pNodeSuperIq : m_pNodeSuperIp;
+	_ASSERTE(pOriginNode == pNodeSuperIq_ || pOriginNode == pNodeSuperIp_);
+	return pNodeSuperIp_ == pOriginNode ? pNodeSuperIq_ : pNodeSuperIp_;
 }
 
 void CDynaBranch::DeviceProperties(CDeviceContainerProperties& props)
@@ -437,13 +437,13 @@ void CDynaBranchContainer::LinkToReactors(CDeviceContainer& containerReactors)
 bool CDynaBranch::BranchAndNodeConnected(CDynaNodeBase* pNode)
 {
 
-	if (pNode == m_pNodeIp)
+	if (pNode == pNodeIp_)
 	{
-		return m_BranchState == CDynaBranch::BranchState::BRANCH_ON || m_BranchState == CDynaBranch::BranchState::BRANCH_TRIPIQ;
+		return BranchState_ == CDynaBranch::BranchState::BRANCH_ON || BranchState_ == CDynaBranch::BranchState::BRANCH_TRIPIQ;
 	}
-	else if (pNode == m_pNodeIq)
+	else if (pNode == pNodeIq_)
 	{
-		return m_BranchState == CDynaBranch::BranchState::BRANCH_ON || m_BranchState == CDynaBranch::BranchState::BRANCH_TRIPIP;
+		return BranchState_ == CDynaBranch::BranchState::BRANCH_ON || BranchState_ == CDynaBranch::BranchState::BRANCH_TRIPIP;
 	}
 	else
 		_ASSERTE(!"CDynaNodeContainer::BranchAndNodeConnected - branch and node mismatch");
@@ -458,37 +458,37 @@ bool CDynaBranch::DisconnectBranchFromNode(CDynaNodeBase* pNode)
 
 	const char* pSwitchOffMode{ CDFW2Messages::m_cszSwitchedOffBranchComplete };
 
-	if (pNode == m_pNodeIp)
+	if (pNode == pNodeIp_)
 	{
-		switch (m_BranchState)
+		switch (BranchState_)
 		{
 			// если ветвь включена - отключаем ее со стороны отключенного узла
 		case CDynaBranch::BranchState::BRANCH_ON:
 
 			pSwitchOffMode = CDFW2Messages::m_cszSwitchedOffBranchHead;
-			m_BranchState = CDynaBranch::BranchState::BRANCH_TRIPIP;
+			BranchState_ = CDynaBranch::BranchState::BRANCH_TRIPIP;
 			bDisconnected = true;
 			break;
 			// если ветвь отключена с обратной стороны - отключаем полностью
 		case CDynaBranch::BranchState::BRANCH_TRIPIQ:
-			m_BranchState = CDynaBranch::BranchState::BRANCH_OFF;
+			BranchState_ = CDynaBranch::BranchState::BRANCH_OFF;
 			bDisconnected = true;
 			break;
 		}
 	}
-	else if (pNode == m_pNodeIq)
+	else if (pNode == pNodeIq_)
 	{
-		switch (m_BranchState)
+		switch (BranchState_)
 		{
 			// если ветвь включена - отключаем ее со стороны отключенного узла
 		case CDynaBranch::BranchState::BRANCH_ON:
 			pSwitchOffMode = CDFW2Messages::m_cszSwitchedOffBranchTail;
-			m_BranchState = CDynaBranch::BranchState::BRANCH_TRIPIQ;
+			BranchState_ = CDynaBranch::BranchState::BRANCH_TRIPIQ;
 			bDisconnected = true;
 			break;
 			// если ветвь отключена с обратной стороны - отключаем полностью
 		case CDynaBranch::BranchState::BRANCH_TRIPIP:
-			m_BranchState = CDynaBranch::BranchState::BRANCH_OFF;
+			BranchState_ = CDynaBranch::BranchState::BRANCH_OFF;
 			bDisconnected = true;
 			break;
 		}

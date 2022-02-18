@@ -6,20 +6,20 @@ namespace DFW2
 	// примитив сумма двух переменных
 	class CSum : public CDynaPrimitive
 	{
-		double m_K1, m_K2;
-		InputVariable m_Input1;
+		double K1_, K2_;
+		InputVariable Input1_;
 	public:
 		// данный примитив пример примитива с несколькими входами
 		// первый вход инициализируется в базовом классе, второй - в конструкторе 
 
 		CSum(CDevice& Device, const ORange& Output, const IRange& Input) :
-			CDynaPrimitive(Device, Output, Input), m_Input1(Input[1]), m_K1(1.0), m_K2(1.0) {}
+			CDynaPrimitive(Device, Output, Input), Input1_(Input[1]), K1_(1.0), K2_(1.0) {}
 		CSum(CDevice& Device, const OutputList& Output, const InputList& Input) :
 			CSum(Device, ORange(Output), IRange(Input)) { }
 
 
 		virtual ~CSum() = default;
-		void SetK(double K1, double K2) { m_K1 = K1; m_K2 = K2; }
+		void SetK(double K1, double K2) { K1_ = K1; K2_ = K2; }
 		void BuildEquations(CDynaModel *pDynaModel) override;
 		void BuildRightHand(CDynaModel *pDynaModel) override;
 		/*

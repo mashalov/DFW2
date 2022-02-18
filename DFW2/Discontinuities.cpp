@@ -17,15 +17,15 @@ void CModelAction::Log(CDynaModel* pDynaModel, std::string_view message)
 
 CStaticEvent::~CStaticEvent()
 {
-	for (auto&& it : m_Actions)
+	for (auto&& it : Actions_)
 		delete it;
 }
 
-CDiscontinuities::CDiscontinuities(CDynaModel *pDynaModel) : m_pDynaModel(pDynaModel)
+CDiscontinuities::CDiscontinuities(CDynaModel *pDynaModel) : pDynaModel_(pDynaModel)
 {
 }
 
-CStaticEvent::CStaticEvent(double dTime) : m_dTime(dTime)
+CStaticEvent::CStaticEvent(double Time) : Time_(Time)
 {
 	
 }
@@ -33,15 +33,15 @@ CStaticEvent::CStaticEvent(double dTime) : m_dTime(dTime)
 
 bool CStaticEvent::AddAction(CModelAction* Action) const
 {
-	bool bRes = true;
-	m_Actions.push_back(Action);
+	bool bRes{ true };
+	Actions_.push_back(Action);
 	return bRes;
 }
 
 bool CStaticEvent::ContainsStop() const
 {
-	bool bStopFound = false;
-	for (const auto& action : m_Actions)
+	bool bStopFound{ false };
+	for (const auto& action : Actions_)
 		if (action->Type() == eDFW2_ACTION_TYPE::AT_STOP)
 		{
 			bStopFound = true;
@@ -52,9 +52,9 @@ bool CStaticEvent::ContainsStop() const
 
 bool CStaticEvent::RemoveStateAction(CDiscreteDelay *pDelayObject) const
 {
-	bool bRes = false;
-	auto itFound = m_Actions.end();
-	for (auto it = m_Actions.begin(); it != m_Actions.end(); it++)
+	bool bRes{ false };
+	auto itFound{ Actions_.end() };
+	for (auto it = Actions_.begin(); it != Actions_.end(); it++)
 		if ((*it)->Type() == eDFW2_ACTION_TYPE::AT_STATE)
 		{
 			if (static_cast<CModelActionState*>(*it)->GetDelayObject() == pDelayObject)
@@ -64,21 +64,21 @@ bool CStaticEvent::RemoveStateAction(CDiscreteDelay *pDelayObject) const
 				break;
 			}
 		}
-	if (itFound != m_Actions.end())
-		m_Actions.erase(itFound);
+	if (itFound != Actions_.end())
+		Actions_.erase(itFound);
 	return bRes;
 }
 
 eDFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_INACTIVE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_INACTIVE };
 
 	// внутри ModelAction::Do может быть вызывано удаление ивента
 	// которое вызовет сбой итерации. Поэтому мы копируем исходный список
 	// во временный, итерации ведем по временному, а возможность удалять 
 	// даем из основного списка ивентов
 
-	MODELACTIONLIST tempList = m_Actions;
+	MODELACTIONLIST tempList{ Actions_ };
 
 	for (auto&& it : tempList)
 	{
@@ -89,57 +89,56 @@ eDFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 	return State;
 }
 
-bool CDiscontinuities::AddEvent(double dTime, CModelAction* Action)
+bool CDiscontinuities::AddEvent(double Time, CModelAction* Action)
 {
-	bool bRes = true;
-	CStaticEvent newEvent(dTime);
-	auto checkInsert = m_StaticEvent.insert(newEvent);
+	bool bRes{ true };
+	CStaticEvent newEvent(Time);
+	auto checkInsert{ StaticEvent_.insert(newEvent) };
 	checkInsert.first->AddAction(Action);
 	return bRes;
 }
 
-bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dTime)
+bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double Time)
 {
-	bool bRes = true;
-	CStateObjectIdToTime newObject(pDelayObject, dTime);
-	auto it = m_StateEvents.find(pDelayObject);
-	if (it == m_StateEvents.end())
+	bool bRes{ true };
+	CStateObjectIdToTime newObject(pDelayObject, Time);
+	auto it{ StateEvents_.find(pDelayObject) };
+	if (it == StateEvents_.end())
 	{
-		m_StateEvents.insert(newObject);
-		AddEvent(dTime, new CModelActionState(pDelayObject));
+		StateEvents_.insert(newObject);
+		AddEvent(Time, new CModelActionState(pDelayObject));
 	}
 	else
 	{
 		RemoveStateDiscontinuity(pDelayObject);
-		AddEvent(dTime, new CModelActionState(pDelayObject));
-		m_StateEvents.insert(pDelayObject);
+		AddEvent(Time, new CModelActionState(pDelayObject));
+		StateEvents_.insert(pDelayObject);
 	}
-
 	return bRes;
 }
 
 bool CDiscontinuities::CheckStateDiscontinuity(CDiscreteDelay *pDelayObject)
 {
 	CStateObjectIdToTime newObject(pDelayObject, 0.0);
-	auto it = m_StateEvents.find(newObject);
-	return it != m_StateEvents.end();
+	auto it{ StateEvents_.find(newObject) };
+	return it != StateEvents_.end();
 }
 
 bool CDiscontinuities::RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject)
 {
-	bool bRes = true;
+	bool bRes{ true };
 	CStateObjectIdToTime newObject(pDelayObject, 0.0);
-	auto it = m_StateEvents.find(newObject);
-	if (it != m_StateEvents.end())
+	auto it{ StateEvents_.find(newObject) };
+	if (it != StateEvents_.end())
 	{
-		auto itEvent = m_StaticEvent.lower_bound(it->Time());
-		if (itEvent != m_StaticEvent.end())
+		auto itEvent{ StaticEvent_.lower_bound(it->Time()) };
+		if (itEvent != StaticEvent_.end())
 		{
 			itEvent->RemoveStateAction(pDelayObject);
 			if (!itEvent->ActionsCount())
-				m_StaticEvent.erase(itEvent);
+				StaticEvent_.erase(itEvent);
 		}
-		m_StateEvents.erase(it);
+		StateEvents_.erase(it);
 	}
 	return bRes;
 }
@@ -150,9 +149,9 @@ void CDiscontinuities::Init()
 
 double CDiscontinuities::NextEventTime()
 {
-	double dNextEventTime = -1;
-	if (!m_StaticEvent.empty())
-		dNextEventTime = m_StaticEvent.begin()->Time();
+	double dNextEventTime{ -1 };
+	if (!StaticEvent_.empty())
+		dNextEventTime = StaticEvent_.begin()->Time();
 
 	/*if (m_itCurrentStaticEvent != m_StaticEvent.end())
 	{
@@ -161,15 +160,15 @@ double CDiscontinuities::NextEventTime()
 	return dNextEventTime;
 }
 
-void CDiscontinuities::PassTime(double dTime)
+void CDiscontinuities::PassTime(double Time)
 {
-	if (!m_pDynaModel->IsInDiscontinuityMode())
+	if (!pDynaModel_->IsInDiscontinuityMode())
 	{
-		auto itEvent = m_StaticEvent.lower_bound(CStaticEvent(dTime));
-		if (itEvent != m_StaticEvent.end())
+		auto itEvent{ StaticEvent_.lower_bound(CStaticEvent(Time)) };
+		if (itEvent != StaticEvent_.end())
 		{
-			if (itEvent != m_StaticEvent.begin())
-				m_StaticEvent.erase(m_StaticEvent.begin(), itEvent);
+			if (itEvent != StaticEvent_.begin())
+				StaticEvent_.erase(StaticEvent_.begin(), itEvent);
 		}
 	}
 }
@@ -177,26 +176,26 @@ void CDiscontinuities::PassTime(double dTime)
 
 eDFW2_ACTION_STATE CDiscontinuities::ProcessStaticEvents()
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_INACTIVE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_INACTIVE };
 
-	if (!m_StaticEvent.empty())
+	if (!StaticEvent_.empty())
 	{
-		State = m_StaticEvent.begin()->DoActions(m_pDynaModel);
+		State = StaticEvent_.begin()->DoActions(pDynaModel_);
 	}
 	return State;
 }
 
 CModelActionChangeVariable::CModelActionChangeVariable(double *pVariable, double TargetValue) : CModelAction(eDFW2_ACTION_TYPE::AT_CV),
-																								m_dTargetValue(TargetValue),
-																								m_pVariable(pVariable)
+																								TargetValue_(TargetValue),
+																								pVariable_(pVariable)
 {
 
 }
 
 eDFW2_ACTION_STATE CModelActionChangeVariable::Do(CDynaModel *pDynaModel)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
-	*m_pVariable = m_dTargetValue;
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	*pVariable_ = TargetValue_;
 	return State;
 }
 
@@ -212,11 +211,10 @@ eDFW2_ACTION_STATE CModelActionStop::Do(CDynaModel *pDynaModel)
 	return eDFW2_ACTION_STATE::AS_DONE;
 }
 
-
 void CModelActionChangeBranchParameterBase::WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view Description)
 {
-	pDynaModel->WriteSlowVariable(m_pDynaBranch->GetType(),
-		{ m_pDynaBranch->key.Ip, m_pDynaBranch->key.Iq, m_pDynaBranch->key.Np },
+	pDynaModel->WriteSlowVariable(pDynaBranch_->GetType(),
+		{ pDynaBranch_->key.Ip, pDynaBranch_->key.Iq, pDynaBranch_->key.Np },
 		VariableName,
 		Value,
 		PreviousValue,
@@ -225,8 +223,8 @@ void CModelActionChangeBranchParameterBase::WriteSlowVariable(CDynaModel* pDynaM
 
 void CModelActionChangeNodeParameterBase::WriteSlowVariable(CDynaModel* pDynaModel, std::string_view VariableName, double Value, double PreviousValue, std::string_view Description)
 {
-	pDynaModel->WriteSlowVariable(m_pDynaNode->GetType(),
-		{ m_pDynaNode->GetId() },
+	pDynaModel->WriteSlowVariable(pDynaNode_->GetType(),
+		{ pDynaNode_->GetId() },
 		VariableName,
 		Value,
 		PreviousValue,
@@ -236,7 +234,7 @@ void CModelActionChangeNodeParameterBase::WriteSlowVariable(CDynaModel* pDynaMod
 
 CModelActionChangeBranchState::CModelActionChangeBranchState(CDynaBranch *pBranch, enum CDynaBranch::BranchState NewState) :
 																									CModelActionChangeBranchParameterBase(pBranch),
-																									m_NewState(NewState)
+																									NewState_(NewState)
 {
 	
 
@@ -244,32 +242,32 @@ CModelActionChangeBranchState::CModelActionChangeBranchState(CDynaBranch *pBranc
 
 eDFW2_ACTION_STATE CModelActionChangeBranchImpedance::Do(CDynaModel* pDynaModel)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 	Log(pDynaModel, fmt::format("{} Z={} -> Z={}",
-		m_pDynaBranch->GetVerbalName(),
-		cplx(m_pDynaBranch->R, m_pDynaBranch->X),
-		m_Impedance
+		pDynaBranch_->GetVerbalName(),
+		cplx(pDynaBranch_->R, pDynaBranch_->X),
+		Impedance_
 	));
 
-	CDevice::FromComplex(m_pDynaBranch->R, m_pDynaBranch->X, m_Impedance);
-	
+	CDevice::FromComplex(pDynaBranch_->R, pDynaBranch_->X, Impedance_);
 	pDynaModel->ProcessTopologyRequest();
+
 	return State;
 }
 
 eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double R)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "R", R, m_pDynaBranch->R, m_pDynaBranch->GetVerbalName());
+	WriteSlowVariable(pDynaModel, "R", R, pDynaBranch_->R, pDynaBranch_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} R={} -> R={}",
-		m_pDynaBranch->GetVerbalName(),
-		m_pDynaBranch->R,
+		pDynaBranch_->GetVerbalName(),
+		pDynaBranch_->R,
 		R
 		));
 
-	m_pDynaBranch->R = R;
+	pDynaBranch_->R = R;
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 
@@ -277,34 +275,34 @@ eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double 
 
 eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double X)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "X", X, m_pDynaBranch->X, m_pDynaBranch->GetVerbalName());
+	WriteSlowVariable(pDynaModel, "X", X, pDynaBranch_->X, pDynaBranch_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} X={} -> X={}",
-		m_pDynaBranch->GetVerbalName(),
-		m_pDynaBranch->X,
+		pDynaBranch_->GetVerbalName(),
+		pDynaBranch_->X,
 		X
 	));
 
-	m_pDynaBranch->X = X;
+	pDynaBranch_->X = X;
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
 
 eDFW2_ACTION_STATE CModelActionChangeBranchB::Do(CDynaModel* pDynaModel, double B)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "B", B, m_pDynaBranch->B, m_pDynaBranch->GetVerbalName());
+	WriteSlowVariable(pDynaModel, "B", B, pDynaBranch_->B, pDynaBranch_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} B={} -> B={}",
-		m_pDynaBranch->GetVerbalName(),
-		m_pDynaBranch->B,
+		pDynaBranch_->GetVerbalName(),
+		pDynaBranch_->B,
 		B
 	));
 
-	m_pDynaBranch->B = B;
+	pDynaBranch_->B = B;
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
@@ -313,17 +311,17 @@ eDFW2_ACTION_STATE CModelActionChangeBranchB::Do(CDynaModel* pDynaModel, double 
 
 eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	if (!CDevice::IsFunctionStatusOK(m_pDynaBranch->SetBranchState(m_NewState, eDEVICESTATECAUSE::DSC_EXTERNAL)))
+	if (!CDevice::IsFunctionStatusOK(pDynaBranch_->SetBranchState(NewState_, eDEVICESTATECAUSE::DSC_EXTERNAL)))
 		State = eDFW2_ACTION_STATE::AS_ERROR;
 
 	return State;
 }
 
-eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, double Value)
 {
-	int nState = static_cast<int>(dValue);
+	int nState{ static_cast<int>(Value) };
 	CDynaBranch::BranchState variants[4] =
 	{
 		CDynaBranch::BranchState::BRANCH_OFF,
@@ -333,25 +331,25 @@ eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, dou
 	};
 
 	if (nState >= 0 && nState <= 3)
-		m_NewState = variants[nState];
+		NewState_ = variants[nState];
 	else
 	if (nState > 0)
-		m_NewState = CDynaBranch::BranchState::BRANCH_ON;
+		NewState_ = CDynaBranch::BranchState::BRANCH_ON;
 	else
-		m_NewState = CDynaBranch::BranchState::BRANCH_OFF;
+		NewState_ = CDynaBranch::BranchState::BRANCH_OFF;
 
 	WriteSlowVariable(pDynaModel, 
 		CDevice::m_cszState, 
-		dValue, 
-		static_cast<double>(m_pDynaBranch->m_BranchState), 
-		m_pDynaBranch->GetVerbalName());
+		Value, 
+		static_cast<double>(pDynaBranch_->BranchState_), 
+		pDynaBranch_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
-			m_pDynaBranch->GetVerbalName(),
+			pDynaBranch_->GetVerbalName(),
 			CDevice::m_cszState,
-			stringutils::enum_text(m_pDynaBranch->m_BranchState, CDynaBranch::m_cszBranchStateNames),
+			stringutils::enum_text(pDynaBranch_->BranchState_, CDynaBranch::m_cszBranchStateNames),
 			CDevice::m_cszState,
-			stringutils::enum_text(m_NewState, CDynaBranch::m_cszBranchStateNames)));
+			stringutils::enum_text(NewState_, CDynaBranch::m_cszBranchStateNames)));
 
 	return Do(pDynaModel);
 }
@@ -359,122 +357,122 @@ eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, dou
 
 
 CModelActionChangeNodeShunt::CModelActionChangeNodeShunt(CDynaNode *pNode, const cplx& ShuntRX) : CModelActionChangeNodeParameterBase(pNode),
-																							m_ShuntRX(ShuntRX)
+												 												  ShuntRX_(ShuntRX)
 {
 	
 }
 
 eDFW2_ACTION_STATE CModelActionChangeNodeShunt::Do(CDynaModel* pDynaModel)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	const cplx rx = 1.0 / cplx(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt);
+	const cplx rx{ 1.0 / cplx(pDynaNode_->Gshunt, pDynaNode_->Bshunt) };
 	if(CModelAction::isfinite(rx))
 		Log(pDynaModel, fmt::format("{} Z={} -> Z={}",
-			m_pDynaNode->GetVerbalName(),
+			pDynaNode_->GetVerbalName(),
 			rx,
-			m_ShuntRX
+			ShuntRX_
 		));
 	else
 		Log(pDynaModel, fmt::format("{} Z={}",
-			m_pDynaNode->GetVerbalName(),
-			m_ShuntRX
+			pDynaNode_->GetVerbalName(),
+			ShuntRX_
 		));
 
-	cplx y = 1.0 / m_ShuntRX;
+	cplx y = 1.0 / ShuntRX_;
 
-	CDevice::FromComplex(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt,y);
+	CDevice::FromComplex(pDynaNode_->Gshunt, pDynaNode_->Bshunt,y);
 
-	m_pDynaNode->ProcessTopologyRequest();
+	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 
 CModelActionChangeNodePQLoad::CModelActionChangeNodePQLoad(CDynaNode* pNode, double Pload) : CModelActionChangeNodeParameterBase(pNode),
-																						m_Pload(Pload),
-																						m_InitialLoad{pNode->Pn, pNode->Qn}
+																						Pload_(Pload),
+																						InitialLoad_{pNode->Pn, pNode->Qn}
 {
 
 }
 
-eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, double Value)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
-	const cplx Sload{ m_pDynaNode->Pn, m_pDynaNode->Qn };
-	double newQ = Sload.imag();
-	if (!Equal(m_InitialLoad.real(), 0.0))
-		newQ = m_InitialLoad.imag() / m_InitialLoad.real() * dValue;
-	const cplx SloadNew{ dValue, newQ };
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	const cplx Sload{ pDynaNode_->Pn, pDynaNode_->Qn };
+	double newQ{ Sload.imag() };
+	if (!Equal(InitialLoad_.real(), 0.0))
+		newQ = InitialLoad_.imag() / InitialLoad_.real() * Value;
+	const cplx SloadNew{ Value, newQ };
 
 	Log(pDynaModel, fmt::format("{} Sload={} -> Sload={}",
-		m_pDynaNode->GetVerbalName(),
+		pDynaNode_->GetVerbalName(),
 		Sload,
 		SloadNew
 	));
 
-	CDevice::FromComplex(m_pDynaNode->Pn, m_pDynaNode->Qn, SloadNew);
+	CDevice::FromComplex(pDynaNode_->Pn, pDynaNode_->Qn, SloadNew);
 
-	m_pDynaNode->ProcessTopologyRequest();
+	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 
 
-eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, double Value)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
-	cplx rx = 1.0 / cplx(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	cplx rx{ 1.0 / cplx(pDynaNode_->Gshunt, pDynaNode_->Bshunt) };
 
 	if(CModelAction::isfinite(rx))
 		Log(pDynaModel, fmt::format("{} R={} -> R={}",
-				m_pDynaNode->GetVerbalName(),
+				pDynaNode_->GetVerbalName(),
 				rx.real(),
-				dValue
+				Value
 		));
 	else
 	{
 		rx = {};
 		Log(pDynaModel, fmt::format("{} R={}",
-			m_pDynaNode->GetVerbalName(),
-			dValue
+			pDynaNode_->GetVerbalName(),
+			Value
 		));
 	}
 
-	WriteSlowVariable(pDynaModel, "R", dValue, rx.real(), m_pDynaNode->GetVerbalName());
+	WriteSlowVariable(pDynaModel, "R", Value, rx.real(), pDynaNode_->GetVerbalName());
 
-	rx.real(dValue);
+	rx.real(Value);
 	rx = 1.0 / rx;
 
-	CDevice::FromComplex(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt, rx);
+	CDevice::FromComplex(pDynaNode_->Gshunt, pDynaNode_->Bshunt, rx);
 
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
 
 
-eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, double Value)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
-	cplx rx = 1.0 / cplx(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	cplx rx{ 1.0 / cplx(pDynaNode_->Gshunt, pDynaNode_->Bshunt) };
 	if (CModelAction::isfinite(rx))
 		Log(pDynaModel, fmt::format("{} X={} -> X={}",
-			m_pDynaNode->GetVerbalName(),
+			pDynaNode_->GetVerbalName(),
 			rx.imag(),
-			dValue
+			Value
 		));
 	else
 	{
 		rx = {};
 		Log(pDynaModel, fmt::format("{} X={}",
-			m_pDynaNode->GetVerbalName(),
-			dValue
+			pDynaNode_->GetVerbalName(),
+			Value
 		));
 	}
 
-	WriteSlowVariable(pDynaModel, "X", dValue, rx.real(), m_pDynaNode->GetVerbalName());
+	WriteSlowVariable(pDynaModel, "X", Value, rx.real(), pDynaNode_->GetVerbalName());
 
-	rx.imag(dValue);
+	rx.imag(Value);
 	rx = 1.0 / rx;
 
-	CDevice::FromComplex(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt, rx);
+	CDevice::FromComplex(pDynaNode_->Gshunt, pDynaNode_->Bshunt, rx);
 
 	pDynaModel->ProcessTopologyRequest();
 	return State;
@@ -484,109 +482,109 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, doub
 
 eDFW2_ACTION_STATE CModelActionChangeNodeShuntAdmittance::Do(CDynaModel *pDynaModel)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
-	const cplx y(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	const cplx y(pDynaNode_->Gshunt, pDynaNode_->Bshunt);
 	if (CModelAction::isfinite(y))
 		Log(pDynaModel, fmt::format("{} Y={} -> Y={}",
-			m_pDynaNode->GetVerbalName(),
+			pDynaNode_->GetVerbalName(),
 			y,
-			m_ShuntGB));
+			ShuntGB_));
 	else
 		Log(pDynaModel, fmt::format("{} Y={}",
-			m_pDynaNode->GetVerbalName(),
-			m_ShuntGB));
+			pDynaNode_->GetVerbalName(),
+			ShuntGB_));
 
-	CDevice::FromComplex(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt, m_ShuntGB);
+	CDevice::FromComplex(pDynaNode_->Gshunt, pDynaNode_->Bshunt, ShuntGB_);
 
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
 
-eDFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, double Value)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "G", dValue, m_pDynaNode->G, m_pDynaNode->GetVerbalName());
+	WriteSlowVariable(pDynaModel, "G", Value, pDynaNode_->G, pDynaNode_->GetVerbalName());
 
-	if(std::isfinite(m_pDynaNode->Gshunt))
+	if(std::isfinite(pDynaNode_->Gshunt))
 		Log(pDynaModel, fmt::format("{} G={} -> G={}",
-			m_pDynaNode->GetVerbalName(),
-			m_pDynaNode->Gshunt,
-			dValue
+			pDynaNode_->GetVerbalName(),
+			pDynaNode_->Gshunt,
+			Value
 		));
 	else
 		Log(pDynaModel, fmt::format("{} G={}",
-			m_pDynaNode->GetVerbalName(),
-			dValue
+			pDynaNode_->GetVerbalName(),
+			Value
 		));
 
-	m_pDynaNode->Gshunt = dValue;
+	pDynaNode_->Gshunt = Value;
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
 
-eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, double Value)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "B", dValue, m_pDynaNode->B, m_pDynaNode->GetVerbalName());
+	WriteSlowVariable(pDynaModel, "B", Value, pDynaNode_->B, pDynaNode_->GetVerbalName());
 
-	if (std::isfinite(m_pDynaNode->Bshunt))
+	if (std::isfinite(pDynaNode_->Bshunt))
 		Log(pDynaModel, fmt::format("{} B={} -> B={}",
-			m_pDynaNode->GetVerbalName(),
-			m_pDynaNode->Bshunt,
-			dValue
+			pDynaNode_->GetVerbalName(),
+			pDynaNode_->Bshunt,
+			Value
 		));
 	else
 		Log(pDynaModel, fmt::format("{} B={}",
-			m_pDynaNode->GetVerbalName(),
-			dValue
+			pDynaNode_->GetVerbalName(),
+			Value
 		));
 
-	m_pDynaNode->Bshunt = dValue;
+	pDynaNode_->Bshunt = Value;
 	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
 
 eDFW2_ACTION_STATE CModelActionRemoveNodeShunt::Do(CDynaModel *pDynaModel)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	const cplx y(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt);
+	const cplx y(pDynaNode_->Gshunt, pDynaNode_->Bshunt);
 	if(CModelAction::isfinite(y))
 		Log(pDynaModel, fmt::format("{} Y={} -> Y=0.0",
-			m_pDynaNode->GetVerbalName(),
-			cplx(m_pDynaNode->Gshunt, m_pDynaNode->Bshunt)));
+			pDynaNode_->GetVerbalName(),
+			cplx(pDynaNode_->Gshunt, pDynaNode_->Bshunt)));
 	else
 		Log(pDynaModel, fmt::format("{} Y=0.0",
-			m_pDynaNode->GetVerbalName()));
+			pDynaNode_->GetVerbalName()));
 
-	m_pDynaNode->Gshunt = m_pDynaNode->Bshunt = 0.0;
-	m_pDynaNode->ProcessTopologyRequest();
+	pDynaNode_->Gshunt = pDynaNode_->Bshunt = 0.0;
+	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 
 
 CModelActionChangeNodeLoad::CModelActionChangeNodeLoad(CDynaNode *pNode, cplx& LoadPower) : CModelActionChangeVariable(nullptr, 0),
-																						    m_pDynaNode(pNode),
-																							m_newLoad(LoadPower)
+																						    pDynaNode_(pNode),
+																							newLoad_(LoadPower)
 {
 	
 }
 
 eDFW2_ACTION_STATE CModelActionChangeNodeLoad::Do(CDynaModel *pDynaModel)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	CDevice::FromComplex(m_pDynaNode->Pn, m_pDynaNode->Qn,m_newLoad);
+	CDevice::FromComplex(pDynaNode_->Pn, pDynaNode_->Qn, newLoad_);
 
-	m_pDynaNode->ProcessTopologyRequest();
+	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 
 
 CModelActionState::CModelActionState(CDiscreteDelay *pDiscreteDelay) : CModelAction(eDFW2_ACTION_TYPE::AT_STATE),
-																	   m_pDiscreteDelay(pDiscreteDelay)
+																	   pDiscreteDelay_(pDiscreteDelay)
 {
 
 }
@@ -594,54 +592,54 @@ CModelActionState::CModelActionState(CDiscreteDelay *pDiscreteDelay) : CModelAct
 
 eDFW2_ACTION_STATE CModelActionState::Do(CDynaModel *pDynaModel)
 { 
-	CDevice* device(m_pDiscreteDelay->GetDevice());
+	CDevice* device(pDiscreteDelay_->GetDevice());
 
 	if (!device)
 		device = pDynaModel->AutomaticDevice.GetDeviceByIndex(0);
 
-	m_pDiscreteDelay->NotifyDelay(pDynaModel);
+	pDiscreteDelay_->NotifyDelay(pDynaModel);
 	pDynaModel->DiscontinuityRequest(*device, DiscontinuityLevel::Hard);
 	return eDFW2_ACTION_STATE::AS_INACTIVE;
 }
 
 
 CModelActionChangeDeviceState::CModelActionChangeDeviceState(CDevice* pDevice, eDEVICESTATE NewState) : CModelActionChangeVariable(nullptr,0),
-																							    m_pDevice(pDevice),
-																								m_NewState(NewState)
+																							    pDevice_(pDevice),
+																								NewState_(NewState)
 {
 
 }
 
 eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel)
 {
-	eDFW2_ACTION_STATE State(eDFW2_ACTION_STATE::AS_DONE);
-	if (!CDevice::IsFunctionStatusOK(m_pDevice->SetState(m_NewState, eDEVICESTATECAUSE::DSC_EXTERNAL)))
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	if (!CDevice::IsFunctionStatusOK(pDevice_->SetState(NewState_, eDEVICESTATECAUSE::DSC_EXTERNAL)))
 		State = eDFW2_ACTION_STATE::AS_ERROR;
 	return State;
 }
 
-eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel, double dValue)
+eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel, double Value)
 {
-	int nState = static_cast<int>(dValue);
+	int nState{ static_cast<int>(Value) };
 
 	if (nState > 0)
-		m_NewState = eDEVICESTATE::DS_ON;
+		NewState_ = eDEVICESTATE::DS_ON;
 	else
-		m_NewState = eDEVICESTATE::DS_OFF;
+		NewState_ = eDEVICESTATE::DS_OFF;
 
-	pDynaModel->WriteSlowVariable(m_pDevice->GetType(),
-								{ m_pDevice->GetId() },
+	pDynaModel->WriteSlowVariable(pDevice_->GetType(),
+								{ pDevice_->GetId() },
 								CDevice::m_cszState,
-								static_cast<double>(m_NewState),
-								static_cast<double>(m_pDevice->GetState()),
-								m_pDevice->GetVerbalName());
+								static_cast<double>(NewState_),
+								static_cast<double>(pDevice_->GetState()),
+								pDevice_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
-		m_pDevice->GetVerbalName(),
+		pDevice_->GetVerbalName(),
 		CDevice::m_cszState,
-		stringutils::enum_text(m_pDevice->GetState(), CDevice::m_cszStates),
+		stringutils::enum_text(pDevice_->GetState(), CDevice::m_cszStates),
 		CDevice::m_cszState,
-		stringutils::enum_text(m_pDevice->GetState(), CDevice::m_cszStates)));
+		stringutils::enum_text(pDevice_->GetState(), CDevice::m_cszStates)));
 
 	return Do(pDynaModel);
 }

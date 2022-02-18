@@ -144,7 +144,7 @@ void CLoadFlow::Estimate()
 	for (auto&& it : *pBranchContainer)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
-		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON && !pBranch->InSuperNode())
+		if (pBranch->BranchState_ == CDynaBranch::BranchState::BRANCH_ON && !pBranch->InSuperNode())
 			BranchAngleCheck.push_back(pBranch);
 	}
 }
@@ -1916,7 +1916,7 @@ double CLoadFlow::GetNewtonRatio()
 	for (auto&& it : BranchAngleCheck)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
-		const auto& pNodeIp{ pBranch->m_pNodeIp }, &pNodeIq{ pBranch->m_pNodeIq };
+		const auto& pNodeIp{ pBranch->pNodeIp_ }, &pNodeIq{ pBranch->pNodeIq_ };
 		// текущий взаимный угол
 		const double CurrentDelta{ pNodeIp->Delta - pNodeIq->Delta };
 		// приращения углов для узлов, которые в матрице или нули, если не в матрице
@@ -2126,7 +2126,7 @@ void CLoadFlow::CalculateBranchFlows()
 		if (pBranch->IsZeroImpedance()) continue;
 		pBranch->Sb = pBranch->Se = { 0.0, 0.0 };
 		// в отключенных ветвях потоки просто обнуляем
-		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_OFF) continue;
+		if (pBranch->BranchState_ == CDynaBranch::BranchState::BRANCH_OFF) continue;
 		cplx cIb, cIe, cSb, cSe;
 		CDynaBranchMeasure::CalculateFlows(pBranch, cIb, cIe, pBranch->Sb, pBranch->Se);
 	}
@@ -2150,8 +2150,8 @@ bool CLoadFlow::CheckNodeBalances()
 	for (auto&& dev : *pBranchContainer)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(dev) };
-		pBranch->m_pNodeIp->dLRCGen -= pBranch->Sb;
-		pBranch->m_pNodeIq->dLRCGen += pBranch->Se;
+		pBranch->pNodeIp_->dLRCGen -= pBranch->Sb;
+		pBranch->pNodeIq_->dLRCGen += pBranch->Se;
 	}
 
 	for (const auto& dev : pNodes->DevVec)

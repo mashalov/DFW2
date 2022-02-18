@@ -6,8 +6,8 @@ namespace DFW2
 	class CAbs : public CDynaPrimitiveState
 	{
 	protected:
-		bool m_bPositive = true;			// текущее состояние
-		bool m_bPositiveSaved = true;		// cохраненное состояние
+		bool Positive_ = true;			// текущее состояние
+		bool PositiveSaved_ = true;		// cохраненное состояние
 	public:
 
 		CAbs(CDevice& Device, const ORange& Output, const IRange& Input) : 
@@ -30,7 +30,7 @@ namespace DFW2
 		const char* GetVerbalName() override { return "Модуль"; }
 		static size_t PrimitiveSize() { return sizeof(CAbs); }
 		static long EquationsCount()  { return 1; }
-		void StoreState() override { m_bPositiveSaved = m_bPositive; }
-		void RestoreState() override { m_bPositive = m_bPositiveSaved; }
+		void StoreState() override { PositiveSaved_ = Positive_; }
+		void RestoreState() override { Positive_ = PositiveSaved_; }
 	};
 }

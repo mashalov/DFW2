@@ -190,7 +190,7 @@ void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_GEN_DQ);
 	// название класса не ставим, потому что это базовый класс и явно использоваться не должен
 	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGeneratorDQBase::m_cszExciterId);
-	props.nEquationsCount = CDynaGeneratorDQBase::VARS::V_LAST;
+	props.EquationsCount = CDynaGeneratorDQBase::VARS::V_LAST;
 
 	props.VarMap_.insert(std::make_pair(CDynaGeneratorDQBase::m_cszEq, CVarIndex(CDynaGeneratorDQBase::V_EQ, VARUNIT_KVOLTS)));
 	props.VarMap_.insert(std::make_pair(m_cszId, CVarIndex(CDynaGeneratorDQBase::V_ID, VARUNIT_KAMPERES)));

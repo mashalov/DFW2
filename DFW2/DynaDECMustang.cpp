@@ -252,7 +252,7 @@ void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
 	// может линковаться с возбудителем
 	props.AddLinkFrom(DEVTYPE_EXCITER, DLM_SINGLE, DPD_MASTER);
 
-	props.nEquationsCount = CDynaDECMustang::VARS::V_LAST;
+	props.EquationsCount = CDynaDECMustang::VARS::V_LAST;
 
 	props.VarMap_.insert(std::make_pair("EnfOnRly", CVarIndex(CDynaDECMustang::V_ENFONRELAY, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("DefOnRly", CVarIndex(CDynaDECMustang::V_DEFONRELAY, VARUNIT_PU)));

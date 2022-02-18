@@ -6,7 +6,7 @@ namespace DFW2
 	class CComparator : public CDynaPrimitiveBinaryOutput
 	{
 	protected:
-		InputVariable m_Input1;
+		InputVariable Input1_;
 
 		double OnStateOn(CDynaModel *pDynaModel) override;
 		double OnStateOff(CDynaModel *pDynaModel) override;
@@ -14,7 +14,7 @@ namespace DFW2
 	public:
 
 		CComparator(CDevice& Device, const ORange& Output, const IRange& Input) : 
-			CDynaPrimitiveBinaryOutput(Device, Output, Input), m_Input1(Input[1]) {}
+			CDynaPrimitiveBinaryOutput(Device, Output, Input), Input1_(Input[1]) {}
 		CComparator(CDevice& Device, const OutputList& Output, const InputList& Input) :
 			CComparator(Device, ORange(Output), IRange(Input)) { }
 

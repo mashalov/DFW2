@@ -258,7 +258,7 @@ void CDynaGeneratorMustang::DeviceProperties(CDeviceContainerProperties& props)
 	// задаем имя типа устройства
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorMustang, CDeviceContainerProperties::m_cszSysNameGeneratorMustang);
 	// задаем количество уравнений устройства
-	props.nEquationsCount = CDynaGeneratorMustang::VARS::V_LAST;
+	props.EquationsCount = CDynaGeneratorMustang::VARS::V_LAST;
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorMustang>>();
 }

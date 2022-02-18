@@ -18,20 +18,20 @@ bool CDynaModel::Link()
 	{
 		CDeviceContainerProperties &Props = it->ContainerProps();
 		// отдельные ссылки без направления для ведущих и ведомых
-		Props.m_Slaves.reserve(Props.LinksFrom_.size() + Props.LinksTo_.size());
-		Props.m_Masters.reserve(Props.m_Slaves.capacity());
+		Props.Slaves.reserve(Props.LinksFrom_.size() + Props.LinksTo_.size());
+		Props.Masters.reserve(Props.Slaves.capacity());
 
 		for (auto&& it1 : Props.LinksTo_)
 			if (it1.first != DEVTYPE_MODEL)
 			{
 				if (it1.second.eDependency == DPD_MASTER)
 				{
-					Props.m_MasterLinksTo.insert(std::make_pair(it1.first, &it1.second));	// ведущие к
-					Props.m_Masters.push_back(&it1.second);								// ведущие без направления
+					Props.MasterLinksTo.insert(std::make_pair(it1.first, &it1.second));	// ведущие к
+					Props.Masters.push_back(&it1.second);								// ведущие без направления
 				}
 				else
 				{
-					Props.m_Slaves.push_back(&it1.second);								// ведомые без направления
+					Props.Slaves.push_back(&it1.second);								// ведомые без направления
 				}
 			}
 
@@ -40,12 +40,12 @@ bool CDynaModel::Link()
 			{
 				if (it2.second.eDependency == DPD_MASTER)
 				{
-					Props.m_MasterLinksFrom.insert(std::make_pair(it2.first, &it2.second));	// ведущие от
-					Props.m_Masters.push_back(&it2.second);								// ведущие без направления
+					Props.MasterLinksFrom.insert(std::make_pair(it2.first, &it2.second));	// ведущие от
+					Props.Masters.push_back(&it2.second);								// ведущие без направления
 				}
 				else
 				{
-					Props.m_Slaves.push_back(&it2.second);								// ведомые без направления
+					Props.Slaves.push_back(&it2.second);								// ведомые без направления
 				}
 			}
 	}
@@ -98,7 +98,7 @@ void CDynaModel::PrepareNetworkElements()
 	if(Nodes.Count() == 0 || Branches.Count() == 0)
 		throw dfw2error(CDFW2Messages::m_cszNoNodesOrBranchesForLF);
 
-	bool bOk(true);
+	bool bOk{ true };
 
 	// убеждаемся в том, что в исходных данных есть СХН, соотвествующая параметрам
 	ptrdiff_t LRCId{ -2 };
@@ -465,12 +465,12 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
 		// по умолчанию суперузлы ветви равны исходным узлам
-		pBranch->m_pNodeSuperIp = pBranch->m_pNodeIp;
-		pBranch->m_pNodeSuperIq = pBranch->m_pNodeIq;
+		pBranch->pNodeSuperIp_ = pBranch->pNodeIp_;
+		pBranch->pNodeSuperIq_ = pBranch->pNodeIq_;
 		if (pBranch->IsZeroImpedance())
 		{
-			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
-			JoinableNodes[pBranch->m_pNodeIq].insert(pBranch->m_pNodeIp);
+			JoinableNodes[pBranch->pNodeIp_].insert(pBranch->pNodeIq_);
+			JoinableNodes[pBranch->pNodeIq_].insert(pBranch->pNodeIp_);
 			ZeroBranchCount += 2;	// учитываем, что ветвь может учитываться в двух узлах два раза
 		}
 	}
@@ -527,11 +527,11 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 			CDynaBranch *pBranch = static_cast<CDynaBranch*>(it);
 				
 			// Здесь включаем все ветви: и включенные и отключенные, иначе надо всякий раз перестраивать матрицу
-			if (pBranch->m_BranchState != CDynaBranch::BranchState::BRANCH_ON)
+			if (pBranch->BranchState_ != CDynaBranch::BranchState::BRANCH_ON)
 				continue;
 
-			const auto& pNodeIp(pBranch->m_pNodeIp);
-			const auto& pNodeIq(pBranch->m_pNodeIq);
+			const auto& pNodeIp(pBranch->pNodeIp_);
+			const auto& pNodeIq(pBranch->pNodeIq_);
 
 			if (pNodeIp->pSuperNodeParent == pNodeIq->pSuperNodeParent)
 			{
@@ -555,7 +555,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 				}
 				else
 					// иначе суперузел есть - и ветвь внутри него
-					pBranch->m_pNodeSuperIp = pBranch->m_pNodeSuperIq = pNodeIp->pSuperNodeParent;
+					pBranch->pNodeSuperIp_ = pBranch->pNodeSuperIq_ = pNodeIp->pSuperNodeParent;
 					//m_pDynaModel->Log(CDFW2Messages::DFW2LOG_INFO, Cex("Branch %s in super node %s", pBranch->GetVerbalName(), pNodeIp->m_pSuperNodeParent->GetVerbalName()));
 			}
 			else
@@ -564,8 +564,8 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 				// если у узлов есть суперузел - связываем ветвь не с узлом, а с его
 				// суперузлом
 
-				const auto& pNodeIpSuper{ pBranch->m_pNodeSuperIp = pNodeIp->GetSuperNode() };
-				const auto& pNodeIqSuper{ pBranch->m_pNodeSuperIq = pNodeIq->GetSuperNode() };
+				const auto& pNodeIpSuper{ pBranch->pNodeSuperIp_ = pNodeIp->GetSuperNode() };
+				const auto& pNodeIqSuper{ pBranch->pNodeSuperIq_ = pNodeIq->GetSuperNode() };
 
 				// если суперузел у узлов ветви не общий
 				if (pNodeIpSuper != pNodeIqSuper)
@@ -759,12 +759,12 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 			const auto& pOppNode = pBranch->GetOppositeSuperNode(pNode);
 
 			// получаем проводимость к оппозитному узлу
-			_ASSERTE((pBranch->m_pNodeSuperIp == pNode && pBranch->m_pNodeSuperIq != pNode) || 
-					 (pBranch->m_pNodeSuperIq == pNode && pBranch->m_pNodeSuperIp != pNode));
+			_ASSERTE((pBranch->pNodeSuperIp_ == pNode && pBranch->pNodeSuperIq_ != pNode) || 
+					 (pBranch->pNodeSuperIq_ == pNode && pBranch->pNodeSuperIp_ != pNode));
 
 			// определяем направление ветви не по адресу узла, а по адресу суперузла,
 			// так как нас интересует направление непереадресованных ветвей между суперузлами
-			const cplx& Ykm{ pBranch->m_pNodeSuperIp == pNode ? pBranch->Yip : pBranch->Yiq };
+			const cplx& Ykm{ pBranch->pNodeSuperIp_ == pNode ? pBranch->Yip : pBranch->Yiq };
 			// проверяем, уже прошли данный оппозитный узел для просматриваемого узла или нет
 			ptrdiff_t DupIndex = pNode->CheckAddVisited(pOppNode);
 			if (DupIndex < 0)
@@ -914,10 +914,10 @@ void CDynaNodeContainer::GetTopologySynchroZones(NODEISLANDMAP& NodeIslands)
 	for (auto&& it : *pBranchContainer)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
-		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+		if (pBranch->BranchState_ == CDynaBranch::BranchState::BRANCH_ON)
 		{
-			JoinableNodes[pBranch->m_pNodeIp].insert(pBranch->m_pNodeIq);
-			JoinableNodes[pBranch->m_pNodeIq].insert(pBranch->m_pNodeIp);
+			JoinableNodes[pBranch->pNodeIp_].insert(pBranch->pNodeIq_);
+			JoinableNodes[pBranch->pNodeIq_].insert(pBranch->pNodeIp_);
 		}
 	}
 	// формируем перечень островов
@@ -1017,7 +1017,7 @@ void CDynaNodeContainer::DumpNetwork()
 			{
 				dump << fmt::format("\tOriginal Branch %{}-%{}-({}) r={} x={} state={}",
 					pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np,
-					pBranch->R, pBranch->X, pBranch->m_BranchState) << std::endl;
+					pBranch->R, pBranch->X, pBranch->BranchState_) << std::endl;
 			}
 
 			const CLinkPtrCount* const pSuperNodeLink{ pNode->GetSuperLink(0) };
@@ -1034,7 +1034,7 @@ void CDynaNodeContainer::DumpNetwork()
 				{
 					dump << fmt::format("\t\t\tOriginal Branch %{}-%{}-({}) r={} x={} state={}", 
 						pDeviceBranch->key.Ip, pDeviceBranch->key.Iq, pDeviceBranch->key.Np,
-						pDeviceBranch->R, pDeviceBranch->X, pDeviceBranch->m_BranchState) << std::endl;
+						pDeviceBranch->R, pDeviceBranch->X, pDeviceBranch->BranchState_) << std::endl;
 				}
 			}
 

@@ -18,7 +18,7 @@ namespace DFW2
 		void UpdateVerbalName() override;
 	public:
 
-		CDynaBranchMeasure* m_pMeasure = nullptr;
+		CDynaBranchMeasure* pMeasure_ = nullptr;
 
 		struct Key 
 		{
@@ -31,9 +31,9 @@ namespace DFW2
 		double G, B, GrIp, GrIq, BrIp, BrIq;		// проводимость ветви, проводимости реакторов в начали и в конце
 		DynaReactors reactorsHead, reactorsTail;	// список отключаемых реакторов в начале и конце
 		ptrdiff_t NrIp, NrIq;						// количество реакторов в начале и в конце
-		CDynaNodeBase *m_pNodeIp, *m_pNodeIq;		// узлы начала и конца
-		CDynaNodeBase *m_pNodeSuperIp, 
-					  *m_pNodeSuperIq;				// суперузлы начала и конца
+		CDynaNodeBase *pNodeIp_, *pNodeIq_;			// узлы начала и конца
+		CDynaNodeBase *pNodeSuperIp_, 
+					  *pNodeSuperIq_;				// суперузлы начала и конца
 		double GIp0, BIp0, GIq0, BIq0;				// статические расчетные проводимости в начале и в конце, учитывающие проводимости ветви и статические реакторы
 		double GIp, BIp, GIq, BIq;					// расчетные проводимости в начале и в конце, статические проводимости и отключаемые реакторы
 		cplx Yip, Yiq, Yips, Yiqs;					// компоненты взаимных и собственных проводимостей 
@@ -51,7 +51,7 @@ namespace DFW2
 			BRANCH_TRIPIP,			// отключена в начале
 			BRANCH_TRIPIQ			// отключена в конце
 		} 
-			m_BranchState;
+			BranchState_;
 
 
 		CDynaBranch() : CDevice() {};
@@ -68,17 +68,17 @@ namespace DFW2
 		// возвращает продольную проводимость относительно заданного узла
 		inline const cplx& OppositeY(const CDynaNodeBase* pOriginNode) const
 		{
-			_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
-			return (m_pNodeIp == pOriginNode) ? Yip : Yiq;
+			_ASSERTE(pOriginNode == pNodeIq_ || pOriginNode == pNodeIp_);
+			return (pNodeIp_ == pOriginNode) ? Yip : Yiq;
 		}
 		// возвращает ток от заданного узла
 		inline const cplx CurrentFrom(const CDynaNodeBase* pOriginNode) const
 		{
-			_ASSERTE(pOriginNode == m_pNodeIq || pOriginNode == m_pNodeIp);
-			if (m_pNodeIp == pOriginNode)
-				return cplx(m_pNodeIq->Vre, m_pNodeIq->Vim) * Yip;
+			_ASSERTE(pOriginNode == pNodeIq_ || pOriginNode == pNodeIp_);
+			if (pNodeIp_ == pOriginNode)
+				return cplx(pNodeIq_->Vre, pNodeIq_->Vim) * Yip;
 			else
-				return cplx(m_pNodeIp->Vre, m_pNodeIp->Vim) * Yiq;
+				return cplx(pNodeIp_->Vre, pNodeIp_->Vim) * Yiq;
 		}
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 
@@ -87,7 +87,7 @@ namespace DFW2
 		// возвращает суперузел с обратного конца ветви относительно заданного
 		CDynaNodeBase* GetOppositeSuperNode(CDynaNodeBase* pOriginNode);
 		// возвращает true если ветвь внутри суперузла (суперузлы с обоих концов одинаковые, и ненулевые)
-		inline bool InSuperNode() const { return (m_pNodeSuperIp == m_pNodeSuperIq) && m_pNodeSuperIp; }
+		inline bool InSuperNode() const { return (pNodeSuperIp_ == pNodeSuperIq_) && pNodeSuperIp_; }
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 

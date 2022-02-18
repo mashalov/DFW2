@@ -205,24 +205,24 @@ namespace DFW2
 	template <typename T, typename D>
 	class KLUCommonDeleter
 	{
-		T* m_p;
+		T* p_;
 		KLU_common& Common;
 		void CleanUp(KLU_numeric*)
 		{
-			KLUFunctions<D>::TKLU_free_numeric(&m_p, &Common);
+			KLUFunctions<D>::TKLU_free_numeric(&p_, &Common);
 		}
 		void CleanUp(KLU_symbolic*)
 		{
-			KLUFunctions<D>::TKLU_free_symbolic(&m_p, &Common);
+			KLUFunctions<D>::TKLU_free_symbolic(&p_, &Common);
 		}
 	public:
-		KLUCommonDeleter(T* p, KLU_common& common) : m_p(p), Common(common) {}
+		KLUCommonDeleter(T* p, KLU_common& common) : p_(p), Common(common) {}
 		virtual ~KLUCommonDeleter()
 		{
-			if (m_p)
-				CleanUp(m_p);
+			if (p_)
+				CleanUp(p_);
 		}
-		T* GetKLUObject() { return m_p; }
+		T* GetKLUObject() { return p_; }
 
 	};
 
@@ -239,13 +239,13 @@ namespace DFW2
 
 		std::unique_ptr<ptrdiff_t[]> pAi,		// номера строк
 								     pAp;		// номера столбцов
-		ptrdiff_t m_nMatrixSize = 0;
-		ptrdiff_t m_nNonZeroCount = 0;
-		ptrdiff_t m_nAnalyzingsCount = 0;
-		ptrdiff_t m_nFactorizationsCount = 0;
-		ptrdiff_t m_nRefactorizationsCount = 0;
-		ptrdiff_t m_nRefactorizationFailures = 0;
-		std::string m_strKLUError;
+		ptrdiff_t MatrixSize_ = 0;
+		ptrdiff_t NonZeroCount_ = 0;
+		ptrdiff_t AnalyzingsCount_ = 0;
+		ptrdiff_t FactorizationsCount_ = 0;
+		ptrdiff_t RefactorizationsCount_ = 0;
+		ptrdiff_t RefactorizationFailures_ = 0;
+		std::string KLUError_;
 
 		using KLUSymbolic = KLUCommonDeleter<KLU_symbolic, T>;
 		using KLUNumeric = KLUCommonDeleter<KLU_numeric, T>;
@@ -275,25 +275,25 @@ namespace DFW2
 			switch (pCommon.status)
 			{
 			case 0:
-				m_strKLUError = CDFW2Messages::m_cszKLUOk;
+				KLUError_ = CDFW2Messages::m_cszKLUOk;
 				break;
 			case 1:
-				m_strKLUError = CDFW2Messages::m_cszKLUSingular;
+				KLUError_ = CDFW2Messages::m_cszKLUSingular;
 				DumpMatrix(true);
 				break;
 			case -2:
-				m_strKLUError = CDFW2Messages::m_cszKLUOutOfMemory;
+				KLUError_ = CDFW2Messages::m_cszKLUOutOfMemory;
 				break;
 			case -3:
-				m_strKLUError = CDFW2Messages::m_cszKLUInvalidInput;
+				KLUError_ = CDFW2Messages::m_cszKLUInvalidInput;
 				break;
 			case -4:
-				m_strKLUError = CDFW2Messages::m_cszKLUIntOverflow;
+				KLUError_ = CDFW2Messages::m_cszKLUIntOverflow;
 				break;
 			default:
-				m_strKLUError = fmt::format(CDFW2Messages::m_cszKLUUnknownError, pCommon.status);
+				KLUError_ = fmt::format(CDFW2Messages::m_cszKLUUnknownError, pCommon.status);
 			}
-			return m_strKLUError.c_str();
+			return KLUError_.c_str();
 		}
 		static const char* KLUWrapperName()
 		{
@@ -305,28 +305,28 @@ namespace DFW2
 		{
 			KLU_defaults(&pCommon);
 		}
-		void SetSize(ptrdiff_t nMatrixSize, ptrdiff_t nNonZeroCount)
+		void SetSize(ptrdiff_t MatrixSize, ptrdiff_t NonZeroCount)
 		{
-			m_nMatrixSize = nMatrixSize;
-			m_nNonZeroCount = nNonZeroCount;
-			pAx = std::make_unique<double[]>(m_nNonZeroCount * doubles_count<T>::count);			// числа матрицы
-			pb = vector_aligned_double(m_nMatrixSize * doubles_count<T>::count);					// вектор правой части
+			MatrixSize_ = MatrixSize;
+			NonZeroCount_ = NonZeroCount;
+			pAx = std::make_unique<double[]>(NonZeroCount_ * doubles_count<T>::count);			// числа матрицы
+			pb = vector_aligned_double(MatrixSize_ * doubles_count<T>::count);					// вектор правой части
 
 			// вектор уточнения 
 			// если уже был получен ранее - обновляем его размерность
 			if (pRefine)
-				pRefine = vector_aligned_double(3 * m_nMatrixSize * doubles_count<T>::count);
-			pAi = std::make_unique<ptrdiff_t[]>(m_nMatrixSize + 1);									// строки матрицы
-			pAp = std::make_unique<ptrdiff_t[]>(m_nNonZeroCount);									// столбцы матрицы
+				pRefine = vector_aligned_double(3 * MatrixSize_ * doubles_count<T>::count);
+			pAi = std::make_unique<ptrdiff_t[]>(MatrixSize_ + 1);									// строки матрицы
+			pAp = std::make_unique<ptrdiff_t[]>(NonZeroCount_);									// столбцы матрицы
 			pSymbolic.reset();
 			pNumeric.reset();
 		}
-		inline ptrdiff_t MatrixSize() const { return m_nMatrixSize; }
-		ptrdiff_t NonZeroCount() { return m_nNonZeroCount; }
-		ptrdiff_t AnalyzingsCount() { return m_nAnalyzingsCount; }
-		ptrdiff_t FactorizationsCount() { return m_nFactorizationsCount; }
-		ptrdiff_t RefactorizationsCount() { return m_nRefactorizationsCount; }
-		ptrdiff_t RefactorizationFailuresCount() { return m_nRefactorizationFailures; }
+		inline ptrdiff_t MatrixSize() const { return MatrixSize_; }
+		ptrdiff_t NonZeroCount() { return NonZeroCount_; }
+		ptrdiff_t AnalyzingsCount() { return AnalyzingsCount_; }
+		ptrdiff_t FactorizationsCount() { return FactorizationsCount_; }
+		ptrdiff_t RefactorizationsCount() { return RefactorizationsCount_; }
+		ptrdiff_t RefactorizationFailuresCount() { return RefactorizationFailures_; }
 		inline double* Ax() { return pAx.get(); }
 		inline const double* Ax() const { return pAx.get(); }
 		inline double* B() { return pb.get(); }
@@ -339,13 +339,13 @@ namespace DFW2
 		KLU_common* Common() { return &pCommon; }
 		void Analyze()
 		{
-			pSymbolic = std::make_unique<KLUSymbolic>(KLUFunctions<T>::TKLU_analyze(m_nMatrixSize, pAi.get(), pAp.get(), &pCommon), pCommon);
+			pSymbolic = std::make_unique<KLUSymbolic>(KLUFunctions<T>::TKLU_analyze(MatrixSize_, pAi.get(), pAp.get(), &pCommon), pCommon);
 			if (!Analyzed())
 			{
 				DumpMatrix(false);
 				throw dfw2error(fmt::format("{}::KLU_analyze {}", KLUWrapperName(), KLUErrorDescription()));
 			}
-			m_nAnalyzingsCount++;
+			AnalyzingsCount_++;
 		}
 
 		void Factor()
@@ -355,7 +355,7 @@ namespace DFW2
 			pNumeric = std::make_unique<KLUNumeric>(KLUFunctions<T>::TKLU_factor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), &pCommon), pCommon);
 			if (!Factored())
 				throw dfw2error(fmt::format("{}::KLU_factor {}", KLUWrapperName(), KLUErrorDescription()));
-			m_nFactorizationsCount++;
+			FactorizationsCount_++;
 		}
 
 		bool TryRefactor()
@@ -364,12 +364,12 @@ namespace DFW2
 				throw dfw2error(fmt::format("{}::KLU_refactor - no numeric to refactor", KLUWrapperName()));
 			if (KLUFunctions<T>::TKLU_refactor(pAi.get(), pAp.get(), pAx.get(), pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), &pCommon))
 			{
-				m_nRefactorizationsCount++;
+				RefactorizationsCount_++;
 				return true;
 			}
 			else
 			{
-				m_nRefactorizationFailures++;
+				RefactorizationFailures_++;
 				return false;
 			}
 		}
@@ -386,7 +386,7 @@ namespace DFW2
 				Analyze();
 			if (!Factored())
 				Factor();
-			if (!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
+			if (!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), MatrixSize_, 1, pb.get(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
@@ -398,7 +398,7 @@ namespace DFW2
 
 			// если не был получен - создаем
 			if (!pRefine)
-				pRefine = vector_aligned_double(3 * m_nMatrixSize * doubles_count<T>::count);
+				pRefine = vector_aligned_double(3 * MatrixSize_ * doubles_count<T>::count);
 
 			double* pR1{ pRefine.get() };			// правая часть СЛУ (b)
 			double* pR2{ pR1 + MatrixSize() };		// исходное решение СЛУ (x)
@@ -458,7 +458,7 @@ namespace DFW2
 			if (!Analyzed())
 				Analyze();
 			Factor();
-			if (!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), m_nMatrixSize, 1, pb.get(), &pCommon))
+			if (!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), MatrixSize_, 1, pb.get(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
 		}
 
@@ -491,12 +491,12 @@ namespace DFW2
 			double bmax{ 0.0 };
 			nMaxIndex = -1;
 			double* pbb{ pb.get() };
-			if (m_nMatrixSize > 0)
+			if (MatrixSize_ > 0)
 			{
 				nMaxIndex = 0;
 				bmax = std::abs(*pbb);
 				pbb++;
-				for (ptrdiff_t x = 1; x < m_nMatrixSize; x++, pbb++)
+				for (ptrdiff_t x = 1; x < MatrixSize_; x++, pbb++)
 				{
 					double absb = std::abs(*pbb);
 					if (bmax < absb)

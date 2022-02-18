@@ -346,7 +346,7 @@ void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)
 	CDynaGeneratorDQBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_PARK3C);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark3C, CDeviceContainerProperties::m_cszSysNameGeneratorPark3C);
-	props.nEquationsCount = CDynaGeneratorPark3C::VARS::V_LAST;
+	props.EquationsCount = CDynaGeneratorPark3C::VARS::V_LAST;
 	props.VarMap_.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
 	props.VarMap_.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
 	props.VarMap_.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));

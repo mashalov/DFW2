@@ -6,11 +6,11 @@ namespace DFW2
 	class CRelay : public CDynaPrimitiveBinaryOutput
 	{
 	protected:
-		double m_dUpper = 0.0;		// уставка на повышение
-		double m_dLower = 0.0;		// уставка на понижение
-		double m_dUpperH = 0.0;		// уставка на повышение с учетом коэффициента возврата
-		double m_dLowerH = 0.0;		// уставка на понижение с учетом коэффициента возврата
-		bool m_bMaxRelay = true;	// true - максимальное реле, false - минимальное
+		double Upper_ = 0.0;		// уставка на повышение
+		double Lower_ = 0.0;		// уставка на понижение
+		double UpperH_ = 0.0;		// уставка на повышение с учетом коэффициента возврата
+		double LowerH_ = 0.0;		// уставка на понижение с учетом коэффициента возврата
+		bool MaxRelay_ = true;		// true - максимальное реле, false - минимальное
 
 	protected:
 		inline eRELAYSTATES GetCurrentState() override { return eCurrentState; }
@@ -43,15 +43,15 @@ namespace DFW2
 	class CDiscreteDelay
 	{
 	protected:
-		double m_dDelay = 0.0;
-		ptrdiff_t m_nDiscontinuityId;
+		double Delay_ = 0.0;
+		ptrdiff_t DiscontinuityId_;
 	public:
-		CDiscreteDelay() : m_nDiscontinuityId(0) {}
+		CDiscreteDelay() : DiscontinuityId_(0) {}
 		virtual bool NotifyDelay(CDynaModel *pDynaModel) = 0;
 		virtual CDevice* GetDevice() { return nullptr; };
 		bool Init(CDynaModel *pDynaModel);
-		void SetDiscontinuityId(ptrdiff_t nDiscontinuityId) noexcept { m_nDiscontinuityId = nDiscontinuityId; }
-		ptrdiff_t GetDiscontinuityId() const noexcept { return m_nDiscontinuityId; }
+		void SetDiscontinuityId(ptrdiff_t DiscontinuityId) noexcept { DiscontinuityId_ = DiscontinuityId; }
+		ptrdiff_t GetDiscontinuityId() const noexcept { return DiscontinuityId_; }
 	};
 
 	class CRelayDelay : public CRelay, public CDiscreteDelay
@@ -67,7 +67,7 @@ namespace DFW2
 		bool Init(CDynaModel *pDynaModel) override;
 		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
-		CDevice* GetDevice() override { return &m_Device; };
+		CDevice* GetDevice() override { return &Device_; };
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelay); }
@@ -105,7 +105,7 @@ namespace DFW2
 		bool UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR& Parameters) override
 		{
 			const bool bRes{ CRelayDelayLogic::UnserializeParameters(pDynaModel, Parameters) };
-			m_bMaxRelay = false;
+			MaxRelay_ = false;
 			return bRes;
 		}
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayMinDelayLogic); }

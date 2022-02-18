@@ -37,7 +37,7 @@ void CResultsWriterABI::AddDeviceType(const CDeviceContainer& Container)
 
 	const CDeviceContainerProperties& Props{ Container.ContainerProps()};
 	// по умолчанию у устройства один идентификатор и одно родительское устройство
-	long DeviceIdsCount{ 1 }, ParentIdsCount{ static_cast<long>(Props.m_Masters.size()) };
+	long DeviceIdsCount{ 1 }, ParentIdsCount{ static_cast<long>(Props.Masters.size()) };
 	// у ветви - три идентификатора
 	if (Container.GetType() == DEVTYPE_BRANCH)
 	{
@@ -75,13 +75,13 @@ void CResultsWriterABI::AddDeviceType(const CDeviceContainer& Container)
 			// для ветвей передаем номер начала, конца и номер параллельной цепи
 			const CDynaBranch* pBranch = static_cast<const CDynaBranch*>(device);
 			DeviceIds = { pBranch->key.Ip, pBranch->key.Iq, pBranch->key.Np };
-			ParentIds = { pBranch->m_pNodeIp ? pBranch->m_pNodeIp->GetId() : 0,  pBranch->m_pNodeIq ? pBranch->m_pNodeIq->GetId() : 0 };
+			ParentIds = { pBranch->pNodeIp_ ? pBranch->pNodeIp_->GetId() : 0,  pBranch->pNodeIq_ ? pBranch->pNodeIq_->GetId() : 0 };
 			ParentTypes = { DEVTYPE_NODE, DEVTYPE_NODE };
 		}
 		else
 		{
 			DeviceIds = { device->GetId() };
-			for (const auto& master : Props.m_Masters)
+			for (const auto& master : Props.Masters)
 			{
 				CDevice* pLinkDev = device->GetSingleLink(master->nLinkIndex);
 				ParentIds.push_back(pLinkDev ? pLinkDev->GetId() : 0);

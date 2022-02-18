@@ -272,7 +272,7 @@ void CDynaExcConMustangNonWindup::DeviceProperties(CDeviceContainerProperties& p
 	props.SetClassName(CDeviceContainerProperties::m_cszNameExcConMustang, CDeviceContainerProperties::m_cszSysNameExcConMustang);
 	props.AddLinkFrom(DEVTYPE_EXCITER, DLM_SINGLE, DPD_MASTER);
 
-	props.nEquationsCount = CDynaExcConMustangNonWindup::VARS::V_LAST;
+	props.EquationsCount = CDynaExcConMustangNonWindup::VARS::V_LAST;
 
 
 	props.VarMap_.insert(std::make_pair("Uf", CVarIndex(CDynaExcConMustangNonWindup::V_UF, VARUNIT_PU)));

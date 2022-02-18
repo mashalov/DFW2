@@ -160,7 +160,7 @@ void CDynaGeneratorInfBusBase::DeviceProperties(CDeviceContainerProperties& prop
 	CDynaVoltageSource::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_INFPOWER);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorInfPower, CDeviceContainerProperties::m_cszSysNameGeneratorInfPower);
-	props.nEquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
+	props.EquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorInfBus>>();
 }

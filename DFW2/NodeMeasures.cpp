@@ -61,7 +61,7 @@ void CDynaNodeMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	// правил связывания не нужно
 	props.SetType(DEVTYPE_NODEMEASURE);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNodeMeasure, CDeviceContainerProperties::m_cszSysNameNodeMeasure);
-	props.nEquationsCount = CDynaNodeMeasure::VARS::V_LAST;
+	props.EquationsCount = CDynaNodeMeasure::VARS::V_LAST;
 	props.VarMap_.insert({ m_cszPload,  CVarIndex(CDynaNodeMeasure::V_PLOAD, VARUNIT_MW) });
 	props.VarMap_.insert({ m_cszQload,  CVarIndex(CDynaNodeMeasure::V_QLOAD, VARUNIT_MVAR) });
 
@@ -326,6 +326,6 @@ void CDynaNodeZeroLoadFlow::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_ZEROLOADFLOW);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameZeroLoadFlow, CDeviceContainerProperties::m_cszSysNameZeroLoadFlow);
-	props.nEquationsCount = 0;
+	props.EquationsCount = 0;
 	props.bVolatile = true;
 }

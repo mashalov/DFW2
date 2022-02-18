@@ -757,7 +757,7 @@ void CDeviceContainer::ResetStack()
 
 ptrdiff_t CDeviceContainer::GetPossibleSingleLinksCount()
 {
-	return ContainerProps_.nPossibleLinksCount;
+	return ContainerProps_.PossibleLinksCount;
 }
 
 // базовая реализация возвращает константу из свойств
@@ -765,7 +765,7 @@ ptrdiff_t CDeviceContainer::GetPossibleSingleLinksCount()
 // но при этом в свойствах контейнера должно быть bVolatile = true
 ptrdiff_t CDeviceContainer::EquationsCount() const
 {
-	return ContainerProps_.nEquationsCount;
+	return ContainerProps_.EquationsCount;
 }
 
 CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom)

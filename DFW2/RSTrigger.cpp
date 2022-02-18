@@ -6,33 +6,33 @@ using namespace DFW2;
 
 bool CRSTrigger::Init(CDynaModel *pDynaModel)
 {
-	m_Output = 0.0;
+	Output_ = 0.0;
 	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 }
 
 eDEVICEFUNCTIONSTATUS CRSTrigger::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		const double dOldOut{ m_Output };
-		const double& R{ m_Input };
-		const double& S{ m_Input1 };
+		const double dOldOut{ Output_ };
+		const double& R{ Input_ };
+		const double& S{ Input1_ };
 
 		if (S > 0.0)
 		{
 			if (R > 0.0)
-				pDynaModel->SetVariableNordsiek(m_Output, m_bResetPriority ? 0.0 : 1.0);
+				pDynaModel->SetVariableNordsiek(Output_, ResetPriority_ ? 0.0 : 1.0);
 			else
-				pDynaModel->SetVariableNordsiek(m_Output, 1.0);
+				pDynaModel->SetVariableNordsiek(Output_, 1.0);
 		}
 		else
 		{
 			if (R > 0.0)
-				pDynaModel->SetVariableNordsiek(m_Output, 0.0);
+				pDynaModel->SetVariableNordsiek(Output_, 0.0);
 		}
 
-		if (dOldOut != m_Output)
-			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+		if (dOldOut != Output_)
+			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -43,16 +43,16 @@ bool CRSTrigger::UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTO
 	double dResetPriority{ 1.0 };
 	// по умолчанию приоритет имеет вход Reset
 	CDynaPrimitive::UnserializeParameters({ { dResetPriority, 1.0 } }, Parameters);
-	m_bResetPriority = dResetPriority > 0;
+	ResetPriority_ = dResetPriority > 0;
 	return true;
 }
 
 bool CRSTrigger::GetResetPriority() const
 {
-	return m_bResetPriority;
+	return ResetPriority_;
 }
 
 void CRSTrigger::SetResetPriority(bool bResetPriority)
 {
-	m_bResetPriority = bResetPriority;
+	ResetPriority_ = bResetPriority;
 }

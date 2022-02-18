@@ -6,64 +6,64 @@ using namespace DFW2;
 
 void CDeadBand::BuildEquations(CDynaModel *pDynaModel)
 {
-	switch (m_eDbState)
+	switch (eDbState_)
 	{
 	case eDFW2DEADBANDSTATES::DBS_MAX:
 	case eDFW2DEADBANDSTATES::DBS_MIN:
 	case eDFW2DEADBANDSTATES::DBS_OFF:
-		pDynaModel->SetElement(m_Output, m_Input, 1.0);
+		pDynaModel->SetElement(Output_, Input_, 1.0);
 		break;
 	case eDFW2DEADBANDSTATES::DBS_ZERO:
-		pDynaModel->SetElement(m_Output, m_Input, 0.0);
+		pDynaModel->SetElement(Output_, Input_, 0.0);
 		break;
 	}
 
-	pDynaModel->SetElement(m_Output, m_Output, 1.0);
+	pDynaModel->SetElement(Output_, Output_, 1.0);
 }
 
 void CDeadBand::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		switch (m_eDbState)
+		switch (eDbState_)
 		{
 		case eDFW2DEADBANDSTATES::DBS_MIN:
-			pDynaModel->SetFunction(m_Output, m_Output - m_Input - m_Db);
+			pDynaModel->SetFunction(Output_, Output_ - Input_ - Db_);
 			break;
 		case eDFW2DEADBANDSTATES::DBS_ZERO:
-			pDynaModel->SetFunction(m_Output, 0.0);
-			pDynaModel->SetVariableNordsiek(m_Output, 0.0);
+			pDynaModel->SetFunction(Output_, 0.0);
+			pDynaModel->SetVariableNordsiek(Output_, 0.0);
 			break;
 		case eDFW2DEADBANDSTATES::DBS_OFF:
-			pDynaModel->SetFunction(m_Output, m_Output - m_Input);
+			pDynaModel->SetFunction(Output_, Output_ - Input_);
 			break;
 		case eDFW2DEADBANDSTATES::DBS_MAX:
-			pDynaModel->SetFunction(m_Output, m_Output - m_Input + m_Db);
+			pDynaModel->SetFunction(Output_, Output_ - Input_ + Db_);
 			break;
 		}
 	}
 	else
-		pDynaModel->SetFunction(m_Output, 0.0);
+		pDynaModel->SetFunction(Output_, 0.0);
 }
 
 
 
 bool CDeadBand::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = CDynaPrimitive::Init(pDynaModel);
-	if (m_Db < 0)
+	bool bRes{ CDynaPrimitive::Init(pDynaModel) };
+	if (Db_ < 0)
 	{
-		m_Device.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongDeadBandParameter, GetVerbalName(), m_Device.GetVerbalName(), m_Db));
+		Device_.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongDeadBandParameter, GetVerbalName(), Device_.GetVerbalName(), Db_));
 		bRes = false;
 	}
 	else
-		if (Equal(m_Db,0.0))
-			m_eDbState = eDFW2DEADBANDSTATES::DBS_OFF;
+		if (Equal(Db_,0.0))
+			eDbState_ = eDFW2DEADBANDSTATES::DBS_OFF;
 	else
 	{
-		m_DbMax = pDynaModel->GetHysteresis(m_Db);
-		m_DbMin = -m_Db - m_DbMax;
-		m_DbMax += m_Db;
+		DbMax_ = pDynaModel->GetHysteresis(Db_);
+		DbMin_ = -Db_ - DbMax_;
+		DbMax_ += Db_;
 	}
 
 	bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
@@ -72,44 +72,44 @@ bool CDeadBand::Init(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDeadBand::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		if (m_eDbState != eDFW2DEADBANDSTATES::DBS_OFF)
+		if (eDbState_ != eDFW2DEADBANDSTATES::DBS_OFF)
 		{
-			pDynaModel->SetVariableNordsiek(m_Output, 0.0);
+			pDynaModel->SetVariableNordsiek(Output_, 0.0);
 
-			m_eDbState = eDFW2DEADBANDSTATES::DBS_ZERO;
+			eDbState_ = eDFW2DEADBANDSTATES::DBS_ZERO;
 
-			if (m_Input >= m_Db)
+			if (Input_ >= Db_)
 			{
-				pDynaModel->SetVariableNordsiek(m_Output, m_Input - m_Db);
-				m_eDbState = eDFW2DEADBANDSTATES::DBS_MAX;
+				pDynaModel->SetVariableNordsiek(Output_, Input_ - Db_);
+				eDbState_ = eDFW2DEADBANDSTATES::DBS_MAX;
 			}
 			else
-				if (m_Input <= -m_Db)
+				if (Input_ <= -Db_)
 				{
-					pDynaModel->SetVariableNordsiek(m_Output, m_Input + m_Db);
-					m_eDbState = eDFW2DEADBANDSTATES::DBS_MIN;
+					pDynaModel->SetVariableNordsiek(Output_, Input_ + Db_);
+					eDbState_ = eDFW2DEADBANDSTATES::DBS_MIN;
 				}
 		}
 		else
-			pDynaModel->CopyVariableNordsiek(m_Output, m_Input);
+			pDynaModel->CopyVariableNordsiek(Output_, Input_);
 	}
 	else
-		m_Output = 0.0;
+		Output_ = 0.0;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		eDFW2DEADBANDSTATES OldState = m_eDbState;
+		eDFW2DEADBANDSTATES OldState{ eDbState_ };
 
-		switch (m_eDbState)
+		switch (eDbState_)
 		{
 		case eDFW2DEADBANDSTATES::DBS_MAX:
 			rH = OnStateMax(pDynaModel);
@@ -123,21 +123,21 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 		case eDFW2DEADBANDSTATES::DBS_OFF:
 			break;
 		}
-		if (OldState != m_eDbState)
+		if (OldState != eDbState_)
 		{
 			pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG,
 							fmt::format("t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}", 
 											pDynaModel->GetCurrentTime(), 
 											pDynaModel->GetIntegrationStepNumber(), 
 											GetVerbalName(), 
-											m_Device.GetVerbalName(), 
-											/*(const double)*/m_Output, 
-											m_DbMin, 
-											m_DbMax, 
+											Device_.GetVerbalName(), 
+											Output_, 
+											DbMin_, 
+											DbMax_, 
 											OldState, 
-											m_eDbState)
+											eDbState_)
 							);
-			pDynaModel->DiscontinuityRequest(m_Device, DiscontinuityLevel::Light);
+			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
 		}
 	}
 
@@ -146,31 +146,31 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 bool CDeadBand::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	return CDynaPrimitive::UnserializeParameters({ {m_Db, 0.0} }, Parameters);
+	return CDynaPrimitive::UnserializeParameters({ {Db_, 0.0} }, Parameters);
 }
 
 
 void CDeadBand::SetCurrentState(eDFW2DEADBANDSTATES CurrentState)
 {
-	m_eDbState = CurrentState;
+	eDbState_ = CurrentState;
 }
 
 double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
-	double CheckMin = -m_Db - m_Input;
+	double rH{ 1.0 };
+	RightVector* pRightVector1{ pDynaModel->GetRightVector(Input_) };
+	const double CheckMin{ -Db_ - Input_ };
 
 	if (CheckMin < 0.0)
 	{
-		double derr = std::abs(pRightVector1->GetWeightedError(CheckMin, m_Input));
+		const double derr{ std::abs(pRightVector1->GetWeightedError(CheckMin, Input_)) };
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, -m_Db);
+			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, -Db_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
@@ -181,20 +181,20 @@ double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 
 double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
-	double CheckMax = m_Input - m_Db;
+	double rH{ 1.0 };
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(Input_);
+	const double CheckMax{ Input_ - Db_ };
 
 	if (CheckMax < 0.0)
 	{
-		double derr = std::abs(pRightVector1->GetWeightedError(CheckMax, m_Input));
+		const double derr{ std::abs(pRightVector1->GetWeightedError(CheckMax, Input_)) };
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_Db);
+			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, Db_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
@@ -204,22 +204,22 @@ double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 
 double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-	RightVector *pRightVector1 = pDynaModel->GetRightVector(m_Input);
+	double rH{ 1.0 };
+	RightVector *pRightVector1 = pDynaModel->GetRightVector(Input_);
 
-	double CheckMax = m_Input - m_DbMax;
-	double CheckMin = m_DbMin - m_Input;
+	const double CheckMax{ Input_ - DbMax_ };
+	const double CheckMin{ DbMin_ - Input_ };
 
 	if (CheckMax >= 0.0)
 	{
-		double derr = std::abs(pRightVector1->GetWeightedError(CheckMax, m_Input));
+		const double derr{ std::abs(pRightVector1->GetWeightedError(CheckMax, Input_)) };
 		if (derr < pDynaModel->GetZeroCrossingTolerance())
 		{
 			SetCurrentState(eDFW2DEADBANDSTATES::DBS_MAX);
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_DbMax);
+			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, DbMax_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 			{
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_MAX);
@@ -229,14 +229,14 @@ double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 	else
 		if (CheckMin >= 0.0)
 		{
-			double derr = std::abs(pRightVector1->GetWeightedError(CheckMin, m_Input));
+			const double derr{ std::abs(pRightVector1->GetWeightedError(CheckMin, Input_)) };
 			if (derr < pDynaModel->GetZeroCrossingTolerance())
 			{
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_MIN);
 			}
 			else
 			{
-				rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, m_DbMin);
+				rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, DbMin_);
 				if (pDynaModel->ZeroCrossingStepReached(rH))
 				{
 					SetCurrentState(eDFW2DEADBANDSTATES::DBS_MIN);

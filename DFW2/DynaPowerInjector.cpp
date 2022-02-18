@@ -108,7 +108,7 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.ConstVarMap_.insert({ m_cszP, CConstVarIndex(CDynaPowerInjector::C_P, VARUNIT_MW, true, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ m_cszQ, CConstVarIndex(CDynaPowerInjector::C_Q, VARUNIT_MVAR, true, eDVT_CONSTSOURCE) });
 
-	props.nEquationsCount = CDynaPowerInjector::VARS::V_LAST;
+	props.EquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
 
 	props.bFinishStep = true;	// нужно рассчитывать мощности после выполнения шага

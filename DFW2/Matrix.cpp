@@ -647,7 +647,7 @@ void CDynaModel::CreateTotalRightVector()
 		// для volatile устройств зон в TotalRightVector не оставляем места
 		if (cit->ContainerProps().bVolatile)
 			continue;
-		m_nTotalVariablesCount += cit->ContainerProps().nEquationsCount * cit->Count();
+		m_nTotalVariablesCount += cit->ContainerProps().EquationsCount * cit->Count();
 	}
 	// забираем полный вектор для всех переменных
 	pRightVectorTotal = std::make_unique<RightVectorTotal[]>(m_nTotalVariablesCount);

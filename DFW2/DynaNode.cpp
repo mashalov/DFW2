@@ -870,7 +870,7 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 			pBranch->CalcAdmittances(bFixNegativeZs);
 			// состояние ветви в данном случае не важно - слагаемые только к собственной
 			// проводимости узла. Слагаемые сами по себе рассчитаны с учетом состояния ветви
-			Yii -= (this == pBranch->m_pNodeIp) ? pBranch->Yips : pBranch->Yiqs;
+			Yii -= (this == pBranch->pNodeIp_) ? pBranch->Yips : pBranch->Yiqs;
 		}
 		
 		if (V < DFW2_EPSILON)
@@ -1432,16 +1432,13 @@ bool CDynaNodeBase::InMatrix()
 
 double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
-
+	double rH{ 1.0 };
 	const double Hyst{ LOW_VOLTAGE_HYST };
 	const RightVector* pRvre{ pDynaModel->GetRightVector(Vre.Index) };
 	const RightVector* pRvim{ pDynaModel->GetRightVector(Vim.Index) };
 	const double* lm{ pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1] };
-
 	const double Vre1{ pRvre->Nordsiek[0] + pRvre->Error * lm[0] };
 	const double Vim1{ pRvim->Nordsiek[0] + pRvim->Error * lm[0] };
-
 	const double Vcheck{ std::sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
 
 	/*
@@ -1455,14 +1452,12 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	if (LowVoltage)
 	{
 		const double Border{ LOW_VOLTAGE + Hyst };
-
 		if (Vcheck > Border)
 			rH = FindVoltageZC(pDynaModel, pRvre, pRvim, Hyst, false);
 	}
 	else
 	{
 		const double Border{ LOW_VOLTAGE - Hyst };
-
 		if (Vcheck < Border)
 			rH = FindVoltageZC(pDynaModel, pRvre, pRvim, Hyst, true);
 	}
@@ -1507,9 +1502,9 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 			if (!pVb->pParallelTo)
 			{
 				// проверяем есть ли параллельная впрямую
-				bool bParr{ pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIq };
+				bool bParr{ pVb->pBranch->pNodeIp_ == pBranch->pNodeIp_ && pVb->pBranch->pNodeIq_ == pBranch->pNodeIq_ };
 				// и если нет - проверяем параллельную в обратную
-				bParr = bParr ? bParr : pVb->pBranch->m_pNodeIq == pBranch->m_pNodeIp && pVb->pBranch->m_pNodeIp == pBranch->m_pNodeIq;
+				bParr = bParr ? bParr : pVb->pBranch->pNodeIq_ == pBranch->pNodeIp_ && pVb->pBranch->pNodeIp_ == pBranch->pNodeIq_;
 				if (bParr)
 					// если есть параллельная, ставим в добавляемую ветвь ссылку на найденную параллельную ветвь
 					pParallelFound = pVb;
@@ -1697,7 +1692,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		while (pBranchLink->In(pBranch))
 		{
 			// интересуют только включенные ветви - так или иначе связывающие узлы 
-			if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+			if (pBranch->BranchState_ == CDynaBranch::BranchState::BRANCH_ON)
 			{
 				const auto& pOppNode{ pBranch->GetOppositeNode(node) };
 
@@ -1852,8 +1847,8 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 	for (const VirtualZeroBranch* pZb = pVirtualZeroBranchBegin_; pZb < pVirtualZeroBranchEnd_; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
-		const auto& pNode1{ pBranch->m_pNodeIp->ZeroLF };
-		const auto& pNode2{ pBranch->m_pNodeIq->ZeroLF };
+		const auto& pNode1{ pBranch->pNodeIp_->ZeroLF };
+		const auto& pNode2{ pBranch->pNodeIq_->ZeroLF };
 
 		// рассчитываем ток ветви по индикаторам
 		pBranch->Se = pBranch->Sb = cplx(pNode2.vRe - pNode1.vRe, pNode2.vIm - pNode1.vIm);
@@ -1879,7 +1874,7 @@ void CDynaNodeBase::CalculateZeroLFBranches()
 	{
 		const auto& pBranch{ pZb->pBranch };
 		pBranch->Sb = pBranch->Se = 0.0;
-		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+		if (pBranch->BranchState_ == CDynaBranch::BranchState::BRANCH_ON)
 			pBranch->Sb = pBranch->Se = pZb->pParallelTo->Sb;
 	}
 
@@ -1887,10 +1882,10 @@ void CDynaNodeBase::CalculateZeroLFBranches()
 	for (VirtualZeroBranch* pZb = pVirtualZeroBranchBegin_; pZb < pVirtualZeroBranchEnd_; pZb++)
 	{
 		const auto& pBranch{ pZb->pBranch };
-		if (pBranch->m_BranchState == CDynaBranch::BranchState::BRANCH_ON)
+		if (pBranch->BranchState_ == CDynaBranch::BranchState::BRANCH_ON)
 		{
-			pZb->pBranch->Sb -= cplx(pBranch->m_pNodeIp->V * pBranch->m_pNodeIp->V * cplx(pBranch->GIp, -pBranch->BIp));
-			pZb->pBranch->Se += cplx(pBranch->m_pNodeIq->V * pBranch->m_pNodeIq->V * cplx(pBranch->GIq, -pBranch->BIq));
+			pZb->pBranch->Sb -= cplx(pBranch->pNodeIp_->V * pBranch->pNodeIp_->V * cplx(pBranch->GIp, -pBranch->BIp));
+			pZb->pBranch->Se += cplx(pBranch->pNodeIq_->V * pBranch->pNodeIq_->V * cplx(pBranch->GIq, -pBranch->BIq));
 		}
 	}
 }
@@ -1930,7 +1925,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	// Вводим в граф ребра
 	EdgeType *pEdge = pGraphEdges.get();
 	for (VirtualZeroBranch *pZb = pVirtualZeroBranchBegin_; pZb < pVirtualZeroBranchParallelsBegin_; pZb++, pEdge++)
-		gc.AddEdge(pEdge->SetIds(pZb->pBranch->m_pNodeIp, pZb->pBranch->m_pNodeIq, pZb));
+		gc.AddEdge(pEdge->SetIds(pZb->pBranch->pNodeIp_, pZb->pBranch->pNodeIq_, pZb));
 
 	GraphType::CyclesType Cycles;
 	// Определяем циклы
@@ -2089,7 +2084,7 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 	// и инжекторы много к одному. Для них узел выступает ведущим
 	props.AddLinkFrom(DEVTYPE_POWER_INJECTOR, DLM_MULTI, DPD_SLAVE);
 
-	props.nEquationsCount = CDynaNodeBase::VARS::V_LAST;
+	props.EquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
 	props.VarMap_.insert({ CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS) });
 	props.VarMap_.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
@@ -2101,7 +2096,7 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaNodeBase::DeviceProperties(props);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
-	props.nEquationsCount = CDynaNode::VARS::V_LAST;
+	props.EquationsCount = CDynaNode::VARS::V_LAST;
 	props.VarMap_.insert({ CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU) });
 	props.VarMap_.insert({ CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS) });
 
@@ -2122,7 +2117,7 @@ void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.bVolatile = true;
 	props.eDeviceType = DEVTYPE_SYNCZONE;
-	props.nEquationsCount = CSynchroZone::VARS::V_LAST;
+	props.EquationsCount = CSynchroZone::VARS::V_LAST;
 	props.VarMap_.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CSynchroZone>>();
 }

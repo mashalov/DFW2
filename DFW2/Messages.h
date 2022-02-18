@@ -191,6 +191,8 @@ namespace DFW2
 		static const char* m_cszFailedToCreateFolder;
 		static const char* m_cszFailedToCreateCOMResultsWriter;
 		static const char* m_cszModuleLoadError;
+		static const char* m_cszDLLFunctionNotFound;
+		static const char* m_cszDLLIsNotReadyForCreateCall;
 		static const char* m_cszPathShouldBeFolder;
 		static const char* m_cszNoUserModelInFolder;
 		static const char* m_cszNoUserModelReferenceFolder;
