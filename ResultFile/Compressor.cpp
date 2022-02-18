@@ -104,7 +104,7 @@ eFCResult CCompressorBase::WriteLEB(uint64_t Value, CBitStream& Output)
 	{
 		do
 		{
-			unsigned char low{ Value & 0x7f };
+			unsigned char low( Value & 0x7f );
 			Value >>= 7;
 			if (Value != 0)
 				low |= 0x80;
