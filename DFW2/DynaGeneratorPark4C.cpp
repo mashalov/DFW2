@@ -21,20 +21,20 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::InitModel(CDynaModel* pDynaModel)
 	if (!CalculateFundamentalParameters(pDynaModel->Parameters().m_eParkParametersDetermination))
 		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status{ CDynaGeneratorDQBase::InitModel(pDynaModel) };
 
-	const double omega(1.0 + s);
-	const double Psiq = -(Vd + r * Id) / omega;		// (7)
-	const double Psid =  (Vq + r * Iq) / omega;		// (8)
-	const double ifd = (Psid - xd * Id) / lad;		// (1)
+	const double omega{ 1.0 + s };
+	const double Psiq{ -(Vd + r * Id) / omega };		// (7)
+	const double Psid{ (Vq + r * Iq) / omega };			// (8)
+	const double ifd{ (Psid - xd * Id) / lad };			// (1)
 	// масштабы ЭДС и тока ротора для АРВ не понятны 
 	// Исходные значения одинаковые, но ток идет в масштабе lad, а ЭДС - Rfd / lad;
 	ExtEqe = Eq = ifd * lad;
 	Psifd = lad * Id + (lad + lrc + lfd) * ifd;		// (2)
 	Psi1d = lad * Id + (lad + lrc) * ifd;			// (3)
 	Psi1q = Psi2q = laq * Iq;
-
-	cplx emf(GetEMF());
+	
+	const cplx emf{ GetEMF() };
 
 	Pt = (P + r * (Id * Id + Iq * Iq)) * omega;
 
@@ -49,14 +49,14 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::InitModel(CDynaModel* pDynaModel)
 		}
 	}
 
-	m_Zgen = { r , 0.5 * (lq2 + ld2) };
+	Zgen_ = { r , 0.5 * (lq2 + ld2) };
 	
 	return Status;
 }
 
 double* CDynaGeneratorPark4C::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double* p = CDynaGeneratorDQBase::GetVariablePtr(nVarIndex);
+	double* p{ CDynaGeneratorDQBase::GetVariablePtr(nVarIndex) };
 	if (!p)
 	{
 		switch (nVarIndex)
@@ -78,13 +78,10 @@ VariableIndexRefVec& CDynaGeneratorPark4C::GetVariables(VariableIndexRefVec& Chi
 
 bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method)
 {
-	bool bRes(true);
+	bool bRes{ true };
 	lad = xd - xl;	laq = xq - xl;
-
 	lrc = 0.0;
-
-	double R1d(0), l1d(0), R1q(0), R2q(0), l1q(0), l2q(0);
-
+	double R1d{ 0 }, l1d{ 0 }, R1q{ 0 }, R2q{ 0 }, l1q{ 0 }, l2q{ 0 };
 
 	switch (Method)
 	{
@@ -119,15 +116,15 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	CompareParksParameterCalculation();
 
-	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
-	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d
-	const double l1Q(laq + l1q);		// сопротивление первой демпферной обмотки q
-	const double l2Q(laq + l2q);		// сопротивление второй демпферной обмотки q
+	const double lFd{ lad + lfd };		// сопротивление обмотки возбуждения
+	const double l1D{ lad + l1d };		// сопротивление демпферной обмотки d
+	const double l1Q{ laq + l1q };		// сопротивление первой демпферной обмотки q
+	const double l2Q{ laq + l2q };		// сопротивление второй демпферной обмотки q
 
 
-	const double C(lad + lrc), A(C + lfd), B(C + l1d);
-	const double& D(l1Q), &F(l2Q);
-	double detd(C * C - A * B), detq(laq * laq - D * F);
+	const double C{ lad + lrc }, A{ C + lfd }, B{ C + l1d };
+	const double& D{ l1Q }, & F{ l2Q };
+	double detd{ C * C - A * B }, detq{ laq * laq - D * F };
 
 	if (Equal(detd, 0.0))
 	{
@@ -275,9 +272,9 @@ void CDynaGeneratorPark4C::BuildEquations(CDynaModel* pDynaModel)
 
 cplx CDynaGeneratorPark4C::GetIdIq() const
 {
-	const double omega = ZeroGuardSlip(1.0 + s);
-	const double omega2 = omega * omega;
-	const double zsq = ZeroDivGuard(1.0, r * r + omega2 * ld2 * lq2);
+	const double omega{ ZeroGuardSlip(1.0 + s) };
+	const double omega2{ omega * omega };
+	const double zsq{ ZeroDivGuard(1.0, r * r + omega2 * ld2 * lq2) };
 
 	const double id = zsq * (
 		-r * Vd
@@ -304,6 +301,12 @@ void CDynaGeneratorPark4C::BuildRightHand(CDynaModel* pDynaModel)
 {
 	const double omega(1.0 + s);
 	const double dEq = Eq + (Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id) * lad / Rfd;
+
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+	// здесь лучше перейти к другим уравнениям для Id и Iq как в Park 3C, так как эти уравнения
+	// дают 0 в якоби из-за того, что r=0. Поэтому нужно переделать на выражения из GetIdIq()
+	// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 	const double dId = -r * Id - omega * lq2 * Iq + omega * Ed_Psi1q * Psi1q + omega * Ed_Psi2q * Psi2q - Vd;
 	const double dIq = -r * Iq + omega * ld2 * Id + omega * Eq_Psifd * Psifd + omega * Eq_Psi1d * Psi1d - Vq;
 	pDynaModel->SetFunction(Id, dId);
@@ -322,7 +325,7 @@ void CDynaGeneratorPark4C::BuildDerivatives(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes{ CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel) };
 	if (CDevice::IsFunctionStatusOK(eRes) && IsStateOn())
 	{
 		CalculatePower();
@@ -333,10 +336,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::ProcessDiscontinuity(CDynaModel* pDy
 
 bool CDynaGeneratorPark4C::CalculatePower()
 {
-	double NodeV = V;
-	double DeltaGT = Delta - DeltaV;
-	double cosDeltaGT = cos(DeltaGT);
-	double sinDeltaGT = sin(DeltaGT);
+	const double NodeV{ V }, DeltaGT{ Delta - DeltaV };
+	const double cosDeltaGT{ cos(DeltaGT) }, sinDeltaGT{ sin(DeltaGT) };
 	Vd = -NodeV * sinDeltaGT;
 	Vq = NodeV * cosDeltaGT;
 	FromComplex(Id,Iq, GetIdIq());
@@ -356,11 +357,10 @@ cplx CDynaGeneratorPark4C::GetEMF()
 
 const cplx& CDynaGeneratorPark4C::CalculateEgen()
 {
-
-	double xgen = Zgen().imag();
-	cplx emf(GetEMF() * std::polar(1.0, -Delta.Value));
-	const double omega = ZeroGuardSlip(1.0 + Sv);
-	return m_Egen = cplx(emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen)) * std::polar(1.0, (double)Delta);
+	const double xgen{ Zgen().imag() };
+	const cplx emf{ GetEMF() * std::polar(1.0, -Delta.Value) };
+	const double omega{ ZeroGuardSlip(1.0 + Sv) };
+	return Egen_ = cplx(emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen)) * std::polar(1.0, (double)Delta);
 }
 
 void CDynaGeneratorPark4C::DeviceProperties(CDeviceContainerProperties& props)

@@ -67,8 +67,8 @@ void CDynaPowerInjector::FinishStep()
 	double dIre{ Ire }, dIim{ Iim };
 	// если в модели инжектора учитывается шунт Нортона,
 	// рассчитываем токи в шунте и добавляем к току инжектора
-	if (std::abs(m_Ynorton) > DFW2_EPSILON)
-		FromComplex(dIre, dIim, cplx(dIre, dIim) - cplx(dVre,dVim) * m_Ynorton);
+	if (std::abs(Ynorton_) > DFW2_EPSILON)
+		FromComplex(dIre, dIim, cplx(dIre, dIim) - cplx(dVre,dVim) * Ynorton_);
 	P = dVre * dIre + dVim * dIim;
 	Q = dVim * dIre - dVre * dIim;
 }

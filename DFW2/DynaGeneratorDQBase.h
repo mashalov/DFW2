@@ -30,7 +30,7 @@ namespace DFW2
 			C_LAST
 		};
 
-		double m_ExciterId, Eqnom, Snom, Qnom, Inom, xd;
+		double ExciterId, Eqnom, Snom, Qnom, Inom, xd;
 		double xd2, xq1, xq2, xl, Tdo1, Tqo1, Tdo2, Tqo2;
 
 		enum VARS
@@ -46,7 +46,7 @@ namespace DFW2
 		VariableIndex Vd, Vq, Id, Iq, Eq;							// составляющие напряжения и тока в осях 
 		VariableIndexExternalOptional ExtEqe;						// внешняя переменная эдс возбуждения
 
-		cplx m_Egen; // эквивалентная ЭДС генератора для учета явнополюсности в стартовом методе
+		cplx Egen_; // эквивалентная ЭДС генератора для учета явнополюсности в стартовом методе
 					 // используется всеми dq генераторами
 
 		using CDynaGeneratorMotion::CDynaGeneratorMotion;

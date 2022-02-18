@@ -8,7 +8,7 @@ namespace DFW2
 	{
 	protected:
 		bool SetUpDelta();
-		cplx m_Zgen;
+		cplx Zgen_;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
 		virtual double GetXofEqs() const{ return xd1; }

@@ -12,7 +12,7 @@ VariableIndexRefVec& CDynaGeneratorMotion::GetVariables(VariableIndexRefVec& Chi
 
 double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = CDynaGeneratorInfBusBase::GetVariablePtr(nVarIndex);
+	double* p{ CDynaGeneratorInfBusBase::GetVariablePtr(nVarIndex) };
 	if (!p)
 	{
 		switch (nVarIndex)
@@ -35,7 +35,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 			Mj *= Pnom;
 	}*/
 
-	auto Status = CDynaGeneratorInfBusBase::InitModel(pDynaModel);
+	auto Status{ CDynaGeneratorInfBusBase::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -63,9 +63,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 		Mj *= Kgen;
 	}
 
-	m_Zgen = { 0 , xd1 };
+	Zgen_ = { 0 , xd1 };
 	// шунт Нортона
-	m_Ynorton = 1.0 / m_Zgen;
+	Ynorton_ = 1.0 / Zgen_;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -111,7 +111,7 @@ void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 
 void CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 {
-	double NodeSv = Sv;
+	const double NodeSv{ Sv };
 	// в уравнение входит только составляющая тока генератора
 	// от ЭДС
 	pDynaModel->SetFunction(Ire, Ire - Eqs * sin(Delta) / xd1);

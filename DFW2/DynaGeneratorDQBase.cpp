@@ -8,21 +8,20 @@ using namespace DFW2;
 // расчет токов в осях RI из токов в DQ
 void CDynaGeneratorDQBase::IfromDQ()
 {
-	double co(cos(Delta)), si(sin(Delta));
-
+	const double co{ cos(Delta) }, si{ sin(Delta) };
 	Ire = Iq * co - Id * si;
 	Iim = Iq * si + Id * co;
 }
 
 cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 {
-	cplx YgInt{ 1.0 / Zgen() };
+	const cplx YgInt{ 1.0 / Zgen() };
 
 	if (!nIteration)
-		m_Egen = GetEMF();
+		Egen_ = GetEMF();
 	else
 	{
-		const cplx Ig{ (m_Egen - std::polar((double)V, (double)DeltaV)) * YgInt };
+		const cplx Ig{ (Egen_ - std::polar((double)V, (double)DeltaV)) * YgInt };
 		const cplx Idq{ Ig * std::polar(1.0, -Delta) };
 		FromComplex(Iq, Id, Idq);
 	}
@@ -42,10 +41,10 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 		r /= Kgen;
 	}
 
-	m_Zgen = { r , 0.5 * (xq + xd1) };
+	Zgen_ = { r , 0.5 * (xq + xd1) };
 	// В генераторах с dq преобразованием нельзя
 	// использовать шунт Нортона, поэтому он обнуляется
-	m_Ynorton = 0.0;
+	Ynorton_ = 0.0;
 
 	if (std::abs(xq) < 1E-7) xq = xd1; // place to validation !!!
 	if (xd <= 0) xd = xd1;
@@ -93,7 +92,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorMotion::ProcessDiscontinuity(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes{ CDynaGeneratorMotion::ProcessDiscontinuity(pDynaModel) };
 	if (CDevice::IsFunctionStatusOK(eRes))
 	{
 		if (IsStateOn())
@@ -117,7 +116,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::ProcessDiscontinuity(CDynaModel* pDy
 
 double* CDynaGeneratorDQBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double* p = CDynaGeneratorMotion::GetVariablePtr(nVarIndex);
+	double* p{ CDynaGeneratorMotion::GetVariablePtr(nVarIndex) };
 	if (!p)
 	{
 		switch (nVarIndex)
@@ -136,12 +135,12 @@ double* CDynaGeneratorDQBase::GetVariablePtr(ptrdiff_t nVarIndex)
 
 double* CDynaGeneratorDQBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double* p = CDynaGeneratorMotion::GetConstVariablePtr(nVarIndex);
+	double* p{ CDynaGeneratorMotion::GetConstVariablePtr(nVarIndex) };
 	if (!p)
 	{
 		switch (nVarIndex)
 		{
-			MAP_VARIABLE(m_ExciterId, C_EXCITERID)
+			MAP_VARIABLE(ExciterId, C_EXCITERID)
 			MAP_VARIABLE(Eqnom, C_EQNOM)
 			MAP_VARIABLE(Snom, C_SNOM)
 			MAP_VARIABLE(Qnom, C_QNOM)
@@ -159,8 +158,8 @@ VariableIndexRefVec& CDynaGeneratorDQBase::GetVariables(VariableIndexRefVec& Chi
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::UpdateExternalVariables(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorMotion::UpdateExternalVariables(pDynaModel);
-	CDevice* pExciter = GetSingleLink(DEVTYPE_EXCITER);
+	eDEVICEFUNCTIONSTATUS eRes{ CDynaGeneratorMotion::UpdateExternalVariables(pDynaModel) };
+	CDevice* pExciter{ GetSingleLink(DEVTYPE_EXCITER) };
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtEqe, pExciter, m_cszEqe));
 	return eRes;
 }
@@ -170,8 +169,8 @@ void CDynaGeneratorDQBase::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorMotion::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
-	Serializer->AddProperty(m_cszExciterId, m_ExciterId, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddState("Egen", m_Egen, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(m_cszExciterId, ExciterId, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddState("Egen", Egen_, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty(m_cszxd, xd, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddState(m_cszVd, Vd, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszVq, Vq, eVARUNITS::VARUNIT_KVOLTS);
@@ -212,7 +211,7 @@ void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
 
 const cplx& CDynaGeneratorDQBase::CalculateEgen()
 {
-	return m_Egen;
+	return Egen_;
 }
 
 // вводит в матрицу блок уравнении для преобразования
@@ -518,7 +517,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 	double& l2,
 	PARK_PARAMETERS_DETERMINATION_METHOD Method)
 {
-	bool bRes(true);
+	bool bRes{ true };
 
 	if (Method != PARK_PARAMETERS_DETERMINATION_METHOD::Kundur &&
 		Method != PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo &&

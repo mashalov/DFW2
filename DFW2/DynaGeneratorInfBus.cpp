@@ -23,9 +23,9 @@ bool CDynaGeneratorInfBusBase::CalculatePower()
 	P = Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
 
-	if (std::abs(m_Ynorton) > DFW2_EPSILON)
+	if (std::abs(Ynorton_) > DFW2_EPSILON)
 	{
-		FromComplex(Ire, Iim, GetEMF() * m_Ynorton);
+		FromComplex(Ire, Iim, GetEMF() * Ynorton_);
 	}
 	
 	return true;
@@ -42,7 +42,7 @@ void CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::InitModel(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = CDynaVoltageSource::InitModel(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status{ CDynaVoltageSource::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -66,9 +66,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::PreInit(CDynaModel* pDynaModel)
 	if (Kgen > 1)
 		xd1 /= Kgen;
 
-	m_Zgen = { 0 , xd1 };
+	Zgen_ = { 0 , xd1 };
 	// шунт Нортона для ШБМ
-	m_Ynorton = 1.0 / m_Zgen;
+	Ynorton_ = 1.0 / Zgen_;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -80,7 +80,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::InitModel(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorInfBusBase::InitModel(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status{ CDynaGeneratorInfBusBase::InitModel(pDynaModel) };
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		EqsCos = Eqs * cos(Delta);
@@ -92,20 +92,20 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::InitModel(CDynaModel* pDynaModel)
 
 bool CDynaGeneratorInfBusBase::SetUpDelta()
 {
-	bool bRes = true;
+	bool bRes{ true };
 	cplx S(P, Q);
 	cplx v = std::polar((double)V, (double)DeltaV);
 	_ASSERTE(abs(v) > 0.0);
 	cplx i = conj(S / v);
 	// тут еще надо учитывать сопротивление статора
-	cplx eQ = v + i * cplx(r, GetXofEqs());
+	const cplx eQ{ v + i * cplx(r, GetXofEqs()) };
 	Delta = arg(eQ);
 	Eqs = abs(eQ);
 
 	// если у генератора есть ненулевой шунт Нортона,
 	// его ток инициализируется как ток только от ЭДС
-	if (std::abs(m_Ynorton) > DFW2_EPSILON)
-		i = eQ * m_Ynorton;
+	if (std::abs(Ynorton_) > DFW2_EPSILON)
+		i = eQ * Ynorton_;
 
 	FromComplex(Ire, Iim, i);
 	return bRes;
@@ -113,13 +113,13 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 
 const cplx& CDynaGeneratorInfBusBase::Zgen() const
 {
-	return m_Zgen;
+	return Zgen_;
 }
 
 cplx CDynaGeneratorInfBusBase::Igen(ptrdiff_t nIteration)
 {
 	// функция общая для всех генераторов с шунтом Нортона
-	return GetEMF() * m_Ynorton;
+	return GetEMF() * Ynorton_;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::UpdateExternalVariables(CDynaModel *pDynaModel)

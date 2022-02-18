@@ -21,7 +21,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 	if (!CalculateFundamentalParameters(pDynaModel->Parameters().m_eParkParametersDetermination))
 		return eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status{ CDynaGeneratorDQBase::InitModel(pDynaModel) };
 
 	const double omega(1.0 + s);
 	const double Psiq = -(Vd + r * Id) / omega;		// (7)
@@ -34,7 +34,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 	Psi1d = lad * Id + (lad + lrc) * ifd;			// (3)
 	Psi1q = laq * Iq;
 
-	cplx emf(GetEMF());
+	const cplx emf{ GetEMF() };
 
 	Pt = (P + r * (Id * Id + Iq * Iq)) * omega;
 
@@ -49,14 +49,14 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 		}
 	}
 
-	m_Zgen = { r , 0.5 * (lq2 + ld2) };
+	Zgen_ = { r , 0.5 * (lq2 + ld2) };
 	
 	return Status;
 }
 
 double* CDynaGeneratorPark3C::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double* p = CDynaGeneratorDQBase::GetVariablePtr(nVarIndex);
+	double* p{ CDynaGeneratorDQBase::GetVariablePtr(nVarIndex) };
 	if (!p)
 	{
 		switch (nVarIndex)
@@ -76,11 +76,10 @@ VariableIndexRefVec& CDynaGeneratorPark3C::GetVariables(VariableIndexRefVec& Chi
 
 bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method)
 {
-	bool bRes(true);
+	bool bRes{ true };
 	lad = xd - xl;	laq = xq - xl;
 	
 	lrc = 0.0;
-
 
 	double R1d(0), R1q(0), l1d(0), l1q(0);
 		
@@ -304,7 +303,7 @@ void CDynaGeneratorPark3C::BuildDerivatives(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes{ CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel) };
 	if (CDevice::IsFunctionStatusOK(eRes) && IsStateOn())
 	{
 		CalculatePower();
@@ -315,10 +314,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::ProcessDiscontinuity(CDynaModel* pDy
 
 bool CDynaGeneratorPark3C::CalculatePower()
 {
-	double NodeV = V;
-	double DeltaGT = Delta - DeltaV;
-	double cosDeltaGT = cos(DeltaGT);
-	double sinDeltaGT = sin(DeltaGT);
+	const double NodeV{ V }, DeltaGT{ Delta - DeltaV };
+	const double cosDeltaGT{ cos(DeltaGT) }, sinDeltaGT{ sin(DeltaGT) };
 	Vd = -NodeV * sinDeltaGT;
 	Vq = NodeV * cosDeltaGT;
 	FromComplex(Id,Iq, GetIdIq());
@@ -338,11 +335,10 @@ cplx CDynaGeneratorPark3C::GetEMF()
 
 const cplx& CDynaGeneratorPark3C::CalculateEgen()
 {
-
-	double xgen = Zgen().imag();
-	cplx emf(GetEMF() * std::polar(1.0, -Delta.Value));
-	const double omega(1.0 + Sv);
-	return m_Egen = cplx(emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen)) * std::polar(1.0, (double)Delta);
+	const double xgen{ Zgen().imag() };
+	const cplx emf{ GetEMF() * std::polar(1.0, -Delta.Value) };
+	const double omega{ 1.0 + Sv };
+	return Egen_ = cplx(emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen)) * std::polar(1.0, (double)Delta);
 }
 
 void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)

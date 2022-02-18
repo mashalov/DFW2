@@ -23,7 +23,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::PreInit(CDynaModel* pDynaModel)
 		xq2 /= Kgen;
 	}
 
-	m_Zgen = { 0, 0.5 * (xd2 + xq2) };
+	Zgen_ = { 0, 0.5 * (xd2 + xq2) };
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -35,7 +35,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGenerator3C::InitModel(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = CDynaGenerator1C::InitModel(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status{ CDynaGenerator1C::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -60,8 +60,8 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::InitModel(CDynaModel* pDynaModel)
 
 void CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 {
-	double NodeV = V;
-	double DeltaGT = Delta - DeltaV;
+	double NodeV{ V };
+	double DeltaGT{ Delta - DeltaV };
 
 	const double cosDeltaGT{ cos(DeltaGT) }, sinDeltaGT{ sin(DeltaGT) };
 
@@ -126,8 +126,8 @@ void CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 		pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Tdo1);
 
 
-	double sp1 = ZeroGuardSlip(1.0 + s);
-	double sp2 = ZeroGuardSlip(1.0 + Sv);
+	double sp1{ ZeroGuardSlip(1.0 + s) };
+	double sp2{ ZeroGuardSlip(1.0 + Sv) };
 	// dS / dS
 
 	pDynaModel->SetElement(s, s, 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
@@ -169,11 +169,9 @@ void CDynaGenerator3C::BuildEquations(CDynaModel *pDynaModel)
 
 void CDynaGenerator3C::BuildRightHand(CDynaModel *pDynaModel)
 {
-	double NodeV = V;
-	double DeltaGT = Delta - DeltaV;
-
+	double NodeV{ V };
+	double DeltaGT{ Delta - DeltaV };
 	const double cosDeltaGT{ cos(DeltaGT) }, sinDeltaGT{ sin(DeltaGT) };
-
 	const double sp1{ ZeroGuardSlip(1.0 + s) }, sp2{ ZeroGuardSlip(1.0 + Sv) };
 		
 	const double Pairgap{ P + (Id * Id + Iq * Iq) * r };
@@ -241,13 +239,13 @@ VariableIndexRefVec& CDynaGenerator3C::GetVariables(VariableIndexRefVec& ChildVe
 
 double* CDynaGenerator3C::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = CDynaGenerator1C::GetConstVariablePtr(nVarIndex);
+	double* p{ CDynaGenerator1C::GetConstVariablePtr(nVarIndex) };
 	return p;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGenerator3C::ProcessDiscontinuity(CDynaModel *pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGenerator1C::ProcessDiscontinuity(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes{ CDynaGenerator1C::ProcessDiscontinuity(pDynaModel) };
 	if (CDevice::IsFunctionStatusOK(eRes) && IsStateOn())
 	{
 		Id = -zsq * (r * (Vd - Edss) + xq2 * (Eqss - Vq));
@@ -264,11 +262,10 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::UpdateExternalVariables(CDynaModel *pDyn
 bool CDynaGenerator3C::CalculatePower()
 {
 	
-	double NodeV = V;
-	double DeltaGT = Delta - DeltaV;
-
-	double cosDeltaGT = cos(DeltaGT);
-	double sinDeltaGT = sin(DeltaGT);
+	double NodeV{ V };
+	double DeltaGT{ Delta - DeltaV };
+	const double cosDeltaGT{ cos(DeltaGT) };
+	const double sinDeltaGT{ sin(DeltaGT) };
 
 	double sp1 = ZeroGuardSlip(1.0 + s);
 	double sp2 = ZeroGuardSlip(1.0 + Sv);
@@ -292,8 +289,8 @@ cplx CDynaGenerator3C::GetEMF()
 
 const cplx& CDynaGenerator3C::CalculateEgen()
 {
-	double xgen = Zgen().imag();
-	return m_Egen = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, (double)Delta);
+	const double xgen{ Zgen().imag() };
+	return Egen_ = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, (double)Delta);
 }
 
 void CDynaGenerator3C::UpdateValidator(CSerializerValidatorRules* Validator)

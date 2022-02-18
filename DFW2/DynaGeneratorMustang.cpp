@@ -35,7 +35,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::PreInit(CDynaModel* pDynaModel)
 			xd1 = (xd * (Tds - Tdo2 + Tdss) - xd2 * Tdo2) / (Tdo1 - Tdo2);
 	}
 
-	m_Zgen = { 0, 0.5 * (xd2 + xq2) };
+	Zgen_ = { 0, 0.5 * (xd2 + xq2) };
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -47,15 +47,15 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::InitModel(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status(CDynaGenerator3C::InitModel(pDynaModel));
+	eDEVICEFUNCTIONSTATUS Status{ CDynaGenerator3C::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		switch (GetState())
 		{
-			case eDEVICESTATE::DS_ON:
+		case eDEVICESTATE::DS_ON:
 		break;
-			case eDEVICESTATE::DS_OFF:
+		case eDEVICESTATE::DS_OFF:
 		break;
 		}
 	}
@@ -193,13 +193,12 @@ void CDynaGeneratorMustang::BuildDerivatives(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::ProcessDiscontinuity(CDynaModel *pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGenerator3C::ProcessDiscontinuity(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes{ CDynaGenerator3C::ProcessDiscontinuity(pDynaModel) };
 	if (IsStateOn())
 	{
-		double dVre(Vre), dVim(Vim);
-		double cosg(cos(Delta)), sing(sin(Delta));
-		double sp1 = ZeroGuardSlip(1.0 + s);
-		double sp2 = ZeroGuardSlip(1.0 + Sv);
+		const double dVre{ Vre }, dVim{ Vim };
+		const double cosg{ cos(Delta) }, sing{ sin(Delta) };
+		const double sp1{ ZeroGuardSlip(1.0 + s) }, sp2{ ZeroGuardSlip(1.0 + Sv) };
 
 		Vd = -dVre * sing + dVim * cosg;
 		Vq =  dVre * cosg + dVim * sing;
@@ -225,17 +224,17 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::UpdateExternalVariables(CDynaModel 
 
 const cplx& CDynaGeneratorMustang::CalculateEgen()
 {
-	double xgen = Zgen().imag();
-	double sp2 = ZeroGuardSlip(1.0 + Sv);
-	return m_Egen = cplx(sp2 * Eqss - Id * (xgen - xd2), sp2 * Edss + Iq * (xgen - xq2)) * std::polar(1.0, (double)Delta);
+	const double xgen{ Zgen().imag() };
+	const double sp2{ ZeroGuardSlip(1.0 + Sv) };
+	return Egen_ = cplx(sp2 * Eqss - Id * (xgen - xd2), sp2 * Edss + Iq * (xgen - xq2)) * std::polar(1.0, (double)Delta);
 }
 
 bool CDynaGeneratorMustang::CalculatePower()
 {
-	double dVre(Vre), dVim(Vim);
-	double cosg(cos(Delta)), sing(sin(Delta));
-	double sp1 = ZeroGuardSlip(1.0 + s);
-	double sp2 = ZeroGuardSlip(1.0 + Sv);
+	const double dVre{ Vre }, dVim{ Vim };
+	const double cosg{ cos(Delta) }, sing{ sin(Delta) };
+	const double sp1{ ZeroGuardSlip(1.0 + s) };
+	const double sp2{ ZeroGuardSlip(1.0 + Sv) };
 
 	Vd = -dVre * sing + dVim * cosg;
 	Vq =  dVre * cosg + dVim * sing;

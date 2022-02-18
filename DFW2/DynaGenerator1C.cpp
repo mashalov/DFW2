@@ -8,7 +8,7 @@ using namespace DFW2;
 
 eDEVICEFUNCTIONSTATUS CDynaGenerator1C::InitModel(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorDQBase::InitModel(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status{ CDynaGeneratorDQBase::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -51,7 +51,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator1C::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGenerator1C::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel);
+	eDEVICEFUNCTIONSTATUS eRes{ CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel) };
 	if (CDevice::IsFunctionStatusOK(eRes))
 	{
 		if (IsStateOn())
@@ -147,8 +147,8 @@ void CDynaGenerator1C::BuildRightHand(CDynaModel *pDynaModel)
 	pDynaModel->SetFunction(Id, Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
 	pDynaModel->SetFunction(Iq, Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
 	pDynaModel->SetFunction(Eq, Eq - Eqs + Id * (xd - xd1));
-	double eEqs = (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1;
-	double eS = (Pt / sp1 - Kdemp  * s - Pairgap / sp2) / Mj;
+	const double eEqs{ (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1 };
+	const  double eS{ (Pt / sp1 - Kdemp * s - Pairgap / sp2) / Mj };
 	pDynaModel->SetFunctionDiff(s, eS);
 	pDynaModel->SetFunctionDiff(Eqs, eEqs);
 	pDynaModel->SetFunctionDiff(Delta, pDynaModel->GetOmega0() * s);
@@ -189,7 +189,7 @@ void CDynaGenerator1C::BuildDerivatives(CDynaModel *pDynaModel)
 
 double* CDynaGenerator1C::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p = CDynaGeneratorDQBase::GetVariablePtr(nVarIndex);
+	double* p{ CDynaGeneratorDQBase::GetVariablePtr(nVarIndex) };
 	if (!p)
 	{
 		switch (nVarIndex)
@@ -202,19 +202,19 @@ double* CDynaGenerator1C::GetVariablePtr(ptrdiff_t nVarIndex)
 
 const cplx& CDynaGenerator1C::CalculateEgen()
 {
-	double xgen = Zgen().imag();
-	return m_Egen = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, (double)Delta);
+	const double xgen{ Zgen().imag() };
+	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, (double)Delta);
 }
 
 bool CDynaGenerator1C::CalculatePower()
 {
 
-	double NodeV = V;
-	double DeltaGT = Delta - DeltaV;
-	double cosDeltaGT = cos(DeltaGT);
-	double sinDeltaGT = sin(DeltaGT);
-	double sp1 = ZeroGuardSlip(1.0 + s);
-	double sp2 = ZeroGuardSlip(1.0 + Sv);
+	double NodeV{ V };
+	double DeltaGT{ Delta - DeltaV };
+	double cosDeltaGT{ cos(DeltaGT) };
+	double sinDeltaGT{ sin(DeltaGT) };
+	double sp1{ ZeroGuardSlip(1.0 + s) };
+	double sp2{ ZeroGuardSlip(1.0 + Sv) };
 
 	if (!IsStateOn())
 	{
@@ -256,4 +256,3 @@ void CDynaGenerator1C::UpdateSerializer(CSerializerBase* Serializer)
 	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState("zsq", zsq, eVARUNITS::VARUNIT_PU);
 }
-
