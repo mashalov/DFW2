@@ -72,7 +72,7 @@ void CDynaModel::WriteResultsHeader()
 				continue;
 
 			long nVarIndex(0);
-			for (const auto& variable : container->ContainerProps().m_VarMap)
+			for (const auto& variable : container->ContainerProps().VarMap_)
 			{
 				if (variable.second.Output_)
 				{
@@ -84,7 +84,7 @@ void CDynaModel::WriteResultsHeader()
 				}
 			}
 
-			for (const auto& variable : container->ContainerProps().m_ConstVarMap)
+			for (const auto& variable : container->ContainerProps().ConstVarMap_)
 			{
 				if (variable.second.Output_)
 				{

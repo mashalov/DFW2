@@ -47,13 +47,13 @@ void CResultsWriterABI::AddDeviceType(const CDeviceContainer& Container)
 
 	pDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, static_cast<long>(Container.CountNonPermanentOff()));
 
-	for (const auto& var : Props.m_VarMap)
+	for (const auto& var : Props.VarMap_)
 	{
 		if (var.second.Output_)
 			pDeviceType->AddDeviceTypeVariable(var.first, var.second.Units_, var.second.Multiplier_);
 	}
 
-	for (const auto& var : Props.m_ConstVarMap)
+	for (const auto& var : Props.ConstVarMap_)
 	{
 		if (var.second.Output_)
 			pDeviceType->AddDeviceTypeVariable(var.first, var.second.Units_, var.second.Multiplier_);

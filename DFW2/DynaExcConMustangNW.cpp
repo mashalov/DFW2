@@ -275,15 +275,15 @@ void CDynaExcConMustangNonWindup::DeviceProperties(CDeviceContainerProperties& p
 	props.nEquationsCount = CDynaExcConMustangNonWindup::VARS::V_LAST;
 
 
-	props.m_VarMap.insert(std::make_pair("Uf", CVarIndex(CDynaExcConMustangNonWindup::V_UF, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("Usum", CVarIndex(CDynaExcConMustangNonWindup::V_USUM, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("Svt", CVarIndex(CDynaExcConMustangNonWindup::V_SVT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dVdt", CVarIndex(CDynaExcConMustangNonWindup::V_DVDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dEqdt", CVarIndex(CDynaExcConMustangNonWindup::V_EQDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dSdt", CVarIndex(CDynaExcConMustangNonWindup::V_SDT, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dVdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_DVDT + 1, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dEqdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_EQDT + 1, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("dSdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_SDT + 1, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("Uf", CVarIndex(CDynaExcConMustangNonWindup::V_UF, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("Usum", CVarIndex(CDynaExcConMustangNonWindup::V_USUM, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("Svt", CVarIndex(CDynaExcConMustangNonWindup::V_SVT, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("dVdt", CVarIndex(CDynaExcConMustangNonWindup::V_DVDT, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("dEqdt", CVarIndex(CDynaExcConMustangNonWindup::V_EQDT, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("dSdt", CVarIndex(CDynaExcConMustangNonWindup::V_SDT, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("dVdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_DVDT + 1, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("dEqdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_EQDT + 1, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("dSdtLag", CVarIndex(CDynaExcConMustangNonWindup::V_SDT + 1, VARUNIT_PU)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExcConMustangNonWindup>>();
 }

@@ -62,10 +62,10 @@ void CDynaNodeMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_NODEMEASURE);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNodeMeasure, CDeviceContainerProperties::m_cszSysNameNodeMeasure);
 	props.nEquationsCount = CDynaNodeMeasure::VARS::V_LAST;
-	props.m_VarMap.insert({ m_cszPload,  CVarIndex(CDynaNodeMeasure::V_PLOAD, VARUNIT_MW) });
-	props.m_VarMap.insert({ m_cszQload,  CVarIndex(CDynaNodeMeasure::V_QLOAD, VARUNIT_MVAR) });
+	props.VarMap_.insert({ m_cszPload,  CVarIndex(CDynaNodeMeasure::V_PLOAD, VARUNIT_MW) });
+	props.VarMap_.insert({ m_cszQload,  CVarIndex(CDynaNodeMeasure::V_QLOAD, VARUNIT_MVAR) });
 
-	props.m_VarAliasMap.insert({ { "pn", m_cszPload }, { "qn", m_cszQload } });
+	props.VarAliasMap_.insert({ { "pn", m_cszPload }, { "qn", m_cszQload } });
 
 	// измерения создаются индивидуально с узлом в конструкторе
 	//props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();

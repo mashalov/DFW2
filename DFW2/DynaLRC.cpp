@@ -96,7 +96,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 	}
 
 	// проходим по десериализованным СХН
-	for (auto&& dev : m_DevVec)
+	for (auto&& dev : DevVec)
 	{
 		auto lrc{ static_cast<CDynaLRC*>(dev) };
 

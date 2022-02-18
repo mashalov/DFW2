@@ -37,7 +37,7 @@ void CLoadFlow::AllocateSupernodes()
 	// результаты по ним нужно обновлять
 	std::list<CDynaNodeBase*> SlackBuses;
 
-	for (auto&& it : pNodes->m_DevVec)
+	for (auto&& it : pNodes->DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 		// обрабатываем только включенные узлы и узлы без родительского суперузла
@@ -1172,7 +1172,7 @@ bool CLoadFlow::Run()
 
 		pNodes->SwitchLRCs(true);
 
-		for (auto&& it : pNodes->m_DevVec)
+		for (auto&& it : pNodes->DevVec)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 
@@ -1279,7 +1279,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 	if (!pNodes->CheckLink(1))
 		return;	// если генераторов нет - выходим. В узлах остаются инъеции pg/qg;
 
-	for (auto&& it : pNodes->m_DevVec)
+	for (auto&& it : pNodes->DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 
@@ -1344,7 +1344,7 @@ void CLoadFlow::UpdateQToGenerators()
 	if (!pNodes->CheckLink(1))
 		return;	// если генераторов нет - выходим
 
-	for (auto&& it : pNodes->m_DevVec)
+	for (auto&& it : pNodes->DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 
@@ -1470,7 +1470,7 @@ void CLoadFlow::DumpNodes()
 	if (dump.is_open())
 	{
 		dump << "N;V;D;Pn;Qn;Pnr;Qnr;Pg;Qg;Qgr;Type;Qmin;Qmax;Vref;VR;DeltaR;QgR;QnR" << std::endl;
-		for (auto&& it : pNodes->m_DevVec)
+		for (auto&& it : pNodes->DevVec)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 #ifdef _DEBUG
@@ -1863,7 +1863,7 @@ void CLoadFlow::RestoreSuperNodes()
 	for (_MatrixInfo* pMatrixInfo = pMatrixInfo_.get(); pMatrixInfo < pMatrixInfoSlackEnd; pMatrixInfo++)
 		pMatrixInfo->Restore();
 
-	for (auto&& it : pNodes->m_DevVec)
+	for (auto&& it : pNodes->DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 		if (!pNode->pSuperNodeParent)
@@ -2136,7 +2136,7 @@ bool CLoadFlow::CheckNodeBalances()
 {
 	bool bRes(true);
 	cplx y;
-	for (auto&& dev : pNodes->m_DevVec)
+	for (auto&& dev : pNodes->DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(dev) };
 		// проводимость узла собираем из шунта узла и реакторов
@@ -2154,7 +2154,7 @@ bool CLoadFlow::CheckNodeBalances()
 		pBranch->m_pNodeIq->dLRCGen += pBranch->Se;
 	}
 
-	for (const auto& dev : pNodes->m_DevVec)
+	for (const auto& dev : pNodes->DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(dev) };
 		if (pNode->GetState() == eDEVICESTATE::DS_OFF) continue;

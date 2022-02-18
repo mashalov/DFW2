@@ -7,10 +7,10 @@ CCustomDevice::CCustomDevice()
 {
 	CDeviceContainerPropertiesBase props;
 	GetDeviceProperties(props);
-	m_Consts.resize(props.m_ConstVarMap.size());
+	m_Consts.resize(props.ConstVarMap_.size());
 	m_Variables.resize(props.nEquationsCount);
 	m_StateVariablesRefs = VariableIndexRefVec(m_Variables.begin(), m_Variables.end());
-	m_ExtVariables.resize(props.m_ExtVarMap.size());
+	m_ExtVariables.resize(props.ExtVarMap_.size());
 	m_ExternalVariablesRefs = VariableIndexExternalRefVec(m_ExtVariables.begin(), m_ExtVariables.end());
 	m_Primitives =
 	{
@@ -236,27 +236,27 @@ void CCustomDevice::GetDeviceProperties(CDeviceContainerPropertiesBase& DevicePr
 	DeviceProps.SetType(DEVTYPE_AUTOMATIC);
 	DeviceProps.SetClassName("Automatic & scenario", "Automatic");
 	DeviceProps.AddLinkFrom(DEVTYPE_MODEL, DLM_SINGLE, DPD_MASTER);
-	DeviceProps.m_VarMap.insert(std::make_pair("V0", CVarIndex(0, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V1", CVarIndex(1, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V2", CVarIndex(2, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V3", CVarIndex(3, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V4", CVarIndex(4, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V5", CVarIndex(5, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V6", CVarIndex(6, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V7", CVarIndex(7, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V8", CVarIndex(8, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("V9", CVarIndex(9, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("A3", CVarIndex(10, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("A4", CVarIndex(11, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("A5", CVarIndex(12, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("A6", CVarIndex(13, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("A7", CVarIndex(14, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("A8", CVarIndex(15, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("LT1", CVarIndex(16, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("LT2", CVarIndex(17, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("LT3", CVarIndex(18, VARUNIT_NOTSET)));
-	DeviceProps.m_VarMap.insert(std::make_pair("LT4", CVarIndex(19, VARUNIT_NOTSET)));
-	DeviceProps.nEquationsCount = DeviceProps.m_VarMap.size();
+	DeviceProps.VarMap_.insert(std::make_pair("V0", CVarIndex(0, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V1", CVarIndex(1, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V2", CVarIndex(2, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V3", CVarIndex(3, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V4", CVarIndex(4, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V5", CVarIndex(5, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V6", CVarIndex(6, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V7", CVarIndex(7, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V8", CVarIndex(8, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("V9", CVarIndex(9, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("A3", CVarIndex(10, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("A4", CVarIndex(11, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("A5", CVarIndex(12, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("A6", CVarIndex(13, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("A7", CVarIndex(14, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("A8", CVarIndex(15, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("LT1", CVarIndex(16, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("LT2", CVarIndex(17, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("LT3", CVarIndex(18, VARUNIT_NOTSET)));
+	DeviceProps.VarMap_.insert(std::make_pair("LT4", CVarIndex(19, VARUNIT_NOTSET)));
+	DeviceProps.nEquationsCount = DeviceProps.VarMap_.size();
 
 
 

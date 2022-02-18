@@ -577,7 +577,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDyn
 	eDEVICEFUNCTIONSTATUS eRes(eDEVICEFUNCTIONSTATUS::DFS_OK);
 	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
 	const VariableIndexExternalRefVec& ExtVec = m_pDevice->GetExternalVariables();
-	for (const auto& ext : pContainer_->ContainerProps().m_ExtVarMap)
+	for (const auto& ext : pContainer_->ContainerProps().ExtVarMap_)
 	{
 		CDevice::CheckIndex(ExtVec, ext.second.Index_, "CCustomDeviceCPP::UpdateExternalVariables");
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVec[ext.second.Index_], this, ext.first.c_str(), ext.second.DeviceToSearch_));

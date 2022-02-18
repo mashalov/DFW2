@@ -369,10 +369,10 @@ void CDynaGeneratorPark4C::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_GEN_PARK4C);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark4C, CDeviceContainerProperties::m_cszSysNameGeneratorPark4C);
 	props.nEquationsCount = CDynaGeneratorPark4C::VARS::V_LAST;
-	props.m_VarMap.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
-	props.m_VarMap.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
-	props.m_VarMap.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));
-	props.m_VarMap.insert(std::make_pair(m_cszPsi2q, CVarIndex(V_PSI_2Q, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(m_cszPsi2q, CVarIndex(V_PSI_2Q, eVARUNITS::VARUNIT_WB)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorPark4C>>();
 }
 

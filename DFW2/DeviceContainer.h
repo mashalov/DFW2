@@ -19,33 +19,33 @@ namespace DFW2
 	class CMultiLink
 	{
 	protected:
-		inline CLinkPtrCount* GetLinkInternal(ptrdiff_t nDeviceInContainerIndex)
+		inline CLinkPtrCount* GetLinkInternal(ptrdiff_t DeviceInContainerIndex)
 		{
-			if (nDeviceInContainerIndex >= static_cast<ptrdiff_t>(m_LinkInfo.size()))
+			if (DeviceInContainerIndex >= static_cast<ptrdiff_t>(LinkInfo_.size()))
 				throw dfw2error("CLinkPtrCount::GetLink - Device index out of range");
-			return &m_LinkInfo[nDeviceInContainerIndex];
+			return &LinkInfo_[DeviceInContainerIndex];
 		}
 	public:
-		DevicesPtrs  m_ppPointers;											// вектор указателей на связанные устройства
+		DevicesPtrs  ppPointers_;											// вектор указателей на связанные устройства
 		CDeviceContainer *pContainer_ = nullptr;							// внешний контейнер, с устройствами которого строится связь
-		std::vector<CLinkPtrCount> m_LinkInfo;								// вектор ссылок с количеством связей
-		size_t   m_nCount = 0;												// количество возможных связей 
-		CMultiLink(CDeviceContainer* pContainer, size_t nCount) : pContainer_(pContainer)
+		std::vector<CLinkPtrCount> LinkInfo_;								// вектор ссылок с количеством связей
+		size_t   Count_ = 0;												// количество возможных связей 
+		CMultiLink(CDeviceContainer* pContainer, size_t Count) : pContainer_(pContainer)
 		{
 			// память выделим под известное количество связей в AllocateLinks()
-			m_LinkInfo.resize(nCount);
+			LinkInfo_.resize(Count);
 		}
 		// конструктор копирования нет. Для создания CMultiLink в контейнере нужно использовать emplace
 		void Join(CMultiLink& pLink);
 
-		inline const CLinkPtrCount* const GetLink(ptrdiff_t nDeviceInContainerIndex)
+		inline const CLinkPtrCount* const GetLink(ptrdiff_t DeviceInContainerIndex)
 		{
-			return GetLinkInternal(nDeviceInContainerIndex);
+			return GetLinkInternal(DeviceInContainerIndex);
 		}
 
-		inline CLinkPtrCount* const GetAddLink(ptrdiff_t nDeviceInContainerIndex)
+		inline CLinkPtrCount* const GetAddLink(ptrdiff_t DeviceInContainerIndex)
 		{
-			return GetLinkInternal(nDeviceInContainerIndex);
+			return GetLinkInternal(DeviceInContainerIndex);
 		}
 	};
 
@@ -68,28 +68,28 @@ namespace DFW2
 			BySolid,			// вектор устройств в CDeviceProperties
 			ByPieces			// указатели на отдельные устройства
 		}
-		m_MemoryManagement = ContainerMemoryManagementType::Unspecified;
+		MemoryManagement_ = ContainerMemoryManagementType::Unspecified;
 
 		void SetMemoryManagement(ContainerMemoryManagementType ManagementType);
 
-		eDEVICEFUNCTIONSTATUS m_eDeviceFunctionStatus = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
+		eDEVICEFUNCTIONSTATUS eDeviceFunctionStatus_ = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 
-		DEVICEVECTOR m_DevVec;												// вектор указателей на экземпляры хранимых в контейнере устройств
-		DEVICEVECTOR m_DevInMatrix;											// вектор указателей на экземпляры устройств, у которых есть уравнения
-		DEVSEARCHSET m_DevSet;												// сет для поиска устройств по идентификаторам
+		DEVICEVECTOR DevVec;												// вектор указателей на экземпляры хранимых в контейнере устройств
+		DEVICEVECTOR DevInMatrix;											// вектор указателей на экземпляры устройств, у которых есть уравнения
+		DEVSEARCHSET DevSet;												// сет для поиска устройств по идентификаторам
 		bool SetUpSearch();													// подготовка к поиску устройства в сете по идентификаторам
-		DevicesPtrs m_ppSingleLinks;										// вектор указателей на устройства с одиночными ссылками
+		DevicesPtrs ppSingleLinks;											// вектор указателей на устройства с одиночными ссылками
 		void CleanUp();														// очистка контейнера
-		CDynaModel *m_pDynaModel;											// через указатель на модель контейнеры и устройства обмениваются общими данными
+		CDynaModel *pDynaModel_;											// через указатель на модель контейнеры и устройства обмениваются общими данными
 		void PrepareSingleLinks();
-		CDevice *m_pClosestZeroCrossingDevice = nullptr;
+		CDevice *pClosestZeroCrossingDevice_ = nullptr;
 
 		// привязать созданные устройства к контейнеру
 		void SettleDevicesFromSolid()
 		{
-			ptrdiff_t nIndex(0);
-			for (auto&& it : m_DevVec)
-				SettleDevice(it, nIndex++);
+			ptrdiff_t Index{ 0 };
+			for (auto&& it : DevVec)
+				SettleDevice(it, Index++);
 		}
 		// описание статических атрибутов контейнера: тип и связи с другими устройствами
 		CDeviceContainerProperties ContainerProps_;
@@ -110,8 +110,8 @@ namespace DFW2
 		CDeviceContainer(CDynaModel *pDynaModel);
 		virtual ~CDeviceContainer();
 
-		DevicesPtrs m_ppDevicesAux;
-		size_t   m_nVisitedCount = 0;
+		DevicesPtrs ppDevicesAux_;
+		size_t   VisitedCount_ = 0;
 
 		template<class T>
 		T* CreateDevices(size_t nCount)
@@ -122,10 +122,10 @@ namespace DFW2
 			// создаем фабрику устройств заданного типа
 			auto factory = std::make_unique<CDeviceFactory<T>>();
 			// создаем вектор устройств
-			T* ptr = factory->CreateRet(nCount, m_DevVec);
+			T* ptr = factory->CreateRet(nCount, DevVec);
 			// оставляем фабрику устройств в свойствах устройства (??? может оставлять старую ?)
 			ContainerProps_.DeviceFactory = std::move(factory);
-			// указатели на отдельные устройства теперь в m_DevVec, а
+			// указатели на отдельные устройства теперь в DevVec, а
 			// вектор устройств остался в фабрике под ее контролем
 			// привязываем устройства к контейнеру
 			SettleDevicesFromSolid();
@@ -141,7 +141,7 @@ namespace DFW2
 			if (!ContainerProps_.DeviceFactory)
 				throw dfw2error(fmt::format("CDynaNodeContainer::CreateDevice - DeviceFactory not defined for \"{}\"", GetSystemClassName()));
 			// создаем устройства с помощью фабрики
-			ContainerProps_.DeviceFactory->Create(nCount, m_DevVec);
+			ContainerProps_.DeviceFactory->Create(nCount, DevVec);
 			// и привязываем их к контейнеру
 			SettleDevicesFromSolid();
 		}
@@ -174,12 +174,12 @@ namespace DFW2
 		bool VariableOutputEnable(std::string_view VarName, bool OutputEnable);
 
 		// диапазон карты переменных состояния
-		inline VARINDEXMAP::const_iterator VariablesBegin() { return ContainerProps_.m_VarMap.begin(); }
-		inline VARINDEXMAP::const_iterator VariablesEnd() { return ContainerProps_.m_VarMap.end(); }
+		inline VARINDEXMAP::const_iterator VariablesBegin() { return ContainerProps_.VarMap_.begin(); }
+		inline VARINDEXMAP::const_iterator VariablesEnd() { return ContainerProps_.VarMap_.end(); }
 
 		// диапазон карты констант
-		inline CONSTVARINDEXMAP::const_iterator ConstVariablesBegin() { return ContainerProps_.m_ConstVarMap.begin(); }
-		inline CONSTVARINDEXMAP::const_iterator ConstVariablesEnd() { return ContainerProps_.m_ConstVarMap.end(); }
+		inline CONSTVARINDEXMAP::const_iterator ConstVariablesBegin() { return ContainerProps_.ConstVarMap_.begin(); }
+		inline CONSTVARINDEXMAP::const_iterator ConstVariablesEnd() { return ContainerProps_.ConstVarMap_.end(); }
 
 		
 		ptrdiff_t GetVariableIndex(std::string_view VarName)	  const;	// получить индекс переменной состояния по имени
@@ -193,32 +193,30 @@ namespace DFW2
 		void RemoveDeviceByIndex(ptrdiff_t nIndex); 
 		size_t Count() const;												// получить количество устройств в контейнере
 		size_t CountNonPermanentOff() const;								// получить количество устройств в конейнере без признака PermanentOff
-		inline DEVICEVECTOR::iterator begin() { return m_DevVec.begin(); }			// диапазон вектора устройств
-		inline DEVICEVECTOR::iterator end() { return m_DevVec.end(); }
+		inline DEVICEVECTOR::iterator begin() { return DevVec.begin(); }			// диапазон вектора устройств
+		inline DEVICEVECTOR::iterator end() { return DevVec.end(); }
 
-		inline const DEVICEVECTOR::const_iterator begin() const { return m_DevVec.begin(); }			// const-диапазон вектора устройств
-		inline const DEVICEVECTOR::const_iterator end() const   { return m_DevVec.end(); }
+		inline const DEVICEVECTOR::const_iterator begin() const { return DevVec.begin(); }			// const-диапазон вектора устройств
+		inline const DEVICEVECTOR::const_iterator end() const   { return DevVec.end(); }
 
 		void Log(DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);
 		void DebugLog(const std::string_view Message);
 
-		LINKSVEC m_Links;													// вектор возможных связей. Элемент вектора - связь с определенным типом устройств
+		LINKSVEC Links_;													// вектор возможных связей. Элемент вектора - связь с определенным типом устройств
 		bool IsKindOfType(eDFW2DEVICETYPE eType);
 		bool CreateLink(CDeviceContainer* pLinkContainer);
 		ptrdiff_t GetLinkIndex(CDeviceContainer* pLinkContainer);			// получить индекс ссылок по внешнему контейнеру
 		ptrdiff_t GetLinkIndex(eDFW2DEVICETYPE eDeviceType);				// получить индекс ссылок по типу внешнего устройства
-		void IncrementLinkCounter(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
-		void IncrementLinkCounter(CMultiLink& pLink, ptrdiff_t nDeviceIndex);
-		void AllocateLinks(ptrdiff_t nLinkIndex);
+		void IncrementLinkCounter(ptrdiff_t LinkIndex, ptrdiff_t DeviceIndex);
+		void IncrementLinkCounter(CMultiLink& pLink, ptrdiff_t DeviceIndex);
+		void AllocateLinks(ptrdiff_t LinkIndex);
 		void AllocateLinks(CMultiLink& pLink);
-		void AddLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, CDevice* pDevice);
-		void AddLink(CMultiLink& pLink, ptrdiff_t nDeviceIndex, CDevice* pDevice);
-		void RestoreLinks(ptrdiff_t nLinkIndex);
-		void RestoreLinks(CMultiLink& pLink);
-		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex);
-		CMultiLink& GetCheckLink(ptrdiff_t nLinkIndex, ptrdiff_t nDeviceIndex, LINKSVEC& LinksVec);
-		bool CheckLink(ptrdiff_t nLinkIndex);
-		bool CheckLink(ptrdiff_t nLinkIndex, LINKSVEC& LinksVec);
+		void AddLink(ptrdiff_t LinkIndex, ptrdiff_t DeviceIndex, CDevice* pDevice);
+		void AddLink(CMultiLink& pLink, ptrdiff_t DeviceIndex, CDevice* pDevice);
+		CMultiLink& GetCheckLink(ptrdiff_t LinkIndex, ptrdiff_t DeviceIndex);
+		CMultiLink& GetCheckLink(ptrdiff_t LinkIndex, ptrdiff_t DeviceIndex, LINKSVEC& LinksVec);
+		bool CheckLink(ptrdiff_t LinkIndex);
+		bool CheckLink(ptrdiff_t LinkIndex, LINKSVEC& LinksVec);
 		void InitNordsieck(CDynaModel *pDynaModel);
 		void Predict();
   		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби

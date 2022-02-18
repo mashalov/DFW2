@@ -5,11 +5,11 @@ using namespace DFW2;
 
 const char* CDeviceContainerProperties::GetVerbalClassName() const
 {
-	return m_strClassName.c_str();
+	return ClassName_.c_str();
 }
 const char* CDeviceContainerProperties::GetSystemClassName() const
 {
-	return m_strClassSysName.c_str();
+	return ClassSysName_.c_str();
 }
 
 eDFW2DEVICETYPE CDeviceContainerProperties::GetType() const

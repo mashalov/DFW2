@@ -33,7 +33,6 @@
 
 namespace DFW2
 {
-
 	class CDynaModel
 	{
 	public:

@@ -750,7 +750,7 @@ CDynaNodeContainer::~CDynaNodeContainer()
 
 void CDynaNodeContainer::CalcAdmittances(bool bFixNegativeZs)
 {
-	for (auto&& it : m_DevVec)
+	for (auto&& it : DevVec)
 		static_cast<CDynaNodeBase*>(it)->CalcAdmittances(bFixNegativeZs);
 }
 
@@ -758,11 +758,11 @@ void CDynaNodeContainer::CalcAdmittances(bool bFixNegativeZs)
 void CDynaNodeContainer::CalculateShuntParts()
 {
 	// сначала считаем индивидуально для каждого узла
-	for (auto&& it : m_DevVec)
+	for (auto&& it : DevVec)
 		static_cast<CDynaNodeBase*>(it)->CalculateShuntParts();
 
 	// затем суммируем шунтовые нагрузки в суперузлы
-	for (auto&& node : m_DevVec)
+	for (auto&& node : DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 		// собираем проводимость
@@ -991,8 +991,8 @@ bool CDynaNodeContainer::LULF()
 	bool bRes{ true };
 
 	KLUWrapper<std::complex<double>> klu;
-	size_t nNodeCount{ m_DevInMatrix.size() };
-	size_t nBranchesCount{ m_pDynaModel->Branches.Count() };
+	size_t nNodeCount{ DevInMatrix.size() };
+	size_t nBranchesCount{ pDynaModel_->Branches.Count() };
 	// оценка количества ненулевых элементов
 	size_t nNzCount{ nNodeCount + 2 * nBranchesCount };
 
@@ -1016,7 +1016,7 @@ bool CDynaNodeContainer::LULF()
 
 	fnode << ";";
 
-	for (auto&& it : m_DevInMatrix)
+	for (auto&& it : DevInMatrix)
 	{
 		_ASSERTE(pAx < Ax + nNzCount * 2);
 		_ASSERTE(pAi < Ai + nNzCount);
@@ -1064,7 +1064,7 @@ bool CDynaNodeContainer::LULF()
 		fgen  << std::endl << nIteration << ";";
 
 		// проходим по узлам вне зависимости от их состояния, параллельно идем по диагонали матрицы
-		for (auto&& it : m_DevInMatrix)
+		for (auto&& it : DevInMatrix)
 		{
 			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 			_ASSERTE(pB < B + nNodeCount * 2);
@@ -1158,9 +1158,9 @@ bool CDynaNodeContainer::LULF()
 		// KLU может делать повторную факторизацию матрицы с начальным пивотингом
 		// это быстро, но при изменении пивотов может вызывать численную неустойчивость.
 		// У нас есть два варианта факторизации/рефакторизации на итерации LULF
-		double *pB = B;
+		double* pB{ B };
 
-		for (auto&& it: m_DevInMatrix)
+		for (auto&& it: DevInMatrix)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
 			// напряжение после решения системы в векторе задающий токов
@@ -1181,7 +1181,7 @@ bool CDynaNodeContainer::LULF()
 
 		DumpIterationControl(DFW2MessageStatus::DFW2LOG_DEBUG);
 
-		if (std::abs(IterationControl_.MaxV.GetDiff()) < m_pDynaModel->GetRtolLULF())
+		if (std::abs(IterationControl_.MaxV.GetDiff()) < pDynaModel_->GetRtolLULF())
 		{
 			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLULFConverged, IterationControl_.MaxV.GetDiff(), nIteration));
 			break;
@@ -1203,7 +1203,7 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 	if (bSwitchToDynamicLRC != DynamicLRC)
 	{
 		DynamicLRC = bSwitchToDynamicLRC;
-		for (auto&& node : m_DevVec)
+		for (auto&& node : DevVec)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(node) };
 			// меняем местами СХН УР и динамики
@@ -2091,10 +2091,10 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.nEquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
-	props.m_VarMap.insert({ CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS) });
-	props.m_VarMap.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
-	props.m_VarMap.insert({ CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS) });
-	props.m_VarAliasMap.insert({ "vras", { CDynaNodeBase::m_cszV }});
+	props.VarMap_.insert({ CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS) });
+	props.VarMap_.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
+	props.VarMap_.insert({ CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS) });
+	props.VarAliasMap_.insert({ "vras", { CDynaNodeBase::m_cszV }});
 }
 
 void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
@@ -2102,8 +2102,8 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	CDynaNodeBase::DeviceProperties(props);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
 	props.nEquationsCount = CDynaNode::VARS::V_LAST;
-	props.m_VarMap.insert({ CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU) });
-	props.m_VarMap.insert({ CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS) });
+	props.VarMap_.insert({ CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU) });
+	props.VarMap_.insert({ CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS) });
 
 	/*
 	props.m_VarMap.insert(make_pair("Sip", CVarIndex(V_SIP, VARUNIT_PU)));
@@ -2113,9 +2113,9 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaNode>>();
 
-	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasNode);
-	props.m_ConstVarMap.insert({ CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
-	props.m_ConstVarMap.insert({ CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasNode);
+	props.ConstVarMap_.insert({ CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
 }
 
 void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
@@ -2123,7 +2123,7 @@ void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 	props.bVolatile = true;
 	props.eDeviceType = DEVTYPE_SYNCZONE;
 	props.nEquationsCount = CSynchroZone::VARS::V_LAST;
-	props.m_VarMap.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CSynchroZone>>();
 }
 
@@ -2239,7 +2239,7 @@ void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
 {
 	static_cast<CDynaLRCContainer*>(&containerLRC)->CreateFromSerialized();
 
-	for (auto&& dev : m_DevVec)
+	for (auto&& dev : DevVec)
 	{
 		const auto& pNode = static_cast<CDynaNode*>(dev);
 		if (pNode->LRCLoadFlowId > 0)

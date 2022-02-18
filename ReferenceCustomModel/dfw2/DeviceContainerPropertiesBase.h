@@ -12,12 +12,12 @@ namespace DFW2
 		// добавить тип устройства, или тип, от которого устройство наследовано
 		void SetType(eDFW2DEVICETYPE eDevType)
 		{
-			m_TypeInfoSet.insert(eDeviceType = eDevType);
+			TypeInfoSet_.insert(eDeviceType = eDevType);
 		}
 		void SetClassName(std::string_view VerbalName, std::string_view SystemName)
 		{
-			m_strClassName = VerbalName;
-			m_strClassSysName = SystemName;
+			ClassName_ = VerbalName;
+			ClassSysName_ = SystemName;
 		}
 
 		// добавить возможность связи от устройства
@@ -28,9 +28,9 @@ namespace DFW2
 		// eDFW2DEVICEDEPENDENCY должны быть комплиментарны - Master - Slave.
 		void AddLinkTo(eDFW2DEVICETYPE eDevType, eDFW2DEVICELINKMODE eLinkMode, eDFW2DEVICEDEPENDENCY Dependency, std::string_view strIdField)
 		{
-			if (m_LinksTo.find(eDevType) == m_LinksTo.end())
+			if (LinksTo_.find(eDevType) == LinksTo_.end())
 			{
-				m_LinksTo.insert(std::make_pair(eDevType, LinkDirectionTo(eLinkMode, Dependency, m_LinksTo.size() + m_LinksFrom.size(), strIdField)));
+				LinksTo_.insert(std::make_pair(eDevType, LinkDirectionTo(eLinkMode, Dependency, LinksTo_.size() + LinksFrom_.size(), strIdField)));
 				if (eLinkMode == DLM_SINGLE)
 					nPossibleLinksCount++;
 			}
@@ -40,11 +40,11 @@ namespace DFW2
 		// указываем тип устройства, режим связи и тип зависимости. Режим связи и тип зависимости указываются для внешнего устройства
 		void AddLinkFrom(eDFW2DEVICETYPE eDevType, eDFW2DEVICELINKMODE eLinkMode, eDFW2DEVICEDEPENDENCY Dependency)
 		{
-			if (m_LinksFrom.find(eDeviceType) == m_LinksFrom.end())
+			if (LinksFrom_.find(eDeviceType) == LinksFrom_.end())
 			{
 				// если связи с данным типом устройства еще нет
 				// добавляем ее
-				m_LinksFrom.insert(std::make_pair(eDevType, LinkDirectionFrom(eLinkMode, Dependency, m_LinksTo.size() + m_LinksFrom.size())));
+				LinksFrom_.insert(std::make_pair(eDevType, LinkDirectionFrom(eLinkMode, Dependency, LinksTo_.size() + LinksFrom_.size())));
 				if (eLinkMode == DLM_SINGLE)
 					nPossibleLinksCount++;
 			}
@@ -58,16 +58,16 @@ namespace DFW2
 		ptrdiff_t nPossibleLinksCount = 0;									// возможное для устройства в контейнере количество ссылок на другие устройства
 		ptrdiff_t nEquationsCount = 0;										// количество уравнений устройства в контейнере
 		eDFW2DEVICETYPE	eDeviceType = DEVTYPE_UNKNOWN;
-		VARINDEXMAP m_VarMap;												// карта индексов перменных состояния
-		CONSTVARINDEXMAP m_ConstVarMap;										// карта индексов констант
-		EXTVARINDEXMAP m_ExtVarMap;											// карта индексов внешних переменных
-		TYPEINFOSET m_TypeInfoSet;											// набор типов устройства
-		LINKSFROMMAP m_LinksFrom;
-		LINKSTOMAP  m_LinksTo;
-		std::list<std::string> m_lstAliases;								// возможные псевдонимы типа устройства (типа "Node","node")
-		ALIASMAP m_VarAliasMap;												// карта псевдонимов переменных
+		VARINDEXMAP VarMap_;												// карта индексов перменных состояния
+		CONSTVARINDEXMAP ConstVarMap_;										// карта индексов констант
+		EXTVARINDEXMAP ExtVarMap_;											// карта индексов внешних переменных
+		TYPEINFOSET TypeInfoSet_;											// набор типов устройства
+		LINKSFROMMAP LinksFrom_;
+		LINKSTOMAP  LinksTo_;
+		std::list<std::string> Aliases_;									// возможные псевдонимы типа устройства (типа "Node","node")
+		ALIASMAP VarAliasMap_;												// карта псевдонимов переменных
 	protected:
-		std::string m_strClassName;											// имя типа устройства
-		std::string m_strClassSysName;										// системное имя имя типа устройства для сериализации
+		std::string ClassName_;												// имя типа устройства
+		std::string ClassSysName_;											// системное имя имя типа устройства для сериализации
 	};
 }

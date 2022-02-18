@@ -34,25 +34,25 @@ bool CCustomDeviceContainer::ConnectDLL(std::string_view DLLFilePath)
 	{
 		// копируем в контейнер описания констант
 		for (const auto& it : m_DLL.GetConstsInfo())
-			ContainerProps_.m_ConstVarMap.insert({ it.VarInfo.Name,
-					CConstVarIndex(ContainerProps_.m_ConstVarMap.size(),
+			ContainerProps_.ConstVarMap_.insert({ it.VarInfo.Name,
+					CConstVarIndex(ContainerProps_.ConstVarMap_.size(),
 						static_cast<eVARUNITS>(it.VarInfo.eUnits),
 						eDVT_CONSTSOURCE) });
 
 		// копируем в контейнер описания уставок
 		for (const auto& it : m_DLL.GetSetPointsInfo())
-			ContainerProps_.m_ConstVarMap.insert({ it.Name,
-				CConstVarIndex(ContainerProps_.m_ConstVarMap.size(), 
+			ContainerProps_.ConstVarMap_.insert({ it.Name,
+				CConstVarIndex(ContainerProps_.ConstVarMap_.size(), 
 					static_cast<eVARUNITS>(it.eUnits),
 					eDVT_INTERNALCONST) });
 
 		// копируем в контейнер описания внутренних переменных
 		for (const auto& it : m_DLL.GetInternalsInfo())
-			ContainerProps_.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
+			ContainerProps_.VarMap_.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
 
 		// копируем в контейнер описания выходных переменных
 		for (const auto& it : m_DLL.GetOutputsInfo())
-			ContainerProps_.m_VarMap.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
+			ContainerProps_.VarMap_.insert(std::make_pair(it.Name, CVarIndex(it.nIndex, it.bOutput ? true : false, static_cast<eVARUNITS>(it.eUnits))));
 
 		bRes = true;
 	}
@@ -304,7 +304,7 @@ void CCustomDeviceCPPContainer::ConnectDLL(std::filesystem::path DLLFilePath)
 
 void CCustomDeviceCPPContainer::BuildStructure()
 {
-	m_PrimitivePools.Allocate(m_DevVec.size());
-	for (auto& dit : m_DevVec)
+	m_PrimitivePools.Allocate(DevVec.size());
+	for (auto& dit : DevVec)
 		static_cast<CCustomDeviceCPP*>(dit)->CreateDLLDeviceInstance(*this);
 }

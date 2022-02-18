@@ -34,8 +34,8 @@ namespace DFW2
 	friend class CDeviceContainer;
 	friend class CMultiLink;
 	protected:
-		CDevice  **pPointer_ = nullptr;		// вектор указателей на связанные устройства
-		size_t	 Count_ = 0;				// количество связанных устройств
+		CDevice **pPointerBegin_ = nullptr;		// вектор указателей на связанные устройства
+		CDevice	**pPointerEnd_ = nullptr;		// указатель на конец связанных устройств
 	public:
 
 		// последовательное получение очередного связанного устройства _включенного_в_матрицу
@@ -60,10 +60,10 @@ namespace DFW2
 			if (!p.pointer)
 			{
 				// если передан указатель на null
-				if (Count_)
+				if (Count())
 				{
 					// если связи есть - возвращаем первую
-					p.pointer = reinterpret_cast<T**>(pPointer_);
+					p.pointer = reinterpret_cast<T**>(pPointerBegin_);
 					return true;
 				}
 				else
@@ -88,10 +88,9 @@ namespace DFW2
 			return false;
 		}
 
-		inline size_t Count() const { return Count_; }
-
-		inline CDevice** begin() const { return pPointer_; }
-		inline CDevice** end() const { return pPointer_ + Count(); }
+		inline size_t Count() const { return pPointerEnd_ - pPointerBegin_; }
+		inline CDevice** begin() const { return pPointerBegin_; }
+		inline CDevice** end() const { return pPointerEnd_; }
 	};
 
 	// элемент для хранения/передачи списка связанных устройств одного типа

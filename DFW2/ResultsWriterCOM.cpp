@@ -104,7 +104,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 
 		spDeviceType->SetDeviceTypeMetrics(DeviceIdsCount, ParentIdsCount, static_cast<long>(Container.CountNonPermanentOff()));
 
-		for (const auto& var : Props.m_VarMap)
+		for (const auto& var : Props.VarMap_)
 		{
 			if (var.second.Output_)
 				spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),
@@ -112,7 +112,7 @@ void CResultsWriterCOM::AddDeviceType(const CDeviceContainer& Container)
 					var.second.Multiplier_);
 		}
 
-		for (const auto& var : Props.m_ConstVarMap)
+		for (const auto& var : Props.ConstVarMap_)
 		{
 			if (var.second.Output_)
 				spDeviceType->AddDeviceTypeVariable(stringutils::utf8_decode(var.first).c_str(),

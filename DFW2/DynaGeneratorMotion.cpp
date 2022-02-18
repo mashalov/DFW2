@@ -192,10 +192,10 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorMotion, CDeviceContainerProperties::m_cszSysNameGeneratorMotion);
 	props.nEquationsCount = CDynaGeneratorMotion::VARS::V_LAST;
 
-	props.m_VarMap.insert(std::make_pair("S", CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
+	props.VarMap_.insert(std::make_pair("S", CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
-	props.m_ConstVarMap.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
+	props.ConstVarMap_.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorMotion>>();
 

@@ -101,15 +101,15 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_POWER_INJECTOR);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, CDynaPowerInjector::m_cszNodeId);
 
-	props.m_VarMap.insert({ m_cszIre, CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES) });
-	props.m_VarMap.insert({ m_cszIim, CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ m_cszIre, CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ m_cszIim, CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES) });
 
-	props.m_ConstVarMap.insert({ CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_UNITLESS, eDVT_CONSTSOURCE) });
-	props.m_ConstVarMap.insert({ m_cszP, CConstVarIndex(CDynaPowerInjector::C_P, VARUNIT_MW, true, eDVT_CONSTSOURCE) });
-	props.m_ConstVarMap.insert({ m_cszQ, CConstVarIndex(CDynaPowerInjector::C_Q, VARUNIT_MVAR, true, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_UNITLESS, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ m_cszP, CConstVarIndex(CDynaPowerInjector::C_P, VARUNIT_MW, true, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ m_cszQ, CConstVarIndex(CDynaPowerInjector::C_Q, VARUNIT_MVAR, true, eDVT_CONSTSOURCE) });
 
 	props.nEquationsCount = CDynaPowerInjector::VARS::V_LAST;
-	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
+	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
 
 	props.bFinishStep = true;	// нужно рассчитывать мощности после выполнения шага
 

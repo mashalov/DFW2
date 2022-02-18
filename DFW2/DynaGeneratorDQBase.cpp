@@ -193,18 +193,18 @@ void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGeneratorDQBase::m_cszExciterId);
 	props.nEquationsCount = CDynaGeneratorDQBase::VARS::V_LAST;
 
-	props.m_VarMap.insert(std::make_pair(CDynaGeneratorDQBase::m_cszEq, CVarIndex(CDynaGeneratorDQBase::V_EQ, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(m_cszId, CVarIndex(CDynaGeneratorDQBase::V_ID, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(m_cszIq, CVarIndex(CDynaGeneratorDQBase::V_IQ, VARUNIT_KAMPERES)));
-	props.m_VarMap.insert(std::make_pair(m_cszVd, CVarIndex(CDynaGeneratorDQBase::V_VD, VARUNIT_KVOLTS)));
-	props.m_VarMap.insert(std::make_pair(m_cszVq, CVarIndex(CDynaGeneratorDQBase::V_VQ, VARUNIT_KVOLTS)));
+	props.VarMap_.insert(std::make_pair(CDynaGeneratorDQBase::m_cszEq, CVarIndex(CDynaGeneratorDQBase::V_EQ, VARUNIT_KVOLTS)));
+	props.VarMap_.insert(std::make_pair(m_cszId, CVarIndex(CDynaGeneratorDQBase::V_ID, VARUNIT_KAMPERES)));
+	props.VarMap_.insert(std::make_pair(m_cszIq, CVarIndex(CDynaGeneratorDQBase::V_IQ, VARUNIT_KAMPERES)));
+	props.VarMap_.insert(std::make_pair(m_cszVd, CVarIndex(CDynaGeneratorDQBase::V_VD, VARUNIT_KVOLTS)));
+	props.VarMap_.insert(std::make_pair(m_cszVq, CVarIndex(CDynaGeneratorDQBase::V_VQ, VARUNIT_KVOLTS)));
 
-	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszExciterId, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
-	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszEqnom, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
-	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszSnom, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
-	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszInom, CConstVarIndex(CDynaGeneratorDQBase::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
-	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszQnom, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
-	props.m_ConstVarMap.insert({ CDynaGeneratorDQBase::m_cszEqe, CConstVarIndex(CDynaGeneratorDQBase::C_EQE, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszExciterId, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszEqnom, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszSnom, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszInom, CConstVarIndex(CDynaGeneratorDQBase::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszQnom, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszEqe, CConstVarIndex(CDynaGeneratorDQBase::C_EQE, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
 
 	// запрещаем явное использование фабрики данного класса
 	props.DeviceFactory = nullptr;

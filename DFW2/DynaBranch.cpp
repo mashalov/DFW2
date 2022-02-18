@@ -147,8 +147,6 @@ bool CDynaBranch::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer
 				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIp->InContainerIndex(), pBranch);
 				pContainer->AddLink(ptrdiff_t(0), pBranch->m_pNodeIq->InContainerIndex(), pBranch);
 			}
-			// сбрасываем счетчики ссылок (заканчиваем связывание)
-			pContainer->RestoreLinks(ptrdiff_t(0));
 		}
 	}
 	return bRes;
@@ -367,7 +365,7 @@ void CDynaBranch::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_BRANCH);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranch, CDeviceContainerProperties::m_cszSysNameBranch);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, "");
-	props.m_lstAliases.push_back(CDeviceContainerProperties::m_cszAliasBranch);
+	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasBranch);
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranch>>();
 }
@@ -375,9 +373,9 @@ void CDynaBranch::DeviceProperties(CDeviceContainerProperties& props)
 void CDynaBranchContainer::IndexBranchIds()
 {
 	BranchKeyMap.clear();
-	for (auto&& branch : m_DevVec)
+	for (auto&& branch : DevVec)
 	{
-		CDynaBranch* pBranch = static_cast<CDynaBranch*>(branch);
+		const auto& pBranch{ static_cast<CDynaBranch*>(branch) };
 		BranchKeyMap.insert(pBranch);
 	}
 }

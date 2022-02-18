@@ -93,7 +93,7 @@ class COscDetectorBase
 				throw std::runtime_error("values_state_type::transform - values sizes mismatch");
 
 			// параллельно проходим состояния детекторов и заданные значения
-			auto dst = values.begin();
+			auto dst{ values.begin() };
 			for (auto& v : *this)
 			{
 				// для доступа к значению используем шаблон - можно работать и с double, и с const double*
@@ -163,7 +163,7 @@ class COscDetectorBase
 			value.transform(timepoint.value, [&oldtime, &newtime, rtol, atol](COscDetectorBase::value_state_type& vs, const COscDetectorBase::value_type& v)
 				{
 					// определяем разность между текущим значением и заданным
-					double diff(vs.value - v);
+					double diff{ vs.value - v };
 					// в зависимости от состояния детектора
 					switch (vs.state)
 					{
@@ -187,7 +187,7 @@ class COscDetectorBase
 							if (!vs.maxs.empty())
 							{
 								// проверяем отличие сохраненного максимума от найденного с учетом допустимой точности расчета
-								double d = (vs.maxs.back().value - vs.value) / (std::abs(vs.value) * rtol + atol);
+								const double d{ (vs.maxs.back().value - vs.value) / (std::abs(vs.value) * rtol + atol) };
 								if (d < -1.0)
 								{
 									// если отклонение более чем на точность расчета,

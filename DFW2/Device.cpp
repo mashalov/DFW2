@@ -22,7 +22,7 @@ bool CDevice::IsKindOfType(eDFW2DEVICETYPE eType)
 
 	if (pContainer_)
 	{
-		const TYPEINFOSET& TypeInfoSet{ pContainer_->ContainerProps().m_TypeInfoSet };
+		const TYPEINFOSET& TypeInfoSet{ pContainer_->ContainerProps().TypeInfoSet_ };
 		return TypeInfoSet.find(eType) != TypeInfoSet.end();
 	}
 	return false;
@@ -292,9 +292,6 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 				if (pDevLinked)
 					pContSlave->AddLink(LinkFrom.nLinkIndex, pDevLinked->InContainerIndex_, pDev);
 			}
-			// после добавления связей восстанавливаем внутренние указатели связей
-			pContSlave->RestoreLinks(LinkFrom.nLinkIndex);
-
 		}
 	}
 	return bRes;
@@ -389,29 +386,29 @@ void CDevice::ResetVisited()
 {
 	_ASSERTE(pContainer_);
 	// если списка просмотра нет - создаем его
-	if (!pContainer_->m_ppDevicesAux)
-		pContainer_->m_ppDevicesAux = std::make_unique<DevicePtr>(pContainer_->Count());
+	if (!pContainer_->ppDevicesAux_)
+		pContainer_->ppDevicesAux_ = std::make_unique<DevicePtr>(pContainer_->Count());
 	// обнуляем счетчик просмотренных ссылок
-	pContainer_->m_nVisitedCount = 0;
+	pContainer_->VisitedCount_ = 0;
 }
 
 ptrdiff_t CDevice::CheckAddVisited(CDevice* pDevice)
 {
 	_ASSERTE(pContainer_);
 
-	CDevice** ppDevice{ pContainer_->m_ppDevicesAux.get() };
-	CDevice** const ppEnd{ ppDevice + pContainer_->m_nVisitedCount };
+	CDevice** ppDevice{ pContainer_->ppDevicesAux_.get() };
+	CDevice** const ppEnd{ ppDevice + pContainer_->VisitedCount_ };
 
 	// просматриваем список просмотренных
 	for (; ppDevice < ppEnd; ppDevice++)
 		if (*ppDevice == pDevice)
-			return ppDevice - pContainer_->m_ppDevicesAux.get() ;	// если нашли заданное устройство - выходим и возвращаем номер
+			return ppDevice - pContainer_->ppDevicesAux_.get() ;	// если нашли заданное устройство - выходим и возвращаем номер
 																	// с которым это устройство уже было добавлено
 	// если дошли до конца списка и не нашли запрошенного устройства
 	// добавляем его в список просмотренных
 	*ppDevice = pDevice;
 	// и счетчик просмотренных увеличиваем
-	pContainer_->m_nVisitedCount++;
+	pContainer_->VisitedCount_++;
 	// возвращаем -1, так как устройство не было найдено
 	return -1;
 }
@@ -768,7 +765,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 	{
 		// по информации из атрибутов контейнера определяем индекс
 		// связи, соответствующий типу
-		const auto& FromLinks{ pContainer_->ContainerProps().m_LinksFrom};
+		const auto& FromLinks{ pContainer_->ContainerProps().LinksFrom_ };
 		const auto&& itFrom{ FromLinks.find(eDevType) };
 		if (itFrom != FromLinks.end())
 			pRetDev = GetSingleLink(itFrom->second.nLinkIndex);
@@ -778,7 +775,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 
 #ifdef _DEBUG
 		CDevice *pRetDevTo(nullptr);
-		const LINKSTOMAP& ToLinks{ pContainer_->ContainerProps().m_LinksTo };
+		const LINKSTOMAP& ToLinks{ pContainer_->ContainerProps().LinksTo_ };
 		const auto& itTo = ToLinks.find(eDevType);
 
 		// в режиме отладки проверяем однозначность определения связи
@@ -793,7 +790,7 @@ CDevice* CDevice::GetSingleLink(eDFW2DEVICETYPE eDevType)
 #else
 		if(!pRetDev)
 		{
-			const LINKSTOMAP& ToLinks{ pContainer_->ContainerProps().m_LinksTo};
+			const LINKSTOMAP& ToLinks{ pContainer_->ContainerProps().LinksTo_};
 			auto&& itTo{ ToLinks.find(eDevType) };
 			if (itTo != ToLinks.end())
 				pRetDev = GetSingleLink(itTo->second.nLinkIndex);

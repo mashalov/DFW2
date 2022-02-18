@@ -300,7 +300,7 @@ void CLoadFlow::CompareWithRastr()
 	CDynaNodeBase *pNodeMaxPnr(nullptr);
 	CDynaNodeBase *pNodeMaxQnr(nullptr);
 
-	for (auto&& it : pNodes->m_DevVec)
+	for (auto&& it : pNodes->DevVec)
 	{
 		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
 		if (pNode->IsStateOn())

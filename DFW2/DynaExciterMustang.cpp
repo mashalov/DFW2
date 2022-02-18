@@ -227,9 +227,9 @@ void CDynaExciterMustang::DeviceProperties(CDeviceContainerProperties& props)
 	props.nEquationsCount = CDynaExciterMustang::VARS::V_LAST;
 	props.SetClassName(CDeviceContainerProperties::m_cszNameExciterMustang, CDeviceContainerProperties::m_cszSysNameExciterMustang);
 
-	props.m_VarMap.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("EqeV", CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
-	props.m_VarMap.insert(std::make_pair("Eqsum", CVarIndex(CDynaExciterMustang::V_EQSUM, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("EqeV", CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("Eqsum", CVarIndex(CDynaExciterMustang::V_EQSUM, VARUNIT_PU)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExciterMustang>>();
 }

@@ -63,9 +63,9 @@ namespace DFW2
 		using CDeviceContainer::CDeviceContainer;
 		ptrdiff_t EquationsCount() const override
 		{
-			if (m_DevVec.size() != 1)
+			if (DevVec.size() != 1)
 				throw dfw2error("CDynaNodeZeroLoadFlowContainer::EquationsCount - container must contain exactly 1 device");
-			return static_cast<const CDynaNodeZeroLoadFlow*>(m_DevVec.front())->EquationsCount();
+			return static_cast<const CDynaNodeZeroLoadFlow*>(DevVec.front())->EquationsCount();
 		}
 	};
 }
