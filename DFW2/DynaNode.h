@@ -108,6 +108,8 @@ namespace DFW2
 										// это значение синхронизируется с переменными состояния Vre и Vim
 										// в Update... и Predict...
 		alignas(16) cplx YiiSuper;		// собственная проводимость суперузла
+		alignas(16) cplx dLRCLoad;		// расчетные значения прозводных СХН по напряжению
+		alignas(16) cplx dLRCGen;			
 
 		
 
@@ -134,7 +136,6 @@ namespace DFW2
 		cplx Iconst;					// постоянный ток в узле
 		cplx IconstSuper;				// постоянный ток в суперузле
 		double Vold;					// модуль напряжения на предыдущей итерации
-		cplx dLRCLoad, dLRCGen;			// расчетные значения прозводных СХН по напряжению
 		CDynaLRC *pLRC = nullptr;		// указатель на СХН узла в динамике
 		CDynaLRC *pLRCLF = nullptr;		// указатель на СХН узла в УР
 		CDynaLRC *pLRCGen = nullptr;	// СХН для генерации, которая не задана моделями генераторов

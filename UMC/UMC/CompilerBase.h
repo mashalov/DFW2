@@ -4,7 +4,7 @@
 #include "ICompiler.h"
 #include <optional>
 #include "UniqueHandle.h"
-#include "..\..\DFW2\version.h"
+#include "../../DFW2/version.h"
 
 class CompilerBase : public ICompiler
 {

@@ -63,16 +63,19 @@ void CCompilerGCC::BuildWithCompiler()
 	CompileWithGCC();
 }
 
-std::optional<CompilerBase::ModelMetaData> CCompilerMSBuild::GetMetaData(const std::filesystem::path& pathDLLOutput)
+std::optional<CompilerBase::ModelMetaData> CCompilerGCC::GetMetaData(const std::filesystem::path& pathDLLOutput)
 {
 	// конвертируем путь в UNICODE
 	UniqueHandle dll(dlopen(pathDLLOutput.string().c_str(), RTLD_LAZY));
 	if (static_cast<void*>(dll) != NULL)
 	{
 		using fnSourceType = const char* (*)();
+		using fnVersionType = const DFW2::VersionInfo& (*)();
 		fnSourceType fnSource = reinterpret_cast<fnSourceType>(dlsym(dll,"Source"));
-		if (fnSource != nullptr)
-			return std::string((fnSource)());
+		fnVersionType fnModelVersion = reinterpret_cast<fnVersionType>(dlsym(dll, "ModelVersion"));
+		fnVersionType fnCompilerVersion = reinterpret_cast<fnVersionType>(dlsym(dll, "CompilerVersion"));
+		if (fnSource != nullptr && fnModelVersion != nullptr && fnCompilerVersion != nullptr)
+			return CompilerBase::ModelMetaData{ fnSource(), fnModelVersion(), fnCompilerVersion() };
 	}
 	return {};
 }
