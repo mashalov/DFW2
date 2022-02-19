@@ -32,7 +32,7 @@ namespace DFW2
 			{
 				LinksTo_.insert(std::make_pair(eDevType, LinkDirectionTo(eLinkMode, Dependency, LinksTo_.size() + LinksFrom_.size(), strIdField)));
 				if (eLinkMode == DLM_SINGLE)
-					nPossibleLinksCount++;
+					PossibleLinksCount++;
 			}
 		}
 
@@ -46,7 +46,7 @@ namespace DFW2
 				// добавляем ее
 				LinksFrom_.insert(std::make_pair(eDevType, LinkDirectionFrom(eLinkMode, Dependency, LinksTo_.size() + LinksFrom_.size())));
 				if (eLinkMode == DLM_SINGLE)
-					nPossibleLinksCount++;
+					PossibleLinksCount++;
 			}
 		}
 
@@ -55,8 +55,8 @@ namespace DFW2
 		bool bPredict = false;												// нужен ли контейнеру вызов предиктора
 		bool bVolatile = false;												// устройства в контейнере могут создаваться и удаляться динамически во время расчета
 		bool bFinishStep = false;											// нужен ли контейнеру расчет независимых переменных после завершения шага
-		ptrdiff_t nPossibleLinksCount = 0;									// возможное для устройства в контейнере количество ссылок на другие устройства
-		ptrdiff_t nEquationsCount = 0;										// количество уравнений устройства в контейнере
+		ptrdiff_t PossibleLinksCount = 0;									// возможное для устройства в контейнере количество ссылок на другие устройства
+		ptrdiff_t EquationsCount = 0;										// количество уравнений устройства в контейнере
 		eDFW2DEVICETYPE	eDeviceType = DEVTYPE_UNKNOWN;
 		VARINDEXMAP VarMap_;												// карта индексов перменных состояния
 		CONSTVARINDEXMAP ConstVarMap_;										// карта индексов констант

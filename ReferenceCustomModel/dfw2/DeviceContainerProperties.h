@@ -27,7 +27,7 @@ namespace DFW2
 	{
 		// вектор устройств, которым управляет фабрика
 		using DeviceVectorType = std::unique_ptr<T[]>;
-		DeviceVectorType m_pDevices;
+		DeviceVectorType pDevices;
 	public:
 		// создать некоторые устройства и привязать к вектору
 		void Create(size_t nCount, DEVICEVECTOR& DevVec) override
@@ -35,18 +35,18 @@ namespace DFW2
 			CreateRet(nCount, DevVec);
 		}
 		// создать устройства по типу контейнера, вернуть указатель на вектор даного типа
-		T* CreateRet(size_t nCount, DEVICEVECTOR& DevVec)
+		T* CreateRet(size_t Count, DEVICEVECTOR& DevVec)
 		{
 			// создаем новые устройства
-			m_pDevices = std::make_unique<T[]>(nCount);
+			pDevices = std::make_unique<T[]>(Count);
 			// ставим новый размер вектора указателей на устройства
-			DevVec.resize(nCount);
-			auto it = DevVec.begin();
+			DevVec.resize(Count);
+			auto it{ DevVec.begin() };
 			// заполняем вектор указателей указателями на созданные фабрикой устройства
-			for (T* p = m_pDevices.get(); p < m_pDevices.get() + nCount; p++, it++)
+			for (T* p = pDevices.get(); p < pDevices.get() + Count; p++, it++)
 				*it = p;
 			// возвращаем  на вектор устройств типа
-			return m_pDevices.get();
+			return pDevices.get();
 		}
 	};
 
@@ -54,9 +54,9 @@ namespace DFW2
 	{
 	public:
 		std::unique_ptr<CDeviceFactoryBase> DeviceFactory;
-		LINKSFROMMAPPTR m_MasterLinksFrom;
-		LINKSTOMAPPTR  m_MasterLinksTo;
-		LINKSUNDIRECTED m_Masters, m_Slaves;
+		LINKSFROMMAPPTR MasterLinksFrom;
+		LINKSTOMAPPTR  MasterLinksTo;
+		LINKSUNDIRECTED Masters, Slaves;
 		eDFW2DEVICETYPE GetType() const;
 		const char* GetVerbalClassName() const;
 		const char* GetSystemClassName() const;

@@ -93,24 +93,24 @@ public:
 		}
 
 		// генерируем векторы переменных состояния, внешних и констант
-		GenerateVariables("DeviceProps.m_VarMap      = { ", stateVars, " };", true);
-		GenerateVariables("DeviceProps.m_ExtVarMap   = { ", extVars, " };", true);
-		GenerateVariables("DeviceProps.m_ConstVarMap = { ", constVars, " };", true);
+		GenerateVariables("DeviceProps.VarMap_      = { ", stateVars, " };", true);
+		GenerateVariables("DeviceProps.ExtVarMap_   = { ", extVars, " };", true);
+		GenerateVariables("DeviceProps.ConstVarMap_ = { ", constVars, " };", true);
 		// формируем количество уравнений
-		EmitLine("DeviceProps.nEquationsCount = DeviceProps.m_VarMap.size();");
+		EmitLine("DeviceProps.EquationsCount = DeviceProps.VarMap_.size();");
 		Indent--;
 		EmitLine("}");
 	}
 
 	void GenerateHostBlocksParameters()
 	{
-		EmitLine("const DOUBLEVECTOR& GetBlockParameters(ptrdiff_t nBlockIndex) override");
+		EmitLine("const DOUBLEVECTOR& GetBlockParameters(ptrdiff_t BlockIndex) override");
 		EmitLine("{");
 		Indent++;
-		EmitLine("m_BlockParameters.clear();");
+		EmitLine("BlockParameters_.clear();");
 		if (!HostBlocksList.empty())
 		{
-			EmitLine("switch(nBlockIndex)");
+			EmitLine("switch(BlockIndex)");
 			EmitLine("{");
 			Indent++;
 			for (auto& h : HostBlocksList)
@@ -126,14 +126,14 @@ public:
 
 				EmitLine(fmt::format("case {}:", h->GetHostBlockIndex()));
 				Indent++;
-				EmitLine(fmt::format("m_BlockParameters = DOUBLEVECTOR{{ {} }};", fmt::join(Consts, ", ")));
+				EmitLine(fmt::format("BlockParameters_ = DOUBLEVECTOR{{ {} }};", fmt::join(Consts, ", ")));
 				Indent--;
 				EmitLine("break;");
 			}
 			Indent--;
 			EmitLine("}");
 		}
-		EmitLine("return m_BlockParameters;");
+		EmitLine("return BlockParameters_;");
 		Indent--;
 		EmitLine("}");
 	}
@@ -254,7 +254,7 @@ public:
 				Vars.push_back(v.first);
 
 		GenerateVariables("VariableIndex ", Vars, ";");
-		GenerateVariables("VariableIndexRefVec m_StateVariables = { ", Vars, " };", true);
+		GenerateVariables("VariableIndexRefVec StateVariables_ = { ", Vars, " };", true);
 	}
 
 	void GenerateConstVariables()
@@ -276,7 +276,7 @@ public:
 			if (v.second.IsNamedConstant())
 				Vars.push_back(v.first);
 
-		GenerateVariables("std::vector<std::reference_wrapper<double>> m_ConstantVariables = { ", Vars, " };", true);
+		GenerateVariables("std::vector<std::reference_wrapper<double>> ConstantVariables_ = { ", Vars, " };", true);
 	}
 
 	void GenerateExternalVariables()
@@ -287,7 +287,7 @@ public:
 				Vars.push_back(v.first);
 
 		GenerateVariables("VariableIndexExternal ", Vars,";");
-		GenerateVariables("VariableIndexExternalRefVec m_ExternalVariables = { ", Vars, " };", true);
+		GenerateVariables("VariableIndexExternalRefVec ExternalVariables_ = { ", Vars, " };", true);
 	}
 
 	void GenerateVariablesDeclaration()
@@ -299,7 +299,7 @@ public:
 
 	void GenerateHostBlocks()
 	{
-		std::string Line = "PRIMITIVEVECTOR m_Primitives = { ";
+		std::string Line = "PRIMITIVEVECTOR Primitives_ = { ";
 		auto& HostBlocks = pTree->GetHostBlocks();
 		size_t indent = Line.length();
 
@@ -355,17 +355,17 @@ public:
 			Line = std::string(indent, ' ');
 		}
 
-		EmitLine("DOUBLEVECTOR m_BlockParameters;");
+		EmitLine("DOUBLEVECTOR BlockParameters_;");
 	}
 
 	void GenerateGetVariablesAndPrimitives()
 	{
 		// переменные состояния
-		EmitLine("const VariableIndexRefVec& GetVariables() override { return m_StateVariables;}");
+		EmitLine("const VariableIndexRefVec& GetVariables() override { return StateVariables_;}");
 		// внешние переменные
-		EmitLine("const VariableIndexExternalRefVec& GetExternalVariables() override { return m_ExternalVariables;}");
+		EmitLine("const VariableIndexExternalRefVec& GetExternalVariables() override { return ExternalVariables_;}");
 		// примитивы (хост-блоки)
-		EmitLine("const PRIMITIVEVECTOR& GetPrimitives() override { return m_Primitives;}");
+		EmitLine("const PRIMITIVEVECTOR& GetPrimitives() override { return Primitives_;}");
 	}
 
 	void GenerateSetSourceConstant()
@@ -373,10 +373,10 @@ public:
 		EmitLine("bool SetSourceConstant(size_t Index, double Value) override");
 		EmitLine("{");
 		Indent++;
-		EmitLine("if( Index < m_ConstantVariables.size() )");
+		EmitLine("if( Index < ConstantVariables_.size() )");
 		EmitLine("{");
 		Indent++;
-		EmitLine("m_ConstantVariables[Index] = Value;");
+		EmitLine("ConstantVariables_[Index] = Value;");
 		EmitLine("return true;");
 		Indent--;
 		EmitLine("}");
