@@ -343,7 +343,7 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 
 	std::sort(pSortOrder.get(),
 			  pSortOrder.get() + m_nTotalVariablesCount,
-			  [](const RightVectorTotal* lhs, const RightVectorTotal* rhs) { return rhs->nErrorHits < lhs->nErrorHits; });
+			  [](const RightVectorTotal* lhs, const RightVectorTotal* rhs) { return rhs->ErrorHits < lhs->ErrorHits; });
 	
 	if (nCount > m_nTotalVariablesCount)
 		nCount = m_nTotalVariablesCount;
@@ -354,12 +354,12 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 		pVectorBegin = *ppSortOrder;
 
 		// если нет переменных с ошибками - выходим
-		if (!pVectorBegin->nErrorHits)
+		if (!pVectorBegin->ErrorHits)
 			break;
 
 			Log(DFW2MessageStatus::DFW2LOG_INFO,
 				fmt::format("{:<6} {} {} Rtol {} Atol {}",
-					pVectorBegin->nErrorHits,
+					pVectorBegin->ErrorHits,
 					pVectorBegin->pDevice->GetVerbalName(),
 					pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
 					pVectorBegin->Rtol,
@@ -438,7 +438,7 @@ void CDynaModel::DumpStateVector()
 			dump << fmt::format("{};", pRv->Tminus2Value);
 			dump << fmt::format("{};", pRv->PhysicalEquationType);
 			dump << fmt::format("{};", pRv->PrimitiveBlock);
-			dump << fmt::format("{}", pRv->nErrorHits) << std::endl;
+			dump << fmt::format("{}", pRv->ErrorHits) << std::endl;
 		}
 	}
 }

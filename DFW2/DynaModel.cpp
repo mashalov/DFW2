@@ -887,7 +887,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 	if (!sc.m_bNewtonConverged)
 	{
 		if (sc.Newton.Absolute.pVector)
-			sc.Newton.Absolute.pVector->nErrorHits++;
+			sc.Newton.Absolute.pVector->ErrorHits++;
 	}
 
 	return bRes;
@@ -1199,7 +1199,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 
 	// считаем ошибку в уравнении если шаг придется уменьшить
 	if (r <= 1.0 && sc.Integrator.Weighted.pVector)
-		sc.Integrator.Weighted.pVector->nErrorHits++;
+		sc.Integrator.Weighted.pVector->ErrorHits++;
 
 	return r;
 }

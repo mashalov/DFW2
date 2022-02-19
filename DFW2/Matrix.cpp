@@ -664,7 +664,7 @@ void CDynaModel::CreateTotalRightVector()
 			{
 				pb->pValue = dit->GetVariablePtr(z);
 				pb->pDevice = dit;
-				pb->nErrorHits = 0;
+				pb->ErrorHits = 0;
 			}
 	}
 }
@@ -781,9 +781,9 @@ void CDynaModel::UpdateTotalRightVector()
 						throw dfw2error("CDynaModel::UpdateTotalRightVector - TotalRightVector Out Of Sync");
 
 					// количество ошибок в полном векторе суммируем с накопленным количеством ошибок в рабочем
-					ptrdiff_t nNewErrorHits = pRvB->nErrorHits + pRv->nErrorHits;
+					ptrdiff_t nNewErrorHits = pRvB->ErrorHits + pRv->ErrorHits;
 					*pRvB = *pRv;
-					pRvB->nErrorHits = nNewErrorHits;
+					pRvB->ErrorHits = nNewErrorHits;
 					pRv++;	pRvB++;
 				}
 			}

@@ -214,38 +214,38 @@ bool CDynaModel::DetectAdamsRinging()
 #endif
 			// если знак производной изменился - увеличиваем счетчик циклов
 			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && std::abs(newValue) > pVectorBegin->Atol * sc.m_dCurrentH * 5.0)
-				pVectorBegin->nRingsCount++;
+				pVectorBegin->RingsCount++;
 			else
-				pVectorBegin->nRingsCount = 0;
+				pVectorBegin->RingsCount = 0;
 
 			// если счетчик циклов изменения знака достиг порога
-			if (pVectorBegin->nRingsCount > m_Parameters.m_nAdamsIndividualSuppressionCycles)
+			if (pVectorBegin->RingsCount > m_Parameters.m_nAdamsIndividualSuppressionCycles)
 			{
-				pVectorBegin->nRingsCount = 0;
+				pVectorBegin->RingsCount = 0;
 				sc.bRingingDetected = true;
 				switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 				{
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
 						if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
 						{
-							// в RightVector устанавливаемколичество шагов, на протяжении которых производная Адамса будет заменяться 
+							// в RightVector устанавливаем количество шагов, на протяжении которых производная Адамса будет заменяться 
 							// на производную  BDF
-							pVectorBegin->nRingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
+							pVectorBegin->RingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
 						}
 						break;
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA:
-						pVectorBegin->nRingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
+						pVectorBegin->RingsSuppress = m_Parameters.m_nAdamsIndividualSuppressStepsRange;
 						break;
 				}
 				
-				if (pVectorBegin->nRingsSuppress)
+				if (pVectorBegin->RingsSuppress)
 				{
 					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Ringing {} {} last values {} {} {}",
 						pVectorBegin->pDevice->GetVerbalName(),
 						pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
 						newValue,
 						pVectorBegin->SavedNordsiek[0],
-						pVectorBegin->nRingsSuppress));
+						pVectorBegin->RingsSuppress));
 				}
 			}
 		}
@@ -326,13 +326,13 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 				switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 				{
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
-						if (pVectorBegin->nRingsSuppress > 0)
+						if (pVectorBegin->RingsSuppress > 0)
 						{
 							// для переменных, у которых количество шагов для замены Адамса на BDF не исчерпано
 							// делаем эту замену и уменьшаем счетчик
 							pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
-							pVectorBegin->nRingsSuppress--;
-							pVectorBegin->nRingsCount = 0;
+							pVectorBegin->RingsSuppress--;
+							pVectorBegin->RingsCount = 0;
 						}
 					break;
 					case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL:
@@ -466,9 +466,9 @@ void CDynaModel::InitNordsiekElement(struct RightVector *pVectorBegin, double At
 	pVectorBegin->Atol = Atol;
 	pVectorBegin->Rtol = Rtol;
 	pVectorBegin->SavedError = pVectorBegin->Tminus2Value = 0.0;
-	pVectorBegin->nErrorHits = 0;
-	pVectorBegin->nRingsCount = 0;
-	pVectorBegin->nRingsSuppress = 0;
+	pVectorBegin->ErrorHits = 0;
+	pVectorBegin->RingsCount = 0;
+	pVectorBegin->RingsSuppress = 0;
 }
 
 void CDynaModel::PrepareNordsiekElement(struct RightVector *pVectorBegin)

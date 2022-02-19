@@ -120,9 +120,9 @@ namespace DFW2
 			// ставим тип управления памятью
 			SetMemoryManagement(ContainerMemoryManagementType::BySolid);
 			// создаем фабрику устройств заданного типа
-			auto factory = std::make_unique<CDeviceFactory<T>>();
+			auto factory{ std::make_unique<CDeviceFactory<T>>() };
 			// создаем вектор устройств
-			T* ptr = factory->CreateRet(nCount, DevVec);
+			T* ptr{ factory->CreateRet(nCount, DevVec) };
 			// оставляем фабрику устройств в свойствах устройства (??? может оставлять старую ?)
 			ContainerProps_.DeviceFactory = std::move(factory);
 			// указатели на отдельные устройства теперь в DevVec, а

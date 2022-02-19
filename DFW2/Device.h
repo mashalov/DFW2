@@ -228,7 +228,7 @@ namespace DFW2
 		CDevice *pDevice;												// устройство, в котором эта переменная
 		double Atol;													// абсолютная и относительная погрешности
 		double Rtol;													// задаются индивидуально для каждой переменной
-		ptrdiff_t nErrorHits;											// количество ограничений шага или завалов итераций Ньютона по этой переменной
+		ptrdiff_t ErrorHits;											// количество ограничений шага или завалов итераций Ньютона по этой переменной
 		DEVICE_EQUATION_TYPE EquationType;								// тип уравнения переменной для выбора коэффициентов метода (BDF - алгебраический, ADAM - дифференциальный)
 		DEVICE_EQUATION_TYPE PhysicalEquationType;						// физический тип уравнения - дифференциальный или алгебраический
 	};
@@ -243,8 +243,8 @@ namespace DFW2
 		double SavedError;												// предыдущего шага
 		double Tminus2Value;											// значение на пред-предыдыущем шаге для реинита Nordsieck
 		PrimitiveBlockType PrimitiveBlock;								// тип блока примитива если есть
-		ptrdiff_t nRingsCount;
-		ptrdiff_t nRingsSuppress;
+		ptrdiff_t RingsCount;
+		ptrdiff_t RingsSuppress;
 
 		// расчет взвешенной ошибки по значению снаружи
 		// но с допустимыми погрешностями для этой переменной
