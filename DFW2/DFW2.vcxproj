@@ -395,7 +395,7 @@
     <ClInclude Include="DynaReactor.h" />
     <ClInclude Include="DynaVoltageSource.h" />
     <ClInclude Include="DynaGeneratorMustang.h" />
-    <ClInclude Include="FmtComplexFormat.h" />
+    <ClInclude Include="FmtFormatters.h" />
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="ICustomDevice.h" />

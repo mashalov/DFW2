@@ -63,7 +63,7 @@ void CCompilerGCC::BuildWithCompiler()
 	CompileWithGCC();
 }
 
-std::optional<std::string> CCompilerGCC::GetSource(const std::filesystem::path& pathDLLOutput)
+std::optional<CompilerBase::ModelMetaData> CCompilerMSBuild::GetMetaData(const std::filesystem::path& pathDLLOutput)
 {
 	// конвертируем путь в UNICODE
 	UniqueHandle dll(dlopen(pathDLLOutput.string().c_str(), RTLD_LAZY));

@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "DeviceContainerPropertiesBase.h"
-
 namespace DFW2
 {
 	class CDFWModelData

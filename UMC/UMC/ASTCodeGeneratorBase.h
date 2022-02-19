@@ -138,6 +138,12 @@ public:
 		EmitLine("}");
 	}
 
+	void GenerateVersions()
+	{
+		EmitLine("static constexpr VersionInfo modelVersion = { { 1, 0, 0, 0 } };");
+		EmitLine("static constexpr VersionInfo compilerVersion = { { 1, 0, 0, 0 } };");
+	}
+
 	void GenerateEncodedSource()
 	{
 		std::string Gzipped, Base64Encoded;
@@ -177,6 +183,7 @@ public:
 		// обертка для класса
 		EmitLine("#pragma once");
 		EmitLine("#include\"DFW2/ICustomDevice.h\"");
+		EmitLine("#include\"DFW2/version.h\"");
 		EmitLine("#include <math.h>");
 		EmitLine("namespace DFW2\n{");
 		// отступ вправо
@@ -559,6 +566,7 @@ public:
 		GenerateProcessDiscontinuity();
 		GenerateDestroy();
 		GenerateEncodedSource();
+		GenerateVersions();
 		// возврат отступа
 		Indent--;
 		EmitLine("};");

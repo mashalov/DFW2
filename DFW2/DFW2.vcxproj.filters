@@ -241,7 +241,7 @@
     <ClInclude Include="OscDetector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="FmtComplexFormat.h">
+    <ClInclude Include="FmtFormatters.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="PlatformFolders.h">

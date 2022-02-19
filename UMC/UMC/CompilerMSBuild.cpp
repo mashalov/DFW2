@@ -222,16 +222,20 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	}
 }
 
-std::optional<std::string> CCompilerMSBuild::GetSource(const std::filesystem::path& pathDLLOutput)
+std::optional<CompilerBase::ModelMetaData> CCompilerMSBuild::GetMetaData(const std::filesystem::path& pathDLLOutput)
 {
 	// конвертируем путь в UNICODE
 	UniqueHandle dll(LoadLibrary(pathDLLOutput.c_str()));
 	if (static_cast<HMODULE>(dll) != nullptr)
 	{
 		using fnSourceType = const char* (__cdecl*)();
+		using fnVersionType = const DFW2::VersionInfo& (__cdecl*)();
 		fnSourceType fnSource = reinterpret_cast<fnSourceType>(::GetProcAddress(dll, "Source"));
-		if (fnSource != nullptr)
-			return std::string((fnSource)());
+		fnVersionType fnModelVersion = reinterpret_cast<fnVersionType>(::GetProcAddress(dll, "ModelVersion"));
+		fnVersionType fnCompilerVersion = reinterpret_cast<fnVersionType>(::GetProcAddress(dll, "CompilerVersion"));
+		if (fnSource != nullptr && fnModelVersion != nullptr && fnCompilerVersion != nullptr)
+			return CompilerBase::ModelMetaData{ fnSource(), fnModelVersion(), fnCompilerVersion() };
 	}
 	return {};
 }
+

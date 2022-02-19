@@ -49,16 +49,16 @@ bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, std::file
 		return bRes;
 
 	// достаем исходный текст из модуля
-    if (auto source(GetSource(pathDLLOutput)); source.has_value())
+    if (auto metadata(GetMetaData(pathDLLOutput)); metadata.has_value())
 	{
         // если исходный текст в модуле есть, разжимаем его из base64 и потом из gzip
 		std::string Gzip;
-		CryptoPP::StringSource d64(source.value(), true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(Gzip)));
-		source.value().clear();
-		CryptoPP::StringSource gzip(Gzip, true, new CryptoPP::Gunzip(new CryptoPP::StringSink(source.value()), false));
+		CryptoPP::StringSource d64(metadata.value().Source, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(Gzip)));
+        metadata.value().Source.clear();
+		CryptoPP::StringSource gzip(Gzip, true, new CryptoPP::Gunzip(new CryptoPP::StringSink(metadata.value().Source), false));
         // сравниваем компилируемый исходный текст с тем, который извлечен из модуля, 
         // если они совпадают - отказываемся от рекомпиляции
-		if (source.value() == SourceToCompile)
+		if (metadata.value().Source == SourceToCompile)
 			bRes = true;
 	}
 

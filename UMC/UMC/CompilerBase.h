@@ -4,10 +4,18 @@
 #include "ICompiler.h"
 #include <optional>
 #include "UniqueHandle.h"
+#include "..\..\DFW2\version.h"
 
 class CompilerBase : public ICompiler
 {
 protected:
+
+    struct ModelMetaData
+    {
+        std::string Source;
+        DFW2::VersionInfo modelVersion;
+        DFW2::VersionInfo compilerVersion;
+    };
 
     std::filesystem::path compiledModulePath;
     static constexpr const char* cszUMCFailed = "Невозможна компиляция пользовательского устройства";
@@ -27,7 +35,7 @@ protected:
     // функция выполняет сборку модуля с помощью выбранного компилятора
     virtual void BuildWithCompiler() = 0;
     // возвращает исходный текст из модуля по заданному пути
-    virtual std::optional<std::string> GetSource(const std::filesystem::path& pathDLLOutput) = 0;
+    virtual std::optional<ModelMetaData> GetMetaData(const std::filesystem::path& pathDLLOutput) = 0;
     MessageCallBacks messageCallBacks;
 
     std::filesystem::path pathOutDir;
