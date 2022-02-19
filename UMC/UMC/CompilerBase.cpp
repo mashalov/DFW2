@@ -1,6 +1,7 @@
 ﻿#include "CompilerBase.h"
 #include "../../DFW2/dfw2exception.h"
 #include "../../DFW2/Messages.h"
+#include "../../DFW2/FmtFormatters.h"
 
 bool CompilerBase::SetProperty(std::string_view PropertyName, std::string_view Value)
 {
@@ -42,34 +43,48 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 // возвращает true, если повторная рекомпиляция модуля таргета не требуется
 bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, std::filesystem::path& pathDLLOutput)
 {
-	bool bRes(false);
+    bool bRes{ false };
     // проверяем режим ребилда, если он задан - игнорируем 
     // исходный текст в модуле и требуем рекомпиляции
 	if (!GetProperty(PropertyMap::szPropRebuild).empty())
 		return bRes;
 
-	// достаем исходный текст из модуля
-    if (auto metadata(GetMetaData(pathDLLOutput)); metadata.has_value())
+    // формируем начало сообщения о проверке пользовательской модели на необходимость рекомпиляции
+    auto ModuleName { fmt::format(DFW2::CDFW2Messages::m_cszCustomModelModule, utf8_encode(pathDLLOutput.c_str())) };
+    // готовимся к тому, что в модуле нет метаданных
+    std::string condition{ DFW2::CDFW2Messages::m_cszCustomModelHasNoMetadata };
+
+	// достаем метаданные из модуля
+    if (auto metadataoption(GetMetaData(pathDLLOutput)); metadataoption.has_value())
 	{
-        // если исходный текст в модуле есть, разжимаем его из base64 и потом из gzip
-		std::string Gzip;
-		CryptoPP::StringSource d64(metadata.value().Source, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(Gzip)));
-        metadata.value().Source.clear();
-		CryptoPP::StringSource gzip(Gzip, true, new CryptoPP::Gunzip(new CryptoPP::StringSink(metadata.value().Source), false));
-        // сравниваем компилируемый исходный текст с тем, который извлечен из модуля, 
-        // если они совпадают - отказываемся от рекомпиляции
-		if (metadata.value().Source == SourceToCompile)
-			bRes = true;
+        auto& metadata{ metadataoption.value() };
+        // проверяем версию компилятора в модели
+        if (CompilerBase::VersionsEquals(metadata.compilerVersion, CASTCodeGeneratorBase::compilerVersion))
+        {
+            // версия компилятора модели и данного компилятора совпадают
+            // если исходный текст в модуле есть, разжимаем его из base64 и потом из gzip
+            std::string Gzip;
+            CryptoPP::StringSource d64(metadata.Source, true, new CryptoPP::Base64Decoder(new CryptoPP::StringSink(Gzip)));
+            metadata.Source.clear();
+            CryptoPP::StringSource gzip(Gzip, true, new CryptoPP::Gunzip(new CryptoPP::StringSink(metadata.Source), false));
+            // сравниваем компилируемый исходный текст с тем, который извлечен из модуля, 
+            // если они совпадают - отказываемся от рекомпиляции
+            if (metadata.Source == SourceToCompile)
+                bRes = true;
+            else
+                condition = DFW2::CDFW2Messages::m_cszCustomModelChanged;   // тексты не совпадают
+        }
+        else
+            condition = fmt::format(DFW2::CDFW2Messages::m_cszCompilerVersionMismatch,  // версии компилятора модели и данного компилятора не совпадают
+                metadata.compilerVersion,
+                CASTCodeGeneratorBase::compilerVersion);
 	}
-
-    static const char* m_cszUserModelAlreadyCompiled;
-    static const char* m_cszUserModelShouldBeCompiled;
-
-    // формируем текст сообщения о результате проверки рекомпиляции
+    
+    // формируем полный текст сообщения о результате проверки рекомпиляции
 	if (bRes)
-		pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelAlreadyCompiled, utf8_encode(pathDLLOutput.c_str())));
+		pTree->Message(fmt::format("{}. {}", ModuleName, DFW2::CDFW2Messages::m_cszUserModelAlreadyCompiled));
 	else
-		pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelShouldBeCompiled, utf8_encode(pathDLLOutput.c_str())));
+		pTree->Message(fmt::format("{} {}. {}", ModuleName, condition, DFW2::CDFW2Messages::m_cszUserModelShouldBeCompiled));
 
 	return bRes;
 }

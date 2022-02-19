@@ -10,6 +10,8 @@
 #include "windows.h"
 #endif
 
+#include "../../DFW2/version.h"
+
 using StringViewList = std::list<std::string_view>;
 
 class CASTCodeGeneratorBase
@@ -141,7 +143,7 @@ public:
 	void GenerateVersions()
 	{
 		EmitLine("static constexpr VersionInfo modelVersion = { { 1, 0, 0, 0 } };");
-		EmitLine("static constexpr VersionInfo compilerVersion = { { 1, 0, 0, 0 } };");
+		EmitLine(fmt::format("static constexpr VersionInfo compilerVersion = {{ {} }};", fmt::join(compilerVersion, ", ")));
 	}
 
 	void GenerateEncodedSource()
@@ -601,5 +603,6 @@ public:
 	}
 
 	static inline const std::string CustomDeviceHeader = "CustomDevice.h";
+	static constexpr DFW2::VersionInfo compilerVersion = { {1,0,0,1} };
 };
 

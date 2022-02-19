@@ -4,7 +4,6 @@
 #include "ICompiler.h"
 #include <optional>
 #include "UniqueHandle.h"
-#include "../../DFW2/version.h"
 
 class CompilerBase : public ICompiler
 {
@@ -40,6 +39,16 @@ protected:
 
     std::filesystem::path pathOutDir;
     std::filesystem::path pathRefDir;
+
+    static bool VersionsEquals(const DFW2::VersionInfo& v1, const DFW2::VersionInfo& v2)
+    {
+        auto fnVersionTie = [](const DFW2::VersionInfo& v)
+        {
+            return std::tie(v[0], v[1], v[2], v[3]);
+        };
+        return fnVersionTie(v1) == fnVersionTie(v2);
+    }
+
 public:
 
     void SetMessageCallBacks(const MessageCallBacks& MessageCallBackFunctions) override

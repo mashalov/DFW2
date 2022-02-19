@@ -201,7 +201,11 @@ namespace DFW2
 		static const char* m_cszUserModelFailedToCompile;
 		static const char* m_cszUserModelFailedToOpenSource;
 		static const char* m_cszUserModelAlreadyCompiled;
+		static const char* m_cszCustomModelModule;
+		static const char* m_cszCustomModelHasNoMetadata;
 		static const char* m_cszUserModelShouldBeCompiled;
+		static const char* m_cszCompilerVersionMismatch;
+		static const char* m_cszCustomModelChanged;
 		static const char* m_cszUserModelCannotSaveFile;
 		static const char* m_cszDebug;
 		static const char* m_cszInfo;
