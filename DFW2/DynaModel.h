@@ -957,5 +957,14 @@ namespace DFW2
 
 		static constexpr const VersionInfo version = { { 1, 0, 0, 1 } };
 
+		static bool VersionsEquals(const DFW2::VersionInfo& v1, const DFW2::VersionInfo& v2)
+		{
+			auto fnVersionTie = [](const DFW2::VersionInfo& v)
+			{
+				return std::tie(v[0], v[1], v[2], v[3]);
+			};
+			return fnVersionTie(v1) == fnVersionTie(v2);
+		}
+
 	};
 }

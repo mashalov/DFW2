@@ -3,7 +3,7 @@
 #include <string>
 #include <variant>
 #include "MessageCallbacks.h"
-
+#include "../../DFW2/version.h"
 
 class ICompiler
 {
@@ -14,6 +14,7 @@ public:
 	virtual bool Compile(std::filesystem::path FilePath) = 0;
 	virtual void SetMessageCallBacks(const MessageCallBacks& MessageCallBackFunctions) = 0;
 	virtual const std::filesystem::path& CompiledModulePath() const = 0;
+	virtual const DFW2::VersionInfo& Version() const = 0;
 	virtual void Destroy() = 0;
 };
 

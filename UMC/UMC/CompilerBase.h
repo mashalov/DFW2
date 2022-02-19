@@ -72,6 +72,7 @@ public:
     void SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput);
     // возвращает полный путь к файлу скомпилированного модуля
     const std::filesystem::path& CompiledModulePath() const override;
-
+    // возвращает версию компилятора
+    const DFW2::VersionInfo& Version() const override;
 };
 

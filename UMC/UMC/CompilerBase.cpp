@@ -235,3 +235,9 @@ bool CompilerBase::Compile(std::istream& SourceStream)
 
     return bRes;
 }
+
+const DFW2::VersionInfo& CompilerBase::Version() const
+{
+    return CASTCodeGeneratorBase::compilerVersion;
+}
+

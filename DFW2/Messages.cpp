@@ -236,3 +236,4 @@ const char* CDFW2Messages::m_cszResultWriterDisabled = "Запись резул�
 const char* CDFW2Messages::m_cszResultFileCreated  = "Создан файл результатов расчета \"{}\"";
 const char* CDFW2Messages::m_cszTopologyNodesCreated = "Количество узлов после топологической обработки {} из {} исходных: {:.1f}%";
 const char* CDFW2Messages::m_cszLFOverswitchedNode = "Для узла {} было выполнено более {} переключений типа PV-PQ";
+const char* CDFW2Messages::m_cszCompilerAndRaidenVersionMismatch = "Версия компилятора пользовательских моделей {} и модуля расчета {} не совпадают";

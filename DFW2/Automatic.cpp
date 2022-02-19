@@ -103,6 +103,12 @@ void CAutomatic::CompileModels()
 		
 		std::stringstream Sourceutf8stream;
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
+
+		const auto vc{ Compiler->Version() };
+		if (!CDynaModel::VersionsEquals(vc, m_pDynaModel->version))
+			throw dfw2error(fmt::format(DFW2::CDFW2Messages::m_cszCompilerAndRaidenVersionMismatch, vc, m_pDynaModel->version));
+
+
 		CDynaModel* pDynaModel(m_pDynaModel);
 
 		Compiler->SetMessageCallBacks(

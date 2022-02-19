@@ -243,6 +243,7 @@ namespace DFW2
 		static const char* m_cszResultFileCreated;
 		static const char* m_cszTopologyNodesCreated;
 		static const char* m_cszLFOverswitchedNode;
+		static const char* m_cszCompilerAndRaidenVersionMismatch;
 	};
 }
 
