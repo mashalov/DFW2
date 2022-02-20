@@ -124,7 +124,15 @@ void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 	if (IsStateOn())
 	{
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
-		// интересно, что мощность от токов ЭДС равна мощности от полных токов ?! 
+		// интересно, что _активная_ мощность от токов ЭДС равна мощности от полных токов c Ynorton ?! 
+		// I = (Ere + jEim - Vre - jVim) / jxd = (Eim - Vim + j(Vre - Ere)) / xd
+		// Ire = (Eim - Vim) / xd 
+		// Iim = (Vre - Ere) / xd
+		// S = (Vre + jVim) * (Eim - Vim + j(Ere - Vre)) / xd 
+		//   = (VreEim - VreVim + jVreEre - jVreVre + jVimEim - jVimVim - VimEim + VimVre) / xd
+		//   = (VreEim - VreVim + VimVre - VimEim) / xd + j(VreEre - VreVre - VimVim - VimEim) / xd
+		//   = (VreEim - VimEre) / xd + j(VreEre - VimEim - Vre^2 - Vim^2) / xd
+		// напряжения в активной мощности вычитаются
 		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1.0 + s) - Kdemp * s - ZeroDivGuard(Vre * Ire + Vim * Iim, 1 + Sv)) / Mj);
 	}
 	else

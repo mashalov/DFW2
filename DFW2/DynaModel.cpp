@@ -895,7 +895,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 bool CDynaModel::Step()
 {
-	bool bRes = true;
+	bool bRes{ true };
 
 	// запоминаем текущее значение времени
 	sc.Assign_t0();

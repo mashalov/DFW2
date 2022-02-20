@@ -8,7 +8,7 @@
 
 using namespace DFW2;
 
-#define LOW_VOLTAGE 0.1
+#define LOW_VOLTAGE 0.1	// может быть сделать в о.е. ? Что будет с узлами с низким Uном ?
 #define LOW_VOLTAGE_HYST LOW_VOLTAGE * 0.1
 
 // запоминает значение модуля напряжения с предыдущей итерации
