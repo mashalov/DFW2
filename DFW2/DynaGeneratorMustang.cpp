@@ -29,13 +29,16 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::PreInit(CDynaModel* pDynaModel)
 	// валидация должна далее найти некорректные данные и показать
 	if (xd > 0 && xd1 > 0)
 	{
-		double Tds = Tdo1 * xd1 / xd;
-		double Tdss = Tdo2 * xd2 / xd1;
+		const double Tds{ Tdo1 * xd1 / xd };
+		const double Tdss{ Tdo2 * xd2 / xd1 };
 		if(Tdo1 > Tdo2)
 			xd1 = (xd * (Tds - Tdo2 + Tdss) - xd2 * Tdo2) / (Tdo1 - Tdo2);
 	}
 
 	Zgen_ = { 0, 0.5 * (xd2 + xq2) };
+
+	Tm_ = (1.0 / Tdo2 - 1.0 / Tdo1);
+	Txm_ = ((xd1 - xd2) / Tdo2 + (xd - xd1) / Tdo1);
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -126,9 +129,9 @@ void CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 	// dEqss / dEqss
 	pDynaModel->SetElement(Eqss, Eqss, -1.0 / Tdo2);
 	// dEqss / dEqs
-	pDynaModel->SetElement(Eqss, Eqs, -(1.0 / Tdo2 - 1.0 / Tdo1));
+	pDynaModel->SetElement(Eqss, Eqs, -Tm_);
 	// dEqss / dId
-	pDynaModel->SetElement(Eqss, Id, -((xd1 - xd2) / Tdo2 + (xd - xd1) / Tdo1));
+	pDynaModel->SetElement(Eqss, Id, -Txm_);
 	// dEqss / dEqe
 	if (ExtEqe.Indexed())
 		pDynaModel->SetElement(Eqss, ExtEqe, -1.0 / Tdo1);
@@ -174,7 +177,7 @@ void CDynaGeneratorMustang::CalculateDerivatives(CDynaModel* pDynaModel, CDevice
 		(pDynaModel->*fn)(s, (Pt / ( 1.0 + s ) - Kdemp * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj);
 		(pDynaModel->*fn)(Eqs, (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1);
 		(pDynaModel->*fn)(Edss, (-Edss - Iq * (xq1 - xq2)) / Tqo2);
-		(pDynaModel->*fn)(Eqss, Eqs * (1.0 / Tdo2 - 1.0 / Tdo1) + Id * ((xd1 - xd2) / Tdo2 + (xd - xd1) / Tdo1) - Eqss / Tdo2 + ExtEqe / Tdo1);
+		(pDynaModel->*fn)(Eqss, Eqs * Tm_ + Id * Txm_ - Eqss / Tdo2 + ExtEqe / Tdo1);
 	}
 	else
 	{

@@ -11,6 +11,8 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
+		double Tm_;		// константы из модели Мустанг, которые имеет смысл
+		double Txm_;	// рассчитать один раз
 	public:
 
 		using CDynaGenerator3C::CDynaGenerator3C;
