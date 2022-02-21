@@ -65,7 +65,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 	if (!pDynaModel->ConsiderDampingEquation())
 		Kdemp = 0.0;
 
-	eDEVICEFUNCTIONSTATUS Status = CDynaGeneratorMotion::InitModel(pDynaModel);
+	eDEVICEFUNCTIONSTATUS Status{ CDynaGeneratorMotion::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -93,6 +93,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS eRes{ CDynaGeneratorMotion::ProcessDiscontinuity(pDynaModel) };
+
 	if (CDevice::IsFunctionStatusOK(eRes))
 	{
 		if (IsStateOn())
@@ -100,7 +101,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::ProcessDiscontinuity(CDynaModel* pDy
 			double DeltaGT{ Delta - DeltaV }, NodeV{ V };
 			Vd = -NodeV * sin(DeltaGT);
 			Vq = NodeV * cos(DeltaGT);
-			double det{ Vd * Vd + Vq * Vq };
+			const double det{ Vd * Vd + Vq * Vq };
 			Id = (P * Vd - Q * Vq) / det;
 			Iq = (Q * Vd + P * Vq) / det;
 			IfromDQ();

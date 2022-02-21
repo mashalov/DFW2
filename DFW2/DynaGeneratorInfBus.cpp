@@ -24,9 +24,7 @@ bool CDynaGeneratorInfBusBase::CalculatePower()
 	Q = -Vre * Iim + Vim * Ire;
 
 	if (std::abs(Ynorton_) > DFW2_EPSILON)
-	{
 		FromComplex(Ire, Iim, GetEMF() * Ynorton_);
-	}
 	
 	return true;
 }
@@ -94,9 +92,9 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 {
 	bool bRes{ true };
 	cplx S(P, Q);
-	cplx v = std::polar((double)V, (double)DeltaV);
+	const cplx v{ std::polar((double)V, (double)DeltaV) };
 	_ASSERTE(abs(v) > 0.0);
-	cplx i = conj(S / v);
+	cplx i{ conj(S / v) };
 	// тут еще надо учитывать сопротивление статора
 	const cplx eQ{ v + i * cplx(r, GetXofEqs()) };
 	Delta = arg(eQ);
@@ -161,6 +159,5 @@ void CDynaGeneratorInfBusBase::DeviceProperties(CDeviceContainerProperties& prop
 	props.SetType(DEVTYPE_GEN_INFPOWER);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorInfPower, CDeviceContainerProperties::m_cszSysNameGeneratorInfPower);
 	props.EquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
-
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorInfBus>>();
 }

@@ -37,8 +37,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::PreInit(CDynaModel* pDynaModel)
 
 	Zgen_ = { 0, 0.5 * (xd2 + xq2) };
 
+	xd2_xq2_ = xd2 - xq2;
+	xd_xd1_ = xd - xd1;
+	xq1_xq2_ = xq1 - xq2;
+	xd1_xd2_ = xd1 - xd2;
+	xd_xd2_ = xd - xd2;
 	Tm_ = (1.0 / Tdo2 - 1.0 / Tdo1);
-	Txm_ = ((xd1 - xd2) / Tdo2 + (xd - xd1) / Tdo1);
+	Txm_ = (xd1_xd2_ / Tdo2 + xd_xd1_ / Tdo1);
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -107,7 +112,7 @@ void CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 	// dEqs/dEqs
 	pDynaModel->SetElement(Eqs, Eqs, -1.0 / Tdo1);
 	// dEqs/dId
-	pDynaModel->SetElement(Eqs, Id, -(xd - xd1) / Tdo1);
+	pDynaModel->SetElement(Eqs, Id, -xd_xd1_/ Tdo1);
 	// dEqs/dEqe
 	if (ExtEqe.Indexed())
 		pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Tdo1);
@@ -115,15 +120,15 @@ void CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 	// m_pExciter->A(CDynaExciterBase::V_EQE)
 
 	// dS / dS
-	pDynaModel->SetElement(s, s, 1.0 / Mj * (-Kdemp - Pt / sp1 / sp1));
+	pDynaModel->SetElement(s, s, (-Kdemp - Pt / sp1 / sp1) / Mj);
 	// dS / Eqss
-	pDynaModel->SetElement(s, Eqss, 1.0 / Mj * Iq);
+	pDynaModel->SetElement(s, Eqss, Iq / Mj);
 	// dS / Edss
-	pDynaModel->SetElement(s, Edss, 1.0 / Mj * Id);
+	pDynaModel->SetElement(s, Edss, Id / Mj);
 	// dS / Id
-	pDynaModel->SetElement(s, Id, 1.0 / Mj * (Edss + Iq * (xd2 - xq2)));
+	pDynaModel->SetElement(s, Id, (Edss + Iq * xd2_xq2_) / Mj);
 	// dS / Iq
-	pDynaModel->SetElement(s, Iq, 1.0 / Mj * (Eqss + Id * (xd2 - xq2)));
+	pDynaModel->SetElement(s, Iq, (Eqss + Id * xd2_xq2_) / Mj);
 
 
 	// dEqss / dEqss
@@ -139,14 +144,14 @@ void CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 	// dEdss / dEdss
 	pDynaModel->SetElement(Edss, Edss, -1.0 / Tqo2);
 	// dEdss / dIq
-	pDynaModel->SetElement(Edss, Iq, (xq1 - xq2) / Tqo2);
+	pDynaModel->SetElement(Edss, Iq, xq1_xq2_ / Tqo2);
 
 	// dEq / dEq
 	pDynaModel->SetElement(Eq, Eq, 1.0);
 	// dEq / dEqss
 	pDynaModel->SetElement(Eq, Eqss, -1.0);
 	// dEq / dId
-	pDynaModel->SetElement(Eq, Id, xd - xd2);
+	pDynaModel->SetElement(Eq, Id, xd_xd2_);
 
 	// строит уравнения для Vd, Vq, Ire, Iim
 	BuildRIfromDQEquations(pDynaModel);
@@ -163,7 +168,7 @@ void CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 
 	pDynaModel->SetFunction(Id, Id + zsq * (sp2 * Eqss - Vq) * xq2);
 	pDynaModel->SetFunction(Iq, Iq + zsq * (Vd - sp2 * Edss) * xd2);
-	pDynaModel->SetFunction(Eq, Eq - Eqss + Id * (xd - xd2));
+	pDynaModel->SetFunction(Eq, Eq - Eqss + Id * xd_xd2_);
 	SetFunctionsDiff(pDynaModel);
 	// строит уравнения для Vd, Vq, Ire, Iim
 	BuildRIfromDQRightHand(pDynaModel);
@@ -174,9 +179,9 @@ void CDynaGeneratorMustang::CalculateDerivatives(CDynaModel* pDynaModel, CDevice
 	if (IsStateOn())
 	{
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
-		(pDynaModel->*fn)(s, (Pt / ( 1.0 + s ) - Kdemp * s - (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2))) / Mj);
-		(pDynaModel->*fn)(Eqs, (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1);
-		(pDynaModel->*fn)(Edss, (-Edss - Iq * (xq1 - xq2)) / Tqo2);
+		(pDynaModel->*fn)(s, (Pt / ( 1.0 + s ) - Kdemp * s - (Eqss * Iq + Edss * Id + Id * Iq * xd2_xq2_)) / Mj);
+		(pDynaModel->*fn)(Eqs, (ExtEqe - Eqs + Id * xd_xd1_) / Tdo1);
+		(pDynaModel->*fn)(Edss, (-Edss - Iq * xq1_xq2_) / Tqo2);
 		(pDynaModel->*fn)(Eqss, Eqs * Tm_ + Id * Txm_ - Eqss / Tdo2 + ExtEqe / Tdo1);
 	}
 	else
@@ -207,9 +212,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::ProcessDiscontinuity(CDynaModel *pD
 		Vq =  dVre * cosg + dVim * sing;
 		Id = -zsq * (sp2 * Eqss - Vq) * xq2;
 		Iq = -zsq * (Vd - sp2 * Edss) * xd2;
-		P =  sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2));
+		P =  sp2 * (Eqss * Iq + Edss * Id + Id * Iq * xd2_xq2_);
 		Q =  Vd * Iq - Vq * Id;
-		Eq  = Eqss - Id * (xd - xd2);
+		Eq  = Eqss - Id * xd_xd2_;
 		IfromDQ();
 	}
 	else
@@ -243,7 +248,7 @@ bool CDynaGeneratorMustang::CalculatePower()
 	Vq =  dVre * cosg + dVim * sing;
 	Id = -zsq * (sp2 * Eqss - Vq) * xq2;
 	Iq = -zsq * (Vd - sp2 * Edss) * xd2;
-	P = sp2 * (Eqss * Iq + Edss * Id + Id * Iq * (xd2 - xq2));
+	P = sp2 * (Eqss * Iq + Edss * Id + Id * Iq * xd2_xq2_);
 	Q = Vd * Iq - Vq * Id;
 	IfromDQ();
 	return true;

@@ -13,6 +13,11 @@ namespace DFW2
 		void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
 		double Tm_;		// константы из модели Мустанг, которые имеет смысл
 		double Txm_;	// рассчитать один раз
+		double xd2_xq2_;
+		double xd_xd1_;
+		double xq1_xq2_;
+		double xd1_xd2_;
+		double xd_xd2_;
 	public:
 
 		using CDynaGenerator3C::CDynaGenerator3C;

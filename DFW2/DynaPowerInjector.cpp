@@ -6,7 +6,7 @@ using namespace DFW2;
 
 double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p(nullptr);
+	double* p{ nullptr };
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(NodeId, C_NODEID)
@@ -23,7 +23,7 @@ VariableIndexRefVec& CDynaPowerInjector::GetVariables(VariableIndexRefVec& Child
 
 double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 {
-	double *p(nullptr);
+	double* p{ nullptr };
 
 	switch (nVarIndex)
 	{
@@ -48,7 +48,7 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(V, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszV, DEVTYPE_NODE));
+	eDEVICEFUNCTIONSTATUS eRes{ DeviceFunctionResult(InitExternalVariable(V, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszV, DEVTYPE_NODE)) };
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(DeltaV, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszDelta, DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vre, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszVre, DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vim, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszVim, DEVTYPE_NODE));
@@ -110,11 +110,8 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.EquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
-
 	props.bFinishStep = true;	// нужно рассчитывать мощности после выполнения шага
-
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaPowerInjector>>();
-
 }
 
 
