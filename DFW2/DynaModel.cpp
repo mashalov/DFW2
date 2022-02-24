@@ -71,7 +71,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaGeneratorPark4C::DeviceProperties(GeneratorsPark4C.ContainerProps());
 	CDynaDECMustang::DeviceProperties(DECsMustang.ContainerProps());
 	CDynaExcConMustang::DeviceProperties(ExcConMustang.ContainerProps());
-	//CDynaExcConMustangNonWindup::DeviceProperties(ExcConMustang.m_ContainerProps);
+	//CDynaExcConMustangNonWindup::DeviceProperties(ExcConMustang.ContainerProps());
 	CDynaExciterMustang::DeviceProperties(ExcitersMustang.ContainerProps());
 	CDynaBranchMeasure::DeviceProperties(BranchMeasures.ContainerProps());
 	CDynaNodeMeasure::DeviceProperties(NodeMeasures.ContainerProps());
