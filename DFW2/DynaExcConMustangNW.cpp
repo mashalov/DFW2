@@ -58,17 +58,17 @@ void CDynaExcConMustangNonWindup::ScaleGains(CDynaExcConMustangNonWindup& excon)
 
 eDEVICEFUNCTIONSTATUS CDynaExcConMustangNonWindup::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
 
 	dVdtOut = dEqdtOut = dSdtOut = 0.0;
 	Svt = Uf = Usum = 0.0;
-	double Eqnom, Unom, Eqe0;
+	double Unom, Eqe0;
 
 	CDevice* pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
 	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqnom, pExciter, CDynaGeneratorDQBase::m_cszEqnom))
+	if (!InitConstantVariable(Eqnom_, pExciter, CDynaGeneratorDQBase::m_cszEqnom))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqe0, pExciter, CDynaGeneratorDQBase::m_cszEqe, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
@@ -77,12 +77,13 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustangNonWindup::Init(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Lag.SetMinMaxTK(pDynaModel, Umin * Eqnom - Eqe0, Umax * Eqnom - Eqe0, Tr, 1.0);
+		Lag.SetMinMaxTK(pDynaModel, Umin * Eqnom_ - Eqe0, Umax * Eqnom_ - Eqnom_, Tr, Eqnom_);
 
-		K0u *= Eqnom / Unom;
-		K1u *= Eqnom / Unom;
-		K0f *= Eqnom * pDynaModel->GetOmega0() / 2.0 / M_PI;
-		K1f *= Eqnom * pDynaModel->GetOmega0() / 2.0 / M_PI;
+		K0u /= Unom;
+		K1u /= Unom;
+		K0f *= pDynaModel->GetOmega0() / 2.0 / M_PI;
+		K1f *= pDynaModel->GetOmega0() / 2.0 / M_PI;
+		K1if /= Eqnom_;
 
 		// забавно - если умножить на машстабы до
 		// расчета о.е - изменяется количество шагов метода
@@ -100,7 +101,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustangNonWindup::Init(CDynaModel* pDynaModel)
 		{
 		case eDEVICESTATE::DS_ON:
 		{
-			bool bRes = true;
+			bool bRes{ true };
 			Vref = dVdtIn;
 			bRes = Lag.Init(pDynaModel);
 			Status = bRes ? eDEVICEFUNCTIONSTATUS::DFS_OK : eDEVICEFUNCTIONSTATUS::DFS_FAILED;
