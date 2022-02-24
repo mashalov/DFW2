@@ -59,7 +59,7 @@ void CDynaExcConMustang::ScaleGains(CDynaExcConMustang& excon)
 
 eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
 
 	dVdtOut = dEqdtOut = dSdtOut = 0.0;
 	Svt = Uf = Usum = UsumLmt = 0.0;
@@ -79,10 +79,11 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		Limiter.SetMinMax(pDynaModel, Umin - Eqe0 / Eqnom_, Umax - Eqe0 / Eqnom_);
-		K0u *= 1.0 / Unom;
-		K1u *= 1.0 / Unom;
+		K0u /= Unom;
+		K1u /= Unom;
 		K0f *= pDynaModel->GetOmega0() / 2.0 / M_PI;
 		K1f *= pDynaModel->GetOmega0() / 2.0 / M_PI;
+		K1if /= Eqnom_;
 
 		// забавно - если умножить на машстабы до
 		// расчета о.е - изменяется количество шагов метода
