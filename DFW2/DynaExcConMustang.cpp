@@ -143,7 +143,7 @@ void CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(Svt, dSdtIn, -1.0 / Tf);
 
 		pDynaModel->SetElement(Uf, UsumLmt, -Eqnom_ / Tr);
-		pDynaModel->SetElement(Uf, Uf, -Eqnom_ / Tr);
+		pDynaModel->SetElement(Uf, Uf, -1.0 / Tr);
 
 	}
 	else
@@ -190,7 +190,7 @@ void CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 		
 		pDynaModel->SetFunction(Usum, dSum);
 		pDynaModel->SetFunctionDiff(Svt, (dSdtIn - Svt) / Tf);
-		pDynaModel->SetFunctionDiff(Uf, Eqnom_ * (UsumLmt - Uf) / Tr);
+		pDynaModel->SetFunctionDiff(Uf, (Eqnom_ * UsumLmt - Uf) / Tr);
 	}
 	else
 	{
@@ -208,7 +208,7 @@ void CDynaExcConMustang::BuildDerivatives(CDynaModel *pDynaModel)
 	if (IsStateOn())
 	{
 		pDynaModel->SetDerivative(Svt, (dSdtIn - Svt) / Tf);
-		pDynaModel->SetFunctionDiff(Uf, (UsumLmt - Uf) / Tr);
+		pDynaModel->SetFunctionDiff(Uf, (Eqnom_ * UsumLmt - Uf) / Tr);
 	}
 	else
 	{
