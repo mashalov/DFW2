@@ -22,6 +22,8 @@ namespace DFW2
 			const double K1f = 0.5;
 		};
 
+		double Eqnom_ = 0.0;
+
 		// Единичные масштабы (совместимость с нормальными АРВ)
 		static constexpr GainScales UnityGains = { 1.0, 1.0, 1.0, 1.0 };
 		// Станадартные масштабы для (совместимость с Мустанг)

@@ -63,13 +63,13 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 	dVdtOut = dEqdtOut = dSdtOut = 0.0;
 	Svt = Uf = Usum = UsumLmt = 0.0;
-	double Eqnom, Unom, Eqe0;
+	double Unom, Eqe0;
 
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
 	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqnom, pExciter, CDynaGeneratorDQBase::m_cszEqnom))
+	if (!InitConstantVariable(Eqnom_, pExciter, CDynaGeneratorDQBase::m_cszEqnom))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqe0, pExciter, CDynaGeneratorDQBase::m_cszEqe, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
@@ -78,11 +78,11 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Limiter.SetMinMax(pDynaModel, Umin * Eqnom - Eqe0, Umax * Eqnom - Eqe0);
-		K0u *= Eqnom / Unom;
-		K1u *= Eqnom / Unom;
-		K0f *= Eqnom * pDynaModel->GetOmega0() / 2.0 / M_PI;
-		K1f *= Eqnom * pDynaModel->GetOmega0() / 2.0 / M_PI;
+		Limiter.SetMinMax(pDynaModel, Umin - Eqe0 / Eqnom_, Umax - Eqe0 / Eqnom_);
+		K0u *= 1.0 / Unom;
+		K1u *= 1.0 / Unom;
+		K0f *= pDynaModel->GetOmega0() / 2.0 / M_PI;
+		K1f *= pDynaModel->GetOmega0() / 2.0 / M_PI;
 
 		// забавно - если умножить на машстабы до
 		// расчета о.е - изменяется количество шагов метода
@@ -141,8 +141,8 @@ void CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 		//dSvt / dSv
 		pDynaModel->SetElement(Svt, dSdtIn, -1.0 / Tf);
 
-		pDynaModel->SetElement(Uf, UsumLmt, -1.0 / Tr);
-		pDynaModel->SetElement(Uf, Uf, -1.0 / Tr);
+		pDynaModel->SetElement(Uf, UsumLmt, -Eqnom_ / Tr);
+		pDynaModel->SetElement(Uf, Uf, -Eqnom_ / Tr);
 
 	}
 	else
@@ -189,7 +189,7 @@ void CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 		
 		pDynaModel->SetFunction(Usum, dSum);
 		pDynaModel->SetFunctionDiff(Svt, (dSdtIn - Svt) / Tf);
-		pDynaModel->SetFunctionDiff(Uf, (UsumLmt - Uf) / Tr);
+		pDynaModel->SetFunctionDiff(Uf, Eqnom_ * (UsumLmt - Uf) / Tr);
 	}
 	else
 	{
