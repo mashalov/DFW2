@@ -106,7 +106,7 @@ public:
 #else
 	static std::string COM_encode(const std::string_view& str)
 	{
-		return std::string(str)
+		return std::string(str);
 	}
 #endif
 
