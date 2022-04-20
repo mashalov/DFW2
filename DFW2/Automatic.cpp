@@ -226,7 +226,7 @@ void CAutomatic::Init()
 		pActionRelay->SetDiscontinuityId(pLogic->GetId());
 		CAutomaticLogic *pLogicItem = static_cast<CAutomaticLogic*>(pLogic);
 		const std::string strActions = pLogicItem->GetActions();
-		stringutils::split(strActions, ";,", ActionList);
+		stringutils::split(strActions, ActionList);
 
 		for (auto&& sit : ActionList)
 		{
