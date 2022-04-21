@@ -6,6 +6,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/include/"
              "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/runtime/src/" )
 
+set(ANTLR4CPP_JAR_LOCATION ${PROJECT_SOURCE_DIR}/antlr/antlr-4.9.2-complete.jar)
+
+set(ANTLR4_PRODUCTS
+  "${CMAKE_CURRENT_SOURCE_DIR}/Generated/EquationsBaseVisitor.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Generated/EquationsLexer.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Generated/EquationsVisitor.cpp"
+  "${CMAKE_CURRENT_SOURCE_DIR}/Generated/EquationsParser.cpp"
+)
+
+
+add_custom_command(OUTPUT ${ANTLR4_PRODUCTS}
+  COMMAND java -jar ${ANTLR4CPP_JAR_LOCATION} -Dlanguage=Cpp -no-listener -visitor -o ${CMAKE_CURRENT_SOURCE_DIR}/Generated ${CMAKE_CURRENT_SOURCE_DIR}/Equations.g4
+  DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/Equations.g4"
+  COMMENT "Generating lexer and parser by Antlr4"
+  VERBATIM
+)
+
+
 set(SOURCES 
     ../../../fmt/src/format.cc
     Generated/EquationsBaseVisitor.cpp
@@ -42,12 +60,7 @@ set(SOURCES
     ../../DFW2/Messages.cpp
     )             
 
-#add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/"
-# "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/build/")
-
- #add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/"
- #"${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/build/")
-
+add_custom_target(ANTL4RUNTIME DEPENDS ${ANTLR4_PRODUCTS})
 add_library(UMC SHARED ${SOURCES})
 
 #add_executable(UMC  ${SOURCES})
