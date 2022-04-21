@@ -66,7 +66,7 @@ bool CExpand::NotifyDelay(CDynaModel *pDynaModel)
 
 bool CExpand::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	return CDynaPrimitive::UnserializeParameters({ {Delay_,0.0} }, Parameters);
+	return CDynaPrimitive::UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT { {Delay_,0.0} }, Parameters);
 }
 
 

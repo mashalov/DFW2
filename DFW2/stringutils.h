@@ -1,9 +1,9 @@
 ﻿#pragma once
-#include "list"
-#include "algorithm"
-#include "string"
+#include <list>
+#include <algorithm>
+#include <string>
 
-typedef std::list<std::string> STRINGLIST;
+using STRINGLIST = std::list<std::string>;
 
 class stringutils
 {

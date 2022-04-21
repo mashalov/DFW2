@@ -42,7 +42,7 @@ bool CRSTrigger::UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTO
 {
 	double dResetPriority{ 1.0 };
 	// по умолчанию приоритет имеет вход Reset
-	CDynaPrimitive::UnserializeParameters({ { dResetPriority, 1.0 } }, Parameters);
+	CDynaPrimitive::UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT{ { dResetPriority, 1.0 } }, Parameters);
 	ResetPriority_ = dResetPriority > 0;
 	return true;
 }

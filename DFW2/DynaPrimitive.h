@@ -2,6 +2,7 @@
 #include "Device.h"
 #include <limits.h>
 #include <type_traits>
+#include <functional>
 
 namespace DFW2
 {

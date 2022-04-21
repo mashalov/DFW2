@@ -146,7 +146,7 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 bool CDeadBand::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	return CDynaPrimitive::UnserializeParameters({ {Db_, 0.0} }, Parameters);
+	return CDynaPrimitive::UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT { {Db_, 0.0} }, Parameters);
 }
 
 

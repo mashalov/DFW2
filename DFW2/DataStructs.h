@@ -6,6 +6,7 @@
 #include <string>
 #include <algorithm>
 #include <variant>
+#include <functional>
 #include "DeviceTypes.h"
 #include "DLLStructs.h"
 
