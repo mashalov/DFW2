@@ -2145,7 +2145,7 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty(CDevice::m_cszname, TypedSerializedValue::eValueType::VT_NAME);
 	AddStateProperty(Serializer);
-	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum(eLFNodeType_, CDynaNodeBase::m_cszLFNodeTypeNames));
+	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>(eLFNodeType_, CDynaNodeBase::m_cszLFNodeTypeNames));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);

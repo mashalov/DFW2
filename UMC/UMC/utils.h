@@ -25,20 +25,22 @@ std::string to_string(const T& t)
     return str;
 }
 
-static char localestring[] = "en_US.UTF-8";
+
+static std::locale utf8locale;
+
 // используем локаль для isspace для возможности работы в UTF-8
 static inline std::string& ltrim(std::string& s)
 {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char ch) noexcept { 
-		return !std::isspace(ch, std::locale(localestring)); 
-		}));
-    return s;
+	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char ch) noexcept { 
+		return !std::isspace(ch, utf8locale); 
+	}));
+	return s;
 }
 
 static inline std::string& rtrim(std::string& s)
 {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](char ch) noexcept { 
-		return !std::isspace(ch, std::locale(localestring));
+	s.erase(std::find_if(s.rbegin(), s.rend(), [](char ch) noexcept { 
+		return !std::isspace(ch, utf8locale);
 		 }).base(), s.end());
     return s;
 }

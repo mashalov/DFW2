@@ -267,6 +267,11 @@ namespace DFW2
 																						   StringRepresentation_(ppStringRepresentation),
 																						   Count_(N)
 																						   {}
+
+																						   // additional deduction guide
+		//template<class Iter>
+		//	container(Iter b, Iter e) -> container<typename std::iterator_traits<Iter>::value_type>;
+			
 		virtual ~CSerializerAdapterEnum() = default;
 	};
 

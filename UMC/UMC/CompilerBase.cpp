@@ -227,7 +227,7 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         else
             pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelFailedToCompile, stringutils::utf8_encode(compiledModulePath.c_str())));
     }
-    catch (const dfw2error& err)
+    catch (const std::exception& err) 
     {
         pTree->Message(err.what());
         bRes = false;

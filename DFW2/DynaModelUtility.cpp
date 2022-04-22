@@ -650,25 +650,25 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszProcessDuration, m_dProcessDuration);
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
-		new CSerializerAdapterEnum(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
+		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
 
 	Serializer->AddEnumProperty(m_cszFreqDampingType,
-		new CSerializerAdapterEnum(eFreqDampingType, m_cszFreqDampingNames));
+		new CSerializerAdapterEnum<ACTIVE_POWER_DAMPING_TYPE>(eFreqDampingType, m_cszFreqDampingNames));
 
 	Serializer->AddEnumProperty("DiffEquationType",
-		new CSerializerAdapterEnum(m_eDiffEquationType, m_cszDiffEquationTypeNames));
+		new CSerializerAdapterEnum<DEVICE_EQUATION_TYPE>(m_eDiffEquationType, m_cszDiffEquationTypeNames));
 
 	Serializer->AddEnumProperty(m_cszConsoleLogLevel,
-		new CSerializerAdapterEnum(m_eConsoleLogLevel, m_cszLogLevelNames));
+		new CSerializerAdapterEnum<DFW2MessageStatus>(m_eConsoleLogLevel, m_cszLogLevelNames));
 
 	Serializer->AddEnumProperty(m_cszFileLogLevel,
-		new CSerializerAdapterEnum(m_eFileLogLevel, m_cszLogLevelNames));
+		new CSerializerAdapterEnum<DFW2MessageStatus>(m_eFileLogLevel, m_cszLogLevelNames));
 
 	Serializer->AddEnumProperty(m_cszParkParametersDetermination,
-		new CSerializerAdapterEnum(m_eParkParametersDetermination, m_cszParkParametersDeterminationMethodNames));
+		new CSerializerAdapterEnum<PARK_PARAMETERS_DETERMINATION_METHOD>(m_eParkParametersDetermination, m_cszParkParametersDeterminationMethodNames));
 
 	Serializer->AddEnumProperty(m_cszGeneratorLessLRC,
-		new CSerializerAdapterEnum(m_eGeneratorLessLRC, m_cszGeneratorLessLRCNames));
+		new CSerializerAdapterEnum<GeneratorLessLRC>(m_eGeneratorLessLRC, m_cszGeneratorLessLRCNames));
 
 	// расчет УР
 
@@ -676,7 +676,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszLFFlat, Flat);
 
 	Serializer->AddEnumProperty(m_cszLFStartup,
-		new CSerializerAdapterEnum(Startup, m_cszLFStartupNames));
+		new CSerializerAdapterEnum<CLoadFlow::eLoadFlowStartupMethod>(Startup, m_cszLFStartupNames));
 		
 	Serializer->AddProperty(m_cszLFSeidellStep, SeidellStep);
 	Serializer->AddProperty(m_cszLFSeidellIterations, SeidellIterations);
@@ -686,7 +686,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszLFNewtonMaxNodeAngleStep, NodeAngleNewtonStep);
 	Serializer->AddProperty(m_cszLFNewtonMaxBranchAngleStep, BranchAngleNewtonStep);
 	Serializer->AddProperty(m_cszLFForceSwitchLambda, ForceSwitchLambda);
-	Serializer->AddEnumProperty(m_cszLFFormulation, new CSerializerAdapterEnum(LFFormulation, m_cszLFFormulationTypeNames));
+	Serializer->AddEnumProperty(m_cszLFFormulation, 
+		new CSerializerAdapterEnum<CLoadFlow::eLoadFlowFormulation>(LFFormulation, m_cszLFFormulationTypeNames));
 	Serializer->AddProperty(m_cszLFAllowNegativeLRC, AllowNegativeLRC);
 	Serializer->AddProperty(m_cszLFLRCMinSlope, LRCMinSlope);
 	Serializer->AddProperty(m_cszLFLRCMaxSlope, LRCMaxSlope);
@@ -713,7 +714,8 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 	Serializer->AddProperty("ZeroCrossingMode", m_bZeroCrossingMode);
 	Serializer->AddProperty("RetryStep", m_bRetryStep);
 	Serializer->AddProperty("ProcessTopology", m_bProcessTopology);
-	Serializer->AddEnumProperty("DiscontinuityRequest", new CSerializerAdapterEnum(m_eDiscontinuityLevel, m_cszDiscontinuityLevelTypeNames));
+	Serializer->AddEnumProperty("DiscontinuityRequest", 
+		new CSerializerAdapterEnum<DiscontinuityLevel>(m_eDiscontinuityLevel, m_cszDiscontinuityLevelTypeNames));
 	Serializer->AddProperty("EnforceOut", m_bEnforceOut);
 	Serializer->AddProperty("BeforeDiscontinuityWritten", m_bBeforeDiscontinuityWritten);
 	Serializer->AddProperty("FilteredStep", dFilteredStep);

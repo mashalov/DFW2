@@ -23,7 +23,6 @@ add_custom_command(OUTPUT ${ANTLR4_PRODUCTS}
   VERBATIM
 )
 
-
 set(SOURCES 
     ../../../fmt/src/format.cc
     Generated/EquationsBaseVisitor.cpp
@@ -57,19 +56,19 @@ set(SOURCES
     dllmain.cpp
     EquationsOps.cpp
     UMC.cpp
+    utils.h
     ../../DFW2/Messages.cpp
     )             
 
 add_custom_target(ANTL4RUNTIME DEPENDS ${ANTLR4_PRODUCTS})
 add_library(UMC SHARED ${SOURCES})
 
-#add_executable(UMC  ${SOURCES})
 target_include_directories(UMC PRIVATE ${INCLUDES}) 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
 target_link_libraries(UMC 
     "${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/libcryptopp.a"
     "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/dist/libantlr4-runtime.a"
-    dl
+    dl stdc++fs
     )
 
 
