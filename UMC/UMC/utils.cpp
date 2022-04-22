@@ -25,4 +25,4 @@ static std::locale GetLocaleUTF8()
 	return currentLocale;
 }
 
-static std::locale utf8locale = GetLocaleUTF8();
+std::locale utf8locale = GetLocaleUTF8();

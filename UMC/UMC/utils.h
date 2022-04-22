@@ -1,9 +1,14 @@
 ﻿#pragma once
 #include <locale>
+#include <string>
+#include <algorithm>
+#include <fmt/core.h>
+#include <fmt/format.h>
 #define NOMINMAX
 #ifdef _MSC_VER
 #include <Windows.h>
 #endif
+
 
 template <class T>
 inline void hash_combine(std::size_t& seed, const T& v)
@@ -26,7 +31,7 @@ std::string to_string(const T& t)
 }
 
 
-static std::locale utf8locale;
+extern std::locale utf8locale;
 
 // используем локаль для isspace для возможности работы в UTF-8
 static inline std::string& ltrim(std::string& s)
