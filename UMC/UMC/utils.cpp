@@ -1,5 +1,4 @@
 #include "utils.h"
-#include <iostream>
 
 static std::locale GetLocaleUTF8()
 {
@@ -21,7 +20,6 @@ static std::locale GetLocaleUTF8()
 			catch(const std::exception&) {}
 		}
 	}
-	std::cout << "locale set" << std::endl;
 	return currentLocale;
 }
 
