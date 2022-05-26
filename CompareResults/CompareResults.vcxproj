@@ -157,6 +157,7 @@
     <ClInclude Include="Log.h" />
     <ClInclude Include="Plot.h" />
     <ClInclude Include="Result.h" />
+    <ClInclude Include="TimeSeries.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

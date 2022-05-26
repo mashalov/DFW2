@@ -22,13 +22,11 @@ void CResult::Load(std::filesystem::path InputFile)
 		// выбираем нулевой канал чтобы узнать диапазон времени, доступный в файле
 		// (может неправильно работать, если нулевой канал медленная переменная, более 
 		// надежно взять GetTimeScale
-		CPlot testPlot{ ConstructFromPlot(m_ResultRead->GetPlotByIndex(0)) };
-		Log(fmt::format("Loaded file {}, Channels {}, Points {}, Time in [{};{}], Ratio {:3.2}",
+		auto testPlot{ ConstructFromPlot(m_ResultRead->GetPlotByIndex(0)) };
+		Log(fmt::format("Loaded file {}, Channels {}, Points {}, Ratio {:3.2}",
 			InputFile.filename().string(),
 			m_ResultRead->GetChannels(),
 			m_ResultRead->GetPoints(),
-			testPlot.tmin(),
-			testPlot.tmax(),
 			m_ResultRead->GetCompressionRatio()));
 	}
 	catch (_com_error& er)
@@ -61,7 +59,7 @@ DEVICELIST CResult::GetDevices(ptrdiff_t DeviceType) const
 	return devices;
 }
 
-CPlot CResult::ConstructFromPlot(_variant_t Input, const CompareRange& range) const
+CResult::TimeSeriesData CResult::ConstructFromPlot(_variant_t Input, const CompareRange& range) const
 {
 	if (Input.vt != (VT_ARRAY | VT_R8))
 		throw dfw2error(fmt::format("CResult::ConstructFromPlot - array has wrong type {}", Input.vt));
@@ -77,14 +75,14 @@ CPlot CResult::ConstructFromPlot(_variant_t Input, const CompareRange& range) co
 
 	double* pData{ nullptr };
 
-	uBound -= lBound;
+	uBound -= lBound - 1;
 
 	hr = SafeArrayAccessData(Input.parray, (void**)&pData);
 
 	if (FAILED(hr))
 		throw dfw2error(fmt::format("CResult::ConstructFromPlot - SafeArrayAccessData failed {}", GetHRESULT(hr)));
 
-	CPlot plot(uBound, pData + uBound + 1, pData, range);
+	TimeSeriesData plot(uBound, pData + uBound, pData);
 
 	hr = SafeArrayUnaccessData(Input.parray);
 
@@ -105,9 +103,9 @@ void CResult::Compare(const CResult& other, const CompareRange& range) const
 	//CompareDevices(other, 16, "S", 1 * 1000000 + 9, "S", range); // генераторы
 }
 
-CPlot CResult::GetPlot(ptrdiff_t DeviceType, ptrdiff_t DeviceId, std::string_view Variable)
+CResult::TimeSeriesData CResult::GetPlot(ptrdiff_t DeviceType, ptrdiff_t DeviceId, std::string_view Variable)
 {
-	CPlot plot;
+	TimeSeriesData plot;
 	if (auto device{ CResult::GetDevice(GetDevices(DeviceType), DeviceId) }; device)
 	{
 		ResultFileLib::IVariablesPtr variables{ device->GetVariables() };
@@ -132,7 +130,7 @@ void CResult::CompareDevices(const CResult& other, long DeviceType1, std::string
 	struct CompareData
 	{
 		ResultFileLib::IDevicePtr device;
-		PointDifference diff;
+		TimeSeriesData::CompareResult diff;
 	};
 
 	std::map<double, CompareData, std::greater<double>> CompareOrder;
@@ -162,38 +160,47 @@ void CResult::CompareDevices(const CResult& other, long DeviceType1, std::string
 			if (var2 == nullptr)
 				continue;
 
-			// строим графики результатов
-			CPlot plot1{ ConstructFromPlot(var1->GetPlot(), range) };
-			CPlot plot2{ other.ConstructFromPlot(var2->GetPlot(), range) };
-
-			// определяем различия графиков в прямом и обратном направлениях
-			PointDifference diffDirect{ plot1.Compare(plot2) };
-			PointDifference diffReverse{ plot2.Compare(plot1) };
-
-			if (diffDirect.diff < diffReverse.diff)
-				diffDirect = diffReverse;
-
-			if(CompareOrder.size() < 10)
-				CompareOrder.insert({ diffDirect.diff, {dev1, diffDirect} });
-			else
+			try
 			{
-				const double lastDiff{ std::prev(CompareOrder.end())->first };
-				if (lastDiff < diffDirect.diff)
+				// строим графики результатов
+				auto plot1{ ConstructFromPlot(var1->GetPlot(), range) };
+				auto plot2{ other.ConstructFromPlot(var2->GetPlot(), range) };
+
+				// определяем различия графиков в прямом и обратном направлениях
+
+				CResult::TimeSeriesOptions Options;
+
+				//Options.SetAtol(1e-4);
+				//Options.SetRtol(1e-4);
+
+				auto diff{ plot1.Compare(plot2, Options) };
+
+				if (CompareOrder.size() < 10)
+					CompareOrder.insert({ diff.Max().v(), {dev1, diff} });
+				else
 				{
-					CompareOrder.erase(lastDiff);
-					CompareOrder.insert({ diffDirect.diff, {dev1, diffDirect} });
+					const double lastDiff{ std::prev(CompareOrder.end())->first };
+					if (lastDiff < diff.Max().v())
+					{
+						CompareOrder.erase(lastDiff);
+						CompareOrder.insert({ diff.Max().v(), {dev1, diff} });
+					}
 				}
+			}
+			catch (const std::runtime_error& ex)
+			{
+				Log(ex.what());
 			}
 		}
 	}
 
 	for(const auto& res : CompareOrder)
-		Log(fmt::format("{} differences {} at {} ({} vs {})", 
+		Log(fmt::format("{:10} differences {:10f} at {:10f} ({:10f} vs {:10f})", 
 			res.second.device->GetId(), 
 			res.first, 
-			res.second.diff.t,
-			res.second.diff.v1,
-			res.second.diff.v2)
+			res.second.diff.Max().t(),
+			res.second.diff.Max().v1(),
+			res.second.diff.Max().v2())
 		);
 }
 

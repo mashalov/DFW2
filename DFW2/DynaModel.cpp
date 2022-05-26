@@ -907,7 +907,8 @@ bool CDynaModel::Step()
 		if(sc.CurrentTimePlusStep() > dTimeNextEvent)
 		{
 			// если внутри шага есть события, настраиваем шаг на момент события
-			double rHit = (dTimeNextEvent - GetCurrentTime()) / GetH();
+			double rHit = (dTimeNextEvent - GetCurrentTime()) / GetH() * (1.0 - 1E-12);
+			//sc.t0 = dTimeNextEvent;
 			// если при этом настроенный коэффициент изменения шага больше погрешности
 			if (rHit > DFW2_EPSILON)
 			{
