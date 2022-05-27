@@ -19,7 +19,7 @@
 
 \begin{document}
 
-\title{Power System Transient Stability Simulation Results Compression Method}
+\title{Automatic Implementation of Equipment Models For Transient Stability Simulation by Symbolic Manipulations}
 
 \author {Eugene Mashalov, Joint Stock Company "Scientific and Technical Center of Unified Power System", Ekaterinburg, Russia}
 
@@ -34,35 +34,149 @@
 \maketitle
 
 \begin{abstract}
-Transient stability analysis simulation software can produce large amount of
-the resulting data, representing the time series of parameters. Modern power system models
-are highly detailed, and the duration of simulation is usually tens of minutes. 
-In addition, power system simulations is generally performed on multiple variants with
-varying model parameters. The resulting time series for tens of thousands of variables
-may require significant storage and its cost may be tangible even for modern computer systems.
-This article discusses the compression algorithm and its implementation, which can 
-losslessly reduce the amount of time series data by about 40\% with small computational overhead.
+One of the most important tasks in developing transient stability simulation software is to maintain a library of power system equipment models. 
+This paper discusses the process of automatic implementation of custom equipment transient stability models described in graphical and textual forms or their combination. 
+The implementation process is based on symbolic manipulation and does not require programming skills from users.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Power System Transient Stability Simulation, Time Series Lossless Compression.
+Power System Transient Stability Simulation, Power System Equipment modeling, Symbolic Manipulations, Computer Algebra Systems, Compilation.
 \end{IEEEkeywords}
 
 \section{Introduction}
-\IEEEPARstart{M}{odern} power system transient stability analysis practice is mainly involved
-into development of new facilities and also plays a significant role in post-contingency
-control. The last task requires just single answer to the question "will this contingency be stable or not ?"
-Simple criteria, such as angle or energy based can be used to evaluate transient stability, and in 
-most cases they do not require time series analysis. But for system setup, tuning and incident inquiries
-detailed time series are still required. With regard to development tasks, time series are most important
-supplement material for design documentation and their study requires at least all machine angles, 
-voltage magnitudes and angles of buses, some control signals. In most cases much more data should be presented. 
-Thus, the ability to store large amount of transient stability time series should be provided, at least optionally.
+\IEEEPARstart{S}{ince} the beginning of the 2000s, the ability of engineers to create their own custom mathematical models of power system equipment 
+has become one of the major requirements for transient stability simulation software. The intensive development of FACTS technology, 
+the elaboration of control systems and technologies, and the growing demands for energy efficiency increase lead to the fact that dozens 
+of new equipment units appear on the market every year. Often, the transient properties of such equipment differ significantly from the properties of 
+the built-in simulation models. The productivity of the approach to keeping the library of models built into the software up to date by the developers 
+seems to be moderate, since the main task of the developers is to develop the software itself. 
+The professional community of software users is immersed in equipment progress trends and is motivated to obtain accurate simulation results. 
+Therefore, if there are convenient and reliable tools for creating custom models, the process of updating the library with higher quality and at lower costs 
+can be provided directly by users. Modern communication technologies allow the exchange of model development results and unlimited access to the current library online.
 
-The resulting time series are snapshots of model state variables at arbitrary moments of transient.
-The sampling rate of snapshots is uneven and conditioned by integration step. Dense output is not used often, as it 
-produces excess data for long-term transients decay phases. Some model variables have discrete nature, such
-as breaker positions and network parameters changes. Their dense representation also inefficient.
+Despite the fact that for almost all engineering areas in which some kind of simulation is required, there is at least one software package 
+(and most often several options are available), a unified approach to describing user models has not been developed. 
+One of the universal environments that can be considered a de facto standard is Matlab/Simulink \cite{sumulink}. Model development in Simulink 
+is focused on graphical interface in the form of a block diagram. Another widely used environment, Modelica \cite{modelica}, also claims to have 
+the maximum coverage of engineering areas, but offers an approach to model using a special object-oriented language. 
+In parallel with universal modeling environments, specialized software developed for particular areas is quite successfully developing. 
+The choice of such software is obviously conditioned by the fact that it considers the features and established practice of the engineering discipline, 
+and also allows to effectively use the features of the mathematical description of the problem. In most cases, specialized software 
+provides an acceptable level of functionality without the need to create custom models by tuning to the  of built-in ones, and allows 
+to focus directly on the analysis of the results.
+
+Specialized simulation software also includes products for simulation and analysis of transient stability.
+Almost every product has tools for creating custom models, but even in this relatively narrow niche, a unified approach to their presentation 
+has not been formed. In particular, EUROSTAG \cite{eurostag} and PSS®SINCAL \cite{sincal} use graphical interface, while DigSILENT 
+PowerFactory \cite{powefactory} offers a programming language in textual format.
+If we consider in more detail the process of implementing a custom model, that is, its transformation from a representation in which 
+it is developed by an engineer into a representation suitable for embedding in the software, it turns out that the graphical and textual approaches 
+to model development at some point in the implementation process should give identical results. Thus, there is no need to focus on one approach or another,
+and moreover, they can be combined. Users with little development experience tend to prefer graphical interface block-building tools as they are more visual. 
+As models become more complex, it is often more convenient to use a textual representation, since graphical block diagrams of relatively simple algorithmic 
+expressions can be cumbersome. With major changes in the model, efforts will be required to maintain the visibility of its graphical representation. 
+Since model editing is most often done to increase detail by adding new blocks to existing links, a significant part of the graphic image has to be rebuilt.
+This paper discusses the process of implementing custom models that allows to perform symbolic transformations that are invariant to the representation method
+of the initial mathematical description of the model and allows to combine graphical and textual approaches to the model development.
+
+\section{Requirements for custom models}
+Before defining the requirements for the custom models implementation, it is necessary to give a brief description of the problem being solved. 
+Transient stability simulation is in fact is the process of solving a differential-algebraic system of equations (DAE) of the form:
+
+\begin{equation}
+	\label{eqn_thedae}
+	\begin{array}{c}
+		\begin{cases}
+			\begin{array}{lcl}
+				\dot{y}&=&f(x(t), y(t), t) \\
+			 	      0&=&g(x(t), t(t), t)\\
+			\end{array}
+		\end{cases} 
+	\vspace{0.5em} \\
+	 x(t_0)=x_0, y(t_0)=y_0 \\
+	\end{array}
+\end{equation}
+\noindent where \(g\) and \(f\) are smooth vector functions. The solution of \eqref{eqn_thedae} is formally to find \(x(t)\) and \(y(t)\) for \(t\in[t_0;T_{end}]\). Since the analytical solution of \eqref{eqn_thedae} is impossible in most cases, a numerical integration is used which involves replacing differential part
+of \eqref{eqn_thedae} with finite-difference equations and their sequential solution with some integration
+method. The integration method builds sequence of approximations \(z_n(t_n)=[y_n(t_n), x_n(t_n)]^T\), satisfying
+the conditions:
+\begin{equation}
+	\label{eqn_fdapprox}
+	\vert\vert z(t_n)-z_n(t_n) \vert\vert \leq \epsilon
+\end{equation}
+\noindent where \(z(t_n)\) is analytical solution and \(z_n(t_n)\) is approximated solution. Since \eqref{eqn_thedae} is usually stiff,
+mostly implicit integration methods are used, requiring the solution of a nonlinear system of equations at each integration step \(n\).
+
+Transient trajectories are not smooth and subject to discontinuities at particular time instants due to switching and limiting of state variables.
+Thus \(f\) and \(g\) are not continuous in \(t\in[t_0;T_{end}]\) but only piece-wise continuous, as well as their derivatives. This requires a restart integration
+method at time instants of discontinuities \(t_d\) with new initial conditions \(z_d(t_d))\). In some cases structure and dimension of \eqref{eqn_thedae}
+also subject to change. Discontinuities are associated with events that can be divided into time events and state events. Time events are 
+unconditional and has a known time of occurrence. They can be applied to solution at scheduled time instants. State events have only conditions of occurrence and
+their times must be located during solution.
+
+Based on the above characteristics of the problem, to solve system \eqref{eqn_thedae}, the following minimum set of procedures should be implemented:
+\begin{itemize}
+	\item evaluation of initial conditions at \(t_0\);
+	\item evaluation of residuals of equations;
+	\item construction of a submatrix of partial derivatives;
+	\item time location of the state events \(t_d\);
+	\item evaluation of switched \eqref{eqn_thedae} initial conditions at the discontinuities \(t_d\).
+\end{itemize}
+
+The custom model is a subsystem of \eqref{eqn_thedae}, therefore, a set of procedures identical to the set for the general system must be implemented for it.
+
+When developer is asked for creation of equipment model, he starts by analyzing the given block diagram, forms a system of equations, and then implements 
+a program with functions that ensure the interaction of the model with the core software. The result of that work is an integral part of the software. 
+To implement a custom model, a similar process is required with two differences: the developer does not participate in the process, and the result of the work 
+is not included directly in the software, but operates as external module. The latter is usually, a native machine code executable module in the operating system format.
+(*.dll for Windows or *.so for Unix systems). Implementing custom model functions in native code eliminates technical differences between custom and 
+built-in models and ensures maximum performance.
+
+The generation of native code in itself is the complex task, since it is necessary to take into account the system architecture features.
+Therefore, when implementing custom models, to generate native code, standard systems for compiling executable modules are used, 
+for which the source text of the custom model program is preliminarily created in one of the general-purpose programming languages. 
+In this case, such a programming language is called intermediate. In practice, C/C++ and Fortran compilers are often used. 
+Automatically generated programs in these languages are the penultimate stage of the implementation of the custom model, 
+preceding the compilation of the executable module in native code.
+
+\section{Model representation in AST-form}
+Consider the model representation in block diagram and textual forms. As an example, the simple model of automatic voltage regulator is used. 
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\columnwidth]{code.eps}
+	\caption{Sample AVR model pesudocode representation}
+	\label{fig_avrcode}
+\end{figure}
+Textual form of representation is shown in Fig. \ref{fig_avrcode} and block diagram in Fig. \ref{fig_avr}.
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\columnwidth]{avr.eps}
+	\caption{Sample AVR model block diagram}
+	\label{fig_avr}
+\end{figure}
+
+Both representations use elementary functional blocks: lag, derivative lag and limited lag. Ready-made elementary functional
+blocks are included in custom model toolbox to simplify model creation and enable efficient implementation by core software
+instead of letting the user build these blocks from individual differential equations.
+In addition, the implementation of the elementary blocks in the core software allows to use common procedures for discrete events 
+location and processing and hide these details from the user. 
+If necessary, differential equations can be explicitly specified using the integrator block.
+
+Formally, the block diagram of the model corresponds to a directed graph whose vertices are elementary blocks, and
+edges are defined by links. Compared to a conventional graph, the order in which the edges in a node are listed matters,
+because elementary blocks have positional arguments that must be specified in a particular order. This imposes some restrictions
+on the algorithms used in the implementation of custom models. The block diagram representation of custom models
+turns out to be easier to use for implementation compared to textual one, since the order of calculations is readily
+available by traversing graph from outputs to inputs, and validation of links and parameters is performed by the 
+block diagram editor.
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\columnwidth]{ast.eps}
+	\caption{Sample AVR model AST-tree }
+	\label{fig_ast}
+\end{figure}
+
 
 \begin{table}[!h]
 	\caption{State variable count for basic transient stability equipment models\label{tab:statvarscount}}
@@ -302,7 +416,7 @@ algorithm with predictor is shown in Fig \ref{fig_compr}.
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.8\columnwidth]{fig1.eps}
+%	\includegraphics[width=0.8\columnwidth]{fig1.eps}
 	\caption{Compression algorithm.}
 	\label{fig_compr}
 \end{figure}
@@ -314,7 +428,7 @@ Predictor is updated with \(a_i\).
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.8\columnwidth]{fig2.eps}
+%	\includegraphics[width=0.8\columnwidth]{fig2.eps}
 	\caption{Decompression algorithm.}
 	\label{fig_decompr}
 \end{figure}
@@ -414,7 +528,7 @@ result and does not affect the quality of the analysis of the simulation result,
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.8\columnwidth]{fig5.eps}
+%	\includegraphics[width=0.8\columnwidth]{fig5.eps}
 	\caption{Pre-compression results filtering for RLE in range of \(Atol\).}
 	\label{fig_rle}
 \end{figure}
@@ -470,7 +584,7 @@ the slip of one of the generators of the model is shown in the figure \ref{fig_c
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.8\columnwidth]{fig3.eps}
+%	\includegraphics[width=0.8\columnwidth]{fig3.eps}
 	\caption{Transient cases with different decays.}
 	\label{fig_cases1}
 \end{figure}
@@ -484,7 +598,7 @@ the  results were saved than for Case 1. The resulting sizes were compressed by 
   
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=0.8\columnwidth]{fig4.eps}
+%	\includegraphics[width=0.8\columnwidth]{fig4.eps}
 	\caption{Integration step impact on result output step.}
 	\label{fig_cases2}
 \end{figure}
@@ -581,27 +695,33 @@ transient stability simulation.
 
 \begin{thebibliography}{1}
 \bibliographystyle{IEEEtran}
+\bibitem{sumulink}
+Simulink - Simulation and Model-Based Design // www.mathworks.com. [2020]. URL: https://www.mathworks.com/products/simulink.html
+\bibitem{modelica}
+Modelica Language Documents - Version 3.4 - April 2017. // modelica.org. [2020]. URL: https://modelica.org/documents. 
+\bibitem{eurostag}
+Flexible and secure modeling // www.eurostag.be. URL: http://www.eurostag.be/en/products/eurostag/features/flexible-and-secure/flexible-secure/.
+\bibitem{sincal}
+PSS SINCAL Platform // www.simtec-gmbh.at. URL: http://www.simtec-gmbh.at/sites\_en/platform.asp.
+\bibitem{powefactory}
+Francisco Gonzalez-Longatt JLRT, editor. Advanced Smart Grid Functionalities Based on PowerFactory. Springer International Publishing AG, 2018.
+\bibitem{gear71}
+Gear C.W. The Simultaneous Numerical Solution Of Differential - Algebraic Equations SLAC-PUB-0723. // IEEE Trans.Circuits Theory, No. 18, 1971. pp. 85-95.
+\bibitem{gathen13}
+Joachim von zur Gathen J.G. Modern Computer Algebra. 3rd ed. Cambridge University Press, 2013.
+\bibitem{pearl84}
+Pearl J. Heuristics: Intelligent Search Strategies for Computer Problem Solving. Addison-Wesley Pub, 1984.
+\bibitem{davis12}
+Timothy A. Davis E.P.N. Sparse Matrix Methods for Circuit Simulation Problems // In: Scientific Computing in Electrical Engineering. Springer, Berlin, Heidelberg, 2012. pp. 3-14.
+\bibitem{fabozzi17}
+Davide Fabozzi S.W.B.W.F.V. Semi-implicit Formulation of Proportional-integral Controller Block with Non-windup Limiter According to IEEE Standard 421.5-2016 // Proceedings Of IREP'2017 Symposium, 2017.
+\bibitem{sedgwwick11}
+Robert Sedgewick K.W. Algorithms. 4th ed. Pearson Education, 2011.
 
-\bibitem{lzw77}
-J. Ziv and A. Lempel, “A Universal Algorithm for Data Compression”, IEEE Transactions on
-Information Theory, Vol. 23, 1977, pp. 337-343.
-\bibitem{welch84}
-T. A. Welch, "A technique for high-performance data compression", Computer, vol. 17, no. 6, pp. 8-
-19, Jun. 1984.
-\bibitem{bwt94}
-M. Burrows and D. J. Wheeler, “A Block-Sorting Lossless Data Compression Algorithm”, Digital
-SRC Research Report 124, 1994.
-\bibitem{lch03}
-Khalid Sayood, “Lossless Compression Handbook”. Academic Press, 2003, ISBN 0-12-620861-1,
-chapter 12.
-\bibitem{ratana06}
-Ratanaworabhan, J. Ke, and M. Burtscher, "Fast lossless compression of scientific floating-point data,"
-in Data Compression Conference, 2006, pp. 133-142.
-\bibitem{camata10}
-Camata Jose, Burtscher Martin, Barth, William, Coutinho, Alvaro. Accelerating MPI Broadcasts using Floating-Point Compression. 2010
+
 
 \end{thebibliography}
-\newpage
+%\newpage
 \section{Biography Section}
 \vspace{-33pt}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{mashalov}}]{Eugene Mashalov}
