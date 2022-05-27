@@ -59,7 +59,7 @@ DEVICELIST CResult::GetDevices(ptrdiff_t DeviceType) const
 	return devices;
 }
 
-CResult::TimeSeriesData CResult::ConstructFromPlot(_variant_t Input, const CompareRange& range) const
+CResult::TimeSeries CResult::ConstructFromPlot(_variant_t Input, const CompareRange& range) const
 {
 	if (Input.vt != (VT_ARRAY | VT_R8))
 		throw dfw2error(fmt::format("CResult::ConstructFromPlot - array has wrong type {}", Input.vt));
@@ -82,7 +82,7 @@ CResult::TimeSeriesData CResult::ConstructFromPlot(_variant_t Input, const Compa
 	if (FAILED(hr))
 		throw dfw2error(fmt::format("CResult::ConstructFromPlot - SafeArrayAccessData failed {}", GetHRESULT(hr)));
 
-	TimeSeriesData plot(uBound, pData + uBound, pData);
+	TimeSeries plot(uBound, pData + uBound, pData);
 
 	hr = SafeArrayUnaccessData(Input.parray);
 
@@ -103,9 +103,9 @@ void CResult::Compare(const CResult& other, const CompareRange& range) const
 	//CompareDevices(other, 16, "S", 1 * 1000000 + 9, "S", range); // генераторы
 }
 
-CResult::TimeSeriesData CResult::GetPlot(ptrdiff_t DeviceType, ptrdiff_t DeviceId, std::string_view Variable)
+CResult::TimeSeries CResult::GetPlot(ptrdiff_t DeviceType, ptrdiff_t DeviceId, std::string_view Variable)
 {
-	TimeSeriesData plot;
+	TimeSeries plot;
 	if (auto device{ CResult::GetDevice(GetDevices(DeviceType), DeviceId) }; device)
 	{
 		ResultFileLib::IVariablesPtr variables{ device->GetVariables() };
@@ -130,7 +130,7 @@ void CResult::CompareDevices(const CResult& other, long DeviceType1, std::string
 	struct CompareData
 	{
 		ResultFileLib::IDevicePtr device;
-		TimeSeriesData::CompareResult diff;
+		TimeSeries::CompareResult diff;
 	};
 
 	std::map<double, CompareData, std::greater<double>> CompareOrder;

@@ -7,8 +7,8 @@
 using DEVICELIST = std::list<ResultFileLib::IDevicePtr>;
 class CResult
 {
-	using TimeSeriesData = TimeSeries::TimeSeriesData<double, double>;
-	using TimeSeriesOptions = TimeSeries::Options<double, double>;
+	using TimeSeries = timeseries::TimeSeriesData<double, double>;
+	using TimeSeriesOptions = TimeSeries::Options;
 protected:
 	CLog& Log_;
 	ResultFileLib::IResultReadPtr m_ResultRead;;
@@ -21,10 +21,10 @@ protected:
 public:
 	CResult(CLog& Log) : Log_(Log) {}
 	void Load(std::filesystem::path InputFile);
-	TimeSeriesData ConstructFromPlot(_variant_t Input, const CompareRange& range = {}) const;
+	TimeSeries ConstructFromPlot(_variant_t Input, const CompareRange& range = {}) const;
 	DEVICELIST GetDevices(ptrdiff_t DeviceType) const;
 	void Compare(const CResult& other, const CompareRange& range = {}) const;
-	TimeSeriesData GetPlot(ptrdiff_t DeviceType, ptrdiff_t DeviceId, std::string_view Variable);
+	TimeSeries GetPlot(ptrdiff_t DeviceType, ptrdiff_t DeviceId, std::string_view Variable);
 
 	static ResultFileLib::IVariablePtr GetVariable(ResultFileLib::IVariablesPtr& Variables, std::string_view VariableName);
 	static ResultFileLib::IDevicePtr GetDevice(const DEVICELIST& Devices, ptrdiff_t Id);
