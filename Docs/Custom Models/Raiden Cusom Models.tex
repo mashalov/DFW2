@@ -126,7 +126,7 @@ Based on the above characteristics of the problem, to solve system \eqref{eqn_th
 The custom model is a subsystem of \eqref{eqn_thedae}, therefore, a set of procedures identical to the set for the general system must be implemented for it.
 
 When developer is asked for creation of equipment model, he starts by analyzing the given block diagram, forms a system of equations, and then implements 
-a program with functions that ensure the interaction of the model with the core software. The result of that work is an integral part of the software. 
+a program with functions that ensure the interaction of the model with the software core. The result of that work is an integral part of the software. 
 To implement a custom model, a similar process is required with two differences: the developer does not participate in the process, and the result of the work 
 is not included directly in the software, but operates as external module. The latter is usually, a native machine code executable module in the operating system format.
 (*.dll for Windows or *.so for Unix systems). Implementing custom model functions in native code eliminates technical differences between custom and 
@@ -156,9 +156,9 @@ Textual form of representation is shown in Fig. \ref{fig_avrcode} and block diag
 \end{figure}
 
 Both representations use elementary functional blocks: lag, derivative lag and limited lag. Ready-made elementary functional
-blocks are included in custom model toolbox to simplify model creation and enable efficient implementation by core software
+blocks are included in custom model toolbox to simplify model creation and enable efficient implementation by software core 
 instead of letting the user build these blocks from individual differential equations.
-In addition, the implementation of the elementary blocks in the core software allows to use common procedures for discrete events 
+In addition, the implementation of the elementary blocks in the software core allows to use common procedures for discrete events 
 location and processing and hide these details from the user. 
 If necessary, differential equations can be explicitly specified using the integrator block.
 
@@ -170,6 +170,30 @@ turns out to be easier to use for implementation compared to textual one, since 
 available by traversing graph from outputs to inputs, and validation of links and parameters is performed by the 
 block diagram editor.
 
+Creating a custom model in a text representation is reduced to describing a system of equations using generally accepted
+mathematical operators and a set of built-in functions that also include elementary blocks. The system of equations must 
+link the input and output variables. This provides for the possibility of using internal variables for structuring the 
+system or introducing feedback. The description of the system is far from an intermediate language, so its transformation 
+is required to implement the model. The textual representation is not as visual as the block diagram, 
+but with some skill, it greatly speeds up the creation of models. At least text editors today remain the main means 
+of professional software development and there is no trend towards the transition to graphical environments. 
+It should be emphasized that the description of the model in the textual representation cannot be called a program in the
+traditional sense of the term. The program sets the sequence of actions, while the solution sequence is not defined for th
+e system of equations in textual representation. However, the implementation of the model must be nothing more than an ordinary
+imperative program in the form of an executable module, therefore, in the process of transformations, 
+the order of calculations must be determined.
+
+To transform the custom model source data in text format, some general-purpose parsers are widely used. They are the programs
+that allow to perform lexical and syntactic analysis of the source text according to a given dictionary and form the required 
+data structure for further processing. Almost all programming languages use parsers in one way or another to generate 
+intermediate object code from source code. Existing parsing technologies can also be used to analyze the textual representation 
+of the model's system of equations. In the process of analyzing the original textual representation, the control of compliance 
+with the specified rules and the detection of syntactic errors are performed. As a result of the analysis, a tree structure is
+generated that allows performing the required transformations by manipulating the tree. To represent the system of equations 
+of the custom model, a structure in the form of the abstract syntax tree (AST) is suitable. The nodes of such a tree are the
+operators, and the edges define the mutual links of the operators. One of the possible options for converting the textual
+representation of the AVR model from the example Fig. \ref{fig_avr}, \ref{fig_avrcode} into the AST is shown in Fig \ref{fig_ast}.
+
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=\columnwidth]{ast.eps}
@@ -177,6 +201,59 @@ block diagram editor.
 	\label{fig_ast}
 \end{figure}
 
+In general, this structure is not a tree. The use of variables as operands of functional blocks turns the structure into a graph,
+which, in the presence of feedbacks, cannot be reduced to the form of a tree. If there are several output variables, the structure
+turns into a forest. The traditional use of the term "tree" is due to the fact that the structure is hierarchical and determines
+the order of links of nodes. The AST shown in the Fig \ref{fig_ast}. Cycles on system variables are shown by dotted lines. 
+If the edges of the connections of variables are not taken into account, then the graph can be considered directed from the lower
+nodes to the upper ones. The edges of the variable connections do not have a given direction, but it can be determined 
+provided if there are no feedbacks.
+
+The root node of the tree marked as \raisebox{-2pt}[0pt][0pt]{\includegraphics{eq.eps}} denotes a system of equations. 
+Nodes marked as \raisebox{-2pt}[0pt][0pt]{\includegraphics{let.eps}} represent individual equations. An equation node 
+has two child nodes: a left a right. In AST, equations of the form \(f(x)=0\) are accepted, 
+so if a non-zero expression appears on the right side in the process of transformation, it is transferred to the left 
+side of the equation with a negative sign. Each equation node can resolve one of the model variables.
+
+The form of AST for a given system of equations is not unique. For ASTs there is an identity rule, similar to the rule for
+mathematical expressions. Two ASTs are identical if the values of the root nodes are equal on the entire set of values of the
+variables included in them in their domains of definition. While maintaining identity, it is possible to perform AST 
+transformations using subtree manipulations, achieving certain properties from the resulting AST. All manipulations of 
+this kind are performed at the symbol level, that is, with variables whose values are unknown. Identity is preserved 
+through the use of the rules of algebra and logic in the transformations. The AST structure is convenient for these 
+transformations from an algorithmic point of view.
+
+Taking as intermediate variables \(V_{c}\), \(V_{s}\) and \(U_{sum} \) at the figure points marked in the block diagram
+of the model in Fig. \ref{fig_avr}, by traversing the graph from outputs to inputs, it is easy to obtain an AST 
+identical to Fig. \ref{fig_ast}. One can also get the AST identical to shown in Fig. \ref{fig_ast} by transforming 
+an arbitrary version of the AST built from block diagram. Thus, the AST can be used as an intermediate structure 
+that is invariant with respect to the representation of the custom model. To build it, it is necessary to combine 
+the analysis of the model graph with the analysis of text expressions. Due to this, the possibilities of describing 
+the custom model in block diagram form can be significantly expanded. In particular, for the inputs and outputs 
+of elementary blocks, mathematical expressions can be additionally specified in the textual representation. 
+At the same time, the block diagram of the model remains compact and clear, and the user has almost unlimited 
+possibilities for expanding the functionality of the model. The construction of an AST with such a combined approach 
+begins with a traversal of the model graph, with a transition to the analysis of mathematical expressions. The results 
+of parsing expressions are included in the graph AST as subtrees.
+
+After transformation the representation of the model into the form of the AST, the main stage of the model implementation begins, which includes the following operations:
+\begin{itemize}
+	\item classification of variables;
+	\item validation of the initial system of equations;
+	\item simplification and optimization of mathematical expressions;
+	\item generation of expressions for calculating partial derivatives;
+	\item determination of the order of solving the system of equations by variables causalization.
+\end{itemize}
+
+\section{Custom model symbolic transformation}
+
+
+\begin{figure}[h]
+	\centering
+	\includegraphics[width=\columnwidth]{variables.eps}
+	\caption{Classification of the custom model variables}
+	\label{fig_ast}
+\end{figure}
 
 \begin{table}[!h]
 	\caption{State variable count for basic transient stability equipment models\label{tab:statvarscount}}
