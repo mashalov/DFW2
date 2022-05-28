@@ -55,7 +55,7 @@ Therefore, if there are convenient and reliable tools for creating custom models
 can be provided directly by users. Modern communication technologies allow the exchange of model development results and unlimited access to the current library online.
 
 Despite the fact that for almost all engineering areas in which some kind of simulation is required, there is at least one software package 
-(and most often several options are available), a unified approach to describing user models has not been developed. 
+(and most often several options are available), a unified approach to describing custom models has not been developed. 
 One of the universal environments that can be considered a de facto standard is Matlab/Simulink \cite{sumulink}. Model development in Simulink 
 is focused on graphical interface in the form of a block diagram. Another widely used environment, Modelica \cite{modelica}, also claims to have 
 the maximum coverage of engineering areas, but offers an approach to model using a special object-oriented language. 
@@ -242,533 +242,324 @@ After transformation the representation of the model into the form of the AST, t
 	\item validation of the initial system of equations;
 	\item simplification and optimization of mathematical expressions;
 	\item generation of expressions for calculating partial derivatives;
-	\item determination of the order of solving the system of equations by variables causalization.
+	\item determination of the order of system of equations solution the by variables causalization.
 \end{itemize}
 
 \section{Custom model symbolic transformation}
 
+\subsection{Model variables classification} \label{sec_varclass}
+The block diagram or system of equations is the main, but not the only component of the source data for the implementation 
+of the custom model. To link the model with software core, additional information is required, which, in particular, 
+includes the declaration of variables. With the help of named variables, data exchange is arranged between 
+the model and the software core, as well as with other models that are part of the system \eqref{eqn_thedae}. 
+In addition to names, the declarations of variables includes attributes that allow them to be divided into classes according to
+certain properties. The most important is the constant attribute. Variables with this attribute cannot be changed during the
+simulation and are used to obtain source data when the model is initialized and the initial conditions are calculated. 
+The attribute is also necessary for the correct formation of the system of model equations and determining the order of its solution. In the AST example above, the constants are variables for gains, time constants, and limits.
+
+Variable attributes that explicitly define their properties must be specified in the model source data. But during the analysis
+of the AST, some of the variables can receive the constant attribute implicitly. For example, an AST subtree in which only 
+numerical values and constants act as variables is constant. If such an AST subtree resolves a state variable, then it will 
+also be a constant. The definition of an implicit constant attribute affects the structure of the system of equations of the model.
+Obviously, the number of equations must be equal to the number of unknown variables. Classification of one of the state variables 
+as a constant requires eliminating one of the equations from the system. If the equality of the number of variables and 
+equations is preserved, such an exception reduces the amount of calculations. However, in some cases, implicitly defining 
+a variable as a constant may result in multiple equations being resolved, in which case the system becomes underdetermined. 
+In such a situation, the model implementation process should terminate with an appropriate error message pointing the source data
+problem.
+
+Variables that are not classified as constants are state variables and, in turn, are divided into internal and external. 
+Internal variables are resolved by model equations. External variables are references to internal variables of other models. 
+In the example above, external to the AST model are the generator state variables \(S_u\), \(V_g\), \(I_g\), and \(I_f\) – 
+rotor slip, terminal voltage, stator and rotor currents, respectively. In turn, the internal variable \(U_f\) will be interpreted as
+external in the exciter model.
+
+For state variables that are not constants, there is an intermediate class of discrete variables. It includes variables whose 
+values can change only with discrete changes in the system of equations. These include, for example, variable output values of
+logic elementary blocks. When the state of a logical block, the software core must perform the procedure for processing a
+discontinuity in the system of equations by restarting the integration method with the calculation of new initial conditions,
+including new values of discrete variables. In the time interval between discontinuities, the discrete variable has a constant
+value. Thus, it makes no sense to include discrete variables into the system of model equations, considering their values in the
+process of integration as constants. Calculation of the values of discrete variables is performed only when initialization and in
+the discontinuity handling procedures. The definition of discrete variables is performed according to a principle similar 
+to the implicit definition of constants: if the AST subtree resolves some variable and contains only constants and discrete
+variables as, then the resolved variable is discrete.
 
 \begin{figure}[h]
 	\centering
 	\includegraphics[width=\columnwidth]{variables.eps}
 	\caption{Classification of the custom model variables}
-	\label{fig_ast}
+	\label{fig_vars}
 \end{figure}
 
-\begin{table}[!h]
-	\caption{State variable count for basic transient stability equipment models\label{tab:statvarscount}}
+State variables not classified as discrete or costant are ordinary continuous variables and are resolved by the system of model
+equations as part of system \eqref{eqn_thedae}. The Fig. \ref{fig_vars} shows a simplified variables classification structure,
+indicating how variables can be assigned to classes. 
+It should be noted that the variables are not divided into differential and algebraic, which is due to the fact that the 
+integration process in a particular implementation is based on the Gear method \cite{gear71}.
+
+\subsection {Equation system source data validation} \label{sec_validation}
+
+In the process of automatic custom model implementation, two phases of validation of the source data can be distinguished. 
+The first phase is to detect errors that prevent the correct generation of the AST based on graphical or textual representations. 
+In the graphical representation of the source data, a set of elementary blocks corresponding to the AST nodes is defined,
+therefore, only topology validation is necessary: checks of unconnected inputs and outputs, the direction of connections from
+outputs to inputs, etc. In order to prepare a text representation for generating an AST, it must be first parsed from the text 
+and then checked or syntax errors, most of which prevent correct connections generation between AST nodes, and in some cases 
+make it impossible to determine the set of AST nodes.
+
+Once the AST has been generated, a second phase of validation can be performed, which is to detect semantic errors. The second phase
+does not depend on the way the model is presented initially, since it uses only the AST and the results of the variables 
+classification. This information allows validation of AST nodes that have received the constant attribute. In particular, 
+the AST allows to ensure that those elementary block arguments that must be given as constants are defined by a constant subtrees. Since there are no restrictions on the structure of equations in text representation, it is possible for an equation to explicitly
+or implicitly change the value of a variable with a constant attribute. Detection of this kind of errors can also be performed 
+by the AST.
+
+If the values of the child nodes of some AST node can be calculated from the given constants, it becomes possible to check 
+the result of calculation for compliance with the acceptable node values in the process of model implementation. Such nodes 
+include, for example, division, square root, inverse trigonometric functions, elementary blocks with restrictions. 
+Error analysis in constant expressions, of course, does not guarantee that the model will behave correctly for any values 
+of the source data, but allows to identify errors that do not depend on the source data and will inevitably arise during the simulation process.
+
+\subsection {Simplification and optimization of mathematical expressions} \label{sec_simplification}
+
+The possibility of representing mathematical expressions in a tree structure is widely used in computer algebra systems \cite{gathen13}. 
+The purposes of such systems go far beyond the simplification of mathematical expressions and is mainly focused on solving problems in a symbolic way,
+up to automated proof of theorems. Parts of the technology of identical transformations of expressions are in demand in optimizing systems for translating program
+code, which can also include the considered system for models implementation. Expression simplification in computer algebra systems acts as a utility function 
+and is designed to display results in a compact, generally accepted form. There is no universal definition of the result of the expression simplification, so at
+least two options are considered: in the form of factorization (for example, \((a+b)(a-b)\) or in the form of a polynomial \((a ^ 2-b ^ 2)\). In the context of 
+the considered application for the implementation of custom models, the term "simplification" takes on a clearer meaning and implies the calculation of the
+expression with minimum computation cost. If each AST node is assigned a score of the cost of performing an operation, then the total cost of resolving the AST 
+can be determined. The task of simplification is reduced to finding an identical AST with minimal total computation cost. Considering that the costs of 
+the operation of multiplication, and even more so of raising to a power, are higher than for the operation of addition, for the difference of squares 
+considered in the example above, the result of simplification will be \((a+b)(a-b)\).
+
+Identity transformations of the AST are performed according to a certain set of rules \(r_i\) forming the set \(R\). The rule \(r_i\) is an identity, 
+on the left side of which the AST of the original form specified, and on the right - the transformed AST. For example, the rule for the difference of squares has the form shown in Fig \ref{fig_simpl}.
+
+\begin{figure}[h]
 	\centering
-	\begin{tabularx}{\columnwidth}{l|X|r}
-		\hline
-		Model & Description & Count\\
-		\hlineB{3}	
-		Bus & Voltage angle and magnitude, filtered voltage slip & 4\\
-		\hline
-		Load & Active and reactive power & 2\\
-		\hline
-		Generator & Simplified generator model with active and reactive power, voltage and current on dq-axes, 
-		angle, slip, transient and excitation EMFs & 10\\
-		\hline
-		Exciter & Voltage at bus, output & 3\\
-		\hline
-		AVR & Excitation EMF, voltage, slip and excitation current filtered derivatives, output, filtered slip & 12\\
-		\hline
-		DEC & Discrete excitation control: 2 relays, 2 triggers, voltage magnitude & 7\\
-		\hline
-	\end{tabularx}
-\end{table}
+	\includegraphics[width=.7\columnwidth]{simplification.eps}
+	\caption{The difference of squares identity transformation rule}
+	\label{fig_simpl}
+\end{figure}
 
-To get an idea of the amount of data to be stored consider the number of state variable for basic transient 
-stability equipment models in the table \ref{tab:statvarscount}. The equipment models used are not 
-highly detailed, but overall practical model dimension gives 6624 state variables. For 60s simulation with
-output step \(10^{-2}\)s and double precision representation of results the required amount of memory will be 303.2MB.
-Of course output can be limited to a selected set of state variables to reduce storage requirements,
-but this selection require extra care for various cases of contingencies.
+Since the rules define identities are reversible, they can be applied for transformations from the left AST to the right one and vice versa. 
+In order to apply a rule, it is necessary to find in the source AST a subtree corresponding to the pattern of the AST of the part of the rule and replace it
+with the AST subtree of the opposite part of the rule. At the same time, both when searching and when replacing, it must be taken into account that any subtrees 
+of the original AST can act as arguments to the rules. In this example, these subtrees are labeled a and b. Thus, rules can be applied not only to 
+expression variables, but to subexpressions.
 
-The storage required for resulting time series depends on model dimension, simulation duration
-and accuracy, as well as transient response features. State variables values are computed on each DAE integration
-step \(h\), but the results go to output with much slower rate than integration step \(H_p>>h\). 
-When integration uses \(h<H_p\), intermediate instants in \([t;t+H_p]\) are not stored, except
-instants with discrete events, such as switching, limiting and contingencies. At discrete instants
-results are stored before the event in \(t_d^-\) and after the event in \(t_d^+\), \(0<t_d^+-t_d^-<h_min\).
-Such a representation is much more convenient for the analysis of discrete events, since it preserves
-discontinuity, but it also increases the amount of data stored, and it grows in proportion to the 
-frequency of discrete events.
-
-When transient decays, state variables amplitude oscillations become smaller, which increases
-integration method extrapolation accuracy and allows to increase \(h\) appropriately.
-When \(h>H_p\) result output will use \(h\) instead of \(H_p\). If transient decay is slow or
-transient is unstable its simulation results will require much more storage, as integration
-step is unlikely to reach \(H_p\). 
-
-Low-precision transient simulation with limited error tolerances requires less memory since \(h\) can usually be
-greater than \(H_p\), but the quality of the simulation cannot be considered as a storage reduction factor.
-
-\section{Transient stability results features and general purpose compression algorithms}
-Consider the simulation results time series as subject to data compression:
+Searching for a rule subtree pattern in the AST can be done recursively from top to bottom or bottom to top. For large ASTs, bottom-up search is more efficient, 
+but it requires tree preprocessing. Since the AST changes during the application of the rules, the processing has to be repeated, therefore, 
+the search for patterns is performed from top to bottom. When searching, one has to take into account permutations of arguments in nested 
+AST nodes. For example, an addition operation with three terms yields 6 permutations, each of which must be checked against the pattern. 
+In addition, some operations in AST are equivalent, such as exponentiation and successive multiplication. 
+To reduce costs when searching for pattern rules, the AST is modified as follows:
 
 \begin{enumerate}
-	\item{Simulation results are sequential time series. In most cases they are approximations
-	to piecewise smooth functions, which are DAE solutions. The difference of two successive
-	values are small, suggesting high data redundancy.}
-	\item{All time series values are associated with common time values. It can be used to store the only time data for all series.}
-	\item{Some state variables are discrete or change infrequently. This is also true for state variables that have reached their limits. The values of these state variables remain fixed for a relatively long period of simulation time or vary within a small range of integration accuracy.}
-	\item{When the transient decays, most state variables tend to steady state with negligible oscillations.}
-	\item{Any state variable can be subject to discontinuity due to discrete event. It is assumed that discrete events frequency is limited in most cases. }
+	\item All commutative binary operators are replaced by n-ary ones. In this case, the subtree of consecutive binary operators of the same type is replaced by one operator node with \(n\) child nodes.
+	\item Subtraction nodes are replaced by addition nodes with a unary minus.
+	\item Division nodes are replaced by multiplication nodes. The divisor expression is enclosed in the exponentiation \(-1\).
+	\item The child nodes are sorted in a certain order, which brings the AST to the so-called canonical form.
 \end{enumerate}
 
-When data compression is needed one of many available commercial or free software libraries can be used.
-Most of data compression algorithms are general purpose, and do not consider data features.
-Data compression is based on redundancy detection and removal \cite{lzw77,welch84}. 
-Some methods use preconditioning to improve further compression ratios \cite{bwt94} or dictionaries 
-with most frequently occurring data sequences.  All of these algorithms assume that the data to be compressed is
-fully available or available by relatively large successive blocks. Decompression assumes 
-lossless restoration of the original data from the compressed and also operates on full data set. 
-This leads to memory requirements to fit data to be processed.
+Modifications 1, 2 and 3 eliminate the operations of subtraction and division and reduce the height of the AST, which simplifies the comparison of subtrees 
+and reduces the required search depth. Modification 4 allows to eliminate the analysis of permutations when searching for rule patterns, since all child 
+nodes will be in a defined order. Before generating the implementation of the model in the intermediate language, modifications 2 and 3 can be canceled by
+converting to the original operations according to additional rules that are introduced into \(R\) at the final stage of system simplification.
 
-Transient stability simulation results may contain data for tens of thousands of state variables.
-Depending on the engineering problem, a large subset of them may need to be worked on, but it is unlikely that a complete set of data will be required.
-Thus, it is desirable to be able to decompress only a subset of the results for selected state variables. 
-In order to achieve this capability from the general purpose algorithms, it is necessary to compress the data for each 
-state variable separately, which will lead to an increased CPU, memory and storage overhead.
+To optimize the system of equations for performance, the set of rules \(R\) includes elementary rules of algebra (commutative, associative and distributive laws), 
+rules of addition with zero and multiplication with zero and one, identities with powers, trigonometric and logarithmic identities. 
+Since implicitly specified constants can be determined during the simplification process, the rules also include the calculation of AST nodes by numerical
+arguments. If a numerical value of a node can be calculated, it is excluded from the AST together with the subtree and replaced with a numerical value. 
+The total number of rules used is about fifty. All rules are represented in a special form of the AST.
 
-The above peculiarities of general purpose algorithms make them less efficient for simulation 
-results compression. General purpose algorithms should be adapted to work on time series. 
-The table \ref{tab:gpcompr} shows relationships between simulation results features, general purpose
-compression algorithms peculiarities and possible workarounds to use algorithms to work with
-results.
+A feature of the simplifications of the expressions used in this work is that they are performed for the entire system of equations, and not for
+individual equations. Simplification algorithnm searches for repeated subexpressions, extacts them into a separate equation, and replaces the found
+expressions with a variable using a substitution rule. Equations representation in canonical form \(f(x)=0\) eliminates the use of rules that must 
+work on both sides of the equation, such as taking logarithms or exponentiation. In addition, this form of equations representation simplifies the
+generation of expressions for partial derivatives and the determination of the order in which equations are solved.
 
-\begin{table}[!h]
-	\caption{General purpose compression for simulation results\label{tab:gpcompr}}
-	\centering
-	\begin{tabularx}{\columnwidth}{ 
-			  >{\raggedright\arraybackslash}X 
-			| >{\raggedright\arraybackslash}X 
-			| >{\raggedright\arraybackslash}X }
-		\hline
-		Results feature & General Purpose compression peculiarity & Workaround\\
-		\hlineB{3}	
-		Available sequentially as integration progresses & 
-		Requires access to full data set or it's large parts  &
-		Intermediate buffer to accumulate results to be compressed\\
-		\hline
-		Access to selected results & 
-		Restores full compressed dataset & 
-		Much more data should be decomressed than needed\\
-		\hline
-	\end{tabularx}
-\end{table}
+Simplification and optimization of expressions in a system of equations consists in the sequential application of rules with the control of computational
+cost reducing. The problem in what order and which rules to apply to achieve a minimum of costs does not have an unambiguous solution and in most cases
+is solved by enumeration of possible variants. The solution of this problem is complicated by the fact that the sequence leading to the form of 
+the system with minimal computational costs includes intermediate forms with higher costs than the original form. Therefore, when solving, it 
+is not possible to use objective function indicating the optimal sequence. In addition, as in most problems of finding a global minimum, 
+the solution can be achieved by exhaustive enumeration of all possible combinations, which is inapplicable in practice even for small systems and a
+reduced set of rules. For the problem of simplification and optimization of the system of equations, two approaches were tested in this work. 
+Both do not guarantee the achievement of a global minimum of costs, but can significantly reduce costs (if possible) for an acceptable time of
+source data processing.
 
-One can consider separate compression of each time series or their groups by
-general purpose algorithms. This approach will require separate instances
-of the algorithm as well as increase amount of memory required. For time series
-consisting of thousands of separate channels memory amount may be inappropriate.
+The first approach implies separation of \(R\) into two subsets: \(R_1\) and \(R_2\). The subset \(R_1\) includes the rules that generate the 
+polynomial form of expressions, and \(R_2\) includes the rules for the factorized form. \(R_1\) and \(R_2\) are sequentially applied to the original 
+system of equations until the computational cost stops decreasing. This approach is similar to that used with manual simplification of expressions. 
+First, all the expressions are expanded by opening brackets, then they are factorized. This approach allows to reduce computational costs, mainly due to 
+the fact that in the process of sequential application of \(R_1\) and \(R_2\), some of the AST nodes is converted into constants.
 
-There are compression algorithms designed for specific data. Lossless audio compression
-algorithms, for example, work actually on time series \cite{lch03}. But those 
-algorithms are designed for fixed sample rates and integer sample values, 
-which is not the case for simulation results. Audio compression works well
-with multiple channels, but not with thousands of simultaneous separate channels,
-due to performance penalties. A high compression ratios achieved by trying
-several compression methods and further best ratio selection. This also may
-lead to performance drop.
+The second approach is more general and is based on finding a path in the graph \(G(F,T)\), where \(F\) are identical forms of the simplified system,
+\(T\) are transformations performed according to the rules \(R\). \(A^*\) search algorithm \cite{pearl84} is used for path search. The original
+algorithm is designed to find the shortest path between given nodes in a weighted graph and is used, for example, to build routes on flat maps. 
+The difference from the equation system simplification problem is that the target node is not specified in the source data and must be determined 
+by the minimum cost. A distinctive feature of \(A^*\) is that it preserves all paths from the source node to the destination. This allows to track
+changes in costs and cut off paths where costs do not decrease. However, the time spent on its execution will be exponential.Ways to reduce
+the cost of time is heuristic pruning of "dead end" paths and limiting the depth of paths to be searched
 
-Data compression performance is one of most important features to be considered.
-When data compression is used for transient stability simulation results it
-is auxiliary function, as system resources must be used for computation. 
-A reasonable approach is to run result compression in separate process/thread and 
-give it enough CPU time to process the computed results while computing the next results.
-Thus system resources will be optimally distributed and synchronization bottlenecks will be avoided.
+Practical studies show that in most cases the first approach allows to obtain an acceptable result. The second approach is used optionally, 
+since it is more complex and not well determined, but in some cases it can significantly reduce computational costs compared to the original 
+system due to the fact that it is able to “overcome” a sharp increase in computational costs at the initial stages of system 
+simplification and determine the optimal order for applying the rules.
 
-\section{Transient stability simulation results compression algorithm}
-Besides algorithms reviewed above which are suitable for compressing general or media data,
-there are algorithms designed for scientific data exchange. The are widely used for MPI systems \cite{camata10}. 
-When the bandwidth is limited data compression can improve performance even at additional
-cost on processing.
-These algorithms are designed for 32- or 64-bits floating point values and exploit encoding
-scheme for IEEE-754 numbers. Consider 64-bit value pattern:
+It should be noted that the purpose of simplification of the expressions of the user model is not only to reduce computational costs, but also to
+additionally check the consistency of the given system. In the process of simplification, a situation may arise in which dependent equations are
+eliminated, but the number of variables remains unchanged. Therefore, in the process of simplification, the consistency of the system is controlled
+according to the rules given in subsection \ref{sec_validation}.
 
-\begin{table}[!h]
-%	\caption{IEEE-754 64 bit floating point number format\label{tab:gpcompr}}
-	\centering
-	\begin{tabularx}{\columnwidth}{ 
-		 	| >{\raggedright\arraybackslash}X 
-			| >{\raggedright\arraybackslash}X 
-			| >{\raggedright\arraybackslash}X 
-			| >{\raggedright\arraybackslash}X |}
-		\hline
-		Bits & 63 & 62-52 & 51-0\\
-		\hline
-   	    Purpose & Sign & Exponent & Mantissa\\
-		\hline
-	\end{tabularx}
-\end{table}
+\subsection{Automatic differentiation}
 
-Let \(a\) and \(b\) be floating point numbers, and \(a\approx b\). This means most exponent and most of mantissa 
-bits will match between \(a\) and \(b\). If we compute exclusive or \(c=a \oplus b\) the high bits of \(c\) will
-be zero. Higher non-zero bits count in \(c\) will decrease as \(a\) approaches to \(b\). If one can count
-higher non zero bits, \(c\) can be represented with the following encoding scheme:
-
-\begin{table}[!h]
-%\caption{Floating point number encoding by exclusive or}
-	\centering
-	\begin{tabularx}{0.2\columnwidth}{ 
-			| >{\centering\arraybackslash}X 
-			| >{\centering\arraybackslash}X |}
-		\hline
-		\(Z_B\) & \(C_B\)\\
-		\hline
-	\end{tabularx}
-\end{table}
-
-\noindent where \(Z_B\) it the number of zero bits divided by 4, \(C_B\) is non-zero bits sequence.
-To store \(Z_B\) 4 bits are needed. To store \(C_B\) --- \(64 - 4*Z_B\) bits. 
-Since \(\oplus\) reversible, the original \(a\) can be restored by \(a = c \oplus b\) with \(c\)
-and \(b\) casted to the IEEE-754 bit pattern. It can be seen that encoding and decoding are lossless.
-
-Consider the example of encoding \(a \approx \pi\) up to 16 decimal digits. Let \(b\approx \pi\) 
-up to 10 decimal digits. The IEEE-754 representation of \(a\) and \(b\) is as follows:
-
-\begin{table}[!h]
-%	\caption{Floating point number encoding by exclusive or}
-	\centering
-	\fontsize{5.5}{1.2} {
-	\begin{tabularx}{\columnwidth}{ 
-			| >{\raggedleft\arraybackslash}l 
-			| >{\raggedright\arraybackslash}X |}
-		\hline
-		 \(a\) & \texttt{0100000000001001001000011111101101010100010001000010110100011000} \\
-		\hline
-		\(b\) & \texttt{0100000000001001001000011111101101010100010000010001011101000100} \\
-		\hline
-	\end{tabularx}
-}
-\end{table}
-
-The resulting \(c=a \oplus b\) is:
-
-\begin{table}[!h]
-	%	\caption{Floating point number encoding by exclusive or}
-	\centering
-	\fontsize{5.5}{1.2} {
-		\begin{tabularx}{\columnwidth}{ 
-				| >{\raggedleft\arraybackslash}l 
-				| >{\raggedright\arraybackslash}l 
- 			    | >{\raggedright\arraybackslash}X |}
-			\hline
-			\(c\) & \texttt{00000000000000000000000000000000000000000000} & \texttt{01010011101001011100} \\
-			\hline
-		    & \multicolumn{1}{c|} {\(Z_B * 4\)} & \multicolumn{1}{c|} {\(C_B\)} \\ 
-			\hline
-		\end{tabularx}
-	}
-\end{table}
-
-Since \(c\) has 45 higher zero bits, \(Z_B\)=11. The encoded form of \(c\) would then be:
-
-\begin{table}[!h]
-	%	\caption{Floating point number encoding by exclusive or}
-	\centering
-	\fontsize{5.5}{1.2} {
-		\begin{tabularx}{0.4\columnwidth}{ 
-				| >{\raggedright\arraybackslash}l 
-				| >{\raggedright\arraybackslash}X |}
-			\hline
-			\multicolumn{1}{|c|} {\(Z_B\)} & \multicolumn{1}{c|} {\(C_B\)} \\ 
-			\hline
-			\texttt{1011} & \texttt{01010011101001011100} \\
-			\hline
-		\end{tabularx}
-	}
-\end{table}
-
-To store \(a\) 24 bits required instead of 64. The compression ratio \(K_c=24/64=0.375\). 
-Decoding of \(a\) can be done in reverse order.
-
-An encoding scheme can be applied to floating point numbers sequence \(a_i\), if one can generate sequence \(b_i\)
-with values close enough to \(a_i\) values. Assume function \(f(i)\), whose values sufficiently close to \(a_i\).
-In \cite{ratana06} this function is called predictor and it is based on DFCM algorithm, used for prediction of cache operations for microprocessors. The function algorithm successively builds a hash table of previous sequence values differences. 
-With a sufficient hash table size algorithm can predict repeating patterns in the data sequence. Compression
-algorithm with predictor is shown in Fig \ref{fig_compr}.
+At this stage of the implementation of the custom model, the system of equations is reduced to the final version with the minimal achieved
+computational costs and prepared for linking with the software core. To solve the system of equations of the model, it is necessary to build 
+a block of the matrix of partial derivatives. For models implemented by a software developer, this stage is performed manually according 
+to a given system of equations. To implement a custom model, the generation of symbolic expressions for calculating partial 
+derivatives must be fully automatic.
 
 \begin{figure}[h]
 	\centering
-%	\includegraphics[width=0.8\columnwidth]{fig1.eps}
-	\caption{Compression algorithm.}
-	\label{fig_compr}
+	\includegraphics[width=.7\columnwidth]{derivative.eps}
+	\caption{The power rule in form of AST}
+	\label{fig_dpower}
 \end{figure}
 
-To compress \(a_i\) in the sequence of \(a_i=a(t_i)\) the predictor generates \(b_i\) to compute 
-\(c=a \oplus b \). 
-Then \(Z_{bi}\) is determined by counting higher zero bits of \(c_i\) and encoded pair \(Z_{bi}\), \(C_{bi}\) then ready to store.
-Predictor is updated with \(a_i\).
+The problem of determining expressions for calculating partial derivatives is solved using symbolic manipulations using the system of equations AST.
+Differentiation is performed analytically and eliminates the errors of numerical differentiation in transient simulations. 
+The expressions for calculating partial derivatives is determined using template rules \(d_i\), which form a set of differentiation 
+rules \(D\). The rules are defined for each type of AST nodes. As an example in Fig. \ref{fig_dpower} shows the rule for the partial 
+derivative of the power function node.
 
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=0.8\columnwidth]{fig2.eps}
-	\caption{Decompression algorithm.}
-	\label{fig_decompr}
-\end{figure}
+If a differentiation rule is set for each of the types of AST nodes, then using a chain rule an ASD of a system of partial differential equations can be
+obtained, in which each equation is assigned to an element of the Jacobi matrix of the custom model. Since the resulting expressions of partial 
+derivatives will also be represented in the form of AST, the same simplification and optimization rules that were described in 
+subsection \ref{sec_simplification} can be applied to them. The practical use of symbolic differentiation of functions has shown that a number of
+expressions for partial derivatives turn out to be quite cumbersome and expressions can contain subexpressions that occur many times in the system. 
+Simplification and optimization rules make it possible to detect such subexpressions and extract them into separate equations, which significantly
+reduces the computational costs of calculating partial derivatives.
 
-To decompress \(a_i\) from the stored sequence \(c_i\), the encoded pair \(Z_{bi}\), \(C_{bi}\) 
-is mapped to IEEE-754 bit pattern. Predictor generates \(b_i\) and \(a\) restores by XOR operation.
-Predictor is updated with \(a_i\). The \(b_i\) sequences generated by the predictor for encoding and decoding are the same, as they use the same \(a_i\).
-
-The closer \(b_i\) given by the predictor function, to the original values of \(a_i\), the better compression ratio can be obtained. 
-Therefore, the predictor function should consider the most of the features of the data being processed. 
-A hash table-based predictor suits for general floating point periodic data. It automatically adjusts to the processed sequence and, if a period can be distinguished in the data, it provides high accuracy of the forecast. 
-However, the use of a hash table comes with a major disadvantage of such a predictor, since 
-its storage requires memory (about 16MB for optimal prediction quality at transient simulation duration over 60s). 
-In the considered problem of compression of the results of transients simulation, an individual hash table must be created for each state variable.
-
-It was noted above that simulation results  in most cases are approximations to piecewise smooth functions.
-This property gives option to use Lagrange polynomial extrapolation for prediction:
-
+Since the optimization of expressions of partial derivatives is somehow carried out by introducing additional equations for repeated subexpressions,
+a variant with a preliminary transformation of the model equations AST into the so-called operator tree was considered. In the operator tree, 
+each original AST node is assigned an intermediate variable \(s_i\):
 \begin{equation}
-	\label{eqn_lagrb}
-	b_i=b_i(t_i)=\sum_{m=1}^{np+1} a(t_{i-m})l_m(t_i),
+	\label{eqn_opthree}
+	s_i=op_i(s,z)
 \end{equation}
-\noindent with basis polynomials:
-\begin{equation}
-	\label{eqn_lagrbasic}
-	l_m(t_i)=\prod_{k=1, k \neq m}^{np+1} \frac{t_i-t_{i-k}}{t_{i-m}-t_{i-k}}
-\end{equation}
-
-\noindent where \(np\) is the order of the polynomial, which also the order of predictor. 
-The Lagrange polynomial does not require \(t_i\) to be equally spaced. This property allows to output
-the results from integration method directly without dense output processing.
-
-The prediction method used for encoding is similar to the prediction method for DAE integration. 
-For such a predictor to work, it is sufficient to have a vector of previous values with a depth equal to the order of the predictor. 
-The order can be changed, if necessary, at virtually no additional cost. 
-Increasing the order of the predictor improves the quality of prediction for high-order components of transient. 
-Considering also that all values of the results are related to common time values, the basis polynomials \ref{eqn_lagrbasic} can be calculated once 
-for all state variables that going to output at the current step \(t_i\). Thus, for the results, it is optimal 
-to choose a predictor with Lagrange extrapolation, which requires a negligible amount of memory and makes it possible to eliminate redundant computations.
-
-The order of the predictor polynomial can vary from zero to some \(n_{Pmax}\). For the first step of transient stability simulation, the value of the DAE
-initial conditions is used as the predictor value. The next step gives a linear extrapolation, and so on. 
-It has been found empirically that the best compression ratio gives the value \(n_{Pmax}=4\). A the order increases prediction worsens. Presumably, the reason for this is the Runge phenomenon, since most of the results are stored with a step \(h_P\), with slight deviations.
-
-As noted above, for discrete changes, the time instants \(t_d^-\) and \(t_d^+\) are preserved. 
-Since \(t_d^- \neq t_d^+\), the proposed compression method  remains operational, but at the instants of 
-discrete changes it can degrade the compression ratio, as the function undergoes a discontinuity 
-and polynomial extrapolation cannot give a qualitative prediction. In the instants of discrete changes, 
-the integration stops and new initial conditions are calculated for \(t_d^+\), 
-after which the integration resumes. The order of the predictor after calculating the new initial conditions is reset to zero and increases 
-to \(n_{Pmax}\) as new integration results are accumulated. This approach to processing discrete changes allows to maintain an acceptable compression ratio, since it takes into account the discontinuity of the function of the simulation result.
- 
-With an exact match between the predicted and stored value of the simulation result, the encoding scheme allows to reduce the
-representation to 1 byte - F0 (in hexadecimal), while \(K_c=0.125\). Such prediction accuracy is unlikely for time-varying parameters, 
-but for piecewise constant parameters such as outputs of discrete elements, or parameters that are at the limits, this is easily achievable. 
-Taking into account the fact that the time intervals during which the values of such parameters do not change can be long, 
-it is possible to further improve the compression ratio by using Run Length Encoding (RLE). 
-Before saving, the results compressed by the proposed method are accumulated in a fixed size buffer with a repetition counter. 
-If the buffer is not empty and the value of the current calculation result is the same as the previous one, the current value 
-is not written to the buffer, but instead the repeat counter is incremented. Thus, a series of repeating consecutive values is 
-encoded by the given value and the number of its repetitions.
-If the repeat counter has a non-zero value, but the previous and current values of the calculation result do not match, 
-the contents of the buffer are stored, after which the buffer size and the repeat counter are reset to zero values.
-
-The simulation results when using additional run-length encoding are stored in the form of blocks. 
-The block is marked with a repeat counter. If the repetition counter is zero, then the block contains non-repeating 
-data compressed by the proposed method. Otherwise, the block contains a series of equal values that can be recovered 
-by decoding the single value and copying it in sequence. The buffer size within 50-100 samples does not lead to a significant memory consumption, but allows I/O operations to process more data, which increases write speed when saving results to file
-and the speed of access when reading and restoring results for viewing and analysis. 
-File I/O operations, both read and write, are sequential.
-
-The proposed compression method provides exact data recovery, that is, it is a lossless compression method. 
-This property of the algorithm is valuable, but it is redundant for storing the results of 
-transient stability simulation, as it is carried out with the finite accuracy of the integration method. 
-The local error is controlled by predictor-corrector integration scheme:
-\begin{equation}
-	\label{eqn_interror}
-	d_i=C\frac{e_i}{|y_i|Rtol+Atol} \leq 1
-\end{equation}
-
-\noindent where
+\noindent where:
 \begin{description}
-	\item  \(e_i\) is the corrector equation error with respect to the 
-	state variable \(y_i\);
-	\item  \(C\) is a constant of the integration method;
-	\item  \(Rtol\) is the relative error tolerance;
-	\item  \(Atol\) is the absolute error tolerance.
+	\item  \(s\) is the intermediate variables vector;
+	\item  \(z\) state variables vector;
+	\item  \(op_i\) is the function defined by AST node;
 \end{description}
 
-Obviously, limiting the accuracy while storing the simulation results 
-to the value of \(Atol\) will not lead to a deterioration in the quality of the transient stability analysis. 
-Therefore, a preliminary filter can be applied, which rounds values to \(Atol\). 
-Filtering by itself does not provide compression, but allows to get the result in the form of a piecewise
-constant function and use run-length encoding for intervals in which the change in the result value does not exceed \(Atol\), as shown on Fig. \ref{fig_rle}. 
-Filtering does not introduce an additional error into the simulation 
-result and does not affect the quality of the analysis of the simulation result, but improves compression ratio.
+There are no complicated functions in the operator tree, so only differentiation rules can be used to calculate partial derivatives with no need
+to use chain rule.  The expressions obtained according to such rules are relatively compact and the computational costs for partial
+derivatives, most often, turn out to be lower compared to optimized expressions for complicated functions. Of course, the reduction in 
+computational costs is achieved by increasing the number of equations in the system. However, in this work, to solve the system of linear equations
+with a matrix of partial derivatives, the matrix is transformed into a block triangular form \cite{davis12}. This form is constructed by  
+permutation of the system so that non-zero values are located above diagonal, which in turn is free of zeros. 
+After permutation, blocks remain on the diagonal, each of which, in the process of solving of the system, is subjected to LU decomposition 
+with partial pivoting. The solution of the systems reduced to a back substitution in block form. Transformation of the AST into an operator form 
+increases the dimension of the system being solved, but does not lead to the appearance of blocks on the diagonal, since all \(s_i\) are 
+resolvable with respect to \(op_i\), and \eqref{eqn_opthree} can be interpreted not as an equality, but as an assignment. Thus, the addition 
+of equations associated with the translation of the AST into an operator form is equivalent to the introduction of intermediate variables in the
+calculation of partial derivatives, and its effect on the performance of the solution of the system is negligible.
 
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=0.8\columnwidth]{fig5.eps}
-	\caption{Pre-compression results filtering for RLE in range of \(Atol\).}
-	\label{fig_rle}
-\end{figure}
+The operator form of th AST also has a certain advantage, which allows for each operation in the system of equations of the custom model to 
+obtain a result in he form of \(s_i (t_n)\) in the process of simulation. This feature is useful for in-depth analysis of the custom model 
+in the process of its development and debugging. It should also be noted that the automatic differentiation tool provides significant support 
+in the process of model development in the traditional way - by the software developer, as it eliminates the work of manual writing 
+several tens or hundreds of expressions for partial derivatives.
 
-In addition, filtering allows to eliminate the effect that may occur when the result values oscillate around zero. 
-The IEEE-754 representation of a double-precision number contains sign information in the high bit. 
-Slight oscillations in the result values around zero can lead to a sign change. The relatively 
-small absolute prediction error, but affecting the sign, will lead to the fact that when encoding \(Z_b\), 
-counted from the most significant bits, will be equal to zero, and instead of reducing the size of data, 
-the algorithm will increase it, since 4 extra bits will be required for \(Z_b\) encoding. 
-Filtering eliminates the sign change caused by oscillations in the results with amplitudes not exceeding 
-the \(Atol\), and allows to maintain an acceptable compression ratio.
-When \(Atol\) values of \(10^{-4}\) or more are acceptable, which is usually adequate for transient stability
-simulation for post-contingency control task, a single precision real number format requiring only 32 bits 
-can be used to store the results. 
-This will halve the size of results at the cost of accuracy, but at the same time 
-retain the ability to use the proposed compression method with minimal changes in the encoding scheme.
+\subsection{Determination of the order of the system of equations solution} 
 
-\section{Implementation and comparison with mainstream compression algorithms}
-To study proposed compression method implementation, series of tests were carried out to store 
-transient stability simulation results for the model with the following parameters:
+There is no need to determine the order of solution for solving the system of equations of the custom model.
+However, the overall performance of the simulation slightly affected by the pre-ordering of the system of
+equations into a block triangular form. This reduces the cost of ordering of the complete system 
+\eqref{eqn_thedae} in the software core. The question of the order of solution arises in the problem of
+calculating the initial conditions at the points \(z_0 (t_0)\) and \(z_d (t_d)\). When the custom model is
+implemented by the developer, the initial system is subjected to analysis, on the basis of which the 
+procedure for determining the initial conditions for all elementary blocks and model variables is determined. 
+If there are no feedbacks in the model, this order is reduced to a sequence of assignments, usually in the
+direction from the output to the inputs. In the presence of feedbacks, the sequence requires the solution of
+subsystems of equations, in general case, nonlinear ones. In most cases, the procedures for determining the
+initial conditions at \(t_0\) and at \(t_d\) are the same. The only difference is that at \(t_0\) it is assumed:
 
-\begin{table}[!h]
-	\caption{Test model features\label{tab:testmodel}}
-	\centering
-	\begin{tabularx}{\columnwidth}{ 
-			>{\raggedright\arraybackslash}X 
-			| >{\raggedleft\arraybackslash}X }
-		\hline
-		Equipment model & Count \\
-		\hlineB{3}
-		Bus & 842 \\
-		\hline		
-		Branch & 1189 \\
-		\hline		
-  	    Generator(simplified Park's) & 149 \\
-		\hline
-		Excitation system (Exciter+AVR+DEC) & 145 \\
-		\hline				
-	\end{tabularx}
-\end{table}
+\begin{equation}
+	\label{eqn_opthree}
+	\frac{df}{dt}(t_0)=\frac{dg}{dt}(t_0)=0,
+\end{equation}
 
-The tests were performed on a PC with an Intel Core i7-4770 CPU 3.4GHz and 32GB of RAM. A 4GB disk drive 
-was emulated in RAM, to make file data files I/O times negligible.
+\noindent while for \(t_d \)this condition is not met, but the values of the derivatives at 
+\(t_{d-}\) (up to the point of discontinuity) are known. Differential variables in most cases are considered continuous:
 
-The total number of state variables in the model was 6892. 
-The Transient with a duration of 100s and a step for the results output \(H_p=10^{-2}s\) in this 
-model was simulated for two cases. In the first case (Case 1), the frequency stabilization channels 
-of the AVR were switched off, due to which the transient process decayed much more slowly compared to 
-the second case (Case 2), in which the AVR stabilization channels were in operation. 
-Absolute integration error tolerance were \(Atol=10^{-7}\). Comparison of the simulation results of 
-the slip of one of the generators of the model is shown in the figure \ref{fig_cases1}:
+\begin{equation}
+	\label{eqn_cont}
+	\dot{y}(t_{d-})=\dot{y}(t_{d+}),
+\end{equation}
+\noindent which gives ability to resolve \(x(t_{d+})\).
 
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=0.8\columnwidth]{fig3.eps}
-	\caption{Transient cases with different decays.}
-	\label{fig_cases1}
-\end{figure}
-For Case 2, due to faster decay, the integration method increased the step at the final stage of the
- simulation over \(H_p\), which can be seen from the location of the markers in the 
- figure \ref{fig_cases2}. For that case, therefore, a significantly smaller amount of 
-the  results were saved than for Case 1. The resulting sizes were compressed by the proposed method during 
- the simulation. After simulation, the results were restored and compressed by two mainstream 
- archiving programs: WinRAR 5.5 and 7zip 16.02 with maximum compression settings.
- The results of the experiment are shown in the table \ref{tab:winrarz}. The best results are in bold.
-  
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=0.8\columnwidth]{fig4.eps}
-	\caption{Integration step impact on result output step.}
-	\label{fig_cases2}
-\end{figure}
+The presence in the model of elements with integration constants, the values of which are determined using complicated logic,
+significantly hampers calculation of the initial conditions. For example, the initialization of the PID controller or the
+implementation of bumpless control according to this law, depending on the given coefficients, may require the rejection of 
+\eqref{eqn_cont} and does not allow to determine the initial conditions in a general form \cite{fabozzi17}. In this case, 
+it is required to supply extra source data of the custom model in the form of so-called initialization scheme, which explicitly
+specifies expressions for determining the initial conditions.
 
+In the simplest cases, when \eqref{eqn_thedae} does not contain nonlinear feedbacks and complicated logic that determines the
+integration constants, the initialization scheme can be constructed automatically by analyzing the original system. 
+Since the AST in operator form is used to solve this problem, a sufficient condition is the availability of the inverse 
+function \(op^{inv}\) to the operator op, which allows resolving the variable from the equation of the AST node. 
+The ability to solve an equation with respect to some variable is determined on the classification of variables described in
+subsection \ref{sec_varclass} and the set of already resolved variables. To determine the order of equations resolving, 
+an algorithm for finding the strongly connected components in the graph \(G(V,E)\), where \(V\) are state variables and \(E\) 
+are equations, can be applied. One of the most efficient is Tarjan's algorithm \cite{sedgwwick11}.
 
-\begin{table}[!h]
-	\caption{Compression performance comparison\label{tab:winrarz}}
-	\centering
-	\begin{tabularx}{\columnwidth}{ 
- 		     >{\raggedright\arraybackslash}X 
-			| >{\raggedleft\arraybackslash}X 
-			| >{\raggedleft\arraybackslash}X }
-		\hline
- 	    & \multicolumn{1}{c|} {Case 1} & \multicolumn{1}{c} {Case 2} \\ 
-		\hlineB{3}		
-		\multicolumn{3}{c}{Proposed method} \\ 		
-		\hline
-		Samples count & 8052 & 5298 \\
-		\hline
-		State vars count & 6892 & 6892 \\
-		\hline		
-		Uncompressed, MB & 423.39 & 278.58 \\
-		\hline
-		Time, s & \textbf{16} & \textbf{10} \\
-		\hline		
-		RAM, GB & \textbf{0.003} & \textbf{0.003} \\
-		\hline		
-		Compressed, MB & \textbf{169.47} & 102.24 \\
-		\hline		
-		Ratio, \% & \textbf{40.03} & 36.70 \\
-		\hlineB{3}		
-		\multicolumn{3}{c}{WinRAR} \\ 		
-		\hline		
-		Time, s & 19 & 10 \\
-		\hline		
-		Time 1 core, s &	69 & 38 \\
-		\hline		
-		RAM, GB & 0.82 & 0.82 \\
-		\hline		
-		Compressed, MB & 175.20 & \textbf{98.16} \\
-		\hline		
-		Ratio, \% & 41.38 & \textbf{35.24} \\
-		\hlineB{3}		
-		\multicolumn{3}{c}{7zip} \\ 	
-		\hline	
-		Time, s & 38 & 25 \\
-		\hline		
-		Time 1 core, s & 120 & 62 \\
-		\hline		
-		RAM, GB & 2.94 & 1.86 \\
-		\hline
-		Compressed, MB & 197.57 & 106.52 \\
-		\hline		
-		Ratio, \% & 46.66 & 38.24 \\
-		\hline		
-	\end{tabularx}
-\end{table}
+If there are feedbacks in the original system, then ordering the equations in the form of a simple sequence of calculations
+becomes impossible. Feedbacks form the so-called algebraic cycles, the solution of which requires the solution of a system of
+equations. In this case, the ordering algorithm chooses the variable that allows the largest number of loop equations to be
+resolved, and continues ordering the equations as if that variable were resolved. If there is an inverse function for the
+equation of such a variable, the variable is introduced into the system of cycle equations using a substitution. 
+This technique does not guarantee the solution of the system of equations, but will allow the system of equations to be 
+ordered so that it acquires a block triangular form with diagonal blocks of the minimum size. Thus, the initial system, 
+already in the process of implementation, takes on a form that does not require additional ordering in the software core.
 
-During the comparison, the sizes of the compressed data were measured and the compression ratios were determined, 
-, as well as the time spent on the compression. 
-The compression ratio of the proposed method turns out to be comparable with the compression ratios of mainstream 
-archivers. For a larger amount of results, the proposed method gives the best compression ratio. 
-For a smaller size of results, the proposed method is slightly inferior to WinRAR.
+In case the ordering algorithm copes with the task of resolving all variables, the custom model can be converted into an
+intermediate language program. Otherwise, the algorithm produces a list of variables and equations that could not be resolved,
+and the user must supply extra data of the model with the necessary initialization equations. The main reason that not all 
+state variables can be resolved is the lack of inverse functions for AST nodes or functions used for variable substitutions. 
+In this case, the simplest way to resolve a variable is to explicitly specify an expression to calculate its value in the 
+initial conditions.
 
-It should be noted that in the comparison, the proposed compression method was run in parallel with the process 
-of  the transient stability simulation on one core of an eight-core processor. 
-The load on the processor from the compression method, thus, could not exceed 12.5\%. 
-The WinRAR and 7zip archivers were run with no threading restrictions. 
-The average load on the processor when running WinRAR was about 65\%, and when running 7zip --- 53\%. 
-In order to compare the time required by that archivers to process data using only one processor core, they 
-were artificially restricted by the operating system. The execution time of archivers on one 
-processor core is also shown in the table. The amount of memory required by the proposed method is negligible 
-compared to the amount required by archivers that use general purpose compression methods.
-
-The "Compressed" row shows the full size of the results compressed by the proposed method, which, 
-in addition to these results, also includes auxiliary data, for example, a list of state 
-variables with their names and units, a list of model elements, etc., as the compressed size for archivers, 
-is only the size of result data. At the end of the comparison, the results compressed 
-by the proposed method was additionally compressed by WinRAR. The compression ratio for Case 1 turned out 
-to be 96\%, for Case 2 --- 94\%, which can be explained by a better compression of auxiliary data. 
-However, compression of the auxiliary data for the result will require 
-its full decompression when reading for analysis. Considering that the additional possible compression is negligible, the auxiliary data is stored without using compression to speed up the reading of results.
+Improving the capabilities of algorithms for determining the initial conditions is the subject of further research. 
+The presence of algebraic cycles in itself is not a problem, since they are solvable as a system of equations. The main 
+problems in solving \eqref{eqn_thedae} at points \(t_0\) and \(t_d\) are related to the ambiguity in determining the 
+integration constants and the states of logical elementary blocks. To obtain unique and feasible solution of the system, 
+additional source data must be taken into account. One of the possible options is to provide ready-made implementations 
+of complicated logical elements as elementary blocks. A more versatile approach implies addition of extra source data by 
+extending model representation. Possible extension options are the use of Petri nets or finite state machines.
 
 \section{Conclusion}
-The proposed method for compressing the results of transient stability simulation makes it possible to obtain a compression ratio 
-close to the compression ratio of mainstream archiving programs that implement general purpose algorithms, with significantly 
-less computational efforts. The amount of memory required for the method is several orders of magnitude smaller than the amount 
-required for general purpose compression algorithms. The method allows to compress the result of the simulation for each 
-state variable separately, therefore, to restore a subset of the data required for analysis, it is not necessary to restore 
-the entire amount of data. The method supports a lossy compression option with a normalized error not exceeding the absolute 
-integration error tolerance. The results obtained are achieved through the use of specific properties of the data of the results of the 
-transient stability simulation. The compression method is implemented as a component of the developed software for 
-transient stability simulation.
+
+The process described above is implemented in a special compiler of the transient stability modeling package. The compiler accepts
+model block diagram graph, textual description of the system of equations, or a mixed description consisting of
+graph with additional equations for elementary blocks. The compiler supports more than 50 elementary blocks and allows
+generate source code in an intermediate language for subsequent translation into native code. C++17 is used as an intermediate language. 
+The result of compilation is a dynamic library with the implementation of the functions necessary for the model to interact with the software core. 
+Using the compiler is not only a equipment model can be implemented, but also models of automatic devices and transient stability simulation scenarios.
+
+The use of symbolic manipulations allows to fully automate the implementation of custom models
+for transient stability simulation. In the process of implementing the model, symbolic manipulations make it possible
+optimize models to improve performance and provide advanced error checking. The source data of custom models can be graphic
+representation, textual representation, or a mix of both, which allows to combine the capabilities of different modeling
+approaches without the need to involve software developers.
 
 \begin{thebibliography}{1}
 \bibliographystyle{IEEEtran}
@@ -781,24 +572,22 @@ Flexible and secure modeling // www.eurostag.be. URL: http://www.eurostag.be/en/
 \bibitem{sincal}
 PSS SINCAL Platform // www.simtec-gmbh.at. URL: http://www.simtec-gmbh.at/sites\_en/platform.asp.
 \bibitem{powefactory}
-Francisco Gonzalez-Longatt JLRT, editor. Advanced Smart Grid Functionalities Based on PowerFactory. Springer International Publishing AG, 2018.
+Francisco Gonzalez-Longatt and Jos{\'{e}} Luis Rueda Torres. Advanced Smart Grid Functionalities Based on PowerFactory. Springer International Publishing AG, 2018.
 \bibitem{gear71}
 Gear C.W. The Simultaneous Numerical Solution Of Differential - Algebraic Equations SLAC-PUB-0723. // IEEE Trans.Circuits Theory, No. 18, 1971. pp. 85-95.
 \bibitem{gathen13}
-Joachim von zur Gathen J.G. Modern Computer Algebra. 3rd ed. Cambridge University Press, 2013.
+Joachim von zur Gathen, Jürgen Gerhard. Modern Computer Algebra. 3rd ed. Cambridge University Press, 2013.
 \bibitem{pearl84}
 Pearl J. Heuristics: Intelligent Search Strategies for Computer Problem Solving. Addison-Wesley Pub, 1984.
 \bibitem{davis12}
-Timothy A. Davis E.P.N. Sparse Matrix Methods for Circuit Simulation Problems // In: Scientific Computing in Electrical Engineering. Springer, Berlin, Heidelberg, 2012. pp. 3-14.
+Timothy A. Davis, E. Palamadai Natarajan. Sparse Matrix Methods for Circuit Simulation Problems // In: Scientific Computing in Electrical Engineering. Springer, Berlin, Heidelberg, 2012. pp. 3-14.
 \bibitem{fabozzi17}
-Davide Fabozzi S.W.B.W.F.V. Semi-implicit Formulation of Proportional-integral Controller Block with Non-windup Limiter According to IEEE Standard 421.5-2016 // Proceedings Of IREP'2017 Symposium, 2017.
+Davide Fabozzi, Stefan Weigel, Bernd Weise, Fortunato Villella. Semi-implicit Formulation of Proportional-integral Controller Block with Non-windup Limiter According to IEEE Standard 421.5-2016 // Proceedings Of IREP'2017 Symposium, 2017.
 \bibitem{sedgwwick11}
-Robert Sedgewick K.W. Algorithms. 4th ed. Pearson Education, 2011.
-
-
-
+Robert Sedgewick, Kevin Wayne.  Algorithms. 4th ed. Pearson Education, 2011.
 \end{thebibliography}
-%\newpage
+
+\newpage
 \section{Biography Section}
 \vspace{-33pt}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{mashalov}}]{Eugene Mashalov}
