@@ -339,7 +339,7 @@ namespace DFW2
 	{
 		size_t nRowCount = 0;													// количество элементов в строке матрицы
 		CDynaNodeBase *pNode;													// узел, к которому относится данное Info
-		ptrdiff_t PVSwitchCount = 0;											// счетчик переключений PV-PQ
+		size_t PVSwitchCount = 0;												// счетчик переключений PV-PQ
 		alignas(16) double ImbS[2];												// небалансы по P и Q
 		double& ImbP{ ImbS[0] };
 		double& ImbQ{ ImbS[1] };

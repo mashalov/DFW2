@@ -99,7 +99,7 @@ and accuracy, as well as transient response features. State variables values are
 step \(h\), but the results go to output with much slower rate than integration step \(H_p>>h\). 
 When integration uses \(h<H_p\), intermediate instants in \([t;t+H_p]\) are not stored, except
 instants with discrete events, such as switching, limiting and contingencies. At discrete instants
-results are stored before the event in \(t_d^-\) and after the event in \(t_d^+\), \(0<t_d^+-t_d^-<h_min\).
+results are stored before the event in \(t_d^-\) and after the event in \(t_d^+\), \(0<t_d^+-t_d^-<h_{min}\).
 Such a representation is much more convenient for the analysis of discrete events, since it preserves
 discontinuity, but it also increases the amount of data stored, and it grows in proportion to the 
 frequency of discrete events.

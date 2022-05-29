@@ -538,7 +538,7 @@ void CLoadFlow::Seidell()
 
 	double dPreviousImb{ -1.0 }, dPreviousImbQ{ -1.0 };
 
-	ptrdiff_t& SeidellIterations{ pNodes->IterationControl().Number };
+	size_t& SeidellIterations{ pNodes->IterationControl().Number };
 
 	for (SeidellIterations = 0; SeidellIterations < Parameters.SeidellIterations; SeidellIterations++)
 	{
@@ -1550,17 +1550,13 @@ void CLoadFlow::SolveLinearSystem()
 void CLoadFlow::Newton()
 {
 	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
-	ptrdiff_t& it{ pNodes->IterationControl().Number };
-	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
-	MATRIXINFO PV_PQmax, PV_PQmin, PQmax_PV, PQmin_PV;
+	size_t& it{ pNodes->IterationControl().Number };
 
-	PV_PQmax.reserve(klu.MatrixSize() / 2);
-	PV_PQmin.reserve(klu.MatrixSize() / 2);
-	PQmax_PV.reserve(klu.MatrixSize() / 2);
-	PQmin_PV.reserve(klu.MatrixSize() / 2);
+	Limits limits(*this);
 
 	// квадраты небалансов до и после итерации
-	double g0(0.0), g1(0.1), lambda(1.0);
+	double g0(0.0), g1(0.1);
+	lambda_ = 1.0;
 	NodeTypeSwitchesDone = 1;
 	it = 0;
 	
@@ -1573,10 +1569,8 @@ void CLoadFlow::Newton()
 			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
 
 		pNodes->IterationControl().Reset();
-		PV_PQmax.clear();	// сбрасываем список переключаемых узлов чтобы его обновить
-		PV_PQmin.clear();
-		PQmax_PV.clear();
-		PQmin_PV.clear();
+		limits.Clear();
+		
 
 		// считаем небаланс по всем узлам кроме БУ
 		_MatrixInfo* pMatrixInfo{ pMatrixInfo_.get() };
@@ -1587,45 +1581,11 @@ void CLoadFlow::Newton()
 			GetNodeImb(pMatrixInfo);
 			// обновляем данные итерации от текущего узла
 			pNodes->IterationControl().Update(pMatrixInfo);
-			// получаем расчетную генерацию узла
-			double Qg = pNode->Qgr + pMatrixInfo->ImbQ;
-			switch (pNode->eLFNodeType_)
-			{
-				// если узел на минимуме Q и напряжение ниже уставки, он должен стать PV
-			case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-				if (pMatrixInfo->NodeVoltageViolation() < - Parameters.Vdifference)
-				{
-					if (pMatrixInfo->PVSwitchCount < Parameters.MaxPVPQSwitches)
-						PQmin_PV.push_back(pMatrixInfo);
-					else
- 						FailedPVPQNodes.insert(pNode);
-				}
-				break;
-				// если узел на максимуме Q и напряжение выше уставки, он должен стать PV
-			case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-				if (pMatrixInfo->NodeVoltageViolation() > Parameters.Vdifference)
-				{
-					if (pMatrixInfo->PVSwitchCount < Parameters.MaxPVPQSwitches)
-						PQmax_PV.push_back(pMatrixInfo);
-					else
-						FailedPVPQNodes.insert(pNode);
-				}
-				break;
-				// если узел PV, но реактивная генерация вне диапазона, делаем его PQ
-			case CDynaNodeBase::eLFNodeType::LFNT_PV:
-				pNode->Qgr = Qg;	// если реактивная генерация в пределах - обновляем ее значение в узле
-				// рассчитываем нарушение ограничения по генерации реактивной мощности
-				if ((pMatrixInfo->NodePowerViolation_ = Qg - pNode->LFQmax) > Parameters.Imb)
-					PV_PQmax.push_back(pMatrixInfo);
-				else if ((pMatrixInfo->NodePowerViolation_ = Qg - pNode->LFQmin) < - Parameters.Imb)
-					PV_PQmin.push_back(pMatrixInfo);
-
-				break;
-			}
+			limits.Select(pMatrixInfo);
 		}
 
 		// общее количество узлов с нарушенными ограничениями и подлежащих переключению
-		pNodes->IterationControl().QviolatedCount = PV_PQmax.size() + PV_PQmin.size() + PQmax_PV.size() + PQmin_PV.size();
+		pNodes->IterationControl().QviolatedCount = limits.ViolatedCount();
 
 		UpdateSlackBusesImbalance();
 
@@ -1646,16 +1606,16 @@ void CLoadFlow::Newton()
 		{
 			double gs1v = -CDynaModel::gs1(klu, pRh, klu.B());
 			// знак gs1v должен быть "-" ????
-			lambda *= -0.5 * gs1v / (g1 - g0 - gs1v);
+			lambda_ *= -0.5 * gs1v / (g1 - g0 - gs1v);
 			// если шаг слишком мал и есть узлы для переключений,
 			// несмотря на не снижающийся небаланс переходим к переключениям узлов
-			if (lambda > Parameters.ForceSwitchLambda)
+			if (lambda_ > Parameters.ForceSwitchLambda)
 			{
 				// ограничение шага не достигло значения
 				// для принудительного переключения
 				RestoreVDelta();
-				UpdateVDelta(lambda);
-				NewtonStepRatio.Ratio_ = lambda;
+				UpdateVDelta(lambda_);
+				NewtonStepRatio.Ratio_ = lambda_;
 				NewtonStepRatio.eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
 				continue;
 			}
@@ -1664,93 +1624,9 @@ void CLoadFlow::Newton()
 		// сохраняем исходные значения переменных
 		StoreVDelta();
 
-		NodeTypeSwitchesDone = 0;
+		limits.Apply();
 
-		// функция возврата узла из ограничения Q в PV
-		const auto fnToPv = [this](auto& node, std::string_view Title)
-		{
-			node->PVSwitchCount++;
-			CDynaNodeBase*& pNode = node->pNode;
-			LogNodeSwitch(node, Title);
-			pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PV;
-			pNode->V = pNode->LFVref;
-			pNode->UpdateVreVimSuper();
-			// считаем количество переключений типов узлов
-			// чтобы исключить выбор шага по g1 > g0
-			NodeTypeSwitchesDone++;
-		};
-
-		std::sort(PQmin_PV.begin(), PQmin_PV.end(), [](const _MatrixInfo* lhs, const _MatrixInfo* rhs)
-			{
-				return std::abs(lhs->NodeVoltageViolation_) > std::abs(rhs->NodeVoltageViolation_);
-			});
-
-		std::sort(PQmax_PV.begin(), PQmax_PV.end(), [](const _MatrixInfo* lhs, const _MatrixInfo* rhs)
-			{
-				return std::abs(lhs->NodeVoltageViolation_) > std::abs(rhs->NodeVoltageViolation_);
-			});
-
-		std::sort(PV_PQmax.begin(), PV_PQmax.end(), [](const _MatrixInfo* lhs, const _MatrixInfo* rhs)
-			{
-				return std::abs(lhs->NodePowerViolation_) > std::abs(rhs->NodePowerViolation_);
-			});
-
-		std::sort(PV_PQmin.begin(), PV_PQmin.end(), [](const _MatrixInfo* lhs, const _MatrixInfo* rhs)
-			{
-				return std::abs(lhs->NodePowerViolation_) > std::abs(rhs->NodePowerViolation_);
-			});
-
-		for (auto&& vec : std::array<MATRIXINFO*, 4>{&PQmin_PV, &PQmax_PV, &PV_PQmax, &PV_PQmin})
-		{
-			if (static_cast<ptrdiff_t>(vec->size()) > Parameters.PVPQSwitchPerIt)
-				vec->resize(Parameters.PVPQSwitchPerIt);
-		}
-
-		// Сначала снимаем узлы с минимумов Q, чтобы избежать
-		// дефицита реактивной мощности
-
-		for (auto&& it : PQmin_PV)
-			fnToPv(it, "PQmin->PV");
-
-		// если узлов на минимуме нет - снимаем узлы с максимумов Q
-		if (PQmin_PV.empty())
-			for (auto&& it : PQmax_PV)
-				fnToPv(it, "PQmax->PV");
-
-		// Разрешаем переключать узлы PV в случае, если 
-		// 1. небаланс по P снизился до заданного порога
-		// 2. снижение небаланса относительно мало
-		// 3. шаг Ньютона ограничен до уровня m_Parameters.ForceSwitchLambda из-за бэктрэка
-
-		const double absImbRatio{ std::abs(pNodes->IterationControl().ImbRatio)};
-
-		if (std::abs(pNodes->IterationControl().MaxImbP.GetDiff()) < 100.0 * Parameters.Imb ||
-			absImbRatio > 0.95 ||
-			std::abs(lambda) <= Parameters.ForceSwitchLambda)
-		{
-			for (auto&& it : PV_PQmax)
-			{
-				LogNodeSwitch(it, "PV->PQmax");
-				CDynaNodeBase*& pNode = it->pNode;
-				pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
-				pNode->Qgr = pNode->LFQmax;
-				NodeTypeSwitchesDone++;
-			}
-
-			if (PV_PQmax.empty())
-			{
-				for (auto&& it : PV_PQmin)
-				{
-					LogNodeSwitch(it, "PV->PQmin");
-					CDynaNodeBase*& pNode = it->pNode;
-					pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
-					pNode->Qgr = pNode->LFQmin;
-					NodeTypeSwitchesDone++;
-				}
-			}
-		}
-
-		lambda = 1.0;
+		lambda_ = 1.0;
 		g0 = g1;
 
 		switch (Parameters.LFFormulation)
@@ -2043,10 +1919,6 @@ void CLoadFlow::CheckFeasible()
 {
 	bool bRes{ true };
 
-	for (const auto& it : FailedPVPQNodes)
-		it->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLFOverswitchedNode, it->GetVerbalName(),
-			Parameters.MaxPVPQSwitches));
-
 	for (auto&& it : *pNodes)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
@@ -2283,7 +2155,7 @@ void CLoadFlow::Gauss()
 	nNzCount = (pAx - Ax) / 2;		// рассчитываем получившееся количество ненулевых элементов (делим на 2 потому что комплекс)
 	Ap[nNodeCount] = nNzCount;
 
-	ptrdiff_t& nIteration{ pNodes->IterationControl().Number};
+	size_t& nIteration{ pNodes->IterationControl().Number};
 
 	for (nIteration = 0; nIteration < 20; nIteration++)
 	{
@@ -2362,3 +2234,177 @@ void CLoadFlow::Gauss()
 		}
 	}
 }
+
+
+
+CLoadFlow::Limits::Limits(CLoadFlow& LoadFlow) :
+	LoadFlow_(LoadFlow)
+{
+	const size_t PlannedSize(LoadFlow_.klu.MatrixSize() / 2);
+	PV_PQmax.reserve(PlannedSize);
+	PV_PQmin.reserve(PlannedSize);
+	PQmax_PV.reserve(PlannedSize);
+	PQmin_PV.reserve(PlannedSize);
+}
+
+void CLoadFlow::Limits::Clear()
+{
+	PV_PQmax.clear();
+	PV_PQmin.clear();
+	PQmax_PV.clear();
+	PQmin_PV.clear();
+}
+
+void CLoadFlow::Limits::Select(_MatrixInfo* pMatrixInfo)
+{
+	const auto& pNode{ pMatrixInfo->pNode };
+	const auto& Parameters{ LoadFlow_.Parameters };
+
+	// получаем расчетную генерацию узла
+	const double Qg{ pNode->Qgr + pMatrixInfo->ImbQ };
+
+	switch (pNode->eLFNodeType_)
+	{
+		// если узел на минимуме Q и напряжение ниже уставки, он должен стать PV
+	case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
+		if (pMatrixInfo->NodeVoltageViolation() < -Parameters.Vdifference)
+		{
+			if (pMatrixInfo->PVSwitchCount < Parameters.MaxPVPQSwitches)
+				PQmin_PV.push_back(pMatrixInfo);
+			else
+				FailedPVPQNodes.insert(pNode);
+		}
+		break;
+		// если узел на максимуме Q и напряжение выше уставки, он должен стать PV
+	case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
+		if (pMatrixInfo->NodeVoltageViolation() > Parameters.Vdifference)
+		{
+			if (pMatrixInfo->PVSwitchCount < Parameters.MaxPVPQSwitches)
+				PQmax_PV.push_back(pMatrixInfo);
+			else
+				FailedPVPQNodes.insert(pNode);
+		}
+		break;
+		// если узел PV, но реактивная генерация вне диапазона, делаем его PQ
+	case CDynaNodeBase::eLFNodeType::LFNT_PV:
+		pNode->Qgr = Qg;	// если реактивная генерация в пределах - обновляем ее значение в узле
+		// рассчитываем нарушение ограничения по генерации реактивной мощности
+		if ((pMatrixInfo->NodePowerViolation_ = Qg - pNode->LFQmax) > Parameters.Imb)
+			PV_PQmax.push_back(pMatrixInfo);
+		else if ((pMatrixInfo->NodePowerViolation_ = Qg - pNode->LFQmin) < -Parameters.Imb)
+			PV_PQmin.push_back(pMatrixInfo);
+		break;
+	}
+}
+
+size_t CLoadFlow::Limits::ViolatedCount() const
+{
+	return PV_PQmax.size() + PV_PQmin.size() + PQmax_PV.size() + PQmin_PV.size();
+};
+
+void CLoadFlow::Limits::Apply()
+{
+	const auto& pNodes{ LoadFlow_.pNodes };
+	const auto& Parameters{ LoadFlow_.Parameters };
+
+	// сортируем узлы с ограничениями по величине нарушения
+
+	std::sort(PQmin_PV.begin(), PQmin_PV.end(), [](const _MatrixInfo* lhs, const _MatrixInfo* rhs)
+		{
+			return std::abs(lhs->NodeVoltageViolation_) > std::abs(rhs->NodeVoltageViolation_);
+		});
+
+	std::sort(PQmax_PV.begin(), PQmax_PV.end(), [](const _MatrixInfo* lhs, const _MatrixInfo* rhs)
+		{
+			return std::abs(lhs->NodeVoltageViolation_) > std::abs(rhs->NodeVoltageViolation_);
+		});
+
+	std::sort(PV_PQmax.begin(), PV_PQmax.end(), [](const _MatrixInfo* lhs, const _MatrixInfo* rhs)
+		{
+			return std::abs(lhs->NodePowerViolation_) > std::abs(rhs->NodePowerViolation_);
+		});
+
+	std::sort(PV_PQmin.begin(), PV_PQmin.end(), [](const _MatrixInfo* lhs, const _MatrixInfo* rhs)
+		{
+			return std::abs(lhs->NodePowerViolation_) > std::abs(rhs->NodePowerViolation_);
+		});
+
+	// обрезаем векторы узлов с ограничениями по допустимой размерности
+	// равной количеству переключений на итерации
+	for (auto&& vec : std::array<MATRIXINFO*, 4>{&PQmin_PV, & PQmax_PV, & PV_PQmax, & PV_PQmin})
+	{
+		if (vec->size() > Parameters.PVPQSwitchPerIt)
+			vec->resize(Parameters.PVPQSwitchPerIt);
+	}
+
+	// функция возврата узла из ограничения Q в PV
+	const auto fnToPv = [this](auto& node, std::string_view Title)
+	{
+		node->PVSwitchCount++;
+		CDynaNodeBase*& pNode = node->pNode;
+		LoadFlow_.LogNodeSwitch(node, Title);
+		pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PV;
+		pNode->V = pNode->LFVref;
+		pNode->UpdateVreVimSuper();
+		// считаем количество переключений типов узлов
+		// чтобы исключить выбор шага по g1 > g0
+		LoadFlow_.NodeTypeSwitchesDone++;
+	};
+
+	// запоминаем были ли переключения узлов на предыдущей итерации
+	const bool PreviousSwitches{ LoadFlow_.NodeTypeSwitchesDone > 0 && false};
+	// сбрасываем количество переключений узлов
+	LoadFlow_.NodeTypeSwitchesDone = 0;
+	const double absImbRatio{ std::abs(pNodes->IterationControl().ImbRatio) };
+
+	// Сначала снимаем узлы с минимумов Q, чтобы избежать
+	// дефицита реактивной мощности
+
+	for (auto&& it : PQmin_PV)
+		fnToPv(it, "PQmin->PV");
+
+	// если узлов на минимуме нет - снимаем узлы с максимумов Q
+	if (PQmin_PV.empty())
+		for (auto&& it : PQmax_PV)
+			fnToPv(it, "PQmax->PV");
+
+	// Разрешаем переключать узлы PV в случае, если 
+	// 1. небаланс по P снизился до заданного порога
+	// 2. снижение небаланса относительно мало
+	// 3. шаг Ньютона ограничен до уровня m_Parameters.ForceSwitchLambda из-за бэктрэка
+
+	if ((std::abs(pNodes->IterationControl().MaxImbP.GetDiff()) < 100.0 * Parameters.Imb &&
+		 std::abs(pNodes->IterationControl().MaxImbQ.GetDiff()) < 100.0 * Parameters.Imb) ||
+		(absImbRatio > 0.95 && !PreviousSwitches) ||
+		std::abs(LoadFlow_.lambda_) <= Parameters.ForceSwitchLambda)
+	{
+		for (auto&& it : PV_PQmax)
+		{
+			LoadFlow_.LogNodeSwitch(it, "PV->PQmax");
+			CDynaNodeBase*& pNode = it->pNode;
+			pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
+			pNode->Qgr = pNode->LFQmax;
+			LoadFlow_.NodeTypeSwitchesDone++;
+		}
+
+		if (PV_PQmax.empty())
+		{
+			for (auto&& it : PV_PQmin)
+			{
+				LoadFlow_.LogNodeSwitch(it, "PV->PQmin");
+				CDynaNodeBase*& pNode = it->pNode;
+				pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
+				pNode->Qgr = pNode->LFQmin;
+				LoadFlow_.NodeTypeSwitchesDone++;
+			}
+		}
+	}
+}
+
+void CLoadFlow::Limits::CheckFeasible()
+{
+	for (const auto& it : FailedPVPQNodes)
+		it->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLFOverswitchedNode, it->GetVerbalName(),
+			LoadFlow_.Parameters.MaxPVPQSwitches));
+}
+

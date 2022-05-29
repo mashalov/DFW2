@@ -1071,7 +1071,7 @@ bool CDynaNodeContainer::LULF()
 	nNzCount = (pAx - Ax) / 2;		// рассчитываем получившееся количество ненулевых элементов (делим на 2 потому что комплекс)
 	Ap[nNodeCount] = nNzCount;
 
-	ptrdiff_t& nIteration = IterationControl_.Number;
+	size_t& nIteration{ IterationControl_.Number };
 	for (nIteration = 0; nIteration < 200; nIteration++)
 	{
 		IterationControl_.Reset();

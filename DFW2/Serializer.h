@@ -23,6 +23,7 @@ namespace DFW2
 		// конструкторы для разных типов
 		uValue(double* pDouble) noexcept: pDbl(pDouble) {}
 		uValue(ptrdiff_t* pInteger) noexcept : pInt(pInteger) {}
+		uValue(size_t* pUInteger) noexcept : pInt(reinterpret_cast<ptrdiff_t*>(pUInteger)) {}
 		uValue(bool* pBoolean) noexcept : pBool(pBoolean) {}
 		uValue(cplx* pComplex) noexcept : pCplx(pComplex) {}
 		uValue(std::string* pString) noexcept : pStr(pString) {}
@@ -139,6 +140,10 @@ namespace DFW2
 		TypedSerializedValue(CSerializerBase* pSerializer, ptrdiff_t* pInteger) : pSerializer_(pSerializer),
 																				  Value(pInteger), 
 																				  ValueType(eValueType::VT_INT) {}
+
+		TypedSerializedValue(CSerializerBase* pSerializer, size_t* pUInteger) : pSerializer_(pSerializer),
+			Value(pUInteger),
+			ValueType(eValueType::VT_INT) {}
 
 		TypedSerializedValue(CSerializerBase* pSerializer, bool* pBoolean) : pSerializer_(pSerializer),
 																			 Value(pBoolean), 
@@ -286,6 +291,7 @@ namespace DFW2
 		MetaSerializedValue(CSerializerBase* pSerializer, CSerializerAdapterBase* pAdapter) : TypedSerializedValue(pSerializer, pAdapter) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, double* pDouble) : TypedSerializedValue(pSerializer, pDouble) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, ptrdiff_t* pInteger) : TypedSerializedValue(pSerializer, pInteger) {}
+		MetaSerializedValue(CSerializerBase* pSerializer, size_t* pInteger) : TypedSerializedValue(pSerializer, pInteger) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, bool* pBoolean) : TypedSerializedValue(pSerializer, pBoolean) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, cplx* pComplex) : TypedSerializedValue(pSerializer, pComplex) {}
 		MetaSerializedValue(CSerializerBase* pSerializer, std::string* pString) : TypedSerializedValue(pSerializer, pString) {}

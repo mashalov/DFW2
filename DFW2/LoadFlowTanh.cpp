@@ -7,7 +7,7 @@ using namespace DFW2;
 void CLoadFlow::NewtonTanh()
 {
 	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
-	ptrdiff_t& it{ pNodes->IterationControl().Number};
+	size_t& it{ pNodes->IterationControl().Number};
 
 	// вектор для указателей переключаемых узлов, с размерностью в половину уравнений матрицы
 

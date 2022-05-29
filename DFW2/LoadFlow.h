@@ -29,11 +29,11 @@ namespace DFW2
 			bool Flat = false;							// плоский старт
 			eLoadFlowStartupMethod Startup;				// стартовый метод 
 			double SeidellStep = 1.0;					// шаг ускорения метода Зейделя	
-			ptrdiff_t SeidellIterations = 17;			// количество итераций Зейделем
-			ptrdiff_t EnableSwitchIteration = 2;		// номер итерации, с которой разрешается переключение PV-PQ
-			ptrdiff_t MaxIterations = 100;				// максимальное количество итераций Ньютоном
-			ptrdiff_t MaxPVPQSwitches = 5;				// максимальное количество переключений PV-PQ
-			ptrdiff_t PVPQSwitchPerIt = 10;				// количество переключений типов узлов на одной итерации
+			size_t SeidellIterations = 17;				// количество итераций Зейделем
+			size_t EnableSwitchIteration = 2;			// номер итерации, с которой разрешается переключение PV-PQ
+			size_t MaxIterations = 100;					// максимальное количество итераций Ньютоном
+			size_t MaxPVPQSwitches = 5;					// максимальное количество переключений PV-PQ
+			size_t PVPQSwitchPerIt = 10;				// количество переключений типов узлов на одной итерации
 			double VoltageNewtonStep = 0.3;				// максимальное относительное приращение шага Ньютона по напряжению
 			double NodeAngleNewtonStep = 1.5;			// максимальное приращение шага Ньютона по углу узла
 			double BranchAngleNewtonStep = 0.5;			// максимальное приращение шага Ньютона по углу связи
@@ -43,6 +43,21 @@ namespace DFW2
 			double Vdifference = 1E-4;					// порог сравнения модуля напряжения
 			double LRCMinSlope = 0.0;					// минимальная крутизна СХН
 			double LRCMaxSlope = 5.0;					// максимальная крутизна СХН
+		};
+
+
+		class Limits
+		{
+			MATRIXINFO PV_PQmax, PV_PQmin, PQmax_PV, PQmin_PV;
+			std::set<CDynaNodeBase*> FailedPVPQNodes;
+			CLoadFlow& LoadFlow_;
+		public:
+			Limits(CLoadFlow& LoadFlow);
+			void Clear();
+			void Select(_MatrixInfo* pMatrixInfo);
+			size_t ViolatedCount() const;
+			void Apply();
+			void CheckFeasible();
 		};
 
 		CLoadFlow(CDynaModel *pDynaModel);
@@ -90,6 +105,7 @@ namespace DFW2
 		_MatrixInfo *pMatrixInfoSlackEnd = nullptr;				// конец вектора узлов с учетом базисных
 		
 		double TanhBeta = 500.0;
+		double lambda_ = 1.0;
 		ptrdiff_t NodeTypeSwitchesDone = 0;
 
 		const LoadFlowParameters& Parameters;
@@ -111,7 +127,6 @@ namespace DFW2
 		std::unique_ptr<double[]> pDbackup;
 		std::unique_ptr<double[]> pRh;		// невязки до итерации
 		std::vector<CDynaBranch*> BranchAngleCheck;
-		std::set<CDynaNodeBase*> FailedPVPQNodes;
 	};
 }
 

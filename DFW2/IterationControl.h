@@ -60,8 +60,8 @@ namespace DFW2
 		_MaxNodeDiff MaxImbQ;
 		_MaxNodeDiff MaxV;
 		_MaxNodeDiff MinV;
-		ptrdiff_t Number = 0;
-		ptrdiff_t QviolatedCount = 0;
+		size_t Number = 0;
+		size_t QviolatedCount = 0;
 		double ImbRatio = 0.0;
 		bool Converged(double m_dToleratedImb);
 		void Reset();
