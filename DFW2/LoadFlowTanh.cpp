@@ -84,7 +84,7 @@ void CLoadFlow::NewtonTanh()
 
 		// обновляем переменные
 		double MaxRatio = GetNewtonRatio();
-		UpdateVDelta(MaxRatio);
+		UpdateVDelta(-MaxRatio);
 		if (NewtonStepRatio.Ratio_ >= 1.0 && TanhBeta < 2500.0)
 		{
 			TanhBeta *= 1.0;
@@ -364,3 +364,219 @@ void CLoadFlow::CompareWithRastr()
 }
 #endif
 
+void CLoadFlow::ContinuousNewton()
+{
+	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningNewton);
+	size_t& it{ pNodes->IterationControl().Number };
+	//Limits limits(*this);
+
+	// квадраты небалансов до и после итерации
+	double g0(0.0), g1(0.1);
+	lambda_ = 1.0;
+	NodeTypeSwitchesDone = 1;
+	it = 0;
+
+	double h{ 0.75 };
+	const double eps{ 0.001 };
+	size_t itStepChanged{ 0 };
+
+	while (1)
+	{
+		if (!CheckLF())
+			throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
+
+		if (it > Parameters.MaxIterations)
+			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
+
+		pNodes->IterationControl().Reset();
+		//limits.Clear();
+
+		const auto Imb = [this]()
+		{
+			_MatrixInfo* pMatrixInfo{ pMatrixInfo_.get() };
+			for (; pMatrixInfo < pMatrixInfoEnd; pMatrixInfo++)
+			{
+				const auto& pNode{ pMatrixInfo->pNode };
+				GetNodeImb(pMatrixInfo);
+			}
+		};
+
+
+		// считаем небаланс по всем узлам кроме БУ
+		_MatrixInfo* pMatrixInfo{ pMatrixInfo_.get() };
+		for (; pMatrixInfo < pMatrixInfoEnd; pMatrixInfo++)
+		{
+			const auto& pNode{ pMatrixInfo->pNode };
+			GetNodeImb(pMatrixInfo);
+			if (pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PV)
+				pNode->Qgr = pNode->Qgr + pMatrixInfo->ImbQ;
+			pNodes->IterationControl().Update(pMatrixInfo);
+		}
+
+		// общее количество узлов с нарушенными ограничениями и подлежащих переключению
+		//pNodes->IterationControl().QviolatedCount = limits.ViolatedCount();
+
+		UpdateSlackBusesImbalance();
+
+		g1 = GetSquaredImb();
+
+		// отношение квадратов невязок
+		pNodes->IterationControl().ImbRatio = g0 > 0.0 ? g1 / g0 : 0.0;
+		DumpNewtonIterationControl();
+		it++;
+
+		if (pNodes->IterationControl().Converged(Parameters.Imb))
+			break;
+
+		if (pNodes->IterationControl().ImbRatio > 1)
+		{
+			RestoreVDelta();
+			h *= 0.5;
+		}
+
+		// сохраняем исходные значения переменных
+		StoreVDelta();
+
+		//limits.Apply();
+
+		lambda_ = 1.0;
+		g0 = g1;
+
+		BuildMatrixCurrent();
+		SolveLinearSystem();
+
+		auto k1{ std::make_unique<double[]>(klu.MatrixSize()) };
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k1.get());
+
+		/*
+		RestoreVDelta();
+		UpdateVDelta(k1.get(), -h * 0.5);
+		BuildMatrixCurrent();
+		SolveLinearSystem();
+		auto k2{ std::make_unique<double[]>(klu.MatrixSize()) };
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k2.get());
+
+		RestoreVDelta();
+		UpdateVDelta(k2.get(), -h * 0.5);
+		BuildMatrixCurrent();
+		SolveLinearSystem();
+		auto k3{ std::make_unique<double[]>(klu.MatrixSize()) };
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k3.get());
+
+		RestoreVDelta();
+		UpdateVDelta(k3.get(), -h);
+		BuildMatrixCurrent();
+		SolveLinearSystem();
+		auto k4{ std::make_unique<double[]>(klu.MatrixSize()) };
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k4.get());
+
+		UpdateVDelta(k1.get(), -h / 6);
+		UpdateVDelta(k2.get(), -2.0 * h / 6);
+		UpdateVDelta(k3.get(), -2.0 * h / 6);
+		UpdateVDelta(k4.get(), h / 6);
+		*/
+
+		
+		RestoreVDelta();
+		UpdateVDelta(k1.get(), -h / 3.0);
+		BuildMatrixCurrent();
+		SolveLinearSystem();
+
+		auto k2{ std::make_unique<double[]>(klu.MatrixSize()) };
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k2.get());
+
+		RestoreVDelta();
+		UpdateVDelta(k1.get(), -h / 6.0);
+		UpdateVDelta(k2.get(), -h / 6.0);
+		BuildMatrixCurrent();
+		SolveLinearSystem();
+
+		auto k3{ std::make_unique<double[]>(klu.MatrixSize()) };
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k3.get());
+
+		RestoreVDelta();
+		UpdateVDelta(k1.get(), -h / 8.0);
+		UpdateVDelta(k3.get(), -h * 3.0 / 8.0);
+		BuildMatrixCurrent();
+		SolveLinearSystem();
+
+		auto k4{ std::make_unique<double[]>(klu.MatrixSize()) };
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k4.get());
+
+		RestoreVDelta();
+		UpdateVDelta(k1.get(), -h / 2.0);
+		UpdateVDelta(k3.get(),  h * 3.0 / 2.0);
+		UpdateVDelta(k4.get(), -h * 2.0);
+		BuildMatrixCurrent();
+		SolveLinearSystem();
+
+		auto k5{ std::make_unique<double[]>(klu.MatrixSize()) };
+		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k5.get());
+
+		RestoreVDelta();
+
+		auto a1{ std::make_unique<double[]>(klu.MatrixSize()) };
+		auto a2{ std::make_unique<double[]>(klu.MatrixSize()) };
+		
+
+		pMatrixInfo = pMatrixInfo_.get();
+
+		double r{ 0.0 };
+		for (; pMatrixInfo < pMatrixInfoEnd; pMatrixInfo++)
+		{
+			const auto& pNode{ pMatrixInfo->pNode };
+
+			double* pk1{ k1.get() + pNode->A(0) };
+			double* pk2{ k2.get() + pNode->A(0) };
+			double* pk3{ k3.get() + pNode->A(0) };
+			double* pk4{ k4.get() + pNode->A(0) };
+			double* pk5{ k5.get() + pNode->A(0) };
+			double* pa1{ a1.get() + pNode->A(0) };
+			double* pa2{ a2.get() + pNode->A(0) };
+
+			*pa1 = pNode->Delta - h * (*pk1 * 0.5 - *pk3 * 3.0 / 2.0 + *pk4 * 2.0);
+			*pa2 = pNode->Delta -= h * (*pk1 / 6.0 + *pk4 * 2.0 / 3.0 + *pk5 / 6.0);
+
+			pNode->Delta += (*pa1 - *pa2) / 5.0;
+
+			double er{ std::abs(*pa1 - *pa2) / 2 / M_PI };
+			if (r < er)
+				r = er;
+			
+
+			pk1++; pk2++; pk3++; pk4++; pk5++; pa1++; pa2++;
+
+			*pa1 = pNode->V - h * (*pk1 * 0.5 - *pk3 * 3.0 / 2.0 + *pk4 * 2.0);
+			*pa2 = pNode->V -= h * (*pk1 / 6.0 + *pk4 * 2.0 / 3.0 + *pk5 / 6.0);
+
+			pNode->V += (*pa1 - *pa2) / 5.0;
+
+			er = std::abs(*pa1 - *pa2) / pNode->Unom;
+			if (r < er)
+				r = er;
+
+			pk1++; pk2++; pk3++; pk4++; pk5++; pa1++; pa2++;
+		}
+
+
+		/*
+		r *= 0.2;
+		if (r > eps)
+		{
+			RestoreVDelta();
+			h *= 0.5;
+		}
+		else if (r <= eps / 64)
+			h *= 2.0;
+		*/
+
+	
+		r /= 5 * h;
+		double hk{ 0.9 * std::pow(eps / r, 0.25) };
+		h *= hk;
+		h = (std::max)((std::min)(h, 0.75), 1.15);
+	}
+
+	// обновляем реактивную генерацию в суперузлах
+	UpdateSupernodesPQ();
+}

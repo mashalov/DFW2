@@ -75,7 +75,9 @@ namespace DFW2
 		void SeidellTanh();
 		void Newton();
 		void NewtonTanh();
+		void ContinuousNewton();
 		double GetNewtonRatio();
+		void UpdateVDelta(double const* b, double Mult = 1.0);
 		void UpdateVDelta(double dStep = 1.0);
 		void BuildMatrixPower();
 		void BuildMatrixCurrent();

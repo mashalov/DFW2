@@ -794,7 +794,7 @@ void CLoadFlow::BuildMatrixCurrent()
 		cplx Sneb;
 		// диагональные производные проще чем в мощностях, их досчитываем в конце
 		double dPdDelta(0.0), dQdDelta(0.0);
-		double dPdV(0.0), dQdV(1.0);
+		double dPdV(0.0), dQdV(1.0); 
 		double* pAxSelf = pAx;
 		pAx += 2;
 		// обратная величина от модуля напряжения в узле
@@ -1138,6 +1138,9 @@ bool CLoadFlow::Run()
 		Start();
 		Estimate();
 
+		//ContinuousNewton();
+		//Newton();
+
 		switch (Parameters.Startup)
 		{
 		case CLoadFlow::eLoadFlowStartupMethod::Seidell:
@@ -1447,6 +1450,9 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 	pNode->Qnr = pNode->Qn;
 	double VdVnom = pNode->V / pNode->V0;
 
+	if (VdVnom < 0.0)
+		throw dfw2error(fmt::format("CLoadFlow::GetPnrQnr {} negative V/Vnom {:.3f}", pNode->GetVerbalName(), VdVnom));
+
 	pNode->dLRCLoad = 0.0;
 
 	// если есть СХН нагрузки, рассчитываем
@@ -1614,7 +1620,7 @@ void CLoadFlow::Newton()
 				// ограничение шага не достигло значения
 				// для принудительного переключения
 				RestoreVDelta();
-				UpdateVDelta(lambda_);
+				UpdateVDelta(-lambda_);
 				NewtonStepRatio.Ratio_ = lambda_;
 				NewtonStepRatio.eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
 				continue;
@@ -1655,7 +1661,7 @@ void CLoadFlow::Newton()
 
 		// обновляем переменные
 		double MaxRatio = GetNewtonRatio();
-		UpdateVDelta(MaxRatio);
+		UpdateVDelta(-MaxRatio);
 		if (NewtonStepRatio.eStepCause != LFNewtonStepRatio::eStepLimitCause::None)
 			NodeTypeSwitchesDone = 1;
 	}
@@ -1830,48 +1836,26 @@ double CLoadFlow::GetNewtonRatio()
 	return NewtonStepRatio.Ratio_;
 }
 
-void CLoadFlow::UpdateVDelta(double dStep)
+void CLoadFlow::UpdateVDelta(double const* b, double Mult)
 {
 	_MatrixInfo* pMatrixInfo{ pMatrixInfo_.get() };
-	double* b{ klu.B() };
-	double MaxRatio{ 1.0 };
-
+	double const* pb{ b };
 	for (; pMatrixInfo < pMatrixInfoEnd; pMatrixInfo++)
 	{
 		const auto& pNode{ pMatrixInfo->pNode };
 		const double* pb{ b + pNode->A(0) };
-		const double newDelta{ pNode->Delta - *pb * dStep };		
+		const double newDelta{ pNode->Delta + *pb * Mult };
 		pb++;
-		const double newV{ pNode->V - *pb * dStep };
-
-		/*
-		// Не даем узлам на ограничениях реактивной мощности отклоняться от уставки более чем на 10%
-		// стратка работает в Inor при небалансах не превышающих заданный
-		switch (pNode->m_eLFNodeType)
-		{
-		case CDynaNodeBase::eLFNodeType::LFNT_PVQMAX:
-			if (newV / pNode->LFVref > 1.1)
-			{
-				newV = pNode->LFVref;
-				pNode->Qgr = pNode->LFQmin;
-				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-			}
-			break;
-		case CDynaNodeBase::eLFNodeType::LFNT_PVQMIN:
-			if (newV / pNode->LFVref < 0.9)
-			{
-				newV = pNode->LFVref;
-				pNode->Qgr = pNode->LFQmax;
-				pNode->m_eLFNodeType = CDynaNodeBase::eLFNodeType::LFNT_PV;
-			}
-			break;
-		}
-		*/
-
+		const double newV{ pNode->V + *pb * Mult};
 		pNode->Delta = newDelta;
 		pNode->V = newV;
 		pNode->UpdateVreVimSuper();
 	}
+}
+
+void CLoadFlow::UpdateVDelta(double dStep)
+{
+	UpdateVDelta(klu.B(), dStep);
 }
 
 
@@ -1901,6 +1885,7 @@ void CLoadFlow::RestoreVDelta()
 		{
 			pMatrix->pNode->V = *pV;
 			pMatrix->pNode->Delta = *pD;
+			pMatrix->pNode->UpdateVreVimSuper();
 		}
 	}
 	else
