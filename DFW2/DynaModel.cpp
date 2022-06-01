@@ -37,6 +37,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   GeneratorsMustang(this),
 						   GeneratorsMotion(this),
 						   GeneratorsInfBus(this),
+						   GeneratorsPowerInjector(this),
 						   LRCs(this),
 						   Reactors(this),
 						   SynchroZones(this),
@@ -62,6 +63,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaBranch::DeviceProperties(Branches.ContainerProps());
 	CDynaLRC::DeviceProperties(LRCs.ContainerProps());
 	CDynaReactor::DeviceProperties(Reactors.ContainerProps());
+	CDynaPowerInjector::DeviceProperties(GeneratorsPowerInjector.ContainerProps());
 	CDynaGeneratorInfBus::DeviceProperties(GeneratorsInfBus.ContainerProps());
 	CDynaGeneratorMotion::DeviceProperties(GeneratorsMotion.ContainerProps());
 	CDynaGenerator1C::DeviceProperties(Generators1C.ContainerProps());
@@ -96,6 +98,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	m_DeviceContainers.push_back(&Generators1C);
 	m_DeviceContainers.push_back(&GeneratorsMotion);
 	m_DeviceContainers.push_back(&GeneratorsInfBus);
+	m_DeviceContainers.push_back(&GeneratorsPowerInjector);
 	//m_DeviceContainers.push_back(&CustomDevice);
 	//m_DeviceContainers.push_back(&CustomDeviceCPP);
 	m_DeviceContainers.push_back(&BranchMeasures);

@@ -362,7 +362,11 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	*/
 
 	// СМЗУ Северо-Запад
-	LoadFile("d:\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
+	//LoadFile("d:\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
+
+	// Единая схема
+	//LoadFile("e:\\downloads\\Mashalov\\Mashalov\\edin\\2.rst");
+
 
 	// Test-9
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
@@ -485,6 +489,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMustang, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorPark3C, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorPark4C, "Generator");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorPowerInjector, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExciterMustang, "Exciter");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameDECMustang, "Forcer");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
@@ -501,6 +506,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.GeneratorsMustang, "ModelType=6");
 	ReadTable(Network.GeneratorsPark3C, "ModelType=7");
 	ReadTable(Network.GeneratorsPark4C, "ModelType=8");
+	ReadTable(Network.GeneratorsPowerInjector, "ModelType=0");
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);

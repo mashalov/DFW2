@@ -2316,6 +2316,7 @@ void CLoadFlow::Limits::Apply()
 
 	// обрезаем векторы узлов с ограничениями по допустимой размерности
 	// равной количеству переключений на итерации
+
 	for (auto&& vec : std::array<MATRIXINFO*, 4>{&PQmin_PV, & PQmax_PV, & PV_PQmax, & PV_PQmin})
 	{
 		if (vec->size() > Parameters.PVPQSwitchPerIt)

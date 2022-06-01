@@ -656,6 +656,7 @@ namespace DFW2
 		CDeviceContainer Generators1C;
 		CDeviceContainer GeneratorsMotion;
 		CDeviceContainer GeneratorsInfBus;
+		CDeviceContainer GeneratorsPowerInjector;
 		CDeviceContainer SynchroZones;
 		CDeviceContainer ExcitersMustang;
 		CDeviceContainer DECsMustang;

@@ -574,7 +574,9 @@ void CLoadFlow::ContinuousNewton()
 		r /= 5 * h;
 		double hk{ 0.9 * std::pow(eps / r, 0.25) };
 		h *= hk;
-		h = (std::max)((std::min)(h, 0.75), 1.15);
+		h = (std::min)((std::max)(h, 0.25), 2.5);
+		if (hk < 0.5)
+			RestoreVDelta();
 	}
 
 	// обновляем реактивную генерацию в суперузлах

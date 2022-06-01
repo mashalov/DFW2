@@ -100,6 +100,7 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_POWER_INJECTOR);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, CDynaPowerInjector::m_cszNodeId);
+	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPowerInjector, CDeviceContainerProperties::m_cszSysNameGeneratorPowerInjector);
 
 	props.VarMap_.insert({ m_cszIre, CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES) });
 	props.VarMap_.insert({ m_cszIim, CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES) });
@@ -113,7 +114,6 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.bFinishStep = true;	// нужно рассчитывать мощности после выполнения шага
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaPowerInjector>>();
 }
-
 
 CValidationRuleGeneratorKgen CDynaPowerInjector::ValidatorKgen;
 

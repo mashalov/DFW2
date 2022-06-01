@@ -25,6 +25,7 @@ const char* CDeviceContainerProperties::m_cszNameGeneratorPark3C = "Генера
 const char* CDeviceContainerProperties::m_cszNameGeneratorPark4C = "Генератор Парк 4К";
 const char* CDeviceContainerProperties::m_cszNameGeneratorMustang = "Генератор Mustang";
 const char* CDeviceContainerProperties::m_cszNameGeneratorInfPower = "ШБМ";
+const char* CDeviceContainerProperties::m_cszNameGeneratorPowerInjector = "Генератор-инъекция";
 const char* CDeviceContainerProperties::m_cszNameGeneratorMotion = "Генератор УД";
 const char* CDeviceContainerProperties::m_cszNameExciterMustang = "Возбудитель Mustang";
 const char* CDeviceContainerProperties::m_cszNameExcConMustang = "АРВ Мустанг";
@@ -37,12 +38,14 @@ const char* CDeviceContainerProperties::m_cszNameZeroLoadFlow = "Потокор�
 const char* CDeviceContainerProperties::m_cszNameLRC = "СХН";
 const char* CDeviceContainerProperties::m_cszNameReactor = "Реактор";
 
+
 const char* CDeviceContainerProperties::m_cszSysNameGenerator1C = "Generator1C";
 const char* CDeviceContainerProperties::m_cszSysNameGenerator3C = "Generator3C";
 const char* CDeviceContainerProperties::m_cszSysNameGeneratorPark3C = "GeneratorPark3C";
 const char* CDeviceContainerProperties::m_cszSysNameGeneratorPark4C = "GeneratorPark4C";
 const char* CDeviceContainerProperties::m_cszSysNameGeneratorMustang = "GeneratorMustang";
 const char* CDeviceContainerProperties::m_cszSysNameGeneratorInfPower = "GeneratorInfBus";
+const char* CDeviceContainerProperties::m_cszSysNameGeneratorPowerInjector = "GeneratorPowerInjector";
 const char* CDeviceContainerProperties::m_cszSysNameGeneratorMotion = "GeneratorMotion";
 const char* CDeviceContainerProperties::m_cszSysNameExciterMustang = "ExciterMustang";
 const char* CDeviceContainerProperties::m_cszSysNameExcConMustang = "ExcControlMustang";
