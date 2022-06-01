@@ -20,7 +20,8 @@ namespace DFW2
 		{
 			None,
 			Seidell,
-			Tanh
+			Tanh,
+			RKF,
 		};
 
 		struct LoadFlowParameters

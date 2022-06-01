@@ -151,7 +151,7 @@ namespace DFW2
 			static constexpr const char* m_cszNewtonMaxNorm = "NewtonMaxNorm";
 			static constexpr const char* m_cszMaxPVPQSwitches = "MaxPVPQSwitches";
 			static constexpr const char* m_cszPVPQSwitchPerIt = "PVPQSwitchesPerIteration";
-			static constexpr const char* m_cszLFStartupNames[3] = { "None","Seidell", "Tanh"};
+			static constexpr const char* m_cszLFStartupNames[4] = { "None","Seidell", "Tanh", "RKF"};
 
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};

@@ -1137,8 +1137,7 @@ bool CLoadFlow::Run()
 
 		Start();
 		Estimate();
-
-		//ContinuousNewton();
+		
 		//Newton();
 
 		switch (Parameters.Startup)
@@ -1149,6 +1148,9 @@ bool CLoadFlow::Run()
 			break;
 		case CLoadFlow::eLoadFlowStartupMethod::Tanh:
 			NewtonTanh();
+			break;
+		case CLoadFlow::eLoadFlowStartupMethod::RKF:
+			ContinuousNewton();
 			break;
 		}
 
@@ -1451,7 +1453,11 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 	double VdVnom = pNode->V / pNode->V0;
 
 	if (VdVnom < 0.0)
-		throw dfw2error(fmt::format("CLoadFlow::GetPnrQnr {} negative V/Vnom {:.3f}", pNode->GetVerbalName(), VdVnom));
+	{
+		//throw dfw2error(fmt::format("CLoadFlow::GetPnrQnr {} negative V/Vnom {:.3f}", pNode->GetVerbalName(), VdVnom));
+		pNode->dLRCLoad = pNode->Pnr = pNode->Qnr = 0.0;
+		return;
+	}
 
 	pNode->dLRCLoad = 0.0;
 
@@ -1559,6 +1565,9 @@ void CLoadFlow::Newton()
 	size_t& it{ pNodes->IterationControl().Number };
 
 	Limits limits(*this);
+
+	NewtonStepRatio.eStepCause = DFW2::LFNewtonStepRatio::eStepLimitCause::None;
+	NewtonStepRatio.Ratio_ = 1.0;
 
 	// квадраты небалансов до и после итерации
 	double g0(0.0), g1(0.1);
