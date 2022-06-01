@@ -17,9 +17,17 @@
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
 % updated with editorial comments 8/9/2021
 
+\makeatletter
+\def\endthebibliography{%
+	\def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+	\endlist
+}
+\makeatother
+
+
 \begin{document}
 
-\title{Automatic Implementation of Equipment Models for Transient Stability Simulation by Symbolic Manipulations}
+\title{Raiden. Power System Transient Stability Simulation Software Prototype}
 
 \author {Eugene Mashalov, Joint Stock Company "Scientific and Technical Center of Unified Power System", Ekaterinburg, Russia}
 
@@ -34,17 +42,16 @@
 \maketitle
 
 \begin{abstract}
-One of the most important tasks in developing transient stability simulation software is to maintain a library of power system equipment models. 
-This paper discusses the process of automatic implementation of custom equipment transient stability models described in graphical and textual forms or their combination. 
-The implementation process is based on the symbolic manipulation and does not require programming skills from the users.
+This paper discusses implementation details of the transient stability analysis prototype software based on implicit integration scheme. The main advantages of an implicit integration scheme with separate treatment of differential and algebraic state variables as well as an integration process with discrete events handling are considered. The results of test simulations and their comparison with existing software package are presented.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Power System Transient Stability Simulation, Power System Equipment modeling, Symbolic Manipulations, Computer Algebra Systems, Compilation.
+Transient Stability Analysis, Implicit Integration, Discontinuous DAE
 \end{IEEEkeywords}
 
 \section{Introduction}
-\IEEEPARstart{S}{ince} the beginning of the 2000s, the ability of engineers to create their own custom mathematical models of power system equipment 
+\IEEEPARstart{T}{ransient} stability simulation is one of the most advanced applications in power system analysis.
+beginning of the 2000s, the ability of engineers to create their own custom mathematical models of power system equipment 
 has become one of the major requirements for transient stability simulation software. The intensive development of FACTS technology, 
 the elaboration of control systems, and the growing demands for energy efficiency have led to the fact that dozens 
 of new equipment units appear in the market every year. Often, the transient properties of such equipment differ significantly from the properties of 
@@ -56,8 +63,8 @@ can be provided directly by users. Modern communication technologies allow the e
 
 Although for almost all engineering areas in which some simulations are required, there is at least one software package 
 (and most often several options are available),  no unified approach to describing custom models has been developed. 
-One of the universal environments that can be considered as a de facto standard is Matlab/Simulink \cite{sumulink}. Model development in Simulink 
-focuses on the graphical interface in the form of a block diagram. Another widely used environment, Modelica \cite{modelica}, also claims to have 
+One of the universal environments that can be considered as a de facto standard is Matlab/Simulink \cite{texbook}. Model development in Simulink 
+focuses on the graphical interface in the form of a block diagram. Another widely used environment, Modelica \cite{texbook}, also claims to have 
 the maximum coverage of engineering areas, but offers an approach to model using a special object-oriented language. 
 In parallel with universal modeling environments, specialized software developed for particular areas is quite successful. 
 The choice of such software is obviously conditioned by the fact that it considers the features and established practices of the engineering discipline, 
@@ -67,7 +74,7 @@ to focus directly on the analysis of the results.
 
 Specialized simulation software also includes products for the simulation and analysis of transient stability.
 Almost every product has tools for creating custom models, but even in this relatively narrow niche, no unified approach to their presentation 
-has been adopted. In particular, EUROSTAG \cite{eurostag} and PSS®SINCAL \cite{sincal} use graphical interface, while \mbox{DigSILENT PowerFactory} \cite{powefactory} offers a programming language in textual format.
+has been adopted. In particular, EUROSTAG \cite{texbook} and PSS®SINCAL \cite{texbook} use graphical interface, while \mbox{DigSILENT PowerFactory} \cite{texbook} offers a programming language in textual format.
 If we consider in more detail the process of implementing a custom model, that is, its transformation from a representation in which 
 it is developed by an engineer into a representation suitable for embedding in the software, it turns out that the graphical and textual approaches 
 to model development at some point in the implementation process should give identical results. Thus, there is no need to focus on one approach or another,
@@ -109,7 +116,7 @@ mostly implicit integration methods are used, requiring the solution of a nonlin
 Transient trajectories are not smooth and subject to discontinuities at particular time instants due to switching and limiting of state variables.
 Thus, \(f\) and \(g\) are not continuous in \(t\in[t_0;T_{end}]\) but only piece-wise continuous, as well as their derivatives. This requires a restart integration
 method at time instants of discontinuities \(t_d\) with new initial conditions \(z_d(t_d)\). In some cases structure and dimension of \eqref{eqn_thedae}
-also subject to change. Discontinuities are associated with events that can be divided into time events and state events \cite{cellier}. Time events are 
+also subject to change. Discontinuities are associated with events that can be divided into time events and state events \cite{texbook}. Time events are 
 unconditional and have a known time of occurrence. They can be applied to the solution at scheduled time instants. State events have only conditions of occurrence and
 their times must be located during the solution.
 
@@ -142,14 +149,14 @@ preceding the compilation of the executable module in native code.
 Consider the model representation in block diagram and textual forms. As an example, a simple model of the automatic voltage regulator is used. 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=\columnwidth]{code.eps}
+%	\includegraphics[width=\columnwidth]{code.eps}
 	\caption{Sample AVR model pseudocode representation}
 	\label{fig_avrcode}
 \end{figure}
 Textual form of representation is shown in Fig. \ref{fig_avrcode} and the block diagram in Fig. \ref{fig_avr}.
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=\columnwidth]{avr.eps}
+%	\includegraphics[width=\columnwidth]{avr.eps}
 	\caption{Sample AVR model block diagram}
 	\label{fig_avr}
 \end{figure}
@@ -184,7 +191,7 @@ the order of calculations must be determined.
 
 To transform the custom model source data in text format, some general-purpose parsers are widely used. They are the programs
 that allow to perform lexical and syntactic analysis of the source text according to a given dictionary and form the required 
-data structure for further processing \cite{antlr}. Almost all programming languages use parsers in one way or another to generate 
+data structure for further processing \cite{texbook}. Almost all programming languages use parsers in one way or another to generate 
 intermediate object code from source code. Existing parsing technologies can also be used to analyze the textual representation 
 of the model's system of equations. In the process of analyzing the original textual representation, the verification of compliance 
 with the specified rules and the detection of syntactic errors are performed. As a result of the analysis, a tree structure is
@@ -195,7 +202,7 @@ representation of the AVR model from the example Fig. \ref{fig_avr}, \ref{fig_av
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=\columnwidth]{ast.eps}
+%	\includegraphics[width=\columnwidth]{ast.eps}
 	\caption{Sample AVR model AST-tree }
 	\label{fig_ast}
 \end{figure}
@@ -208,11 +215,11 @@ If it were possible to eliminate the edges of the connections of variables, the 
 nodes to the top. The edges of the variables connections do not have a given directions, but they can be determined 
 if there is no feedback.
 
-The root node of the tree marked as \raisebox{-2pt}[0pt][0pt]{\includegraphics{eq.eps}} denotes a system of equations. 
-Nodes marked as \raisebox{-2pt}[0pt][0pt]{\includegraphics{let.eps}} represent individual equations. An equation node 
-has two child nodes: left and right. In AST, equations of the form \(f(x)=0\) are accepted, 
-so if a nonzero expression appears on the right side during the transformation, it is transferred to the left 
-side of the equation with a negative sign. Each equation node can resolve one of the model variables.
+%The root node of the tree marked as \raisebox{-2pt}[0pt][0pt]{\includegraphics{eq.eps}} denotes a system of equations. 
+%Nodes marked as \raisebox{-2pt}[0pt][0pt]{\includegraphics{let.eps}} represent individual equations. An equation node 
+%has two child nodes: left and right. In AST, equations of the form \(f(x)=0\) are accepted, 
+%so if a nonzero expression appears on the right side during the transformation, it is transferred to the left 
+%side of the equation with a negative sign. Each equation node can resolve one of the model variables.
 
 The form of AST for a given system of equations is not unique. For ASTs, there is an identity rule, similar to the rule for
 mathematical expressions. The two ASTs are identical if the values of the root nodes are identical on the entire set of values of the
@@ -287,7 +294,7 @@ variables, then the resolved variable is discrete.
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=\columnwidth]{variables.eps}
+%	\includegraphics[width=\columnwidth]{variables.eps}
 	\caption{Classification of the custom model variables}
 	\label{fig_vars}
 \end{figure}
@@ -296,7 +303,7 @@ State variables not classified as discrete or constant are ordinary continuous v
 equations as part of system \eqref{eqn_thedae}. The Fig. \ref{fig_vars} shows a simplified variables classification chart,
 indicating how variables can be assigned to classes. 
 It should be noted that the variables are not divided into differential and algebraic, because the 
-integration process in a particular implementation is based on the Gear method \cite{gear71}.
+integration process in a particular implementation is based on the Gear method \cite{texbook}.
 
 \subsection {Equation system source data validation} \label{sec_validation}
 
@@ -324,7 +331,7 @@ of the source data, but allows to identify errors that do not depend on the sour
 
 \subsection {Simplification and optimization of mathematical expressions} \label{sec_simplification}
 
-The possibility of representing mathematical expressions in a tree structure is widely used in computer algebra systems \cite{gathen13}. 
+The possibility of representing mathematical expressions in a tree structure is widely used in computer algebra systems \cite{texbook}. 
 The purposes of such systems go far beyond the simplification of mathematical expressions and is mainly focused on solving problems symbolically,
 up to automated proof of theorems. Parts of the technology of identical transformations of expressions are in demand in optimization systems for translating program
 code, which can also include the considered system for model implementation. Expression simplification in computer algebra systems acts as a utility function 
@@ -341,7 +348,7 @@ on the left side of which the AST in the original form, and on the right - the t
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=.7\columnwidth]{simplification.eps}
+%	\includegraphics[width=.7\columnwidth]{simplification.eps}
 	\caption{The difference of squares identity tree transformation rule}
 	\label{fig_simpl}
 \end{figure}
@@ -400,7 +407,7 @@ First, all the expressions are expanded by opening brackets, then they are facto
 the fact that in the process of sequential application of \(R_1\) and \(R_2\), some of the AST nodes are converted into constants or become common factors.
 
 The second approach is more general and is based on finding a path in the graph \(G(F,T)\), where \(F\) are identical forms of the original AST to be simplified,
-\(T\) are transformations performed according to the rules \(R\). \(A^*\) search algorithm \cite{pearl84} is used for path search. The original
+\(T\) are transformations performed according to the rules \(R\). \(A^*\) search algorithm \cite{texbook} is used for path search. The original
 algorithm is designed to find the shortest path between given nodes in a weighted graph and is used, for example, to build routes on flat maps. 
 The difference from the equation system simplification problem is that the target node is not specified in the source data and must be determined 
 by the minimum cost. A distinctive feature of \(A^*\) is that it preserves all paths from the source node to the destination. This allows to track
@@ -427,7 +434,7 @@ derivatives must be fully automatic.
 
 \begin{figure}[h]
 	\centering
-	\includegraphics[width=.7\columnwidth]{derivative.eps}
+%	\includegraphics[width=.7\columnwidth]{derivative.eps}
 	\caption{The power rule in form of AST}
 	\label{fig_dpower}
 \end{figure}
@@ -465,7 +472,7 @@ There are no complicated functions in the operator tree, so only differentiation
 to use chain rule. The expressions obtained according to such rules are relatively compact and the computational costs for partial
 derivatives, most often, turn out to be lower compared to optimized expressions for complicated expressions. Of course, the reduction in 
 computational costs is achieved by increasing the number of equations in the system. However, in this work, to solve the system of linear equations
-with a matrix of partial derivatives, the matrix is transformed into a block triangular form \cite{davis12}. This form is constructed by  
+with a matrix of partial derivatives, the matrix is transformed into a block triangular form \cite{texbook}. This form is constructed by  
 the permutation of the system so that nonzero values are located above the diagonal, which in turn is free of zeros. 
 After permutation, blocks remain on the diagonal, each of which, in the process of solving of the system, is subjected to LU decomposition 
 with partial pivoting. The solution of the systems reduced to a back substitution in block form. Transformation of the AST into an operator form 
@@ -493,7 +500,7 @@ subsystems of equations, in the general case, nonlinear ones. In most cases, the
 initial conditions at \(t_0\) and at \(t_d\) are the same. The only difference is that at \(t_0\), it is assumed:
 
 \begin{equation}
-	\label{eqn_opthree}
+	\label{eqn_opthree2}
 	\frac{df}{dt}(t_0)=\frac{dg}{dt}(t_0)=0,
 \end{equation}
 
@@ -509,7 +516,7 @@ initial conditions at \(t_0\) and at \(t_d\) are the same. The only difference i
 The presence in the model of elements with integration constants, the values of which are determined using complicated logic,
 significantly hampers the calculation of the initial conditions. For example, the initialization of the PID controller or the
 implementation of bumpless control according to this law, depending on the given coefficients, may require the rejection of 
-\eqref{eqn_cont} and does not allow to determine the initial conditions in a general form \cite{fabozzi17}. In this case, 
+\eqref{eqn_cont} and does not allow to determine the initial conditions in a general form \cite{texbook}. In this case, 
 it is required to supply extra source data of the custom model in the form of so-called initialization scheme, which explicitly
 declares expressions for determining the initial conditions.
 
@@ -519,12 +526,12 @@ function \(op^{inv}\) to the operator \(op\), which allows resolving the variabl
 The ability to solve an equation with respect to some variable is determined by the classification of variables described in
 subsection \ref{sec_varclass} and the set of already resolved variables. To determine the order of equations and variables resolving, 
 an algorithm for finding the strongly connected components in the graph \(G(V,E)\), where \(V\) are state variables and \(E\) 
-are equations, can be applied. One of the most efficient is Tarjan's algorithm \cite{sedgwwick11}.
+are equations, can be applied. One of the most efficient is Tarjan's algorithm \cite{texbook}.
 
 If there is feedback in the original system, then ordering the equations in the form of a simple sequence of calculations
 becomes impossible. Feedback form the so-called algebraic cycles, which handling requires the solution of a system of
 equations. Here the ordering algorithm chooses the variable that allows the maximum number of cycle equations to be
-resolved, and continues ordering the equations as if that variable was resolved. Such technique is known as tearing \cite{cellier}. If there is an inverse function for the
+resolved, and continues ordering the equations as if that variable was resolved. Such technique is known as tearing \cite{texbook}. If there is an inverse function for the
 equation of such a variable, the variable is introduced into the system of cycle equations using a substitution. 
 This technique allow the system of equations to be ordered so that it acquires a block triangular form with diagonal blocks of 
 the minimum size. Thus, the initial system, during the implementation process takes on a form that does not require additional 
@@ -559,37 +566,23 @@ During the implementation of the model, symbolic manipulations allow to optimize
 The source data of custom models can be either graphic representation, textual representation, or a mix of both, which allows to combine the capabilities of different modeling
 approaches without the need to involve software developers.
 
-\begin{flushleft}
-\begin{thebibliography}{99}
+\section{References Section}
+You can use a bibliography generated by BibTeX as a .bbl file. \cite{texbook}
+BibTeX documentation can be easily obtained at:
+http://mirror.ctan.org/biblio/bibtex/contrib/doc/
+The IEEEtran BibTeX style support page is:
+http://www.michaelshell.org/tex/ieeetran/bibtex/
+
+% argument is your BibTeX string definitions and bibliography database(s)
+%
+\section{Simple References}
+You can manually copy in the resultant .bbl file and set second argument of $\backslash${\tt{begin}} to the number of references \cite{cellier06}, \cite{gear71}, \cite{mixedadams} \cite{hairer93}
+\cite{mycompiler} \cite{petzold82} \cite{Radhakrishnan1993} \cite{Moore1994} \cite{Lee2015}
+\cite{Hiskens01}  \cite{VanCutsem2020} \cite{Murad2019}
+\cite{Canay93} \cite{Filippov1988} \cite{mycompression} 
+
 \bibliographystyle{IEEEtran}
-\bibitem{sumulink}
-Simulink - Simulation and Model-Based Design // www.mathworks.com. [2020]. URL: https://www.mathworks.com/products/simulink.html
-\bibitem{modelica}
-Modelica Language Documents - Version 3.4 - April 2017. // modelica.org. [2020]. URL: https://modelica.org/documents. 
-\bibitem{eurostag}
-Flexible and secure modeling // www.eurostag.be. URL: http://www.eurostag.be/en/products/eurostag/features/flexible-and-secure/flexible-secure/.
-\bibitem{sincal}
-PSS SINCAL Platform // www.simtec-gmbh.at. URL: http://www.simtec-gmbh.at/sites\_en/platform.asp.
-\bibitem{powefactory}
-Francisco Gonzalez-Longatt and Jos{\'{e}} Luis Rueda Torres. Advanced Smart Grid Functionalities Based on PowerFactory. Springer International Publishing AG, 2018.
-\bibitem{cellier}
-François E. Cellier, Ernesto Kofman. Continuous System Simulation. Springer New York, NY, 2006.
-\bibitem{antlr}
-Terence Parr. The Definitive ANTLR 4 Reference. Pragmatic Bookshelf, 2013
-\bibitem{gear71}
-Gear C.W. The Simultaneous Numerical Solution Of Differential - Algebraic Equations SLAC-PUB-0723. // IEEE Trans.Circuits Theory, No. 18, 1971. pp. 85-95.
-\bibitem{gathen13}
-Joachim von zur Gathen, Jürgen Gerhard. Modern Computer Algebra. 3rd ed. Cambridge University Press, 2013.
-\bibitem{pearl84}
-Pearl J. Heuristics: Intelligent Search Strategies for Computer Problem Solving. Addison-Wesley Pub, 1984.
-\bibitem{davis12}
-Timothy A. Davis, E. Palamadai Natarajan. Sparse Matrix Methods for Circuit Simulation Problems // In: Scientific Computing in Electrical Engineering. Springer, Berlin, Heidelberg, 2012. pp. 3-14.
-\bibitem{fabozzi17}
-Davide Fabozzi, Stefan Weigel, Bernd Weise, Fortunato Villella. Semi-implicit Formulation of Proportional-integral Controller Block with Non-windup Limiter According to IEEE Standard 421.5-2016 // Proceedings Of IREP'2017 Symposium, 2017.
-\bibitem{sedgwwick11}
-Robert Sedgewick, Kevin Wayne.  Algorithms. 4th ed. Pearson Education, 2011.
-\end{thebibliography}
-\end{flushleft}
+\bibliography{raiden}
 
 
 \newpage
