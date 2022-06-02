@@ -42,7 +42,7 @@
 \maketitle
 
 \begin{abstract}
-This paper discusses implementation details of the transient stability analysis prototype software based on implicit integration scheme. The main advantages of an implicit integration scheme with separate treatment of differential and algebraic state variables as well as an integration process with discrete events handling are considered. The results of test simulations and their comparison with existing software package are presented.
+This paper discusses implementation details of the transient stability analysis prototype software based on the implicit integration scheme. The main advantages of an implicit integration scheme with separate treatment of differential and algebraic state variables as well as an integration process with discrete event handling are considered. The results of test simulations and their comparison with existing software packages are presented.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -50,44 +50,12 @@ Transient Stability Analysis, Implicit Integration, Discontinuous DAE
 \end{IEEEkeywords}
 
 \section{Introduction}
-\IEEEPARstart{T}{ransient} stability simulation is one of the most advanced applications in power system analysis.
-beginning of the 2000s, the ability of engineers to create their own custom mathematical models of power system equipment 
-has become one of the major requirements for transient stability simulation software. The intensive development of FACTS technology, 
-the elaboration of control systems, and the growing demands for energy efficiency have led to the fact that dozens 
-of new equipment units appear in the market every year. Often, the transient properties of such equipment differ significantly from the properties of 
-the built-in simulation models. The productivity of the approach to keeping the library of models built into the software up to date by the developers 
-seems to be moderate, since the main task of the developers is to develop the software itself. 
-The professional community of software users is immersed in equipment progress trends and motivated to obtain accurate simulation results. 
-Therefore, if there are convenient and reliable tools for creating custom models, the process of updating the library with higher quality and at lower costs 
-can be provided directly by users. Modern communication technologies allow the exchange of model development results and unlimited access to the current library online.
+\IEEEPARstart{T}{ransient} stability simulation is one of the most complicated tasks of power system analysis. Besides methodological complexity, it requires intense computation with significant time consumption. Parallel implementation of simulation algorithms is difficult due to the sequential nature of the solution method, which is based on integration of the differential-algebraic system of equations (DAE), which is hardly separable into weakly connected parts. Thus, even modern computer systems do not provide the opportunity for real-time simulation, unless model details are reduced. Transient stability is dominantly used in offline applications, such as facility development, and rarely used for power system control on a time scale close to real-time.
 
-Although for almost all engineering areas in which some simulations are required, there is at least one software package 
-(and most often several options are available),  no unified approach to describing custom models has been developed. 
-One of the universal environments that can be considered as a de facto standard is Matlab/Simulink \cite{texbook}. Model development in Simulink 
-focuses on the graphical interface in the form of a block diagram. Another widely used environment, Modelica \cite{texbook}, also claims to have 
-the maximum coverage of engineering areas, but offers an approach to model using a special object-oriented language. 
-In parallel with universal modeling environments, specialized software developed for particular areas is quite successful. 
-The choice of such software is obviously conditioned by the fact that it considers the features and established practices of the engineering discipline, 
-and allows to effectively use the features of the specific description of the problem. In most cases, specialized software 
-provides an acceptable level of functionality even without the need to create custom models by tuning of built-in ones, and allows 
-to focus directly on the analysis of the results.
+However, some near-real-time implementations have been introduced in the last decade. One of the most successful is the stability monitoring system, used by the System Operator of Russia. The system evaluates the safe limits of network load over a period of 40–900 s with respect to static and transient stability. However, some near-real-time implementations have been introduced in the last decade. One of the most successful is the stability monitoring system, used by the System Operator of Russia. The system evaluates the safe margins of network load over a period of 40–900 s with respect to static and transient stability. These margins are used for system automatic or manual control. The duration of the evaluation cycle is mostly determined by the duration of the transient stability simulation. The aim of reducing the computation time of simulation led to the development of the software prototype based on the implicit integration scheme, instead of the former implementation based on explicit methods. The new algorithm consists of three components of integration: the method, the scheme, and the process. However, some near-real-time implementations have been introduced in the last decade. One of the most successful is the stability monitoring system, used by the System Operator of Russia. The system evaluates the safe margins of network load over a period of 40–900 s with respect to static and transient stability. These margins are used for system automatic or manual control. The duration of the evaluation cycle is mostly determined by the duration of the transient stability simulation. The aim of reducing the computation time of simulation led to the development of the software prototype based on the implicit integration scheme, instead of the former implementation based on explicit methods. The new algorithm consists of three components of integration: the method, the scheme, and the process. The integration method defines the numerical properties of the problem solution. The integration scheme defines the computation process of the method to ensure optimal utilization of the problem properties. And finally, the integration process arranges the operation of the integration scheme, considering discrete events and discontinuities in the model.
 
-Specialized simulation software also includes products for the simulation and analysis of transient stability.
-Almost every product has tools for creating custom models, but even in this relatively narrow niche, no unified approach to their presentation 
-has been adopted. In particular, EUROSTAG \cite{texbook} and PSS®SINCAL \cite{texbook} use graphical interface, while \mbox{DigSILENT PowerFactory} \cite{texbook} offers a programming language in textual format.
-If we consider in more detail the process of implementing a custom model, that is, its transformation from a representation in which 
-it is developed by an engineer into a representation suitable for embedding in the software, it turns out that the graphical and textual approaches 
-to model development at some point in the implementation process should give identical results. Thus, there is no need to focus on one approach or another,
-and moreover, they can be combined. Users with limited development experience tend to prefer graphical interface block-building tools as they are more visual. 
-As models become more complex, it is often more convenient to use a textual representation, since graphical block diagrams of relatively simple algorithmic 
-expressions can be cumbersome. With major changes in the model, efforts will be required to maintain the consistency of its graphical representation. 
-Since model editing is most often done to increase detail by adding new blocks to existing links, a significant part of the graphic image has to be rebuilt.
-This paper discusses the process of implementing custom models that allows to perform symbolic manipulations that are invariant to the representation method
-of the initial mathematical description of the model and allows to combine graphical and textual approaches to the model development.
-
-\section{Requirements for custom models}
-Before defining the requirements for the custom models implementation, it is necessary to give a brief description of the problem being solved. 
-Transient stability simulation is in fact is the process of solving a differential-algebraic system of equations (DAE) in the form:
+\section{Transient stability simulation algorithm development}
+Time spent on transient simulation is proportional to the number of numerical integration steps of the system \eqref{eqn_thedae}: 
 
 \begin{equation}
 	\label{eqn_thedae}
@@ -102,9 +70,219 @@ Transient stability simulation is in fact is the process of solving a differenti
 	 x(t_0)=x_0, y(t_0)=y_0 \\
 	\end{array}
 \end{equation}
-\noindent where \(g\) and \(f\) are smooth vector functions. The solution of \eqref{eqn_thedae} is formally to find \(x(t)\) and \(y(t)\) for \(t\in[t_0;T_{end}]\). Since the analytical solution of \eqref{eqn_thedae} is impossible in most cases, numerical integration is used, which involves replacing differential part
+\noindent where \(g\) and \(f\) are smooth vector functions. The time of simulation initialization and computation of the initial conditions is much smaller than the time of the \eqref{eqn_thedae} solution. The latter depends on the integration method properties and the system dimension \(N_e\). As a rule, solution time \(T_{hn}=O(N_e^3)\), since the integration step in one form or another requires the solution of a system of nonlinear algebraic equations. The value of the integration step \(h_n\) is determined by the properties of the DAE. The crucial property of \eqref{eqn_thedae} with respect to \(h_n\) is the stiffness of the DAE, estimated as the ratio of the maximum and minimum values of the real part of the eigenvalues of its linearized matrix. 
+
+\subsection{The integration method}
+
+In most cases, the transient stability problem \eqref{eqn_thedae} is considered stiff, which encourages using implicit integration methods for its solution. The integration method is a vector function \(F(x,y)\) which maps values from the previous step \(y_{n-1}\) to current step values \(y_n\). Of course, the current step values of \(x_{n} \leftarrow x_{n-1}\) are also required, but there are several approaches to performing this. The general form of the implicit method for differential variables is:
+\begin{equation}
+	\label{eqn_implicit}
+	F(y_n,y_{n-1},t)=0
+\end{equation}
+
+The solution of (3) involves the solution of the nonlinear system of equations, which is associated with some technical complications. That was the main reason for the former implementation of transient stability software, which was developed in the 1980s relying on explicit methods. The solution of \eqref{eqn_implicit} implies the solution of the nonlinear system of equations, which is associated with some technical complications. Integration step control bounds solution to:
+
+\begin{equation}
+	\label{eqn_z}
+	\begin{array}{c}
+		\vert\vert z(t_n)-z_n(t_n) \vert\vert <= \epsilon, \\
+		z_n(t_n)=[y_n(t_n), x_n(t_n)]^T	 \\
+		z(t)=[y(t), x(t)]^T \\
+	\end{array}
+\end{equation}
+\noindent where
+\begin{description}
+	\item  \(z_n(t_n)\) is the approximated solution;
+	\item  \(z(t)\) is the exact solution;
+	\item  \(\epsilon\) is the error tolerance;
+\end{description}
+
+The step control allows one to vary \(h_{n}=t_{n}-t_{n-1}\) according to \eqref{eqn_z}. For transient phases with rapid changes, the step is reduced. When the transient decays, the step can be increased, which significantly reduces the number of steps required to solve \eqref{eqn_thedae}.
+
+The implicit method implementation is much more complicated than the explicit one, as it requires a non-linear system of equations solution. In most cases, this solution is provided by the Newton method. Power system equipment models should be implemented with respect to this requirement and provide the ability to construct blocks of partial derivatives of the Jacobi matrix. The use of the automatic implementation system can overcome this problem \cite{mycompiler}. Another problem that arises from nonlinearities is the possibility of multiple solutions at the time instants of discontinuities. However, the problems where \eqref{eqn_thedae} has discontinuous \(f\) and \(g\) are well known and there are various approaches developed. Some use rigorous discontinuity modeling \cite{Filippov1988}, while others use integration restart techniques \cite{cellier06}.
+
+\subsection{The integration scheme}
+
+The DAE \eqref{eqn_thedae} solution implies discretization into a pure algebraic system of equations using a chosen integration method. Since the resulting system is nonlinear, an iterative solution method is used. The simplest method is fixed point iteration. This method is usable, but, in many cases, does not provide convergence due to its limitations. The application of the Newton method requires Jacobian matrix formation, which greatly increases the equipment models development complexity. In addition to the system of equations for each model, it is also required to form a block of the Jacobi matrix. However, Newton's method makes it possible to reliably obtain a solution, has good convergence, and, moreover, can be used not only to solve \eqref{eqn_thedae} but also to determine the initial conditions at \(t=0\) and at the time points of discrete changes \(t_d\). The weak side of Newton's method is its sensitivity to the quality of the initial guess. This problem is partly solved by using the initial estimation from the previous integration step. An additional factor that improves the convergence of Newton's method can be the scheme of the integration method. A well-known integration approach is the predictor-corrector scheme. With values on the available solution \(z_{n-1}\) at the time \(t_{n-1}\), the method can predict the values of \(z_n\) using extrapolation. The resulting prediction is used as an initial estimation for solving the equivalent \eqref{eqn_thedae} system, in which the differential equations are discretized in a form that depends on the chosen integration method. During the solution, the prediction is corrected so that the values satisfy the given system of equations. This scheme is effectively implemented using multi-step integration methods, which imply saving the data of several completed steps to perform the next step. To solve DAE, this approach is implemented in the Gear method \cite{gear71}. This method involves the use of the BDF integration method, both for differential and algebraic equations, and provides a simultaneous solution to \eqref{eqn_thedae}. Such an integration scheme is fully implicit and preserves integration method stability properties.
+
+A variant of the Gear method is implemented in the well-known software Eurostag \cite{mixedadams}. Since the methods of the BDF family have the property of damping high-frequency oscillations with an increase in the integration step, the Gear method exhibits "hyperstability" and erroneously treats unstable cases as stable. The proposed modification, which consists of applying the Adams method for differential variables, eliminates this drawback. A variant of the Gear method is implemented in the well-known software Eurostag [8]. Since the methods of the BDF family have the property of damping high-frequency oscillations with an increase in the integration step, the Gear method exhibits hyperstability and erroneously treats unstable cases as stable. The proposed modification, which consists of applying the Adams method to differential variables, eliminates this drawback since the 2nd order Adams method is A-stable. The use of the BDF for algebraic variables makes it possible to maintain a higher integration step compared to the Adams method with the same overall stability properties of the integration scheme.
+
+All linear multistep methods of order \(q\), despite significant differences in their properties, can be expressed in Nordsieck form \cite{hairer93}. That vector has a dimension of \(1 \times q+1\). Since the integration method must be A-stable order is constrained \((q<=2)\) and the maximum dimension of the Nordsieck vector is fixed at \(1 \times 3\). 
+
+At the n-th integration step, Nordsieck vector components of differential and algebraic variables are:
+\begin{equation}
+	\label{eqn_nords}
+	\begin{array}{cc}
+		Y_n=\left[y_n, h_n \dot{y}_n, \frac{h_n^2}{2} \ddot{y}\right], &
+		X_n=\left[x_n, h_n \dot{x}_n, \frac{h_n^2}{2} \ddot{x}\right] 
+	\end{array}
+\end{equation}
+
+The Nordsieck vector is merely a form to express the Taylor's expansion of \(x_n\) and \(y_n\) at \(t_n\). If this vector for \(t_{n-1}\) is known, the prediction at \(t_n\) is:
+
+\begin{equation}
+	\label{eqn_predictor}
+	\begin{array}{cc}
+		Y_n^0=Y_{n-1}A, &
+		X_n^0=X_{n-1}A
+	\end{array}
+\end{equation}
+
+\noindent where 
+\begin{description}
+	\item  \(Y_n^0\) is the differential variables vector extrapolated to \(t_n\);
+	\item  \(X_n^0\) is the algebraic variables vector extrapolated to \(t_n\);
+	\item  \(A\) is the lower triangular Pascal matrix \(q+1 \times q+1\).
+\end{description}
+
+The corrected Nordsieck vector at \(t_n\) is: 
+\begin{equation}
+	\label{eqn_corrector}
+	\begin{array}{cc}
+		Y_n=Y_n^0 +l^Ye_{yn}, &
+		X_n=X_n^0 +l^Xe_{xn},
+	\end{array}
+\end{equation}
+\noindent where 
+\begin{description}
+	\item  \(l^Y\) is the row vector of integration method for differential variables;
+	\item  \(l^X\) is the row vector of integration method for algebraic variables;
+	\item  \(e_{yn}, e_{xn}\) are the error vectors with respect to the predicted vectors;
+\end{description}
+The vectors \(e_{yn}, e_{xn}\) are normalized:
+\begin{equation}
+	\label{eqn_nordnormal}
+		l^Y_1=l^X_1=1
+\end{equation}
+The corrector equations \eqref{eqn_corrector} can be written by components:
+\begin{equation}
+	\label{eqn_corrcomp}
+	\def\arraystretch{1.4}
+	\begin{array}{l}
+		\begin{array}{rllll}
+			y_n &= &y_n^0&+&l_0^Ye_{yn} \\
+			h_n \dot{y}_n &=& h_n \dot{y}_n^0&+&l_1^Ye_{yn} \\
+			\frac{h_n^2}{2}\ddot{y}_n &=& \frac{h_n^2}{2}\ddot{y}_n^0& + &l_2^Ye_{yn}
+		\end{array}
+		\\
+		\begin{array}{rllll}
+			x_n &= &x_n^0&+&l_0^Xe_{xn} \\
+			h_n \dot{x}_n &=& h_n \dot{x}_n^0&+&l_1^Xe_{xn} \\
+			\frac{h_n^2}{2}\ddot{x}_n &=& \frac{h_n^2}{2}\ddot{x}_n^0& + &l_2^Xe_{xn}
+		\end{array}
+	\end{array}
+\end{equation}
+
+From the \(\dot{y}_n\) equation from \eqref{eqn_corrcomp}:
+\begin{equation}
+	\label{eqn_corrdiff}
+	\def\arraystretch{1.1}
+	\begin{array}{l}
+		h_n\dot{y}_n =  h_nf(x_n,y_n,t_n)\\
+		h_n\dot{y}_n^0+l_1^Ye_{yn} - h_nf(x_n,y_n,t_n) = 0
+	\end{array}
+\end{equation}
+Using \eqref{eqn_nordnormal} define:
+\begin{equation}
+	\label{eqn_define}
+	\begin{array}{c}
+		F_Y(e_{xn}, e_{yn}, t) = h_n\dot{y}_n^0+e_{yn}-h_nf(x_n, y_n, t_n) \\
+		F_X(e_{xn}, e_{yn}, t) = g(x_n, y_n^0+l_0^Ye_{yn}, t_n)
+	\end{array}
+\end{equation}
+
+\noindent from which the following system can be obtained:
+\begin{equation}
+	\label{eqn_system1}
+	\begin{array}{c}
+		\begin{cases}
+			\begin{array}{rcl}
+			F_Y(e_{xn}, e_{yn}, t) &=&0 \\
+			F_X(e_{xn}, e_{yn}, t) &=&0 
+			\end{array}
+		\end{cases} 
+	\end{array}
+\end{equation}
+\noindent with Jacobi matrix (\(n\) step index is omitted for simplicity):
+
+\begin{equation}
+	\label{eqn_jacobi1}
+	J = \begin{bmatrix}
+		\frac{\partial F_Y(e_x, e_y, t)}{\partial e_y}  +  \frac{\partial F_Y(e_x, e_y, t)}{\partial e_x} \\
+		\frac{\partial F_X(e_x, e_y, t)}{\partial e_y}  +  \frac{\partial F_X(e_x, e_y, t)}{\partial e_x}
+	\end{bmatrix}
+\end{equation}
+The combination of \eqref{eqn_define} and \eqref{eqn_jacobi1} gives:
+\begin{equation}
+	\label{eqn_jacobi2}
+	J = \begin{bmatrix}
+		I - h_nl_0^Y\frac{\partial f(x, y, t)}{\partial y}  -  h_nl_0^X\frac{\partial f(x, y, t)}{\partial x} \\
+		l_0^Y\frac{\partial g(x, y, t)}{\partial y} +  l_0^X\frac{\partial g(x, y, t)}{\partial x} 
+	\end{bmatrix}
+\end{equation}
+Note that the Jacobi matrix does not become singular with \(h_n\rightarrow 0\), which allows it to be used to solve DAE for initial conditions \(y_d\), \(x_d\) at instants of discontinuities \(t_d\). In addition, step reduction does not cause numerical problems, which, for example, the integration scheme \cite{petzold82} is subject to.
+
+The system of equations \eqref{eqn_system1} can be solved iteratively. Variables at iteration \(m\) are:
+
+\begin{equation}
+	\label{eqn_mitervars}
+	\begin{array}{c}
+		\def\arraystretch{1.3}
+		\begin{array}{c}
+			\begin{cases}
+				\begin{array}{l}
+					y_n^m =y_n^0+l_0^Ye_{yn}^m \\
+					x_n^m =x_n^0+l_0^Xe_{xn}^m \\
+				\end{array} \\
+			\end{cases} \\
+			e_{xn}^0=e_{yn}^0= 0 
+		\end{array}
+	\end{array}
+\end{equation}
+
+The iterative process of solving \eqref{eqn_system1} with respect to \(e_x\) and \(e_y\) is performed according to the recursive formula (\(n\) step index is omitted for simplicity):
+\begin{equation}
+	\label{eqn_fulliter1}
+	\begin{bmatrix}
+		e_{y}^{m+1} \\
+		e_{x}^{m+1} 
+	\end{bmatrix}
+	+ 
+	\begin{bmatrix}
+		e_{y}^m \\
+		e_{x}^m 
+	\end{bmatrix}
+	+ (J^{m})^{-1}
+	+
+	B^m
+\end{equation}
+\noindent where:
+\begin{equation}
+	B^m = 
+	\begin{bmatrix}
+		h_nf(x^m, y^m, t) - h \dot{y}^0 - e_y^m \\
+		-g(x^m, y^m, t_n) 
+	\end{bmatrix}
+\end{equation}
+
+\noindent and:
+
+\begin{equation}
+	J^m = \begin{bmatrix}
+	I - h_nl_0^Y\frac{\partial f(x^m, y^m, t)}{\partial y}  -  h_nl_0^X\frac{\partial f(x^m, y^m, t)}{\partial x} \\
+	l_0^Y\frac{\partial g(x^m, y^m, t)}{\partial y} +  l_0^X\frac{\partial g(x^m, y^m, t)}{\partial x} 
+\end{bmatrix}
+\end{equation}
+
+When the process \eqref{eqn_fulliter1} converges, the Nordsiek vectors \(X_n\) and \(Y_n\) at the \(t_n\) are updated using \eqref{eqn_corrector}.
+\subsection{Local truncation error control}
+
+
+
+
+The solution of \eqref{eqn_thedae} is formally to find \(x(t)\) and \(y(t)\) for \(t\in[t_0;T_{end}]\). Since the analytical solution of \eqref{eqn_thedae} is impossible in most cases, numerical integration is used, which involves replacing differential part
 of \eqref{eqn_thedae} with finite-difference equations and their sequential solution with some integration
-method. The integration method builds a sequence of approximations \(z_n(t_n)=[y_n(t_n), x_n(t_n)]^T\), satisfying
+method. The integration method builds a sequence of approximations  satisfying
 the conditions:
 \begin{equation}
 	\label{eqn_fdapprox}
@@ -576,10 +754,7 @@ http://www.michaelshell.org/tex/ieeetran/bibtex/
 % argument is your BibTeX string definitions and bibliography database(s)
 %
 \section{Simple References}
-You can manually copy in the resultant .bbl file and set second argument of $\backslash${\tt{begin}} to the number of references \cite{cellier06}, \cite{gear71}, \cite{mixedadams} \cite{hairer93}
-\cite{mycompiler} \cite{petzold82} \cite{Radhakrishnan1993} \cite{Moore1994} \cite{Lee2015}
-\cite{Hiskens01}  \cite{VanCutsem2020} \cite{Murad2019}
-\cite{Canay93} \cite{Filippov1988} \cite{mycompression} 
+You can manually copy in the resultant .bbl file and set second argument of $\backslash${\tt{begin}} to the number of references 
 
 \bibliographystyle{IEEEtran}
 \bibliography{raiden}
