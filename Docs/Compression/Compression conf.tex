@@ -1,35 +1,26 @@
-\documentclass[lettersize,journal]{IEEEtran}
-\usepackage{amsmath,amsfonts}
-\usepackage{algorithmic}
-\usepackage{algorithm}
-\usepackage{array}
-\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
-\usepackage{textcomp}
-\usepackage{stfloats}
-\usepackage{url}
-\usepackage{verbatim}
-\usepackage{graphicx}
+\documentclass[conference]{IEEEtran}
+\IEEEoverridecommandlockouts
+% The preceding line is only needed to identify funding in the first footnote. If that is unneeded, please comment it out.
 \usepackage{cite}
+\usepackage{amsmath,amssymb,amsfonts}
+\usepackage{algorithmic}
+\usepackage{graphicx}
+\usepackage{textcomp}
+\usepackage{xcolor}
+\def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em
+    T\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 \usepackage{tabularx}
 \usepackage{boldline}
-%\usepackage[justification=centering]{caption}
-%\usepackage{hyperref}
-\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
-% updated with editorial comments 8/9/2021
-
 \begin{document}
 
 \title{Power System Transient Stability Simulation Results Compression Method}
 
-\author {Eugene Mashalov, Joint Stock Company "Scientific and Technical Center of Unified Power System", Ekaterinburg, Russia}
-
-
-%\markboth{Journal of \LaTeX\ Class Files,~Vol.~14, No.~8, August~2021}%
-%${Shell \MakeLowercase{\textit{et al.}}: A Sample Article Using IEEEtran.cls for IEEE Journals}
-
-%\IEEEpubid{0000--0000/00\$00.00~\copyright~2021 IEEE}
-% Remember, if you use this you must call \IEEEpubidadjcol in the second
-% column for its text to clear the IEEEpubid mark.
+\author{\IEEEauthorblockN{Eugene Mashalov}
+\IEEEauthorblockA{\textit{STF9} \\
+\textit{Scientific and Technical Center of Unified Power System}\\
+Ekaterinburg, Russia\\
+mashalov@gmail.com}
+}
 
 \maketitle
 
@@ -592,17 +583,6 @@ as a component of the developed software for transient stability simulation.
 	Camata Jose, Burtscher Martin, Barth, William, Coutinho, Alvaro. Accelerating MPI Broadcasts using Floating-Point Compression. 2010
 	
 \end{thebibliography}
-\newpage
-\section{Biography Section}
-\vspace{-33pt}
-\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{mashalov}}]{Eugene Mashalov}
-Graduated from Electrotechnical Faculty, Ekaterinburg, Urals State Polytechnical University, 1997. 
-Received Ph.D degree in 2000 from the same university. 
-Works for JSC "Scientific and Technical Center of Unified Power System", Ekaterinburg, Russia.\\
-mashalov@gmail.com \\
-www.inorxl.com
-\end{IEEEbiography}
-\vfill
+
+
 \end{document}
-
-
