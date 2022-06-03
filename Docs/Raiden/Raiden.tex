@@ -103,9 +103,9 @@ The implicit method implementation is much more complicated than the explicit on
 
 \subsection{The integration scheme}
 
-The DAE \eqref{eqn_thedae} solution implies discretization into a pure algebraic system of equations using a chosen integration method. Since the resulting system is nonlinear, an iterative solution method is used. The simplest method is fixed point iteration. This method is usable, but, in many cases, does not provide convergence due to its limitations. The application of the Newton method requires Jacobian matrix formation, which greatly increases the equipment models development complexity. In addition to the system of equations for each model, it is also required to form a block of the Jacobi matrix. However, Newton's method makes it possible to reliably obtain a solution, has good convergence, and, moreover, can be used not only to solve \eqref{eqn_thedae} but also to determine the initial conditions at \(t=0\) and at the time points of discrete changes \(t_d\). The weak side of Newton's method is its sensitivity to the quality of the initial guess. This problem is partly solved by using the initial estimation from the previous integration step. An additional factor that improves the convergence of Newton's method can be the scheme of the integration method. A well-known integration approach is the predictor-corrector scheme. With values on the available solution \(z_{n-1}\) at the time \(t_{n-1}\), the method can predict the values of \(z_n\) using extrapolation. The resulting prediction is used as an initial estimation for solving the equivalent \eqref{eqn_thedae} system, in which the differential equations are discretized in a form that depends on the chosen integration method. During the solution, the prediction is corrected so that the values satisfy the given system of equations. This scheme is effectively implemented using multi-step integration methods, which imply saving the data of several completed steps to perform the next step. To solve DAE, this approach is implemented in the Gear method \cite{gear71}. This method involves the use of the BDF integration method, both for differential and algebraic equations, and provides a simultaneous solution to \eqref{eqn_thedae}. Such an integration scheme is fully implicit and preserves integration method stability properties.
+The DAE \eqref{eqn_thedae} solution implies discretization into a pure algebraic system of equations using a chosen integration method. Since the resulting system is nonlinear, an iterative solution method is used. The simplest method is fixed point iteration. This method is usable, but, in many cases, does not provide convergence due to its limitations. The application of the Newton method requires Jacobian matrix formation, which greatly increases the equipment models development complexity. In addition to the system of equations for each model, it is also required to form a block of the Jacobi matrix. However, Newton's method makes it possible to reliably obtain a solution, has good convergence, and, moreover, can be used not only to solve \eqref{eqn_thedae} but also to determine the initial conditions at \(t=0\) and at the time points of discrete changes \(t_d\). The weak side of Newton's method is its sensitivity to the quality of the initial guess. This problem is partly solved by using the initial estimation from the previous integration step. An additional factor that improves the convergence of Newton's method can be the scheme of the integration method. A well-known integration approach is the predictor-corrector scheme. With values of the available solution \(z_{n-1}\) at the time \(t_{n-1}\), the method can predict the values of \(z_n\) using extrapolation. The resulting prediction is used as an initial estimation for solving the equivalent \eqref{eqn_thedae} system, in which the differential equations are discretized in a form that depends on the chosen integration method. During the solution, the prediction is corrected so that the values satisfy the given system of equations. This scheme is effectively implemented using multi-step integration methods, which imply saving the data of several completed steps to perform the next step. To solve DAE, this approach is implemented in the Gear method \cite{gear71}. This method involves the use of the BDF integration method, both for differential and algebraic equations, and provides a simultaneous solution to \eqref{eqn_thedae}. Such an integration scheme is fully implicit and preserves integration method stability properties.
 
-A variant of the Gear method is implemented in the well-known software Eurostag \cite{mixedadams}. Since the methods of the BDF family have the property of damping high-frequency oscillations with an increase in the integration step, the Gear method exhibits "hyperstability" and erroneously treats unstable cases as stable. The proposed modification, which consists of applying the Adams method for differential variables, eliminates this drawback. A variant of the Gear method is implemented in the well-known software Eurostag [8]. Since the methods of the BDF family have the property of damping high-frequency oscillations with an increase in the integration step, the Gear method exhibits hyperstability and erroneously treats unstable cases as stable. The proposed modification, which consists of applying the Adams method to differential variables, eliminates this drawback since the 2nd order Adams method is A-stable. The use of the BDF for algebraic variables makes it possible to maintain a higher integration step compared to the Adams method with the same overall stability properties of the integration scheme.
+A variant of the Gear method is implemented in the well-known software EUROSTAG \cite{mixedadams}. Since the methods of the BDF family have the property of damping high-frequency oscillations with an increase in the integration step, the Gear method exhibits "hyperstability" and erroneously treats unstable cases as stable. The proposed modification, which consists of applying the Adams method for differential variables, eliminates this drawback. A variant of the Gear method is implemented in the well-known software Eurostag [8]. Since the methods of the BDF family have the property of damping high-frequency oscillations with an increase in the integration step, the Gear method exhibits hyperstability and erroneously treats unstable cases as stable. The proposed modification, which consists of applying the Adams method to differential variables, eliminates this drawback since the 2nd order Adams method is A-stable. The use of the BDF for algebraic variables makes it possible to maintain a higher integration step compared to the Adams method with the same overall stability properties of the integration scheme.
 
 All linear multistep methods of order \(q\), despite significant differences in their properties, can be expressed in Nordsieck form \cite{hairer93}. That vector has a dimension of \(1 \times q+1\). Since the integration method must be A-stable order is constrained \((q<=2)\) and the maximum dimension of the Nordsieck vector is fixed at \(1 \times 3\). 
 
@@ -276,485 +276,103 @@ The iterative process of solving \eqref{eqn_system1} with respect to \(e_x\) and
 
 When the process \eqref{eqn_fulliter1} converges, the Nordsiek vectors \(X_n\) and \(Y_n\) at the \(t_n\) are updated using \eqref{eqn_corrector}.
 \subsection{Local truncation error control}
-
-
-
-
-The solution of \eqref{eqn_thedae} is formally to find \(x(t)\) and \(y(t)\) for \(t\in[t_0;T_{end}]\). Since the analytical solution of \eqref{eqn_thedae} is impossible in most cases, numerical integration is used, which involves replacing differential part
-of \eqref{eqn_thedae} with finite-difference equations and their sequential solution with some integration
-method. The integration method builds a sequence of approximations  satisfying
-the conditions:
+The solution of \eqref{eqn_fulliter1} is the difference between predicted and corrected values of the state variables. It is used for local truncation error estimation. The next integration step and integration method optimal order can be further determined using error estimation. Local truncation error \(d_n\) at the step \(n\):
 \begin{equation}
-	\label{eqn_fdapprox}
-	\vert\vert z(t_n)-z_n(t_n) \vert\vert \leq \epsilon
+	d_n=C_{q+1}q!l_qe_n
 \end{equation}
-\noindent where \(z(t_n)\) is the analytical solution and \(z_n(t_n)\) is approximated solution. Since \eqref{eqn_thedae} is usually stiff,
-mostly implicit integration methods are used, requiring the solution of a nonlinear system of equations at each integration step \(n\).
+\noindent where \(C_{q+1}\) is the integration method constant.
 
-Transient trajectories are not smooth and subject to discontinuities at particular time instants due to switching and limiting of state variables.
-Thus, \(f\) and \(g\) are not continuous in \(t\in[t_0;T_{end}]\) but only piece-wise continuous, as well as their derivatives. This requires a restart integration
-method at time instants of discontinuities \(t_d\) with new initial conditions \(z_d(t_d)\). In some cases structure and dimension of \eqref{eqn_thedae}
-also subject to change. Discontinuities are associated with events that can be divided into time events and state events \cite{texbook}. Time events are 
-unconditional and have a known time of occurrence. They can be applied to the solution at scheduled time instants. State events have only conditions of occurrence and
-their times must be located during the solution.
-
-Based on the above characteristics of the problem, to solve system \eqref{eqn_thedae}, the following minimum set of procedures should be implemented:
-\begin{itemize}
-	\item evaluation of initial conditions at \(t_0\);
-	\item evaluation of residuals of equations;
-	\item construction of a submatrix of partial derivatives;
-	\item time location of the state events \(t_d\);
-	\item evaluation of switched \eqref{eqn_thedae} initial conditions at the discontinuities \(t_d\).
-\end{itemize}
-
-The custom model is a subsystem of \eqref{eqn_thedae}, therefore, a set of procedures identical to the set for the general system must be implemented for it.
-
-When a developer is asked for the creation of equipment model, he starts by analyzing the given block diagram, forms a system of equations, and then implements 
-a program with functions that ensure the interaction of the model with the software core. The result of that work is an integral part of the software. 
-To implement a custom model, a similar process is required with two differences: the developer does not participate in the process, and the result of the work 
-is not included directly in the software, but operates as an external module. The latter is usually, a native machine code executable module in the operating system format.
-(*.dll for Windows or *.so for Unix systems). Implementing custom model functions in native code eliminates technical differences between custom and 
-built-in models and ensures maximum performance.
-
-The generation of native code in itself is the complicated task, since it is necessary to consider the system architecture features.
-Therefore, when implementing custom models, to generate native code, standard systems for compiling executable modules are used, 
-for which the source code of the custom model program is preliminarily created in one of the general-purpose programming languages. 
-In this case, such a programming language is called an intermediate. In practice, C/C++ and Fortran compilers are often used. 
-Automatically generated programs in these languages are the penultimate stage of the implementation of the custom model, 
-preceding the compilation of the executable module in native code.
-
-\section{Model representation in AST-form}
-Consider the model representation in block diagram and textual forms. As an example, a simple model of the automatic voltage regulator is used. 
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=\columnwidth]{code.eps}
-	\caption{Sample AVR model pseudocode representation}
-	\label{fig_avrcode}
-\end{figure}
-Textual form of representation is shown in Fig. \ref{fig_avrcode} and the block diagram in Fig. \ref{fig_avr}.
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=\columnwidth]{avr.eps}
-	\caption{Sample AVR model block diagram}
-	\label{fig_avr}
-\end{figure}
-
-Both representations use elementary functional blocks: lag, derivative lag and limited lag. Ready-made elementary functional
-blocks are included in custom model toolbox to simplify model creation and enable efficient implementation by software core 
-instead of letting the user build these blocks from individual differential equations.
-In addition, the implementation of the elementary blocks in the software core allows to use common procedures for discrete events 
-location and processing and hide these details from the user. 
-If necessary, differential equations can be explicitly specified using the integrator block.
-
-Formally, the block diagram of the model corresponds to a directed graph whose vertices are elementary blocks, and
-edges are defined by links. Compared to a conventional graph, the order in which the edges in a node are listed matters,
-because elementary blocks have positional arguments that must be specified in a particular order. This imposes some restrictions
-on the algorithms used in the implementation of custom models. The block diagram representation of custom models
-turns out to be easier to use for implementation compared to textual one, since the order of calculations is readily
-available by traversing the graph from outputs to inputs, and validation of links and parameters is performed by the 
-block diagram editor.
-
-Creating a custom model in a text representation is reduced to describing a system of equations using generally accepted
-mathematical operators and a set of built-in functions that also include elementary blocks. The system of equations must 
-link the input and output variables. This provides the possibility of using internal variables for structuring the 
-system or introducing feedback. The description of the system is far from an intermediate language, so its transformation 
-is required to implement the model. The textual representation is not as visual as the block diagram, 
-but with some skill, it greatly speeds up the creation of models. At least text editors today remain the basic tool 
-of professional software development and there is no trend toward the transition to graphical environments. 
-It should be emphasized that the description of the model in the textual representation cannot be called a program in the
-traditional sense of the term. The program sets the sequence of actions, while the solution sequence is not defined for the 
-system of equations in the textual representation. However, the implementation of the model must be nothing more than an ordinary
-imperative program in the form of an executable module, therefore, in the process of transformations, 
-the order of calculations must be determined.
-
-To transform the custom model source data in text format, some general-purpose parsers are widely used. They are the programs
-that allow to perform lexical and syntactic analysis of the source text according to a given dictionary and form the required 
-data structure for further processing \cite{texbook}. Almost all programming languages use parsers in one way or another to generate 
-intermediate object code from source code. Existing parsing technologies can also be used to analyze the textual representation 
-of the model's system of equations. In the process of analyzing the original textual representation, the verification of compliance 
-with the specified rules and the detection of syntactic errors are performed. As a result of the analysis, a tree structure is
-generated that allows to perform the required transformations for further processing by manipulating the tree. To represent the system of equations 
-of the custom model, a structure in the form of the abstract syntax tree (AST) is suitable. The nodes of such a tree are the
-operators, and the edges define the mutual directed links of the operators. One of the possible options for converting the textual
-representation of the AVR model from the example Fig. \ref{fig_avr}, \ref{fig_avrcode} into the AST is shown in Fig \ref{fig_ast}.
-
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=\columnwidth]{ast.eps}
-	\caption{Sample AVR model AST-tree }
-	\label{fig_ast}
-\end{figure}
-
-Generally, the resulting structure is not a tree. The use of variables as operands of elementary blocks turns the structure into a graph,
-which, in the presence of feedback, cannot be reduced to the form of a tree. If there are several output variables, the structure
-turns into a forest. The traditional use of the term "tree" because the structure is hierarchical and determines
-the order of links of nodes. For the AST shown in the Fig \ref{fig_ast} cycles on system variables are shown by dotted lines. 
-If it were possible to eliminate the edges of the connections of variables, the graph could be considered directed from below
-nodes to the top. The edges of the variables connections do not have a given directions, but they can be determined 
-if there is no feedback.
-
-%The root node of the tree marked as \raisebox{-2pt}[0pt][0pt]{\includegraphics{eq.eps}} denotes a system of equations. 
-%Nodes marked as \raisebox{-2pt}[0pt][0pt]{\includegraphics{let.eps}} represent individual equations. An equation node 
-%has two child nodes: left and right. In AST, equations of the form \(f(x)=0\) are accepted, 
-%so if a nonzero expression appears on the right side during the transformation, it is transferred to the left 
-%side of the equation with a negative sign. Each equation node can resolve one of the model variables.
-
-The form of AST for a given system of equations is not unique. For ASTs, there is an identity rule, similar to the rule for
-mathematical expressions. The two ASTs are identical if the values of the root nodes are identical on the entire set of values of the
-variables included in them in their domains. While maintaining identity, it is possible to perform AST 
-transformations using subtree manipulations, achieving certain properties from the resulting AST. All manipulations of 
-this kind are performed at the symbol level, that is, with variables whose values are unknown. Identity is preserved 
-using the rules of algebra and logic in the transformations. The AST structure is convenient for these 
-transformations from an algorithmic point of view.
-
-Taking as intermediate variables \(V_{c}\), \(V_{s}\) and \(U_{sum} \) at the points marked in the block diagram
-of the model in Fig. \ref{fig_avr}, by traversing the graph from outputs to inputs, it is easy to obtain an AST 
-identical to Fig. \ref{fig_ast}. One can also get the AST identical to that shown in Fig. \ref{fig_ast} by transforming 
-an arbitrary variation of the AST built from block diagram. Thus, the AST can be used as an intermediate structure 
-that is invariant with respect to the representation of the custom model. To build it, the analysis of the model 
-graph and the analysis of text expressions can be combined. Due to this, the possibilities of describing 
-the custom model in block diagram form can be significantly expanded. In particular, for the inputs and outputs 
-of elementary blocks, mathematical expressions can be additionally specified in the textual representation. 
-They can be used for additional value transformations or for linking to other model blocks without having to explicitly draw those links.
-At the same time, the block diagram of the model remains compact and clear, and the user has almost unlimited 
-possibilities to expand the functionality of the model. The construction of an AST with such a combined approach 
-begins with a traversal of the model block diagram graph, with a transition to the analysis of mathematical expressions. The results 
-of parsing textual expressions are included in the graph AST as subtrees.
-
-After transformation the representation of the model into the form of the AST, the main stage of the model implementation begins, which includes the following operations:
-\begin{itemize}
-	\item classification of variables;
-	\item validation of the initial system of equations;
-	\item simplification and optimization of mathematical expressions;
-	\item generation of expressions for calculating partial derivatives;
-	\item determination of the order of the system of equations solution the by variables causalization.
-\end{itemize}
-
-\section{Custom model symbolic transformation}
-
-\subsection{Model variables classification} \label{sec_varclass}
-The block diagram or system of equations is the main, but not the only component of the source data for the implementation 
-of the custom model. To link the model with the software core, additional information is required, which, in particular, 
-includes the declaration of variables. With the help of named variables, data exchange is arranged between 
-the model and the software core, as well as with other models that are part of the system \eqref{eqn_thedae}. 
-In addition to names, the declarations of variables include attributes that allow them to be divided into classes according to
-certain properties. The one of the most important is the constant attribute. Variables with this attribute cannot be changed during the
-simulation and are used to obtain source data when the model is initialized and the initial conditions are calculated. 
-The attribute is also necessary for the correct construction of the system of equations and to determine the order of its solution. In the AST example above, the constants are variables for gains, time constants, and limits.
-
-Constant attributes can be explicitly declared for variables in the model source data. But during the analysis
-of the AST, some variables can receive the constant attribute implicitly. For example, an AST subtree in which only 
-numerical values and constants act as variables is constant. If such an AST subtree resolves a state variable, then it will 
-also be a constant. The definition of an implicit constant attribute affects the structure of the system of equations of the model.
-Obviously, the number of equations must be equal to the number of unknown variables. Classification of one of the state variables 
-as a constant requires eliminating one of the equations from the system. If the equality of the number of variables and 
-equations is preserved, such elimination reduces the computation burden. However, in some cases, implicitly defining 
-a variable as a constant may result in multiple equations being resolved, in which case, the system becomes underdetermined. 
-In such a situation, the model implementation process should terminate with an appropriate error message pointing to the source data
-problem.
-
-Variables that are not classified as constants are state variables and, in turn, are divided into internal and external. 
-Internal variables are resolved by model equations. External variables are references to internal variables of other models. 
-In the example above, external to the AST model are the generator state variables \(S_u\), \(V_g\), \(I_g\), and \(I_f\) – 
-rotor slip, terminal voltage, stator and rotor currents, respectively. In turn, the internal variable \(U_f\) will be interpreted as
-external in the exciter model.
-
-For state variables that are not constants, there is an intermediate class of discrete variables. It includes variables whose 
-values can change only when the system of equations undergoes discontinuity. These include, for example, variable output values of
-logical elementary blocks. When the state of such a block changes, the software core must process a
-discontinuity of the system of equations by restarting the integration method with the calculation of new initial conditions,
-including new values of discrete variables. In the time interval between discontinuities, the discrete variable has a constant
-value. Thus, it makes no sense to include discrete variables into the system of model equations, considering their values in the
-process of integration as constants. Calculation of the values of discrete variables is performed only when initialization and in
-the discontinuity processing. The classification of discrete variables is performed according to a principle similar 
-to the implicit classification of constants: if the AST subtree resolves some variable and contains only constants and discrete
-variables, then the resolved variable is discrete.
-
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=\columnwidth]{variables.eps}
-	\caption{Classification of the custom model variables}
-	\label{fig_vars}
-\end{figure}
-
-State variables not classified as discrete or constant are ordinary continuous variables and are resolved by the system of model
-equations as part of system \eqref{eqn_thedae}. The Fig. \ref{fig_vars} shows a simplified variables classification chart,
-indicating how variables can be assigned to classes. 
-It should be noted that the variables are not divided into differential and algebraic, because the 
-integration process in a particular implementation is based on the Gear method \cite{texbook}.
-
-\subsection {Equation system source data validation} \label{sec_validation}
-
-In the process of automatic custom model implementation, two phases of validation of the source data can be distinguished. 
-The first phase is to detect errors that prevent the correct generation of the AST based on graphical or textual representations. 
-In the graphical representation of the source data, a set of elementary blocks corresponding to the AST nodes is defined,
-therefore, only topology validation is necessary: checks of unconnected inputs and outputs, the direction of connections from
-outputs to inputs, etc. To prepare a text representation for generating an AST, it must be first parsed from the text 
-and then checked or syntax errors, most of which prevent correct connection generation between AST nodes and in some cases 
-make it impossible to determine the set of AST nodes.
-
-Once the AST has been generated, a second phase of validation can be performed, which is to detect semantic errors. The second phase
-does not depend on the way the model is presented initially since it uses only the AST and the results of the variable 
-classification. This information allows validation of AST nodes that have received the constant attribute. In particular, 
-the AST allows to ensure that those elementary block arguments that must be given as constants are defined by a constant subtrees. 
-Since there are no restrictions on the structure of equations in the text representation, it is possible for an equation to explicitly
-or implicitly change the value of a variable with a constant attribute. Detection of such errors can also be performed 
-by the AST.
-
-If the values of the child nodes of some AST node can be calculated from the given constants, it becomes possible to check 
-the result of calculation for compliance with the acceptable node values in the process of model implementation. Such nodes 
-include, for example, division, square root, inverse trigonometric functions, elementary blocks with constraints. 
-Error analysis in constant expressions, of course, does not guarantee that the model will behave correctly for any set of values 
-of the source data, but allows to identify errors that do not depend on the source data and will inevitably arise during the simulation.
-
-\subsection {Simplification and optimization of mathematical expressions} \label{sec_simplification}
-
-The possibility of representing mathematical expressions in a tree structure is widely used in computer algebra systems \cite{texbook}. 
-The purposes of such systems go far beyond the simplification of mathematical expressions and is mainly focused on solving problems symbolically,
-up to automated proof of theorems. Parts of the technology of identical transformations of expressions are in demand in optimization systems for translating program
-code, which can also include the considered system for model implementation. Expression simplification in computer algebra systems acts as a utility function 
-and is designed to display results in a compact, generally accepted form. There is no universal definition of the result of the expression simplification, so at
-least two options are considered: the factored form (for example, \((a+b)(a-b)\) or the polynomial form \((a ^ 2-b ^ 2)\). In the context of 
-the considered application for the implementation of custom models, the term "simplification" takes on a clearer meaning and implies the calculation of the
-expression with minimum computation cost. If each AST node is assigned a score of the cost of performing an operation, the total cost of resolving the AST 
-can be determined. The task of simplification is reduced to finding an identical AST with minimal total computation cost. Considering that the costs of 
-the operation of multiplication, and even more so of raising to a power, are higher than for the operation of addition, for the difference of squares 
-considered in the example above, the result of simplification will be \((a+b)(a-b)\).
-
-Identity transformations of the AST are performed according to a certain set of rules \(r_i\) forming the set \(R\). The rule \(r_i\) is an identity, 
-on the left side of which the AST in the original form, and on the right - the transformed AST. For example, the rule for the difference of squares has the form shown in Fig \ref{fig_simpl}.
-
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=.7\columnwidth]{simplification.eps}
-	\caption{The difference of squares identity tree transformation rule}
-	\label{fig_simpl}
-\end{figure}
-
-Since the rules that define identities are reversible, they can be applied for transformations from the left AST to the right one and vice versa. 
-To apply a rule, it is necessary to find in the source AST a subtree corresponding to the pattern of the AST of the rule and replace it
-with the AST subtree from the opposite part of the rule. At the same time, both when searching and when replacing, it must be taken into account that any subtrees 
-of the original AST can act as arguments to the rules. In this example, these subtrees are labeled \(a\) and \(b\). Thus, rules can be applied not only to 
-expression variables, but to subexpressions.
-
-Searching for a rule subtree pattern in the AST can be done recursively from top to bottom or bottom to top. For large ASTs, bottom-up search is more efficient, 
-but it requires tree preprocessing. Since the AST changes during the application of the rules, the processing must be repeated, therefore, 
-the search for patterns is performed from top to bottom. When searching, one must consider the permutations of arguments in nested 
-AST nodes. For example, an addition operation with three terms yields 6 permutations, each of which must be checked against the pattern. 
-In addition, some operations in AST are equivalent, such as exponentiation and successive multiplication. 
-To reduce searching complexity for pattern rules, the AST is maintained in the so-called canonical form which is described by the following rules:
-
-\begin{enumerate}
-	\item All commutative binary operators are replaced by n-ary ones. In this case, the subtree of consecutive binary operators of the same type is replaced by one operator node with \(n\) child nodes.
-	\item Subtraction nodes are replaced by addition nodes with a unary minus.
-	\item Division nodes are replaced by multiplication nodes. The divisor expression is enclosed in the exponentiation \(-1\).
-	\item The child nodes are sorted in a lexical order.
-\end{enumerate}
-
-Rules 1, 2, and 3 eliminate the operations of subtraction and division and reduce the height of the AST, which simplifies the comparison of subtrees 
-and reduces the required search depth. Rule 4 allows to eliminate the analysis of permutations when searching for rule patterns since all child 
-nodes will be in a defined order. Before generating the implementation of the model in the intermediate language, rules 2 and 3 can be canceled out by
-converting to the regular operations according to additional rules that are introduced into \(R\) at the final stage of system simplification.
-
-To optimize the system of equations for performance, the set of rules \(R\) includes elementary of algebra (commutative, associative and distributive laws), 
-rules of addition with zero and multiplication with zero and one, identities with powers, trigonometric and logarithms. 
-Since implicitly specified constants can be determined during the simplification process, the rules also include the calculation of AST nodes by numerical
-arguments. If a numerical value of a node can be calculated, it is excluded from the AST together with its subtree and replaced with a numerical value. 
-The total number of basic rules is about fifty. All rules are represented in a special form of the AST, extended
-for patterns representation.
-
-A feature of the simplification of the expressions used in this work is that it is performed for the entire system of equations, and not for
-individual equations. The simplification algorithm searches for repeated subexpressions, extracts them into a separate equations, and replaces the found
-expressions with a variable using a substitution rule. Equation representation in canonical form \(f(x)=0\) eliminates the use of rules that must 
-work on both sides of the equation, such as taking logarithms or exponentiation. In addition, this form of equation representation simplifies the
-generation of expressions for partial derivatives and the determination of the order in which equations are solved.
-
-Simplification and optimization of expressions in a system of equations consist of the sequential application of rules with the tracking of computational
-cost. The problem in what order and which rules to apply to achieve a minimum of cost does not have an unambiguous solution and in most cases,
-is solved by the enumeration of possible variants. The solution of this problem is complicated by the fact that the sequence leading to the form of 
-the system with minimal computational costs includes intermediate forms with costs higher than the original form. Therefore, when solving, it 
-is impossible to use objective function indicating the optimal sequence. In addition, as in most problems of finding a global minimum, 
-the solution can be achieved by exhaustive enumeration of all possible combinations, which cannot be applied in practice even for small systems and a
-reduced set of rules. For the problem of simplification and optimization of the system of equations, two approaches were tested in this work. 
-Both do not guarantee the achievement of a global minimum of costs, but can significantly reduce costs (if possible) for an acceptable time of processing.
-
-The first approach implies the separation of \(R\) into two subsets: \(R_1\) and \(R_2\). The subset \(R_1\) includes the rules that generate the 
-polynomial form of expressions, and \(R_2\) includes the rules for the factorized form. \(R_1\) and \(R_2\) are sequentially applied to the original 
-system of equations until the computational cost stops decreasing. This approach is similar to that used for manual simplification of expressions. 
-First, all the expressions are expanded by opening brackets, then they are factorized. This approach reduces computational costs, mainly due to 
-the fact that in the process of sequential application of \(R_1\) and \(R_2\), some of the AST nodes are converted into constants or become common factors.
-
-The second approach is more general and is based on finding a path in the graph \(G(F,T)\), where \(F\) are identical forms of the original AST to be simplified,
-\(T\) are transformations performed according to the rules \(R\). \(A^*\) search algorithm \cite{texbook} is used for path search. The original
-algorithm is designed to find the shortest path between given nodes in a weighted graph and is used, for example, to build routes on flat maps. 
-The difference from the equation system simplification problem is that the target node is not specified in the source data and must be determined 
-by the minimum cost. A distinctive feature of \(A^*\) is that it preserves all paths from the source node to the destination. This allows to track
-changes in costs and cut off paths where costs do not decrease. However, the time spent on its execution will be exponential. Ways to reduce
-searching are heuristic pruning of "dead end" paths and limiting the depth of paths to be searched
-
-Practical studies show that, in most cases, the first approach allows to obtain an acceptable result. The second approach is used optionally
-since it is more complicated and not well determined, but in some cases it can significantly reduce computational costs compared with the original 
-system because it can “overcome” a sharp increase in computational costs at the initial stages of system simplification and determine 
-the optimal order of rules application.
-
-It should be noted that the purpose of simplification of the expressions of the custom model is not only to reduce computational costs, but also to
-additionally check the consistency of the given system. During the simplification, a situation may arise in which dependent equations are
-eliminated, but the number of variables remains unchanged. Therefore, in the process of simplification, the consistency of the system is verified
-according to the rules given in subsection \ref{sec_validation}.
-
-\subsection{Automatic differentiation}
-
-At this stage of the implementation of the custom model, the system of equations is reduced to the final version with the minimal achieved
-computational costs and prepared for linking with the software core. To solve the system of equations of the model, it is necessary to build 
-a block of the matrix of partial derivatives. For models implemented by a software developer, this stage is performed manually according 
-to a given system of equations. To implement a custom model, the generation of symbolic expressions for calculating partial 
-derivatives must be fully automatic.
-
-\begin{figure}[h]
-	\centering
-%	\includegraphics[width=.7\columnwidth]{derivative.eps}
-	\caption{The power rule in form of AST}
-	\label{fig_dpower}
-\end{figure}
-
-The problem of determining expressions for calculating partial derivatives is solved by symbolic manipulations using the AST of the system of equations.
-Differentiation is performed analytically and makes transient simulations free of of numerical differentiation errors 
-The expressions for partial derivatives calculation are determined using template rules \(d_i\), which form a set of differentiation 
-rules \(D\). The rules are defined for each type of AST node. As an example in Fig. \ref{fig_dpower} shows the rule for the partial 
-derivative of the power function node.
-
-If a differentiation rule is set for each type of AST node, then using a chain rule, an AST of a system of partial derivatives can be
-obtained, where each equation is assigned to an element of the Jacobi matrix of the custom model. Since the resulting expressions of partial 
-derivatives will also be represented in the form of AST, the same simplification and optimization rules that were described in 
-subsection \ref{sec_simplification} can be applied to them. The practical use of symbolic differentiation of functions has shown that many 
-expressions for partial derivatives turn out to be quite cumbersome and expressions can contain subexpressions that occur many times in the system. 
-Simplification and optimization rules make it possible to detect such subexpressions and extract them into separate equations, which significantly
-reduces the computational costs of calculating partial derivatives.
-
-Since the optimization of expressions of partial derivatives is somehow carried out by introducing additional equations for repeated subexpressions,
-a variant with a preliminary transformation of the model equations AST into the so-called operator tree was considered. In the operator tree, 
-each original AST node is assigned an intermediate variable \(s_i\):
+Since state variables may have very different magnitudes, it is common to use weighted differences for error estimation:
 
 \begin{equation}
-	\label{eqn_opthree}
-	s_i=op_i(s,z)
+	W_{in}=Rtol_i|Z_{i,n-1}|+Atol_i
 \end{equation}
 \noindent where:
 \begin{description}
-	\item  \(s\) is the intermediate variables vector;
-	\item  \(z\) state variables vector;
-	\item  \(op_i\) is the function defined by AST node;
+	\item \(Atol_i\) is the absolute tolerance of i-th state variable;
+	\item \(Rtol_i\) is the relative tolerance of i-th state variable.
 \end{description}
 
-There are no complicated functions in the operator tree, so only differentiation rules can be used to calculate partial derivatives with no need
-to use chain rule. The expressions obtained according to such rules are relatively compact and the computational costs for partial
-derivatives, most often, turn out to be lower compared to optimized expressions for complicated expressions. Of course, the reduction in 
-computational costs is achieved by increasing the number of equations in the system. However, in this work, to solve the system of linear equations
-with a matrix of partial derivatives, the matrix is transformed into a block triangular form \cite{texbook}. This form is constructed by  
-the permutation of the system so that nonzero values are located above the diagonal, which in turn is free of zeros. 
-After permutation, blocks remain on the diagonal, each of which, in the process of solving of the system, is subjected to LU decomposition 
-with partial pivoting. The solution of the systems reduced to a back substitution in block form. Transformation of the AST into an operator form 
-increases the dimension of the system being solved, but does not lead to the appearance of blocks on the diagonal, since all \(s_i\) are 
-resolvable with respect to \(op_i\), and \eqref{eqn_opthree} can be interpreted not as an equality, but as an assignment. Thus, the addition 
-of equations associated with the transformation of the AST into the operator form is equivalent to the introduction of intermediate variables in the
-calculation of partial derivatives, and its effect on the performance of the solution of the system is negligible.
+The condition \eqref{eqn_dn} is used to accept step \(n\). 
+\begin{equation}
+	\label{eqn_dn}
+	\vert\vert d_n \vert\vert = \sqrt{\frac{1}{N} \sum_{i=1}^{N}{\left(\frac{d_{i,n}}{W_{i,n}}\right)^2}} \leq 1
+\end{equation}
+\noindent where \(N\) is the number of state variables.
+If \eqref{eqn_dn} holds, the step and the order of the integration method are adjusted for the next step. The step is rejected and repeated otherwise with a smaller \(h\).
 
-The operator form of th AST also has a certain advantage, which allows for each operation in the system of equations of the custom model to 
-obtain a result in the form of \(s_i (t_n)\) in the process of simulation. This feature is useful for an in-depth analysis of the custom model 
-during its development and debugging. It should also be noted that the automatic differentiation tool provides significant support 
-in the process of model development in the traditional way -- by the software developer, as it eliminates the error prone work of manual writing 
-several tens or hundreds of expressions for partial derivatives.
+The choice of the norm type for \(d\) estimation has a strong influence on the quality of the simulation. The default option is \(l^2\)-norm, which is acceptable both for the quality of the solution and step size control. As the \eqref{eqn_thedae} is stiff, differential equations with small time constants tend to produce large differences between predicted and corrected values. The \(l^2\)-norm averages these differences and allows step size to be larger.  However, this averaging property degrades the quality of simulation for models with large dimensions due to the "masking" of unacceptable errors in some state variables. In some cases, these errors have a crucial influence on the stability simulations and may lead to erroneous estimation of unstable cases as stable. Using \(l^\infty\)-norm overcomes this problem but leads to an unacceptable time step decrease. A hybrid norm was proposed in \cite{pegase10}, which combines properties of \(l^2\)- and \(l^\infty\)-norms. In this paper, a similar approach based on the weighting of norms is applied.
 
-\subsection{Determination of the order of the system of equations solution} 
+The operations of integration step and order change induce extra computation costs and should not be used at every step. Step size and order control are based on the strategy described in \cite{Radhakrishnan1993}, where these aspects are considered in relation to the pure differential system of equations. Since the problem being solved is differential-algebraic and stiff, additional measures for convergence control of the corrector and excessive step change suppression are implemented on the basis of \cite{petzold82}.
 
-There is no need to determine the order of solution for the system of equations of the custom model.
-However, the overall performance of the simulation was slightly affected by the pre-ordering of the system of
-equations into a block triangular form. This reduces the cost of complete system ordering 
-\eqref{eqn_thedae} in the software core. The question of the order of solution arises in the problem of
-calculating of the initial conditions at the time instants \(z_0 (t_0)\) and \(z_d (t_d)\). 
-If there is no feedback in the model, this order is reduced to a sequence of assignments, usually in the
-direction from the output to the inputs. In the presence of feedback, the sequence requires the solution of
-subsystems of equations, in the general case, nonlinear ones. In most cases, the procedures for determining the
-initial conditions at \(t_0\) and at \(t_d\) are the same. The only difference is that at \(t_0\), it is assumed:
+\subsection{Adams integration method ringing suppression}
+
+The implicit 2nd-order Adams method, also known as the trapezoidal rule, has the property of "ringing" with the increase of the integration step. Ringing appears as oscillations of state variables at transient decay phases where the integration step is relatively large. Ringing does not affect the quality of simulations considerably, but prevents the growth of the integration step, despite the fact that the physical process tends to a steady state.
+
+The 2nd-order Adams method \eqref{eqn_adams} applied to the model equation \(\dot{y}=\lambda y, y(0)=y_0\) gives expression \eqref{eqn_adamsmodel}.
+\begin{equation}
+	\label{eqn_adams}
+	y_n=y_{n-1}+\frac{h}{2}\left(\dot{y}_{n-1}+\dot{y}_n\right)
+\end{equation}
+\begin{equation}
+	\label{eqn_adamsmodel}
+	y_n=y_0 \left( \frac{2+h\lambda }{2-h\lambda } \right)^n
+\end{equation}
+\begin{equation}
+	\label{eqn_adamsinf}
+	\lim_{h\rightarrow\infty}{ \left( \frac{2+h \lambda }{2-h \lambda } \right) } = -1
+\end{equation}
+As the integration step increase the \eqref{eqn_adamsinf} holds, which leads to the state variable sign change \((-1)^n\) at every integration step. To suppress ringing, it is necessary to eliminate the influence of the property \eqref{eqn_adamsinf} to the solution. There are several approaches to this problem. For the chosen integration scheme, good results are obtained by replacing \(\dot{y}_n\) proposed in \cite{Lee2015}, after obtaining the solution \(y_n\) by \eqref{eqn_adams}, by the value \(\dot{y}_n^{BDF}\), computed by \eqref{eqn_adamsdsamp}.
 
 \begin{equation}
-	\label{eqn_opthree2}
-	\frac{df}{dt}(t_0)=\frac{dg}{dt}(t_0)=0,
+	\label{eqn_adamsdsamp}
+	\begin{array}{c}
+	\dot{y}_n^{BDF}=\frac{\alpha^2y_{n-2}-(1+\alpha)^2y_{n-1}+(1+2\alpha)y_n}{h_n(1+\alpha)} \\
+	\alpha=\frac{h_n}{h_{n-1}}
+	\end{array}
 \end{equation}
-
-\noindent while for \(t_d \) this condition is not met, but the values of the derivatives at 
-\(t_{d-}\) (up to the instant of discontinuity) are known. Differential variables in most cases are considered continuous:
+At the step \(n+1\) the expression \eqref{eqn_adams} would use \(\dot{y}_n^{BDF}\) instead of the value \(\dot{y}_n\) computed at the step \(n\), as shown in \eqref{eqn_modadams}.
 
 \begin{equation}
-	\label{eqn_cont}
-	\dot{y}(t_{d-})=\dot{y}(t_{d+}),
+	\label{eqn_modadams}
+	y_{n+1}=y_n+\frac{h}{2}\left(\dot{y}_n^{BDF}+\dot{y}_{n+1} \right)
 \end{equation}
-\noindent which gives the ability to resolve \(x(t_{d+})\).
 
-The presence in the model of elements with integration constants, the values of which are determined using complicated logic,
-significantly hampers the calculation of the initial conditions. For example, the initialization of the PID controller or the
-implementation of bumpless control according to this law, depending on the given coefficients, may require the rejection of 
-\eqref{eqn_cont} and does not allow to determine the initial conditions in a general form \cite{texbook}. In this case, 
-it is required to supply extra source data of the custom model in the form of so-called initialization scheme, which explicitly
-declares expressions for determining the initial conditions.
+Since replacement \(\dot{y}_n^{BDF} \rightarrow \dot{y}_n\) changes integration method stability properties, it is applied only when ringing is detected. The extra conditions to apply this artificial damping are \(h_n>0.1\) s and a cool-down period of several steps before the next damping. The effect of damping is shown in Fig. \ref{fig_adams_damping_variable} and Fig. \ref{fig_adams_damping_step}.
 
-In the simplest cases, when \eqref{eqn_thedae} does not contain nonlinear feedback and complicated logic, the initialization scheme can be constructed automatically by analyzing the original system. 
-Since the AST in operator form \eqref{eqn_opthree} is used to solve this problem, a sufficient condition is the availability of the inverse 
-function \(op^{inv}\) to the operator \(op\), which allows resolving the variable from the equation of the AST node. 
-The ability to solve an equation with respect to some variable is determined by the classification of variables described in
-subsection \ref{sec_varclass} and the set of already resolved variables. To determine the order of equations and variables resolving, 
-an algorithm for finding the strongly connected components in the graph \(G(V,E)\), where \(V\) are state variables and \(E\) 
-are equations, can be applied. One of the most efficient is Tarjan's algorithm \cite{texbook}.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.8\columnwidth]{adams_damping_variable.eps}
+	\caption{The ringing suppression effect of 2nd-order Adams damping on state variable evolutions }
+	\label{fig_adams_damping_variable}
+\end{figure}
 
-If there is feedback in the original system, then ordering the equations in the form of a simple sequence of calculations
-becomes impossible. Feedback form the so-called algebraic cycles, which handling requires the solution of a system of
-equations. Here the ordering algorithm chooses the variable that allows the maximum number of cycle equations to be
-resolved, and continues ordering the equations as if that variable was resolved. Such technique is known as tearing \cite{texbook}. If there is an inverse function for the
-equation of such a variable, the variable is introduced into the system of cycle equations using a substitution. 
-This technique allow the system of equations to be ordered so that it acquires a block triangular form with diagonal blocks of 
-the minimum size. Thus, the initial system, during the implementation process takes on a form that does not require additional 
-ordering in the software core.
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=0.8\columnwidth]{adams_damping_step.eps}
+	\caption{The ringing suppression effect of 2nd-order Adams damping on integration step size evolutions (log scale) }
+	\label{fig_adams_damping_step}
+\end{figure}
 
-In case the ordering algorithm copes with the task of resolving all variables, the custom model can be converted into an
-intermediate language program. Otherwise, the algorithm produces a list of variables and equations that could not be resolved,
-and the user must supply extra model data with the necessary equations. The main reason that not all 
-state variables can be resolved is the lack of inverse functions for AST nodes or functions used for variable substitutions. 
-In this case, the simplest way to resolve a variable is to explicitly specify an expression to calculate its value in the 
-initial conditions.
+\subsection {The integration process}
+The integration method and scheme considered above assume that the \eqref{eqn_thedae} is continuous. When simulating practical transients, this condition is not met since some of the \(f\) and \(g\) are not smooth over their entire domain due to constraints or are discrete. In addition, to simulate discrete events, some of the equations of the system have to be modified. In some cases, the dimension of the system also changes. Problems in which system \eqref{eqn_thedae} is not continuous are the separate problem class for DSAR – Differential Switched Algebraic and State Reset equations \cite{Hiskens01}. An obvious approach for solving such problems is integrating a sequence of continuous DAEs.
 
-Improving the capabilities of algorithms for determining the initial conditions is a subject of further research. 
-The presence of algebraic cycles in itself is not a problem since they are resolvable by a system of equations. The main 
-problems in solving \eqref{eqn_thedae} at instants \(t_0\) and \(t_d\) are related to the ambiguity in determining the 
-integration constants and the states of logical elementary blocks. To obtain a unique and feasible solution of the system, 
-additional options must be used. One of the possible options is to provide ready-made implementations 
-of complicated logical elements as elementary blocks. A more versatile approach implies the addition of extra source data by 
-extending the model representation. Possible extension options are the use of Petri nets or finite state machines.
+The problem of DSAR treatment consists of the arrangement of a transition from one continuous DAE to the next one at a time instant defined with consistent initial conditions. The last problem is not trivial, since the nonlinearity and the presence of discrete functions make multiple solutions possible. Due to the additional information available in the history of solution and specified in the form of rules in the models \cite{mycompiler}, the ambiguity can be resolved by a formal choice of the most plausible combination of state variables.
 
-\section{Conclusion}
+Thus, a full-fledged algorithm for tranient stability simulation should implement the integration process, which governs the integration scheme and solves the following problems:
+\begin{enumerate}
+	\item Discrete events management.
+	\item Discontinuities handling.
+	\item Calculation of initial conditions and restart of integration
+	\item State events time instants location.
+\end{enumerate}
 
-The process described above is implemented in a custom model compiler for the transient stability modeling package. 
-The compiler accepts a model block diagram graph, textual description of the system of equations, or a mixed description consisting of
-graph with additional equations for elementary blocks. The compiler supports over 50 elementary blocks can generate source code in an intermediate 
-language for subsequent translation into native code. C++17 is used as an intermediate language. 
-The result of compilation is a dynamic library with the implementation of the functions necessary for the model to interact with the software core. 
-By using the compiler not only a equipment model can be implemented, but also models of automatic devices and parameterized transient stability simulation scenarios.
+The discrete event is a command to modify \eqref{eqn_thedae} at an arbitrary time instant \(t_d\). Command execution requires at least a restart of the integration. In general, some modifications of \eqref{eqn_thedae} structure are also needed. The new consistent initial conditions at \(t_d\) must be calculated to resume integration.
 
-The use of symbolic manipulations allows to fully automate the implementation of custom models for transient stability simulation. 
-During the implementation of the model, symbolic manipulations allow to optimize models to improve performance and provide advanced error checking. 
-The source data of custom models can be either graphic representation, textual representation, or a mix of both, which allows to combine the capabilities of different modeling
-approaches without the need to involve software developers.
+Discrete events can be divided into two groups: time events and state events \cite{cellier06}.  The events of the first group occur at the moments of time that are known before simulation. These include simulation stop time, application of disturbances or triggered time delays. State events occur when some conditions are met. They are connected with threshold elements, limiters, comparators, relays and so on.  Their time of occurrence must be determined during the simulation. 
 
-\section{References Section}
-You can use a bibliography generated by BibTeX as a .bbl file. \cite{texbook}
-BibTeX documentation can be easily obtained at:
-http://mirror.ctan.org/biblio/bibtex/contrib/doc/
-The IEEEtran BibTeX style support page is:
-http://www.michaelshell.org/tex/ieeetran/bibtex/
 
-% argument is your BibTeX string definitions and bibliography database(s)
-%
-\section{Simple References}
-You can manually copy in the resultant .bbl file and set second argument of $\backslash${\tt{begin}} to the number of references 
+
 
 \bibliographystyle{IEEEtran}
 \bibliography{raiden}
