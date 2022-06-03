@@ -359,7 +359,7 @@ The integration method and scheme considered above assume that the \eqref{eqn_th
 
 The problem of DSAR treatment consists of the arrangement of a transition from one continuous DAE to the next one at a time instant defined with consistent initial conditions. The last problem is not trivial, since the nonlinearity and the presence of discrete functions make multiple solutions possible. Due to the additional information available in the history of solution and specified in the form of rules in the models \cite{mycompiler}, the ambiguity can be resolved by a formal choice of the most plausible combination of state variables.
 
-Thus, a full-fledged algorithm for tranient stability simulation should implement the integration process, which governs the integration scheme and solves the following problems:
+Thus, a full-fledged algorithm for transient stability simulation should implement the integration process, which governs the integration scheme and solves the following problems:
 \begin{enumerate}
 	\item Discrete events management.
 	\item Discontinuities handling.
@@ -371,14 +371,219 @@ The discrete event is a command to modify \eqref{eqn_thedae} at an arbitrary tim
 
 Discrete events can be divided into two groups: time events and state events \cite{cellier06}.  The events of the first group occur at the moments of time that are known before simulation. These include simulation stop time, application of disturbances or triggered time delays. State events occur when some conditions are met. They are connected with threshold elements, limiters, comparators, relays and so on.  Their time of occurrence must be determined during the simulation. 
 
+Discrete event processing is independent of the group it is related to, if \(t_d\) is known. This instant must be located for state events. Assume integration method steps from \(t_{n-1}\) to \(t_n\) and \(t_{n-1}<t_d<t_n\). Discrete event processing must be handled in the following sequence:
+\begin{enumerate}
+	\item At \(t_{n-1}\) choose \(h_d=t_d-t_{n-1}\) and step to \(t_d\). Let \(t_n=t_d\).
+	\item Estimate local truncation error of the step.If tolerance is violated, reject the step, return to \(t_{n-1}\) and choose a new step size according to the error.
+	\item At \(t_d\) store simulation results. Since the discrete event considered instant, the time before the event is denoted by \(t_{d-}\) and the time after the event is \(t_{d+}\). Strictly \(t_{d+}>t_d>t_{d-},  t_{d+}-t_{d-} \rightarrow 0\), but to preserve integration method numerical stability in practice \(t_d=t_{d-} = t_{d+}-0.1h_{min}\), where \(h_min\) the is smallest integration step allowed.
+	\item Modify \(f\) and \(g\) according to discrete event and solve system \eqref{eqn_system1} with \(h_n=0\). The latter implies \(y_n=y(t_{d-})=y(t_{d+})=const\). The solution of \eqref{eqn_system1}  by an iterative method may be difficult due to a bad initial guess. Therefore, the linear method is used to improve the initial guess and the Newton scheme uses step control, as opposed to the Newton scheme used for integration step \eqref{eqn_fulliter1}.
+	\item In case \eqref{eqn_system1} solved successfully, store simulation results at \(t_{d+}\).
+	\item Restart the integration scheme from initial conditions \(x_n, y_n\) obtained from \eqref{eqn_system1} solution. Restart sets the integration method order to 1st and \(h_n=h_{min}\).
+\end{enumerate}
+Since a state event instant must be located, special zero-crossing functions are used to model the conditions of a state event in the form \eqref{eqn_zcbase}.
+\begin{equation}
+	\label{eqn_zcbase}
+	z_i(t) > Ref_i(t)
+\end{equation}
+\noindent where \(Ref_i(t)\) is zero-crossing function of the i-th state variable.
 
+Usually zero crossing functions are considered as algebraic equations in \eqref{eqn_thedae} in the form \eqref{eqn_zcindae}.
+\begin{equation}
+	\label{eqn_zcindae}
+	c_j(t)=z_i(t)-Ref_i(t)
+\end{equation}
+\noindent which sign change \(c_j(t_{d-}) c_j(t_{d+}) < 0 \) indicates \(t_d\) location. This condition can be checked at the final stage of the integration step.
+For zero-crossing functions, whose signs have been changed \(t_d \in [t_{n-1}, t_n]\) should be located with accuracy up to \(h_{min}\). Since the integration scheme is based on the multistep integration method at \(t_n\) a Nordsieck vector is available for all state variables (including algebraic ones) up to 2nd order \eqref{eqn_zcnord}.
+\begin{equation}
+	\label{eqn_zcnord}
+	\left[ c_{jn}, h_e\dot{c}_{jn}, \frac{h_e^2}{2}\ddot{c}_{jn}\right]
+\end{equation}
+Using \eqref{eqn_zcnord} one can solve equation \eqref{eqn_he} with respect to \(h_e\)
+\begin{equation}
+	\label{eqn_he}
+	c_{jn}+h_e\dot{c}_{jn}+\frac{h_e^2}{2}\ddot{c}_{jn} = 0
+\end{equation}
+\noindent and calculate \(t_e = t_n - h_e\). After the step size correction, the sign change check of \eqref{eqn_zcindae}  is repeated until at least one of the functions changes its sign.
+Practical simulation demonstrated the possibility of incorrect \(t_e\) location due to multiple changes of the sign of \eqref{eqn_zcindae} at interval \(\left[t_{n-1},t_n\right]\). In this case, an additional zero-crossing function in the form \(dc_j(t)=\dot{c}_j(t)\), whose sign changes at the extrema of \eqref{eqn_zcindae}, significantly reduces the probability of missing \(t_d\). This approach is proposed in \cite{cellier06} and it does not require to locate \(t_e\) for this condition. It is sufficient to detect a sign change of \(dc_j(t)\) and then use the bisection method to search for sign change of` \eqref{eqn_zcindae} in the interval \(\left[t_{n-1},t_n\right]\).
+
+Explicit use of zero-crossing functions is necessary in software implementations that use standard DAE solvers. In this case, these functions are part of an interface for representing events in the system being solved. In this paper, the custom solver is used, and therefore there is no need to consider zero-crossing functions explicitly. Since there are Nordsieck vectors for variables \eqref{eqn_zcbase}, the solution of \eqref{eqn_he} can be obtained with the difference between the components of these vectors. Due to this, the dimension of the system being solved does not change to represent the zero-crossing functions. In addition, about 80\% of the constraints in the system \eqref{eqn_thedae} have \(Ref_j=const\), which further reduce the cost of \(t_e\) location.
+
+The separate class of discrete state events is time delays. A typical example is a relay that operates when a certain condition is met with delay \(\Delta T_R\). Processing models with a time delay requires the control of two related state events - the instants of pick-up and drop, if any. At the pick-up instant \(t_e\), a new time event is generated for \(t_e+\Delta T_R\). If the relay drops in \(\left[t_e, t_e+\Delta T_R \right]\), this event is canceled.
+
+The interesting feature of the delayed relay events is that they can be used as supplemental criteria to stop transient simulation before the designed duration time is reached. In many simulation scenarios, a transient is judged as stable when it has sufficient decay. In other words, the simulation continues until the "steady state" is reached. If there are delayed events on hold, they can significantly change the transient when applied to the model. Therefore, when transient sufficiently decayed it is necessary to check delayed events and if there are none, it simulation can be safely finished. Neglecting of the events related to the protection of equipment can lead to an erroneous assessment of the stability \cite{VanCutsem2020}. Unstable transient detection is much easier in most cases. Besides numerical indicators of instabilities, some practical angle-based criteria can be used to detect loss of synchronous operation and abort simulation to save time.
+
+Some types of state events may have more complex zero-crossing functions than \eqref{eqn_zcbase}. Such an event is, for example, the position of the out-of-sync relay protection impedance point within a designated area, which cannot be represented by the single variable function. In addition, some constraints are defined in the form of piecewise functions, which requires the introduction of a state event and \eqref{eqn_thedae} solely for the purpose of switching to a new segment of the constraint due to derivative discontinuity. For such complex state events, a general location procedure has not yet been developed and the search for \(t_e\) bisection method is used.
+
+The integration process described above is a classic DSAR solution. The contemporary approach to this problem is shifting towards a rigorous theory of solving systems of differential equations with a nonsmooth right hand side \cite{Filippov1988}. There is a positive experience of using this approach in the problem of transient simulation \cite{Murad2019} with application to DAE. This research field is very promising for future work.
+
+\section {Software prototype implementation and simulation results}
+\subsection {Implementation details}
+
+The software based on the approaches described above is implemented in C++. It was designed to run on either the Windows or Linux operating systems. The prototype has a limited equipment model library, which includes general models necessary for basic simulations. However, the library can readily be extended with special tools for automatic model implementation \cite{mycompiler}. The current library contents are listed in the Table \ref{tab:models}.
+
+\begin{table}[!h]
+	\caption{Equipment models description and features \label{tab:models}}
+	\centering
+	\begin{tabularx}{\columnwidth}{|l|X|}
+		\hline
+		Model & Description \\
+		\hlineB{3}	
+		Network & Network model in the form of \(YU=I\).  \\
+		\hline
+		Load & Active and reactive power frequency dependent load model in the form of piece-wise load response curve.\\
+		\hline
+		Generator & Infinite bus, simplified motion equation model, simplified model in the form of EMFs, full Park's model with 2 or 3 damping windings and refinement of model parameters \cite{Canay93}. \\
+		\hline
+		Excitation & Basic exciter model, AVR with PID and stabilization circuits, discrete excitation control.\\
+		\hline
+	\end{tabularx}
+\end{table}
+
+The initial conditions of the transient simulation are determined automatically with the embedded power flow solver, which implements the modified Newton method with initial guesses selection from Seidell or Continuous Newton methods \cite{MilanoRK09}, \cite{TostadoVliz2021}.
+
+The prototype can use source data in a proprietary format based on JSON and can import data files in the format of the former transient simulator RUSTab and, to a limited extent, EUROSTAG formats. It is possible to save and load "snapshots" of the state variables and service data of the model at an arbitrary simulation time \(t_s\), which makes it possible to perform subsequent calculations on the same model from the time \(t_s\) without the need to re-integrate the interval \([0;t_s)\). By default, during the simulation, all state variables' time series are saved. To reduce the storage space required for results, the data compression method is used \cite{mycompression}.
+
+\subsection{Simulation results}
+
+Two test cases of different dimensions were used to compare the proposed software with the current implementation of the transient simulator RUSTab. The latter is relatively old software based on explicit methods, but it is known for its stability and simulation quality. The test cases description is shown in Table \ref{tab:cases}.
+
+\begin{table}[!h]
+	\caption{Test cases description and elements count\label{tab:cases}}
+	\centering
+	\begin{tabularx}{0.75\columnwidth}{ 
+			| >{\raggedright\arraybackslash}X 
+			| >{\raggedleft\arraybackslash}X 
+			| >{\raggedleft\arraybackslash}X | }
+		\hline
+		Model element & Case 1 & Case 2 \\
+		\hlineB{3}	
+		Buses & 887 & 7387  \\
+		\hline
+		Branches & 1254 & 9279 \\
+		\hline
+		Generators & 151 & 624 \\
+		\hline
+		Loads & 730 & 6757\\
+		\hline
+		State variables & 8139 & 38244\\
+		\hline
+	\end{tabularx}
+\end{table}
+
+A scenario with a duration of 150 s was simulated, including a three-phase short circuit with a duration of 0.1 s, followed by a line trip and its automatic reclosure. The transient almost completely decays at \(t>45\) s. Simulations were performed using RUSTab and the proposed prototype software. For the RUSTab accuracy on differential variables was set to \(10^{-5}\), while RUSTab cannot check accuracy on algebraic variables. For the prototype \(Rtol=Atol=10^{-4}\) were used. A comparison of simulation results of the most volatile state variable is shown in Fig. \ref{case1state}.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case1state.eps}
+	\caption{Comparison of simulation results of AVR outputs for case 1}
+	\label{case1state}
+\end{figure}
+
+In the Fig. \ref{case1step} comparison of integration step sizes if shown. The Fig. \ref{case1stepz} shows zoomed version of the RUSTab step size to depict its step size control results. The implicit method allows much larger step sizes when transient decays due to its superior numerical stability.
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case1step.eps}
+	\caption{Comparison of integration steps for case 1}
+	\label{case1step}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case1stepz.eps}
+	\caption{Comparison of integration steps for case 1 (zoomed)}
+	\label{case1stepz}
+\end{figure}
+
+The times of simulations are shown in the Table \ref{tab:case1perf}.
+
+\begin{table}[!h]
+	\caption{Time of simulation and step count for the case 1\label{tab:case1perf}}
+	\centering
+	\begin{tabularx}{0.9\columnwidth}{ 
+			| >{\raggedright\arraybackslash}X 
+			| >{\raggedleft\arraybackslash}X 
+			| >{\raggedleft\arraybackslash}X  
+  	 	    | >{\raggedleft\arraybackslash}X |}
+		\hline
+ 		 & \multicolumn{1}{c|} {RUSTab \(10^{-5}\)} & \multicolumn{1}{c|} {Prot. \(10^{-4}\)} & \multicolumn{1}{c|} {Prot. \(10^{-2}\)}\\ 
+		\hlineB{3}	
+		Time, s  & 77.9 & 4.0 & 3.7\\
+		\hline
+		Steps & 10628 & 2503 & 1842 \\
+		\hline
+	\end{tabularx}
+\end{table}
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case1atols.eps}
+	\caption{Comparison of simulation results with different tolerances for case 1}
+	\label{case1atols}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case1atolsstep.eps}
+	\caption{Comparison of integration step sizes with different tolerances for case 1}
+	\label{case1atols}
+\end{figure}
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case2state.eps}
+	\caption{Comparison of simulation results of the generator output for case 2}
+	\label{case2state}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case2step.eps}
+	\caption{Comparison of integration steps for case 2}
+	\label{case2step}
+\end{figure}
+
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case2atols.eps}
+	\caption{Comparison of simulation results with different tolerances for case 2}
+	\label{case2atols}
+\end{figure}
+
+\begin{figure}[htbp]
+	\centering
+	\includegraphics[width=\columnwidth]{case2atolsstep.eps}
+	\caption{Comparison of integration step sizes with different tolerances for case 2}
+	\label{case2atols}
+\end{figure}
+
+\begin{table}[!h]
+	\caption{Time of simulation and step count for the case 2\label{tab:case2perf}}
+	\centering
+	\begin{tabularx}{0.9\columnwidth}{ 
+			| >{\raggedright\arraybackslash}X 
+			| >{\raggedleft\arraybackslash}X 
+			| >{\raggedleft\arraybackslash}X  
+			| >{\raggedleft\arraybackslash}X |}
+		\hline
+		& \multicolumn{1}{c|} {RUSTab \(10^{-5}\)} & \multicolumn{1}{c|} {Prot. \(10^{-4}\)} & \multicolumn{1}{c|} {Prot. \(10^{-2}\)}\\ 
+		\hlineB{3}	
+		Time, s  & 4685.6 & 279.1 & 98.6\\
+		\hline
+		Steps & 79395 & 11293 & 3909 \\
+		\hline
+	\end{tabularx}
+\end{table}
 
 
 \bibliographystyle{IEEEtran}
 \bibliography{raiden}
 
 
-\newpage
+%\newpage
 \section{Biography Section}
 \vspace{-33pt}
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{mashalov}}]{Eugene Mashalov}

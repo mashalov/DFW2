@@ -89,4 +89,49 @@ I.~Hiskens and P.~Sokolowski, ``Systematic modeling and symbolically assisted
   simulation of power systems,'' \emph{IEEE Transactions on Power Systems},
   vol.~16, no.~2, pp. 229--234, 2001.
 
+\bibitem{VanCutsem2020}
+\BIBentryALTinterwordspacing
+T.~V. Cutsem, M.~Glavic, W.~Rosehart, C.~Canizares, M.~Kanatas, L.~Lima,
+  F.~Milano, L.~Papangelis, R.~A. Ramos, J.~A. dos Santos, B.~Tamimi,
+  G.~Taranto, and C.~Vournas, ``Test systems for voltage stability studies,''
+  \emph{{IEEE} Transactions on Power Systems}, vol.~35, no.~5, pp. 4078--4087,
+  Sep. 2020. [Online]. Available:
+  \url{https://doi.org/10.1109/tpwrs.2020.2976834}
+\BIBentrySTDinterwordspacing
+
+\bibitem{Murad2019}
+\BIBentryALTinterwordspacing
+M.~A.~A. Murad, B.~Hayes, and F.~Milano, ``Application of filippov theory to
+  the {IEEE} standard 421.5-2016 anti-windup {PI} controller,'' in \emph{2019
+  {IEEE} Milan {PowerTech}}.\hskip 1em plus 0.5em minus 0.4em\relax {IEEE},
+  Jun. 2019. [Online]. Available:
+  \url{https://doi.org/10.1109/ptc.2019.8810738}
+\BIBentrySTDinterwordspacing
+
+\bibitem{Canay93}
+I.~Canay, ``Modelling of alternating-current machines having multiple rotor
+  circuits,'' \emph{IEEE Transactions on Energy Conversion}, vol.~8, no.~2, pp.
+  280--296, 1993.
+
+\bibitem{MilanoRK09}
+F.~Milano, ``Continuous newton's method for power flow analysis,'' \emph{IEEE
+  Transactions on Power Systems}, vol.~24, no.~1, pp. 50--57, 2009.
+
+\bibitem{TostadoVliz2021}
+\BIBentryALTinterwordspacing
+J.~A. L. F.~J. MarcosTostado-Véliz, Manuel~A.Matos, ``An improved version of
+  the continuous newton's method for efficiently solving the power-flow in
+  ill-conditioned systems,'' \emph{International Journal of Electrical Power
+  and Energy Systems}, vol. 124, p. 106389, Jan. 2021. [Online]. Available:
+  \url{https://doi.org/10.1016/j.ijepes.2020.106389}
+\BIBentrySTDinterwordspacing
+
+\bibitem{mycompression}
+\BIBentryALTinterwordspacing
+E.~Mashalov, ``\BIBforeignlanguage{en}{Power system transient stability
+  simulation results compression method},''
+  \emph{\BIBforeignlanguage{en}{Unpublished}}, 2022. [Online]. Available:
+  \url{https://rgdoi.net/10.13140/RG.2.2.10208.97289}
+\BIBentrySTDinterwordspacing
+
 \end{thebibliography}

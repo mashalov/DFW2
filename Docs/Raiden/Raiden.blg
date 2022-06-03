@@ -14,47 +14,49 @@ Database file #1: raiden.bib
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
 Warning--empty author in pegase10
+Too many commas in name 1 of "MarcosTostado-Véliz, Manuel A.Matos, João A.Peças Lopes, Francisco Jurado" for entry TostadoVliz2021
+while executing---line 2403 of file IEEEtran.bst
 
 Done.
-You've used 11 entries,
+You've used 17 entries,
             4087 wiz_defined-function locations,
-            893 strings with 9183 characters,
-and the built_in function-call counts, 6531 in all, are:
-= -- 549
-> -- 116
-< -- 41
-+ -- 62
-- -- 20
-* -- 325
-:= -- 1120
-add.period$ -- 22
-call.type$ -- 11
-change.case$ -- 10
-chr.to.int$ -- 87
-cite$ -- 12
-duplicate$ -- 475
-empty$ -- 524
-format.name$ -- 26
-if$ -- 1469
+            937 strings with 10652 characters,
+and the built_in function-call counts, 11067 in all, are:
+= -- 934
+> -- 220
+< -- 74
++ -- 120
+- -- 40
+* -- 555
+:= -- 1842
+add.period$ -- 35
+call.type$ -- 17
+change.case$ -- 16
+chr.to.int$ -- 153
+cite$ -- 18
+duplicate$ -- 810
+empty$ -- 870
+format.name$ -- 48
+if$ -- 2519
 int.to.chr$ -- 0
-int.to.str$ -- 11
-missing$ -- 88
-newline$ -- 66
-num.names$ -- 12
-pop$ -- 190
+int.to.str$ -- 17
+missing$ -- 147
+newline$ -- 92
+num.names$ -- 18
+pop$ -- 312
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 505
+skip$ -- 859
 stack$ -- 0
-substring$ -- 211
-swap$ -- 373
-text.length$ -- 12
+substring$ -- 383
+swap$ -- 651
+text.length$ -- 23
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 11
+type$ -- 17
 warning$ -- 1
-while$ -- 24
-width$ -- 13
-write$ -- 137
-(There was 1 warning)
+while$ -- 41
+width$ -- 19
+write$ -- 208
+(There was 1 error message)
