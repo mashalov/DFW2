@@ -21,14 +21,6 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
-\bibitem{mycompiler}
-\BIBentryALTinterwordspacing
-E.~Mashalov, ``\BIBforeignlanguage{en}{Automatic implementation of equipment
-  models for transient stability simulation by symbolic manipulations},''
-  \emph{\BIBforeignlanguage{en}{Unpublished}}, 2022. [Online]. Available:
-  \url{https://rgdoi.net/10.13140/RG.2.2.29110.78404}
-\BIBentrySTDinterwordspacing
-
 \bibitem{Filippov1988}
 \BIBentryALTinterwordspacing
 A.~F. Filippov, \emph{Differential Equations with Discontinuous Righthand
@@ -40,6 +32,14 @@ A.~F. Filippov, \emph{Differential Equations with Discontinuous Righthand
 \bibitem{cellier06}
 F.~E. Cellier and E.~Kofman, \emph{Continuous System Simulation}.\hskip 1em
   plus 0.5em minus 0.4em\relax Springer, New York, 2006.
+
+\bibitem{mycompiler}
+\BIBentryALTinterwordspacing
+E.~Mashalov, ``\BIBforeignlanguage{en}{Automatic implementation of equipment
+  models for transient stability simulation by symbolic manipulations},''
+  \emph{\BIBforeignlanguage{en}{Unpublished}}, 2022. [Online]. Available:
+  \url{https://rgdoi.net/10.13140/RG.2.2.29110.78404}
+\BIBentrySTDinterwordspacing
 
 \bibitem{gear71}
 C.~Gear, ``Simultaneous numerical solution of differential-algebraic
