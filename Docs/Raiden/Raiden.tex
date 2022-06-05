@@ -12,6 +12,7 @@
 \usepackage{cite}
 \usepackage{tabularx}
 \usepackage{boldline}
+\usepackage{empheq}
 %\usepackage[justification=centering]{caption}
 %\usepackage{hyperref}
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
@@ -24,8 +25,9 @@
 }
 \makeatother
 
-
 \begin{document}
+	
+%\onecolumn
 
 \title{Raiden. Power System Transient Stability Simulation Software Prototype}
 
@@ -69,7 +71,7 @@ Time spent on transient simulation is proportional to the number of numerical in
 	 x(t_0)=x_0, y(t_0)=y_0 \\
 	\end{array}
 \end{equation}
-\noindent where \(g\) and \(f\) are continuous vector functions and \(y_0, x_0\) are initial conditions. The time of initialization and computation of the initial conditions of simulation is much smaller than the time of \eqref{eqn_thedae} solution. The latter depends on the integration method properties and the system dimension \(N_e\). In general, simulation time \(T_{hn}=O(N_e^3)\), because the integration step requires the solution of a system of nonlinear algebraic equations in some form or another. The value of the integration step \(h_n\) is determined by the properties of the DAE. The crucial property of \eqref{eqn_thedae} with respect to \(h_n\) is the stiffness of the DAE \cite{hairer93}. 
+\noindent where \(g\) and \(f\) are continuous vector functions and \(y_0, x_0\) are initial conditions. The time of initialization and computation of the initial conditions of simulation is much smaller than the time of \eqref{eqn_thedae} solution. The latter depends on the integration method properties and the system dimension \(N_e\). In general, simulation time \(T_{hn}=O(N_e^3)\), because the integration step requires the solution of a system of nonlinear algebraic equations in some form or another. The size of the integration step \(h_n\) is determined by the properties of the DAE. The crucial property of \eqref{eqn_thedae} with respect to \(h_n\) is the stiffness of the DAE \cite{hairer93}. 
 
 \subsection{The integration method}
 
@@ -80,7 +82,6 @@ In most cases, the transient stability problem \eqref{eqn_thedae} is considered 
 \end{equation}
 
 The solution of \eqref{eqn_implicit} involves the solution of the nonlinear system of equations. Integration step control bounds solution to:
-
 \begin{equation}
 	\label{eqn_z}
 	\def\arraystretch{1.4}
@@ -103,11 +104,11 @@ The implicit method implementation is much more complicated than the explicit on
 
 \subsection{The integration scheme}
 
-The DAE \eqref{eqn_thedae} solution implies discreteization into a pure algebraic system of equations using a chosen integration method. An iterative solution method is used since the resulting system is nonlinear. The simplest method is fixed point iteration. This method is usable, but, in many cases, does not provide convergence due to its limitations. The application of the Newton's method requires Jacobi matrix formation, which greatly increases the equipment models development complexity, but this problem can be solved by the automatic implementation systems \cite{mycompiler}. On the other hand, Newton's method makes it possible to reliably obtain a solution, has good convergence, and, moreover, can be used not only to solve \eqref{eqn_thedae} but also to determine the initial conditions at \(t=0\) and at the time instants of discrete events \(t_d\). The weak side of Newton's method is its sensitivity to the quality of the initial guess. This problem is largely solved by using the initial estimation from the previous integration step. An additional factor that improves the convergence of the Newton's method can be the scheme of the integration method. A well-known integration approach is the predictor-corrector scheme. With values of the solution available from the previous step \(z_{n-1}\), the scheme can predict the values of \(z_n\) using extrapolation. The resulting prediction is used as an initial guess for the solution of the equivalent \eqref{eqn_thedae} system, in which the differential equations are discretized in a form that depends on the chosen integration method. During the solution, the prediction is corrected so that the values satisfy the given system of equations. This scheme is effectively implemented using multi-step integration methods, which imply saving the data of several completed steps to perform the next step. To solve DAE, this approach is implemented in Gear's method \cite{gear71}. This method involves the use of the BDF integration method, both for differential and algebraic equations, and provides a simultaneous solution of \eqref{eqn_thedae}. Such an integration scheme is fully implicit and preserves integration method stability properties.
+The DAE \eqref{eqn_thedae} solution implies discreteization into a pure algebraic system of equations using a chosen integration method. An iterative solution method is used since the resulting system is nonlinear. The simplest method is fixed point iteration. This method is usable, but, in many cases, does not provide convergence due to its limitations. The application of the Newton's method requires Jacobi matrix formation, which greatly increases the equipment models development complexity, but this problem can be solved by the automatic implementation systems \cite{mycompiler}. On the other hand, Newton's method makes it possible to reliably obtain a solution, has good convergence, and, moreover, can be used not only to solve \eqref{eqn_thedae} but also to determine the initial conditions at \(t_0\) and at the time instants of discrete events \(t_d\). The weak side of Newton's method is its sensitivity to the quality of the initial guess. This problem is largely solved by using the initial estimation from the previous integration step. An additional factor that improves the convergence of the Newton's method can be the integration method scheme. A well-known integration approach is the predictor-corrector scheme. With values of the solution available from the previous step \(z_{n-1}\), the scheme predicts the values of \(z_n\) using extrapolation. The resulting prediction is used as an initial guess for the solution of the equivalent to \eqref{eqn_thedae} system, in which the differential equations are discretized in a form that depends on the chosen integration method. During the solution, the prediction is corrected so that the values satisfy the given system of equations. This scheme is effectively implemented using multi-step integration methods, which imply saving the history of several completed steps to perform the next step. To solve DAE, this approach is implemented in Gear's method \cite{gear71}. This method involves the use of the BDF integration method, both for differential and algebraic equations, and provides a simultaneous solution of \eqref{eqn_thedae}. Such an integration scheme is fully implicit and preserves integration method stability properties.
 
-A variant of Gear's method is implemented in the well-known software EUROSTAG \cite{mixedadams}. Since the methods of the BDF family have the property of damping high-frequency oscillations with an increase in the integration step, Gear's method exhibits "hyperstability", which can lead to erroneous treatment of unstable cases as stable. The proposed by the authors of EUROSTAG modification, which consists of applying Adams method to differential variables, eliminates this drawback since the 2nd order Adams method is A-stable. The use of the BDF for algebraic variables makes it possible to maintain a higher integration step compared to Adams method with the same overall stability properties of the integration scheme.
+A variant of Gear's method is implemented in the well-known software EUROSTAG \cite{mixedadams}. Since the methods of the BDF type have the property of damping high-frequency oscillations with an increase in the integration step, Gear's method exhibits "hyperstability", which can lead to erroneous treatment of unstable cases as stable. The proposed by the authors of EUROSTAG modification, which consists of applying Adams method to differential variables, eliminates this drawback since the 2nd order Adams method is A-stable. The use of the BDF for algebraic variables makes it possible to maintain a higher integration step compared to Adams method with the same overall stability properties of the integration scheme.
 
-All linear multistep methods of order \(q\), despite significant differences in their properties, can be expressed in the Nordsieck form \cite{hairer93}. The Nordsieck vector has a dimension of \(1 \times q+1\). Since the integration method must be A-stable order is constrained \((q \leq 2)\) and the maximum dimension of the Nordsieck vector is limited to \(1 \times 3\). 
+All linear multistep methods of order \(q\), despite significant differences in their properties, can be expressed in the Nordsieck form \cite{hairer93}. The Nordsieck vector has a dimension of \(1 \times q+1\). Since the integration method must be A-stable, the order is constrained to \((q \leq 2)\) and the maximum dimension of the Nordsieck vector is limited to \(1 \times 3\). 
 
 At the \(n\)-th integration step, Nordsieck vector components of differential and algebraic variables are:
 \begin{equation}
@@ -150,7 +151,7 @@ The corrected Nordsieck vector at \(t_n\) is:
 	\item  \(e_{yn}, e_{xn}\) are the error vectors between predicted and corrected values of state variables;
 \end{description}
 
-The vectors \(l_{yn}, l_{xn}\) are normalized:
+The vectors \(l^Y,l^X\) are normalized as follows:
 
 \begin{equation}
 	\label{eqn_nordnormal}
@@ -160,21 +161,15 @@ The corrector equations \eqref{eqn_corrector} can be written by components:
 \begin{equation}
 	\label{eqn_corrcomp}
 	\def\arraystretch{1.4}
-	\begin{array}{l}
-		\begin{array}{rllll}
-			y_n &= &y_n^0&+&l_0^Ye_{yn} \\
-			h_n \dot{y}_n &=& h_n \dot{y}_n^0&+&l_1^Ye_{yn} \\
-			\frac{h_n^2}{2}\ddot{y}_n &=& \frac{h_n^2}{2}\ddot{y}_n^0& + &l_2^Ye_{yn}
-		\end{array}
-		\\
-		\begin{array}{rllll}
-			x_n &= &x_n^0&+&l_0^Xe_{xn} \\
-			h_n \dot{x}_n &=& h_n \dot{x}_n^0&+&l_1^Xe_{xn} \\
-			\frac{h_n^2}{2}\ddot{x}_n &=& \frac{h_n^2}{2}\ddot{x}_n^0& + &l_2^Xe_{xn}
-		\end{array}
+	\begin{array}{rlrll}
+		y_n &= &y_n^0&+&l_0^Ye_{yn} \\
+		\underline{h_n \dot{y}_n }&=& h_n \dot{y}_n^0&+&l_1^Ye_{yn} \\
+		\frac{h_n^2}{2}\ddot{y}_n &=& \frac{h_n^2}{2}\ddot{y}_n^0& + &l_2^Ye_{yn} \\
+		x_n &= &x_n^0&+&l_0^Xe_{xn} \\
+		h_n \dot{x}_n &=& h_n \dot{x}_n^0&+&l_1^Xe_{xn} \\
+		\frac{h_n^2}{2}\ddot{x}_n &=& \frac{h_n^2}{2}\ddot{x}_n^0& + &l_2^Xe_{xn} \\
 	\end{array}
 \end{equation}
-
 From the \(\dot{y}_n\) equation of \eqref{eqn_corrcomp} combined with \eqref{eqn_thedae}:
 \begin{equation}
 	\label{eqn_corrdiff}
@@ -187,9 +182,9 @@ From the \(\dot{y}_n\) equation of \eqref{eqn_corrcomp} combined with \eqref{eqn
 Using \eqref{eqn_nordnormal} define:
 \begin{equation}
 	\label{eqn_define}
-	\begin{array}{c}
-		F_Y(e_{xn}, e_{yn}, t) = h_n\dot{y}_n^0+e_{yn}-h_nf(x_n, y_n, t_n) \\
-		F_X(e_{xn}, e_{yn}, t) = g(x_n, y_n^0+l_0^Ye_{yn}, t_n)
+	\begin{array}{rl}
+		F_Y(e_{xn}, e_{yn}, t) =& h_n\dot{y}_n^0+e_{yn}-h_nf(x_n, y_n, t_n) \\
+		F_X(e_{xn}, e_{yn}, t) =& g(x_n, y_n^0+l_0^Ye_{yn}, t_n)
 	\end{array}
 \end{equation}
 
@@ -222,7 +217,7 @@ The combination of \eqref{eqn_define} and \eqref{eqn_jacobi1} gives:
 		l_0^Y\frac{\partial g(x, y, t)}{\partial y} +  l_0^X\frac{\partial g(x, y, t)}{\partial x} 
 	\end{bmatrix}
 \end{equation}
-Note that the Jacobi matrix does not become singular with \(h_n\rightarrow 0\), which allows it to be used to solve DAE for initial conditions \(y_d\), \(x_d\) at instants of discontinuities \(t_d\). In addition, step reduction does not cause numerical problems, which, for example, the integration scheme \cite{petzold82} is subject to.
+Note that the Jacobi matrix does not become singular with \(h_n\rightarrow 0\), which allows it to be used to solve DAE for initial conditions \(y_d\), \(x_d\) at instants of discontinuities \(t_d\). In addition, step reduction does not cause numerical problems, which, for example, the integration scheme \cite{petzold82} is subjected to.
 
 The system of equations \eqref{eqn_system1} can be solved iteratively. Variables at iteration \(m\) are:
 
@@ -275,7 +270,7 @@ The iterative process of solving \eqref{eqn_system1} with respect to \(e_{yn}\) 
 When the process \eqref{eqn_fulliter1} converges, the Nordsiek vectors \(X_n\) and \(Y_n\) at the \(t_n\) are updated once per step using \eqref{eqn_corrector}.
 
 \subsection{Local truncation error control}
-The solution of \eqref{eqn_fulliter1} is the difference between predicted and corrected values of the state variables and is used for local truncation error estimation. The size of the next integration step and integration method order can be further determined using this estimation. Local truncation error \(d_n\) at the step \(n\):
+The solution of \eqref{eqn_fulliter1} is the difference between predicted and corrected values of the state variables and it is used for local truncation error estimation. The size of the next integration step and integration method order can be further determined using this estimation. Local truncation error \(d_n\) at the step \(n\):
 \begin{equation}
 	d_n=C_{q+1}q!l_qe_n
 \end{equation}
@@ -300,9 +295,9 @@ The condition \eqref{eqn_dn} is used to accept step \(n\).
 \noindent where \(N\) is the number of state variables.
 If \eqref{eqn_dn} holds, the step and the order of the integration method are adjusted for the next step. The step is rejected and repeated with a smaller \(h\) otherwise.
 
-The choice of the norm type for \(\vert\vert d\vert\vert \) estimation has a strong influence on the quality of the simulation. The default option is \(l^2\)-norm, which is acceptable both for the quality of the solution and step size control. As \eqref{eqn_thedae} is stiff, differential equations with small time constants tend to produce large differences between predicted and corrected values. The \(l^2\)-norm averages these differences and allows the step size to be larger.  However, this averaging property degrades the quality of simulation for models with large dimensions due to the "masking" of unacceptable errors in some state variables. These errors may have a crucial influence on the stability simulations and lead to erroneous estimation of unstable cases as stable. Using \(l^\infty\)-norm overcomes this problem but leads to an unacceptable time step decrease. A hybrid norm was proposed in \cite{pegase10}, which combines properties of \(l^2\)- and \(l^\infty\)-norms. In this paper, a similar approach based on the weighting of norms is applied.
+The choice of the norm type for \(\vert\vert d\vert\vert \) estimation has a strong influence on the quality of the simulation. The default option is \(l^2\)-norm, which is acceptable both for the quality of the solution and step size control. Since \eqref{eqn_thedae} is stiff, differential equations with small time constants tend to produce large differences between predicted and corrected values. The \(l^2\)-norm averages these differences and allows the step size to be larger.  However, this averaging property degrades the quality of simulation for models with large dimensions due to the "masking" of unacceptable errors in some state variables. These errors may have a crucial influence on the stability simulations and lead to erroneous estimation of unstable cases as stable. Using \(l^\infty\)-norm overcomes this problem but leads to an unacceptable time step decrease. A hybrid norm was proposed in \cite{pegase10}, which combines properties of \(l^2\)- and \(l^\infty\)-norms. In this paper, a similar approach based on the weighting of norms is applied.
 
-The procedures for integration step and order change add extra computation costs and should not be used at every step. Step size and order control are based on the strategy described in \cite{Radhakrishnan1993}, where these aspects are considered in relation to the pure differential system of equations. Since the problem being solved is differential-algebraic and stiff, additional measures for convergence control of the corrector and excessive step change suppression are implemented on the basis of \cite{petzold82}.
+The procedures for integration step and order change add extra computation costs and should not be used at every step. Step size and order control is based on the strategy described in \cite{Radhakrishnan1993}, where these aspects are considered in relation to the pure differential system of equations. Since the problem being solved is differential-algebraic and stiff, additional measures for convergence control of the corrector and excessive step change suppression are implemented on the basis of \cite{petzold82}.
 
 \subsection{Adams integration method ringing suppression}
 
@@ -354,7 +349,7 @@ Since replacement \(\dot{y}_n^{BDF} \rightarrow \dot{y}_n\) changes integration 
 \end{figure}
 
 \subsection {The integration process}
-The integration method and scheme considered above assume that \eqref{eqn_thedae} is continuous. When simulating practical transients, this condition is not met since some of the \(f\) and \(g\) or their derivatives are not continuous due to constraints or are discrete. In addition, to simulate discrete events, some of the equations of the system have to be modified. In some cases, the dimension of the system also changes. Problems in which system \eqref{eqn_thedae} is not continuous are the particular problem class of DSAR -- Differential Switched Algebraic and State Reset equations \cite{Hiskens01}. An obvious approach for solving such problems is integrating a sequence of continuous DAEs.
+The integration method and scheme considered above assume that \eqref{eqn_thedae} is continuous. When simulating practical transients, this condition is not met since some of the \(f\) and \(g\) or their derivatives are not continuous due to constraints or the are just discrete. In addition, to simulate discrete events, some of the equations of the system have to be modified. In some cases, the dimension of the system also changes. Problems in which system \eqref{eqn_thedae} is not continuous are the particular problem class of DSAR -- Differential Switched Algebraic and State Reset equations \cite{Hiskens01}. An obvious approach for solving such problems is integrating a sequence of continuous DAEs.
 
 The problem of DSAR treatment consists of the arrangement of a transition from one continuous DAE to the next one with consistent initial conditions at a time instant defined. The last problem is not trivial, since the nonlinearity and the presence of discrete functions make multiple solutions possible. Using the additional information available in the history of solution and specified in the form of model rules \cite{mycompiler}, the ambiguity can be resolved by a formal choice of the most plausible combination of state variables.
 
@@ -366,14 +361,14 @@ Thus, a full-fledged algorithm for transient stability simulation should impleme
 	\item State events time instants location.
 \end{enumerate}
 
-The discrete event is a command to modify \eqref{eqn_thedae} at an arbitrary time instant \(t_d\). Command execution requires at least a restart of the integration. In general, some modifications of \eqref{eqn_thedae} structure are also needed. The new consistent initial conditions at \(t_d\) must be calculated to resume integration.
+The discrete event is a command to modify \eqref{eqn_thedae} at an arbitrary time instant \(t_d\). Command execution requires at least a restart of the integration scheme. In general, some modifications of \eqref{eqn_thedae} structure are also needed. The new consistent initial conditions at \(t_d\) must be calculated to resume integration.
 
 Discrete events can be divided into two groups: time events and state events \cite{cellier06}.  The events of the first group occur at the moments of time that are known before simulation. These include simulation stop time, application of disturbances or triggered time delays. State events occur when some conditions are met. They are connected with threshold elements, limiters, comparators, relays and so on.  Their time of occurrence must be determined during the simulation. 
 
 Discrete event processing is independent of the group it is related to, if \(t_d\) is known. This instant must be located for state events. Let integration method steps from \(t_{n-1}\) to \(t_n\) and \(t_{n-1}<t_d<t_n\). Discrete event processing must be handled in the following sequence:
 \begin{enumerate}
 	\item At \(t_{n-1}\) choose \(h_d=t_d-t_{n-1}\) and step to \(t_d\). Let \(t_n=t_d\).
-	\item Estimate local truncation error of the step. If tolerance is violated, reject the step, return to \(t_{n-1}\) and choose a new step size according to the error.
+	\item Estimate local truncation error of the step \eqref{eqn_dn}. If tolerance is violated, reject the step, return to \(t_{n-1}\) and choose a new step size according to the error.
 	\item At \(t_d\) store simulation results. Since the discrete event considered instant, the time before the event is denoted by \(t_{d-}\) and the time after the event is \(t_{d+}\). Strictly \(t_{d+}>t_d>t_{d-},  t_{d+}-t_{d-} \rightarrow 0\), but to preserve integration method numerical stability in practice \(t_d=t_{d-} = t_{d+}-0.1h_{min}\), where \(h_{min}\) the is smallest integration step allowed.
 	\item Modify \(f\) and \(g\) according to discrete event and solve system \eqref{eqn_system1} with \(h_n=0\). The latter implies \(y_n=y(t_{d-})=y(t_{d+})=const\). The solution of \eqref{eqn_system1}  by an iterative method may be difficult due to a bad initial guess. Therefore, the linear method is used to estimate the initial guess and the Newton's method uses step control with line search, as opposed to the Newton's method used for integration step \eqref{eqn_fulliter1}.
 	\item If \eqref{eqn_system1} is solved successfully, store simulation results at \(t_{d+}\).
@@ -393,33 +388,33 @@ Usually zero crossing functions are considered as algebraic equations in \eqref{
 	c_j(t)=z_i(t)-Ref_i(t)
 \end{equation}
 \noindent which sign change \(c_j(t_{d-}) \cdot c_j(t_{d+}) < 0 \) indicates \(t_d\) location. This condition can be checked at the final stage of the integration step.
-For zero-crossing functions, whose signs have been changed \(t_d \in [t_{n-1}, t_n]\) should be located with tolerance \(h_{min}\). Since the integration scheme is based on the multistep integration method, a Nordsieck vector is available at \(t_n\) for all state variables (including algebraic ones) up to 2nd order \eqref{eqn_zcnord}.
+For zero-crossing functions, whose signs have been changed, \(t_d \in [t_{n-1}, t_n]\) should be located with tolerance \(h_{min}\). Since the integration scheme is based on the multistep integration method, a Nordsieck vector is available at \(t_n\) for all state variables (including algebraic ones) up to 2nd order \eqref{eqn_zcnord}.
 \begin{equation}
 	\label{eqn_zcnord}
-	\left[ c_{jn}, h_e\dot{c}_{jn}, \frac{h_e^2}{2}\ddot{c}_{jn}\right]
+	\left[ c_{jn}, h_d\dot{c}_{jn}, \frac{h_d^2}{2}\ddot{c}_{jn}\right]
 \end{equation}
-Using \eqref{eqn_zcnord} one can solve equation \eqref{eqn_he} with respect to \(h_e\)
+Using \eqref{eqn_zcnord} one can solve equation \eqref{eqn_he} with respect to \(h_d\)
 \begin{equation}
 	\label{eqn_he}
-	c_{jn}+h_e\dot{c}_{jn}+\frac{h_e^2}{2}\ddot{c}_{jn} = 0
+	c_{jn}+h_d\dot{c}_{jn}+\frac{h_d^2}{2}\ddot{c}_{jn} = 0
 \end{equation}
 \noindent and calculate \(t_d = t_n - h_d\). After the step with size \(h_d\), the sign change check of \eqref{eqn_zcindae}  is repeated until at least one of the functions changes its sign.
 Practical simulations demonstrate the possibility of incorrect \(t_d\) location due to multiple changes of the sign of \eqref{eqn_zcindae} at interval \(\left[t_{n-1},t_n\right]\). In this case, an additional zero-crossing function in the form \(dc_j(t)=\dot{c}_j(t)\), whose sign changes at the extrema of \eqref{eqn_zcindae}, significantly reduces the probability of missing \(t_d\). This approach is proposed in \cite{cellier06} and it does not require to locate \(t_d\) for this condition. It is sufficient to detect a sign change of \(dc_j(t)\) and then use the bisection method to search for sign change of` \eqref{eqn_zcindae} in the interval \(\left[t_{n-1},t_n\right]\).
 
-Explicit use of zero-crossing functions is necessary in software implementations that use standard DAE solvers. In this case, these functions are part of an interface for representing events in the system being solved. In this paper, the custom solver is used, and therefore there is no need to consider zero-crossing functions explicitly. Since there are Nordsieck vectors for variables \eqref{eqn_zcbase}, the solution of \eqref{eqn_he} can be obtained with the difference between the components of these vectors. Thus, the dimension of the system being solved does not change to represent the zero-crossing functions. In addition, about 80\% of the constraints in the system \eqref{eqn_thedae} in practice have \(Ref_j=const\), which further reduces the cost of \(t_d\) location, simplifying \eqref{eqn_he} solution.
+Explicit use of zero-crossing functions is necessary in software implementations that use standard DAE solvers. In this case, these functions are part of an interface for representing events in the system being solved. In this paper, the custom solver is used, and therefore there is no need to consider zero-crossing functions explicitly by adding extra equations. Since there are Nordsieck vectors for variables \eqref{eqn_zcbase}, the solution of \eqref{eqn_he} can be obtained with the difference between the components of these vectors. Thus, the dimension of the system being solved does not change to represent the zero-crossing functions. In addition, about 80\% of the constraints in the system \eqref{eqn_thedae} in practice have \(Ref_j=const\), which further reduces the cost of \(t_d\) location due to the simplification of \eqref{eqn_he}.
 
 The separate class of discrete state events is time delays. A typical example is a relay that operates when a certain condition is met with delay \(\Delta T_R\). Processing models with a time delay requires the control of two related state events -- the instants of pick up and drop out, if any. At the pick up instant \(t_d\), a new time event is generated for \(t_d+\Delta T_R\). If the relay drops in \(\left[t_d, t_d+\Delta T_R \right]\), this event is canceled.
 
 The interesting feature of the delayed relay events is that they can be used as a supplemental criteria to stop transient simulation before the designed duration time is reached. In many simulation scenarios, a transient is judged as stable when it has sufficient decay. In other words, the simulation continues until the "steady state" is reached. If there are delayed events on hold, they can significantly change the transient when applied to the model. Therefore, when the transient has sufficiently decayed, it is necessary to check for delayed events, and if there are none, the simulation can be safely finished. Neglecting of the events related to the protection of equipment can lead to an erroneous assessment of the stability \cite{VanCutsem2020}. Unstable transient detection is much easier in most cases. Besides numerical indicators of instabilities, some practical angle-based criteria can be used to detect loss of synchronous operation and abort simulation to save time.
 
-Some types of state events may have more complex zero-crossing functions than \eqref{eqn_zcbase}. Such an event is, for example, the position of the out-of-sync relay protection impedance point within a designated area. The condition for such a state event cannot be represented by the single variable function. In addition, some constraints are defined in the form of piecewise functions, which requires the introduction of a state event \eqref{eqn_thedae} solely for the purpose of switching to a new segment of the constraint due to derivative discontinuity. For such complex state events, a general location procedure has not yet been developed and the search for \(t_d\) bisection method is used.
+Some types of state events may have more complex zero-crossing functions than \eqref{eqn_zcbase}. Such an event is, for example, the position of the out-of-sync relay protection impedance point within a designated area. The condition for such a state event cannot be represented by the single variable function. In addition, some constraints are defined in the form of piecewise functions, which requires the introduction of a state event in \eqref{eqn_thedae} solely for the purpose of switching to a new segment of the constraint due to derivative discontinuity. For such complex state events, a general location procedure has not yet been developed, and the location of \(t_d\) uses the bisection method.
 
 The integration process described above is a classic DSAR solution. The contemporary approach to this problem is shifting towards a rigorous theory of solving systems of differential equations with a discontinuous right hand side \cite{Filippov1988}. There is positive experience of using this approach in the problem of transient simulation \cite{Murad2019} with application to DAE. This research field is very promising for future work.
 
 \section {Software prototype implementation and simulation results}
 \subsection {Implementation details}
 
-The software based on the approaches described above is implemented in C++. It was designed to run on either Windows or Linux operating systems. The prototype called "Raiden" has a limited equipment model library, which includes only generic models necessary for basic simulations. However, the library can readily be extended with special tools for automatic model implementation \cite{mycompiler}. The current library contents are listed in the Table~\ref{tab:models}.
+The software based on the approaches and algorithms described above is implemented in C++. It was designed to run on either Windows or Linux operating systems. The prototype called "Raiden" has a limited equipment model library, which includes only generic models necessary for basic simulations. However, the library can readily be extended with special tools for automatic model implementation \cite{mycompiler}. The current library contents are listed in the Table~\ref{tab:models}.
 
 \begin{table}[!h]
 	\caption{Equipment models description and features \label{tab:models}}
@@ -442,7 +437,7 @@ The software based on the approaches described above is implemented in C++. It w
 
 The initial conditions of the transient simulation are determined automatically with the embedded power flow solver, which implements the modified Newton method with initial guesses selection from Seidell or Continuous Newton methods \cite{MilanoRK09}, \cite{TostadoVliz2021}.
 
-Raiden can use source data in a proprietary format based on JSON and can import data files in the format of the former transient simulator RUSTab and, to a limited extent, EUROSTAG formats. It is possible to save and load "snapshots" of the state variables and service data of the model at an arbitrary simulation time \(t_s\), which makes it possible to perform subsequent calculations on the same model from the time \(t_s\) without the need to re-integrate the interval \([0;t_s)\). By default, during the simulation, all state variables' time series are saved. To reduce the storage space required for results, the data compression method is used \cite{mycompression}.
+Raiden can use source data in a proprietary format based on JSON and can import data files in the format of the former transient simulator RUSTab and, to a limited extent, EUROSTAG formats. It is possible to save and load a "snapshots" of the state variables and service data of the model at an arbitrary simulation time \(t_s\), which makes it possible to perform subsequent calculations on the same model from the time \(t_s\) without the need to re-integrate the interval \([0;t_s)\). By default, during the simulation, all state variables' time series are saved. To reduce the storage space required for results, the data compression method is used \cite{mycompression}.
 
 \subsection{Simulation results}
 
@@ -472,7 +467,7 @@ Two test cases of different dimensions were used to compare the proposed softwar
 	\end{tabularx}
 \end{table}
 
-A scenario with a duration of 150 s was simulated, including a three-phase short circuit with a duration of 0.1 s, followed by a line trip and its subsequent automatic reclosure. The transient almost completely decays at \(t>45\) s. Simulations were performed using RUSTab and the proposed software. For the RUSTab accuracy on differential variables was set to \(10^{-5}\), while RUSTab cannot check accuracy on algebraic variables. For the Raiden \(Rtol=Atol=10^{-4}\) were used. A comparison of simulation results of the most volatile state variable is shown in Fig.~\ref{case1state}.
+A scenario with a duration of 150 s was simulated, including a three-phase short circuit with a duration of 0.1 s, followed by a line trip and its subsequent automatic reclosure. The transient almost completely decays at \(t>45\) s. Simulations were performed using RUSTab and the proposed software. For the RUSTab accuracy on differential variables was set to \(10^{-5}\) (RUSTab do not check accuracy on algebraic variables). For the Raiden \(Rtol=Atol=10^{-4}\) were used. A comparison of simulation results of the most volatile state variable is shown in Fig.~\ref{case1state}.
 
 \begin{figure}[htbp]
 	\centering
@@ -521,7 +516,7 @@ An additional simulation with a higher tolerance \(Atol=10^{-2}\) was compared w
 	\end{tabularx}
 \end{table}
 
-The difference between simulation with \(Atol=10^{-2}\) and simulation with \(Atol=10^{-4}\) within given tolerance bounds while computation time decreased by 25\%. Further increases in tolerance may lead to a reduction in simulation time and this effect can be used to perform rough estimations of stability. However, it should be noted that this can also lead to an inaccurate location of the state events and significant phase deviations when simulating long-term transients.
+The difference between simulation with \(Atol=10^{-2}\) and simulation with \(Atol=10^{-4}\) is within given tolerance bounds while computation time decreased by 25\%. Further increases of tolerance may lead to a reduction in simulation time and this effect can be used to perform rough estimations of stability. However, it should be noted that this can also lead to an inaccurate location of the state events and significant phase deviations when simulating long-term transients.
 
 \begin{figure}[htbp]
 	\centering
@@ -537,9 +532,9 @@ The difference between simulation with \(Atol=10^{-2}\) and simulation with \(At
 	\label{case1atolsstep}
 \end{figure}
 
-The second test case dimension is connected to a higher level of switchgear details included in the model. Such a models have become more common in recent years. About 30\% of the branches in the network are breakers. The network dimension of this model is significantly reduced after topological processing. In this test case, the number of nodes for which equations were generated is 5141, which is approximately 70\% of the original number of buses.
+The second test case dimension is connected to a higher level of switchgear details included in the model. Such a models have become more common in recent years. About 30\% of the branches of the network are breakers. The network dimension of this model is significantly reduced after topological processing. In this test case, the number of nodes for which equations were generated is 5141, which is approximately 70\% of the original number of buses.
 
-A scenario with a duration of 150 s was simulated, including a single-phase short circuit with a duration of 0.08 s, a line trip, and subsequent breaker failure with a delay of 0.255 s. The active phase of the transient decays at \(t>15\) s, but oscillations with a small amplitude persist until the end of the simulation. The comparison of simulation results is shown in Fig.~\ref{case2state}.
+A scenario with a duration of 150 s was simulated, including a single-phase short circuit with a duration of 0.08 s, a line trip, and subsequent breaker failure with a delay of 0.255 s. The active phase of the transient decays at \(t>15\) s, but oscillations with a small amplitudes persist until the end of the simulation. The comparison of simulation results is shown in Fig.~\ref{case2state}.
 %, and the comparison of integration steps is shown in Fig.~\ref{case2step}.
 
 \begin{table}[!h]
@@ -592,6 +587,7 @@ Case 2 was subjected to another simulation with a higher tolerance \(Atol=10^{-2
 %\end{figure}
 
 \section {Conclusion}
+The developed prototype software convincingly shows the advantages of the implicit integration schemes for power system transient simulation. The higher complexity of the implementation of the algorithms is compensated with the help of automated development tools. Despite some unresolved issues, the considered scheme has prospects for application in online power system analysis tools that operate on a time scale close to real time. For power system models with high dimensions, the considered implementation of the algorithms makes it possible to obtain a significant advantage in the simulation time consumption in offline tasks.
 
 \bibliographystyle{IEEEtran}
 \bibliography{raiden}
