@@ -83,7 +83,7 @@ void CLoadFlow::NewtonTanh()
 
 
 		// обновляем переменные
-		double MaxRatio = GetNewtonRatio();
+		double MaxRatio = GetNewtonRatio(klu.B());
 		UpdateVDelta(-MaxRatio);
 		if (NewtonStepRatio.Ratio_ >= 1.0 && TanhBeta < 2500.0)
 		{
@@ -487,16 +487,14 @@ void CLoadFlow::ContinuousNewton()
 		{
 			// RKF
 
-			RestoreVDelta();
-			UpdateVDelta(k1.get(), -h / 3.0);
+			RestoreUpdateVDelta(k1.get(), -h / 3.0);
 			BuildMatrixCurrent();
 			SolveLinearSystem();
 
 			auto k2{ std::make_unique<double[]>(klu.MatrixSize()) };
 			std::copy(klu.B(), klu.B() + klu.MatrixSize(), k2.get());
 
-			RestoreVDelta();
-			UpdateVDelta(k1.get(), -h / 6.0);
+			RestoreUpdateVDelta(k1.get(), -h / 6.0);
 			UpdateVDelta(k2.get(), -h / 6.0);
 			BuildMatrixCurrent();
 			SolveLinearSystem();
@@ -504,8 +502,7 @@ void CLoadFlow::ContinuousNewton()
 			auto k3{ std::make_unique<double[]>(klu.MatrixSize()) };
 			std::copy(klu.B(), klu.B() + klu.MatrixSize(), k3.get());
 
-			RestoreVDelta();
-			UpdateVDelta(k1.get(), -h / 8.0);
+			RestoreUpdateVDelta(k1.get(), -h / 8.0);
 			UpdateVDelta(k3.get(), -h * 3.0 / 8.0);
 			BuildMatrixCurrent();
 			SolveLinearSystem();
@@ -513,8 +510,7 @@ void CLoadFlow::ContinuousNewton()
 			auto k4{ std::make_unique<double[]>(klu.MatrixSize()) };
 			std::copy(klu.B(), klu.B() + klu.MatrixSize(), k4.get());
 
-			RestoreVDelta();
-			UpdateVDelta(k1.get(), -h / 2.0);
+			RestoreUpdateVDelta(k1.get(), -h / 2.0);
 			UpdateVDelta(k3.get(), h * 3.0 / 2.0);
 			UpdateVDelta(k4.get(), -h * 2.0);
 			BuildMatrixCurrent();

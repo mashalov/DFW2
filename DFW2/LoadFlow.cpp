@@ -1669,7 +1669,7 @@ void CLoadFlow::Newton()
 		CDynaNodeBase* pNode2(pMatrixInfo_.get()[iMax / 2].pNode);
 
 		// обновляем переменные
-		double MaxRatio = GetNewtonRatio();
+		double MaxRatio = GetNewtonRatio(klu.B());
 		UpdateVDelta(-MaxRatio);
 		if (NewtonStepRatio.eStepCause != LFNewtonStepRatio::eStepLimitCause::None)
 			NodeTypeSwitchesDone = 1;
@@ -1776,18 +1776,17 @@ void CLoadFlow::RestoreSuperNodes()
 
 // Возвращает коэффициент шага Ньютона
 
-double CLoadFlow::GetNewtonRatio()
+double CLoadFlow::GetNewtonRatio(double const* b)
 {
 	NewtonStepRatio.Reset();
 
 	const _MatrixInfo* pMatrixInfo{ pMatrixInfo_.get() };
-	double* b{ klu.B() };
 
 	// проходим по всем узлам
 	for (; pMatrixInfo < pMatrixInfoEnd; pMatrixInfo++)
 	{
 		const auto& pNode{ pMatrixInfo->pNode };
-		double* pb{ b + pNode->A(0) };
+		double const* pb{ b + pNode->A(0) };
 		// рассчитываем новый угол в узле
 		const double newDelta{ pNode->Delta - *pb };
 
@@ -1888,12 +1887,35 @@ void CLoadFlow::RestoreVDelta()
 {
 	if (pVbackup && pDbackup)
 	{
-		double* pV{ pVbackup.get() };
-		double* pD{ pDbackup.get() };
+		double const* pV{ pVbackup.get() };
+		double const* pD{ pDbackup.get() };
 		for (_MatrixInfo* pMatrix = pMatrixInfo_.get(); pMatrix < pMatrixInfoEnd; pMatrix++, pV++, pD++)
 		{
 			pMatrix->pNode->V = *pV;
 			pMatrix->pNode->Delta = *pD;
+			pMatrix->pNode->UpdateVreVimSuper();
+		}
+	}
+	else
+		throw dfw2error("CLoadFlow::RestoreVDelta called before StoreVDelta");
+}
+
+
+void CLoadFlow::RestoreUpdateVDelta(double const* b, double Mult)
+{
+	if (pVbackup && pDbackup)
+	{
+		double const* pV{ pVbackup.get() };
+		double const* pD{ pDbackup.get() };
+		for (_MatrixInfo* pMatrix = pMatrixInfo_.get(); pMatrix < pMatrixInfoEnd; pMatrix++, pV++, pD++)
+		{
+			const auto& pNode{ pMatrix->pNode };
+			const double* pb{ b + pNode->A(0) };
+			const double newDelta{ *pD + *pb * Mult };
+			pb++;
+			const double newV{ *pV + *pb * Mult };
+			pMatrix->pNode->V = newV;
+			pMatrix->pNode->Delta = newDelta;
 			pMatrix->pNode->UpdateVreVimSuper();
 		}
 	}

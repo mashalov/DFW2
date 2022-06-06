@@ -77,7 +77,7 @@ namespace DFW2
 		void Newton();
 		void NewtonTanh();
 		void ContinuousNewton();
-		double GetNewtonRatio();
+		double GetNewtonRatio(double const* b);
 		void UpdateVDelta(double const* b, double Mult = 1.0);
 		void UpdateVDelta(double dStep = 1.0);
 		void BuildMatrixPower();
@@ -120,6 +120,7 @@ namespace DFW2
 
 		void StoreVDelta();
 		void RestoreVDelta();
+		void RestoreUpdateVDelta(double const* b, double Mult = 1.0);
 		void UpdateSlackBusesImbalance();
 		double GetSquaredImb();
 		void CheckFeasible();
