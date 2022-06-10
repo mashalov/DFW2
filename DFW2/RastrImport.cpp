@@ -363,7 +363,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 	// СМЗУ Северо-Запад
 	LoadFile("d:\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
-
+	
 	// Единая схема
 	// LoadFile("e:\\downloads\\Mashalov\\Mashalov\\edin\\2.rst");
 

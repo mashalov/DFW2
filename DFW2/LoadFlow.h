@@ -34,7 +34,7 @@ namespace DFW2
 			size_t EnableSwitchIteration = 2;			// номер итерации, с которой разрешается переключение PV-PQ
 			size_t MaxIterations = 100;					// максимальное количество итераций Ньютоном
 			size_t MaxPVPQSwitches = 5;					// максимальное количество переключений PV-PQ
-			size_t PVPQSwitchPerIt = 50;				// количество переключений типов узлов на одной итерации
+			size_t PVPQSwitchPerIt = 0;					// количество переключений типов узлов на одной итерации
 			double VoltageNewtonStep = 0.3;				// максимальное относительное приращение шага Ньютона по напряжению
 			double NodeAngleNewtonStep = 1.5;			// максимальное приращение шага Ньютона по углу узла
 			double BranchAngleNewtonStep = 0.5;			// максимальное приращение шага Ньютона по углу связи

@@ -363,10 +363,12 @@ void CLoadFlow::BuildSeidellOrder2(MATRIXINFO& SeidellOrder)
 {
 	const ptrdiff_t NodeCount{ pMatrixInfoSlackEnd - pMatrixInfo_.get() };
 	SeidellOrder.reserve(NodeCount);
+
 	QUEUE queue;
 
 	_MatrixInfo* pMatrixInfo;
 
+	// сбрасываем признаки посещения
 	for (pMatrixInfo = pMatrixInfo_.get(); pMatrixInfo <= pMatrixInfoEnd; pMatrixInfo++)
 		pMatrixInfo->bVisited = false;
 
@@ -434,8 +436,6 @@ void CLoadFlow::BuildSeidellOrder2(MATRIXINFO& SeidellOrder)
 
 		std::sort(branches.begin(), branches.end(), SortOrder);
 
-
-
 		pMatrixInfo->pNode->DebugLog(fmt::format("{}----", pMatrixInfo->pNode->GetId()));
 		for (auto&& branch : branches)
 		{
@@ -448,7 +448,7 @@ void CLoadFlow::BuildSeidellOrder2(MATRIXINFO& SeidellOrder)
 			auto matrixInfo{ OppMatrixInfo(branch->pNode) };
 			matrixInfo->bVisited = true;
 			queue.push_back(matrixInfo);
-			SeidellOrder.push_back(pMatrixInfo);
+			SeidellOrder.push_back(OppMatrixInfo(branch->pNode));
 		}
 	}
 }
@@ -2348,11 +2348,10 @@ void CLoadFlow::Limits::Apply()
 	// обрезаем векторы узлов с ограничениями по допустимой размерности
 	// равной количеству переключений на итерации
 
-	for (auto&& vec : std::array<MATRIXINFO*, 4>{&PQmin_PV, & PQmax_PV, & PV_PQmax, & PV_PQmin})
-	{
-		if (vec->size() > Parameters.PVPQSwitchPerIt)
-			vec->resize(Parameters.PVPQSwitchPerIt);
-	}
+	if(Parameters.PVPQSwitchPerIt)
+		for (auto&& vec : std::array<MATRIXINFO*, 4>{&PQmin_PV, & PQmax_PV, & PV_PQmax, & PV_PQmin})
+			if (vec->size() > Parameters.PVPQSwitchPerIt)
+				vec->resize(Parameters.PVPQSwitchPerIt);
 
 	// функция возврата узла из ограничения Q в PV
 	const auto fnToPv = [this](auto& node, std::string_view Title)

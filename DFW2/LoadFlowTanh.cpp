@@ -376,17 +376,17 @@ void CLoadFlow::ContinuousNewton()
 	NodeTypeSwitchesDone = 1;
 	it = 0;
 
-	double h{ 1.0 };
+	const double hmin{ 0.2 }, hmax{3.0};
+	double h{ hmin };
 	const double eps{ 0.001 };
-	size_t itStepChanged{ 0 };
-
+	
 	while (1)
 	{
 		if (!CheckLF())
 			throw dfw2error(CDFW2Messages::m_cszUnacceptableLF);
 
-		if (it > Parameters.MaxIterations)
-			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);
+		/*if (it > Parameters.MaxIterations)
+			throw dfw2error(CDFW2Messages::m_cszLFNoConvergence);*/
 
 		pNodes->IterationControl().Reset();
 		//limits.Clear();
@@ -427,7 +427,7 @@ void CLoadFlow::ContinuousNewton()
 		DumpNewtonIterationControl();
 		it++;
 
-		if (pNodes->IterationControl().Converged(Parameters.Imb))
+		if (pNodes->IterationControl().Converged(10.0))
 			break;
 
 		if (pNodes->IterationControl().ImbRatio > 1)
@@ -451,7 +451,7 @@ void CLoadFlow::ContinuousNewton()
 		auto k1{ std::make_unique<double[]>(klu.MatrixSize()) };
 		std::copy(klu.B(), klu.B() + klu.MatrixSize(), k1.get());
 
-		int Method{ 1 };
+		int Method{ 0 };
 
 		if (Method == 0)
 		{
@@ -527,6 +527,7 @@ void CLoadFlow::ContinuousNewton()
 			pMatrixInfo = pMatrixInfo_.get();
 
 			double r{ 0.0 };
+			double rms{ 0.0 };
 			for (; pMatrixInfo < pMatrixInfoEnd; pMatrixInfo++)
 			{
 				const auto& pNode{ pMatrixInfo->pNode };
@@ -544,9 +545,11 @@ void CLoadFlow::ContinuousNewton()
 
 				pNode->Delta += (*pa1 - *pa2) / 5.0;
 
-				double er{ std::abs(*pa1 - *pa2) / 2 / M_PI };
+				double er{ MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(*pa1, *pa2) / 2 / M_PI };
 				if (r < er)
 					r = er;
+
+				rms += er * er;
 
 
 				pk1++; pk2++; pk3++; pk4++; pk5++; pa1++; pa2++;
@@ -559,6 +562,8 @@ void CLoadFlow::ContinuousNewton()
 				er = std::abs(*pa1 - *pa2) / pNode->Unom;
 				if (r < er)
 					r = er;
+
+				rms += er * er;
 
 				pk1++; pk2++; pk3++; pk4++; pk5++; pa1++; pa2++;
 			}
@@ -574,14 +579,17 @@ void CLoadFlow::ContinuousNewton()
 			//	h *= 2.0;
 			//
 
+			rms = std::sqrt(rms / klu.MatrixSize() );
+			r = rms;
+
 
 			r /= 5 * h;
 			double hk{ 0.9 * std::pow(eps / r, 0.25) };
 			h *= hk;
-			h = (std::min)((std::max)(h, 0.25), 3.0);
+			h = (std::min)((std::max)(h, hmin), hmax);
 			NewtonStepRatio.eStepCause = LFNewtonStepRatio::eStepLimitCause::None;
 
-			if (hk < 0.5)
+			if (hk < 0.1)
 			{
 				RestoreVDelta();
 				NewtonStepRatio.eStepCause = LFNewtonStepRatio::eStepLimitCause::Backtrack;
@@ -631,5 +639,5 @@ void CLoadFlow::ContinuousNewton()
 	}
 
 	// обновляем реактивную генерацию в суперузлах
-	UpdateSupernodesPQ();
+	//UpdateSupernodesPQ();
 }
