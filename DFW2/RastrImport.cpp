@@ -363,6 +363,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 	// СМЗУ Северо-Запад
 	LoadFile("d:\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
+	//LoadFile("E:\\Downloads\\matpower-master\\matpower-master\\data\\case13659pegase.rst");
 	
 	// Единая схема
 	// LoadFile("e:\\downloads\\Mashalov\\Mashalov\\edin\\2.rst");

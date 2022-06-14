@@ -125,6 +125,7 @@ namespace DFW2
 		static const char* m_cszMemoryAllocError;
 		static const char* m_cszLULFConverged;
 		static const char* m_cszLFRunningNewton;
+		static const char* m_cszLFRunningContinuousNewton;
 		static const char* m_cszLFRunningSeidell;
 		static const char* m_cszLFNoConvergence;
 		static const char* m_cszLFNodeVTooHigh;

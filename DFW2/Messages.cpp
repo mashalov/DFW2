@@ -119,6 +119,7 @@ const char* CDFW2Messages::m_cszUnknownError = "Неизвестная ошиб�
 const char* CDFW2Messages::m_cszMemoryAllocError = "Ошибка распределения памяти {}";
 const char* CDFW2Messages::m_cszLULFConverged = "Линейный метод сошелся с погрешностью {} за {} итераций";
 const char* CDFW2Messages::m_cszLFRunningNewton = "Расчет УР методом Ньютона";
+const char* CDFW2Messages::m_cszLFRunningContinuousNewton = "Расчет УР методом Милано";
 const char* CDFW2Messages::m_cszLFRunningSeidell = "Расчет УР методом Зейделя";
 const char* CDFW2Messages::m_cszLFNoConvergence = "Не удалось сбалансировать установившийся режим";
 const char* CDFW2Messages::m_cszLFNodeVTooHigh = "Недопустимое напряжение в узле \"{}\" - {} номинального";
