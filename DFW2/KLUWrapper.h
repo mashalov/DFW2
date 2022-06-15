@@ -690,7 +690,7 @@ namespace DFW2
 				const auto& ax{ pAx.get() + p * 2 };
 				const auto& px{ x + 2 * pAp.get()[p]};
 				cplx A{ *ax, *(ax+1) };
-				A *=  { *px, *(px + 1 ) };
+				A *= cplx( *px, *( px + 1 ) );
 				*bj += A.real();
 				*(bj + 1) += A.imag();
 			}
