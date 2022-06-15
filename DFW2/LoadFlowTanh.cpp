@@ -378,7 +378,7 @@ void CLoadFlow::ContinuousNewton()
 
 	const double hmin{ 0.2 }, hmax{3.0};
 	double h{ hmin };
-	const double eps{ 0.001 };
+	const double eps{ 0.01 };
 	
 	while (1)
 	{
@@ -399,6 +399,24 @@ void CLoadFlow::ContinuousNewton()
 				const auto& pNode{ pMatrixInfo->pNode };
 				GetNodeImb(pMatrixInfo);
 			}
+		};
+
+		const auto addvecs = [](double* x, double mult, double const* y, size_t size, bool clear = false)
+		{
+			const double* end{ x + size };
+			for (; x < end; x++, y++)
+			{
+				if (clear)
+					*x = 0;
+				*x += *y * mult;
+			}
+		};
+
+		const auto periodAnlge = [](double* x, size_t size)
+		{
+			const double* end{ x + size };
+			for (; x < end; x += 2)
+				*x = MathUtils::AngleRoutines::WrapPosNegPI(*x);
 		};
 
 
@@ -457,27 +475,23 @@ void CLoadFlow::ContinuousNewton()
 		{
 			// RK4
 
-			RestoreVDelta();
-			UpdateVDelta(k1.get(), -h * 0.5);
+			RestoreUpdateVDelta(k1.get(), -h * 0.5);
 			BuildMatrixCurrent();
 			SolveLinearSystem();
 			auto k2{ std::make_unique<double[]>(klu.MatrixSize()) };
 			std::copy(klu.B(), klu.B() + klu.MatrixSize(), k2.get());
 
-			RestoreVDelta();
-			UpdateVDelta(k2.get(), -h * 0.5);
+			RestoreUpdateVDelta(k2.get(), -h * 0.5);
 			BuildMatrixCurrent();
 			SolveLinearSystem();
 			auto k3{ std::make_unique<double[]>(klu.MatrixSize()) };
 			std::copy(klu.B(), klu.B() + klu.MatrixSize(), k3.get());
 
-			RestoreVDelta();
-			UpdateVDelta(k3.get(), -h);
+			RestoreUpdateVDelta(k3.get(), -h);
 			BuildMatrixCurrent();
 			SolveLinearSystem();
 			auto k4{ std::make_unique<double[]>(klu.MatrixSize()) };
 			std::copy(klu.B(), klu.B() + klu.MatrixSize(), k4.get());
-
 			UpdateVDelta(k1.get(), -h / 6);
 			UpdateVDelta(k2.get(), -2.0 * h / 6);
 			UpdateVDelta(k3.get(), -2.0 * h / 6);
@@ -488,25 +502,7 @@ void CLoadFlow::ContinuousNewton()
 			// RKF
 
 			auto d{ std::make_unique<double[]>(klu.MatrixSize()) };
-
-			const auto addvecs = [](double* x, double mult, double const* y, size_t size, bool clear = false)
-			{
-				const double* end{ x + size };
-				for (; x < end; x++, y++)
-				{
-					if (clear)
-						*x = 0;
-					*x += *y * mult;
-				}
-			};
-
-			const auto periodAnlge = [](double* x, size_t size)
-			{
-				const double* end{ x + size };
-				for (; x < end; x+=2)
-					*x = MathUtils::AngleRoutines::WrapPosNegPI(*x);
-			};
-
+						
 			(addvecs)(d.get(), -h / 3.0, k1.get(), klu.MatrixSize(), true);
 			
 		
@@ -593,31 +589,55 @@ void CLoadFlow::ContinuousNewton()
 				pk1++; pk2++; pk3++; pk4++; pk5++; pa1++; pa2++;
 			}
 
+
+			for (_MatrixInfo* pMatrix = pMatrixInfo_.get(); pMatrix < pMatrixInfoEnd; pMatrix++)
+			{
+				const auto& pNode{ pMatrix->pNode };
+
+				double* pk1{ k1.get() + pNode->A(0) };
+				double* pk2{ k2.get() + pNode->A(0) };
+				double* pk3{ k3.get() + pNode->A(0) };
+				double* pk4{ k4.get() + pNode->A(0) };
+				double* pk5{ k5.get() + pNode->A(0) };
+				double* pa1{ a1.get() + pNode->A(0) };
+				double* pa2{ a2.get() + pNode->A(0) };
+
+				for (int i = 0; i < 2; i++)
+				{
+					*pa1 = -h * (*pk1 * 0.5 - *pk3 * 3.0 / 2.0 + *pk4 * 2.0);
+					*pa2 = -h * (*pk1 / 6.0 + *pk4 * 2.0 / 3.0 + *pk5 / 6.0);
+
+					double er{ std::abs(* pa1 - *pa2)};
+					if (i == 0)
+						er = std::abs(MathUtils::AngleRoutines::WrapPosNegPI(er));
+					else
+						er /= pNode->Unom;
+
+					if (r < er)
+						r = er;
+
+					rms += er * er;
+
+					pk1++; pk2++; pk3++; pk4++; pk5++; pa1++; pa2++;
+					
+				}
+			}
+
+
 			(addvecs)(d.get(), 1.0, a2.get(), klu.MatrixSize(), true);
 			(addvecs)(d.get(),  1.0 / 5.0, a1.get(), klu.MatrixSize(), false);
 			(addvecs)(d.get(), -1.0 / 5.0, a2.get(), klu.MatrixSize(), false);
 			(periodAnlge)(d.get(), klu.MatrixSize());
 
+			RestoreVDelta();
 			if (double ratio{ GetNewtonRatio(d.get()) }; ratio < 1.0)
 			{
 				h *= ratio;
-				RestoreVDelta();
 				continue;
 			}
 
-			RestoreUpdateVDelta(d.get());
+			UpdateVDelta(d.get());
 		
-
-			//r *= 0.2;
-			//if (r > eps)
-			//{
-			//	RestoreVDelta();
-			//	h *= 0.5;
-			//}
-			//else if (r <= eps / 64)
-			//	h *= 2.0;
-			//
-
 			rms = std::sqrt(rms / klu.MatrixSize() );
 			r = rms;
 
@@ -639,8 +659,7 @@ void CLoadFlow::ContinuousNewton()
 		{
 			//RK2 Ralston
 
-			RestoreVDelta();
-			UpdateVDelta(k1.get(), -h * 3.0 / 4.0);
+			RestoreUpdateVDelta(k1.get(), -h * 3.0 / 4.0);
 			BuildMatrixCurrent();
 			SolveLinearSystem();
 			auto k2{ std::make_unique<double[]>(klu.MatrixSize()) };
@@ -650,25 +669,35 @@ void CLoadFlow::ContinuousNewton()
 			double ksi{ 0.0 };
 			const double sigma1{0.95}, sigma2{1.05}, tmin{0.1}, tmax{1.0};
 			pMatrixInfo = pMatrixInfo_.get();
-			for (; pMatrixInfo < pMatrixInfoEnd; pMatrixInfo++)
+
+			auto d{ std::make_unique<double[]>(klu.MatrixSize()) };
+			double* pk1{ k1.get() }, * pk2{ k2.get() };
+
+			
+			bool bDelta{ true };
+			for (double* pd{ d.get() }; pd < d.get() + klu.MatrixSize(); pd++, pk1++, pk2++)
 			{
-				const auto& pNode{ pMatrixInfo->pNode };
+				*pd = -h / 3.0 * (*pk1 + *pk2 * 2.0);
+				auto val{ std::abs(*pk1) };
+				if (bDelta)
+					val = MathUtils::AngleRoutines::WrapPosNegPI(val) / 2 / M_PI;
+				else
+					val /= 100;
 
-				double* pk1{ k1.get() + pNode->A(0) };
-				double* pk2{ k2.get() + pNode->A(0) };
-				pNode->Delta -= h / 3.0 * (*pk1 + *pk2 * 2.0);
+				bDelta = !bDelta;
 
-				if (ksi < std::abs(*pk1 / 2.0 / M_PI))
-					ksi = std::abs(*pk1 / 2.0 / M_PI);
-
-				pk1++; pk2++;
-				pNode->V -= h / 3.0 * (*pk1 + *pk2 * 2.0);
-
-				if (ksi < std::abs(*pk1 / pNode->Unom))
-					ksi = std::abs(*pk1 / pNode->Unom);
-
-				pk1++; pk2++;
+				if (ksi < val)
+					ksi = val;
 			}
+
+			RestoreVDelta();
+			if (double ratio{ GetNewtonRatio(d.get()) }; ratio < 1.0)
+			{
+				h *= ratio;
+				continue;
+			}
+
+			UpdateVDelta(d.get());
 
 			if (ksi / 2.0 > 0.3)
 				h = (std::max)(h * sigma1, tmin);

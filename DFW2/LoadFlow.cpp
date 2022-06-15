@@ -528,7 +528,7 @@ void CLoadFlow::BuildSeidellOrder(MATRIXINFO& SeidellOrder)
 
 void CLoadFlow::Seidell()
 {
-	//Gauss();
+	//Gauss(); return;
 	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 
 	MATRIXINFO SeidellOrder;
@@ -1260,7 +1260,9 @@ bool CLoadFlow::CheckLF()
 
 		for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
 		{
-			double dDelta = pNode->Delta - pBranch->pNode->Delta;
+			// рассчитываем угол с устранением проворота. До проворота не должны дойти
+			// так как ограничиваем шаг по углам
+			const double dDelta{ MathUtils::AngleRoutines::WrapPosNegPI(pNode->Delta - pBranch->pNode->Delta) };
 
 			if (dDelta > M_PI_2 || dDelta < -M_PI_2)
 			{
@@ -1825,16 +1827,35 @@ double CLoadFlow::GetNewtonRatio(double const* b)
 		const double dIpDelta{ NodeInMatrix(pNodeIp) ? *(b + pNodeIp->A(0)) : 0.0 };
 		const double dIqDelta{ NodeInMatrix(pNodeIq) ? *(b + pNodeIq->A(0)) : 0.0 };
 
-		const double DeltaDiff{ MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(dIqDelta, dIpDelta) };
+		// полное изменение угла от Ньютона с проворотами
+		const double DeltaDiff{ dIqDelta -  dIpDelta };
+		// это же изменение угла но с удалением проворотов
+		const double DeltaDiffWrapped{ MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(dIqDelta, dIpDelta) };
 		//_ASSERTE(Equal(DeltaDiff, dIpDelta - dIqDelta));
 
-		// новый взаимный угол
-		const double NewDelta{ CurrentDelta + DeltaDiff };
+		// новый взаимный угол с удалением проворотов
+		const double NewDelta{ CurrentDelta + DeltaDiffWrapped };
+		// модуль угла изменения с проворотами
 		const double AbsDeltaDiff{ std::abs(DeltaDiff) };
 
 		// проверяем новый взаимный угол на ограничения в 90 градусов
-		if (std::abs(NewDelta) > M_PI_2)
-			NewtonStepRatio.UpdateBranchAngleOutOfRange(((std::signbit(NewDelta) ? -M_PI_2 : M_PI_2) - CurrentDelta) / DeltaDiff, pNodeIp, pNodeIq);
+
+		const double NewDeltaWrapped{ MathUtils::AngleRoutines::WrapPosNegPI(NewDelta) };
+		
+//		if (NewDeltaWrapped > M_PI_2 || NewDeltaWrapped < -M_PI_2)
+//			NewtonStepRatio.UpdateBranchAngleOutOfRange(
+//				(std::min)(std::abs(MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(CurrentDelta, -M_PI_2)),
+//						   std::abs(MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(CurrentDelta, M_PI_2))) / AbsDeltaDiff, pNodeIp, pNodeIq);
+
+		// если новый угол превысил +90
+		// считаем разность между текущим углом и +90
+		// и делим на полный шаг Ньютона с проворотами
+		// таким образом ограничиваем шаг Ньютона до первого "пересечения" с +90
+		// точно так же поступаем с -90
+		if (NewDeltaWrapped > M_PI_2)
+			NewtonStepRatio.UpdateBranchAngleOutOfRange(std::abs(MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(CurrentDelta, M_PI_2)) / AbsDeltaDiff, pNodeIp, pNodeIq);
+		else if (NewDeltaWrapped < -M_PI_2)
+			NewtonStepRatio.UpdateBranchAngleOutOfRange(std::abs(MathUtils::AngleRoutines::GetAbsoluteDiff2Angles(CurrentDelta, -M_PI_2)) / AbsDeltaDiff, pNodeIp, pNodeIq);
 
 		// проверяем приращение взаимного угла
 		if (AbsDeltaDiff > Parameters.BranchAngleNewtonStep)
@@ -2162,9 +2183,13 @@ void CLoadFlow::Gauss()
 
 		for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
 		{
-			*pAx = pV->Y.real();   pAx++;
-			*pAx = pV->Y.imag();   pAx++;
-			*pAi = pV->pNode->A(0) / 2 ; pAi++;
+			// связи с базисным узлом и отключеннымив матрицу не входят
+			if (NodeInMatrix(pV->pNode))
+			{
+				*pAx = pV->Y.real();   pAx++;
+				*pAx = pV->Y.imag();   pAx++;
+				*pAi = pV->pNode->A(0) / 2; pAi++;
+			}
 		}
 	}
 
@@ -2198,7 +2223,7 @@ void CLoadFlow::Gauss()
 
 			// рассчитываем задающий ток узла от нагрузки
 			// можно посчитать ток, а можно посчитать добавку в диагональ
-			I += std::conj(cplx(pNode->Pnr - pNode->Pg, pNode->Qnr - pNode->Qg) / Unode);
+			I += std::conj(cplx(pNode->Pnr - pNode->Pgr - pMatrixInfo->UncontrolledP, pNode->Qnr - pNode->Qgr - pMatrixInfo->UncontrolledQ) / Unode);
 
 			//if (pNode->V > 0.0)
 			//	Y += std::conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V.Value / pNode->V.Value);
@@ -2212,21 +2237,39 @@ void CLoadFlow::Gauss()
 			// и заполняем вектор комплексных токов
 			*pB = I.real(); pB++;
 			*pB = I.imag(); pB++;
+
 			// диагональ матрицы формируем по Y узла
 			**ppDiags = Y.real();
 			*(*ppDiags + 1) = Y.imag();
-
 			ppDiags++;
 		}
 
+		// добавляем токи от связей с базисными узлами в вектор токов
+		for (_MatrixInfo* pMatrixInfo = pMatrixInfoEnd; pMatrixInfo < pMatrixInfoSlackEnd; pMatrixInfo++)
+		{
+			const auto& pNode{ pMatrixInfo->pNode };
+			GetNodeImb(pMatrixInfo);
+			// для БУ небалансы только для результатов
+			pNode->Pgr += pMatrixInfo->ImbP;
+			pNode->Qgr += pMatrixInfo->ImbQ;
+
+			for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
+			{
+
+				for (auto pvb = pV->pNode->pVirtualBranchBegin_; pvb < pV->pNode->pVirtualBranchEnd_; pvb++)
+				{
+					if (pvb->pNode == pNode)
+					{
+						cplx Ix{ -pNode->VreVim * pvb->Y };
+						klu.B()[pV->pNode->A(0)] += Ix.real();
+						klu.B()[pV->pNode->A(0) + 1] += Ix.imag();
+					}
+				}
+			}
+		}
+
 		pNodes->DumpIterationControl();
-
-		ptrdiff_t iMax(0);
-		double maxb = klu.FindMaxB(iMax);
-
 		klu.FactorSolve();
-
-		maxb = klu.FindMaxB(iMax);
 
 		// KLU может делать повторную факторизацию матрицы с начальным пивотингом
 		// это быстро, но при изменении пивотов может вызывать численную неустойчивость.
@@ -2237,14 +2280,8 @@ void CLoadFlow::Gauss()
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(pMatrixInfo->pNode) };
 			// напряжение после решения системы в векторе задающий токов
-			if (pNode->IsLFTypePQ())
-			{
-				pNode->Vre = *pB;		pB++;
-				pNode->Vim = *pB;		pB++;
-			}
-			else
-				pB += 2;
-
+			pNode->Vre = *pB;		pB++;
+			pNode->Vim = *pB;		pB++;
 			pNode->UpdateVDeltaSuper();
 		
 		}

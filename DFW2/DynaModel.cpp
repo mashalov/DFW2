@@ -196,7 +196,7 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.SeidellIterations = 5;
 		m_Parameters.EnableSwitchIteration = 5;
 		//m_Parameters.SeidellStep = 1.02;
-		//m_Parameters.m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
+		m_Parameters.m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
 		m_Parameters.Imb = 0.05 * GetAtol();
 
 		// если в параметрах задан BDF для дифуров, отключаем

@@ -366,11 +366,11 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("E:\\Downloads\\matpower-master\\matpower-master\\data\\case13659pegase.rst");
 	
 	// Единая схема
-	// LoadFile("e:\\downloads\\Mashalov\\Mashalov\\edin\\2.rst");
+	//LoadFile("e:\\downloads\\Mashalov\\Mashalov\\edin\\2.rst");
 
 
 	// Test-9
-	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
+	//LoadFile("d:\\source\\repos\\DFW2\\tests\\test92.rst", rstPath.c_str());
 	//m_spRastr->NewFile(dfwPath.c_str());
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park_noexc.rst");
 	//LoadFile("C:\\Users\\masha\\source\\repos\\DFW2\\tests\\test9_park3c.rst");

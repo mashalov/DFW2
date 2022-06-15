@@ -677,5 +677,27 @@ namespace DFW2
 			}
 		}
 	};
+
+	// вариант умножения комплексной матрицы на комплексный вектор
+	template<> inline csi KLUWrapper< std::complex<double>>::Multiply(const double* x, double* b)
+	{
+		for (ptrdiff_t j = 0; j < MatrixSize(); j++)
+		{
+			const auto& ai{ Ai() };
+			const auto& bj{ b + j * 2 };
+			for (ptrdiff_t p = ai[j]; p < ai[j + 1]; p++)
+			{
+				const auto& ax{ pAx.get() + p * 2 };
+				const auto& px{ x + 2 * pAp.get()[p]};
+				cplx A{ *ax, *(ax+1) };
+				A *=  { *px, *(px + 1 ) };
+				*bj += A.real();
+				*(bj + 1) += A.imag();
+			}
+		}
+		return {};
+	}
 }
+
+
 
