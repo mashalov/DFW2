@@ -528,7 +528,7 @@ void CLoadFlow::BuildSeidellOrder(MATRIXINFO& SeidellOrder)
 
 void CLoadFlow::Seidell()
 {
-	//Gauss(); return;
+	Z0(); //return;
 	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 
 	MATRIXINFO SeidellOrder;
@@ -547,7 +547,7 @@ void CLoadFlow::Seidell()
 
 		if (SeidellIterations > 2)
 		{
-			dPreviousImbQ = 0.3 * std::abs(pNodes->IterationControl().MaxImbQ.GetDiff());
+			dPreviousImbQ = 0.5 * std::abs(pNodes->IterationControl().MaxImbQ.GetDiff());
 
 			// если сделали более 2-х итераций начинаем анализировать небалансы
 			if (dPreviousImb < 0.0)
@@ -2288,6 +2288,119 @@ void CLoadFlow::Gauss()
 	}
 }
 
+
+void CLoadFlow::Z0()
+{
+	KLUWrapper<std::complex<double>> klu;
+
+	std::vector<_MatrixInfo*> PQnodes;
+	PQnodes.reserve(pMatrixInfoEnd - pMatrixInfo_.get());
+
+	for (auto node{ pMatrixInfo_.get() }; node < pMatrixInfoEnd; node++)
+		if (node->pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PQ)
+		{
+			node->pNode->SetMatrixRow(PQnodes.size());
+			PQnodes.push_back(node);
+		}
+
+	size_t nBranchesCount{ pDynaModel->Branches.Count() };
+	// оценка количества ненулевых элементов
+	size_t nNzCount{ PQnodes.size() + 2 * nBranchesCount};
+
+	klu.SetSize(PQnodes.size(), nNzCount);
+	double* const Ax{ klu.Ax() };
+	double* const B{ klu.B() };
+	ptrdiff_t* Ap{ klu.Ai() };
+	ptrdiff_t* Ai{ klu.Ap() };
+
+	// вектор указателей на диагональ матрицы
+	auto pDiags{ std::make_unique<double* []>(PQnodes.size()) };
+	double** ppDiags{ pDiags.get() };
+	double* pB{ B };
+
+	double* pAx{ Ax };
+	ptrdiff_t* pAp{ Ap };
+	ptrdiff_t* pAi{ Ai };
+
+	for (const auto& mx : PQnodes)
+	{
+		const auto& pNode{ static_cast<CDynaNodeBase*>(mx->pNode) };
+		*pAp = (pAx - Ax) / 2;    pAp++;
+		*pAi = pNode->A(0);		  pAi++;
+		// первый элемент строки используем под диагональ
+		// и запоминаем указатель на него
+		*ppDiags = pAx;
+		*pAx = 1.0; pAx++;
+		*pAx = 0.0; pAx++;
+		ppDiags++;
+
+		for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
+		{
+			if (NodeInMatrix(pV->pNode) && pV->pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PQ)
+			{
+				*pAx = pV->Y.real();    pAx++;
+				*pAx = pV->Y.imag();    pAx++;
+				*pAi = pV->pNode->A(0); pAi++;
+			}
+		}
+	}
+	
+	nNzCount = (pAx - Ax) / 2;		// рассчитываем получившееся количество ненулевых элементов (делим на 2 потому что комплекс)
+	Ap[PQnodes.size()] = nNzCount;
+
+	size_t& nIteration{ pNodes->IterationControl().Number };
+
+	for (nIteration = 0; nIteration < 1; nIteration++)
+	{
+		pNodes->IterationControl().Reset();
+
+		ppDiags = pDiags.get();
+		pB = B;
+
+		for (const auto& mx : PQnodes)
+		{
+			CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(mx->pNode) };
+			GetNodeImb(mx);
+			pNodes->IterationControl().Update(mx);
+			//cplx Unode(pNode->Vre, pNode->Vim);
+			cplx I{ pNode->IconstSuper };
+			cplx Y{ pNode->YiiSuper };		// диагональ матрицы по умолчанию собственная проводимость узла
+			**ppDiags = Y.real();
+			*(*ppDiags + 1) = Y.imag();
+			ppDiags++;
+
+			for (auto pV{ pNode->pVirtualBranchBegin_ }; pV < pNode->pVirtualBranchEnd_; pV++)
+			{
+				if (pV->pNode->eLFNodeType_ != CDynaNodeBase::eLFNodeType::LFNT_PQ)
+				{
+					I -= pV->pNode->VreVim * pV->Y;
+				}
+			}
+
+			*pB = I.real(); pB++;
+			*pB = I.imag(); pB++;
+		}
+
+		pNodes->DumpIterationControl();
+		klu.FactorSolve();
+
+		// KLU может делать повторную факторизацию матрицы с начальным пивотингом
+		// это быстро, но при изменении пивотов может вызывать численную неустойчивость.
+		// У нас есть два варианта факторизации/рефакторизации на итерации LULF
+		double* pB = B;
+
+		for (const auto& mx : PQnodes)
+		{
+			const auto& pNode{ static_cast<CDynaNodeBase*>(mx->pNode) };
+			pNode->Vre = *pB;		pB++;
+			pNode->Vim = *pB;		pB++;
+			pNode->UpdateVDeltaSuper();
+		}
+	}
+
+	for (auto node{ pMatrixInfo_.get() }; node < pMatrixInfoEnd; node++)
+		node->pNode->SetMatrixRow((node - pMatrixInfo_.get()) * 2);
+}
 
 
 CLoadFlow::Limits::Limits(CLoadFlow& LoadFlow) :

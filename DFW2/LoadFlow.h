@@ -73,6 +73,7 @@ namespace DFW2
 		void BuildSeidellOrder(MATRIXINFO& SeidellOrder);
 		void BuildSeidellOrder2(MATRIXINFO& SeidellOrder);
 		void Gauss();
+		void Z0();
 		void SeidellTanh();
 		void Newton();
 		void NewtonTanh();
