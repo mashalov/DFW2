@@ -528,7 +528,6 @@ void CLoadFlow::BuildSeidellOrder(MATRIXINFO& SeidellOrder)
 
 void CLoadFlow::Seidell()
 {
-	Z0(); //return;
 	pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningSeidell);
 
 	MATRIXINFO SeidellOrder;
@@ -1143,6 +1142,9 @@ bool CLoadFlow::Run()
 		switch (Parameters.Startup)
 		{
 		case CLoadFlow::eLoadFlowStartupMethod::Seidell:
+			// испольузем Z0-оценку для Зейделя на плоском старте
+			if (Parameters.Flat)
+				Z0();
 			Seidell();
 			pNodes->CalculateSuperNodesAdmittances(false);
 			break;
@@ -2291,6 +2293,17 @@ void CLoadFlow::Gauss()
 
 void CLoadFlow::Z0()
 {
+	// Z0-оценка ставит нулевые углы в PV-узлах
+	// и сохраняет модули. Поэтому это по-сути и есть плоский старт.
+	// Если мы не хотим с него считать - то Z0-оценку лучше не использовать.
+	if (!Parameters.Flat)
+	{
+		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_MESSAGE, CDFW2Messages::m_cszLFZ0isForFlatOnly);
+		return;
+	}
+	else
+		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, CDFW2Messages::m_cszLFRunningZ0);
+		
 	KLUWrapper<std::complex<double>> klu;
 
 	std::vector<_MatrixInfo*> PQnodes;

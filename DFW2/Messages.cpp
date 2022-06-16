@@ -238,3 +238,5 @@ const char* CDFW2Messages::m_cszResultFileCreated  = "Создан файл ре
 const char* CDFW2Messages::m_cszTopologyNodesCreated = "Количество узлов после топологической обработки {} из {} исходных: {:.1f}%";
 const char* CDFW2Messages::m_cszLFOverswitchedNode = "Для узла {} было выполнено более {} переключений типа PV-PQ";
 const char* CDFW2Messages::m_cszCompilerAndRaidenVersionMismatch = "Версия компилятора пользовательских моделей {} и модуля расчета {} не совпадают";
+const char* CDFW2Messages::m_cszLFZ0isForFlatOnly = "Оценка УР методом Z0 может быть применена только с плоским стартом";
+const char* CDFW2Messages::m_cszLFRunningZ0 = "Оценка УР методом Z0";
