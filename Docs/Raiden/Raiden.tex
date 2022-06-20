@@ -13,6 +13,7 @@
 \usepackage{tabularx}
 \usepackage{boldline}
 \usepackage{empheq}
+\usepackage{amssymb}
 %\usepackage[justification=centering]{caption}
 %\usepackage{hyperref}
 \hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
@@ -64,14 +65,14 @@ Time spent on transient simulation is proportional to the number of numerical in
 		\begin{cases}
 			\begin{array}{lcl}
 				\dot{y}&=&f(x(t), y(t), t) \\
-			 	      0&=&g(x(t), t(t), t)\\
+			 	      0&=&g(x(t), y(t), t)\\
 			\end{array}
 		\end{cases} 
 	\vspace{0.5em} \\
 	 x(t_0)=x_0, y(t_0)=y_0 \\
 	\end{array}
 \end{equation}
-\noindent where \(g\) and \(f\) are continuous vector functions and \(y_0, x_0\) are initial conditions. The time of initialization and computation of the initial conditions of simulation is much smaller than the time of \eqref{eqn_thedae} solution. The latter depends on the integration method properties and the system dimension \(N_e\). In general, simulation time \(T_{hn}=O(N_e^3)\), because the integration step requires the solution of a system of nonlinear algebraic equations in some form or another. The size of the integration step \(h_n\) is determined by the properties of the DAE. The crucial property of \eqref{eqn_thedae} with respect to \(h_n\) is the stiffness of the DAE \cite{hairer93}. 
+\noindent where \(g\) and \(f\) are continuous vector functions and \(y_0, x_0\) are initial conditions. The time of initialization and computation of the initial conditions of simulation is much smaller than the time of \eqref{eqn_thedae} solution. The latter depends on the integration method properties and the system dimension \(N_e\). In general, simulation time \(T_{hn}=O(N_e^3)\), because the integration step requires the solution of a system of nonlinear algebraic equations in some form or another. The size of the integration step \(h_n\) is determined by the properties of the DAE. The crucial property of \eqref{eqn_thedae} with respect to \(h_n\) is the stiffness of the DAE~\cite{hairer93}. 
 
 \subsection{The integration method}
 
@@ -86,7 +87,7 @@ The solution of \eqref{eqn_implicit} involves the solution of the nonlinear syst
 	\label{eqn_z}
 	\def\arraystretch{1.4}
 	\begin{array}{c}
-		\vert\vert z(t_n)-z_n(t_n) \vert\vert <= \epsilon, \\
+		\vert\vert z(t_n)-z_n(t_n) \vert\vert \leqslant \epsilon, \\
 		z_n(t_n)=[y_n(t_n), x_n(t_n)]^T	 \\
 		z(t)=[y(t), x(t)]^T \\
 	\end{array}
@@ -104,7 +105,7 @@ The implicit method implementation is much more complicated than the explicit on
 
 \subsection{The integration scheme}
 
-The DAE \eqref{eqn_thedae} solution implies discreteization into a pure algebraic system of equations using a chosen integration method. An iterative solution method is used since the resulting system is nonlinear. The simplest method is fixed point iteration. This method is usable, but, in many cases, does not provide convergence due to its limitations. The application of the Newton's method requires Jacobi matrix formation, which greatly increases the equipment models development complexity, but this problem can be solved by the automatic implementation systems \cite{mycompiler}. On the other hand, Newton's method makes it possible to reliably obtain a solution, has good convergence, and, moreover, can be used not only to solve \eqref{eqn_thedae} but also to determine the initial conditions at \(t_0\) and at the time instants of discrete events \(t_d\). The weak side of Newton's method is its sensitivity to the quality of the initial guess. This problem is largely solved by using the initial estimation from the previous integration step. An additional factor that improves the convergence of the Newton's method can be the integration method scheme. A well-known integration approach is the predictor-corrector scheme. With values of the solution available from the previous step \(z_{n-1}\), the scheme predicts the values of \(z_n\) using extrapolation. The resulting prediction is used as an initial guess for the solution of the equivalent to \eqref{eqn_thedae} system, in which the differential equations are discretized in a form that depends on the chosen integration method. During the solution, the prediction is corrected so that the values satisfy the given system of equations. This scheme is effectively implemented using multi-step integration methods, which imply saving the history of several completed steps to perform the next step. To solve DAE, this approach is implemented in Gear's method \cite{gear71}. This method involves the use of the BDF integration method, both for differential and algebraic equations, and provides a simultaneous solution of \eqref{eqn_thedae}. Such an integration scheme is fully implicit and preserves integration method stability properties.
+The DAE \eqref{eqn_thedae} solution implies discretization into a pure algebraic system of equations using a chosen integration method. An iterative solution method is used since the resulting system is nonlinear. The simplest method is fixed point iteration. This method is usable, but, in many cases, does not provide convergence due to its limitations. The application of the Newton's method requires Jacobi matrix formation, which greatly increases the equipment models development complexity, but this problem can be solved by the automatic implementation systems \cite{mycompiler}. On the other hand, Newton's method makes it possible to reliably obtain a solution, has good convergence, and, moreover, can be used not only to solve \eqref{eqn_thedae} but also to determine the initial conditions at \(t_0\) and at the time instants of discrete events \(t_d\). The weak side of Newton's method is its sensitivity to the quality of the initial guess. This problem is largely solved by using the initial estimation from the previous integration step. An additional factor that improves the convergence of the Newton's method can be the integration method scheme. A well-known integration approach is the predictor-corrector scheme. With values of the solution available from the previous step \(z_{n-1}\), the scheme predicts the values of \(z_n\) using extrapolation. The resulting prediction is used as an initial guess for the solution of the equivalent to \eqref{eqn_thedae} system, in which the differential equations are discretized in a form that depends on the chosen integration method. During the solution, the prediction is corrected so that the values satisfy the given system of equations. This scheme is effectively implemented using multi-step integration methods, which imply saving the history of several completed steps to perform the next step. To solve DAE, this approach is implemented in Gear's method \cite{gear71}. This method involves the use of the BDF integration method, both for differential and algebraic equations, and provides a simultaneous solution of \eqref{eqn_thedae}. Such an integration scheme is fully implicit and preserves integration method stability properties.
 
 A variant of Gear's method is implemented in the well-known software EUROSTAG \cite{mixedadams}. Since the methods of the BDF type have the property of damping high-frequency oscillations with an increase in the integration step, Gear's method exhibits "hyperstability", which can lead to erroneous treatment of unstable cases as stable. The proposed by the authors of EUROSTAG modification, which consists of applying Adams method to differential variables, eliminates this drawback since the 2nd order Adams method is A-stable. The use of the BDF for algebraic variables makes it possible to maintain a higher integration step compared to Adams method with the same overall stability properties of the integration scheme.
 
@@ -158,19 +159,20 @@ The vectors \(l^Y,l^X\) are normalized as follows:
 		l^Y_1=l^X_1=1
 \end{equation}
 The corrector equations \eqref{eqn_corrector} can be written by components:
-\begin{equation}
-	\label{eqn_corrcomp}
-	\def\arraystretch{1.4}
-	\begin{array}{rlrll}
-		y_n &= &y_n^0&+&l_0^Ye_{yn} \\
-		\underline{h_n \dot{y}_n }&=& h_n \dot{y}_n^0&+&l_1^Ye_{yn} \\
-		\frac{h_n^2}{2}\ddot{y}_n &=& \frac{h_n^2}{2}\ddot{y}_n^0& + &l_2^Ye_{yn} \\
-		x_n &= &x_n^0&+&l_0^Xe_{xn} \\
-		h_n \dot{x}_n &=& h_n \dot{x}_n^0&+&l_1^Xe_{xn} \\
-		\frac{h_n^2}{2}\ddot{x}_n &=& \frac{h_n^2}{2}\ddot{x}_n^0& + &l_2^Xe_{xn} \\
-	\end{array}
-\end{equation}
-From the \(\dot{y}_n\) equation of \eqref{eqn_corrcomp} combined with \eqref{eqn_thedae}:
+
+\begin{subequations}
+	\begin{align}
+		y_n =& y_n^0+l_0^Ye_{yn} \\
+		h_n \dot{y}_n=& h_n \dot{y}_n^0+l_1^Ye_{yn} 	\label{eqn_corrcomp}  \\
+		\frac{h_n^2}{2}\ddot{y}_n =& \frac{h_n^2}{2}\ddot{y}_n^0 +l_2^Ye_{yn} \\
+		x_n =& x_n^0+l_0^Xe_{xn} \\
+		h_n \dot{x}_n =& h_n \dot{x}_n^0+l_1^Xe_{xn} \\
+		\frac{h_n^2}{2}\ddot{x}_n =& \frac{h_n^2}{2}\ddot{x}_n^0 + l_2^Xe_{xn} 
+	\end{align}
+\end{subequations}
+
+
+From the equation \eqref{eqn_corrcomp} combined with \eqref{eqn_thedae}:
 \begin{equation}
 	\label{eqn_corrdiff}
 	\def\arraystretch{1.1}
@@ -263,7 +265,7 @@ The iterative process of solving \eqref{eqn_system1} with respect to \(e_{yn}\) 
 	B^m = 
 	\begin{bmatrix}
 		h_nf(x^m, y^m, t) - h \dot{y}^0 - e_y^m \\
-		-g(x^m, y^m, t_n) 
+		-g(x^m, y^m, t) 
 	\end{bmatrix}
 \end{equation}
 
@@ -287,7 +289,7 @@ Since state variables may have very different magnitudes, it is common to use we
 	\item \(Rtol_i\) is the relative tolerance of i-th state variable.
 \end{description}
 
-The condition \eqref{eqn_dn} is used to accept step \(n\). 
+The condition \eqref{eqn_dn} is used to accept step \(n\):
 \begin{equation}
 	\label{eqn_dn}
 	\vert\vert d_n \vert\vert = \sqrt{\frac{1}{N} \sum_{i=1}^{N}{\left(\frac{d_{i,n}}{W_{i,n}}\right)^2}} \leq 1
@@ -357,8 +359,8 @@ Thus, a full-fledged algorithm for transient stability simulation should impleme
 \begin{enumerate}
 	\item Discrete events management.
 	\item Discontinuities handling.
-	\item Calculation of initial conditions and restart of integration
-	\item State events time instants location.
+	\item Calculation of initial conditions and restart of integration.
+	\item State events time instant's location.
 \end{enumerate}
 
 The discrete event is a command to modify \eqref{eqn_thedae} at an arbitrary time instant \(t_d\). Command execution requires at least a restart of the integration scheme. In general, some modifications of \eqref{eqn_thedae} structure are also needed. The new consistent initial conditions at \(t_d\) must be calculated to resume integration.
@@ -369,7 +371,7 @@ Discrete event processing is independent of the group it is related to, if \(t_d
 \begin{enumerate}
 	\item At \(t_{n-1}\) choose \(h_d=t_d-t_{n-1}\) and step to \(t_d\). Let \(t_n=t_d\).
 	\item Estimate local truncation error of the step \eqref{eqn_dn}. If tolerance is violated, reject the step, return to \(t_{n-1}\) and choose a new step size according to the error.
-	\item At \(t_d\) store simulation results. Since the discrete event considered instant, the time before the event is denoted by \(t_{d-}\) and the time after the event is \(t_{d+}\). Strictly \(t_{d+}>t_d>t_{d-},  t_{d+}-t_{d-} \rightarrow 0\), but to preserve integration method numerical stability in practice \(t_d=t_{d-} = t_{d+}-0.1h_{min}\), where \(h_{min}\) the is smallest integration step allowed.
+	\item At \(t_d\) store simulation results. Since the discrete event considered instant, the time before the event is denoted by \(t_{d-}\) and the time after the event is \(t_{d+}\). Strictly \(t_{d+}>t_d>t_{d-},  t_{d+}-t_{d-} \rightarrow 0\), but to preserve integration method numerical stability in practice \(t_d=t_{d-} = t_{d+}-0.1h_{min}\), where \(h_{min}\) is the smallest integration step allowed.
 	\item Modify \(f\) and \(g\) according to discrete event and solve system \eqref{eqn_system1} with \(h_n=0\). The latter implies \(y_n=y(t_{d-})=y(t_{d+})=const\). The solution of \eqref{eqn_system1}  by an iterative method may be difficult due to a bad initial guess. Therefore, the linear method is used to estimate the initial guess and the Newton's method uses step control with line search, as opposed to the Newton's method used for integration step \eqref{eqn_fulliter1}.
 	\item If \eqref{eqn_system1} is solved successfully, store simulation results at \(t_{d+}\).
 	\item Restart the integration scheme with initial conditions \(y_n, x_n\) obtained from \eqref{eqn_system1} solution. Restart sets the integration method order to 1 and \(h_n=h_{min}\).
@@ -381,14 +383,14 @@ Since a state event instant must be located, special zero-crossing functions are
 \end{equation}
 \noindent where \(Ref_i(t)\) is zero-crossing function of the i-th state variable.
 
-Usually zero crossing functions are considered as algebraic equations in \eqref{eqn_thedae} in the form \eqref{eqn_zcindae}:
+Usually, zero crossing functions are considered as algebraic equations in \eqref{eqn_thedae} in the form \eqref{eqn_zcindae}:
 
 \begin{equation}
 	\label{eqn_zcindae}
 	c_j(t)=z_i(t)-Ref_i(t)
 \end{equation}
 \noindent which sign change \(c_j(t_{d-}) \cdot c_j(t_{d+}) < 0 \) indicates \(t_d\) location. This condition can be checked at the final stage of the integration step.
-For zero-crossing functions, whose signs have been changed, \(t_d \in [t_{n-1}, t_n]\) should be located with tolerance \(h_{min}\). Since the integration scheme is based on the multistep integration method, a Nordsieck vector is available at \(t_n\) for all state variables (including algebraic ones) up to 2nd order \eqref{eqn_zcnord}.
+For zero-crossing functions, whose signs have been changed, \(t_d \in [t_{n-1}, t_n]\) should be located with tolerance \(h_{min}\). Since the integration scheme is based on the multistep integration method, a Nordsieck vector is available at \(t_n\) for all state variables (including algebraic ones) up to 2nd order:
 \begin{equation}
 	\label{eqn_zcnord}
 	\left[ c_{jn}, h_d\dot{c}_{jn}, \frac{h_d^2}{2}\ddot{c}_{jn}\right]
@@ -405,11 +407,11 @@ Explicit use of zero-crossing functions is necessary in software implementations
 
 The separate class of discrete state events is time delays. A typical example is a relay that operates when a certain condition is met with delay \(\Delta T_R\). Processing models with a time delay requires the control of two related state events -- the instants of pick up and drop out, if any. At the pick up instant \(t_d\), a new time event is generated for \(t_d+\Delta T_R\). If the relay drops in \(\left[t_d, t_d+\Delta T_R \right]\), this event is canceled.
 
-The interesting feature of the delayed relay events is that they can be used as a supplemental criteria to stop transient simulation before the designed duration time is reached. In many simulation scenarios, a transient is judged as stable when it has sufficient decay. In other words, the simulation continues until the "steady state" is reached. If there are delayed events on hold, they can significantly change the transient when applied to the model. Therefore, when the transient has sufficiently decayed, it is necessary to check for delayed events, and if there are none, the simulation can be safely finished. Neglecting of the events related to the protection of equipment can lead to an erroneous assessment of the stability \cite{VanCutsem2020}. Unstable transient detection is much easier in most cases. Besides numerical indicators of instabilities, some practical angle-based criteria can be used to detect loss of synchronous operation and abort simulation to save time.
+The interesting feature of the delayed relay events is that they can be used as a supplemental criterion to stop transient simulation before the designed duration time is reached. In many simulation scenarios, a transient is judged as stable when it has sufficient decay. In other words, the simulation continues until the "steady state" is reached. If there are delayed events on hold, they can significantly change the transient when applied to the model. Therefore, when the transient has sufficiently decayed, it is necessary to check for delayed events, and if there are none, the simulation can be safely finished. Neglecting of the events related to the protection of equipment can lead to an erroneous assessment of the stability \cite{VanCutsem2020}. Unstable transient detection is much easier in most cases. Besides numerical indicators of instabilities, some practical angle-based criteria can be used to detect loss of synchronous operation and abort simulation to save time.
 
-Some types of state events may have more complex zero-crossing functions than \eqref{eqn_zcbase}. Such an event is, for example, the position of the out-of-sync relay protection impedance point within a designated area. The condition for such a state event cannot be represented by the single variable function. In addition, some constraints are defined in the form of piecewise functions, which requires the introduction of a state event in \eqref{eqn_thedae} solely for the purpose of switching to a new segment of the constraint due to derivative discontinuity. For such complex state events, a general location procedure has not yet been developed, and the location of \(t_d\) uses the bisection method.
+Some types of state events may have more complex zero-crossing functions than \eqref{eqn_zcbase}. Such an event is, for example, the position of the out-of-sync relay protection complex impedance point within a designated area. The condition for such a state event cannot be represented by the single variable function. In addition, some constraints are defined in the form of piecewise functions, which requires the introduction of a state event in \eqref{eqn_thedae} solely for the purpose of switching to a new segment of the constraint due to derivative discontinuity. For such complex state events, a general location procedure has not yet been developed, and the location of \(t_d\) uses the bisection method.
 
-The integration process described above is a classic DSAR solution. The contemporary approach to this problem is shifting towards a rigorous theory of solving systems of differential equations with a discontinuous right hand side \cite{Filippov1988}. There is positive experience of using this approach in the problem of transient simulation \cite{Murad2019} with application to DAE. This research field is very promising for future work.
+The integration process described above is a classic DSAR solution. The contemporary approach to this problem is shifting towards a rigorous theory of solving systems of differential equations with a discontinuous righthand side \cite{Filippov1988}. There is positive experience of using this approach in the problem of transient simulation \cite{Murad2019} with application to DAE. This research field is very promising for future work.
 
 \section {Software prototype implementation and simulation results}
 \subsection {Implementation details}
@@ -509,7 +511,7 @@ An additional simulation with a higher tolerance \(Atol=10^{-2}\) was compared w
 		\hline
 		 & \multicolumn{1}{c|} {RUSTab \(10^{-5}\)} & \multicolumn{1}{c|} {Raiden \(10^{-4}\)} & \multicolumn{1}{c|} {Raiden \(10^{-2}\)}\\ 
 		\hlineB{3}	
-		Time, s  & 77.9 & 4.0 & 3.7\\
+		Time, s  & 77.9 & 4.9 & 3.7\\
 		\hline
 		Steps & 10628 & 2503 & 1842 \\
 		\hline
