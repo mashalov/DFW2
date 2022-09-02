@@ -166,7 +166,7 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 					// если требуется плоский старт
 					V = LFVref;										// напряжение задаем равным Vref
 					Qgr = LFQmin + (LFQmax - LFQmin) / 2.0;			// реактивную мощность ставим в середину диапазона
-					Delta = 0.0;
+					Delta = pSyncZone->Mj;							// угол берем из синхронной зоны (средний угол базисных узлов)
 				}
 				else if (V > LFVref && Qgr >= LFQmin + ImbTol)
 				{
@@ -2290,6 +2290,13 @@ void CLoadFlow::Gauss()
 	}
 }
 
+// Выполняет оценку начального приближения УР "Z0"-методом
+// Аюев, Давыдов, Ерохин, Неуймин, Khokhlov. 
+// (2021).Исследование стартовых алгоритмов расчета установившихся режимов 
+// электрических систем методом Ньютона.Известия Российской академии наук.Энергетика. 109 - 121. 10.31857 / 
+// DOI: 10.31857/S0002331021010039
+// Идея - поставить нулевые углы по базисным во всех PV узлах 
+// (что по островам не очень понятно) и рассчитать YU=I для холостого хода
 
 void CLoadFlow::Z0()
 {
@@ -2306,13 +2313,16 @@ void CLoadFlow::Z0()
 		
 	KLUWrapper<std::complex<double>> klu;
 
+	// в матрице участвуют только PQ-узлы
 	std::vector<_MatrixInfo*> PQnodes;
 	PQnodes.reserve(pMatrixInfoEnd - pMatrixInfo_.get());
 
 	for (auto node{ pMatrixInfo_.get() }; node < pMatrixInfoEnd; node++)
 		if (node->pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PQ)
 		{
+			// связываем PQ-узлы со строками матрицы
 			node->pNode->SetMatrixRow(PQnodes.size());
+			// добавляем PQ-узел в список
 			PQnodes.push_back(node);
 		}
 
@@ -2337,6 +2347,7 @@ void CLoadFlow::Z0()
 
 	for (const auto& mx : PQnodes)
 	{
+		// проходим по PQ-узлам
 		const auto& pNode{ static_cast<CDynaNodeBase*>(mx->pNode) };
 		*pAp = (pAx - Ax) / 2;    pAp++;
 		*pAi = pNode->A(0);		  pAi++;
@@ -2347,6 +2358,7 @@ void CLoadFlow::Z0()
 		*pAx = 0.0; pAx++;
 		ppDiags++;
 
+		// формируем внедиагонгональные элементы
 		for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
 		{
 			if (NodeInMatrix(pV->pNode) && pV->pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PQ)
@@ -2370,18 +2382,25 @@ void CLoadFlow::Z0()
 		ppDiags = pDiags.get();
 		pB = B;
 
+		// для PQ-узлов
 		for (const auto& mx : PQnodes)
 		{
 			CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(mx->pNode) };
+			// рассчитываем небаланс и собираем статистику
 			GetNodeImb(mx);
 			pNodes->IterationControl().Update(mx);
 			//cplx Unode(pNode->Vre, pNode->Vim);
+
+			// учитываем ток суперузла
 			cplx I{ pNode->IconstSuper };
-			cplx Y{ pNode->YiiSuper };		// диагональ матрицы по умолчанию собственная проводимость узла
+			// диагональ матрицы по умолчанию собственная проводимость узла
+			cplx Y{ pNode->YiiSuper };		
+			// заполняем диагональ матрицы
 			**ppDiags = Y.real();
 			*(*ppDiags + 1) = Y.imag();
 			ppDiags++;
 
+			// собираем токи от инцидентных узлов. Нагрузку не учитываем
 			for (auto pV{ pNode->pVirtualBranchBegin_ }; pV < pNode->pVirtualBranchEnd_; pV++)
 			{
 				if (pV->pNode->eLFNodeType_ != CDynaNodeBase::eLFNodeType::LFNT_PQ)
@@ -2394,6 +2413,7 @@ void CLoadFlow::Z0()
 			*pB = I.imag(); pB++;
 		}
 
+		// рассчитываем YU=I
 		pNodes->DumpIterationControl();
 		klu.FactorSolve();
 
@@ -2402,6 +2422,7 @@ void CLoadFlow::Z0()
 		// У нас есть два варианта факторизации/рефакторизации на итерации LULF
 		double* pB = B;
 
+		// обновляем напряжения в PQ-узлах
 		for (const auto& mx : PQnodes)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(mx->pNode) };
@@ -2411,6 +2432,8 @@ void CLoadFlow::Z0()
 		}
 	}
 
+	// восстанавливаем привязку узлов к строкам полной матрицы после привязки
+	// матрице PQ-узлов
 	for (auto node{ pMatrixInfo_.get() }; node < pMatrixInfoEnd; node++)
 		node->pNode->SetMatrixRow((node - pMatrixInfo_.get()) * 2);
 }

@@ -937,12 +937,29 @@ void CDynaNodeContainer::PrepareLFTopology()
 	NODEISLANDMAP NodeIslands;
 	GetTopologySynchroZones(NodeIslands);
 
+	if (!pSynchroZones)
+		pSynchroZones = pDynaModel_->GetDeviceContainer(eDFW2DEVICETYPE::DEVTYPE_SYNCZONE);
+	if (!pSynchroZones)
+		throw dfw2error("CDynaNodeContainer::ProcessTopology - SynchroZone container not found");
+
+	auto pSyncZones{ pSynchroZones->CreateDevices<CSynchroZone>(NodeIslands.size()) }; /// ???????
+
 	for (auto&& island : NodeIslands)
 	{
-		// для каждого острова считаем количество базисных узлов
-		ptrdiff_t nSlacks = std::count_if(island.second.begin(), island.second.end(), [](CDynaNodeBase* pNode) -> bool { 
-				return pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_BASE;
-		});
+		// для каждого острова считаем количество базисных узлов и средний угол
+		size_t nSlacks{ 0 };
+		// средний угол рассчитываем в Mj (для УР он не нужен)
+		pSyncZones->Mj = 0.0;
+		for (auto&& node : island.second)
+		{
+			node->pSyncZone = pSyncZones;
+			if (node->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_BASE)
+			{
+				nSlacks++;
+				pSyncZones->Mj += node->Delta;
+			}
+		}
+
 		pDynaModel_->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandSlackBusesCount, island.second.size(), nSlacks));
 		if (!nSlacks)
 		{
@@ -957,6 +974,10 @@ void CDynaNodeContainer::PrepareLFTopology()
 			// и отключаем ветви
 			SwitchOffDanglingNodes(Queue);
 		}
+		else
+			pSyncZones->Mj /= nSlacks;
+
+		pSyncZones++;
 	}
 }
 
