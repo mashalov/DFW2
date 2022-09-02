@@ -960,7 +960,11 @@ void CDynaNodeContainer::PrepareLFTopology()
 			}
 		}
 
-		pDynaModel_->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandSlackBusesCount, island.second.size(), nSlacks));
+		pDynaModel_->Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszIslandSlackBusesCount, 
+			island.second.size(), 
+			nSlacks, 
+			pSyncZones->Mj * 180.0 / M_PI));
+
 		if (!nSlacks)
 		{
 			// если базисных узлов в острове нет - отключаем все узлы острова
