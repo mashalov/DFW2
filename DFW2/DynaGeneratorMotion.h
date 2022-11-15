@@ -120,7 +120,8 @@ namespace DFW2
 			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
 			const cplx Slf{ pGen->P, pGen->Q };
 			const double Srated = 1.05 * (Equal(pGen->cosPhinom, 0.0) ? pGen->Pnom : pGen->Pnom / pGen->cosPhinom);
-			const double absSlf(std::abs(Slf));
+			// предполагаем что прошел валидатор Kgen
+			const double absSlf(std::abs(Slf) / pGen->Kgen);
 
 			if (absSlf > Srated)
 			{

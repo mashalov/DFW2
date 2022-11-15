@@ -354,6 +354,13 @@ void CRastrImport::LoadFile(std::filesystem::path FilePath, const std::filesyste
 
 void CRastrImport::GetFileData(CDynaModel& Network)
 {
+	
+	// Тесты СО
+	LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111");				// исходный режим
+	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_027440");		// режим с нарушением устойчивости(сценарии 102, 109)
+	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m04560");		// последний режим с нарушением устойчивости, перед предельным(сценарии 109)
+	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m05560");		// режим без нарушения устойчивости, предельный
+	
 	// Уват
 	/*
 	m_spRastr->NewFile(dfwPath.c_str());
@@ -362,7 +369,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	*/
 
 	// СМЗУ Северо-Запад
-	LoadFile("d:\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
+	//LoadFile("d:\\source\\repos\\DFW2\\tests\\mdp_debug_1"); 
 	//LoadFile("E:\\Downloads\\matpower-master\\matpower-master\\data\\case13659pegase.rst");
 	
 	// Единая схема
