@@ -8,7 +8,17 @@ using namespace DFW2;
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::PreInit(CDynaModel* pDynaModel)
 {
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	auto PreInitRet{ CDynaGeneratorDQBase::PreInit(pDynaModel) };
+
+	if (Kgen > 1)
+	{
+		xd2 /= Kgen;
+		xq2 /= Kgen;
+		xq1 /= Kgen;
+		xl /= Kgen;
+	}
+
+	return PreInitRet; 
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::Init(CDynaModel* pDynaModel)
