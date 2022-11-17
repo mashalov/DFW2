@@ -236,6 +236,7 @@ namespace DFW2
 		virtual ~CRastrImport() = default;
 		void GetFileData(CDynaModel& Network);
 		void GetData(CDynaModel& Network);
+		void StoreResults(const CDynaModel& Network);
 	protected:
 		void InitRastrWin();
 		IRastrPtr m_spRastr;

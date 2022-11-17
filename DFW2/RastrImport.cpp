@@ -425,6 +425,46 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	GetData(Network);
 }
 
+
+void CRastrImport::StoreResults(const CDynaModel& Network)
+{
+	ITablesPtr spTables{ m_spRastr->Tables };
+	constexpr const char* szRaidenResults{ "RaidenResults" };
+	constexpr const char* szTimeComputed{ "TimeComputed" };
+	constexpr const char* szMessage{ "Message" };
+	constexpr const char* szSyncLossCause{ "SyncLossCause" };
+	long TableIndex{ spTables->GetFind(szRaidenResults) };
+	if (TableIndex < 0)
+		spTables->Add(szRaidenResults);
+	ITablePtr spResults{ spTables->Item(szRaidenResults) };
+	IColsPtr spResCols{ spResults->Cols };
+	spResults->DelRowS();
+	spResults->AddRow();
+	
+	long TimeComputedIndex{ spResCols->GetFind(szTimeComputed) };
+	if (TimeComputedIndex < 0)
+		spResCols->Add(szTimeComputed, PropTT::PR_REAL);
+
+	IColPtr spTimeComputed{ spResCols->Item(szTimeComputed) };
+	spTimeComputed->PutZ(0, Network.GetCurrentTime());
+
+	long MessageIndex{ spResCols->GetFind(szMessage) };
+	if (MessageIndex < 0)
+		spResCols->Add(szMessage, PropTT::PR_STRING);
+
+	IColPtr spMessage{ spResCols->Item(szMessage) };
+	spMessage->PutZS(0, stringutils::utf8_decode(Network.FinalMessage()).c_str());
+
+	long SyncLossCauseIndex{ spResCols->GetFind(szSyncLossCause) };
+	if (SyncLossCauseIndex < 0)
+		spResCols->Add(szSyncLossCause, PropTT::PR_ENUM);
+
+	IColPtr spSyncLossCause{ spResCols->Item(szSyncLossCause) };
+	spSyncLossCause->PutProp(FL_NAMEREF, stringutils::COM_encode("Нет|АР ветви|АР генератора|Автомат скорости|Отказ метода").c_str());
+	spSyncLossCause->PutZ(0, static_cast<long>(Network.SyncLossCause()));
+
+}
+
 void CRastrImport::GetData(CDynaModel& Network)
 {
 

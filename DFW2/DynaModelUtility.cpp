@@ -512,10 +512,15 @@ bool CDynaModel::StabilityLost()
 				bStabilityLost = true;
 				// если возник АР, максимальный угол уже не нужен
 				sc.m_MaxBranchAngle.Reset();
-				Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
+
+				FinalMessage_ = fmt::format(DFW2::CDFW2Messages::m_cszBranchAngleExceedsPI,
 					pBranch->GetVerbalName(),
 					ret.second,
-					GetCurrentTime()));
+					GetCurrentTime());
+
+				SyncLossCause_ = eSyncLossCause::BranchOOS;
+
+				Log(DFW2MessageStatus::DFW2LOG_MESSAGE, FinalMessage_);
 			}
 		}
 	}
@@ -543,10 +548,15 @@ bool CDynaModel::StabilityLost()
 					{
 						bStabilityLost = true;
 						// если возник АР, максимальный угол уже не нужен
-						Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
+
+						FinalMessage_ = fmt::format(DFW2::CDFW2Messages::m_cszGeneratorAngleExceedsPI,
 							pGen->GetVerbalName(),
 							ret.second,
-							GetCurrentTime()));
+							GetCurrentTime());
+
+						SyncLossCause_ = eSyncLossCause::GeneratorOOS;
+
+						Log(DFW2MessageStatus::DFW2LOG_MESSAGE, FinalMessage_);
 					}
 				}
 			}

@@ -173,7 +173,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 		m_Parameters.m_dLRCToShuntVmin = 0.5;
 		m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
-		m_Parameters.m_dProcessDuration = 150;
+		//m_Parameters.m_dProcessDuration = 150;
 		m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 		m_Parameters.m_dOutStep = 1E-10;
@@ -186,10 +186,10 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA;
 		m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
 		m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
-		m_Parameters.m_dAtol = 1E-4;
-		m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
+		//m_Parameters.m_dAtol = 1E-4;
+		//m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
 		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
-		m_Parameters.m_bDisableResultsWriter = false;
+		//m_Parameters.m_bDisableResultsWriter = false;
 
 		m_Parameters.Flat = true;
 		m_Parameters.Startup = CLoadFlow::eLoadFlowStartupMethod::Seidell;

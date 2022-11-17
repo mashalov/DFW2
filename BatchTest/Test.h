@@ -26,7 +26,7 @@ class CBatchTest
 protected:
 	using FilesT = std::list<std::filesystem::path>;
 	FilesT CaseFiles_, ContingencyFiles_;
-	std::filesystem::path rstPath_, dfwPath_, scnPath_;
+	std::filesystem::path rstPath_, dfwPath_, scnPath_, macroPath_;
 	struct Options
 	{
 		bool EmsMode_ = false;

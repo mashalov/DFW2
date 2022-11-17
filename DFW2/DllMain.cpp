@@ -22,6 +22,7 @@ BOOL APIENTRY DllMain(HMODULE hModule,
 
 extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr)
 {
+	LONG RetCode{ 0 };
 	try
 	{
 		CDynaModel::DynaModelParameters parameters;
@@ -33,7 +34,8 @@ extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr)
 		{
 			CRastrImport ri(spRastr);
 			ri.GetData(Network);
-			Network.RunTransient();
+			RetCode = Network.RunTransient();
+			ri.StoreResults(Network);
 		}
 		catch (_com_error& err)
 		{
@@ -48,7 +50,7 @@ extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr)
 	{
 		std::cout << "Ошибка " << err.what() << std::endl;
 	}
-    return 0;
+    return RetCode;
 }
 #else
 #include "CompilerGCC.h"

@@ -2,6 +2,21 @@
 #include "DynaModel.h"
 using namespace DFW2;
 
+
+std::filesystem::path CDynaModel::CreateResultFilePath(std::string_view FileNameMask, const std::filesystem::path& Path)
+{
+	long Counter{ 0 };
+	while (true)
+	{
+		std::filesystem::path CheckPath{ Path };
+		CheckPath.append(fmt::format(FileNameMask, Counter));
+		if (!std::filesystem::exists(CheckPath))
+			return CheckPath;
+		else
+			Counter++;
+	}
+}
+
 void CDynaModel::WriteResultsHeader()
 {
 	if (m_Parameters.m_bDisableResultsWriter)
@@ -25,7 +40,8 @@ void CDynaModel::WriteResultsHeader()
 	// создаем каталог для вывода результатов
 	Platform().CheckPath(resultPath);
 
-	resultPath.append("binresultCOM.rst");
+	resultPath = CreateResultFilePath("Raiden_{:05d}.sna", resultPath);
+	//resultPath.append("binresultCOM.rst");
 
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(resultPath, resultsInfo );

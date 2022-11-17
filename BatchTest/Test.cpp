@@ -50,6 +50,9 @@ void CBatchTest::Run()
 		RegCloseKey(handle);
 		handle = NULL;
 
+		macroPath_ = templatePath / L"macro";
+		
+
 		templatePath.append(L"shablon");
 
 		rstPath_ = templatePath;
@@ -61,14 +64,12 @@ void CBatchTest::Run()
 		scnPath_.append(L"сценарий.scn");
 
 		Options opts;
+		opts.EmsMode_ = false;
 
-		for (const auto& casefile : CaseFiles_)
-		{
-			for (const auto& contfile : ContingencyFiles_)
-			{
+		for (const auto& contfile : ContingencyFiles_)
+			for (const auto& casefile : CaseFiles_)
 				TestPair(casefile, contfile, opts);
-			}
-		}
+
 	}
 	catch (const std::runtime_error& er)
 	{
@@ -91,26 +92,40 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		if (const HRESULT hr{ Rastr.CreateInstance("Astra.Rastr.1") }; FAILED(hr))
 			throw dfw2error("Rastr CoCreate failed with scode {}", hr);
 		Rastr->Load(RG_REPL, bstrPath(CaseFile), bstrPath(rstPath_));
-		Rastr->Load(RG_REPL, bstrPath(ContingencyFile), bstrPath(dfwPath_));
+		Rastr->Load(RG_REPL, bstrPath(ContingencyFile), bstrPath(scnPath_));
+		Rastr->NewFile(bstrPath(dfwPath_));
+		Rastr->ExecMacroPath(bstrPath(macroPath_ / "Scn2Dfw.rbs"), L"");
 		Rastr->NewFile(bstrPath(scnPath_));
-		CTestTimer RustabTimer;
 		auto FWDynamic{ Rastr->FWDynamic() };
-		const auto RustabRetCode { Opts.EmsMode_ ? FWDynamic->RunEMSmode() : FWDynamic->Run() };
-		const auto RustabDuration{ RustabTimer.Duration() };
-
+		
 		ITablePtr ComDynamic{ Rastr->Tables->Item("com_dynamics") };
 		IColPtr DurationSet{ ComDynamic->Cols->Item("Tras")};
+		IColPtr Hint{ ComDynamic->Cols->Item("Hint") };
+		IColPtr Hmin{ ComDynamic->Cols->Item("Hmin") };
+		IColPtr Hmax{ ComDynamic->Cols->Item("Hmax") };
 
-		report << fmt::format("Модель: {} Возмущение: {} Режим: {} Длительность ЭМПП: {:.3f}",
+		Hint->PutZ(0, 5e-3);
+		Hmin->PutZ(0, 5e-3);
+		Hmax->PutZ(0, 5.0);
+
+		DurationSet->PutZ(0, 15.0);
+
+		ITablePtr RaidenParameters{ Rastr->Tables->Item("RaidenParameters") };
+		IColPtr GoRaiden{ RaidenParameters->Cols->Item("GoRaiden")};
+		IColPtr Atol{ RaidenParameters->Cols->Item("Atol") };
+		Atol->PutZ(0, 1e-2);
+
+
+		/*report << fmt::format("-- Модель: {}\n-- Возмущение: {}\n-- Режим: {}\n-- Длительность ЭМПП: {:.3f}",
 			CaseFile.filename().u8string(),
 			ContingencyFile.filename().u8string(),
 			Opts.EmsMode_ ? "EMS" : "Инженерный",
 			DurationSet->GetZ(0).dblVal
-			) << std::endl;
+			) << std::endl;*/
 
 		auto fnVerbalCode = [](const RastrRetCode& code) -> std::string
 		{
-			return code == AST_OK ? "Ok" : "Failed !";
+			return code == AST_OK ? "OK" : "Отказ !";
 		};
 
 		auto fnVerbalSyncLossCause = [](const DFWSyncLossCause cause) -> std::string
@@ -126,15 +141,47 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			}
 		};
 
-		report << fmt::format("Rustab Результат: {} Просчитано: {:.3f} Устойчивость: {} Сообщение: {} Время расчета: {:.3f}",
-			(fnVerbalCode)(RustabRetCode),
-			FWDynamic->TimeReached,
-			(fnVerbalSyncLossCause)(FWDynamic->SyncLossCause),
-			stringutils::utf8_encode(FWDynamic->ResultMessage),
-			RustabDuration
-			) << std::endl;
+		IColPtr StopOnBranchOOS{ RaidenParameters->Cols->Item("StopOnBranchOOS") };
+		IColPtr StopOnGeneratorOOS{ RaidenParameters->Cols->Item("StopOnGeneratorOOS") };
+		IColPtr DisableResultWriter{ RaidenParameters->Cols->Item("DisableResultsWriter") };
 
+		StopOnBranchOOS->PutZ(0, 1);
+		StopOnGeneratorOOS->PutZ(0, 1);
+
+		if (Opts.EmsMode_)
+		{
+			StopOnBranchOOS->PutZ(0, 1);
+			StopOnGeneratorOOS->PutZ(0, 1);
+			DisableResultWriter->PutZ(0, 1);
+		}
+
+		report << CaseFile.filename().u8string() << ";" << ContingencyFile.filename().u8string() << ";";
+
+		for (int method{ 0 }; method < 2; method++)
+		{
+			CTestTimer Timer;
+			GoRaiden->PutZ(0, method);
+			const auto RustabRetCode{ Opts.EmsMode_ ? FWDynamic->RunEMSmode() : FWDynamic->Run() };
+			const auto Duration{ Timer.Duration() };
+
+			report << Duration << ";";
+			report << (fnVerbalSyncLossCause)(FWDynamic->SyncLossCause) << ";";
+
+			/*
+				report << fmt::format("{} Результат: {} Просчитано: {:.3f} Устойчивость: {} Сообщение: {} Время расчета: {:.3f}",
+				method ? "Raiden" : "RUSTab",
+				(fnVerbalCode)(RustabRetCode),
+				FWDynamic->TimeReached,
+				(fnVerbalSyncLossCause)(FWDynamic->SyncLossCause),
+				stringutils::utf8_encode(FWDynamic->ResultMessage),
+				Duration
+			) << std::endl;
+			*/
+		}
+
+		report << std::endl;
 	}
+
 	catch (const _com_error& er)
 	{
 		throw dfw2error(stringutils::utf8_encode(er.Description()));

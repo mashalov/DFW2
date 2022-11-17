@@ -37,6 +37,15 @@ namespace DFW2
 	{
 	public:
 
+		enum class eSyncLossCause
+		{
+			None,
+			BranchOOS,
+			GeneratorOOS,
+			Overspeed,
+			Method
+		};
+
 		struct DynaModelParameters : public CLoadFlow::LoadFlowParameters
 		{
 			
@@ -608,6 +617,7 @@ namespace DFW2
 		double CheckZeroCrossing();
 		void FinishStep();
 
+		std::filesystem::path CreateResultFilePath(std::string_view FileNameMask, const std::filesystem::path& BasePath);
 		void WriteResultsHeader();
 		void WriteResults();
 		void FinishWriteResults();
@@ -628,6 +638,9 @@ namespace DFW2
 		FILE* fResult;
 		mutable std::ofstream LogFile, DebugLogFile;
 		static bool ApproveContainerToWriteResults(CDeviceContainer *pDevCon);
+
+		std::string FinalMessage_;
+		eSyncLossCause SyncLossCause_ = eSyncLossCause::None;
 
 		std::atomic<bool> bStopProcessing = false;
 
@@ -846,6 +859,18 @@ namespace DFW2
 		inline ptrdiff_t GetIntegrationStepNumber() const
 		{
 			return sc.nStepsCount;
+		}
+
+		// возвращает итоговое сообщение о результате расчета
+		const std::string& FinalMessage() const
+		{
+			return FinalMessage_;
+		}
+
+		// возвращает причину завершения расчета ранее заданной длительности
+		const eSyncLossCause SyncLossCause() const
+		{
+			return SyncLossCause_;
 		}
 
 		// возвращает текущее время интегрирования
