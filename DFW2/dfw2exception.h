@@ -11,6 +11,8 @@ class dfw2error : public std::runtime_error
 protected:
 	mutable std::wstring _whatw;
 public:
+	template <typename... Args>
+	dfw2error(std::string_view Format, Args&&... args) : std::runtime_error(fmt::format(Format, args...)) {}
 	dfw2error(const std::string& Message) : runtime_error(Message) {}
 	dfw2error(const char * Message) : runtime_error(Message) {}
 	dfw2error(const std::string_view Message) : runtime_error(std::string(Message)) {}

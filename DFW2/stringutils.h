@@ -1,4 +1,8 @@
 ﻿#pragma once
+#ifdef _MSC_VER
+#include <Windows.h>
+#include <stringapiset.h>
+#endif 
 #include <list>
 #include <algorithm>
 #include <string>
