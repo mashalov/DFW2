@@ -4,8 +4,8 @@
 #ifdef _MSC_VER
 #include "Device.h"
 #include "Variable.h"
-
-
+#include "ResultRead.h"
+#include "CompareResult.h"
 
 // CVariable
 
@@ -155,6 +155,50 @@ STDMETHODIMP CVariable::get_ChannelIndex(LONG* Index)
 	else
 		hRes = E_INVALIDARG;
 
+	return hRes;
+}
+
+STDMETHODIMP CVariable::Compare(VARIANT TimeSeries, VARIANT* CompareResult)
+{
+	HRESULT hRes{ E_FAIL };
+	if (pVariableInfo_ &&
+		pDeviceInstanceInfo_ &&
+		pDeviceInstanceInfo_->pDevType_ &&
+		pDeviceInstanceInfo_->pDevType_->pFileReader_)
+	{
+		CResultFileReader* pFileReader{ pDeviceInstanceInfo_->pDevType_->pFileReader_ };
+		try
+		{
+			CComObject<CCompareResult>*pCompareResult;
+			if (SUCCEEDED(VariantClear(CompareResult)))
+			{
+				if (SUCCEEDED(CComObject<CCompareResult>::CreateInstance(&pCompareResult)))
+				{
+					CComVariant vt{ pFileReader->CreateSafeArray(pFileReader->ReadChannel(
+						pDeviceInstanceInfo_->pDevType_->eDeviceType,
+						pDeviceInstanceInfo_->GetId(0),
+						pVariableInfo_->Index)) };
+
+					CResultRead::DoublePlot::Options opts;
+					auto plot1{ CResultRead::ConstructFromPlot(vt) };
+					auto plot2{ CResultRead::ConstructFromPlot(TimeSeries) };
+					pCompareResult->results_ = plot1.Compare(plot2, opts);
+					pCompareResult->AddRef();
+					CompareResult->vt = VT_DISPATCH;
+					CompareResult->pdispVal = pCompareResult;
+					hRes = S_OK;
+				}
+			}
+		}
+		catch (CFileReadException& ex)
+		{
+			Error(ex.whatw(), IID_IVariable, hRes);
+		}
+		catch (const std::runtime_error& ex)
+		{
+			Error(ex.what(), IID_IResultRead, hRes);
+		}
+	}
 	return hRes;
 }
 #endif

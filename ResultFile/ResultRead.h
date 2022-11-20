@@ -23,11 +23,10 @@ class ATL_NO_VTABLE CResultRead :
 protected:
 	CResultFileReader ResultFileReader_;
 	DeviceTypeInfo DeviceTypeInfo_;
+public:
+
 	using DoublePlot = timeseries::TimeSeries<double, double>;
 
-	DoublePlot ConstructFromPlot(const VARIANT& Input) const;
-
-public:
 	CResultRead()
 	{
 		DeviceTypeInfo_.pFileReader_ = &ResultFileReader_;
@@ -87,6 +86,8 @@ public:
 	STDMETHOD(get_CompressionRatio)(DOUBLE *pRatio);
 	STDMETHOD (Compare)(VARIANT TimeSeries1, VARIANT TimeSeries2, VARIANT* CompareResult);
 	void OpenFile(std::string_view PathName);
+
+	static DoublePlot ConstructFromPlot(const VARIANT& Input);
 	
 };
 

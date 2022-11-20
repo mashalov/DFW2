@@ -69,5 +69,6 @@ public:
 	STDMETHOD(get_UnitsName)(BSTR* UnitsName);
 	STDMETHOD(get_Device)(VARIANT* Device);
 	STDMETHOD(get_ChannelIndex)(LONG* Index);
+	STDMETHOD(Compare)(VARIANT TimeSeries, VARIANT* CompareResult);
 };
 #endif

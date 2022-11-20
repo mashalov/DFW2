@@ -430,7 +430,7 @@ STDMETHODIMP CResultRead::Compare(VARIANT TimeSeries1, VARIANT TimeSeries2, VARI
 }
 
 
-CResultRead::DoublePlot CResultRead::ConstructFromPlot(const VARIANT& Input) const
+CResultRead::DoublePlot CResultRead::ConstructFromPlot(const VARIANT& Input)
 {
 	if (Input.vt != (VT_ARRAY | VT_R8))
 		throw dfw2error(fmt::format("CResult::ConstructFromPlot - array has wrong type {}", Input.vt));

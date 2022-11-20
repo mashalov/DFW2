@@ -120,6 +120,7 @@ interface IVariable : IDispatch
 	[propget, id(6), helpstring("Get variable Units Name")] HRESULT UnitsName([out, retval]BSTR* UnitsName);
 	[propget, id(7), helpstring("Get variable Device")] HRESULT Device([out, retval]VARIANT* Device);
 	[propget, id(8), helpstring("Get variable channel index")] HRESULT ChannelIndex([out, retval]LONG* Index);
+	[id(9), helpstring("Compare this variable with another timeserie")] HRESULT Compare([in]VARIANT TimeSeries, [out, retval]VARIANT* CompareResult);
 };
 
 [
