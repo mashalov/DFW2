@@ -253,6 +253,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="BitStream.cpp" />
+    <ClCompile Include="CompareResult.cpp" />
+    <ClCompile Include="CompareResults\Plot.cpp" />
     <ClCompile Include="Compressor.cpp" />
     <ClCompile Include="CSVWriter.cpp" />
     <ClCompile Include="Device.cpp" />
@@ -306,6 +308,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Timestamped.cpp" />
     <ClCompile Include="UnicodeSCSU.cpp" />
     <ClCompile Include="Variable.cpp" />
     <ClCompile Include="Variables.cpp" />
@@ -315,6 +318,9 @@
     <ClInclude Include="..\DFW2\DeviceTypes.h" />
     <ClInclude Include="..\DFW2\Header.h" />
     <ClInclude Include="..\DFW2\Messages.h" />
+    <ClInclude Include="CompareResult.h" />
+    <ClInclude Include="CompareResults\Log.h" />
+    <ClInclude Include="CompareResults\TimeSeries.h" />
     <ClInclude Include="Compressor.h" />
     <ClInclude Include="CSVWriter.h" />
     <ClInclude Include="Device.h" />
@@ -342,6 +348,7 @@
     <ClInclude Include="SlowVariables.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="Timestamped.h" />
     <ClInclude Include="UnicodeSCSU.h" />
     <ClInclude Include="Variable.h" />
     <ClInclude Include="Variables.h" />

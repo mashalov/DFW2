@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include "Test.h"
 #import "progid:Astra.Rastr.1" named_guids no_namespace
+#import "progid:ResultFile.Raiden.1" named_guids no_namespace
 
 _bstr_t bstrPath(const std::filesystem::path& Path)
 {
@@ -69,13 +70,11 @@ void CBatchTest::Run()
 		for (const auto& contfile : ContingencyFiles_)
 			for (const auto& casefile : CaseFiles_)
 				TestPair(casefile, contfile, opts);
-
 	}
 	catch (const std::runtime_error& er)
 	{
 		if (handle)
 			RegCloseKey(handle);
-	
 
 		auto s{ stringutils::utf8_decode(er.what()) };
 
@@ -89,7 +88,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 	try
 	{
 		IRastrPtr Rastr;
-		if (const HRESULT hr{ Rastr.CreateInstance("Astra.Rastr.1") }; FAILED(hr))
+		if (const HRESULT hr{ Rastr.CreateInstance(CLSID_Rastr) }; FAILED(hr))
 			throw dfw2error("Rastr CoCreate failed with scode {}", hr);
 		Rastr->Load(RG_REPL, bstrPath(CaseFile), bstrPath(rstPath_));
 		Rastr->Load(RG_REPL, bstrPath(ContingencyFile), bstrPath(scnPath_));
@@ -104,17 +103,16 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IColPtr Hmin{ ComDynamic->Cols->Item("Hmin") };
 		IColPtr Hmax{ ComDynamic->Cols->Item("Hmax") };
 
-		Hint->PutZ(0, 5e-3);
-		Hmin->PutZ(0, 5e-3);
-		Hmax->PutZ(0, 5.0);
+		//Hint->PutZ(0, 5e-3);
+		//Hmin->PutZ(0, 5e-3);
+		//Hmax->PutZ(0, 5.0);
 
 		DurationSet->PutZ(0, 15.0);
 
 		ITablePtr RaidenParameters{ Rastr->Tables->Item("RaidenParameters") };
 		IColPtr GoRaiden{ RaidenParameters->Cols->Item("GoRaiden")};
 		IColPtr Atol{ RaidenParameters->Cols->Item("Atol") };
-		Atol->PutZ(0, 1e-2);
-
+		Atol->PutZ(0, 1e-4);
 
 		/*report << fmt::format("-- Модель: {}\n-- Возмущение: {}\n-- Режим: {}\n-- Длительность ЭМПП: {:.3f}",
 			CaseFile.filename().u8string(),
@@ -157,6 +155,21 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 
 		report << CaseFile.filename().u8string() << ";" << ContingencyFile.filename().u8string() << ";";
 
+		IResultPtr Result;
+		if(const HRESULT hr{ Result.CreateInstance(CLSID_Result) }; FAILED(hr))
+			throw dfw2error("Result CoCreate failed with scode {}", hr);
+		IResultReadPtr ResultRead{ Result->Load(L"c:\\tmp\\000000.sna") };
+		const auto plot1{ ResultRead->GetPlot(1000006, 248, L"modV") };
+		const auto plot2{ ResultRead->GetPlot(1000006, 240, L"modV") };
+		ICompareResultPtr CompareResult{ ResultRead->Compare(plot1,plot1) };
+
+		ITimestampedPtr Max{ CompareResult->Max };
+		ITimestampedPtr Left{ CompareResult->Max };
+		ITimestampedPtr Right{ CompareResult->Right };
+
+		double avg{ CompareResult->Average };
+		double std{ CompareResult->StdDev };
+		
 		for (int method{ 0 }; method < 2; method++)
 		{
 			CTestTimer Timer;

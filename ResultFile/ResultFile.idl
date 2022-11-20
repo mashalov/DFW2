@@ -7,6 +7,36 @@
 import "oaidl.idl";
 import "ocidl.idl";
 
+
+[
+	object,
+	uuid(0C8A1D1C-01D9-41E8-B3B6-819E5B3D0E58),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface ITimestamped : IDispatch
+{
+	[propget, id(1), helpstring("Get Time")] HRESULT Time([out, retval] double* Time);
+	[propget, id(2), helpstring("Get Value")] HRESULT Value([out, retval] double* Value);
+};
+
+[
+	object,
+	uuid(DE769CD3-5D38-4E8D-8910-02A364A656B5),
+	dual,
+	nonextensible,
+	pointer_default(unique)
+]
+interface ICompareResult : IDispatch
+{
+	[propget, id(1), helpstring("Get Left Timestamped")] HRESULT Left([out, retval] VARIANT* Left);
+	[propget, id(2), helpstring("Get Right Timestamped")] HRESULT Right([out, retval] VARIANT* Right);
+	[propget, id(3), helpstring("Get Max Difference Timestamped")] HRESULT Max([out, retval] VARIANT* Max);
+	[propget, id(4), helpstring("Get Average Difference")] HRESULT Average([out, retval] double* Average);
+	[propget, id(5), helpstring("Get Standard Deviatin")] HRESULT StdDev([out, retval] double* StdDev);
+};
+
 [
 	object,
 	uuid(92BC385C-48C9-4FB4-B215-3968EA2A1457),
@@ -34,6 +64,7 @@ interface IResultRead : IDispatch
 	[propput, id(15), helpstring("Set User Comment")] HRESULT UserComment([in]BSTR UserComment);
 	[propget, id(16), helpstring("Get Ratio")] HRESULT CompressionRatio([out, retval]DOUBLE *pRatio);
 	[propget, id(17), helpstring("Get time step")] HRESULT TimeStep([out, retval]VARIANT* TimeStep);
+	[id(18), helpstring("Compare two timeseries")] HRESULT Compare([in]VARIANT TimeSeries1, [in]VARIANT TimeSeries2, [out, retval] VARIANT* CompareResult);
 };
 
 [
@@ -53,7 +84,6 @@ interface IDevice : IDispatch
 	[propget, id(6), helpstring("Get device Type Name")] HRESULT TypeName([out, retval]BSTR* TypeName);
 	[propget, id(7), helpstring("Get device has variables")] HRESULT HasVariables([out, retval]VARIANT_BOOL* HasVariables);
 };
-
 
 [
 	object,
@@ -309,6 +339,22 @@ library ResultFileLib
 	coclass DeviceTypeWrite
 	{
 		[default] interface IDeviceTypeWrite;
+	};
+	[
+		uuid(91201CE6-962C-4ABD-AEAF-B0642E613FF0),
+		noncreatable
+	]
+	coclass Timestamped
+	{
+		[default] interface ITimestamped;
+	};
+	[
+		uuid(4BAC206C-1FB2-4A50-8364-1A5CCADD7E0E),
+		noncreatable
+	]
+	coclass CompareResults
+	{
+		[default] interface ICompareResult;
 	};
 };
 

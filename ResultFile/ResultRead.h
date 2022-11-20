@@ -5,7 +5,7 @@
 #include "resource.h"       // main symbols
 #include "ResultFile_i.h"
 #include "Device.h"
-
+#include "CompareResults/TimeSeries.h"
 #if defined(_WIN32_WCE) && !defined(_CE_DCOM) && !defined(_CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA)
 #error "Single-threaded COM objects are not properly supported on Windows CE platform, such as the Windows Mobile platforms that do not include full DCOM support. Define _CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA to force ATL to support creating single-thread COM object's and allow use of it's single-threaded COM object implementations. The threading model in your rgs file was set to 'Free' as that is the only threading model supported in non DCOM Windows CE platforms."
 #endif
@@ -23,6 +23,10 @@ class ATL_NO_VTABLE CResultRead :
 protected:
 	CResultFileReader ResultFileReader_;
 	DeviceTypeInfo DeviceTypeInfo_;
+	using DoublePlot = timeseries::TimeSeries<double, double>;
+
+	DoublePlot ConstructFromPlot(const VARIANT& Input) const;
+
 public:
 	CResultRead()
 	{
@@ -81,7 +85,9 @@ public:
 	STDMETHOD(get_UserComment)(BSTR* UserComment);
 	STDMETHOD(put_UserComment)(BSTR UserComment);
 	STDMETHOD(get_CompressionRatio)(DOUBLE *pRatio);
+	STDMETHOD (Compare)(VARIANT TimeSeries1, VARIANT TimeSeries2, VARIANT* CompareResult);
 	void OpenFile(std::string_view PathName);
+	
 };
 
 OBJECT_ENTRY_AUTO(__uuidof(ResultRead), CResultRead)

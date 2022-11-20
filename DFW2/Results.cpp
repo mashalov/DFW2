@@ -40,8 +40,8 @@ void CDynaModel::WriteResultsHeader()
 	// создаем каталог для вывода результатов
 	Platform().CheckPath(resultPath);
 
-	resultPath = CreateResultFilePath("Raiden_{:05d}.sna", resultPath);
-	//resultPath.append("binresultCOM.rst");
+	//resultPath = CreateResultFilePath("Raiden_{:05d}.sna", resultPath);
+	resultPath.append("binresultCOM.rst");
 
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(resultPath, resultsInfo );

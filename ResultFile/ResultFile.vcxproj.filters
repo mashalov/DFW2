@@ -17,6 +17,12 @@
       <UniqueIdentifier>{7da1de7c-40b0-4cf0-86fa-2585acfbf7c0}</UniqueIdentifier>
       <SourceControlFiles>False</SourceControlFiles>
     </Filter>
+    <Filter Include="Header Files\CompareResults">
+      <UniqueIdentifier>{465a120b-4d93-4ebb-8547-7051759ffd45}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\CompareResults">
+      <UniqueIdentifier>{4e686040-5968-4a31-9b09-310a9cc5e298}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -102,6 +108,15 @@
     </ClCompile>
     <ClCompile Include="DeviceTypeInfo.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Timestamped.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CompareResult.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="CompareResults\Plot.cpp">
+      <Filter>Source Files\CompareResults</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -209,6 +224,18 @@
     </ClInclude>
     <ClInclude Include="DeviceTypeInfo.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Timestamped.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CompareResult.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="CompareResults\Log.h">
+      <Filter>Header Files\CompareResults</Filter>
+    </ClInclude>
+    <ClInclude Include="CompareResults\TimeSeries.h">
+      <Filter>Header Files\CompareResults</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

@@ -116,6 +116,8 @@ public:
 
 	static std::string utf8_encode(const wchar_t *wstr)
 	{
+		if (!wstr)
+			return {};
 #ifdef _MSC_VER
 		return stringutils::utf8_encode(std::wstring_view(wstr));
 #else

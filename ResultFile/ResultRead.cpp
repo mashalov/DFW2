@@ -6,9 +6,14 @@
 #include "DeviceTypes.h"
 #include "SlowVariables.h"
 #include "CSVWriter.h"
-
+#include "CompareResult.h"
 
 // CResult
+
+std::string GetHRESULT(HRESULT hr)
+{
+	return fmt::format("HRESULT = {:#0x}", static_cast<unsigned>(hr));
+}
 
 STDMETHODIMP CResultRead::InterfaceSupportsErrorInfo(REFIID riid)
 {
@@ -387,10 +392,74 @@ STDMETHODIMP CResultRead::put_UserComment(BSTR UserComment)
 		ResultFileReader_.SetUserComment(stringutils::utf8_encode(UserComment));
 		hRes = S_OK;
 	}
-	catch (CFileWriteException& ex)
+	catch (const CFileWriteException& ex)
 	{
 		Error(ex.whatw(), IID_IResultRead, hRes);
 	}
 	return hRes;
 }
 
+
+STDMETHODIMP CResultRead::Compare(VARIANT TimeSeries1, VARIANT TimeSeries2, VARIANT* CompareResult)
+{
+	HRESULT hRes{ E_INVALIDARG };
+	CComObject<CCompareResult>* pCompareResult;
+	
+	try
+	{
+		auto plot1{ ConstructFromPlot(TimeSeries1) };
+		auto plot2{ ConstructFromPlot(TimeSeries2) };
+		DoublePlot::Options opts;
+		const auto result{ plot1.Compare(plot2, opts) };
+
+		if (SUCCEEDED(VariantClear(CompareResult)))
+		{
+			if (SUCCEEDED(CComObject<CCompareResult>::CreateInstance(&pCompareResult)))
+			{
+				pCompareResult->AddRef();
+				CompareResult->vt = VT_DISPATCH;
+				CompareResult->pdispVal = pCompareResult;
+				hRes = S_OK;
+			}
+		}
+	}
+	catch (const std::runtime_error& ex)
+	{
+		Error(ex.what(), IID_IResultRead, hRes);
+	}
+	return hRes;
+}
+
+
+CResultRead::DoublePlot CResultRead::ConstructFromPlot(const VARIANT& Input) const
+{
+	if (Input.vt != (VT_ARRAY | VT_R8))
+		throw dfw2error(fmt::format("CResult::ConstructFromPlot - array has wrong type {}", Input.vt));
+	if (auto nDims{ SafeArrayGetDim(Input.parray) }; nDims != 2)
+		throw dfw2error(fmt::format("CResult::ConstructFromPlot - array must have 2 dimensions {}", nDims));
+	LONG lBound{ 0 }, uBound{ 0 };
+	HRESULT hr{ SafeArrayGetLBound(Input.parray, 1, &lBound) };
+	if (FAILED(hr))
+		throw dfw2error(fmt::format("CResult::ConstructFromPlot - cannot get low bound {}", GetHRESULT(hr)));
+	hr = SafeArrayGetUBound(Input.parray, 1, &uBound);
+	if (FAILED(hr))
+		throw dfw2error(fmt::format("CResult::ConstructFromPlot - cannot get high bound {}", GetHRESULT(hr)));
+
+	double* pData{ nullptr };
+
+	uBound -= lBound - 1;
+
+	hr = SafeArrayAccessData(Input.parray, (void**)&pData);
+
+	if (FAILED(hr))
+		throw dfw2error(fmt::format("CResult::ConstructFromPlot - SafeArrayAccessData failed {}", GetHRESULT(hr)));
+
+	DoublePlot plot(uBound, pData + uBound, pData);
+
+	hr = SafeArrayUnaccessData(Input.parray);
+
+	if (FAILED(hr))
+		throw dfw2error(fmt::format("CResult::ConstructFromPlot - SafeArrayUnaccessData failed {}", GetHRESULT(hr)));
+
+	return plot;
+}
