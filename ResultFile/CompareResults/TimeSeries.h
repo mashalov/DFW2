@@ -306,8 +306,7 @@ namespace timeseries
 
 		class  CompareResult
 		{
-		protected:
-
+		public:
 			class MinMaxData : public pointT
 			{
 			protected:
@@ -339,7 +338,6 @@ namespace timeseries
 				return (v1 - v2) / (options.Rtol() * std::abs((std::max)(v1, v2)) + options.Atol());
 			}
 
-		public:
 			CompareResult()
 			{
 				Reset();

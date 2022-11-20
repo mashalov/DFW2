@@ -161,14 +161,27 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IResultReadPtr ResultRead{ Result->Load(L"c:\\tmp\\000000.sna") };
 		const auto plot1{ ResultRead->GetPlot(1000006, 248, L"modV") };
 		const auto plot2{ ResultRead->GetPlot(1000006, 240, L"modV") };
-		ICompareResultPtr CompareResult{ ResultRead->Compare(plot1,plot1) };
+		ICompareResultPtr CompareResult{ ResultRead->Compare(plot1,plot2) };
 
-		ITimestampedPtr Max{ CompareResult->Max };
-		ITimestampedPtr Left{ CompareResult->Max };
-		ITimestampedPtr Right{ CompareResult->Right };
+		IMinMaxDataPtr Max{ CompareResult->Max };
+		IMinMaxDataPtr Min{ CompareResult->Min };
+		IMinMaxDataPtr Left{ CompareResult->Left };
+		IMinMaxDataPtr Right{ CompareResult->Right };
 
-		double avg{ CompareResult->Average };
-		double std{ CompareResult->StdDev };
+		auto strrep{
+			fmt::format("Max {:.5f}({:.05f}) {:.5f}:{:.5f}, Min {:.5f}({:.05f}) {:.5f}:{:.5f}, Avg {:.5f}, Sqr {:.5f}",
+			Max->Metric,
+			Max->Time,
+			Max->Value1,
+			Max->Value2,
+			Min->Metric,
+			Min->Time,
+			Min->Value1,
+			Min->Value2,
+			CompareResult->Average,
+			CompareResult->SquaredDiff
+			)
+		};
 		
 		for (int method{ 0 }; method < 2; method++)
 		{

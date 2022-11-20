@@ -20,9 +20,6 @@
     <Filter Include="Header Files\CompareResults">
       <UniqueIdentifier>{465a120b-4d93-4ebb-8547-7051759ffd45}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\CompareResults">
-      <UniqueIdentifier>{4e686040-5968-4a31-9b09-310a9cc5e298}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -109,14 +106,11 @@
     <ClCompile Include="DeviceTypeInfo.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Timestamped.cpp">
+    <ClCompile Include="IMinMax.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="CompareResult.cpp">
       <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="CompareResults\Plot.cpp">
-      <Filter>Source Files\CompareResults</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -225,7 +219,7 @@
     <ClInclude Include="DeviceTypeInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Timestamped.h">
+    <ClInclude Include="IMinMax.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="CompareResult.h">

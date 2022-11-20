@@ -15,10 +15,12 @@ import "ocidl.idl";
 	nonextensible,
 	pointer_default(unique)
 ]
-interface ITimestamped : IDispatch
+interface IMinMaxData: IDispatch
 {
 	[propget, id(1), helpstring("Get Time")] HRESULT Time([out, retval] double* Time);
-	[propget, id(2), helpstring("Get Value")] HRESULT Value([out, retval] double* Value);
+	[propget, id(2), helpstring("Get Metric")] HRESULT Metric([out, retval] double* Metric);
+	[propget, id(3), helpstring("Get 1st Value")] HRESULT Value1([out, retval] double* Value);
+	[propget, id(4), helpstring("Get 2nd Value")] HRESULT Value2([out, retval] double* Value);
 };
 
 [
@@ -33,8 +35,9 @@ interface ICompareResult : IDispatch
 	[propget, id(1), helpstring("Get Left Timestamped")] HRESULT Left([out, retval] VARIANT* Left);
 	[propget, id(2), helpstring("Get Right Timestamped")] HRESULT Right([out, retval] VARIANT* Right);
 	[propget, id(3), helpstring("Get Max Difference Timestamped")] HRESULT Max([out, retval] VARIANT* Max);
-	[propget, id(4), helpstring("Get Average Difference")] HRESULT Average([out, retval] double* Average);
-	[propget, id(5), helpstring("Get Standard Deviatin")] HRESULT StdDev([out, retval] double* StdDev);
+	[propget, id(4), helpstring("Get Min Difference Timestamped")] HRESULT Min([out, retval] VARIANT* Min);
+	[propget, id(5), helpstring("Get Average Difference")] HRESULT Average([out, retval] double* Average);
+	[propget, id(6), helpstring("Get Squared Difference")] HRESULT SquaredDiff([out, retval] double* StdDev);
 };
 
 [
@@ -344,9 +347,9 @@ library ResultFileLib
 		uuid(91201CE6-962C-4ABD-AEAF-B0642E613FF0),
 		noncreatable
 	]
-	coclass Timestamped
+	coclass MinMaxData
 	{
-		[default] interface ITimestamped;
+		[default] interface IMinMaxData;
 	};
 	[
 		uuid(4BAC206C-1FB2-4A50-8364-1A5CCADD7E0E),

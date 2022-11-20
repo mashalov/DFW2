@@ -409,13 +409,12 @@ STDMETHODIMP CResultRead::Compare(VARIANT TimeSeries1, VARIANT TimeSeries2, VARI
 	{
 		auto plot1{ ConstructFromPlot(TimeSeries1) };
 		auto plot2{ ConstructFromPlot(TimeSeries2) };
-		DoublePlot::Options opts;
-		const auto result{ plot1.Compare(plot2, opts) };
-
 		if (SUCCEEDED(VariantClear(CompareResult)))
 		{
 			if (SUCCEEDED(CComObject<CCompareResult>::CreateInstance(&pCompareResult)))
 			{
+				DoublePlot::Options opts;
+				pCompareResult->results_ = plot1.Compare(plot2, opts);
 				pCompareResult->AddRef();
 				CompareResult->vt = VT_DISPATCH;
 				CompareResult->pdispVal = pCompareResult;

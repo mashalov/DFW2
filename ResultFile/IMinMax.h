@@ -11,26 +11,26 @@
 #error "Single-threaded COM objects are not properly supported on Windows CE platform, such as the Windows Mobile platforms that do not include full DCOM support. Define _CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA to force ATL to support creating single-thread COM object's and allow use of it's single-threaded COM object implementations. The threading model in your rgs file was set to 'Free' as that is the only threading model supported in non DCOM Windows CE platforms."
 #endif
 
-
-
+#include "CompareResults/TimeSeries.h"
 #ifdef _MSC_VER
 using namespace ATL;
 
-class ATL_NO_VTABLE CTimestamped:
+class ATL_NO_VTABLE CMinMaxData:
 	public CComObjectRootEx<CComSingleThreadModel>,
-	public CComCoClass<CTimestamped, &CLSID_Timestamped>,
+	public CComCoClass<CMinMaxData, &CLSID_MinMaxData>,
 	public ISupportErrorInfo,
-	public IDispatchImpl<ITimestamped, &IID_ITimestamped, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
+	public IDispatchImpl<IMinMaxData, &IID_IMinMaxData, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
-protected:
-	PointDifference difference_;
+
 public:
 
-	BEGIN_COM_MAP(CTimestamped)
-		COM_INTERFACE_ENTRY(ITimestamped)
+	BEGIN_COM_MAP(CMinMaxData)
+		COM_INTERFACE_ENTRY(IMinMaxData)
 		COM_INTERFACE_ENTRY(IDispatch)
 		COM_INTERFACE_ENTRY(ISupportErrorInfo)
 	END_COM_MAP()
+
+	timeseries::TimeSeries<double, double>::CompareResult::MinMaxData data_;
 
 	// ISupportsErrorInfo
 	STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid);
@@ -50,7 +50,9 @@ public:
 public:
 
 	STDMETHOD(get_Time)(double* Time);
-	STDMETHOD(get_Value)(double* Value);
+	STDMETHOD(get_Metric)(double* Metric);
+	STDMETHOD(get_Value1)(double* Value);
+	STDMETHOD(get_Value2)(double* Value);
 };
 
 #endif

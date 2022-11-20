@@ -5,7 +5,7 @@
 #include "ResultFile_i.h"
 #endif
 
-#include "Timestamped.h"
+#include "IMinMax.h"
 #include "CompareResults/TimeSeries.h"
 
 #if defined(_WIN32_WCE) && !defined(_CE_DCOM) && !defined(_CE_ALLOW_SINGLE_THREADED_OBJECTS_IN_MTA)
@@ -24,13 +24,14 @@ class ATL_NO_VTABLE CCompareResult:
 	public IDispatchImpl<ICompareResult, &IID_ICompareResult, &LIBID_ResultFileLib, /*wMajor =*/ 1, /*wMinor =*/ 0>
 {
 protected:
-	timeseries::TimeSeries<double, double>::CompareResult results_;
 public:
 	BEGIN_COM_MAP(CCompareResult)
 		COM_INTERFACE_ENTRY(ICompareResult)
 		COM_INTERFACE_ENTRY(IDispatch)
 		COM_INTERFACE_ENTRY(ISupportErrorInfo)
 	END_COM_MAP()
+
+	timeseries::TimeSeries<double, double>::CompareResult results_;
 
 	// ISupportsErrorInfo
 	STDMETHOD(InterfaceSupportsErrorInfo)(REFIID riid);
@@ -52,8 +53,9 @@ public:
 	STDMETHOD(get_Left)(VARIANT* Left);
 	STDMETHOD(get_Right)(VARIANT* Right);
 	STDMETHOD(get_Max)(VARIANT* Max);
+	STDMETHOD(get_Min)(VARIANT* Min);
 	STDMETHOD(get_Average)(double* Average);
-	STDMETHOD(get_StdDev)(double* StdDev);
+	STDMETHOD(get_SquaredDiff)(double* StdDev);
 };
 
 #endif
