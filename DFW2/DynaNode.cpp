@@ -590,17 +590,8 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 	else
 	{
 		pLRCGen = pDynaModel->GetLRCGen();		// если есть генерация но нет генераторов - нужна СХН генераторов
-		if (pLRCGen->GetId() == -2 && false) // если задана СХН Iconst - меняем СХН на постоянный ток в системе уравнений
-		{
-			// альтернативный вариант - генерация в узле 
-			// представляется током
-			// рассчитываем и сохраняем постоянный ток по мощности и напряжению
-			Iconst = -std::conj(cplx(Pgr, Qgr) / VreVim);
-			// обнуляем генерацию в узле
-			Pg = Qg = Pgr = Qgr = 0.0;;
-			// и обнуляем СХН, так как она больше не нужна
-			pLRCGen = nullptr;
-		}
+		if (std::abs(Pg) < 0.1)
+			pLRCGen = pDynaModel->GetLRCYconst();
 	}
 
 	// если в узле нет СХН для динамики, подставляем СХН по умолчанию

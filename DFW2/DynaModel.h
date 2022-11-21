@@ -526,8 +526,11 @@ namespace DFW2
 		std::vector<RightVector> m_RightVectorSnapshot;
 
 		KLUWrapper<double> klu;
-		CDynaLRC *m_pLRCGen		= nullptr;		// СХН для генераторных узлов без генераторов
-		CDynaLRC *m_pLRCLoad	= nullptr;		// СХН для узлов без динамической СХН
+		CDynaLRC *pLRCGen_		= nullptr;		// СХН для генераторных узлов без генераторов
+		CDynaLRC *pLRCLoad_		= nullptr;		// СХН для узлов без динамической СХН
+		CDynaLRC* pLRCYconst_	= nullptr;		// СХН c постоянным шунтом
+		CDynaLRC* pLRCIconst_	= nullptr;		// СХН c постоянным током
+		CDynaLRC* pLRCSconst_	= nullptr;		// СХН c постоянной мощностью
 
 		std::unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;
 		std::unique_ptr<RightVector[]> pRightVectorUniq;
@@ -756,14 +759,29 @@ namespace DFW2
 			return m_Parameters.m_dFrequencyTimeConstant;
 		}
 
-		inline CDynaLRC* GetLRCGen()
+		inline CDynaLRC* GetLRCYconst() const
 		{
-			return m_pLRCGen;
+			return pLRCYconst_;
+		}
+
+		inline CDynaLRC* GetLRCIconst() const
+		{
+			return pLRCIconst_;
+		}
+
+		inline CDynaLRC* GetLRСSconst() const
+		{
+			return pLRCSconst_;
+		}
+
+		inline CDynaLRC* GetLRCGen() const
+		{
+			return pLRCGen_;
 		}
 
 		inline CDynaLRC* GetLRCDynamicDefault()
 		{
-			return m_pLRCLoad;
+			return pLRCLoad_;
 		}
 
 		inline double GetMustangDerivativeTimeConstant() const

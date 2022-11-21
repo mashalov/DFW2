@@ -101,24 +101,39 @@ void CDynaModel::PrepareNetworkElements()
 	bool bOk{ true };
 
 	// убеждаемся в том, что в исходных данных есть СХН, соотвествующая параметрам
-	ptrdiff_t LRCId{ -2 };
+
+	struct LRCCheckListType
+	{
+		CDynaLRC** ppLRC;
+		ptrdiff_t Id;
+	};
+
+	std::array<LRCCheckListType, 3> LRCCheckList =
+	{
+		{
+			{&pLRCIconst_, -2},
+			{&pLRCYconst_,  0},
+			{&pLRCSconst_, -1},
+		}
+	};
+
+	// собираем указатели на разные типы СХН и убеждаемся что они заданы
+	for (const auto& LRCCheck : LRCCheckList)
+	{
+		if (*LRCCheck.ppLRC = static_cast<CDynaLRC*>(LRCs.GetDevice(LRCCheck.Id)), *LRCCheck.ppLRC == nullptr)
+		{
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszMustBeEmbeddedLRC, LRCCheck.Id));
+			bOk = false;
+		}
+	}
+
 	switch (m_Parameters.m_eGeneratorLessLRC)
 	{
-	case GeneratorLessLRC::Iconst:  LRCId = -2; break;
-	case GeneratorLessLRC::Sconst:  LRCId = -1; break;
+		case GeneratorLessLRC::Iconst:  pLRCGen_ = pLRCIconst_; break;
+		case GeneratorLessLRC::Sconst:  pLRCGen_ = pLRCSconst_; break;
 	}
-	if (!(m_pLRCGen = static_cast<CDynaLRC*>(LRCs.GetDevice(LRCId))))
-	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszMustBeEmbeddedLRC, LRCId));
-		bOk = false;
-	}
-	// убеждаемся в том, что в исходных данных есть СХН для шунта
-	LRCId = 0;
-	if (!(m_pLRCLoad = static_cast<CDynaLRC*>(LRCs.GetDevice(LRCId))))
-	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszMustBeEmbeddedLRC, LRCId));
-		bOk = false;
-	}
+
+	pLRCLoad_ = pLRCYconst_;
 
 	// для узлов учитываем проводимости реакторов
 	// и проверяем значение Uном
