@@ -1,13 +1,12 @@
 ﻿#include <iostream>
 #include "Test.h"
+#include "ResultCompare.h"
 #import "progid:Astra.Rastr.1" named_guids no_namespace
-#import "progid:ResultFile.Raiden.1" named_guids no_namespace
 
 _bstr_t bstrPath(const std::filesystem::path& Path)
 {
 	return _bstr_t(Path.c_str());
 }
-
 
 void CBatchTest::AddCase(std::filesystem::path CaseFile)
 {
@@ -102,6 +101,8 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IColPtr Hint{ ComDynamic->Cols->Item("Hint") };
 		IColPtr Hmin{ ComDynamic->Cols->Item("Hmin") };
 		IColPtr Hmax{ ComDynamic->Cols->Item("Hmax") };
+		IColPtr SnapTemplate{ComDynamic->Cols->Item("SnapTemplate")};
+		IColPtr SnapPath{ ComDynamic->Cols->Item("SnapPath") };
 
 		//Hint->PutZ(0, 5e-3);
 		//Hmin->PutZ(0, 5e-3);
@@ -112,6 +113,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		ITablePtr RaidenParameters{ Rastr->Tables->Item("RaidenParameters") };
 		IColPtr GoRaiden{ RaidenParameters->Cols->Item("GoRaiden")};
 		IColPtr Atol{ RaidenParameters->Cols->Item("Atol") };
+		IColPtr ResultsFolder{ RaidenParameters->Cols->Item("ResultsFolder") };
 		Atol->PutZ(0, 1e-4);
 
 		/*report << fmt::format("-- Модель: {}\n-- Возмущение: {}\n-- Режим: {}\n-- Длительность ЭМПП: {:.3f}",
@@ -155,33 +157,13 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 
 		report << CaseFile.filename().u8string() << ";" << ContingencyFile.filename().u8string() << ";";
 
-		IResultPtr Result;
-		if(const HRESULT hr{ Result.CreateInstance(CLSID_Result) }; FAILED(hr))
-			throw dfw2error("Result CoCreate failed with scode {}", hr);
-		IResultReadPtr ResultRead{ Result->Load(L"c:\\tmp\\000000.sna") };
-		const auto plot1{ ResultRead->GetPlot(1000006, 248, L"modV") };
-		const auto plot2{ ResultRead->GetPlot(1000006, 240, L"modV") };
-		ICompareResultPtr CompareResult{ ResultRead->Compare(plot1,plot2) };
-
-		IMinMaxDataPtr Max{ CompareResult->Max };
-		IMinMaxDataPtr Min{ CompareResult->Min };
-		IMinMaxDataPtr Left{ CompareResult->Left };
-		IMinMaxDataPtr Right{ CompareResult->Right };
-
-		auto strrep{
-			fmt::format("Max {:.5f}({:.05f}) {:.5f}:{:.5f}, Min {:.5f}({:.05f}) {:.5f}:{:.5f}, Avg {:.5f}, Sqr {:.5f}",
-			Max->Metric,
-			Max->Time,
-			Max->Value1,
-			Max->Value2,
-			Min->Metric,
-			Min->Time,
-			Min->Value1,
-			Min->Value2,
-			CompareResult->Average,
-			CompareResult->SquaredDiff
-			)
-		};
+		const std::filesystem::path ResultBasePath{ "c:\\tmp\\" };
+		std::filesystem::path ResultPath1(ResultBasePath), ResultPath2(ResultBasePath);
+		SnapPath->PutZ(0, bstrPath(ResultPath1));
+		SnapTemplate->PutZ(0, "file.sna");
+		ResultPath1.append(stringutils::COM_decode(SnapTemplate->GetZ(0).bstrVal));
+		ResultPath2.append("raidenfile.sna");
+		ResultsFolder->PutZ(0, bstrPath(ResultPath2));
 		
 		for (int method{ 0 }; method < 2; method++)
 		{
@@ -205,7 +187,9 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			*/
 		}
 
-		report << std::endl;
+		ResultCompare compare;
+		const auto strResult{ compare.Compare(ResultPath1, ResultPath2) };
+		report << std::endl << strResult;
 	}
 
 	catch (const _com_error& er)

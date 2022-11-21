@@ -37,11 +37,23 @@ void CDynaModel::WriteResultsHeader()
 	else
 		resultPath.append(m_Parameters.m_strResultsFolder);
 
-	// создаем каталог для вывода результатов
-	Platform().CheckPath(resultPath);
+	auto resultCheckPath{ resultPath };
 
-	//resultPath = CreateResultFilePath("Raiden_{:05d}.sna", resultPath);
-	resultPath.append("binresultCOM.rst");
+	if (resultPath.has_filename() && resultPath.has_extension())
+	{
+		// задан полный путь к файлу результатов, используем как есть
+		resultCheckPath.replace_extension("");
+		resultCheckPath.remove_filename();
+	}
+	else
+	{
+		// задан путь без имени файла результатов, генерируем имя
+		//resultPath = CreateResultFilePath("Raiden_{:05d}.sna", resultPath);
+		resultPath.append("binresultCOM.rst");
+	}
+
+	// создаем каталог для вывода результатов
+	Platform().CheckPath(resultCheckPath);
 
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(resultPath, resultsInfo );

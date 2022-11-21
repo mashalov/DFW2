@@ -104,6 +104,28 @@ namespace timeseries
 	public:
 		class OptionsT
 		{
+		public:
+			struct ProcessRange
+			{
+			protected:
+				std::optional<T> begin_;
+				std::optional<T> end_;
+			public:
+				const std::optional<T>& begin() const { return begin_; }
+				const std::optional<T>& end() const { return end_; }
+				void begin(const std::optional<T>& begin) { begin_ = begin; }
+				void end(const std::optional<T>& end) { end_ = end; }
+
+				bool InRange(const T& Time) const
+				{
+					if (begin_.has_value() && Time < begin_.value())
+						return false;
+					if (end_.has_value() && Time >= end_.value())
+						return false;
+					return true;
+				}
+			};
+
 		protected:
 			T TimeTolerance_ = 1E-8;
 			V ValueTolerance_ = 1E-8;
@@ -111,17 +133,15 @@ namespace timeseries
 			V Atol_ = 1.0;		// absolute tolerance
 			V Rtol_ = 0.0;		// relative tolerance
 
-			struct ProcessRange
-			{
-				std::optional<T> begin;
-				std::optional<T> end;
-			};
+			bool IntersectRange_ = true;
 
 			ProcessRange Range_;
 
 			MultiValuePointProcess MultiValuePointProcess_ = MultiValuePointProcess::All;
 
 		public:
+			inline bool IntersectRange() const { return IntersectRange_; }
+			void SetIntersectRange(bool IntersectRange) { IntersectRange_ = IntersectRange; }
 			inline T TimeTolerance() const { return TimeTolerance_; }
 			void SetTimeTolerance(T TimeTolerance) { TimeTolerance_ = TimeTolerance; }
 			inline V ValueTolerance() const { return ValueTolerance_; }
@@ -177,13 +197,25 @@ namespace timeseries
 			auto t2{ ExtData.begin() };
 			const auto& locoptions{ options };
 
+			typename Options::ProcessRange range;
 
-			const auto StoreTime = [&uniontime, &locoptions](const T& Time) -> void
+			const auto StoreTime = [&uniontime, &range, &locoptions](const T& Time) -> void
 			{
-				if(locoptions.TimeInRange(Time))
+				if(range.InRange(Time))
 					if (uniontime.empty() || std::abs(uniontime.back() - Time) > locoptions.TimeTolerance() * 2.0)
 						uniontime.emplace_back(Time);
 			};
+
+			if (locoptions.IntersectRange() && 
+				TimeSeriesData::begin() != TimeSeriesData::end() &&
+				ExtData.begin() != ExtData.end())
+			{
+				auto te1{ TimeSeriesData::rbegin() };
+				auto te2{ ExtData.rbegin() };
+				range.begin((std::max)(t1->t(), t2->t()));
+				range.end((std::min)(te1->t(), te2->t()) + locoptions.TimeTolerance());
+			}
+
 
 			while (1)
 			{

@@ -113,8 +113,21 @@ namespace timeseries
 
 			struct ProcessRange
 			{
-				std::optional<T> begin;
-				std::optional<T> end;
+			protected:
+				std::optional<T> begin_;
+				std::optional<T> end_;
+			public:
+				const std::optional<T>& begin() const { return begin_; }
+				const std::optional<T>& end() const { return end_; }
+
+				bool InRange(const T& Time) const
+				{
+					if (begin_.has_value() && Time < begin_.value())
+						return false;
+					if (end_.has_value() && Time >= end_.value())
+						return false;
+					return true;
+				}
 			};
 
 			ProcessRange Range_;

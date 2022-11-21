@@ -27,9 +27,15 @@
     <ClCompile Include="..\fmt\src\os.cc">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="ResultCompare.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Test.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ResultCompare.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
