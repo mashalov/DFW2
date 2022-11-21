@@ -7,6 +7,9 @@ using namespace DFW2;
 
 
 CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
+	// лаг на работает на выход через ограничитель 
+	// (можем выбирать windup/non-windup режимы работы)
+	OutputLimit(*this, {EqeV}, {EqeLag}),	
 	EqLimit(*this, { EqOutputValue }, { EqInput })
 {
 	Primitives_.pop_back();
@@ -58,16 +61,16 @@ void CDynaExciterMustang::BuildEquations(CDynaModel* pDynaModel)
 		// имеет дополительный элемент матрицы к напряжению узла
 		
 		//dEqe / dEqeV
-		pDynaModel->SetElement(Eqe, ExcLag, -ExtVg / Ug0);
+		pDynaModel->SetElement(Eqe, OutputLimit, -ExtVg / Ug0);
 		//dEqe / dV
-		pDynaModel->SetElement(Eqe, ExtVg, -ExcLag / Ug0);
+		pDynaModel->SetElement(Eqe, ExtVg, -OutputLimit / Ug0);
 	}
 	else
 	{
 		// независимый возбудитель 
 		 
 		//dEqe / dEqeV
-		pDynaModel->SetElement(Eqe, ExcLag, -1.0);
+		pDynaModel->SetElement(Eqe, OutputLimit, -1.0);
 	}
 	CDynaExciterBase::BuildEquations(pDynaModel);
 }
@@ -79,9 +82,9 @@ void CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 	// Для зависимого возбудителя рассчитываем отношение текущего
 	// напряжения к исходному. Для независимого отношение 1.0
 	if (bVoltageDependent)
-		pDynaModel->SetFunction(Eqe, Eqe - ExcLag * ExtVg / Ug0);
+		pDynaModel->SetFunction(Eqe, Eqe - OutputLimit * ExtVg / Ug0);
 	else
-		pDynaModel->SetFunction(Eqe, Eqe - ExcLag);
+		pDynaModel->SetFunction(Eqe, Eqe - OutputLimit);
 
 	pDynaModel->SetFunction(Eqsum, dEqsum);
 
@@ -109,7 +112,10 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 		Kig *= Eqnom / Inom;
 		Imin *= Eqnom;
 		Imax *= Eqnom;
-		ExcLag.SetMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
+		// ограничения либо на лаге (non-windup)
+		ExcLag.SetMinMaxTK(pDynaModel, -1E6, 1E6, Texc, 1.0);
+		// либо на ограничителе (windup)
+		OutputLimit.SetMinMax(pDynaModel, Umin, Umax);
 		EqLimit.SetMinMax(pDynaModel, Imin, Imax);
 		EqOutputValue = Eq0;
 		bool bRes = ExcLag.Init(pDynaModel);
@@ -198,16 +204,25 @@ bool CDynaExciterMustang::SetUpEqLimits(CDynaModel *pDynaModel, CDynaPrimitiveLi
 	{
 		bRes = true;
 
+		// ограничения и постоянную времени
+		// меняем в зависимости от желаемого режима
+		// windup/non-windup
 		switch (EqLimitStateResulting)
 		{
 		case CDynaPrimitiveLimited::eLIMITEDSTATES::Max:
-			ExcLag.ChangeMinMaxTK(pDynaModel, Umin, Imax, Texc, 1.0);
+			OutputLimit.SetMinMax(pDynaModel, Umin, Imax);
+			ExcLag.ChangeTimeConstant(Texc);
+			//ExcLag.ChangeMinMaxTK(pDynaModel, -1E6, 1E6, Texc, 1.0);
 			break;
 		case CDynaPrimitiveLimited::eLIMITEDSTATES::Min:
-			ExcLag.ChangeMinMaxTK(pDynaModel, Imin, Umax, Texc, 1.0);
+			OutputLimit.SetMinMax(pDynaModel, Imin, Umax);
+			ExcLag.ChangeTimeConstant(Texc);
+			//ExcLag.ChangeMinMaxTK(pDynaModel, -1E6, 1E6, Texc, 1.0);
 			break;
 		case CDynaPrimitiveLimited::eLIMITEDSTATES::Mid:
-			ExcLag.ChangeMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
+			OutputLimit.SetMinMax(pDynaModel, Umin, Umax);
+			ExcLag.ChangeTimeConstant(Texc);
+			//ExcLag.ChangeMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
 			break;
 		}
 	}
@@ -230,6 +245,7 @@ void CDynaExciterMustang::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("EqeV", CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("Eqsum", CVarIndex(CDynaExciterMustang::V_EQSUM, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("Lag", CVarIndex(CDynaExciterMustang::V_EQELAG, VARUNIT_PU)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaExciterMustang>>();
 }

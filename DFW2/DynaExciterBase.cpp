@@ -5,7 +5,8 @@
 using namespace DFW2;
 
 CDynaExciterBase::CDynaExciterBase() : CDevice(),
-			ExcLag(*this, { EqeV }, { Eqsum })
+			//  выход лага идет на ограничитель, а не на выход
+			ExcLag(*this, { EqeLag }, { Eqsum })	
 {
 }
 
@@ -43,8 +44,9 @@ double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	switch (nVarIndex)
 	{
 		MAP_VARIABLE(Eqe.Value, V_EQE)
-		MAP_VARIABLE(EqeV.Value, V_EQEV)
 		MAP_VARIABLE(Eqsum.Value, V_EQSUM)
+		MAP_VARIABLE(EqeV.Value, V_EQEV)
+		MAP_VARIABLE(EqeLag.Value, V_EQELAG)
 	}
 	return p;
 }
@@ -52,7 +54,7 @@ double* CDynaExciterBase::GetVariablePtr(ptrdiff_t nVarIndex)
 VariableIndexRefVec& CDynaExciterBase::GetVariables(VariableIndexRefVec& ChildVec)
 {
 	// ExcLag добавляется автоматически в JoinVariables
-	return CDevice::GetVariables(JoinVariables({Eqe, Eqsum, EqeV}, ChildVec));
+	return CDevice::GetVariables(JoinVariables({Eqe, Eqsum, EqeV, EqeLag}, ChildVec));
 }
 
 double CDynaExciterBase::GetIg()

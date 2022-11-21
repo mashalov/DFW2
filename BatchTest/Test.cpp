@@ -114,7 +114,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IColPtr GoRaiden{ RaidenParameters->Cols->Item("GoRaiden")};
 		IColPtr Atol{ RaidenParameters->Cols->Item("Atol") };
 		IColPtr ResultsFolder{ RaidenParameters->Cols->Item("ResultsFolder") };
-		Atol->PutZ(0, 1e-4);
+		Atol->PutZ(0, 1e-2);
 
 		/*report << fmt::format("-- Модель: {}\n-- Возмущение: {}\n-- Режим: {}\n-- Длительность ЭМПП: {:.3f}",
 			CaseFile.filename().u8string(),

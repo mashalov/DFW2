@@ -24,6 +24,7 @@ namespace DFW2
 			V_EQE,
 			V_EQSUM,
 			V_EQEV,
+			V_EQELAG,
 			V_LAST
 		};
 
@@ -35,7 +36,7 @@ namespace DFW2
 
 		double DECId, RegId;
 
-		VariableIndex Eqe, Eqsum, EqeV;
+		VariableIndex Eqe, Eqsum, EqeV, EqeLag;
 		double Eqe0, Ig0, Eq0, Ug0;
 
 

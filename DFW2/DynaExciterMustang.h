@@ -10,7 +10,8 @@ namespace DFW2
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		VariableIndex EqOutputValue;
-		CLimiterConst EqLimit;
+		// предусмотрен ограничитель на выходе (windup-режим)
+		CLimiterConst OutputLimit, EqLimit;
 		bool SetUpEqLimits(CDynaModel *pDynaModel, CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateInitial, CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateResulting);
 	public:
 
