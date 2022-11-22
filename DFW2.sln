@@ -39,6 +39,9 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "CompareResults", "CompareRe
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BatchTest", "BatchTest\BatchTest.vcxproj", "{4AC8B921-7D78-4241-A24E-786717ECA3D5}"
+	ProjectSection(ProjectDependencies) = postProject
+		{10A29A20-D54F-465D-8A51-EF34EA3D9DD7} = {10A29A20-D54F-465D-8A51-EF34EA3D9DD7}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

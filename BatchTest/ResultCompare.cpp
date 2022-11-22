@@ -1,53 +1,50 @@
 ﻿#include <stack>
 #include <set>
-#include <map>
 #include "ResultCompare.h"
 #include "..\DFW2\dfw2exception.h"
-#import "progid:ResultFile.Raiden.1" named_guids no_namespace
 
-std::string ResultCompare::Compare(const std::filesystem::path& ResultPath1, const std::filesystem::path& ResultPath2)
+ResultCompare::CompareResultsT ResultCompare::Compare(const std::filesystem::path& ResultPath1, const std::filesystem::path& ResultPath2)
 {
-	std::string strResult;
-	IResultPtr Result1, Result2;
-	if (const HRESULT hr{ Result1.CreateInstance(CLSID_Result) }; FAILED(hr))
+	CompareResultsT Results;
+
+	Results.push_back({ 100, "Генератор", "Delta", {} });
+
+	ResultFileLib::IResultPtr Result1, Result2;
+	if (const HRESULT hr{ Result1.CreateInstance(ResultFileLib::CLSID_Result) }; FAILED(hr))
 		throw dfw2error("Result CoCreate failed with scode {}", hr);
-	if (const HRESULT hr{ Result2.CreateInstance(CLSID_Result) }; FAILED(hr))
+	if (const HRESULT hr{ Result2.CreateInstance(ResultFileLib::CLSID_Result) }; FAILED(hr))
 		throw dfw2error("Result CoCreate failed with scode {}", hr);
 
-	IResultReadPtr ResultRead1{ Result1->Load(_bstr_t(ResultPath1.c_str())) };
-	IResultReadPtr ResultRead2{ Result2->Load(_bstr_t(ResultPath2.c_str())) };
+	ResultFileLib::IResultReadPtr ResultRead1{ Result1->Load(_bstr_t(ResultPath1.c_str())) };
+	ResultFileLib::IResultReadPtr ResultRead2{ Result2->Load(_bstr_t(ResultPath2.c_str())) };
 
 	std::map<long, long> RUSTabDeviceTypes;
 	for (const auto& DevType : DeviceTypeMap)
 		RUSTabDeviceTypes.emplace(DevType.RUSTab.Type * 1000000 + DevType.RUSTab.SubType, DevType.Raiden);
 
+	const _bstr_t bstrVarName{ Results.back().VariableName.c_str() };
 
-	struct ComparedDevices
-	{
-		long DeviceId;
-		std::string DeviceName;
-		ICompareResultPtr Compare;
-	};
+	
 
-	std::map<double, ComparedDevices, std::greater<double> > Comps;
-
-	std::stack<IDevicePtr> stack;
-	std::set<IDevicePtr> visited;
+	std::stack<ResultFileLib::IDevicePtr> stack;
+	std::set<ResultFileLib::IDevicePtr> visited;
 	stack.push(ResultRead1->GetRoot());
 	while (!stack.empty())
 	{
-		IDevicePtr device{ stack.top() };
+		ResultFileLib::IDevicePtr device{ stack.top() };
 		stack.pop();
 		if (auto MappedType{ RUSTabDeviceTypes.find(device->GetType()) } ; MappedType != RUSTabDeviceTypes.end())
 		{
-			IVariablesPtr Vars{ device->Variables };
+			ResultFileLib::IVariablesPtr Vars{ device->Variables };
 			for (long v{ 0 }; v < Vars->Count; v++)
 			{
-				IVariablePtr Var{ Vars->Item(v) };
-				if (Var->Name == _bstr_t("Delta"))
+				ResultFileLib::IVariablePtr Var{ Vars->Item(v) };
+				if (Var->Name == bstrVarName)
 				{
-					ICompareResultPtr CompareResult{ Var->Compare(ResultRead2->GetPlot(MappedType->second, device->Id, Var->Name)) };
-					IMinMaxDataPtr Max{ CompareResult->Max };
+					ResultFileLib::ICompareResultPtr CompareResult{ Var->Compare(ResultRead2->GetPlot(MappedType->second, device->Id, Var->Name)) };
+					ResultFileLib::IMinMaxDataPtr Max{ CompareResult->Max };
+
+					auto& Comps{ Results.back().Ordered };
 
 					Comps.emplace(std::abs(Max->Metric), 
 						ComparedDevices{
@@ -56,7 +53,7 @@ std::string ResultCompare::Compare(const std::filesystem::path& ResultPath1, con
 							CompareResult
 						});
 
-					while (Comps.size() > 10)
+					while (Comps.size() > 5)
 						Comps.erase(std::prev(Comps.end()));
 				}
 			}
@@ -64,25 +61,10 @@ std::string ResultCompare::Compare(const std::filesystem::path& ResultPath1, con
 		if (visited.find(device) == visited.end())
 		{
 			visited.insert(device);
-			IDevicesPtr children{ device->GetChildren() };
+			ResultFileLib::IDevicesPtr children{ device->GetChildren() };
 			for (long i = 0; i < children->GetCount(); i++)
 				stack.push(children->Item(i));
 		}
 	}
-
-	for (const auto& diff : Comps)
-	{
-		IMinMaxDataPtr Max{ diff.second.Compare->Max };
-		strResult.append(fmt::format("{} {} Max {:.5f}({:.5f}) {:.5f}<=>{:.5f} Avg {:.5f}\n",
-			diff.second.DeviceId,
-			diff.second.DeviceName,
-			Max->Metric,
-			Max->Time,
-			Max->Value1,
-			Max->Value2,
-			diff.second.Compare->Average
-		)
-		);
-	}
-	return strResult;
+	return Results;
 }

@@ -1,7 +1,11 @@
 ﻿#pragma once
 #include <string>
 #include <array>
+#include <list>
+#include <map>
 #include <filesystem>
+
+#import "progid:ResultFile.Raiden.1" named_guids
 
 enum eDFW2DEVICETYPE
 {
@@ -191,7 +195,25 @@ public:
 		RUSTab;
 		long Raiden;
 	};
-	std::string Compare(const std::filesystem::path& ResultPath1, const std::filesystem::path& ResultPath2);
+
+	struct ComparedDevices
+	{
+		long DeviceId;
+		std::string DeviceName;
+		ResultFileLib::ICompareResultPtr CompareResult;
+	};
+
+	struct ComparedVariables
+	{
+		long DeviceTypeId;
+		std::string DeviceTypeVerbal;
+		std::string VariableName;
+		std::map<double, ComparedDevices, std::greater<double> > Ordered;
+	};
+
+	using CompareResultsT = std::list <ComparedVariables>;
+
+	CompareResultsT Compare(const std::filesystem::path& ResultPath1, const std::filesystem::path& ResultPath2);
 
 
 	static constexpr const std::array<TypeMap, 3> DeviceTypeMap =

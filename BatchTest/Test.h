@@ -29,11 +29,20 @@ protected:
 	std::filesystem::path rstPath_, dfwPath_, scnPath_, macroPath_;
 	struct Options
 	{
-		bool EmsMode_ = false;
+		bool EmsMode = false;
+		long CaseId = 0;
+		double Duration = 15;
+		double RaidenAtol = 1e-4;
+		double RUSTabHmin = 1e-2;
+		std::filesystem::path ResultPath;
 	};
 	void TestPair(const std::filesystem::path& CaseFile, const std::filesystem::path& ContingencyFile, const Options& Opts);
 	std::ofstream report;
+	std::filesystem::path parametersPath_;
+	void ReadParameters();
+	Options GlobalOptions;
 public:
+	CBatchTest(const std::filesystem::path& parametersPath) :parametersPath_(parametersPath) {}
 	void Run();
 	void AddCase(std::filesystem::path CaseFile);
 	void AddContingency(std::filesystem::path ContingencyFile);
