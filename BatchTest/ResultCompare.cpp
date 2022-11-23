@@ -9,14 +9,13 @@ ResultCompare::CompareResultsT ResultCompare::Compare(const std::filesystem::pat
 
 	Results.push_back({ 100, "Генератор", "Delta", {} });
 
-	ResultFileLib::IResultPtr Result1, Result2;
-	if (const HRESULT hr{ Result1.CreateInstance(ResultFileLib::CLSID_Result) }; FAILED(hr))
-		throw dfw2error("Result CoCreate failed with scode {}", hr);
-	if (const HRESULT hr{ Result2.CreateInstance(ResultFileLib::CLSID_Result) }; FAILED(hr))
-		throw dfw2error("Result CoCreate failed with scode {}", hr);
+	std::array<ResultFileLib::IResultPtr, 2> BothResults;
+	for(auto&& result : BothResults)
+	if (const HRESULT hr{ result.CreateInstance(ResultFileLib::CLSID_Result)}; FAILED(hr))
+		throw dfw2error("Ошибка создания модуля работы с результатами, scode {:0x}", static_cast<unsigned long>(hr));
 
-	ResultFileLib::IResultReadPtr ResultRead1{ Result1->Load(_bstr_t(ResultPath1.c_str())) };
-	ResultFileLib::IResultReadPtr ResultRead2{ Result2->Load(_bstr_t(ResultPath2.c_str())) };
+	ResultFileLib::IResultReadPtr ResultRead1{ BothResults[0]->Load(_bstr_t(ResultPath1.c_str())) },
+								  ResultRead2{ BothResults[1]->Load(_bstr_t(ResultPath2.c_str())) };
 
 	std::map<long, long> RUSTabDeviceTypes;
 	for (const auto& DevType : DeviceTypeMap)
