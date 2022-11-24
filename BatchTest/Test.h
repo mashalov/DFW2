@@ -35,6 +35,7 @@ protected:
 		double RaidenAtol = 1e-4;
 		double RUSTabHmin = 1e-2;
 		std::filesystem::path ResultPath;
+		long SelectedRun = 0;
 	};
 	void TestPair(const std::filesystem::path& CaseFile, const std::filesystem::path& ContingencyFile, const Options& Opts);
 	std::ofstream report;

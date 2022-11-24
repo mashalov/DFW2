@@ -28,6 +28,7 @@ void CBatchTest::ReadParameters()
 		GlobalOptions.RUSTabHmin = parameters.at("RUSTabHmin").get<double>();
 		GlobalOptions.RaidenAtol = parameters.at("RaidenAtol").get<double>();
 		GlobalOptions.ResultPath = parameters.at("ResultPath").get<std::string>();
+		GlobalOptions.SelectedRun = parameters.at("SelectedRun").get<long>();
 
 
 		std::cout << "Поиск файлов моделей в каталоге " << CaseFilesFolder.string() << std::endl;
@@ -80,7 +81,11 @@ void CBatchTest::Run()
 	if (!parametersPath_.empty())
 		ReadParameters();
 
-	report.open("c:\\tmp\\rep.txt");
+	report.open("briefreport.csv");
+	report.imbue(std::locale("fr_FR"));  // Set OUTPUT to use a COMMA
+	unsigned char bom[] = { 0xEF,0xBB,0xBF };
+	report.write((char*)bom, sizeof(bom));
+	report << fmt::format("Id;Модель;Возмущение;RUSTab;Raiden;T RUSTab;T Raiden;Макс откл;Переменная\n");
 
 
 	constexpr const char* NoRastrWinFoundInRegistry{ "Не найдено данных RastrWin3 в реестре" };
@@ -131,7 +136,11 @@ void CBatchTest::Run()
 				
 				Options opts{GlobalOptions};
 				opts.CaseId = ++CaseId;
-				TestPair(casefile, contfile, opts);
+				// если SelectedRun больше нуля - считаем только комбинацию с номером
+				// равным SelectedRun
+				if((opts.SelectedRun > 0 && opts.SelectedRun == opts.CaseId) || 
+					opts.SelectedRun <= 0)
+					TestPair(casefile, contfile, opts);
 			}
 	}
 	catch (const std::runtime_error& er)
@@ -165,27 +174,27 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IColPtr Hint{ ComDynamic->Cols->Item("Hint") };
 		IColPtr Hmin{ ComDynamic->Cols->Item("Hmin") };
 		IColPtr Hmax{ ComDynamic->Cols->Item("Hmax") };
+		IColPtr Hout{ ComDynamic->Cols->Item("Hout") };
 		IColPtr SnapTemplate{ComDynamic->Cols->Item("SnapTemplate")};
 		IColPtr SnapPath{ ComDynamic->Cols->Item("SnapPath") };
 
 		Hint->PutZ(0, Opts.RUSTabHmin);
 		Hmin->PutZ(0, Opts.RUSTabHmin);
+		Hout->PutZ(0, Opts.RUSTabHmin);
 
 		DurationSet->PutZ(0, Opts.Duration);
 
 		ITablePtr RaidenParameters{ Rastr->Tables->Item("RaidenParameters") };
 		IColPtr GoRaiden{ RaidenParameters->Cols->Item("GoRaiden")};
 		IColPtr Atol{ RaidenParameters->Cols->Item("Atol") };
+		IColPtr ZeroBranchImpedance{ RaidenParameters->Cols->Item("ZeroBranchImpedance") };
 		IColPtr ResultsFolder{ RaidenParameters->Cols->Item("ResultsFolder") };
+		IColPtr OutStep{ RaidenParameters->Cols->Item("OutStep") };
 
 		Atol->PutZ(0, Opts.RaidenAtol);
+		Hout->PutZ(0, Opts.RUSTabHmin);
 
-		/*report << fmt::format("-- Модель: {}\n-- Возмущение: {}\n-- Режим: {}\n-- Длительность ЭМПП: {:.3f}",
-			CaseFile.filename().u8string(),
-			ContingencyFile.filename().u8string(),
-			Opts.EmsMode_ ? "EMS" : "Инженерный",
-			DurationSet->GetZ(0).dblVal
-			) << std::endl;*/
+		ZeroBranchImpedance->PutZ(0, -1.0);
 
 		auto fnVerbalCode = [](const RastrRetCode& code) -> std::string
 		{
@@ -224,7 +233,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			DisableResultWriter->PutZ(0, 1);
 		}
 
-		report << CaseFile.filename().u8string() << ";" << ContingencyFile.filename().u8string() << ";";
+
 		const std::string ResultFileName{ fmt::format("{:05d}.sna", Opts.CaseId) };
 		std::filesystem::path ResultPath1(Opts.ResultPath), ResultPath2(Opts.ResultPath);
 		ResultPath1.append("RUSTab");
@@ -242,17 +251,19 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			CaseFile.u8string(),
 			ContingencyFile.u8string()
 		);
+
+		double Duration[2];
+		DFWSyncLossCause SyncLossCause[2];
+		RastrRetCode RetCode[2];
+
 		
 		for (int method{ 0 }; method < 2; method++)
 		{
-			CTestTimer Timer;
 			GoRaiden->PutZ(0, method);
-			const auto RustabRetCode{ Opts.EmsMode ? FWDynamic->RunEMSmode() : FWDynamic->Run() };
-			const auto Duration{ Timer.Duration() };
-
-			report << Duration << ";";
-			report << (fnVerbalSyncLossCause)(FWDynamic->SyncLossCause) << ";";
-
+			CTestTimer Timer;
+			RetCode[method] = Opts.EmsMode ? FWDynamic->RunEMSmode() : FWDynamic->Run();
+			Duration[method] = Timer.Duration();
+			SyncLossCause[method] = FWDynamic->SyncLossCause;
 			
 			std::cout << fmt::format("*\t{} {} режим "
 									 "\n\tРезультат: {}"
@@ -263,16 +274,19 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 
 					method ? "Raiden" : "RUSTab",
 					Opts.EmsMode ? "EMS" : "Инженерный",
-					(fnVerbalCode)(RustabRetCode),
+					(fnVerbalCode)(RetCode[method]),
 					FWDynamic->TimeReached,
 					(fnVerbalSyncLossCause)(FWDynamic->SyncLossCause),
 					(fnMessage)(FWDynamic->ResultMessage),
-					Duration) << std::endl;
+					Duration[method]) << std::endl;
 
 			if (!Opts.EmsMode)
 				std::cout << fmt::format("\tФайл результатов : {}",
 					method ? ResultPath2.u8string() : ResultPath1.u8string()) << std::endl;
 		}
+
+		double MaxDiff{ 0.0 };
+		std::string MaxDiffVariable;
 
 		if (!Opts.EmsMode)
 		{
@@ -299,8 +313,35 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 						diff.second.CompareResult->Average
 					);
 				}
+
+				if (!var.Ordered.empty())
+				{
+					const auto& diff{ *var.Ordered.begin() };
+					ResultFileLib::IMinMaxDataPtr Max{ diff.second.CompareResult->Max };
+					MaxDiff = Max->Metric;
+					MaxDiffVariable = fmt::format("{}.{} {} [{}]",
+						var.DeviceTypeVerbal, 
+						var.VariableName, 
+						diff.second.DeviceId, 
+						diff.second.DeviceName
+					);
+				}
 			}
 		}
+
+		//	report << fmt::format("Id;Модель;Возмущение;RUSTab;Raiden;T RUSTab;T Raiden;Макс откл;Переменная\n");
+		report <<
+			Opts.CaseId << ";" <<
+			CaseFile.u8string() << ";" <<
+			ContingencyFile.u8string() << ";" <<
+			(RetCode[0] != AST_OK ? (fnVerbalCode)(RetCode[0]) : (fnVerbalSyncLossCause)(SyncLossCause[0])) << ";" <<
+			(RetCode[1] != AST_OK ? (fnVerbalCode)(RetCode[1]) : (fnVerbalSyncLossCause)(SyncLossCause[1])) << ";" <<
+			Duration[0] << ";" <<
+			Duration[1] << ";" <<
+
+			MaxDiff << ";" <<
+			MaxDiffVariable << ";" <<
+			std::endl;
 	}
 
 	catch (const _com_error& er)

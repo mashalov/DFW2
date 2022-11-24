@@ -274,3 +274,4 @@ UMC/antlr4-master/antlr4-master/runtime/Cpp/
 UMC/CryptoPP/*.o
 UMC/CryptoPP/*.a
 cd/
+/BatchTest/briefreport.csv
