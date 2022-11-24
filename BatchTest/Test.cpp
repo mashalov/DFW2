@@ -93,7 +93,7 @@ void CBatchTest::Run()
 	try
 	{
 		if (const HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))
-			throw dfw2error("Ошибка CoInitialize scode {}", hr);
+			throw dfw2error("Ошибка CoInitialize, scode {:0x}", static_cast<unsigned long>(hr));
 	
 
 		std::filesystem::path templatePath;
@@ -161,7 +161,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 	{
 		IRastrPtr Rastr;
 		if (const HRESULT hr{ Rastr.CreateInstance(CLSID_Rastr) }; FAILED(hr))
-			throw dfw2error("Rastr CoCreate failed with scode {}", hr);
+			throw dfw2error("Ошибка создания Rastr, scode {:0x}", static_cast<unsigned long>(hr));
 		Rastr->Load(RG_REPL, bstrPath(CaseFile), bstrPath(rstPath_));
 		Rastr->Load(RG_REPL, bstrPath(ContingencyFile), bstrPath(scnPath_));
 		Rastr->NewFile(bstrPath(dfwPath_));
