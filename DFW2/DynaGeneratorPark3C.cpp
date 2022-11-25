@@ -109,7 +109,16 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (!bRes)
 		return bRes;
-	
+
+	DebugLog(fmt::format("{} Rfd {:.3f} lfd {:.3f} R1d {:.3f} l1d {:.3f} R1q {:.3f} L1q {:.3f}",
+		GetVerbalName(),
+		Rfd, 
+		lfd, 
+		R1d, 
+		l1d, 
+		R1q, 
+		l1q));
+	//
 	CompareParksParameterCalculation();
 
 	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
@@ -156,6 +165,17 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 		Psid_Psifd = -lad * l1d * detd;
 		Psid_Psi1d = -lad * lfd * detd;
 		Psiq_Psi1q = laq / l1Q;
+
+
+		DebugLog(fmt::format("{} lad {:.3f} lFd {:.3f} l1d {:.3f} l1Q {:.3f} Tdo1 {:.3f} Tdo2 {:.3f}",
+			GetVerbalName(),
+			lad,
+			lFd,
+			l1D,
+			l1Q,
+			lFd / Rfd,
+			l1D / R1d
+		));
 	}
 
 	return bRes;

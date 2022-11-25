@@ -29,6 +29,7 @@ void CBatchTest::ReadParameters()
 		GlobalOptions.RaidenAtol = parameters.at("RaidenAtol").get<double>();
 		GlobalOptions.ResultPath = parameters.at("ResultPath").get<std::string>();
 		GlobalOptions.SelectedRun = parameters.at("SelectedRun").get<long>();
+		GlobalOptions.RaidenStopOnOOS = parameters.at("RaidenStopOnOOS").get<bool>();
 
 
 		std::cout << "Поиск файлов моделей в каталоге " << CaseFilesFolder.string() << std::endl;
@@ -36,7 +37,7 @@ void CBatchTest::ReadParameters()
 		for (const auto& entry : std::filesystem::directory_iterator(CaseFilesFolder))
 		{
 			const auto& path{ entry.path() };
-			if (!path.has_extension())
+			if (!path.has_extension() && !std::filesystem::is_directory(path))
 			{
 				AddCase(path);
 				std::cout << "Добавлен файл модели " << path.u8string() << std::endl;
@@ -60,6 +61,7 @@ void CBatchTest::ReadParameters()
 		std::cout << "Режим: " << (GlobalOptions.EmsMode ? "EMS" : "Инженерный") << std::endl;
 		std::cout << "Точность Raiden: " << GlobalOptions.RaidenAtol << std::endl;
 		std::cout << "Hmin RUSTab: " << GlobalOptions.RUSTabHmin << std::endl;
+		std::cout << "Останов Raiden по АР: " << (GlobalOptions.RaidenStopOnOOS ? "Да": "Нет") << std::endl;
 	}
 	catch (const json::exception& jex)
 	{
@@ -223,8 +225,9 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IColPtr StopOnGeneratorOOS{ RaidenParameters->Cols->Item("StopOnGeneratorOOS") };
 		IColPtr DisableResultWriter{ RaidenParameters->Cols->Item("DisableResultsWriter") };
 
-		StopOnBranchOOS->PutZ(0, 1);
-		StopOnGeneratorOOS->PutZ(0, 1);
+
+		StopOnBranchOOS->PutZ(0, Opts.RaidenStopOnOOS ? 1 : 0);
+		StopOnGeneratorOOS->PutZ(0, StopOnBranchOOS->GetZ(0));
 
 		if (Opts.EmsMode)
 		{

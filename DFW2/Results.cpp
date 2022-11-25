@@ -129,7 +129,7 @@ void CDynaModel::WriteResultsHeader()
 	sc.m_MaxBranchAngle.Reset();
 	sc.m_MaxGeneratorAngle.Reset();
 
-	m_dTimeWritten = 0.0;
+	TimeWritten_ = 0.0;
 }
 
 void CDynaModel::WriteResults()
@@ -137,10 +137,11 @@ void CDynaModel::WriteResults()
 	if (m_Parameters.m_bDisableResultsWriter)
 		return;
 
-	if (sc.m_bEnforceOut || GetCurrentTime() >= m_dTimeWritten)
+	if (sc.m_bEnforceOut || GetCurrentTime() >= TimeWritten_ + m_Parameters.m_dOutStep)
 	{
-		m_ResultsWriter.WriteResults({ GetCurrentTime(), GetH() });
-		m_dTimeWritten = GetCurrentTime() + m_Parameters.m_dOutStep;
+		const auto TimeToWrite{ (std::max)(GetCurrentTime(), TimeWritten_) };
+		m_ResultsWriter.WriteResults({ TimeToWrite, GetH() });
+		TimeWritten_ = TimeToWrite;
 		sc.m_bEnforceOut = false;
 	}
 }

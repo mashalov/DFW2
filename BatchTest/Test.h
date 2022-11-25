@@ -36,6 +36,7 @@ protected:
 		double RUSTabHmin = 1e-2;
 		std::filesystem::path ResultPath;
 		long SelectedRun = 0;
+		bool RaidenStopOnOOS = false;
 	};
 	void TestPair(const std::filesystem::path& CaseFile, const std::filesystem::path& ContingencyFile, const Options& Opts);
 	std::ofstream report;

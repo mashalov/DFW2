@@ -280,9 +280,10 @@ namespace DFW2
 
 				void Update(RightVector* pRightVector, double dError)
 				{
-					if (pVector == nullptr || dError > dMaxError)
+					const auto absValue{ std::abs(dError) };
+					if (pVector == nullptr || absValue > dMaxError)
 					{
-						dMaxError = dError;
+						dMaxError = absValue;
 						pVector = pRightVector;
 					}
 				}
@@ -467,8 +468,7 @@ namespace DFW2
 				// предополагается, что шаг не может быть отменен
 				// и поэтому сумма Кэхэна обновляется
 				KahanC = (temp - t0) - ky;
-				if(t < temp)
-					t = temp;
+				t = temp;
 
 				_OrderStatistics& os = OrderStatistics[q - 1];
 				ky = m_dCurrentH - os.dTimePassedKahan;
@@ -490,8 +490,7 @@ namespace DFW2
 				// can be disregarded;
 				const double ky{ m_dCurrentH - KahanC };
 				const double temp{ t0 + ky };
-				if(t < temp) 
-					t = temp;
+				t = temp;
 			}
 
 			void Assign_t0()
@@ -649,7 +648,7 @@ namespace DFW2
 
 		std::atomic<bool> bStopProcessing = false;
 
-		double m_dTimeWritten;
+		double TimeWritten_;
 		const char* m_cszDampingName = nullptr;
 
 		COscDetectorBase m_OscDetector;
