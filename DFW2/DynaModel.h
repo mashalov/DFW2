@@ -465,15 +465,17 @@ namespace DFW2
 				volatile double ky = m_dCurrentH - KahanC;
 				volatile double temp = t0 + ky;
 				// предополагается, что шаг не может быть отменен
-				// и поэтому сумма Кэхэна обновляет ся
+				// и поэтому сумма Кэхэна обновляется
 				KahanC = (temp - t0) - ky;
-				t = temp;
+				if(t < temp)
+					t = temp;
 
 				_OrderStatistics& os = OrderStatistics[q - 1];
 				ky = m_dCurrentH - os.dTimePassedKahan;
 				temp = os.dTimePassed + ky;
 				os.dTimePassedKahan = (temp - os.dTimePassed) - ky;
-				os.dTimePassed = temp;
+				if(os.dTimePassed < temp)
+					os.dTimePassed = temp;
 
 				_ASSERTE(std::abs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t) < DFW2_EPSILON);
 			}
@@ -486,9 +488,10 @@ namespace DFW2
 
 				// do not update KahanC, as this check time
 				// can be disregarded;
-				double ky = m_dCurrentH - KahanC;
-				double temp = t0 + ky;
-				t = temp;
+				const double ky{ m_dCurrentH - KahanC };
+				const double temp{ t0 + ky };
+				if(t < temp) 
+					t = temp;
 			}
 
 			void Assign_t0()
