@@ -69,7 +69,7 @@ void CBatchTest::ReadParameters()
 		std::cout << "RUSTab Hmin: " << GlobalOptions.RUSTabHmin << std::endl;
 		std::cout << "Raiden останов по АР: " << (GlobalOptions.RaidenStopOnOOS ? "Да": "Нет") << std::endl;
 		if(GlobalOptions.SelectedRun > 0)
-			std::cout << "Выбран расчет № : " << GlobalOptions.SelectedRun << std::endl;
+			std::cout << "Выбран расчет №: " << GlobalOptions.SelectedRun << std::endl;
 	}
 	catch (const json::exception& jex)
 	{

@@ -344,7 +344,8 @@ bool CDynaModel::RunTransient()
 					bResultsNeedToBeFinished = false;
 					FinishWriteResults();
 				}
-				Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка в цикле расчета : {}", err.what()));
+				Log(DFW2MessageStatus::DFW2LOG_FATAL, FinalMessage_ = fmt::format("Ошибка в цикле расчета : {}", err.what()));
+				bRes = false;
 			}
 			EndProgress();
 		}
@@ -1188,7 +1189,15 @@ double CDynaModel::GetRatioForCurrentOrder()
 
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
-		
+
+	const double maxnorm{ 0.2 };
+
+	// гибридная норма
+	//ConvTest[DET_ALGEBRAIC].dErrorSum *= (1.0 - maxnorm);
+	//ConvTest[DET_ALGEBRAIC].dErrorSum += maxnorm * sc.Integrator.Weighted.dMaxError;
+	//ConvTest[DET_DIFFERENTIAL].dErrorSum *= (1.0 - maxnorm);
+	//ConvTest[DET_DIFFERENTIAL].dErrorSum += maxnorm * sc.Integrator.Weighted.dMaxError;
+
 	const double DqSame0{ ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[sc.q - 1][3] };
 	const double DqSame1{ ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[sc.q + 1][3] };
 	const double rSame0{ pow(DqSame0, -1.0 / (sc.q + 1)) };
