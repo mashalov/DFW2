@@ -30,7 +30,10 @@ void CBatchTest::ReadParameters()
 		GlobalOptions.ResultPath = parameters.at("ResultPath").get<std::string>();
 		GlobalOptions.SelectedRun = parameters.at("SelectedRun").get<long>();
 		GlobalOptions.RaidenStopOnOOS = parameters.at("RaidenStopOnOOS").get<bool>();
-
+		
+		constexpr const char* szRaidenRtol{ "RaidenRtol" };
+		if (parameters.contains(szRaidenRtol))
+			GlobalOptions.RaidenRtol = parameters[szRaidenRtol].get<double>();
 
 		std::cout << "Поиск файлов моделей в каталоге " << CaseFilesFolder.string() << std::endl;
 
@@ -59,9 +62,10 @@ void CBatchTest::ReadParameters()
 		std::cout << "Будет выполнено " << ContingencyFiles_.size() * CaseFiles_.size() << " расчетов" << std::endl;
 		std::cout << "Длительность расчета: " << GlobalOptions.Duration << std::endl;
 		std::cout << "Режим: " << (GlobalOptions.EmsMode ? "EMS" : "Инженерный") << std::endl;
-		std::cout << "Точность Raiden: " << GlobalOptions.RaidenAtol << std::endl;
-		std::cout << "Hmin RUSTab: " << GlobalOptions.RUSTabHmin << std::endl;
-		std::cout << "Останов Raiden по АР: " << (GlobalOptions.RaidenStopOnOOS ? "Да": "Нет") << std::endl;
+		std::cout << "Raiden Atol: " << GlobalOptions.RaidenAtol << std::endl;
+		std::cout << "Raiden Rtol: " << GlobalOptions.RaidenRtol << std::endl;
+		std::cout << "RUSTab Hmin: " << GlobalOptions.RUSTabHmin << std::endl;
+		std::cout << "Raiden останов по АР: " << (GlobalOptions.RaidenStopOnOOS ? "Да": "Нет") << std::endl;
 	}
 	catch (const json::exception& jex)
 	{
@@ -189,10 +193,12 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		ITablePtr RaidenParameters{ Rastr->Tables->Item("RaidenParameters") };
 		IColPtr GoRaiden{ RaidenParameters->Cols->Item("GoRaiden")};
 		IColPtr Atol{ RaidenParameters->Cols->Item("Atol") };
+		IColPtr Rtol{ RaidenParameters->Cols->Item("Rtol") };
 		IColPtr ZeroBranchImpedance{ RaidenParameters->Cols->Item("ZeroBranchImpedance") };
 		IColPtr ResultsFolder{ RaidenParameters->Cols->Item("ResultsFolder") };
 		IColPtr OutStep{ RaidenParameters->Cols->Item("OutStep") };
 
+		Rtol->PutZ(0, Opts.RaidenRtol);
 		Atol->PutZ(0, Opts.RaidenAtol);
 		Hout->PutZ(0, Opts.RUSTabHmin);
 

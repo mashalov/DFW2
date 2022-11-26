@@ -147,7 +147,7 @@ bool CDynaModel::RunTransient()
 	AutomaticDevice.BuildStructure();
 	AutomaticDevice.GetDeviceByIndex(0)->SetName(CDFW2Messages::m_cszAutomaticScenario);
 		
-	bool bRes = true;
+	bool bRes{ true };
 #ifdef _WIN64
 	_set_FMA3_enable(1);
 #endif
@@ -417,7 +417,8 @@ bool CDynaModel::RunTransient()
 
 	catch (const dfw2error& err)
 	{
-		Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Исключение : {}", err.what()));
+		Log(DFW2MessageStatus::DFW2LOG_FATAL, FinalMessage_ = fmt::format("Исключение : {}", err.what()));
+		bRes = false;
 	}
 	return bRes;
 }

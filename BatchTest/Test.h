@@ -33,6 +33,7 @@ protected:
 		long CaseId = 0;
 		double Duration = 15;
 		double RaidenAtol = 1e-4;
+		double RaidenRtol = 1e-4;
 		double RUSTabHmin = 1e-2;
 		std::filesystem::path ResultPath;
 		long SelectedRun = 0;
