@@ -89,6 +89,7 @@ namespace DFW2
 			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo;
 			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 			double m_dProcessDuration = 150.0;
+			double Hmax = (std::numeric_limits<double>::max)();
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -161,6 +162,7 @@ namespace DFW2
 			static constexpr const char* m_cszMaxPVPQSwitches = "MaxPVPQSwitches";
 			static constexpr const char* m_cszPVPQSwitchPerIt = "PVPQSwitchesPerIteration";
 			static constexpr const char* m_cszLFStartupNames[4] = { "None","Seidell", "Tanh", "RKF"};
+			static constexpr const char* m_cszHmax = { "Hmax" };
 
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
@@ -353,7 +355,7 @@ namespace DFW2
 			double dFilteredOrder = 0.0;
 			double dFilteredStepInner =0.0;								// фильтр минимального шага на серии шагов
 			double dFilteredOrderInner =0.0;
-			double dRateGrowLimit = FLT_MAX;
+			double dRateGrowLimit = (std::numeric_limits<double>::max)();
 			ptrdiff_t nStepsCount = 0;
 			ptrdiff_t nNewtonIterationsCount = 0;
 			double dLastConditionNumber = 1.0;
@@ -416,7 +418,7 @@ namespace DFW2
 			void StepChanged()
 			{
 				nStepsToStepChange = nStepsToStepChangeParameter;
-				dFilteredStep = dFilteredStepInner = FLT_MAX;
+				dFilteredStep = dFilteredStepInner = (std::numeric_limits<double>::max)();
 			}
 
 			bool FilterStep(double dStep);
@@ -427,7 +429,7 @@ namespace DFW2
 			void OrderChanged()
 			{
 				nStepsToOrderChange = nStepsToOrderChangeParameter;
-				dFilteredOrderInner = dFilteredOrder = FLT_MAX;
+				dFilteredOrderInner = dFilteredOrder = (std::numeric_limits<double>::max)();
 			}
 
 			void ResetStepsToFail()
@@ -743,10 +745,14 @@ namespace DFW2
 			return sc.m_bNordsiekReset;
 		}
 
-		inline void SetH(double h)
+		//  возвращает отношение текущего шага к новому
+		inline double SetH(double h)
 		{
+			h = (std::min)(h, m_Parameters.Hmax);
+			const double ratio{ sc.m_dCurrentH > 0 ? h / sc.m_dCurrentH : 1.0 };
 			sc.m_dCurrentH = h;
 			Computehl0();
+			return ratio;
 		}
 
 		inline double GetOldH() const
@@ -865,7 +871,7 @@ namespace DFW2
 
 		inline double GetZeroCrossingTolerance() const
 		{
-			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? FLT_MAX : 100.0 * m_Parameters.m_dAtol;
+			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? (std::numeric_limits<double>::max)() : 100.0 * m_Parameters.m_dAtol;
 		}
 
 		// Текущий номер итерации Ньютона

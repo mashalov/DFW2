@@ -345,10 +345,11 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 
 		if (MathUtils::CSquareSolver::Roots(a, b, c, h1, h2))
 		{
-			_ASSERTE(!(Equal(h1, FLT_MAX) && Equal(h2, FLT_MAX)));
+			_ASSERTE(!(Equal(h1, (std::numeric_limits<double>::max)()) && 
+					   Equal(h2, (std::numeric_limits<double>::max)())));
 
-			if (h1 > 0.0 || h1 < -h) h1 = FLT_MAX;
-			if (h2 > 0.0 || h2 < -h) h2 = FLT_MAX;
+			if (h1 > 0.0 || h1 < -h) h1 = (std::numeric_limits<double>::max)();
+			if (h2 > 0.0 || h2 < -h) h2 = (std::numeric_limits<double>::max)();
 
 			// возвращаем наименьший из действительных корней
 			rH = (h + (std::min)(h1, h2)) / h;

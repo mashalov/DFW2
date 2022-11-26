@@ -1204,7 +1204,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 		GetIntegrationStepNumber(),
 		sc.Integrator.Weighted.Info(),
 		r,
-		sc.dRateGrowLimit < FLT_MAX ? sc.dRateGrowLimit : 0.0,
+		sc.dRateGrowLimit < (std::numeric_limits<double>::max)() ? sc.dRateGrowLimit : 0.0,
 		sc.nStepsToEndRateGrow - sc.nStepsCount));
 
 	// считаем ошибку в уравнении если шаг придется уменьшить
@@ -1461,9 +1461,9 @@ void CDynaModel::GoodStep(double rSame)
 				if (sc.FilterOrder(rHigher))
 				{
 					ConstructNordsiekOrder();
-					SetH(sc.m_dCurrentH * sc.dFilteredOrder);
+					const double ratio{ SetH(sc.m_dCurrentH * sc.dFilteredOrder) };
 					ChangeOrder(2);
-					RescaleNordsiek(sc.dFilteredOrder);
+					RescaleNordsiek(ratio);
 					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 				}
 			}
@@ -1485,9 +1485,9 @@ void CDynaModel::GoodStep(double rSame)
 				// пытаемся перейти на первый порядок
 				if (sc.FilterOrder(rLower))
 				{
-					SetH(sc.m_dCurrentH * sc.dFilteredOrder);
+					const double ratio{ SetH(sc.m_dCurrentH * sc.dFilteredOrder) };
 					ChangeOrder(1);
-					RescaleNordsiek(sc.dFilteredOrder);
+					RescaleNordsiek(ratio);
 					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
 				}
 			}
@@ -1507,9 +1507,9 @@ void CDynaModel::GoodStep(double rSame)
 			// RescaleNordsiek
 			const double k{ sc.dFilteredStep };
 			// рассчитываем новый шаг
-			SetH(sc.m_dCurrentH * sc.dFilteredStep);
+			const double ratio{ SetH(sc.m_dCurrentH * sc.dFilteredStep) };
 			// пересчитываем Nordsieck на новый шаг
-			RescaleNordsiek(sc.dFilteredStep);
+			RescaleNordsiek(ratio);
 			Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), GetH(), k, sc.q));
 		}
 	}

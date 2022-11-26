@@ -34,6 +34,7 @@ protected:
 		double Duration = 15;
 		double RaidenAtol = 1e-4;
 		double RaidenRtol = 1e-4;
+		double RUSTabAtol = 1e-6;
 		double RUSTabHmin = 1e-2;
 		std::filesystem::path ResultPath;
 		long SelectedRun = 0;

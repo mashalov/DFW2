@@ -30,6 +30,7 @@ void CBatchTest::ReadParameters()
 		GlobalOptions.ResultPath = parameters.at("ResultPath").get<std::string>();
 		GlobalOptions.SelectedRun = parameters.at("SelectedRun").get<long>();
 		GlobalOptions.RaidenStopOnOOS = parameters.at("RaidenStopOnOOS").get<bool>();
+		GlobalOptions.RUSTabAtol = parameters.at("RUSTabAtol").get<double>();
 		
 		constexpr const char* szRaidenRtol{ "RaidenRtol" };
 		if (parameters.contains(szRaidenRtol))
@@ -64,8 +65,11 @@ void CBatchTest::ReadParameters()
 		std::cout << "Режим: " << (GlobalOptions.EmsMode ? "EMS" : "Инженерный") << std::endl;
 		std::cout << "Raiden Atol: " << GlobalOptions.RaidenAtol << std::endl;
 		std::cout << "Raiden Rtol: " << GlobalOptions.RaidenRtol << std::endl;
+		std::cout << "RUSTab.Atol: " << GlobalOptions.RUSTabAtol << std::endl;
 		std::cout << "RUSTab Hmin: " << GlobalOptions.RUSTabHmin << std::endl;
 		std::cout << "Raiden останов по АР: " << (GlobalOptions.RaidenStopOnOOS ? "Да": "Нет") << std::endl;
+		if(GlobalOptions.SelectedRun > 0)
+			std::cout << "Выбран расчет № : " << GlobalOptions.SelectedRun << std::endl;
 	}
 	catch (const json::exception& jex)
 	{
@@ -183,10 +187,13 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IColPtr Hout{ ComDynamic->Cols->Item("Hout") };
 		IColPtr SnapTemplate{ComDynamic->Cols->Item("SnapTemplate")};
 		IColPtr SnapPath{ ComDynamic->Cols->Item("SnapPath") };
+		IColPtr RUSTabAtol{ ComDynamic->Cols->Item("IntEpsilon") };
 
 		Hint->PutZ(0, Opts.RUSTabHmin);
 		Hmin->PutZ(0, Opts.RUSTabHmin);
 		Hout->PutZ(0, Opts.RUSTabHmin);
+		RUSTabAtol->PutZ(0, Opts.RUSTabAtol);
+		Hmax->PutZ(0, 5);
 
 		DurationSet->PutZ(0, Opts.Duration);
 
