@@ -173,13 +173,12 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 		m_Parameters.m_dLRCToShuntVmin = 0.5;
 		//m_Parameters.m_dZeroBranchImpedance = 4.0E-6;
-		m_Parameters.m_dProcessDuration = 15;
-		m_Parameters.m_dFrequencyTimeConstant = 0.04;
+		//m_Parameters.m_dProcessDuration = 15;
+		//m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 		m_Parameters.m_dOutStep = 1E-10;
 		//m_Parameters.eFreqDampingType = APDT_ISLAND;
 		//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
-
 		//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
 		//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 		//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL;
@@ -189,8 +188,8 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 		//m_Parameters.m_dAtol = 1E-4;
 		//m_Parameters.m_dRtol = 1E-4;
-		//m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
-		//m_Parameters.m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
+	//m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
+		//m_Parameters.m_eParkPar metersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bDisableResultsWriter = false;
 
 		m_Parameters.Flat = true;
@@ -573,7 +572,7 @@ bool CDynaModel::NewtonUpdate()
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
 	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
-	double ConvCheck = 0.1 / (sc.q + 2);
+	const double ConvCheck{ 0.1 / (sc.q + 2.0) };
 
 	double dOldMaxAbsError = sc.Newton.Absolute.dMaxError;
 
@@ -1264,7 +1263,6 @@ double CDynaModel::GetRatioForLowerOrder()
 {
 	double rDown{ 0.0 };
 	_ASSERTE(sc.q == 2);
-
 	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 

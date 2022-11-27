@@ -204,12 +204,14 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IColPtr ZeroBranchImpedance{ RaidenParameters->Cols->Item("ZeroBranchImpedance") };
 		IColPtr ResultsFolder{ RaidenParameters->Cols->Item("ResultsFolder") };
 		IColPtr OutStep{ RaidenParameters->Cols->Item("OutStep") };
+		IColPtr DurationRaiden{ RaidenParameters->Cols->Item("Duration") };
 
 		Rtol->PutZ(0, Opts.RaidenRtol);
 		Atol->PutZ(0, Opts.RaidenAtol);
 		Hout->PutZ(0, Opts.RUSTabHmin);
 
 		ZeroBranchImpedance->PutZ(0, -1.0);
+		DurationRaiden->PutZ(0, Opts.Duration);
 
 		auto fnVerbalCode = [](const RastrRetCode& code) -> std::string
 		{

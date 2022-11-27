@@ -725,7 +725,7 @@ namespace DFW2
 		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
 		struct RightVector* GetRightVector(const InputVariable& Variable);
 
-		inline double GetOmega0() const
+		inline constexpr double GetOmega0() const
 		{
 			return 2 * 50.0 * M_PI;
 		}

@@ -2326,6 +2326,10 @@ void CLoadFlow::Z0()
 			PQnodes.push_back(node);
 		}
 
+	// PQ-узлов нет
+	if (PQnodes.empty())
+		return;
+
 	size_t nBranchesCount{ pDynaModel->Branches.Count() };
 	// оценка количества ненулевых элементов
 	size_t nNzCount{ PQnodes.size() + 2 * nBranchesCount};

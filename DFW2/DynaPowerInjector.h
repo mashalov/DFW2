@@ -48,7 +48,7 @@ namespace DFW2
 		void FinishStep() override;
 
 		// комплекс шунта Нортона в узле подключения	
-		virtual cplx Ynorton() const { return Ynorton_; }
+		virtual const cplx& Ynorton() const { return Ynorton_; }
 
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
