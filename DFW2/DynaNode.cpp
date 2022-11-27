@@ -1298,7 +1298,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 
 	// выбираем границу сравгнения с гистерезисом - на снижение -, на повышение +
 	const double Border{ LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst) };
-	const double  h{ pDynaModel->GetH() };
+	const double  h{ pDynaModel->H() };
 	const double* lm{ pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1] };
 
 	const ptrdiff_t q(pDynaModel->GetOrder());

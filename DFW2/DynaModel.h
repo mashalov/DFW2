@@ -319,6 +319,19 @@ namespace DFW2
 
 		struct StepControl
 		{
+		protected:
+			double m_dCurrentH = 0.0;
+		public:
+
+			inline double CurrentH() const
+			{
+				return m_dCurrentH;
+			}
+			void SetH(double h)
+			{
+				m_dCurrentH = h;
+			}
+
 			enum class eIterationMode
 			{
 				NEWTON,
@@ -366,7 +379,6 @@ namespace DFW2
 			_OrderStatistics OrderStatistics[2];
 			ptrdiff_t nDiscontinuityNewtonFailures = 0;
 			ptrdiff_t nMinimumStepFailures = 0;
-			double m_dCurrentH = 0.0;
 			double m_dOldH = -1.0;
 			double m_dStoredH = 0.0;
 			ptrdiff_t q = 1;
@@ -735,9 +747,9 @@ namespace DFW2
 			return sc.q;
 		}
 
-		inline double GetH() const
+		inline double H() const
 		{
-			return sc.m_dCurrentH;
+			return sc.CurrentH();
 		}
 
 		inline bool IsNordsiekReset() const
@@ -749,8 +761,8 @@ namespace DFW2
 		inline double SetH(double h)
 		{
 			h = (std::min)(h, m_Parameters.Hmax);
-			const double ratio{ sc.m_dCurrentH > 0 ? h / sc.m_dCurrentH : 1.0 };
-			sc.m_dCurrentH = h;
+			const double ratio{ H() > 0 ? h / H() : 1.0};
+			sc.SetH(h);
 			Computehl0();
 			return ratio;
 		}
@@ -871,7 +883,7 @@ namespace DFW2
 
 		inline double GetZeroCrossingTolerance() const
 		{
-			return ((sc.Hmin / sc.m_dCurrentH) > 0.999) ? (std::numeric_limits<double>::max)() : 100.0 * m_Parameters.m_dAtol;
+			return ((sc.Hmin / H()) > 0.999) ? (std::numeric_limits<double>::max)() : 100.0 * m_Parameters.m_dAtol;
 		}
 
 		// Текущий номер итерации Ньютона
@@ -942,10 +954,10 @@ namespace DFW2
 
 		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const;
 		void DebugLog(std::string_view Message) const;
-
-		double Methodl[4][4];
-		double Methodlh[4];
-		static const double MethodlDefault[4][4];
+				
+		double Methodl[4][4];	// текущие коэффициенты метода интегрирования
+		double Methodlh[4];		// коэффициенты метода интегрирования l0, умноженные на шаг
+		static const double MethodlDefault[4][4]; // фиксированные коэффициенты метода интегрирования
 
 		static double gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double* Sol);
 

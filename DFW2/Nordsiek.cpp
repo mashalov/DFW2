@@ -143,7 +143,7 @@ void CDynaModel::ReInitializeNordsiek()
 			pVectorBegin->SavedError = 0.0;
 		}
 		// масшатабируем Nordsieck на заданный шаг
-		RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
+		RescaleNordsiek(H() / sc.m_dOldH);
 		BuildDerivatives();
 	}
 	sc.OrderChanged();
@@ -200,7 +200,7 @@ bool CDynaModel::DetectAdamsRinging()
 
 	if ((m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA ||
 		m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL) &&
-		sc.q == 2 && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
+		sc.q == 2 && H() > 0.01 && sc.m_dOldH > 0.0)
 	{
 		const double Methodl1[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
 		const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
@@ -213,7 +213,7 @@ bool CDynaModel::DetectAdamsRinging()
 			double newValue = pVectorBegin->Error *  Methodl1[pVectorBegin->EquationType] +  pVectorBegin->Nordsiek[1];
 #endif
 			// если знак производной изменился - увеличиваем счетчик циклов
-			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && std::abs(newValue) > pVectorBegin->Atol * sc.m_dCurrentH * 5.0)
+			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && std::abs(newValue) > pVectorBegin->Atol * H() * 5.0)
 				pVectorBegin->RingsCount++;
 			else
 				pVectorBegin->RingsCount = 0;
@@ -264,7 +264,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 {
 	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
-	const double alpha{ sc.m_dCurrentH / sc.m_dOldH > 0.0 ? sc.m_dOldH : 1.0 };
+	const double alpha{ H() / sc.m_dOldH > 0.0 ? sc.m_dOldH : 1.0};
 	const double alphasq{ alpha * alpha };
 	const double alpha1{ (1.0 + alpha) };
 	double alpha2{ 1.0 + 2.0 * alpha };
@@ -273,7 +273,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	// режим подавления рингинга активируем если порядок метода 2
 	// шаг превышает 0.01 и UpdateNordsieck вызван для перехода к следующему
 	// шагу после успешного завершения предыдущего
-	if (sc.q == 2 && bAllowSuppression && sc.m_dCurrentH > 0.01 && sc.m_dOldH > 0.0)
+	if (sc.q == 2 && bAllowSuppression && H() > 0.01 && sc.m_dOldH > 0.0)
 	{
 		switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 		{
@@ -356,7 +356,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 #endif
 	}
 
-	sc.m_dOldH = sc.m_dCurrentH;
+	sc.m_dOldH = H();
 	sc.m_bNordsiekSaved = true;
 	// после того как Нордсик обновлен,
 	// сбрасываем флаг ресета, начинаем работу предиктора
@@ -406,7 +406,7 @@ void CDynaModel::SaveNordsiek()
 
 		pVectorBegin->SavedError = pVectorBegin->Error;
 	}
-	sc.m_dOldH = sc.m_dCurrentH;
+	sc.m_dOldH = H();
 	sc.m_bNordsiekSaved = true;
 }
 
@@ -441,7 +441,7 @@ void CDynaModel::RescaleNordsiek(const double r)
 	sc.OrderChanged();
 
 	// рассчитываем коэффициент изменения шага
-	const double dRefactorRatio{ sc.m_dCurrentH / sc.m_dLastRefactorH };
+	const double dRefactorRatio{ H() / sc.m_dLastRefactorH};
 	// если шаг изменился более в заданное количество раз - взводим флаг рефакторизации Якоби
 	// sc.m_dLastRefactorH обновляется после рефакторизации
 	if (dRefactorRatio > m_Parameters.m_dRefactorByHRatio || 1.0 / dRefactorRatio > m_Parameters.m_dRefactorByHRatio)

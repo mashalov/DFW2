@@ -7,7 +7,7 @@ void CDynaModel::EstimateMatrix()
 {
 	const ptrdiff_t nOriginalMatrixSize{ klu.MatrixSize() };
 	// если RightVector уже есть - ставим флаг сохранения данных в новый вектор
-	bool bSaveRightVector = pRightVector != nullptr;
+	bool bSaveRightVector{ pRightVector != nullptr };
 	m_nEstimatedMatrixSize = 0;
 	ptrdiff_t nNonZeroCount(0);
 	// заставляем обновиться постоянные элементы в матрице, ставим оценочную сборку матрицы
@@ -55,8 +55,8 @@ void CDynaModel::EstimateMatrix()
 
 	// allocate matrix row headers to access rows instantly
 
-	MatrixRow *pRow = m_pMatrixRows;
-	const MatrixRow *pRowEnd = pRow + m_nEstimatedMatrixSize;
+	MatrixRow* pRow{ m_pMatrixRows };
+	const MatrixRow* pRowEnd{ pRow + m_nEstimatedMatrixSize };
 	while (pRow < pRowEnd)
 	{
 		nNonZeroCount += pRow->m_nColsCount;
@@ -142,7 +142,7 @@ void CDynaModel::BuildMatrix()
 			it->BuildBlock(this);
 
 		m_bRebuildMatrixFlag = false;
-		sc.m_dLastRefactorH = sc.m_dCurrentH;
+		sc.m_dLastRefactorH = H();
 		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
 				"Рефакторизация матрицы {} / {}", klu.FactorizationsCount(), klu.RefactorizationsCount()));
 		if(sc.m_bFillConstantElements)
@@ -164,7 +164,7 @@ void CDynaModel::BuildDerivatives()
 
 ptrdiff_t CDynaModel::AddMatrixSize(ptrdiff_t nSizeIncrement)
 {
-	ptrdiff_t nRet = m_nEstimatedMatrixSize;
+	const ptrdiff_t nRet{ m_nEstimatedMatrixSize };
 	m_nEstimatedMatrixSize += nSizeIncrement;
 	return nRet;
 }
@@ -172,8 +172,8 @@ ptrdiff_t CDynaModel::AddMatrixSize(ptrdiff_t nSizeIncrement)
 void CDynaModel::ResetElement()
 {
 	_ASSERTE(m_pMatrixRows);
-	MatrixRow *pRow = m_pMatrixRows;
-	MatrixRow *pEnd = pRow + m_nEstimatedMatrixSize;
+	MatrixRow* pRow{ m_pMatrixRows };
+	const MatrixRow* pEnd{ pRow + m_nEstimatedMatrixSize };
 	while (pRow < pEnd)
 	{
 		pRow->Reset();
@@ -186,8 +186,8 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 	if(nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
 		throw dfw2error(fmt::format("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, m_nEstimatedMatrixSize));
 
-	MatrixRow *pRow = m_pMatrixRows + nRow;
-	ptrdiff_t nMethodIndx = static_cast<ptrdiff_t>((pRightVector + nCol)->EquationType) * 2 + (sc.q - 1);
+	MatrixRow* pRow{ m_pMatrixRows + nRow };
+	const ptrdiff_t nMethodIndx{ static_cast<ptrdiff_t>((pRightVector + nCol)->EquationType) * 2 + (sc.q - 1) };
 	// в качестве типа уравнения используем __физический__ тип
 	// потому что у алгебраических и дифференциальных уравнений
 	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
@@ -343,9 +343,9 @@ void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 
 void CDynaModel::SetDerivative(ptrdiff_t nRow, double dValue)
 {
-	struct RightVector *pRv = GetRightVector(nRow);
+	auto rv { GetRightVector(nRow) };
 	_CheckNumber(dValue);
-	pRv->Nordsiek[1] = dValue * GetH();
+	rv->Nordsiek[1] = dValue * H();
 }
 
 // копирует значение переменной и компонентов ее Нордсика из источника
@@ -391,27 +391,27 @@ void CDynaModel::SetVariableNordsiek(const VariableIndex& Variable, double v0, d
 
 void CDynaModel::CorrectNordsiek(ptrdiff_t nRow, double dValue)
 {
-	RightVector *pRightVector = GetRightVector(nRow);
+	auto rv{ GetRightVector(nRow) };
 	_CheckNumber(dValue);
-	pRightVector->Nordsiek[0] = dValue;
-	pRightVector->Nordsiek[1] = pRightVector->Nordsiek[2] = 0.0;
+	rv->Nordsiek[0] = dValue;
+	rv->Nordsiek[1] = rv->Nordsiek[2] = 0.0;
 
-	pRightVector->SavedNordsiek[0] = dValue;
-	pRightVector->SavedNordsiek[1] = pRightVector->SavedNordsiek[2] = 0.0;
+	rv->SavedNordsiek[0] = dValue;
+	rv->SavedNordsiek[1] = rv->SavedNordsiek[2] = 0.0;
 
-	pRightVector->Tminus2Value = dValue;
+	rv->Tminus2Value = dValue;
 }
 
 // задает правую часть дифференциального уравнения
 void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 {
-	struct RightVector *pRv = GetRightVector(nRow);
+	auto rv{ GetRightVector(nRow) };
 	_CheckNumber(dValue);
 	// ставим тип метода для уравнения по параметрам в исходных данных
 #ifdef USE_FMA
 	SetFunctionEqType(nRow, std::fma(GetH(), dValue, - pRv->Nordsiek[1] - pRv->Error), GetDiffEquationType());
 #else
-	SetFunctionEqType(nRow, GetH() * dValue - pRv->Nordsiek[1] - pRv->Error, GetDiffEquationType());
+	SetFunctionEqType(nRow, H() * dValue - rv->Nordsiek[1] - rv->Error, GetDiffEquationType());
 #endif
 }
 
@@ -432,11 +432,11 @@ void CDynaModel::SetDerivative(const VariableIndexBase& Row, double dValue)
 
 bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType)
 {
-	RightVector *pRv = GetRightVector(nRow);
+	auto rv{ GetRightVector(nRow) };
 	_CheckNumber(dValue);
 	klu.B()[nRow] = dValue;
-	pRightVector[nRow].EquationType = EquationType;					// тип метода для уравнения
-	pRightVector[nRow].PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
+	rv->EquationType = EquationType;					// тип метода для уравнения
+	rv->PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
 	return true;
 }
 
@@ -596,9 +596,9 @@ void CDynaModel::UpdateRcond()
 
 void CDynaModel::ScaleAlgebraicEquations()
 {
-	RightVector* pVectorBegin{ pRightVector };
-	RightVector* const pVectorEnd{ pRightVector + m_nEstimatedMatrixSize };
-	double h = GetH();
+	auto pVectorBegin{ pRightVector };
+	const auto pVectorEnd{ pRightVector + m_nEstimatedMatrixSize };
+	double h{ H() };
 
 	if (h <= 0)
 		h = 1.0;

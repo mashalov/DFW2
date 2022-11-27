@@ -172,7 +172,7 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst)
 {
 	const ptrdiff_t q{ pDynaModel->GetOrder() };
-	const double h{ pDynaModel->GetH() };
+	const double h{ pDynaModel->H() };
 
 	const double dError{ pRightVector->Error };
 
@@ -286,7 +286,7 @@ void CDynaPrimitiveBinary::BuildRightHand(CDynaModel *pDynaModel)
 double CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(CDynaModel* pDynaModel, const RightVector* pRightVector1, const RightVector* pRightVector2)
 {
 	const ptrdiff_t q{ pDynaModel->GetOrder() };
-	const double h{ pDynaModel->GetH() }, dError1{ pRightVector1->Error }, dError2{ pRightVector2->Error };
+	const double h{ pDynaModel->H() }, dError1{ pRightVector1->Error }, dError2{ pRightVector2->Error };
 
 	const double* lm1{ pDynaModel->Methodl[pRightVector1->EquationType * 2 + q - 1] };
 	const double* lm2{ pDynaModel->Methodl[pRightVector2->EquationType * 2 + q - 1] };
@@ -326,7 +326,7 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 {
 	// по умолчанию зеро-кроссинга нет - отношение 1.0
 	double rH{ 1.0 };
-	const double h{ pDynaModel->GetH() };
+	const double h{ pDynaModel->H() };
 
 	if (Equal(a, 0.0))
 	{

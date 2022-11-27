@@ -140,7 +140,7 @@ void CDynaModel::WriteResults()
 	if (sc.m_bEnforceOut || GetCurrentTime() >= TimeWritten_ + m_Parameters.m_dOutStep)
 	{
 		const auto TimeToWrite{ (std::max)(GetCurrentTime(), TimeWritten_) };
-		m_ResultsWriter.WriteResults({ TimeToWrite, GetH() });
+		m_ResultsWriter.WriteResults({ TimeToWrite, H() });
 		TimeWritten_ = TimeToWrite;
 		sc.m_bEnforceOut = false;
 	}

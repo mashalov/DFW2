@@ -450,7 +450,7 @@ void CDynaModel::Computehl0()
 	// для демпфирования
 	// lh[i] = l[i][0] * GetH()
 	for (auto&& lh : Methodlh)
-		lh = Methodl[&lh - Methodlh][0] * sc.m_dCurrentH;
+		lh = Methodl[&lh - Methodlh][0] * H();
 }
 
 void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)

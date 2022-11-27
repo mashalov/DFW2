@@ -185,9 +185,8 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA;
 		m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
 		m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
-		//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
-		//m_Parameters.m_dAtol = 1E-4;
-		//m_Parameters.m_dRtol = 1E-4;
+		//_Parameters.m_dAtol = 1E-4;
+		//m_Parameters.m_dRtol = 1E-4 ;
 	//m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
 		//m_Parameters.m_eParkPar metersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bDisableResultsWriter = false;
@@ -539,7 +538,7 @@ bool CDynaModel::InitEquations()
 			PrepareNordsiekElement(pVectorBegin);
 		}
 
-		double dCurrentH{ sc.m_dCurrentH };
+		double dCurrentH{ H() };
 		SetH(0.0);
 		sc.m_bDiscontinuityMode = true;
 
@@ -657,7 +656,7 @@ bool CDynaModel::NewtonUpdate()
 				lambdamin = 1E-4;
 				bLineSearch = true;
 			}
-			else if (sc.Hmin / sc.m_dCurrentH > 0.95)
+			else if (sc.Hmin / H() > 0.95)
 			{
 				// если шаг снижается до минимального 
 				// переходим на Ньютон по параметру
@@ -916,14 +915,18 @@ bool CDynaModel::Step()
 		if(sc.CurrentTimePlusStep() > dTimeNextEvent)
 		{
 			// если внутри шага есть события, настраиваем шаг на момент события
-			double rHit = (dTimeNextEvent - GetCurrentTime()) / GetH() * (1.0 - 1E-12);
+			double rHit = (dTimeNextEvent - GetCurrentTime()) / H() * (1.0 - 1E-12);
 			//sc.t0 = dTimeNextEvent;
 			// если при этом настроенный коэффициент изменения шага больше погрешности
 			if (rHit > DFW2_EPSILON)
 			{
-				SetH(sc.m_dCurrentH * rHit); 					// меняем шаг
+				SetH(H() * rHit); 								// меняем шаг
 				RescaleNordsiek(rHit);							// пересчитываем Nordsieck на новый шаг
-				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, GetCurrentTime(), GetIntegrationStepNumber(), sc.m_dCurrentH));
+				Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
+					fmt::format(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, 
+						GetCurrentTime(), 
+						GetIntegrationStepNumber(), 
+						H()));
 				sc.m_bBeforeDiscontinuityWritten = false;		// готовимся к обработке разрыва
 			}
 			else
@@ -1088,7 +1091,7 @@ bool CDynaModel::Step()
 							else
 							{
 								// если время зерокроссинга не достаточно точно определено подбираем новый шаг
-								SetH(sc.m_dCurrentH * rZeroCrossing);
+								SetH(H() * rZeroCrossing);
 								RepeatZeroCrossing();
 							}
 						}
@@ -1118,7 +1121,7 @@ bool CDynaModel::Step()
 								// если время зерокроссинга внутри шага, входим в режим зерокроссинга
 								sc.m_bZeroCrossingMode = true;
 								// и пытаемся подобрать шаг до времени зерокроссинга
-								SetH(sc.m_dCurrentH * rZeroCrossing);
+								SetH(H() * rZeroCrossing);
 								RepeatZeroCrossing();
 							}
 						}
@@ -1204,7 +1207,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 
 	r = (std::min)(rSame0, rSame1);
 
-	if (Equal(sc.m_dCurrentH / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
+	if (Equal(H() / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = (std::max)(1.01, r);
 
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} {} rSame {} RateLimit {} for {} steps", 
@@ -1298,7 +1301,7 @@ void CDynaModel::EnterDiscontinuityMode()
 		sc.m_bDiscontinuityMode = true;
 		sc.m_bZeroCrossingMode = false;
 		ChangeOrder(1);
-		RescaleNordsiek(sc.Hmin / sc.m_dCurrentH);
+		RescaleNordsiek(sc.Hmin / H());
 		SetH(0.0);
 		//sc.m_bEnforceOut = true;
 	}
@@ -1468,10 +1471,10 @@ void CDynaModel::GoodStep(double rSame)
 				if (sc.FilterOrder(rHigher))
 				{
 					ConstructNordsiekOrder();
-					const double ratio{ SetH(sc.m_dCurrentH * sc.dFilteredOrder) };
 					ChangeOrder(2);
-					RescaleNordsiek(ratio);
-					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+					RescaleNordsiek(SetH(H() * sc.dFilteredOrder));
+					Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
+						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
 				}
 			}
 			else
@@ -1492,10 +1495,11 @@ void CDynaModel::GoodStep(double rSame)
 				// пытаемся перейти на первый порядок
 				if (sc.FilterOrder(rLower))
 				{
-					const double ratio{ SetH(sc.m_dCurrentH * sc.dFilteredOrder) };
+					const double ratio{ SetH(H() * sc.dFilteredOrder)};
 					ChangeOrder(1);
 					RescaleNordsiek(ratio);
-					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+					Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
+						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
 				}
 			}
 			else
@@ -1508,16 +1512,15 @@ void CDynaModel::GoodStep(double rSame)
 		if (sc.FilterStep(rSame))
 		{
 			// если фильтр дает разрешение на увеличение
-			_ASSERTE(Equal(sc.m_dCurrentH, sc.m_dOldH));
+			_ASSERTE(Equal(H(), sc.m_dOldH));
 			// запоминаем коэффициент увеличения только для репорта
 			// потому что sc.dFilteredStep изменится в последующем 
 			// RescaleNordsiek
 			const double k{ sc.dFilteredStep };
 			// рассчитываем новый шаг
-			const double ratio{ SetH(sc.m_dCurrentH * sc.dFilteredStep) };
 			// пересчитываем Nordsieck на новый шаг
-			RescaleNordsiek(ratio);
-			Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), GetH(), k, sc.q));
+			RescaleNordsiek(SetH(H() * sc.dFilteredStep));
+			Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), H(), k, sc.q));
 		}
 	}
 	else
@@ -1534,25 +1537,25 @@ void CDynaModel::GoodStep(double rSame)
 // обработка шага с недопустимой погрешностью
 void CDynaModel::BadStep()
 {
-	SetH(sc.m_dCurrentH * 0.5);		// делим шаг пополам
+	SetH(H() * 0.5);		// делим шаг пополам
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
 
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError, GetCurrentTime(), GetIntegrationStepNumber(),
-		GetH() < sc.Hmin ? sc.Hmin : GetH(), 
+		H() < sc.Hmin ? sc.Hmin : H(), 
 		sc.Integrator.Weighted.Info()));
 
 	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
 	sc.OrderStatistics[sc.q - 1].nFailures++;
 
 	// если шаг снизился до минимума
-	if (sc.m_dCurrentH < sc.Hmin)
+	if (H() < sc.Hmin)
 	{
 		//klu.DumpMatrix(true);
 		//DumpStateVector();
 
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
 
 		ChangeOrder(1);				// шаг не изменяем
 		SetH(sc.Hmin);
@@ -1579,7 +1582,7 @@ void CDynaModel::BadStep()
 		// если шаг еще можно снизить
 		sc.nMinimumStepFailures = 0;
 		RestoreNordsiek();									// восстанавливаем Nordsieck c предыдущего шага
-		RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);		// масштабируем Nordsieck на новый (половинный см. выше) шаг
+		RescaleNordsiek(H() / sc.m_dOldH);					// масштабируем Nordsieck на новый (половинный см. выше) шаг
 		sc.CheckAdvance_t0();
 	}
 }
@@ -1597,27 +1600,27 @@ void CDynaModel::NewtonFailed()
 
 	if (sc.nSuccessfullStepsOfNewton > 10)
 	{
-		if (sc.m_dOldH / sc.m_dCurrentH >= 0.8)
+		if (sc.m_dOldH / H() >= 0.8)
 		{
-			SetH(sc.m_dCurrentH * 0.87);
+			SetH(H() * 0.87);
 			sc.SetRateGrowLimit(1.0);
 		}
 		else
 		{
-			SetH(0.8 * sc.m_dOldH + 0.2 * sc.m_dCurrentH);
+			SetH(0.8 * sc.m_dOldH + 0.2 * H());
 			sc.SetRateGrowLimit(1.18);
 		}
 	}
 	else
 	if (sc.nSuccessfullStepsOfNewton >= 1)
 	{
-		SetH(sc.m_dCurrentH * 0.87);
+		SetH(H() * 0.87);
 		sc.SetRateGrowLimit(1.0);
 	}
 	else
 	if (sc.nSuccessfullStepsOfNewton == 0)
 	{
-		SetH(sc.m_dCurrentH * 0.25);
+		SetH(H() * 0.25);
 		sc.SetRateGrowLimit(10.0);
 	}
 
@@ -1625,11 +1628,11 @@ void CDynaModel::NewtonFailed()
 
 	ChangeOrder(1);
 
-	if (sc.m_dCurrentH < sc.Hmin)
+	if (H() < sc.Hmin)
 	{
 		SetH(sc.Hmin);
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
 		sc.Advance_t0();
 		sc.Assign_t0();
 	}
@@ -1639,20 +1642,21 @@ void CDynaModel::NewtonFailed()
 		sc.CheckAdvance_t0();
 	}
 
-	if (sc.Hmin / sc.m_dCurrentH > 0.99)
+	if (sc.Hmin / H() > 0.99)
 		ResetNordsiek();
 	else
 		ReInitializeNordsiek();
 	
 	sc.RefactorMatrix();
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, GetH()));
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
+		fmt::format(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
 }
 
 // функция подготовки к повтору шага
 // для поиска зерокроссинга
 void CDynaModel::RepeatZeroCrossing()
 {
-	if (sc.m_dCurrentH < sc.Hmin)
+	if (H() < sc.Hmin)
 	{
 		// если шаг снижен до минимального,
 		// отменяем зерокроссинг, так как его невозможно выполнить
@@ -1664,11 +1668,11 @@ void CDynaModel::RepeatZeroCrossing()
 	RestoreNordsiek();
 	// масштабируем на шаг зерокроссинга (m_dCurrentH уже должен быть настроен)
 	// старый шаг m_dOldH еще не успели изменить
-	RescaleNordsiek(sc.m_dCurrentH / sc.m_dOldH);
+	RescaleNordsiek(H() / sc.m_dOldH);
 	sc.CheckAdvance_t0();
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(),
 																				GetIntegrationStepNumber(), 
-																				GetH(), 
+																				H(), 
 																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName()));
 }
 
