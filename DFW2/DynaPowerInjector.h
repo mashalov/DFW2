@@ -45,7 +45,7 @@ namespace DFW2
 		virtual ~CDynaPowerInjector() = default;
 
 		virtual bool CalculatePower();
-		void FinishStep() override;
+		void FinishStep(const CDynaModel& DynaModel) override;
 
 		// комплекс шунта Нортона в узле подключения	
 		virtual const cplx& Ynorton() const { return Ynorton_; }

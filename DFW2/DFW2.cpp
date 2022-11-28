@@ -29,64 +29,70 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 	return TRUE;
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+void RunTransient()
 {
 	//_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF);
 	//_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 	//_CrtSetBreakAlloc(260215);
 	//_CrtSetBreakAlloc(31657);
 	//_CrtSetBreakAlloc(236965);
-	
 	//_CrtSetBreakAlloc(1229197);
 
-	/*
-	GraphCycle<int, int> gc;
-	GraphCycle<int, int>::CyclesType Cycles;
-	gc.Test();
-	*/
-		
-	if(SUCCEEDED(CoInitialize(NULL)))
+	CDynaModel::DynaModelParameters parameters;
+	CDynaModel Network(parameters);
+	try
 	{
+		CRastrImport ri;
+		networks.push_back(&Network);
+		//Network.DeSerialize(Network.Platform().ResultFile("serialization.json"));
+		ri.GetFileData(Network);
+		//Network.Serialize(Network.Platform().ResultFile("lf_1500.json"));
+		//Network.Serialize(Network.Platform().ResultFile("lf_7ku.json")); 
+		//Network.RunLoadFlow();
+		//Network.Serialize(Network.Platform().ResultFile("siberia.json")); 
+		Network.RunTransient();
+	}
+	catch (_com_error& err)
+	{
+		const std::string Description{ stringutils::utf8_encode(std::wstring(err.Description())) };
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", Description));
+		throw dfw2error(Description);
+	}
+	catch (const dfw2error& err)
+	{
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+		throw;
+	}
+	//Network.Serialize("c:\\tmp\\lf.json");
+}
 
-		try
-		{
-			CDynaModel::DynaModelParameters parameters;
-			CDynaModel Network(parameters);
+void RunTest()
+{
+	CDynaModel::DynaModelParameters parameters;
+	CDynaModel Network(parameters);
+	networks.push_back(&Network);
+	Network.RunTest();
+}
 
-			SetConsoleCtrlHandler(HandlerRoutine, TRUE);
-			try
-			{
-				CRastrImport ri;
-				networks.push_back(&Network);
-				//Network.DeSerialize(Network.Platform().ResultFile("serialization.json"));
-				ri.GetFileData(Network);
-				//Network.Serialize(Network.Platform().ResultFile("lf_1500.json"));
-				//Network.Serialize(Network.Platform().ResultFile("lf_7ku.json")); 
-				//Network.RunLoadFlow();
-				//Network.Serialize(Network.Platform().ResultFile("siberia.json")); 
-				Network.RunTransient();
-			}
-			catch (_com_error& err)
-			{
-				Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
-			}
-			catch (const dfw2error& err)
-			{
-				Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
-			}
-		}
-		catch (const dfw2error& err)
-		{
-			std::cout << "Ошибка " << err.what() << std::endl;
-		}
+int _tmain(int argc, _TCHAR* argv[])
+{
+	try
+	{
+		if (HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))
+			throw dfw2error("Ошибка CoInitialize {:0x}", static_cast<unsigned long>(hr));
 
-		//Network.Serialize("c:\\tmp\\lf.json");
-		SetConsoleCtrlHandler(NULL, TRUE);
+		SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+		RunTransient();
+		//RunTest();
 		networks.clear();
 		CoUninitialize();
 	}
+	catch (const dfw2error& err)
+	{
+		std::cout << "Ошибка " << err.what() << std::endl;
+	}
+	SetConsoleCtrlHandler(NULL, TRUE);
 	_CrtDumpMemoryLeaks();
-
 	return 0;
 }
 

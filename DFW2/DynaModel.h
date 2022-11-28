@@ -601,6 +601,7 @@ namespace DFW2
 
 		void PrepareNetworkElements();
 		bool Link();
+		void ConsiderContainerProperties();
 		bool UpdateExternalVariables();
 		void TurnOffDevicesByOffMasters();
 		bool SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster);
@@ -675,6 +676,8 @@ namespace DFW2
 		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
 		void SetDerivative(ptrdiff_t nRow, double dValue);
 
+		bool SSE2Available_ = false;
+
 	public:
 		CDynaNodeContainer Nodes;
 		CDynaBranchContainer Branches;
@@ -694,6 +697,7 @@ namespace DFW2
 		CDeviceContainer ExcConMustang;
 		CDeviceContainer BranchMeasures;
 		CDeviceContainer NodeMeasures;
+		CDeviceContainer TestDevices;
 		CDynaNodeZeroLoadFlowContainer ZeroLoadFlow;
 		CCustomDeviceContainer CustomDevice;
 		CCustomDeviceCPPContainer AutomaticDevice;
@@ -703,6 +707,7 @@ namespace DFW2
 		CDynaModel(const DynaModelParameters& ExternalParameters = {});
 		virtual ~CDynaModel();
 		bool RunTransient();
+		bool RunTest();
 		bool RunLoadFlow();
 
 		// выполняет предварительную инициализацию устройств: 
@@ -756,6 +761,8 @@ namespace DFW2
 		{
 			return sc.m_bNordsiekReset;
 		}
+
+		static [[nodiscard]] bool IsSSE2Available();
 
 		//  возвращает отношение текущего шага к новому
 		inline double SetH(double h)

@@ -403,7 +403,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS CheckProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
 		// вызывается после успешного выполнения шага для расчета зависимых переменных
-		virtual void FinishStep();
+		virtual void FinishStep(const CDynaModel& DynaModel);
 		virtual eDEVICESTATE GetState() const { return State_; }
 		bool IsStateOn() const { return GetState() == eDEVICESTATE::DS_ON; }
 		bool IsPermanentOff() const { return GetState() == eDEVICESTATE::DS_OFF && GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT; }

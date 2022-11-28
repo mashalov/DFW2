@@ -55,6 +55,9 @@
     <Filter Include="Source Files\Generators">
       <UniqueIdentifier>{e8ad430e-37c6-44a9-b024-1608dc5575e2}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Testing">
+      <UniqueIdentifier>{647d433d-99d5-4250-8371-d2ff42ad6eee}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <Text Include="ReadMe.txt" />
@@ -282,6 +285,9 @@
     </ClInclude>
     <ClInclude Include="Logger.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TestDevice.h">
+      <Filter>Header Files\Testing</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -619,6 +625,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Logger.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TestDevice.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

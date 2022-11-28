@@ -398,6 +398,7 @@
     <ClInclude Include="FmtFormatters.h" />
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="TestDevice.h" />
     <ClInclude Include="ICustomDevice.h" />
     <ClInclude Include="JsonWalkers.h" />
     <ClInclude Include="KLUWrapper.h" />
@@ -1432,6 +1433,7 @@
     </ClCompile>
     <ClCompile Include="DynaExciterBase.cpp" />
     <ClCompile Include="Sum.cpp" />
+    <ClCompile Include="TestDevice.cpp" />
     <ClCompile Include="ZCDetector.cpp" />
     <ClCompile Include="Expand.cpp" />
   </ItemGroup>

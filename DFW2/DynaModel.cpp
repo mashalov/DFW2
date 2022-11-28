@@ -18,6 +18,7 @@
 #include "DynaBranch.h"
 #include "BranchMeasures.h"
 #include "NodeMeasures.h"
+#include "TestDevice.h"
 
 #define _LFINFO_
 
@@ -26,6 +27,7 @@
 using namespace DFW2;
 
 CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) : 
+						   SSE2Available_(IsSSE2Available()),
 						   m_Discontinuities(this),
 						   m_Automatic(this),
 						   Nodes(this),
@@ -49,6 +51,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   NodeMeasures(this),
 						   ZeroLoadFlow(this),
 						   AutomaticDevice(this),
+						   TestDevices(this),
 						   CustomDeviceCPP(this),
 						   m_ResultsWriter(*this),
 						   m_Platform(*this)
@@ -78,6 +81,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaBranchMeasure::DeviceProperties(BranchMeasures.ContainerProps());
 	CDynaNodeMeasure::DeviceProperties(NodeMeasures.ContainerProps());
 	CDynaNodeZeroLoadFlow::DeviceProperties(ZeroLoadFlow.ContainerProps());
+	CTestDevice::DeviceProperties(TestDevices.ContainerProps());
 
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
 	AutomaticDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
@@ -105,6 +109,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	m_DeviceContainers.push_back(&NodeMeasures);
 	m_DeviceContainers.push_back(&AutomaticDevice);
 	m_DeviceContainers.push_back(&ZeroLoadFlow);
+	m_DeviceContainers.push_back(&TestDevices);
 	m_DeviceContainers.push_back(&SynchroZones);		// синхрозоны должны идти последними
 
 	CheckFolderStructure();
@@ -127,6 +132,9 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 		else
 			throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszStdFileStreamError, stringutils::utf8_encode(logPath.c_str())));
 	}
+
+	if (!SSE2Available_)
+		throw dfw2error(CDFW2Messages::m_cszNoSSE2Support);
 }
 
 
@@ -1164,7 +1172,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 {
 	double r{ 0.0 };
 
-	const  RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
+	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
 
 	sc.Integrator.Reset();
@@ -1485,7 +1493,7 @@ void CDynaModel::GoodStep(double rSame)
 		case 2:
 		{
 			// если были на втором порядке, пробуем шаг для первого порядка
-			const double rLower{ GetRatioForLowerOrder() / 1.3 };
+			const double rLower{ GetRatioForLowerOrder() / 1.3 / 5.0}; // 5.0 - чтобы уменьшить использование демпфирующего метода
 			// call before step change
 			UpdateNordsiek();
 
@@ -1955,8 +1963,6 @@ void CDynaModel::TurnOffDevicesByOffMasters()
 
 bool CDynaModel::RunLoadFlow() 
 {
-	bool bRes(false);
-
 	// внутри линка делается обработка СХН
 	if(!Link())
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);

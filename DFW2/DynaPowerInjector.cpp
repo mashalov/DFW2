@@ -61,7 +61,7 @@ bool CDynaPowerInjector::CalculatePower()
 	return true;
 }
 
-void CDynaPowerInjector::FinishStep()
+void CDynaPowerInjector::FinishStep(const CDynaModel& DynaModel)
 {
 	const double dVre{ Vre }, dVim{ Vim };
 	double dIre{ Ire }, dIim{ Iim };

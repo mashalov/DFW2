@@ -477,11 +477,3 @@ void CDynaModel::PrepareNordsiekElement(struct RightVector *pVectorBegin)
 	pVectorBegin->PhysicalEquationType = DET_ALGEBRAIC;
 }
 
-
-void CDynaModel::FinishStep()
-{
-	// для устройств с независимыми переменными после успешного выполнения шага
-	// рассчитываем актуальные значения независимых переменных
-	for (auto&& it : m_DeviceContainersFinishStep)
-		it->FinishStep();
-}

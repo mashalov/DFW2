@@ -3,9 +3,10 @@
 #include "DynaGeneratorMotion.h"
 
 using namespace DFW2;
+
 bool CDynaModel::Link()
 {
-	bool bRes = true;
+	bool bRes{ true };
 
 	Nodes.LinkToLRCs(LRCs);
 	Nodes.LinkToReactors(Reactors);
@@ -74,17 +75,9 @@ bool CDynaModel::Link()
 			}
 		}
 	}
-	// по атрибутам контейнеров формируем отдельные списки контейнеров для
-	// обновления после итерации Ньютона и после прогноза, чтобы не проверять эти атрибуты в основных циклах
-	for (auto&& it : m_DeviceContainers)
-	{
-		if (it->ContainerProps().bNewtonUpdate)
-			m_DeviceContainersNewtonUpdate.push_back(it);
-		if (it->ContainerProps().bPredict)
-			m_DeviceContainersPredict.push_back(it);
-		if (it->ContainerProps().bFinishStep)
-			m_DeviceContainersFinishStep.push_back(it);
-	}
+	// создает списки контейнеров в соответствии с их
+	// свойствами (особый предиктор, пост-расчет и т.д)
+	ConsiderContainerProperties();
 	//Branches.CreateMeasures(BranchMeasures);
 	return bRes;
 }

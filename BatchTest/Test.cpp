@@ -347,11 +347,10 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			}
 		}
 
-		//	report << fmt::format("Id;Модель;Возмущение;RUSTab;Raiden;T RUSTab;T Raiden;Макс откл;Переменная\n");
 		report <<
 			Opts.CaseId << ";" <<
-			CaseFile.u8string() << ";" <<
-			ContingencyFile.u8string() << ";" <<
+			CaseFile.filename().u8string() << ";" <<
+			ContingencyFile.filename().u8string() << ";" <<
 			(RetCode[0] != AST_OK ? (fnVerbalCode)(RetCode[0]) : (fnVerbalSyncLossCause)(SyncLossCause[0])) << ";" <<
 			(RetCode[1] != AST_OK ? (fnVerbalCode)(RetCode[1]) : (fnVerbalSyncLossCause)(SyncLossCause[1])) << ";" <<
 			Duration[0] << ";" <<

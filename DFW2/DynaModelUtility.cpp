@@ -965,6 +965,76 @@ void CDynaModel::CreateZeroLoadFlow()
 		throw dfw2error("CDynaModel::CreateZeroLoadFlow - ZeroLoadFlow must contain 0 or 1 device");
 }
 
+
+[[nodiscard]] bool CDynaModel::IsSSE2Available()
+{
+#ifdef _MSC_VER	
+	int cpufeats[4];
+	__cpuid(cpufeats, 1);
+	return cpufeats[3] & 0x20;
+#else
+	unsigned int eax(0), ebx(0), ecx(0), edx(0);
+	__get_cpuid(1, &eax, &ebx, &ecx, &edx);
+	return edx & ( 1 << 26);
+#endif	
+}
+
+bool CDynaModel::RunTest()
+{
+	bool bRes{ true };
+	TestDevices.CreateDevices(1);
+	Link();
+	WriteResultsHeader();
+	PreInitDevices();
+	InitDevices();
+	EstimateMatrix();
+
+	m_Parameters.m_dAtol = 1E-1;
+	m_Parameters.m_dRtol = 1E-8;
+	m_Discontinuities.AddEvent(1000.0, new CModelActionStop());
+	m_Discontinuities.Init();
+
+	SetH(0.01);
+
+	bRes = bRes && InitEquations();
+
+
+	while (!CancelProcessing() && bRes)
+	{
+		bRes = bRes && Step();
+		UpdateProgress();
+		if (!CancelProcessing())
+		{
+			WriteResults();
+		}
+	}
+
+	return bRes;
+}
+
+void CDynaModel::ConsiderContainerProperties()
+{
+	// по атрибутам контейнеров формируем отдельные списки контейнеров для
+	// обновления после итерации Ньютона и после прогноза, чтобы не проверять эти атрибуты в основных циклах
+	for (auto&& it : m_DeviceContainers)
+	{
+		if (it->ContainerProps().bNewtonUpdate)
+			m_DeviceContainersNewtonUpdate.push_back(it);
+		if (it->ContainerProps().bPredict)
+			m_DeviceContainersPredict.push_back(it);
+		if (it->ContainerProps().bFinishStep)
+			m_DeviceContainersFinishStep.push_back(it);
+	}
+}
+
+
+void CDynaModel::FinishStep()
+{
+	// для устройств с независимыми переменными после успешного выполнения шага
+	// рассчитываем актуальные значения независимых переменных
+	for (auto&& it : m_DeviceContainersFinishStep)
+		it->FinishStep(*this);
+}
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
 								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1

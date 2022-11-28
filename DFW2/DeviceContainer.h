@@ -231,7 +231,7 @@ namespace DFW2
 		CDevice *GetZeroCrossingDevice();
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);				// предварительно инициализировать и проверить параметры устройств
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
-		void FinishStep();													// завершить шаг и рассчитать зависимые переменные
+		void FinishStep(const CDynaModel& DynaModel);						// завершить шаг и рассчитать зависимые переменные
 		CDynaModel* GetModel();
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);

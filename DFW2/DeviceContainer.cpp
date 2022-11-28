@@ -484,10 +484,10 @@ void CDeviceContainer::EstimateBlock(CDynaModel *pDynaModel)
 	}
 }
 
-void CDeviceContainer::FinishStep()
+void CDeviceContainer::FinishStep(const CDynaModel& DynaModel)
 {
 	for (auto&& dit : DevInMatrix)
-		dit->FinishStep();
+		dit->FinishStep(DynaModel);
 }
 
 void CDeviceContainer::BuildBlock(CDynaModel* pDynaModel)

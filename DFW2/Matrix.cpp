@@ -409,7 +409,7 @@ void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 	_CheckNumber(dValue);
 	// ставим тип метода для уравнения по параметрам в исходных данных
 #ifdef USE_FMA
-	SetFunctionEqType(nRow, std::fma(GetH(), dValue, - pRv->Nordsiek[1] - pRv->Error), GetDiffEquationType());
+	SetFunctionEqType(nRow, std::fma(H(), dValue, - rv->Nordsiek[1] - rv->Error), GetDiffEquationType());
 #else
 	SetFunctionEqType(nRow, H() * dValue - rv->Nordsiek[1] - rv->Error, GetDiffEquationType());
 #endif
