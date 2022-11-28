@@ -13,7 +13,7 @@ namespace DFW2
 			V_LAST,
 		};
 		using CDevice::CDevice;
-		static void DeviceProperties(CDeviceContainerProperties& properties);
+		virtual ~CTestDevice() = default;
 
 		const double k = 1.4;
 		const double m = 0.2;
@@ -29,5 +29,7 @@ namespace DFW2
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		void FinishStep(const CDynaModel& DynaModel) override;
+
+		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 }
