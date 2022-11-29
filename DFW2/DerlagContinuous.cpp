@@ -9,7 +9,7 @@ void CDerlagContinuous::BuildEquations(CDynaModel *pDynaModel)
 
 	if (pDynaModel->EstimateBuild())
 	{
-		RightVector *pRightVector = pDynaModel->GetRightVector(Output_);
+		RightVector* const pRightVector{ pDynaModel->GetRightVector(Output_) };
 		pRightVector->PrimitiveBlock = PBT_DERLAG;
 	}
 
@@ -153,7 +153,7 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuousSmooth::ProcessDiscontinuity(CDynaModel* 
 
 bool CDerlagContinuous::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	double T1(1E-4), T2(1.0);
+	double T1{ 1E-4 }, T2{ 1.0 };
 	CDynaPrimitive::UnserializeParameters({T1,T2}, Parameters);
 	SetTK(T1, T2);
 	return true;

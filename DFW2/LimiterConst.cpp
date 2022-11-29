@@ -132,7 +132,7 @@ eDEVICEFUNCTIONSTATUS CLimiterConst::ProcessDiscontinuity(CDynaModel* pDynaModel
 
 bool CLimiterConst::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
-	double dMin(-1E6), dMax(-dMin);
+	double dMin{ -1E6 }, dMax{ -dMin };
 	CDynaPrimitive::UnserializeParameters({ dMin, dMax }, Parameters);
 	SetMinMax(pDynaModel, dMin, dMax);
 	return true;
