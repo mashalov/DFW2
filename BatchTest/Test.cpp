@@ -266,8 +266,8 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		std::cout << fmt::format("Расчет {} из {}\nМодель: {}\nСценарий: {}\n",
 			Opts.CaseId,
 			ContingencyFiles_.size() * CaseFiles_.size(),
-			CaseFile.u8string(),
-			ContingencyFile.u8string()
+			CaseFile.filename().u8string(),
+			ContingencyFile.filename().u8string()
 		);
 
 		double Duration[2];

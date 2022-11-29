@@ -441,6 +441,11 @@ namespace DFW2
 			void OrderChanged()
 			{
 				nStepsToOrderChange = nStepsToOrderChangeParameter;
+				// для повышения порядка задержка мы ждем
+				// меньше, чтобы увеличить вероятность работы
+				// методом второго порядка с меньшим демпфированием
+				if (q == 1)
+					nStepsToOrderChange /= 2;
 				dFilteredOrderInner = dFilteredOrder = (std::numeric_limits<double>::max)();
 			}
 
