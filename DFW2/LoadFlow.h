@@ -28,7 +28,7 @@ namespace DFW2
 		{
 			double Imb = 1E-4;							// допустимый небаланс мощности
 			bool Flat = false;							// плоский старт
-			eLoadFlowStartupMethod Startup;				// стартовый метод 
+			eLoadFlowStartupMethod Startup = eLoadFlowStartupMethod::Seidell;	// стартовый метод 
 			double SeidellStep = 1.0;					// шаг ускорения метода Зейделя	
 			size_t SeidellIterations = 17;				// количество итераций Зейделем
 			size_t EnableSwitchIteration = 2;			// номер итерации, с которой разрешается переключение PV-PQ
