@@ -4,8 +4,6 @@
 
 using namespace DFW2;
 
-
-
 void CAbs::BuildEquations(CDynaModel *pDynaModel)
 {
 	pDynaModel->SetElement(Output_, Input_, Positive_ ? 1.0 : -1.0);

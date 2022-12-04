@@ -192,7 +192,7 @@ bool CDeviceContainer::SetUpSearch()
 
 CDevice* CDeviceContainer::GetDevice(CDeviceId* pDeviceId)
 {
-	CDevice *pRes(nullptr);
+	CDevice* pRes{ nullptr };
 	if (SetUpSearch())
 	{
 		if (auto it{ DevSet.find(pDeviceId) }; it != DevSet.end())
@@ -204,7 +204,7 @@ CDevice* CDeviceContainer::GetDevice(CDeviceId* pDeviceId)
 
 CDevice* CDeviceContainer::GetDevice(ptrdiff_t nId)
 {
-	CDeviceId Id(nId);
+	CDeviceId Id{ nId };
 	return GetDevice(&Id);
 }
 
@@ -221,7 +221,7 @@ size_t CDeviceContainer::CountNonPermanentOff() const
 // получить количество переменных, которое нужно выводить в результаты
 size_t CDeviceContainer::GetResultVariablesCount()
 {
-	size_t nCount = 0;
+	size_t nCount{ 0 };
 	// определяем простым подсчетом переменных состояния с признаком вывода
 	for (auto&& vit : ContainerProps_.VarMap_)
 		if (vit.second.Output_)
@@ -244,7 +244,7 @@ void CDeviceContainer::Log(DFW2MessageStatus Status, std::string_view Message, p
 
 bool CDeviceContainer::CreateLink(CDeviceContainer* pLinkContainer)
 {
-	bool bRes = true;
+	bool bRes{ true };
 	// выделяем память под ссылки в данном контейнере и внешнем контейнере, с которым надо установить связь
 	// делается для каждого из контейнеров один раз, в качестве флага используется указатель на выделенную память
 	PrepareSingleLinks();
@@ -377,7 +377,7 @@ CMultiLink& CDeviceContainer::GetCheckLink(ptrdiff_t LinkIndex, ptrdiff_t Device
 {
 	if (!CheckLink(LinkIndex, LinksVec))
 		throw dfw2error("CDeviceContainer::GetCheckLink - LinkIndex out of range");
-	auto it = LinksVec.begin() + LinkIndex;
+	auto it{ LinksVec.begin() + LinkIndex };
 	if (DeviceIndex >= static_cast<ptrdiff_t>(it->LinkInfo_.size()))
 		throw dfw2error("CDeviceContainer::GetCheckLink - DeviceIndex out of range");
 	return *it;
@@ -593,7 +593,7 @@ double CDeviceContainer::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDeviceContainer::PreInit(CDynaModel* pDynaModel)
 {
-	eDeviceFunctionStatus_ = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDeviceFunctionStatus_= eDEVICEFUNCTIONSTATUS::DFS_OK;
 	
 	// делаем предварительную инициализацию устройств, чтобы они смогли привести в порядок свои параметры
 	// (например генераторы учтут заданное их количество)
@@ -693,8 +693,8 @@ void CMultiLink::Join(CMultiLink& pLink)
 	// создаем новый вектор указателей на связанные устройства
 	// размер = исходный + объединяемый
 
-	DevicesPtrs ppNewPointers = std::make_unique<DevicePtr>(Count_ = Count_ + pLink.Count_);
-	CDevice** ppNewPtr = ppNewPointers.get();
+	DevicesPtrs ppNewPointers{ std::make_unique<DevicePtr>(Count_ = Count_ + pLink.Count_) };
+	CDevice** ppNewPtr{ ppNewPointers.get() };
 
 	CLinkPtrCount* pLeft{ &LinkInfo_[0] }, *pRight{ &pLink.LinkInfo_[0] }, *pLeftEnd{ pLeft + LinkInfo_.size() };
 
@@ -829,11 +829,11 @@ CDeviceContainer* CDeviceContainer::DetectLinks(CDeviceContainer* pExtContainer,
 
 ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 {
-	ptrdiff_t nRet(-1);
+	ptrdiff_t nRet{ -1 };
 	// по информации из атрибутов контейнера определяем индекс
 	// связи, соответствующий типу
 	const LINKSFROMMAP& FromLinks{ ContainerProps_.LinksFrom_ };
-	auto&& itFrom  = FromLinks.find(eDevType);
+	auto&& itFrom{ FromLinks.find(eDevType) };
 	if (itFrom != FromLinks.end())
 		nRet = itFrom->second.nLinkIndex;
 
