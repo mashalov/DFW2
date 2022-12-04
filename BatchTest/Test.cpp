@@ -1,5 +1,8 @@
 ﻿#include <iostream>
+#include <thread>
 #include "Test.h"
+#include "BS_thread_pool.hpp"
+
 #include "ResultCompare.h"
 #import "progid:Astra.Rastr.1" named_guids no_namespace
 #include "nlohmann/json.hpp"
@@ -36,6 +39,10 @@ void CBatchTest::ReadParameters()
 		if (parameters.contains(szRaidenRtol))
 			GlobalOptions.RaidenRtol = parameters[szRaidenRtol].get<double>();
 
+		constexpr const char* szThreads{ "Threads" };
+		if (parameters.contains(szThreads))
+			GlobalOptions.Threads = parameters[szThreads].get<long>();
+
 		std::cout << "Поиск файлов моделей в каталоге " << CaseFilesFolder.string() << std::endl;
 
 		for (const auto& entry : std::filesystem::directory_iterator(CaseFilesFolder))
@@ -60,7 +67,7 @@ void CBatchTest::ReadParameters()
 			}
 		}
 
-		std::cout << "Будет выполнено " << ContingencyFiles_.size() * CaseFiles_.size() << " расчетов" << std::endl;
+		std::cout << "Максимальное количество расчетов " << ContingencyFiles_.size() * CaseFiles_.size() << std::endl;
 		std::cout << "Длительность расчета: " << GlobalOptions.Duration << std::endl;
 		std::cout << "Режим: " << (GlobalOptions.EmsMode ? "EMS" : "Инженерный") << std::endl;
 		std::cout << "Raiden Atol: " << GlobalOptions.RaidenAtol << std::endl;
@@ -102,10 +109,6 @@ void CBatchTest::Run()
 	HKEY handle{ NULL };
 	try
 	{
-		if (const HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))
-			throw dfw2error("Ошибка CoInitialize, scode {:0x}", static_cast<unsigned long>(hr));
-	
-
 		std::filesystem::path templatePath;
 		const auto cszUserFolder = L"UserFolder";
 
@@ -125,33 +128,93 @@ void CBatchTest::Run()
 		RegCloseKey(handle);
 		handle = NULL;
 
-		macroPath_ = templatePath / L"macro";
-		
-
+		std::filesystem::path macroPath{ templatePath / L"macro" };
 		templatePath.append(L"shablon");
-
-		rstPath_ = templatePath;
-		dfwPath_ = templatePath;
-		scnPath_ = templatePath;
-
-		rstPath_.append(L"динамика.rst");
-		dfwPath_.append(L"автоматика.dfw");
-		scnPath_.append(L"сценарий.scn");
+		std::filesystem::path rstPath{ templatePath }, dfwPath{ templatePath }, scnPath{ templatePath };
+		rstPath.append(L"динамика.rst");
+		dfwPath.append(L"автоматика.dfw");
+		scnPath.append(L"сценарий.scn");
 
 		long CaseId{ 0 };
+
+		const auto MaxThreads{ std::thread::hardware_concurrency() };
+
+		struct InputOutput
+		{
+			Input Inp;
+			Output Out;
+		};
+
+		std::list<InputOutput> Runs;
 
 		for (const auto& contfile : ContingencyFiles_)
 			for (const auto& casefile : CaseFiles_)
 			{
-				
-				Options opts{GlobalOptions};
-				opts.CaseId = ++CaseId;
 				// если SelectedRun больше нуля - считаем только комбинацию с номером
 				// равным SelectedRun
-				if((opts.SelectedRun > 0 && opts.SelectedRun == opts.CaseId) || 
-					opts.SelectedRun <= 0)
-					TestPair(casefile, contfile, opts);
+				++CaseId;
+				if ((GlobalOptions.SelectedRun > 0 && GlobalOptions.SelectedRun == CaseId) ||
+					GlobalOptions.SelectedRun <= 0)
+				{
+					Runs.emplace_back(InputOutput{ {
+						   GlobalOptions,
+						   casefile,
+						   contfile,
+						   rstPath,
+						   scnPath,
+						   dfwPath,
+						   macroPath,
+						   CaseId,
+						   ContingencyFiles_.size() * CaseFiles_.size()
+						},
+						{} });
+				}
 			}
+				
+		std::cout << "Будет выполнено расчетов: " << Runs.size() << std::endl;
+
+		std::vector<std::thread> threads;
+
+		CTestTimer Timer;
+
+		if (GlobalOptions.Threads == 0)
+			GlobalOptions.Threads = std::thread::hardware_concurrency() / 2;
+
+		BS::thread_pool pool(GlobalOptions.Threads);
+
+		double TimeRaiden{ 0.0 }, TimeRustab{ 0.0 };
+
+		if (GlobalOptions.Threads > 1)
+		{
+			for (auto&& run : Runs)
+				pool.push_task(TestPair, std::ref(run.Inp), std::ref(run.Out));
+
+			pool.wait_for_tasks();
+
+			for (auto&& run : Runs)
+			{
+				TimeRaiden += run.Out.TimeRaiden;
+				TimeRustab += run.Out.TimeRustab;
+				std::cout << run.Out.Report.str();
+				report << run.Out.BriefReport.str();
+			}
+		}
+		else
+			for (auto&& run : Runs)
+			{
+				TestPair(run.Inp, run.Out);
+				TimeRaiden += run.Out.TimeRaiden;
+				TimeRustab += run.Out.TimeRustab;
+				std::cout << run.Out.Report.str();
+				report << run.Out.BriefReport.str();
+			}
+
+		std::cout << fmt::format("Общая дительность расчетов {:.3f} RUSTab {:.3f}, Raiden {:.3f}",
+			Timer.Duration(),
+			TimeRustab,
+			TimeRaiden
+			)
+			<< std::endl;
 	}
 	catch (const std::runtime_error& er)
 	{
@@ -165,18 +228,36 @@ void CBatchTest::Run()
 	report.close();
 }
 
-void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::filesystem::path& ContingencyFile, const Options& Opts)
+void CBatchTest::TestPair(const Input& Input, Output& Output)
 {
+	const auto& Opts{ Input.Opts };
 	try
 	{
+		if(Input.Opts.Threads > 1)
+		{
+			std::lock_guard<std::mutex> lock(Input.mtx_);
+			std::cout << 
+				fmt::format("Запущен расчет {}: {} + {}",
+				Input.CaseId,
+				Input.CaseFile.filename().u8string(),
+				Input.ContingencyFile.filename().u8string()
+				) 
+				<< std::endl;
+		}
+
+		if (const HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))
+			throw dfw2error("Ошибка CoInitialize, scode {:0x}", static_cast<unsigned long>(hr));
+
+		
+
 		IRastrPtr Rastr;
 		if (const HRESULT hr{ Rastr.CreateInstance(CLSID_Rastr) }; FAILED(hr))
 			throw dfw2error("Ошибка создания Rastr, scode {:0x}", static_cast<unsigned long>(hr));
-		Rastr->Load(RG_REPL, bstrPath(CaseFile), bstrPath(rstPath_));
-		Rastr->Load(RG_REPL, bstrPath(ContingencyFile), bstrPath(scnPath_));
-		Rastr->NewFile(bstrPath(dfwPath_));
-		Rastr->ExecMacroPath(bstrPath(macroPath_ / "Scn2Dfw.rbs"), L"");
-		Rastr->NewFile(bstrPath(scnPath_));
+		Rastr->Load(RG_REPL, bstrPath(Input.CaseFile), bstrPath(Input.rstPath));
+		Rastr->Load(RG_REPL, bstrPath(Input.ContingencyFile), bstrPath(Input.scnPath));
+		Rastr->NewFile(bstrPath(Input.dfwPath));
+		Rastr->ExecMacroPath(bstrPath(Input.macroPath / "Scn2Dfw.rbs"), L"");
+		Rastr->NewFile(bstrPath(Input.scnPath));
 		auto FWDynamic{ Rastr->FWDynamic() };
 		
 		ITablePtr ComDynamic{ Rastr->Tables->Item("com_dynamics") };
@@ -246,7 +327,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 
 		IColPtr ThreadId{ RaidenParameters->Cols->Item(cszThreadId) };
 
-		ThreadId->PutZ(0, Opts.CaseId);
+		ThreadId->PutZ(0, Input.CaseId);
 
 
 		StopOnBranchOOS->PutZ(0, Opts.RaidenStopOnOOS ? 1 : 0);
@@ -260,7 +341,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		}
 
 
-		const std::string ResultFileName{ fmt::format("{:05d}.sna", Opts.CaseId) };
+		const std::string ResultFileName{ fmt::format("{:05d}.sna", Input.CaseId) };
 		std::filesystem::path ResultPath1(Opts.ResultPath), ResultPath2(Opts.ResultPath);
 		ResultPath1.append("RUSTab");
 		SnapPath->PutZ(0, bstrPath(ResultPath1));
@@ -271,12 +352,19 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 
 		ResultsFolder->PutZ(0, bstrPath(ResultPath2));
 
-		std::cout << fmt::format("Расчет {} из {}\nМодель: {}\nСценарий: {}\n",
-			Opts.CaseId,
-			ContingencyFiles_.size() * CaseFiles_.size(),
-			CaseFile.filename().u8string(),
-			ContingencyFile.filename().u8string()
+		Output.Report << fmt::format("Расчет {} из {}\nМодель: {}\nСценарий: {}\n",
+			Input.CaseId,
+			Input.TotalRuns,
+			Input.CaseFile.filename().u8string(),
+			Input.ContingencyFile.filename().u8string()
 		);
+
+		if (Input.Opts.Threads <= 1)
+		{
+			std::lock_guard<std::mutex> lock(Input.mtx_);
+			std::cout << Output.Report.str() << std::endl;
+			std::stringstream().swap(Output.Report);
+		}
 
 		double Duration[2];
 		DFWSyncLossCause SyncLossCause[2];
@@ -291,7 +379,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			Duration[method] = Timer.Duration();
 			SyncLossCause[method] = FWDynamic->SyncLossCause;
 			
-			std::cout << fmt::format("*\t{} {} режим "
+			Output.Report << fmt::format("*\t{} {} режим "
 									 "\n\tРезультат: {}"
 									 "\n\tПросчитано: {:.3f}с"
 									 "\n\tУстойчивость: {}"
@@ -307,7 +395,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 					Duration[method]) << std::endl;
 
 			if (!Opts.EmsMode)
-				std::cout << fmt::format("\tФайл результатов : {}",
+				Output.Report << fmt::format("\tФайл результатов : {}",
 					method ? ResultPath2.u8string() : ResultPath1.u8string()) << std::endl;
 		}
 
@@ -321,7 +409,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			for (const auto& var : CompareResults)
 			{
 				if(!var.Ordered.empty())
-					std::cout << fmt::format("*\tТоп {} отклонений переменной \"{}\" устройства типа \"{}\"\n",
+					Output.Report << fmt::format("*\tТоп {} отклонений переменной \"{}\" устройства типа \"{}\"\n",
 						var.Ordered.size(),
 						var.VariableName,
 						var.DeviceTypeVerbal);
@@ -329,7 +417,7 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 				for (const auto& diff : var.Ordered)
 				{
 					ResultFileLib::IMinMaxDataPtr Max{ diff.second.CompareResult->Max };
-					std::cout << fmt::format("\t{} {} Max {:.5f}({:.5f}) {:.5f}<=>{:.5f} Avg {:.5f}\n",
+					Output.Report << fmt::format("\t{} {} Max {:.5f}({:.5f}) {:.5f}<=>{:.5f} Avg {:.5f}\n",
 						diff.second.DeviceId,
 						diff.second.DeviceName,
 						Max->Metric,
@@ -355,10 +443,10 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			}
 		}
 
-		report <<
-			Opts.CaseId << ";" <<
-			CaseFile.filename().u8string() << ";" <<
-			ContingencyFile.filename().u8string() << ";" <<
+		Output.BriefReport <<
+			Input.CaseId << ";" <<
+			Input.CaseFile.filename().u8string() << ";" <<
+			Input.ContingencyFile.filename().u8string() << ";" <<
 			(RetCode[0] != AST_OK ? (fnVerbalCode)(RetCode[0]) : (fnVerbalSyncLossCause)(SyncLossCause[0])) << ";" <<
 			(RetCode[1] != AST_OK ? (fnVerbalCode)(RetCode[1]) : (fnVerbalSyncLossCause)(SyncLossCause[1])) << ";" <<
 			Duration[0] << ";" <<
@@ -367,10 +455,19 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 			MaxDiff << ";" <<
 			MaxDiffVariable << ";" <<
 			std::endl;
+
+		Output.TimeRustab = Duration[0];
+		Output.TimeRaiden = Duration[1];
 	}
 
 	catch (const _com_error& er)
 	{
 		throw dfw2error(stringutils::utf8_encode(er.Description()));
+	}
+
+	if (Input.Opts.Threads > 1)
+	{
+		std::lock_guard<std::mutex> lock(Input.mtx_);
+		std::cout << "Завершен расчет " << Input.CaseId << std::endl;
 	}
 }

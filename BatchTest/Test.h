@@ -2,7 +2,10 @@
 #include <list>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <string>
 #include <chrono>
+#include <mutex>
 #include "..\DFW2\dfw2exception.h"
 
 
@@ -26,11 +29,9 @@ class CBatchTest
 protected:
 	using FilesT = std::list<std::filesystem::path>;
 	FilesT CaseFiles_, ContingencyFiles_;
-	std::filesystem::path rstPath_, dfwPath_, scnPath_, macroPath_;
 	struct Options
 	{
 		bool EmsMode = false;
-		long CaseId = 0;
 		double Duration = 15;
 		double RaidenAtol = 1e-4;
 		double RaidenRtol = 1e-4;
@@ -39,8 +40,32 @@ protected:
 		std::filesystem::path ResultPath;
 		long SelectedRun = 0;
 		bool RaidenStopOnOOS = false;
+		long Threads = 1;
 	};
-	void TestPair(const std::filesystem::path& CaseFile, const std::filesystem::path& ContingencyFile, const Options& Opts);
+
+	struct Input
+	{
+		const Options& Opts;
+		std::filesystem::path CaseFile;
+		std::filesystem::path ContingencyFile;
+		std::filesystem::path  rstPath;
+		std::filesystem::path  scnPath;
+		std::filesystem::path  dfwPath;
+		std::filesystem::path  macroPath;
+		long CaseId = 0;
+		size_t TotalRuns = 0;
+		inline static std::mutex mtx_;
+	};
+
+	struct Output
+	{
+		std::stringstream Report;
+		std::stringstream BriefReport;
+		double TimeRaiden = 0.0;
+		double TimeRustab = 0.0;
+	};
+
+	static void TestPair(const Input& Input, Output& Output);
 	std::ofstream report;
 	std::filesystem::path parametersPath_;
 	void ReadParameters();
