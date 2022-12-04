@@ -240,6 +240,14 @@ void CBatchTest::TestPair(const std::filesystem::path& CaseFile, const std::file
 		IColPtr StopOnGeneratorOOS{ RaidenParameters->Cols->Item("StopOnGeneratorOOS") };
 		IColPtr DisableResultWriter{ RaidenParameters->Cols->Item("DisableResultsWriter") };
 
+		constexpr const char* cszThreadId{ "ThreadId" };
+		if (RaidenParameters->Cols->GetFind(cszThreadId) < 0)
+			RaidenParameters->Cols->Add(cszThreadId, PropTT::PR_INT);
+
+		IColPtr ThreadId{ RaidenParameters->Cols->Item(cszThreadId) };
+
+		ThreadId->PutZ(0, Opts.CaseId);
+
 
 		StopOnBranchOOS->PutZ(0, Opts.RaidenStopOnOOS ? 1 : 0);
 		StopOnGeneratorOOS->PutZ(0, StopOnBranchOOS->GetZ(0));

@@ -11,6 +11,7 @@ namespace DFW2
 	protected:
 
 		std::filesystem::path pathRoot;
+		std::filesystem::path pathThreadRoot;
 		std::filesystem::path pathAutomatic;
 		std::filesystem::path pathAutomaticBuild;
 		std::filesystem::path pathAutomaticModules;

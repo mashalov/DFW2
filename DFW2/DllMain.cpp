@@ -20,12 +20,13 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
-extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr)
+extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr, unsigned long ThreadId)
 {
 	LONG RetCode{ 0 };
 	try
 	{
 		CDynaModel::DynaModelParameters parameters;
+		parameters.ThreadId_ = ThreadId;
 		CDynaModel Network(parameters);
 		Network.SetLogger(std::make_unique<CLoggerRastrWin>(spRastr));
 		Network.SetProgress(std::make_unique<CProgressRastrWin>(spRastr));

@@ -90,6 +90,7 @@ namespace DFW2
 			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 			double m_dProcessDuration = 150.0;
 			double Hmax = (std::numeric_limits<double>::max)();
+			unsigned long ThreadId_ = 0;
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -1007,6 +1008,11 @@ namespace DFW2
 		}
 
 		void CheckFolderStructure();
+
+		unsigned long ThreadId() const
+		{
+			return m_Parameters.ThreadId_;
+		}
 
 		const DynaModelParameters& Parameters() const
 		{

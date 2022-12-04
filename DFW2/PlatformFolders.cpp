@@ -55,20 +55,31 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 {
 	const char* cszBuild{ "Build" };
 	const char* cszModules{ "Modules" };
+
+	const auto ThreadId{ m_Model.ThreadId() };
 	
 	if (WorkingFolder.is_absolute())
 		pathRoot = WorkingFolder;
 	else
 		pathRoot = std::filesystem::path(GetUserFolder()).append(WorkingFolder.c_str());
 
-		
+
+
 	std::string strPlatform(Platform());
 	strPlatform += std::filesystem::path::preferred_separator;
 
 	pathRoot.append(CDFW2Messages::m_cszProjectName);
 	CheckPath(pathRoot);
 
-	pathAutomatic = std::filesystem::path(pathRoot).append("Automatic");
+	pathThreadRoot = pathRoot;
+
+	// если задан номер потока - все каталоги, которые
+	// должны быть разделены для потоков создаем в подкаталоге
+	// с номером потока
+	if (ThreadId)
+		pathThreadRoot.append(fmt::format("Threads/{:02d}/", ThreadId));
+
+	pathAutomatic = std::filesystem::path(pathThreadRoot).append("Automatic");
 	CheckPath(pathAutomatic);
 
 	pathAutomaticBuild = std::filesystem::path(pathAutomatic).append(cszBuild).append(Configuration()).append(strPlatform);
@@ -77,7 +88,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 	pathAutomaticModules = std::filesystem::path(pathAutomatic).append(cszModules).append(Configuration()).append(strPlatform);
 	CheckPath(pathAutomaticModules);
 
-	pathCustomModels = std::filesystem::path(pathRoot).append("CustomModels");
+	pathCustomModels = std::filesystem::path(pathThreadRoot).append("CustomModels");
 
 	pathCustomModelsBuild = std::filesystem::path(pathCustomModels).append(cszBuild).append(Configuration()).append(strPlatform);
 	CheckPath(pathCustomModelsBuild);
@@ -88,9 +99,9 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 	pathSourceReference = std::filesystem::path(pathRoot).append("Reference/");
 	CheckPath(pathSourceReference);
 
-	pathLogs = std::filesystem::path(pathRoot).append("Logs/");
+	pathLogs = std::filesystem::path(pathThreadRoot).append("Logs/");
 	CheckPath(pathLogs);
 
-	pathResults = std::filesystem::path(pathRoot).append("Results/");
+	pathResults = std::filesystem::path(pathThreadRoot).append("Results/");
 	CheckPath(pathResults);
 }
