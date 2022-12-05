@@ -18,6 +18,7 @@ bool CRelay::Init(CDynaModel *pDynaModel)
 double CRelay::OnStateOff(CDynaModel *pDynaModel)
 {
 	double OnBound{ UpperH_ };
+	// нужно переключать если Check < 0
 	double Check{ UpperH_ - Input_ };
 
 	if (!MaxRelay_)
@@ -36,13 +37,13 @@ double CRelay::OnStateOff(CDynaModel *pDynaModel)
 // отслеживание состояния в сработанном состоянии
 double CRelay::OnStateOn(CDynaModel *pDynaModel)
 {
-	double OnBound{ LowerH_ };
-	double Check{ Input_ - LowerH_ };
+	double OnBound{ UpperH_};
+	double Check{ Input_ - UpperH_ };
 
 	if (!MaxRelay_)
 	{
-		OnBound = UpperH_;
-		Check = UpperH_ - Input_;
+		OnBound = LowerH_;
+		Check = LowerH_ - Input_;
 	}
 
 	double rH{ 1.0 };
@@ -55,7 +56,7 @@ double CRelay::OnStateOn(CDynaModel *pDynaModel)
 
 CRelay::eRELAYSTATES CRelay::GetInstantState()
 {
-	CRelay::eRELAYSTATES State = eCurrentState;	// берем текущее состояние
+	CRelay::eRELAYSTATES State{ eCurrentState };	// берем текущее состояние
 	if (MaxRelay_)
 	{
 		// для максимального реле 
@@ -63,13 +64,13 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 		{
 			// если реле не сработано
 			// проверяем превышает ли вход уставку на срабатывание
-			if (Input_ > Upper_)
+			if (Input_ > UpperH_)
 				State = eRELAYSTATES::RS_ON;
 		}
 		else
 		{
 			// если реле сработано - проверяем не ниже ли вход уставки на отпускание
-			if (Input_ <= Lower_)
+			if (Input_ <= UpperH_)
 				State = eRELAYSTATES::RS_OFF;
 		}
 	}
@@ -80,14 +81,14 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 		{
 			// если реле не сработано
 			// проверяем не ниже ли вход уставки на срабатывание
-			if (Input_ < Lower_)
+			if (Input_ < LowerH_)
 				State = eRELAYSTATES::RS_ON;
 		}
 		else
 		{
 			// если реле сработано
 			// проверяем не выше ли вход уставки на отпускание
-			if (Input_ >= Upper_)
+			if (Input_ >= LowerH_)
 				State = eRELAYSTATES::RS_OFF;
 		}
 	}
@@ -100,7 +101,7 @@ eDEVICEFUNCTIONSTATUS CRelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	if (Device_.IsStateOn())
 	{
 		// получаем текущее состояние
-		CRelay::eRELAYSTATES State = GetInstantState();
+		const CRelay::eRELAYSTATES State{ GetInstantState() };
 		// ставим полученное состояние
 		SetCurrentState(pDynaModel, State);
 		// транслируем состояние из enum в 0/1 на выход
@@ -112,7 +113,7 @@ eDEVICEFUNCTIONSTATUS CRelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 bool CRelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
 	// уставка и коэффициент возврата по умолчанию
-	double Rt0(0.0), Rt1(1.0);
+	double Rt0{ 0.0 }, Rt1{ 1.0 };
 	// забиваем значения по умолчанию значениями из заданного вектора по порядку
 	CDynaPrimitive::UnserializeParameters({ Rt0, Rt1 }, Parameters);
 	// вводим уставки максимального реле
@@ -122,7 +123,7 @@ bool CRelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& P
 bool CRelayMin::UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR& Parameters)
 {
 	// уставка и коэффициент возврата по умолчанию
-	double Rt0(0.0), Rt1(1.0);
+	double Rt0{ 0.0 }, Rt1{ 1.0 };
 	// забиваем значения по умолчанию значениями из заданного вектора по порядку
 	CDynaPrimitive::UnserializeParameters({ Rt0, Rt1 }, Parameters);
 	// вводим уставки минимального реле
@@ -154,7 +155,7 @@ void CRelayDelay::SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, 
 bool CRelayDelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
 {
 	// уставка, коэффициент возврата и выдержка
-	double Rt0(0.0), Rt1(0.0), Rt2(1.0);
+	double Rt0{ 0.0 }, Rt1{ 0.0 }, Rt2{ 1.0 };
 	// в параметрах последовательно: уставка, выдержка и коэффициент возврата
 	// коэффициент возврата, как правило, остается значением по умолчанию
 	CDynaPrimitive::UnserializeParameters({Rt0, Rt1, Rt2}, Parameters);
@@ -166,7 +167,7 @@ bool CRelayDelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECT
 bool CRelayMinDelay::UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR& Parameters)
 {
 	// уставка, коэффициент возврата и выдержка
-	double Rt0(0.0), Rt1(0.0), Rt2(1.0);
+	double Rt0{ 0.0 }, Rt1{ 0.0 }, Rt2{ 1.0 };
 	CDynaPrimitive::UnserializeParameters({ Rt0, Rt1, Rt2 }, Parameters);
 	SetRefs(pDynaModel, Rt0, Rt0 * Rt2, false, Rt1);
 	return true;
@@ -174,9 +175,7 @@ bool CRelayMinDelay::UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEV
 
 bool CRelayDelay::Init(CDynaModel *pDynaModel)
 {
-
 	bool bRes{ true };
-
 	eCurrentState = eRELAYSTATES::RS_OFF;
 	if (Device_.IsStateOn())
 	{
@@ -221,8 +220,8 @@ eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (Device_.IsStateOn())
 	{
-		CRelay::eRELAYSTATES OldState(eCurrentState);
-		CRelay::eRELAYSTATES State = GetInstantState();
+		const CRelay::eRELAYSTATES OldState{ eCurrentState };
+		const CRelay::eRELAYSTATES State{ GetInstantState() };
 
 		SetCurrentState(pDynaModel, State);
 

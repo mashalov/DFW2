@@ -413,7 +413,12 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert({ m_cszSb,	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA) });
 	props.VarMap_.insert({ m_cszSe,	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA) });
 
-	props.VarAliasMap_.insert({ { "ib", m_cszIb }, { "ie", m_cszIe } });
+	props.VarAliasMap_.insert({ 
+		{ "ib", m_cszIb }, 
+		{ "ie", m_cszIe }, 
+		{ "pl_ip", m_cszPb },
+		{ "pl_iq", m_cszPe }
+		});
 
 	// измерения создаются индивидуально с ветвью в конструкторе
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();

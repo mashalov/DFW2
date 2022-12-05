@@ -12,7 +12,7 @@ bool CDynaPrimitive::Init(CDynaModel *pDynaModel)
 
 bool CDynaPrimitiveLimited::Init(CDynaModel *pDynaModel)
 {
-	bool bRes = CDynaPrimitive::Init(pDynaModel);
+	bool bRes{ CDynaPrimitive::Init(pDynaModel) };
 	if (bRes)
 	{
 		eCurrentState = eLIMITEDSTATES::Mid;
@@ -48,7 +48,7 @@ double CDynaPrimitive::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 bool CDynaPrimitive::UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters)
 {
-	auto dest = ParametersList.begin();
+	auto dest{ ParametersList.begin() };
 	for (auto& src : Parameters)
 		if (dest != ParametersList.end())
 		{
@@ -87,7 +87,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 		// на уточнение зеро-кроссинга
 		if (Device_.DetectZeroCrossingFine(this))
 		{
-			RightVector* pRightVector = pDynaModel->GetRightVector(ValueIndex);
+			const auto pRightVector{ pDynaModel->GetRightVector(ValueIndex) };
 			// определяем расстояние до точки zero-crossing в долях от текущего шага
 			rH = FindZeroCrossingToConst(pDynaModel, pRightVector, Constraint);
 			if (pDynaModel->GetZeroCrossingInRange(rH))
@@ -137,7 +137,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH{ 1.0 };
-	eLIMITEDSTATES oldCurrentState = eCurrentState;
+	const eLIMITEDSTATES oldCurrentState{ eCurrentState };
 	switch (eCurrentState)
 	{
 	case eLIMITEDSTATES::Mid:
@@ -169,7 +169,7 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return rH;
 }
 
-double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst)
+double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, const RightVector* pRightVector, double dConst)
 {
 	const ptrdiff_t q{ pDynaModel->GetOrder() };
 	const double h{ pDynaModel->H() };
@@ -362,7 +362,7 @@ double CDynaPrimitive::GetZCStepRatio(CDynaModel *pDynaModel, double a, double b
 std::string CDynaPrimitive::GetVerboseName()
 {
 	const auto pRightVector{ Device_.GetModel()->GetRightVector(Output_) };
-	const char* cszUnknown = "\"unknown\"";
+	constexpr const char* cszUnknown{ "\"unknown\"" };
 	return fmt::format("{} {} {} {}", 
 		GetVerbalName(), 
 		Device_.GetVerbalName(), 

@@ -231,6 +231,7 @@ void CBatchTest::Run()
 void CBatchTest::TestPair(const Input& Input, Output& Output)
 {
 	const auto& Opts{ Input.Opts };
+	Output.BriefReport.imbue(std::locale("fr_FR"));  // Set OUTPUT to use a COMMA
 	try
 	{
 		if(Input.Opts.Threads > 1)

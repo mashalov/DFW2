@@ -145,7 +145,7 @@ namespace DFW2
 		virtual bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) { return true; }
 		std::string GetVerboseName();
 		static double GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c);
-		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, RightVector* pRightVector, double dConst);
+		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, const RightVector* pRightVector, double dConst);
 	};
 
 	// примитив с состоянием, изменение которого может вызывать разрыв
