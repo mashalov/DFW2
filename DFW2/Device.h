@@ -397,7 +397,7 @@ namespace DFW2
 		}
 		virtual void InitNordsiek(CDynaModel* pDynaModel);
 		virtual void Predict() {};
-		virtual bool InMatrix();
+		virtual bool InMatrix() const;
 		void EstimateEquations(CDynaModel* pDynaModel);
 		virtual bool LeaveDiscontinuityMode(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckProcessDiscontinuity(CDynaModel* pDynaModel);

@@ -613,7 +613,7 @@ CModelActionChangeDeviceState::CModelActionChangeDeviceState(CDevice* pDevice, e
 eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel)
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
-	if (!CDevice::IsFunctionStatusOK(pDevice_->SetState(NewState_, eDEVICESTATECAUSE::DSC_EXTERNAL)))
+	if (!CDevice::IsFunctionStatusOK(pDevice_->ChangeState(NewState_, eDEVICESTATECAUSE::DSC_EXTERNAL)))
 		State = eDFW2_ACTION_STATE::AS_ERROR;
 	return State;
 }

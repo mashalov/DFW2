@@ -162,7 +162,7 @@ double CDevice::GetValue(std::string_view VarName) const
 double CDevice::SetValue(std::string_view VarName, double Value)
 {
 	double* pRes{ GetVariablePtr(VarName) };
-	double OldValue = 0.0;
+	double OldValue{ 0.0 };
 	if (pRes)
 	{
 		OldValue = *pRes;
@@ -319,7 +319,7 @@ const CLinkPtrCount* const CDevice::GetLink(ptrdiff_t nLinkIndex)
 }
 
 // Определяет нужны ли уравнения для этого устройства
-bool CDevice::InMatrix()
+bool CDevice::InMatrix() const
 {
 	return IsStateOn();
 }
@@ -448,6 +448,15 @@ eDEVICEFUNCTIONSTATUS CDevice::PreInit(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice)
 {
+	if (State_ != eState)
+	{
+		if (eState == eDEVICESTATE::DS_OFF)
+		{
+			VariableIndexRefVec vec;
+			for (auto&& var : GetVariables(vec))
+				var.get() = 0.0;
+		}
+	}
 	State_ = eState;
 	// если устройство было отключено навсегда - попытка изменения его состояния (даже отключение) вызывает исключение
 	// по крайней мере для отладки
@@ -457,8 +466,9 @@ eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE e
 	StateCause_ = eStateCause;
 	// если устройство отключается навсегда - обнуляем все его переменные, чтобы не было мусора
 	// в результатах (мы такие устройства и так не пишем, но на всякий случай
-	if (eStateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
-		for (int i = 0; i < pContainer_->EquationsCount(); *GetVariablePtr(i++) = 0.0);
+	
+	//if (eStateCause == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
+	//	for (int i = 0; i < pContainer_->EquationsCount(); *GetVariablePtr(i++) = 0.0);
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -969,7 +979,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 	if (eState == eDEVICESTATE::DS_ON)
 	{
 		// если устройство хотят включить - нужно проверить, все ли его masters включены. Если да - то включить, если нет - предупреждение и состояние не изменять
-		CDevice *pDeviceOff(nullptr);
+		CDevice* pDeviceOff{ nullptr };
 		for (auto&& masterdevice : pContainer_->ContainerProps().Masters)
 		{
 			// если было найдено отключенное ведущее устройство - выходим
@@ -993,7 +1003,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 			else
 			{
 				// если устройство с простой ссылки отключено - фиксируем
-				CDevice *pDevice(GetSingleLink(masterdevice->nLinkIndex));
+				CDevice* pDevice{ GetSingleLink(masterdevice->nLinkIndex) };
 				if (pDevice && !pDevice->IsStateOn())
 				{
 					pDeviceOff = pDevice;
@@ -1022,11 +1032,11 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 		
 		// обрабатываем  отключаемые устройства рекурсивно
 		std::stack<std::pair<CDevice*, CDevice*>> offstack;
-		offstack.push(std::make_pair(this,nullptr));
+		offstack.push({ this,nullptr });
 		while (!offstack.empty())
 		{
-			CDevice *pOffDevice = offstack.top().first;	// устройство которое отключают
-			CDevice* pCauseDevice = offstack.top().second; // устройство из-за которого отключают
+			CDevice* pOffDevice{ offstack.top().first };	// устройство которое отключают
+			CDevice* pCauseDevice{ offstack.top().second }; // устройство из-за которого отключают
 			offstack.pop();
 
 			// для ветвей состояние не бинарное: могут быть отключены в начале/в конце/полность.
@@ -1038,7 +1048,6 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 																pCauseDevice->GetVerbalName()));
 
 			pOffDevice->SetState(eState, eStateCause, pCauseDevice);
-
 
 			// если отключаем не устройство, которое запросили отключить (первое в стеке), а рекурсивно отключаемое - изменяем причину отключения на внутреннюю
 			eStateCause = eDEVICESTATECAUSE::DSC_INTERNAL;
@@ -1068,7 +1077,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 				else
 				{
 					// проверяем устройство на простой ссылке
-					CDevice *pDevice(pOffDevice->GetSingleLink(slavedevice->nLinkIndex));
+					CDevice* pDevice{ pOffDevice->GetSingleLink(slavedevice->nLinkIndex) };
 					if (pDevice && pDevice->IsStateOn())
 						offstack.push(std::make_pair(pDevice, pOffDevice));
 				}
@@ -1085,7 +1094,7 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 SerializerPtr CDevice::GetSerializer()
 {
 	// создаем сериализатор
-	SerializerPtr extSerializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceContainer(GetContainer()));
+	auto extSerializer{ std::make_unique<CSerializerBase>(new CSerializerDataSourceContainer(GetContainer())) };
 	// заполняем сериализатор данными из этого устройства
 	UpdateSerializer(extSerializer.get());
 	return extSerializer;
@@ -1094,7 +1103,7 @@ SerializerPtr CDevice::GetSerializer()
 // возвращает валидатор для данного типа устройств
 SerializerValidatorRulesPtr CDevice::GetValidator()
 {
-	auto Validator = std::make_unique<CSerializerValidatorRules>();
+	auto Validator{ std::make_unique<CSerializerValidatorRules>() };
 	UpdateValidator(Validator.get());
 	return Validator;
 }
@@ -1156,11 +1165,11 @@ bool CDevice::CheckLimits(double& Min, double& Max)
 		return true;
 	else
 	{
-		const auto serializer = GetSerializer();
-		const auto mtMin = serializer->ByPointer(&Min);
-		const auto mtMax = serializer->ByPointer(&Max);
-		std::string nameMin(mtMin.has_value() ? mtMin->first : CDFW2Messages::m_cszUnknown);
-		std::string nameMax(mtMax.has_value() ? mtMax->first : CDFW2Messages::m_cszUnknown);
+		const auto serializer{ GetSerializer() };
+		const auto mtMin{ serializer->ByPointer(&Min) };
+		const auto mtMax{ serializer->ByPointer(&Max) };
+		std::string nameMin{ mtMin.has_value() ? mtMin->first : CDFW2Messages::m_cszUnknown };
+		std::string nameMax{ mtMax.has_value() ? mtMax->first : CDFW2Messages::m_cszUnknown };
 
 		if (Min > Max)
 		{
