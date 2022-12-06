@@ -347,12 +347,6 @@ void CDynaNodeBase::MarkZoneEnergized()
 	}
 }
 
-
-void CDynaNodeContainer::ProcessTopologyRequest()
-{
-	pDynaModel_->ProcessTopologyRequest();
-}
-
 void CDynaNodeContainer::DumpNodeIslands(NODEISLANDMAP& Islands)
 {
 	for (auto&& supernode : Islands)

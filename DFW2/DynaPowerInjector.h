@@ -50,6 +50,7 @@ namespace DFW2
 		// комплекс шунта Нортона в узле подключения	
 		virtual const cplx& Ynorton() const { return Ynorton_; }
 
+		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;

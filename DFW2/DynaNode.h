@@ -158,7 +158,6 @@ namespace DFW2
 		void NewtonUpdateEquation(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		void MarkZoneEnergized();
-		void ProcessTopologyRequest();
 		void CalcAdmittances(bool bFixNegativeZs);
 		void GetGroundAdmittance(cplx& y);
 		void CalculateShuntParts();
@@ -436,7 +435,6 @@ namespace DFW2
 		void ProcessTopology();
 		void ProcessTopologyInitial();
 		bool LULF();
-		void ProcessTopologyRequest();
 		void AddToTopologyCheck(CDynaNodeBase* pNode);
 		void ResetTopologyCheck();
 		bool DynamicLRC = true;

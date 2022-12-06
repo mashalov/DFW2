@@ -61,6 +61,17 @@ bool CDynaPowerInjector::CalculatePower()
 	return true;
 }
 
+eDEVICEFUNCTIONSTATUS CDynaPowerInjector::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice)
+{
+	// если устройство отключается - обнуляем выходные мощности
+	// они не являются переменными состояния и не обнуляются
+	// в базовом классе
+	const auto SetStateRet{ CDevice::SetState(eState, eStateCause, pCauseDevice) };
+	if (CDevice::IsFunctionStatusOK(SetStateRet) && !IsStateOn())
+		P = Q = 0;
+	return SetStateRet;
+}
+
 void CDynaPowerInjector::FinishStep(const CDynaModel& DynaModel)
 {
 	const double dVre{ Vre }, dVim{ Vim };

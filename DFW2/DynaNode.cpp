@@ -1474,13 +1474,6 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	return rH;
 }
 
-
-void CDynaNodeBase::ProcessTopologyRequest()
-{
-	if (pContainer_)
-		static_cast<CDynaNodeContainer*>(pContainer_)->ProcessTopologyRequest();
-}
-
 // добавляет ветвь в список ветвей с нулевым сопротивлением суперузла
 VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 {

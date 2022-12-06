@@ -970,6 +970,8 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 	if (eState == State_)
 		return eDEVICEFUNCTIONSTATUS::DFS_DONTNEED;	// если устройство уже находится в заданном состоянии - выходим, с индикацией отсутствия необходимости
 
+	const auto OriginalState{ State_ };
+
 	if (StateCause_ == eDEVICESTATECAUSE::DSC_INTERNAL_PERMANENT)
 	{
 		Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotChangePermanentDeviceState, GetVerbalName()));
@@ -1083,6 +1085,11 @@ eDEVICEFUNCTIONSTATUS CDevice::ChangeState(eDEVICESTATE eState, eDEVICESTATECAUS
 				}
 			}
 		}
+
+		// если произошло изменение состояния 
+		// информируем модель что нужно пересобрать матрицу
+		if (OriginalState != eState)
+			ProcessTopologyRequest();
 
 		return eDEVICEFUNCTIONSTATUS::DFS_OK;
 	}
@@ -1217,4 +1224,15 @@ void CDevice::SetFunctionsDiff(CDynaModel* pDynaModel)
 void CDevice::SetDerivatives(CDynaModel* pDynaModel)
 {
 	CalculateDerivatives(pDynaModel, &CDynaModel::SetDerivative);
+}
+
+void CDevice::ProcessTopologyRequest()
+{
+	auto container{ GetContainer() };
+	if (!container)
+		throw dfw2error("CDevice::ProcessTopologyRequest - no container !");
+	auto model{ container->GetModel() };
+	if(!model)
+		throw dfw2error("CDevice::ProcessTopologyRequest - no model !");
+	model->ProcessTopologyRequest();
 }
