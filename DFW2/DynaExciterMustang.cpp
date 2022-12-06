@@ -7,7 +7,7 @@ using namespace DFW2;
 
 
 CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
-	// лаг на работает на выход через ограничитель 
+	// лаг работает на выход через ограничитель 
 	// (можем выбирать windup/non-windup режимы работы)
 	OutputLimit(*this, {EqeV}, {EqeLag}),	
 	EqLimit(*this, { EqOutputValue }, { EqInput })
@@ -93,19 +93,10 @@ void CDynaExciterMustang::BuildRightHand(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS Status = CDynaExciterBase::Init(pDynaModel);
-		
+	eDEVICEFUNCTIONSTATUS Status{ CDynaExciterBase::Init(pDynaModel) };
 	ExtUdec = 0.0;
-	double Eqnom, Inom;
-
-	if (!InitConstantVariable(Eqnom, GetSingleLink(DEVTYPE_GEN_DQ), CDynaGenerator1C::m_cszEqnom, DEVTYPE_GEN_DQ))
-		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Inom, GetSingleLink(DEVTYPE_GEN_DQ), CDynaGenerator1C::m_cszInom, DEVTYPE_GEN_DQ))
-		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-
 		CheckLimits(Umin, Umax);
 		CheckLimits(Imin, Imax);
 
@@ -200,7 +191,7 @@ double CDynaExciterMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 bool CDynaExciterMustang::SetUpEqLimits(CDynaModel *pDynaModel, CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateInitial, CDynaPrimitiveLimited::eLIMITEDSTATES EqLimitStateResulting)
 {
-	bool bRes = false;
+	bool bRes{ false };
 	{
 		bRes = true;
 
