@@ -184,7 +184,6 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_dProcessDuration = 15;
 		//m_Parameters.m_dFrequencyTimeConstant = 0.04;
 		m_Parameters.eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
-		m_Parameters.m_dOutStep = 1E-10;
 		//m_Parameters.eFreqDampingType = APDT_ISLAND;
 		//m_Parameters.m_eDiffEquationType = DET_ALGEBRAIC;
 		//m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
@@ -212,6 +211,10 @@ bool CDynaModel::RunTransient()
 		if(m_Parameters.m_eDiffEquationType == DET_ALGEBRAIC)
 			m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 
+		// считаем параметры гистерезиса по заданным параметрам
+		HysteresisAtol_ = GetAtol() * m_Parameters.HysteresisAtol_;
+		HysteresisRtol_ = GetRtol() * m_Parameters.HysteresisRtol_;
+
 		//m_Parameters.m_dOutStep = 1E-5;
 		//bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
 		bRes = bRes && (Reactors.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
@@ -221,6 +224,7 @@ bool CDynaModel::RunTransient()
 
 		if(!Link())
 			throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
 
 		TurnOffDevicesByOffMasters();
 

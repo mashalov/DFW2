@@ -59,7 +59,7 @@ namespace DFW2
 			double m_dZeroCrossingTolerance = 0.0;
 			bool m_bDontCheckTolOnMinStep = false;
 			bool m_bConsiderDampingEquation = false;
-			double m_dOutStep = 0.01;
+			double m_dOutStep = 1e-10;
 			ptrdiff_t nVarSearchStackDepth = 100;
 			double m_dAtol = DFW2_ATOL_DEFAULT;
 			double m_dRtol = DFW2_RTOL_DEFAULT;
@@ -91,6 +91,8 @@ namespace DFW2
 			double m_dProcessDuration = 150.0;
 			double Hmax = (std::numeric_limits<double>::max)();
 			unsigned long ThreadId_ = 0;
+			double HysteresisRtol_ = 1e-2;								// относительный гистерезис
+			double HysteresisAtol_ = 3.0;								// абсолютный гистерезис
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -164,6 +166,8 @@ namespace DFW2
 			static constexpr const char* m_cszPVPQSwitchPerIt = "PVPQSwitchesPerIteration";
 			static constexpr const char* m_cszLFStartupNames[4] = { "None","Seidell", "Tanh", "RKF"};
 			static constexpr const char* m_cszHmax = { "Hmax" };
+			static constexpr const char* cszHysteresisRtol = { "HysteresisRtol" };
+			static constexpr const char* cszHysteresisAtol = { "HysteresisAtol" };
 
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
@@ -683,6 +687,8 @@ namespace DFW2
 		void SetDerivative(ptrdiff_t nRow, double dValue);
 
 		bool SSE2Available_ = false;
+		double HysteresisRtol_ = 1e-2;
+		double HysteresisAtol_ = 10.0;
 
 	public:
 		CDynaNodeContainer Nodes;
@@ -872,6 +878,19 @@ namespace DFW2
 		{
 			return m_Parameters.m_dAtol;
 		}
+
+		// возвращает относительный гистерезиса
+		inline double HysteresisRtol() const
+		{
+			return HysteresisRtol_;
+		}
+
+		// возвращает абсолютный гистерезис
+		inline double HysteresisAtol() const
+		{
+			return HysteresisAtol_;
+		}
+
 		// возвращает относительную точность из параметров
 		inline double GetRtol() const
 		{
@@ -936,7 +955,7 @@ namespace DFW2
 
 		inline double GetHysteresis(double dValue) const
 		{
-			return std::abs(dValue) * GetRtol() * 0.01 + GetAtol() * 3.0;
+			return std::abs(dValue) * HysteresisRtol() + HysteresisAtol();
 		}
 
 		void StopProcess();

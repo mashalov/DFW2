@@ -659,6 +659,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszResultsFolder, m_strResultsFolder);
 	Serializer->AddProperty(m_cszProcessDuration, m_dProcessDuration);
 	Serializer->AddProperty(m_cszHmax, Hmax);
+	Serializer->AddProperty(cszHysteresisAtol, HysteresisAtol_);
+	Serializer->AddProperty(cszHysteresisRtol, HysteresisRtol_);
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
