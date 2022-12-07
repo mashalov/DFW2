@@ -66,7 +66,7 @@ protected:
 	};
 
 	static void TestPair(const Input& Input, Output& Output);
-	std::ofstream report;
+	std::ofstream briefreport, fullreport;
 	std::filesystem::path parametersPath_;
 	void ReadParameters();
 	Options GlobalOptions;

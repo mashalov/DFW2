@@ -936,8 +936,9 @@ namespace DFW2
 
 		inline double GetHysteresis(double dValue) const
 		{
-			return std::abs(dValue) * GetRtol() * 0.01 + GetAtol() * 10.0;
+			return std::abs(dValue) * GetRtol() * 0.01 + GetAtol() * 3.0;
 		}
+
 		void StopProcess();
 		void ProcessTopologyRequest();
 		void DiscontinuityRequest(CDevice& device, const DiscontinuityLevel Level);

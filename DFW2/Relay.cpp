@@ -17,14 +17,14 @@ bool CRelay::Init(CDynaModel *pDynaModel)
 // отслеживание состояния в несработанном состоянии
 double CRelay::OnStateOff(CDynaModel *pDynaModel)
 {
-	double OnBound{ UpperH_ };
+	double OnBound{ Upper_ };
 	// нужно переключать если Check < 0
-	double Check{ UpperH_ - Input_ };
+	double Check{ Upper_ - Input_ };
 
 	if (!MaxRelay_)
 	{
-		OnBound = LowerH_;
-		Check = Input_ - LowerH_;
+		OnBound = Lower_;
+		Check = Input_ - Lower_;
 	}
 
 	double rH{ 1.0 };
@@ -64,7 +64,7 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 		{
 			// если реле не сработано
 			// проверяем превышает ли вход уставку на срабатывание
-			if (Input_ > UpperH_)
+			if (Input_ > Upper_)
 				State = eRELAYSTATES::RS_ON;
 		}
 		else
@@ -81,7 +81,7 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 		{
 			// если реле не сработано
 			// проверяем не ниже ли вход уставки на срабатывание
-			if (Input_ < LowerH_)
+			if (Input_ < Lower_)
 				State = eRELAYSTATES::RS_ON;
 		}
 		else
@@ -140,8 +140,8 @@ void CRelay::SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool 
 
 	// TODO еще бы проверять m_dUpper > m_dLower
 
-	UpperH_ = Upper_ + pDynaModel->GetHysteresis(Upper_);	// порог на срабатывание увеличиваем на величину гистерезиса
-	LowerH_ = Lower_ - pDynaModel->GetHysteresis(Lower_);	// порог на отпускание уменьшаем на величину гистерезиса
+	UpperH_ = Upper_ - pDynaModel->GetHysteresis(Upper_);	// порог на срабатывание уменьшаем на величину гистерезиса
+	LowerH_ = Lower_ + pDynaModel->GetHysteresis(Lower_);	// порог на отпускание увеличиваем на величину гистерезиса
 
 }
 

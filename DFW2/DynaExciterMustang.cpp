@@ -104,9 +104,9 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 		Imin *= Eqnom;
 		Imax *= Eqnom;
 		// ограничения либо на лаге (non-windup)
-		ExcLag.SetMinMaxTK(pDynaModel, -1E6, 1E6, Texc, 1.0);
+		ExcLag.SetMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
 		// либо на ограничителе (windup)
-		OutputLimit.SetMinMax(pDynaModel, Umin, Umax);
+		OutputLimit.SetMinMax(pDynaModel, -1e6, 1e6);
 		EqLimit.SetMinMax(pDynaModel, Imin, Imax);
 		EqOutputValue = Eq0;
 		bool bRes = ExcLag.Init(pDynaModel);
@@ -201,19 +201,19 @@ bool CDynaExciterMustang::SetUpEqLimits(CDynaModel *pDynaModel, CDynaPrimitiveLi
 		switch (EqLimitStateResulting)
 		{
 		case CDynaPrimitiveLimited::eLIMITEDSTATES::Max:
-			OutputLimit.SetMinMax(pDynaModel, Umin, Imax);
+			//OutputLimit.SetMinMax(pDynaModel, Umin, Imax);
 			ExcLag.ChangeTimeConstant(Texc);
-			//ExcLag.ChangeMinMaxTK(pDynaModel, -1E6, 1E6, Texc, 1.0);
+			ExcLag.ChangeMinMaxTK(pDynaModel, -1E6, 1E6, Texc, 1.0);
 			break;
 		case CDynaPrimitiveLimited::eLIMITEDSTATES::Min:
-			OutputLimit.SetMinMax(pDynaModel, Imin, Umax);
+			//OutputLimit.SetMinMax(pDynaModel, Imin, Umax);
 			ExcLag.ChangeTimeConstant(Texc);
-			//ExcLag.ChangeMinMaxTK(pDynaModel, -1E6, 1E6, Texc, 1.0);
+			ExcLag.ChangeMinMaxTK(pDynaModel, -1E6, 1E6, Texc, 1.0);
 			break;
 		case CDynaPrimitiveLimited::eLIMITEDSTATES::Mid:
-			OutputLimit.SetMinMax(pDynaModel, Umin, Umax);
+			//OutputLimit.SetMinMax(pDynaModel, Umin, Umax);
 			ExcLag.ChangeTimeConstant(Texc);
-			//ExcLag.ChangeMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
+			ExcLag.ChangeMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
 			break;
 		}
 	}

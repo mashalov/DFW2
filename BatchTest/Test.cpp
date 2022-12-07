@@ -98,12 +98,25 @@ void CBatchTest::Run()
 	if (!parametersPath_.empty())
 		ReadParameters();
 
-	report.open("briefreport.csv");
-	report.imbue(std::locale("fr_FR"));  // Set OUTPUT to use a COMMA
-	unsigned char bom[] = { 0xEF,0xBB,0xBF };
-	report.write((char*)bom, sizeof(bom));
-	report << fmt::format("Id;Модель;Возмущение;RUSTab;Raiden;T RUSTab;T Raiden;Макс откл;Переменная\n");
+	const auto fnFileName{ [this](const std::string filenamebase)
+	{
+		return fmt::format("{} Mode {} Atol {} Thds {}.csv", 
+			filenamebase,
+			GlobalOptions.EmsMode ? "ems" : "eng",
+			GlobalOptions.RaidenAtol,
+			GlobalOptions.Threads
+		);
+	} };
 
+	briefreport.open((fnFileName)("briefreport"));
+	briefreport.imbue(std::locale("fr_FR"));  // Set OUTPUT to use a COMMA
+	constexpr const unsigned char bom[] = { 0xEF,0xBB,0xBF };
+	briefreport.write((char*)bom, sizeof(bom));
+	briefreport << fmt::format("Id;Модель;Возмущение;RUSTab;Raiden;T RUSTab;T Raiden;Макс откл;t откл;Переменная\n");
+
+	fullreport.open((fnFileName)("fullreport"));
+	fullreport.imbue(std::locale("fr_FR"));  // Set OUTPUT to use a COMMA
+	fullreport.write((char*)bom, sizeof(bom));
 
 	constexpr const char* NoRastrWinFoundInRegistry{ "Не найдено данных RastrWin3 в реестре" };
 	HKEY handle{ NULL };
@@ -195,8 +208,9 @@ void CBatchTest::Run()
 			{
 				TimeRaiden += run.Out.TimeRaiden;
 				TimeRustab += run.Out.TimeRustab;
+				fullreport << run.Out.Report.str();
 				std::cout << run.Out.Report.str();
-				report << run.Out.BriefReport.str();
+				briefreport << run.Out.BriefReport.str();
 			}
 		}
 		else
@@ -205,16 +219,18 @@ void CBatchTest::Run()
 				TestPair(run.Inp, run.Out);
 				TimeRaiden += run.Out.TimeRaiden;
 				TimeRustab += run.Out.TimeRustab;
+				fullreport << run.Out.Report.str();
 				std::cout << run.Out.Report.str();
-				report << run.Out.BriefReport.str();
+				briefreport << run.Out.BriefReport.str();
 			}
 
-		std::cout << fmt::format("Общая дительность расчетов {:.3f} RUSTab {:.3f}, Raiden {:.3f}",
+		const std::string timeused{ fmt::format("Общая дительность расчетов {:.3f} RUSTab {:.3f}, Raiden {:.3f}\n",
 			Timer.Duration(),
 			TimeRustab,
 			TimeRaiden
-			)
-			<< std::endl;
+			) };
+		fullreport << timeused;
+		std::cout << timeused;
 	}
 	catch (const std::runtime_error& er)
 	{
@@ -223,9 +239,11 @@ void CBatchTest::Run()
 
 		auto s{ stringutils::utf8_decode(er.what()) };
 
-		std::cout << er.what();
+		std::cout << er.what() << std::endl;
+		fullreport << er.what() << std::endl;
 	}
-	report.close();
+	fullreport.close();
+	briefreport.close();
 }
 
 void CBatchTest::TestPair(const Input& Input, Output& Output)
@@ -290,7 +308,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 
 		Rtol->PutZ(0, Opts.RaidenRtol);
 		Atol->PutZ(0, Opts.RaidenAtol);
-		Hout->PutZ(0, Opts.RUSTabHmin);
+		OutStep->PutZ(0, Opts.RUSTabHmin);
 
 		ZeroBranchImpedance->PutZ(0, -1.0);
 		DurationRaiden->PutZ(0, Opts.Duration);
@@ -401,6 +419,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		}
 
 		double MaxDiff{ 0.0 };
+		double MaxDiffTime{ 0.0 };
 		std::string MaxDiffVariable;
 
 		if (!Opts.EmsMode)
@@ -434,6 +453,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 					const auto& diff{ *var.Ordered.begin() };
 					ResultFileLib::IMinMaxDataPtr Max{ diff.second.CompareResult->Max };
 					MaxDiff = Max->Metric;
+					MaxDiffTime = Max->Time;
 					MaxDiffVariable = fmt::format("{}.{} {} [{}]",
 						var.DeviceTypeVerbal, 
 						var.VariableName, 
@@ -452,8 +472,8 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 			(RetCode[1] != AST_OK ? (fnVerbalCode)(RetCode[1]) : (fnVerbalSyncLossCause)(SyncLossCause[1])) << ";" <<
 			Duration[0] << ";" <<
 			Duration[1] << ";" <<
-
 			MaxDiff << ";" <<
+			MaxDiffTime << ";" <<
 			MaxDiffVariable << ";" <<
 			std::endl;
 
