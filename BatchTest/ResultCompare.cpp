@@ -7,7 +7,9 @@ ResultCompare::CompareResultsT ResultCompare::Compare(const std::filesystem::pat
 {
 	CompareResultsT Results;
 
-	Results.push_back({ 100, "Генератор", "Delta", {} });
+	Results.push_back({ 100, "Генератор", "Delta", "Delta", {}});
+	//Results.push_back({ 100, "Возбудитель", "Eqe", "EqeV", {}});
+	//Results.push_back({ 100, "Генератор", "S", "S", {}});
 
 	std::array<ResultFileLib::IResultPtr, 2> BothResults;
 	for(auto&& result : BothResults)
@@ -21,9 +23,7 @@ ResultCompare::CompareResultsT ResultCompare::Compare(const std::filesystem::pat
 	for (const auto& DevType : DeviceTypeMap)
 		RUSTabDeviceTypes.emplace(DevType.RUSTab.Type * 1000000 + DevType.RUSTab.SubType, DevType.Raiden);
 
-	const _bstr_t bstrVarName{ Results.back().VariableName.c_str() };
-
-	
+	const _bstr_t bstrVarName{ Results.back().VariableName1.c_str() };
 
 	std::stack<ResultFileLib::IDevicePtr> stack;
 	std::set<ResultFileLib::IDevicePtr> visited;
@@ -40,7 +40,8 @@ ResultCompare::CompareResultsT ResultCompare::Compare(const std::filesystem::pat
 				ResultFileLib::IVariablePtr Var{ Vars->Item(v) };
 				if (Var->Name == bstrVarName)
 				{
-					ResultFileLib::ICompareResultPtr CompareResult{ Var->Compare(ResultRead2->GetPlot(MappedType->second, device->Id, Var->Name)) };
+					const _bstr_t bstrVariableName2{ Results.back().VariableName2.c_str() };
+					ResultFileLib::ICompareResultPtr CompareResult{ Var->Compare(ResultRead2->GetPlot(MappedType->second, device->Id, bstrVariableName2)) };
 					ResultFileLib::IMinMaxDataPtr Max{ CompareResult->Max };
 
 					auto& Comps{ Results.back().Ordered };

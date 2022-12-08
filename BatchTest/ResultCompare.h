@@ -207,7 +207,8 @@ public:
 	{
 		long DeviceTypeId;
 		std::string DeviceTypeVerbal;
-		std::string VariableName;
+		std::string VariableName1;
+		std::string VariableName2;
 		std::map<double, ComparedDevices, std::greater<double> > Ordered;
 	};
 
@@ -216,11 +217,12 @@ public:
 	CompareResultsT Compare(const std::filesystem::path& ResultPath1, const std::filesystem::path& ResultPath2);
 
 
-	static constexpr const std::array<TypeMap, 3> DeviceTypeMap =
+	static constexpr const std::array<TypeMap, 4> DeviceTypeMap =
 	{{
 		{{DFWTYPE_SYNCMACHINE, DFWSUBTYPE_SYNCMACHINE_PARK3K}, DEVTYPE_GEN_PARK3C},
 		{{DFWTYPE_SYNCMACHINE, DFWSUBTYPE_SYNCMACHINE_INF_POWER}, DEVTYPE_GEN_INFPOWER},
 		{{DFWTYPE_SYNCMACHINE, DFWSUBTYPE_SYNCMACHINE_CLASSIC}, DEVTYPE_GEN_MOTION},
+		{{DFWTYPE_EXCITER, DFWSUBTYPE_EXCITER_UNIVERSAL}, DEVTYPE_EXCITER_MUSTANG},
 	}};
 };
 

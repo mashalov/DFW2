@@ -431,7 +431,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 				if(!var.Ordered.empty())
 					Output.Report << fmt::format("*\tТоп {} отклонений переменной \"{}\" устройства типа \"{}\"\n",
 						var.Ordered.size(),
-						var.VariableName,
+						var.VariableName1,
 						var.DeviceTypeVerbal);
 
 				for (const auto& diff : var.Ordered)
@@ -456,7 +456,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 					MaxDiffTime = Max->Time;
 					MaxDiffVariable = fmt::format("{}.{} {} [{}]",
 						var.DeviceTypeVerbal, 
-						var.VariableName, 
+						var.VariableName1, 
 						diff.second.DeviceId, 
 						diff.second.DeviceName
 					);
