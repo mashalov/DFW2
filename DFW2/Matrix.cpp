@@ -377,7 +377,7 @@ void CDynaModel::CopyVariableNordsiek(const VariableIndex& Variable, const Input
 void CDynaModel::SetVariableNordsiek(const VariableIndex& Variable, double v0, double v1, double v2)
 {
 	// если переменная индексирована
-	if (Variable.Indexed())
+	if (Variable.Indexed()  && !EstimateBuild() )
 	{
 		// достаем вектор
 		auto rv{ GetRightVector(Variable.Index) };

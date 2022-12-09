@@ -985,14 +985,15 @@ bool CDynaModel::RunTest()
 {
 	bool bRes{ true };
 	TestDevices.CreateDevices(1);
+	m_Parameters.m_dAtol = 1E-6;
+	m_Parameters.m_dRtol = 1E-4;
+
+	PrecomputeConstants();
 	Link();
 	WriteResultsHeader();
 	PreInitDevices();
 	InitDevices();
 	EstimateMatrix();
-
-	m_Parameters.m_dAtol = 1E-1;
-	m_Parameters.m_dRtol = 1E-8;
 	m_Discontinuities.AddEvent(1000.0, new CModelActionStop());
 	m_Discontinuities.Init();
 
@@ -1010,6 +1011,8 @@ bool CDynaModel::RunTest()
 			WriteResults();
 		}
 	}
+
+	DumpStatistics();
 
 	return bRes;
 }
@@ -1029,6 +1032,15 @@ void CDynaModel::ConsiderContainerProperties()
 	}
 }
 
+void CDynaModel::PrecomputeConstants()
+{
+	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
+	// константы могут изменяться, например для демпфирования
+	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
+	// считаем параметры гистерезиса по заданным параметрам
+	HysteresisAtol_ = GetAtol() * m_Parameters.HysteresisAtol_;
+	HysteresisRtol_ = GetRtol() * m_Parameters.HysteresisRtol_;
+}
 
 void CDynaModel::FinishStep()
 {
@@ -1037,6 +1049,66 @@ void CDynaModel::FinishStep()
 	for (auto&& it : m_DeviceContainersFinishStep)
 		it->FinishStep(*this);
 }
+
+
+void CDynaModel::DumpStatistics()
+{
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Steps count {}", sc.nStepsCount));
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Steps by 1st order count {}, failures {} Newton failures {} zc {} Time passed {}",
+		sc.OrderStatistics[0].nSteps,
+		sc.OrderStatistics[0].nFailures,
+		sc.OrderStatistics[0].nNewtonFailures,
+		sc.OrderStatistics[0].nZeroCrossingsSteps,
+		sc.OrderStatistics[0].dTimePassed));
+
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Steps by 2nd order count {}, failures {} Newton failures {} zc {} Time passed {}",
+		sc.OrderStatistics[1].nSteps,
+		sc.OrderStatistics[1].nFailures,
+		sc.OrderStatistics[1].nNewtonFailures,
+		sc.OrderStatistics[1].nZeroCrossingsSteps,
+		sc.OrderStatistics[1].dTimePassed));
+
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Factors count {} / (Refactors {} + {} failures) Analyzings count {}",
+		klu.FactorizationsCount(),
+		klu.RefactorizationsCount(),
+		klu.RefactorizationFailuresCount(),
+		klu.AnalyzingsCount()));
+
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Newtons count {} {:.2} per step, failures at step {} failures at discontinuity {}",
+		sc.nNewtonIterationsCount,
+		static_cast<double>(sc.nNewtonIterationsCount) / sc.nStepsCount,
+		sc.OrderStatistics[0].nNewtonFailures + sc.OrderStatistics[1].nNewtonFailures,
+		sc.nDiscontinuityNewtonFailures));
+
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Max condition number {} at time {}",
+		sc.dMaxConditionNumber,
+		sc.dMaxConditionNumberTime));
+
+	if (sc.dMaxSLEResidual > 0.0)
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Max SLE residual {} at time {}",
+			sc.dMaxSLEResidual,
+			sc.dMaxSLEResidualTime));
+
+	if (m_Parameters.m_bStopOnBranchOOS && sc.m_MaxBranchAngle.Device())
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszMaxBranchAngle,
+			sc.m_MaxBranchAngle.Value() * 180.0 / M_PI,
+			sc.m_MaxBranchAngle.Device()->GetVerbalName(),
+			sc.m_MaxBranchAngle.Time()));
+
+	if (m_Parameters.m_bStopOnGeneratorOOS && sc.m_MaxGeneratorAngle.Device())
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszMaxGeneratorAngle,
+			sc.m_MaxGeneratorAngle.Value() * 180 / M_PI,
+			sc.m_MaxGeneratorAngle.Device()->GetVerbalName(),
+			sc.m_MaxGeneratorAngle.Time()));
+
+	GetWorstEquations(10);
+	GetTopZeroCrossings(10);
+	GetTopDiscontinuityRequesters(10);
+	std::chrono::milliseconds CalcDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - sc.m_ClockStart);
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Duration {}", static_cast<double>(CalcDuration.count()) / 1E3));
+}
+
+
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
 								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1

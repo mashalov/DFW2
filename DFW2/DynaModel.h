@@ -610,6 +610,7 @@ namespace DFW2
 		double GetWeightedNorm(double *pVector);
 
 		void PrepareNetworkElements();
+		void PrecomputeConstants();		// расчет констант на уровне DynaModel после ввода параметров расчета
 		bool Link();
 		void ConsiderContainerProperties();
 		bool UpdateExternalVariables();
@@ -645,6 +646,7 @@ namespace DFW2
 		void BuildRightHand();
 		double CheckZeroCrossing();
 		void FinishStep();
+		void DumpStatistics();
 
 		std::filesystem::path CreateResultFilePath(std::string_view FileNameMask, const std::filesystem::path& BasePath);
 		void WriteResultsHeader();

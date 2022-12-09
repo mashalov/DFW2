@@ -310,7 +310,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		Atol->PutZ(0, Opts.RaidenAtol);
 		OutStep->PutZ(0, Opts.RUSTabHmin);
 
-		ZeroBranchImpedance->PutZ(0, -1.0);
+		ZeroBranchImpedance->PutZ(0, 4e-6);
 		DurationRaiden->PutZ(0, Opts.Duration);
 
 		auto fnVerbalCode = [](const RastrRetCode& code) -> std::string

@@ -1,7 +1,16 @@
 ﻿#pragma once
 #include "DeviceContainer.h"
+#include "LimitedLag.h"
+#include "LimiterConst.h"
 namespace DFW2
 {
+	// уравнение гармонического маятника
+	// m * x''= -k * x
+	// аналитическое решение
+	// x(t) = A * cos(omega * t + phi)
+	// omega = sqrt(k / m)
+	// A = x(0)
+
 	class CTestDevice : public CDevice
 	{
 	public:
@@ -9,10 +18,11 @@ namespace DFW2
 		{
 			V_X,			// координата
 			V_V,			// скорость
+			V_LAG,			// выход лага
 			V_XREF,			// референс координаты
 			V_LAST,
 		};
-		using CDevice::CDevice;
+		CTestDevice();
 		virtual ~CTestDevice() = default;
 
 		const double k = 1.4;
@@ -21,7 +31,8 @@ namespace DFW2
 		double A = 0.0;
 		double phi = 0.0;
 
-		VariableIndex x,v, xref;
+		CLimiterConst OutputLag_;
+		VariableIndex x, v, xref, LagOut;
 
 		void BuildEquations(CDynaModel* pDynaModel) override;
 		void BuildRightHand(CDynaModel* pDynaModel) override;
