@@ -275,3 +275,4 @@ UMC/CryptoPP/*.o
 UMC/CryptoPP/*.a
 cd/
 /BatchTest/briefreport.csv
+/Winstaller/RaidenEMSInstall.exe
