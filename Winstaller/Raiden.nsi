@@ -1,10 +1,21 @@
 ﻿!define ProductName "RaidenEMS"
-!define InputFolder "..\x64\release\"
+!define Version "1.0.1.116"
+!define RastrWinX64VersionRequired "2.7.1.6388"
+!define RastrWinX86VersionRequired "2.7.0.6388"
+
+
+!define InputFolderX64 "..\x64\release\"
+!define InputFolderX86 "..\release\"
+
+
+
+!define VisualStudioLink "https://visualstudio.microsoft.com/ru/downloads/"
+!define MSBuildToolsLink "https://aka.ms/vs/17/release/vs_BuildTools.exe"
 
 !include MUI2.nsh
 !include Library.nsh
 !include nsDialogs.nsh
-!define LIBRARY_X64
+!include LogicLib.nsh
 Unicode True
 
 !define UninstallerName $(^Name)Uninstall.exe
@@ -12,6 +23,7 @@ SetCompressor /SOLID /FINAL lzma
 Name ${ProductName}
 
 BrandingText $(CopyrightInfo)
+!define MUI_ICON "installer.ico"
 
 !macro VersionCheckV5 Ver1 Ver2 OutVar
  Push "${Ver1}"
@@ -34,19 +46,30 @@ BrandingText $(CopyrightInfo)
 
 var SysRqDialog
 var MSBuildLabel
-var RastrWinLabel
+var RastrWinX64Label
+var RastrWinX86Label
 
 var MSBuildInstallationCheckResult
-var RastrWinInstallationCheckResult
-var ComponentsPath
+var RastrWinX64InstallationCheckResult
+var RastrWinX86InstallationCheckResult
+var RastrWinX64ComponentsPath
+var RastrWinX86ComponentsPath
 
 Function .onInit
+	SectionSetText 0 $(ComponentsX64)
+	SectionSetText 1 $(ComponentsX86)
+FunctionEnd
 
+Function onVSLink
+	Pop $0
+	ExecShell "open" ${VisualStudioLink}
 FunctionEnd
 
 
-
-
+Function onMSBuildLink
+	Pop $0
+	ExecShell "open" ${MSBuildToolsLink}
+FunctionEnd
 
 Function SystemRequirementsPage
  	nsDialogs::Create 1018
@@ -59,17 +82,46 @@ Function SystemRequirementsPage
 	!insertmacro MUI_HEADER_TEXT $(CheckSystemRqr) $(CheckSystemRqr2)
 	${NSD_CreateLabel} 5u 5u 100u 12u  $(MSBuildToolsSetup)
 	Pop $MSBuildLabel
-	${NSD_CreateLabel} 5u 25u 100u 12u $(RastrWinSetup)
-	Pop $RastrWinLabel
-	Push "2.7.1.6311"
-	Call CheckRastrWin
+	${NSD_CreateLabel} 5u 25u 100u 12u $(RastrWinSetupX64)
+	Pop $RastrWinX64Label
+	${NSD_CreateLabel} 5u 45u 100u 12u $(RastrWinSetupX86)
+	Pop $RastrWinX86Label
+	Push ${RastrWinX64VersionRequired}
+	Call CheckRastrWinX64
+	Push ${RastrWinX86VersionRequired}
+	Call CheckRastrWinX86
 	Call CheckMSBuild
 	
 	${NSD_CreateLabel} 110u 5u 150u 12u $MSBuildInstallationCheckResult
-	${NSD_CreateLabel} 110u 25u 150u 12u $RastrWinInstallationCheckResult
+	${NSD_CreateLabel} 110u 25u 150u 12u $RastrWinX64InstallationCheckResult
+	${NSD_CreateLabel} 110u 45u 150u 12u $RastrWinX86InstallationCheckResult
 	
-	StrCmp $MSBuildInstallationCheckResult $(Installed) 0 DisableInstall
-	StrCmp $MSBuildInstallationCheckResult $(Installed) 0 DisableInstall
+	StrCmp $MSBuildInstallationCheckResult $(Installed) 0 MSBuildNotInstalled
+	StrCmp $RastrWinX64InstallationCheckResult $(Installed) 0 RastrX64NotInstalled
+	SectionSetFlags 0 1
+	StrCmp $RastrWinX86InstallationCheckResult $(Installed) 0 RastrX86NotInstalled
+	Goto EnableInstall
+	
+MSBuildNotInstalled:
+	${NSD_CreateLabel} 5u 65u 250u 25u $(MSBuildInstallationInstructions)
+	${NSD_CreateLink} 5u 95u 250u 12u ${VisualStudioLink}
+	Pop $1
+	${NSD_CreateLink} 5u 105u 250u 12u ${MSBuildToolsLink}
+	Pop $0
+	${NSD_OnClick} $1 onVSLink
+	${NSD_OnClick} $0 onMSBuildLink
+	Goto DisableInstall
+
+RastrX86NotInstalled:	
+	SectionSetFlags 1 16
+	Goto EnableInstall
+	
+RastrX64NotInstalled:
+	SectionSetFlags 0 16
+	StrCmp $RastrWinX86InstallationCheckResult $(Installed) 0 DisableInstall
+	SectionSetFlags 1 1
+
+EnableInstall:	
 	EnableWindow $1 1
 	
 DisableInstall:
@@ -80,22 +132,42 @@ FunctionEnd
 Function SystemRequirementsPageLeave
 FunctionEnd
 
-Function CheckRastrWin
+Function CheckRastrWinX64
 	ClearErrors
 	Pop $R3
-	StrCpy $RastrWinInstallationCheckResult $(RastrWinRegistryFailed)
-	ReadRegStr $R4 HKCU Software\RastrWin3 "InstallPath"
-	ReadRegStr $R1 HKCU Software\RastrWin3 "Version"
-	IfErrors FailedCheckRastrWin
-	StrCpy $RastrWinInstallationCheckResult $(RastrWinAstraNotFound)
+	StrCpy $RastrWinX64InstallationCheckResult $(RastrWinRegistryFailed)
+	SetRegView 64
+	ReadRegStr $R4 HKLM Software\RastrWin3 "InstallPath"
+	ReadRegStr $R1 HKLM Software\RastrWin3 "Version"
+	IfErrors FailedCheckRastrWinX64
+	StrCpy $RastrWinX64InstallationCheckResult $(RastrWinAstraNotFound)
 	StrCpy $R0 "$R4\astra.dll"
-	IfFileExists $R0 0 FailedCheckRastrWin
-	StrCpy $RastrWinInstallationCheckResult "$(OldVersion)$R1$(RequiredVersion)$R3"
+	IfFileExists $R0 0 FailedCheckRastrWinX64
+	StrCpy $RastrWinX64InstallationCheckResult "$(OldVersion)$R1$(RequiredVersion)$R3"
 	${VersionCheckNew} $R3 $R1 $R0
-	IntCmp $R0 1 FailedCheckRastrWin
-	StrCpy $RastrWinInstallationCheckResult $(Installed)
-	StrCpy $ComponentsPath $R4
-FailedCheckRastrWin:
+	IntCmp $R0 1 FailedCheckRastrWinX64
+	StrCpy $RastrWinX64InstallationCheckResult $(Installed)
+	StrCpy $RastrWinX64ComponentsPath $R4
+FailedCheckRastrWinX64:
+FunctionEnd
+
+Function CheckRastrWinX86
+	ClearErrors
+	Pop $R3
+	StrCpy $RastrWinX86InstallationCheckResult $(RastrWinRegistryFailed)
+	SetRegView 32
+	ReadRegStr $R4 HKLM Software\RastrWin3 "InstallPath"
+	ReadRegStr $R1 HKLM Software\RastrWin3 "Version"
+	IfErrors FailedCheckRastrWinX86
+	StrCpy $RastrWinX86InstallationCheckResult $(RastrWinAstraNotFound)
+	StrCpy $R0 "$R4\astra.dll"
+	IfFileExists $R0 0 FailedCheckRastrWinX86
+	StrCpy $RastrWinX86InstallationCheckResult "$(OldVersion)$R1$(RequiredVersion)$R3"
+	${VersionCheckNew} $R3 $R1 $R0
+	IntCmp $R0 1 FailedCheckRastrWinX86
+	StrCpy $RastrWinX86InstallationCheckResult $(Installed)
+	StrCpy $RastrWinX86ComponentsPath $R4
+FailedCheckRastrWinX86:
 FunctionEnd
 
 
@@ -120,25 +192,40 @@ Page custom SystemRequirementsPage SystemRequirementsPageLeave
 !insertmacro MUI_PAGE_LICENSE "licenseru.rtf"
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
-Section "Программные модули"
+
+Section InstallX64 0
 	ClearErrors
-	SetOutPath $ComponentsPath
-	File "${InputFolder}dfw2.dll"
-	File "${InputFolder}umc.dll"
-	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolder}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
-	WriteUninstaller "${UninstallerName}"
-	IfErrors 0 CopySectionOK
+	DetailPrint '$(Installing) "$(ComponentsX64)"'
+	SetOutPath $RastrWinX64ComponentsPath
+	File "${InputFolderX64}..\release dll\dfw2.dll"
+	File "${InputFolderX64}umc.dll"
+	!define LIBRARY_X64
+	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX64}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
+	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
+	IfErrors 0 InstallX64OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
-CopySectionOK:	
+InstallX64OK:	
+SectionEnd
+
+Section InstallX86 1
+	ClearErrors
+	DetailPrint '$(Installing) "$(ComponentsX86)"'
+	SetOutPath $RastrWinX86ComponentsPath
+	File "${InputFolderX86}..\release dll\dfw2.dll"
+	File "${InputFolderX86}umc.dll"
+	!undef LIBRARY_X64
+	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX86}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
+	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
+	IfErrors 0 InstallX86OK
+	MessageBox MB_ICONSTOP $(InstallationFailed)
+InstallX86OK:	
 SectionEnd
 
 Section "Uninstall"
   Delete $INSTDIR\${UninstallerName}
   Delete $INSTDIR\dfw2.dll
   Delete $INSTDIR\umc.dll
-  !insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED $INSTDIR\ResultFile.dll
-  RMDir $INSTDIR
-  DeleteRegKey HKLM SOFTWARE\myApp
+  !insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED $INSTDIR\ResultFile2.dll
 SectionEnd
 
 OutFile ${ProductName}Install.exe
@@ -254,16 +341,18 @@ FunctionEnd
 !insertmacro MUI_LANGUAGE "Russian"
 !insertmacro MUI_LANGUAGE "English"
 
-LangString CopyrightInfo ${LANG_ENGLISH} "${ProductName} © Eugene Mashalov 2017-2022"
-LangString CopyrightInfo ${LANG_RUSSIAN} "${ProductName} © Евгений Машалов 2017-2022"
+LangString CopyrightInfo ${LANG_ENGLISH} "${ProductName} ${Version} © Eugene Mashalov 2017-2022"
+LangString CopyrightInfo ${LANG_RUSSIAN} "${ProductName} ${Version} © Евгений Машалов 2017-2022"
 LangString CheckSystemRqr ${LANG_ENGLISH} "Checking system requirements"
 LangString CheckSystemRqr ${LANG_RUSSIAN} "Проверка системных требований"
 LangString CheckSystemRqr2 ${LANG_ENGLISH} "Now installer will check your computer for installed prerequisites"
 LangString CheckSystemRqr2 ${LANG_RUSSIAN} "Программа установки проверяет наличие требуемого ПО в системе"
 LangString MSBuildToolsSetup ${LANG_ENGLISH} "Microsoft Build Tools"
 LangString MSBuildToolsSetup ${LANG_RUSSIAN} "Microsoft Build Tools"
-LangString RastrWinSetup ${LANG_ENGLISH} "RastrWin"
-LangString RastrWinSetup ${LANG_RUSSIAN} "RastrWin"
+LangString RastrWinSetupX64 ${LANG_ENGLISH} "RastrWin x64"
+LangString RastrWinSetupX64 ${LANG_RUSSIAN} "RastrWin x64"
+LangString RastrWinSetupX86 ${LANG_ENGLISH} "RastrWin x86"
+LangString RastrWinSetupX86 ${LANG_RUSSIAN} "RastrWin x86"
 LangString MSBuildNotInstalled ${LANG_ENGLISH} "Not installed"
 LangString MSBuildNotInstalled ${LANG_RUSSIAN} "Не установлен"
 LangString RastrWinNotInstalled ${LANG_ENGLISH} "Not installed"
@@ -284,3 +373,21 @@ LangString MSBuildNotFound ${LANG_ENGLISH} "msbuild.exe not found"
 LangString MSBuildNotFound ${LANG_RUSSIAN} "Не найден msbuild.exe"
 LangString InstallationFailed ${LANG_ENGLISH} "Installation failed. See details"
 LangString InstallationFailed ${LANG_RUSSIAN} "Установка не выполнена. Детали в протоколе"
+LangString ComponentsX64 ${LANG_ENGLISH} "x64 components"
+LangString ComponentsX64 ${LANG_RUSSIAN} "Компоненты x64"
+LangString ComponentsX86 ${LANG_ENGLISH} "x86 components"
+LangString ComponentsX86 ${LANG_RUSSIAN} "Компоненты x86"
+LangString MSBuildInstallationInstructions ${LANG_ENGLISH} "This program requires Microsoft Visual Studio 2022 or Microsoft Build Tools to be installed with C++ workload"
+LangString MSBuildInstallationInstructions ${LANG_RUSSIAN} "Для работы данного ПО необходима установка Microsoft Visual Studio 2022 или Microsoft Build Tools с рабочей нагрузкой C++"
+LangString Installing ${LANG_ENGLISH} "Installing"
+LangString Installing ${LANG_RUSSIAN} "Инсталляция"
+
+VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" ${ProductName}
+VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "© Eugene Mashalov"
+VIAddVersionKey /LANG=${LANG_ENGLISH} "FileDescription" "${ProductName} installer"
+VIAddVersionKey /LANG=${LANG_ENGLISH} "FileVersion" ${Version}
+VIAddVersionKey /LANG=${LANG_RUSSIAN} "ProductName" ${ProductName}
+VIAddVersionKey /LANG=${LANG_RUSSIAN} "LegalCopyright" "© Евгений Машалов"
+VIAddVersionKey /LANG=${LANG_RUSSIAN} "FileDescription" "Программа установки ${ProductName}"
+VIAddVersionKey /LANG=${LANG_RUSSIAN} "FileVersion" ${Version}
+VIProductVersion ${Version}

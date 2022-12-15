@@ -470,10 +470,10 @@ bool CDynaGeneratorDQBase::CheckTimeConstants(
 	std::array<const char*, 4> names = { cszTo1, cszT1, cszTo2, cszT2 };
 	std::array<const double*, 4> values = { &To1, &T1, &To2, &T2 };
 	// список постоянных с нарушениями
-	std::list<int> badindexes;
+	std::list<size_t> badindexes;
 
 	// проверяем убывание
-	for (int i = 0; i < names.size() - 1; i++)
+	for (size_t i{ 0 }; i < names.size() - 1; i++)
 	{
 		// если следующая постоянная больше предыдущей, добавляем
 		// предыдущую в список нарушений

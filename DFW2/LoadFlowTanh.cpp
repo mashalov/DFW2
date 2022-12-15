@@ -108,7 +108,7 @@ void CLoadFlow::SeidellTanh()
 	// TODO !!!! рассчитываем проводимости узлов с устранением отрицательных сопротивлений
 	//pNodes->CalcAdmittances(true);
 	double dPreviousImb = -1.0;
-	for (int SeidellIterations = 0; SeidellIterations < Parameters.SeidellIterations; SeidellIterations++)
+	for (size_t SeidellIterations = 0; SeidellIterations < Parameters.SeidellIterations; SeidellIterations++)
 	{
 		// множитель для ускорения Зейделя
 		double dStep = Parameters.SeidellStep;
