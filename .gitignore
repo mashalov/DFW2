@@ -276,3 +276,5 @@ UMC/CryptoPP/*.a
 cd/
 /BatchTest/briefreport.csv
 /Winstaller/RaidenEMSInstall.exe
+/DFW2/Release DLL
+/Release DLL
