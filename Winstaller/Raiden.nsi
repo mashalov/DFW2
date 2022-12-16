@@ -1,12 +1,11 @@
 ﻿!define ProductName "RaidenEMS"
 !define Version "1.0.1.116"
 !define RastrWinX64VersionRequired "2.7.1.6388"
-!define RastrWinX86VersionRequired "2.7.0.6388"
+!define RastrWinX86VersionRequired "2.7.0.6387"
 
 
 !define InputFolderX64 "..\x64\release\"
 !define InputFolderX86 "..\release\"
-
 
 
 !define VisualStudioLink "https://visualstudio.microsoft.com/ru/downloads/"
@@ -18,6 +17,9 @@
 !include LogicLib.nsh
 Unicode True
 
+!define RastrWin3RegKey "Software\RastrWin3"
+!define ProductRegKey "${RastrWin3RegKey}\${ProductName}"
+!define VersionVerb "Version"
 !define UninstallerName $(^Name)Uninstall.exe
 SetCompressor /SOLID /FINAL lzma
 Name ${ProductName}
@@ -137,8 +139,8 @@ Function CheckRastrWinX64
 	Pop $R3
 	StrCpy $RastrWinX64InstallationCheckResult $(RastrWinRegistryFailed)
 	SetRegView 64
-	ReadRegStr $R4 HKLM Software\RastrWin3 "InstallPath"
-	ReadRegStr $R1 HKLM Software\RastrWin3 "Version"
+	ReadRegStr $R4 HKLM ${RastrWin3RegKey} "InstallPath"
+	ReadRegStr $R1 HKLM ${RastrWin3RegKey} ${VersionVerb}
 	IfErrors FailedCheckRastrWinX64
 	StrCpy $RastrWinX64InstallationCheckResult $(RastrWinAstraNotFound)
 	StrCpy $R0 "$R4\astra.dll"
@@ -156,8 +158,8 @@ Function CheckRastrWinX86
 	Pop $R3
 	StrCpy $RastrWinX86InstallationCheckResult $(RastrWinRegistryFailed)
 	SetRegView 32
-	ReadRegStr $R4 HKLM Software\RastrWin3 "InstallPath"
-	ReadRegStr $R1 HKLM Software\RastrWin3 "Version"
+	ReadRegStr $R4 HKLM ${RastrWin3RegKey} "InstallPath"
+	ReadRegStr $R1 HKLM ${RastrWin3RegKey} ${VersionVerb}
 	IfErrors FailedCheckRastrWinX86
 	StrCpy $RastrWinX86InstallationCheckResult $(RastrWinAstraNotFound)
 	StrCpy $R0 "$R4\astra.dll"
@@ -196,11 +198,13 @@ Page custom SystemRequirementsPage SystemRequirementsPageLeave
 Section InstallX64 0
 	ClearErrors
 	DetailPrint '$(Installing) "$(ComponentsX64)"'
+	SetRegView 64
 	SetOutPath $RastrWinX64ComponentsPath
 	File "${InputFolderX64}..\release dll\dfw2.dll"
 	File "${InputFolderX64}umc.dll"
 	!define LIBRARY_X64
 	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX64}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
+	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX64OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
@@ -210,11 +214,13 @@ SectionEnd
 Section InstallX86 1
 	ClearErrors
 	DetailPrint '$(Installing) "$(ComponentsX86)"'
+	SetRegView 32
 	SetOutPath $RastrWinX86ComponentsPath
 	File "${InputFolderX86}..\release dll\dfw2.dll"
 	File "${InputFolderX86}umc.dll"
 	!undef LIBRARY_X64
 	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX86}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
+	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX86OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
@@ -222,10 +228,25 @@ InstallX86OK:
 SectionEnd
 
 Section "Uninstall"
-  Delete $INSTDIR\${UninstallerName}
-  Delete $INSTDIR\dfw2.dll
-  Delete $INSTDIR\umc.dll
-  !insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED $INSTDIR\ResultFile2.dll
+
+	SetRegView 64
+	ReadRegStr $R0 HKLM ${RastrWin3RegKey} "InstallPath"
+	SetRegView 32
+	ReadRegStr $R1 HKLM ${RastrWin3RegKey} "InstallPath"
+	StrCmp $R0 $INSTDIR 0 UninstallX86
+	SetRegView 64
+	!define LIBRARY_X64
+	DetailPrint '$(UnInstalling) "$(ComponentsX64)"'
+	goto UninstallCommon
+UninstallX86:
+DetailPrint '$(UnInstalling) "$(ComponentsX86)"'
+	goto UninstallCommon
+UninstallCommon:
+	Delete $INSTDIR\${UninstallerName}
+	Delete $INSTDIR\dfw2.dll
+	Delete $INSTDIR\umc.dll
+	!insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED $INSTDIR\ResultFile2.dll
+	DeleteRegKey HKLM ${ProductRegKey}
 SectionEnd
 
 OutFile ${ProductName}Install.exe
@@ -381,6 +402,8 @@ LangString MSBuildInstallationInstructions ${LANG_ENGLISH} "This program require
 LangString MSBuildInstallationInstructions ${LANG_RUSSIAN} "Для работы данного ПО необходима установка Microsoft Visual Studio 2022 или Microsoft Build Tools с рабочей нагрузкой C++"
 LangString Installing ${LANG_ENGLISH} "Installing"
 LangString Installing ${LANG_RUSSIAN} "Инсталляция"
+LangString UnInstalling ${LANG_ENGLISH} "Uninstalling"
+LangString UnInstalling ${LANG_RUSSIAN} "Деинсталляция"
 
 VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" ${ProductName}
 VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "© Eugene Mashalov"
