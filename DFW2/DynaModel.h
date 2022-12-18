@@ -90,7 +90,6 @@ namespace DFW2
 			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 			double m_dProcessDuration = 150.0;
 			double Hmax = (std::numeric_limits<double>::max)();
-			unsigned long ThreadId_ = 0;
 			double HysteresisRtol_ = 1e-2;								// относительный гистерезис
 			double HysteresisAtol_ = 3.0;								// абсолютный гистерезис
 		};
@@ -1034,6 +1033,11 @@ namespace DFW2
 		unsigned long ThreadId() const
 		{
 			return m_Parameters.ThreadId_;
+		}
+
+		const std::filesystem::path& ModuleFilePath() const
+		{
+			return m_Parameters.ModuleFilePath_;
 		}
 
 		const DynaModelParameters& Parameters() const

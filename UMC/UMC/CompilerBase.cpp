@@ -213,8 +213,8 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         if (ec)
         {
             throw dfw2errorGLE(fmt::format(DFW2::CDFW2Messages::m_cszCouldNotCopyUserModelReference,
-                pathRefDir.string(),
-                pathOutDir.string()));
+                stringutils::utf8_encode(pathRefDir.c_str()),
+                stringutils::utf8_encode(pathOutDir.c_str())));
         }
         // построить модуль с помощью выбранного компилятора
         BuildWithCompiler();

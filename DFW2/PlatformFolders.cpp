@@ -96,7 +96,12 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 	pathCustomModelsModules = std::filesystem::path(pathCustomModels).append(cszModules).append(Configuration()).append(strPlatform);
 	CheckPath(pathCustomModelsModules);
 
+#ifdef _WINDLL
+	pathSourceReference = m_Model.ModuleFilePath();
+	pathSourceReference.append("RaidenEMS/Reference/");
+#else
 	pathSourceReference = std::filesystem::path(pathRoot).append("Reference/");
+#endif
 	CheckPath(pathSourceReference);
 
 	pathLogs = std::filesystem::path(pathThreadRoot).append("Logs/");

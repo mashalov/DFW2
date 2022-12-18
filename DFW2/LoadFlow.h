@@ -1,4 +1,5 @@
 ﻿#pragma once
+#include <filesystem>
 #include "DynaNode.h"
 #include "KLUWrapper.h"
 
@@ -44,6 +45,8 @@ namespace DFW2
 			double Vdifference = 1E-6;					// порог сравнения модуля напряжения
 			double LRCMinSlope = 0.0;					// минимальная крутизна СХН
 			double LRCMaxSlope = 5.0;					// максимальная крутизна СХН
+			unsigned long ThreadId_ = 0;
+			std::filesystem::path ModuleFilePath_;
 
 			virtual ~LoadFlowParameters() = default;
 		};

@@ -27,6 +27,18 @@ extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr, unsigned lo
 	{
 		CDynaModel::DynaModelParameters parameters;
 		parameters.ThreadId_ = ThreadId;
+
+		HMODULE module{ nullptr };
+		wchar_t Path[MAX_PATH];
+		if (GetModuleHandleEx(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS |
+			GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, (LPWSTR)&Run, &module))
+			if (GetModuleFileName(module, Path, sizeof(Path)))
+			{
+				parameters.ModuleFilePath_ = Path;
+				parameters.ModuleFilePath_.remove_filename();
+			}
+
+
 		CDynaModel Network(parameters);
 		Network.SetLogger(std::make_unique<CLoggerRastrWin>(spRastr));
 		Network.SetProgress(std::make_unique<CProgressRastrWin>(spRastr));

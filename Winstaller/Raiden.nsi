@@ -6,6 +6,7 @@
 
 !define InputFolderX64 "..\x64\release\"
 !define InputFolderX86 "..\release\"
+!define ModelReferencePath "${ProductName}\Reference"
 
 
 !define VisualStudioLink "https://visualstudio.microsoft.com/ru/downloads/"
@@ -21,7 +22,7 @@ Unicode True
 !define ProductRegKey "${RastrWin3RegKey}\${ProductName}"
 !define VersionVerb "Version"
 !define UninstallerName $(^Name)Uninstall.exe
-SetCompressor /SOLID /FINAL lzma
+;SetCompressor /SOLID /FINAL lzma
 Name ${ProductName}
 
 BrandingText $(CopyrightInfo)
@@ -195,6 +196,7 @@ Page custom SystemRequirementsPage SystemRequirementsPageLeave
 !insertmacro MUI_PAGE_COMPONENTS
 !insertmacro MUI_PAGE_INSTFILES
 
+
 Section InstallX64 0
 	ClearErrors
 	DetailPrint '$(Installing) "$(ComponentsX64)"'
@@ -206,6 +208,7 @@ Section InstallX64 0
 	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX64}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
+	File /r /x ".vs" "${InputFolderX64}\..\..\ReferenceCustomModel\*.*"
 	IfErrors 0 InstallX64OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
 InstallX64OK:	
@@ -222,6 +225,7 @@ Section InstallX86 1
 	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX86}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
+	File /r /x ".vs" "${InputFolderX86}\..\ReferenceCustomModel\*.*"
 	IfErrors 0 InstallX86OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
 InstallX86OK:	
@@ -245,6 +249,7 @@ UninstallCommon:
 	Delete $INSTDIR\${UninstallerName}
 	Delete $INSTDIR\dfw2.dll
 	Delete $INSTDIR\umc.dll
+	RmDir /r $INSTDIR\${ProductName}
 	!insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED $INSTDIR\ResultFile2.dll
 	DeleteRegKey HKLM ${ProductRegKey}
 SectionEnd
