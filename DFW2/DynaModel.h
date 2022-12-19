@@ -82,7 +82,7 @@ namespace DFW2
 			ptrdiff_t m_nDecayDetectorCycles = 3;
 			bool m_bStopOnBranchOOS = false;
 			bool m_bStopOnGeneratorOOS = false;
-			std::string m_strWorkingFolder = "Русский тест";
+			std::string m_strWorkingFolder = "";
 			std::string m_strResultsFolder = "";
 			DFW2MessageStatus m_eConsoleLogLevel = DFW2MessageStatus::DFW2LOG_ERROR;
 			DFW2MessageStatus m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;

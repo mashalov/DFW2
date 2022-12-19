@@ -138,7 +138,7 @@ namespace ResultFileTest
             menuStrip.Items.Add(Images.ButtonFileOpen).Click += OnOpenFile; ;
             menuStrip.Items.Add(Images.ButtonExit).Click += OnExit; ;
 
-            PopulateTree("d:\\documents\\Русский тест\\Raiden\\Results\\binresultcom.rst");
+            PopulateTree("d:\\documents\\Raiden\\Results\\binresultcom.rst");
 
           //  resultFile.ExportCSV("c:\\tmp\\result.csv");
         }

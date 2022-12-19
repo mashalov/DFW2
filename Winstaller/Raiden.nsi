@@ -21,8 +21,9 @@ Unicode True
 !define RastrWin3RegKey "Software\RastrWin3"
 !define ProductRegKey "${RastrWin3RegKey}\${ProductName}"
 !define VersionVerb "Version"
+!define InstallPathVerb "InstallPath"
 !define UninstallerName $(^Name)Uninstall.exe
-;SetCompressor /SOLID /FINAL lzma
+SetCompressor /SOLID /FINAL lzma
 Name ${ProductName}
 
 BrandingText $(CopyrightInfo)
@@ -140,7 +141,7 @@ Function CheckRastrWinX64
 	Pop $R3
 	StrCpy $RastrWinX64InstallationCheckResult $(RastrWinRegistryFailed)
 	SetRegView 64
-	ReadRegStr $R4 HKLM ${RastrWin3RegKey} "InstallPath"
+	ReadRegStr $R4 HKLM ${RastrWin3RegKey} ${InstallPathVerb}
 	ReadRegStr $R1 HKLM ${RastrWin3RegKey} ${VersionVerb}
 	IfErrors FailedCheckRastrWinX64
 	StrCpy $RastrWinX64InstallationCheckResult $(RastrWinAstraNotFound)
@@ -159,7 +160,7 @@ Function CheckRastrWinX86
 	Pop $R3
 	StrCpy $RastrWinX86InstallationCheckResult $(RastrWinRegistryFailed)
 	SetRegView 32
-	ReadRegStr $R4 HKLM ${RastrWin3RegKey} "InstallPath"
+	ReadRegStr $R4 HKLM ${RastrWin3RegKey} ${InstallPathVerb}
 	ReadRegStr $R1 HKLM ${RastrWin3RegKey} ${VersionVerb}
 	IfErrors FailedCheckRastrWinX86
 	StrCpy $RastrWinX86InstallationCheckResult $(RastrWinAstraNotFound)
@@ -234,9 +235,9 @@ SectionEnd
 Section "Uninstall"
 
 	SetRegView 64
-	ReadRegStr $R0 HKLM ${RastrWin3RegKey} "InstallPath"
+	ReadRegStr $R0 HKLM ${RastrWin3RegKey} ${InstallPathVerb}
 	SetRegView 32
-	ReadRegStr $R1 HKLM ${RastrWin3RegKey} "InstallPath"
+	ReadRegStr $R1 HKLM ${RastrWin3RegKey} ${InstallPathVerb}
 	StrCmp $R0 $INSTDIR 0 UninstallX86
 	SetRegView 64
 	!define LIBRARY_X64
