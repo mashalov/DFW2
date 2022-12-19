@@ -25,7 +25,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 {
 
 	std::string CommandLineUTF8Version(utf8_encode(CommandLine));
-	DWORD dwCreationFlags = 0;
+	const DWORD dwCreationFlags{ 0 };
 	UniqueHandle<HANDLE> hStdWrite, hStdRead;
 	SECURITY_ATTRIBUTES stdSA;
 	ZeroMemory(&stdSA, sizeof(SECURITY_ATTRIBUTES));
@@ -45,12 +45,13 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	si.cb = sizeof(STARTUPINFO);
 	si.hStdError = hStdWrite;
 	si.hStdOutput = hStdWrite;
-	si.dwFlags |= STARTF_USESTDHANDLES;
+	si.dwFlags |= STARTF_USESTDHANDLES | STARTF_USESHOWWINDOW;
+	si.wShowWindow = SW_HIDE;
 
 	UniqueHandle hProcess(pi.hProcess);
 	UniqueHandle hThread(pi.hThread);
 
-	auto wcmd = std::make_unique<wchar_t[]>(CommandLine.length() + 2);
+	auto wcmd{ std::make_unique<wchar_t[]>(CommandLine.length() + 2) };
 	_tcscpy_s(wcmd.get(), CommandLine.length() + 2, CommandLine.c_str());
 
 	if (!SetHandleInformation(hStdRead, HANDLE_FLAG_INHERIT, 0))
@@ -75,10 +76,10 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	// закрываем handle вывода в консоль, иначе ReadFile может зависнуть
 	hStdWrite.Close();
 
-	DWORD dwRead(0);
-	const size_t BufSize = 500;
-	auto chBuf = std::make_unique<char[]>(BufSize);
-	BOOL bSuccess = FALSE;
+	DWORD dwRead{ 0 };
+	const size_t BufSize{ 500 };
+	auto chBuf{ std::make_unique<char[]>(BufSize) };
+	BOOL bSuccess{ FALSE };
 	std::string strOut;
 	for (;;)
 	{
@@ -114,7 +115,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	if (!strOut.empty())
 		listConsole.push_back(utf8_decode(strOut));
 
-	DWORD dwResult(0);
+	DWORD dwResult{ 0 };
 	if (!GetExitCodeProcess(pi.hProcess, &dwResult))
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()),
 			fmt::format("Ошибка при получении кода завершения работы процесса {}", CommandLineUTF8Version));

@@ -646,17 +646,16 @@ void CRastrImport::GetData(CDynaModel& Network)
 			spAAORunsCount->GetZ(i).lVal);
 	}
 
-	Network.CustomDeviceCPP.ConnectDLL("CustomDeviceCPP.dll");
+	//Network.CustomDeviceCPP.ConnectDLL("CustomDeviceCPP.dll");
+	//CustomDeviceConnectInfo ci("ExcControl",2);
+	//ITablePtr spExAddXTable{ m_spRastr->Tables->Item(L"ExcControl") };
+	//IColsPtr spExAddCols{ spExAddXTable->Cols };
+	//const _bstr_t cszXcomp{ L"Xcomp" };
+	//if(spExAddCols->GetFind(cszXcomp) < 0)
+	//	spExAddCols->Add(cszXcomp, PR_REAL);
 
-	CustomDeviceConnectInfo ci("ExcControl",2);
-	ITablePtr spExAddXTable{ m_spRastr->Tables->Item(L"ExcControl") };
-	IColsPtr spExAddCols{ spExAddXTable->Cols };
-	const _bstr_t cszXcomp{ L"Xcomp" };
-	if(spExAddCols->GetFind(cszXcomp) < 0)
-		spExAddCols->Add(cszXcomp, PR_REAL);
-
-	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
-	GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);
+	//GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDevice);
+	//GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);
 }
 
 
