@@ -278,3 +278,5 @@ cd/
 /Winstaller/RaidenEMSInstall.exe
 /DFW2/Release DLL
 /Release DLL
+/UMC/UMC/Release DLL/UMC.iobj
+/UMC/UMC/Release DLL/UMC.ipdb
