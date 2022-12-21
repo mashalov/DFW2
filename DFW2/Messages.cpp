@@ -241,3 +241,4 @@ const char* CDFW2Messages::m_cszCompilerAndRaidenVersionMismatch = "Версия
 const char* CDFW2Messages::m_cszLFZ0isForFlatOnly = "Оценка УР методом Z0 может быть применена только с плоским стартом";
 const char* CDFW2Messages::m_cszLFRunningZ0 = "Оценка УР методом Z0";
 const char* CDFW2Messages::m_cszNoSSE2Support = "Процессор не поддерживает SSE2";
+const char* CDFW2Messages::m_cszWrongTaggedPath = "Ошибка пути с тегами в позиции {}";

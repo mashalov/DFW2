@@ -248,6 +248,7 @@ namespace DFW2
 		static const char* m_cszLFZ0isForFlatOnly;
 		static const char* m_cszLFRunningZ0;
 		static const char* m_cszNoSSE2Support;
+		static const char* m_cszWrongTaggedPath;
 	};
 }
 

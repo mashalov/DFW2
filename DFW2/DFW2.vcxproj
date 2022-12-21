@@ -398,6 +398,7 @@
     <ClInclude Include="FmtFormatters.h" />
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="TaggedPath.h" />
     <ClInclude Include="TestDevice.h" />
     <ClInclude Include="ICustomDevice.h" />
     <ClInclude Include="JsonWalkers.h" />

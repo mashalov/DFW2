@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
+#include "TaggedPath.h"
 using namespace DFW2;
 
 
@@ -53,11 +54,18 @@ void CDynaModel::WriteResultsHeader()
 	}
 
 	// создаем каталог для вывода результатов
-	Platform().CheckPath(resultCheckPath);
+	//Platform().CheckPath(resultCheckPath);
+	
+	// путь к файлу и сам файл создаем
+	// с помощью пути с тегами
+
+	TaggedPath resultFilePath{ resultPath.string() };
+	resultFilePath.Create().close();
+
 
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
-	m_ResultsWriter.CreateFile(resultPath, resultsInfo );
-	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, stringutils::utf8_encode(resultPath.c_str())));
+	m_ResultsWriter.CreateFile(stringutils::utf8_decode(resultFilePath.Path()), resultsInfo);
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, resultFilePath.Path()));
 
 	// добавляем описание единиц измерения переменных
 	CDFW2Messages vars;

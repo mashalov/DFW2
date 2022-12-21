@@ -341,7 +341,7 @@ bool CDynaModel::RunTransient()
 						break;
 				}
 			}
-			catch (const dfw2error& err)
+			catch (const std::exception& err)
 			{
 				if (bResultsNeedToBeFinished)
 				{
@@ -367,7 +367,7 @@ bool CDynaModel::RunTransient()
 		DumpStatistics();
 	}
 
-	catch (const dfw2error& err)
+	catch (const std::exception& err)
 	{
 		Log(DFW2MessageStatus::DFW2LOG_FATAL, FinalMessage_ = fmt::format("Исключение : {}", err.what()));
 		bRes = false;

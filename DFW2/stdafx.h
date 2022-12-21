@@ -5,6 +5,7 @@
 
 #ifdef _MSC_VER
 
+#define NOMINMAX
 #define _CRTDBG_MAP_ALLOC
 
 #endif

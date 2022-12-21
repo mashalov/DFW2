@@ -289,6 +289,9 @@
     <ClInclude Include="TestDevice.h">
       <Filter>Header Files\Testing</Filter>
     </ClInclude>
+    <ClInclude Include="TaggedPath.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
