@@ -275,7 +275,8 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		Rastr->Load(RG_REPL, bstrPath(Input.CaseFile), bstrPath(Input.rstPath));
 		Rastr->Load(RG_REPL, bstrPath(Input.ContingencyFile), bstrPath(Input.scnPath));
 		Rastr->NewFile(bstrPath(Input.dfwPath));
-		Rastr->ExecMacroPath(bstrPath(Input.macroPath / "Scn2Dfw.rbs"), L"");
+		//Rastr->ExecMacroPath(bstrPath(Input.macroPath / "Scn2Dfw.rbs"), L"");
+		Rastr->ExecMacroPath(bstrPath("Scn2Dfw.rbs"), L"");
 		Rastr->NewFile(bstrPath(Input.scnPath));
 		auto FWDynamic{ Rastr->FWDynamic() };
 		
@@ -389,6 +390,9 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		DFWSyncLossCause SyncLossCause[2];
 		RastrRetCode RetCode[2];
 
+		//Rastr->ExecMacroPath(bstrPath(Input.macroPath / "ModelCorrect.rbs"), L"");
+		Rastr->ExecMacroPath(bstrPath("ModelCorrect.rbs"), L"");
+
 		
 		for (int method{ 0 }; method < 2; method++)
 		{
@@ -483,7 +487,13 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 
 	catch (const _com_error& er)
 	{
-		throw dfw2error(stringutils::utf8_encode(er.Description()));
+		if (Input.Opts.Threads > 1)
+		{
+			std::lock_guard<std::mutex> lock(Input.mtx_);
+			Output.Report << "Исключение: " << stringutils::utf8_encode(er.Description()) << std::endl;
+		}
+		else
+			throw dfw2error(stringutils::utf8_encode(er.Description()));
 	}
 
 	if (Input.Opts.Threads > 1)

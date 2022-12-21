@@ -7,6 +7,7 @@
 !define InputFolderX64 "..\x64\release\"
 !define InputFolderX86 "..\release\"
 !define ModelReferencePath "${ProductName}\Reference"
+!define TestStuffPath "${ProductName}\Test"
 
 
 !define VisualStudioLink "https://visualstudio.microsoft.com/ru/downloads/"
@@ -209,7 +210,13 @@ Section InstallX64 0
 	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX64}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
+	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX64}\..\..\ReferenceCustomModel\*.*"
+;	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
+;	File "${InputFolderX64}BatchTest.exe"
+;	File "${InputFolderX64}Scn2Dfw.rbs"
+;	File "${InputFolderX64}ModelCorrect.rbs"
+;	File "${InputFolderX64}config.json"
 	IfErrors 0 InstallX64OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
 InstallX64OK:	
@@ -226,14 +233,19 @@ Section InstallX86 1
 	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX86}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
+	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX86}\..\ReferenceCustomModel\*.*"
+;	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
+;	File "${InputFolderX86}BatchTest.exe"
+;	File "${InputFolderX64}Scn2Dfw.rbs"
+;	File "${InputFolderX64}ModelCorrect.rbs"
+;	File "${InputFolderX64}config.json"
 	IfErrors 0 InstallX86OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
 InstallX86OK:	
 SectionEnd
 
 Section "Uninstall"
-
 	SetRegView 64
 	ReadRegStr $R0 HKLM ${RastrWin3RegKey} ${InstallPathVerb}
 	SetRegView 32

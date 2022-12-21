@@ -8,7 +8,7 @@ namespace DFW2
 
 // дефайн который определяет какие уравнения движения используются
 // для уравнений Парка
-#define USE_VOLTAGE_FREQ_DAMPING
+//#define USE_VOLTAGE_FREQ_DAMPING
 
 	class CDynaGeneratorDQBase : public CDynaGeneratorMotion
 	{
