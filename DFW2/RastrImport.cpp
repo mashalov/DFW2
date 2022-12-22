@@ -444,6 +444,8 @@ void CRastrImport::StoreResults(const CDynaModel& Network)
 	constexpr const char* szTimeComputed{ "TimeComputed" };
 	constexpr const char* szMessage{ "Message" };
 	constexpr const char* szSyncLossCause{ "SyncLossCause" };
+	constexpr const char* szResultFilePath{ "ResultFilePath" };
+
 	long TableIndex{ spTables->GetFind(szRaidenResults) };
 	if (TableIndex < 0)
 		spTables->Add(szRaidenResults);
@@ -474,6 +476,12 @@ void CRastrImport::StoreResults(const CDynaModel& Network)
 	spSyncLossCause->PutProp(FL_NAMEREF, stringutils::COM_encode("Нет|АР ветви|АР генератора|Автомат скорости|Отказ метода").c_str());
 	spSyncLossCause->PutZ(0, static_cast<long>(Network.SyncLossCause()));
 
+	long ResultFilePathIndex{ spResCols->GetFind(szResultFilePath) };
+	if (ResultFilePathIndex < 0)
+		spResCols->Add(szResultFilePath, PropTT::PR_STRING);
+
+	IColPtr spResultFilePath{ spResCols->Item(szResultFilePath) };
+	spResultFilePath->PutZS(0, Network.ResultFilePath().c_str());
 }
 
 void CRastrImport::GetData(CDynaModel& Network)

@@ -609,7 +609,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 void CDynaNode::Predict()
 {
 	VreVim = { Vre, Vim };
-	LRCVicinity = 0.05;
+	LRCVicinity = 0.0;
 	const double newDelta{ std::atan2(std::sin(Delta), std::cos(Delta)) };
 	if (std::abs(newDelta - Delta) > DFW2_EPSILON)
 	{

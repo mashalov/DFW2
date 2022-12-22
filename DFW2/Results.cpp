@@ -61,10 +61,9 @@ void CDynaModel::WriteResultsHeader()
 
 	TaggedPath resultFilePath{ resultPath.string() };
 	resultFilePath.Create().close();
-
-
+	ResultFilePath_ = stringutils::utf8_decode(resultFilePath.Path());
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
-	m_ResultsWriter.CreateFile(stringutils::utf8_decode(resultFilePath.Path()), resultsInfo);
+	m_ResultsWriter.CreateFile(ResultFilePath_, resultsInfo);
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, resultFilePath.Path()));
 
 	// добавляем описание единиц измерения переменных
