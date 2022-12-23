@@ -216,6 +216,7 @@ Section InstallX64 0
 	File "${InputFolderX64}Scn2Dfw.rbs"
 	File "${InputFolderX64}ModelCorrect.rbs"
 	File "${InputFolderX64}config.json"
+	File "${InputFolderX64}Тестовая утилита.pdf"
 	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX64OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
@@ -239,6 +240,7 @@ Section InstallX86 1
 	File "${InputFolderX64}Scn2Dfw.rbs"
 	File "${InputFolderX64}ModelCorrect.rbs"
 	File "${InputFolderX64}config.json"
+	File "${InputFolderX64}Тестовая утилита.pdf"
 	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX86OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
