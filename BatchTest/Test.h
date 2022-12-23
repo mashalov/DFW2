@@ -48,10 +48,12 @@ protected:
 		const Options& Opts;
 		std::filesystem::path CaseFile;
 		std::filesystem::path ContingencyFile;
-		std::filesystem::path  rstPath;
-		std::filesystem::path  scnPath;
-		std::filesystem::path  dfwPath;
-		std::filesystem::path  macroPath;
+		std::filesystem::path rstPath;
+		std::filesystem::path scnPath;
+		std::filesystem::path dfwPath;
+		std::filesystem::path macroPath;
+		std::filesystem::path astraPath;
+		std::filesystem::path currentPath;
 		long CaseId = 0;
 		size_t TotalRuns = 0;
 		inline static std::mutex mtx_;

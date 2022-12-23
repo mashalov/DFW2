@@ -112,7 +112,7 @@ void CBatchTest::Run()
 	briefreport.imbue(std::locale("fr_FR"));  // Set OUTPUT to use a COMMA
 	constexpr const unsigned char bom[] = { 0xEF,0xBB,0xBF };
 	briefreport.write((char*)bom, sizeof(bom));
-	briefreport << fmt::format("Id;Модель;Возмущение;RUSTab;Raiden;T RUSTab;T Raiden;Макс откл;t откл;Переменная\n");
+	briefreport << fmt::format("Id;Модель;Возмущение;RUSTab;Raiden;T RUSTab;T Raiden;Макс|откл|;Макс|%|;tоткл;Переменная\n");
 
 	fullreport.open((fnFileName)("fullreport"));
 	fullreport.imbue(std::locale("fr_FR"));  // Set OUTPUT to use a COMMA
@@ -122,8 +122,9 @@ void CBatchTest::Run()
 	HKEY handle{ NULL };
 	try
 	{
-		std::filesystem::path templatePath;
+		std::filesystem::path templatePath, installPath;
 		const auto cszUserFolder = L"UserFolder";
+		const auto cszInstallPath = L"InstallPath";
 
 
 		HKEY handle{ NULL };
@@ -135,6 +136,14 @@ void CBatchTest::Run()
 		auto buffer = std::make_unique<wchar_t[]>(size * sizeof(wchar_t) / sizeof(BYTE));
 		if (RegQueryValueEx(handle, cszUserFolder, NULL, NULL, reinterpret_cast<BYTE*>(buffer.get()), &size) == ERROR_SUCCESS)
 			templatePath = buffer.get();
+		else
+			throw dfw2error(NoRastrWinFoundInRegistry);
+		size = 0;
+		if (RegQueryValueEx(handle, cszInstallPath, NULL, NULL, NULL, &size) != ERROR_SUCCESS)
+			throw dfw2error(NoRastrWinFoundInRegistry);
+		buffer = std::make_unique<wchar_t[]>(size * sizeof(wchar_t) / sizeof(BYTE));
+		if (RegQueryValueEx(handle, cszInstallPath, NULL, NULL, reinterpret_cast<BYTE*>(buffer.get()), &size) == ERROR_SUCCESS)
+			installPath = buffer.get();
 		else
 			throw dfw2error(NoRastrWinFoundInRegistry);
 
@@ -177,6 +186,8 @@ void CBatchTest::Run()
 						   scnPath,
 						   dfwPath,
 						   macroPath,
+						   installPath,
+						   std::filesystem::current_path(),
 						   CaseId,
 						   ContingencyFiles_.size() * CaseFiles_.size()
 						},
@@ -252,6 +263,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 	Output.BriefReport.imbue(std::locale("fr_FR"));  // Set OUTPUT to use a COMMA
 	try
 	{
+		std::filesystem::current_path(Input.astraPath);
 		if(Input.Opts.Threads > 1)
 		{
 			std::lock_guard<std::mutex> lock(Input.mtx_);
@@ -275,8 +287,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		Rastr->Load(RG_REPL, bstrPath(Input.CaseFile), bstrPath(Input.rstPath));
 		Rastr->Load(RG_REPL, bstrPath(Input.ContingencyFile), bstrPath(Input.scnPath));
 		Rastr->NewFile(bstrPath(Input.dfwPath));
-		//Rastr->ExecMacroPath(bstrPath(Input.macroPath / "Scn2Dfw.rbs"), L"");
-		Rastr->ExecMacroPath(bstrPath("Scn2Dfw.rbs"), L"");
+		Rastr->ExecMacroPath(bstrPath(Input.currentPath / "Scn2Dfw.rbs"), L"");
 		Rastr->NewFile(bstrPath(Input.scnPath));
 		auto FWDynamic{ Rastr->FWDynamic() };
 		
@@ -288,6 +299,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		IColPtr Hout{ ComDynamic->Cols->Item("Hout") };
 		IColPtr SnapTemplate{ComDynamic->Cols->Item("SnapTemplate")};
 		IColPtr SnapPath{ ComDynamic->Cols->Item("SnapPath") };
+		IColPtr SnapAutoLoad{ ComDynamic->Cols->Item("SnapAutoLoad") };
 		IColPtr RUSTabAtol{ ComDynamic->Cols->Item("IntEpsilon") };
 
 		Hint->PutZ(0, Opts.RUSTabHmin);
@@ -295,6 +307,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		Hout->PutZ(0, Opts.RUSTabHmin);
 		RUSTabAtol->PutZ(0, Opts.RUSTabAtol);
 		Hmax->PutZ(0, 5);
+		SnapAutoLoad->PutZ(0, 0);
 
 		DurationSet->PutZ(0, Opts.Duration);
 
@@ -391,7 +404,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		RastrRetCode RetCode[2];
 
 		//Rastr->ExecMacroPath(bstrPath(Input.macroPath / "ModelCorrect.rbs"), L"");
-		Rastr->ExecMacroPath(bstrPath("ModelCorrect.rbs"), L"");
+		Rastr->ExecMacroPath(bstrPath(Input.currentPath / "ModelCorrect.rbs"), L"");
 
 		
 		for (int method{ 0 }; method < 2; method++)
@@ -423,6 +436,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		}
 
 		double MaxDiff{ 0.0 };
+		double MaxDiffRel{ 0.0 };
 		double MaxDiffTime{ 0.0 };
 		std::string MaxDiffVariable;
 
@@ -430,6 +444,12 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		{
 			ResultCompare compare;
 			const auto CompareResults{ compare.Compare(ResultPath1, ResultPath2) };
+
+			const auto fnRelativeDiff = [](const double& Value1, const double& Value2)
+			{
+				return std::abs(Value1 - Value2) / (1e-8 + (std::max)(std::abs(Value1), std::abs(Value2)));
+			};
+
 			for (const auto& var : CompareResults)
 			{
 				if(!var.Ordered.empty())
@@ -441,11 +461,12 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 				for (const auto& diff : var.Ordered)
 				{
 					ResultFileLib::IMinMaxDataPtr Max{ diff.second.CompareResult->Max };
-					Output.Report << fmt::format("\t{} {} Max {:.5f}({:.5f}) {:.5f}<=>{:.5f} Avg {:.5f}\n",
+					Output.Report << fmt::format("\t{} {} Max {:.5f}({:.5f}) {:.5f}% {:.5f}<=>{:.5f} Avg {:.5f}\n",
 						diff.second.DeviceId,
 						diff.second.DeviceName,
 						Max->Metric,
 						Max->Time,
+						(fnRelativeDiff)(Max->Value1, Max->Value2) * 100.0,
 						Max->Value1,
 						Max->Value2,
 						diff.second.CompareResult->Average
@@ -457,6 +478,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 					const auto& diff{ *var.Ordered.begin() };
 					ResultFileLib::IMinMaxDataPtr Max{ diff.second.CompareResult->Max };
 					MaxDiff = Max->Metric;
+					MaxDiffRel = (fnRelativeDiff)(Max->Value1, Max->Value2) * 100.0,
 					MaxDiffTime = Max->Time;
 					MaxDiffVariable = fmt::format("{}.{} {} [{}]",
 						var.DeviceTypeVerbal, 
@@ -477,6 +499,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 			Duration[0] << ";" <<
 			Duration[1] << ";" <<
 			MaxDiff << ";" <<
+			MaxDiffRel << ";" <<
 			MaxDiffTime << ";" <<
 			MaxDiffVariable << ";" <<
 			std::endl;

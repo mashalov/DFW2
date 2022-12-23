@@ -209,14 +209,14 @@ Section InstallX64 0
 	!define LIBRARY_X64
 	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX64}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
-	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
 	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX64}\..\..\ReferenceCustomModel\*.*"
-;	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
-;	File "${InputFolderX64}BatchTest.exe"
-;	File "${InputFolderX64}Scn2Dfw.rbs"
-;	File "${InputFolderX64}ModelCorrect.rbs"
-;	File "${InputFolderX64}config.json"
+	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
+	File "${InputFolderX64}BatchTest.exe"
+	File "${InputFolderX64}Scn2Dfw.rbs"
+	File "${InputFolderX64}ModelCorrect.rbs"
+	File "${InputFolderX64}config.json"
+	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX64OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
 InstallX64OK:	
@@ -232,14 +232,14 @@ Section InstallX86 1
 	!undef LIBRARY_X64
 	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX86}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
-	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
 	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX86}\..\ReferenceCustomModel\*.*"
-;	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
-;	File "${InputFolderX86}BatchTest.exe"
-;	File "${InputFolderX64}Scn2Dfw.rbs"
-;	File "${InputFolderX64}ModelCorrect.rbs"
-;	File "${InputFolderX64}config.json"
+	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
+	File "${InputFolderX86}BatchTest.exe"
+	File "${InputFolderX64}Scn2Dfw.rbs"
+	File "${InputFolderX64}ModelCorrect.rbs"
+	File "${InputFolderX64}config.json"
+	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX86OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
 InstallX86OK:	
