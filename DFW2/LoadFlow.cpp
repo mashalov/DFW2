@@ -197,7 +197,7 @@ void CDynaNodeBase::StartLF(bool bFlatStart, double ImbTol)
 				eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PQ;
 				if (bFlatStart)
 				{
-					V = Unom;
+					V = 1.0;
 					Delta = 0.0;
 				}
 			}
@@ -252,6 +252,16 @@ void CLoadFlow::Start()
 	for (auto&& it : *pNodes)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
+		const auto& Sbase{ Parameters.Sbase_ };
+		const auto& Ubase{ pNode->Unom };
+
+		pNode->Pn /= Sbase;
+		pNode->Qn /= Sbase;
+		pNode->Pg /= Sbase;
+		pNode->Qg /= Sbase;
+		pNode->LFQmax /= Sbase;
+		pNode->LFQmin /= Sbase;
+		pNode->LFVref /= Ubase;
 		pNode->Pgr = pNode->Pg;
 		pNode->Qgr = pNode->Qg;
 		pNode->StartLF(Parameters.Flat, Parameters.Imb);
@@ -1248,15 +1258,14 @@ bool CLoadFlow::CheckLF()
 	for (_MatrixInfo* pMatrixInfo = pMatrixInfo_.get(); pMatrixInfo < pMatrixInfoEnd; pMatrixInfo++)
 	{
 		const auto& pNode{ pMatrixInfo->pNode };
-		double dV = pNode->V / pNode->Unom;
-		if (dV > 2.0)
+		if (pNode->V > 2.0)
 		{
-			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeVTooHigh, pNode->GetVerbalName(), dV));
+			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeVTooHigh, pNode->GetVerbalName(), pNode->V));
 			bRes = false;
 		}
-		else if (dV < 0.5)
+		else if (pNode->V < 0.5)
 		{
-			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeVTooLow, pNode->GetVerbalName(), dV));
+			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLFNodeVTooLow, pNode->GetVerbalName(), pNode->V));
 			bRes = false;
 		}
 
@@ -1454,9 +1463,8 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 	// по умолчанию нагрузка равна заданной в УР
 	pNode->Pnr = pNode->Pn;
 	pNode->Qnr = pNode->Qn;
-	double VdVnom = pNode->V / pNode->V0;
 
-	if (VdVnom < 0.0)
+	if (pNode->V < 0.0)
 	{
 		//throw dfw2error(fmt::format("CLoadFlow::GetPnrQnr {} negative V/Vnom {:.3f}", pNode->GetVerbalName(), VdVnom));
 		pNode->dLRCLoad = pNode->Pnr = pNode->Qnr = 0.0;
@@ -1478,13 +1486,13 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 
 		if (Parameters.AllowNegativeLRC || pNode->Pn > 0.0)
 		{
-			pNode->Pnr *= pNode->pLRC->P()->GetBoth(VdVnom, re, pNode->LRCVicinity);
+			pNode->Pnr *= pNode->pLRC->P()->GetBoth(pNode->V, re, pNode->LRCVicinity);
 			re *= pNode->Pn;
 		}
 
 		if (Parameters.AllowNegativeLRC || pNode->Qn > 0.0)
 		{
-			pNode->Qnr *= pNode->pLRC->Q()->GetBoth(VdVnom, im, pNode->LRCVicinity);
+			pNode->Qnr *= pNode->pLRC->Q()->GetBoth(pNode->V, im, pNode->LRCVicinity);
 			im *=  pNode->Qn;
 		}
 
@@ -1809,7 +1817,7 @@ double CLoadFlow::GetNewtonRatio(double const* b)
 		for (const double d : {0.5, 2.0})
 		{
 			if ((d > 1.0) ? Ratio > d : Ratio < d)
-				NewtonStepRatio.UpdateVoltageOutOfRange((pNode->V - d * pNode->Unom) / *pb, pNode);
+				NewtonStepRatio.UpdateVoltageOutOfRange((pNode->V - d) / *pb, pNode);
 		}
 
 		// поиск ограничения шага по напряжению

@@ -133,6 +133,7 @@ void CDynaModel::PrepareNetworkElements()
 	for (auto&& it : Nodes)
 	{
 		const auto& pNode{ static_cast<CDynaNode*>(it) };
+
 		// задаем V0 для узла. Оно потребуется временно, для холстого расчета шунтовых
 		// нагрузок в CreateSuperNodes
 		if (pNode->Unom < DFW2_EPSILON)
@@ -143,6 +144,8 @@ void CDynaModel::PrepareNetworkElements()
 		else
 			pNode->PickV0();
 
+		pNode->Zbase_ = pNode->Unom * pNode->Unom / Sbase();
+
 		pNode->G += pNode->Gr0 * pNode->Nr;
 		pNode->B += pNode->Br0 * pNode->Nr;
 		// после того как обновили значения G и B обнуляем количество реакторов,
@@ -150,6 +153,10 @@ void CDynaModel::PrepareNetworkElements()
 		// правильное значение
 		pNode->Nr = 0;
 		pNode->Gshunt = pNode->Bshunt = 0.0;
+
+		pNode->V /= pNode->Unom;
+		pNode->G *= pNode->Zbase_;
+		pNode->B *= pNode->Zbase_;
 	}
 
 	if (!bOk)
@@ -158,6 +165,9 @@ void CDynaModel::PrepareNetworkElements()
 	for (auto&& it : Branches)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
+		const auto& Zbase{ pBranch->pNodeIp_->Zbase_ };
+		const double Ktbase{ pBranch->pNodeIp_->Unom / pBranch->pNodeIq_->Unom };
+
 		// проверяем не самозамкнута ли ветвь
 		if (pBranch->key.Iq == pBranch->key.Ip)
 		{
@@ -188,6 +198,17 @@ void CDynaModel::PrepareNetworkElements()
 		pBranch->GIq0 += pBranch->NrIq * pBranch->GrIq;
 		pBranch->BIp0 += pBranch->NrIp * pBranch->BrIp;
 		pBranch->BIq0 += pBranch->NrIq * pBranch->BrIq;
+
+		pBranch->Ktr *= Ktbase;
+		pBranch->Kti *= Ktbase;
+		pBranch->R /= Zbase;
+		pBranch->X /= Zbase;
+		pBranch->G *= Zbase;
+		pBranch->B *= Zbase;
+		pBranch->GIp0 *= Zbase;
+		pBranch->GIq0 *= Zbase;
+		pBranch->BIp0 *= Zbase;
+		pBranch->BIq0 *= Zbase;
 	}
 
 	if (!bOk)

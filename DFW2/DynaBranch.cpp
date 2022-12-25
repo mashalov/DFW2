@@ -231,15 +231,15 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 	for(const auto& reactor : reactorsHead)
 		if (reactor->IsStateOn())
 		{
-			GIp += reactor->g;
-			BIp += reactor->b;
+			GIp += reactor->g * pNodeIp_->Zbase_;
+			BIp += reactor->b * pNodeIp_->Zbase_;
 		}
 
 	for (const auto& reactor : reactorsTail)
 		if (reactor->IsStateOn())
 		{
-			GIq += reactor->g;
-			BIq += reactor->b;
+			GIq += reactor->g * pNodeIq_->Zbase_;
+			BIq += reactor->b * pNodeIq_->Zbase_;
 		}
 
 	switch (BranchState_)

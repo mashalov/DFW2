@@ -663,6 +663,8 @@ namespace DFW2
 		void RepeatZeroCrossing();
 		void UnprocessDiscontinuity();
 
+		void RestoreNamedUnits();
+
 		bool LoadFlow();
 		void DumpStateVector();
 		FILE* fResult;
@@ -846,6 +848,12 @@ namespace DFW2
 		inline bool FillConstantElements() const
 		{
 			return sc.m_bFillConstantElements;
+		}
+
+		// возвращает базисную мощность
+		inline double Sbase() const
+		{
+			return m_Parameters.Sbase_;
 		}
 		
 		inline bool EstimateBuild() const

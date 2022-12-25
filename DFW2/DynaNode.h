@@ -92,7 +92,7 @@ namespace DFW2
 		}
 #endif
 		
-
+		double Zbase_ = 0.0;
 		double Pn,Qn,Pg,Qg;
 		double G,B, Gr0, Br0;
 		// переменные, используемые для SSE выравниваем на 16 байт

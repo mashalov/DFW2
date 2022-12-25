@@ -142,9 +142,8 @@ void _IterationControl::Update(_MatrixInfo* pMatrixInfo)
 		const auto& pNode{ pMatrixInfo->pNode };
 		MaxImbP.UpdateMaxAbs(pNode, pMatrixInfo->ImbP);
 		MaxImbQ.UpdateMaxAbs(pNode, pMatrixInfo->ImbQ);
-		const double VdVnom{ pNode->V / pNode->Unom };
-		MaxV.UpdateMax(pNode, VdVnom);
-		MinV.UpdateMin(pNode, VdVnom);
+		MaxV.UpdateMax(pNode, pNode->V);
+		MinV.UpdateMin(pNode, pNode->V);
 	}
 	else
 		_ASSERTE(pMatrixInfo && pMatrixInfo->pNode);

@@ -47,6 +47,7 @@ namespace DFW2
 			double LRCMaxSlope = 5.0;					// максимальная крутизна СХН
 			unsigned long ThreadId_ = 0;
 			std::filesystem::path ModuleFilePath_;
+			double Sbase_ = 100.0;						// базисная мощность для pu
 
 			virtual ~LoadFlowParameters() = default;
 		};

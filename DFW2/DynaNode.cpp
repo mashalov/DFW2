@@ -830,12 +830,12 @@ void CDynaNodeBase::CalculateShuntParts()
 void CDynaNodeBase::GetGroundAdmittance(cplx& y)
 {
 
-	y.real(G + Gshunt);
-	y.imag(B + Bshunt);
+	y.real(G + Gshunt * Zbase_);
+	y.imag(B + Bshunt * Zbase_);
 	for (const auto& reactor : reactors)
 	{
 		if (reactor->IsStateOn())
-			y += cplx(reactor->g, reactor->b);
+			y += cplx(reactor->g, reactor->b) * Zbase_;
 	}
 
 	// добавляем к проводимости на землю
