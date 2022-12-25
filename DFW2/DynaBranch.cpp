@@ -27,8 +27,8 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	// ветви меньше минимального, либо связь параллельна такой ветви
 
 #ifdef _DEBUG
-	bool bZ1{ pNodeSuperIp_ == pNodeSuperIq_ };
-	bool bZ2{ IsZeroImpedance() };
+	const bool bZ1{ pNodeSuperIp_ == pNodeSuperIq_ };
+	const bool bZ2{ IsZeroImpedance() };
 	// Ассертит случай, когда ветвь в суперузле но имеет большее чем пороговое сопротивление
 	//_ASSERTE(bZ1 == bZ2);
 	if(bZ2||bZ1)
@@ -41,7 +41,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 	double Rf{ R }, Xf{ X };
 	// Для ветвей с малым или отрицательным сопротивлением
 	// задаем сопротивление в о.е. относительно напряжения
-	const double Xfictive{ pNodeIp_->Unom * 110.0 * 0.000004 };
+	const double Xfictive{ pNodeIp_->Unom * 110.0 * 0.000004 / pNodeIp_->Zbase_};
 
 #define ZMIN_RASTRWIN
 
@@ -309,9 +309,8 @@ bool CDynaBranch::IsZeroImpedance()
 
 	if (BranchState_ == CDynaBranch::BranchState::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
 	{
-		const  double Zmin{ pModel->GetZeroBranchImpedance() };
-		if (std::abs(R) / pNodeIp_->Unom / pNodeIq_->Unom < Zmin &&
-			std::abs(X) / pNodeIp_->Unom / pNodeIq_->Unom < Zmin)
+		const double Zmin{ pModel->GetZeroBranchImpedance() };
+		if (std::abs(R) < Zmin && std::abs(X) < Zmin)
 			return true;
 	}
 

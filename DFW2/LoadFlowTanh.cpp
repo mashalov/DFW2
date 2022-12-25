@@ -302,10 +302,10 @@ void CLoadFlow::CompareWithRastr()
 
 	for (auto&& it : pNodes->DevVec)
 	{
-		CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+		CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(it) };
 		if (pNode->IsStateOn())
 		{
-			double mx = std::abs(pNode->V - pNode->Vrastr);
+			double mx{ std::abs(pNode->V - pNode->Vrastr) };
 			if (pNodeMaxV)
 			{
 				if (mx > std::abs(pNodeMaxV->V - pNodeMaxV->Vrastr))

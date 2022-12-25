@@ -662,9 +662,6 @@ namespace DFW2
 		void NewtonFailed();
 		void RepeatZeroCrossing();
 		void UnprocessDiscontinuity();
-
-		void RestoreNamedUnits();
-
 		bool LoadFlow();
 		void DumpStateVector();
 		FILE* fResult;

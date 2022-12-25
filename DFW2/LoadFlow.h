@@ -131,6 +131,7 @@ namespace DFW2
 		void UpdateSlackBusesImbalance();
 		double GetSquaredImb();
 		void CheckFeasible();
+		void RestoreNamedUnits();
 		void DumpNewtonIterationControl() const;
 		void LogNodeSwitch(_MatrixInfo* pNode, std::string_view Title);
 		LFNewtonStepRatio NewtonStepRatio;

@@ -1226,7 +1226,7 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 			// если СХН для динамики - номинальное напряжение СХН
 			// равно расчетному
 			if (!DynamicLRC)
-				pNode->V0 = pNode->Unom;
+				pNode->V0 = 1;
 			else
 				pNode->V0 = pNode->V;
 		}

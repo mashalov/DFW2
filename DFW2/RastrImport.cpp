@@ -356,12 +356,12 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 {
 	
 	// Тесты СО
-	LoadFile("e:\\temp\\sztest\\deep\\test9.rst", rstPath.c_str());				// исходный режим
-	m_spRastr->NewFile(dfwPath.c_str());
-	m_spRastr->NewFile(scnPath.c_str());
+	//LoadFile("e:\\temp\\sztest\\deep\\test9.rst", rstPath.c_str());				// исходный режим
+	//m_spRastr->NewFile(dfwPath.c_str());
+	//m_spRastr->NewFile(scnPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_027440");		// режим с нарушением устойчивости(сценарии 102, 109)
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m004560");		// последний режим с нарушением устойчивости, перед предельным(сценарии 109)
-	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560");		// режим без нарушения устойчивости, предельный
+	LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560");		// режим без нарушения устойчивости, предельный
 
 
 	//LoadFile("e:\\temp\\sztest\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw", dfwPath.c_str());

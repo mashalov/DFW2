@@ -239,10 +239,18 @@ void CLoadFlow::Start()
 	// используется метод Зейделя или без устранения в противном случае
 	pNodes->CalculateSuperNodesAdmittances(Parameters.Startup == CLoadFlow::eLoadFlowStartupMethod::Seidell);
 
+	const auto& Sbase{ Parameters.Sbase_ };
+
 	// в режиме отладки запоминаем что было в узлах после расчета Rastr для сравнения результатов
 #ifdef _DEBUG
 	for (auto&& it : *pNodes)
-		static_cast<CDynaNodeBase*>(it)->GrabRastrResult();
+	{
+		auto& pNode{ *static_cast<CDynaNodeBase*>(it) };
+		pNode.GrabRastrResult();
+		pNode.Qgrastr /= Sbase;
+		pNode.Pnrrastr /= Sbase;
+		pNode.Qnrrastr /= Sbase;
+	}
 #endif
 
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
@@ -252,15 +260,7 @@ void CLoadFlow::Start()
 	for (auto&& it : *pNodes)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
-		const auto& Sbase{ Parameters.Sbase_ };
 		const auto& Ubase{ pNode->Unom };
-
-		pNode->Pn /= Sbase;
-		pNode->Qn /= Sbase;
-		pNode->Pg /= Sbase;
-		pNode->Qg /= Sbase;
-		pNode->LFQmax /= Sbase;
-		pNode->LFQmin /= Sbase;
 		pNode->LFVref /= Ubase;
 		pNode->Pgr = pNode->Pg;
 		pNode->Qgr = pNode->Qg;
@@ -1216,8 +1216,10 @@ bool CLoadFlow::Run()
 			}
 		}
 
+		RestoreNamedUnits();
 		UpdateQToGenerators();
 		CheckFeasible();
+		
 	}
 	catch (const dfw2error&)
 	{
@@ -1297,6 +1299,8 @@ void CLoadFlow::UpdatePQFromGenerators()
 	if (!pNodes->CheckLink(1))
 		return;	// если генераторов нет - выходим. В узлах остаются инъеции pg/qg;
 
+	const auto& Sbase{ Parameters.Sbase_ };
+
 	for (auto&& it : pNodes->DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
@@ -1310,6 +1314,8 @@ void CLoadFlow::UpdatePQFromGenerators()
 
 		// сбрасываем суммарные ограничения Q генераторов
 		pNode->LFQminGen = pNode->LFQmaxGen = 0.0;
+		pNode->LFQmin /= Sbase;
+		pNode->LFQmax /= Sbase;
 
 		if (pGenLink->Count())
 		{
@@ -1326,7 +1332,10 @@ void CLoadFlow::UpdatePQFromGenerators()
 							pGen->Kgen));
 						pGen->Kgen = 1.0;
 					}
+
 					pNode->Pg += pGen->P;
+					pGen->LFQmin /= Sbase;
+					pGen->LFQmax /= Sbase;
 
 					// проверяем ограничения по реактивной мощности
 					if (pGen->LFQmin > pGen->LFQmax)
@@ -1338,7 +1347,6 @@ void CLoadFlow::UpdatePQFromGenerators()
 
 						// если Qmin>Qmax ставим Qmin=Qmax (нужно больше реактивки)
 						pGen->LFQmin = pGen->LFQmax;
-
 					}
 
 					// вводим Q генератора в диапазон
@@ -1352,6 +1360,10 @@ void CLoadFlow::UpdatePQFromGenerators()
 				}
 			}
 		}
+		pNode->Pg /= Sbase;
+		pNode->Qg /= Sbase;
+		pNode->Pn /= Sbase;
+		pNode->Qn /= Sbase;
 	}
 }
 
@@ -1463,6 +1475,7 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 	// по умолчанию нагрузка равна заданной в УР
 	pNode->Pnr = pNode->Pn;
 	pNode->Qnr = pNode->Qn;
+	const double VdVnom{ pNode->V / pNode->V0 };
 
 	if (pNode->V < 0.0)
 	{
@@ -1486,13 +1499,13 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 
 		if (Parameters.AllowNegativeLRC || pNode->Pn > 0.0)
 		{
-			pNode->Pnr *= pNode->pLRC->P()->GetBoth(pNode->V, re, pNode->LRCVicinity);
+			pNode->Pnr *= pNode->pLRC->P()->GetBoth(VdVnom, re, pNode->LRCVicinity);
 			re *= pNode->Pn;
 		}
 
 		if (Parameters.AllowNegativeLRC || pNode->Qn > 0.0)
 		{
-			pNode->Qnr *= pNode->pLRC->Q()->GetBoth(pNode->V, im, pNode->LRCVicinity);
+			pNode->Qnr *= pNode->pLRC->Q()->GetBoth(VdVnom, im, pNode->LRCVicinity);
 			im *=  pNode->Qn;
 		}
 
@@ -1811,17 +1824,17 @@ double CLoadFlow::GetNewtonRatio(double const* b)
 		// рассчитываем новый модуль напряжения в узле
 		pb++;
 		const double newV{ pNode->V - *pb };
-		const double Ratio{ newV / pNode->Unom };
+		//const double Ratio{ newV / pNode->Unom };
 
 		// поиск ограничения по модулю напряжения
 		for (const double d : {0.5, 2.0})
 		{
-			if ((d > 1.0) ? Ratio > d : Ratio < d)
+			if ((d > 1.0) ? newV > d : newV < d)
 				NewtonStepRatio.UpdateVoltageOutOfRange((pNode->V - d) / *pb, pNode);
 		}
 
 		// поиск ограничения шага по напряжению
-		const double VstepPU{ std::abs(*pb) / pNode->Unom };
+		const double VstepPU{ std::abs(*pb) };
 		if (VstepPU > Parameters.VoltageNewtonStep)
 			NewtonStepRatio.UpdateVoltage(Parameters.VoltageNewtonStep / VstepPU, pNode);
 	}
@@ -2621,4 +2634,72 @@ void CLoadFlow::Limits::CheckFeasible()
 		it->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLFOverswitchedNode, it->GetVerbalName(),
 			LoadFlow_.Parameters.MaxPVPQSwitches));
 }
+
+void CLoadFlow::RestoreNamedUnits()
+{
+	const auto& Sbase{ Parameters.Sbase_ };
+
+	CDeviceContainer* pBranchContainer{ pDynaModel->GetDeviceContainer(DEVTYPE_BRANCH) };
+	BranchAngleCheck.reserve(pBranchContainer->Count());
+	for (auto&& it : *pBranchContainer)
+	{
+		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
+		const double Ktbase{ pBranch->pNodeIp_->Unom / pBranch->pNodeIq_->Unom };
+		const double& ZbaseIp{ pBranch->pNodeIp_->Zbase_ };
+		const double& ZbaseIq{ pBranch->pNodeIq_->Zbase_ };
+
+		pBranch->R *= ZbaseIp;
+		pBranch->X *= ZbaseIp;
+		pBranch->G /= ZbaseIp;
+		pBranch->B /= ZbaseIp;
+		pBranch->GIp0 /= ZbaseIp;
+		pBranch->GIq0 /= ZbaseIq;
+		pBranch->BIp0 /= ZbaseIp;
+		pBranch->BIq0 /= ZbaseIq;
+
+		pBranch->Ktr /= Ktbase;
+		pBranch->Kti /= Ktbase;
+	}
+
+	for (auto&& it : pNodes->DevVec)
+	{
+		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
+		pNode->V *= pNode->Unom;
+		pNode->LFVref *= pNode->Unom;
+		pNode->Pg *= Sbase;
+		pNode->Pgr *= Sbase;
+		pNode->Qg *= Sbase;
+		pNode->Qgr *= Sbase;
+		pNode->Pn *= Sbase;
+		pNode->Pnr *= Sbase;
+		pNode->Qn *= Sbase;
+		pNode->Qnr *= Sbase;
+		pNode->LFQmax *= Sbase;
+		pNode->LFQmin *= Sbase;
+		pNode->LFQmaxGen *= Sbase;
+		pNode->LFQminGen *= Sbase;
+		pNode->V0 *= pNode->Unom;
+		pNode->G /= pNode->Zbase_;
+		pNode->B /= pNode->Zbase_;
+		pNode->Zbase_ = 1.0;
+		pNode->UpdateVreVimSuper();
+
+		const  CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
+		LinkWalker< CDynaPowerInjector> pGen;
+		while (pGenLink->In(pGen))
+		{
+			pGen->LFQmin *= Sbase;
+			pGen->LFQmax *= Sbase;
+		}
+	}
+
+	pNodes->CalculateSuperNodesAdmittances(false);
+
+	for (auto&& it : pNodes->DevVec)
+	{
+		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
+		pNode->GetPnrQnrSuper();
+	}
+}
+
 
