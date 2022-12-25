@@ -763,8 +763,15 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 	}
 }
 
-
 void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
+{
+	CalculateSuperNodesAdmittancesWithoutShunts(bFixNegativeZs);
+	// считаем проводимости и шунтовые части нагрузки
+	// для суперузлов выделенной функцией
+	CalculateShuntParts();
+}
+
+void CDynaNodeContainer::CalculateSuperNodesAdmittancesWithoutShunts(bool bFixNegativeZs)
 {
 	// Рассчитываем проводимости узлов и ветвей только после того, как провели
 	// топологический анлализ. Это позволяет определить ветви внутри суперузлов
@@ -814,9 +821,6 @@ void CDynaNodeContainer::CalculateSuperNodesAdmittances(bool bFixNegativeZs)
 		//if (pNode->m_VirtualBranchBegin == pNode->m_VirtualBranchEnd)
 		//	pNode->ChangeState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
 	}
-	// считаем проводимости и шунтовые части нагрузки
-	// для суперузлов выделенной функцией
-	CalculateShuntParts();
 }
 
 void CDynaNodeContainer::ClearSuperLinks()

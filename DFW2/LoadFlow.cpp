@@ -1219,7 +1219,6 @@ bool CLoadFlow::Run()
 		RestoreNamedUnits();
 		UpdateQToGenerators();
 		CheckFeasible();
-		
 	}
 	catch (const dfw2error&)
 	{
@@ -1333,7 +1332,11 @@ void CLoadFlow::UpdatePQFromGenerators()
 						pGen->Kgen = 1.0;
 					}
 
+					// сначала добавляем МВт, потом 
+					// поделим сумму на Sbase
 					pNode->Pg += pGen->P;
+					// но генератор сразу приводим в о.е.
+					pGen->P /= Sbase;
 					pGen->LFQmin /= Sbase;
 					pGen->LFQmax /= Sbase;
 
@@ -2659,6 +2662,10 @@ void CLoadFlow::RestoreNamedUnits()
 
 		pBranch->Ktr /= Ktbase;
 		pBranch->Kti /= Ktbase;
+
+		pBranch->Sb *= Sbase;
+		pBranch->Se *= Sbase;
+
 	}
 
 	for (auto&& it : pNodes->DevVec)
@@ -2682,23 +2689,31 @@ void CLoadFlow::RestoreNamedUnits()
 		pNode->G /= pNode->Zbase_;
 		pNode->B /= pNode->Zbase_;
 		pNode->Zbase_ = 1.0;
-		pNode->UpdateVreVimSuper();
-
 		const  CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
 		LinkWalker< CDynaPowerInjector> pGen;
 		while (pGenLink->In(pGen))
 		{
 			pGen->LFQmin *= Sbase;
 			pGen->LFQmax *= Sbase;
+			pGen->P *= Sbase;
+			pGen->Q *= Sbase;
+
 		}
 	}
-
-	pNodes->CalculateSuperNodesAdmittances(false);
 
 	for (auto&& it : pNodes->DevVec)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
-		pNode->GetPnrQnrSuper();
+		pNode->UpdateVreVimSuper();
+	}
+		
+
+	pNodes->CalculateSuperNodesAdmittancesWithoutShunts(false);
+
+	for (auto&& it : pNodes->DevVec)
+	{
+		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
+		pNode->GetPnrQnr();
 	}
 }
 

@@ -399,6 +399,7 @@ namespace DFW2
 		void CreateSuperNodes();
 		void CreateSuperNodesStructure();
 		void CalculateSuperNodesAdmittances(bool bFixNegativeZs = false);
+		void CalculateSuperNodesAdmittancesWithoutShunts(bool bFixNegativeZs = false);
 		void PrepareLFTopology();
 		void GetTopologySynchroZones(NODEISLANDMAP& NodeIslands);
 		void SwitchOffDanglingNode(CDynaNodeBase *pNode, NodeSet& Queue);
