@@ -72,7 +72,10 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 {
-	return InitModel(pDynaModel);
+	const auto ret{ InitModel(pDynaModel) };
+	if (CDevice::IsFunctionStatusOK(ret))
+		EqsByXd = Eqs / xd1;
+	return ret;
 }
 
 
@@ -87,23 +90,24 @@ void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		sp1 = sp2 = 1.0;
 	}
 
+	const double MjBySp2{ sp2 / Mj };
 	
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1)/ Mj );
-	pDynaModel->SetElement(s, Vre, Ire / Mj / sp2);
-	pDynaModel->SetElement(s, Vim, Iim / Mj / sp2);
-	pDynaModel->SetElement(s, Ire, Vre / Mj / sp2);
-	pDynaModel->SetElement(s, Iim, Vim / Mj / sp2);
-	pDynaModel->SetElement(s, Sv, -(Iim * Vim + Ire * Vre) / Mj / sp2 / sp2);
+	pDynaModel->SetElement(s, Vre, Ire * MjBySp2);
+	pDynaModel->SetElement(s, Vim, Iim * MjBySp2);
+	pDynaModel->SetElement(s, Ire, Vre * MjBySp2);
+	pDynaModel->SetElement(s, Iim, Vim * MjBySp2);
+	pDynaModel->SetElement(s, Sv, -(Iim * Vim + Ire * Vre) * MjBySp2 / sp2);
 
 	// dIre / dIre
 	pDynaModel->SetElement(Ire, Ire, 1.0);
 	// dIre / dDeltaG
-	pDynaModel->SetElement(Ire, Delta, -Eqs * cos(Delta) / xd1);
+	pDynaModel->SetElement(Ire, Delta, -EqsByXd * cos(Delta));
 
 	// dIim / dIim
 	pDynaModel->SetElement(Iim, Iim, 1.0);
 	// dIim / dDeltaG
-	pDynaModel->SetElement(Iim, Delta, -Eqs * sin(Delta) / xd1);
+	pDynaModel->SetElement(Iim, Delta, -EqsByXd * sin(Delta));
 
 	BuildAngleEquationBlock(pDynaModel);
 }
@@ -114,8 +118,8 @@ void CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
 	const double NodeSv{ Sv };
 	// в уравнение входит только составляющая тока генератора
 	// от ЭДС
-	pDynaModel->SetFunction(Ire, Ire - Eqs * sin(Delta) / xd1);
-	pDynaModel->SetFunction(Iim, Iim + Eqs * cos(Delta) / xd1);
+	pDynaModel->SetFunction(Ire, Ire - EqsByXd * sin(Delta));
+	pDynaModel->SetFunction(Iim, Iim + EqsByXd * cos(Delta));
 	SetFunctionsDiff(pDynaModel);
 }
 
