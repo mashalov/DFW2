@@ -365,7 +365,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 
 	//LoadFile("e:\\temp\\sztest\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw", dfwPath.c_str());
-	//LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.dfw", dfwPath.c_str());
+	LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.dfw", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\106_БЕЗ ШУНТА ПС 330 кВ Петрозаводск (с откл.Кондопога-Петрозаводск).dfw", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\deep\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw ", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\deep\\КЗ-откл-нагрузка.dfw ", dfwPath.c_str());
