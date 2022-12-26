@@ -2070,7 +2070,7 @@ void CLoadFlow::CalculateBranchFlows()
 		const auto& pBranch{ static_cast<CDynaBranch*>(dev) };
 		// пропускаем ветви с нулевым сопротивлением, для них потоки 
 		// уже рассчитаны в SuperNodeLoadFlow
-		if (pBranch->IsZeroImpedance()) continue;
+		if (pBranch->IsInSuperNode()) continue;
 		pBranch->Sb = pBranch->Se = { 0.0, 0.0 };
 		// в отключенных ветвях потоки просто обнуляем
 		if (pBranch->BranchState_ == CDynaBranch::BranchState::BRANCH_OFF) continue;

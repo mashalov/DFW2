@@ -64,7 +64,9 @@ namespace DFW2
 		eDEVICESTATE GetState() const override;
 		eDEVICEFUNCTIONSTATUS SetBranchState(BranchState eBranchState, eDEVICESTATECAUSE eStateCause);
 		void CalcAdmittances(bool bFixNegativeZs);
-		bool IsZeroImpedance();
+		bool IsZeroImpedance() const;
+		bool IsEqualUnoms() const;
+		bool IsInSuperNode() const;
 		// возвращает продольную проводимость относительно заданного узла
 		inline const cplx& OppositeY(const CDynaNodeBase* pOriginNode) const
 		{

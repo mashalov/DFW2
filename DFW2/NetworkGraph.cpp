@@ -199,12 +199,13 @@ void CDynaModel::PrepareNetworkElements()
 		pBranch->BIp0 += pBranch->NrIp * pBranch->BrIp;
 		pBranch->BIq0 += pBranch->NrIq * pBranch->BrIq;
 
-		/*
-		if (Equal(pBranch->Ktr, 1.0) &&
-			Equal(pBranch->Kti, 0.0) &&
-			!Equal(pBranch->pNodeIp_->Unom, pBranch->pNodeIq_->Unom))
-			Ktbase = 1.0;
-		*/
+		if (pBranch->IsZeroImpedance() && !pBranch->IsEqualUnoms())
+			pBranch->Log(DFW2MessageStatus::DFW2LOG_WARNING, 
+				fmt::format(CDFW2Messages::m_cszBreakerHasDifferentUnoms,
+				pBranch->GetVerbalName(),
+				cplx(pBranch->R, pBranch->X),
+				pBranch->pNodeIp_->Unom,
+				pBranch->pNodeIq_->Unom));
 
 		pBranch->Ktr *= Ktbase;
 		pBranch->Kti *= Ktbase;
@@ -497,7 +498,7 @@ void CDynaNodeContainer::CreateSuperNodesStructure()
 		// по умолчанию суперузлы ветви равны исходным узлам
 		pBranch->pNodeSuperIp_ = pBranch->pNodeIp_;
 		pBranch->pNodeSuperIq_ = pBranch->pNodeIq_;
-		if (pBranch->IsZeroImpedance())
+		if (pBranch->IsInSuperNode())
 		{
 			JoinableNodes[pBranch->pNodeIp_].insert(pBranch->pNodeIq_);
 			JoinableNodes[pBranch->pNodeIq_].insert(pBranch->pNodeIp_);

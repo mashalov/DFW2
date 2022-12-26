@@ -1482,7 +1482,7 @@ VirtualZeroBranch* CDynaNodeBase::AddZeroBranch(CDynaBranch* pBranch)
 	// ветвей с нулевым сопротивлением. Потоки по таким ветвями будут рассчитаны как обычно и будут нулями, если ветвь
 	// находится в суперузле (все напряжения одинаковые)
 
-	if (pBranch->IsZeroImpedance())
+	if (pBranch->IsInSuperNode())
 	{
 		if (pVirtualZeroBranchEnd_>= static_cast<CDynaNodeContainer*>(pContainer_)->GetZeroBranchesEnd())
 			throw dfw2error("CDynaNodeBase::AddZeroBranch VirtualZeroBranches overrun");
@@ -1646,7 +1646,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 		// ищем ветви соединяющие разные суперузлы
 		while (pBranchLink->In(pBranch))
 		{
-			if (!pBranch->IsZeroImpedance())
+			if (!pBranch->IsInSuperNode())
 				nBranchesCount++;
 		}
 	}
@@ -1698,7 +1698,7 @@ void CDynaNodeBase::CreateZeroLoadFlowData()
 			{
 				const auto& pOppNode{ pBranch->GetOppositeNode(node) };
 
-				if (!pBranch->IsZeroImpedance())
+				if (!pBranch->IsInSuperNode())
 				{
 					// если ветвь не в данном суперузле, добавляем ее в список виртуальных ветвей 
 					const auto& Ykm = pBranch->OppositeY(node);
@@ -2063,7 +2063,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 	{
 		VirtualZeroBranch* pVirtualBranch(static_cast<VirtualZeroBranch*>(edge->m_IdBranch));
 		const auto& pBranch{ pVirtualBranch->pBranch };
-		_ASSERTE(pBranch->IsZeroImpedance());
+		_ASSERTE(pBranch->IsInSuperNode());
 		// учитываем, что у ветвей могут быть параллельные. Поток будет разделен по параллельным
 		// ветвям. Для ветвей с ненулевым сопротивлением внутри суперузлов
 		// обычный расчет потока по напряжениям даст ноль, так как напряжения узлов одинаковые

@@ -242,3 +242,4 @@ const char* CDFW2Messages::m_cszLFZ0isForFlatOnly = "Оценка УР мето�
 const char* CDFW2Messages::m_cszLFRunningZ0 = "Оценка УР методом Z0";
 const char* CDFW2Messages::m_cszNoSSE2Support = "Процессор не поддерживает SSE2";
 const char* CDFW2Messages::m_cszWrongTaggedPath = "Ошибка пути с тегами в позиции {}";
+const char* CDFW2Messages::m_cszBreakerHasDifferentUnoms = "{} с малым сопротивлением {} Ом имеет разные номинальные напряжения по концам {:.3f}<=>{:.3f} кВ";

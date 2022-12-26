@@ -28,7 +28,7 @@ cplx CDynaBranch::GetYBranch(bool bFixNegativeZ)
 
 #ifdef _DEBUG
 	const bool bZ1{ pNodeSuperIp_ == pNodeSuperIq_ };
-	const bool bZ2{ IsZeroImpedance() };
+	const bool bZ2{ IsInSuperNode() };
 	// Ассертит случай, когда ветвь в суперузле но имеет большее чем пороговое сопротивление
 	//_ASSERTE(bZ1 == bZ2);
 	if(bZ2||bZ1)
@@ -301,9 +301,22 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 	_CheckNumber(Yiqs.imag());
 }
 
+// возвращает true если номинальные напряжения по концам равны
+bool CDynaBranch::IsEqualUnoms() const
+{
+	return Equal(pNodeIp_->Unom, pNodeIq_->Unom);
+}
+
+// возвращает композитное условие, по которому
+// ветвь может быть включена в супеузел
+bool CDynaBranch::IsInSuperNode() const
+{
+	return IsEqualUnoms() && IsZeroImpedance();
+}
+
 // функция возвращает true если сопротивление ветви меньше порогового для ветви с "нулевым сопротивлением".
 // функция не контролирует, находится ли ветвь в параллели к ветви с нулевым сопротивлением
-bool CDynaBranch::IsZeroImpedance()
+bool CDynaBranch::IsZeroImpedance() const
 {
 	const CDynaModel* pModel{ GetModel() };
 
