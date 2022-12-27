@@ -18,7 +18,7 @@ void CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 
 bool CDynaGeneratorInfBusBase::CalculatePower()
 {
-	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs();
+ 	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs();
 	Iim = (Vre - Eqs * cos(Delta)) / GetXofEqs();
 	P = Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
@@ -64,16 +64,17 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::PreInit(CDynaModel* pDynaModel)
 	if (Kgen > 1)
 		xd1 /= Kgen;
 
+	Snom_ = pDynaModel->Sbase(); 
+	xd1 /= Unom_ * Unom_ / Snom_;
+	Zgen_ = { 0 , xd1 };
+	// шунт Нортона для ШБМ
+	Ynorton_ = 1.0 / Zgen_;
+
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
 {
-	Snom_ = pDynaModel->Sbase();
-	xd1 /= Unom_ * Unom_ / Snom_;
-	Zgen_ = { 0 , xd1 };
-	// шунт Нортона для ШБМ
-	Ynorton_ = 1.0 / Zgen_;
 	return InitModel(pDynaModel);
 }
 
@@ -94,12 +95,12 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 	bool bRes{ true }; 
 	cplx S(P, Q);
 	const cplx v{ std::polar((double)V, (double)DeltaV) };
-	_ASSERTE(abs(v) > 0.0);
+	_ASSERTE(std::abs(v) > 0.0);
 	cplx i{ std::conj(S / v) };
 	// тут еще надо учитывать сопротивление статора
 	const cplx eQ{ v + i * cplx(r, GetXofEqs()) };
-	Delta = arg(eQ);
-	Eqs = abs(eQ);
+	Delta = std::arg(eQ);
+	Eqs = std::abs(eQ);
 
 	// если у генератора есть ненулевой шунт Нортона,
 	// его ток инициализируется как ток только от ЭДС

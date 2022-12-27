@@ -590,7 +590,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 	else
 	{
 		pLRCGen = pDynaModel->GetLRCGen();		// если есть генерация но нет генераторов - нужна СХН генераторов
-		if (std::abs(Pg) < 0.1)
+		if (std::abs(Pg) < 0.1 / pDynaModel->Sbase())
 			pLRCGen = pDynaModel->GetLRCYconst();
 	}
 
@@ -831,8 +831,8 @@ void CDynaNodeBase::CalculateShuntParts()
 void CDynaNodeBase::GetGroundAdmittance(cplx& y)
 {
 
-	y.real(G + Gshunt * Zbase_);
-	y.imag(B + Bshunt * Zbase_);
+	y.real(G + 0 * Gshunt * Zbase_); 
+	y.imag(B + 0 * Bshunt * Zbase_);
 	for (const auto& reactor : reactors)
 	{
 		if (reactor->IsStateOn())
@@ -1129,7 +1129,7 @@ bool CDynaNodeContainer::LULF()
 					_CheckNumber(I.real());
 					_CheckNumber(I.imag());
 
-					fgen << pVsource->P << ";";
+					fgen << pVsource->P << ";"  << pVsource->Q << ";";
 				}
 
 				// рассчитываем задающий ток узла от нагрузки
@@ -1151,11 +1151,11 @@ bool CDynaNodeContainer::LULF()
 				**ppDiags = Y.real();
 				*(*ppDiags + 1) = Y.imag();
 
-				fnode << pNode->V / pNode->V0 << ";";
+				fnode << pNode->V << ";";
 			}
 			else
 			{
-				// если узел в металлическом КЗ, задающий ток для него равен нулю
+				// если узел в металлическом КЗ, задающий ток для него равен нулю 
 				*pB = 0.0; pB++;
 				*pB = 0.0; pB++;
 				_ASSERTE(pNode->Vre <= 0.0 && pNode->Vim <= 0.0 && pNode->V <= 0.0);
@@ -1186,7 +1186,7 @@ bool CDynaNodeContainer::LULF()
 			// считаем изменение напряжения узла между итерациями и находим
 			// самый изменяющийся узел
 			if (!pNode->InMetallicSC)
-				IterationControl_.MaxV.UpdateMaxAbs(pNode, CDevice::ZeroDivGuard(pNode->V - pNode->Vold, pNode->Vold));
+				IterationControl_.MaxV.UpdateMaxAbs(pNode, pNode->V - pNode->Vold);
 		}
 
 		DumpIterationControl(DFW2MessageStatus::DFW2LOG_DEBUG);
