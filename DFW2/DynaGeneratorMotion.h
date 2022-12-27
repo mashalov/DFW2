@@ -14,7 +14,7 @@ namespace DFW2
 		 eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		 eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		 void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
-		 double EqsByXd;
+		 double Eqsxd1;
 	public:
 		enum VARS
 		{
@@ -34,7 +34,7 @@ namespace DFW2
 		
 		VariableIndex s;
 
-		double	Unom, Kdemp, xq, Mj, Pt, Pnom, cosPhinom, Snom, Qnom, Inom, deltaDiff = 0.0;
+		double Unom, Kdemp, xq, Mj, Pt, Pnom, cosPhinom, Snom, Qnom, Inom, deltaDiff = 0.0;
 
 		using CDynaGeneratorInfBusBase::CDynaGeneratorInfBusBase;
 		virtual ~CDynaGeneratorMotion() = default;
