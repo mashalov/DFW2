@@ -12,6 +12,8 @@ double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 		MAP_VARIABLE(NodeId, C_NODEID)
 		MAP_VARIABLE(P, C_P)
 		MAP_VARIABLE(Q, C_Q)
+		MAP_VARIABLE(Unom_, C_UNOM)
+		MAP_VARIABLE(Snom_, C_SNOM)
 	}
 	return p;
 }
@@ -35,14 +37,22 @@ double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::InitModel(CDynaModel* pDynaModel)
 {
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
+
+	const CDynaNodeBase* pNode{ static_cast<const CDynaNodeBase*>(GetSingleLink(0)) };
+	if (pNode)
+		NodeUnom_ = pNode->Unom;
+	else
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+
 	if (!IsStateOn())
 		P = Q = Ire = Iim = 0.0;
-
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	return Status;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::Init(CDynaModel* pDynaModel)
 {
+	Snom_ = pDynaModel->Sbase();
 	return InitModel(pDynaModel);
 }
 
@@ -102,6 +112,7 @@ void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(m_cszQ, Q, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddState(m_cszIre, Ire, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState(m_cszIim, Iim, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddProperty(CDynaNode::m_cszUnom, Unom_, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("Qmin", LFQmin, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty("Qmax", LFQmax, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty(m_cszKgen, Kgen, eVARUNITS::VARUNIT_PIECES);
@@ -119,6 +130,8 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.ConstVarMap_.insert({ CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_UNITLESS, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ m_cszP, CConstVarIndex(CDynaPowerInjector::C_P, VARUNIT_MW, true, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ m_cszQ, CConstVarIndex(CDynaPowerInjector::C_Q, VARUNIT_MVAR, true, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ m_cszSnom, CConstVarIndex(CDynaPowerInjector::C_SNOM, VARUNIT_MVA, true, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ CDynaNodeBase::m_cszUnom, CConstVarIndex(CDynaPowerInjector::C_SNOM, VARUNIT_MVA, true, eDVT_CONSTSOURCE) });
 
 	props.EquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);

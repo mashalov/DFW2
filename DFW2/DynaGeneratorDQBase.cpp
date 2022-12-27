@@ -69,7 +69,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Eqnom = (Unom * Unom * (Unom * Unom + Qnom * (xd + xq)) + Snom * Snom * xd * xq) / (Unom * sqrt(Unom * Unom * (Unom * Unom + 2.0 * Qnom * xq) + Snom * Snom * xq * xq));
+		Eqnom = (Unom_ * Unom_ * (Unom_ * Unom_ + Qnom * (xd + xq)) + Snom_ * Snom_ * xd * xq) / (Unom_ * std::sqrt(Unom_ * Unom_ * (Unom_ * Unom_ + 2.0 * Qnom * xq) + Snom_ * Snom_ * xq * xq));
 
 		switch (GetState())
 		{
@@ -174,7 +174,7 @@ void CDynaGeneratorDQBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqe, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszSnom, Snom, eVARUNITS::VARUNIT_MVA);
+	Serializer->AddState(m_cszSnom, Snom_, eVARUNITS::VARUNIT_MVA);
 	Serializer->AddState(m_cszQnom, Qnom, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddState(m_cszInom, Inom, eVARUNITS::VARUNIT_KAMPERES);
 }

@@ -31,7 +31,7 @@ namespace DFW2
 		static constexpr const char* m_cszxd1 = "xd1";
 		static constexpr const char* m_cszEqs = "Eqs";
 	};
-
+	
 	class CDynaGeneratorInfBus : public CDynaGeneratorInfBusBase
 	{
 	protected:

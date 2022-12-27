@@ -574,6 +574,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 
 	ReadTable(Network.GeneratorsInfBus, "ModelType=2");
+	/*
 	ReadTable(Network.GeneratorsMotion, "ModelType=3|ModelType=7");
 	ReadTable(Network.Generators1C, "ModelType=4");
 	ReadTable(Network.Generators3C, "ModelType=5");
@@ -584,6 +585,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
+	*/
 
 
 	

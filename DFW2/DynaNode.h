@@ -64,7 +64,8 @@ namespace DFW2
 		enum CONSTVARS
 		{
 			C_GSH,
-			C_BSH
+			C_BSH,
+			C_UNOM
 		};
 
 		enum VARS
@@ -259,6 +260,7 @@ namespace DFW2
 		static constexpr const char* m_cszGsh = "gsh";
 		static constexpr const char* m_cszBsh = "bsh";
 		static constexpr const char* m_cszPload = "pn";
+		static constexpr const char* m_cszUnom = "Unom";
 		static constexpr const char* m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };
 
 	protected:

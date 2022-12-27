@@ -64,15 +64,16 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::PreInit(CDynaModel* pDynaModel)
 	if (Kgen > 1)
 		xd1 /= Kgen;
 
-	Zgen_ = { 0 , xd1 };
-	// шунт Нортона для ШБМ
-	Ynorton_ = 1.0 / Zgen_;
-
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
 {
+	Snom_ = pDynaModel->Sbase();
+	xd1 /= Unom_ * Unom_ / Snom_;
+	Zgen_ = { 0 , xd1 };
+	// шунт Нортона для ШБМ
+	Ynorton_ = 1.0 / Zgen_;
 	return InitModel(pDynaModel);
 }
 
@@ -90,11 +91,11 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::InitModel(CDynaModel* pDynaModel)
 
 bool CDynaGeneratorInfBusBase::SetUpDelta()
 {
-	bool bRes{ true };
+	bool bRes{ true }; 
 	cplx S(P, Q);
 	const cplx v{ std::polar((double)V, (double)DeltaV) };
 	_ASSERTE(abs(v) > 0.0);
-	cplx i{ conj(S / v) };
+	cplx i{ std::conj(S / v) };
 	// тут еще надо учитывать сопротивление статора
 	const cplx eQ{ v + i * cplx(r, GetXofEqs()) };
 	Delta = arg(eQ);

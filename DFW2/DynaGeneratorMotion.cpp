@@ -26,14 +26,9 @@ double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 {
-	// !!!!!! just for debug !!!!!!
-	/*
-	if (Equal(Pnom, 0.0))
-	{
-		Pnom = P;
-		if(!Equal(Pnom, 0.0))
-			Mj *= Pnom;
-	}*/
+	Snom_ = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
+	Qnom = Snom_ * std::sqrt(1.0 - cosPhinom * cosPhinom);
+	Inom = Snom_ / Unom_ / CDynaModel::Sqrt3();
 
 	auto Status{ CDynaGeneratorInfBusBase::InitModel(pDynaModel) };
 
@@ -45,10 +40,6 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 		Kdemp *= Pnom;
 		Pt = P;
 		s = 0;
-
-		Snom = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
-		Qnom = Snom * std::sqrt(1.0 - cosPhinom * cosPhinom);
-		Inom = Snom / Unom / CDynaModel::Sqrt3();
 
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	}
@@ -82,22 +73,22 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(ret))
 	{
-		const double Zbase{ Unom * Unom / Snom };
+		const double Zbase{ Unom_ * Unom_ / Snom_ };
 		xd1 /= Zbase;
 		//Eqs /= Unom;
 
 		Pt /= Pnom;
 		Kdemp /= Pnom;
 		Mj /= Pnom;
-		Eqsxd1 = Eqs / Unom / xd1 * Inom * CDynaModel::Sqrt3();
+		Eqsxd1 = Eqs / Unom_ / xd1 * Inom * CDynaModel::Sqrt3();
 	}
 	return ret;
 }
 
 bool CDynaGeneratorMotion::CalculatePower()
 {
-	Ire = Eqsxd1 * sin(Delta) - Vim / xd1 / Unom * Inom * CDynaModel::Sqrt3();;
-	Iim = Vre / xd1 / Unom * Inom * CDynaModel::Sqrt3() - Eqsxd1 * cos(Delta);
+	Ire = Eqsxd1 * sin(Delta) - Vim / xd1 / Unom_ * Inom * CDynaModel::Sqrt3();;
+	Iim = Vre / xd1 / Unom_ * Inom * CDynaModel::Sqrt3() - Eqsxd1 * cos(Delta);
 	P = Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
 
@@ -187,11 +178,8 @@ double* CDynaGeneratorMotion::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	{
 		switch (nVarIndex)
 		{
-			MAP_VARIABLE(Unom, C_UNOM)
-			MAP_VARIABLE(Snom, C_SNOM)
 			MAP_VARIABLE(Qnom, C_QNOM)
 			MAP_VARIABLE(Inom, C_INOM)
-
 		}
 	}
 	return p;
@@ -212,7 +200,6 @@ void CDynaGeneratorMotion::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(m_cszxq, xq, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszMj, Mj, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszPnom, Pnom, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(m_cszUnom, Unom, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty(m_cszcosPhinom, cosPhinom, eVARUNITS::VARUNIT_UNITLESS);
 	// добавляем переменные состояния
 	Serializer->AddState("Pt", Pt, eVARUNITS::VARUNIT_MW);
@@ -225,7 +212,7 @@ void CDynaGeneratorMotion::UpdateValidator(CSerializerValidatorRules* Validator)
 	Validator->AddRule(m_cszKdemp, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule({ m_cszxq, m_cszPnom }, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszcosPhinom, &CDynaGeneratorMotion::ValidatorCos);
-	Validator->AddRule(m_cszUnom, &CDynaGeneratorMotion::ValidatorUnom);
+	Validator->AddRule(CDynaNode::m_cszUnom, &CDynaGeneratorMotion::ValidatorUnom);
 	Validator->AddRule(m_cszMj, &CDynaGeneratorMotion::ValidatorMj);
 	Validator->AddRule(m_cszPnom, &CDynaGeneratorMotion::ValidatorPnom);
 }
@@ -240,8 +227,6 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert(std::make_pair("S", CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
-	props.ConstVarMap_.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
-	props.ConstVarMap_.insert({ CDynaGeneratorMotion::m_cszSnom, CConstVarIndex(CDynaGeneratorMotion::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
 	props.ConstVarMap_.insert({ CDynaGeneratorMotion::m_cszInom, CConstVarIndex(CDynaGeneratorMotion::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
 	props.ConstVarMap_.insert({ CDynaGeneratorMotion::m_cszQnom, CConstVarIndex(CDynaGeneratorMotion::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
 

@@ -14,6 +14,9 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel);
 		VariableIndexExternal V, DeltaV, Vre, Vim, Sv;
 		cplx Ynorton_;
+		double NodeUnom_ = 0.0;
+		double Snom_ = 0.0;
+		double Unom_ = 0.0;
 	public:
 		enum VARS
 		{
@@ -24,9 +27,11 @@ namespace DFW2
 
 		enum CONSTVARS
 		{
-			C_NODEID,
-			C_P,
-			C_Q,
+			C_NODEID,													// номер узла
+			C_UNOM,														// номинальное напряжение
+			C_SNOM,														// номинальная полная мощность
+			C_P,														// исходная активная мощность
+			C_Q,														// исходная реактивная мощность
 			C_LAST
 		};
 
@@ -50,6 +55,8 @@ namespace DFW2
 		// комплекс шунта Нортона в узле подключения	
 		virtual const cplx& Ynorton() const { return Ynorton_; }
 
+		virtual double Unom() const { return Unom_; }
+
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
@@ -60,12 +67,35 @@ namespace DFW2
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		static constexpr const char* m_cszP = "P";
 		static constexpr const char* m_cszQ = "Q";
+		static constexpr const char* m_cszSnom = "Snom";
 		static constexpr const char* m_cszIre = "Ire";
 		static constexpr const char* m_cszIim = "Iim";
 		static constexpr const char* m_cszNodeId = "NodeId";
 		static constexpr const char* m_cszKgen = "Kgen";
 
 		static CValidationRuleGeneratorKgen ValidatorKgen;
+	};
+
+	class CValidationRuleGeneratorUnom : public CValidationRuleBase
+	{
+	public:
+
+		using CValidationRuleBase::CValidationRuleBase;
+
+		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
+		{
+			CheckDevice(device);
+			const CDynaNodeBase* pNode { static_cast<const CDynaNodeBase*>(device->GetSingleLink(0))};
+			CheckDevice(pNode);
+			const CDynaPowerInjector* pGen{ static_cast<const CDynaPowerInjector*>(device) };
+
+			if (pNode && (pGen->Unom() > pNode->Unom * 1.15 || pGen->Unom() < pNode->Unom * 0.85))
+			{
+				message = fmt::format(CDFW2Messages::m_cszUnomMismatch, pNode->GetVerbalName(), pNode->Unom);
+				return ValidationResult::Warning;
+			}
+			return ValidationResult::Ok;
+		}
 	};
 
 	class CValidationRuleGeneratorKgen : public CValidationRuleBiggerThanZero

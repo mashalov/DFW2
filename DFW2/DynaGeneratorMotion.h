@@ -25,16 +25,14 @@ namespace DFW2
 
 		enum CONSTVARS
 		{
-			C_UNOM = CDynaGeneratorInfBusBase::CONSTVARS::C_LAST,
-			C_SNOM,														// номинальная полная мощность
-			C_QNOM,														// номинальная реактивная мощность
+			C_QNOM = CDynaGeneratorInfBusBase::CONSTVARS::C_LAST,		// номинальная реактивная мощность
 			C_INOM,														// номинальный ток
 			C_LAST
 		};
 		
 		VariableIndex s;
 
-		double Unom, Kdemp, xq, Mj, Pt, Pnom, cosPhinom, Snom, Qnom, Inom, deltaDiff = 0.0;
+		double Kdemp, xq, Mj, Pt, Pnom, cosPhinom, Qnom, Inom, deltaDiff = 0.0;
 
 		using CDynaGeneratorInfBusBase::CDynaGeneratorInfBusBase;
 		virtual ~CDynaGeneratorMotion() = default;
@@ -58,9 +56,7 @@ namespace DFW2
 		static constexpr const char* m_cszxq = "xq";
 		static constexpr const char* m_cszMj = "Mj";
 		static constexpr const char* m_cszPnom = "Pnom";
-		static constexpr const char* m_cszUnom = "Unom";
 		static constexpr const char* m_cszcosPhinom = "cosPhinom";
-		static constexpr const char* m_cszSnom = "Snom";
 		static constexpr const char* m_cszInom = "Inom";
 		static constexpr const char* m_cszQnom = "Qnom";
 
@@ -72,27 +68,7 @@ namespace DFW2
 
 
 
-	class CValidationRuleGeneratorUnom : public CValidationRuleBase
-	{
-	public:
-
-		using CValidationRuleBase::CValidationRuleBase;
-
-		ValidationResult Validate(MetaSerializedValue* value, CDevice* device, std::string& message) const override
-		{
-			CheckDevice(device);
-			const CDynaNodeBase* pNode = static_cast<const CDynaNodeBase*>(device->GetSingleLink(0));
-			CheckDevice(pNode);
-			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
-
-			if (pNode && (pGen->Unom > pNode->Unom * 1.15 || pGen->Unom < pNode->Unom * 0.85))
-			{
-				message = fmt::format(CDFW2Messages::m_cszUnomMismatch, pNode->GetVerbalName(), pNode->Unom);
-				return ValidationResult::Warning;
-			}
-			return ValidationResult::Ok;
-		}
-	};
+	
 
 	class CValidationRuleGeneratorMj : public CValidationRuleBase
 	{
