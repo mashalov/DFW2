@@ -1076,6 +1076,8 @@ namespace DFW2
 
 		static constexpr const VersionInfo version = { { 1, 0, 0, 1 } };
 
+		static constexpr double Sqrt3() { return 1.7320508075688772935274463415059;  /*return std::sqrt(3.0);*/ }
+
 		static bool VersionsEquals(const DFW2::VersionInfo& v1, const DFW2::VersionInfo& v2)
 		{
 			auto fnVersionTie = [](const DFW2::VersionInfo& v)

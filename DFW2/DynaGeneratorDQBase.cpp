@@ -69,9 +69,6 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Snom = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
-		Qnom = Snom * sqrt(1.0 - cosPhinom * cosPhinom);
-		Inom = Snom / Unom / M_SQRT3;
 		Eqnom = (Unom * Unom * (Unom * Unom + Qnom * (xd + xq)) + Snom * Snom * xd * xq) / (Unom * sqrt(Unom * Unom * (Unom * Unom + 2.0 * Qnom * xq) + Snom * Snom * xq * xq));
 
 		switch (GetState())
@@ -143,9 +140,6 @@ double* CDynaGeneratorDQBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 		{
 			MAP_VARIABLE(ExciterId, C_EXCITERID)
 			MAP_VARIABLE(Eqnom, C_EQNOM)
-			MAP_VARIABLE(Snom, C_SNOM)
-			MAP_VARIABLE(Qnom, C_QNOM)
-			MAP_VARIABLE(Inom, C_INOM)
 			MAP_VARIABLE(*ExtEqe.pValue, C_EQE)
 		}
 	}
@@ -201,9 +195,6 @@ void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszExciterId, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszEqnom, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszSnom, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszInom, CConstVarIndex(CDynaGeneratorDQBase::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszQnom, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
 	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszEqe, CConstVarIndex(CDynaGeneratorDQBase::C_EQE, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
 
 	// запрещаем явное использование фабрики данного класса

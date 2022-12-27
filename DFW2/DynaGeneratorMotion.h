@@ -26,16 +26,20 @@ namespace DFW2
 		enum CONSTVARS
 		{
 			C_UNOM = CDynaGeneratorInfBusBase::CONSTVARS::C_LAST,
+			C_SNOM,														// номинальная полная мощность
+			C_QNOM,														// номинальная реактивная мощность
+			C_INOM,														// номинальный ток
 			C_LAST
 		};
 		
 		VariableIndex s;
 
-		double	Unom, Kdemp, xq, Mj, Pt, Pnom, cosPhinom, deltaDiff = 0.0;
+		double	Unom, Kdemp, xq, Mj, Pt, Pnom, cosPhinom, Snom, Qnom, Inom, deltaDiff = 0.0;
 
 		using CDynaGeneratorInfBusBase::CDynaGeneratorInfBusBase;
 		virtual ~CDynaGeneratorMotion() = default;
 
+		bool CalculatePower() override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : DFW2_EPSILON; }
@@ -56,6 +60,9 @@ namespace DFW2
 		static constexpr const char* m_cszPnom = "Pnom";
 		static constexpr const char* m_cszUnom = "Unom";
 		static constexpr const char* m_cszcosPhinom = "cosPhinom";
+		static constexpr const char* m_cszSnom = "Snom";
+		static constexpr const char* m_cszInom = "Inom";
+		static constexpr const char* m_cszQnom = "Qnom";
 
 		static CValidationRuleGeneratorUnom ValidatorUnom;
 		static CValidationRuleGeneratorPnom ValidatorPnom;

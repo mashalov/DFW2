@@ -45,6 +45,11 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 		Kdemp *= Pnom;
 		Pt = P;
 		s = 0;
+
+		Snom = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
+		Qnom = Snom * std::sqrt(1.0 - cosPhinom * cosPhinom);
+		Inom = Snom / Unom / CDynaModel::Sqrt3();
+
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 	}
 
@@ -73,9 +78,34 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 {
 	const auto ret{ InitModel(pDynaModel) };
+
+
 	if (CDevice::IsFunctionStatusOK(ret))
-		EqsByXd = Eqs / xd1;
+	{
+		Snom = Pnom;
+		Inom = Snom / Unom / CDynaModel::Sqrt3();
+		const double Zbase{Unom * Unom / Snom};
+		Pt /= Snom;
+		xd1 /= Zbase;
+		Eqs /= Unom;
+		Kdemp /= Pnom;
+		Mj /= Pnom;
+		EqsByXd = Eqs / xd1 * Inom* CDynaModel::Sqrt3();
+	}
 	return ret;
+}
+
+bool CDynaGeneratorMotion::CalculatePower()
+{
+	Ire = Inom * CDynaModel::Sqrt3() * (Eqs * sin(Delta) - Vim / Unom) / xd1;
+	Iim = Inom * CDynaModel::Sqrt3() * (Vre / Unom - Eqs * cos(Delta)) / xd1;
+	P = Vre * Ire + Vim * Iim;
+	Q = -Vre * Iim + Vim * Ire;
+
+	if (std::abs(Ynorton_) > DFW2_EPSILON)
+		FromComplex(Ire, Iim, Inom * CDynaModel::Sqrt3() * GetEMF() * Ynorton_);
+
+	return true;
 }
 
 
@@ -90,7 +120,7 @@ void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		sp1 = sp2 = 1.0;
 	}
 
-	const double MjBySp2{ sp2 / Mj };
+	const double MjBySp2{ sp2 / Mj / Snom };
 	
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1)/ Mj );
 	pDynaModel->SetElement(s, Vre, Ire * MjBySp2);
@@ -137,7 +167,7 @@ void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 		//   = (VreEim - VreVim + VimVre - VimEim) / xd + j(VreEre - VreVre - VimVim - VimEim) / xd
 		//   = (VreEim - VimEre) / xd + j(VreEre - VimEim - Vre^2 - Vim^2) / xd
 		// напряжения в активной мощности вычитаются
-		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1.0 + s) - Kdemp * s - ZeroDivGuard(Vre * Ire + Vim * Iim, 1 + Sv)) / Mj);
+		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1.0 + s) - Kdemp * s - ZeroDivGuard(Vre * Ire + Vim * Iim, 1 + Sv) / Snom ) / Mj);
 	}
 	else
 	{
@@ -159,6 +189,10 @@ double* CDynaGeneratorMotion::GetConstVariablePtr(ptrdiff_t nVarIndex)
 		switch (nVarIndex)
 		{
 			MAP_VARIABLE(Unom, C_UNOM)
+			MAP_VARIABLE(Snom, C_SNOM)
+			MAP_VARIABLE(Qnom, C_QNOM)
+			MAP_VARIABLE(Inom, C_INOM)
+
 		}
 	}
 	return p;
@@ -208,6 +242,9 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
 	props.ConstVarMap_.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
+	props.ConstVarMap_.insert({ CDynaGeneratorMotion::m_cszSnom, CConstVarIndex(CDynaGeneratorMotion::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorMotion::m_cszInom, CConstVarIndex(CDynaGeneratorMotion::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorMotion::m_cszQnom, CConstVarIndex(CDynaGeneratorMotion::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorMotion>>();
 

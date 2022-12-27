@@ -23,14 +23,11 @@ namespace DFW2
 		{
 			C_EXCITERID = CDynaGeneratorMotion::CONSTVARS::C_LAST,		// номер возбудителя
 			C_EQNOM,													// номинальная эдс возбуждения (рассчитывается внутри данной модели)
-			C_SNOM,														// номинальная полная мощность
-			C_QNOM,														// номинальная реактивная мощность
-			C_INOM,														// номинальный ток
 			C_EQE,														// каст ЭДС возбуждения к константе для расчета начальных условий
 			C_LAST
 		};
 
-		double ExciterId, Eqnom, Snom, Qnom, Inom, xd;
+		double ExciterId, Eqnom, xd;
 		double xd2, xq1, xq2, xl, Tdo1, Tqo1, Tdo2, Tqo2;
 
 		enum VARS
@@ -80,9 +77,6 @@ namespace DFW2
 		static constexpr const char* m_cszVq = "Vq";
 		static constexpr const char* m_cszExciterId = "ExciterId";
 		static constexpr const char* m_cszEqnom = "Eqnom";
-		static constexpr const char* m_cszSnom = "Snom";
-		static constexpr const char* m_cszInom = "Inom";
-		static constexpr const char* m_cszQnom = "Qnom";
 		static constexpr const char* m_cszxd = "xd";
 		static constexpr const char* m_csztdo1 = "td01";
 		static constexpr const char* m_csztdo2 = "td02";
