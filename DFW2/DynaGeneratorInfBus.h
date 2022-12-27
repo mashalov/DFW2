@@ -13,6 +13,7 @@ namespace DFW2
 	public:
 		virtual double GetXofEqs() const{ return xd1; }
 		VariableIndex Delta, Eqs;
+		double Eqsxd1;
 		double xd1;
 		double	r = 0.0;	// активное сопротивление статора
 		using CDynaVoltageSource::CDynaVoltageSource;

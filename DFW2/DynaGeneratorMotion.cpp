@@ -1,4 +1,4 @@
-﻿#include "stdafx.h"
+﻿ #include "stdafx.h"
 #include "DynaGeneratorMotion.h"
 #include "DynaModel.h"
 
@@ -7,7 +7,7 @@ using namespace DFW2;
 
 VariableIndexRefVec& CDynaGeneratorMotion::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDynaGeneratorInfBusBase::GetVariables(JoinVariables({ s, Delta },ChildVec));
+	return CDynaGeneratorInfBusBase::GetVariables(JoinVariables({ s, Delta }, ChildVec));
 }
 
 double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -18,7 +18,7 @@ double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
 		switch (nVarIndex)
 		{
 			MAP_VARIABLE(Delta.Value, V_DELTA)
-			MAP_VARIABLE(s.Value, V_S)
+				MAP_VARIABLE(s.Value, V_S)
 		}
 	}
 	return p;
@@ -72,11 +72,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 {
-	return InitModel(pDynaModel);
+	const auto ret{ InitModel(pDynaModel) };
+	if (CDevice::IsFunctionStatusOK(ret))
+		Eqsxd1 = Eqs / xd1;
+	return ret;
 }
 
-
-void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
+void CDynaGeneratorMotion::BuildEquations(CDynaModel* pDynaModel)
 {
 	const double NodeSv{ Sv };
 	double sp1{ ZeroGuardSlip(1.0 + s) };
@@ -87,35 +89,37 @@ void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		sp1 = sp2 = 1.0;
 	}
 
-	
-	pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1)/ Mj );
-	pDynaModel->SetElement(s, Vre, Ire / Mj / sp2);
-	pDynaModel->SetElement(s, Vim, Iim / Mj / sp2);
-	pDynaModel->SetElement(s, Ire, Vre / Mj / sp2);
-	pDynaModel->SetElement(s, Iim, Vim / Mj / sp2);
-	pDynaModel->SetElement(s, Sv, -(Iim * Vim + Ire * Vre) / Mj / sp2 / sp2);
+	const double Mjsp2{ 1.0 / Mj / sp2 };
+
+
+	pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1) / Mj);
+	pDynaModel->SetElement(s, Vre, Ire * Mjsp2);
+	pDynaModel->SetElement(s, Vim, Iim * Mjsp2);
+	pDynaModel->SetElement(s, Ire, Vre * Mjsp2);
+	pDynaModel->SetElement(s, Iim, Vim * Mjsp2);
+	pDynaModel->SetElement(s, Sv, -(Iim * Vim + Ire * Vre) * Mjsp2 / sp2);
 
 	// dIre / dIre
 	pDynaModel->SetElement(Ire, Ire, 1.0);
 	// dIre / dDeltaG
-	pDynaModel->SetElement(Ire, Delta, -Eqs * cos(Delta) / xd1);
+	pDynaModel->SetElement(Ire, Delta, -Eqsxd1 * cos(Delta));
 
 	// dIim / dIim
 	pDynaModel->SetElement(Iim, Iim, 1.0);
 	// dIim / dDeltaG
-	pDynaModel->SetElement(Iim, Delta, -Eqs * sin(Delta) / xd1);
+	pDynaModel->SetElement(Iim, Delta, -Eqsxd1 * sin(Delta));
 
 	BuildAngleEquationBlock(pDynaModel);
 }
 
 
-void CDynaGeneratorMotion::BuildRightHand(CDynaModel *pDynaModel)
+void CDynaGeneratorMotion::BuildRightHand(CDynaModel* pDynaModel)
 {
 	const double NodeSv{ Sv };
 	// в уравнение входит только составляющая тока генератора
 	// от ЭДС
-	pDynaModel->SetFunction(Ire, Ire - Eqs * sin(Delta) / xd1);
-	pDynaModel->SetFunction(Iim, Iim + Eqs * cos(Delta) / xd1);
+	pDynaModel->SetFunction(Ire, Ire - Eqsxd1 * sin(Delta));
+	pDynaModel->SetFunction(Iim, Iim + Eqsxd1 * cos(Delta));
 	SetFunctionsDiff(pDynaModel);
 }
 
@@ -142,7 +146,7 @@ void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 	}
 }
 
-void CDynaGeneratorMotion::BuildDerivatives(CDynaModel *pDynaModel)
+void CDynaGeneratorMotion::BuildDerivatives(CDynaModel* pDynaModel)
 {
 	SetDerivatives(pDynaModel);
 }
@@ -160,7 +164,7 @@ double* CDynaGeneratorMotion::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::UpdateExternalVariables(CDynaModel *pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::UpdateExternalVariables(CDynaModel* pDynaModel)
 {
 	return CDynaGeneratorInfBusBase::UpdateExternalVariables(pDynaModel);
 }
