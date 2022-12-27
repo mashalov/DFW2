@@ -571,17 +571,22 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.Reactors);
 	ReadTable(Network.Nodes);
 	ReadTable(Network.Branches);
+
+
 	ReadTable(Network.GeneratorsInfBus, "ModelType=2");
-	ReadTable(Network.GeneratorsMotion, "ModelType=3");
+	ReadTable(Network.GeneratorsMotion, "ModelType=3|ModelType=7");
 	ReadTable(Network.Generators1C, "ModelType=4");
 	ReadTable(Network.Generators3C, "ModelType=5");
 	ReadTable(Network.GeneratorsMustang, "ModelType=6");
-	ReadTable(Network.GeneratorsPark3C, "ModelType=7");
+	//ReadTable(Network.GeneratorsPark3C, "ModelType=7");
 	ReadTable(Network.GeneratorsPark4C, "ModelType=8");
 	ReadTable(Network.GeneratorsPowerInjector, "ModelType=0");
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
+
+
+	
 
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
 	IColsPtr spASCols = spAutoStarters->Cols;

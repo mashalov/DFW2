@@ -884,7 +884,7 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 		
 		if (V < DFW2_EPSILON)
 		{
-			Vre = V = Unom;
+			Vre = V = 1.0;
 			Vim = Delta = 0.0;
 		}
 
@@ -908,7 +908,7 @@ eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE
 			V = Delta = Lag = S = /*Sip = Cop = Sv = */ 0.0;
 			break;
 		case eDEVICESTATE::DS_ON:
-			V = Unom;
+			V = 1.0;
 			Delta = 0;
 			Lag = S = /*Sv = */0.0;
 			Vre = V;
@@ -1044,7 +1044,7 @@ bool CDynaNodeContainer::LULF()
 		if (!pNode->InMetallicSC)
 		{
 			// стартуем с плоского
-			pNode->Vre = pNode->V = pNode->Unom;
+			pNode->Vre = pNode->V = 1.0;
 			pNode->Vim = pNode->Delta = 0.0;
 			// для всех узлов, которые не отключены и не находятся в металлическом КЗ (КЗ с нулевым шунтом)
 			fnode << pNode->GetId() << ";";

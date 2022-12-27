@@ -1216,7 +1216,7 @@ bool CLoadFlow::Run()
 			}
 		}
 
-		RestoreNamedUnits();
+		//RestoreNamedUnits();
 		UpdateQToGenerators();
 		CheckFeasible();
 	}
