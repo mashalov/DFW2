@@ -68,7 +68,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 			xd1 /= Kgen;
 			Pnom *= Kgen;
 			xq /= Kgen;
-			Mj *= Kgen;
+			//Mj *= Kgen;
 		}
 
 		eDEVICEFUNCTIONSTATUS ret{ GetConnection(pDynaModel) };
