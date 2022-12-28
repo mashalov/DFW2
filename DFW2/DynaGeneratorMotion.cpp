@@ -29,11 +29,11 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 	auto Status{ CDynaGeneratorInfBusBase::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
-	{
+	{ 
 		if (Mj < 1E-7)
 			Mj = 3 * Pnom;
 
-		Mj /= Pnom;
+		Mj /= Snom_; 
 
 		s = 0;
 
@@ -67,8 +67,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 		{
 			xd1 /= Kgen;
 			Pnom *= Kgen;
-			xq /= Kgen;
-			//Mj *= Kgen;
+			xq /= Kgen; 
+			Mj *= Kgen;
 		}
 
 		eDEVICEFUNCTIONSTATUS ret{ GetConnection(pDynaModel) };
