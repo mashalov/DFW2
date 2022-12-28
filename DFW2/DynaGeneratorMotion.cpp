@@ -106,6 +106,9 @@ bool CDynaGeneratorMotion::CalculatePower()
 
 	P = Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
+
+	P *= puV_;
+	Q *= puV_;
 		
 	if (std::abs(Ynorton_) > DFW2_EPSILON)
 		FromComplex(Ire, Iim, GetEMF() / cplx(0, GetXofEqs()));
@@ -125,7 +128,7 @@ void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		sp1 = sp2 = 1.0;
 	}
 
-	const double MjBySp2{ 1.0 / sp2 / Mj };
+	const double MjBySp2{ puV_ / sp2 / Mj };
 	
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1)/ Mj );
 	pDynaModel->SetElement(s, Vre, Ire * MjBySp2);
@@ -172,7 +175,7 @@ void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 		//   = (VreEim - VreVim + VimVre - VimEim) / xd + j(VreEre - VreVre - VimVim - VimEim) / xd
 		//   = (VreEim - VimEre) / xd + j(VreEre - VimEim - Vre^2 - Vim^2) / xd
 		// напряжения в активной мощности вычитаются
-		const auto Pel{ Vre * Ire + Vim * Iim };
+		const auto Pel{ (Vre * Ire + Vim * Iim) * puV_ };
 		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1.0 + s) - Kdemp * s - ZeroDivGuard(Pel, 1 + Sv)) / Mj);
 	}
 	else

@@ -1184,7 +1184,7 @@ bool CDynaNodeContainer::LULF()
 			// считаем изменение напряжения узла между итерациями и находим
 			// самый изменяющийся узел
 			if (!pNode->InMetallicSC)
-				IterationControl_.MaxV.UpdateMaxAbs(pNode, pNode->V - pNode->Vold);
+				IterationControl_.MaxV.UpdateMaxAbs(pNode, CDevice::ZeroDivGuard(pNode->V - pNode->Vold, pNode->Vold));
 		}
 
 		DumpIterationControl(DFW2MessageStatus::DFW2LOG_DEBUG);
