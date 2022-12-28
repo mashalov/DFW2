@@ -106,11 +106,10 @@ bool CDynaGeneratorMotion::CalculatePower()
 
 	P = Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
-
-	/*
+		
 	if (std::abs(Ynorton_) > DFW2_EPSILON)
-		FromComplex(Ire, Iim, GetEMF() / puV_ * Ynorton_);*/
-
+		FromComplex(Ire, Iim, GetEMF() / cplx(0, GetXofEqs()));
+		
 	return true;
 }
 
