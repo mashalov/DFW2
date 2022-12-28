@@ -26,10 +26,6 @@ double* CDynaGeneratorMotion::GetVariablePtr(ptrdiff_t nVarIndex)
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 {
-	Snom_ = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
-	Qnom = Snom_ * std::sqrt(1.0 - cosPhinom * cosPhinom);
-	Inom = Snom_ / Unom_ / CDynaModel::Sqrt3();
-
 	auto Status{ CDynaGeneratorInfBusBase::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
@@ -37,8 +33,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 		if (Mj < 1E-7)
 			Mj = 3 * Pnom;
 
-		Kdemp *= Pnom;
-		Pt = P;
+		Mj /= Pnom;
+
 		s = 0;
 
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -47,53 +43,73 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 	return Status;
 }
 
+
+eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::GetConnection(CDynaModel* pDynaModel)
+{
+	eDEVICEFUNCTIONSTATUS ret{ CDynaPowerInjector::GetConnection(pDynaModel) };
+	if (CDevice::IsFunctionStatusOK(ret))
+	{
+		Snom_ = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
+		Qnom = Snom_ * std::sqrt(1.0 - cosPhinom * cosPhinom);
+		Inom = Snom_ / Unom_ / CDynaModel::Sqrt3();
+		puV_ = NodeUnom_ / Unom_;
+		puI_ = Snom_ / pDynaModel->Sbase() * puV_;
+	}
+	return ret;
+
+}
+
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 {
-	xq = 1.0;
+		xq = 1.0;
 
-	if (Kgen > 1)
-	{
-		xd1 /= Kgen;
-		Pnom *= Kgen;
-		xq /= Kgen;
-		Mj *= Kgen;
-	}
+		if (Kgen > 1)
+		{
+			xd1 /= Kgen;
+			Pnom *= Kgen;
+			xq /= Kgen;
+			Mj *= Kgen;
+		}
 
-	Zgen_ = { 0 , xd1 };
-	// шунт Нортона
-	Ynorton_ = 1.0 / Zgen_;
-
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+		eDEVICEFUNCTIONSTATUS ret{ GetConnection(pDynaModel) };
+		if (CDevice::IsFunctionStatusOK(ret))
+		{
+			P *= pDynaModel->Sbase() / Snom_;
+			Q *= pDynaModel->Sbase() / Snom_;
+			Zgen_ = { 0 , xd1 };
+			// приводим сопротивление генератора к о.е. сети
+			Zgen_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();
+			// шунт Нортона для УД
+			Ynorton_ = 1.0 / Zgen_;
+			xd1 /= Unom_ * Unom_ / Snom_;
+		}
+	
+	return ret;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 {
 	const auto ret{ InitModel(pDynaModel) };
 
-
 	if (CDevice::IsFunctionStatusOK(ret))
 	{
-		const double Zbase{ Unom_ * Unom_ / Snom_ };
-		xd1 /= Zbase;
-		//Eqs /= Unom;
-
-		Pt /= Pnom;
-		Kdemp /= Pnom;
-		Mj /= Pnom;
-		Eqsxd1 = Eqs / Unom_ / xd1 * Inom * CDynaModel::Sqrt3();
+		Pt = P;
+		Eqsxd1 = Eqs / xd1;
 	}
 	return ret;
 }
 
 bool CDynaGeneratorMotion::CalculatePower()
 {
-	Ire = Eqsxd1 * sin(Delta) - Vim / xd1 / Unom_ * Inom * CDynaModel::Sqrt3();;
-	Iim = Vre / xd1 / Unom_ * Inom * CDynaModel::Sqrt3() - Eqsxd1 * cos(Delta);
+	Ire = Eqsxd1 * sin(Delta) - puV_ *  Vim / xd1;
+	Iim = puV_ * Vre / xd1 - Eqsxd1 * cos(Delta);
+
 	P = Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
 
+	/*
 	if (std::abs(Ynorton_) > DFW2_EPSILON)
-		FromComplex(Ire, Iim, GetEMF() * Ynorton_);
+		FromComplex(Ire, Iim, GetEMF() / puV_ * Ynorton_);*/
 
 	return true;
 }
@@ -110,7 +126,7 @@ void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		sp1 = sp2 = 1.0;
 	}
 
-	const double MjBySp2{ 1.0 / sp2 / Mj / Pnom };
+	const double MjBySp2{ 1.0 / sp2 / Mj };
 	
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1)/ Mj );
 	pDynaModel->SetElement(s, Vre, Ire * MjBySp2);
@@ -157,7 +173,8 @@ void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 		//   = (VreEim - VreVim + VimVre - VimEim) / xd + j(VreEre - VreVre - VimVim - VimEim) / xd
 		//   = (VreEim - VimEre) / xd + j(VreEre - VimEim - Vre^2 - Vim^2) / xd
 		// напряжения в активной мощности вычитаются
-		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1.0 + s) - Kdemp * s - ZeroDivGuard(Vre * Ire + Vim * Iim, 1 + Sv) / Pnom) / Mj);
+		const auto Pel{ Vre * Ire + Vim * Iim };
+		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1.0 + s) - Kdemp * s - ZeroDivGuard(Pel, 1 + Sv)) / Mj);
 	}
 	else
 	{

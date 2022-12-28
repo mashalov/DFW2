@@ -35,16 +35,21 @@ double* CDynaPowerInjector::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-eDEVICEFUNCTIONSTATUS CDynaPowerInjector::InitModel(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaPowerInjector::GetConnection(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
-
 	const CDynaNodeBase* pNode{ static_cast<const CDynaNodeBase*>(GetSingleLink(0)) };
 	if (pNode)
 		NodeUnom_ = pNode->Unom;
 	else
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+	return Status;
+}
 
+
+eDEVICEFUNCTIONSTATUS CDynaPowerInjector::InitModel(CDynaModel* pDynaModel)
+{
+	eDEVICEFUNCTIONSTATUS Status{ GetConnection(pDynaModel) };
 	if (!IsStateOn())
 		P = Q = Ire = Iim = 0.0;
 	return Status;
@@ -130,8 +135,8 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.ConstVarMap_.insert({ CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_UNITLESS, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ m_cszP, CConstVarIndex(CDynaPowerInjector::C_P, VARUNIT_MW, true, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ m_cszQ, CConstVarIndex(CDynaPowerInjector::C_Q, VARUNIT_MVAR, true, eDVT_CONSTSOURCE) });
-	props.ConstVarMap_.insert({ m_cszSnom, CConstVarIndex(CDynaPowerInjector::C_SNOM, VARUNIT_MVA, true, eDVT_CONSTSOURCE) });
-	props.ConstVarMap_.insert({ CDynaNodeBase::m_cszUnom, CConstVarIndex(CDynaPowerInjector::C_SNOM, VARUNIT_MVA, true, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ m_cszSnom, CConstVarIndex(CDynaPowerInjector::C_SNOM, VARUNIT_MVA, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ CDynaNodeBase::m_cszUnom, CConstVarIndex(CDynaPowerInjector::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE) });
 
 	props.EquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);

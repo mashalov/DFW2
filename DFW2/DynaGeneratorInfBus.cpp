@@ -64,13 +64,18 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::PreInit(CDynaModel* pDynaModel)
 	if (Kgen > 1)
 		xd1 /= Kgen;
 
-	Snom_ = pDynaModel->Sbase(); 
-	xd1 /= Unom_ * Unom_ / Snom_;
-	Zgen_ = { 0 , xd1 };
-	// шунт Нортона для ШБМ
-	Ynorton_ = 1.0 / Zgen_;
-
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDEVICEFUNCTIONSTATUS ret{ CDynaPowerInjector::GetConnection(pDynaModel) };
+	if (CDevice::IsFunctionStatusOK(ret))
+	{
+		Snom_ = pDynaModel->Sbase();
+		Zgen_ = { 0 , xd1 };
+		// приводим сопротивление генератора к о.е. сети
+		Zgen_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();
+		// шунт Нортона для ШБМ
+		Ynorton_ = 1.0 / Zgen_;
+		xd1 /= Unom_ * Unom_ / Snom_;
+	}
+	return ret;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::Init(CDynaModel* pDynaModel)
@@ -94,7 +99,7 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 {
 	bool bRes{ true }; 
 	cplx S(P, Q);
-	const cplx v{ std::polar((double)V, (double)DeltaV) };
+	const cplx v{ puV_ *  std::polar((double)V, (double)DeltaV) };
 	_ASSERTE(std::abs(v) > 0.0);
 	cplx i{ std::conj(S / v) };
 	// тут еще надо учитывать сопротивление статора
@@ -105,7 +110,7 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 	// если у генератора есть ненулевой шунт Нортона,
 	// его ток инициализируется как ток только от ЭДС
 	if (std::abs(Ynorton_) > DFW2_EPSILON)
-		i = eQ * Ynorton_;
+		i = eQ / cplx(0, GetXofEqs());
 
 	FromComplex(Ire, Iim, i);
 	return bRes;

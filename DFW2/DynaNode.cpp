@@ -8,7 +8,7 @@
 
 using namespace DFW2;
 
-#define LOW_VOLTAGE 0.1	// может быть сделать в о.е. ? Что будет с узлами с низким Uном ?
+#define LOW_VOLTAGE 0.001	// может быть сделать в о.е. ? Что будет с узлами с низким Uном ?
 #define LOW_VOLTAGE_HYST LOW_VOLTAGE * 0.1
 
 // запоминает значение модуля напряжения с предыдущей итерации
@@ -342,8 +342,6 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	const CLinkPtrCount* const pGenLink = GetSuperLink(2);
 	LinkWalker<CDynaPowerInjector> pGen;
 
-	CDevice** ppGen{ nullptr };
-	
 	double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
 
 	double V4 = V2 * V2;
@@ -360,13 +358,13 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 		// обходим генераторы и формируем производные от токов генераторов
 		// если узел в металлическом КЗ производные равны нулю
-		double dGenMatrixCoe{ InMetallicSC ? 0.0 : -1.0 };
+		double dGenMatrixCoe{ (InMetallicSC ? 0.0 : -1.0) };
 		while (pGenLink->InMatrix(pGen))
 		{
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
-			pDynaModel->SetElement(Vre, pGen->Ire, dGenMatrixCoe);
-			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe);
+			pDynaModel->SetElement(Vre, pGen->Ire, dGenMatrixCoe * pGen->kI());
+			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe * pGen->kI());
 		}
 
 		if (InMetallicSC)
@@ -526,7 +524,7 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 
 		while (pGenLink->InMatrix(pGen))
 		{
-			sI = _mm_sub_pd(sI, _mm_set_pd(pGen->Iim, pGen->Ire));
+			sI = _mm_sub_pd(sI, _mm_set_pd(pGen->Iim * pGen->kI(), pGen->Ire * pGen->kI()));
 			//cI -= cplx(pGen->Ire, pGen->Iim);
 			//Ire -= pGen->Ire;
 			//Iim -= pGen->Iim;
@@ -831,8 +829,8 @@ void CDynaNodeBase::CalculateShuntParts()
 void CDynaNodeBase::GetGroundAdmittance(cplx& y)
 {
 
-	y.real(G + 0 * Gshunt * Zbase_); 
-	y.imag(B + 0 * Bshunt * Zbase_);
+	y.real(G + Gshunt * Zbase_); 
+	y.imag(B + Bshunt * Zbase_);
 	for (const auto& reactor : reactors)
 	{
 		if (reactor->IsStateOn())
@@ -1122,7 +1120,7 @@ bool CDynaNodeContainer::LULF()
 						// матрицы. Это работает для генераторов у которых есть Нортон (он
 						// обратен Zgen), и нет Нортона (он равен нулю)
 						Y -= 1.0 / pGen->Zgen() - pGen->Ynorton();
-						I -= pGen->Igen(nIteration);
+						I -= pGen->Igen(nIteration) * pGen->kI();
 
 					}
 
@@ -1824,7 +1822,7 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 		LinkWalker<CDynaPowerInjector> pGen;
 
 		while (pGenLink->InMatrix(pGen))
-			Is -= cplx(pGen->Ire, pGen->Iim);
+			Is -= cplx(pGen->Ire, pGen->Iim) * pGen->kI();
 
 		*pB = -Is.real();	pB++;
 		*pB = -Is.imag();	pB++;

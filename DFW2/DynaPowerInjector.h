@@ -12,11 +12,15 @@ namespace DFW2
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		virtual eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel);
+		virtual eDEVICEFUNCTIONSTATUS GetConnection(CDynaModel* pDynaModel);
+
 		VariableIndexExternal V, DeltaV, Vre, Vim, Sv;
 		cplx Ynorton_;
 		double NodeUnom_ = 0.0;
 		double Snom_ = 0.0;
 		double Unom_ = 0.0;
+		double puV_ = 1.0; // трансформатор напряжения из pu сети в pu модели
+		double puI_ = 1.0; // трансформатор тока из pu модели в pu сети 
 	public:
 		enum VARS
 		{
@@ -56,6 +60,7 @@ namespace DFW2
 		virtual const cplx& Ynorton() const { return Ynorton_; }
 
 		virtual double Unom() const { return Unom_; }
+		double kI() const { return puI_; }
 
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
