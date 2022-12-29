@@ -33,7 +33,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::InitModel(CDynaModel* pDynaModel)
 		if (Mj < 1E-7)
 			Mj = 3 * Pnom;
 
-		Mj /= Snom_; 
+		Mj /= Pnom; 
 
 		s = 0;
 
@@ -93,7 +93,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(ret))
 	{
-		Pt = P;
+		Pt = P * Snom_ / Pnom;
 		Eqsxd1 = Eqs / xd1;
 	}
 	return ret;
@@ -128,7 +128,7 @@ void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 		sp1 = sp2 = 1.0;
 	}
 
-	const double MjBySp2{ puV_ / sp2 / Mj };
+	const double MjBySp2{ Snom_ / Pnom * puV_ / sp2 / Mj };
 	
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / sp1 / sp1)/ Mj );
 	pDynaModel->SetElement(s, Vre, Ire * MjBySp2);
@@ -175,7 +175,7 @@ void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 		//   = (VreEim - VreVim + VimVre - VimEim) / xd + j(VreEre - VreVre - VimVim - VimEim) / xd
 		//   = (VreEim - VimEre) / xd + j(VreEre - VimEim - Vre^2 - Vim^2) / xd
 		// напряжения в активной мощности вычитаются
-		const auto Pel{ (Vre * Ire + Vim * Iim) * puV_ };
+		const auto Pel{ (Vre * Ire + Vim * Iim) * puV_ * Snom_ / Pnom };
 		(pDynaModel->*fn)(s, (ZeroDivGuard(Pt, 1.0 + s) - Kdemp * s - ZeroDivGuard(Pel, 1 + Sv)) / Mj);
 	}
 	else
