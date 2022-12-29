@@ -1337,8 +1337,6 @@ void CLoadFlow::UpdatePQFromGenerators()
 					pNode->Pg += pGen->P;
 					// но генератор сразу приводим в о.е.
 					pGen->P /= Sbase;
-					pGen->LFQmin /= Sbase;
-					pGen->LFQmax /= Sbase;
 
 					// проверяем ограничения по реактивной мощности
 					if (pGen->LFQmin > pGen->LFQmax)
@@ -1353,8 +1351,10 @@ void CLoadFlow::UpdatePQFromGenerators()
 					}
 
 					// вводим Q генератора в диапазон
-					pGen->Q = (std::max)((std::min)(pGen->Q, pGen->LFQmax), pGen->LFQmin);
+					pGen->Q = (std::max)((std::min)(pGen->Q, pGen->LFQmax * pGen->Kgen), pGen->LFQmin * pGen->Kgen);
 					pNode->Qg += pGen->Q;
+					pGen->LFQmin /= Sbase;
+					pGen->LFQmax /= Sbase;
 					// рассчитываем суммарные ограничения по генераторам
 					// в узлах остаются два ограничения - обычные (для суперузла - сумма)
 					// и ограничения по сумме генераторов (в суперузлы не суммируются и для каждого узла индивидуальные)

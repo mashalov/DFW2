@@ -194,13 +194,13 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.m_eParkPar metersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
 		//m_Parameters.m_bDisableResultsWriter = false;
 
-		m_Parameters.Flat = true;
-		m_Parameters.Startup = CLoadFlow::eLoadFlowStartupMethod::Seidell;
+		m_Parameters.Flat = false ;
+		m_Parameters.Startup = CLoadFlow::eLoadFlowStartupMethod::None;
 		m_Parameters.SeidellIterations = 5;
 		m_Parameters.EnableSwitchIteration = 5;
 		//m_Parameters.SeidellStep = 1.02;
 		m_Parameters.m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
-		m_Parameters.Imb = 0.005 * GetAtol() ;
+		m_Parameters.Imb = 0.00005 * GetAtol() ;
 
 		PrecomputeConstants();
 

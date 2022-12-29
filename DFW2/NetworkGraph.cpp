@@ -165,7 +165,8 @@ void CDynaModel::PrepareNetworkElements()
 	for (auto&& it : Branches)
 	{
 		const auto& pBranch{ static_cast<CDynaBranch*>(it) };
-		const auto& Zbase{ pBranch->pNodeIp_->Zbase_ };
+		const auto& ZbaseIp{ pBranch->pNodeIp_->Zbase_ };
+		const auto& ZbaseIq{ pBranch->pNodeIq_->Zbase_ };
 		double Ktbase{ pBranch->pNodeIp_->Unom / pBranch->pNodeIq_->Unom };
 
 		// проверяем не самозамкнута ли ветвь
@@ -209,14 +210,14 @@ void CDynaModel::PrepareNetworkElements()
 
 		pBranch->Ktr *= Ktbase;
 		pBranch->Kti *= Ktbase;
-		pBranch->R /= Zbase;
-		pBranch->X /= Zbase;
-		pBranch->G *= Zbase;
-		pBranch->B *= Zbase;
-		pBranch->GIp0 *= Zbase;
-		pBranch->GIq0 *= Zbase;
-		pBranch->BIp0 *= Zbase;
-		pBranch->BIq0 *= Zbase;
+		pBranch->R /= ZbaseIp;
+		pBranch->X /= ZbaseIp;
+		pBranch->G *= ZbaseIp;
+		pBranch->B *= ZbaseIp;
+		pBranch->GIp0 *= ZbaseIp;
+		pBranch->GIq0 *= ZbaseIq;
+		pBranch->BIp0 *= ZbaseIp;
+		pBranch->BIq0 *= ZbaseIq;
 	}
 
 	if (!bOk)
