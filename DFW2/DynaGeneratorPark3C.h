@@ -47,7 +47,7 @@ namespace DFW2
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		bool CalculateFundamentalParameters(PARK_PARAMETERS_DETERMINATION_METHOD Method);
-		bool CalculatePower() override;
+		void CalculatePower() override;
 		cplx GetEMF() override;
 		const cplx& CalculateEgen() override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;

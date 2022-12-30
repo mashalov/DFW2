@@ -29,7 +29,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
-		bool CalculatePower() override;
+		void CalculatePower() override;
 		const cplx& CalculateEgen() override;
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);

@@ -20,7 +20,7 @@ namespace DFW2
 		};
 
 		const cplx& CalculateEgen() override;
-		bool CalculatePower() override;
+		void CalculatePower() override;
 
 		using CDynaGeneratorDQBase::CDynaGeneratorDQBase;
 		virtual ~CDynaGenerator1C() = default;

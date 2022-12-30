@@ -7,21 +7,21 @@ namespace DFW2
 	class CDynaGeneratorInfBusBase : public CDynaVoltageSource
 	{
 	protected:
-		bool SetUpDelta();
-		cplx Zgen_;
+		void SetUpDelta();
+		cplx ZgenNet_;			// сопротивление приведенное к pu сети
+		cplx ZgenInternal_;		// сопротивление в pu генератора
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
-		virtual double GetXofEqs() const{ return xd1; }
 		VariableIndex Delta, Eqs;
 		double xd1;
 		double	r = 0.0;	// активное сопротивление статора
 		using CDynaVoltageSource::CDynaVoltageSource;
 		virtual ~CDynaGeneratorInfBusBase() = default;
-		const cplx& Zgen() const;
+		const cplx& Zgen() const { return ZgenNet_; }
 		virtual cplx Igen(ptrdiff_t nIteration);
 		cplx GetEMF() override { return std::polar((double)Eqs, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
-		bool CalculatePower() override;
+		void CalculatePower() override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;

@@ -23,7 +23,7 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::PreInit(CDynaModel* pDynaModel)
 		xq2 /= Kgen;
 	}
 
-	Zgen_ = { 0, 0.5 * (xd2 + xq2) };
+	ZgenNet_ = { 0, 0.5 * (xd2 + xq2) };
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -259,9 +259,8 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::UpdateExternalVariables(CDynaModel *pDyn
 	return CDynaGenerator1C::UpdateExternalVariables(pDynaModel);
 }
 
-bool CDynaGenerator3C::CalculatePower()
+void CDynaGenerator3C::CalculatePower()
 {
-	
 	double NodeV{ V };
 	double DeltaGT{ Delta - DeltaV };
 	const double cosDeltaGT{ cos(DeltaGT) };
@@ -278,8 +277,6 @@ bool CDynaGenerator3C::CalculatePower()
 	Iq = -zsq * (r * (Vq - Eqss) + xd2 * (Vd - Edss));
 	P = Vd * Id + Vq * Iq;
 	Q = Vd * Iq - Vq * Id;
-
-	return true;
 }
 
 cplx CDynaGenerator3C::GetEMF()

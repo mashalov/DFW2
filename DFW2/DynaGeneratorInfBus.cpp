@@ -16,17 +16,16 @@ void CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iim, Iim, 1.0);
 }
 
-bool CDynaGeneratorInfBusBase::CalculatePower()
+void CDynaGeneratorInfBusBase::CalculatePower()
 {
- 	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs();
-	Iim = (Vre - Eqs * cos(Delta)) / GetXofEqs();
+	Ire = (Eqs * sin(Delta) - puV_ * Vim) / ZgenInternal_.imag();
+	Iim = (puV_ * Vre - Eqs * cos(Delta)) / ZgenInternal_.imag();
 	P = Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
-
+	P *= puV_;
+	Q *= puV_;
 	if (std::abs(Ynorton_) > DFW2_EPSILON)
-		FromComplex(Ire, Iim, GetEMF() / cplx(0, GetXofEqs()));
-	
-	return true;
+		FromComplex(Ire, Iim, GetEMF() / ZgenInternal_);
 }
 
 
@@ -47,8 +46,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::InitModel(CDynaModel* pDynaModel
 		switch (GetState())
 		{
 		case eDEVICESTATE::DS_ON:
-			if (!SetUpDelta())
-				Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+			SetUpDelta();
 			break;
 		case eDEVICESTATE::DS_OFF:
 			P = Q = Delta = Eqs = Ire = Iim = 0.0;
@@ -69,12 +67,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::PreInit(CDynaModel* pDynaModel)
 	{
 		Snom_ = pDynaModel->Sbase();
 		Unom_ = NodeUnom_;
-		Zgen_ = { 0 , xd1 };
+		ZgenNet_ = { 0 , xd1 };
 		// приводим сопротивление генератора к о.е. сети
-		Zgen_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();
+		ZgenNet_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();
 		// шунт Нортона для ШБМ
-		Ynorton_ = 1.0 / Zgen_;
+		Ynorton_ = 1.0 / ZgenNet_;
 		xd1 /= Unom_ * Unom_ / Snom_;
+		ZgenInternal_ = { 0, xd1 };
 	}
 	return ret;
 }
@@ -96,7 +95,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::InitModel(CDynaModel* pDynaModel)
 }
 
 
-bool CDynaGeneratorInfBusBase::SetUpDelta()
+void CDynaGeneratorInfBusBase::SetUpDelta()
 {
 	bool bRes{ true }; 
 	cplx S(P, Q);
@@ -104,28 +103,21 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 	_ASSERTE(std::abs(v) > 0.0);
 	cplx i{ std::conj(S / v) };
 	// тут еще надо учитывать сопротивление статора
-	const cplx eQ{ v + i * cplx(r, GetXofEqs()) };
+	const cplx eQ{ v + i * ZgenInternal_ };
 	Delta = std::arg(eQ);
 	Eqs = std::abs(eQ);
 
 	// если у генератора есть ненулевой шунт Нортона,
 	// его ток инициализируется как ток только от ЭДС
 	if (std::abs(Ynorton_) > DFW2_EPSILON)
-		i = eQ / cplx(0, GetXofEqs());
-
+		i = eQ / ZgenInternal_;
 	FromComplex(Ire, Iim, i);
-	return bRes;
-}
-
-const cplx& CDynaGeneratorInfBusBase::Zgen() const
-{
-	return Zgen_;
 }
 
 cplx CDynaGeneratorInfBusBase::Igen(ptrdiff_t nIteration)
 {
 	// функция общая для всех генераторов с шунтом Нортона
-	return GetEMF() / cplx(0, GetXofEqs());
+	return GetEMF() / ZgenInternal_;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::UpdateExternalVariables(CDynaModel *pDynaModel)

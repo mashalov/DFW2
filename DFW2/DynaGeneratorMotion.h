@@ -38,7 +38,6 @@ namespace DFW2
 		using CDynaGeneratorInfBusBase::CDynaGeneratorInfBusBase;
 		virtual ~CDynaGeneratorMotion() = default;
 
-		bool CalculatePower() override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : DFW2_EPSILON; }

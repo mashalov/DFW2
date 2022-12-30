@@ -71,9 +71,9 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pD
 	return eRes;
 }
 
-bool CDynaPowerInjector::CalculatePower()
+void CDynaPowerInjector::CalculatePower()
 {
-	return true;
+
 }
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice)
@@ -89,14 +89,11 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::SetState(eDEVICESTATE eState, eDEVICES
 
 void CDynaPowerInjector::FinishStep(const CDynaModel& DynaModel)
 {
-	const double dVre{ Vre }, dVim{ Vim };
-	double dIre{ Ire }, dIim{ Iim };
-	// если в модели инжектора учитывается шунт Нортона,
-	// рассчитываем токи в шунте и добавляем к току инжектора
-	if (std::abs(Ynorton_) > DFW2_EPSILON)
-		FromComplex(dIre, dIim, cplx(dIre, dIim) - cplx(dVre,dVim) * Ynorton_);
-	P = dVre * dIre + dVim * dIim;
-	Q = dVim * dIre - dVre * dIim;
+	cplx Vnet{ Vre, Vim }, Inet{ Ire, Iim };
+	Inet *= kI();
+	Inet -= Vnet * Ynorton_;
+	Vnet *= std::conj(Inet) * DynaModel.Sbase() / Snom_;
+	FromComplex(P, Q, Vnet);
 }
 
 void CDynaPowerInjector::UpdateValidator(CSerializerValidatorRules* Validator)

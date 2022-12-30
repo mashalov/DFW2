@@ -41,7 +41,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 		r /= Kgen;
 	}
 
-	Zgen_ = { r , 0.5 * (xq + xd1) };
+	ZgenInternal_ = { r, xq };
+
+	ZgenNet_ = { r , 0.5 * (xq + xd1) };
 	// В генераторах с dq преобразованием нельзя
 	// использовать шунт Нортона, поэтому он обнуляется
 	Ynorton_ = 0.0;

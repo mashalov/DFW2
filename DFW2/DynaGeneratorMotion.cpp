@@ -76,12 +76,13 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 		{
 			P *= pDynaModel->Sbase() / Snom_;
 			Q *= pDynaModel->Sbase() / Snom_;
-			Zgen_ = { 0 , xd1 };
+			ZgenNet_ = { 0 , xd1 };
 			// приводим сопротивление генератора к о.е. сети
-			Zgen_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();
+			ZgenNet_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();
 			// шунт Нортона для УД
-			Ynorton_ = 1.0 / Zgen_;
+			Ynorton_ = 1.0 / ZgenNet_;
 			xd1 /= Unom_ * Unom_ / Snom_;
+			ZgenInternal_ = { 0, xd1 };
 		}
 	
 	return ret;
@@ -98,24 +99,6 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::Init(CDynaModel* pDynaModel)
 	}
 	return ret;
 }
-
-bool CDynaGeneratorMotion::CalculatePower()
-{
-	Ire = Eqsxd1 * sin(Delta) - puV_ *  Vim / xd1;
-	Iim = puV_ * Vre / xd1 - Eqsxd1 * cos(Delta);
-
-	P = Vre * Ire + Vim * Iim;
-	Q = -Vre * Iim + Vim * Ire;
-
-	P *= puV_;
-	Q *= puV_;
-		
-	if (std::abs(Ynorton_) > DFW2_EPSILON)
-		FromComplex(Ire, Iim, GetEMF() / cplx(0, GetXofEqs()));
-		
-	return true;
-}
-
 
 void CDynaGeneratorMotion::BuildEquations(CDynaModel *pDynaModel)
 {

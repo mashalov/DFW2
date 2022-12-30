@@ -59,7 +59,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 		}
 	}
 
-	Zgen_ = { r , 0.5 * (lq2 + ld2) };
+	ZgenNet_ = { r , 0.5 * (lq2 + ld2) };
 	
 	return Status;
 }
@@ -342,7 +342,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::ProcessDiscontinuity(CDynaModel* pDy
 	return eRes;
 }
 
-bool CDynaGeneratorPark3C::CalculatePower()
+void CDynaGeneratorPark3C::CalculatePower()
 {
 	const double NodeV{ V }, DeltaGT{ Delta - DeltaV };
 	const double cosDeltaGT{ cos(DeltaGT) }, sinDeltaGT{ sin(DeltaGT) };
@@ -352,7 +352,6 @@ bool CDynaGeneratorPark3C::CalculatePower()
 	P = Vd * Id + Vq * Iq;
 	Q = Vd * Iq - Vq * Id;
 	IfromDQ();
-	return true;
 }
 
 cplx CDynaGeneratorPark3C::GetEMF()

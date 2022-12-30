@@ -34,7 +34,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		cplx GetEMF() override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
-		bool CalculatePower() override;
+		void CalculatePower() override;
 		const cplx& CalculateEgen() override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;

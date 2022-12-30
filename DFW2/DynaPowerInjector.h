@@ -53,14 +53,14 @@ namespace DFW2
 		using CDevice::CDevice; 
 		virtual ~CDynaPowerInjector() = default;
 
-		virtual bool CalculatePower();
+		virtual void CalculatePower();
 		void FinishStep(const CDynaModel& DynaModel) override;
 
 		// комплекс шунта Нортона в узле подключения	
 		virtual const cplx& Ynorton() const { return Ynorton_; }
 
-		virtual double Unom() const { return Unom_; }
-		double kI() const { return puI_; }
+		inline double Unom() const { return Unom_; }
+		inline double kI() const { return puI_; }
 
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;

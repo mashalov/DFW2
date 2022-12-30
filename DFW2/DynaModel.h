@@ -903,6 +903,7 @@ namespace DFW2
 		{
 			return m_Parameters.m_dRtol;
 		}
+
 		// Относительная погрешность решения УР по напряжению
 		// с помощью линейного метода
 		inline double GetRtolLULF() const

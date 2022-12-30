@@ -35,7 +35,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::PreInit(CDynaModel* pDynaModel)
 			xd1 = (xd * (Tds - Tdo2 + Tdss) - xd2 * Tdo2) / (Tdo1 - Tdo2);
 	}
 
-	Zgen_ = { 0, 0.5 * (xd2 + xq2) };
+	ZgenNet_ = { 0, 0.5 * (xd2 + xq2) };
 
 	xd2_xq2_ = xd2 - xq2;
 	xd_xd1_ = xd - xd1;
@@ -237,7 +237,7 @@ const cplx& CDynaGeneratorMustang::CalculateEgen()
 	return Egen_ = cplx(sp2 * Eqss - Id * (xgen - xd2), sp2 * Edss + Iq * (xgen - xq2)) * std::polar(1.0, (double)Delta);
 }
 
-bool CDynaGeneratorMustang::CalculatePower()
+void CDynaGeneratorMustang::CalculatePower()
 {
 	const double dVre{ Vre }, dVim{ Vim };
 	const double cosg{ cos(Delta) }, sing{ sin(Delta) };
@@ -251,7 +251,6 @@ bool CDynaGeneratorMustang::CalculatePower()
 	P = sp2 * (Eqss * Iq + Edss * Id + Id * Iq * xd2_xq2_);
 	Q = Vd * Iq - Vq * Id;
 	IfromDQ();
-	return true;
 }
 
 

@@ -206,7 +206,7 @@ const cplx& CDynaGenerator1C::CalculateEgen()
 	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, (double)Delta);
 }
 
-bool CDynaGenerator1C::CalculatePower()
+void CDynaGenerator1C::CalculatePower()
 {
 
 	double NodeV{ V };
@@ -228,8 +228,6 @@ bool CDynaGenerator1C::CalculatePower()
 	Iq = zsq * (r * (Eqs - Vq) - xd1 * Vd);
 	P = Vd * Id + Vq * Iq;
 	Q = Vd * Iq - Vq * Id;
-
-	return true;
 }
 
 void CDynaGenerator1C::DeviceProperties(CDeviceContainerProperties& props)
