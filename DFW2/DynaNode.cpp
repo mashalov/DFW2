@@ -1451,7 +1451,7 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	const double Vcheck{ std::sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
 
 	/*
-	if (GetId() == 61112076 && GetModel()->GetCurrentTime() > 2.7)
+	if (GetId() == 2023 && GetModel()->GetIntegrationStepNumber() >= 3868)
 	{
 		const double Vold(std::sqrt(pRvre->Nordsiek[0] * pRvre->Nordsiek[0] + pRvim->Nordsiek[0] * pRvim->Nordsiek[0]));
 		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("{}->{}", Vold, Vcheck));

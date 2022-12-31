@@ -53,7 +53,7 @@ const char* CDFW2Messages::m_cszDeviceContainerFailedToInit = "Отказ ини
 const char* CDFW2Messages::m_cszStepAndOrderChanged = "t={:15.012f} {} Порядок и шаг метода изменен : порядок {} шаг {} с";
 const char* CDFW2Messages::m_cszStepChanged = "t={:15.012f} {} Шаг метода изменен : шаг {} с ({}), порядок {}";
 const char* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = "t={:15.012f} {} Порядок и шаг метода изменен по Ньютону: порядок {} шаг {} с";
-const char* CDFW2Messages::m_cszZeroCrossingStep = "t={:15.012f} {} Шаг метода изменен для поиска ограничения: шаг {} с в устройстве {}";
+const char* CDFW2Messages::m_cszZeroCrossingStep = "t={:15.012f} {} Шаг метода изменен для поиска ограничения: шаг {} с в устройстве {}, rH {}";
 const char* CDFW2Messages::m_cszStepChangedOnError = "t={:15.012f} {} Шаг метода изменен по корректору: шаг {} с, {}";
 const char* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = "t={:15.012f} {} Шаг метода изменен для обработки события: шаг {}";
 const char* CDFW2Messages::m_cszSynchroZoneCountChanged = "Обновлено количество синхронных зон : {}";
