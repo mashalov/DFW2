@@ -198,7 +198,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.EnableSwitchIteration = 5;
 		//m_Parameters.SeidellStep = 1.02;
 		m_Parameters.m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
-		m_Parameters.Imb = 0.05 * GetAtol() ;
+		m_Parameters.Imb = 0.05 * GetAtol();
 
 		PrecomputeConstants();
 
@@ -1009,7 +1009,7 @@ bool CDynaModel::Step()
 
 						// если шаг можно увеличить
 						// проверяем нет ли зерокроссинга
-						double rZeroCrossing = CheckZeroCrossing();
+						double rZeroCrossing{ CheckZeroCrossing() };
 
 						if (rZeroCrossing < 0)
 							Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}",
@@ -1042,8 +1042,7 @@ bool CDynaModel::Step()
 							else
 							{
 								// если время зерокроссинга не достаточно точно определено подбираем новый шаг
-								SetH(H() * rZeroCrossing);
-								RepeatZeroCrossing();
+								RepeatZeroCrossing(rZeroCrossing);
 							}
 						}
 						else
@@ -1072,8 +1071,7 @@ bool CDynaModel::Step()
 								// если время зерокроссинга внутри шага, входим в режим зерокроссинга
 								sc.m_bZeroCrossingMode = true;
 								// и пытаемся подобрать шаг до времени зерокроссинга
-								SetH(H() * rZeroCrossing);
-								RepeatZeroCrossing();
+								RepeatZeroCrossing(rZeroCrossing);
 							}
 						}
 					}
@@ -1605,26 +1603,29 @@ void CDynaModel::NewtonFailed()
 
 // функция подготовки к повтору шага
 // для поиска зерокроссинга
-void CDynaModel::RepeatZeroCrossing()
+void CDynaModel::RepeatZeroCrossing(double rH)
 {
-	if (H() < sc.Hmin)
+	double rHstep{ H() * rH };
+	// ограничиваем шаг до минимального
+	if (rHstep < sc.Hmin)
 	{
-		// если шаг снижен до минимального,
-		// отменяем зерокроссинг, так как его невозможно выполнить
-		SetH(sc.Hmin);
-		sc.m_bZeroCrossingMode = false;
+		rHstep = sc.Hmin;
+		// переходим на первый порядок, так
+		// как снижение шага может быть очень
+		// значительным
+		ChangeOrder(1);
 	}
-	sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
 	// восстанавливаем Nordsieck с предыдущего шага
 	RestoreNordsiek();
-	// масштабируем на шаг зерокроссинга (m_dCurrentH уже должен быть настроен)
-	// старый шаг m_dOldH еще не успели изменить
+	sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
+	SetH(rHstep);
 	RescaleNordsiek(H() / sc.m_dOldH);
 	sc.CheckAdvance_t0();
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(),
 																				GetIntegrationStepNumber(), 
 																				H(), 
-																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName()));
+																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName(),
+																				rH));
 }
 
 bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name)
@@ -1922,4 +1923,3 @@ bool CDynaModel::RunLoadFlow()
 	PrepareNetworkElements();
 	return LoadFlow();
 }
-

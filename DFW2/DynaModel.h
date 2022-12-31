@@ -660,7 +660,7 @@ namespace DFW2
 		void GoodStep(double rSame);
 		void BadStep();
 		void NewtonFailed();
-		void RepeatZeroCrossing();
+		void RepeatZeroCrossing(double rH);
 		void UnprocessDiscontinuity();
 		bool LoadFlow();
 		void DumpStateVector();
