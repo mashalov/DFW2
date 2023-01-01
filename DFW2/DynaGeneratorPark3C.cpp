@@ -52,7 +52,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 
 	const cplx emf{ GetEMF() };
 
-	Pt = (P + r * (Id * Id + Iq * Iq)) * omega * Snom_ / Pnom;
+	Pt = (P + r * (Id * Id + Iq * Iq)) * omega;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -65,7 +65,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 		}
 	}
 
-	ZgenNet_ = { r , 0.5 * ( lq2 + ld2 ) };
+	ZgenInternal_ = { r , 0.5 * (lq2 + ld2) };
+	ZgenNet_ = ZgenInternal_;
+	// преобразуем сопротивление в единицы сети
 	ZgenNet_ *= Zbase_ / NodeUnom_ / NodeUnom_ * pDynaModel->Sbase();
 	
 	return Status;
@@ -351,7 +353,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::ProcessDiscontinuity(CDynaModel* pDy
 
 void CDynaGeneratorPark3C::CalculatePower()
 {
-	const double NodeV{ V }, DeltaGT{ Delta - DeltaV };
+	const double NodeV{ V * puV_ }, DeltaGT{ Delta - DeltaV };
 	const double cosDeltaGT{ cos(DeltaGT) }, sinDeltaGT{ sin(DeltaGT) };
 	Vd = -NodeV * sinDeltaGT;
 	Vq = NodeV * cosDeltaGT;
@@ -371,7 +373,7 @@ cplx CDynaGeneratorPark3C::GetEMF()
 
 const cplx& CDynaGeneratorPark3C::CalculateEgen()
 {
-	const double xgen{ Zgen().imag() };
+	const double xgen{ ZgenInternal_.imag() };
 	const cplx emf{ GetEMF() * std::polar(1.0, -Delta.Value) };
 	const double omega{ 1.0 + Sv };
 	return Egen_ = cplx(emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen)) * std::polar(1.0, (double)Delta);

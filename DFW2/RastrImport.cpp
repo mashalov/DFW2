@@ -361,8 +361,10 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//m_spRastr->NewFile(scnPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_027440");		// режим с нарушением устойчивости(сценарии 102, 109)
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m004560");		// последний режим с нарушением устойчивости, перед предельным(сценарии 109)
-	LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560");		// режим без нарушения устойчивости, предельный
+	LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560_noarv");		// режим без нарушения устойчивости, предельный
 
+	m_spRastr->NewFile(dfwPath.c_str());
+	m_spRastr->NewFile(scnPath.c_str());
 
 	//LoadFile("e:\\temp\\sztest\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw", dfwPath.c_str());
 	LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.dfw", dfwPath.c_str());
@@ -373,8 +375,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("e:\\downloads\\srv-smzu1-sz__mdp_debug_1_111_1\\ur78scn");
 	//LoadFile("e:\\downloads\\srv-smzu1-sz__mdp_debug_1_111_1\\1.dfw", dfwPath.c_str());
 
-	m_spRastr->NewFile(dfwPath.c_str());
-	m_spRastr->NewFile(scnPath.c_str());
+	
 
 
 
@@ -579,9 +580,9 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	ReadTable(Network.GeneratorsInfBus, "ModelType=2");
 	ReadTable(Network.GeneratorsMotion, "ModelType=3");
-	//ReadTable(Network.Generators1C, "ModelType=4");
-	//ReadTable(Network.Generators3C, "ModelType=5");
-	//ReadTable(Network.GeneratorsMustang, "ModelType=6");
+	ReadTable(Network.Generators1C, "ModelType=4");
+	ReadTable(Network.Generators3C, "ModelType=5");
+	ReadTable(Network.GeneratorsMustang, "ModelType=6");
 	ReadTable(Network.GeneratorsPark3C, "ModelType=7");
 	ReadTable(Network.GeneratorsPark4C, "ModelType=8");
 	ReadTable(Network.GeneratorsPowerInjector, "ModelType=0");

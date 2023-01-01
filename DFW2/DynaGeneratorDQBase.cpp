@@ -15,13 +15,13 @@ void CDynaGeneratorDQBase::IfromDQ()
 
 cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 {
-	const cplx YgInt{ 1.0 / Zgen() };
+	const cplx YgInt{ 1.0 / ZgenInternal_ };
 
 	if (!nIteration)
 		Egen_ = GetEMF();
 	else
 	{
-		const cplx Ig{ (Egen_ - std::polar((double)V, (double)DeltaV)) * YgInt };
+		const cplx Ig{ (Egen_ - puV_ * std::polar((double)V, (double)DeltaV)) * YgInt };
 		const cplx Idq{ Ig * std::polar(1.0, -Delta) };
 		FromComplex(Iq, Id, Idq);
 	}
@@ -240,7 +240,7 @@ const cplx& CDynaGeneratorDQBase::CalculateEgen()
 // тока из dq в ri и напряжения из ri в dq
 void CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 {
-	const double co{ cos(Delta) }, si{ sin(Delta) };
+	double co{ cos(Delta) }, si{ sin(Delta) };
 
 	// dIre / dIre
 	pDynaModel->SetElement(Ire, Ire, 1.0);
@@ -260,6 +260,11 @@ void CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 	// dIim / dDeltaG
 	pDynaModel->SetElement(Iim, Delta, Id * si - Iq * co);
 
+
+	// учитываем трансформацию pu напряжения
+
+	co *= puV_;
+	si *= puV_;
 
 	// dVd/dVd
 	pDynaModel->SetElement(Vd, Vd, 1);
@@ -284,9 +289,13 @@ void CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 // тока из dq в ri и напряжения из ri в dq
 void CDynaGeneratorDQBase::BuildRIfromDQRightHand(CDynaModel* pDynaModel)
 {
-	const double co{ cos(Delta) }, si{ sin(Delta) };
+	double co{ cos(Delta) }, si{ sin(Delta) };
 	pDynaModel->SetFunction(Ire, Ire - Iq  * co + Id  * si);
 	pDynaModel->SetFunction(Iim, Iim - Iq  * si - Id  * co);
+
+	co *= puV_;
+	si *= puV_;
+
 	pDynaModel->SetFunction(Vd,  Vd  + Vre * si - Vim * co);
 	pDynaModel->SetFunction(Vq,  Vq  - Vre * co - Vim * si);
 }
