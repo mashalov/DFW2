@@ -268,7 +268,8 @@ bool CDevice::LinkToContainer(CDeviceContainer *pContainer, CDeviceContainer *pC
 				{
 					// если устройство для связи по идентификатору не нашли - выдаем ошибку
 					pDev->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format (CDFW2Messages::m_cszDeviceForDeviceNotFound,
-																		 DevId, 
+																		 DevId,
+																		 pContSlave->ContainerProps().GetVerbalClassName(),
 																		 pDev->GetVerbalName()));
 					bRes = false;
 					_ASSERTE(bRes);

@@ -46,9 +46,24 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 	// использовать шунт Нортона, поэтому он обнуляется
 	Ynorton_ = 0.0;
 
-	if (std::abs(xq) < 1E-7) xq = xd1; // place to validation !!!
-	if (xd <= 0) xd = xd1;
-	if (xq <= 0) xq = xd1;
+	const auto fnFixZeroXtoXd1 = [this](double& value, const char* cszValueName)
+	{
+		if (value <= 0.0 || true)
+		{
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("\"{}\" : {} = {} {}. {}{}",
+				GetVerbalName(),
+				cszValueName,
+				value,
+				CDFW2Messages::m_cszValidationBiggerThanZero,
+				CDFW2Messages::m_cszValidationChangedTo,
+				fmt::format("{} = {}", m_cszxd1, xd1))
+			);
+			value = xd1; 
+		}
+	};
+
+	(fnFixZeroXtoXd1)(xq, m_cszxq);
+	(fnFixZeroXtoXd1)(xd, m_cszxd);
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 
