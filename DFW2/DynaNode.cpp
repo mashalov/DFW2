@@ -339,7 +339,7 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 			GetPnrQnrSuper(V2sq);
 	}
 
-	const CLinkPtrCount* const pGenLink = GetSuperLink(2);
+	const CLinkPtrCount* const pGenLink{ GetSuperLink(2) };
 	LinkWalker<CDynaPowerInjector> pGen;
 
 	double Pk{ Pnr - Pgr }, Qk{ Qnr - Qgr };
@@ -358,13 +358,13 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 
 		// обходим генераторы и формируем производные от токов генераторов
 		// если узел в металлическом КЗ производные равны нулю
-		double dGenMatrixCoe{ (InMetallicSC ? 0.0 : -1.0) };
 		while (pGenLink->InMatrix(pGen))
 		{
 			// здесь нужно проверять находится ли генератор в матрице (другими словами включен ли он)
 			// или строить суперссылку на генераторы по условию того, что они в матрице
-			pDynaModel->SetElement(Vre, pGen->Ire, dGenMatrixCoe * pGen->kI());
-			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe * pGen->kI());
+			const double dGenMatrixCoe{ (InMetallicSC ? 0.0 : -pGen->kI()) };
+			pDynaModel->SetElement(Vre, pGen->Ire, dGenMatrixCoe);
+			pDynaModel->SetElement(Vim, pGen->Iim, dGenMatrixCoe);
 		}
 
 		if (InMetallicSC)

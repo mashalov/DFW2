@@ -263,8 +263,7 @@ void CDynaGeneratorDQBase::BuildRIfromDQEquations(CDynaModel* pDynaModel)
 
 	// учитываем трансформацию pu напряжения
 
-	co *= puV_;
-	si *= puV_;
+	co *= puV_;	si *= puV_;
 
 	// dVd/dVd
 	pDynaModel->SetElement(Vd, Vd, 1);
@@ -293,8 +292,7 @@ void CDynaGeneratorDQBase::BuildRIfromDQRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunction(Ire, Ire - Iq  * co + Id  * si);
 	pDynaModel->SetFunction(Iim, Iim - Iq  * si - Id  * co);
 
-	co *= puV_;
-	si *= puV_;
+	co *= puV_;	si *= puV_;
 
 	pDynaModel->SetFunction(Vd,  Vd  + Vre * si - Vim * co);
 	pDynaModel->SetFunction(Vq,  Vq  - Vre * co - Vim * si);
