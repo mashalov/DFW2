@@ -91,6 +91,8 @@ void CDynaModel::InitNordsiek()
 
 	sc.StepChanged();
 	sc.OrderChanged();
+	sc.SetNordsiekScaledForH(0.0);
+	sc.SetNordsiekScaledForHSaved(0.0);
 	sc.m_bNordsiekSaved = false;
 }
 
@@ -118,6 +120,8 @@ void CDynaModel::ResetNordsiek()
 	// контролировать соответствие предиктора-корректору
 	// на стартап-шаге
 	sc.m_bNordsiekReset = true;
+	sc.SetNordsiekScaledForH(H());
+	sc.SetNordsiekScaledForHSaved(H());
 }
 
 // построение Nordsieck после того, как обнаружено что текущая история
@@ -143,7 +147,8 @@ void CDynaModel::ReInitializeNordsiek()
 			pVectorBegin->SavedError = 0.0;
 		}
 		// масшатабируем Nordsieck на заданный шаг
-		RescaleNordsiek(H() / sc.m_dOldH);
+		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
+		RescaleNordsiek();
 		BuildDerivatives();
 	}
 	sc.OrderChanged();
@@ -175,6 +180,7 @@ void CDynaModel::RestoreNordsiek()
 			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
 			pVectorBegin->Error = pVectorBegin->SavedError;
 		}
+		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
 	}
 	else
 	{
@@ -187,6 +193,8 @@ void CDynaModel::RestoreNordsiek()
 			pVectorBegin->Nordsiek[1] = pVectorBegin->Nordsiek[2] = 0.0;
 			pVectorBegin->Error = 0.0;
 		}
+		sc.SetNordsiekScaledForH(0.0);
+		sc.SetNordsiekScaledForHSaved(0.0);
 	}
 
 	for (auto&& it : m_DeviceContainers)
@@ -358,6 +366,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 
 	sc.m_dOldH = H();
 	sc.m_bNordsiekSaved = true;
+	sc.SetNordsiekScaledForHSaved(sc.NordsiekScaledForH());
 	// после того как Нордсик обновлен,
 	// сбрасываем флаг ресета, начинаем работу предиктора
 	// и контроль соответствия предиктора корректору
@@ -407,18 +416,28 @@ void CDynaModel::SaveNordsiek()
 		pVectorBegin->SavedError = pVectorBegin->Error;
 	}
 	sc.m_dOldH = H();
+	sc.SetNordsiekScaledForHSaved(sc.NordsiekScaledForH());
+	sc.SetNordsiekScaledForH(H());
 	sc.m_bNordsiekSaved = true;
 }
 
 // масштабирование Nordsieck на заданный коэффициент изменения шага
-void CDynaModel::RescaleNordsiek(const double r)
+void CDynaModel::RescaleNordsiek()
 {
 	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 	
 	// расчет выполняется путем умножения текущего Nordsieck на диагональную матрицу C[q+1;q+1]
 	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
 
-	const double crs[4] = { 1.0, r, (sc.q == 2) ? r * r : 1.0 , 1.0 };
+	_ASSERTE(sc.NordsiekScaledForH() > 0.0);
+	const double r{ H() / sc.NordsiekScaledForH() };
+	if (r == 1.0)
+		return;
+
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Nordsiek rescale {}->{}", 
+		GetCurrentTime(),	sc.nStepsCount, sc.NordsiekScaledForH(), H()));
+
+	const double crs[4] = { 1.0, r , (sc.q == 2) ? r * r : 1.0 , 1.0};
 #ifdef _AVX2
 	const __m256d rs = _mm256_load_pd(crs);
 #endif
@@ -439,6 +458,7 @@ void CDynaModel::RescaleNordsiek(const double r)
 	// заданного количества шагов
 	sc.StepChanged();
 	sc.OrderChanged();
+	sc.SetNordsiekScaledForH(H());
 
 	// рассчитываем коэффициент изменения шага
 	const double dRefactorRatio{ H() / sc.m_dLastRefactorH};
