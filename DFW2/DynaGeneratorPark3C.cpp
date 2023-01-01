@@ -65,7 +65,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 		}
 	}
 
-	ZgenNet_ = { r , 0.5 * (lq2 + ld2) };
+	ZgenNet_ = { r , 0.5 * ( lq2 + ld2 ) };
+	ZgenNet_ *= Zbase_ / NodeUnom_ / NodeUnom_ * pDynaModel->Sbase();
 	
 	return Status;
 }
