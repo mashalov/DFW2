@@ -52,7 +52,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 
 	const cplx emf{ GetEMF() };
 
-	Pt = (P + r * (Id * Id + Iq * Iq)) * omega;
+	Pt = (P + r * (Id * Id + Iq * Iq)) * omega * Snom_ / Pnom;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
@@ -252,11 +252,14 @@ void CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 #else
 	// используем стандартное уравнение движения с демпфированием только от
 	// скольжения генератора. Момент рассчитывается по потокосцеплениям.
-	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q - Iq * ld2 + Iq * lq2) / Mj);
-	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) / Mj);
-	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd / Mj);
-	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d / Mj);
-	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q / Mj);
+
+	const double MjSnomPnom{ Snom_ / Pnom / Mj };
+
+	pDynaModel->SetElement(s, Id, -(Psi1q * Psiq_Psi1q - Iq * ld2 + Iq * lq2) * MjSnomPnom);
+	pDynaModel->SetElement(s, Iq, (Psi1d * Psid_Psi1d + Psifd * Psid_Psifd + Id * ld2 - Id * lq2) * MjSnomPnom);
+	pDynaModel->SetElement(s, Psifd, Iq * Psid_Psifd * MjSnomPnom);
+	pDynaModel->SetElement(s, Psi1d, Iq * Psid_Psi1d * MjSnomPnom);
+	pDynaModel->SetElement(s, Psi1q, -Id * Psiq_Psi1q * MjSnomPnom);
 	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
 	BuildAngleEquationBlock(pDynaModel);
 #endif
@@ -316,9 +319,9 @@ void CDynaGeneratorPark3C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 #else
 		// используем стандартное уравнение движения с демпфированием только от
 		// скольжения генератора. Момент рассчитывается по потокосцеплениям.
-		const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q) * Id;
+		const double Te{ (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q) * Id };
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
-		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - Te) / Mj);
+		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - Te * Snom_ / Pnom) / Mj);
 #endif
 		(pDynaModel->*fn)(Psifd, dPsifd);
 		(pDynaModel->*fn)(Psi1d, dPsi1d);

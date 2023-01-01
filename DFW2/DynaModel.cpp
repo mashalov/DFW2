@@ -188,7 +188,7 @@ bool CDynaModel::RunTransient()
 		m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA;
 		m_Parameters.m_nAdamsGlobalSuppressionStep = 15;
 		m_Parameters.m_nAdamsIndividualSuppressStepsRange = 150;
-		m_Parameters.m_dAtol = 1E-6;
+		m_Parameters.m_dAtol = 1E-5;
 		m_Parameters.m_dRtol = 1E-5;
 	//m_Parameters.m_bStopOnBranchOOS = m_Parameters.m_bStopOnGeneratorOOS = false;
 		//m_Parameters.m_eParkPar metersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::Canay;
