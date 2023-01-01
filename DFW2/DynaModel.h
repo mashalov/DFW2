@@ -325,8 +325,9 @@ namespace DFW2
 		{
 		protected:
 			double m_dCurrentH = 0.0;
+			double NordsiekScaledForH_ = 1.0;
+			double NordsiekScaledForHSaved_ = 1.0;
 		public:
-
 			inline double CurrentH() const
 			{
 				return m_dCurrentH;
@@ -334,6 +335,26 @@ namespace DFW2
 			void SetH(double h)
 			{
 				m_dCurrentH = h;
+			}
+
+			inline double NordsiekScaledForH() const
+			{
+				return NordsiekScaledForH_;
+			}
+
+			inline double NordsiekScaledForHSaved() const
+			{
+				return NordsiekScaledForHSaved_;
+			}
+
+			inline void SetNordsiekScaledForH(double NordsiekScaledForH)
+			{
+				NordsiekScaledForH_ = NordsiekScaledForH;
+			}
+
+			inline void SetNordsiekScaledForHSaved(double NordsiekScaledForHSaved)
+			{
+				NordsiekScaledForHSaved_ = NordsiekScaledForHSaved;
 			}
 
 			enum class eIterationMode
@@ -632,7 +653,7 @@ namespace DFW2
 		void InitDevicesNordsiek();
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
 		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
-		void RescaleNordsiek(const double r);
+		void RescaleNordsiek();
 		void UpdateNordsiek(bool bAllowSuppression = false);
 		bool DetectAdamsRinging();
 		void SaveNordsiek();

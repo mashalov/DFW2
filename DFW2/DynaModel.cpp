@@ -873,8 +873,8 @@ bool CDynaModel::Step()
 			// если при этом настроенный коэффициент изменения шага больше погрешности
 			if (rHit > DFW2_EPSILON)
 			{
-				SetH(H() * rHit); 								// меняем шаг
-				RescaleNordsiek(rHit);							// пересчитываем Nordsieck на новый шаг
+				SetH(H() * rHit); 							// меняем шаг
+				RescaleNordsiek();							// пересчитываем Nordsieck на новый шаг
 				Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
 					fmt::format(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, 
 						GetCurrentTime(), 
@@ -1252,9 +1252,8 @@ void CDynaModel::EnterDiscontinuityMode()
 		sc.m_bDiscontinuityMode = true;
 		sc.m_bZeroCrossingMode = false;
 		ChangeOrder(1);
-		RescaleNordsiek(sc.Hmin / H());
 		SetH(0.0);
-		//sc.m_bEnforceOut = true;
+		RescaleNordsiek();
 	}
 }
 
@@ -1423,7 +1422,8 @@ void CDynaModel::GoodStep(double rSame)
 				{
 					ConstructNordsiekOrder();
 					ChangeOrder(2);
-					RescaleNordsiek(SetH(H() * sc.dFilteredOrder));
+					SetH(H() * sc.dFilteredOrder);
+					RescaleNordsiek();
 					Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
 						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
 				}
@@ -1446,9 +1446,9 @@ void CDynaModel::GoodStep(double rSame)
 				// пытаемся перейти на первый порядок
 				if (sc.FilterOrder(rLower))
 				{
-					const double ratio{ SetH(H() * sc.dFilteredOrder)};
+					SetH(H() * sc.dFilteredOrder);
 					ChangeOrder(1);
-					RescaleNordsiek(ratio);
+					RescaleNordsiek();
 					Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
 						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
 				}
@@ -1470,7 +1470,8 @@ void CDynaModel::GoodStep(double rSame)
 			const double k{ sc.dFilteredStep };
 			// рассчитываем новый шаг
 			// пересчитываем Nordsieck на новый шаг
-			RescaleNordsiek(SetH(H() * sc.dFilteredStep));
+			SetH(H() * sc.dFilteredStep);
+			RescaleNordsiek();
 			Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), H(), k, sc.q));
 		}
 	}
@@ -1488,28 +1489,25 @@ void CDynaModel::GoodStep(double rSame)
 // обработка шага с недопустимой погрешностью
 void CDynaModel::BadStep()
 {
-	SetH(H() * 0.5);		// делим шаг пополам
+	double newH{ 0.5 * H() };
+	double newEffectiveH{ (std::max)(newH, sc.Hmin) };
+
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
 
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError, GetCurrentTime(), GetIntegrationStepNumber(),
-		H() < sc.Hmin ? sc.Hmin : H(), 
-		sc.Integrator.Weighted.Info()));
+		newEffectiveH, sc.Integrator.Weighted.Info()));
 
 	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
 	sc.OrderStatistics[sc.q - 1].nFailures++;
 
 	// если шаг снизился до минимума
-	if (H() < sc.Hmin)
+	if (newH <= sc.Hmin && Equal(H(), sc.Hmin))
 	{
-		//klu.DumpMatrix(true);
-		//DumpStateVector();
-
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
 
-		ChangeOrder(1);				// шаг не изменяем
-		SetH(sc.Hmin);
+		ChangeOrder(1);
 
 		// проверяем количество последовательно
 		// заваленных шагов
@@ -1519,7 +1517,8 @@ void CDynaModel::BadStep()
 			// обновляем Nordsieck и пересчитываем 
 			// производные
 			UpdateNordsiek();
-			BuildDerivatives();
+			SetH(newEffectiveH);
+			RescaleNordsiek();
 		}
 		else
 			ReInitializeNordsiek(); // если заваленных шагов слишком много, делаем новый Nordsieck
@@ -1532,8 +1531,9 @@ void CDynaModel::BadStep()
 	{
 		// если шаг еще можно снизить
 		sc.nMinimumStepFailures = 0;
-		RestoreNordsiek();									// восстанавливаем Nordsieck c предыдущего шага
-		RescaleNordsiek(H() / sc.m_dOldH);					// масштабируем Nordsieck на новый (половинный см. выше) шаг
+		RestoreNordsiek();					// восстанавливаем Nordsieck c предыдущего шага
+		SetH(newEffectiveH);
+		RescaleNordsiek();					// масштабируем Nordsieck на новый (половинный см. выше) шаг
 		sc.CheckAdvance_t0();
 	}
 }
@@ -1608,6 +1608,8 @@ void CDynaModel::NewtonFailed()
 void CDynaModel::RepeatZeroCrossing(double rH)
 {
 	double rHstep{ H() * rH };
+	// восстанавливаем Nordsieck с предыдущего шага
+	RestoreNordsiek();
 	// ограничиваем шаг до минимального
 	if (rHstep < sc.Hmin)
 	{
@@ -1617,11 +1619,9 @@ void CDynaModel::RepeatZeroCrossing(double rH)
 		// значительным
 		ChangeOrder(1);
 	}
-	// восстанавливаем Nordsieck с предыдущего шага
-	RestoreNordsiek();
 	sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
 	SetH(rHstep);
-	RescaleNordsiek(H() / sc.m_dOldH);
+	RescaleNordsiek();
 	sc.CheckAdvance_t0();
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(),
 																				GetIntegrationStepNumber(), 
