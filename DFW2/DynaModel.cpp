@@ -1608,13 +1608,20 @@ void CDynaModel::RepeatZeroCrossing(double rH)
 	double rHstep{ H() * rH };
 	// ограничиваем шаг до минимального
 	if (rHstep < sc.Hmin)
-	{
 		rHstep = sc.Hmin;
+
+	if (rH < 0.2)
+	{
 		// переходим на первый порядок, так
 		// как снижение шага может быть очень
 		// значительным
 		ChangeOrder(1);
 	}
+	else
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), H(), rH, sc.q));
+
+
+
 	// восстанавливаем Nordsieck с предыдущего шага
 	RestoreNordsiek();
 	sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
