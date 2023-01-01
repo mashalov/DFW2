@@ -87,7 +87,7 @@ const char* CDFW2Messages::m_cszConstVarNoDeviceFor = "Нет устройств
 const char* CDFW2Messages::m_cszVarSearchStackDepthNotEnough = "Недостаточна глубина стека для поиска переменных устройств ({})";
 const char* CDFW2Messages::m_cszWrongSingleLinkIndex = "Попытка использовать связь № = {} для устройства {}. Доступно {} связей";
 const char* CDFW2Messages::m_cszDeviceAlreadyLinked = "Устройство {} не может быть связано с устройством {}, так как уже связано с устройством {}";
-const char* CDFW2Messages::m_cszDeviceForDeviceNotFound = "Устройство Id = {} не найдено для устройства {}";
+const char* CDFW2Messages::m_cszDeviceForDeviceNotFound = "Устройство Id = {} типа \"{}\" не найдено для устройства {}";
 const char* CDFW2Messages::m_cszIncompatibleLinkModes = "Несовместимые режимы связи для устройств";
 const char* CDFW2Messages::m_cszFilePostion = " Позиция файла: {}. ";
 const char* CDFW2Messages::m_cszFileReadError = "Ошибка чтения файла.";

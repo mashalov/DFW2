@@ -19,8 +19,9 @@ namespace DFW2
 		double NodeUnom_ = 0.0;
 		double Snom_ = 0.0;
 		double Unom_ = 0.0;
-		double puV_ = 1.0; // трансформатор напряжения из pu сети в pu модели
-		double puI_ = 1.0; // трансформатор тока из pu модели в pu сети 
+		double puV_ = 1.0;		// трансформатор напряжения из pu сети в pu модели
+		double puI_ = 1.0;		// трансформатор тока из pu модели в pu сети 
+		double Zbase_ = 1.0;	// базисное сопротививление статора
 	public:
 		enum VARS
 		{

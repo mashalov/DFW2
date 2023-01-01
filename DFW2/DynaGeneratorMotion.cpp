@@ -54,6 +54,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::GetConnection(CDynaModel* pDynaModel
 		Inom = Snom_ / Unom_ / CDynaModel::Sqrt3();
 		puV_ = NodeUnom_ / Unom_;
 		puI_ = Snom_ / pDynaModel->Sbase() * puV_;
+		Zbase_ = Unom_ * Unom_ / Snom_;
 	}
 	return ret;
 
@@ -81,7 +82,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 			ZgenNet_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();
 			// шунт Нортона для УД
 			Ynorton_ = 1.0 / ZgenNet_;
-			xd1 /= Unom_ * Unom_ / Snom_;
+			xd1 /= Zbase_;
 			ZgenInternal_ = { 0, xd1 };
 		}
 	

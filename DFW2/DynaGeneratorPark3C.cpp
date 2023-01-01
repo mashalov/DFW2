@@ -8,17 +8,23 @@ using namespace DFW2;
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::PreInit(CDynaModel* pDynaModel)
 {
-	auto PreInitRet{ CDynaGeneratorDQBase::PreInit(pDynaModel) };
-
 	if (Kgen > 1)
 	{
 		xd2 /= Kgen;
 		xq2 /= Kgen;
-		//xq1 /= Kgen;
 		xl /= Kgen;
 	}
 
-	return PreInitRet;
+	auto ret{ CDynaGeneratorDQBase::PreInit(pDynaModel) };
+
+	if (CDevice::IsFunctionStatusOK(ret))
+	{
+		xd2 /= Zbase_;
+		xq2 /= Zbase_;
+		xl /= Zbase_;
+	}
+
+	return ret;
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::Init(CDynaModel* pDynaModel)
@@ -46,7 +52,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 
 	const cplx emf{ GetEMF() };
 
-	Pt = (P + r * (Id * Id + Iq * Iq)) * omega;
+	Pt = (P + r * (Id * Id + Iq * Iq)) * omega * Snom_ / Pnom;
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{

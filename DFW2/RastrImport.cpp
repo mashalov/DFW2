@@ -373,6 +373,10 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("e:\\downloads\\srv-smzu1-sz__mdp_debug_1_111_1\\ur78scn");
 	//LoadFile("e:\\downloads\\srv-smzu1-sz__mdp_debug_1_111_1\\1.dfw", dfwPath.c_str());
 
+	m_spRastr->NewFile(dfwPath.c_str());
+	m_spRastr->NewFile(scnPath.c_str());
+
+
 
 
 
@@ -574,21 +578,16 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 
 	ReadTable(Network.GeneratorsInfBus, "ModelType=2");
-	ReadTable(Network.GeneratorsMotion, "ModelType=3|ModelType=7");
-	/*
-	
-	ReadTable(Network.Generators1C, "ModelType=4");
-	ReadTable(Network.Generators3C, "ModelType=5");
-	ReadTable(Network.GeneratorsMustang, "ModelType=6");
-	//ReadTable(Network.GeneratorsPark3C, "ModelType=7");
+	ReadTable(Network.GeneratorsMotion, "ModelType=3");
+	//ReadTable(Network.Generators1C, "ModelType=4");
+	//ReadTable(Network.Generators3C, "ModelType=5");
+	//ReadTable(Network.GeneratorsMustang, "ModelType=6");
+	ReadTable(Network.GeneratorsPark3C, "ModelType=7");
 	ReadTable(Network.GeneratorsPark4C, "ModelType=8");
 	ReadTable(Network.GeneratorsPowerInjector, "ModelType=0");
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
-	*/
-
-
 	
 
 	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");

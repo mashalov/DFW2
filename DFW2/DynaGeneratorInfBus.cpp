@@ -67,6 +67,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::PreInit(CDynaModel* pDynaModel)
 	{
 		Snom_ = pDynaModel->Sbase();
 		Unom_ = NodeUnom_;
+		Zbase_ = Unom_ * Unom_ / Snom_;
 		ZgenNet_ = { 0 , xd1 };
 		// приводим сопротивление генератора к о.е. сети
 		ZgenNet_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();

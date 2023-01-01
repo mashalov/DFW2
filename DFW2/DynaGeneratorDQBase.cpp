@@ -41,16 +41,29 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 		r /= Kgen;
 	}
 
-	ZgenInternal_ = { r, xq };
-
-	ZgenNet_ = { r , 0.5 * (xq + xd1) };
-	// В генераторах с dq преобразованием нельзя
-	// использовать шунт Нортона, поэтому он обнуляется
-	Ynorton_ = 0.0;
+	eDEVICEFUNCTIONSTATUS ret{ GetConnection(pDynaModel) };
 
 	if (std::abs(xq) < 1E-7) xq = xd1; // place to validation !!!
 	if (xd <= 0) xd = xd1;
 	if (xq <= 0) xq = xd1;
+
+	if (CDevice::IsFunctionStatusOK(ret))
+	{
+		P *= pDynaModel->Sbase() / Snom_;
+		Q *= pDynaModel->Sbase() / Snom_;
+		ZgenNet_ = { r , 0.5 * (xq + xd1) };
+		// приводим сопротивление генератора к о.е. сети
+		ZgenNet_ /= NodeUnom_ * NodeUnom_ / pDynaModel->Sbase();
+		xd1 /= Zbase_;
+		r /= Zbase_;
+		xq /= Zbase_;
+		ZgenInternal_ = { r, xq };
+		xd /= Zbase_;
+	}
+
+	// В генераторах с dq преобразованием нельзя
+	// использовать шунт Нортона, поэтому он обнуляется
+	Ynorton_ = 0.0;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 
@@ -79,8 +92,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 			CDynaGeneratorDQBase::ProcessDiscontinuity(pDynaModel);
 			break;
 		case eDEVICESTATE::DS_OFF:
-			Vd = -V;
-			Vq = V;
+			Vd = -puV_ * V;
+			Vq = puV_ * V;
 			Eq = 0.0;
 			ExtEqe = 0.0;
 			break;
@@ -97,7 +110,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::ProcessDiscontinuity(CDynaModel* pDy
 	{
 		if (IsStateOn())
 		{
-			double DeltaGT{ Delta - DeltaV }, NodeV{ V };
+			double DeltaGT{ Delta - DeltaV }, NodeV{ puV_ * V };
 			Vd = -NodeV * sin(DeltaGT);
 			Vq = NodeV * cos(DeltaGT);
 			const double det{ Vd * Vd + Vq * Vq };
