@@ -48,7 +48,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 
 	const auto fnFixZeroXtoXd1 = [this](double& value, const char* cszValueName)
 	{
-		if (value <= 0.0 || true)
+		if (value <= 0.0)
 		{
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("\"{}\" : {} = {} {}. {}{}",
 				GetVerbalName(),
