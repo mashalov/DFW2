@@ -110,7 +110,9 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 		EqLimit.SetMinMax(pDynaModel, Imin, Imax);
 		EqOutputValue = Eq0;
 		bool bRes = ExcLag.Init(pDynaModel);
-		bRes = bRes && EqLimit.Init(pDynaModel);
+		bRes = bRes && EqLimit.Init(pDynaModel) &&
+					   OutputLimit.Init(pDynaModel) &&
+					   EqLimit.Init(pDynaModel);
 		if (!bRes)
 			Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	}

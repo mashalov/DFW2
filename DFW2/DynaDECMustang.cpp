@@ -85,10 +85,10 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status) && IsStateOn())
 	{
-		EnforceOn.SetRefs(pDynaModel, Unom * VEnfOn, Unom * VEnfOn, false, TdelOn);
-		EnforceOff.SetRefs(pDynaModel, Unom * VEnfOff, Unom * VEnfOff, true, TdelOff);
-		DeforceOn.SetRefs(pDynaModel, Unom * VDefOn, Unom * VDefOn, true, TdelOn);
-		DeforceOff.SetRefs(pDynaModel, Unom * VDefOff, Unom * VDefOff, false, TdelOff);
+		EnforceOn.SetRefs(pDynaModel, VEnfOn, VEnfOn, false, TdelOn);
+		EnforceOff.SetRefs(pDynaModel, VEnfOff, VEnfOff, true, TdelOff);
+		DeforceOn.SetRefs(pDynaModel, VDefOn, VDefOn, true, TdelOn);
+		DeforceOff.SetRefs(pDynaModel, VDefOff, VDefOff, false, TdelOff);
 		m_dEnforceValue = EnfRatio * Eqnom - Eqe0;
 		m_dDeforceValue = DefRatio * Eqnom - Eqe0;
 
