@@ -14,6 +14,7 @@ double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 		MAP_VARIABLE(Q, C_Q)
 		MAP_VARIABLE(Unom_, C_UNOM)
 		MAP_VARIABLE(Snom_, C_SNOM)
+		MAP_VARIABLE(puV_, C_KV)
 	}
 	return p;
 }
@@ -134,6 +135,7 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.ConstVarMap_.insert({ m_cszQ, CConstVarIndex(CDynaPowerInjector::C_Q, VARUNIT_MVAR, true, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ m_cszSnom, CConstVarIndex(CDynaPowerInjector::C_SNOM, VARUNIT_MVA, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ CDynaNodeBase::m_cszUnom, CConstVarIndex(CDynaPowerInjector::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ m_cszKv, CConstVarIndex(CDynaPowerInjector::C_KV, VARUNIT_UNITLESS, eDVT_INTERNALCONST) });
 
 	props.EquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);

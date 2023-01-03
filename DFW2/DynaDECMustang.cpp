@@ -71,10 +71,10 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
 
-	double Unom, Eqnom, Eqe0;
+	double Kv, Eqnom, Eqe0;
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
-	if (!InitConstantVariable(Unom, pExciter, CDynaNode::m_cszUnom, DEVTYPE_GEN_MOTION))
+	if (!InitConstantVariable(Kv, pExciter, CDynaPowerInjector::m_cszKv, DEVTYPE_POWER_INJECTOR))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqnom, pExciter, CDynaGeneratorDQBase::m_cszEqnom, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
@@ -85,10 +85,10 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status) && IsStateOn())
 	{
-		EnforceOn.SetRefs(pDynaModel, VEnfOn, VEnfOn, false, TdelOn);
-		EnforceOff.SetRefs(pDynaModel, VEnfOff, VEnfOff, true, TdelOff);
-		DeforceOn.SetRefs(pDynaModel, VDefOn, VDefOn, true, TdelOn);
-		DeforceOff.SetRefs(pDynaModel, VDefOff, VDefOff, false, TdelOff);
+		EnforceOn.SetRefs(pDynaModel, VEnfOn / Kv, VEnfOn / Kv, false, TdelOn);
+		EnforceOff.SetRefs(pDynaModel, VEnfOff / Kv, VEnfOff / Kv, true, TdelOff);
+		DeforceOn.SetRefs(pDynaModel, VDefOn / Kv, VDefOn / Kv, true, TdelOn);
+		DeforceOff.SetRefs(pDynaModel, VDefOff / Kv, VDefOff / Kv, false, TdelOff);
 		m_dEnforceValue = EnfRatio * Eqnom - Eqe0;
 		m_dDeforceValue = DefRatio * Eqnom - Eqe0;
 

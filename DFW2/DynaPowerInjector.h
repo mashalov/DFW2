@@ -37,6 +37,7 @@ namespace DFW2
 			C_SNOM,														// номинальная полная мощность
 			C_P,														// исходная активная мощность
 			C_Q,														// исходная реактивная мощность
+			C_KV,														// трансформатор напряжения из pu сети в pu модели
 			C_LAST
 		};
 
@@ -77,6 +78,7 @@ namespace DFW2
 		static constexpr const char* m_cszIre = "Ire";
 		static constexpr const char* m_cszIim = "Iim";
 		static constexpr const char* m_cszNodeId = "NodeId";
+		static constexpr const char* m_cszKv = "Kv";
 		static constexpr const char* m_cszKgen = "Kgen";
 
 		static CValidationRuleGeneratorKgen ValidatorKgen;
