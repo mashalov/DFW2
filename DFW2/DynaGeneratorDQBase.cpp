@@ -99,7 +99,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Eqnom = (Unom_ * Unom_ * (Unom_ * Unom_ + Qnom * (xd + xq)) + Snom_ * Snom_ * xd * xq) / (Unom_ * std::sqrt(Unom_ * Unom_ * (Unom_ * Unom_ + 2.0 * Qnom * xq) + Snom_ * Snom_ * xq * xq));
+		//Eqnom = (Unom_ * Unom_ * (Unom_ * Unom_ + Qnom * (xd + xq)) + Snom_ * Snom_ * xd * xq) / (Unom_ * std::sqrt(Unom_ * Unom_ * (Unom_ * Unom_ + 2.0 * Qnom * xq) + Snom_ * Snom_ * xq * xq));
+		Eqnom = ((1.0 + Qnom / Snom_ * (xd + xq)) + xd * xq) / (std::sqrt((1.0 + 2.0 * Qnom / Snom_ * xq) + xq * xq));
+		
 
 		switch (GetState())
 		{

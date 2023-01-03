@@ -361,7 +361,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//m_spRastr->NewFile(scnPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_027440");		// режим с нарушением устойчивости(сценарии 102, 109)
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m004560");		// последний режим с нарушением устойчивости, перед предельным(сценарии 109)
-	LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560_noarv");		// режим без нарушения устойчивости, предельный
+	LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560");		// режим без нарушения устойчивости, предельный
 
 	m_spRastr->NewFile(dfwPath.c_str());
 	m_spRastr->NewFile(scnPath.c_str());
