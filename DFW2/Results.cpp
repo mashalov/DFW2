@@ -59,7 +59,7 @@ void CDynaModel::WriteResultsHeader()
 	// путь к файлу и сам файл создаем
 	// с помощью пути с тегами
 
-	TaggedPath resultFilePath{ resultPath.string() };
+	TaggedPath resultFilePath{ stringutils::utf8_encode(resultPath.c_str()) };
 	resultFilePath.Create().close();
 	ResultFilePath_ = stringutils::utf8_decode(resultFilePath.Path());
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
