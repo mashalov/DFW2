@@ -63,6 +63,7 @@ void CLimiterConst::BuildRightHand(CDynaModel *pDynaModel)
 bool CLimiterConst::Init(CDynaModel *pDynaModel)
 {
 	bool bRes{ CDynaPrimitiveLimited::Init(pDynaModel) };
+	Output_ = Input_;
 	bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
 	return bRes;
 }
