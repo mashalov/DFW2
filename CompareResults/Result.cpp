@@ -95,9 +95,10 @@ CResult::TimeSeries CResult::ConstructFromPlot(_variant_t Input, const CompareRa
 
 void CResult::Compare(const CResult& other, const CompareRange& range) const
 {
-	CompareDevices(other, 3, "V", 3 , "V", range);	// узлы
+	//CompareDevices(other, 3, "V", 3 , "V", range);	// узлы
 	//CompareDevices(other, 3, "V", 6 * 1000000 + 4, "vras", range);	// узлы
-	//CompareDevices(other, 16, "Delta", 1 * 1000000 + 9, "Delta", range); // генераторы
+	CompareDevices(other, 17, "Delta", 17, "Delta", range); // генераторы
+	CompareDevices(other, 17, "S", 17, "S", range); // генераторы
 	//CompareDevices(other, 16, "P", 1 * 1000000 + 9, "P", range); // генераторы
 	//CompareDevices(other, 16, "Q", 1 * 1000000 + 9, "Q", range); // генераторы
 	//CompareDevices(other, 16, "S", 1 * 1000000 + 9, "S", range); // генераторы
@@ -170,8 +171,8 @@ void CResult::CompareDevices(const CResult& other, long DeviceType1, std::string
 
 				CResult::TimeSeriesOptions Options;
 
-				//Options.SetAtol(1e-4);
-				//Options.SetRtol(1e-4);
+				Options.SetAtol(1e-6);
+				Options.SetRtol(0.0);
 
 				auto diff{ plot1.Compare(plot2, Options) };
 

@@ -145,9 +145,9 @@ namespace timeseries
 			void SetRange(const ProcessRange& Range) { Range_ = Range; }
 			bool TimeInRange(const T& Time) const
 			{
-				if (Range_.begin.has_value() && Time < Range_.begin.value())
+				if (Range_.begin().has_value() && Time < Range_.begin().value())
 					return false;
-				if (Range_.end.has_value() && Time >= Range_.end.value())
+				if (Range_.end().has_value() && Time >= Range_.end().value())
 					return false;
 				return true;
 			}

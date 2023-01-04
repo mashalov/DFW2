@@ -9,9 +9,9 @@ int main()
         CoInitialize(NULL);
         CLog log;
         CResult result1(log), result2(log);
-        result1.Load("d:\\documents\\Русский тест\\Raiden\\Results\\binresultcom.rst");
-        result2.Load("d:\\Documents\\Русский тест\\Raiden\\Results\\binresultcom-a-2.rst");
-        result1.Compare(result2, { 0, 150.0 });
+        result1.Load("d:\\documents\\Raiden\\Results\\Жабск\\ref 1e-6 nz.sna");
+        result2.Load("d:\\documents\\Raiden\\Results\\Жабск\\binresultCOMM0000.sna");
+        result1.Compare(result2, { 0, 15.0 });
 
         //auto plot{ result1.GetPlot(16, 10, "P") };
         //auto denseplot{ plot.DenseOutput(0.01) };
