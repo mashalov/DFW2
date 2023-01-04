@@ -19,8 +19,9 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqe0, pGen, CDynaGeneratorDQBase::m_cszEqe, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Inom, pGen, CDynaGenerator1C::m_cszInom, DEVTYPE_GEN_DQ))
-		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+
+	/*if (!InitConstantVariable(Inom, pGen, CDynaGenerator1C::m_cszInom, DEVTYPE_GEN_DQ))
+		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;*/
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{

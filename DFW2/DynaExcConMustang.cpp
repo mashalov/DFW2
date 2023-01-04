@@ -63,11 +63,11 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 
 	dVdtOut = dEqdtOut = dSdtOut = 0.0;
 	Svt = Uf = Usum = UsumLmt = 0.0;
-	double Unom, Eqe0;
+	double Eqe0;
 
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
-	if (!InitConstantVariable(Unom, pExciter, CDynaNode::m_cszUnom))
+	if (!InitConstantVariable(Kv, pExciter, CDynaPowerInjector::m_cszKv))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqnom_, pExciter, CDynaGeneratorDQBase::m_cszEqnom))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
@@ -79,11 +79,12 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		Limiter.SetMinMax(pDynaModel, Umin - Eqe0 / Eqnom_, Umax - Eqe0 / Eqnom_);
-		K0u /= Unom;
-		K1u /= Unom;
+		//K0u /= Unom;
+		//K1u /= Unom;
 		K0f *= pDynaModel->GetOmega0() / 2.0 / M_PI;
 		K1f *= pDynaModel->GetOmega0() / 2.0 / M_PI;
 		K1if /= Eqnom_;
+		K1u *= Kv;
 
 		// забавно - если умножить на машстабы до
 		// расчета о.е - изменяется количество шагов метода
@@ -102,7 +103,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 		case eDEVICESTATE::DS_ON:
 		{
 			bool bRes = true;
-			Vref = dVdtIn;
+			Vref = Kv * dVdtIn;
 			bRes = Limiter.Init(pDynaModel);
 			Status = bRes ? eDEVICEFUNCTIONSTATUS::DFS_OK : eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 		}
@@ -126,7 +127,7 @@ void CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 	if (IsStateOn())
 	{
 		// dUsum / dV
-		pDynaModel->SetElement(Usum, dVdtIn, K0u);
+		pDynaModel->SetElement(Usum, dVdtIn, K0u * Kv);
 		// dUsum / Sv
 		pDynaModel->SetElement(Usum, dSdtIn, -K0u * Alpha * Vref - K0f);
 		// dUsum / Svt
@@ -167,27 +168,7 @@ void CDynaExcConMustang::BuildRightHand(CDynaModel* pDynaModel)
 {
 	if (IsStateOn())
 	{
-		const double dSum{ Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) - K0f * (dSdtIn - Svt) + dVdtOut + dEqdtOut - dSdtOut };
-
-		/*
-		if (m_Id == 115)
-		{
-			if (pDynaModel->GetIntegrationStepNumber() == 0)
-				DebugLog(fmt::format("Step;V;S;Eq;dV;dS;dEq;Usum;dSLag"));
-
-			DebugLog(fmt::format("{};{};{};{};{};{};{};{};{};",
-				pDynaModel->GetIntegrationStepNumber(),
-				dVdtIn,
-				dSdtIn,
-				dEqdtIn,
-				dVdtOut,
-				dSdtOut,
-				dEqdtOut,
-				Usum,
-				dSdtOut1));
-		}
-		*/
-		
+		const double dSum{ Usum - K0u * (Vref * (1.0 + Alpha * dSdtIn) - Kv * dVdtIn) - K0f * (dSdtIn - Svt) + dVdtOut + dEqdtOut - dSdtOut };
 		pDynaModel->SetFunction(Usum, dSum);
 		pDynaModel->SetFunctionDiff(Svt, (dSdtIn - Svt) / Tf);
 		pDynaModel->SetFunctionDiff(Uf, (Eqnom_ * UsumLmt - Uf) / Tr);
@@ -225,7 +206,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::ProcessDiscontinuity(CDynaModel* pDyna
 	if (IsStateOn())
 	{
 		//double V = dVdtIn.Value();
-		Usum = K0u * (Vref * (1.0 + Alpha * dSdtIn) - dVdtIn) + K0f * (dSdtIn - Svt) - dVdtOut - dEqdtOut + dSdtOut;
+		Usum = K0u * (Vref * (1.0 + Alpha * dSdtIn) - Kv * dVdtIn) + K0f * (dSdtIn - Svt) - dVdtOut - dEqdtOut + dSdtOut;
 		Status = CDevice::ProcessDiscontinuity(pDynaModel);
 	}
 	else
@@ -237,7 +218,7 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::ProcessDiscontinuity(CDynaModel* pDyna
 
 double CDynaExcConMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 	if (IsStateOn())
 		rH = CDevice::CheckZeroCrossing(pDynaModel);
 	return rH;

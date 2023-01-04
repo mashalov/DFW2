@@ -57,7 +57,7 @@ namespace DFW2
 		};
 
 		double K0u, K1u, Alpha, K1if, K0f, K1f, Umin, Umax, Tf, Tr;
-		double Vref;
+		double Vref, Kv;
 		VariableIndex Uf, Usum, UsumLmt, Svt;
 
 		CDynaExcConMustang();

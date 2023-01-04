@@ -37,7 +37,7 @@ namespace DFW2
 		double DECId, RegId;
 
 		VariableIndex Eqe, Eqsum, EqeV, EqeLag;
-		double Eqe0, Ig0, Eq0, Ug0, Eqnom, Inom;
+		double Eqe0, Ig0, Eq0, Ug0, Eqnom/*, Inom*/;
 
 
 		double Texc, Umin, Umax;

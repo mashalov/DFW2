@@ -100,7 +100,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 		CheckLimits(Umin, Umax);
 		CheckLimits(Imin, Imax);
 
-		Kig *= Eqnom / Inom;
+		Kig *= Eqnom;
 		Imin *= Eqnom;
 		Imax *= Eqnom;
 		// ограничения либо на лаге (non-windup)
