@@ -92,7 +92,7 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	lrc = 0.0;
 
 	double R1d(0), R1q(0), l1d(0), l1q(0);
-		
+	
 	switch (Method)
 	{
 		case PARK_PARAMETERS_DETERMINATION_METHOD::Kundur:
@@ -121,7 +121,7 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 		l1q));
 	//*/
 	
-	CompareParksParameterCalculation();
+	//CompareParksParameterCalculation();
 
 	const double lFd(lad + lfd);		// сопротивление обмотки возбуждения
 	const double l1D(lad + l1d);		// сопротивление демпферной обмотки d

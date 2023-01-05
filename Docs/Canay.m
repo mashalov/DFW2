@@ -95,8 +95,9 @@ r2 = 1 / deltay2 / (Tde02 * w)
 
 
 
-[r1,x1,r2,x2] = CanayParameters(1.63,0.217292727,0.151543636,0.150741818, 6.7,0.059)
-%[r1,x1,r2,x2] = CanayParameters(1.77,0.329, 0.253, 0.17, 0.859, 0.0247)
+%[r1,x1,r2,x2] = CanayParameters(1.63,0.217292727,0.151543636,0.150741818, 6.7,0.059)
+%xd, xd1, xd2, xl, Td01, Td02
+[r1,x1,r2,x2] = CanayParameters(1.77,0.329, 0.253, 0.17, 0.859, 0.0247)
 
 xrcb = -1.0;
 xrce = 1.0;
@@ -201,6 +202,8 @@ end
 
 function [r1, x1, r2, x2] = CanayParameters(xd, xd1, xd2, xl, Td01, Td02)
     [Td1, Td2] = SCTimeConstants(xd, xd1, xd2, Td01, Td02);
+%   Td1 = 0.859;
+%   Td2 = 0.0247;
     A0 = xd / xd1 * Td1 + (xd / xd2 - xd / xd1 + 1) * Td2;
     B0 = xd / xd2 * Td1*Td2;
     roots = Roots(B0,A0,1);
@@ -219,9 +222,10 @@ function [r1, x1, r2, x2] = CanayParameters(xd, xd1, xd2, xl, Td01, Td02)
     deltay2 = 1 / xde2 - 1 / xde1;
     x1 = 1 / deltay1;
     x2 = 1 / deltay2;
-    w = 1; %2 * pi * 60
-    r1 = x1 / (Tde01 * w);
-    r2 = x2 / (Tde02 * w);
+    % видимо время в относительных единицах, поэтому Canay делит на 2*pi*60
+    w =1% 2 * pi * 60
+    r1 = x1 / (Tde01 * w);% 0.001048
+    r2 = x2 / (Tde02 * w);% 0.026765
 end
 
 function [Td1, Td2] = SCTimeConstants(xd, xd1, xd2, Td01, Td02)
