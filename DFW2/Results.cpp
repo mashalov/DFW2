@@ -27,7 +27,7 @@ void CDynaModel::WriteResultsHeader()
 	}
 
 	auto resultPath(Platform().Results());
-	std::filesystem::path parametersResultPath(m_Parameters.m_strResultsFolder);
+	std::filesystem::path parametersResultPath(stringutils::utf8_decode(m_Parameters.m_strResultsFolder));
 
 	// если в параметрах задан абосолютный путь к каталогу
 	// результатов - используем его как есть,
@@ -36,7 +36,7 @@ void CDynaModel::WriteResultsHeader()
 	if (parametersResultPath.is_absolute())
 		resultPath = parametersResultPath;
 	else
-		resultPath.append(m_Parameters.m_strResultsFolder);
+		resultPath.append(stringutils::utf8_decode(m_Parameters.m_strResultsFolder));
 
 	auto resultCheckPath{ resultPath };
 

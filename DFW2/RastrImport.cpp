@@ -522,7 +522,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ps->at(CDynaModel::Parameters::m_cszLRCToShuntVmin)->SetDouble(spLTC2Y->GetZ(0).dblVal);
 	ps->at(CDynaModel::Parameters::m_cszFrequencyTimeConstant)->SetDouble(spFreqT->GetZ(0).dblVal);
 	ps->at(CDynaModel::Parameters::m_cszConsiderDampingEquation)->SetBool(spDamping->GetZ(0).lVal ? true : false);
-	ps->at(CDynaModel::Parameters::m_cszParkParametersDetermination)->SetInt(spParkParams->GetZ(0).lVal ? 0 : 1);
+	if(spParkParams->GetZ(0).lVal == 1)
+		ps->at(CDynaModel::Parameters::m_cszParkParametersDetermination)->SetInt(0);
 
 	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
 		return;

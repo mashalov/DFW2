@@ -28,11 +28,11 @@ namespace DFW2
 		struct LoadFlowParameters
 		{
 			double Imb = 1E-4;							// допустимый небаланс мощности
-			bool Flat = false;							// плоский старт
+			bool Flat = true;							// плоский старт
 			eLoadFlowStartupMethod Startup = eLoadFlowStartupMethod::Seidell;	// стартовый метод 
 			double SeidellStep = 1.0;					// шаг ускорения метода Зейделя	
-			size_t SeidellIterations = 17;				// количество итераций Зейделем
-			size_t EnableSwitchIteration = 2;			// номер итерации, с которой разрешается переключение PV-PQ
+			size_t SeidellIterations = 5;				// количество итераций Зейделем
+			size_t EnableSwitchIteration = 3;			// номер итерации, с которой разрешается переключение PV-PQ
 			size_t MaxIterations = 100;					// максимальное количество итераций Ньютоном
 			size_t MaxPVPQSwitches = 5;					// максимальное количество переключений PV-PQ
 			size_t PVPQSwitchPerIt = 0;					// количество переключений типов узлов на одной итерации

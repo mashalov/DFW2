@@ -51,7 +51,7 @@ namespace DFW2
 			
 			DynaModelParameters() : CLoadFlow::LoadFlowParameters() {}
 
-			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND;
+			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
 			double m_dLRCToShuntVmin = 0.5;
@@ -67,10 +67,10 @@ namespace DFW2
 			double m_dRefactorByHRatio = 1.5;
 			double m_dMustangDerivativeTimeConstant = 1E-4;
 			// режим подавления рингинга
-			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL;
+			ADAMS_RINGING_SUPPRESSION_MODE m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA;
 			ptrdiff_t m_nAdamsIndividualSuppressionCycles = 3;			// количество перемен знака переменной для обнаружения рингинга
-			ptrdiff_t m_nAdamsGlobalSuppressionStep = 10;				// номер шага, на кратном которому работает глобальное подавление рингинга
-			ptrdiff_t m_nAdamsIndividualSuppressStepsRange = 5;			// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
+			ptrdiff_t m_nAdamsGlobalSuppressionStep = 15;				// номер шага, на кратном которому работает глобальное подавление рингинга
+			ptrdiff_t m_nAdamsIndividualSuppressStepsRange = 150;		// количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной
 			bool m_bUseRefactor = true;
 			bool m_bDisableResultsWriter = false;
 			ptrdiff_t m_nMinimumStepFailures = 1;
