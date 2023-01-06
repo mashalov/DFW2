@@ -438,7 +438,9 @@ eDEVICEFUNCTIONSTATUS CDevice::UpdateExternalVariables(CDynaModel *pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDevice::Init(CDynaModel* pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eStatus = eDEVICEFUNCTIONSTATUS::DFS_OK;
+	eDEVICEFUNCTIONSTATUS eStatus{ eDEVICEFUNCTIONSTATUS::DFS_OK };
+	for (auto&& it : Primitives_)
+		eStatus = CDevice::DeviceFunctionResult(eStatus, it->Init(pDynaModel));
 	return eStatus;
 }
 

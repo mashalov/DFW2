@@ -242,4 +242,5 @@ const char* CDFW2Messages::m_cszLFZ0isForFlatOnly = "Оценка УР мето�
 const char* CDFW2Messages::m_cszLFRunningZ0 = "Оценка УР методом Z0";
 const char* CDFW2Messages::m_cszNoSSE2Support = "Процессор не поддерживает SSE2";
 const char* CDFW2Messages::m_cszWrongTaggedPath = "Ошибка пути с тегами в позиции {}";
+const char* CDFW2Messages::m_cszParameterIsOutOfRange = "Значение параметра \"{}\" : \"{}\" = {:.3f} находится вне диапазона типовых значений [{:.3f};{:.3f}]";
 

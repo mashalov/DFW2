@@ -1459,7 +1459,9 @@ void CDynaModel::GoodStep(double rSame)
 		}
 
 		// запрашиваем возможность изменения (увеличения шага)
-		if (sc.FilterStep(rSame))
+		// тут можно регулировать частоту увеличения шага 
+		// rSame уже поделили выше для безопасности на 1.2
+		if (sc.FilterStep(rSame) && rSame > 1.1)
 		{
 			// если фильтр дает разрешение на увеличение
 			_ASSERTE(Equal(H(), sc.m_dOldH));
@@ -1472,6 +1474,7 @@ void CDynaModel::GoodStep(double rSame)
 			SetH(H() * sc.dFilteredStep);
 			RescaleNordsiek();
 			Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), H(), k, sc.q));
+			sc.StepChanged();
 		}
 	}
 	else

@@ -10,6 +10,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		cplx GetIdIq() const;
 		void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
+		void CheckParameters();
 	public:
 		using  CDynaGeneratorDQBase::CDynaGeneratorDQBase;
 		virtual ~CDynaGeneratorPark3C() = default;

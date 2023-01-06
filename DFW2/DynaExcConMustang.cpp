@@ -93,26 +93,27 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::Init(CDynaModel* pDynaModel)
 		dEqdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1if);
 		dSdt.SetTK(pDynaModel->GetMustangDerivativeTimeConstant(), K1f);
 
-		dVdt.Init(pDynaModel);
-		dEqdt.Init(pDynaModel);
-		dSdt.Init(pDynaModel);
-
 		switch (GetState())
 		{
 		case eDEVICESTATE::DS_ON:
 		{
-			bool bRes = true;
 			Vref = dVdtIn;
-			bRes = Limiter.Init(pDynaModel);
-			Status = bRes ? eDEVICEFUNCTIONSTATUS::DFS_OK : eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+			break;
 		}
 		break;
 		case eDEVICESTATE::DS_OFF:
-			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 			Vref = Usum = UsumLmt = 0.0;
-			Limiter.Init(pDynaModel);
 			break;
 		}
+		Status = CDevice::DeviceFunctionResult(Status, CDevice::Init(pDynaModel));
+		/*
+		dVdt.Init(pDynaModel);
+		dEqdt.Init(pDynaModel);
+		dSdt.Init(pDynaModel);
+		*/
+
+
+
 	}
 	return Status;
 }
