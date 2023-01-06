@@ -13,6 +13,13 @@
 !define VisualStudioLink "https://visualstudio.microsoft.com/ru/downloads/"
 !define MSBuildToolsLink "https://aka.ms/vs/17/release/vs_BuildTools.exe"
 
+
+!define MUI_HEADERIMAGE
+!define MUI_HEADERIMAGE_BITMAP header.bmp
+;!define MUI_WELCOMEFINISHPAGE_BITMAP header.bmp
+;!define MUI_BGCOLOR 000000
+;!define MUI_TEXTCOLOR FFFFFF
+
 !include MUI2.nsh
 !include Library.nsh
 !include nsDialogs.nsh
@@ -207,7 +214,7 @@ Section InstallX64 0
 	File "${InputFolderX64}..\release dll\dfw2.dll"
 	File "${InputFolderX64}umc.dll"
 	!define LIBRARY_X64
-	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX64}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
+;	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX64}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX64}\..\..\ReferenceCustomModel\*.*"
@@ -231,7 +238,7 @@ Section InstallX86 1
 	File "${InputFolderX86}..\release dll\dfw2.dll"
 	File "${InputFolderX86}umc.dll"
 	!undef LIBRARY_X64
-	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX86}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
+;	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX86}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX86}\..\ReferenceCustomModel\*.*"
@@ -265,7 +272,7 @@ UninstallCommon:
 	Delete $INSTDIR\dfw2.dll
 	Delete $INSTDIR\umc.dll
 	RmDir /r $INSTDIR\${ProductName}
-	!insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED $INSTDIR\ResultFile2.dll
+;	!insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED $INSTDIR\ResultFile2.dll
 	DeleteRegKey HKLM ${ProductRegKey}
 SectionEnd
 
