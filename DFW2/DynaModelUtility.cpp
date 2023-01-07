@@ -382,7 +382,8 @@ bool CDynaModel::StepControl::FilterStep(double dStep)
 		dFilteredStepInner = dStep;
 
 	dFilteredStep = dFilteredStepInner;
-
+	
+	
 	// если не достигли шага, на котором ограничение изменения заканчивается
 	if (nStepsToEndRateGrow >= nStepsCount)
 	{
@@ -390,6 +391,14 @@ bool CDynaModel::StepControl::FilterStep(double dStep)
 		if (dRateGrowLimit < dFilteredStep)
 			dFilteredStep = dRateGrowLimit;
 	}
+
+	// если находимся на минимальном шаге
+	// используем любой шанс его поднять раньше
+	// чем пройдет лимит по nStepsToStepChange 
+
+	if (Equal(H(), Hmin))
+		return dFilteredStep > 1.0;
+
 	// возвращаем true если серия шагов ограничения закончилась и 
 	// отфильтрованный шаг должен увеличиться
 	return (--nStepsToStepChange <= 0) && dFilteredStep > 1.0;

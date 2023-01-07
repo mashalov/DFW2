@@ -328,7 +328,7 @@ namespace DFW2
 			double NordsiekScaledForH_ = 1.0;
 			double NordsiekScaledForHSaved_ = 1.0;
 		public:
-			inline double CurrentH() const
+			inline double H() const
 			{
 				return m_dCurrentH;
 			}
@@ -789,7 +789,7 @@ namespace DFW2
 
 		inline double H() const
 		{
-			return sc.CurrentH();
+			return sc.H();
 		}
 
 		inline bool IsNordsiekReset() const
