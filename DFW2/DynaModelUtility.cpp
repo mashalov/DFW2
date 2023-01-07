@@ -358,7 +358,7 @@ void CDynaModel::GetWorstEquations(ptrdiff_t nCount)
 			break;
 
 			Log(DFW2MessageStatus::DFW2LOG_INFO,
-				fmt::format("{:<6} {} {} Rtol {} Atol {}",
+				fmt::format("{:<6} {} {} Rtol {:.3g} Atol {:.3g}",
 					pVectorBegin->ErrorHits,
 					pVectorBegin->pDevice->GetVerbalName(),
 					pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),

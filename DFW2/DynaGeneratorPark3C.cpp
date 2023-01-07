@@ -64,6 +64,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 		}
 	}
 
+	// наверное нужно учитывать omega = (1+s)
+	// при расчете дискретного изменения ?
 	Zgen_ = { r , 0.5 * (lq2 + ld2) };
 	
 	return Status;

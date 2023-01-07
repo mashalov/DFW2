@@ -470,10 +470,20 @@ void CDynaModel::SetDifferentiatorsTolerance()
 {
 	// Для всех алгебраических уравнений, в которые входит РДЗ, рекурсивно ставим точность Atol не превышающую РДЗ
 	// если доходим до дифференциального уравнения - его точность и точность связанных с ним уравнений оставляем
-	ptrdiff_t nMarked = 0;
+	ptrdiff_t nMarked{ 0 };
+
+	double DerlagCoe{ DerlagTolerance() };
+	// если задан коэффициент изменения Atol/Rtol  1.0 - ничего не делаем
+	if (Equal(DerlagCoe, 1.0))
+		return;
+
+	const double AtolDerlag{ DerlagCoe * GetAtol() };
+	const double RtolDerlag{ DerlagCoe * GetAtol() };
+
 	do
 	{
 		nMarked = 0;
+
 		RightVector* pVectorBegin{ pRightVector };
 		RightVector* const pVectorEnd{ pRightVector + m_nEstimatedMatrixSize };
 
@@ -483,18 +493,18 @@ void CDynaModel::SetDifferentiatorsTolerance()
 			{
 				// уравнение отмечено как уравнение РДЗ, меняем отметку, чтобы указать, что это уравнение уже прошли
 				pVectorBegin->PrimitiveBlock = PBT_LAST;
-				//pVectorBegin->Atol = 1E-2;
-				//pVectorBegin->Rtol = 1E-5;
+				pVectorBegin->Atol = AtolDerlag;
+				pVectorBegin->Rtol = RtolDerlag;
 
-				ptrdiff_t nDerLagEqIndex = pVectorBegin - pRightVector;
-				MatrixRow *pRowBase = m_pMatrixRows;
-				MatrixRow *pRow = pRowBase;
-				MatrixRow *pRowEnd = pRow + m_nEstimatedMatrixSize;
+				const ptrdiff_t nDerLagEqIndex{ pVectorBegin - pRightVector };
+				MatrixRow* const pRowBase{ m_pMatrixRows };
+				MatrixRow* pRow{ pRowBase };
+				const MatrixRow* const pRowEnd{ pRow + m_nEstimatedMatrixSize };
 
 				// просматриваем строки матрицы, ищем столбцы с индексом, соответствующим уравнению РДЗ
 				for (; pRow < pRowEnd ; pRow++)
 				{
-					ptrdiff_t nEqIndex = pRow - pRowBase;
+					const ptrdiff_t nEqIndex{ pRow - pRowBase };
 					if (nEqIndex != nDerLagEqIndex)
 					{
 						for (ptrdiff_t *pc = pRow->pApRow; pc < pRow->pApRow + pRow->m_nColsCount; pc++)
@@ -502,7 +512,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 							if (*pc == nDerLagEqIndex)
 							{
 								// нашли столбец с индексом уравнения РДЗ
-								RightVector *pMarkEq = pRightVector + nEqIndex;
+								RightVector* const pMarkEq{ pRightVector + nEqIndex };
 								// если уравнение с этим столбцом алгебраическое и еще не просмотрено
 								if (pMarkEq->PrimitiveBlock == PBT_UNKNOWN && pMarkEq->EquationType == DET_ALGEBRAIC)
 								{
@@ -522,7 +532,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 			pVectorBegin++;
 		}
 		// продолжаем, пока есть необработанные уравнения
-		Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Marked = {}", nMarked);
+		//Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Marked = {}", nMarked);
 	} while (nMarked);
 
 }

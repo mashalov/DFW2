@@ -92,6 +92,7 @@ namespace DFW2
 			double Hmax = (std::numeric_limits<double>::max)();
 			double HysteresisRtol_ = 1e-2;								// относительный гистерезис
 			double HysteresisAtol_ = 3.0;								// абсолютный гистерезис
+			double DerLagTolerance_ = 1.0;								// коэффициент, на который умножается Atol/Rtol Derlag
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -167,7 +168,6 @@ namespace DFW2
 			static constexpr const char* m_cszHmax = { "Hmax" };
 			static constexpr const char* cszHysteresisRtol = { "HysteresisRtol" };
 			static constexpr const char* cszHysteresisAtol = { "HysteresisAtol" };
-
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
 
@@ -859,6 +859,11 @@ namespace DFW2
 		{
 			_ASSERTE(m_cszDampingName);
 			return m_cszDampingName;
+		}
+
+		inline double DerlagTolerance() const
+		{
+			return m_Parameters.DerLagTolerance_;
 		}
 
 		bool CountConstElementsToSkip(ptrdiff_t nRow);
