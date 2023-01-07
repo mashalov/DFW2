@@ -86,6 +86,7 @@ set(EMSSSOURCES
     NodeMeasures.cpp
     BranchMeasures.cpp
     Logger.cpp
+    TestDevice.cpp
     )             
 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)

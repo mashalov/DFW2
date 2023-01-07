@@ -47,6 +47,7 @@ void CCompilerGCC::CompileWithGCC()
 		pathRefDir.string(),
 		pathSOOutput.string(),
 		pathCustomDeviceCPP.string()));
+	pTree->Debug(CommandLine);
 
 	const auto Result(exec(CommandLine.c_str()));
 	if (Result.second != 0)

@@ -3,6 +3,13 @@
 #include "DynaGeneratorMotion.h"
 #include "BranchMeasures.h"
 #include "MathUtils.h"
+#ifdef _MSC_VER
+#include <intrin.h>
+#else
+#include <x86intrin.h>
+#include <cpuid.h>
+#endif
+
 
 using namespace DFW2;
 

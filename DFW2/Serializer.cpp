@@ -2,6 +2,7 @@
 #include "Serializer.h"
 #include "DeviceContainer.h"
 #include "FmtFormatters.h"
+#include <stdint.h>
 using namespace DFW2;
 
 
@@ -302,13 +303,13 @@ template<> MetaSerializedValue* MetaSerializedValue::Set<int const&>(const int& 
 	return this;
 }
 
-template<> MetaSerializedValue* MetaSerializedValue::Set<unsigned __int64 const&>(const unsigned __int64& value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<uint64_t const&>(const uint64_t& value)
 {
 	SetInt(static_cast<const ptrdiff_t>(value));
 	return this;
 }
 
-template<> MetaSerializedValue* MetaSerializedValue::Set<__int64 const&>(const __int64& value)
+template<> MetaSerializedValue* MetaSerializedValue::Set<int64_t const&>(const int64_t& value)
 {
 	SetInt(static_cast<const ptrdiff_t>(value));
 	return this;

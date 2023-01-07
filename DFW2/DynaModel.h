@@ -797,7 +797,7 @@ namespace DFW2
 			return sc.m_bNordsiekReset;
 		}
 
-		static [[nodiscard]] bool IsSSE2Available();
+		static bool IsSSE2Available();
 
 		//  возвращает отношение текущего шага к новому
 		inline double SetH(double h)
@@ -830,7 +830,7 @@ namespace DFW2
 			return pLRCIconst_;
 		}
 
-		inline CDynaLRC* GetLRСSconst() const
+		inline CDynaLRC* GetLRCSconst() const
 		{
 			return pLRCSconst_;
 		}
