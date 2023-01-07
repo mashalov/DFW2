@@ -797,7 +797,7 @@ namespace DFW2
 			return sc.m_bNordsiekReset;
 		}
 
-		static bool IsSSE2Available();
+		[[nodiscard]] static bool IsSSE2Available();
 
 		//  возвращает отношение текущего шага к новому
 		inline double SetH(double h)
