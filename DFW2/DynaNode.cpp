@@ -1190,7 +1190,7 @@ bool CDynaNodeContainer::LULF()
 
 		DumpIterationControl(DFW2MessageStatus::DFW2LOG_DEBUG);
 
-		if (std::abs(IterationControl_.MaxV.GetDiff()) < pDynaModel_->GetRtolLULF())
+		if (std::abs(IterationControl_.MaxV.GetDiff()) < pDynaModel_->RtolLULF())
 		{
 			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLULFConverged, IterationControl_.MaxV.GetDiff(), nIteration));
 			break;

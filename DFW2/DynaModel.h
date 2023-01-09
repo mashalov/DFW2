@@ -902,7 +902,7 @@ namespace DFW2
 			return m_Parameters.m_bConsiderDampingEquation;
 		}
 		// возвращает абсолютную точность из параметров
-		inline double GetAtol() const
+		inline double Atol() const
 		{
 			return m_Parameters.m_dAtol;
 		}
@@ -920,13 +920,13 @@ namespace DFW2
 		}
 
 		// возвращает относительную точность из параметров
-		inline double GetRtol() const
+		inline double Rtol() const
 		{
 			return m_Parameters.m_dRtol;
 		}
 		// Относительная погрешность решения УР по напряжению
 		// с помощью линейного метода
-		inline double GetRtolLULF() const
+		inline double RtolLULF() const
 		{
 			return m_Parameters.m_dRtol;
 		}

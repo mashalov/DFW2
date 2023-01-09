@@ -87,7 +87,7 @@ void CDynaModel::InitNordsiek()
 	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-		InitNordsiekElement(pVectorBegin,GetAtol(),GetRtol());
+		InitNordsiekElement(pVectorBegin,Atol(),Rtol());
 
 	sc.StepChanged();
 	sc.OrderChanged();

@@ -199,7 +199,7 @@ bool CDynaModel::RunTransient()
 		//m_Parameters.EnableSwitchIteration = 5;
 		//m_Parameters.SeidellStep = 1.02;
 		//m_Parameters.m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
-		m_Parameters.Imb = 0.05 * GetAtol();
+		m_Parameters.Imb = 0.05 * Atol();
 		//m_Parameters.DerLagTolerance_ = 10.0;
 
 		PrecomputeConstants();

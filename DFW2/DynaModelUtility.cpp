@@ -592,7 +592,7 @@ bool CDynaModel::OscillationsDecayed()
 {
 	if (m_Parameters.m_bAllowDecayDetector)
 	{
-		m_OscDetector.check_pointed_values(GetCurrentTime(), GetRtol(), GetAtol());
+		m_OscDetector.check_pointed_values(GetCurrentTime(), Rtol(), Atol());
 		if (m_OscDetector.has_decay(static_cast<size_t>(m_Parameters.m_nDecayDetectorCycles)))
 		{
 			Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszDecayDetected, GetCurrentTime()));
@@ -1054,8 +1054,8 @@ void CDynaModel::PrecomputeConstants()
 	// константы могут изменяться, например для демпфирования
 	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
 	// считаем параметры гистерезиса по заданным параметрам
-	HysteresisAtol_ = GetAtol() * m_Parameters.HysteresisAtol_;
-	HysteresisRtol_ = GetRtol() * m_Parameters.HysteresisRtol_;
+	HysteresisAtol_ = Atol() * m_Parameters.HysteresisAtol_;
+	HysteresisRtol_ = Rtol() * m_Parameters.HysteresisRtol_;
 }
 
 void CDynaModel::FinishStep()

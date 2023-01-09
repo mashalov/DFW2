@@ -62,7 +62,7 @@ void CDynaModel::WriteResultsHeader()
 	TaggedPath resultFilePath{ stringutils::utf8_encode(resultPath.c_str()) };
 	resultFilePath.Create().close();
 	ResultFilePath_ = stringutils::utf8_decode(resultFilePath.Path());
-	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * GetAtol(), "Тестовая схема mdp_debug5 с КЗ"};
+	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * Atol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(ResultFilePath_, resultsInfo);
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, resultFilePath.Path()));
 

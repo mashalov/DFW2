@@ -477,8 +477,8 @@ void CDynaModel::SetDifferentiatorsTolerance()
 	if (Equal(DerlagCoe, 1.0))
 		return;
 
-	const double AtolDerlag{ DerlagCoe * GetAtol() };
-	const double RtolDerlag{ DerlagCoe * GetAtol() };
+	const double AtolDerlag{ DerlagCoe * Atol() };
+	const double RtolDerlag{ DerlagCoe * Atol() };
 
 	do
 	{
@@ -582,7 +582,7 @@ void CDynaModel::SolveLinearSystem()
 
 void CDynaModel::SolveRefine()
 {
-	const double maxresidual{ klu.SolveRefine( GetAtol() * GetAtol() * GetAtol()) };
+	const double maxresidual{ klu.SolveRefine( Atol() * Atol() * Atol()) };
 	if (maxresidual > sc.dMaxSLEResidual)
 	{
 		sc.dMaxSLEResidual = maxresidual;

@@ -151,21 +151,6 @@ double CDynaPrimitiveLimited::CheckZeroCrossing(CDynaModel *pDynaModel)
 		break;
 	}
 
-	// если состояние изменилось, запрашиваем обработку разрыва
-	if (oldCurrentState != eCurrentState)
-	{
-		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
-			fmt::format("t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}", 
-			pDynaModel->GetCurrentTime(), 
-			pDynaModel->GetIntegrationStepNumber(),
-			GetVerbalName(), 
-			Device_.GetVerbalName(),
-			Output_,
-			Min_, Max_, 
-			oldCurrentState, eCurrentState));
-		pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
-	}
-
 	return rH;
 }
 
@@ -176,14 +161,28 @@ double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, const Rig
 
 	const double dError{ pRightVector->Error };
 
+
+
 	// получаем константу метода интегрирования
 	const double* lm{ pDynaModel->Methodl[pRightVector->EquationType * 2 + q - 1] };
 	// рассчитываем коэффициенты полинома, описывающего изменение переменной
 	double a{ 0.0 };		// если порядок метода 1 - квадратичный член равен нулю
 	// линейный член
-	double b{ (pRightVector->Nordsiek[1] + dError * lm[1]) / h };
+	const double b{ (pRightVector->Nordsiek[1] + dError * lm[1]) / h };
 	// постоянный член
-	double c{ (pRightVector->Nordsiek[0] + dError * lm[0]) - dConst };
+	double c{ (pRightVector->Nordsiek[0] + dError * lm[0])};
+
+	//const double GuardDiff{ pDynaModel->GetZeroCrossingTolerance() * (pRightVector->Rtol * std::abs(dConst) + pRightVector->Atol) };
+	const double GuardDiff{ pDynaModel->GetZeroCrossingTolerance() };
+	if (c < dConst)
+		dConst -= GuardDiff;
+	else
+		dConst += GuardDiff;
+
+	c -= dConst;
+
+
+
 	// если порядок метода 2 - то вводим квадратичный коэффициент
 	if (q == 2)
 		a = (pRightVector->Nordsiek[2] + dError * lm[2]) / h / h;
@@ -213,9 +212,25 @@ void CDynaPrimitiveLimited::SetCurrentState(CDynaModel* pDynaModel, eLIMITEDSTAT
 {
 	if (eCurrentState != CurrentState)
 	{
+		const auto fnDecodeState = [](CDynaPrimitiveLimited::eLIMITEDSTATES State)
+		{
+			constexpr std::array<const char*, 3> VerbStates = {"Min", "Mid", "Max"};
+			return VerbStates[static_cast<std::underlying_type<CDynaPrimitiveLimited::eLIMITEDSTATES>::type>(State)];
+		};
+
+		// если состояние изменилось, запрашиваем обработку разрыва
 		pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
+		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG,
+				fmt::format(CDFW2Messages::m_cszPrimitiveChangesState,
+					pDynaModel->GetCurrentTime(),
+					pDynaModel->GetIntegrationStepNumber(),
+					GetVerbalName(),
+					Device_.GetVerbalName(),
+					Output_,
+					Min_, Max_,
+					(fnDecodeState)(eCurrentState),
+					(fnDecodeState)(CurrentState)));
 	}
-	
 	eCurrentState = CurrentState;
 }
 

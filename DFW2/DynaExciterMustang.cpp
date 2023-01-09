@@ -166,7 +166,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::ProcessDiscontinuity(CDynaModel* pDyn
 
 double CDynaExciterMustang::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
-	double rH = 1.0;
+	double rH{ 1.0 };
 
 	if (IsStateOn())
 	{

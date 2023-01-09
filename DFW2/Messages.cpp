@@ -243,4 +243,5 @@ const char* CDFW2Messages::m_cszLFRunningZ0 = "Оценка УР методом 
 const char* CDFW2Messages::m_cszNoSSE2Support = "Процессор не поддерживает SSE2";
 const char* CDFW2Messages::m_cszWrongTaggedPath = "Ошибка пути с тегами в позиции {}";
 const char* CDFW2Messages::m_cszParameterIsOutOfRange = "Значение параметра \"{}\" : \"{}\" = {:.3f} находится вне диапазона типовых значений [{:.3f};{:.3f}]";
+const char* CDFW2Messages::m_cszPrimitiveChangesState = "t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}";
 
