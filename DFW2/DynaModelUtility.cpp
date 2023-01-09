@@ -1105,6 +1105,8 @@ void CDynaModel::DumpStatistics()
 			sc.dMaxSLEResidual,
 			sc.dMaxSLEResidualTime));
 
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Zerocrossing misses {}", sc.ZeroCrossingMisses));
+
 	if (m_Parameters.m_bStopOnBranchOOS && sc.m_MaxBranchAngle.Device())
 		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszMaxBranchAngle,
 			sc.m_MaxBranchAngle.Value() * 180.0 / M_PI,

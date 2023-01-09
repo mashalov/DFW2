@@ -172,16 +172,15 @@ double CDynaPrimitive::FindZeroCrossingToConst(CDynaModel *pDynaModel, const Rig
 	// постоянный член
 	double c{ (pRightVector->Nordsiek[0] + dError * lm[0])};
 
-	//const double GuardDiff{ pDynaModel->GetZeroCrossingTolerance() * (pRightVector->Rtol * std::abs(dConst) + pRightVector->Atol) };
-	const double GuardDiff{ pDynaModel->GetZeroCrossingTolerance() };
-	if (c < dConst)
-		dConst -= GuardDiff;
-	else
-		dConst += GuardDiff;
+	double GuardDiff{ pDynaModel->GetZeroCrossingTolerance() * ( pRightVector->Rtol * std::abs(dConst) + pRightVector->Atol) };
 
 	c -= dConst;
+	if (c > 0)
+		GuardDiff = std::min(c, GuardDiff);
+	else
+		GuardDiff = std::max(c, -GuardDiff);
 
-
+	c -= 0.755 * GuardDiff;
 
 	// если порядок метода 2 - то вводим квадратичный коэффициент
 	if (q == 2)

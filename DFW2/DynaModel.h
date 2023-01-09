@@ -427,6 +427,7 @@ namespace DFW2
 			bool bAdamsDampingEnabled = false;
 			ptrdiff_t nNoRingingSteps = 0;
 			const double Hmin = 1E-8;
+			ptrdiff_t ZeroCrossingMisses = 0;
 
 			StepError Newton;
 			StepError Integrator;
@@ -943,7 +944,7 @@ namespace DFW2
 
 		inline double GetZeroCrossingTolerance() const
 		{
-			return ((sc.Hmin / H()) > 0.999) ? (std::numeric_limits<double>::max)() : 100.0 * m_Parameters.m_dAtol;
+			return ((sc.Hmin / H()) > 0.999) ? (std::numeric_limits<double>::max)() : 0.95;
 		}
 
 		// Текущий номер итерации Ньютона

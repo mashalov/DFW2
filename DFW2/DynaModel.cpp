@@ -1033,6 +1033,7 @@ bool CDynaModel::Step()
 									rSame = 0.0;
 									// и признаем шаг успешным
 									GoodStep(rSame);
+									sc.ZeroCrossingMisses++;
 								}
 								else
 								{
@@ -1045,6 +1046,7 @@ bool CDynaModel::Step()
 							{
 								// если время зерокроссинга не достаточно точно определено подбираем новый шаг
 								RepeatZeroCrossing(rZeroCrossing);
+								sc.ZeroCrossingMisses++;
 							}
 						}
 						else
