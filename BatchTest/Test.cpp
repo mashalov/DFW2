@@ -2,15 +2,59 @@
 #include <thread>
 #include "Test.h"
 #include "BS_thread_pool.hpp"
-
 #include "ResultCompare.h"
 #import "progid:Astra.Rastr.1" named_guids no_namespace
 #include "nlohmann/json.hpp"
+
+#include <atlbase.h>
+#include <atlcom.h>
+
+CComModule _Module;
 
 _bstr_t bstrPath(const std::filesystem::path& Path)
 {
 	return _bstr_t(Path.c_str());
 }
+
+static const GUID CLSID_Handler = { 0x5219b44b, 0x874, 0x449e,{ 0x86, 0x11, 0xb7, 0x8, 0xd, 0xbf, 0xa6, 0xab } };
+
+
+class ATL_NO_VTABLE CEventHandler :
+	public CComObjectRootEx<CComSingleThreadModel>,
+	public CComCoClass<CEventHandler, &CLSID_Handler>,
+	public IDispatchImpl<_IRastrEvents, &DIID__IRastrEvents, &LIBID_ASTRALib>
+{
+public:
+	BEGIN_COM_MAP(CEventHandler)
+		COM_INTERFACE_ENTRY(_IRastrEvents)
+		COM_INTERFACE_ENTRY(IDispatch)
+	END_COM_MAP()
+	//Custom functions
+
+	STDMETHOD(Invoke)(
+		_In_ DISPID dispidMember,
+		_In_ REFIID riid,
+		_In_ LCID lcid,
+		_In_ WORD wFlags,
+		_In_ DISPPARAMS* pdispparams,
+		_Out_opt_ VARIANT* pvarResult,
+		_Out_opt_ EXCEPINFO* pexcepinfo,
+		_Out_opt_ UINT* puArgErr)
+	{
+
+		if (dispidMember == 3)
+		{
+			if (pdispparams->rgvarg[4].lVal == 24)
+			{
+				std::cout << stringutils::utf8_encode(pdispparams->rgvarg[2].bstrVal) << "\r";
+			}
+		}
+		return S_OK;
+	}
+
+};
+
+class  __declspec(uuid("5219b44b-0874-449e-8611-b7080dbfa6ab")) CEventHandler;
 
 void CBatchTest::ReadParameters()
 {
@@ -289,6 +333,23 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		IRastrPtr Rastr;
 		if (const HRESULT hr{ Rastr.CreateInstance(CLSID_Rastr) }; FAILED(hr))
 			throw dfw2error("Ошибка создания Rastr, scode {:0x}", static_cast<unsigned long>(hr));
+
+		_com_ptr_t<_com_IIID<IConnectionPoint, &__uuidof(IConnectionPoint)>> ConnectionPoint;
+		DWORD dwCookie{ 0 };
+
+		CComObject<CEventHandler>* handler{ nullptr };
+		DWORD dwCookieReg{ 0 };
+
+		if (Input.Opts.Threads == 1)
+		{
+			CEventHandler::CreateInstance(&handler);
+			CComObject<CEventHandler>::CreateInstance(&handler);
+			_com_ptr_t<_com_IIID<IConnectionPointContainer, &__uuidof(IConnectionPointContainer)>> ConnectionPoints;
+			if (SUCCEEDED(Rastr->QueryInterface(&ConnectionPoints)))
+				if (SUCCEEDED(ConnectionPoints->FindConnectionPoint(__uuidof(_IRastrEvents), &ConnectionPoint)))
+					ConnectionPoint->Advise(handler, &dwCookie);
+		}
+
 		Rastr->Load(RG_REPL, bstrPath(Input.CaseFile), bstrPath(Input.rstPath));
 		Rastr->Load(RG_REPL, bstrPath(Input.ContingencyFile), bstrPath(Input.scnPath));
 		Rastr->NewFile(bstrPath(Input.dfwPath));
@@ -302,11 +363,15 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		IColPtr Hmin{ ComDynamic->Cols->Item("Hmin") };
 		IColPtr Hmax{ ComDynamic->Cols->Item("Hmax") };
 		IColPtr Hout{ ComDynamic->Cols->Item("Hout") };
+		IColPtr MInt{ ComDynamic->Cols->Item("Mint") };
+
 		IColPtr SnapTemplate{ComDynamic->Cols->Item("SnapTemplate")};
 		IColPtr SnapPath{ ComDynamic->Cols->Item("SnapPath") };
 		IColPtr SnapAutoLoad{ ComDynamic->Cols->Item("SnapAutoLoad") };
 		IColPtr RUSTabAtol{ ComDynamic->Cols->Item("IntEpsilon") };
 
+
+		//MInt->PutZ(0, 6);
 		Hint->PutZ(0, Opts.RUSTabHmin);
 		Hmin->PutZ(0, Opts.RUSTabHmin);
 		Hout->PutZ(0, Opts.RUSTabHmin);
@@ -511,8 +576,11 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 
 		Output.TimeRustab = Duration[0];
 		Output.TimeRaiden = Duration[1];
-	}
 
+		if (ConnectionPoint && handler && dwCookie > 0)
+			ConnectionPoint->Unadvise(dwCookie);
+	}
+	
 	catch (const _com_error& er)
 	{
 		if (Input.Opts.Threads > 1)
