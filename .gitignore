@@ -280,3 +280,4 @@ cd/
 /Release DLL
 /UMC/UMC/Release DLL/UMC.iobj
 /UMC/UMC/Release DLL/UMC.ipdb
+/Doxygen/html
