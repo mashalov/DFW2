@@ -872,7 +872,9 @@ eDEVICEFUNCTIONSTATUS CDevice::MastersReady(CheckMasterDeviceFunction* pFnCheckM
 	return Status;
 }
 
-
+/*!
+	Базовая реализация выполняет zerocrossing для всех примитивов, которые входят в девайс
+*/
 double CDevice::CheckZeroCrossing(CDynaModel *pDynaModel)
 {
 	double rH{ 1.0 };
@@ -903,12 +905,20 @@ void CDevice::RegisterPrimitive(CDynaPrimitive *pPrimitive)
 	Primitives_.push_back(pPrimitive);
 }
 
+/*!  
+	В базовой реализации выполняет CDynaPrimitive::StoreState для
+	всех примитивов.
+*/
 void CDevice::StoreStates()
 {
 	for (auto&& it : StatePrimitives_)
 		it->StoreState();
 }
 
+/*!
+	В базовой реализации выполняет CDynaPrimitive::RestoreState для
+	всех примитивов.
+*/
 void CDevice::RestoreStates()
 {
 	for (auto&& it : StatePrimitives_)
@@ -1118,11 +1128,11 @@ SerializerValidatorRulesPtr CDevice::GetValidator()
 	return Validator;
 }
 
-// идея UpdateSerializer состоит в том, что
-// для данного экземпляра устройства функция заполняет
-// переданный Serializer значениями, необходимыми устройству 
-// и связывает значения с внутренними переменными устройства
-
+/*! Идея UpdateSerializer состоит в том, что
+	для данного экземпляра устройства функция заполняет
+	переданный Serializer значениями, необходимыми устройству 
+	и связывает значения с внутренними переменными устройства
+*/
 void CDevice::UpdateSerializer(CSerializerBase* Serializer)
 {
 	Serializer->BeginUpdate(this);
@@ -1163,6 +1173,10 @@ VariableIndex& CDevice::GetVariable(ptrdiff_t nVarIndex)
 		throw dfw2error("CDevice::GetVariable index ouf of range");
 }
 
+/*!
+	Используется для выполнения расчетов переменных, которые не входят в систему уравнений,
+	но необходимы в результатах или в промежуточных расчетах между шагами.
+*/
 void CDevice::FinishStep(const CDynaModel& DynaModel)
 {
 	return;

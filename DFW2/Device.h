@@ -403,7 +403,7 @@ namespace DFW2
 		virtual bool LeaveDiscontinuityMode(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckProcessDiscontinuity(CDynaModel* pDynaModel);
 		virtual eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel);
-		// вызывается после успешного выполнения шага для расчета зависимых переменных
+		//! Вызывается после успешного выполнения шага для расчета зависимых переменных
 		virtual void FinishStep(const CDynaModel& DynaModel);
 		virtual eDEVICESTATE GetState() const { return State_; }
 		bool IsStateOn() const { return GetState() == eDEVICESTATE::DS_ON; }
@@ -413,21 +413,25 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ChangeState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause);
 
 		const char* VariableNameByPtr(double* pVariable) const;
+		//! Выполняет zerocrossing
 		virtual double CheckZeroCrossing(CDynaModel* pDynaModel);
-		// callback для девайса, который позволяет ему определить нужно ли
-		// делать zerocrossing для заданного примитива. Используется, например,
-		// в форсировке, чтобы не контролировать выход из форсировки пока не вышли на форсировку
+		//! Сallback для девайса, который позволяет ему определить нужно ли делать zerocrossing для заданного примитива.
+		/*! 
+		Используется, например, в форсировке, чтобы не контролировать выход из форсировки пока не вышли на форсировку 
+		*/
 		virtual bool DetectZeroCrossingFine(const CDynaPrimitive* primitive) { return true; }
+		//! Сохраняет состояния устройства и его примитивов
 		virtual void StoreStates();
+		//! Восстанавливает сохраненные состояния устройства и его примитивов
 		virtual void RestoreStates();
 
-		// возвращает сериализатор для данного типа устройств
+		//! Возвращает сериализатор для данного типа устройств
 		SerializerPtr GetSerializer();
-		// возвращает валидатор для данного типа устройств
+		//! Возвращает валидатор для данного типа устройств
 		SerializerValidatorRulesPtr GetValidator();
-		// обновляет сериализатор для данного типа устройств
+		//! Обновляет сериализатор для данного типа устройств
 		virtual void UpdateSerializer(CSerializerBase* Serializer);
-		// обновляет валидатор для данного типа устройств
+		//! Обновляет валидатор для данного типа устройств
 		virtual void UpdateValidator(CSerializerValidatorRules* Validator);
 		// shortcut добавляет в сериализатор свойство состояния
 		void AddStateProperty(CSerializerBase* Serializer);
