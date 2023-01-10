@@ -270,7 +270,7 @@ namespace DFW2
 		}
 	};
 
-	// класс устройства, наследует все что связано с идентификацией
+	//! класс устройства, наследует все что связано с идентификацией
 	class CDevice : public CDeviceId
 	{
 	protected:
@@ -414,6 +414,9 @@ namespace DFW2
 
 		const char* VariableNameByPtr(double* pVariable) const;
 		virtual double CheckZeroCrossing(CDynaModel* pDynaModel);
+		// callback для девайса, который позволяет ему определить нужно ли
+		// делать zerocrossing для заданного примитива. Используется, например,
+		// в форсировке, чтобы не контролировать выход из форсировки пока не вышли на форсировку
 		virtual bool DetectZeroCrossingFine(const CDynaPrimitive* primitive) { return true; }
 		virtual void StoreStates();
 		virtual void RestoreStates();

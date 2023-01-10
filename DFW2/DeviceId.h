@@ -4,7 +4,7 @@
 
 namespace DFW2
 {
-	// класс для идентификации устройств. Является базовым для всех устройств
+	//! Класс для идентификации устройств. Является базовым для всех устройств
 	class CDeviceId
 	{
 	protected:
@@ -17,13 +17,13 @@ namespace DFW2
 		CDeviceId();
 		explicit CDeviceId(ptrdiff_t Id);
 		virtual ~CDeviceId() {}
-		ptrdiff_t GetId() const;				// получить идентификатор
-		void SetId(ptrdiff_t Id);				// задать идентификатор
-		const char* GetName() const;			// получить имя без подробностей
-		void SetName(std::string_view Name);	// задать имя без подробностей
-		const char* GetVerbalName() const;		// получить имя с подробностями
-		ptrdiff_t GetDBIndex() const;			// получить индекс в БД
-		void SetDBIndex(ptrdiff_t nIndex);		// задать индекс в БД
+		ptrdiff_t GetId() const;				//! получить идентификатор
+		void SetId(ptrdiff_t Id);				//! задать идентификатор
+		const char* GetName() const;			//! получить имя без подробностей
+		void SetName(std::string_view Name);	//! задать имя без подробностей
+		const char* GetVerbalName() const;		//! получить имя с подробностями
+		ptrdiff_t GetDBIndex() const;			//! получить индекс в БД
+		void SetDBIndex(ptrdiff_t nIndex);		//! задать индекс в БД
 
 		static constexpr const char* m_cszid = "id";
 	};
