@@ -37,6 +37,7 @@ protected:
 		double RaidenRtol = 1e-4;
 		double RUSTabAtol = 1e-6;
 		double RUSTabHmin = 1e-2;
+		double RUSTabZeroBranch = 4e-6;
 		std::filesystem::path ResultPath;
 		long SelectedRun = 0;
 		bool RaidenStopOnOOS = false;

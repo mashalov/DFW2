@@ -25,6 +25,8 @@
 !include nsDialogs.nsh
 !include LogicLib.nsh
 Unicode True
+ShowInstDetails show
+ShowUninstDetails show
 
 !define RastrWin3RegKey "Software\RastrWin3"
 !define ProductRegKey "${RastrWin3RegKey}\${ProductName}"
@@ -214,7 +216,6 @@ Section InstallX64 0
 	File "${InputFolderX64}..\release dll\dfw2.dll"
 	File "${InputFolderX64}umc.dll"
 	!define LIBRARY_X64
-;	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX64}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX64}\..\..\ReferenceCustomModel\*.*"
@@ -224,6 +225,9 @@ Section InstallX64 0
 	File "${InputFolderX64}ModelCorrect.rbs"
 	File "${InputFolderX64}config.json"
 	File "${InputFolderX64}Тестовая утилита.pdf"
+	SetOutPath $RastrWinX64ComponentsPath\PDF\Raiden
+	File "${InputFolderX64}Руководство администратора RaidenEMS.pdf"
+	File "${InputFolderX64}Руководство пользователя RaidenEMS.pdf"
 	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX64OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
@@ -238,9 +242,8 @@ Section InstallX86 1
 	File "${InputFolderX86}..\release dll\dfw2.dll"
 	File "${InputFolderX86}umc.dll"
 	!undef LIBRARY_X64
-;	!insertmacro InstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED "${InputFolderX86}ResultFile.dll" $OUTDIR\ResultFile2.dll $TEMP
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
-	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
+	SetOutPath $RastrWinX86ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX86}\..\ReferenceCustomModel\*.*"
 	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
 	File "${InputFolderX86}BatchTest.exe"
@@ -248,6 +251,9 @@ Section InstallX86 1
 	File "${InputFolderX64}ModelCorrect.rbs"
 	File "${InputFolderX64}config.json"
 	File "${InputFolderX64}Тестовая утилита.pdf"
+	SetOutPath $RastrWinX86ComponentsPath\PDF\Raiden
+	File "${InputFolderX64}Руководство администратора RaidenEMS.pdf"
+	File "${InputFolderX64}Руководство пользователя RaidenEMS.pdf"
 	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX86OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
@@ -271,9 +277,9 @@ UninstallCommon:
 	Delete $INSTDIR\${UninstallerName}
 	Delete $INSTDIR\dfw2.dll
 	Delete $INSTDIR\umc.dll
-	RmDir /r $INSTDIR\${ProductName}
-;	!insertmacro UninstallLib REGDLL NOTSHARED NOREBOOT_PROTECTED $INSTDIR\ResultFile2.dll
+	RmDir /r $INSTDIR\PDF\Raiden
 	DeleteRegKey HKLM ${ProductRegKey}
+	RmDir /r $INSTDIR\${ProductName}
 SectionEnd
 
 OutFile ${ProductName}Install.exe
@@ -389,8 +395,8 @@ FunctionEnd
 !insertmacro MUI_LANGUAGE "Russian"
 !insertmacro MUI_LANGUAGE "English"
 
-LangString CopyrightInfo ${LANG_ENGLISH} "${ProductName} ${Version} © Eugene Mashalov 2017-2022"
-LangString CopyrightInfo ${LANG_RUSSIAN} "${ProductName} ${Version} © Евгений Машалов 2017-2022"
+LangString CopyrightInfo ${LANG_ENGLISH} "${ProductName} ${Version} © Eugene Mashalov 2017-2023"
+LangString CopyrightInfo ${LANG_RUSSIAN} "${ProductName} ${Version} © Евгений Машалов 2017-2023"
 LangString CheckSystemRqr ${LANG_ENGLISH} "Checking system requirements"
 LangString CheckSystemRqr ${LANG_RUSSIAN} "Проверка системных требований"
 LangString CheckSystemRqr2 ${LANG_ENGLISH} "Now installer will check your computer for installed prerequisites"

@@ -612,7 +612,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 						bRes = true;
 					}
 					else
-						Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
+						Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszParkParametersNiiptPlusMethodFailed, GetVerbalName()));
 				}
 			}
 			else
@@ -712,7 +712,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersCanay(const double& x,
 		}
 	}
 
-	Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszParkParametersCanayMethodFailed, GetVerbalName()));
+	Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszParkParametersCanayMethodFailed, GetVerbalName()));
 	// если не получилось у Canay, пробуем Kundur
 	return GetAxisParametersNiipt(x, xl, x1, x2, To1, To2, r1, l1, r2, l2, PARK_PARAMETERS_DETERMINATION_METHOD::Kundur);
 }

@@ -43,6 +43,10 @@ void CBatchTest::ReadParameters()
 		if (parameters.contains(szThreads))
 			GlobalOptions.Threads = parameters[szThreads].get<long>();
 
+		constexpr const char* szRaidenZeroBranch{ "RaidenZeroBranch" };
+		if (parameters.contains(szRaidenZeroBranch))
+			GlobalOptions.RUSTabZeroBranch = parameters[szRaidenZeroBranch].get<double>();
+
 		std::cout << "Поиск файлов моделей в каталоге " << CaseFilesFolder.string() << std::endl;
 
 		for (const auto& entry : std::filesystem::directory_iterator(CaseFilesFolder))
@@ -74,6 +78,7 @@ void CBatchTest::ReadParameters()
 		std::cout << "Raiden Rtol: " << GlobalOptions.RaidenRtol << std::endl;
 		std::cout << "RUSTab.Atol: " << GlobalOptions.RUSTabAtol << std::endl;
 		std::cout << "RUSTab Hmin: " << GlobalOptions.RUSTabHmin << std::endl;
+		std::cout << "RUSTab Zero branch: " << GlobalOptions.RUSTabZeroBranch << std::endl;
 		std::cout << "Raiden останов по АР: " << (GlobalOptions.RaidenStopOnOOS ? "Да": "Нет") << std::endl;
 		if(GlobalOptions.SelectedRun > 0)
 			std::cout << "Выбран расчет №: " << GlobalOptions.SelectedRun << std::endl;
@@ -324,7 +329,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		Atol->PutZ(0, Opts.RaidenAtol);
 		OutStep->PutZ(0, Opts.RUSTabHmin);
 
-		ZeroBranchImpedance->PutZ(0, 4e-6);
+		ZeroBranchImpedance->PutZ(0, Opts.RUSTabZeroBranch);
 		DurationRaiden->PutZ(0, Opts.Duration);
 
 		auto fnVerbalCode = [](const RastrRetCode& code) -> std::string
