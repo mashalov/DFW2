@@ -15,33 +15,33 @@ namespace DFW2
 	struct VariableIndexBase
 	{
 		ptrdiff_t Index = -100000;
-		constexpr bool Indexed() const { return Index >= 0; }
+		constexpr bool Indexed() const noexcept { return Index >= 0; }
 	};
 
 	struct VariableIndex : VariableIndexBase
 	{
 		double Value;
-		constexpr operator double& () { return Value; }
-		constexpr operator const double& () const { return Value; }
-		constexpr double& operator= (double value) { Value = value;  return Value; }
+		constexpr operator double& () noexcept { return Value; }
+		constexpr operator const double& () const noexcept { return Value; }
+		constexpr double& operator= (double value) noexcept { Value = value;  return Value; }
 		// опасный ход, но пока работает
 		// нужен для корректных присваиваний в исходнике пользовательского устройства
-		constexpr VariableIndex& operator = (VariableIndex& value) {  Value = value.Value; return *this; }
+		constexpr VariableIndex& operator = (VariableIndex& value) noexcept {  Value = value.Value; return *this; }
 	};
 
 	struct VariableIndexExternal : VariableIndexBase
 	{
 		double* pValue = nullptr;
-		constexpr operator double& () { return *pValue; }
-		constexpr operator const double& () const { return *pValue; }
-		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
+		constexpr operator double& () noexcept { return *pValue; }
+		constexpr operator const double& () const noexcept { return *pValue; }
+		constexpr double& operator= (double value) noexcept { *pValue = value;  return *pValue; }
 	};
 
 	struct VariableIndexExternalOptional : VariableIndexExternal
 	{
 		double Value;
-		void MakeLocal() { pValue = &Value; Index = -1; }
-		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
+		void MakeLocal() noexcept { pValue = &Value; Index = -1; }
+		constexpr double& operator= (double value) noexcept { *pValue = value;  return *pValue; }
 	};
 
 	using VariableIndexRefVec = std::vector<std::reference_wrapper<VariableIndex>>;
@@ -122,7 +122,7 @@ namespace DFW2
 		VariableVariant Variable;
 		PrimitivePin(ptrdiff_t Pin, VariableIndex& vi) : nPin(Pin), Variable(vi) {}
 		PrimitivePin(ptrdiff_t Pin, VariableIndexExternal& vi) : nPin(Pin), Variable(vi) {}
-		PrimitivePin& operator = (const PrimitivePin& pin) { return *this; }
+		PrimitivePin& operator = (const PrimitivePin& pin) noexcept { return *this; }
 	};
 
 	using PrimitivePinVec = std::vector<PrimitivePin>;

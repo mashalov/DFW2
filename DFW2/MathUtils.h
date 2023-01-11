@@ -130,11 +130,11 @@ namespace MathUtils
 		{
 			sum_ = 0.0;
 		}
-		void Add(double value)
+		void Add(double value) noexcept
 		{
 			sum_ += value;
 		}
-		double Finalize() 
+		double Finalize() noexcept
 		{
 			return sum_;
 		}
@@ -145,12 +145,12 @@ namespace MathUtils
 	protected:
 		volatile double kahan_ = 0.0;
 	public:
-		void Reset()
+		void Reset() noexcept
 		{
 			StraightSummation::Reset();
 			kahan_ = 0.0;
 		}
-		void Add(double value)
+		void Add(double value) noexcept
 		{
 			volatile double y{ value - kahan_ };
 			volatile double t{ sum_ + y };
@@ -164,18 +164,18 @@ namespace MathUtils
 	protected:
 		volatile double neumaier_ = 0.0;
 	public:
-		void Reset()
+		void Reset() noexcept
 		{
 			StraightSummation::Reset();
 			neumaier_ = 0.0;
 		}
-		void Add(double value)
+		void Add(double value) noexcept
 		{
 			volatile double t{ sum_ + value };
 			neumaier_ += (std::abs(sum_) >= std::abs(value)) ? ((sum_ - t) + value) : ((value - t) + sum_);
 			sum_ = t;
 		}
-		double Finalize()
+		double Finalize() noexcept
 		{
 			sum_ += neumaier_;
 			neumaier_ = 0.0;

@@ -22,9 +22,9 @@ namespace DFW2
 	protected:
 		T** pointer = nullptr;
 	public:
-		inline T* operator->() { return *pointer; }
-		inline bool empty() const { return pointer == nullptr; }
-		inline operator T* () { return *pointer; };
+		inline T* operator->() noexcept { return *pointer; }
+		inline bool empty() const noexcept { return pointer == nullptr; }
+		inline operator T* () noexcept { return *pointer; };
 	};
 
 	// класс для хранения связей устройства
@@ -40,7 +40,7 @@ namespace DFW2
 
 		// последовательное получение очередного связанного устройства _включенного_в_матрицу
 		template<typename T>
-		bool InMatrix(LinkWalker<T>& p) const
+		bool InMatrix(LinkWalker<T>& p) const noexcept
 		{
 			while (In(p))
 			{
@@ -55,7 +55,7 @@ namespace DFW2
 		// вызов In() возвращает очередную связь и true, или false - если связи закончились
 		// начало последовательности требует чтобы на вход был передан указатель на null
 		template<typename T>
-		bool In(LinkWalker<T>& p) const
+		bool In(LinkWalker<T>& p) const noexcept
 		{
 			if (!p.pointer)
 			{
@@ -88,9 +88,9 @@ namespace DFW2
 			return false;
 		}
 
-		inline size_t Count() const { return pPointerEnd_ - pPointerBegin_; }
-		inline CDevice** begin() const { return pPointerBegin_; }
-		inline CDevice** end() const { return pPointerEnd_; }
+		inline size_t Count() const noexcept { return pPointerEnd_ - pPointerBegin_; }
+		inline CDevice** begin() const noexcept { return pPointerBegin_; }
+		inline CDevice** end() const noexcept { return pPointerEnd_; }
 	};
 
 	// элемент для хранения/передачи списка связанных устройств одного типа
@@ -108,9 +108,9 @@ namespace DFW2
 			_ASSERTE(ppLinkStart_ <= ppLinkEnd_);
 		}
 
-		inline ptrdiff_t Count() const { return ppLinkEnd_ - ppLinkStart_; }
-		inline CDevice** begin() const { return ppLinkStart_; }
-		inline CDevice** end() const { return ppLinkStart_ + Count(); }
+		inline ptrdiff_t Count() const noexcept { return ppLinkEnd_ - ppLinkStart_; }
+		inline CDevice** begin() const noexcept { return ppLinkStart_; }
+		inline CDevice** end() const noexcept { return ppLinkStart_ + Count(); }
 
 	};
 
@@ -138,7 +138,7 @@ namespace DFW2
 		{
 			LinkRange_ = LinkRange;
 		}
-		const SingleLinksRange& GetLinksRange() const
+		const SingleLinksRange& GetLinksRange() const noexcept
 		{
 			return LinkRange_;
 		}
@@ -248,7 +248,7 @@ namespace DFW2
 
 		// расчет взвешенной ошибки по значению снаружи
 		// но с допустимыми погрешностями для этой переменной
-		double GetWeightedError(const double dError, const double dAbsValue) const
+		inline double GetWeightedError(const double dError, const double dAbsValue) const noexcept
 		{
 			_ASSERTE(Atol > 0.0);
 #ifdef USE_FMA_FULL
@@ -259,7 +259,7 @@ namespace DFW2
 		}
 
 		// расчет взвешенной ошибки по значению данной переменной
-		double GetWeightedError(const double dAbsValue) const
+		inline double GetWeightedError(const double dAbsValue) const noexcept
 		{
 			_ASSERTE(Atol > 0.0);
 #ifdef USE_FMA_FULL
@@ -300,7 +300,7 @@ namespace DFW2
 		ptrdiff_t InContainerIndex_ = -1;
 	public:
 
-		eDFW2DEVICETYPE GetType() const;							// получить тип устройства
+		eDFW2DEVICETYPE GetType() const noexcept;					// получить тип устройства
 		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
 
 		void Log(DFW2MessageStatus Status, std::string_view Message) const;
@@ -338,8 +338,8 @@ namespace DFW2
 		CDevice* GetSingleLink(ptrdiff_t Index);
 		CDevice* GetSingleLink(eDFW2DEVICETYPE eDevType);
 		void SetContainer(CDeviceContainer* pContainer, ptrdiff_t Index);
-		inline ptrdiff_t InContainerIndex() const { return InContainerIndex_; }
-		CDeviceContainer* GetContainer() { return pContainer_; }
+		inline ptrdiff_t InContainerIndex() const noexcept { return InContainerIndex_; }
+		CDeviceContainer* GetContainer() noexcept { return pContainer_; }
 		const CDeviceContainer* GetContainer() const { return pContainer_; }
 		virtual ~CDevice() = default;
 		virtual bool LinkToContainer(CDeviceContainer* pContainer, CDeviceContainer* pContLead, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
@@ -350,8 +350,8 @@ namespace DFW2
 		ptrdiff_t CheckAddVisited(CDevice* pDevice);
 		void SetSingleLinkStart(CDevice** ppLinkStart);
 
-		CDynaModel* GetModel();
-		const CDynaModel* GetModel() const;
+		CDynaModel* GetModel() noexcept;
+		const CDynaModel* GetModel() const noexcept;
 		void ProcessTopologyRequest();
 
 		// построение блока уравнения в Якоби
@@ -377,11 +377,11 @@ namespace DFW2
 		// предварительная однократная инициалиация устройства
 		virtual eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckInit(CDynaModel* pDynaModel);
-		eDEVICEFUNCTIONSTATUS Initialized() { return eInitStatus_; }
+		eDEVICEFUNCTIONSTATUS Initialized() const noexcept { return eInitStatus_; }
 		virtual eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel* pDynaModel);
-		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() { return eInitStatus_; }
+		eDEVICEFUNCTIONSTATUS DiscontinuityProcessed() const noexcept { return eInitStatus_; }
 		// ставит статус обработки в "неготово", для того чтобы различать устройства с обработанными разрывами
-		void UnprocessDiscontinuity() { eInitStatus_ = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY; }
+		void UnprocessDiscontinuity() noexcept { eInitStatus_ = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY; }
 
 		// функция ремапа номера уравнения устройства в номер уравнения в Якоби
 		inline ptrdiff_t A(ptrdiff_t nOffset) const
@@ -398,7 +398,7 @@ namespace DFW2
 		}
 		virtual void InitNordsiek(CDynaModel* pDynaModel);
 		virtual void Predict() {};
-		virtual bool InMatrix() const;
+		virtual bool InMatrix() const noexcept;
 		void EstimateEquations(CDynaModel* pDynaModel);
 		virtual bool LeaveDiscontinuityMode(CDynaModel* pDynaModel);
 		eDEVICEFUNCTIONSTATUS CheckProcessDiscontinuity(CDynaModel* pDynaModel);

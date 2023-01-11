@@ -165,7 +165,7 @@ namespace DFW2
 		void StartLF(bool bFlatStart, double ImbTol);
 		void StoreStates() override;
 		void RestoreStates() override;
-		bool InMatrix() const override;
+		bool InMatrix() const noexcept override;
 		void InitNordsiek(CDynaModel* pDynaModel) override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
 		void SuperNodeLoadFlowYU(CDynaModel* pDynaModel);

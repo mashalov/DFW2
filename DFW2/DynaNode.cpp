@@ -1431,7 +1431,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 	return rH;
 }
 // узел не должен быть в матрице, если он отключен или входит в суперузел
-bool CDynaNodeBase::InMatrix() const
+bool CDynaNodeBase::InMatrix() const noexcept
 {
 	if (pSuperNodeParent || !IsStateOn())
 		return false;

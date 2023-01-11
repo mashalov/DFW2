@@ -94,8 +94,8 @@ namespace DFW2
 		// описание статических атрибутов контейнера: тип и связи с другими устройствами
 		CDeviceContainerProperties ContainerProps_;
 	public:
-		inline CDeviceContainerProperties& ContainerProps() { return ContainerProps_; }
-		inline const CDeviceContainerProperties& ContainerProps() const { return ContainerProps_; }
+		inline CDeviceContainerProperties& ContainerProps() noexcept { return ContainerProps_; }
+		inline const CDeviceContainerProperties& ContainerProps() const noexcept { return ContainerProps_; }
 		// количество уравнений одного устройства в данном контейнере
 		// функция виртуальная, так как для ряда устройств количество переменных не постоянное
 		// количество таких устройств в контейнере всегда одно. В свойствах контейнера 
@@ -103,9 +103,9 @@ namespace DFW2
 		virtual ptrdiff_t EquationsCount() const;							
 
 		// тип устройства хранится в атрибутах контейнера. Устройство вне контейнера не знает своего типа
-		inline eDFW2DEVICETYPE GetType() const { return ContainerProps_.GetType(); }
+		inline eDFW2DEVICETYPE GetType() const noexcept { return ContainerProps_.GetType(); }
 		// текстовое описание типа устройства
-		const char* GetTypeName() const { return ContainerProps_.GetVerbalClassName(); }
+		const char* GetTypeName() const noexcept { return ContainerProps_.GetVerbalClassName(); }
 
 		CDeviceContainer(CDynaModel *pDynaModel);
 		virtual ~CDeviceContainer();
@@ -174,12 +174,12 @@ namespace DFW2
 		bool VariableOutputEnable(std::string_view VarName, bool OutputEnable);
 
 		// диапазон карты переменных состояния
-		inline VARINDEXMAP::const_iterator VariablesBegin() { return ContainerProps_.VarMap_.begin(); }
-		inline VARINDEXMAP::const_iterator VariablesEnd() { return ContainerProps_.VarMap_.end(); }
+		inline VARINDEXMAP::const_iterator VariablesBegin() noexcept { return ContainerProps_.VarMap_.begin(); }
+		inline VARINDEXMAP::const_iterator VariablesEnd() noexcept { return ContainerProps_.VarMap_.end(); }
 
 		// диапазон карты констант
-		inline CONSTVARINDEXMAP::const_iterator ConstVariablesBegin() { return ContainerProps_.ConstVarMap_.begin(); }
-		inline CONSTVARINDEXMAP::const_iterator ConstVariablesEnd() { return ContainerProps_.ConstVarMap_.end(); }
+		inline CONSTVARINDEXMAP::const_iterator ConstVariablesBegin() noexcept { return ContainerProps_.ConstVarMap_.begin(); }
+		inline CONSTVARINDEXMAP::const_iterator ConstVariablesEnd() noexcept { return ContainerProps_.ConstVarMap_.end(); }
 
 		
 		ptrdiff_t GetVariableIndex(std::string_view VarName)	  const;	// получить индекс переменной состояния по имени
@@ -191,13 +191,14 @@ namespace DFW2
 		void SettleDevice(CDevice *pDevice, ptrdiff_t nIndex);				// привязать устройство в контейнере
 		void RemoveDevice(ptrdiff_t nId);									// удалить устройство по идентификатору или индексу
 		void RemoveDeviceByIndex(ptrdiff_t nIndex); 
-		size_t Count() const;												// получить количество устройств в контейнере
+		size_t Count() const noexcept;										// получить количество устройств в контейнере
 		size_t CountNonPermanentOff() const;								// получить количество устройств в конейнере без признака PermanentOff
-		inline DEVICEVECTOR::iterator begin() { return DevVec.begin(); }			// диапазон вектора устройств
-		inline DEVICEVECTOR::iterator end() { return DevVec.end(); }
+		// диапазон вектора устройств
+		inline DEVICEVECTOR::iterator begin() noexcept { return DevVec.begin(); }			
+		inline DEVICEVECTOR::iterator end() noexcept   { return DevVec.end(); }
 
-		inline const DEVICEVECTOR::const_iterator begin() const { return DevVec.begin(); }			// const-диапазон вектора устройств
-		inline const DEVICEVECTOR::const_iterator end() const   { return DevVec.end(); }
+		inline const DEVICEVECTOR::const_iterator begin() const noexcept { return DevVec.begin(); }			// const-диапазон вектора устройств
+		inline const DEVICEVECTOR::const_iterator end() const noexcept   { return DevVec.end(); }
 
 		void Log(DFW2MessageStatus Status, const std::string_view Message, ptrdiff_t nDBIndex = -1);
 		void DebugLog(const std::string_view Message);
@@ -232,7 +233,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);				// предварительно инициализировать и проверить параметры устройств
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
 		void FinishStep(const CDynaModel& DynaModel);						// завершить шаг и рассчитать зависимые переменные
-		CDynaModel* GetModel();
+		CDynaModel* GetModel() noexcept;
 		void PushVarSearchStack(CDevice*pDevice);
 		bool PopVarSearchStack(CDevice* &pDevice);
 		void ResetStack();
@@ -240,7 +241,7 @@ namespace DFW2
 		CDeviceContainer* DetectLinks(CDeviceContainer* pExtContainer, LinkDirectionTo& LinkTo, LinkDirectionFrom& LinkFrom);
 		size_t GetResultVariablesCount();									// получить количество переменных, которое нужно выводить в результаты
 		bool HasAlias(std::string_view Alias) const;						// соответствует ли тип устройства заданному псевдониму
-		const char* GetSystemClassName() const;
+		const char* GetSystemClassName() const noexcept;
 		ptrdiff_t GetSingleLinkIndex(eDFW2DEVICETYPE eDevType);				// получить индекс ссылки один-к-одному по типу устройства
 		SerializerPtr GetSerializer();
 	};

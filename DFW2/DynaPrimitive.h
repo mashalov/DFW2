@@ -52,11 +52,11 @@ namespace DFW2
 		// для внешней переменной этот совпадает с указателем на значение переменной
 		// для внутренней указатель указывает на промежуточный внутренний указатель, 
 		// который иницализирован указателем на значение внутренней переменной
-		constexpr operator double& () { return *pValue; }
-		constexpr operator const double& () const { return *pValue; }
+		constexpr operator double& () noexcept { return *pValue; }
+		constexpr operator const double& () const noexcept { return *pValue; }
 		// значение double можно присвоить
-		constexpr double& operator= (double value) { *pValue = value;  return *pValue; }
-		constexpr bool Indexed() const { return Index >= 0; }
+		constexpr double& operator= (double value) noexcept { *pValue = value;  return *pValue; }
+		constexpr bool Indexed() const noexcept { return Index >= 0; }
 	};
 
 	using OutputList = std::initializer_list<std::reference_wrapper<VariableIndex>>;
@@ -106,14 +106,14 @@ namespace DFW2
 		bool UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters);
 	public:
 		// возвращает значение выхода
-		constexpr operator double& () { return Output_.Value; }
-		constexpr operator const double& () const { return Output_.Value; }
-		constexpr operator double* () { return &Output_.Value; }
+		constexpr operator double& () noexcept { return Output_.Value; }
+		constexpr operator const double& () const noexcept { return Output_.Value; }
+		constexpr operator double* () noexcept { return &Output_.Value; }
 		// присваивает значение связанной выходной переменной
-		constexpr double& operator= (double value) { Output_.Value = value;  return Output_.Value; }
+		constexpr double& operator= (double value) noexcept { Output_.Value = value;  return Output_.Value; }
 		// возвращает ссылки на выходную переменную
-		constexpr operator VariableIndex& () { return Output_; }
-		constexpr operator const VariableIndex& () const { return Output_; }
+		constexpr operator VariableIndex& () noexcept { return Output_; }
+		constexpr operator const VariableIndex& () const noexcept { return Output_; }
 
 		// примитив может иметь несколько входов и выходов (количество выходов соответствует порядку примитива)
 		// поэтому конструктор принимает список входных переменных, одну обязательную выходную переменную

@@ -5,7 +5,7 @@ using namespace DFW2;
 
 // у устройства нет собственного типа. Тип задается из контейнера
 // к которому устройство принадлежит. Если контейнера нет - тип неизвестен
-eDFW2DEVICETYPE CDevice::GetType() const
+eDFW2DEVICETYPE CDevice::GetType() const noexcept
 {
 	_ASSERTE(pContainer_);
 
@@ -320,7 +320,7 @@ const CLinkPtrCount* const CDevice::GetLink(ptrdiff_t nLinkIndex)
 }
 
 // Определяет нужны ли уравнения для этого устройства
-bool CDevice::InMatrix() const
+bool CDevice::InMatrix() const noexcept
 {
 	return IsStateOn();
 }
@@ -966,13 +966,13 @@ void CDevice::DumpIntegrationStep(ptrdiff_t nId, ptrdiff_t nStepNumber)
 	}
 }
 
-CDynaModel* CDevice::GetModel()
+CDynaModel* CDevice::GetModel() noexcept
 {
 	_ASSERTE(pContainer_ && pContainer_->GetModel());
 	return pContainer_->GetModel();
 }
 
-const CDynaModel* CDevice::GetModel() const
+const CDynaModel* CDevice::GetModel() const noexcept
 {
 	_ASSERTE(pContainer_ && pContainer_->GetModel());
 	return pContainer_->GetModel();

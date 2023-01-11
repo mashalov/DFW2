@@ -12,7 +12,7 @@ CDeviceId::CDeviceId(ptrdiff_t nId) : Id_(nId)
 {
 }
 
-const char* CDeviceId::GetVerbalName() const
+const char* CDeviceId::GetVerbalName() const noexcept
 {
 	return VerbalName_.c_str();
 		
@@ -33,23 +33,23 @@ void CDeviceId::SetName(std::string_view Name)
 	UpdateVerbalName();
 }
 
-void CDeviceId::SetDBIndex(ptrdiff_t nIndex)
+void CDeviceId::SetDBIndex(ptrdiff_t nIndex) noexcept
 {
 	DBIndex_ = nIndex;
 }
 
-ptrdiff_t CDeviceId::GetDBIndex() const
+ptrdiff_t CDeviceId::GetDBIndex() const noexcept
 {
 	return DBIndex_;
 }
 
 
-ptrdiff_t CDeviceId::GetId() const
+ptrdiff_t CDeviceId::GetId() const noexcept
 {
 	return Id_;
 }
 
-const char* CDeviceId::GetName() const
+const char* CDeviceId::GetName() const noexcept
 {
 	return Name_.c_str();
 }

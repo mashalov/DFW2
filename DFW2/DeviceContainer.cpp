@@ -208,12 +208,12 @@ CDevice* CDeviceContainer::GetDevice(ptrdiff_t nId)
 	return GetDevice(&Id);
 }
 
-size_t CDeviceContainer::Count() const
+size_t CDeviceContainer::Count() const noexcept
 {
 	return DevVec.size();
 }
 
-size_t CDeviceContainer::CountNonPermanentOff() const
+size_t CDeviceContainer::CountNonPermanentOff() const 
 {
 	return std::count_if(DevVec.begin(), DevVec.end(), [](const CDevice* pDev)->bool {return !pDev->IsPermanentOff(); });
 }
@@ -851,12 +851,12 @@ ptrdiff_t CDeviceContainer::GetSingleLinkIndex(eDFW2DEVICETYPE eDevType)
 	return nRet;
 }
 
-CDynaModel* CDeviceContainer::GetModel() 
+CDynaModel* CDeviceContainer::GetModel() noexcept
 { 
 	return pDynaModel_; 
 }
 
-const char* CDeviceContainer::GetSystemClassName() const
+const char* CDeviceContainer::GetSystemClassName() const noexcept
 {
 	return ContainerProps_.GetSystemClassName();
 }

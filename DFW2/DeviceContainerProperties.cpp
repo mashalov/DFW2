@@ -3,16 +3,16 @@
 using namespace DFW2;
 
 
-const char* CDeviceContainerProperties::GetVerbalClassName() const
+const char* CDeviceContainerProperties::GetVerbalClassName() const noexcept
 {
 	return ClassName_.c_str();
 }
-const char* CDeviceContainerProperties::GetSystemClassName() const
+const char* CDeviceContainerProperties::GetSystemClassName() const noexcept
 {
 	return ClassSysName_.c_str();
 }
 
-eDFW2DEVICETYPE CDeviceContainerProperties::GetType() const
+eDFW2DEVICETYPE CDeviceContainerProperties::GetType() const noexcept
 {
 	return eDeviceType;
 }
