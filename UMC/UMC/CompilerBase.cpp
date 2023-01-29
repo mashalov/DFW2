@@ -40,8 +40,30 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 	OutputStream.close();
 }
 
+// возвращает путь к файлу, в котором уже есть скомпилированный текст модели, определяемый по хэшу
+std::filesystem::path CompilerBase::CachedModulePath(const std::string_view& SourceToCompile, const std::filesystem::path& pathDLLOutput)
+{
+    std::filesystem::path OutputPath(pathDLLOutput);
+    const auto extension{ pathDLLOutput.extension() };
+    OutputPath.remove_filename();
+    // строим строку хэша от исходника
+    std::string SourceHash;
+    CryptoPP::SHA256 hash;
+    CryptoPP::StringSource SourceHashCompute(reinterpret_cast<const CryptoPP::byte*>(SourceToCompile.data()), SourceToCompile.size(), true,
+        new CryptoPP::HashFilter(hash,
+            new CryptoPP::Base32Encoder(
+                new CryptoPP::StringSink(SourceHash)
+            )
+        )
+    );
+    // формируем имя файла по полученному хэшу с исходным расширением
+    OutputPath.append(SourceHash);
+    OutputPath.replace_extension(extension);
+    return OutputPath;
+}
+
 // возвращает true, если повторная рекомпиляция модуля таргета не требуется
-bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, std::filesystem::path& pathDLLOutput)
+bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, const std::filesystem::path& pathDLLOutput)
 {
     bool bRes{ false };
     // проверяем режим ребилда, если он задан - игнорируем 
@@ -137,8 +159,26 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         // сохраняем исходный текст из стрима
         SaveSource(Source, pathSourceOutput);
 
-        // проверяем, нужна повторная компиляция модуля таргета
-        if (NoRecompileNeeded(Source, compiledModulePath))
+
+        // получаем путь к файлу, имя которого построено по хэшу
+        // исходника модели
+        const auto cachedModulePath{ CachedModulePath(Source, compiledModulePath) };
+        if (std::filesystem::exists(cachedModulePath))
+        {
+            // если файл есть, проверяем, нужна ли повторная компиляция модуля таргета
+            pTree->Message(fmt::format("{}. {}", 
+                stringutils::utf8_encode(cachedModulePath.c_str()),
+                DFW2::CDFW2Messages::m_cszCachedUserModelFound));
+
+            if (NoRecompileNeeded(Source, cachedModulePath))
+            {
+                // если исходник внутри точно такой же,
+                // принимаем найденный по хэшу модуль как готовый к работе
+                compiledModulePath = cachedModulePath;
+                return true;
+            }
+        } // если по хэшу ничего не нашли, используем исходное имя модуля
+        else if (NoRecompileNeeded(Source, compiledModulePath))
             return true;
 
         // создаем дерево правил
@@ -216,8 +256,17 @@ bool CompilerBase::Compile(std::istream& SourceStream)
                 stringutils::utf8_encode(pathRefDir.c_str()),
                 stringutils::utf8_encode(pathOutDir.c_str())));
         }
+
         // построить модуль с помощью выбранного компилятора
         BuildWithCompiler();
+
+        ec.clear();
+        std::filesystem::copy(compiledModulePath, cachedModulePath, ec);
+
+        if(ec)
+            pTree->Warning(fmt::format(DFW2::CDFW2Messages::m_cszFileCopyError, 
+                stringutils::utf8_encode(compiledModulePath.c_str()),
+                stringutils::utf8_encode(cachedModulePath.c_str())));
 
         if (pTree->ErrorCount() == 0)
         {

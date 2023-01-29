@@ -5,6 +5,9 @@
 #include "ASTNodes.h"
 #include "../CryptoPP/gzip.h"
 #include "../CryptoPP/base64.h"
+#include "../CryptoPP/base32.h"
+#include "../CryptoPP/sha.h"
+#include "../CryptoPP/filters.h"
 #define NOMINMAX
 #ifdef _MSC_VER
 #include "windows.h"

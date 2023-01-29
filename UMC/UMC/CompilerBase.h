@@ -67,7 +67,9 @@ public:
     // удаление компилятора
     void Destroy() override { delete this; }
     // возвращает true, если модуль на заданном пути содержит исходник, идентичный заданному тексту
-    bool NoRecompileNeeded(std::string_view SourceToCompile, std::filesystem::path& pathDLLOutput);
+    bool NoRecompileNeeded(std::string_view SourceToCompile, const std::filesystem::path& pathDLLOutput);
+    // возвращает путь к файлу, в котором уже есть скомпилированный текст модели, определяемый по хэшу
+    std::filesystem::path CachedModulePath(const std::string_view& SourceToCompile, const std::filesystem::path& pathDLLOutput);
     // сохраняет исходный текст в файл с заданным путем
     void SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput);
     // возвращает полный путь к файлу скомпилированного модуля
