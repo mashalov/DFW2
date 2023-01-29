@@ -216,7 +216,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	else
 	{
 		std::filesystem::path pathResultingDLL = pathDLLOutput;
-		pathResultingDLL.append(TargetName).replace_extension(".dll");
+		pathResultingDLL.append(TargetName).replace_extension(CompilerBase::szModuleExtension);
 		std::filesystem::path pathDLLLibrary = pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath);
 		std::filesystem::create_directories(pathDLLLibrary);
 		std::filesystem::copy(pathResultingDLL, pathDLLLibrary, std::filesystem::copy_options::overwrite_existing);

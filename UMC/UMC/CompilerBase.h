@@ -49,6 +49,15 @@ protected:
         return fnVersionTie(v1) == fnVersionTie(v2);
     }
 
+    // возвращает true, если модуль на заданном пути содержит исходник, идентичный заданному тексту
+    bool NoRecompileNeeded(std::string_view SourceToCompile, const std::filesystem::path& pathDLLOutput);
+    // возвращает путь к файлу, в котором уже есть скомпилированный текст модели, определяемый по хэшу
+    std::filesystem::path CachedModulePath(const std::string_view& SourceToCompile, const std::filesystem::path& pathDLLOutput);
+    // удаляет файлы из кэша моделей, если их количество превышает заданное значение. Файлы удаляются в порядке от старых к новым
+    void RemoveCachedModules(const std::filesystem::path& path, const size_t AllowedFilesCount);
+    // сохраняет исходный текст в файл с заданным путем
+    void SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput);
+
 public:
 
     void SetMessageCallBacks(const MessageCallBacks& MessageCallBackFunctions) override
@@ -66,15 +75,16 @@ public:
     std::string GetProperty(std::string_view PropertyName) override;
     // удаление компилятора
     void Destroy() override { delete this; }
-    // возвращает true, если модуль на заданном пути содержит исходник, идентичный заданному тексту
-    bool NoRecompileNeeded(std::string_view SourceToCompile, const std::filesystem::path& pathDLLOutput);
-    // возвращает путь к файлу, в котором уже есть скомпилированный текст модели, определяемый по хэшу
-    std::filesystem::path CachedModulePath(const std::string_view& SourceToCompile, const std::filesystem::path& pathDLLOutput);
-    // сохраняет исходный текст в файл с заданным путем
-    void SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput);
     // возвращает полный путь к файлу скомпилированного модуля
     const std::filesystem::path& CompiledModulePath() const override;
     // возвращает версию компилятора
     const DFW2::VersionInfo& Version() const override;
+
+#ifdef _MSC_VER
+    static constexpr const char* szModuleExtension = ".dll";
+#else
+    static constexpr const char* szModuleExtension = ".so";
+#endif
+    
 };
 

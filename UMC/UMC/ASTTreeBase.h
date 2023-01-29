@@ -51,6 +51,7 @@ public:
     static inline constexpr const char* szPropConfiguration = "Configuration";
     static inline constexpr const char* szPropPlatform = "Platform";
     static inline constexpr const char* szPropRebuild = "Rebuild";
+    static inline constexpr const char* szPropCachedModulesCount = "CachedModulesCount";
 };
 
 using ASTFragmentsMap  = std::map<std::string, ASTNodeSet>;

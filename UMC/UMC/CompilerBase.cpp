@@ -40,6 +40,47 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 	OutputStream.close();
 }
 
+
+void CompilerBase::RemoveCachedModules(const std::filesystem::path& path, const size_t AllowedFilesCount)
+{
+    struct FileTime
+    {
+        const std::filesystem::path Path_;
+        std::filesystem::file_time_type Time_;
+    };
+
+    auto fnFileTimeCompare = [](const FileTime& lhs, const FileTime& rhs)
+    {
+        return std::tie(lhs.Time_, lhs.Path_) < std::tie(rhs.Time_, rhs.Path_);
+    };
+
+    std::set<FileTime, decltype(fnFileTimeCompare)> files{ fnFileTimeCompare };
+
+    std::error_code ec;
+
+    for (const auto& file : std::filesystem::directory_iterator(path))
+        files.insert({ file.path(), std::filesystem::last_write_time(file, ec) });
+
+    if (AllowedFilesCount >= files.size())
+        return;
+
+    pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszTooManyCachedModules, 
+        files.size(), 
+        AllowedFilesCount,
+        stringutils::utf8_encode(path.c_str())));
+
+    size_t FilesToDelete{ files.size() - AllowedFilesCount };
+    for (const auto& file : files)
+    {
+        if (!FilesToDelete--)
+            break;
+        ec.clear();
+        std::filesystem::remove(file.Path_, ec);
+        if(!ec)
+            pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszRemovingExcessCachedModule, stringutils::utf8_encode(file.Path_.c_str())));
+    }
+}
+
 // возвращает путь к файлу, в котором уже есть скомпилированный текст модели, определяемый по хэшу
 std::filesystem::path CompilerBase::CachedModulePath(const std::string_view& SourceToCompile, const std::filesystem::path& pathDLLOutput)
 {
@@ -56,6 +97,7 @@ std::filesystem::path CompilerBase::CachedModulePath(const std::string_view& Sou
             )
         )
     );
+
     // формируем имя файла по полученному хэшу с исходным расширением
     OutputPath.append(SourceHash);
     OutputPath.replace_extension(extension);
@@ -140,16 +182,11 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         // устанавливаем обработчики ошибок парсера
         pTree->SetMessageCallBacks(messageCallBacks);
         // к пути из свойств компилятора
-        compiledModulePath = pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath);
+        const std::filesystem::path DllLibraryPath{ pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath) };
+        compiledModulePath = DllLibraryPath;
         // добавляем имя проекта
         compiledModulePath.append(Properties[PropertyMap::szPropProjectName]);
-
-        // формируем расширение таргета в зависимости от платформы
-#ifdef _MSC_VER
-        compiledModulePath.replace_extension(".dll");
-#else
-        compiledModulePath.replace_extension(".so");
-#endif
+        compiledModulePath.replace_extension(CompilerBase::szModuleExtension);
 
         // формируем путь для сохранения исходного текста из стрима
         pathSourceOutput = pTree->GetPropertyPath(PropertyMap::szPropOutputPath);
@@ -159,6 +196,10 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         // сохраняем исходный текст из стрима
         SaveSource(Source, pathSourceOutput);
 
+        // если задано ограничение количества файлов модулей в кэше - удаляем лишние
+        if (const auto CacheSizeString{ GetProperty(PropertyMap::szPropCachedModulesCount) }; !CacheSizeString.empty())
+            if(const long CacheSizeLong{ std::stol(CacheSizeString) }; CacheSizeLong > 0)
+                RemoveCachedModules(DllLibraryPath, CacheSizeLong);
 
         // получаем путь к файлу, имя которого построено по хэшу
         // исходника модели

@@ -42,7 +42,7 @@ void CCompilerGCC::CompileWithGCC()
 
 	// формируем путь к результирующей dll модели
 	std::filesystem::path pathSOOutput(pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath));
-	pathSOOutput.append(Properties[PropertyMap::szPropProjectName]).replace_extension(".so");
+	pathSOOutput.append(Properties[PropertyMap::szPropProjectName]).replace_extension(CompilerBase::szModuleExtension);
 	const std::string CommandLine(fmt::format("g++ -std=c++17 -fPIC -shared -s -O2 -I'{}' -o '{}' '{}' 2>&1",
 		pathRefDir.string(),
 		pathSOOutput.string(),
