@@ -54,7 +54,7 @@ protected:
     // возвращает путь к файлу, в котором уже есть скомпилированный текст модели, определяемый по хэшу
     std::filesystem::path CachedModulePath(const std::string_view& SourceToCompile, const std::filesystem::path& pathDLLOutput);
     // удаляет файлы из кэша моделей, если их количество превышает заданное значение. Файлы удаляются в порядке от старых к новым
-    void RemoveCachedModules(const std::filesystem::path& path, const size_t AllowedFilesCount);
+    void RemoveCachedModules(const std::filesystem::path& path, size_t AllowedFilesCount, size_t AllowedSizeInMbytes, long CheckPeriodInSecs = 60);
     // сохраняет исходный текст в файл с заданным путем
     void SaveSource(std::string_view SourceToCompile, std::filesystem::path& pathSourceOutput);
 

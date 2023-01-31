@@ -41,43 +41,103 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 }
 
 
-void CompilerBase::RemoveCachedModules(const std::filesystem::path& path, const size_t AllowedFilesCount)
+void CompilerBase::RemoveCachedModules(const std::filesystem::path& path, size_t AllowedFilesCount, size_t AllowedSizeInMbytes, long CheckPeriodInSecs)
 {
+    // если ограничения заданы нулями, ставим масимальные ограничения
+    if (AllowedFilesCount == 0)
+        AllowedFilesCount = std::numeric_limits<decltype(AllowedFilesCount)>::max();
+    if(AllowedSizeInMbytes == 0)
+        AllowedSizeInMbytes = std::numeric_limits<decltype(AllowedSizeInMbytes)>::max();
+
+    // если фактически ограничений нет - просто выходим
+    if (AllowedFilesCount == std::numeric_limits<decltype(AllowedFilesCount)>::max() &&
+        AllowedSizeInMbytes == std::numeric_limits<decltype(AllowedSizeInMbytes)>::max())
+        return;
+
     struct FileTime
     {
         const std::filesystem::path Path_;
         std::filesystem::file_time_type Time_;
+        double Size_;
     };
 
     auto fnFileTimeCompare = [](const FileTime& lhs, const FileTime& rhs)
     {
-        return std::tie(lhs.Time_, lhs.Path_) < std::tie(rhs.Time_, rhs.Path_);
+        return std::tie(lhs.Time_, lhs.Size_, lhs.Path_) < std::tie(rhs.Time_, rhs.Size_, rhs.Path_);
     };
 
-    std::set<FileTime, decltype(fnFileTimeCompare)> files{ fnFileTimeCompare };
+    // получаем текущее время
+    const auto CurrentTime{ std::chrono::system_clock::now() };
+    std::chrono::seconds CurrentTimeInSeconds{ std::chrono::duration_cast<std::chrono::seconds>(CurrentTime.time_since_epoch()) };
+    std::chrono::seconds LastTimeInSeconds{ CurrentTimeInSeconds };
 
-    std::error_code ec;
+    // пытаемся прочитать файл-маркер, в котором указано время последней очистки
+    const auto MarkerFile{ path / "marker" };
+    std::ifstream  MarkerIn{ MarkerFile };
+    if (MarkerIn.is_open())
+    {
+        // если файл есть, читаем время последней очистки
+        MarkerIn.read(reinterpret_cast<char*>(&LastTimeInSeconds), sizeof(std::chrono::seconds));
+        MarkerIn.close();
+    }
+    // если файла маркера нет - время последней очистки равно текущему времени
+    // если с момента последней очистки прошло меньше заданного периода очистки ничего не делаем
 
-    for (const auto& file : std::filesystem::directory_iterator(path))
-        files.insert({ file.path(), std::filesystem::last_write_time(file, ec) });
-
-    if (AllowedFilesCount >= files.size())
+    if ((CurrentTimeInSeconds - LastTimeInSeconds).count() < CheckPeriodInSecs)
         return;
 
-    pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszTooManyCachedModules, 
-        files.size(), 
-        AllowedFilesCount,
+    // пишем в файл маркера текущее время
+    std::ofstream MarkerOut{ MarkerFile };
+    if (MarkerOut.is_open())
+    {
+        MarkerOut.write(reinterpret_cast<const char*>(&CurrentTimeInSeconds), sizeof(std::chrono::seconds));
+        MarkerOut.close();
+    }
+
+    std::set<FileTime, decltype(fnFileTimeCompare)> files{ fnFileTimeCompare };
+    std::error_code ec;
+
+    // собираем файлы из каталога в сет, сортируем по дате, размеру и пути
+    double CachedFilesSize{ 0.0 };
+    for (const auto& file : std::filesystem::directory_iterator(path))
+        if (std::filesystem::is_regular_file(file, ec))
+        {
+            const auto FileSize{ static_cast<double>(file.file_size(ec)) / 1024 / 1024 };
+            files.insert({ file.path(), std::filesystem::last_write_time(file, ec), FileSize });
+            // подсчитываем размер файлов в каталоге
+            CachedFilesSize += FileSize;
+        }
+
+    // если насчитали количество файлов и их размер меньше, чем заданные ограничения - выходим
+
+    // считаем количество файлов для удаления
+    size_t FilesToDelete{ files.size() > AllowedFilesCount ? files.size() - AllowedFilesCount : 0 };
+    if (FilesToDelete == 0 && AllowedSizeInMbytes >= CachedFilesSize)
+        return;
+
+    constexpr const char* cszInf{ "inf" };
+
+    pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszTooManyCachedModules,
+        files.size(),
+        CachedFilesSize,
+        AllowedFilesCount == std::numeric_limits<decltype(AllowedFilesCount)>::max() ? cszInf: std::to_string(AllowedFilesCount),
+        AllowedSizeInMbytes == std::numeric_limits<decltype(AllowedFilesCount)>::max() ? cszInf: std::to_string(AllowedSizeInMbytes),
         stringutils::utf8_encode(path.c_str())));
 
-    size_t FilesToDelete{ files.size() - AllowedFilesCount };
     for (const auto& file : files)
     {
-        if (!FilesToDelete--)
+        if(FilesToDelete == 0 && CachedFilesSize < AllowedSizeInMbytes)
             break;
-        ec.clear();
+
         std::filesystem::remove(file.Path_, ec);
-        if(!ec)
-            pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszRemovingExcessCachedModule, stringutils::utf8_encode(file.Path_.c_str())));
+        if (!ec)
+        {
+            pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszRemovingExcessCachedModule,
+                stringutils::utf8_encode(file.Path_.c_str())));
+            CachedFilesSize -= file.Size_;
+            if (FilesToDelete > 0)
+                FilesToDelete--;
+        }
     }
 }
 
@@ -196,11 +256,18 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         // сохраняем исходный текст из стрима
         SaveSource(Source, pathSourceOutput);
 
-        // если задано ограничение количества файлов модулей в кэше - удаляем лишние
-        if (const auto CacheSizeString{ GetProperty(PropertyMap::szPropCachedModulesCount) }; !CacheSizeString.empty())
-            if(const long CacheSizeLong{ std::stol(CacheSizeString) }; CacheSizeLong > 0)
-                RemoveCachedModules(DllLibraryPath, CacheSizeLong);
+        // получаем из параметров ограничения выходного каталога по количеству и объему файлов
+        size_t AllowedCachedFilesCount{ 0 }, AllowedCachedFilesSize{ 0 };
 
+        if (const auto CacheSizeString{ GetProperty(PropertyMap::szPropCachedModulesCount) }; !CacheSizeString.empty())
+            AllowedCachedFilesCount = std::stoull(CacheSizeString);
+
+        if (const auto CacheSizeString{ GetProperty(PropertyMap::szPropCachedModulesSize) }; !CacheSizeString.empty())
+            AllowedCachedFilesSize = std::stoull(CacheSizeString);
+
+        // выполняем очистку каталога по заданным ограничениями
+        RemoveCachedModules(DllLibraryPath, AllowedCachedFilesCount, AllowedCachedFilesSize);
+        
         // получаем путь к файлу, имя которого построено по хэшу
         // исходника модели
         const auto cachedModulePath{ CachedModulePath(Source, compiledModulePath) };
@@ -301,9 +368,7 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         // построить модуль с помощью выбранного компилятора
         BuildWithCompiler();
 
-        ec.clear();
         std::filesystem::copy(compiledModulePath, cachedModulePath, ec);
-
         if(ec)
             pTree->Warning(fmt::format(DFW2::CDFW2Messages::m_cszFileCopyError, 
                 stringutils::utf8_encode(compiledModulePath.c_str()),
