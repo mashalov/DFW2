@@ -1,5 +1,5 @@
 ﻿!define ProductName "RaidenEMS"
-!define Version "1.0.1.116"
+!define Version "1.0.1.117"
 !define RastrWinX64VersionRequired "2.7.1.6388"
 !define RastrWinX86VersionRequired "2.7.0.6387"
 
@@ -33,6 +33,7 @@ ShowUninstDetails show
 !define VersionVerb "Version"
 !define InstallPathVerb "InstallPath"
 !define UninstallerName $(^Name)Uninstall.exe
+!define ReadmeFileName "RaidenEMS.txt"
 SetCompressor /SOLID /FINAL lzma
 Name ${ProductName}
 
@@ -72,7 +73,14 @@ var RastrWinX86ComponentsPath
 Function .onInit
 	SectionSetText 0 $(ComponentsX64)
 	SectionSetText 1 $(ComponentsX86)
+	InitPluginsDir
 FunctionEnd
+
+ Function .onInstSuccess
+    MessageBox MB_YESNO|MB_ICONQUESTION $(ShowReleaseNotes) IDNO NoReadme
+      Exec "notepad.exe $TEMP\${ReadmeFileName}"
+    NoReadme:
+  FunctionEnd
 
 Function onVSLink
 	Pop $0
@@ -228,6 +236,7 @@ Section InstallX64 0
 	SetOutPath $RastrWinX64ComponentsPath\PDF\Raiden
 	File "${InputFolderX64}Руководство администратора RaidenEMS.pdf"
 	File "${InputFolderX64}Руководство пользователя RaidenEMS.pdf"
+	File /oname=$TEMP\${ReadmeFileName} ${ReadmeFileName} 
 	WriteUninstaller "$RastrWinX64ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX64OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
@@ -254,6 +263,7 @@ Section InstallX86 1
 	SetOutPath $RastrWinX86ComponentsPath\PDF\Raiden
 	File "${InputFolderX64}Руководство администратора RaidenEMS.pdf"
 	File "${InputFolderX64}Руководство пользователя RaidenEMS.pdf"
+	File /oname=$TEMP\${ReadmeFileName} ${ReadmeFileName} 
 	WriteUninstaller "$RastrWinX86ComponentsPath\${UninstallerName}"
 	IfErrors 0 InstallX86OK
 	MessageBox MB_ICONSTOP $(InstallationFailed)
@@ -415,6 +425,8 @@ LangString RastrWinRegistryFailed ${LANG_ENGLISH} "No registry record found"
 LangString RastrWinRegistryFailed ${LANG_RUSSIAN} "Не записи в реестре"
 LangString RastrWinAstraNotFound ${LANG_ENGLISH} "astra.dll not found"
 LangString RastrWinAstraNotFound ${LANG_RUSSIAN} "Не найдена astra.dll"
+LangString ShowReleaseNotes ${LANG_ENGLISH} "Show release notes ?"
+LangString ShowReleaseNotes ${LANG_RUSSIAN} "Показать сведения об изменениях ?"
 LangString OldVersion ${LANG_ENGLISH} "Outdated "
 LangString OldVersion ${LANG_RUSSIAN} "Версия "
 LangString RequiredVersion ${LANG_ENGLISH} ", required "
