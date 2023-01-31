@@ -69,10 +69,10 @@ void CompilerBase::RemoveCachedModules(const std::filesystem::path& path, size_t
     // получаем текущее время
     const auto CurrentTime{ std::chrono::system_clock::now() };
     std::chrono::seconds CurrentTimeInSeconds{ std::chrono::duration_cast<std::chrono::seconds>(CurrentTime.time_since_epoch()) };
-    std::chrono::seconds LastTimeInSeconds{ CurrentTimeInSeconds };
+    std::chrono::seconds LastTimeInSeconds{ 0 };
 
     // пытаемся прочитать файл-маркер, в котором указано время последней очистки
-    const auto MarkerFile{ path / "marker" };
+    const auto MarkerFile{ path / "last_clean_marker" };
     std::ifstream  MarkerIn{ MarkerFile };
     if (MarkerIn.is_open())
     {
@@ -80,11 +80,14 @@ void CompilerBase::RemoveCachedModules(const std::filesystem::path& path, size_t
         MarkerIn.read(reinterpret_cast<char*>(&LastTimeInSeconds), sizeof(std::chrono::seconds));
         MarkerIn.close();
     }
-    // если файла маркера нет - время последней очистки равно текущему времени
+    // если файла маркера нет - время последней очистки равно нулю
     // если с момента последней очистки прошло меньше заданного периода очистки ничего не делаем
 
-    if ((CurrentTimeInSeconds - LastTimeInSeconds).count() < CheckPeriodInSecs)
+    if (const auto SecondsLeft{ (CurrentTimeInSeconds - LastTimeInSeconds).count() - CheckPeriodInSecs }; SecondsLeft < 0)
+    {
+        pTree->Information(fmt::format(DFW2::CDFW2Messages::m_cszNextCacheClieanIn, stringutils::utf8_encode(path.c_str()), -SecondsLeft));
         return;
+    }
 
     // пишем в файл маркера текущее время
     std::ofstream MarkerOut{ MarkerFile };
@@ -101,23 +104,23 @@ void CompilerBase::RemoveCachedModules(const std::filesystem::path& path, size_t
     double CachedFilesSize{ 0.0 };
     for (const auto& file : std::filesystem::directory_iterator(path))
         if (std::filesystem::is_regular_file(file, ec))
-        {
-            const auto FileSize{ static_cast<double>(file.file_size(ec)) / 1024 / 1024 };
-            files.insert({ file.path(), std::filesystem::last_write_time(file, ec), FileSize });
             // подсчитываем размер файлов в каталоге
-            CachedFilesSize += FileSize;
-        }
+            CachedFilesSize += files.insert({ file.path(),
+                                              std::filesystem::last_write_time(file, ec), 
+                                              static_cast<double>(file.file_size(ec)) / 1024 / 1024 
+                                            }).first->Size_;
 
-    // если насчитали количество файлов и их размер меньше, чем заданные ограничения - выходим
 
     // считаем количество файлов для удаления
     size_t FilesToDelete{ files.size() > AllowedFilesCount ? files.size() - AllowedFilesCount : 0 };
+
+    // если подсчитанные количество файлов и размер меньше, чем заданные ограничения - выходим
     if (FilesToDelete == 0 && AllowedSizeInMbytes >= CachedFilesSize)
         return;
 
-    constexpr const char* cszInf{ "inf" };
+    constexpr const char* cszInf{ "∞" };
 
-    pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszTooManyCachedModules,
+    pTree->Information(fmt::format(DFW2::CDFW2Messages::m_cszTooManyCachedModules,
         files.size(),
         CachedFilesSize,
         AllowedFilesCount == std::numeric_limits<decltype(AllowedFilesCount)>::max() ? cszInf: std::to_string(AllowedFilesCount),
@@ -126,14 +129,22 @@ void CompilerBase::RemoveCachedModules(const std::filesystem::path& path, size_t
 
     for (const auto& file : files)
     {
+        // работаем в цикле до тех пор, пока есть файлы для удаления
+        // и размер файлов не снизился до ограничения
         if(FilesToDelete == 0 && CachedFilesSize < AllowedSizeInMbytes)
             break;
 
+        // не удаляем файл маркера
+        if (file.Path_ == MarkerFile)
+            continue;
+
+        // удаляем файл
         std::filesystem::remove(file.Path_, ec);
         if (!ec)
         {
-            pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszRemovingExcessCachedModule,
+            pTree->Information(fmt::format(DFW2::CDFW2Messages::m_cszRemovingExcessCachedModule,
                 stringutils::utf8_encode(file.Path_.c_str())));
+            // уменьшаем суммарный размер файлов на размер удаленного файла
             CachedFilesSize -= file.Size_;
             if (FilesToDelete > 0)
                 FilesToDelete--;
@@ -264,7 +275,7 @@ bool CompilerBase::Compile(std::istream& SourceStream)
 
         if (const auto CacheSizeString{ GetProperty(PropertyMap::szPropCachedModulesSize) }; !CacheSizeString.empty())
             AllowedCachedFilesSize = std::stoull(CacheSizeString);
-
+     
         // выполняем очистку каталога по заданным ограничениями
         RemoveCachedModules(DllLibraryPath, AllowedCachedFilesCount, AllowedCachedFilesSize);
         
