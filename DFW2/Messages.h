@@ -236,7 +236,8 @@ namespace DFW2
 		static const char* m_cszValidationLessOrEqualThanNamed;
 		static const char* m_cszValidationLessThanNamed;
 		static const char* m_cszDiscontinuityProcessing;
-		static const char* m_cszAutomaticScenario;
+		static const char* m_cszAutomaticName;
+		static const char* m_cszScenarioName;
 		static const char* m_cszCannotConvertShortCircuitConstants;
 		static const char* m_cszParameterIsOutOfRange;
 		static const char* m_cszWrongTimeConstants;

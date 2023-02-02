@@ -79,7 +79,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 	if (ThreadId)
 		pathThreadRoot.append(fmt::format("Threads/{:02d}/", ThreadId));
 
-	pathAutomatic = std::filesystem::path(pathThreadRoot).append("Automatic");
+	pathAutomatic = std::filesystem::path(pathThreadRoot).append(AutomaticModuleName());
 	CheckPath(pathAutomatic);
 
 	pathAutomaticBuild = std::filesystem::path(pathAutomatic).append(cszBuild).append(Configuration()).append(strPlatform);
@@ -87,6 +87,16 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 
 	pathAutomaticModules = std::filesystem::path(pathAutomatic).append(cszModules).append(Configuration()).append(strPlatform);
 	CheckPath(pathAutomaticModules);
+
+
+	pathScenario = std::filesystem::path(pathThreadRoot).append(ScenarioModuleName());
+	CheckPath(pathScenario);
+
+	pathScenarioBuild = std::filesystem::path(pathScenario).append(cszBuild).append(Configuration()).append(strPlatform);
+	CheckPath(pathScenarioBuild);
+
+	pathScenarioModules = std::filesystem::path(pathScenario).append(cszModules).append(Configuration()).append(strPlatform);
+	CheckPath(pathScenarioModules);
 
 	pathCustomModels = std::filesystem::path(pathThreadRoot).append("CustomModels");
 

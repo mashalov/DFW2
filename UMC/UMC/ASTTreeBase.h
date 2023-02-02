@@ -53,6 +53,12 @@ public:
     static inline constexpr const char* szPropRebuild = "Rebuild";
     static inline constexpr const char* szPropCachedModulesCount = "CachedModulesCount";
     static inline constexpr const char* szPropCachedModulesSize = "CachedModulesSize";
+    static inline constexpr const char* szPropDeviceType = "DeviceType";
+    static inline constexpr const char* szPropDeviceTypeNameSystem = "DeviceTypeNameSystem";
+    static inline constexpr const char* szPropDeviceTypeNameVerbal = "DeviceTypeNameVerbal";
+    static inline constexpr const char* szPropLinkDeviceType = "LinkDeviceType";
+    static inline constexpr const char* szPropLinkDeviceMode = "LinkDeviceMode";
+    static inline constexpr const char* szPropLinkDeviceDependency = "LinkDeviceDependency";
 };
 
 using ASTFragmentsMap  = std::map<std::string, ASTNodeSet>;

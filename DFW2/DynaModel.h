@@ -736,8 +736,9 @@ namespace DFW2
 		CDeviceContainer TestDevices;
 		CDynaNodeZeroLoadFlowContainer ZeroLoadFlow;
 		CCustomDeviceContainer CustomDevice;
-		CCustomDeviceCPPContainer AutomaticDevice;
-		CAutomatic m_Automatic;
+		CCustomDeviceCPPContainer AutomaticDevice, ScenarioDevice;
+		CAutomatic Automatic_;
+		CScenario Scenario_;
 		CCustomDeviceCPPContainer CustomDeviceCPP;
 
 		CDynaModel(const DynaModelParameters& ExternalParameters = {});
@@ -1038,6 +1039,7 @@ namespace DFW2
 		CDeviceContainer *GetContainerByAlias(std::string_view Alias);
 		DEVICECONTAINERS GetContainersByAlias(std::string_view Alias);
 		CAutomatic& Automatic();
+		CAutomatic& Scenario();
 
 		// выдать в лог топ-nCount переменных по количеству ошибок
 		void GetWorstEquations(ptrdiff_t nCount);

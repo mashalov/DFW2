@@ -5,5 +5,10 @@ using namespace DFW2;
 
 CAutomatic& CDynaModel::Automatic()
 {
-	return m_Automatic;
+	return Automatic_;
+}
+
+CAutomatic& CDynaModel::Scenario()
+{
+	return Scenario_;
 }

@@ -29,7 +29,8 @@ using namespace DFW2;
 CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) : 
 						   SSE2Available_(IsSSE2Available()),
 						   m_Discontinuities(this),
-						   m_Automatic(this),
+						   Automatic_(this),
+						   Scenario_(this),
 						   Nodes(this),
 						   Branches(this),
 						   Generators1C(this),
@@ -51,6 +52,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   NodeMeasures(this),
 						   ZeroLoadFlow(this),
 						   AutomaticDevice(this),
+						   ScenarioDevice(this),
 						   TestDevices(this),
 						   CustomDeviceCPP(this),
 						   m_ResultsWriter(*this),
@@ -81,6 +83,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
 	AutomaticDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
+	ScenarioDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
 	CustomDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDevice>>();
 	CustomDeviceCPP.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
 
@@ -104,6 +107,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	m_DeviceContainers.push_back(&BranchMeasures);
 	m_DeviceContainers.push_back(&NodeMeasures);
 	m_DeviceContainers.push_back(&AutomaticDevice);
+	m_DeviceContainers.push_back(&ScenarioDevice);
 	m_DeviceContainers.push_back(&ZeroLoadFlow);
 	m_DeviceContainers.push_back(&TestDevices);
 	m_DeviceContainers.push_back(&SynchroZones);		// синхрозоны должны идти последними
@@ -146,10 +150,18 @@ CDynaModel::~CDynaModel()
 bool CDynaModel::RunTransient()
 {
 	Automatic().CompileModels();
+
 	AutomaticDevice.ConnectDLL(Automatic().GetModulePath());
 	AutomaticDevice.CreateDevices(1);
 	AutomaticDevice.BuildStructure();
-	AutomaticDevice.GetDeviceByIndex(0)->SetName(CDFW2Messages::m_cszAutomaticScenario);
+	AutomaticDevice.GetDeviceByIndex(0)->SetName(CDFW2Messages::m_cszAutomaticName);
+
+	Scenario().CompileModels();
+	ScenarioDevice.ConnectDLL(Scenario().GetModulePath());
+	ScenarioDevice.CreateDevices(1);
+	ScenarioDevice.BuildStructure();
+	ScenarioDevice.GetDeviceByIndex(0)->SetName(CDFW2Messages::m_cszScenarioName);
+
 		
 	bool bRes{ true };
 #ifdef _WIN64
@@ -300,7 +312,8 @@ bool CDynaModel::RunTransient()
 
 	
 
-			m_Automatic.Init();
+			Automatic().Init();
+			Scenario().Init();
 			m_Discontinuities.Init();
 			SetH(0.01);
 			// сохраняем начальные условия

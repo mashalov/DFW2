@@ -43,11 +43,18 @@ public:
 		Indent++;
 
 		// тип устройства
-		EmitLine("DeviceProps.SetType(DEVTYPE_AUTOMATIC);");
+		EmitLine(fmt::format("DeviceProps.SetType({});", pTree->GetProperties().at(PropertyMap::szPropDeviceType)));
 		// вербальное имя класса устройства
-		EmitLine("DeviceProps.SetClassName(\"Automatic & scenario\", \"Automatic\");");
+		EmitLine(fmt::format("DeviceProps.SetClassName(\"{}\", \"{}\");",
+			pTree->GetProperties().at(PropertyMap::szPropDeviceTypeNameVerbal),
+			pTree->GetProperties().at(PropertyMap::szPropDeviceTypeNameSystem)));
+
 		// описание связей и их режимов
-		EmitLine("DeviceProps.AddLinkFrom(DEVTYPE_MODEL, DLM_SINGLE, DPD_MASTER);");
+		//EmitLine(fmt::format("DeviceProps.AddLinkFrom(DEVTYPE_MODEL, DLM_SINGLE, DPD_MASTER);",
+		EmitLine(fmt::format("DeviceProps.AddLinkFrom({}, {}, {});",
+			pTree->GetProperties().at(PropertyMap::szPropLinkDeviceType),
+			pTree->GetProperties().at(PropertyMap::szPropLinkDeviceMode),
+			pTree->GetProperties().at(PropertyMap::szPropLinkDeviceDependency)));
 
 		size_t nConstVarIndex(0), nExtVarIndex(0), nStateVarIndex(0);
 		std::list<std::string> stateVars, extVars, constVars;

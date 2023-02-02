@@ -228,7 +228,8 @@ const char* CDFW2Messages::m_cszValidationBiggerOrEqualThanNamed = " должн�
 const char* CDFW2Messages::m_cszValidationLessOrEqualThanNamed = " должно быть меньше или равно {} = {}";
 const char* CDFW2Messages::m_cszValidationLessThanNamed = " должно быть меньше {} = {}";
 const char* CDFW2Messages::m_cszDiscontinuityProcessing = "t={:15.012f} обработка разрыва устройства \"{}\"";
-const char* CDFW2Messages::m_cszAutomaticScenario = "Автоматика/сценарий";
+const char* CDFW2Messages::m_cszAutomaticName = "Автоматика";
+const char* CDFW2Messages::m_cszScenarioName = "Cценарий";
 const char* CDFW2Messages::m_cszCannotConvertShortCircuitConstants = "{} : невозможен точный расчет постоянных времени {} и {}. Попытка использовать приближенные значения {} и {}";
 const char* CDFW2Messages::m_cszWrongTimeConstants = "\"{}\" : не выполняется условие \"{}\" для значений: {}";
 const char* CDFW2Messages::m_cszCannotGetParkParameters = "\"{}\" : невозможно определение параметров модели Парка: {} = {}";

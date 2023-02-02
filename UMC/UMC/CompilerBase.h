@@ -27,7 +27,13 @@ protected:
         {PropertyMap::szPropDllLibraryPath, "C:\\tmp\\CustomModels\\dll\\"},
         {PropertyMap::szPropConfiguration, "Debug"},
         {PropertyMap::szPropPlatform, "Win32"},
-        {PropertyMap::szPropRebuild, ""}
+        {PropertyMap::szPropRebuild, ""},
+        {PropertyMap::szPropDeviceType, "DEVTYPE_MODEL"},
+        {PropertyMap::szPropDeviceTypeNameSystem, "Automatic"},
+        {PropertyMap::szPropDeviceTypeNameVerbal, "Automatic"},
+        {PropertyMap::szPropLinkDeviceType, "DEVTYPE_MODEL"},
+        {PropertyMap::szPropLinkDeviceMode, "DLM_SINGLE"},
+        {PropertyMap::szPropLinkDeviceDependency, "DPD_MASTER"}
     };
 
     std::unique_ptr<CASTTreeBase> pTree;

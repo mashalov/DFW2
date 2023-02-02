@@ -13,8 +13,11 @@ namespace DFW2
 		std::filesystem::path pathRoot;
 		std::filesystem::path pathThreadRoot;
 		std::filesystem::path pathAutomatic;
+		std::filesystem::path pathScenario;
 		std::filesystem::path pathAutomaticBuild;
+		std::filesystem::path pathScenarioBuild;
 		std::filesystem::path pathAutomaticModules;
+		std::filesystem::path pathScenarioModules;
 		std::filesystem::path pathCustomModels;
 		std::filesystem::path pathCustomModelsBuild;
 		std::filesystem::path pathCustomModelsModules;
@@ -23,6 +26,7 @@ namespace DFW2
 		std::filesystem::path pathResults;
 
 		static constexpr const std::string_view automaticModuleName = "Automatic";
+		static constexpr const std::string_view scenarioModuleName = "Scenario";
 
 #ifdef _MSC_VER
 		static constexpr const std::string_view moduleExtension = ".dll";
@@ -78,6 +82,11 @@ namespace DFW2
 			return pathAutomatic;
 		}
 
+		const std::filesystem::path& Scenario() const
+		{
+			return pathScenario;
+		}
+
 		const std::filesystem::path& AutomaticBuild() const
 		{
 			return pathAutomaticBuild;
@@ -86,6 +95,16 @@ namespace DFW2
 		const std::filesystem::path& AutomaticModules() const
 		{
 			return pathAutomaticModules;
+		}
+
+		const std::filesystem::path& ScenarioBuild() const
+		{
+			return pathScenarioBuild;
+		}
+
+		const std::filesystem::path& ScenarioModules() const
+		{
+			return pathScenarioModules;
 		}
 
 		const std::filesystem::path& SourceReference() const
@@ -106,6 +125,11 @@ namespace DFW2
 		constexpr const std::string_view& AutomaticModuleName() const
 		{
 			return CPlatformFolders::automaticModuleName;
+		}
+
+		constexpr const std::string_view& ScenarioModuleName() const
+		{
+			return CPlatformFolders::scenarioModuleName;
 		}
 
 		const std::filesystem::path& Results() const

@@ -258,6 +258,7 @@ namespace DFW2
 		void ReadRastrRowData(SerializerPtr& Serializer, long Row);
 
 
+		void ReadAutomatic(CDynaModel& Network);
 		void ReadLRCs(CDynaLRCContainer& container);
 
 		// Читаем контейнер из таблицы RastrWin

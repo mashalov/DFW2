@@ -362,11 +362,12 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560");		// режим без нарушения устойчивости, предельный
 
 
-	//m_spRastr->NewFile(dfwPath.c_str());
+	m_spRastr->NewFile(dfwPath.c_str());
 	//m_spRastr->NewFile(scnPath.c_str());
 
 	//LoadFile("e:\\temp\\sztest\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw", dfwPath.c_str());
-	LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.dfw", dfwPath.c_str());
+	//LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.dfw", dfwPath);
+	LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.scn", scnPath);
 	//LoadFile("e:\\temp\\sztest\\106_БЕЗ ШУНТА ПС 330 кВ Петрозаводск (с откл.Кондопога-Петрозаводск).dfw", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\deep\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw ", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\deep\\КЗ-откл-нагрузка.dfw ", dfwPath.c_str());
@@ -585,78 +586,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
 
-	ITablePtr spAutoStarters = spTables->Item("DFWAutoStarter");
-	IColsPtr spASCols = spAutoStarters->Cols;
-	IColPtr spASId			= spASCols->Item(L"Id");
-	IColPtr spASName		= spASCols->Item(L"Name");
-	IColPtr spASType		= spASCols->Item(L"Type");
-	IColPtr spASExpr		= spASCols->Item(L"Formula");
-	IColPtr spASObjClass	= spASCols->Item(L"ObjectClass");
-	IColPtr spASObjKey		= spASCols->Item(L"ObjectKey");
-	IColPtr spASObjProp		= spASCols->Item(L"ObjectProp");
 
-
-	for (int i = 0; i < spAutoStarters->GetSize(); i++)
-	{
-		Network.Automatic().AddStarter(spASType->GetZ(i),
-			spASId->GetZ(i).lVal,
-			stringutils::utf8_encode(spASName->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spASExpr->GetZ(i).bstrVal),
-			0,
-			stringutils::utf8_encode(spASObjClass->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spASObjKey->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spASObjProp->GetZ(i).bstrVal));
-	}
-
-	ITablePtr spAutoLogic = spTables->Item("DFWAutoLogic");
-	IColsPtr spALCols = spAutoLogic->Cols;
-	IColPtr spALId			= spALCols->Item(L"Id");
-	IColPtr spALName		= spALCols->Item(L"Name");
-	IColPtr spALType		= spALCols->Item(L"Type");
-	IColPtr spALExpr		= spALCols->Item(L"Formula");
-	IColPtr spALActions		= spALCols->Item(L"Actions");
-	IColPtr spALDelay		= spALCols->Item(L"Delay");
-	IColPtr spALOutputMode	= spALCols->Item(L"OutputMode");
-
-	for (int i = 0; i < spAutoLogic->GetSize(); i++)
-	{
-		Network.Automatic().AddLogic(spALType->GetZ(i),
-			spALId->GetZ(i).lVal,
-			stringutils::utf8_encode(spALName->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spALExpr->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spALActions->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spALDelay->GetZ(i).bstrVal),
-			spALOutputMode->GetZ(i).lVal);
-	}
-
-
-	ITablePtr spAutoActions = spTables->Item("DFWAutoAction");
-	IColsPtr spAACols = spAutoActions->Cols;
-	IColPtr spAAId = spAACols->Item(L"Id");
-	IColPtr spAAName = spAACols->Item(L"Name");
-	IColPtr spAAType = spAACols->Item(L"Type");
-	IColPtr spAAExpr = spAACols->Item(L"Formula");
-	IColPtr spAAObjClass = spAACols->Item(L"ObjectClass");
-	IColPtr spAAObjKey = spAACols->Item(L"ObjectKey");
-	IColPtr spAAObjProp = spAACols->Item(L"ObjectProp");
-	IColPtr spAAOutputMode = spAACols->Item(L"OutputMode");
-	IColPtr spAAActionGroup = spAACols->Item(L"ParentId");
-	IColPtr spAAORunsCount = spAACols->Item(L"RunsCount");
-	
-	for (int i = 0; i < spAutoActions->GetSize(); i++)
-	{
-		Network.Automatic().AddAction(spAAType->GetZ(i),
-			spAAId->GetZ(i).lVal,
-			stringutils::utf8_encode(spAAName->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spAAExpr->GetZ(i).bstrVal),
-			0,
-			stringutils::utf8_encode(spAAObjClass->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spAAObjKey->GetZ(i).bstrVal),
-			stringutils::utf8_encode(spAAObjProp->GetZ(i).bstrVal),
-			spAAActionGroup->GetZ(i).lVal,
-			spAAOutputMode->GetZ(i).lVal,
-			spAAORunsCount->GetZ(i).lVal);
-	}
+	ReadAutomatic(Network);
 
 	//Network.CustomDeviceCPP.ConnectDLL("CustomDeviceCPP.dll");
 	//CustomDeviceConnectInfo ci("ExcControl",2);
@@ -670,6 +601,135 @@ void CRastrImport::GetData(CDynaModel& Network)
 	//GetCustomDeviceData(Network, m_spRastr, ci, Network.CustomDeviceCPP);
 }
 
+void CRastrImport::ReadAutomatic(CDynaModel& Network)
+{
+	struct AutoLevelT
+	{
+		CAutomatic& Automatic;
+		const _bstr_t Starters_;
+		const _bstr_t Logics_;
+		const _bstr_t Actions_;
+	};
+
+	const std::array<AutoLevelT, 2> AutoLevels =
+	{
+		{
+			{Network.Automatic(), L"DFWAutoStarter", L"DFWAutoLogic", L"DFWAutoAction"},
+			{Network.Scenario(), L"DFWAutoStarterScn", L"DFWAutoLogicScn", L"DFWAutoActionScn"},
+		}
+	};
+
+	ITablesPtr spTables{ m_spRastr->Tables };
+
+	const _bstr_t strId{ L"Id" };
+	const _bstr_t strName{ L"Name" };
+	const _bstr_t strType{ L"Type" };
+	const _bstr_t strFormula{ L"Formula" };
+	const _bstr_t strClass{ L"ObjectClass" };
+	const _bstr_t strKey{ L"ObjectKey" };
+	const _bstr_t strProp{ L"ObjectProp" };
+	const _bstr_t strOutput{ L"OutputMode" };
+
+	class AutoValue : public variant_t
+	{
+		using variant_t::variant_t;
+		std::string String_;
+		void ChangeToString()
+		{
+			ChangeType(VT_BSTR);
+			String_ = stringutils::utf8_encode(bstrVal);
+		}
+	public:
+		AutoValue(IColPtr& col, long index) : variant_t{ col->GetZ(index) } {};
+		operator const std::string_view()
+		{
+			ChangeToString();
+			return String_;
+		}
+		operator const char*()
+		{
+			ChangeToString();
+			return String_.c_str();
+		}
+	};
+
+	for (auto&& Level: AutoLevels)
+	{
+		ITablePtr spAutoStarters{ spTables->Item(Level.Starters_) };
+		IColsPtr spASCols{ spAutoStarters->Cols };
+		IColPtr	spASId{ spASCols->Item(strId) },
+				spASName{ spASCols->Item(strName) },
+				spASType{ spASCols->Item(strType) },
+				spASExpr{ spASCols->Item(strFormula) },
+				spASObjClass{ spASCols->Item(strClass) },
+				spASObjKey{ spASCols->Item(strKey) },
+				spASObjProp{ spASCols->Item(strProp) };
+
+		for (long i{ 0 }; i < spAutoStarters->GetSize(); i++)
+		{
+			Level.Automatic.AddStarter(
+				AutoValue(spASType, i),
+				AutoValue(spASId, i),
+				AutoValue(spASName, i),
+				AutoValue(spASExpr, i),
+				0,
+				AutoValue(spASObjClass, i),
+				AutoValue(spASObjKey, i),
+				AutoValue(spASObjProp, i));
+		}
+
+		ITablePtr spAutoLogic{ spTables->Item(Level.Logics_) };
+		IColsPtr spALCols{ spAutoLogic->Cols };
+		IColPtr spALId{ spALCols->Item(strId) },
+				spALName{ spALCols->Item(strName) },
+				spALType{ spALCols->Item(strType) },
+				spALExpr{ spALCols->Item(strFormula) },
+				spALActions{ spALCols->Item(L"Actions") },
+				spALDelay{ spALCols->Item(L"Delay") },
+				spALOutputMode{ spALCols->Item(strOutput) };
+
+		for (int i{ 0 }; i < spAutoLogic->GetSize(); i++)
+		{
+			Level.Automatic.AddLogic(
+				AutoValue(spALType, i),
+				AutoValue(spALId ,i),
+				AutoValue(spALName, i),
+				AutoValue(spALExpr, i),
+				AutoValue(spALActions, i),
+				AutoValue(spALDelay, i),
+				AutoValue(spALOutputMode, i));
+		}
+
+		ITablePtr spAutoActions{ spTables->Item(Level.Actions_) };
+		IColsPtr spAACols{ spAutoActions->Cols };
+		IColPtr spAAId{ spAACols->Item(strId) },
+				spAAName{ spAACols->Item(strName) },
+				spAAType{ spAACols->Item(strType) },
+				spAAExpr{ spAACols->Item(strFormula) },
+				spAAObjClass{ spAACols->Item(strClass) },
+				spAAObjKey{ spAACols->Item(strKey) },
+				spAAObjProp{ spAACols->Item(strProp) },
+				spAAOutputMode{ spAACols->Item(strOutput) },
+				spAAActionGroup{ spAACols->Item(L"ParentId") },
+				spAAORunsCount{ spAACols->Item(L"RunsCount") };
+
+		for (long i{ 0 }; i < spAutoActions->GetSize(); i++)
+		{
+			Level.Automatic.AddAction(
+				AutoValue(spAAType, i),
+				AutoValue(spAAId, i),
+				AutoValue(spAAName, i),
+				AutoValue(spAAExpr, i),
+				0,
+				AutoValue(spAAObjClass, i),
+				AutoValue(spAAObjKey, i),
+				AutoValue(spAAObjProp, i),
+				AutoValue(spAAActionGroup, i),
+				AutoValue(spAAOutputMode, i),
+				AutoValue(spAAORunsCount, i));
+		}
+	}
+}
 
 void CRastrImport::ReadLRCs(CDynaLRCContainer& container)
 {

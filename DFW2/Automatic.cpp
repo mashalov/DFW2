@@ -56,6 +56,26 @@ CAutomatic::CAutomatic(CDynaModel* pDynaModel) : m_pDynaModel(pDynaModel)
 {
 }
 
+const std::filesystem::path& CAutomatic::PathRoot() const
+{
+	return m_pDynaModel->Platform().Automatic();
+}
+
+const std::filesystem::path& CAutomatic::BuildPath() const
+{
+	return m_pDynaModel->Platform().AutomaticBuild();
+}
+
+const std::filesystem::path& CAutomatic::ModulesPath() const
+{
+	return m_pDynaModel->Platform().AutomaticModules();
+}
+
+const std::string_view CAutomatic::ModuleName() const
+{
+	return m_pDynaModel->Platform().AutomaticModuleName();
+}
+
 void CAutomatic::Clean()
 {
 	m_lstActions.clear();
@@ -86,8 +106,7 @@ void CAutomatic::CompileModels()
 		m_AutoActionGroups[static_cast<CAutomaticAction*>(action.get())->m_nActionGroup].push_back(action.get());
 
 	std::ofstream src;
-	const std::filesystem::path& root(m_pDynaModel->Platform().Automatic());
-	std::filesystem::path autoFile(root);
+	std::filesystem::path autoFile(PathRoot());
 	autoFile.append("auto.cmp");
 
 	src.open(autoFile, std::fstream::out);
@@ -96,9 +115,9 @@ void CAutomatic::CompileModels()
 		src << "main\n{\n" << source.str() << "}\n";
 		src.close();
 #ifdef _MSC_VER
-		auto pCompiler = std::make_shared<CCompilerDLL>("UMC.dll", "CompilerFactory");
+		auto pCompiler{ std::make_shared<CCompilerDLL>("UMC.dll", "CompilerFactory") };
 #else
-		auto pCompiler = std::make_shared<CCompilerDLL>("./Build/libUMC.so", "CompilerFactory");
+		auto pCompiler{ std::make_shared<CCompilerDLL>("./Build/libUMC.so", "CompilerFactory") };
 #endif
 		
 		std::stringstream Sourceutf8stream;
@@ -109,7 +128,7 @@ void CAutomatic::CompileModels()
 			throw dfw2error(fmt::format(DFW2::CDFW2Messages::m_cszCompilerAndRaidenVersionMismatch, vc, m_pDynaModel->version));
 
 
-		CDynaModel* pDynaModel(m_pDynaModel);
+		CDynaModel* pDynaModel{ m_pDynaModel };
 
 		Compiler->SetMessageCallBacks(
 				MessageCallBacks
@@ -143,12 +162,20 @@ void CAutomatic::CompileModels()
 		);
 
 		Sourceutf8stream <<"main\n{\n" << source.str() << "}\n";
+
 		Compiler->SetProperty("Platform", m_pDynaModel->Platform().Platform());
 		Compiler->SetProperty("Configuration", m_pDynaModel->Platform().Configuration());
-		Compiler->SetProperty("OutputPath", m_pDynaModel->Platform().AutomaticBuild().string());
-		Compiler->SetProperty("DllLibraryPath", m_pDynaModel->Platform().AutomaticModules().string());
-		Compiler->SetProperty("ProjectName", m_pDynaModel->Platform().AutomaticModuleName());
+
+		Compiler->SetProperty("OutputPath", BuildPath().string());
+		Compiler->SetProperty("DllLibraryPath", ModulesPath().string());
+		Compiler->SetProperty("ProjectName", ModuleName());
 		Compiler->SetProperty("ReferenceSources", m_pDynaModel->Platform().SourceReference().string());
+		Compiler->SetProperty("DeviceType", DeviceType());
+		Compiler->SetProperty("DeviceTypeNameSystem", "Auomatic");
+		Compiler->SetProperty("DeviceTypeNameVerbal", "Automatic");
+		Compiler->SetProperty("LinkDeviceType", "DEVTYPE_MODEL");
+		Compiler->SetProperty("LinkDeviceMode", "DLM_SINGLE");
+		Compiler->SetProperty("LinkDeviceDependency", "DPD_MASTER");
 
 		if (!Compiler->Compile(Sourceutf8stream))
 			throw dfw2error(DFW2::CDFW2Messages::m_cszWrongSourceData);
@@ -201,12 +228,29 @@ bool CAutomatic::AddAction(ptrdiff_t Type,
 	return true;
 }
 
+bool CAutomatic::ParseActionId(std::string& Action, ptrdiff_t& Id)
+{
+	bool Res{ false };
+	stringutils::trim(Action);
+	Id = 0;
+	if (!Action.empty())
+	{
+#ifdef _MSC_VER
+		if (sscanf_s(Action.c_str(), "A%td", &Id) == 1)
+#else
+		if (sscanf(Action.c_str(), "A%td", &Id) == 1)
+#endif
+			Res = true;
+	}
+	return Res;
+}
+
 void CAutomatic::Init()
 {
-	CDeviceContainer *pAutomaticContainer = m_pDynaModel->GetDeviceContainer(DEVTYPE_AUTOMATIC);
+	CDeviceContainer* pAutomaticContainer{ m_pDynaModel->GetDeviceContainer(Type()) };
 	if(!pAutomaticContainer)
 		throw dfw2error("CAutomatic::Init AutomaticContainer not available");
-	CCustomDevice *pCustomDevice = static_cast<CCustomDevice*>(pAutomaticContainer->GetDeviceByIndex(0));
+	CCustomDevice* pCustomDevice{ static_cast<CCustomDevice*>(pAutomaticContainer->GetDeviceByIndex(0)) };
 	if (!pCustomDevice)
 		throw dfw2error("CAutomatic::Init CustomDevice for automatic not available");
 
@@ -219,56 +263,47 @@ void CAutomatic::Init()
 		std::string strVarName = fmt::format("LT{}", pLogic->GetId());
 
 		// находим в автоматике выходное реле элемента логики по имени выхода
-		CRelayDelay *pActionRelay = static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName.c_str()));
+		CRelayDelay* pActionRelay{ static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName)) };
 		if (!pActionRelay)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszLogicNotFoundInDLL, strVarName));
 
 		pActionRelay->SetDiscontinuityId(pLogic->GetId());
-		CAutomaticLogic *pLogicItem = static_cast<CAutomaticLogic*>(pLogic);
-		const std::string strActions = pLogicItem->GetActions();
+		CAutomaticLogic* pLogicItem{ static_cast<CAutomaticLogic*>(pLogic) };
+		const std::string strActions{ pLogicItem->GetActions() };
 		stringutils::split(strActions, ActionList);
 
-		for (auto&& sit : ActionList)
+		ptrdiff_t Id{ 0 };
+		for (auto&& strAction : ActionList)
 		{
-			std::string strAction = sit;
-			stringutils::trim(strAction);
-			if (!strAction.empty())
+			if (CAutomatic::ParseActionId(strAction, Id))
 			{
-				ptrdiff_t nId(0);
-#ifdef _MSC_VER
-				if (sscanf_s(strAction.c_str(), "A%td", &nId) == 1)
-#else
-				if (sscanf(strAction.c_str(), "A%td", &nId) == 1)
-#endif
+				const auto mit{ m_AutoActionGroups.find(Id) };
+				if (mit != m_AutoActionGroups.end())
 				{
-					auto mit = m_AutoActionGroups.find(nId);
-					if (mit != m_AutoActionGroups.end())
+					if (!pLogicItem->AddActionGroupId(Id))
 					{
-						if (!pLogicItem->AddActionGroupId(nId))
-						{
-							m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
-																							nId, 
-																							strActions, 
-																							pLogicItem->GetId()));
-						}
-					}
-					else
-					{
-						m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
-																					nId, 
-																					strActions, 
-																					pLogicItem->GetId()));
-						bRes = false;
+						m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
+																						Id, 
+																						strActions, 
+																						pLogicItem->GetId()));
 					}
 				}
 				else
 				{
-					m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongActionInLogicList,
-																	strAction, 
-																	strActions, 
-																	pLogic->GetId()));
+					m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
+																				Id, 
+																				strActions, 
+																				pLogicItem->GetId()));
 					bRes = false;
 				}
+			}
+			else
+			{
+				m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongActionInLogicList,
+																strAction, 
+																strActions, 
+																pLogic->GetId()));
+				bRes = false;
 			}
 		}
 	}
@@ -292,7 +327,7 @@ void CAutomatic::Init()
 
 bool CAutomatic::NotifyRelayDelay(const CRelayDelayLogic* pRelay)
 {
-	bool bRes = false;
+	bool bRes{ false };
 	_ASSERTE(pRelay);
 
 	if (!pRelay)
@@ -305,22 +340,20 @@ bool CAutomatic::NotifyRelayDelay(const CRelayDelayLogic* pRelay)
 		return true;
 
 
-	auto mit = m_mapLogics.find(pRelay->GetDiscontinuityId());
-
-	_ASSERTE(mit != m_mapLogics.end());
+	auto mit{ m_mapLogics.find(pRelay->GetDiscontinuityId()) };
 
 	if (mit != m_mapLogics.end())
 	{
-		CAutomaticLogic *pLogic = static_cast<CAutomaticLogic*>(mit->second);
+		CAutomaticLogic* pLogic{ static_cast<CAutomaticLogic*>(mit->second) };
 		for (auto git : pLogic->GetGroupIds())
 		{
-			auto autoGroupIt = m_AutoActionGroups.find(git);
+			auto autoGroupIt{ m_AutoActionGroups.find(git) };
 
 			_ASSERTE(autoGroupIt != m_AutoActionGroups.end());
 
 			if (autoGroupIt != m_AutoActionGroups.end())
 			{
-				auto& lstActions = autoGroupIt->second;
+				auto& lstActions{ autoGroupIt->second };
 				for (auto & item : lstActions)
 				{
 					static_cast<CAutomaticAction*>(item)->Do(m_pDynaModel);
@@ -566,6 +599,27 @@ SerializerPtr CAutomatic::GetSerializer()
 	Serializer->AddSerializer("Logic", new CSerializerBase(new CSerializerLogic(m_lstLogics)));
 	Serializer->AddSerializer("Starter", new CSerializerBase(new CSerializerStarter(m_lstStarters)));
 	return Serializer;
+}
+
+
+const std::filesystem::path& CScenario::PathRoot() const
+{
+	return m_pDynaModel->Platform().Scenario();
+}
+
+const std::filesystem::path& CScenario::BuildPath() const
+{
+	return m_pDynaModel->Platform().ScenarioBuild();
+}
+
+const std::filesystem::path& CScenario::ModulesPath() const 
+{
+	return m_pDynaModel->Platform().ScenarioModules();
+}
+
+const std::string_view CScenario::ModuleName() const 
+{
+	return m_pDynaModel->Platform().ScenarioModuleName();
 }
 
 const char* CAutomaticAction::cszActionTemplate = "A{}";

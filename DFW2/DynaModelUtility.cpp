@@ -168,8 +168,9 @@ bool CDynaModel::CheckStateDiscontinuity(CDiscreteDelay *pDelayObject)
 }
 
 void CDynaModel::NotifyRelayDelay(const CRelayDelayLogic* pRelayDelay)
-{
-	m_Automatic.NotifyRelayDelay(pRelayDelay);
+{ 
+	Automatic().NotifyRelayDelay(pRelayDelay);
+	Scenario().NotifyRelayDelay(pRelayDelay);
 }
 
 void CDynaModel::PushVarSearchStack(CDevice*pDevice)

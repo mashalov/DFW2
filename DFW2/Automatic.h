@@ -234,6 +234,30 @@ namespace DFW2
 		void Clean();
 		bool NotifyRelayDelay(const CRelayDelayLogic* pRelay);
 		SerializerPtr GetSerializer();
+		static bool ParseActionId(std::string& Action, ptrdiff_t& Id);
+		virtual const std::filesystem::path& PathRoot() const;
+		virtual const std::filesystem::path& BuildPath() const;
+		virtual const std::filesystem::path& ModulesPath() const;
+		virtual const std::string_view ModuleName() const;
+		virtual const std::string_view DeviceType() const { return "DEVTYPE_AUTOMATIC"; }
+		virtual const std::string_view DeviceTypeSystemName() const { return "Automatic"; }
+		virtual const std::string_view DeviceTypeVerbalName() const { return "Automatic"; }
+		virtual const eDFW2DEVICETYPE Type() const { return eDFW2DEVICETYPE::DEVTYPE_AUTOMATIC; }
+	};
+
+	class CScenario : public CAutomatic
+	{
+	public:
+		using CAutomatic::CAutomatic;
+
+		const std::filesystem::path& PathRoot() const override;
+		const std::filesystem::path& BuildPath() const override;
+		const std::filesystem::path& ModulesPath() const override;
+		const std::string_view ModuleName() const override;
+		const std::string_view DeviceType() const override { return "DEVTYPE_SCENARIO"; } 
+		const std::string_view DeviceTypeSystemName() const override { return "Scenario"; }
+		const std::string_view DeviceTypeVerbalName() const override { return "Scenario"; }
+		const eDFW2DEVICETYPE Type() const override { return eDFW2DEVICETYPE::DEVTYPE_SCENARIO; }
 	};
 }
 
