@@ -1,8 +1,9 @@
 ﻿!define ProductName "RaidenEMS"
-!define Version "1.0.1.117"
+!define Version "1.0.1.118"
 !define RastrWinX64VersionRequired "2.7.1.6388"
 !define RastrWinX86VersionRequired "2.7.0.6387"
 
+!getdllversion "..\release dll\dfw2.dll" DllVer
 
 !define InputFolderX64 "..\x64\release\"
 !define InputFolderX86 "..\release\"
@@ -292,8 +293,7 @@ UninstallCommon:
 	RmDir /r $INSTDIR\${ProductName}
 SectionEnd
 
-OutFile ${ProductName}Install.exe
-
+OutFile "${ProductName}Install ${Version}.exe"
  
 Function VersionCheckV5
  Exch $R0 ; second version number
