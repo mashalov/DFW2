@@ -12,6 +12,7 @@ namespace DFW2
 
 		std::filesystem::path pathRoot;
 		std::filesystem::path pathThreadRoot;
+		std::filesystem::path pathFactory;
 		std::filesystem::path pathAutomatic;
 		std::filesystem::path pathScenario;
 		std::filesystem::path pathAutomaticBuild;
@@ -125,6 +126,11 @@ namespace DFW2
 		constexpr const std::string_view& AutomaticModuleName() const
 		{
 			return CPlatformFolders::automaticModuleName;
+		}
+
+		const std::filesystem::path& Factory() const
+		{
+			return pathFactory;
 		}
 
 		constexpr const std::string_view& ScenarioModuleName() const
