@@ -31,6 +31,11 @@ namespace DFW2
 			m_strObjectKey(std::move(other.m_strObjectKey)),
 			m_strObjectProp(std::move(other.m_strObjectProp)) {}
 
+		bool empty() const
+		{
+			return m_strObjectClass.empty() && m_strObjectKey.empty() && m_strObjectProp.empty();
+		}
+
 		std::string String() const
 		{
 			return fmt::format("{}[{}].{}",

@@ -1142,16 +1142,25 @@ void CASTTreeBase::ApplyHostBlocks()
     // для всех найденных блоков
     for (auto& node : ChangeBlocks)
     {
-        if (node->CheckType(ASTNodeType::FnOr))
+        CASTHostBlockBase* host{ nullptr };
+        switch (node->GetType())
         {
-            // создаем хост-блок, идентичный по назначению
-            auto hostOr = CreateNode<CASTfnOrHost>(node->GetParent(), GetHostBlocks().size());
+        case ASTNodeType::FnOr:
+            host = CreateNode<CASTfnOrHost>(node->GetParent(), GetHostBlocks().size());
+            break;
+        case ASTNodeType::FnAnd:
+            host = CreateNode<CASTfnAndHost>(node->GetParent(), GetHostBlocks().size());
+            break;
+
+        }
+        if (host)
+        {
             // переключаем дочерние узлы из исходного узла на хост-блок
             ASTNodeList OrChildren;
             node->ExtractChildren(OrChildren);
-            hostOr->AppendChildren(OrChildren);
+            host->AppendChildren(OrChildren);
             // заменяем исходный узел на новый хост-блок
-            node->GetParent()->ReplaceChild(node, hostOr);
+            node->GetParent()->ReplaceChild(node, host);
         }
     }
 

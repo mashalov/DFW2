@@ -21,9 +21,9 @@ CAutomaticItem::CAutomaticItem(ptrdiff_t Type, ptrdiff_t Id, std::string_view Na
 
 void CAutomaticStarter::AddToSource(std::ostringstream& source)
 {
-	source << fmt::format("S{} = starter({}, {})\n", m_nId,
+	source << fmt::format("S{} = starter({}{})\n", m_nId,
 		m_strExpression.empty() ? "V" : m_strExpression, 
-		CAutoModelLink::String());
+		CAutoModelLink::empty() ? "" : fmt::format(",{}", CAutoModelLink::String()));
 }
 
 void CAutomaticLogic::AddToSource(std::ostringstream& source)

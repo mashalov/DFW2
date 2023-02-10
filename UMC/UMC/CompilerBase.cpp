@@ -271,14 +271,14 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         size_t AllowedCachedFilesCount{ 0 }, AllowedCachedFilesSize{ 0 };
 
         if (const auto CacheSizeString{ GetProperty(PropertyMap::szPropCachedModulesCount) }; !CacheSizeString.empty())
-            AllowedCachedFilesCount = std::stoull(CacheSizeString);
+            AllowedCachedFilesCount = std::stoul(CacheSizeString);
 
         if (const auto CacheSizeString{ GetProperty(PropertyMap::szPropCachedModulesSize) }; !CacheSizeString.empty())
-            AllowedCachedFilesSize = std::stoull(CacheSizeString);
+            AllowedCachedFilesSize = std::stoul(CacheSizeString);
      
         // выполняем очистку каталога по заданным ограничениями
         RemoveCachedModules(DllLibraryPath, AllowedCachedFilesCount, AllowedCachedFilesSize);
-        
+         
         // получаем путь к файлу, имя которого построено по хэшу
         // исходника модели
         const auto cachedModulePath{ CachedModulePath(Source, compiledModulePath) };

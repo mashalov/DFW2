@@ -1127,6 +1127,28 @@ public:
     CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
 };
 
+// Класс для замены flat-функции OR на хост-блок
+class CASTfnAndHost : public CASTHostBlockBase
+{
+    static inline const HostBlockInfo hbInfo = {
+                                                    {
+                                                        CASTFunctionBase::FunctionInfo::VariableOnly,   // вход 1 
+                                                        CASTFunctionBase::FunctionInfo::VariableOnly,   // вход 1
+                                                        CASTFunctionBase::FunctionInfo::OptionalList    // остальные входы
+                                                    },
+                                                    "PBT_AND",
+                                                    1
+    };
+public:
+    using CASTHostBlockBase::CASTHostBlockBase;
+    static inline constexpr std::string_view static_text = "And";
+    ASTNodeType GetType() const override { return ASTNodeType::FnAnd; }
+    const std::string_view GetText() const override { return CASTfnAndHost::static_text; }
+    const HostBlockInfo& GetHostBlockInfo() const override { return CASTfnAndHost::hbInfo; }
+    CASTNodeBase* Clone(CASTNodeBase* pParent) override { return CloneImpl(pParent, this); }
+    ptrdiff_t DesignedChildrenCount() const override { return -1; }
+};
+
 // реле с коэффициентом возврата без выдержки времени
 class CASTfnRelay : public CASTHostBlockBase
 {

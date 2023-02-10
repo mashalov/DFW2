@@ -6,7 +6,7 @@
 #include "DynaExciterMustang.h"
 #include "DynaDECMustang.h"
 #include "DynaExcConMustang.h"
-#include "DynaBranch.h"
+#include "BranchMeasures.h"
 
 using namespace DFW2;
 //cl /LD /EHsc -DUNICODE -D_UNICODE customdevice.cpp dllmain.cpp
@@ -359,7 +359,10 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("e:\\temp\\sztest\\deep\\test9");				// исходный режим
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_027440");		// режим с нарушением устойчивости(сценарии 102, 109)
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m004560");		// последний режим с нарушением устойчивости, перед предельным(сценарии 109)
-	LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560");		// режим без нарушения устойчивости, предельный
+	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560");		// режим без нарушения устойчивости, предельный
+
+
+	LoadFile("e:\\downloads\\starters_with_formulas\\2\\mdp_debug_1_19"); 
 
 
 	m_spRastr->NewFile(dfwPath.c_str());
@@ -367,7 +370,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 	//LoadFile("e:\\temp\\sztest\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.dfw", dfwPath);
-	LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.scn", scnPath);
+	//LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.scn", scnPath);
 	//LoadFile("e:\\temp\\sztest\\106_БЕЗ ШУНТА ПС 330 кВ Петрозаводск (с откл.Кондопога-Петрозаводск).dfw", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\deep\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw ", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\deep\\КЗ-откл-нагрузка.dfw ", dfwPath.c_str());
@@ -619,6 +622,82 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 		}
 	};
 
+
+	struct ActionCommandTypeArgsT
+	{
+		long Type;
+		std::string_view Table;
+		std::string_view Prop;
+	};
+
+
+	/*  Типы действий RUSTab
+
+	0 Откл|
+	1 Объект|
+	2 Сост узла|
+	3 Сост ветви|
+	4 Узел Gш|
+	5 Узел Bш|
+	6 Узел Rш|
+	7 Узел Xш|
+	8 Узел Pn|
+	9 Узел Qn|
+	10 ЭГП|
+	11 Якоби|
+	12 Узел PnQn|
+	13 Узел PnQn0|
+	14 ГРАМ|
+	15 РТ|
+	16 Стоп|
+	17 Ветвь КЗ|
+	18 Протокол*/
+
+	/* Типы стартеров RUSTab
+	
+	0 Откл|
+	1 Объект|
+	2 Время|
+	3 Формула|
+	4 Сост узла|
+	5 Сост ветви|
+	6 Ветвь Iнач|
+	7 Ветвь Iкон|
+	8 Ветвь Pнач|
+	9 Ветвь Pкон|
+	10 Ветвь Qнач|
+	11 Ветвь Qкон|
+	12 Ветвь PHIнач|
+	13 Ветвь PHIкон
+
+	*/
+
+
+	const std::map<long, std::pair<const std::string_view, const std::string_view>>
+	ActionCommandTypeArgs
+	{
+		{2 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::m_cszSta } },
+		{3 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::m_cszSta } },
+		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszGsh } },
+		{5 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszBsh} },
+		{6 , {CDeviceContainerProperties::m_cszAliasNode, "r"} },
+		{7 , {CDeviceContainerProperties::m_cszAliasNode, "x"} },
+		{8 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszPload} },
+		{9 , {CDeviceContainerProperties::m_cszAliasNode, "qn"} },
+		{13 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszPload} },
+	},
+	StarterTypeArgs
+	{
+		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::m_cszSta } },
+		{5 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::m_cszSta } },
+		{6 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszIb } },
+		{7 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszIe } },
+		{8 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszPb } },
+		{9 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszPe } },
+		{10 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszQb } },
+		{11 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszQe } }
+	};
+
 	ITablesPtr spTables{ m_spRastr->Tables };
 
 	const _bstr_t strId{ L"Id" };
@@ -667,15 +746,25 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 
 		for (long i{ 0 }; i < spAutoStarters->GetSize(); i++)
 		{
+			
+			std::string table{ static_cast<std::string_view>(AutoValue(spASObjClass, i)) };
+			std::string prop{ static_cast<std::string_view>(AutoValue(spASObjProp, i)) };
+
+			if (const auto type{ StarterTypeArgs.find(AutoValue(spASType, i)) }; type != StarterTypeArgs.end())
+			{
+				table = type->second.first;
+				prop = type->second.second;
+			}
+
 			Level.Automatic.AddStarter(
 				AutoValue(spASType, i),
 				AutoValue(spASId, i),
 				AutoValue(spASName, i),
 				AutoValue(spASExpr, i),
 				0,
-				AutoValue(spASObjClass, i),
+				table,
 				AutoValue(spASObjKey, i),
-				AutoValue(spASObjProp, i));
+				prop);
 		}
 
 		ITablePtr spAutoLogic{ spTables->Item(Level.Logics_) };
@@ -715,15 +804,24 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 
 		for (long i{ 0 }; i < spAutoActions->GetSize(); i++)
 		{
+			std::string table{ static_cast<std::string_view>(AutoValue(spAAObjClass, i)) };
+			std::string prop{ static_cast<std::string_view>(AutoValue(spAAObjProp, i)) };
+
+			if (const auto type{ ActionCommandTypeArgs.find(AutoValue(spAAType, i)) }; type != ActionCommandTypeArgs.end())
+			{
+				table = type->second.first;
+				prop  = type->second.second;
+			}
+
 			Level.Automatic.AddAction(
 				AutoValue(spAAType, i),
 				AutoValue(spAAId, i),
 				AutoValue(spAAName, i),
 				AutoValue(spAAExpr, i),
 				0,
-				AutoValue(spAAObjClass, i),
+				table,
 				AutoValue(spAAObjKey, i),
-				AutoValue(spAAObjProp, i),
+				prop,
 				AutoValue(spAAActionGroup, i),
 				AutoValue(spAAOutputMode, i),
 				AutoValue(spAAORunsCount, i));
