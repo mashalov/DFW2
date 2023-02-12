@@ -378,15 +378,16 @@ bool CompilerBase::Compile(std::istream& SourceStream)
 
         // построить модуль с помощью выбранного компилятора
         BuildWithCompiler();
-
-        std::filesystem::copy(compiledModulePath, cachedModulePath, ec);
-        if(ec)
-            pTree->Warning(fmt::format(DFW2::CDFW2Messages::m_cszFileCopyError, 
-                stringutils::utf8_encode(compiledModulePath.c_str()),
-                stringutils::utf8_encode(cachedModulePath.c_str())));
-
+        
         if (pTree->ErrorCount() == 0)
         {
+            //  копируем готовый модуль в файл с именем хэша
+            std::filesystem::copy(compiledModulePath, cachedModulePath, ec);
+            if (ec)
+                pTree->Warning(fmt::format(DFW2::CDFW2Messages::m_cszFileCopyError,
+                    stringutils::utf8_encode(compiledModulePath.c_str()),
+                    stringutils::utf8_encode(cachedModulePath.c_str())));
+
             pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelCompiled, stringutils::utf8_encode(compiledModulePath.c_str())));
             bRes = true;
         }
