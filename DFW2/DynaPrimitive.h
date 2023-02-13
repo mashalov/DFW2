@@ -114,6 +114,7 @@ namespace DFW2
 		// возвращает ссылки на выходную переменную
 		constexpr operator VariableIndex& () noexcept { return Output_; }
 		constexpr operator const VariableIndex& () const noexcept { return Output_; }
+		constexpr const InputVariable& Input() const { return Input_; }
 
 		// примитив может иметь несколько входов и выходов (количество выходов соответствует порядку примитива)
 		// поэтому конструктор принимает список входных переменных, одну обязательную выходную переменную

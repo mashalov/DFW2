@@ -264,7 +264,7 @@ double CDynaPrimitiveBinaryOutput::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 	if (Device_.IsStateOn())
 	{
-		eRELAYSTATES oldCurrentState = eCurrentState;
+		eRELAYSTATES oldCurrentState{ eCurrentState };
 
 		switch (eCurrentState)
 		{

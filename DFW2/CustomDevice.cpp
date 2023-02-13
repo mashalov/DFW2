@@ -584,6 +584,12 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDyn
 		if (eRes == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 			break;
 	}
+
+	// очень грубый  тест инициализации внешних переменных
+	//if(pDynaModel->GetCurrentTime() > 0.01)
+	//	for (const auto& x : Primitives_)
+	//		if(x->Input().Indexed())
+	//			pDynaModel->GetRightVector(x->Input().Index);
 	return eRes;
 }
 
