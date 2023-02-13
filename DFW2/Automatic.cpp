@@ -259,8 +259,8 @@ void CAutomatic::Init()
 
 	for (auto&& it : m_lstLogics)
 	{
-		CAutomaticItem *pLogic= it.get();
-		std::string strVarName = fmt::format("LT{}", pLogic->GetId());
+		CAutomaticItem* pLogic{ it.get() };
+		const std::string strVarName{ fmt::format("LT{}", pLogic->GetId()) };
 
 		// находим в автоматике выходное реле элемента логики по имени выхода
 		CRelayDelay* pActionRelay{ static_cast<CRelayDelay*>(pCustomDevice->GetPrimitiveForNamedOutput(strVarName)) };
@@ -372,6 +372,11 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 
 	if (m_pAction && m_pValue && m_nRunsCount)
 	{
+		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszRunningAction, 
+			pDynaModel->GetCurrentTime(), 
+			pDynaModel->GetIntegrationStepNumber(), 
+			GetVerbalName()));
+
 		bRes = (m_pAction->Do(pDynaModel, *m_pValue) != eDFW2_ACTION_STATE::AS_ERROR);
 		m_nRunsCount--;
 	}
@@ -381,11 +386,11 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 
 bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice)
 {
-	bool bRes = false;
+	bool bRes{ false };
 	_ASSERTE(!m_pAction);
 	_ASSERTE(!m_pValue);
-	std::string strVarName = fmt::format(cszActionTemplate, m_nId);
-	m_pValue = pCustomDevice->GetVariableConstPtr(strVarName.c_str());
+	const std::string strVarName{ fmt::format(cszActionTemplate, m_nId) };
+	m_pValue = pCustomDevice->GetVariableConstPtr(strVarName);
 	if (m_pValue)
 	{
 		switch (m_nType)
@@ -394,7 +399,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 			{
 
 				// получаем устройство по классу и ключу
-				CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
+				CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String()) };
 				if (pDev)
 				{
 					// если устройство найдено, проверяем его тип по наследованию

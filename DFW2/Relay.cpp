@@ -189,7 +189,10 @@ void CRelayDelay::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentSt
 {
 	if (Equal(Delay_, 0.0))
 	{
+		const auto OldState{ eCurrentState };
 		CRelay::SetCurrentState(pDynaModel, CurrentState);
+		if (OldState == eRELAYSTATES::RS_OFF && CurrentState == eRELAYSTATES::RS_ON)
+			NotifyDelay(pDynaModel);
 	}
 	else
 	{
@@ -240,7 +243,10 @@ void CRelayDelay::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 
 bool CRelayDelay::NotifyDelay(CDynaModel *pDynaModel)
 {
+	// удаляем условное событие, так как оно 
+	// готово к тому, чтобы отработать
 	pDynaModel->RemoveStateDiscontinuity(this);
+	// ставим значение выхода по состоянию реле
 	pDynaModel->SetVariableNordsiek(Output_, (GetCurrentState() == eRELAYSTATES::RS_ON) ? 1.0 : 0.0);
 	return true;
 }
@@ -265,8 +271,12 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 
 bool CRelayDelayLogic::NotifyDelay(CDynaModel *pDynaModel)
 {
+	// запоминаем текущее значение выхода
 	const double dOldOut{ Output_ };
+	// ставим выход в 1 или 0 по состоянию реле
 	CRelayDelay::NotifyDelay(pDynaModel);
+	// если состояние выхода изменилось
+	// информируем модель о событии на этом реле
 	if (Output_ != dOldOut)
 		pDynaModel->NotifyRelayDelay(this);
 	return true;

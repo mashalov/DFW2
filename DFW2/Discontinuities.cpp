@@ -128,9 +128,11 @@ bool CDiscontinuities::RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject)
 {
 	bool bRes{ true };
 	CStateObjectIdToTime newObject(pDelayObject, 0.0);
+	// находим выдержку в условных событиях
 	auto it{ StateEvents_.find(newObject) };
 	if (it != StateEvents_.end())
 	{
+		// находим статические события для  времени условного события
 		auto itEvent{ StaticEvent_.lower_bound(it->Time()) };
 		if (itEvent != StaticEvent_.end())
 		{
@@ -180,6 +182,7 @@ eDFW2_ACTION_STATE CDiscontinuities::ProcessStaticEvents()
 
 	if (!StaticEvent_.empty())
 	{
+		// исполняем первое статическое событие
 		State = StaticEvent_.begin()->DoActions(pDynaModel_);
 	}
 	return State;
@@ -592,7 +595,7 @@ CModelActionState::CModelActionState(CDiscreteDelay *pDiscreteDelay) : CModelAct
 
 eDFW2_ACTION_STATE CModelActionState::Do(CDynaModel *pDynaModel)
 { 
-	CDevice* device(pDiscreteDelay_->GetDevice());
+	CDevice* device{ pDiscreteDelay_->GetDevice() };
 
 	if (!device)
 		device = pDynaModel->AutomaticDevice.GetDeviceByIndex(0);
@@ -615,6 +618,8 @@ eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel)
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 	if (!CDevice::IsFunctionStatusOK(pDevice_->ChangeState(NewState_, eDEVICESTATECAUSE::DSC_EXTERNAL)))
 		State = eDFW2_ACTION_STATE::AS_ERROR;
+	else
+		pDynaModel->ProcessTopologyRequest();
 	return State;
 }
 
@@ -639,7 +644,7 @@ eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel, dou
 		CDevice::m_cszState,
 		stringutils::enum_text(pDevice_->GetState(), CDevice::m_cszStates),
 		CDevice::m_cszState,
-		stringutils::enum_text(pDevice_->GetState(), CDevice::m_cszStates)));
+		stringutils::enum_text(NewState_, CDevice::m_cszStates)));
 
 	return Do(pDynaModel);
 }

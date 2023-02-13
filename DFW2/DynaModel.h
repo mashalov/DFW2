@@ -709,6 +709,7 @@ namespace DFW2
 		void SetFunction(ptrdiff_t nRow, double dValue);
 		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
 		void SetDerivative(ptrdiff_t nRow, double dValue);
+		bool ApplyChangesToModel();
 
 		bool SSE2Available_ = false;
 		double HysteresisRtol_ = 1e-2;

@@ -867,6 +867,30 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 	return bRes;
 }
 
+bool CDynaModel::ApplyChangesToModel()
+{
+	bool bRes{ true };
+	// проверяем, не возникла ли при обработке разрыва необходимость обработки топологии
+	if (sc.m_bProcessTopology)
+		Nodes.ProcessTopology();
+
+	// если возникла необходимость перестроения Якоби
+	if (m_bRebuildMatrixFlag)
+	{
+		// строим ее заново
+		// создаем новый вариант систем уравнений 
+		// потокораспределения суперузлов
+		CreateZeroLoadFlow();
+		EstimateMatrix();
+		bRes = UpdateExternalVariables();
+	}
+	// проверяем, не возникло ли новых запросов на обработку разрыва при обработке разрыва
+	if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
+		sc.m_bBeforeDiscontinuityWritten = false;		// если запросов нет - больше записывать до разрыва нечего
+
+	return bRes;
+}
+
 bool CDynaModel::Step()
 {
 	bool bRes{ true };
@@ -907,23 +931,7 @@ bool CDynaModel::Step()
 						EnterDiscontinuityMode();			
 						// обрабатываем разрыв
 						bRes = m_Discontinuities.ProcessStaticEvents() != eDFW2_ACTION_STATE::AS_ERROR;
-						// проверяем, не возникла ли при обработке разрыва необходимость обработки топологии
-						if (sc.m_bProcessTopology)
-							Nodes.ProcessTopology();
-
-						// если возникла необходимость перестроения Якоби
-						if (m_bRebuildMatrixFlag)
-						{
-							// строим ее заново
-							// создаем новый вариант систем уравнений 
-							// потокораспределения суперузлов
-							CreateZeroLoadFlow();
-							EstimateMatrix();
-							bRes = bRes && UpdateExternalVariables();
-						}
-						// проверяем, не возникло ли новых запросов на обработку разрыва при обработке разрыва
-						if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
-							sc.m_bBeforeDiscontinuityWritten = false;		// если запросов нет - больше записывать до разрыва нечего
+						bRes = bRes && ApplyChangesToModel();
 					}
 					else
 					{
@@ -946,6 +954,7 @@ bool CDynaModel::Step()
 		{
 			// и мы уже записали состояние модели до разрыва
 			ServeDiscontinuityRequest();	// обрабатываем разрыв
+			bRes = bRes && ApplyChangesToModel();
 			sc.m_bBeforeDiscontinuityWritten = false;
 		}
 		else
