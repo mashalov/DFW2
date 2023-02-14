@@ -2133,8 +2133,8 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);
 	Serializer->AddProperty("pnr", Pn, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty("qnr", Qn, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty("pn", Pnr, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty("qn", Qnr, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(CDynaNodeBase::m_cszPload, Pnr, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(CDynaNodeBase::m_cszQload, Qnr, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty("pg", Pg, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty("qg", Qg, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty("gsh", G, eVARUNITS::VARUNIT_SIEMENS);

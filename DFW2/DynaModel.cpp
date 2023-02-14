@@ -1679,8 +1679,7 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 
 	if (nFieldCount == 3)
 	{
-		CDevice *pFoundDevice = GetDeviceBySymbolicLink(Object, Keys, Name);
-		if (pFoundDevice)
+		if (CDevice* pFoundDevice{ GetDeviceBySymbolicLink(Object, Keys, Name) }; pFoundDevice)
 		{
 			// Сначала ищем переменную состояния, со значением и с индексом
 			ExtVar = pFoundDevice->GetExternalVariable(Prop);
@@ -1688,6 +1687,12 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 			{
 				// смещение больше не нужно - работаем в абсолютных индексах
 				//ExtVar.Index -= pFromDevice->A(0);
+
+				// если работаем с узлами, учитываем что может быть
+				// найдет slave-узел и подменяем его на суперузел
+				if (!ExtVar.Indexed() && pFoundDevice->GetType() == DEVTYPE_NODE)
+					ExtVar = static_cast<CDynaNodeBase*>(pFoundDevice)->GetSuperNode()->GetExternalVariable(Prop);
+
 				bRes = true;
 			}
 			else
@@ -1707,17 +1712,17 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 				{
 					// если не нашли параметр и тип объекта - "ветвь"
 					// создаем для ветви блок измерений и пытаемся забрать параметр из блока
-					CDynaBranch *pBranch = static_cast<CDynaBranch*>(pFoundDevice);
+					CDynaBranch* pBranch{ static_cast<CDynaBranch*>(pFoundDevice) };
 					if (!pBranch->pMeasure_)
 					{
-						CDynaBranchMeasure* pBranchMeasure = new CDynaBranchMeasure();
+						CDynaBranchMeasure* pBranchMeasure{ new CDynaBranchMeasure() };
 						pBranchMeasure->SetBranch(pBranch);
 						pBranchMeasure->Init(this);
 						BranchMeasures.AddDevice(pBranchMeasure);
 						pBranch->pMeasure_ = pBranchMeasure;
 					}
-					else
-						pBranch->pMeasure_->Init(this);
+					//else
+					//	pBranch->pMeasure_->Init(this);	/// ???????
 
 					ExtVar = pBranch->pMeasure_->GetExternalVariable(Prop);
 
@@ -1734,10 +1739,10 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 				{
 					// если не нашли параметр и тип объекта - "узел"
 					// создаем блок измерений для узла и пытаемся забрать параметр из блока
-					CDynaNode* pNode = static_cast<CDynaNode*>(pFoundDevice);
+					CDynaNode* pNode{ static_cast<CDynaNode*>(pFoundDevice) };
 					if (!pNode->pMeasure)
 					{
-						CDynaNodeMeasure* pNodeMeasure = new CDynaNodeMeasure(pNode);
+						CDynaNodeMeasure* pNodeMeasure{ new CDynaNodeMeasure(pNode) };
 						pNodeMeasure->SetId(NodeMeasures.Count() + 1);
 						pNodeMeasure->SetName(pNode->GetVerbalName());
 						pNodeMeasure->Init(this);

@@ -848,13 +848,7 @@ CDevice* CDynaModel::GetDeviceBySymbolicLink(std::string_view Object, std::strin
 				if (sscanf(std::string(Keys).c_str(), "%td", &nId) == 1)
 #endif
 				if (pFindDevice = container->GetDevice(nId))
-				{
-					// если работаем с узлами, учитываем что может быть
-					// найдет slave-узел и подменяем его на суперузел
-					if (pFindDevice->GetType() == eDFW2DEVICETYPE::DEVTYPE_NODE)
-						pFindDevice = static_cast<CDynaNodeBase*>(pFindDevice)->GetSuperNode();
 					FoundDevices.push_back(pFindDevice);
-				}
 			}
 		}
 

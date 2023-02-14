@@ -412,6 +412,9 @@ eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, doub
 		SloadNew
 	));
 
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::m_cszPload, SloadNew.real(), Sload.real(), pDynaNode_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::m_cszQload, SloadNew.imag(), Sload.imag(), pDynaNode_->GetVerbalName());
+
 	CDevice::FromComplex(pDynaNode_->Pn, pDynaNode_->Qn, SloadNew);
 
 	pDynaNode_->ProcessTopologyRequest();

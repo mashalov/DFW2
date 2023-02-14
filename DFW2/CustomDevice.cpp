@@ -580,7 +580,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDyn
 	for (const auto& ext : pContainer_->ContainerProps().ExtVarMap_)
 	{
 		CDevice::CheckIndex(ExtVec, ext.second.Index_, "CCustomDeviceCPP::UpdateExternalVariables");
-		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVec[ext.second.Index_], this, ext.first.c_str(), ext.second.DeviceToSearch_));
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVec[ext.second.Index_], this, ext.first, ext.second.DeviceToSearch_));
 		if (eRes == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 			break;
 	}

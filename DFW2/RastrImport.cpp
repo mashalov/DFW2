@@ -684,7 +684,7 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 		{6 , {CDeviceContainerProperties::m_cszAliasNode, "r"} },
 		{7 , {CDeviceContainerProperties::m_cszAliasNode, "x"} },
 		{8 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszPload} },
-		{9 , {CDeviceContainerProperties::m_cszAliasNode, "qn"} },
+		{9 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszQload} },
 		{13 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszPload} },
 	},
 	StarterTypeArgs
