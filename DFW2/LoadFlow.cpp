@@ -1476,6 +1476,8 @@ void CLoadFlow::GetPnrQnr(CDynaNodeBase* pNode)
 		double& re{ reinterpret_cast<double(&)[2]>(pNode->dLRCLoad)[0] };
 		double& im{ reinterpret_cast<double(&)[2]>(pNode->dLRCLoad)[1] };
 
+		// тут бы конечно не использовать параметры, а просто обнулить указатель
+		// на СХН для узлов с P/Q <= 0
 		if (Parameters.AllowNegativeLRC || pNode->Pn > 0.0)
 		{
 			pNode->Pnr *= pNode->pLRC->P()->GetBoth(VdVnom, re, pNode->LRCVicinity);

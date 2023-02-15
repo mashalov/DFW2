@@ -41,7 +41,7 @@ namespace DFW2
 			double BranchAngleNewtonStep = 0.5;			// максимальное приращение шага Ньютона по углу связи
 			double ForceSwitchLambda = 1e-2;			// шаг Ньютона, меньше которого бэктрэк выключается и выполняется переключение типов узлов
 			eLoadFlowFormulation LFFormulation	= eLoadFlowFormulation::Current;	// способ представления модели УР
-			bool AllowNegativeLRC = true;				// разрешить учет СХН для узлов с отрицательной нагрузкой
+			bool AllowNegativeLRC = true;				// разрешить учет СХН для узлов с отрицательной нагрузкой в УР
 			double Vdifference = 1E-6;					// порог сравнения модуля напряжения
 			double LRCMinSlope = 0.0;					// минимальная крутизна СХН
 			double LRCMaxSlope = 5.0;					// максимальная крутизна СХН

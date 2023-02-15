@@ -471,38 +471,41 @@ void CDynaGeneratorPark3C::CheckParameters()
 
 	struct ParameterPair : ParameterRange
 	{
-		const double* Value;
+		const double& Value;
 	};
 
 	const double Zbase{ Unom * Unom / Snom };
+	// множитель, расширяющий допустимый диапазон параметров влево и вправо
 	const double tol{ 0.8 };
+
+	// типовые параметры генераторов P.Kudndur, Power System Stability and Control
+	// Table 4.2 - взят максимально широкий диапазон из Thermal/Hydro
 		
 	const std::array<ParameterPair, 9> CheckList =
 	{ {
-		{{ 0.6 * Zbase, 2.3 * Zbase, m_cszxd }, &xd},
-		{{ 0.4 * Zbase, 2.3 * Zbase, m_cszxq }, &xq} ,
-		{{ 0.15 * Zbase, 0.5 * Zbase, m_cszxd1 }, &xd1},
-		//{{ 0.3 * Zbase, 1.0 * Zbase, m_cszxq1 }, &xq1},
-		{{ 0.12 * Zbase, 0.35 * Zbase, m_cszxd2 }, &xd2},
-		{{ 0.12 * Zbase, 0.45 * Zbase, m_cszxq2 }, &xq2},
-		{{ 1.5, 10.0, m_csztdo1 }, &Tdo1},
-		//{{ 0.5, 2.0, m_csztqo1 }, &Tqo1},
-		{{ 0.01, 0.05, m_csztdo2 }, &Tdo2},
-		{{ 0.01, 0.09, m_csztqo2 }, &Tqo2},
-		{{ 0.1 * Zbase, 0.2 * Zbase, m_cszxl}, &xl}
+		{{ 0.6 * Zbase, 2.3 * Zbase, m_cszxd }, xd},
+		{{ 0.4 * Zbase, 2.3 * Zbase, m_cszxq }, xq} ,
+		{{ 0.15 * Zbase, 0.5 * Zbase, m_cszxd1 }, xd1},
+		//{{ 0.3 * Zbase, 1.0 * Zbase, m_cszxq1 }, xq1},
+		{{ 0.12 * Zbase, 0.35 * Zbase, m_cszxd2 }, xd2},
+		{{ 0.12 * Zbase, 0.45 * Zbase, m_cszxq2 }, xq2},
+		{{ 1.5, 10.0, m_csztdo1 }, Tdo1},
+		//{{ 0.5, 2.0, m_csztqo1 }, Tqo1},
+		{{ 0.01, 0.05, m_csztdo2 }, Tdo2},
+		{{ 0.01, 0.09, m_csztqo2 }, Tqo2},
+		{{ 0.1 * Zbase, 0.2 * Zbase, m_cszxl}, xl}
 	} };
 
 	for (const auto& Check : CheckList)
 	{
-		if (*Check.Value < Check.min * tol || *Check.Value > Check.max / tol)
+		if (Check.Value < Check.min * tol || Check.Value > Check.max / tol)
 			DebugLog(/*DFW2MessageStatus::DFW2LOG_WARNING, */
 				fmt::format(CDFW2Messages::m_cszParameterIsOutOfRange,
 				GetVerbalName(),
 				Check.cszName,
-				*Check.Value,
+				Check.Value,
 				Check.min * tol,
 				Check.max / tol
 			));
 	}
-
 }

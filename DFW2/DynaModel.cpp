@@ -1690,7 +1690,7 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 
 				// если работаем с узлами, учитываем что может быть
 				// найдет slave-узел и подменяем его на суперузел
-				if (!ExtVar.Indexed() && pFoundDevice->GetType() == DEVTYPE_NODE)
+				if (pFoundDevice->GetType() == DEVTYPE_NODE)
 					ExtVar = static_cast<CDynaNodeBase*>(pFoundDevice)->GetSuperNode()->GetExternalVariable(Prop);
 
 				bRes = true;
