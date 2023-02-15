@@ -19,6 +19,8 @@ double* CDynaBranchMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
 		MAP_VARIABLE(Ie.Value, V_IE)
 		MAP_VARIABLE(Pb.Value, V_PB)
 		MAP_VARIABLE(Qb.Value, V_QB)
+		MAP_VARIABLE(Pbr.Value, V_PBR)
+		MAP_VARIABLE(Qbr.Value, V_QBR)
 		MAP_VARIABLE(Pe.Value, V_PE)
 		MAP_VARIABLE(Qe.Value, V_QE)
 		MAP_VARIABLE(Sb.Value, V_SB)
@@ -216,6 +218,18 @@ void CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 		// dQb / dIbim
 		pDynaModel->SetElement(Qb, Ibim,  Vbre);
 
+		// Pbr + Pb = 0;
+		// dPbr / dPbr
+		pDynaModel->SetElement(Pbr, Pbr, 1.0);
+		// dPbr / dPb
+		pDynaModel->SetElement(Pbr, Pb, 1.0);
+		
+		// Qbr + Qb = 0;
+		// dQbr / dQbr
+		pDynaModel->SetElement(Qbr, Qbr, 1.0);
+		// dQbr / dQb
+		pDynaModel->SetElement(Qbr, Qb, 1.0);
+
 		// Pe - Vere * Iere - Veim * Ieim = 0
 		// 
 		// dPe / dPe
@@ -273,6 +287,8 @@ void CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 		pDynaModel->SetElement(Ie, Ie, 1.0);
 		pDynaModel->SetElement(Pb, Pb, 1.0);
 		pDynaModel->SetElement(Qb, Qb, 1.0);
+		pDynaModel->SetElement(Pbr, Pbr, 1.0);
+		pDynaModel->SetElement(Qbr, Qbr, 1.0);
 		pDynaModel->SetElement(Pe, Pe, 1.0);
 		pDynaModel->SetElement(Qe, Qe, 1.0);
 		pDynaModel->SetElement(Sb, Sb, 1.0);
@@ -315,6 +331,8 @@ void CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 		pDynaModel->SetFunction(Ie, Ie - std::sqrt(Iere * Iere + Ieim * Ieim + ABS_GUARD));
 		pDynaModel->SetFunction(Pb, Pb - cSb.real());
 		pDynaModel->SetFunction(Qb, Qb - cSb.imag());
+		pDynaModel->SetFunction(Pbr, Pbr + cSb.real());
+		pDynaModel->SetFunction(Qbr, Qbr + cSb.imag());
 		pDynaModel->SetFunction(Pe, Pe - cSe.real());
 		pDynaModel->SetFunction(Qe, Qe - cSe.imag());
 		pDynaModel->SetFunction(Sb, Sb - std::sqrt(Pb * Pb + Qb * Qb + ABS_GUARD));
@@ -360,7 +378,7 @@ void CDynaBranchMeasure::CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, c
 
 VariableIndexRefVec& CDynaBranchMeasure::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDevice::GetVariables(JoinVariables({ Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pe, Qe, Sb, Se }, ChildVec));
+	return CDevice::GetVariables(JoinVariables({ Ibre, Ibim, Iere, Ieim, Ib, Ie, Pb, Qb, Pbr, Qbr, Pe, Qe, Sb, Se }, ChildVec));
 }
 
 eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDynaModel)
@@ -385,6 +403,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 	FromComplex(Iere, Ieim, cIe);
 	FromComplex(Pb, Qb, cSb);
 	FromComplex(Pe, Qe, cSe);
+	FromComplex(Pbr, Qbr, -cSb);
 	Sb = std::sqrt(Pb * Pb + Qb * Qb + ABS_GUARD);
 	Se = std::sqrt(Pe * Pe + Qe * Qe + ABS_GUARD);
 	Ib = std::sqrt(Ibre * Ibre + Ibim * Ibim + ABS_GUARD);
@@ -408,6 +427,8 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert({ m_cszIe,	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES) });
 	props.VarMap_.insert({ m_cszPb,	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW) });
 	props.VarMap_.insert({ m_cszQb,	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR) });
+	props.VarMap_.insert({ m_cszPbr, CVarIndex(CDynaBranchMeasure::V_PBR, VARUNIT_MW) });
+	props.VarMap_.insert({ m_cszQbr, CVarIndex(CDynaBranchMeasure::V_QBR, VARUNIT_MVAR) });
 	props.VarMap_.insert({ m_cszPe,	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW) });
 	props.VarMap_.insert({ m_cszQe,	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR) });
 	props.VarMap_.insert({ m_cszSb,	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA) });
@@ -416,7 +437,7 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarAliasMap_.insert({ 
 		{ "ib", m_cszIb }, 
 		{ "ie", m_cszIe }, 
-		{ "pl_ip", m_cszPb },
+		{ "pl_ip", m_cszPbr },
 		{ "pl_iq", m_cszPe }
 		});
 
