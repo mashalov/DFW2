@@ -82,6 +82,7 @@ namespace DFW2
 			ptrdiff_t m_nDecayDetectorCycles = 3;
 			bool m_bStopOnBranchOOS = false;
 			bool m_bStopOnGeneratorOOS = false;
+			double SecuritySpinReference_ = 0.12;						// уставка глобального автомата скорости
 			std::string m_strWorkingFolder = "";
 			std::string m_strResultsFolder = "";
 			DFW2MessageStatus m_eConsoleLogLevel = DFW2MessageStatus::DFW2LOG_ERROR;
@@ -110,6 +111,7 @@ namespace DFW2
 			static constexpr const char* m_cszFreqDampingNames[2] = { "Node", "Island" };
 			static constexpr const char* m_cszGeneratorLessLRCNames[2] = { "S","I" };
 
+			static constexpr const char* m_cszSecuritySpinReference = "SecuritySpinReference";
 			static constexpr const char* m_cszProcessDuration = "ProcessDuration";
 			static constexpr const char* m_cszFrequencyTimeConstant = "FrequencyTimeConstant";
 			static constexpr const char* m_cszLRCToShuntVmin = "LRCToShuntVmin";
@@ -626,6 +628,10 @@ namespace DFW2
 		void   Computehl0(); // рассчитывает кэшированные произведения l0 * GetH для элементов матрицы
 
 		bool Step();
+		// обрабатывает автоматику между шагами без
+		// определения зерокроссинга по итоговым
+		// значениям переменных
+		bool ProcessOffStep();
 
 		double GetNorm(double *pVector);
 		double GetWeightedNorm(double *pVector);

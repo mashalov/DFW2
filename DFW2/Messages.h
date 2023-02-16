@@ -258,6 +258,7 @@ namespace DFW2
 		static const char* m_cszWrongTaggedPath;
 		static const char* m_cszPrimitiveChangesState;
 		static const char* m_cszRunningAction;
+		static const char* m_cszGeneratorOverspeed;
 	};
 }
 

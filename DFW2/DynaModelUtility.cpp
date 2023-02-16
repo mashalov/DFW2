@@ -520,7 +520,7 @@ bool CDynaModel::StabilityLost()
 	{
 		for (const auto& dev : Branches)
 		{
-			CDynaBranch* pBranch(static_cast<CDynaBranch*>(dev));
+			CDynaBranch* pBranch{ static_cast<CDynaBranch*>(dev) };
 			if (pBranch->BranchState_ != CDynaBranch::BranchState::BRANCH_ON) continue;
 			const auto ret = CheckAnglesCrossedPi(pBranch->pNodeIp_->Delta, pBranch->pNodeIq_->Delta, pBranch->deltaDiff);
 			sc.m_MaxBranchAngle.UpdateAbs(pBranch->deltaDiff, GetCurrentTime(), pBranch);
@@ -552,7 +552,7 @@ bool CDynaModel::StabilityLost()
 			{
 				for (auto&& gen : *gencontainer)
 				{
-					CDynaGeneratorMotion* pGen(static_cast<CDynaGeneratorMotion*>(gen));
+					CDynaGeneratorMotion* pGen{ static_cast<CDynaGeneratorMotion*>(gen) };
 					if (!pGen->InMatrix()) continue;
 					const double nodeDelta(static_cast<const CDynaNodeBase*>(pGen->GetSingleLink(0))->Delta);
 					// угол генератора рассчитывается без периодизации и не подходит для CheckAnglesCrossedPi,
@@ -675,6 +675,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszWorkingFolder, m_strWorkingFolder);
 	Serializer->AddProperty(m_cszResultsFolder, m_strResultsFolder);
 	Serializer->AddProperty(m_cszProcessDuration, m_dProcessDuration);
+	Serializer->AddProperty(m_cszSecuritySpinReference, SecuritySpinReference_);
 	Serializer->AddProperty(m_cszHmax, Hmax);
 	Serializer->AddProperty(cszHysteresisAtol, HysteresisAtol_);
 	Serializer->AddProperty(cszHysteresisRtol, HysteresisRtol_);
@@ -1125,6 +1126,62 @@ void CDynaModel::DumpStatistics()
 	std::chrono::milliseconds CalcDuration = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - sc.m_ClockStart);
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Duration {}", static_cast<double>(CalcDuration.count()) / 1E3));
 }
+
+
+bool CDynaModel::ProcessOffStep()
+{
+	bool bRes{ true };
+
+	const auto OldDiscontinuityLevel{ sc.m_eDiscontinuityLevel };
+
+	// моделируем работу автоматов безопасности турбин
+	if (m_Parameters.SecuritySpinReference_ > 0.0)
+	{
+		for (auto&& gencontainer : m_DeviceContainers)
+		{
+			// тут можно заранее отобрать контейнеры с генераторами
+			if (gencontainer->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
+			{
+				for (auto&& gen : *gencontainer)
+				{
+					CDynaGeneratorMotion* pGen{ static_cast<CDynaGeneratorMotion*>(gen) };
+					if (!pGen->InMatrix() && pGen->GetState() != eDEVICESTATE::DS_ON)
+						continue;
+					if (pGen->s > m_Parameters.SecuritySpinReference_)
+					{
+						Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(CDFW2Messages::m_cszGeneratorOverspeed, 
+							GetCurrentTime(),
+							GetIntegrationStepNumber(),
+							pGen->GetVerbalName(), 
+							pGen->s, 
+							m_Parameters.SecuritySpinReference_),
+							pGen->GetDBIndex());
+
+						pGen->ChangeState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+					}
+				}
+			}
+		}
+	}
+
+	// если мы повысили уровень разрыва, обрабатываем
+	// его внутри данной функции, чтобы выполнить
+	// необходимые изменения в системе уравнений
+	if (sc.m_eDiscontinuityLevel > OldDiscontinuityLevel)
+	{
+		// обрабатываем разрыв
+		ServeDiscontinuityRequest();
+		// учитываем изменения в системе уравненний
+		bRes = bRes && ApplyChangesToModel();	
+		// возвращаем уровень разрыва к исходному, так как уже все
+		// что случилось внутри этой функции обработали
+		sc.m_eDiscontinuityLevel = OldDiscontinuityLevel;
+		// но оставляем информацию о разрыве для цикла интегрирования
+	}
+
+	return bRes;
+}
+
 
 
 const double CDynaModel::MethodlDefault[4][4] = 

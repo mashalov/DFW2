@@ -348,6 +348,11 @@ bool CDynaModel::RunTransient()
 							bResultsNeedToBeFinished = true;  // если записали - то фиксируем признак завершения
 						}
 					}
+					// обрабатываем автоматику, которая
+					// может работать между шагами
+					// и не требует точности определения пороговых
+					// параметров
+					bRes = bRes && ProcessOffStep();
 					if (StabilityLost())
 						break;
 					if (OscillationsDecayed())

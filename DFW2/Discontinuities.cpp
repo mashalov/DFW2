@@ -253,7 +253,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchImpedance::Do(CDynaModel* pDynaModel)
 	));
 
 	CDevice::FromComplex(pDynaBranch_->R, pDynaBranch_->X, Impedance_);
-	pDynaModel->ProcessTopologyRequest();
+	pDynaBranch_->ProcessTopologyRequest();
 
 	return State;
 }
@@ -271,7 +271,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double 
 		));
 
 	pDynaBranch_->R = R;
-	pDynaModel->ProcessTopologyRequest();
+	pDynaBranch_->ProcessTopologyRequest();
 	return State;
 
 }
@@ -289,7 +289,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double 
 	));
 
 	pDynaBranch_->X = X;
-	pDynaModel->ProcessTopologyRequest();
+	pDynaBranch_->ProcessTopologyRequest();
 	return State;
 }
 
@@ -306,7 +306,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchB::Do(CDynaModel* pDynaModel, double 
 	));
 
 	pDynaBranch_->B = B;
-	pDynaModel->ProcessTopologyRequest();
+	pDynaBranch_->ProcessTopologyRequest();
 	return State;
 }
 
@@ -448,8 +448,8 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, doub
 	rx = 1.0 / rx;
 
 	CDevice::FromComplex(pDynaNode_->Gshunt, pDynaNode_->Bshunt, rx);
+	pDynaNode_->ProcessTopologyRequest();
 
-	pDynaModel->ProcessTopologyRequest();
 	return State;
 }
 
@@ -480,7 +480,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, doub
 
 	CDevice::FromComplex(pDynaNode_->Gshunt, pDynaNode_->Bshunt, rx);
 
-	pDynaModel->ProcessTopologyRequest();
+	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 
@@ -502,7 +502,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntAdmittance::Do(CDynaModel *pDynaMo
 
 	CDevice::FromComplex(pDynaNode_->Gshunt, pDynaNode_->Bshunt, ShuntGB_);
 
-	pDynaModel->ProcessTopologyRequest();
+	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 
@@ -525,7 +525,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, doub
 		));
 
 	pDynaNode_->Gshunt = Value;
-	pDynaModel->ProcessTopologyRequest();
+	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 
@@ -548,7 +548,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, doub
 		));
 
 	pDynaNode_->Bshunt = Value;
-	pDynaModel->ProcessTopologyRequest();
+	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
 
@@ -622,7 +622,7 @@ eDFW2_ACTION_STATE CModelActionChangeDeviceState::Do(CDynaModel* pDynaModel)
 	if (!CDevice::IsFunctionStatusOK(pDevice_->ChangeState(NewState_, eDEVICESTATECAUSE::DSC_EXTERNAL)))
 		State = eDFW2_ACTION_STATE::AS_ERROR;
 	else
-		pDynaModel->ProcessTopologyRequest();
+		pDevice_->ProcessTopologyRequest();
 	return State;
 }
 

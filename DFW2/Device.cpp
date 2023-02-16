@@ -1251,5 +1251,8 @@ void CDevice::ProcessTopologyRequest()
 	auto model{ container->GetModel() };
 	if(!model)
 		throw dfw2error("CDevice::ProcessTopologyRequest - no model !");
+	// запрашиваем разрыв, чтобы задействовать обработку разрывов 
+	// в цикле интегрирования
+	model->DiscontinuityRequest(*this, DiscontinuityLevel::Hard);
 	model->ProcessTopologyRequest();
 }

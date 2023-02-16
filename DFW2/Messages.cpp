@@ -251,4 +251,5 @@ const char* CDFW2Messages::m_cszWrongTaggedPath = "Ошибка пути с те
 const char* CDFW2Messages::m_cszParameterIsOutOfRange = "Значение параметра \"{}\" : \"{}\" = {:.3f} находится вне диапазона типовых значений [{:.3f};{:.3f}]";
 const char* CDFW2Messages::m_cszPrimitiveChangesState = "t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}";
 const char* CDFW2Messages::m_cszRunningAction = "t={:15.012f} {:>3} Исполняется действие \"{}\"";
+const char* CDFW2Messages::m_cszGeneratorOverspeed = "t={:15.012f} {:>3} Генератор \"{}\" отключается действием автомата скорости. Скольжение {:.3f} превысило уставку {:.3f}";
 
