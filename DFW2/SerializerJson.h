@@ -60,14 +60,26 @@ namespace DFW2
         }
     };
 
-    // базовый сериализатор, настроенный на структуру входного json
-    
-    class JsonSaxAcceptorWalkerBase : public JsonSaxAcceptorWalker
+    // пустой базовый сериализатор
+
+    class JsonSaxAcceptorWalkerEmpty : public JsonSaxAcceptorWalker
     {
     protected:
         JsonSaxAcceptorBase* data;
     public:
-        JsonSaxAcceptorWalkerBase() : JsonSaxAcceptorWalker(std::make_unique<JsonSaxAcceptorBase>(JsonObjectTypes::Object, ""))
+        JsonSaxAcceptorWalkerEmpty() : 
+            JsonSaxAcceptorWalker(std::make_unique<JsonSaxAcceptorBase>(JsonObjectTypes::Object, "")),
+            data(rootAcceptor.get()) 
+        {
+        }
+    };
+
+
+    // базовый сериализатор, настроенный на структуру входного json
+    class JsonSaxAcceptorWalkerBase : public JsonSaxAcceptorWalkerEmpty
+    {
+    public:
+        JsonSaxAcceptorWalkerBase() : JsonSaxAcceptorWalkerEmpty()
         {
             auto powerSystem = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "powerSystemModel");
             powerSystem->AddAcceptor(data = new JsonSaxAcceptorBase(JsonObjectTypes::Object, "data"));
@@ -392,15 +404,16 @@ namespace DFW2
     };
 
     // сериализатор второго прохода по json
-    class JsonSaxMainSerializer : public JsonSaxAcceptorWalkerBase
+    template<class T>
+    class JsonSaxMainSerializerT : public T
     {
     protected:
         JsonContainers* containers;
     public:
-        JsonSaxMainSerializer() : JsonSaxAcceptorWalkerBase()
+        JsonSaxMainSerializerT() : T()
         {
             // добавляем акцептор для контейнеров
-            data->AddAcceptor(containers = new JsonContainers());
+            T::data->AddAcceptor(containers = new JsonContainers());
         }
         // добавление сериализатора контейнера
         void AddSerializer(const std::string_view& ClassName, SerializerPtr&& serializer)
@@ -408,6 +421,9 @@ namespace DFW2
             containers->AddSerializer(ClassName, std::move(serializer));
         }
     };
+
+    using JsonSaxMainSerializer = JsonSaxMainSerializerT<JsonSaxAcceptorWalkerBase>;
+    using JsonSaxParametersSerializer = JsonSaxMainSerializerT<JsonSaxAcceptorWalkerEmpty>;
 
 	class CSerializerJson
 	{

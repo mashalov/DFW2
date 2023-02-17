@@ -31,12 +31,67 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 	jsonSerializer.Commit();
 }
 
+
+// читает дополнительную конфигурацию в виде json из рабочего каталога
+// и заменяет параметры непосредственно перед расчетом
+
+void CDynaModel::DeserializeParameters(const std::filesystem::path path)
+{
+	try
+	{
+		// если файл отсутствует - параметры не трогаем
+		if (!std::filesystem::exists(path))
+			return;
+
+		// файл найден - сообщаем что принялись его читать
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingParameters,
+			CDynaModel::cszJson,
+			stringutils::utf8_encode(path.c_str())));
+
+		std::ifstream js;
+		js.exceptions(js.exceptions() | std::ios::failbit);
+		js.open(path);
+
+		// получаем сериализатор параметров
+		// и сохраняем указатель на него чтобы определить
+		// какие параметры изменились
+		auto serializer{ m_Parameters.GetSerializer() };
+		const auto pSerializer{ serializer.get() };
+		auto saxSerializer{ std::make_unique<JsonSaxParametersSerializer>() };
+		const std::string Class{ serializer->GetClassNameW() };
+		saxSerializer->AddSerializer(Class, std::move(serializer));
+		nlohmann::json::sax_parse(js, saxSerializer.get());
+
+		// получаем карту параметров, которые не изменились
+		const auto UnsetMap{ pSerializer->GetUnsetValues() };
+		
+		// проходим по всем параметрам
+		// если параметра нет в карте не изменившихся - выводим его значение
+		for (const auto& var : *pSerializer)
+			if (UnsetMap.find(var.first) == UnsetMap.end())
+				Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(
+					CDFW2Messages::m_cszExternalParameterAccepted, 
+					var.first, 
+					var.second->String()));
+	}
+
+	catch (nlohmann::json::exception& e)
+	{
+		throw dfw2error(fmt::format(CDFW2Messages::m_cszJsonParserError, e.what()));
+	}
+	catch (std::ofstream::failure&)
+	{
+		throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszStdFileStreamError,
+			stringutils::utf8_encode(path.c_str())));
+	}
+}
+
 void CDynaModel::DeSerialize(const std::filesystem::path path)
 {
 	try
 	{
 		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszLoadingModelFormat, 
-			"json", 
+			CDynaModel::cszJson,
 			stringutils::utf8_encode(path.c_str())));
 
 		// создаем json-сериализатор
@@ -49,9 +104,9 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 		// делаем первый проход - считаем сколько чего мы можем взять из json
 		auto acceptorCounter = std::make_unique<JsonSaxElementCounter>();
 		nlohmann::json::sax_parse(js, acceptorCounter.get());
-		// после первого прохода в saxCounter количество объекто для каждого найденного
+		// после первого прохода в saxCounter количество объектов для каждого найденного
 		// в json контейнера
-		// создаем сериалиазатор для второго прохода
+		// создаем сериализатор для второго прохода
 		// и добавляем в него сериализаторы для каждого из контейнеров,
 		// в которых первый проход нашел данные
 

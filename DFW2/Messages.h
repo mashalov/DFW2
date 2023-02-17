@@ -173,6 +173,7 @@ namespace DFW2
 		static const char* m_cszNodeNotFoundForReactor;
 		static const char* m_cszBranchNotFoundForReactor;
 		static const char* m_cszLoadingModelFormat;
+		static const char* m_cszLoadingParameters;
 		static const char* m_cszStdFileStreamError;
 		static const char* m_cszJsonParserError;
 		static const char* m_cszFoundContainerData;
@@ -259,6 +260,7 @@ namespace DFW2
 		static const char* m_cszPrimitiveChangesState;
 		static const char* m_cszRunningAction;
 		static const char* m_cszGeneratorOverspeed;
+		static const char* m_cszExternalParameterAccepted;
 	};
 }
 

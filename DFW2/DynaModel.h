@@ -1057,6 +1057,7 @@ namespace DFW2
 
 		void Serialize(const std::filesystem::path path);
 		void DeSerialize(const std::filesystem::path path);
+		void DeserializeParameters(const std::filesystem::path path);
 
 		// возвращает true, если расчет нужно прекратить (отмена пользователем)
 		inline bool CancelProcessing()
@@ -1116,5 +1117,6 @@ namespace DFW2
 			return fnVersionTie(v1) == fnVersionTie(v2);
 		}
 
+		static constexpr const char* cszJson = "json";
 	};
 }

@@ -149,6 +149,7 @@ CDynaModel::~CDynaModel()
 
 bool CDynaModel::RunTransient()
 {
+	DeserializeParameters(Platform().Root() / "config.json");
 	Automatic().CompileModels();
 
 	AutomaticDevice.ConnectDLL(Automatic().GetModulePath());

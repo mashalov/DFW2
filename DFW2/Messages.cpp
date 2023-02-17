@@ -167,6 +167,8 @@ const char* CDFW2Messages::m_cszUserOverrideOfStandardLRC = "СХН с номе�
 const char* CDFW2Messages::m_cszLRCVminChanged = "Значение Vmin = {} недопустимо для обработки СХН. Значение изменено на {}";
 const char* CDFW2Messages::m_cszLRCIdNotFound = "СХН {} не найдена для узла \"{}\"}";
 const char* CDFW2Messages::m_cszLoadingModelFormat = "Загрузка модели в формате {} \"{}\"";
+const char* CDFW2Messages::m_cszLoadingParameters = "Найден файл параметров в формате {} \"{}\"";
+const char* CDFW2Messages::m_cszExternalParameterAccepted = "Принят параметр: \"{}\" = {}";
 const char* CDFW2Messages::m_cszStdFileStreamError = "Ошибка работы с файлом - \"{}\"";
 const char* CDFW2Messages::m_cszJsonParserError = "Ошибка парсера json \"{}\"";
 const char* CDFW2Messages::m_cszFoundContainerData = "Найдены данные для ввода \"{}\" (\"{}\"). Количество объектов {}";
