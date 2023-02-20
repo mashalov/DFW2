@@ -96,6 +96,8 @@ namespace DFW2
 			double DerLagTolerance_ = 1.0;								// коэффициент, на который умножается Atol/Rtol Derlag
 			ptrdiff_t MaxResultFilesCount_ = 0;							// ограничение количества файлов результатов
 			ptrdiff_t MaxResultFilesSize_  = 0;							// ограничение объема файлов в каталоге результатов
+			ptrdiff_t MaxLogFilesCount_ = 0;							// ограничение количества файлов в каталоге протокола
+			ptrdiff_t MaxLogFilesSize_ = 0;								// ограничение объема файлов в каталоге протокола
 		};
 
 		struct Parameters : public DynaModelParameters

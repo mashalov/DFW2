@@ -207,6 +207,8 @@ protected:
 
 class TaggedPath : public TaggedString
 {
+protected:
+	std::filesystem::path path_;
 public:
 	TaggedPath(const std::string_view& Path) : TaggedString(Path)
 	{
@@ -242,20 +244,25 @@ public:
 
 	std::ofstream Create()
 	{
-		std::filesystem::path path{ stringutils::utf8_decode(Process()) };
-		while (std::filesystem::exists(path) && Count_ > 0)
-			path = std::filesystem::weakly_canonical(stringutils::utf8_decode(Process()));
+		path_ = stringutils::utf8_decode(Process());
+		while (std::filesystem::exists(path_) && Count_ > 0)
+			path_ = std::filesystem::weakly_canonical(stringutils::utf8_decode(Process()));
 
-		std::filesystem::path folder{ path };
+		std::filesystem::path folder{ path_ };
 		std::filesystem::create_directories(folder.remove_filename());
-		std::ofstream dummy(path.string());
+		std::ofstream dummy(path_.string());
 		if (dummy.is_open())
 			return dummy;
 		else
-			throw dfw2error(DFW2::CDFW2Messages::m_cszStdFileStreamError, stringutils::utf8_encode(path.c_str()));
+			throw dfw2error(DFW2::CDFW2Messages::m_cszStdFileStreamError, stringutils::utf8_encode(path_.c_str()));
 	}
 
-	const std::string& Path() const
+	const std::filesystem::path& Path() const
+	{
+		return path_;
+	}
+
+	const std::string& PathString() const
 	{
 		return Root_.substitution_;
 	}

@@ -50,14 +50,14 @@ void CDynaModel::WriteResultsHeader()
 	// с помощью пути с тегами
 	TaggedPath resultFilePath{ stringutils::utf8_encode(resultPath.c_str()) };
 	resultFilePath.Create().close();
-	ResultFilePath_ = stringutils::utf8_decode(resultFilePath.Path());
+	ResultFilePath_ = stringutils::utf8_decode(resultFilePath.PathString());
 	CFolderClean FolderClean(ResultFilePath_, m_Parameters.MaxResultFilesCount_, m_Parameters.MaxResultFilesSize_);
 	FolderClean.SetReportFunction([this](const std::string_view& Message) { Log(DFW2MessageStatus::DFW2LOG_INFO, Message); });
 	FolderClean.Clean();
 
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * Atol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(ResultFilePath_, resultsInfo);
-	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, resultFilePath.Path()));
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, resultFilePath.PathString()));
 
 	// добавляем описание единиц измерения переменных
 	CDFW2Messages vars;

@@ -19,6 +19,8 @@
 #include "BranchMeasures.h"
 #include "NodeMeasures.h"
 #include "TestDevice.h"
+#include "TaggedPath.h"
+#include "FolderClean.h"
 
 #define _LFINFO_
 
@@ -116,10 +118,12 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 
 	if (m_Parameters.m_eFileLogLevel != DFW2MessageStatus::DFW2LOG_NONE)
 	{
-		const auto logPath{ std::filesystem::path(Platform().Logs()).append("dfw2.log") };
-		const auto debugLogPath{ std::filesystem::path(Platform().Logs()).append("debug.log") };
-		LogFile.open(logPath, std::ios::out);
-		DebugLogFile.open(debugLogPath, std::ios::out);
+		const auto LogPath{ Platform().Logs() };
+		TaggedPath MainLogPath((std::filesystem::path(LogPath).append("dfw2.log")).string());
+		TaggedPath DebugLogPath((std::filesystem::path(LogPath).append("debug.log")).string());
+		LogFile = MainLogPath.Create();
+		DebugLogFile = DebugLogPath.Create();
+
 		if (LogFile.is_open())
 		{
 			LogFile << fmt::format(CDFW2Messages::m_cszLogStarted, 
@@ -130,7 +134,10 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 				stringutils::enum_text(m_Parameters.m_eFileLogLevel, m_Parameters.m_cszLogLevelNames)) << std::endl;
 		}
 		else
-			throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszStdFileStreamError, stringutils::utf8_encode(logPath.c_str())));
+			throw dfw2errorGLE(fmt::format(CDFW2Messages::m_cszStdFileStreamError, stringutils::utf8_encode(MainLogPath.Path().c_str())));
+
+		CFolderClean FolderClean(LogPath, m_Parameters.MaxLogFilesCount_, m_Parameters.MaxLogFilesSize_);
+		FolderClean.Clean();
 	}
 
 	if (!SSE2Available_)
