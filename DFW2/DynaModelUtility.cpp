@@ -639,7 +639,11 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 	Validator->AddRule(m_cszLFForceSwitchLambda, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszNewtonMaxNorm, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszLRCSmoothingRange, &ValidatorRange01);
-
+	Validator->AddRule(m_cszSecuritySpinReference, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(m_cszLRCSmoothingRange, &ValidatorRange01);
+	Validator->AddRule(m_cszSecuritySpinReference, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(cszMaxResultFilesCount, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(cszMaxResultFilesSize, &CSerializerValidatorRules::NonNegative);
 	return Validator;
 }
 
@@ -679,6 +683,9 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszHmax, Hmax);
 	Serializer->AddProperty(cszHysteresisAtol, HysteresisAtol_);
 	Serializer->AddProperty(cszHysteresisRtol, HysteresisRtol_);
+	Serializer->AddProperty(cszMaxResultFilesCount, MaxResultFilesCount_);
+	Serializer->AddProperty(cszMaxResultFilesSize, MaxResultFilesSize_);
+
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));

@@ -292,6 +292,9 @@
     <ClInclude Include="TaggedPath.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="FolderClean.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">

@@ -396,6 +396,7 @@
     <ClInclude Include="DynaVoltageSource.h" />
     <ClInclude Include="DynaGeneratorMustang.h" />
     <ClInclude Include="FmtFormatters.h" />
+    <ClInclude Include="FolderClean.h" />
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="TaggedPath.h" />

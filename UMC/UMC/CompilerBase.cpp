@@ -2,6 +2,7 @@
 #include "../../DFW2/dfw2exception.h"
 #include "../../DFW2/Messages.h"
 #include "../../DFW2/FmtFormatters.h"
+#include "../../DFW2/FolderClean.h"
 
 bool CompilerBase::SetProperty(std::string_view PropertyName, std::string_view Value)
 {
@@ -277,7 +278,10 @@ bool CompilerBase::Compile(std::istream& SourceStream)
             AllowedCachedFilesSize = std::stoul(CacheSizeString);
      
         // выполняем очистку каталога по заданным ограничениями
-        RemoveCachedModules(DllLibraryPath, AllowedCachedFilesCount, AllowedCachedFilesSize);
+        CFolderClean FolderClean(DllLibraryPath, AllowedCachedFilesCount, AllowedCachedFilesSize);
+        FolderClean.SetReportFunction([this](const std::string_view& Message) { pTree->Information(Message); });
+        FolderClean.Clean();
+        //RemoveCachedModules(DllLibraryPath, AllowedCachedFilesCount, AllowedCachedFilesSize);
          
         // получаем путь к файлу, имя которого построено по хэшу
         // исходника модели

@@ -94,6 +94,8 @@ namespace DFW2
 			double HysteresisRtol_ = 1e-2;								// относительный гистерезис
 			double HysteresisAtol_ = 3.0;								// абсолютный гистерезис
 			double DerLagTolerance_ = 1.0;								// коэффициент, на который умножается Atol/Rtol Derlag
+			ptrdiff_t MaxResultFilesCount_ = 0;							// ограничение количества файлов результатов
+			ptrdiff_t MaxResultFilesSize_  = 0;							// ограничение объема файлов в каталоге результатов
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -167,9 +169,11 @@ namespace DFW2
 			static constexpr const char* m_cszMaxPVPQSwitches = "MaxPVPQSwitches";
 			static constexpr const char* m_cszPVPQSwitchPerIt = "PVPQSwitchesPerIteration";
 			static constexpr const char* m_cszLFStartupNames[4] = { "None","Seidell", "Tanh", "RKF"};
-			static constexpr const char* m_cszHmax = { "Hmax" };
-			static constexpr const char* cszHysteresisRtol = { "HysteresisRtol" };
-			static constexpr const char* cszHysteresisAtol = { "HysteresisAtol" };
+			static constexpr const char* m_cszHmax = "Hmax";
+			static constexpr const char* cszHysteresisRtol = "HysteresisRtol";
+			static constexpr const char* cszHysteresisAtol = "HysteresisAtol";
+			static constexpr const char* cszMaxResultFilesCount = "MaxResultFilesCount";
+			static constexpr const char* cszMaxResultFilesSize = "MaxResultFilesSize";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
 

@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
 #include "TaggedPath.h"
+#include "FolderClean.h"
 using namespace DFW2;
 
 
@@ -38,30 +39,22 @@ void CDynaModel::WriteResultsHeader()
 	else
 		resultPath.append(stringutils::utf8_decode(m_Parameters.m_strResultsFolder));
 
-	auto resultCheckPath{ resultPath };
-
-	if (resultPath.has_filename() && resultPath.has_extension())
-	{
-		// задан полный путь к файлу результатов, используем как есть
-		resultCheckPath.replace_extension("");
-		resultCheckPath.remove_filename();
-	}
-	else
+	if (!(resultPath.has_filename() || resultPath.has_extension()))
 	{
 		// задан путь без имени файла результатов, генерируем имя
 		//resultPath = CreateResultFilePath("Raiden_{:05d}.sna", resultPath);
 		resultPath.append("binresultCOM.rst");
 	}
 
-	// создаем каталог для вывода результатов
-	//Platform().CheckPath(resultCheckPath);
-	
 	// путь к файлу и сам файл создаем
 	// с помощью пути с тегами
-
 	TaggedPath resultFilePath{ stringutils::utf8_encode(resultPath.c_str()) };
 	resultFilePath.Create().close();
 	ResultFilePath_ = stringutils::utf8_decode(resultFilePath.Path());
+	CFolderClean FolderClean(ResultFilePath_, m_Parameters.MaxResultFilesCount_, m_Parameters.MaxResultFilesSize_);
+	FolderClean.SetReportFunction([this](const std::string_view& Message) { Log(DFW2MessageStatus::DFW2LOG_INFO, Message); });
+	FolderClean.Clean();
+
 	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * Atol(), "Тестовая схема mdp_debug5 с КЗ"};
 	m_ResultsWriter.CreateFile(ResultFilePath_, resultsInfo);
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, resultFilePath.Path()));
