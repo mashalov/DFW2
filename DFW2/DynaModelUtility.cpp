@@ -685,6 +685,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszHysteresisRtol, HysteresisRtol_);
 	Serializer->AddProperty(cszMaxResultFilesCount, MaxResultFilesCount_);
 	Serializer->AddProperty(cszMaxResultFilesSize, MaxResultFilesSize_);
+	Serializer->AddProperty(cszChangeActionsAreCumulative, ChangeActionsAreCumulative_);
 
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 

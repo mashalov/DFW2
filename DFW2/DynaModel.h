@@ -98,6 +98,7 @@ namespace DFW2
 			ptrdiff_t MaxResultFilesSize_  = 0;							// ограничение объема файлов в каталоге результатов
 			ptrdiff_t MaxLogFilesCount_ = 0;							// ограничение количества файлов в каталоге протокола
 			ptrdiff_t MaxLogFilesSize_ = 0;								// ограничение объема файлов в каталоге протокола
+			bool ChangeActionsAreCumulative_ = true;					// включает аккумуляцию изменений (наример - последовательное изменение нагрузки на дискрете)
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -176,6 +177,7 @@ namespace DFW2
 			static constexpr const char* cszHysteresisAtol = "HysteresisAtol";
 			static constexpr const char* cszMaxResultFilesCount = "MaxResultFilesCount";
 			static constexpr const char* cszMaxResultFilesSize = "MaxResultFilesSize";
+			static constexpr const char* cszChangeActionsAreCumulative = "cszChangeActionsAreCumulative";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
 
@@ -916,6 +918,13 @@ namespace DFW2
 		{
 			return m_Parameters.m_bConsiderDampingEquation;
 		}
+
+		// возвращает флаг кумулятивности дискретных изменений
+		inline double ChangeActionsAreCumulative() const
+		{
+			return m_Parameters.ChangeActionsAreCumulative_;
+		}
+
 		// возвращает абсолютную точность из параметров
 		inline double Atol() const
 		{

@@ -417,6 +417,17 @@ eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, doub
 
 	CDevice::FromComplex(pDynaNode_->Pn, pDynaNode_->Qn, SloadNew);
 
+	// В RUSTab изменение параметра оказывается кумулятивным - последовательные изменения суммируются через V 
+	// для формул вида V - k * Base. В этом проекте V фиксированное и не изменяется до обработки разрыва.
+	// Новое значение получается после решения начальных условий. 
+	// Для того чтобы сэмулировать поведение RUSTab можно использовать глобальную обработку разрыва
+	// после каждого изменения. При этом изменяется и нагрузка узла от блока измерения, и значение действия по формуле выше.
+	// Работает за счет того, что нагрузка рассчитывается на CDynaNodeMeasure::ProcessDiscontinuuity,
+	// а далее вызывается ProcessDiscontinuity в пользовательской модели автоматики/сценария.
+	// В результате Value в параметрах функции вычисляется еще раз с только что поставленной нагрузкой
+	// Медленно, но зато просто
+	if(pDynaModel->ChangeActionsAreCumulative())
+		pDynaModel->ProcessDiscontinuity();
 	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
