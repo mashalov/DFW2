@@ -27,6 +27,7 @@ namespace DFW2
 		void BuildRightHand(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
+		void FinishStep(const CDynaModel& DynaModel) override;
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
