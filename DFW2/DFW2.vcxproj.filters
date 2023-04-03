@@ -295,6 +295,9 @@
     <ClInclude Include="FolderClean.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="DynaGenerator2C.h">
+      <Filter>Header Files\Generators</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -635,6 +638,9 @@
     </ClCompile>
     <ClCompile Include="TestDevice.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaGenerator2C.cpp">
+      <Filter>Source Files\Generators</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

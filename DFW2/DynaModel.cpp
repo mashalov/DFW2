@@ -8,6 +8,7 @@
 #include "stdafx.h"
 #include "DynaModel.h"
 #include "DynaGeneratorMustang.h"
+#include "DynaGenerator2C.h"
 #include "DynaGeneratorPark3C.h"
 #include "DynaGeneratorPark4C.h"
 #include "DynaGeneratorInfBus.h"
@@ -36,6 +37,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   Nodes(this),
 						   Branches(this),
 						   Generators1C(this),
+						   Generators2C(this),
 						   Generators3C(this),
 						   GeneratorsPark3C(this),
 						   GeneratorsPark4C(this),
@@ -71,6 +73,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaGeneratorMotion::DeviceProperties(GeneratorsMotion.ContainerProps());
 	CDynaGenerator1C::DeviceProperties(Generators1C.ContainerProps());
 	CDynaGenerator3C::DeviceProperties(Generators3C.ContainerProps());
+	CDynaGenerator2C::DeviceProperties(Generators2C.ContainerProps());
 	CDynaGeneratorMustang::DeviceProperties(GeneratorsMustang.ContainerProps());
 	CDynaGeneratorPark3C::DeviceProperties(GeneratorsPark3C.ContainerProps());
 	CDynaGeneratorPark4C::DeviceProperties(GeneratorsPark4C.ContainerProps());
@@ -96,6 +99,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	m_DeviceContainers.push_back(&DECsMustang);
 	m_DeviceContainers.push_back(&ExcConMustang);
 	m_DeviceContainers.push_back(&Branches);
+	m_DeviceContainers.push_back(&Generators2C);
 	m_DeviceContainers.push_back(&Generators3C);
 	m_DeviceContainers.push_back(&GeneratorsMustang);
 	m_DeviceContainers.push_back(&GeneratorsPark3C);

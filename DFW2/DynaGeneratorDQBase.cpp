@@ -306,8 +306,6 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 	{
 		const double omega{ 1.0 + s };
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
-//		double Pairgap = Vd * Id + Vq * Iq;
-//		Pairgap += (Id * Id + Iq * Iq) * r;
 		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq + (Id * Id + Iq * Iq) * r) / (1.0 + Sv)) / Mj);
 	}
 	else

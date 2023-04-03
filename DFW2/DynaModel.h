@@ -739,6 +739,7 @@ namespace DFW2
 		CDeviceContainer GeneratorsPark3C;
 		CDeviceContainer GeneratorsPark4C;
 		CDeviceContainer Generators1C;
+		CDeviceContainer Generators2C;
 		CDeviceContainer GeneratorsMotion;
 		CDeviceContainer GeneratorsInfBus;
 		CDeviceContainer GeneratorsPowerInjector;

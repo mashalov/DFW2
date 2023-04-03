@@ -387,6 +387,7 @@
     <ClInclude Include="DynaGeneratorMotion.h" />
     <ClInclude Include="DynaGeneratorPark3C.h" />
     <ClInclude Include="DynaGeneratorPark4C.h" />
+    <ClInclude Include="DynaGenerator2C.h" />
     <ClInclude Include="DynaLRC.h" />
     <ClInclude Include="DynaModel.h" />
     <ClInclude Include="DynaNode.h" />
@@ -465,6 +466,7 @@
       <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</MultiProcessorCompilation>
       <MultiProcessorCompilation Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">false</MultiProcessorCompilation>
     </ClCompile>
+    <ClCompile Include="DynaGenerator2C.cpp" />
     <ClCompile Include="DynaGeneratorDQBase.cpp" />
     <ClCompile Include="Comparator.cpp" />
     <ClCompile Include="CustomDevice.cpp" />

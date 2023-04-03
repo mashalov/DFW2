@@ -61,6 +61,7 @@ namespace DFW2
 		const char* GetVerbalClassName() const noexcept;
 		const char* GetSystemClassName() const noexcept;
 		static const char* m_cszNameGenerator1C, *m_cszSysNameGenerator1C;
+		static const char* m_cszNameGenerator2C, * m_cszSysNameGenerator2C;
 		static const char* m_cszNameGenerator3C, *m_cszSysNameGenerator3C;
 		static const char* m_cszNameGeneratorPark3C, *m_cszSysNameGeneratorPark3C;
 		static const char* m_cszNameGeneratorPark4C, *m_cszSysNameGeneratorPark4C;

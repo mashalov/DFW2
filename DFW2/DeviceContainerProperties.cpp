@@ -20,6 +20,7 @@ eDFW2DEVICETYPE CDeviceContainerProperties::GetType() const noexcept
 
 
 const char* CDeviceContainerProperties::m_cszNameGenerator1C = "Генератор 1К";
+const char* CDeviceContainerProperties::m_cszNameGenerator2C = "Генератор 2К";
 const char* CDeviceContainerProperties::m_cszNameGenerator3C = "Генератор 3К";
 const char* CDeviceContainerProperties::m_cszNameGeneratorPark3C = "Генератор Парк 3К";
 const char* CDeviceContainerProperties::m_cszNameGeneratorPark4C = "Генератор Парк 4К";
@@ -40,6 +41,7 @@ const char* CDeviceContainerProperties::m_cszNameReactor = "Реактор";
 
 
 const char* CDeviceContainerProperties::m_cszSysNameGenerator1C = "Generator1C";
+const char* CDeviceContainerProperties::m_cszSysNameGenerator2C = "Generator2C";
 const char* CDeviceContainerProperties::m_cszSysNameGenerator3C = "Generator3C";
 const char* CDeviceContainerProperties::m_cszSysNameGeneratorPark3C = "GeneratorPark3C";
 const char* CDeviceContainerProperties::m_cszSysNameGeneratorPark4C = "GeneratorPark4C";
