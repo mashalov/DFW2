@@ -104,7 +104,7 @@ void CDynaGenerator2C::BuildEquations(CDynaModel* pDynaModel)
 	// dEds/dEds
 	pDynaModel->SetElement(Eds, Eds, -1.0 / Tqo1);
 	// dEds/dIq
-	pDynaModel->SetElement(Eds, Iq, (xq1 - xq) / Tqo1);
+	pDynaModel->SetElement(Eds, Iq, (xq - xq1) / Tqo1);
 
 	// dEq / dEq
 	pDynaModel->SetElement(Eq, Eq, 1.0);
@@ -151,7 +151,7 @@ double* CDynaGenerator2C::GetVariablePtr(ptrdiff_t nVarIndex)
 const cplx& CDynaGenerator2C::CalculateEgen()
 {
 	const double xgen{ Zgen().imag() };
-	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Eds - Iq * (xgen - xq1)) * std::polar(1.0, (double)Delta);
+	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Eds + Iq * (xgen - xq1)) * std::polar(1.0, (double)Delta);
 }
 
 
@@ -176,7 +176,7 @@ void CDynaGenerator2C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnD
 	if (IsStateOn())
 	{
 		(pDynaModel->*fn)(Eqs, (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1);
-		(pDynaModel->*fn)(Eds, (-Eds + Iq * (xq - xq1)) / Tqo1);
+		(pDynaModel->*fn)(Eds, (-Eds - Iq * (xq - xq1)) / Tqo1);
 	}
 	else
 	{
@@ -209,6 +209,7 @@ void CDynaGenerator2C::UpdateSerializer(CSerializerBase* Serializer)
 	CDynaGenerator1C::UpdateSerializer(Serializer);
 	// добавляем свойства модели двухконтурной  модели генератора в ЭДС
 	Serializer->AddProperty(m_csztqo1, Tqo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
 	// добавляем переменные состояния модели двухконтурной модели генератора в ЭДС
 	Serializer->AddState(CDynaGenerator2C::m_cszEds, Eds, eVARUNITS::VARUNIT_PU);
 }

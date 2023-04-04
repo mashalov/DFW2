@@ -75,7 +75,7 @@ eDEVICEFUNCTIONSTATUS CLeadLag::ProcessDiscontinuity(CDynaModel* pDynaModel)
 bool CLeadLag::ChangeTimeConstants(double T1, double  T2)
 {
 	const bool bRes{ CheckTimeConstant(T2) };
-	if(bRes);
+	if(bRes)
 	{
 		T1_ = T1;
 		T2_ = T2;
