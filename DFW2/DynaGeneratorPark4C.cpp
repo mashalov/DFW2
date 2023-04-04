@@ -346,10 +346,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::ProcessDiscontinuity(CDynaModel* pDy
 
 bool CDynaGeneratorPark4C::CalculatePower()
 {
-	const double NodeV{ V }, DeltaGT{ Delta - DeltaV };
-	const double cosDeltaGT{ cos(DeltaGT) }, sinDeltaGT{ sin(DeltaGT) };
-	Vd = -NodeV * sinDeltaGT;
-	Vq = NodeV * cosDeltaGT;
+	GetVdVq();
 	FromComplex(Id,Iq, GetIdIq());
 	P = Vd * Id + Vq * Iq;
 	Q = Vd * Iq - Vq * Id;

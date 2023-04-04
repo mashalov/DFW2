@@ -322,6 +322,8 @@ double CDynaLRCChannel::Get(double VdivVnom, double dVicinity) const
 
 double CDynaLRCChannel::GetBoth(double VdivVnom, double& dP, double dVicinity) const
 {
+	// ищем сегмент СХН, в котором находится VdivVnom
+	// если сегмент в СХН один - возвращаем первый, если нет - ищем в сете, сортированном по напряжению
 	const auto itSegment{ Ps.size() == 1 ? Ps.begin() : std::prev(std::upper_bound(Ps.begin(), Ps.end(), CLRCDataInterpolated(VdivVnom))) };
 	return itSegment->GetBoth(VdivVnom, dP);
 

@@ -107,15 +107,9 @@ void CDynaGenerator2C::BuildEquations(CDynaModel* pDynaModel)
 
 void CDynaGenerator2C::BuildRightHand(CDynaModel* pDynaModel)
 {
-	double sp1{ ZeroGuardSlip(1.0 + s) }, sp2{ ZeroGuardSlip(1.0 + Sv) };
-
-	if (!IsStateOn())
-		sp1 = sp2 = 1.0;
-
 	pDynaModel->SetFunction(Id, Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
 	pDynaModel->SetFunction(Iq, Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
 	pDynaModel->SetFunction(Eq, Eq - Eqs + Id * (xd - xd1));
-
 	SetFunctionsDiff(pDynaModel);
 	BuildRIfromDQRightHand(pDynaModel);
 }
@@ -146,28 +140,21 @@ const cplx& CDynaGenerator2C::CalculateEgen()
 	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, (double)Delta);
 }
 
+
+cplx CDynaGenerator2C::GetIdIq() const
+{
+	const double id{ zsq * (r * (Eds - Vd) - xq1 * (Eqs - Vq)) };
+	const double iq{ zsq * (r * (Eqs - Vq) + xd1 * (Eds - Vd)) };
+	return { id, iq };
+}
+
 bool CDynaGenerator2C::CalculatePower()
 {
-	double NodeV{ V };
-	double DeltaGT{ Delta - DeltaV };
-	double cosDeltaGT{ cos(DeltaGT) };
-	double sinDeltaGT{ sin(DeltaGT) };
-	double sp1{ ZeroGuardSlip(1.0 + s) };
-	double sp2{ ZeroGuardSlip(1.0 + Sv) };
-
-	if (!IsStateOn())
-	{
-		NodeV = cosDeltaGT = sinDeltaGT = 0.0;
-		sp1 = sp2 = 1.0;
-	}
-
-	Vd = -NodeV * sinDeltaGT;
-	Vq = NodeV * cosDeltaGT;
-	Id = zsq * (-r * Vd - xq * (Eqs - Vq));
-	Iq = zsq * (r * (Eqs - Vq) - xd1 * Vd);
+	GetVdVq();
+	Id = zsq * (r * (Eds - Vd) - xq1 * (Eqs - Vq));
+	Iq = zsq * (r * (Eqs - Vq) + xd1 * (Eds - Vd));
 	P = Vd * Id + Vq * Iq;
 	Q = Vd * Iq - Vq * Id;
-
 	return true;
 }
 

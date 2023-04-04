@@ -204,12 +204,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::ProcessDiscontinuity(CDynaModel *pD
 	eDEVICEFUNCTIONSTATUS eRes{ CDynaGenerator3C::ProcessDiscontinuity(pDynaModel) };
 	if (IsStateOn())
 	{
-		const double dVre{ Vre }, dVim{ Vim };
-		const double cosg{ cos(Delta) }, sing{ sin(Delta) };
 		const double sp1{ ZeroGuardSlip(1.0 + s) }, sp2{ ZeroGuardSlip(1.0 + Sv) };
-
-		Vd = -dVre * sing + dVim * cosg;
-		Vq =  dVre * cosg + dVim * sing;
+		GetVdVq();
 		Id = -zsq * (sp2 * Eqss - Vq) * xq2;
 		Iq = -zsq * (Vd - sp2 * Edss) * xd2;
 		P =  sp2 * (Eqss * Iq + Edss * Id + Id * Iq * xd2_xq2_);
@@ -239,13 +235,11 @@ const cplx& CDynaGeneratorMustang::CalculateEgen()
 
 bool CDynaGeneratorMustang::CalculatePower()
 {
-	const double dVre{ Vre }, dVim{ Vim };
-	const double cosg{ cos(Delta) }, sing{ sin(Delta) };
 	const double sp1{ ZeroGuardSlip(1.0 + s) };
 	const double sp2{ ZeroGuardSlip(1.0 + Sv) };
 
-	Vd = -dVre * sing + dVim * cosg;
-	Vq =  dVre * cosg + dVim * sing;
+	GetVdVq();
+
 	Id = -zsq * (sp2 * Eqss - Vq) * xq2;
 	Iq = -zsq * (Vd - sp2 * Edss) * xd2;
 	P = sp2 * (Eqss * Iq + Edss * Id + Id * Iq * xd2_xq2_);

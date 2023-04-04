@@ -160,17 +160,7 @@ void CDynaGenerator1C::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	if (IsStateOn())
 	{
-		double NodeV{ V };
-		double DeltaGT{ Delta - DeltaV };
-		double cosDeltaGT{ cos(DeltaGT) };
 		double sp1{ ZeroGuardSlip(1.0 + s) }, sp2{ ZeroGuardSlip(1.0 + Sv) };
-
-		if (!IsStateOn())
-		{
-			NodeV = cosDeltaGT = 0.0;
-			sp1 = sp2 = 1.0;
-		}
-
 		const double Pairgap{ P + (Id * Id + Iq * Iq) * r };
 		const double eDelta{ pDynaModel->GetOmega0() * s };
 		const double eEqs{ (ExtEqe - Eqs + Id * (xd - xd1)) / Tdo1 };
@@ -208,22 +198,9 @@ const cplx& CDynaGenerator1C::CalculateEgen()
 
 bool CDynaGenerator1C::CalculatePower()
 {
-
-	double NodeV{ V };
-	double DeltaGT{ Delta - DeltaV };
-	double cosDeltaGT{ cos(DeltaGT) };
-	double sinDeltaGT{ sin(DeltaGT) };
 	double sp1{ ZeroGuardSlip(1.0 + s) };
 	double sp2{ ZeroGuardSlip(1.0 + Sv) };
-
-	if (!IsStateOn())
-	{
-		NodeV = cosDeltaGT = sinDeltaGT = 0.0;
-		sp1 = sp2 = 1.0;
-	}
-
-	Vd = -NodeV * sinDeltaGT;
-	Vq = NodeV * cosDeltaGT;
+	GetVdVq();
 	Id = zsq * (-r * Vd - xq * (Eqs - Vq));
 	Iq = zsq * (r * (Eqs - Vq) - xd1 * Vd);
 	P = Vd * Id + Vq * Iq;

@@ -277,14 +277,16 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 
 	_ASSERTE(pLRC);
 
+	// принимаем производные СХН в re/im для активной и реактивной мощности
 	double& re{ reinterpret_cast<double(&)[2]>(dLRCLoad)[0] };
 	double& im{ reinterpret_cast<double(&)[2]>(dLRCLoad)[1] };
 
 	Pnr *= pLRC->P()->GetBoth(VdVnom, re, LRCVicinity);
-	re *= Pn;
 	Qnr *= pLRC->Q()->GetBoth(VdVnom, im, LRCVicinity);
-	im *= Qn;
 
+	// производные масштабируем в номинальным мощностям и напряжению
+	re *= Pn;
+	im *= Qn;
 	dLRCLoad /= V0;
 
 	// если есть СХН генерации (нет привязанных генераторов, но есть заданная в УР генерация)

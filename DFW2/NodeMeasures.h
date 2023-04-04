@@ -8,7 +8,7 @@ namespace DFW2
 	class CDynaNodeMeasure : public CDevice
 	{
 	protected:
-		CDynaNode* m_pNode;				// ветвь, для которой выполняеются расчеты потоков
+		CDynaNode* pNode_;				// узел, для которой выполняеются расчеты потоков
 		eDEVICEFUNCTIONSTATUS  ProcessDiscontinuityImpl(CDynaModel* pDynaModel);
 	public:
 		enum VARS
@@ -19,7 +19,7 @@ namespace DFW2
 		};
 
 		VariableIndex Pload, Qload;
-		CDynaNodeMeasure(CDynaNode* pNode) : CDevice(), m_pNode(pNode) {}
+		CDynaNodeMeasure(CDynaNode* pNode) : CDevice(), pNode_(pNode) {}
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
@@ -27,8 +27,6 @@ namespace DFW2
 		void BuildRightHand(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		void FinishStep(const CDynaModel& DynaModel) override;
-
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 		static constexpr const char* m_cszPload = "Pn";

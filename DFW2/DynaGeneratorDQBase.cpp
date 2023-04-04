@@ -113,9 +113,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::ProcessDiscontinuity(CDynaModel* pDy
 	{
 		if (IsStateOn())
 		{
-			double DeltaGT{ Delta - DeltaV }, NodeV{ V };
-			Vd = -NodeV * sin(DeltaGT);
-			Vq = NodeV * cos(DeltaGT);
+			GetVdVq();
 			const double det{ Vd * Vd + Vq * Vq };
 			Id = (P * Vd - Q * Vq) / det;
 			Iq = (Q * Vd + P * Vq) / det;
@@ -768,4 +766,13 @@ void CDynaGeneratorDQBase::CompareParksParameterCalculation()
 		GetVerbalName(),
 		CanayD.r1, CanayD.l1, CanayD.r2, CanayD.l2,
 		CanayQ.r1, CanayQ.l1, CanayQ.r2, CanayQ.l2));
+}
+
+// рассчитывает vd/vq по Vre/Vim узла
+void CDynaGeneratorDQBase::GetVdVq()
+{
+	const double dVre{Vre}, dVim{Vim};
+	const double co{ std::cos(Delta) }, si{ std::sin(Delta) };
+	Vd = -dVre * si + dVim * co;
+	Vq =  dVre * co + dVim * si;
 }

@@ -19,15 +19,28 @@ double* CDynaNodeMeasure::GetVariablePtr(ptrdiff_t nVarIndex)
 
 void CDynaNodeMeasure::BuildEquations(CDynaModel* pDynaModel)
 {
+
+	// Измерение нагрузки узла просто дублирует расчет нагрузки из узла
+	// по СХН	
+	// Sload - pNode_->Sload = Sload - Snom(a0 + a1*V/V0 + a2*V^2/V0^2) = 0
+	// GetPntQnr возвращает производную pNode_->Sload, масштабированную
+	// к Snov/V0
+	pNode_->GetPnrQnr();
+	// напряжение берем с суперузла, напряжение данного узла может
+	// быть не в матрице
+	const auto pSuperNode{ pNode_->GetSuperNode() };
 	pDynaModel->SetElement(Pload, Pload, 1.0);
+	pDynaModel->SetElement(Pload, pSuperNode->V, -pNode_->dLRCLoad.real());
 	pDynaModel->SetElement(Qload, Qload, 1.0);
+	pDynaModel->SetElement(Qload, pSuperNode->V, -pNode_->dLRCLoad.imag());
 }
 
 
 void CDynaNodeMeasure::BuildRightHand(CDynaModel* pDynaModel)
 {
-	pDynaModel->SetFunction(Pload, 0.0);
-	pDynaModel->SetFunction(Qload, 0.0);
+	// Sload - pNode_->Sload = 0
+	pDynaModel->SetFunction(Pload, Pload - pNode_->Pnr);
+	pDynaModel->SetFunction(Qload, Qload - pNode_->Qnr);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNodeMeasure::Init(CDynaModel* pDynaModel)
@@ -42,24 +55,15 @@ VariableIndexRefVec& CDynaNodeMeasure::GetVariables(VariableIndexRefVec& ChildVe
 
 eDEVICEFUNCTIONSTATUS CDynaNodeMeasure::ProcessDiscontinuityImpl(CDynaModel* pDynaModel)
 {
-	m_pNode->GetPnrQnr();
-	Pload = m_pNode->Pnr;
-	Qload = m_pNode->Qnr;
+	pNode_->GetPnrQnr();
+	Pload = pNode_->Pnr;
+	Qload = pNode_->Qnr;
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
-}
-
-void CDynaNodeMeasure::FinishStep(const CDynaModel& DynaModel)
-{
-	m_pNode->GetPnrQnr();
-	Pload = m_pNode->Pnr;
-	Qload = m_pNode->Qnr;
-//	if (m_pNode->GetId() == 6040)
-//		DynaModel.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("loadp={}", Pload));
 }
 
 eDEVICEFUNCTIONSTATUS CDynaNodeMeasure::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	_ASSERTE(CDevice::IsFunctionStatusOK(m_pNode->DiscontinuityProcessed()));
+	_ASSERTE(CDevice::IsFunctionStatusOK(pNode_->DiscontinuityProcessed()));
 	return ProcessDiscontinuityImpl(pDynaModel);
 }
 
@@ -70,7 +74,6 @@ void CDynaNodeMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	// правил связывания не нужно
 	props.SetType(DEVTYPE_NODEMEASURE);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNodeMeasure, CDeviceContainerProperties::m_cszSysNameNodeMeasure);
-	props.bFinishStep = true;
 	props.EquationsCount = CDynaNodeMeasure::VARS::V_LAST;
 	props.VarMap_.insert({ m_cszPload,  CVarIndex(CDynaNodeMeasure::V_PLOAD, VARUNIT_MW) });
 	props.VarMap_.insert({ m_cszQload,  CVarIndex(CDynaNodeMeasure::V_QLOAD, VARUNIT_MVAR) });

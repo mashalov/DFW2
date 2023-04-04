@@ -1545,13 +1545,15 @@ void CDynaModel::BadStep()
 	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
 	sc.OrderStatistics[sc.q - 1].nFailures++;
 
+
+	if(newH < sc.Hmin * 10.0)
+		ChangeOrder(1);
+
 	// если шаг снизился до минимума
 	if (newH <= sc.Hmin && Equal(H(), sc.Hmin))
 	{
 		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
-
-		ChangeOrder(1);
 
 		// проверяем количество последовательно
 		// заваленных шагов
