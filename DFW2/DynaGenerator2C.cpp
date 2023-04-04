@@ -14,9 +14,10 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator2C::InitModel(CDynaModel* pDynaModel)
 		switch (GetState())
 		{
 		case eDEVICESTATE::DS_ON:
-			zsq = 1.0 / (r * r + xd1 * xq);
+			zsq = 1.0 / (r * r + xd1 * xq1);
 			CDynaGenerator2C::ProcessDiscontinuity(pDynaModel);
 			Eqs = Vq + r * Iq - xd1 * Id;
+			Eds = Vd + r * Id + xq1 * Iq;
 			ExtEqe = Eqs - Id * (xd - xd1);
 			Eq = Eqs - Id * (xd - xd1); // repeat eq calc after eqs (first eq calc is in processdiscontinuity)
 			break;
@@ -32,13 +33,16 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator2C::PreInit(CDynaModel* pDynaModel)
 {
 	if (Kgen > 1)
 	{
+		xd /= Kgen;
 		xd1 /= Kgen;
 		Pnom *= Kgen;
 		xq /= Kgen;
+		xq1 /= Kgen;
 		Mj *= Kgen;
-		xd /= Kgen;
 		r /= Kgen;
 	}
+
+	Zgen_ = { 0, 0.5 * (xd1 + xq1) };
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -72,9 +76,11 @@ void CDynaGenerator2C::BuildEquations(CDynaModel* pDynaModel)
 	// dId/dVd
 	pDynaModel->SetElement(Id, Vd, r * zsq);
 	// dId/dVq
-	pDynaModel->SetElement(Id, Vq, -xq * zsq);
+	pDynaModel->SetElement(Id, Vq, -xq1 * zsq);
 	// dId/dEqs
-	pDynaModel->SetElement(Id, Eqs, xq * zsq);
+	pDynaModel->SetElement(Id, Eqs, xq1 * zsq);
+	// dId/dEds
+	pDynaModel->SetElement(Id, Eds, -r * zsq);
 
 	// dIq/dIq
 	pDynaModel->SetElement(Iq, Iq, 1);
@@ -84,14 +90,21 @@ void CDynaGenerator2C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iq, Vq, r * zsq);
 	// dIq/dEqs
 	pDynaModel->SetElement(Iq, Eqs, -r * zsq);
+	// dIq/dEds
+	pDynaModel->SetElement(Iq, Eds, -xd1 * zsq);
 
 	// dEqs/dEqs
 	pDynaModel->SetElement(Eqs, Eqs, -1.0 / Tdo1);
 	// dEqs/dId
-	pDynaModel->SetElement(Eqs, Id, -1.0 / Tdo1 * (xd - xd1));
+	pDynaModel->SetElement(Eqs, Id, (xd1 - xd) / Tdo1);
 	// dEqs/dEqe
 	if (ExtEqe.Indexed())
 		pDynaModel->SetElement(Eqs, ExtEqe, -1.0 / Tdo1);
+
+	// dEds/dEds
+	pDynaModel->SetElement(Eds, Eds, -1.0 / Tqo1);
+	// dEds/dIq
+	pDynaModel->SetElement(Eds, Iq, (xq1 - xq) / Tqo1);
 
 	// dEq / dEq
 	pDynaModel->SetElement(Eq, Eq, 1.0);
@@ -107,8 +120,9 @@ void CDynaGenerator2C::BuildEquations(CDynaModel* pDynaModel)
 
 void CDynaGenerator2C::BuildRightHand(CDynaModel* pDynaModel)
 {
-	pDynaModel->SetFunction(Id, Id - zsq * (-r * Vd - xq * (Eqs - Vq)));
-	pDynaModel->SetFunction(Iq, Iq - zsq * (r * (Eqs - Vq) - xd1 * Vd));
+	const cplx I{ GetIdIq() };
+	pDynaModel->SetFunction(Id, Id - I.real());
+	pDynaModel->SetFunction(Iq, Iq - I.imag());
 	pDynaModel->SetFunction(Eq, Eq - Eqs + Id * (xd - xd1));
 	SetFunctionsDiff(pDynaModel);
 	BuildRIfromDQRightHand(pDynaModel);
@@ -137,7 +151,7 @@ double* CDynaGenerator2C::GetVariablePtr(ptrdiff_t nVarIndex)
 const cplx& CDynaGenerator2C::CalculateEgen()
 {
 	const double xgen{ Zgen().imag() };
-	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, (double)Delta);
+	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Eds - Iq * (xgen - xq1)) * std::polar(1.0, (double)Delta);
 }
 
 
@@ -151,8 +165,7 @@ cplx CDynaGenerator2C::GetIdIq() const
 bool CDynaGenerator2C::CalculatePower()
 {
 	GetVdVq();
-	Id = zsq * (r * (Eds - Vd) - xq1 * (Eqs - Vq));
-	Iq = zsq * (r * (Eqs - Vq) + xd1 * (Eds - Vd));
+	FromComplex(Id, Iq, GetIdIq());
 	P = Vd * Id + Vq * Iq;
 	Q = Vd * Iq - Vq * Id;
 	return true;

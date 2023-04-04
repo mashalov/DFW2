@@ -363,13 +363,13 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
-	LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
+	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
 
 
 	
-	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
-	//m_spRastr->NewFile(dfwPath.c_str());
-	//m_spRastr->NewFile(scnPath.c_str());
+	LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
+	m_spRastr->NewFile(dfwPath.c_str());
+	m_spRastr->NewFile(scnPath.c_str());
 
 	//LoadFile("e:\\temp\\sztest\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.dfw", dfwPath);
@@ -568,6 +568,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMotion, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator1C, "Generator");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator2C, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator3C, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMustang, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorPark3C, "Generator");
@@ -589,6 +590,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.GeneratorsMustang, "ModelType=6");
 	ReadTable(Network.GeneratorsPark3C, "ModelType=7");
 	ReadTable(Network.GeneratorsPark4C, "ModelType=8");
+	ReadTable(Network.Generators2C, "ModelType=10");
 	ReadTable(Network.GeneratorsPowerInjector, "ModelType=0");
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
