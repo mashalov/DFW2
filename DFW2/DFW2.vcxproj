@@ -400,6 +400,7 @@
     <ClInclude Include="FolderClean.h" />
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="LeadLag.h" />
     <ClInclude Include="TaggedPath.h" />
     <ClInclude Include="TestDevice.h" />
     <ClInclude Include="ICustomDevice.h" />
@@ -505,6 +506,7 @@
     <ClCompile Include="DynaVoltageSource.cpp" />
     <ClCompile Include="DynaGeneratorMustang.cpp" />
     <ClCompile Include="IterationControl.cpp" />
+    <ClCompile Include="LeadLag.cpp" />
     <ClCompile Include="LimitedLag.cpp" />
     <ClCompile Include="LimiterConst.cpp" />
     <ClCompile Include="LoadFlow.cpp" />

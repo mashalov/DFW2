@@ -298,6 +298,9 @@
     <ClInclude Include="DynaGenerator2C.h">
       <Filter>Header Files\Generators</Filter>
     </ClInclude>
+    <ClInclude Include="LeadLag.h">
+      <Filter>Header Files\Dynamic Primitives</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -641,6 +644,9 @@
     </ClCompile>
     <ClCompile Include="DynaGenerator2C.cpp">
       <Filter>Source Files\Generators</Filter>
+    </ClCompile>
+    <ClCompile Include="LeadLag.cpp">
+      <Filter>Source Files\Dynamic Primitives</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

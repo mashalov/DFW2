@@ -383,3 +383,18 @@ std::string CDynaPrimitive::GetVerboseName()
 		pRightVector ? Device_.VariableNameByPtr(pRightVector->pValue) : cszUnknown,
 		pRightVector ? *pRightVector->pValue : 0.0);
 }
+
+
+bool CDynaPrimitive::CheckTimeConstant(const double& T)
+{
+	if (Equal(T, 0.0))
+	{
+		Device_.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveTimeConstant,
+			GetVerbalName(),
+			Device_.GetVerbalName(),
+			T));
+		return false;
+	}
+	else
+		return true;
+}

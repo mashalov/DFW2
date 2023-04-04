@@ -63,21 +63,8 @@ bool CLimitedLag::Init(CDynaModel *pDynaModel)
 	}
 
 	bool bRes{ CDynaPrimitiveLimited::Init(pDynaModel) };
-
-	if (bRes)
-	{
-		if (Equal(T_,0.0))
-		{
-			Device_.Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongPrimitiveTimeConstant,
-																   GetVerbalName(), 
-																   Device_.GetVerbalName(), 
-																   T_));
-			bRes = false;
-		}
-	}
-
+	bRes = bRes && CheckTimeConstant(T_);
 	bRes = bRes && CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));
-
 	return bRes;
 }
 
