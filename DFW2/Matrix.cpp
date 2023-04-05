@@ -11,7 +11,7 @@ void CDynaModel::EstimateMatrix()
 	m_nEstimatedMatrixSize = 0;
 	ptrdiff_t nNonZeroCount(0);
 	// заставляем обновиться постоянные элементы в матрице, ставим оценочную сборку матрицы
-	sc.m_bFillConstantElements = m_bEstimateBuild = true;
+	sc.UpdateConstElements(m_bEstimateBuild = true);
 	// взводим флаг рефакторизации
 	sc.RefactorMatrix();
 
@@ -148,7 +148,7 @@ void CDynaModel::BuildMatrix()
 		if(sc.m_bFillConstantElements)
 			Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Обновление констант");
 		if (!EstimateBuild())
-			sc.m_bFillConstantElements = false;
+			sc.UpdateConstElements(false);
 	}
 }
 
@@ -626,26 +626,6 @@ void CDynaModel::ScaleAlgebraicEquations()
 
 	}
 }
-
-bool CDynaModel::CountConstElementsToSkip(ptrdiff_t nRow)
-{
-	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
-		throw dfw2error(fmt::format("CDynaModel::CountConstElementsToSkip matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
-	MatrixRow *pRow = m_pMatrixRows + nRow;
-	pRow->m_nConstElementsToSkip = pRow->pAp - pRow->pApRow;
-	return true;
-}
-
-bool CDynaModel::SkipConstElements(ptrdiff_t nRow)
-{
-	if (nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(fmt::format("CDynaModel::SkipConstElements matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
-	MatrixRow *pRow = m_pMatrixRows  + nRow;
-	pRow->pAp = pRow->pApRow + pRow->m_nConstElementsToSkip;
-	pRow->pAx = pRow->pAxRow + pRow->m_nConstElementsToSkip;
-	return true;
-}
-
 
 void CDynaModel::CreateTotalRightVector()
 {

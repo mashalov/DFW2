@@ -35,8 +35,6 @@ void CDynaModel::ChangeOrder(ptrdiff_t Newq)
 		sc.RefactorMatrix();
 		// если меняется порядок - то нужно обновлять элементы матрицы считавшиеся постоянными, так как 
 		// изменяются коэффициенты метода.
-		// Для подавления рингинга обновление элементов не требуется, так как постоянные элементы
-		// относятся к алгебре, а подавление рингинга адамса выполняется в дифурах
 		sc.UpdateConstElements();
 	}
 
@@ -478,7 +476,12 @@ void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
 	Methodl[3][0] = MethodlDefault[3][0] * (1.0 + Alpha);
 	// Вместо MethodDefault[3][3] можно использовать честную формулу для LTE (см. Docs)
 	Methodl[3][3] = 1.0 / std::abs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
+	// требуется обновление матрицы и постоянных коэффициентов 
+	// из-за замены коэффициентов метода
 	sc.RefactorMatrix();
+	// Для подавления рингинга требуется обновление элементов так как в алгебраические
+	// уравнения могут входит дифференциальные переменные с коэффициентами Адамса
+	sc.UpdateConstElements();  
 	Computehl0();
 	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping,
 														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));

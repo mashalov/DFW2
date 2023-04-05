@@ -884,9 +884,30 @@ namespace DFW2
 			return m_Parameters.DerLagTolerance_;
 		}
 
-		bool CountConstElementsToSkip(ptrdiff_t nRow);
-		bool SkipConstElements(ptrdiff_t nRow);
-
+		template <typename... Vars>
+		void CountConstElementsToSkip(const Vars& ... vars) 
+		{
+			for (const auto& p : { vars... }) 
+			{
+				if (p.Index >= m_nEstimatedMatrixSize || p.Index < 0)
+					throw dfw2error(fmt::format("CDynaModel::CountConstElementsToSkip matrix size overrun Row {} MatrixSize {}", p.Index, m_nEstimatedMatrixSize));
+				MatrixRow* pRow{ m_pMatrixRows + p.Index };
+				pRow->m_nConstElementsToSkip = pRow->pAp - pRow->pApRow;
+			}
+		}
+		template <typename... Vars>
+		void SkipConstElements(const Vars& ... vars)
+		{
+			for (const auto& p : { vars... })
+			{
+				if (p.Index >= m_nEstimatedMatrixSize || p.Index < 0)
+					throw dfw2error(fmt::format("CDynaModel::SkipConstElements matrix size overrun Row {} MatrixSize {}", p.Index, m_nEstimatedMatrixSize));
+				MatrixRow* pRow{ m_pMatrixRows + p.Index };
+				pRow->pAp = pRow->pApRow + pRow->m_nConstElementsToSkip;
+				pRow->pAx = pRow->pAxRow + pRow->m_nConstElementsToSkip; 
+			}
+		}
+						
 		inline bool FillConstantElements() const
 		{
 			return sc.m_bFillConstantElements;

@@ -403,15 +403,11 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		}
 
 		// запоминаем позиции в строках матрицы, на которых заканчиваются постоянные элементы
-		pDynaModel->CountConstElementsToSkip(Vre.Index);
-		pDynaModel->CountConstElementsToSkip(Vim.Index);
+		pDynaModel->CountConstElementsToSkip(Vre, Vim);
 	}
 	else
-	{
 		// если постоянные элементы не надо обновлять, то пропускаем их и начинаем с непостоянных
-		pDynaModel->SkipConstElements(Vre.Index);
-		pDynaModel->SkipConstElements(Vim.Index);
-	}
+		pDynaModel->SkipConstElements(Vre, Vim);
 
 	// check low voltage
 	if (LowVoltage)

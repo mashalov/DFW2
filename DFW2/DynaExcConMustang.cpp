@@ -126,18 +126,26 @@ void CDynaExcConMustang::BuildEquations(CDynaModel* pDynaModel)
 
 	if (IsStateOn())
 	{
-		// dUsum / dV
-		pDynaModel->SetElement(Usum, dVdtIn, K0u);
-		// dUsum / Sv
-		pDynaModel->SetElement(Usum, dSdtIn, -K0u * Alpha * Vref - K0f);
-		// dUsum / Svt
-		pDynaModel->SetElement(Usum, Svt, K0f);
-		// dUsum / dVdt
-		pDynaModel->SetElement(Usum, dVdtOut, 1.0);
-		// dUsum / dEqdt
-		pDynaModel->SetElement(Usum, dEqdtOut, 1.0);
-		// dUsum / dSdt
-		pDynaModel->SetElement(Usum, dSdtOut, -1.0);
+		if (pDynaModel->FillConstantElements())
+		{
+			// dUsum / dV
+			pDynaModel->SetElement(Usum, dVdtIn, K0u);
+			// dUsum / Svt
+			pDynaModel->SetElement(Usum, Svt, K0f);
+			// dUsum / dVdt
+			pDynaModel->SetElement(Usum, dVdtOut, 1.0);
+			// dUsum / dEqdt
+			pDynaModel->SetElement(Usum, dEqdtOut, 1.0);
+			// dUsum / dSdt
+			pDynaModel->SetElement(Usum, dSdtOut, -1.0);
+			// dUsum / Sv
+			pDynaModel->SetElement(Usum, dSdtIn, -K0u * Alpha * Vref - K0f);
+
+			pDynaModel->CountConstElementsToSkip(Usum);
+		}
+		else
+			pDynaModel->SkipConstElements(Usum);
+
 		//dSvt / dSvt
 		pDynaModel->SetElement(Svt, Svt, -1.0 / Tf);
 		//dSvt / dSv

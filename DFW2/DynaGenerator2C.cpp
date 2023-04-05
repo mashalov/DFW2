@@ -71,27 +71,42 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator2C::ProcessDiscontinuity(CDynaModel* pDynaMo
 
 void CDynaGenerator2C::BuildEquations(CDynaModel* pDynaModel)
 {
-	// dId/dId
-	pDynaModel->SetElement(Id, Id, 1);
-	// dId/dVd
-	pDynaModel->SetElement(Id, Vd, r * zsq);
-	// dId/dVq
-	pDynaModel->SetElement(Id, Vq, -xq1 * zsq);
-	// dId/dEqs
-	pDynaModel->SetElement(Id, Eqs, xq1 * zsq);
-	// dId/dEds
-	pDynaModel->SetElement(Id, Eds, -r * zsq);
+	if (pDynaModel->FillConstantElements())
+	{
+		// dId/dId
+		pDynaModel->SetElement(Id, Id, 1);
+		// dId/dVd
+		pDynaModel->SetElement(Id, Vd, r * zsq);
+		// dId/dVq
+		pDynaModel->SetElement(Id, Vq, -xq1 * zsq);
+		// dId/dEqs
+		pDynaModel->SetElement(Id, Eqs, xq1 * zsq);
+		// dId/dEds
+		pDynaModel->SetElement(Id, Eds, -r * zsq);
 
-	// dIq/dIq
-	pDynaModel->SetElement(Iq, Iq, 1);
-	// dIq/dVd
-	pDynaModel->SetElement(Iq, Vd, xd1 * zsq);
-	// dIq/dVq
-	pDynaModel->SetElement(Iq, Vq, r * zsq);
-	// dIq/dEqs
-	pDynaModel->SetElement(Iq, Eqs, -r * zsq);
-	// dIq/dEds
-	pDynaModel->SetElement(Iq, Eds, -xd1 * zsq);
+		// dIq/dIq
+		pDynaModel->SetElement(Iq, Iq, 1);
+		// dIq/dVd
+		pDynaModel->SetElement(Iq, Vd, xd1 * zsq);
+		// dIq/dVq
+		pDynaModel->SetElement(Iq, Vq, r * zsq);
+		// dIq/dEqs
+		pDynaModel->SetElement(Iq, Eqs, -r * zsq);
+		// dIq/dEds
+		pDynaModel->SetElement(Iq, Eds, -xd1 * zsq);
+
+		// dEq / dEq
+		pDynaModel->SetElement(Eq, Eq, 1.0);
+		// dEq / dEqs
+		pDynaModel->SetElement(Eq, Eqs, -1.0);
+		// dEq / dId
+		pDynaModel->SetElement(Eq, Id, xd - xd1);
+
+		pDynaModel->CountConstElementsToSkip(Id, Iq, Eqs);
+	}
+	else
+		pDynaModel->SkipConstElements(Id, Iq, Eqs);
+
 
 	// dEqs/dEqs
 	pDynaModel->SetElement(Eqs, Eqs, -1.0 / Tdo1);
@@ -106,12 +121,6 @@ void CDynaGenerator2C::BuildEquations(CDynaModel* pDynaModel)
 	// dEds/dIq
 	pDynaModel->SetElement(Eds, Iq, (xq - xq1) / Tqo1);
 
-	// dEq / dEq
-	pDynaModel->SetElement(Eq, Eq, 1.0);
-	// dEq / dEqs
-	pDynaModel->SetElement(Eq, Eqs, -1.0);
-	// dEq / dId
-	pDynaModel->SetElement(Eq, Id, xd - xd1);
 
 	BuildMotionEquationBlock(pDynaModel);
 	BuildRIfromDQEquations(pDynaModel);
