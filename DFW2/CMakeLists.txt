@@ -53,6 +53,7 @@ set(EMSSSOURCES
     DynaGeneratorMotion.cpp
     DynaGeneratorMustang.cpp
     DynaGenerator1C.cpp
+    DynaGenerator2C.cpp
     DynaGenerator3C.cpp
     DynaDECMustang.cpp
     DynaExcConMustang.cpp

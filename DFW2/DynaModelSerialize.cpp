@@ -58,7 +58,7 @@ void CDynaModel::DeserializeParameters(const std::filesystem::path path)
 		auto serializer{ m_Parameters.GetSerializer() };
 		const auto pSerializer{ serializer.get() };
 		auto saxSerializer{ std::make_unique<JsonSaxParametersSerializer>() };
-		const std::string Class{ serializer->GetClassNameW() };
+		const std::string Class{ serializer->GetClassName() };
 		saxSerializer->AddSerializer(Class, std::move(serializer));
 		nlohmann::json::sax_parse(js, saxSerializer.get());
 
