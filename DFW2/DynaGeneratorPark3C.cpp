@@ -241,10 +241,16 @@ void CDynaGeneratorPark3C::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Psi1q, Iq, -Psi1q_iq);
 	pDynaModel->SetElement(Psi1q, Psi1q, Psi1q_Psi1q);
 
-	pDynaModel->SetElement(Eq, Eq, 1);
-	pDynaModel->SetElement(Eq, Psifd, Psifd_Psifd * lad / Rfd);
-	pDynaModel->SetElement(Eq, Psi1d, Psifd_Psi1d * lad / Rfd);
-	pDynaModel->SetElement(Eq, Id, Psifd_id * lad / Rfd);
+	if (pDynaModel->FillConstantElements())
+	{
+		pDynaModel->SetElement(Eq, Eq, 1);
+		pDynaModel->SetElement(Eq, Psifd, Psifd_Psifd * lad / Rfd);
+		pDynaModel->SetElement(Eq, Psi1d, Psifd_Psi1d * lad / Rfd);
+		pDynaModel->SetElement(Eq, Id, Psifd_id * lad / Rfd);
+		pDynaModel->CountConstElementsToSkip(Eq);
+	}
+	else
+		pDynaModel->SkipConstElements(Eq);
 
 	BuildRIfromDQEquations(pDynaModel);
 

@@ -363,11 +363,11 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
-	LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
+	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
 	
-	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
-	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39_sc5.scn", scnPath.c_str());
-	//m_spRastr->NewFile(dfwPath.c_str());
+	LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
+	LoadFile("D:\\source\\repos\\DFW2\\tests\\case39_sc5.scn", scnPath.c_str());
+	m_spRastr->NewFile(dfwPath.c_str()); 
 
 	//LoadFile("e:\\temp\\sztest\\102_1ф.КЗ с УРОВ на КАЭС (откл. КАЭС - Княжегубская №1).dfw", dfwPath.c_str());
 	//LoadFile("e:\\temp\\sztest\\109_ 1ф. КЗ с УРОВ на КАЭС с отключением ВЛ 330 кВ Кольская АЭС - Мончегорск №2.dfw", dfwPath);

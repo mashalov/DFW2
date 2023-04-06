@@ -554,14 +554,34 @@ namespace DFW2
 			return minmax;
 		}
 
+		void ExportCoordinate(const std::filesystem::path& path)
+		{
+			std::ofstream file(path);
+			if (file.is_open())
+			{
+				ptrdiff_t nRow{ 0 };
+				ptrdiff_t* pAi{ Ap() };
+				double* pAx{ Ax() };
+				for (ptrdiff_t* pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
+				{
+					const ptrdiff_t* pAiend{ pAi + *(pAp + 1) - *pAp };
+					while (pAi < pAiend)
+					{
+						file << nRow + 1 << " " << *pAi + 1 << " " << *pAx << std::endl;
+						pAx++; pAi++;
+					}
+				}
+			}
+		}
+
 		// todo - complex version
 		void DumpMatrix(bool bAnalyzeLinearDependenies)
 		{
 			std::ofstream mts(stringutils::utf8_decode("c:\\tmp\\dwfsingularmatrix.mtx"));
 			if (mts.is_open())
 			{
-				ptrdiff_t* pAi = Ap();
-				double* pAx = Ax();
+				ptrdiff_t* pAi{ Ap() };
+				double* pAx{ Ax() };
 				ptrdiff_t nRow = 0;
 				std::set<ptrdiff_t> BadNumbers, FullZeros;
 				std::vector<bool> NonZeros;
@@ -574,7 +594,7 @@ namespace DFW2
 
 				for (ptrdiff_t* pAp = Ai(); pAp < Ai() + MatrixSize(); pAp++, nRow++)
 				{
-					ptrdiff_t* pAiend = pAi + *(pAp + 1) - *pAp;
+					const ptrdiff_t* pAiend{ pAi + *(pAp + 1) - *pAp };
 					bool bAllZeros = true;
 					while (pAi < pAiend)
 					{
