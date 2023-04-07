@@ -177,7 +177,7 @@ namespace DFW2
 			static constexpr const char* cszHysteresisAtol = "HysteresisAtol";
 			static constexpr const char* cszMaxResultFilesCount = "MaxResultFilesCount";
 			static constexpr const char* cszMaxResultFilesSize = "MaxResultFilesSize";
-			static constexpr const char* cszChangeActionsAreCumulative = "cszChangeActionsAreCumulative";
+			static constexpr const char* cszChangeActionsAreCumulative = "ChangeActionsAreCumulative";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
 
