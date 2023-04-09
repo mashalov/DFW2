@@ -16,7 +16,7 @@ using namespace DFW2;
 void CDynaNodeBase::UpdateVreVim()
 {
 	Vold = V;
-	VreVim = std::polar((double)V, (double)Delta);
+	VreVim = std::polar(static_cast<double>(V), static_cast<double>(Delta));
 	FromComplex(Vre, Vim, VreVim);
 }
 

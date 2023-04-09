@@ -885,6 +885,18 @@ namespace DFW2
 		}
 
 		template <typename... Vars>
+		void DebugDump(const CDevice& device, const Vars& ... vars)
+		{
+			if (DebugLogFile.is_open())
+			{
+				DebugLogFile << GetCurrentTime() << ";";
+				for (const auto& p : { vars... })
+					DebugLogFile << p.Value << ";";
+				DebugLogFile << std::endl;
+			}
+		}
+
+		template <typename... Vars>
 		void CountConstElementsToSkip(const Vars& ... vars) 
 		{
 			for (const auto& p : { vars... }) 

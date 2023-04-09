@@ -25,10 +25,10 @@ void CDynaNodeMeasure::BuildEquations(CDynaModel* pDynaModel)
 	// Sload - pNode_->Sload = Sload - Snom(a0 + a1*V/V0 + a2*V^2/V0^2) = 0
 	// GetPntQnr возвращает производную pNode_->Sload, масштабированную
 	// к Snov/V0
-	pNode_->GetPnrQnr();
+	const auto pSuperNode{ pNode_->GetSuperNode() };
+	pNode_->GetPnrQnr(pSuperNode->V);
 	// напряжение берем с суперузла, напряжение данного узла может
 	// быть не в матрице
-	const auto pSuperNode{ pNode_->GetSuperNode() };
 	pDynaModel->SetElement(Pload, Pload, 1.0);
 	pDynaModel->SetElement(Pload, pSuperNode->V, -pNode_->dLRCLoad.real());
 	pDynaModel->SetElement(Qload, Qload, 1.0);
@@ -39,6 +39,8 @@ void CDynaNodeMeasure::BuildEquations(CDynaModel* pDynaModel)
 void CDynaNodeMeasure::BuildRightHand(CDynaModel* pDynaModel)
 {
 	// Sload - pNode_->Sload = 0
+	const auto pSuperNode{ pNode_->GetSuperNode() };
+	pNode_->GetPnrQnr(pSuperNode->V);
 	pDynaModel->SetFunction(Pload, Pload - pNode_->Pnr);
 	pDynaModel->SetFunction(Qload, Qload - pNode_->Qnr);
 }
