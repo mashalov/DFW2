@@ -21,7 +21,7 @@ cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 		Egen_ = GetEMF();
 
 	const cplx Ig{ (Egen_ - std::polar(static_cast<double>(V), static_cast<double>(DeltaV))) * YgInt };
-	const cplx Idq{ Ig * std::polar(1.0, -Delta) };
+	const cplx Idq{ ToDQ(Ig) };
 	FromComplex(Iq, Id, Idq);
 
 	return CalculateEgen() * YgInt;

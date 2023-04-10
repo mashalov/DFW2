@@ -230,7 +230,7 @@ const cplx& CDynaGeneratorMustang::CalculateEgen()
 {
 	const double xgen{ Zgen().imag() };
 	const double sp2{ ZeroGuardSlip(1.0 + Sv) };
-	return Egen_ = cplx(sp2 * Eqss - Id * (xgen - xd2), sp2 * Edss + Iq * (xgen - xq2)) * std::polar(1.0, (double)Delta);
+	return Egen_ = ToRI({ sp2 * Eqss - Id * (xgen - xd2), sp2 * Edss + Iq * (xgen - xq2) });
 }
 
 bool CDynaGeneratorMustang::CalculatePower()

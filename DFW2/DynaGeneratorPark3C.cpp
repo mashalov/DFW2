@@ -371,18 +371,16 @@ bool CDynaGeneratorPark3C::CalculatePower()
 
 cplx CDynaGeneratorPark3C::GetEMF()
 {
-	cplx emf{ Eq_Psifd * Psifd + Eq_Psi1d * Psi1d, Ed_Psi1q * Psi1q };
-	emf *= (1.0 + s);
-	emf *= std::polar(1.0, Delta.Value);
+	const cplx emf{ ToRI({Eq_Psifd * Psifd + Eq_Psi1d * Psi1d, Ed_Psi1q * Psi1q }) * (1.0 + s) };
 	return emf;
 }
 
 const cplx& CDynaGeneratorPark3C::CalculateEgen()
 {
 	const double xgen{ Zgen().imag() };
-	const cplx emf{ GetEMF() * std::polar(1.0, -Delta.Value) };
+	const cplx emf{ ToDQ(GetEMF()) };
 	const double omega{ 1.0 + Sv };
-	return Egen_ = cplx(emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen)) * std::polar(1.0, (double)Delta);
+	return Egen_ = ToRI({ emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen) });
 }
 
 void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)

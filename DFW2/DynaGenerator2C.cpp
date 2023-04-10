@@ -157,10 +157,15 @@ double* CDynaGenerator2C::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
+cplx CDynaGenerator2C::GetEMF()
+{
+	return ToRI({ Eqs, Eds });
+}
+
 const cplx& CDynaGenerator2C::CalculateEgen()
 {
 	const double xgen{ Zgen().imag() };
-	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Eds + Iq * (xgen - xq1)) * std::polar(1.0, (double)Delta);
+	return Egen_ = ToRI({ Eqs - Id * (xgen - xd1), Eds + Iq * (xgen - xq1) });
 }
 
 

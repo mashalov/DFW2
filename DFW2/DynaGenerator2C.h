@@ -37,7 +37,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
-
+		cplx GetEMF() override;
 		static constexpr const char* m_cszEds = "Eds";
 	};
 }

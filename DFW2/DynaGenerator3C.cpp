@@ -284,13 +284,13 @@ bool CDynaGenerator3C::CalculatePower()
 
 cplx CDynaGenerator3C::GetEMF()
 {
-	return cplx(Eqss, Edss) * std::polar(1.0, (double)Delta);
+	return ToRI({ Eqss, Edss });
 }
 
 const cplx& CDynaGenerator3C::CalculateEgen()
 {
 	const double xgen{ Zgen().imag() };
-	return Egen_ = cplx(Eqss - Id * (xgen - xd2), Edss + Iq*(xgen - xq2)) * std::polar(1.0, (double)Delta);
+	return Egen_ = ToRI({ Eqss - Id * (xgen - xd2), Edss + Iq * (xgen - xq2) });
 }
 
 void CDynaGenerator3C::UpdateValidator(CSerializerValidatorRules* Validator)

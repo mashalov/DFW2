@@ -193,7 +193,7 @@ double* CDynaGenerator1C::GetVariablePtr(ptrdiff_t nVarIndex)
 const cplx& CDynaGenerator1C::CalculateEgen()
 {
 	const double xgen{ Zgen().imag() };
-	return Egen_ = cplx(Eqs - Id * (xgen - xd1), Iq * (xgen - xq)) * std::polar(1.0, (double)Delta);
+	return Egen_ = ToRI({ Eqs - Id * (xgen - xd1), Iq * (xgen - xq) });
 }
 
 bool CDynaGenerator1C::CalculatePower()
