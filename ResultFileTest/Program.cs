@@ -16,6 +16,7 @@ namespace ResultFileTest
         {
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
+            //Application.Set­Process­Dpi­Awareness()
             Application.Run(new Form1());
         }
     }

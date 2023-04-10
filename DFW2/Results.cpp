@@ -48,7 +48,7 @@ void CDynaModel::WriteResultsHeader()
 
 	// путь к файлу и сам файл создаем
 	// с помощью пути с тегами
-	TaggedPath resultFilePath{ stringutils::utf8_encode(resultPath.c_str()) };
+	TaggedPath resultFilePath{ resultPath };
 	resultFilePath.Create().close();
 	ResultFilePath_ = stringutils::utf8_decode(resultFilePath.PathString());
 	CFolderClean FolderClean(ResultFilePath_, m_Parameters.MaxResultFilesCount_, m_Parameters.MaxResultFilesSize_);

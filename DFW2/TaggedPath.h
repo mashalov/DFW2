@@ -210,6 +210,7 @@ class TaggedPath : public TaggedString
 protected:
 	std::filesystem::path path_;
 public:
+	TaggedPath(const std::filesystem::path& path) : TaggedPath(std::string_view{ stringutils::utf8_encode(path.c_str()) }) {}
 	TaggedPath(const std::string_view& Path) : TaggedString(Path)
 	{
 		AddFunction([this](const std::string& Tag) -> std::optional<std::string>

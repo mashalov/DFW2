@@ -186,6 +186,7 @@ namespace ResultFileTest
             Font nodeFont = e.Node.NodeFont;
             if (nodeFont == null) nodeFont = ((TreeView)sender).Font;
 
+            nodeFont = new Font(nodeFont.FontFamily, nodeFont.Size * 96 / DeviceDpi);
             if ((e.State & TreeNodeStates.Selected) != 0)
             {
                 e.Graphics.FillRectangle(DevTreeNode.HighLightBrush, backBounds);

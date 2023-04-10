@@ -123,8 +123,8 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	if (m_Parameters.m_eFileLogLevel != DFW2MessageStatus::DFW2LOG_NONE)
 	{
 		const auto LogPath{ Platform().Logs() };
-		TaggedPath MainLogPath((std::filesystem::path(LogPath).append("dfw2.log")).string());
-		TaggedPath DebugLogPath((std::filesystem::path(LogPath).append("debug.log")).string());
+		TaggedPath MainLogPath(std::filesystem::path(LogPath).append("dfw2.log"));
+		TaggedPath DebugLogPath(std::filesystem::path(LogPath).append("debug.log"));
 		LogFile = MainLogPath.Create();
 		DebugLogFile = DebugLogPath.Create();
 
