@@ -34,6 +34,7 @@
             this.VarBox = new System.Windows.Forms.ListView();
             this.menuStrip = new System.Windows.Forms.MenuStrip();
             this.FilterBox = new ResultFileTest.ButtonTextBox();
+            this.tableLayoutPanel1 = new System.Windows.Forms.TableLayoutPanel();
             ((System.ComponentModel.ISupportInitialize)(this.ChartContainer)).BeginInit();
             this.ChartContainer.Panel1.SuspendLayout();
             this.ChartContainer.SuspendLayout();
@@ -41,6 +42,7 @@
             this.TreeAndVarsContainer.Panel1.SuspendLayout();
             this.TreeAndVarsContainer.Panel2.SuspendLayout();
             this.TreeAndVarsContainer.SuspendLayout();
+            this.tableLayoutPanel1.SuspendLayout();
             this.SuspendLayout();
             // 
             // ChartContainer
@@ -65,8 +67,7 @@
             // 
             // TreeAndVarsContainer.Panel1
             // 
-            this.TreeAndVarsContainer.Panel1.Controls.Add(this.DeviceTree);
-            this.TreeAndVarsContainer.Panel1.Controls.Add(this.FilterBox);
+            this.TreeAndVarsContainer.Panel1.Controls.Add(this.tableLayoutPanel1);
             // 
             // TreeAndVarsContainer.Panel2
             // 
@@ -81,10 +82,10 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.DeviceTree.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawText;
-            this.DeviceTree.Location = new System.Drawing.Point(0, 19);
+            this.DeviceTree.Location = new System.Drawing.Point(0, 20);
             this.DeviceTree.Margin = new System.Windows.Forms.Padding(0);
             this.DeviceTree.Name = "DeviceTree";
-            this.DeviceTree.Size = new System.Drawing.Size(147, 399);
+            this.DeviceTree.Size = new System.Drawing.Size(146, 398);
             this.DeviceTree.TabIndex = 0;
             this.DeviceTree.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.OnDrawNode);
             this.DeviceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.OnItemSelect);
@@ -104,20 +105,36 @@
             // 
             // menuStrip
             // 
+            this.menuStrip.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip.Name = "menuStrip";
+            this.menuStrip.Size = new System.Drawing.Size(621, 24);
             this.menuStrip.TabIndex = 5;
             // 
             // FilterBox
             // 
-            this.FilterBox.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.FilterBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.FilterBox.FilterMode = false;
             this.FilterBox.Location = new System.Drawing.Point(0, 0);
             this.FilterBox.Margin = new System.Windows.Forms.Padding(0);
             this.FilterBox.Name = "FilterBox";
-            this.FilterBox.Size = new System.Drawing.Size(147, 20);
+            this.FilterBox.Size = new System.Drawing.Size(146, 20);
             this.FilterBox.TabIndex = 1;
             this.FilterBox.TextChanged += new System.EventHandler(this.OnTextChanged);
+            // 
+            // tableLayoutPanel1
+            // 
+            this.tableLayoutPanel1.ColumnCount = 1;
+            this.tableLayoutPanel1.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.Controls.Add(this.FilterBox, 0, 0);
+            this.tableLayoutPanel1.Controls.Add(this.DeviceTree, 0, 1);
+            this.tableLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tableLayoutPanel1.Location = new System.Drawing.Point(0, 0);
+            this.tableLayoutPanel1.Name = "tableLayoutPanel1";
+            this.tableLayoutPanel1.RowCount = 2;
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tableLayoutPanel1.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
+            this.tableLayoutPanel1.Size = new System.Drawing.Size(146, 418);
+            this.tableLayoutPanel1.TabIndex = 0;
             // 
             // Form1
             // 
@@ -134,10 +151,11 @@
             ((System.ComponentModel.ISupportInitialize)(this.ChartContainer)).EndInit();
             this.ChartContainer.ResumeLayout(false);
             this.TreeAndVarsContainer.Panel1.ResumeLayout(false);
-            this.TreeAndVarsContainer.Panel1.PerformLayout();
             this.TreeAndVarsContainer.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.TreeAndVarsContainer)).EndInit();
             this.TreeAndVarsContainer.ResumeLayout(false);
+            this.tableLayoutPanel1.ResumeLayout(false);
+            this.tableLayoutPanel1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -151,6 +169,7 @@
         private System.Windows.Forms.SplitContainer TreeAndVarsContainer;
         private System.Windows.Forms.SplitContainer ChartContainer;
         private System.Windows.Forms.MenuStrip menuStrip;
+        private System.Windows.Forms.TableLayoutPanel tableLayoutPanel1;
     }
 }
 
