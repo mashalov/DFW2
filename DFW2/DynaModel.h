@@ -578,6 +578,7 @@ namespace DFW2
 #else
 		CResultsWriterABI m_ResultsWriter;
 #endif		
+		std::string ModelName_;					// имя расчетной модели
 		std::map<ptrdiff_t, std::set<ptrdiff_t>> m_MatrixChecker;
 		std::vector<RightVector> m_RightVectorSnapshot;
 
@@ -1122,6 +1123,16 @@ namespace DFW2
 		}
 
 		void CheckFolderStructure();
+
+		const std::string& ModelName() const
+		{
+			return ModelName_;
+		}
+
+		void SetModelName(const std::string_view ModelName)
+		{
+			ModelName_ = ModelName;
+		}
 
 		unsigned long ThreadId() const
 		{

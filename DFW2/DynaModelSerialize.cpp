@@ -145,6 +145,7 @@ void CDynaModel::DeSerialize(const std::filesystem::path path)
 		// делаем второй проход с реальным чтением данных
 		nlohmann::json::sax_parse(js, saxSerializer.get());
 
+		SetModelName(stringutils::utf8_encode(path.filename().c_str()));
 	}
 	catch (nlohmann::json::exception& e)
 	{

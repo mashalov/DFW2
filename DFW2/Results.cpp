@@ -55,7 +55,7 @@ void CDynaModel::WriteResultsHeader()
 	FolderClean.SetReportFunction([this](const std::string_view& Message) { Log(DFW2MessageStatus::DFW2LOG_INFO, Message); });
 	FolderClean.Clean();
 
-	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * Atol(), "Тестовая схема mdp_debug5 с КЗ"};
+	CResultsWriterBase::ResultsInfo resultsInfo { 0.0 * Atol(), ModelName() };
 	m_ResultsWriter.CreateFile(ResultFilePath_, resultsInfo);
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszResultFileCreated, resultFilePath.PathString()));
 

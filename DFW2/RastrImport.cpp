@@ -494,7 +494,7 @@ void CRastrImport::StoreResults(const CDynaModel& Network)
 
 void CRastrImport::GetData(CDynaModel& Network)
 {
-
+	
 	ITablesPtr spTables{ m_spRastr->Tables };
 
 	auto ps{ Network.GetParametersSerializer() };
@@ -659,7 +659,7 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 	18 Протокол*/
 
 	/* Типы стартеров RUSTab
-	
+
 	0 Откл|
 	1 Объект|
 	2 Время|
@@ -679,7 +679,7 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 
 
 	const std::map<long, std::pair<const std::string_view, const std::string_view>>
-	ActionCommandTypeArgs
+		ActionCommandTypeArgs
 	{
 		{2 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::m_cszSta } },
 		{3 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::m_cszSta } },
@@ -730,28 +730,28 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 			ChangeToString();
 			return String_;
 		}
-		operator const char*()
+		operator const char* ()
 		{
 			ChangeToString();
 			return String_.c_str();
 		}
 	};
 
-	for (auto&& Level: AutoLevels)
+	for (auto&& Level : AutoLevels)
 	{
 		ITablePtr spAutoStarters{ spTables->Item(Level.Starters_) };
 		IColsPtr spASCols{ spAutoStarters->Cols };
 		IColPtr	spASId{ spASCols->Item(strId) },
-				spASName{ spASCols->Item(strName) },
-				spASType{ spASCols->Item(strType) },
-				spASExpr{ spASCols->Item(strFormula) },
-				spASObjClass{ spASCols->Item(strClass) },
-				spASObjKey{ spASCols->Item(strKey) },
-				spASObjProp{ spASCols->Item(strProp) };
+			spASName{ spASCols->Item(strName) },
+			spASType{ spASCols->Item(strType) },
+			spASExpr{ spASCols->Item(strFormula) },
+			spASObjClass{ spASCols->Item(strClass) },
+			spASObjKey{ spASCols->Item(strKey) },
+			spASObjProp{ spASCols->Item(strProp) };
 
 		for (long i{ 0 }; i < spAutoStarters->GetSize(); i++)
 		{
-			
+
 			std::string table{ static_cast<std::string_view>(AutoValue(spASObjClass, i)) };
 			std::string prop{ static_cast<std::string_view>(AutoValue(spASObjProp, i)) };
 
@@ -775,18 +775,18 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 		ITablePtr spAutoLogic{ spTables->Item(Level.Logics_) };
 		IColsPtr spALCols{ spAutoLogic->Cols };
 		IColPtr spALId{ spALCols->Item(strId) },
-				spALName{ spALCols->Item(strName) },
-				spALType{ spALCols->Item(strType) },
-				spALExpr{ spALCols->Item(strFormula) },
-				spALActions{ spALCols->Item(L"Actions") },
-				spALDelay{ spALCols->Item(L"Delay") },
-				spALOutputMode{ spALCols->Item(strOutput) };
+			spALName{ spALCols->Item(strName) },
+			spALType{ spALCols->Item(strType) },
+			spALExpr{ spALCols->Item(strFormula) },
+			spALActions{ spALCols->Item(L"Actions") },
+			spALDelay{ spALCols->Item(L"Delay") },
+			spALOutputMode{ spALCols->Item(strOutput) };
 
 		for (int i{ 0 }; i < spAutoLogic->GetSize(); i++)
 		{
 			Level.Automatic.AddLogic(
 				AutoValue(spALType, i),
-				AutoValue(spALId ,i),
+				AutoValue(spALId, i),
 				AutoValue(spALName, i),
 				AutoValue(spALExpr, i),
 				AutoValue(spALActions, i),
@@ -797,15 +797,15 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 		ITablePtr spAutoActions{ spTables->Item(Level.Actions_) };
 		IColsPtr spAACols{ spAutoActions->Cols };
 		IColPtr spAAId{ spAACols->Item(strId) },
-				spAAName{ spAACols->Item(strName) },
-				spAAType{ spAACols->Item(strType) },
-				spAAExpr{ spAACols->Item(strFormula) },
-				spAAObjClass{ spAACols->Item(strClass) },
-				spAAObjKey{ spAACols->Item(strKey) },
-				spAAObjProp{ spAACols->Item(strProp) },
-				spAAOutputMode{ spAACols->Item(strOutput) },
-				spAAActionGroup{ spAACols->Item(L"ParentId") },
-				spAAORunsCount{ spAACols->Item(L"RunsCount") };
+			spAAName{ spAACols->Item(strName) },
+			spAAType{ spAACols->Item(strType) },
+			spAAExpr{ spAACols->Item(strFormula) },
+			spAAObjClass{ spAACols->Item(strClass) },
+			spAAObjKey{ spAACols->Item(strKey) },
+			spAAObjProp{ spAACols->Item(strProp) },
+			spAAOutputMode{ spAACols->Item(strOutput) },
+			spAAActionGroup{ spAACols->Item(L"ParentId") },
+			spAAORunsCount{ spAACols->Item(L"RunsCount") };
 
 		for (long i{ 0 }; i < spAutoActions->GetSize(); i++)
 		{
@@ -815,7 +815,7 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 			if (const auto type{ ActionCommandTypeArgs.find(AutoValue(spAAType, i)) }; type != ActionCommandTypeArgs.end())
 			{
 				table = type->second.first;
-				prop  = type->second.second;
+				prop = type->second.second;
 			}
 
 			Level.Automatic.AddAction(
@@ -832,6 +832,15 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 				AutoValue(spAAORunsCount, i));
 		}
 	}
+
+	// в качестве имени модели используем имя файла
+
+	const auto rstFile{ std::find_if(LoadedFiles.rbegin(), LoadedFiles.rend(), [](const auto& path) 
+		{ 
+			return path.extension() == ".rst" || path.extension().empty();
+		}) };
+	if(rstFile != LoadedFiles.rend())
+		Network.SetModelName(stringutils::utf8_encode(rstFile->filename().c_str()));
 }
 
 void CRastrImport::ReadLRCs(CDynaLRCContainer& container)

@@ -46,16 +46,14 @@
             // ChartContainer
             // 
             this.ChartContainer.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.ChartContainer.Location = new System.Drawing.Point(0, 48);
-            this.ChartContainer.Margin = new System.Windows.Forms.Padding(6);
+            this.ChartContainer.Location = new System.Drawing.Point(0, 24);
             this.ChartContainer.Name = "ChartContainer";
             // 
             // ChartContainer.Panel1
             // 
             this.ChartContainer.Panel1.Controls.Add(this.TreeAndVarsContainer);
-            this.ChartContainer.Size = new System.Drawing.Size(1242, 837);
-            this.ChartContainer.SplitterDistance = 414;
-            this.ChartContainer.SplitterWidth = 8;
+            this.ChartContainer.Size = new System.Drawing.Size(621, 418);
+            this.ChartContainer.SplitterDistance = 207;
             this.ChartContainer.TabIndex = 4;
             // 
             // TreeAndVarsContainer
@@ -73,9 +71,8 @@
             // TreeAndVarsContainer.Panel2
             // 
             this.TreeAndVarsContainer.Panel2.Controls.Add(this.VarBox);
-            this.TreeAndVarsContainer.Size = new System.Drawing.Size(414, 837);
-            this.TreeAndVarsContainer.SplitterDistance = 292;
-            this.TreeAndVarsContainer.SplitterWidth = 8;
+            this.TreeAndVarsContainer.Size = new System.Drawing.Size(207, 418);
+            this.TreeAndVarsContainer.SplitterDistance = 146;
             this.TreeAndVarsContainer.TabIndex = 3;
             // 
             // DeviceTree
@@ -84,10 +81,10 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.DeviceTree.DrawMode = System.Windows.Forms.TreeViewDrawMode.OwnerDrawText;
-            this.DeviceTree.Location = new System.Drawing.Point(0, 38);
+            this.DeviceTree.Location = new System.Drawing.Point(0, 19);
             this.DeviceTree.Margin = new System.Windows.Forms.Padding(0);
             this.DeviceTree.Name = "DeviceTree";
-            this.DeviceTree.Size = new System.Drawing.Size(290, 794);
+            this.DeviceTree.Size = new System.Drawing.Size(147, 399);
             this.DeviceTree.TabIndex = 0;
             this.DeviceTree.DrawNode += new System.Windows.Forms.DrawTreeNodeEventHandler(this.OnDrawNode);
             this.DeviceTree.AfterSelect += new System.Windows.Forms.TreeViewEventHandler(this.OnItemSelect);
@@ -97,10 +94,9 @@
             this.VarBox.Dock = System.Windows.Forms.DockStyle.Fill;
             this.VarBox.HideSelection = false;
             this.VarBox.Location = new System.Drawing.Point(0, 0);
-            this.VarBox.Margin = new System.Windows.Forms.Padding(6);
             this.VarBox.MultiSelect = false;
             this.VarBox.Name = "VarBox";
-            this.VarBox.Size = new System.Drawing.Size(114, 837);
+            this.VarBox.Size = new System.Drawing.Size(57, 418);
             this.VarBox.TabIndex = 2;
             this.VarBox.UseCompatibleStateImageBehavior = false;
             this.VarBox.View = System.Windows.Forms.View.Details;
@@ -108,11 +104,6 @@
             // 
             // menuStrip
             // 
-            this.menuStrip.GripMargin = new System.Windows.Forms.Padding(2, 2, 0, 2);
-            this.menuStrip.ImageScalingSize = new System.Drawing.Size(32, 32);
-            this.menuStrip.Location = new System.Drawing.Point(0, 0);
-            this.menuStrip.Name = "menuStrip";
-            this.menuStrip.Size = new System.Drawing.Size(1242, 48);
             this.menuStrip.TabIndex = 5;
             // 
             // FilterBox
@@ -124,19 +115,18 @@
             this.FilterBox.Location = new System.Drawing.Point(0, 0);
             this.FilterBox.Margin = new System.Windows.Forms.Padding(0);
             this.FilterBox.Name = "FilterBox";
-            this.FilterBox.Size = new System.Drawing.Size(290, 31);
+            this.FilterBox.Size = new System.Drawing.Size(147, 20);
             this.FilterBox.TabIndex = 1;
             this.FilterBox.TextChanged += new System.EventHandler(this.OnTextChanged);
             // 
             // Form1
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(192F, 192F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
-            this.ClientSize = new System.Drawing.Size(1242, 885);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.ClientSize = new System.Drawing.Size(621, 442);
             this.Controls.Add(this.ChartContainer);
             this.Controls.Add(this.menuStrip);
             this.MainMenuStrip = this.menuStrip;
-            this.Margin = new System.Windows.Forms.Padding(6);
             this.Name = "Form1";
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.OnLoad);

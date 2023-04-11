@@ -88,7 +88,7 @@ namespace ResultFileTest
                 DeviceTree.Nodes.Add(rootNode);
                 rootNode.Populate();
                 rootNode.Expand();
-                Text = $"Version {resultRead.Version} Channels {resultRead.Channels} Points {resultRead.Points} Ratio {resultRead.CompressionRatio}";
+                Text = $"Name {resultRead.Comment} Version {resultRead.Version} Channels {resultRead.Channels} Points {resultRead.Points} Ratio {resultRead.CompressionRatio} ";
 
                 foreach (ResultFileLib.SlowVariable slowVar in resultRead.SlowVariables)
                 {

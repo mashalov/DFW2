@@ -78,7 +78,7 @@ namespace DFW2
 			ValidationResult res(value->Double() > 1.0 ? ValidationResult::Ok : DefaultResult);
 			if (res != ValidationResult::Ok)
 			{
-				message = CDFW2Messages::m_cszValidationBiggerThanZero;
+				message = CDFW2Messages::m_cszValidationBiggerThanUnity;
 				res = ReplaceValue(value);
 			}
 			return res;

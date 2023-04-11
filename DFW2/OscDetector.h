@@ -280,8 +280,9 @@ public:
 	// возвращает true, если по всем контролируемым значениям зафиксировано затухание
 	bool has_decay(size_t decay_check_cycles)
 	{
-		bool bHasDecay(false);
-		size_t Decayed(0);
+		bool has_decay{ false };
+		size_t  decayed(0);
+		size_t index{ 0 };
 		for (const auto& channel : old_time_point.value)
 		{
 			// если есть канал с обнаруженным отклонением
@@ -290,18 +291,19 @@ public:
 				{
 					// и в канале накоплено более чем заданное количество минимумов и максимумов
 					// определяем затухание
-					bHasDecay = true;
-					Decayed++;
+					has_decay = true;
+					decayed++;
 				}
 				else
 				{
 					// если в канале нет нужного количества минимумов и максимумов, затухания нет
 					// и дальше проверять смысла нет
-					bHasDecay = false;
+					has_decay = false;
 					break;
 				}
+			index++;
 		}
-		return bHasDecay;
+		return has_decay;
 	}
 };
 
