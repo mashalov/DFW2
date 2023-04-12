@@ -664,6 +664,7 @@ bool CDynaModel::NewtonUpdate()
 					std::copy(pRightHandBackup.get(), pRightHandBackup.get() + klu.MatrixSize(), pRh.get()); // копируем невязки до итерации
 					std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRb.get());								 // копируем невязки после итерации
 					double g0 = sc.dRightHandNorm;															 // норма небаланса до итерации
+					NewtonUpdateDevices();																     // обновляем комплексные VreVim в узлах
 					BuildRightHand();																		 // рассчитываем невязки после итерации
 					double g1 = sc.dRightHandNorm;															 // норма небаланса после итерации
 

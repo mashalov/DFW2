@@ -364,7 +364,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
-	LoadFile("e:\\downloads\\Tests\\test2");
+	LoadFile("e:\\downloads\\Tests\\test3");
 	
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39_sc5.scn", scnPath.c_str());

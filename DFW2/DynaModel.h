@@ -893,6 +893,7 @@ namespace DFW2
 			if (DebugLogFile.is_open())
 			{
 				DebugLogFile << GetCurrentTime() << ";";
+				DebugLogFile << GetIntegrationStepNumber() << ";";
 				for (const auto& p : { vars... })
 					DebugLogFile << p.Value << ";";
 				DebugLogFile << std::endl;

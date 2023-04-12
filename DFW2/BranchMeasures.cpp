@@ -308,7 +308,7 @@ void CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 {
 	const auto& pNodeIp{ pZeroLFNode_ ? pBranch_->pNodeIp_ : pBranch_->pNodeSuperIp_ };
 	const auto& pNodeIq{ pZeroLFNode_ ? pBranch_->pNodeIq_ : pBranch_->pNodeSuperIq_ };
-	pNodeIp->UpdateVreVim();	pNodeIq->UpdateVreVim();
+	pNodeIp->UpdateVDelta();	pNodeIq->UpdateVDelta();
 
 	if (pBranch_->BranchState_ != CDynaBranch::BranchState::BRANCH_OFF)
 	{
@@ -369,7 +369,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::Init(CDynaModel* pDynaModel)
 
 void CDynaBranchMeasure::CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, cplx& cIe, cplx& cSb, cplx& cSe)
 {
-	// !!!!!!!!!!!!!   здесь рассчитываем на то, что для узлов начала и конца были сделаны UpdateVreVim !!!!!!!!!!!!!!
+	// !!!!!!!!!!!!!   здесь рассчитываем на то, что для узлов начала и конца были сделаны UpdateVDelta !!!!!!!!!!!!!!
 	if (pBranch->BranchState_ != CDynaBranch::BranchState::BRANCH_OFF)
 	{
 		const cplx Ue{ pBranch->pNodeIq_->Vre, pBranch->pNodeIq_->Vim };
@@ -392,7 +392,7 @@ eDEVICEFUNCTIONSTATUS CDynaBranchMeasure::ProcessDiscontinuity(CDynaModel* pDyna
 {
 	const auto& pNodeIp{ pBranch_->pNodeIp_ };
 	const auto& pNodeIq{ pBranch_->pNodeIq_ };
-	pNodeIq->UpdateVreVim();	pNodeIp->UpdateVreVim();
+	pNodeIq->UpdateVDelta();	pNodeIp->UpdateVDelta();
 	cplx cIb, cIe, cSb, cSe;
 	CDynaBranchMeasure::CalculateFlows(pBranch_, cIb, cIe, cSb, cSe);
 	if (pZeroLFNode_)
