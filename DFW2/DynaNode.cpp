@@ -502,8 +502,8 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 	//double Ire(IconstSuper.real()), Iim(IconstSuper.imag()), 
 	double dV{0.0};
 
-	if (Id_ == 6400 && (pDynaModel->GetIntegrationStepNumber() >= 114 && pDynaModel->GetIntegrationStepNumber() <= 115))
-		pDynaModel->DebugDump(*this, Vre, Vim);
+/*	if (Id_ == 6400 && (pDynaModel->GetIntegrationStepNumber() >= 114 && pDynaModel->GetIntegrationStepNumber() <= 115))
+		pDynaModel->DebugDump(*this, Vre, Vim);*/
 
 	alignas(32) cplx cI{ IconstSuper };
 
@@ -541,8 +541,8 @@ void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 			__m128d yb = _mm_load_pd(reinterpret_cast<double(&)[2]>(pV->Y));
 			__m128d ov = _mm_load_pd(reinterpret_cast<double(&)[2]>(pV->pNode->VreVim));
 
-			if (Id_ == 6400 && (pDynaModel->GetIntegrationStepNumber() >= 114 && pDynaModel->GetIntegrationStepNumber() <= 115))
-				pDynaModel->DebugDump(*this, pV->pNode->Vre, pV->pNode->Vim);
+			/*if (Id_ == 6400 && (pDynaModel->GetIntegrationStepNumber() >= 114 && pDynaModel->GetIntegrationStepNumber() <= 115))
+				pDynaModel->DebugDump(*this, pV->pNode->Vre, pV->pNode->Vim);*/
 
 			// v1 = a + jb ; v2 = c +jd; v1*v2 = (a*c - b*d) + j(a*d + b*c)
 
