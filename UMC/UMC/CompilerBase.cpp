@@ -386,11 +386,14 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         if (pTree->ErrorCount() == 0)
         {
             //  копируем готовый модуль в файл с именем хэша
-            std::filesystem::copy(compiledModulePath, cachedModulePath, ec);
+            std::filesystem::copy(compiledModulePath, cachedModulePath, std::filesystem::copy_options::overwrite_existing, ec);
             if (ec)
+            {
                 pTree->Warning(fmt::format(DFW2::CDFW2Messages::m_cszFileCopyError,
                     stringutils::utf8_encode(compiledModulePath.c_str()),
                     stringutils::utf8_encode(cachedModulePath.c_str())));
+                bRes = false;
+            }
 
             pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelCompiled, stringutils::utf8_encode(compiledModulePath.c_str())));
             bRes = true;

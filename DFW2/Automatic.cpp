@@ -409,7 +409,11 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice
 						m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
 						if (pDev)
 						{
-
+							if (m_strObjectProp == CDevice::m_cszSta)
+							{
+								m_pAction = std::make_unique<CModelActionChangeDeviceState>(static_cast<CDynaNode*>(pDev), eDEVICESTATE::DS_OFF);
+								bRes = true;
+							}
 						}
 					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_BRANCH))
 					{
