@@ -613,6 +613,6 @@ public:
 	}
 
 	static inline const std::string CustomDeviceHeader = "CustomDevice.h";
-	static constexpr DFW2::VersionInfo compilerVersion = { {1,0,0,1} };
+	static constexpr DFW2::VersionInfo compilerVersion = { {1,0,1,124} };
 };
 

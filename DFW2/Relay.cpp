@@ -187,20 +187,25 @@ bool CRelayDelay::Init(CDynaModel *pDynaModel)
 
 void CRelayDelay::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 {
-	if (Equal(Delay_, 0.0))
+	if (EnableInstantSwitch(pDynaModel))
 	{
+		// для реле с нулевой сравниваем состояния до и после
 		const auto OldState{ eCurrentState };
 		CRelay::SetCurrentState(pDynaModel, CurrentState);
+		// и если реле переходит в положение "влключено" - сразу выдаем уведомление на
+		// модель
 		if (OldState == eRELAYSTATES::RS_OFF && CurrentState == eRELAYSTATES::RS_ON)
 			NotifyDelay(pDynaModel);
 	}
 	else
 	{
+		// для реле с выдержкой
 		switch (eCurrentState)
 		{
 		case eRELAYSTATES::RS_ON:
 			if (CurrentState == eRELAYSTATES::RS_OFF)
 			{
+				// при отключении убираем событие на срабатывание с выдержкой
 				pDynaModel->RemoveStateDiscontinuity(this);
 
 				if (Output_ > 0.0)
@@ -210,6 +215,7 @@ void CRelayDelay::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentSt
 		case eRELAYSTATES::RS_OFF:
 			if (CurrentState == eRELAYSTATES::RS_ON)
 			{
+				// при включении ставим безусловное событие на время выдержки
 				pDynaModel->SetStateDiscontinuity(this, Delay_);
 			}
 			break;
@@ -227,8 +233,9 @@ eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		const CRelay::eRELAYSTATES State{ GetInstantState() };
 
 		SetCurrentState(pDynaModel, State);
-
-		if ((Delay_ > 0 && !pDynaModel->CheckStateDiscontinuity(this)) || Delay_ == 0)
+		// если реле может переключаться мгновенно
+		// или его нет в перечне событий, сразу ставим выходное значение
+		if ((!EnableInstantSwitch(pDynaModel) && !pDynaModel->CheckStateDiscontinuity(this)) || EnableInstantSwitch(pDynaModel))
 			pDynaModel->SetVariableNordsiek(Output_, (eCurrentState == eRELAYSTATES::RS_ON) ? 1.0 : 0.0);
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -258,7 +265,7 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 	{
 		if (Device_.IsStateOn())
 		{
-			if (eCurrentState == eRELAYSTATES::RS_ON && Delay_ > 0)
+			if (eCurrentState == eRELAYSTATES::RS_ON)
 			{
 				pDynaModel->SetStateDiscontinuity(this, Delay_);
 				eCurrentState = eRELAYSTATES::RS_OFF;
@@ -268,6 +275,21 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 	}
 	return bRes;
 }
+
+// вариант для реле логики - оно не может переключаться в отрицательном времени
+// если выдержка равна нулю
+bool CRelayDelayLogic::EnableInstantSwitch(CDynaModel* pDynaModel) const
+{
+	return CRelayDelay::EnableInstantSwitch(pDynaModel) && pDynaModel->PositiveTime();
+}
+
+// вариант для обычного реле - может переключаться в отрицательном времени
+// если выдержка равна нулю
+bool CRelayDelay::EnableInstantSwitch(CDynaModel* pDynaModel) const
+{
+	return Delay_ <= DFW2_EPSILON;
+}
+
 
 bool CRelayDelayLogic::NotifyDelay(CDynaModel *pDynaModel)
 {

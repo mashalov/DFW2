@@ -92,7 +92,9 @@ eDFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 bool CDiscontinuities::AddEvent(double Time, CModelAction* Action)
 {
 	bool bRes{ true };
-	CStaticEvent newEvent(Time);
+	// событие может добавляться в отрицательное время,
+	// но мы уводим его на начало расчета
+	CStaticEvent newEvent((std::max)(Time, 0.0));
 	auto checkInsert{ StaticEvent_.insert(newEvent) };
 	checkInsert.first->AddAction(Action);
 	return bRes;
@@ -101,6 +103,9 @@ bool CDiscontinuities::AddEvent(double Time, CModelAction* Action)
 bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double Time)
 {
 	bool bRes{ true };
+	// событие может добавляться в отрицательное время,
+	// но мы уводим его на начало расчета
+	Time = (std::max)(Time, 0.0);
 	CStateObjectIdToTime newObject(pDelayObject, Time);
 	auto it{ StateEvents_.find(pDelayObject) };
 	if (it == StateEvents_.end())
@@ -164,6 +169,9 @@ double CDiscontinuities::NextEventTime()
 
 void CDiscontinuities::PassTime(double Time)
 {
+	// событие может добавляться в отрицательное время,
+	// но мы уводим его на начало расчета
+	Time = (std::max)(Time, 0.0);
 	if (!pDynaModel_->IsInDiscontinuityMode())
 	{
 		auto itEvent{ StaticEvent_.lower_bound(CStaticEvent(Time)) };

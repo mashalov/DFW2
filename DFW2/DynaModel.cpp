@@ -389,11 +389,10 @@ bool CDynaModel::RunTransient()
 		if (bResultsNeedToBeFinished)
 			FinishWriteResults();
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(_WINDLL)
 		if (!bRes)
 			MessageBox(NULL, L"Failed", L"Failed", MB_OK);
 #endif
-
 		DumpStatistics();
 	}
 

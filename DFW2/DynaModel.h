@@ -417,8 +417,10 @@ namespace DFW2
 			double m_dOldH = -1.0;
 			double m_dStoredH = 0.0;
 			ptrdiff_t q = 1;
-			double t = 0.0;
-			double t0 = 0.0;
+			const double StartupStep = 0.01;
+			const double TimeOffset = -3.0 * StartupStep;
+			double t = TimeOffset;
+			double t0 = TimeOffset;
 			// volatile нужен для гарантии корректного учета суммы кэхэна в расчете времени
 			// но он же не дает мешает сериализации, поэтому временно убран. Проверить, как влияет
 			// наличие или отсутствие volatile на расчет
@@ -532,7 +534,7 @@ namespace DFW2
 				if(os.dTimePassed < temp)
 					os.dTimePassed = temp;
 
-				_ASSERTE(std::abs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t) < DFW2_EPSILON);
+				_ASSERTE(std::abs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t + TimeOffset) < DFW2_EPSILON);
 			}
 
 			// рассчитывает текущее время перед выполнением шага, с возможностью возврата
@@ -1041,6 +1043,19 @@ namespace DFW2
 			return sc.t;
 		}
 
+		// возвращает true если время положительно
+		// с учетом минимального шага
+		inline bool PositiveTime() const
+		{
+			return sc.t > -sc.Hmin;
+		}
+
+		// возвращает минимальный шаг
+		inline double Hmin() const
+		{
+			return sc.Hmin;
+		}
+
 		inline bool ZeroCrossingStepReached(double dHstep) const
 		{
 			return dHstep > 0.997;
@@ -1166,7 +1181,7 @@ namespace DFW2
 
 		void CreateZeroLoadFlow();
 
-		static constexpr const VersionInfo version = { { 1, 0, 0, 1 } };
+		static constexpr const VersionInfo version = { { 1, 0, 1, 124 } };
 
 		static bool VersionsEquals(const DFW2::VersionInfo& v1, const DFW2::VersionInfo& v2)
 		{

@@ -59,6 +59,8 @@ namespace DFW2
 	protected:
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 		void RequestZCDiscontinuity(CDynaModel* pDynaModel) override;
+		// разрешает "мгновенное" переключение выхода для реле с нулевой задержкой
+		virtual bool EnableInstantSwitch(CDynaModel* pDynaModel) const;
 	public:
 
 		CRelayDelay(CDevice& Device, ORange Output, IRange Input) : CRelay(Device, Output, Input), CDiscreteDelay() {}
@@ -84,6 +86,8 @@ namespace DFW2
 
 	class CRelayDelayLogic : public CRelayDelay
 	{
+	protected:
+		bool EnableInstantSwitch(CDynaModel* pDynaModel) const override;
 	public:
 
 		CRelayDelayLogic(CDevice& Device, const ORange& Output, const IRange& Input) : 

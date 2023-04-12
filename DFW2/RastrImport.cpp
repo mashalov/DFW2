@@ -362,8 +362,9 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("e:\\temp\\sztest\\РМ_mdp_debug_1_111_m005560");		// режим без нарушения устойчивости, предельный
 
 
-	LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
-	LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
+	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
+	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
+	LoadFile("e:\\downloads\\Tests\\test1");
 	
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39_sc5.scn", scnPath.c_str());
