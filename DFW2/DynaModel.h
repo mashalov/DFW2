@@ -55,7 +55,7 @@ namespace DFW2
 			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
 			double m_dLRCToShuntVmin = 0.5;
-			double m_dLRCSmoothingRange = 0.05;
+			double m_dLRCSmoothingRange = 0.001;
 			double m_dZeroCrossingTolerance = 0.0;
 			bool m_bDontCheckTolOnMinStep = false;
 			bool m_bConsiderDampingEquation = false;
