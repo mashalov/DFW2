@@ -260,11 +260,14 @@ bool CRelayDelay::NotifyDelay(CDynaModel *pDynaModel)
 
 bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 {
-	// для реле логики ставим уставки вверх и вниз вблизи 0.0 и 1.0
+	// для реле логики ставим уставки вверх и вниз вблизи 0.0
 	// чуть сдвинув их внутрь на гистерезис
-	SetRefs(pDynaModel, 1.0 - 2.0 * pDynaModel->GetHysteresis(1.0), 
-						0.0 + 2.0 * pDynaModel->GetHysteresis(0.0), 
-						true, Delay_);
+
+	// Хотим чтобы отпускало ниже UpperH_ = HysteresisAtol
+	// UpperH_ = Upper_ - (abs(Upper) * HysteresisRtol + HysteresisAtol)
+	// Upper_ = 2 * HysteresisAtol / ( 1 + HysteresisRtol )
+
+	SetRefs(pDynaModel,	2 * pDynaModel->HysteresisAtol() / (1 - pDynaModel->HysteresisRtol()), 0.0, true, Delay_);
 
 	bool bRes{ CRelayDelay::Init(pDynaModel) };
 	if (bRes)
