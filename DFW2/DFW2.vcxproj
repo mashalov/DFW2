@@ -401,6 +401,7 @@
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
     <ClInclude Include="LeadLag.h" />
+    <ClInclude Include="PackageVersion.h" />
     <ClInclude Include="TaggedPath.h" />
     <ClInclude Include="TestDevice.h" />
     <ClInclude Include="ICustomDevice.h" />

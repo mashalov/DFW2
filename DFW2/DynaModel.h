@@ -24,7 +24,7 @@
 #include "FmtFormatters.h"
 #include "PlatformFolders.h"
 #include "LoadFlow.h"
-#include "version.h"
+#include "PackageVersion.h"
 #include "DynaBranch.h"
 #include "Statistics.h"
 #include "Logger.h"
@@ -1182,8 +1182,7 @@ namespace DFW2
 
 		void CreateZeroLoadFlow();
 
-		static constexpr const VersionInfo version = { { 1, 0, 1, 124 } };
-
+		static constexpr const VersionInfo version = PackageVersion;
 		static bool VersionsEquals(const DFW2::VersionInfo& v1, const DFW2::VersionInfo& v2)
 		{
 			auto fnVersionTie = [](const DFW2::VersionInfo& v)

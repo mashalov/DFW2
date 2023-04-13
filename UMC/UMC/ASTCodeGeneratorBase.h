@@ -13,7 +13,7 @@
 #include "windows.h"
 #endif
 
-#include "../../DFW2/version.h"
+#include "../../DFW2/PackageVersion.h"
 
 using StringViewList = std::list<std::string_view>;
 
@@ -613,6 +613,6 @@ public:
 	}
 
 	static inline const std::string CustomDeviceHeader = "CustomDevice.h";
-	static constexpr DFW2::VersionInfo compilerVersion = { {1,0,1,124} };
+	static constexpr DFW2::VersionInfo compilerVersion = PackageVersion;
 };
 
