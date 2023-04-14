@@ -8,7 +8,7 @@ using namespace DFW2;
 bool CRelay::Init(CDynaModel *pDynaModel)
 {
 	// задаем уставки
-	SetRefs(pDynaModel, Upper_, Lower_, MaxRelay_);
+	SetRefs(pDynaModel, RefOn_, RefOff_, MaxRelay_);
 	// получаем исходное состояние
 	eCurrentState = GetInstantState();
 	return CDevice::IsFunctionStatusOK(ProcessDiscontinuity(pDynaModel));;
@@ -17,18 +17,14 @@ bool CRelay::Init(CDynaModel *pDynaModel)
 // отслеживание состояния в несработанном состоянии
 double CRelay::OnStateOff(CDynaModel *pDynaModel)
 {
-	double OnBound{ Upper_ };
 	// нужно переключать если Check < 0
-	double Check{ Upper_ - Input_ };
+	double Check{ RefOn_ - Input_ };
 
 	if (!MaxRelay_)
-	{
-		OnBound = Lower_;
-		Check = Input_ - Lower_;
-	}
+		Check = -Check;
 
 	double rH{ 1.0 };
-	if (CDynaPrimitive::ChangeState(pDynaModel, Check, Input_, OnBound, Input_.Index, rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, Check, Input_, RefOn_, Input_.Index, rH))
 		SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
 
 	return rH; 
@@ -37,17 +33,13 @@ double CRelay::OnStateOff(CDynaModel *pDynaModel)
 // отслеживание состояния в сработанном состоянии
 double CRelay::OnStateOn(CDynaModel *pDynaModel)
 {
-	double OnBound{ UpperH_};
-	double Check{ Input_ - UpperH_ };
+	double Check{ Input_ - RefOff_};
 
 	if (!MaxRelay_)
-	{
-		OnBound = LowerH_;
-		Check = LowerH_ - Input_;
-	}
-
+		Check = -Check;
+	
 	double rH{ 1.0 };
-	if (CDynaPrimitive::ChangeState(pDynaModel, Check, Input_, OnBound, Input_.Index, rH))
+	if (CDynaPrimitive::ChangeState(pDynaModel, Check, Input_, RefOff_, Input_.Index, rH))
 		SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
 	return rH;
 
@@ -64,13 +56,13 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 		{
 			// если реле не сработано
 			// проверяем превышает ли вход уставку на срабатывание
-			if (Input_ > Upper_)
+			if (Input_ >= RefOn_)
 				State = eRELAYSTATES::RS_ON;
 		}
 		else
 		{
 			// если реле сработано - проверяем не ниже ли вход уставки на отпускание
-			if (Input_ <= UpperH_)
+			if (Input_ <= RefOff_)
 				State = eRELAYSTATES::RS_OFF;
 		}
 	}
@@ -81,14 +73,14 @@ CRelay::eRELAYSTATES CRelay::GetInstantState()
 		{
 			// если реле не сработано
 			// проверяем не ниже ли вход уставки на срабатывание
-			if (Input_ < Lower_)
+			if (Input_ <= RefOn_)
 				State = eRELAYSTATES::RS_ON;
 		}
 		else
 		{
 			// если реле сработано
 			// проверяем не выше ли вход уставки на отпускание
-			if (Input_ >= LowerH_)
+			if (Input_ >= RefOff_)
 				State = eRELAYSTATES::RS_OFF;
 		}
 	}
@@ -131,25 +123,40 @@ bool CRelayMin::UnserializeParameters(CDynaModel* pDynaModel, const DOUBLEVECTOR
 	return true;
 }
 
-
-void CRelay::SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay)
+void CRelay::SetRefs(CDynaModel* pDynaModel, double RefOn, bool MaxRelay)
 {
-	Upper_ = dUpper;		// порог срабатывания
-	Lower_ = dLower;		// порог отпускания
-	MaxRelay_ = MaxRelay;	// признак максимального реле
-
-	// TODO еще бы проверять m_dUpper > m_dLower
-
-	UpperH_ = Upper_ - pDynaModel->GetHysteresis(Upper_);	// порог на срабатывание уменьшаем на величину гистерезиса
-	LowerH_ = Lower_ + pDynaModel->GetHysteresis(Lower_);	// порог на отпускание увеличиваем на величину гистерезиса
-
+	SetRefs(pDynaModel, RefOn, RefOn, MaxRelay);
 }
 
-
-void CRelayDelay::SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay)
+void CRelay::SetRefs(CDynaModel* pDynaModel, double RefOn, double RefOff, bool MaxRelay)
 {
-	CRelay::SetRefs(pDynaModel, dUpper, dLower, MaxRelay);
-	Delay_ = dDelay;
+	RefOn_	= RefOn;		// порог срабатывания
+	RefOff_ = RefOff;		// порог отпускания
+	MaxRelay_ = MaxRelay;	// признак максимального реле
+
+	// добавляем гистерезис к порогу отпускания
+	// если он слишком близко
+	if (MaxRelay)
+	{
+		RefOff_ = (std::min)(RefOff_, RefOn_ - pDynaModel->GetHysteresis(RefOn_));
+		_ASSERTE(RefOn_ > RefOff_);
+	}
+	else
+	{
+		RefOff_ = (std::max)(RefOff_, RefOn_ + pDynaModel->GetHysteresis(RefOn_));
+		_ASSERTE(RefOn_ < RefOff_);
+	}
+}
+
+void CRelayDelay::SetRefs(CDynaModel* pDynaModel, double RefOn, bool MaxRelay, double Delay)
+{
+	SetRefs(pDynaModel, RefOn, RefOn, MaxRelay, Delay);
+}
+
+void CRelayDelay::SetRefs(CDynaModel *pDynaModel, double RefOn, double RefOff, bool MaxRelay, double Delay)
+{
+	CRelay::SetRefs(pDynaModel, RefOn, RefOff, MaxRelay);
+	Delay_ = Delay;
 }
 
 bool CRelayDelay::UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters)
@@ -267,7 +274,7 @@ bool CRelayDelayLogic::Init(CDynaModel *pDynaModel)
 	// UpperH_ = Upper_ - (abs(Upper) * HysteresisRtol + HysteresisAtol)
 	// Upper_ = 2 * HysteresisAtol / ( 1 + HysteresisRtol )
 
-	SetRefs(pDynaModel,	2 * pDynaModel->HysteresisAtol() / (1 - pDynaModel->HysteresisRtol()), 0.0, true, Delay_);
+	SetRefs(pDynaModel,	2 * pDynaModel->HysteresisAtol() / (1 - pDynaModel->HysteresisRtol()), true, Delay_);
 
 	bool bRes{ CRelayDelay::Init(pDynaModel) };
 	if (bRes)

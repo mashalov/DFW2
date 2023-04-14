@@ -6,10 +6,8 @@ namespace DFW2
 	class CRelay : public CDynaPrimitiveBinaryOutput
 	{
 	protected:
-		double Upper_ = 0.0;		// уставка на повышение
-		double Lower_ = 0.0;		// уставка на понижение
-		double UpperH_ = 0.0;		// уставка на повышение с учетом коэффициента возврата
-		double LowerH_ = 0.0;		// уставка на понижение с учетом коэффициента возврата
+		double RefOn_ = 0.0;		// уставка на срабатывание
+		double RefOff_ = 0.0;		// уставка на возврат
 		bool MaxRelay_ = true;		// true - максимальное реле, false - минимальное
 
 	protected:
@@ -23,7 +21,10 @@ namespace DFW2
 		CRelay(CDevice& Device, const OutputList& Output, const InputList& Input) : CRelay(Device, ORange(Output), IRange(Input)) { }
 
 		virtual ~CRelay() = default;
-		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay);				// задать уставки и режим работы
+		// задать уставки и режим работы
+		void SetRefs(CDynaModel *pDynaModel, double RefOn, double RefOff, bool MaxRelay);	
+		// задать уставки и режим работы реле с максимальным коэффициентом возврата
+		void SetRefs(CDynaModel* pDynaModel, double RefOn, bool MaxRelay);					
 		bool Init(CDynaModel *pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		const char* GetVerbalName() noexcept override { return "Реле"; }
@@ -67,7 +68,8 @@ namespace DFW2
 		CRelayDelay(CDevice& Device, const OutputList& Output, const InputList& Input) : CRelayDelay(Device, ORange(Output), IRange(Input)) { }
 
 		bool Init(CDynaModel *pDynaModel) override;
-		void SetRefs(CDynaModel *pDynaModel, double dUpper, double dLower, bool MaxRelay, double dDelay);
+		void SetRefs(CDynaModel* pDynaModel, double RefOn, bool RefOff, double Delay);
+		void SetRefs(CDynaModel *pDynaModel, double RefOn, double RefOff, bool MaxRelay, double Delay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
 		CDevice* GetDevice() override { return &Device_; };
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
