@@ -121,12 +121,7 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaM
 		if (Equal(K_, 0.0))
 			Y2_ = 0.0;
 		else
-		{
-			// Пока не ясно, надо делать на РДЗ скачок на выходе,
-			// или пытаться подогнать лаг ко входу
-			Y2_ = Input_ - Output_ / T_ / K_;			// подгонка лага ко входу
-			//m_Output = m_K * m_T * (m_Input - m_Y2);		// выход по входу
-		}
+			Output_ = K_ * T_ * (Input_ - Y2_);		// выход по входу
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -140,11 +135,8 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuousSmooth::ProcessDiscontinuity(CDynaModel* 
 		if (Equal(K_, 0.0))
 			Y2_ = 0.0;
 		else
-		{
 			// рассчитываем выход лага с условием сохранения значения на выходе РДЗ
-			Y2_ = Input_  - Output_ / K_ / T_;
-			double dOut = Output_ + K_ * T_ * (Y2_ - Input_);
-		}
+			Y2_ = Input_  - Output_ / K_ / T_;		// подгонка лага ко входу
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -172,22 +164,22 @@ bool CDerlagNordsieck::Init(CDynaModel *pDynaModel)
 		_ASSERTE(!Equal(m_T, 0.0));
 		m_T = 1.0 / m_T;
 	}
-	m_Output = 0.0;
+	Output_ = 0.0;
 	return true;
 }
 
 void CDerlagNordsieck::BuildRightHand(CDynaModel *pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		const RightVector* pRightVector{ pDynaModel->GetRightVector(m_Input.Index) };
+		const RightVector* pRightVector{ pDynaModel->GetRightVector(Input_.Index) };
 
 		if (pDynaModel->IsInDiscontinuityMode())
-			pDynaModel->SetFunctionDiff(m_Output, 0.0);
+			pDynaModel->SetFunctionDiff(Output_, 0.0);
 		else
 		{
 			//if(pDynaModel->IsNordsiekReset())
-				pDynaModel->SetFunctionDiff(m_Output, ((m_Input - pRightVector->Nordsiek[0]) / pDynaModel->GetH() * m_K - m_Output) * m_T);
+				pDynaModel->SetFunctionDiff(Output_, ((Input_ - pRightVector->Nordsiek[0]) / pDynaModel->H() * m_K - Output_) * m_T);
 			//else
 			//	pDynaModel->SetFunctionDiff(m_Output, (pRightVector->Nordsiek[1] / pDynaModel->GetH() * m_K - m_Output) * m_T);
 				
@@ -197,17 +189,17 @@ void CDerlagNordsieck::BuildRightHand(CDynaModel *pDynaModel)
 	}
 	else
 	{
-		pDynaModel->SetFunctionDiff(m_Output, 0.0);
+		pDynaModel->SetFunctionDiff(Output_, 0.0);
 		pDynaModel->SetFunction(m_Y2, 0.0);
 	}
 }
 
 void CDerlagNordsieck::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
-		const RightVector* pRightVector{ pDynaModel->GetRightVector(m_Input.Index) };
-		pDynaModel->SetDerivative(m_Output, (pRightVector->Nordsiek[1] / pDynaModel->GetH() * m_K - m_Output) * m_T);
+		const RightVector* pRightVector{ pDynaModel->GetRightVector(Input_.Index) };
+		pDynaModel->SetDerivative(Output_, (pRightVector->Nordsiek[1] / pDynaModel->H() * m_K - Output_) * m_T);
 	}
 }
 
@@ -221,13 +213,13 @@ bool CDerlagNordsieck::UnserializeParameters(CDynaModel *pDynaModel, const DOUBL
 
 eDEVICEFUNCTIONSTATUS CDerlagNordsieck::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
 		if (Equal(m_K, 0.0))
 			m_Y2 = 0.0;
 		else
 		{
-			const RightVector* pRightVector{ pDynaModel->GetRightVector(m_Input.Index) };
+			const RightVector* pRightVector{ pDynaModel->GetRightVector(Input_.Index) };
 			//m_Output = pRightVector->Nordsiek[1] / pDynaModel->GetH() * m_K;
 			//// рассчитываем выход лага с условием сохранения значения на выходе РДЗ
 			//m_Y2 = (m_Input * m_K * m_T - m_Output) / m_K / m_T;
@@ -239,32 +231,32 @@ eDEVICEFUNCTIONSTATUS CDerlagNordsieck::ProcessDiscontinuity(CDynaModel* pDynaMo
 
 void CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 {
-	if (m_Device.IsStateOn())
+	if (Device_.IsStateOn())
 	{
 
-		const RightVector* pRightVector{ pDynaModel->GetRightVector(m_Input) };
+		const RightVector* pRightVector{ pDynaModel->GetRightVector(Input_) };
 
 		double dIdO{ 0.0 };
 
 		if (!pDynaModel->IsInDiscontinuityMode())
 		{
 			// dOut / dOut
-			pDynaModel->SetElement(m_Output, m_Output, -m_T);
+			pDynaModel->SetElement(Output_, Output_, -m_T);
 			//if (pDynaModel->IsNordsiekReset())
-				dIdO = -m_Input / pDynaModel->GetH() * m_K * m_T;
+				dIdO = -Input_ / pDynaModel->H() * m_K * m_T;
 		}
 		else
 		{
 			// dOut / dOut
-			pDynaModel->SetElement(m_Output, m_Output, 1.0);
+			pDynaModel->SetElement(Output_, Output_, 1.0);
 		}
 
-		pDynaModel->SetElement(m_Output, m_Input, dIdO);
+		pDynaModel->SetElement(Output_, Input_, dIdO);
 		pDynaModel->SetElement(m_Y2, m_Y2, 1.0);
 	}
 	else
 	{
-		pDynaModel->SetElement(m_Output, m_Output, 1.0);
+		pDynaModel->SetElement(Output_, Output_, 1.0);
 		pDynaModel->SetElement(m_Y2, m_Y2, 1.0);
 	}
 }

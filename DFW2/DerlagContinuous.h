@@ -2,8 +2,8 @@
 #include "DynaPrimitive.h"
 
 
-#define DERLAG_CONTINUOUS
-//#define DERLAG_CONTINUOUSMOOTH
+//#define DERLAG_CONTINUOUS
+#define DERLAG_CONTINUOUSMOOTH
 //#define DERLAG_NORDSIEK
 
 namespace DFW2

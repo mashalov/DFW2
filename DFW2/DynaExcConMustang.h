@@ -36,7 +36,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		CLimiterConst Limiter;
 
-		CDerlagContinuousSmooth dVdt, dEqdt, dSdt;
+		CDerlag dVdt, dEqdt, dSdt;
 
 		VariableIndexExternal dVdtIn, dEqdtIn, dSdtIn;
 		VariableIndex dVdtOut, dEqdtOut, dSdtOut;
