@@ -255,7 +255,7 @@ Section InstallX86 1
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	SetOutPath $RastrWinX86ComponentsPath\${ModelReferencePath}
 	File /r /x ".vs" "${InputFolderX86}\..\ReferenceCustomModel\*.*"
-	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
+	SetOutPath $RastrWinX86ComponentsPath\${TestStuffPath}
 	File "${InputFolderX86}BatchTest.exe"
 	File "${InputFolderX64}Scn2Dfw.rbs"
 	File "${InputFolderX64}ModelCorrect.rbs"
