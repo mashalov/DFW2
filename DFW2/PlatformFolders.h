@@ -25,6 +25,7 @@ namespace DFW2
 		std::filesystem::path pathSourceReference;
 		std::filesystem::path pathLogs;
 		std::filesystem::path pathResults;
+		std::filesystem::path pathModelDebugFolder;
 
 		static constexpr const std::string_view automaticModuleName = "Automatic";
 		static constexpr const std::string_view scenarioModuleName = "Scenario";
@@ -146,6 +147,11 @@ namespace DFW2
 		const std::filesystem::path ResultFile(std::string_view FileName) const
 		{
 			return std::filesystem::path(Results()).append(FileName);
+		}
+
+		const std::filesystem::path& ModelDebugFolder() const
+		{
+			return pathModelDebugFolder;
 		}
 	};
 }

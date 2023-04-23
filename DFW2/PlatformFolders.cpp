@@ -120,4 +120,7 @@ void CPlatformFolders::CheckFolderStructure(const std::filesystem::path WorkingF
 
 	pathResults = std::filesystem::path(pathThreadRoot).append("Results/");
 	CheckPath(pathResults);
+
+	pathModelDebugFolder = std::filesystem::path(pathThreadRoot).append("ModelDebugFolder");
+
 }

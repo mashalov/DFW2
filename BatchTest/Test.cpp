@@ -350,11 +350,8 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 					ConnectionPoint->Advise(handler, &dwCookie);
 		}
 
-		Rastr->Load(RG_REPL, bstrPath(Input.CaseFile), bstrPath(Input.rstPath));
-		Rastr->Load(RG_REPL, bstrPath(Input.ContingencyFile), bstrPath(Input.scnPath));
-		Rastr->NewFile(bstrPath(Input.dfwPath));
-		Rastr->ExecMacroPath(bstrPath(Input.currentPath / "Scn2Dfw.rbs"), L"");
-		Rastr->NewFile(bstrPath(Input.scnPath));
+		Rastr->Load(RG_REPL, bstrPath(Input.CaseFile), L"" /*bstrPath(Input.rstPath)*/);
+		//Rastr->Load(RG_REPL, bstrPath(Input.ContingencyFile), bstrPath(Input.scnPath));
 		auto FWDynamic{ Rastr->FWDynamic() };
 		
 		ITablePtr ComDynamic{ Rastr->Tables->Item("com_dynamics") };
@@ -442,6 +439,8 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 			StopOnGeneratorOOS->PutZ(0, 1);
 			DisableResultWriter->PutZ(0, 1);
 		}
+		else
+			DisableResultWriter->PutZ(0, 0);
 
 
 		const std::string ResultFileName{ fmt::format("{:05d}.sna", Input.CaseId) };

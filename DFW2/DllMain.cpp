@@ -1,6 +1,7 @@
 ﻿#include "stdafx.h"
 #ifdef _MSC_VER
 #include "RastrImport.h"
+#include "TaggedPath.h"
 
 using namespace DFW2;
 
@@ -49,6 +50,20 @@ extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr, unsigned lo
 			ri.GetData(Network);
 			RetCode = Network.RunTransient();
 			ri.StoreResults(Network);
+			// если задан шаблон имени для сохранения отладочного дампа
+			if (const auto& ModelTemplateName{ Network.Parameters().DebugModelNameTemplate_ } ; !ModelTemplateName.empty())
+			{
+				auto ModelPath{ Network.Platform().ModelDebugFolder() };
+				// создаем каталог для дампов
+				Network.Platform().CheckPath(ModelPath);
+				// формируем имя файла дампа по шаблону
+				ModelPath.append(stringutils::utf8_decode(ModelTemplateName));
+				TaggedPath path(ModelPath);
+				// создаем файл
+				path.Create().close();
+				// сохраняем файл без шаблона
+				spRastr->Save(stringutils::utf8_decode(path.PathString()).c_str(), L"");
+			}
 		}
 		catch (_com_error& err)
 		{

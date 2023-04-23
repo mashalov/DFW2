@@ -680,8 +680,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszDecayDetectorCycles, m_nDecayDetectorCycles);
 	Serializer->AddProperty(m_cszStopOnBranchOOS, m_bStopOnBranchOOS);
 	Serializer->AddProperty(m_cszStopOnGeneratorOOS, m_bStopOnGeneratorOOS);
-	Serializer->AddProperty(m_cszWorkingFolder, m_strWorkingFolder);
-	Serializer->AddProperty(m_cszResultsFolder, m_strResultsFolder);
+	Serializer->AddProperty(m_cszWorkingFolder, WorkingFolder_);
+	Serializer->AddProperty(m_cszResultsFolder, ResultsFolder_);
 	Serializer->AddProperty(m_cszProcessDuration, m_dProcessDuration);
 	Serializer->AddProperty(m_cszSecuritySpinReference, SecuritySpinReference_);
 	Serializer->AddProperty(m_cszHmax, Hmax);
@@ -690,7 +690,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszMaxResultFilesCount, MaxResultFilesCount_);
 	Serializer->AddProperty(cszMaxResultFilesSize, MaxResultFilesSize_);
 	Serializer->AddProperty(cszChangeActionsAreCumulative, ChangeActionsAreCumulative_);
-
+	Serializer->AddProperty(cszDebugModelNameTemplate, DebugModelNameTemplate_);
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
@@ -815,7 +815,7 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 
 void CDynaModel::CheckFolderStructure()
 {
-	m_Platform.CheckFolderStructure(stringutils::utf8_decode(m_Parameters.m_strWorkingFolder));
+	m_Platform.CheckFolderStructure(stringutils::utf8_decode(m_Parameters.WorkingFolder_));
 }
 
 
@@ -1030,6 +1030,11 @@ bool CDynaModel::RunTest()
 
 	bRes = bRes && InitEquations();
 
+	// сохраняем начальные условия
+	// в истории Нордсика с тем чтобы иметь 
+	// возможность восстановить их при сбое Ньютона
+	// на первом шаге
+	SaveNordsiek();
 
 	while (!CancelProcessing() && bRes)
 	{
@@ -1198,7 +1203,7 @@ bool CDynaModel::ProcessOffStep()
 
 const double CDynaModel::MethodlDefault[4][4] = 
 //									   l0			l1			l2			Tauq
-								   { { 1.0,			1.0,		0.0,		2.0 },				//  BDF-1
-									 { 2.0 / 3.0,	1.0,		1.0 /3.0,   4.5 },				//  BDF-2
-									 { 1.0,			1.0,		0.0,		2.0 },				//  ADAMS-1
+								   { { 1.0,			1.0,		0.0,		2.0  },				//  BDF-1
+									 { 2.0 / 3.0,	1.0,		1.0 / 3.0,   4.5 },				//  BDF-2
+									 { 1.0,			1.0,		0.0,		2.0  },				//  ADAMS-1
 									 { 0.5,			1.0,		0.5,		12.0 } };			//  ADAMS-2

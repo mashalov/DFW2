@@ -83,8 +83,9 @@ namespace DFW2
 			bool m_bStopOnBranchOOS = false;
 			bool m_bStopOnGeneratorOOS = false;
 			double SecuritySpinReference_ = 0.12;						// уставка глобального автомата скорости
-			std::string m_strWorkingFolder = "";
-			std::string m_strResultsFolder = "";
+			std::string WorkingFolder_;
+			std::string ResultsFolder_;
+			std::string DebugModelNameTemplate_;
 			DFW2MessageStatus m_eConsoleLogLevel = DFW2MessageStatus::DFW2LOG_ERROR;
 			DFW2MessageStatus m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
 			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo;
@@ -178,6 +179,7 @@ namespace DFW2
 			static constexpr const char* cszMaxResultFilesCount = "MaxResultFilesCount";
 			static constexpr const char* cszMaxResultFilesSize = "MaxResultFilesSize";
 			static constexpr const char* cszChangeActionsAreCumulative = "ChangeActionsAreCumulative";
+			static constexpr const char* cszDebugModelNameTemplate = "DebugModelNameTemplate";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
 
