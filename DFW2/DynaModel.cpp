@@ -625,7 +625,7 @@ bool CDynaModel::NewtonUpdate()
 
 			Старый вариант определения расходимости 
 
-			if ((sc.nNewtonIteration > 5 && sc.Hmin / sc.m_dCurrentH < 0.98) ||
+			if ((sc.nNewtonIteration > 5 && sc.Hmin / sc.CurrentH_ < 0.98) ||
 				(sc.nNewtonIteration > 2 && sc.Newton.dMaxErrorVariable > 1.0))
 					sc.m_bNewtonDisconverging = true;
 			*/
@@ -748,7 +748,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		BuildMatrix();
 
 #ifdef _LFINFO2_
-		if (sc.m_bDiscontinuityMode || sc.m_dCurrentH <= sc.Hmin)
+		if (sc.m_bDiscontinuityMode || sc.CurrentH_ <= sc.Hmin)
 		{
 			for (DEVICEVECTORITR it = Nodes.begin(); it != Nodes.end(); it++)
 			{
@@ -1293,6 +1293,7 @@ void CDynaModel::EnterDiscontinuityMode()
 		sc.m_bDiscontinuityMode = true;
 		sc.m_bZeroCrossingMode = false;
 		ChangeOrder(1);
+		StoreUsedH();
 		SetH(0.0);
 		RescaleNordsiek();
 	}
@@ -1397,7 +1398,7 @@ void CDynaModel::LeaveDiscontinuityMode()
 		sc.m_bDiscontinuityMode = false;
 		for (auto&& it : m_DeviceContainers)
 			it->LeaveDiscontinuityMode(this);
-		SetH(sc.Hmin);
+		SetRestartH();
 		ResetNordsiek();
 	}
 }
@@ -1506,7 +1507,7 @@ void CDynaModel::GoodStep(double rSame)
 		if (sc.FilterStep(rSame) && rSame > 1.1)
 		{
 			// если фильтр дает разрешение на увеличение
-			_ASSERTE(Equal(H(), sc.m_dOldH));
+			_ASSERTE(Equal(H(), UsedH()));
 			// запоминаем коэффициент увеличения только для репорта
 			// потому что sc.dFilteredStep изменится в последующем 
 			// RescaleNordsiek
@@ -1597,14 +1598,14 @@ void CDynaModel::NewtonFailed()
 
 	if (sc.nSuccessfullStepsOfNewton > 10)
 	{
-		if (sc.m_dOldH / H() >= 0.8)
+		if (sc.UsedH() / H() >= 0.8)
 		{
 			SetH(H() * 0.87);
 			sc.SetRateGrowLimit(1.0);
 		}
 		else
 		{
-			SetH(0.8 * sc.m_dOldH + 0.2 * H());
+			SetH(0.8 * UsedH() + 0.2 * H());
 			sc.SetRateGrowLimit(1.18);
 		}
 	}

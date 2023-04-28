@@ -100,6 +100,8 @@ namespace DFW2
 			ptrdiff_t MaxLogFilesCount_ = 0;							// ограничение количества файлов в каталоге протокола
 			ptrdiff_t MaxLogFilesSize_ = 0;								// ограничение объема файлов в каталоге протокола
 			bool ChangeActionsAreCumulative_ = true;					// включает аккумуляцию изменений (наример - последовательное изменение нагрузки на дискрете)
+			ptrdiff_t StepsToStepChange_ = 4;							// количество шагов до увеличения шага
+			ptrdiff_t StepsToOrderChange_ = 4;							// количество шагов до изменения порядка
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -180,6 +182,8 @@ namespace DFW2
 			static constexpr const char* cszMaxResultFilesSize = "MaxResultFilesSize";
 			static constexpr const char* cszChangeActionsAreCumulative = "ChangeActionsAreCumulative";
 			static constexpr const char* cszDebugModelNameTemplate = "DebugModelNameTemplate";
+			static constexpr const char* cszStepsToStepChange = "StepsToStepChange";
+			static constexpr const char* cszStepsToOrderChange = "StepsToOrderChange";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 		};
 
@@ -336,17 +340,26 @@ namespace DFW2
 		struct StepControl
 		{
 		protected:
-			double m_dCurrentH = 0.0;
+			double CurrentH_ = 0.0;
+			double UsedH_ = -1.0;
 			double NordsiekScaledForH_ = 1.0;
 			double NordsiekScaledForHSaved_ = 1.0;
 		public:
+			void StoreUsedH()
+			{
+				UsedH_ = CurrentH_;
+			}
+			inline double UsedH() const
+			{
+				return UsedH_;
+			}
 			inline double H() const
 			{
-				return m_dCurrentH;
+				return CurrentH_;
 			}
 			void SetH(double h)
 			{
-				m_dCurrentH = h;
+				CurrentH_ = h;
 			}
 
 			inline double NordsiekScaledForH() const
@@ -416,8 +429,6 @@ namespace DFW2
 			_OrderStatistics OrderStatistics[2];
 			ptrdiff_t nDiscontinuityNewtonFailures = 0;
 			ptrdiff_t nMinimumStepFailures = 0;
-			double m_dOldH = -1.0;
-			double m_dStoredH = 0.0;
 			ptrdiff_t q = 1;
 			const double StartupStep = 0.01;
 			const double TimeOffset = -3.0 * StartupStep;
@@ -512,25 +523,25 @@ namespace DFW2
 
 			inline double CurrentTimePlusStep()
 			{
-				//return t + m_dCurrentH;
-				return t + m_dCurrentH - KahanC;
+				//return t + CurrentH_;
+				return t + CurrentH_ - KahanC;
 			}
 
 			// рассчитывает текущее время перед выполнением шага
 			inline void Advance_t0()
 			{
-				// математически функция выполняет t = t0 + m_dCurrentH;
+				// математически функция выполняет t = t0 + CurrentH_;
 
 				// но мы используем Kahan summation для устранения накопленной ошибки
-				volatile double ky = m_dCurrentH - KahanC;
-				volatile double temp = t0 + ky;
+				volatile double ky{ CurrentH_ - KahanC };
+				volatile double temp{ t0 + ky };
 				// предополагается, что шаг не может быть отменен
 				// и поэтому сумма Кэхэна обновляется
 				KahanC = (temp - t0) - ky;
 				t = temp;
 
-				_OrderStatistics& os = OrderStatistics[q - 1];
-				ky = m_dCurrentH - os.dTimePassedKahan;
+				_OrderStatistics& os{ OrderStatistics[q - 1] };
+				ky = CurrentH_ - os.dTimePassedKahan;
 				temp = os.dTimePassed + ky;
 				os.dTimePassedKahan = (temp - os.dTimePassed) - ky;
 				if(os.dTimePassed < temp)
@@ -547,7 +558,7 @@ namespace DFW2
 
 				// do not update KahanC, as this check time
 				// can be disregarded;
-				const double ky{ m_dCurrentH - KahanC };
+				const double ky{ CurrentH_ - KahanC };
 				const double temp{ t0 + ky };
 				t = temp;
 			}
@@ -815,12 +826,31 @@ namespace DFW2
 			return sc.H();
 		}
 
+		inline double UsedH() const
+		{
+			return sc.UsedH();
+		}
+
+		void StoreUsedH()
+		{
+			sc.StoreUsedH();
+		}
+
 		inline bool IsNordsiekReset() const
 		{
 			return sc.m_bNordsiekReset;
 		}
 
 		[[nodiscard]] static bool IsSSE2Available();
+
+
+		void SetRestartH()
+		{
+			//if (m_Parameters.RestartFromHmin_)
+				SetH(sc.Hmin);
+			//else
+			//	SetH((std::min)(UsedH(), 100.0 * sc.Hmin));
+		}
 
 		//  возвращает отношение текущего шага к новому
 		inline double SetH(double h)
@@ -831,12 +861,6 @@ namespace DFW2
 			Computehl0();
 			return ratio;
 		}
-
-		inline double GetOldH() const
-		{
-			return sc.m_dOldH;
-		}
-
 
 		inline double GetFreqTimeConstant() const
 		{

@@ -691,6 +691,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszMaxResultFilesSize, MaxResultFilesSize_);
 	Serializer->AddProperty(cszChangeActionsAreCumulative, ChangeActionsAreCumulative_);
 	Serializer->AddProperty(cszDebugModelNameTemplate, DebugModelNameTemplate_);
+	Serializer->AddProperty(cszStepsToStepChange, StepsToStepChange_);
+	Serializer->AddProperty(cszStepsToOrderChange, StepsToOrderChange_);
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
@@ -772,9 +774,8 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 	Serializer->AddProperty("MaxConditionNumberTime", dMaxConditionNumberTime);
 	Serializer->AddProperty("DiscontinuityNewtonFailures", nDiscontinuityNewtonFailures);
 	Serializer->AddProperty("MinimumStepFailures", nMinimumStepFailures);
-	Serializer->AddProperty("CurrentH", m_dCurrentH);
-	Serializer->AddProperty("OldH", m_dOldH);
-	Serializer->AddProperty("StoredH", m_dStoredH);
+	Serializer->AddProperty("CurrentH", CurrentH_);
+	Serializer->AddProperty("UsedH", UsedH_);
 	Serializer->AddProperty("q", q);
 	Serializer->AddProperty("t", t);
 	//Serializer->AddProperty("KahanC", KahanC);
@@ -1074,6 +1075,8 @@ void CDynaModel::PrecomputeConstants()
 	// считаем параметры гистерезиса по заданным параметрам
 	HysteresisAtol_ = Atol() * m_Parameters.HysteresisAtol_;
 	HysteresisRtol_ = Rtol() * m_Parameters.HysteresisRtol_;
+	sc.nStepsToStepChangeParameter = m_Parameters.StepsToStepChange_;
+	sc.nStepsToOrderChangeParameter = m_Parameters.StepsToOrderChange_;
 }
 
 void CDynaModel::FinishStep()

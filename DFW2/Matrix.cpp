@@ -145,7 +145,7 @@ void CDynaModel::BuildMatrix()
 		sc.m_dLastRefactorH = H();
 		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
 				"Рефакторизация матрицы {} / {}", klu.FactorizationsCount(), klu.RefactorizationsCount()));
-		if(sc.m_bFillConstantElements)
+		if(FillConstantElements())
 			Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Обновление констант");
 		if (!EstimateBuild())
 			sc.UpdateConstElements(false);

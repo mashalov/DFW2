@@ -208,7 +208,7 @@ bool CDynaModel::DetectAdamsRinging()
 
 	if ((m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA ||
 		m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL) &&
-		sc.q == 2 && H() > 0.01 && sc.m_dOldH > 0.0)
+		sc.q == 2 && H() > 0.01 && UsedH() > 0.0)
 	{
 		const double Methodl1[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
 		const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
@@ -272,7 +272,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 {
 	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
-	const double alpha{ H() / sc.m_dOldH > 0.0 ? sc.m_dOldH : 1.0};
+	const double alpha{ H() / UsedH() > 0.0 ? UsedH() : 1.0};
 	const double alphasq{ alpha * alpha };
 	const double alpha1{ (1.0 + alpha) };
 	double alpha2{ 1.0 + 2.0 * alpha };
@@ -281,7 +281,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	// режим подавления рингинга активируем если порядок метода 2
 	// шаг превышает 0.01 и UpdateNordsieck вызван для перехода к следующему
 	// шагу после успешного завершения предыдущего
-	if (sc.q == 2 && bAllowSuppression && H() > 0.01 && sc.m_dOldH > 0.0)
+	if (sc.q == 2 && bAllowSuppression && H() > 0.01 && UsedH() > 0.0)
 	{
 		switch (m_Parameters.m_eAdamsRingingSuppressionMode)
 		{
@@ -364,7 +364,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 #endif
 	}
 
-	sc.m_dOldH = H();
+	StoreUsedH();
 	sc.m_bNordsiekSaved = true;
 	sc.SetNordsiekScaledForHSaved(sc.NordsiekScaledForH());
 	// после того как Нордсик обновлен,
@@ -415,7 +415,7 @@ void CDynaModel::SaveNordsiek()
 
 		pVectorBegin->SavedError = pVectorBegin->Error;
 	}
-	sc.m_dOldH = H();
+	StoreUsedH();
 	sc.SetNordsiekScaledForHSaved(sc.NordsiekScaledForH());
 	sc.SetNordsiekScaledForH(H());
 	sc.m_bNordsiekSaved = true;
