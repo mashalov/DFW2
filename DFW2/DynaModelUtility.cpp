@@ -648,6 +648,8 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 	Validator->AddRule(m_cszSecuritySpinReference, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule(cszMaxResultFilesCount, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule(cszMaxResultFilesSize, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(cszStepsToOrderChange, &ValidatorRange2_10);
+	Validator->AddRule(cszStepsToStepChange, &ValidatorRange2_10);
 	return Validator;
 }
 

@@ -361,6 +361,8 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		IColPtr Hmax{ ComDynamic->Cols->Item("Hmax") };
 		IColPtr Hout{ ComDynamic->Cols->Item("Hout") };
 		IColPtr MInt{ ComDynamic->Cols->Item("Mint") };
+		IColPtr LRCTol{ ComDynamic->Cols->Item("SXNTolerance") };
+		IColPtr SalientTol{ ComDynamic->Cols->Item("dEf") };
 
 		IColPtr SnapTemplate{ComDynamic->Cols->Item("SnapTemplate")};
 		IColPtr SnapPath{ ComDynamic->Cols->Item("SnapPath") };
@@ -373,6 +375,8 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		Hmin->PutZ(0, Opts.RUSTabHmin);
 		Hout->PutZ(0, Opts.RUSTabHmin);
 		RUSTabAtol->PutZ(0, Opts.RUSTabAtol);
+		LRCTol->PutZ(0, Opts.RUSTabAtol);
+		SalientTol->PutZ(0, Opts.RUSTabAtol * 100.0);
 		Hmax->PutZ(0, 5);
 		SnapAutoLoad->PutZ(0, 0);
 
