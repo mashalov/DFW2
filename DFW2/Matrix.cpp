@@ -21,7 +21,7 @@ void CDynaModel::EstimateMatrix()
 	if (bSaveRightVector)
 		UpdateTotalRightVector();
 
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 		it->EstimateBlock(this);
 
 	m_pMatrixRowsUniq = std::make_unique<MatrixRow[]>(m_nEstimatedMatrixSize);
@@ -113,7 +113,7 @@ void CDynaModel::EstimateMatrix()
 
 void CDynaModel::BuildRightHand()
 {
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 		it->BuildRightHand(this);
 
 	sc.dRightHandNorm = 0.0;
@@ -138,15 +138,18 @@ void CDynaModel::BuildMatrix()
 	{
 		ResetElement();
 
-		for (auto&& it : m_DeviceContainers)
+		if (FillConstantElements())
+			Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Обновление констант");
+
+		for (auto&& it : DeviceContainers_)
 			it->BuildBlock(this);
 
 		m_bRebuildMatrixFlag = false;
 		sc.m_dLastRefactorH = H();
+
 		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
 				"Рефакторизация матрицы {} / {}", klu.FactorizationsCount(), klu.RefactorizationsCount()));
-		if(FillConstantElements())
-			Log(DFW2MessageStatus::DFW2LOG_DEBUG, "Обновление констант");
+
 		if (!EstimateBuild())
 			sc.UpdateConstElements(false);
 	}
@@ -158,7 +161,7 @@ void CDynaModel::BuildDerivatives()
 	// похоже что производные дифуров при нулевых
 	// производных алгебры только мешают Ньютону
 	return; 
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 		it->BuildDerivatives(this);
 }
 
@@ -632,7 +635,7 @@ void CDynaModel::CreateTotalRightVector()
 	// стром полный вектор всех возможных переменных вне зависимости от состояния устройств
 	m_nTotalVariablesCount = 0;
 	// считаем количество устройств
-	for (auto&& cit : m_DeviceContainers)
+	for (auto&& cit : DeviceContainers_)
 	{
 		// для volatile устройств зон в TotalRightVector не оставляем места
 		if (cit->ContainerProps().bVolatile)
@@ -641,9 +644,9 @@ void CDynaModel::CreateTotalRightVector()
 	}
 	// забираем полный вектор для всех переменных
 	pRightVectorTotal = std::make_unique<RightVectorTotal[]>(m_nTotalVariablesCount);
-	RightVectorTotal *pb = pRightVectorTotal.get();
+	RightVectorTotal* pb{ pRightVectorTotal.get() };
 
-	for (auto&& cit : m_DeviceContainers)
+	for (auto&& cit : DeviceContainers_)
 	{
 		if (cit->ContainerProps().bVolatile)
 			continue;
@@ -665,7 +668,7 @@ void CDynaModel::UpdateNewRightVector()
 	RightVector* pRv = pRightVectorUniq.get();
 
 	// логика синхронизации векторов такая же как в UpdateTotalRightVector
-	for (auto&& cit : m_DeviceContainers)
+	for (auto&& cit : DeviceContainers_)
 	{
 		if (cit->ContainerProps().bVolatile)
 		{
@@ -710,7 +713,7 @@ void CDynaModel::DebugCheckRightVectorSync()
 	RightVector* pRv = pRightVectorUniq.get();
 
 	// логика синхронизации векторов такая же как в UpdateTotalRightVector
-	for (auto&& cit : m_DeviceContainers)
+	for (auto&& cit : DeviceContainers_)
 	{
 		if (cit->ContainerProps().bVolatile)
 		{
@@ -748,7 +751,7 @@ void CDynaModel::UpdateTotalRightVector()
 
 	// проходим по всем устройствам, пропускаем фрагменты RightVectorTotal для
 	// устройств без уравнений, для всех остальных копируем то что посчитано в RightVector в RightVectorTotal
-	for (auto&& cit : m_DeviceContainers)
+	for (auto&& cit : DeviceContainers_)
 	{
 		if (cit->ContainerProps().bVolatile)
 		{

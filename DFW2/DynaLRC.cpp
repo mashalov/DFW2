@@ -35,6 +35,7 @@ void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_LRC);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameLRC, CDeviceContainerProperties::m_cszSysNameLRC);
+	props.bStoreStates = false;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaLRC>>();
 }
 

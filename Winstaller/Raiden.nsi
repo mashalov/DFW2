@@ -1,5 +1,5 @@
 ﻿!define ProductName "RaidenEMS"
-!define Version "1.0.1.124"
+!define Version "1.0.1.125"
 !define RastrWinX64VersionRequired "2.8.1.6420"
 !define RastrWinX86VersionRequired "2.8.0.6419"
 

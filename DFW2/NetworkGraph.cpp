@@ -15,7 +15,7 @@ bool CDynaModel::Link()
 
 	// делаем отдельные списки ссылок устройств контейнера для ведущих устройств, ведомых устройств 
 	// и без учета направления
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 	{
 		CDeviceContainerProperties &Props = it->ContainerProps();
 		// отдельные ссылки без направления для ведущих и ведомых
@@ -53,9 +53,9 @@ bool CDynaModel::Link()
 
 
 	// линкуем всех со всеми по матрице
-	for (auto&& it : m_DeviceContainers)			// внешний контейнер
+	for (auto&& it : DeviceContainers_)				// внешний контейнер
 	{
-		for (auto&& lt : m_DeviceContainers)		// внутренний контейнер
+		for (auto&& lt : DeviceContainers_)			// внутренний контейнер
 		{
 			// не линкуем тип с этим же типом
 			if (it != lt)

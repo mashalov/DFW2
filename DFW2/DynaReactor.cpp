@@ -7,6 +7,7 @@ void CDynaReactor::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_REACTOR);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameReactor, CDeviceContainerProperties::m_cszSysNameReactor);
+	props.bStoreStates = false;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaReactor>>();
 }
 

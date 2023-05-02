@@ -366,7 +366,7 @@ void CDynaBranch::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetClassName(CDeviceContainerProperties::m_cszNameBranch, CDeviceContainerProperties::m_cszSysNameBranch);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, "");
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasBranch);
-
+	props.bStoreStates = false;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranch>>();
 }
 

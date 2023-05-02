@@ -69,14 +69,14 @@ void CDynaModel::Predict()
 	// для устройств, которые требует внутренней обработки прогноза
 	// (например для узлов, которым нужно перевести прогноз полярного напряжения в прямоугольное)
 	// делаем цикл с вызовом функции прогноза устройства
-	for (auto&& it : m_DeviceContainersPredict)
+	for (auto&& it : DeviceContainersPredict_)
 		it->Predict();
 }
 
 void CDynaModel::InitDevicesNordsiek()
 {
 	ChangeOrder(1);
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 		it->InitNordsieck(this);
 }
 
@@ -197,7 +197,7 @@ void CDynaModel::RestoreNordsiek()
 		sc.SetNordsiekScaledForHSaved(0.0);
 	}
 
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainersStoreStates_)
 		for (auto&& dit : *it)
 			dit->RestoreStates();
 }
@@ -372,7 +372,7 @@ void CDynaModel::UpdateNordsiek(bool bAllowSuppression)
 	// и контроль соответствия предиктора корректору
 	sc.m_bNordsiekReset = false;
 
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainersStoreStates_)
 		for (auto&& dit : *it)
 			dit->StoreStates();
 
@@ -465,7 +465,7 @@ void CDynaModel::RescaleNordsiek()
 	// если шаг изменился более в заданное количество раз - взводим флаг рефакторизации Якоби
 	// sc.m_dLastRefactorH обновляется после рефакторизации
 	if (dRefactorRatio > m_Parameters.m_dRefactorByHRatio || 1.0 / dRefactorRatio > m_Parameters.m_dRefactorByHRatio)
-		sc.RefactorMatrix(true);
+		sc.RefactorMatrix();
 }
 
 void CDynaModel::ConstructNordsiekOrder()

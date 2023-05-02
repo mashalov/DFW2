@@ -65,7 +65,7 @@ void CDynaModel::WriteResultsHeader()
 		m_ResultsWriter.AddVariableUnit(vn.first, vn.second);
 
 
-	for (const auto& container : m_DeviceContainers)
+	for (const auto& container : DeviceContainers_)
 	{
 		// проверяем, нужно ли записывать данные для такого типа контейнера
 		if (!ApproveContainerToWriteResults(container)) continue;
@@ -77,7 +77,7 @@ void CDynaModel::WriteResultsHeader()
 
 	long nIndex = 0;
 
-	for (const auto& container : m_DeviceContainers)
+	for (const auto& container : DeviceContainers_)
 	{
 		// собираем углы генераторов для детектора затухания колебаний
 		if (m_Parameters.m_bAllowDecayDetector && container->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))

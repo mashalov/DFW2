@@ -611,10 +611,11 @@ namespace DFW2
 		RightVector *pRightVector = nullptr;
 		MatrixRow *m_pMatrixRows = nullptr;
 
-		DEVICECONTAINERS m_DeviceContainers;
-		DEVICECONTAINERS m_DeviceContainersNewtonUpdate;
-		DEVICECONTAINERS m_DeviceContainersPredict;
-		DEVICECONTAINERS m_DeviceContainersFinishStep;
+		DEVICECONTAINERS DeviceContainers_;
+		DEVICECONTAINERS DeviceContainersNewtonUpdate_;
+		DEVICECONTAINERS DeviceContainersPredict_;
+		DEVICECONTAINERS DeviceContainersFinishStep_;
+		DEVICECONTAINERS DeviceContainersStoreStates_;
 
 		CDevice **m_ppVarSearchStackTop;
 		std::unique_ptr<CDevice*[]> m_ppVarSearchStackBase;

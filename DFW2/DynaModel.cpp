@@ -92,31 +92,31 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CustomDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDevice>>();
 	CustomDeviceCPP.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
 
-	m_DeviceContainers.push_back(&Nodes);
-	m_DeviceContainers.push_back(&LRCs);
-	m_DeviceContainers.push_back(&Reactors);
-	m_DeviceContainers.push_back(&ExcitersMustang);
-	m_DeviceContainers.push_back(&DECsMustang);
-	m_DeviceContainers.push_back(&ExcConMustang);
-	m_DeviceContainers.push_back(&Branches);
-	m_DeviceContainers.push_back(&Generators2C);
-	m_DeviceContainers.push_back(&Generators3C);
-	m_DeviceContainers.push_back(&GeneratorsMustang);
-	m_DeviceContainers.push_back(&GeneratorsPark3C);
-	m_DeviceContainers.push_back(&GeneratorsPark4C);
-	m_DeviceContainers.push_back(&Generators1C);
-	m_DeviceContainers.push_back(&GeneratorsMotion);
-	m_DeviceContainers.push_back(&GeneratorsInfBus);
-	m_DeviceContainers.push_back(&GeneratorsPowerInjector);
+	DeviceContainers_.push_back(&Nodes);
+	DeviceContainers_.push_back(&LRCs);
+	DeviceContainers_.push_back(&Reactors);
+	DeviceContainers_.push_back(&ExcitersMustang);
+	DeviceContainers_.push_back(&DECsMustang);
+	DeviceContainers_.push_back(&ExcConMustang);
+	DeviceContainers_.push_back(&Branches);
+	DeviceContainers_.push_back(&Generators2C);
+	DeviceContainers_.push_back(&Generators3C);
+	DeviceContainers_.push_back(&GeneratorsMustang);
+	DeviceContainers_.push_back(&GeneratorsPark3C);
+	DeviceContainers_.push_back(&GeneratorsPark4C);
+	DeviceContainers_.push_back(&Generators1C);
+	DeviceContainers_.push_back(&GeneratorsMotion);
+	DeviceContainers_.push_back(&GeneratorsInfBus);
+	DeviceContainers_.push_back(&GeneratorsPowerInjector);
 	//m_DeviceContainers.push_back(&CustomDevice);
 	//m_DeviceContainers.push_back(&CustomDeviceCPP);
-	m_DeviceContainers.push_back(&BranchMeasures);
-	m_DeviceContainers.push_back(&NodeMeasures);
-	m_DeviceContainers.push_back(&AutomaticDevice);
-	m_DeviceContainers.push_back(&ScenarioDevice);
-	m_DeviceContainers.push_back(&ZeroLoadFlow);
-	m_DeviceContainers.push_back(&TestDevices);
-	m_DeviceContainers.push_back(&SynchroZones);		// синхрозоны должны идти последними
+	DeviceContainers_.push_back(&BranchMeasures);
+	DeviceContainers_.push_back(&NodeMeasures);
+	DeviceContainers_.push_back(&AutomaticDevice);
+	DeviceContainers_.push_back(&ScenarioDevice);
+	DeviceContainers_.push_back(&ZeroLoadFlow);
+	DeviceContainers_.push_back(&TestDevices);
+	DeviceContainers_.push_back(&SynchroZones);		// синхрозоны должны идти последними
 
 	CheckFolderStructure();
 
@@ -410,7 +410,7 @@ void CDynaModel::PreInitDevices()
 	CSerializerValidator Validator(this, m_Parameters.GetSerializer(), m_Parameters.GetValidator());
 	eDEVICEFUNCTIONSTATUS Status{ Validator.Validate() };
 
-	for (auto&& container : m_DeviceContainers)
+	for (auto&& container : DeviceContainers_)
 		Status = CDevice::DeviceFunctionResult(Status, container->PreInit(this));
 
 	if (!CDevice::IsFunctionStatusOK(Status))
@@ -439,7 +439,7 @@ void CDynaModel::InitDevices()
 	{
 		ptrdiff_t nOKInits = 0;
 
-		for (auto&& it : m_DeviceContainers)
+		for (auto&& it : DeviceContainers_)
 		{
 			if (Status == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 				break;
@@ -458,7 +458,7 @@ void CDynaModel::InitDevices()
 				break;
 			}
 		}
-		if (nOKInits == m_DeviceContainers.size())
+		if (nOKInits == DeviceContainers_.size())
 		{
 			Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 			break;
@@ -479,7 +479,7 @@ void CDynaModel::InitDevices()
 		if (!CDevice::IsFunctionStatusOK(Status) && Status != eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 		{
 			// инициализируем контейнеры
-			for (auto&& it : m_DeviceContainers)
+			for (auto&& it : DeviceContainers_)
 			{
 				// для каждого контейнера получаем статус
 				eDEVICEFUNCTIONSTATUS ContainerStatus  = it->Init(this);
@@ -533,7 +533,7 @@ bool CDynaModel::InitEquations()
 		SetH(dCurrentH);
 		sc.nStepsCount = 0;
 
-		for (auto&& cit : m_DeviceContainers)
+		for (auto&& cit : DeviceContainers_)
 			for (auto&& dit : *cit)
 				dit->StoreStates();
 	}
@@ -708,7 +708,7 @@ bool CDynaModel::NewtonUpdate()
 
 void CDynaModel::NewtonUpdateDevices()
 {
-	for (auto&& it : m_DeviceContainersNewtonUpdate)
+	for (auto&& it : DeviceContainersNewtonUpdate_)
 		it->NewtonUpdateBlock(this);
 }
 
@@ -939,7 +939,7 @@ bool CDynaModel::Step()
 			else
 			{
 				// если время найденного события "точно" попадает во время текущего шага
-				if (Equal(GetCurrentTime(), dTimeNextEvent))
+				if (std::abs(GetCurrentTime() - dTimeNextEvent) < Hmin())
 				{
 					if (sc.m_bBeforeDiscontinuityWritten)
 					{
@@ -1302,7 +1302,7 @@ void CDynaModel::EnterDiscontinuityMode()
 // для устройств во всех контейнерах сбрасывает статус готовности функции
 void CDynaModel::UnprocessDiscontinuity()
 {
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 		it->UnprocessDiscontinuity();
 }
 
@@ -1337,7 +1337,7 @@ bool CDynaModel::ProcessDiscontinuity()
 				// пока статус "неготово"
 				ptrdiff_t nOKPds = 0;
 				// обрабатываем разрывы для всех устройств во всех контейнерах
-				for (auto&& it : m_DeviceContainers)
+				for (auto&& it : DeviceContainers_)
 				{
 					if (Status == eDEVICEFUNCTIONSTATUS::DFS_FAILED)
 						break;
@@ -1357,7 +1357,7 @@ bool CDynaModel::ProcessDiscontinuity()
 					}
 				}
 				// если количество успехов равно количеству конейнеров - модель обработала разрыв успешно, выходим из цикла
-				if (nOKPds == m_DeviceContainers.size())
+				if (nOKPds == DeviceContainers_.size())
 				{
 					Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 					break;
@@ -1396,7 +1396,7 @@ void CDynaModel::LeaveDiscontinuityMode()
 	if (sc.m_bDiscontinuityMode)
 	{
 		sc.m_bDiscontinuityMode = false;
-		for (auto&& it : m_DeviceContainers)
+		for (auto&& it : DeviceContainers_)
 			it->LeaveDiscontinuityMode(this);
 		SetRestartH();
 		ResetNordsiek();
@@ -1406,7 +1406,7 @@ void CDynaModel::LeaveDiscontinuityMode()
 double CDynaModel::CheckZeroCrossing()
 {
 	double Kh{ 1.0 };
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 	{
 		double Khi{ it->CheckZeroCrossing(this) };
 		if (Khi < Kh)
@@ -1917,7 +1917,7 @@ void CDynaModel::TurnOffDevicesByOffMasters()
 	while (nOffCount)
 	{
 		nOffCount = 0;
-		for (auto&& it : m_DeviceContainers)
+		for (auto&& it : DeviceContainers_)
 		{
 			const CDeviceContainerProperties& Props{ it->ContainerProps() };
 			if (Props.eDeviceType == eDFW2DEVICETYPE::DEVTYPE_BRANCH)

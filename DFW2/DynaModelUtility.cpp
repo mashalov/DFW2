@@ -78,9 +78,9 @@ void CDynaModel::StopProcess()
 
 CDeviceContainer* CDynaModel::GetDeviceContainer(eDFW2DEVICETYPE Type)
 {
-	auto&& it = find_if(m_DeviceContainers.begin(), m_DeviceContainers.end(), [&Type](const auto& Cont) { return Cont->GetType() == Type; });
+	auto&& it = find_if(DeviceContainers_.begin(), DeviceContainers_.end(), [&Type](const auto& Cont) { return Cont->GetType() == Type; });
 
-	if (it == m_DeviceContainers.end())
+	if (it == DeviceContainers_.end())
 		return nullptr;
 	else
 		return *it;
@@ -209,7 +209,7 @@ void CDynaModel::ResetStack()
 bool CDynaModel::UpdateExternalVariables()
 {
 	bool bRes = true;
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 	{
 		for (auto&& dit : *it)
 		{
@@ -240,12 +240,12 @@ CDeviceContainer* CDynaModel::GetContainerByAlias(std::string_view Alias)
 
 	// ищем контейнер по системному имени или псевдониму
 
-	auto it = std::find_if(m_DeviceContainers.begin(), 
-						   m_DeviceContainers.end(), 
+	auto it = std::find_if(DeviceContainers_.begin(), 
+						   DeviceContainers_.end(), 
 						  [&Alias](const auto& cont) { return cont->GetSystemClassName() == Alias || cont->HasAlias(Alias); });
 
 
-	if (it != m_DeviceContainers.end())
+	if (it != DeviceContainers_.end())
 		return *it;
 
 	return nullptr;
@@ -254,7 +254,7 @@ CDeviceContainer* CDynaModel::GetContainerByAlias(std::string_view Alias)
 DEVICECONTAINERS CDynaModel::GetContainersByAlias(std::string_view Alias)
 {
 	DEVICECONTAINERS ret;
-	std::copy_if(m_DeviceContainers.begin(), m_DeviceContainers.end(), std::back_inserter(ret), [&Alias](const CDeviceContainer* pContainer)
+	std::copy_if(DeviceContainers_.begin(), DeviceContainers_.end(), std::back_inserter(ret), [&Alias](const CDeviceContainer* pContainer)
 		{
 			return pContainer->HasAlias(Alias) || pContainer->GetSystemClassName() == Alias;
 		});
@@ -274,7 +274,7 @@ void CDynaModel::GetTopZeroCrossings(ptrdiff_t nCount)
 	std::multiset<const CDevice*, decltype(comp)> ZeroCrossingsSet(comp);
 	ptrdiff_t nTotalZcCount(0);
 	// перебираем контейнеры с устройствами
-	for (const auto& container : m_DeviceContainers)
+	for (const auto& container : DeviceContainers_)
 		for (const auto& dev : *container)
 		{
 			if (auto nZc(dev->GetZeroCrossings()); nZc)
@@ -307,7 +307,7 @@ void CDynaModel::GetTopDiscontinuityRequesters(ptrdiff_t nCount)
 	std::multiset<const CDevice*, decltype(comp)> DiscontinuityRequesters(comp);
 	ptrdiff_t nTotalRequests(0);
 	// перебираем контейнеры с устройствами
-	for (const auto& container : m_DeviceContainers)
+	for (const auto& container : DeviceContainers_)
 	for (const auto& dev : *container)
 	{
 		if (auto nDr(dev->GetDiscontinuityRequests()); nDr)
@@ -548,7 +548,7 @@ bool CDynaModel::StabilityLost()
 
 	if (m_Parameters.m_bStopOnGeneratorOOS)
 	{
-		for (auto&& gencontainer : m_DeviceContainers)
+		for (auto&& gencontainer : DeviceContainers_)
 		{
 			// тут можно заранее отобрать контейнеры с генераторами
 
@@ -1058,14 +1058,16 @@ void CDynaModel::ConsiderContainerProperties()
 {
 	// по атрибутам контейнеров формируем отдельные списки контейнеров для
 	// обновления после итерации Ньютона и после прогноза, чтобы не проверять эти атрибуты в основных циклах
-	for (auto&& it : m_DeviceContainers)
+	for (auto&& it : DeviceContainers_)
 	{
 		if (it->ContainerProps().bNewtonUpdate)
-			m_DeviceContainersNewtonUpdate.push_back(it);
+			DeviceContainersNewtonUpdate_.emplace_back(it);
 		if (it->ContainerProps().bPredict)
-			m_DeviceContainersPredict.push_back(it);
+			DeviceContainersPredict_.emplace_back(it);
 		if (it->ContainerProps().bFinishStep)
-			m_DeviceContainersFinishStep.push_back(it);
+			DeviceContainersFinishStep_.emplace_back(it);
+		if (it->ContainerProps().bStoreStates)
+			DeviceContainersStoreStates_.emplace_back(it);
 	}
 }
 
@@ -1085,7 +1087,7 @@ void CDynaModel::FinishStep()
 {
 	// для устройств с независимыми переменными после успешного выполнения шага
 	// рассчитываем актуальные значения независимых переменных
-	for (auto&& it : m_DeviceContainersFinishStep)
+	for (auto&& it : DeviceContainersFinishStep_)
 		it->FinishStep(*this);
 }
 
@@ -1159,7 +1161,7 @@ bool CDynaModel::ProcessOffStep()
 	// моделируем работу автоматов безопасности турбин
 	if (m_Parameters.SecuritySpinReference_ > 0.0)
 	{
-		for (auto&& gencontainer : m_DeviceContainers)
+		for (auto&& gencontainer : DeviceContainers_)
 		{
 			// тут можно заранее отобрать контейнеры с генераторами
 			if (gencontainer->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))

@@ -268,7 +268,7 @@ void CDynaNodeBase::GetPnrQnr(double Vnode)
 	Pnr = Pn;	Qnr = Qn;
 	// генерация в узле также равна заданной в УР
 	Pgr = Pg;	Qgr = Qg;
-	double VdVnom = Vnode / V0;
+	const double VdVnom{ Vnode / V0 };
 	
 	dLRCLoad = dLRCGen = 0.0;
 

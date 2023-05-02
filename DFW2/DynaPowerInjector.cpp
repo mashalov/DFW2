@@ -123,6 +123,7 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.EquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
 	props.bFinishStep = true;	// нужно рассчитывать мощности после выполнения шага
+	props.bStoreStates = false;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaPowerInjector>>();
 }
 

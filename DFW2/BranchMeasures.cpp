@@ -448,8 +448,10 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 		{ "pl_iq", m_cszPe }
 		});
 
+	props.bStoreStates = false;
 	// измерения создаются индивидуально с ветвью в конструкторе
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();
+	
 }
 
 void CDynaBranchMeasure::TopologyUpdated()
