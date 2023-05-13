@@ -46,13 +46,16 @@ namespace DFW2
 	protected:
 		double Delay_ = 0.0;
 		ptrdiff_t DiscontinuityId_;
+		CDynaPrimitive& Primitive_;	// примитив, который работает с выдержкой времени
 	public:
-		CDiscreteDelay() : DiscontinuityId_(0) {}
+		// для конструктора CDiscreteDelay при использовании множественного
+		// наследования с примитивом надо использовать static_cast<CDynaPrimitive*>(this)
+		CDiscreteDelay(CDynaPrimitive& Primitive) : Primitive_(Primitive), DiscontinuityId_(0) {}
 		virtual bool NotifyDelay(CDynaModel *pDynaModel) = 0;
-		virtual CDevice* GetDevice() { return nullptr; };
 		bool Init(CDynaModel *pDynaModel);
 		void SetDiscontinuityId(ptrdiff_t DiscontinuityId) noexcept { DiscontinuityId_ = DiscontinuityId; }
 		ptrdiff_t GetDiscontinuityId() const noexcept { return DiscontinuityId_; }
+		CDynaPrimitive& Primitive() { return Primitive_; }
 	};
 
 	class CRelayDelay : public CRelay, public CDiscreteDelay
@@ -64,14 +67,15 @@ namespace DFW2
 		virtual bool EnableInstantSwitch(CDynaModel* pDynaModel) const;
 	public:
 
-		CRelayDelay(CDevice& Device, ORange Output, IRange Input) : CRelay(Device, Output, Input), CDiscreteDelay() {}
+		CRelayDelay(CDevice& Device, ORange Output, IRange Input) : 
+			CDiscreteDelay(*static_cast<CDynaPrimitive*>(this)), 
+			CRelay(Device, Output, Input) {}
 		CRelayDelay(CDevice& Device, const OutputList& Output, const InputList& Input) : CRelayDelay(Device, ORange(Output), IRange(Input)) { }
 
 		bool Init(CDynaModel *pDynaModel) override;
 		void SetRefs(CDynaModel* pDynaModel, double RefOn, bool RefOff, double Delay);
 		void SetRefs(CDynaModel *pDynaModel, double RefOn, double RefOff, bool MaxRelay, double Delay);
 		bool NotifyDelay(CDynaModel *pDynaModel) override;
-		CDevice* GetDevice() override { return &Device_; };
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static size_t PrimitiveSize() noexcept { return sizeof(CRelayDelay); }

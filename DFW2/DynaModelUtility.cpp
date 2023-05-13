@@ -19,10 +19,15 @@ void CDynaModel::DebugLog(std::string_view Message) const
 		DebugLogFile << Message << std::endl;
 }
 
-void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex) const
+void CDynaModel::LogTime(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t DbIndex) const
+{
+	CDynaModel::Log(Status, fmt::format("{} {}", TimeAndStep(), Message), DbIndex);
+}
+
+void CDynaModel::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t DbIndex) const
 {
 	if (m_pLogger && Status <= m_Parameters.m_eConsoleLogLevel)
-		m_pLogger->Log(Status, Message, nDbIndex);
+		m_pLogger->Log(Status, Message, DbIndex);
 
 	if (LogFile.is_open() && Status <= m_Parameters.m_eFileLogLevel)
 		LogFile << Message << std::endl;
@@ -98,12 +103,34 @@ void CDynaModel::ProcessTopologyRequest()
 	sc.UpdateConstElements();
 }
 
+// Запрос обработки разрыва от устройства
 void CDynaModel::DiscontinuityRequest(CDevice& device, const DiscontinuityLevel Level)
 {
+	// увеличиваем счетчик запросов от устройства
 	device.IncrementDiscontinuityRequests();
-	sc.m_pDiscontinuityDevice = &device;
-	if(sc.m_eDiscontinuityLevel < Level)
-		sc.m_eDiscontinuityLevel = Level;
+	// информации о примитиве устройсва нет - отказываемся
+	// от учета примитива
+	sc.pDiscontinuityPrimitive_ = nullptr;
+	if (sc.DiscontinuityLevel_ < Level)
+	{
+		// запоминаем устройство
+		sc.DiscontinuityLevel_ = Level;
+		sc.pDiscontinuityDevice_ = &device;
+	}
+}
+
+// Запрос обработки разрыва от примитива
+void CDynaModel::DiscontinuityRequest(CDynaPrimitive& primitive, const DiscontinuityLevel Level)
+{
+	// увеличиваем счетчик запросов от устройства
+	primitive.Device().IncrementDiscontinuityRequests();
+	if (sc.DiscontinuityLevel_ < Level)
+	{
+		// запоминаем устройство
+		sc.DiscontinuityLevel_ = Level;
+		sc.pDiscontinuityDevice_ = &primitive.Device();
+		sc.pDiscontinuityPrimitive_ = &primitive;
+	}
 }
 
 double CDynaModel::GetWeightedNorm(double *pVector)
@@ -135,16 +162,19 @@ double CDynaModel::GetNorm(double *pVector)
 
 void CDynaModel::ServeDiscontinuityRequest()
 {
-	if (sc.m_eDiscontinuityLevel != DiscontinuityLevel::None)
+	if (sc.DiscontinuityLevel_ != DiscontinuityLevel::None)
 	{
-		std::string DeviceInfo(sc.m_pDiscontinuityDevice ? sc.m_pDiscontinuityDevice->GetVerbalName() : "");
+		std::string DeviceInfo(sc.pDiscontinuityDevice_ ? sc.pDiscontinuityDevice_->GetVerbalName() : "");
 		if (DeviceInfo.empty())
 			DeviceInfo = "???";
-		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszDiscontinuityProcessing, 
-			GetCurrentTime(), DeviceInfo));
 
-		sc.m_eDiscontinuityLevel = DiscontinuityLevel::None;
-		sc.m_pDiscontinuityDevice = nullptr;
+		if (sc.pDiscontinuityPrimitive_ && !sc.pDiscontinuityPrimitive_->Name().empty())
+			DeviceInfo.append(fmt::format("/{}", sc.pDiscontinuityPrimitive_->Name()));
+
+		LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszDiscontinuityProcessing, DeviceInfo));
+
+		sc.DiscontinuityLevel_ = DiscontinuityLevel::None;
+		sc.pDiscontinuityDevice_ = nullptr;
 		EnterDiscontinuityMode();
 		ProcessDiscontinuity();
 	}
@@ -763,7 +793,7 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 	Serializer->AddProperty("RetryStep", m_bRetryStep);
 	Serializer->AddProperty("ProcessTopology", m_bProcessTopology);
 	Serializer->AddEnumProperty("DiscontinuityRequest", 
-		new CSerializerAdapterEnum<DiscontinuityLevel>(m_eDiscontinuityLevel, m_cszDiscontinuityLevelTypeNames));
+		new CSerializerAdapterEnum<DiscontinuityLevel>(DiscontinuityLevel_, m_cszDiscontinuityLevelTypeNames));
 	Serializer->AddProperty("EnforceOut", m_bEnforceOut);
 	Serializer->AddProperty("BeforeDiscontinuityWritten", m_bBeforeDiscontinuityWritten);
 	Serializer->AddProperty("FilteredStep", dFilteredStep);
@@ -1157,7 +1187,7 @@ bool CDynaModel::ProcessOffStep()
 {
 	bool bRes{ true };
 
-	const auto OldDiscontinuityLevel{ sc.m_eDiscontinuityLevel };
+	const auto OldDiscontinuityLevel{ sc.DiscontinuityLevel_ };
 
 	// моделируем работу автоматов безопасности турбин
 	if (m_Parameters.SecuritySpinReference_ > 0.0)
@@ -1174,9 +1204,7 @@ bool CDynaModel::ProcessOffStep()
 						continue;
 					if (pGen->s > m_Parameters.SecuritySpinReference_)
 					{
-						Log(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(CDFW2Messages::m_cszGeneratorOverspeed, 
-							GetCurrentTime(),
-							GetIntegrationStepNumber(),
+						LogTime(DFW2MessageStatus::DFW2LOG_MESSAGE, fmt::format(CDFW2Messages::m_cszGeneratorOverspeed, 
 							pGen->GetVerbalName(), 
 							pGen->s, 
 							m_Parameters.SecuritySpinReference_),
@@ -1192,7 +1220,7 @@ bool CDynaModel::ProcessOffStep()
 	// если мы повысили уровень разрыва, обрабатываем
 	// его внутри данной функции, чтобы выполнить
 	// необходимые изменения в системе уравнений
-	if (sc.m_eDiscontinuityLevel > OldDiscontinuityLevel)
+	if (sc.DiscontinuityLevel_ > OldDiscontinuityLevel)
 	{
 		// обрабатываем разрыв
 		ServeDiscontinuityRequest();
@@ -1200,11 +1228,18 @@ bool CDynaModel::ProcessOffStep()
 		bRes = bRes && ApplyChangesToModel();	
 		// возвращаем уровень разрыва к исходному, так как уже все
 		// что случилось внутри этой функции обработали
-		sc.m_eDiscontinuityLevel = OldDiscontinuityLevel;
+		sc.DiscontinuityLevel_ = OldDiscontinuityLevel;
 		// но оставляем информацию о разрыве для цикла интегрирования
 	}
 
 	return bRes;
+}
+
+const std::string CDynaModel::TimeAndStep() const
+{
+	return fmt::format("t={:15.012f} {:>3}", 
+		GetCurrentTime(), 
+		GetIntegrationStepNumber());
 }
 
 

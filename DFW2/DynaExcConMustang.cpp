@@ -11,6 +11,7 @@ CDynaExcConMustang::CDynaExcConMustang() : CDevice(),
 	dEqdt(*this, { dEqdtOut, dEqdtOut1 }, { dEqdtIn }),
 	dSdt(*this,  { dSdtOut, dSdtOut1   }, { dSdtIn })
 {
+	Limiter.SetName(cszUsumLmt);
 }
 
 VariableIndexRefVec& CDynaExcConMustang::GetVariables(VariableIndexRefVec& ChildVec)
@@ -285,7 +286,7 @@ void CDynaExcConMustang::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaExcConMustang::m_cszUrv_max, Umax, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Vref", Vref, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Usum", Usum, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState("UsumLmt", UsumLmt, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(cszUsumLmt, UsumLmt, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Uf", Uf, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Svt", Svt, eVARUNITS::VARUNIT_PU);
 }
@@ -315,7 +316,7 @@ void CDynaExcConMustang::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.VarMap_.insert(std::make_pair("Uf", CVarIndex(CDynaExcConMustang::V_UF, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("Usum", CVarIndex(CDynaExcConMustang::V_USUM, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("UsumLmt", CVarIndex(CDynaExcConMustang::V_USUMLMT, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszUsumLmt, CVarIndex(CDynaExcConMustang::V_USUMLMT, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("Svt", CVarIndex(CDynaExcConMustang::V_SVT, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("dVdt", CVarIndex(CDynaExcConMustang::V_DVDT, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("dEqdt", CVarIndex(CDynaExcConMustang::V_EQDT, VARUNIT_PU)));

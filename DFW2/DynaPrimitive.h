@@ -104,6 +104,9 @@ namespace DFW2
 		bool ChangeState(CDynaModel *pDynaModel, double Diff, double TolCheck, double Constraint, ptrdiff_t ValueIndex, double &rH);
 		bool UnserializeParameters(PRIMITIVEPARAMETERSDEFAULT ParametersList, const DOUBLEVECTOR& Parameters);
 		bool UnserializeParameters(DOUBLEREFVEC ParametersList, const DOUBLEVECTOR& Parameters);
+		// Опциональное имя примитива. Задано string_view и ссылается
+		// на статическую строку из constexpr или контейнера пользовательских устройств
+		std::string_view Name_;			
 	public:
 		// возвращает значение выхода
 		constexpr operator double& () noexcept { return Output_.Value; }
@@ -148,6 +151,9 @@ namespace DFW2
 		bool CheckTimeConstant(const double& T);
 		static double GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c);
 		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, const RightVector* pRightVector, double dConst);
+		void SetName(const std::string_view& Name) { Name_ = Name; }
+		const std::string_view& Name() const { return Name_; }
+		CDevice& Device() { return Device_; }
 	};
 
 	// примитив с состоянием, изменение которого может вызывать разрыв

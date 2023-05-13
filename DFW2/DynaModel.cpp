@@ -827,8 +827,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 			if (sc.m_bNewtonConverged)
 			{
 #ifdef _LFINFO_
-				Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Converged{:>3} iteration {} MaxWeight {} Saving {:.2} Rcond {}", GetCurrentTime(),
-																				sc.nStepsCount,
+				LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Converged{:>3} iteration {} MaxWeight {} Saving {:.2} Rcond {}", 
 																				sc.nNewtonIteration,
 																				sc.Newton.Absolute.Info(),
 																				sc.Newton.Weighted.dMaxError,
@@ -848,8 +847,7 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 				if (!sc.m_bNewtonStepControl)
 				{
-					Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Continue {:>3} iteration {} MaxWeight {} Rcond {}", GetCurrentTime(),
-						sc.nStepsCount,
+					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Continue {:>3} iteration {} MaxWeight {} Rcond {}", 
 						sc.nNewtonIteration,
 						sc.Newton.Absolute.Info(),
 						sc.Newton.Weighted.dMaxError,
@@ -900,7 +898,7 @@ bool CDynaModel::ApplyChangesToModel()
 		bRes = UpdateExternalVariables();
 	}
 	// проверяем, не возникло ли новых запросов на обработку разрыва при обработке разрыва
-	if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
+	if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
 		sc.m_bBeforeDiscontinuityWritten = false;		// если запросов нет - больше записывать до разрыва нечего
 
 	return bRes;
@@ -927,10 +925,8 @@ bool CDynaModel::Step()
 			{
 				SetH(H() * rHit); 							// меняем шаг
 				RescaleNordsiek();							// пересчитываем Nordsieck на новый шаг
-				Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
+				LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
 					fmt::format(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, 
-						GetCurrentTime(), 
-						GetIntegrationStepNumber(), 
 						H()));
 				sc.m_bBeforeDiscontinuityWritten = false;		// готовимся к обработке разрыва
 			}
@@ -962,7 +958,7 @@ bool CDynaModel::Step()
 		}
 	}
 
-	if (sc.m_eDiscontinuityLevel != DiscontinuityLevel::None)
+	if (sc.DiscontinuityLevel_ != DiscontinuityLevel::None)
 	{
 		// если был запрос на обработку разрыва
 		if (sc.m_bBeforeDiscontinuityWritten)
@@ -1033,9 +1029,7 @@ bool CDynaModel::Step()
 					if (sc.m_bNordsiekReset)
 					{
 						// если нордсик был сброшен не конторолируем предиктор
-						Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} startup step",
-							GetCurrentTime(),
-							GetIntegrationStepNumber()));
+						LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("startup step"));
 					}
 					else
 						rSame = GetRatioForCurrentOrder(); // если нордиск не был сброшен выбираем шаг по соответствию предиктору
@@ -1063,7 +1057,7 @@ bool CDynaModel::Step()
 								// если нашли время зерокроссинга выходим из режима зерокроссинга
 								sc.m_bZeroCrossingMode = false;
 
-								if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
+								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
 								{
 									// если не возникло запросов на обработку разрыва
 									// обнуляем коэффициент шага, чтобы он не изменился
@@ -1095,7 +1089,7 @@ bool CDynaModel::Step()
 								// режим зерокроссинга отменяем
 								sc.m_bZeroCrossingMode = false;
 
-								if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
+								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
 								{
 									// если не было запросов обработки разрыва признаем шаг успешным
 									GoodStep(rSame);
@@ -1200,9 +1194,7 @@ double CDynaModel::GetRatioForCurrentOrder()
 	if (Equal(H() / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = (std::max)(1.01, r);
 
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} {} rSame {} RateLimit {} for {} steps", 
-		GetCurrentTime(), 
-		GetIntegrationStepNumber(),
+	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} rSame {} RateLimit {} for {} steps", 
 		sc.Integrator.Weighted.Info(),
 		r,
 		sc.dRateGrowLimit < (std::numeric_limits<double>::max)() ? sc.dRateGrowLimit : 0.0,
@@ -1306,7 +1298,7 @@ void CDynaModel::UnprocessDiscontinuity()
 
 bool CDynaModel::ProcessDiscontinuity()
 {
-	bool bRes = true;
+	bool bRes{ true };
 
 	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
 		
@@ -1322,8 +1314,8 @@ bool CDynaModel::ProcessDiscontinuity()
 			// начинают обработку заново
 			UnprocessDiscontinuity();
 			// запрос на обработку разрыва сбрасываем
-			sc.m_eDiscontinuityLevel = DiscontinuityLevel::None;
-			sc.m_pDiscontinuityDevice = nullptr;
+			sc.DiscontinuityLevel_ = DiscontinuityLevel::None;
+			sc.pDiscontinuityDevice_ = nullptr;
 
 			ChangeOrder(1);
 			ptrdiff_t nTotalOKPds = -1;
@@ -1377,7 +1369,7 @@ bool CDynaModel::ProcessDiscontinuity()
 			}
 
 			// если все ОК, но в процессе обработки разрыва был(и) запрос(ы) на обработку разрывов - повторяем цикл обработки
-			if (sc.m_eDiscontinuityLevel == DiscontinuityLevel::None)
+			if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
 				break;
 		}
 		// инициализируем Нордсик
@@ -1464,8 +1456,10 @@ void CDynaModel::GoodStep(double rSame)
 					ChangeOrder(2);
 					SetH(H() * sc.dFilteredOrder);
 					RescaleNordsiek();
-					Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
-						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
+					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
+						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, 
+							sc.q, 
+							H()));
 				}
 			}
 			else
@@ -1489,8 +1483,10 @@ void CDynaModel::GoodStep(double rSame)
 					SetH(H() * sc.dFilteredOrder);
 					ChangeOrder(1);
 					RescaleNordsiek();
-					Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
-						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
+					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
+						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, 
+							sc.q, 
+							H()));
 				}
 			}
 			else
@@ -1514,7 +1510,10 @@ void CDynaModel::GoodStep(double rSame)
 			// пересчитываем Nordsieck на новый шаг
 			SetH(H() * sc.dFilteredStep);
 			RescaleNordsiek();
-			Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged, GetCurrentTime(), GetIntegrationStepNumber(), H(), k, sc.q));
+			LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged,
+				H(), 
+				k, 
+				sc.q));
 			sc.StepChanged();
 		}
 	}
@@ -1538,8 +1537,9 @@ void CDynaModel::BadStep()
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
 
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError, GetCurrentTime(), GetIntegrationStepNumber(),
-		newEffectiveH, sc.Integrator.Weighted.Info()));
+	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError, 
+		newEffectiveH, 
+		sc.Integrator.Weighted.Info()));
 
 	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
 	sc.OrderStatistics[sc.q - 1].nFailures++;
@@ -1644,8 +1644,10 @@ void CDynaModel::NewtonFailed()
 		ReInitializeNordsiek();
 	
 	sc.RefactorMatrix();
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, 
-		fmt::format(CDFW2Messages::m_cszStepAndOrderChangedOnNewton, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
+	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
+		fmt::format(CDFW2Messages::m_cszStepAndOrderChangedOnNewton,
+			sc.q, 
+			H()));
 }
 
 // функция подготовки к повтору шага
@@ -1668,8 +1670,7 @@ void CDynaModel::RepeatZeroCrossing(double rH)
 	SetH(rHstep);
 	RescaleNordsiek();
 	sc.CheckAdvance_t0();
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep, GetCurrentTime(),
-																				GetIntegrationStepNumber(), 
+	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep,
 																				H(), 
 																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName(),
 																				rH));

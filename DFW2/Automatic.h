@@ -139,6 +139,7 @@ namespace DFW2
 	{
 	protected:
 		INTLIST m_ActionGroupIds;
+		CRelayDelay* pRelay_ = nullptr;
 	public:
 		ptrdiff_t m_nOutputMode = 0;
 		std::string m_strActions;
@@ -164,6 +165,7 @@ namespace DFW2
 		bool AddActionGroupId(ptrdiff_t nActionId);
 		const INTLIST& GetGroupIds() const { return m_ActionGroupIds;  }
 		void AddToSource(std::ostringstream& source) override;
+		void LinkRelay(CRelayDelay* pRelay) { pRelay_ = pRelay; }
 	};
 
 
@@ -191,7 +193,7 @@ namespace DFW2
 	class CAutomatic
 	{
 	protected:
-		CDynaModel *m_pDynaModel;
+		CDynaModel *pDynaModel_;
 		AUTOITEMS m_lstActions;
 		AUTOITEMS m_lstLogics;
 		AUTOITEMS m_lstStarters;

@@ -8,6 +8,7 @@ CDynaExciterBase::CDynaExciterBase() : CDevice(),
 			//  выход лага идет на ограничитель, а не на выход
 			ExcLag(*this, { EqeLag }, { Eqsum })	
 {
+	ExcLag.SetName(cszLag);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
@@ -105,8 +106,3 @@ void CDynaExciterBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::m_cszDECId, CConstVarIndex(CDynaExciterBase::C_DECID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
 
 }
-
-const char* CDynaExciterBase::m_cszUf		= "Uf";
-const char* CDynaExciterBase::m_cszUdec		= "Vdec";
-const char* CDynaExciterBase::m_cszExcConId	= "ExcControlId";
-const char* CDynaExciterBase::m_cszDECId	= "ForcerId";

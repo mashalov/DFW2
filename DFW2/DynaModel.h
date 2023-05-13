@@ -412,8 +412,9 @@ namespace DFW2
 			bool m_bZeroCrossingMode = false;
 			bool m_bRetryStep = false;
 			bool m_bProcessTopology = false;
-			DiscontinuityLevel m_eDiscontinuityLevel = DiscontinuityLevel::None;
-			const CDevice* m_pDiscontinuityDevice = nullptr;
+			DiscontinuityLevel DiscontinuityLevel_ = DiscontinuityLevel::None;
+			const CDevice* pDiscontinuityDevice_ = nullptr;
+			const CDynaPrimitive* pDiscontinuityPrimitive_ = nullptr;
 			bool m_bEnforceOut = false;
 			bool m_bBeforeDiscontinuityWritten = false;				// флаг обработки момента времени до разрыва
 			double dFilteredStep = 0.0;
@@ -727,7 +728,7 @@ namespace DFW2
 		std::string FinalMessage_;
 		eSyncLossCause SyncLossCause_ = eSyncLossCause::None;
 		std::filesystem::path ResultFilePath_;
-
+		const std::string TimeAndStep() const;
 		std::atomic<bool> bStopProcessing = false;
 
 		double TimeWritten_;
@@ -1098,7 +1099,10 @@ namespace DFW2
 
 		void StopProcess();
 		void ProcessTopologyRequest();
+		// запрос обработки разрыва от устройства
 		void DiscontinuityRequest(CDevice& device, const DiscontinuityLevel Level);
+		// запрос обработки разрыва от примитива (который, в свою очередь, должен быть привязан к устройству)
+		void DiscontinuityRequest(CDynaPrimitive &primitive, const DiscontinuityLevel Level);
 		void ServeDiscontinuityRequest();
 		bool SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double dDelay);
 		bool RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject);
@@ -1123,7 +1127,10 @@ namespace DFW2
 		CProgress::ProgressStatus UpdateProgress();
 		void EndProgress();
 
-		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex = -1) const;
+		// вывод Message в протокол
+		void Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t DbIndex = -1) const;
+		// вывод Message в протокол с добавлением метки времени и номера шага интегрирования
+		void LogTime(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t DbIndex = -1) const;
 		void DebugLog(std::string_view Message) const;
 				
 		double Methodl[4][4];	// текущие коэффициенты метода интегрирования

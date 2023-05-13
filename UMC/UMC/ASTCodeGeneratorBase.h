@@ -345,6 +345,13 @@ public:
 			for (auto& o : h->Outputs)
 				outputs.push_back(fmt::format("{{ {}, {} }}", pin++, o->first));
 
+			// если у примитива есть заданный идентификатор
+			// ввводим его, если нет - используем имя выхода, если задано
+
+			std::string PrimitiveDescription{ h->GetId() };
+			if (PrimitiveDescription.empty() && !h->Outputs.empty())
+				PrimitiveDescription = h->Outputs.front()->first;
+
 			pin = 0;
 			for (auto& i : h->ChildNodes())
 			{
@@ -355,7 +362,7 @@ public:
 			 
 			Line += fmt::format("{{ {}, \"{}\",  {{ {} }},  {{ {} }} }}",
 				h->GetHostBlockInfo().PrimitiveCompilerName,
-				h->GetId(),
+				PrimitiveDescription,
 				fmt::join(outputs, ", "),
 				fmt::join(inputs, ", "));
 

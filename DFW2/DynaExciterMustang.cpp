@@ -13,6 +13,8 @@ CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
 	EqLimit(*this, { EqOutputValue }, { EqInput })
 {
 	Primitives_.pop_back();
+	OutputLimit.SetName(cszEqeV);
+	EqLimit.SetName(cszEqLimit);
 }
 
 double* CDynaExciterMustang::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -232,7 +234,7 @@ void CDynaExciterMustang::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetClassName(CDeviceContainerProperties::m_cszNameExciterMustang, CDeviceContainerProperties::m_cszSysNameExciterMustang);
 
 	props.VarMap_.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("EqeV", CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszEqeV, CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("Eqsum", CVarIndex(CDynaExciterMustang::V_EQSUM, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("Lag", CVarIndex(CDynaExciterMustang::V_EQELAG, VARUNIT_PU)));
 

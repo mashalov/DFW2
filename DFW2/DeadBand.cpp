@@ -125,10 +125,8 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 		}
 		if (OldState != eDbState_)
 		{
-			pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG,
-							fmt::format("t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}", 
-											pDynaModel->GetCurrentTime(), 
-											pDynaModel->GetIntegrationStepNumber(), 
+			pDynaModel->LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
+							fmt::format("Примитив {} из {} изменяет состояние {} {} {} с {} на {}", 
 											GetVerbalName(), 
 											Device_.GetVerbalName(), 
 											Output_, 
@@ -137,7 +135,7 @@ double CDeadBand::CheckZeroCrossing(CDynaModel *pDynaModel)
 											OldState, 
 											eDbState_)
 							);
-			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
+			pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 		}
 	}
 

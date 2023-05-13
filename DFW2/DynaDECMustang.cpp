@@ -21,6 +21,13 @@ CDynaDECMustang::CDynaDECMustang() : CDevice(),
 
 	EnfTrigger.SetResetPriority(false);
 	DefTrigger.SetResetPriority(false);
+
+	EnforceOn.SetName(cszEnfOnRly);
+	DeforceOn.SetName(cszDefOnRly);
+	EnforceOff.SetName(cszEnfOffRly);
+	DeforceOff.SetName(cszDefOffRly);
+	EnfTrigger.SetName(cszEnfTrig);
+	DefTrigger.SetName(cszDefTrig);
 }
 
 
@@ -254,12 +261,12 @@ void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.EquationsCount = CDynaDECMustang::VARS::V_LAST;
 
-	props.VarMap_.insert(std::make_pair("EnfOnRly", CVarIndex(CDynaDECMustang::V_ENFONRELAY, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("DefOnRly", CVarIndex(CDynaDECMustang::V_DEFONRELAY, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("EnfOffRly", CVarIndex(CDynaDECMustang::V_ENFOFFRELAY, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("DefOffRly", CVarIndex(CDynaDECMustang::V_DEFOFFRELAY, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("EnfTrg", CVarIndex(CDynaDECMustang::V_ENFTRIG, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("DefTrg", CVarIndex(CDynaDECMustang::V_DEFTRIG, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszEnfOnRly, CVarIndex(CDynaDECMustang::V_ENFONRELAY, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszDefOnRly, CVarIndex(CDynaDECMustang::V_DEFONRELAY, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszEnfOffRly, CVarIndex(CDynaDECMustang::V_ENFOFFRELAY, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszDefOffRly, CVarIndex(CDynaDECMustang::V_DEFOFFRELAY, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszEnfTrig, CVarIndex(CDynaDECMustang::V_ENFTRIG, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszDefTrig, CVarIndex(CDynaDECMustang::V_DEFTRIG, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair(CDynaExciterBase::m_cszUdec, CVarIndex(CDynaDECMustang::V_DEC, VARUNIT_PU)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaDECMustang>>();

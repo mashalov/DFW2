@@ -13,7 +13,8 @@ namespace DFW2
 	public:
 
 		CExpand(CDevice& Device, const ORange& Output, const IRange& Input) : 
-			CDynaPrimitiveBinary(Device, Output, Input) {}
+			CDynaPrimitiveBinary(Device, Output, Input), 
+			CDiscreteDelay(*static_cast<CDynaPrimitive*>(this)) {}
 		CExpand(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CExpand(Device, ORange(Output), IRange(Input)) { }
  
@@ -36,7 +37,6 @@ namespace DFW2
 		void SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState) override;
 
 	public:
-
 		CShrink(CDevice& Device, ORange Output, IRange Input) : CExpand(Device, Output, Input) {}
 		CShrink(CDevice& Device, const OutputList& Output, const InputList& Input) : CShrink(Device, ORange(Output), IRange(Input))  { }
 

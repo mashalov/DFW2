@@ -35,7 +35,7 @@ eDEVICEFUNCTIONSTATUS CAnd::ProcessDiscontinuity(CDynaModel* pDynaModel)
 			pDynaModel->SetVariableNordsiek(Output_, 0.0);
 
 		if (dOldOut != Output_)
-			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
+			pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -58,7 +58,7 @@ eDEVICEFUNCTIONSTATUS COr::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		}
 
 		if (dOldOut != Output_)
-			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
+			pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -76,7 +76,7 @@ eDEVICEFUNCTIONSTATUS CNot::ProcessDiscontinuity(CDynaModel* pDynaModel)
 			pDynaModel->SetVariableNordsiek(Output_, 1.0);
 
 		if (dOldOut != Output_)
-			pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
+			pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 	}
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

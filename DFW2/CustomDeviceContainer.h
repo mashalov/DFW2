@@ -87,7 +87,7 @@ namespace DFW2
 		size_t m_nSize = 0;
 	public:
 		void IncSize() { m_nSize++; }
-		virtual CDynaPrimitive* Create(CDevice& Device, const ORange& Output, const IRange& Input) = 0;
+		virtual CDynaPrimitive* Create(CDevice& Device, const std::string_view& Name, const ORange& Output, const IRange& Input) = 0;
 		virtual void Allocate(size_t nDevicesCount) = 0;
 		virtual ~CPrimitivePoolBase() = default;
 	};
@@ -98,10 +98,12 @@ namespace DFW2
 	protected:
 		std::vector<T> m_Primitives;
 	public:
-		CDynaPrimitive* Create(CDevice& Device, const ORange& Output, const IRange& Input) override
+		CDynaPrimitive* Create(CDevice& Device, const std::string_view& Name, const ORange& Output, const IRange& Input) override
 		{
 			m_Primitives.emplace_back(Device, Output, Input);
-			return &m_Primitives.back();
+			auto Primitive{ &m_Primitives.back() };
+			Primitive->SetName(Name);
+			return Primitive;
 		}
 		void Allocate(size_t nDevicesCount) override
 		{
@@ -154,12 +156,13 @@ namespace DFW2
 		}
 
 		CDynaPrimitive* Create(PrimitiveBlockType ePrimitiveType, 
-							   CDevice& Device, 
+							   CDevice& Device,
+							   std::string_view Name,
 							   const ORange& Output, 
 							   const IRange& Input)
 		{
 			CDevice::CheckIndex(m_Pools, ePrimitiveType);
-			return m_Pools[ePrimitiveType]->Create(Device, Output, Input);
+			return m_Pools[ePrimitiveType]->Create(Device, Name, Output, Input);
 		}
 
 		std::array<std::unique_ptr<CPrimitivePoolBase>, PrimitiveBlockType::PBT_LAST> m_Pools;
@@ -170,6 +173,7 @@ namespace DFW2
 	protected:
 		std::shared_ptr<CCustomDeviceCPPDLL> m_pDLL;
 		CPrimitivePools m_PrimitivePools;
+		STRINGLIST PrimitiveNames_;
 	public:
 		std::shared_ptr<CCustomDeviceCPPDLL> DLL() { return m_pDLL; }
 		CCustomDeviceCPPContainer(CDynaModel* pDynaModel);
@@ -177,12 +181,15 @@ namespace DFW2
 		void BuildStructure();
 		void ConnectDLL(std::filesystem::path DLLFilePath);
 
+		const STRINGLIST& PrimitiveNames() const { return PrimitiveNames_; }
+
 		CDynaPrimitive* CreatePrimitive(PrimitiveBlockType ePrimitiveType,
 			CDevice& Device,
+			std::string_view Name,
 			const ORange& Output,
 			const IRange& Input)
 		{
-				return m_PrimitivePools.Create(ePrimitiveType, Device, Output, Input);
+				return m_PrimitivePools.Create(ePrimitiveType, Device, Name, Output, Input);
 		}
 	};
 }

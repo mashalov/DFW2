@@ -67,6 +67,12 @@ namespace DFW2
 		static constexpr const char* m_cszTexc_rf = "Texc_rf";
 		static constexpr const char* m_cszTz_in = "Tz_in";
 		static constexpr const char* m_cszTz_out = "Tz_out";
+		static constexpr const char* cszEnfOnRly = "EnfOnRly";
+		static constexpr const char* cszDefOnRly = "DefOnRly";
+		static constexpr const char* cszEnfOffRly = "EnfOffRly";
+		static constexpr const char* cszDefOffRly = "DefOffRly";
+		static constexpr const char* cszEnfTrig = "EnfTrg";
+		static constexpr const char* cszDefTrig = "DefTrg";
 
 		// допускаются равные уставки на ввод и снятие форсировки/дефорсировки (см. приоритет триггера)
 		static inline CValidationRuleBiggerOrEqualT<CDynaDECMustang, &CDynaDECMustang::VEnfOn> ValidatorVenfOff = { CDynaDECMustang::m_cszUbf };

@@ -422,7 +422,7 @@ double* CCustomDevice::GetVariablePtr(ptrdiff_t nVarIndex)
 
 CDynaPrimitive* CCustomDevice::GetPrimitiveForNamedOutput(std::string_view OutputName)
 {
-	const double *pValue = GetVariableConstPtr(OutputName);
+	const double* pValue{ GetVariableConstPtr(OutputName) };
 
 	for (const auto& it : Primitives_)
 		if (static_cast<const double*>(*it) == pValue)
@@ -447,6 +447,9 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 	m_pDevice.Create(Container.DLL());
 
 	// проходим по примитивам устройства
+
+	auto PrimitiveName{ Container.PrimitiveNames().begin() };
+
 	for (const auto& prim : m_pDevice->GetPrimitives())
 	{
 		// проверяем количество входов и выходов
@@ -482,7 +485,8 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 			}
 		}
 		// создаем примитив из пула
-		Container.CreatePrimitive(prim.eBlockType, *this, ORange(outputs), IRange(inputs));
+		Container.CreatePrimitive(prim.eBlockType, *this, *PrimitiveName, ORange(outputs), IRange(inputs));
+		PrimitiveName++;
 	}
 }
 

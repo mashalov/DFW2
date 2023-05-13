@@ -481,7 +481,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 		return;
 
 	const double AtolDerlag{ DerlagCoe * Atol() };
-	const double RtolDerlag{ DerlagCoe * Atol() };
+	const double RtolDerlag{ DerlagCoe * Rtol() };
 
 	do
 	{

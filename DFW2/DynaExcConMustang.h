@@ -84,6 +84,7 @@ namespace DFW2
 		static constexpr const char* m_cszTf = "Tf";
 		static constexpr const char* m_cszUrv_min = "Urv_min";
 		static constexpr const char* m_cszUrv_max = "Urv_max";
+		static constexpr const char* cszUsumLmt = "UsumLmt";
 
 		static inline CValidationRuleRange ValidatorAlpha = CValidationRuleRange(-1,1);
 		static inline CValidationRuleBiggerThanZero ValidatorTf = CValidationRuleBiggerThanZero(0.9);

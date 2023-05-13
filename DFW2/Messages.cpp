@@ -50,12 +50,12 @@ const char* CDFW2Messages::m_cszKLUIntOverflow = "KLU - Переполнение
 const char* CDFW2Messages::m_cszKLUUnknownError = "KLU - Неизвестная ошибка с кодом {}";
 const char* CDFW2Messages::m_cszInitLoopedInfinitely = "При инициализации устройств обнаружен бесконечный цикл";
 const char* CDFW2Messages::m_cszDeviceContainerFailedToInit = "Отказ инициализации для устройств типа {} код {}";
-const char* CDFW2Messages::m_cszStepAndOrderChanged = "t={:15.012f} {} Порядок и шаг метода изменен : порядок {} шаг {} с";
-const char* CDFW2Messages::m_cszStepChanged = "t={:15.012f} {} Шаг метода изменен : шаг {} с ({}), порядок {}";
-const char* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = "t={:15.012f} {} Порядок и шаг метода изменен по Ньютону: порядок {} шаг {} с";
-const char* CDFW2Messages::m_cszZeroCrossingStep = "t={:15.012f} {} Шаг метода изменен для поиска ограничения: шаг {} с в устройстве {}, rH {}";
-const char* CDFW2Messages::m_cszStepChangedOnError = "t={:15.012f} {} Шаг метода изменен по корректору: шаг {} с, {}";
-const char* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = "t={:15.012f} {} Шаг метода изменен для обработки события: шаг {}";
+const char* CDFW2Messages::m_cszStepAndOrderChanged = "Порядок и шаг метода изменен : порядок {} шаг {} с";
+const char* CDFW2Messages::m_cszStepChanged = "Шаг метода изменен : шаг {} с ({}), порядок {}";
+const char* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = "Порядок и шаг метода изменен по Ньютону: порядок {} шаг {} с";
+const char* CDFW2Messages::m_cszZeroCrossingStep = "Шаг метода изменен для поиска ограничения: шаг {} с в устройстве {}, rH {}";
+const char* CDFW2Messages::m_cszStepChangedOnError = "Шаг метода изменен по корректору: шаг {} с, {}";
+const char* CDFW2Messages::m_cszStepAdjustedToDiscontinuity = "Шаг метода изменен для обработки события: шаг {}";
 const char* CDFW2Messages::m_cszSynchroZoneCountChanged = "Обновлено количество синхронных зон : {}";
 const char* CDFW2Messages::m_cszAllNodesOff = "Все узлы отключены";
 const char* CDFW2Messages::m_cszNodeTripDueToZone = "Узел \"{}\" отключен, так как находится в зоне без источников напряжения";
@@ -229,7 +229,7 @@ const char* CDFW2Messages::m_cszValidationBiggerThanNamed = " должно бы�
 const char* CDFW2Messages::m_cszValidationBiggerOrEqualThanNamed = " должно быть больше или равно {} = {}";
 const char* CDFW2Messages::m_cszValidationLessOrEqualThanNamed = " должно быть меньше или равно {} = {}";
 const char* CDFW2Messages::m_cszValidationLessThanNamed = " должно быть меньше {} = {}";
-const char* CDFW2Messages::m_cszDiscontinuityProcessing = "t={:15.012f} обработка разрыва устройства \"{}\"";
+const char* CDFW2Messages::m_cszDiscontinuityProcessing = "Обработка разрыва устройства \"{}\"";
 const char* CDFW2Messages::m_cszAutomaticName = "Автоматика";
 const char* CDFW2Messages::m_cszScenarioName = "Cценарий";
 const char* CDFW2Messages::m_cszCannotConvertShortCircuitConstants = "{} : невозможен точный расчет постоянных времени {} и {}. Попытка использовать приближенные значения {} и {}";
@@ -251,7 +251,7 @@ const char* CDFW2Messages::m_cszLFRunningZ0 = "Оценка УР методом 
 const char* CDFW2Messages::m_cszNoSSE2Support = "Процессор не поддерживает SSE2";
 const char* CDFW2Messages::m_cszWrongTaggedPath = "Ошибка пути с тегами в позиции {}";
 const char* CDFW2Messages::m_cszParameterIsOutOfRange = "Значение параметра \"{}\" : \"{}\" = {:.3f} находится вне диапазона типовых значений [{:.3f};{:.3f}]";
-const char* CDFW2Messages::m_cszPrimitiveChangesState = "t={:15.012f} {:>3} Примитив {} из {} изменяет состояние {} {} {} с {} на {}";
-const char* CDFW2Messages::m_cszRunningAction = "t={:15.012f} {:>3} Исполняется действие \"{}\"";
-const char* CDFW2Messages::m_cszGeneratorOverspeed = "t={:15.012f} {:>3} Генератор \"{}\" отключается действием автомата скорости. Скольжение {:.3f} превысило уставку {:.3f}";
+const char* CDFW2Messages::m_cszPrimitiveChangesState = "Примитив {} из {} изменяет состояние {} {} {} с {} на {}";
+const char* CDFW2Messages::m_cszRunningAction = "Исполняется действие \"{}\"";
+const char* CDFW2Messages::m_cszGeneratorOverspeed = "Генератор \"{}\" отключается действием автомата скорости. Скольжение {:.3f} превысило уставку {:.3f}";
 

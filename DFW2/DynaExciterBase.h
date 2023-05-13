@@ -56,10 +56,12 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static const char* m_cszUf;
-		static const char* m_cszUdec;
-		static const char* m_cszExcConId;
-		static const char* m_cszDECId;
+		static constexpr const char* cszLag = "Lag";
+		static constexpr const char* m_cszUf = "Uf";
+		static constexpr const char* m_cszUdec = "Vdec";
+		static constexpr const char* m_cszExcConId = "ExcControlId";
+		static constexpr const char* m_cszDECId = "ForcerId";
+
 	};
 }
 

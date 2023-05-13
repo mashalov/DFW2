@@ -444,8 +444,9 @@ void CDynaModel::RescaleNordsiek()
 	if (r == 1.0)
 		return;
 
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("t={:15.012f} {} Nordsiek rescale {}->{}", 
-		GetCurrentTime(),	sc.nStepsCount, sc.NordsiekScaledForH(), H()));
+	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Nordsiek rescale {}->{}", 
+		sc.NordsiekScaledForH(), 
+		H()));
 
 	const double crs[4] = { 1.0, r , (sc.q == 2) ? r * r : 1.0 , 1.0};
 #ifdef _AVX2

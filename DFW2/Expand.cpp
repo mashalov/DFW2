@@ -56,7 +56,7 @@ void CExpand::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES CurrentState)
 void CExpand::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 {
 	if (Delay_ <= 0.0)
-		pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
+		pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 }
 
 bool CExpand::NotifyDelay(CDynaModel *pDynaModel)

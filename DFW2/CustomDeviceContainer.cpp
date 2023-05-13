@@ -295,7 +295,13 @@ void CCustomDeviceCPPContainer::ConnectDLL(std::filesystem::path DLLFilePath)
 	CCustomDeviceDLLWrapper pDevice(m_pDLL);
 	pDevice->GetDeviceProperties(ContainerProps_);
 	for (const auto& prim : pDevice->GetPrimitives())
+	{
 		m_PrimitivePools.CountPrimitive(prim.eBlockType);
+		// имена притивов размещаем в списке
+		// чтобы ссылаться на них из всех
+		// экземпляров примитивов
+		PrimitiveNames_.emplace_back(prim.Name);
+	}
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszUserModelModuleLoaded, 
 		stringutils::utf8_encode(DLLFilePath.c_str())));
 }

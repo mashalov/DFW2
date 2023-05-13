@@ -218,11 +218,9 @@ void CDynaPrimitiveLimited::SetCurrentState(CDynaModel* pDynaModel, eLIMITEDSTAT
 		};
 
 		// если состояние изменилось, запрашиваем обработку разрыва
-		pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
-		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_DEBUG,
+		pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
+		pDynaModel->LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
 				fmt::format(CDFW2Messages::m_cszPrimitiveChangesState,
-					pDynaModel->GetCurrentTime(),
-					pDynaModel->GetIntegrationStepNumber(),
 					GetVerbalName(),
 					Device_.GetVerbalName(),
 					Output_,
@@ -253,7 +251,7 @@ void CDynaPrimitiveBinary::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES 
 	{
 		// если текущее состояние не соответствует заданному
 		// запрашиваем обработку разрыва
-		pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
+		pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 	}
 	eCurrentState = CurrentState;
 }
@@ -284,7 +282,7 @@ double CDynaPrimitiveBinaryOutput::CheckZeroCrossing(CDynaModel *pDynaModel)
 
 void CDynaPrimitiveBinary::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 {
-	pDynaModel->DiscontinuityRequest(Device_, DiscontinuityLevel::Light);
+	pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 }
 
 void CDynaPrimitiveBinary::BuildEquations(CDynaModel *pDynaModel)

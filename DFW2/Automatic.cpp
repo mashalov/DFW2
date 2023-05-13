@@ -52,28 +52,28 @@ bool CAutomaticLogic::AddActionGroupId(ptrdiff_t nActionId)
 }
 
 
-CAutomatic::CAutomatic(CDynaModel* pDynaModel) : m_pDynaModel(pDynaModel)
+CAutomatic::CAutomatic(CDynaModel* pDynaModel) : pDynaModel_(pDynaModel)
 {
 }
 
 const std::filesystem::path& CAutomatic::PathRoot() const
 {
-	return m_pDynaModel->Platform().Automatic();
+	return pDynaModel_->Platform().Automatic();
 }
 
 const std::filesystem::path& CAutomatic::BuildPath() const
 {
-	return m_pDynaModel->Platform().AutomaticBuild();
+	return pDynaModel_->Platform().AutomaticBuild();
 }
 
 const std::filesystem::path& CAutomatic::ModulesPath() const
 {
-	return m_pDynaModel->Platform().AutomaticModules();
+	return pDynaModel_->Platform().AutomaticModules();
 }
 
 const std::string_view CAutomatic::ModuleName() const
 {
-	return m_pDynaModel->Platform().AutomaticModuleName();
+	return pDynaModel_->Platform().AutomaticModuleName();
 }
 
 void CAutomatic::Clean()
@@ -124,11 +124,11 @@ void CAutomatic::CompileModels()
 		CDLLInstanceWrapper<CCompilerDLL> Compiler(pCompiler);
 
 		const auto vc{ Compiler->Version() };
-		if (!CDynaModel::VersionsEquals(vc, m_pDynaModel->version))
-			throw dfw2error(fmt::format(DFW2::CDFW2Messages::m_cszCompilerAndRaidenVersionMismatch, vc, m_pDynaModel->version));
+		if (!CDynaModel::VersionsEquals(vc, pDynaModel_->version))
+			throw dfw2error(fmt::format(DFW2::CDFW2Messages::m_cszCompilerAndRaidenVersionMismatch, vc, pDynaModel_->version));
 
 
-		CDynaModel* pDynaModel{ m_pDynaModel };
+		CDynaModel* pDynaModel{ pDynaModel_ };
 
 		Compiler->SetMessageCallBacks(
 				MessageCallBacks
@@ -163,13 +163,13 @@ void CAutomatic::CompileModels()
 
 		Sourceutf8stream <<"main\n{\n" << source.str() << "}\n";
 
-		Compiler->SetProperty("Platform", m_pDynaModel->Platform().Platform());
-		Compiler->SetProperty("Configuration", m_pDynaModel->Platform().Configuration());
+		Compiler->SetProperty("Platform", pDynaModel_->Platform().Platform());
+		Compiler->SetProperty("Configuration", pDynaModel_->Platform().Configuration());
 
 		Compiler->SetProperty("OutputPath", BuildPath().string());
 		Compiler->SetProperty("DllLibraryPath", ModulesPath().string());
 		Compiler->SetProperty("ProjectName", ModuleName());
-		Compiler->SetProperty("ReferenceSources", m_pDynaModel->Platform().SourceReference().string());
+		Compiler->SetProperty("ReferenceSources", pDynaModel_->Platform().SourceReference().string());
 		Compiler->SetProperty("DeviceType", DeviceType());
 		Compiler->SetProperty("DeviceTypeNameSystem", "Auomatic");
 		Compiler->SetProperty("DeviceTypeNameVerbal", "Automatic");
@@ -247,7 +247,7 @@ bool CAutomatic::ParseActionId(std::string& Action, ptrdiff_t& Id)
 
 void CAutomatic::Init()
 {
-	CDeviceContainer* pAutomaticContainer{ m_pDynaModel->GetDeviceContainer(Type()) };
+	CDeviceContainer* pAutomaticContainer{ pDynaModel_->GetDeviceContainer(Type()) };
 	if(!pAutomaticContainer)
 		throw dfw2error("CAutomatic::Init AutomaticContainer not available");
 	CCustomDevice* pCustomDevice{ static_cast<CCustomDevice*>(pAutomaticContainer->GetDeviceByIndex(0)) };
@@ -269,6 +269,7 @@ void CAutomatic::Init()
 
 		pActionRelay->SetDiscontinuityId(pLogic->GetId());
 		CAutomaticLogic* pLogicItem{ static_cast<CAutomaticLogic*>(pLogic) };
+		pLogicItem->LinkRelay(pActionRelay);
 		const std::string strActions{ pLogicItem->GetActions() };
 		stringutils::split(strActions, ActionList);
 
@@ -282,7 +283,7 @@ void CAutomatic::Init()
 				{
 					if (!pLogicItem->AddActionGroupId(Id))
 					{
-						m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
+						pDynaModel_->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszDuplicateActionGroupInLogic,
 																						Id, 
 																						strActions, 
 																						pLogicItem->GetId()));
@@ -290,7 +291,7 @@ void CAutomatic::Init()
 				}
 				else
 				{
-					m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
+					pDynaModel_->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszNoActionGroupFoundInLogic,
 																				Id, 
 																				strActions, 
 																				pLogicItem->GetId()));
@@ -299,7 +300,7 @@ void CAutomatic::Init()
 			}
 			else
 			{
-				m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongActionInLogicList,
+				pDynaModel_->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongActionInLogicList,
 																strAction, 
 																strActions, 
 																pLogic->GetId()));
@@ -311,9 +312,9 @@ void CAutomatic::Init()
 	for (auto&& it : m_lstActions)
 	{
 		CAutomaticAction *pAction = static_cast<CAutomaticAction*>(it.get());
-		if (!pAction->Init(m_pDynaModel, pCustomDevice))
+		if (!pAction->Init(pDynaModel_, pCustomDevice))
 		{
-			m_pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotInitialized,
+			pDynaModel_->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotInitialized,
 				pAction->GetVerbalName(),
 				pAction->String()));
 			bRes = false;
@@ -345,6 +346,9 @@ bool CAutomatic::NotifyRelayDelay(const CRelayDelayLogic* pRelay)
 	if (mit != m_mapLogics.end())
 	{
 		CAutomaticLogic* pLogic{ static_cast<CAutomaticLogic*>(mit->second) };
+		pDynaModel_->LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Сработало реле автоматики {}",
+			pLogic->GetVerbalName()
+			));
 		for (auto git : pLogic->GetGroupIds())
 		{
 			auto autoGroupIt{ m_AutoActionGroups.find(git) };
@@ -356,7 +360,7 @@ bool CAutomatic::NotifyRelayDelay(const CRelayDelayLogic* pRelay)
 				auto& lstActions{ autoGroupIt->second };
 				for (auto & item : lstActions)
 				{
-					static_cast<CAutomaticAction*>(item)->Do(m_pDynaModel);
+					static_cast<CAutomaticAction*>(item)->Do(pDynaModel_);
 					bRes = true;
 				}
 			}
@@ -372,9 +376,7 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 
 	if (m_pAction && m_pValue && m_nRunsCount)
 	{
-		pDynaModel->Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszRunningAction, 
-			pDynaModel->GetCurrentTime(), 
-			pDynaModel->GetIntegrationStepNumber(), 
+		pDynaModel->LogTime(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszRunningAction, 
 			GetVerbalName()));
 
 		bRes = (m_pAction->Do(pDynaModel, *m_pValue) != eDFW2_ACTION_STATE::AS_ERROR);
@@ -613,22 +615,22 @@ SerializerPtr CAutomatic::GetSerializer()
 
 const std::filesystem::path& CScenario::PathRoot() const
 {
-	return m_pDynaModel->Platform().Scenario();
+	return pDynaModel_->Platform().Scenario();
 }
 
 const std::filesystem::path& CScenario::BuildPath() const
 {
-	return m_pDynaModel->Platform().ScenarioBuild();
+	return pDynaModel_->Platform().ScenarioBuild();
 }
 
 const std::filesystem::path& CScenario::ModulesPath() const 
 {
-	return m_pDynaModel->Platform().ScenarioModules();
+	return pDynaModel_->Platform().ScenarioModules();
 }
 
 const std::string_view CScenario::ModuleName() const 
 {
-	return m_pDynaModel->Platform().ScenarioModuleName();
+	return pDynaModel_->Platform().ScenarioModuleName();
 }
 
 const char* CAutomaticAction::cszActionTemplate = "A{}";
