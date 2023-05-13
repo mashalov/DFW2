@@ -166,7 +166,6 @@ namespace DFW2
 		void StoreStates() override;
 		void RestoreStates() override;
 		bool InMatrix() const noexcept override;
-		void InitNordsiek(CDynaModel* pDynaModel) override;
 		void SuperNodeLoadFlow(CDynaModel *pDynaModel);
 		void SuperNodeLoadFlowYU(CDynaModel* pDynaModel);
 		inline CDynaNodeBase* GetSuperNode() { return pSuperNodeParent ? pSuperNodeParent : this; }

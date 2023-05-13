@@ -17,19 +17,10 @@ void CDynaModel::Predict()
 #ifdef DBG_CHECK_PREDICTION
 	SnapshotRightVector();
 #endif
-	
-	for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd ; pVectorBegin++)
-	{
-		pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
-		pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
-	}
 
 	if (!sc.m_bNordsiekReset)
 	{
-		// Алгоритм расчета [Lsode 2.61]
-		for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-		{
-			/*
+		/* 	Алгоритм расчета [Lsode 2.61]
 			for (ptrdiff_t k = 0; k < sc.q; k++)
 			{
 				for (ptrdiff_t j = sc.q; j >= k + 1; j--)
@@ -37,24 +28,43 @@ void CDynaModel::Predict()
 					pVectorBegin->Nordsiek[j - 1] += pVectorBegin->Nordsiek[j];
 				}
 			}
-			*/
+		*/
 
-			//
-			// |x0|x1|x2| * |1|0|0|
-			//				|1|1|0|
-			//				|1|2|1|
+		//
+		// |x0|x1|x2| * |1|0|0|
+		//				|1|1|0|
+		//				|1|2|1|
 
-			if (sc.q == 2)
+		if (sc.q == 2)
+		{
+			for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 			{
+				pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
 				pVectorBegin->Nordsiek[1] += pVectorBegin->Nordsiek[2];
 				pVectorBegin->Nordsiek[0] += pVectorBegin->Nordsiek[1];
 				pVectorBegin->Nordsiek[1] += pVectorBegin->Nordsiek[2];
+				pVectorBegin->Error = 0.0;
 			}
-			else
+		}
+		else
+		{
+			for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+			{
+				pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
 				pVectorBegin->Nordsiek[0] += pVectorBegin->Nordsiek[1];
+				pVectorBegin->Error = 0.0;
+			}
+		}
 
-			// прогнозное значение переменной состояния обновляем по Nordsieck
-			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
+		for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+			*pVectorBegin->pValue = *pVectorBegin->Nordsiek;
+	}
+	else
+	{
+		for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+		{
+			pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
+			pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
 		}
 	}
 

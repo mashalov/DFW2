@@ -695,6 +695,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszDebugModelNameTemplate, DebugModelNameTemplate_);
 	Serializer->AddProperty(cszStepsToStepChange, StepsToStepChange_);
 	Serializer->AddProperty(cszStepsToOrderChange, StepsToOrderChange_);
+	Serializer->AddProperty(cszDerlagToleranceMultiplier, DerLagTolerance_);
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));

@@ -480,22 +480,6 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 	pDynaModel->SetElement(Vim, Vim, dIimdVim);
 }
 
-void CDynaNodeBase::InitNordsiek(CDynaModel* pDynaModel)
-{
-	_ASSERTE(pContainer_);
-	struct RightVector* pRv = pDynaModel->GetRightVector(A(0));
-
-	VariableIndexRefVec seed;
-	for (auto&& var : GetVariables(seed))
-	{
-		pRv->pValue = &var.get().Value;
-		_ASSERTE(pRv->pValue);
-		pRv->pDevice = this;
-		pRv++;
-	}
-}
-
-
 void CDynaNodeBase::BuildRightHand(CDynaModel *pDynaModel)
 {
 	// в узле может быть уже известный постоянный ток

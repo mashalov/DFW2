@@ -576,9 +576,7 @@ bool CDynaModel::NewtonUpdate()
 #ifdef USE_FMA
 		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
 #else
-		double l0{ pVectorBegin->Error };
-		l0 *= Methodl0[pVectorBegin->EquationType];
-		const double dNewValue{ pVectorBegin->Nordsiek[0] + l0 };
+		const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
 #endif
 
 		const double dOldValue{ *pVectorBegin->pValue };

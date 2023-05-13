@@ -346,6 +346,7 @@ void CDevice::EstimateEquations(CDynaModel *pDynaModel)
 // участвует в CDynaModel::InitNordsieck() для инициализации правой части уравнений
 void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 {
+	/*
 	_ASSERTE(pContainer_);
 	struct RightVector* pRv{ pDynaModel->GetRightVector(A(0)) };
 	const ptrdiff_t EquationsCount{ pContainer_->EquationsCount() };
@@ -356,6 +357,20 @@ void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 		pRv->pValue = GetVariablePtr(z);	// передачи значения переменной устройства в структуру вектора правой части
 		_ASSERTE(pRv->pValue);
 		pRv->pDevice = this;				// передачи данных об устройстве в структуру правой части
+		pRv++;
+	}
+	*/
+
+	// версия с доступом к переменным девайса без индексов
+	// по ссылкам, ранее была откатана в CDynaNode
+	_ASSERTE(pContainer_);
+	struct RightVector* pRv{ pDynaModel->GetRightVector(A(0)) };
+	VariableIndexRefVec seed;
+	for (auto&& var : GetVariables(seed))
+	{
+		pRv->pValue = &var.get().Value;
+		_ASSERTE(pRv->pValue);
+		pRv->pDevice = this;
 		pRv++;
 	}
 }
