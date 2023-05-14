@@ -78,6 +78,8 @@ void CBatchTest::ReadParameters()
 		GlobalOptions.SelectedRun = parameters.at("SelectedRun").get<long>();
 		GlobalOptions.RaidenStopOnOOS = parameters.at("RaidenStopOnOOS").get<bool>();
 		GlobalOptions.RUSTabAtol = parameters.at("RUSTabAtol").get<double>();
+		GlobalOptions.RunRaiden = parameters.at("RunRaiden").get<bool>();
+		GlobalOptions.RunRUSTab = parameters.at("RunRUSTab").get<bool>();
 		
 		constexpr const char* szRaidenRtol{ "RaidenRtol" };
 		if (parameters.contains(szRaidenRtol))
@@ -482,6 +484,9 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		
 		for (int method{ 0 }; method < 2; method++)
 		{
+			if (method == 0 && !Opts.RunRUSTab) continue;
+			if (method == 1 && !Opts.RunRaiden) continue;
+
 			GoRaiden->PutZ(0, method);
 			CTestTimer Timer;
 			RetCode[method] = Opts.EmsMode ? FWDynamic->RunEMSmode() : FWDynamic->Run();

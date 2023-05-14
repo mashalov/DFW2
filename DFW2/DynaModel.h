@@ -423,6 +423,7 @@ namespace DFW2
 			double dFilteredOrderInner =0.0;
 			double dRateGrowLimit = (std::numeric_limits<double>::max)();
 			ptrdiff_t nStepsCount = 0;
+			ptrdiff_t DiscontinuitiesProcessed_ = 0;
 			ptrdiff_t nNewtonIterationsCount = 0;
 			double dLastConditionNumber = 1.0;
 			double dMaxConditionNumber = 0.0;
@@ -632,8 +633,8 @@ namespace DFW2
 		std::unique_ptr<CProgress> m_pProgress = std::make_unique<CProgress>();
 		std::chrono::time_point<std::chrono::high_resolution_clock> m_LastProgress;
 
-		bool m_bEstimateBuild;
-		bool m_bRebuildMatrixFlag;
+		bool EstimateBuild_;
+		bool RebuildMatrixFlag_;
 		std::vector<CDevice*> ZeroCrossingDevices;
 		void ConvertToCCSMatrix();
 		void SolveLinearSystem();
@@ -644,6 +645,7 @@ namespace DFW2
 		bool SolveNewton(ptrdiff_t nMaxIts);
 		void EstimateMatrix();
 		void CreateTotalRightVector();
+		void CreateUniqueRightVector();
 		void UpdateTotalRightVector();
 		void UpdateNewRightVector();
 		void DebugCheckRightVectorSync();
@@ -961,7 +963,7 @@ namespace DFW2
 		
 		inline bool EstimateBuild() const
 		{
-			return m_bEstimateBuild;
+			return EstimateBuild_;
 		}
 		// возвращает тип метода для уравнения
 		// используется для управления методом интегрирования дифференциальных переменных

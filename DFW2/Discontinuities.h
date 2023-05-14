@@ -56,6 +56,7 @@ namespace DFW2
 
 	class CModelActionStop : public CModelAction
 	{
+		double Time_;
 	public:
 		CModelActionStop();
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
@@ -253,7 +254,6 @@ namespace DFW2
 		virtual ~CStaticEvent();
 		bool AddAction(CModelAction* Action) const;
 		double Time() const { return Time_; }
-		bool ContainsStop() const;
 		ptrdiff_t ActionsCount() const { return Actions_.size(); }
 		bool RemoveStateAction(CDiscreteDelay *pDelayObject) const;
 		eDFW2_ACTION_STATE DoActions(CDynaModel *pDynaModel) const;
@@ -299,5 +299,6 @@ namespace DFW2
 		double NextEventTime();
 		void PassTime(double Time);
 		eDFW2_ACTION_STATE ProcessStaticEvents();
+		size_t EventsLeft(double Time) const;
 	};
 }

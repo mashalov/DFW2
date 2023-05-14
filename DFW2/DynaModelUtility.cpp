@@ -93,8 +93,8 @@ CDeviceContainer* CDynaModel::GetDeviceContainer(eDFW2DEVICETYPE Type)
 
 void CDynaModel::RebuildMatrix(bool bRebuild)
 {
-	if (!m_bRebuildMatrixFlag)
-		m_bRebuildMatrixFlag = sc.m_bRefactorMatrix = bRebuild;
+	if (!RebuildMatrixFlag_)
+		RebuildMatrixFlag_ = sc.m_bRefactorMatrix = bRebuild;
 }
 
 void CDynaModel::ProcessTopologyRequest()
@@ -1155,6 +1155,10 @@ void CDynaModel::DumpStatistics()
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Max condition number {} at time {}",
 		sc.dMaxConditionNumber,
 		sc.dMaxConditionNumberTime));
+
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Discontinuities processed {}, {} ahead",
+		sc.DiscontinuitiesProcessed_,
+		m_Discontinuities.EventsLeft(GetCurrentTime() + 0.9 * Hmin())));
 
 	if (sc.dMaxSLEResidual > 0.0)
 		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Max SLE residual {} at time {}",

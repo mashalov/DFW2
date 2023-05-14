@@ -888,7 +888,7 @@ bool CDynaModel::ApplyChangesToModel()
 		Nodes.ProcessTopology();
 
 	// если возникла необходимость перестроения Якоби
-	if (m_bRebuildMatrixFlag)
+	if (RebuildMatrixFlag_)
 	{
 		// строим ее заново
 		// создаем новый вариант систем уравнений 
@@ -1122,7 +1122,7 @@ bool CDynaModel::Step()
 					// если находились в режиме обработки разрыва, выходим из него (Ньютон сошелся, все ОК)
 					LeaveDiscontinuityMode();
 					// удаляем события, который уже отработали по времени
-					m_Discontinuities.PassTime(GetCurrentTime() + 2.0 * DFW2_EPSILON);
+					m_Discontinuities.PassTime(GetCurrentTime() + 0.9 * Hmin());
 					sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
 					sc.m_bEnforceOut = true;		// требуем записи результатов после обработки разрыва
 					sc.m_bBeforeDiscontinuityWritten = false;
@@ -1373,6 +1373,7 @@ bool CDynaModel::ProcessDiscontinuity()
 				break;
 		}
 		// инициализируем Нордсик
+		sc.DiscontinuitiesProcessed_++;
 		ResetNordsiek();
 	}
 	else

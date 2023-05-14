@@ -11,7 +11,7 @@ void CDynaModel::EstimateMatrix()
 	m_nEstimatedMatrixSize = 0;
 	ptrdiff_t nNonZeroCount(0);
 	// заставляем обновиться постоянные элементы в матрице, ставим оценочную сборку матрицы
-	sc.UpdateConstElements(m_bEstimateBuild = true);
+	sc.UpdateConstElements(EstimateBuild_ = true);
 	// взводим флаг рефакторизации
 	sc.RefactorMatrix();
 
@@ -32,17 +32,13 @@ void CDynaModel::EstimateMatrix()
 	if (bSaveRightVector)
 	{
 		// make a copy of original right vector to new right vector
-		pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
-		pRightVector = pRightVectorUniq.get();
-		pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
+		CreateUniqueRightVector();
 		UpdateNewRightVector();
 	}
 	else
 	{
 		CreateTotalRightVector();
-		pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
-		pRightVector = pRightVectorUniq.get();
-		pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
+		CreateUniqueRightVector();
 	}
 
 	// substitute element setter to counter (not actually setting values, just count)
@@ -108,7 +104,7 @@ void CDynaModel::EstimateMatrix()
 		}
 	}
 	*/
-	m_bEstimateBuild = false;
+	EstimateBuild_ = false;
 }
 
 void CDynaModel::BuildRightHand()
@@ -144,7 +140,7 @@ void CDynaModel::BuildMatrix()
 		for (auto&& it : DeviceContainers_)
 			it->BuildBlock(this);
 
-		m_bRebuildMatrixFlag = false;
+		RebuildMatrixFlag_ = false;
 		sc.m_dLastRefactorH = H();
 
 		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
@@ -628,6 +624,13 @@ void CDynaModel::ScaleAlgebraicEquations()
 		pVectorBegin++;
 
 	}
+}
+
+void CDynaModel::CreateUniqueRightVector()
+{
+	pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
+	pRightVector = pRightVectorUniq.get();
+	pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
 }
 
 void CDynaModel::CreateTotalRightVector()

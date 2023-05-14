@@ -32,6 +32,8 @@ protected:
 	struct Options
 	{
 		bool EmsMode = false;
+		bool RunRaiden = true;
+		bool RunRUSTab = true;
 		double Duration = 15;
 		double RaidenAtol = 1e-4;
 		double RaidenRtol = 1e-4;

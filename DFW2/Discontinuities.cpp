@@ -38,18 +38,6 @@ bool CStaticEvent::AddAction(CModelAction* Action) const
 	return bRes;
 }
 
-bool CStaticEvent::ContainsStop() const
-{
-	bool bStopFound{ false };
-	for (const auto& action : Actions_)
-		if (action->Type() == eDFW2_ACTION_TYPE::AT_STOP)
-		{
-			bStopFound = true;
-			break;
-		}
-	return bStopFound;
-}
-
 bool CStaticEvent::RemoveStateAction(CDiscreteDelay *pDelayObject) const
 {
 	bool bRes{ false };
@@ -159,11 +147,6 @@ double CDiscontinuities::NextEventTime()
 	double dNextEventTime{ -1 };
 	if (!StaticEvent_.empty())
 		dNextEventTime = StaticEvent_.begin()->Time();
-
-	/*if (m_itCurrentStaticEvent != m_StaticEvent.end())
-	{
-		dNextEventTime = m_itCurrentStaticEvent->Time();
-	}*/
 	return dNextEventTime;
 }
 
@@ -183,6 +166,14 @@ void CDiscontinuities::PassTime(double Time)
 	}
 }
 
+size_t CDiscontinuities::EventsLeft(double Time) const 
+{ 
+	// считаем количество статических событий и событий состояния со временем, превышающим заденное 
+	return std::distance(std::upper_bound(StaticEvent_.begin(), StaticEvent_.end(), CStaticEvent(Time)), StaticEvent_.end()) + 
+		std::count_if(StateEvents_.begin(), StateEvents_.end(), [Time](const auto& evt) {
+			return evt.Time() > Time;
+			});
+}
 
 eDFW2_ACTION_STATE CDiscontinuities::ProcessStaticEvents()
 {

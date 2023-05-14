@@ -308,7 +308,9 @@ void CDynaBranchMeasure::BuildRightHand(CDynaModel* pDynaModel)
 {
 	const auto& pNodeIp{ pZeroLFNode_ ? pBranch_->pNodeIp_ : pBranch_->pNodeSuperIp_ };
 	const auto& pNodeIq{ pZeroLFNode_ ? pBranch_->pNodeIq_ : pBranch_->pNodeSuperIq_ };
-	pNodeIp->UpdateVDelta();	pNodeIq->UpdateVDelta();
+	// !!!!!!!!!!!!!!! нужно ли здесь обновлять VDelta ????????????????
+	// кажется нет
+	// pNodeIp->UpdateVDelta();	pNodeIq->UpdateVDelta();
 
 	if (pBranch_->BranchState_ != CDynaBranch::BranchState::BRANCH_OFF)
 	{
