@@ -525,7 +525,7 @@ void CBatchTest::TestPair(const Input& Input, Output& Output)
 		double MaxDiffTime{ 0.0 };
 		std::string MaxDiffVariable;
 
-		if (!Opts.EmsMode)
+		if (!Opts.EmsMode && Opts.RunRaiden && Opts.RunRUSTab)
 		{
 			ResultCompare compare;
 			const auto CompareResults{ compare.Compare(ResultPath1, ResultPath2) };
