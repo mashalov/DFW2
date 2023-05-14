@@ -78,8 +78,6 @@ void CBatchTest::ReadParameters()
 		GlobalOptions.SelectedRun = parameters.at("SelectedRun").get<long>();
 		GlobalOptions.RaidenStopOnOOS = parameters.at("RaidenStopOnOOS").get<bool>();
 		GlobalOptions.RUSTabAtol = parameters.at("RUSTabAtol").get<double>();
-		GlobalOptions.RunRaiden = parameters.at("RunRaiden").get<bool>();
-		GlobalOptions.RunRUSTab = parameters.at("RunRUSTab").get<bool>();
 		
 		constexpr const char* szRaidenRtol{ "RaidenRtol" };
 		if (parameters.contains(szRaidenRtol))
@@ -92,6 +90,15 @@ void CBatchTest::ReadParameters()
 		constexpr const char* szRaidenZeroBranch{ "RaidenZeroBranch" };
 		if (parameters.contains(szRaidenZeroBranch))
 			GlobalOptions.RUSTabZeroBranch = parameters[szRaidenZeroBranch].get<double>();
+
+		constexpr const char* szRunRaiden{ "RunRaiden" };
+		if (parameters.contains(szRunRaiden))
+			GlobalOptions.RunRaiden = parameters[szRunRaiden].get<bool>();
+
+		constexpr const char* szRunRustab{ "RunRUSTab" };
+		if (parameters.contains(szRunRustab))
+			GlobalOptions.RunRUSTab = parameters[szRunRustab].get<bool>();
+
 
 		std::cout << "Поиск файлов моделей в каталоге " << CaseFilesFolder.string() << std::endl;
 
