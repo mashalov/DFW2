@@ -1471,7 +1471,7 @@ void CDynaModel::GoodStep(double rSame)
 		case 2:
 		{
 			// если были на втором порядке, пробуем шаг для первого порядка
-			const double rLower{ GetRatioForLowerOrder() / 1.3 / 5.0}; // 5.0 - чтобы уменьшить использование демпфирующего метода
+			const double rLower{ GetRatioForLowerOrder() / 1.3 }; 
 			// call before step change
 			UpdateNordsiek();
 
