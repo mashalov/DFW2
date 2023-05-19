@@ -794,7 +794,6 @@ namespace DFW2
 		/// !!!!!!!!!!!!!!!!!!!!!!!!!!! DIRT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 		typedef double(*MethodLType)[4];
-
 		const MethodLType& Methodl() const;
 		const double* Methodlh() const;
 

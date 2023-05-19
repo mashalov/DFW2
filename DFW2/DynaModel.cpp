@@ -1062,7 +1062,7 @@ bool CDynaModel::Step()
 								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
 								{
 									// если не было запросов обработки разрыва признаем шаг успешным
-									Integrator_->AcceptStep();
+									Integrator_->AcceptStep(sc.m_bNordsiekReset);
 								}
 								else
 								{
