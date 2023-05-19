@@ -1033,7 +1033,7 @@ bool CDynaModel::Step()
 								{
 									// если не возникло запросов на обработку разрыва
 									// и признаем шаг успешным, блокируя управление шагом
-									Integrator_->AcceptStep(false);
+									Integrator_->AcceptStep(true);
 									sc.ZeroCrossingMisses++;
 								}
 								else
