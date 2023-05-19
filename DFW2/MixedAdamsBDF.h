@@ -13,6 +13,8 @@ namespace DFW2
 		void UpdateStepSize() override;
 		void Init() override;
 		bool StepConverged() override;
+		void NewtonUpdateIteration() override;
+		void NewtonBacktrack(const double* pVec, double lambda) override;
 	protected:
 		double GetRatioForHigherOrder();
 		double GetRatioForCurrentOrder();

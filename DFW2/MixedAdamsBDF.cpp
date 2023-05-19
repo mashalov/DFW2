@@ -756,6 +756,86 @@ void MixedAdamsBDF::RestoreNordsiek()
 			dit->RestoreStates();
 }
 
+void MixedAdamsBDF::NewtonBacktrack(const double* pVec, double lambda)
+{
+	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* pVectorBegin{ pRightVector };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
+	const double Methodl0[2]{ Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][0] };
+	const double* pB{ pVec };
+	lambda -= 1.0;
+	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++)
+	{
+		pVectorBegin->Error += *pB * lambda;
+		*pVectorBegin->pValue = pVectorBegin->Nordsiek[0] + Methodl0[pVectorBegin->EquationType] * pVectorBegin->Error;
+	}
+}
+
+void MixedAdamsBDF::NewtonUpdateIteration()
+{
+	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* pVectorBegin{ pRightVector };
+	const auto& Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+
+	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
+	const double ConvCheck{ 0.1 / (DynaModel_.Order() + 2.0) };
+
+	// first check Newton convergence
+	sc.Newton.Reset();
+
+	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
+	const double Methodl0[2]{ Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
+
+	const double* pB{ DynaModel_.B() };
+
+	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++)
+	{
+		pVectorBegin->b = *pB;
+		pVectorBegin->Error += pVectorBegin->b;
+		sc.Newton.Absolute.Update(pVectorBegin, std::abs(pVectorBegin->b));
+
+#ifdef USE_FMA
+		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
+#else
+		const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
+#endif
+		const double dOldValue{ *pVectorBegin->pValue };
+		*pVectorBegin->pValue = dNewValue;
+		if (pVectorBegin->Atol > 0)
+		{
+			const double dError{ pVectorBegin->GetWeightedError(pVectorBegin->b, dOldValue) };
+			sc.Newton.Weighted.Update(pVectorBegin, dError);
+			_CheckNumber(dError);
+			ConvergenceTest* pCt{ ConvTest_ + pVectorBegin->EquationType };
+#ifdef _DEBUG
+			// breakpoint place for nans
+			_ASSERTE(!std::isnan(dError));
+#endif
+			pCt->AddError(dError);
+		}
+	}
+
+	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::FinalizeSum);
+	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::GetConvergenceRatio);
+
+	bool bConvCheckConverged{ ConvTest_[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
+							  ConvTest_[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
+							  sc.Newton.Weighted.dMaxError < Parameters.m_dNewtonMaxNorm };
+
+	if (bConvCheckConverged)
+		sc.m_bNewtonConverged = true;
+	else
+	{
+		if (ConvTest_[DET_ALGEBRAIC].dCms > 1.0 || ConvTest_[DET_DIFFERENTIAL].dCms > 1.0)
+			sc.m_bNewtonDisconverging = true;
+		else
+			sc.RefactorMatrix(false);
+	}
+}
+
 
 const double MixedAdamsBDF::MethodlDefault[4][4] =
 	//									   l0			l1			l2			Tauq

@@ -749,6 +749,11 @@ namespace DFW2
 			return klu.MatrixSize();
 		}
 
+		inline const double* B() const
+		{
+			return klu.B();
+		}
+
 		inline constexpr double GetOmega0() const
 		{
 			return 2 * 50.0 * M_PI;

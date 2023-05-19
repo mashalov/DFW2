@@ -537,70 +537,7 @@ void CDynaModel::NewtonUpdate()
 	sc.m_bNewtonDisconverging = false;
 	sc.m_bNewtonStepControl = false;
 	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::Reset);
-
-
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
-	const double ConvCheck{ 0.1 / (sc.q + 2.0) };
-
-	// first check Newton convergence
-	sc.Newton.Reset();
-
-	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
-	const double Methodl0[2] { Methodl()[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl()[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
-
-	const double* const pB{ klu.B() };
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		const double& db = *(pB + (pVectorBegin - pRightVector));
-		pVectorBegin->Error += db;
-		pVectorBegin->b = db;
-
-		sc.Newton.Absolute.Update(pVectorBegin, std::abs(db));
-
-#ifdef USE_FMA
-		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
-#else
-		const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
-#endif
-
-		const double dOldValue{ *pVectorBegin->pValue };
-
-		*pVectorBegin->pValue = dNewValue;
-
-		if (pVectorBegin->Atol > 0)
-		{
-			const double dError{ pVectorBegin->GetWeightedError(db, dOldValue) };
-			sc.Newton.Weighted.Update(pVectorBegin, dError);
-			_CheckNumber(dError);
-			ConvergenceTest* pCt{ Integrator_->ConvTest() + pVectorBegin->EquationType};
-#ifdef _DEBUG
-			// breakpoint place for nans
-			_ASSERTE(!std::isnan(dError));
-#endif
-			pCt->AddError(dError);
-		}
-	}
-
-	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::GetConvergenceRatio);
-
-	bool bConvCheckConverged = Integrator_->ConvTest()[DET_ALGEBRAIC].dErrorSums < Methodl()[sc.q - 1][3] * ConvCheck &&
-							   Integrator_->ConvTest()[DET_DIFFERENTIAL].dErrorSums < Methodl()[sc.q + 1][3] * ConvCheck &&
-							   sc.Newton.Weighted.dMaxError < m_Parameters.m_dNewtonMaxNorm;
-
-	if ( bConvCheckConverged )
-		sc.m_bNewtonConverged = true;
-	else
-	{
-		if (Integrator_->ConvTest()[DET_ALGEBRAIC].dCms > 1.0 ||
-			Integrator_->ConvTest()[DET_DIFFERENTIAL].dCms > 1.0)
-				sc.m_bNewtonDisconverging = true;
-		else
-			sc.RefactorMatrix(false);
-	}
-
+	Integrator_->NewtonUpdateIteration();
 	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::NextIteration);
 }
 
@@ -742,22 +679,8 @@ void CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 					// считаем множитель
 					double lambda{ -0.5 * gs1v / (g1 - g0 - gs1v) };
 
-					// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
-					const double Methodl0[2]{ Methodl()[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl()[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
-
 					if (lambda > lambdamin && lambda < 1.0)
-					{
-						const RightVector* const pVectorEnd{ pRightVector + MaxtrixSize() };
-						for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-						{
-							double& db = pRb[pVectorBegin - pRightVector];
-							pVectorBegin->Error -= db;
-							pVectorBegin->Error += db * lambda;
-							double l0 = pVectorBegin->Error;
-							l0 *= Methodl0[pVectorBegin->EquationType];
-							*pVectorBegin->pValue = pVectorBegin->Nordsiek[0] + l0;
-						}
-					}
+						Integrator_->NewtonBacktrack(pRb.get(), lambda);
 				}
 			}
 		}

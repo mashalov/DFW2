@@ -101,6 +101,8 @@ namespace DFW2
 		virtual void RejectStep() = 0;
 		virtual void UpdateStepSize() = 0;
 		virtual void Init() = 0;
+		virtual void NewtonUpdateIteration() = 0;
+		virtual void NewtonBacktrack(const double* pVec, double lambda) = 0;
 		ConvergenceTest::ConvergenceTestVec& ConvTest()
 		{
 			return ConvTest_;
