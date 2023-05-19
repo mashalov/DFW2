@@ -192,11 +192,11 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
 
 	if ((pRightVector + nRow)->PhysicalEquationType == DET_ALGEBRAIC)
-		dValue *= Methodl[nMethodIndx][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
+		dValue *= Methodl()[nMethodIndx][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
 	else
 	{
 		// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
-		dValue *= Methodlh[nMethodIndx];
+		dValue *= Methodlh()[nMethodIndx];
 		// если элемент диагональный, учитываем диагональную единичную матрицу
 		if (nRow == nCol)
 			dValue = 1.0 - dValue;
@@ -257,11 +257,11 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
 
 	if ((pRightVector + nRow)->PhysicalEquationType == DET_ALGEBRAIC)
-		dValue *= Methodl[nMethodIndx][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
+		dValue *= Methodl()[nMethodIndx][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
 	else
 	{
 		// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
-		dValue *= Methodlh[nMethodIndx];
+		dValue *= Methodlh()[nMethodIndx];
 		// если элемент диагональный, учитываем диагональную единичную матрицу
 		if (nRow == nCol)
 			dValue = 1.0 - dValue;

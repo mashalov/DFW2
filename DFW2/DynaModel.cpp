@@ -565,7 +565,7 @@ bool CDynaModel::NewtonUpdate()
 	sc.Newton.Reset();
 
 	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
-	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
+	const double Methodl0[2] { Methodl()[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl()[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	const double* const pB{ klu.B() };
 
@@ -604,8 +604,8 @@ bool CDynaModel::NewtonUpdate()
 	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::GetConvergenceRatio);
 
-	bool bConvCheckConverged = Integrator_->ConvTest()[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
-							   Integrator_->ConvTest()[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
+	bool bConvCheckConverged = Integrator_->ConvTest()[DET_ALGEBRAIC].dErrorSums < Methodl()[sc.q - 1][3] * ConvCheck &&
+							   Integrator_->ConvTest()[DET_DIFFERENTIAL].dErrorSums < Methodl()[sc.q + 1][3] * ConvCheck &&
 							   sc.Newton.Weighted.dMaxError < m_Parameters.m_dNewtonMaxNorm;
 
 	if ( bConvCheckConverged )
@@ -994,7 +994,7 @@ bool CDynaModel::Step()
 					DetectAdamsRinging();
 
 					// и мы не находились в режиме обработки разрыва
-					bool StepConverged{ true };
+					bool StepConverged{ false };
 					
 					// рассчитываем возможный шаг для текущего порядка метода
 					// если сделанный шаг не был сделан без предиктора

@@ -1207,4 +1207,13 @@ const std::string CDynaModel::TimeAndStep() const
 		GetIntegrationStepNumber());
 }
 
+const CDynaModel::MethodLType& CDynaModel::Methodl() const
+{
+	return static_cast<MixedAdamsBDF*>(Integrator_.get())->Methodl;
+}
+
+const double* CDynaModel::Methodlh() const
+{
+	return static_cast<MixedAdamsBDF*>(Integrator_.get())->Methodlh;
+}
 

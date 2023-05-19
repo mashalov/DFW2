@@ -729,7 +729,7 @@ namespace DFW2
 		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
 		struct RightVector* GetRightVector(const InputVariable& Variable);
 
-		const StepControl& StepControl() const
+		StepControl& StepControl()
 		{
 			return sc;
 		}
@@ -789,6 +789,14 @@ namespace DFW2
 			//else
 			//	SetH((std::min)(UsedH(), 100.0 * sc.Hmin));
 		}
+
+
+		/// !!!!!!!!!!!!!!!!!!!!!!!!!!! DIRT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+		typedef double(*MethodLType)[4];
+
+		const MethodLType& Methodl() const;
+		const double* Methodlh() const;
 
 		//  возвращает отношение текущего шага к новому
 		inline double SetH(double h)

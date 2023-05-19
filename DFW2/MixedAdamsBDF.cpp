@@ -16,7 +16,7 @@ void MixedAdamsBDF::Step()
 
 void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 {
-	auto sc{ DynaModel_.StepControl() };
+	auto& sc{ DynaModel_.StepControl() };
 
 	sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
 	sc.RefactorMatrix(false);		// отказываемся от рефакторизации Якоби
@@ -134,8 +134,8 @@ void MixedAdamsBDF::RejectStep()
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
-	auto sc{ DynaModel_.StepControl() };
-	const auto Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const auto& Parameters{ DynaModel_.Parameters() };
 
 	double newH{ 0.5 * DynaModel_.H() };
 	double newEffectiveH{ (std::max)(newH, sc.Hmin) };
@@ -288,8 +288,8 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
-	auto sc{ DynaModel_.StepControl() };
-	const auto Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const auto& Parameters{ DynaModel_.Parameters() };
 		
 	sc.Integrator.Reset();
 
@@ -390,7 +390,7 @@ double MixedAdamsBDF::GetRatioForLowerOrder()
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
-	auto sc{ DynaModel_.StepControl() };
+	auto& sc{ DynaModel_.StepControl() };
 
 	double rDown{ 0.0 };
 	_ASSERTE(sc.q == 2);
@@ -427,8 +427,8 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
-	auto sc{ DynaModel_.StepControl() };
-	const auto Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const auto& Parameters{ DynaModel_.Parameters() };
 
 	const double alpha{ DynaModel_.H() / DynaModel_.UsedH() > 0.0 ? DynaModel_.UsedH() : 1.0 };
 	const double alphasq{ alpha * alpha };
@@ -552,7 +552,7 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 
 void MixedAdamsBDF::ChangeOrder(ptrdiff_t newOrder)
 {
-	auto sc{ DynaModel_.StepControl() };
+	auto& sc{ DynaModel_.StepControl() };
 	if (DynaModel_.Order() != newOrder)
 	{
 		sc.RefactorMatrix();
@@ -587,8 +587,8 @@ void MixedAdamsBDF::RescaleNordsiek()
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
-	auto sc{ DynaModel_.StepControl() };
-	const auto Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const auto& Parameters{ DynaModel_.Parameters() };
 
 	// расчет выполняется путем умножения текущего Nordsieck на диагональную матрицу C[q+1;q+1]
 	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
@@ -635,8 +635,8 @@ void MixedAdamsBDF::RescaleNordsiek()
 
 void MixedAdamsBDF::EnableAdamsCoefficientDamping(bool bEnable)
 {
-	auto sc{ DynaModel_.StepControl() };
-	const auto Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const auto& Parameters{ DynaModel_.Parameters() };
 	if (bEnable == sc.bAdamsDampingEnabled) return;
 
 	sc.bAdamsDampingEnabled = bEnable;
@@ -673,8 +673,8 @@ void MixedAdamsBDF::ReInitializeNordsiek()
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
-	auto sc{ DynaModel_.StepControl() };
-	const auto Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const auto& Parameters{ DynaModel_.Parameters() };
 
 	if (sc.m_bNordsiekSaved)
 	{
@@ -707,8 +707,8 @@ void MixedAdamsBDF::RestoreNordsiek()
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
-	auto sc{ DynaModel_.StepControl() };
-	const auto Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const auto& Parameters{ DynaModel_.Parameters() };
 
 	if (sc.m_bNordsiekSaved)
 	{

@@ -143,7 +143,7 @@ bool CDynaModel::DetectAdamsRinging()
 		m_Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL) &&
 		sc.q == 2 && H() > 0.01 && UsedH() > 0.0)
 	{
-		const double Methodl1[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
+		const double Methodl1[2] { Methodl()[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl()[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
 		const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
 		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)

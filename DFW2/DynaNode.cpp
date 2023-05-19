@@ -1287,7 +1287,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 	// выбираем границу сравгнения с гистерезисом - на снижение -, на повышение +
 	const double Border{ LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst) };
 	const double  h{ pDynaModel->H() };
-	const double* lm{ pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->Order() - 1] };
+	const double* lm{ pDynaModel->Methodl()[DET_ALGEBRAIC * 2 + pDynaModel->Order() - 1] };
 
 	const ptrdiff_t q(pDynaModel->Order());
 
@@ -1433,7 +1433,7 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	const double Hyst{ LOW_VOLTAGE_HYST };
 	const RightVector* pRvre{ pDynaModel->GetRightVector(Vre.Index) };
 	const RightVector* pRvim{ pDynaModel->GetRightVector(Vim.Index) };
-	const double* lm{ pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->Order() - 1] };
+	const double* lm{ pDynaModel->Methodl()[DET_ALGEBRAIC * 2 + pDynaModel->Order() - 1] };
 	const double Vre1{ pRvre->Nordsiek[0] + pRvre->Error * lm[0] };
 	const double Vim1{ pRvim->Nordsiek[0] + pRvim->Error * lm[0] };
 	const double Vcheck{ std::sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
