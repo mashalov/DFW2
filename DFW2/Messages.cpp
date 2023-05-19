@@ -230,6 +230,8 @@ const char* CDFW2Messages::m_cszValidationBiggerOrEqualThanNamed = " должн�
 const char* CDFW2Messages::m_cszValidationLessOrEqualThanNamed = " должно быть меньше или равно {} = {}";
 const char* CDFW2Messages::m_cszValidationLessThanNamed = " должно быть меньше {} = {}";
 const char* CDFW2Messages::m_cszDiscontinuityProcessing = "Обработка разрыва устройства \"{}\"";
+const char* CDFW2Messages::m_cszNewtonSolverDoesNotConvergedInIterations = "Метод Ньютона не достиг решения за {} итераций";
+const char* CDFW2Messages::m_cszDiscontinuityProcessingFailed = "Отказ при обработке разрыва ProcessDiscontinuity()";
 const char* CDFW2Messages::m_cszAutomaticName = "Автоматика";
 const char* CDFW2Messages::m_cszScenarioName = "Cценарий";
 const char* CDFW2Messages::m_cszCannotConvertShortCircuitConstants = "{} : невозможен точный расчет постоянных времени {} и {}. Попытка использовать приближенные значения {} и {}";

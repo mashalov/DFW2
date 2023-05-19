@@ -1023,7 +1023,7 @@ bool CDynaModel::RunTest()
 
 	SetH(sc.StartupStep);
 
-	bRes = bRes && InitEquations();
+	InitEquations();
 
 	// сохраняем начальные условия
 	// в истории Нордсика с тем чтобы иметь 

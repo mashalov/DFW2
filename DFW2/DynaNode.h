@@ -434,7 +434,7 @@ namespace DFW2
 		virtual ~CDynaNodeContainer();
 		void ProcessTopology();
 		void ProcessTopologyInitial();
-		bool LULF();
+		void LULF();
 		void AddToTopologyCheck(CDynaNodeBase* pNode);
 		void ResetTopologyCheck();
 		bool DynamicLRC = true;

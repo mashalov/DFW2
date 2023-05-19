@@ -983,10 +983,8 @@ eDEVICEFUNCTIONSTATUS CSynchroZone::Init(CDynaModel* pDynaModel)
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CDynaNodeContainer::LULF()
+void CDynaNodeContainer::LULF()
 {
-	bool bRes{ true };
-
 	KLUWrapper<std::complex<double>> klu;
 	size_t nNodeCount{ DevInMatrix.size() };
 	size_t nBranchesCount{ pDynaModel_->Branches.Count() };
@@ -1184,7 +1182,6 @@ bool CDynaNodeContainer::LULF()
 			break;
 		}
 	}
-	return bRes;
 }
 
 // Для перехода от расчета динамики к расчету УР

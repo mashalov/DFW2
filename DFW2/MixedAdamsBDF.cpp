@@ -5,7 +5,7 @@
 using namespace DFW2;
 MixedAdamsBDF::MixedAdamsBDF(CDynaModel& DynaModel) : IntegratorBase(DynaModel)
 {
-
+	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
 }
 
 void MixedAdamsBDF::Step()
@@ -203,7 +203,9 @@ bool MixedAdamsBDF::StepConverged()
 
 void MixedAdamsBDF::Init() 
 {
-	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
+	auto& Parameters{ DynaModel_.Parameters() };
+	if (Parameters.m_eDiffEquationType == DET_ALGEBRAIC)
+		Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 }
 
 void MixedAdamsBDF::Predict()

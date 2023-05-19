@@ -561,8 +561,8 @@ namespace DFW2
 		void SolveRefine();
 		void UpdateRcond();
 		void SetDifferentiatorsTolerance();
-		bool NewtonUpdate();
-		bool SolveNewton(ptrdiff_t nMaxIts);
+		void NewtonUpdate();
+		void SolveNewton(ptrdiff_t nMaxIts);
 		void EstimateMatrix();
 		void CreateTotalRightVector();
 		void CreateUniqueRightVector();
@@ -700,7 +700,7 @@ namespace DFW2
 		// и валидация
 		void PreInitDevices();
 		void InitDevices();
-		bool InitEquations();
+		void InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
 		void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
@@ -1059,7 +1059,7 @@ namespace DFW2
 
 		void EnterDiscontinuityMode();
 		void LeaveDiscontinuityMode();
-		bool ProcessDiscontinuity();
+		void ProcessDiscontinuity();
 		inline bool IsInDiscontinuityMode() { return sc.m_bDiscontinuityMode; }
 		inline bool IsInZeroCrossingMode() { return sc.m_bZeroCrossingMode; }
 		ptrdiff_t GetStepNumber() {  return sc.nStepsCount;  }
@@ -1139,6 +1139,11 @@ namespace DFW2
 		}
 
 		const DynaModelParameters& Parameters() const
+		{
+			return m_Parameters;
+		}
+
+		DynaModelParameters& Parameters()
 		{
 			return m_Parameters;
 		}
