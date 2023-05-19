@@ -28,6 +28,7 @@ namespace DFW2
 		void Computehl0();
 		void ReInitializeNordsiek();
 		void RestoreNordsiek();
+		void DetectAdamsRinging();
 	public:
 		static const double MethodlDefault[4][4]; // фиксированные коэффициенты метода интегрирования
 		double Methodl[4][4];	// текущие коэффициенты метода интегрирования

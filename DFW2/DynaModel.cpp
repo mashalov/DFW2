@@ -809,7 +809,6 @@ bool CDynaModel::Step()
 	while (sc.m_bRetryStep && bRes && !CancelProcessing())
 	{
 		Integrator_->Step();
-		SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
 
 		/*if (GetIntegrationStepNumber() == 3514)
 		{
@@ -824,130 +823,125 @@ bool CDynaModel::Step()
 		/*if (GetIntegrationStepNumber() == 3516)
 			CompareRightVector();*/
 
-		if (bRes)
+		// если корректор отработал без сбоев
+		if (sc.m_bNewtonConverged)
 		{
-			// если корректор отработал без сбоев
-			if (sc.m_bNewtonConverged)
+			// если Ньютон сошелся
+			FinishStep();	// рассчитываем независимые переменные, которые не входят в систему уравнения
+
+			if (!sc.m_bDiscontinuityMode)
 			{
-				// если Ньютон сошелся
-				FinishStep();	// рассчитываем независимые переменные, которые не входят в систему уравнения
-
-				if (!sc.m_bDiscontinuityMode)
-				{
-					DetectAdamsRinging();
-
-					// и мы не находились в режиме обработки разрыва
-					bool StepConverged{ false };
+				// и мы не находились в режиме обработки разрыва
+				bool StepConverged{ false };
 					
-					// рассчитываем возможный шаг для текущего порядка метода
-					// если сделанный шаг не был сделан без предиктора
-					if (sc.m_bNordsiekReset)
+				// рассчитываем возможный шаг для текущего порядка метода
+				// если сделанный шаг не был сделан без предиктора
+				if (sc.m_bNordsiekReset)
+				{
+					// если нордсик был сброшен не конторолируем предиктор
+					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("startup step"));
+				}
+				else
+					StepConverged = Integrator_->StepConverged();
+
+				// шаг выполнен успешно если это был стартап-шаг
+				// после сброса предиктора или корректор и предиктор
+				// дали возможность не уменьшать шаг
+				if (StepConverged || sc.m_bNordsiekReset)
+				{
+
+					// если шаг можно увеличить
+					// проверяем нет ли зерокроссинга
+					double rZeroCrossing{ CheckZeroCrossing() };
+
+					if (rZeroCrossing < 0)
+						Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}",
+							rZeroCrossing,
+							GetCurrentTime()));
+
+					if (sc.m_bZeroCrossingMode)
 					{
-						// если нордсик был сброшен не конторолируем предиктор
-						LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("startup step"));
-					}
-					else
-						StepConverged = Integrator_->StepConverged();
-
-					// шаг выполнен успешно если это был стартап-шаг
-					// после сброса предиктора или корректор и предиктор
-					// дали возможность не уменьшать шаг
-					if (StepConverged || sc.m_bNordsiekReset)
-					{
-
-						// если шаг можно увеличить
-						// проверяем нет ли зерокроссинга
-						double rZeroCrossing{ CheckZeroCrossing() };
-
-						if (rZeroCrossing < 0)
-							Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}",
-								rZeroCrossing,
-								GetCurrentTime()));
-
-						if (sc.m_bZeroCrossingMode)
+						// если были в зерокроссинге проверяем точность попадания времени при поиске зерокроссинга
+						if (ZeroCrossingStepReached(rZeroCrossing))
 						{
-							// если были в зерокроссинге проверяем точность попадания времени при поиске зерокроссинга
-							if (ZeroCrossingStepReached(rZeroCrossing))
-							{
-								// если нашли время зерокроссинга выходим из режима зерокроссинга
-								sc.m_bZeroCrossingMode = false;
+							// если нашли время зерокроссинга выходим из режима зерокроссинга
+							sc.m_bZeroCrossingMode = false;
 
-								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
-								{
-									// если не возникло запросов на обработку разрыва
-									// и признаем шаг успешным, блокируя управление шагом
-									Integrator_->AcceptStep(true);
-									sc.ZeroCrossingMisses++;
-								}
-								else
-								{
-									sc.m_bRetryStep = false; // если были запросы на обработку разрыва отменяем повтор шага, чтобы обработать разрыв
-									sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
-									sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
-								}
+							if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
+							{
+								// если не возникло запросов на обработку разрыва
+								// и признаем шаг успешным, блокируя управление шагом
+								Integrator_->AcceptStep(true);
+								sc.ZeroCrossingMisses++;
 							}
 							else
 							{
-								// если время зерокроссинга не достаточно точно определено подбираем новый шаг
-								RepeatZeroCrossing(rZeroCrossing);
-								sc.ZeroCrossingMisses++;
+								sc.m_bRetryStep = false; // если были запросы на обработку разрыва отменяем повтор шага, чтобы обработать разрыв
+								sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
+								sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
 							}
 						}
 						else
 						{
-							// если мы не были в режиме зерокроссинга
-							if (rZeroCrossing >= 1.0)
-							{
-								// и найденное время зерокроссинга не находится в пределах текущего шага
-								// режим зерокроссинга отменяем
-								sc.m_bZeroCrossingMode = false;
-
-								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
-								{
-									// если не было запросов обработки разрыва признаем шаг успешным
-									Integrator_->AcceptStep(sc.m_bNordsiekReset);
-								}
-								else
-								{
-									sc.m_bRetryStep = false; // отменяем повтор шага, чтобы обработать разрыв
-									sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
-									sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
-								}
-							}
-							else
-							{
-								// если время зерокроссинга внутри шага, входим в режим зерокроссинга
-								sc.m_bZeroCrossingMode = true;
-								// и пытаемся подобрать шаг до времени зерокроссинга
-								RepeatZeroCrossing(rZeroCrossing);
-							}
+							// если время зерокроссинга не достаточно точно определено подбираем новый шаг
+							RepeatZeroCrossing(rZeroCrossing);
+							sc.ZeroCrossingMisses++;
 						}
 					}
 					else
 					{
-						// шаг нужно уменьшить
-						// отбрасываем шаг
-						Integrator_->RejectStep();
+						// если мы не были в режиме зерокроссинга
+						if (rZeroCrossing >= 1.0)
+						{
+							// и найденное время зерокроссинга не находится в пределах текущего шага
+							// режим зерокроссинга отменяем
+							sc.m_bZeroCrossingMode = false;
+
+							if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
+							{
+								// если не было запросов обработки разрыва признаем шаг успешным
+								Integrator_->AcceptStep(sc.m_bNordsiekReset);
+							}
+							else
+							{
+								sc.m_bRetryStep = false; // отменяем повтор шага, чтобы обработать разрыв
+								sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
+								sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
+							}
+						}
+						else
+						{
+							// если время зерокроссинга внутри шага, входим в режим зерокроссинга
+							sc.m_bZeroCrossingMode = true;
+							// и пытаемся подобрать шаг до времени зерокроссинга
+							RepeatZeroCrossing(rZeroCrossing);
+						}
 					}
 				}
 				else
 				{
-					// если находились в режиме обработки разрыва, выходим из него (Ньютон сошелся, все ОК)
-					LeaveDiscontinuityMode();
-					// удаляем события, который уже отработали по времени
-					m_Discontinuities.PassTime(GetCurrentTime() + 0.9 * Hmin());
-					sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
-					sc.m_bEnforceOut = true;		// требуем записи результатов после обработки разрыва
-					sc.m_bBeforeDiscontinuityWritten = false;
-					sc.OrderStatistics[sc.q - 1].nSteps++;
+					// шаг нужно уменьшить
+					// отбрасываем шаг
+					Integrator_->RejectStep();
 				}
 			}
 			else
 			{
-				// Ньютон не сошелся
-				// отбрасываем шаг
-				NewtonFailed();
+				// если находились в режиме обработки разрыва, выходим из него (Ньютон сошелся, все ОК)
+				LeaveDiscontinuityMode();
+				// удаляем события, который уже отработали по времени
+				m_Discontinuities.PassTime(GetCurrentTime() + 0.9 * Hmin());
+				sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
+				sc.m_bEnforceOut = true;		// требуем записи результатов после обработки разрыва
+				sc.m_bBeforeDiscontinuityWritten = false;
+				sc.OrderStatistics[sc.q - 1].nSteps++;
 			}
+		}
+		else
+		{
+			// Ньютон не сошелся
+			// отбрасываем шаг
+			NewtonFailed();
 		}
 		sc.nStepsCount++;
 	}

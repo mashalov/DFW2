@@ -562,7 +562,6 @@ namespace DFW2
 		void UpdateRcond();
 		void SetDifferentiatorsTolerance();
 		void NewtonUpdate();
-		void SolveNewton(ptrdiff_t nMaxIts);
 		void EstimateMatrix();
 		void CreateTotalRightVector();
 		void CreateUniqueRightVector();
@@ -607,7 +606,6 @@ namespace DFW2
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
 		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
 		void RescaleNordsiek();
-		bool DetectAdamsRinging();
 		void SaveNordsiek();
 		void RestoreNordsiek();
 		void ConstructNordsiekOrder();
@@ -694,6 +692,7 @@ namespace DFW2
 		bool RunTransient();
 		bool RunTest();
 		bool RunLoadFlow();
+		void SolveNewton(ptrdiff_t nMaxIts);
 
 		// выполняет предварительную инициализацию устройств: 
 		// расчет внутренних констант, которые не зависят от связанных устройств

@@ -10,7 +10,11 @@ MixedAdamsBDF::MixedAdamsBDF(CDynaModel& DynaModel) : IntegratorBase(DynaModel)
 
 void MixedAdamsBDF::Step()
 {
+	auto& sc{ DynaModel_.StepControl() };
 	Predict();
+	DynaModel_.SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
+	if(sc.m_bNewtonConverged && !sc.m_bDiscontinuityMode)
+		DetectAdamsRinging();
 }
 
 
@@ -23,7 +27,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 	sc.nSuccessfullStepsOfNewton++;
 	sc.nMinimumStepFailures = 0;
 	// рассчитываем количество успешных шагов и пройденного времени для каждого порядка
-	sc.OrderStatistics[sc.q - 1].nSteps++;
+	sc.OrderStatistics[DynaModel_.Order() - 1].nSteps++;
 	// переходим к новому рассчитанному времени с обновлением суммы Кэхэна
 	sc.Advance_t0();
 
@@ -34,7 +38,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 		// если шаг можно хорошо увеличить
 		StepRatio /= 1.2;
 
-		switch (sc.q)
+		switch (DynaModel_.Order())
 		{
 		case 1:
 		{
@@ -55,7 +59,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 					RescaleNordsiek();
 					DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
 						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged,
-							sc.q,
+							DynaModel_.Order(),
 							DynaModel_.H()));
 				}
 			}
@@ -82,7 +86,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 					RescaleNordsiek();
 					DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
 						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged,
-							sc.q,
+							DynaModel_.Order(),
 							DynaModel_.H()));
 				}
 			}
@@ -111,7 +115,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 			DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged,
 				DynaModel_.H(),
 				k,
-				sc.q));
+				DynaModel_.Order()));
 			sc.StepChanged();
 		}
 	}
@@ -150,7 +154,7 @@ void MixedAdamsBDF::RejectStep()
 		sc.Integrator.Weighted.Info()));
 
 	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
-	sc.OrderStatistics[sc.q - 1].nFailures++;
+	sc.OrderStatistics[DynaModel_.Order()].nFailures++;
 
 
 	if (newH < sc.Hmin * 10.0)
@@ -298,7 +302,7 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
 	sc.Integrator.Reset();
 
-	const double Methodl0[2]{ Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
+	const double Methodl0[2]{ Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 	{
@@ -328,10 +332,10 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 	//ConvTest[DET_DIFFERENTIAL].dErrorSum *= (1.0 - maxnorm);
 	//ConvTest[DET_DIFFERENTIAL].dErrorSum += maxnorm * sc.Integrator.Weighted.dMaxError;
 
-	const double DqSame0{ ConvTest_[DET_ALGEBRAIC].dErrorSum / Methodl[sc.q - 1][3] };
-	const double DqSame1{ ConvTest_[DET_DIFFERENTIAL].dErrorSum / Methodl[sc.q + 1][3] };
-	const double rSame0{ pow(DqSame0, -1.0 / (sc.q + 1)) };
-	const double rSame1{ pow(DqSame1, -1.0 / (sc.q + 1)) };
+	const double DqSame0{ ConvTest_[DET_ALGEBRAIC].dErrorSum / Methodl[DynaModel_.Order() - 1][3] };
+	const double DqSame1{ ConvTest_[DET_DIFFERENTIAL].dErrorSum / Methodl[DynaModel_.Order() + 1][3] };
+	const double rSame0{ pow(DqSame0, -1.0 / (DynaModel_.Order() + 1)) };
+	const double rSame1{ pow(DqSame1, -1.0 / (DynaModel_.Order() + 1)) };
 
 	r = (std::min)(rSame0, rSame1);
 
@@ -354,7 +358,7 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 double MixedAdamsBDF::GetRatioForHigherOrder()
 {
 	double rUp{ 0.0 };
-	_ASSERTE(sc.q == 1);
+	_ASSERTE(DynaModel_.Order() == 1);
 
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
@@ -398,7 +402,7 @@ double MixedAdamsBDF::GetRatioForLowerOrder()
 	auto& sc{ DynaModel_.StepControl() };
 
 	double rDown{ 0.0 };
-	_ASSERTE(sc.q == 2);
+	_ASSERTE(DynaModel_.Order() == 2);
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
 
 	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
@@ -419,8 +423,8 @@ double MixedAdamsBDF::GetRatioForLowerOrder()
 	const double DqDown0{ ConvTest_[DET_ALGEBRAIC].dErrorSum };
 	const double DqDown1{ ConvTest_[DET_DIFFERENTIAL].dErrorSum };
 
-	const double rDown0{ pow(DqDown0, -1.0 / sc.q) };
-	const double rDown1{ pow(DqDown1, -1.0 / sc.q) };
+	const double rDown0{ pow(DqDown0, -1.0 / DynaModel_.Order()) };
+	const double rDown1{ pow(DqDown1, -1.0 / DynaModel_.Order()) };
 
 	rDown = (std::min)(rDown0, rDown1);
 	return rDown;
@@ -444,7 +448,7 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 	// режим подавления рингинга активируем если порядок метода 2
 	// шаг превышает 0.01 и UpdateNordsieck вызван для перехода к следующему
 	// шагу после успешного завершения предыдущего
-	if (sc.q == 2 && bAllowSuppression && DynaModel_.H() > 0.01 && DynaModel_.UsedH() > 0.0)
+	if (DynaModel_.Order() == 2 && bAllowSuppression && DynaModel_.H() > 0.01 && DynaModel_.UsedH() > 0.0)
 	{
 		switch (Parameters.m_eAdamsRingingSuppressionMode)
 		{
@@ -464,8 +468,8 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 
 	// делаем локальную копию коэффициентов метода для текущего порядка
 	alignas(32) double LocalMethodl[2][3];
-	std::copy(&Methodl[sc.q - 1][0], &Methodl[sc.q - 1][3], &LocalMethodl[0][0]);
-	std::copy(&Methodl[sc.q + 1][0], &Methodl[sc.q + 1][3], &LocalMethodl[1][0]);
+	std::copy(&Methodl[DynaModel_.Order() - 1][0], &Methodl[DynaModel_.Order() - 1][3], &LocalMethodl[0][0]);
+	std::copy(&Methodl[DynaModel_.Order() + 1][0], &Methodl[DynaModel_.Order() + 1][3], &LocalMethodl[1][0]);
 
 	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 	{
@@ -568,7 +572,7 @@ void MixedAdamsBDF::ChangeOrder(ptrdiff_t newOrder)
 
 	sc.q = newOrder;
 
-	switch (sc.q)
+	switch (DynaModel_.Order())
 	{
 	case 1:
 		break;
@@ -607,7 +611,7 @@ void MixedAdamsBDF::RescaleNordsiek()
 		sc.NordsiekScaledForH(),
 		DynaModel_.H()));
 
-	const double crs[4] = { 1.0, r , (sc.q == 2) ? r * r : 1.0 , 1.0 };
+	const double crs[4] = { 1.0, r , (DynaModel_.Order() == 2) ? r * r : 1.0 , 1.0 };
 #ifdef _AVX2
 	const __m256d rs = _mm256_load_pd(crs);
 #endif
@@ -618,7 +622,7 @@ void MixedAdamsBDF::RescaleNordsiek()
 		nord = _mm256_mul_pd(nord, rs);
 		_mm256_store_pd(pVectorBegin->Nordsiek, nord);
 #else
-		for (ptrdiff_t j = 1; j < sc.q + 1; j++)
+		for (ptrdiff_t j = 1; j < DynaModel_.Order() + 1; j++)
 			pVectorBegin->Nordsiek[j] *= crs[j];
 #endif
 	}
@@ -787,7 +791,7 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 	sc.Newton.Reset();
 
 	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
-	const double Methodl0[2]{ Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
+	const double Methodl0[2]{ Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][0] };
 
 	const double* pB{ DynaModel_.B() };
 
@@ -821,8 +825,8 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::GetConvergenceRatio);
 
-	bool bConvCheckConverged{ ConvTest_[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
-							  ConvTest_[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
+	bool bConvCheckConverged{ ConvTest_[DET_ALGEBRAIC].dErrorSums < Methodl[DynaModel_.Order() - 1][3] * ConvCheck &&
+							  ConvTest_[DET_DIFFERENTIAL].dErrorSums < Methodl[DynaModel_.Order() + 1][3] * ConvCheck &&
 							  sc.Newton.Weighted.dMaxError < Parameters.m_dNewtonMaxNorm };
 
 	if (bConvCheckConverged)
@@ -835,6 +839,77 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 			sc.RefactorMatrix(false);
 	}
 }
+
+
+void MixedAdamsBDF::DetectAdamsRinging()
+{
+	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* pVectorBegin{ pRightVector };
+	const auto& Parameters{ DynaModel_.Parameters() };
+	auto& sc{ DynaModel_.StepControl() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+
+	sc.bRingingDetected = false;
+
+	if ((Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA ||
+		Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL) &&
+		DynaModel_.Order() == 2 && DynaModel_.H() > 0.01 && DynaModel_.UsedH() > 0.0)
+	{
+		const double Methodl1[2]{ Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][1],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][1] };
+
+		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+		{
+#ifdef USE_FMA
+			double newValue = std::fma(pVectorBegin->Error, Methodl1[pVectorBegin->EquationType], pVectorBegin->Nordsiek[1]);
+#else 
+			double newValue = pVectorBegin->Error * Methodl1[pVectorBegin->EquationType] + pVectorBegin->Nordsiek[1];
+#endif
+			// если знак производной изменился - увеличиваем счетчик циклов
+			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && std::abs(newValue) > pVectorBegin->Atol * DynaModel_.H() * 5.0)
+				pVectorBegin->RingsCount++;
+			else
+				pVectorBegin->RingsCount = 0;
+
+			// если счетчик циклов изменения знака достиг порога
+			if (pVectorBegin->RingsCount > Parameters.m_nAdamsIndividualSuppressionCycles)
+			{
+				pVectorBegin->RingsCount = 0;
+				sc.bRingingDetected = true;
+				switch (Parameters.m_eAdamsRingingSuppressionMode)
+				{
+				case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
+					if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
+					{
+						// в RightVector устанавливаем количество шагов, на протяжении которых производная Адамса будет заменяться 
+						// на производную  BDF
+						pVectorBegin->RingsSuppress = Parameters.m_nAdamsIndividualSuppressStepsRange;
+					}
+					break;
+				case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA:
+					pVectorBegin->RingsSuppress = Parameters.m_nAdamsIndividualSuppressStepsRange;
+					break;
+				}
+
+				if (pVectorBegin->RingsSuppress)
+				{
+					DynaModel_.Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Ringing {} {} last values {} {} {}",
+									pVectorBegin->pDevice->GetVerbalName(),
+									pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
+									newValue,
+									pVectorBegin->SavedNordsiek[0],
+									pVectorBegin->RingsSuppress));
+				}
+			}
+		}
+
+		if (sc.bRingingDetected)
+			sc.nNoRingingSteps = 0;
+		else
+			sc.nNoRingingSteps++;
+
+	}
+}
+
 
 
 const double MixedAdamsBDF::MethodlDefault[4][4] =
