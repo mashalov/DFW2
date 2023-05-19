@@ -84,8 +84,8 @@ int _tmain(int argc, _TCHAR* argv[])
 			throw dfw2error("Ошибка CoInitialize {:0x}", static_cast<unsigned long>(hr));
 
 		SetConsoleCtrlHandler(HandlerRoutine, TRUE);
-		RunTransient();
-		//RunTest();
+		//RunTransient();
+		RunTest();
 		networks.clear();
 		CoUninitialize();
 	}

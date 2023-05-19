@@ -1186,10 +1186,27 @@ double CDynaModel::GetRatioForCurrentOrder()
 
 	const double DqSame0{ ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[sc.q - 1][3] };
 	const double DqSame1{ ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[sc.q + 1][3] };
-	const double rSame0{ pow(DqSame0, -1.0 / (sc.q + 1)) };
-	const double rSame1{ pow(DqSame1, -1.0 / (sc.q + 1)) };
+
+	const double alpha{ 1.0 / (sc.q + 1) };
+
+	// интегральное управление шагом
+	//const double alpha{ 0.7 / (sc.q + 1) };
+	//const double  beta{ 0.4 / (sc.q + 1) };
+	//hnew = h * norm ^ -alpha * oldnorm ^ beta * gamma;
+
+
+	if (sc.StartupStep)
+		sc.OldNorm0 = sc.OldNorm1 = 1.0;
+
+	const double rSame0{ pow(DqSame0, -alpha)};
+	const double rSame1{ pow(DqSame1, -alpha)};
+
+	sc.OldNorm0 = DqSame0;		sc.OldNorm1 = DqSame1;
+
 
 	r = (std::min)(rSame0, rSame1);
+
+
 
 	if (Equal(H() / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
 		r = (std::max)(1.01, r);
@@ -1471,7 +1488,7 @@ void CDynaModel::GoodStep(double rSame)
 		case 2:
 		{
 			// если были на втором порядке, пробуем шаг для первого порядка
-			const double rLower{ GetRatioForLowerOrder() / 1.3 / 5.0}; // 5.0 - чтобы уменьшить использование демпфирующего метода
+			const double rLower{ GetRatioForLowerOrder() / 1.3 }; // 5.0 - чтобы уменьшить использование демпфирующего метода
 			// call before step change
 			UpdateNordsiek();
 
@@ -1501,6 +1518,7 @@ void CDynaModel::GoodStep(double rSame)
 		// rSame уже поделили выше для безопасности на 1.2
 		if (sc.FilterStep(rSame) && rSame > 1.1)
 		{
+
 			// если фильтр дает разрешение на увеличение
 			_ASSERTE(Equal(H(), UsedH()));
 			// запоминаем коэффициент увеличения только для репорта

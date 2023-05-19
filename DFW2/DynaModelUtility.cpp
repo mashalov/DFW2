@@ -651,7 +651,7 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 	Validator->AddRule(m_cszZeroCrossingTolerance, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule(m_cszOutStep, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszAtol, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszRtol, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(m_cszRtol, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule(m_cszRefactorByHRatio, &CSerializerValidatorRules::BiggerThanUnity);
 	Validator->AddRule(m_cszMustangDerivativeTimeConstant, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszAdamsIndividualSuppressionCycles, &CSerializerValidatorRules::BiggerThanUnity);
@@ -1047,10 +1047,8 @@ void CDynaModel::CreateZeroLoadFlow()
 bool CDynaModel::RunTest()
 {
 	bool bRes{ true };
+	DeserializeParameters(Platform().Root() / "config.json");
 	TestDevices.CreateDevices(1);
-	m_Parameters.m_dAtol = 1E-6;
-	m_Parameters.m_dRtol = 1E-4;
-
 	PrecomputeConstants();
 	Link();
 	WriteResultsHeader();

@@ -100,8 +100,8 @@ namespace DFW2
 			ptrdiff_t MaxLogFilesCount_ = 0;							// ограничение количества файлов в каталоге протокола
 			ptrdiff_t MaxLogFilesSize_ = 0;								// ограничение объема файлов в каталоге протокола
 			bool ChangeActionsAreCumulative_ = true;					// включает аккумуляцию изменений (наример - последовательное изменение нагрузки на дискрете)
-			ptrdiff_t StepsToStepChange_ = 4;							// количество шагов до увеличения шага
-			ptrdiff_t StepsToOrderChange_ = 4;							// количество шагов до изменения порядка
+			ptrdiff_t StepsToStepChange_ = 2;							// количество шагов до увеличения шага
+			ptrdiff_t StepsToOrderChange_ = 2;							// количество шагов до изменения порядка
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -457,7 +457,8 @@ namespace DFW2
 			ptrdiff_t nNoRingingSteps = 0;
 			const double Hmin = 1E-8;
 			ptrdiff_t ZeroCrossingMisses = 0;
-
+			double OldNorm0 = 0.0;	// норма алгебраических переменных на предыдущем шаге
+			double OldNorm1 = 0.0;	// норма дифференциальных переменных на предыдущем шаге
 			StepError Newton;
 			StepError Integrator;
 			double m_dLastRefactorH = 0.0;
