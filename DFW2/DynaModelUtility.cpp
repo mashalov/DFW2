@@ -3,6 +3,7 @@
 #include "DynaGeneratorMotion.h"
 #include "BranchMeasures.h"
 #include "MathUtils.h"
+#include "MixedAdamsBDF.h"
 #ifdef _MSC_VER
 #include <intrin.h>
 #else
@@ -488,44 +489,6 @@ void CDynaModel::DumpStateVector()
 		}
 	}
 }
-
-void CDynaModel::Computehl0()
-{
-	// кэшированное значение l0 * GetH для элементов матрицы
-	// пересчитывается при изменении шага и при изменении коэффициентов метода
-	// для демпфирования
-	// lh[i] = l[i][0] * GetH()
-	for (auto&& lh : Methodlh)
-		lh = Methodl[&lh - Methodlh][0] * H();
-}
-
-void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
-{
-	if (bEnable == sc.bAdamsDampingEnabled) return;
-	sc.bAdamsDampingEnabled = bEnable;
-	double Alpha = bEnable ? m_Parameters.m_dAdamsDampingAlpha : 0.0;
-	Methodl[3][0] = MethodlDefault[3][0] * (1.0 + Alpha);
-	// Вместо MethodDefault[3][3] можно использовать честную формулу для LTE (см. Docs)
-	Methodl[3][3] = 1.0 / std::abs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
-	// требуется обновление матрицы и постоянных коэффициентов 
-	// из-за замены коэффициентов метода
-	sc.RefactorMatrix();
-	// Для подавления рингинга требуется обновление элементов так как в алгебраические
-	// уравнения могут входит дифференциальные переменные с коэффициентами Адамса
-	sc.UpdateConstElements();  
-	Computehl0();
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping,
-														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
-}
-
-// https://stackoverflow.com/questions/1878907/how-can-i-find-the-difference-between-two-angles
-/*
-double GetAbsoluteDiff2Angles(const double x, const double y)
-{
-	// c can be PI (for radians) or 180.0 (for degrees);
-	return M_PI - std::abs(std::fmod(std::abs(x - y), 2.0 * M_PI) - M_PI);
-}
-*/
 
 std::pair<bool, double> CheckAnglesCrossedPi(const double Angle1, const double Angle2, double& PreviosAngleDifference)
 {
@@ -1104,7 +1067,7 @@ void CDynaModel::PrecomputeConstants()
 {
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
 	// константы могут изменяться, например для демпфирования
-	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
+	Integrator_->Init();
 	// считаем параметры гистерезиса по заданным параметрам
 	HysteresisAtol_ = Atol() * m_Parameters.HysteresisAtol_;
 	HysteresisRtol_ = Rtol() * m_Parameters.HysteresisRtol_;
@@ -1245,10 +1208,3 @@ const std::string CDynaModel::TimeAndStep() const
 }
 
 
-
-const double CDynaModel::MethodlDefault[4][4] = 
-//									   l0			l1			l2			Tauq
-								   { { 1.0,			1.0,		0.0,		2.0  },				//  BDF-1
-									 { 2.0 / 3.0,	1.0,		1.0 / 3.0,   4.5 },				//  BDF-2
-									 { 1.0,			1.0,		0.0,		2.0  },				//  ADAMS-1
-									 { 0.5,			1.0,		0.5,		12.0 } };			//  ADAMS-2

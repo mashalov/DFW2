@@ -400,8 +400,11 @@
     <ClInclude Include="FolderClean.h" />
     <ClInclude Include="GraphCycle.h" />
     <ClInclude Include="Header.h" />
+    <ClInclude Include="IntegratorBase.h" />
     <ClInclude Include="LeadLag.h" />
+    <ClInclude Include="MixedAdamsBDF.h" />
     <ClInclude Include="PackageVersion.h" />
+    <ClInclude Include="Rodas.h" />
     <ClInclude Include="TaggedPath.h" />
     <ClInclude Include="TestDevice.h" />
     <ClInclude Include="ICustomDevice.h" />
@@ -515,6 +518,7 @@
     <ClCompile Include="Logger.cpp" />
     <ClCompile Include="Matrix.cpp" />
     <ClCompile Include="Messages.cpp" />
+    <ClCompile Include="MixedAdamsBDF.cpp" />
     <ClCompile Include="NetworkGraph.cpp" />
     <ClCompile Include="NodeMeasures.cpp" />
     <ClCompile Include="Nordsiek.cpp" />
@@ -530,6 +534,7 @@
     </ClCompile>
     <ClCompile Include="ResultsWriterABI.cpp" />
     <ClCompile Include="ResultsWriterCOM.cpp" />
+    <ClCompile Include="Rodas.cpp" />
     <ClCompile Include="RSTrigger.cpp" />
     <ClCompile Include="Serializer.cpp" />
     <ClCompile Include="SerializerJson.cpp" />

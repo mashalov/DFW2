@@ -304,6 +304,15 @@
     <ClInclude Include="PackageVersion.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Rodas.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="IntegratorBase.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="MixedAdamsBDF.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -650,6 +659,12 @@
     </ClCompile>
     <ClCompile Include="LeadLag.cpp">
       <Filter>Source Files\Dynamic Primitives</Filter>
+    </ClCompile>
+    <ClCompile Include="Rodas.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="MixedAdamsBDF.cpp">
+      <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

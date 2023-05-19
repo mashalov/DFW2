@@ -22,6 +22,8 @@
 #include "TestDevice.h"
 #include "TaggedPath.h"
 #include "FolderClean.h"
+#include "Rodas.h"
+#include "MixedAdamsBDF.h"
 
 #define _LFINFO_
 
@@ -146,6 +148,8 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 
 	if (!SSE2Available_)
 		throw dfw2error(CDFW2Messages::m_cszNoSSE2Support);
+
+	Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
 }
 
 
@@ -550,7 +554,7 @@ bool CDynaModel::NewtonUpdate()
 
 	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
 
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
+	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::Reset);
 
 	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
 	const double ConvCheck{ 0.1 / (sc.q + 2.0) };
@@ -588,7 +592,7 @@ bool CDynaModel::NewtonUpdate()
 			const double dError{ pVectorBegin->GetWeightedError(db, dOldValue) };
 			sc.Newton.Weighted.Update(pVectorBegin, dError);
 			_CheckNumber(dError);
-			ConvergenceTest* pCt{ ConvTest + pVectorBegin->EquationType };
+			ConvergenceTest* pCt{ Integrator_->ConvTest() + pVectorBegin->EquationType};
 #ifdef _DEBUG
 			// breakpoint place for nans
 			_ASSERTE(!std::isnan(dError));
@@ -597,11 +601,11 @@ bool CDynaModel::NewtonUpdate()
 		}
 	}
 
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetConvergenceRatio);
+	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::FinalizeSum);
+	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::GetConvergenceRatio);
 
-	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
-							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
+	bool bConvCheckConverged = Integrator_->ConvTest()[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
+							   Integrator_->ConvTest()[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
 							   sc.Newton.Weighted.dMaxError < m_Parameters.m_dNewtonMaxNorm;
 
 	if ( bConvCheckConverged )
@@ -610,8 +614,8 @@ bool CDynaModel::NewtonUpdate()
 	}
 	else
 	{
-		if (ConvTest[DET_ALGEBRAIC].dCms > 1.0 || 
-			ConvTest[DET_DIFFERENTIAL].dCms > 1.0)
+		if (Integrator_->ConvTest()[DET_ALGEBRAIC].dCms > 1.0 ||
+			Integrator_->ConvTest()[DET_DIFFERENTIAL].dCms > 1.0)
 		{
 			sc.RefactorMatrix();
 
@@ -698,7 +702,7 @@ bool CDynaModel::NewtonUpdate()
 			sc.RefactorMatrix(false);
 	}
 
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::NextIteration);
+	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::NextIteration);
 
 	NewtonUpdateDevices();
 	return bRes;
@@ -745,37 +749,11 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 		BuildMatrix();
 
-#ifdef _LFINFO2_
-		if (sc.m_bDiscontinuityMode || sc.CurrentH_ <= sc.Hmin)
-		{
-			for (DEVICEVECTORITR it = Nodes.begin(); it != Nodes.end(); it++)
-			{
-				CDynaNode *pNode = static_cast<CDynaNode*>(*it);
-				_tcprintf("\n%30s - %6.2f %6.2f %6.2f %6.2f", pNode->GetVerbalName(), pNode->V, pNode->Delta * 180 / 3.14159, pNode->Pnr, pNode->Qnr);
-			}
-			for (DEVICEVECTORITR it = Generators1C.begin(); it != Generators1C.end(); it++)
-			{
-				CDynaGenerator1C *pGen = static_cast<CDynaGenerator1C*>(*it);
-				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
-			}
-			for (DEVICEVECTORITR it = GeneratorsMotion.begin(); it != GeneratorsMotion.end(); it++)
-			{
-				CDynaGeneratorMotion *pGen = static_cast<CDynaGeneratorMotion*>(*it);
-				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
-			}
-			for (DEVICEVECTORITR it = GeneratorsInfBus.begin(); it != GeneratorsInfBus.end(); it++)
-			{
-				CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(*it);
-				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
-			}
-		}
-#endif
-
 		sc.nNewtonIterationsCount++;
 
 		ptrdiff_t imax(0);
-		double bmax = klu.FindMaxB(imax);
 
+		double bmax = klu.FindMaxB(imax);
 		double *bwatch = klu.B();
 
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "%g %d", bmax, imax);
@@ -986,14 +964,7 @@ bool CDynaModel::Step()
 	// пока шаг нужно повторять, все в порядке и не получена команда останова
 	while (sc.m_bRetryStep && bRes && !CancelProcessing())
 	{
-
-		Predict();		// делаем прогноз Nordsieck для следуюшего времени
-
-		/*if (GetIntegrationStepNumber() == 1354)
-			SnapshotRightVector();
-		if(GetIntegrationStepNumber() == 1356)
-			CompareRightVector();
-		*/
+		Integrator_->Step();
 
 		bRes = bRes && SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
 
@@ -1023,7 +994,8 @@ bool CDynaModel::Step()
 					DetectAdamsRinging();
 
 					// и мы не находились в режиме обработки разрыва
-					double rSame{ 0.0 };
+					bool StepConverged{ true };
+					
 					// рассчитываем возможный шаг для текущего порядка метода
 					// если сделанный шаг не был сделан без предиктора
 					if (sc.m_bNordsiekReset)
@@ -1032,12 +1004,12 @@ bool CDynaModel::Step()
 						LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("startup step"));
 					}
 					else
-						rSame = GetRatioForCurrentOrder(); // если нордиск не был сброшен выбираем шаг по соответствию предиктору
+						StepConverged = Integrator_->StepConverged();
 
 					// шаг выполнен успешно если это был стартап-шаг
 					// после сброса предиктора или корректор и предиктор
 					// дали возможность не уменьшать шаг
-					if (rSame > 1.0 || sc.m_bNordsiekReset)
+					if (StepConverged || sc.m_bNordsiekReset)
 					{
 
 						// если шаг можно увеличить
@@ -1060,10 +1032,8 @@ bool CDynaModel::Step()
 								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
 								{
 									// если не возникло запросов на обработку разрыва
-									// обнуляем коэффициент шага, чтобы он не изменился
-									rSame = 0.0;
-									// и признаем шаг успешным
-									GoodStep(rSame);
+									// и признаем шаг успешным, блокируя управление шагом
+									Integrator_->AcceptStep(false);
 									sc.ZeroCrossingMisses++;
 								}
 								else
@@ -1092,7 +1062,7 @@ bool CDynaModel::Step()
 								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
 								{
 									// если не было запросов обработки разрыва признаем шаг успешным
-									GoodStep(rSame);
+									Integrator_->AcceptStep();
 								}
 								else
 								{
@@ -1114,7 +1084,7 @@ bool CDynaModel::Step()
 					{
 						// шаг нужно уменьшить
 						// отбрасываем шаг
-						BadStep();
+						Integrator_->RejectStep();
 					}
 				}
 				else
@@ -1142,155 +1112,6 @@ bool CDynaModel::Step()
 	//_ASSERTE(_CrtCheckMemory());
 	return bRes;
 
-}
-
-double CDynaModel::GetRatioForCurrentOrder()
-{
-	double r{ 0.0 };
-
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
-
-	sc.Integrator.Reset();
-
-	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
-
-	for(RightVector* pVectorBegin = pRightVector ; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		if (pVectorBegin->Atol > 0)
-		{
-			// compute again to not asking device via pointer
-#ifdef USE_FMA
-			double dNewValue = std::fma(pVectorBegin->Error, Methodl0[pVectorBegin->EquationType], pVectorBegin->Nordsiek[0]);
-#else
-			const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
-#endif
-			const double dError{ pVectorBegin->GetWeightedError(dNewValue) };
-			sc.Integrator.Weighted.Update(pVectorBegin, dError);
-			struct ConvergenceTest* const pCt{ ConvTest + pVectorBegin->EquationType };
-			pCt->AddError(dError);
-		}
-	}
-
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
-
-	const double maxnorm{ 0.2 };
-
-	// гибридная норма
-	//ConvTest[DET_ALGEBRAIC].dErrorSum *= (1.0 - maxnorm);
-	//ConvTest[DET_ALGEBRAIC].dErrorSum += maxnorm * sc.Integrator.Weighted.dMaxError;
-	//ConvTest[DET_DIFFERENTIAL].dErrorSum *= (1.0 - maxnorm);
-	//ConvTest[DET_DIFFERENTIAL].dErrorSum += maxnorm * sc.Integrator.Weighted.dMaxError;
-
-	const double DqSame0{ ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[sc.q - 1][3] };
-	const double DqSame1{ ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[sc.q + 1][3] };
-
-	const double alpha{ 1.0 / (sc.q + 1) };
-
-	// интегральное управление шагом
-	//const double alpha{ 0.7 / (sc.q + 1) };
-	//const double  beta{ 0.4 / (sc.q + 1) };
-	//hnew = h * norm ^ -alpha * oldnorm ^ beta * gamma;
-
-
-	if (sc.StartupStep)
-		sc.OldNorm0 = sc.OldNorm1 = 1.0;
-
-	const double rSame0{ pow(DqSame0, -alpha)};
-	const double rSame1{ pow(DqSame1, -alpha)};
-
-	sc.OldNorm0 = DqSame0;		sc.OldNorm1 = DqSame1;
-
-
-	r = (std::min)(rSame0, rSame1);
-
-
-
-	if (Equal(H() / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
-		r = (std::max)(1.01, r);
-
-	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} rSame {} RateLimit {} for {} steps", 
-		sc.Integrator.Weighted.Info(),
-		r,
-		sc.dRateGrowLimit < (std::numeric_limits<double>::max)() ? sc.dRateGrowLimit : 0.0,
-		sc.nStepsToEndRateGrow - sc.nStepsCount));
-
-	// считаем ошибку в уравнении если шаг придется уменьшить
-	if (r <= 1.0 && sc.Integrator.Weighted.pVector)
-		sc.Integrator.Weighted.pVector->ErrorHits++;
-
-	return r;
-}
-
-double CDynaModel::GetRatioForHigherOrder()
-{
-	double rUp{ 0.0 };
-	_ASSERTE(sc.q == 1);
-
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
-	
-	const double Methodl1[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		if (pVectorBegin->Atol > 0) 
-		{
-			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
-			double dNewValue = *pVectorBegin->pValue;
-			// method consts lq can be 1 only
-			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Error - pVectorBegin->SavedError, dNewValue) * Methodl1[pVectorBegin->EquationType];
-			pCt->AddError(dError);
-		}
-	}
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
-
-	const double DqUp0{ ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[1][3] };		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
-	const double DqUp1{ ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[3][3] };		// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
-
-	const double rUp0{ pow(DqUp0, -1.0 / (sc.q + 2)) };
-	const double rUp1{ pow(DqUp1, -1.0 / (sc.q + 2)) };
-
-	rUp = (std::min)(rUp0, rUp1);
-
-	return rUp;
-}
-
-double CDynaModel::GetRatioForLowerOrder()
-{
-	double rDown{ 0.0 };
-	_ASSERTE(sc.q == 2);
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		if (pVectorBegin->Atol > 0)
-		{
-			struct ConvergenceTest* const pCt{ ConvTest + pVectorBegin->EquationType };
-			const double dNewValue{ *pVectorBegin->pValue };
-			// method consts lq can be 1 only
-			const double dError{ pVectorBegin->GetWeightedError(pVectorBegin->Nordsiek[2], dNewValue) };
-			pCt->AddError(dError);
-		}
-	}
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
-
-	const double DqDown0{ ConvTest[DET_ALGEBRAIC].dErrorSum };
-	const double DqDown1{ ConvTest[DET_DIFFERENTIAL].dErrorSum };
-
-	const double rDown0{ pow(DqDown0, -1.0 / sc.q) };
-	const double rDown1{ pow(DqDown1, -1.0 / sc.q) };
-
-	rDown = (std::min)(rDown0, rDown1);
-	return rDown;
 }
 
 void CDynaModel::EnterDiscontinuityMode()
@@ -1437,169 +1258,6 @@ void CDynaModel::AddZeroCrossingDevice(CDevice *pDevice)
 	ZeroCrossingDevices.push_back(pDevice);
 	if (ZeroCrossingDevices.size() >= static_cast<size_t>(klu.MatrixSize()))
 		throw dfw2error("CDynaModel::AddZeroCrossingDevice - matrix size overrun");
-}
-
-void CDynaModel::GoodStep(double rSame)
-{
-	sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
-	sc.RefactorMatrix(false);		// отказываемся от рефакторизации Якоби
-	sc.nSuccessfullStepsOfNewton++;
-	sc.nMinimumStepFailures = 0;
-	// рассчитываем количество успешных шагов и пройденного времени для каждого порядка
-	sc.OrderStatistics[sc.q - 1].nSteps++;
-	// переходим к новому рассчитанному времени с обновлением суммы Кэхэна
-	sc.Advance_t0();
-
-	if (rSame > 1.2)
-	{
-		// если шаг можно хорошо увеличить
-		rSame /= 1.2;
-
-		switch (sc.q)
-		{
-		case 1:
-		{
-			// если были на первом порядке, пробуем шаг для второго порядка
-			const double rHigher{ GetRatioForHigherOrder() / 1.4 };
-			// call before step change
-			UpdateNordsiek();
-
-			// если второй порядок лучше чем первый
-			if (rHigher > rSame)
-			{
-				// пытаемся перейти на второй порядок
-				if (sc.FilterOrder(rHigher))
-				{
-					ConstructNordsiekOrder();
-					ChangeOrder(2);
-					SetH(H() * sc.dFilteredOrder);
-					RescaleNordsiek();
-					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
-						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, 
-							sc.q, 
-							H()));
-				}
-			}
-			else
-				sc.OrderChanged();	// сбрасываем фильтр изменения порядка, если перейти на второй неэффективно
-		}
-		break;
-
-		case 2:
-		{
-			// если были на втором порядке, пробуем шаг для первого порядка
-			const double rLower{ GetRatioForLowerOrder() / 1.3 }; // 5.0 - чтобы уменьшить использование демпфирующего метода
-			// call before step change
-			UpdateNordsiek();
-
-			// если первый порядок лучше чем второй
-			if (rLower > rSame)
-			{
-				// пытаемся перейти на первый порядок
-				if (sc.FilterOrder(rLower))
-				{
-					SetH(H() * sc.dFilteredOrder);
-					ChangeOrder(1);
-					RescaleNordsiek();
-					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
-						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, 
-							sc.q, 
-							H()));
-				}
-			}
-			else
-				sc.OrderChanged();	// сбрасываем фильтр изменения порядка, если перейти на первый неэффективно
-		}
-		break;
-		}
-
-		// запрашиваем возможность изменения (увеличения шага)
-		// тут можно регулировать частоту увеличения шага 
-		// rSame уже поделили выше для безопасности на 1.2
-		if (sc.FilterStep(rSame) && rSame > 1.1)
-		{
-
-			// если фильтр дает разрешение на увеличение
-			_ASSERTE(Equal(H(), UsedH()));
-			// запоминаем коэффициент увеличения только для репорта
-			// потому что sc.dFilteredStep изменится в последующем 
-			// RescaleNordsiek
-			const double k{ sc.dFilteredStep };
-			// рассчитываем новый шаг
-			// пересчитываем Nordsieck на новый шаг
-			SetH(H() * sc.dFilteredStep);
-			RescaleNordsiek();
-			LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged,
-				H(), 
-				k, 
-				sc.q));
-			sc.StepChanged();
-		}
-	}
-	else
-	{
-		// если шаг хорошо увеличить нельзя, обновляем Nordsieck, сбрасываем фильтр шага, если его увеличивать неэффективно
-		UpdateNordsiek(true);
-		// если мы находимся здесь - можно включить BDF по дифурам, на случай, если шаг не растет из-за рингинга
-		// но нужно посчитать сколько раз мы не смогли увеличить шаг и перейти на BDF, скажем, на десятом шагу
-		// причем делать это нужно после вызова UpdateNordsiek(), так как в нем BDF отменяется
-		sc.StepChanged();
-	}
-}
-
-// обработка шага с недопустимой погрешностью
-void CDynaModel::BadStep()
-{
-	double newH{ 0.5 * H() };
-	double newEffectiveH{ (std::max)(newH, sc.Hmin) };
-
-	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
-	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
-
-	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError, 
-		newEffectiveH, 
-		sc.Integrator.Weighted.Info()));
-
-	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
-	sc.OrderStatistics[sc.q - 1].nFailures++;
-
-
-	if(newH < sc.Hmin * 10.0)
-		ChangeOrder(1);
-
-	// если шаг снизился до минимума
-	if (newH <= sc.Hmin && Equal(H(), sc.Hmin))
-	{
-		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
-
-		// проверяем количество последовательно
-		// заваленных шагов
-		if (sc.StepFailLimit())
-		{
-			// если можно еще делать шаги,
-			// обновляем Nordsieck и пересчитываем 
-			// производные
-			UpdateNordsiek();
-			SetH(newEffectiveH);
-			RescaleNordsiek();
-		}
-		else
-			ReInitializeNordsiek(); // если заваленных шагов слишком много, делаем новый Nordsieck
-
-		// шагаем на следующее время без возможности возврата, так как шаг уже не снизить
-		sc.Advance_t0();
-		sc.Assign_t0();
-	}
-	else
-	{
-		// если шаг еще можно снизить
-		sc.nMinimumStepFailures = 0;
-		RestoreNordsiek();					// восстанавливаем Nordsieck c предыдущего шага
-		SetH(newEffectiveH);
-		RescaleNordsiek();					// масштабируем Nordsieck на новый (половинный см. выше) шаг
-		sc.CheckAdvance_t0();
-	}
 }
 
 void CDynaModel::NewtonFailed()

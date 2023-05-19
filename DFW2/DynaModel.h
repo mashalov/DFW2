@@ -29,7 +29,7 @@
 #include "Statistics.h"
 #include "Logger.h"
 #include "NodeMeasures.h"
-#include "MathUtils.h"
+#include "IntegratorBase.h"
 
 namespace DFW2
 {
@@ -205,90 +205,8 @@ namespace DFW2
 		};
 
 		CDiscontinuities m_Discontinuities;
-
-		using summatorT = MathUtils::StraightSummation;
-
-		struct ConvergenceTest
-		{
-			ptrdiff_t nVarsCount;
-			volatile double dErrorSum;
-			double dOldErrorSum;
-			double dCm;
-			double dCms;
-			double dOldCm;
-			double dErrorSums;
-
-			summatorT summator;
-
-			void Reset()
-			{
-				summator.Reset();
-				nVarsCount = 0;
-			}
-
-			void GetConvergenceRatio()
-			{
-				GetRMS();
-				dCms = 0.7;
-				if (!Equal(dOldErrorSum,0.0))
-				{
-					dCm = dErrorSum / dOldErrorSum;
-					dCms = (std::max)(0.2 * dOldCm, dCm);
-				}
-				dErrorSums = dErrorSum * (std::min)(1.0, 1.5 * dCms); 
-			}
-
-			void GetRMS()
-			{
-				if (nVarsCount)
-				{
-					dErrorSum /= static_cast<double>(nVarsCount);
-					dErrorSum = sqrt(dErrorSum);
-				}
-				else
-					dErrorSum = dErrorSums = 0.0;
-			}
-
-			void ResetIterations()
-			{
-				dOldErrorSum = 0.0;
-				dOldCm = 0.7;
-			}
-
-			void NextIteration()
-			{
-				dOldErrorSum = dErrorSum;
-				dOldCm = dCm;
-			}
-
-			void AddError(double dError) 
-			{
-				nVarsCount++;
-				summator.Add(dError * dError);
-			}
-
-			void FinalizeSum()
-			{
-				dErrorSum = summator.Finalize();
-			}
-
-			// обработка диапазона тестов сходимости в массиве
-
-			typedef ConvergenceTest ConvergenceTestVec[2];
-
-			static void ProcessRange(ConvergenceTestVec &Range, void(*ProcFunc)(ConvergenceTest& ct))
-			{
-				for (auto&& it : Range) ProcFunc(it);
-			}
-
-			static void Reset(ConvergenceTest& ct) { ct.Reset(); }
-			static void GetConvergenceRatio(ConvergenceTest& ct) { ct.GetConvergenceRatio(); }
-			static void NextIteration(ConvergenceTest& ct) { ct.NextIteration(); }
-			static void FinalizeSum(ConvergenceTest& ct) { ct.FinalizeSum(); }
-			static void GetRMS(ConvergenceTest& ct) { ct.GetRMS(); }
-			static void ResetIterations(ConvergenceTest& ct) { ct.ResetIterations(); }
-		};
-
+		std::unique_ptr<IntegratorBase> Integrator_;
+		
 		struct StepError
 		{
 			struct Error
@@ -572,6 +490,7 @@ namespace DFW2
 			{
 				t0 = t;
 			}
+
 			SerializerPtr GetSerializer();
 
 			static constexpr const char* m_cszDiscontinuityLevelTypeNames[3] = { "none", "light", "hard" };
@@ -652,9 +571,6 @@ namespace DFW2
 		void DebugCheckRightVectorSync();
 		void NewtonUpdateDevices();
 
-		double GetRatioForCurrentOrder();
-		double GetRatioForHigherOrder();
-		double GetRatioForLowerOrder();
 		void   ChangeOrder(ptrdiff_t Newq);
 		void   Computehl0(); // рассчитывает кэшированные произведения l0 * GetH для элементов матрицы
 
@@ -686,20 +602,17 @@ namespace DFW2
 		ElementSetterFn			ElementSetter;
 		ElementSetterNoDupFn	ElementSetterNoDup;
 
-		void Predict();
 		void InitNordsiek();
 		void InitDevicesNordsiek();
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
 		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
 		void RescaleNordsiek();
-		void UpdateNordsiek(bool bAllowSuppression = false);
 		bool DetectAdamsRinging();
 		void SaveNordsiek();
 		void RestoreNordsiek();
 		void ConstructNordsiekOrder();
 		void ReInitializeNordsiek();
 		void ResetNordsiek();
-		void BuildDerivatives();
 		void BuildMatrix();
 		void BuildRightHand();
 		double CheckZeroCrossing();
@@ -711,13 +624,9 @@ namespace DFW2
 		void WriteResults();
 		void FinishWriteResults();
 
-		ConvergenceTest::ConvergenceTestVec ConvTest;
 		struct StepControl sc;
 
 		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
-		void EnableAdamsCoefficientDamping(bool bEnable);
-		void GoodStep(double rSame);
-		void BadStep();
 		void NewtonFailed();
 		void RepeatZeroCrossing(double rH);
 		void UnprocessDiscontinuity();
@@ -804,6 +713,8 @@ namespace DFW2
 		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
 		void SetDerivative(const VariableIndexBase& Row, double dValue);
 
+		void BuildDerivatives();
+
 
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		// Задает значение для переменной, и компонентов Нордиска. 
@@ -818,12 +729,32 @@ namespace DFW2
 		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
 		struct RightVector* GetRightVector(const InputVariable& Variable);
 
+		const StepControl& StepControl() const
+		{
+			return sc;
+		}
+
+		inline DEVICECONTAINERS& DeviceContainersStoreStates()
+		{
+			return DeviceContainersStoreStates_;
+		}
+
+		inline DEVICECONTAINERS& DeviceContainersPredict()
+		{
+			return DeviceContainersPredict_;
+		}
+
+		inline ptrdiff_t MaxtrixSize() const
+		{
+			return klu.MatrixSize();
+		}
+
 		inline constexpr double GetOmega0() const
 		{
 			return 2 * 50.0 * M_PI;
 		}
 
-		inline ptrdiff_t GetOrder() const
+		inline ptrdiff_t Order() const
 		{
 			return sc.q;
 		}
@@ -865,7 +796,7 @@ namespace DFW2
 			h = (std::min)(h, m_Parameters.Hmax);
 			const double ratio{ H() > 0 ? h / H() : 1.0};
 			sc.SetH(h);
-			Computehl0();
+			Integrator_->UpdateStepSize();
 			return ratio;
 		}
 
@@ -960,6 +891,11 @@ namespace DFW2
 		inline bool FillConstantElements() const
 		{
 			return sc.m_bFillConstantElements;
+		}
+
+		void PassTime()
+		{
+			m_Discontinuities.PassTime(GetCurrentTime());
 		}
 		
 		inline bool EstimateBuild() const
@@ -1135,10 +1071,6 @@ namespace DFW2
 		// вывод Message в протокол с добавлением метки времени и номера шага интегрирования
 		void LogTime(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t DbIndex = -1) const;
 		void DebugLog(std::string_view Message) const;
-				
-		double Methodl[4][4];	// текущие коэффициенты метода интегрирования
-		double Methodlh[4];		// коэффициенты метода интегрирования l0, умноженные на шаг
-		static const double MethodlDefault[4][4]; // фиксированные коэффициенты метода интегрирования
 
 		static double gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double* Sol);
 
