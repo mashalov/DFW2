@@ -27,10 +27,12 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 	// переходим к новому рассчитанному времени с обновлением суммы Кэхэна
 	sc.Advance_t0();
 
-	if (StepRatio_ > 1.2 && !DisableStepControl)
+	double StepRatio{ StepRatio_ };
+
+	if (StepRatio > 1.2 && !DisableStepControl)
 	{
 		// если шаг можно хорошо увеличить
-		StepRatio_ /= 1.2;
+		StepRatio /= 1.2;
 
 		switch (sc.q)
 		{
@@ -42,7 +44,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 			UpdateNordsiek();
 
 			// если второй порядок лучше чем первый
-			if (rHigher > StepRatio_)
+			if (rHigher > StepRatio)
 			{
 				// пытаемся перейти на второй порядок
 				if (sc.FilterOrder(rHigher))
@@ -70,7 +72,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 			UpdateNordsiek();
 
 			// если первый порядок лучше чем второй
-			if (rLower > StepRatio_)
+			if (rLower > StepRatio)
 			{
 				// пытаемся перейти на первый порядок
 				if (sc.FilterOrder(rLower))
@@ -93,7 +95,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 		// запрашиваем возможность изменения (увеличения шага)
 		// тут можно регулировать частоту увеличения шага 
 		// rSame уже поделили выше для безопасности на 1.2
-		if (sc.FilterStep(StepRatio_) && StepRatio_ > 1.1)
+		if (sc.FilterStep(StepRatio) && StepRatio > 1.1)
 		{
 
 			// если фильтр дает разрешение на увеличение
@@ -291,6 +293,7 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 		
+	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
 	sc.Integrator.Reset();
 
 	const double Methodl0[2]{ Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
