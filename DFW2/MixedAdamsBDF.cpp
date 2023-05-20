@@ -103,7 +103,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 		{
 
 			// если фильтр дает разрешение на увеличение
-			_ASSERTE(Equal(H(), UsedH()));
+			_ASSERTE(Equal(DynaModel_.H(), DynaModel_.UsedH()));
 			// запоминаем коэффициент увеличения только для репорта
 			// потому что sc.dFilteredStep изменится в последующем 
 			// RescaleNordsiek
@@ -137,7 +137,7 @@ void MixedAdamsBDF::UpdateStepSize()
 
 void MixedAdamsBDF::RejectStep()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
@@ -205,16 +205,16 @@ bool MixedAdamsBDF::StepConverged()
 	return StepRatio_ > 1.0;
 }
 
-void MixedAdamsBDF::Init() 
+void MixedAdamsBDF::Init()
 {
-	auto& Parameters{ DynaModel_.Parameters() };
-	if (Parameters.m_eDiffEquationType == DET_ALGEBRAIC)
+	/*if (Parameters.m_eDiffEquationType == DET_ALGEBRAIC)
 		Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
+	*/
 }
 
 void MixedAdamsBDF::Predict()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 
@@ -293,7 +293,7 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 {
 	double r{ 0.0 };
 
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
@@ -360,7 +360,7 @@ double MixedAdamsBDF::GetRatioForHigherOrder()
 	double rUp{ 0.0 };
 	_ASSERTE(DynaModel_.Order() == 1);
 
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 
@@ -396,7 +396,7 @@ double MixedAdamsBDF::GetRatioForHigherOrder()
 
 double MixedAdamsBDF::GetRatioForLowerOrder()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
@@ -433,7 +433,7 @@ double MixedAdamsBDF::GetRatioForLowerOrder()
 
 void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
@@ -583,7 +583,7 @@ void MixedAdamsBDF::ChangeOrder(ptrdiff_t newOrder)
 
 void MixedAdamsBDF::ConstructNordsiekOrder()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
@@ -593,7 +593,7 @@ void MixedAdamsBDF::ConstructNordsiekOrder()
 // масштабирование Nordsieck на заданный коэффициент изменения шага
 void MixedAdamsBDF::RescaleNordsiek()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
@@ -679,7 +679,7 @@ void MixedAdamsBDF::Computehl0()
 // ненадежна
 void MixedAdamsBDF::ReInitializeNordsiek()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
@@ -762,7 +762,7 @@ void MixedAdamsBDF::RestoreNordsiek()
 
 void MixedAdamsBDF::NewtonBacktrack(const double* pVec, double lambda)
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
@@ -778,7 +778,7 @@ void MixedAdamsBDF::NewtonBacktrack(const double* pVec, double lambda)
 
 void MixedAdamsBDF::NewtonUpdateIteration()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
@@ -843,7 +843,7 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 
 void MixedAdamsBDF::DetectAdamsRinging()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
+	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
@@ -910,6 +910,40 @@ void MixedAdamsBDF::DetectAdamsRinging()
 	}
 }
 
+void  MixedAdamsBDF::AOperator(ptrdiff_t Row, double& Value)
+{
+
+}
+
+void  MixedAdamsBDF::DOperator(ptrdiff_t Row, double& Value)
+{
+	const  RightVector* const rv{ DynaModel_.GetRightVector(Row) };
+#ifdef USE_FMA
+	Value = std::fma(DynaModel_.H(), Value, -rv->Nordsiek[1] - rv->Error);
+#else
+	Value = DynaModel_.H() * Value - rv->Nordsiek[1] - rv->Error;
+#endif
+}
+
+void MixedAdamsBDF::WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value)
+{
+	const  RightVector* const pRightVector{ DynaModel_.GetRightVector()};
+	const ptrdiff_t nMethodIndx{ static_cast<ptrdiff_t>((pRightVector + Col)->EquationType) * 2 + (DynaModel_.Order() - 1)};
+	// в качестве типа уравнения используем __физический__ тип
+	// потому что у алгебраических и дифференциальных уравнений
+	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
+
+	if ((pRightVector + Row)->PhysicalEquationType == DET_ALGEBRAIC)
+		Value *= Methodl[nMethodIndx][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
+	else
+	{
+		// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
+		Value *= Methodlh[nMethodIndx];
+		// если элемент диагональный, учитываем диагональную единичную матрицу
+		if (Row == Col)
+			Value = 1.0 - Value;
+	}
+}
 
 
 const double MixedAdamsBDF::MethodlDefault[4][4] =

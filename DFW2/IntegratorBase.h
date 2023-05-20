@@ -3,6 +3,7 @@
 namespace DFW2
 {
 	class CDynaModel;
+	class Parameters;
 
 	using summatorT = MathUtils::StraightSummation;
 
@@ -89,6 +90,8 @@ namespace DFW2
 
 	class IntegratorBase
 	{
+	public:
+		using fnElementSetT = void(IntegratorBase::*)(ptrdiff_t, ptrdiff_t, double&);
 	protected:
 		CDynaModel& DynaModel_;
 		ConvergenceTest::ConvergenceTestVec ConvTest_;
@@ -103,9 +106,9 @@ namespace DFW2
 		virtual void Init() = 0;
 		virtual void NewtonUpdateIteration() = 0;
 		virtual void NewtonBacktrack(const double* pVec, double lambda) = 0;
-		ConvergenceTest::ConvergenceTestVec& ConvTest()
-		{
-			return ConvTest_;
-		}
+		virtual void WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value) = 0;
+		virtual void AOperator(ptrdiff_t Row, double& Value) = 0;
+		virtual void DOperator(ptrdiff_t Row, double& Value) = 0;
+		inline ConvergenceTest::ConvergenceTestVec& ConvTest()  { return ConvTest_; }
 	};
 }

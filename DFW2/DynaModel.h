@@ -601,6 +601,8 @@ namespace DFW2
 		ElementSetterFn			ElementSetter;
 		ElementSetterNoDupFn	ElementSetterNoDup;
 
+		IntegratorBase::fnElementSetT fnElementOperator = nullptr;
+
 		void InitNordsiek();
 		void InitDevicesNordsiek();
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
@@ -714,6 +716,10 @@ namespace DFW2
 
 		void BuildDerivatives();
 
+		void SetElementSetFunction(IntegratorBase::fnElementSetT fn)
+		{
+			fnElementOperator = fn;
+		}
 
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		// Задает значение для переменной, и компонентов Нордиска. 
@@ -724,6 +730,7 @@ namespace DFW2
 
 		// возвращает значение правой части системы уравнений
 		double GetFunction(ptrdiff_t nRow) const;
+		inline struct RightVector* GetRightVector() { return pRightVector; }
 		struct RightVector* GetRightVector(const ptrdiff_t nRow);
 		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
 		struct RightVector* GetRightVector(const InputVariable& Variable);
@@ -799,7 +806,6 @@ namespace DFW2
 
 		typedef double(*MethodLType)[4];
 		const MethodLType& Methodl() const;
-		const double* Methodlh() const;
 
 		//  возвращает отношение текущего шага к новому
 		inline double SetH(double h)
@@ -1143,11 +1149,6 @@ namespace DFW2
 		}
 
 		const DynaModelParameters& Parameters() const
-		{
-			return m_Parameters;
-		}
-
-		DynaModelParameters& Parameters()
 		{
 			return m_Parameters;
 		}

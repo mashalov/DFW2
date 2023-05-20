@@ -185,37 +185,9 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 	if(nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
 		throw dfw2error(fmt::format("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, m_nEstimatedMatrixSize));
 
+	Integrator_->WOperator(nRow, nCol, dValue);
 	MatrixRow* pRow{ m_pMatrixRows + nRow };
-	const ptrdiff_t nMethodIndx{ static_cast<ptrdiff_t>((pRightVector + nCol)->EquationType) * 2 + (sc.q - 1) };
-	// в качестве типа уравнения используем __физический__ тип
-	// потому что у алгебраических и дифференциальных уравнений
-	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
-
-	if ((pRightVector + nRow)->PhysicalEquationType == DET_ALGEBRAIC)
-		dValue *= Methodl()[nMethodIndx][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
-	else
-	{
-		// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
-		dValue *= Methodlh()[nMethodIndx];
-		// если элемент диагональный, учитываем диагональную единичную матрицу
-		if (nRow == nCol)
-			dValue = 1.0 - dValue;
-	}
-
 	_CheckNumber(dValue);
-
-	/*
-	switch (sc.IterationMode)
-	{
-	case StepControl::eIterationMode::JN:
-		if (nRow != nCol) dValue = 0.0;
-		break;
-	case StepControl::eIterationMode::FUNCTIONAL:
-		if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
-		break;
-
-	}
-	*/
 
 	// если нужно суммировать элементы, на входа задан флаг bAddToPrevious
 	// пока нужно для параллельных ветвей
@@ -236,7 +208,7 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue,
 	else
 	{
 		if (pRow->pAp >= pRow->pApRow + pRow->m_nColsCount || pRow->pAx >= pRow->pAxRow + pRow->m_nColsCount)
-			throw dfw2error("CDynaModel::ReallySetElement Column count");
+			throw dfw2error("CDynaModel::ReallySetElement Column count mismatch");
 		*pRow->pAp = nCol;			*pRow->pAx = dValue;
 		pRow->pAp++;				pRow->pAx++;
 	}
@@ -250,44 +222,17 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 
 	CHECK_MATRIX_ELEMENT(nRow, nCol);
 
+	Integrator_->WOperator(nRow, nCol, dValue);
 	MatrixRow* pRow{ m_pMatrixRows + nRow };
-	const ptrdiff_t nMethodIndx{ static_cast<ptrdiff_t>((pRightVector + nCol)->EquationType) * 2 + (sc.q - 1) };
-	// в качестве типа уравнения используем __физический__ тип
-	// потому что у алгебраических и дифференциальных уравнений
-	// разная структура в матрице Якоби, а EquationType указывает лишь набор коэффициентов метода
-
-	if ((pRightVector + nRow)->PhysicalEquationType == DET_ALGEBRAIC)
-		dValue *= Methodl()[nMethodIndx][0];		// если уравнение алгебраическое, ставим коэффициент метода интегрирования
-	else
-	{
-		// если уравнение дифференциальное, ставим коэффициент метода умноженный на шаг
-		dValue *= Methodlh()[nMethodIndx];
-		// если элемент диагональный, учитываем диагональную единичную матрицу
-		if (nRow == nCol)
-			dValue = 1.0 - dValue;
-	}
-
 	_CheckNumber(dValue);
 
-	/*
-	switch (sc.IterationMode)
-	{
-	case StepControl::eIterationMode::JN:
-		if (nRow != nCol) dValue = 0.0;
-		break;
-	case StepControl::eIterationMode::FUNCTIONAL:
-		if (nRow != nCol) dValue = 0.0; else dValue = 1.0;
-		break;
-
-	}
-	*/
-
 	if (pRow->pAp >= pRow->pApRow + pRow->m_nColsCount || pRow->pAx >= pRow->pAxRow + pRow->m_nColsCount)
-		throw dfw2error("CDynaModel::ReallySetElementNoDup Column count");
+		throw dfw2error("CDynaModel::ReallySetElementNoDup Column count mismatch");
 
 	*pRow->pAp = nCol;			*pRow->pAx = dValue;
 	pRow->pAp++;				pRow->pAx++;
 }
+
 // Функция подсчета количества элементов в строке матрицы
 void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
 {
@@ -407,11 +352,15 @@ void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 	auto rv{ GetRightVector(nRow) };
 	_CheckNumber(dValue);
 	// ставим тип метода для уравнения по параметрам в исходных данных
-#ifdef USE_FMA
+	/*
+	#ifdef USE_FMA
 	SetFunctionEqType(nRow, std::fma(H(), dValue, - rv->Nordsiek[1] - rv->Error), GetDiffEquationType());
 #else
 	SetFunctionEqType(nRow, H() * dValue - rv->Nordsiek[1] - rv->Error, GetDiffEquationType());
 #endif
+	*/
+	Integrator_->DOperator(nRow, dValue);
+	SetFunctionEqType(nRow, dValue, GetDiffEquationType());
 }
 
 void CDynaModel::SetFunction(const VariableIndexBase& Row, double dValue)
