@@ -17,5 +17,11 @@ namespace DFW2
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
 		void AOperator(ptrdiff_t Row, double& Value) override;
 		void DOperator(ptrdiff_t Row, double& Value) override;
+	protected:
+		static inline const double c32 = 6.0 + std::sqrt(2.0);
+		static inline const double d = 1.0 / (2.0 + sqrt(2.0));
+		std::vector<double> f();
+		double PrevNorm_ = 0.5;
+		double NextH() const;
 	};
 }

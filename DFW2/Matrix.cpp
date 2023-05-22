@@ -282,7 +282,8 @@ void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
 		throw dfw2error(fmt::format("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
 	_CheckNumber(dValue);
-	klu.B()[nRow] = -dValue;
+	Integrator_->AOperator(nRow, dValue);
+	klu.B()[nRow] = dValue;
 }
 
 void CDynaModel::SetDerivative(ptrdiff_t nRow, double dValue)
@@ -485,7 +486,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 
 }
 
-void CDynaModel::SolveLinearSystem()
+void CDynaModel::SolveLinearSystem(bool Refined)
 {
 	if (sc.m_bRefactorMatrix || !klu.Factored())
 	{
@@ -520,10 +521,16 @@ void CDynaModel::SolveLinearSystem()
 				UpdateRcond();
 			}
 		}
-		klu.Solve();
+		if (Refined)
+			klu.SolveRefine();
+		else
+			klu.Solve();
 	}
 	else
-		klu.Solve();
+		if (Refined)
+			klu.SolveRefine();
+		else
+			klu.Solve();
 }
 
 
@@ -618,19 +625,36 @@ void CDynaModel::UpdateNewRightVector()
 {
 	RightVectorTotal* pRvB = pRightVectorTotal.get();
 	RightVector* pRv = pRightVectorUniq.get();
+	const RightVector const * pEnd{ pRv + m_nEstimatedMatrixSize };
 
 	// логика синхронизации векторов такая же как в UpdateTotalRightVector
 	for (auto&& cit : DeviceContainers_)
 	{
 		if (cit->ContainerProps().bVolatile)
 		{
-			pRv += cit->Count() * cit->EquationsCount();
+			//pRv += cit->Count() * cit->EquationsCount();
+			//continue;
+			for (auto&& dit : *cit)
+			{
+				if (dit->AssignedToMatrix())
+				{
+					for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++)
+					{
+						// проверяем, совпадают ли адрес устройства и переменной в полном векторе
+						// с адресом устройства и переменной во рабочем векторе
+						if (pRv >= pEnd)
+							throw dfw2error("CDynaModel::UpdateNewRightVector - New right vector overrun");
+						InitNordsiekElement(pRv, Atol(), Rtol());
+						PrepareNordsiekElement(pRv);
+						pRv++;
+					}
+				}
+			}
 			continue;
 		}
 
 		// для устройств в контейнере, которые включены в матрицу
 
-		RightVector* pEnd = pRv + m_nEstimatedMatrixSize;
 		for (auto&& dit : *cit)
 		{
 			if (dit->AssignedToMatrix())

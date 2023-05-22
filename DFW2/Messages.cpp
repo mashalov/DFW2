@@ -51,6 +51,7 @@ const char* CDFW2Messages::m_cszKLUUnknownError = "KLU - Неизвестная 
 const char* CDFW2Messages::m_cszInitLoopedInfinitely = "При инициализации устройств обнаружен бесконечный цикл";
 const char* CDFW2Messages::m_cszDeviceContainerFailedToInit = "Отказ инициализации для устройств типа {} код {}";
 const char* CDFW2Messages::m_cszStepAndOrderChanged = "Порядок и шаг метода изменен : порядок {} шаг {} с";
+const char* CDFW2Messages::m_cszMultiStageSepAccepted = "Шаг {} с, |{}| max {}";
 const char* CDFW2Messages::m_cszStepChanged = "Шаг метода изменен : шаг {} с ({}), порядок {}";
 const char* CDFW2Messages::m_cszStepAndOrderChangedOnNewton = "Порядок и шаг метода изменен по Ньютону: порядок {} шаг {} с";
 const char* CDFW2Messages::m_cszZeroCrossingStep = "Шаг метода изменен для поиска ограничения: шаг {} с в устройстве {}, rH {}";

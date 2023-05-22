@@ -146,7 +146,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	if (!SSE2Available_)
 		throw dfw2error(CDFW2Messages::m_cszNoSSE2Support);
 
-	Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
+	Integrator_ = std::make_unique<Rodas4>(*this);
 }
 
 
@@ -562,7 +562,7 @@ void CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		
 	for (; sc.nNewtonIteration < nMaxIts; sc.nNewtonIteration++)
 	{
-		if (sc.m_bDiscontinuityMode)
+		if (IsInDiscontinuityMode())
 			sc.RefactorMatrix();
 
 		BuildMatrix();
@@ -633,7 +633,7 @@ void CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 
 			sc.RefactorMatrix();
 			double lambdamin{ 0.1 };
-			if (sc.m_bDiscontinuityMode)
+			if (IsInDiscontinuityMode())
 			{
 				// для обработки разрыва шаг линейного поиска делаем больше чем минимальный шаг
 				// (хотя может стоит его сделать таким же, как и для минимального шага,
@@ -692,7 +692,7 @@ void CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 				sc.dLastConditionNumber));
 	}
 
-	if (sc.nNewtonIteration == nMaxIts)
+	if (sc.nNewtonIteration == nMaxIts && IsInDiscontinuityMode())
 		throw dfw2error(CDFW2Messages::m_cszNewtonSolverDoesNotConvergedInIterations, nMaxIts);
 
 	if (!sc.m_bNewtonConverged)

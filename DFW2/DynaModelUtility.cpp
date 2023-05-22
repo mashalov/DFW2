@@ -1018,7 +1018,7 @@ bool CDynaModel::RunTest()
 	PreInitDevices();
 	InitDevices();
 	EstimateMatrix();
-	m_Discontinuities.AddEvent(1000.0, new CModelActionStop());
+	m_Discontinuities.AddEvent(100.0, new CModelActionStop());
 	m_Discontinuities.Init();
 
 	SetH(sc.StartupStep);
@@ -1030,6 +1030,8 @@ bool CDynaModel::RunTest()
 	// возможность восстановить их при сбое Ньютона
 	// на первом шаге
 	SaveNordsiek();
+
+	m_Parameters.m_dOutStep = 0.1 * Hmin();
 
 	while (!CancelProcessing() && bRes)
 	{

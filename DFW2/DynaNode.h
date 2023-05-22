@@ -11,6 +11,8 @@ namespace DFW2
 	class CDynaBranch;
 	class CSynchroZone : public CDevice
 	{
+	protected:
+		double CalculateS() const;
 	public:
 		enum VARS
 		{
@@ -32,6 +34,7 @@ namespace DFW2
 		void BuildEquations(CDynaModel* pDynaModel) override;
 		void BuildRightHand(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 

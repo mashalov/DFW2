@@ -398,7 +398,7 @@ namespace DFW2
 
 			// если не был получен - создаем
 			if (!pRefine)
-				pRefine = vector_aligned_double(3 * MatrixSize_ * doubles_count<T>::count);
+				pRefine = vector_aligned_double(3 * MatrixSize() * doubles_count<T>::count);
 
 			double* pR1{ pRefine.get() };			// правая часть СЛУ (b)
 			double* pR2{ pR1 + MatrixSize() };		// исходное решение СЛУ (x)
@@ -414,6 +414,8 @@ namespace DFW2
 
 			double r{ 0.0 };
 			ptrdiff_t nMaxIndex{ 0 };
+
+			double prevR{ 0 };
 
 			for (ptrdiff_t m = 0; m < 5; m++)
 			{
@@ -432,12 +434,15 @@ namespace DFW2
 				}
 				r = (std::max)(FindMaxB(nMaxIndex), r);
 				// если невязки меньше чем заданное значение
-				if (r < Tolerance)
+				if (r <= Tolerance || (m > 0 && prevR >= r))
 				{
 					// отдаем значение с последней итерации
 					std::copy(pR2, pR2 + MatrixSize(), pb.get());
 					break;
 				}
+
+				prevR = r;
+
 				// решаем Ac = r
 				Solve();
 				// рассчитываем x_{m+1} = x_{m} + c_{m}

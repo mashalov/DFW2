@@ -57,6 +57,7 @@ namespace DFW2
 		static const char* m_cszInitLoopedInfinitely;
 		static const char* m_cszDeviceContainerFailedToInit;
 		static const char* m_cszStepAndOrderChanged;
+		static const char* m_cszMultiStageSepAccepted;
 		static const char* m_cszStepChanged;
 		static const char* m_cszStepAndOrderChangedOnNewton;
 		static const char* m_cszZeroCrossingStep;

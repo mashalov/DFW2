@@ -912,7 +912,7 @@ void MixedAdamsBDF::DetectAdamsRinging()
 
 void  MixedAdamsBDF::AOperator(ptrdiff_t Row, double& Value)
 {
-
+	Value = -Value;
 }
 
 void  MixedAdamsBDF::DOperator(ptrdiff_t Row, double& Value)

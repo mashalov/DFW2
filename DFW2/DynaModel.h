@@ -557,8 +557,6 @@ namespace DFW2
 		bool RebuildMatrixFlag_;
 		std::vector<CDevice*> ZeroCrossingDevices;
 		void ConvertToCCSMatrix();
-		void SolveLinearSystem();
-		void SolveRefine();
 		void UpdateRcond();
 		void SetDifferentiatorsTolerance();
 		void NewtonUpdate();
@@ -568,7 +566,6 @@ namespace DFW2
 		void UpdateTotalRightVector();
 		void UpdateNewRightVector();
 		void DebugCheckRightVectorSync();
-		void NewtonUpdateDevices();
 
 		void   ChangeOrder(ptrdiff_t Newq);
 		void   Computehl0(); // рассчитывает кэшированные произведения l0 * GetH для элементов матрицы
@@ -607,14 +604,13 @@ namespace DFW2
 		void InitDevicesNordsiek();
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
 		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
+		void SolveRefine();
 		void RescaleNordsiek();
 		void SaveNordsiek();
 		void RestoreNordsiek();
 		void ConstructNordsiekOrder();
 		void ReInitializeNordsiek();
 		void ResetNordsiek();
-		void BuildMatrix();
-		void BuildRightHand();
 		double CheckZeroCrossing();
 		void FinishStep();
 		void DumpStatistics();
@@ -695,6 +691,10 @@ namespace DFW2
 		bool RunTest();
 		bool RunLoadFlow();
 		void SolveNewton(ptrdiff_t nMaxIts);
+		void BuildMatrix();
+		void BuildRightHand();
+		void SolveLinearSystem(bool Refined = false);
+		void NewtonUpdateDevices();
 
 		// выполняет предварительную инициализацию устройств: 
 		// расчет внутренних констант, которые не зависят от связанных устройств
@@ -756,6 +756,11 @@ namespace DFW2
 		}
 
 		inline const double* B() const
+		{
+			return klu.B();
+		}
+
+		inline double* B()
 		{
 			return klu.B();
 		}

@@ -954,32 +954,43 @@ void CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 	}
 }
 
-
-void CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
+double CSynchroZone::CalculateS() const
 {
-	double dS{ S };
-	if (InfPower)
-	{
-		pDynaModel->SetFunction(S, 0.0);
-	}
-	else
+	double CurrentS{ 0.0 };
+	if (!InfPower)
 	{
 		for (auto&& it : LinkedGenerators)
 		{
 			if (it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
 				const auto& pGenMj{ static_cast<CDynaGeneratorMotion*>(it) };
-				dS -= pGenMj->Mj * pGenMj->s / Mj;
+				CurrentS += pGenMj->Mj * pGenMj->s / Mj;
 			}
 		}
-		pDynaModel->SetFunction(S, dS);
 	}
+	return CurrentS;
+}
+
+
+void CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
+{
+	double dS{ S };
+	if (InfPower)
+		pDynaModel->SetFunction(S, 0.0);
+	else
+		pDynaModel->SetFunction(S, S - CalculateS());
 }
 
 
 eDEVICEFUNCTIONSTATUS CSynchroZone::Init(CDynaModel* pDynaModel)
 {
 	S = 0.0;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CSynchroZone::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	S = CalculateS();
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 

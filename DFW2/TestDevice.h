@@ -25,8 +25,8 @@ namespace DFW2
 		CTestDevice();
 		virtual ~CTestDevice() = default;
 
-		const double k = 1.4;
-		const double m = 0.2;
+		const double k = 3.0;
+		const double m = 0.3;
 		double omega = 0.0;
 		double A = 0.0;
 		double phi = 0.0;

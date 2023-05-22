@@ -42,14 +42,14 @@ void CTestDevice::BuildRightHand(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CTestDevice::Init(CDynaModel* pDynaModel)
 {
-	A = x = 10.0;
+	A = x = 1.0;
 	omega = std::sqrt(k / m);
-	phi = 0;
+	phi = -pDynaModel->GetCurrentTime() * omega;
 	//OutputLag_.SetMinMaxTK(pDynaModel, -A / 2.0, A / 2.0, 0.5, 1.0);
 	OutputLag_.SetMinMax(pDynaModel, -A * 2.0, A * 2.0);
 	LagOut = A / 2.0;
 	OutputLag_.Init(pDynaModel);
-	x = 10.0;
+	x = 1.0;
 	v = 0.0;
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
