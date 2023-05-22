@@ -509,6 +509,7 @@
     <ClCompile Include="DynaReactor.cpp" />
     <ClCompile Include="DynaVoltageSource.cpp" />
     <ClCompile Include="DynaGeneratorMustang.cpp" />
+    <ClCompile Include="IntegratorBase.cpp" />
     <ClCompile Include="IterationControl.cpp" />
     <ClCompile Include="LeadLag.cpp" />
     <ClCompile Include="LimitedLag.cpp" />

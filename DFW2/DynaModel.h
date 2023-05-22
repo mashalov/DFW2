@@ -597,9 +597,6 @@ namespace DFW2
 		void ScaleAlgebraicEquations();
 		ElementSetterFn			ElementSetter;
 		ElementSetterNoDupFn	ElementSetterNoDup;
-
-		IntegratorBase::fnElementSetT fnElementOperator = nullptr;
-
 		void InitNordsiek();
 		void InitDevicesNordsiek();
 		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
@@ -713,14 +710,7 @@ namespace DFW2
 		void SetFunction(const VariableIndexBase& Row, double dValue);
 		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
 		void SetDerivative(const VariableIndexBase& Row, double dValue);
-
 		void BuildDerivatives();
-
-		void SetElementSetFunction(IntegratorBase::fnElementSetT fn)
-		{
-			fnElementOperator = fn;
-		}
-
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		// Задает значение для переменной, и компонентов Нордиска. 
 		// Используется, в основном, для ввода ограничения переменной
@@ -734,6 +724,24 @@ namespace DFW2
 		struct RightVector* GetRightVector(const ptrdiff_t nRow);
 		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
 		struct RightVector* GetRightVector(const InputVariable& Variable);
+
+		struct RightVectorRangeT
+		{
+			struct RightVector* begin;
+			const struct RightVector* const end;
+			std::size_t size() const { return end - begin; }
+		};
+
+		struct BRangeT
+		{
+			double* begin;
+			const double* const end;
+			std::size_t size() const { return end - begin; }
+		};
+
+
+		struct RightVectorRangeT RightVectorRange();
+		struct BRangeT BRange();
 
 		StepControl& StepControl()
 		{
@@ -750,7 +758,7 @@ namespace DFW2
 			return DeviceContainersPredict_;
 		}
 
-		inline ptrdiff_t MaxtrixSize() const
+		inline ptrdiff_t MatrixSize() const
 		{
 			return klu.MatrixSize();
 		}

@@ -55,6 +55,16 @@ void CDynaModel::ChangeOrder(ptrdiff_t Newq)
 	}
 }
 
+CDynaModel::RightVectorRangeT CDynaModel::RightVectorRange()
+{
+	return { pRightVector, pRightVector + MatrixSize() };
+}
+
+CDynaModel::BRangeT CDynaModel::BRange()
+{
+	return { B(), B() + MatrixSize()};
+}
+
 struct RightVector* CDynaModel::GetRightVector(const InputVariable& Variable)
 {
 	return GetRightVector(Variable.Index);

@@ -666,6 +666,9 @@
     <ClCompile Include="MixedAdamsBDF.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="IntegratorBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="dfw2.natvis" />

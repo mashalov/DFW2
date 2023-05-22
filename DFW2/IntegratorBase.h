@@ -90,12 +90,16 @@ namespace DFW2
 
 	class IntegratorBase
 	{
-	public:
-		using fnElementSetT = void(IntegratorBase::*)(ptrdiff_t, ptrdiff_t, double&);
 	protected:
+		using vecType = std::vector<double>;
 		CDynaModel& DynaModel_;
 		ConvergenceTest::ConvergenceTestVec ConvTest_;
 		double StepRatio_ = 0.0;
+		vecType::iterator VerifyVector(vecType& vec);
+		vecType::iterator FromModel(vecType& vec);
+		vecType::iterator ToModel(vecType& vec);
+		vecType::iterator FromB(vecType& vec);
+		vecType::iterator ToB(vecType& vec);
 	public:
 		IntegratorBase(CDynaModel& DynaModel) : DynaModel_(DynaModel) {}
 		virtual void Step() = 0;
@@ -110,5 +114,12 @@ namespace DFW2
 		virtual void AOperator(ptrdiff_t Row, double& Value) = 0;
 		virtual void DOperator(ptrdiff_t Row, double& Value) = 0;
 		inline ConvergenceTest::ConvergenceTestVec& ConvTest()  { return ConvTest_; }
+	};
+
+	class IntegratorMultiStageBase : public IntegratorBase
+	{
+	protected:
+		vecType::iterator f(vecType& vec);
+		using IntegratorBase::IntegratorBase;
 	};
 }

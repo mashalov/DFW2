@@ -2,7 +2,7 @@
 #include "IntegratorBase.h"
 namespace DFW2
 {
-	class Rodas4 : public IntegratorBase
+	class Rodas4 : public IntegratorMultiStageBase
 	{
 	public:
 		Rodas4(CDynaModel& DynaModel);
@@ -20,7 +20,7 @@ namespace DFW2
 	protected:
 		static inline const double c32 = 6.0 + std::sqrt(2.0);
 		static inline const double d = 1.0 / (2.0 + sqrt(2.0));
-		std::vector<double> f();
+		IntegratorBase::vecType uprev, f0, f1, f2, k1, k2;
 		double PrevNorm_ = 0.5;
 		double NextH() const;
 	};

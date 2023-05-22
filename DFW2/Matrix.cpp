@@ -625,7 +625,7 @@ void CDynaModel::UpdateNewRightVector()
 {
 	RightVectorTotal* pRvB = pRightVectorTotal.get();
 	RightVector* pRv = pRightVectorUniq.get();
-	const RightVector const * pEnd{ pRv + m_nEstimatedMatrixSize };
+	const RightVector*  pEnd{ pRv + m_nEstimatedMatrixSize };
 
 	// логика синхронизации векторов такая же как в UpdateTotalRightVector
 	for (auto&& cit : DeviceContainers_)

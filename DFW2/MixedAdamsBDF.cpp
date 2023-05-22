@@ -139,7 +139,7 @@ void MixedAdamsBDF::RejectStep()
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -216,7 +216,7 @@ void MixedAdamsBDF::Predict()
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 
 	//#define DBG_CHECK_PREDICTION
 
@@ -295,7 +295,7 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 		
@@ -362,7 +362,7 @@ double MixedAdamsBDF::GetRatioForHigherOrder()
 
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
 
@@ -398,7 +398,7 @@ double MixedAdamsBDF::GetRatioForLowerOrder()
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 
 	double rDown{ 0.0 };
@@ -435,7 +435,7 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -585,7 +585,7 @@ void MixedAdamsBDF::ConstructNordsiekOrder()
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
 		pVectorBegin->Nordsiek[2] = pVectorBegin->Error / 2.0;
 }
@@ -595,7 +595,7 @@ void MixedAdamsBDF::RescaleNordsiek()
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -681,7 +681,7 @@ void MixedAdamsBDF::ReInitializeNordsiek()
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -715,7 +715,7 @@ void MixedAdamsBDF::RestoreNordsiek()
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -764,7 +764,7 @@ void MixedAdamsBDF::NewtonBacktrack(const double* pVec, double lambda)
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
 	const double Methodl0[2]{ Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][0] };
 	const double* pB{ pVec };
@@ -782,7 +782,7 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 	RightVector* pVectorBegin{ pRightVector };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 
 	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
 	const double ConvCheck{ 0.1 / (DynaModel_.Order() + 2.0) };
@@ -847,7 +847,7 @@ void MixedAdamsBDF::DetectAdamsRinging()
 	RightVector* pVectorBegin{ pRightVector };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 
 	sc.bRingingDetected = false;
 

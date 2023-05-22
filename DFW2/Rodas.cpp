@@ -3,48 +3,25 @@
 #include "Rodas.h"
 
 using namespace DFW2;
-Rodas4::Rodas4(CDynaModel& DynaModel) : IntegratorBase(DynaModel)
+Rodas4::Rodas4(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel)
 {
 
-}
-
-std::vector<double> Rodas4::f()
-{
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const auto& Parameters{ DynaModel_.Parameters() };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
-
-	double* pB{ DynaModel_.B() };
-	std::vector<double> vec(DynaModel_.MaxtrixSize());
-	auto  vecit{ vec.begin() };
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++, vecit++)
-	{
-		*vecit = *pB;
-		/*if (pVectorBegin->PhysicalEquationType == DET_ALGEBRAIC)
-			*vecit += pVectorBegin->Nordsiek[0];*/
-	}
-
-	return vec;
 }
 
 void Rodas4::Step()
 {
 	const bool Refine{ false };
-	std::vector<double> uprev(DynaModel_.MaxtrixSize());
-	auto uprevit{ uprev.begin() };
 
+	auto uprevit{ VerifyVector(uprev) };
+	auto f0it{ VerifyVector(f0) };
+	auto f1it{ VerifyVector(f1) };
+	auto f2it{ VerifyVector(f2) };  // f2 становится f0 на следующем шаге
 
 	PrevNorm_ = ConvTest_[0].dErrorSum;
-
 	if (PrevNorm_ == 0.0)
 		PrevNorm_ = 0.5;
 
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
 	const double h{ DynaModel_.H() };
 
 	if (DynaModel_.IsInDiscontinuityMode())
@@ -60,110 +37,106 @@ void Rodas4::Step()
 
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, uprevit++)
-		*uprevit = pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
-
-
+	FromModel(uprev);
+	
 	for (auto&& it : DynaModel_.DeviceContainersPredict())
 		it->Predict();
 	DynaModel_.NewtonUpdateDevices();
 	DynaModel_.BuildMatrix();
-
-	auto f0{ f() };
-		
-	double* pB{ DynaModel_.B() };
-	auto f0it{ f0.begin() };
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++, f0it++)
-	{
-		*pB = *f0it;
-	}
+	FromB(f0);
 
 	DynaModel_.SolveLinearSystem(Refine);
 
-	pB = DynaModel_.B();
-		
-	std::vector<double> k1(DynaModel_.MaxtrixSize());
-	auto  k1it{ k1.begin() };
-	uprevit = uprev.begin();
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++, k1it++, uprevit++)
+	const double dth { h * d };
+
 	{
-		*k1it = *pB / h / d;
-		*pVectorBegin->pValue = *uprevit + 0.5 * h * *k1it;
+		uprevit = uprev.begin();
+		auto BRange{ DynaModel_.BRange() };
+		auto RVRange{ DynaModel_.RightVectorRange() };
+		for (auto k1it{ VerifyVector(k1) }; k1it != k1.end(); k1it++, BRange.begin++, RVRange.begin++, uprevit++)
+		{
+			*k1it = *BRange.begin / dth;
+			*RVRange.begin->pValue = *uprevit + 0.5 * h * *k1it;
+		}
 	}
 
-
-	for (auto&& it : DynaModel_.DeviceContainersPredict())
-		it->Predict();
-	DynaModel_.NewtonUpdateDevices();
-	DynaModel_.BuildRightHand();
-
-	auto f1{ f() };
-
-	auto f1it{ f1.begin() };
-	pB = DynaModel_.B();
-	k1it = k1.begin();
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++, k1it++, f1it++)
+	f(f1);
+	
 	{
-		*pB = *f1it;
-		if(pVectorBegin->PhysicalEquationType == DET_DIFFERENTIAL)
-			*pB -= *k1it;
+		auto BRange{ DynaModel_.BRange() };
+		auto RVRange{ DynaModel_.RightVectorRange() };
+		for (const auto& k1it : k1)
+		{
+			if (RVRange.begin->PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange.begin -= k1it;
+			RVRange.begin++;
+			BRange.begin++;
+		}
 	}
 
 	DynaModel_.SolveLinearSystem(Refine);
-
-
-	std::vector<double> k2(DynaModel_.MaxtrixSize());
-	auto  k2it{ k2.begin() };
-	pB = DynaModel_.B();
-	k1it = k1.begin();
-	uprevit = uprev.begin();
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++, k1it++, k2it++, uprevit++)
+	VerifyVector(k2);
 	{
-		*k2it = *pB / h / d + *k1it;
-		*pVectorBegin->pValue = *uprevit + h * *k2it;
+		auto BRange{ DynaModel_.BRange() };
+		auto RVRange{ DynaModel_.RightVectorRange() };
+		uprevit = uprev.begin();
+		auto k1it{ k1.begin() };
+		for (auto&& k2it : k2)
+		{
+			k2it = *BRange.begin / dth + *k1it;
+			*RVRange.begin->pValue = *uprevit + h * k2it;
+			BRange.begin++;
+			RVRange.begin++;
+			uprevit++;
+			k1it++;
+		}
 	}
 
-	for (auto&& it : DynaModel_.DeviceContainersPredict())
-		it->Predict();
-	DynaModel_.NewtonUpdateDevices();
-	DynaModel_.BuildRightHand();
+	f(f2);
 
-	auto f2{ f() };
-	auto f2it{ f2.begin() };
-
-	pB = DynaModel_.B();
-	f1it = f1.begin();
-	f0it = f0.begin();
-	k1it = k1.begin();
-	k2it = k2.begin();
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++, k1it++, k2it++, f2it++, f1it++, f0it++)
-		//*pB = *f2it - c32 * (*k2it - *f1it) - 2 * (*k1it - *f0it);
 	{
-		const double M{ (pVectorBegin->PhysicalEquationType == DET_ALGEBRAIC) ? 0.0 : c32 * *k2it + 2.0 * *k1it };
-		*pB = *f2it - M + c32 * *f1it + 2 ** f0it;
-			//linsolve_tmp = integrator.fsallast - mass_matrix * (c₃₂ * k₂ + 2 * k₁) + c₃₂ * f₁ + 2 * integrator.fsalfirst + dt * dT
+		auto BRange{ DynaModel_.BRange() };
+		auto RVRange{ DynaModel_.RightVectorRange() };
+		uprevit = uprev.begin();
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		auto f1it{ f1.begin() };
+		for (const auto& f0it : f0)
+		{
+			*BRange.begin += c32 * *f1it + 2 * f0it;
+			if (RVRange.begin->PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange.begin -= (c32 * *k2it + 2.0 * *k1it);
+
+			BRange.begin++;
+			RVRange.begin++;
+			f1it++;
+			k1it++;
+			k2it++;
+		}
 	}
+
 
 	DynaModel_.SolveLinearSystem(Refine);
-
-	std::vector<double> ut(DynaModel_.MaxtrixSize());
-
-	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
-
-	k1it = k1.begin();
-	k2it = k2.begin();
-	pB = DynaModel_.B();
 
 	sc.Integrator.Weighted.Reset();
-	uprevit = uprev.begin();
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++, k1it++, k2it++, uprevit++)
+	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
+
 	{
-		const double ut{ h / 6 * (*k1it - 2 * *k2it + *pB / h / d ) };
-		double dError = pVectorBegin->GetWeightedError(ut, (std::max)(std::abs(*uprevit),std::abs(*pVectorBegin->pValue)));
-		ConvTest_[0].AddError(dError);
-		sc.Integrator.Weighted.Update(pVectorBegin, dError);
+		auto BRange{ DynaModel_.BRange() };
+		auto RVRange{ DynaModel_.RightVectorRange() };
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		for (const auto& uprevit : uprev)
+		{
+			const double ut{ h / 6 * (*k1it - 2 * *k2it + *BRange.begin / dth) };
+			const double dError{ RVRange.begin->GetWeightedError(ut, (std::max)(std::abs(uprevit), std::abs(*RVRange.begin->pValue))) };
+			ConvTest_[0].AddError(dError);
+			sc.Integrator.Weighted.Update(RVRange.begin, dError);
+			RVRange.begin++;
+			BRange.begin++;
+			k1it++;
+			k2it++;
+		}
 	}
 
 
@@ -190,7 +163,7 @@ void Rodas4::AcceptStep(bool DisableStepControl)
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	const double Norm{ ConvTest_[0].dErrorSum };
@@ -218,7 +191,7 @@ void Rodas4::RejectStep()
 {
 	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -262,8 +235,10 @@ void Rodas4::RejectStep()
 	{
 		// если шаг еще можно снизить
 		sc.nMinimumStepFailures = 0;
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
+		auto uprevit{ uprev.begin() };
+		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, uprevit++)
+			*pVectorBegin->pValue = *uprevit;
+
 		DynaModel_.NewtonUpdateDevices();
 		DynaModel_.SetH(newEffectiveH);
 		sc.CheckAdvance_t0();
@@ -291,7 +266,7 @@ void Rodas4::NewtonUpdateIteration()
 	RightVector* pVectorBegin{ pRightVector };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MaxtrixSize() };
+	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 
 	sc.Newton.Reset();
 
