@@ -2,10 +2,10 @@
 #include "IntegratorBase.h"
 namespace DFW2
 {
-	class Rodas4 : public IntegratorMultiStageBase
+	class Rosenbrock23 : public IntegratorMultiStageBase
 	{
 	public:
-		Rodas4(CDynaModel& DynaModel);
+		Rosenbrock23(CDynaModel& DynaModel);
 		void Step() override;
 		void AcceptStep(bool DisableStepControl = false) override;
 		void RejectStep() override;

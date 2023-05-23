@@ -724,22 +724,29 @@ namespace DFW2
 		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
 		struct RightVector* GetRightVector(const InputVariable& Variable);
 
-		struct RightVectorRangeT
+		template<class T>
+		struct RangeAdapter
 		{
-			struct RightVector* begin;
-			const struct RightVector* const end;
-			std::size_t size() const { return end - begin; }
+		protected:
+			T* begin_;
+			const T* const end_;
+		public:
+			RangeAdapter(T* begin, const T* const end) : begin_(begin), end_(end) {}
+			T* begin() { return begin_; }
+			const T* end() const { return end_; }
+			inline bool empty() const { return begin_ < end_; }
+			inline T* operator++ (int) { auto temp{ begin_ };  begin_++; return temp; }
+			inline T* operator++ () { begin_++; return begin_; }
+			std::size_t size() const { return end_ - begin_; }
+			inline T* operator-> () { return begin_; }
+			inline operator T* () { return begin_; }
 		};
 
-		struct BRangeT
-		{
-			double* begin;
-			const double* const end;
-			std::size_t size() const { return end - begin; }
-		};
+		using RightVectorRangeT = RangeAdapter<RightVector>;
+		using BRangeT = RangeAdapter<double>;
 
+		RightVectorRangeT RightVectorRange();
 
-		struct RightVectorRangeT RightVectorRange();
 		struct BRangeT BRange();
 
 		StepControl& StepControl()

@@ -16,8 +16,8 @@ IntegratorBase::vecType::iterator IntegratorBase::FromModel(IntegratorBase::vecT
 	if (range.size() != vec.size())
 		throw dfw2error("IntegratorBase::FromModel vector size mismatch");
 
-	for (auto vit{ vec.begin() }; vit!= vec.end(); vit++, range.begin++)
-		*vit = *range.begin->pValue;
+	for (auto vit{ vec.begin() }; vit!= vec.end(); vit++, ++range)
+		*vit = *range->pValue;
 	return vec.begin();
 }
 
@@ -27,8 +27,8 @@ IntegratorBase::vecType::iterator IntegratorBase::ToModel(IntegratorBase::vecTyp
 	if (range.size() != vec.size())
 		throw dfw2error("IntegratorBase::ToModel vector size mismatch");
 
-	for (auto vit{ vec.begin() }; vit != vec.end(); vit++, range.begin++)
-		*range.begin->pValue  = *vit;
+	for (auto vit{ vec.begin() }; vit != vec.end(); vit++, ++range)
+		*range->pValue  = *vit;
 
 	return vec.begin();
 }
@@ -40,8 +40,8 @@ IntegratorBase::vecType::iterator IntegratorBase::FromB(IntegratorBase::vecType&
 	if (range.size() != vec.size())
 		throw dfw2error("IntegratorBase::FromB vector size mismatch");
 
-	for (auto vit{ vec.begin() }; vit != vec.end(); vit++, range.begin++)
-		*vit = *range.begin;
+	for (auto vit{ vec.begin() }; vit != vec.end(); ++vit, ++range)
+		*vit = *range;
 
 	return vec.begin();
 }
@@ -52,8 +52,8 @@ IntegratorBase::vecType::iterator IntegratorBase::ToB(IntegratorBase::vecType& v
 	if (range.size() != vec.size())
 		throw dfw2error("IntegratorBase::ToB vector size mismatch");
 
-	for (auto vit{ vec.begin() }; vit != vec.end(); vit++, range.begin++)
-		*range.begin = *vit;
+	for (auto vit{ vec.begin() }; vit != vec.end(); ++vit, ++range)
+		*range = *vit;
 
 	return vec.begin();
 }

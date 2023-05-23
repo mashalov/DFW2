@@ -3,22 +3,22 @@
 #include "Rodas.h"
 
 using namespace DFW2;
-Rodas4::Rodas4(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel)
+Rosenbrock23::Rosenbrock23(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel)
 {
 
 }
 
-void Rodas4::Restart()
+void Rosenbrock23::Restart()
 {
 	fsal_ = false;
 	DynaModel_.ResetStep(true);
-	for (auto RVRange{ DynaModel_.RightVectorRange() }; RVRange.begin < RVRange.end; RVRange.begin++)
+	for (auto&& r :  DynaModel_.RightVectorRange())
 		// в качестве значения принимаем то, что рассчитано в устройстве
-		RVRange.begin->Tminus2Value = RVRange.begin->Nordsiek[0] = RVRange.begin->SavedNordsiek[0] = *RVRange.begin->pValue;
+		r.Tminus2Value = r.Nordsiek[0] = r.SavedNordsiek[0] = *r.pValue;
 }
 
 
-void Rodas4::Step()
+void Rosenbrock23::Step()
 {
 	const bool Refine{ false };
 
@@ -73,10 +73,10 @@ void Rodas4::Step()
 		uprevit = uprev.begin();
 		auto BRange{ DynaModel_.BRange() };
 		auto RVRange{ DynaModel_.RightVectorRange() };
-		for (auto k1it{ VerifyVector(k1) }; k1it != k1.end(); k1it++, BRange.begin++, RVRange.begin++, uprevit++)
+		for (auto k1it{ VerifyVector(k1) }; k1it != k1.end(); ++k1it, ++BRange, ++RVRange, ++uprevit)
 		{
-			*k1it = *BRange.begin / dth;
-			*RVRange.begin->pValue = *uprevit + 0.5 * h * *k1it;
+			*k1it = *BRange / dth;
+			*RVRange->pValue = *uprevit + 0.5 * h * *k1it;
 		}
 	}
 
@@ -87,10 +87,10 @@ void Rodas4::Step()
 		auto RVRange{ DynaModel_.RightVectorRange() };
 		for (const auto& k1it : k1)
 		{
-			if (RVRange.begin->PhysicalEquationType == DET_DIFFERENTIAL)
-				*BRange.begin -= k1it;
-			RVRange.begin++;
-			BRange.begin++;
+			if (RVRange->PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange -= k1it;
+			++RVRange;
+			++BRange;
 		}
 	}
 
@@ -103,12 +103,12 @@ void Rodas4::Step()
 		auto k1it{ k1.begin() };
 		for (auto&& k2it : k2)
 		{
-			k2it = *BRange.begin / dth + *k1it;
-			*RVRange.begin->pValue = *uprevit + h * k2it;
-			BRange.begin++;
-			RVRange.begin++;
-			uprevit++;
-			k1it++;
+			k2it = *BRange / dth + *k1it;
+			*RVRange->pValue = *uprevit + h * k2it;
+			++BRange;
+			++RVRange;
+			++uprevit;
+			++k1it;
 		}
 	}
 
@@ -125,15 +125,15 @@ void Rodas4::Step()
 		auto f1it{ f1.begin() };
 		for (const auto& f0it : f0)
 		{
-			*BRange.begin += c32 * *f1it + 2 * f0it;
-			if (RVRange.begin->PhysicalEquationType == DET_DIFFERENTIAL)
-				*BRange.begin -= (c32 * *k2it + 2.0 * *k1it);
+			*BRange += c32 * *f1it + 2 * f0it;
+			if (RVRange->PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange -= (c32 * *k2it + 2.0 * *k1it);
 
-			BRange.begin++;
-			RVRange.begin++;
-			f1it++;
-			k1it++;
-			k2it++;
+			++BRange;
+			++RVRange;
+			++f1it;
+			++k1it;
+			++k2it;
 		}
 	}
 
@@ -150,14 +150,14 @@ void Rodas4::Step()
 		auto k2it{ k2.begin() };
 		for (const auto& uprevit : uprev)
 		{
-			const double ut{ h / 6 * (*k1it - 2 * *k2it + *BRange.begin / dth) };
-			const double dError{ RVRange.begin->GetWeightedError(ut, (std::max)(std::abs(uprevit), std::abs(*RVRange.begin->pValue))) };
+			const double ut{ h / 6 * (*k1it - 2 * *k2it + *BRange / dth) };
+			const double dError{ RVRange->GetWeightedError(ut, (std::max)(std::abs(uprevit), std::abs(*RVRange->pValue))) };
 			ConvTest_[0].AddError(dError);
-			sc.Integrator.Weighted.Update(RVRange.begin, dError);
-			RVRange.begin++;
-			BRange.begin++;
-			k1it++;
-			k2it++;
+			sc.Integrator.Weighted.Update(RVRange, dError);
+			++RVRange;
+			++BRange;
+			++k1it;
+			++k2it;
 		}
 	}
 
@@ -172,7 +172,7 @@ void Rodas4::Step()
 	DynaModel_.ResetStep(false);
 }
 
-double Rodas4::NextH() const
+double Rosenbrock23::NextH() const
 {
 	const double Norm{ ConvTest_[0].dErrorSum };
 	const double alpha{ 0.7 / 2.0 };
@@ -181,13 +181,9 @@ double Rodas4::NextH() const
 	return gamma * DynaModel_.H() * std::pow(Norm, -alpha) * pow(PrevNorm_, beta);
 }
 
-void Rodas4::AcceptStep(bool DisableStepControl)
+void Rosenbrock23::AcceptStep(bool DisableStepControl)
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
-	const auto& Parameters{ DynaModel_.Parameters() };
 	const double Norm{ ConvTest_[0].dErrorSum };
 	sc.Advance_t0();
 	sc.m_bRetryStep = false;
@@ -209,15 +205,10 @@ void Rodas4::AcceptStep(bool DisableStepControl)
 	}
 }
 
-void Rodas4::RejectStep()
+void Rosenbrock23::RejectStep()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
-
-
 	double newH{ NextH() };
 	double newEffectiveH{ (std::max)(newH, sc.Hmin) };
 
@@ -257,49 +248,43 @@ void Rodas4::RejectStep()
 	{
 		// если шаг еще можно снизить
 		sc.nMinimumStepFailures = 0;
-		auto uprevit{ uprev.begin() };
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, uprevit++)
-			*pVectorBegin->pValue = *uprevit;
-
+		ToModel(uprev);
 		DynaModel_.NewtonUpdateDevices();
 		DynaModel_.SetH(newEffectiveH);
 		sc.CheckAdvance_t0();
 	}
 }
 
-void Rodas4::UpdateStepSize()
+void Rosenbrock23::UpdateStepSize()
 {
 
 }
 
-void Rodas4::Init()
+void Rosenbrock23::Init()
 {
 
 }
 
-bool Rodas4::StepConverged()
+bool Rosenbrock23::StepConverged()
 {
 	return ConvTest_[0].dErrorSum <= 1.0;
 }
 
-void Rodas4::NewtonUpdateIteration()
+void Rosenbrock23::NewtonUpdateIteration()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 
 	sc.Newton.Reset();
 
 	const double* pB{ DynaModel_.B() };
 
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++)
+	for (auto&& r : DynaModel_.RightVectorRange())
 	{
-		const double dOldValue{ *pVectorBegin->pValue };
-		pVectorBegin->b = *pB;
-		sc.Newton.Absolute.Update(pVectorBegin, std::abs(pVectorBegin->b));
-		const double dNewValue{ dOldValue + pVectorBegin->b };
+		const double dOldValue{ *r.pValue };
+		r.b = *pB;
+		sc.Newton.Absolute.Update(&r, std::abs(r.b));
+		const double dNewValue{ dOldValue + r.b };
 
 #ifdef USE_FMA
 		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
@@ -307,20 +292,22 @@ void Rodas4::NewtonUpdateIteration()
 		
 #endif
 
-		*pVectorBegin->pValue = dNewValue;
+		*r.pValue = dNewValue;
 
-		if (pVectorBegin->Atol > 0)
+		if (r.Atol > 0)
 		{
-			const double dError{ pVectorBegin->GetWeightedError(pVectorBegin->b, dOldValue) };
-			sc.Newton.Weighted.Update(pVectorBegin, dError);
+			const double dError{ r.GetWeightedError(r.b, dOldValue) };
+			sc.Newton.Weighted.Update(&r, dError);
 			_CheckNumber(dError);
-			ConvergenceTest* pCt{ ConvTest_ + pVectorBegin->EquationType };
+			ConvergenceTest* pCt{ ConvTest_ + r.EquationType };
 #ifdef _DEBUG
 			// breakpoint place for nans
 			_ASSERTE(!std::isnan(dError));
 #endif
 			pCt->AddError(dError);
 		}
+
+		++pB;
 	}
 
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::FinalizeSum);
@@ -334,24 +321,23 @@ void Rodas4::NewtonUpdateIteration()
 		sc.RefactorMatrix(false);
 }
 
-void Rodas4::NewtonBacktrack(const double* pVec, double lambda)
+void Rosenbrock23::NewtonBacktrack(const double* pVec, double lambda)
 {
 
 }
 
-void Rodas4::AOperator(ptrdiff_t Row, double& Value)
+void Rosenbrock23::AOperator(ptrdiff_t Row, double& Value)
 {
 	//Value = -Value;
 }
 
-void Rodas4::DOperator(ptrdiff_t Row, double& Value)
+void Rosenbrock23::DOperator(ptrdiff_t Row, double& Value)
 {
-	const  RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	if (DynaModel_.IsInDiscontinuityMode())
 		Value = 0.0;
 }
 
-void Rodas4::WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value)
+void Rosenbrock23::WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value)
 {
 	// из SetElement знаки приходят
 	// Алгебра - как есть
@@ -361,7 +347,6 @@ void Rodas4::WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value)
 	const  RightVector* const pRightVector{ DynaModel_.GetRightVector() };
 	if (DynaModel_.IsInDiscontinuityMode())
 	{
-		
 		if ((pRightVector + Row)->PhysicalEquationType == DET_DIFFERENTIAL)
 			Value = (Row == Col) ? 1.0 : 0.0;
 		else

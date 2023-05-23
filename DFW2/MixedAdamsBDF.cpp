@@ -135,12 +135,8 @@ void MixedAdamsBDF::UpdateStepSize()
 
 void MixedAdamsBDF::RejectStep()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
-
 	double newH{ 0.5 * DynaModel_.H() };
 	double newEffectiveH{ (std::max)(newH, sc.Hmin) };
 
@@ -210,10 +206,6 @@ void MixedAdamsBDF::Init()
 
 void MixedAdamsBDF::Predict()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
-
 	//#define DBG_CHECK_PREDICTION
 
 #ifdef DBG_CHECK_PREDICTION
@@ -239,34 +231,34 @@ void MixedAdamsBDF::Predict()
 
 		if (DynaModel_.Order() == 2)
 		{
-			for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+			for (auto&& r : DynaModel_.RightVectorRange())
 			{
-				pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
-				pVectorBegin->Nordsiek[1] += pVectorBegin->Nordsiek[2];
-				pVectorBegin->Nordsiek[0] += pVectorBegin->Nordsiek[1];
-				pVectorBegin->Nordsiek[1] += pVectorBegin->Nordsiek[2];
-				pVectorBegin->Error = 0.0;
+				r.Nordsiek[0] = *r.pValue;
+				r.Nordsiek[1] += r.Nordsiek[2];
+				r.Nordsiek[0] += r.Nordsiek[1];
+				r.Nordsiek[1] += r.Nordsiek[2];
+				r.Error = 0.0;
 			}
 		}
 		else
 		{
-			for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+			for (auto&& r : DynaModel_.RightVectorRange())
 			{
-				pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
-				pVectorBegin->Nordsiek[0] += pVectorBegin->Nordsiek[1];
-				pVectorBegin->Error = 0.0;
+				r.Nordsiek[0] = *r.pValue;
+				r.Nordsiek[0] += r.Nordsiek[1];
+				r.Error = 0.0;
 			}
 		}
 
-		for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-			*pVectorBegin->pValue = *pVectorBegin->Nordsiek;
+		for (auto&& r : DynaModel_.RightVectorRange())
+			*r.pValue = *r.Nordsiek;
 	}
 	else
 	{
-		for (pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+		for (auto&& r : DynaModel_.RightVectorRange())
 		{
-			pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
-			pVectorBegin->Error = 0.0;	// обнуляем ошибку шага
+			r.Nordsiek[0] = *r.pValue;
+			r.Error = 0.0;   // обнуляем ошибку шага
 		}
 	}
 
@@ -288,10 +280,6 @@ void MixedAdamsBDF::Predict()
 double MixedAdamsBDF::GetRatioForCurrentOrder()
 {
 	double r{ 0.0 };
-
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 		
@@ -300,19 +288,19 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 
 	const double Methodl0[2]{ Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][0] };
 
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+	for (auto&& r : DynaModel_.RightVectorRange())
 	{
-		if (pVectorBegin->Atol > 0)
+		if (r.Atol > 0)
 		{
 			// compute again to not asking device via pointer
 #ifdef USE_FMA
 			double dNewValue = std::fma(pVectorBegin->Error, Methodl0[pVectorBegin->EquationType], pVectorBegin->Nordsiek[0]);
 #else
-			const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
+			const double dNewValue{ r.Nordsiek[0] + r.Error * Methodl0[r.EquationType] };
 #endif
-			const double dError{ pVectorBegin->GetWeightedError(dNewValue) };
-			sc.Integrator.Weighted.Update(pVectorBegin, dError);
-			struct ConvergenceTest* const pCt{ ConvTest_ + pVectorBegin->EquationType };
+			const double dError{ r.GetWeightedError(dNewValue) };
+			sc.Integrator.Weighted.Update(&r, dError);
+			struct ConvergenceTest* const pCt{ ConvTest_ + r.EquationType };
 			pCt->AddError(dError);
 		}
 	}
@@ -356,22 +344,18 @@ double MixedAdamsBDF::GetRatioForHigherOrder()
 	double rUp{ 0.0 };
 	_ASSERTE(DynaModel_.Order() == 1);
 
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
-
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
 
 	const double Methodl1[2] = { Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][1],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][1] };
 
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+	for (auto&& r : DynaModel_.RightVectorRange())
 	{
-		if (pVectorBegin->Atol > 0)
+		if (r.Atol > 0)
 		{
-			struct ConvergenceTest* pCt{ ConvTest_ + pVectorBegin->EquationType };
-			double dNewValue = *pVectorBegin->pValue;
+			struct ConvergenceTest* pCt{ ConvTest_ + r.EquationType };
+			double dNewValue{ *r.pValue };
 			// method consts lq can be 1 only
-			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Error - pVectorBegin->SavedError, dNewValue) * Methodl1[pVectorBegin->EquationType];
+			const double dError{ r.GetWeightedError(r.Error - r.SavedError, dNewValue) * Methodl1[r.EquationType] };
 			pCt->AddError(dError);
 		}
 	}
@@ -392,23 +376,20 @@ double MixedAdamsBDF::GetRatioForHigherOrder()
 
 double MixedAdamsBDF::GetRatioForLowerOrder()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 
 	double rDown{ 0.0 };
 	_ASSERTE(DynaModel_.Order() == 2);
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
 
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+	for (auto&& r : DynaModel_.RightVectorRange())
 	{
-		if (pVectorBegin->Atol > 0)
+		if (r.Atol > 0)
 		{
-			struct ConvergenceTest* const pCt{ ConvTest_ + pVectorBegin->EquationType };
-			const double dNewValue{ *pVectorBegin->pValue };
+			struct ConvergenceTest* const pCt{ ConvTest_ + r.EquationType };
+			const double dNewValue{ *r.pValue };
 			// method consts lq can be 1 only
-			const double dError{ pVectorBegin->GetWeightedError(pVectorBegin->Nordsiek[2], dNewValue) };
+			const double dError{ r.GetWeightedError(r.Nordsiek[2], dNewValue) };
 			pCt->AddError(dError);
 		}
 	}
@@ -429,9 +410,6 @@ double MixedAdamsBDF::GetRatioForLowerOrder()
 
 void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -467,11 +445,11 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 	std::copy(&Methodl[DynaModel_.Order() - 1][0], &Methodl[DynaModel_.Order() - 1][3], &LocalMethodl[0][0]);
 	std::copy(&Methodl[DynaModel_.Order() + 1][0], &Methodl[DynaModel_.Order() + 1][3], &LocalMethodl[1][0]);
 
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+	for (auto&& r: DynaModel_.RightVectorRange())
 	{
 		// выбираем коэффициент метода по типу уравнения EquationType
-		const double& Error{ pVectorBegin->Error };
-		const double* lm = LocalMethodl[pVectorBegin->EquationType];
+		const double& Error{ r.Error };
+		const double* lm = LocalMethodl[r.EquationType];
 #ifdef _AVX2
 		const __m256d err = _mm256_set1_pd(pVectorBegin->Error);
 		__m256d lmms = _mm256_load_pd(lm);
@@ -479,51 +457,51 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 		nord = _mm256_fmadd_pd(err, lmms, nord);
 		_mm256_store_pd(pVectorBegin->Nordsiek, nord);
 #else
-		pVectorBegin->Nordsiek[0] += Error * *lm;	lm++;
-		pVectorBegin->Nordsiek[1] += Error * *lm;	lm++;
-		pVectorBegin->Nordsiek[2] += Error * *lm;
+		r.Nordsiek[0] += Error * *lm;	lm++;
+		r.Nordsiek[1] += Error * *lm;	lm++;
+		r.Nordsiek[2] += Error * *lm;
 #endif
 	}
 
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+	for (auto&& r : DynaModel_.RightVectorRange())
 	{
-		pVectorBegin->SavedError = pVectorBegin->Error;
+		r.SavedError = r.Error;
 		// подавление рингинга
 		if (bSuprressRinging)
 		{
-			if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
+			if (r.EquationType == DET_DIFFERENTIAL)
 			{
 				// рингинг подавляем только для дифуров (если дифуры решаются BDF надо сбрасывать подавление в ARSM_NONE)
 				switch (Parameters.m_eAdamsRingingSuppressionMode)
 				{
 				case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
-					if (pVectorBegin->RingsSuppress > 0)
+					if (r.RingsSuppress > 0)
 					{
 						// для переменных, у которых количество шагов для замены Адамса на BDF не исчерпано
 						// делаем эту замену и уменьшаем счетчик
-						pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
-						pVectorBegin->RingsSuppress--;
-						pVectorBegin->RingsCount = 0;
+						r.Nordsiek[1] = (alphasq * r.Tminus2Value - alpha1 * alpha1 * r.SavedNordsiek[0] + alpha2 * r.Nordsiek[0]) / alpha1;
+						r.RingsSuppress--;
+						r.RingsCount = 0;
 					}
 					break;
 				case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_GLOBAL:
 					// в глобальном режиме просто заменяем производную Адамса на производную BDF
-					pVectorBegin->Nordsiek[1] = (alphasq * pVectorBegin->Tminus2Value - alpha1 * alpha1 * pVectorBegin->SavedNordsiek[0] + alpha2 * pVectorBegin->Nordsiek[0]) / alpha1;
+					r.Nordsiek[1] = (alphasq * r.Tminus2Value - alpha1 * alpha1 * r.SavedNordsiek[0] + alpha2 * r.Nordsiek[0]) / alpha1;
 					break;
 				}
 			}
 		}
 
 		// сохраняем пред-предыдущее значение переменной состояния
-		pVectorBegin->Tminus2Value = pVectorBegin->SavedNordsiek[0];
+		r.Tminus2Value = r.SavedNordsiek[0];
 
 		// и сохраняем текущее значение переменных состояния перед новым шагом
 #ifdef _AVX2
 		_mm256_store_pd(pVectorBegin->SavedNordsiek, _mm256_load_pd(pVectorBegin->Nordsiek));
 #else
-		pVectorBegin->SavedNordsiek[0] = pVectorBegin->Nordsiek[0];
-		pVectorBegin->SavedNordsiek[1] = pVectorBegin->Nordsiek[1];
-		pVectorBegin->SavedNordsiek[2] = pVectorBegin->Nordsiek[2];
+		r.SavedNordsiek[0] = r.Nordsiek[0];
+		r.SavedNordsiek[1] = r.Nordsiek[1];
+		r.SavedNordsiek[2] = r.Nordsiek[2];
 #endif
 	}
 
@@ -579,19 +557,13 @@ void MixedAdamsBDF::ChangeOrder(ptrdiff_t newOrder)
 
 void MixedAdamsBDF::ConstructNordsiekOrder()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-		pVectorBegin->Nordsiek[2] = pVectorBegin->Error / 2.0;
+	for (auto&& r :  DynaModel_.RightVectorRange() )
+		r.Nordsiek[2] = r.Error / 2.0;
 }
 
 // масштабирование Nordsieck на заданный коэффициент изменения шага
 void MixedAdamsBDF::RescaleNordsiek()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -612,7 +584,7 @@ void MixedAdamsBDF::RescaleNordsiek()
 #ifdef _AVX2
 	const __m256d rs = _mm256_load_pd(crs);
 #endif
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+	for (auto&& r:  DynaModel_.RightVectorRange())
 	{
 #ifdef _AVX2
 		__m256d nord = _mm256_load_pd(pVectorBegin->Nordsiek);
@@ -620,7 +592,7 @@ void MixedAdamsBDF::RescaleNordsiek()
 		_mm256_store_pd(pVectorBegin->Nordsiek, nord);
 #else
 		for (ptrdiff_t j = 1; j < DynaModel_.Order() + 1; j++)
-			pVectorBegin->Nordsiek[j] *= crs[j];
+			r.Nordsiek[j] *= crs[j];
 #endif
 	}
 
@@ -676,26 +648,23 @@ void MixedAdamsBDF::Computehl0()
 // ненадежна
 void MixedAdamsBDF::ReInitializeNordsiek()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
 	if (sc.m_bNordsiekSaved)
 	{
 		// если есть сохраненный шаг
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+		for (auto&& r : DynaModel_.RightVectorRange())
 		{
 			// значение восстанавливаем
-			pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0];
-			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
+			r.Nordsiek[0] = r.SavedNordsiek[0];
+			*r.pValue = r.Nordsiek[0];
 			// а элемент первого порядка конструируем по разности между предыдущим и пред-предыдущим значениями
 			// т.к. первый элемент это hy', а y' = (y(-1) - y(-2)) / h. Note - мы берем производную с пред-предыдущего шага
 
 			//											y(-1)						y(-2)
-			pVectorBegin->Nordsiek[1] = pVectorBegin->SavedNordsiek[0] - pVectorBegin->Tminus2Value;
-			pVectorBegin->SavedError = 0.0;
+			r.Nordsiek[1] = r.SavedNordsiek[0] - r.Tminus2Value;
+			r.SavedError = 0.0;
 		}
 		// масшатабируем Nordsieck на заданный шаг
 		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
@@ -710,9 +679,6 @@ void MixedAdamsBDF::ReInitializeNordsiek()
 // восстанавление Nordsieck с предыдущего шага
 void MixedAdamsBDF::RestoreNordsiek()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector(0) };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
@@ -720,20 +686,20 @@ void MixedAdamsBDF::RestoreNordsiek()
 	{
 		// если есть данные для восстановления - просто копируем предыдущий шаг
 		// в текущий
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+		for (auto&& r : DynaModel_.RightVectorRange())
 		{
 
 #ifdef _AVX2
 			_mm256_store_pd(pVectorBegin->Nordsiek, _mm256_load_pd(pVectorBegin->SavedNordsiek));
 #else
-			double* pN = pVectorBegin->Nordsiek;
-			double* pS = pVectorBegin->SavedNordsiek;
+			double* pN{ r.Nordsiek };
+			double* pS{ r.SavedNordsiek };
 			*pN = *pS; pS++; pN++;
 			*pN = *pS; pS++; pN++;
 			*pN = *pS; pS++; pN++;
 #endif
-			* pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-			pVectorBegin->Error = pVectorBegin->SavedError;
+			*r.pValue = r.Nordsiek[0];
+			r.Error = r.SavedError;
 		}
 		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
 	}
@@ -742,11 +708,11 @@ void MixedAdamsBDF::RestoreNordsiek()
 		// если данных для восстановления нет
 		// считаем что прозводные нулевые
 		// это слабая надежда, но лучше чем ничего
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+		for (auto&& r : DynaModel_.RightVectorRange())
 		{
-			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-			pVectorBegin->Nordsiek[1] = pVectorBegin->Nordsiek[2] = 0.0;
-			pVectorBegin->Error = 0.0;
+			*r.pValue = r.Nordsiek[0];
+			r.Nordsiek[1] = r.Nordsiek[2] = 0.0;
+			r.Error = 0.0;
 		}
 		sc.SetNordsiekScaledForH(0.0);
 		sc.SetNordsiekScaledForHSaved(0.0);
@@ -759,27 +725,22 @@ void MixedAdamsBDF::RestoreNordsiek()
 
 void MixedAdamsBDF::NewtonBacktrack(const double* pVec, double lambda)
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
 	const double Methodl0[2]{ Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][0],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][0] };
 	const double* pB{ pVec };
 	lambda -= 1.0;
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++)
+	for (auto&& r: DynaModel_.RightVectorRange())
 	{
-		pVectorBegin->Error += *pB * lambda;
-		*pVectorBegin->pValue = pVectorBegin->Nordsiek[0] + Methodl0[pVectorBegin->EquationType] * pVectorBegin->Error;
+		r.Error += *pB * lambda;
+		*r.pValue = r.Nordsiek[0] + Methodl0[r.EquationType] * r.Error;
+		++pB;
 	}
 }
 
 void MixedAdamsBDF::NewtonUpdateIteration()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
 
 	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
 	const double ConvCheck{ 0.1 / (DynaModel_.Order() + 2.0) };
@@ -792,31 +753,33 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 
 	const double* pB{ DynaModel_.B() };
 
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++, pB++)
+	for (auto&& r : DynaModel_.RightVectorRange())
 	{
-		pVectorBegin->b = *pB;
-		pVectorBegin->Error += pVectorBegin->b;
-		sc.Newton.Absolute.Update(pVectorBegin, std::abs(pVectorBegin->b));
+		r.b = *pB;
+		r.Error += r.b;
+		sc.Newton.Absolute.Update(&r, std::abs(r.b));
 
 #ifdef USE_FMA
 		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
 #else
-		const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
+		const double dNewValue{ r.Nordsiek[0] + r.Error * Methodl0[r.EquationType] };
 #endif
-		const double dOldValue{ *pVectorBegin->pValue };
-		*pVectorBegin->pValue = dNewValue;
-		if (pVectorBegin->Atol > 0)
+		const double dOldValue{ *r.pValue };
+		*r.pValue = dNewValue;
+		if (r.Atol > 0)
 		{
-			const double dError{ pVectorBegin->GetWeightedError(pVectorBegin->b, dOldValue) };
-			sc.Newton.Weighted.Update(pVectorBegin, dError);
+			const double dError{ r.GetWeightedError(r.b, dOldValue) };
+			sc.Newton.Weighted.Update(&r, dError);
 			_CheckNumber(dError);
-			ConvergenceTest* pCt{ ConvTest_ + pVectorBegin->EquationType };
+			ConvergenceTest* pCt{ ConvTest_ + r.EquationType };
 #ifdef _DEBUG
 			// breakpoint place for nans
 			_ASSERTE(!std::isnan(dError));
 #endif
 			pCt->AddError(dError);
 		}
+
+		++pB;
 	}
 
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::FinalizeSum);
@@ -840,12 +803,8 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 
 void MixedAdamsBDF::DetectAdamsRinging()
 {
-	RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	RightVector* pVectorBegin{ pRightVector };
 	const auto& Parameters{ DynaModel_.Parameters() };
 	auto& sc{ DynaModel_.StepControl() };
-	const RightVector* const pVectorEnd{ pVectorBegin + DynaModel_.MatrixSize() };
-
 	sc.bRingingDetected = false;
 
 	if ((Parameters.m_eAdamsRingingSuppressionMode == ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA ||
@@ -854,47 +813,47 @@ void MixedAdamsBDF::DetectAdamsRinging()
 	{
 		const double Methodl1[2]{ Methodl[DynaModel_.Order() - 1 + DET_ALGEBRAIC * 2][1],  Methodl[DynaModel_.Order() - 1 + DET_DIFFERENTIAL * 2][1] };
 
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
+		for(auto&& r : DynaModel_.RightVectorRange())
 		{
 #ifdef USE_FMA
 			double newValue = std::fma(pVectorBegin->Error, Methodl1[pVectorBegin->EquationType], pVectorBegin->Nordsiek[1]);
 #else 
-			double newValue = pVectorBegin->Error * Methodl1[pVectorBegin->EquationType] + pVectorBegin->Nordsiek[1];
+			double newValue{ r.Error * Methodl1[r.EquationType] + r.Nordsiek[1] };
 #endif
 			// если знак производной изменился - увеличиваем счетчик циклов
-			if (std::signbit(newValue) != std::signbit(pVectorBegin->SavedNordsiek[1]) && std::abs(newValue) > pVectorBegin->Atol * DynaModel_.H() * 5.0)
-				pVectorBegin->RingsCount++;
+			if (std::signbit(newValue) != std::signbit(r.SavedNordsiek[1]) && std::abs(newValue) > r.Atol * DynaModel_.H() * 5.0)
+				r.RingsCount++;
 			else
-				pVectorBegin->RingsCount = 0;
+				r.RingsCount = 0;
 
 			// если счетчик циклов изменения знака достиг порога
-			if (pVectorBegin->RingsCount > Parameters.m_nAdamsIndividualSuppressionCycles)
+			if (r.RingsCount > Parameters.m_nAdamsIndividualSuppressionCycles)
 			{
-				pVectorBegin->RingsCount = 0;
+				r.RingsCount = 0;
 				sc.bRingingDetected = true;
 				switch (Parameters.m_eAdamsRingingSuppressionMode)
 				{
 				case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_INDIVIDUAL:
-					if (pVectorBegin->EquationType == DET_DIFFERENTIAL)
+					if (r.EquationType == DET_DIFFERENTIAL)
 					{
 						// в RightVector устанавливаем количество шагов, на протяжении которых производная Адамса будет заменяться 
 						// на производную  BDF
-						pVectorBegin->RingsSuppress = Parameters.m_nAdamsIndividualSuppressStepsRange;
+						r.RingsSuppress = Parameters.m_nAdamsIndividualSuppressStepsRange;
 					}
 					break;
 				case ADAMS_RINGING_SUPPRESSION_MODE::ARSM_DAMPALPHA:
-					pVectorBegin->RingsSuppress = Parameters.m_nAdamsIndividualSuppressStepsRange;
+					r.RingsSuppress = Parameters.m_nAdamsIndividualSuppressStepsRange;
 					break;
 				}
 
-				if (pVectorBegin->RingsSuppress)
+				if (r.RingsSuppress)
 				{
 					DynaModel_.Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Ringing {} {} last values {} {} {}",
-									pVectorBegin->pDevice->GetVerbalName(),
-									pVectorBegin->pDevice->VariableNameByPtr(pVectorBegin->pValue),
+									r.pDevice->GetVerbalName(),
+									r.pDevice->VariableNameByPtr(r.pValue),
 									newValue,
-									pVectorBegin->SavedNordsiek[0],
-									pVectorBegin->RingsSuppress));
+									r.SavedNordsiek[0],
+									r.RingsSuppress));
 				}
 			}
 		}
@@ -924,7 +883,7 @@ void  MixedAdamsBDF::DOperator(ptrdiff_t Row, double& Value)
 
 void MixedAdamsBDF::WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value)
 {
-	const  RightVector* const pRightVector{ DynaModel_.GetRightVector()};
+	const RightVector* const pRightVector{ DynaModel_.GetRightVector()};
 	const ptrdiff_t nMethodIndx{ static_cast<ptrdiff_t>((pRightVector + Col)->EquationType) * 2 + (DynaModel_.Order() - 1)};
 	// в качестве типа уравнения используем __физический__ тип
 	// потому что у алгебраических и дифференциальных уравнений
@@ -947,13 +906,13 @@ void MixedAdamsBDF::Restart()
 	auto& sc{ DynaModel_.StepControl() };
 	if (sc.m_bNordsiekSaved)
 	{
-		for (auto RVRange{ DynaModel_.RightVectorRange() }; RVRange.begin < RVRange.end ; RVRange.begin++)
+		for (auto&& r :  DynaModel_.RightVectorRange())
 		{
 			// в качестве значения принимаем то, что рассчитано в устройстве
-			RVRange.begin->Tminus2Value = RVRange.begin->Nordsiek[0] = RVRange.begin->SavedNordsiek[0] = *RVRange.begin->pValue;
+			r.Tminus2Value = r.Nordsiek[0] = r.SavedNordsiek[0] = *r.pValue;
 			// первая производная равна нулю (вторая тоже, но после Reset мы ее не используем, т.к. работаем на первом порядке
-			RVRange.begin->Nordsiek[1] = RVRange.begin->SavedNordsiek[1] = 0.0;
-			RVRange.begin->SavedError = 0.0;
+			r.Nordsiek[1] = r.SavedNordsiek[1] = 0.0;
+			r.SavedError = 0.0;
 		}
 		// запрашиваем расчет производных дифференциальных уравнений у устройств, которые это могут
 		DynaModel_.BuildDerivatives();

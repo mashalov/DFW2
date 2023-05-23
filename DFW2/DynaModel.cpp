@@ -146,7 +146,8 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	if (!SSE2Available_)
 		throw dfw2error(CDFW2Messages::m_cszNoSSE2Support);
 
-	Integrator_ = std::make_unique<Rodas4>(*this);
+	//Integrator_ = std::make_unique<Rosenbrock23>(*this);
+	Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
 }
 
 
