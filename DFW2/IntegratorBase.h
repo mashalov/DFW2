@@ -91,6 +91,7 @@ namespace DFW2
 	class IntegratorBase
 	{
 	protected:
+		bool fsal_ = false;
 		using vecType = std::vector<double>;
 		CDynaModel& DynaModel_;
 		ConvergenceTest::ConvergenceTestVec ConvTest_;
@@ -113,6 +114,7 @@ namespace DFW2
 		virtual void WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value) = 0;
 		virtual void AOperator(ptrdiff_t Row, double& Value) = 0;
 		virtual void DOperator(ptrdiff_t Row, double& Value) = 0;
+		virtual void Restart() {};
 		inline ConvergenceTest::ConvergenceTestVec& ConvTest()  { return ConvTest_; }
 	};
 

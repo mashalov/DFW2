@@ -8,6 +8,11 @@ Rodas4::Rodas4(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel)
 
 }
 
+void Rodas4::Restart()
+{
+	fsal_ = false;
+}
+
 void Rodas4::Step()
 {
 	const bool Refine{ false };
