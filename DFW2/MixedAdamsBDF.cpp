@@ -56,7 +56,6 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 					ConstructNordsiekOrder();
 					ChangeOrder(2);
 					DynaModel_.SetH(DynaModel_.H() * sc.dFilteredOrder);
-					RescaleNordsiek();
 					DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
 						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged,
 							DynaModel_.Order(),
@@ -81,9 +80,8 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 				// пытаемся перейти на первый порядок
 				if (sc.FilterOrder(rLower))
 				{
-					DynaModel_.SetH(DynaModel_.H() * sc.dFilteredOrder);
 					ChangeOrder(1);
-					RescaleNordsiek();
+					DynaModel_.SetH(DynaModel_.H() * sc.dFilteredOrder);
 					DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
 						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged,
 							DynaModel_.Order(),
@@ -111,7 +109,6 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 			// рассчитываем новый шаг
 			// пересчитываем Nordsieck на новый шаг
 			DynaModel_.SetH(DynaModel_.H() * sc.dFilteredStep);
-			RescaleNordsiek();
 			DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged,
 				DynaModel_.H(),
 				k,
@@ -133,6 +130,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 void MixedAdamsBDF::UpdateStepSize()
 {
 	Computehl0();
+	RescaleNordsiek();
 }
 
 void MixedAdamsBDF::RejectStep()
@@ -179,7 +177,6 @@ void MixedAdamsBDF::RejectStep()
 			// производные
 			UpdateNordsiek();
 			DynaModel_.SetH(newEffectiveH);
-			RescaleNordsiek();
 		}
 		else
 			ReInitializeNordsiek(); // если заваленных шагов слишком много, делаем новый Nordsieck
@@ -194,7 +191,6 @@ void MixedAdamsBDF::RejectStep()
 		sc.nMinimumStepFailures = 0;
 		RestoreNordsiek();					// восстанавливаем Nordsieck c предыдущего шага
 		DynaModel_.SetH(newEffectiveH);
-		RescaleNordsiek();					// масштабируем Nordsieck на новый (половинный см. выше) шаг
 		sc.CheckAdvance_t0();
 	}
 }
@@ -224,7 +220,7 @@ void MixedAdamsBDF::Predict()
 	SnapshotRightVector();
 #endif
 
-	if (!DynaModel_.StepControl().m_bNordsiekReset)
+	if (!DynaModel_.StepFromReset())
 	{
 		/* 	Алгоритм расчета [Lsode 2.61]
 			for (ptrdiff_t k = 0; k < sc.q; k++)
@@ -537,7 +533,7 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 	// после того как Нордсик обновлен,
 	// сбрасываем флаг ресета, начинаем работу предиктора
 	// и контроль соответствия предиктора корректору
-	sc.m_bNordsiekReset = false;
+	DynaModel_.ResetStep(false);
 
 	for (auto&& it : DynaModel_.DeviceContainersStoreStates())
 		for (auto&& dit : *it)
@@ -602,7 +598,8 @@ void MixedAdamsBDF::RescaleNordsiek()
 	// расчет выполняется путем умножения текущего Nordsieck на диагональную матрицу C[q+1;q+1]
 	// с элементами C[i,i] = r^(i-1) [Lsode 2.64]
 
-	_ASSERTE(sc.NordsiekScaledForH() > 0.0);
+	if (sc.NordsiekScaledForH() <= 0.0)
+		return;
 	const double r{ DynaModel_.H() / sc.NordsiekScaledForH() };
 	if (r == 1.0)
 		return;
@@ -943,6 +940,32 @@ void MixedAdamsBDF::WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value)
 		if (Row == Col)
 			Value = 1.0 - Value;
 	}
+}
+
+void MixedAdamsBDF::Restart()
+{
+	auto& sc{ DynaModel_.StepControl() };
+	if (sc.m_bNordsiekSaved)
+	{
+		for (auto RVRange{ DynaModel_.RightVectorRange() }; RVRange.begin < RVRange.end ; RVRange.begin++)
+		{
+			// в качестве значения принимаем то, что рассчитано в устройстве
+			RVRange.begin->Tminus2Value = RVRange.begin->Nordsiek[0] = RVRange.begin->SavedNordsiek[0] = *RVRange.begin->pValue;
+			// первая производная равна нулю (вторая тоже, но после Reset мы ее не используем, т.к. работаем на первом порядке
+			RVRange.begin->Nordsiek[1] = RVRange.begin->SavedNordsiek[1] = 0.0;
+			RVRange.begin->SavedError = 0.0;
+		}
+		// запрашиваем расчет производных дифференциальных уравнений у устройств, которые это могут
+		DynaModel_.BuildDerivatives();
+	}
+	sc.OrderChanged();
+	sc.StepChanged();
+	// ставим флаг ресета Нордсика, чтобы не
+	// контролировать соответствие предиктора-корректору
+	// на стартап-шаге
+	DynaModel_.ResetStep(true);
+	sc.SetNordsiekScaledForH(DynaModel_.H());
+	sc.SetNordsiekScaledForHSaved(DynaModel_.H());
 }
 
 

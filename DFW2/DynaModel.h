@@ -381,7 +381,7 @@ namespace DFW2
 			StepError Integrator;
 			double m_dLastRefactorH = 0.0;
 			bool bRingingDetected = false;
-			bool m_bNordsiekReset = true;		// флаг сброса Нордсика - производные равны нулю, контроль предиктора не выполняется
+			bool StepFromReset_ = true;		// флаг сброса Нордсика - производные равны нулю, контроль предиктора не выполняется
 
 			StatisticsMaxFinder m_MaxBranchAngle, m_MaxGeneratorAngle;
 
@@ -607,7 +607,6 @@ namespace DFW2
 		void RestoreNordsiek();
 		void ConstructNordsiekOrder();
 		void ReInitializeNordsiek();
-		void ResetNordsiek();
 		double CheckZeroCrossing();
 		void FinishStep();
 		void DumpStatistics();
@@ -688,8 +687,9 @@ namespace DFW2
 		bool RunTest();
 		bool RunLoadFlow();
 		void SolveNewton(ptrdiff_t nMaxIts);
-		void BuildMatrix();
+		void BuildMatrix(bool SkipRightHand = false);
 		void BuildRightHand();
+		void BuildDerivatives();
 		void SolveLinearSystem(bool Refined = false);
 		void NewtonUpdateDevices();
 
@@ -710,7 +710,6 @@ namespace DFW2
 		void SetFunction(const VariableIndexBase& Row, double dValue);
 		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
 		void SetDerivative(const VariableIndexBase& Row, double dValue);
-		void BuildDerivatives();
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		// Задает значение для переменной, и компонентов Нордиска. 
 		// Используется, в основном, для ввода ограничения переменной
@@ -798,9 +797,14 @@ namespace DFW2
 			sc.StoreUsedH();
 		}
 
-		inline bool IsNordsiekReset() const
+		inline bool StepFromReset() const
 		{
-			return sc.m_bNordsiekReset;
+			return sc.StepFromReset_;
+		}
+
+		void ResetStep(bool Reset = true)
+		{
+			sc.StepFromReset_ = Reset;
 		}
 
 		[[nodiscard]] static bool IsSSE2Available();

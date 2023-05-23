@@ -11,7 +11,12 @@ Rodas4::Rodas4(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel)
 void Rodas4::Restart()
 {
 	fsal_ = false;
+	DynaModel_.ResetStep(true);
+	for (auto RVRange{ DynaModel_.RightVectorRange() }; RVRange.begin < RVRange.end; RVRange.begin++)
+		// в качестве значения принимаем то, что рассчитано в устройстве
+		RVRange.begin->Tminus2Value = RVRange.begin->Nordsiek[0] = RVRange.begin->SavedNordsiek[0] = *RVRange.begin->pValue;
 }
+
 
 void Rodas4::Step()
 {
@@ -35,7 +40,7 @@ void Rodas4::Step()
 		return;
 	}
 
-	if(sc.nStepsCount == 2316)
+	if (sc.nStepsCount == 2316)
 		if (PrevNorm_ == 0.0)
 			PrevNorm_ = 0.5;
 
@@ -43,16 +48,26 @@ void Rodas4::Step()
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 
 	FromModel(uprev);
-	
-	for (auto&& it : DynaModel_.DeviceContainersPredict())
-		it->Predict();
-	DynaModel_.NewtonUpdateDevices();
-	DynaModel_.BuildMatrix();
-	FromB(f0);
+
+
+
+	if (fsal_)
+	{
+		f0 = f2;
+		DynaModel_.BuildMatrix(false);
+	}
+	else
+	{
+		for (auto&& it : DynaModel_.DeviceContainersPredict())
+			it->Predict();
+		DynaModel_.NewtonUpdateDevices();
+		DynaModel_.BuildMatrix();
+		FromB(f0);
+	}
 
 	DynaModel_.SolveLinearSystem(Refine);
 
-	const double dth { h * d };
+	const double dth{ h * d };
 
 	{
 		uprevit = uprev.begin();
@@ -66,7 +81,7 @@ void Rodas4::Step()
 	}
 
 	f(f1);
-	
+
 	{
 		auto BRange{ DynaModel_.BRange() };
 		auto RVRange{ DynaModel_.RightVectorRange() };
@@ -98,6 +113,8 @@ void Rodas4::Step()
 	}
 
 	f(f2);
+
+	fsal_ = true;
 
 	{
 		auto BRange{ DynaModel_.BRange() };
@@ -150,9 +167,9 @@ void Rodas4::Step()
 
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::FinalizeSum);
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::GetRMS);
-	
+
 	sc.m_bNewtonConverged = true;
-	sc.m_bNordsiekReset = false;
+	DynaModel_.ResetStep(false);
 }
 
 double Rodas4::NextH() const

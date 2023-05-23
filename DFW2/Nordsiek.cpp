@@ -29,34 +29,6 @@ void CDynaModel::InitNordsiek()
 	sc.m_bNordsiekSaved = false;
 }
 
-// сброс элементов Нордиска (уничтожение истории)
-void CDynaModel::ResetNordsiek()
-{
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-
-	if (sc.m_bNordsiekSaved)
-	{
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-		{
-			// в качестве значения принимаем то, что рассчитано в устройстве
-			pVectorBegin->Tminus2Value = pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0] = *pVectorBegin->pValue;
-			// первая производная равна нулю (вторая тоже, но после Reset мы ее не используем, т.к. работаем на первом порядке
-			pVectorBegin->Nordsiek[1] = pVectorBegin->SavedNordsiek[1] = 0.0;
-			pVectorBegin->SavedError = 0.0;
-		}
-		// запрашиваем расчет производных дифференциальных уравнений у устройств, которые это могут
-		BuildDerivatives();
-	}
-	sc.OrderChanged();
-	sc.StepChanged();
-	// ставим флаг ресета Нордсика, чтобы не
-	// контролировать соответствие предиктора-корректору
-	// на стартап-шаге
-	sc.m_bNordsiekReset = true;
-	sc.SetNordsiekScaledForH(H());
-	sc.SetNordsiekScaledForHSaved(H());
-}
-
 // построение Nordsieck после того, как обнаружено что текущая история
 // ненадежна
 void CDynaModel::ReInitializeNordsiek()

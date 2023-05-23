@@ -123,11 +123,11 @@ void CDynaModel::BuildRightHand()
 	std::copy(klu.B(), klu.B() + m_nEstimatedMatrixSize, pRightHandBackup.get());
 }
 
-void CDynaModel::BuildMatrix()
+void CDynaModel::BuildMatrix(bool SkipRightHand)
 {
 	RESET_CHECK_MATRIX_ELEMENT();
 
-	if (!EstimateBuild())
+	if (!EstimateBuild() && !SkipRightHand)
 		BuildRightHand();
 
 	if (sc.m_bRefactorMatrix)
@@ -630,50 +630,30 @@ void CDynaModel::UpdateNewRightVector()
 	// логика синхронизации векторов такая же как в UpdateTotalRightVector
 	for (auto&& cit : DeviceContainers_)
 	{
-		if (cit->ContainerProps().bVolatile)
-		{
-			//pRv += cit->Count() * cit->EquationsCount();
-			//continue;
-			for (auto&& dit : *cit)
-			{
-				if (dit->AssignedToMatrix())
-				{
-					for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++)
-					{
-						// проверяем, совпадают ли адрес устройства и переменной в полном векторе
-						// с адресом устройства и переменной во рабочем векторе
-						if (pRv >= pEnd)
-							throw dfw2error("CDynaModel::UpdateNewRightVector - New right vector overrun");
-						InitNordsiekElement(pRv, Atol(), Rtol());
-						PrepareNordsiekElement(pRv);
-						pRv++;
-					}
-				}
-			}
-			continue;
-		}
-
 		// для устройств в контейнере, которые включены в матрицу
 
 		for (auto&& dit : *cit)
 		{
+			const bool VolatileContainer{ cit->ContainerProps().bVolatile };
 			if (dit->AssignedToMatrix())
 			{
-				for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++)
+				for (ptrdiff_t z = 0; z < cit->EquationsCount(); z++, pRv++)
 				{
 					// проверяем, совпадают ли адрес устройства и переменной в полном векторе
 					// с адресом устройства и переменной во рабочем векторе
 					if (pRv >= pEnd)
 						throw dfw2error("CDynaModel::UpdateNewRightVector - New right vector overrun");
 
-					/*
-					if (pRvB->pDevice != pRv->pDevice || pRvB->pValue != pRv->pValue)
-						throw dfw2error("CDynaModel::UpdateNewRightVector - TotalRightVector Out Of Sync");
-						*/
-					InitNordsiekElement(pRv, pRvB->Atol, pRvB->Rtol);
+					// обходим устройства, которые volatile
+					if (VolatileContainer)
+						InitNordsiekElement(pRv, Atol(), Rtol());
+					else
+					{
+						InitNordsiekElement(pRv, pRvB->Atol, pRvB->Rtol);
+						*static_cast<RightVectorTotal*>(pRv) = *pRvB;
+						pRvB++;
+					}
 					PrepareNordsiekElement(pRv);
-					*static_cast<RightVectorTotal*>(pRv) = *pRvB;
-					pRv++;	pRvB++;
 				}
 			}
 			else

@@ -146,7 +146,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	if (!SSE2Available_)
 		throw dfw2error(CDFW2Messages::m_cszNoSSE2Support);
 
-	Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
+	Integrator_ = std::make_unique<Rodas4>(*this);
 }
 
 
@@ -519,6 +519,7 @@ void CDynaModel::InitEquations()
 	}
 
 	double dCurrentH{ H() };
+	sc.SetNordsiekScaledForH(1.0);
 	SetH(0.0);
 	sc.m_bDiscontinuityMode = true;
 	SolveNewton(100);
@@ -746,7 +747,6 @@ bool CDynaModel::Step()
 			if (rHit > DFW2_EPSILON)
 			{
 				SetH(H() * rHit); 							// меняем шаг
-				RescaleNordsiek();							// пересчитываем Nordsieck на новый шаг
 				LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
 					fmt::format(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, 
 						H()));
@@ -836,7 +836,7 @@ bool CDynaModel::Step()
 					
 				// рассчитываем возможный шаг для текущего порядка метода
 				// если сделанный шаг не был сделан без предиктора
-				if (sc.m_bNordsiekReset)
+				if (StepFromReset())
 				{
 					// если нордсик был сброшен не конторолируем предиктор
 					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("startup step"));
@@ -847,7 +847,7 @@ bool CDynaModel::Step()
 				// шаг выполнен успешно если это был стартап-шаг
 				// после сброса предиктора или корректор и предиктор
 				// дали возможность не уменьшать шаг
-				if (StepConverged || sc.m_bNordsiekReset)
+				if (StepConverged || StepFromReset())
 				{
 
 					// если шаг можно увеличить
@@ -900,7 +900,7 @@ bool CDynaModel::Step()
 							if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
 							{
 								// если не было запросов обработки разрыва признаем шаг успешным
-								Integrator_->AcceptStep(sc.m_bNordsiekReset);
+								Integrator_->AcceptStep(StepFromReset());
 							}
 							else
 							{
@@ -960,7 +960,6 @@ void CDynaModel::EnterDiscontinuityMode()
 		ChangeOrder(1);
 		StoreUsedH();
 		SetH(0.0);
-		RescaleNordsiek();
 	}
 }
 
@@ -1047,7 +1046,7 @@ void CDynaModel::ProcessDiscontinuity()
 		}
 		// инициализируем Нордсик
 		sc.DiscontinuitiesProcessed_++;
-		ResetNordsiek();
+		Integrator_->Restart();
 	}
 	else
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -1064,7 +1063,7 @@ void CDynaModel::LeaveDiscontinuityMode()
 		for (auto&& it : DeviceContainers_)
 			it->LeaveDiscontinuityMode(this);
 		SetRestartH();
-		ResetNordsiek();
+		Integrator_->Restart();
 	}
 }
 
@@ -1152,7 +1151,7 @@ void CDynaModel::NewtonFailed()
 	}
 
 	if (sc.Hmin / H() > 0.99)
-		ResetNordsiek();
+		Integrator_->Restart();
 	else
 		ReInitializeNordsiek();
 	
@@ -1181,7 +1180,6 @@ void CDynaModel::RepeatZeroCrossing(double rH)
 	}
 	sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
 	SetH(rHstep);
-	RescaleNordsiek();
 	sc.CheckAdvance_t0();
 	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep,
 																				H(), 
