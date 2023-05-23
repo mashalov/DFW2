@@ -228,7 +228,8 @@ void Rodas4::Step()
 		{
 			*k1it = *BRange;
 			//	u = uprev + a21 * k1
-			*r.pValue = *uprevit + a21 * *k1it;
+			//*r.pValue = *uprevit + a21 * *k1it;
+			*r.pValue = std::fma(a21, *k1it, *uprevit) ;
 			++uprevit;
 			++k1it;
 			++BRange;
@@ -244,7 +245,8 @@ void Rodas4::Step()
 		for (auto&& r : DynaModel_.RightVectorRange())
 		{
 			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
-				*BRange += dtC21 * *k1it;
+				//*BRange += dtC21 * *k1it;
+				*BRange = std::fma(dtC21, *k1it, *BRange);
 			++BRange;
 			++k1it;
 		}
@@ -260,7 +262,8 @@ void Rodas4::Step()
 		auto k2it{ k2.begin() };
 		for (auto&& r : DynaModel_.RightVectorRange())
 		{
-			*r.pValue = *uprevit + a31 * *k1it + a32 * *k2it;
+			//*r.pValue = *uprevit + a31 * *k1it + a32 * *k2it;
+			*r.pValue = std::fma(a31, *k1it,  std::fma(a32, *k2it, *uprevit));
 			++uprevit;
 			++k1it;
 			++k2it;
@@ -277,7 +280,8 @@ void Rodas4::Step()
 		for (auto&& r : DynaModel_.RightVectorRange())
 		{
 			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
-				*BRange += dtC31 * *k1it + dtC32 * *k2it;
+				//*BRange += dtC31 * *k1it + dtC32 * *k2it;
+				*BRange = std::fma(dtC31, *k1it, std::fma(dtC32, *k2it, *BRange));
 			++BRange;
 			++k1it;
 			++k2it;
@@ -295,7 +299,8 @@ void Rodas4::Step()
 		auto k3it{ k3.begin() };
 		for (auto&& r : DynaModel_.RightVectorRange())
 		{
-			*r.pValue = *uprevit + a41 * *k1it + a42 * *k2it + a43 * *k3it;
+			//*r.pValue = *uprevit + a41 * *k1it + a42 * *k2it + a43 * *k3it;
+			*r.pValue = std::fma(a41, *k1it, std::fma(a42, *k2it, std::fma(a43, *k3it, *uprevit)));
 			++uprevit;
 			++k1it;
 			++k2it;
@@ -313,7 +318,8 @@ void Rodas4::Step()
 		for (auto&& r : DynaModel_.RightVectorRange())
 		{
 			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
-				*BRange += dtC41 * *k1it + dtC42 * *k2it + dtC43* *k3it;
+				//*BRange += dtC41 * *k1it + dtC42 * *k2it + dtC43* *k3it;
+				*BRange = std::fma(dtC41, *k1it, std::fma(dtC42, *k2it, std::fma(dtC43, *k3it, *BRange)));
 			++BRange;
 			++k1it;
 			++k2it;
@@ -333,7 +339,8 @@ void Rodas4::Step()
 		auto k4it{ k4.begin() };
 		for (auto&& r : DynaModel_.RightVectorRange())
 		{
-			*r.pValue = *uprevit + a51 * *k1it + a52 * *k2it + a53 * *k3it + a54 * *k4it;
+			//*r.pValue = *uprevit + a51 * *k1it + a52 * *k2it + a53 * *k3it + a54 * *k4it;
+			*r.pValue = std::fma(a51, *k1it, std::fma(a52, *k2it, std::fma(a53, *k3it, std::fma(a54, *k4it, *uprevit))));
 			++uprevit;
 			++k1it;
 			++k2it;
@@ -353,7 +360,8 @@ void Rodas4::Step()
 		for (auto&& r : DynaModel_.RightVectorRange())
 		{
 			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
-				*BRange += dtC52 * *k2it + dtC54 * *k4it + dtC51* *k1it + dtC53* * k3it;
+				//*BRange += dtC52 * *k2it + dtC54 * *k4it + dtC51* *k1it + dtC53* * k3it;
+				*BRange = std::fma(dtC52, *k2it, std::fma(dtC54, *k4it, std::fma(dtC51, *k1it, std::fma(dtC53, *k3it, *BRange))));
 			++BRange;
 			++k1it;
 			++k2it;
@@ -387,7 +395,8 @@ void Rodas4::Step()
 		for (auto&& r : DynaModel_.RightVectorRange())
 		{
 			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
-				*BRange += dtC61 * *k1it + dtC62 * *k2it + dtC65 * *k5it + dtC64 * *k4it + dtC63 * *k3it;
+				//*BRange += dtC61 * *k1it + dtC62 * *k2it + dtC65 * *k5it + dtC64 * *k4it + dtC63 * *k3it;
+				*BRange = std::fma(dtC61, *k1it, std::fma(dtC62, *k2it, std::fma(dtC65, *k5it, std::fma(dtC64, *k4it, std::fma(dtC63, *k3it, *BRange)))));
 			++BRange;
 			++k1it;
 			++k2it;
