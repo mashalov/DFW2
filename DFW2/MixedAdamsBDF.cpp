@@ -294,7 +294,7 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 		{
 			// compute again to not asking device via pointer
 #ifdef USE_FMA
-			double dNewValue = std::fma(pVectorBegin->Error, Methodl0[pVectorBegin->EquationType], pVectorBegin->Nordsiek[0]);
+			const double dNewValue{ std::fma(r.Error, Methodl0[r.EquationType], r.Nordsiek[0]) };
 #else
 			const double dNewValue{ r.Nordsiek[0] + r.Error * Methodl0[r.EquationType] };
 #endif
@@ -760,7 +760,7 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 		sc.Newton.Absolute.Update(&r, std::abs(r.b));
 
 #ifdef USE_FMA
-		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
+		const double dNewValue{ std::fma(Methodl0[r.EquationType], r.Error, r.Nordsiek[0]) };
 #else
 		const double dNewValue{ r.Nordsiek[0] + r.Error * Methodl0[r.EquationType] };
 #endif
@@ -816,9 +816,9 @@ void MixedAdamsBDF::DetectAdamsRinging()
 		for(auto&& r : DynaModel_.RightVectorRange())
 		{
 #ifdef USE_FMA
-			double newValue = std::fma(pVectorBegin->Error, Methodl1[pVectorBegin->EquationType], pVectorBegin->Nordsiek[1]);
+			const double newValue{ std::fma(r.Error, Methodl1[r.EquationType], r.Nordsiek[1]) };
 #else 
-			double newValue{ r.Error * Methodl1[r.EquationType] + r.Nordsiek[1] };
+			const double newValue{ r.Error * Methodl1[r.EquationType] + r.Nordsiek[1] };
 #endif
 			// если знак производной изменился - увеличиваем счетчик циклов
 			if (std::signbit(newValue) != std::signbit(r.SavedNordsiek[1]) && std::abs(newValue) > r.Atol * DynaModel_.H() * 5.0)
@@ -866,19 +866,21 @@ void MixedAdamsBDF::DetectAdamsRinging()
 	}
 }
 
-void  MixedAdamsBDF::AOperator(ptrdiff_t Row, double& Value)
+void  MixedAdamsBDF::BOperator()
 {
-	Value = -Value;
-}
+	auto BRange{ DynaModel_.BRange() };
+	for (const auto& r : DynaModel_.RightVectorRange())
+	{
+		if (r.PhysicalEquationType == DET_ALGEBRAIC)
+			*BRange = -*BRange;
+		else
+		{
 
-void  MixedAdamsBDF::DOperator(ptrdiff_t Row, double& Value)
-{
-	const  RightVector* const rv{ DynaModel_.GetRightVector(Row) };
-#ifdef USE_FMA
-	Value = std::fma(DynaModel_.H(), Value, -rv->Nordsiek[1] - rv->Error);
-#else
-	Value = DynaModel_.H() * Value - rv->Nordsiek[1] - rv->Error;
-#endif
+//			*BRange = *BRange * DynaModel_.H() - r.Nordsiek[1] - r.Error;
+			*BRange = std::fma(DynaModel_.H(), *BRange, -r.Nordsiek[1] - r.Error);
+		}
+		++BRange;
+	}
 }
 
 void MixedAdamsBDF::WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value)

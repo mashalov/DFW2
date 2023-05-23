@@ -103,6 +103,7 @@ namespace DFW2
 		vecType::iterator ToB(vecType& vec);
 	public:
 		IntegratorBase(CDynaModel& DynaModel) : DynaModel_(DynaModel) {}
+		virtual ~IntegratorBase() = default;
 		virtual void Step() = 0;
 		virtual bool StepConverged() = 0;
 		virtual void AcceptStep(bool DisableStepControl = false) = 0;
@@ -112,9 +113,8 @@ namespace DFW2
 		virtual void NewtonUpdateIteration() = 0;
 		virtual void NewtonBacktrack(const double* pVec, double lambda) = 0;
 		virtual void WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value) = 0;
-		virtual void AOperator(ptrdiff_t Row, double& Value) = 0;
-		virtual void DOperator(ptrdiff_t Row, double& Value) = 0;
-		virtual void Restart() {};
+		virtual void BOperator() = 0;
+		virtual void Restart() = 0 ;
 		inline ConvergenceTest::ConvergenceTestVec& ConvTest()  { return ConvTest_; }
 	};
 
@@ -122,6 +122,24 @@ namespace DFW2
 	{
 	protected:
 		vecType::iterator f(vecType& vec);
-		using IntegratorBase::IntegratorBase;
+		void f();
+		IntegratorMultiStageBase(CDynaModel& DynaModel);
+		virtual double NextH() const;
+		double PrevNorm_ = 0.5;
+		double alpha, beta, gamma;
+		double d;
+		IntegratorBase::vecType uprev;
+	public:
+		virtual int Order() const = 0;
+		void Restart() override;
+		void AcceptStep(bool DisableStepControl = false) override;
+		void RejectStep() override;
+		void UpdateStepSize() override;
+		void Init() override;
+		bool StepConverged() override;
+		void NewtonUpdateIteration() override;
+		void NewtonBacktrack(const double* pVec, double lambda) override;
+		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
+		void BOperator() override;
 	};
 }

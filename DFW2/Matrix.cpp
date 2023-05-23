@@ -112,14 +112,13 @@ void CDynaModel::BuildRightHand()
 	for (auto&& it : DeviceContainers_)
 		it->BuildRightHand(this);
 
+	Integrator_->BOperator();
+
 	sc.dRightHandNorm = 0.0;
-	const double* pBb{ klu.B() };
-	const double* const pBe{ pBb + m_nEstimatedMatrixSize };
-	while (pBb < pBe)
-	{
-		sc.dRightHandNorm += *pBb * *pBb;
-		pBb++;
-	}
+
+	for (const auto& b : BRange())
+		sc.dRightHandNorm += b * b;
+
 	std::copy(klu.B(), klu.B() + m_nEstimatedMatrixSize, pRightHandBackup.get());
 }
 
@@ -282,7 +281,6 @@ void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
 		throw dfw2error(fmt::format("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
 	_CheckNumber(dValue);
-	Integrator_->AOperator(nRow, dValue);
 	klu.B()[nRow] = dValue;
 }
 
@@ -350,17 +348,8 @@ void CDynaModel::CorrectNordsiek(ptrdiff_t nRow, double dValue)
 // задает правую часть дифференциального уравнения
 void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
 {
-	auto rv{ GetRightVector(nRow) };
 	_CheckNumber(dValue);
 	// ставим тип метода для уравнения по параметрам в исходных данных
-	/*
-	#ifdef USE_FMA
-	SetFunctionEqType(nRow, std::fma(H(), dValue, - rv->Nordsiek[1] - rv->Error), GetDiffEquationType());
-#else
-	SetFunctionEqType(nRow, H() * dValue - rv->Nordsiek[1] - rv->Error, GetDiffEquationType());
-#endif
-	*/
-	Integrator_->DOperator(nRow, dValue);
 	SetFunctionEqType(nRow, dValue, GetDiffEquationType());
 }
 

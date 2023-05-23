@@ -16,8 +16,7 @@ namespace DFW2
 		void NewtonUpdateIteration() override;
 		void NewtonBacktrack(const double* pVec, double lambda) override;
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
-		void AOperator(ptrdiff_t Row, double& Value) override;
-		void DOperator(ptrdiff_t Row, double& Value) override;
+		void BOperator() override;
 		void Restart() override;
 	protected:
 		double GetRatioForHigherOrder();

@@ -3,20 +3,10 @@
 #include "Rodas.h"
 
 using namespace DFW2;
-Rosenbrock23::Rosenbrock23(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel)
+Rosenbrock23::Rosenbrock23(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel) 
 {
-
+	d = 1.0 / (2.0 + sqrt(2.0));
 }
-
-void Rosenbrock23::Restart()
-{
-	fsal_ = false;
-	DynaModel_.ResetStep(true);
-	for (auto&& r :  DynaModel_.RightVectorRange())
-		// в качестве значения принимаем то, что рассчитано в устройстве
-		r.Tminus2Value = r.Nordsiek[0] = r.SavedNordsiek[0] = *r.pValue;
-}
-
 
 void Rosenbrock23::Step()
 {
@@ -40,16 +30,9 @@ void Rosenbrock23::Step()
 		return;
 	}
 
-	if (sc.nStepsCount == 2316)
-		if (PrevNorm_ == 0.0)
-			PrevNorm_ = 0.5;
-
-
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 
 	FromModel(uprev);
-
-
 
 	if (fsal_)
 	{
@@ -172,194 +155,285 @@ void Rosenbrock23::Step()
 	DynaModel_.ResetStep(false);
 }
 
-double Rosenbrock23::NextH() const
+Rodas4::Rodas4(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel)
 {
-	const double Norm{ ConvTest_[0].dErrorSum };
-	const double alpha{ 0.7 / 2.0 };
-	const double beta{ 0.4 / 2.0 };
-	const double gamma{ 0.95 };
-	return gamma * DynaModel_.H() * std::pow(Norm, -alpha) * pow(PrevNorm_, beta);
+	d = 0.25;
 }
 
-void Rosenbrock23::AcceptStep(bool DisableStepControl)
+void Rodas4::Step()
 {
+	const bool Refine{ false };
+
+	PrevNorm_ = ConvTest_[0].dErrorSum;
+	if (PrevNorm_ == 0.0)
+		PrevNorm_ = 0.5;
+
 	auto& sc{ DynaModel_.StepControl() };
-	const double Norm{ ConvTest_[0].dErrorSum };
-	sc.Advance_t0();
-	sc.m_bRetryStep = false;
-	sc.nMinimumStepFailures = 0;
-	sc.OrderStatistics[0].nSteps++;
-	if (!DisableStepControl)
+	const double h{ DynaModel_.H() };
+
+	if (DynaModel_.IsInDiscontinuityMode())
 	{
-		DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
-			fmt::format(CDFW2Messages::m_cszMultiStageSepAccepted, 
-				DynaModel_.H(), 
-				Norm,
-				sc.Integrator.Weighted.Info()));
-
-		const double alpha{ 0.7 / 2.0 };
-		const double beta{ 0.4 / 2.0 };
-		const double gamma{ 0.95 };
-		DynaModel_.SetH(NextH());
-		sc.StepChanged();
+		DynaModel_.SolveNewton(20);
+		return;
 	}
-}
 
-void Rosenbrock23::RejectStep()
-{
-	auto& sc{ DynaModel_.StepControl() };
-	const auto& Parameters{ DynaModel_.Parameters() };
-	double newH{ NextH() };
-	double newEffectiveH{ (std::max)(newH, sc.Hmin) };
+	auto uprevit{ VerifyVector(uprev) };
+	auto duit{ VerifyVector(du) };
 
-	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
+	const double dtC21{ C21 / h };
+	const double dtC31{ C31 / h };
+	const double dtC32{ C32 / h };
+	const double dtC41{ C41 / h };
+	const double dtC42{ C42 / h };
+	const double dtC43{ C43 / h };
+	const double dtC51{ C51 / h };
+	const double dtC52{ C52 / h };
+	const double dtC53{ C53 / h };
+	const double dtC54{ C54 / h };
+	const double dtC61{ C61 / h };
+	const double dtC62{ C62 / h };
+	const double dtC63{ C63 / h };
+	const double dtC64{ C64 / h };
+	const double dtC65{ C65 / h };
 
-	DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError,
-		newEffectiveH,
-		sc.Integrator.Weighted.Info()));
+	const double dtd1{ h * d1 };
+	const double dtd2{ h * d2 };
+	const double dtd3{ h * d3 };
+	const double dtd4{ h * d4 };
 
-	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
-	sc.OrderStatistics[0].nFailures++;
+	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
+	FromModel(uprev);
 
-	// если шаг снизился до минимума
-	if (newH <= sc.Hmin && Equal(DynaModel_.H(), sc.Hmin))
-	{
-		if (++sc.nMinimumStepFailures > Parameters.m_nMinimumStepFailures)
-			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep,
-				DynaModel_.GetCurrentTime(),
-				DynaModel_.GetIntegrationStepNumber(),
-				DynaModel_.Order(),
-				DynaModel_.H()));
+	//W = calc_W(integrator, cache, dtgamma, repeat_step, true)
 
-		// проверяем количество последовательно
-		// заваленных шагов
-		if (sc.StepFailLimit())
-		{
-			// если можно еще делать шаги,
-			// обновляем Nordsieck и пересчитываем 
-			// производные
-			DynaModel_.SetH(newEffectiveH);
-		}
-		// шагаем на следующее время без возможности возврата, так как шаг уже не снизить
-		sc.Advance_t0();
-		sc.Assign_t0();
-	}
+
+	if (fsal_)
+		DynaModel_.BuildMatrix(false);
 	else
 	{
-		// если шаг еще можно снизить
-		sc.nMinimumStepFailures = 0;
-		ToModel(uprev);
+		for (auto&& it : DynaModel_.DeviceContainersPredict())
+			it->Predict();
 		DynaModel_.NewtonUpdateDevices();
-		DynaModel_.SetH(newEffectiveH);
-		sc.CheckAdvance_t0();
+		DynaModel_.BuildMatrix();
 	}
-}
+	//du = f(uprev, p, t)
+	{
+		//	linsolve_tmp = du + dtd1 * dT
+		//	k1 = _reshape(W \ - _vec(linsolve_tmp), axes(uprev))
+		DynaModel_.SolveLinearSystem(Refine);
+		auto BRange{ DynaModel_.BRange() };
+		uprevit = uprev.begin();
+		auto k1it{ VerifyVector(k1) };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			*k1it = *BRange;
+			//	u = uprev + a21 * k1
+			*r.pValue = *uprevit + a21 * *k1it;
+			++uprevit;
+			++k1it;
+			++BRange;
+		}
+		//	du = f(u, p, t + c2 * dt)
+		f();
+	}
+	{
+		// linsolve_tmp = du + dtd2 * dT + mass_matrix * (dtC21 * k1)
+		//	k2 = _reshape(W \ - _vec(linsolve_tmp), axes(uprev))
+		auto BRange{ DynaModel_.BRange() };
+		auto k1it{ k1.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange += dtC21 * *k1it;
+			++BRange;
+			++k1it;
+		}
+		DynaModel_.SolveLinearSystem(Refine); // k2 in B()
+		VerifyVector(k2);
+		FromB(k2);
+	}
 
-void Rosenbrock23::UpdateStepSize()
-{
+	{
+		//	u = uprev + a31 * k1 + a32 * k2
+		uprevit = uprev.begin();
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			*r.pValue = *uprevit + a31 * *k1it + a32 * *k2it;
+			++uprevit;
+			++k1it;
+			++k2it;
+		}
 
-}
+		//	du = f(u, p, t + c3 * dt)
+		f();
+	}
+	{
+		//	linsolve_tmp = du + dtd3 * dT + mass_matrix * (dtC31 * k1 + dtC32 * k2)
+		auto BRange{ DynaModel_.BRange() };
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange += dtC31 * *k1it + dtC32 * *k2it;
+			++BRange;
+			++k1it;
+			++k2it;
+		}
+		//	k3 = _reshape(W \ - _vec(linsolve_tmp), axes(uprev))
+		DynaModel_.SolveLinearSystem(Refine);
+		VerifyVector(k3);
+		FromB(k3);
+	}
+	{
+		//	u = uprev + a41 * k1 + a42 * k2 + a43 * k3
+		uprevit = uprev.begin();
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		auto k3it{ k3.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			*r.pValue = *uprevit + a41 * *k1it + a42 * *k2it + a43 * *k3it;
+			++uprevit;
+			++k1it;
+			++k2it;
+			++k3it;
+		}
+		//	du = f(u, p, t + c3 * dt)
+		f();
+	}
+	{
+		//	linsolve_tmp = du + dtd4 * dT + mass_matrix * (dtC41 * k1 + dtC42 * k2 + dtC43 * k3)
+		auto BRange{ DynaModel_.BRange() };
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		auto k3it{ k3.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange += dtC41 * *k1it + dtC42 * *k2it + dtC43* *k3it;
+			++BRange;
+			++k1it;
+			++k2it;
+			++k3it;
+		}
+		//k4 = _reshape(W \ - _vec(linsolve_tmp), axes(uprev))
+		DynaModel_.SolveLinearSystem(Refine);
+		VerifyVector(k4);
+		FromB(k4);
+	}
+	{
+		//	u = uprev + a51 * k1 + a52 * k2 + a53 * k3 + a54 * k4
+		uprevit = uprev.begin();
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		auto k3it{ k3.begin() };
+		auto k4it{ k4.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			*r.pValue = *uprevit + a51 * *k1it + a52 * *k2it + a53 * *k3it + a54 * *k4it;
+			++uprevit;
+			++k1it;
+			++k2it;
+			++k3it;
+			++k4it;
+		}
+		//	du = f(u, p, t + c3 * dt)
+		f();
+	}
+	{
+		//	linsolve_tmp = du + mass_matrix * (dtC52 * k2 + dtC54 * k4 + dtC51 * k1 + dtC53 * k3)
+		auto BRange{ DynaModel_.BRange() };
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		auto k3it{ k3.begin() };
+		auto k4it{ k4.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange += dtC52 * *k2it + dtC54 * *k4it + dtC51* *k1it + dtC53* * k3it;
+			++BRange;
+			++k1it;
+			++k2it;
+			++k3it;
+			++k4it;
+		}
+		//	k5 = _reshape(W \ - _vec(linsolve_tmp), axes(uprev))
+		DynaModel_.SolveLinearSystem(Refine);
+		VerifyVector(k5);
+		FromB(k5);
+	}
+	{
+		// u = u + k5
+		auto k5it{ k5.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			*r.pValue += *k5it;
+			++k5it;
+		}
+		//	du = f(u, p, t + c3 * dt)
+		f();
+	}
+	{
+		// linsolve_tmp = du + mass_matrix * (dtC61 * k1 + dtC62 * k2 + dtC65 * k5 + dtC64 * k4 + dtC63 * k3)
+		auto BRange{ DynaModel_.BRange() };
+		auto k1it{ k1.begin() };
+		auto k2it{ k2.begin() };
+		auto k3it{ k3.begin() };
+		auto k4it{ k4.begin() };
+		auto k5it{ k5.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			if (r.PhysicalEquationType == DET_DIFFERENTIAL)
+				*BRange += dtC61 * *k1it + dtC62 * *k2it + dtC65 * *k5it + dtC64 * *k4it + dtC63 * *k3it;
+			++BRange;
+			++k1it;
+			++k2it;
+			++k3it;
+			++k4it;
+			++k5it;
+		}
+		//	k6 = _reshape(W \ - _vec(linsolve_tmp), axes(uprev))
+		DynaModel_.SolveLinearSystem(Refine);
+		VerifyVector(k6);
+		FromB(k6);
+	}
+	{
+		// u = u + k6
+		auto k6it{ k6.begin() };
+		for (auto&& r : DynaModel_.RightVectorRange())
+		{
+			*r.pValue += *k6it;
+			++k6it;
+		}
+		//	du = f(u, p, t + c3 * dt)
+		f(du);
+	}
 
-void Rosenbrock23::Init()
-{
+//	atmp = calculate_residuals(k6, uprev, u, integrator.opts.abstol, integrator.opts.reltol, integrator.opts.internalnorm, t)
+//	integrator.EEst = integrator.opts.internalnorm(atmp, t)
 
-}
-
-bool Rosenbrock23::StepConverged()
-{
-	return ConvTest_[0].dErrorSum <= 1.0;
-}
-
-void Rosenbrock23::NewtonUpdateIteration()
-{
-	const auto& Parameters{ DynaModel_.Parameters() };
-	auto& sc{ DynaModel_.StepControl() };
-
-	sc.Newton.Reset();
-
-	const double* pB{ DynaModel_.B() };
-
+	sc.Integrator.Weighted.Reset();
+	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::Reset);
+	auto k6it{ k6.begin() };
+	uprevit = uprev.begin();
 	for (auto&& r : DynaModel_.RightVectorRange())
 	{
-		const double dOldValue{ *r.pValue };
-		r.b = *pB;
-		sc.Newton.Absolute.Update(&r, std::abs(r.b));
-		const double dNewValue{ dOldValue + r.b };
-
-#ifdef USE_FMA
-		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
-#else
-		
-#endif
-
-		*r.pValue = dNewValue;
-
-		if (r.Atol > 0)
-		{
-			const double dError{ r.GetWeightedError(r.b, dOldValue) };
-			sc.Newton.Weighted.Update(&r, dError);
-			_CheckNumber(dError);
-			ConvergenceTest* pCt{ ConvTest_ + r.EquationType };
-#ifdef _DEBUG
-			// breakpoint place for nans
-			_ASSERTE(!std::isnan(dError));
-#endif
-			pCt->AddError(dError);
-		}
-
-		++pB;
+		const double dError{ r.GetWeightedError(*k6it, (std::max)(std::abs(*uprevit), std::abs(*r.pValue))) };
+		ConvTest_[0].AddError(dError);
+		sc.Integrator.Weighted.Update(&r, dError);
+		++k6it;
+		++uprevit;
 	}
+
+	if (sc.Integrator.Weighted.pVector)
+		sc.Integrator.Weighted.pVector->ErrorHits++;
 
 	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::GetConvergenceRatio);
+	ConvergenceTest::ProcessRange(ConvTest_, ConvergenceTest::GetRMS);
 
-	bool bConvCheckConverged{ sc.Newton.Weighted.dMaxError < Parameters.m_dNewtonMaxNorm };
-
-	if (bConvCheckConverged)
-		sc.m_bNewtonConverged = true;
-	else
-		sc.RefactorMatrix(false);
-}
-
-void Rosenbrock23::NewtonBacktrack(const double* pVec, double lambda)
-{
-
-}
-
-void Rosenbrock23::AOperator(ptrdiff_t Row, double& Value)
-{
-	//Value = -Value;
-}
-
-void Rosenbrock23::DOperator(ptrdiff_t Row, double& Value)
-{
-	if (DynaModel_.IsInDiscontinuityMode())
-		Value = 0.0;
-}
-
-void Rosenbrock23::WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value)
-{
-	// из SetElement знаки приходят
-	// Алгебра - как есть
-	// Дифур диагональ - знак как есть
-	// Дифур внедиагональ - отрицательный
-	// из SetEquation приходит -g !!!!
-	const  RightVector* const pRightVector{ DynaModel_.GetRightVector() };
-	if (DynaModel_.IsInDiscontinuityMode())
-	{
-		if ((pRightVector + Row)->PhysicalEquationType == DET_DIFFERENTIAL)
-			Value = (Row == Col) ? 1.0 : 0.0;
-		else
-			Value = -Value;
-	}
-	else
-	{
-		if ((pRightVector + Row)->PhysicalEquationType == DET_DIFFERENTIAL)
-		{
-			if (Row == Col)
-				Value = 1.0 / DynaModel_.H() / d - Value; // диагональ как есть
-		}
-		else
-			Value = -Value;
-	}
+	sc.m_bNewtonConverged = true;
+	DynaModel_.ResetStep(false);
 }
