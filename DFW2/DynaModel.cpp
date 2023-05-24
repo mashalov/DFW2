@@ -146,9 +146,9 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	if (!SSE2Available_)
 		throw dfw2error(CDFW2Messages::m_cszNoSSE2Support);
 	
-	Integrator_ = std::make_unique<Rodas4>(*this);
+	//Integrator_ = std::make_unique<Rodas4>(*this);
 	//Integrator_ = std::make_unique<Rosenbrock23>(*this);
-	//Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
+	Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
 	Integrator_->Init();
 }
 
@@ -887,7 +887,7 @@ bool CDynaModel::Step()
 						else
 						{
 							// если время зерокроссинга не достаточно точно определено подбираем новый шаг
-							RepeatZeroCrossing(rZeroCrossing);
+							Integrator_->RepeatZeroCrossing(rZeroCrossing);
 							sc.ZeroCrossingMisses++;
 						}
 					}
@@ -917,7 +917,7 @@ bool CDynaModel::Step()
 							// если время зерокроссинга внутри шага, входим в режим зерокроссинга
 							sc.m_bZeroCrossingMode = true;
 							// и пытаемся подобрать шаг до времени зерокроссинга
-							RepeatZeroCrossing(rZeroCrossing);
+							Integrator_->RepeatZeroCrossing(rZeroCrossing);
 						}
 					}
 				}
@@ -1163,31 +1163,6 @@ void CDynaModel::NewtonFailed()
 		fmt::format(CDFW2Messages::m_cszStepAndOrderChangedOnNewton,
 			sc.q, 
 			H()));
-}
-
-// функция подготовки к повтору шага
-// для поиска зерокроссинга
-void CDynaModel::RepeatZeroCrossing(double rH)
-{
-	double rHstep{ H() * rH };
-	// восстанавливаем Nordsieck с предыдущего шага
-	RestoreNordsiek();
-	// ограничиваем шаг до минимального
-	if (rHstep < sc.Hmin)
-	{
-		rHstep = sc.Hmin;
-		// переходим на первый порядок, так
-		// как снижение шага может быть очень
-		// значительным
-		ChangeOrder(1);
-	}
-	sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
-	SetH(rHstep);
-	sc.CheckAdvance_t0();
-	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep,
-																				H(), 
-																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName(),
-																				rH));
 }
 
 bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name)

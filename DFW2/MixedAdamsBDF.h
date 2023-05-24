@@ -18,6 +18,7 @@ namespace DFW2
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
 		void BOperator() override;
 		void Restart() override;
+		void RepeatZeroCrossing(double rh) override;
 	protected:
 		double GetRatioForHigherOrder();
 		double GetRatioForCurrentOrder();

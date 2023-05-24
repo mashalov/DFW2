@@ -115,6 +115,8 @@ namespace DFW2
 		virtual void WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value) = 0;
 		virtual void BOperator() = 0;
 		virtual void Restart() = 0 ;
+		//! Функция подготовки к повтору шага для поиска зерокроссинга
+		virtual void RepeatZeroCrossing(double rh);
 		inline ConvergenceTest::ConvergenceTestVec& ConvTest()  { return ConvTest_; }
 	};
 

@@ -61,52 +61,6 @@ void CDynaModel::ReInitializeNordsiek()
 	sc.ResetStepsToFail();
 }
 
-// восстанавление Nordsieck с предыдущего шага
-void CDynaModel::RestoreNordsiek()
-{
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-
-	if (sc.m_bNordsiekSaved)
-	{
-		// если есть данные для восстановления - просто копируем предыдущий шаг
-		// в текущий
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-		{
-
-#ifdef _AVX2
-			_mm256_store_pd(pVectorBegin->Nordsiek, _mm256_load_pd(pVectorBegin->SavedNordsiek));
-#else
-			double* pN = pVectorBegin->Nordsiek;
-			double* pS = pVectorBegin->SavedNordsiek;
-			*pN = *pS; pS++; pN++;
-			*pN = *pS; pS++; pN++;
-			*pN = *pS; pS++; pN++;
-#endif
-			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-			pVectorBegin->Error = pVectorBegin->SavedError;
-		}
-		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
-	}
-	else
-	{
-		// если данных для восстановления нет
-		// считаем что прозводные нулевые
-		// это слабая надежда, но лучше чем ничего
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-		{
-			*pVectorBegin->pValue = pVectorBegin->Nordsiek[0];
-			pVectorBegin->Nordsiek[1] = pVectorBegin->Nordsiek[2] = 0.0;
-			pVectorBegin->Error = 0.0;
-		}
-		sc.SetNordsiekScaledForH(0.0);
-		sc.SetNordsiekScaledForHSaved(0.0);
-	}
-
-	for (auto&& it : DeviceContainersStoreStates_)
-		for (auto&& dit : *it)
-			dit->RestoreStates();
-}
-
 // сохранение копии Nordsieck перед выполнением шага
 void CDynaModel::SaveNordsiek()
 {

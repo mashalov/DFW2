@@ -604,7 +604,6 @@ namespace DFW2
 		void SolveRefine();
 		void RescaleNordsiek();
 		void SaveNordsiek();
-		void RestoreNordsiek();
 		void ConstructNordsiekOrder();
 		void ReInitializeNordsiek();
 		double CheckZeroCrossing();
@@ -620,7 +619,6 @@ namespace DFW2
 
 		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
 		void NewtonFailed();
-		void RepeatZeroCrossing(double rH);
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
@@ -689,6 +687,7 @@ namespace DFW2
 		void SolveNewton(ptrdiff_t nMaxIts);
 		void BuildMatrix(bool SkipRightHand = false);
 		void BuildRightHand();
+		const CDeviceContainer* ClosestZeroCrossingContainer() const { return m_pClosestZeroCrossingContainer; }
 		void BuildDerivatives();
 		void SolveLinearSystem(bool Refined = false);
 		void NewtonUpdateDevices();

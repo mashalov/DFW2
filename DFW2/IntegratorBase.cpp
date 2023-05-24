@@ -3,6 +3,19 @@
 
 using namespace DFW2;
 
+
+void IntegratorBase::RepeatZeroCrossing(double rh)
+{
+	DynaModel_.SetH(rh);
+	auto& sc{ DynaModel_.StepControl() };
+	sc.CheckAdvance_t0();
+	sc.OrderStatistics[DynaModel_.Order() - 1].nZeroCrossingsSteps++;
+	DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep,
+		DynaModel_.H(),
+		DynaModel_.ClosestZeroCrossingContainer()->GetZeroCrossingDevice()->GetVerbalName(),
+		rh));
+}
+
 IntegratorBase::vecType::iterator IntegratorBase::VerifyVector(IntegratorBase::vecType& vec)
 {
 	if (vec.size() != DynaModel_.MatrixSize())

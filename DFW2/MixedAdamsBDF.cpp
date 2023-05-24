@@ -929,6 +929,24 @@ void MixedAdamsBDF::Restart()
 	sc.SetNordsiekScaledForHSaved(DynaModel_.H());
 }
 
+void MixedAdamsBDF::RepeatZeroCrossing(double rh)
+{
+	double rHstep{ DynaModel_.H() * rh };
+	auto& sc{ DynaModel_.StepControl() };
+	// восстанавливаем Nordsieck с предыдущего шага
+	RestoreNordsiek();
+	// ограничиваем шаг до минимального
+	if (rHstep < sc.Hmin)
+	{
+		rHstep = sc.Hmin;
+		// переходим на первый порядок, так
+		// как снижение шага может быть очень
+		// значительным
+		ChangeOrder(1);
+	}
+	IntegratorBase::RepeatZeroCrossing(rHstep);
+}
+
 
 const double MixedAdamsBDF::MethodlDefault[4][4] =
 	//									   l0			l1			l2			Tauq

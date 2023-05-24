@@ -556,7 +556,7 @@ void CDeviceContainer::UnprocessDiscontinuity()
 		it->UnprocessDiscontinuity();
 }
 
-CDevice* CDeviceContainer::GetZeroCrossingDevice()
+const CDevice* CDeviceContainer::GetZeroCrossingDevice() const
 {
 	return pClosestZeroCrossingDevice_;
 }
