@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
+#include "MixedAdamsBDF.h"
 
 using namespace DFW2;
 
@@ -182,6 +183,18 @@ void IntegratorMultiStageBase::Init()
 	alpha = 0.7 / static_cast<double>(Order());
 	beta = 0.4 / static_cast<double>(Order());
 	gamma = 0.95;
+
+	DynaModel_.InitDevicesNordsiek();
+
+	for (auto&& r : DynaModel_.RightVectorRange())
+		MixedAdamsBDF::InitNordsiekElement(&r, DynaModel_.Atol(), DynaModel_.Rtol());
+
+	DynaModel_.SetH(0.0);
+	auto& sc{ DynaModel_.StepControl() };
+	sc.m_bDiscontinuityMode = true;
+	DynaModel_.SolveNewton(100);
+	sc.m_bDiscontinuityMode = false;
+
 }
 
 bool IntegratorMultiStageBase::StepConverged()
@@ -235,6 +248,18 @@ void IntegratorMultiStageBase::NewtonUpdateIteration()
 }
 
 void IntegratorMultiStageBase::NewtonBacktrack(const double* pVec, double lambda)
+{
+	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
+	const double* pB{ pVec };
+	lambda -= 1.0;
+	for (auto&& r : DynaModel_.RightVectorRange())
+	{
+		*r.pValue = *pB * lambda;
+		++pB;
+	}
+}
+
+void IntegratorMultiStageBase::NewtonFailed()
 {
 
 }

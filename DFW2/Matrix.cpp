@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
+#include "MixedAdamsBDF.h"
 
 using namespace DFW2;
 
@@ -635,14 +636,14 @@ void CDynaModel::UpdateNewRightVector()
 
 					// обходим устройства, которые volatile
 					if (VolatileContainer)
-						InitNordsiekElement(pRv, Atol(), Rtol());
+						MixedAdamsBDF::InitNordsiekElement(pRv, Atol(), Rtol());
 					else
 					{
-						InitNordsiekElement(pRv, pRvB->Atol, pRvB->Rtol);
+						MixedAdamsBDF::InitNordsiekElement(pRv, pRvB->Atol, pRvB->Rtol);
 						*static_cast<RightVectorTotal*>(pRv) = *pRvB;
 						pRvB++;
 					}
-					PrepareNordsiekElement(pRv);
+					MixedAdamsBDF::PrepareNordsiekElement(pRv);
 				}
 			}
 			else

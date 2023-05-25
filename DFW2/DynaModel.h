@@ -597,15 +597,8 @@ namespace DFW2
 		void ScaleAlgebraicEquations();
 		ElementSetterFn			ElementSetter;
 		ElementSetterNoDupFn	ElementSetterNoDup;
-		void InitNordsiek();
-		void InitDevicesNordsiek();
-		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
-		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
 		void SolveRefine();
-		void RescaleNordsiek();
-		void SaveNordsiek();
-		void ConstructNordsiekOrder();
-		void ReInitializeNordsiek();
+
 		double CheckZeroCrossing();
 		void FinishStep();
 		void DumpStatistics();
@@ -618,7 +611,6 @@ namespace DFW2
 		struct StepControl sc;
 
 		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
-		void NewtonFailed();
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
@@ -691,6 +683,7 @@ namespace DFW2
 		void BuildDerivatives();
 		void SolveLinearSystem(bool Refined = false);
 		void NewtonUpdateDevices();
+		void InitDevicesNordsiek();
 
 		// выполняет предварительную инициализацию устройств: 
 		// расчет внутренних констант, которые не зависят от связанных устройств

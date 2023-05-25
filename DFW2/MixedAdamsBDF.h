@@ -15,6 +15,7 @@ namespace DFW2
 		bool StepConverged() override;
 		void NewtonUpdateIteration() override;
 		void NewtonBacktrack(const double* pVec, double lambda) override;
+		void NewtonFailed() override;
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
 		void BOperator() override;
 		void Restart() override;
@@ -33,9 +34,13 @@ namespace DFW2
 		void ReInitializeNordsiek();
 		void RestoreNordsiek();
 		void DetectAdamsRinging();
+		void SaveNordsiek();
+		void InitNordsiek();
 	public:
 		static const double MethodlDefault[4][4]; // фиксированные коэффициенты метода интегрирования
 		double Methodl[4][4];	// текущие коэффициенты метода интегрирования
 		double Methodlh[4];		// коэффициенты метода интегрирования l0, умноженные на шаг
+		static void InitNordsiekElement(struct RightVector* pVectorBegin, double Atol, double Rtol);
+		static void PrepareNordsiekElement(struct RightVector* pVectorBegin);
 	};
 }

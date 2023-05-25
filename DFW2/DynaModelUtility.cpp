@@ -1031,15 +1031,8 @@ bool CDynaModel::RunTest()
 	m_Discontinuities.AddEvent(100.0, new CModelActionStop());
 	m_Discontinuities.Init();
 
-	SetH(sc.StartupStep);
-
 	InitEquations();
-
-	// сохраняем начальные условия
-	// в истории Нордсика с тем чтобы иметь 
-	// возможность восстановить их при сбое Ньютона
-	// на первом шаге
-	SaveNordsiek();
+	SetH(sc.StartupStep);
 
 	m_Parameters.m_dOutStep = 0.1 * Hmin();
 
@@ -1079,7 +1072,6 @@ void CDynaModel::PrecomputeConstants()
 {
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
 	// константы могут изменяться, например для демпфирования
-	Integrator_->Init();
 	// считаем параметры гистерезиса по заданным параметрам
 	HysteresisAtol_ = Atol() * m_Parameters.HysteresisAtol_;
 	HysteresisRtol_ = Rtol() * m_Parameters.HysteresisRtol_;

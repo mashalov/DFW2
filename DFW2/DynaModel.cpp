@@ -149,7 +149,6 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	//Integrator_ = std::make_unique<Rodas4>(*this);
 	//Integrator_ = std::make_unique<Rosenbrock23>(*this);
 	Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
-	Integrator_->Init();
 }
 
 
@@ -329,12 +328,7 @@ bool CDynaModel::RunTransient()
 			Automatic().Init();
 			Scenario().Init();
 			m_Discontinuities.Init();
-			SetH(0.01);
-			// сохраняем начальные условия
-			// в истории Нордсика с тем чтобы иметь 
-			// возможность восстановить их при сбое Ньютона
-			// на первом шаге
-			SaveNordsiek();
+			SetH(sc.StartupStep);
 
 			//Serialize("c:\\tmp\\serialization.json");
 
@@ -508,31 +502,11 @@ void CDynaModel::InitDevices()
 
 void CDynaModel::InitEquations()
 {
-	InitNordsiek();
+
 	// Второй раз вызываем обновление внешних переменных чтобы получить реальные индексы элементов из матрицы
 	if(!UpdateExternalVariables())
 		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
-
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0] = *pVectorBegin->pValue;
-		PrepareNordsiekElement(pVectorBegin);
-	}
-
-	double dCurrentH{ H() };
-	sc.SetNordsiekScaledForH(1.0);
-	SetH(0.0);
-	sc.m_bDiscontinuityMode = true;
-	SolveNewton(100);
-	sc.m_bDiscontinuityMode = false;
-	SetH(dCurrentH);
-	sc.nStepsCount = 0;
-
-	for (auto&& cit : DeviceContainersStoreStates_)
-		for (auto&& dit : *cit)
-			dit->StoreStates();
+	Integrator_->Init();
 }
 
 void CDynaModel::NewtonUpdate()
@@ -944,7 +918,7 @@ bool CDynaModel::Step()
 		{
 			// Ньютон не сошелся
 			// отбрасываем шаг
-			NewtonFailed();
+			Integrator_->NewtonFailed();
 		}
 		sc.nStepsCount++;
 	}
@@ -1096,73 +1070,6 @@ void CDynaModel::AddZeroCrossingDevice(CDevice *pDevice)
 	ZeroCrossingDevices.push_back(pDevice);
 	if (ZeroCrossingDevices.size() >= static_cast<size_t>(klu.MatrixSize()))
 		throw dfw2error("CDynaModel::AddZeroCrossingDevice - matrix size overrun");
-}
-
-void CDynaModel::NewtonFailed()
-{
-	// обновляем подсчет ошибок Ньютона
-	if (!sc.m_bDiscontinuityMode)
-	{
-		// если вне разрыва - считаем для порядка шага
-		sc.OrderStatistics[sc.q - 1].nNewtonFailures++;
-	}
-	else // если в разрыве - считаем количество завалов на разрывах
-		sc.nDiscontinuityNewtonFailures++;
-
-	if (sc.nSuccessfullStepsOfNewton > 10)
-	{
-		if (sc.UsedH() / H() >= 0.8)
-		{
-			SetH(H() * 0.87);
-			sc.SetRateGrowLimit(1.0);
-		}
-		else
-		{
-			SetH(0.8 * UsedH() + 0.2 * H());
-			sc.SetRateGrowLimit(1.18);
-		}
-	}
-	else
-	if (sc.nSuccessfullStepsOfNewton >= 1)
-	{
-		SetH(H() * 0.87);
-		sc.SetRateGrowLimit(1.0);
-	}
-	else
-	if (sc.nSuccessfullStepsOfNewton == 0)
-	{
-		SetH(H() * 0.25);
-		sc.SetRateGrowLimit(10.0);
-	}
-
-	sc.nSuccessfullStepsOfNewton = 0;
-
-	ChangeOrder(1);
-
-	if (H() < sc.Hmin)
-	{
-		SetH(sc.Hmin);
-		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
-		sc.Advance_t0();
-		sc.Assign_t0();
-	}
-	else
-	{
-		sc.nMinimumStepFailures = 0;
-		sc.CheckAdvance_t0();
-	}
-
-	if (sc.Hmin / H() > 0.99)
-		Integrator_->Restart();
-	else
-		ReInitializeNordsiek();
-	
-	sc.RefactorMatrix();
-	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
-		fmt::format(CDFW2Messages::m_cszStepAndOrderChangedOnNewton,
-			sc.q, 
-			H()));
 }
 
 bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name)

@@ -112,6 +112,8 @@ namespace DFW2
 		virtual void Init() = 0;
 		virtual void NewtonUpdateIteration() = 0;
 		virtual void NewtonBacktrack(const double* pVec, double lambda) = 0;
+		//! Обработка отказа расчета Ньютоном
+		virtual void NewtonFailed() = 0;
 		virtual void WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value) = 0;
 		virtual void BOperator() = 0;
 		virtual void Restart() = 0 ;
@@ -141,6 +143,7 @@ namespace DFW2
 		bool StepConverged() override;
 		void NewtonUpdateIteration() override;
 		void NewtonBacktrack(const double* pVec, double lambda) override;
+		void NewtonFailed() override;
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
 		void BOperator() override;
 	};
