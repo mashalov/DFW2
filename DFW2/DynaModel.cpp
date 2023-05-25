@@ -1039,7 +1039,6 @@ void CDynaModel::LeaveDiscontinuityMode()
 		sc.m_bDiscontinuityMode = false;
 		for (auto&& it : DeviceContainers_)
 			it->LeaveDiscontinuityMode(this);
-		SetRestartH();
 		Integrator_->Restart();
 	}
 }

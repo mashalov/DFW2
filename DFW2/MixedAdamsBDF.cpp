@@ -1,4 +1,5 @@
 ﻿#include "stdafx.h"
+#include "stdafx.h"
 #include "DynaModel.h"
 #include "MixedAdamsBDF.h"
 
@@ -15,12 +16,10 @@ void MixedAdamsBDF::SaveNordsiek()
 	for (auto&& r : DynaModel_.RightVectorRange())
 	{
 		double* pN{ r.Nordsiek };
-		*pN = *r.pValue;
+		double* pS{ r.SavedNordsiek };
 #ifdef _AVX2
 		_mm256_store_pd(pVectorBegin->Nordsiek, _mm256_load_pd(pVectorBegin->SavedNordsiek));
 #else
-		double* pS{ r.SavedNordsiek };
-
 		// сохраняем пред-предыдущее значение переменной состояния
 		r.Tminus2Value = *pS;
 
@@ -29,7 +28,6 @@ void MixedAdamsBDF::SaveNordsiek()
 		*pS = *pN; pS++; pN++;
 		*pS = *pN; pS++; pN++;
 #endif
-
 		r.SavedError = r.Error;
 	}
 
@@ -550,7 +548,6 @@ void MixedAdamsBDF::UpdateNordsiek(bool bAllowSuppression)
 
 	for (auto&& r : DynaModel_.RightVectorRange())
 	{
-		r.SavedError = r.Error;
 		// подавление рингинга
 		if (bSuprressRinging)
 		{
@@ -1050,6 +1047,7 @@ void MixedAdamsBDF::WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value)
 
 void MixedAdamsBDF::Restart()
 {
+	DynaModel_.SetH(DynaModel_.Hmin());
 	auto& sc{ DynaModel_.StepControl() };
 	if (sc.m_bNordsiekSaved)
 	{

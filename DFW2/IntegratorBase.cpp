@@ -90,8 +90,9 @@ IntegratorMultiStageBase::IntegratorMultiStageBase(CDynaModel& DynaModel) :  Int
 
 void IntegratorMultiStageBase::Restart()
 {
+	DynaModel_.SetH(1000.0 * DynaModel_.Hmin());
 	fsal_ = false;
-	DynaModel_.ResetStep(true);
+	//DynaModel_.ResetStep(true);
 	for (auto&& r : DynaModel_.RightVectorRange())
 		// в качестве значения принимаем то, что рассчитано в устройстве
 		r.Tminus2Value = r.Nordsiek[0] = r.SavedNordsiek[0] = *r.pValue;

@@ -143,8 +143,11 @@ void CDynaModel::BuildMatrix(bool SkipRightHand)
 		RebuildMatrixFlag_ = false;
 		sc.m_dLastRefactorH = H();
 
-		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
-				"Рефакторизация матрицы {} / {}", klu.FactorizationsCount(), klu.RefactorizationsCount()));
+		if(Integrator_->ReportJacobiRefactor())
+			Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(
+					"Рефакторизация матрицы {} / {}", 
+				klu.FactorizationsCount(), 
+				klu.RefactorizationsCount()));
 
 		if (!EstimateBuild())
 			sc.UpdateConstElements(false);
@@ -607,6 +610,8 @@ void CDynaModel::CreateTotalRightVector()
 				pb->pValue = dit->GetVariablePtr(z);
 				pb->pDevice = dit;
 				pb->ErrorHits = 0;
+				pb->Atol = Atol();
+				pb->Rtol = Rtol();
 			}
 	}
 }

@@ -808,16 +808,6 @@ namespace DFW2
 
 		[[nodiscard]] static bool IsSSE2Available();
 
-
-		void SetRestartH()
-		{
-			//if (m_Parameters.RestartFromHmin_)
-				SetH(sc.Hmin);
-			//else
-			//	SetH((std::min)(UsedH(), 100.0 * sc.Hmin));
-		}
-
-
 		/// !!!!!!!!!!!!!!!!!!!!!!!!!!! DIRT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 		typedef double(*MethodLType)[4];
