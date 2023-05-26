@@ -1089,6 +1089,211 @@ void MixedAdamsBDF::RepeatZeroCrossing(double rh)
 	IntegratorBase::RepeatZeroCrossing(rHstep);
 }
 
+double MixedAdamsBDF::NextStepValue(const RightVector* pRightVector)
+{
+	const double lm{ Methodl[static_cast<ptrdiff_t>(pRightVector->PhysicalEquationType) * 2 + (DynaModel_.Order() - 1)][0] };
+	return pRightVector->Nordsiek[0] + pRightVector->Error * lm;
+}
+
+double MixedAdamsBDF::FindZeroCrossingToConst(const RightVector* pRightVector, double dConst)
+{
+	const ptrdiff_t q{ DynaModel_.Order() };
+	const double h{ DynaModel_.H() };
+
+	const double dError{ pRightVector->Error };
+
+	// получаем константу метода интегрирования
+	const double* lm{ Methodl[pRightVector->EquationType * 2 + q - 1] };
+	// рассчитываем коэффициенты полинома, описывающего изменение переменной
+	double a{ 0.0 };		// если порядок метода 1 - квадратичный член равен нулю
+	// линейный член
+	const double b{ (pRightVector->Nordsiek[1] + dError * lm[1]) / h };
+	// постоянный член
+	double c{ (pRightVector->Nordsiek[0] + dError * lm[0]) };
+
+	double GuardDiff{ DynaModel_.GetZeroCrossingTolerance() * (pRightVector->Rtol * std::abs(dConst) + pRightVector->Atol) };
+
+	c -= dConst;
+	if (c > 0)
+		GuardDiff = std::min(c, GuardDiff);
+	else
+		GuardDiff = std::max(c, -GuardDiff);
+
+	c -= 0.755 * GuardDiff;
+
+	// если порядок метода 2 - то вводим квадратичный коэффициент
+	if (q == 2)
+		a = (pRightVector->Nordsiek[2] + dError * lm[2]) / h / h;
+	// возвращаем отношение зеро-кроссинга для полинома
+	const double rH{ GetZCStepRatio(a, b, c) };
+
+	if (rH <= 0.0)
+	{
+		if (pRightVector->pDevice)
+			pRightVector->pDevice->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(
+				"Negative ZC ratio {} in device {}, variable {} at t={}. "
+				"Nordsieck [{},{},{}], Constant = {}",
+				rH,
+				pRightVector->pDevice->GetVerbalName(),
+				pRightVector->pDevice->VariableNameByPtr(pRightVector->pValue),
+				GetCurrentTime(),
+				pRightVector->Nordsiek[0],
+				pRightVector->Nordsiek[1],
+				pRightVector->Nordsiek[2],
+				dConst
+			));
+	}
+	return rH;
+}
+
+// возвращает отношение текущего шага к шагу до пересечения заданного a*t*t + b*t + c полинома
+double MixedAdamsBDF::GetZCStepRatio(double a, double b, double c)
+{
+	// по умолчанию зеро-кроссинга нет - отношение 1.0
+	double rH{ 1.0 };
+	const double h{ DynaModel_.H() };
+
+	if (Equal(a, 0.0))
+	{
+		// если квадратичный член равен нулю - просто решаем линейное уравнение
+		//if (!Equal(b, 0.0))
+		{
+			const double h1{ -c / b };
+			rH = (h + h1) / h;
+			//_ASSERTE(rH >= 0);
+		}
+	}
+	else
+	{
+		// если квадратичный член ненулевой - решаем квадратичное уравнение
+		double h1(0.0), h2(0.0);
+
+		if (MathUtils::CSquareSolver::Roots(a, b, c, h1, h2))
+		{
+			_ASSERTE(!(Equal(h1, (std::numeric_limits<double>::max)()) &&
+				Equal(h2, (std::numeric_limits<double>::max)())));
+
+			if (h1 > 0.0 || h1 < -h) h1 = (std::numeric_limits<double>::max)();
+			if (h2 > 0.0 || h2 < -h) h2 = (std::numeric_limits<double>::max)();
+
+			// возвращаем наименьший из действительных корней
+			rH = (h + (std::min)(h1, h2)) / h;
+		}
+	}
+
+	return rH;
+}
+
+double MixedAdamsBDF::FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2)
+{
+	const ptrdiff_t q{ DynaModel_.Order() };
+	const double h{ DynaModel_.H() };
+	const double dError1{ pRightVector1->Error };
+	const double dError2{ pRightVector2->Error };
+
+	const double* lm1{ Methodl[pRightVector1->EquationType * 2 + q - 1] };
+	const double* lm2{ Methodl[pRightVector2->EquationType * 2 + q - 1] };
+
+	double a{ 0.0 };
+	double b{ (pRightVector1->Nordsiek[1] + dError1 * lm1[1] - (pRightVector2->Nordsiek[1] + dError2 * lm2[1])) / h };
+	double c{ (pRightVector1->Nordsiek[0] + dError1 * lm1[0] - (pRightVector2->Nordsiek[0] + dError2 * lm2[0])) };
+
+	if (q == 2)
+		a = (pRightVector1->Nordsiek[2] + dError1 * lm1[2] - (pRightVector2->Nordsiek[2] + dError2 * lm2[2])) / h / h;
+
+	const double rH{ GetZCStepRatio(a, b, c) };
+
+	if (rH <= 0.0)
+	{
+		if (pRightVector1->pDevice)
+			pRightVector1->pDevice->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(
+				"Negative ZC ratio {} in device {}, variable {} at t={}. "
+				"Nordsieck1 [{},{},{}], Nordsieck2 [{},{},{}]",
+				rH,
+				pRightVector1->pDevice->GetVerbalName(),
+				pRightVector1->pDevice->VariableNameByPtr(pRightVector1->pValue),
+				GetCurrentTime(),
+				pRightVector1->Nordsiek[0],
+				pRightVector1->Nordsiek[1],
+				pRightVector1->Nordsiek[2],
+				pRightVector2->Nordsiek[0],
+				pRightVector2->Nordsiek[1],
+				pRightVector2->Nordsiek[2]
+			));
+	}
+	return rH;
+}
+
+double MixedAdamsBDF::FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow)
+{
+	double rH{ 1.0 };
+	const double  h{ DynaModel_.H() };
+	const ptrdiff_t q{ DynaModel_.Order() };
+	const double* lm{ Methodl[DET_ALGEBRAIC * 2 + q - 1] };
+	
+	// рассчитываем текущие напряжения по Нордсику (итоговые еще не рассчитаны в итерации)
+	const double Vre1{ NextStepValue(pRvre) };
+	const double Vim1{ NextStepValue(pRvim) };
+	// коэффициенты первого порядка
+	const double dVre1{ (pRvre->Nordsiek[1] + pRvre->Error * lm[1]) / h };
+	const double dVim1{ (pRvim->Nordsiek[1] + pRvim->Error * lm[1]) / h };
+	// коэффициенты второго порядка
+	const double dVre2{ (q == 2) ? (pRvre->Nordsiek[2] + pRvre->Error * lm[2]) / h / h : 0.0 };
+	const double dVim2{ (q == 2) ? (pRvim->Nordsiek[2] + pRvim->Error * lm[2]) / h / h : 0.0 };
+
+	// функция значения переменной от шага
+	// Vre(h) = Vre1 + h * dVre1 + h^2 * dVre2
+	// Vim(h) = Vim1 + h * dVim1 + h^2 * dVim2
+
+	// (Vre1 + h * dVre1 + h^2 * dVre2)^2 + (Vim1 + h * dVim1 + h^2 * dVim2)^2 - Boder^2 = 0
+
+
+	if (q == 1)
+	{
+		// для первого порядка решаем квадратное уравнение
+		// (Vre1 + h * dVre1)^2 + (Vim1 + h * dVim1)^2 - Boder^2 = 0
+		// Vre1^2 + 2 * Vre1 * h * dVre1 + dVre1^2 * h^2 + Vim1^2 + 2 * Vim1 * h * dVim1 + dVim1^2 * h^2 - Border^2 = 0
+
+		const double a{ dVre1 * dVre1 + dVim1 * dVim1 };
+		const double b{ 2.0 * (Vre1 * dVre1 + Vim1 * dVim1) };
+		const double c{ Vre1 * Vre1 + Vim1 * Vim1 - Const * Const };
+
+		rH = GetZCStepRatio(a, b, c);
+	}
+	else
+	{
+		const double a{ dVre2 * dVre2 + dVim2 * dVim2 };												// (xs2^2 + ys2^2)*t^4 
+		const double b{ 2.0 * (dVre1 * dVre2 + dVim1 * dVim1) };										// (2*xs1*xs2 + 2*ys1*ys2)*t^3 
+		const double c{ (dVre1 * dVre1 + dVim1 * dVim1 + 2.0 * Vre1 * dVre2 + 2.0 * Vim1 * dVim2) };	// (xs1^2 + ys1^2 + 2*x1*xs2 + 2*y1*ys2)*t^2 
+		const double d{ (2.0 * Vre1 * dVre1 + 2.0 * Vim1 * dVim1) };									// (2*x1*xs1 + 2*y1*ys1)*t 
+		const double e{ Vre1 * Vre1 + Vim1 * Vim1 - Const * Const };									// x1^2 + y1^2 - e
+		double t{ -0.5 * h };
+
+		for (int i = 0; i < 5; i++)
+		{
+			double dt = (a * t * t * t * t + b * t * t * t + c * t * t + d * t + e) / (4.0 * a * t * t * t + 3.0 * b * t * t + 2.0 * c * t + d);
+			t = t - dt;
+
+			// здесь была проверка диапазона t, но при ее использовании возможно неправильное
+			// определение доли шага, так как на первых итерациях значение может значительно выходить
+			// за диапазон. Но можно попробовать контролировать диапазон не на первой, а на последующих итерациях
+
+			if (std::abs(dt) < DFW2_EPSILON * 10.0)
+				break;
+
+			/*
+			if (t > 0.0 || t < -h)
+			{
+				t = FLT_MAX;
+				break;
+			}
+			*/
+		}
+		rH = (h + t) / h;
+	}
+	return rH;
+}
+
 
 const double MixedAdamsBDF::MethodlDefault[4][4] =
 	//									   l0			l1			l2			Tauq

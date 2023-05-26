@@ -306,5 +306,22 @@ void IntegratorMultiStageBase::WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& 
 	}
 }
 
+double IntegratorMultiStageBase::NextStepValue(const RightVector* pRightVector)
+{
+	return *pRightVector->pValue;
+}
 
+double IntegratorMultiStageBase::FindZeroCrossingToConst(const RightVector* pRightVector, double dConst)
+{
+	return 0.671;
+}
 
+double IntegratorMultiStageBase::FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2)
+{
+	return 0.671;
+}
+
+double IntegratorMultiStageBase::FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow)
+{
+	return 0.671;
+}

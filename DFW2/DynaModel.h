@@ -686,7 +686,7 @@ namespace DFW2
 		void InitDevicesNordsiek();
 		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst);
 		double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2);
-		double GetZCStepRatio(double a, double b, double c);
+		double FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow);
 		double NextStepValue(const RightVector* pRightVector);
 
 		// выполняет предварительную инициализацию устройств: 
@@ -811,11 +811,6 @@ namespace DFW2
 		}
 
 		[[nodiscard]] static bool IsSSE2Available();
-
-		/// !!!!!!!!!!!!!!!!!!!!!!!!!!! DIRT !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-		typedef double(*MethodLType)[4];
-		const MethodLType& Methodl() const;
 
 		//  возвращает отношение текущего шага к новому
 		inline double SetH(double h)

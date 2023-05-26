@@ -20,6 +20,10 @@ namespace DFW2
 		void BOperator() override;
 		void Restart() override;
 		void RepeatZeroCrossing(double rh) override;
+		double NextStepValue(const RightVector* pRightVector) override;
+		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst) override;
+		double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2) override;
+		double FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow) override;
 	protected:
 		double GetRatioForHigherOrder();
 		double GetRatioForCurrentOrder();
@@ -36,6 +40,7 @@ namespace DFW2
 		void DetectAdamsRinging();
 		void SaveNordsiek();
 		void InitNordsiek();
+		double GetZCStepRatio(double a, double b, double c);
 	public:
 		static const double MethodlDefault[4][4]; // фиксированные коэффициенты метода интегрирования
 		double Methodl[4][4];	// текущие коэффициенты метода интегрирования

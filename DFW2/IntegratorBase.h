@@ -120,6 +120,10 @@ namespace DFW2
 		//! Функция подготовки к повтору шага для поиска зерокроссинга
 		virtual void RepeatZeroCrossing(double rh);
 		virtual bool ReportJacobiRefactor() const { return true; }
+		virtual double NextStepValue(const RightVector* pRightVector) = 0;
+		virtual double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst) = 0;
+		virtual	double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2) = 0;
+		virtual	double FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow) = 0;
 		inline ConvergenceTest::ConvergenceTestVec& ConvTest()  { return ConvTest_; }
 	};
 
@@ -148,5 +152,9 @@ namespace DFW2
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
 		void BOperator() override;
 		bool ReportJacobiRefactor() const override { return false; } ;
+		double NextStepValue(const RightVector* pRightVector) override;
+		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst) override;
+		double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2) override;
+		double FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow) override;
 	};
 }
