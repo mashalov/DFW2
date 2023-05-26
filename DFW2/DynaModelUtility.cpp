@@ -1345,3 +1345,8 @@ double CDynaModel::GetZCStepRatio(double a, double b, double c)
 	return rH;
 }
 
+double CDynaModel::NextStepValue(const RightVector* pRightVector)
+{
+	const double lm{ Methodl()[static_cast<ptrdiff_t>(pRightVector->PhysicalEquationType) * 2 + (Order() - 1)][0]};
+	return pRightVector->Nordsiek[0] + pRightVector->Error * lm;
+}

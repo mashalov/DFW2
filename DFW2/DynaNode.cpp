@@ -1300,8 +1300,8 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 	const ptrdiff_t q(pDynaModel->Order());
 
 	// рассчитываем текущие напряжения по Нордсику (итоговые еще не рассчитаны в итерации)
-	const double Vre1{ pRvre->Nordsiek[0] + pRvre->Error * lm[0] };
-	const double Vim1{ pRvim->Nordsiek[0] + pRvim->Error * lm[0] };
+	const double Vre1{ pDynaModel->NextStepValue(pRvre) };
+	const double Vim1{ pDynaModel->NextStepValue(pRvim) };
 	// текущий модуль напряжения
 	const double Vcheck{ sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
 	// коэффициенты первого порядка
@@ -1441,9 +1441,8 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	const double Hyst{ LOW_VOLTAGE_HYST };
 	const RightVector* pRvre{ pDynaModel->GetRightVector(Vre.Index) };
 	const RightVector* pRvim{ pDynaModel->GetRightVector(Vim.Index) };
-	const double* lm{ pDynaModel->Methodl()[DET_ALGEBRAIC * 2 + pDynaModel->Order() - 1] };
-	const double Vre1{ pRvre->Nordsiek[0] + pRvre->Error * lm[0] };
-	const double Vim1{ pRvim->Nordsiek[0] + pRvim->Error * lm[0] };
+	const double Vre1{ pDynaModel->NextStepValue(pRvre)};
+	const double Vim1{ pDynaModel->NextStepValue(pRvim) };
 	const double Vcheck{ std::sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
 
 	/*if (GetId() == 2005 && GetModel()->GetIntegrationStepNumber() >= 6900)

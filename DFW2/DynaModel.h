@@ -687,6 +687,7 @@ namespace DFW2
 		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst);
 		double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2);
 		double GetZCStepRatio(double a, double b, double c);
+		double NextStepValue(const RightVector* pRightVector);
 
 		// выполняет предварительную инициализацию устройств: 
 		// расчет внутренних констант, которые не зависят от связанных устройств
