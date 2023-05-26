@@ -168,7 +168,7 @@ double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, -Db_);
+			rH = pDynaModel->FindZeroCrossingToConst(pRightVector1, -Db_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
@@ -192,7 +192,7 @@ double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, Db_);
+			rH = pDynaModel->FindZeroCrossingToConst(pRightVector1, Db_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
@@ -217,7 +217,7 @@ double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, DbMax_);
+			rH = pDynaModel->FindZeroCrossingToConst(pRightVector1, DbMax_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 			{
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_MAX);
@@ -234,7 +234,7 @@ double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 			}
 			else
 			{
-				rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, DbMin_);
+				rH = pDynaModel->FindZeroCrossingToConst(pRightVector1, DbMin_);
 				if (pDynaModel->ZeroCrossingStepReached(rH))
 				{
 					SetCurrentState(eDFW2DEADBANDSTATES::DBS_MIN);

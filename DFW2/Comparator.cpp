@@ -32,7 +32,7 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 
 	if (dCheck < 0)
 	{
-		rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
+		rH = pDynaModel->FindZeroCrossingOfDifference(pRightVector1, pRightVector2);
 		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{
 			const double derr{ std::abs(pRightVector1->GetWeightedError(dCheck, Input1_)) };
@@ -70,7 +70,7 @@ double CComparator::OnStateOff(CDynaModel *pDynaModel)
 
 	if (dCheck < 0)
 	{
-		rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
+		rH = pDynaModel->FindZeroCrossingOfDifference(pRightVector1, pRightVector2);
 		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{
 			const double derr{ std::abs(pRightVector1->GetWeightedError(dCheck, Input1_)) };

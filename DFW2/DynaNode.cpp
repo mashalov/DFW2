@@ -1341,7 +1341,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 			const double b{ 2.0 * (Vre1 * dVre1 + Vim1 * dVim1) };
 			const double c{ Vre1 * Vre1 + Vim1 * Vim1 - Border * Border };
 
-			rH = CDynaPrimitive::GetZCStepRatio(pDynaModel, a, b, c);
+			rH = pDynaModel->GetZCStepRatio(a, b, c);
 
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 			{

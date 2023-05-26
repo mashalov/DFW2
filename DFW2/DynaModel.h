@@ -638,10 +638,10 @@ namespace DFW2
 		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
 		void SetDerivative(ptrdiff_t nRow, double dValue);
 		bool ApplyChangesToModel();
-
 		bool SSE2Available_ = false;
 		double HysteresisRtol_ = 1e-2;
 		double HysteresisAtol_ = 10.0;
+
 
 	public:
 		CDynaNodeContainer Nodes;
@@ -684,6 +684,9 @@ namespace DFW2
 		void SolveLinearSystem(bool Refined = false);
 		void NewtonUpdateDevices();
 		void InitDevicesNordsiek();
+		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst);
+		double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2);
+		double GetZCStepRatio(double a, double b, double c);
 
 		// выполняет предварительную инициализацию устройств: 
 		// расчет внутренних констант, которые не зависят от связанных устройств
