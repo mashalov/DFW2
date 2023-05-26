@@ -10,6 +10,7 @@ namespace DFW2
 		void Step() override;
 		void AcceptStep(bool DisableStepControl = false) override;
 		void RejectStep() override;
+		void LeaveDiscontinuityMode() override;
 		void UpdateStepSize() override;
 		void Init() override;
 		bool StepConverged() override;

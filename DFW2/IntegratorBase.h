@@ -117,6 +117,7 @@ namespace DFW2
 		virtual void WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value) = 0;
 		virtual void BOperator() = 0;
 		virtual void Restart() = 0 ;
+		virtual void LeaveDiscontinuityMode() = 0;
 		//! Функция подготовки к повтору шага для поиска зерокроссинга
 		virtual void RepeatZeroCrossing(double rh);
 		virtual bool ReportJacobiRefactor() const { return true; }
@@ -137,10 +138,11 @@ namespace DFW2
 		double PrevNorm_ = 0.5;
 		double alpha, beta, gamma;
 		double d;
-		IntegratorBase::vecType uprev;
+		IntegratorBase::vecType uprev, f0, flast;
 	public:
 		virtual int Order() const = 0;
 		void Restart() override;
+		void LeaveDiscontinuityMode() override;
 		void AcceptStep(bool DisableStepControl = false) override;
 		void RejectStep() override;
 		void UpdateStepSize() override;
@@ -151,6 +153,7 @@ namespace DFW2
 		void NewtonFailed() override;
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
 		void BOperator() override;
+		void RepeatZeroCrossing(double rh) override;
 		bool ReportJacobiRefactor() const override { return false; } ;
 		double NextStepValue(const RightVector* pRightVector) override;
 		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst) override;

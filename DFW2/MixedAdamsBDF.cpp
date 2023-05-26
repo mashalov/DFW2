@@ -1045,9 +1045,13 @@ void MixedAdamsBDF::WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value)
 	}
 }
 
-void MixedAdamsBDF::Restart()
+void MixedAdamsBDF::LeaveDiscontinuityMode()
 {
 	DynaModel_.SetH(DynaModel_.Hmin());
+}
+
+void MixedAdamsBDF::Restart()
+{
 	auto& sc{ DynaModel_.StepControl() };
 	if (sc.m_bNordsiekSaved)
 	{
@@ -1073,20 +1077,18 @@ void MixedAdamsBDF::Restart()
 
 void MixedAdamsBDF::RepeatZeroCrossing(double rh)
 {
-	double rHstep{ DynaModel_.H() * rh };
-	auto& sc{ DynaModel_.StepControl() };
+	const auto& sc{ DynaModel_.StepControl() };
 	// восстанавливаем Nordsieck с предыдущего шага
 	RestoreNordsiek();
 	// ограничиваем шаг до минимального
-	if (rHstep < sc.Hmin)
+	if (DynaModel_.H() * rh < sc.Hmin)
 	{
-		rHstep = sc.Hmin;
 		// переходим на первый порядок, так
 		// как снижение шага может быть очень
 		// значительным
 		ChangeOrder(1);
 	}
-	IntegratorBase::RepeatZeroCrossing(rHstep);
+	IntegratorBase::RepeatZeroCrossing(rh);
 }
 
 double MixedAdamsBDF::NextStepValue(const RightVector* pRightVector)

@@ -46,11 +46,18 @@ namespace DFW2
 			Method
 		};
 
+		enum class eItegrationMethod
+		{
+			MixedAdamsBDF,
+			Rodas4,
+			Rosenbrock23
+		};
+
 		struct DynaModelParameters : public CLoadFlow::LoadFlowParameters
 		{
 			
 			DynaModelParameters() : CLoadFlow::LoadFlowParameters() {}
-
+			eItegrationMethod IntegrationMethod_ = eItegrationMethod::MixedAdamsBDF;
 			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
@@ -111,7 +118,9 @@ namespace DFW2
 			SerializerPtr GetSerializer();
 			SerializerValidatorRulesPtr GetValidator();
 
+			static constexpr const char* m_cszIntegrationMethod = "IntegrationMethod";
 			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Current", "Power", "Tanh" };
+			static constexpr const char* m_cszIntegrationMethodNames[3] = { "MixedAdamsBDF", "Rodas4", "Rosenbrock23" };
 			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
 			static constexpr const char* m_cszLogLevelNames[7] = { "none", "fatal", "error", "warning", "message", "info", "debug" };
 			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };

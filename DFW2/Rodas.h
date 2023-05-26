@@ -10,7 +10,7 @@ namespace DFW2
 		int Order() const override { return 2; }
 	protected:
 		static inline const double c32 = 6.0 + std::sqrt(2.0);
-		IntegratorBase::vecType f0, f1, f2, k1, k2;
+		IntegratorBase::vecType f1, k1, k2;
 	};
 
 	class Rodas4 : public IntegratorMultiStageBase
@@ -21,7 +21,7 @@ namespace DFW2
 		int Order() const override { return 4; }
 
 	protected:
-        IntegratorBase::vecType du, k1, k2, k3, k4, k5, k6;
+        IntegratorBase::vecType k1, k2, k3, k4, k5, k6;
 
         static inline const double a21 = 1.544000000000000;
         static inline const double a31 = 0.9466785280815826;

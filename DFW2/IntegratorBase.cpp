@@ -1,13 +1,15 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
 #include "MixedAdamsBDF.h"
+#include "Eigen/Dense"
 
 using namespace DFW2;
 
 
+
 void IntegratorBase::RepeatZeroCrossing(double rh)
 {
-	DynaModel_.SetH(rh);
+	DynaModel_.SetH( (std::max)(DynaModel_.Hmin(), rh * DynaModel_.H()));
 	auto& sc{ DynaModel_.StepControl() };
 	sc.CheckAdvance_t0();
 	sc.OrderStatistics[DynaModel_.Order() - 1].nZeroCrossingsSteps++;
@@ -90,12 +92,21 @@ IntegratorMultiStageBase::IntegratorMultiStageBase(CDynaModel& DynaModel) :  Int
 
 void IntegratorMultiStageBase::Restart()
 {
-	DynaModel_.SetH(1000.0 * DynaModel_.Hmin());
 	fsal_ = false;
-	//DynaModel_.ResetStep(true);
-	for (auto&& r : DynaModel_.RightVectorRange())
-		// в качестве значения принимаем то, что рассчитано в устройстве
-		r.Tminus2Value = r.Nordsiek[0] = r.SavedNordsiek[0] = *r.pValue;
+}
+
+void IntegratorMultiStageBase::LeaveDiscontinuityMode()
+{
+	DynaModel_.SetH(1000.0 * DynaModel_.Hmin());
+}
+
+void IntegratorMultiStageBase::RepeatZeroCrossing(double rh)
+{
+	ToModel(uprev);
+	DynaModel_.NewtonUpdateDevices();
+	DynaModel_.ResetStep(true);
+	Restart();
+	IntegratorBase::RepeatZeroCrossing(rh);
 }
 
 void IntegratorMultiStageBase::AcceptStep(bool DisableStepControl)
@@ -106,13 +117,13 @@ void IntegratorMultiStageBase::AcceptStep(bool DisableStepControl)
 	sc.m_bRetryStep = false;
 	sc.nMinimumStepFailures = 0;
 	sc.OrderStatistics[0].nSteps++;
+	DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
+		fmt::format(CDFW2Messages::m_cszMultiStageSepAccepted,
+			DynaModel_.H(),
+			Norm,
+			sc.Integrator.Weighted.Info()));
 	if (!DisableStepControl)
 	{
-		DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
-			fmt::format(CDFW2Messages::m_cszMultiStageSepAccepted,
-				DynaModel_.H(),
-				Norm,
-				sc.Integrator.Weighted.Info()));
 		DynaModel_.SetH(NextH());
 		sc.StepChanged();
 	}
@@ -313,7 +324,31 @@ double IntegratorMultiStageBase::NextStepValue(const RightVector* pRightVector)
 
 double IntegratorMultiStageBase::FindZeroCrossingToConst(const RightVector* pRightVector, double dConst)
 {
-	return 0.671;
+	// find zero crossing point by fitting inverse cubic polynomial 
+	// François E.Cellier, Ernesto Kofman. Continuous System Simulation. https://doi.org/10.1007/0-387-30260-3
+
+	const auto rvBase{ DynaModel_.GetRightVector() };
+	const double fs{ uprev[pRightVector - rvBase] - dConst};	// f(t0) - dConst
+	const double dfs{ f0[pRightVector - rvBase] };				// df/ft(t0)
+	const double fl{ *pRightVector->pValue - dConst };			// f(t0+h)  - dConst
+	const double dfl{ flast[pRightVector - rvBase] };			// df/dt(t0+h)
+
+	const double h{ DynaModel_.H() };
+
+	Eigen::Matrix4d A;
+	A << fs * fs * fs, fs * fs, fs, 1.0,
+		 fl * fl * fl, fl * fl, fl, 1.0,
+		 3.0 * fs * fs, 2.0 * fs, 1.0, 0.0,
+		 3.0 * fl * fl, 2.0 * fl, 1.0, 0.0;
+
+	Eigen::Vector4d b(4);
+	b << 0.0, 
+		 h,
+		 1.0 / dfs, 
+		 1.0 / dfl;
+
+	const double d{ A.lu().solve(b)(3) };
+	return d / h;
 }
 
 double IntegratorMultiStageBase::FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2)

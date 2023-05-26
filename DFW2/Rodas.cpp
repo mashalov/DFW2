@@ -15,7 +15,7 @@ void Rosenbrock23::Step()
 	auto uprevit{ VerifyVector(uprev) };
 	auto f0it{ VerifyVector(f0) };
 	auto f1it{ VerifyVector(f1) };
-	auto f2it{ VerifyVector(f2) };  // f2 становится f0 на следующем шаге
+	auto f2it{ VerifyVector(flast) };  // f2 становится f0 на следующем шаге
 
 	PrevNorm_ = ConvTest_[0].dErrorSum;
 	if (PrevNorm_ == 0.0)
@@ -36,7 +36,7 @@ void Rosenbrock23::Step()
 
 	if (fsal_)
 	{
-		f0 = f2;
+		f0 = flast;
 		DynaModel_.BuildMatrix(false);
 	}
 	else
@@ -95,7 +95,7 @@ void Rosenbrock23::Step()
 		}
 	}
 
-	f(f2);
+	f(flast);
 
 	fsal_ = true;
 
@@ -178,7 +178,7 @@ void Rodas4::Step()
 	}
 
 	auto uprevit{ VerifyVector(uprev) };
-	auto duit{ VerifyVector(du) };
+	auto duit{ VerifyVector(flast) };
 
 	const double dtC21{ C21 / h };
 	const double dtC31{ C31 / h };
@@ -216,6 +216,8 @@ void Rodas4::Step()
 		DynaModel_.NewtonUpdateDevices();
 		DynaModel_.BuildMatrix();
 	}
+	VerifyVector(f0);
+	FromB(f0);
 	//du = f(uprev, p, t)
 	{
 		//	linsolve_tmp = du + dtd1 * dT
@@ -418,7 +420,7 @@ void Rodas4::Step()
 			++k6it;
 		}
 		//	du = f(u, p, t + c3 * dt)
-		f(du);
+		f(flast);
 	}
 
 //	atmp = calculate_residuals(k6, uprev, u, integrator.opts.abstol, integrator.opts.reltol, integrator.opts.internalnorm, t)

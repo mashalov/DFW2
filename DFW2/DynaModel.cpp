@@ -22,8 +22,6 @@
 #include "TestDevice.h"
 #include "TaggedPath.h"
 #include "FolderClean.h"
-#include "Rodas.h"
-#include "MixedAdamsBDF.h"
 #include "klu.h"
 #include "cs.h"
 using namespace DFW2;
@@ -145,10 +143,6 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 
 	if (!SSE2Available_)
 		throw dfw2error(CDFW2Messages::m_cszNoSSE2Support);
-	
-	//Integrator_ = std::make_unique<Rodas4>(*this);
-	//Integrator_ = std::make_unique<Rosenbrock23>(*this);
-	Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
 }
 
 
@@ -164,6 +158,7 @@ CDynaModel::~CDynaModel()
 bool CDynaModel::RunTransient()
 {
 	DeserializeParameters(Platform().Root() / "config.json");
+
 	Automatic().CompileModels();
 
 	AutomaticDevice.ConnectDLL(Automatic().GetModulePath());
@@ -1039,6 +1034,7 @@ void CDynaModel::LeaveDiscontinuityMode()
 		sc.m_bDiscontinuityMode = false;
 		for (auto&& it : DeviceContainers_)
 			it->LeaveDiscontinuityMode(this);
+		Integrator_->LeaveDiscontinuityMode();
 		Integrator_->Restart();
 	}
 }

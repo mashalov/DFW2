@@ -3,6 +3,7 @@
 #include "DynaGeneratorMotion.h"
 #include "BranchMeasures.h"
 #include "MathUtils.h"
+#include "Rodas.h"
 #include "MixedAdamsBDF.h"
 #ifdef _MSC_VER
 #include <intrin.h>
@@ -660,6 +661,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 {
 	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
 	Serializer->SetClassName("Parameters");
+	Serializer->AddEnumProperty(m_cszIntegrationMethod, new CSerializerAdapterEnum<eItegrationMethod>(IntegrationMethod_, m_cszIntegrationMethodNames));
 	Serializer->AddProperty(m_cszFrequencyTimeConstant, m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_cszLRCToShuntVmin, m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszConsiderDampingEquation, m_bConsiderDampingEquation);
@@ -1077,6 +1079,19 @@ void CDynaModel::PrecomputeConstants()
 	HysteresisRtol_ = Rtol() * m_Parameters.HysteresisRtol_;
 	sc.nStepsToStepChangeParameter = m_Parameters.StepsToStepChange_;
 	sc.nStepsToOrderChangeParameter = m_Parameters.StepsToOrderChange_;
+
+	switch (Parameters().IntegrationMethod_)
+	{
+	case eItegrationMethod::Rodas4:
+		Integrator_ = std::make_unique<Rodas4>(*this);
+		break;
+	case eItegrationMethod::Rosenbrock23:
+		Integrator_ = std::make_unique<Rosenbrock23>(*this);
+		break;
+	default:
+		Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
+		break;
+	}
 }
 
 void CDynaModel::FinishStep()
