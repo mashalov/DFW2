@@ -1097,6 +1097,11 @@ double MixedAdamsBDF::NextStepValue(const RightVector* pRightVector)
 	return pRightVector->Nordsiek[0] + pRightVector->Error * lm;
 }
 
+double MixedAdamsBDF::StepStartValue(const RightVector* pRightVector)
+{
+	return pRightVector->Nordsiek[0];
+}
+
 double MixedAdamsBDF::FindZeroCrossingToConst(const RightVector* pRightVector, double dConst)
 {
 	const ptrdiff_t q{ DynaModel_.Order() };

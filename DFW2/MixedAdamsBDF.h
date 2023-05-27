@@ -22,6 +22,9 @@ namespace DFW2
 		void Restart() override;
 		void RepeatZeroCrossing(double rh) override;
 		double NextStepValue(const RightVector* pRightVector) override;
+		double StepStartValue(const RightVector* pRightVector) override;
+		double StepStartDerivative(const RightVector* pRightVector) override { return 0.0; }
+		double NextStepDerivative(const RightVector* pRightVector) override { return 0.0; }
 		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst) override;
 		double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2) override;
 		double FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow) override;

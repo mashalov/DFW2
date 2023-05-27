@@ -97,7 +97,7 @@ void IntegratorMultiStageBase::Restart()
 
 void IntegratorMultiStageBase::LeaveDiscontinuityMode()
 {
-	DynaModel_.SetH(1000.0 * DynaModel_.Hmin());
+	DynaModel_.SetH(1e3 * DynaModel_.Hmin());
 }
 
 void IntegratorMultiStageBase::RepeatZeroCrossing(double rh)
@@ -192,8 +192,8 @@ void IntegratorMultiStageBase::UpdateStepSize()
 
 void IntegratorMultiStageBase::Init()
 {
-	alpha = 0.7 / static_cast<double>(Order());
-	beta = 0.4 / static_cast<double>(Order());
+	alpha = 1.0 / static_cast<double>(Order());
+	beta = 0.0 / static_cast<double>(Order());
 	gamma = 0.95;
 
 	DynaModel_.InitDevicesNordsiek();
@@ -322,41 +322,80 @@ double IntegratorMultiStageBase::NextStepValue(const RightVector* pRightVector)
 	return *pRightVector->pValue;
 }
 
-double IntegratorMultiStageBase::FindZeroCrossingToConst(const RightVector* pRightVector, double dConst)
+double IntegratorMultiStageBase::StepStartValue(const RightVector* pRightVector)
 {
-	// find zero crossing point by fitting inverse cubic polynomial 
-	// François E.Cellier, Ernesto Kofman. Continuous System Simulation. https://doi.org/10.1007/0-387-30260-3
+	return uprev[pRightVector - DynaModel_.GetRightVector()];
+}
 
-	const auto rvBase{ DynaModel_.GetRightVector() };
-	const double fs{ uprev[pRightVector - rvBase] - dConst};	// f(t0) - dConst
-	const double dfs{ f0[pRightVector - rvBase] };				// df/ft(t0)
-	const double fl{ *pRightVector->pValue - dConst };			// f(t0+h)  - dConst
-	const double dfl{ flast[pRightVector - rvBase] };			// df/dt(t0+h)
+double IntegratorMultiStageBase::ZeroCrossingInverseCubic(double fstart, double dfstart, double fend, double dfend) const
+{
+	const double fssq{ fstart * fstart };
+	const double fesq{ fend * fend };
+
+	Eigen::Matrix4d A;
+	A << fstart * fssq,		fssq,			fstart,			1.0,
+		 fend * fesq,		fesq,			fend,			1.0,
+		 3.0 * fssq,		2.0 * fstart,	1.0,			0.0,
+		 3.0 * fesq,		2.0 * fend,		1.0,			0.0;
 
 	const double h{ DynaModel_.H() };
 
-	Eigen::Matrix4d A;
-	A << fs * fs * fs, fs * fs, fs, 1.0,
-		 fl * fl * fl, fl * fl, fl, 1.0,
-		 3.0 * fs * fs, 2.0 * fs, 1.0, 0.0,
-		 3.0 * fl * fl, 2.0 * fl, 1.0, 0.0;
-
 	Eigen::Vector4d b(4);
-	b << 0.0, 
-		 h,
-		 1.0 / dfs, 
-		 1.0 / dfl;
+	b << 0.0, 	h,	 1.0 / dfstart,		1.0 / dfend;
 
 	const double d{ A.lu().solve(b)(3) };
 	return d / h;
 }
 
+double IntegratorMultiStageBase::FindZeroCrossingToConst(const RightVector* pRightVector, double dConst)
+{
+	// find zero crossing point by fitting inverse cubic polynomial 
+	// François E.Cellier, Ernesto Kofman. Continuous System Simulation. https://doi.org/10.1007/0-387-30260-3
+
+	const double fstart{ StepStartValue(pRightVector) - dConst };	// f(t0) - dConst
+	const double dfstart{ StepStartDerivative(pRightVector) };		// df/ft(t0)
+	const double fend{ NextStepValue(pRightVector)- dConst };		// f(t0+h)  - dConst
+	const double dfend{ NextStepDerivative(pRightVector) };			// df/dt(t0+h)
+	return ZeroCrossingInverseCubic(fstart, dfstart, fend, dfend);
+}
+	
+
 double IntegratorMultiStageBase::FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2)
 {
-	return 0.671;
+	const double fstart{ StepStartValue(pRightVector1) - StepStartValue(pRightVector2) };
+	const double dfstart{ StepStartDerivative(pRightVector1) - StepStartDerivative(pRightVector2) };
+	const double fend{ NextStepValue(pRightVector1) - NextStepValue(pRightVector2) };
+	const double dfend{ NextStepDerivative(pRightVector1) - NextStepDerivative(pRightVector2) };
+	return ZeroCrossingInverseCubic(fstart, dfstart, fend, dfend);
 }
 
 double IntegratorMultiStageBase::FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow)
 {
-	return 0.671;
+	
+	// f(t) = vre(t)^2 + vim(t)^2 - Const^2
+	// df(t)/dt = 2*vre(t)*dvre(t)/dt + 2*vim(t)*dvim(t)/dt
+
+	const auto rvBase{ DynaModel_.GetRightVector() };
+	double VreStart{ StepStartValue(pRvre) };
+	double VimStart{ StepStartValue(pRvim) };
+	double dVreStart{ StepStartDerivative(pRvre) };
+	double dVimStart{ StepStartDerivative(pRvim) };
+	double VreEnd{ NextStepValue(pRvre) };
+	double VimEnd{ NextStepValue(pRvim) };
+	double dVreEnd{ NextStepDerivative(pRvre) };
+	double dVimEnd{ NextStepDerivative(pRvim) };
+
+	const double dfstart{ 2.0 * (VreStart * dVreStart + VimStart * dVimStart) };
+	const double dfend{ 2.0 * (VreEnd * dVreEnd + VimEnd * dVimEnd) };
+
+	VreStart *= VreStart;
+	VimStart *= VimStart;
+	VreEnd *= VreEnd;
+	VimEnd *= VimEnd;
+	Const *= Const;
+
+	const double fstart{ VreStart + VimStart - Const };
+	const double fend{ VreEnd + VimEnd - Const };
+
+	return ZeroCrossingInverseCubic(fstart, dfstart, fend, dfend);
 }

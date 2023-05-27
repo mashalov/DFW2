@@ -155,6 +155,18 @@ void Rosenbrock23::Step()
 	DynaModel_.ResetStep(false);
 }
 
+
+double Rosenbrock23::StepStartDerivative(const RightVector* pRightVector)
+{
+	return k1[pRightVector - DynaModel_.GetRightVector()];
+}
+
+double Rosenbrock23::NextStepDerivative(const RightVector* pRightVector)
+{
+	return k2[pRightVector - DynaModel_.GetRightVector()];
+}
+
+
 Rodas4::Rodas4(CDynaModel& DynaModel) : IntegratorMultiStageBase(DynaModel)
 {
 	d = 0.25;
@@ -447,4 +459,23 @@ void Rodas4::Step()
 
 	sc.m_bNewtonConverged = true;
 	DynaModel_.ResetStep(false);
+}
+
+
+double Rodas4::StepStartDerivative(const RightVector* pRightVector)
+{
+	const ptrdiff_t ix{ pRightVector - DynaModel_.GetRightVector() };
+	return (a51 * k1[ix] + a52 * k2[ix] + a53 * k3[ix] + a54 * k4[ix]) / DynaModel_.H();
+	//return h21 * k1[ix] + h22 * k2[ix] + h23 * k3[ix] + h24 * k4[ix] + h25 * k5[ix];
+	//return f0[pRightVector - DynaModel_.GetRightVector()];
+	//return k1[pRightVector - DynaModel_.GetRightVector()] / DynaModel_.H();
+}
+
+double Rodas4::NextStepDerivative(const RightVector* pRightVector)
+{
+	const ptrdiff_t ix{ pRightVector - DynaModel_.GetRightVector() };
+	//return h31 * k1[ix] + h32 * k2[ix] + h33 * k3[ix] + h34 * k4[ix] + h35 * k5[ix];
+	return (a51 * k1[ix] + a52 * k2[ix] + a53 * k3[ix] + a54 * k4[ix] + k5[ix] + k6[ix]) / DynaModel_.H();
+	//return flast[pRightVector - DynaModel_.GetRightVector()];
+	//return (k5[pRightVector - DynaModel_.GetRightVector()] + k6[pRightVector - DynaModel_.GetRightVector()]) / DynaModel_.H();
 }

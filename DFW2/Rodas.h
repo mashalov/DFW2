@@ -8,6 +8,8 @@ namespace DFW2
 		Rosenbrock23(CDynaModel& DynaModel);
 		void Step() override;
 		int Order() const override { return 2; }
+        double StepStartDerivative(const RightVector* pRightVector) override;
+        double NextStepDerivative(const RightVector* pRightVector) override;
 	protected:
 		static inline const double c32 = 6.0 + std::sqrt(2.0);
 		IntegratorBase::vecType f1, k1, k2;
@@ -19,7 +21,8 @@ namespace DFW2
 		Rodas4(CDynaModel& DynaModel);
 		void Step() override;
 		int Order() const override { return 4; }
-
+        double StepStartDerivative(const RightVector* pRightVector) override;
+        double NextStepDerivative(const RightVector* pRightVector) override;
 	protected:
         IntegratorBase::vecType k1, k2, k3, k4, k5, k6;
 

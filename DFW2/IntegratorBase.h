@@ -122,6 +122,9 @@ namespace DFW2
 		virtual void RepeatZeroCrossing(double rh);
 		virtual bool ReportJacobiRefactor() const { return true; }
 		virtual double NextStepValue(const RightVector* pRightVector) = 0;
+		virtual double StepStartValue(const RightVector* pRightVector) = 0;
+		virtual double StepStartDerivative(const RightVector* pRightVector) = 0;
+		virtual double NextStepDerivative(const RightVector* pRightVector) = 0;
 		virtual double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst) = 0;
 		virtual	double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2) = 0;
 		virtual	double FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow) = 0;
@@ -139,6 +142,7 @@ namespace DFW2
 		double alpha, beta, gamma;
 		double d;
 		IntegratorBase::vecType uprev, f0, flast;
+		double ZeroCrossingInverseCubic(double fstart, double dfstart, double fend, double dfend) const;
 	public:
 		virtual int Order() const = 0;
 		void Restart() override;
@@ -156,6 +160,7 @@ namespace DFW2
 		void RepeatZeroCrossing(double rh) override;
 		bool ReportJacobiRefactor() const override { return false; } ;
 		double NextStepValue(const RightVector* pRightVector) override;
+		double StepStartValue(const RightVector* pRightVector) override;
 		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst) override;
 		double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2) override;
 		double FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow) override;
