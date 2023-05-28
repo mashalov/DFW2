@@ -103,6 +103,7 @@ void IntegratorMultiStageBase::LeaveDiscontinuityMode()
 void IntegratorMultiStageBase::RepeatZeroCrossing(double rh)
 {
 	ToModel(uprev);
+	DynaModel_.RestoreStates();
 	DynaModel_.NewtonUpdateDevices();
 	DynaModel_.ResetStep(true);
 	Restart();
@@ -179,6 +180,7 @@ void IntegratorMultiStageBase::RejectStep()
 		// если шаг еще можно снизить
 		sc.nMinimumStepFailures = 0;
 		ToModel(uprev);
+		DynaModel_.RestoreStates();
 		DynaModel_.NewtonUpdateDevices();
 		DynaModel_.SetH(newEffectiveH);
 		sc.CheckAdvance_t0();

@@ -33,6 +33,7 @@ void Rosenbrock23::Step()
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 
 	FromModel(uprev);
+	DynaModel_.StoreStates();
 
 	if (fsal_)
 	{
@@ -215,6 +216,7 @@ void Rodas4::Step()
 
 	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
 	FromModel(uprev);
+	DynaModel_.StoreStates();
 
 	//W = calc_W(integrator, cache, dtgamma, repeat_step, true)
 
@@ -462,20 +464,28 @@ void Rodas4::Step()
 }
 
 
+double derivative(double theta, double h, double k1, double k2, double y0, double y1)
+{
+	//k[1] + Θ * (-2 * k[1] + 2 * k[2] - 3 * k[2] * Θ) - y₀ + y₁) / dt
+	return (k1 + theta * (-2.0 * k1 + 2 * k2 - 3 * k2 * theta) - y0 + y1) / h;
+}
+
 double Rodas4::StepStartDerivative(const RightVector* pRightVector)
 {
 	const ptrdiff_t ix{ pRightVector - DynaModel_.GetRightVector() };
-	return (a51 * k1[ix] + a52 * k2[ix] + a53 * k3[ix] + a54 * k4[ix]) / DynaModel_.H();
-	//return h21 * k1[ix] + h22 * k2[ix] + h23 * k3[ix] + h24 * k4[ix] + h25 * k5[ix];
-	//return f0[pRightVector - DynaModel_.GetRightVector()];
-	//return k1[pRightVector - DynaModel_.GetRightVector()] / DynaModel_.H();
+	const double df1{ (a51 * k1[ix] + a52 * k2[ix] + a53 * k3[ix] + a54 * k4[ix]) / DynaModel_.H() };
+	//const double rk1{ h21 * k1[ix] + h22 * k2[ix] + h23 * k3[ix] + h24 * k4[ix] + h25 * k5[ix] };
+	//const double rk2{ h31 * k1[ix] + h32 * k2[ix] + h33 * k3[ix] + h34 * k4[ix] + h35 * k5[ix] };
+	//const double df1{ derivative(0.0, DynaModel_.H(), rk1, rk2, uprev[ix], *pRightVector->pValue) };
+	return df1;
 }
 
 double Rodas4::NextStepDerivative(const RightVector* pRightVector)
 {
 	const ptrdiff_t ix{ pRightVector - DynaModel_.GetRightVector() };
-	//return h31 * k1[ix] + h32 * k2[ix] + h33 * k3[ix] + h34 * k4[ix] + h35 * k5[ix];
-	return (a51 * k1[ix] + a52 * k2[ix] + a53 * k3[ix] + a54 * k4[ix] + k5[ix] + k6[ix]) / DynaModel_.H();
-	//return flast[pRightVector - DynaModel_.GetRightVector()];
-	//return (k5[pRightVector - DynaModel_.GetRightVector()] + k6[pRightVector - DynaModel_.GetRightVector()]) / DynaModel_.H();
+	const double df1{ StepStartDerivative(pRightVector) + (k5[ix] + k6[ix]) / DynaModel_.H() };
+	//const double rk1{ h21 * k1[ix] + h22 * k2[ix] + h23 * k3[ix] + h24 * k4[ix] + h25 * k5[ix] };
+	//const double rk2{ h31 * k1[ix] + h32 * k2[ix] + h33 * k3[ix] + h34 * k4[ix] + h35 * k5[ix] };
+	//const double df1{ derivative(1.0, DynaModel_.H(), rk1, rk2, uprev[ix], *pRightVector->pValue) };
+	return df1;
 }

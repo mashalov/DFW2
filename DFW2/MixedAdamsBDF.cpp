@@ -34,10 +34,7 @@ void MixedAdamsBDF::SaveNordsiek()
 	DynaModel_.StoreUsedH();
 	sc.SetNordsiekScaledForHSaved(sc.NordsiekScaledForH());
 	sc.m_bNordsiekSaved = true;
-
-	for (auto&& it : DynaModel_.DeviceContainersStoreStates())
-		for (auto&& dit : *it)
-			dit->StoreStates();
+	DynaModel_.StoreStates();
 }
 
 void MixedAdamsBDF::Step()
@@ -784,9 +781,7 @@ void MixedAdamsBDF::RestoreNordsiek()
 		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
 	}
 
-	for (auto&& it : DynaModel_.DeviceContainersStoreStates())
-		for (auto&& dit : *it)
-			dit->RestoreStates();
+	DynaModel_.RestoreStates();
 }
 
 void MixedAdamsBDF::NewtonBacktrack(const double* pVec, double lambda)

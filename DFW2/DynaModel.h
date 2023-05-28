@@ -688,6 +688,8 @@ namespace DFW2
 		void SolveNewton(ptrdiff_t nMaxIts);
 		void BuildMatrix(bool SkipRightHand = false);
 		void BuildRightHand();
+		void StoreStates();
+		void RestoreStates();
 		const CDeviceContainer* ClosestZeroCrossingContainer() const { return m_pClosestZeroCrossingContainer; }
 		void BuildDerivatives();
 		void SolveLinearSystem(bool Refined = false);
@@ -757,11 +759,6 @@ namespace DFW2
 		StepControl& StepControl()
 		{
 			return sc;
-		}
-
-		inline DEVICECONTAINERS& DeviceContainersStoreStates()
-		{
-			return DeviceContainersStoreStates_;
 		}
 
 		inline DEVICECONTAINERS& DeviceContainersPredict()

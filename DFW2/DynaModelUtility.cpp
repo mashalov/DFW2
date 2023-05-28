@@ -1246,3 +1246,17 @@ double CDynaModel::FindZeroCrossingOfModule(const RightVector* pRvre, const Righ
 {
 	return Integrator_->FindZeroCrossingOfModule(pRvre, pRvim, Const, bCheckForLow);
 }
+
+void CDynaModel::RestoreStates()
+{
+	for (auto&& it : DeviceContainersStoreStates_)
+		for (auto&& dit : *it)
+			dit->RestoreStates();
+}
+
+void CDynaModel::StoreStates()
+{
+	for (auto&& it : DeviceContainersStoreStates_)
+		for (auto&& dit : *it)
+			dit->StoreStates();
+}
