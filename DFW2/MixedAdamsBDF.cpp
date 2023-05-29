@@ -867,7 +867,7 @@ void MixedAdamsBDF::NewtonFailed()
 	auto& sc{ DynaModel_.StepControl() };
 
 	const double h{ DynaModel_.H() };
-	const double usedh{ DynaModel_.H() };
+	const double usedh{ DynaModel_.UsedH() };
 
 	// обновляем подсчет ошибок Ньютона
 	if (!sc.m_bDiscontinuityMode)

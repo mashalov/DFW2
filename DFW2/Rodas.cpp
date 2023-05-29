@@ -50,6 +50,7 @@ void Rosenbrock23::Step()
 	}
 
 	DynaModel_.SolveLinearSystem(Refine);
+	sc.RefactorMatrix(false);
 
 	const double dth{ h * d };
 
@@ -237,6 +238,7 @@ void Rodas4::Step()
 		//	linsolve_tmp = du + dtd1 * dT
 		//	k1 = _reshape(W \ - _vec(linsolve_tmp), axes(uprev))
 		DynaModel_.SolveLinearSystem(Refine);
+		sc.RefactorMatrix(false);
 		auto BRange{ DynaModel_.BRange() };
 		uprevit = uprev.begin();
 		auto k1it{ VerifyVector(k1) };
