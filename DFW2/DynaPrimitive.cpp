@@ -119,7 +119,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 			{
 				bChangeState = true;
 				_ASSERTE(0); // корня нет, но знак изменился !
-				rH = pDynaModel->FindZeroCrossingToConst(pRightVector, Constraint);
+				//rH = pDynaModel->FindZeroCrossingToConst(pRightVector, Constraint);
 				rH = 1.0;
 			}
 		}
