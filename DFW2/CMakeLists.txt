@@ -88,6 +88,9 @@ set(EMSSSOURCES
     BranchMeasures.cpp
     Logger.cpp
     TestDevice.cpp
+    MixedAdamsBDF.cpp
+    Rodas.cpp
+    IntegratorBase.cpp
     )             
 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
