@@ -1120,11 +1120,12 @@ void CDynaModel::DumpStatistics()
 		sc.OrderStatistics[1].nZeroCrossingsSteps,
 		sc.OrderStatistics[1].dTimePassed));
 
-	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Factors count {} / (Refactors {} + {} failures) Analyzings count {}",
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Factors count {} / (Refactors {} + {} failures) Analyzings count {} Solves count {}",
 		klu.FactorizationsCount(),
 		klu.RefactorizationsCount(),
 		klu.RefactorizationFailuresCount(),
-		klu.AnalyzingsCount()));
+		klu.AnalyzingsCount(),
+		klu.SolvesCount()));
 
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Newtons count {} {:.2} per step, failures at step {} failures at discontinuity {}",
 		sc.nNewtonIterationsCount,

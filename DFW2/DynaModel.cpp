@@ -589,11 +589,11 @@ void CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		if (sc.m_bNewtonConverged)
 		{
 			NewtonUpdateDevices();
-			LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Converged{:>3} iteration {} MaxWeight {} Saving {:.2} Rcond {}", 
+			LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Converged{:>3} iteration {} MaxWeight {} Saving {:.2f} Rcond {}", 
 																			sc.nNewtonIteration,
 																			sc.Newton.Absolute.Info(),
 																			sc.Newton.Weighted.dMaxError,
-																			1.0 - static_cast<double>(klu.FactorizationsCount() + klu.RefactorizationsCount()) / sc.nNewtonIterationsCount,
+																			1.0 - static_cast<double>(klu.FactorizationsCount() + klu.RefactorizationsCount()) / klu.SolvesCount(),
 																			sc.dLastConditionNumber));
 			// ProcessDiscontinuity checks Discontinuity mode internally and can be called
 			// regardless of this mode

@@ -176,7 +176,7 @@ void MixedAdamsBDF::RejectStep()
 		sc.Integrator.Weighted.Info()));
 
 	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
-	sc.OrderStatistics[DynaModel_.Order()].nFailures++;
+	sc.OrderStatistics[DynaModel_.Order() - 1].nFailures++;
 
 
 	if (newH < sc.Hmin * 10.0)

@@ -242,6 +242,7 @@ namespace DFW2
 		ptrdiff_t MatrixSize_ = 0;
 		ptrdiff_t NonZeroCount_ = 0;
 		ptrdiff_t AnalyzingsCount_ = 0;
+		ptrdiff_t SolvesCount_ = 0;
 		ptrdiff_t FactorizationsCount_ = 0;
 		ptrdiff_t RefactorizationsCount_ = 0;
 		ptrdiff_t RefactorizationFailures_ = 0;
@@ -322,11 +323,12 @@ namespace DFW2
 			pNumeric.reset();
 		}
 		inline ptrdiff_t MatrixSize() const { return MatrixSize_; }
-		ptrdiff_t NonZeroCount() { return NonZeroCount_; }
-		ptrdiff_t AnalyzingsCount() { return AnalyzingsCount_; }
-		ptrdiff_t FactorizationsCount() { return FactorizationsCount_; }
-		ptrdiff_t RefactorizationsCount() { return RefactorizationsCount_; }
-		ptrdiff_t RefactorizationFailuresCount() { return RefactorizationFailures_; }
+		ptrdiff_t NonZeroCount() const { return NonZeroCount_; }
+		ptrdiff_t SolvesCount() const { return SolvesCount_; };
+		ptrdiff_t AnalyzingsCount() const { return AnalyzingsCount_; }
+		ptrdiff_t FactorizationsCount() const { return FactorizationsCount_; }
+		ptrdiff_t RefactorizationsCount() const { return RefactorizationsCount_; }
+		ptrdiff_t RefactorizationFailuresCount() const { return RefactorizationFailures_; }
 		inline double* Ax() { return pAx.get(); }
 		inline const double* Ax() const { return pAx.get(); }
 		inline double* B() { return pb.get(); }
@@ -388,6 +390,7 @@ namespace DFW2
 				Factor();
 			if (!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), MatrixSize_, 1, pb.get(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
+			SolvesCount_++;
 		}
 
 		// Решение СЛУ с итерационным уточнением
