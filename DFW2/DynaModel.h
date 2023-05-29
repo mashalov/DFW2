@@ -754,7 +754,7 @@ namespace DFW2
 
 		RightVectorRangeT RightVectorRange();
 
-		struct BRangeT BRange();
+		BRangeT BRange();
 
 		StepControl& StepControl()
 		{
