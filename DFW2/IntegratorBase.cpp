@@ -334,6 +334,8 @@ double IntegratorMultiStageBase::ZeroCrossingInverseCubic(double fstart, double 
 	const double fssq{ fstart * fstart };
 	const double fesq{ fend * fend };
 
+	// сначала пытаемся найти точку пересечения zс-функции
+	// с помощью инверсного кубического полинома
 	Eigen::Matrix4d A;
 	A << fstart * fssq,		fssq,			fstart,			1.0,
 		 fend * fesq,		fesq,			fend,			1.0,
@@ -345,8 +347,38 @@ double IntegratorMultiStageBase::ZeroCrossingInverseCubic(double fstart, double 
 	Eigen::Vector4d b(4);
 	b << 0.0, 	h,	 1.0 / dfstart,		1.0 / dfend;
 
-	const double d{ A.lu().solve(b)(3) };
-	return d / h;
+	double d{ A.lu().solve(b)(3) };
+
+	// если корень недопустим - стром 
+	// прямой кубический полином и решаем
+	// кубическое уравнение
+	if (d <  0 || d > h)
+	{
+		Eigen::Matrix4d A1;
+		A << 0.0,			0.0,		 0.0,		1.0,
+			 h*h*h,			h*h,		 h,			1.0,	
+			 0.0,			0.0,		 1.0,		0.0,
+			 3.0*h*h,		2.0*h,		 1.0,		0.0;
+
+		Eigen::Vector4d b1(4);
+		b << fstart, fend, dfstart, dfend;
+		auto sol{ A.lu().solve(b) };
+
+		double cs[4] = { sol[3], sol[2], sol[1], sol[0] };
+		double roots[4];
+		int nroots{ MathUtils::CCubicSolver::Roots(cs, roots) };
+
+		// выбираем минимальный допустимый корень
+		d = 2 * h;
+		for (int i = 0; i < nroots; i++)
+			if (roots[i] >= 0 && roots[i] <= h)
+				d = (std::min)(d, roots[i]);
+	}
+
+	// Может быть точное попадание, и тогда критерий
+	// неравенства не сработает. Поэтому шаг делаем меньше
+	// на долю минимального шага
+	return (1.0 - 0.1 * DynaModel_.Hmin()) * d / h;
 }
 
 double IntegratorMultiStageBase::FindZeroCrossingToConst(const RightVector* pRightVector, double dConst)
