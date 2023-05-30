@@ -203,7 +203,11 @@ void MixedAdamsBDF::RejectStep()
 			DynaModel_.SetH(newEffectiveH);
 		}
 		else
+		{
 			ReInitializeNordsiek(); // если заваленных шагов слишком много, делаем новый Nordsieck
+			DynaModel_.SetH(newEffectiveH);
+			DynaModel_.BuildDerivatives();
+		}
 
 		// шагаем на следующее время без возможности возврата, так как шаг уже не снизить
 		sc.Advance_t0();
@@ -715,26 +719,24 @@ void MixedAdamsBDF::ReInitializeNordsiek()
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
 
-	if (sc.m_bNordsiekSaved)
-	{
-		// если есть сохраненный шаг
-		for (auto&& r : DynaModel_.RightVectorRange())
-		{
-			// значение восстанавливаем
-			r.Nordsiek[0] = r.SavedNordsiek[0];
-			*r.pValue = r.Nordsiek[0];
-			// а элемент первого порядка конструируем по разности между предыдущим и пред-предыдущим значениями
-			// т.к. первый элемент это hy', а y' = (y(-1) - y(-2)) / h. Note - мы берем производную с пред-предыдущего шага
+	if (!sc.m_bNordsiekSaved)
+		throw dfw2error(cszNoNordsiekHistory);
 
-			//											y(-1)						y(-2)
-			r.Nordsiek[1] = r.SavedNordsiek[0] - r.Tminus2Value;
-			r.SavedError = 0.0;
-		}
-		// масшатабируем Nordsieck на заданный шаг
-		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
-		RescaleNordsiek();
-		DynaModel_.BuildDerivatives();
+	// если есть сохраненный шаг
+	for (auto&& r : DynaModel_.RightVectorRange())
+	{
+		// значение восстанавливаем
+		r.Nordsiek[0] = r.SavedNordsiek[0];
+		*r.pValue = r.Nordsiek[0];
+		// а элемент первого порядка конструируем по разности между предыдущим и пред-предыдущим значениями
+		// т.к. первый элемент это hy', а y' = (y(-1) - y(-2)) / h. Note - мы берем производную с пред-предыдущего шага
+
+		//											y(-1)						y(-2)
+		r.Nordsiek[1] = r.SavedNordsiek[0] - r.Tminus2Value;
+		r.SavedError = 0.0;
 	}
+	// восстанавливаем шаг, на который был отмасштабирован Nordsiek
+	sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
 	sc.OrderChanged();
 	sc.StepChanged();
 	sc.ResetStepsToFail();
@@ -745,6 +747,9 @@ void MixedAdamsBDF::RestoreNordsiek()
 {
 	auto& sc{ DynaModel_.StepControl() };
 	const auto& Parameters{ DynaModel_.Parameters() };
+
+	if (!sc.m_bNordsiekSaved)
+		throw dfw2error(cszNoNordsiekHistory);
 
 	if (sc.m_bNordsiekSaved)
 	{
@@ -868,6 +873,7 @@ void MixedAdamsBDF::NewtonFailed()
 
 	const double h{ DynaModel_.H() };
 	const double usedh{ DynaModel_.UsedH() };
+	double newH{ h };
 
 	// обновляем подсчет ошибок Ньютона
 	if (!sc.m_bDiscontinuityMode)
@@ -882,25 +888,29 @@ void MixedAdamsBDF::NewtonFailed()
 	{
 		if (usedh / h >= 0.8)
 		{
-			DynaModel_.SetH(h * 0.87);
+			newH *= 0.87;
+			//DynaModel_.SetH(h * 0.87);
 			sc.SetRateGrowLimit(1.0);
 		}
 		else
 		{
-			DynaModel_.SetH(0.8 * usedh + 0.2 * h);
+			newH = 0.8 * usedh + 0.2 * h;
+			//DynaModel_.SetH(0.8 * usedh + 0.2 * h);
 			sc.SetRateGrowLimit(1.18);
 		}
 	}
 	else
 		if (sc.nSuccessfullStepsOfNewton >= 1)
 		{
-			DynaModel_.SetH(h * 0.87);
+			newH *= 0.87;
+			//DynaModel_.SetH(h * 0.87);
 			sc.SetRateGrowLimit(1.0);
 		}
 		else
 			if (sc.nSuccessfullStepsOfNewton == 0)
 			{
-				DynaModel_.SetH(h * 0.25);
+				newH *= 0.25;
+				//DynaModel_.SetH(h * 0.25);
 				sc.SetRateGrowLimit(10.0);
 			}
 
@@ -908,28 +918,43 @@ void MixedAdamsBDF::NewtonFailed()
 
 	ChangeOrder(1);
 
-	if (DynaModel_.H() < DynaModel_.Hmin())
+	if (newH < DynaModel_.Hmin())
 	{
-		DynaModel_.SetH(DynaModel_.Hmin());
+		newH = DynaModel_.Hmin();
+
+		//DynaModel_.SetH(DynaModel_.Hmin());
 		if (++sc.nMinimumStepFailures > Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, 
 				DynaModel_.GetCurrentTime(), 
 				DynaModel_.GetIntegrationStepNumber(), 
 				DynaModel_.Order(), 
-				DynaModel_.H()));
-		sc.Advance_t0();
-		sc.Assign_t0();
+				newH));
+		//sc.Advance_t0();
+		//sc.Assign_t0();
 	}
 	else
 	{
 		sc.nMinimumStepFailures = 0;
-		sc.CheckAdvance_t0();
+		//sc.CheckAdvance_t0();
 	}
 
 	if (DynaModel_.Hmin() / DynaModel_.H() > 0.99)
 		Restart();
 	else
 		ReInitializeNordsiek();
+
+	DynaModel_.SetH(newH);
+	if (Equal(newH, DynaModel_.Hmin()))
+	{
+		sc.Advance_t0();
+		sc.Assign_t0();
+	}
+	else
+	{
+		sc.CheckAdvance_t0();
+	}
+
+	DynaModel_.BuildDerivatives();
 
 	sc.RefactorMatrix();
 	DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
@@ -1048,9 +1073,11 @@ void MixedAdamsBDF::LeaveDiscontinuityMode()
 void MixedAdamsBDF::Restart()
 {
 	auto& sc{ DynaModel_.StepControl() };
+
+	// Рестартовать можем только с истории  
 	if (sc.m_bNordsiekSaved)
 	{
-		for (auto&& r :  DynaModel_.RightVectorRange())
+		for (auto&& r : DynaModel_.RightVectorRange())
 		{
 			// в качестве значения принимаем то, что рассчитано в устройстве
 			r.Tminus2Value = r.Nordsiek[0] = r.SavedNordsiek[0] = *r.pValue;
@@ -1060,8 +1087,8 @@ void MixedAdamsBDF::Restart()
 		}
 		// запрашиваем расчет производных дифференциальных уравнений у устройств, которые это могут
 		sc.SetNordsiekScaledForH(DynaModel_.H());
-		DynaModel_.BuildDerivatives();
 	}
+	//DynaModel_.BuildDerivatives();
 	sc.OrderChanged();
 	sc.StepChanged();
 	// ставим флаг ресета Нордсика, чтобы не

@@ -51,5 +51,6 @@ namespace DFW2
 		double Methodlh[4];		// коэффициенты метода интегрирования l0, умноженные на шаг
 		static void InitNordsiekElement(struct RightVector* pVectorBegin, double Atol, double Rtol);
 		static void PrepareNordsiekElement(struct RightVector* pVectorBegin);
+		static inline constexpr const char* cszNoNordsiekHistory = "MixedAdamsBDF - No Nordsiek History";
 	};
 }
