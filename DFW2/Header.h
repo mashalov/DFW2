@@ -35,14 +35,22 @@ typedef int (*FARPROC)();
 
 namespace DFW2
 {
-	typedef std::complex<double> cplx;
+	using cplx = std::complex<double> ;
 
-#define DFW2_EPSILON 1E-10
-#define DFW2_ATOL_DEFAULT 1E-4
-#define DFW2_RTOL_DEFAULT 1E-4
-#define M_SQRT3 1.7320508075688772935274463415059
-#define DFW2_VERSION 1
-#define DFW2_RESULTFILE_VERSION 2
+	class Consts
+	{
+	public:
+		static constexpr double epsilon = 1e-10;
+		static constexpr double atol_default = 1e-4;
+		static constexpr double rtol_default = 1e-4;
+		static inline const double sqrt3 = std::sqrt(3);
+		static constexpr int dfwv_ersion = 1;
+		static constexpr int dfw_result_file_version = 2;
+		static inline bool Equal(const double& x, const double& y)
+		{
+			return std::abs(x - y) <= epsilon;
+		}
+	};
 
 //#define USE_FMA_FULL
 //#define USE_FMA
@@ -57,9 +65,6 @@ namespace DFW2
 
 #define _CheckNumber(a) _ASSERTE(!std::isnan((a)) && !std::isinf((a)));
 
-	inline bool Equal(const double x, const double y)
-	{
-		return std::abs(x - y) < DFW2_EPSILON;
-	}
+
 }
 

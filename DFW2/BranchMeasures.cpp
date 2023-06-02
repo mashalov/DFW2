@@ -274,8 +274,8 @@ void CDynaBranchMeasure::BuildEquations(CDynaModel* pDynaModel)
 
 		absIb = std::sqrt(Pe * Pe + Qe * Qe + ABS_GUARD);
 
-		if (absIb < DFW2_EPSILON)
-			absIb = DFW2_EPSILON;
+		if (absIb < Consts::epsilon)
+			absIb = Consts::epsilon;
 
 		// dSe / dSe
 		pDynaModel->SetElement(Se, Se, 1.0);

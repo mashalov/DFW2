@@ -716,7 +716,7 @@ bool CDynaModel::Step()
 			double rHit = (dTimeNextEvent - GetCurrentTime()) / H() * (1.0 - 1E-12);
 			//sc.t0 = dTimeNextEvent;
 			// если при этом настроенный коэффициент изменения шага больше погрешности
-			if (rHit > DFW2_EPSILON)
+			if (rHit > Consts::epsilon)
 			{
 				SetH(H() * rHit); 							// меняем шаг
 				LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 

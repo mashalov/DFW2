@@ -416,7 +416,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 
 	double DerlagCoe{ DerlagTolerance() };
 	// если задан коэффициент изменения Atol/Rtol  1.0 - ничего не делаем
-	if (Equal(DerlagCoe, 1.0))
+	if (Consts::Equal(DerlagCoe, 1.0))
 		return;
 
 	const double AtolDerlag{ DerlagCoe * Atol() };

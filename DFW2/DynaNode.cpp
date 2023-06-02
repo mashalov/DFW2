@@ -573,7 +573,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 
 	if (GetLink(1)->Count() > 0)						// если к узлу подключены генераторы, то СХН генераторов не нужна и мощности генерации 0
 		Pg = Qg = Pgr = Qgr = 0.0;
-	else if (Equal(Pg, 0.0) && Equal(Qg, 0.0))		// если генераторы не подключены, и мощность генерации равна нулю - СХН генераторов не нужна
+	else if (Consts::Equal(Pg, 0.0) && Consts::Equal(Qg, 0.0))		// если генераторы не подключены, и мощность генерации равна нулю - СХН генераторов не нужна
 		Pgr = Qgr = 0.0;
 	else
 	{
@@ -599,7 +599,7 @@ void CDynaNode::Predict()
 	VreVim = { Vre, Vim };
 	LRCVicinity = 0.05;
 	const double newDelta{ std::atan2(std::sin(Delta), std::cos(Delta)) };
-	if (std::abs(newDelta - Delta) > DFW2_EPSILON)
+	if (!Consts::Equal(newDelta, Delta))
 	{
 		RightVector* const pRvDelta{ GetModel()->GetRightVector(Delta.Index) };
 		RightVector* const pRvLag{ GetModel()->GetRightVector(Lag.Index) };
@@ -870,7 +870,7 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 			Yii -= (this == pBranch->pNodeIp_) ? pBranch->Yips : pBranch->Yiqs;
 		}
 		
-		if (V < DFW2_EPSILON)
+		if (V < Consts::epsilon)
 		{
 			Vre = V = Unom;
 			Vim = Delta = 0.0;

@@ -68,8 +68,8 @@ namespace DFW2
 			bool m_bConsiderDampingEquation = false;
 			double m_dOutStep = 1e-10;
 			ptrdiff_t nVarSearchStackDepth = 100;
-			double m_dAtol = DFW2_ATOL_DEFAULT;
-			double m_dRtol = DFW2_RTOL_DEFAULT;
+			double m_dAtol = Consts::atol_default;
+			double m_dRtol = Consts::rtol_default;
 			double m_dNewtonMaxNorm = 1.0;								// дополнительный контроль абсолютной ошибки Ньютона
 			double m_dRefactorByHRatio = 1.5;
 			double m_dMustangDerivativeTimeConstant = 1E-4;

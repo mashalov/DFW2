@@ -57,7 +57,7 @@ bool CDeadBand::Init(CDynaModel *pDynaModel)
 		bRes = false;
 	}
 	else
-		if (Equal(Db_,0.0))
+		if (Consts::Equal(Db_,0.0))
 			eDbState_ = eDFW2DEADBANDSTATES::DBS_OFF;
 	else
 	{

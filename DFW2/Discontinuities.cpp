@@ -401,7 +401,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, doub
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 	const cplx Sload{ pDynaNode_->Pn, pDynaNode_->Qn };
 	double newQ{ Sload.imag() };
-	if (!Equal(InitialLoad_.real(), 0.0))
+	if (!Consts::Equal(InitialLoad_.real(), 0.0))
 		newQ = InitialLoad_.imag() / InitialLoad_.real() * Value;
 	const cplx SloadNew{ Value, newQ };
 

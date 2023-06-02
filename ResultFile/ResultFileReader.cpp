@@ -14,8 +14,8 @@ void CResultFileReader::ReadHeader(int& Version)
 	uint64_t Version64;
 	ReadLEB(Version64);
 	Version = static_cast<int>(Version64);
-	if (Version64 > DFW2_RESULTFILE_VERSION)
-		return throw CFileReadException(infile, fmt::format(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, DFW2_RESULTFILE_VERSION).c_str());
+	if (Version64 > Consts::dfw_result_file_version)
+		return throw CFileReadException(infile, fmt::format(CDFW2Messages::m_cszResultFileHasNewerVersion, Version, Consts::dfw_result_file_version).c_str());
 }
 
 std::unique_ptr<double[]> CResultFileReader::ReadChannel(ptrdiff_t Index)

@@ -445,7 +445,7 @@ bool CDynaModel::StepControl::FilterStep(double dStep)
 	// используем любой шанс его поднять раньше
 	// чем пройдет лимит по nStepsToStepChange 
 
-	if (Equal(H(), Hmin))
+	if (Consts::Equal(H(), Hmin))
 		return dFilteredStep > 1.0;
 
 	// возвращаем true если серия шагов ограничения закончилась и 

@@ -23,7 +23,7 @@ bool CDynaGeneratorInfBusBase::CalculatePower()
 	P = Vre * Ire + Vim * Iim;
 	Q = -Vre * Iim + Vim * Ire;
 
-	if (std::abs(Ynorton_) > DFW2_EPSILON)
+	if (std::abs(Ynorton_) > Consts::epsilon)
 		FromComplex(Ire, Iim, GetEMF() * Ynorton_);
 	
 	return true;
@@ -102,7 +102,7 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 
 	// если у генератора есть ненулевой шунт Нортона,
 	// его ток инициализируется как ток только от ЭДС
-	if (std::abs(Ynorton_) > DFW2_EPSILON)
+	if (std::abs(Ynorton_) > Consts::epsilon)
 		i = eQ * Ynorton_;
 
 	FromComplex(Ire, Iim, i);

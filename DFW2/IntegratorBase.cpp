@@ -153,7 +153,7 @@ void IntegratorMultiStageBase::RejectStep()
 	sc.OrderStatistics[0].nFailures++;
 
 	// если шаг снизился до минимума
-	if (newH <= sc.Hmin && Equal(DynaModel_.H(), sc.Hmin))
+	if (newH <= sc.Hmin && Consts::Equal(DynaModel_.H(), sc.Hmin))
 	{
 		if (++sc.nMinimumStepFailures > Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep,

@@ -215,7 +215,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 				{
 					auto nextIt{ std::next(it) };
 
-					if (nextIt != pq.end() && Equal(it->V, nextIt->V)) 
+					if (nextIt != pq.end() && Consts::Equal(it->V, nextIt->V))
 					{
 
 						if(CDynaLRCContainer::CompareLRCs(*it,*nextIt))
@@ -291,12 +291,12 @@ void CDynaLRCContainer::CreateFromSerialized()
 
 bool CDynaLRCContainer::IsLRCEmpty(const LRCRawData& lrc)
 {
-	return Equal(lrc.a0, 0.0) && Equal(lrc.a1, 0.0) && Equal(lrc.a2, 0.0);
+	return Consts::Equal(lrc.a0, 0.0) && Consts::Equal(lrc.a1, 0.0) && Consts::Equal(lrc.a2, 0.0);
 }
 
 bool CDynaLRCContainer::CompareLRCs(const LRCRawData& lhs, const LRCRawData& rhs)
 {
-	return Equal(lhs.a0, rhs.a0) && Equal(lhs.a1, rhs.a1) && Equal(lhs.a2, rhs.a2);
+	return Consts::Equal(lhs.a0, rhs.a0) && Consts::Equal(lhs.a1, rhs.a1) && Consts::Equal(lhs.a2, rhs.a2);
 }
 
 
@@ -453,7 +453,7 @@ bool CDynaLRCChannel::Check(const CDevice *pDevice)
 			if (v->V < 1.0 && v->V > itSegment->V)
 				itSegment = v;
 
-			if (!Equal(10.0 * DFW2_EPSILON * (s - q), 0.0))
+			if (!Consts::Equal(10.0 * Consts::epsilon * (s - q), 0.0))
 			{
 				pDevice->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszLRCDiscontinuityAt,
 					pDevice->GetVerbalName(),

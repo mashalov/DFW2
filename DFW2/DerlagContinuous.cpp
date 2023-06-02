@@ -88,7 +88,7 @@ void CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
 {
 	bool bRes{ true };
-	if (Equal(K_, 0.0))
+	if (Consts::Equal(K_, 0.0))
 		T_ = 0.0;
 	else
 	{
@@ -118,7 +118,7 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaM
 {
 	if (Device_.IsStateOn())
 	{
-		if (Equal(K_, 0.0))
+		if (Consts::Equal(K_, 0.0))
 			Y2_ = 0.0;
 		else
 			Output_ = K_ * T_ * (Input_ - Y2_);		// выход по входу
@@ -132,7 +132,7 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuousSmooth::ProcessDiscontinuity(CDynaModel* 
 {
 	if (Device_.IsStateOn())
 	{
-		if (Equal(K_, 0.0))
+		if (Consts::Equal(K_, 0.0))
 			Y2_ = 0.0;
 		else
 			// рассчитываем выход лага с условием сохранения значения на выходе РДЗ

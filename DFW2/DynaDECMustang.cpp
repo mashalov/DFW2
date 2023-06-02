@@ -34,10 +34,10 @@ CDynaDECMustang::CDynaDECMustang() : CDevice(),
 eDEVICEFUNCTIONSTATUS CDynaDECMustang::PreInit(CDynaModel* pDynaModel)
 {
 	// если не заданы уставки расфорсировки - ставим их выше номинала в 100 раз
-	if (Equal(VDefOff, 0.0) && Equal(VDefOn, 0.0))
+	if (Consts::Equal(VDefOff, 0.0) && Consts::Equal(VDefOn, 0.0))
 		VDefOff = VDefOn = 100.0;
 	// если не заданы уставки форсировки - ставим их отрицательными
-	if (Equal(VEnfOff, 0.0) && Equal(VEnfOn, 0.0))
+	if (Consts::Equal(VEnfOff, 0.0) && Consts::Equal(VEnfOn, 0.0))
 		VEnfOff = VEnfOn = -100.0;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -188,7 +188,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 				pExciter->SetLagTimeConstantRatio(DefTexc);
 			}
 
-		if (!Equal(dOldDec, Udec))
+		if (!Consts::Equal(dOldDec, Udec))
 			pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 	}
 	else

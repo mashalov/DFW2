@@ -424,7 +424,7 @@ double CCompressorSingle::Predict(double t)
 		bool bReset{ false };
 		for (int j = 0; j < PredictorOrder_; j++)
 		{
-			if (DFW2::Equal(t, ts[j]))
+			if (DFW2::Consts::Equal(t, ts[j]))
 			{
 				bReset = true;
 				break;

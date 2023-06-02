@@ -260,7 +260,7 @@ namespace DFW2
 
 		bool operator<(const CStaticEvent& evt) const
 		{
-			return Time_ < evt.Time_ && !Equal(Time_,evt.Time_);
+			return Time_ < evt.Time_ && !Consts::Equal(Time_,evt.Time_);
 		}
 	};
 

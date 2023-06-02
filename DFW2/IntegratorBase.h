@@ -29,7 +29,7 @@ namespace DFW2
 		{
 			GetRMS();
 			dCms = 0.7;
-			if (!Equal(dOldErrorSum, 0.0))
+			if (!Consts::Equal(dOldErrorSum, 0.0))
 			{
 				dCm = dErrorSum / dOldErrorSum;
 				dCms = (std::max)(0.2 * dOldCm, dCm);

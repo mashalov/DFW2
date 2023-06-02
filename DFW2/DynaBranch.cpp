@@ -268,7 +268,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 		_ASSERTE(!Equal(abs(Ysum), 0.0));
 
 		// собстванная со стороны узла конца
-		if (!Equal(abs(Ysum), 0.0))
+		if (!Consts::Equal(abs(Ysum), 0.0))
 			Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktrx);
 	}
 	break;
@@ -285,7 +285,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 
 		_ASSERTE(!Equal(abs(Ysum), 0.0));
 
-		if (!Equal(abs(Ysum), 0.0))
+		if (!Consts::Equal(abs(Ysum), 0.0))
 			Yips += Yip1 * Ybranch / Ysum;
 	}
 	break;
@@ -307,7 +307,7 @@ bool CDynaBranch::IsZeroImpedance()
 {
 	const CDynaModel* pModel{ GetModel() };
 
-	if (BranchState_ == CDynaBranch::BranchState::BRANCH_ON && Equal(Ktr,1.0) && Equal(Kti,0.0))
+	if (BranchState_ == CDynaBranch::BranchState::BRANCH_ON && Consts::Equal(Ktr,1.0) && Consts::Equal(Kti,0.0))
 	{
 		const  double Zmin{ pModel->GetZeroBranchImpedance() };
 		if (std::abs(R) / pNodeIp_->Unom / pNodeIq_->Unom < Zmin &&

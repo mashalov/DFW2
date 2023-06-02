@@ -183,7 +183,7 @@ void MixedAdamsBDF::RejectStep()
 		ChangeOrder(1);
 
 	// если шаг снизился до минимума
-	if (newH <= sc.Hmin && Equal(DynaModel_.H(), sc.Hmin))
+	if (newH <= sc.Hmin && Consts::Equal(DynaModel_.H(), sc.Hmin))
 	{
 		if (++sc.nMinimumStepFailures > Parameters.m_nMinimumStepFailures)
 			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, 
@@ -407,7 +407,7 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 
 	r = (std::min)(rSame0, rSame1);
 
-	if (Equal(DynaModel_.H() / sc.Hmin, 1.0) && Parameters.m_bDontCheckTolOnMinStep)
+	if (Consts::Equal(DynaModel_.H() / sc.Hmin, 1.0) && Parameters.m_bDontCheckTolOnMinStep)
 		r = (std::max)(1.01, r);
 
 	DynaModel_.LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} rSame {} RateLimit {} for {} steps",
@@ -944,7 +944,7 @@ void MixedAdamsBDF::NewtonFailed()
 		ReInitializeNordsiek();
 
 	DynaModel_.SetH(newH);
-	if (Equal(newH, DynaModel_.Hmin()))
+	if (Consts::Equal(newH, DynaModel_.Hmin()))
 	{
 		sc.Advance_t0();
 		sc.Assign_t0();
@@ -1182,7 +1182,7 @@ double MixedAdamsBDF::GetZCStepRatio(double a, double b, double c)
 	double rH{ 1.0 };
 	const double h{ DynaModel_.H() };
 
-	if (Equal(a, 0.0))
+	if (Consts::Equal(a, 0.0))
 	{
 		// если квадратичный член равен нулю - просто решаем линейное уравнение
 		//if (!Equal(b, 0.0))
@@ -1307,7 +1307,7 @@ double MixedAdamsBDF::FindZeroCrossingOfModule(const RightVector* pRvre, const R
 			// определение доли шага, так как на первых итерациях значение может значительно выходить
 			// за диапазон. Но можно попробовать контролировать диапазон не на первой, а на последующих итерациях
 
-			if (std::abs(dt) < DFW2_EPSILON * 10.0)
+			if (std::abs(dt) < Consts::epsilon * 10.0)
 				break;
 
 			/*

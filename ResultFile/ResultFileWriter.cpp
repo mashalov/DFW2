@@ -48,7 +48,7 @@ void CResultFileWriter::WriteTime(double Time, double Step)
 		bool bReset = false;
 		for (int j = 0; j < PredictorOrder_; j++)
 		{
-			if (Equal(Time, ts[j]))
+			if (Consts::Equal(Time, ts[j]))
 			{
 				bReset = true;
 				break;
@@ -442,7 +442,7 @@ void CResultFileWriter::CreateResultFile(std::filesystem::path FilePath)
 	size_t nCountSignature = sizeof(m_cszSignature);
 	infile.write(m_cszSignature, nCountSignature);
 	// запись версии (версия в define, соответствует исходнику)
-	WriteLEB(DFW2_RESULTFILE_VERSION);
+	WriteLEB(Consts::dfw_result_file_version);
 
 	// создаем поток для записи
 	threadWriter = std::thread(CResultFileWriter::WriterThread, this); 
@@ -745,7 +745,7 @@ void CResultFileWriter::FinishWriteHeader()
 			unsigned char BitFlags = 0x0;
 			// если у переменной есть множитель -
 			// добавляем битовый флаг
-			if (!Equal(vi.Multiplier, 1.0))
+			if (!Consts::Equal(vi.Multiplier, 1.0))
 				BitFlags |= 0x1;
 			WriteLEB(BitFlags);								// битовые флаги переменной
 			// если есть множитель

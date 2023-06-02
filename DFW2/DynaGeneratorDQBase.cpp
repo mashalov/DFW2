@@ -84,9 +84,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Snom = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
+		Snom = Consts::Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
 		Qnom = Snom * sqrt(1.0 - cosPhinom * cosPhinom);
-		Inom = Snom / Unom / M_SQRT3;
+		Inom = Snom / Unom / Consts::sqrt3;
 		Eqnom = (Unom * Unom * (Unom * Unom + Qnom * (xd + xq)) + Snom * Snom * xd * xq) / (Unom * sqrt(Unom * Unom * (Unom * Unom + 2.0 * Qnom * xq) + Snom * Snom * xq * xq));
 
 		switch (GetState())
@@ -321,7 +321,7 @@ bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, dou
 	{
 		std::optional<double> ret;
 		const double Mult{ (xa + x1) * (xa + x2) };
-		if (!Equal(Mult, 0.0))
+		if (!Consts::Equal(Mult, 0.0))
 			ret = 1.0 / Mult * (Mult - x12 * x12);
 		return ret;
 	};
@@ -540,7 +540,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 
 	// l1 - Kundur (4.29)
 	double denom{ la - x1 + xl };
-	if (Equal(denom, 0.0))
+	if (Consts::Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
 		return false;
@@ -551,7 +551,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 	// l2 - Kundur (4.28)
 	denom = la * l1 - (x2 - xl) * (l1 + la);
 
-	if (Equal(denom, 0.0))
+	if (Consts::Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la * l1 - (x2 - xl) * (l1 + la)", denom));
 		return false;
@@ -629,7 +629,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(double x, double xl, double x1
 	bool bRes{ true };
 	const double la{ x - xl };
 	const double denom{ la - x1 + xl };
-	if (Equal(denom, 0.0))
+	if (Consts::Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
 		return false;
