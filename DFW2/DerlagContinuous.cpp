@@ -92,7 +92,7 @@ bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
 		T_ = 0.0;
 	else
 	{
-		_ASSERTE(!Equal(T_, 0.0));
+		_ASSERTE(!Consts::Equal(T_, 0.0));
 		T_ = 1.0 / T_;
 	}
 	Y2_ = Input_;

@@ -63,7 +63,6 @@ namespace DFW2
 			double m_dFrequencyTimeConstant = 0.02;
 			double m_dLRCToShuntVmin = 0.5;
 			double m_dLRCSmoothingRange = 0.001;
-			double m_dZeroCrossingTolerance = 0.0;
 			bool m_bDontCheckTolOnMinStep = false;
 			bool m_bConsiderDampingEquation = false;
 			double m_dOutStep = 1e-10;
@@ -109,6 +108,7 @@ namespace DFW2
 			bool ChangeActionsAreCumulative_ = true;					// включает аккумуляцию изменений (наример - последовательное изменение нагрузки на дискрете)
 			ptrdiff_t StepsToStepChange_ = 2;							// количество шагов до увеличения шага
 			ptrdiff_t StepsToOrderChange_ = 2;							// количество шагов до изменения порядка
+			double ZeroCrossingTolerance_ = 0.95;						// нормированная точность поиска ограничения
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -134,7 +134,6 @@ namespace DFW2
 			static constexpr const char* m_cszLRCToShuntVmin = "LRCToShuntVmin";
 			static constexpr const char* m_cszConsiderDampingEquation = "ConsiderDampingEquation";
 			static constexpr const char* m_cszParkParametersDetermination = "ParkParametersDetermination";
-			static constexpr const char* m_cszZeroCrossingTolerance = "ZeroCrossingTolerance";
 			static constexpr const char* m_cszDontCheckTolOnMinStep = "DontCheckTolOnMinStep";
 			static constexpr const char* m_cszOutStep = "OutStep";
 
@@ -193,6 +192,7 @@ namespace DFW2
 			static constexpr const char* cszDebugModelNameTemplate = "DebugModelNameTemplate";
 			static constexpr const char* cszStepsToStepChange = "StepsToStepChange";
 			static constexpr const char* cszStepsToOrderChange = "StepsToOrderChange";
+			static constexpr const char* cszZeroCrossingTolerance = "ZeroCrossingTolerance";
 			static constexpr const char* cszDerlagToleranceMultiplier = "DerlagToleranceMultiplier";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 			static inline CValidationRuleRange ValidatorRange2_10 = CValidationRuleRange(2, 10);
@@ -479,7 +479,7 @@ namespace DFW2
 				if(os.dTimePassed < temp)
 					os.dTimePassed = temp;
 
-				_ASSERTE(std::abs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t + TimeOffset) < DFW2_EPSILON);
+				_ASSERTE(std::abs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t + TimeOffset) < Consts::epsilon);
 			}
 
 			// рассчитывает текущее время перед выполнением шага, с возможностью возврата
@@ -1000,9 +1000,9 @@ namespace DFW2
 			return rH > 0.0 && rH < 1.0;
 		}
 
-		inline double GetZeroCrossingTolerance() const
+		inline double ZeroCrossingTolerance() const
 		{
-			return ((sc.Hmin / H()) > 0.999) ? (std::numeric_limits<double>::max)() : 0.95;
+			return ((sc.Hmin / H()) > 0.999) ? (std::numeric_limits<double>::max)() : m_Parameters.ZeroCrossingTolerance_;
 		}
 
 		// Текущий номер итерации Ньютона

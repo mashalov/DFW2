@@ -95,7 +95,7 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 				// проверяем погрешность зеро-кроссинга по значению со взвешиванием
 				// так же как в контроле точности шага
 				const double derr{ std::abs(pRightVector->GetWeightedError(Diff, TolCheck)) };
-				if (derr < pDynaModel->GetZeroCrossingTolerance())
+				if (derr < pDynaModel->ZeroCrossingTolerance())
 				{
 					// если точность удовлетворительная, изменяем состояние
 					// примитива и шаг не уменьшаем

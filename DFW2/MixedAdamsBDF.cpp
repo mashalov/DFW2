@@ -130,7 +130,7 @@ void MixedAdamsBDF::AcceptStep(bool DisableStepControl)
 		{
 
 			// если фильтр дает разрешение на увеличение
-			_ASSERTE(Equal(DynaModel_.H(), DynaModel_.UsedH()));
+			_ASSERTE(Consts::Equal(DynaModel_.H(), DynaModel_.UsedH()));
 			// запоминаем коэффициент увеличения только для репорта
 			// потому что sc.dFilteredStep изменится в последующем 
 			const double k{ sc.dFilteredStep };
@@ -1140,7 +1140,7 @@ double MixedAdamsBDF::FindZeroCrossingToConst(const RightVector* pRightVector, d
 	// постоянный член
 	double c{ (pRightVector->Nordsiek[0] + dError * lm[0]) };
 
-	double GuardDiff{ DynaModel_.GetZeroCrossingTolerance() * (pRightVector->Rtol * std::abs(dConst) + pRightVector->Atol) };
+	double GuardDiff{ DynaModel_.ZeroCrossingTolerance() * (pRightVector->Rtol * std::abs(dConst) + pRightVector->Atol) };
 
 	c -= dConst;
 	if (c > 0)
@@ -1199,8 +1199,8 @@ double MixedAdamsBDF::GetZCStepRatio(double a, double b, double c)
 
 		if (MathUtils::CSquareSolver::Roots(a, b, c, h1, h2))
 		{
-			_ASSERTE(!(Equal(h1, (std::numeric_limits<double>::max)()) &&
-				Equal(h2, (std::numeric_limits<double>::max)())));
+			_ASSERTE(!(Consts::Equal(h1, (std::numeric_limits<double>::max)()) &&
+				Consts::Equal(h2, (std::numeric_limits<double>::max)())));
 
 			if (h1 > 0.0 || h1 < -h) h1 = (std::numeric_limits<double>::max)();
 			if (h2 > 0.0 || h2 < -h) h2 = (std::numeric_limits<double>::max)();

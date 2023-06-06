@@ -265,10 +265,10 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 
 		const cplx Yip1(GIp, BIp), Ysum{ Yip1 + Ybranch };
 
-		_ASSERTE(!Equal(abs(Ysum), 0.0));
+		_ASSERTE(!Consts::Equal(std::abs(Ysum), 0.0));
 
 		// собстванная со стороны узла конца
-		if (!Consts::Equal(abs(Ysum), 0.0))
+		if (!Consts::Equal(std::abs(Ysum), 0.0))
 			Yiqs += (Yip1 * Ybranch / Ysum) / norm(Ktrx);
 	}
 	break;
@@ -283,7 +283,7 @@ void CDynaBranch::CalcAdmittances(bool bFixNegativeZs)
 		// собственная со стороны узла начала
 		const cplx Ysum{ Yip1 / norm(Ktrx) + Ybranch };
 
-		_ASSERTE(!Equal(abs(Ysum), 0.0));
+		_ASSERTE(!Consts::Equal(abs(Ysum), 0.0));
 
 		if (!Consts::Equal(abs(Ysum), 0.0))
 			Yips += Yip1 * Ybranch / Ysum;

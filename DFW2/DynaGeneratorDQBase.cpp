@@ -422,8 +422,8 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 		// корни есть
 		T1 = To1 * To2 * x2 / T2 / x;
 		// проверяем
-		_ASSERTE(Equal(To1 + To2 - x / x1 * T1 - (1 - x / x1 + x / x2) * T2, 0.0));
-		_ASSERTE(Equal(To1 * To2 - T1 * T2 * x / x2, 0.0));
+		_ASSERTE(Consts::Equal(To1 + To2 - x / x1 * T1 - (1 - x / x1 + x / x2) * T2, 0.0));
+		_ASSERTE(Consts::Equal(To1 * To2 - T1 * T2 * x / x2, 0.0));
 	}
 	else
 	{

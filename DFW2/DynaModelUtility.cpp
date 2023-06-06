@@ -622,7 +622,6 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 	Validator->AddRule(m_cszLRCToShuntVmin, &ValidatorRange01);
 	Validator->AddRule(m_cszFrequencyTimeConstant, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszLRCToShuntVmin, &ValidatorRange01);
-	Validator->AddRule(m_cszZeroCrossingTolerance, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule(m_cszOutStep, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszAtol, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszRtol, &CSerializerValidatorRules::NonNegative);
@@ -665,7 +664,6 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszFrequencyTimeConstant, m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_cszLRCToShuntVmin, m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszConsiderDampingEquation, m_bConsiderDampingEquation);
-	Serializer->AddProperty(m_cszZeroCrossingTolerance, m_dZeroCrossingTolerance);
 	Serializer->AddProperty(m_cszDontCheckTolOnMinStep, m_bDontCheckTolOnMinStep);
 	Serializer->AddProperty(m_cszOutStep, m_dOutStep, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty("VarSearchStackDepth", nVarSearchStackDepth);
@@ -701,6 +699,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszStepsToStepChange, StepsToStepChange_);
 	Serializer->AddProperty(cszStepsToOrderChange, StepsToOrderChange_);
 	Serializer->AddProperty(cszDerlagToleranceMultiplier, DerLagTolerance_);
+	Serializer->AddProperty(cszZeroCrossingTolerance, ZeroCrossingTolerance_);
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
@@ -1079,6 +1078,15 @@ void CDynaModel::PrecomputeConstants()
 	HysteresisRtol_ = Rtol() * m_Parameters.HysteresisRtol_;
 	sc.nStepsToStepChangeParameter = m_Parameters.StepsToStepChange_;
 	sc.nStepsToOrderChangeParameter = m_Parameters.StepsToOrderChange_;
+
+	// если в параметрах поставили точность зерокроссинга 0.0 - 
+	// ставим 0.95, если отрицательный - считаем зерокросс как придется
+
+	if (m_Parameters.ZeroCrossingTolerance_ < 0)
+		m_Parameters.ZeroCrossingTolerance_ = (std::numeric_limits<double>::max)();
+	else if (Consts::Equal(m_Parameters.ZeroCrossingTolerance_, 0.0))
+		m_Parameters.ZeroCrossingTolerance_ = 0.95;
+		
 
 	switch (Parameters().IntegrationMethod_)
 	{

@@ -104,7 +104,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 	}
 #ifdef _DEBUG
 	else
-		_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
+		_ASSERTE(std::abs(Pnr - Pgr) < Consts::epsilon && std::abs(Qnr - Qgr) < Consts::epsilon);
 #endif
 	//_ASSERTE(Equal(Ire, cI.real()) && Equal(Iim, cI.imag()));
 	return cI;
@@ -173,7 +173,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 	}
 #ifdef _DEBUG
 	else
-		_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
+		_ASSERTE(std::abs(Pnr - Pgr) < Consts::epsilon && std::abs(Qnr - Qgr) < Consts::epsilon);
 #endif
 	//_ASSERTE(Equal(Ire, cI.real()) && Equal(Iim, cI.imag()));
 	return cI;
@@ -421,8 +421,8 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		// ассерты могут работать на неподготовленные данные на эстимейте
 		if (!pDynaModel->EstimateBuild())
 		{
-			_ASSERTE(std::abs(PgVre2) < DFW2_EPSILON && std::abs(PgVim2) < DFW2_EPSILON);
-			_ASSERTE(std::abs(QgVre2) < DFW2_EPSILON && std::abs(QgVim2) < DFW2_EPSILON);
+			_ASSERTE(std::abs(PgVre2) < Consts::epsilon && std::abs(PgVim2) < Consts::epsilon);
+			_ASSERTE(std::abs(QgVre2) < Consts::epsilon && std::abs(QgVim2) < Consts::epsilon);
 		}
 #endif
 
@@ -1298,7 +1298,7 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 	const double Border{ LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst) };
 	const double derr{ std::abs(pRvre->GetWeightedError(std::abs(Vcheck - Border), Border)) };
 
-	if (derr < pDynaModel->GetZeroCrossingTolerance())
+	if (derr < pDynaModel->ZeroCrossingTolerance())
 	{
 		// если погрешность меньше заданной в параметрах
 		// ставим заданную фиксацию напряжения 
