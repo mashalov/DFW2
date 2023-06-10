@@ -29,7 +29,8 @@
 #include "Statistics.h"
 #include "Logger.h"
 #include "NodeMeasures.h"
-#include "IntegratorBase.h"
+#include "MixedAdamsBDF.h"
+#include "Rodas.h"
 
 namespace DFW2
 {
@@ -213,8 +214,10 @@ namespace DFW2
 			}
 		};
 
+		using IntegratorT = MixedAdamsBDF;
+
 		CDiscontinuities m_Discontinuities;
-		std::unique_ptr<IntegratorBase> Integrator_;
+		std::unique_ptr<IntegratorT> Integrator_;
 		
 		struct StepError
 		{
@@ -727,9 +730,9 @@ namespace DFW2
 		// возвращает значение правой части системы уравнений
 		double GetFunction(ptrdiff_t nRow) const;
 		inline struct RightVector* GetRightVector() { return pRightVector; }
-		struct RightVector* GetRightVector(const ptrdiff_t nRow);
-		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
-		struct RightVector* GetRightVector(const InputVariable& Variable);
+		RightVector* GetRightVector(const ptrdiff_t nRow);
+		RightVector* GetRightVector(const VariableIndexBase& Variable);
+		RightVector* GetRightVector(const InputVariable& Variable);
 
 		template<class T>
 		struct RangeAdapter

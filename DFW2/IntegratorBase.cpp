@@ -278,6 +278,21 @@ void IntegratorMultiStageBase::NewtonFailed()
 
 }
 
+
+double IntegratorMultiStageBase::BOperatorAlgebraic(ptrdiff_t Row, const double Value)
+{
+	return Value;
+}
+
+double IntegratorMultiStageBase::BOperatorDifferential(ptrdiff_t Row, const double Value)
+{
+	if (DynaModel_.IsInDiscontinuityMode())
+		return 0.0;
+	else
+		return Value;
+}
+
+
 void IntegratorMultiStageBase::BOperator()
 {
 	if (DynaModel_.IsInDiscontinuityMode())

@@ -116,6 +116,8 @@ namespace DFW2
 		virtual void NewtonFailed() = 0;
 		virtual void WOperator(ptrdiff_t Row, ptrdiff_t Col, double& Value) = 0;
 		virtual void BOperator() = 0;
+		virtual double BOperatorAlgebraic(ptrdiff_t Row, const double Value) = 0;
+		virtual double BOperatorDifferential(ptrdiff_t Row, const double Value) = 0;
 		virtual void Restart() = 0 ;
 		virtual void LeaveDiscontinuityMode() = 0;
 		//! Функция подготовки к повтору шага для поиска зерокроссинга
@@ -157,6 +159,8 @@ namespace DFW2
 		void NewtonFailed() override;
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
 		void BOperator() override;
+		double BOperatorDifferential(ptrdiff_t Row, const double Value) override;
+		double BOperatorAlgebraic(ptrdiff_t Row, const double Value) override;
 		void RepeatZeroCrossing(double rh) override;
 		bool ReportJacobiRefactor() const override { return false; } ;
 		double NextStepValue(const RightVector* pRightVector) override;

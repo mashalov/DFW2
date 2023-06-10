@@ -113,7 +113,7 @@ void CDynaModel::BuildRightHand()
 	for (auto&& it : DeviceContainers_)
 		it->BuildRightHand(this);
 
-	Integrator_->BOperator();
+	//Integrator_->BOperator();
 
 	sc.dRightHandNorm = 0.0;
 
@@ -285,7 +285,7 @@ void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
 	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
 		throw dfw2error(fmt::format("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
 	_CheckNumber(dValue);
-	klu.B()[nRow] = dValue;
+	klu.B()[nRow] = Integrator_->BOperatorAlgebraic(nRow, dValue);
 }
 
 void CDynaModel::SetDerivative(ptrdiff_t nRow, double dValue)
@@ -376,9 +376,9 @@ bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATIO
 {
 	auto rv{ GetRightVector(nRow) };
 	_CheckNumber(dValue);
-	klu.B()[nRow] = dValue;
 	rv->EquationType = EquationType;					// тип метода для уравнения
 	rv->PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
+	klu.B()[nRow] = Integrator_->BOperatorDifferential(nRow, dValue);
 	return true;
 }
 

@@ -2,7 +2,7 @@
 #include "IntegratorBase.h"
 namespace DFW2
 {
-	class Rosenbrock23 : public IntegratorMultiStageBase
+	class Rosenbrock23 final : public IntegratorMultiStageBase
 	{
 	public:
 		Rosenbrock23(CDynaModel& DynaModel);
@@ -15,7 +15,7 @@ namespace DFW2
 		IntegratorBase::vecType f1, k1, k2;
 	};
 
-	class Rodas4 : public IntegratorMultiStageBase
+	class Rodas4 final : public IntegratorMultiStageBase
 	{
 	public:
 		Rodas4(CDynaModel& DynaModel);

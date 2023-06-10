@@ -1028,6 +1028,17 @@ void MixedAdamsBDF::DetectAdamsRinging()
 	}
 }
 
+double MixedAdamsBDF::BOperatorAlgebraic(ptrdiff_t Row, const double Value)
+{
+	return -Value;
+}
+
+double MixedAdamsBDF::BOperatorDifferential(ptrdiff_t Row, const double Value)
+{
+	const RightVector* const pRightVector{ DynaModel_.GetRightVector() + Row };
+	return std::fma(DynaModel_.H(), Value, -pRightVector->Nordsiek[1] - pRightVector->Error);
+}
+
 void  MixedAdamsBDF::BOperator()
 {
 	auto BRange{ DynaModel_.BRange() };

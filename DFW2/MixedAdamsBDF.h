@@ -3,7 +3,7 @@
 
 namespace DFW2
 {
-	class MixedAdamsBDF : public IntegratorBase
+	class MixedAdamsBDF final : public IntegratorBase
 	{
 	public:
 		MixedAdamsBDF(CDynaModel& DynaModel);
@@ -19,6 +19,8 @@ namespace DFW2
 		void NewtonFailed() override;
 		void WOperator(ptrdiff_t Row, ptrdiff_t  Col, double& Value) override;
 		void BOperator() override;
+		double BOperatorAlgebraic(ptrdiff_t Row, const double Value) override;
+		double BOperatorDifferential(ptrdiff_t Row, const double Value) override;
 		void Restart() override;
 		void RepeatZeroCrossing(double rh) override;
 		double NextStepValue(const RightVector* pRightVector) override;

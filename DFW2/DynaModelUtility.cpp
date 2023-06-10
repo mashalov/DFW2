@@ -1088,18 +1088,22 @@ void CDynaModel::PrecomputeConstants()
 		m_Parameters.ZeroCrossingTolerance_ = 0.95;
 		
 
+
+	Integrator_ = std::make_unique<IntegratorT>(*this);
+	/*
 	switch (Parameters().IntegrationMethod_)
 	{
 	case eItegrationMethod::Rodas4:
-		Integrator_ = std::make_unique<Rodas4>(*this);
+		//Integrator_ = std::make_unique<Rodas4>(*this);
 		break;
 	case eItegrationMethod::Rosenbrock23:
-		Integrator_ = std::make_unique<Rosenbrock23>(*this);
+		//Integrator_ = std::make_unique<Rosenbrock23>(*this);
 		break;
 	default:
 		Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
 		break;
 	}
+	*/
 }
 
 void CDynaModel::FinishStep()
