@@ -1036,6 +1036,7 @@ double MixedAdamsBDF::BOperatorAlgebraic(ptrdiff_t Row, const double Value)
 double MixedAdamsBDF::BOperatorDifferential(ptrdiff_t Row, const double Value)
 {
 	const RightVector* const pRightVector{ DynaModel_.GetRightVector() + Row };
+	//return	Value * DynaModel_.H() - pRightVector->Nordsiek[1] - pRightVector->Error;
 	return std::fma(DynaModel_.H(), Value, -pRightVector->Nordsiek[1] - pRightVector->Error);
 }
 

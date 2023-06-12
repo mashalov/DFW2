@@ -3,7 +3,7 @@
 
 namespace DFW2
 {
-	class CDynaGeneratorPark3C : public CDynaGeneratorDQBase
+	class CDynaGeneratorPark3C final : public CDynaGeneratorDQBase
 	{
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;

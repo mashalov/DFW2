@@ -247,5 +247,21 @@ namespace DFW2
 	};
 
 	using DEVICECONTAINERS = std::vector<CDeviceContainer*>;
+
+	template<class T>
+	class CDeviceContainerT
+	{
+	protected:
+		CDynaModel& DynaModel_;
+		std::vector<T*> DevVec_, DevInMatrix;
+		DEVSEARCHSET DevSet;
+	public:
+		CDeviceContainerT(CDynaModel& DynaModel) : DynaModel_(DynaModel) {};
+		void BuildRightHand()
+		{
+			for (auto&& it : DevInMatrix)
+				it->BuildRightHand(&DynaModel_);
+		}
+	};
 };
 
