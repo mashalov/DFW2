@@ -660,7 +660,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 {
 	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
 	Serializer->SetClassName("Parameters");
-	Serializer->AddEnumProperty(m_cszIntegrationMethod, new CSerializerAdapterEnum<eItegrationMethod>(IntegrationMethod_, m_cszIntegrationMethodNames));
+	//Serializer->AddEnumProperty(m_cszIntegrationMethod, new CSerializerAdapterEnum<eItegrationMethod>(IntegrationMethod_, m_cszIntegrationMethodNames));
 	Serializer->AddProperty(m_cszFrequencyTimeConstant, m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_cszLRCToShuntVmin, m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszConsiderDampingEquation, m_bConsiderDampingEquation);
