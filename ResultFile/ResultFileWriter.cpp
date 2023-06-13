@@ -18,25 +18,9 @@ void CResultFile::WriteLEB(uint64_t Value)
 
 void CResultFile::WriteString(std::string_view cszString)
 {
-	if (cszString.empty())
-		WriteLEB(0);
-	else
-	{
-		if (Consts::dfw_result_file_version > 1)
-		{
-			WriteLEB(cszString.size());
-			// for file versions > 1 write plain utf-8 strings
-			infile.write(cszString.data(), cszString.size());
-		}
-		else
-		{
-			// for older versions write scsu
-			std::wstring scsuToEncode = stringutils::utf8_decode(cszString);
-			WriteLEB(scsuToEncode.size());
-			CUnicodeSCSU StringWriter(infile);
-			StringWriter.WriteSCSU(scsuToEncode);
-		}
-	}
+	WriteLEB(cszString.size());
+	if (!cszString.empty())
+		infile.write(cszString.data(), cszString.size());
 }
 
 void CResultFileWriter::WriteTime(double Time, double Step)
