@@ -78,13 +78,15 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 	if (!pDynaModel->ConsiderDampingEquation())
 		Kdemp = 0.0;
 
+	DampMechanicalPower_ = 0.0;
+
 	eDEVICEFUNCTIONSTATUS Status{ CDynaGeneratorMotion::InitModel(pDynaModel) };
 
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
-		Snom = Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
+		Snom = Consts::Equal(cosPhinom, 0.0) ? Pnom : Pnom / cosPhinom;
 		Qnom = Snom * sqrt(1.0 - cosPhinom * cosPhinom);
-		Inom = Snom / Unom / M_SQRT3;
+		Inom = Snom / Unom / Consts::sqrt3;
 		Eqnom = (Unom * Unom * (Unom * Unom + Qnom * (xd + xq)) + Snom * Snom * xd * xq) / (Unom * sqrt(Unom * Unom * (Unom * Unom + 2.0 * Qnom * xq) + Snom * Snom * xq * xq));
 
 		switch (GetState())
@@ -286,12 +288,12 @@ void CDynaGeneratorDQBase::BuildMotionEquationBlock(CDynaModel* pDynaModel)
 {
 	// Вариант уравнения движения с расчетом момента от частоты тока
 	// Момент рассчитывается от электрической мощности путем деления на скольжение
-	const double omega{ ZeroGuardSlip(1.0 + s) }, omegav{ ZeroGuardSlip(1.0 + Sv) }, MjOmegav{ Mj * omegav };
+	const double omega{ ZeroGuardSlip(1.0 + DampMechanicalPower_ * s) }, omegav{ ZeroGuardSlip(1.0 + Sv) }, MjOmegav{ Mj * omegav };
 	pDynaModel->SetElement(s, Id, (Vd + 2.0 * Id * r) / MjOmegav);
 	pDynaModel->SetElement(s, Iq, (Vq + 2.0 * Iq * r) / MjOmegav);
 	pDynaModel->SetElement(s, Vd, Id / MjOmegav);
 	pDynaModel->SetElement(s, Vq, Iq / MjOmegav);
-	pDynaModel->SetElement(s, s, -(Kdemp + Pt / omega / omega) / Mj);
+	pDynaModel->SetElement(s, s, -(Kdemp + DampMechanicalPower_ * Pt / omega / omega) / Mj);
 	pDynaModel->SetElement(s, Sv, -(Id * Vd + Iq * Vq + r * (Id * Id + Iq * Iq)) / MjOmegav / omegav);
 	BuildAngleEquationBlock(pDynaModel);
 }
@@ -300,7 +302,7 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 {
 	if (IsStateOn())
 	{
-		const double omega{ 1.0 + s };
+		const double omega{ 1.0 + DampMechanicalPower_ * s };
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
 		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq + (Id * Id + Iq * Iq) * r) / (1.0 + Sv)) / Mj);
 	}
@@ -319,7 +321,7 @@ bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, dou
 	{
 		std::optional<double> ret;
 		const double Mult{ (xa + x1) * (xa + x2) };
-		if (!Equal(Mult, 0.0))
+		if (!Consts::Equal(Mult, 0.0))
 			ret = 1.0 / Mult * (Mult - x12 * x12);
 		return ret;
 	};
@@ -420,8 +422,8 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 		// корни есть
 		T1 = To1 * To2 * x2 / T2 / x;
 		// проверяем
-		_ASSERTE(Equal(To1 + To2 - x / x1 * T1 - (1 - x / x1 + x / x2) * T2, 0.0));
-		_ASSERTE(Equal(To1 * To2 - T1 * T2 * x / x2, 0.0));
+		_ASSERTE(Consts::Equal(To1 + To2 - x / x1 * T1 - (1 - x / x1 + x / x2) * T2, 0.0));
+		_ASSERTE(Consts::Equal(To1 * To2 - T1 * T2 * x / x2, 0.0));
 	}
 	else
 	{
@@ -538,7 +540,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 
 	// l1 - Kundur (4.29)
 	double denom{ la - x1 + xl };
-	if (Equal(denom, 0.0))
+	if (Consts::Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
 		return false;
@@ -549,7 +551,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(const double& x,
 	// l2 - Kundur (4.28)
 	denom = la * l1 - (x2 - xl) * (l1 + la);
 
-	if (Equal(denom, 0.0))
+	if (Consts::Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la * l1 - (x2 - xl) * (l1 + la)", denom));
 		return false;
@@ -627,7 +629,7 @@ bool CDynaGeneratorDQBase::GetAxisParametersNiipt(double x, double xl, double x1
 	bool bRes{ true };
 	const double la{ x - xl };
 	const double denom{ la - x1 + xl };
-	if (Equal(denom, 0.0))
+	if (Consts::Equal(denom, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "la - x1 - xl", denom));
 		return false;

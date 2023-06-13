@@ -13,6 +13,7 @@ namespace DFW2
 	class CDynaGeneratorDQBase : public CDynaGeneratorMotion
 	{
 	protected:
+		double DampMechanicalPower_ = 1.0;
 		double GetXofEqs() const override { return xq; };
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;

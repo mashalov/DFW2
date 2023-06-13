@@ -37,7 +37,7 @@ namespace DFW2
 
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : DFW2_EPSILON; }
+		static double ZeroGuardSlip(double Omega) { return (Omega > 0) ? Omega : Consts::epsilon; }
 		void BuildEquations(CDynaModel* pDynaModel) override;
 		void BuildRightHand(CDynaModel* pDynaModel) override;
 		void BuildDerivatives(CDynaModel *pDynaModel) override;
@@ -119,7 +119,7 @@ namespace DFW2
 			CheckDevice(device);
 			const CDynaGeneratorMotion* pGen = static_cast<const CDynaGeneratorMotion*>(device);
 			const cplx Slf{ pGen->P, pGen->Q };
-			const double Srated = 1.05 * (Equal(pGen->cosPhinom, 0.0) ? pGen->Pnom : pGen->Pnom / pGen->cosPhinom);
+			const double Srated = 1.05 * (Consts::Equal(pGen->cosPhinom, 0.0) ? pGen->Pnom : pGen->Pnom / pGen->cosPhinom);
 			// предполагаем что прошел валидатор Kgen
 			const double absSlf(std::abs(Slf) / pGen->Kgen);
 

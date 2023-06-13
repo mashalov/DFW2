@@ -104,7 +104,7 @@ cplx CDynaNodeBase::GetSelfImbInotSuper(double& Vsq)
 	}
 #ifdef _DEBUG
 	else
-		_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
+		_ASSERTE(std::abs(Pnr - Pgr) < Consts::epsilon && std::abs(Qnr - Qgr) < Consts::epsilon);
 #endif
 	//_ASSERTE(Equal(Ire, cI.real()) && Equal(Iim, cI.imag()));
 	return cI;
@@ -173,7 +173,7 @@ cplx CDynaNodeBase::GetSelfImbISuper(double& Vsq)
 	}
 #ifdef _DEBUG
 	else
-		_ASSERTE(std::abs(Pnr - Pgr) < DFW2_EPSILON && std::abs(Qnr - Qgr) < DFW2_EPSILON);
+		_ASSERTE(std::abs(Pnr - Pgr) < Consts::epsilon && std::abs(Qnr - Qgr) < Consts::epsilon);
 #endif
 	//_ASSERTE(Equal(Ire, cI.real()) && Equal(Iim, cI.imag()));
 	return cI;
@@ -421,8 +421,8 @@ void CDynaNodeBase::BuildEquations(CDynaModel *pDynaModel)
 		// ассерты могут работать на неподготовленные данные на эстимейте
 		if (!pDynaModel->EstimateBuild())
 		{
-			_ASSERTE(std::abs(PgVre2) < DFW2_EPSILON && std::abs(PgVim2) < DFW2_EPSILON);
-			_ASSERTE(std::abs(QgVre2) < DFW2_EPSILON && std::abs(QgVim2) < DFW2_EPSILON);
+			_ASSERTE(std::abs(PgVre2) < Consts::epsilon && std::abs(PgVim2) < Consts::epsilon);
+			_ASSERTE(std::abs(QgVre2) < Consts::epsilon && std::abs(QgVim2) < Consts::epsilon);
 		}
 #endif
 
@@ -573,7 +573,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 
 	if (GetLink(1)->Count() > 0)						// если к узлу подключены генераторы, то СХН генераторов не нужна и мощности генерации 0
 		Pg = Qg = Pgr = Qgr = 0.0;
-	else if (Equal(Pg, 0.0) && Equal(Qg, 0.0))		// если генераторы не подключены, и мощность генерации равна нулю - СХН генераторов не нужна
+	else if (Consts::Equal(Pg, 0.0) && Consts::Equal(Qg, 0.0))		// если генераторы не подключены, и мощность генерации равна нулю - СХН генераторов не нужна
 		Pgr = Qgr = 0.0;
 	else
 	{
@@ -599,7 +599,7 @@ void CDynaNode::Predict()
 	VreVim = { Vre, Vim };
 	LRCVicinity = 0.05;
 	const double newDelta{ std::atan2(std::sin(Delta), std::cos(Delta)) };
-	if (std::abs(newDelta - Delta) > DFW2_EPSILON)
+	if (!Consts::Equal(newDelta, Delta))
 	{
 		RightVector* const pRvDelta{ GetModel()->GetRightVector(Delta.Index) };
 		RightVector* const pRvLag{ GetModel()->GetRightVector(Lag.Index) };
@@ -870,7 +870,7 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 			Yii -= (this == pBranch->pNodeIp_) ? pBranch->Yips : pBranch->Yiqs;
 		}
 		
-		if (V < DFW2_EPSILON)
+		if (V < Consts::epsilon)
 		{
 			Vre = V = Unom;
 			Vim = Delta = 0.0;
@@ -954,26 +954,31 @@ void CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
 	}
 }
 
-
-void CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
+double CSynchroZone::CalculateS() const
 {
-	double dS{ S };
-	if (InfPower)
-	{
-		pDynaModel->SetFunction(S, 0.0);
-	}
-	else
+	double CurrentS{ 0.0 };
+	if (!InfPower)
 	{
 		for (auto&& it : LinkedGenerators)
 		{
 			if (it->IsKindOfType(DEVTYPE_GEN_MOTION))
 			{
 				const auto& pGenMj{ static_cast<CDynaGeneratorMotion*>(it) };
-				dS -= pGenMj->Mj * pGenMj->s / Mj;
+				CurrentS += pGenMj->Mj * pGenMj->s / Mj;
 			}
 		}
-		pDynaModel->SetFunction(S, dS);
 	}
+	return CurrentS;
+}
+
+
+void CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
+{
+	double dS{ S };
+	if (InfPower)
+		pDynaModel->SetFunction(S, 0.0);
+	else
+		pDynaModel->SetFunction(S, S - CalculateS());
 }
 
 
@@ -983,10 +988,14 @@ eDEVICEFUNCTIONSTATUS CSynchroZone::Init(CDynaModel* pDynaModel)
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-bool CDynaNodeContainer::LULF()
+eDEVICEFUNCTIONSTATUS CSynchroZone::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	bool bRes{ true };
+	S = CalculateS();
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
 
+void CDynaNodeContainer::LULF()
+{
 	KLUWrapper<std::complex<double>> klu;
 	size_t nNodeCount{ DevInMatrix.size() };
 	size_t nBranchesCount{ pDynaModel_->Branches.Count() };
@@ -1184,7 +1193,6 @@ bool CDynaNodeContainer::LULF()
 			break;
 		}
 	}
-	return bRes;
 }
 
 // Для перехода от расчета динамики к расчету УР
@@ -1283,36 +1291,14 @@ void CDynaNodeBase::SetLowVoltage(bool bLowVoltage)
 double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *pRvre, const RightVector *pRvim, double Hyst, bool bCheckForLow)
 {
 	double rH{ 1.0 };
-
+	const double Vre1{ pDynaModel->NextStepValue(pRvre) };
+	const double Vim1{ pDynaModel->NextStepValue(pRvim) };
+	const double Vcheck{ sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
 	// выбираем границу сравгнения с гистерезисом - на снижение -, на повышение +
 	const double Border{ LOW_VOLTAGE + (bCheckForLow ? -Hyst : Hyst) };
-	const double  h{ pDynaModel->H() };
-	const double* lm{ pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1] };
-
-	const ptrdiff_t q(pDynaModel->GetOrder());
-
-	// рассчитываем текущие напряжения по Нордсику (итоговые еще не рассчитаны в итерации)
-	const double Vre1{ pRvre->Nordsiek[0] + pRvre->Error * lm[0] };
-	const double Vim1{ pRvim->Nordsiek[0] + pRvim->Error * lm[0] };
-	// текущий модуль напряжения
-	const double Vcheck{ sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
-	// коэффициенты первого порядка
-	const double dVre1{ (pRvre->Nordsiek[1] + pRvre->Error * lm[1]) / h };
-	const double dVim1{ (pRvim->Nordsiek[1] + pRvim->Error * lm[1]) / h };
-	// коэффициенты второго порядка
-	const double dVre2{ (q == 2) ? (pRvre->Nordsiek[2] + pRvre->Error * lm[2]) / h / h : 0.0 };
-	const double dVim2{ (q == 2) ? (pRvim->Nordsiek[2] + pRvim->Error * lm[2]) / h / h : 0.0 };
-
-	// функция значения переменной от шага
-	// Vre(h) = Vre1 + h * dVre1 + h^2 * dVre2
-	// Vim(h) = Vim1 + h * dVim1 + h^2 * dVim2
-
-	// (Vre1 + h * dVre1 + h^2 * dVre2)^2 + (Vim1 + h * dVim1 + h^2 * dVim2)^2 - Boder^2 = 0
-
-	// определяем разность границы и текущего напряжения и взвешиваем разность по выражению контроля погрешности
 	const double derr{ std::abs(pRvre->GetWeightedError(std::abs(Vcheck - Border), Border)) };
 
-	if (derr < pDynaModel->GetZeroCrossingTolerance())
+	if (derr < pDynaModel->ZeroCrossingTolerance())
 	{
 		// если погрешность меньше заданной в параметрах
 		// ставим заданную фиксацию напряжения 
@@ -1321,101 +1307,22 @@ double CDynaNodeBase::FindVoltageZC(CDynaModel *pDynaModel, const RightVector *p
 	}
 	else
 	{
-		// если погрешность больше - определяем коэффициент шага, на котором
-		// нужно проверить разность снова
-		if ( q == 1)
+		rH = pDynaModel->FindZeroCrossingOfModule(pRvre, pRvim, Border, bCheckForLow);
+		if (pDynaModel->ZeroCrossingStepReached(rH))
 		{
-			// для первого порядка решаем квадратное уравнение
-			// (Vre1 + h * dVre1)^2 + (Vim1 + h * dVim1)^2 - Boder^2 = 0
-			// Vre1^2 + 2 * Vre1 * h * dVre1 + dVre1^2 * h^2 + Vim1^2 + 2 * Vim1 * h * dVim1 + dVim1^2 * h^2 - Border^2 = 0
-
-			const double a{ dVre1 * dVre1 + dVim1 * dVim1 };
-			const double b{ 2.0 * (Vre1 * dVre1 + Vim1 * dVim1) };
-			const double c{ Vre1 * Vre1 + Vim1 * Vim1 - Border * Border };
-
-			rH = CDynaPrimitive::GetZCStepRatio(pDynaModel, a, b, c);
-
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetLowVoltage(bCheckForLow);
-				pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
-			}
-		}
-		else
+			SetLowVoltage(bCheckForLow);
+			pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
+		} else if(rH < 0.0)
 		{
-			const double a{ dVre2 * dVre2 + dVim2 * dVim2 };												// (xs2^2 + ys2^2)*t^4 
-			const double b{ 2.0 * (dVre1 * dVre2 + dVim1 * dVim1) };										// (2*xs1*xs2 + 2*ys1*ys2)*t^3 
-			const double c{ (dVre1 * dVre1 + dVim1 * dVim1 + 2.0 * Vre1 * dVre2 + 2.0 * Vim1 * dVim2) };	// (xs1^2 + ys1^2 + 2*x1*xs2 + 2*y1*ys2)*t^2 
-			const double d{ (2.0 * Vre1 * dVre1 + 2.0 * Vim1 * dVim1) };									// (2*x1*xs1 + 2*y1*ys1)*t 
-			const double e{ Vre1 * Vre1 + Vim1 * Vim1 - Border * Border };									// x1^2 + y1^2 - e
-			double t{ -0.5 * h };
-
-			for (int i = 0; i < 5; i++)
-			{
-				double dt = (a*t*t*t*t + b * t*t*t + c * t*t + d * t + e) / (4.0*a*t*t*t + 3.0*b*t*t + 2.0*c*t + d);
-				t = t - dt;
-
-				// здесь была проверка диапазона t, но при ее использовании возможно неправильное
-				// определение доли шага, так как на первых итерациях значение может значительно выходить
-				// за диапазон. Но можно попробовать контролировать диапазон не на первой, а на последующих итерациях
-
-				if (std::abs(dt) < DFW2_EPSILON * 10.0)
-					break;
-
-				/*
-				if (t > 0.0 || t < -h)
-				{
-					t = FLT_MAX;
-					break;
-				}
-				*/ 
-			}
-			rH = (h + t) / h;
-			if (pDynaModel->ZeroCrossingStepReached(rH))
-			{
-				SetLowVoltage(bCheckForLow);
-				pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
-			}
-		}
-
-		if (rH < 0.0)
-		{
-
-			const double h0{ h * rH - h };
-			const double checkVre{ Vre1 + dVre1 * h0 + dVre2 * h0 * h0 };
-			const double checkVim{ Vim1 + dVim1 * h0 + dVim2 * h0 * h0 };
-			const double Vh0{ std::sqrt(checkVre * checkVre + checkVim * checkVim) };
-
-			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at node \"{}\" at t={} order={}, V={} <- V={} Border={}",
+			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at node \"{}\" at t={} V={} Border={}",
 				rH,
 				GetVerbalName(),
 				GetModel()->GetCurrentTime(),
-				q,
-				Vh0,
 				Vcheck,
 				Border
 			));
-
-			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Nordsieck Vre=[{};{};{}]->[{};{};{}]",
-				pRvre->Nordsiek[0],
-				pRvre->Nordsiek[1],
-				pRvre->Nordsiek[2],
-				Vre1,
-				dVre1 * h,
-				dVre2 * h * h
-			));
-
-			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Nordsieck Vim=[{};{};{}]->[{};{};{}]",
-				pRvim->Nordsiek[0],
-				pRvim->Nordsiek[1],
-				pRvim->Nordsiek[2],
-				Vim1,
-				dVim1 * h,
-				dVim2 * h * h
-			));
 		}
 	}
-
 	return rH;
 }
 // узел не должен быть в матрице, если он отключен или входит в суперузел
@@ -1433,9 +1340,8 @@ double CDynaNodeBase::CheckZeroCrossing(CDynaModel *pDynaModel)
 	const double Hyst{ LOW_VOLTAGE_HYST };
 	const RightVector* pRvre{ pDynaModel->GetRightVector(Vre.Index) };
 	const RightVector* pRvim{ pDynaModel->GetRightVector(Vim.Index) };
-	const double* lm{ pDynaModel->Methodl[DET_ALGEBRAIC * 2 + pDynaModel->GetOrder() - 1] };
-	const double Vre1{ pRvre->Nordsiek[0] + pRvre->Error * lm[0] };
-	const double Vim1{ pRvim->Nordsiek[0] + pRvim->Error * lm[0] };
+	const double Vre1{ pDynaModel->NextStepValue(pRvre)};
+	const double Vim1{ pDynaModel->NextStepValue(pRvim) };
 	const double Vcheck{ std::sqrt(Vre1 * Vre1 + Vim1 * Vim1) };
 
 	/*if (GetId() == 2005 && GetModel()->GetIntegrationStepNumber() >= 6900)

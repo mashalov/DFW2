@@ -229,7 +229,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel *pDynaModel);	// обработать разрыв
 		void UnprocessDiscontinuity();
 		double CheckZeroCrossing(CDynaModel *pDynaModel);					// проверить zerocrossing и вернуть долю текущего шага до zerocrossing
-		CDevice *GetZeroCrossingDevice();
+		const CDevice *GetZeroCrossingDevice() const;
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel);				// предварительно инициализировать и проверить параметры устройств
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);					// инициализировать устройства
 		void FinishStep(const CDynaModel& DynaModel);						// завершить шаг и рассчитать зависимые переменные
@@ -247,5 +247,21 @@ namespace DFW2
 	};
 
 	using DEVICECONTAINERS = std::vector<CDeviceContainer*>;
+
+	template<class T>
+	class CDeviceContainerT
+	{
+	protected:
+		CDynaModel& DynaModel_;
+		std::vector<T*> DevVec_, DevInMatrix;
+		DEVSEARCHSET DevSet;
+	public:
+		CDeviceContainerT(CDynaModel& DynaModel) : DynaModel_(DynaModel) {};
+		void BuildRightHand()
+		{
+			for (auto&& it : DevInMatrix)
+				it->BuildRightHand(&DynaModel_);
+		}
+	};
 };
 

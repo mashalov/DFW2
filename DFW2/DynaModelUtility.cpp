@@ -3,6 +3,8 @@
 #include "DynaGeneratorMotion.h"
 #include "BranchMeasures.h"
 #include "MathUtils.h"
+#include "Rodas.h"
+#include "MixedAdamsBDF.h"
 #ifdef _MSC_VER
 #include <intrin.h>
 #else
@@ -52,6 +54,16 @@ void CDynaModel::ChangeOrder(ptrdiff_t Newq)
 	case 2:
 		break;
 	}
+}
+
+CDynaModel::RightVectorRangeT CDynaModel::RightVectorRange()
+{
+	return { pRightVector, pRightVector + MatrixSize() };
+}
+
+CDynaModel::BRangeT CDynaModel::BRange()
+{
+	return { B(), B() + MatrixSize()};
 }
 
 struct RightVector* CDynaModel::GetRightVector(const InputVariable& Variable)
@@ -433,7 +445,7 @@ bool CDynaModel::StepControl::FilterStep(double dStep)
 	// используем любой шанс его поднять раньше
 	// чем пройдет лимит по nStepsToStepChange 
 
-	if (Equal(H(), Hmin))
+	if (Consts::Equal(H(), Hmin))
 		return dFilteredStep > 1.0;
 
 	// возвращаем true если серия шагов ограничения закончилась и 
@@ -488,44 +500,6 @@ void CDynaModel::DumpStateVector()
 		}
 	}
 }
-
-void CDynaModel::Computehl0()
-{
-	// кэшированное значение l0 * GetH для элементов матрицы
-	// пересчитывается при изменении шага и при изменении коэффициентов метода
-	// для демпфирования
-	// lh[i] = l[i][0] * GetH()
-	for (auto&& lh : Methodlh)
-		lh = Methodl[&lh - Methodlh][0] * H();
-}
-
-void CDynaModel::EnableAdamsCoefficientDamping(bool bEnable)
-{
-	if (bEnable == sc.bAdamsDampingEnabled) return;
-	sc.bAdamsDampingEnabled = bEnable;
-	double Alpha = bEnable ? m_Parameters.m_dAdamsDampingAlpha : 0.0;
-	Methodl[3][0] = MethodlDefault[3][0] * (1.0 + Alpha);
-	// Вместо MethodDefault[3][3] можно использовать честную формулу для LTE (см. Docs)
-	Methodl[3][3] = 1.0 / std::abs(-1.0 / MethodlDefault[3][3] - 0.5 * Alpha) / (1.0 + Alpha);
-	// требуется обновление матрицы и постоянных коэффициентов 
-	// из-за замены коэффициентов метода
-	sc.RefactorMatrix();
-	// Для подавления рингинга требуется обновление элементов так как в алгебраические
-	// уравнения могут входит дифференциальные переменные с коэффициентами Адамса
-	sc.UpdateConstElements();  
-	Computehl0();
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(DFW2::CDFW2Messages::m_cszAdamsDamping,
-														bEnable ? DFW2::CDFW2Messages::m_cszOn : DFW2::CDFW2Messages::m_cszOff));
-}
-
-// https://stackoverflow.com/questions/1878907/how-can-i-find-the-difference-between-two-angles
-/*
-double GetAbsoluteDiff2Angles(const double x, const double y)
-{
-	// c can be PI (for radians) or 180.0 (for degrees);
-	return M_PI - std::abs(std::fmod(std::abs(x - y), 2.0 * M_PI) - M_PI);
-}
-*/
 
 std::pair<bool, double> CheckAnglesCrossedPi(const double Angle1, const double Angle2, double& PreviosAngleDifference)
 {
@@ -648,7 +622,6 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 	Validator->AddRule(m_cszLRCToShuntVmin, &ValidatorRange01);
 	Validator->AddRule(m_cszFrequencyTimeConstant, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszLRCToShuntVmin, &ValidatorRange01);
-	Validator->AddRule(m_cszZeroCrossingTolerance, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule(m_cszOutStep, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszAtol, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszRtol, &CSerializerValidatorRules::NonNegative);
@@ -687,10 +660,10 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 {
 	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
 	Serializer->SetClassName("Parameters");
+	Serializer->AddEnumProperty(m_cszIntegrationMethod, new CSerializerAdapterEnum<eItegrationMethod>(IntegrationMethod_, m_cszIntegrationMethodNames));
 	Serializer->AddProperty(m_cszFrequencyTimeConstant, m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_cszLRCToShuntVmin, m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszConsiderDampingEquation, m_bConsiderDampingEquation);
-	Serializer->AddProperty(m_cszZeroCrossingTolerance, m_dZeroCrossingTolerance);
 	Serializer->AddProperty(m_cszDontCheckTolOnMinStep, m_bDontCheckTolOnMinStep);
 	Serializer->AddProperty(m_cszOutStep, m_dOutStep, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty("VarSearchStackDepth", nVarSearchStackDepth);
@@ -726,6 +699,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszStepsToStepChange, StepsToStepChange_);
 	Serializer->AddProperty(cszStepsToOrderChange, StepsToOrderChange_);
 	Serializer->AddProperty(cszDerlagToleranceMultiplier, DerLagTolerance_);
+	Serializer->AddProperty(cszZeroCrossingTolerance, ZeroCrossingTolerance_);
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
@@ -828,7 +802,7 @@ SerializerPtr CDynaModel::StepControl::GetSerializer()
 	Serializer->AddProperty("LastRefactorH", m_dLastRefactorH);
 	Serializer->AddProperty("RingingDetected", bRingingDetected);
 	Serializer->AddProperty("LastConditionNumber", dLastConditionNumber);
-	Serializer->AddProperty("NordsiekReset", m_bNordsiekReset);
+	Serializer->AddProperty("StepFromReset", StepFromReset_);
 
 	Serializer->AddProperty("Order0Steps", OrderStatistics[0].nSteps);
 	Serializer->AddProperty("Order0Failures", OrderStatistics[0].nFailures);
@@ -1047,28 +1021,21 @@ void CDynaModel::CreateZeroLoadFlow()
 bool CDynaModel::RunTest()
 {
 	bool bRes{ true };
+	DeserializeParameters(Platform().Root() / "config.json");
 	TestDevices.CreateDevices(1);
-	m_Parameters.m_dAtol = 1E-6;
-	m_Parameters.m_dRtol = 1E-4;
-
 	PrecomputeConstants();
 	Link();
 	WriteResultsHeader();
 	PreInitDevices();
 	InitDevices();
 	EstimateMatrix();
-	m_Discontinuities.AddEvent(1000.0, new CModelActionStop());
+	m_Discontinuities.AddEvent(100.0, new CModelActionStop());
 	m_Discontinuities.Init();
 
+	InitEquations();
 	SetH(sc.StartupStep);
 
-	bRes = bRes && InitEquations();
-
-	// сохраняем начальные условия
-	// в истории Нордсика с тем чтобы иметь 
-	// возможность восстановить их при сбое Ньютона
-	// на первом шаге
-	SaveNordsiek();
+	m_Parameters.m_dOutStep = 0.1 * Hmin();
 
 	while (!CancelProcessing() && bRes)
 	{
@@ -1106,12 +1073,37 @@ void CDynaModel::PrecomputeConstants()
 {
 	// копируем дефолтные константы методов интегрирования в константы экземпляра модели
 	// константы могут изменяться, например для демпфирования
-	std::copy(&MethodlDefault[0][0], &MethodlDefault[0][0] + sizeof(MethodlDefault) / sizeof(MethodlDefault[0][0]), &Methodl[0][0]);
 	// считаем параметры гистерезиса по заданным параметрам
 	HysteresisAtol_ = Atol() * m_Parameters.HysteresisAtol_;
 	HysteresisRtol_ = Rtol() * m_Parameters.HysteresisRtol_;
 	sc.nStepsToStepChangeParameter = m_Parameters.StepsToStepChange_;
 	sc.nStepsToOrderChangeParameter = m_Parameters.StepsToOrderChange_;
+
+	// если в параметрах поставили точность зерокроссинга 0.0 - 
+	// ставим 0.95, если отрицательный - считаем зерокросс как придется
+
+	if (m_Parameters.ZeroCrossingTolerance_ < 0)
+		m_Parameters.ZeroCrossingTolerance_ = (std::numeric_limits<double>::max)();
+	else if (Consts::Equal(m_Parameters.ZeroCrossingTolerance_, 0.0))
+		m_Parameters.ZeroCrossingTolerance_ = 0.95;
+		
+
+
+	Integrator_ = std::make_unique<IntegratorT>(*this);
+	/*
+	switch (Parameters().IntegrationMethod_)
+	{
+	case eItegrationMethod::Rodas4:
+		//Integrator_ = std::make_unique<Rodas4>(*this);
+		break;
+	case eItegrationMethod::Rosenbrock23:
+		//Integrator_ = std::make_unique<Rosenbrock23>(*this);
+		break;
+	default:
+		Integrator_ = std::make_unique<MixedAdamsBDF>(*this);
+		break;
+	}
+	*/
 }
 
 void CDynaModel::FinishStep()
@@ -1140,11 +1132,12 @@ void CDynaModel::DumpStatistics()
 		sc.OrderStatistics[1].nZeroCrossingsSteps,
 		sc.OrderStatistics[1].dTimePassed));
 
-	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Factors count {} / (Refactors {} + {} failures) Analyzings count {}",
+	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Factors count {} / (Refactors {} + {} failures) Analyzings count {} Solves count {}",
 		klu.FactorizationsCount(),
 		klu.RefactorizationsCount(),
 		klu.RefactorizationFailuresCount(),
-		klu.AnalyzingsCount()));
+		klu.AnalyzingsCount(),
+		klu.SolvesCount()));
 
 	Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Newtons count {} {:.2} per step, failures at step {} failures at discontinuity {}",
 		sc.nNewtonIterationsCount,
@@ -1246,11 +1239,37 @@ const std::string CDynaModel::TimeAndStep() const
 		GetIntegrationStepNumber());
 }
 
+double CDynaModel::FindZeroCrossingToConst(const RightVector* pRightVector, double dConst)
+{
+	return Integrator_->FindZeroCrossingToConst(pRightVector, dConst);
+}
+
+double CDynaModel::FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2)
+{
+	return Integrator_->FindZeroCrossingOfDifference(pRightVector1, pRightVector2);
+}
+
+double CDynaModel::NextStepValue(const RightVector* pRightVector)
+{
+	return Integrator_->NextStepValue(pRightVector);
+}
 
 
-const double CDynaModel::MethodlDefault[4][4] = 
-//									   l0			l1			l2			Tauq
-								   { { 1.0,			1.0,		0.0,		2.0  },				//  BDF-1
-									 { 2.0 / 3.0,	1.0,		1.0 / 3.0,   4.5 },				//  BDF-2
-									 { 1.0,			1.0,		0.0,		2.0  },				//  ADAMS-1
-									 { 0.5,			1.0,		0.5,		12.0 } };			//  ADAMS-2
+double CDynaModel::FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow)
+{
+	return Integrator_->FindZeroCrossingOfModule(pRvre, pRvim, Const, bCheckForLow);
+}
+
+void CDynaModel::RestoreStates()
+{
+	for (auto&& it : DeviceContainersStoreStates_)
+		for (auto&& dit : *it)
+			dit->RestoreStates();
+}
+
+void CDynaModel::StoreStates()
+{
+	for (auto&& it : DeviceContainersStoreStates_)
+		for (auto&& dit : *it)
+			dit->StoreStates();
+}

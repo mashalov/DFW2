@@ -31,13 +31,6 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 
 void RunTransient()
 {
-	//_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF);
-	//_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
-	//_CrtSetBreakAlloc(260215);
-	//_CrtSetBreakAlloc(31657);
-	//_CrtSetBreakAlloc(236965);
-	//_CrtSetBreakAlloc(1229197);
-
 	CDynaModel::DynaModelParameters parameters;
 	CDynaModel Network(parameters);
 	try
@@ -78,6 +71,8 @@ void RunTest()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF);
+	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 	try
 	{
 		if (HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))

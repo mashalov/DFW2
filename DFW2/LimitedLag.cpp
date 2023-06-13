@@ -52,7 +52,7 @@ void CLimitedLag::BuildRightHand(CDynaModel *pDynaModel)
 
 bool CLimitedLag::Init(CDynaModel *pDynaModel)
 {
-	if (Equal(K_, 0.0))
+	if (Consts::Equal(K_, 0.0))
 	{
 		Output_ = Min_ = Max_ = 0.0;
 		SetCurrentState(pDynaModel, eLIMITEDSTATES::Max);

@@ -22,9 +22,6 @@
 #include "TestDevice.h"
 #include "TaggedPath.h"
 #include "FolderClean.h"
-
-#define _LFINFO_
-
 #include "klu.h"
 #include "cs.h"
 using namespace DFW2;
@@ -161,6 +158,7 @@ CDynaModel::~CDynaModel()
 bool CDynaModel::RunTransient()
 {
 	DeserializeParameters(Platform().Root() / "config.json");
+
 	Automatic().CompileModels();
 
 	AutomaticDevice.ConnectDLL(Automatic().GetModulePath());
@@ -230,8 +228,6 @@ bool CDynaModel::RunTransient()
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга
-		if(m_Parameters.m_eDiffEquationType == DET_ALGEBRAIC)
-			m_Parameters.m_eAdamsRingingSuppressionMode = ADAMS_RINGING_SUPPRESSION_MODE::ARSM_NONE;
 
 		//m_Parameters.m_dOutStep = 1E-5;
 		//bRes = bRes && (LRCs.Init(this) == eDEVICEFUNCTIONSTATUS::DFS_OK);
@@ -262,7 +258,7 @@ bool CDynaModel::RunTransient()
 		Nodes.ProcessTopologyInitial();
 		InitDevices();
 		EstimateMatrix();
-		bRes = bRes && InitEquations();
+		InitEquations();
 
 		//pLRC->TestDump("c:\\tmp\\lrctest2.csv");
 
@@ -327,12 +323,7 @@ bool CDynaModel::RunTransient()
 			Automatic().Init();
 			Scenario().Init();
 			m_Discontinuities.Init();
-			SetH(0.01);
-			// сохраняем начальные условия
-			// в истории Нордсика с тем чтобы иметь 
-			// возможность восстановить их при сбое Ньютона
-			// на первом шаге
-			SaveNordsiek();
+			SetH(sc.StartupStep);
 
 			//Serialize("c:\\tmp\\serialization.json");
 
@@ -504,204 +495,23 @@ void CDynaModel::InitDevices()
 }
 
 
-bool CDynaModel::InitEquations()
+void CDynaModel::InitEquations()
 {
-	InitNordsiek();
+
 	// Второй раз вызываем обновление внешних переменных чтобы получить реальные индексы элементов из матрицы
-	bool bRes = UpdateExternalVariables(); 
-	if (bRes)
-	{
-		const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-
-		for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-		{
-			//pVectorBegin->Nordsiek[0] = *pVectorBegin->pValue;
-			pVectorBegin->Nordsiek[0] = pVectorBegin->SavedNordsiek[0] = *pVectorBegin->pValue;
-			PrepareNordsiekElement(pVectorBegin);
-		}
-
-		double dCurrentH{ H() };
-		SetH(0.0);
-		sc.m_bDiscontinuityMode = true;
-
-		if (!SolveNewton(100))
-			bRes = false;
-		if (!sc.m_bNewtonConverged)
-			bRes = false;
-
-		sc.m_bDiscontinuityMode = false;
-		SetH(dCurrentH);
-		sc.nStepsCount = 0;
-
-		for (auto&& cit : DeviceContainers_)
-			for (auto&& dit : *cit)
-				dit->StoreStates();
-	}
-	return bRes;
+	if(!UpdateExternalVariables())
+		throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+	Integrator_->Init();
 }
 
-bool CDynaModel::NewtonUpdate()
+void CDynaModel::NewtonUpdate()
 {
-	bool bRes{ true };
-
 	sc.m_bNewtonConverged = false;
 	sc.m_bNewtonDisconverging = false;
 	sc.m_bNewtonStepControl = false;
-
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
-
-	// original Hindmarsh (2.99) suggests ConvCheck = 0.5 / (sc.q + 2), but i'm using tolerance 5 times lower
-	const double ConvCheck{ 0.1 / (sc.q + 2.0) };
-
-	double dOldMaxAbsError = sc.Newton.Absolute.dMaxError;
-
-	// first check Newton convergence
-	sc.Newton.Reset();
-
-	// константы метода выделяем в локальный массив, определяя порядок метода для всех переменных один раз
-	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
-
-	const double* const pB{ klu.B() };
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		const double& db = *(pB + (pVectorBegin - pRightVector));
-		pVectorBegin->Error += db;
-		pVectorBegin->b = db;
-
-		sc.Newton.Absolute.Update(pVectorBegin, std::abs(db));
-
-#ifdef USE_FMA
-		const double dNewValue{ std::fma(Methodl0[pVectorBegin->EquationType], pVectorBegin->Error, pVectorBegin->Nordsiek[0]) };
-#else
-		const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
-#endif
-
-		const double dOldValue{ *pVectorBegin->pValue };
-
-		*pVectorBegin->pValue = dNewValue;
-
-		if (pVectorBegin->Atol > 0)
-		{
-			const double dError{ pVectorBegin->GetWeightedError(db, dOldValue) };
-			sc.Newton.Weighted.Update(pVectorBegin, dError);
-			_CheckNumber(dError);
-			ConvergenceTest* pCt{ ConvTest + pVectorBegin->EquationType };
-#ifdef _DEBUG
-			// breakpoint place for nans
-			_ASSERTE(!std::isnan(dError));
-#endif
-			pCt->AddError(dError);
-		}
-	}
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetConvergenceRatio);
-
-	bool bConvCheckConverged = ConvTest[DET_ALGEBRAIC].dErrorSums < Methodl[sc.q - 1][3] * ConvCheck &&
-							   ConvTest[DET_DIFFERENTIAL].dErrorSums < Methodl[sc.q + 1][3] * ConvCheck &&
-							   sc.Newton.Weighted.dMaxError < m_Parameters.m_dNewtonMaxNorm;
-
-	if ( bConvCheckConverged )
-	{
-		sc.m_bNewtonConverged = true;
-	}
-	else
-	{
-		if (ConvTest[DET_ALGEBRAIC].dCms > 1.0 || 
-			ConvTest[DET_DIFFERENTIAL].dCms > 1.0)
-		{
-			sc.RefactorMatrix();
-
-			double lambdamin{ 0.1 };
-			bool bLineSearch{ false };
-
-			
-			/*
-
-			Старый вариант определения расходимости 
-
-			if ((sc.nNewtonIteration > 5 && sc.Hmin / sc.CurrentH_ < 0.98) ||
-				(sc.nNewtonIteration > 2 && sc.Newton.dMaxErrorVariable > 1.0))
-					sc.m_bNewtonDisconverging = true;
-			*/
-
-			if (sc.m_bDiscontinuityMode)
-			{
-				// для обработки разрыва шаг линейного поиска делаем больше чем минимальный шаг
-				// (хотя может стоит его сделать таким же, как и для минимального шага,
-				// но будет сходиться очень медленно)
-				lambdamin = 1E-4;
-				bLineSearch = true;
-			}
-			else if (sc.Hmin / H() > 0.95)
-			{
-				// если шаг снижается до минимального 
-				// переходим на Ньютон по параметру
-				lambdamin = sc.Hmin;
- 				bLineSearch = true;
-			}
-			else
-			{
-				// если шаг относительно большой
-				// прерываем итерации Ньютона: проще снизить шаг чем пытаться пройти Ньютоном
-				if(sc.nNewtonIteration > 5)
-					sc.m_bNewtonDisconverging = true;
-				else if(sc.nNewtonIteration > 2 && sc.Newton.Absolute.dMaxError > 1.0)
-					sc.m_bNewtonDisconverging = true;
-			}
-
-			if (!sc.m_bNewtonDisconverging)
-			{
-				if (bLineSearch)
-				{
-					std::unique_ptr<double[]> pRh = std::make_unique<double[]>(klu.MatrixSize());			 // невязки до итерации	
-					std::unique_ptr<double[]> pRb = std::make_unique<double[]>(klu.MatrixSize());			 // невязки после итерации
-					std::copy(pRightHandBackup.get(), pRightHandBackup.get() + klu.MatrixSize(), pRh.get()); // копируем невязки до итерации
-					std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRb.get());								 // копируем невязки после итерации
-					double g0 = sc.dRightHandNorm;															 // норма небаланса до итерации
-					NewtonUpdateDevices();																     // обновляем комплексные VreVim в узлах
-					BuildRightHand();																		 // рассчитываем невязки после итерации
-					double g1 = sc.dRightHandNorm;															 // норма небаланса после итерации
-
-					if (g0 < g1)
-					{
-						
-						// если небаланс увеличился
-						double gs1v = gs1(klu, pRh, pRb.get());
-						
-						// считаем множитель
-						double lambda = -0.5 * gs1v / (g1 - g0 - gs1v);
-
-						if (lambda > lambdamin && lambda < 1.0)
-						{
-							for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-							{
-								double& db = pRb[pVectorBegin - pRightVector];
-								pVectorBegin->Error -= db;
-								pVectorBegin->Error += db * lambda;
-								double l0 = pVectorBegin->Error;
-								l0 *= Methodl0[pVectorBegin->EquationType];
-								*pVectorBegin->pValue = pVectorBegin->Nordsiek[0] + l0;
-							}
-						}
-						else
-							sc.m_bNewtonDisconverging = true;
-					}
-					sc.RefactorMatrix();
-				}
-			}
-		}
-		else
-			sc.RefactorMatrix(false);
-	}
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::NextIteration);
-
-	NewtonUpdateDevices();
-	return bRes;
+	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::Reset);
+	Integrator_->NewtonUpdateIteration();
+	ConvergenceTest::ProcessRange(Integrator_->ConvTest(), ConvergenceTest::NextIteration);
 }
 
 void CDynaModel::NewtonUpdateDevices()
@@ -710,73 +520,32 @@ void CDynaModel::NewtonUpdateDevices()
 		it->NewtonUpdateBlock(this);
 }
 
-bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
+void CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 {
-	bool bRes = true;
 	sc.nNewtonIteration = 1;
 
 	if (sc.m_bProcessTopology)
 	{
-		bRes = bRes && Nodes.LULF();
-		bRes = bRes && ProcessDiscontinuity();
+		Nodes.LULF();
+		ProcessDiscontinuity();
 		sc.m_bProcessTopology = false;
 		_ASSERTE(sc.m_bDiscontinuityMode);
 		sc.m_bDiscontinuityMode = true;
 	}
-
-	if (!bRes)
-		return bRes;
-
-	bRes = false;
-
-	/*
-	if (sc.m_bDiscontinuityMode)
-	{
-		sc.RefactorMatrix();
-	}
-	*/
-
+		
 	for (; sc.nNewtonIteration < nMaxIts; sc.nNewtonIteration++)
 	{
-		bool IterationOK = false;
-
-		if (sc.m_bDiscontinuityMode)
+		if (IsInDiscontinuityMode())
 			sc.RefactorMatrix();
 
 		BuildMatrix();
 
-#ifdef _LFINFO2_
-		if (sc.m_bDiscontinuityMode || sc.CurrentH_ <= sc.Hmin)
-		{
-			for (DEVICEVECTORITR it = Nodes.begin(); it != Nodes.end(); it++)
-			{
-				CDynaNode *pNode = static_cast<CDynaNode*>(*it);
-				_tcprintf("\n%30s - %6.2f %6.2f %6.2f %6.2f", pNode->GetVerbalName(), pNode->V, pNode->Delta * 180 / 3.14159, pNode->Pnr, pNode->Qnr);
-			}
-			for (DEVICEVECTORITR it = Generators1C.begin(); it != Generators1C.end(); it++)
-			{
-				CDynaGenerator1C *pGen = static_cast<CDynaGenerator1C*>(*it);
-				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
-			}
-			for (DEVICEVECTORITR it = GeneratorsMotion.begin(); it != GeneratorsMotion.end(); it++)
-			{
-				CDynaGeneratorMotion *pGen = static_cast<CDynaGeneratorMotion*>(*it);
-				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
-			}
-			for (DEVICEVECTORITR it = GeneratorsInfBus.begin(); it != GeneratorsInfBus.end(); it++)
-			{
-				CDynaGeneratorInfBus *pGen = static_cast<CDynaGeneratorInfBus*>(*it);
-				_tcprintf("\n%30s - %6.2f %6.2f", pGen->GetVerbalName(), pGen->P, pGen->Q);
-			}
-		}
-#endif
-
 		sc.nNewtonIterationsCount++;
 
 		ptrdiff_t imax(0);
-		double bmax = klu.FindMaxB(imax);
 
-		double *bwatch = klu.B();
+		double bmax{ klu.FindMaxB(imax) };
+		double* bwatch{ klu.B() };
 
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "%g %d", bmax, imax);
 
@@ -814,70 +583,96 @@ bool CDynaModel::SolveNewton(ptrdiff_t nMaxIts)
 		bmax = klu.FindMaxB(imax);
 //		Log(CDFW2Messages::DFW2MessageStatus::DFW2LOG_DEBUG, "%g %d", bmax, imax);
 
-		if (NewtonUpdate())
+		NewtonUpdate();
+		// если Ньютон сошелся, выдаем репорт 
+		// обрабатываем разрыв если есть и выходим
+		if (sc.m_bNewtonConverged)
 		{
-			/*if (GetIntegrationStepNumber() == 2031 && GetNewtonIterationNumber() == 5)
-			{
-				DumpStateVector();
-				DumpMatrix();
-			}
-			*/
-			IterationOK = true;
+			NewtonUpdateDevices();
+			LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Converged{:>3} iteration {} MaxWeight {} Saving {:.2f} Rcond {}", 
+																			sc.nNewtonIteration,
+																			sc.Newton.Absolute.Info(),
+																			sc.Newton.Weighted.dMaxError,
+																			1.0 - static_cast<double>(klu.FactorizationsCount() + klu.RefactorizationsCount()) / klu.SolvesCount(),
+																			sc.dLastConditionNumber));
+			// ProcessDiscontinuity checks Discontinuity mode internally and can be called
+			// regardless of this mode
+			ProcessDiscontinuity();
+			break;
+		}
+		else if (sc.m_bNewtonDisconverging)
+		{
+			// Ньютон расходится
 
-			if (sc.m_bNewtonConverged)
+			sc.RefactorMatrix();
+			double lambdamin{ 0.1 };
+			if (IsInDiscontinuityMode())
 			{
-#ifdef _LFINFO_
-				LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Converged{:>3} iteration {} MaxWeight {} Saving {:.2} Rcond {}", 
-																				sc.nNewtonIteration,
-																				sc.Newton.Absolute.Info(),
-																				sc.Newton.Weighted.dMaxError,
-																				1.0 - static_cast<double>(klu.FactorizationsCount() + klu.RefactorizationsCount()) / sc.nNewtonIterationsCount,
-																				sc.dLastConditionNumber));
-						
-#endif
-
-				// ProcessDiscontinuity checks Discontinuity mode internally and can be called
-				// regardless of this mode
-				bRes = ProcessDiscontinuity();
-				break;
+				// для обработки разрыва шаг линейного поиска делаем больше чем минимальный шаг
+				// (хотя может стоит его сделать таким же, как и для минимального шага,
+				// но будет сходиться очень медленно)
+				lambdamin = 1E-4;
+				sc.m_bNewtonStepControl = true;
 			}
-#ifdef _LFINFO_
+			else if (sc.Hmin / H() > 0.95)
+			{
+				// если шаг снижается до минимального 
+				// переходим на Ньютон по параметру
+				lambdamin = sc.Hmin;
+				sc.m_bNewtonStepControl = true;
+			}
 			else
 			{
+				// если шаг относительно большой
+				// прерываем итерации Ньютона: проще снизить шаг чем пытаться пройти Ньютоном
+				// при этом не вызываем NewtonUpdateDevices
+				if (sc.nNewtonIteration > 5)
+					break;
+				else if (sc.nNewtonIteration > 2 && sc.Newton.Absolute.dMaxError > 1.0)
+					break;
+			}
 
-				if (!sc.m_bNewtonStepControl)
+			if (sc.m_bNewtonStepControl)
+			{
+				// Бэктрэк Ньютона
+				std::unique_ptr<double[]> pRh = std::make_unique<double[]>(klu.MatrixSize());			 // невязки до итерации	
+				std::unique_ptr<double[]> pRb = std::make_unique<double[]>(klu.MatrixSize());			 // невязки после итерации
+				std::copy(pRightHandBackup.get(), pRightHandBackup.get() + klu.MatrixSize(), pRh.get()); // копируем невязки до итерации
+				std::copy(klu.B(), klu.B() + klu.MatrixSize(), pRb.get());								 // копируем невязки после итерации
+				const double g0{ sc.dRightHandNorm };													 // норма небаланса до итерации
+				NewtonUpdateDevices();																     // обновляем комплексные VreVim в узлах
+				BuildRightHand();																		 // рассчитываем невязки после итерации
+				const double g1{ sc.dRightHandNorm };													// норма небаланса после итерации
+
+				if (g0 < g1)
 				{
-					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Continue {:>3} iteration {} MaxWeight {} Rcond {}", 
-						sc.nNewtonIteration,
-						sc.Newton.Absolute.Info(),
-						sc.Newton.Weighted.dMaxError,
-						sc.dLastConditionNumber));
+					// если небаланс увеличился
+					const double gs1v{ gs1(klu, pRh, pRb.get()) };
+
+					// считаем множитель
+					double lambda{ -0.5 * gs1v / (g1 - g0 - gs1v) };
+
+					if (lambda > lambdamin && lambda < 1.0)
+						Integrator_->NewtonBacktrack(pRb.get(), lambda);
 				}
 			}
-
-			if (sc.m_bNewtonDisconverging && !sc.m_bDiscontinuityMode)
-			{
-				bRes = true;
-				break;
-			}
-#endif
 		}
-		if (!IterationOK) 
-			break;
+		NewtonUpdateDevices();
+		LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Continue {:>3} iteration {} MaxWeight {} Rcond {}", 
+				sc.nNewtonIteration,
+				sc.Newton.Absolute.Info(),
+				sc.Newton.Weighted.dMaxError,
+				sc.dLastConditionNumber));
 	}
 
-	if (sc.nNewtonIteration == nMaxIts)
-	{
-		bRes = true;
-	}
+	if (sc.nNewtonIteration == nMaxIts && IsInDiscontinuityMode())
+		throw dfw2error(CDFW2Messages::m_cszNewtonSolverDoesNotConvergedInIterations, nMaxIts);
 
 	if (!sc.m_bNewtonConverged)
 	{
 		if (sc.Newton.Absolute.pVector)
 			sc.Newton.Absolute.pVector->ErrorHits++;
 	}
-
-	return bRes;
 }
 
 bool CDynaModel::ApplyChangesToModel()
@@ -921,10 +716,9 @@ bool CDynaModel::Step()
 			double rHit = (dTimeNextEvent - GetCurrentTime()) / H() * (1.0 - 1E-12);
 			//sc.t0 = dTimeNextEvent;
 			// если при этом настроенный коэффициент изменения шага больше погрешности
-			if (rHit > DFW2_EPSILON)
+			if (rHit > Consts::epsilon)
 			{
 				SetH(H() * rHit); 							// меняем шаг
-				RescaleNordsiek();							// пересчитываем Nordsieck на новый шаг
 				LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
 					fmt::format(CDFW2Messages::m_cszStepAdjustedToDiscontinuity, 
 						H()));
@@ -986,16 +780,7 @@ bool CDynaModel::Step()
 	// пока шаг нужно повторять, все в порядке и не получена команда останова
 	while (sc.m_bRetryStep && bRes && !CancelProcessing())
 	{
-
-		Predict();		// делаем прогноз Nordsieck для следуюшего времени
-
-		/*if (GetIntegrationStepNumber() == 1354)
-			SnapshotRightVector();
-		if(GetIntegrationStepNumber() == 1356)
-			CompareRightVector();
-		*/
-
-		bRes = bRes && SolveNewton(sc.m_bDiscontinuityMode ? 20 : 10);	// делаем корректор
+		Integrator_->Step();
 
 		/*if (GetIntegrationStepNumber() == 3514)
 		{
@@ -1010,131 +795,125 @@ bool CDynaModel::Step()
 		/*if (GetIntegrationStepNumber() == 3516)
 			CompareRightVector();*/
 
-		if (bRes)
+		// если корректор отработал без сбоев
+		if (sc.m_bNewtonConverged)
 		{
-			// если корректор отработал без сбоев
-			if (sc.m_bNewtonConverged)
+			// если Ньютон сошелся
+			FinishStep();	// рассчитываем независимые переменные, которые не входят в систему уравнения
+
+			if (!sc.m_bDiscontinuityMode)
 			{
-				// если Ньютон сошелся
-				FinishStep();	// рассчитываем независимые переменные, которые не входят в систему уравнения
-
-				if (!sc.m_bDiscontinuityMode)
+				// и мы не находились в режиме обработки разрыва
+				bool StepConverged{ false };
+					
+				// рассчитываем возможный шаг для текущего порядка метода
+				// если сделанный шаг не был сделан без предиктора
+				if (StepFromReset())
 				{
-					DetectAdamsRinging();
+					// если нордсик был сброшен не конторолируем предиктор
+					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("startup step"));
+				}
+				else
+					StepConverged = Integrator_->StepConverged();
 
-					// и мы не находились в режиме обработки разрыва
-					double rSame{ 0.0 };
-					// рассчитываем возможный шаг для текущего порядка метода
-					// если сделанный шаг не был сделан без предиктора
-					if (sc.m_bNordsiekReset)
+				// шаг выполнен успешно если это был стартап-шаг
+				// после сброса предиктора или корректор и предиктор
+				// дали возможность не уменьшать шаг
+				if (StepConverged || StepFromReset())
+				{
+
+					// если шаг можно увеличить
+					// проверяем нет ли зерокроссинга
+					double rZeroCrossing{ CheckZeroCrossing() };
+
+					if (rZeroCrossing < 0)
+						Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}",
+							rZeroCrossing,
+							GetCurrentTime()));
+
+					if (sc.m_bZeroCrossingMode)
 					{
-						// если нордсик был сброшен не конторолируем предиктор
-						LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("startup step"));
-					}
-					else
-						rSame = GetRatioForCurrentOrder(); // если нордиск не был сброшен выбираем шаг по соответствию предиктору
-
-					// шаг выполнен успешно если это был стартап-шаг
-					// после сброса предиктора или корректор и предиктор
-					// дали возможность не уменьшать шаг
-					if (rSame > 1.0 || sc.m_bNordsiekReset)
-					{
-
-						// если шаг можно увеличить
-						// проверяем нет ли зерокроссинга
-						double rZeroCrossing{ CheckZeroCrossing() };
-
-						if (rZeroCrossing < 0)
-							Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("Negative ZC ratio rH={} at t={}",
-								rZeroCrossing,
-								GetCurrentTime()));
-
-						if (sc.m_bZeroCrossingMode)
+						// если были в зерокроссинге проверяем точность попадания времени при поиске зерокроссинга
+						if (ZeroCrossingStepReached(rZeroCrossing))
 						{
-							// если были в зерокроссинге проверяем точность попадания времени при поиске зерокроссинга
-							if (ZeroCrossingStepReached(rZeroCrossing))
-							{
-								// если нашли время зерокроссинга выходим из режима зерокроссинга
-								sc.m_bZeroCrossingMode = false;
+							// если нашли время зерокроссинга выходим из режима зерокроссинга
+							sc.m_bZeroCrossingMode = false;
 
-								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
-								{
-									// если не возникло запросов на обработку разрыва
-									// обнуляем коэффициент шага, чтобы он не изменился
-									rSame = 0.0;
-									// и признаем шаг успешным
-									GoodStep(rSame);
-									sc.ZeroCrossingMisses++;
-								}
-								else
-								{
-									sc.m_bRetryStep = false; // если были запросы на обработку разрыва отменяем повтор шага, чтобы обработать разрыв
-									sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
-									sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
-								}
+							if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
+							{
+								// если не возникло запросов на обработку разрыва
+								// и признаем шаг успешным, блокируя управление шагом
+								Integrator_->AcceptStep(true);
+								sc.ZeroCrossingMisses++;
 							}
 							else
 							{
-								// если время зерокроссинга не достаточно точно определено подбираем новый шаг
-								RepeatZeroCrossing(rZeroCrossing);
-								sc.ZeroCrossingMisses++;
+								sc.m_bRetryStep = false; // если были запросы на обработку разрыва отменяем повтор шага, чтобы обработать разрыв
+								sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
+								sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
 							}
 						}
 						else
 						{
-							// если мы не были в режиме зерокроссинга
-							if (rZeroCrossing >= 1.0)
-							{
-								// и найденное время зерокроссинга не находится в пределах текущего шага
-								// режим зерокроссинга отменяем
-								sc.m_bZeroCrossingMode = false;
-
-								if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
-								{
-									// если не было запросов обработки разрыва признаем шаг успешным
-									GoodStep(rSame);
-								}
-								else
-								{
-									sc.m_bRetryStep = false; // отменяем повтор шага, чтобы обработать разрыв
-									sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
-									sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
-								}
-							}
-							else
-							{
-								// если время зерокроссинга внутри шага, входим в режим зерокроссинга
-								sc.m_bZeroCrossingMode = true;
-								// и пытаемся подобрать шаг до времени зерокроссинга
-								RepeatZeroCrossing(rZeroCrossing);
-							}
+							// если время зерокроссинга не достаточно точно определено подбираем новый шаг
+							Integrator_->RepeatZeroCrossing(rZeroCrossing);
+							sc.ZeroCrossingMisses++;
 						}
 					}
 					else
 					{
-						// шаг нужно уменьшить
-						// отбрасываем шаг
-						BadStep();
+						// если мы не были в режиме зерокроссинга
+						if (rZeroCrossing >= 1.0)
+						{
+							// и найденное время зерокроссинга не находится в пределах текущего шага
+							// режим зерокроссинга отменяем
+							sc.m_bZeroCrossingMode = false;
+
+							if (sc.DiscontinuityLevel_ == DiscontinuityLevel::None)
+							{
+								// если не было запросов обработки разрыва признаем шаг успешным
+								Integrator_->AcceptStep(StepFromReset());
+							}
+							else
+							{
+								sc.m_bRetryStep = false; // отменяем повтор шага, чтобы обработать разрыв
+								sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
+								sc.Advance_t0();	// делаем Advance чтобы правильно рассчитать время пройденное каждым методом интегрирования
+							}
+						}
+						else
+						{
+							// если время зерокроссинга внутри шага, входим в режим зерокроссинга
+							sc.m_bZeroCrossingMode = true;
+							// и пытаемся подобрать шаг до времени зерокроссинга
+							Integrator_->RepeatZeroCrossing(rZeroCrossing);
+						}
 					}
 				}
 				else
 				{
-					// если находились в режиме обработки разрыва, выходим из него (Ньютон сошелся, все ОК)
-					LeaveDiscontinuityMode();
-					// удаляем события, который уже отработали по времени
-					m_Discontinuities.PassTime(GetCurrentTime() + 0.9 * Hmin());
-					sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
-					sc.m_bEnforceOut = true;		// требуем записи результатов после обработки разрыва
-					sc.m_bBeforeDiscontinuityWritten = false;
-					sc.OrderStatistics[sc.q - 1].nSteps++;
+					// шаг нужно уменьшить
+					// отбрасываем шаг
+					Integrator_->RejectStep();
 				}
 			}
 			else
 			{
-				// Ньютон не сошелся
-				// отбрасываем шаг
-				NewtonFailed();
+				// если находились в режиме обработки разрыва, выходим из него (Ньютон сошелся, все ОК)
+				LeaveDiscontinuityMode();
+				// удаляем события, который уже отработали по времени
+				m_Discontinuities.PassTime(GetCurrentTime() + 0.9 * Hmin());
+				sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
+				sc.m_bEnforceOut = true;		// требуем записи результатов после обработки разрыва
+				sc.m_bBeforeDiscontinuityWritten = false;
+				sc.OrderStatistics[sc.q - 1].nSteps++;
 			}
+		}
+		else
+		{
+			// Ньютон не сошелся
+			// отбрасываем шаг
+			Integrator_->NewtonFailed();
 		}
 		sc.nStepsCount++;
 	}
@@ -1142,138 +921,6 @@ bool CDynaModel::Step()
 	//_ASSERTE(_CrtCheckMemory());
 	return bRes;
 
-}
-
-double CDynaModel::GetRatioForCurrentOrder()
-{
-	double r{ 0.0 };
-
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
-
-	sc.Integrator.Reset();
-
-	const double Methodl0[2] { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][0],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][0] };
-
-	for(RightVector* pVectorBegin = pRightVector ; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		if (pVectorBegin->Atol > 0)
-		{
-			// compute again to not asking device via pointer
-#ifdef USE_FMA
-			double dNewValue = std::fma(pVectorBegin->Error, Methodl0[pVectorBegin->EquationType], pVectorBegin->Nordsiek[0]);
-#else
-			const double dNewValue{ pVectorBegin->Nordsiek[0] + pVectorBegin->Error * Methodl0[pVectorBegin->EquationType] };
-#endif
-			const double dError{ pVectorBegin->GetWeightedError(dNewValue) };
-			sc.Integrator.Weighted.Update(pVectorBegin, dError);
-			struct ConvergenceTest* const pCt{ ConvTest + pVectorBegin->EquationType };
-			pCt->AddError(dError);
-		}
-	}
-
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
-
-	const double maxnorm{ 0.2 };
-
-	// гибридная норма
-	//ConvTest[DET_ALGEBRAIC].dErrorSum *= (1.0 - maxnorm);
-	//ConvTest[DET_ALGEBRAIC].dErrorSum += maxnorm * sc.Integrator.Weighted.dMaxError;
-	//ConvTest[DET_DIFFERENTIAL].dErrorSum *= (1.0 - maxnorm);
-	//ConvTest[DET_DIFFERENTIAL].dErrorSum += maxnorm * sc.Integrator.Weighted.dMaxError;
-
-	const double DqSame0{ ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[sc.q - 1][3] };
-	const double DqSame1{ ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[sc.q + 1][3] };
-	const double rSame0{ pow(DqSame0, -1.0 / (sc.q + 1)) };
-	const double rSame1{ pow(DqSame1, -1.0 / (sc.q + 1)) };
-
-	r = (std::min)(rSame0, rSame1);
-
-	if (Equal(H() / sc.Hmin, 1.0) && m_Parameters.m_bDontCheckTolOnMinStep)
-		r = (std::max)(1.01, r);
-
-	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("{} rSame {} RateLimit {} for {} steps", 
-		sc.Integrator.Weighted.Info(),
-		r,
-		sc.dRateGrowLimit < (std::numeric_limits<double>::max)() ? sc.dRateGrowLimit : 0.0,
-		sc.nStepsToEndRateGrow - sc.nStepsCount));
-
-	// считаем ошибку в уравнении если шаг придется уменьшить
-	if (r <= 1.0 && sc.Integrator.Weighted.pVector)
-		sc.Integrator.Weighted.pVector->ErrorHits++;
-
-	return r;
-}
-
-double CDynaModel::GetRatioForHigherOrder()
-{
-	double rUp{ 0.0 };
-	_ASSERTE(sc.q == 1);
-
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
-	
-	const double Methodl1[2] = { Methodl[sc.q - 1 + DET_ALGEBRAIC * 2][1],  Methodl[sc.q - 1 + DET_DIFFERENTIAL * 2][1] };
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		if (pVectorBegin->Atol > 0) 
-		{
-			struct ConvergenceTest *pCt = ConvTest + pVectorBegin->EquationType;
-			double dNewValue = *pVectorBegin->pValue;
-			// method consts lq can be 1 only
-			double dError = pVectorBegin->GetWeightedError(pVectorBegin->Error - pVectorBegin->SavedError, dNewValue) * Methodl1[pVectorBegin->EquationType];
-			pCt->AddError(dError);
-		}
-	}
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
-
-	const double DqUp0{ ConvTest[DET_ALGEBRAIC].dErrorSum / Methodl[1][3] };		// 4.5 gives better result than 3.0, calculated by formulas in Hindmarsh
-	const double DqUp1{ ConvTest[DET_DIFFERENTIAL].dErrorSum / Methodl[3][3] };		// also 4.5 is LTE of BDF-2. 12 is LTE of ADAMS-2, so 4.5 seems correct
-
-	const double rUp0{ pow(DqUp0, -1.0 / (sc.q + 2)) };
-	const double rUp1{ pow(DqUp1, -1.0 / (sc.q + 2)) };
-
-	rUp = (std::min)(rUp0, rUp1);
-
-	return rUp;
-}
-
-double CDynaModel::GetRatioForLowerOrder()
-{
-	double rDown{ 0.0 };
-	_ASSERTE(sc.q == 2);
-	const RightVector* const pVectorEnd{ pRightVector + klu.MatrixSize() };
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::Reset);
-
-	for (RightVector* pVectorBegin = pRightVector; pVectorBegin < pVectorEnd; pVectorBegin++)
-	{
-		if (pVectorBegin->Atol > 0)
-		{
-			struct ConvergenceTest* const pCt{ ConvTest + pVectorBegin->EquationType };
-			const double dNewValue{ *pVectorBegin->pValue };
-			// method consts lq can be 1 only
-			const double dError{ pVectorBegin->GetWeightedError(pVectorBegin->Nordsiek[2], dNewValue) };
-			pCt->AddError(dError);
-		}
-	}
-
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::FinalizeSum);
-	ConvergenceTest::ProcessRange(ConvTest, ConvergenceTest::GetRMS);
-
-	const double DqDown0{ ConvTest[DET_ALGEBRAIC].dErrorSum };
-	const double DqDown1{ ConvTest[DET_DIFFERENTIAL].dErrorSum };
-
-	const double rDown0{ pow(DqDown0, -1.0 / sc.q) };
-	const double rDown1{ pow(DqDown1, -1.0 / sc.q) };
-
-	rDown = (std::min)(rDown0, rDown1);
-	return rDown;
 }
 
 void CDynaModel::EnterDiscontinuityMode()
@@ -1285,7 +932,6 @@ void CDynaModel::EnterDiscontinuityMode()
 		ChangeOrder(1);
 		StoreUsedH();
 		SetH(0.0);
-		RescaleNordsiek();
 	}
 }
 
@@ -1296,11 +942,9 @@ void CDynaModel::UnprocessDiscontinuity()
 		it->UnprocessDiscontinuity();
 }
 
-bool CDynaModel::ProcessDiscontinuity()
+void CDynaModel::ProcessDiscontinuity()
 {
-	bool bRes{ true };
-
-	eDEVICEFUNCTIONSTATUS Status = eDEVICEFUNCTIONSTATUS::DFS_NOTREADY;
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_NOTREADY };
 		
 	// функция работает только в режиме обработки разрыва
 	if (sc.m_bDiscontinuityMode)
@@ -1374,12 +1018,13 @@ bool CDynaModel::ProcessDiscontinuity()
 		}
 		// инициализируем Нордсик
 		sc.DiscontinuitiesProcessed_++;
-		ResetNordsiek();
+		Integrator_->Restart();
 	}
 	else
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 
-	return CDevice::IsFunctionStatusOK(Status);
+	if (!CDevice::IsFunctionStatusOK(Status))
+		throw dfw2error(CDFW2Messages::m_cszDiscontinuityProcessingFailed);
 }
 
 void CDynaModel::LeaveDiscontinuityMode()
@@ -1389,8 +1034,8 @@ void CDynaModel::LeaveDiscontinuityMode()
 		sc.m_bDiscontinuityMode = false;
 		for (auto&& it : DeviceContainers_)
 			it->LeaveDiscontinuityMode(this);
-		SetRestartH();
-		ResetNordsiek();
+		Integrator_->LeaveDiscontinuityMode();
+		Integrator_->Restart();
 	}
 }
 
@@ -1420,261 +1065,6 @@ void CDynaModel::AddZeroCrossingDevice(CDevice *pDevice)
 	ZeroCrossingDevices.push_back(pDevice);
 	if (ZeroCrossingDevices.size() >= static_cast<size_t>(klu.MatrixSize()))
 		throw dfw2error("CDynaModel::AddZeroCrossingDevice - matrix size overrun");
-}
-
-void CDynaModel::GoodStep(double rSame)
-{
-	sc.m_bRetryStep = false;		// отказываемся от повтора шага, все хорошо
-	sc.RefactorMatrix(false);		// отказываемся от рефакторизации Якоби
-	sc.nSuccessfullStepsOfNewton++;
-	sc.nMinimumStepFailures = 0;
-	// рассчитываем количество успешных шагов и пройденного времени для каждого порядка
-	sc.OrderStatistics[sc.q - 1].nSteps++;
-	// переходим к новому рассчитанному времени с обновлением суммы Кэхэна
-	sc.Advance_t0();
-
-	if (rSame > 1.2)
-	{
-		// если шаг можно хорошо увеличить
-		rSame /= 1.2;
-
-		switch (sc.q)
-		{
-		case 1:
-		{
-			// если были на первом порядке, пробуем шаг для второго порядка
-			const double rHigher{ GetRatioForHigherOrder() / 1.4 };
-			// call before step change
-			UpdateNordsiek();
-
-			// если второй порядок лучше чем первый
-			if (rHigher > rSame)
-			{
-				// пытаемся перейти на второй порядок
-				if (sc.FilterOrder(rHigher))
-				{
-					ConstructNordsiekOrder();
-					ChangeOrder(2);
-					SetH(H() * sc.dFilteredOrder);
-					RescaleNordsiek();
-					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
-						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, 
-							sc.q, 
-							H()));
-				}
-			}
-			else
-				sc.OrderChanged();	// сбрасываем фильтр изменения порядка, если перейти на второй неэффективно
-		}
-		break;
-
-		case 2:
-		{
-			// если были на втором порядке, пробуем шаг для первого порядка
-			const double rLower{ GetRatioForLowerOrder() / 1.3 }; 
-			// call before step change
-			UpdateNordsiek();
-
-			// если первый порядок лучше чем второй
-			if (rLower > rSame)
-			{
-				// пытаемся перейти на первый порядок
-				if (sc.FilterOrder(rLower))
-				{
-					SetH(H() * sc.dFilteredOrder);
-					ChangeOrder(1);
-					RescaleNordsiek();
-					LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
-						fmt::format(CDFW2Messages::m_cszStepAndOrderChanged, 
-							sc.q, 
-							H()));
-				}
-			}
-			else
-				sc.OrderChanged();	// сбрасываем фильтр изменения порядка, если перейти на первый неэффективно
-		}
-		break;
-		}
-
-		// запрашиваем возможность изменения (увеличения шага)
-		// тут можно регулировать частоту увеличения шага 
-		// rSame уже поделили выше для безопасности на 1.2
-		if (sc.FilterStep(rSame) && rSame > 1.1)
-		{
-			// если фильтр дает разрешение на увеличение
-			_ASSERTE(Equal(H(), UsedH()));
-			// запоминаем коэффициент увеличения только для репорта
-			// потому что sc.dFilteredStep изменится в последующем 
-			// RescaleNordsiek
-			const double k{ sc.dFilteredStep };
-			// рассчитываем новый шаг
-			// пересчитываем Nordsieck на новый шаг
-			SetH(H() * sc.dFilteredStep);
-			RescaleNordsiek();
-			LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChanged,
-				H(), 
-				k, 
-				sc.q));
-			sc.StepChanged();
-		}
-	}
-	else
-	{
-		// если шаг хорошо увеличить нельзя, обновляем Nordsieck, сбрасываем фильтр шага, если его увеличивать неэффективно
-		UpdateNordsiek(true);
-		// если мы находимся здесь - можно включить BDF по дифурам, на случай, если шаг не растет из-за рингинга
-		// но нужно посчитать сколько раз мы не смогли увеличить шаг и перейти на BDF, скажем, на десятом шагу
-		// причем делать это нужно после вызова UpdateNordsiek(), так как в нем BDF отменяется
-		sc.StepChanged();
-	}
-}
-
-// обработка шага с недопустимой погрешностью
-void CDynaModel::BadStep()
-{
-	double newH{ 0.5 * H() };
-	double newEffectiveH{ (std::max)(newH, sc.Hmin) };
-
-	sc.RefactorMatrix(true);	// принудительно рефакторизуем матрицу
-	sc.m_bEnforceOut = false;	// отказываемся от вывода данных на данном заваленном шаге
-
-	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszStepChangedOnError, 
-		newEffectiveH, 
-		sc.Integrator.Weighted.Info()));
-
-	// считаем статистику по заваленным шагам для текущего порядка метода интегрирования
-	sc.OrderStatistics[sc.q - 1].nFailures++;
-
-
-	if(newH < sc.Hmin * 10.0)
-		ChangeOrder(1);
-
-	// если шаг снизился до минимума
-	if (newH <= sc.Hmin && Equal(H(), sc.Hmin))
-	{
-		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
-
-		// проверяем количество последовательно
-		// заваленных шагов
-		if (sc.StepFailLimit())
-		{
-			// если можно еще делать шаги,
-			// обновляем Nordsieck и пересчитываем 
-			// производные
-			UpdateNordsiek();
-			SetH(newEffectiveH);
-			RescaleNordsiek();
-		}
-		else
-			ReInitializeNordsiek(); // если заваленных шагов слишком много, делаем новый Nordsieck
-
-		// шагаем на следующее время без возможности возврата, так как шаг уже не снизить
-		sc.Advance_t0();
-		sc.Assign_t0();
-	}
-	else
-	{
-		// если шаг еще можно снизить
-		sc.nMinimumStepFailures = 0;
-		RestoreNordsiek();					// восстанавливаем Nordsieck c предыдущего шага
-		SetH(newEffectiveH);
-		RescaleNordsiek();					// масштабируем Nordsieck на новый (половинный см. выше) шаг
-		sc.CheckAdvance_t0();
-	}
-}
-
-void CDynaModel::NewtonFailed()
-{
-	// обновляем подсчет ошибок Ньютона
-	if (!sc.m_bDiscontinuityMode)
-	{
-		// если вне разрыва - считаем для порядка шага
-		sc.OrderStatistics[sc.q - 1].nNewtonFailures++;
-	}
-	else // если в разрыве - считаем количество завалов на разрывах
-		sc.nDiscontinuityNewtonFailures++;
-
-	if (sc.nSuccessfullStepsOfNewton > 10)
-	{
-		if (sc.UsedH() / H() >= 0.8)
-		{
-			SetH(H() * 0.87);
-			sc.SetRateGrowLimit(1.0);
-		}
-		else
-		{
-			SetH(0.8 * UsedH() + 0.2 * H());
-			sc.SetRateGrowLimit(1.18);
-		}
-	}
-	else
-	if (sc.nSuccessfullStepsOfNewton >= 1)
-	{
-		SetH(H() * 0.87);
-		sc.SetRateGrowLimit(1.0);
-	}
-	else
-	if (sc.nSuccessfullStepsOfNewton == 0)
-	{
-		SetH(H() * 0.25);
-		sc.SetRateGrowLimit(10.0);
-	}
-
-	sc.nSuccessfullStepsOfNewton = 0;
-
-	ChangeOrder(1);
-
-	if (H() < sc.Hmin)
-	{
-		SetH(sc.Hmin);
-		if (++sc.nMinimumStepFailures > m_Parameters.m_nMinimumStepFailures)
-			throw dfw2error(fmt::format(CDFW2Messages::m_cszFailureAtMinimalStep, GetCurrentTime(), GetIntegrationStepNumber(), sc.q, H()));
-		sc.Advance_t0();
-		sc.Assign_t0();
-	}
-	else
-	{
-		sc.nMinimumStepFailures = 0;
-		sc.CheckAdvance_t0();
-	}
-
-	if (sc.Hmin / H() > 0.99)
-		ResetNordsiek();
-	else
-		ReInitializeNordsiek();
-	
-	sc.RefactorMatrix();
-	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, 
-		fmt::format(CDFW2Messages::m_cszStepAndOrderChangedOnNewton,
-			sc.q, 
-			H()));
-}
-
-// функция подготовки к повтору шага
-// для поиска зерокроссинга
-void CDynaModel::RepeatZeroCrossing(double rH)
-{
-	double rHstep{ H() * rH };
-	// восстанавливаем Nordsieck с предыдущего шага
-	RestoreNordsiek();
-	// ограничиваем шаг до минимального
-	if (rHstep < sc.Hmin)
-	{
-		rHstep = sc.Hmin;
-		// переходим на первый порядок, так
-		// как снижение шага может быть очень
-		// значительным
-		ChangeOrder(1);
-	}
-	sc.OrderStatistics[sc.q - 1].nZeroCrossingsSteps++;
-	SetH(rHstep);
-	RescaleNordsiek();
-	sc.CheckAdvance_t0();
-	LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszZeroCrossingStep,
-																				H(), 
-																				m_pClosestZeroCrossingContainer->GetZeroCrossingDevice()->GetVerbalName(),
-																				rH));
 }
 
 bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pFromDevice, std::string_view Name)

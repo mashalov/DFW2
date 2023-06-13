@@ -8,29 +8,38 @@ namespace MathUtils
 	public:
 		static int Roots(double a, double b, double c, double& r1, double& r2)
 		{
-			if (a == 0.0)
+			const double cs[3] = { c,b,a };
+			double rs[2];
+			const int nRoots{ Roots(cs,rs) };
+			r1 = rs[0];
+			r2 = rs[1];
+			return nRoots;
+		}
+
+		static int Roots(const double(&c)[3], double(&r)[2])
+		{
+			if (c[2] == 0.0)
 			{
-				if (b == 0.0)
+				if (c[1] == 0.0)
 					return 0;
 				else
-					r1 = -c / b;
-
+					r[0] = -c[2] / c[1];
 				return 1;
 			}
 
-			double d = b * b - 4.0 * a * c;
+			double d{ c[1] * c[1] - 4.0 * c[2] * c[0]};
 			if (d >= 0)
 			{
-				d = sqrt(d);
-				r1 = (-b + d) / 2.0 / a;
-				r2 = (-b - d) / 2.0 / a;
+				d = std::sqrt(d);
+				r[0] = (-c[1] + d) / 2.0 / c[2];
+				r[1] = (-c[1] - d) / 2.0 / c[2];
 				// use stable formulas to avoid
 				// precision loss by numerical cancellation 
 				// "What Every Computer Scientist Should Know About Floating-Point Arithmetic" by DAVID GOLDBERG p.10
-				if ((b * b - a * c) > 1E3 && b > 0)
-					r1 = 2.0 * c / (-b - d);
+				if ((c[1] * c[1] - c[2] * c[0]) > 1E3 && c[1] > 0)
+					r[0] = 2.0 * c[0] / (-c[1] - d);
 				else
-					r2 = 2.0 * c / (-b + d);
+					r[1] = 2.0 * c[0] / (-c[1] + d);
 
 				//_ASSERTE(DFW2::Equal(a * r1 * r1 + b * r1 + c, 0.0));
 				//_ASSERTE(DFW2::Equal(a * r2 * r2 + b * r2 + c, 0.0));
@@ -47,6 +56,77 @@ namespace MathUtils
 			if (nRoots && std::abs(r1) > std::abs(r2))
 				std::swap(r1, r2);
 			return nRoots;
+		}
+	};
+
+	// https://github.com/erich666/GraphicsGems/blob/master/gems/Roots3And4.c
+
+	class CCubicSolver
+	{
+	public:
+		static int Roots(const double(&c)[4], double(&r)[4])
+		{
+			int num{ 0 };
+			// normal form: x^3 + Ax^2 + Bx + C = 0 
+
+			const double A{ c[2] / c[3] };
+			const double B{ c[1] / c[3] };
+			const double C{ c[0] / c[3] };
+
+			//  substitute x = y - A/3 to eliminate quadric term:
+			// x^3 +px + q = 0
+
+			const double sq_A{ A * A };
+			const double p{ 1.0 / 3 * (-1.0 / 3 * sq_A + B) };
+			const double q{ 1.0 / 2 * (2.0 / 27 * A * sq_A - 1.0 / 3 * A * B + C) };
+
+			// use Cardano's formula 
+
+			const double cb_p{ p * p * p };
+			const double D{ q * q + cb_p };
+
+			if (D == 0.0)
+			{
+				if (q == 0.0) // one triple solution 
+				{
+					r[0] = 0;
+					num = 1;
+				}
+				else // one single and one double solution 
+				{
+					const double u{ std::cbrt(-q) };
+					r[0] = 2 * u;
+					r[1] = -u;
+					num = 2;
+				}
+			}
+			else if (D < 0) // three real solutions
+			{
+				const double phi{ 1.0 / 3 * std::acos(-q / std::sqrt(-cb_p)) };
+				const double t{ 2 * std::sqrt(-p) };
+
+				r[0] = t * std::cos(phi);
+				r[1] = -t * std::cos(phi + M_PI / 3);
+				r[2] = -t * std::cos(phi - M_PI / 3);
+				num = 3;
+			}
+			else // one real solution
+			{
+				const double sqrt_D{ std::sqrt(D) };
+				const double u{ std::cbrt(sqrt_D - q) };
+				const double v{ -std::cbrt(sqrt_D + q) };
+				r[0] = u + v;
+				num = 1;
+			}
+
+			// resubstitute
+
+			const double sub{ 1.0 / 3 * A };
+
+			for (int i{ 0 }; i < num; ++i)
+				r[i] -= sub;
+
+			return num;
 		}
 	};
 
@@ -183,3 +263,4 @@ namespace MathUtils
 		}
 	};
 };
+

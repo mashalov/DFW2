@@ -29,7 +29,8 @@
 #include "Statistics.h"
 #include "Logger.h"
 #include "NodeMeasures.h"
-#include "MathUtils.h"
+#include "MixedAdamsBDF.h"
+#include "Rodas.h"
 
 namespace DFW2
 {
@@ -46,23 +47,29 @@ namespace DFW2
 			Method
 		};
 
+		enum class eItegrationMethod
+		{
+			MixedAdamsBDF,
+			Rodas4,
+			Rosenbrock23
+		};
+
 		struct DynaModelParameters : public CLoadFlow::LoadFlowParameters
 		{
 			
 			DynaModelParameters() : CLoadFlow::LoadFlowParameters() {}
-
+			eItegrationMethod IntegrationMethod_ = eItegrationMethod::MixedAdamsBDF;
 			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
 			double m_dLRCToShuntVmin = 0.5;
 			double m_dLRCSmoothingRange = 0.001;
-			double m_dZeroCrossingTolerance = 0.0;
 			bool m_bDontCheckTolOnMinStep = false;
 			bool m_bConsiderDampingEquation = false;
 			double m_dOutStep = 1e-10;
 			ptrdiff_t nVarSearchStackDepth = 100;
-			double m_dAtol = DFW2_ATOL_DEFAULT;
-			double m_dRtol = DFW2_RTOL_DEFAULT;
+			double m_dAtol = Consts::atol_default;
+			double m_dRtol = Consts::rtol_default;
 			double m_dNewtonMaxNorm = 1.0;								// дополнительный контроль абсолютной ошибки Ньютона
 			double m_dRefactorByHRatio = 1.5;
 			double m_dMustangDerivativeTimeConstant = 1E-4;
@@ -100,8 +107,9 @@ namespace DFW2
 			ptrdiff_t MaxLogFilesCount_ = 0;							// ограничение количества файлов в каталоге протокола
 			ptrdiff_t MaxLogFilesSize_ = 0;								// ограничение объема файлов в каталоге протокола
 			bool ChangeActionsAreCumulative_ = true;					// включает аккумуляцию изменений (наример - последовательное изменение нагрузки на дискрете)
-			ptrdiff_t StepsToStepChange_ = 4;							// количество шагов до увеличения шага
-			ptrdiff_t StepsToOrderChange_ = 4;							// количество шагов до изменения порядка
+			ptrdiff_t StepsToStepChange_ = 2;							// количество шагов до увеличения шага
+			ptrdiff_t StepsToOrderChange_ = 2;							// количество шагов до изменения порядка
+			double ZeroCrossingTolerance_ = 0.95;						// нормированная точность поиска ограничения
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -111,7 +119,9 @@ namespace DFW2
 			SerializerPtr GetSerializer();
 			SerializerValidatorRulesPtr GetValidator();
 
+			static constexpr const char* m_cszIntegrationMethod = "IntegrationMethod";
 			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Current", "Power", "Tanh" };
+			static constexpr const char* m_cszIntegrationMethodNames[3] = { "MixedAdamsBDF", "Rodas4", "Rosenbrock23" };
 			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
 			static constexpr const char* m_cszLogLevelNames[7] = { "none", "fatal", "error", "warning", "message", "info", "debug" };
 			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
@@ -125,7 +135,6 @@ namespace DFW2
 			static constexpr const char* m_cszLRCToShuntVmin = "LRCToShuntVmin";
 			static constexpr const char* m_cszConsiderDampingEquation = "ConsiderDampingEquation";
 			static constexpr const char* m_cszParkParametersDetermination = "ParkParametersDetermination";
-			static constexpr const char* m_cszZeroCrossingTolerance = "ZeroCrossingTolerance";
 			static constexpr const char* m_cszDontCheckTolOnMinStep = "DontCheckTolOnMinStep";
 			static constexpr const char* m_cszOutStep = "OutStep";
 
@@ -184,6 +193,7 @@ namespace DFW2
 			static constexpr const char* cszDebugModelNameTemplate = "DebugModelNameTemplate";
 			static constexpr const char* cszStepsToStepChange = "StepsToStepChange";
 			static constexpr const char* cszStepsToOrderChange = "StepsToOrderChange";
+			static constexpr const char* cszZeroCrossingTolerance = "ZeroCrossingTolerance";
 			static constexpr const char* cszDerlagToleranceMultiplier = "DerlagToleranceMultiplier";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 			static inline CValidationRuleRange ValidatorRange2_10 = CValidationRuleRange(2, 10);
@@ -204,91 +214,11 @@ namespace DFW2
 			}
 		};
 
+		using IntegratorT = MixedAdamsBDF;
+
 		CDiscontinuities m_Discontinuities;
-
-		using summatorT = MathUtils::StraightSummation;
-
-		struct ConvergenceTest
-		{
-			ptrdiff_t nVarsCount;
-			volatile double dErrorSum;
-			double dOldErrorSum;
-			double dCm;
-			double dCms;
-			double dOldCm;
-			double dErrorSums;
-
-			summatorT summator;
-
-			void Reset()
-			{
-				summator.Reset();
-				nVarsCount = 0;
-			}
-
-			void GetConvergenceRatio()
-			{
-				GetRMS();
-				dCms = 0.7;
-				if (!Equal(dOldErrorSum,0.0))
-				{
-					dCm = dErrorSum / dOldErrorSum;
-					dCms = (std::max)(0.2 * dOldCm, dCm);
-				}
-				dErrorSums = dErrorSum * (std::min)(1.0, 1.5 * dCms); 
-			}
-
-			void GetRMS()
-			{
-				if (nVarsCount)
-				{
-					dErrorSum /= static_cast<double>(nVarsCount);
-					dErrorSum = sqrt(dErrorSum);
-				}
-				else
-					dErrorSum = dErrorSums = 0.0;
-			}
-
-			void ResetIterations()
-			{
-				dOldErrorSum = 0.0;
-				dOldCm = 0.7;
-			}
-
-			void NextIteration()
-			{
-				dOldErrorSum = dErrorSum;
-				dOldCm = dCm;
-			}
-
-			void AddError(double dError) 
-			{
-				nVarsCount++;
-				summator.Add(dError * dError);
-			}
-
-			void FinalizeSum()
-			{
-				dErrorSum = summator.Finalize();
-			}
-
-			// обработка диапазона тестов сходимости в массиве
-
-			typedef ConvergenceTest ConvergenceTestVec[2];
-
-			static void ProcessRange(ConvergenceTestVec &Range, void(*ProcFunc)(ConvergenceTest& ct))
-			{
-				for (auto&& it : Range) ProcFunc(it);
-			}
-
-			static void Reset(ConvergenceTest& ct) { ct.Reset(); }
-			static void GetConvergenceRatio(ConvergenceTest& ct) { ct.GetConvergenceRatio(); }
-			static void NextIteration(ConvergenceTest& ct) { ct.NextIteration(); }
-			static void FinalizeSum(ConvergenceTest& ct) { ct.FinalizeSum(); }
-			static void GetRMS(ConvergenceTest& ct) { ct.GetRMS(); }
-			static void ResetIterations(ConvergenceTest& ct) { ct.ResetIterations(); }
-		};
-
+		std::unique_ptr<IntegratorT> Integrator_;
+		
 		struct StepError
 		{
 			struct Error
@@ -457,12 +387,13 @@ namespace DFW2
 			ptrdiff_t nNoRingingSteps = 0;
 			const double Hmin = 1E-8;
 			ptrdiff_t ZeroCrossingMisses = 0;
-
+			double OldNorm0 = 0.0;	// норма алгебраических переменных на предыдущем шаге
+			double OldNorm1 = 0.0;	// норма дифференциальных переменных на предыдущем шаге
 			StepError Newton;
 			StepError Integrator;
 			double m_dLastRefactorH = 0.0;
 			bool bRingingDetected = false;
-			bool m_bNordsiekReset = true;		// флаг сброса Нордсика - производные равны нулю, контроль предиктора не выполняется
+			bool StepFromReset_ = true;		// флаг сброса Нордсика - производные равны нулю, контроль предиктора не выполняется
 
 			StatisticsMaxFinder m_MaxBranchAngle, m_MaxGeneratorAngle;
 
@@ -551,7 +482,7 @@ namespace DFW2
 				if(os.dTimePassed < temp)
 					os.dTimePassed = temp;
 
-				_ASSERTE(std::abs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t + TimeOffset) < DFW2_EPSILON);
+				_ASSERTE(std::abs(OrderStatistics[0].dTimePassed + OrderStatistics[1].dTimePassed - t + TimeOffset) < Consts::epsilon);
 			}
 
 			// рассчитывает текущее время перед выполнением шага, с возможностью возврата
@@ -571,6 +502,7 @@ namespace DFW2
 			{
 				t0 = t;
 			}
+
 			SerializerPtr GetSerializer();
 
 			static constexpr const char* m_cszDiscontinuityLevelTypeNames[3] = { "none", "light", "hard" };
@@ -637,23 +569,16 @@ namespace DFW2
 		bool RebuildMatrixFlag_;
 		std::vector<CDevice*> ZeroCrossingDevices;
 		void ConvertToCCSMatrix();
-		void SolveLinearSystem();
-		void SolveRefine();
 		void UpdateRcond();
 		void SetDifferentiatorsTolerance();
-		bool NewtonUpdate();
-		bool SolveNewton(ptrdiff_t nMaxIts);
+		void NewtonUpdate();
 		void EstimateMatrix();
 		void CreateTotalRightVector();
 		void CreateUniqueRightVector();
 		void UpdateTotalRightVector();
 		void UpdateNewRightVector();
 		void DebugCheckRightVectorSync();
-		void NewtonUpdateDevices();
 
-		double GetRatioForCurrentOrder();
-		double GetRatioForHigherOrder();
-		double GetRatioForLowerOrder();
 		void   ChangeOrder(ptrdiff_t Newq);
 		void   Computehl0(); // рассчитывает кэшированные произведения l0 * GetH для элементов матрицы
 
@@ -675,32 +600,13 @@ namespace DFW2
 		bool SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster);
 
 		void ResetElement();
-		void ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		void CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		void ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		void CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		typedef void (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
-		typedef void (CDynaModel::*ElementSetterNoDupFn)(ptrdiff_t, ptrdiff_t, double);
+		void ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		typedef void (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double);
 		void ScaleAlgebraicEquations();
-		ElementSetterFn			ElementSetter;
-		ElementSetterNoDupFn	ElementSetterNoDup;
+		ElementSetterFn	ElementSetter;
+		void SolveRefine();
 
-		void Predict();
-		void InitNordsiek();
-		void InitDevicesNordsiek();
-		static void InitNordsiekElement(struct RightVector *pVectorBegin, double Atol, double Rtol);
-		static void PrepareNordsiekElement(struct RightVector *pVectorBegin);
-		void RescaleNordsiek();
-		void UpdateNordsiek(bool bAllowSuppression = false);
-		bool DetectAdamsRinging();
-		void SaveNordsiek();
-		void RestoreNordsiek();
-		void ConstructNordsiekOrder();
-		void ReInitializeNordsiek();
-		void ResetNordsiek();
-		void BuildDerivatives();
-		void BuildMatrix();
-		void BuildRightHand();
 		double CheckZeroCrossing();
 		void FinishStep();
 		void DumpStatistics();
@@ -710,15 +616,17 @@ namespace DFW2
 		void WriteResults();
 		void FinishWriteResults();
 
-		ConvergenceTest::ConvergenceTestVec ConvTest;
 		struct StepControl sc;
 
-		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
-		void EnableAdamsCoefficientDamping(bool bEnable);
-		void GoodStep(double rSame);
-		void BadStep();
-		void NewtonFailed();
-		void RepeatZeroCrossing(double rH);
+		inline void SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType)
+		{
+			auto rv{ GetRightVector(nRow) };
+			_CheckNumber(dValue);
+			rv->EquationType = EquationType;					// тип метода для уравнения
+			rv->PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
+			klu.B()[nRow] = Integrator_->BOperatorDifferential(nRow, dValue);
+		}
+
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
@@ -740,16 +648,34 @@ namespace DFW2
 
 		CDeviceContainer *m_pClosestZeroCrossingContainer = nullptr;
 
-		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		void SetFunction(ptrdiff_t nRow, double dValue);
-		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
+		inline void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+		{
+			(this->*(ElementSetter))(nRow, nCol, dValue);
+		}
+
+		// задает правую часть алгебраического уравнения
+		inline void SetFunction(ptrdiff_t nRow, double dValue)
+		{
+			if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
+				throw dfw2error(fmt::format("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
+			_CheckNumber(dValue);
+			klu.B()[nRow] = Integrator_->BOperatorAlgebraic(nRow, dValue);
+		}
+
+		// задает правую часть дифференциального уравнения
+		void SetFunctionDiff(ptrdiff_t nRow, double dValue)
+		{
+			_CheckNumber(dValue);
+			// ставим тип метода для уравнения по параметрам в исходных данных
+			SetFunctionEqType(nRow, dValue, GetDiffEquationType());
+		}
+
 		void SetDerivative(ptrdiff_t nRow, double dValue);
 		bool ApplyChangesToModel();
-
 		bool SSE2Available_ = false;
 		double HysteresisRtol_ = 1e-2;
 		double HysteresisAtol_ = 10.0;
+
 
 	public:
 		CDynaNodeContainer Nodes;
@@ -784,26 +710,48 @@ namespace DFW2
 		bool RunTransient();
 		bool RunTest();
 		bool RunLoadFlow();
+		void SolveNewton(ptrdiff_t nMaxIts);
+		void BuildMatrix(bool SkipRightHand = false);
+		void BuildRightHand();
+		void StoreStates();
+		void RestoreStates();
+		const CDeviceContainer* ClosestZeroCrossingContainer() const { return m_pClosestZeroCrossingContainer; }
+		void BuildDerivatives();
+		void SolveLinearSystem(bool Refined = false);
+		void NewtonUpdateDevices();
+		void InitDevicesNordsiek();
+		double FindZeroCrossingToConst(const RightVector* pRightVector, double dConst);
+		double FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2);
+		double FindZeroCrossingOfModule(const RightVector* pRvre, const RightVector* pRvim, double Const, bool bCheckForLow);
+		double NextStepValue(const RightVector* pRightVector);
 
 		// выполняет предварительную инициализацию устройств: 
 		// расчет внутренних констант, которые не зависят от связанных устройств
 		// и валидация
 		void PreInitDevices();
 		void InitDevices();
-		bool InitEquations();
+		void InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
-		void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
-		void SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue);
+		inline void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
+		{
+			(this->*(ElementSetter))(Row.Index, Col.Index, dValue);
+		}
+		inline void SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue)
+		{
+			(this->*(ElementSetter))(Row.Index, Col.Index, dValue);
+		}
 
-		// Для теста с множителями
-		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
-
-		void SetFunction(const VariableIndexBase& Row, double dValue);
-		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
+		// задает правую часть алгебраического уравнения
+		inline void SetFunction(const VariableIndexBase& Row, double dValue)
+		{
+			SetFunction(Row.Index, dValue);
+		}
+		inline void SetFunctionDiff(const VariableIndexBase& Row, double dValue)
+		{
+			SetFunctionDiff(Row.Index, dValue);
+		}
 		void SetDerivative(const VariableIndexBase& Row, double dValue);
-
-
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		// Задает значение для переменной, и компонентов Нордиска. 
 		// Используется, в основном, для ввода ограничения переменной
@@ -813,16 +761,67 @@ namespace DFW2
 
 		// возвращает значение правой части системы уравнений
 		double GetFunction(ptrdiff_t nRow) const;
-		struct RightVector* GetRightVector(const ptrdiff_t nRow);
-		struct RightVector* GetRightVector(const VariableIndexBase& Variable);
-		struct RightVector* GetRightVector(const InputVariable& Variable);
+		inline struct RightVector* GetRightVector() { return pRightVector; }
+		RightVector* GetRightVector(const ptrdiff_t nRow);
+		RightVector* GetRightVector(const VariableIndexBase& Variable);
+		RightVector* GetRightVector(const InputVariable& Variable);
+
+		template<class T>
+		struct RangeAdapter
+		{
+		protected:
+			T* begin_;
+			const T* const end_;
+		public:
+			RangeAdapter(T* begin, const T* const end) : begin_(begin), end_(end) {}
+			T* begin() { return begin_; }
+			const T* end() const { return end_; }
+			inline bool empty() const { return begin_ < end_; }
+			inline T* operator++ (int) { auto temp{ begin_ };  begin_++; return temp; }
+			inline T* operator++ () { begin_++; return begin_; }
+			std::size_t size() const { return end_ - begin_; }
+			inline T* operator-> () { return begin_; }
+			inline operator T* () { return begin_; }
+		};
+
+		using RightVectorRangeT = RangeAdapter<RightVector>;
+		using BRangeT = RangeAdapter<double>;
+
+		RightVectorRangeT RightVectorRange();
+
+		BRangeT BRange();
+
+		StepControl& StepControl()
+		{
+			return sc;
+		}
+
+		inline DEVICECONTAINERS& DeviceContainersPredict()
+		{
+			return DeviceContainersPredict_;
+		}
+
+		inline ptrdiff_t MatrixSize() const
+		{
+			return klu.MatrixSize();
+		}
+
+		inline const double* B() const
+		{
+			return klu.B();
+		}
+
+		inline double* B()
+		{
+			return klu.B();
+		}
 
 		inline constexpr double GetOmega0() const
 		{
 			return 2 * 50.0 * M_PI;
 		}
 
-		inline ptrdiff_t GetOrder() const
+		inline ptrdiff_t Order() const
 		{
 			return sc.q;
 		}
@@ -842,21 +841,17 @@ namespace DFW2
 			sc.StoreUsedH();
 		}
 
-		inline bool IsNordsiekReset() const
+		inline bool StepFromReset() const
 		{
-			return sc.m_bNordsiekReset;
+			return sc.StepFromReset_;
+		}
+
+		void ResetStep(bool Reset = true)
+		{
+			sc.StepFromReset_ = Reset;
 		}
 
 		[[nodiscard]] static bool IsSSE2Available();
-
-
-		void SetRestartH()
-		{
-			//if (m_Parameters.RestartFromHmin_)
-				SetH(sc.Hmin);
-			//else
-			//	SetH((std::min)(UsedH(), 100.0 * sc.Hmin));
-		}
 
 		//  возвращает отношение текущего шага к новому
 		inline double SetH(double h)
@@ -864,7 +859,7 @@ namespace DFW2
 			h = (std::min)(h, m_Parameters.Hmax);
 			const double ratio{ H() > 0 ? h / H() : 1.0};
 			sc.SetH(h);
-			Computehl0();
+			Integrator_->UpdateStepSize();
 			return ratio;
 		}
 
@@ -960,6 +955,11 @@ namespace DFW2
 		{
 			return sc.m_bFillConstantElements;
 		}
+
+		void PassTime()
+		{
+			m_Discontinuities.PassTime(GetCurrentTime());
+		}
 		
 		inline bool EstimateBuild() const
 		{
@@ -1035,9 +1035,9 @@ namespace DFW2
 			return rH > 0.0 && rH < 1.0;
 		}
 
-		inline double GetZeroCrossingTolerance() const
+		inline double ZeroCrossingTolerance() const
 		{
-			return ((sc.Hmin / H()) > 0.999) ? (std::numeric_limits<double>::max)() : 0.95;
+			return ((sc.Hmin / H()) > 0.999) ? (std::numeric_limits<double>::max)() : m_Parameters.ZeroCrossingTolerance_;
 		}
 
 		// Текущий номер итерации Ньютона
@@ -1115,7 +1115,7 @@ namespace DFW2
 
 		void EnterDiscontinuityMode();
 		void LeaveDiscontinuityMode();
-		bool ProcessDiscontinuity();
+		void ProcessDiscontinuity();
 		inline bool IsInDiscontinuityMode() { return sc.m_bDiscontinuityMode; }
 		inline bool IsInZeroCrossingMode() { return sc.m_bZeroCrossingMode; }
 		ptrdiff_t GetStepNumber() {  return sc.nStepsCount;  }
@@ -1134,10 +1134,6 @@ namespace DFW2
 		// вывод Message в протокол с добавлением метки времени и номера шага интегрирования
 		void LogTime(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t DbIndex = -1) const;
 		void DebugLog(std::string_view Message) const;
-				
-		double Methodl[4][4];	// текущие коэффициенты метода интегрирования
-		double Methodlh[4];		// коэффициенты метода интегрирования l0, умноженные на шаг
-		static const double MethodlDefault[4][4]; // фиксированные коэффициенты метода интегрирования
 
 		static double gs1(KLUWrapper<double>& klu, std::unique_ptr<double[]>& Imb, const double* Sol);
 

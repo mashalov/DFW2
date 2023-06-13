@@ -251,7 +251,7 @@ eDEVICEFUNCTIONSTATUS CRelayDelay::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 void CRelayDelay::RequestZCDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (Equal(Delay_, 0.0))
+	if (Consts::Equal(Delay_, 0.0))
 		pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
 }
 
@@ -303,7 +303,7 @@ bool CRelayDelayLogic::EnableInstantSwitch(CDynaModel* pDynaModel) const
 // если выдержка равна нулю
 bool CRelayDelay::EnableInstantSwitch(CDynaModel* pDynaModel) const
 {
-	return Delay_ <= DFW2_EPSILON;
+	return Delay_ <= Consts::epsilon;
 }
 
 

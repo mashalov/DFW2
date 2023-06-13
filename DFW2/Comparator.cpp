@@ -32,11 +32,11 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 
 	if (dCheck < 0)
 	{
-		rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
+		rH = pDynaModel->FindZeroCrossingOfDifference(pRightVector1, pRightVector2);
 		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{
 			const double derr{ std::abs(pRightVector1->GetWeightedError(dCheck, Input1_)) };
-			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			if (derr < pDynaModel->ZeroCrossingTolerance())
 			{
 				SetCurrentState(pDynaModel, eRELAYSTATES::RS_OFF);
 				rH = 1.0;
@@ -70,11 +70,11 @@ double CComparator::OnStateOff(CDynaModel *pDynaModel)
 
 	if (dCheck < 0)
 	{
-		rH = CDynaPrimitiveBinaryOutput::FindZeroCrossingOfDifference(pDynaModel, pRightVector1, pRightVector2);
+		rH = pDynaModel->FindZeroCrossingOfDifference(pRightVector1, pRightVector2);
 		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{
 			const double derr{ std::abs(pRightVector1->GetWeightedError(dCheck, Input1_)) };
-			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			if (derr < pDynaModel->ZeroCrossingTolerance())
 			{
 				SetCurrentState(pDynaModel, eRELAYSTATES::RS_ON);
 				rH = 1.0;

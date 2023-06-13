@@ -457,7 +457,7 @@ namespace DFW2
 		inline static double ZeroDivGuard(double Nom, double Denom)
 		{
 			// если делитель - ноль, деление не выполняем
-			return (std::abs(Denom) < DFW2_EPSILON) ? Nom : Nom / Denom;
+			return Consts::Equal(Denom,0.0) ? Nom : Nom / Denom;
 		}
 
 		template<typename T>

@@ -88,11 +88,11 @@ void CDerlagContinuous::BuildRightHand(CDynaModel *pDynaModel)
 bool CDerlagContinuous::Init(CDynaModel *pDynaModel)
 {
 	bool bRes{ true };
-	if (Equal(K_, 0.0))
+	if (Consts::Equal(K_, 0.0))
 		T_ = 0.0;
 	else
 	{
-		_ASSERTE(!Equal(T_, 0.0));
+		_ASSERTE(!Consts::Equal(T_, 0.0));
 		T_ = 1.0 / T_;
 	}
 	Y2_ = Input_;
@@ -118,7 +118,7 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuous::ProcessDiscontinuity(CDynaModel* pDynaM
 {
 	if (Device_.IsStateOn())
 	{
-		if (Equal(K_, 0.0))
+		if (Consts::Equal(K_, 0.0))
 			Y2_ = 0.0;
 		else
 			Output_ = K_ * T_ * (Input_ - Y2_);		// выход по входу
@@ -132,7 +132,7 @@ eDEVICEFUNCTIONSTATUS CDerlagContinuousSmooth::ProcessDiscontinuity(CDynaModel* 
 {
 	if (Device_.IsStateOn())
 	{
-		if (Equal(K_, 0.0))
+		if (Consts::Equal(K_, 0.0))
 			Y2_ = 0.0;
 		else
 			// рассчитываем выход лага с условием сохранения значения на выходе РДЗ
@@ -163,6 +163,7 @@ bool CDerlagNordsieck::Init(CDynaModel *pDynaModel)
 	{
 		_ASSERTE(!Equal(m_T, 0.0));
 		m_T = 1.0 / m_T;
+		Y2_ = m_K * Input_;
 	}
 	Output_ = 0.0;
 	return true;
@@ -172,25 +173,31 @@ void CDerlagNordsieck::BuildRightHand(CDynaModel *pDynaModel)
 {
 	if (Device_.IsStateOn())
 	{
-		const RightVector* pRightVector{ pDynaModel->GetRightVector(Input_.Index) };
+		const RightVector* pRvY2{ pDynaModel->GetRightVector(Y2_.Index) };
+		const RightVector* pRvOut{ pDynaModel->GetRightVector(Output_.Index) };
 
 		if (pDynaModel->IsInDiscontinuityMode())
-			pDynaModel->SetFunctionDiff(Output_, 0.0);
+		{
+			pDynaModel->SetFunctionDiff(Y2_, 0.0);
+			pDynaModel->SetFunction(Output_, 0.0);
+		}
 		else
 		{
-			//if(pDynaModel->IsNordsiekReset())
-				pDynaModel->SetFunctionDiff(Output_, ((Input_ - pRightVector->Nordsiek[0]) / pDynaModel->H() * m_K - Output_) * m_T);
-			//else
-			//	pDynaModel->SetFunctionDiff(m_Output, (pRightVector->Nordsiek[1] / pDynaModel->GetH() * m_K - m_Output) * m_T);
-				
-		}
+			double der{ pRvY2->Nordsiek[1] };
 
-		pDynaModel->SetFunction(m_Y2, 0.0);
+			if (pDynaModel->H() <= 0.0)
+				der = 0.0;
+			else
+				der = Output_ - der / pDynaModel->H();
+
+			pDynaModel->SetFunctionDiff(Y2_, (m_K * Input_ - Y2_) * m_T);
+			pDynaModel->SetFunction(Output_, der);
+		}
 	}
 	else
 	{
 		pDynaModel->SetFunctionDiff(Output_, 0.0);
-		pDynaModel->SetFunction(m_Y2, 0.0);
+		pDynaModel->SetFunction(Y2_, 0.0);
 	}
 }
 
@@ -198,8 +205,7 @@ void CDerlagNordsieck::BuildDerivatives(CDynaModel *pDynaModel)
 {
 	if (Device_.IsStateOn())
 	{
-		const RightVector* pRightVector{ pDynaModel->GetRightVector(Input_.Index) };
-		pDynaModel->SetDerivative(Output_, (pRightVector->Nordsiek[1] / pDynaModel->H() * m_K - Output_) * m_T);
+		pDynaModel->SetFunctionDiff(Y2_, (m_K * Input_ - Y2_) * m_T);
 	}
 }
 
@@ -216,14 +222,11 @@ eDEVICEFUNCTIONSTATUS CDerlagNordsieck::ProcessDiscontinuity(CDynaModel* pDynaMo
 	if (Device_.IsStateOn())
 	{
 		if (Equal(m_K, 0.0))
-			m_Y2 = 0.0;
+			Y2_ = 0.0;
 		else
 		{
-			const RightVector* pRightVector{ pDynaModel->GetRightVector(Input_.Index) };
-			//m_Output = pRightVector->Nordsiek[1] / pDynaModel->GetH() * m_K;
-			//// рассчитываем выход лага с условием сохранения значения на выходе РДЗ
-			//m_Y2 = (m_Input * m_K * m_T - m_Output) / m_K / m_T;
-			//double dOut = m_Output + m_K * m_T * (m_Y2 - m_Input);
+			const RightVector* pRightVector{ pDynaModel->GetRightVector(Y2_.Index) };
+			//Y2_ = (Input_ * m_K * m_T - Output_) / m_K / m_T;
 		}
 	}
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -234,30 +237,15 @@ void CDerlagNordsieck::BuildEquations(CDynaModel *pDynaModel)
 	if (Device_.IsStateOn())
 	{
 
-		const RightVector* pRightVector{ pDynaModel->GetRightVector(Input_) };
-
-		double dIdO{ 0.0 };
-
-		if (!pDynaModel->IsInDiscontinuityMode())
-		{
-			// dOut / dOut
-			pDynaModel->SetElement(Output_, Output_, -m_T);
-			//if (pDynaModel->IsNordsiekReset())
-				dIdO = -Input_ / pDynaModel->H() * m_K * m_T;
-		}
-		else
-		{
-			// dOut / dOut
-			pDynaModel->SetElement(Output_, Output_, 1.0);
-		}
-
-		pDynaModel->SetElement(Output_, Input_, dIdO);
-		pDynaModel->SetElement(m_Y2, m_Y2, 1.0);
+		const RightVector* pRvY2{ pDynaModel->GetRightVector(Y2_) };
+		pDynaModel->SetElement(Output_, Output_, 1.0);
+		pDynaModel->SetElement(Y2_, Y2_, -m_T);
+		pDynaModel->SetElement(Y2_, Input_, -m_K * m_T);
 	}
 	else
 	{
 		pDynaModel->SetElement(Output_, Output_, 1.0);
-		pDynaModel->SetElement(m_Y2, m_Y2, 1.0);
+		pDynaModel->SetElement(Y2_, Y2_, 1.0);
 	}
 }
 

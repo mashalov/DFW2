@@ -5,9 +5,10 @@
 using namespace DFW2;
 
 CTestDevice::CTestDevice() : CDevice(),
-	OutputLag_(*this, { LagOut }, { x })
+	OutputLag_(*this, { LagOut }, { x }),
+	Der_(*this, {DerOut, DerOut1}, {x})
 {
-	
+	SetName("Test device");
 }
 
 void CTestDevice::DeviceProperties(CDeviceContainerProperties& props)
@@ -20,6 +21,7 @@ void CTestDevice::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert({ "v", CVarIndex(V_V, VARUNIT_PU) });
 	props.VarMap_.insert({ "xref", CVarIndex(V_XREF, VARUNIT_PU) });
 	props.VarMap_.insert({ "Lag", CVarIndex(V_LAG , VARUNIT_PU) });
+	props.VarMap_.insert({ "Der", CVarIndex(V_DER , VARUNIT_PU) });
 	props.EquationsCount = CTestDevice::VARS::V_XREF;
 	props.bFinishStep = true;
 }
@@ -42,22 +44,24 @@ void CTestDevice::BuildRightHand(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CTestDevice::Init(CDynaModel* pDynaModel)
 {
-	A = x = 10.0;
+	A = x = 1.0;
+	const double Limit{ A / 2.0 };
 	omega = std::sqrt(k / m);
-	phi = 0;
-	//OutputLag_.SetMinMaxTK(pDynaModel, -A / 2.0, A / 2.0, 0.5, 1.0);
-	OutputLag_.SetMinMax(pDynaModel, -A / 2.0, A / 2.0);
-	LagOut = A / 2.0;
-	OutputLag_.Init(pDynaModel);
-	x = 10.0;
+	phi = -pDynaModel->GetCurrentTime() * omega;
+	OutputLag_.SetMinMax(pDynaModel, -Limit, Limit);
+	LagOut = (std::max)((std::min)(A, Limit), -Limit);
+	x = 1.0;
 	v = 0.0;
+	DerOut = v;
+	Der_.SetTK(1e-4, 1.0);
+	CDevice::Init(pDynaModel);
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
 
 VariableIndexRefVec& CTestDevice::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDevice::GetVariables(JoinVariables({ x, v, LagOut }, ChildVec));
+	return CDevice::GetVariables(JoinVariables({ x, v, LagOut, DerOut, DerOut1 }, ChildVec));
 }
 
 double* CTestDevice::GetVariablePtr(ptrdiff_t nVarIndex)

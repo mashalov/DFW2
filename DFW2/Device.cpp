@@ -1220,7 +1220,7 @@ bool CDevice::CheckLimits(double& Min, double& Max)
 				GetVerbalName()));
 			return false;
 		}
-		if (Equal(Min, Max) && Equal(Min, 0.0))
+		if (Consts::Equal(Min, Max) && Consts::Equal(Min, 0.0))
 		{
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszEmptyLimits,
 				nameMin,

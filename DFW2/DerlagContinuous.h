@@ -56,9 +56,9 @@ namespace DFW2
 	protected:
 		double m_K, m_T;
 	public:
-		VariableIndex& m_Y2;
+		VariableIndex& Y2_;
 		CDerlagNordsieck(CDevice& Device, const ORange& Output, const IRange& Input) :
-			CDynaPrimitive(Device, Output, Input), m_Y2(Output[1]) {}
+			CDynaPrimitive(Device, Output, Input), Y2_(Output[1]) {}
 		CDerlagNordsieck(CDevice& Device, const OutputList& Output, const InputList& Input) :
 			CDerlagNordsieck(Device, ORange(Output), IRange(Input)) { }
 
@@ -72,7 +72,7 @@ namespace DFW2
 		const char* GetVerbalName() override { return "ДЗ Nordsieck"; }
 		bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) override;
 		static size_t PrimitiveSize() { return sizeof(CDerlagNordsieck); }
-		static long EquationsCount() { return 3; }
+		static long EquationsCount() { return 2; }
 	};
 #endif
 

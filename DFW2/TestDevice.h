@@ -2,6 +2,7 @@
 #include "DeviceContainer.h"
 #include "LimitedLag.h"
 #include "LimiterConst.h"
+#include "DerlagContinuous.h"
 namespace DFW2
 {
 	// уравнение гармонического маятника
@@ -19,20 +20,23 @@ namespace DFW2
 			V_X,			// координата
 			V_V,			// скорость
 			V_LAG,			// выход лага
+			V_DER,			// выход дерлага
+			V_DER1,			// лаг дерлага
 			V_XREF,			// референс координаты
 			V_LAST,
 		};
 		CTestDevice();
 		virtual ~CTestDevice() = default;
 
-		const double k = 1.4;
-		const double m = 0.2;
+		const double k = 3.0;
+		const double m = 0.3;
 		double omega = 0.0;
 		double A = 0.0;
 		double phi = 0.0;
 
+		CDerlagContinuous Der_;
 		CLimiterConst OutputLag_;
-		VariableIndex x, v, xref, LagOut;
+		VariableIndex x, v, xref, LagOut, DerOut, DerOut1;
 
 		void BuildEquations(CDynaModel* pDynaModel) override;
 		void BuildRightHand(CDynaModel* pDynaModel) override;

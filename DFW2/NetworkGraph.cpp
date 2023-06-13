@@ -135,7 +135,7 @@ void CDynaModel::PrepareNetworkElements()
 		const auto& pNode{ static_cast<CDynaNode*>(it) };
 		// задаем V0 для узла. Оно потребуется временно, для холстого расчета шунтовых
 		// нагрузок в CreateSuperNodes
-		if (pNode->Unom < DFW2_EPSILON)
+		if (Consts::Equal(pNode->Unom, 0.0))
 		{
 			pNode->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszWrongUnom, pNode->GetVerbalName(), pNode->Unom));
 			bOk = false;
@@ -168,7 +168,7 @@ void CDynaModel::PrepareNetworkElements()
 
 		}
 		// нулевой коэффициент трансформации заменяем на единичный
-		if (Equal(pBranch->Ktr, 0.0) || Equal(pBranch->Ktr, 1.0))
+		if (Consts::Equal(pBranch->Ktr, 0.0) || Consts::Equal(pBranch->Ktr, 1.0))
 		{
 			// если ветвь не трансформатор, схема замещения "П"
 			pBranch->Ktr = 1.0;

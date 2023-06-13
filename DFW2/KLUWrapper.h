@@ -242,6 +242,7 @@ namespace DFW2
 		ptrdiff_t MatrixSize_ = 0;
 		ptrdiff_t NonZeroCount_ = 0;
 		ptrdiff_t AnalyzingsCount_ = 0;
+		ptrdiff_t SolvesCount_ = 0;
 		ptrdiff_t FactorizationsCount_ = 0;
 		ptrdiff_t RefactorizationsCount_ = 0;
 		ptrdiff_t RefactorizationFailures_ = 0;
@@ -322,11 +323,12 @@ namespace DFW2
 			pNumeric.reset();
 		}
 		inline ptrdiff_t MatrixSize() const { return MatrixSize_; }
-		ptrdiff_t NonZeroCount() { return NonZeroCount_; }
-		ptrdiff_t AnalyzingsCount() { return AnalyzingsCount_; }
-		ptrdiff_t FactorizationsCount() { return FactorizationsCount_; }
-		ptrdiff_t RefactorizationsCount() { return RefactorizationsCount_; }
-		ptrdiff_t RefactorizationFailuresCount() { return RefactorizationFailures_; }
+		ptrdiff_t NonZeroCount() const { return NonZeroCount_; }
+		ptrdiff_t SolvesCount() const { return SolvesCount_; };
+		ptrdiff_t AnalyzingsCount() const { return AnalyzingsCount_; }
+		ptrdiff_t FactorizationsCount() const { return FactorizationsCount_; }
+		ptrdiff_t RefactorizationsCount() const { return RefactorizationsCount_; }
+		ptrdiff_t RefactorizationFailuresCount() const { return RefactorizationFailures_; }
 		inline double* Ax() { return pAx.get(); }
 		inline const double* Ax() const { return pAx.get(); }
 		inline double* B() { return pb.get(); }
@@ -388,6 +390,7 @@ namespace DFW2
 				Factor();
 			if (!KLUFunctions<T>::TKLU_tsolve(pSymbolic->GetKLUObject(), pNumeric->GetKLUObject(), MatrixSize_, 1, pb.get(), &pCommon))
 				throw dfw2error(fmt::format("{}::KLU_tsolve {}", KLUWrapperName(), KLUErrorDescription()));
+			SolvesCount_++;
 		}
 
 		// Решение СЛУ с итерационным уточнением
@@ -398,7 +401,7 @@ namespace DFW2
 
 			// если не был получен - создаем
 			if (!pRefine)
-				pRefine = vector_aligned_double(3 * MatrixSize_ * doubles_count<T>::count);
+				pRefine = vector_aligned_double(3 * MatrixSize() * doubles_count<T>::count);
 
 			double* pR1{ pRefine.get() };			// правая часть СЛУ (b)
 			double* pR2{ pR1 + MatrixSize() };		// исходное решение СЛУ (x)
@@ -414,6 +417,8 @@ namespace DFW2
 
 			double r{ 0.0 };
 			ptrdiff_t nMaxIndex{ 0 };
+
+			double prevR{ 0 };
 
 			for (ptrdiff_t m = 0; m < 5; m++)
 			{
@@ -432,12 +437,15 @@ namespace DFW2
 				}
 				r = (std::max)(FindMaxB(nMaxIndex), r);
 				// если невязки меньше чем заданное значение
-				if (r < Tolerance)
+				if (r <= Tolerance || (m > 0 && prevR >= r))
 				{
 					// отдаем значение с последней итерации
 					std::copy(pR2, pR2 + MatrixSize(), pb.get());
 					break;
 				}
+
+				prevR = r;
+
 				// решаем Ac = r
 				Solve();
 				// рассчитываем x_{m+1} = x_{m} + c_{m}

@@ -18,23 +18,9 @@ void CResultFile::WriteLEB(uint64_t Value)
 
 void CResultFile::WriteString(std::string_view cszString)
 {
-	if (cszString.empty())
-		WriteLEB(0);
-	else
-	{
-		
-#if DFW2_RESULTFILE_VERSION > 1
-		WriteLEB(cszString.size());
-		// for file versions > 1 write plain utf-8 strings
+	WriteLEB(cszString.size());
+	if (!cszString.empty())
 		infile.write(cszString.data(), cszString.size());
-#else
-		// for older versions write scsu
-		std::wstring scsuToEncode = stringutils::utf8_decode(cszString);
-		WriteLEB(scsuToEncode.size());
-		CUnicodeSCSU StringWriter(infile);
-		StringWriter.WriteSCSU(scsuToEncode);
-#endif
-	}
 }
 
 void CResultFileWriter::WriteTime(double Time, double Step)
@@ -48,7 +34,7 @@ void CResultFileWriter::WriteTime(double Time, double Step)
 		bool bReset = false;
 		for (int j = 0; j < PredictorOrder_; j++)
 		{
-			if (Equal(Time, ts[j]))
+			if (Consts::Equal(Time, ts[j]))
 			{
 				bReset = true;
 				break;
@@ -442,7 +428,7 @@ void CResultFileWriter::CreateResultFile(std::filesystem::path FilePath)
 	size_t nCountSignature = sizeof(m_cszSignature);
 	infile.write(m_cszSignature, nCountSignature);
 	// запись версии (версия в define, соответствует исходнику)
-	WriteLEB(DFW2_RESULTFILE_VERSION);
+	WriteLEB(Consts::dfw_result_file_version);
 
 	// создаем поток для записи
 	threadWriter = std::thread(CResultFileWriter::WriterThread, this); 
@@ -745,7 +731,7 @@ void CResultFileWriter::FinishWriteHeader()
 			unsigned char BitFlags = 0x0;
 			// если у переменной есть множитель -
 			// добавляем битовый флаг
-			if (!Equal(vi.Multiplier, 1.0))
+			if (!Consts::Equal(vi.Multiplier, 1.0))
 				BitFlags |= 0x1;
 			WriteLEB(BitFlags);								// битовые флаги переменной
 			// если есть множитель

@@ -149,8 +149,6 @@ namespace DFW2
 		virtual bool UnserializeParameters(CDynaModel *pDynaModel, const DOUBLEVECTOR& Parameters) { return true; }
 		std::string GetVerboseName();
 		bool CheckTimeConstant(const double& T);
-		static double GetZCStepRatio(CDynaModel *pDynaModel, double a, double b, double c);
-		static double FindZeroCrossingToConst(CDynaModel *pDynaModel, const RightVector* pRightVector, double dConst);
 		void SetName(const std::string_view& Name) { Name_ = Name; }
 		const std::string_view& Name() const { return Name_; }
 		CDevice& Device() { return Device_; }
@@ -253,8 +251,6 @@ namespace DFW2
 		CDynaPrimitiveBinaryOutput(CDevice& Device, const ORange& Output, const IRange& Input) : CDynaPrimitiveBinary(Device, Output, Input) {}
 		CDynaPrimitiveBinaryOutput(CDevice& Device, const OutputList& Output, const InputList& Input) : 
 			CDynaPrimitiveBinaryOutput(Device, ORange(Output), IRange(Input)) { }
-
-		static double FindZeroCrossingOfDifference(CDynaModel *pDynaModel, const RightVector* pRightVector1, const RightVector* pRightVector2);
 		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
 	};
 

@@ -137,12 +137,12 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 	const double C(lad + lrc), A(C + lfd), B(C + l1d);
 	double detd(C * C - A * B);
 
-	if (Equal(detd, 0.0))
+	if (Consts::Equal(detd, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, CDynaGeneratorDQBase::m_cszBadCoeficients, GetVerbalName(), detd));
 		bRes = false;
 	}
-	if (Equal(l1Q, 0.0))
+	if (Consts::Equal(l1Q, 0.0))
 	{
 		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), "laq + l1q", l1Q));
 		bRes = false;

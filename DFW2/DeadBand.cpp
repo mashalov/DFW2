@@ -57,7 +57,7 @@ bool CDeadBand::Init(CDynaModel *pDynaModel)
 		bRes = false;
 	}
 	else
-		if (Equal(Db_,0.0))
+		if (Consts::Equal(Db_,0.0))
 			eDbState_ = eDFW2DEADBANDSTATES::DBS_OFF;
 	else
 	{
@@ -162,13 +162,13 @@ double CDeadBand::OnStateMin(CDynaModel *pDynaModel)
 	if (CheckMin < 0.0)
 	{
 		const double derr{ std::abs(pRightVector1->GetWeightedError(CheckMin, Input_)) };
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
+		if (derr < pDynaModel->ZeroCrossingTolerance())
 		{
 			SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, -Db_);
+			rH = pDynaModel->FindZeroCrossingToConst(pRightVector1, -Db_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
@@ -186,13 +186,13 @@ double CDeadBand::OnStateMax(CDynaModel *pDynaModel)
 	if (CheckMax < 0.0)
 	{
 		const double derr{ std::abs(pRightVector1->GetWeightedError(CheckMax, Input_)) };
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
+		if (derr < pDynaModel->ZeroCrossingTolerance())
 		{
 			SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, Db_);
+			rH = pDynaModel->FindZeroCrossingToConst(pRightVector1, Db_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_ZERO);
 		}
@@ -211,13 +211,13 @@ double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 	if (CheckMax >= 0.0)
 	{
 		const double derr{ std::abs(pRightVector1->GetWeightedError(CheckMax, Input_)) };
-		if (derr < pDynaModel->GetZeroCrossingTolerance())
+		if (derr < pDynaModel->ZeroCrossingTolerance())
 		{
 			SetCurrentState(eDFW2DEADBANDSTATES::DBS_MAX);
 		}
 		else
 		{
-			rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, DbMax_);
+			rH = pDynaModel->FindZeroCrossingToConst(pRightVector1, DbMax_);
 			if (pDynaModel->ZeroCrossingStepReached(rH))
 			{
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_MAX);
@@ -228,13 +228,13 @@ double CDeadBand::OnStateZero(CDynaModel *pDynaModel)
 		if (CheckMin >= 0.0)
 		{
 			const double derr{ std::abs(pRightVector1->GetWeightedError(CheckMin, Input_)) };
-			if (derr < pDynaModel->GetZeroCrossingTolerance())
+			if (derr < pDynaModel->ZeroCrossingTolerance())
 			{
 				SetCurrentState(eDFW2DEADBANDSTATES::DBS_MIN);
 			}
 			else
 			{
-				rH = FindZeroCrossingToConst(pDynaModel, pRightVector1, DbMin_);
+				rH = pDynaModel->FindZeroCrossingToConst(pRightVector1, DbMin_);
 				if (pDynaModel->ZeroCrossingStepReached(rH))
 				{
 					SetCurrentState(eDFW2DEADBANDSTATES::DBS_MIN);
