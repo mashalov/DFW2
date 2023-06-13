@@ -600,15 +600,11 @@ namespace DFW2
 		bool SetDeviceStateByMaster(CDevice *pDev, const CDevice *pMaster);
 
 		void ResetElement();
-		void ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		void CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		void ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		void CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		typedef void (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double, bool);
-		typedef void (CDynaModel::*ElementSetterNoDupFn)(ptrdiff_t, ptrdiff_t, double);
+		void ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		void CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
+		typedef void (CDynaModel::*ElementSetterFn)(ptrdiff_t, ptrdiff_t, double);
 		void ScaleAlgebraicEquations();
-		ElementSetterFn			ElementSetter;
-		ElementSetterNoDupFn	ElementSetterNoDup;
+		ElementSetterFn	ElementSetter;
 		void SolveRefine();
 
 		double CheckZeroCrossing();
@@ -622,7 +618,15 @@ namespace DFW2
 
 		struct StepControl sc;
 
-		bool SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType);
+		inline void SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType)
+		{
+			auto rv{ GetRightVector(nRow) };
+			_CheckNumber(dValue);
+			rv->EquationType = EquationType;					// тип метода для уравнения
+			rv->PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
+			klu.B()[nRow] = Integrator_->BOperatorDifferential(nRow, dValue);
+		}
+
 		void UnprocessDiscontinuity();
 
 		bool LoadFlow();
@@ -644,10 +648,28 @@ namespace DFW2
 
 		CDeviceContainer *m_pClosestZeroCrossingContainer = nullptr;
 
-		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious);
-		void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue);
-		void SetFunction(ptrdiff_t nRow, double dValue);
-		void SetFunctionDiff(ptrdiff_t nRow, double dValue);
+		inline void SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+		{
+			(this->*(ElementSetter))(nRow, nCol, dValue);
+		}
+
+		// задает правую часть алгебраического уравнения
+		inline void SetFunction(ptrdiff_t nRow, double dValue)
+		{
+			if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
+				throw dfw2error(fmt::format("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
+			_CheckNumber(dValue);
+			klu.B()[nRow] = Integrator_->BOperatorAlgebraic(nRow, dValue);
+		}
+
+		// задает правую часть дифференциального уравнения
+		void SetFunctionDiff(ptrdiff_t nRow, double dValue)
+		{
+			_CheckNumber(dValue);
+			// ставим тип метода для уравнения по параметрам в исходных данных
+			SetFunctionEqType(nRow, dValue, GetDiffEquationType());
+		}
+
 		void SetDerivative(ptrdiff_t nRow, double dValue);
 		bool ApplyChangesToModel();
 		bool SSE2Available_ = false;
@@ -711,14 +733,24 @@ namespace DFW2
 		void InitEquations();
 
 		ptrdiff_t AddMatrixSize(ptrdiff_t nSizeIncrement);
-		void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
-		void SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue);
+		inline void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
+		{
+			(this->*(ElementSetter))(Row.Index, Col.Index, dValue);
+		}
+		inline void SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue)
+		{
+			(this->*(ElementSetter))(Row.Index, Col.Index, dValue);
+		}
 
-		// Для теста с множителями
-		//bool SetElement2(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious = false);
-
-		void SetFunction(const VariableIndexBase& Row, double dValue);
-		void SetFunctionDiff(const VariableIndexBase& Row, double dValue);
+		// задает правую часть алгебраического уравнения
+		inline void SetFunction(const VariableIndexBase& Row, double dValue)
+		{
+			SetFunction(Row.Index, dValue);
+		}
+		inline void SetFunctionDiff(const VariableIndexBase& Row, double dValue)
+		{
+			SetFunctionDiff(Row.Index, dValue);
+		}
 		void SetDerivative(const VariableIndexBase& Row, double dValue);
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		// Задает значение для переменной, и компонентов Нордиска. 

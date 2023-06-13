@@ -45,7 +45,6 @@ void CDynaModel::EstimateMatrix()
 	// substitute element setter to counter (not actually setting values, just count)
 
 	ElementSetter		= &CDynaModel::CountSetElement;
-	ElementSetterNoDup  = &CDynaModel::CountSetElementNoDup;
 
 	BuildMatrix();
 	nNonZeroCount = 0;
@@ -78,7 +77,6 @@ void CDynaModel::EstimateMatrix()
 
 	// revert to real element setter
 	ElementSetter		= &CDynaModel::ReallySetElement;
-	ElementSetterNoDup  = &CDynaModel::ReallySetElementNoDup;
 			
 	InitDevicesNordsiek();
 	
@@ -183,42 +181,7 @@ void CDynaModel::ResetElement()
 	}
 }
 
-void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
-{
-	if(nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
-		throw dfw2error(fmt::format("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, m_nEstimatedMatrixSize));
-
-	Integrator_->WOperator(nRow, nCol, dValue);
-	MatrixRow* pRow{ m_pMatrixRows + nRow };
-	_CheckNumber(dValue);
-
-	// если нужно суммировать элементы, на входа задан флаг bAddToPrevious
-	// пока нужно для параллельных ветвей
-	if (bAddToPrevious)
-	{
-		ptrdiff_t *pSp = pRow->pAp - 1;
-		while (pSp >= pRow->pApRow)
-		{
-			if (*pSp == nCol)
-			{
-				ptrdiff_t pDfr = pSp - pRow->pAp;
-				*(pRow->pAx + pDfr) += dValue;
-				break;
-			}
-			pSp--;
-		}
-	}
-	else
-	{
-		if (pRow->pAp >= pRow->pApRow + pRow->m_nColsCount || pRow->pAx >= pRow->pAxRow + pRow->m_nColsCount)
-			throw dfw2error("CDynaModel::ReallySetElement Column count mismatch");
-		*pRow->pAp = nCol;			*pRow->pAx = dValue;
-		pRow->pAp++;				pRow->pAx++;
-	}
-}
-
-
-void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
 	if (nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
 		throw dfw2error(fmt::format("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, m_nEstimatedMatrixSize));
@@ -236,56 +199,13 @@ void CDynaModel::ReallySetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dV
 	pRow->pAp++;				pRow->pAx++;
 }
 
-// Функция подсчета количества элементов в строке матрицы
-void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
-{
-	if (nRow >= m_nEstimatedMatrixSize || nRow < 0 )
-		throw dfw2error(fmt::format("CDynaModel::CountSetElement matrix size overrun Row {} Col {} MatrixSize {}",nRow, nCol, m_nEstimatedMatrixSize));
-	if (!bAddToPrevious)
-	{
-		// учитываем элементы с учетом суммирования
-		MatrixRow *pRow = m_pMatrixRows + nRow;
-		pRow->m_nColsCount++;
-	}
-}
-
-
-void CDynaModel::CountSetElementNoDup(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
+void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
 	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
 		throw dfw2error(fmt::format("CDynaModel::CountSetElementNoDup matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, m_nEstimatedMatrixSize));
 	// учитываем элементы с учетом суммирования
 	MatrixRow *pRow = m_pMatrixRows + nRow;
 	pRow->m_nColsCount++;
-}
-
-void CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue, bool bAddToPrevious)
-{
-	(this->*(ElementSetter))(nRow, nCol, dValue, bAddToPrevious);
-}
-
-void CDynaModel::SetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
-{
-	(this->*(ElementSetterNoDup))(nRow, nCol, dValue);
-}
-
-void CDynaModel::SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue)
-{
-	(this->*(ElementSetterNoDup))(Row.Index, Col.Index, dValue);
-}
-
-void CDynaModel::SetElement(const VariableIndexBase& Row, const InputVariable& Col, double dValue)
-{
-	(this->*(ElementSetterNoDup))(Row.Index, Col.Index, dValue);
-}
-
-// задает правую часть алгебраического уравнения
-void CDynaModel::SetFunction(ptrdiff_t nRow, double dValue)
-{
-	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
-		throw dfw2error(fmt::format("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
-	_CheckNumber(dValue);
-	klu.B()[nRow] = Integrator_->BOperatorAlgebraic(nRow, dValue);
 }
 
 void CDynaModel::SetDerivative(ptrdiff_t nRow, double dValue)
@@ -349,39 +269,10 @@ void CDynaModel::CorrectNordsiek(ptrdiff_t nRow, double dValue)
 	rv->Tminus2Value = dValue;
 }
 
-// задает правую часть дифференциального уравнения
-void CDynaModel::SetFunctionDiff(ptrdiff_t nRow, double dValue)
-{
-	_CheckNumber(dValue);
-	// ставим тип метода для уравнения по параметрам в исходных данных
-	SetFunctionEqType(nRow, dValue, GetDiffEquationType());
-}
-
-void CDynaModel::SetFunction(const VariableIndexBase& Row, double dValue)
-{
-	SetFunction(Row.Index, dValue);
-}
-
-void CDynaModel::SetFunctionDiff(const VariableIndexBase& Row, double dValue)
-{
-	SetFunctionDiff(Row.Index, dValue);
-}
-
 void CDynaModel::SetDerivative(const VariableIndexBase& Row, double dValue)
 {
 	SetDerivative(Row.Index, dValue);
 }
-
-bool CDynaModel::SetFunctionEqType(ptrdiff_t nRow, double dValue, DEVICE_EQUATION_TYPE EquationType)
-{
-	auto rv{ GetRightVector(nRow) };
-	_CheckNumber(dValue);
-	rv->EquationType = EquationType;					// тип метода для уравнения
-	rv->PhysicalEquationType = DET_DIFFERENTIAL;		// уравнение, устанавливаемое этой функцией всегда дифференциальное
-	klu.B()[nRow] = Integrator_->BOperatorDifferential(nRow, dValue);
-	return true;
-}
-
 
 double CDynaModel::GetFunction(ptrdiff_t nRow)  const
 {

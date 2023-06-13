@@ -278,7 +278,7 @@ long CCustomDevice::DLLEntrySetElement(BuildEquationsObjects *pBEObjs, ptrdiff_t
 	CDynaModel *pDynaModel = static_cast<CDynaModel*>(pBEObjs->pModel);
 	CDevice    *pDevice    = static_cast<CDevice*>(pBEObjs->pDevice);
 	_ASSERTE(nCol != DFW2_NON_STATE_INDEX);
-	pDynaModel->SetElement(pDevice->A(nRow), pDevice->A(nCol), dValue, bAddToPreviois ? true : false );
+	pDynaModel->SetElement(pDevice->A(nRow), pDevice->A(nCol), dValue);
 	return 1;
 }
 
