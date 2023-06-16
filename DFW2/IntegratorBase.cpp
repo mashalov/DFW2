@@ -1,11 +1,13 @@
 ﻿#include "stdafx.h"
 #include "DynaModel.h"
 #include "MixedAdamsBDF.h"
+// eigen does not compile on x86 with AVX2 enabled
+#if defined(_MSC_VER) && !defined(_WIN64)
+#define EIGEN_DONT_VECTORIZE
+#endif
 #include "Eigen/Dense"
 
 using namespace DFW2;
-
-
 
 void IntegratorBase::RepeatZeroCrossing(double rh)
 {
