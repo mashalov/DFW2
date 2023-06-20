@@ -24,7 +24,7 @@ add_custom_command(OUTPUT ${ANTLR4_PRODUCTS}
 )
 
 set(SOURCES 
-    ../../../fmt/src/format.cc
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/src/format.cc
     Generated/EquationsBaseVisitor.cpp
     Generated/EquationsLexer.cpp
     Generated/EquationsParser.cpp

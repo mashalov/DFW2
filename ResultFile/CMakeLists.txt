@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../fmt/include/" )
 
 set(SOURCES 
-    ../../../fmt/src/format.cc 
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/src/format.cc 
     BitStream.cpp
     Compressor.cpp
 #    CSVWriter.cpp

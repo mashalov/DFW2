@@ -24,7 +24,7 @@ set(KLU_INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/SuiteSparse/KLU/Include"
 
 set(EMSSSOURCES 
     main.cpp 
-    ../../fmt/src/format.cc 
+    ${CMAKE_CURRENT_SOURCE_DIR}/../fmt/src/format.cc 
     Messages.cpp
     LoadFlow.cpp
     LoadFlowTanh.cpp
