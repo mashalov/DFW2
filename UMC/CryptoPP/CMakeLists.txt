@@ -590,7 +590,7 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU
     # not assemble modern ISA, like AVX or AVX2.
 	if (CMAKE_SYSTEM_NAME STREQUAL "Darwin")
       CheckCompileLinkOption("-Wa,-q" CRYPTOPP_IA32_WAQ
-                             "${TEST_PROG_DIR}/test_x86_sse2.cpp")
+                             "${TEST_PROG_DIR}/test_x86_sse2.cxx")
 
       if (CRYPTOPP_IA32_WAQ)
         list(APPEND CRYPTOPP_COMPILE_OPTIONS "-Wa,-q")
@@ -599,29 +599,29 @@ if (CMAKE_CXX_COMPILER_ID MATCHES "Clang" OR CMAKE_CXX_COMPILER_ID STREQUAL "GNU
 
     # Now we can move on to normal feature testing.
     CheckCompileLinkOption("-msse2" CRYPTOPP_IA32_SSE2
-                           "${TEST_PROG_DIR}/test_x86_sse2.cpp")
+                           "${TEST_PROG_DIR}/test_x86_sse2.cxx")
     CheckCompileLinkOption("-mssse3" CRYPTOPP_IA32_SSSE3
-                           "${TEST_PROG_DIR}/test_x86_ssse3.cpp")
+                           "${TEST_PROG_DIR}/test_x86_ssse3.cxx")
     CheckCompileLinkOption("-msse4.1" CRYPTOPP_IA32_SSE41
-                           "${TEST_PROG_DIR}/test_x86_sse41.cpp")
+                           "${TEST_PROG_DIR}/test_x86_sse41.cxx")
     CheckCompileLinkOption("-msse4.2" CRYPTOPP_IA32_SSE42
-                           "${TEST_PROG_DIR}/test_x86_sse42.cpp")
+                           "${TEST_PROG_DIR}/test_x86_sse42.cxx")
     CheckCompileLinkOption("-mssse3 -mpclmul" CRYPTOPP_IA32_CLMUL
-                           "${TEST_PROG_DIR}/test_x86_clmul.cpp")
+                           "${TEST_PROG_DIR}/test_x86_clmul.cxx")
     CheckCompileLinkOption("-msse4.1 -maes" CRYPTOPP_IA32_AES
-                           "${TEST_PROG_DIR}/test_x86_aes.cpp")
+                           "${TEST_PROG_DIR}/test_x86_aes.cxx")
     CheckCompileLinkOption("-mavx" CRYPTOPP_IA32_AVX
-                           "${TEST_PROG_DIR}/test_x86_avx.cpp")
+                           "${TEST_PROG_DIR}/test_x86_avx.cxx")
     CheckCompileLinkOption("-mavx2" CRYPTOPP_IA32_AVX2
-                           "${TEST_PROG_DIR}/test_x86_avx2.cpp")
+                           "${TEST_PROG_DIR}/test_x86_avx2.cxx")
     CheckCompileLinkOption("-msse4.2 -msha" CRYPTOPP_IA32_SHA
-                           "${TEST_PROG_DIR}/test_x86_sha.cpp")
-    if (EXISTS "${TEST_PROG_DIR}/test_asm_mixed.cpp")
+                           "${TEST_PROG_DIR}/test_x86_sha.cxx")
+    if (EXISTS "${TEST_PROG_DIR}/test_asm_mixed.cxx")
       CheckCompileLinkOption("" CRYPTOPP_MIXED_ASM
-                             "${TEST_PROG_DIR}/test_asm_mixed.cpp")
+                             "${TEST_PROG_DIR}/test_asm_mixed.cxx")
     else ()
       CheckCompileLinkOption("" CRYPTOPP_MIXED_ASM
-                             "${TEST_PROG_DIR}/test_mixed_asm.cpp")
+                             "${TEST_PROG_DIR}/test_mixed_asm.cxx")
     endif ()
 
     # https://github.com/weidai11/cryptopp/issues/756

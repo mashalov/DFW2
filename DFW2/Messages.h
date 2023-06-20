@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "map"
 #include "string"
+#include <cstddef>
 #include "DeviceTypes.h"
 
 namespace DFW2

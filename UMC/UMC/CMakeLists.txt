@@ -3,6 +3,8 @@ project(UMC)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
+add_compile_options(-march=native)
+
 set(INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/include/"
              "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/runtime/src/" )
 
@@ -15,6 +17,10 @@ set(ANTLR4_PRODUCTS
   "${CMAKE_CURRENT_SOURCE_DIR}/Generated/EquationsParser.cpp"
 )
 
+SET(BUILD_STATIC OFF CACHE BOOL "CryptoPP static off")
+SET(BUILD_TESTING OFF CACHE BOOL "CryptoPP tests off")
+
+add_subdirectory("../CryptoPP" "${CMAKE_CURRENT_BINARY_DIR}/Build")
 
 add_custom_command(OUTPUT ${ANTLR4_PRODUCTS}
   COMMAND java -jar ${ANTLR4CPP_JAR_LOCATION} -Dlanguage=Cpp -no-listener -visitor -o ${CMAKE_CURRENT_SOURCE_DIR}/Generated ${CMAKE_CURRENT_SOURCE_DIR}/Equations.g4
