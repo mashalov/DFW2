@@ -324,6 +324,7 @@ bool CDynaModel::RunTransient()
 			Scenario().Init();
 			m_Discontinuities.Init();
 			SetH(sc.StartupStep);
+			StepControl().Start();
 
 			//Serialize("c:\\tmp\\serialization.json");
 

@@ -402,6 +402,11 @@ namespace DFW2
 				m_ClockStart = std::chrono::high_resolution_clock::now();
 			}
 
+			void Start()
+			{
+				t = t0 = TimeOffset;
+			}
+
 			// Устанавливаем относительный лимит изменения шага на заданное количество шагов
 			void SetRateGrowLimit(double RateGrowLimit, ptrdiff_t nRateGrowSteps = 10)
 			{

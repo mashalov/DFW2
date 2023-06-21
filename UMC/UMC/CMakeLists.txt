@@ -2,13 +2,13 @@ cmake_minimum_required(VERSION 3.16)
 project(UMC)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+include(ExternalProject)
 
 add_compile_options(-march=native)
-
 set(INCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/../../fmt/include/"
-             "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/runtime/src/" )
+             "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4/Cpp/runtime/src/" )
 
-set(ANTLR4CPP_JAR_LOCATION ${PROJECT_SOURCE_DIR}/antlr/antlr-4.9.2-complete.jar)
+set(ANTLR4CPP_JAR_LOCATION ${PROJECT_SOURCE_DIR}/antlr/antlr-4.13.0-complete.jar)
 
 set(ANTLR4_PRODUCTS
   "${CMAKE_CURRENT_SOURCE_DIR}/Generated/EquationsBaseVisitor.cpp"
@@ -17,10 +17,12 @@ set(ANTLR4_PRODUCTS
   "${CMAKE_CURRENT_SOURCE_DIR}/Generated/EquationsParser.cpp"
 )
 
-SET(BUILD_STATIC OFF CACHE BOOL "CryptoPP static off")
-SET(BUILD_TESTING OFF CACHE BOOL "CryptoPP tests off")
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP" "${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/Build")
+add_subdirectory(
+  "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4/Cpp/"
+  "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/Build")
 
-add_subdirectory("../CryptoPP" "${CMAKE_CURRENT_BINARY_DIR}/Build")
+set_property(TARGET antlr4_static PROPERTY POSITION_INDEPENDENT_CODE ON)
 
 add_custom_command(OUTPUT ${ANTLR4_PRODUCTS}
   COMMAND java -jar ${ANTLR4CPP_JAR_LOCATION} -Dlanguage=Cpp -no-listener -visitor -o ${CMAKE_CURRENT_SOURCE_DIR}/Generated ${CMAKE_CURRENT_SOURCE_DIR}/Equations.g4
@@ -68,12 +70,11 @@ set(SOURCES
 
 add_custom_target(ANTL4RUNTIME DEPENDS ${ANTLR4_PRODUCTS})
 add_library(UMC SHARED ${SOURCES})
-
 target_include_directories(UMC PRIVATE ${INCLUDES}) 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
 target_link_libraries(UMC 
-    "${CMAKE_CURRENT_BINARY_DIR}/Build/libcryptopp.a"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/dist/libantlr4-runtime.a"
+    cryptopp-static
+    antlr4_static
     dl stdc++fs
     )
 

@@ -8,7 +8,7 @@ add_compile_options(-march=native)
 add_compile_definitions(DLONG)
 
 set_directory_properties(PROPERTIES COMPILE_DEFINITIONS_DEBUG "_DEBUG")
-add_subdirectory("../UMC/UMC" "${CMAKE_CURRENT_BINARY_DIR}/Build")
+add_subdirectory("../UMC/UMC" "${CMAKE_CURRENT_BINARY_DIR}/umc")
 add_subdirectory("../ResultFile" "${CMAKE_CURRENT_BINARY_DIR}/Res")
 
 
