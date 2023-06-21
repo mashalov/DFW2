@@ -1,5 +1,5 @@
 
-// Generated from D:\source\repos\DFW2\UMC\UMC\Equations.g4 by ANTLR 4.9.2
+// Generated from D:\source\repos\DFW2\UMC\UMC\Equations.g4 by ANTLR 4.13.0
 
 
 #include "EquationsVisitor.h"
@@ -8,14 +8,159 @@
 
 
 using namespace antlrcpp;
+
 using namespace antlr4;
 
-EquationsParser::EquationsParser(TokenStream *input) : Parser(input) {
-  _interpreter = new atn::ParserATNSimulator(this, _atn, _decisionToDFA, _sharedContextCache);
+namespace {
+
+struct EquationsParserStaticData final {
+  EquationsParserStaticData(std::vector<std::string> ruleNames,
+                        std::vector<std::string> literalNames,
+                        std::vector<std::string> symbolicNames)
+      : ruleNames(std::move(ruleNames)), literalNames(std::move(literalNames)),
+        symbolicNames(std::move(symbolicNames)),
+        vocabulary(this->literalNames, this->symbolicNames) {}
+
+  EquationsParserStaticData(const EquationsParserStaticData&) = delete;
+  EquationsParserStaticData(EquationsParserStaticData&&) = delete;
+  EquationsParserStaticData& operator=(const EquationsParserStaticData&) = delete;
+  EquationsParserStaticData& operator=(EquationsParserStaticData&&) = delete;
+
+  std::vector<antlr4::dfa::DFA> decisionToDFA;
+  antlr4::atn::PredictionContextCache sharedContextCache;
+  const std::vector<std::string> ruleNames;
+  const std::vector<std::string> literalNames;
+  const std::vector<std::string> symbolicNames;
+  const antlr4::dfa::Vocabulary vocabulary;
+  antlr4::atn::SerializedATNView serializedATN;
+  std::unique_ptr<antlr4::atn::ATN> atn;
+};
+
+::antlr4::internal::OnceFlag equationsParserOnceFlag;
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+static thread_local
+#endif
+EquationsParserStaticData *equationsParserStaticData = nullptr;
+
+void equationsParserInitialize() {
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+  if (equationsParserStaticData != nullptr) {
+    return;
+  }
+#else
+  assert(equationsParserStaticData == nullptr);
+#endif
+  auto staticData = std::make_unique<EquationsParserStaticData>(
+    std::vector<std::string>{
+      "input", "main", "init", "variables", "vardefines", "equationsys", 
+      "varlist", "vardefineline", "vardefine", "constvardefine", "extvardefine", 
+      "equation", "equationline", "expressionlist", "intlist", "constvalue", 
+      "modlink", "modlinkbase", "expression"
+    },
+    std::vector<std::string>{
+      "", "", "", "", "", "", "'const'", "'external'", "", "", "", "'='", 
+      "'#'", "'&'", "'|'", "'('", "')'", "'{'", "'}'", "'['", "']'", "'.'", 
+      "','", "'+'", "'-'", "'*'", "'/'", "'^'", "'>'", "'<'"
+    },
+    std::vector<std::string>{
+      "", "FLOAT", "INTEGER", "MAIN", "INIT", "VARS", "CONST", "EXTERNAL", 
+      "VARIABLE", "NEWLINE", "LINE_COMMENT", "EQUAL", "BAR", "AND", "OR", 
+      "LB", "RB", "LCB", "RCB", "LSB", "RSB", "DOT", "COMMA", "PLUS", "MINUS", 
+      "MUL", "DIV", "POW", "HIGH", "LOW", "WS"
+    }
+  );
+  static const int32_t serializedATNSegment[] = {
+  	4,1,30,196,2,0,7,0,2,1,7,1,2,2,7,2,2,3,7,3,2,4,7,4,2,5,7,5,2,6,7,6,2,
+  	7,7,7,2,8,7,8,2,9,7,9,2,10,7,10,2,11,7,11,2,12,7,12,2,13,7,13,2,14,7,
+  	14,2,15,7,15,2,16,7,16,2,17,7,17,2,18,7,18,1,0,3,0,40,8,0,1,0,1,0,3,0,
+  	44,8,0,1,0,5,0,47,8,0,10,0,12,0,50,9,0,1,0,1,0,1,1,1,1,1,1,1,2,1,2,1,
+  	2,1,3,1,3,1,3,1,4,1,4,5,4,65,8,4,10,4,12,4,68,9,4,1,4,5,4,71,8,4,10,4,
+  	12,4,74,9,4,1,4,1,4,1,5,1,5,5,5,80,8,5,10,5,12,5,83,9,5,1,5,5,5,86,8,
+  	5,10,5,12,5,89,9,5,1,5,1,5,1,6,1,6,1,6,5,6,96,8,6,10,6,12,6,99,9,6,1,
+  	7,4,7,102,8,7,11,7,12,7,103,1,7,1,7,1,8,1,8,3,8,110,8,8,1,9,1,9,1,9,1,
+  	10,1,10,1,10,1,11,1,11,1,11,1,11,1,12,4,12,123,8,12,11,12,12,12,124,1,
+  	12,1,12,1,13,1,13,1,13,5,13,132,8,13,10,13,12,13,135,9,13,1,14,1,14,1,
+  	14,5,14,140,8,14,10,14,12,14,143,9,14,1,15,1,15,1,16,1,16,1,16,1,16,1,
+  	16,1,16,1,16,1,17,1,17,1,17,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,
+  	18,1,18,1,18,1,18,1,18,1,18,3,18,171,8,18,1,18,3,18,174,8,18,1,18,1,18,
+  	1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,1,18,5,18,
+  	191,8,18,10,18,12,18,194,9,18,1,18,0,1,36,19,0,2,4,6,8,10,12,14,16,18,
+  	20,22,24,26,28,30,32,34,36,0,5,1,0,1,2,1,0,23,24,1,0,25,26,1,0,28,29,
+  	1,0,13,14,201,0,39,1,0,0,0,2,53,1,0,0,0,4,56,1,0,0,0,6,59,1,0,0,0,8,62,
+  	1,0,0,0,10,77,1,0,0,0,12,92,1,0,0,0,14,101,1,0,0,0,16,109,1,0,0,0,18,
+  	111,1,0,0,0,20,114,1,0,0,0,22,117,1,0,0,0,24,122,1,0,0,0,26,128,1,0,0,
+  	0,28,136,1,0,0,0,30,144,1,0,0,0,32,146,1,0,0,0,34,153,1,0,0,0,36,173,
+  	1,0,0,0,38,40,3,6,3,0,39,38,1,0,0,0,39,40,1,0,0,0,40,41,1,0,0,0,41,43,
+  	3,2,1,0,42,44,3,4,2,0,43,42,1,0,0,0,43,44,1,0,0,0,44,48,1,0,0,0,45,47,
+  	5,9,0,0,46,45,1,0,0,0,47,50,1,0,0,0,48,46,1,0,0,0,48,49,1,0,0,0,49,51,
+  	1,0,0,0,50,48,1,0,0,0,51,52,5,0,0,1,52,1,1,0,0,0,53,54,5,3,0,0,54,55,
+  	3,10,5,0,55,3,1,0,0,0,56,57,5,4,0,0,57,58,3,10,5,0,58,5,1,0,0,0,59,60,
+  	5,5,0,0,60,61,3,8,4,0,61,7,1,0,0,0,62,66,5,17,0,0,63,65,3,14,7,0,64,63,
+  	1,0,0,0,65,68,1,0,0,0,66,64,1,0,0,0,66,67,1,0,0,0,67,72,1,0,0,0,68,66,
+  	1,0,0,0,69,71,5,9,0,0,70,69,1,0,0,0,71,74,1,0,0,0,72,70,1,0,0,0,72,73,
+  	1,0,0,0,73,75,1,0,0,0,74,72,1,0,0,0,75,76,5,18,0,0,76,9,1,0,0,0,77,81,
+  	5,17,0,0,78,80,3,24,12,0,79,78,1,0,0,0,80,83,1,0,0,0,81,79,1,0,0,0,81,
+  	82,1,0,0,0,82,87,1,0,0,0,83,81,1,0,0,0,84,86,5,9,0,0,85,84,1,0,0,0,86,
+  	89,1,0,0,0,87,85,1,0,0,0,87,88,1,0,0,0,88,90,1,0,0,0,89,87,1,0,0,0,90,
+  	91,5,18,0,0,91,11,1,0,0,0,92,97,5,8,0,0,93,94,5,22,0,0,94,96,5,8,0,0,
+  	95,93,1,0,0,0,96,99,1,0,0,0,97,95,1,0,0,0,97,98,1,0,0,0,98,13,1,0,0,0,
+  	99,97,1,0,0,0,100,102,5,9,0,0,101,100,1,0,0,0,102,103,1,0,0,0,103,101,
+  	1,0,0,0,103,104,1,0,0,0,104,105,1,0,0,0,105,106,3,16,8,0,106,15,1,0,0,
+  	0,107,110,3,18,9,0,108,110,3,20,10,0,109,107,1,0,0,0,109,108,1,0,0,0,
+  	110,17,1,0,0,0,111,112,5,6,0,0,112,113,3,12,6,0,113,19,1,0,0,0,114,115,
+  	5,7,0,0,115,116,3,12,6,0,116,21,1,0,0,0,117,118,3,36,18,0,118,119,5,11,
+  	0,0,119,120,3,36,18,0,120,23,1,0,0,0,121,123,5,9,0,0,122,121,1,0,0,0,
+  	123,124,1,0,0,0,124,122,1,0,0,0,124,125,1,0,0,0,125,126,1,0,0,0,126,127,
+  	3,22,11,0,127,25,1,0,0,0,128,133,3,36,18,0,129,130,5,22,0,0,130,132,3,
+  	36,18,0,131,129,1,0,0,0,132,135,1,0,0,0,133,131,1,0,0,0,133,134,1,0,0,
+  	0,134,27,1,0,0,0,135,133,1,0,0,0,136,141,5,2,0,0,137,138,5,22,0,0,138,
+  	140,5,2,0,0,139,137,1,0,0,0,140,143,1,0,0,0,141,139,1,0,0,0,141,142,1,
+  	0,0,0,142,29,1,0,0,0,143,141,1,0,0,0,144,145,7,0,0,0,145,31,1,0,0,0,146,
+  	147,5,8,0,0,147,148,5,19,0,0,148,149,3,28,14,0,149,150,5,20,0,0,150,151,
+  	5,21,0,0,151,152,5,8,0,0,152,33,1,0,0,0,153,154,5,12,0,0,154,155,3,32,
+  	16,0,155,35,1,0,0,0,156,157,6,18,-1,0,157,174,3,30,15,0,158,174,5,8,0,
+  	0,159,174,3,34,17,0,160,174,3,32,16,0,161,162,5,15,0,0,162,163,3,36,18,
+  	0,163,164,5,16,0,0,164,174,1,0,0,0,165,166,7,1,0,0,166,174,3,36,18,6,
+  	167,168,5,8,0,0,168,170,5,15,0,0,169,171,3,26,13,0,170,169,1,0,0,0,170,
+  	171,1,0,0,0,171,172,1,0,0,0,172,174,5,16,0,0,173,156,1,0,0,0,173,158,
+  	1,0,0,0,173,159,1,0,0,0,173,160,1,0,0,0,173,161,1,0,0,0,173,165,1,0,0,
+  	0,173,167,1,0,0,0,174,192,1,0,0,0,175,176,10,7,0,0,176,177,5,27,0,0,177,
+  	191,3,36,18,7,178,179,10,5,0,0,179,180,7,2,0,0,180,191,3,36,18,6,181,
+  	182,10,4,0,0,182,183,7,1,0,0,183,191,3,36,18,5,184,185,10,3,0,0,185,186,
+  	7,3,0,0,186,191,3,36,18,4,187,188,10,2,0,0,188,189,7,4,0,0,189,191,3,
+  	36,18,3,190,175,1,0,0,0,190,178,1,0,0,0,190,181,1,0,0,0,190,184,1,0,0,
+  	0,190,187,1,0,0,0,191,194,1,0,0,0,192,190,1,0,0,0,192,193,1,0,0,0,193,
+  	37,1,0,0,0,194,192,1,0,0,0,17,39,43,48,66,72,81,87,97,103,109,124,133,
+  	141,170,173,190,192
+  };
+  staticData->serializedATN = antlr4::atn::SerializedATNView(serializedATNSegment, sizeof(serializedATNSegment) / sizeof(serializedATNSegment[0]));
+
+  antlr4::atn::ATNDeserializer deserializer;
+  staticData->atn = deserializer.deserialize(staticData->serializedATN);
+
+  const size_t count = staticData->atn->getNumberOfDecisions();
+  staticData->decisionToDFA.reserve(count);
+  for (size_t i = 0; i < count; i++) { 
+    staticData->decisionToDFA.emplace_back(staticData->atn->getDecisionState(i), i);
+  }
+  equationsParserStaticData = staticData.release();
+}
+
+}
+
+EquationsParser::EquationsParser(TokenStream *input) : EquationsParser(input, antlr4::atn::ParserATNSimulatorOptions()) {}
+
+EquationsParser::EquationsParser(TokenStream *input, const antlr4::atn::ParserATNSimulatorOptions &options) : Parser(input) {
+  EquationsParser::initialize();
+  _interpreter = new atn::ParserATNSimulator(this, *equationsParserStaticData->atn, equationsParserStaticData->decisionToDFA, equationsParserStaticData->sharedContextCache, options);
 }
 
 EquationsParser::~EquationsParser() {
   delete _interpreter;
+}
+
+const atn::ATN& EquationsParser::getATN() const {
+  return *equationsParserStaticData->atn;
 }
 
 std::string EquationsParser::getGrammarFileName() const {
@@ -23,11 +168,15 @@ std::string EquationsParser::getGrammarFileName() const {
 }
 
 const std::vector<std::string>& EquationsParser::getRuleNames() const {
-  return _ruleNames;
+  return equationsParserStaticData->ruleNames;
 }
 
-dfa::Vocabulary& EquationsParser::getVocabulary() const {
-  return _vocabulary;
+const dfa::Vocabulary& EquationsParser::getVocabulary() const {
+  return equationsParserStaticData->vocabulary;
+}
+
+antlr4::atn::SerializedATNView EquationsParser::getSerializedATN() const {
+  return equationsParserStaticData->serializedATN;
 }
 
 
@@ -67,7 +216,7 @@ size_t EquationsParser::InputContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::InputContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::InputContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitInput(this);
   else
@@ -149,7 +298,7 @@ size_t EquationsParser::MainContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::MainContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::MainContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitMain(this);
   else
@@ -204,7 +353,7 @@ size_t EquationsParser::InitContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::InitContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::InitContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitInit(this);
   else
@@ -259,7 +408,7 @@ size_t EquationsParser::VariablesContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::VariablesContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::VariablesContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitVariables(this);
   else
@@ -330,7 +479,7 @@ size_t EquationsParser::VardefinesContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::VardefinesContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::VardefinesContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitVardefines(this);
   else
@@ -425,7 +574,7 @@ size_t EquationsParser::EquationsysContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::EquationsysContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::EquationsysContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitEquationsys(this);
   else
@@ -512,7 +661,7 @@ size_t EquationsParser::VarlistContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::VarlistContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::VarlistContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitVarlist(this);
   else
@@ -582,7 +731,7 @@ size_t EquationsParser::VardefinelineContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::VardefinelineContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::VardefinelineContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitVardefineline(this);
   else
@@ -646,7 +795,7 @@ size_t EquationsParser::VardefineContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::VardefineContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::VardefineContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitVardefine(this);
   else
@@ -716,7 +865,7 @@ size_t EquationsParser::ConstvardefineContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::ConstvardefineContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::ConstvardefineContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitConstvardefine(this);
   else
@@ -771,7 +920,7 @@ size_t EquationsParser::ExtvardefineContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::ExtvardefineContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::ExtvardefineContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitExtvardefine(this);
   else
@@ -830,7 +979,7 @@ size_t EquationsParser::EquationContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::EquationContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::EquationContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitEquation(this);
   else
@@ -851,11 +1000,11 @@ EquationsParser::EquationContext* EquationsParser::equation() {
   try {
     enterOuterAlt(_localctx, 1);
     setState(117);
-    dynamic_cast<EquationContext *>(_localctx)->left = expression(0);
+    antlrcpp::downCast<EquationContext *>(_localctx)->left = expression(0);
     setState(118);
     match(EquationsParser::EQUAL);
     setState(119);
-    dynamic_cast<EquationContext *>(_localctx)->right = expression(0);
+    antlrcpp::downCast<EquationContext *>(_localctx)->right = expression(0);
    
   }
   catch (RecognitionException &e) {
@@ -891,7 +1040,7 @@ size_t EquationsParser::EquationlineContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::EquationlineContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::EquationlineContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitEquationline(this);
   else
@@ -963,7 +1112,7 @@ size_t EquationsParser::ExpressionlistContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::ExpressionlistContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::ExpressionlistContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitExpressionlist(this);
   else
@@ -1037,7 +1186,7 @@ size_t EquationsParser::IntlistContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::IntlistContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::IntlistContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitIntlist(this);
   else
@@ -1103,7 +1252,7 @@ size_t EquationsParser::ConstvalueContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::ConstvalueContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::ConstvalueContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitConstvalue(this);
   else
@@ -1182,7 +1331,7 @@ size_t EquationsParser::ModlinkContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::ModlinkContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::ModlinkContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitModlink(this);
   else
@@ -1245,7 +1394,7 @@ size_t EquationsParser::ModlinkbaseContext::getRuleIndex() const {
 }
 
 
-antlrcpp::Any EquationsParser::ModlinkbaseContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::ModlinkbaseContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitModlinkbase(this);
   else
@@ -1316,7 +1465,7 @@ tree::TerminalNode* EquationsParser::AndorContext::AND() {
 EquationsParser::AndorContext::AndorContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::AndorContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::AndorContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitAndor(this);
   else
@@ -1331,7 +1480,7 @@ EquationsParser::ModlinkContext* EquationsParser::ModellinkContext::modlink() {
 EquationsParser::ModellinkContext::ModellinkContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::ModellinkContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::ModellinkContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitModellink(this);
   else
@@ -1358,7 +1507,7 @@ tree::TerminalNode* EquationsParser::HighlowContext::LOW() {
 EquationsParser::HighlowContext::HighlowContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::HighlowContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::HighlowContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitHighlow(this);
   else
@@ -1373,7 +1522,7 @@ EquationsParser::ModlinkbaseContext* EquationsParser::ModellinkbaseContext::modl
 EquationsParser::ModellinkbaseContext::ModellinkbaseContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::ModellinkbaseContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::ModellinkbaseContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitModellinkbase(this);
   else
@@ -1400,7 +1549,7 @@ EquationsParser::ExpressionlistContext* EquationsParser::FunctionContext::expres
 EquationsParser::FunctionContext::FunctionContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::FunctionContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::FunctionContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitFunction(this);
   else
@@ -1415,7 +1564,7 @@ tree::TerminalNode* EquationsParser::VariableContext::VARIABLE() {
 EquationsParser::VariableContext::VariableContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::VariableContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::VariableContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitVariable(this);
   else
@@ -1438,7 +1587,7 @@ tree::TerminalNode* EquationsParser::PowContext::POW() {
 EquationsParser::PowContext::PowContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::PowContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::PowContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitPow(this);
   else
@@ -1453,7 +1602,7 @@ EquationsParser::ConstvalueContext* EquationsParser::RealconstContext::constvalu
 EquationsParser::RealconstContext::RealconstContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::RealconstContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::RealconstContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitRealconst(this);
   else
@@ -1476,7 +1625,7 @@ tree::TerminalNode* EquationsParser::UnaryContext::MINUS() {
 EquationsParser::UnaryContext::UnaryContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::UnaryContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::UnaryContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitUnary(this);
   else
@@ -1511,7 +1660,7 @@ tree::TerminalNode* EquationsParser::InfixContext::MINUS() {
 EquationsParser::InfixContext::InfixContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::InfixContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::InfixContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitInfix(this);
   else
@@ -1534,7 +1683,7 @@ tree::TerminalNode* EquationsParser::BracesContext::RB() {
 EquationsParser::BracesContext::BracesContext(ExpressionContext *ctx) { copyFrom(ctx); }
 
 
-antlrcpp::Any EquationsParser::BracesContext::accept(tree::ParseTreeVisitor *visitor) {
+std::any EquationsParser::BracesContext::accept(tree::ParseTreeVisitor *visitor) {
   if (auto parserVisitor = dynamic_cast<EquationsVisitor*>(visitor))
     return parserVisitor->visitBraces(this);
   else
@@ -1624,12 +1773,12 @@ EquationsParser::ExpressionContext* EquationsParser::expression(int precedence) 
       _ctx = _localctx;
       previousContext = _localctx;
       setState(165);
-      dynamic_cast<UnaryContext *>(_localctx)->op = _input->LT(1);
+      antlrcpp::downCast<UnaryContext *>(_localctx)->op = _input->LT(1);
       _la = _input->LA(1);
       if (!(_la == EquationsParser::PLUS
 
       || _la == EquationsParser::MINUS)) {
-        dynamic_cast<UnaryContext *>(_localctx)->op = _errHandler->recoverInline(this);
+        antlrcpp::downCast<UnaryContext *>(_localctx)->op = _errHandler->recoverInline(this);
       }
       else {
         _errHandler->reportMatch(this);
@@ -1645,7 +1794,7 @@ EquationsParser::ExpressionContext* EquationsParser::expression(int precedence) 
       _ctx = _localctx;
       previousContext = _localctx;
       setState(167);
-      dynamic_cast<FunctionContext *>(_localctx)->func = match(EquationsParser::VARIABLE);
+      antlrcpp::downCast<FunctionContext *>(_localctx)->func = match(EquationsParser::VARIABLE);
       setState(168);
       match(EquationsParser::LB);
       setState(170);
@@ -1653,13 +1802,7 @@ EquationsParser::ExpressionContext* EquationsParser::expression(int precedence) 
 
       _la = _input->LA(1);
       if ((((_la & ~ 0x3fULL) == 0) &&
-        ((1ULL << _la) & ((1ULL << EquationsParser::FLOAT)
-        | (1ULL << EquationsParser::INTEGER)
-        | (1ULL << EquationsParser::VARIABLE)
-        | (1ULL << EquationsParser::BAR)
-        | (1ULL << EquationsParser::LB)
-        | (1ULL << EquationsParser::PLUS)
-        | (1ULL << EquationsParser::MINUS))) != 0)) {
+        ((1ULL << _la) & 25202950) != 0)) {
         setState(169);
         expressionlist();
       }
@@ -1706,19 +1849,19 @@ EquationsParser::ExpressionContext* EquationsParser::expression(int precedence) 
 
           if (!(precpred(_ctx, 5))) throw FailedPredicateException(this, "precpred(_ctx, 5)");
           setState(179);
-          dynamic_cast<InfixContext *>(_localctx)->op = _input->LT(1);
+          antlrcpp::downCast<InfixContext *>(_localctx)->op = _input->LT(1);
           _la = _input->LA(1);
           if (!(_la == EquationsParser::MUL
 
           || _la == EquationsParser::DIV)) {
-            dynamic_cast<InfixContext *>(_localctx)->op = _errHandler->recoverInline(this);
+            antlrcpp::downCast<InfixContext *>(_localctx)->op = _errHandler->recoverInline(this);
           }
           else {
             _errHandler->reportMatch(this);
             consume();
           }
           setState(180);
-          dynamic_cast<InfixContext *>(_localctx)->right = expression(6);
+          antlrcpp::downCast<InfixContext *>(_localctx)->right = expression(6);
           break;
         }
 
@@ -1731,19 +1874,19 @@ EquationsParser::ExpressionContext* EquationsParser::expression(int precedence) 
 
           if (!(precpred(_ctx, 4))) throw FailedPredicateException(this, "precpred(_ctx, 4)");
           setState(182);
-          dynamic_cast<InfixContext *>(_localctx)->op = _input->LT(1);
+          antlrcpp::downCast<InfixContext *>(_localctx)->op = _input->LT(1);
           _la = _input->LA(1);
           if (!(_la == EquationsParser::PLUS
 
           || _la == EquationsParser::MINUS)) {
-            dynamic_cast<InfixContext *>(_localctx)->op = _errHandler->recoverInline(this);
+            antlrcpp::downCast<InfixContext *>(_localctx)->op = _errHandler->recoverInline(this);
           }
           else {
             _errHandler->reportMatch(this);
             consume();
           }
           setState(183);
-          dynamic_cast<InfixContext *>(_localctx)->right = expression(5);
+          antlrcpp::downCast<InfixContext *>(_localctx)->right = expression(5);
           break;
         }
 
@@ -1756,19 +1899,19 @@ EquationsParser::ExpressionContext* EquationsParser::expression(int precedence) 
 
           if (!(precpred(_ctx, 3))) throw FailedPredicateException(this, "precpred(_ctx, 3)");
           setState(185);
-          dynamic_cast<HighlowContext *>(_localctx)->op = _input->LT(1);
+          antlrcpp::downCast<HighlowContext *>(_localctx)->op = _input->LT(1);
           _la = _input->LA(1);
           if (!(_la == EquationsParser::HIGH
 
           || _la == EquationsParser::LOW)) {
-            dynamic_cast<HighlowContext *>(_localctx)->op = _errHandler->recoverInline(this);
+            antlrcpp::downCast<HighlowContext *>(_localctx)->op = _errHandler->recoverInline(this);
           }
           else {
             _errHandler->reportMatch(this);
             consume();
           }
           setState(186);
-          dynamic_cast<HighlowContext *>(_localctx)->right = expression(4);
+          antlrcpp::downCast<HighlowContext *>(_localctx)->right = expression(4);
           break;
         }
 
@@ -1781,19 +1924,19 @@ EquationsParser::ExpressionContext* EquationsParser::expression(int precedence) 
 
           if (!(precpred(_ctx, 2))) throw FailedPredicateException(this, "precpred(_ctx, 2)");
           setState(188);
-          dynamic_cast<AndorContext *>(_localctx)->op = _input->LT(1);
+          antlrcpp::downCast<AndorContext *>(_localctx)->op = _input->LT(1);
           _la = _input->LA(1);
           if (!(_la == EquationsParser::AND
 
           || _la == EquationsParser::OR)) {
-            dynamic_cast<AndorContext *>(_localctx)->op = _errHandler->recoverInline(this);
+            antlrcpp::downCast<AndorContext *>(_localctx)->op = _errHandler->recoverInline(this);
           }
           else {
             _errHandler->reportMatch(this);
             consume();
           }
           setState(189);
-          dynamic_cast<AndorContext *>(_localctx)->right = expression(3);
+          antlrcpp::downCast<AndorContext *>(_localctx)->right = expression(3);
           break;
         }
 
@@ -1816,7 +1959,7 @@ EquationsParser::ExpressionContext* EquationsParser::expression(int precedence) 
 
 bool EquationsParser::sempred(RuleContext *context, size_t ruleIndex, size_t predicateIndex) {
   switch (ruleIndex) {
-    case 18: return expressionSempred(dynamic_cast<ExpressionContext *>(context), predicateIndex);
+    case 18: return expressionSempred(antlrcpp::downCast<ExpressionContext *>(context), predicateIndex);
 
   default:
     break;
@@ -1838,202 +1981,10 @@ bool EquationsParser::expressionSempred(ExpressionContext *_localctx, size_t pre
   return true;
 }
 
-// Static vars and initialization.
-std::vector<dfa::DFA> EquationsParser::_decisionToDFA;
-atn::PredictionContextCache EquationsParser::_sharedContextCache;
-
-// We own the ATN which in turn owns the ATN states.
-atn::ATN EquationsParser::_atn;
-std::vector<uint16_t> EquationsParser::_serializedATN;
-
-std::vector<std::string> EquationsParser::_ruleNames = {
-  "input", "main", "init", "variables", "vardefines", "equationsys", "varlist", 
-  "vardefineline", "vardefine", "constvardefine", "extvardefine", "equation", 
-  "equationline", "expressionlist", "intlist", "constvalue", "modlink", 
-  "modlinkbase", "expression"
-};
-
-std::vector<std::string> EquationsParser::_literalNames = {
-  "", "", "", "", "", "", "'const'", "'external'", "", "", "", "'='", "'#'", 
-  "'&'", "'|'", "'('", "')'", "'{'", "'}'", "'['", "']'", "'.'", "','", 
-  "'+'", "'-'", "'*'", "'/'", "'^'", "'>'", "'<'"
-};
-
-std::vector<std::string> EquationsParser::_symbolicNames = {
-  "", "FLOAT", "INTEGER", "MAIN", "INIT", "VARS", "CONST", "EXTERNAL", "VARIABLE", 
-  "NEWLINE", "LINE_COMMENT", "EQUAL", "BAR", "AND", "OR", "LB", "RB", "LCB", 
-  "RCB", "LSB", "RSB", "DOT", "COMMA", "PLUS", "MINUS", "MUL", "DIV", "POW", 
-  "HIGH", "LOW", "WS"
-};
-
-dfa::Vocabulary EquationsParser::_vocabulary(_literalNames, _symbolicNames);
-
-std::vector<std::string> EquationsParser::_tokenNames;
-
-EquationsParser::Initializer::Initializer() {
-	for (size_t i = 0; i < _symbolicNames.size(); ++i) {
-		std::string name = _vocabulary.getLiteralName(i);
-		if (name.empty()) {
-			name = _vocabulary.getSymbolicName(i);
-		}
-
-		if (name.empty()) {
-			_tokenNames.push_back("<INVALID>");
-		} else {
-      _tokenNames.push_back(name);
-    }
-	}
-
-  static const uint16_t serializedATNSegment0[] = {
-    0x3, 0x608b, 0xa72a, 0x8133, 0xb9ed, 0x417c, 0x3be7, 0x7786, 0x5964, 
-       0x3, 0x20, 0xc6, 0x4, 0x2, 0x9, 0x2, 0x4, 0x3, 0x9, 0x3, 0x4, 0x4, 
-       0x9, 0x4, 0x4, 0x5, 0x9, 0x5, 0x4, 0x6, 0x9, 0x6, 0x4, 0x7, 0x9, 
-       0x7, 0x4, 0x8, 0x9, 0x8, 0x4, 0x9, 0x9, 0x9, 0x4, 0xa, 0x9, 0xa, 
-       0x4, 0xb, 0x9, 0xb, 0x4, 0xc, 0x9, 0xc, 0x4, 0xd, 0x9, 0xd, 0x4, 
-       0xe, 0x9, 0xe, 0x4, 0xf, 0x9, 0xf, 0x4, 0x10, 0x9, 0x10, 0x4, 0x11, 
-       0x9, 0x11, 0x4, 0x12, 0x9, 0x12, 0x4, 0x13, 0x9, 0x13, 0x4, 0x14, 
-       0x9, 0x14, 0x3, 0x2, 0x5, 0x2, 0x2a, 0xa, 0x2, 0x3, 0x2, 0x3, 0x2, 
-       0x5, 0x2, 0x2e, 0xa, 0x2, 0x3, 0x2, 0x7, 0x2, 0x31, 0xa, 0x2, 0xc, 
-       0x2, 0xe, 0x2, 0x34, 0xb, 0x2, 0x3, 0x2, 0x3, 0x2, 0x3, 0x3, 0x3, 
-       0x3, 0x3, 0x3, 0x3, 0x4, 0x3, 0x4, 0x3, 0x4, 0x3, 0x5, 0x3, 0x5, 
-       0x3, 0x5, 0x3, 0x6, 0x3, 0x6, 0x7, 0x6, 0x43, 0xa, 0x6, 0xc, 0x6, 
-       0xe, 0x6, 0x46, 0xb, 0x6, 0x3, 0x6, 0x7, 0x6, 0x49, 0xa, 0x6, 0xc, 
-       0x6, 0xe, 0x6, 0x4c, 0xb, 0x6, 0x3, 0x6, 0x3, 0x6, 0x3, 0x7, 0x3, 
-       0x7, 0x7, 0x7, 0x52, 0xa, 0x7, 0xc, 0x7, 0xe, 0x7, 0x55, 0xb, 0x7, 
-       0x3, 0x7, 0x7, 0x7, 0x58, 0xa, 0x7, 0xc, 0x7, 0xe, 0x7, 0x5b, 0xb, 
-       0x7, 0x3, 0x7, 0x3, 0x7, 0x3, 0x8, 0x3, 0x8, 0x3, 0x8, 0x7, 0x8, 
-       0x62, 0xa, 0x8, 0xc, 0x8, 0xe, 0x8, 0x65, 0xb, 0x8, 0x3, 0x9, 0x6, 
-       0x9, 0x68, 0xa, 0x9, 0xd, 0x9, 0xe, 0x9, 0x69, 0x3, 0x9, 0x3, 0x9, 
-       0x3, 0xa, 0x3, 0xa, 0x5, 0xa, 0x70, 0xa, 0xa, 0x3, 0xb, 0x3, 0xb, 
-       0x3, 0xb, 0x3, 0xc, 0x3, 0xc, 0x3, 0xc, 0x3, 0xd, 0x3, 0xd, 0x3, 
-       0xd, 0x3, 0xd, 0x3, 0xe, 0x6, 0xe, 0x7d, 0xa, 0xe, 0xd, 0xe, 0xe, 
-       0xe, 0x7e, 0x3, 0xe, 0x3, 0xe, 0x3, 0xf, 0x3, 0xf, 0x3, 0xf, 0x7, 
-       0xf, 0x86, 0xa, 0xf, 0xc, 0xf, 0xe, 0xf, 0x89, 0xb, 0xf, 0x3, 0x10, 
-       0x3, 0x10, 0x3, 0x10, 0x7, 0x10, 0x8e, 0xa, 0x10, 0xc, 0x10, 0xe, 
-       0x10, 0x91, 0xb, 0x10, 0x3, 0x11, 0x3, 0x11, 0x3, 0x12, 0x3, 0x12, 
-       0x3, 0x12, 0x3, 0x12, 0x3, 0x12, 0x3, 0x12, 0x3, 0x12, 0x3, 0x13, 
-       0x3, 0x13, 0x3, 0x13, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 
-       0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 
-       0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x5, 0x14, 0xad, 0xa, 
-       0x14, 0x3, 0x14, 0x5, 0x14, 0xb0, 0xa, 0x14, 0x3, 0x14, 0x3, 0x14, 
-       0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 
-       0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 0x3, 0x14, 
-       0x3, 0x14, 0x7, 0x14, 0xc1, 0xa, 0x14, 0xc, 0x14, 0xe, 0x14, 0xc4, 
-       0xb, 0x14, 0x3, 0x14, 0x2, 0x3, 0x26, 0x15, 0x2, 0x4, 0x6, 0x8, 0xa, 
-       0xc, 0xe, 0x10, 0x12, 0x14, 0x16, 0x18, 0x1a, 0x1c, 0x1e, 0x20, 0x22, 
-       0x24, 0x26, 0x2, 0x7, 0x3, 0x2, 0x3, 0x4, 0x3, 0x2, 0x19, 0x1a, 0x3, 
-       0x2, 0x1b, 0x1c, 0x3, 0x2, 0x1e, 0x1f, 0x3, 0x2, 0xf, 0x10, 0x2, 
-       0xcb, 0x2, 0x29, 0x3, 0x2, 0x2, 0x2, 0x4, 0x37, 0x3, 0x2, 0x2, 0x2, 
-       0x6, 0x3a, 0x3, 0x2, 0x2, 0x2, 0x8, 0x3d, 0x3, 0x2, 0x2, 0x2, 0xa, 
-       0x40, 0x3, 0x2, 0x2, 0x2, 0xc, 0x4f, 0x3, 0x2, 0x2, 0x2, 0xe, 0x5e, 
-       0x3, 0x2, 0x2, 0x2, 0x10, 0x67, 0x3, 0x2, 0x2, 0x2, 0x12, 0x6f, 0x3, 
-       0x2, 0x2, 0x2, 0x14, 0x71, 0x3, 0x2, 0x2, 0x2, 0x16, 0x74, 0x3, 0x2, 
-       0x2, 0x2, 0x18, 0x77, 0x3, 0x2, 0x2, 0x2, 0x1a, 0x7c, 0x3, 0x2, 0x2, 
-       0x2, 0x1c, 0x82, 0x3, 0x2, 0x2, 0x2, 0x1e, 0x8a, 0x3, 0x2, 0x2, 0x2, 
-       0x20, 0x92, 0x3, 0x2, 0x2, 0x2, 0x22, 0x94, 0x3, 0x2, 0x2, 0x2, 0x24, 
-       0x9b, 0x3, 0x2, 0x2, 0x2, 0x26, 0xaf, 0x3, 0x2, 0x2, 0x2, 0x28, 0x2a, 
-       0x5, 0x8, 0x5, 0x2, 0x29, 0x28, 0x3, 0x2, 0x2, 0x2, 0x29, 0x2a, 0x3, 
-       0x2, 0x2, 0x2, 0x2a, 0x2b, 0x3, 0x2, 0x2, 0x2, 0x2b, 0x2d, 0x5, 0x4, 
-       0x3, 0x2, 0x2c, 0x2e, 0x5, 0x6, 0x4, 0x2, 0x2d, 0x2c, 0x3, 0x2, 0x2, 
-       0x2, 0x2d, 0x2e, 0x3, 0x2, 0x2, 0x2, 0x2e, 0x32, 0x3, 0x2, 0x2, 0x2, 
-       0x2f, 0x31, 0x7, 0xb, 0x2, 0x2, 0x30, 0x2f, 0x3, 0x2, 0x2, 0x2, 0x31, 
-       0x34, 0x3, 0x2, 0x2, 0x2, 0x32, 0x30, 0x3, 0x2, 0x2, 0x2, 0x32, 0x33, 
-       0x3, 0x2, 0x2, 0x2, 0x33, 0x35, 0x3, 0x2, 0x2, 0x2, 0x34, 0x32, 0x3, 
-       0x2, 0x2, 0x2, 0x35, 0x36, 0x7, 0x2, 0x2, 0x3, 0x36, 0x3, 0x3, 0x2, 
-       0x2, 0x2, 0x37, 0x38, 0x7, 0x5, 0x2, 0x2, 0x38, 0x39, 0x5, 0xc, 0x7, 
-       0x2, 0x39, 0x5, 0x3, 0x2, 0x2, 0x2, 0x3a, 0x3b, 0x7, 0x6, 0x2, 0x2, 
-       0x3b, 0x3c, 0x5, 0xc, 0x7, 0x2, 0x3c, 0x7, 0x3, 0x2, 0x2, 0x2, 0x3d, 
-       0x3e, 0x7, 0x7, 0x2, 0x2, 0x3e, 0x3f, 0x5, 0xa, 0x6, 0x2, 0x3f, 0x9, 
-       0x3, 0x2, 0x2, 0x2, 0x40, 0x44, 0x7, 0x13, 0x2, 0x2, 0x41, 0x43, 
-       0x5, 0x10, 0x9, 0x2, 0x42, 0x41, 0x3, 0x2, 0x2, 0x2, 0x43, 0x46, 
-       0x3, 0x2, 0x2, 0x2, 0x44, 0x42, 0x3, 0x2, 0x2, 0x2, 0x44, 0x45, 0x3, 
-       0x2, 0x2, 0x2, 0x45, 0x4a, 0x3, 0x2, 0x2, 0x2, 0x46, 0x44, 0x3, 0x2, 
-       0x2, 0x2, 0x47, 0x49, 0x7, 0xb, 0x2, 0x2, 0x48, 0x47, 0x3, 0x2, 0x2, 
-       0x2, 0x49, 0x4c, 0x3, 0x2, 0x2, 0x2, 0x4a, 0x48, 0x3, 0x2, 0x2, 0x2, 
-       0x4a, 0x4b, 0x3, 0x2, 0x2, 0x2, 0x4b, 0x4d, 0x3, 0x2, 0x2, 0x2, 0x4c, 
-       0x4a, 0x3, 0x2, 0x2, 0x2, 0x4d, 0x4e, 0x7, 0x14, 0x2, 0x2, 0x4e, 
-       0xb, 0x3, 0x2, 0x2, 0x2, 0x4f, 0x53, 0x7, 0x13, 0x2, 0x2, 0x50, 0x52, 
-       0x5, 0x1a, 0xe, 0x2, 0x51, 0x50, 0x3, 0x2, 0x2, 0x2, 0x52, 0x55, 
-       0x3, 0x2, 0x2, 0x2, 0x53, 0x51, 0x3, 0x2, 0x2, 0x2, 0x53, 0x54, 0x3, 
-       0x2, 0x2, 0x2, 0x54, 0x59, 0x3, 0x2, 0x2, 0x2, 0x55, 0x53, 0x3, 0x2, 
-       0x2, 0x2, 0x56, 0x58, 0x7, 0xb, 0x2, 0x2, 0x57, 0x56, 0x3, 0x2, 0x2, 
-       0x2, 0x58, 0x5b, 0x3, 0x2, 0x2, 0x2, 0x59, 0x57, 0x3, 0x2, 0x2, 0x2, 
-       0x59, 0x5a, 0x3, 0x2, 0x2, 0x2, 0x5a, 0x5c, 0x3, 0x2, 0x2, 0x2, 0x5b, 
-       0x59, 0x3, 0x2, 0x2, 0x2, 0x5c, 0x5d, 0x7, 0x14, 0x2, 0x2, 0x5d, 
-       0xd, 0x3, 0x2, 0x2, 0x2, 0x5e, 0x63, 0x7, 0xa, 0x2, 0x2, 0x5f, 0x60, 
-       0x7, 0x18, 0x2, 0x2, 0x60, 0x62, 0x7, 0xa, 0x2, 0x2, 0x61, 0x5f, 
-       0x3, 0x2, 0x2, 0x2, 0x62, 0x65, 0x3, 0x2, 0x2, 0x2, 0x63, 0x61, 0x3, 
-       0x2, 0x2, 0x2, 0x63, 0x64, 0x3, 0x2, 0x2, 0x2, 0x64, 0xf, 0x3, 0x2, 
-       0x2, 0x2, 0x65, 0x63, 0x3, 0x2, 0x2, 0x2, 0x66, 0x68, 0x7, 0xb, 0x2, 
-       0x2, 0x67, 0x66, 0x3, 0x2, 0x2, 0x2, 0x68, 0x69, 0x3, 0x2, 0x2, 0x2, 
-       0x69, 0x67, 0x3, 0x2, 0x2, 0x2, 0x69, 0x6a, 0x3, 0x2, 0x2, 0x2, 0x6a, 
-       0x6b, 0x3, 0x2, 0x2, 0x2, 0x6b, 0x6c, 0x5, 0x12, 0xa, 0x2, 0x6c, 
-       0x11, 0x3, 0x2, 0x2, 0x2, 0x6d, 0x70, 0x5, 0x14, 0xb, 0x2, 0x6e, 
-       0x70, 0x5, 0x16, 0xc, 0x2, 0x6f, 0x6d, 0x3, 0x2, 0x2, 0x2, 0x6f, 
-       0x6e, 0x3, 0x2, 0x2, 0x2, 0x70, 0x13, 0x3, 0x2, 0x2, 0x2, 0x71, 0x72, 
-       0x7, 0x8, 0x2, 0x2, 0x72, 0x73, 0x5, 0xe, 0x8, 0x2, 0x73, 0x15, 0x3, 
-       0x2, 0x2, 0x2, 0x74, 0x75, 0x7, 0x9, 0x2, 0x2, 0x75, 0x76, 0x5, 0xe, 
-       0x8, 0x2, 0x76, 0x17, 0x3, 0x2, 0x2, 0x2, 0x77, 0x78, 0x5, 0x26, 
-       0x14, 0x2, 0x78, 0x79, 0x7, 0xd, 0x2, 0x2, 0x79, 0x7a, 0x5, 0x26, 
-       0x14, 0x2, 0x7a, 0x19, 0x3, 0x2, 0x2, 0x2, 0x7b, 0x7d, 0x7, 0xb, 
-       0x2, 0x2, 0x7c, 0x7b, 0x3, 0x2, 0x2, 0x2, 0x7d, 0x7e, 0x3, 0x2, 0x2, 
-       0x2, 0x7e, 0x7c, 0x3, 0x2, 0x2, 0x2, 0x7e, 0x7f, 0x3, 0x2, 0x2, 0x2, 
-       0x7f, 0x80, 0x3, 0x2, 0x2, 0x2, 0x80, 0x81, 0x5, 0x18, 0xd, 0x2, 
-       0x81, 0x1b, 0x3, 0x2, 0x2, 0x2, 0x82, 0x87, 0x5, 0x26, 0x14, 0x2, 
-       0x83, 0x84, 0x7, 0x18, 0x2, 0x2, 0x84, 0x86, 0x5, 0x26, 0x14, 0x2, 
-       0x85, 0x83, 0x3, 0x2, 0x2, 0x2, 0x86, 0x89, 0x3, 0x2, 0x2, 0x2, 0x87, 
-       0x85, 0x3, 0x2, 0x2, 0x2, 0x87, 0x88, 0x3, 0x2, 0x2, 0x2, 0x88, 0x1d, 
-       0x3, 0x2, 0x2, 0x2, 0x89, 0x87, 0x3, 0x2, 0x2, 0x2, 0x8a, 0x8f, 0x7, 
-       0x4, 0x2, 0x2, 0x8b, 0x8c, 0x7, 0x18, 0x2, 0x2, 0x8c, 0x8e, 0x7, 
-       0x4, 0x2, 0x2, 0x8d, 0x8b, 0x3, 0x2, 0x2, 0x2, 0x8e, 0x91, 0x3, 0x2, 
-       0x2, 0x2, 0x8f, 0x8d, 0x3, 0x2, 0x2, 0x2, 0x8f, 0x90, 0x3, 0x2, 0x2, 
-       0x2, 0x90, 0x1f, 0x3, 0x2, 0x2, 0x2, 0x91, 0x8f, 0x3, 0x2, 0x2, 0x2, 
-       0x92, 0x93, 0x9, 0x2, 0x2, 0x2, 0x93, 0x21, 0x3, 0x2, 0x2, 0x2, 0x94, 
-       0x95, 0x7, 0xa, 0x2, 0x2, 0x95, 0x96, 0x7, 0x15, 0x2, 0x2, 0x96, 
-       0x97, 0x5, 0x1e, 0x10, 0x2, 0x97, 0x98, 0x7, 0x16, 0x2, 0x2, 0x98, 
-       0x99, 0x7, 0x17, 0x2, 0x2, 0x99, 0x9a, 0x7, 0xa, 0x2, 0x2, 0x9a, 
-       0x23, 0x3, 0x2, 0x2, 0x2, 0x9b, 0x9c, 0x7, 0xe, 0x2, 0x2, 0x9c, 0x9d, 
-       0x5, 0x22, 0x12, 0x2, 0x9d, 0x25, 0x3, 0x2, 0x2, 0x2, 0x9e, 0x9f, 
-       0x8, 0x14, 0x1, 0x2, 0x9f, 0xb0, 0x5, 0x20, 0x11, 0x2, 0xa0, 0xb0, 
-       0x7, 0xa, 0x2, 0x2, 0xa1, 0xb0, 0x5, 0x24, 0x13, 0x2, 0xa2, 0xb0, 
-       0x5, 0x22, 0x12, 0x2, 0xa3, 0xa4, 0x7, 0x11, 0x2, 0x2, 0xa4, 0xa5, 
-       0x5, 0x26, 0x14, 0x2, 0xa5, 0xa6, 0x7, 0x12, 0x2, 0x2, 0xa6, 0xb0, 
-       0x3, 0x2, 0x2, 0x2, 0xa7, 0xa8, 0x9, 0x3, 0x2, 0x2, 0xa8, 0xb0, 0x5, 
-       0x26, 0x14, 0x8, 0xa9, 0xaa, 0x7, 0xa, 0x2, 0x2, 0xaa, 0xac, 0x7, 
-       0x11, 0x2, 0x2, 0xab, 0xad, 0x5, 0x1c, 0xf, 0x2, 0xac, 0xab, 0x3, 
-       0x2, 0x2, 0x2, 0xac, 0xad, 0x3, 0x2, 0x2, 0x2, 0xad, 0xae, 0x3, 0x2, 
-       0x2, 0x2, 0xae, 0xb0, 0x7, 0x12, 0x2, 0x2, 0xaf, 0x9e, 0x3, 0x2, 
-       0x2, 0x2, 0xaf, 0xa0, 0x3, 0x2, 0x2, 0x2, 0xaf, 0xa1, 0x3, 0x2, 0x2, 
-       0x2, 0xaf, 0xa2, 0x3, 0x2, 0x2, 0x2, 0xaf, 0xa3, 0x3, 0x2, 0x2, 0x2, 
-       0xaf, 0xa7, 0x3, 0x2, 0x2, 0x2, 0xaf, 0xa9, 0x3, 0x2, 0x2, 0x2, 0xb0, 
-       0xc2, 0x3, 0x2, 0x2, 0x2, 0xb1, 0xb2, 0xc, 0x9, 0x2, 0x2, 0xb2, 0xb3, 
-       0x7, 0x1d, 0x2, 0x2, 0xb3, 0xc1, 0x5, 0x26, 0x14, 0x9, 0xb4, 0xb5, 
-       0xc, 0x7, 0x2, 0x2, 0xb5, 0xb6, 0x9, 0x4, 0x2, 0x2, 0xb6, 0xc1, 0x5, 
-       0x26, 0x14, 0x8, 0xb7, 0xb8, 0xc, 0x6, 0x2, 0x2, 0xb8, 0xb9, 0x9, 
-       0x3, 0x2, 0x2, 0xb9, 0xc1, 0x5, 0x26, 0x14, 0x7, 0xba, 0xbb, 0xc, 
-       0x5, 0x2, 0x2, 0xbb, 0xbc, 0x9, 0x5, 0x2, 0x2, 0xbc, 0xc1, 0x5, 0x26, 
-       0x14, 0x6, 0xbd, 0xbe, 0xc, 0x4, 0x2, 0x2, 0xbe, 0xbf, 0x9, 0x6, 
-       0x2, 0x2, 0xbf, 0xc1, 0x5, 0x26, 0x14, 0x5, 0xc0, 0xb1, 0x3, 0x2, 
-       0x2, 0x2, 0xc0, 0xb4, 0x3, 0x2, 0x2, 0x2, 0xc0, 0xb7, 0x3, 0x2, 0x2, 
-       0x2, 0xc0, 0xba, 0x3, 0x2, 0x2, 0x2, 0xc0, 0xbd, 0x3, 0x2, 0x2, 0x2, 
-       0xc1, 0xc4, 0x3, 0x2, 0x2, 0x2, 0xc2, 0xc0, 0x3, 0x2, 0x2, 0x2, 0xc2, 
-       0xc3, 0x3, 0x2, 0x2, 0x2, 0xc3, 0x27, 0x3, 0x2, 0x2, 0x2, 0xc4, 0xc2, 
-       0x3, 0x2, 0x2, 0x2, 0x13, 0x29, 0x2d, 0x32, 0x44, 0x4a, 0x53, 0x59, 
-       0x63, 0x69, 0x6f, 0x7e, 0x87, 0x8f, 0xac, 0xaf, 0xc0, 0xc2, 
-  };
-
-  _serializedATN.insert(_serializedATN.end(), serializedATNSegment0,
-    serializedATNSegment0 + sizeof(serializedATNSegment0) / sizeof(serializedATNSegment0[0]));
-
-
-  atn::ATNDeserializer deserializer;
-  _atn = deserializer.deserialize(_serializedATN);
-
-  size_t count = _atn.getNumberOfDecisions();
-  _decisionToDFA.reserve(count);
-  for (size_t i = 0; i < count; i++) { 
-    _decisionToDFA.emplace_back(_atn.getDecisionState(i), i);
-  }
+void EquationsParser::initialize() {
+#if ANTLR4_USE_THREAD_LOCAL_CACHE
+  equationsParserInitialize();
+#else
+  ::antlr4::internal::call_once(equationsParserOnceFlag, equationsParserInitialize);
+#endif
 }
-
-EquationsParser::Initializer EquationsParser::_init;

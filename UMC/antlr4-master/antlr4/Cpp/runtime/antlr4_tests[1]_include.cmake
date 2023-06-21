@@ -1,0 +1,5 @@
+if(EXISTS "D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/antlr4_tests[1]_tests.cmake")
+  include("D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/antlr4_tests[1]_tests.cmake")
+else()
+  add_test(antlr4_tests_NOT_BUILT antlr4_tests_NOT_BUILT)
+endif()

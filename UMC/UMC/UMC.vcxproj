@@ -128,51 +128,51 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(CommonExecutablePath);$(Path)</ExecutablePath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4-master\runtime\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
-    <LibraryPath>$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\vs-2019\x86\Debug Static;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Debug</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
+    <LibraryPath>$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\x86\Debug;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Debug</LibraryPath>
     <OutDir>$(SolutionDir)Debug\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">
     <LinkIncremental>true</LinkIncremental>
     <ExecutablePath>$(VC_ExecutablePath_x86);$(CommonExecutablePath);$(Path)</ExecutablePath>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4-master\runtime\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
-    <LibraryPath>$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\vs-2019\x86\Debug Static;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Debug</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
+    <LibraryPath>$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\x86\Debug;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Debug</LibraryPath>
     <OutDir>$(SolutionDir)Debug\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4-master\runtime\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
-    <LibraryPath>$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\vs-2019\x86\Release Static;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Release</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
+    <LibraryPath>$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\x86\Release;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Release</LibraryPath>
     <OutDir>$(SolutionDir)Release\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4-master\runtime\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
-    <LibraryPath>$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\vs-2019\x86\Release Static;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Release</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
+    <LibraryPath>$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\x86\Release;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Release</LibraryPath>
     <OutDir>$(SolutionDir)Release\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4-master\runtime\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\vs-2019\x64\Debug Static;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Debug</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(ProjectDir)..\antlr4-master\bin\x64\Debug;$(ProjectDir)..\CryptoPP\$(Platform)\Output\Debug</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\Debug\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4-master\runtime\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(ProjectDir)..\CryptoPP\$(Platform)\Output\Debug;$(ProjectDir)..\antlr4-master\bin\vs-2019\x64\Debug Static</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(ProjectDir)..\CryptoPP\$(Platform)\Output\Debug;$(ProjectDir)..\antlr4-master\bin\x64\Debug</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\Debug\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4-master\runtime\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(ProjectDir)..\CryptoPP\$(Platform)\Output\Release;$(ProjectDir)..\antlr4-master\bin\vs-2019\x64\Release Static</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(ProjectDir)..\CryptoPP\$(Platform)\Output\Release;$(ProjectDir)..\antlr4-master\bin\x64\Release</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\Release\</OutDir>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4-master\runtime\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
-    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(ProjectDir)..\CryptoPP\$(Platform)\Output\Release;$(ProjectDir)..\antlr4-master\bin\vs-2019\x64\Release Static</LibraryPath>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);$(ProjectDir)..\antlr4-master\antlr4\Cpp\runtime\src\;..\..\fmt\include;</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);$(LibraryPath);$(ProjectDir)..\CryptoPP\$(Platform)\Output\Release;$(ProjectDir)..\antlr4-master\bin\x64\Release</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\Release\</OutDir>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -191,7 +191,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime-static.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">
@@ -210,7 +210,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime-static.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -231,7 +231,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime-static.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">
@@ -252,7 +252,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime-static.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -269,7 +269,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime-static.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'">
@@ -286,7 +286,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime-static.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -307,7 +307,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime-static.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">
@@ -328,7 +328,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;antlr4-runtime-static.lib;cryptlib.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
@@ -371,14 +371,14 @@
   <ItemGroup>
     <CustomBuild Include="Equations.g4">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">java -jar $(ProjectDir)antlr\antlr-4.9.2-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">java -jar $(ProjectDir)antlr\antlr-4.13.0-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">java -jar $(ProjectDir)antlr\antlr-4.13.0-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">java -jar $(ProjectDir)antlr\antlr-4.13.0-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">java -jar $(ProjectDir)antlr\antlr-4.13.0-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">java -jar $(ProjectDir)antlr\antlr-4.13.0-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'">java -jar $(ProjectDir)antlr\antlr-4.13.0-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">java -jar $(ProjectDir)antlr\antlr-4.13.0-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">java -jar $(ProjectDir)antlr\antlr-4.13.0-complete.jar -Dlanguage=Cpp -no-listener  -visitor  -o $(ProjectDir)/Generated/  %(FullPath)</Command>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Generated\EquationsLexer.h;Generated\EquationsParser.h;</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">Generated\EquationsLexer.h;Generated\EquationsParser.h;</Outputs>
       <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Generated\EquationsLexer.h;Generated\EquationsParser.h;</Outputs>

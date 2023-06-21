@@ -1,0 +1,4 @@
+# CMake generation dependency list for this directory.
+C:/Program Files/CMake/share/cmake-3.23/Modules/CMakeDependentOption.cmake
+C:/Program Files/CMake/share/cmake-3.23/Modules/GNUInstallDirs.cmake
+D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/_deps/googletest-src/CMakeLists.txt

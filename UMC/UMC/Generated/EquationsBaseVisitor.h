@@ -1,5 +1,5 @@
 
-// Generated from D:\source\repos\DFW2\UMC\UMC\Equations.g4 by ANTLR 4.9.2
+// Generated from D:\source\repos\DFW2\UMC\UMC\Equations.g4 by ANTLR 4.13.0
 
 #pragma once
 
@@ -15,119 +15,119 @@
 class  EquationsBaseVisitor : public EquationsVisitor {
 public:
 
-  virtual antlrcpp::Any visitInput(EquationsParser::InputContext *ctx) override {
+  virtual std::any visitInput(EquationsParser::InputContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitMain(EquationsParser::MainContext *ctx) override {
+  virtual std::any visitMain(EquationsParser::MainContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitInit(EquationsParser::InitContext *ctx) override {
+  virtual std::any visitInit(EquationsParser::InitContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitVariables(EquationsParser::VariablesContext *ctx) override {
+  virtual std::any visitVariables(EquationsParser::VariablesContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitVardefines(EquationsParser::VardefinesContext *ctx) override {
+  virtual std::any visitVardefines(EquationsParser::VardefinesContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitEquationsys(EquationsParser::EquationsysContext *ctx) override {
+  virtual std::any visitEquationsys(EquationsParser::EquationsysContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitVarlist(EquationsParser::VarlistContext *ctx) override {
+  virtual std::any visitVarlist(EquationsParser::VarlistContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitVardefineline(EquationsParser::VardefinelineContext *ctx) override {
+  virtual std::any visitVardefineline(EquationsParser::VardefinelineContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitVardefine(EquationsParser::VardefineContext *ctx) override {
+  virtual std::any visitVardefine(EquationsParser::VardefineContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitConstvardefine(EquationsParser::ConstvardefineContext *ctx) override {
+  virtual std::any visitConstvardefine(EquationsParser::ConstvardefineContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitExtvardefine(EquationsParser::ExtvardefineContext *ctx) override {
+  virtual std::any visitExtvardefine(EquationsParser::ExtvardefineContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitEquation(EquationsParser::EquationContext *ctx) override {
+  virtual std::any visitEquation(EquationsParser::EquationContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitEquationline(EquationsParser::EquationlineContext *ctx) override {
+  virtual std::any visitEquationline(EquationsParser::EquationlineContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitExpressionlist(EquationsParser::ExpressionlistContext *ctx) override {
+  virtual std::any visitExpressionlist(EquationsParser::ExpressionlistContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitIntlist(EquationsParser::IntlistContext *ctx) override {
+  virtual std::any visitIntlist(EquationsParser::IntlistContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitConstvalue(EquationsParser::ConstvalueContext *ctx) override {
+  virtual std::any visitConstvalue(EquationsParser::ConstvalueContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitModlink(EquationsParser::ModlinkContext *ctx) override {
+  virtual std::any visitModlink(EquationsParser::ModlinkContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitModlinkbase(EquationsParser::ModlinkbaseContext *ctx) override {
+  virtual std::any visitModlinkbase(EquationsParser::ModlinkbaseContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitAndor(EquationsParser::AndorContext *ctx) override {
+  virtual std::any visitAndor(EquationsParser::AndorContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitModellink(EquationsParser::ModellinkContext *ctx) override {
+  virtual std::any visitModellink(EquationsParser::ModellinkContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitHighlow(EquationsParser::HighlowContext *ctx) override {
+  virtual std::any visitHighlow(EquationsParser::HighlowContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitModellinkbase(EquationsParser::ModellinkbaseContext *ctx) override {
+  virtual std::any visitModellinkbase(EquationsParser::ModellinkbaseContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitFunction(EquationsParser::FunctionContext *ctx) override {
+  virtual std::any visitFunction(EquationsParser::FunctionContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitVariable(EquationsParser::VariableContext *ctx) override {
+  virtual std::any visitVariable(EquationsParser::VariableContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitPow(EquationsParser::PowContext *ctx) override {
+  virtual std::any visitPow(EquationsParser::PowContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitRealconst(EquationsParser::RealconstContext *ctx) override {
+  virtual std::any visitRealconst(EquationsParser::RealconstContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitUnary(EquationsParser::UnaryContext *ctx) override {
+  virtual std::any visitUnary(EquationsParser::UnaryContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitInfix(EquationsParser::InfixContext *ctx) override {
+  virtual std::any visitInfix(EquationsParser::InfixContext *ctx) override {
     return visitChildren(ctx);
   }
 
-  virtual antlrcpp::Any visitBraces(EquationsParser::BracesContext *ctx) override {
+  virtual std::any visitBraces(EquationsParser::BracesContext *ctx) override {
     return visitChildren(ctx);
   }
 
