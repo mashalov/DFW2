@@ -72,7 +72,7 @@ add_library(UMC SHARED ${SOURCES})
 target_include_directories(UMC PRIVATE ${INCLUDES}) 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)
 target_link_libraries(UMC 
-    "${CMAKE_CURRENT_SOURCE_DIR}/../CryptoPP/libcryptopp.a"
+    "${CMAKE_CURRENT_BINARY_DIR}/Build/libcryptopp.a"
     "${CMAKE_CURRENT_SOURCE_DIR}/../antlr4-master/antlr4-master/runtime/Cpp/dist/libantlr4-runtime.a"
     dl stdc++fs
     )
