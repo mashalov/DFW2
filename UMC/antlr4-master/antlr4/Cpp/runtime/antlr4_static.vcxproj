@@ -80,7 +80,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -97,14 +97,14 @@
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;ANTLR4CPP_STATIC;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
-      <ProgramDataBaseFileName>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\Debug\antlr4-runtime-static.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(TargetDir)antlr4-runtime-static.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;ANTLR4CPP_STATIC;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -123,7 +123,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
@@ -140,14 +140,14 @@
       <WarningLevel>Level4</WarningLevel>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;ANTLR4CPP_STATIC;CMAKE_INTDIR="Debug"</PreprocessorDefinitions>
       <ObjectFileName>$(IntDir)</ObjectFileName>
-      <ProgramDataBaseFileName>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\Debug\antlr4-runtime-static.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(TargetDir)antlr4-runtime-static.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_DEBUG;_WINDOWS;ANTLR4CPP_STATIC;CMAKE_INTDIR=\"Debug\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -166,7 +166,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DisableSpecificWarnings>4251</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -185,14 +185,14 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
-      <ProgramDataBaseFileName>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\Release\antlr4-runtime-static.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(TargetDir)antlr4-runtime-static.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ANTLR4CPP_STATIC;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -211,7 +211,7 @@
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
       <DisableSpecificWarnings>4251</DisableSpecificWarnings>
       <ExceptionHandling>Sync</ExceptionHandling>
@@ -230,14 +230,14 @@
       <ObjectFileName>$(IntDir)</ObjectFileName>
       <DebugInformationFormat>
       </DebugInformationFormat>
-      <ProgramDataBaseFileName>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\Release\antlr4-runtime-static.pdb</ProgramDataBaseFileName>
+      <ProgramDataBaseFileName>$(TargetDir)antlr4-runtime-static.pdb</ProgramDataBaseFileName>
     </ClCompile>
     <ResourceCompile>
       <PreprocessorDefinitions>%(PreprocessorDefinitions);WIN32;_WINDOWS;NDEBUG;ANTLR4CPP_STATIC;CMAKE_INTDIR=\"Release\"</PreprocessorDefinitions>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Midl>
-      <AdditionalIncludeDirectories>D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern;D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir)src;$(ProjectDir)src\atn;$(ProjectDir)src\dfa;$(ProjectDir)src\internal;$(ProjectDir)src\misc;$(ProjectDir)src\support;$(ProjectDir)src\tree;$(ProjectDir)src\tree\pattern;$(ProjectDir)tree\xpath;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
       <HeaderFileName>%(Filename).h</HeaderFileName>
       <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
@@ -255,207 +255,142 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <CustomBuild Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\CMakeLists.txt">
-      <UseUtf8Encoding>Always</UseUtf8Encoding>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/CMakeLists.txt</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Building Custom Rule D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/CMakeLists.txt</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp -BD:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp --check-stamp-file D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/CMakeFiles/generate.stamp
-if %errorlevel% neq 0 goto :cmEnd
-:cmEnd
-endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
-:cmErrorLevel
-exit /b %1
-:cmDone
-if %errorlevel% neq 0 goto :VCEnd</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp -BD:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp --check-stamp-file D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/CMakeFiles/generate.stamp
-if %errorlevel% neq 0 goto :cmEnd
-:cmEnd
-endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
-:cmErrorLevel
-exit /b %1
-:cmDone
-if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">C:\Program Files\CMake\share\cmake-3.23\Modules\FetchContent.cmake;C:\Program Files\CMake\share\cmake-3.23\Modules\FetchContent\CMakeLists.cmake.in;C:\Program Files\CMake\share\cmake-3.23\Modules\GoogleTest.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Program Files\CMake\share\cmake-3.23\Modules\FetchContent.cmake;C:\Program Files\CMake\share\cmake-3.23\Modules\FetchContent\CMakeLists.cmake.in;C:\Program Files\CMake\share\cmake-3.23\Modules\GoogleTest.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\CMakeFiles\generate.stamp</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\CMakeFiles\generate.stamp</Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</LinkObjects>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/CMakeLists.txt</Message>
-      <Message Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Building Custom Rule D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/CMakeLists.txt</Message>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp -BD:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp --check-stamp-file D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/CMakeFiles/generate.stamp
-if %errorlevel% neq 0 goto :cmEnd
-:cmEnd
-endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
-:cmErrorLevel
-exit /b %1
-:cmDone
-if %errorlevel% neq 0 goto :VCEnd</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">setlocal
-"C:\Program Files\CMake\bin\cmake.exe" -SD:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp -BD:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp --check-stamp-file D:/source/repos/DFW2/UMC/antlr4-master/antlr4/Cpp/runtime/CMakeFiles/generate.stamp
-if %errorlevel% neq 0 goto :cmEnd
-:cmEnd
-endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
-:cmErrorLevel
-exit /b %1
-:cmDone
-if %errorlevel% neq 0 goto :VCEnd</Command>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">C:\Program Files\CMake\share\cmake-3.23\Modules\FetchContent.cmake;C:\Program Files\CMake\share\cmake-3.23\Modules\FetchContent\CMakeLists.cmake.in;C:\Program Files\CMake\share\cmake-3.23\Modules\GoogleTest.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">C:\Program Files\CMake\share\cmake-3.23\Modules\FetchContent.cmake;C:\Program Files\CMake\share\cmake-3.23\Modules\FetchContent\CMakeLists.cmake.in;C:\Program Files\CMake\share\cmake-3.23\Modules\GoogleTest.cmake;%(AdditionalInputs)</AdditionalInputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\CMakeFiles\generate.stamp</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\CMakeFiles\generate.stamp</Outputs>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
-      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</LinkObjects>
-    </CustomBuild>
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ANTLRErrorListener.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ANTLRErrorStrategy.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ANTLRFileStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ANTLRInputStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\BailErrorStrategy.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\BaseErrorListener.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\BufferedTokenStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\CharStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\CommonToken.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\CommonTokenFactory.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\CommonTokenStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ConsoleErrorListener.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\DefaultErrorStrategy.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\DiagnosticErrorListener.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\Exceptions.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\FailedPredicateException.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\InputMismatchException.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\IntStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\InterpreterRuleContext.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\Lexer.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\LexerInterpreter.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\LexerNoViableAltException.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ListTokenSource.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\NoViableAltException.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\Parser.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ParserInterpreter.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ParserRuleContext.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\ProxyErrorListener.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\RecognitionException.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\Recognizer.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\RuleContext.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\RuleContextWithAltNum.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\RuntimeMetaData.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\Token.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\TokenSource.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\TokenStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\TokenStreamRewriter.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\UnbufferedCharStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\UnbufferedTokenStream.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\Vocabulary.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\WritableToken.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ATN.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ATNConfig.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ATNConfigSet.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ATNDeserializationOptions.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ATNDeserializer.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ATNSimulator.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ATNState.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ATNStateType.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ActionTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\AmbiguityInfo.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ArrayPredictionContext.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\AtomTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ContextSensitivityInfo.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\DecisionEventInfo.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\DecisionInfo.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\DecisionState.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\EpsilonTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ErrorInfo.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LL1Analyzer.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerATNConfig.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerATNSimulator.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerActionExecutor.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerChannelAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerCustomAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerIndexedCustomAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerModeAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerMoreAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerPopModeAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerPushModeAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerSkipAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LexerTypeAction.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\LookaheadEventInfo.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\NotSetTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\OrderedATNConfigSet.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ParseInfo.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ParserATNSimulator.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\PrecedencePredicateTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\PredicateEvalInfo.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\PredicateTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\PredictionContext.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\PredictionContextCache.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\PredictionContextMergeCache.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\PredictionMode.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\ProfilingATNSimulator.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\RangeTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\RuleTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\SemanticContext.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\SetTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\SingletonPredictionContext.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\StarLoopbackState.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\Transition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\TransitionType.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\atn\WildcardTransition.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa\DFA.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa\DFASerializer.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa\DFAState.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\dfa\LexerDFASerializer.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\internal\Synchronization.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc\InterpreterDataReader.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc\Interval.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc\IntervalSet.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc\MurmurHash.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\misc\Predicate.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support\Any.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support\Arrays.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support\CPPUtils.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support\StringUtils.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\support\Utf8.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\ErrorNodeImpl.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\IterativeParseTreeWalker.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\ParseTree.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\ParseTreeListener.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\ParseTreeVisitor.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\ParseTreeWalker.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\TerminalNodeImpl.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\Trees.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern\Chunk.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern\ParseTreeMatch.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern\ParseTreePattern.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern\ParseTreePatternMatcher.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern\RuleTagToken.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern\TagChunk.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern\TextChunk.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\pattern\TokenTagToken.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPath.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathElement.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathLexer.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathLexerErrorListener.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathRuleAnywhereElement.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathRuleElement.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathTokenAnywhereElement.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathTokenElement.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathWildcardAnywhereElement.cpp" />
-    <ClCompile Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\runtime\src\tree\xpath\XPathWildcardElement.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="D:\source\repos\DFW2\UMC\antlr4-master\antlr4\Cpp\ZERO_CHECK.vcxproj">
-      <Project>{778BF217-7BBF-388A-BB35-2846997493F2}</Project>
-      <Name>ZERO_CHECK</Name>
-      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
-    </ProjectReference>
+    <ClCompile Include="$(ProjectDir)src\ANTLRErrorListener.cpp" />
+    <ClCompile Include="$(ProjectDir)src\ANTLRErrorStrategy.cpp" />
+    <ClCompile Include="$(ProjectDir)src\ANTLRFileStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\ANTLRInputStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\BailErrorStrategy.cpp" />
+    <ClCompile Include="$(ProjectDir)src\BaseErrorListener.cpp" />
+    <ClCompile Include="$(ProjectDir)src\BufferedTokenStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\CharStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\CommonToken.cpp" />
+    <ClCompile Include="$(ProjectDir)src\CommonTokenFactory.cpp" />
+    <ClCompile Include="$(ProjectDir)src\CommonTokenStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\ConsoleErrorListener.cpp" />
+    <ClCompile Include="$(ProjectDir)src\DefaultErrorStrategy.cpp" />
+    <ClCompile Include="$(ProjectDir)src\DiagnosticErrorListener.cpp" />
+    <ClCompile Include="$(ProjectDir)src\Exceptions.cpp" />
+    <ClCompile Include="$(ProjectDir)src\FailedPredicateException.cpp" />
+    <ClCompile Include="$(ProjectDir)src\InputMismatchException.cpp" />
+    <ClCompile Include="$(ProjectDir)src\IntStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\InterpreterRuleContext.cpp" />
+    <ClCompile Include="$(ProjectDir)src\Lexer.cpp" />
+    <ClCompile Include="$(ProjectDir)src\LexerInterpreter.cpp" />
+    <ClCompile Include="$(ProjectDir)src\LexerNoViableAltException.cpp" />
+    <ClCompile Include="$(ProjectDir)src\ListTokenSource.cpp" />
+    <ClCompile Include="$(ProjectDir)src\NoViableAltException.cpp" />
+    <ClCompile Include="$(ProjectDir)src\Parser.cpp" />
+    <ClCompile Include="$(ProjectDir)src\ParserInterpreter.cpp" />
+    <ClCompile Include="$(ProjectDir)src\ParserRuleContext.cpp" />
+    <ClCompile Include="$(ProjectDir)src\ProxyErrorListener.cpp" />
+    <ClCompile Include="$(ProjectDir)src\RecognitionException.cpp" />
+    <ClCompile Include="$(ProjectDir)src\Recognizer.cpp" />
+    <ClCompile Include="$(ProjectDir)src\RuleContext.cpp" />
+    <ClCompile Include="$(ProjectDir)src\RuleContextWithAltNum.cpp" />
+    <ClCompile Include="$(ProjectDir)src\RuntimeMetaData.cpp" />
+    <ClCompile Include="$(ProjectDir)src\Token.cpp" />
+    <ClCompile Include="$(ProjectDir)src\TokenSource.cpp" />
+    <ClCompile Include="$(ProjectDir)src\TokenStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\TokenStreamRewriter.cpp" />
+    <ClCompile Include="$(ProjectDir)src\UnbufferedCharStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\UnbufferedTokenStream.cpp" />
+    <ClCompile Include="$(ProjectDir)src\Vocabulary.cpp" />
+    <ClCompile Include="$(ProjectDir)src\WritableToken.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ATN.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ATNConfig.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ATNConfigSet.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ATNDeserializationOptions.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ATNDeserializer.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ATNSimulator.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ATNState.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ATNStateType.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ActionTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\AmbiguityInfo.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ArrayPredictionContext.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\AtomTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ContextSensitivityInfo.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\DecisionEventInfo.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\DecisionInfo.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\DecisionState.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\EpsilonTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ErrorInfo.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LL1Analyzer.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerATNConfig.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerATNSimulator.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerActionExecutor.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerChannelAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerCustomAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerIndexedCustomAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerModeAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerMoreAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerPopModeAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerPushModeAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerSkipAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LexerTypeAction.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\LookaheadEventInfo.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\NotSetTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\OrderedATNConfigSet.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ParseInfo.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ParserATNSimulator.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\PrecedencePredicateTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\PredicateEvalInfo.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\PredicateTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\PredictionContext.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\PredictionContextCache.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\PredictionContextMergeCache.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\PredictionMode.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\ProfilingATNSimulator.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\RangeTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\RuleTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\SemanticContext.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\SetTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\SingletonPredictionContext.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\StarLoopbackState.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\Transition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\TransitionType.cpp" />
+    <ClCompile Include="$(ProjectDir)src\atn\WildcardTransition.cpp" />
+    <ClCompile Include="$(ProjectDir)src\dfa\DFA.cpp" />
+    <ClCompile Include="$(ProjectDir)src\dfa\DFASerializer.cpp" />
+    <ClCompile Include="$(ProjectDir)src\dfa\DFAState.cpp" />
+    <ClCompile Include="$(ProjectDir)src\dfa\LexerDFASerializer.cpp" />
+    <ClCompile Include="$(ProjectDir)src\internal\Synchronization.cpp" />
+    <ClCompile Include="$(ProjectDir)src\misc\InterpreterDataReader.cpp" />
+    <ClCompile Include="$(ProjectDir)src\misc\Interval.cpp" />
+    <ClCompile Include="$(ProjectDir)src\misc\IntervalSet.cpp" />
+    <ClCompile Include="$(ProjectDir)src\misc\MurmurHash.cpp" />
+    <ClCompile Include="$(ProjectDir)src\misc\Predicate.cpp" />
+    <ClCompile Include="$(ProjectDir)src\support\Any.cpp" />
+    <ClCompile Include="$(ProjectDir)src\support\Arrays.cpp" />
+    <ClCompile Include="$(ProjectDir)src\support\CPPUtils.cpp" />
+    <ClCompile Include="$(ProjectDir)src\support\StringUtils.cpp" />
+    <ClCompile Include="$(ProjectDir)src\support\Utf8.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\ErrorNodeImpl.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\IterativeParseTreeWalker.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\ParseTree.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\ParseTreeListener.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\ParseTreeVisitor.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\ParseTreeWalker.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\TerminalNodeImpl.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\Trees.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\pattern\Chunk.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\pattern\ParseTreeMatch.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\pattern\ParseTreePattern.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\pattern\ParseTreePatternMatcher.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\pattern\RuleTagToken.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\pattern\TagChunk.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\pattern\TextChunk.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\pattern\TokenTagToken.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPath.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathElement.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathLexer.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathLexerErrorListener.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathRuleAnywhereElement.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathRuleElement.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathTokenAnywhereElement.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathTokenElement.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathWildcardAnywhereElement.cpp" />
+    <ClCompile Include="$(ProjectDir)src\tree\xpath\XPathWildcardElement.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
