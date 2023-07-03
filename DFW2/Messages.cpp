@@ -131,6 +131,7 @@ const char* CDFW2Messages::m_cszWrongGeneratorQlimitsFixed = "Ограничен
 const char* CDFW2Messages::m_cszFailureAtMinimalStep = "Необходимая точность решения не может быть достигнута на минимальном шаге t = {} {} порядок {} шаг = {}";
 const char* CDFW2Messages::m_cszMustBeEmbeddedLRC = "Не найдена типовая встроенная СХН с номером {}";
 const char* CDFW2Messages::m_cszMustBeDefaultDynamicLRC = "Не найдена типовая СХН нагрузки в динамике с номером 0";
+const char* CDFW2Messages::m_cszNodeGenerationLRCSelected = "В узле {} нет модели генератора, но задана генерация в УР: {:.3f}. Для моделирования выбрана \"{}\"";
 const char* CDFW2Messages::m_cszResultFileWrongCompressedBlockType = "Неверный тип сжатого блока данных в файле результатов";
 const char* CDFW2Messages::m_cszResultFilePointsCountMismatch = "Размерность канала {} {} не совпадает с количеством точек в файле {}";
 const char* CDFW2Messages::m_cszDeivceDoesNotHaveAccessToModel = "Устройство не имеет доступа к модели";

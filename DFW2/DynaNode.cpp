@@ -578,8 +578,13 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 	else
 	{
 		pLRCGen = pDynaModel->GetLRCGen();		// если есть генерация но нет генераторов - нужна СХН генераторов
-		if (std::abs(Pg) < 0.1)
+		if (Pg < 0.1)
 			pLRCGen = pDynaModel->GetLRCYconst();
+
+		Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszNodeGenerationLRCSelected, 
+			GetVerbalName(),
+			cplx(Pg,Qg),
+			pLRCGen->GetVerbalName()));
 	}
 
 	// если в узле нет СХН для динамики, подставляем СХН по умолчанию

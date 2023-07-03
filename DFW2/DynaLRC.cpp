@@ -85,7 +85,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 {
 	double Vmin{ GetModel()->GetLRCToShuntVmin() };
 
-	struct DualLRC { std::array<std::list<CLRCData>,2> PQ; };
+	struct DualLRC { std::array<std::list<CLRCData>, 2> PQ; };
 	using LRCConstructmMap = std::map<ptrdiff_t, DualLRC>;
 
 	LRCConstructmMap constructMap;
@@ -109,7 +109,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 		{
 			for (const auto& p : x == 0 ? lrc->P()->P : lrc->Q()->P)
 			{
-				if(!CDynaLRCContainer::IsLRCEmpty(p))
+				if (!CDynaLRCContainer::IsLRCEmpty(p))
 					pqFromId[x].push_back(p);
 			}
 		}
@@ -120,14 +120,14 @@ void CDynaLRCContainer::CreateFromSerialized()
 	// типовые СХН Rastr 1 и 2
 
 	bool bForceStandardLRC{ !GetModel()->AllowUserToOverrideStandardLRC() };
-	
+
 	// удаляем все сегменты по p и q
 	auto clearPQ = [](DualLRC& dualLRC)
 	{
 		dualLRC.PQ[0].clear(); dualLRC.PQ[1].clear();
 	};
 
-	auto CheckUserLRC = [this,&constructMap](ptrdiff_t Id, bool bForceStandardLRC) -> bool
+	auto CheckUserLRC = [this, &constructMap](ptrdiff_t Id, bool bForceStandardLRC) -> bool
 	{
 		bool bInsert{ true };
 		auto itLRC{ constructMap.find(Id) };
@@ -192,7 +192,7 @@ void CDynaLRCContainer::CreateFromSerialized()
 		lrcConstI.PQ[1].push_back({ 0.0, 1.0, 0.0, 1.0, 0.0 });
 	}
 
-	
+
 	auto SortLRC = [](const auto& lhs, const auto& rhs) { return lhs.V < rhs.V; };
 
 	for (auto&& lrc : constructMap)
@@ -218,11 +218,11 @@ void CDynaLRCContainer::CreateFromSerialized()
 					if (nextIt != pq.end() && Consts::Equal(it->V, nextIt->V))
 					{
 
-						if(CDynaLRCContainer::CompareLRCs(*it,*nextIt))
+						if (CDynaLRCContainer::CompareLRCs(*it, *nextIt))
 							Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszAmbigousLRCSegment,
-								lrc.first, 
-								it->V, 
-								it->a0, 
+								lrc.first,
+								it->V,
+								it->a0,
 								it->a1,
 								it->a2));
 						// если нашли сегменты с одинаковым напряжением - убираем второй по счету
@@ -244,10 +244,10 @@ void CDynaLRCContainer::CreateFromSerialized()
 					rit->V = Vmin;
 					// удаляем все сегменты до Vmin
 					auto revRit{ std::prev(rit.base()) };
-					
+
 					pq.erase(pq.begin(), revRit);
 					// добавляем шунтовой сегмент от нуля до Vmin в точку предыдущего сегмента
-					pq.insert(pq.begin(), { 0.0,	1.0,	0.0,	0.0,	LRCatV / Vmin / Vmin } );
+					pq.insert(pq.begin(), { 0.0,	1.0,	0.0,	0.0,	LRCatV / Vmin / Vmin });
 				}
 
 				// удаляем из СХН сегменты с одинаковыми коэффициентами
@@ -267,11 +267,23 @@ void CDynaLRCContainer::CreateFromSerialized()
 	CDynaLRC* pLRC{ CreateDevices<CDynaLRC>(constructMap.size()) };
 
 	bool bCheck{ true };
+
+	const std::map < ptrdiff_t, std::string_view> SpecialLRCNames = 
+	{ 
+		{0, "Zconst"},
+		{-1, "Sconst"},
+		{-2, "Iconst"}
+	 };
+
 	for (auto&& lrc : constructMap)
 	{
 		std::copy(lrc.second.PQ[0].begin(), lrc.second.PQ[0].end(), std::back_inserter(pLRC->P()->P));
 		std::copy(lrc.second.PQ[1].begin(), lrc.second.PQ[1].end(), std::back_inserter(pLRC->Q()->P));
 		pLRC->SetId(lrc.first);
+
+		if (const auto nameit{ SpecialLRCNames.find(lrc.first) }; nameit != SpecialLRCNames.end())
+			pLRC->SetName(nameit->second);
+
 		bCheck = pLRC->Check() && bCheck;
 
 		/*

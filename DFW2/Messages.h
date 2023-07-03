@@ -265,6 +265,7 @@ namespace DFW2
 		static const char* m_cszRunningAction;
 		static const char* m_cszGeneratorOverspeed;
 		static const char* m_cszExternalParameterAccepted;
+		static const char* m_cszNodeGenerationLRCSelected;
 	};
 }
 
