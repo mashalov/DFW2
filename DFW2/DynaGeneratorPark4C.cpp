@@ -189,11 +189,11 @@ void CDynaGeneratorPark4C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 {
 	if (IsStateOn())
 	{
-		const double omega(1.0 + s);
-		const double dPsifd = Rfd * ExtEqe / lad + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id;
-		const double dPsi1d = Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * Id;
-		const double dPsi1q = Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * Iq;
-		const double dPsi2q = Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq;
+		const double omega{ 1.0 + s };
+		const double dPsifd{ Rfd * ExtEqe / lad + Psifd_Psifd * Psifd + Psifd_Psi1d * Psi1d + Psifd_id * Id };
+		const double dPsi1d{ Psi1d_Psifd * Psifd + Psi1d_Psi1d * Psi1d + Psi1d_id * Id };
+		const double dPsi1q{ Psi1q_Psi1q * Psi1q + Psi1q_Psi2q * Psi2q + Psi1q_iq * Iq };
+		const double dPsi2q{ Psi2q_Psi1q * Psi1q + Psi2q_Psi2q * Psi2q + Psi2q_iq * Iq };
 
 #ifdef USE_VOLTAGE_FREQ_DAMPING
 		// используем вариант уравнения движения с демпфированием от частоты напряжения
@@ -201,8 +201,8 @@ void CDynaGeneratorPark4C::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 #else
 		// используем стандартное уравнение движения с демпфированием только от
 		// скольжения генератора. Момент рассчитывается по потокосцеплениям.
-		const double Te = (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id;
-		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+		const double Te{ (ld2 * Id + Psid_Psifd * Psifd + Psid_Psi1d * Psi1d) * Iq - (lq2 * Iq + Psiq_Psi1q * Psi1q + Psiq_Psi2q * Psi2q) * Id };
+		BuildAngleEquation(pDynaModel, fn);
 		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - Te) / Mj);
 #endif
 		(pDynaModel->*fn)(Psifd, dPsifd);

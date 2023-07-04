@@ -12,7 +12,7 @@ namespace DFW2
 	protected:
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		virtual eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel);
-		VariableIndexExternal V, DeltaV, Vre, Vim, Sv;
+		VariableIndexExternal V, DeltaV, Vre, Vim, Sv, Scoi;
 		cplx Ynorton_;
 	public:
 		enum VARS

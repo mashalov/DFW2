@@ -127,7 +127,7 @@ void CDynaGeneratorMotion::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 {
 	if (IsStateOn())
 	{
-		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+		BuildAngleEquation(pDynaModel, fn);
 		// интересно, что _активная_ мощность от токов ЭДС равна мощности от полных токов c Ynorton ?! 
 		// I = (Ere + jEim - Vre - jVim) / jxd = (Eim - Vim + j(Vre - Ere)) / xd
 		// Ire = (Eim - Vim) / xd 
@@ -216,7 +216,13 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 void CDynaGeneratorMotion::BuildAngleEquationBlock(CDynaModel* pDynaModel)
 {
 	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
+	pDynaModel->SetElement(Delta, Scoi, pDynaModel->GetOmega0());
 	pDynaModel->SetElement(Delta, Delta, 0.0);
+}
+
+void CDynaGeneratorMotion::BuildAngleEquation(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
+{
+	(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * (s - Scoi));
 }
 
 

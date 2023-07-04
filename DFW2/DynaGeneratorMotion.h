@@ -46,6 +46,7 @@ namespace DFW2
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		void BuildAngleEquationBlock(CDynaModel* pDynaModel);
+		void BuildAngleEquation(CDynaModel* pDynaModel, CDevice::fnDerivative fn);
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 

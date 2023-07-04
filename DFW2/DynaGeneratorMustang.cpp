@@ -178,7 +178,7 @@ void CDynaGeneratorMustang::CalculateDerivatives(CDynaModel* pDynaModel, CDevice
 {
 	if (IsStateOn())
 	{
-		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+		BuildAngleEquation(pDynaModel, fn);
 		(pDynaModel->*fn)(s, (Pt / ( 1.0 + s ) - Kdemp * s - (Eqss * Iq + Edss * Id + Id * Iq * xd2_xq2_)) / Mj);
 		(pDynaModel->*fn)(Eqs, (ExtEqe - Eqs + Id * xd_xd1_) / Tdo1);
 		(pDynaModel->*fn)(Edss, (-Edss - Iq * xq1_xq2_) / Tqo2);

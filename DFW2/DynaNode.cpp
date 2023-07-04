@@ -665,12 +665,14 @@ void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	{
 		pDynaModel->SetElement(S, Delta, -1.0 / T / w0);
 		pDynaModel->SetElement(S, Lag, 1.0 / T / w0);
+		pDynaModel->SetElement(S, pSyncZone->S, -1.0);
 		pDynaModel->SetElement(S, S, 1.0);
 	}
 	else
 	{
 		pDynaModel->SetElement(S, Delta, 0.0);
 		pDynaModel->SetElement(S, Lag, 0.0);
+		pDynaModel->SetElement(S, pSyncZone->S, 0.0);
 		pDynaModel->SetElement(S, S, 1.0);
 	}
 }
@@ -682,7 +684,7 @@ void CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 	const double T{ pDynaModel->GetFreqTimeConstant() };
 	const double w0{ pDynaModel->GetOmega0() };
 	const double dLag{ (Delta - Lag) / T };
-	double dS{ S - (Delta - Lag) / T / w0 };
+	double dS{ S - (Delta - Lag) / T / w0 - pSyncZone->S };
 
 	double dDelta{ 0.0 };
 

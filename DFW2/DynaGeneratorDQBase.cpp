@@ -303,7 +303,7 @@ void CDynaGeneratorDQBase::CalculateDerivatives(CDynaModel* pDynaModel, CDevice:
 	if (IsStateOn())
 	{
 		const double omega{ 1.0 + DampMechanicalPower_ * s };
-		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+		BuildAngleEquation(pDynaModel, fn);
 		(pDynaModel->*fn)(s, (Pt / omega - Kdemp * s - (Vd * Id + Vq * Iq + (Id * Id + Iq * Iq) * r) / (1.0 + Sv)) / Mj);
 	}
 	else
