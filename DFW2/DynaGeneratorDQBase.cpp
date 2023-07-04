@@ -78,7 +78,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::InitModel(CDynaModel* pDynaModel)
 	if (!pDynaModel->ConsiderDampingEquation())
 		Kdemp = 0.0;
 
-	DampMechanicalPower_ = 0.0;
+	//DampMechanicalPower_ = 0.0;
 
 	eDEVICEFUNCTIONSTATUS Status{ CDynaGeneratorMotion::InitModel(pDynaModel) };
 
