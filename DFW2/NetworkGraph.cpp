@@ -202,6 +202,14 @@ void CDynaNodeContainer::BuildSynchroZones()
 	if (!pSynchroZones)
 		throw dfw2error("CDynaNodeContainer::ProcessTopology - SynchroZone container not found");
 
+	// модели с углами могут рассчитываться
+	// относительно COI. При переходе к новому 
+	// составу синхронных зон нужно восстановить
+	// углы в синхронные оси !
+	if(pDynaModel_->UseCOI())
+		for (auto&& SyncZone : *pSynchroZones)
+			static_cast<CSynchroZone*>(SyncZone)->AnglesToSyncReference();
+
 	// проверяем, есть ли отключенные узлы
 	// даже не знаю что лучше для поиска первого отключенного узла...
 	bool bGotOffNodes = std::find_if(DevVec.begin(), DevVec.end(), [](const auto* pNode)->bool { return !pNode->IsStateOn(); }) != DevVec.end();

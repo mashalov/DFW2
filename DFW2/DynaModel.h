@@ -196,6 +196,7 @@ namespace DFW2
 			static constexpr const char* cszStepsToOrderChange = "StepsToOrderChange";
 			static constexpr const char* cszZeroCrossingTolerance = "ZeroCrossingTolerance";
 			static constexpr const char* cszDerlagToleranceMultiplier = "DerlagToleranceMultiplier";
+			static constexpr const char* cszUseCOI = "UseCOI";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 			static inline CValidationRuleRange ValidatorRange2_10 = CValidationRuleRange(2, 10);
 		};
@@ -637,7 +638,6 @@ namespace DFW2
 		}
 
 		void UnprocessDiscontinuity();
-
 		bool LoadFlow();
 		void DumpStateVector();
 		FILE* fResult;

@@ -733,6 +733,8 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 	{
 		MAP_VARIABLE(Bshunt, C_BSH)
 		MAP_VARIABLE(Gshunt, C_GSH)
+		MAP_VARIABLE(SyncDelta_, C_SYNCDELTA)
+		MAP_VARIABLE(SyncSlip_, C_SYNCSLIP)
 	}
 	return p;
 }
@@ -925,84 +927,13 @@ eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE
 
 eDEVICEFUNCTIONSTATUS CDynaNode::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	Lag = Delta - S * pDynaModel->GetFreqTimeConstant() * pDynaModel->GetOmega0();
+	Lag = S;
+	if (pDynaModel->UseCOI())
+		Lag -= pSyncZone->S;
+
+	Lag = Delta - Lag * pDynaModel->GetFreqTimeConstant() * pDynaModel->GetOmega0();
 	SetLowVoltage(sqrt(Vre * Vre + Vim * Vim) < (LOW_VOLTAGE - LOW_VOLTAGE_HYST));
 	//Delta = atan2(Vim, Vre);
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
-}
-
-CSynchroZone::CSynchroZone() : CDevice()
-{
-}
-
-
-VariableIndexRefVec& CSynchroZone::GetVariables(VariableIndexRefVec& ChildVec)
-{
-	return CDevice::GetVariables(JoinVariables({ S },ChildVec));
-}
-
-double* CSynchroZone::GetVariablePtr(ptrdiff_t nVarIndex)
-{
-	return &GetVariable(nVarIndex).Value;
-}
-
-void CSynchroZone::BuildEquations(CDynaModel* pDynaModel)
-{
-	if (InfPower)
-	{
-		pDynaModel->SetElement(S, S, 1.0);
-	}
-	else
-	{
-		pDynaModel->SetElement(S, S, 1.0);
-		for (auto&& it : LinkedGenerators)
-		{
-			if(it->IsKindOfType(DEVTYPE_GEN_MOTION))
-			{
-				const auto& pGenMj{ static_cast<CDynaGeneratorMotion*>(it) };
-				pDynaModel->SetElement(S, pGenMj->s, -pGenMj->Mj / Mj);
-			}
-		}
-	}
-}
-
-double CSynchroZone::CalculateS() const
-{
-	double CurrentS{ 0.0 };
-	if (!InfPower)
-	{
-		for (auto&& it : LinkedGenerators)
-		{
-			if (it->IsKindOfType(DEVTYPE_GEN_MOTION))
-			{
-				const auto& pGenMj{ static_cast<CDynaGeneratorMotion*>(it) };
-				CurrentS += pGenMj->Mj * pGenMj->s / Mj;
-			}
-		}
-	}
-	return CurrentS;
-}
-
-
-void CSynchroZone::BuildRightHand(CDynaModel* pDynaModel)
-{
-	double dS{ S };
-	if (InfPower)
-		pDynaModel->SetFunction(S, 0.0);
-	else
-		pDynaModel->SetFunction(S, S - CalculateS());
-}
-
-
-eDEVICEFUNCTIONSTATUS CSynchroZone::Init(CDynaModel* pDynaModel)
-{
-	S = 0.0;
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
-}
-
-eDEVICEFUNCTIONSTATUS CSynchroZone::ProcessDiscontinuity(CDynaModel* pDynaModel)
-{
-	S = CalculateS();
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
@@ -1243,12 +1174,12 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 
 VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::string_view VarName)
 {
-	if (VarName == CDynaNode::m_cszSz)
+	if (VarName == CDynaNode::m_cszSz || VarName == CDynaNode::m_cszDz)
 	{
 		VariableIndexExternal ExtVar = { -1, nullptr };
 
 		if (pSyncZone)
-			ExtVar = pSyncZone->GetExternalVariable(CDynaNode::m_cszS);
+			ExtVar = pSyncZone->GetExternalVariable(VarName);
 		return ExtVar;
 	}
 	else
@@ -1989,13 +1920,22 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.AddLinkFrom(DEVTYPE_BRANCH, DLM_MULTI, DPD_SLAVE);
 	// и инжекторы много к одному. Для них узел выступает ведущим
 	props.AddLinkFrom(DEVTYPE_POWER_INJECTOR, DLM_MULTI, DPD_SLAVE);
-
+	props.bFinishStep = true;
 	props.EquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
 	props.VarMap_.insert({ CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS) });
 	props.VarMap_.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
 	props.VarMap_.insert({ CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS) });
 	props.VarAliasMap_.insert({ "vras", { CDynaNodeBase::m_cszV }});
+	props.ConstVarMap_.insert({ "SyncDelta", CConstVarIndex(CDynaNode::C_SYNCDELTA, VARUNIT_RADIANS, true, eDVT_CONSTSOURCE)});
+	props.ConstVarMap_.insert({ "SyncSlip", CConstVarIndex(CDynaNode::C_SYNCSLIP, VARUNIT_UNITLESS, true, eDVT_CONSTSOURCE)});
+}
+
+void CDynaNode::FinishStep(const CDynaModel& DynaModel)
+{
+	SyncDelta_ = pSyncZone->Delta + Delta;
+	SyncDelta_ = std::atan2(std::sin(SyncDelta_), std::cos(SyncDelta_));
+	SyncSlip_  = pSyncZone->S;
 }
 
 void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
@@ -2017,15 +1957,6 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasNode);
 	props.ConstVarMap_.insert({ CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
 	props.ConstVarMap_.insert({ CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
-}
-
-void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
-{
-	props.bVolatile = true;
-	props.eDeviceType = DEVTYPE_SYNCZONE;
-	props.EquationsCount = CSynchroZone::VARS::V_LAST;
-	props.VarMap_.insert(std::make_pair(CDynaNode::m_cszS, CVarIndex(0,VARUNIT_PU)));
-	props.DeviceFactory = std::make_unique<CDeviceFactory<CSynchroZone>>();
 }
 
 void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)

@@ -16,6 +16,12 @@ void CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Iim, Iim, 1.0);
 }
 
+eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::AngleToSyncReference()
+{
+	Delta += Dcoi;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
 bool CDynaGeneratorInfBusBase::CalculatePower()
 {
 	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs();

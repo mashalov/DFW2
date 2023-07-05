@@ -90,7 +90,8 @@ set(EMSSSOURCES
     TestDevice.cpp
     MixedAdamsBDF.cpp
     Rodas.cpp
-    IntegratorBase.cpp
+    IntegratorBase.cpp 
+    SynchroZone.cpp
     )             
 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)

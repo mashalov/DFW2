@@ -313,6 +313,9 @@
     <ClInclude Include="MixedAdamsBDF.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="SyncroZone.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
@@ -667,6 +670,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="IntegratorBase.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SynchroZone.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

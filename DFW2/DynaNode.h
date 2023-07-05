@@ -5,39 +5,11 @@
 #include "IterationControl.h"
 #include "queue"
 #include "stack"
+#include "SyncroZone.h"
 
 namespace DFW2
 {
 	class CDynaBranch;
-	class CSynchroZone : public CDevice
-	{
-	protected:
-		double CalculateS() const;
-	public:
-		enum VARS
-		{
-			V_S,			// скольжение в синхронной зоне
-			V_LAST
-		};
-
-		DEVICEVECTOR LinkedGenerators;
-		VariableIndex S;						// переменная состояния - скольжение
-
-		double Mj = 0.0;						// суммарный момент инерции
-		bool InfPower = false;					// признак наличия ШБМ
-		CSynchroZone();		
-		virtual ~CSynchroZone() = default;
-		bool Energized = false;					// признак наличия источника напряжения
-
-		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
-		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		void BuildEquations(CDynaModel* pDynaModel) override;
-		void BuildRightHand(CDynaModel* pDynaModel) override;
-		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
-		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
-		static void DeviceProperties(CDeviceContainerProperties& properties);
-	};
-
 #define DFW2_SQRT_EPSILON DFW2_EPSILON
 
 	struct VirtualBranch;
@@ -67,7 +39,9 @@ namespace DFW2
 		enum CONSTVARS
 		{
 			C_GSH,
-			C_BSH
+			C_BSH,
+			C_SYNCDELTA,
+			C_SYNCSLIP
 		};
 
 		enum VARS
@@ -82,6 +56,9 @@ namespace DFW2
 		VariableIndex V;
 		VariableIndex Vre;
 		VariableIndex Vim;
+
+		double SyncDelta_ = 0.0;
+		double SyncSlip_ = 0.0;
 
 #ifdef _DEBUG
 		double Vrastr, Deltarastr, Qgrastr, Pnrrastr, Qnrrastr;
@@ -311,12 +288,14 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void FinishStep(const CDynaModel& DynaModel);
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 
 		static constexpr const char* m_cszS = "S";
 		static constexpr const char* m_cszSz = "Sz";
+		static constexpr const char* m_cszDz = "Dz";
 	};
 
 	// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько
