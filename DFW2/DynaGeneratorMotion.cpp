@@ -216,13 +216,17 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 void CDynaGeneratorMotion::BuildAngleEquationBlock(CDynaModel* pDynaModel)
 {
 	pDynaModel->SetElement(Delta, s, -pDynaModel->GetOmega0());
-	pDynaModel->SetElement(Delta, Scoi, pDynaModel->GetOmega0());
+	if(pDynaModel->UseCOI())
+		pDynaModel->SetElement(Delta, Scoi, pDynaModel->GetOmega0());
 	pDynaModel->SetElement(Delta, Delta, 0.0);
 }
 
 void CDynaGeneratorMotion::BuildAngleEquation(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
 {
-	(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * (s - Scoi));
+	if(pDynaModel->UseCOI())
+		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * (s - Scoi));
+	else
+		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
 }
 
 

@@ -110,6 +110,7 @@ namespace DFW2
 			ptrdiff_t StepsToStepChange_ = 2;							// количество шагов до увеличения шага
 			ptrdiff_t StepsToOrderChange_ = 2;							// количество шагов до изменения порядка
 			double ZeroCrossingTolerance_ = 0.95;						// нормированная точность поиска ограничения
+			bool UseCOI_ = false;
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -281,14 +282,17 @@ namespace DFW2
 			{
 				UsedH_ = CurrentH_;
 			}
+
 			inline double UsedH() const
 			{
 				return UsedH_;
 			}
+
 			inline double H() const
 			{
 				return CurrentH_;
 			}
+
 			void SetH(double h)
 			{
 				CurrentH_ = h;
@@ -829,6 +833,11 @@ namespace DFW2
 		inline ptrdiff_t Order() const
 		{
 			return sc.q;
+		}
+
+		inline bool UseCOI() const
+		{
+			return Parameters().UseCOI_;
 		}
 
 		inline double H() const
