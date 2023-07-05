@@ -397,7 +397,7 @@ namespace DFW2
 			return MatrixRow_ != IndexUnassigned;
 		}
 		virtual void InitNordsiek(CDynaModel* pDynaModel);
-		virtual void Predict() {};
+		virtual void Predict(const CDynaModel& DynaModel) {};
 		virtual bool InMatrix() const noexcept;
 		void EstimateEquations(CDynaModel* pDynaModel);
 		virtual bool LeaveDiscontinuityMode(CDynaModel* pDynaModel);

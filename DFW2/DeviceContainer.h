@@ -219,7 +219,7 @@ namespace DFW2
 		bool CheckLink(ptrdiff_t LinkIndex);
 		bool CheckLink(ptrdiff_t LinkIndex, LINKSVEC& LinksVec);
 		void InitNordsieck(CDynaModel *pDynaModel);
-		void Predict();
+		void Predict(const CDynaModel& DynaModel);
   		void EstimateBlock(CDynaModel *pDynaModel);							// подсчитать количество уравнений устройств и привязать устройства к строкам Якоби
 		void BuildBlock(CDynaModel* pDynaModel);							// построить блок уравнений устройств в Якоби
 		void BuildRightHand(CDynaModel* pDynaModel);						// рассчитать правую часть уравнений устройств

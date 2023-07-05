@@ -358,7 +358,7 @@ void MixedAdamsBDF::Predict()
 	// (например для узлов, которым нужно перевести прогноз полярного напряжения в прямоугольное)
 	// делаем цикл с вызовом функции прогноза устройства
 	for (auto&& it : DynaModel_.DeviceContainersPredict())
-		it->Predict();
+		it->Predict(DynaModel_);
 }
 
 double MixedAdamsBDF::GetRatioForCurrentOrder()

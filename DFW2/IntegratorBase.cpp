@@ -85,7 +85,7 @@ IntegratorBase::vecType::iterator IntegratorMultiStageBase::f(IntegratorBase::ve
 void IntegratorMultiStageBase::f()
 {
 	for (auto&& it : DynaModel_.DeviceContainersPredict())
-		it->Predict();
+		it->Predict(DynaModel_);
 	DynaModel_.NewtonUpdateDevices();
 	DynaModel_.BuildRightHand();
 }

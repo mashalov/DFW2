@@ -283,7 +283,7 @@ namespace DFW2
 		void BuildEquations(CDynaModel* pDynaModel) override;
 		void BuildRightHand(CDynaModel* pDynaModel) override;
 		void BuildDerivatives(CDynaModel *pDynaModel) override;
-		void Predict()  override;			// допонительная обработка прогноза
+		void Predict(const CDynaModel& DynaModel) override;		// допонительная обработка прогноза
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;

@@ -599,7 +599,7 @@ eDEVICEFUNCTIONSTATUS CDynaNodeBase::Init(CDynaModel* pDynaModel)
 // напряжение в декартовых координатах
 // и сбрасываются значения по умолчанию перед
 // итерационным процессом решения сети
-void CDynaNode::Predict()
+void CDynaNode::Predict(const CDynaModel& DynaModel)
 {
 	VreVim = { Vre, Vim };
 	LRCVicinity = 0.05;
@@ -611,6 +611,8 @@ void CDynaNode::Predict()
 		double dDL = Delta - Lag;
 		Delta = newDelta;
 		Lag = Delta - dDL;
+		if (DynaModel.UseCOI())
+			Lag += pSyncZone->Delta;
 		pRvDelta->Nordsiek[0] = Delta;
 		pRvLag->Nordsiek[0] = Lag;
 	}
@@ -623,8 +625,10 @@ CDynaNode::CDynaNode() : CDynaNodeBase()
 
 void CDynaNode::BuildDerivatives(CDynaModel *pDynaModel)
 {
-	const double T{ pDynaModel->GetFreqTimeConstant() };
-	pDynaModel->SetDerivative(Lag, (Delta - Lag) / T);
+	double DiffDelta{ Delta };
+	if (pDynaModel->UseCOI())
+		DiffDelta += pSyncZone->Delta;
+	pDynaModel->SetDerivative(Lag, (DiffDelta - Lag) / pDynaModel->GetFreqTimeConstant());
 }
 
 
@@ -647,6 +651,8 @@ void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Delta, Delta, 1.0);
 
 	pDynaModel->SetElement(Lag, Delta, -1.0 / T);
+	if(pDynaModel->UseCOI())
+		pDynaModel->SetElement(Lag, pSyncZone->Delta, -1.0 / T);
 	pDynaModel->SetElement(Lag, Lag, -1.0 / T);
 
 
@@ -664,6 +670,8 @@ void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	if (!pDynaModel->IsInDiscontinuityMode())
 	{
 		pDynaModel->SetElement(S, Delta, -1.0 / T / w0);
+		if (pDynaModel->UseCOI())
+			pDynaModel->SetElement(S, pSyncZone->Delta, -1.0 / T / w0);
 		pDynaModel->SetElement(S, Lag, 1.0 / T / w0);
 		if(pDynaModel->UseCOI())
 			pDynaModel->SetElement(S, pSyncZone->S, -1.0);
@@ -672,6 +680,8 @@ void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 	else
 	{
 		pDynaModel->SetElement(S, Delta, 0.0);
+		if (pDynaModel->UseCOI())
+			pDynaModel->SetElement(S, pSyncZone->Delta, 0.0);
 		pDynaModel->SetElement(S, Lag, 0.0);
 		if(pDynaModel->UseCOI())
 			pDynaModel->SetElement(S, pSyncZone->S, 0.0);
@@ -685,11 +695,14 @@ void CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 
 	const double T{ pDynaModel->GetFreqTimeConstant() };
 	const double w0{ pDynaModel->GetOmega0() };
-	const double dLag{ (Delta - Lag) / T };
-	double dS{ S - (Delta - Lag) / T / w0 };
+
+	double DiffDelta{ Delta };
 
 	if (pDynaModel->UseCOI())
-		dS -= pSyncZone->S;
+		DiffDelta += pSyncZone->Delta;
+
+	const double dLag{ (DiffDelta - Lag) / T };
+	double dS{ S - (DiffDelta - Lag) / T / w0 };
 
 	double dDelta{ 0.0 };
 
@@ -927,11 +940,10 @@ eDEVICEFUNCTIONSTATUS CDynaNode::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE
 
 eDEVICEFUNCTIONSTATUS CDynaNode::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	Lag = S;
+	Lag = Delta - S * pDynaModel->GetFreqTimeConstant() * pDynaModel->GetOmega0();
 	if (pDynaModel->UseCOI())
-		Lag -= pSyncZone->S;
+		Lag += pSyncZone->Delta;
 
-	Lag = Delta - Lag * pDynaModel->GetFreqTimeConstant() * pDynaModel->GetOmega0();
 	SetLowVoltage(sqrt(Vre * Vre + Vim * Vim) < (LOW_VOLTAGE - LOW_VOLTAGE_HYST));
 	//Delta = atan2(Vim, Vre);
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;

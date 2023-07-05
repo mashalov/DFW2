@@ -43,7 +43,7 @@ void Rosenbrock23::Step()
 	else
 	{
 		for (auto&& it : DynaModel_.DeviceContainersPredict())
-			it->Predict();
+			it->Predict(DynaModel_);
 		DynaModel_.NewtonUpdateDevices();
 		DynaModel_.BuildMatrix();
 		FromB(f0);
@@ -227,7 +227,7 @@ void Rodas4::Step()
 	else
 	{
 		for (auto&& it : DynaModel_.DeviceContainersPredict())
-			it->Predict();
+			it->Predict(DynaModel_);
 		DynaModel_.NewtonUpdateDevices();
 		DynaModel_.BuildMatrix();
 	}
