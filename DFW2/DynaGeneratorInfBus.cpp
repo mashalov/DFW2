@@ -22,6 +22,16 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::AngleToSyncReference()
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
+void CDynaGeneratorInfBusBase::FinishStep(const CDynaModel& DynaModel)
+{
+	CDynaVoltageSource::FinishStep(DynaModel);
+	if (DynaModel.UseCOI() && DynaModel.ShowAbsoluteAngles())
+	{
+		SyncDelta_ = Dcoi + Delta;
+		SyncDelta_ = std::atan2(std::sin(SyncDelta_), std::cos(SyncDelta_));
+	}
+}
+
 bool CDynaGeneratorInfBusBase::CalculatePower()
 {
 	Ire = (Eqs * sin(Delta) - Vim) / GetXofEqs();

@@ -56,6 +56,8 @@ namespace DFW2
 		bool bVolatile = false;												// устройства в контейнере могут создаваться и удаляться динамически во время расчета
 		bool bFinishStep = false;											// нужен ли контейнеру расчет независимых переменных после завершения шага
 		bool bStoreStates = true;											// нужно ли контейнеру сохранять состояния
+		bool bUseCOI = false;												// устройства в контейнере используют COI
+		ptrdiff_t SyncDeltaId = 0;											// идентификатор переменной абсолютного угла
 		ptrdiff_t PossibleLinksCount = 0;									// возможное для устройства в контейнере количество ссылок на другие устройства
 		ptrdiff_t EquationsCount = 0;										// количество уравнений устройства в контейнере
 		eDFW2DEVICETYPE	eDeviceType = DEVTYPE_UNKNOWN;

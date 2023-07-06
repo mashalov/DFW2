@@ -19,7 +19,7 @@ namespace DFW2
 	public:
 		// создает устройства какого-то типа и привязать их к переданному вектору указателей устройств
 		virtual void Create(size_t nCount, DEVICEVECTOR& DevVec) = 0;
-		virtual ~CDeviceFactoryBase() {}
+		virtual ~CDeviceFactoryBase() = default;
 	};
 
 	template<class T>
@@ -57,13 +57,15 @@ namespace DFW2
 		LINKSFROMMAPPTR MasterLinksFrom;
 		LINKSTOMAPPTR  MasterLinksTo;
 		LINKSUNDIRECTED Masters, Slaves;
-		eDFW2DEVICETYPE GetType() const;
-		const char* GetVerbalClassName() const;
-		const char* GetSystemClassName() const;
+		eDFW2DEVICETYPE GetType() const noexcept;
+		const char* GetVerbalClassName() const noexcept;
+		const char* GetSystemClassName() const noexcept;
 		static const char* m_cszNameGenerator1C, *m_cszSysNameGenerator1C;
+		static const char* m_cszNameGenerator2C, * m_cszSysNameGenerator2C;
 		static const char* m_cszNameGenerator3C, *m_cszSysNameGenerator3C;
-		static const char* m_cszNameGeneratorPark3C, * m_cszSysNameGeneratorPark3C;
-		static const char* m_cszNameGeneratorPark4C, * m_cszSysNameGeneratorPark4C;
+		static const char* m_cszNameGeneratorPark3C, *m_cszSysNameGeneratorPark3C;
+		static const char* m_cszNameGeneratorPark4C, *m_cszSysNameGeneratorPark4C;
+		static const char* m_cszNameGeneratorPowerInjector, * m_cszSysNameGeneratorPowerInjector;
 		static const char* m_cszNameGeneratorMustang, *m_cszSysNameGeneratorMustang;
 		static const char* m_cszNameGeneratorInfPower, *m_cszSysNameGeneratorInfPower;
 		static const char* m_cszNameGeneratorMotion, *m_cszSysNameGeneratorMotion;

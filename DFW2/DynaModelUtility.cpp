@@ -701,6 +701,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszDerlagToleranceMultiplier, DerLagTolerance_);
 	Serializer->AddProperty(cszZeroCrossingTolerance, ZeroCrossingTolerance_);
 	Serializer->AddProperty(cszUseCOI, UseCOI_);
+	Serializer->AddProperty(cszShowAbsoluteAngles, ShowAbsoluteAngles_);
 
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
@@ -1059,6 +1060,19 @@ void CDynaModel::ConsiderContainerProperties()
 	// обновления после итерации Ньютона и после прогноза, чтобы не проверять эти атрибуты в основных циклах
 	for (auto&& it : DeviceContainers_)
 	{
+		// в режиме использования COI включаем запись абсолютных углов
+		if (UseCOI() && Parameters().ShowAbsoluteAngles_)
+		{
+			auto& props{ it->ContainerProps() };
+			if (props.bUseCOI)
+			{
+				// требуем расчета абсолютных углов в FinishStep
+				props.bFinishStep = true;
+				// добавляем переменную абсолютного угла в записываемые константы
+				props.ConstVarMap_.insert({ CDynaNode::cszSyncDelta, CConstVarIndex(props.SyncDeltaId, VARUNIT_RADIANS, true, eDVT_CONSTSOURCE) });
+			}
+		}
+
 		if (it->ContainerProps().bNewtonUpdate)
 			DeviceContainersNewtonUpdate_.emplace_back(it);
 		if (it->ContainerProps().bPredict)

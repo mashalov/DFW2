@@ -40,8 +40,7 @@ namespace DFW2
 		{
 			C_GSH,
 			C_BSH,
-			C_SYNCDELTA,
-			C_SYNCSLIP
+			C_SYNCDELTA
 		};
 
 		enum VARS
@@ -58,7 +57,6 @@ namespace DFW2
 		VariableIndex Vim;
 
 		double SyncDelta_ = 0.0;
-		double SyncSlip_ = 0.0;
 
 #ifdef _DEBUG
 		double Vrastr, Deltarastr, Qgrastr, Pnrrastr, Qnrrastr;
@@ -292,10 +290,9 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-
 		static constexpr const char* m_cszS = "S";
 		static constexpr const char* m_cszSz = "Sz";
-		static constexpr const char* m_cszDz = "Dz";
+		static constexpr const char* cszSyncDelta = "SyncDelta";
 	};
 
 	// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько

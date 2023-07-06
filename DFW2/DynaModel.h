@@ -110,7 +110,8 @@ namespace DFW2
 			ptrdiff_t StepsToStepChange_ = 2;							// количество шагов до увеличения шага
 			ptrdiff_t StepsToOrderChange_ = 2;							// количество шагов до изменения порядка
 			double ZeroCrossingTolerance_ = 0.95;						// нормированная точность поиска ограничения
-			bool UseCOI_ = false;
+			bool UseCOI_ = false;										// использовать систему координат синхронной зоны
+			bool ShowAbsoluteAngles_ = false;							// дополнительно выводить в результаты углы в синхронных осях
 		};
 
 		struct Parameters : public DynaModelParameters
@@ -197,6 +198,7 @@ namespace DFW2
 			static constexpr const char* cszZeroCrossingTolerance = "ZeroCrossingTolerance";
 			static constexpr const char* cszDerlagToleranceMultiplier = "DerlagToleranceMultiplier";
 			static constexpr const char* cszUseCOI = "UseCOI";
+			static constexpr const char* cszShowAbsoluteAngles = "ShowAbsoluteAngles";
 			static inline CValidationRuleRange ValidatorRange01 = CValidationRuleRange(0, 1);
 			static inline CValidationRuleRange ValidatorRange2_10 = CValidationRuleRange(2, 10);
 		};
@@ -838,6 +840,11 @@ namespace DFW2
 		inline bool UseCOI() const
 		{
 			return Parameters().UseCOI_;
+		}
+
+		inline bool ShowAbsoluteAngles() const
+		{
+			return Parameters().ShowAbsoluteAngles_;
 		}
 
 		inline double H() const

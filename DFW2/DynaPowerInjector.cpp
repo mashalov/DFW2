@@ -12,6 +12,7 @@ double* CDynaPowerInjector::GetConstVariablePtr(ptrdiff_t nVarIndex)
 		MAP_VARIABLE(NodeId, C_NODEID)
 		MAP_VARIABLE(P, C_P)
 		MAP_VARIABLE(Q, C_Q)
+		MAP_VARIABLE(SyncDelta_, C_SYNCDELTA)
 	}
 	return p;
 }
@@ -54,7 +55,7 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pD
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vim, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszVim, DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Sv, GetSingleLink(DEVTYPE_NODE), pDynaModel->GetDampingName(), DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Scoi, GetSingleLink(DEVTYPE_NODE), CDynaNode::m_cszSz, DEVTYPE_NODE));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Dcoi, GetSingleLink(DEVTYPE_NODE), CDynaNode::m_cszDz, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Dcoi, GetSingleLink(DEVTYPE_NODE), CDynaNode::cszSyncDelta, DEVTYPE_NODE));
 	return eRes;
 }
 
@@ -125,6 +126,9 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 	props.EquationsCount = CDynaPowerInjector::VARS::V_LAST;
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
 	props.bFinishStep = true;	// нужно рассчитывать мощности после выполнения шага
+	props.bUseCOI = true;
+	props.bUseCOI = true;
+	props.SyncDeltaId = CDynaPowerInjector::C_SYNCDELTA;
 	props.bStoreStates = false;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaPowerInjector>>();
 }

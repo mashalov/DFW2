@@ -747,7 +747,6 @@ double* CDynaNodeBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 		MAP_VARIABLE(Bshunt, C_BSH)
 		MAP_VARIABLE(Gshunt, C_GSH)
 		MAP_VARIABLE(SyncDelta_, C_SYNCDELTA)
-		MAP_VARIABLE(SyncSlip_, C_SYNCSLIP)
 	}
 	return p;
 }
@@ -1186,7 +1185,7 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 
 VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::string_view VarName)
 {
-	if (VarName == CDynaNode::m_cszSz || VarName == CDynaNode::m_cszDz)
+	if (VarName == CDynaNode::m_cszSz || VarName == CDynaNode::cszSyncDelta)
 	{
 		VariableIndexExternal ExtVar = { -1, nullptr };
 
@@ -1932,22 +1931,18 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.AddLinkFrom(DEVTYPE_BRANCH, DLM_MULTI, DPD_SLAVE);
 	// и инжекторы много к одному. Для них узел выступает ведущим
 	props.AddLinkFrom(DEVTYPE_POWER_INJECTOR, DLM_MULTI, DPD_SLAVE);
-	props.bFinishStep = true;
 	props.EquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
 	props.VarMap_.insert({ CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS) });
 	props.VarMap_.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
 	props.VarMap_.insert({ CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS) });
 	props.VarAliasMap_.insert({ "vras", { CDynaNodeBase::m_cszV }});
-	props.ConstVarMap_.insert({ "SyncDelta", CConstVarIndex(CDynaNode::C_SYNCDELTA, VARUNIT_RADIANS, true, eDVT_CONSTSOURCE)});
-	props.ConstVarMap_.insert({ "SyncSlip", CConstVarIndex(CDynaNode::C_SYNCSLIP, VARUNIT_UNITLESS, true, eDVT_CONSTSOURCE)});
 }
 
 void CDynaNode::FinishStep(const CDynaModel& DynaModel)
 {
 	SyncDelta_ = pSyncZone->Delta + Delta;
 	SyncDelta_ = std::atan2(std::sin(SyncDelta_), std::cos(SyncDelta_));
-	SyncSlip_  = pSyncZone->S;
 }
 
 void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
@@ -1969,6 +1964,9 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasNode);
 	props.ConstVarMap_.insert({ CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
 	props.ConstVarMap_.insert({ CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+
+	props.bUseCOI = true;
+	props.SyncDeltaId = CDynaNode::C_SYNCDELTA;
 }
 
 void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)

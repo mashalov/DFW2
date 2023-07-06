@@ -353,7 +353,7 @@ namespace DFW2
 		CDynaModel* GetModel() noexcept;
 		const CDynaModel* GetModel() const noexcept;
 		void ProcessTopologyRequest();
-
+		
 		// построение блока уравнения в Якоби
 		virtual void BuildEquations(CDynaModel* pDynaModel);
 		// построение правой части уравнений

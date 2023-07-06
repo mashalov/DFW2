@@ -27,6 +27,7 @@ namespace DFW2
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		virtual eDEVICEFUNCTIONSTATUS AngleToSyncReference();
+		void FinishStep(const CDynaModel& DynaModel) override;
 
 		static constexpr const char* m_cszr = "r";
 		static constexpr const char* m_cszxd1 = "xd1";

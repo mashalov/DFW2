@@ -239,7 +239,6 @@ bool CDynaModel::RunTransient()
 		if(!Link())
 			throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
 
-
 		TurnOffDevicesByOffMasters();
 
 		// записывать заголовок нужно сразу после линковки и отключения устройств без ведущих навсегда

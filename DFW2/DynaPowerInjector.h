@@ -27,13 +27,14 @@ namespace DFW2
 			C_NODEID,
 			C_P,
 			C_Q,
+			C_SYNCDELTA,
 			C_LAST
 		};
 
 
 		VariableIndex Ire, Iim;
 
-		double P, Q;
+		double P, Q, SyncDelta_;
 
 		double Kgen;
 		double LFQmin;
