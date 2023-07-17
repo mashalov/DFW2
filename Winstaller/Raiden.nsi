@@ -2,6 +2,7 @@
 !define Version "1.0.1.129"
 !define RastrWinX64VersionRequired "2.8.1.6442"
 !define RastrWinX86VersionRequired "2.8.0.6440"
+!define VisualStudioVersionRequired "17.6.5"
 
 !getdllversion "..\release dll\dfw2.dll" DllVer
 
@@ -113,6 +114,7 @@ Function SystemRequirementsPage
 	Call CheckRastrWinX64
 	Push ${RastrWinX86VersionRequired}
 	Call CheckRastrWinX86
+	Push ${VisualStudioVersionRequired}
 	Call CheckMSBuild
 	
 	${NSD_CreateLabel} 110u 5u 150u 12u $MSBuildInstallationCheckResult
@@ -196,6 +198,7 @@ FunctionEnd
 
 Function CheckMSBuild
 	ClearErrors
+	Pop $R3
 	StrCpy $MSBuildInstallationCheckResult $(MSBuildVsWhere)
 	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe"'
 	Pop $R0 # return value/error/timeout
@@ -205,6 +208,15 @@ Function CheckMSBuild
 	StrCpy $MSBuildInstallationCheckResult $(MSBuildNotFound)
 	${Trim} $R0 $R1
 	IfFileExists "$R0" 0 FailedCheckMSBuild
+	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -property catalog_productDisplayVersion'
+	Pop $R0 # return value/error/timeout
+	Pop $R1 # printed text, up to ${NSIS_MAX_STRLEN}
+	StrCmp $R0 "error" FailedCheckMSBuild 0
+	IntCmp $R0 0 0 FailedCheckMSBuild FailedCheckMSBuild
+	${Trim} $R2 $R1
+	StrCpy $MSBuildInstallationCheckResult "$(OldVersion)$R2$(RequiredVersion)$R3"
+	${VersionCheckNew} $R3 $R2 $R0
+	IntCmp $R0 1 FailedCheckMSBuild
 	StrCpy $MSBuildInstallationCheckResult $(Installed)
 FailedCheckMSBuild:
 FunctionEnd
