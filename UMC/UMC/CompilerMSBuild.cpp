@@ -123,54 +123,69 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	return dwResult;
 }
 
+DFW2::VersionInfo CCompilerMSBuild::Version(const std::wstring& strVersion)
+{
+	DFW2::VersionInfo version;
+	std::fill(version.begin(), version.end(), 0);
+	constexpr const char* szFailedToGetMSBuildVersion = "Невозможно получить версию из \"{}\"";
+	const std::string utf8Version {utf8_encode(strVersion)};
+	if (sscanf_s(utf8Version.c_str(), "%zu.%zu.%zu.%zu",
+		&version[0],
+		&version[1],
+		&version[2],
+		&version[3]) < 2)
+		throw std::runtime_error(fmt::format(szFailedToGetMSBuildVersion, utf8Version));
+	return version;
+
+}
+
+DFW2::VersionInfo CCompilerMSBuild::GetVSVersion()
+{
+	std::list<std::wstring> output;
+	RunVswhere(L" -property catalog_productDisplayVersion", output);
+	constexpr const char* szFailedToGetVSVersion = "Невозможно получить версию Visual Studio";
+	if(output.empty())
+		throw std::runtime_error(szFailedToGetVSVersion);
+		
+	return CCompilerMSBuild::Version(output.front());
+}
+
 DFW2::VersionInfo CCompilerMSBuild::GetMSBuildVersion(const std::filesystem::path& MSBuildPath)
 {
 	std::list<std::wstring> output;
 	std::wstring commandLine {MSBuildPath.c_str()};
 	commandLine.append(L" -ver -nologo");
-	const DWORD dwResult{ RunWindowsConsole(commandLine, {}, output) };
-	if (dwResult != 0)
-		throw std::system_error(
-			std::error_code(
-				GetLastError(), 
-				std::system_category()), 
-				fmt::format("{} завершен с ошибкой", 
-					utf8_encode(commandLine))
-		);
 
+	const DWORD dwResult{ RunWindowsConsole(commandLine, {}, output) };
 	constexpr const char* szFailedToGetMSBuildVersion = "Невозможно получить версию MSBuild";
-	DFW2::VersionInfo version;
+
 	if (output.empty())
 		throw std::runtime_error(szFailedToGetMSBuildVersion);
-		if(sscanf_s(utf8_encode(output.front()).c_str(), "%zu.%zu.%zu.%zu",
-			&version[0],
-			&version[1],
-			&version[2],
-			&version[3]) != 4)
-				throw std::runtime_error(szFailedToGetMSBuildVersion);
-
-	return version;
+	return CCompilerMSBuild::Version(output.front());
 }
 
-std::wstring CCompilerMSBuild::GetMSBuildPath()
+DWORD CCompilerMSBuild::RunVswhere(std::wstring CommandLine, std::list<std::wstring>& listConsole)
 {
 	// используем vswhere из Visual Studio
 	PWSTR ppszPath;
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, KF_FLAG_DEFAULT, NULL, &ppszPath)))
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "SHGetKnownFolderPath - отказ получения пути к Program Files");
-	std::wstring MSBuildPath(ppszPath);
+	std::wstring vswhereCommandLine(ppszPath);
 	CoTaskMemFree(ppszPath);
-	MSBuildPath.append(L"\\Microsoft Visual Studio\\Installer\\vswhere.exe -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe");
-
-	std::list<std::wstring> output;
-	DWORD dwResult(RunWindowsConsole(MSBuildPath, L"", output));
-
+	vswhereCommandLine.append(L"\\Microsoft Visual Studio\\Installer\\vswhere.exe");
+	vswhereCommandLine.append(CommandLine);
+	const DWORD dwResult{ RunWindowsConsole(vswhereCommandLine, {}, listConsole) };
 	if (dwResult != 0)
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "vswhere завершен с ошибкой");
-
-	return output.size() ? output.front() : L"";// "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\Professional\\MSBuild\\Current\\Bin\\msbuild.exe";
+	return dwResult;
 }
 
+std::wstring CCompilerMSBuild::GetMSBuildPath()
+{
+	std::list<std::wstring> output;
+	RunVswhere(L" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe", output);
+	return output.size() ? output.front() : L"";
+}
 
 void CCompilerMSBuild::CompileWithMSBuild()
 {
@@ -181,8 +196,23 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	// находим путь к msbuild
 	std::wstring MSBuildPath(GetMSBuildPath());
 	// получаем версию msbuild
-	const auto ver{ GetMSBuildVersion(MSBuildPath) };
+	const auto MSBuildVersion{ GetMSBuildVersion(MSBuildPath) };
+	const auto VSVersion{ GetVSVersion() };
 
+	static_assert(_MSC_VER == 1936);
+	const DFW2::VersionInfo VSrequiredVersion = { 17, 6, 5, 0 };
+
+	auto fnVersionTie = [](const DFW2::VersionInfo& v)
+	{
+		return std::tie(v[0], v[1], v[2], v[3]);
+	};
+
+	if (fnVersionTie(VSVersion) > fnVersionTie(VSrequiredVersion))
+		throw std::runtime_error(fmt::format("Для сборки требуется версия Visual Studio не старше {}.{}.{}",
+			VSrequiredVersion[0],
+			VSrequiredVersion[1], 
+			VSrequiredVersion[2]));
+			
 	// задаем платформу сборки
 	std::wstring Platform = utf8_decode(Properties[PropertyMap::szPropPlatform]);
 	// имя dll берем по имени проекта
