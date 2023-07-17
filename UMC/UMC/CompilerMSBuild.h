@@ -9,5 +9,6 @@ protected:
 	void BuildWithCompiler() override;
 	std::optional<ModelMetaData> GetMetaData(const std::filesystem::path& pathDLLOutput) override;
 	std::wstring GetMSBuildPath();
+	DFW2::VersionInfo GetMSBuildVersion(const std::filesystem::path& MSBuildPath);
 };
 

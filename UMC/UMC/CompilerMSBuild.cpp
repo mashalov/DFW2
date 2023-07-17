@@ -123,6 +123,35 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	return dwResult;
 }
 
+DFW2::VersionInfo CCompilerMSBuild::GetMSBuildVersion(const std::filesystem::path& MSBuildPath)
+{
+	std::list<std::wstring> output;
+	std::wstring commandLine {MSBuildPath.c_str()};
+	commandLine.append(L" -ver -nologo");
+	const DWORD dwResult{ RunWindowsConsole(commandLine, {}, output) };
+	if (dwResult != 0)
+		throw std::system_error(
+			std::error_code(
+				GetLastError(), 
+				std::system_category()), 
+				fmt::format("{} завершен с ошибкой", 
+					utf8_encode(commandLine))
+		);
+
+	constexpr const char* szFailedToGetMSBuildVersion = "Невозможно получить версию MSBuild";
+	DFW2::VersionInfo version;
+	if (output.empty())
+		throw std::runtime_error(szFailedToGetMSBuildVersion);
+		if(sscanf_s(utf8_encode(output.front()).c_str(), "%zu.%zu.%zu.%zu",
+			&version[0],
+			&version[1],
+			&version[2],
+			&version[3]) != 4)
+				throw std::runtime_error(szFailedToGetMSBuildVersion);
+
+	return version;
+}
+
 std::wstring CCompilerMSBuild::GetMSBuildPath()
 {
 	// используем vswhere из Visual Studio
@@ -151,6 +180,9 @@ void CCompilerMSBuild::CompileWithMSBuild()
 
 	// находим путь к msbuild
 	std::wstring MSBuildPath(GetMSBuildPath());
+	// получаем версию msbuild
+	const auto ver{ GetMSBuildVersion(MSBuildPath) };
+
 	// задаем платформу сборки
 	std::wstring Platform = utf8_decode(Properties[PropertyMap::szPropPlatform]);
 	// имя dll берем по имени проекта
