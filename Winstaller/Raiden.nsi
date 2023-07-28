@@ -1,5 +1,5 @@
 ﻿!define ProductName "RaidenEMS"
-!define Version "1.0.1.129"
+!define Version "1.0.1.130"
 !define RastrWinX64VersionRequired "2.8.1.6442"
 !define RastrWinX86VersionRequired "2.8.0.6440"
 !define VisualStudioVersionRequired "17.6.5"
@@ -208,7 +208,7 @@ Function CheckMSBuild
 	StrCpy $MSBuildInstallationCheckResult $(MSBuildNotFound)
 	${Trim} $R0 $R1
 	IfFileExists "$R0" 0 FailedCheckMSBuild
-	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -property catalog_productDisplayVersion'
+	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property catalog_productDisplayVersion'
 	Pop $R0 # return value/error/timeout
 	Pop $R1 # printed text, up to ${NSIS_MAX_STRLEN}
 	StrCmp $R0 "error" FailedCheckMSBuild 0
@@ -220,7 +220,6 @@ Function CheckMSBuild
 	StrCpy $MSBuildInstallationCheckResult $(Installed)
 FailedCheckMSBuild:
 FunctionEnd
-
 
 RequestExecutionLevel admin
 Page custom SystemRequirementsPage SystemRequirementsPageLeave
@@ -242,7 +241,7 @@ Section InstallX64 0
 	File /r /x ".vs" "${InputFolderX64}\..\..\ReferenceCustomModel\*.*"
 	SetOutPath $RastrWinX64ComponentsPath\${TestStuffPath}
 	File "${InputFolderX64}BatchTest.exe"
-	File "${InputFolderX64}Scn2Dfw.rbs"
+#	File "${InputFolderX64}Scn2Dfw.rbs"
 	File "${InputFolderX64}ModelCorrect.rbs"
 	File "${InputFolderX64}config.json"
 	File "${InputFolderX64}Тестовая утилита.pdf"
@@ -455,8 +454,8 @@ LangString ComponentsX64 ${LANG_ENGLISH} "x64 components"
 LangString ComponentsX64 ${LANG_RUSSIAN} "Компоненты x64"
 LangString ComponentsX86 ${LANG_ENGLISH} "x86 components"
 LangString ComponentsX86 ${LANG_RUSSIAN} "Компоненты x86"
-LangString MSBuildInstallationInstructions ${LANG_ENGLISH} "This program requires Microsoft Visual Studio 2022 or Microsoft Build Tools to be installed with C++ workload"
-LangString MSBuildInstallationInstructions ${LANG_RUSSIAN} "Для работы данного ПО необходима установка Microsoft Visual Studio 2022 или Microsoft Build Tools с рабочей нагрузкой C++"
+LangString MSBuildInstallationInstructions ${LANG_ENGLISH} "This program requires Microsoft Visual Studio 2022 or Microsoft Build Tools ${VisualStudioVersionRequired} to be installed with C++ workload"
+LangString MSBuildInstallationInstructions ${LANG_RUSSIAN} "Для работы данного ПО необходима установка Microsoft Visual Studio 2022 или Microsoft Build Tools версии не старше ${VisualStudioVersionRequired} с рабочей нагрузкой C++"
 LangString Installing ${LANG_ENGLISH} "Installing"
 LangString Installing ${LANG_RUSSIAN} "Инсталляция"
 LangString UnInstalling ${LANG_ENGLISH} "Uninstalling"

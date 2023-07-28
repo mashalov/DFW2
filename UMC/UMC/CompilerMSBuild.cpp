@@ -142,7 +142,7 @@ DFW2::VersionInfo CCompilerMSBuild::Version(const std::wstring& strVersion)
 DFW2::VersionInfo CCompilerMSBuild::GetVSVersion()
 {
 	std::list<std::wstring> output;
-	RunVswhere(L" -property catalog_productDisplayVersion", output);
+	RunVswhere(L" -latest -products * -property catalog_productDisplayVersion", output);
 	constexpr const char* szFailedToGetVSVersion = "Невозможно получить версию Visual Studio";
 	if(output.empty())
 		throw std::runtime_error(szFailedToGetVSVersion);
