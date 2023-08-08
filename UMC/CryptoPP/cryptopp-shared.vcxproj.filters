@@ -1,0 +1,550 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="17.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\source\repos\DFW2\UMC\CryptoPP\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <MASM Include="D:\source\repos\DFW2\UMC\CryptoPP\rdrand.asm" />
+    <MASM Include="D:\source\repos\DFW2\UMC\CryptoPP\rdseed.asm" />
+    <MASM Include="D:\source\repos\DFW2\UMC\CryptoPP\x64dll.asm" />
+    <MASM Include="D:\source\repos\DFW2\UMC\CryptoPP\x64masm.asm" />
+  </ItemGroup>
+  <ItemGroup>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\cryptlib.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\cpu.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\integer.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\3way.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\adler32.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\algebra.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\algparam.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\allocate.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\arc4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\aria.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\aria_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ariatab.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\asn.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\authenc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\base32.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\base64.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\basecode.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\bfinit.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\blake2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\blake2b_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\blake2s_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\blowfish.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\blumshub.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\camellia.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\cast.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\casts.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\cbcmac.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ccm.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\chacha.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\chacha_avx.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\chacha_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\chachapoly.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\cham.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\cham_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\channels.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\cmac.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\crc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\crc_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\darn.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\default.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\des.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\dessp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\dh.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\dh2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\dll.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\donna_32.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\donna_64.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\donna_sse.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\dsa.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\eax.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ec2n.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\eccrypto.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ecp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\elgamal.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\emsa2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\eprecomp.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\esign.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\files.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\filters.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\fips140.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gcm.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gcm_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gf256.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gf2_32.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gf2n.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gf2n_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gfpcrypt.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gost.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\gzip.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\hc128.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\hc256.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\hex.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\hight.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\hmac.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\hrtimer.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ida.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\idea.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\iterhash.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\kalyna.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\kalynatab.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\keccak.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\keccak_core.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\keccak_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\lea.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\lea_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\lsh256.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\lsh256_avx.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\lsh256_sse.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\lsh512.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\lsh512_avx.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\lsh512_sse.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\luc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\mars.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\marss.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\md2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\md4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\md5.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\misc.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\modes.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\mqueue.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\mqv.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\nbtheory.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\neon_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\oaep.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\osrng.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\padlkrng.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\panama.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\pkcspad.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\poly1305.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\polynomi.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ppc_power7.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ppc_power8.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ppc_power9.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ppc_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\pssr.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\pubkey.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\queue.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rabbit.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rabin.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\randpool.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rc2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rc5.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rc6.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rdrand.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rdtables.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rijndael.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rijndael_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ripemd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rng.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rsa.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\rw.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\safer.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\salsa.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\scrypt.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\seal.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\seed.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\serpent.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sha.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sha3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sha_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\shacal2.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\shacal2_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\shake.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\shark.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sharkbox.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\simeck.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\simon.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\simon128_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\skipjack.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sm3.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sm4.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sm4_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sosemanuk.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\speck.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\speck128_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\square.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\squaretb.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\sse_simd.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\strciphr.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\tea.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\tftables.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\threefish.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\tiger.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\tigertab.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\ttmac.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\tweetnacl.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\twofish.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\vmac.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\wake.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\whrlpool.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\xed25519.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\xtr.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\xtrcrypt.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\xts.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\zdeflate.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\zinflate.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+    <Object Include="D:\source\repos\DFW2\UMC\CryptoPP\cryptopp-object.dir\$(Configuration)\zlib.obj">
+      <Filter>Object Libraries</Filter>
+    </Object>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Object Libraries">
+      <UniqueIdentifier>{0AE7B921-E8D9-3038-BE56-F627B24D3F85}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

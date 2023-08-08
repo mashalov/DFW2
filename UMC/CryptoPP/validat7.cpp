@@ -46,6 +46,25 @@
 NAMESPACE_BEGIN(CryptoPP)
 NAMESPACE_BEGIN(Test)
 
+ANONYMOUS_NAMESPACE_BEGIN
+
+inline bool operator==(const x25519& lhs, const x25519& rhs)
+{
+	// This is a hack because the KeyAgreement classes do not make it easy to access the PrivateKey
+	ByteQueue q1, q2;
+	lhs.DEREncodePrivateKey(q1);
+	rhs.DEREncodePrivateKey(q2);
+
+	return q1 == q2;
+}
+
+inline bool operator!=(const x25519& lhs, const x25519& rhs)
+{
+	return !operator==(lhs, rhs);
+}
+
+ANONYMOUS_NAMESPACE_END
+
 bool ValidateDH()
 {
 	std::cout << "\nDH validation suite running...\n\n";
@@ -76,234 +95,121 @@ bool ValidateMQV()
 bool ValidateHMQV()
 {
 	std::cout << "\nHMQV validation suite running...\n\n";
+	bool success = true, fail;
 
-	ECHMQV256 hmqvB(false);
 	FileSource f256(DataDir("TestData/hmqv256.dat").c_str(), true, new HexDecoder);
 	FileSource f384(DataDir("TestData/hmqv384.dat").c_str(), true, new HexDecoder);
 	FileSource f512(DataDir("TestData/hmqv512.dat").c_str(), true, new HexDecoder);
-	hmqvB.AccessGroupParameters().BERDecode(f256);
+
+	/////////////////////////
 
 	std::cout << "HMQV with NIST P-256 and SHA-256:" << std::endl;
 
-	if (hmqvB.GetCryptoParameters().Validate(GlobalRNG(), 3))
-		std::cout << "passed    authenticated key agreement domain parameters validation (server)" << std::endl;
-	else
-	{
-		std::cout << "FAILED    authenticated key agreement domain parameters invalid (server)" << std::endl;
-		return false;
-	}
-
+	ECHMQV256 hmqvB256(false);
+	hmqvB256.AccessGroupParameters().BERDecode(f256);
 	const OID oid = ASN1::secp256r1();
-	ECHMQV< ECP >::Domain hmqvA(oid, true /*client*/);
+	ECHMQV< ECP >::Domain hmqvA256(oid, true /*client*/);
 
-	if (hmqvA.GetCryptoParameters().Validate(GlobalRNG(), 3))
-		std::cout << "passed    authenticated key agreement domain parameters validation (client)" << std::endl;
+	fail = !AuthenticatedKeyAgreementWithRolesValidate(hmqvA256, hmqvB256);
+	success = !fail && success;
+	if (fail == false)
+		std::cout << "passed    authenticated key agreement" << std::endl;
 	else
-	{
-		std::cout << "FAILED    authenticated key agreement domain parameters invalid (client)" << std::endl;
-		return false;
-	}
+		std::cout << "FAILED    authenticated key agreement" << std::endl;
 
-	SecByteBlock sprivA(hmqvA.StaticPrivateKeyLength()), sprivB(hmqvB.StaticPrivateKeyLength());
-	SecByteBlock eprivA(hmqvA.EphemeralPrivateKeyLength()), eprivB(hmqvB.EphemeralPrivateKeyLength());
-	SecByteBlock spubA(hmqvA.StaticPublicKeyLength()), spubB(hmqvB.StaticPublicKeyLength());
-	SecByteBlock epubA(hmqvA.EphemeralPublicKeyLength()), epubB(hmqvB.EphemeralPublicKeyLength());
-	SecByteBlock valA(hmqvA.AgreedValueLength()), valB(hmqvB.AgreedValueLength());
+	/////////////////////////
 
-	hmqvA.GenerateStaticKeyPair(GlobalRNG(), sprivA, spubA);
-	hmqvB.GenerateStaticKeyPair(GlobalRNG(), sprivB, spubB);
-	hmqvA.GenerateEphemeralKeyPair(GlobalRNG(), eprivA, epubA);
-	hmqvB.GenerateEphemeralKeyPair(GlobalRNG(), eprivB, epubB);
-
-	std::memset(valA.begin(), 0x00, valA.size());
-	std::memset(valB.begin(), 0x11, valB.size());
-
-	if (!(hmqvA.Agree(valA, sprivA, eprivA, spubB, epubB) && hmqvB.Agree(valB, sprivB, eprivB, spubA, epubA)))
-	{
-		std::cout << "FAILED    authenticated key agreement failed" << std::endl;
-		return false;
-	}
-
-	if (memcmp(valA.begin(), valB.begin(), hmqvA.AgreedValueLength()))
-	{
-		std::cout << "FAILED    authenticated agreed values not equal" << std::endl;
-		return false;
-	}
-
-	std::cout << "passed    authenticated key agreement" << std::endl;
-
-	// Now test HMQV with NIST P-384 curve and SHA384 hash
-	std::cout << std::endl;
 	std::cout << "HMQV with NIST P-384 and SHA-384:" << std::endl;
 
 	ECHMQV384 hmqvB384(false);
 	hmqvB384.AccessGroupParameters().BERDecode(f384);
-
-	if (hmqvB384.GetCryptoParameters().Validate(GlobalRNG(), 3))
-		std::cout << "passed    authenticated key agreement domain parameters validation (server)" << std::endl;
-	else
-	{
-		std::cout << "FAILED    authenticated key agreement domain parameters invalid (server)" << std::endl;
-		return false;
-	}
-
 	const OID oid384 = ASN1::secp384r1();
 	ECHMQV384 hmqvA384(oid384, true /*client*/);
 
-	if (hmqvA384.GetCryptoParameters().Validate(GlobalRNG(), 3))
-		std::cout << "passed    authenticated key agreement domain parameters validation (client)" << std::endl;
+	fail = !AuthenticatedKeyAgreementWithRolesValidate(hmqvA384, hmqvB384);
+	success = !fail && success;
+	if (fail == false)
+		std::cout << "passed    authenticated key agreement" << std::endl;
 	else
-	{
-		std::cout << "FAILED    authenticated key agreement domain parameters invalid (client)" << std::endl;
-		return false;
-	}
+		std::cout << "FAILED    authenticated key agreement" << std::endl;
 
-	SecByteBlock sprivA384(hmqvA384.StaticPrivateKeyLength()), sprivB384(hmqvB384.StaticPrivateKeyLength());
-	SecByteBlock eprivA384(hmqvA384.EphemeralPrivateKeyLength()), eprivB384(hmqvB384.EphemeralPrivateKeyLength());
-	SecByteBlock spubA384(hmqvA384.StaticPublicKeyLength()), spubB384(hmqvB384.StaticPublicKeyLength());
-	SecByteBlock epubA384(hmqvA384.EphemeralPublicKeyLength()), epubB384(hmqvB384.EphemeralPublicKeyLength());
-	SecByteBlock valA384(hmqvA384.AgreedValueLength()), valB384(hmqvB384.AgreedValueLength());
+	/////////////////////////
 
-	hmqvA384.GenerateStaticKeyPair(GlobalRNG(), sprivA384, spubA384);
-	hmqvB384.GenerateStaticKeyPair(GlobalRNG(), sprivB384, spubB384);
-	hmqvA384.GenerateEphemeralKeyPair(GlobalRNG(), eprivA384, epubA384);
-	hmqvB384.GenerateEphemeralKeyPair(GlobalRNG(), eprivB384, epubB384);
+	std::cout << "HMQV with NIST P-521 and SHA-512:" << std::endl;
 
-	std::memset(valA384.begin(), 0x00, valA384.size());
-	std::memset(valB384.begin(), 0x11, valB384.size());
+	ECHMQV512 hmqvB521(false);
+	hmqvB521.AccessGroupParameters().BERDecode(f512);
+	const OID oid521 = ASN1::secp521r1();
+	ECHMQV512 hmqvA521(oid521, true /*client*/);
 
-	if (!(hmqvA384.Agree(valA384, sprivA384, eprivA384, spubB384, epubB384) && hmqvB384.Agree(valB384, sprivB384, eprivB384, spubA384, epubA384)))
-	{
-		std::cout << "FAILED    authenticated key agreement failed" << std::endl;
-		return false;
-	}
+	fail = !AuthenticatedKeyAgreementWithRolesValidate(hmqvA521, hmqvB521);
+	success = !fail && success;
+	if (fail == false)
+		std::cout << "passed    authenticated key agreement" << std::endl;
+	else
+		std::cout << "FAILED    authenticated key agreement" << std::endl;
 
-	if (memcmp(valA384.begin(), valB384.begin(), hmqvA384.AgreedValueLength()))
-	{
-		std::cout << "FAILED    authenticated agreed values not equal" << std::endl;
-		return false;
-	}
-
-	std::cout << "passed    authenticated key agreement" << std::endl;
-
-	return true;
+	return success;
 }
 
 bool ValidateFHMQV()
 {
-std::cout << "\nFHMQV validation suite running...\n\n";
+	std::cout << "\nFHMQV validation suite running...\n\n";
+	bool success = true, fail;
 
-	//ECFHMQV< ECP >::Domain fhmqvB(false /*server*/);
-	ECFHMQV256 fhmqvB(false);
 	FileSource f256(DataDir("TestData/fhmqv256.dat").c_str(), true, new HexDecoder);
 	FileSource f384(DataDir("TestData/fhmqv384.dat").c_str(), true, new HexDecoder);
 	FileSource f512(DataDir("TestData/fhmqv512.dat").c_str(), true, new HexDecoder);
-	fhmqvB.AccessGroupParameters().BERDecode(f256);
+
+	/////////////////////////
 
 	std::cout << "FHMQV with NIST P-256 and SHA-256:" << std::endl;
 
-	if (fhmqvB.GetCryptoParameters().Validate(GlobalRNG(), 3))
-		std::cout << "passed    authenticated key agreement domain parameters validation (server)" << std::endl;
-	else
-	{
-		std::cout << "FAILED    authenticated key agreement domain parameters invalid (server)" << std::endl;
-		return false;
-	}
-
+	ECFHMQV256 fhmqvB256(false);
+	fhmqvB256.AccessGroupParameters().BERDecode(f256);
 	const OID oid = ASN1::secp256r1();
-	ECFHMQV< ECP >::Domain fhmqvA(oid, true /*client*/);
+	ECFHMQV< ECP >::Domain fhmqvA256(oid, true /*client*/);
 
-	if (fhmqvA.GetCryptoParameters().Validate(GlobalRNG(), 3))
-		std::cout << "passed    authenticated key agreement domain parameters validation (client)" << std::endl;
+	fail = !AuthenticatedKeyAgreementWithRolesValidate(fhmqvA256, fhmqvB256);
+	success = !fail && success;
+	if (fail == false)
+		std::cout << "passed    authenticated key agreement" << std::endl;
 	else
-	{
-		std::cout << "FAILED    authenticated key agreement domain parameters invalid (client)" << std::endl;
-		return false;
-	}
+		std::cout << "FAILED    authenticated key agreement" << std::endl;
 
-	SecByteBlock sprivA(fhmqvA.StaticPrivateKeyLength()), sprivB(fhmqvB.StaticPrivateKeyLength());
-	SecByteBlock eprivA(fhmqvA.EphemeralPrivateKeyLength()), eprivB(fhmqvB.EphemeralPrivateKeyLength());
-	SecByteBlock spubA(fhmqvA.StaticPublicKeyLength()), spubB(fhmqvB.StaticPublicKeyLength());
-	SecByteBlock epubA(fhmqvA.EphemeralPublicKeyLength()), epubB(fhmqvB.EphemeralPublicKeyLength());
-	SecByteBlock valA(fhmqvA.AgreedValueLength()), valB(fhmqvB.AgreedValueLength());
+	/////////////////////////
 
-	fhmqvA.GenerateStaticKeyPair(GlobalRNG(), sprivA, spubA);
-	fhmqvB.GenerateStaticKeyPair(GlobalRNG(), sprivB, spubB);
-	fhmqvA.GenerateEphemeralKeyPair(GlobalRNG(), eprivA, epubA);
-	fhmqvB.GenerateEphemeralKeyPair(GlobalRNG(), eprivB, epubB);
-
-	std::memset(valA.begin(), 0x00, valA.size());
-	std::memset(valB.begin(), 0x11, valB.size());
-
-	if (!(fhmqvA.Agree(valA, sprivA, eprivA, spubB, epubB) && fhmqvB.Agree(valB, sprivB, eprivB, spubA, epubA)))
-	{
-		std::cout << "FAILED    authenticated key agreement failed" << std::endl;
-		return false;
-	}
-
-	if (memcmp(valA.begin(), valB.begin(), fhmqvA.AgreedValueLength()))
-	{
-		std::cout << "FAILED    authenticated agreed values not equal" << std::endl;
-		return false;
-	}
-
-	std::cout << "passed    authenticated key agreement" << std::endl;
-
-	// Now test FHMQV with NIST P-384 curve and SHA384 hash
-	std::cout << std::endl;
 	std::cout << "FHMQV with NIST P-384 and SHA-384:" << std::endl;
 
 	ECHMQV384 fhmqvB384(false);
 	fhmqvB384.AccessGroupParameters().BERDecode(f384);
-
-	if (fhmqvB384.GetCryptoParameters().Validate(GlobalRNG(), 3))
-		std::cout << "passed    authenticated key agreement domain parameters validation (server)" << std::endl;
-	else
-	{
-		std::cout << "FAILED    authenticated key agreement domain parameters invalid (server)" << std::endl;
-		return false;
-	}
-
 	const OID oid384 = ASN1::secp384r1();
 	ECHMQV384 fhmqvA384(oid384, true /*client*/);
 
-	if (fhmqvA384.GetCryptoParameters().Validate(GlobalRNG(), 3))
-		std::cout << "passed    authenticated key agreement domain parameters validation (client)" << std::endl;
+	fail = !AuthenticatedKeyAgreementWithRolesValidate(fhmqvA384, fhmqvB384);
+	success = !fail && success;
+	if (fail == false)
+		std::cout << "passed    authenticated key agreement" << std::endl;
 	else
-	{
-		std::cout << "FAILED    authenticated key agreement domain parameters invalid (client)" << std::endl;
-		return false;
-	}
+		std::cout << "FAILED    authenticated key agreement" << std::endl;
 
-	SecByteBlock sprivA384(fhmqvA384.StaticPrivateKeyLength()), sprivB384(fhmqvB384.StaticPrivateKeyLength());
-	SecByteBlock eprivA384(fhmqvA384.EphemeralPrivateKeyLength()), eprivB384(fhmqvB384.EphemeralPrivateKeyLength());
-	SecByteBlock spubA384(fhmqvA384.StaticPublicKeyLength()), spubB384(fhmqvB384.StaticPublicKeyLength());
-	SecByteBlock epubA384(fhmqvA384.EphemeralPublicKeyLength()), epubB384(fhmqvB384.EphemeralPublicKeyLength());
-	SecByteBlock valA384(fhmqvA384.AgreedValueLength()), valB384(fhmqvB384.AgreedValueLength());
+	/////////////////////////
 
-	fhmqvA384.GenerateStaticKeyPair(GlobalRNG(), sprivA384, spubA384);
-	fhmqvB384.GenerateStaticKeyPair(GlobalRNG(), sprivB384, spubB384);
-	fhmqvA384.GenerateEphemeralKeyPair(GlobalRNG(), eprivA384, epubA384);
-	fhmqvB384.GenerateEphemeralKeyPair(GlobalRNG(), eprivB384, epubB384);
+	std::cout << "FHMQV with NIST P-521 and SHA-512:" << std::endl;
 
-	std::memset(valA384.begin(), 0x00, valA384.size());
-	std::memset(valB384.begin(), 0x11, valB384.size());
+	ECHMQV512 fhmqvB521(false);
+	fhmqvB521.AccessGroupParameters().BERDecode(f512);
+	const OID oid521 = ASN1::secp521r1();
+	ECHMQV512 fhmqvA521(oid521, true /*client*/);
 
-	if (!(fhmqvA384.Agree(valA384, sprivA384, eprivA384, spubB384, epubB384) && fhmqvB384.Agree(valB384, sprivB384, eprivB384, spubA384, epubA384)))
-	{
-		std::cout << "FAILED    authenticated key agreement failed" << std::endl;
-		return false;
-	}
+	fail = !AuthenticatedKeyAgreementWithRolesValidate(fhmqvA521, fhmqvB521);
+	success = !fail && success;
+	if (fail == false)
+		std::cout << "passed    authenticated key agreement" << std::endl;
+	else
+		std::cout << "FAILED    authenticated key agreement" << std::endl;
 
-	if (memcmp(valA384.begin(), valB384.begin(), fhmqvA384.AgreedValueLength()))
-	{
-		std::cout << "FAILED    authenticated agreed values not equal" << std::endl;
-		return false;
-	}
-
-	std::cout << "passed    authenticated key agreement" << std::endl;
-
-	return true;
+	return success;
 }
 
 bool ValidateLUC_DH()
@@ -363,32 +269,13 @@ bool TestX25519()
 {
 	std::cout << "\nTesting curve25519 Key Agreements...\n\n";
 	const unsigned int AGREE_COUNT = 64;
-	bool pass = true;
+	bool pass = true, fail;
 
-	try {
-
-		FileSource f1(DataDir("TestData/x25519.dat").c_str(), true, new HexDecoder);
-		FileSource f2(DataDir("TestData/x25519v0.dat").c_str(), true, new HexDecoder);
-		FileSource f3(DataDir("TestData/x25519v1.dat").c_str(), true, new HexDecoder);
-
-		x25519 x1(f1);
-		x25519 x2(f2);
-		x25519 x3(f3);
-
-		FileSource f4(DataDir("TestData/x25519.dat").c_str(), true, new HexDecoder);
-		FileSource f5(DataDir("TestData/x25519v0.dat").c_str(), true, new HexDecoder);
-		FileSource f6(DataDir("TestData/x25519v1.dat").c_str(), true, new HexDecoder);
-
-		x1.Load(f4);
-		x2.Load(f5);
-		x3.Load(f6);
-	}
-	catch (const BERDecodeErr&) {
-		pass = false;
-	}
+	size_t i = 0;
+	unsigned int failed = 0;
 
 	SecByteBlock priv1(32), priv2(32), pub1(32), pub2(32), share1(32), share2(32);
-	for (unsigned int i=0; i<AGREE_COUNT; ++i)
+	for (i=0, failed=0; i<AGREE_COUNT; ++i)
 	{
 		GlobalRNG().GenerateBlock(priv1, priv1.size());
 		GlobalRNG().GenerateBlock(priv2, priv2.size());
@@ -415,15 +302,154 @@ bool TestX25519()
 		int ret6 = std::memcmp(share1, share2, 32);
 #endif
 
-		bool fail = ret1 != 0 || ret2 != 0 || ret3 != 0 || ret4 != 0 || ret5 != 0 || ret6 != 0;
-		pass = pass && !fail;
+		fail = ret1 != 0 || ret2 != 0 || ret3 != 0 || ret4 != 0 || ret5 != 0 || ret6 != 0;
+		if (fail) failed++;
 	}
 
-	if (pass)
-		std::cout << "passed:";
-	else
-		std::cout << "FAILED:";
-	std::cout << "  " << AGREE_COUNT << " key agreements" << std::endl;
+	failed ? fail = true : fail = false;
+	pass = pass && !fail;
+
+	std::cout << (fail ? "FAILED" : "passed") << "  ";
+	std::cout << AGREE_COUNT << " key agreements" << std::endl;
+
+	try {
+
+		FileSource f1(DataDir("TestData/x25519.dat").c_str(), true, new HexDecoder);
+		FileSource f2(DataDir("TestData/x25519v0.dat").c_str(), true, new HexDecoder);
+		FileSource f3(DataDir("TestData/x25519v1.dat").c_str(), true, new HexDecoder);
+
+		x25519 x1(f1);
+		x25519 x2(f2);
+		x25519 x3(f3);
+
+		FileSource f4(DataDir("TestData/x25519.dat").c_str(), true, new HexDecoder);
+		FileSource f5(DataDir("TestData/x25519v0.dat").c_str(), true, new HexDecoder);
+		FileSource f6(DataDir("TestData/x25519v1.dat").c_str(), true, new HexDecoder);
+
+		x1.Load(f4);
+		x2.Load(f5);
+		x3.Load(f6);
+
+		// No throw is success
+		fail = false;
+	}
+	catch (const BERDecodeErr&) {
+		fail = true;
+	}
+
+	pass = pass && !fail;
+
+	std::cout << (fail ? "FAILED" : "passed") << "  ";
+	std::cout << "x25519 load and save\n";
+
+#if defined(CRYPTOPP_EXTENDED_VALIDATION)
+	{
+		x25519 x1(GlobalRNG()), x2;
+
+		ByteQueue q;
+		x1.DEREncode(q);
+		x2.BERDecode(q);
+
+		fail = (x1 != x2);
+		pass = pass && !fail;
+
+		std::cout << (fail ? "FAILED" : "passed") << "  ";
+		std::cout << "x25519 encoding and decoding\n";
+	}
+	{
+		SecByteBlock b1(32);
+		GlobalRNG().GenerateBlock(b1, b1.size());
+		b1[0] &= 248; b1[31] &= 127; b1[31] |= 64;
+
+		try {
+			fail = false;
+			x25519 x1(b1);
+			if (!x1.Validate(GlobalRNG(), 3))
+				throw Exception(Exception::OTHER_ERROR, "x25519::Validate");
+		} catch(const Exception&) {
+			fail = true;
+		}
+
+		pass = pass && !fail;
+
+		std::cout << (fail ? "FAILED" : "passed") << "  ";
+		std::cout << "x25519 private key byte buffer construction\n";
+
+		std::reverse(b1.begin(), b1.begin()+b1.size());
+		Integer x(b1.begin(), b1.size());
+
+		try {
+			fail = false;
+			x25519 x1(x);
+			if (!x1.Validate(GlobalRNG(), 3))
+				throw Exception(Exception::OTHER_ERROR, "x25519::Validate");
+		} catch(const Exception&) {
+			fail = true;
+		}
+
+		pass = pass && !fail;
+
+		std::cout << (fail ? "FAILED" : "passed") << "  ";
+		std::cout << "x25519 private key Integer construction\n";
+	}
+
+	{
+		SecByteBlock b1(32), b2(32);
+		GlobalRNG().GenerateBlock(b1, b1.size());
+		b1[0] &= 248; b1[31] &= 127; b1[31] |= 64;
+		Donna::curve25519_mult(b2, b1);
+
+		try {
+			fail = false;
+			x25519 x1(b2, b1);
+			if (!x1.Validate(GlobalRNG(), 3))
+				throw Exception(Exception::OTHER_ERROR, "x25519::Validate");
+		} catch(const Exception&) {
+			fail = true;
+		}
+
+		pass = pass && !fail;
+
+		std::cout << (fail ? "FAILED" : "passed") << "  ";
+		std::cout << "x25519 public key byte buffer construction\n";
+
+		SecByteBlock b3(b1), b4(b2);
+		std::reverse(b3.begin(), b3+b3.size());
+		std::reverse(b4.begin(), b4+b4.size());
+
+		Integer x(b3, b3.size());
+		Integer y(b4, b4.size());
+
+		try {
+			fail = false;
+			x25519 x1(y, x);
+			if (!x1.Validate(GlobalRNG(), 3))
+				throw Exception(Exception::OTHER_ERROR, "x25519::Validate");
+		} catch(const Exception&) {
+			fail = true;
+		}
+
+		pass = pass && !fail;
+
+		std::cout << (fail ? "FAILED" : "passed");
+		std::cout << "  " << "x25519 public key Integer construction\n";
+
+		try {
+			fail = false;
+			x25519 x1(b2, b1);
+			x25519 x2(y, x);
+			if (x1 != x2)
+				throw Exception(Exception::OTHER_ERROR, "x25519::Validate");
+		} catch(const Exception&) {
+			fail = true;
+		}
+
+		pass = pass && !fail;
+
+		std::cout << (fail ? "FAILED" : "passed") << "  ";
+		std::cout << "x25519 byte buffer and Integer consistency\n";
+	}
+#endif
 
 	return pass;
 }
@@ -434,7 +460,10 @@ bool TestX25519()
 bool TestEd25519()
 {
 	std::cout << "\nTesting ed25519 Signatures...\n\n";
-	bool pass = true;
+	bool pass = true, fail;
+
+	size_t i = 0;
+	unsigned int failed = 0;
 
 #ifndef CRYPTOPP_DISABLE_NACL
 	const unsigned int SIGN_COUNT = 64, MSG_SIZE=128;
@@ -442,7 +471,7 @@ bool TestEd25519()
 
 	// Test key conversion
 	byte seed[32], sk1[64], sk2[64], pk1[32], pk2[32];
-	for (unsigned int i = 0; i<SIGN_COUNT; ++i)
+	for (i = 0, failed = 0; i<SIGN_COUNT; ++i)
 	{
 		GlobalRNG().GenerateBlock(seed, 32);
 		std::memcpy(sk1, seed, 32);
@@ -452,18 +481,18 @@ bool TestEd25519()
 		int ret2 = Donna::ed25519_publickey(pk2, sk2);
 		int ret3 = std::memcmp(pk1, pk2, 32);
 
-		bool fail = ret1 != 0 || ret2 != 0 || ret3 != 0;
-		pass = pass && !fail;
+		fail = ret1 != 0 || ret2 != 0 || ret3 != 0;
+		if (fail) failed++;
 	}
 
-	if (pass)
-		std::cout << "passed:";
-	else
-		std::cout << "FAILED:";
-	std::cout << "  " << SIGN_COUNT << " public keys" << std::endl;
+	failed ? fail = true : fail = false;
+	pass = pass && !fail;
+
+	std::cout << (fail ? "FAILED" : "passed") << "  ";
+	std::cout << SIGN_COUNT << " public keys" << std::endl;
 
 	// Test signature generation
-	for (unsigned int i = 0; i<SIGN_COUNT; ++i)
+	for (i = 0, failed = 0; i<SIGN_COUNT; ++i)
 	{
 		// Fresh keypair
 		(void)NaCl::crypto_sign_keypair(pk1, sk1);
@@ -483,18 +512,18 @@ bool TestEd25519()
 		int ret2 = Donna::ed25519_sign(msg, len, sk2, pk2, sig2);
 		int ret3 = std::memcmp(sig1, sig2, 64);
 
-		bool fail = ret1 != 0 || ret2 != 0 || ret3 != 0;
-		pass = pass && !fail;
+		fail = ret1 != 0 || ret2 != 0 || ret3 != 0;
+		if (fail) failed++;
 	}
 
-	if (pass)
-		std::cout << "passed:";
-	else
-		std::cout << "FAILED:";
-	std::cout << "  " << SIGN_COUNT << " signatures" << std::endl;
+	failed ? fail = true : fail = false;
+	pass = pass && !fail;
+
+	std::cout << (fail ? "FAILED" : "passed") << "  ";
+	std::cout << SIGN_COUNT << " signatures" << std::endl;
 
 	// Test signature verification
-	for (unsigned int i = 0; i<SIGN_COUNT; ++i)
+	for (i = 0, failed = 0; i<SIGN_COUNT; ++i)
 	{
 		// Fresh keypair
 		(void)NaCl::crypto_sign_keypair(pk1, sk1);
@@ -528,18 +557,18 @@ bool TestEd25519()
 		int ret4 = NaCl::crypto_sign_open(msg1, &mlen, sig1, smlen, pk2);
 		int ret5 = Donna::ed25519_sign_open(msg2, len, pk1, sig2);
 
-		bool fail = ret1 != 0 || ret2 != 0 || ret3 != 0 || ((ret4 != 0) ^ tamper) || ((ret5 != 0) ^ tamper);
-		pass = pass && !fail;
+		fail = ret1 != 0 || ret2 != 0 || ret3 != 0 || ((ret4 != 0) ^ tamper) || ((ret5 != 0) ^ tamper);
+		if (fail) failed++;
 	}
 
-	if (pass)
-		std::cout << "passed:";
-	else
-		std::cout << "FAILED:";
-	std::cout << "  " << SIGN_COUNT << " verifications" << std::endl;
+	failed ? fail = true : fail = false;
+	pass = pass && !fail;
+
+	std::cout << (fail ? "FAILED" : "passed") << "  ";
+	std::cout << SIGN_COUNT << " verifications" << std::endl;
 
 	// Test signature verification using streams
-	for (unsigned int i = 0; i<SIGN_COUNT; ++i)
+	for (i = 0, failed = 0; i<SIGN_COUNT; ++i)
 	{
 		// Fresh keypair
 		(void)NaCl::crypto_sign_keypair(pk1, sk1);
@@ -581,15 +610,15 @@ bool TestEd25519()
 		int ret4 = NaCl::crypto_sign_open(msg1, &mlen, sig1, smlen, pk2);
 		int ret5 = Donna::ed25519_sign_open(iss, pk1, sig2);
 
-		bool fail = ret1 != 0 || ret2 != 0 || ret3 != 0 || ((ret4 != 0) ^ tamper) || ((ret5 != 0) ^ tamper);
-		pass = pass && !fail;
+		fail = ret1 != 0 || ret2 != 0 || ret3 != 0 || ((ret4 != 0) ^ tamper) || ((ret5 != 0) ^ tamper);
+		if (fail) failed++;
 	}
 
-	if (pass)
-		std::cout << "passed:";
-	else
-		std::cout << "FAILED:";
-	std::cout << "  " << SIGN_COUNT << " streams" << std::endl;
+	failed ? fail = true : fail = false;
+	pass = pass && !fail;
+
+	std::cout << (fail ? "FAILED" : "passed") << "  ";
+	std::cout << SIGN_COUNT << " streams" << std::endl;
 #endif
 
 	// RFC 8032 test vector
@@ -627,18 +656,17 @@ bool TestEd25519()
 		StringSource(msg_sig, true, new SignatureVerificationFilter(verifier, NULLPTR, flags));
 
 		// No throw is success
+		fail = false;
 	}
 	catch(const Exception&)
 	{
-		pass = false;
+		fail = true;
 	}
 
-	if (pass)
-		std::cout << "passed:";
-	else
-		std::cout << "FAILED:";
-	std::cout << "  RFC 8032 test vectors" << std::endl;
+	pass = pass && !fail;
 
+	std::cout << (fail ? "FAILED" : "passed") << "  ";
+	std::cout << "RFC 8032 test vectors" << std::endl;
 
 	// Test key loads
 	try {
@@ -657,16 +685,18 @@ bool TestEd25519()
 		s1.AccessKey().Load(f4);
 		s2.AccessKey().Load(f5);
 		s3.AccessKey().Load(f6);
+
+		// No throw is success
+		fail = false;
 	}
 	catch (const BERDecodeErr&) {
-		pass = false;
+		fail = true;
 	}
 
-	if (pass)
-		std::cout << "passed:";
-	else
-		std::cout << "FAILED:";
-	std::cout << "  RFC 5208 and 5958 key loads" << std::endl;
+	pass = pass && !fail;
+
+	std::cout << (fail ? "FAILED" : "passed") << "  ";
+	std::cout << "RFC 5208 and 5958 key loads" << std::endl;
 
 	return pass;
 }
