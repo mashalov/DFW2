@@ -23,7 +23,6 @@ template<> struct UniqueHandleTraits<HMODULE>
 
 DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, std::list<std::wstring>& listConsole)
 {
-
 	std::string CommandLineUTF8Version(utf8_encode(CommandLine));
 	const DWORD dwCreationFlags{ 0 };
 	UniqueHandle<HANDLE> hStdWrite, hStdRead;
@@ -81,6 +80,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	auto chBuf{ std::make_unique<char[]>(BufSize) };
 	BOOL bSuccess{ FALSE };
 	std::string strOut;
+
 	for (;;)
 	{
 		bSuccess = ReadFile(hStdRead, chBuf.get(), BufSize, &dwRead, NULL);
@@ -97,7 +97,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 			// в текущую строку
 			strOut += strMsgLine.substr(0, nFind);
 			// и добавляем получившуюся строку в список
-			listConsole.push_back(utf8_decode(strOut));
+			listConsole.push_back(console_decode(strOut));
 			// строку очищаем и ждем нового перевода строки
 			strOut.clear();
 			// из исходной строки удаляем перевод
@@ -113,7 +113,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	// если после обработки вывода что-то осталось в текущей
 	// строке - добавляем ее в список
 	if (!strOut.empty())
-		listConsole.push_back(utf8_decode(strOut));
+		listConsole.push_back(console_decode(strOut));
 
 	DWORD dwResult{ 0 };
 	if (!GetExitCodeProcess(pi.hProcess, &dwResult))

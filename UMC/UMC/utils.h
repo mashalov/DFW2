@@ -113,6 +113,42 @@ static inline std::string& rtrim(std::string& s)
 		return std::string(str);
 	}
 #endif
+#ifdef _MSC_VER
+
+	static UINT GetConsoleCodePage()
+	{
+		UINT acp{ GetConsoleOutputCP() };
+		if (acp == 0)
+		{
+			const int sizeInChars{ sizeof(acp) / sizeof(TCHAR) };
+			if (GetLocaleInfo(GetUserDefaultLCID(),
+				LOCALE_IDEFAULTCODEPAGE |
+				LOCALE_RETURN_NUMBER,
+				reinterpret_cast<LPTSTR>(&acp),
+				sizeInChars) != sizeInChars)
+					acp = 866;
+		}
+		return acp;
+	}
+
+	static std::wstring console_decode(const std::string_view& str)
+	{
+		if (str.empty()) return std::wstring();
+		const auto ConsoleCodePage(GetConsoleCodePage());
+		int size_needed = MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), NULL, 0);
+		std::wstring wstrTo(size_needed, 0);
+		MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+		return wstrTo;
+	}
+#else
+	// на linux функция ничего не делает и возвращает тот же std::string
+	static std::string console_decode(const std::string_view& str)
+	{
+		return std::string(str);
+	}
+#endif
+
+
 
 static inline std::string& trim(std::string& s) { ltrim(s);  rtrim(s); return s; }
 static inline std::string ctrim(const std::string& s) { std::string st(s); return trim(st); }
