@@ -164,7 +164,7 @@ DFW2::VersionInfo CCompilerMSBuild::GetMSBuildVersion(const std::filesystem::pat
 	return CCompilerMSBuild::Version(output.front());
 }
 
-DWORD CCompilerMSBuild::RunVswhere(std::wstring CommandLine, std::list<std::wstring>& listConsole)
+DWORD RunVswhere(std::wstring CommandLine, std::list<std::wstring>& listConsole)
 {
 	// используем vswhere из Visual Studio
 	PWSTR ppszPath;
