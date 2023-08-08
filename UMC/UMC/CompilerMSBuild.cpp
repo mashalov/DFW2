@@ -123,6 +123,22 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	return dwResult;
 }
 
+DWORD RunVswhere(std::wstring CommandLine, std::list<std::wstring>& listConsole)
+{
+	// используем vswhere из Visual Studio
+	PWSTR ppszPath;
+	if (FAILED(SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, KF_FLAG_DEFAULT, NULL, &ppszPath)))
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "SHGetKnownFolderPath - отказ получения пути к Program Files");
+	std::wstring vswhereCommandLine(ppszPath);
+	CoTaskMemFree(ppszPath);
+	vswhereCommandLine.append(L"\\Microsoft Visual Studio\\Installer\\vswhere.exe");
+	vswhereCommandLine.append(CommandLine);
+	const DWORD dwResult{ RunWindowsConsole(vswhereCommandLine, {}, listConsole) };
+	if (dwResult != 0)
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "vswhere завершен с ошибкой");
+	return dwResult;
+}
+
 DFW2::VersionInfo CCompilerMSBuild::Version(const std::wstring& strVersion)
 {
 	DFW2::VersionInfo version;
@@ -162,22 +178,6 @@ DFW2::VersionInfo CCompilerMSBuild::GetMSBuildVersion(const std::filesystem::pat
 	if (output.empty())
 		throw std::runtime_error(szFailedToGetMSBuildVersion);
 	return CCompilerMSBuild::Version(output.front());
-}
-
-DWORD RunVswhere(std::wstring CommandLine, std::list<std::wstring>& listConsole)
-{
-	// используем vswhere из Visual Studio
-	PWSTR ppszPath;
-	if (FAILED(SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, KF_FLAG_DEFAULT, NULL, &ppszPath)))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "SHGetKnownFolderPath - отказ получения пути к Program Files");
-	std::wstring vswhereCommandLine(ppszPath);
-	CoTaskMemFree(ppszPath);
-	vswhereCommandLine.append(L"\\Microsoft Visual Studio\\Installer\\vswhere.exe");
-	vswhereCommandLine.append(CommandLine);
-	const DWORD dwResult{ RunWindowsConsole(vswhereCommandLine, {}, listConsole) };
-	if (dwResult != 0)
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "vswhere завершен с ошибкой");
-	return dwResult;
 }
 
 std::wstring CCompilerMSBuild::GetMSBuildPath()
