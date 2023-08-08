@@ -54,7 +54,7 @@ static inline std::string& rtrim(std::string& s)
 	{
 #ifdef _MSC_VER
 		if (wstr.empty()) return std::string();
-		int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+		const int size_needed{ WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL) };
 		std::string strTo(size_needed, 0);
 		WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
 		return strTo;
@@ -88,7 +88,7 @@ static inline std::string& rtrim(std::string& s)
 	{
 #ifdef _MSC_VER
 		if (str.empty()) return std::string();
-		int size_needed = MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), NULL, 0);
+		const int size_needed{ MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), NULL, 0) };
 		std::wstring wstrTo(size_needed, 0);
 		MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
 		return utf8_encode(wstrTo);
@@ -101,7 +101,7 @@ static inline std::string& rtrim(std::string& s)
 	static std::wstring utf8_decode(const std::string_view& str)
 	{
 		if (str.empty()) return std::wstring();
-		int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+		const int size_needed{ MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0) };
 		std::wstring wstrTo(size_needed, 0);
 		MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
 		return wstrTo;
@@ -115,28 +115,44 @@ static inline std::string& rtrim(std::string& s)
 #endif
 #ifdef _MSC_VER
 
+	//! функции для доступа к выводу консоли
+	
+	//! Возвращает текущую кодовую страницу для консоли
 	static UINT GetConsoleCodePage()
 	{
+		// если выполняемся уже в консоли, считываем
+		// текущую кодовую страницу
 		UINT acp{ GetConsoleOutputCP() };
-		if (acp == 0)
-		{
-			const int sizeInChars{ sizeof(acp) / sizeof(TCHAR) };
-			if (GetLocaleInfo(GetUserDefaultLCID(),
-				LOCALE_IDEFAULTCODEPAGE |
-				LOCALE_RETURN_NUMBER,
-				reinterpret_cast<LPTSTR>(&acp),
-				sizeInChars) != sizeInChars)
-					acp = 866;
-		}
+		if (acp != 0)
+			return acp;
+
+		// если GetConsoleOutputCP() вернула ноль - это ошибка,
+		// и консоли с процессом не связано. В этом случае
+		// получаем кодовую страницу из текущей локали пользователя.
+		// Рецепт: https://devblogs.microsoft.com/oldnewthing/20161007-00/?p=94475
+
+		const int sizeInChars{ sizeof(acp) / sizeof(TCHAR) };
+
+		if (GetLocaleInfo(GetUserDefaultLCID(),
+			LOCALE_IDEFAULTCODEPAGE |
+			LOCALE_RETURN_NUMBER,
+			reinterpret_cast<LPTSTR>(&acp),
+			sizeInChars) != sizeInChars)
+				acp = 866; // и если что-то пошло не так с локалью, ставим русскую 866
+
 		return acp;
 	}
 
+	//! Декодирует строку, полученную из консоли в unicode
 	static std::wstring console_decode(const std::string_view& str)
 	{
 		if (str.empty()) return std::wstring();
+		// получаем кодовую страницу консоли
 		const auto ConsoleCodePage(GetConsoleCodePage());
-		int size_needed = MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), NULL, 0);
+		// подсчитываем размер буфера для кодовой страницы
+		const int size_needed{ MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), NULL, 0) };
 		std::wstring wstrTo(size_needed, 0);
+		// и конвертируем кодовую страницу консоли в unicode
 		MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
 		return wstrTo;
 	}
