@@ -46,7 +46,6 @@ set(EMSSSOURCES
     DynaPrimitive.cpp
     CustomDevice.cpp
     CustomDeviceContainer.cpp
-    CustomDeviceDLL.cpp
     DynaPowerInjector.cpp
     DynaVoltageSource.cpp
     DynaGeneratorInfBus.cpp

@@ -363,7 +363,6 @@
     <ClInclude Include="Comparator.h" />
     <ClInclude Include="CustomDevice.h" />
     <ClInclude Include="CustomDeviceContainer.h" />
-    <ClInclude Include="CustomDeviceDLL.h" />
     <ClInclude Include="DataStructs.h" />
     <ClInclude Include="DeadBand.h" />
     <ClInclude Include="DerlagContinuous.h" />
@@ -485,7 +484,6 @@
     <ClCompile Include="Comparator.cpp" />
     <ClCompile Include="CustomDevice.cpp" />
     <ClCompile Include="CustomDeviceContainer.cpp" />
-    <ClCompile Include="CustomDeviceDLL.cpp" />
     <ClCompile Include="DeadBand.cpp" />
     <ClCompile Include="DerlagContinuous.cpp" />
     <ClCompile Include="Device.cpp" />

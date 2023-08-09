@@ -14,8 +14,9 @@ namespace DFW2
 {
 	struct VariableIndexBase
 	{
-		ptrdiff_t Index = -100000;
+		ptrdiff_t Index = VariableIndexBase::BadIndex;
 		constexpr bool Indexed() const noexcept { return Index >= 0; }
+		static const ptrdiff_t BadIndex = -100000;
 	};
 
 	struct VariableIndex : VariableIndexBase

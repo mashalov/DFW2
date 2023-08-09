@@ -160,9 +160,6 @@
     <ClInclude Include="DynaVoltageSource.h">
       <Filter>Header Files\Generators</Filter>
     </ClInclude>
-    <ClInclude Include="CustomDeviceDLL.h">
-      <Filter>Header Files\CustomDevices</Filter>
-    </ClInclude>
     <ClInclude Include="CustomDeviceContainer.h">
       <Filter>Header Files\CustomDevices</Filter>
     </ClInclude>
@@ -530,9 +527,6 @@
     </ClCompile>
     <ClCompile Include="DynaVoltageSource.cpp">
       <Filter>Source Files\Generators</Filter>
-    </ClCompile>
-    <ClCompile Include="CustomDeviceDLL.cpp">
-      <Filter>Source Files\CustomDevices</Filter>
     </ClCompile>
     <ClCompile Include="CustomDeviceContainer.cpp">
       <Filter>Source Files\CustomDevices</Filter>

@@ -4,51 +4,6 @@
 
 namespace DFW2
 {
-	// прокси-устройство для включения пользовательского устройства из dll в расчетную модель
-	class CCustomDevice : public CDevice
-	{
-	protected:
-		VariableIndex* m_pVars = nullptr;
-		VariableIndexExternal* m_pVarsExt = nullptr;
-		double *m_pConstVars = nullptr;
-		double *m_pSetPoints = nullptr;
-		DLLExternalVariable*m_pExternals = nullptr;
-		BuildEquationsArgs m_DLLArgs;
-
-		void ConstructDLLParameters(CDynaModel *pDynaModel);
-
-		static long DLLEntrySetElement(BuildEquationsObjects *pBEObjs, ptrdiff_t nRow, ptrdiff_t nCol, double dValue, int bAddToPreviois);
-		static long DLLEntrySetFunction(BuildEquationsObjects *pBEObjs, ptrdiff_t nRow, double dValue);
-		static long DLLEntrySetFunctionDiff(BuildEquationsObjects *pBEObjs, ptrdiff_t nRow, double dValue);
-		static long DLLEntrySetDerivative(BuildEquationsObjects *pBEObjs, ptrdiff_t nRow, double dValue);
-		static long DLLProcessBlockDiscontinuity(BuildEquationsObjects *pBEObjs, long nBlockIndex);
-		static long DLLInitBlock(BuildEquationsObjects *pBEObjs, long nBlockIndex);
-
-		CCustomDeviceContainer *Container() { return static_cast<CCustomDeviceContainer*>(pContainer_); }
-		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
-
-	public:
-		eDEVICEFUNCTIONSTATUS m_ExternalStatus;
-
-		CCustomDevice();
-		virtual ~CCustomDevice() = default;
-		bool BuildStructure();
-		bool SetConstDefaultValues();
-		bool SetConstValue(size_t nIndex, double dValue);
-
-		double* GetConstVariablePtr(ptrdiff_t nVarIndex) override;
-
-		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
-		void BuildEquations(CDynaModel *pDynaModel) override;
-		void BuildRightHand(CDynaModel *pDynaModel) override;
-		void BuildDerivatives(CDynaModel *pDynaModel) override;
-		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
-		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
-		double CheckZeroCrossing(CDynaModel *pDynaModel) override;
-		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
-		CDynaPrimitive* GetPrimitiveForNamedOutput(std::string_view OutputName);
-	};
-
 	using CCustomDeviceDLLWrapper = CDLLInstanceWrapper<CCustomDeviceCPPDLL>;
 
 	class CCustomDeviceDataHost : public CCustomDeviceData
@@ -92,7 +47,8 @@ namespace DFW2
 		static void DLLSetDerivative(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
 		static eDEVICEFUNCTIONSTATUS DLLInitPrimitive(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);
 		static eDEVICEFUNCTIONSTATUS DLLProcPrimDisco(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);
-		static const char* m_cszNoDeviceDLL;
+		CDynaPrimitive* GetPrimitiveForNamedOutput(std::string_view OutputName);
+		static constexpr const char* m_cszNoDeviceDLL = "CCustomDeviceCPP - no DLL device initialized";
 	};
 }
 

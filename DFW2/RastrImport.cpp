@@ -18,14 +18,6 @@ CRastrImport::CRastrImport(IRastrPtr spRastr)
 	InitRastrWin();
 }
 
-bool GetConstFromField(const ConstVarsInfo& VarsInfo)
-{
-	bool bRes = false;
-	if (!(VarsInfo.VarFlags & (CVF_INTERNALCONST)) && VarsInfo.eDeviceType == DEVTYPE_UNKNOWN)
-		bRes = true;
-	return bRes;
-}
-
 bool GetConstFromField(const CConstVarIndex& VarInfo )
 {
 	bool bRes = false;
@@ -107,103 +99,6 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 	}
 	return bRes;
 }
-
-
-bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, CustomDeviceConnectInfo& ConnectInfo, CCustomDeviceContainer& CustomDeviceContainer)
-{
-	bool bRes = false;
-	if (spRastr)
-	{
-		try
-		{
-			ITablePtr spSourceTable = spRastr->Tables->Item(ConnectInfo.m_TableName.c_str());
-			IColsPtr spSourceCols = spSourceTable->Cols;
-			const DFW2::CCustomDeviceDLL& DLL = CustomDeviceContainer.DLL();
-
-			// get and check constants fields from storage
-			size_t nConstsCount = DLL.GetConstsInfo().size();
-			typedef std::vector<std::pair<IColPtr,ptrdiff_t> > COLVECTOR;
-			typedef COLVECTOR::iterator COLITR;
-			COLVECTOR Cols;
-			Cols.reserve(nConstsCount);
-
-			IColPtr spColId		= spSourceCols->Item(L"Id");
-			IColPtr spColName	= spSourceCols->Item(L"Name");
-
-
-			ptrdiff_t ConstIndex(0);
-			for (const auto& it : DLL.GetConstsInfo())
-				if (GetConstFromField(it))
-					Cols.push_back(std::make_pair(spSourceCols->Item(it.VarInfo.Name), ConstIndex++));
-
-
-			// count model types in storage
-			IColPtr spModelType = spSourceCols->Item(ConnectInfo.m_ModelTypeField.c_str());
-
-			long nTableIndex = 0;
-			long nTableSize = spSourceTable->GetSize();
-			long nModelsCount = 0;
-
-			for (; nTableIndex < nTableSize; nTableIndex++)
-			{
-				if (spModelType->GetZ(nTableIndex).lVal == ConnectInfo.m_nModelType)
-					nModelsCount++;
-			}
-
-			if (nModelsCount)
-			{
-				// create models for count given
-				
-				
-				CCustomDevice *pCustomDevices = Network.CustomDevice.CreateDevices<CCustomDevice>(nModelsCount);
-				Network.CustomDevice.BuildStructure();
-
-				// put constants to each model
-				long nModelIndex = 0;
-				for (nTableIndex = 0 ; nTableIndex < nTableSize; nTableIndex++)
-				{
-					if (spModelType->GetZ(nTableIndex).lVal == ConnectInfo.m_nModelType)
-					{
-						if (nModelIndex >= nModelsCount)
-						{
-							Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
-							break;
-						}
-
-						CCustomDevice *pDevice = pCustomDevices + nModelIndex;
-						if (pDevice->SetConstDefaultValues())
-						{
-							pDevice->SetId(spColId->GetZ(nTableIndex).lVal);
-							pDevice->SetName(static_cast<const char*>(spColId->GetZS(nTableIndex)));
-							for (COLITR cit = Cols.begin(); cit != Cols.end(); cit++)
-							{
-								if (!pDevice->SetConstValue(cit->second, cit->first->GetZ(nTableIndex).dblVal))
-								{
-									Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
-									break;
-								}
-							}
-						}
-						else
-						{
-							Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszDLLBadBlocks, CustomDeviceContainer.DLL().GetModuleFilePath()));
-							break;
-						}
-						nModelIndex++;
-					}
-				}
-			}
-		}
-		catch (_com_error &err)
-		{
-			Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
-																CustomDeviceContainer.DLL().GetModuleFilePath(), 
-																static_cast<const char*>(err.Description())));
-		}
-	}
-	return bRes;
-}
-
 
 // читаем в сериализатор строку с заднным номером из таблицы RastrWin
 // полагая что в сериализаторе устройство
@@ -364,8 +259,8 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
-	//LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00013");
-	LoadFile("D:\\source\\repos\\MatPowerImport\\x64\\Release\\case9all");
+	LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00000");
+	//LoadFile("D:\\source\\repos\\MatPowerImport\\x64\\Release\\case9all");
 	
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39_sc5.scn", scnPath.c_str());

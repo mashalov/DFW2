@@ -709,8 +709,8 @@ namespace DFW2
 		CDeviceContainer BranchMeasures;
 		CDeviceContainer NodeMeasures;
 		CDeviceContainer TestDevices;
+		CCustomDeviceCPPContainer CustomDevice;
 		CDynaNodeZeroLoadFlowContainer ZeroLoadFlow;
-		CCustomDeviceContainer CustomDevice;
 		CCustomDeviceCPPContainer AutomaticDevice, ScenarioDevice;
 		CAutomatic Automatic_;
 		CScenario Scenario_;

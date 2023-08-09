@@ -17,17 +17,28 @@
 
 using StringViewList = std::list<std::string_view>;
 
+class CASTCodeGeneratorBase;
+class BlockEmit
+{
+	CASTCodeGeneratorBase& CodeGenerator_;
+public:
+	BlockEmit(CASTCodeGeneratorBase& CodeGenerator);
+	virtual ~BlockEmit();
+};
+
+
+
 class CASTCodeGeneratorBase
 {
 protected:
 	CASTTreeBase* pTree;
 	std::ofstream OutputStream;
-	size_t Indent = 0;
 	size_t DefaultIndent = 15;
 	size_t MaxLineLentgh = 80;
 	std::string SourceText;
 	std::list<CASTHostBlockBase*> HostBlocksList;
 public:
+	size_t Indent = 0;
 	CASTCodeGeneratorBase(CASTTreeBase* pASTTree, 
 						  std::string_view Source) : pTree(pASTTree), 
 												     SourceText(Source)
@@ -39,8 +50,7 @@ public:
 	{
 		// объявление функции
 		EmitLine("void GetDeviceProperties(CDeviceContainerPropertiesBase & DeviceProps) override");
-		EmitLine("{");
-		Indent++;
+		BlockEmit block(*this);
 
 		// тип устройства
 		EmitLine(fmt::format("DeviceProps.SetType({});", pTree->GetProperties().at(PropertyMap::szPropDeviceType)));
@@ -110,21 +120,17 @@ public:
 		GenerateVariables("DeviceProps.ConstVarMap_ = { ", constVars, " };", true);
 		// формируем количество уравнений
 		EmitLine("DeviceProps.EquationsCount = DeviceProps.VarMap_.size();");
-		Indent--;
-		EmitLine("}");
 	}
 
 	void GenerateHostBlocksParameters()
 	{
 		EmitLine("const DOUBLEVECTOR& GetBlockParameters(ptrdiff_t BlockIndex) override");
-		EmitLine("{");
-		Indent++;
+		BlockEmit block(*this);
 		EmitLine("BlockParameters_.clear();");
 		if (!HostBlocksList.empty())
 		{
 			EmitLine("switch(BlockIndex)");
-			EmitLine("{");
-			Indent++;
+			BlockEmit block(*this);
 			for (auto& h : HostBlocksList)
 			{
 				std::list<std::string> Consts;
@@ -142,12 +148,8 @@ public:
 				Indent--;
 				EmitLine("break;");
 			}
-			Indent--;
-			EmitLine("}");
 		}
 		EmitLine("return BlockParameters_;");
-		Indent--;
-		EmitLine("}");
 	}
 
 	void GenerateVersions()
@@ -197,15 +199,10 @@ public:
 		EmitLine("#include\"DFW2/ICustomDevice.h\"");
 		EmitLine("#include\"DFW2/version.h\"");
 		EmitLine("#include <math.h>");
-		EmitLine("namespace DFW2\n{");
-		// отступ вправо
-		Indent++;
+		EmitLine("namespace DFW2");
+		BlockEmit block(*this);
 		// генерируем класс
 		GenerateClass();
-
-		// возврат отступа
-		Indent--;
-		EmitLine("}");
 	}
 
 	// генерирут строку вектора ссылок на переменные
@@ -390,28 +387,20 @@ public:
 	void GenerateSetSourceConstant()
 	{
 		EmitLine("bool SetSourceConstant(size_t Index, double Value) override");
-		EmitLine("{");
-		Indent++;
+		BlockEmit blockfunction(*this);
 		EmitLine("if( Index < ConstantVariables_.size() )");
-		EmitLine("{");
-		Indent++;
-		EmitLine("ConstantVariables_[Index] = Value;");
-		EmitLine("return true;");
-		Indent--;
-		EmitLine("}");
-		EmitLine("else");
-		Indent++;
-		EmitLine("return false;");
-		Indent--;
-		Indent--;
-		EmitLine("}");
+		{
+			BlockEmit blockif(*this);
+			EmitLine("ConstantVariables_[Index] = Value;");
+			EmitLine("return true;");
+		}
+		EmitLine("else return false;");
 	}
 
 	void GenerateBuildRightHand()
 	{
 		EmitLine("void BuildRightHand(CCustomDeviceData& CustomDeviceData) override");
-		EmitLine("{");
-		Indent++;
+		BlockEmit block(*this);
 
 		CASTEquationSystem* pMain = pTree->GetEquationSystem(ASTNodeType::Main);
 		for (auto& eq : pMain->ChildNodes())
@@ -428,15 +417,12 @@ public:
 				EmitLine(fmt::format("// {} is for host block ", ctrim(pEquation->ChildNodes().front()->GetInfix())));
 
 		}
-		Indent--;
-		EmitLine("}");
 	}
 
 	void GenerateInit()
 	{
 		EmitLine("eDEVICEFUNCTIONSTATUS Init(CCustomDeviceData& CustomDeviceData) override");
-		EmitLine("{");
-		Indent++;
+		BlockEmit block(*this);
 
 		// в секции Init есть основная система и система присваивания базовых значений
 		// внешних переменных. Основная система сортируется в порядке исполнения. Система
@@ -478,15 +464,12 @@ public:
 					ctrim(pEquation->GetInfix())));
 		}
 		EmitLine("return eDEVICEFUNCTIONSTATUS::DFS_OK;");
-		Indent--;
-		EmitLine("}");
 	}
 
 	void GenerateProcessDiscontinuity()
 	{
 		EmitLine("eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CCustomDeviceData& CustomDeviceData) override");
-		EmitLine("{");
-		Indent++;
+		BlockEmit block(*this);
 
 		CASTEquationSystem* pInit = pTree->GetEquationSystem(ASTNodeType::Init);
 		for (auto& eq : pInit->ChildNodes())
@@ -503,32 +486,53 @@ public:
 					ctrim(pEquation->GetInfix())));
 		}
 		EmitLine("return eDEVICEFUNCTIONSTATUS::DFS_OK;");
-		Indent--;
-		EmitLine("}");
 	}
 
 	void GenerateBuildEquations()
 	{
 		// функция построения матрицы Якоби
 		EmitLine("void BuildEquations(CCustomDeviceData& CustomDeviceData) override");
-		EmitLine("{");
-		Indent++;
+		BlockEmit block(*this);
 
-		// проходим по якобиану дерева
-		for (auto& v : pTree->GetJacobian()->ChildNodes())
+		std::map<std::string, ASTNodeList> ExternalVarsDerivatives;
+
+		auto fnEmitDerivative = [this](const CASTJacobiElement* const pJe) -> void
 		{
-			// для каждого элемента якобиана
-			CASTJacobiElement* pJe = static_cast<CASTJacobiElement*>(v);
-			// добавляем SetElement
 			EmitLine(fmt::format("CustomDeviceData.SetElement({}, {}, {});   // {} by {}",
 				pJe->pequation->itResolvedBy->first,			// строка элемента якобиана
 				pJe->var->first,								// столбец элемента якобина
 				ctrim(pJe->ChildNodes().front()->GetInfix()),	// функция вычисления элемента якобиана
 				ctrim(pJe->pequation->GetInfix()),				// комментарий: уравнение, от которого берется частная производная
 				pJe->var->first));								// комментарие: переменная, по которой берется частная производная
+		};
+
+		// проходим по якобиану дерева
+		for (const auto& v : pTree->GetJacobian()->ChildNodes())
+		{
+			// для каждого элемента якобиана
+			const CASTJacobiElement* pJe{ static_cast<CASTJacobiElement*>(v) };
+
+			if (pJe->var->second.External)
+				// внешняя переменная, которая может быть константой,
+				// ограждаем условием по наличию индекса
+				ExternalVarsDerivatives[pJe->var->first].emplace_back(v);
+			else
+				// обычная переменная - добавляем SetElement
+				(fnEmitDerivative)(pJe);
 		}
-		Indent--;
-		EmitLine("}");
+
+		for (const auto& v : ExternalVarsDerivatives)
+		{
+			EmitLine(fmt::format("if({}.Indexed())", v.first));
+			std::unique_ptr<BlockEmit> block;
+			if (v.second.size() > 1)
+				block = std::make_unique<BlockEmit>(*this);
+			for (const auto& pv : v.second)
+			{
+				const CASTJacobiElement* pJe{ static_cast<CASTJacobiElement*>(pv) };
+				(fnEmitDerivative)(pJe);
+			}
+		}
 	}
 
 	void GenerateDestroy()
@@ -539,25 +543,20 @@ public:
 	void GenerateBuildDerivatives()
 	{
 		EmitLine("void BuildDerivatives(CCustomDeviceData& CustomDeviceData) override");
-		EmitLine("{");
-		EmitLine("}");
+		BlockEmit block(*this);
 	}
 
 	void GenerateSetConstsDefaultValues()
 	{
 		EmitLine("void SetConstsDefaultValues() override");
-		EmitLine("{");
-		EmitLine("}");
+		BlockEmit block(*this);
 	}
 
 	void GenerateDLLFunctions()
 	{
 		EmitLine("extern \"C\" __declspec(dllexport) ICustomDevice * __cdecl CustomDeviceFactory()");
-		EmitLine("{");
-		Indent++;
+		BlockEmit block(*this);
 		EmitLine("return new CCustomDevice();");
-		Indent--;
-		EmitLine("}");
 	}
 
 	void GenerateClass()
@@ -622,4 +621,5 @@ public:
 	static inline const std::string CustomDeviceHeader = "CustomDevice.h";
 	static constexpr DFW2::VersionInfo compilerVersion = PackageVersion;
 };
+
 

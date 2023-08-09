@@ -250,7 +250,7 @@ void CAutomatic::Init()
 	CDeviceContainer* pAutomaticContainer{ pDynaModel_->GetDeviceContainer(Type()) };
 	if(!pAutomaticContainer)
 		throw dfw2error("CAutomatic::Init AutomaticContainer not available");
-	CCustomDevice* pCustomDevice{ static_cast<CCustomDevice*>(pAutomaticContainer->GetDeviceByIndex(0)) };
+	auto *pCustomDevice{ static_cast<CCustomDeviceCPP*>(pAutomaticContainer->GetDeviceByIndex(0)) };
 	if (!pCustomDevice)
 		throw dfw2error("CAutomatic::Init CustomDevice for automatic not available");
 
@@ -386,7 +386,7 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 	return bRes;
 }
 
-bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice)
+bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDevice)
 {
 	bool bRes{ false };
 	_ASSERTE(!m_pAction);

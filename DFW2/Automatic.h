@@ -10,7 +10,7 @@
 namespace DFW2
 {
 	class CDynaModel;
-	class CCustomDevice;
+	class CCustomDeviceCPP;
 
 	using CCompilerDLL = CDLLInstanceFactory<ICompiler>;
 
@@ -124,7 +124,7 @@ namespace DFW2
 		}
 
 		bool Do(CDynaModel *pDynaModel);
-		bool Init(CDynaModel* pDynaModel, CCustomDevice *pCustomDevice);
+		bool Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDevice);
 		virtual ~CAutomaticAction() = default;
 		void AddToSource(std::ostringstream& source) override;
 		static const char* cszActionTemplate;

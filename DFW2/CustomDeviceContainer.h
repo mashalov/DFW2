@@ -1,6 +1,10 @@
 ﻿#pragma once
 #include "DeviceContainer.h"
-#include "CustomDeviceDLL.h"
+#include "Header.h"
+#include "DLLHeader.h"
+#include "vector"
+#include "ICustomDevice.h"
+#include "DLLWrapper.h"
 #include "LimitedLag.h"
 #include "LimiterConst.h"
 #include "Relay.h"
@@ -17,6 +21,7 @@
 
 namespace DFW2
 {
+	using CCustomDeviceCPPDLL = CDLLInstanceFactory<ICustomDevice>;
 
 	// пул памяти для хост-блоков
 	struct PrimitivePoolElement
@@ -34,52 +39,6 @@ namespace DFW2
 		PrimitiveInfo(size_t Size, long EquationsCount) : nSize(Size),
 														  nEquationsCount(EquationsCount) {}
 	};
-
-	class CCustomDeviceContainer : public CDeviceContainer
-	{
-	protected:
-		CCustomDeviceDLL m_DLL;
-		// пулы для всех устройств контейнера
-		PrimitivePoolElement m_PrimitivePool[PrimitiveBlockType::PBT_LAST];			// таблица пулов для каждого типа хост-блоков
-		std::vector<DLLExternalVariable> m_ExternalVarsPool;						// пул внешних переменных устройства
-		std::vector<double> m_DoubleVarsPool;										// пул double - переменных 
-		std::vector<VariableIndex> m_VariableIndexPool;								// пул для VariableIndexes
-		std::vector<VariableIndexExternal> m_VariableIndexExternalPool;
-		DLLExternalVariable* m_pExternalVarsHead;
-
-		double *m_pDoubleVarsHead;
-		size_t m_nBlockEquationsCount;												// количество внутренних уравнений хост-блоков
-		size_t m_nDoubleVarsCount;													// количество необходимых одному устройству double-переменных
-		size_t m_nExternalVarsCount;												// количество внешних переменных
-		size_t m_nVariableIndexesCount;												// количество переменных для уравнений
-
-		void CleanUp();
-	public:
-		CCustomDeviceContainer(CDynaModel *pDynaModel);
-		bool ConnectDLL(std::string_view DLLFilePath);
-		virtual ~CCustomDeviceContainer();
-		bool BuildStructure();
-		bool InitDLLEquations(BuildEquationsArgs *pArgs);
-		void BuildDLLEquations(BuildEquationsArgs *pArgs);
-		void BuildDLLRightHand(BuildEquationsArgs *pArgs);
-		void BuildDLLDerivatives(BuildEquationsArgs *pArgs);
-		void ProcessDLLDiscontinuity(BuildEquationsArgs *pArgs);
-
-		PrimitiveInfo GetPrimitiveInfo(PrimitiveBlockType eType);
-		size_t PrimitiveSize(PrimitiveBlockType eType);
-		long PrimitiveEquationsCount(PrimitiveBlockType eType);
-		double* NewDoubleVariables();
-		VariableIndex* NewVariableIndexVariables();
-		VariableIndexExternal* NewVariableIndexExternals();
-		DLLExternalVariable* NewExternalVariables();
-		void* NewPrimitive(PrimitiveBlockType eType);
-		const CCustomDeviceDLL& DLL() { return m_DLL; }
-		long GetParametersValues(ptrdiff_t nId, BuildEquationsArgs* pArgs, long nBlockIndex, DOUBLEVECTOR& Parameters);
-		size_t GetInputsCount()				{  return m_DLL.GetInputsInfo().size();     }
-		size_t GetConstsCount()				{  return m_DLL.GetConstsInfo().size();     }
-		size_t GetSetPointsCount()			{  return m_DLL.GetSetPointsInfo().size();  }
-	};
-
 
 	class CPrimitivePoolBase
 	{
@@ -176,8 +135,8 @@ namespace DFW2
 		STRINGLIST PrimitiveNames_;
 	public:
 		std::shared_ptr<CCustomDeviceCPPDLL> DLL() { return m_pDLL; }
-		CCustomDeviceCPPContainer(CDynaModel* pDynaModel);
-		virtual ~CCustomDeviceCPPContainer();
+		CCustomDeviceCPPContainer(CDynaModel* pDynaModel) : CDeviceContainer(pDynaModel) {}
+		~CCustomDeviceCPPContainer() = default;
 		void BuildStructure();
 		void ConnectDLL(std::filesystem::path DLLFilePath);
 

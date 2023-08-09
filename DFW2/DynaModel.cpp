@@ -86,7 +86,6 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
 	AutomaticDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
 	ScenarioDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
-	CustomDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDevice>>();
 	CustomDeviceCPP.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
 
 	DeviceContainers_.push_back(&Nodes);
@@ -1115,7 +1114,7 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 					// если нашли константу, объявляем ей индекс DFW2_NON_STATE_INDEX,
 					// чтобы при формировании матрицы понимать, что это константа
 					// и не ставить производную в индекс этой переменной
-					ExtVar.Index = DFW2_NON_STATE_INDEX;
+					ExtVar.Index = VariableIndexBase::BadIndex;
 					bRes = true;
 				}
 				else if (pFoundDevice->GetType() == DEVTYPE_BRANCH)
