@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "DeviceId.h"
 #include "SerializerValidation.h"
+#include <array>
 
 namespace DFW2
 {
@@ -280,6 +281,7 @@ namespace DFW2
 		virtual eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel);						// инициализация устройства
 		ptrdiff_t MatrixRow_ = 0;														// строка в матрице с которой начинаются уравнения устройства
 		eDEVICESTATE State_ = eDEVICESTATE::DS_ON;										// состояние устройства
+		double StateVar_ = 1.0;															// фиктивная переменная для возврата состояния устройства в виде double: 1 - вкл, 0 - выкл
 		eDEVICESTATECAUSE StateCause_ = eDEVICESTATECAUSE::DSC_INTERNAL;				// причина изменения состояния устройства
 		STATEPRIMITIVESLIST StatePrimitives_;
 		PRIMITIVESVEC Primitives_;
@@ -508,6 +510,7 @@ namespace DFW2
 		static constexpr const char* m_cszState = "State";
 		static constexpr const char* m_csz_state = "state";
 		static constexpr const char* m_cszStates[4] = { "Off", "On", "Ready", "Determine", };
+		static constexpr const std::array<const std::string_view, 3> StateAliases_ = { m_cszSta, m_cszState, m_csz_state };
 	};
 
 using DEVICEVECTOR = std::vector<CDevice*>;

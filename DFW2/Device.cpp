@@ -58,6 +58,14 @@ double* CDevice::GetConstVariablePtr(std::string_view VarName)
 	double* pRes{ nullptr };
 	if (pContainer_)
 		pRes = GetConstVariablePtr(pContainer_->GetConstVariableIndex(VarName));
+	// если переменной не нашли,
+	// проверяем не состояние ли запросили
+	// и если да (один из нескольких алиасов)
+	// возвращаем фиктивную double переменную StateVar_
+	if (!pRes)
+		if (std::find(CDevice::StateAliases_.begin(), CDevice::StateAliases_.end(), VarName) != CDevice::StateAliases_.end())
+			pRes = &StateVar_;
+
 	return pRes;
 }
 
@@ -468,13 +476,20 @@ eDEVICEFUNCTIONSTATUS CDevice::SetState(eDEVICESTATE eState, eDEVICESTATECAUSE e
 {
 	if (State_ != eState)
 	{
+		// если устройство должно быть отключено
+		// обнуляем все переменные состояния
 		if (eState == eDEVICESTATE::DS_OFF)
 		{
 			VariableIndexRefVec vec;
 			for (auto&& var : GetVariables(vec))
 				var.get() = 0.0;
+			// а также обнуляем фиктивную переменную состояния устройства
+			StateVar_ = 0.0;
 		}
+		else
+			StateVar_ = 1.0; // если _не_ отключение, фиктивная переменная равна 1.0 - "on"
 	}
+
 	State_ = eState;
 	// если устройство было отключено навсегда - попытка изменения его состояния (даже отключение) вызывает исключение
 	// по крайней мере для отладки

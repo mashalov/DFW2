@@ -162,6 +162,9 @@ eDEVICEFUNCTIONSTATUS CDynaBranch::SetBranchState(CDynaBranch::BranchState eBran
 		// если заданное состояние ветви не 
 		// совпадает с текущим
 		BranchState_ = eBranchState;
+		// синхронизируем фиктивную переменную состояния
+		// по маппингу состояния ветви в обычное состояние устройства
+		StateVar_ = (GetState() == eDEVICESTATE::DS_OFF) ? 0.0 : 1.0;
 		// информируем модель о необходимости 
 		// обработки разрыва
 		pNodeIp_->ProcessTopologyRequest();

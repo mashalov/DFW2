@@ -527,11 +527,17 @@ public:
 			std::unique_ptr<BlockEmit> block;
 			if (v.second.size() > 1)
 				block = std::make_unique<BlockEmit>(*this);
+			else
+				Indent++;
+
 			for (const auto& pv : v.second)
 			{
 				const CASTJacobiElement* pJe{ static_cast<CASTJacobiElement*>(pv) };
 				(fnEmitDerivative)(pJe);
 			}
+
+			if (v.second.size() <= 1)
+				Indent--;
 		}
 	}
 
