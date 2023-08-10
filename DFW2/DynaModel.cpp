@@ -1111,10 +1111,30 @@ bool CDynaModel::InitExternalVariable(VariableIndexExternal& ExtVar, CDevice* pF
 				ExtVar.pValue = pFoundDevice->GetConstVariablePtr(Prop);
 				if (ExtVar.pValue)
 				{
-					// если нашли константу, объявляем ей индекс DFW2_NON_STATE_INDEX,
-					// чтобы при формировании матрицы понимать, что это константа
-					// и не ставить производную в индекс этой переменной
-					ExtVar.Index = VariableIndexBase::BadIndex;
+					// для констант, которые не являются переменными состояния и не входят
+					// в систему уравнений формируем фиктивные векторы Нордсика для корректной работы
+					// zerocrossing
+
+					// собираем адреса запрошенных констант
+					// и определяем их индекс в векторе фиктивных векторов Нордиска
+					// пока вектор фиктивных векторов не создан, просто перечисляем запрошенные константы
+					auto newRightVectorIt{ NonStateCounter_.emplace(ExtVar.pValue, static_cast<ptrdiff_t>(NonStateCounter_.size())).first };
+					// если вектор создан (был выполнен CDynaModel::EstimateMatrix)				
+					if (pNonStateRightVector)
+					{
+						// задаем константе индекс за пределами размерности системы уравнений
+						// по этому индексу определяем что переменная является константой
+						// с помощью CDynaModel::IndexedVariable а также в CDynaModel::GetRightVector
+						ExtVar.Index = newRightVectorIt->second + EstimatedMatrixSize_;
+
+						// инициализируем фиктивный вектор Нордсика
+						auto& Rv{ pNonStateRightVector[newRightVectorIt->second] };
+						MixedAdamsBDF::InitNordsiekElement(&Rv, Parameters().m_dAtol, Parameters().m_dRtol);
+						Rv.pValue = ExtVar.pValue;	// привязываем константу к Нордсику
+						Rv.pDevice = pFoundDevice;	// мы знаем и устройство для Нордсика
+					}
+					else
+						ExtVar.Index = -1;
 					bRes = true;
 				}
 				else if (pFoundDevice->GetType() == DEVTYPE_BRANCH)

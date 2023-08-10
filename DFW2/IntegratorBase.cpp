@@ -213,6 +213,11 @@ void IntegratorMultiStageBase::Init()
 
 }
 
+void IntegratorMultiStageBase::FinishStep()
+{
+
+}
+
 bool IntegratorMultiStageBase::StepConverged()
 {
 	return ConvTest_[0].dErrorSum <= 1.0;

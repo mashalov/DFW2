@@ -372,7 +372,7 @@ void CDevice::InitNordsiek(CDynaModel* pDynaModel)
 	// версия с доступом к переменным девайса без индексов
 	// по ссылкам, ранее была откатана в CDynaNode
 	_ASSERTE(pContainer_);
-	struct RightVector* pRv{ pDynaModel->GetRightVector(A(0)) };
+	RightVector* pRv{ pDynaModel->GetRightVector(A(0)) };
 	VariableIndexRefVec seed;
 	for (auto&& var : GetVariables(seed))
 	{

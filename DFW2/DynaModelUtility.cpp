@@ -55,10 +55,16 @@ void CDynaModel::ChangeOrder(ptrdiff_t Newq)
 		break;
 	}
 }
-
+//! Возвращает диапазон векторов Нордсика
 CDynaModel::RightVectorRangeT CDynaModel::RightVectorRange()
 {
 	return { pRightVector, pRightVector + MatrixSize() };
+}
+
+//! Возвращает диапазон фиктивных векторов Нордсика
+CDynaModel::RightVectorRangeT CDynaModel::NonStateRightVectorRange()
+{
+	return { pNonStateRightVector.get(), pNonStateRightVector.get() + NonStateCounter_.size() };
 }
 
 CDynaModel::BRangeT CDynaModel::BRange()
@@ -78,9 +84,17 @@ struct RightVector* CDynaModel::GetRightVector(const VariableIndexBase& Variable
 
 struct RightVector* CDynaModel::GetRightVector(const ptrdiff_t nRow)
 {
-	if (nRow < 0 || nRow >= m_nEstimatedMatrixSize)
-		throw dfw2error(fmt::format("CDynaModel::GetRightVector matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
-	return pRightVector + nRow;
+	// при запросе RightVector выделяем области переменных состояния
+	// в индексах [0;EstimatedMatrixSize_] и область фиктивных векторов
+	// Нордиска (EsitmatedMatrixSize; EstimatedMatrixSize + NonStateCounter_.size()]
+
+	// в первой области выдаем реальные векторы Нордсика, во второй - фиктивные
+	if (nRow < 0 || nRow >= (EstimatedMatrixSize_ + static_cast<ptrdiff_t>(NonStateCounter_.size())))
+		throw dfw2error(fmt::format("CDynaModel::GetRightVector matrix size overrun Row {} MatrixSize {}", nRow, EstimatedMatrixSize_));
+	if (nRow < EstimatedMatrixSize_)
+		return pRightVector + nRow;
+	else
+		return &pNonStateRightVector[nRow - EstimatedMatrixSize_];
 }
 
 
@@ -1127,6 +1141,8 @@ void CDynaModel::FinishStep()
 	// рассчитываем актуальные значения независимых переменных
 	for (auto&& it : DeviceContainersFinishStep_)
 		it->FinishStep(*this);
+	// даем обработать завершение шага интегратору
+	Integrator_->FinishStep();
 }
 
 

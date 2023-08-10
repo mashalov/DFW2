@@ -14,6 +14,7 @@ namespace DFW2
 		void UpdateStepSize() override;
 		void Init() override;
 		bool StepConverged() override;
+		void FinishStep() override;
 		void NewtonUpdateIteration() override;
 		void NewtonBacktrack(const double* pVec, double lambda) override;
 		void NewtonFailed() override;

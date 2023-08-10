@@ -523,7 +523,9 @@ public:
 
 		for (const auto& v : ExternalVarsDerivatives)
 		{
-			EmitLine(fmt::format("if({}.Indexed())", v.first));
+			// вставляем проверку является ли переменная индексированной
+			// или это константа с фиктивным вектором Нордсика
+			EmitLine(fmt::format("if(CustomDeviceData.IndexedVariable({}))", v.first));
 			std::unique_ptr<BlockEmit> block;
 			if (v.second.size() > 1)
 				block = std::make_unique<BlockEmit>(*this);

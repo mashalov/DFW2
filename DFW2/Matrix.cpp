@@ -9,7 +9,7 @@ void CDynaModel::EstimateMatrix()
 	const ptrdiff_t nOriginalMatrixSize{ klu.MatrixSize() };
 	// если RightVector уже есть - ставим флаг сохранения данных в новый вектор
 	bool bSaveRightVector{ pRightVector != nullptr };
-	m_nEstimatedMatrixSize = 0;
+	EstimatedMatrixSize_ = 0;
 	ptrdiff_t nNonZeroCount(0);
 	// заставляем обновиться постоянные элементы в матрице, ставим оценочную сборку матрицы
 	sc.UpdateConstElements(EstimateBuild_ = true);
@@ -25,10 +25,10 @@ void CDynaModel::EstimateMatrix()
 	for (auto&& it : DeviceContainers_)
 		it->EstimateBlock(this);
 
-	m_pMatrixRowsUniq = std::make_unique<MatrixRow[]>(m_nEstimatedMatrixSize);
+	m_pMatrixRowsUniq = std::make_unique<MatrixRow[]>(EstimatedMatrixSize_);
 	m_pMatrixRows = m_pMatrixRowsUniq.get();
 
-	ZeroCrossingDevices.reserve(m_nEstimatedMatrixSize);
+	ZeroCrossingDevices.reserve(EstimatedMatrixSize_);
 
 	if (bSaveRightVector)
 	{
@@ -46,13 +46,19 @@ void CDynaModel::EstimateMatrix()
 
 	ElementSetter		= &CDynaModel::CountSetElement;
 
+	// В NonStateCounter собраны адреса запрошенных переменных,
+	// не являющихся переменными состояния с индексами.
+	// Для хранения фиктивных векторов Нордиска для этих переменных
+	// создаем вектор pNonStateRightVector
+	pNonStateRightVector = std::make_unique<RightVector[]>(NonStateCounter_.size());
+
 	BuildMatrix();
 	nNonZeroCount = 0;
 
 	// allocate matrix row headers to access rows instantly
 
 	MatrixRow* pRow{ m_pMatrixRows };
-	const MatrixRow* pRowEnd{ pRow + m_nEstimatedMatrixSize };
+	const MatrixRow* pRowEnd{ pRow + EstimatedMatrixSize_ };
 	while (pRow < pRowEnd)
 	{
 		nNonZeroCount += pRow->m_nColsCount;
@@ -60,8 +66,8 @@ void CDynaModel::EstimateMatrix()
 	}
 
 	// allocate KLU matrix in CCS form
-	klu.SetSize(m_nEstimatedMatrixSize, nNonZeroCount);
-	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszMatrixSize, m_nEstimatedMatrixSize, nNonZeroCount));
+	klu.SetSize(EstimatedMatrixSize_, nNonZeroCount);
+	Log(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format(CDFW2Messages::m_cszMatrixSize, EstimatedMatrixSize_, nNonZeroCount));
 	m_pMatrixRows->pApRow = klu.Ap();
 	m_pMatrixRows->pAxRow = klu.Ax();
 
@@ -118,7 +124,7 @@ void CDynaModel::BuildRightHand()
 	for (const auto& b : BRange())
 		sc.dRightHandNorm += b * b;
 
-	std::copy(klu.B(), klu.B() + m_nEstimatedMatrixSize, pRightHandBackup.get());
+	std::copy(klu.B(), klu.B() + EstimatedMatrixSize_, pRightHandBackup.get());
 }
 
 void CDynaModel::BuildMatrix(bool SkipRightHand)
@@ -164,8 +170,8 @@ void CDynaModel::BuildDerivatives()
 
 ptrdiff_t CDynaModel::AddMatrixSize(ptrdiff_t nSizeIncrement)
 {
-	const ptrdiff_t nRet{ m_nEstimatedMatrixSize };
-	m_nEstimatedMatrixSize += nSizeIncrement;
+	const ptrdiff_t nRet{ EstimatedMatrixSize_ };
+	EstimatedMatrixSize_ += nSizeIncrement;
 	return nRet;
 }
 
@@ -173,7 +179,7 @@ void CDynaModel::ResetElement()
 {
 	_ASSERTE(m_pMatrixRows);
 	MatrixRow* pRow{ m_pMatrixRows };
-	const MatrixRow* pEnd{ pRow + m_nEstimatedMatrixSize };
+	const MatrixRow* pEnd{ pRow + EstimatedMatrixSize_ };
 	while (pRow < pEnd)
 	{
 		pRow->Reset();
@@ -183,8 +189,8 @@ void CDynaModel::ResetElement()
 
 void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
-	if (nRow >= m_nEstimatedMatrixSize || nCol >= m_nEstimatedMatrixSize || nRow < 0 || nCol < 0)
-		throw dfw2error(fmt::format("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, m_nEstimatedMatrixSize));
+	if (nRow >= EstimatedMatrixSize_ || nCol >= EstimatedMatrixSize_ || nRow < 0 || nCol < 0)
+		throw dfw2error(fmt::format("CDynaModel::ReallySetElement matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, EstimatedMatrixSize_));
 
 	CHECK_MATRIX_ELEMENT(nRow, nCol);
 
@@ -201,8 +207,8 @@ void CDynaModel::ReallySetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 
 void CDynaModel::CountSetElement(ptrdiff_t nRow, ptrdiff_t nCol, double dValue)
 {
-	if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
-		throw dfw2error(fmt::format("CDynaModel::CountSetElementNoDup matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, m_nEstimatedMatrixSize));
+	if (nRow >= EstimatedMatrixSize_ || nRow < 0)
+		throw dfw2error(fmt::format("CDynaModel::CountSetElementNoDup matrix size overrun Row {} Col {} MatrixSize {}", nRow, nCol, EstimatedMatrixSize_));
 	// учитываем элементы с учетом суммирования
 	MatrixRow *pRow = m_pMatrixRows + nRow;
 	pRow->m_nColsCount++;
@@ -278,7 +284,7 @@ double CDynaModel::GetFunction(ptrdiff_t nRow)  const
 {
 	double dVal{ std::numeric_limits<double>::quiet_NaN() };
 
-	if (nRow >= 0 && nRow < m_nEstimatedMatrixSize)
+	if (nRow >= 0 && nRow < EstimatedMatrixSize_)
 		dVal = klu.B()[nRow];
 
 	return dVal;
@@ -290,13 +296,13 @@ void CDynaModel::ConvertToCCSMatrix()
 	ptrdiff_t *Ap = klu.Ap();
 	MatrixRow *pRowBase = m_pMatrixRows;
 	MatrixRow *pRow = pRowBase;
-	MatrixRow *pEnd = pRow + m_nEstimatedMatrixSize;
+	MatrixRow *pEnd = pRow + EstimatedMatrixSize_;
 	while (pRow < pEnd)
 	{
 		Ai[pRow - pRowBase] = pRow->pApRow - Ap;
 		pRow++;
 	}
-	klu.Ai()[m_nEstimatedMatrixSize] = klu.NonZeroCount();
+	klu.Ai()[EstimatedMatrixSize_] = klu.NonZeroCount();
 }
 
 void CDynaModel::SetDifferentiatorsTolerance()
@@ -318,7 +324,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 		nMarked = 0;
 
 		RightVector* pVectorBegin{ pRightVector };
-		RightVector* const pVectorEnd{ pRightVector + m_nEstimatedMatrixSize };
+		RightVector* const pVectorEnd{ pRightVector + EstimatedMatrixSize_ };
 
 		while (pVectorBegin < pVectorEnd)
 		{
@@ -332,7 +338,7 @@ void CDynaModel::SetDifferentiatorsTolerance()
 				const ptrdiff_t nDerLagEqIndex{ pVectorBegin - pRightVector };
 				MatrixRow* const pRowBase{ m_pMatrixRows };
 				MatrixRow* pRow{ pRowBase };
-				const MatrixRow* const pRowEnd{ pRow + m_nEstimatedMatrixSize };
+				const MatrixRow* const pRowEnd{ pRow + EstimatedMatrixSize_ };
 
 				// просматриваем строки матрицы, ищем столбцы с индексом, соответствующим уравнению РДЗ
 				for (; pRow < pRowEnd ; pRow++)
@@ -446,7 +452,7 @@ void CDynaModel::UpdateRcond()
 void CDynaModel::ScaleAlgebraicEquations()
 {
 	auto pVectorBegin{ pRightVector };
-	const auto pVectorEnd{ pRightVector + m_nEstimatedMatrixSize };
+	const auto pVectorEnd{ pRightVector + EstimatedMatrixSize_ };
 	double h{ H() };
 
 	if (h <= 0)
@@ -468,9 +474,9 @@ void CDynaModel::ScaleAlgebraicEquations()
 
 void CDynaModel::CreateUniqueRightVector()
 {
-	pRightVectorUniq = std::make_unique<RightVector[]>(m_nEstimatedMatrixSize);
+	pRightVectorUniq = std::make_unique<RightVector[]>(EstimatedMatrixSize_);
 	pRightVector = pRightVectorUniq.get();
-	pRightHandBackup = std::make_unique<double[]>(m_nEstimatedMatrixSize);
+	pRightHandBackup = std::make_unique<double[]>(EstimatedMatrixSize_);
 }
 
 void CDynaModel::CreateTotalRightVector()
@@ -511,7 +517,7 @@ void CDynaModel::UpdateNewRightVector()
 {
 	RightVectorTotal* pRvB = pRightVectorTotal.get();
 	RightVector* pRv = pRightVectorUniq.get();
-	const RightVector*  pEnd{ pRv + m_nEstimatedMatrixSize };
+	const RightVector*  pEnd{ pRv + EstimatedMatrixSize_ };
 
 	// логика синхронизации векторов такая же как в UpdateTotalRightVector
 	for (auto&& cit : DeviceContainers_)
@@ -564,7 +570,7 @@ void CDynaModel::DebugCheckRightVectorSync()
 		}
 
 		// для устройств в контейнере, которые включены в матрицу
-		RightVector* pEnd = pRv + m_nEstimatedMatrixSize;
+		RightVector* pEnd = pRv + EstimatedMatrixSize_;
 		for (auto&& dit : *cit)
 		{
 			if (dit->AssignedToMatrix())

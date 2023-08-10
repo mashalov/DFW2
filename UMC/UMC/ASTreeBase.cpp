@@ -40,6 +40,43 @@ CASTTreeBase::~CASTTreeBase()
 		delete node;
 }
 
+//! Сбрасывает маркер визитов в узлах
+/*!
+    После обхода дерева с процессингом в обрабатываемых
+    узлах не сбрасывались маркеры. Поэтому эта функция 
+    перечисляет все узлы дерева и ставит заданный маркер визита DFSLevel_
+*/
+void CASTTreeBase::Unvisit(CASTNodeBase* Root)
+{
+    // ставим для посещенных узлов максимально возможный маркер
+
+    const ptrdiff_t DFSLevelMarker{ std::numeric_limits<ptrdiff_t>::max() };
+
+    // резервируем стек и список посещенных узлов
+    CDFSStack stack(NodeList.size());
+    ASTNodeVec visited;
+    visited.reserve(NodeList.size());
+
+    stack.push(Root);
+
+    while (!stack.empty())
+    {
+        auto v{ stack.top() };
+        stack.pop();
+        if (!v->Visited(DFSLevelMarker))
+        {
+            v->Visit(DFSLevelMarker);
+            visited.push_back(v);
+            for (auto c : v->ChildNodes())
+                stack.push(c);
+        }
+    }
+
+    // для перечисленных узлов ставим текущее значения маркера визита
+    for (auto&& node : visited)
+        node->Visit(DFSLevel_);
+}
+
 void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 {
     // увеличиваем текущий номер обхода
@@ -47,8 +84,6 @@ void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 
     // резервируем стек и список посещенных узлов
     CDFSStack stack(NodeList.size() * 2);
-    ASTNodeVec visited;
-    visited.reserve(NodeList.size() * 2);
     
     stack.push(Root);
 
@@ -63,7 +98,6 @@ void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
         if (!v->Visited(DFSLevel_))
         {
             v->Visit(DFSLevel_);
-            visited.push_back(v);
             if (!(Visitor)(v))
                 break;
             for (auto c : v->ChildNodes())
@@ -74,8 +108,7 @@ void CASTTreeBase::DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor)
     // Возвращаем номер обхода
     DFSLevel_--;
     // и восстанавливаем исходные посещения у посещенных в данном обходе узлов
-    for (auto&& node : visited)
-        node->Visit(DFSLevel_);
+    Unvisit(Root);
 }
 
 void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
@@ -85,8 +118,6 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
 
     // резервируем стек и список посещенных узлов
     CDFSStack stack(NodeList.size() * 2);
-    ASTNodeVec visited;
-    visited.reserve(NodeList.size() * 2);
 
     stack.push(Root);
 
@@ -100,7 +131,6 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
         if (!v->Visited(DFSLevel_))
         {
             v->Visit(DFSLevel_);
-            visited.push_back(v);
             for (auto c : v->ChildNodes())
                 stack.push(c);
         }
@@ -118,8 +148,7 @@ void CASTTreeBase::DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor)
     // Возвращаем номер обхода
     DFSLevel_--;
     // и восстанавливаем исходные посещения у посещенных в данном обходе узлов
-    for (auto&& node : visited)
-        node->Visit(DFSLevel_);
+    Unvisit(Root);
 }
 
 
@@ -473,11 +502,16 @@ void CASTTreeBase::RemoveSingleFragments(ASTFragmentsMap& fragments) const
     // удаляем из фрагментов те, которые повторяются менее двух раз
     for (auto it = fragments.begin(); it != fragments.end(); )
     {
-        if (it->second.size() < 2 ||
-            (*it->second.begin())->CheckType(ASTNodeType::Numeric))
-        {
+        auto& nodes{ it->second };
+        // удаляем ссылки на удаленные узлы
+        for (auto nodeit{ nodes.begin() }; nodeit != nodes.end();)
+            if ((*nodeit)->Deleted())
+                nodeit = nodes.erase(nodeit);
+            else
+                nodeit++;
+
+        if (it->second.size() < 2)
             it = fragments.erase(it);
-        }
         else
             it++;
     }

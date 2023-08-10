@@ -13,6 +13,7 @@ CCustomDeviceCPP::CCustomDeviceCPP()
 	CustomDeviceData.SetFnSetFunctionDiff(DLLSetFunctionDiff);
 	CustomDeviceData.SetFnInitPrimitive(DLLInitPrimitive);
 	CustomDeviceData.SetFnProcessPrimitiveDisco(DLLProcPrimDisco);
+	CustomDeviceData.SetFnIndexedVariable(DLLIndexedVariable);
 }
 
 void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Container)
@@ -209,6 +210,11 @@ void CCustomDeviceCPP::DLLSetElement(CDFWModelData& DFWModelData, const Variable
 void CCustomDeviceCPP::DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue)
 {
 	GetModel(DFWModelData)->SetFunction(Row, dValue);
+}
+
+bool CCustomDeviceCPP::DLLIndexedVariable(CDFWModelData& DFWModelData, const VariableIndexBase& Variable)
+{
+	return GetModel(DFWModelData)->IndexedVariable(Variable);
 }
 
 CCustomDeviceCPPContainer* CCustomDeviceCPP::GetContainer()

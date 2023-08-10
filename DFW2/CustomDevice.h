@@ -15,6 +15,7 @@ namespace DFW2
 		void SetFnSetDerivative(FNCDSETDERIVATIVE pFn) { pFnSetDerivative = pFn; }
 		void SetFnInitPrimitive(FNCDINITPRIMITIVE pFn) { pFnInitPrimitive = pFn; }
 		void SetFnProcessPrimitiveDisco(FNCDPROCPRIMDISCO pFn) { pFnProcPrimDisco = pFn; }
+		void SetFnIndexedVariable(FNCDINDEXED pFn) { pFnIndexed = pFn; }
 		void SetModelData(CDynaModel* Model, CDevice* Device);
 	};
 
@@ -43,6 +44,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static void DLLSetElement(CDFWModelData& DFWModelData, const VariableIndexBase& Row, const VariableIndexBase& Col, double dValue);
 		static void DLLSetFunction(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
+		static bool DLLIndexedVariable(CDFWModelData& DFWModelData, const VariableIndexBase& Variable);
 		static void DLLSetFunctionDiff(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
 		static void DLLSetDerivative(CDFWModelData& DFWModelData, const VariableIndexBase& Row, double dValue);
 		static eDEVICEFUNCTIONSTATUS DLLInitPrimitive(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);

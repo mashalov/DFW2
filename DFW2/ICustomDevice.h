@@ -16,6 +16,7 @@ namespace DFW2
 	using FNCDSETDERIVATIVE		= void(*)(CDFWModelData&, const VariableIndexBase&, double);
 	using FNCDINITPRIMITIVE		= eDEVICEFUNCTIONSTATUS(*)(CDFWModelData&, ptrdiff_t nPrimitiveIndex);
 	using FNCDPROCPRIMDISCO		= eDEVICEFUNCTIONSTATUS(*)(CDFWModelData&, ptrdiff_t nPrimitiveIndex);
+	using FNCDINDEXED			= bool(*)(CDFWModelData&, const VariableIndexBase&);
 
 	class CCustomDeviceData : protected CDFWModelData
 	{
@@ -26,6 +27,7 @@ namespace DFW2
 		FNCDSETDERIVATIVE		pFnSetDerivative;
 		FNCDINITPRIMITIVE		pFnInitPrimitive;
 		FNCDPROCPRIMDISCO		pFnProcPrimDisco;
+		FNCDINDEXED				pFnIndexed;
 	public:
 		inline void ProcessPrimitiveDisco(ptrdiff_t nPrimitiveIndex)
 		{
@@ -35,13 +37,17 @@ namespace DFW2
 		{
 			(*pFnInitPrimitive)(*this, nPrimitiveIndex);
 		}
-		inline void SetFunction(VariableIndexBase& Row, double Value)
+		inline void SetFunction(const VariableIndexBase& Row, double Value)
 		{
 			(*pFnSetFunction)(*this, Row, Value);
 		}
-		inline void SetElement(VariableIndexBase& Row, VariableIndexBase& Col, double Value)
+		inline void SetElement(const VariableIndexBase& Row, const VariableIndexBase& Col, double Value)
 		{
 			(*pFnSetElement)(*this, Row, Col, Value);
+		}
+		inline bool IndexedVariable(const VariableIndexBase& Variable)
+		{
+			return (*pFnIndexed)(*this, Variable);
 		}
 		inline double time() const
 		{

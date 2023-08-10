@@ -160,6 +160,7 @@ public:
     void DeleteNode(CASTNodeBase* pNode);
     void DFS(CASTNodeBase* Root, DFSVisitorFunction Visitor);
     void DFSPost(CASTNodeBase* Root, DFSVisitorFunction Visitor);
+    void Unvisit(CASTNodeBase* Root);
     void PostParseCheck();
     void Flatten();
     void Collect();

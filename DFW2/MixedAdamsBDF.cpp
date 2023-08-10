@@ -31,6 +31,18 @@ void MixedAdamsBDF::SaveNordsiek()
 		r.SavedError = r.Error;
 	}
 
+	// сохраняем фиктивные векторы Нордсика
+	for (auto&& r : DynaModel_.NonStateRightVectorRange())
+	{
+		r.Tminus2Value = r.SavedNordsiek[0];
+		double* pN{ r.Nordsiek };
+		double* pS{ r.SavedNordsiek };
+		*pS = *pN; pS++; pN++;
+		*pS = *pN; pS++; pN++;
+		*pS = *pN; pS++; pN++;
+		r.SavedError = r.Error;
+	}
+
 	DynaModel_.StoreUsedH();
 	sc.SetNordsiekScaledForHSaved(sc.NordsiekScaledForH());
 	sc.m_bNordsiekSaved = true;
@@ -345,6 +357,14 @@ void MixedAdamsBDF::Predict()
 			r.Error = 0.0;   // обнуляем ошибку шага
 		}
 	}
+
+	// сбрасываем фиктивные векторы Нордсика
+	for (auto&& r : DynaModel_.NonStateRightVectorRange())
+	{
+		r.Nordsiek[0] = *r.pValue;
+		r.Nordsiek[1] = r.Nordsiek[2] = r.Error = 0.0;   // обнуляем ошибку шага
+	}
+
 
 #ifdef DBG_CHECK_PREDICTION
 	// после выполнения прогноза рассчитываем разность
@@ -770,6 +790,19 @@ void MixedAdamsBDF::RestoreNordsiek()
 			*r.pValue = r.Nordsiek[0];
 			r.Error = r.SavedError;
 		}
+
+		// восстанавливаем фиктивные векторы Нордсика
+		for (auto&& r : DynaModel_.NonStateRightVectorRange())
+		{
+			double* pN{ r.Nordsiek };
+			double* pS{ r.SavedNordsiek };
+			*pN = *pS; pS++; pN++;
+			*pN = *pS; pS++; pN++;
+			*pN = *pS; pS++; pN++;
+			*r.pValue = r.Nordsiek[0];
+			r.Error = r.SavedError;
+		}
+
 		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
 	}
 	else
@@ -783,6 +816,15 @@ void MixedAdamsBDF::RestoreNordsiek()
 			r.Nordsiek[1] = r.Nordsiek[2] = 0.0;
 			r.Error = 0.0;
 		}
+
+		// сбрасываем фиктивные векторы Нордсика
+		for (auto&& r : DynaModel_.NonStateRightVectorRange())
+		{
+			*r.pValue = r.Nordsiek[0];
+			r.Nordsiek[1] = r.Nordsiek[2] = 0.0;
+			r.Error = 0.0;
+		}
+
 		sc.SetNordsiekScaledForH(sc.NordsiekScaledForHSaved());
 	}
 
@@ -1223,6 +1265,19 @@ double MixedAdamsBDF::GetZCStepRatio(double a, double b, double c)
 	}
 
 	return rH;
+}
+
+void MixedAdamsBDF::FinishStep()
+{
+	// имитируем для фиктивных векторов Нордсика
+	// ошибку и первую производную для корректной работы
+	// zerocrossing
+	for (auto&& r : DynaModel_.NonStateRightVectorRange())
+	{
+		const double* lm{ Methodl[r.EquationType * 2 + DynaModel_.Order() - 1]};
+		r.Nordsiek[1] = *r.pValue - r.Nordsiek[0];
+		r.Error = (r.Nordsiek[1]) / lm[0];
+	}
 }
 
 double MixedAdamsBDF::FindZeroCrossingOfDifference(const RightVector* pRightVector1, const RightVector* pRightVector2)

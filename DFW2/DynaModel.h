@@ -555,6 +555,13 @@ namespace DFW2
 		std::unique_ptr<MatrixRow[]> m_pMatrixRowsUniq;
 		std::unique_ptr<RightVector[]> pRightVectorUniq;
 		std::unique_ptr<RightVectorTotal[]> pRightVectorTotal;
+		// вектор для эмуляции Нордсика переменных, не являющихся
+		// переменными состояния
+		std::unique_ptr<RightVector[]> pNonStateRightVector;
+		// счетчик индексов переменных, не являющихся
+		// переменными состояния
+		std::map<double*, ptrdiff_t> NonStateCounter_;
+
 		RightVector *pRightVector = nullptr;
 		MatrixRow *m_pMatrixRows = nullptr;
 
@@ -568,7 +575,7 @@ namespace DFW2
 		std::unique_ptr<CDevice*[]> m_ppVarSearchStackBase;
 		DEVICEPTRSET m_setVisitedDevices;
 
-		ptrdiff_t m_nEstimatedMatrixSize;
+		ptrdiff_t EstimatedMatrixSize_;
 		ptrdiff_t m_nTotalVariablesCount;
 		double *pbRightHand;
 		std::unique_ptr<double[]> pRightHandBackup;
@@ -667,8 +674,8 @@ namespace DFW2
 		// задает правую часть алгебраического уравнения
 		inline void SetFunction(ptrdiff_t nRow, double dValue)
 		{
-			if (nRow >= m_nEstimatedMatrixSize || nRow < 0)
-				throw dfw2error(fmt::format("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}", nRow, m_nEstimatedMatrixSize));
+			if (nRow >= EstimatedMatrixSize_ || nRow < 0)
+				throw dfw2error(fmt::format("CDynaModel::SetFunction matrix size overrun Row {} MatrixSize {}", nRow, EstimatedMatrixSize_));
 			_CheckNumber(dValue);
 			klu.B()[nRow] = Integrator_->BOperatorAlgebraic(nRow, dValue);
 		}
@@ -762,6 +769,11 @@ namespace DFW2
 		{
 			SetFunctionDiff(Row.Index, dValue);
 		}
+		// возвращает true если переменная имеет индекс в RightVector
+		inline bool IndexedVariable(const VariableIndexBase& Variable)
+		{
+			return Variable.Index < EstimatedMatrixSize_ && Variable.Index >= 0;
+		}
 		void SetDerivative(const VariableIndexBase& Row, double dValue);
 		void CorrectNordsiek(ptrdiff_t nRow, double dValue);
 		// Задает значение для переменной, и компонентов Нордиска. 
@@ -799,6 +811,7 @@ namespace DFW2
 		using BRangeT = RangeAdapter<double>;
 
 		RightVectorRangeT RightVectorRange();
+		RightVectorRangeT NonStateRightVectorRange();
 
 		BRangeT BRange();
 
@@ -953,8 +966,8 @@ namespace DFW2
 		{
 			for (const auto& p : { vars... }) 
 			{
-				if (p.Index >= m_nEstimatedMatrixSize || p.Index < 0)
-					throw dfw2error(fmt::format("CDynaModel::CountConstElementsToSkip matrix size overrun Row {} MatrixSize {}", p.Index, m_nEstimatedMatrixSize));
+				if (p.Index >= EstimatedMatrixSize_ || p.Index < 0)
+					throw dfw2error(fmt::format("CDynaModel::CountConstElementsToSkip matrix size overrun Row {} MatrixSize {}", p.Index, EstimatedMatrixSize_));
 				MatrixRow* pRow{ m_pMatrixRows + p.Index };
 				pRow->m_nConstElementsToSkip = pRow->pAp - pRow->pApRow;
 			}
@@ -964,8 +977,8 @@ namespace DFW2
 		{
 			for (const auto& p : { vars... })
 			{
-				if (p.Index >= m_nEstimatedMatrixSize || p.Index < 0)
-					throw dfw2error(fmt::format("CDynaModel::SkipConstElements matrix size overrun Row {} MatrixSize {}", p.Index, m_nEstimatedMatrixSize));
+				if (p.Index >= EstimatedMatrixSize_ || p.Index < 0)
+					throw dfw2error(fmt::format("CDynaModel::SkipConstElements matrix size overrun Row {} MatrixSize {}", p.Index, EstimatedMatrixSize_));
 				MatrixRow* pRow{ m_pMatrixRows + p.Index };
 				pRow->pAp = pRow->pApRow + pRow->m_nConstElementsToSkip;
 				pRow->pAx = pRow->pAxRow + pRow->m_nConstElementsToSkip; 

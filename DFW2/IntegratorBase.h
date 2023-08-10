@@ -109,6 +109,7 @@ namespace DFW2
 		virtual void AcceptStep(bool DisableStepControl = false) = 0;
 		virtual void RejectStep() = 0;
 		virtual void UpdateStepSize() = 0;
+		virtual void FinishStep() = 0;
 		virtual void Init() = 0;
 		virtual void NewtonUpdateIteration() = 0;
 		virtual void NewtonBacktrack(const double* pVec, double lambda) = 0;
@@ -154,6 +155,7 @@ namespace DFW2
 		void UpdateStepSize() override;
 		void Init() override;
 		bool StepConverged() override;
+		void FinishStep() override;
 		void NewtonUpdateIteration() override;
 		void NewtonBacktrack(const double* pVec, double lambda) override;
 		void NewtonFailed() override;

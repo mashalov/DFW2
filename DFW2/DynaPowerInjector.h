@@ -19,22 +19,22 @@ namespace DFW2
 		{
 			V_IRE,
 			V_IIM,
+			V_P,
+			V_Q,
 			V_LAST
 		};
 
 		enum CONSTVARS
 		{
 			C_NODEID,
-			C_P,
-			C_Q,
 			C_SYNCDELTA,
 			C_LAST
 		};
 
 
-		VariableIndex Ire, Iim;
+		VariableIndex Ire, Iim, P, Q;
 
-		double P, Q, SyncDelta_;
+		double SyncDelta_;
 
 		double Kgen;
 		double LFQmin;
@@ -46,8 +46,6 @@ namespace DFW2
 		virtual ~CDynaPowerInjector() = default;
 
 		virtual bool CalculatePower();
-		void FinishStep(const CDynaModel& DynaModel) override;
-
 		// комплекс шунта Нортона в узле подключения	
 		virtual const cplx& Ynorton() const { return Ynorton_; }
 
@@ -58,6 +56,9 @@ namespace DFW2
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		static constexpr const char* m_cszP = "P";
 		static constexpr const char* m_cszQ = "Q";

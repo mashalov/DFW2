@@ -25,13 +25,14 @@ eDEVICEFUNCTIONSTATUS CComparator::ProcessDiscontinuity(CDynaModel* pDynaModel)
 
 double CComparator::OnStateOn(CDynaModel *pDynaModel)
 {
-	const RightVector* pRightVector1{ pDynaModel->GetRightVector(Input_) };
-	const RightVector* pRightVector2{ pDynaModel->GetRightVector(Input1_) };
 	const double dCheck{ Input_ - Input1_ };
 	double rH{ 1.0 };
 
 	if (dCheck < 0)
 	{
+		const RightVector* pRightVector1{ pDynaModel->GetRightVector(Input_) };
+		const RightVector* pRightVector2{ pDynaModel->GetRightVector(Input1_) };
+
 		rH = pDynaModel->FindZeroCrossingOfDifference(pRightVector1, pRightVector2);
 		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{
@@ -63,13 +64,14 @@ double CComparator::OnStateOn(CDynaModel *pDynaModel)
 
 double CComparator::OnStateOff(CDynaModel *pDynaModel)
 {
-	const RightVector* pRightVector1{ pDynaModel->GetRightVector(Input_) };
-	const RightVector* pRightVector2{ pDynaModel->GetRightVector(Input1_) };
 	const double dCheck{ Input1_ - Input_ };
 	double rH{ 1.0 };
 
 	if (dCheck < 0)
 	{
+		const RightVector* pRightVector1{ pDynaModel->GetRightVector(Input_) };
+		const RightVector* pRightVector2{ pDynaModel->GetRightVector(Input1_) };
+
 		rH = pDynaModel->FindZeroCrossingOfDifference(pRightVector1, pRightVector2);
 		if (pDynaModel->GetZeroCrossingInRange(rH))
 		{

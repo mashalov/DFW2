@@ -14,6 +14,7 @@ void CDynaGeneratorInfBus::BuildEquations(CDynaModel* pDynaModel)
 	pDynaModel->SetElement(Ire, Ire, 1.0);
 	// dIim / dIim
 	pDynaModel->SetElement(Iim, Iim, 1.0);
+	CDynaPowerInjector::BuildEquations(pDynaModel);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::AngleToSyncReference()
@@ -52,6 +53,7 @@ void CDynaGeneratorInfBus::BuildRightHand(CDynaModel* pDynaModel)
 	// изменяется только составляющая тока на шунте Нортона
 	pDynaModel->SetFunction(Ire, 0.0);
 	pDynaModel->SetFunction(Iim, 0.0);
+	CDynaPowerInjector::BuildRightHand(pDynaModel);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::InitModel(CDynaModel* pDynaModel)
@@ -176,4 +178,5 @@ void CDynaGeneratorInfBusBase::DeviceProperties(CDeviceContainerProperties& prop
 	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorInfPower, CDeviceContainerProperties::m_cszSysNameGeneratorInfPower);
 	props.EquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorInfBus>>();
+	props.bFinishStep = true;
 }

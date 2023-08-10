@@ -219,6 +219,8 @@ void CDynaGeneratorMotion::BuildAngleEquationBlock(CDynaModel* pDynaModel)
 	if(pDynaModel->UseCOI())
 		pDynaModel->SetElement(Delta, Scoi, pDynaModel->GetOmega0());
 	pDynaModel->SetElement(Delta, Delta, 0.0);
+
+	CDynaPowerInjector::BuildEquations(pDynaModel);
 }
 
 void CDynaGeneratorMotion::BuildAngleEquation(CDynaModel* pDynaModel, CDevice::fnDerivative fn)
@@ -227,6 +229,8 @@ void CDynaGeneratorMotion::BuildAngleEquation(CDynaModel* pDynaModel, CDevice::f
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * (s - Scoi));
 	else
 		(pDynaModel->*fn)(Delta, pDynaModel->GetOmega0() * s);
+
+	CDynaPowerInjector::BuildRightHand(pDynaModel);
 }
 
 
