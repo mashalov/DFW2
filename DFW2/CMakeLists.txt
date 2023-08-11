@@ -31,6 +31,8 @@ set(EMSSSOURCES
     Device.cpp
     DeviceContainer.cpp
     DynaNode.cpp
+    DynaNodeBase.cpp
+    DynaNodeFreq.cpp
     DynaBranch.cpp
     DeviceId.cpp
     DynaLRC.cpp

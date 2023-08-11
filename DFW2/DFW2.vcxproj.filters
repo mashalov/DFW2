@@ -325,7 +325,7 @@
     <ClCompile Include="DeviceId.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="DynaNode.cpp">
+    <ClCompile Include="DynaNodeBase.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Device.cpp">
@@ -668,6 +668,12 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="SynchroZone.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaNodeFreq.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="DynaNode.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

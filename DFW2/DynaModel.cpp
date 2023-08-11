@@ -60,7 +60,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   m_Platform(*this)
 {
 	static_cast<DynaModelParameters&>(m_Parameters) = ExternalParameters;
-	CDynaNode::DeviceProperties(Nodes.ContainerProps());
+	CDynaNodeDerlag::DeviceProperties(Nodes.ContainerProps());
 	CSynchroZone::DeviceProperties(SynchroZones.ContainerProps());
 	CDynaBranch::DeviceProperties(Branches.ContainerProps());
 	CDynaLRC::DeviceProperties(LRCs.ContainerProps());

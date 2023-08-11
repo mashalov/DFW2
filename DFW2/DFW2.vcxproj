@@ -382,6 +382,7 @@
     <ClInclude Include="DynaDECMustang.h" />
     <ClInclude Include="DynaExcConMustang.h" />
     <ClCompile Include="BranchMeasures.cpp" />
+    <ClCompile Include="DynaNode.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="DynaExcConMustangNW.cpp">
       <FileType>CppHeader</FileType>
@@ -511,7 +512,8 @@
     <ClCompile Include="DynaModelCompile.cpp" />
     <ClCompile Include="DynaModelSerialize.cpp" />
     <ClCompile Include="DynaModelUtility.cpp" />
-    <ClCompile Include="DynaNode.cpp" />
+    <ClCompile Include="DynaNodeBase.cpp" />
+    <ClCompile Include="DynaNodeFreq.cpp" />
     <ClCompile Include="DynaPowerInjector.cpp" />
     <ClCompile Include="DynaPrimitive.cpp" />
     <ClCompile Include="DynaReactor.cpp" />

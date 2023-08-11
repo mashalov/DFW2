@@ -123,8 +123,8 @@ namespace DFW2
 		double LFVref, LFQmin, LFQmax;	// заданный модуль напряжения и пределы по реактивной мощности для УР
 		double LFQminGen, LFQmaxGen;	// суммарные ограничения реактивной мощности генераторов в узле
 		virtual ~CDynaNodeBase() = default;
-		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		double* GetVariablePtr(ptrdiff_t nVarIndex)  override;
 		double* GetConstVariablePtr(ptrdiff_t nVarIndex)  override;
 		void GetPnrQnr();
 		void GetPnrQnrSuper();
@@ -238,7 +238,9 @@ namespace DFW2
 		static constexpr const char* m_cszPload = "pn";
 		static constexpr const char* m_cszQload = "qn";
 		static constexpr const char* m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };
-
+		static constexpr const char* m_cszS = "S";
+		static constexpr const char* m_cszSz = "Sz";
+		static constexpr const char* cszSyncDelta = "SyncDelta";
 	protected:
 		// Рассчитать полную информацию о потоках в ветвях по рассчитанным взаимным потокам
 		void CalculateZeroLFBranches();
@@ -252,48 +254,78 @@ namespace DFW2
 
 	class CDynaNodeMeasure;
 
+	//! Базовый класс узла, с учетом угла, но без скольжения
 	class CDynaNode : public CDynaNodeBase
 	{
 	public:
 		// здесь переменные состояния добавляются к базовому классу
 		enum VARS
 		{
-			V_DELTA = CDynaNodeBase::V_LAST,
-			V_LAG, 			// дифференциальное уравнение лага скольжения в третьей строке
-			V_S,			// скольжение
-	//		V_SIP,
-	//		V_COP,
-	//		V_SV,
+			V_DELTA = CDynaNodeBase::V_LAST,	// угол
+			V_S,								// скольжение
 			V_LAST
 		};
 
-		CDynaNodeMeasure* pMeasure = nullptr;
-
-		VariableIndex Lag;
 		VariableIndex S;
-		//double Sip;
-		//double Cop;
-		//double Sv, Dlt;
-		CDynaNode();
-		virtual ~CDynaNode() = default;
-		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+
+		CDynaNodeMeasure* pMeasure = nullptr;
+		using CDynaNodeBase::CDynaNodeBase;
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void BuildEquations(CDynaModel* pDynaModel) override;
 		void BuildRightHand(CDynaModel* pDynaModel) override;
-		void BuildDerivatives(CDynaModel *pDynaModel) override;
 		void Predict(const CDynaModel& DynaModel) override;		// допонительная обработка прогноза
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice *pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		void FinishStep(const CDynaModel& DynaModel);
-
 		static void DeviceProperties(CDeviceContainerProperties& properties);
-
-		static constexpr const char* m_cszS = "S";
-		static constexpr const char* m_cszSz = "Sz";
-		static constexpr const char* cszSyncDelta = "SyncDelta";
 	};
+
+	//! Класс узла с учетом скольжения с помощью РДЗ
+	class CDynaNodeDerlag : public CDynaNode
+	{
+	public:
+		// здесь переменные состояния добавляются к базовому классу
+		enum VARS
+		{
+			V_LAG = CDynaNode::V_LAST,	// дифференциальное уравнение лага скольжения
+			V_LAST
+		};
+
+		VariableIndex Lag;
+		using CDynaNode::CDynaNode;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel* pDynaModel) override;
+		void Predict(const CDynaModel& DynaModel) override;		// допонительная обработка прогноза
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
+		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr)  override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
+		void UpdateSerializer(CSerializerBase* Serializer) override;
+		static void DeviceProperties(CDeviceContainerProperties& properties);
+	};
+
+
+	//! Класс узла с учетом скольжения с помощью Frequency Divider
+	class CDynaNodeFreqDivider : public CDynaNode
+	{
+	public:
+		using CDynaNode::CDynaNode;
+		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
+		void BuildEquations(CDynaModel* pDynaModel) override;
+		void BuildRightHand(CDynaModel* pDynaModel) override;
+		void BuildDerivatives(CDynaModel* pDynaModel) override;
+		void Predict(const CDynaModel& DynaModel) override;		// допонительная обработка прогноза
+		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
+		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr)  override;
+		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
+		void UpdateSerializer(CSerializerBase* Serializer) override;
+		void FinishStep(const CDynaModel& DynaModel);
+		static void DeviceProperties(CDeviceContainerProperties& properties);
+	};
+
 
 	// "виртуальная" ветвь для узла. Заменяет собой настоящую включенную ветвь или несколько
 	// включенных параллельных ветвей эквивалентным Y. Эти два параметра - все что нужно
@@ -303,7 +335,6 @@ namespace DFW2
 		alignas(16) cplx Y;
 		CDynaNodeBase *pNode;
 	};
-
 
 	struct VirtualZeroBranch
 	{
