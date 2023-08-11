@@ -34,6 +34,7 @@
 #include "Variables.h"
 #include "ASTNodeTypes.h"
 #include "MessageCallbacks.h"
+#include "../../DFW2/Messages.h"
 
 
 class CASTTreeBase;

@@ -130,6 +130,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 				CDFW2Messages::m_cszProjectName,
 				version,
 				__DATE__,
+				CDFW2Messages::m_cszCopyright,
 				CDFW2Messages::m_cszOS,
 				stringutils::enum_text(m_Parameters.m_eFileLogLevel, m_Parameters.m_cszLogLevelNames)) << std::endl;
 		}

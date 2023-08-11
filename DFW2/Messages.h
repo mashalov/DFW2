@@ -203,6 +203,7 @@ namespace DFW2
 		static const char* m_cszCouldNotCopyUserModelReference;
 		static const char* m_cszUserModelCompiled;
 		static const char* m_cszUserModelFailedToCompile;
+		static const char* m_cszUserModelCompiler;
 		static const char* m_cszFileCopyError;
 		static const char* m_cszRemovingExcessCachedModule;
 		static const char* m_cszTooManyCachedModules;
@@ -223,6 +224,7 @@ namespace DFW2
 		static const char* m_cszError;
 		static const char* m_cszEvent;
 		static const char* m_cszLogStarted;
+		static const char* m_cszCopyright;
 		static const char* m_cszOS;
 		static const char* m_cszLFNodeImbalance;
 		static const char* m_cszMaxBranchAngle;

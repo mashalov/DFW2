@@ -253,6 +253,9 @@ bool CompilerBase::Compile(std::istream& SourceStream)
         pTree = std::make_unique<CASTTreeBase>(Properties);
         // устанавливаем обработчики ошибок парсера
         pTree->SetMessageCallBacks(messageCallBacks);
+        pTree->Message(fmt::format(DFW2::CDFW2Messages::m_cszUserModelCompiler, 
+            Version(),
+            DFW2::CDFW2Messages::m_cszCopyright));
         // к пути из свойств компилятора
         const std::filesystem::path DllLibraryPath{ pTree->GetPropertyPath(PropertyMap::szPropDllLibraryPath) };
         compiledModulePath = DllLibraryPath;

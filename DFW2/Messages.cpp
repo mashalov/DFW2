@@ -197,6 +197,7 @@ const char* CDFW2Messages::m_cszNoUserModelReferenceFolder = "Не найден 
 const char* CDFW2Messages::m_cszCouldNotCopyUserModelReference = "Невозможно копирование файлов исходных текстов пользовательской модели из \"{}\" в \"{}\"";
 const char* CDFW2Messages::m_cszUserModelCompiled = "Выполнена компиляция модуля пользовательской модели \"{}\"";
 const char* CDFW2Messages::m_cszUserModelFailedToCompile = "Ошибка компиляции модуля пользовательской модели \"{}\"";
+const char* CDFW2Messages::m_cszUserModelCompiler = "Raiden User Model Compiler {} {}";
 const char* CDFW2Messages::m_cszFileCopyError = "Ошибка копирования файла \"{}\" в \"{}\"";
 const char* CDFW2Messages::m_cszTooManyCachedModules = "Количество или общий размер файлов {}/{:.1f} Мб превышают заданные ограничения {}/{} Мб в каталоге \"{}\"";
 const char* CDFW2Messages::m_cszNextCacheClieanIn = "Следующая очистка каталога \"{}\" будет выполнена при запуске через {} с";
@@ -216,7 +217,8 @@ const char* CDFW2Messages::m_cszMessage = "Сообщение: ";
 const char* CDFW2Messages::m_cszWarning = "Предупреждение: ";
 const char* CDFW2Messages::m_cszError = "Ошибка: ";
 const char* CDFW2Messages::m_cszEvent = "Событие: ";
-const char* CDFW2Messages::m_cszLogStarted = "{} {} от {} на {}. Протокол запущен в режиме \"{}\"";
+const char* CDFW2Messages::m_cszLogStarted = "{} {} от {} {} на {}. Протокол запущен в режиме \"{}\"";
+const char* CDFW2Messages::m_cszCopyright = "© Eugene Mashalov 2018-2023";
 const char* CDFW2Messages::m_cszLFNodeImbalance = "Небаланс УР в узле {} : {}";
 const char* CDFW2Messages::m_cszMaxBranchAngle = "Максимальный угол по связи {:.3f} \"{}\" при t = {}";
 const char* CDFW2Messages::m_cszMaxGeneratorAngle = "Максимальный угол по генератору {:.3f} \"{}\" при t = {}";

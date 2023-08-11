@@ -12,7 +12,6 @@
 #ifdef _MSC_VER
 #include "windows.h"
 #endif
-
 #include "../../DFW2/PackageVersion.h"
 
 using StringViewList = std::list<std::string_view>;
