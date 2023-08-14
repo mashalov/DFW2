@@ -717,14 +717,17 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszUseCOI, UseCOI_);
 	Serializer->AddProperty(cszShowAbsoluteAngles, ShowAbsoluteAngles_);
 
+	Serializer->AddEnumProperty(cszBusFrequencyEstimation_,
+		new CSerializerAdapterEnum<eBusFrequencyEstimation>(BusFrequencyEstimation_, cszBusFrequencyEstimationTypeNames_));
+
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
 
 	Serializer->AddEnumProperty(m_cszFreqDampingType,
-		new CSerializerAdapterEnum<ACTIVE_POWER_DAMPING_TYPE>(eFreqDampingType, m_cszFreqDampingNames));
+		new CSerializerAdapterEnum<ACTIVE_POWER_DAMPING_TYPE>(eFreqDampingType_, m_cszFreqDampingNames));
 
 	Serializer->AddEnumProperty("DiffEquationType",
-		new CSerializerAdapterEnum<DEVICE_EQUATION_TYPE>(m_eDiffEquationType, m_cszDiffEquationTypeNames));
+		new CSerializerAdapterEnum<DEVICE_EQUATION_TYPE>(eDiffEquationType_, m_cszDiffEquationTypeNames));
 
 	Serializer->AddEnumProperty(m_cszConsoleLogLevel,
 		new CSerializerAdapterEnum<DFW2MessageStatus>(m_eConsoleLogLevel, m_cszLogLevelNames));

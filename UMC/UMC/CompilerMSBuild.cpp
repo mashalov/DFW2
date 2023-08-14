@@ -207,7 +207,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 		return std::tie(v[0], v[1], v[2], v[3]);
 	};
 
-	if (fnVersionTie(VSVersion) > fnVersionTie(VSrequiredVersion))
+	if (fnVersionTie(VSVersion) < fnVersionTie(VSrequiredVersion))
 		throw std::runtime_error(fmt::format("Для сборки требуется версия Visual Studio не старше {}.{}.{}",
 			VSrequiredVersion[0],
 			VSrequiredVersion[1], 

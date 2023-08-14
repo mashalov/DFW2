@@ -259,7 +259,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
-	LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00013");
+	LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00009");
 	//LoadFile("D:\\source\\repos\\MatPowerImport\\x64\\Release\\case9all");
 	
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
@@ -411,6 +411,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 		ReadRastrRowData(ps, 0);
 	}
 
+
+	
 	// принимаем основные параметры от RUSTab
 	ITablePtr spParameters{ spTables->Item("com_dynamics") };
 	IColsPtr spParCols{ spParameters->Cols };
@@ -421,17 +423,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	IColPtr spDamping{ spParCols->Item(L"IsDemp") };
 	IColPtr spMaxResultFiles{ spParCols->Item(L"MaxResultFiles") };
 
-	ps->at(CDynaModel::Parameters::m_cszProcessDuration)->SetDouble(spDuration->GetZ(0).dblVal);
-	ps->at(CDynaModel::Parameters::m_cszLRCToShuntVmin)->SetDouble(spLTC2Y->GetZ(0).dblVal);
-	ps->at(CDynaModel::Parameters::m_cszFrequencyTimeConstant)->SetDouble(spFreqT->GetZ(0).dblVal);
-	ps->at(CDynaModel::Parameters::cszMaxResultFilesCount)->SetInt(spMaxResultFiles->GetZ(0).lVal);
-	ps->at(CDynaModel::Parameters::m_cszConsiderDampingEquation)->SetBool(spDamping->GetZ(0).lVal ? true : false);
-	if(spParkParams->GetZ(0).lVal == 1)
-		ps->at(CDynaModel::Parameters::m_cszParkParametersDetermination)->SetInt(0);
 
-	/*if (!Network.CustomDevice.ConnectDLL("DeviceDLL.dll"))
-		return;
-		*/
+	Network.DeserializeParameters(Network.Platform().Root() / "config.json");
 
 	m_rastrSynonyms
 		.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameLRC, "polin")

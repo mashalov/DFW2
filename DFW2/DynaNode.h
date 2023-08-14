@@ -138,7 +138,9 @@ namespace DFW2
 		void MarkZoneEnergized();
 		void CalcAdmittances(bool bFixNegativeZs);
 		void GetGroundAdmittance(cplx& y);
-		void CalculateShuntParts();
+		// функция расчета составляющих шунтов виртуальная,
+		// чтобы досчитать "проводимости" для FrequencyDivider
+		virtual void CalculateShuntParts();
 		// инициализация узла для расчета УР
 		void StartLF(bool bFlatStart, double ImbTol);
 		void StoreStates() override;
@@ -309,20 +311,22 @@ namespace DFW2
 
 
 	//! Класс узла с учетом скольжения с помощью Frequency Divider
+	/*!
+		https://www.researchgate.net/publication/303320530_Frequency_Divider
+	*/
 	class CDynaNodeFreqDivider : public CDynaNode
 	{
+	protected:
+		double BGenSum_; // полная сумма "проводимостей" = генераторы + ветви
+		double BBranchSum_;	// сумма "проводимостей" генераторов, включая ШБМ
 	public:
 		using CDynaNode::CDynaNode;
-		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		void BuildEquations(CDynaModel* pDynaModel) override;
 		void BuildRightHand(CDynaModel* pDynaModel) override;
-		void BuildDerivatives(CDynaModel* pDynaModel) override;
 		void Predict(const CDynaModel& DynaModel) override;		// допонительная обработка прогноза
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel)  override;
-		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr)  override;
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel)  override;
-		void UpdateSerializer(CSerializerBase* Serializer) override;
-		void FinishStep(const CDynaModel& DynaModel);
+		void CalculateShuntParts() override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 	};
 

@@ -54,13 +54,20 @@ namespace DFW2
 			Rosenbrock23
 		};
 
+		enum class eBusFrequencyEstimation
+		{
+			Derlag,
+			FD
+		};
+
 		struct DynaModelParameters : public CLoadFlow::LoadFlowParameters
 		{
 			
 			DynaModelParameters() : CLoadFlow::LoadFlowParameters() {}
 			eItegrationMethod IntegrationMethod_ = eItegrationMethod::MixedAdamsBDF;
-			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
-			DEVICE_EQUATION_TYPE m_eDiffEquationType = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
+			eBusFrequencyEstimation BusFrequencyEstimation_ = eBusFrequencyEstimation::Derlag;
+			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType_ = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
+			DEVICE_EQUATION_TYPE eDiffEquationType_ = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
 			double m_dLRCToShuntVmin = 0.5;
 			double m_dLRCSmoothingRange = 0.001;
@@ -121,6 +128,8 @@ namespace DFW2
 			SerializerPtr GetSerializer();
 			SerializerValidatorRulesPtr GetValidator();
 
+			static constexpr const char* cszBusFrequencyEstimation_ = "BusFrequencyEstimation";
+			static constexpr const char* cszBusFrequencyEstimationTypeNames_[3] = { "Derlag", "FD" };
 			static constexpr const char* m_cszIntegrationMethod = "IntegrationMethod";
 			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Current", "Power", "Tanh" };
 			static constexpr const char* m_cszIntegrationMethodNames[3] = { "MixedAdamsBDF", "Rodas4", "Rosenbrock23" };
@@ -934,7 +943,12 @@ namespace DFW2
 
 		inline ACTIVE_POWER_DAMPING_TYPE GetFreqDampingType() const
 		{
-			return m_Parameters.eFreqDampingType;
+			return m_Parameters.eFreqDampingType_;
+		}
+
+		inline eBusFrequencyEstimation BusFrequencyEstimation() const
+		{
+			return m_Parameters.BusFrequencyEstimation_;
 		}
 
 		inline const char* GetDampingName() const
@@ -1004,7 +1018,7 @@ namespace DFW2
 		// алгебраические уравнения всегда интегрируются BDF. Дифференциальные - ADAMS или BDF
 		inline DEVICE_EQUATION_TYPE GetDiffEquationType() const
 		{
-			return m_Parameters.m_eDiffEquationType;
+			return m_Parameters.eDiffEquationType_;
 		}
 
 		// возвращает напряжение перехода СХН на шунт

@@ -73,6 +73,23 @@ void CDynaModel::DeserializeParameters(const std::filesystem::path path)
 					CDFW2Messages::m_cszExternalParameterAccepted, 
 					var.first, 
 					var.second->String()));
+
+
+		// при выборе FrequencyDivider в качестве
+		// метода оценивания частоты меняем фабрику узлов
+		// по умолчанию (DerLag) на фабрику с FrequencyDivider
+
+		// это нужно делать _до_ линка
+
+		switch (BusFrequencyEstimation())
+		{
+		case eBusFrequencyEstimation::Derlag:
+			CDynaNodeDerlag::DeviceProperties(Nodes.ContainerProps());
+			break;
+		case eBusFrequencyEstimation::FD:
+			CDynaNodeFreqDivider::DeviceProperties(Nodes.ContainerProps());
+			break;
+		}
 	}
 
 	catch (nlohmann::json::exception& e)

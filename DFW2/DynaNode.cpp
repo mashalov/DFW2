@@ -34,14 +34,6 @@ void CDynaNode::BuildEquations(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase::BuildEquations(pDynaModel);
 
-	// Копируем скольжение в слэйв-узлы суперузла
-	// (можно совместить с CDynaNodeBase::FromSuperNode()
-	// и сэкономить цикл
-	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
-	LinkWalker<CDynaNode> pSlaveNode;
-	while (pLink->In(pSlaveNode))
-		pSlaveNode->S = S;
-
 	const double Vre2{ Vre * Vre }, Vim2{ Vim * Vim }, V2{ Vre2 + Vim2 };
 
 	pDynaModel->SetElement(V, V, 1.0);
@@ -63,6 +55,13 @@ void CDynaNode::BuildRightHand(CDynaModel* pDynaModel)
 {
 	CDynaNodeBase::BuildRightHand(pDynaModel);
 
+	// Копируем скольжение в слэйв-узлы суперузла
+	// (можно совместить с CDynaNodeBase::FromSuperNode()
+	// и сэкономить цикл
+	const CLinkPtrCount* const pLink{ GetSuperLink(0) };
+	LinkWalker<CDynaNode> pSlaveNode;
+	while (pLink->In(pSlaveNode))
+		pSlaveNode->S = S;
 
 	double DiffDelta{ Delta };
 	double dDelta{ 0.0 };

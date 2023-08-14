@@ -157,8 +157,6 @@ CDynaModel::~CDynaModel()
 
 bool CDynaModel::RunTransient()
 {
-	DeserializeParameters(Platform().Root() / "config.json");
-
 	Automatic().CompileModels();
 
 	AutomaticDevice.ConnectDLL(Automatic().GetModulePath());
@@ -171,7 +169,6 @@ bool CDynaModel::RunTransient()
 	ScenarioDevice.CreateDevices(1);
 	ScenarioDevice.BuildStructure();
 	ScenarioDevice.GetDeviceByIndex(0)->SetName(CDFW2Messages::m_cszScenarioName);
-
 		
 	bool bRes{ true };
 #ifdef _WIN64
