@@ -680,4 +680,7 @@
   <ItemGroup>
     <Natvis Include="dfw2.natvis" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="..\Winstaller\Raiden.nsi" />
+  </ItemGroup>
 </Project>
