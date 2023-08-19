@@ -680,7 +680,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(m_cszConsiderDampingEquation, m_bConsiderDampingEquation);
 	Serializer->AddProperty(m_cszDontCheckTolOnMinStep, m_bDontCheckTolOnMinStep);
 	Serializer->AddProperty(m_cszOutStep, m_dOutStep, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty("VarSearchStackDepth", nVarSearchStackDepth);
+	Serializer->AddProperty(cszVarSearchStackDepth, nVarSearchStackDepth);
 	Serializer->AddProperty(m_cszAtol, m_dAtol);
 	Serializer->AddProperty(m_cszRtol, m_dRtol);
 	Serializer->AddProperty(m_cszRefactorByHRatio, m_dRefactorByHRatio);
@@ -726,7 +726,7 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddEnumProperty(m_cszFreqDampingType,
 		new CSerializerAdapterEnum<ACTIVE_POWER_DAMPING_TYPE>(eFreqDampingType_, m_cszFreqDampingNames));
 
-	Serializer->AddEnumProperty("DiffEquationType",
+	Serializer->AddEnumProperty(cszDiffEquationType,
 		new CSerializerAdapterEnum<DEVICE_EQUATION_TYPE>(eDiffEquationType_, m_cszDiffEquationTypeNames));
 
 	Serializer->AddEnumProperty(m_cszConsoleLogLevel,

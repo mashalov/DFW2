@@ -130,7 +130,7 @@ void CRastrImport::ReadRastrRowData(SerializerPtr& Serializer, long Row)
 			continue;
 		//получаем вариант со значением из столбца таблицы, привязанного к сериализатору
 		const auto& dataProp{static_cast<CSerializedValueAuxDataRastr*>(mv.pAux.get())};
-		variant_t vt = { dataProp->m_spCol->GetZ(Row) };
+		variant_t vt { dataProp->m_spCol->GetZ(Row) };
 		// конвертируем вариант из таблицы в нужный тип значения сериализатора
 		// с необходимыми преобразованиями по метаданным
 		switch (mv.ValueType)
@@ -230,7 +230,7 @@ void CRastrImport::InitRastrWin()
 	dfwPath = templatePath;
 	scnPath = templatePath;
 
-	rstPath.append(L"динамика.rst");
+	rstPath.append(wcszDynamicRST);
 	dfwPath.append(L"автоматика.dfw");
 	scnPath.append(L"сценарий.scn");
 }
@@ -259,7 +259,8 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
-	LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00009");
+	//LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00009");
+	LoadFile("e:\\downloads\\тестирование_4_19_006499_109\\тестирование_4_19_006499_109.os");
 	//LoadFile("D:\\source\\repos\\MatPowerImport\\x64\\Release\\case9all");
 	
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
@@ -397,7 +398,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	auto ps{ Network.GetParametersSerializer() };
 
 	// пытаемся прочитать параметры Raiden из таблицы RastrWin
-	if (long nTableIndex{ spTables->GetFind("RaidenParameters") }; nTableIndex >= 0)
+	if (long nTableIndex{ spTables->GetFind(cszRaidenParameters_) }; nTableIndex >= 0)
 	{
 		ITablePtr spRaidenParameters{ spTables->Item(nTableIndex) };
 		IColsPtr spCols{ spRaidenParameters->Cols };
@@ -784,6 +785,175 @@ void CRastrImport::ReadLRCs(CDynaLRCContainer& container)
 		}
 	}
 
+}
+
+void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
+{
+	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, "Генерация шаблона для RastrWin");
+
+	auto ps{ Network.GetParametersSerializer() };
+	ITablesPtr spTables{ m_spRastr->Tables };
+
+	size_t MissedDescriptions{ 0 };
+
+	if (long nTableIndex{ spTables->GetFind(cszRaidenParameters_) }; nTableIndex >= 0)
+		spTables->Remove(nTableIndex);
+
+	ITablePtr spRaidenParameters{ spTables->Add(cszRaidenParameters_) };
+	IColsPtr spCols{ spRaidenParameters->Cols };
+	spRaidenParameters->PutTemplateName(wcszDynamicRST);
+	IColPtr spGoRaiden{ spCols->Add(L"GoRaiden", PR_BOOL) };
+	spGoRaiden->PutProp(FL_DESC, L"Выполнять расчет ЭМПП с помощью Raiden");
+	spGoRaiden->PutProp(FL_ZAG, spGoRaiden->Name);
+	spRaidenParameters->AddRow();
+	spRaidenParameters->PutTipT(1L);
+
+	std::map<std::string, std::string> Descriptions =
+	{
+		{CDynaModel::Parameters::m_cszAdamsDampingAlpha, "Коэффициент подавления рингинга Адамса"},
+		{CDynaModel::Parameters::m_cszLFImbalance, "УР: Допустимый небаланс"},
+		{CDynaModel::Parameters::m_cszLFFlat, "УР: Плоский старт"},
+		{CDynaModel::Parameters::m_cszLFStartup, "УР: Стартовый метод"},
+		{CDynaModel::Parameters::m_cszLFSeidellIterations, "УР: Максимальное количество итераций стартового метода"},
+		{CDynaModel::Parameters::m_cszLFSeidellStep, "УР: Коэффициент ускорения метода Зейделя"},
+		{CDynaModel::Parameters::m_cszLFEnableSwitchIteration, "УР: Разрешить переключать типы узлов с данной итерации"},
+		{CDynaModel::Parameters::m_cszLFMaxIterations, "УР: Максимальное количество итераций метода Ньютона"},
+		{CDynaModel::Parameters::m_cszLFNewtonMaxVoltageStep, "УР: Максимальное приращение шага Ньютона по напряжению"},
+		{CDynaModel::Parameters::m_cszLFNewtonMaxNodeAngleStep, "УР: Максимальное приращение шага Ньютона по углу узла"},
+		{CDynaModel::Parameters::m_cszLFNewtonMaxBranchAngleStep, "УР: Максимальное приращение шага Ньютона по углу связи"},
+		{CDynaModel::Parameters::m_cszLFForceSwitchLambda, "УР: Шаг Ньютона, меньше которого бэктрэк выключается и выполняется переключение типов узлов"},
+		{CDynaModel::Parameters::m_cszLFFormulation, "УР: Система уравнений метода Ньютона"},
+		{CDynaModel::Parameters::m_cszLFAllowNegativeLRC, "УР: Разрешить учет СХН для узлов с отрицательной нагрузкой"},
+		{CDynaModel::Parameters::m_cszLFLRCMinSlope, "УР: Минимальная крутизна СХН"},
+		{CDynaModel::Parameters::m_cszLFLRCMaxSlope, "УР: Максимальная крутизна СХН"},
+		{CDynaModel::Parameters::m_cszFrequencyTimeConstant, "Постоянная времени сглаживания частоты в узле"},
+		{CDynaModel::Parameters::m_cszLRCToShuntVmin, "Напряжение перехода СХН на шунт"},
+		{CDynaModel::Parameters::m_cszConsiderDampingEquation, "Постоянная времени сглаживания частоты в узле"},
+		{CDynaModel::Parameters::cszZeroCrossingTolerance, "Точность определения дискретных изменений"},
+		{CDynaModel::Parameters::m_cszProcessDuration, "Точность определения дискретных изменений"},
+		{CDynaModel::Parameters::m_cszOutStep, "Минимальный шаг вывода результатов"},
+		{CDynaModel::Parameters::m_cszAtol, "Абсолютная точность интегрирования"},
+		{CDynaModel::Parameters::m_cszRtol, "Относительная точность интегрирования"},
+		{CDynaModel::Parameters::m_cszRefactorByHRatio, "Выполнять рефакторизацию Якоби при изменении шага превышающем"},
+		{CDynaModel::Parameters::m_cszMustangDerivativeTimeConstant, "Постоянная времени сглаживания производных в АРВ Мустанг"},
+		{CDynaModel::Parameters::m_cszAdamsIndividualSuppressionCycles, "Количество перемен знака переменной для обнаружения рингинга"},
+		{CDynaModel::Parameters::m_cszAdamsGlobalSuppressionStep, "Номер шага, на кратном которому работает глобальное подавление рингинга"},
+		{CDynaModel::Parameters::m_cszAdamsIndividualSuppressStepsRange, "Количество шагов, на протяжении которого работает индивидуальное подавление рингинга переменной"},
+		{CDynaModel::Parameters::m_cszUseRefactor, "Использовать быструю рефакторизацию KLU"},
+		{CDynaModel::Parameters::m_cszDisableResultsWriter, "Отключить запись результатов"},
+		{CDynaModel::Parameters::m_cszMinimumStepFailures, "Допустимое количество ошибок на минимальном шаге"},
+		{CDynaModel::Parameters::m_cszZeroBranchImpedance, "Минимальное сопротивление ветви"},
+		{CDynaModel::Parameters::m_cszAllowUserOverrideStandardLRC, "Разрешить замену стандартных СХН пользовательскими"},
+		{CDynaModel::Parameters::m_cszAllowDecayDetector, "Разрешить завершение расчета при затухании ЭМПП"},
+		{CDynaModel::Parameters::m_cszDecayDetectorCycles, "Контролировать затухание ЭМПП на протяжении количества циклов колебаний"},
+		{CDynaModel::Parameters::m_cszStopOnBranchOOS, "Завершать расчет при фиксации асинхронного режима по связи"},
+		{CDynaModel::Parameters::m_cszStopOnGeneratorOOS, "Завершать расчет при фиксации асинхронного режима в генераторе"},
+		{CDynaModel::Parameters::m_cszWorkingFolder, "Рабочий каталог"},
+		{CDynaModel::Parameters::m_cszResultsFolder, "Каталог результатов"},
+		{CDynaModel::Parameters::m_cszAdamsRingingSuppressionMode, "Метод подавления рингинга"},
+		{CDynaModel::Parameters::m_cszFreqDampingType, "Расчет скольжения для демпфирования в уравнении движения"},
+		{CDynaModel::Parameters::m_cszFileLogLevel, "Уровень подробности протокола в файл"},
+		{CDynaModel::Parameters::m_cszConsoleLogLevel, "Уровень подробности протокола в консоль"},
+		{CDynaModel::Parameters::m_cszParkParametersDetermination, "Метод расчета параметров моделей Парка"},
+		{CDynaModel::Parameters::m_cszGeneratorLessLRC, "Вид СХН для учета генераторных узлов УР без генераторов"},
+		{CDynaModel::Parameters::m_cszAdamsDampingSteps, "Количество шагов демпфирования Адамса"},
+		{CDynaModel::Parameters::cszBusFrequencyEstimation_, "Метод оценки частоты на шине"},
+		{CDynaModel::Parameters::cszChangeActionsAreCumulative, "Кумулятивные изменения параметров действиями автоматики и сценария"},
+		{CDynaModel::Parameters::cszDebugModelNameTemplate, "Шаблон имени вывода отладочных файлов"},
+		{CDynaModel::Parameters::cszDerlagToleranceMultiplier, "Множитель точности дифференцирующего звена"},
+		{CDynaModel::Parameters::m_cszDontCheckTolOnMinStep, "Не проверять сходимость на минимальном шаге"},
+		{CDynaModel::Parameters::m_cszHmax, "Максимальный шаг интегрирования"},
+		{CDynaModel::Parameters::cszHysteresisAtol, "Абсолютная точность гистерезиса пороговых элементов"},
+		{CDynaModel::Parameters::cszHysteresisRtol, "Относительная точность гистерезиса пороговых элементов"},
+		{CDynaModel::Parameters::m_cszLRCSmoothingRange, "Диапазон сглаживания СХН"},
+		{CDynaModel::Parameters::m_cszMaxPVPQSwitches, "УР: Допустимое количество переключений PV-PQ"},
+		{CDynaModel::Parameters::cszMaxResultFilesCount, "Максимальное количество файлов результатов в каталоге"},
+		{CDynaModel::Parameters::cszMaxResultFilesSize, "Максимальный суммарный размер файлов результатов в каталоге"},
+		{CDynaModel::Parameters::m_cszNewtonMaxNorm, "Допустимая норма контроля сходимости метода Ньютона"},
+		{CDynaModel::Parameters::m_cszPVPQSwitchPerIt, "УР: Максимальное количество переключений PV-PQ на итерации"},
+		{CDynaModel::Parameters::m_cszSecuritySpinReference, "Уставка автомата безопасности СГ"},
+		{CDynaModel::Parameters::cszShowAbsoluteAngles, "Сохранять абсолютные углы в режиме COI"},
+		{CDynaModel::Parameters::cszStepsToOrderChange, "Количество шагов перед сменой порядка метода интегрирования"},
+		{CDynaModel::Parameters::cszStepsToStepChange, "Количество шагов перед сменой шага метода интегрирования"},
+		{CDynaModel::Parameters::cszUseCOI, "Использовать систему координат синхронной зоны"},
+		{CDynaModel::Parameters::cszVarSearchStackDepth, "Глубина стека поиска переменных"},
+		{CDynaModel::Parameters::cszDiffEquationType, "Метод для дифференциальных уравнений"}
+	};
+
+	IColPtr spNewCol;
+	for (const auto& field : *ps)
+	{
+		const auto& mv{ *field.second };
+		_bstr_t name{ field.first.c_str() };
+		switch (field.second->ValueType)
+		{
+		case TypedSerializedValue::eValueType::VT_BOOL:
+		case TypedSerializedValue::eValueType::VT_STATE:
+			spNewCol = spCols->Add(name, PR_BOOL);
+			spNewCol->PutZ(0, *mv.Value.pBool);
+			break;
+		case TypedSerializedValue::eValueType::VT_DBL:
+			spNewCol = spCols->Add(name, PR_REAL);
+			spNewCol->PutProp(FL_MASH, mv.Multiplier);
+			spNewCol->PutProp(FL_PREC, 6);
+			spNewCol->PutZ(0, *mv.Value.pDbl);
+		break;
+		case TypedSerializedValue::eValueType::VT_ID:
+		case TypedSerializedValue::eValueType::VT_INT:
+			spNewCol = spCols->Add(name, PR_INT);
+			spNewCol->PutZ(0, *mv.Value.pInt);
+			break;
+		case TypedSerializedValue::eValueType::VT_NAME:
+		case TypedSerializedValue::eValueType::VT_STRING:
+			spNewCol = spCols->Add(name, PR_STRING);
+			spNewCol->PutZ(0, *mv.Value.pStr->c_str());
+			break;
+		case TypedSerializedValue::eValueType::VT_ADAPTER:
+			{
+				const auto& adapter { static_cast<CSerializerAdapterBase*>(mv.Adapter.get()) };
+				STRINGLIST EnumStrings;
+				const ptrdiff_t OriginalIndex{ adapter->GetInt() };
+				try
+				{
+					ptrdiff_t index{ 0 };
+					while (true)
+					{
+						adapter->SetInt(index++);
+						EnumStrings.emplace_back(adapter->GetString());
+					}
+				}
+				catch (const dfw2error&) { }
+				adapter->SetInt(OriginalIndex);
+
+				spNewCol = spCols->Add(name, PR_ENUM);
+				spNewCol->PutProp(FL_NAMEREF, fmt::format("{}", fmt::join(EnumStrings, "|")).c_str());
+				spNewCol->PutZ(0, OriginalIndex);
+			}
+			break;
+		default:
+			throw dfw2error(fmt::format("CRastrImport::ReadRastrRow wrong serializer type {}", mv.ValueType));
+		}
+	
+		if (spNewCol)
+		{
+			spNewCol->PutProp(FL_ZAG, name);
+			if (auto it{ Descriptions.find(field.first) }; it != Descriptions.end())
+				spNewCol->PutProp(FL_DESC, stringutils::utf8_decode(it->second).c_str());
+			else
+			{
+				Network.Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("No description for \"{}\"", field.first));
+				MissedDescriptions++;
+			}
+		}
+	}
+
+	if (MissedDescriptions > 0)
+		MessageBox(NULL,
+			stringutils::utf8_decode(fmt::format("There are {} missed descriptions", MissedDescriptions)).c_str(),
+			stringutils::utf8_decode(CDFW2Messages::m_cszProjectName).c_str(),
+			MB_ICONEXCLAMATION | MB_OK);
+
+	m_spRastr->Save("", rstPath.c_str());
 }
 
 
@@ -1293,6 +1463,5 @@ bool SLCPOLY::InsertLRCToShuntVmin(double Vmin)
 	}
 	return bRes;
 }
+*/
 
-
-																  */

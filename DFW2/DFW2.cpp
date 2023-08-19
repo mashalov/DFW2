@@ -39,6 +39,7 @@ void RunTransient()
 			CRastrImport ri;
 			networks.push_back(&Network);
 			//Network.DeSerialize(Network.Platform().ResultFile("serialization.json"));
+			//ri.GenerateRastrWinTemplate(Network);
 			ri.GetFileData(Network);
 		}
 		//Network.Serialize(Network.Platform().ResultFile("lf_1500.json"));

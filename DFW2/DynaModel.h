@@ -129,7 +129,7 @@ namespace DFW2
 			SerializerValidatorRulesPtr GetValidator();
 
 			static constexpr const char* cszBusFrequencyEstimation_ = "BusFrequencyEstimation";
-			static constexpr const char* cszBusFrequencyEstimationTypeNames_[3] = { "Derlag", "FD" };
+			static constexpr const char* cszBusFrequencyEstimationTypeNames_[2] = { "Derlag", "FD" };
 			static constexpr const char* m_cszIntegrationMethod = "IntegrationMethod";
 			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Current", "Power", "Tanh" };
 			static constexpr const char* m_cszIntegrationMethodNames[3] = { "MixedAdamsBDF", "Rodas4", "Rosenbrock23" };
@@ -148,8 +148,8 @@ namespace DFW2
 			static constexpr const char* m_cszParkParametersDetermination = "ParkParametersDetermination";
 			static constexpr const char* m_cszDontCheckTolOnMinStep = "DontCheckTolOnMinStep";
 			static constexpr const char* m_cszOutStep = "OutStep";
-
-
+			static constexpr const char* cszVarSearchStackDepth = "VarSearchStackDepth";
+			static constexpr const char* cszDiffEquationType = "DiffEquationType";
 			static constexpr const char* m_cszAtol = "Atol";
 			static constexpr const char* m_cszRtol = "Rtol";
 			static constexpr const char* m_cszRefactorByHRatio = "RefactorByHRatio";
