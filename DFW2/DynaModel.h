@@ -105,7 +105,7 @@ namespace DFW2
 			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo;
 			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;
 			double m_dProcessDuration = 150.0;
-			double Hmax = (std::numeric_limits<double>::max)();
+			double Hmax = 0.0;
 			double HysteresisRtol_ = 1e-2;								// относительный гистерезис
 			double HysteresisAtol_ = 3.0;								// абсолютный гистерезис
 			double DerLagTolerance_ = 1.0;								// коэффициент, на который умножается Atol/Rtol Derlag
@@ -138,7 +138,7 @@ namespace DFW2
 			static constexpr const char* m_cszAdamsRingingSuppressionNames[4] = { "None", "Global", "Individual", "DampAlpha" };
 			static constexpr const char* m_cszParkParametersDeterminationMethodNames[4] = { "Kundur", "NiiptTo", "NiiptToTd", "Canay" };
 			static constexpr const char* m_cszFreqDampingNames[2] = { "Node", "Island" };
-			static constexpr const char* m_cszGeneratorLessLRCNames[2] = { "S","I" };
+			static constexpr const char* m_cszGeneratorLessLRCNames[2] = { "Sconst","Iconst" };
 
 			static constexpr const char* m_cszSecuritySpinReference = "SecuritySpinReference";
 			static constexpr const char* m_cszProcessDuration = "ProcessDuration";
@@ -189,7 +189,7 @@ namespace DFW2
 			static constexpr const char* m_cszLFFormulation = "LFFormulation";
 			static constexpr const char* m_cszLFAllowNegativeLRC = "AllowNegativeLRC";
 			static constexpr const char* m_cszLFLRCMinSlope = "LRCMinSlope";
-			static constexpr const char* m_cszLFLRCMaxSlope = "dLRCMaxSlope";
+			static constexpr const char* m_cszLFLRCMaxSlope = "LRCMaxSlope";
 			static constexpr const char* m_cszLRCSmoothingRange = "LRCSmoothingRange";
 			static constexpr const char* m_cszNewtonMaxNorm = "NewtonMaxNorm";
 			static constexpr const char* m_cszMaxPVPQSwitches = "MaxPVPQSwitches";

@@ -791,6 +791,8 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
 {
 	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, "Генерация шаблона для RastrWin");
 
+	m_spRastr->NewFile(rstPath.c_str());
+
 	auto ps{ Network.GetParametersSerializer() };
 	ITablesPtr spTables{ m_spRastr->Tables };
 
@@ -828,7 +830,7 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
 		{CDynaModel::Parameters::m_cszLFLRCMaxSlope, "УР: Максимальная крутизна СХН"},
 		{CDynaModel::Parameters::m_cszFrequencyTimeConstant, "Постоянная времени сглаживания частоты в узле"},
 		{CDynaModel::Parameters::m_cszLRCToShuntVmin, "Напряжение перехода СХН на шунт"},
-		{CDynaModel::Parameters::m_cszConsiderDampingEquation, "Постоянная времени сглаживания частоты в узле"},
+		{CDynaModel::Parameters::m_cszConsiderDampingEquation, "Учитывать демпфирование в уравнении движения для моделей с демпферными контурами"},
 		{CDynaModel::Parameters::cszZeroCrossingTolerance, "Точность определения дискретных изменений"},
 		{CDynaModel::Parameters::m_cszProcessDuration, "Точность определения дискретных изменений"},
 		{CDynaModel::Parameters::m_cszOutStep, "Минимальный шаг вывода результатов"},
@@ -906,7 +908,7 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
 		case TypedSerializedValue::eValueType::VT_NAME:
 		case TypedSerializedValue::eValueType::VT_STRING:
 			spNewCol = spCols->Add(name, PR_STRING);
-			spNewCol->PutZ(0, *mv.Value.pStr->c_str());
+			spNewCol->PutZ(0, mv.Value.pStr->c_str());
 			break;
 		case TypedSerializedValue::eValueType::VT_ADAPTER:
 			{

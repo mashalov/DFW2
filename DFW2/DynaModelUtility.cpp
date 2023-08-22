@@ -1110,7 +1110,9 @@ void CDynaModel::PrecomputeConstants()
 	HysteresisRtol_ = Rtol() * m_Parameters.HysteresisRtol_;
 	sc.nStepsToStepChangeParameter = m_Parameters.StepsToStepChange_;
 	sc.nStepsToOrderChangeParameter = m_Parameters.StepsToOrderChange_;
-
+	if(m_Parameters.Hmax <= 0.0) 
+		m_Parameters.Hmax = (std::numeric_limits<double>::max)();
+		
 	// если в параметрах поставили точность зерокроссинга 0.0 - 
 	// ставим 0.95, если отрицательный - считаем зерокросс как придется
 
