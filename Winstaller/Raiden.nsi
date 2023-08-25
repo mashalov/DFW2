@@ -1,7 +1,7 @@
 ﻿!define ProductName "RaidenEMS"
-!define Version "1.0.2.132"
+!define Version "1.0.2.133"
 !define RastrWinX64VersionRequired "2.8.1.6442"
-!define RastrWinX86VersionRequired "2.8.0.6440"
+!define RastrWinX86VersionRequired "2.8.0.6475"
 !define VisualStudioVersionRequired "17.6.5"
 
 !getdllversion "..\release dll\dfw2.dll" DllVer
