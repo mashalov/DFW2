@@ -832,7 +832,7 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
 		{CDynaModel::Parameters::m_cszLRCToShuntVmin, "Напряжение перехода СХН на шунт"},
 		{CDynaModel::Parameters::m_cszConsiderDampingEquation, "Учитывать демпфирование в уравнении движения для моделей с демпферными контурами"},
 		{CDynaModel::Parameters::cszZeroCrossingTolerance, "Точность определения дискретных изменений"},
-		{CDynaModel::Parameters::m_cszProcessDuration, "Точность определения дискретных изменений"},
+		{CDynaModel::Parameters::m_cszProcessDuration, "Длительность ЭМПП"},
 		{CDynaModel::Parameters::m_cszOutStep, "Минимальный шаг вывода результатов"},
 		{CDynaModel::Parameters::m_cszAtol, "Абсолютная точность интегрирования"},
 		{CDynaModel::Parameters::m_cszRtol, "Относительная точность интегрирования"},
