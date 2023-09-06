@@ -238,16 +238,15 @@ namespace DFW2
 
 		std::string GetEnumStrings()
 		{
-			std::string enumStrings = "[";
+			std::string enumStrings{"["};
 			for (ptrdiff_t nIndex = 0; nIndex < static_cast<ptrdiff_t>(Count_); nIndex++)
 			{
 				if (nIndex > 0)
-					enumStrings += ',';
+					enumStrings.append(",");
 
-				enumStrings += StringRepresentation_[nIndex];
+				enumStrings.append(StringRepresentation_[nIndex]);
 			}
-			enumStrings += "]";
-			return enumStrings;
+			return enumStrings.append("]");
 		}
 
 		void SetString(const std::string_view String) override

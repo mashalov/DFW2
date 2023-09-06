@@ -39,7 +39,7 @@ namespace DFW2
 		{
 			Init(DLLFilePath);
 		}
-		const std::filesystem::path GetModuleFilePath() const { return ModulePath_; }
+		const std::filesystem::path& GetModuleFilePath() const { return ModulePath_; }
 	};
 
 	template<class Interface>
