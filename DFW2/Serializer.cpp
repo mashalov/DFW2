@@ -131,12 +131,10 @@ void TypedSerializedValue::NoConversion(eValueType fromType)
 			pSerializer_->GetVariableName(this),
 			pSerializer_->GetClassName()
 		);
-		msg += add;
+		msg.append(add);
 	}
 
-	msg += '.';
-
-	throw dfw2error(msg);
+	throw dfw2error(msg.append("."));
 }
 
 void MetaSerializedValue::SetDouble(double value)

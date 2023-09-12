@@ -1,4 +1,6 @@
 ﻿#include "stdafx.h"
+// Eigen 3.4 uses deprecated in C++23 STL denorm classes !
+#define _SILENCE_CXX23_DENORM_DEPRECATION_WARNING
 #include "DynaModel.h"
 #include "MixedAdamsBDF.h"
 // eigen does not compile on x86 with AVX2 enabled

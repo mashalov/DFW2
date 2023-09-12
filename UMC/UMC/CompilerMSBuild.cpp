@@ -199,7 +199,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	const auto MSBuildVersion{ GetMSBuildVersion(MSBuildPath) };
 	const auto VSVersion{ GetVSVersion() };
 
-	static_assert(_MSC_VER == 1936);
+	//static_assert(_MSC_VER == 1936);
 	const DFW2::VersionInfo VSrequiredVersion = { 17, 6, 5, 0 };
 
 	auto fnVersionTie = [](const DFW2::VersionInfo& v)
