@@ -1,5 +1,5 @@
 ﻿!define ProductName "RaidenEMS"
-!define Version "1.0.2.133"
+!define Version "1.0.2.134"
 !define RastrWinX64VersionRequired "2.8.1.6442"
 !define RastrWinX86VersionRequired "2.8.0.6475"
 !define VisualStudioVersionRequired "17.6.5"
@@ -51,12 +51,21 @@ BrandingText $(CopyrightInfo)
 
 
 !define Trim "!insertmacro Trim"
+!define StrStr "!insertmacro StrStr"
  
 !macro Trim ResultVar String
   Push "${String}"
   Call Trim
   Pop "${ResultVar}"
 !macroend
+
+!macro StrStr ResultVar String SubString
+  Push `${String}`
+  Push `${SubString}`
+  Call StrStr
+  Pop `${ResultVar}`
+!macroend
+
 
 !define VersionCheckNew "!insertmacro VersionCheckV5"
 
@@ -200,6 +209,7 @@ Function CheckMSBuild
 	ClearErrors
 	Pop $R3
 	StrCpy $MSBuildInstallationCheckResult $(MSBuildVsWhere)
+	# check msbuild available
 	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -latest -prerelease -products * -requires Microsoft.Component.MSBuild -find MSBuild\\**\\Bin\\MSBuild.exe"'
 	Pop $R0 # return value/error/timeout
 	Pop $R1 # printed text, up to ${NSIS_MAX_STRLEN}
@@ -208,6 +218,7 @@ Function CheckMSBuild
 	StrCpy $MSBuildInstallationCheckResult $(MSBuildNotFound)
 	${Trim} $R0 $R1
 	IfFileExists "$R0" 0 FailedCheckMSBuild
+	# check msbuild version
 	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -property catalog_productDisplayVersion'
 	Pop $R0 # return value/error/timeout
 	Pop $R1 # printed text, up to ${NSIS_MAX_STRLEN}
@@ -217,6 +228,13 @@ Function CheckMSBuild
 	StrCpy $MSBuildInstallationCheckResult "$(OldVersion)$R2$(RequiredVersion)$R3"
 	${VersionCheckNew} $R3 $R2 $R0
 	IntCmp $R0 1 FailedCheckMSBuild
+	StrCpy $MSBuildInstallationCheckResult $(MSBuildNoCPPWorkload)
+	# check c++ workload available
+	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.VisualStudio.Workload.NativeDesktop'
+	Pop $R0 # return value/error/timeout
+	Pop $R1 # printed text, up to ${NSIS_MAX_STRLEN}
+	${StrStr} $R0 $R1 "isLaunchable: 1" 
+	StrCmp $R0 "" FailedCheckMSBuild 0
 	StrCpy $MSBuildInstallationCheckResult $(Installed)
 FailedCheckMSBuild:
 FunctionEnd
@@ -374,8 +392,6 @@ Function VersionCheckV5
  Exch $R0 ; output
 FunctionEnd
 
-
-
 ; Trim
 ;   Removes leading & trailing whitespace from a string
 ; Usage:
@@ -413,6 +429,60 @@ Done:
 	Exch $R1
 FunctionEnd
 
+Function StrStr
+/*After this point:
+  ------------------------------------------
+  $R0 = SubString (input)
+  $R1 = String (input)
+  $R2 = SubStringLen (temp)
+  $R3 = StrLen (temp)
+  $R4 = StartCharPos (temp)
+  $R5 = TempStr (temp)*/
+ 
+  ;Get input from user
+  Exch $R0
+  Exch
+  Exch $R1
+  Push $R2
+  Push $R3
+  Push $R4
+  Push $R5
+ 
+  ;Get "String" and "SubString" length
+  StrLen $R2 $R0
+  StrLen $R3 $R1
+  ;Start "StartCharPos" counter
+  StrCpy $R4 0
+ 
+  ;Loop until "SubString" is found or "String" reaches its end
+  ${Do}
+    ;Remove everything before and after the searched part ("TempStr")
+    StrCpy $R5 $R1 $R2 $R4
+ 
+    ;Compare "TempStr" with "SubString"
+    ${IfThen} $R5 == $R0 ${|} ${ExitDo} ${|}
+    ;If not "SubString", this could be "String"'s end
+    ${IfThen} $R4 >= $R3 ${|} ${ExitDo} ${|}
+    ;If not, continue the loop
+    IntOp $R4 $R4 + 1
+  ${Loop}
+ 
+/*After this point:
+  ------------------------------------------
+  $R0 = ResultVar (output)*/
+ 
+  ;Remove part before "SubString" on "String" (if there has one)
+  StrCpy $R0 $R1 `` $R4
+ 
+  ;Return output to user
+  Pop $R5
+  Pop $R4
+  Pop $R3
+  Pop $R2
+  Pop $R1
+  Exch $R0
+FunctionEnd
+
 !insertmacro MUI_LANGUAGE "Russian"
 !insertmacro MUI_LANGUAGE "English"
 
@@ -448,6 +518,8 @@ LangString MSBuildVsWhere ${LANG_ENGLISH} "Vswhere failed"
 LangString MSBuildVsWhere ${LANG_RUSSIAN} "Ошибка vswhere"
 LangString MSBuildNotFound ${LANG_ENGLISH} "msbuild.exe not found"
 LangString MSBuildNotFound ${LANG_RUSSIAN} "Не найден msbuild.exe"
+LangString MSBuildNoCPPWorkload ${LANG_RUSSIAN} "Сборка C++ недоступна"
+LangString MSBuildNoCPPWorkload ${LANG_ENGLISH} "No C++ Workload"
 LangString InstallationFailed ${LANG_ENGLISH} "Installation failed. See details"
 LangString InstallationFailed ${LANG_RUSSIAN} "Установка не выполнена. Детали в протоколе"
 LangString ComponentsX64 ${LANG_ENGLISH} "x64 components"
