@@ -286,7 +286,7 @@ Section InstallX86 1
 	DetailPrint "$(UpdatingRastrWinTemplates) $R5"
 	System::Call '"$RastrWinX86ComponentsPath\dfw2.dll"::GenerateRastrTemplate(t "$R5")i.R0' 
 	IntCmp $R0 1 0 TemplateUpdateX86Failed TemplateUpdateX86Failed
-	StrCpy $R5 "$R4\shablon\podisk.os"
+	StrCpy $R5 "$R4\shablon\poisk.os"
 	DetailPrint "$(UpdatingRastrWinTemplates) $R5"
 	System::Call '"$RastrWinX86ComponentsPath\dfw2.dll"::GenerateRastrTemplate(t "$R5")i.R0' 
 	IntCmp $R0 1 TemplateUpdateX86OK TemplateUpdateX86Failed TemplateUpdateX86Failed
@@ -546,8 +546,8 @@ LangString Installing ${LANG_ENGLISH} "Installing"
 LangString Installing ${LANG_RUSSIAN} "Инсталляция"
 LangString UnInstalling ${LANG_ENGLISH} "Uninstalling"
 LangString UnInstalling ${LANG_RUSSIAN} "Деинсталляция"
-LangString UpdatingRastrWinTemplates ${LANG_ENGLISH} "Updating RastrWin3 templates"
-LangString UpdatingRastrWinTemplates ${LANG_RUSSIAN} "Обновление шаблонов RastrWin3"
+LangString UpdatingRastrWinTemplates ${LANG_ENGLISH} "Updating RastrWin3 template : "
+LangString UpdatingRastrWinTemplates ${LANG_RUSSIAN} "Обновление шаблона RastrWin3 : "
 LangString FailedUpdatingRastrWinTemplates ${LANG_ENGLISH} "Failed updating RastrWin3 templates"
 LangString FailedUpdatingRastrWinTemplates ${LANG_RUSSIAN} "Ошибка обновления шаблонов RastrWin3"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" ${ProductName}
