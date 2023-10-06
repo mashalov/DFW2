@@ -39,15 +39,15 @@ void GenerateRastrWinTemplate(std::filesystem::path Path = {})
 			ri.GenerateRastrWinTemplate(Network, Path);
 		}
 	}
-	catch (_com_error& err)
+	catch (const _com_error& err)
 	{
-		const std::string Description{ stringutils::utf8_encode(std::wstring(err.Description())) };
-		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", Description));
+		const std::string Description{ CRastrImport::COMErrorDescription(err) };
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszCOMError, Description));
 		throw dfw2error(Description);
 	}
 	catch (const dfw2error& err)
 	{
-		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszError, err.what()));
 		throw;
 	}
 }
@@ -71,15 +71,15 @@ void RunTransient()
 		//Network.Serialize(Network.Platform().ResultFile("siberia.json")); 
 		Network.RunTransient();
 	}
-	catch (_com_error& err)
+	catch (const _com_error& err)
 	{
-		const std::string Description{ stringutils::utf8_encode(std::wstring(err.Description())) };
-		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", Description));
+		const std::string Description{ CRastrImport::COMErrorDescription(err) };
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszCOMError, Description));
 		throw dfw2error(Description);
 	}
 	catch (const dfw2error& err)
 	{
-		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszDFW2Error, err.what()));
 		throw;
 	}
 	//Network.Serialize("c:\\tmp\\lf.json");

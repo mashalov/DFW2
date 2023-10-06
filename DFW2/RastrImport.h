@@ -241,6 +241,7 @@ namespace DFW2
 
 		static constexpr const char* cszRaidenParameters_ = "RaidenParameters";
 		static constexpr const wchar_t* wcszDynamicRST = L"динамика.rst";
+		static std::string COMErrorDescription(const _com_error& error);
 	protected:
 		void InitRastrWin();
 		IRastrPtr m_spRastr;

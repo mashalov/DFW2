@@ -1,5 +1,5 @@
 ﻿!define ProductName "RaidenEMS"
-!define Version "1.0.2.134"
+!define Version "1.0.2.135"
 !define RastrWinX64VersionRequired "2.8.1.6442"
 !define RastrWinX86VersionRequired "2.8.0.6475"
 !define VisualStudioVersionRequired "17.6.5"
@@ -34,6 +34,7 @@ ShowUninstDetails show
 !define ProductRegKey "${RastrWin3RegKey}\${ProductName}"
 !define VersionVerb "Version"
 !define InstallPathVerb "InstallPath"
+!define UserFolderPathVerb "UserFolder"
 !define UninstallerName $(^Name)Uninstall.exe
 !define ReadmeFileName "RaidenEMS.txt"
 SetCompressor /SOLID /FINAL lzma
@@ -280,6 +281,19 @@ Section InstallX86 1
 	SetOutPath $RastrWinX86ComponentsPath
 	File "${InputFolderX86}..\release dll\dfw2.dll"
 	File "${InputFolderX86}umc.dll"
+	ReadRegStr $R4 HKCU ${RastrWin3RegKey} ${UserFolderPathVerb}
+	StrCpy $R5 "$R4\shablon\динамика.rst"
+	DetailPrint "$(UpdatingRastrWinTemplates) $R5"
+	System::Call '"$RastrWinX86ComponentsPath\dfw2.dll"::GenerateRastrTemplate(t "$R5")i.R0' 
+	IntCmp $R0 1 0 TemplateUpdateX86Failed TemplateUpdateX86Failed
+	StrCpy $R5 "$R4\shablon\podisk.os"
+	DetailPrint "$(UpdatingRastrWinTemplates) $R5"
+	System::Call '"$RastrWinX86ComponentsPath\dfw2.dll"::GenerateRastrTemplate(t "$R5")i.R0' 
+	IntCmp $R0 1 TemplateUpdateX86OK TemplateUpdateX86Failed TemplateUpdateX86Failed
+TemplateUpdateX86Failed:	
+	DetailPrint $(FailedUpdatingRastrWinTemplates)
+	SetErrors
+TemplateUpdateX86OK:	
 	!undef LIBRARY_X64
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	SetOutPath $RastrWinX86ComponentsPath\${ModelReferencePath}
@@ -532,7 +546,10 @@ LangString Installing ${LANG_ENGLISH} "Installing"
 LangString Installing ${LANG_RUSSIAN} "Инсталляция"
 LangString UnInstalling ${LANG_ENGLISH} "Uninstalling"
 LangString UnInstalling ${LANG_RUSSIAN} "Деинсталляция"
-
+LangString UpdatingRastrWinTemplates ${LANG_ENGLISH} "Updating RastrWin3 templates"
+LangString UpdatingRastrWinTemplates ${LANG_RUSSIAN} "Обновление шаблонов RastrWin3"
+LangString FailedUpdatingRastrWinTemplates ${LANG_ENGLISH} "Failed updating RastrWin3 templates"
+LangString FailedUpdatingRastrWinTemplates ${LANG_RUSSIAN} "Ошибка обновления шаблонов RastrWin3"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" ${ProductName}
 VIAddVersionKey /LANG=${LANG_ENGLISH} "LegalCopyright" "© Eugene Mashalov"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "FileDescription" "${ProductName} installer"

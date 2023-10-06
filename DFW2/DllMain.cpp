@@ -21,6 +21,36 @@ BOOL APIENTRY DllMain(HMODULE hModule,
     return TRUE;
 }
 
+extern "C" __declspec(dllexport) LONG __cdecl GenerateRastrTemplate(const _TCHAR *Path)
+{
+	LONG RetCode{ 0 };
+	try
+	{
+		CDynaModel::DynaModelParameters parameters;
+		CDynaModel Network(parameters);
+		try
+		{
+			CRastrImport ri;
+			ri.GenerateRastrWinTemplate(Network, Path);
+			RetCode = 1;
+		}
+		catch (const _com_error& err)
+		{
+			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszCOMError, CRastrImport::COMErrorDescription(err)));
+		}
+		catch (const dfw2error& err)
+		{
+			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszDFW2Error, err.what()));
+		}
+	}
+	catch (const dfw2error& err)
+	{
+		std::cout << fmt::format(CDFW2Messages::m_cszDFW2Error, err.what()) << std::endl;
+	}
+
+	return RetCode;
+}
+
 extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr, unsigned long ThreadId)
 {
 	LONG RetCode{ 0 };
@@ -65,18 +95,18 @@ extern "C" __declspec(dllexport) LONG __cdecl Run(IRastrPtr spRastr, unsigned lo
 				spRastr->Save(stringutils::utf8_decode(path.PathString()).c_str(), L"");
 			}
 		}
-		catch (_com_error& err)
+		catch (const _com_error& err)
 		{
-			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", stringutils::utf8_encode(std::wstring(err.Description()))));
+			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszCOMError, CRastrImport::COMErrorDescription(err)));
 		}
 		catch (const dfw2error& err)
 		{
-			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+			Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszDFW2Error, err.what()));
 		}
-}
+	}
 	catch (const dfw2error& err)
 	{
-		std::cout << "Ошибка " << err.what() << std::endl;
+		std::cout << fmt::format(CDFW2Messages::m_cszDFW2Error, err.what()) << std::endl;
 	}
     return RetCode;
 }

@@ -90,7 +90,7 @@ bool CRastrImport::GetCustomDeviceData(CDynaModel& Network, IRastrPtr spRastr, C
 				}
 			}
 		}
-		catch (_com_error& err)
+		catch (const _com_error& err)
 		{
 			Network.Log(DFW2::DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszTableNotFoundForCustomDevice,
 				stringutils::utf8_encode(CustomDeviceContainer.DLL()->GetModuleFilePath().c_str()),
@@ -971,6 +971,14 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network, const std::file
 	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Сохранен шаблон для RastrWin : {}", stringutils::utf8_encode(rstPath.c_str())));
 }
 
+
+std::string CRastrImport::COMErrorDescription(const _com_error& error)
+{
+	_bstr_t desc{ error.Description() };
+	if (desc.length() == 0)
+		desc = fmt::format("HRESULT {:0x}", static_cast<unsigned long>(error.Error())).c_str();
+	return stringutils::utf8_encode(std::wstring(desc));
+}
 
 /*
 * Archived source for reference
