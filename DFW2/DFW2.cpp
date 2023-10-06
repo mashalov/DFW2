@@ -4,8 +4,7 @@
 #include "stdafx.h"
 #include "DynaModel.h"
 #include "RastrImport.h"
-#include "GraphCycle.h"
-
+#include "cli.h"
 
 using namespace DFW2;
 /*
@@ -27,6 +26,30 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 	for (auto&& nw : networks)
 		nw->StopProcess();
 	return TRUE;
+}
+
+void GenerateRastrWinTemplate(std::filesystem::path Path = {})
+{
+	CDynaModel::DynaModelParameters parameters;
+	CDynaModel Network(parameters);
+	try
+	{
+		{	
+			CRastrImport ri;
+			ri.GenerateRastrWinTemplate(Network, Path);
+		}
+	}
+	catch (_com_error& err)
+	{
+		const std::string Description{ stringutils::utf8_encode(std::wstring(err.Description())) };
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка COM : {}", Description));
+		throw dfw2error(Description);
+	}
+	catch (const dfw2error& err)
+	{
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format("Ошибка : {}", err.what()));
+		throw;
+	}
 }
 
 void RunTransient()
@@ -79,11 +102,19 @@ int _tmain(int argc, _TCHAR* argv[])
 		if (HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))
 			throw dfw2error("Ошибка CoInitialize {:0x}", static_cast<unsigned long>(hr));
 
-		SetConsoleCtrlHandler(HandlerRoutine, TRUE);
-		RunTransient();
-		//RunTest();
-		networks.clear();
-		CoUninitialize();
+		const CLIParser<_TCHAR> cli(argc, argv);
+		const auto& CLIOptions{ cli.Options() };
+
+		if (const auto gtp{ CLIOptions.find("gt") }; gtp != CLIOptions.end())
+			GenerateRastrWinTemplate(gtp->second);
+		else
+		{
+			SetConsoleCtrlHandler(HandlerRoutine, TRUE);
+			RunTransient();
+			//RunTest();
+			networks.clear();
+			CoUninitialize();
+		}
 	}
 	catch (const dfw2error& err)
 	{

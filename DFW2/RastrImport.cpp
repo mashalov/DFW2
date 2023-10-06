@@ -787,9 +787,12 @@ void CRastrImport::ReadLRCs(CDynaLRCContainer& container)
 
 }
 
-void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
+void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network, const std::filesystem::path& Path)
 {
-	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, "Генерация шаблона для RastrWin");
+	if (!Path.empty())
+		rstPath = Path;
+
+	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Генерация шаблона для RastrWin : {}", stringutils::utf8_encode(rstPath.c_str())));
 
 	m_spRastr->NewFile(rstPath.c_str());
 
@@ -809,6 +812,8 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
 	spGoRaiden->PutProp(FL_ZAG, spGoRaiden->Name);
 	spRaidenParameters->AddRow();
 	spRaidenParameters->PutTipT(1L);
+
+	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Генерация таблицы \"{}\"", cszRaidenParameters_));
 
 	std::map<std::string, std::string> Descriptions =
 	{
@@ -939,6 +944,7 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
 		if (spNewCol)
 		{
 			spNewCol->PutProp(FL_ZAG, name);
+
 			if (auto it{ Descriptions.find(field.first) }; it != Descriptions.end())
 				spNewCol->PutProp(FL_DESC, stringutils::utf8_decode(it->second).c_str());
 			else
@@ -946,6 +952,11 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
 				Network.Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format("No description for \"{}\"", field.first));
 				MissedDescriptions++;
 			}
+
+			Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("\"{}\" = {} // {}",
+				stringutils::utf8_encode(spNewCol->Name),
+				stringutils::utf8_encode(spNewCol->GetZS(0)),
+				stringutils::utf8_encode(spNewCol->GetProp(FL_DESC).bstrVal)));
 		}
 	}
 
@@ -956,6 +967,8 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network)
 			MB_ICONEXCLAMATION | MB_OK);
 
 	m_spRastr->Save("", rstPath.c_str());
+
+	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Сохранен шаблон для RastrWin : {}", stringutils::utf8_encode(rstPath.c_str())));
 }
 
 

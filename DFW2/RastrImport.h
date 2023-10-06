@@ -237,7 +237,7 @@ namespace DFW2
 		void GetFileData(CDynaModel& Network);
 		void GetData(CDynaModel& Network);
 		void StoreResults(const CDynaModel& Network);
-		void GenerateRastrWinTemplate(CDynaModel& Network);
+		void GenerateRastrWinTemplate(CDynaModel& Network, const std::filesystem::path& Path = {});
 
 		static constexpr const char* cszRaidenParameters_ = "RaidenParameters";
 		static constexpr const wchar_t* wcszDynamicRST = L"динамика.rst";

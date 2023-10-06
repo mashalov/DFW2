@@ -361,6 +361,7 @@
     <ClInclude Include="AndOrNot.h" />
     <ClInclude Include="Automatic.h" />
     <ClInclude Include="BranchMeasures.h" />
+    <ClInclude Include="cli.h" />
     <ClInclude Include="Comparator.h" />
     <ClInclude Include="CustomDevice.h" />
     <ClInclude Include="CustomDeviceContainer.h" />
