@@ -40,6 +40,10 @@ namespace DFW2
 			Init(DLLFilePath);
 		}
 		const std::filesystem::path& GetModuleFilePath() const { return ModulePath_; }
+		void* GetProcAddress(std::string_view FunctionName)
+		{
+			return ::GetProcAddress(hDLL_, std::string(FunctionName).c_str());
+		}
 	};
 
 	template<class Interface>

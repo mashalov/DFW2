@@ -82,10 +82,13 @@ var RastrWinX86InstallationCheckResult
 var RastrWinX64ComponentsPath
 var RastrWinX86ComponentsPath
 
+var TemplatesPatched
+
 Function .onInit
 	SectionSetText 0 $(ComponentsX64)
 	SectionSetText 1 $(ComponentsX86)
 	InitPluginsDir
+	StrCpy $TemplatesPatched 0
 FunctionEnd
 
  Function .onInstSuccess
@@ -254,6 +257,18 @@ Section InstallX64 0
 	SetOutPath $RastrWinX64ComponentsPath
 	File "${InputFolderX64}..\release dll\dfw2.dll"
 	File "${InputFolderX64}umc.dll"
+	IntCmp $TemplatesPatched 1 TemplateUpdateX64OK
+	File "/oname=$PLUGINSDIR\RaidenEMS_x64.exe" "${InputFolderX64}RaidenEMS.exe"
+	ReadRegStr $R4 HKCU ${RastrWin3RegKey} ${UserFolderPathVerb}
+	DetailPrint $(UpdatingRastrWinTemplates)
+	nsExec::ExecToLog '$PLUGINSDIR\RaidenEMS_x64.exe -dll $\"$RastrWinX64ComponentsPath\dfw2.dll$\" -templates $\"$R4\shablon$\"'
+	Pop $0
+	StrCpy $TemplatesPatched 1
+	IntCmp $0 0 TemplateUpdateX64OK
+	DetailPrint $(FailedUpdatingRastrWinTemplates)
+	SetErrors
+	StrCpy $TemplatesPatched 0
+TemplateUpdateX64OK:	
 	!define LIBRARY_X64
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
 	SetOutPath $RastrWinX64ComponentsPath\${ModelReferencePath}
@@ -281,18 +296,17 @@ Section InstallX86 1
 	SetOutPath $RastrWinX86ComponentsPath
 	File "${InputFolderX86}..\release dll\dfw2.dll"
 	File "${InputFolderX86}umc.dll"
+	IntCmp $TemplatesPatched 1 TemplateUpdateX86OK
+	File "/oname=$PLUGINSDIR\RaidenEMS_x86.exe" "${InputFolderX86}RaidenEMS.exe"
 	ReadRegStr $R4 HKCU ${RastrWin3RegKey} ${UserFolderPathVerb}
-	StrCpy $R5 "$R4\shablon\динамика.rst"
-	DetailPrint "$(UpdatingRastrWinTemplates) $R5"
-	System::Call '"$RastrWinX86ComponentsPath\dfw2.dll"::GenerateRastrTemplate(t "$R5")i.R0' 
-	IntCmp $R0 1 0 TemplateUpdateX86Failed TemplateUpdateX86Failed
-	StrCpy $R5 "$R4\shablon\poisk.os"
-	DetailPrint "$(UpdatingRastrWinTemplates) $R5"
-	System::Call '"$RastrWinX86ComponentsPath\dfw2.dll"::GenerateRastrTemplate(t "$R5")i.R0' 
-	IntCmp $R0 1 TemplateUpdateX86OK TemplateUpdateX86Failed TemplateUpdateX86Failed
-TemplateUpdateX86Failed:	
+	DetailPrint $(UpdatingRastrWinTemplates)
+	nsExec::ExecToLog '$PLUGINSDIR\RaidenEMS_x86.exe -dll $\"$RastrWinX86ComponentsPath\dfw2.dll$\" -templates $\"$R4\shablon$\"'
+	Pop $0
+	StrCpy $TemplatesPatched 1
+	IntCmp $0 0 TemplateUpdateX86OK
 	DetailPrint $(FailedUpdatingRastrWinTemplates)
 	SetErrors
+	StrCpy $TemplatesPatched 0
 TemplateUpdateX86OK:	
 	!undef LIBRARY_X64
 	WriteRegStr HKLM ${ProductRegKey} ${VersionVerb} ${Version}
@@ -546,8 +560,8 @@ LangString Installing ${LANG_ENGLISH} "Installing"
 LangString Installing ${LANG_RUSSIAN} "Инсталляция"
 LangString UnInstalling ${LANG_ENGLISH} "Uninstalling"
 LangString UnInstalling ${LANG_RUSSIAN} "Деинсталляция"
-LangString UpdatingRastrWinTemplates ${LANG_ENGLISH} "Updating RastrWin3 template : "
-LangString UpdatingRastrWinTemplates ${LANG_RUSSIAN} "Обновление шаблона RastrWin3 : "
+LangString UpdatingRastrWinTemplates ${LANG_ENGLISH} "Updating RastrWin3 templates"
+LangString UpdatingRastrWinTemplates ${LANG_RUSSIAN} "Обновление шаблонов RastrWin3"
 LangString FailedUpdatingRastrWinTemplates ${LANG_ENGLISH} "Failed updating RastrWin3 templates"
 LangString FailedUpdatingRastrWinTemplates ${LANG_RUSSIAN} "Ошибка обновления шаблонов RastrWin3"
 VIAddVersionKey /LANG=${LANG_ENGLISH} "ProductName" ${ProductName}

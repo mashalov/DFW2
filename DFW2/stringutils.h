@@ -149,6 +149,19 @@ public:
 #endif
 	}
 
+	static std::string acp_encode(const std::string_view& str)
+	{
+#ifdef _MSC_VER
+		std::wstring wstr{utf8_decode(str)};
+		const auto size_needed{ WideCharToMultiByte(CP_ACP, 0, &wstr[0], static_cast<int>(wstr.size()), NULL, 0, NULL, NULL) };
+		std::string strTo(size_needed, 0);
+		WideCharToMultiByte(CP_ACP, 0, &wstr[0], static_cast<int>(wstr.size()), &strTo[0], size_needed, NULL, NULL);
+		return strTo;
+#else
+		return std::string(str); // nothing to convert on linux
+#endif
+	}
+
 #ifdef _MSC_VER		
 	static std::wstring utf8_decode(const std::string_view& str)
 	{

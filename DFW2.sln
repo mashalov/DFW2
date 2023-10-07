@@ -43,6 +43,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "BatchTest", "BatchTest\Batc
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "antlr4_static", "UMC\antlr4-master\antlr4\Cpp\runtime\antlr4_static.vcxproj", "{F7C4C939-7D8C-3BEA-9264-2F5B3E6BF327}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "RaidenEMS", "RaidenEMS\RaidenEMS.vcxproj", "{0D115AE5-190B-40C9-9760-86072C8DEA04}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug DLL|Win32 = Debug DLL|Win32
@@ -381,6 +383,38 @@ Global
 		{F7C4C939-7D8C-3BEA-9264-2F5B3E6BF327}.Release|Win32.Build.0 = Release|Win32
 		{F7C4C939-7D8C-3BEA-9264-2F5B3E6BF327}.Release|x64.ActiveCfg = Release|x64
 		{F7C4C939-7D8C-3BEA-9264-2F5B3E6BF327}.Release|x64.Build.0 = Release|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug DLL|Win32.ActiveCfg = Debug|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug DLL|Win32.Build.0 = Debug|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug DLL|x64.ActiveCfg = Debug|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug DLL|x64.Build.0 = Debug|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug Static|Win32.ActiveCfg = Debug|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug Static|Win32.Build.0 = Debug|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug Static|x64.ActiveCfg = Debug|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug Static|x64.Build.0 = Debug|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug|Win32.ActiveCfg = Debug|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug|Win32.Build.0 = Debug|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug|x64.ActiveCfg = Debug|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Debug|x64.Build.0 = Debug|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.DLL-Import Debug|Win32.ActiveCfg = Debug|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.DLL-Import Debug|Win32.Build.0 = Debug|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.DLL-Import Debug|x64.ActiveCfg = Debug|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.DLL-Import Debug|x64.Build.0 = Debug|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.DLL-Import Release|Win32.ActiveCfg = Release|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.DLL-Import Release|Win32.Build.0 = Release|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.DLL-Import Release|x64.ActiveCfg = Release|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.DLL-Import Release|x64.Build.0 = Release|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release DLL|Win32.ActiveCfg = Release|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release DLL|Win32.Build.0 = Release|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release DLL|x64.ActiveCfg = Release|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release DLL|x64.Build.0 = Release|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release Static|Win32.ActiveCfg = Release|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release Static|Win32.Build.0 = Release|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release Static|x64.ActiveCfg = Release|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release Static|x64.Build.0 = Release|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release|Win32.ActiveCfg = Release|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release|Win32.Build.0 = Release|Win32
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release|x64.ActiveCfg = Release|x64
+		{0D115AE5-190B-40C9-9760-86072C8DEA04}.Release|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

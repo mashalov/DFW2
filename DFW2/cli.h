@@ -1,4 +1,6 @@
 #pragma once
+#include <map>
+#include <filesystem>
 #include "stringutils.h"
 
 template<typename T>
