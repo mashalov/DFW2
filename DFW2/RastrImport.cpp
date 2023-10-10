@@ -806,7 +806,7 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network, const std::file
 
 	ITablePtr spRaidenParameters{ spTables->Add(cszRaidenParameters_) };
 	IColsPtr spCols{ spRaidenParameters->Cols };
-	spRaidenParameters->PutTemplateName(wcszDynamicRST);
+	spRaidenParameters->PutTemplateName(Path.filename().c_str());
 	IColPtr spGoRaiden{ spCols->Add(L"GoRaiden", PR_BOOL) };
 	spGoRaiden->PutProp(FL_DESC, L"Выполнять расчет ЭМПП с помощью Raiden");
 	spGoRaiden->PutProp(FL_ZAG, spGoRaiden->Name);
