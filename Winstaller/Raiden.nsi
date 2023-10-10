@@ -233,12 +233,19 @@ Function CheckMSBuild
 	${VersionCheckNew} $R3 $R2 $R0
 	IntCmp $R0 1 FailedCheckMSBuild
 	StrCpy $MSBuildInstallationCheckResult $(MSBuildNoCPPWorkload)
+	
 	# check c++ workload available
+	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -products * -latest -requires Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core'
+	Pop $R0 # return value/error/timeout
+	Pop $R1 # printed text, up to ${NSIS_MAX_STRLEN}
+	${StrStr} $R0 $R1 "isLaunchable: 1" 
+	StrCmp $R0 "" 0 MSBuildInstalled 
 	nsExec::ExecToStack /OEM '"$PROGRAMFILES32\Microsoft Visual Studio\Installer\vswhere.exe" -latest -requires Microsoft.VisualStudio.Workload.NativeDesktop'
 	Pop $R0 # return value/error/timeout
 	Pop $R1 # printed text, up to ${NSIS_MAX_STRLEN}
 	${StrStr} $R0 $R1 "isLaunchable: 1" 
 	StrCmp $R0 "" FailedCheckMSBuild 0
+MSBuildInstalled:	
 	StrCpy $MSBuildInstallationCheckResult $(Installed)
 FailedCheckMSBuild:
 FunctionEnd
