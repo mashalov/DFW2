@@ -35,7 +35,7 @@ void CompilerBase::SaveSource(std::string_view SourceToCompile, std::filesystem:
 	// UTF-8 filename ?
 	std::ofstream OutputStream(pathSourceOutput);
 	if (!OutputStream.is_open())
-        throw dfw2errorGLE(fmt::format(DFW2::CDFW2Messages::m_cszUserModelCannotSaveFile, utf8_encode(OutputPath.c_str())));
+        throw dfw2errorGLE(fmt::format(DFW2::CDFW2Messages::m_cszUserModelCannotSaveFile, stringutils::utf8_encode(OutputPath.c_str())));
     // выводим исходный текст в файл
 	OutputStream << SourceToCompile;
 	OutputStream.close();
@@ -186,7 +186,7 @@ bool CompilerBase::NoRecompileNeeded(std::string_view SourceToCompile, const std
 		return bRes;
 
     // формируем начало сообщения о проверке пользовательской модели на необходимость рекомпиляции
-    auto ModuleName { fmt::format(DFW2::CDFW2Messages::m_cszCustomModelModule, utf8_encode(pathDLLOutput.c_str())) };
+    auto ModuleName { fmt::format(DFW2::CDFW2Messages::m_cszCustomModelModule, stringutils::utf8_encode(pathDLLOutput.c_str())) };
     // готовимся к тому, что в модуле нет метаданных
     std::string condition{ DFW2::CDFW2Messages::m_cszCustomModelHasNoMetadata };
 

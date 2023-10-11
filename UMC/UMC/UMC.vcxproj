@@ -366,7 +366,6 @@
     <ClCompile Include="Generated\EquationsVisitor.cpp" />
     <ClCompile Include="ASTreeBase.cpp" />
     <ClCompile Include="ASTNodeBase.cpp" />
-    <ClCompile Include="utils.cpp" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="Equations.g4">

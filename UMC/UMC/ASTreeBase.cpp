@@ -599,7 +599,7 @@ void CASTTreeBase::CheckInitEquations()
             if (pVarInfo->Constant && e->GetParentOfType(ASTNodeType::InitExtVars) == nullptr)
                 Error(fmt::format("Попытка при инициализации присвоить значение переменной \"{}\", объявленной как const. \"{}\" {}", 
                     pInitVar->GetText(),
-                    ctrim(e->GetInfix()),
+                    stringutils::ctrim(e->GetInfix()),
                     e->GetEquationSourceDescription()));
         }
     }

@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include <locale>
 #include <string>
 #include <algorithm>
 #include <fmt/core.h>
@@ -8,7 +7,7 @@
 #ifdef _MSC_VER
 #include <Windows.h>
 #endif
-
+#include "..\..\DFW2\stringutils.h"
 
 template <class T>
 inline void hash_combine(std::size_t& seed, const T& v)
@@ -29,145 +28,6 @@ std::string to_string(const T& t)
     str.erase(str.find_last_not_of('0') + offset, std::string::npos);
     return str;
 }
-
-
-extern std::locale utf8locale;
-
-// используем локаль для isspace для возможности работы в UTF-8
-static inline std::string& ltrim(std::string& s)
-{
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char ch) noexcept { 
-		return !std::isspace(ch, utf8locale); 
-	}));
-	return s;
-}
-
-static inline std::string& rtrim(std::string& s)
-{
-	s.erase(std::find_if(s.rbegin(), s.rend(), [](char ch) noexcept { 
-		return !std::isspace(ch, utf8locale);
-		 }).base(), s.end());
-    return s;
-}
-
-	static std::string utf8_encode(const std::wstring_view& wstr)
-	{
-#ifdef _MSC_VER
-		if (wstr.empty()) return std::string();
-		const int size_needed{ WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL) };
-		std::string strTo(size_needed, 0);
-		WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
-		return strTo;
-#else
-		return std::string(); // nothing to convert on linux
-#endif
-	}
-
-	static std::string utf8_encode(const wchar_t *wstr)
-	{
-#ifdef _MSC_VER
-		return utf8_encode(std::wstring_view(wstr));
-#else
-		return std::string(); // nothing to convert on linux
-#endif
-	}
-
-#ifndef _MSC_VER
-	static std::string utf8_encode(const char *str)
-	{
-		return std::string(str); // nothing to convert on linux
-	}
-
-	static std::string utf8_encode(const std::string& str)
-	{
-		return std::string(str);
-	}
-#endif	
-
-	static std::string acp_decode(const std::string_view& str)
-	{
-#ifdef _MSC_VER
-		if (str.empty()) return std::string();
-		const int size_needed{ MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), NULL, 0) };
-		std::wstring wstrTo(size_needed, 0);
-		MultiByteToWideChar(CP_ACP, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
-		return utf8_encode(wstrTo);
-#else
-		return std::string(); // nothing to convert on linux
-#endif
-	}
-
-#ifdef _MSC_VER		
-	static std::wstring utf8_decode(const std::string_view& str)
-	{
-		if (str.empty()) return std::wstring();
-		const int size_needed{ MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0) };
-		std::wstring wstrTo(size_needed, 0);
-		MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
-		return wstrTo;
-	}
-#else
-	// на linux функция ничего не делает и возвращает тот же std::string
-	static std::string utf8_decode(const std::string_view& str)
-	{
-		return std::string(str);
-	}
-#endif
-#ifdef _MSC_VER
-
-	//! функции для доступа к выводу консоли
-	
-	//! Возвращает текущую кодовую страницу для консоли
-	static UINT GetConsoleCodePage()
-	{
-		// если выполняемся уже в консоли, считываем
-		// текущую кодовую страницу
-		UINT acp{ GetConsoleOutputCP() };
-		if (acp != 0)
-			return acp;
-
-		// если GetConsoleOutputCP() вернула ноль - это ошибка,
-		// и консоли с процессом не связано. В этом случае
-		// получаем кодовую страницу из текущей локали пользователя.
-		// Рецепт: https://devblogs.microsoft.com/oldnewthing/20161007-00/?p=94475
-
-		const int sizeInChars{ sizeof(acp) / sizeof(TCHAR) };
-
-		if (GetLocaleInfo(GetUserDefaultLCID(),
-			LOCALE_IDEFAULTCODEPAGE |
-			LOCALE_RETURN_NUMBER,
-			reinterpret_cast<LPTSTR>(&acp),
-			sizeInChars) != sizeInChars)
-				acp = 866; // и если что-то пошло не так с локалью, ставим русскую 866
-
-		return acp;
-	}
-
-	//! Декодирует строку, полученную из консоли в unicode
-	static std::wstring console_decode(const std::string_view& str)
-	{
-		if (str.empty()) return std::wstring();
-		// получаем кодовую страницу консоли
-		const auto ConsoleCodePage(GetConsoleCodePage());
-		// подсчитываем размер буфера для кодовой страницы
-		const int size_needed{ MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), NULL, 0) };
-		std::wstring wstrTo(size_needed, 0);
-		// и конвертируем кодовую страницу консоли в unicode
-		MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
-		return wstrTo;
-	}
-#else
-	// на linux функция ничего не делает и возвращает тот же std::string
-	static std::string console_decode(const std::string_view& str)
-	{
-		return std::string(str);
-	}
-#endif
-
-
-
-static inline std::string& trim(std::string& s) { ltrim(s);  rtrim(s); return s; }
-static inline std::string ctrim(const std::string& s) { std::string st(s); return trim(st); }
 
 #ifdef _MSC_VER
 #define EXCEPTIONMSG(x) { _ASSERTE(!(x)); throw std::runtime_error(fmt::format("{} {} in {} {}", __FUNCSIG__, (x), __FILE__, __LINE__));}

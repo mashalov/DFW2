@@ -64,7 +64,6 @@ set(SOURCES
     dllmain.cpp
     EquationsOps.cpp
     UMC.cpp
-    utils.cpp
     ../../DFW2/Messages.cpp
     )             
 

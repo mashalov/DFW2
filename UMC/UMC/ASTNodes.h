@@ -906,7 +906,7 @@ public:
     std::string GetEquationDescription()
     {
         std::ostringstream result;
-        std::string strInfix = ctrim(GetInfix());
+        const std::string strInfix{ stringutils::ctrim(GetInfix()) };
         if (!strInfix.empty())
             result << "\"" << strInfix << "\"";
         result << GetEquationSourceDescription();
@@ -917,7 +917,7 @@ public:
     std::string GetEquationSourceDescription()
     {
         std::ostringstream result;
-        std::string strSource = ctrim(GetSourceEquation());
+        const std::string strSource{ stringutils::ctrim(GetSourceEquation()) };
         size_t line(GetSourceEquationLine());
         if (line >= 0 && !strSource.empty())
         {
@@ -1629,7 +1629,7 @@ public:
     void ToInfix() override
     {
         infix = fmt::format("\td({})/d({}) = {}", 
-                    ctrim(pequation->GetInfix()),
+                    stringutils::ctrim(pequation->GetInfix()),
                     var->first.c_str(),
                     Children.front()->Infix());
     }

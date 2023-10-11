@@ -3,6 +3,7 @@
 #include <Windows.h>
 #include <stringapiset.h>
 #endif 
+#include <locale>
 #include <list>
 #include <algorithm>
 #include <string>
@@ -18,14 +19,21 @@ public:
 		s.erase(std::remove(s.begin(), s.end(), '\r'), s.end());
 	}
 
-	static inline void ltrim(std::string& s)
+	// используем локаль для isspace для возможности работы в UTF-8
+	static inline std::string& ltrim(std::string& s)
 	{
-		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](int ch) noexcept { return !std::isspace(ch); }));
+		s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](char ch) noexcept {
+			return !std::isspace(ch, utf8locale);
+			}));
+		return s;
 	}
 
-	static inline void rtrim(std::string& s)
+	static inline std::string& rtrim(std::string& s)
 	{
-		s.erase(std::find_if(s.rbegin(), s.rend(), [](int ch) noexcept { return !std::isspace(ch); }).base(), s.end());
+		s.erase(std::find_if(s.rbegin(), s.rend(), [](char ch) noexcept {
+			return !std::isspace(ch, utf8locale);
+			}).base(), s.end());
+		return s;
 	}
 
 	static inline void tolower(std::string& s)
@@ -33,7 +41,8 @@ public:
 		std::transform(s.begin(), s.end(), s.begin(), [](unsigned char c) { return std::tolower(c); });
 	}
 
-	static inline void trim(std::string& s) { ltrim(s);  rtrim(s); }
+	static inline std::string& trim(std::string& s) { ltrim(s);  rtrim(s); return s; }
+	static inline std::string ctrim(const std::string& s) { std::string st(s); return trim(st); }
 
 	template<typename T>
 	static std::string join(const T& container, const std::string::value_type Delimiter = ',')
@@ -191,5 +200,81 @@ public:
 		else
 			return "???";
 	}
+
+	static std::locale GetLocaleUTF8()
+	{
+		std::locale  currentLocale{ std::locale() };
+		std::string localeName{ currentLocale.name() };
+		std::transform(localeName.begin(), localeName.end(), localeName.begin(), [](unsigned char c) { return std::tolower(c); });
+		if (localeName.find("utf-8") == std::string::npos && localeName.find("utf8") == std::string::npos)
+		{
+			try
+			{
+				currentLocale = std::locale("en_US.UTF-8");
+			}
+			catch (const std::exception&)
+			{
+				try
+				{
+					currentLocale = std::locale("ru_RU.UTF-8");
+				}
+				catch (const std::exception&) {}
+			}
+		}
+		return currentLocale;
+	}
+
+#ifdef _MSC_VER
+
+	//! функции для доступа к выводу консоли
+	//! Возвращает текущую кодовую страницу для консоли
+	static UINT GetConsoleCodePage()
+	{
+		// если выполняемся уже в консоли, считываем
+		// текущую кодовую страницу
+		UINT acp{ GetConsoleOutputCP() };
+		if (acp != 0)
+			return acp;
+
+		// если GetConsoleOutputCP() вернула ноль - это ошибка,
+		// и консоли с процессом не связано. В этом случае
+		// получаем кодовую страницу из текущей локали пользователя.
+		// Рецепт: https://devblogs.microsoft.com/oldnewthing/20161007-00/?p=94475
+
+		const int sizeInChars{ sizeof(acp) / sizeof(TCHAR) };
+
+		if (GetLocaleInfo(GetUserDefaultLCID(),
+			LOCALE_IDEFAULTCODEPAGE |
+			LOCALE_RETURN_NUMBER,
+			reinterpret_cast<LPTSTR>(&acp),
+			sizeInChars) != sizeInChars)
+			acp = 866; // и если что-то пошло не так с локалью, ставим русскую 866
+
+		return acp;
+	}
+
+	//! Декодирует строку, полученную из консоли в unicode
+	static std::wstring console_decode(const std::string_view& str)
+	{
+		if (str.empty()) return std::wstring();
+		// получаем кодовую страницу консоли
+		const auto ConsoleCodePage(GetConsoleCodePage());
+		// подсчитываем размер буфера для кодовой страницы
+		const int size_needed{ MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), NULL, 0) };
+		std::wstring wstrTo(size_needed, 0);
+		// и конвертируем кодовую страницу консоли в unicode
+		MultiByteToWideChar(ConsoleCodePage, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+		return wstrTo;
+	}
+#else
+	// на linux функция ничего не делает и возвращает тот же std::string
+	static std::string console_decode(const std::string_view& str)
+	{
+		return std::string(str);
+	}
+#endif
+
+
+	static inline const std::locale utf8locale = GetLocaleUTF8();
 };
 

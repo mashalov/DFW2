@@ -136,7 +136,7 @@ public:
 				for (auto& cst : h->ConstantArguments)
 				{
 					if (cst.first->CheckType(ASTNodeType::Equation) && cst.first->ChildNodes().size() == 2)
-						Consts.push_back(ctrim(cst.first->ChildNodes().back()->GetInfix()));
+						Consts.push_back(stringutils::ctrim(cst.first->ChildNodes().back()->GetInfix()));
 					else
 						EXCEPTIONMSG("Wrong constant argument type");
 				}
@@ -410,10 +410,10 @@ public:
 			{
 				EmitLine(fmt::format("CustomDeviceData.SetFunction({}, {});",
 					pEquation->itResolvedBy->first,
-					ctrim(pEquation->ChildNodes().front()->GetInfix())));
+					stringutils::ctrim(pEquation->ChildNodes().front()->GetInfix())));
 			}
 			else
-				EmitLine(fmt::format("// {} is for host block ", ctrim(pEquation->ChildNodes().front()->GetInfix())));
+				EmitLine(fmt::format("// {} is for host block ", stringutils::ctrim(pEquation->ChildNodes().front()->GetInfix())));
 
 		}
 	}
@@ -443,7 +443,7 @@ public:
 				if (!varInfo.External)
 					EXCEPTIONMSG("Right child should be external variable");
 
-				EmitLine(fmt::format("{}; // {} ", ctrim(eq->GetInfix()), varInfo.ModelLink));
+				EmitLine(fmt::format("{}; // {} ", stringutils::ctrim(eq->GetInfix()), varInfo.ModelLink));
 			}
 		}
 
@@ -455,12 +455,12 @@ public:
 			CASTEquation* pEquation(static_cast<CASTEquation*>(eq));
 			if (pEquation->pHostBlock == nullptr)
 			{
-				EmitLine(fmt::format("{};", ctrim(pEquation->GetInfix())));
+				EmitLine(fmt::format("{};", stringutils::ctrim(pEquation->GetInfix())));
 			}
 			else
 				EmitLine(fmt::format("CustomDeviceData.InitPrimitive({}); // {}",
 					pEquation->pHostBlock->GetHostBlockIndex(),
-					ctrim(pEquation->GetInfix())));
+					stringutils::ctrim(pEquation->GetInfix())));
 		}
 		EmitLine("return eDEVICEFUNCTIONSTATUS::DFS_OK;");
 	}
@@ -477,12 +477,12 @@ public:
 			CASTEquation* pEquation(static_cast<CASTEquation*>(eq));
 			if (pEquation->pHostBlock == nullptr)
 			{
-				EmitLine(fmt::format("{};", ctrim(pEquation->GetInfix())));
+				EmitLine(fmt::format("{};", stringutils::ctrim(pEquation->GetInfix())));
 			}
 			else
 				EmitLine(fmt::format("CustomDeviceData.ProcessPrimitiveDisco({}); // {}", 
 					pEquation->pHostBlock->GetHostBlockIndex(),
-					ctrim(pEquation->GetInfix())));
+					stringutils::ctrim(pEquation->GetInfix())));
 		}
 		EmitLine("return eDEVICEFUNCTIONSTATUS::DFS_OK;");
 	}
@@ -498,11 +498,11 @@ public:
 		auto fnEmitDerivative = [this](const CASTJacobiElement* const pJe) -> void
 		{
 			EmitLine(fmt::format("CustomDeviceData.SetElement({}, {}, {});   // {} by {}",
-				pJe->pequation->itResolvedBy->first,			// строка элемента якобиана
-				pJe->var->first,								// столбец элемента якобина
-				ctrim(pJe->ChildNodes().front()->GetInfix()),	// функция вычисления элемента якобиана
-				ctrim(pJe->pequation->GetInfix()),				// комментарий: уравнение, от которого берется частная производная
-				pJe->var->first));								// комментарие: переменная, по которой берется частная производная
+				pJe->pequation->itResolvedBy->first,						// строка элемента якобиана
+				pJe->var->first,											// столбец элемента якобина
+				stringutils::ctrim(pJe->ChildNodes().front()->GetInfix()),	// функция вычисления элемента якобиана
+				stringutils::ctrim(pJe->pequation->GetInfix()),				// комментарий: уравнение, от которого берется частная производная
+				pJe->var->first));											// комментарие: переменная, по которой берется частная производная
 		};
 
 		// проходим по якобиану дерева

@@ -11,7 +11,7 @@ std::string AntlrASTErrorListener::GetSourceLineFromSource(std::string_view sour
         offset = newoffset + 1;
     }
     std::string ret(source.substr(offset, newoffset - offset));
-    trim(ret);
+    stringutils::trim(ret);
     return ret;
 }
 

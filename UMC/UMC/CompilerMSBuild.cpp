@@ -23,7 +23,7 @@ template<> struct UniqueHandleTraits<HMODULE>
 
 DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, std::list<std::wstring>& listConsole)
 {
-	std::string CommandLineUTF8Version(utf8_encode(CommandLine));
+	std::string CommandLineUTF8Version(stringutils::utf8_encode(CommandLine));
 	const DWORD dwCreationFlags{ 0 };
 	UniqueHandle<HANDLE> hStdWrite, hStdRead;
 	SECURITY_ATTRIBUTES stdSA;
@@ -97,7 +97,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 			// в текущую строку
 			strOut += strMsgLine.substr(0, nFind);
 			// и добавляем получившуюся строку в список
-			listConsole.push_back(console_decode(strOut));
+			listConsole.push_back(stringutils::console_decode(strOut));
 			// строку очищаем и ждем нового перевода строки
 			strOut.clear();
 			// из исходной строки удаляем перевод
@@ -113,7 +113,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	// если после обработки вывода что-то осталось в текущей
 	// строке - добавляем ее в список
 	if (!strOut.empty())
-		listConsole.push_back(console_decode(strOut));
+		listConsole.push_back(stringutils::console_decode(strOut));
 
 	DWORD dwResult{ 0 };
 	if (!GetExitCodeProcess(pi.hProcess, &dwResult))
@@ -144,7 +144,7 @@ DFW2::VersionInfo CCompilerMSBuild::Version(const std::wstring& strVersion)
 	DFW2::VersionInfo version;
 	std::fill(version.begin(), version.end(), 0);
 	constexpr const char* szFailedToGetMSBuildVersion = "Невозможно получить версию из \"{}\"";
-	const std::string utf8Version {utf8_encode(strVersion)};
+	const std::string utf8Version { stringutils::utf8_encode(strVersion)};
 	if (sscanf_s(utf8Version.c_str(), "%zu.%zu.%zu.%zu",
 		&version[0],
 		&version[1],
@@ -214,10 +214,10 @@ void CCompilerMSBuild::CompileWithMSBuild()
 			VSrequiredVersion[2]));
 			
 	// задаем платформу сборки
-	std::wstring Platform = utf8_decode(Properties[PropertyMap::szPropPlatform]);
+	const std::wstring Platform{ stringutils::utf8_decode(Properties[PropertyMap::szPropPlatform]) };
 	// имя dll берем по имени проекта
-	std::wstring TargetName = utf8_decode(Properties[PropertyMap::szPropProjectName]);
-	std::wstring Configuration = utf8_decode(Properties[PropertyMap::szPropConfiguration]);
+	const std::wstring TargetName{ stringutils::utf8_decode(Properties[PropertyMap::szPropProjectName]) };
+	const std::wstring Configuration{ stringutils::utf8_decode(Properties[PropertyMap::szPropConfiguration]) };
 	// формируем путь до vcxproj
 	std::filesystem::path pathVcxproj = pathOutDir;
 	pathVcxproj.append(CASTCodeGeneratorBase::CustomDeviceHeader).replace_extension("vcxproj");
@@ -260,7 +260,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	std::list<std::wstring> listConsole;
 
 	if (messageCallBacks.Debug)
-		messageCallBacks.Debug(fmt::format("MSBuild using : {}", utf8_encode(commandLine)));
+		messageCallBacks.Debug(fmt::format("MSBuild using : {}", stringutils::utf8_encode(commandLine)));
 
 	DWORD dwResult(RunWindowsConsole(commandLine, WorkingFolder, listConsole));
 
@@ -268,7 +268,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	{
 		for (auto& l : listConsole)
 		{
-			const std::string utf8message{ utf8_encode(l) };
+			const std::string utf8message{ stringutils::utf8_encode(l) };
 			//std::cout << utf8message << std::endl;
 			if (messageCallBacks.Debug)
 				messageCallBacks.Debug(utf8message);
