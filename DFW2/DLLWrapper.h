@@ -42,7 +42,11 @@ namespace DFW2
 		const std::filesystem::path& GetModuleFilePath() const { return ModulePath_; }
 		void* GetProcAddress(std::string_view FunctionName)
 		{
+#ifdef _MSC_VER			
 			return ::GetProcAddress(hDLL_, std::string(FunctionName).c_str());
+#else
+			return dlsym(hDLL_, strFactoryFn.c_str())
+#endif
 		}
 	};
 
@@ -58,14 +62,9 @@ namespace DFW2
 		fnFactory pfnFactory_ = nullptr;
 		void Init(std::string_view FactoryFunction)
 		{
-			std::string strFactoryFn(FactoryFunction);
-#ifdef _MSC_VER
-			pfnFactory_ = reinterpret_cast<fnFactory>(::GetProcAddress(hDLL_, strFactoryFn.c_str()));
-#else
-			pfnFactory_ = reinterpret_cast<fnFactory>(dlsym(hDLL_, strFactoryFn.c_str()));
-#endif
+			pfnFactory_ = reinterpret_cast<fnFactory>(GetProcAddress(FactoryFunction));
 			if (!pfnFactory_)
-				throw dfw2error(fmt::format(CDFW2Messages::m_cszDLLFunctionNotFound, strFactoryFn,
+				throw dfw2error(fmt::format(CDFW2Messages::m_cszDLLFunctionNotFound, FactoryFunction,
 					stringutils::utf8_encode(ModulePath_.c_str())));
 		}
 	public:
