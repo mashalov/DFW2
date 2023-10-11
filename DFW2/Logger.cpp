@@ -6,8 +6,6 @@ using namespace DFW2;
 
 void CLoggerConsole::Log(DFW2MessageStatus Status, std::string_view Message, ptrdiff_t nDbIndex) const
 {
-	if (Status <= DFW2MessageStatus::DFW2LOG_ERROR)
-	{
 #ifdef _MSC_VER
 		// для Windows делаем разные цвета в консоли
 		HANDLE hCon = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -26,6 +24,8 @@ void CLoggerConsole::Log(DFW2MessageStatus Status, std::string_view Message, ptr
 			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_INTENSITY);
 			break;
 		case DFW2MessageStatus::DFW2LOG_MESSAGE:
+			SetConsoleTextAttribute(hCon, FOREGROUND_RED | FOREGROUND_GREEN);
+			break;
 		case DFW2MessageStatus::DFW2LOG_INFO:
 			SetConsoleTextAttribute(hCon, FOREGROUND_INTENSITY | FOREGROUND_BLUE | FOREGROUND_RED | FOREGROUND_GREEN);
 			break;
@@ -41,5 +41,4 @@ void CLoggerConsole::Log(DFW2MessageStatus Status, std::string_view Message, ptr
 #ifdef _MSC_VER
 		SetConsoleTextAttribute(hCon, FOREGROUND_BLUE | FOREGROUND_GREEN | FOREGROUND_INTENSITY | FOREGROUND_RED);
 #endif
-	}
 }

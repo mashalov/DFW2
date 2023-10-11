@@ -31,6 +31,7 @@ BOOL WINAPI HandlerRoutine(DWORD dwCtrlType)
 void GenerateRastrWinTemplate(std::filesystem::path Path = {})
 {
 	CDynaModel::DynaModelParameters parameters;
+	parameters.m_eConsoleLogLevel = DFW2MessageStatus::DFW2LOG_INFO;
 	CDynaModel Network(parameters);
 	try
 	{
@@ -62,7 +63,6 @@ void RunTransient()
 			CRastrImport ri;
 			networks.push_back(&Network);
 			//Network.DeSerialize(Network.Platform().ResultFile("serialization.json"));
-			//ri.GenerateRastrWinTemplate(Network);
 			ri.GetFileData(Network);
 		}
 		//Network.Serialize(Network.Platform().ResultFile("lf_1500.json"));
@@ -95,8 +95,10 @@ void RunTest()
 
 int _tmain(int argc, _TCHAR* argv[])
 {
+	int Ret{ 0 };
 	_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF);
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+	SetConsoleOutputCP(CP_UTF8);
 	try
 	{
 		if (HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))
@@ -118,10 +120,11 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	catch (const dfw2error& err)
 	{
-		std::cout << "Ошибка " << err.what() << std::endl;
+		std::cout << "Исключение: " << err.what() << std::endl;
+		Ret = 1;
 	}
 	SetConsoleCtrlHandler(NULL, TRUE);
 	_CrtDumpMemoryLeaks();
-	return 0;
+	return Ret;
 }
 
