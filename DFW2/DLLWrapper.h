@@ -45,7 +45,7 @@ namespace DFW2
 #ifdef _MSC_VER			
 			return ::GetProcAddress(hDLL_, std::string(FunctionName).c_str());
 #else
-			return dlsym(hDLL_, strFactoryFn.c_str())
+			return dlsym(hDLL_, std::string(strFactoryFn).c_str());
 #endif
 		}
 	};
