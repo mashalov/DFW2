@@ -7,7 +7,7 @@
 #ifdef _MSC_VER
 #include <Windows.h>
 #endif
-#include "..\..\DFW2\stringutils.h"
+#include "../../DFW2/stringutils.h"
 
 template <class T>
 inline void hash_combine(std::size_t& seed, const T& v)
