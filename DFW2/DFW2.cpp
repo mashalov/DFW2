@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "DynaModel.h"
 #include "RastrImport.h"
-#include "cli.h"
+#include <CLI11.hpp>
 
 using namespace DFW2;
 /*
@@ -93,22 +93,43 @@ void RunTest()
 	Network.RunTest();
 }
 
-int _tmain(int argc, _TCHAR* argv[])
+int main(int argc, char* argv[])
 {
 	int Ret{ 0 };
 	_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF);
 	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 	SetConsoleOutputCP(CP_UTF8);
+	HANDLE hCon{ GetStdHandle(STD_OUTPUT_HANDLE) };
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	GetConsoleScreenBufferInfo(hCon, &csbi);
 	try
 	{
 		if (HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))
 			throw dfw2error("Ошибка CoInitialize {:0x}", static_cast<unsigned long>(hr));
 
-		const CLIParser<_TCHAR> cli(argc, argv);
-		const auto& CLIOptions{ cli.Options() };
+		CLI::App app{ fmt::format("{} {} {} {} {}",
+			CDFW2Messages::m_cszProjectName,
+			CDynaModel::version,
+			__DATE__,
+			CDFW2Messages::m_cszCopyright,
+			CDFW2Messages::m_cszOS)};
 
-		if (const auto gtp{ CLIOptions.find("gt") }; gtp != CLIOptions.end())
-			GenerateRastrWinTemplate(gtp->second);
+		std::string dllpath, templatespath, templatetogenerate;
+		app.add_option("--dll", dllpath, "dfw2.dll path");
+		app.add_option("--templates", templatespath, "RastrWin3 templates path");
+		app.add_option("--gt", templatetogenerate, "Generate RastrWin3 templates");
+
+		try
+		{
+			app.parse(argc, argv);
+		}
+		catch (const CLI::ParseError& e)
+		{
+			return app.exit(e);
+		}
+
+		if (!templatetogenerate.empty())
+			GenerateRastrWinTemplate(templatetogenerate);
 		else
 		{
 			SetConsoleCtrlHandler(HandlerRoutine, TRUE);
@@ -120,6 +141,7 @@ int _tmain(int argc, _TCHAR* argv[])
 	}
 	catch (const dfw2error& err)
 	{
+		SetConsoleTextAttribute(hCon, csbi.wAttributes);
 		std::cout << "Исключение: " << err.what() << std::endl;
 		Ret = 1;
 	}

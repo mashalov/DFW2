@@ -268,7 +268,7 @@ Section InstallX64 0
 	File "/oname=$PLUGINSDIR\RaidenEMS_x64.exe" "${InputFolderX64}RaidenEMS.exe"
 	ReadRegStr $R4 HKCU ${RastrWin3RegKey} ${UserFolderPathVerb}
 	DetailPrint $(UpdatingRastrWinTemplates)
-	nsExec::ExecToLog '$PLUGINSDIR\RaidenEMS_x64.exe -dll $\"$RastrWinX64ComponentsPath\dfw2.dll$\" -templates $\"$R4\shablon$\"'
+	nsExec::ExecToLog /OEM '$PLUGINSDIR\RaidenEMS_x64.exe --dll $\"$RastrWinX64ComponentsPath\dfw2.dll$\" --templates $\"$R4\shablon$\"'
 	Pop $0
 	StrCpy $TemplatesPatched 1
 	IntCmp $0 0 TemplateUpdateX64OK
@@ -307,7 +307,7 @@ Section InstallX86 1
 	File "/oname=$PLUGINSDIR\RaidenEMS_x86.exe" "${InputFolderX86}RaidenEMS.exe"
 	ReadRegStr $R4 HKCU ${RastrWin3RegKey} ${UserFolderPathVerb}
 	DetailPrint $(UpdatingRastrWinTemplates)
-	nsExec::ExecToLog '$PLUGINSDIR\RaidenEMS_x86.exe -dll $\"$RastrWinX86ComponentsPath\dfw2.dll$\" -templates $\"$R4\shablon$\"'
+	nsExec::ExecToLog /OEM '$PLUGINSDIR\RaidenEMS_x86.exe --dll $\"$RastrWinX86ComponentsPath\dfw2.dll$\" --templates $\"$R4\shablon$\"'
 	Pop $0
 	StrCpy $TemplatesPatched 1
 	IntCmp $0 0 TemplateUpdateX86OK

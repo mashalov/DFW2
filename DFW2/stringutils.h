@@ -274,6 +274,27 @@ public:
 	}
 #endif
 
+#ifdef _MSC_VER
+	//! Декодирует строку, полученную из консоли в unicode
+	static std::string console_encode(const std::string_view& str)
+	{
+		if (str.empty()) return std::string();
+		std::wstring wstr{ stringutils::utf8_decode(str) };
+		// получаем кодовую страницу консоли
+		const auto ConsoleCodePage(GetConsoleCodePage());
+		const auto size_needed{ WideCharToMultiByte(ConsoleCodePage, 0, &wstr[0], static_cast<int>(wstr.size()), NULL, 0, NULL, NULL) };
+		std::string strTo(size_needed, 0);
+		WideCharToMultiByte(ConsoleCodePage, 0, &wstr[0], static_cast<int>(wstr.size()), &strTo[0], size_needed, NULL, NULL);
+		return strTo;
+	}
+#else
+// на linux функция ничего не делает и возвращает тот же std::string
+static std::string console_encode(const std::string_view& str)
+{
+	return std::string(str);
+}
+#endif
+
 
 	static inline const std::locale utf8locale = GetLocaleUTF8();
 };
