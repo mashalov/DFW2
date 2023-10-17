@@ -107,17 +107,18 @@ int main(int argc, char* argv[])
 		if (HRESULT hr{ CoInitialize(NULL) }; FAILED(hr))
 			throw dfw2error("Ошибка CoInitialize {:0x}", static_cast<unsigned long>(hr));
 
-		CLI::App app{ fmt::format("{} {} {} {} {}",
+		CLI::App app{ fmt::format("{} {} built {} for {} {}",
 			CDFW2Messages::m_cszProjectName,
 			CDynaModel::version,
 			__DATE__,
-			CDFW2Messages::m_cszCopyright,
-			CDFW2Messages::m_cszOS)};
+			CDFW2Messages::m_cszOS,
+			CDFW2Messages::m_cszCopyright)};
 
-		std::string dllpath, templatespath, templatetogenerate;
-		app.add_option("--dll", dllpath, "dfw2.dll path");
-		app.add_option("--templates", templatespath, "RastrWin3 templates path");
-		app.add_option("--gt", templatetogenerate, "Generate RastrWin3 templates");
+		std::string cli_templatetogenerate;
+		bool cli_showversion;
+		constexpr const char* szPath{ "PATH" };
+		app.add_option("--gt", cli_templatetogenerate, "Update RastrWin3 template specified at the given path")->option_text(szPath);
+		app.add_flag("--ver", cli_showversion, "Show version info");
 
 		try
 		{
@@ -128,8 +129,10 @@ int main(int argc, char* argv[])
 			return app.exit(e);
 		}
 
-		if (!templatetogenerate.empty())
-			GenerateRastrWinTemplate(templatetogenerate);
+		if (cli_showversion)
+			std::cout << app.get_description() << std::endl;
+		else if (!cli_templatetogenerate.empty())
+			GenerateRastrWinTemplate(cli_templatetogenerate);
 		else
 		{
 			SetConsoleCtrlHandler(HandlerRoutine, TRUE);

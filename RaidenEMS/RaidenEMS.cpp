@@ -24,8 +24,9 @@ int main(int argc, char* argv[])
 
 		CLI::App app{ "Raiden EMS utility"};
 		std::string dllpath, templatespath;
-		app.add_option("--dll", dllpath, "dfw2.dll path");
-		app.add_option("--templates", templatespath, "RastrWin3 templates path");
+		constexpr const char* szPath{ "PATH" };
+		app.add_option("--dll", dllpath, "dfw2.dll path")->option_text(szPath);
+		app.add_option("--templates", templatespath, "RastrWin3 templates folder path")->option_text(szPath);
 
 		try 
 		{
