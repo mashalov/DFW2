@@ -123,49 +123,49 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\CLI;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
+    <IncludePath>..\CLI11\;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\CLI;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
+    <IncludePath>..\CLI11\;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\CLI;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
+    <IncludePath>..\CLI11\;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug DLL|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>..\CLI;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
+    <IncludePath>..\CLI11\;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\CLI;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
+    <IncludePath>..\CLI11\;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|Win32'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\CLI;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
+    <IncludePath>..\CLI11\;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\CLI;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
+    <IncludePath>..\CLI11\;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release DLL|x64'">
     <LinkIncremental>false</LinkIncremental>
-    <IncludePath>..\CLI;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
+    <IncludePath>..\CLI11\;..\njson\;..\fmt\include\;$(VC_IncludePath);$(WindowsSDK_IncludePath);SuiteSparse\BTF\Include;SuiteSparse\ColAMD\Include;SuiteSparse\SuiteSparse_config\;SuiteSparse\AMD\Include;SuiteSparse\KLU\Include;SuiteSparse\CSparse\Include</IncludePath>
     <CodeAnalysisRuleSet>NativeRecommendedRules.ruleset</CodeAnalysisRuleSet>
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>

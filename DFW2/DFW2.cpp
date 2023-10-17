@@ -4,7 +4,7 @@
 #include "stdafx.h"
 #include "DynaModel.h"
 #include "RastrImport.h"
-#include <CLI11.hpp>
+#include <CLI/CLI.hpp>
 
 using namespace DFW2;
 /*
@@ -115,13 +115,14 @@ int main(int argc, char* argv[])
 			CDFW2Messages::m_cszCopyright)};
 
 		std::string cli_templatetogenerate;
-		bool cli_showversion;
+		bool cli_showversion{ false };
 		constexpr const char* szPath{ "PATH" };
 		app.add_option("--gt", cli_templatetogenerate, "Update RastrWin3 template specified at the given path")->option_text(szPath);
 		app.add_flag("--ver", cli_showversion, "Show version info");
 
 		try
 		{
+			argv = app.ensure_utf8(argv);
 			app.parse(argc, argv);
 		}
 		catch (const CLI::ParseError& e)
@@ -132,7 +133,7 @@ int main(int argc, char* argv[])
 		if (cli_showversion)
 			std::cout << app.get_description() << std::endl;
 		else if (!cli_templatetogenerate.empty())
-			GenerateRastrWinTemplate(cli_templatetogenerate);
+			GenerateRastrWinTemplate(stringutils::utf8_decode(cli_templatetogenerate));
 		else
 		{
 			SetConsoleCtrlHandler(HandlerRoutine, TRUE);

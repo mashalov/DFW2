@@ -5,7 +5,7 @@
 #include <array>
 #include "../DFW2/stringutils.h"
 #include "../DFW2/dfw2exception.h"
-#include <CLI11.hpp>
+#include <CLI/CLI.hpp>
 #include "../DFW2/DLLWrapper.h"
 
 void Log(std::string_view Message)
@@ -30,6 +30,7 @@ int main(int argc, char* argv[])
 
 		try 
 		{
+			argv = app.ensure_utf8(argv);
 			app.parse(argc, argv);
 		}
 		catch (const CLI::ParseError& e) 
@@ -41,12 +42,12 @@ int main(int argc, char* argv[])
 		constexpr const char* cszGenerateRastrTemplate = "GenerateRastrTemplate";
 		if (!dllpath.empty() && !templatespath.empty())
 		{
-			DFW2::CDLLInstance Raiden(dllpath);
+			DFW2::CDLLInstance Raiden(stringutils::utf8_decode(dllpath));
 			auto fnGenerateTemplates{ static_cast<long(__cdecl*)(const wchar_t*)>(Raiden.GetProcAddress(cszGenerateRastrTemplate)) };
 			if (fnGenerateTemplates)
 			{
 				int SuccessCount{ 0 };
-				std::filesystem::path BasePath{ templatespath };
+				std::filesystem::path BasePath{ stringutils::utf8_decode(templatespath) };
 				std::array<const wchar_t*, 2> TemplateFiles = {L"динамика.rst", L"poisk.os"};
 
 				for (const auto& TemplateFile : TemplateFiles)
