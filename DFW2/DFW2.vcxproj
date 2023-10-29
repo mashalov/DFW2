@@ -414,6 +414,7 @@
     <ClInclude Include="MixedAdamsBDF.h" />
     <ClInclude Include="PackageVersion.h" />
     <ClInclude Include="Rodas.h" />
+    <ClInclude Include="SVC.h" />
     <ClInclude Include="SyncroZone.h" />
     <ClInclude Include="TaggedPath.h" />
     <ClInclude Include="TestDevice.h" />
@@ -1456,6 +1457,7 @@
     </ClCompile>
     <ClCompile Include="DynaExciterBase.cpp" />
     <ClCompile Include="Sum.cpp" />
+    <ClCompile Include="SVC.cpp" />
     <ClCompile Include="SynchroZone.cpp" />
     <ClCompile Include="TestDevice.cpp" />
     <ClCompile Include="ZCDetector.cpp" />

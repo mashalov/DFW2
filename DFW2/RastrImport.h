@@ -328,8 +328,15 @@ namespace DFW2
 						if (serializervalue.first == CDeviceId::m_cszid)
 							synonyms.insert("Id");
 
+						// если в таблице синонимов есть пустая строка - пропускаем поле
+						bool SkipField{ false };
 						for (const auto& synonym : synonyms)
 						{
+							if (synonym.empty())
+							{
+								SkipField = true;
+								break;
+							}
 							if (long index = spCols->GetFind(synonym.c_str()); index >= 0)
 							{
 								auto transformer{tableSynonyms.m_FieldTransformers.find(synonym.c_str())};
@@ -339,7 +346,7 @@ namespace DFW2
 							}
 						}
 
-						if (!serializervalue.second->pAux)
+						if (!serializervalue.second->pAux && !SkipField)
 							throw dfw2error(fmt::format("RastrImport::ReadTable - no synonyms for field \"{}\" from \"{}\" of container \"{}\" found in table \"{}\"",
 								serializervalue.first,
 								fmt::join(synonyms, ","),

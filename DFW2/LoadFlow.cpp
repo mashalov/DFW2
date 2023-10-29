@@ -1317,6 +1317,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 							pGen->Kgen));
 						pGen->Kgen = 1.0;
 					}
+
 					pNode->Pg += pGen->P;
 
 					// проверяем ограничения по реактивной мощности
@@ -1331,6 +1332,16 @@ void CLoadFlow::UpdatePQFromGenerators()
 						pGen->LFQmin = pGen->LFQmax;
 
 					}
+
+					/*
+					if (pGen->GetType() == DEVTYPE_SVC)
+					{
+						pGen->Q = -pGen->Q;
+						std::swap(pGen->LFQmax, pGen->LFQmin);
+						pGen->LFQmax = -pGen->LFQmax;
+						pGen->LFQmin = -pGen->LFQmin;
+					}
+					*/
 
 					// вводим Q генератора в диапазон
 					pGen->Q = (std::max)((std::min)(static_cast<double>(pGen->Q), pGen->LFQmax * pGen->Kgen), pGen->LFQmin * pGen->Kgen);

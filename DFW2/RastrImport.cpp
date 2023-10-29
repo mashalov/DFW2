@@ -6,6 +6,7 @@
 #include "DynaExciterMustang.h"
 #include "DynaDECMustang.h"
 #include "DynaExcConMustang.h"
+#include "SVC.h"
 #include "BranchMeasures.h"
 
 using namespace DFW2;
@@ -260,7 +261,12 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
 	//LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00009");
-	LoadFile("e:\\downloads\\тестирование_4_19_006499_109\\тестирование_4_19_006499_109.os");
+	//LoadFile("e:\\downloads\\тестирование_4_19_006499_109\\тестирование_4_19_006499_109.os");
+	//
+	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
+	m_spRastr->NewFile(dfwPath.c_str()); 
+	m_spRastr->NewFile(scnPath.c_str());
+	// 
 	//LoadFile("D:\\source\\repos\\MatPowerImport\\x64\\Release\\case9all");
 	
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
@@ -455,6 +461,15 @@ void CRastrImport::GetData(CDynaModel& Network)
 		.AddFieldSynonyms(CSerializerBase::m_cszType, "tip")
 		.AddFieldSynonyms("Placement", "Pr_vikl");
 
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameSVC, "USHR")
+		.AddFieldSynonyms("Kgen", "")
+		.AddFieldSynonyms(CDynaPowerInjector::m_cszP, "")
+		.AddFieldSynonyms(CDynaPowerInjector::m_cszQ, "Qr")
+		.AddFieldSynonyms(CDynaPowerInjector::m_cszQmin, "Min")
+		.AddFieldSynonyms(CDynaPowerInjector::m_cszQmax, "Max")
+		.AddFieldSynonyms(CDynaPowerInjector::m_cszQnom, CDynaPowerInjector::m_cszSnom)
+		.AddFieldSynonyms(CSVC::cszDroop_, "Kct");
+
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMotion, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator1C, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator2C, "Generator");
@@ -484,6 +499,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
+	ReadTable(Network.SVCs, "Type=0");
 
 
 	ReadAutomatic(Network);

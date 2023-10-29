@@ -179,7 +179,7 @@ void CDynaGeneratorMotion::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(m_cszxq, xq, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty(m_cszMj, Mj, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(m_cszPnom, Pnom, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(m_cszUnom, Unom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(CDynaPowerInjector::m_cszUnom, Unom, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty(m_cszcosPhinom, cosPhinom, eVARUNITS::VARUNIT_UNITLESS);
 	// добавляем переменные состояния
 	Serializer->AddState("Pt", Pt, eVARUNITS::VARUNIT_MW);
@@ -192,7 +192,7 @@ void CDynaGeneratorMotion::UpdateValidator(CSerializerValidatorRules* Validator)
 	Validator->AddRule(m_cszKdemp, &CSerializerValidatorRules::NonNegative);
 	Validator->AddRule({ m_cszxq, m_cszPnom }, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszcosPhinom, &CDynaGeneratorMotion::ValidatorCos);
-	Validator->AddRule(m_cszUnom, &CDynaGeneratorMotion::ValidatorUnom);
+	Validator->AddRule(CDynaPowerInjector::m_cszUnom, &CDynaPowerInjector::ValidatorUnom);
 	Validator->AddRule(m_cszMj, &CDynaGeneratorMotion::ValidatorMj);
 	Validator->AddRule(m_cszPnom, &CDynaGeneratorMotion::ValidatorPnom);
 }
@@ -207,7 +207,7 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert(std::make_pair("S", CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
-	props.ConstVarMap_.insert(std::make_pair(CDynaGeneratorMotion::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
+	props.ConstVarMap_.insert(std::make_pair(CDynaPowerInjector::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorMotion>>();
 
@@ -233,7 +233,5 @@ void CDynaGeneratorMotion::BuildAngleEquation(CDynaModel* pDynaModel, CDevice::f
 	CDynaPowerInjector::BuildRightHand(pDynaModel);
 }
 
-
-CValidationRuleGeneratorUnom CDynaGeneratorMotion::ValidatorUnom;
 CValidationRuleGeneratorMj CDynaGeneratorMotion::ValidatorMj;
 CValidationRuleGeneratorPnom CDynaGeneratorMotion::ValidatorPnom;

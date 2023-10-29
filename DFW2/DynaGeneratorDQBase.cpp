@@ -193,8 +193,8 @@ void CDynaGeneratorDQBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqe, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszSnom, Snom, eVARUNITS::VARUNIT_MVA);
-	Serializer->AddState(m_cszQnom, Qnom, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState(CDynaPowerInjector::m_cszSnom, Snom, eVARUNITS::VARUNIT_MVA);
+	Serializer->AddState(CDynaPowerInjector::m_cszQnom, Qnom, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddState(m_cszInom, Inom, eVARUNITS::VARUNIT_KAMPERES);
 }
 
@@ -214,9 +214,9 @@ void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
 
 	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszExciterId, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
 	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszEqnom, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszSnom, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaPowerInjector::m_cszSnom, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
 	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszInom, CConstVarIndex(CDynaGeneratorDQBase::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszQnom, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaPowerInjector::m_cszQnom, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
 	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszEqe, CConstVarIndex(CDynaGeneratorDQBase::C_EQE, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
 
 	// запрещаем явное использование фабрики данного класса

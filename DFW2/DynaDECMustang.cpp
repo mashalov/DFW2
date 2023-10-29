@@ -81,7 +81,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 	double Unom, Eqnom, Eqe0;
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
-	if (!InitConstantVariable(Unom, pExciter, CDynaGeneratorMotion::m_cszUnom, DEVTYPE_GEN_MOTION))
+	if (!InitConstantVariable(Unom, pExciter, CDynaPowerInjector::m_cszUnom, DEVTYPE_GEN_MOTION))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 	if (!InitConstantVariable(Eqnom, pExciter, CDynaGeneratorDQBase::m_cszEqnom, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;

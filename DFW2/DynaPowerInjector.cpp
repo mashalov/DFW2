@@ -147,8 +147,8 @@ void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(m_cszQ, Q, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddState(m_cszIre, Ire, eVARUNITS::VARUNIT_KAMPERES);
 	Serializer->AddState(m_cszIim, Iim, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddProperty("Qmin", LFQmin, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty("Qmax", LFQmax, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(m_cszQmin, LFQmin, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(m_cszQmax, LFQmax, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty(m_cszKgen, Kgen, eVARUNITS::VARUNIT_PIECES);
 }
 
@@ -174,4 +174,5 @@ void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 }
 
 CValidationRuleGeneratorKgen CDynaPowerInjector::ValidatorKgen;
+CValidationRuleGeneratorUnom CDynaPowerInjector::ValidatorUnom;
 

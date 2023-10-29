@@ -19,6 +19,7 @@
 #include "DynaBranch.h"
 #include "BranchMeasures.h"
 #include "NodeMeasures.h"
+#include "SVC.h"
 #include "TestDevice.h"
 #include "TaggedPath.h"
 #include "FolderClean.h"
@@ -44,6 +45,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   GeneratorsPowerInjector(this),
 						   LRCs(this),
 						   Reactors(this),
+						   SVCs(this),
 						   SynchroZones(this),
 						   ExcitersMustang(this),
 						   DECsMustang(this),
@@ -82,6 +84,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaNodeMeasure::DeviceProperties(NodeMeasures.ContainerProps());
 	CDynaNodeZeroLoadFlow::DeviceProperties(ZeroLoadFlow.ContainerProps());
 	CTestDevice::DeviceProperties(TestDevices.ContainerProps());
+	CSVC::DeviceProperties(SVCs.ContainerProps());
 
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
 	AutomaticDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
@@ -112,6 +115,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	DeviceContainers_.push_back(&ScenarioDevice);
 	DeviceContainers_.push_back(&ZeroLoadFlow);
 	DeviceContainers_.push_back(&TestDevices);
+	DeviceContainers_.push_back(&SVCs);
 	DeviceContainers_.push_back(&SynchroZones);		// синхрозоны должны идти последними
 
 	CheckFolderStructure();

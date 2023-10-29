@@ -709,6 +709,7 @@ namespace DFW2
 		CDynaBranchContainer Branches;
 		CDeviceContainer LRCs;
 		CDeviceContainer Reactors;
+		CDeviceContainer SVCs;
 		CDeviceContainer Generators3C; 
 		CDeviceContainer GeneratorsMustang;
 		CDeviceContainer GeneratorsPark3C;
