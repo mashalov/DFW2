@@ -16,6 +16,7 @@ namespace DFW2
 
 		double Droop_ = 0.03;
 		double Qnom_ = 100.0;
+		double Vref_ = 220.0;
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		void UpdateSerializer(CSerializerBase* Serializer) override;

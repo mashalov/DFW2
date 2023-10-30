@@ -363,6 +363,12 @@ namespace DFW2
 		double NodeVoltageViolation_;											// отклонение напряжения от уставки
 		double NodePowerViolation_;												// отклонение мощности от ограничения
 
+		// указатели на виртуальные ветви
+		// для подмены реальных ветвей на необходимые
+		// для ввода искусственных узлов
+		VirtualBranch* pVirtualBranchBegin_ = nullptr;
+		VirtualBranch* pVirtualBranchEnd_ = nullptr;
+
 		double NodeVoltageViolation()
 		{
 			if (pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_BASE ||
@@ -383,6 +389,7 @@ namespace DFW2
 			LFQmax = pNode->LFQmax;
 			LFNodeType = pNode->eLFNodeType_;
 		}
+
 		void Restore() noexcept
 		{
 			pNode->LFQmin = LFQmin;

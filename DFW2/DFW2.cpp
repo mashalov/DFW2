@@ -2,22 +2,28 @@
 //
 
 #include "stdafx.h"
-#include "DynaModel.h"
-#include "RastrImport.h"
-#include <CLI/CLI.hpp>
 
-using namespace DFW2;
-/*
-struct CrtBreakAllocSetter {
-	CrtBreakAllocSetter() {
-		_crtBreakAlloc = 211;
+// контроль утечек памяти на глобально уровне - до include
+struct CrtBreakAllocSetter 
+{
+	CrtBreakAllocSetter() 
+	{
+		_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF);
+		_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
+		_crtBreakAlloc = 477;
+	}
+	~CrtBreakAllocSetter()
+	{
+		_CrtDumpMemoryLeaks();
 	}
 };
 
-CrtBreakAllocSetter g_crtBreakAllocSetter;
+CrtBreakAllocSetter crtBreakAllocSetter_;
 
-*/
-
+#include "DynaModel.h"
+#include "RastrImport.h"
+#include <CLI/CLI.hpp>
+using namespace DFW2;
 
 std::list<CDynaModel*> networks;
 
@@ -96,8 +102,6 @@ void RunTest()
 int main(int argc, char* argv[])
 {
 	int Ret{ 0 };
-	_CrtSetDbgFlag(_CRTDBG_CHECK_ALWAYS_DF);
-	_CrtSetDbgFlag(_CrtSetDbgFlag(_CRTDBG_REPORT_FLAG) | _CRTDBG_LEAK_CHECK_DF);
 	SetConsoleOutputCP(CP_UTF8);
 	HANDLE hCon{ GetStdHandle(STD_OUTPUT_HANDLE) };
 	CONSOLE_SCREEN_BUFFER_INFO csbi;
@@ -150,7 +154,6 @@ int main(int argc, char* argv[])
 		Ret = 1;
 	}
 	SetConsoleCtrlHandler(NULL, TRUE);
-	_CrtDumpMemoryLeaks();
 	return Ret;
 }
 

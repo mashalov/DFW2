@@ -73,6 +73,7 @@ namespace DFW2
 		static constexpr const char* m_cszUnom = "Unom";
 		static constexpr const char* m_cszQnom = "Qnom";
 		static constexpr const char* m_cszSnom = "Snom";
+		static constexpr const char* cszVref_ = "Vref";
 
 		static CValidationRuleGeneratorKgen ValidatorKgen;
 		static CValidationRuleGeneratorUnom ValidatorUnom;

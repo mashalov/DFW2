@@ -1755,6 +1755,7 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
 	props.VarMap_.insert({ CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS) });
 	props.VarAliasMap_.insert({ "vras", { CDynaNodeBase::m_cszV }});
+	props.DeviceFactory = std::make_unique <CDeviceFactory<CDynaNodeBase>>();
 }
 
 void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)

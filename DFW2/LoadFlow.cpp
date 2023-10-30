@@ -3,7 +3,6 @@
 #include <algorithm>
 #include "LoadFlow.h"
 #include "DynaModel.h"
-#include "DynaPowerInjector.h"
 #include "limits"
 #include "BranchMeasures.h"
 #include "MathUtils.h"
@@ -29,8 +28,10 @@ void CLoadFlow::AllocateSupernodes()
 	ptrdiff_t nMatrixSize(0), nNonZeroCount(0);
 	// создаем привязку узлов к информации по строкам матрицы
 	// размер берем по количеству суперузлов. Реальный размер матрицы будет меньше на
-	// количество отключенных узлов и БУ
-	pMatrixInfo_ = std::make_unique<_MatrixInfo[]>(pNodes->Count());
+	// количество отключенных узлов и БУ. Также он корректируется на количество требуемых 
+	// искусственных узлов
+
+	pMatrixInfo_ = std::make_unique<_MatrixInfo[]>(pNodes->Count() + ArtificialNodes_->Count());
 	_MatrixInfo* pMatrixInfo{ pMatrixInfo_.get() };
 
 	// базисные узлы держим в отдельном списке, так как они не в матрице, но
@@ -53,13 +54,14 @@ void CLoadFlow::AllocateSupernodes()
 		// и ненулевых элементов
 		if (NodeInMatrix(pNode))
 		{
+			pNode->SetMatrixRow(nMatrixSize);
+			// для узлов, которые попадают в матрицу нумеруем включенные узлы строками матрицы
+			pMatrixInfo->Store(pNode);
+
 			for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
 				if (NodeInMatrix(pV->pNode))
 					pMatrixInfo->nRowCount += 2;	// количество ненулевых элементов = ветвей - ветвей на БУ
 
-			// для узлов, которые попадают в матрицу нумеруем включенные узлы строками матрицы
-			pNode->SetMatrixRow(nMatrixSize);
-			pMatrixInfo->Store(pNode);
 			nMatrixSize += 2;				// на узел 2 уравнения в матрице
 			pMatrixInfo->nRowCount += 2;	// считаем диагональный элемент
 			nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
@@ -69,9 +71,84 @@ void CLoadFlow::AllocateSupernodes()
 
 	if (!nMatrixSize)
 		throw dfw2error(CDFW2Messages::m_cszNoNodesForLF);
+	
+	// исходный Id для искусственных узлов, определяется как максимальный
+	// из реальных
+	ptrdiff_t ArtificialId{ 0 };	
+	// количество необходимых виртуальных ветвей для искусственных
+	// узлов
+	ptrdiff_t VirtualBranchCount{ 0 };
+	// если есть искусственные узлы для компенсаторов
+	if (ArtificialNodes_->Count() > 0)
+	{
+		// определяем максимальный номер узла из существующих
+		ArtificialId = (*std::max_element(pNodes->begin(),
+			pNodes->end(),
+			[](const CDevice* lhs, const CDevice* rhs)
+			{
+				return lhs->GetId() < rhs->GetId();
+			}))->GetId();
 
-	pMatrixInfoEnd = pMatrixInfo;								// конец инфо по матрице для узлов, которые в матрице
-	klu.SetSize(nMatrixSize, nNonZeroCount);
+		for (auto&& svclink : SVCs_)
+		{
+			if (!svclink.SVC_.IsStateOn())
+				continue;
+
+			auto& SVCNode{ svclink.pExtraNode_ };
+			auto& SVC{ svclink.SVC_ };
+			// формируем номер и название искусственного узла для репортов
+			SVCNode->SetId(++ArtificialId);
+			SVCNode->SetName(fmt::format("{} setpoint", SVC.GetVerbalName()));
+
+			// добавляем искусственный узел в матрицу
+			SVCNode->SetMatrixRow(nMatrixSize);
+			// задаем уставку по напряжению
+			SVCNode->LFVref = SVCNode->Unom = SVC.Vref_;
+			// задаем ограничения
+			SVCNode->LFQmax = -SVC.LFQmin;
+			SVCNode->LFQmin = -SVC.LFQmax;
+
+			/*
+			*  pny->tip_ogr=OGR_B; 
+			double r=(1.-pf->max*pf->xstat);
+			if ( r <= 1.e-4) r=1.e-4;
+			pny->qmin=-pny->vzd*pny->vzd*pf->max/r;
+			r=(1.-pf->min*pf->xstat);
+			if ( r <= 1.e-4) r=1.e-4;
+			pny->qmax=-pny->vzd*pny->vzd*pf->min/r;
+			*/
+
+			// задаем тип искусственного узла компенсатора - PV
+			SVCNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PV;
+			// достаем узел, управляемый компенсатором
+			CDynaNodeBase* SVCControlledNode{ static_cast<CDynaNodeBase*>(SVC.GetSingleLink(DEVTYPE_NODE)) };
+			// копируем синхронную зону из реального узла
+			SVCNode->pSyncZone = SVCControlledNode->pSyncZone;
+			// сохраняем исходные данные инскусственного узла
+			pMatrixInfo->Store(svclink.pExtraNode_);
+			// подсчитываем количество виртуальных ветвей в реальных узлах, к которым подключены компенсаторы
+			VirtualBranchCount += 2 + SVCControlledNode->pVirtualBranchEnd_ - SVCControlledNode->pVirtualBranchBegin_;
+			nMatrixSize += 2;				// на узел 2 уравнения в матрице
+			pMatrixInfo->nRowCount += 4;	// считаем диагональный элемент и одну ветвь до реального узла
+			nNonZeroCount += 2 * pMatrixInfo->nRowCount;	// количество ненулевых элементов увеличиваем на количество подсчитанных элементов в строке (4 double на элемент)
+
+			// если узел, управляемый компенсатором в матрице (не БУ)
+			if (NodeInMatrix(SVCControlledNode))
+			{
+				_MatrixInfo* SVCNodeMatrix{ &pMatrixInfo_[SVCControlledNode->A(0) / 2] };
+				SVCNodeMatrix->nRowCount += 2; // еще два элемента для новой ветви
+				nNonZeroCount += 4; // еще 4 элемента на связь от реального узла
+			}
+
+			pMatrixInfo++;
+		}
+		// создаем виртуальные ветви от искусственных узлов и к искусственным узлам
+		pVirtualBranches = std::make_unique<VirtualBranch[]>(VirtualBranchCount);
+	}
+
+	// конец инфо по матрице для узлов, которые в матрице
+	pMatrixInfoEnd = pMatrixInfo;							
+
 	// базисные узлы добавляем "под" - матрицу. Они в нее не входят
 	// но должны быть под рукой в общем векторе узлов в расчете
 	for (auto&& sit : SlackBuses)
@@ -88,10 +165,88 @@ void CLoadFlow::AllocateSupernodes()
 		pNode->UpdateVreVimSuper();
 		pMatrixInfo++;
 	}
-
+		
+	klu.SetSize(nMatrixSize, nNonZeroCount);
 	pMatrixInfoSlackEnd = pMatrixInfo;
+
+	// формируем параметры ветвей для искусственных узлов
+	
+	AllocateSVCc();
+
 	pRh = std::make_unique<double[]>(klu.MatrixSize());		// невязки до итерации
 }
+
+//! Формирует параметры ветвей для искусственных узлов
+/*! Может вызываться после Allocate и после очередного просчета
+	проводимостей. Добавляет виртуальные ветви к искусственным узлам
+	и корректирует проводимости.
+ */
+void CLoadFlow::AllocateSVCc()
+{
+	// всю работу с ветвями делаем не из узлов, а из матрицы
+	// что позволяет заменить ветви из узлов новыми, в которых 
+	// есть дополнительные ветви для искусственных узлов
+	for (_MatrixInfo* pMatrixInfo = pMatrixInfo_.get(); pMatrixInfo < pMatrixInfoSlackEnd; pMatrixInfo++)
+	{
+		// копируем диапазоны ветвей из узлов в матрицу
+		pMatrixInfo->pVirtualBranchBegin_ = pMatrixInfo->pNode->pVirtualBranchBegin_;
+		pMatrixInfo->pVirtualBranchEnd_ = pMatrixInfo->pNode->pVirtualBranchEnd_;
+	}
+
+	if (ArtificialNodes_->Count() > 0)
+	{
+		VirtualBranch* pVirtualBranch{ pVirtualBranches.get() };
+
+		// для узлов с компенсаторами добавляем по одной
+		// ветви до искусственных узлов
+		for (auto&& svclink : SVCs_)
+		{
+			if (!svclink.SVC_.IsStateOn())
+				continue;
+
+			auto& SVCNode{ svclink.pExtraNode_ };
+			auto& SVC{ svclink.SVC_ };
+			// узел, управляемый компенсатором
+			CDynaNodeBase* SVCControlledNode{ static_cast<CDynaNodeBase*>(SVC.GetSingleLink(DEVTYPE_NODE)) };
+			_MatrixInfo* SVCNodeMatrix{ &pMatrixInfo_[SVCControlledNode->A(0) / 2] };
+
+			// количество ветвей с учетом ввода дополнительной ветви
+			const ptrdiff_t VirtualBranchNodeCount{ SVCControlledNode->pVirtualBranchEnd_ - SVCControlledNode->pVirtualBranchBegin_ + 1};
+
+			const double xsl{ SVC.Droop_ * (SVC.Unom * SVC.Unom) / SVC.Qnom_};
+			cplx ysvc{ 1.0 / cplx(0, xsl) };
+
+			// копируем реальные ветви узла в новые
+			std::copy(SVCControlledNode->pVirtualBranchBegin_,
+					  SVCControlledNode->pVirtualBranchEnd_,
+					  pVirtualBranch);
+
+			// перенастраиваем диапазон ветвей узла в матрице на новые
+			SVCNodeMatrix->pVirtualBranchBegin_ = pVirtualBranch;
+			pVirtualBranch += VirtualBranchNodeCount;
+			SVCNodeMatrix->pVirtualBranchEnd_ = pVirtualBranch;
+			// формируем для последней (добавленной) ветви
+			// проводимость и указатель на искусственный узел
+			(pVirtualBranch - 1)->pNode = SVCNode;
+			(pVirtualBranch - 1)->Y = ysvc;
+
+			// добавляем одну ветвь к узлу компенсатора
+			_MatrixInfo* SVCExtraNodeMatrix{ &pMatrixInfo_[SVCNode->A(0) / 2] };
+			// у искусственного узла диапазон ветвей будет таким же как и в матрице
+			// он используется для расчета мощности от этого узла
+			SVCNode->pVirtualBranchBegin_ = SVCExtraNodeMatrix->pVirtualBranchBegin_ = pVirtualBranch;
+			SVCNode->pVirtualBranchEnd_ = SVCExtraNodeMatrix->pVirtualBranchEnd_ = pVirtualBranch + 1;
+			pVirtualBranch->pNode = SVCControlledNode;
+			pVirtualBranch->Y = ysvc;
+			pVirtualBranch++;
+			// задаем собственную проводимость искусственного узла
+			SVCNode->YiiSuper = -ysvc;
+			// корректируем проводимости управляемого компенсатором узла
+			SVCControlledNode->YiiSuper -= ysvc;
+		}
+	}
+}
+
 
 void CLoadFlow::Estimate()
 {
@@ -117,7 +272,7 @@ void CLoadFlow::Estimate()
 		*(pAp + pMatrixInfo->nRowCount) = pNode->A(1);
 		pAp++;
 
-		for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
+		for (VirtualBranch* pV = pMatrixInfo->pVirtualBranchBegin_; pV < pMatrixInfo->pVirtualBranchEnd_; pV++)
 		{
 			CDynaNodeBase*& pOppNode(pV->pNode);
 			if (NodeInMatrix(pOppNode))
@@ -245,6 +400,9 @@ void CLoadFlow::Start()
 		static_cast<CDynaNodeBase*>(it)->GrabRastrResult();
 #endif
 
+	// собираем данные по компенсаторам, требующим ввода дополнительных узлов
+	CollectSVCData();
+
 	// обновляем данные в PV-узлах по заданным в генераторах реактивным мощностям
 	UpdatePQFromGenerators();
 
@@ -263,50 +421,59 @@ void CLoadFlow::Start()
 	for (_MatrixInfo* pMatrixInfo = pMatrixInfo_.get(); pMatrixInfo < pMatrixInfoSlackEnd; pMatrixInfo++)
 	{
 		const auto& pNode{ pMatrixInfo->pNode };
-		const CLinkPtrCount* const pNodeLink{ pNode->GetSuperLink(0) };
-		LinkWalker<CDynaNodeBase> pSlaveNode;
 		double QrangeMax{ pNode->LFQmax - pNode->LFQmin };
 
-		while (pNodeLink->In(pSlaveNode))
-		{
-			// в суперузел суммируем все мощности входящих узлов
-			pNode->Pgr += pSlaveNode->Pgr;
-			pNode->Qgr += pSlaveNode->Qgr;
+		// собираем информацию для суперузла только для узлов
+		// которые были в исходном контейнере. Для искусственных узлов
+		// пропускаем обработку суперузла
 
-			switch (pSlaveNode->eLFNodeType_)
+		if (pNode->GetContainer() != ArtificialNodes_.get())
+		{
+			const CLinkPtrCount* const pNodeLink{ pNode->GetSuperLink(0) };
+			LinkWalker<CDynaNodeBase> pSlaveNode;
+
+
+			while (pNodeLink->In(pSlaveNode))
 			{
-			case CDynaNodeBase::eLFNodeType::LFNT_BASE:
-				// если в суперузле базисный узел - узел представитель тоже должен быть
-				// базисным, потому что так должны строиться суперузлы в CreateSuperNodes
-				_ASSERTE(pNode->eLFNodeType_ == pSlaveNode->eLFNodeType_);
-				break;
-			case CDynaNodeBase::eLFNodeType::LFNT_PQ:
-				// если в суперузел входит нагрузочный - учитываем его генерацию как неуправляемую
-				pMatrixInfo->UncontrolledP += pSlaveNode->Pgr;
-				pMatrixInfo->UncontrolledQ += pSlaveNode->Qgr;
-				break;
-			default:
-				// генераторный узел не может входить в PQ-суперузел
-				_ASSERTE(pNode->eLFNodeType_ != CDynaNodeBase::eLFNodeType::LFNT_PQ);
-				// если в суперузел входит генераторный - учитываем его активную генерацию как неуправляемую
-				pMatrixInfo->UncontrolledP += pSlaveNode->Pgr;
-				// считаем диапазон реактивной мощности суперзула
-				pNode->LFQmin += pSlaveNode->LFQmin;
-				pNode->LFQmax += pSlaveNode->LFQmax;
-				if (pNode->IsLFTypeSlack())
+				// в суперузел суммируем все мощности входящих узлов
+				pNode->Pgr += pSlaveNode->Pgr;
+				pNode->Qgr += pSlaveNode->Qgr;
+
+				switch (pSlaveNode->eLFNodeType_)
 				{
-					// если генераторный узел входит в базисный суперузел
-					// уставка по напряжению равна напряжению базисного узла
-					pSlaveNode->LFVref = pNode->LFVref;
-				}
-				else
-				{
-					const double Qrange{ pSlaveNode->LFQmax - pSlaveNode->LFQmin };
-					// выбираем заданное напряжение по узлу с максимальным диапазоном Qmin/Qmax
-					if (QrangeMax < Qrange)
+				case CDynaNodeBase::eLFNodeType::LFNT_BASE:
+					// если в суперузле базисный узел - узел представитель тоже должен быть
+					// базисным, потому что так должны строиться суперузлы в CreateSuperNodes
+					_ASSERTE(pNode->eLFNodeType_ == pSlaveNode->eLFNodeType_);
+					break;
+				case CDynaNodeBase::eLFNodeType::LFNT_PQ:
+					// если в суперузел входит нагрузочный - учитываем его генерацию как неуправляемую
+					pMatrixInfo->UncontrolledP += pSlaveNode->Pgr;
+					pMatrixInfo->UncontrolledQ += pSlaveNode->Qgr;
+					break;
+				default:
+					// генераторный узел не может входить в PQ-суперузел
+					_ASSERTE(pNode->eLFNodeType_ != CDynaNodeBase::eLFNodeType::LFNT_PQ);
+					// если в суперузел входит генераторный - учитываем его активную генерацию как неуправляемую
+					pMatrixInfo->UncontrolledP += pSlaveNode->Pgr;
+					// считаем диапазон реактивной мощности суперзула
+					pNode->LFQmin += pSlaveNode->LFQmin;
+					pNode->LFQmax += pSlaveNode->LFQmax;
+					if (pNode->IsLFTypeSlack())
 					{
-						pNode->LFVref = pSlaveNode->LFVref;
-						QrangeMax = Qrange;
+						// если генераторный узел входит в базисный суперузел
+						// уставка по напряжению равна напряжению базисного узла
+						pSlaveNode->LFVref = pNode->LFVref;
+					}
+					else
+					{
+						const double Qrange{ pSlaveNode->LFQmax - pSlaveNode->LFQmin };
+						// выбираем заданное напряжение по узлу с максимальным диапазоном Qmin/Qmax
+						if (QrangeMax < Qrange)
+						{
+							pNode->LFVref = pSlaveNode->LFVref;
+							QrangeMax = Qrange;
+						}
 					}
 				}
 			}
@@ -324,12 +491,11 @@ void CLoadFlow::Start()
 			pMatrixInfo->UncontrolledP, pMatrixInfo->UncontrolledQ
 		));
 
-		for (VirtualBranch* pBranch{ pNode->pVirtualBranchBegin_}; pBranch < pNode->pVirtualBranchEnd_; pBranch++)
+		for (VirtualBranch* pBranch{ pMatrixInfo->pVirtualBranchBegin_}; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 		{
 			const auto& pOppNode{ pBranch->pNode };
 			pNode->DebugLog(fmt::format("{} y={}", pBranch->pNode->GetId(), pBranch->Y));
 		}
-
 
 		switch (pNode->eLFNodeType_)
 		{
@@ -427,7 +593,7 @@ void CLoadFlow::BuildSeidellOrder2(MATRIXINFO& SeidellOrder)
 		pMatrixInfo = queue.front();
 		queue.pop_front();
 
-		for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+		for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 		{
 			if (pBranch->pNode->IsLFTypeSlack() || OppMatrixInfo(pBranch->pNode)->bVisited)
 				continue;
@@ -461,7 +627,7 @@ void CLoadFlow::BuildSeidellOrder(MATRIXINFO& SeidellOrder)
 	const auto AddToQueue = [this](_MatrixInfo* pMatrixInfo, QUEUE& queue)
 	{
 		// просматриваем список ветвей узла
-		for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+		for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 		{
 			const auto& pOppNode{ pBranch->pNode };
 			// мы обходим узлы, но кроме данных узлов нам нужны данные матрицы, чтобы просматривать
@@ -797,15 +963,15 @@ void CLoadFlow::BuildMatrixCurrent()
 		double* pAxSelf = pAx;
 		pAx += 2;
 		// обратная величина от модуля напряжения в узле
-		const double Vinv = 1.0 / pNode->V;
+		const double Vinv{ 1.0 / pNode->V };
 		// сопряженное напряжение деленное на модуль
-		const cplx UnodeConjByV(std::conj(pNode->VreVim) * Vinv);
+		const cplx UnodeConjByV{ std::conj(pNode->VreVim) * Vinv };
 
 		if (pNode->IsLFTypePQ())
 		{
 			// для PQ-узлов формируем оба уравнения
 
-			for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+			for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 			{
 				const auto& pOppNode{ pBranch->pNode };
 				// вычисляем компоненты производных по комплексным напряжениям в узлах (Давыдов, стр. 75)
@@ -822,10 +988,10 @@ void CLoadFlow::BuildMatrixCurrent()
 				if (NodeInMatrix(pOppNode))
 				{
 					// внедиагональные производные (уже разделены на модуль, так как компоненты рассчитаны по UnodeConjByV
-					double dPdDeltaM = mult.imag();
-					double dPdVM = -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
-					double dQdDeltaM = mult.real();
-					double dQdVM = CDevice::ZeroDivGuard(mult.imag(), pOppNode->V);
+					const double dPdDeltaM{ mult.imag() };
+					const double dPdVM{ -CDevice::ZeroDivGuard(mult.real(), pOppNode->V) };
+					const double dQdDeltaM{ mult.real() };
+					const double dQdVM{ CDevice::ZeroDivGuard(mult.imag(), pOppNode->V) };
 
 					_CheckNumber(dPdDeltaM);
 					_CheckNumber(dPdVM);
@@ -844,7 +1010,7 @@ void CLoadFlow::BuildMatrixCurrent()
 		else
 		{
 			// для PV-только уравнение для P
-			for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+			for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 			{
 				const auto& pOppNode{ pBranch->pNode };
 				const cplx mult{ UnodeConjByV * pOppNode->VreVim * pBranch->Y };
@@ -856,8 +1022,8 @@ void CLoadFlow::BuildMatrixCurrent()
 				if (NodeInMatrix(pOppNode))
 				{
 					// внедиагональные производные (уже разделены на модуль, так как компоненты рассчитаны по UnodeConjByV
-					double dPdDeltaM = mult.imag();
-					double dPdVM = -CDevice::ZeroDivGuard(mult.real(), pOppNode->V);
+					const double dPdDeltaM{ mult.imag() };
+					const double dPdVM{ -CDevice::ZeroDivGuard(mult.real(), pOppNode->V) };
 
 					_CheckNumber(dPdDeltaM);
 					_CheckNumber(dPdVM);
@@ -881,7 +1047,7 @@ void CLoadFlow::BuildMatrixCurrent()
 		// небалансы в токах - поэтому делим мощности на модуль
 		Sneb = Vinv * (std::conj(Sneb) * pNode->VreVim + NodeInjL - NodeInjG);
 
-		const double VinvSq(Vinv * Vinv);
+		const double VinvSq{ Vinv * Vinv };
 
 		// диагональные производные по напряжению
 		// в уравнении разность генерации и нагрузки, деленная на напряжение. Генерация не зависит от напряжения.
@@ -941,7 +1107,7 @@ void CLoadFlow::BuildMatrixPower()
 			// для PQ-узлов формируем оба уравнения
 
 			dQdV = pNode->GetSelfdQdV();
-			for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+			for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 			{
 				const auto& pOppNode{ pBranch->pNode };
 				const cplx mult{ UnodeConj * pOppNode->VreVim * pBranch->Y };
@@ -977,7 +1143,7 @@ void CLoadFlow::BuildMatrixPower()
 		else
 		{
 			// для PV-только уравнение для P
-			for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+			for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 			{
 				const auto& pOppNode{ pBranch->pNode };
 				const cplx mult{ UnodeConj * pOppNode->VreVim * pBranch->Y };
@@ -1057,7 +1223,7 @@ void CLoadFlow::GetNodeImbSSE(_MatrixInfo* pMatrixInfo)
 	}
 	
 
-	for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+	for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 	{
 		const auto& pOppNode{ pBranch->pNode };
 
@@ -1108,7 +1274,7 @@ void CLoadFlow::GetNodeImb(_MatrixInfo* pMatrixInfo)
 
 	alignas(16) cplx I { -pNode->VreVim * pNode->YiiSuper };
 
-	for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+	for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 	{
 		const auto& pOppNode{ pBranch->pNode };
 		// в отладке можем посмотреть мощность перетока по ветви
@@ -1147,6 +1313,7 @@ bool CLoadFlow::Run()
 				Z0();
 			Seidell();
 			pNodes->CalculateSuperNodesAdmittances(false);
+			AllocateSVCc();
 			break;
 		case CLoadFlow::eLoadFlowStartupMethod::Tanh:
 			NewtonTanh();
@@ -1186,7 +1353,6 @@ bool CLoadFlow::Run()
 			if (!pNode->IsStateOn())
 				continue;
 
-
 			if (!pNode->pSuperNodeParent)
 			{
 				// этот вызов портит qnr
@@ -1197,10 +1363,19 @@ bool CLoadFlow::Run()
 				// с СХН на постоянную мощность
 				// которые в УР заданы nullptr
 				pNode->GetPnrQnrSuper();
+
+				// небаланс рассчитывается через
+				// матрицу, поэтому создаем временную строку
+				// и привязываем к ней узел
 				_MatrixInfo mx;
-				mx.pNode = pNode;
+				mx.Store(pNode);
+
+				// здесь используем ветви реальных узлов
+				// так как рассчитываем на то что мощности компенсаторов
+				// уже перенесены в генерацию управляемых узлов
+				mx.pVirtualBranchBegin_ = pNode->pVirtualBranchBegin_;
+				mx.pVirtualBranchEnd_ = pNode->pVirtualBranchEnd_;
 				GetNodeImb(&mx);
-				mx.pNode = pNode;
 				_ASSERTE(std::abs(mx.ImbP) < Parameters.Imb && std::abs(mx.ImbQ) < Parameters.Imb);
 				pNode->GetPnrQnr();
 			}
@@ -1260,7 +1435,7 @@ bool CLoadFlow::CheckLF()
 			bRes = false;
 		}
 
-		for (VirtualBranch* pBranch = pMatrixInfo->pNode->pVirtualBranchBegin_; pBranch < pMatrixInfo->pNode->pVirtualBranchEnd_; pBranch++)
+		for (VirtualBranch* pBranch = pMatrixInfo->pVirtualBranchBegin_; pBranch < pMatrixInfo->pVirtualBranchEnd_; pBranch++)
 		{
 			// рассчитываем угол с устранением проворота. До проворота не должны дойти
 			// так как ограничиваем шаг по углам
@@ -1308,6 +1483,12 @@ void CLoadFlow::UpdatePQFromGenerators()
 			pNode->LFQmin = pNode->LFQmax = 0.0;
 			while (pGenLink->In(pGen))
 			{
+				// инжектор типа компенсатора - пропускаем
+				// он учитывается не так, как генератор, а
+				// в отдельном искусственном узле
+				if (pGen->IsKindOfType(DEVTYPE_SVC))
+					continue;
+
 				if (pGen->IsStateOn())
 				{
 					if (pGen->Kgen <= 0)
@@ -1332,17 +1513,7 @@ void CLoadFlow::UpdatePQFromGenerators()
 						pGen->LFQmin = pGen->LFQmax;
 
 					}
-
-					/*
-					if (pGen->GetType() == DEVTYPE_SVC)
-					{
-						pGen->Q = -pGen->Q;
-						std::swap(pGen->LFQmax, pGen->LFQmin);
-						pGen->LFQmax = -pGen->LFQmax;
-						pGen->LFQmin = -pGen->LFQmin;
-					}
-					*/
-
+									
 					// вводим Q генератора в диапазон
 					pGen->Q = (std::max)((std::min)(static_cast<double>(pGen->Q), pGen->LFQmax * pGen->Kgen), pGen->LFQmin * pGen->Kgen);
 					pNode->Qg += pGen->Q;
@@ -1380,43 +1551,49 @@ void CLoadFlow::UpdateQToGenerators()
 
 			while (pGenLink->In(pGen))
 			{
-				pGen->Q = 0.0;
-				if (pGen->IsStateOn())
+
+				if (pGen->IsKindOfType(DEVTYPE_SVC) && pGen->IsStateOn())
+					Qspread += pGen->Q; // мощности компенсаторов уже рассчитаны
+										// поэтому просто изымаем их из диапазона
+				else
 				{
+					pGen->Q = 0.0;
+					if (pGen->IsStateOn())
+					{
+						if (Qrange > 0.0)
+						{
+							pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
+							Qgmin += pGen->LFQmin;
+							Qgmax += pGen->LFQmax;
+							_CheckNumber(pGen->Q);
+						}
+						else if (pGen->GetType() == eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER)
+						{
+							pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->Count();
+							pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->Count();
+						}
+						else if (pNode->IsLFTypeSlack())
+						{
+							double Qrange = pNode->LFQmaxGen - pNode->LFQminGen;
+							pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQminGen));
+							Qgmin += pGen->LFQmin;
+							Qgmax += pGen->LFQmax;
+							_CheckNumber(pGen->Q);
+						}
+						else if (Qrange < Parameters.Imb)
+						{
+							// если у генератора пустой диапазон,
+							// пишем в него его Qmin
+							pGen->Q = pGen->Kgen * pGen->LFQmin;
+							Qgmin += pGen->LFQmin;
+							Qgmax += pGen->LFQmax;
+							_CheckNumber(pGen->Q);
+						}
+						else
+							pGen->Q = 0.0;
 
-					if (Qrange > 0.0)
-					{
-						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQmin));
-						Qgmin += pGen->LFQmin;
-						Qgmax += pGen->LFQmax;
-						_CheckNumber(pGen->Q);
+						Qspread += pGen->Q;
 					}
-					else if (pGen->GetType() == eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER)
-					{
-						pGen->Q = pGen->Kgen * pNode->Qg / pGenLink->Count();
-						pGen->P = pGen->Kgen * pNode->Pgr / pGenLink->Count();
-					}
-					else if (pNode->IsLFTypeSlack())
-					{
-						double Qrange = pNode->LFQmaxGen - pNode->LFQminGen;
-						pGen->Q = pGen->Kgen * (pGen->LFQmin + (pGen->LFQmax - pGen->LFQmin) / Qrange * (pNode->Qg - pNode->LFQminGen));
-						Qgmin += pGen->LFQmin;
-						Qgmax += pGen->LFQmax;
-						_CheckNumber(pGen->Q);
-					}
-					else if (Qrange < Parameters.Imb)
-					{
-						// если у генератора пустой диапазон,
-						// пишем в него его Qmin
-						pGen->Q = pGen->Kgen * pGen->LFQmin;
-						Qgmin += pGen->LFQmin;
-						Qgmax += pGen->LFQmax;
-						_CheckNumber(pGen->Q);
-					}
-					else
-						pGen->Q = 0.0;
-
-					Qspread += pGen->Q;
 				}
 			}
 			if (std::abs(pNode->Qg - Qspread) > Parameters.Imb)
@@ -1432,6 +1609,42 @@ void CLoadFlow::UpdateQToGenerators()
 	}
 	if (!bAllOk)
 		throw dfw2error(CDFW2Messages::m_cszLFError);
+}
+
+//! собирает данные по компенсаторам и определяет необходимое количество искусственных узлов
+
+void CLoadFlow::CollectSVCData()
+{
+	// создаем дополнительный контейнер для искусственных узлов
+	ArtificialNodes_ = std::make_unique<CDynaNodeContainer>(pDynaModel);
+
+	auto pSVCContainer{ pDynaModel->GetDeviceContainer(DEVTYPE_SVC) };
+	if (pSVCContainer == nullptr)
+		return;
+
+	SVCs_.reserve(pSVCContainer->Count());
+	const ptrdiff_t OnSVCs{ std::count_if(pSVCContainer->begin(), pSVCContainer->end(), [](const CDevice* dev) { return dev->IsStateOn();  }) };
+	if (OnSVCs > 0)
+	{
+		// создаем искусственные узлы для включенных компенсаторов
+		CDynaNodeBase::DeviceProperties(ArtificialNodes_->ContainerProps());
+		ArtificialNodes_->CreateDevices(OnSVCs);
+		ArtificialNodes_->SuperLinks.emplace_back(ArtificialNodes_.get(), ArtificialNodes_->Count());
+	}
+
+	// собираем компенсаторы и соответствующие им 
+	// искусственные узлы в вектор
+	auto NodeIt{ ArtificialNodes_->begin() };
+	for (auto&& svc : *pSVCContainer)
+	{
+		CDynaNodeBase* pSVCNode{ nullptr };
+		if (svc->IsStateOn())
+		{
+			pSVCNode = static_cast<CDynaNodeBase*>(*NodeIt);
+			NodeIt++;
+		}
+		SVCs_.emplace_back(static_cast<CSVC&>(*svc), pSVCNode);
+	}
 }
 
 void CLoadFlow::GetPnrQnrSuper(CDynaNodeBase* pNode)
@@ -1703,7 +1916,7 @@ void CLoadFlow::UpdateSupernodesPQ()
 
 	for (_MatrixInfo* pMatrixInfo = pMatrixInfo_.get(); pMatrixInfo < pMatrixInfoSlackEnd; pMatrixInfo++)
 	{
-		CDynaNodeBase*& pNode = pMatrixInfo->pNode;
+		CDynaNodeBase*& pNode{ pMatrixInfo->pNode };
 		// диапазон реактивной мощности узла
 		double Qrange{ pNode->LFQmax - pNode->LFQmin };
 		double Qspread{ 0.0 }, PgSource{ pNode->Pgr }, QgSource{ pNode->Qgr }, DropToSlack{ 0.0 };
@@ -1780,6 +1993,28 @@ void CLoadFlow::UpdateSupernodesPQ()
 
 void CLoadFlow::RestoreSuperNodes()
 {
+	// после расчета УР переносим мощности
+	// компенсаторов в генерацию узлов
+	for (const auto& svc : SVCs_)
+	{
+		if (!svc.SVC_.IsStateOn())
+			continue;
+		// проходим по ветвям искусственного узла (она одна)
+		for (auto vb{ svc.pExtraNode_->pVirtualBranchBegin_ }; vb < svc.pExtraNode_->pVirtualBranchEnd_; vb++)
+		{
+			// ток от искусственного узла к контролируемому с учетом
+			// собственной проводимости
+			const cplx Ig{ svc.pExtraNode_->VreVim * vb->Y - vb->pNode->VreVim * vb->Y };
+			const cplx Sg{ vb->pNode->VreVim * std::conj(Ig) };
+			svc.SVC_.Q = Sg.imag();
+			// переносим мощность в генерацию узла
+			vb->pNode->Qg = (vb->pNode->Qgr += svc.SVC_.Q);
+			// восстанавливаем собственную проводимость
+			// контролируемого узла (корректировали в AllocateSVCs())
+			vb->pNode->YiiSuper += vb->Y;
+		}
+	}
+
 	for (_MatrixInfo* pMatrixInfo = pMatrixInfo_.get(); pMatrixInfo < pMatrixInfoSlackEnd; pMatrixInfo++)
 		pMatrixInfo->Restore();
 
@@ -2070,7 +2305,7 @@ void CLoadFlow::CalculateBranchFlows()
 
 bool CLoadFlow::CheckNodeBalances()
 {
-	bool bRes(true);
+	bool bRes{ true };
 	cplx y;
 	for (auto&& dev : pNodes->DevVec)
 	{
@@ -2196,7 +2431,7 @@ void CLoadFlow::Gauss()
 		*pAx = 0.0; pAx++;
 		ppDiags++;
 
-		for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
+		for (VirtualBranch* pV = pMatrixInfo->pVirtualBranchBegin_; pV < pMatrixInfo->pVirtualBranchEnd_; pV++)
 		{
 			// связи с базисным узлом и отключеннымив матрицу не входят
 			if (NodeInMatrix(pV->pNode))
@@ -2268,9 +2503,8 @@ void CLoadFlow::Gauss()
 			pNode->Pgr += pMatrixInfo->ImbP;
 			pNode->Qgr += pMatrixInfo->ImbQ;
 
-			for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
+			for (VirtualBranch* pV = pMatrixInfo->pVirtualBranchBegin_; pV < pMatrixInfo->pVirtualBranchEnd_; pV++)
 			{
-
 				for (auto pvb = pV->pNode->pVirtualBranchBegin_; pvb < pV->pNode->pVirtualBranchEnd_; pvb++)
 				{
 					if (pvb->pNode == pNode)
@@ -2343,7 +2577,8 @@ void CLoadFlow::Z0()
 	if (PQnodes.empty())
 		return;
 
-	size_t nBranchesCount{ pDynaModel->Branches.Count() };
+	// учитываем ветви от компенсаторов
+	size_t nBranchesCount{ SVCs_.size() + pDynaModel->Branches.Count() };
 	// оценка количества ненулевых элементов
 	size_t nNzCount{ PQnodes.size() + 2 * nBranchesCount};
 
@@ -2376,7 +2611,7 @@ void CLoadFlow::Z0()
 		ppDiags++;
 
 		// формируем внедиагонгональные элементы
-		for (VirtualBranch* pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
+		for (VirtualBranch* pV = mx->pVirtualBranchBegin_; pV < mx->pVirtualBranchEnd_; pV++)
 		{
 			if (NodeInMatrix(pV->pNode) && pV->pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PQ)
 			{
@@ -2418,7 +2653,7 @@ void CLoadFlow::Z0()
 			ppDiags++;
 
 			// собираем токи от инцидентных узлов. Нагрузку не учитываем
-			for (auto pV{ pNode->pVirtualBranchBegin_ }; pV < pNode->pVirtualBranchEnd_; pV++)
+			for (auto pV{ mx->pVirtualBranchBegin_ }; pV < mx->pVirtualBranchEnd_; pV++)
 			{
 				if (pV->pNode->eLFNodeType_ != CDynaNodeBase::eLFNodeType::LFNT_PQ)
 				{

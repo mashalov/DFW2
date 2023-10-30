@@ -468,6 +468,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 		.AddFieldSynonyms(CDynaPowerInjector::m_cszQmin, "Min")
 		.AddFieldSynonyms(CDynaPowerInjector::m_cszQmax, "Max")
 		.AddFieldSynonyms(CDynaPowerInjector::m_cszQnom, CDynaPowerInjector::m_cszSnom)
+		.AddFieldSynonyms(CDynaPowerInjector::cszVref_, "Ref1")
 		.AddFieldSynonyms(CSVC::cszDroop_, "Kct");
 
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMotion, "Generator");
@@ -499,7 +500,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
-	ReadTable(Network.SVCs, "Type=0");
+	ReadTable(Network.SVCs, "Type=0&tref1=0");
 
 
 	ReadAutomatic(Network);

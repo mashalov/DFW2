@@ -260,7 +260,7 @@ void CDynaExcConMustangNonWindup::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaExcConMustang::m_cszTf, Tf, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(CDynaExcConMustang::m_cszUrv_min, Umin, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(CDynaExcConMustang::m_cszUrv_max, Umax, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState("Vref", Vref, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(CDynaPowerInjector::cszVref_, Vref, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Usum", Usum, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Uf", Uf, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState("Svt", Svt, eVARUNITS::VARUNIT_PU);

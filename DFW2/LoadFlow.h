@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include <filesystem>
 #include "DynaNode.h"
+#include "SVC.h"
 #include "KLUWrapper.h"
 
 namespace DFW2
@@ -73,6 +74,7 @@ namespace DFW2
 		void GetPnrQnr(CDynaNodeBase *pNode);
 		void GetPnrQnrSuper(CDynaNodeBase *pNode);
 		void AllocateSupernodes();
+		void AllocateSVCc();	// ввод компенсаторов в икусственные узлы
 		void Estimate();
 		void Seidell();
 		void BuildSeidellOrder(MATRIXINFO& SeidellOrder);
@@ -94,6 +96,7 @@ namespace DFW2
 		void SolveLinearSystem();
 		void UpdateQToGenerators();					// обновление данных генераторов по результату расчета PV-узлов
 		void UpdatePQFromGenerators();				// обновление данных PV-узлов по исходным данным генераторов
+		void CollectSVCData();						// выделение данных по компенсаторам с допонительными узлами
 		void UpdateSupernodesPQ();					// обновление генерации в суперузлах
 		void DumpNodes();
 		void CompareWithRastr();
@@ -112,6 +115,21 @@ namespace DFW2
 		std::unique_ptr<_MatrixInfo[]> pMatrixInfo_;			// вектор узлов отнесенных к строкам матрицы якоби
 		_MatrixInfo *pMatrixInfoEnd = nullptr;					// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *pMatrixInfoSlackEnd = nullptr;				// конец вектора узлов с учетом базисных
+
+
+		// связь компенсатора с искусственным узлом
+		struct SVCLink
+		{
+			CSVC& SVC_;		
+			CDynaNodeBase* pExtraNode_ = nullptr;
+		};
+
+		// контейнер для искусственных узлов
+		std::unique_ptr<CDynaNodeContainer> ArtificialNodes_;
+		// виртуальные ветви для искусственных узлов
+		std::unique_ptr<VirtualBranch[]> pVirtualBranches;
+		// список компенсаторов
+		std::vector<SVCLink> SVCs_;
 		
 		double TanhBeta = 500.0;
 		double lambda_ = 1.0;
