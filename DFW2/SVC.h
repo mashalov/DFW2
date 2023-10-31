@@ -12,6 +12,16 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		CLimitedLag CoilLag_;
 		CLimitedLag ControlLag_;
+
+		CRelay LowVoltage;
+		CRelay HighVoltage;
+		CRelay LowCurrent;
+		CRelay CanDeforce;
+		CRelay CanEnforce;
+		CRelay CurrentAvailable;
+		CRSTrigger EnforceTrigger;
+		CRSTrigger DeforceTrigger;
+
 		struct Output
 		{
 			double Bunlimited;
@@ -19,7 +29,15 @@ namespace DFW2
 			double Qunlimited;
 			double Qlimited;
 			CDynaPrimitiveLimited::eLIMITEDSTATES State;
-		} Output_;
+		} 
+			Output_;
+
+		double Vmin_ = 0.0;
+		double Vmax_ = 0.0;
+		double Ilow_ = 0.0;
+		double Ienfb_ = 0.0;
+		double Idefb_ = 0.0;
+		double Imax_ = 0.0;
 
 	public:
 
@@ -28,14 +46,39 @@ namespace DFW2
 			V_CONTIN = CDynaPowerInjector::V_LAST,
 			V_CONTOUT,
 			V_BOUT,
+			V_IABS,
+			V_LOWVOLTAGE,
+			V_HIGHVOLTAGE,
+			V_LOWCURRENT,
+			V_CANDEFORCE,
+			V_CANENFORCE,
+			V_CURRENTAVAIL,
+			V_ENFTRIG,
+			V_ENFTRIGS,
+			V_ENFTRIGR,
+			V_DEFTRIG,
+			V_DEFTRIGS,
+			V_DEFTRIGR,
+			V_IF,
 			V_LAST
 		};
 
-		VariableIndex ControlIn, ControlOut, Bout;
+		VariableIndex ControlIn, ControlOut, Bout, I;
+		VariableIndex LoV, HiV, NZ, CD, CE, CA;
+		VariableIndex EnfOut, EnfS, EnfR;
+		VariableIndex DefOut, DefS, DefR, If;
 		
 		CSVC() : CDynaPowerInjector(),
-			CoilLag_(*this, { Bout }, { ControlOut }),
-			ControlLag_(*this, { ControlOut }, { ControlIn })
+			CoilLag_(*this, { Bout }, { If }),
+			ControlLag_(*this, { ControlOut }, { ControlIn }),
+			LowVoltage(*this, { LoV }, { V }),
+			HighVoltage(*this, { HiV }, { V }),
+			LowCurrent(*this, { NZ }, { I }),
+			CanDeforce(*this, { CD }, { I }),
+			CanEnforce(*this, { CE }, { I }),
+			CurrentAvailable(*this, { CA }, { I }),
+			EnforceTrigger(*this, { EnfOut }, { EnfR, EnfS }),
+			DeforceTrigger(*this, { DefOut }, { DefR, DefS })
 		{
 			P = 0.0;
 			Kgen = 1.0;
@@ -50,6 +93,14 @@ namespace DFW2
 		double Bmin_ = -1;
 		double Bmax_ = -1;
 		double V0_ = 220.0;
+		double Tcoil_ = 0.9;
+		double Tcontrol_ = 0.04;
+		double Kenf_ = 2.0;
+		double Kdef_ = 2.0;
+		double Kienf_ = 0.7;
+		double Kidef_ = 0.3;
+
+		double Bcr_;
 
 		const Output& B(const CDynaNodeBase& pNode);
 
@@ -67,6 +118,12 @@ namespace DFW2
 		static constexpr const char* m_cszxd1 = "xd1";
 		static constexpr const char* m_cszEqs = "Eqs";
 		static constexpr const char* cszDroop_ = "Droop";
+		static constexpr const char* cszTcoil_ = "Tcoil";
+		static constexpr const char* cszTcontrol_ = "Tc";
+		static constexpr const char* cszKenf_ = "Kenf";
+		static constexpr const char* cszKdef_ = "Kdef";
+		static constexpr const char* cszKienf_ = "Kienf";
+		static constexpr const char* cszKidef_ = "Kidef";
 	};
 }
 

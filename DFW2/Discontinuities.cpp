@@ -557,7 +557,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, doub
 			Value
 		));
 
-	pDynaNode_->Bshunt = Value * 1e-6;
+	pDynaNode_->Bshunt = -Value * 1e-6;
 	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }

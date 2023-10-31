@@ -21,6 +21,8 @@ CDFW2Messages::CDFW2Messages()
 	m_VarNameMap[VARUNIT_SECONDS]   = "с";
 	m_VarNameMap[VARUNIT_OHM]		= "Ом";
 	m_VarNameMap[VARUNIT_WB]		= "Вб";
+	m_VarNameMap[VARUNIT_DIGITAL]   = "0|1";
+	m_VarNameMap[VARUNIT_PERCENT]   = "%";
 	m_VarNameMap[VARUNIT_UNITLESS] = "";
 }
 
