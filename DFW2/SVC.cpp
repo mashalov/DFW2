@@ -4,6 +4,25 @@
 #include "DynaModel.h"
 using namespace DFW2;
 
+double* CSVC::GetVariablePtr(ptrdiff_t nVarIndex)
+{
+	double* p{ CDynaPowerInjector::GetVariablePtr(nVarIndex) };
+	if (!p)
+	{
+		switch (nVarIndex)
+		{
+			MAP_VARIABLE(ControlIn.Value, V_CONTIN)
+			MAP_VARIABLE(ControlOut.Value, V_CONTOUT)
+			MAP_VARIABLE(Bout.Value, V_BOUT)
+		}
+	}
+	return p;
+}
+
+VariableIndexRefVec& CSVC::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDynaPowerInjector::GetVariables(JoinVariables({ ControlIn, ControlOut, Bout }, ChildVec));
+}
 
 eDEVICEFUNCTIONSTATUS CSVC::PreInit(CDynaModel* pDynaModel)
 {
@@ -11,6 +30,60 @@ eDEVICEFUNCTIONSTATUS CSVC::PreInit(CDynaModel* pDynaModel)
 	xsl_ = Droop_ * Unom2 / Qnom_;
 	Bmin_ = LFQmin / Unom2;
 	Bmax_ = LFQmax / Unom2;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CSVC::InitModel(CDynaModel* pDynaModel)
+{
+	auto Status{ CDynaPowerInjector::InitModel(pDynaModel) };
+	if (CDevice::IsFunctionStatusOK(Status))
+	{
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+		Bout = Output_.Blimited;
+		//FromComplex(Ire, Iim, cplx(Vre, Vim) * cplx(0.0, Bout));
+		Ire = -Vim * Bout;
+		Iim =  Vre * Bout;
+		V0_ = 1.0 / xsl_ / V;
+		ControlOut = Bout;
+		CoilLag_.SetMinMaxTK(pDynaModel, Bmin_, Bmax_, 0.9, 1.0);
+		CoilLag_.Init(pDynaModel);
+		ControlLag_.SetMinMaxTK(pDynaModel, Bmin_, Bmax_, 0.04, 1.0);
+		ControlLag_.Init(pDynaModel);
+		ControlIn = (V - Vref_) * V0_;
+	}
+	return Status;
+}
+
+void CSVC::BuildRightHand(CDynaModel* pDynaModel)
+{
+	pDynaModel->SetFunction(ControlIn, ControlIn - (V - Vref_) * V0_);
+	pDynaModel->SetFunction(Ire, Ire + Vim * Bout);
+	pDynaModel->SetFunction(Iim, Iim - Vre * Bout);
+	SetFunctionsDiff(pDynaModel);
+	CDynaPowerInjector::BuildRightHand(pDynaModel);
+	CDevice::BuildRightHand(pDynaModel);
+}
+
+void CSVC::BuildEquations(CDynaModel* pDynaModel)
+{
+	pDynaModel->SetElement(ControlIn, ControlIn, 1.0);
+	pDynaModel->SetElement(ControlIn, V, -V0_);
+	// Ire + Vim * Bout = 0
+	// Iim - Vre * Bout = 0
+	pDynaModel->SetElement(Ire, Ire, 1.0);
+	pDynaModel->SetElement(Ire, Vim, Bout);
+	pDynaModel->SetElement(Ire, Bout, Vim);
+	pDynaModel->SetElement(Iim, Iim, 1.0);
+	pDynaModel->SetElement(Iim, Vre, -Bout);
+	pDynaModel->SetElement(Iim, Bout, -Vre);
+	CDynaPowerInjector::BuildEquations(pDynaModel);
+	CDevice::BuildEquations(pDynaModel);
+}
+
+eDEVICEFUNCTIONSTATUS CSVC::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	ControlIn = (V - Vref_) * V0_;
+	CDevice::ProcessDiscontinuity(pDynaModel);
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
@@ -50,6 +123,10 @@ void CSVC::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetClassName(CDeviceContainerProperties::m_cszNameSVC, CDeviceContainerProperties::m_cszSysNameSVC);
 	props.EquationsCount = CSVC::VARS::V_LAST;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CSVC>>();
+
+	props.VarMap_.insert(std::make_pair("ControlIn", CVarIndex(CSVC::V_CONTIN, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("ControlOut", CVarIndex(CSVC::V_CONTOUT, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("B", CVarIndex(CSVC::V_BOUT, VARUNIT_PU)));
 }
 
 void CSVC::UpdateSerializer(CSerializerBase* Serializer)

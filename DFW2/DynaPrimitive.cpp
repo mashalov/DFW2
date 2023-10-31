@@ -85,6 +85,10 @@ bool CDynaPrimitive::ChangeState(CDynaModel *pDynaModel, double Diff, double Tol
 	{
 		// обращаемся к устройству с запросом
 		// на уточнение зеро-кроссинга
+
+		//if (pDynaModel->GetIntegrationStepNumber() == 408)
+		//	Diff = -1.0;
+
 		if (Device_.DetectZeroCrossingFine(this))
 		{
 			const auto pRightVector{ pDynaModel->GetRightVector(ValueIndex) };

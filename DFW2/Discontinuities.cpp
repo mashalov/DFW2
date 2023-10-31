@@ -525,7 +525,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, doub
 	if(std::isfinite(pDynaNode_->Gshunt))
 		Log(pDynaModel, fmt::format("{} G={} -> G={}",
 			pDynaNode_->GetVerbalName(),
-			pDynaNode_->Gshunt,
+			pDynaNode_->Gshunt * 1e6,
 			Value
 		));
 	else
@@ -534,7 +534,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, doub
 			Value
 		));
 
-	pDynaNode_->Gshunt = Value;
+	pDynaNode_->Gshunt = Value * 1e-6;
 	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
@@ -548,7 +548,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, doub
 	if (std::isfinite(pDynaNode_->Bshunt))
 		Log(pDynaModel, fmt::format("{} B={} -> B={}",
 			pDynaNode_->GetVerbalName(),
-			pDynaNode_->Bshunt,
+			pDynaNode_->Bshunt * 1e6,
 			Value
 		));
 	else
@@ -557,7 +557,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, doub
 			Value
 		));
 
-	pDynaNode_->Bshunt = Value;
+	pDynaNode_->Bshunt = Value * 1e-6;
 	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
