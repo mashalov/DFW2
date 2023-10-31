@@ -208,6 +208,7 @@ void CSVC::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetClassName(CDeviceContainerProperties::m_cszNameSVC, CDeviceContainerProperties::m_cszSysNameSVC);
 	props.EquationsCount = CSVC::VARS::V_LAST;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CSVC>>();
+	props.bStoreStates = true;
 
 	props.VarMap_.insert(std::make_pair("ConIn", CVarIndex(CSVC::V_CONTIN, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("ConOut", CVarIndex(CSVC::V_CONTOUT, VARUNIT_PU)));

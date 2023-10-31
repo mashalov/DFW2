@@ -487,7 +487,7 @@ namespace DFW2
 		}
 
 		bool CheckLimits(double& Min, double& Max);
-
+		bool HasStatePrimitives() const { return !StatePrimitives_.empty(); }
 
 #ifdef _DEBUG
 		static char UnknownVarIndex[80];

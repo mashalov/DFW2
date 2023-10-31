@@ -1075,12 +1075,12 @@ void CDynaModel::ConsiderContainerProperties()
 {
 	// по атрибутам контейнеров формируем отдельные списки контейнеров для
 	// обновления после итерации Ньютона и после прогноза, чтобы не проверять эти атрибуты в основных циклах
-	for (auto&& it : DeviceContainers_)
+	for (auto&& container : DeviceContainers_)
 	{
+		auto& props{ container->ContainerProps() };
 		// в режиме использования COI включаем запись абсолютных углов
 		if (UseCOI() && Parameters().ShowAbsoluteAngles_)
 		{
-			auto& props{ it->ContainerProps() };
 			if (props.bUseCOI)
 			{
 				// требуем расчета абсолютных углов в FinishStep
@@ -1090,14 +1090,16 @@ void CDynaModel::ConsiderContainerProperties()
 			}
 		}
 
-		if (it->ContainerProps().bNewtonUpdate)
-			DeviceContainersNewtonUpdate_.emplace_back(it);
-		if (it->ContainerProps().bPredict)
-			DeviceContainersPredict_.emplace_back(it);
-		if (it->ContainerProps().bFinishStep)
-			DeviceContainersFinishStep_.emplace_back(it);
-		if (it->ContainerProps().bStoreStates)
-			DeviceContainersStoreStates_.emplace_back(it);
+		if (container->ContainerProps().bNewtonUpdate)
+			DeviceContainersNewtonUpdate_.emplace_back(container);
+		if (container->ContainerProps().bPredict)
+			DeviceContainersPredict_.emplace_back(container);
+		if (container->ContainerProps().bFinishStep)
+			DeviceContainersFinishStep_.emplace_back(container);
+		if (!props.bStoreStates && container->Count() > 0 && container->GetDeviceByIndex(0)->HasStatePrimitives())
+			container->ContainerProps().bStoreStates = true;
+		if (container->ContainerProps().bStoreStates)
+			DeviceContainersStoreStates_.emplace_back(container);
 	}
 }
 

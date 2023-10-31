@@ -260,6 +260,7 @@ const char* CDFW2Messages::m_cszNoSSE2Support = "Процессор не под�
 const char* CDFW2Messages::m_cszWrongTaggedPath = "Ошибка пути с тегами в позиции {}";
 const char* CDFW2Messages::m_cszParameterIsOutOfRange = "Значение параметра \"{}\" : \"{}\" = {:.3f} находится вне диапазона типовых значений [{:.3f};{:.3f}]";
 const char* CDFW2Messages::m_cszPrimitiveChangesState = "Примитив {} из {} изменяет состояние {} {} {} с {} на {}";
+const char* CDFW2Messages::m_cszBinaryPrimitiveChangesState = "Примитив {} из {} {} изменяет состояние с {} на {}";
 const char* CDFW2Messages::m_cszRunningAction = "Исполняется действие \"{}\"";
 const char* CDFW2Messages::m_cszGeneratorOverspeed = "Генератор \"{}\" отключается действием автомата скорости. Скольжение {:.3f} превысило уставку {:.3f}";
 const char* CDFW2Messages::m_cszCOMError = "Ошибка COM : {}";

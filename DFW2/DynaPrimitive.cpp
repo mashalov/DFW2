@@ -202,9 +202,21 @@ void CDynaPrimitiveBinary::SetCurrentState(CDynaModel *pDynaModel, eRELAYSTATES 
 {
 	if (eCurrentState != CurrentState)
 	{
+		const auto fnDecodeState = [](CDynaPrimitiveBinary::eRELAYSTATES State)
+			{
+				constexpr std::array<const char*, 2> VerbStates = { "On", "Off" };
+				return VerbStates[static_cast<std::underlying_type<CDynaPrimitiveBinary::eRELAYSTATES>::type>(State)];
+			};
 		// если текущее состояние не соответствует заданному
 		// запрашиваем обработку разрыва
 		pDynaModel->DiscontinuityRequest(*this, DiscontinuityLevel::Light);
+		pDynaModel->LogTime(DFW2MessageStatus::DFW2LOG_DEBUG,
+			fmt::format(CDFW2Messages::m_cszBinaryPrimitiveChangesState,
+				GetVerbalName(),
+				Device_.GetVerbalName(),
+				Input_,
+				(fnDecodeState)(eCurrentState),
+				(fnDecodeState)(CurrentState)));
 	}
 	eCurrentState = CurrentState;
 }

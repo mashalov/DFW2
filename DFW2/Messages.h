@@ -264,6 +264,7 @@ namespace DFW2
 		static const char* m_cszNoSSE2Support;
 		static const char* m_cszWrongTaggedPath;
 		static const char* m_cszPrimitiveChangesState;
+		static const char* m_cszBinaryPrimitiveChangesState;
 		static const char* m_cszRunningAction;
 		static const char* m_cszGeneratorOverspeed;
 		static const char* m_cszExternalParameterAccepted;
