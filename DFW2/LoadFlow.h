@@ -74,7 +74,6 @@ namespace DFW2
 		void GetPnrQnr(CDynaNodeBase *pNode);
 		void GetPnrQnrSuper(CDynaNodeBase *pNode);
 		void AllocateSupernodes();
-		void AllocateSVCc();	// ввод компенсаторов в икусственные узлы
 		void Estimate();
 		void Seidell();
 		void BuildSeidellOrder(MATRIXINFO& SeidellOrder);
@@ -117,19 +116,8 @@ namespace DFW2
 		_MatrixInfo *pMatrixInfoSlackEnd = nullptr;				// конец вектора узлов с учетом базисных
 
 
-		// связь компенсатора с искусственным узлом
-		struct SVCLink
-		{
-			CSVC& SVC_;		
-			CDynaNodeBase* pExtraNode_ = nullptr;
-		};
-
-		// контейнер для искусственных узлов
-		std::unique_ptr<CDynaNodeContainer> ArtificialNodes_;
-		// виртуальные ветви для искусственных узлов
-		std::unique_ptr<VirtualBranch[]> pVirtualBranches;
-		// список компенсаторов
-		std::vector<SVCLink> SVCs_;
+		// список включенных компенсаторов
+		std::vector<CSVC*> SVCs_;
 		
 		double TanhBeta = 500.0;
 		double lambda_ = 1.0;

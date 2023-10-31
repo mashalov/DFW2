@@ -15,6 +15,29 @@ namespace DFW2
 	struct VirtualBranch;
 	struct VirtualZeroBranch;
 
+	// темплейт для преобразования
+	// диапазона указтелей в range
+	template <typename T>
+	class CMemRange
+	{
+		const T* begin_;
+		const T* end_;
+	public:
+		CMemRange(const T* beg, const T* end) :
+			begin_(beg),
+			end_(end) {}
+
+		const T* begin() const
+		{
+			return begin_;
+		}
+
+		const T* end() const
+		{
+			return end_;
+		}
+	};
+
 	class CDynaNodeBase : public CDevice
 	{
 	public:
@@ -194,7 +217,6 @@ namespace DFW2
 			VirtualBranch* pVirtualZeroBranchesEnd = nullptr;
 
 			using LFMatrixType = std::vector<CDynaNodeBase*>;
-
 			// все динамические данные для расчета потокораспредения
 			// внутри суперузла упаковываем в смартпойинтер для минимизации c/d
 			struct ZeroSuperNodeData
@@ -222,6 +244,12 @@ namespace DFW2
 
 		VirtualBranch	  *pVirtualBranchBegin_, *pVirtualBranchEnd_;
 		VirtualZeroBranch *pVirtualZeroBranchBegin_, *pVirtualZeroBranchEnd_, *pVirtualZeroBranchParallelsBegin_;
+
+		//! Возвращает range виртуальных ветвей узла
+		CMemRange<VirtualBranch> VirtualBranches()
+		{
+			return CMemRange<VirtualBranch>(pVirtualBranchBegin_, pVirtualBranchEnd_);
+		}
 
 		VirtualZeroBranch* AddZeroBranch(CDynaBranch* pBranch);
 		void TidyZeroBranches();
@@ -363,12 +391,6 @@ namespace DFW2
 		double NodeVoltageViolation_;											// отклонение напряжения от уставки
 		double NodePowerViolation_;												// отклонение мощности от ограничения
 
-		// указатели на виртуальные ветви
-		// для подмены реальных ветвей на необходимые
-		// для ввода искусственных узлов
-		VirtualBranch* pVirtualBranchBegin_ = nullptr;
-		VirtualBranch* pVirtualBranchEnd_ = nullptr;
-
 		double NodeVoltageViolation()
 		{
 			if (pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_BASE ||
@@ -395,6 +417,12 @@ namespace DFW2
 			pNode->LFQmin = LFQmin;
 			pNode->LFQmax = LFQmax;
 			pNode->eLFNodeType_ = LFNodeType;
+		}
+
+		//! Возвращает range виртуальных ветвей узла
+		CMemRange<VirtualBranch> VirtualBranches()
+		{
+			return pNode->VirtualBranches();
 		}
 	};
 
