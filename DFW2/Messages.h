@@ -270,6 +270,7 @@ namespace DFW2
 		static const char* m_cszNodeGenerationLRCSelected;
 		static const char* m_cszCOMError;
 		static const char* m_cszDFW2Error;
+		static const char* m_cszModelSavedToPath;
 	};
 }
 

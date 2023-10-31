@@ -100,7 +100,7 @@ namespace DFW2
 			std::string WorkingFolder_;
 			std::string ResultsFolder_;
 			std::string DebugModelNameTemplate_;
-			DFW2MessageStatus m_eConsoleLogLevel = DFW2MessageStatus::DFW2LOG_ERROR;
+			DFW2MessageStatus m_eConsoleLogLevel = DFW2MessageStatus::DFW2LOG_INFO;
 			DFW2MessageStatus m_eFileLogLevel = DFW2MessageStatus::DFW2LOG_DEBUG;
 			PARK_PARAMETERS_DETERMINATION_METHOD m_eParkParametersDetermination = PARK_PARAMETERS_DETERMINATION_METHOD::NiiptTo;
 			GeneratorLessLRC m_eGeneratorLessLRC = GeneratorLessLRC::Iconst;

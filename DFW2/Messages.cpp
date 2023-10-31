@@ -264,4 +264,4 @@ const char* CDFW2Messages::m_cszRunningAction = "Исполняется дейс
 const char* CDFW2Messages::m_cszGeneratorOverspeed = "Генератор \"{}\" отключается действием автомата скорости. Скольжение {:.3f} превысило уставку {:.3f}";
 const char* CDFW2Messages::m_cszCOMError = "Ошибка COM : {}";
 const char* CDFW2Messages::m_cszDFW2Error = "Ошибка : {}";
-
+const char* CDFW2Messages::m_cszModelSavedToPath = "Модель сохранена в файл {}";

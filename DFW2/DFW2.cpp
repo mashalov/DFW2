@@ -4,6 +4,8 @@
 #include "stdafx.h"
 
 // контроль утечек памяти на глобально уровне - до include
+
+#ifdef _DEBUG
 struct CrtBreakAllocSetter 
 {
 	CrtBreakAllocSetter() 
@@ -17,8 +19,8 @@ struct CrtBreakAllocSetter
 		_CrtDumpMemoryLeaks();
 	}
 };
-
 CrtBreakAllocSetter crtBreakAllocSetter_;
+#endif
 
 #include "DynaModel.h"
 #include "RastrImport.h"
@@ -59,7 +61,7 @@ void GenerateRastrWinTemplate(std::filesystem::path Path = {})
 	}
 }
 
-void RunTransient()
+void RunTransient(std::filesystem::path jsonserializepath)
 {
 	CDynaModel::DynaModelParameters parameters;
 	CDynaModel Network(parameters);
@@ -71,11 +73,16 @@ void RunTransient()
 			//Network.DeSerialize(Network.Platform().ResultFile("serialization.json"));
 			ri.GetFileData(Network);
 		}
+
+		if (!jsonserializepath.empty())
+			Network.Serialize(jsonserializepath);
+	
+		Network.RunTransient();
 		//Network.Serialize(Network.Platform().ResultFile("lf_1500.json"));
 		//Network.Serialize(Network.Platform().ResultFile("lf_7ku.json")); 
 		//Network.RunLoadFlow();
-		//Network.Serialize(Network.Platform().ResultFile("siberia.json")); 
-		Network.RunTransient();
+		//
+
 	}
 	catch (const _com_error& err)
 	{
@@ -88,7 +95,6 @@ void RunTransient()
 		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszDFW2Error, err.what()));
 		throw;
 	}
-	//Network.Serialize("c:\\tmp\\lf.json");
 }
 
 void RunTest()
@@ -119,9 +125,11 @@ int main(int argc, char* argv[])
 			CDFW2Messages::m_cszCopyright)};
 
 		std::string cli_templatetogenerate;
+		std::string cli_jsonserialize;
 		bool cli_showversion{ false };
 		constexpr const char* szPath{ "PATH" };
 		app.add_option("--gt", cli_templatetogenerate, "Update RastrWin3 template specified at the given path")->option_text(szPath);
+		app.add_option("--ojson", cli_jsonserialize, "Serialize model in json format to the given path")->option_text(szPath);
 		app.add_flag("--ver", cli_showversion, "Show version info");
 
 		try
@@ -141,7 +149,7 @@ int main(int argc, char* argv[])
 		else
 		{
 			SetConsoleCtrlHandler(HandlerRoutine, TRUE);
-			RunTransient();
+			RunTransient(stringutils::utf8_decode(cli_jsonserialize));
 			//RunTest();
 			networks.clear();
 			CoUninitialize();

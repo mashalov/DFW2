@@ -229,5 +229,5 @@ void CSVC::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaPowerInjector::UpdateValidator(Validator);
 	Validator->AddRule(CDynaPowerInjector::m_cszUnom, &CDynaPowerInjector::ValidatorUnom);
-	Validator->AddRule(CDynaPowerInjector::m_cszQnom, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ cszDroop_, CDynaPowerInjector::m_cszQnom }, &CSerializerValidatorRules::BiggerThanZero);
 }

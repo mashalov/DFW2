@@ -18,7 +18,8 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 
 	// обходим контейнеры устройств и регистрируем перечисление типов устройств
 	for (auto&& container : DeviceContainers_)
-		jsonSerializer.AddDeviceTypeDescription(container->GetType(), container->GetSystemClassName());
+		if(container->GetType() != DEVTYPE_UNKNOWN)
+			jsonSerializer.AddDeviceTypeDescription(container->GetType(), container->GetSystemClassName());
 
 	// обходим контейнеры снова
 	for (auto&& container : DeviceContainers_)
@@ -29,6 +30,11 @@ void CDynaModel::Serialize(const std::filesystem::path path)
 
 	// завершаем сериализацию
 	jsonSerializer.Commit();
+
+	Log(DFW2MessageStatus::DFW2LOG_MESSAGE,
+		fmt::format(CDFW2Messages::m_cszModelSavedToPath, 
+			stringutils::utf8_encode(std::filesystem::absolute(path).c_str())));
+
 }
 
 
