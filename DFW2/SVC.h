@@ -18,7 +18,7 @@ namespace DFW2
 		CRelay LowCurrent;
 		CRelay CanDeforce;
 		CRelay CanEnforce;
-		CRelay CurrentAvailable;
+		CRelay HighCurrent;
 		CRSTrigger EnforceTrigger;
 		CRSTrigger DeforceTrigger;
 
@@ -64,21 +64,22 @@ namespace DFW2
 		};
 
 		VariableIndex ControlIn, ControlOut, Bout, I;
-		VariableIndex LoV, HiV, NZ, CD, CE, CA;
-		VariableIndex EnfOut, EnfS, EnfR;
-		VariableIndex DefOut, DefS, DefR, If;
+		VariableIndex LowVoltageOut, HighVoltageOut, LowCurrentOut;
+		VariableIndex CanDeforceOut, CanEnforceOut, HighCurrentOut;
+		VariableIndex EnforceOut, EnforceS, EnforceR;
+		VariableIndex DeforceOut, DeforceS, DeforceR, IfOut;
 		
 		CSVC() : CDynaPowerInjector(),
-			CoilLag_(*this, { Bout }, { If }),
+			CoilLag_(*this, { Bout }, { IfOut }),
 			ControlLag_(*this, { ControlOut }, { ControlIn }),
-			LowVoltage(*this, { LoV }, { V }),
-			HighVoltage(*this, { HiV }, { V }),
-			LowCurrent(*this, { NZ }, { I }),
-			CanDeforce(*this, { CD }, { I }),
-			CanEnforce(*this, { CE }, { I }),
-			CurrentAvailable(*this, { CA }, { I }),
-			EnforceTrigger(*this, { EnfOut }, { EnfR, EnfS }),
-			DeforceTrigger(*this, { DefOut }, { DefR, DefS })
+			LowVoltage(*this, { LowVoltageOut }, { V }),
+			HighVoltage(*this, { HighVoltageOut }, { V }),
+			LowCurrent(*this, { LowCurrentOut }, { I }),
+			CanDeforce(*this, { CanDeforceOut }, { I }),
+			CanEnforce(*this, { CanEnforceOut }, { I }),
+			HighCurrent(*this, { HighCurrentOut }, { I }),
+			EnforceTrigger(*this, { EnforceOut }, { EnforceR, EnforceS }),
+			DeforceTrigger(*this, { DeforceOut }, { DeforceR, DeforceS })
 		{
 			P = 0.0;
 			Kgen = 1.0;
