@@ -77,7 +77,7 @@ eDEVICEFUNCTIONSTATUS CSVC::InitModel(CDynaModel* pDynaModel)
 		LowVoltage.SetRefs(pDynaModel , Vref_ * (1.0 - xsl_ * Bmin_), false);
 		HighVoltage.SetRefs(pDynaModel, Vref_ * (1.0 + xsl_ * Bmax_), true);
 		CanDeforce.SetRefs(pDynaModel, Imin + Icr * Kidef_, true);
-		CanEnforce.SetRefs(pDynaModel, Imax - Icr * (1.0 - Kienf_), false);
+		CanEnforce.SetRefs(pDynaModel, Imin + Icr * Kienf_, false);
 		LowCurrent.SetRefs(pDynaModel, Imin, true);
 		CurrentAvailable.SetRefs(pDynaModel, Imax, false);
 
