@@ -4,7 +4,7 @@
 #include "DynaModel.h"
 using namespace DFW2;
 
-double* CSVC::GetVariablePtr(ptrdiff_t nVarIndex)
+double* CDynaSVCBase::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double* p{ CDynaPowerInjector::GetVariablePtr(nVarIndex) };
 	if (!p)
@@ -14,6 +14,18 @@ double* CSVC::GetVariablePtr(ptrdiff_t nVarIndex)
 			MAP_VARIABLE(ControlIn.Value, V_CONTIN)
 			MAP_VARIABLE(ControlOut.Value, V_CONTOUT)
 			MAP_VARIABLE(Bout.Value, V_BOUT)
+		}
+	}
+	return p;
+}
+
+double* CDynaSVCDEC::GetVariablePtr(ptrdiff_t nVarIndex)
+{
+	double* p{ CDynaSVCBase::GetVariablePtr(nVarIndex) };
+	if (!p)
+	{
+		switch (nVarIndex)
+		{
 			MAP_VARIABLE(I.Value, V_IABS)
 			MAP_VARIABLE(LowVoltageOut.Value, V_LOWVOLTAGE)
 			MAP_VARIABLE(HighVoltageOut.Value, V_HIGHVOLTAGE)
@@ -33,28 +45,65 @@ double* CSVC::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
-VariableIndexRefVec& CSVC::GetVariables(VariableIndexRefVec& ChildVec)
+
+VariableIndexRefVec& CDynaSVCBase::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	return CDynaPowerInjector::GetVariables(JoinVariables({ ControlIn, ControlOut, Bout, I,
-															LowVoltageOut, HighVoltageOut, LowCurrentOut, 
-															CanDeforceOut, CanEnforceOut, HighCurrentOut,
-															EnforceOut, EnforceS, EnforceR,
-															DeforceOut, DeforceS, DeforceR, IfOut }, ChildVec));
+	return CDynaPowerInjector::GetVariables(JoinVariables({ ControlIn, ControlOut, Bout }, ChildVec));
 }
 
-eDEVICEFUNCTIONSTATUS CSVC::PreInit(CDynaModel* pDynaModel)
+VariableIndexRefVec& CDynaSVCDEC::GetVariables(VariableIndexRefVec& ChildVec)
+{
+	return CDynaSVCBase::GetVariables(JoinVariables({ I, LowVoltageOut, HighVoltageOut, LowCurrentOut, 
+														 CanDeforceOut, CanEnforceOut, HighCurrentOut,
+														 EnforceOut, EnforceS, EnforceR,
+														 DeforceOut, DeforceS, DeforceR, IfOut }, ChildVec));
+}
+
+eDEVICEFUNCTIONSTATUS CDynaSVCBase::PreInit(CDynaModel* pDynaModel)
 {
 	const double Unom2{ Unom * Unom };
 	xsl_ = Droop_ * Unom2 / Qnom_;
 	Bmin_ = LFQmin / Unom2;
 	Bmax_ = LFQmax / Unom2;
-	Bcr_ = 1e6 * (Bmax_ - Bmin_);
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
 
-eDEVICEFUNCTIONSTATUS CSVC::InitModel(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaSVCDEC::PreInit(CDynaModel* pDynaModel)
 {
-	auto Status{ CDynaPowerInjector::InitModel(pDynaModel) };
+	auto Status{ CDynaSVCBase::PreInit(pDynaModel) };
+	Bcr_ = 1e6 * (Bmax_ - Bmin_);
+	return Status;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaSVCBase::InitModel(CDynaModel* pDynaModel)
+{
+	V0_ = 1.0 / xsl_ / V * 1e6;
+	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaSVC::InitModel(CDynaModel* pDynaModel)
+{
+	auto Status{ CDynaSVCBase::InitModel(pDynaModel) };
+	if (CDevice::IsFunctionStatusOK(Status))
+	{
+		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
+		Bout = 1e6 * Output_.Blimited;
+		Ire = -Vim * 1e-6 * Bout;
+		Iim = Vre * 1e-6 * Bout;
+		ControlOut = Bout;
+		CoilLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcoil_);
+		ControlLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcontrol_);
+		if (!CoilLag_.Init(pDynaModel) || !ControlLag_.Init(pDynaModel))
+			Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
+		ControlIn = (V - Vref_) * V0_;
+		Status = ProcessDiscontinuity(pDynaModel);
+	}
+	return Status;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaSVCDEC::InitModel(CDynaModel* pDynaModel)
+{
+	auto Status{ CDynaSVCBase::InitModel(pDynaModel) };
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
@@ -63,10 +112,9 @@ eDEVICEFUNCTIONSTATUS CSVC::InitModel(CDynaModel* pDynaModel)
 		Ire = -Vim * 1e-6 * Bout;
 		Iim =  Vre * 1e-6 * Bout;
 		I = V * Bout;
-		V0_ = 1.0 / xsl_ / V;
 		ControlOut = Bout;
-		CoilLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcoil_, 1.0);
-		ControlLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcontrol_, 1e6);
+		CoilLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcoil_);
+		ControlLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcontrol_);
 		if (!CoilLag_.Init(pDynaModel) || !ControlLag_.Init(pDynaModel))
 			Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 		ControlIn = (V - Vref_) * V0_;
@@ -96,7 +144,17 @@ eDEVICEFUNCTIONSTATUS CSVC::InitModel(CDynaModel* pDynaModel)
 	return Status;
 }
 
-void CSVC::BuildRightHand(CDynaModel* pDynaModel)
+void CDynaSVC::BuildRightHand(CDynaModel* pDynaModel)
+{
+	pDynaModel->SetFunction(ControlIn, ControlIn - (V - Vref_) * V0_);
+	pDynaModel->SetFunction(Ire, Ire + Vim * 1e-6 * Bout);
+	pDynaModel->SetFunction(Iim, Iim - Vre * 1e-6 * Bout);
+	SetFunctionsDiff(pDynaModel);
+	CDynaSVCBase::BuildRightHand(pDynaModel);
+	CDevice::BuildRightHand(pDynaModel);
+}
+
+void CDynaSVCDEC::BuildRightHand(CDynaModel* pDynaModel)
 {
 	pDynaModel->SetFunction(ControlIn, ControlIn - (V - Vref_) * V0_);
 	pDynaModel->SetFunction(Ire, Ire + Vim * 1e-6 * Bout);
@@ -117,11 +175,27 @@ void CSVC::BuildRightHand(CDynaModel* pDynaModel)
 	pDynaModel->SetFunction(IfOut, dIf);
 
 	SetFunctionsDiff(pDynaModel);
-	CDynaPowerInjector::BuildRightHand(pDynaModel);
+	CDynaSVCBase::BuildRightHand(pDynaModel);
 	CDevice::BuildRightHand(pDynaModel);
 }
 
-void CSVC::BuildEquations(CDynaModel* pDynaModel)
+void CDynaSVC::BuildEquations(CDynaModel* pDynaModel)
+{
+	pDynaModel->SetElement(ControlIn, ControlIn, 1.0);
+	pDynaModel->SetElement(ControlIn, V, -V0_);
+	// Ire + Vim * Bout = 0
+	// Iim - Vre * Bout = 0
+	pDynaModel->SetElement(Ire, Ire, 1.0);
+	pDynaModel->SetElement(Ire, Vim, 1e-6 * Bout);
+	pDynaModel->SetElement(Ire, Bout, 1e-6 * Vim);
+	pDynaModel->SetElement(Iim, Iim, 1.0);
+	pDynaModel->SetElement(Iim, Vre, -1e-6 * Bout);
+	pDynaModel->SetElement(Iim, Bout, -1e-6 * Vre);
+	CDynaSVCBase::BuildEquations(pDynaModel);
+	CDevice::BuildEquations(pDynaModel);
+}
+
+void CDynaSVCDEC::BuildEquations(CDynaModel* pDynaModel)
 {
 	pDynaModel->SetElement(ControlIn, ControlIn, 1.0);
 	pDynaModel->SetElement(ControlIn, V, -V0_);
@@ -150,13 +224,28 @@ void CSVC::BuildEquations(CDynaModel* pDynaModel)
 		IfByControlOut = -1.0;
 	pDynaModel->SetElement(IfOut, ControlOut, IfByControlOut);
 
-	CDynaPowerInjector::BuildEquations(pDynaModel);
+	CDynaSVCBase::BuildEquations(pDynaModel);
 	CDevice::BuildEquations(pDynaModel);
 }
 
-eDEVICEFUNCTIONSTATUS CSVC::ProcessDiscontinuity(CDynaModel* pDynaModel)
+eDEVICEFUNCTIONSTATUS CDynaSVCBase::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
+	auto Status(CDynaPowerInjector::ProcessDiscontinuity(pDynaModel));
 	ControlIn = (V - Vref_) * V0_;
+	CDevice::ProcessDiscontinuity(pDynaModel);
+	return Status;
+}
+
+eDEVICEFUNCTIONSTATUS CDynaSVC::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	auto Status(CDynaSVCBase::ProcessDiscontinuity(pDynaModel));
+	return Status;
+}
+
+
+eDEVICEFUNCTIONSTATUS CDynaSVCDEC::ProcessDiscontinuity(CDynaModel* pDynaModel)
+{
+	auto Status(CDynaSVCBase::ProcessDiscontinuity(pDynaModel));
 	I = V * 1e-6 * Bout;
 	EnforceR = HighVoltageOut <= 0.0 && HighCurrentOut > 0.0;
 	EnforceS = CanEnforceOut > 0.0 && HighVoltageOut > 0.0;
@@ -169,10 +258,10 @@ eDEVICEFUNCTIONSTATUS CSVC::ProcessDiscontinuity(CDynaModel* pDynaModel)
 		IfOut = -Kdef_ * Bcr_;
 	else
 		IfOut = ControlOut;
-	return eDEVICEFUNCTIONSTATUS::DFS_OK;
+	return Status;
 }
 
-const CSVC::Output& CSVC::B(const CDynaNodeBase& pNode)
+const CDynaSVCBase::Output& CDynaSVCBase::B(const CDynaNodeBase& pNode)
 {
 	Output_.Bunlimited =(pNode.V - Vref_) / xsl_ / pNode.V;
 
@@ -198,33 +287,49 @@ const CSVC::Output& CSVC::B(const CDynaNodeBase& pNode)
 	Output_.Qunlimited = Output_.Bunlimited * V2;
 
 	return Output_;
-} 
+}
 
-
-void CSVC::DeviceProperties(CDeviceContainerProperties& props)
+void CDynaSVCBase::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaPowerInjector::DeviceProperties(props);
 	props.SetType(DEVTYPE_SVC);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameSVC, CDeviceContainerProperties::m_cszSysNameSVC);
-	props.EquationsCount = CSVC::VARS::V_LAST;
-	props.DeviceFactory = std::make_unique<CDeviceFactory<CSVC>>();
 	props.bStoreStates = true;
 
-	props.VarMap_.insert(std::make_pair("ConIn", CVarIndex(CSVC::V_CONTIN, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("ConOut", CVarIndex(CSVC::V_CONTOUT, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair("B", CVarIndex(CSVC::V_BOUT, VARUNIT_SIEMENS)));
-	props.VarMap_.insert(std::make_pair("LoV", CVarIndex(CSVC::V_LOWVOLTAGE, VARUNIT_DIGITAL)));
-	props.VarMap_.insert(std::make_pair("HiV", CVarIndex(CSVC::V_HIGHVOLTAGE, VARUNIT_DIGITAL)));
-	props.VarMap_.insert(std::make_pair("|I|", CVarIndex(CSVC::V_IABS, VARUNIT_KAMPERES)));
-	props.VarMap_.insert(std::make_pair("LowI", CVarIndex(CSVC::V_LOWCURRENT, VARUNIT_DIGITAL)));
-	props.VarMap_.insert(std::make_pair("CanDef", CVarIndex(CSVC::V_CANDEFORCE, VARUNIT_DIGITAL)));
-	props.VarMap_.insert(std::make_pair("CanEnf", CVarIndex(CSVC::V_CANENFORCE, VARUNIT_DIGITAL)));
-	props.VarMap_.insert(std::make_pair("HighI", CVarIndex(CSVC::V_CURRENTAVAIL, VARUNIT_DIGITAL)));
-	props.VarMap_.insert(std::make_pair("Enforce", CVarIndex(CSVC::V_ENFTRIG, VARUNIT_DIGITAL)));
-	props.VarMap_.insert(std::make_pair("Deforce", CVarIndex(CSVC::V_DEFTRIG, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("ConIn", CVarIndex(CDynaSVCBase::V_CONTIN, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("ConOut", CVarIndex(CDynaSVCBase::V_CONTOUT, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair("B", CVarIndex(CDynaSVCBase::V_BOUT, VARUNIT_SIEMENS)));
 }
 
-void CSVC::UpdateSerializer(CSerializerBase* Serializer)
+void CDynaSVC::DeviceProperties(CDeviceContainerProperties& props)
+{
+	CDynaSVCBase::DeviceProperties(props);
+	props.SetType(DEVTYPE_SVCPROP);
+	props.SetClassName(CDeviceContainerProperties::m_cszNameSVC, CDeviceContainerProperties::m_cszSysNameSVC);
+	props.EquationsCount = CDynaSVC::VARS::V_LAST;
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaSVC>>();
+}
+
+void CDynaSVCDEC::DeviceProperties(CDeviceContainerProperties& props)
+{
+	CDynaSVCBase::DeviceProperties(props);
+	props.SetType(DEVTYPE_SVCPROPDEC);
+	props.SetClassName(CDeviceContainerProperties::m_cszNameSVCDEC, CDeviceContainerProperties::m_cszSysNameSVCDEC);
+	props.EquationsCount = CDynaSVCDEC::VARS::V_LAST;
+	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaSVCDEC>>();
+
+	props.VarMap_.insert(std::make_pair("LoV", CVarIndex(CDynaSVCDEC::V_LOWVOLTAGE, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("HiV", CVarIndex(CDynaSVCDEC::V_HIGHVOLTAGE, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("|I|", CVarIndex(CDynaSVCDEC::V_IABS, VARUNIT_KAMPERES)));
+	props.VarMap_.insert(std::make_pair("LoI", CVarIndex(CDynaSVCDEC::V_LOWCURRENT, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("CanDef", CVarIndex(CDynaSVCDEC::V_CANDEFORCE, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("CanEnf", CVarIndex(CDynaSVCDEC::V_CANENFORCE, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("HighI", CVarIndex(CDynaSVCDEC::V_CURRENTAVAIL, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("Enforce", CVarIndex(CDynaSVCDEC::V_ENFTRIG, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("Deforce", CVarIndex(CDynaSVCDEC::V_DEFTRIG, VARUNIT_DIGITAL)));
+	props.VarMap_.insert(std::make_pair("IF", CVarIndex(CDynaSVCDEC::V_IF, VARUNIT_PU)));
+}
+
+void CDynaSVCBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDynaPowerInjector::UpdateSerializer(Serializer);
 	Serializer->AddProperty(cszDroop_, Droop_, eVARUNITS::VARUNIT_PERCENT, 0.01);
@@ -233,9 +338,31 @@ void CSVC::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDynaPowerInjector::cszVref_, Vref_, eVARUNITS::VARUNIT_KVOLTS);
 }
 
-void CSVC::UpdateValidator(CSerializerValidatorRules* Validator)
+void CDynaSVC::UpdateSerializer(CSerializerBase* Serializer)
+{
+	CDynaSVCBase::UpdateSerializer(Serializer);
+}
+
+
+void CDynaSVCDEC::UpdateSerializer(CSerializerBase* Serializer)
+{
+	CDynaSVCBase::UpdateSerializer(Serializer);
+}
+
+void CDynaSVCBase::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaPowerInjector::UpdateValidator(Validator);
 	Validator->AddRule(CDynaPowerInjector::m_cszUnom, &CDynaPowerInjector::ValidatorUnom);
 	Validator->AddRule({ cszDroop_, CDynaPowerInjector::m_cszQnom }, &CSerializerValidatorRules::BiggerThanZero);
+}
+
+void CDynaSVC::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDynaSVCBase::UpdateValidator(Validator);
+}
+
+
+void CDynaSVCDEC::UpdateValidator(CSerializerValidatorRules* Validator)
+{
+	CDynaSVCBase::UpdateValidator(Validator);
 }

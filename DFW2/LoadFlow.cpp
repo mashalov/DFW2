@@ -904,7 +904,7 @@ void CLoadFlow::BuildMatrixCurrent()
 		{
 			if (pGen->IsStateOn() && pGen->IsKindOfType(DEVTYPE_SVC))
 			{
-				CSVC* svc{ static_cast<CSVC*>(static_cast<CDynaPowerInjector*>(pGen)) };
+				CDynaSVCBase* svc{ static_cast<CDynaSVCBase*>(static_cast<CDynaPowerInjector*>(pGen)) };
 				const auto& SVCOutput{ svc->B(*pNode) };
 				switch (SVCOutput.State)
 				{
@@ -1052,7 +1052,7 @@ void CLoadFlow::BuildMatrixPower()
 		{
 			if (pGen->IsStateOn() && pGen->IsKindOfType(DEVTYPE_SVC))
 			{
-				CSVC* svc{ static_cast<CSVC*>(static_cast<CDynaPowerInjector*>(pGen)) };
+				CDynaSVCBase* svc{ static_cast<CDynaSVCBase*>(static_cast<CDynaPowerInjector*>(pGen)) };
 				const auto& SVCOutput{ svc->B(*pNode) };
 				switch (SVCOutput.State)
 				{
@@ -1156,12 +1156,12 @@ void CLoadFlow::GetNodeImbSSE(_MatrixInfo* pMatrixInfo)
 	_mm_store_pd(&pMatrixInfo->ImbP, sI);
 
 	const  CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
-	LinkWalker< CDynaPowerInjector> pGen;
+	LinkWalker<CDynaPowerInjector> pGen;
 	while (pGenLink->In(pGen))
 	{
 		if (pGen->IsStateOn() && pGen->IsKindOfType(DEVTYPE_SVC))
 		{
-			CSVC* svc{ static_cast<CSVC*>(static_cast<CDynaPowerInjector*>(pGen)) };
+			CDynaSVCBase* svc{ static_cast<CDynaSVCBase*>(static_cast<CDynaPowerInjector*>(pGen)) };
 			pMatrixInfo->ImbQ += svc->B(*pNode).Qlimited;
 		}
 	}
@@ -1525,19 +1525,19 @@ void CLoadFlow::UpdateQToGenerators()
 
 void CLoadFlow::CollectSVCData()
 {
-	auto pSVCContainer{ pDynaModel->GetDeviceContainer(DEVTYPE_SVC) };
-	if (pSVCContainer == nullptr)
-		return;
-	SVCs_.reserve(pSVCContainer->Count());
-	// собираем компенсаторы и соответствующие им 
-	// искусственные узлы в вектор
-	for (auto&& svc : *pSVCContainer)
+
+	// собираем все типы компенсаторов
+	for (const auto& container : pDynaModel->DeviceContainers())
 	{
-		if (svc->IsStateOn())
-		{
-			CDevice::IsFunctionStatusOK(svc->PreInit(pDynaModel));
-			SVCs_.emplace_back(static_cast<CSVC*>(svc));
-		}
+		if (!container->IsKindOfType(DEVTYPE_SVC))
+			continue;
+
+		for (auto&& svc : *container)
+			if (svc->IsStateOn())
+			{
+				CDevice::IsFunctionStatusOK(svc->PreInit(pDynaModel));
+				SVCs_.emplace_back(static_cast<CDynaSVCBase*>(svc));
+			}
 	}
 }
 

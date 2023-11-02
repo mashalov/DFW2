@@ -117,7 +117,7 @@ namespace DFW2
 
 
 		// список включенных компенсаторов
-		std::vector<CSVC*> SVCs_;
+		std::list<CDynaSVCBase*> SVCs_;
 		
 		double TanhBeta = 500.0;
 		double lambda_ = 1.0;

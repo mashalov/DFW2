@@ -106,7 +106,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterMustang::Init(CDynaModel* pDynaModel)
 		Imin *= Eqnom;
 		Imax *= Eqnom;
 		// ограничения либо на лаге (non-windup)
-		ExcLag.SetMinMaxTK(pDynaModel, Umin, Umax, Texc, 1.0);
+		ExcLag.SetMinMaxTK(pDynaModel, Umin, Umax, Texc);
 		// либо на ограничителе (windup)
 		OutputLimit.SetMinMax(pDynaModel, -1e6, 1e6);
 		EqLimit.SetMinMax(pDynaModel, Imin, Imax);

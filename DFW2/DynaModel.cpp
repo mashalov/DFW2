@@ -46,6 +46,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 						   LRCs(this),
 						   Reactors(this),
 						   SVCs(this),
+					   	   SVCDECs(this),
 						   SynchroZones(this),
 						   ExcitersMustang(this),
 						   DECsMustang(this),
@@ -84,7 +85,8 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	CDynaNodeMeasure::DeviceProperties(NodeMeasures.ContainerProps());
 	CDynaNodeZeroLoadFlow::DeviceProperties(ZeroLoadFlow.ContainerProps());
 	CTestDevice::DeviceProperties(TestDevices.ContainerProps());
-	CSVC::DeviceProperties(SVCs.ContainerProps());
+	CDynaSVC::DeviceProperties(SVCs.ContainerProps());
+	CDynaSVCDEC::DeviceProperties(SVCDECs.ContainerProps());
 
 	// указываем фабрику устройства здесь - для автоматики свойства не заполняются
 	AutomaticDevice.ContainerProps().DeviceFactory = std::make_unique<CDeviceFactory<CCustomDeviceCPP>>();
@@ -116,6 +118,7 @@ CDynaModel::CDynaModel(const DynaModelParameters& ExternalParameters) :
 	DeviceContainers_.push_back(&ZeroLoadFlow);
 	DeviceContainers_.push_back(&TestDevices);
 	DeviceContainers_.push_back(&SVCs);
+	DeviceContainers_.push_back(&SVCDECs);
 	DeviceContainers_.push_back(&SynchroZones);		// синхрозоны должны идти последними
 
 	CheckFolderStructure();

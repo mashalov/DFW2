@@ -39,6 +39,7 @@ const char* CDeviceContainerProperties::m_cszNameZeroLoadFlow = "Потокор�
 const char* CDeviceContainerProperties::m_cszNameLRC = "СХН";
 const char* CDeviceContainerProperties::m_cszNameReactor = "Реактор";
 const char* CDeviceContainerProperties::m_cszNameSVC = "УШР";
+const char* CDeviceContainerProperties::m_cszNameSVCDEC = "УШР с форсировкой";
 
 const char* CDeviceContainerProperties::m_cszSysNameGenerator1C = "Generator1C";
 const char* CDeviceContainerProperties::m_cszSysNameGenerator2C = "Generator2C";
@@ -60,6 +61,7 @@ const char* CDeviceContainerProperties::m_cszSysNameZeroLoadFlow = "ZeroLoadFlow
 const char* CDeviceContainerProperties::m_cszSysNameLRC = "LRC";
 const char* CDeviceContainerProperties::m_cszSysNameReactor = "Reactor";
 const char* CDeviceContainerProperties::m_cszSysNameSVC = "SVC";
+const char* CDeviceContainerProperties::m_cszSysNameSVCDEC = "SVCDEC";
 
 const char* CDeviceContainerProperties::m_cszAliasNode = "node";
 const char* CDeviceContainerProperties::m_cszAliasBranch = "vetv";

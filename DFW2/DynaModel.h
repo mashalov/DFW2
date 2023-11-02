@@ -710,6 +710,7 @@ namespace DFW2
 		CDeviceContainer LRCs;
 		CDeviceContainer Reactors;
 		CDeviceContainer SVCs;
+		CDeviceContainer SVCDECs;
 		CDeviceContainer Generators3C; 
 		CDeviceContainer GeneratorsMustang;
 		CDeviceContainer GeneratorsPark3C;
@@ -1146,6 +1147,11 @@ namespace DFW2
 		inline double GetHysteresis(double dValue) const
 		{
 			return std::abs(dValue) * HysteresisRtol() + HysteresisAtol();
+		}
+
+		[[nodiscard]] const DEVICECONTAINERS& DeviceContainers() const
+		{
+			return DeviceContainers_;
 		}
 
 		void StopProcess();

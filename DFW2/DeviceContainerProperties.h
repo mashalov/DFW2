@@ -72,6 +72,7 @@ namespace DFW2
 		static const char* m_cszNameExciterMustang, *m_cszSysNameExciterMustang;
 		static const char* m_cszNameExcConMustang, *m_cszSysNameExcConMustang;
 		static const char* m_cszNameSVC, * m_cszSysNameSVC;
+		static const char* m_cszNameSVCDEC, * m_cszSysNameSVCDEC;
 		static const char* m_cszNameDECMustang, *m_cszSysNameDECMustang;
 		static const char* m_cszNameNode, *m_cszSysNameNode;
 		static const char* m_cszNameBranch, *m_cszSysNameBranch;
