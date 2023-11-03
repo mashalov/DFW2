@@ -1505,7 +1505,7 @@ void CLoadFlow::CollectSVCData()
 			if (svc->IsStateOn())
 			{
 				CDevice::IsFunctionStatusOK(svc->PreInit(pDynaModel));
-				SVCs_.emplace_back(static_cast<CDynaSVCBase*>(svc));
+				SVCs_.emplace_back(SVCExtra{static_cast<CDynaSVCBase*>(&*svc)});
 			}
 	}
 
