@@ -503,7 +503,7 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
 	ReadTable(Network.SVCs, "Type=0&tref1=0");
-	ReadTable(Network.SVCDECs, "Type=0&tref1=0");
+	//ReadTable(Network.SVCDECs, "Type=0&tref1=0");
 
 	ReadAutomatic(Network);
 

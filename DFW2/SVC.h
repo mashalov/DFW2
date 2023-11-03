@@ -11,15 +11,6 @@ namespace DFW2
 	protected:
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		CLimitedLag ControlLag_;
-		struct Output
-		{
-			double Bunlimited;
-			double Blimited;
-			double Qunlimited;
-			double Qlimited;
-			CDynaPrimitiveLimited::eLIMITEDSTATES State;
-		}
-		Output_;
 	public:
 		enum VARS
 		{
@@ -44,8 +35,6 @@ namespace DFW2
 		double Bmax_ = -1;
 		double V0_ = 220.0;
 		double Tcontrol_ = 0.04;
-
-		const Output& B(const CDynaNodeBase& pNode);
 
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;

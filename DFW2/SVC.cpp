@@ -87,7 +87,7 @@ eDEVICEFUNCTIONSTATUS CDynaSVC::InitModel(CDynaModel* pDynaModel)
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
-		Bout = 1e6 * Output_.Blimited;
+		Bout = Q / V / V * 1e6;
 		Ire = -Vim * 1e-6 * Bout;
 		Iim = Vre * 1e-6 * Bout;
 		ControlOut = Bout;
@@ -107,7 +107,7 @@ eDEVICEFUNCTIONSTATUS CDynaSVCDEC::InitModel(CDynaModel* pDynaModel)
 	if (CDevice::IsFunctionStatusOK(Status))
 	{
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
-		Bout = 1e6 * Output_.Blimited;
+		Bout = Q / V / V * 1e6;
 		//FromComplex(Ire, Iim, cplx(Vre, Vim) * cplx(0.0, Bout));
 		Ire = -Vim * 1e-6 * Bout;
 		Iim =  Vre * 1e-6 * Bout;
@@ -259,34 +259,6 @@ eDEVICEFUNCTIONSTATUS CDynaSVCDEC::ProcessDiscontinuity(CDynaModel* pDynaModel)
 	else
 		IfOut = ControlOut;
 	return Status;
-}
-
-const CDynaSVCBase::Output& CDynaSVCBase::B(const CDynaNodeBase& pNode)
-{
-	Output_.Bunlimited =(pNode.V - Vref_) / xsl_ / pNode.V;
-
-	if (Output_.Bunlimited > Bmax_)
-	{
-		Output_.Blimited = Bmax_;
-		Output_.State = CDynaPrimitiveLimited::eLIMITEDSTATES::Max;
-	}
-	else if (Output_.Bunlimited < Bmin_)
-	{
-		Output_.Blimited = Bmin_;
-		Output_.State = CDynaPrimitiveLimited::eLIMITEDSTATES::Min;
-	}
-	else
-	{
-		Output_.Blimited = Output_.Bunlimited;
-		Output_.State = CDynaPrimitiveLimited::eLIMITEDSTATES::Mid;
-	}
-
-	const double V2{ pNode.V * pNode.V };
-
-	Q = -(Output_.Qlimited = Output_.Blimited * V2);
-	Output_.Qunlimited = Output_.Bunlimited * V2;
-
-	return Output_;
 }
 
 void CDynaSVCBase::DeviceProperties(CDeviceContainerProperties& props)

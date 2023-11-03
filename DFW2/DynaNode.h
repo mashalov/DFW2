@@ -16,7 +16,7 @@ namespace DFW2
 	struct VirtualZeroBranch;
 
 	// темплейт для преобразования
-	// диапазона указтелей в range
+	// диапазона указателей в range
 	template <typename T>
 	class CMemRange
 	{
@@ -35,6 +35,11 @@ namespace DFW2
 		const T* end() const
 		{
 			return end_;
+		}
+
+		ptrdiff_t size() const
+		{
+			return end_ - begin_;
 		}
 	};
 
@@ -419,10 +424,15 @@ namespace DFW2
 			pNode->eLFNodeType_ = LFNodeType;
 		}
 
+		// виртуальные ветви для ввода в матрицу
+		// дополнительных искусственных узлов
+		VirtualBranch* pVirtualBranchBegin_ = nullptr;
+		VirtualBranch* pVirtualBranchEnd_ = nullptr;
+
 		//! Возвращает range виртуальных ветвей узла
 		CMemRange<VirtualBranch> VirtualBranches()
 		{
-			return pNode->VirtualBranches();
+			return CMemRange<VirtualBranch>(pVirtualBranchBegin_, pVirtualBranchEnd_);
 		}
 	};
 

@@ -71,6 +71,44 @@ namespace DFW2
 		bool Run();
 	protected:
 
+		// список включенных компенсаторов
+
+		struct SVCExtra
+		{
+			CDynaSVCBase* SVC = nullptr;
+			CDynaNodeBase* OriginalNode = nullptr;
+			CDynaNodeBase* ExtraNode = nullptr;
+		};
+
+		using SVCCONTAINER = std::list<SVCExtra>;
+		SVCCONTAINER  SVCs_;
+
+		ptrdiff_t MatrixSize_ = 0;
+		ptrdiff_t NonZeroCount_ =0;
+
+		class CExtraNodes
+		{
+		protected:
+			std::map<CDynaNodeBase*, std::list<SVCExtra*>> OriginalNodeSet_;
+			CLoadFlow& LoadFlow_;
+			CDynaNodeContainer *OriginalNodes_;
+			CDynaNodeContainer Nodes_;
+			std::unique_ptr<VirtualBranch[]> Branches_;
+		public:
+			CExtraNodes(CLoadFlow& LoadFlow) :
+				LoadFlow_(LoadFlow),
+				OriginalNodes_(LoadFlow.pNodes),
+				Nodes_(LoadFlow.pDynaModel)
+				{  }
+			void CreateSVCNodes();
+			void UpdateVirtualBranches();
+			ptrdiff_t Count() const { return Nodes_.Count(); }
+			_MatrixInfo* UpdateDimensions(_MatrixInfo* pMatrixInfo);
+			void Restore();
+		};
+
+		std::unique_ptr<CExtraNodes>  ExtraNodes_;
+
 		void GetPnrQnr(CDynaNodeBase *pNode);
 		void GetPnrQnrSuper(CDynaNodeBase *pNode);
 		void AllocateSupernodes();
@@ -114,10 +152,6 @@ namespace DFW2
 		std::unique_ptr<_MatrixInfo[]> pMatrixInfo_;			// вектор узлов отнесенных к строкам матрицы якоби
 		_MatrixInfo *pMatrixInfoEnd = nullptr;					// конец вектора узлов PV-PQ в якоби
 		_MatrixInfo *pMatrixInfoSlackEnd = nullptr;				// конец вектора узлов с учетом базисных
-
-
-		// список включенных компенсаторов
-		std::list<CDynaSVCBase*> SVCs_;
 		
 		double TanhBeta = 500.0;
 		double lambda_ = 1.0;
