@@ -142,6 +142,10 @@ namespace DFW2
 		bool CheckNodeBalances();
 		void RestoreSuperNodes();
 
+		// расчет функциональных ограничений
+		const ControlledLimit& NodeLFQmin(CDynaNodeBase* pNode);
+		const ControlledLimit& NodeLFQmax(CDynaNodeBase* pNode);
+
 		// возвращает true если узел учитывается в матрице якоби
 		static bool NodeInMatrix(const CDynaNodeBase* pNode);
 				

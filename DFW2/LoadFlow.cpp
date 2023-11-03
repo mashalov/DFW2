@@ -620,11 +620,11 @@ void CLoadFlow::Seidell()
 					{
 						pNode->Qgr = Q;
 						LogNodeSwitch(it, "PQmax->PQmin");
-						pNode->Qgr = pNode->LFQmin;
+						pNode->Qgr = NodeLFQmin(pNode).Q;
 						pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 						pNodes->IterationControl().QviolatedCount++;
 						Qe = Q - pNode->Qgr;
-						cplx dU = I1 * cplx(Pe, -Qe);
+						const cplx dU{ I1 * cplx(Pe, -Qe) };
 						pNode->Vre += dU.real();
 						pNode->Vim += dU.imag();
 					}
@@ -637,7 +637,7 @@ void CLoadFlow::Seidell()
 						pMatrixInfo->PVSwitchCount++;
 						pNodes->IterationControl().QviolatedCount++;
 						pNode->Qgr = Q;
-						cplx dU = I1 * cplx(Pe, 0);
+						cplx dU{ I1 * cplx(Pe, 0) };
 						dU += pNode->VreVim;
 						dU = pNode->LFVref * dU / std::abs(dU);
 						pNode->Vre = dU.real();
@@ -647,8 +647,8 @@ void CLoadFlow::Seidell()
 				else
 				{
 					// если напряжение не выше заданного - вводим ограничение реактивной мощности
-					pNode->Qgr = pNode->LFQmax;
-					cplx dU = I1 * cplx(Pe, -Qe);
+					pNode->Qgr = NodeLFQmax(pNode).Q;
+					const cplx dU{ I1 * cplx(Pe, -Qe) };
 					pNode->Vre += dU.real();
 					pNode->Vim += dU.imag();
 				}
@@ -665,9 +665,9 @@ void CLoadFlow::Seidell()
 						LogNodeSwitch(it, "PQmin->PQmax");
 						pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 						pNodes->IterationControl().QviolatedCount++;
-						pNode->Qgr = pNode->LFQmax;
+						pNode->Qgr = NodeLFQmax(pNode).Q;
 						Qe = Q - pNode->Qgr;
-						cplx dU = I1 * cplx(Pe, -Qe);
+						const cplx dU{ I1 * cplx(Pe, -Qe) };
 						pNode->Vre += dU.real();
 						pNode->Vim += dU.imag();
 					}
@@ -680,7 +680,7 @@ void CLoadFlow::Seidell()
 						pNodes->IterationControl().QviolatedCount++;
 						pMatrixInfo->PVSwitchCount++;
 						pNode->Qgr = Q;
-						cplx dU = I1 * cplx(Pe, 0);
+						cplx dU{ I1 * cplx(Pe, 0) };
 						dU += pNode->VreVim;
 						dU = pNode->LFVref * dU / std::abs(dU);
 						pNode->Vre = dU.real();
@@ -690,8 +690,8 @@ void CLoadFlow::Seidell()
 				else
 				{
 					// если напряжение не меньше заданного - вводим ограничение реактивной мощности
-					pNode->Qgr = pNode->LFQmin;
-					cplx dU = I1 * cplx(Pe, -Qe);
+					pNode->Qgr = NodeLFQmin(pNode).Q;
+					const cplx dU{ I1 * cplx(Pe, -Qe) };
 					pNode->Vre += dU.real();
 					pNode->Vim += dU.imag();
 				}
@@ -708,7 +708,7 @@ void CLoadFlow::Seidell()
 						LogNodeSwitch(it, "PV->PQmax");
 						pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
 						pNodes->IterationControl().QviolatedCount++;
-						pNode->Qgr = pNode->LFQmax;
+						pNode->Qgr = NodeLFQmax(pNode).Q;
 						Qe = Q - pNode->Qgr;
 					}
 					else if (Q < pNode->LFQmin - Parameters.Imb - dPreviousImbQ)
@@ -717,7 +717,7 @@ void CLoadFlow::Seidell()
 						LogNodeSwitch(it, "PV->PQmin");
 						pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
 						pNodes->IterationControl().QviolatedCount++;
-						pNode->Qgr = pNode->LFQmin;
+						pNode->Qgr = NodeLFQmin(pNode).Q;
 						Qe = Q - pNode->Qgr;
 					}
 					else
@@ -725,8 +725,7 @@ void CLoadFlow::Seidell()
 						pNode->Qgr = Q;
 						Qe = 0.0;
 					}
-					cplx dU = I1 * cplx(Pe, -Qe);
-
+					cplx dU{ I1 * cplx(Pe, -Qe) };
 					dU += pNode->VreVim;
 					dU = pNode->LFVref * dU / std::abs(dU);
 					pNode->Vre = dU.real();
@@ -742,7 +741,7 @@ void CLoadFlow::Seidell()
 					pNode->Vim += dU.imag();
 					*/
 					///*
-					cplx dU = I1 * cplx(Pe, -Qe);
+					cplx dU{ I1 * cplx(Pe, -Qe) };
 					dU += pNode->VreVim;
 					dU = pNode->LFVref * dU / std::abs(dU);
 					pNode->Vre = dU.real();
@@ -814,12 +813,29 @@ void CLoadFlow::BuildMatrixCurrent()
 		pAx += 2;
 		// обратная величина от модуля напряжения в узле
 		const double Vinv{ 1.0 / pNode->V };
+		const double VinvSq{ Vinv * Vinv };
 		// сопряженное напряжение деленное на модуль
 		const cplx UnodeConjByV{ std::conj(pNode->VreVim) * Vinv };
 
 		if (pNode->IsLFTypePQ())
 		{
 			// для PQ-узлов формируем оба уравнения
+
+			// узлы в которых есть зависимые ограничения Q - рассчитываем и формируем производные dQ/dV
+			if (pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PVQMAX)
+			{
+				const auto Limit{ NodeLFQmax(pNode) };
+				pNode->Qgr = Limit.Q;
+				dQdV -= Limit.dIdV;
+			}
+			else if (pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PVQMIN)
+			{
+				const auto Limit{ NodeLFQmin(pNode) };
+				pNode->Qgr = Limit.Q;
+				dQdV -= Limit.dIdV;
+			}
+			else
+				dQdV += pNode->Qg * VinvSq;
 
 			for (const auto& pv : pMatrixInfo->VirtualBranches())
 			{
@@ -897,8 +913,6 @@ void CLoadFlow::BuildMatrixCurrent()
 		// небалансы в токах - поэтому делим мощности на модуль
 		Sneb = Vinv * (std::conj(Sneb) * pNode->VreVim + NodeInjL - NodeInjG);
 
-		const double VinvSq{ Vinv * Vinv };
-
 		// диагональные производные по напряжению
 		// в уравнении разность генерации и нагрузки, деленная на напряжение. Генерация не зависит от напряжения.
 		// Нагрузка с СХН - функция напряжения, поэтому генерацию просто делим на квадрат напряжения, а производную
@@ -907,7 +921,7 @@ void CLoadFlow::BuildMatrixCurrent()
 		dPdV = pNode->dLRCLoad.real() * Vinv - (pNode->Pnr - NodeInjG.real()) * VinvSq - pNode->YiiSuper.real();
 
 		if (pNode->IsLFTypePQ())
-			dQdV += pNode->dLRCLoad.imag() * Vinv - (pNode->Qnr - NodeInjG.imag()) * VinvSq + pNode->YiiSuper.imag();
+			dQdV += pNode->dLRCLoad.imag() * Vinv - pNode->Qnr * VinvSq + pMatrixInfo->UncontrolledQ * VinvSq + pNode->YiiSuper.imag();
 		else
 		{
 			dQdV = 1.0;
@@ -960,6 +974,21 @@ void CLoadFlow::BuildMatrixPower()
 			// для PQ-узлов формируем оба уравнения
 
 			dQdV = pNode->GetSelfdQdV();
+
+			// узлы в которых есть зависимые ограничения Q - рассчитываем и формируем производные dQ/dV
+			if (pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PVQMAX)
+			{
+				const auto Limit{ NodeLFQmax(pNode) };
+				pNode->Qgr = Limit.Q;
+				dQdV -= Limit.dQdV;
+			}
+			else if (pNode->eLFNodeType_ == CDynaNodeBase::eLFNodeType::LFNT_PVQMIN)
+			{
+				const auto Limit{ NodeLFQmin(pNode) };
+				pNode->Qgr = Limit.Q;
+				dQdV -= Limit.dQdV;
+			}
+
 			for (const auto& pv : pMatrixInfo->VirtualBranches())
 			{
 				const auto& pOppNode{ pv.pNode };
@@ -1226,18 +1255,6 @@ bool CLoadFlow::Run()
 				// и привязываем к ней узел
 				_MatrixInfo mx;
 				mx.Store(pNode);
-
-				/*
-				const  CLinkPtrCount* const pGenLink{ pNode->GetLink(1) };
-				LinkWalker< CDynaPowerInjector> pGen;
-				while (pGenLink->In(pGen))
-				{
-					if (pGen->IsStateOn() && pGen->IsKindOfType(DEVTYPE_SVC))
-					{
-						pNode->Qg = pNode->Qgr = 0.0;
-						break;
-					}
-				}*/
 				GetNodeImb(&mx);
 				//_ASSERTE(std::abs(mx.ImbP) < Parameters.Imb && std::abs(mx.ImbQ) < Parameters.Imb);
 				pNode->GetPnrQnr();
@@ -1728,7 +1745,7 @@ void CLoadFlow::Newton()
 			BuildMatrixPower();
 			break;
 		case eLoadFlowFormulation::Current:
-			BuildMatrixCurrent();
+			BuildMatrixCurrent(); 
 			break;
 		}
 
@@ -1737,7 +1754,7 @@ void CLoadFlow::Newton()
 
 		// Находим узел с максимальной невязкой до шага Ньютона
 		ptrdiff_t iMax(0);
-		double maxb = klu.FindMaxB(iMax);
+		double maxb{ klu.FindMaxB(iMax) };
 		CDynaNodeBase* pNode1(pMatrixInfo_.get()[iMax / 2].pNode);
 
 		SolveLinearSystem();
@@ -2665,7 +2682,7 @@ void CLoadFlow::Limits::Apply()
 			LoadFlow_.LogNodeSwitch(it, "PV->PQmax");
 			CDynaNodeBase*& pNode = it->pNode;
 			pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMAX;
-			pNode->Qgr = pNode->LFQmax;
+			pNode->Qgr = LoadFlow_.NodeLFQmax(pNode).Q;
 			LoadFlow_.NodeTypeSwitchesDone++;
 		}
 
@@ -2676,7 +2693,7 @@ void CLoadFlow::Limits::Apply()
 				LoadFlow_.LogNodeSwitch(it, "PV->PQmin");
 				CDynaNodeBase*& pNode = it->pNode;
 				pNode->eLFNodeType_ = CDynaNodeBase::eLFNodeType::LFNT_PVQMIN;
-				pNode->Qgr = pNode->LFQmin;
+				pNode->Qgr = LoadFlow_.NodeLFQmin(pNode).Q;
 				LoadFlow_.NodeTypeSwitchesDone++;
 			}
 		}
@@ -2689,6 +2706,55 @@ void CLoadFlow::Limits::CheckFeasible()
 		it->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszLFOverswitchedNode, it->GetVerbalName(),
 			LoadFlow_.Parameters.MaxPVPQSwitches));
 }
+
+const ControlledLimit& CLoadFlow::NodeLFQmin(CDynaNodeBase* pNode)
+{
+	auto& Matrix{ pMatrixInfo_[pNode->A(0) / 2] };
+	auto& Controllers{ Matrix.LimitControllers_ };
+	auto& cl{ Matrix.ControlledLimit_ };
+	cl = {};
+	if (Controllers.empty())
+	{
+		cl.Q = pNode->LFQmin;
+		cl.dIdV = -cl.Q / pNode->V / pNode->V;
+		return cl;
+	}
+	for (auto&& controller : Controllers)
+	{
+		CDynaSVCBase* pSVC{ static_cast<CDynaSVCBase*>(controller) };
+		// оценка напряжения в управляемом узле
+		const double Voriginal{ pNode->V / (1.0 - pSVC->Bmax_ * pSVC->xsl_) };
+		cl.Q += -pSVC->Bmax_ * Voriginal * pNode->V;
+		cl.dQdV += -2.0 * pSVC->Bmax_ * Voriginal;
+		cl.dIdV += -pSVC->Bmax_ * Voriginal / pNode->V;
+	}
+	return cl;
+}
+
+const ControlledLimit& CLoadFlow::NodeLFQmax(CDynaNodeBase* pNode)
+{
+	auto& Matrix{ pMatrixInfo_[pNode->A(0) / 2] };
+	auto& Controllers{ Matrix.LimitControllers_ };
+	auto& cl{ Matrix.ControlledLimit_ };
+	cl = {};
+	if (Controllers.empty())
+	{
+		cl.Q = pNode->LFQmax;
+		cl.dIdV = -cl.Q / pNode->V / pNode->V;
+		return cl;
+	}
+	for (auto&& controller : Controllers)
+	{
+		CDynaSVCBase* pSVC{ static_cast<CDynaSVCBase*>(controller) };
+		// оценка напряжения в управляемом узле
+		const double Voriginal{ pNode->V / (1.0 - pSVC->Bmin_ * pSVC->xsl_) };
+		cl.Q += -pSVC->Bmin_ * Voriginal * pNode->V;
+		cl.dQdV += -2.0 * pSVC->Bmin_ * Voriginal;
+		cl.dIdV += -pSVC->Bmin_ * Voriginal / pNode->V;
+	}
+	return cl;
+}
+
 
 void CLoadFlow::CExtraNodes::CreateSVCNodes()
 {
@@ -2720,8 +2786,12 @@ void CLoadFlow::CExtraNodes::CreateSVCNodes()
 		// уставка по напряжению
 		svc->ExtraNode->LFVref = svc->ExtraNode->Unom = svc->SVC->Vref_;
 		// задаем ограничения
-		svc->ExtraNode->LFQmax = -svc->SVC->LFQmin;
-		svc->ExtraNode->LFQmin = -svc->SVC->LFQmax;
+		const double vmax{ svc->SVC->Vref_ / (1.0 - svc->SVC->Bmax_ * svc->SVC->xsl_) };
+		const double vmin{ svc->SVC->Vref_ / (1.0 - svc->SVC->Bmin_ * svc->SVC->xsl_) };
+		
+		svc->ExtraNode->LFQmax = -svc->SVC->Bmin_ * svc->SVC->Vref_ * vmin;
+		svc->ExtraNode->LFQmin = -svc->SVC->Bmax_ * svc->SVC->Vref_ * vmax;
+		 
 		// включаем искусственный узел в синхронную зону
 		// управляемого узла
 		svc->ExtraNode->pSyncZone = svc->OriginalNode->pSyncZone;
@@ -2795,7 +2865,7 @@ void CLoadFlow::CExtraNodes::UpdateVirtualBranches()
 
 _MatrixInfo* CLoadFlow::CExtraNodes::UpdateDimensions(_MatrixInfo* pMatrixInfo)
 {
-	for(const auto& svc : LoadFlow_.SVCs_)
+	for(auto&& svc : LoadFlow_.SVCs_)
 	{
 		CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(svc.ExtraNode) };
 		pNode->SetMatrixRow(LoadFlow_.MatrixSize_);
@@ -2803,6 +2873,8 @@ _MatrixInfo* CLoadFlow::CExtraNodes::UpdateDimensions(_MatrixInfo* pMatrixInfo)
 		pMatrixInfo->Store(pNode);
 		if (NodeInMatrix(svc.OriginalNode))
 			pMatrixInfo->nRowCount += 2;	// 2 элемента для ветви до УШР
+
+		pMatrixInfo->LimitControllers_.emplace_back(svc.SVC);
 
 		LoadFlow_.MatrixSize_ += 2;		// 2 уравнения на узел УШР
 		pMatrixInfo->nRowCount += 2;	// считаем диагональный элемент

@@ -380,6 +380,14 @@ namespace DFW2
 		ptrdiff_t nParallelCount = 1;
 	};
 
+	// данные расчета функционального ограничения
+	struct ControlledLimit
+	{
+		double Q = 0.0;		// мощность
+		double dQdV = 0.0;	// производная мощности
+		double dIdV = 0.0;	// производная тока
+	};
+
 	// маппинг узла в строки матрица
 	struct _MatrixInfo
 	{
@@ -395,6 +403,7 @@ namespace DFW2
 		double LFQmax;
 		double NodeVoltageViolation_;											// отклонение напряжения от уставки
 		double NodePowerViolation_;												// отклонение мощности от ограничения
+		ControlledLimit ControlledLimit_;										// данные для учета функционального ограничения
 
 		double NodeVoltageViolation()
 		{
@@ -434,6 +443,9 @@ namespace DFW2
 		{
 			return CMemRange<VirtualBranch>(pVirtualBranchBegin_, pVirtualBranchEnd_);
 		}
+		// список контроллеров ограничений для PV 
+		// с функциональными ограничениями 
+		std::list<CDevice*> LimitControllers_;
 	};
 
 	using QUEUE = std::list<_MatrixInfo*>;
