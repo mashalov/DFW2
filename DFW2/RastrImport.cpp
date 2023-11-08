@@ -268,6 +268,8 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.scn", scnPath.c_str());
 	// 
 	//LoadFile("D:\\source\\repos\\MatPowerImport\\x64\\Release\\case9all");
+
+	//LoadFile("e:/downloads/ПРМ Московское РДУ/result.os");
 	
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39.rst", rstPath.c_str());
 	//LoadFile("D:\\source\\repos\\DFW2\\tests\\case39_sc5.scn", scnPath.c_str());
@@ -502,8 +504,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
-	ReadTable(Network.SVCs, "Type=0&tref1=0");
-	//ReadTable(Network.SVCDECs, "Type=0&tref1=0");
+	//ReadTable(Network.SVCs, "Type=0&tref1=0");
+	ReadTable(Network.SVCDECs, "Type=0&tref1=0");
 
 	ReadAutomatic(Network);
 
@@ -806,15 +808,30 @@ void CRastrImport::ReadLRCs(CDynaLRCContainer& container)
 
 }
 
+void CRastrImport::GenerateRastrWinFile(CDynaModel& Network, const std::filesystem::path& Path)
+{
+	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Генерация файла для RastrWin : {}", stringutils::utf8_encode(rstPath.c_str())));
+	m_spRastr->Load(RG_KOD::RG_REPL, Path.c_str(), L"");
+	UpdateRastrWinFile(Network, rstPath.filename().string());
+	m_spRastr->Save(Path.c_str(), L"");
+	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Сохранен файл для RastrWin : {}", stringutils::utf8_encode(rstPath.c_str())));
+
+}
+
 void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network, const std::filesystem::path& Path)
 {
 	if (!Path.empty())
 		rstPath = Path;
-
 	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Генерация шаблона для RastrWin : {}", stringutils::utf8_encode(rstPath.c_str())));
-
 	m_spRastr->NewFile(rstPath.c_str());
+	UpdateRastrWinFile(Network, Path.filename().string());
+	m_spRastr->Save("", rstPath.c_str());
+	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Сохранен шаблон для RastrWin : {}", stringutils::utf8_encode(rstPath.c_str())));
 
+}
+
+void CRastrImport::UpdateRastrWinFile(CDynaModel& Network, std::string_view templatename)
+{
 	auto ps{ Network.GetParametersSerializer() };
 	ITablesPtr spTables{ m_spRastr->Tables };
 
@@ -825,7 +842,7 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network, const std::file
 
 	ITablePtr spRaidenParameters{ spTables->Add(cszRaidenParameters_) };
 	IColsPtr spCols{ spRaidenParameters->Cols };
-	spRaidenParameters->PutTemplateName(Path.filename().c_str());
+	spRaidenParameters->PutTemplateName(std::string(templatename).c_str());
 	IColPtr spGoRaiden{ spCols->Add(L"GoRaiden", PR_BOOL) };
 	spGoRaiden->PutProp(FL_DESC, L"Выполнять расчет ЭМПП с помощью Raiden");
 	spGoRaiden->PutProp(FL_ZAG, spGoRaiden->Name);
@@ -984,10 +1001,6 @@ void CRastrImport::GenerateRastrWinTemplate(CDynaModel& Network, const std::file
 			stringutils::utf8_decode(fmt::format("There are {} missed descriptions", MissedDescriptions)).c_str(),
 			stringutils::utf8_decode(CDFW2Messages::m_cszProjectName).c_str(),
 			MB_ICONEXCLAMATION | MB_OK);
-
-	m_spRastr->Save("", rstPath.c_str());
-
-	Network.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format("Сохранен шаблон для RastrWin : {}", stringutils::utf8_encode(rstPath.c_str())));
 }
 
 

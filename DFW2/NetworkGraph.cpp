@@ -300,7 +300,7 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 				if (pNode->GetStateCause() == eDEVICESTATECAUSE::DSC_INTERNAL)
 				{
 					// включаем узел
-					pNode->SetState(eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_INTERNAL);
+					pNode->ChangeState(eDEVICESTATE::DS_ON, eDEVICESTATECAUSE::DSC_INTERNAL);
 					pNode->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszNodeRiseDueToZone, pNode->GetVerbalName()));
 					// считаем количество включенных узлов
 					nEnergizedCount++;
@@ -313,11 +313,11 @@ void CDynaNodeContainer::EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &
 			// и узел включен
 			if (pNode->IsStateOn())
 			{
-			// отключаем узел с признаком, что его состояние изменилось внутренней командой фреймворка
-			pNode->SetState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
-			pNode->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszNodeTripDueToZone, pNode->GetVerbalName()));
-			// считаем количество отключенных узлов
-			nDeenergizedCount++;
+				// отключаем узел с признаком, что его состояние изменилось внутренней командой фреймворка
+				pNode->ChangeState(eDEVICESTATE::DS_OFF, eDEVICESTATECAUSE::DSC_INTERNAL);
+				pNode->Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszNodeTripDueToZone, pNode->GetVerbalName()));
+				// считаем количество отключенных узлов
+				nDeenergizedCount++;
 			}
 		}
 	}

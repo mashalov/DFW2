@@ -238,11 +238,13 @@ namespace DFW2
 		void GetData(CDynaModel& Network);
 		void StoreResults(const CDynaModel& Network);
 		void GenerateRastrWinTemplate(CDynaModel& Network, const std::filesystem::path& Path = {});
+		void GenerateRastrWinFile(CDynaModel& Network, const std::filesystem::path& Path = {});
 
 		static constexpr const char* cszRaidenParameters_ = "RaidenParameters";
 		static constexpr const wchar_t* wcszDynamicRST = L"динамика.rst";
 		static std::string COMErrorDescription(const _com_error& error);
 	protected:
+		void UpdateRastrWinFile(CDynaModel& Network, std::string_view templatename);
 		void InitRastrWin();
 		IRastrPtr m_spRastr;
 		CRastrSynonyms m_rastrSynonyms;

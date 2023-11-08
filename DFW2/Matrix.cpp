@@ -25,6 +25,9 @@ void CDynaModel::EstimateMatrix()
 	for (auto&& it : DeviceContainers_)
 		it->EstimateBlock(this);
 
+	if (EstimatedMatrixSize_ == 0)
+		throw dfw2error(CDFW2Messages::m_cszAllNodesOff);
+
 	m_pMatrixRowsUniq = std::make_unique<MatrixRow[]>(EstimatedMatrixSize_);
 	m_pMatrixRows = m_pMatrixRowsUniq.get();
 

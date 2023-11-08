@@ -61,6 +61,31 @@ void GenerateRastrWinTemplate(std::filesystem::path Path = {})
 	}
 }
 
+void GenerateRastrWinFile(std::filesystem::path Path = {})
+{
+	CDynaModel::DynaModelParameters parameters;
+	parameters.m_eConsoleLogLevel = DFW2MessageStatus::DFW2LOG_INFO;
+	CDynaModel Network(parameters);
+	try
+	{
+		{
+			CRastrImport ri;
+			ri.GenerateRastrWinFile(Network, Path);
+		}
+	}
+	catch (const _com_error& err)
+	{
+		const std::string Description{ CRastrImport::COMErrorDescription(err) };
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszCOMError, Description));
+		throw dfw2error(Description);
+	}
+	catch (const dfw2error& err)
+	{
+		Network.Log(DFW2MessageStatus::DFW2LOG_FATAL, fmt::format(CDFW2Messages::m_cszError, err.what()));
+		throw;
+	}
+}
+
 void RunTransient(std::filesystem::path jsonserializepath)
 {
 	CDynaModel::DynaModelParameters parameters;
@@ -125,9 +150,11 @@ int main(int argc, char* argv[])
 			CDFW2Messages::m_cszCopyright)};
 
 		std::string cli_templatetogenerate;
+		std::string cli_filetogenerate;
 		std::string cli_jsonserialize;
 		bool cli_showversion{ false };
 		constexpr const char* szPath{ "PATH" };
+		app.add_option("--gp", cli_filetogenerate, "Update RastrWin3 file specified at the given path")->option_text(szPath);
 		app.add_option("--gt", cli_templatetogenerate, "Update RastrWin3 template specified at the given path")->option_text(szPath);
 		app.add_option("--ojson", cli_jsonserialize, "Serialize model in json format to the given path")->option_text(szPath);
 		app.add_flag("--ver", cli_showversion, "Show version info");
@@ -146,6 +173,8 @@ int main(int argc, char* argv[])
 			std::cout << app.get_description() << std::endl;
 		else if (!cli_templatetogenerate.empty())
 			GenerateRastrWinTemplate(stringutils::utf8_decode(cli_templatetogenerate));
+		else if (!cli_filetogenerate.empty())
+			GenerateRastrWinFile(stringutils::utf8_decode(cli_filetogenerate));
 		else
 		{
 			SetConsoleCtrlHandler(HandlerRoutine, TRUE);
