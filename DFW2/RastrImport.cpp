@@ -266,6 +266,8 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
 	m_spRastr->NewFile(dfwPath.c_str()); 
 	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.scn", scnPath.c_str());
+
+	//LoadFile("e:/downloads/ПРМ Московское РДУ/result.os");
 	// 
 	//LoadFile("D:\\source\\repos\\MatPowerImport\\x64\\Release\\case9all");
 

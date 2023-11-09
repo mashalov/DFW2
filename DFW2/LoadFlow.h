@@ -48,10 +48,32 @@ namespace DFW2
 			double LRCMaxSlope = 5.0;					// максимальная крутизна СХН
 			unsigned long ThreadId_ = 0;
 			std::filesystem::path ModuleFilePath_;
-
 			virtual ~LoadFlowParameters() = default;
-		};
+			SerializerPtr GetSerializer();
+			SerializerValidatorRulesPtr GetValidator() const;
 
+			static constexpr const char* m_cszLFImbalance = "LFImbalance";
+			static constexpr const char* m_cszLFFlat = "LFFlat";
+			static constexpr const char* m_cszLFStartup = "LFStartup";
+			static constexpr const char* m_cszLFSeidellStep = "SeidellStep";
+			static constexpr const char* m_cszLFSeidellIterations = "SeidellIterations";
+			static constexpr const char* m_cszLFEnableSwitchIteration = "EnableSwitchIteration";
+			static constexpr const char* m_cszLFMaxIterations = "MaxIterations";
+			static constexpr const char* m_cszLFNewtonMaxVoltageStep = "VoltageNewtonStep";
+			static constexpr const char* m_cszLFNewtonMaxNodeAngleStep = "NodeAngleNewtonStep";
+			static constexpr const char* m_cszLFNewtonMaxBranchAngleStep = "BranchAngleNewtonStep";
+			static constexpr const char* m_cszLFForceSwitchLambda = "ForceSwitchLambda";
+			static constexpr const char* m_cszLFFormulation = "LFFormulation";
+			static constexpr const char* m_cszLFAllowNegativeLRC = "AllowNegativeLRC";
+			static constexpr const char* m_cszLFLRCMinSlope = "LRCMinSlope";
+			static constexpr const char* m_cszLFLRCMaxSlope = "LRCMaxSlope";
+			static constexpr const char* m_cszLRCSmoothingRange = "LRCSmoothingRange";
+			static constexpr const char* m_cszMaxPVPQSwitches = "MaxPVPQSwitches";
+			static constexpr const char* m_cszPVPQSwitchPerIt = "PVPQSwitchesPerIteration";
+			static constexpr const char* m_cszLFStartupNames[4] = { "None","Seidell", "Tanh", "RKF" };
+			static constexpr const char* m_cszLFFormulationTypeNames[3] = { "Current", "Power", "Tanh" };
+			static inline CValidationRuleFromSerializerLess MinLRCSLopeValidator = { LoadFlowParameters::m_cszLFLRCMaxSlope };
+		};
 
 		class Limits
 		{

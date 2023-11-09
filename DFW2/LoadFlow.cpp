@@ -2918,3 +2918,57 @@ void CLoadFlow::CExtraNodes::Restore()
 }
 
 
+SerializerPtr CLoadFlow::LoadFlowParameters::GetSerializer()
+{
+	SerializerPtr Serializer{ std::make_unique<CSerializerBase>(new CSerializerDataSourceBase()) };
+	Serializer->SetClassName("Parameters");
+
+	Serializer->AddProperty(m_cszLFImbalance, Imb);
+	Serializer->AddProperty(m_cszLFFlat, Flat);
+
+	Serializer->AddEnumProperty(m_cszLFStartup,
+		new CSerializerAdapterEnum<CLoadFlow::eLoadFlowStartupMethod>(Startup, m_cszLFStartupNames));
+
+	Serializer->AddProperty(m_cszLFSeidellStep, SeidellStep);
+	Serializer->AddProperty(m_cszLFSeidellIterations, SeidellIterations);
+	Serializer->AddProperty(m_cszLFEnableSwitchIteration, EnableSwitchIteration);
+	Serializer->AddProperty(m_cszLFMaxIterations, MaxIterations);
+	Serializer->AddProperty(m_cszLFNewtonMaxVoltageStep, VoltageNewtonStep);
+	Serializer->AddProperty(m_cszLFNewtonMaxNodeAngleStep, NodeAngleNewtonStep);
+	Serializer->AddProperty(m_cszLFNewtonMaxBranchAngleStep, BranchAngleNewtonStep);
+	Serializer->AddProperty(m_cszLFForceSwitchLambda, ForceSwitchLambda);
+	Serializer->AddEnumProperty(m_cszLFFormulation,
+		new CSerializerAdapterEnum<CLoadFlow::eLoadFlowFormulation>(LFFormulation, m_cszLFFormulationTypeNames));
+	Serializer->AddProperty(m_cszLFAllowNegativeLRC, AllowNegativeLRC);
+	Serializer->AddProperty(m_cszLFLRCMinSlope, LRCMinSlope);
+	Serializer->AddProperty(m_cszLFLRCMaxSlope, LRCMaxSlope);
+	Serializer->AddProperty(m_cszMaxPVPQSwitches, MaxPVPQSwitches);
+	Serializer->AddProperty(m_cszPVPQSwitchPerIt, PVPQSwitchPerIt);
+
+	return Serializer;
+}
+
+SerializerValidatorRulesPtr CLoadFlow::LoadFlowParameters::GetValidator() const
+{
+	auto Validator{ std::make_unique<CSerializerValidatorRules>() };
+	Validator->AddRule(
+		{ 
+			m_cszLFImbalance, 
+			m_cszLFMaxIterations,
+			m_cszLFNewtonMaxVoltageStep,
+			m_cszLFSeidellIterations,
+			m_cszLFNewtonMaxNodeAngleStep,
+			m_cszLFNewtonMaxBranchAngleStep,
+			m_cszLFForceSwitchLambda,
+			m_cszLFSeidellStep,
+			m_cszLFLRCMaxSlope,
+			m_cszMaxPVPQSwitches,
+		},
+		&CSerializerValidatorRules::BiggerThanZero);
+
+	Validator->AddRule(m_cszLFLRCMinSlope, &MinLRCSLopeValidator);
+	Validator->AddRule(m_cszLFEnableSwitchIteration, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(m_cszPVPQSwitchPerIt, &CSerializerValidatorRules::NonNegative);
+	return Validator;
+}
+

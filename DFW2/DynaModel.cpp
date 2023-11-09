@@ -230,6 +230,12 @@ bool CDynaModel::RunTransient()
 
 		PrecomputeConstants();
 
+		// валидируем параметры расчета до валидации параметров модели
+		CSerializerValidator ParametersValidator(this, m_Parameters.GetSerializer(), m_Parameters.GetValidator());
+		eDEVICEFUNCTIONSTATUS Status{ ParametersValidator.Validate() };
+		if (!CDevice::IsFunctionStatusOK(Status))
+			throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга
 
@@ -401,9 +407,7 @@ bool CDynaModel::RunTransient()
 
 void CDynaModel::PreInitDevices()
 {
-	// выполняем валидацию параметров расчета
-	CSerializerValidator Validator(this, m_Parameters.GetSerializer(), m_Parameters.GetValidator());
-	eDEVICEFUNCTIONSTATUS Status{ Validator.Validate() };
+	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_OK };
 
 	for (auto&& container : DeviceContainers_)
 		Status = CDevice::DeviceFunctionResult(Status, container->PreInit(this));

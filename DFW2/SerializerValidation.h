@@ -22,17 +22,33 @@ namespace DFW2
 		void CheckDevice(const CDevice* device) const
 		{
 			if(!device)
-				throw dfw2error("CValidationRuleCompareBase::Validate - no device available");
+				throw dfw2error("CValidationRuleBase::CheckDevice - no device available");
 		}
+
+		//! Возвращает значение из сериализатора по имени. 
+		//! Выдает исключение, если в сериализаторе нет имени
+		const MetaSerializedValue* GetFromSerializer(const SerializerPtr& serializer, std::string_view Name) const
+		{
+			auto ret{ serializer->at(Name) };
+			if (ret == nullptr)
+				throw dfw2error(fmt::format("CValidationRuleBase::GetFromSerializer - no \"{}\" varialble available in serializer", Name));
+			return ret;
+		}
+		
 	public:
 		CValidationRuleBase() {}
 		CValidationRuleBase(std::optional<double> Replace) : replaceValue(Replace) {}
 		virtual ~CValidationRuleBase() = default;
+		// валидация с использованием устройства
 		virtual ValidationResult Validate(MetaSerializedValue* value, CDevice *device, std::string& message) const
 		{
 			return ValidationResult::Ok;
 		}
-
+		// валидация с использованием сериализатора
+		virtual ValidationResult Validate(MetaSerializedValue* value, const SerializerPtr& serializer, std::string& message) const
+		{
+			return ValidationResult::Ok;
+		}
 		ValidationResult ReplaceValue(MetaSerializedValue* value) const
 		{
 			if (replaceValue.has_value())
@@ -215,6 +231,59 @@ namespace DFW2
 			if (val > m_Max || val < m_Min)
 			{
 				message = fmt::format(CDFW2Messages::m_cszValidationRange, m_Min, m_Max);
+				return ReplaceValue(value);
+			}
+			return ValidationResult::Ok;
+		}
+	};
+
+	//! Базовый класс валидации по сериализатору
+	class CValidationRuleFromSerializerBase : public CValidationRuleBase
+	{
+	protected:
+		const char* cszCheckValueName_; // имя значения из сериализатора
+		//! Возвращает double по имени из сериализатора. Выбрасывает
+		//! исключение, если имени нет в сериализаторе или значение
+		//! не может быть преобразовано в double
+		double GetCheckValue(const SerializerPtr& serializer) const
+		{
+			return GetFromSerializer(serializer, cszCheckValueName_)->Double();
+		}
+	public:
+		// конструктор принимает имя значения для сериализатора
+		CValidationRuleFromSerializerBase(const char* cszCheckValueName) :
+			CValidationRuleBase(),
+			cszCheckValueName_(cszCheckValueName) {}
+	};
+
+	//! проверка значения на < со значением из сериализатора
+	class CValidationRuleFromSerializerLess : public CValidationRuleFromSerializerBase
+	{
+	public:
+		using CValidationRuleFromSerializerBase::CValidationRuleFromSerializerBase;
+
+		virtual ValidationResult Validate(MetaSerializedValue* value, const SerializerPtr& serializer, std::string& message) const
+		{
+			if (const auto CheckValue{ GetCheckValue(serializer) }; value->Double() >= CheckValue)
+			{
+				message = fmt::format(CDFW2Messages::m_cszValidationLessThanNamed, cszCheckValueName_, CheckValue);
+				return ReplaceValue(value);
+			}
+			return ValidationResult::Ok;
+		}
+	};
+
+	//! проверка значения на > со значением из сериализатора
+	class CValidationRuleFromSerializerBigger : public CValidationRuleFromSerializerBase
+	{
+	public:
+		using CValidationRuleFromSerializerBase::CValidationRuleFromSerializerBase;
+
+		virtual ValidationResult Validate(MetaSerializedValue* value, const SerializerPtr& serializer, std::string& message) const
+		{
+			if (const auto CheckValue{ GetCheckValue(serializer) }; value->Double() <= CheckValue)
+			{
+				message = fmt::format(CDFW2Messages::m_cszValidationBiggerThanNamed, cszCheckValueName_, CheckValue);
 				return ReplaceValue(value);
 			}
 			return ValidationResult::Ok;

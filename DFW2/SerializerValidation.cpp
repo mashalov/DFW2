@@ -37,16 +37,23 @@ eDEVICEFUNCTIONSTATUS CSerializerValidator::Validate()
 	{
 		for (const auto& ruleVariable : *m_Rules)
 		{
-			auto value = m_Serializer->at(ruleVariable.first);
+			auto value{ m_Serializer->at(ruleVariable.first) };
 			if (!value || value->bState) continue;
 			for (const auto& rule : ruleVariable.second)
 			{
 				const double originalValue(value->Double());
-				const auto res(rule->Validate(value, m_Serializer->GetDevice(), message));
+				// последовательно вызываем 2 валидатора
+				// 1 - от устройства (упрощенный)
+				auto res{ rule->Validate(value, m_Serializer->GetDevice(), message) };
+				// 2 - если первый отработал - вызываем второй
+				// который позволяет получить доступ к сериализатору
+		
+				if (res == ValidationResult::Ok)
+					res = rule->Validate(value, m_Serializer, message);
+				if (res == ValidationResult::Ok)
+					continue;
+
 				// если проверка успешна - не формируем описание переменной и продолжаем
-
-				if (res == ValidationResult::Ok) continue;
-
 				std::string verbalValue(fmt::format("\"{}\" : {} = {} {}", ClassName(), ruleVariable.first, originalValue, units.VerbalUnits(value->Units)));
 
 				switch (res)

@@ -630,7 +630,7 @@ bool CDynaModel::OscillationsDecayed()
 
 SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 {
-	auto Validator = std::make_unique<CSerializerValidatorRules>();
+	auto Validator{ CLoadFlow::LoadFlowParameters::GetValidator() };
 	Validator->AddRule(m_cszProcessDuration, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszFrequencyTimeConstant, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszLRCToShuntVmin, &ValidatorRange01);
@@ -649,15 +649,6 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 	Validator->AddRule(m_cszAdamsDampingAlpha, &ValidatorRange01);
 	Validator->AddRule(m_cszProcessDuration, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszDecayDetectorCycles, &CSerializerValidatorRules::BiggerThanUnity);
-	Validator->AddRule(m_cszLFImbalance, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszLFSeidellIterations, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszLFEnableSwitchIteration, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszLFEnableSwitchIteration, &CSerializerValidatorRules::NonNegative);
-	Validator->AddRule(m_cszLFMaxIterations, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszLFNewtonMaxVoltageStep, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszLFNewtonMaxNodeAngleStep, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszLFNewtonMaxBranchAngleStep, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszLFForceSwitchLambda, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszNewtonMaxNorm, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(m_cszLRCSmoothingRange, &ValidatorRange01);
 	Validator->AddRule(m_cszSecuritySpinReference, &CSerializerValidatorRules::NonNegative);
@@ -672,8 +663,7 @@ SerializerValidatorRulesPtr CDynaModel::Parameters::GetValidator()
 
 SerializerPtr CDynaModel::Parameters::GetSerializer()
 {
-	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
-	Serializer->SetClassName("Parameters");
+	SerializerPtr Serializer{ CLoadFlow::LoadFlowParameters::GetSerializer() };
 	//Serializer->AddEnumProperty(m_cszIntegrationMethod, new CSerializerAdapterEnum<eItegrationMethod>(IntegrationMethod_, m_cszIntegrationMethodNames));
 	Serializer->AddProperty(m_cszFrequencyTimeConstant, m_dFrequencyTimeConstant, eVARUNITS::VARUNIT_SECONDS);
 	Serializer->AddProperty(m_cszLRCToShuntVmin, m_dLRCToShuntVmin, eVARUNITS::VARUNIT_PU);
@@ -716,6 +706,8 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddProperty(cszZeroCrossingTolerance, ZeroCrossingTolerance_);
 	Serializer->AddProperty(cszUseCOI, UseCOI_);
 	Serializer->AddProperty(cszShowAbsoluteAngles, ShowAbsoluteAngles_);
+	Serializer->AddProperty(m_cszNewtonMaxNorm, m_dNewtonMaxNorm);
+	Serializer->AddProperty(m_cszLRCSmoothingRange, m_dLRCSmoothingRange);
 
 	Serializer->AddEnumProperty(cszBusFrequencyEstimation_,
 		new CSerializerAdapterEnum<eBusFrequencyEstimation>(BusFrequencyEstimation_, cszBusFrequencyEstimationTypeNames_));
@@ -740,32 +732,6 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 
 	Serializer->AddEnumProperty(m_cszGeneratorLessLRC,
 		new CSerializerAdapterEnum<GeneratorLessLRC>(m_eGeneratorLessLRC, m_cszGeneratorLessLRCNames));
-
-	// расчет УР
-
-	Serializer->AddProperty(m_cszLFImbalance, Imb);
-	Serializer->AddProperty(m_cszLFFlat, Flat);
-
-	Serializer->AddEnumProperty(m_cszLFStartup,
-		new CSerializerAdapterEnum<CLoadFlow::eLoadFlowStartupMethod>(Startup, m_cszLFStartupNames));
-		
-	Serializer->AddProperty(m_cszLFSeidellStep, SeidellStep);
-	Serializer->AddProperty(m_cszLFSeidellIterations, SeidellIterations);
-	Serializer->AddProperty(m_cszLFEnableSwitchIteration, EnableSwitchIteration);
-	Serializer->AddProperty(m_cszLFMaxIterations, MaxIterations);
-	Serializer->AddProperty(m_cszLFNewtonMaxVoltageStep, VoltageNewtonStep);
-	Serializer->AddProperty(m_cszLFNewtonMaxNodeAngleStep, NodeAngleNewtonStep);
-	Serializer->AddProperty(m_cszLFNewtonMaxBranchAngleStep, BranchAngleNewtonStep);
-	Serializer->AddProperty(m_cszLFForceSwitchLambda, ForceSwitchLambda);
-	Serializer->AddEnumProperty(m_cszLFFormulation, 
-		new CSerializerAdapterEnum<CLoadFlow::eLoadFlowFormulation>(LFFormulation, m_cszLFFormulationTypeNames));
-	Serializer->AddProperty(m_cszLFAllowNegativeLRC, AllowNegativeLRC);
-	Serializer->AddProperty(m_cszLFLRCMinSlope, LRCMinSlope);
-	Serializer->AddProperty(m_cszLFLRCMaxSlope, LRCMaxSlope);
-	Serializer->AddProperty(m_cszLRCSmoothingRange, m_dLRCSmoothingRange);
-	Serializer->AddProperty(m_cszNewtonMaxNorm, m_dNewtonMaxNorm);
-	Serializer->AddProperty(m_cszMaxPVPQSwitches, MaxPVPQSwitches);
-	Serializer->AddProperty(m_cszPVPQSwitchPerIt, PVPQSwitchPerIt);
 
 	return Serializer;
 }
