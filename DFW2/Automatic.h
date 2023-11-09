@@ -26,7 +26,7 @@ namespace DFW2
 			m_strObjectKey(ObjectKey),
 			m_strObjectProp(ObjectProp) { }
 
-		CAutoModelLink(const CAutoModelLink&& other) :
+		CAutoModelLink(CAutoModelLink&& other) :
 			m_strObjectClass(std::move(other.m_strObjectClass)),
 			m_strObjectKey(std::move(other.m_strObjectKey)),
 			m_strObjectProp(std::move(other.m_strObjectProp)) {}

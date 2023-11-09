@@ -81,8 +81,7 @@ bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, doubl
 	// но мы уводим его на начало расчета
 	Time = (std::max)(Time, 0.0);
 	CStateObjectIdToTime newObject(pDelayObject, Time);
-	auto it{ StateEvents_.find(pDelayObject) };
-	if (it == StateEvents_.end())
+	if (auto it{ StateEvents_.find(pDelayObject) }; it == StateEvents_.end())
 	{
 		StateEvents_.insert(newObject);
 		AddEvent(Time, std::make_unique<CModelActionState>(pDelayObject));
@@ -143,19 +142,20 @@ void CDiscontinuities::PassTime(double Time)
 	Time = (std::max)(Time, 0.0);
 	if (!pDynaModel_->IsInDiscontinuityMode())
 	{
-		auto itEvent{ StaticEvent_.lower_bound(CStaticEvent(Time)) };
-		if (itEvent != StaticEvent_.end())
-		{
-			if (itEvent != StaticEvent_.begin())
+		// для поиска используем заранее созданный CStaticEventSearch
+		// вместо создания CStaticEvent для каждого поиска
+		auto itEvent{ StaticEvent_.lower_bound(TimeSearch_.Time(Time)) };
+		if (itEvent != StaticEvent_.end() && itEvent != StaticEvent_.begin())
 				StaticEvent_.erase(StaticEvent_.begin(), itEvent);
-		}
 	}
 }
 
 size_t CDiscontinuities::EventsLeft(double Time) const 
 { 
 	// считаем количество статических событий и событий состояния со временем, превышающим заденное 
-	return std::distance(std::upper_bound(StaticEvent_.begin(), StaticEvent_.end(), CStaticEvent(Time)), StaticEvent_.end()) + 
+	// для поиска используем заранее созданный CStaticEventSearch
+	// вместо создания CStaticEvent для каждого поиска
+	return std::distance(std::upper_bound(StaticEvent_.begin(), StaticEvent_.end(), TimeSearch_.Time(Time)), StaticEvent_.end()) +
 		std::count_if(StateEvents_.begin(), StateEvents_.end(), [Time](const auto& evt) {
 			return evt.Time() > Time;
 			});

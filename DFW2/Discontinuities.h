@@ -59,7 +59,6 @@ namespace DFW2
 
 	class CModelActionStop : public CModelAction
 	{
-		double Time_;
 	public:
 		CModelActionStop();
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) override;
@@ -267,6 +266,20 @@ namespace DFW2
 		}
 	};
 
+	//! Класс для подстановки в качестве аргумента для поиска в сете
+	class CStaticEventSearch : public CStaticEvent
+	{
+	public:
+		CStaticEventSearch() : CStaticEvent(0.0) {}
+		//! Возвращает CStaticEvent с заданным времением
+		const CStaticEventSearch& Time(double Time)
+		{
+			Time_ = Time;
+			return *this;
+		}
+	};
+
+
 	class CStateObjectIdToTime
 	{
 		CDiscreteDelay* pDelayObject_;
@@ -291,6 +304,11 @@ namespace DFW2
 		CDynaModel *pDynaModel_;
 		STATICEVENTSET StaticEvent_;
 		STATEEVENTSET StateEvents_;
+		// Вместо создания для поиска CStaticEvent() 
+		// используем заранее созданный CStativEventSearch
+		// которому для поиска задается время
+		// для вызова из const-функция он mutable
+		mutable CStaticEventSearch TimeSearch_;
 	public:
 		CDiscontinuities(CDynaModel* pDynaModel) : pDynaModel_(pDynaModel) {}
 		virtual ~CDiscontinuities() = default;
