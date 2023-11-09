@@ -47,12 +47,15 @@ namespace DFW2
 		eDFW2_ACTION_TYPE Type_;
 	public:
 		CModelAction(eDFW2_ACTION_TYPE Type) : Type_(Type) {}
+		virtual ~CModelAction() = default;
 		eDFW2_ACTION_TYPE Type() { return Type_;  }
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel) { return eDFW2_ACTION_STATE::AS_INACTIVE; }
 		virtual eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) { return Do(pDynaModel,0); }
 		void Log(CDynaModel* pDynaModel, std::string_view message);
 		static bool isfinite(const cplx& value) { return std::isfinite(value.real()) && std::isfinite(value.imag()); }
 	};
+
+	using ModelActionT = std::unique_ptr<CModelAction>;
 
 	class CModelActionStop : public CModelAction
 	{
@@ -242,7 +245,7 @@ namespace DFW2
 		virtual eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value);
 	};
 
-	using MODELACTIONLIST =  std::list<CModelAction*>;
+	using MODELACTIONLIST = std::list<ModelActionT>;
 
 	class CStaticEvent
 	{
@@ -250,9 +253,9 @@ namespace DFW2
 		double Time_;
 		mutable MODELACTIONLIST Actions_;
 	public:
-		CStaticEvent(double Time);
-		virtual ~CStaticEvent();
-		bool AddAction(CModelAction* Action) const;
+		CStaticEvent(double Time) : Time_(Time) {}
+		virtual ~CStaticEvent() = default;
+		bool AddAction(ModelActionT&& Action) const;
 		double Time() const { return Time_; }
 		ptrdiff_t ActionsCount() const { return Actions_.size(); }
 		bool RemoveStateAction(CDiscreteDelay *pDelayObject) const;
@@ -289,9 +292,9 @@ namespace DFW2
 		STATICEVENTSET StaticEvent_;
 		STATEEVENTSET StateEvents_;
 	public:
-		CDiscontinuities(CDynaModel *pDynaModel);
+		CDiscontinuities(CDynaModel* pDynaModel) : pDynaModel_(pDynaModel) {}
 		virtual ~CDiscontinuities() = default;
-		bool AddEvent(double Time, CModelAction* Action);
+		bool AddEvent(double Time, ModelActionT&& Action);
 		bool SetStateDiscontinuity(CDiscreteDelay *pDelayObject, double Time);
 		bool RemoveStateDiscontinuity(CDiscreteDelay *pDelayObject);
 		bool CheckStateDiscontinuity(CDiscreteDelay *pDelayObject);

@@ -75,7 +75,7 @@ namespace DFW2
 	class CAutomaticAction : public CAutomaticItem, public CAutoModelLink
 	{
 	protected:
-		std::unique_ptr<CModelAction> m_pAction;
+		ModelActionT m_pAction;
 		const double* m_pValue = nullptr;
 	public:
 

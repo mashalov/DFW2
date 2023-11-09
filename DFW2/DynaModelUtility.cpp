@@ -1014,7 +1014,7 @@ bool CDynaModel::RunTest()
 	PreInitDevices();
 	InitDevices();
 	EstimateMatrix();
-	m_Discontinuities.AddEvent(100.0, new CModelActionStop());
+	m_Discontinuities.AddEvent(100.0, std::make_unique<CModelActionStop>());
 	m_Discontinuities.Init();
 
 	InitEquations();

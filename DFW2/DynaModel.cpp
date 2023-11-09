@@ -228,13 +228,14 @@ bool CDynaModel::RunTransient()
 		m_Parameters.Imb = 0.05 * Atol();
 		//m_Parameters.DerLagTolerance_ = 10.0;
 
-		PrecomputeConstants();
-
 		// валидируем параметры расчета до валидации параметров модели
-		CSerializerValidator ParametersValidator(this, m_Parameters.GetSerializer(), m_Parameters.GetValidator());
-		eDEVICEFUNCTIONSTATUS Status{ ParametersValidator.Validate() };
-		if (!CDevice::IsFunctionStatusOK(Status))
-			throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+		if (CSerializerValidator ParametersValidator(this, 
+			m_Parameters.GetSerializer(), 
+			m_Parameters.GetValidator()); 
+			!CDevice::IsFunctionStatusOK(ParametersValidator.Validate()))
+				throw dfw2error(CDFW2Messages::m_cszWrongSourceData);
+
+		PrecomputeConstants();
 
 		// если в параметрах задан BDF для дифуров, отключаем
 		// подавление рингинга
@@ -276,11 +277,11 @@ bool CDynaModel::RunTransient()
 		// Расчет может завалиться внутри цикла, например из-за
 		// сингулярной матрицы, поэтому контролируем
 		// была ли начата запись результатов. Если что-то записали - нужно завершить
-		bool bResultsNeedToBeFinished = false;
+		bool bResultsNeedToBeFinished{ false };
 
 		if (bRes)
 		{
-			m_Discontinuities.AddEvent(m_Parameters.m_dProcessDuration, new CModelActionStop());
+			m_Discontinuities.AddEvent(m_Parameters.m_dProcessDuration, std::make_unique<CModelActionStop>());
 
 	#ifdef SMZU
 

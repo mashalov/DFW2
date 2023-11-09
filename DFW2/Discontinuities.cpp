@@ -13,45 +13,24 @@ void CModelAction::Log(CDynaModel* pDynaModel, std::string_view message)
 	));
 }
 
-
-
-CStaticEvent::~CStaticEvent()
-{
-	for (auto&& it : Actions_)
-		delete it;
-}
-
-CDiscontinuities::CDiscontinuities(CDynaModel *pDynaModel) : pDynaModel_(pDynaModel)
-{
-}
-
-CStaticEvent::CStaticEvent(double Time) : Time_(Time)
-{
-	
-}
-
-
-bool CStaticEvent::AddAction(CModelAction* Action) const
+bool CStaticEvent::AddAction(ModelActionT&& Action) const
 {
 	bool bRes{ true };
-	Actions_.push_back(Action);
+	Actions_.emplace_back(std::move(Action));
 	return bRes;
 }
 
 bool CStaticEvent::RemoveStateAction(CDiscreteDelay *pDelayObject) const
 {
 	bool bRes{ false };
-	auto itFound{ Actions_.end() };
-	for (auto it = Actions_.begin(); it != Actions_.end(); it++)
-		if ((*it)->Type() == eDFW2_ACTION_TYPE::AT_STATE)
+	auto itFound{ std::find_if(Actions_.begin(),
+		Actions_.end(),
+		[&pDelayObject](const ModelActionT& Action) -> bool
 		{
-			if (static_cast<CModelActionState*>(*it)->GetDelayObject() == pDelayObject)
-			{
-				delete *it;
-				itFound = it;
-				break;
-			}
-		}
+			return Action->Type() == eDFW2_ACTION_TYPE::AT_STATE && 
+				static_cast<CModelActionState*>(Action.get())->GetDelayObject() == pDelayObject;
+		}) };
+
 	if (itFound != Actions_.end())
 		Actions_.erase(itFound);
 	return bRes;
@@ -66,7 +45,15 @@ eDFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 	// во временный, итерации ведем по временному, а возможность удалять 
 	// даем из основного списка ивентов
 
-	MODELACTIONLIST tempList{ Actions_ };
+	std::list<CModelAction*> tempList;
+
+	std::transform(Actions_.begin(),
+		Actions_.end(), 
+		std::back_inserter(tempList), 
+		[](const ModelActionT& Action) -> CModelAction*
+		{ 
+			return Action.get(); 
+		});
 
 	for (auto&& it : tempList)
 	{
@@ -77,14 +64,13 @@ eDFW2_ACTION_STATE CStaticEvent::DoActions(CDynaModel *pDynaModel) const
 	return State;
 }
 
-bool CDiscontinuities::AddEvent(double Time, CModelAction* Action)
+bool CDiscontinuities::AddEvent(double Time, ModelActionT&& Action)
 {
 	bool bRes{ true };
 	// событие может добавляться в отрицательное время,
 	// но мы уводим его на начало расчета
-	CStaticEvent newEvent((std::max)(Time, 0.0));
-	auto checkInsert{ StaticEvent_.insert(newEvent) };
-	checkInsert.first->AddAction(Action);
+	auto checkInsert{ StaticEvent_.emplace((std::max)(Time, 0.0)) };
+	checkInsert.first->AddAction(std::move(Action));
 	return bRes;
 }
 
@@ -99,12 +85,12 @@ bool CDiscontinuities::SetStateDiscontinuity(CDiscreteDelay *pDelayObject, doubl
 	if (it == StateEvents_.end())
 	{
 		StateEvents_.insert(newObject);
-		AddEvent(Time, new CModelActionState(pDelayObject));
+		AddEvent(Time, std::make_unique<CModelActionState>(pDelayObject));
 	}
 	else
 	{
 		RemoveStateDiscontinuity(pDelayObject);
-		AddEvent(Time, new CModelActionState(pDelayObject));
+		AddEvent(Time, std::make_unique<CModelActionState>(pDelayObject));
 		StateEvents_.insert(pDelayObject);
 	}
 	return bRes;
