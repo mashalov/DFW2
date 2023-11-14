@@ -261,11 +261,11 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("e:\\downloads\\starters_with_formulas\\mdp_debug_1_19"); 
 	//LoadFile("e:\\downloads\\starters_with_formulas\\k_33_0_48312_changed");
 	//LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00009");
-	LoadFile("e:\\downloads\\тестирование_4_19_006499_109\\тестирование_4_19_006499_109.os");
+	//LoadFile("e:\\downloads\\тестирование_4_19_006499_109\\тестирование_4_19_006499_109.os");
 	//
-	/*LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
+	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
 	m_spRastr->NewFile(dfwPath.c_str()); 
-	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.scn", scnPath.c_str());*/
+	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.scn", scnPath.c_str());
 
 	//LoadFile("e:/downloads/ПРМ Московское РДУ/result.os");
 	// 
@@ -465,17 +465,17 @@ void CRastrImport::GetData(CDynaModel& Network)
 		.AddFieldSynonyms(CSerializerBase::m_cszType, "tip")
 		.AddFieldSynonyms("Placement", "Pr_vikl");
 
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameSVC, "USHR")
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameSVC, "DFWFACTS")
 		.AddFieldSynonyms("Kgen", "")
 		.AddFieldSynonyms(CDynaPowerInjector::m_cszP, "")
-		.AddFieldSynonyms(CDynaPowerInjector::m_cszQ, "Qr")
-		.AddFieldSynonyms(CDynaPowerInjector::m_cszQmin, "Min")
-		.AddFieldSynonyms(CDynaPowerInjector::m_cszQmax, "Max")
-		.AddFieldSynonyms(CDynaPowerInjector::m_cszQnom, CDynaPowerInjector::m_cszSnom)
-		.AddFieldSynonyms(CDynaPowerInjector::cszVref_, "Ref1")
-		.AddFieldSynonyms(CDynaSVCDEC::cszDroop_, "Kct");
+		.AddFieldSynonyms(CDynaPowerInjector::m_cszQ, "Qout")
+		//.AddFieldSynonyms(CDynaPowerInjector::m_cszQmin, "Min")
+		//.AddFieldSynonyms(CDynaPowerInjector::m_cszQmax, "Max")
+		//.AddFieldSynonyms(CDynaPowerInjector::m_cszQnom, CDynaPowerInjector::m_cszSnom)
+		//.AddFieldSynonyms(CDynaPowerInjector::cszVref_, "Ref1")
+		.AddFieldSynonyms(CDynaSVCDEC::cszDroop_, "XSL");
 
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameSVCDEC, "USHR");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameSVCDEC, "DFWFACTS");
 
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMotion, "Generator");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator1C, "Generator");
@@ -489,6 +489,107 @@ void CRastrImport::GetData(CDynaModel& Network)
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameDECMustang, "Forcer");
 	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
 
+	ITablePtr VGSVCTable{ spTables->Item(L"USHR") };
+	ITablePtr SVCTable{ spTables->Item(L"DFWFACTS") };
+	IColsPtr VGSVCTableCols{ VGSVCTable->Cols };
+	IColsPtr SVCTableCols{ SVCTable->Cols };
+
+	IColPtr VGSVCId{ VGSVCTableCols->Item(L"Id") };
+	IColPtr VGSVCName{ VGSVCTableCols->Item(L"Name") };
+	IColPtr VGSVCSta{ VGSVCTableCols->Item(L"sta") };
+	IColPtr VGSVCNodeId{ VGSVCTableCols->Item(L"NodeId") };
+	IColPtr VGSVCQnom{ VGSVCTableCols->Item(L"Snom") };
+	IColPtr VGSVCUnom{ VGSVCTableCols->Item(L"Unom") };
+	IColPtr VGSVCType{ VGSVCTableCols->Item(L"Type") };
+	IColPtr VGSVCTypeRef1{ VGSVCTableCols->Item(L"tref1") };
+	IColPtr VGSVCRef1{ VGSVCTableCols->Item(L"Ref1") };
+	IColPtr VGSVCRangeType{ VGSVCTableCols->Item(L"izm") };
+	IColPtr VGSVCMin{ VGSVCTableCols->Item(L"Min") };
+	IColPtr VGSVCMax{ VGSVCTableCols->Item(L"Max") };
+	IColPtr VGSVCKct{ VGSVCTableCols->Item(L"Kct") };
+	IColPtr VGSVCMode{ VGSVCTableCols->Item(L"mode") };
+	IColPtr VGSVCQ{ VGSVCTableCols->Item(L"Qr") };
+
+	IColPtr SVCId{ SVCTableCols->Item(L"Id") };
+	IColPtr SVCName{ SVCTableCols->Item(L"Name") };
+	IColPtr SVCSta{ SVCTableCols->Item(L"sta") };
+	IColPtr SVCModelType{ SVCTableCols->Item(L"ModelType") };
+	IColPtr SVCNodeId{ SVCTableCols->Item(L"NodeId") };
+	IColPtr SVCQnom{ SVCTableCols->Item(L"Qnom") };
+	IColPtr SVCUnom{ SVCTableCols->Item(L"Unom") };
+	IColPtr SVCQmin{ SVCTableCols->Item(L"Qmin") };
+	IColPtr SVCQmax{ SVCTableCols->Item(L"Qmax") };
+	IColPtr SVCXSL{ SVCTableCols->Item(L"XSL") };
+	IColPtr SVCEnfSta{ SVCTableCols->Item(L"EnfSta") };
+	IColPtr SVCKienf{ SVCTableCols->Item(L"Kienf") };
+	IColPtr SVCKidef{ SVCTableCols->Item(L"Kidef") };
+	IColPtr SVCKenf{ SVCTableCols->Item(L"Kenf") };
+	IColPtr SVCKdef{ SVCTableCols->Item(L"Kdef") };
+	IColPtr SVCTcsmooth{ SVCTableCols->Item(L"Tcsmooth") };
+	IColPtr SVCTfir{ SVCTableCols->Item(L"Tfir") };
+	IColPtr SVCVref{ SVCTableCols->Item(L"Vref") };
+
+	for (long index{ 0 }; index < VGSVCTable->GetSize(); index++)
+	{
+		const long Id{ VGSVCId->GetZ(index).lVal };
+		// пропускаем все кроме УШР
+		if (VGSVCType->GetZ(index).lVal != 0)
+			continue;
+		// пропускаем все кроме регуляторов напряжения
+		if(VGSVCTypeRef1->GetZ(index).lVal != 0)
+			continue;
+
+		double Qmin{ VGSVCMin->GetZN(index) }, Qmax{ VGSVCMax->GetZN(index) };
+		const double Qnom{ VGSVCQnom->GetZN(index).dblVal };
+		const double Unom{ VGSVCUnom->GetZN(index) };
+		switch (VGSVCRangeType->GetZ(index).lVal)
+		{
+		case 0: // Q
+			break;
+		case 1: // %Qnom
+			Qmin *= Qnom * 1e-2; Qmax *= Qnom * 1e-2;
+			break;
+		case 2: // B
+			Qmin *= Unom * Unom * 1e-6; Qmax *= Unom * Unom * 1e-6;
+			break;
+		case 3: // X
+			Qmin = Unom * Unom / Qmin; Qmax = Unom * Unom / Qmax;
+			break;
+		case 4: // I
+			Qmin *= Unom * 1e-3 * Consts::sqrt3;
+			Qmax *= Unom * 1e-3 * Consts::sqrt3;
+			break;
+		default:
+			continue;
+		}
+
+		SVCTable->SetSel(_bstr_t(stringutils::utf8_decode(fmt::format("Id={}", Id)).c_str()));
+		long SVCindex{ SVCTable->GetFindNextSel(-1) };
+		if (SVCindex < 0)
+		{
+			SVCindex = SVCTable->GetSize();
+			SVCTable->AddRow();
+			SVCModelType->PutZ(SVCindex, 2);
+		}
+		SVCId->PutZS(SVCindex, VGSVCId->GetZS(index));
+		SVCName->PutZS(SVCindex, VGSVCName->GetZS(index));
+		SVCSta->PutZN(SVCindex, VGSVCSta->GetZN(index));
+		SVCQnom->PutZN(SVCindex, Qnom);
+		SVCUnom->PutZN(SVCindex, Unom);
+		SVCQmin->PutZN(SVCindex, Qmin);
+		SVCQmax->PutZN(SVCindex, Qmax);
+		SVCXSL->PutZN(SVCindex, VGSVCKct->GetZN(index));
+		SVCVref->PutZN(SVCindex, VGSVCRef1->GetZN(index));
+		SVCNodeId->PutZN(SVCindex, VGSVCNodeId->GetZN(index));
+	}
+
+	for (long index{ 0 }; index < SVCTable->GetSize(); index++)
+	{
+		const long Id{ SVCId->GetZ(index).lVal };
+		VGSVCTable->SetSel(_bstr_t(stringutils::utf8_decode(fmt::format("Id={}", Id)).c_str()));
+		if (const long VGSVCindex{ VGSVCTable->GetFindNextSel(-1) }; VGSVCindex < 0)
+			SVCSta->PutZ(index, true);
+	}
 
 	ReadLRCs(static_cast<CDynaLRCContainer&>(Network.LRCs));
 	ReadTable(Network.Reactors);
@@ -507,7 +608,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
 	//ReadTable(Network.SVCs, "Type=0&tref1=0");
-	ReadTable(Network.SVCDECs, "Type=0&tref1=0");
+	ReadTable(Network.SVCs, "ModelType=2");
+	ReadTable(Network.SVCDECs, "ModelType=5");
 
 	ReadAutomatic(Network);
 
