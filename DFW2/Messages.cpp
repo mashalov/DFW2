@@ -266,3 +266,4 @@ const char* CDFW2Messages::m_cszGeneratorOverspeed = "Генератор \"{}\" 
 const char* CDFW2Messages::m_cszCOMError = "Ошибка COM : {}";
 const char* CDFW2Messages::m_cszDFW2Error = "Ошибка : {}";
 const char* CDFW2Messages::m_cszModelSavedToPath = "Модель сохранена в файл {}";
+const char* CDFW2Messages::m_cszRastrWinSVCModelIsNotSupported = "Модель УШР {} \"{}\" или eё тип регулирования \"{}\" не поддерживается";

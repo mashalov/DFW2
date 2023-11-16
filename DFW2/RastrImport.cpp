@@ -532,16 +532,21 @@ void CRastrImport::GetData(CDynaModel& Network)
 	for (long index{ 0 }; index < VGSVCTable->GetSize(); index++)
 	{
 		const long Id{ VGSVCId->GetZ(index).lVal };
-		// пропускаем все кроме УШР
-		if (VGSVCType->GetZ(index).lVal != 0)
+		const std::string SVCTypeString{ stringutils::utf8_encode(VGSVCType->GetZS(index)) };
+		const std::string SVCTypeRefString{ stringutils::utf8_encode(VGSVCTypeRef1->GetZS(index)) };
+		if (VGSVCType->GetZ(index).lVal != 0 || VGSVCTypeRef1->GetZ(index).lVal != 0)
+		{
+			Network.Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(
+				CDFW2Messages::m_cszRastrWinSVCModelIsNotSupported,
+				Id,
+				SVCTypeString,
+				SVCTypeRefString));
 			continue;
-		// пропускаем все кроме регуляторов напряжения
-		if(VGSVCTypeRef1->GetZ(index).lVal != 0)
-			continue;
+		}
+		
 
 		double Qmin{ VGSVCMin->GetZN(index) }, Qmax{ VGSVCMax->GetZN(index) };
-		const double Qnom{ VGSVCQnom->GetZN(index).dblVal };
-		const double Unom{ VGSVCUnom->GetZN(index) };
+		const double Qnom{ VGSVCQnom->GetZN(index) }, Unom{ VGSVCUnom->GetZN(index) };
 		switch (VGSVCRangeType->GetZ(index).lVal)
 		{
 		case 0: // Q
@@ -607,7 +612,6 @@ void CRastrImport::GetData(CDynaModel& Network)
 	ReadTable(Network.ExcitersMustang);
 	ReadTable(Network.DECsMustang);
 	ReadTable(Network.ExcConMustang);
-	//ReadTable(Network.SVCs, "Type=0&tref1=0");
 	ReadTable(Network.SVCs, "ModelType=2");
 	ReadTable(Network.SVCDECs, "ModelType=5");
 
