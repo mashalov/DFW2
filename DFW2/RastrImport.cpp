@@ -263,9 +263,15 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//LoadFile("D:\\Documents\\Raiden\\ModelDebugFolder\\model-00009");
 	//LoadFile("e:\\downloads\\тестирование_4_19_006499_109\\тестирование_4_19_006499_109.os");
 	//
-	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
+	//LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
+	//m_spRastr->NewFile(dfwPath.c_str()); 
+	//LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.scn", scnPath.c_str());
+
+	LoadFile("E:/Downloads/mdp_debug_1_400014 ошибка", rstPath);
 	m_spRastr->NewFile(dfwPath.c_str()); 
-	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.scn", scnPath.c_str());
+	LoadFile("E:/Downloads/mdp_debug_1_400014 ошибка", scnPath);
+	
+	
 
 	//LoadFile("e:/downloads/ПРМ Московское РДУ/result.os");
 	// 

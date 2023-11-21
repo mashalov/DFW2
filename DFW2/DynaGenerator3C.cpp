@@ -261,24 +261,10 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator3C::UpdateExternalVariables(CDynaModel *pDyn
 
 bool CDynaGenerator3C::CalculatePower()
 {
-	
-	double NodeV{ V };
-	double DeltaGT{ Delta - DeltaV };
-	const double cosDeltaGT{ cos(DeltaGT) };
-	const double sinDeltaGT{ sin(DeltaGT) };
-
-	double sp1 = ZeroGuardSlip(1.0 + s);
-	double sp2 = ZeroGuardSlip(1.0 + Sv);
-
-	double Pairgap = P + (Id*Id + Iq * Iq) * r;
-
-	Vd = -NodeV * sinDeltaGT;
-	Vq = NodeV * cosDeltaGT;
+	GetVdVq();
 	Id = -zsq * (r * (Vd - Edss) + xq2 * (Eqss - Vq));
 	Iq = -zsq * (r * (Vq - Eqss) + xd2 * (Vd - Edss));
-	P = Vd * Id + Vq * Iq;
-	Q = Vd * Iq - Vq * Id;
-
+	GetPQ();
 	return true;
 }
 

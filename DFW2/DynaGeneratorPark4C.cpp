@@ -348,9 +348,7 @@ bool CDynaGeneratorPark4C::CalculatePower()
 {
 	GetVdVq();
 	FromComplex(Id,Iq, GetIdIq());
-	P = Vd * Id + Vq * Iq;
-	Q = Vd * Iq - Vq * Id;
-	IfromDQ();
+	GetPQ();
 	return true;
 }
 

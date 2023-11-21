@@ -20,6 +20,7 @@ namespace DFW2
 		void CalculateDerivatives(CDynaModel* pDynaModel, CDevice::fnDerivative fn) override;
 		void CompareParksParameterCalculation();
 		void GetVdVq();
+		void GetPQ();
 		inline cplx ToRI(const cplx& Value) const
 		{
 			return Value * std::polar(1.0, static_cast<double>(Delta));

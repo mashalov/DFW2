@@ -203,9 +203,7 @@ bool CDynaGenerator1C::CalculatePower()
 	GetVdVq();
 	Id = zsq * (-r * Vd - xq * (Eqs - Vq));
 	Iq = zsq * (r * (Eqs - Vq) - xd1 * Vd);
-	P = Vd * Id + Vq * Iq;
-	Q = Vd * Iq - Vq * Id;
-
+	GetPQ();
 	return true;
 }
 

@@ -776,3 +776,10 @@ void CDynaGeneratorDQBase::GetVdVq()
 	Vd = -dVre * si + dVim * co;
 	Vq =  dVre * co + dVim * si;
 }
+
+void CDynaGeneratorDQBase::GetPQ()
+{
+	P = Vd * Id + Vq * Iq;
+	Q = Vd * Iq - Vq * Id;
+	IfromDQ();
+}
