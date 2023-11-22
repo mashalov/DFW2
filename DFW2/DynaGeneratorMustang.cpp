@@ -158,16 +158,21 @@ void CDynaGeneratorMustang::BuildEquations(CDynaModel *pDynaModel)
 	BuildAngleEquationBlock(pDynaModel);
 }
 
+cplx CDynaGeneratorMustang::GetIdIq() const
+{
+	double sp2{ ZeroGuardSlip(1.0 + Sv) };
+	if (!IsStateOn())
+		sp2 = 1.0;
+	const double id{ -zsq * (sp2 * Eqss - Vq) * xq2 };
+	const double iq{ -zsq * (Vd - sp2 * Edss) * xd2 };
+	return { id, iq };
+}
 
 void CDynaGeneratorMustang::BuildRightHand(CDynaModel *pDynaModel)
 {
-	double sp1{ ZeroGuardSlip(1.0 + s) }, sp2{ ZeroGuardSlip(1.0 + Sv) };
-
-	if (!IsStateOn())
-		sp1 = sp2 = 1.0;
-
-	pDynaModel->SetFunction(Id, Id + zsq * (sp2 * Eqss - Vq) * xq2);
-	pDynaModel->SetFunction(Iq, Iq + zsq * (Vd - sp2 * Edss) * xd2);
+	const cplx I{ GetIdIq() };
+	pDynaModel->SetFunction(Id, Id - I.real());
+	pDynaModel->SetFunction(Iq, Iq - I.imag());
 	pDynaModel->SetFunction(Eq, Eq - Eqss + Id * xd_xd2_);
 	SetFunctionsDiff(pDynaModel);
 	// строит уравнения для Vd, Vq, Ire, Iim
@@ -229,12 +234,8 @@ const cplx& CDynaGeneratorMustang::CalculateEgen()
 
 bool CDynaGeneratorMustang::CalculatePower()
 {
-	const double sp1{ ZeroGuardSlip(1.0 + s) };
-	const double sp2{ ZeroGuardSlip(1.0 + Sv) };
-
 	GetVdVq();
-	Id = -zsq * (sp2 * Eqss - Vq) * xq2;
-	Iq = -zsq * (Vd - sp2 * Edss) * xd2;
+	FromComplex(Id, Iq, GetIdIq());
 	GetPQ();
 	return true;
 }
