@@ -101,6 +101,7 @@ namespace timeseries
 	template<typename T, typename V>
 	class TimeSeriesData : protected TimeSeriesDataT<T, V>
 	{
+		using DataT = typename TimeSeriesDataT<T, V>;
 	public:
 		class OptionsT
 		{
@@ -262,7 +263,7 @@ namespace timeseries
 
 			double MultiValue{ 0 };
 
-			for (auto TimePoint = TimeSeriesData::begin(); TimePoint != TimeSeriesData::end(); TimePoint++)
+			for (auto TimePoint = DataT::begin(); TimePoint != DataT::end(); TimePoint++)
 			{
 				switch (options.MultiValuePoint())
 				{

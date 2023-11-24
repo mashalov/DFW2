@@ -179,7 +179,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions);_CONSOLE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions);_CONSOLE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC;_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeTypeInfo>
@@ -198,7 +198,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions);_CONSOLE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;_DEBUG;%(PreprocessorDefinitions);_CONSOLE;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC;_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <RuntimeTypeInfo>
@@ -259,7 +259,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC;_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
@@ -276,7 +276,7 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);;_SILENCE_CXX17_CODECVT_HEADER_DEPRECATION_WARNING;ANTLR4CPP_STATIC;_SILENCE_STDEXT_ARR_ITERS_DEPRECATION_WARNING;</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <LanguageStandard>stdcpplatest</LanguageStandard>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
