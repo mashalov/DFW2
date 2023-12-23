@@ -38,6 +38,8 @@ namespace DFW2
 
 		VariableIndexRefVec& GetVariables(VariableIndexRefVec& ChildVec) override;
 		double* GetVariablePtr(ptrdiff_t nVarIndex) override;
+		bool CalculatePower() override;
+		cplx Igen(ptrdiff_t nIteration) override;
 
 		eDEVICEFUNCTIONSTATUS ProcessDiscontinuity(CDynaModel* pDynaModel) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);

@@ -34,8 +34,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::PreInit(CDynaModel* pDynaModel)
 		if(Tdo1 > Tdo2)
 			xd1 = (xd * (Tds - Tdo2 + Tdss) - xd2 * Tdo2) / (Tdo1 - Tdo2);
 	}
-
 	Zgen_ = { 0, 0.5 * (xd2 + xq2) };
+	Ygen_ = 1.0 / Zgen_;
 
 	xd2_xq2_ = xd2 - xq2;
 	xd_xd1_ = xd - xd1;
@@ -227,7 +227,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMustang::UpdateExternalVariables(CDynaModel 
 
 const cplx& CDynaGeneratorMustang::CalculateEgen()
 {
-	const double xgen{ Zgen().imag() };
+	const double xgen{ Zgen_.imag() };
 	const double sp2{ ZeroGuardSlip(1.0 + Sv) };
 	return Egen_ = ToRI({ sp2 * Eqss - Id * (xgen - xd2), sp2 * Edss + Iq * (xgen - xq2) });
 }

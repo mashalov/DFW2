@@ -165,8 +165,8 @@ void CDynaNodeFreqDivider::BuildEquations(CDynaModel* pDynaModel)
 		while (pGenLink->InMatrix(pGen) && pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
 		{
 			const CDynaGeneratorMotion* pSlipGen{ static_cast<const CDynaGeneratorMotion*>(static_cast<const CDynaPowerInjector*>(pGen)) };
-			const double Bg{ 1.0 / pSlipGen->Zgen().imag() };
-			pDynaModel->SetElement(S, pSlipGen->s, -Bg);
+			const double Bg{ pSlipGen->Ygen().imag() };
+			pDynaModel->SetElement(S, pSlipGen->s, Bg);
 		}
 
 
@@ -209,8 +209,8 @@ void CDynaNodeFreqDivider::BuildRightHand(CDynaModel* pDynaModel)
 	while (pGenLink->InMatrix(pGen) && pGen->IsKindOfType(DEVTYPE_GEN_MOTION))
 	{
 		const CDynaGeneratorMotion* pSlipGen{ static_cast<const CDynaGeneratorMotion*>(static_cast<const CDynaPowerInjector*>(pGen)) };
-		const double Bg{ 1.0 / pSlipGen->Zgen().imag() };
-		dS -= (static_cast<double>(pSlipGen->s)  + pSyncZone->S) * Bg;
+		const double Bg{ pSlipGen->Ygen().imag() };
+		dS += (static_cast<double>(pSlipGen->s) + pSyncZone->S) * Bg;
 	}
 
 	for (VirtualBranch* pV = pVirtualBranchBegin_; pV < pVirtualBranchEnd_; pV++)
@@ -240,7 +240,8 @@ void CDynaNodeFreqDivider::CalculateShuntParts()
 	while (pGenLink->InMatrix(pGen) && pGen->IsKindOfType(DEVTYPE_GEN_INFPOWER))
 	{
 		const CDynaGeneratorInfBus* pXGen{ static_cast<const CDynaGeneratorInfBus*>(static_cast<const CDynaPowerInjector*>(pGen)) };
-		BGenSum_ += 1.0 / pXGen->Zgen().imag();
+		//BGenSum_ += 1.0 / pXGen->Zgen().imag();
+		BGenSum_ -= pXGen->Ygen().imag();
 	}
 
 	// сумма проводимостей генераторов и проводимостей ветвей

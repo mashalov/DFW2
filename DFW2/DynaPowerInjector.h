@@ -14,7 +14,7 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS Init(CDynaModel* pDynaModel) override;
 		virtual eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel);
 		VariableIndexExternal V, DeltaV, Vre, Vim, Sv, Scoi, Dcoi;
-		cplx Ynorton_;
+		cplx Ynorton_, Ygen_, Zgen_;
 	public:
 		enum VARS
 		{
@@ -50,6 +50,9 @@ namespace DFW2
 		virtual bool CalculatePower();
 		// комплекс шунта Нортона в узле подключения	
 		virtual const cplx& Ynorton() const { return Ynorton_; }
+		inline const cplx& Ygen() const { return Ygen_; }
+		inline const cplx& Zgen() const { return Zgen_; }
+		virtual cplx Igen(ptrdiff_t nIteration) { return 0.0; }
 
 		eDEVICEFUNCTIONSTATUS SetState(eDEVICESTATE eState, eDEVICESTATECAUSE eStateCause, CDevice* pCauseDevice = nullptr) override;
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;

@@ -19,6 +19,19 @@ double* CDynaSVCBase::GetVariablePtr(ptrdiff_t nVarIndex)
 	return p;
 }
 
+bool CDynaSVCBase::CalculatePower()
+{
+	FromComplex(P, Q, V * V * cplx(0.0, Bout * 1e-6));
+	return true;
+}
+
+cplx CDynaSVCBase::Igen(ptrdiff_t nIteration)
+{
+	Ire = -Vim * 1e-6 * Bout;
+	Iim = Vre * 1e-6 * Bout;
+	return cplx{ Ire, Iim };
+}
+
 double* CDynaSVCDEC::GetVariablePtr(ptrdiff_t nVarIndex)
 {
 	double* p{ CDynaSVCBase::GetVariablePtr(nVarIndex) };

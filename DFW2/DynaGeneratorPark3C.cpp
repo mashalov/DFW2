@@ -67,6 +67,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark3C::InitModel(CDynaModel* pDynaModel)
 	// наверное нужно учитывать omega = (1+s)
 	// при расчете дискретного изменения ?
 	Zgen_ = { r , 0.5 * (lq2 + ld2) };
+	Ygen_ = 1.0 / Zgen_;
 	
 	return Status;
 }
@@ -375,7 +376,7 @@ cplx CDynaGeneratorPark3C::GetEMF()
 
 const cplx& CDynaGeneratorPark3C::CalculateEgen()
 {
-	const double xgen{ Zgen().imag() };
+	const double xgen{ Zgen_.imag() };
 	const cplx emf{ ToDQ(GetEMF()) };
 	const double omega{ 1.0 + Sv };
 	return Egen_ = ToRI({ emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen) });

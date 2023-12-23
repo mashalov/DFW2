@@ -83,8 +83,9 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBus::PreInit(CDynaModel* pDynaModel)
 		xd1 /= Kgen;
 
 	Zgen_ = { 0 , xd1 };
+	Ygen_ = 1.0 / Zgen_;
 	// шунт Нортона для ШБМ
-	Ynorton_ = 1.0 / Zgen_;
+	Ynorton_ = Ygen_;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -125,11 +126,6 @@ bool CDynaGeneratorInfBusBase::SetUpDelta()
 
 	FromComplex(Ire, Iim, i);
 	return bRes;
-}
-
-const cplx& CDynaGeneratorInfBusBase::Zgen() const
-{
-	return Zgen_;
 }
 
 cplx CDynaGeneratorInfBusBase::Igen(ptrdiff_t nIteration)

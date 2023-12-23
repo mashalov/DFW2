@@ -58,8 +58,8 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorPark4C::InitModel(CDynaModel* pDynaModel)
 			break;
 		}
 	}
-
 	Zgen_ = { r , 0.5 * (lq2 + ld2) };
+	Ygen_ = 1.0 / Zgen_;
 	
 	return Status;
 }
@@ -360,7 +360,7 @@ cplx CDynaGeneratorPark4C::GetEMF()
 
 const cplx& CDynaGeneratorPark4C::CalculateEgen()
 {
-	const double xgen{ Zgen().imag() };
+	const double xgen{ Zgen_.imag() };
 	const cplx emf{ ToDQ(GetEMF()) };
 	const double omega{ ZeroGuardSlip(1.0 + Sv) };
 	return Egen_ = ToRI({ emf.real() - omega * Id * (xgen - ld2),  emf.imag() - omega * Iq * (lq2 - xgen) });

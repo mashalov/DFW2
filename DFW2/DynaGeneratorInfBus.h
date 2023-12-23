@@ -8,7 +8,6 @@ namespace DFW2
 	{
 	protected:
 		bool SetUpDelta();
-		cplx Zgen_;
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 	public:
 		virtual double GetXofEqs() const{ return xd1; }
@@ -17,8 +16,7 @@ namespace DFW2
 		double	r = 0.0;	// активное сопротивление статора
 		using CDynaVoltageSource::CDynaVoltageSource;
 		virtual ~CDynaGeneratorInfBusBase() = default;
-		const cplx& Zgen() const;
-		virtual cplx Igen(ptrdiff_t nIteration);
+		cplx Igen(ptrdiff_t nIteration) override;
 		cplx GetEMF() override { return std::polar((double)Eqs, (double)Delta); }
 		eDEVICEFUNCTIONSTATUS UpdateExternalVariables(CDynaModel *pDynaModel) override;
 		bool CalculatePower() override;

@@ -15,7 +15,7 @@ void CDynaGeneratorDQBase::IfromDQ()
 
 cplx CDynaGeneratorDQBase::Igen(ptrdiff_t nIteration)
 {
-	const cplx YgInt{ 1.0 / Zgen() };
+	const cplx YgInt{ Ygen() };
 
 	if (!nIteration)
 		Egen_ = GetEMF();
@@ -40,6 +40,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 	}
 
 	Zgen_ = { r , 0.5 * (xq + xd1) };
+	Ygen_ = 1.0 / Zgen_;
 	// В генераторах с dq преобразованием нельзя
 	// использовать шунт Нортона, поэтому он обнуляется
 	Ynorton_ = 0.0;

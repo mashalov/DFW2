@@ -844,7 +844,7 @@ void CDynaNodeContainer::LULF()
 		// проходим по узлам вне зависимости от их состояния, параллельно идем по диагонали матрицы
 		for (auto&& it : DevInMatrix)
 		{
-			CDynaNodeBase *pNode = static_cast<CDynaNodeBase*>(it);
+			CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(it) };
 			_ASSERTE(pB < B + nNodeCount * 2);
 
 			/*
@@ -868,7 +868,7 @@ void CDynaNodeContainer::LULF()
 				// Generators
 
 				const CLinkPtrCount* const pLink{ pNode->GetSuperLink(2) };
-				LinkWalker<CDynaVoltageSource> pVsource;
+				LinkWalker<CDynaPowerInjector> pVsource;
 				// проходим по генераторам
 				while (pLink->InMatrix(pVsource))
 				{
@@ -881,15 +881,15 @@ void CDynaNodeContainer::LULF()
 
 					pVsource->CalculatePower();
 
-					if (pVsource->IsKindOfType(DEVTYPE_GEN_INFPOWER))
+					if (pVsource->IsKindOfType(DEVTYPE_POWER_INJECTOR))
 					{
-						const auto& pGen{ static_cast<CDynaGeneratorInfBus*>(static_cast<CDynaVoltageSource*>(pVsource)) };
+						const auto& pGen{ static_cast<CDynaPowerInjector*>(pVsource) };
 
 						// в диагональ матрицы добавляем проводимость генератора
 						// и вычитаем шунт Нортона, так как он уже добавлен в диагональ
 						// матрицы. Это работает для генераторов у которых есть Нортон (он
 						// обратен Zgen), и нет Нортона (он равен нулю)
-						Y -= 1.0 / pGen->Zgen() - pGen->Ynorton();
+						Y -= pGen->Ygen() - pGen->Ynorton();
 						I -= pGen->Igen(nIteration);
 
 					}

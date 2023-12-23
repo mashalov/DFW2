@@ -41,8 +41,8 @@ eDEVICEFUNCTIONSTATUS CDynaGenerator2C::PreInit(CDynaModel* pDynaModel)
 		Mj *= Kgen;
 		r /= Kgen;
 	}
-
 	Zgen_ = { 0, 0.5 * (xd1 + xq1) };
+	Ygen_ = 1.0 / Zgen_;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
@@ -164,7 +164,7 @@ cplx CDynaGenerator2C::GetEMF()
 
 const cplx& CDynaGenerator2C::CalculateEgen()
 {
-	const double xgen{ Zgen().imag() };
+	const double xgen{ Zgen_.imag() };
 	return Egen_ = ToRI({ Eqs - Id * (xgen - xd1), Eds + Iq * (xgen - xq1) });
 }
 

@@ -62,10 +62,10 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorMotion::PreInit(CDynaModel* pDynaModel)
 		xq /= Kgen;
 		Mj *= Kgen;
 	}
-
 	Zgen_ = { 0 , xd1 };
+	Ygen_ = 1.0 / Zgen_;
 	// шунт Нортона
-	Ynorton_ = 1.0 / Zgen_;
+	Ynorton_ = Ygen_;
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 }
