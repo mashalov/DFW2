@@ -1,0 +1,117 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{tabularx}
+\usepackage{boldline}
+\usepackage{empheq}
+\usepackage{amssymb}
+%\usepackage[justification=centering]{caption}
+%\usepackage{hyperref}
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+% updated with editorial comments 8/9/2021
+%\usepackage[russian]{babel}
+%\usepackage[utf8]{inputenc}
+%\usepackage{pscyr}
+\usepackage[T2A]{fontenc}
+
+\makeatletter
+\def\endthebibliography{%
+	\def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+	\endlist
+}
+\makeatother
+
+\begin{document}
+	
+\onecolumn
+
+%\title{Raiden. Power System Transient Stability Simulation Software Prototype}
+
+%\author {Eugene Mashalov, Joint Stock Company "Scientific and Technical Center of Unified Power System", Ekaterinburg, Russia}
+
+
+%\markboth{Journal of \LaTeX\ Class Files,~Vol.~14, No.~8, August~2021}%
+%${Shell \MakeLowercase{\textit{et al.}}: A Sample Article Using IEEEtran.cls for IEEE Journals}
+
+%\IEEEpubid{0000--0000/00\$00.00~\copyright~2021 IEEE}
+% Remember, if you use this you must call \IEEEpubidadjcol in the second
+% column for its text to clear the IEEEpubid mark.
+
+%\maketitle
+
+%\begin{abstract}
+%This paper discusses implementation details of the transient stability analysis prototype %software "Raiden", based on the implicit integration scheme. The main advantages of an %implicit integration scheme with combined treatment of differential and algebraic variables %as well as an integration process with discrete event handling are considered. The results %of test simulations and their comparison with existing software are presented.
+%\end{abstract}
+
+%\begin{IEEEkeywords}
+%Transient Stability Analysis, Implicit Integration, Discontinuous DAE
+%\end{IEEEkeywords}
+
+\section{Расчет шунта по остаточному напряжению и R/X}
+Добавим в уравнение баланса тока узла \(i\) проводимость шунта \(y_s\):
+\begin{equation}
+	\label{eqn_current_balance}
+	(y_{ii} + y_s)v_i + \sum_{j}{v_jy_{ij}} = I_i
+\end{equation}
+и рассчитаем его значение из условия:
+\begin{equation}
+ \label{eqn_Us_magnitude}
+ |v_i|=U_s
+\end{equation} 
+полагая, что исходно \(y_s\) задан в форме сопротивления с отношением \(k=R_s/X_s\):
+\begin{equation}
+	\label{eqn_conductance}
+	\begin{split}
+	y_s = \frac{1}{R_s+jX_s}=&\frac{1}{X_s(k+j)}=\frac{k}{X_s(k^2+1)} - \frac{j}{X_s(k^2+1)}=b_s(k-j) \\ b_s =& \frac{1}{X_s(k^2+1)}
+	\end{split}
+\end{equation}
+Примем \(\sum_{j}{v_jy_{ij}}=const\) и \(I_i=const\) и обозначим:
+\begin{equation}
+	\label{eqn_composite_current}
+	I'= I_i - \sum_{j}{v_jy_{ij}}
+\end{equation}
+
+\begin{equation}
+	\label{eqn_implicit_ys}
+	(y_{ii} + y_s)v_i = I'
+\end{equation}
+Перейдем к составляющим:
+
+\begin{equation}
+	\label{eqn_Vre}
+	v_{iRe} = \frac{I'_{Re}(g_{ii}+kb_s) + I'_{Im}(b_{ii}+b_s)}{(b_{ii}+b_s)^2+(g_{ii}+kb_s)^2}
+\end{equation}
+\begin{equation}
+	\label{eqn_Vim}
+	v_{iIm} = \frac{I'_{Im}(g_{ii}+kb_s) - I'_{Re}(b_{ii}+b_s)}{(b_{ii}+b_s)^2+(g_{ii}+kb_s)^2}
+\end{equation}
+
+Используя условие (\ref{eqn_Us_magnitude}) 
+\begin{equation}
+	\label{eqn_Vre_Vim_Abs}
+	v_{iRe}^2+v_{iIm}^2 = U_s^2
+\end{equation}
+и с учетом (\ref{eqn_Vre}), (\ref{eqn_Vim}) получим:
+\begin{equation}
+	\label{eqn_bs1}
+	\frac{I_{Re}^{'2}+I_{Im}^{'2}}{(b_{ii}+b_s)^2+(g_{ii}+kb_s)^2} = U_s^2
+\end{equation}
+\(b_s\) является корнем уравнения:
+\begin{equation}
+	\label{eqn_bs2}
+	b_s^2(k^2+1) + b_s2(kg_{ii}+b_{ii}) - \left(\frac{I_{Re}^{'2}+I_{Im}^{'2}}{U_s^2} - g_{ii}^2 - b_{ii}^2\right)=0
+\end{equation}
+Выбрав \(b_s\) по знаку можно определить \(v_i=v_{iRe}+jv_{iIm}\) и подставить его значение в систему сети, исключив собственно уравнение \(v_i\). Это пока предположение.
+
+\end{document}
+
+

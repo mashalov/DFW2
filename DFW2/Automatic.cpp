@@ -518,6 +518,16 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 				}
 				break;
 			}
+			case 18: // Шунт по остаточному напряжению
+			{
+				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String()) }; pDev)
+				{
+					m_pAction = std::make_unique<CModelActionChangeNodeShuntToUsc>(static_cast<CDynaNode*>(pDev), *m_pValue, 0.0);
+					bRes = true;
+				}
+				break;
+			}
 			default:
 				pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionTypeNotFound, GetVerbalName(), m_nType));
 				break;

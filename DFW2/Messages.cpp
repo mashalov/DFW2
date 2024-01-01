@@ -267,3 +267,7 @@ const char* CDFW2Messages::m_cszCOMError = "Ошибка COM : {}";
 const char* CDFW2Messages::m_cszDFW2Error = "Ошибка : {}";
 const char* CDFW2Messages::m_cszModelSavedToPath = "Модель сохранена в файл {}";
 const char* CDFW2Messages::m_cszRastrWinSVCModelIsNotSupported = "Модель УШР {} \"{}\" или eё тип регулирования \"{}\" не поддерживается";
+const char* CDFW2Messages::m_cszNodeShortCircuitToUsc = "{} - короткое замыкание Uост={}, R/X={}";
+const char* CDFW2Messages::m_cszShortCircuitNodeAlreadyAdded = "{} с КЗ Uост уже добавлен";
+const char* CDFW2Messages::m_cszShortCircuitShuntCalculated = "Для {} c Uост={}, R/X={} рассчитан шунт КЗ {} |V|={} ({} ое)";
+const char* CDFW2Messages::m_cszShortCircuitShunt = "Шунт КЗ {}";

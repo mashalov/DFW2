@@ -251,7 +251,7 @@ namespace DFW2
 		VirtualZeroBranch *pVirtualZeroBranchBegin_, *pVirtualZeroBranchEnd_, *pVirtualZeroBranchParallelsBegin_;
 
 		//! Возвращает range виртуальных ветвей узла
-		CMemRange<VirtualBranch> VirtualBranches()
+		CMemRange<VirtualBranch> VirtualBranches() const
 		{
 			return CMemRange<VirtualBranch>(pVirtualBranchBegin_, pVirtualBranchEnd_);
 		}
@@ -263,6 +263,8 @@ namespace DFW2
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 
 		void AddToTopologyCheck();
+
+		std::pair<cplx, cplx> GetYI(ptrdiff_t Iteration);
 
 		static constexpr const char* m_cszV = "V";
 		static constexpr const char* m_cszDelta = "Delta";
@@ -276,6 +278,8 @@ namespace DFW2
 		static constexpr const char* m_cszS = "S";
 		static constexpr const char* m_cszSz = "Sz";
 		static constexpr const char* cszSyncDelta = "SyncDelta";
+		static constexpr const char* cszR_ = "R";
+		static constexpr const char* cszX_ = "X";
 	protected:
 		// Рассчитать полную информацию о потоках в ветвях по рассчитанным взаимным потокам
 		void CalculateZeroLFBranches();
@@ -458,12 +462,21 @@ namespace DFW2
 
 	class CDynaNodeContainer : public CDeviceContainer
 	{
+	public:
+		struct ShortCircuitInfo
+		{
+			const double Usc = 0.3;
+			const double RXratio = 0.1;
+		};
+
 	protected:
 		struct BranchNodes
 		{
 			CDynaNodeBase *pNodeIp;
 			CDynaNodeBase *pNodeIq;
 		};
+
+		std::map<CDynaNodeBase*, const ShortCircuitInfo> ShortCircuitNodes_;
 
 		void BuildSynchroZones();
 		void EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
@@ -512,6 +525,7 @@ namespace DFW2
 		void LinkToLRCs(CDeviceContainer& containerLRC);
 		void LinkToReactors(CDeviceContainer& containerReactors);
 		void RequireSuperNodeLF(CDynaNodeBase *pNode);
+		void AddShortCircuitNode(CDynaNodeBase* pNode, const CDynaNodeContainer::ShortCircuitInfo& ShortCircuitInfo);
 	};
 }
 

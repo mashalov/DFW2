@@ -1249,7 +1249,7 @@ double MixedAdamsBDF::GetZCStepRatio(double a, double b, double c)
 	else
 	{
 		// если квадратичный член ненулевой - решаем квадратичное уравнение
-		double h1(0.0), h2(0.0);
+		double h1{ 0.0 }, h2{ 0.0 };
 
 		if (MathUtils::CSquareSolver::Roots(a, b, c, h1, h2))
 		{

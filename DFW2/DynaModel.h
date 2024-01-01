@@ -1135,6 +1135,8 @@ namespace DFW2
 		}
 
 		void StopProcess();
+		// добавляет узел с КЗ на Uост и R/X
+		void AddShortCircuitNode(CDynaNodeBase* pNode, const CDynaNodeContainer::ShortCircuitInfo& ShortCircuitInfo);
 		void ProcessTopologyRequest();
 		// запрос обработки разрыва от устройства
 		void DiscontinuityRequest(CDevice& device, const DiscontinuityLevel Level);

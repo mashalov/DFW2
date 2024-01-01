@@ -1277,3 +1277,8 @@ void CDynaModel::StoreStates()
 		for (auto&& dit : *it)
 			dit->StoreStates();
 }
+
+void CDynaModel::AddShortCircuitNode(CDynaNodeBase* pNode, const CDynaNodeContainer::ShortCircuitInfo& ShortCircuitInfo)
+{
+	Nodes.AddShortCircuitNode(pNode, ShortCircuitInfo);
+}

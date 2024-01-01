@@ -766,6 +766,65 @@ void CDynaNodeBase::CalcAdmittances(bool bFixNegativeZs)
 	}
 }
 
+std::pair<cplx, cplx> CDynaNodeBase::GetYI(ptrdiff_t Iteration)
+{
+	cplx I{ IconstSuper };
+	cplx Y{ YiiSuper };		// диагональ матрицы по умолчанию собственная проводимость узла
+
+	if (!InMetallicSC)
+	{
+		// для всех узлов которые включены и вне металлического КЗ
+
+		const cplx Unode{ Vre, Vim };
+		GetPnrQnrSuper();
+
+		// Generators
+
+		const CLinkPtrCount* const pLink{ GetSuperLink(2) };
+		LinkWalker<CDynaPowerInjector> pVsource;
+		// проходим по генераторам
+		while (pLink->InMatrix(pVsource))
+		{
+			// если в узле есть хотя бы один генератор, то обнуляем мощность генерации узла
+			// если в узле нет генераторов но есть мощность генерации - то она будет учитываться
+			// задающим током
+			// если генераторм выключен то просто пропускаем, его мощность и ток будут равны нулю
+			if (!pVsource->IsStateOn())
+				continue;
+
+			pVsource->CalculatePower();
+
+			if (pVsource->IsKindOfType(DEVTYPE_POWER_INJECTOR))
+			{
+				const auto& pGen{ static_cast<CDynaPowerInjector*>(pVsource) };
+
+				// в диагональ матрицы добавляем проводимость генератора
+				// и вычитаем шунт Нортона, так как он уже добавлен в диагональ
+				// матрицы. Это работает для генераторов у которых есть Нортон (он
+				// обратен Zgen), и нет Нортона (он равен нулю)
+				Y -= pGen->Ygen() - pGen->Ynorton();
+				I -= pGen->Igen(Iteration);
+
+			}
+		}
+
+		// рассчитываем задающий ток узла от нагрузки
+		// можно посчитать ток, а можно посчитать добавку в диагональ
+		//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
+		if (V > 0.0)
+			Y += std::conj(cplx(Pgr - Pnr, Qgr - Qnr) / V.Value / V.Value);
+
+		_CheckNumber(I.real());
+		_CheckNumber(I.imag());
+		_CheckNumber(Y.real());
+		_CheckNumber(Y.imag());
+	}
+	else
+		Y = I = 0.0;
+
+	return { Y, I };
+}
+
 void CDynaNodeContainer::LULF()
 {
 	KLUWrapper<std::complex<double>> klu;
@@ -819,11 +878,11 @@ void CDynaNodeContainer::LULF()
 			fnode << pNode->GetId() << ";";
 			// Branches
 
-			for (VirtualBranch *pV = pNode->pVirtualBranchBegin_; pV < pNode->pVirtualBranchEnd_; pV++)
+			for (const auto& pv : pNode->VirtualBranches())
 			{
-				*pAx = pV->Y.real();   pAx++;
-				*pAx = pV->Y.imag();   pAx++;
-				*pAi = pV->pNode->A(0) / EquationsCount(); pAi++;
+				*pAx = pv.Y.real();   pAx++;
+				*pAx = pv.Y.imag();   pAx++;
+				*pAi = pv.pNode->A(0) / EquationsCount(); pAi++;
 			}
 		}
 	}
@@ -846,88 +905,49 @@ void CDynaNodeContainer::LULF()
 		{
 			CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(it) };
 			_ASSERTE(pB < B + nNodeCount * 2);
+			pNode->Vold = pNode->V;
+			auto [Y, I] { pNode->GetYI(nIteration) };
+			// и заполняем вектор комплексных токов
+			*pB = I.real(); pB++;
+			*pB = I.imag(); pB++;
 
-			/*
-			if (pNode->GetId() == 1067 && m_pDynaModel->GetCurrentTime() > 0.53 && nIteration > 4)
-				pNode->GetId();// pNode->BuildRightHand(m_pDynaModel);
-				*/
 
-			if (!pNode->InMetallicSC)
+			if (auto scit{ ShortCircuitNodes_.find(pNode) }; scit != ShortCircuitNodes_.end())
 			{
-				// для всех узлов которые включены и вне металлического КЗ
-
-				cplx Unode(pNode->Vre, pNode->Vim);
-
-				cplx I{ pNode->IconstSuper };
-				cplx Y{ pNode->YiiSuper };		// диагональ матрицы по умолчанию собственная проводимость узла
-
-				pNode->Vold = pNode->V;			// запоминаем напряжение до итерации для анализа сходимости
-
-				pNode->GetPnrQnrSuper();
-
-				// Generators
-
-				const CLinkPtrCount* const pLink{ pNode->GetSuperLink(2) };
-				LinkWalker<CDynaPowerInjector> pVsource;
-				// проходим по генераторам
-				while (pLink->InMatrix(pVsource))
+				for (const auto& pv : pNode->VirtualBranches())
+					I -= pv.pNode->VreVim * pv.Y;
+				const double a{ -(scit->second.RXratio * scit->second.RXratio + 1.0) };
+				const double b{ 2.0 * (Y.imag() - scit->second.RXratio * Y.real()) };
+				const double Usc{ scit->second.Usc * pNode->Unom };
+				const double c{ std::norm(I) / Usc / Usc - Y.real() * Y.real() - Y.imag() * Y.imag() };
+				double bs1{ 0.0 }, bs2{ 0.0 };
+				
+				switch (MathUtils::CSquareSolver::Roots(a, b, c, bs1, bs2))
 				{
-					// если в узле есть хотя бы один генератор, то обнуляем мощность генерации узла
-					// если в узле нет генераторов но есть мощность генерации - то она будет учитываться
-					// задающим током
-					// если генераторм выключен то просто пропускаем, его мощность и ток будут равны нулю
-					if (!pVsource->IsStateOn())
-						continue;
-
-					pVsource->CalculatePower();
-
-					if (pVsource->IsKindOfType(DEVTYPE_POWER_INJECTOR))
-					{
-						const auto& pGen{ static_cast<CDynaPowerInjector*>(pVsource) };
-
-						// в диагональ матрицы добавляем проводимость генератора
-						// и вычитаем шунт Нортона, так как он уже добавлен в диагональ
-						// матрицы. Это работает для генераторов у которых есть Нортон (он
-						// обратен Zgen), и нет Нортона (он равен нулю)
-						Y -= pGen->Ygen() - pGen->Ynorton();
-						I -= pGen->Igen(nIteration);
-
-					}
-
-					_CheckNumber(I.real());
-					_CheckNumber(I.imag());
-
-					fgen << pVsource->P << ";";
+				case 0:
+					bs1 = -pNode->Bshunt;
+					if (pNode->V > Usc)
+						bs1 *= 0.8;
+					else
+						bs1 *= 1.2;
+					break;
+				case 2:
+					if (pNode->V > Usc)
+						bs1 = std::min(bs1, bs2);
+					else
+						bs1 = std::max(bs1, bs2);
+					break;
 				}
-
-				// рассчитываем задающий ток узла от нагрузки
-				// можно посчитать ток, а можно посчитать добавку в диагональ
-				//I += conj(cplx(Pnr - pNode->Pg, Qnr - pNode->Qg) / pNode->VreVim);
-				if (pNode->V > 0.0)
-					Y += std::conj(cplx(pNode->Pgr - pNode->Pnr, pNode->Qgr - pNode->Qnr) / pNode->V.Value / pNode->V.Value);
-				//Y -= conj(cplx(Pnr, Qnr) / pNode->V / pNode->V);
-
-				_CheckNumber(I.real());
-				_CheckNumber(I.imag());
-				_CheckNumber(Y.real());
-				_CheckNumber(Y.imag());
-
-				// и заполняем вектор комплексных токов
-				*pB = I.real(); pB++;
-				*pB = I.imag(); pB++;
-				// диагональ матрицы формируем по Y узла
-				**ppDiags = Y.real();
-				*(*ppDiags + 1) = Y.imag();
-
-				fnode << pNode->V / pNode->V0 << ";";
+				
+				const cplx Ysc{ scit->second.RXratio * bs1, -bs1 };
+				Y += Ysc;
+				CDevice::FromComplex(pNode->Gshunt, pNode->Bshunt, Ysc);
 			}
-			else
-			{
-				// если узел в металлическом КЗ, задающий ток для него равен нулю
-				*pB = 0.0; pB++;
-				*pB = 0.0; pB++;
-				_ASSERTE(pNode->Vre <= 0.0 && pNode->Vim <= 0.0 && pNode->V <= 0.0);
-			}
+
+			// диагональ матрицы формируем по Y узла
+			**ppDiags = Y.real();
+			*(*ppDiags + 1) = Y.imag();
+			fnode << pNode->V / pNode->V0 << ";";
 			ppDiags++;
 		}
 
@@ -965,6 +985,39 @@ void CDynaNodeContainer::LULF()
 			break;
 		}
 	}
+
+	for (auto&& scnode : ShortCircuitNodes_)
+	{
+		const cplx Ysc{ scnode.first->Gshunt, scnode.first->Bshunt };
+		const cplx Zsc{ 1.0 / Ysc };
+		scnode.first->YiiSuper += Ysc;
+
+		const auto Description{ fmt::format(CDFW2Messages::m_cszShortCircuitShunt, scnode.first->GetVerbalName()) };
+	
+		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszShortCircuitShuntCalculated,
+			scnode.first->GetVerbalName(),
+			scnode.second.Usc,
+			scnode.second.RXratio,
+			Zsc,
+			scnode.first->V,
+			scnode.first->V / scnode.first->Unom));
+
+		pDynaModel_->WriteSlowVariable(scnode.first->GetType(), 
+			{ scnode.first->GetId() },
+			CDynaNodeBase::cszR_,
+			Zsc.real(),
+			0.0,
+			Description);
+
+		pDynaModel_->WriteSlowVariable(scnode.first->GetType(),
+			{ scnode.first->GetId() },
+			CDynaNodeBase::cszX_,
+			Zsc.imag(),
+			0.0,
+			Description);
+	}
+
+	ShortCircuitNodes_.clear();
 }
 
 // Для перехода от расчета динамики к расчету УР
@@ -1801,6 +1854,12 @@ void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)
 			}
 		}
 	}
+}
+
+void CDynaNodeContainer::AddShortCircuitNode(CDynaNodeBase* pNode, const CDynaNodeContainer::ShortCircuitInfo& ShortCircuitInfo)
+{
+	if (!ShortCircuitNodes_.try_emplace(pNode, ShortCircuitInfo).second)
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszShortCircuitNodeAlreadyAdded, pNode->GetVerbalName()));
 }
 
 void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)

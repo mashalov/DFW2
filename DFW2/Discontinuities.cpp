@@ -247,7 +247,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchR::Do(CDynaModel* pDynaModel, double 
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "R", R, pDynaBranch_->R, pDynaBranch_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszR_, R, pDynaBranch_->R, pDynaBranch_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} R={} -> R={}",
 		pDynaBranch_->GetVerbalName(),
@@ -265,7 +265,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchX::Do(CDynaModel* pDynaModel, double 
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "X", X, pDynaBranch_->X, pDynaBranch_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszX_, X, pDynaBranch_->X, pDynaBranch_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} X={} -> X={}",
 		pDynaBranch_->GetVerbalName(),
@@ -438,7 +438,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntR::Do(CDynaModel *pDynaModel, doub
 		));
 	}
 
-	WriteSlowVariable(pDynaModel, "R", Value, rx.real(), pDynaNode_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszR_, Value, rx.real(), pDynaNode_->GetVerbalName());
 
 	rx.real(Value);
 	rx = 1.0 / rx;
@@ -469,7 +469,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, doub
 		));
 	}
 
-	WriteSlowVariable(pDynaModel, "X", Value, rx.real(), pDynaNode_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszX_, Value, rx.real(), pDynaNode_->GetVerbalName());
 
 	rx.imag(Value);
 	rx = 1.0 / rx;
@@ -479,6 +479,18 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, doub
 	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
+
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntToUsc::Do(CDynaModel* pDynaModel, double Value)
+{
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	Log(pDynaModel, fmt::format(CDFW2Messages::m_cszNodeShortCircuitToUsc, 
+		pDynaNode_->GetVerbalName(), 
+		Value, RXratio_));
+	pDynaModel->AddShortCircuitNode(pDynaNode_, { Value, RXratio_ });
+	pDynaNode_->ProcessTopologyRequest();
+	return State;
+}
+
 
 
 
