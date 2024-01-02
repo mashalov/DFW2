@@ -23,6 +23,9 @@
 %\usepackage{pscyr}
 \usepackage[T2A]{fontenc}
 
+\DeclareMathOperator*{\argmin}{arg\,min} % thin space, limits underneath in displays
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+
 \makeatletter
 \def\endthebibliography{%
 	\def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
@@ -74,7 +77,8 @@
 	y_s = \frac{1}{R_s+jX_s}=&\frac{1}{X_s(k+j)}=\frac{k}{X_s(k^2+1)} - \frac{j}{X_s(k^2+1)}=b_s(k-j) \\ b_s =& \frac{1}{X_s(k^2+1)}
 	\end{split}
 \end{equation}
-Примем \(\sum_{j}{v_jy_{ij}}=const\) и \(I_i=const\) и обозначим:
+Примем на итерации
+ \(\sum_{j}{v_jy_{ij}}=const\) и \(I_i=const\) и обозначим:
 \begin{equation}
 	\label{eqn_composite_current}
 	I'= I_i - \sum_{j}{v_jy_{ij}}
@@ -88,11 +92,11 @@
 
 \begin{equation}
 	\label{eqn_Vre}
-	v_{iRe} = \frac{I'_{Re}(g_{ii}+kb_s) + I'_{Im}(b_{ii}+b_s)}{(b_{ii}+b_s)^2+(g_{ii}+kb_s)^2}
+	v_{iRe} = \frac{I'_{Re}(g_{ii}+kb_s) + I'_{Im}(b_{ii}-b_s)}{(b_{ii}-b_s)^2+(g_{ii}+kb_s)^2}
 \end{equation}
 \begin{equation}
 	\label{eqn_Vim}
-	v_{iIm} = \frac{I'_{Im}(g_{ii}+kb_s) - I'_{Re}(b_{ii}+b_s)}{(b_{ii}+b_s)^2+(g_{ii}+kb_s)^2}
+	v_{iIm} = \frac{I'_{Im}(g_{ii}+kb_s) - I'_{Re}(b_{ii}-b_s)}{(b_{ii}-b_s)^2+(g_{ii}+kb_s)^2}
 \end{equation}
 
 Используя условие (\ref{eqn_Us_magnitude}) 
@@ -103,15 +107,31 @@
 и с учетом (\ref{eqn_Vre}), (\ref{eqn_Vim}) получим:
 \begin{equation}
 	\label{eqn_bs1}
-	\frac{I_{Re}^{'2}+I_{Im}^{'2}}{(b_{ii}+b_s)^2+(g_{ii}+kb_s)^2} = U_s^2
+	\frac{I_{Re}^{'2}+I_{Im}^{'2}}{(b_{ii}-b_s)^2+(g_{ii}+kb_s)^2} = U_s^2
 \end{equation}
 \(b_s\) является корнем уравнения:
 \begin{equation}
 	\label{eqn_bs2}
-	b_s^2(k^2+1) + b_s2(kg_{ii}+b_{ii}) - \left(\frac{I_{Re}^{'2}+I_{Im}^{'2}}{U_s^2} - g_{ii}^2 - b_{ii}^2\right)=0
+	-b_s^2(k^2+1) + b_s2(b_{ii} - kg_{ii}) + \left(\frac{I_{Re}^{'2}+I_{Im}^{'2}}{U_s^2} - g_{ii}^2 - b_{ii}^2\right)=0
 \end{equation}
-Выбрав \(b_s\) по знаку можно определить \(v_i=v_{iRe}+jv_{iIm}\) и подставить его значение в систему сети, исключив собственно уравнение \(v_i\). Это пока предположение.
 
+Для выбора корней \(b_{s1}\) и \(b_{s2}\) можно воспользоваться условием:
+\begin{equation}
+	\label{eqn_vx}
+	v_i(x) = \frac{I}{g_{ii} + kx + i(b_{ii} - x)}
+\end{equation}
+
+\begin{equation}
+	\label{eqn_bs1_bs2_select}
+	b_s=\argmin_{x\in{b_{s1}, b_{s2}}}{(\norm{v_i - v(x)}_2)}
+\end{equation}
+то есть выбирать на итерации шунт \(b_s\), который дает вектор \(v_i(b_s)\) наиболее близкий к текущему \(v_i\).
+На итерации целесообразно зафиксировать \(v_i\)=const, для чего (\ref{eqn_current_balance}) можно представить в виде:
+\begin{equation}
+	\label{eqn_vi_fix}
+	v_i=v_i(b_s)
+\end{equation}
+При этом само уравнение технически проще оставить в СЛУ, так напряжение \(v_i\) будет итерационно уточняться. 
 \end{document}
 
 
