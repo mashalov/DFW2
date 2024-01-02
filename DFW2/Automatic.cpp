@@ -523,7 +523,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodeShuntToUsc>(static_cast<CDynaNode*>(pDev), *m_pValue, 0.0);
+					m_pAction = std::make_unique<CModelActionChangeNodeShuntToUsc>(static_cast<CDynaNode*>(pDev), *m_pValue, 0.3);
 					bRes = true;
 				}
 				break;

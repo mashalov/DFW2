@@ -877,12 +877,14 @@ void CDynaNodeContainer::LULF()
 			// для всех узлов, которые не отключены и не находятся в металлическом КЗ (КЗ с нулевым шунтом)
 			fnode << pNode->GetId() << ";";
 			// Branches
-
-			for (const auto& pv : pNode->VirtualBranches())
+			if (ShortCircuitNodes_.find(pNode) == ShortCircuitNodes_.end())
 			{
-				*pAx = pv.Y.real();   pAx++;
-				*pAx = pv.Y.imag();   pAx++;
-				*pAi = pv.pNode->A(0) / EquationsCount(); pAi++;
+				for (const auto& pv : pNode->VirtualBranches())
+				{
+					*pAx = pv.Y.real();   pAx++;
+					*pAx = pv.Y.imag();   pAx++;
+					*pAi = pv.pNode->A(0) / EquationsCount(); pAi++;
+				}
 			}
 		}
 	}
@@ -907,10 +909,6 @@ void CDynaNodeContainer::LULF()
 			_ASSERTE(pB < B + nNodeCount * 2);
 			pNode->Vold = pNode->V;
 			auto [Y, I] { pNode->GetYI(nIteration) };
-			// и заполняем вектор комплексных токов
-			*pB = I.real(); pB++;
-			*pB = I.imag(); pB++;
-
 
 			if (auto scit{ ShortCircuitNodes_.find(pNode) }; scit != ShortCircuitNodes_.end())
 			{
@@ -932,17 +930,31 @@ void CDynaNodeContainer::LULF()
 						bs1 *= 1.2;
 					break;
 				case 2:
-					if (pNode->V > Usc)
-						bs1 = std::min(bs1, bs2);
+					{
+					cplx v1{ I / cplx(Y.real() + scit->second.RXratio * bs1, Y.imag() - bs1) };
+					cplx v2{ I / cplx(Y.real() + scit->second.RXratio * bs2, Y.imag() - bs2) };
+					_ASSERTE(std::abs(std::abs(v1) - Usc) < 1e-3);
+					_ASSERTE(std::abs(std::abs(v2) - Usc) < 1e-3);
+					if (std::norm(v1 - pNode->VreVim) > std::norm(v2 - pNode->VreVim))
+					{
+						pNode->VreVim = v2;
+						bs1 = bs2;
+					}
 					else
-						bs1 = std::max(bs1, bs2);
+						pNode->VreVim = v1;
+					}
 					break;
 				}
-				
 				const cplx Ysc{ scit->second.RXratio * bs1, -bs1 };
-				Y += Ysc;
+				//Y += Ysc;
+				I = pNode->VreVim;
+				Y = 1.0;
 				CDevice::FromComplex(pNode->Gshunt, pNode->Bshunt, Ysc);
 			}
+
+			// и заполняем вектор комплексных токов
+			*pB = I.real(); pB++;
+			*pB = I.imag(); pB++;
 
 			// диагональ матрицы формируем по Y узла
 			**ppDiags = Y.real();
@@ -989,10 +1001,13 @@ void CDynaNodeContainer::LULF()
 	for (auto&& scnode : ShortCircuitNodes_)
 	{
 		const cplx Ysc{ scnode.first->Gshunt, scnode.first->Bshunt };
-		const cplx Zsc{ 1.0 / Ysc };
+		const cplx Zsc{ -1.0 / Ysc };
 		scnode.first->YiiSuper += Ysc;
 
-		const auto Description{ fmt::format(CDFW2Messages::m_cszShortCircuitShunt, scnode.first->GetVerbalName()) };
+		const auto Description{ fmt::format(CDFW2Messages::m_cszShortCircuitShunt, 
+			scnode.second.Usc,
+			scnode.second.RXratio,
+			scnode.first->GetVerbalName()) };
 	
 		Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszShortCircuitShuntCalculated,
 			scnode.first->GetVerbalName(),
