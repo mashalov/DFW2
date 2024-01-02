@@ -277,6 +277,7 @@ namespace DFW2
 		static const char* m_cszShortCircuitNodeAlreadyAdded;
 		static const char* m_cszShortCircuitShuntCalculated;
 		static const char* m_cszShortCircuitShunt;
+		static const char* m_cszShortCircuitVoltageTooLow;
 	};
 }
 
