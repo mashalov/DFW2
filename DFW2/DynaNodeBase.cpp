@@ -877,6 +877,8 @@ void CDynaNodeContainer::LULF()
 			// для всех узлов, которые не отключены и не находятся в металлическом КЗ (КЗ с нулевым шунтом)
 			fnode << pNode->GetId() << ";";
 			// Branches
+			// Если на узле задано Uост - его напряжение будет фиксировано,
+			// уравнение не будет содержать ветвей и будет иметь вид V=V
 			if (ShortCircuitNodes_.find(pNode) == ShortCircuitNodes_.end())
 			{
 				for (const auto& pv : pNode->VirtualBranches())
@@ -910,19 +912,23 @@ void CDynaNodeContainer::LULF()
 			pNode->Vold = pNode->V;
 			auto [Y, I] { pNode->GetYI(nIteration) };
 
+			// если для узла задано Uост рассчитываем шунт и фиксируем на нем напряжение
+			// вообще этот фрагмент лучше сделать до того, как пройдем по обычным узлам
 			if (auto scit{ ShortCircuitNodes_.find(pNode) }; scit != ShortCircuitNodes_.end())
 			{
+				// рассчитываем ток от ветвей
 				for (const auto& pv : pNode->VirtualBranches())
 					I -= pv.pNode->VreVim * pv.Y;
+				// решаем уравнение шунта bs
 				const double a{ -(scit->second.RXratio * scit->second.RXratio + 1.0) };
 				const double b{ 2.0 * (Y.imag() - scit->second.RXratio * Y.real()) };
 				const double Usc{ scit->second.Usc * pNode->Unom };
 				const double c{ std::norm(I) / Usc / Usc - Y.real() * Y.real() - Y.imag() * Y.imag() };
 				double bs1{ 0.0 }, bs2{ 0.0 };
-				
+				// получаем 0-2 корней
 				switch (MathUtils::CSquareSolver::Roots(a, b, c, bs1, bs2))
 				{
-				case 0:
+				case 0:	// если корней нет, используем фикцию
 					bs1 = -pNode->Bshunt;
 					if (pNode->V > Usc)
 						bs1 *= 0.8;
@@ -931,10 +937,13 @@ void CDynaNodeContainer::LULF()
 					break;
 				case 2:
 					{
+					// если корней 2 - рассчитываем 2 шунта и 2 напряжения
 					cplx v1{ I / cplx(Y.real() + scit->second.RXratio * bs1, Y.imag() - bs1) };
 					cplx v2{ I / cplx(Y.real() + scit->second.RXratio * bs2, Y.imag() - bs2) };
+					// проверяем что модуль напряжения получим тот, который задан
 					_ASSERTE(std::abs(std::abs(v1) - Usc) < 1e-3);
 					_ASSERTE(std::abs(std::abs(v2) - Usc) < 1e-3);
+					// выбираем корень по минимальному отклонению от текущего напряжения узла
 					if (std::norm(v1 - pNode->VreVim) > std::norm(v2 - pNode->VreVim))
 					{
 						pNode->VreVim = v2;
@@ -946,9 +955,11 @@ void CDynaNodeContainer::LULF()
 					break;
 				}
 				const cplx Ysc{ scit->second.RXratio * bs1, -bs1 };
-				//Y += Ysc;
+				// формируем уравнение для этого узла 1.0*V=V
 				I = pNode->VreVim;
 				Y = 1.0;
+				// шунт от напряжения задаем _поверх_ существующего шунта. Он сидит в YiiSuper
+				// но тут проблема будет если шунт придет _после_ шунта напряжения !
 				CDevice::FromComplex(pNode->Gshunt, pNode->Bshunt, Ysc);
 			}
 
@@ -998,12 +1009,16 @@ void CDynaNodeContainer::LULF()
 		}
 	}
 
+	// для всех узлов с остаточным напряжением
 	for (auto&& scnode : ShortCircuitNodes_)
 	{
+		// рассчитываем z-шунт
 		const cplx Ysc{ scnode.first->Gshunt, scnode.first->Bshunt };
 		const cplx Zsc{ -1.0 / Ysc };
+		// добавляем его к собстсвенной проводимости узла
 		scnode.first->YiiSuper += Ysc;
 
+		// даем репорт и пишем медленные переменные по z-шунту
 		const auto Description{ fmt::format(CDFW2Messages::m_cszShortCircuitShunt, 
 			scnode.second.Usc,
 			scnode.second.RXratio,
