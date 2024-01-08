@@ -857,7 +857,12 @@ void CDynaNodeContainer::LULF()
 	fnode << ";";
 
 	// выделяем из DevInMatrix узлы, в которых задано Uост
-	DEVICEVECTOR NodeOrder;
+	struct NodeOrderT
+	{
+		CDynaNodeBase* pNode;
+		const ShortCircuitInfo* SCinfo = nullptr;
+	};
+	std::vector<NodeOrderT> NodeOrder;
 	NodeOrder.reserve(nNodeCount);
 
 	// проверяем нет ли узлов с Uост <= 0.0
@@ -888,25 +893,8 @@ void CDynaNodeContainer::LULF()
 			pNode->Vim = pNode->Delta = 0.0;
 			fnode << pNode->GetId() << ";";
 		}
-
-		if (ShortCircuitNodes_.find(pNode) == ShortCircuitNodes_.end())
-			NodeOrder.push_back(pNode);
-	}
-
-	for (auto&& scnode : ShortCircuitNodes_)
-	{
-		_ASSERTE(pAx < Ax + nNzCount * 2);
-		_ASSERTE(pAi < Ai + nNzCount);
-		_ASSERTE(pAp < Ap + nNodeCount);
-		const auto& pNode{ static_cast<CDynaNodeBase*>(scnode.first) };
-		*pAp = (pAx - Ax) / 2;    pAp++;
-		*pAi = pNode->A(0) / EquationsCount();		  pAi++;
-		*ppDiags = pAx;
-		*pAx = 1.0; pAx++;
-		*pAx = 0.0; pAx++;
-		ppDiags++;
-		// Если на узле не задано Uост - его напряжение будет фиксировано,
-		// уравнение не будет содержать ветвей и будет иметь вид V=V
+		auto scit{ ShortCircuitNodes_.find(pNode) };
+		NodeOrder.emplace_back(pNode, scit == ShortCircuitNodes_.end() ? nullptr : &scit->second);
 	}
 
 	for (auto&& it : NodeOrder)
@@ -914,7 +902,7 @@ void CDynaNodeContainer::LULF()
 		_ASSERTE(pAx < Ax + nNzCount * 2);
 		_ASSERTE(pAi < Ai + nNzCount);
 		_ASSERTE(pAp < Ap + nNodeCount);
-		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
+		const auto& pNode{ it.pNode };
 		*pAp = (pAx - Ax) / 2;    pAp++;
 		*pAi = pNode->A(0) / EquationsCount();		  pAi++;
 		// первый элемент строки используем под диагональ
@@ -924,9 +912,8 @@ void CDynaNodeContainer::LULF()
 		*pAx = 0.0; pAx++;
 		ppDiags++;
 
-		if (pNode->InMetallicSC)
+		if (pNode->InMetallicSC || it.SCinfo != nullptr)
 			continue;
-
 		// Branches
 		for (const auto& pv : pNode->VirtualBranches())
 		{
@@ -949,38 +936,39 @@ void CDynaNodeContainer::LULF()
 		fnode << std::endl << nIteration << ";";
 		fgen  << std::endl << nIteration << ";";
 
-		// если для узла задано Uост рассчитываем шунт и фиксируем на нем напряжение
-		// сначала обрабатываем узлы с Uост
-		for (const auto& scit : ShortCircuitNodes_)
+		for (auto&& it : NodeOrder)
 		{
-			CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(scit.first) };
+			CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(it.pNode) };
 			_ASSERTE(pB < B + nNodeCount * 2);
+			// если для узла задано Uост рассчитываем шунт и фиксируем на нем напряжение
 			pNode->Vold = pNode->V;
 			auto [Y, I] { pNode->GetYI(nIteration) };
-			// рассчитываем ток от ветвей
-			for (const auto& pv : pNode->VirtualBranches())
-				I -= pv.pNode->VreVim * pv.Y;
-			// решаем уравнение шунта bs
-			const double a{ -(scit.second.RXratio * scit.second.RXratio + 1.0) };
-			const double b{ 2.0 * (Y.imag() - scit.second.RXratio * Y.real()) };
-			const double Usc{ scit.second.Usc * pNode->Unom };
-			const double c{ std::norm(I) / Usc / Usc - Y.real() * Y.real() - Y.imag() * Y.imag() };
-			double bs1{ 0.0 }, bs2{ 0.0 };
-			// получаем 0-2 корней
-			switch (MathUtils::CSquareSolver::Roots(a, b, c, bs1, bs2))
+			if (it.SCinfo != nullptr)
 			{
-			case 0:	// если корней нет, используем фикцию
-				bs1 = -pNode->Bshunt;
-				if (pNode->V > Usc)
-					bs1 *= 0.8;
-				else
-					bs1 *= 1.2;
-				break;
-			case 2:
+				// рассчитываем ток от ветвей
+				for (const auto& pv : pNode->VirtualBranches())
+					I -= pv.pNode->VreVim * pv.Y;
+				// решаем уравнение шунта bs
+				const double a{ -(it.SCinfo->RXratio * it.SCinfo->RXratio + 1.0) };
+				const double b{ 2.0 * (Y.imag() - it.SCinfo->RXratio * Y.real()) };
+				const double Usc{ it.SCinfo->Usc * pNode->Unom };
+				const double c{ std::norm(I) / Usc / Usc - Y.real() * Y.real() - Y.imag() * Y.imag() };
+				double bs1{ 0.0 }, bs2{ 0.0 };
+				// получаем 0-2 корней
+				switch (MathUtils::CSquareSolver::Roots(a, b, c, bs1, bs2))
+				{
+				case 0:	// если корней нет, используем фикцию
+					bs1 = -pNode->Bshunt;
+					if (pNode->V > Usc)
+						bs1 *= 0.8;
+					else
+						bs1 *= 1.2;
+					break;
+				case 2:
 				{
 					// если корней 2 - рассчитываем 2 шунта и 2 напряжения
-					const cplx v1{ I / cplx(Y.real() + scit.second.RXratio * bs1, Y.imag() - bs1) };
-					const cplx v2{ I / cplx(Y.real() + scit.second.RXratio * bs2, Y.imag() - bs2) };
+					const cplx v1{ I / cplx(Y.real() + it.SCinfo->RXratio * bs1, Y.imag() - bs1) };
+					const cplx v2{ I / cplx(Y.real() + it.SCinfo->RXratio * bs2, Y.imag() - bs2) };
 					// проверяем что модуль напряжения получим тот, который задан
 					_ASSERTE(std::abs(std::abs(v1) - Usc) < 1e-3);
 					_ASSERTE(std::abs(std::abs(v2) - Usc) < 1e-3);
@@ -994,14 +982,16 @@ void CDynaNodeContainer::LULF()
 						pNode->VreVim = v1;
 				}
 				break;
+				}
+				const cplx Ysc{ it.SCinfo->RXratio * bs1, -bs1 };
+				// формируем уравнение для этого узла 1.0*V=V
+				I = pNode->VreVim;
+				Y = 1.0;
+				// шунт от напряжения задаем _поверх_ существующего шунта. Он сидит в YiiSuper
+				// но тут проблема будет если шунт придет _после_ шунта напряжения !
+				CDevice::FromComplex(pNode->Gshunt, pNode->Bshunt, Ysc);
+				// и заполняем вектор комплексных токов
 			}
-			const cplx Ysc{ scit.second.RXratio * bs1, -bs1 };
-			// формируем уравнение для этого узла 1.0*V=V
-			I = pNode->VreVim;
-			Y = 1.0;
-			// шунт от напряжения задаем _поверх_ существующего шунта. Он сидит в YiiSuper
-			// но тут проблема будет если шунт придет _после_ шунта напряжения !
-			CDevice::FromComplex(pNode->Gshunt, pNode->Bshunt, Ysc);
 			// и заполняем вектор комплексных токов
 			*pB = I.real(); pB++;
 			*pB = I.imag(); pB++;
@@ -1011,25 +1001,14 @@ void CDynaNodeContainer::LULF()
 			fnode << pNode->V / pNode->V0 << ";";
 			ppDiags++;
 		}
-
-		// после узлов с Uост обрабатываем остальные узлы
-		for (auto&& it : NodeOrder)
-		{
-			CDynaNodeBase* pNode{ static_cast<CDynaNodeBase*>(it) };
-			_ASSERTE(pB < B + nNodeCount * 2);
-			pNode->Vold = pNode->V;
-			auto [Y, I] { pNode->GetYI(nIteration) };
-			// и заполняем вектор комплексных токов
-			*pB = I.real(); pB++;
-			*pB = I.imag(); pB++;
-			// диагональ матрицы формируем по Y узла
-			**ppDiags = Y.real();
-			*(*ppDiags + 1) = Y.imag();
-			fnode << pNode->V / pNode->V0 << ";";
-			ppDiags++;
-		}
+	
+		klu.AtoDenseCSV("c:/tmp/y.csv");
+		klu.BtoDenseCSV("c:/tmp/i.csv");
 
 		klu.FactorSolve();
+
+		klu.BtoDenseCSV("c:/tmp/u.csv");
+
 
 		// KLU может делать повторную факторизацию матрицы с начальным пивотингом
 		// это быстро, но при изменении пивотов может вызывать численную неустойчивость.

@@ -582,6 +582,20 @@ namespace DFW2
 			}
 		}
 
+		void AtoDenseCSV(const std::filesystem::path& path);
+		void BtoDenseCSV(const std::filesystem::path& path);
+
+		static std::string ComplexFormat(const std::complex<double>& value)
+		{
+			std::stringstream output;
+			output.precision(15);
+			output << value.real();
+			output << (value.imag() > 0.0 ? '+' : '-');
+			output << std::abs(value.imag());
+			output << 'j';
+			return output.str();
+		}
+
 		// todo - complex version
 		void DumpMatrix(bool bAnalyzeLinearDependenies)
 		{
@@ -590,7 +604,7 @@ namespace DFW2
 			{
 				ptrdiff_t* pAi{ Ap() };
 				double* pAx{ Ax() };
-				ptrdiff_t nRow = 0;
+				ptrdiff_t nRow{ 0 };
 				std::set<ptrdiff_t> BadNumbers, FullZeros;
 				std::vector<bool> NonZeros;
 				std::vector<bool> Diagonals;
@@ -725,6 +739,61 @@ namespace DFW2
 		}
 		return {};
 	}
+
+	template<> inline void KLUWrapper<std::complex<double>>::BtoDenseCSV(const std::filesystem::path& path)
+	{
+		std::ofstream csv(path);
+		if (csv.is_open())
+		{
+			for (auto pb{ B() }; pb < B() + 2 * MatrixSize(); pb += 2)
+				csv << KLUWrapper<std::complex<double>>::ComplexFormat(std::complex<double>(*pb, *(pb + 1))) << std::endl;
+		}
+	}
+
+	template<> inline void KLUWrapper<std::complex<double>>::AtoDenseCSV(const std::filesystem::path& path)
+	{
+		std::ofstream csv(path);
+		if (csv.is_open())
+		{
+			double *pAx{ Ax() };
+			ptrdiff_t* pAp{ Ai() }, * pAi{ Ap() }, nRow{ 0 };
+			struct UnpackT
+			{
+				ptrdiff_t index;
+				const double* pAx;
+			};
+
+			for (; pAp < Ai() + MatrixSize(); pAp++, nRow++)
+			{
+				const ptrdiff_t* pAiend{ pAi + *(pAp + 1) - *pAp };
+				std::list<UnpackT> Unpack;
+				while (pAi < pAiend)
+				{
+					Unpack.emplace_back(*pAi, pAx);
+					pAx += 2;
+					pAi++;
+				}
+
+				Unpack.sort([](const UnpackT& lhs, const UnpackT& rhs) { return lhs.index < rhs.index; });
+
+				auto itUnpack{ Unpack.begin() };
+				for (ptrdiff_t nCol{ 0 }; nCol < MatrixSize(); nCol++)
+				{
+					if(nCol > 0)
+						csv << ",";
+					if(itUnpack != Unpack.end() && nCol == itUnpack->index)
+					{
+						csv << KLUWrapper<std::complex<double>>::ComplexFormat(std::complex<double>(*itUnpack->pAx, *(itUnpack->pAx + 1)));
+						itUnpack++;
+					}
+					else
+						csv << KLUWrapper<std::complex<double>>::ComplexFormat(std::complex<double>(0.0));
+				}
+				csv << std::endl;
+			}
+		}
+	}
+
 }
 
 
