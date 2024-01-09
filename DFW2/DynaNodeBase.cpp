@@ -2030,21 +2030,69 @@ void CLULF::Solve2()
 		for (const auto& scit : Nodes_.ShortCircuitNodes_)
 		{
 			klu_.B()[2 * scit.first->A(0) / Nodes_.EquationsCount()] = scit.second.RXratio;
-			klu_.B()[2 * scit.first->A(0) / Nodes_.EquationsCount() + 1] = 1.0;
+			klu_.B()[2 * scit.first->A(0) / Nodes_.EquationsCount() + 1] = -1.0;
 		}
 
 		klu_.FactorSolve();
 
 		pB = klu_.B();
 
+		double t{ 0.0 };
+		cplx uka;
+
+		if (!Nodes_.ShortCircuitNodes_.empty())
+		{
+			auto scit{ Nodes_.ShortCircuitNodes_.begin() };
+			ptrdiff_t zkindex{ 2 * scit->first->A(0) / Nodes_.EquationsCount() };
+			const cplx zk{ cplx(klu_.B()[zkindex], klu_.B()[zkindex + 1]) };
+			const double uk{ scit->second.Usc * scit->first->Unom };
+			const cplx u0{ cplx(U0[zkindex], U0[zkindex + 1]) };
+			const double a{ std::norm(zk) };
+			const double b{ 2.0 * klu_.B()[zkindex] };
+			const double c{ 1.0 - std::norm(u0) / uk / uk };
+			double bs1{ 0.0 }, bs2{ 0.0 };
+			// получаем 0-2 корней
+			switch (MathUtils::CSquareSolver::Roots(a, b, c, bs1, bs2))
+			{
+			case 0:
+				break;
+			case 1:
+			{
+				const double deltak{ std::arg(u0) - std::atan2(bs1 * zk.imag(), bs1 * zk.real() + 1.0) };
+			}
+			break;
+			case 2:
+			{
+				const double deltak1{ std::arg(u0) - std::atan2(bs1 * zk.imag(), bs1 * zk.real() + 1.0) };
+				const double deltak2{ std::arg(u0) - std::atan2(bs2 * zk.imag(), bs2 * zk.real() + 1.0) };
+				cplx uka1{ std::polar(uk, deltak1) };
+				cplx uka2{ std::polar(uk, deltak2) };
+				const auto t1{ (u0 / uka1 - 1.0) / zk };
+				const auto t2{ (u0 / uka2 - 1.0) / zk };
+
+				t = bs2;
+				uka = uka2;
+				if (std::norm(u0 - uka1) < std::norm(u0 - uka2))
+				{
+					t = bs1;
+					uka = uka1;
+				}
+				scit->first->Gshunt = t * scit->second.RXratio;
+				scit->first->Bshunt = -t;
+			}
+			break;
+			}
+		}
+
 		// после решения системы обновляем данные во всех узлах
 		for (auto&& it : Nodes_.DevInMatrix)
 		{
 			const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
-			// напряжение после решения системы в векторе задающий токов
-			pNode->Vre = *pB;		pB++;
-			pNode->Vim = *pB;		pB++;
-
+			ptrdiff_t zkindex{ 2 * pNode->A(0) / Nodes_.EquationsCount() };
+			const cplx u0{ cplx(U0[zkindex], U0[zkindex + 1]) };
+			const cplx zk{ cplx(klu_.B()[zkindex], klu_.B()[zkindex + 1]) };
+			const cplx u{ Nodes_.ShortCircuitNodes_.empty() ? u0 : u0 - t * zk * uka };
+			CDevice::FromComplex(pNode->Vre, pNode->Vim, u);
 			// считаем напряжение узла в полярных координатах
 			pNode->UpdateVDeltaSuper();
 			// считаем изменение напряжения узла между итерациями и находим
@@ -2079,6 +2127,7 @@ void CLULF::Solve2()
 			scnode.second.RXratio,
 			scnode.first->GetVerbalName()) };
 
+
 		Nodes_.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszShortCircuitShuntCalculated,
 			scnode.first->GetVerbalName(),
 			scnode.second.Usc,
@@ -2109,11 +2158,6 @@ void CLULF::Solve2()
 
 void CLULF::CheckShortCircuitNodes()
 {
-	fnode_.open(Nodes_.GetModel()->Platform().ResultFile("nodes.csv"));
-	fgen_.open(Nodes_.GetModel()->Platform().ResultFile("gens.csv"));
-	fnode_ << ";";
-	NodeOrder_.reserve(klu_.MatrixSize());
-
 	// проверяем нет ли узлов с Uост <= 0.0
 	auto scnode{ Nodes_.ShortCircuitNodes_.begin() };
 	while (scnode != Nodes_.ShortCircuitNodes_.end())
@@ -2135,6 +2179,7 @@ void CLULF::CheckShortCircuitNodes()
 
 void CLULF::BuildNodeOrder()
 {
+	NodeOrder_.reserve(klu_.MatrixSize());
 	for (auto&& it : Nodes_.DevInMatrix)
 	{
 		const auto& pNode{ static_cast<CDynaNodeBase*>(it) };
@@ -2150,4 +2195,13 @@ void CLULF::BuildNodeOrder()
 		NodeOrder_.emplace_back(pNode, scit == Nodes_.ShortCircuitNodes_.end() ? nullptr : &scit->second);
 	}
 	pDiags_ = std::make_unique<double* []>(klu_.MatrixSize());
+	fnode_.open(Nodes_.GetModel()->Platform().ResultFile("nodes.csv"));
+	fgen_.open(Nodes_.GetModel()->Platform().ResultFile("gens.csv"));
+	fnode_ << ";";
+
+}
+
+void CLULF::Solve()
+{
+	Solve2();
 }

@@ -548,7 +548,7 @@ namespace DFW2
 
 	public:
 		CLULF(CDynaNodeContainer& Nodes) : Nodes_(Nodes) {}
-		void Solve() { Solve2(); }
+		void Solve();
 	};
 }
 
