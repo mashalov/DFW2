@@ -1,0 +1,96 @@
+\documentclass[lettersize,journal]{IEEEtran}
+\usepackage{amsmath,amsfonts}
+\usepackage{algorithmic}
+\usepackage{algorithm}
+\usepackage{array}
+\usepackage[caption=false,font=normalsize,labelfont=sf,textfont=sf]{subfig}
+\usepackage{textcomp}
+\usepackage{stfloats}
+\usepackage{url}
+\usepackage{verbatim}
+\usepackage{graphicx}
+\usepackage{cite}
+\usepackage{tabularx}
+\usepackage{boldline}
+\usepackage{empheq}
+\usepackage{amssymb}
+%\usepackage[justification=centering]{caption}
+%\usepackage{hyperref}
+\hyphenation{op-tical net-works semi-conduc-tor IEEE-Xplore}
+% updated with editorial comments 8/9/2021
+%\usepackage[russian]{babel}
+%\usepackage[utf8]{inputenc}
+%\usepackage{pscyr}
+\usepackage[T2A]{fontenc}
+\usepackage{steinmetz}
+
+\DeclareMathOperator*{\argmin}{arg\,min} % thin space, limits underneath in displays
+\newcommand\norm[1]{\left\lVert#1\right\rVert}
+
+\makeatletter
+\def\endthebibliography{%
+	\def\@noitemerr{\@latex@warning{Empty `thebibliography' environment}}%
+	\endlist
+}
+\makeatother
+
+\begin{document}
+	
+\onecolumn
+
+%\title{Raiden. Power System Transient Stability Simulation Software Prototype}
+
+%\author {Eugene Mashalov, Joint Stock Company "Scientific and Technical Center of Unified Power System", Ekaterinburg, Russia}
+
+
+%\markboth{Journal of \LaTeX\ Class Files,~Vol.~14, No.~8, August~2021}%
+%${Shell \MakeLowercase{\textit{et al.}}: A Sample Article Using IEEEtran.cls for IEEE Journals}
+
+%\IEEEpubid{0000--0000/00\$00.00~\copyright~2021 IEEE}
+% Remember, if you use this you must call \IEEEpubidadjcol in the second
+% column for its text to clear the IEEEpubid mark.
+
+%\maketitle
+
+%\begin{abstract}
+%This paper discusses implementation details of the transient stability analysis prototype %software "Raiden", based on the implicit integration scheme. The main advantages of an %implicit integration scheme with combined treatment of differential and algebraic variables %as well as an integration process with discrete event handling are considered. The results %of test simulations and their comparison with existing software are presented.
+%\end{abstract}
+
+%\begin{IEEEkeywords}
+%Transient Stability Analysis, Implicit Integration, Discontinuous DAE
+%\end{IEEEkeywords}
+
+\section{Решение уравнения (7)}
+\begin{equation}
+	t=\frac{u_{0k}/u_{kk} -1}{z_{kk}}
+\end{equation}
+Сопоставим равенство комплексных чисел по модулю и углу:
+\begin{equation}
+ 	tz_{kk} + 1 = \frac{u_{0k}}{u_{kk}}
+ \end{equation} 
+учитывая \(Im(t) = 0\) для модулей:
+\begin{equation}
+ 	(tz_{kkRe} + 1)^2 + tz_{kkIm}^2= \frac{|u_{0k}|^2}{|u_{kk}|^2}
+\end{equation} 
+\begin{equation}
+	\label{eqn_quad}
+	t^2|z_{kk}|^2 + 2tz_{kk} + 1 -  \frac{|u_{0k}|^2}{|u_{kk}|^2} = 0
+\end{equation} 
+и для углов:
+\begin{equation}
+		\arctan \left(\frac{tz_{kkIm}}{tz_{kkRe} + 1}\right) = \arg(u_{0k}) - \arg(u_{kk})
+\end{equation} 
+\begin{equation}
+	\delta_{kk}(t) = \delta_{0k} - \arctan \left(\frac{tz_{kkIm}}{tz_{kkRe} + 1}\right)
+\end{equation} 
+\begin{equation}
+	u_{kk}(t)=|u_{kk}|\phase{\delta_{kk}(t)}
+\end{equation} 
+Для выбора корней \(t_1\) и \(t_2\) можно воспользоваться условием:
+\begin{equation}
+	t=\argmin_{x\in{t_1, t_2}}{\norm{u_{kk} - u_{kk}(x)}_2}
+\end{equation}
+то есть выбирать на итерации шунт,  который дает вектор \(u_{kk}(t)\) наиболее близкий к текущему \(u_{kk}\).
+\end{document}
+
+
