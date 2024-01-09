@@ -6,6 +6,7 @@
 #include "queue"
 #include "stack"
 #include "SyncroZone.h"
+#include "KLUWrapper.h"
 
 namespace DFW2
 {
@@ -293,6 +294,13 @@ namespace DFW2
 
 	class CDynaNodeMeasure;
 
+	//! Структура данных короткого замыкания с остаточным напряжением
+	struct ShortCircuitInfo
+	{
+		const double Usc = 0.3;
+		const double RXratio = 0.1;
+	};
+
 	//! Базовый класс узла, с учетом угла, но без скольжения
 	class CDynaNode : public CDynaNodeBase
 	{
@@ -462,22 +470,13 @@ namespace DFW2
 
 	class CDynaNodeContainer : public CDeviceContainer
 	{
-	public:
-		struct ShortCircuitInfo
-		{
-			const double Usc = 0.3;
-			const double RXratio = 0.1;
-		};
-
 	protected:
+		std::map<CDynaNodeBase*, const ShortCircuitInfo> ShortCircuitNodes_;
 		struct BranchNodes
 		{
 			CDynaNodeBase *pNodeIp;
 			CDynaNodeBase *pNodeIq;
 		};
-
-		std::map<CDynaNodeBase*, const ShortCircuitInfo> ShortCircuitNodes_;
-
 		void BuildSynchroZones();
 		void EnergizeZones(ptrdiff_t &nDeenergizedCount, ptrdiff_t &nEnergizedCount);
 		void CreateSuperNodes();
@@ -495,6 +494,7 @@ namespace DFW2
 		void DumpIterationControl(DFW2MessageStatus OutputStatus = DFW2MessageStatus::DFW2LOG_INFO);
 		std::string GetIterationControlString();
 		friend class CLoadFlow;
+		friend class CLULF;
 		LINKSVEC SuperLinks;
 		ORIGINALLINKSVEC OriginalLinks;
 		std::unique_ptr<BranchNodes[]> pOriginalBranchNodes;
@@ -525,7 +525,30 @@ namespace DFW2
 		void LinkToLRCs(CDeviceContainer& containerLRC);
 		void LinkToReactors(CDeviceContainer& containerReactors);
 		void RequireSuperNodeLF(CDynaNodeBase *pNode);
-		void AddShortCircuitNode(CDynaNodeBase* pNode, const CDynaNodeContainer::ShortCircuitInfo& ShortCircuitInfo);
+		void AddShortCircuitNode(CDynaNodeBase* pNode, const ShortCircuitInfo& ShortCircuitInfo);
+	};
+
+	class CLULF
+	{
+		CDynaNodeContainer& Nodes_;
+		void Solve1();
+		void Solve2();
+		KLUWrapper<std::complex<double>> klu_;
+		void CheckShortCircuitNodes();
+		void BuildNodeOrder();
+		struct NodeOrderT
+		{
+			CDynaNodeBase* pNode;
+			const ShortCircuitInfo* SCinfo = nullptr;
+		};
+		std::vector<NodeOrderT> NodeOrder_;
+		std::unique_ptr<double* []> pDiags_;
+		std::ofstream fnode_;
+		std::ofstream fgen_;
+
+	public:
+		CLULF(CDynaNodeContainer& Nodes) : Nodes_(Nodes) {}
+		void Solve() { Solve2(); }
 	};
 }
 

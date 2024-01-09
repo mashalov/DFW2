@@ -3,8 +3,9 @@
 #include "klu.h"
 #include "klu_version.h"
 #include "cs.h"
-#include "fstream"
-#include "iomanip"
+#include <fstream>
+#include <iomanip>
+#include <filesystem>
 #ifndef _MSC_VER
 #include "mm_malloc.h"
 #endif
@@ -748,6 +749,8 @@ namespace DFW2
 			for (auto pb{ B() }; pb < B() + 2 * MatrixSize(); pb += 2)
 				csv << KLUWrapper<std::complex<double>>::ComplexFormat(std::complex<double>(*pb, *(pb + 1))) << std::endl;
 		}
+		else
+			throw dfw2errorGLE(CDFW2Messages::m_cszFileWriteError);
 	}
 
 	template<> inline void KLUWrapper<std::complex<double>>::AtoDenseCSV(const std::filesystem::path& path)
@@ -755,7 +758,7 @@ namespace DFW2
 		std::ofstream csv(path);
 		if (csv.is_open())
 		{
-			double *pAx{ Ax() };
+			double* pAx{ Ax() };
 			ptrdiff_t* pAp{ Ai() }, * pAi{ Ap() }, nRow{ 0 };
 			struct UnpackT
 			{
@@ -779,9 +782,9 @@ namespace DFW2
 				auto itUnpack{ Unpack.begin() };
 				for (ptrdiff_t nCol{ 0 }; nCol < MatrixSize(); nCol++)
 				{
-					if(nCol > 0)
+					if (nCol > 0)
 						csv << ",";
-					if(itUnpack != Unpack.end() && nCol == itUnpack->index)
+					if (itUnpack != Unpack.end() && nCol == itUnpack->index)
 					{
 						csv << KLUWrapper<std::complex<double>>::ComplexFormat(std::complex<double>(*itUnpack->pAx, *(itUnpack->pAx + 1)));
 						itUnpack++;
@@ -792,6 +795,8 @@ namespace DFW2
 				csv << std::endl;
 			}
 		}
+		else
+			throw dfw2errorGLE(CDFW2Messages::m_cszFileWriteError);
 	}
 
 }
