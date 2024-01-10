@@ -1,4 +1,4 @@
-#include "stdafx.h"
+﻿#include "stdafx.h"
 #include "DynaNode.h"
 #include "SVC.h"
 #include "DynaModel.h"
@@ -21,15 +21,17 @@ double* CDynaSVCBase::GetVariablePtr(ptrdiff_t nVarIndex)
 
 bool CDynaSVCBase::CalculatePower()
 {
-	FromComplex(P, Q, V * V * cplx(0.0, Bout * 1e-6));
+	FromComplex(P, Q, V * V * cplx(0.0, Bout * 1e-6));\
+	//  задаем проводимость для LULF
+	Ygen_ = cplx(0.0, -Bout * 1e-6);
 	return true;
 }
 
 cplx CDynaSVCBase::Igen(ptrdiff_t nIteration)
 {
-	Ire = -Vim * 1e-6 * Bout;
-	Iim = Vre * 1e-6 * Bout;
-	return cplx{ Ire, Iim };
+	// для расчета LULF Igen = 0 для УШР на проводимости
+	// он учитывается проводимостью в Y
+	return { 0.0 };
 }
 
 double* CDynaSVCDEC::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -101,8 +103,7 @@ eDEVICEFUNCTIONSTATUS CDynaSVC::InitModel(CDynaModel* pDynaModel)
 	{
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 		Bout = Q / V / V * 1e6;
-		Ire = -Vim * 1e-6 * Bout;
-		Iim = Vre * 1e-6 * Bout;
+		CalculateIreIm();
 		ControlOut = Bout;
 		CoilLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcoil_);
 		ControlLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcontrol_);
@@ -122,8 +123,7 @@ eDEVICEFUNCTIONSTATUS CDynaSVCDEC::InitModel(CDynaModel* pDynaModel)
 		Status = eDEVICEFUNCTIONSTATUS::DFS_OK;
 		Bout = Q / V / V * 1e6;
 		//FromComplex(Ire, Iim, cplx(Vre, Vim) * cplx(0.0, Bout));
-		Ire = -Vim * 1e-6 * Bout;
-		Iim =  Vre * 1e-6 * Bout;
+		CalculateIreIm();
 		I = V * Bout;
 		ControlOut = Bout;
 		CoilLag_.SetMinMaxTK(pDynaModel, 1e6 * Bmin_, 1e6 * Bmax_, Tcoil_);
@@ -241,8 +241,20 @@ void CDynaSVCDEC::BuildEquations(CDynaModel* pDynaModel)
 	CDevice::BuildEquations(pDynaModel);
 }
 
+void CDynaSVCBase::CalculateIreIm()
+{
+	if (IsStateOn())
+	{
+		Ire = -Vim * 1e-6 * Bout;
+		Iim = Vre * 1e-6 * Bout;
+	}
+	else
+		Ire = Iim = 0.0;
+}
+
 eDEVICEFUNCTIONSTATUS CDynaSVCBase::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
+	CalculateIreIm();
 	auto Status(CDynaPowerInjector::ProcessDiscontinuity(pDynaModel));
 	ControlIn = (V - Vref_) * V0_;
 	CDevice::ProcessDiscontinuity(pDynaModel);

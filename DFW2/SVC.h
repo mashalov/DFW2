@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once
 #include "DynaPowerInjector.h"
 #include "LimitedLag.h"
 #include "Relay.h"
@@ -11,6 +11,7 @@ namespace DFW2
 	protected:
 		eDEVICEFUNCTIONSTATUS InitModel(CDynaModel* pDynaModel) override;
 		CLimitedLag ControlLag_;
+		void CalculateIreIm();
 	public:
 		enum VARS
 		{
