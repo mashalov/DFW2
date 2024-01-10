@@ -475,6 +475,12 @@ namespace DFW2
 			dest.imag(Im);
 		}
 
+		static void FromComplex(double*& pB, const cplx& source)
+		{
+			*pB = source.real();	pB++;
+			*pB = source.imag();	pB++;
+		}
+
 		void RegisterStatePrimitive(CDynaPrimitiveState *pPrimitive);
 		void RegisterPrimitive(CDynaPrimitive *pPrimitive);
 

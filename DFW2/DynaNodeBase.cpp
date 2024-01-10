@@ -1356,8 +1356,7 @@ void CDynaNodeBase::SuperNodeLoadFlowYU(CDynaModel* pDynaModel)
 		while (pGenLink->InMatrix(pGen))
 			Is -= cplx(pGen->Ire, pGen->Iim);
 
-		*pB = -Is.real();	pB++;
-		*pB = -Is.imag();	pB++;
+		CDevice::FromComplex(pB, -Is);
 	}
 
 	pB = klu.B();
@@ -1558,9 +1557,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 			I += pBranch->CurrentFrom(pInSuperNode);
 
 		S -= std::conj(I) * Unode;
-
-		*pB = S.real();			pB++;
-		*pB = S.imag();			pB++;
+		CDevice::FromComplex(pB, S);
 	}
 
 	// уравнения для контуров
@@ -1576,8 +1573,7 @@ void CDynaNodeBase::SuperNodeLoadFlow(CDynaModel *pDynaModel)
 			pAp++;
 		}
 		*pAi = nCurrentRow + cycle.size();				// следующая строка матрицы начинается через количество элементов равное количеству ребер контура
-		*pB = 0.0;			pB++;
-		*pB = 0.0;			pB++;
+		CDevice::FromComplex(pB, 0.0);
 	}
 
 	pB = klu.B();
@@ -1861,8 +1857,7 @@ void CLULF::Solve1()
 				// и заполняем вектор комплексных токов
 			}
 			// и заполняем вектор комплексных токов
-			*pB = I.real(); pB++;
-			*pB = I.imag(); pB++;
+			CDevice::FromComplex(pB, I);
 			// диагональ матрицы формируем по Y узла
 			**ppDiags = Y.real();
 			*(*ppDiags + 1) = Y.imag();
@@ -2012,8 +2007,7 @@ void CLULF::Solve2()
 			pNode->Vold = pNode->V;
 			auto [Y, I] { pNode->GetYI(nIteration) };
 			// и заполняем вектор комплексных токов
-			*pB = I.real(); pB++;
-			*pB = I.imag(); pB++;
+			CDevice::FromComplex(pB, I);
 			// диагональ матрицы формируем по Y узла
 			**ppDiags = Y.real();
 			*(*ppDiags + 1) = Y.imag();
