@@ -480,16 +480,26 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntX::Do(CDynaModel *pDynaModel, doub
 	return State;
 }
 
-eDFW2_ACTION_STATE CModelActionChangeNodeShuntToUsc::Do(CDynaModel* pDynaModel, double Value)
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntToUscUref::Do(CDynaModel* pDynaModel, double Value)
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
-	Log(pDynaModel, fmt::format(CDFW2Messages::m_cszNodeShortCircuitToUsc, 
-		pDynaNode_->GetVerbalName(), 
-		Value, RXratio_));
-	pDynaModel->AddShortCircuitNode(pDynaNode_, { Value, RXratio_ });
+	Log(pDynaModel, fmt::format(CDFW2Messages::m_cszNodeShortCircuitToUscUref, pDynaNode_->GetVerbalName(),Value));
+	pDynaModel->AddShortCircuitNode(pDynaNode_, { Value, {} });
 	pDynaNode_->ProcessTopologyRequest();
 	return State;
 }
+
+
+eDFW2_ACTION_STATE CModelActionChangeNodeShuntToUscRX::Do(CDynaModel* pDynaModel, double Value)
+{
+	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
+	Log(pDynaModel, fmt::format(CDFW2Messages::m_cszNodeShortCircuitToUscRX,pDynaNode_->GetVerbalName(),Value));
+	pDynaModel->AddShortCircuitNode(pDynaNode_, { {}, RXratio_ });
+	pDynaNode_->ProcessTopologyRequest();
+	return State;
+}
+
+
 
 
 

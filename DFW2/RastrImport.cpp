@@ -265,7 +265,7 @@ void CRastrImport::GetFileData(CDynaModel& Network)
 	//
 	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.rst");
 	m_spRastr->NewFile(dfwPath.c_str()); 
-	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_dec.scn", scnPath.c_str());
+	LoadFile("d:/Documents/RastrWin3/test-rastr/RUSTab/FACTS/УШР/test9_sc_uref.scn", scnPath.c_str());
 
 	//LoadFile("E:/Downloads/mdp_debug_1_400014 ошибка", rstPath);
 	//m_spRastr->NewFile(dfwPath.c_str()); 
@@ -682,7 +682,10 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 	15 РТ|
 	16 Стоп|
 	17 Ветвь КЗ|
-	18 Протокол*/
+	18 Протокол
+	19 КЗ Uост
+	20 КЗ Uост
+	*/
 
 	/* Типы стартеров RUSTab
 
@@ -716,7 +719,8 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 		{8 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszPload} },
 		{9 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszQload} },
 		{13 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszPload} },
-		{18 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszV} },
+		{19 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszV} },
+		{20 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszV} },
 	},
 	StarterTypeArgs
 	{

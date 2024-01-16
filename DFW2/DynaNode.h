@@ -297,8 +297,8 @@ namespace DFW2
 	//! Структура данных короткого замыкания с остаточным напряжением
 	struct ShortCircuitInfo
 	{
-		const double Usc = 0.3;
-		const double RXratio = 0.1;
+		std::optional<double> Usc;
+		std::optional<double> RXratio;
 	};
 
 	//! Базовый класс узла, с учетом угла, но без скольжения
@@ -471,7 +471,7 @@ namespace DFW2
 	class CDynaNodeContainer : public CDeviceContainer
 	{
 	protected:
-		std::map<CDynaNodeBase*, const ShortCircuitInfo> ShortCircuitNodes_;
+		std::map<CDynaNodeBase*, ShortCircuitInfo> ShortCircuitNodes_;
 		struct BranchNodes
 		{
 			CDynaNodeBase *pNodeIp;

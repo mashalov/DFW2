@@ -1668,8 +1668,22 @@ void CDynaNodeContainer::LinkToReactors(CDeviceContainer& containerReactors)
 
 void CDynaNodeContainer::AddShortCircuitNode(CDynaNodeBase* pNode, const ShortCircuitInfo& ShortCircuitInfo)
 {
-	if (!ShortCircuitNodes_.try_emplace(pNode, ShortCircuitInfo).second)
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszShortCircuitNodeAlreadyAdded, pNode->GetVerbalName()));
+	auto itsc{ ShortCircuitNodes_.find(pNode) };
+	if(itsc == ShortCircuitNodes_.end())
+		ShortCircuitNodes_.emplace(pNode, ShortCircuitInfo);
+	else
+	{
+		if(ShortCircuitInfo.Usc.has_value())
+		if (itsc->second.Usc.has_value())
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszShortCircuitNodeAlreadyAdded, pNode->GetVerbalName()));
+		else 
+			itsc->second.Usc = ShortCircuitInfo.Usc;
+
+		if (ShortCircuitInfo.RXratio.has_value())
+			Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszShortCircuitNodeAlreadyAdded, pNode->GetVerbalName()));
+		else if (ShortCircuitInfo.RXratio.has_value())
+			itsc->second.RXratio = ShortCircuitInfo.RXratio;
+	}
 }
 
 void CDynaNodeContainer::LinkToLRCs(CDeviceContainer& containerLRC)
@@ -1813,9 +1827,9 @@ void CLULF::Solve1()
 				for (const auto& pv : pNode->VirtualBranches())
 					I -= pv.pNode->VreVim * pv.Y;
 				// решаем уравнение шунта bs
-				const double a{ -(it.SCinfo->RXratio * it.SCinfo->RXratio + 1.0) };
-				const double b{ 2.0 * (Y.imag() - it.SCinfo->RXratio * Y.real()) };
-				const double Usc{ it.SCinfo->Usc * pNode->Unom };
+				const double a{ -(it.SCinfo->RXratio.value() * it.SCinfo->RXratio.value() + 1.0)};
+				const double b{ 2.0 * (Y.imag() - it.SCinfo->RXratio.value() * Y.real()) };
+				const double Usc{ it.SCinfo->Usc.value() * pNode->Unom };
 				const double c{ std::norm(I) / Usc / Usc - Y.real() * Y.real() - Y.imag() * Y.imag() };
 				double bs1{ 0.0 }, bs2{ 0.0 };
 				// получаем 0-2 корней
@@ -1831,8 +1845,8 @@ void CLULF::Solve1()
 				case 2:
 				{
 					// если корней 2 - рассчитываем 2 шунта и 2 напряжения
-					const cplx v1{ I / cplx(Y.real() + it.SCinfo->RXratio * bs1, Y.imag() - bs1) };
-					const cplx v2{ I / cplx(Y.real() + it.SCinfo->RXratio * bs2, Y.imag() - bs2) };
+					const cplx v1{ I / cplx(Y.real() + it.SCinfo->RXratio.value() * bs1, Y.imag() - bs1) };
+					const cplx v2{ I / cplx(Y.real() + it.SCinfo->RXratio.value() * bs2, Y.imag() - bs2) };
 					// проверяем что модуль напряжения получим тот, который задан
 					_ASSERTE(std::abs(std::abs(v1) - Usc) < 1e-3);
 					_ASSERTE(std::abs(std::abs(v2) - Usc) < 1e-3);
@@ -1847,7 +1861,7 @@ void CLULF::Solve1()
 				}
 				break;
 				}
-				const cplx Ysc{ it.SCinfo->RXratio * bs1, -bs1 };
+				const cplx Ysc{ it.SCinfo->RXratio.value() * bs1, -bs1 };
 				// формируем уравнение для этого узла 1.0*V=V
 				I = pNode->VreVim;
 				Y = 1.0;
@@ -1911,14 +1925,14 @@ void CLULF::Solve1()
 
 		// даем репорт и пишем медленные переменные по z-шунту
 		const auto Description{ fmt::format(CDFW2Messages::m_cszShortCircuitShunt,
-			scnode.second.Usc,
-			scnode.second.RXratio,
+			scnode.second.Usc.value(),
+			scnode.second.RXratio.value(),
 			scnode.first->GetVerbalName()) };
 
 		Nodes_.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszShortCircuitShuntCalculated,
 			scnode.first->GetVerbalName(),
-			scnode.second.Usc,
-			scnode.second.RXratio,
+			scnode.second.Usc.value(),
+			scnode.second.RXratio.value(),
 			Zsc,
 			scnode.first->V,
 			scnode.first->V / scnode.first->Unom));
@@ -2023,7 +2037,7 @@ void CLULF::Solve2()
 
 		for (const auto& scit : Nodes_.ShortCircuitNodes_)
 		{
-			klu_.B()[2 * scit.first->A(0) / Nodes_.EquationsCount()] = scit.second.RXratio;
+			klu_.B()[2 * scit.first->A(0) / Nodes_.EquationsCount()] = scit.second.RXratio.value();
 			klu_.B()[2 * scit.first->A(0) / Nodes_.EquationsCount() + 1] = -1.0;
 		}
 
@@ -2039,7 +2053,7 @@ void CLULF::Solve2()
 			auto scit{ Nodes_.ShortCircuitNodes_.begin() };
 			ptrdiff_t zkindex{ 2 * scit->first->A(0) / Nodes_.EquationsCount() };
 			const cplx zk{ cplx(klu_.B()[zkindex], klu_.B()[zkindex + 1]) };
-			const double uk{ scit->second.Usc * scit->first->Unom };
+			const double uk{ scit->second.Usc.value() * scit->first->Unom };
 			const cplx u0{ cplx(U0[zkindex], U0[zkindex + 1]) };
 			const double a{ std::norm(zk) };
 			const double b{ 2.0 * klu_.B()[zkindex] };
@@ -2071,7 +2085,7 @@ void CLULF::Solve2()
 					t = bs1;
 					uka = uka1;
 				}
-				scit->first->Gshunt = t * scit->second.RXratio;
+				scit->first->Gshunt = t * scit->second.RXratio.value();
 				scit->first->Bshunt = -t;
 			}
 			break;
@@ -2117,15 +2131,15 @@ void CLULF::Solve2()
 
 		// даем репорт и пишем медленные переменные по z-шунту
 		const auto Description{ fmt::format(CDFW2Messages::m_cszShortCircuitShunt,
-			scnode.second.Usc,
-			scnode.second.RXratio,
+			scnode.second.Usc.value(),
+			scnode.second.RXratio.value(),
 			scnode.first->GetVerbalName()) };
 
 
 		Nodes_.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszShortCircuitShuntCalculated,
 			scnode.first->GetVerbalName(),
-			scnode.second.Usc,
-			scnode.second.RXratio,
+			scnode.second.Usc.value(),
+			scnode.second.RXratio.value(),
 			Zsc,
 			scnode.first->V,
 			scnode.first->V / scnode.first->Unom));
@@ -2152,18 +2166,33 @@ void CLULF::Solve2()
 
 void CLULF::CheckShortCircuitNodes()
 {
-	// проверяем нет ли узлов с Uост <= 0.0
+	// проверяем нет ли узлов с незаданным Uост или Uост <= 0.0
 	auto scnode{ Nodes_.ShortCircuitNodes_.begin() };
 	while (scnode != Nodes_.ShortCircuitNodes_.end())
 	{
-		// если есть - удаляем их из списка Uост и устраиваем металлическое КЗ
-		if (scnode->second.Usc < Consts::epsilon)
+		if (!scnode->second.Usc.has_value())
+		{
+			if (scnode->second.RXratio.has_value())
+			{
+				Nodes_.Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszShortCircuitVoltageNotSetButRX,
+					scnode->first->GetVerbalName(),
+					scnode->second.RXratio.value()));
+			}
+			scnode = Nodes_.ShortCircuitNodes_.erase(scnode);
+		} else if (scnode->second.Usc.value() < Consts::epsilon) // если есть - удаляем их из списка Uост и устраиваем металлическое КЗ
 		{
 			Nodes_.Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszShortCircuitVoltageTooLow,
 				scnode->first->GetVerbalName(),
-				scnode->second.Usc));
+				scnode->second.Usc.value()));
 			scnode->first->InMetallicSC = true;
 			scnode = Nodes_.ShortCircuitNodes_.erase(scnode);
+		} else if (!scnode->second.RXratio.has_value()) // если не задано R/X - используем 0
+		{
+			Nodes_.Log(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszShortCircuitVoltageRXZeroed,
+				scnode->first->GetVerbalName(),
+				scnode->second.Usc.value()));
+			scnode->second.RXratio = 0.0;
+			scnode++;
 		}
 		else
 			scnode++;

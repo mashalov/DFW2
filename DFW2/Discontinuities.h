@@ -198,12 +198,21 @@ namespace DFW2
 		eDFW2_ACTION_STATE Do(CDynaModel *pDynaModel, double Value) override;
 	};
 
-	class CModelActionChangeNodeShuntToUsc : public CModelActionChangeNodeParameterBase
+	class CModelActionChangeNodeShuntToUscUref : public CModelActionChangeNodeParameterBase
 	{
 	protected:
-		double Usc_, RXratio_;
+		double Usc_;
 	public:
-		CModelActionChangeNodeShuntToUsc(CDynaNode* pNode, double Usc, double RXratio) : CModelActionChangeNodeParameterBase(pNode), Usc_(Usc), RXratio_(RXratio) {}
+		CModelActionChangeNodeShuntToUscUref(CDynaNode* pNode, double Usc) : CModelActionChangeNodeParameterBase(pNode), Usc_(Usc) {}
+		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
+	};
+
+	class CModelActionChangeNodeShuntToUscRX : public CModelActionChangeNodeParameterBase
+	{
+	protected:
+		double RXratio_;
+	public:
+		CModelActionChangeNodeShuntToUscRX(CDynaNode* pNode, double RXratio) : CModelActionChangeNodeParameterBase(pNode), RXratio_(RXratio) {}
 		eDFW2_ACTION_STATE Do(CDynaModel* pDynaModel, double Value) override;
 	};
 

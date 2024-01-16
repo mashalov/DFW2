@@ -273,11 +273,14 @@ namespace DFW2
 		static const char* m_cszDFW2Error;
 		static const char* m_cszModelSavedToPath;
 		static const char* m_cszRastrWinSVCModelIsNotSupported;
-		static const char* m_cszNodeShortCircuitToUsc;
+		static const char* m_cszNodeShortCircuitToUscUref;
+		static const char* m_cszNodeShortCircuitToUscRX;
 		static const char* m_cszShortCircuitNodeAlreadyAdded;
 		static const char* m_cszShortCircuitShuntCalculated;
 		static const char* m_cszShortCircuitShunt;
 		static const char* m_cszShortCircuitVoltageTooLow;
+		static const char* m_cszShortCircuitVoltageNotSetButRX;
+		static const char* m_cszShortCircuitVoltageRXZeroed;
 	};
 }
 

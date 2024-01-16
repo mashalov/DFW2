@@ -518,12 +518,22 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 				}
 				break;
 			}
-			case 18: // Шунт по остаточному напряжению
+			case 19: // Шунт по остаточному напряжению - Uост
 			{
 				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodeShuntToUsc>(static_cast<CDynaNode*>(pDev), *m_pValue, 0.3);
+					m_pAction = std::make_unique<CModelActionChangeNodeShuntToUscUref>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					bRes = true;
+				}
+				break;
+			}
+			case 20: // Шунт по остаточному напряжению  - R/X
+			{
+				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String()) }; pDev)
+				{
+					m_pAction = std::make_unique<CModelActionChangeNodeShuntToUscRX>(static_cast<CDynaNode*>(pDev), *m_pValue);
 					bRes = true;
 				}
 				break;
