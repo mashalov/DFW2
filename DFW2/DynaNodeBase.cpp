@@ -1759,7 +1759,7 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddState("YiiSuper", YiiSuper, eVARUNITS::VARUNIT_SIEMENS);
 }
 
-void CLULF::Solve1()
+void CLULF::SolveEM()
 {
 	klu_.SetSize(Nodes_.DevInMatrix.size(), Nodes_.DevInMatrix.size() + 2 * Nodes_.GetModel()->Branches.Count());
 	double* const Ax{ klu_.Ax() };
@@ -1935,7 +1935,8 @@ void CLULF::Solve1()
 			scnode.second.RXratio.value(),
 			Zsc,
 			scnode.first->V,
-			scnode.first->V / scnode.first->Unom));
+			scnode.first->V / scnode.first->Unom,
+			SCMethodName()));
 
 		Nodes_.GetModel()->WriteSlowVariable(scnode.first->GetType(),
 			{ scnode.first->GetId() },
@@ -1957,7 +1958,7 @@ void CLULF::Solve1()
 	Nodes_.ShortCircuitNodes_.clear();
 }
 
-void CLULF::Solve2()
+void CLULF::SolveVG()
 {
 	klu_.SetSize(Nodes_.DevInMatrix.size(), Nodes_.DevInMatrix.size() + 2 * Nodes_.GetModel()->Branches.Count());
 	double* const Ax{ klu_.Ax() };
@@ -2142,7 +2143,8 @@ void CLULF::Solve2()
 			scnode.second.RXratio.value(),
 			Zsc,
 			scnode.first->V,
-			scnode.first->V / scnode.first->Unom));
+			scnode.first->V / scnode.first->Unom,
+			SCMethodName()));
 
 		Nodes_.GetModel()->WriteSlowVariable(scnode.first->GetType(),
 			{ scnode.first->GetId() },
@@ -2224,7 +2226,30 @@ void CLULF::BuildNodeOrder()
 
 }
 
+std::string CLULF::SCMethodName() const
+{
+	std::string ret{ "???" };
+	if (auto Serializer{ Nodes_.GetModel()->GetParametersSerializer() }; Serializer)
+		if (auto ShuntMethodParameter{ Serializer->at(CDynaModel::Parameters::cszShortCircuitShuntMethod_) }; ShuntMethodParameter)
+			if (ShuntMethodParameter->Adapter)
+				ret = ShuntMethodParameter->Adapter->GetString();
+	return ret;
+}
+
+
 void CLULF::Solve()
 {
-	Solve2();
+	switch (Nodes_.GetModel()->Parameters().ShortCircuitShuntMethod_)
+	{
+	case CDynaModel::eShortCircuitShuntMethod::EM:
+		SolveEM();
+		break;
+	case CDynaModel::eShortCircuitShuntMethod::VG:
+		SolveVG();
+		break;
+	default:
+		SolveEM();
+		break;
+	}
+	
 }

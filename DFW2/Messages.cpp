@@ -270,7 +270,7 @@ const char* CDFW2Messages::m_cszRastrWinSVCModelIsNotSupported = "Модель �
 const char* CDFW2Messages::m_cszNodeShortCircuitToUscUref = "{} - короткое замыкание Uост={:.3f}";
 const char* CDFW2Messages::m_cszNodeShortCircuitToUscRX = "{} - короткое замыкание R/X={:.3f}";
 const char* CDFW2Messages::m_cszShortCircuitNodeAlreadyAdded = "{} с КЗ Uост уже добавлен";
-const char* CDFW2Messages::m_cszShortCircuitShuntCalculated = "Для {} c Uост={:.3f}, R/X={:.3f} рассчитан шунт КЗ {} |V|={:.3f} ({:.3f} ое)";
+const char* CDFW2Messages::m_cszShortCircuitShuntCalculated = "Для {} c Uост={:.3f}, R/X={:.3f} рассчитан шунт КЗ {} |V|={:.3f} ({:.3f} ое.) Метод \"{}\"";
 const char* CDFW2Messages::m_cszShortCircuitShunt = "Шунт КЗ Uост={:.3f} R/X={:.3f} {}";
 const char* CDFW2Messages::m_cszShortCircuitVoltageTooLow = "В {} задано слишком низкое Uост={:.3f} для расчета шунта. КЗ будет рассчитано c шунтом Z=0.0";
 const char* CDFW2Messages::m_cszShortCircuitVoltageNotSetButRX = "В {} задано R/X={:.3f} для расчета шунта, но не задано Uост";

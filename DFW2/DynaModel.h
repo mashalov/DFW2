@@ -60,12 +60,19 @@ namespace DFW2
 			FD
 		};
 
+		enum class eShortCircuitShuntMethod
+		{
+			EM,
+			VG
+		};
+
 		struct DynaModelParameters : public CLoadFlow::LoadFlowParameters
 		{
 			
 			DynaModelParameters() : CLoadFlow::LoadFlowParameters() {}
 			eItegrationMethod IntegrationMethod_ = eItegrationMethod::MixedAdamsBDF;
 			eBusFrequencyEstimation BusFrequencyEstimation_ = eBusFrequencyEstimation::Derlag;
+			eShortCircuitShuntMethod ShortCircuitShuntMethod_ = eShortCircuitShuntMethod::VG;
 			ACTIVE_POWER_DAMPING_TYPE eFreqDampingType_ = ACTIVE_POWER_DAMPING_TYPE::APDT_NODE;
 			DEVICE_EQUATION_TYPE eDiffEquationType_ = DEVICE_EQUATION_TYPE::DET_DIFFERENTIAL;
 			double m_dFrequencyTimeConstant = 0.02;
@@ -128,8 +135,10 @@ namespace DFW2
 			SerializerPtr GetSerializer();
 			SerializerValidatorRulesPtr GetValidator();
 
+			static constexpr const char* cszShortCircuitShuntMethod_ = "ShortCircuitShuntMethod";
 			static constexpr const char* cszBusFrequencyEstimation_ = "BusFrequencyEstimation";
 			static constexpr const char* cszBusFrequencyEstimationTypeNames_[2] = { "Derlag", "FD" };
+			static constexpr const char* cszShortCircuitShuntMethodTypeNames_[2] = { "EM", "VG" };
 			static constexpr const char* m_cszIntegrationMethod = "IntegrationMethod";
 			static constexpr const char* m_cszIntegrationMethodNames[3] = { "MixedAdamsBDF", "Rodas4", "Rosenbrock23" };
 			static constexpr const char* m_cszDiffEquationTypeNames[2] = { "Algebraic", "Differential" };
@@ -931,6 +940,11 @@ namespace DFW2
 		inline eBusFrequencyEstimation BusFrequencyEstimation() const
 		{
 			return m_Parameters.BusFrequencyEstimation_;
+		}
+
+		inline eShortCircuitShuntMethod ShortCircuitShuntMethod() const
+		{
+			return m_Parameters.ShortCircuitShuntMethod_;
 		}
 
 		inline const char* GetDampingName() const

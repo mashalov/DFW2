@@ -531,8 +531,8 @@ namespace DFW2
 	class CLULF
 	{
 		CDynaNodeContainer& Nodes_;
-		void Solve1();
-		void Solve2();
+		void SolveEM();
+		void SolveVG();
 		KLUWrapper<std::complex<double>> klu_;
 		void CheckShortCircuitNodes();
 		void BuildNodeOrder();
@@ -545,7 +545,7 @@ namespace DFW2
 		std::unique_ptr<double* []> pDiags_;
 		std::ofstream fnode_;
 		std::ofstream fgen_;
-
+		std::string SCMethodName() const;
 	public:
 		CLULF(CDynaNodeContainer& Nodes) : Nodes_(Nodes) {}
 		void Solve();

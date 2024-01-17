@@ -712,6 +712,9 @@ SerializerPtr CDynaModel::Parameters::GetSerializer()
 	Serializer->AddEnumProperty(cszBusFrequencyEstimation_,
 		new CSerializerAdapterEnum<eBusFrequencyEstimation>(BusFrequencyEstimation_, cszBusFrequencyEstimationTypeNames_));
 
+	Serializer->AddEnumProperty(cszShortCircuitShuntMethod_,
+		new CSerializerAdapterEnum<eShortCircuitShuntMethod>(ShortCircuitShuntMethod_, cszShortCircuitShuntMethodTypeNames_));
+
 	Serializer->AddEnumProperty(m_cszAdamsRingingSuppressionMode, 
 		new CSerializerAdapterEnum<ADAMS_RINGING_SUPPRESSION_MODE>(m_eAdamsRingingSuppressionMode, m_cszAdamsRingingSuppressionNames));
 
