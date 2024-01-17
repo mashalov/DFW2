@@ -2217,7 +2217,7 @@ void CLULF::BuildNodeOrder()
 			fnode_ << pNode->GetId() << ";";
 		}
 		auto scit{ Nodes_.ShortCircuitNodes_.find(pNode) };
-		NodeOrder_.emplace_back(pNode, scit == Nodes_.ShortCircuitNodes_.end() ? nullptr : &scit->second);
+		NodeOrder_.emplace_back(NodeOrderT{pNode, scit == Nodes_.ShortCircuitNodes_.end() ? nullptr : &scit->second});
 	}
 	pDiags_ = std::make_unique<double* []>(klu_.MatrixSize());
 	fnode_.open(Nodes_.GetModel()->Platform().ResultFile("nodes.csv"));

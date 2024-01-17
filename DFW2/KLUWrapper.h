@@ -764,6 +764,7 @@ namespace DFW2
 			{
 				ptrdiff_t index;
 				const double* pAx;
+				
 			};
 
 			for (; pAp < Ai() + MatrixSize(); pAp++, nRow++)
@@ -772,7 +773,7 @@ namespace DFW2
 				std::list<UnpackT> Unpack;
 				while (pAi < pAiend)
 				{
-					Unpack.emplace_back(*pAi, pAx);
+					Unpack.emplace_back(UnpackT{*pAi, pAx});
 					pAx += 2;
 					pAi++;
 				}
