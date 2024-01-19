@@ -1968,6 +1968,10 @@ void CLULF::SolveVG()
 	ptrdiff_t* pAp{ Ap };
 	ptrdiff_t* pAi{ Ai };
 
+
+	if (Nodes_.ShortCircuitNodes_.size() > 1)
+		throw dfw2error(fmt::format(CDFW2Messages::m_cszShortCircutShuntMethodCanCalculateJustOne, SCMethodName(), Nodes_.ShortCircuitNodes_.size()));
+
 	CheckShortCircuitNodes();
 	BuildNodeOrder();
 

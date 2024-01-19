@@ -281,6 +281,7 @@ namespace DFW2
 		static const char* m_cszShortCircuitVoltageTooLow;
 		static const char* m_cszShortCircuitVoltageNotSetButRX;
 		static const char* m_cszShortCircuitVoltageRXZeroed;
+		static const char* m_cszShortCircutShuntMethodCanCalculateJustOne;
 	};
 }
 

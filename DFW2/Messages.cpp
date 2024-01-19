@@ -275,3 +275,4 @@ const char* CDFW2Messages::m_cszShortCircuitShunt = "Шунт КЗ Uост={:.3f
 const char* CDFW2Messages::m_cszShortCircuitVoltageTooLow = "В {} задано слишком низкое Uост={:.3f} для расчета шунта. КЗ будет рассчитано c шунтом Z=0.0";
 const char* CDFW2Messages::m_cszShortCircuitVoltageNotSetButRX = "В {} задано R/X={:.3f} для расчета шунта, но не задано Uост";
 const char* CDFW2Messages::m_cszShortCircuitVoltageRXZeroed = "В {} задано Uост={:.3f} для расчета шунта, но не задано R/X. Будет использовано R/X=0.0";
+const char* CDFW2Messages::m_cszShortCircutShuntMethodCanCalculateJustOne = "Метод расчета шунта КЗ \"{}\" может рассчитать только одну точку КЗ. Задано {}";
