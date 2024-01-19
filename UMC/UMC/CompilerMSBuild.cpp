@@ -39,7 +39,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 
 	if (!CreatePipe(hStdRead, hStdWrite, &stdSA, 0))
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()),
-			fmt::format("Невозможно создание канала получения данных для запуска {}", CommandLineUTF8Version));
+			fmt::format(DFW2::CDFW2Messages::m_cszCannotCreatePipeToRun, CommandLineUTF8Version));
 
 	si.cb = sizeof(STARTUPINFO);
 	si.hStdError = hStdWrite;
@@ -55,7 +55,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 
 	if (!SetHandleInformation(hStdRead, HANDLE_FLAG_INHERIT, 0))
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()),
-			fmt::format("Невозможно подключение канала получения данных {}", CommandLineUTF8Version));
+			fmt::format(DFW2::CDFW2Messages::m_cszCannotCreatePipeToGatherData, CommandLineUTF8Version));
 
 	if (!CreateProcess(NULL,
 		wcmd.get(),
@@ -68,7 +68,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 		&si,
 		&pi))
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()),
-			fmt::format("Ошибка запуска процесса {}", CommandLineUTF8Version));
+			fmt::format(DFW2::CDFW2Messages::m_cszFailedToRunProcess, CommandLineUTF8Version));
 
 	// не нужно ждать завершения, если мы используем перенаправление вывода
 	// https://stackoverflow.com/questions/35969730/how-to-read-output-from-cmd-exe-using-createprocess-and-createpipe
@@ -118,7 +118,7 @@ DWORD RunWindowsConsole(std::wstring CommandLine, std::wstring WorkingFolder, st
 	DWORD dwResult{ 0 };
 	if (!GetExitCodeProcess(pi.hProcess, &dwResult))
 		throw std::system_error(std::error_code(GetLastError(), std::system_category()),
-			fmt::format("Ошибка при получении кода завершения работы процесса {}", CommandLineUTF8Version));
+			fmt::format(DFW2::CDFW2Messages::m_cszFailedToGetProcessExitCode, CommandLineUTF8Version));
 
 	return dwResult;
 }
@@ -128,14 +128,14 @@ DWORD RunVswhere(std::wstring CommandLine, std::list<std::wstring>& listConsole)
 	// используем vswhere из Visual Studio
 	PWSTR ppszPath;
 	if (FAILED(SHGetKnownFolderPath(FOLDERID_ProgramFilesX86, KF_FLAG_DEFAULT, NULL, &ppszPath)))
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "SHGetKnownFolderPath - отказ получения пути к Program Files");
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), DFW2::CDFW2Messages::m_cszSHGetKnownFolderPathFailedToGetPF);
 	std::wstring vswhereCommandLine(ppszPath);
 	CoTaskMemFree(ppszPath);
 	vswhereCommandLine.append(L"\\Microsoft Visual Studio\\Installer\\vswhere.exe");
 	vswhereCommandLine.append(CommandLine);
 	const DWORD dwResult{ RunWindowsConsole(vswhereCommandLine, {}, listConsole) };
 	if (dwResult != 0)
-		throw std::system_error(std::error_code(GetLastError(), std::system_category()), "vswhere завершен с ошибкой");
+		throw std::system_error(std::error_code(GetLastError(), std::system_category()), DFW2::CDFW2Messages::m_cszVswhereFailed);
 	return dwResult;
 }
 
@@ -143,14 +143,13 @@ DFW2::VersionInfo CCompilerMSBuild::Version(const std::wstring& strVersion)
 {
 	DFW2::VersionInfo version;
 	std::fill(version.begin(), version.end(), 0);
-	constexpr const char* szFailedToGetMSBuildVersion = "Невозможно получить версию из \"{}\"";
 	const std::string utf8Version { stringutils::utf8_encode(strVersion)};
 	if (sscanf_s(utf8Version.c_str(), "%zu.%zu.%zu.%zu",
 		&version[0],
 		&version[1],
 		&version[2],
 		&version[3]) < 2)
-		throw std::runtime_error(fmt::format(szFailedToGetMSBuildVersion, utf8Version));
+		throw std::runtime_error(fmt::format(DFW2::CDFW2Messages::m_cszFailedToGetMSBuildVersionFrom, utf8Version));
 	return version;
 
 }
@@ -159,9 +158,8 @@ DFW2::VersionInfo CCompilerMSBuild::GetVSVersion()
 {
 	std::list<std::wstring> output;
 	RunVswhere(L" -latest -products * -property catalog_productDisplayVersion", output);
-	constexpr const char* szFailedToGetVSVersion = "Невозможно получить версию Visual Studio";
 	if(output.empty())
-		throw std::runtime_error(szFailedToGetVSVersion);
+		throw std::runtime_error(DFW2::CDFW2Messages::m_cszFailedToGetVSVersion);
 		
 	return CCompilerMSBuild::Version(output.front());
 }
@@ -173,10 +171,9 @@ DFW2::VersionInfo CCompilerMSBuild::GetMSBuildVersion(const std::filesystem::pat
 	commandLine.append(L" -ver -nologo");
 
 	const DWORD dwResult{ RunWindowsConsole(commandLine, {}, output) };
-	constexpr const char* szFailedToGetMSBuildVersion = "Невозможно получить версию MSBuild";
 
 	if (output.empty())
-		throw std::runtime_error(szFailedToGetMSBuildVersion);
+		throw std::runtime_error(DFW2::CDFW2Messages::m_cszFailedToGetMSBuildVersion);
 	return CCompilerMSBuild::Version(output.front());
 }
 
@@ -208,7 +205,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	};
 
 	if (fnVersionTie(VSVersion) < fnVersionTie(VSrequiredVersion))
-		throw std::runtime_error(fmt::format("Для сборки требуется версия Visual Studio не старше {}.{}.{}",
+		throw std::runtime_error(fmt::format(DFW2::CDFW2Messages::m_cszVisualStudioVersionRequired,
 			VSrequiredVersion[0],
 			VSrequiredVersion[1], 
 			VSrequiredVersion[2]));
@@ -260,7 +257,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 	std::list<std::wstring> listConsole;
 
 	if (messageCallBacks.Debug)
-		messageCallBacks.Debug(fmt::format("MSBuild using : {}", stringutils::utf8_encode(commandLine)));
+		messageCallBacks.Debug(fmt::format(DFW2::CDFW2Messages::m_cszMSBuildCommandLine, stringutils::utf8_encode(commandLine)));
 
 	DWORD dwResult(RunWindowsConsole(commandLine, WorkingFolder, listConsole));
 
@@ -273,7 +270,7 @@ void CCompilerMSBuild::CompileWithMSBuild()
 			if (messageCallBacks.Debug)
 				messageCallBacks.Debug(utf8message);
 		}
-		pTree->Error("Ошибка компиляции MSBuild");
+		pTree->Error(DFW2::CDFW2Messages::m_cszMSBuildFailed);
 	}
 	else
 	{

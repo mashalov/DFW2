@@ -4,6 +4,7 @@
 #include "ICompiler.h"
 #include <optional>
 #include "UniqueHandle.h"
+#include "../../DFW2/Messages.h"
 
 class CompilerBase : public ICompiler
 {
@@ -17,7 +18,6 @@ protected:
     };
 
     std::filesystem::path compiledModulePath;
-    static constexpr const char* cszUMCFailed = "Невозможна компиляция пользовательского устройства";
     PropertyMap Properties =
     {
         {PropertyMap::szPropOutputPath, "c:\\tmp\\"},
@@ -27,7 +27,7 @@ protected:
         {PropertyMap::szPropDllLibraryPath, "C:\\tmp\\CustomModels\\dll\\"},
         {PropertyMap::szPropConfiguration, "Debug"},
         {PropertyMap::szPropPlatform, "Win32"},
-        {PropertyMap::szPropRebuild, ""},
+        {PropertyMap::szPropRebuild, {} },
         {PropertyMap::szPropDeviceType, "DEVTYPE_MODEL"},
         {PropertyMap::szPropDeviceTypeNameSystem, "Automatic"},
         {PropertyMap::szPropDeviceTypeNameVerbal, "Automatic"},

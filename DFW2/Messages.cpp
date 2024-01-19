@@ -276,3 +276,15 @@ const char* CDFW2Messages::m_cszShortCircuitVoltageTooLow = "В {} задано 
 const char* CDFW2Messages::m_cszShortCircuitVoltageNotSetButRX = "В {} задано R/X={:.3f} для расчета шунта, но не задано Uост";
 const char* CDFW2Messages::m_cszShortCircuitVoltageRXZeroed = "В {} задано Uост={:.3f} для расчета шунта, но не задано R/X. Будет использовано R/X=0.0";
 const char* CDFW2Messages::m_cszShortCircutShuntMethodCanCalculateJustOne = "Метод расчета шунта КЗ \"{}\" может рассчитать только одну точку КЗ. Задано {}";
+const char* CDFW2Messages::m_cszVisualStudioVersionRequired = "Для сборки требуется версия Visual Studio не старше {}.{}.{}";
+const char* CDFW2Messages::m_cszCannotCreatePipeToRun = "Невозможно создание канала получения данных для запуска {}";
+const char* CDFW2Messages::m_cszCannotCreatePipeToGatherData = "Невозможно подключение канала получения данных {}";
+const char* CDFW2Messages::m_cszFailedToRunProcess = "Ошибка запуска процесса {}";
+const char* CDFW2Messages::m_cszFailedToGetProcessExitCode = "Ошибка при получении кода завершения работы процесса {}";
+const char* CDFW2Messages::m_cszFailedToGetMSBuildVersionFrom = "Невозможно получить версию из \"{}\"";
+const char* CDFW2Messages::m_cszFailedToGetVSVersion = "Невозможно получить версию Visual Studio";
+const char* CDFW2Messages::m_cszFailedToGetMSBuildVersion = "Невозможно получить версию MSBuild";
+const char* CDFW2Messages::m_cszVswhereFailed = "vswhere завершен с ошибкой";
+const char* CDFW2Messages::m_cszSHGetKnownFolderPathFailedToGetPF = "SHGetKnownFolderPath - отказ получения пути к Program Files";
+const char* CDFW2Messages::m_cszMSBuildFailed = "Ошибка компиляции MSBuild";
+const char* CDFW2Messages::m_cszMSBuildCommandLine = "MSBuild using : {}";

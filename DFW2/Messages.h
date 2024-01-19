@@ -282,6 +282,18 @@ namespace DFW2
 		static const char* m_cszShortCircuitVoltageNotSetButRX;
 		static const char* m_cszShortCircuitVoltageRXZeroed;
 		static const char* m_cszShortCircutShuntMethodCanCalculateJustOne;
+		static const char* m_cszVisualStudioVersionRequired;
+		static const char* m_cszCannotCreatePipeToRun;
+		static const char* m_cszCannotCreatePipeToGatherData;
+		static const char* m_cszFailedToRunProcess;
+		static const char* m_cszFailedToGetProcessExitCode;
+		static const char* m_cszFailedToGetMSBuildVersionFrom;
+		static const char* m_cszFailedToGetVSVersion;
+		static const char* m_cszFailedToGetMSBuildVersion;
+		static const char* m_cszVswhereFailed;
+		static const char* m_cszSHGetKnownFolderPathFailedToGetPF;
+		static const char* m_cszMSBuildFailed;
+		static const char* m_cszMSBuildCommandLine;
 	};
 }
 
