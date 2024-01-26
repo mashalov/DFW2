@@ -404,8 +404,8 @@ double MixedAdamsBDF::GetRatioForCurrentOrder()
 #endif
 			const double dError{ r.GetWeightedError(dNewValue) };
 			sc.Integrator.Weighted.Update(&r, dError);
-			struct ConvergenceTest* const pCt{ ConvTest_ + r.EquationType };
-			pCt->AddError(dError);
+			ConvergenceTest& pCt{ *(ConvTest_ + r.EquationType) };
+			pCt.AddError(dError);
 		}
 	}
 
@@ -456,11 +456,11 @@ double MixedAdamsBDF::GetRatioForHigherOrder()
 	{
 		if (r.Atol > 0)
 		{
-			struct ConvergenceTest* pCt{ ConvTest_ + r.EquationType };
+			ConvergenceTest& pCt{ *(ConvTest_ + r.EquationType) };
 			double dNewValue{ *r.pValue };
 			// method consts lq can be 1 only
 			const double dError{ r.GetWeightedError(r.Error - r.SavedError, dNewValue) * Methodl1[r.EquationType] };
-			pCt->AddError(dError);
+			pCt.AddError(dError);
 		}
 	}
 
@@ -490,11 +490,11 @@ double MixedAdamsBDF::GetRatioForLowerOrder()
 	{
 		if (r.Atol > 0)
 		{
-			struct ConvergenceTest* const pCt{ ConvTest_ + r.EquationType };
+			ConvergenceTest& pCt{ *(ConvTest_ + r.EquationType) };
 			const double dNewValue{ *r.pValue };
 			// method consts lq can be 1 only
 			const double dError{ r.GetWeightedError(r.Nordsiek[2], dNewValue) };
-			pCt->AddError(dError);
+			pCt.AddError(dError);
 		}
 	}
 
@@ -879,12 +879,12 @@ void MixedAdamsBDF::NewtonUpdateIteration()
 			const double dError{ r.GetWeightedError(r.b, dOldValue) };
 			sc.Newton.Weighted.Update(&r, dError);
 			_CheckNumber(dError);
-			ConvergenceTest* pCt{ ConvTest_ + r.EquationType };
+			ConvergenceTest& pCt{ *(ConvTest_ + r.EquationType) };
 #ifdef _DEBUG
 			// breakpoint place for nans
 			_ASSERTE(!std::isnan(dError));
 #endif
-			pCt->AddError(dError);
+			pCt.AddError(dError);
 		}
 
 		++pB;
@@ -1367,7 +1367,7 @@ double MixedAdamsBDF::FindZeroCrossingOfModule(const RightVector* pRvre, const R
 
 		for (int i = 0; i < 5; i++)
 		{
-			double dt = (a * t * t * t * t + b * t * t * t + c * t * t + d * t + e) / (4.0 * a * t * t * t + 3.0 * b * t * t + 2.0 * c * t + d);
+			const double dt{ (a * t * t * t * t + b * t * t * t + c * t * t + d * t + e) / (4.0 * a * t * t * t + 3.0 * b * t * t + 2.0 * c * t + d) };
 			t = t - dt;
 
 			// здесь была проверка диапазона t, но при ее использовании возможно неправильное

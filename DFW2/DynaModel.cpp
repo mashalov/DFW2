@@ -166,13 +166,13 @@ bool CDynaModel::RunTransient()
 {
 	Automatic().CompileModels();
 
-	AutomaticDevice.ConnectDLL(Automatic().GetModulePath());
+	AutomaticDevice.ConnectDLL(Automatic().ModulePath());
 	AutomaticDevice.CreateDevices(1);
 	AutomaticDevice.BuildStructure();
 	AutomaticDevice.GetDeviceByIndex(0)->SetName(CDFW2Messages::m_cszAutomaticName);
 
 	Scenario().CompileModels();
-	ScenarioDevice.ConnectDLL(Scenario().GetModulePath());
+	ScenarioDevice.ConnectDLL(Scenario().ModulePath());
 	ScenarioDevice.CreateDevices(1);
 	ScenarioDevice.BuildStructure();
 	ScenarioDevice.GetDeviceByIndex(0)->SetName(CDFW2Messages::m_cszScenarioName);

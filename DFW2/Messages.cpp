@@ -127,7 +127,7 @@ const char* CDFW2Messages::m_cszLFRunningSeidell = "Расчет УР метод
 const char* CDFW2Messages::m_cszLFNoConvergence = "Не удалось сбалансировать установившийся режим";
 const char* CDFW2Messages::m_cszLFNodeVTooHigh = "Недопустимое напряжение в узле \"{}\" - {} номинального";
 const char* CDFW2Messages::m_cszLFNodeVTooLow = CDFW2Messages::m_cszLFNodeVTooHigh;
-const char* CDFW2Messages::m_cszLFBranchAngleExceeds90 = "Угол по связи {} - {} превысил 90 град - {}";
+const char* CDFW2Messages::m_cszLFBranchAngleExceeds90 = "Угол по связи {} - {} превысил 90° - {}";
 const char* CDFW2Messages::m_cszWrongGeneratorsNumberFixed = "Количество генераторов для \"{}\" задано неверно - {:.0f}, установлено значение 1";
 const char* CDFW2Messages::m_cszWrongGeneratorQlimitsFixed = "Ограничения реактивной мощности для генератора \"{}\" заданы неверно {} > {}. Установлено Qmin = Qmax = {}";
 const char* CDFW2Messages::m_cszFailureAtMinimalStep = "Необходимая точность решения не может быть достигнута на минимальном шаге t = {} {} порядок {} шаг = {}";

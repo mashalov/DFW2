@@ -248,12 +248,12 @@ void IntegratorMultiStageBase::NewtonUpdateIteration()
 			const double dError{ r.GetWeightedError(r.b, dOldValue) };
 			sc.Newton.Weighted.Update(&r, dError);
 			_CheckNumber(dError);
-			ConvergenceTest* pCt{ ConvTest_ + r.EquationType };
+			ConvergenceTest& pCt{ *(ConvTest_ + r.EquationType) };
 #ifdef _DEBUG
 			// breakpoint place for nans
 			_ASSERTE(!std::isnan(dError));
 #endif
-			pCt->AddError(dError);
+			pCt.AddError(dError);
 		}
 
 		++pB;

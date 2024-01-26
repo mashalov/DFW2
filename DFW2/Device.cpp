@@ -16,7 +16,7 @@ eDFW2DEVICETYPE CDevice::GetType() const noexcept
 }
 // функция проверяет входит ли устройство в цепочку наследования от заданного типа
 // например - Генератор Мустанг наследован от ШБМ
-bool CDevice::IsKindOfType(eDFW2DEVICETYPE eType)
+bool CDevice::IsKindOfType(eDFW2DEVICETYPE eType) const
 {
 	_ASSERTE(pContainer_);
 

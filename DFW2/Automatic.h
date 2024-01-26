@@ -16,49 +16,49 @@ namespace DFW2
 
 	struct CAutoModelLink
 	{
-		std::string m_strObjectClass;
-		std::string m_strObjectKey;
-		std::string m_strObjectProp;
+		std::string ObjectClass_;
+		std::string ObjectKey_;
+		std::string ObjectProp_;
 		CAutoModelLink() {}
 
 		CAutoModelLink(std::string_view ObjectClass, std::string_view ObjectKey, std::string_view ObjectProp) :
-			m_strObjectClass(ObjectClass),
-			m_strObjectKey(ObjectKey),
-			m_strObjectProp(ObjectProp) { }
+			ObjectClass_(ObjectClass),
+			ObjectKey_(ObjectKey),
+			ObjectProp_(ObjectProp) { }
 
 		CAutoModelLink(CAutoModelLink&& other) :
-			m_strObjectClass(std::move(other.m_strObjectClass)),
-			m_strObjectKey(std::move(other.m_strObjectKey)),
-			m_strObjectProp(std::move(other.m_strObjectProp)) {}
+			ObjectClass_(std::move(other.ObjectClass_)),
+			ObjectKey_(std::move(other.ObjectKey_)),
+			ObjectProp_(std::move(other.ObjectProp_)) {}
 
 		bool empty() const
 		{
-			return m_strObjectClass.empty() && m_strObjectKey.empty() && m_strObjectProp.empty();
+			return ObjectClass_.empty() && ObjectKey_.empty() && ObjectProp_.empty();
 		}
 
 		std::string String() const
 		{
 			return fmt::format("{}[{}].{}",
-				m_strObjectClass,
-				m_strObjectKey,
-				m_strObjectProp);
+				ObjectClass_,
+				ObjectKey_,
+				ObjectProp_);
 		}
 	};
 		
 	class CAutomaticItem
 	{
 	protected:
-		ptrdiff_t m_nType = 0;
-		ptrdiff_t m_nId = 0;
-		std::string m_strName;
+		ptrdiff_t Type_ = 0;
+		ptrdiff_t Id_ = 0;
+		std::string Name_;
 	public:
-		inline ptrdiff_t GetId() { return m_nId; }
+		inline ptrdiff_t GetId() const { return Id_; }
 		CAutomaticItem() {}
 
 		CAutomaticItem(CAutomaticItem&& other) noexcept :
-			m_nType(std::exchange(other.m_nType, 0)),
-			m_nId(std::exchange(other.m_nId, 0)),
-			m_strName(std::move(m_strName)) 
+			Type_(std::exchange(other.Type_, 0)),
+			Id_(std::exchange(other.Id_, 0)),
+			Name_(std::move(other.Name_))
 		{
 
 		}
@@ -75,16 +75,16 @@ namespace DFW2
 	class CAutomaticAction : public CAutomaticItem, public CAutoModelLink
 	{
 	protected:
-		ModelActionT m_pAction;
-		const double* m_pValue = nullptr;
+		ModelActionT Action_;
+		const double* pValue_ = nullptr;
 	public:
 
-		ptrdiff_t m_nLinkType = 0;
-		ptrdiff_t m_nActionGroup = 0;
-		ptrdiff_t m_nOutputMode = 0;
-		ptrdiff_t m_nRunsCount = 1;
+		ptrdiff_t LinkType_ = 0;
+		ptrdiff_t ActionGroup_ = 0;
+		ptrdiff_t OutputMode_ = 0;
+		ptrdiff_t RunsCount_ = 1;
 	
-		std::string m_strExpression;
+		std::string Expression_;
 
 		CAutomaticAction() {}
 
@@ -101,24 +101,24 @@ namespace DFW2
 			ptrdiff_t RunsCount) :
 
 			CAutomaticItem(Type, Id, Name),
-			m_strExpression(Expression),
-			m_nLinkType(LinkType),
+			Expression_(Expression),
+			LinkType_(LinkType),
 			CAutoModelLink(ObjectClass, ObjectKey, ObjectProp),
-			m_nActionGroup(ActionGroup),
-			m_nOutputMode(OutputMode),
-			m_nRunsCount(RunsCount) {}
+			ActionGroup_(ActionGroup),
+			OutputMode_(OutputMode),
+			RunsCount_(RunsCount) {}
 
 
 		CAutomaticAction(CAutomaticAction&& other) noexcept :
 			CAutomaticItem(std::move(other)),
-			m_pAction(std::move(other.m_pAction)),
-			m_strExpression(std::move(other.m_strExpression)),
+			Action_(std::move(other.Action_)),
+			Expression_(std::move(other.Expression_)),
 			CAutoModelLink(std::move(other)),
-			m_nLinkType(std::exchange(other.m_nLinkType, 0)),
-			m_nActionGroup(std::exchange(other.m_nActionGroup, 0)),
-			m_nOutputMode(std::exchange(other.m_nOutputMode, 0)),
-			m_nRunsCount(std::exchange(other.m_nRunsCount, 0)),
-			m_pValue(std::exchange(other.m_pValue, nullptr))
+			LinkType_(std::exchange(other.LinkType_, 0)),
+			ActionGroup_(std::exchange(other.ActionGroup_, 0)),
+			OutputMode_(std::exchange(other.OutputMode_, 0)),
+			RunsCount_(std::exchange(other.RunsCount_, 0)),
+			pValue_(std::exchange(other.pValue_, nullptr))
 		{
 			
 		}
@@ -138,13 +138,13 @@ namespace DFW2
 	class CAutomaticLogic : public CAutomaticItem
 	{
 	protected:
-		INTLIST m_ActionGroupIds;
+		INTLIST ActionGroupIds_;
 		CRelayDelay* pRelay_ = nullptr;
 	public:
-		ptrdiff_t m_nOutputMode = 0;
-		std::string m_strActions;
-		std::string m_strExpression;
-  	    std::string m_strDelayExpression;
+		ptrdiff_t OutputMode_ = 0;
+		std::string Actions_;
+		std::string Expression_;
+  	    std::string DelayExpression_;
 
 		CAutomaticLogic() {}
 
@@ -155,15 +155,15 @@ namespace DFW2
 			ptrdiff_t OutputMode) :
 
 			CAutomaticItem(Type, Id, Name),
-			m_nOutputMode(OutputMode),
-			m_strActions(Actions),
-			m_strExpression(Expression),
-			m_strDelayExpression(DelayExpression) {}
+			OutputMode_(OutputMode),
+			Actions_(Actions),
+			Expression_(Expression),
+			DelayExpression_(DelayExpression) {}
 
 
-		const std::string& GetActions() { return m_strActions; }
+		const std::string& Actions() const { return Actions_; }
 		bool AddActionGroupId(ptrdiff_t nActionId);
-		const INTLIST& GetGroupIds() const { return m_ActionGroupIds;  }
+		const INTLIST& GroupIds() const { return ActionGroupIds_;  }
 		void AddToSource(std::ostringstream& source) override;
 		void LinkRelay(CRelayDelay* pRelay) { pRelay_ = pRelay; }
 	};
@@ -173,7 +173,7 @@ namespace DFW2
 	{
 	public:
 
-		std::string m_strExpression;
+		std::string Expression_;
 		CAutomaticStarter() {}
 
 		CAutomaticStarter(ptrdiff_t Type,
@@ -184,7 +184,7 @@ namespace DFW2
 			std::string_view ObjectKey,
 			std::string_view ObjectProp) :
 			CAutomaticItem(Type, Id, Name),
-			m_strExpression(Expression),
+			Expression_(Expression),
 			CAutoModelLink(ObjectClass, ObjectKey, ObjectProp) {}
 
 		void AddToSource(std::ostringstream& source) override;
@@ -194,13 +194,13 @@ namespace DFW2
 	{
 	protected:
 		CDynaModel *pDynaModel_;
-		AUTOITEMS m_lstActions;
-		AUTOITEMS m_lstLogics;
-		AUTOITEMS m_lstStarters;
-		AUTOITEMSMAP m_mapLogics;
-		AUTOITEMGROUP m_AutoActionGroups;
+		AUTOITEMS Actions_;
+		AUTOITEMS Logics_;
+		AUTOITEMS Starters_;
+		AUTOITEMSMAP LogicsMap_;
+		AUTOITEMGROUP AutoActionGroups_;
 		std::ostringstream source;
-		std::filesystem::path pathAutomaticModule;
+		std::filesystem::path pathAutomaticModule_;
 
 	public:
 
@@ -233,7 +233,7 @@ namespace DFW2
 					   ptrdiff_t OutputMode,
 					   ptrdiff_t RunsCount);
 
-		const std::filesystem::path& GetModulePath() const { return pathAutomaticModule; }
+		const std::filesystem::path& ModulePath() const { return pathAutomaticModule_; }
 		void CompileModels();
 		CAutomatic(CDynaModel *pDynaModel);
 		virtual ~CAutomatic();

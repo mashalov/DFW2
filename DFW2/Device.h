@@ -303,7 +303,7 @@ namespace DFW2
 	public:
 
 		eDFW2DEVICETYPE GetType() const noexcept;					// получить тип устройства
-		bool IsKindOfType(eDFW2DEVICETYPE eType);					// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
+		bool IsKindOfType(eDFW2DEVICETYPE eType) const;				// проверить, входит ли устройство в цепочку наследования от заданного типа устройства
 
 		void Log(DFW2MessageStatus Status, std::string_view Message) const;
 		void DebugLog(std::string_view Message) const;

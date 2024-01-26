@@ -6,48 +6,48 @@ using namespace DFW2;
 
 std::string CAutomaticItem::GetVerbalName()
 {
-	return m_strName.empty() ? fmt::format("{}", m_nId) : fmt::format("{} - \"{}\"", m_nId, m_strName);
+	return Name_.empty() ? fmt::format("{}", Id_) : fmt::format("{} - \"{}\"", Id_, Name_);
 }
 
 
 
 CAutomaticItem::CAutomaticItem(ptrdiff_t Type, ptrdiff_t Id, std::string_view Name) :
-		m_nType(Type),
-		m_nId(Id),
-		m_strName(Name)
+		Type_(Type),
+		Id_(Id),
+		Name_(Name)
 {
 
 }
 
 void CAutomaticStarter::AddToSource(std::ostringstream& source)
 {
-	source << fmt::format("S{} = starter({}{})\n", m_nId,
-		m_strExpression.empty() ? "V" : m_strExpression, 
+	source << fmt::format("S{} = starter({}{})\n", Id_,
+		Expression_.empty() ? "V" : Expression_, 
 		CAutoModelLink::empty() ? "" : fmt::format(",{}", CAutoModelLink::String()));
 }
 
 void CAutomaticLogic::AddToSource(std::ostringstream& source)
 {
-	source << fmt::format("L{} = {}\n", m_nId, m_strExpression);
+	source << fmt::format("L{} = {}\n", Id_, Expression_);
 	// выражение логики вводим через реле с уставкой 0 и выдержкой времени
-	source << fmt::format("LT{} = relaydelay(L{}, 0.0, {})\n", m_nId, 
-		m_nId,
-		m_strDelayExpression.empty() ? "0" : m_strDelayExpression);
+	source << fmt::format("LT{} = relaydelay(L{}, 0.0, {})\n", Id_, 
+		Id_,
+		DelayExpression_.empty() ? "0" : DelayExpression_);
 }
 
 void CAutomaticAction::AddToSource(std::ostringstream& source)
 {
-	source << fmt::format("A{} = action({}, {})\n", m_nId,
-		m_strExpression.empty() ? "V" : m_strExpression,
+	source << fmt::format("A{} = action({}, {})\n", Id_,
+		Expression_.empty() ? "V" : Expression_,
 		CAutoModelLink::String());
 }
 
 
 bool CAutomaticLogic::AddActionGroupId(ptrdiff_t nActionId)
 {
-	bool bRes = find(m_ActionGroupIds.begin(), m_ActionGroupIds.end(), nActionId) == m_ActionGroupIds.end();
+	bool bRes = find(ActionGroupIds_.begin(), ActionGroupIds_.end(), nActionId) == ActionGroupIds_.end();
 	if (bRes)
-		m_ActionGroupIds.push_back(nActionId);
+		ActionGroupIds_.push_back(nActionId);
 	return bRes;
 }
 
@@ -78,10 +78,10 @@ const std::string_view CAutomatic::ModuleName() const
 
 void CAutomatic::Clean()
 {
-	m_lstActions.clear();
-	m_lstLogics.clear();
-	m_mapLogics.clear();
-	m_AutoActionGroups.clear();
+	Actions_.clear();
+	Logics_.clear();
+	Logics_.clear();
+	AutoActionGroups_.clear();
 }
 
 CAutomatic::~CAutomatic()
@@ -94,16 +94,16 @@ CAutomatic::~CAutomatic()
 
 void CAutomatic::CompileModels()
 {
-	std::array<const AUTOITEMS*, 3> automaticObjects { &m_lstStarters, &m_lstLogics, &m_lstActions };
+	std::array<const AUTOITEMS*, 3> automaticObjects { &Starters_, &Logics_, &Actions_ };
 	for (const auto& automaticObject : automaticObjects)
 		for (const auto& automaticItem : *automaticObject)
 			automaticItem->AddToSource(source);
 
-	for(const auto& logic : m_lstLogics)
-		m_mapLogics.insert(std::make_pair(logic->GetId(), logic.get()));
+	for(const auto& logic : Logics_)
+		LogicsMap_.insert(std::make_pair(logic->GetId(), logic.get()));
 
-	for (const auto& action : m_lstActions)
-		m_AutoActionGroups[static_cast<CAutomaticAction*>(action.get())->m_nActionGroup].push_back(action.get());
+	for (const auto& action : Actions_)
+		AutoActionGroups_[static_cast<CAutomaticAction*>(action.get())->ActionGroup_].push_back(action.get());
 
 	std::ofstream src;
 	std::filesystem::path autoFile(PathRoot());
@@ -180,7 +180,7 @@ void CAutomatic::CompileModels()
 		if (!Compiler->Compile(Sourceutf8stream))
 			throw dfw2error(DFW2::CDFW2Messages::m_cszWrongSourceData);
 
-		pathAutomaticModule = Compiler->CompiledModulePath();
+		pathAutomaticModule_ = Compiler->CompiledModulePath();
 	}
 }
 
@@ -196,7 +196,7 @@ bool CAutomatic::AddStarter(ptrdiff_t Type,
 							std::string_view ObjectKey,
 						    std::string_view ObjectProp)
 {
-	m_lstStarters.push_back(std::make_unique<CAutomaticStarter>(Type, Id, Name, Expression, ObjectClass, ObjectKey, ObjectProp));
+	Starters_.push_back(std::make_unique<CAutomaticStarter>(Type, Id, Name, Expression, ObjectClass, ObjectKey, ObjectProp));
 	return true;
 }
 
@@ -208,7 +208,7 @@ bool CAutomatic::AddLogic(ptrdiff_t Type,
 						  std::string_view DelayExpression,
 						  ptrdiff_t OutputMode)
 {
-	m_lstLogics.push_back(std::make_unique<CAutomaticLogic>(Type, Id, Name, Expression, DelayExpression, Actions, OutputMode));
+	Logics_.push_back(std::make_unique<CAutomaticLogic>(Type, Id, Name, Expression, DelayExpression, Actions, OutputMode));
 	return true;
 }
 
@@ -224,7 +224,7 @@ bool CAutomatic::AddAction(ptrdiff_t Type,
 						   ptrdiff_t OutputMode,
 						   ptrdiff_t RunsCount)
 {
-	m_lstActions.push_back(std::make_unique<CAutomaticAction>(Type, Id, Name, Expression, LinkType, ObjectClass, ObjectKey, ObjectProp, ActionGroup, OutputMode, RunsCount));
+	Actions_.push_back(std::make_unique<CAutomaticAction>(Type, Id, Name, Expression, LinkType, ObjectClass, ObjectKey, ObjectProp, ActionGroup, OutputMode, RunsCount));
 	return true;
 }
 
@@ -257,7 +257,7 @@ void CAutomatic::Init()
 	bool bRes{ true };
 	STRINGLIST ActionList;
 
-	for (auto&& it : m_lstLogics)
+	for (auto&& it : Logics_)
 	{
 		CAutomaticItem* pLogic{ it.get() };
 		const std::string strVarName{ fmt::format("LT{}", pLogic->GetId()) };
@@ -270,7 +270,7 @@ void CAutomatic::Init()
 		pActionRelay->SetDiscontinuityId(pLogic->GetId());
 		CAutomaticLogic* pLogicItem{ static_cast<CAutomaticLogic*>(pLogic) };
 		pLogicItem->LinkRelay(pActionRelay);
-		const std::string strActions{ pLogicItem->GetActions() };
+		const std::string strActions{ pLogicItem->Actions() };
 		stringutils::split(strActions, ActionList);
 
 		ptrdiff_t Id{ 0 };
@@ -278,8 +278,7 @@ void CAutomatic::Init()
 		{
 			if (CAutomatic::ParseActionId(strAction, Id))
 			{
-				const auto mit{ m_AutoActionGroups.find(Id) };
-				if (mit != m_AutoActionGroups.end())
+				if (const auto mit{ AutoActionGroups_.find(Id) }; mit != AutoActionGroups_.end())
 				{
 					if (!pLogicItem->AddActionGroupId(Id))
 					{
@@ -309,9 +308,9 @@ void CAutomatic::Init()
 		}
 	}
 			
-	for (auto&& it : m_lstActions)
+	for (auto&& it : Actions_)
 	{
-		CAutomaticAction *pAction = static_cast<CAutomaticAction*>(it.get());
+		CAutomaticAction* pAction{ static_cast<CAutomaticAction*>(it.get()) };
 		if (!pAction->Init(pDynaModel_, pCustomDevice))
 		{
 			pDynaModel_->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionNotInitialized,
@@ -341,21 +340,21 @@ bool CAutomatic::NotifyRelayDelay(const CRelayDelayLogic* pRelay)
 		return true;
 
 
-	auto mit{ m_mapLogics.find(pRelay->GetDiscontinuityId()) };
+	auto mit{ LogicsMap_.find(pRelay->GetDiscontinuityId()) };
 
-	if (mit != m_mapLogics.end())
+	if (mit != LogicsMap_.end())
 	{
 		CAutomaticLogic* pLogic{ static_cast<CAutomaticLogic*>(mit->second) };
 		pDynaModel_->LogTime(DFW2MessageStatus::DFW2LOG_DEBUG, fmt::format("Сработало реле автоматики {}",
 			pLogic->GetVerbalName()
 			));
-		for (auto git : pLogic->GetGroupIds())
+		for (auto git : pLogic->GroupIds())
 		{
-			auto autoGroupIt{ m_AutoActionGroups.find(git) };
+			auto autoGroupIt{ AutoActionGroups_.find(git) };
 
-			_ASSERTE(autoGroupIt != m_AutoActionGroups.end());
+			_ASSERTE(autoGroupIt != AutoActionGroups_.end());
 
-			if (autoGroupIt != m_AutoActionGroups.end())
+			if (autoGroupIt != AutoActionGroups_.end())
 			{
 				auto& lstActions{ autoGroupIt->second };
 				for (auto & item : lstActions)
@@ -374,13 +373,13 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 {
 	bool bRes = true;
 
-	if (m_pAction && m_pValue && m_nRunsCount)
+	if (Action_ && pValue_ && RunsCount_)
 	{
 		pDynaModel->LogTime(DFW2MessageStatus::DFW2LOG_INFO, fmt::format(CDFW2Messages::m_cszRunningAction, 
 			GetVerbalName()));
 
-		bRes = (m_pAction->Do(pDynaModel, *m_pValue) != eDFW2_ACTION_STATE::AS_ERROR);
-		m_nRunsCount--;
+		bRes = (Action_->Do(pDynaModel, *pValue_) != eDFW2_ACTION_STATE::AS_ERROR);
+		RunsCount_--;
 	}
 
 	return bRes;
@@ -389,63 +388,65 @@ bool CAutomaticAction::Do(CDynaModel *pDynaModel)
 bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDevice)
 {
 	bool bRes{ false };
-	_ASSERTE(!m_pAction);
-	_ASSERTE(!m_pValue);
-	const std::string strVarName{ fmt::format(cszActionTemplate, m_nId) };
-	m_pValue = pCustomDevice->GetVariableConstPtr(strVarName);
-	if (m_pValue)
+	_ASSERTE(!Action_);
+	_ASSERTE(!pValue_);
+	const std::string strVarName{ fmt::format(cszActionTemplate, Id_) };
+	pValue_ = pCustomDevice->GetVariableConstPtr(strVarName);
+	if (pValue_)
 	{
-		switch (m_nType)
+		switch (Type_)
 		{
 			case 1: // объект
 			{
-
+				// здесь нужно определить что за устройство и что за действие по классу и полю. 
+				// Нужно привести заданные параметры для объекта к известным Raiden действиям
 				// получаем устройство по классу и ключу
-				CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String()) };
+
+				CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) };
 				if (pDev)
 				{
 					// если устройство найдено, проверяем его тип по наследованию
 					// до известного автоматике типа
 					if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_NODE))
 					{
-						m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
+						ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
 						if (pDev)
 						{
-							if (m_strObjectProp == CDevice::m_cszSta)
+							if (ObjectProp_ == CDevice::m_cszSta)
 							{
-								m_pAction = std::make_unique<CModelActionChangeDeviceState>(static_cast<CDynaNode*>(pDev), eDEVICESTATE::DS_OFF);
+								Action_ = std::make_unique<CModelActionChangeDeviceState>(static_cast<CDynaNode*>(pDev), eDEVICESTATE::DS_OFF);
 								bRes = true;
 							}
 						}
 					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_BRANCH))
 					{
-						if (m_strObjectProp == CDevice::m_cszSta)
+						if (ObjectProp_ == CDevice::m_cszSta)
 						{
-							m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
+							Action_ = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
 							bRes = true;
 						}
-						else if (m_strObjectProp == "r")
+						else if (ObjectProp_ == "r")
 						{
-							m_pAction = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							Action_ = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *pValue_);
 							bRes = true;
 						}
-						else if (m_strObjectProp == "x")
+						else if (ObjectProp_ == "x")
 						{
-							m_pAction = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							Action_ = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *pValue_);
 							bRes = true;
 						}
-						else if (m_strObjectProp == "b")
+						else if (ObjectProp_ == "b")
 						{
-							m_pAction = std::make_unique<CModelActionChangeBranchB>(static_cast<CDynaBranch*>(pDev), *m_pValue);
+							Action_ = std::make_unique<CModelActionChangeBranchB>(static_cast<CDynaBranch*>(pDev), *pValue_);
 							bRes = true;
 						}
 					} else if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_INFPOWER))
 					{
 						// для генератора отдельное состояние, но вообще можно состояния
-						// всех устройств с обычными состояниями eDEVICESTATE обрабатывать одинаков
-						if (m_strObjectProp == CDevice::m_cszSta)
+						// всех устройств с обычными состояниями eDEVICESTATE обрабатывать одинаково
+						if (ObjectProp_ == CDevice::m_cszSta)
 						{
-							m_pAction = std::make_unique<CModelActionChangeDeviceState>(pDev, eDEVICESTATE::DS_OFF);
+							Action_ = std::make_unique<CModelActionChangeDeviceState>(pDev, eDEVICESTATE::DS_OFF);
 							bRes = true;
 						}
 					}
@@ -454,92 +455,86 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 3:	// состояние ветви
 			{
-				m_strObjectClass = CDeviceContainerProperties::m_cszAliasBranch;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
-				if (pDev)
+				ObjectClass_ = CDeviceContainerProperties::m_cszAliasBranch;
+				if (CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()); pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
+					Action_ = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
 					bRes = true;
 				}
 				break;
 			}
 			case 4:	// g-шунт узла
 			{
-				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
-				if (pDev)
+				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodeShuntG>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					Action_ = std::make_unique<CModelActionChangeNodeShuntG>(static_cast<CDynaNode*>(pDev), *pValue_);
 					bRes = true;
 				}
 				break;
 			}
 			case 5: // b-шунт узла
 			{
-				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
-				if (pDev)
+				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodeShuntB>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					Action_ = std::make_unique<CModelActionChangeNodeShuntB>(static_cast<CDynaNode*>(pDev), *pValue_);
 					bRes = true;
 				}
 				break;
 			}
 			case 6:	// r-шунт узла
 			{
-				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
-				if (pDev)
+				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodeShuntR>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					Action_ = std::make_unique<CModelActionChangeNodeShuntR>(static_cast<CDynaNode*>(pDev), *pValue_);
 					bRes = true;
 				}
 				break;
 			}
 			case 7:	// x-шунт узла
 			{
-				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice *pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
-				if (pDev)
+				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodeShuntX>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					Action_ = std::make_unique<CModelActionChangeNodeShuntX>(static_cast<CDynaNode*>(pDev), *pValue_);
 					bRes = true;
 				}
 				break;
 			}
 			case 13: // PnQn0 - узел
 			{
-				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String());
-				if (pDev)
+				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodePQLoad>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					Action_ = std::make_unique<CModelActionChangeNodePQLoad>(static_cast<CDynaNode*>(pDev), *pValue_);
 					bRes = true;
 				}
 				break;
 			}
 			case 19: // Шунт по остаточному напряжению - Uост
 			{
-				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String()) }; pDev)
+				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodeShuntToUscUref>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					Action_ = std::make_unique<CModelActionChangeNodeShuntToUscUref>(static_cast<CDynaNode*>(pDev), *pValue_);
 					bRes = true;
 				}
 				break;
 			}
 			case 20: // Шунт по остаточному напряжению  - R/X
 			{
-				m_strObjectClass = CDeviceContainerProperties::m_cszAliasNode;
-				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(m_strObjectClass, m_strObjectKey, CAutoModelLink::String()) }; pDev)
+				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
-					m_pAction = std::make_unique<CModelActionChangeNodeShuntToUscRX>(static_cast<CDynaNode*>(pDev), *m_pValue);
+					Action_ = std::make_unique<CModelActionChangeNodeShuntToUscRX>(static_cast<CDynaNode*>(pDev), *pValue_);
 					bRes = true;
 				}
 				break;
 			}
 			default:
-				pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionTypeNotFound, GetVerbalName(), m_nType));
+				pDynaModel->Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszActionTypeNotFound, GetVerbalName(), Type_));
 				break;
 		}
 	}
@@ -551,9 +546,9 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 
 void CAutomaticItem::UpdateSerializer(CSerializerBase* pSerializer)
 {
-	pSerializer->AddProperty(CDeviceId::m_cszid, m_nId);
-	pSerializer->AddProperty("Type", m_nType);
-	pSerializer->AddProperty(CDevice::m_cszName, m_strName);
+	pSerializer->AddProperty(CDeviceId::m_cszid, Id_);
+	pSerializer->AddProperty("Type", Type_);
+	pSerializer->AddProperty(CDevice::m_cszName, Name_);
 }
 
 class CSerializerAction : public CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>
@@ -569,14 +564,14 @@ public:
 		CAutomaticAction* pAction(static_cast<CAutomaticAction*>(DataItem.get()));
 
 		CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::UpdateSerializer(pSerializer);
-		pSerializer->AddProperty("class", pAction->m_strObjectClass);
-		pSerializer->AddProperty("expression", pAction->m_strExpression);
-		pSerializer->AddProperty("key", pAction->m_strObjectKey);
-		pSerializer->AddProperty("prop", pAction->m_strObjectProp);
-		pSerializer->AddProperty("linkType", pAction->m_nLinkType);
-		pSerializer->AddProperty("actionGroup", pAction->m_nActionGroup);
-		pSerializer->AddProperty("outputMode", pAction->m_nOutputMode);
-		pSerializer->AddProperty("runsCount", pAction->m_nRunsCount);
+		pSerializer->AddProperty("class", pAction->ObjectClass_);
+		pSerializer->AddProperty("expression", pAction->Expression_);
+		pSerializer->AddProperty("key", pAction->ObjectKey_);
+		pSerializer->AddProperty("prop", pAction->ObjectProp_);
+		pSerializer->AddProperty("linkType", pAction->LinkType_);
+		pSerializer->AddProperty("actionGroup", pAction->ActionGroup_);
+		pSerializer->AddProperty("outputMode", pAction->OutputMode_);
+		pSerializer->AddProperty("runsCount", pAction->RunsCount_);
 		pAction->UpdateSerializer(pSerializer);
 	}
 };
@@ -594,10 +589,10 @@ public:
 		CAutomaticStarter* pStarter(static_cast<CAutomaticStarter*>(DataItem.get()));
 
 		CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::UpdateSerializer(pSerializer);
-		pSerializer->AddProperty("class", pStarter->m_strObjectClass);
-		pSerializer->AddProperty("expression", pStarter->m_strExpression);
-		pSerializer->AddProperty("key", pStarter->m_strObjectKey);
-		pSerializer->AddProperty("prop", pStarter->m_strObjectProp);
+		pSerializer->AddProperty("class", pStarter->ObjectClass_);
+		pSerializer->AddProperty("expression", pStarter->Expression_);
+		pSerializer->AddProperty("key", pStarter->ObjectKey_);
+		pSerializer->AddProperty("prop", pStarter->ObjectProp_);
 		pStarter->UpdateSerializer(pSerializer);
 	}
 };
@@ -614,10 +609,10 @@ public:
 
 		CAutomaticLogic* pLogic(static_cast<CAutomaticLogic*>(DataItem.get()));
 		CSerializerDataSourceList<std::unique_ptr<CAutomaticItem>>::UpdateSerializer(pSerializer);
-		pSerializer->AddProperty("outputMode", pLogic->m_nOutputMode);
-		pSerializer->AddProperty("actions", pLogic->m_strActions);
-		pSerializer->AddProperty("expression", pLogic->m_strExpression);
-		pSerializer->AddProperty("delayExpression", pLogic->m_strDelayExpression);
+		pSerializer->AddProperty("outputMode", pLogic->OutputMode_);
+		pSerializer->AddProperty("actions", pLogic->Actions_);
+		pSerializer->AddProperty("expression", pLogic->Expression_);
+		pSerializer->AddProperty("delayExpression", pLogic->DelayExpression_);
 		pLogic->UpdateSerializer(pSerializer);
 	}
 };
@@ -626,9 +621,9 @@ SerializerPtr CAutomatic::GetSerializer()
 {
 	SerializerPtr Serializer = std::make_unique<CSerializerBase>(new CSerializerDataSourceBase());
 	Serializer->SetClassName("Automatic");
-	Serializer->AddSerializer("Action", new CSerializerBase(new CSerializerAction(m_lstActions)));
-	Serializer->AddSerializer("Logic", new CSerializerBase(new CSerializerLogic(m_lstLogics)));
-	Serializer->AddSerializer("Starter", new CSerializerBase(new CSerializerStarter(m_lstStarters)));
+	Serializer->AddSerializer("Action", new CSerializerBase(new CSerializerAction(Actions_)));
+	Serializer->AddSerializer("Logic", new CSerializerBase(new CSerializerLogic(Logics_)));
+	Serializer->AddSerializer("Starter", new CSerializerBase(new CSerializerStarter(Starters_)));
 	return Serializer;
 }
 
