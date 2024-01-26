@@ -26,8 +26,8 @@ namespace DFW2
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		virtual eDEVICEFUNCTIONSTATUS AngleToSyncReference();
 		void FinishStep(const CDynaModel& DynaModel) override;
-		static constexpr const char* m_cszxd1 = "xd1";
-		static constexpr const char* m_cszEqs = "Eqs";
+		static constexpr const char* cszxd1_ = "xd1";
+		static constexpr const char* cszEqs_ = "Eqs";
 	};
 
 	class CDynaGeneratorInfBus : public CDynaGeneratorInfBusBase

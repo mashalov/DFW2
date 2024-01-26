@@ -48,19 +48,19 @@ namespace DFW2
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		static void CalculateFlows(const CDynaBranch* pBranch, cplx& cIb, cplx& cIe, cplx& cSb, cplx& cSe);
 
-		static constexpr const char* m_cszIbre = "Ibre";
-		static constexpr const char* m_cszIbim = "Ibim";
-		static constexpr const char* m_cszIere = "Iere";
-		static constexpr const char* m_cszIeim = "Ieim";
-		static constexpr const char* m_cszIb   = "Ib";
-		static constexpr const char* m_cszIe   = "Ie";
-		static constexpr const char* m_cszPb   = "Pb";
-		static constexpr const char* m_cszQb   = "Qb";
-		static constexpr const char* m_cszPbr  = "Pbr";
-		static constexpr const char* m_cszQbr  = "Qbr";
-		static constexpr const char* m_cszPe   = "Pe";
-		static constexpr const char* m_cszQe   = "Qe";
-		static constexpr const char* m_cszSb   = "Sb";
-		static constexpr const char* m_cszSe   = "Se";
+		static constexpr const char* cszIbre_ = "Ibre";
+		static constexpr const char* cszIbim_ = "Ibim";
+		static constexpr const char* cszIere_ = "Iere";
+		static constexpr const char* cszIeim_ = "Ieim";
+		static constexpr const char* cszIb_   = "Ib";
+		static constexpr const char* cszIe_   = "Ie";
+		static constexpr const char* cszPb_   = "Pb";
+		static constexpr const char* cszQb_   = "Qb";
+		static constexpr const char* cszPbr_  = "Pbr";
+		static constexpr const char* cszQbr_  = "Qbr";
+		static constexpr const char* cszPe_   = "Pe";
+		static constexpr const char* cszQe_   = "Qe";
+		static constexpr const char* cszSb_   = "Sb";
+		static constexpr const char* cszSe_   = "Se";
 	};
 }

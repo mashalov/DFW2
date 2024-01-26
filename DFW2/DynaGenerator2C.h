@@ -43,7 +43,7 @@ namespace DFW2
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 		cplx GetEMF() override;
-		static constexpr const char* m_cszEds = "Eds";
+		static constexpr const char* cszEds_ = "Eds";
 	};
 }
 

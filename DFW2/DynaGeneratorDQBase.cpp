@@ -55,14 +55,14 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::PreInit(CDynaModel* pDynaModel)
 				value,
 				CDFW2Messages::m_cszValidationBiggerThanZero,
 				CDFW2Messages::m_cszValidationChangedTo,
-				fmt::format("{} = {}", m_cszxd1, xd1))
+				fmt::format("{} = {}", cszxd1_, xd1))
 			);
 			value = xd1; 
 		}
 	};
 
-	(fnFixZeroXtoXd1)(xq, m_cszxq);
-	(fnFixZeroXtoXd1)(xd, m_cszxd);
+	(fnFixZeroXtoXd1)(xq, cszxq_);
+	(fnFixZeroXtoXd1)(xd, cszxd_);
 
 	return eDEVICEFUNCTIONSTATUS::DFS_OK;
 
@@ -175,7 +175,7 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorDQBase::UpdateExternalVariables(CDynaModel* 
 {
 	eDEVICEFUNCTIONSTATUS eRes{ CDynaGeneratorMotion::UpdateExternalVariables(pDynaModel) };
 	CDevice* pExciter{ GetSingleLink(DEVTYPE_EXCITER) };
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtEqe, pExciter, m_cszEqe));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtEqe, pExciter, cszEqe_));
 	return eRes;
 }
 
@@ -184,19 +184,19 @@ void CDynaGeneratorDQBase::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorMotion::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
-	Serializer->AddProperty(m_cszExciterId, ExciterId, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszExciterId_, ExciterId, eVARUNITS::VARUNIT_UNITLESS);
 	Serializer->AddState("Egen", Egen_, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(m_cszxd, xd, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddState(m_cszVd, Vd, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszVq, Vq, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszId, Id, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddState(m_cszIq, Iq, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddState(m_cszEq, Eq, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszEqe, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(m_cszEqnom, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddState(CDynaPowerInjector::m_cszSnom, Snom, eVARUNITS::VARUNIT_MVA);
-	Serializer->AddState(CDynaPowerInjector::m_cszQnom, Qnom, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddState(m_cszInom, Inom, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddProperty(cszxd_, xd, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddState(cszVd_, Vd, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(cszVq_, Vq, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(cszId_, Id, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(cszIq_, Iq, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(cszEq_, Eq, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(cszEqe_, ExtEqe, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(cszEqnom_, Eqnom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddState(CDynaPowerInjector::cszSnom_, Snom, eVARUNITS::VARUNIT_MVA);
+	Serializer->AddState(CDynaPowerInjector::cszQnom_, Qnom, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState(cszInom_, Inom, eVARUNITS::VARUNIT_KAMPERES);
 }
 
 void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
@@ -204,21 +204,21 @@ void CDynaGeneratorDQBase::DeviceProperties(CDeviceContainerProperties& props)
 	CDynaGeneratorMotion::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_DQ);
 	// название класса не ставим, потому что это базовый класс и явно использоваться не должен
-	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGeneratorDQBase::m_cszExciterId);
+	props.AddLinkTo(DEVTYPE_EXCITER, DLM_SINGLE, DPD_SLAVE, CDynaGeneratorDQBase::cszExciterId_);
 	props.EquationsCount = CDynaGeneratorDQBase::VARS::V_LAST;
 
-	props.VarMap_.insert(std::make_pair(CDynaGeneratorDQBase::m_cszEq, CVarIndex(CDynaGeneratorDQBase::V_EQ, VARUNIT_KVOLTS)));
-	props.VarMap_.insert(std::make_pair(m_cszId, CVarIndex(CDynaGeneratorDQBase::V_ID, VARUNIT_KAMPERES)));
-	props.VarMap_.insert(std::make_pair(m_cszIq, CVarIndex(CDynaGeneratorDQBase::V_IQ, VARUNIT_KAMPERES)));
-	props.VarMap_.insert(std::make_pair(m_cszVd, CVarIndex(CDynaGeneratorDQBase::V_VD, VARUNIT_KVOLTS)));
-	props.VarMap_.insert(std::make_pair(m_cszVq, CVarIndex(CDynaGeneratorDQBase::V_VQ, VARUNIT_KVOLTS)));
+	props.VarMap_.insert(std::make_pair(CDynaGeneratorDQBase::cszEq_, CVarIndex(CDynaGeneratorDQBase::V_EQ, VARUNIT_KVOLTS)));
+	props.VarMap_.insert(std::make_pair(cszId_, CVarIndex(CDynaGeneratorDQBase::V_ID, VARUNIT_KAMPERES)));
+	props.VarMap_.insert(std::make_pair(cszIq_, CVarIndex(CDynaGeneratorDQBase::V_IQ, VARUNIT_KAMPERES)));
+	props.VarMap_.insert(std::make_pair(cszVd_, CVarIndex(CDynaGeneratorDQBase::V_VD, VARUNIT_KVOLTS)));
+	props.VarMap_.insert(std::make_pair(cszVq_, CVarIndex(CDynaGeneratorDQBase::V_VQ, VARUNIT_KVOLTS)));
 
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszExciterId, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszEqnom, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaPowerInjector::m_cszSnom, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszInom, CConstVarIndex(CDynaGeneratorDQBase::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaPowerInjector::m_cszQnom, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::m_cszEqe, CConstVarIndex(CDynaGeneratorDQBase::C_EQE, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::cszExciterId_, CConstVarIndex(CDynaGeneratorDQBase::C_EXCITERID, VARUNIT_PIECES, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::cszEqnom_, CConstVarIndex(CDynaGeneratorDQBase::C_EQNOM, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaPowerInjector::cszSnom_, CConstVarIndex(CDynaGeneratorDQBase::C_SNOM, VARUNIT_MVA, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::cszInom_, CConstVarIndex(CDynaGeneratorDQBase::C_INOM, VARUNIT_KAMPERES, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaPowerInjector::cszQnom_, CConstVarIndex(CDynaGeneratorDQBase::C_QNOM, VARUNIT_MVAR, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaGeneratorDQBase::cszEqe_, CConstVarIndex(CDynaGeneratorDQBase::C_EQE, VARUNIT_KVOLTS, eDVT_INTERNALCONST) });
 
 	// запрещаем явное использование фабрики данного класса
 	props.DeviceFactory = nullptr;
@@ -360,11 +360,11 @@ bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, dou
 		// нужно только для логирования
 
 		if (&x == &xd)
-			return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, To1, T1, To2, T2);
+			return CheckTimeConstants(csztdo1_, csztd1_, csztdo2_, csztd2_, To1, T1, To2, T2);
 		else
 		{
 			_ASSERTE(&x == &xq);
-			return CheckTimeConstants(m_csztqo1, m_csztq1, m_csztqo2, m_csztq2, To1, T1, To2, T2);
+			return CheckTimeConstants(csztqo1_, csztq1_, csztqo2_, csztq2_, To1, T1, To2, T2);
 		}
 	}
 	else
@@ -377,8 +377,8 @@ bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, dou
 		{
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
 				GetVerbalName(),
-				CDynaGeneratorDQBase::m_csztd1,
-				CDynaGeneratorDQBase::m_csztd2,
+				CDynaGeneratorDQBase::csztd1_,
+				CDynaGeneratorDQBase::csztd2_,
 				T1,
 				T2));
 		}
@@ -387,8 +387,8 @@ bool CDynaGeneratorDQBase::GetCanayTimeConstants(const double& x, double xl, dou
 			_ASSERTE(&x == &xq);
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
 				GetVerbalName(),
-				CDynaGeneratorDQBase::m_csztq1,
-				CDynaGeneratorDQBase::m_csztq2,
+				CDynaGeneratorDQBase::csztq1_,
+				CDynaGeneratorDQBase::csztq2_,
 				T1,
 				T2));
 		}
@@ -436,8 +436,8 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 		{
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
 				GetVerbalName(),
-				CDynaGeneratorDQBase::m_csztd1,
-				CDynaGeneratorDQBase::m_csztd2,
+				CDynaGeneratorDQBase::csztd1_,
+				CDynaGeneratorDQBase::csztd2_,
 				T1,
 				T2));
 		}
@@ -446,8 +446,8 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 			_ASSERTE(&x == &xq);
 			Log(DFW2MessageStatus::DFW2LOG_WARNING, fmt::format(CDFW2Messages::m_cszCannotConvertShortCircuitConstants,
 				GetVerbalName(),
-				CDynaGeneratorDQBase::m_csztq1,
-				CDynaGeneratorDQBase::m_csztq2,
+				CDynaGeneratorDQBase::csztq1_,
+				CDynaGeneratorDQBase::csztq2_,
 				T1,
 				T2));
 		}
@@ -458,11 +458,11 @@ bool CDynaGeneratorDQBase::GetShortCircuitTimeConstants(const double& x, double 
 	// нужно только для логирования
 	
 	if(&x == &xd)
-		return CheckTimeConstants(m_csztdo1, m_csztd1, m_csztdo2, m_csztd2, To1, T1, To2, T2);
+		return CheckTimeConstants(csztdo1_, csztd1_, csztdo2_, csztd2_, To1, T1, To2, T2);
 	else
 	{
 		_ASSERTE(&x == &xq);
-		return CheckTimeConstants(m_csztqo1, m_csztq1, m_csztqo2, m_csztq2, To1, T1, To2, T2);
+		return CheckTimeConstants(csztqo1_, csztq1_, csztqo2_, csztq2_, To1, T1, To2, T2);
 	}
 }
 

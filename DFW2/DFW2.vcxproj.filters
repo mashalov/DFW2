@@ -682,6 +682,9 @@
     <ClCompile Include="SVC.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="DeviceNamesLocalization.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Natvis Include="dfw2.natvis" />

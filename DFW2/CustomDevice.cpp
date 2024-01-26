@@ -66,13 +66,13 @@ void CCustomDeviceCPP::CreateDLLDeviceInstance(CCustomDeviceCPPContainer& Contai
 
 void CCustomDeviceCPP::SetConstsDefaultValues()
 {
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	if (!m_pDevice) throw dfw2error(cszNoDeviceDLL_);
 	m_pDevice->SetConstsDefaultValues();
 }
 
 void CCustomDeviceCPP::SetSourceConstant(size_t nIndex, double Value)
 {
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	if (!m_pDevice) throw dfw2error(cszNoDeviceDLL_);
 	if (!m_pDevice->SetSourceConstant(nIndex, Value))
 		throw dfw2error("CCustomDeviceCPP::SetSourceConstant - Constants index overrun");
 }
@@ -80,7 +80,7 @@ void CCustomDeviceCPP::SetSourceConstant(size_t nIndex, double Value)
 
 VariableIndexRefVec& CCustomDeviceCPP::GetVariables(VariableIndexRefVec& ChildVec)
 {
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	if (!m_pDevice) throw dfw2error(cszNoDeviceDLL_);
 	return CDevice::GetVariables(JoinVariables(m_pDevice->GetVariables(), ChildVec));
 }
 
@@ -95,7 +95,7 @@ double* CCustomDeviceCPP::GetVariablePtr(ptrdiff_t nVarIndex)
 
 void CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
 {
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	if (!m_pDevice) throw dfw2error(cszNoDeviceDLL_);
 	PrepareCustomDeviceData(pDynaModel);
 	m_pDevice->BuildRightHand(CustomDeviceData);
 	CDevice::BuildRightHand(pDynaModel);
@@ -103,7 +103,7 @@ void CCustomDeviceCPP::BuildRightHand(CDynaModel* pDynaModel)
 
 void CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
 {
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	if (!m_pDevice) throw dfw2error(cszNoDeviceDLL_);
 	PrepareCustomDeviceData(pDynaModel);
 	m_pDevice->BuildEquations(CustomDeviceData);
 	CDevice::BuildEquations(pDynaModel);
@@ -111,7 +111,7 @@ void CCustomDeviceCPP::BuildEquations(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::Init(CDynaModel* pDynaModel)
 {
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	if (!m_pDevice) throw dfw2error(cszNoDeviceDLL_);
 	PrepareCustomDeviceData(pDynaModel);
 	eDEVICEFUNCTIONSTATUS eRes = m_pDevice->Init(CustomDeviceData);
 
@@ -145,7 +145,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::ProcessDiscontinuity(CDynaModel* pDynaModel)
 {
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	if (!m_pDevice) throw dfw2error(cszNoDeviceDLL_);
 	PrepareCustomDeviceData(pDynaModel);
 	return CDevice::DeviceFunctionResult(m_pDevice->ProcessDiscontinuity(CustomDeviceData), CDevice::ProcessDiscontinuity(pDynaModel));
 }
@@ -153,7 +153,7 @@ eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::ProcessDiscontinuity(CDynaModel* pDynaMo
 eDEVICEFUNCTIONSTATUS CCustomDeviceCPP::UpdateExternalVariables(CDynaModel* pDynaModel)
 {
 	eDEVICEFUNCTIONSTATUS eRes(eDEVICEFUNCTIONSTATUS::DFS_OK);
-	if (!m_pDevice) throw dfw2error(m_cszNoDeviceDLL);
+	if (!m_pDevice) throw dfw2error(cszNoDeviceDLL_);
 	const VariableIndexExternalRefVec& ExtVec = m_pDevice->GetExternalVariables();
 	for (const auto& ext : pContainer_->ContainerProps().ExtVarMap_)
 	{

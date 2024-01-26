@@ -301,7 +301,7 @@ void CDynaSVC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaSVCBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_SVCPROP);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameSVC, CDeviceContainerProperties::m_cszSysNameSVC);
+	props.SetClassName(CDeviceContainerProperties::cszNameSVC_, CDeviceContainerProperties::cszSysNameSVC_);
 	props.EquationsCount = CDynaSVC::VARS::V_LAST;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaSVC>>();
 }
@@ -310,7 +310,7 @@ void CDynaSVCDEC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaSVCBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_SVCPROPDEC);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameSVCDEC, CDeviceContainerProperties::m_cszSysNameSVCDEC);
+	props.SetClassName(CDeviceContainerProperties::cszNameSVCDEC_, CDeviceContainerProperties::cszSysNameSVCDEC_);
 	props.EquationsCount = CDynaSVCDEC::VARS::V_LAST;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaSVCDEC>>();
 
@@ -330,8 +330,8 @@ void CDynaSVCBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDynaPowerInjector::UpdateSerializer(Serializer);
 	Serializer->AddProperty(cszDroop_, Droop_, eVARUNITS::VARUNIT_PERCENT, 0.01);
-	Serializer->AddProperty(CDynaPowerInjector::m_cszUnom, Unom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(CDynaPowerInjector::m_cszQnom, Qnom_, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(CDynaPowerInjector::cszUnom_, Unom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(CDynaPowerInjector::cszQnom_, Qnom_, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty(CDynaPowerInjector::cszVref_, Vref_, eVARUNITS::VARUNIT_KVOLTS);
 }
 
@@ -349,8 +349,8 @@ void CDynaSVCDEC::UpdateSerializer(CSerializerBase* Serializer)
 void CDynaSVCBase::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaPowerInjector::UpdateValidator(Validator);
-	Validator->AddRule(CDynaPowerInjector::m_cszUnom, &CDynaPowerInjector::ValidatorUnom);
-	Validator->AddRule({ cszDroop_, CDynaPowerInjector::m_cszQnom }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(CDynaPowerInjector::cszUnom_, &CDynaPowerInjector::ValidatorUnom);
+	Validator->AddRule({ cszDroop_, CDynaPowerInjector::cszQnom_ }, &CSerializerValidatorRules::BiggerThanZero);
 }
 
 void CDynaSVC::UpdateValidator(CSerializerValidatorRules* Validator)

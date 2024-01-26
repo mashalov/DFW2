@@ -75,7 +75,7 @@ void CDynaNodeMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	// линковка делается только с узлами, поэтому описание
 	// правил связывания не нужно
 	props.SetType(DEVTYPE_NODEMEASURE);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameNodeMeasure, CDeviceContainerProperties::m_cszSysNameNodeMeasure);
+	props.SetClassName(CDeviceContainerProperties::cszNameNodeMeasure_, CDeviceContainerProperties::cszSysNameNodeMeasure_);
 	props.EquationsCount = CDynaNodeMeasure::VARS::V_LAST;
 	props.VarMap_.insert({ m_cszPload,  CVarIndex(CDynaNodeMeasure::V_PLOAD, VARUNIT_MW) });
 	props.VarMap_.insert({ m_cszQload,  CVarIndex(CDynaNodeMeasure::V_QLOAD, VARUNIT_MVAR) });
@@ -341,7 +341,7 @@ void CDynaNodeZeroLoadFlow::UpdateSuperNodeSet()
 void CDynaNodeZeroLoadFlow::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_ZEROLOADFLOW);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameZeroLoadFlow, CDeviceContainerProperties::m_cszSysNameZeroLoadFlow);
+	props.SetClassName(CDeviceContainerProperties::cszNameZeroLoadFlow_, CDeviceContainerProperties::cszSysNameZeroLoadFlow_);
 	props.EquationsCount = 0;
 	props.bVolatile = true;
 }

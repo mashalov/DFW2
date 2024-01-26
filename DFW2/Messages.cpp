@@ -1,7 +1,6 @@
 ﻿#include "stdafx.h"
 #include "Messages.h"
 
-
 using namespace DFW2;
 
 CDFW2Messages::CDFW2Messages()
@@ -288,3 +287,4 @@ const char* CDFW2Messages::m_cszVswhereFailed = "vswhere завершен с о�
 const char* CDFW2Messages::m_cszSHGetKnownFolderPathFailedToGetPF = "SHGetKnownFolderPath - отказ получения пути к Program Files";
 const char* CDFW2Messages::m_cszMSBuildFailed = "Ошибка компиляции MSBuild";
 const char* CDFW2Messages::m_cszMSBuildCommandLine = "MSBuild using : {}";
+

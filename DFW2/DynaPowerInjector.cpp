@@ -132,8 +132,8 @@ void CDynaPowerInjector::BuildEquations(CDynaModel* pDynaModel)
 void CDynaPowerInjector::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDevice::UpdateValidator(Validator);
-	Validator->AddRule(m_cszNodeId, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszKgen, &CDynaPowerInjector::ValidatorKgen);
+	Validator->AddRule(cszNodeId_, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(cszKgen_, &CDynaPowerInjector::ValidatorKgen);
 }
 
 void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
@@ -142,31 +142,31 @@ void CDynaPowerInjector::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty(CDevice::cszName_, TypedSerializedValue::eValueType::VT_NAME, eVARUNITS::VARUNIT_UNITLESS);
 	AddStateProperty(Serializer);
 	Serializer->AddProperty(cszid_, TypedSerializedValue::eValueType::VT_ID, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddProperty(m_cszNodeId, NodeId, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddProperty(m_cszP, P, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(m_cszQ, Q, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddState(m_cszIre, Ire, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddState(m_cszIim, Iim, eVARUNITS::VARUNIT_KAMPERES);
-	Serializer->AddProperty(m_cszQmin, LFQmin, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty(m_cszQmax, LFQmax, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty(m_cszKgen, Kgen, eVARUNITS::VARUNIT_PIECES);
+	Serializer->AddProperty(cszNodeId_, NodeId, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszP_, P, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(cszQ_, Q, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddState(cszIre_, Ire, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddState(cszIim_, Iim, eVARUNITS::VARUNIT_KAMPERES);
+	Serializer->AddProperty(cszQmin_, LFQmin, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(cszQmax_, LFQmax, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(cszKgen_, Kgen, eVARUNITS::VARUNIT_PIECES);
 }
 
 void  CDynaPowerInjector::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_POWER_INJECTOR);
-	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, CDynaPowerInjector::m_cszNodeId);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPowerInjector, CDeviceContainerProperties::m_cszSysNameGeneratorPowerInjector);
+	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, CDynaPowerInjector::cszNodeId_);
+	props.SetClassName(CDeviceContainerProperties::cszNameGeneratorPowerInjector_, CDeviceContainerProperties::cszSysNameGeneratorPowerInjector_);
 
-	props.VarMap_.insert({ m_cszIre, CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES) });
-	props.VarMap_.insert({ m_cszIim, CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES) });
-	props.VarMap_.insert({ m_cszP, CVarIndex(CDynaPowerInjector::V_P, VARUNIT_MW) });
-	props.VarMap_.insert({ m_cszQ, CVarIndex(CDynaPowerInjector::V_Q, VARUNIT_MVAR) });
+	props.VarMap_.insert({ cszIre_, CVarIndex(CDynaPowerInjector::V_IRE, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ cszIim_, CVarIndex(CDynaPowerInjector::V_IIM, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ cszP_, CVarIndex(CDynaPowerInjector::V_P, VARUNIT_MW) });
+	props.VarMap_.insert({ cszQ_, CVarIndex(CDynaPowerInjector::V_Q, VARUNIT_MVAR) });
 
-	props.ConstVarMap_.insert({ CDynaPowerInjector::m_cszNodeId, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_UNITLESS, eDVT_CONSTSOURCE) });
+	props.ConstVarMap_.insert({ CDynaPowerInjector::cszNodeId_, CConstVarIndex(CDynaPowerInjector::C_NODEID, VARUNIT_UNITLESS, eDVT_CONSTSOURCE) });
 
 	props.EquationsCount = CDynaPowerInjector::VARS::V_LAST;
-	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasGenerator);
+	props.Aliases_.push_back(cszAliasGenerator_);
 	props.bUseCOI = true;
 	props.SyncDeltaId = CDynaPowerInjector::C_SYNCDELTA;
 	props.bStoreStates = false;

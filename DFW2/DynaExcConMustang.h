@@ -74,17 +74,17 @@ namespace DFW2
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static constexpr const char* m_cszAlpha = "Alpha";
-		static constexpr const char* m_cszTrv = "Trv";
-		static constexpr const char* m_cszKu = "Ku";
-		static constexpr const char* m_cszKu1 = "Ku1";
-		static constexpr const char* m_cszKif1 = "Kif1";
-		static constexpr const char* m_cszKf = "Kf";
-		static constexpr const char* m_cszKf1 = "Kf1";
-		static constexpr const char* m_cszTf = "Tf";
-		static constexpr const char* m_cszUrv_min = "Urv_min";
-		static constexpr const char* m_cszUrv_max = "Urv_max";
-		static constexpr const char* cszUsumLmt = "UsumLmt";
+		static constexpr const char* cszAlpha_ = "Alpha";
+		static constexpr const char* cszTrv_ = "Trv";
+		static constexpr const char* cszKu_ = "Ku";
+		static constexpr const char* cszKu1_ = "Ku1";
+		static constexpr const char* cszKif1_ = "Kif1";
+		static constexpr const char* cszKf_ = "Kf";
+		static constexpr const char* cszKf1_ = "Kf1";
+		static constexpr const char* cszTf_ = "Tf";
+		static constexpr const char* cszUrv_min_ = "Urv_min";
+		static constexpr const char* cszUrv_max_ = "Urv_max";
+		static constexpr const char* cszUsumLmt_ = "UsumLmt";
 
 		static inline CValidationRuleRange ValidatorAlpha = CValidationRuleRange(-1,1);
 		static inline CValidationRuleBiggerThanZero ValidatorTf = CValidationRuleBiggerThanZero(0.9);

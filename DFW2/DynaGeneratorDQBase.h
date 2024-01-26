@@ -83,29 +83,35 @@ namespace DFW2
 
 		void UpdateSerializer(CSerializerBase* Serializer) override;
 
-		static constexpr const char* m_cszEqe = "Eqe";
-		static constexpr const char* m_cszEq = "Eq";
-		static constexpr const char* m_cszId = "Id";
-		static constexpr const char* m_cszIq = "Iq";
-		static constexpr const char* m_cszVd = "Vd";
-		static constexpr const char* m_cszVq = "Vq";
-		static constexpr const char* m_cszExciterId = "ExciterId";
-		static constexpr const char* m_cszEqnom = "Eqnom";
-		static constexpr const char* m_cszInom = "Inom";
-		static constexpr const char* m_cszxd = "xd";
-		static constexpr const char* m_csztdo1 = "td01";
-		static constexpr const char* m_csztdo2 = "td02";
-		static constexpr const char* m_csztqo1 = "tq01";
-		static constexpr const char* m_csztqo2 = "tq02";
-		static constexpr const char* m_csztd1 = "Td1";
-		static constexpr const char* m_csztd2 = "Td2";
-		static constexpr const char* m_csztq1 = "Tq1";
-		static constexpr const char* m_csztq2 = "Tq2";
-		static constexpr const char* m_cszxd2 = "xd2";
-		static constexpr const char* m_cszxq1 = "xq1";
-		static constexpr const char* m_cszxq2 = "xq2";
+		static constexpr const char* cszEqe_ = "Eqe";
+		static constexpr const char* cszEq_ = "Eq";
+		static constexpr const char* cszId_ = "Id";
+		static constexpr const char* cszIq_ = "Iq";
+		static constexpr const char* cszVd_ = "Vd";
+		static constexpr const char* cszVq_ = "Vq";
+		static constexpr const char* cszExciterId_ = "ExciterId";
+		static constexpr const char* cszEqnom_ = "Eqnom";
+		static constexpr const char* cszInom_ = "Inom";
+		static constexpr const char* cszxd_ = "xd";
+		static constexpr const char* csztdo1_ = "td01";
+		static constexpr const char* csztdo2_ = "td02";
+		static constexpr const char* csztqo1_ = "tq01";
+		static constexpr const char* csztqo2_ = "tq02";
+		static constexpr const char* csztd1_ = "Td1";
+		static constexpr const char* csztd2_ = "Td2";
+		static constexpr const char* csztq1_ = "Tq1";
+		static constexpr const char* csztq2_ = "Tq2";
+		static constexpr const char* cszxd2_ = "xd2";
+		static constexpr const char* cszxq1_ = "xq1";
+		static constexpr const char* cszxq2_ = "xq2";
+		static constexpr const char* cszxl_ = "xl";
+		static constexpr const char* csztq01_ = "tq01";
+		static constexpr const char* cszPsifd_ = "Psifd";
+		static constexpr const char* cszPsi1d_ = "Psi1d";
+		static constexpr const char* cszPsi1q_ = "Psi1q";
+		static constexpr const char* cszPsi2q_ = "Psi2q";
 
-		static constexpr const char* m_cszBadCoeficients = "(lad + lrc)^2 - (lad + lrc + lfd) * (lad + lrc + l1d)";
+		static constexpr const char* cszBadCoeficients_ = "(lad + lrc)^2 - (lad + lrc + lfd) * (lad + lrc + l1d)";
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
@@ -117,16 +123,16 @@ namespace DFW2
 		bool GetCanayTimeConstants(const double& x, double xl, double x1, double x2, double xrc, double& To1, double& To2, double& T1, double& T2);
 		bool CheckTimeConstants(const char* cszTo1, const char* cszT1, const char* cszTo2, const char* cszT2, double To1, double T1, double To2, double T2) const;
 
-		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tdo2> ValidatorTdo1 = { CDynaGeneratorDQBase::m_csztdo2 };
-		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tqo2> ValidatorTqo1 = { CDynaGeneratorDQBase::m_csztqo2 };
-		static inline CValidationRuleBiggerOrEqualT<CDynaGeneratorInfBusBase, &CDynaGeneratorInfBusBase::xd1> ValidatorXd = { CDynaGeneratorInfBusBase::m_cszxd1 };
-		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd2> ValidatorXd1 = { CDynaGeneratorDQBase::m_cszxd2 };
-		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq1> ValidatorXq = { CDynaGeneratorDQBase::m_cszxq1 };
-		static inline CValidationRuleBiggerOrEqualT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXq1 = { CDynaGeneratorDQBase::m_cszxq2 };
-		static inline CValidationRuleLessOrEqualT<CDynaGeneratorMotion, &CDynaGeneratorMotion::xq> ValidatorXlXq = { CDynaGeneratorMotion::m_cszxq };
-		static inline CValidationRuleLessOrEqualT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd> ValidatorXlXd = { CDynaGeneratorDQBase::m_cszxd };
-		static inline CValidationRuleLess<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd2> ValidatorXlXd2 = { CDynaGeneratorDQBase::m_cszxd2 };
-		static inline CValidationRuleLess<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXlXq2 = { CDynaGeneratorDQBase::m_cszxq2 };
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tdo2> ValidatorTdo1 = { CDynaGeneratorDQBase::csztdo2_ };
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::Tqo2> ValidatorTqo1 = { CDynaGeneratorDQBase::csztqo2_ };
+		static inline CValidationRuleBiggerOrEqualT<CDynaGeneratorInfBusBase, &CDynaGeneratorInfBusBase::xd1> ValidatorXd = { CDynaGeneratorInfBusBase::cszxd1_ };
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd2> ValidatorXd1 = { CDynaGeneratorDQBase::cszxd2_ };
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq1> ValidatorXq = { CDynaGeneratorDQBase::cszxq1_ };
+		static inline CValidationRuleBiggerOrEqualT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXq1 = { CDynaGeneratorDQBase::cszxq2_ };
+		static inline CValidationRuleLessOrEqualT<CDynaGeneratorMotion, &CDynaGeneratorMotion::xq> ValidatorXlXq = { CDynaGeneratorMotion::cszxq_ };
+		static inline CValidationRuleLessOrEqualT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd> ValidatorXlXd = { CDynaGeneratorDQBase::cszxd_ };
+		static inline CValidationRuleLess<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xd2> ValidatorXlXd2 = { CDynaGeneratorDQBase::cszxd2_ };
+		static inline CValidationRuleLess<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXlXq2 = { CDynaGeneratorDQBase::cszxq2_ };
 		
 	};
 }

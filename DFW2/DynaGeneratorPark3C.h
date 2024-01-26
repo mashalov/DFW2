@@ -64,13 +64,7 @@ namespace DFW2
 		static bool GetCanayTimeConstants(double Xa, double X1s, double X2s, double Xrc, double& T1, double& T2);
 
 
-		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXqXq2 = { CDynaGeneratorDQBase::m_cszxq2 };
-
-		static constexpr const char* m_cszxl	= "xl";
-		static constexpr const char* m_cszPsifd = "Psifd";
-		static constexpr const char* m_cszPsi1d = "Psi1d";
-		static constexpr const char* m_cszPsi1q = "Psi1q";
-		static constexpr const char* m_cszPsi2q = "Psi2q";
+		static inline CValidationRuleBiggerT<CDynaGeneratorDQBase, &CDynaGeneratorDQBase::xq2> ValidatorXqXq2 = { CDynaGeneratorDQBase::cszxq2_ };
 	};
 }
 

@@ -250,7 +250,7 @@ void CDynaGeneratorMustang::DeviceProperties(CDeviceContainerProperties& props)
 	// добавляем свой тип. В списке типов уже есть все типы родительской цепочки 
 	props.SetType(DEVTYPE_GEN_MUSTANG);
 	// задаем имя типа устройства
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorMustang, CDeviceContainerProperties::m_cszSysNameGeneratorMustang);
+	props.SetClassName(CDeviceContainerProperties::cszNameGeneratorMustang_, CDeviceContainerProperties::cszSysNameGeneratorMustang_);
 	// задаем количество уравнений устройства
 	props.EquationsCount = CDynaGeneratorMustang::VARS::V_LAST;
 

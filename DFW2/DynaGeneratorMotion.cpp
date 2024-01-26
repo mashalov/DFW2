@@ -175,12 +175,12 @@ void CDynaGeneratorMotion::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorInfBusBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели генератора в уравнении движения
-	Serializer->AddProperty(m_cszKdemp, Kdemp, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddProperty(m_cszxq, xq, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_cszMj, Mj, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszPnom, Pnom, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(CDynaPowerInjector::m_cszUnom, Unom, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(m_cszcosPhinom, cosPhinom, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszKdemp_, Kdemp, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszxq_, xq, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(cszMj_, Mj, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszPnom_, Pnom, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(CDynaPowerInjector::cszUnom_, Unom, eVARUNITS::VARUNIT_KVOLTS);
+	Serializer->AddProperty(cszcosPhinom_, cosPhinom, eVARUNITS::VARUNIT_UNITLESS);
 	// добавляем переменные состояния
 	Serializer->AddState("Pt", Pt, eVARUNITS::VARUNIT_MW);
 	Serializer->AddState("s", s, eVARUNITS::VARUNIT_PU);
@@ -189,25 +189,25 @@ void CDynaGeneratorMotion::UpdateSerializer(CSerializerBase* Serializer)
 void CDynaGeneratorMotion::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaGeneratorInfBusBase::UpdateValidator(Validator);
-	Validator->AddRule(m_cszKdemp, &CSerializerValidatorRules::NonNegative);
-	Validator->AddRule({ m_cszxq, m_cszPnom }, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszcosPhinom, &CDynaGeneratorMotion::ValidatorCos);
-	Validator->AddRule(CDynaPowerInjector::m_cszUnom, &CDynaPowerInjector::ValidatorUnom);
-	Validator->AddRule(m_cszMj, &CDynaGeneratorMotion::ValidatorMj);
-	Validator->AddRule(m_cszPnom, &CDynaGeneratorMotion::ValidatorPnom);
+	Validator->AddRule(cszKdemp_, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule({ cszxq_, cszPnom_ }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(cszcosPhinom_, &CDynaGeneratorMotion::ValidatorCos);
+	Validator->AddRule(CDynaPowerInjector::cszUnom_, &CDynaPowerInjector::ValidatorUnom);
+	Validator->AddRule(cszMj_, &CDynaGeneratorMotion::ValidatorMj);
+	Validator->AddRule(cszPnom_, &CDynaGeneratorMotion::ValidatorPnom);
 }
 
 void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaGeneratorInfBusBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_MOTION);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorMotion, CDeviceContainerProperties::m_cszSysNameGeneratorMotion);
+	props.SetClassName(CDeviceContainerProperties::cszNameGeneratorMotion_, CDeviceContainerProperties::cszSysNameGeneratorMotion_);
 	props.EquationsCount = CDynaGeneratorMotion::VARS::V_LAST;
 
 	props.VarMap_.insert(std::make_pair("S", CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair(CDynaNodeBase::cszDelta_, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
-	props.ConstVarMap_.insert(std::make_pair(CDynaPowerInjector::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
+	props.ConstVarMap_.insert(std::make_pair(CDynaPowerInjector::cszUnom_, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorMotion>>();
 

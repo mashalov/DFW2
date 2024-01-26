@@ -204,10 +204,10 @@ void CDynaGenerator2C::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaGenerator1C::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_2C);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator2C, CDeviceContainerProperties::m_cszSysNameGenerator2C);
+	props.SetClassName(CDeviceContainerProperties::cszNameGenerator2C_, CDeviceContainerProperties::cszSysNameGenerator2C_);
 	props.EquationsCount = CDynaGenerator2C::VARS::V_LAST;
-	props.VarMap_.insert(std::make_pair(CDynaGeneratorInfBus::m_cszEqs, CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
-	props.VarMap_.insert(std::make_pair(CDynaGenerator2C::m_cszEds, CVarIndex(CDynaGenerator2C::V_EDS, VARUNIT_KVOLTS)));
+	props.VarMap_.insert(std::make_pair(CDynaGeneratorInfBus::cszEqs_, CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
+	props.VarMap_.insert(std::make_pair(CDynaGenerator2C::cszEds_, CVarIndex(CDynaGenerator2C::V_EDS, VARUNIT_KVOLTS)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGenerator2C>>();
 }
 
@@ -221,8 +221,8 @@ void CDynaGenerator2C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGenerator1C::UpdateSerializer(Serializer);
 	// добавляем свойства модели двухконтурной  модели генератора в ЭДС
-	Serializer->AddProperty(m_csztqo1, Tqo1, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(csztqo1_, Tqo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(cszxq1_, xq1, eVARUNITS::VARUNIT_OHM);
 	// добавляем переменные состояния модели двухконтурной модели генератора в ЭДС
-	Serializer->AddState(CDynaGenerator2C::m_cszEds, Eds, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(CDynaGenerator2C::cszEds_, Eds, eVARUNITS::VARUNIT_PU);
 }

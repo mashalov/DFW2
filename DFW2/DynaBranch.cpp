@@ -340,7 +340,7 @@ void CDynaBranch::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("br_iq", BrIq, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddProperty("nr_ip", NrIp, eVARUNITS::VARUNIT_PIECES);
 	Serializer->AddProperty("nr_iq", NrIq, eVARUNITS::VARUNIT_PIECES);
-	Serializer->AddEnumProperty(CDevice::cszSta_, new CSerializerAdapterEnum<CDynaBranch::BranchState>(BranchState_, m_cszBranchStateNames));
+	Serializer->AddEnumProperty(CDevice::cszSta_, new CSerializerAdapterEnum<CDynaBranch::BranchState>(BranchState_, cszBranchStateNames_));
 	Serializer->AddState("Gip", GIp, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Giq", GIq, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddState("Bip", BIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);
@@ -366,9 +366,9 @@ CDynaNodeBase* CDynaBranch::GetOppositeSuperNode(CDynaNodeBase* pOriginNode)
 void CDynaBranch::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_BRANCH);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameBranch, CDeviceContainerProperties::m_cszSysNameBranch);
+	props.SetClassName(CDeviceContainerProperties::cszNameBranch_, CDeviceContainerProperties::cszSysNameBranch_);
 	props.AddLinkTo(DEVTYPE_NODE, DLM_SINGLE, DPD_MASTER, "");
-	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasBranch);
+	props.Aliases_.push_back(CDynaBranch::cszAliasBranch_);
 	props.bStoreStates = false;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranch>>();
 }

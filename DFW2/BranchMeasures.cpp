@@ -426,28 +426,28 @@ void CDynaBranchMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	// линковка делается только с ветвями, поэтому описание
 	// правил связывания не нужно
 	props.SetType(DEVTYPE_BRANCHMEASURE);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameBranchMeasure, CDeviceContainerProperties::m_cszSysNameBranchMeasure);
+	props.SetClassName(CDeviceContainerProperties::cszNameBranchMeasure_, CDeviceContainerProperties::cszSysNameBranchMeasure_);
 	props.EquationsCount = CDynaBranchMeasure::VARS::V_LAST;
-	props.VarMap_.insert({ m_cszIbre,  CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES) });
-	props.VarMap_.insert({ m_cszIbim,  CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES) });
-	props.VarMap_.insert({ m_cszIere,  CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES) });
-	props.VarMap_.insert({ m_cszIeim,  CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES) });
-	props.VarMap_.insert({ m_cszIb,	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES) });
-	props.VarMap_.insert({ m_cszIe,	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES) });
-	props.VarMap_.insert({ m_cszPb,	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW) });
-	props.VarMap_.insert({ m_cszQb,	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR) });
-	props.VarMap_.insert({ m_cszPbr, CVarIndex(CDynaBranchMeasure::V_PBR, VARUNIT_MW) });
-	props.VarMap_.insert({ m_cszQbr, CVarIndex(CDynaBranchMeasure::V_QBR, VARUNIT_MVAR) });
-	props.VarMap_.insert({ m_cszPe,	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW) });
-	props.VarMap_.insert({ m_cszQe,	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR) });
-	props.VarMap_.insert({ m_cszSb,	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA) });
-	props.VarMap_.insert({ m_cszSe,	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA) });
+	props.VarMap_.insert({ cszIbre_,  CVarIndex(CDynaBranchMeasure::V_IBRE, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ cszIbim_,  CVarIndex(CDynaBranchMeasure::V_IBIM, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ cszIere_,  CVarIndex(CDynaBranchMeasure::V_IERE, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ cszIeim_,  CVarIndex(CDynaBranchMeasure::V_IEIM, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ cszIb_,	CVarIndex(CDynaBranchMeasure::V_IB, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ cszIe_,	CVarIndex(CDynaBranchMeasure::V_IE, VARUNIT_KAMPERES) });
+	props.VarMap_.insert({ cszPb_,	CVarIndex(CDynaBranchMeasure::V_PB, VARUNIT_MW) });
+	props.VarMap_.insert({ cszQb_,	CVarIndex(CDynaBranchMeasure::V_QB, VARUNIT_MVAR) });
+	props.VarMap_.insert({ cszPbr_, CVarIndex(CDynaBranchMeasure::V_PBR, VARUNIT_MW) });
+	props.VarMap_.insert({ cszQbr_, CVarIndex(CDynaBranchMeasure::V_QBR, VARUNIT_MVAR) });
+	props.VarMap_.insert({ cszPe_,	CVarIndex(CDynaBranchMeasure::V_PE, VARUNIT_MW) });
+	props.VarMap_.insert({ cszQe_,	CVarIndex(CDynaBranchMeasure::V_QE, VARUNIT_MVAR) });
+	props.VarMap_.insert({ cszSb_,	CVarIndex(CDynaBranchMeasure::V_SB, VARUNIT_MVA) });
+	props.VarMap_.insert({ cszSe_,	CVarIndex(CDynaBranchMeasure::V_SE, VARUNIT_MVA) });
 
 	props.VarAliasMap_.insert({ 
-		{ "ib", m_cszIb }, 
-		{ "ie", m_cszIe }, 
-		{ "pl_ip", m_cszPbr },
-		{ "pl_iq", m_cszPe }
+		{ "ib", cszIb_ }, 
+		{ "ie", cszIe_ }, 
+		{ "pl_ip", cszPbr_ },
+		{ "pl_iq", cszPe_ }
 		});
 
 	props.bStoreStates = false;

@@ -50,7 +50,7 @@ namespace DFW2
 		static eDEVICEFUNCTIONSTATUS DLLInitPrimitive(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);
 		static eDEVICEFUNCTIONSTATUS DLLProcPrimDisco(CDFWModelData& DFWModelData, ptrdiff_t nPrimitiveIndex);
 		CDynaPrimitive* GetPrimitiveForNamedOutput(std::string_view OutputName);
-		static constexpr const char* m_cszNoDeviceDLL = "CCustomDeviceCPP - no DLL device initialized";
+		static constexpr const char* cszNoDeviceDLL_ = "CCustomDeviceCPP - no DLL device initialized";
 	};
 }
 

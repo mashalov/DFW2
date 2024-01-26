@@ -408,7 +408,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 					// до известного автоматике типа
 					if(pDev->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_NODE))
 					{
-						ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+						ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 						if (ObjectProp_ == CDevice::cszSta_)
 						{
 							Action_ = std::make_unique<CModelActionChangeDeviceState>(static_cast<CDynaNode*>(pDev), eDEVICESTATE::DS_OFF);
@@ -462,7 +462,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 3:	// состояние ветви
 			{
-				ObjectClass_ = CDeviceContainerProperties::m_cszAliasBranch;
+				ObjectClass_ = CDynaBranch::cszAliasBranch_;
 				if (CDevice* pDev = pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()); pDev)
 				{
 					Action_ = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
@@ -472,7 +472,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 4:	// g-шунт узла
 			{
-				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntG>(static_cast<CDynaNode*>(pDev), *pValue_);
@@ -482,7 +482,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 5: // b-шунт узла
 			{
-				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntB>(static_cast<CDynaNode*>(pDev), *pValue_);
@@ -492,7 +492,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 6:	// r-шунт узла
 			{
-				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntR>(static_cast<CDynaNode*>(pDev), *pValue_);
@@ -502,7 +502,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 7:	// x-шунт узла
 			{
-				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntX>(static_cast<CDynaNode*>(pDev), *pValue_);
@@ -512,7 +512,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 13: // PnQn0 - узел
 			{
-				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
 					Action_ = std::make_unique<CModelActionChangeNodePQLoad>(static_cast<CDynaNode*>(pDev), *pValue_);
@@ -522,7 +522,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 19: // Шунт по остаточному напряжению - Uост
 			{
-				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntToUscUref>(static_cast<CDynaNode*>(pDev), *pValue_);
@@ -532,7 +532,7 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 			}
 			case 20: // Шунт по остаточному напряжению  - R/X
 			{
-				ObjectClass_ = CDeviceContainerProperties::m_cszAliasNode;
+				ObjectClass_ = CDynaNodeBase::cszAliasNode_;
 				if (CDevice* pDev{ pDynaModel->GetDeviceBySymbolicLink(ObjectClass_, ObjectKey_, CAutoModelLink::String()) }; pDev)
 				{
 					Action_ = std::make_unique<CModelActionChangeNodeShuntToUscRX>(static_cast<CDynaNode*>(pDev), *pValue_);

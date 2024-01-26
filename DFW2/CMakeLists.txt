@@ -94,6 +94,7 @@ set(EMSSSOURCES
     IntegratorBase.cpp 
     SynchroZone.cpp
     SVC.cpp
+    DeviceNamesLocalization.cpp
     )             
 
 find_library(dl NAMES dl PATH /usr/lib/x86_x64-linux-gnu/libdl.so)

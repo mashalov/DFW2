@@ -287,6 +287,7 @@ namespace DFW2
 		static constexpr const char* cszx_ = "x";
 		static constexpr const char* cszg_ = "g";
 		static constexpr const char* cszb_ = "b";
+		static constexpr const char* cszAliasNode_ = "node";
 	protected:
 		// Рассчитать полную информацию о потоках в ветвях по рассчитанным взаимным потокам
 		void CalculateZeroLFBranches();

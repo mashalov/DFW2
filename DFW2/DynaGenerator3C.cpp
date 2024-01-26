@@ -282,7 +282,7 @@ const cplx& CDynaGenerator3C::CalculateEgen()
 void CDynaGenerator3C::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaGenerator1C::UpdateValidator(Validator);
-	Validator->AddRule({ m_csztdo2, m_csztqo2, m_cszxd2, m_cszxq2, m_cszxq1 }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ csztdo2_, csztqo2_, cszxd2_, cszxq2_, cszxq1_ }, &CSerializerValidatorRules::BiggerThanZero);
 }
 
 void CDynaGenerator3C::UpdateSerializer(CSerializerBase* Serializer)
@@ -292,18 +292,18 @@ void CDynaGenerator3C::UpdateSerializer(CSerializerBase* Serializer)
 	// добавляем перменные состояния трехконтурной модели в ЭДС
 	Serializer->AddState("Eqss", Eqss, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddState("Edss", Edss, eVARUNITS::VARUNIT_KVOLTS);
-	Serializer->AddProperty(m_csztdo2, Tdo2, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztqo2, Tqo2, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(csztdo2_, Tdo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(csztqo2_, Tqo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(cszxd2_, xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(cszxq2_, xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(cszxq1_, xq1, eVARUNITS::VARUNIT_OHM);
 }
 
 void CDynaGenerator3C::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaGenerator1C::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_3C);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator3C, CDeviceContainerProperties::m_cszSysNameGenerator3C);
+	props.SetClassName(CDeviceContainerProperties::cszNameGenerator3C_, CDeviceContainerProperties::cszSysNameGenerator3C_);
 	props.EquationsCount = CDynaGenerator3C::VARS::V_LAST;
 	props.VarMap_.insert(std::make_pair("Eqss", CVarIndex(CDynaGenerator3C::V_EQSS, VARUNIT_KVOLTS)));
 	props.VarMap_.insert(std::make_pair("Edss", CVarIndex(CDynaGenerator3C::V_EDSS, VARUNIT_KVOLTS)));

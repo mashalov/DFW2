@@ -34,7 +34,7 @@ std::tuple<double, double, cplx> CDynaLRC::Get(double VdivVnom, double dLRCVicin
 void CDynaLRC::DeviceProperties(CDeviceContainerProperties& props)
 {
 	props.SetType(DEVTYPE_LRC);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameLRC, CDeviceContainerProperties::m_cszSysNameLRC);
+	props.SetClassName(CDeviceContainerProperties::cszNameLRC_, CDeviceContainerProperties::cszSysNameLRC_);
 	props.bStoreStates = false;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaLRC>>();
 }

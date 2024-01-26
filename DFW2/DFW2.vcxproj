@@ -382,6 +382,7 @@
     <ClInclude Include="DynaDECMustang.h" />
     <ClInclude Include="DynaExcConMustang.h" />
     <ClCompile Include="BranchMeasures.cpp" />
+    <ClCompile Include="DeviceNamesLocalization.cpp" />
     <ClCompile Include="DynaNode.cpp" />
     <ClCompile Include="DllMain.cpp" />
     <ClCompile Include="DynaExcConMustangNW.cpp">

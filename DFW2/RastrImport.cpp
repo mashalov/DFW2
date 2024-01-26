@@ -444,27 +444,27 @@ void CRastrImport::GetData(CDynaModel& Network)
 	Network.DeserializeParameters(Network.Platform().Root() / "config.json");
 
 	m_rastrSynonyms
-		.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameLRC, "polin")
+		.AddRastrSynonym(CDeviceContainerProperties::cszSysNameLRC_, "polin")
 		.AddFieldSynonyms("LRCId", "nsx")
 		.AddFieldSynonyms("Umin", "umin")
 		.AddFieldSynonyms("Freq", "frec");
 
 
 	m_rastrSynonyms
-		.AddRastrSynonym("Node", "node")
+		.AddRastrSynonym("Node", cszAliasNode_)
 		.AddFieldSynonyms("LRCLFId", "nsx")
 		.AddFieldSynonyms("LRCTransId", "dnsx")
 		.AddFieldTransformer("tip", new CRastrNodeTypeEnumTransformer()); // задаем трансформатор типа узла
 
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameBranch, "vetv");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameBranch_, cszAliasBranch_);
 	m_rastrSynonyms
-		.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorInfPower, "Generator")
+		.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorInfPower_, cszAliasGenerator_)
 		.AddFieldSynonyms("Kgen", "NumBrand")
 		.AddFieldSynonyms("Kdemp", "Demp")
 		.AddFieldSynonyms("cosPhinom", "cosFi")
 		.AddFieldSynonyms("Unom", "Ugnom");
 
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameReactor, "Reactors")
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameReactor_, "Reactors")
 		.AddFieldSynonyms("HeadNode", "Id1")
 		.AddFieldSynonyms("TailNode", "Id2")
 		.AddFieldSynonyms("ParallelBranch", "Id3")
@@ -473,29 +473,29 @@ void CRastrImport::GetData(CDynaModel& Network)
 		.AddFieldSynonyms(CSerializerBase::m_cszType, "tip")
 		.AddFieldSynonyms("Placement", "Pr_vikl");
 
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameSVC, "DFWFACTS")
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameSVC_, "DFWFACTS")
 		.AddFieldSynonyms("Kgen", "")
-		.AddFieldSynonyms(CDynaPowerInjector::m_cszP, "")
-		.AddFieldSynonyms(CDynaPowerInjector::m_cszQ, "Qout")
+		.AddFieldSynonyms(CDynaPowerInjector::cszP_, "")
+		.AddFieldSynonyms(CDynaPowerInjector::cszQ_, "Qout")
 		//.AddFieldSynonyms(CDynaPowerInjector::m_cszQmin, "Min")
 		//.AddFieldSynonyms(CDynaPowerInjector::m_cszQmax, "Max")
 		//.AddFieldSynonyms(CDynaPowerInjector::m_cszQnom, CDynaPowerInjector::m_cszSnom)
 		//.AddFieldSynonyms(CDynaPowerInjector::cszVref_, "Ref1")
 		.AddFieldSynonyms(CDynaSVCDEC::cszDroop_, "XSL");
 
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameSVCDEC, "DFWFACTS");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameSVCDEC_, "DFWFACTS");
 
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMotion, "Generator");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator1C, "Generator");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator2C, "Generator");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGenerator3C, "Generator");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorMustang, "Generator");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorPark3C, "Generator");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorPark4C, "Generator");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameGeneratorPowerInjector, "Generator");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExciterMustang, "Exciter");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameDECMustang, "Forcer");
-	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::m_cszSysNameExcConMustang, "ExcControl");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorMotion_, cszAliasGenerator_);
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGenerator1C_, cszAliasGenerator_);
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGenerator2C_, cszAliasGenerator_);
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGenerator3C_, cszAliasGenerator_);
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorMustang_, cszAliasGenerator_);
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorPark3C_, cszAliasGenerator_);
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorPark4C_, cszAliasGenerator_);
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameGeneratorPowerInjector_, cszAliasGenerator_);
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameExciterMustang_, "Exciter");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameDECMustang_, "Forcer");
+	m_rastrSynonyms.AddRastrSynonym(CDeviceContainerProperties::cszSysNameExcConMustang_, "ExcControl");
 
 	ITablePtr VGSVCTable{ spTables->Item(L"USHR") };
 	ITablePtr SVCTable{ spTables->Item(L"DFWFACTS") };
@@ -712,28 +712,28 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 	const std::map<long, std::pair<const std::string_view, const std::string_view>>
 		ActionCommandTypeArgs
 	{
-		{2 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::cszSta_ } },
-		{3 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::cszSta_ } },
-		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszGsh_ } },
-		{5 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszBsh_} },
-		{6 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNodeBase::cszr_} },
-		{7 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNodeBase::cszx_} },
-		{8 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszPload_} },
-		{9 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszQload_} },
-		{13 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszPload_} },
-		{19 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszV_} },
-		{20 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszV_} },
+		{2 , {CDynaNodeBase::cszAliasNode_, CDevice::cszSta_ } },
+		{3 , {CDynaNodeBase::cszAliasNode_, CDevice::cszSta_ } },
+		{4 , {CDynaNodeBase::cszAliasNode_, CDynaNode::cszGsh_ } },
+		{5 , {CDynaNodeBase::cszAliasNode_, CDynaNode::cszBsh_} },
+		{6 , {CDynaNodeBase::cszAliasNode_, CDynaNodeBase::cszr_} },
+		{7 , {CDynaNodeBase::cszAliasNode_, CDynaNodeBase::cszx_} },
+		{8 , {CDynaNodeBase::cszAliasNode_, CDynaNode::cszPload_} },
+		{9 , {CDynaNodeBase::cszAliasNode_, CDynaNode::cszQload_} },
+		{13 , {CDynaNodeBase::cszAliasNode_, CDynaNode::cszPload_} },
+		{19 , {CDynaNodeBase::cszAliasNode_, CDynaNode::cszV_} },
+		{20 , {CDynaNodeBase::cszAliasNode_, CDynaNode::cszV_} },
 	},
 	StarterTypeArgs
 	{
-		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::cszSta_ } },
-		{5 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::cszSta_ } },
-		{6 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszIb } },
-		{7 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszIe } },
-		{8 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszPb } },
-		{9 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszPe } },
-		{10 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszQb } },
-		{11 , {CDeviceContainerProperties::m_cszAliasBranch, CDynaBranchMeasure::m_cszQe } }
+		{4 , {CDynaBranch::cszAliasBranch_, CDevice::cszSta_ } },
+		{5 , {CDynaBranch::cszAliasBranch_, CDevice::cszSta_ } },
+		{6 , {CDynaBranch::cszAliasBranch_, CDynaBranchMeasure::cszIb_ } },
+		{7 , {CDynaBranch::cszAliasBranch_, CDynaBranchMeasure::cszIe_ } },
+		{8 , {CDynaBranch::cszAliasBranch_, CDynaBranchMeasure::cszPb_ } },
+		{9 , {CDynaBranch::cszAliasBranch_, CDynaBranchMeasure::cszPe_ } },
+		{10 , {CDynaBranch::cszAliasBranch_, CDynaBranchMeasure::cszQb_ } },
+		{11 , {CDynaBranch::cszAliasBranch_, CDynaBranchMeasure::cszQe_ } }
 	};
 
 	ITablesPtr spTables{ m_spRastr->Tables };

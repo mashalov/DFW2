@@ -60,33 +60,70 @@ namespace DFW2
 		eDFW2DEVICETYPE GetType() const noexcept;
 		const char* GetVerbalClassName() const noexcept;
 		const char* GetSystemClassName() const noexcept;
-		static const char* m_cszNameGenerator1C, *m_cszSysNameGenerator1C;
-		static const char* m_cszNameGenerator2C, * m_cszSysNameGenerator2C;
-		static const char* m_cszNameGenerator3C, *m_cszSysNameGenerator3C;
-		static const char* m_cszNameGeneratorPark3C, *m_cszSysNameGeneratorPark3C;
-		static const char* m_cszNameGeneratorPark4C, *m_cszSysNameGeneratorPark4C;
-		static const char* m_cszNameGeneratorPowerInjector, * m_cszSysNameGeneratorPowerInjector;
-		static const char* m_cszNameGeneratorMustang, *m_cszSysNameGeneratorMustang;
-		static const char* m_cszNameGeneratorInfPower, *m_cszSysNameGeneratorInfPower;
-		static const char* m_cszNameGeneratorMotion, *m_cszSysNameGeneratorMotion;
-		static const char* m_cszNameExciterMustang, *m_cszSysNameExciterMustang;
-		static const char* m_cszNameExcConMustang, *m_cszSysNameExcConMustang;
-		static const char* m_cszNameSVC, * m_cszSysNameSVC;
-		static const char* m_cszNameSVCDEC, * m_cszSysNameSVCDEC;
-		static const char* m_cszNameDECMustang, *m_cszSysNameDECMustang;
-		static const char* m_cszNameNode, *m_cszSysNameNode;
-		static const char* m_cszNameBranch, *m_cszSysNameBranch;
-		static const char* m_cszNameBranchMeasure, *m_cszSysNameBranchMeasure;
-		static const char* m_cszNameNodeMeasure, * m_cszSysNameNodeMeasure;
-		static const char* m_cszNameZeroLoadFlow, * m_cszSysNameZeroLoadFlow;
-		static const char* m_cszNameLRC, * m_cszSysNameLRC;
-		static const char* m_cszNameReactor, * m_cszSysNameReactor;
-		static const char* m_cszAliasNode;
-		static const char* m_cszAliasBranch;
-		static const char* m_cszAliasGenerator;
+
+		static constexpr const char* cszSysNameGenerator1C_ = "Generator1C";
+		static const char* cszNameGenerator1C_;
+
+		static constexpr const char* cszSysNameGenerator2C_ = "Generator2C";
+		static const char* cszNameGenerator2C_;
+
+		static constexpr const char* cszSysNameGenerator3C_ = "Generator3C";
+		static const char* cszNameGenerator3C_;
+
+		static constexpr const char* cszSysNameGeneratorPark3C_ = "GeneratorPark3C";
+		static const char* cszNameGeneratorPark3C_;
+
+		static constexpr const char* cszSysNameGeneratorPark4C_ = "GeneratorPark4C";
+		static const char* cszNameGeneratorPark4C_;
+
+		static constexpr const char* cszSysNameGeneratorMustang_ = "GeneratorMustang";
+		static const char* cszNameGeneratorMustang_;
+
+		static constexpr const char* cszSysNameGeneratorInfPower_ = "GeneratorInfBus";
+		static const char* cszNameGeneratorInfPower_;
+
+		static constexpr const char* cszSysNameGeneratorPowerInjector_ = "GeneratorPowerInjector";
+		static const char* cszNameGeneratorPowerInjector_;
+
+		static constexpr const char* cszSysNameGeneratorMotion_ = "GeneratorMotion";
+		static const char* cszNameGeneratorMotion_;
+
+		static constexpr const char* cszSysNameExciterMustang_ = "ExciterMustang";
+		static const char* cszNameExciterMustang_;
+
+		static constexpr const char* cszSysNameExcConMustang_ = "ExcControlMustang";
+		static const char* cszNameExcConMustang_;
+
+		
+		static constexpr const char* cszSysNameDECMustang_ = "DecMustang"; 
+		static const char* cszNameDECMustang_;
+
+		static constexpr const char* cszSysNameNode_ = "Node";
+		static const char* cszNameNode_;
+
+		static constexpr const char* cszSysNameBranch_ = "Branch";
+		static const char* cszNameBranch_;
+
+		static constexpr const char* cszSysNameBranchMeasure_ = "BranchMeasure";
+		static const char* cszNameBranchMeasure_;
+
+		static constexpr const char* cszSysNameNodeMeasure_ = "NodeMeasure";
+		static const char* cszNameNodeMeasure_;
+
+		static constexpr const char* cszSysNameZeroLoadFlow_ = "ZeroLoadFlow";
+		static const char* cszNameZeroLoadFlow_;
+
+		static constexpr const char* cszSysNameLRC_ = "LRC";
+		static const char* cszNameLRC_;
+
+		static constexpr const char* cszSysNameReactor_ = "Reactor";
+		static const char* cszNameReactor_;
+
+		static constexpr const char* cszSysNameSVC_ = "SVC";
+		static const char* cszNameSVC_;
+
+		static constexpr const char* cszSysNameSVCDEC_ = "SVCDEC";
+		static const char* cszNameSVCDEC_;
 	};
-
-
-
 }
 

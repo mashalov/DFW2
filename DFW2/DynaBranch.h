@@ -91,7 +91,8 @@ namespace DFW2
 
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static constexpr const char* m_cszBranchStateNames[4] = { "On", "Off", "Htrip", "Ttrip", };
+		static constexpr const char* cszBranchStateNames_[4] = { "On", "Off", "Htrip", "Ttrip", };
+		static constexpr const char *cszAliasBranch_ = "vetv";
 	};
 
 	struct BranchComp

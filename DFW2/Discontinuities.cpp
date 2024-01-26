@@ -335,9 +335,9 @@ eDFW2_ACTION_STATE CModelActionChangeBranchState::Do(CDynaModel *pDynaModel, dou
 	Log(pDynaModel, fmt::format("{} {}=\"{}\" -> {}=\"{}\"",
 			pDynaBranch_->GetVerbalName(),
 			CDevice::cszState_,
-			stringutils::enum_text(pDynaBranch_->BranchState_, CDynaBranch::m_cszBranchStateNames),
+			stringutils::enum_text(pDynaBranch_->BranchState_, CDynaBranch::cszBranchStateNames_),
 			CDevice::cszState_,
-			stringutils::enum_text(NewState_, CDynaBranch::m_cszBranchStateNames)));
+			stringutils::enum_text(NewState_, CDynaBranch::cszBranchStateNames_)));
 
 	return Do(pDynaModel);
 }

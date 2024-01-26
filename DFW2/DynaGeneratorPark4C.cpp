@@ -138,7 +138,7 @@ bool CDynaGeneratorPark4C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (Consts::Equal(detd, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), CDynaGeneratorDQBase::m_cszBadCoeficients, detd));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, GetVerbalName(), CDynaGeneratorDQBase::cszBadCoeficients_, detd));
 		bRes = false;
 	}
 	if (Consts::Equal(detq, 0.0))
@@ -370,12 +370,12 @@ void CDynaGeneratorPark4C::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaGeneratorDQBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_PARK4C);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark4C, CDeviceContainerProperties::m_cszSysNameGeneratorPark4C);
+	props.SetClassName(CDeviceContainerProperties::cszNameGeneratorPark4C_, CDeviceContainerProperties::cszSysNameGeneratorPark4C_);
 	props.EquationsCount = CDynaGeneratorPark4C::VARS::V_LAST;
-	props.VarMap_.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
-	props.VarMap_.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
-	props.VarMap_.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));
-	props.VarMap_.insert(std::make_pair(m_cszPsi2q, CVarIndex(V_PSI_2Q, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(cszPsifd_, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(cszPsi1d_, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(cszPsi1q_, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(cszPsi2q_, CVarIndex(V_PSI_2Q, eVARUNITS::VARUNIT_WB)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorPark4C>>();
 }
 
@@ -384,34 +384,34 @@ void CDynaGeneratorPark4C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 
-	Serializer->AddState(m_cszPsifd, Psifd, eVARUNITS::VARUNIT_WB);
-	Serializer->AddState(m_cszPsi1d, Psi1d, eVARUNITS::VARUNIT_WB);
-	Serializer->AddState(m_cszPsi1q, Psi1q, eVARUNITS::VARUNIT_WB);
-	Serializer->AddState(m_cszPsi2q, Psi2q, eVARUNITS::VARUNIT_WB);
-	Serializer->AddProperty(m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_cszxq1, xq1, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_csztdo1, Tdo1, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztdo2, Tdo2, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztqo1, Tqo1, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztqo2, Tqo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddState(cszPsifd_, Psifd, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(cszPsi1d_, Psi1d, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(cszPsi1q_, Psi1q, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(cszPsi2q_, Psi2q, eVARUNITS::VARUNIT_WB);
+	Serializer->AddProperty(cszxd2_, xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(cszxq1_, xq1, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(cszxq2_, xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(cszxl_, xl, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(csztdo1_, Tdo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(csztdo2_, Tdo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(csztqo1_, Tqo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(csztqo2_, Tqo2, eVARUNITS::VARUNIT_SECONDS);
 }
 
 void CDynaGeneratorPark4C::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaGeneratorDQBase::UpdateValidator(Validator);
-	Validator->AddRule({ m_cszxd2,
-						 m_cszxq1,
-						 m_cszxq2,
-						 m_cszxl,
-						 m_csztdo1,
-						 m_csztdo2,
-						 m_csztqo1,
-						 m_csztqo2 }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ cszxd2_,
+						 cszxq1_,
+						 cszxq2_,
+						 cszxl_,
+						 csztdo1_,
+						 csztdo2_,
+						 csztqo1_,
+						 csztqo2_ }, &CSerializerValidatorRules::BiggerThanZero);
 
-	Validator->AddRule(m_csztdo1, &CDynaGeneratorDQBase::ValidatorTdo1);
-	Validator->AddRule(m_csztqo1, &CDynaGeneratorDQBase::ValidatorTqo1);
-	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXd2);
-	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq2);
+	Validator->AddRule(csztdo1_, &CDynaGeneratorDQBase::ValidatorTdo1);
+	Validator->AddRule(csztqo1_, &CDynaGeneratorDQBase::ValidatorTqo1);
+	Validator->AddRule(cszxl_, &CDynaGeneratorDQBase::ValidatorXlXd2);
+	Validator->AddRule(cszxl_, &CDynaGeneratorDQBase::ValidatorXlXq2);
 }

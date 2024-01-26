@@ -57,28 +57,28 @@ namespace DFW2
 		void UpdateValidator(CSerializerValidatorRules* Validator) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static constexpr const char* m_cszUbf = "Ubf";
-		static constexpr const char* m_cszUef = "Uef";
-		static constexpr const char* m_cszUbrf = "Ubrf";
-		static constexpr const char* m_cszUerf = "Uerf";
-		static constexpr const char* m_cszRf = "Rf";
-		static constexpr const char* m_cszRrf = "Rrf";
-		static constexpr const char* m_cszTexc_f = "Texc_f";
-		static constexpr const char* m_cszTexc_rf = "Texc_rf";
-		static constexpr const char* m_cszTz_in = "Tz_in";
-		static constexpr const char* m_cszTz_out = "Tz_out";
-		static constexpr const char* cszEnfOnRly = "EnfOnRly";
-		static constexpr const char* cszDefOnRly = "DefOnRly";
-		static constexpr const char* cszEnfOffRly = "EnfOffRly";
-		static constexpr const char* cszDefOffRly = "DefOffRly";
-		static constexpr const char* cszEnfTrig = "EnfTrg";
-		static constexpr const char* cszDefTrig = "DefTrg";
+		static constexpr const char* cszUbf_ = "Ubf";
+		static constexpr const char* cszUef_ = "Uef";
+		static constexpr const char* cszUbrf_ = "Ubrf";
+		static constexpr const char* cszUerf_ = "Uerf";
+		static constexpr const char* cszRf_ = "Rf";
+		static constexpr const char* cszRrf_ = "Rrf";
+		static constexpr const char* cszTexc_f_ = "Texc_f";
+		static constexpr const char* cszTexc_rf_ = "Texc_rf";
+		static constexpr const char* cszTz_in_ = "Tz_in";
+		static constexpr const char* cszTz_out_ = "Tz_out";
+		static constexpr const char* cszEnfOnRly_ = "EnfOnRly";
+		static constexpr const char* cszDefOnRly_ = "DefOnRly";
+		static constexpr const char* cszEnfOffRly_ = "EnfOffRly";
+		static constexpr const char* cszDefOffRly_ = "DefOffRly";
+		static constexpr const char* cszEnfTrig_ = "EnfTrg";
+		static constexpr const char* cszDefTrig_ = "DefTrg";
 
 		// допускаются равные уставки на ввод и снятие форсировки/дефорсировки (см. приоритет триггера)
-		static inline CValidationRuleBiggerOrEqualT<CDynaDECMustang, &CDynaDECMustang::VEnfOn> ValidatorVenfOff = { CDynaDECMustang::m_cszUbf };
-		static inline CValidationRuleBiggerOrEqualT<CDynaDECMustang, &CDynaDECMustang::VDefOff> ValidatorVdefOn = { CDynaDECMustang::m_cszUerf };
+		static inline CValidationRuleBiggerOrEqualT<CDynaDECMustang, &CDynaDECMustang::VEnfOn> ValidatorVenfOff = { CDynaDECMustang::cszUbf_ };
+		static inline CValidationRuleBiggerOrEqualT<CDynaDECMustang, &CDynaDECMustang::VDefOff> ValidatorVdefOn = { CDynaDECMustang::cszUerf_ };
 		// полосы форсировки/расфорсировки не должны пересекаться
-		static inline CValidationRuleBiggerT<CDynaDECMustang, &CDynaDECMustang::VEnfOff> ValidatorVdefOff = { CDynaDECMustang::m_cszUef };
+		static inline CValidationRuleBiggerT<CDynaDECMustang, &CDynaDECMustang::VEnfOff> ValidatorVdefOff = { CDynaDECMustang::cszUef_ };
 
 	};
 }

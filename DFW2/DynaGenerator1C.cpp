@@ -211,7 +211,7 @@ void CDynaGenerator1C::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaGeneratorDQBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_1C);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGenerator1C, CDeviceContainerProperties::m_cszSysNameGenerator1C);
+	props.SetClassName(CDeviceContainerProperties::cszNameGenerator1C_, CDeviceContainerProperties::cszSysNameGenerator1C_);
 	props.EquationsCount = CDynaGenerator1C::VARS::V_LAST;
 	props.VarMap_.insert(std::make_pair("Eqs", CVarIndex(CDynaGenerator1C::V_EQS, VARUNIT_KVOLTS)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGenerator1C>>();
@@ -227,7 +227,7 @@ void CDynaGenerator1C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 	// добавляем свойства модели одноконтурной модели генератора в ЭДС
-	Serializer->AddProperty(m_csztdo1, Tdo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(csztdo1_, Tdo1, eVARUNITS::VARUNIT_SECONDS);
 	// добавляем переменные состояния модели одноконтурной модели генератора в ЭДС
 	Serializer->AddState("zsq", zsq, eVARUNITS::VARUNIT_PU);
 }

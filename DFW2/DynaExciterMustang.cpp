@@ -13,8 +13,8 @@ CDynaExciterMustang::CDynaExciterMustang() : CDynaExciterBase(),
 	EqLimit(*this, { EqOutputValue }, { EqInput })
 {
 	Primitives_.pop_back();
-	OutputLimit.SetName(cszEqeV);
-	EqLimit.SetName(cszEqLimit);
+	OutputLimit.SetName(cszEqeV_);
+	EqLimit.SetName(cszEqLimit_);
 }
 
 double* CDynaExciterMustang::GetVariablePtr(ptrdiff_t nVarIndex)
@@ -231,10 +231,10 @@ void CDynaExciterMustang::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaExciterBase::DeviceProperties(props);
 	props.EquationsCount = CDynaExciterMustang::VARS::V_LAST;
-	props.SetClassName(CDeviceContainerProperties::m_cszNameExciterMustang, CDeviceContainerProperties::m_cszSysNameExciterMustang);
+	props.SetClassName(CDeviceContainerProperties::cszNameExciterMustang_, CDeviceContainerProperties::cszSysNameExciterMustang_);
 
-	props.VarMap_.insert(std::make_pair(CDynaGenerator1C::m_cszEqe, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(cszEqeV, CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(CDynaGenerator1C::cszEqe_, CVarIndex(CDynaExciterMustang::V_EQE, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszEqeV_, CVarIndex(CDynaExciterMustang::V_EQEV, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("Eqsum", CVarIndex(CDynaExciterMustang::V_EQSUM, VARUNIT_PU)));
 	props.VarMap_.insert(std::make_pair("Lag", CVarIndex(CDynaExciterMustang::V_EQELAG, VARUNIT_PU)));
 
@@ -248,21 +248,21 @@ void CDynaExciterMustang::UpdateSerializer(CSerializerBase* Serializer)
 	AddStateProperty(Serializer);
 	Serializer->AddProperty(CDevice::cszName_, TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(cszid_, TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty(m_cszTexc, Texc, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_cszUf_min, Umin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszUf_max, Umax, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszIf_min, Imin, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszIf_max, Imax, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszKif, Kif, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszKig, Kig, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszDECId, DECId);
-	Serializer->AddProperty(m_cszExcControlId, RegId);
-	Serializer->AddProperty(m_cszType_rg, bVoltageDependent);
+	Serializer->AddProperty(cszTexc_, Texc, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(cszUf_min_, Umin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszUf_max_, Umax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszIf_min_, Imin, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszIf_max_, Imax, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszKif_, Kif, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszKig_, Kig, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszDECId_, DECId);
+	Serializer->AddProperty(cszExcControlId_, RegId);
+	Serializer->AddProperty(cszType_rg_, bVoltageDependent);
 }
 
 void CDynaExciterMustang::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaExciterBase::UpdateValidator(Validator);
-	Validator->AddRule({ m_cszKig, m_cszKif }, &CSerializerValidatorRules::NonNegative);
-	Validator->AddRule(m_cszTexc, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ cszKig_, cszKif_ }, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(cszTexc_, &CSerializerValidatorRules::BiggerThanZero);
 }

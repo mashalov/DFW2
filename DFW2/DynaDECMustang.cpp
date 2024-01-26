@@ -22,12 +22,12 @@ CDynaDECMustang::CDynaDECMustang() : CDevice(),
 	EnfTrigger.SetResetPriority(false);
 	DefTrigger.SetResetPriority(false);
 
-	EnforceOn.SetName(cszEnfOnRly);
-	DeforceOn.SetName(cszDefOnRly);
-	EnforceOff.SetName(cszEnfOffRly);
-	DeforceOff.SetName(cszDefOffRly);
-	EnfTrigger.SetName(cszEnfTrig);
-	DefTrigger.SetName(cszDefTrig);
+	EnforceOn.SetName(cszEnfOnRly_);
+	DeforceOn.SetName(cszDefOnRly_);
+	EnforceOff.SetName(cszEnfOffRly_);
+	DeforceOff.SetName(cszDefOffRly_);
+	EnfTrigger.SetName(cszEnfTrig_);
+	DefTrigger.SetName(cszDefTrig_);
 }
 
 
@@ -81,11 +81,11 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::Init(CDynaModel* pDynaModel)
 	double Unom, Eqnom, Eqe0;
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 
-	if (!InitConstantVariable(Unom, pExciter, CDynaPowerInjector::m_cszUnom, DEVTYPE_GEN_MOTION))
+	if (!InitConstantVariable(Unom, pExciter, CDynaPowerInjector::cszUnom_, DEVTYPE_GEN_MOTION))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqnom, pExciter, CDynaGeneratorDQBase::m_cszEqnom, DEVTYPE_GEN_DQ))
+	if (!InitConstantVariable(Eqnom, pExciter, CDynaGeneratorDQBase::cszEqnom_, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqe0, pExciter, CDynaGeneratorDQBase::m_cszEqe, DEVTYPE_GEN_DQ))
+	if (!InitConstantVariable(Eqe0, pExciter, CDynaGeneratorDQBase::cszEqe_, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	Udec = 0.0;
@@ -212,16 +212,16 @@ void CDynaDECMustang::UpdateSerializer(CSerializerBase* Serializer)
 	AddStateProperty(Serializer);
 	Serializer->AddProperty(CDevice::cszName_, TypedSerializedValue::eValueType::VT_NAME);
 	Serializer->AddProperty(cszid_, TypedSerializedValue::eValueType::VT_ID);
-	Serializer->AddProperty(m_cszUbf, VEnfOn, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszUef, VEnfOff, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszUbrf, VDefOn, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszUerf, VDefOff, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszRf, EnfRatio, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddProperty(m_cszRrf, DefRatio, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddProperty(m_cszTexc_f, EnfTexc, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddProperty(m_cszTexc_rf, DefTexc, eVARUNITS::VARUNIT_UNITLESS);
-	Serializer->AddProperty(m_cszTz_in, TdelOn, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_cszTz_out, TdelOff, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(cszUbf_, VEnfOn, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszUef_, VEnfOff, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszUbrf_, VDefOn, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszUerf_, VDefOff, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszRf_, EnfRatio, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszRrf_, DefRatio, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszTexc_f_, EnfTexc, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszTexc_rf_, DefTexc, eVARUNITS::VARUNIT_UNITLESS);
+	Serializer->AddProperty(cszTz_in_, TdelOn, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(cszTz_out_, TdelOff, eVARUNITS::VARUNIT_SECONDS);
 
 	// добавляем переменные состояния форсировки
 	Serializer->AddState("EnforceOnValue", EnforceOnOut, eVARUNITS::VARUNIT_PU);
@@ -241,12 +241,12 @@ void CDynaDECMustang::UpdateSerializer(CSerializerBase* Serializer)
 void CDynaDECMustang::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDevice::UpdateValidator(Validator);
-	Validator->AddRule({ m_cszTexc_f, m_cszTexc_rf, m_cszRf }, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule({ m_cszRrf }, &CSerializerValidatorRules::Negative);
-	Validator->AddRule({ m_cszTz_in, m_cszTz_out }, &CSerializerValidatorRules::NonNegative);
-	Validator->AddRule({ m_cszUef }, &CDynaDECMustang::ValidatorVenfOff);
-	Validator->AddRule({ m_cszUbrf }, &CDynaDECMustang::ValidatorVdefOn);
-	Validator->AddRule({ m_cszUerf }, &CDynaDECMustang::ValidatorVdefOff);
+	Validator->AddRule({ cszTexc_f_, cszTexc_rf_, cszRf_ }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ cszRrf_ }, &CSerializerValidatorRules::Negative);
+	Validator->AddRule({ cszTz_in_, cszTz_out_ }, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule({ cszUef_ }, &CDynaDECMustang::ValidatorVenfOff);
+	Validator->AddRule({ cszUbrf_ }, &CDynaDECMustang::ValidatorVdefOn);
+	Validator->AddRule({ cszUerf_ }, &CDynaDECMustang::ValidatorVdefOff);
 }
 
 void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
@@ -255,19 +255,19 @@ void CDynaDECMustang::DeviceProperties(CDeviceContainerProperties& props)
 	// свой тип - форсировка Мустанг
 	props.SetType(DEVTYPE_DEC);	
 	props.SetType(DEVTYPE_DEC_MUSTANG);	
-	props.SetClassName(CDeviceContainerProperties::m_cszNameDECMustang, CDeviceContainerProperties::m_cszSysNameDECMustang);
+	props.SetClassName(CDeviceContainerProperties::cszNameDECMustang_, CDeviceContainerProperties::cszSysNameDECMustang_);
 	// может линковаться с возбудителем
 	props.AddLinkFrom(DEVTYPE_EXCITER, DLM_SINGLE, DPD_MASTER);
 
 	props.EquationsCount = CDynaDECMustang::VARS::V_LAST;
 
-	props.VarMap_.insert(std::make_pair(cszEnfOnRly, CVarIndex(CDynaDECMustang::V_ENFONRELAY, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(cszDefOnRly, CVarIndex(CDynaDECMustang::V_DEFONRELAY, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(cszEnfOffRly, CVarIndex(CDynaDECMustang::V_ENFOFFRELAY, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(cszDefOffRly, CVarIndex(CDynaDECMustang::V_DEFOFFRELAY, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(cszEnfTrig, CVarIndex(CDynaDECMustang::V_ENFTRIG, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(cszDefTrig, CVarIndex(CDynaDECMustang::V_DEFTRIG, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(CDynaExciterBase::m_cszUdec, CVarIndex(CDynaDECMustang::V_DEC, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszEnfOnRly_, CVarIndex(CDynaDECMustang::V_ENFONRELAY, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszDefOnRly_, CVarIndex(CDynaDECMustang::V_DEFONRELAY, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszEnfOffRly_, CVarIndex(CDynaDECMustang::V_ENFOFFRELAY, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszDefOffRly_, CVarIndex(CDynaDECMustang::V_DEFOFFRELAY, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszEnfTrig_, CVarIndex(CDynaDECMustang::V_ENFTRIG, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(cszDefTrig_, CVarIndex(CDynaDECMustang::V_DEFTRIG, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(CDynaExciterBase::cszUdec_, CVarIndex(CDynaDECMustang::V_DEC, VARUNIT_PU)));
 
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaDECMustang>>();
 }

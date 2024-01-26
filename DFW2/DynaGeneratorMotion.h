@@ -49,11 +49,11 @@ namespace DFW2
 		eDEVICEFUNCTIONSTATUS PreInit(CDynaModel* pDynaModel) override;
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
-		static constexpr const char* m_cszKdemp = "Kdemp";
-		static constexpr const char* m_cszxq = "xq";
-		static constexpr const char* m_cszMj = "Mj";
-		static constexpr const char* m_cszPnom = "Pnom";
-		static constexpr const char* m_cszcosPhinom = "cosPhinom";
+		static constexpr const char* cszKdemp_ = "Kdemp";
+		static constexpr const char* cszxq_ = "xq";
+		static constexpr const char* cszMj_ = "Mj";
+		static constexpr const char* cszPnom_ = "Pnom";
+		static constexpr const char* cszcosPhinom_ = "cosPhinom";
 
 
 		static CValidationRuleGeneratorPnom ValidatorPnom;

@@ -8,7 +8,7 @@ CDynaExciterBase::CDynaExciterBase() : CDevice(),
 			//  выход лага идет на ограничитель, а не на выход
 			ExcLag(*this, { EqeLag }, { Eqsum })	
 {
-	ExcLag.SetName(cszLag);
+	ExcLag.SetName(cszLag_);
 }
 
 eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
@@ -16,11 +16,11 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::Init(CDynaModel* pDynaModel)
 	eDEVICEFUNCTIONSTATUS Status(eDEVICEFUNCTIONSTATUS::DFS_OK);
 
 	CDevice* pGen{ GetSingleLink(DEVTYPE_GEN_DQ) };
-	if (!InitConstantVariable(Eqnom, pGen, CDynaGeneratorDQBase::m_cszEqnom, DEVTYPE_GEN_DQ))
+	if (!InitConstantVariable(Eqnom, pGen, CDynaGeneratorDQBase::cszEqnom_, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Eqe0, pGen, CDynaGeneratorDQBase::m_cszEqe, DEVTYPE_GEN_DQ))
+	if (!InitConstantVariable(Eqe0, pGen, CDynaGeneratorDQBase::cszEqe_, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
-	if (!InitConstantVariable(Inom, pGen, CDynaGenerator1C::m_cszInom, DEVTYPE_GEN_DQ))
+	if (!InitConstantVariable(Inom, pGen, CDynaGenerator1C::cszInom_, DEVTYPE_GEN_DQ))
 		Status = eDEVICEFUNCTIONSTATUS::DFS_FAILED;
 
 	if (CDevice::IsFunctionStatusOK(Status))
@@ -82,12 +82,12 @@ double* CDynaExciterBase::GetConstVariablePtr(ptrdiff_t nVarIndex)
 eDEVICEFUNCTIONSTATUS CDynaExciterBase::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
 	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_DQ);
-	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(GenId, pGen, CDynaGeneratorDQBase::m_cszId, DEVTYPE_GEN_DQ));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(GenIq, pGen, CDynaGeneratorDQBase::m_cszIq, DEVTYPE_GEN_DQ));
+	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(GenId, pGen, CDynaGeneratorDQBase::cszId_, DEVTYPE_GEN_DQ));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(GenIq, pGen, CDynaGeneratorDQBase::cszIq_, DEVTYPE_GEN_DQ));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVg, pGen, CDynaNodeBase::cszV_, DEVTYPE_NODE));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGeneratorDQBase::m_cszEq));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, GetSingleLink(DEVTYPE_EXCCON), CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, GetSingleLink(DEVTYPE_DEC), CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGeneratorDQBase::cszEq_));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, GetSingleLink(DEVTYPE_EXCCON), CDynaExciterBase::cszUf_, DEVTYPE_EXCCON_MUSTANG));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, GetSingleLink(DEVTYPE_DEC), CDynaExciterBase::cszUdec_, DEVTYPE_DEC_MUSTANG));
 	return eRes;
 }
 
@@ -97,12 +97,12 @@ void CDynaExciterBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.SetType(DEVTYPE_EXCITER_MUSTANG);
 
 	props.AddLinkFrom(DEVTYPE_GEN_DQ, DLM_SINGLE, DPD_MASTER);
-	props.AddLinkTo(DEVTYPE_DEC, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::m_cszDECId);
-	props.AddLinkTo(DEVTYPE_EXCCON, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::m_cszExcConId);
+	props.AddLinkTo(DEVTYPE_DEC, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::cszDECId_);
+	props.AddLinkTo(DEVTYPE_EXCCON, DLM_SINGLE, DPD_SLAVE, CDynaExciterBase::cszExcConId_);
 	
 	props.EquationsCount = CDynaExciterBase::VARS::V_LAST;
 
-	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::m_cszExcConId, CConstVarIndex(CDynaExciterBase::C_REGID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
-	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::m_cszDECId, CConstVarIndex(CDynaExciterBase::C_DECID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
+	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::cszExcConId_, CConstVarIndex(CDynaExciterBase::C_REGID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
+	props.ConstVarMap_.insert(std::make_pair(CDynaExciterBase::cszDECId_, CConstVarIndex(CDynaExciterBase::C_DECID, VARUNIT_PIECES, eDVT_CONSTSOURCE)));
 
 }

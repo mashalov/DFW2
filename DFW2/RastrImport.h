@@ -242,6 +242,9 @@ namespace DFW2
 
 		static constexpr const char* cszRaidenParameters_ = "RaidenParameters";
 		static constexpr const wchar_t* wcszDynamicRST = L"динамика.rst";
+		static constexpr const char* cszAliasGenerator_ = CDynaPowerInjector::cszAliasGenerator_;
+		static constexpr const char* cszAliasNode_ = "node";
+		static constexpr const char* cszAliasBranch_ = "vetv";
 		static std::string COMErrorDescription(const _com_error& error);
 	protected:
 		void UpdateRastrWinFile(CDynaModel& Network, std::string_view templatename);

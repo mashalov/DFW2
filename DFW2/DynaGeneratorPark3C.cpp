@@ -140,7 +140,7 @@ bool CDynaGeneratorPark3C::CalculateFundamentalParameters(PARK_PARAMETERS_DETERM
 
 	if (Consts::Equal(detd, 0.0))
 	{
-		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, CDynaGeneratorDQBase::m_cszBadCoeficients, GetVerbalName(), detd));
+		Log(DFW2MessageStatus::DFW2LOG_ERROR, fmt::format(CDFW2Messages::m_cszCannotGetParkParameters, CDynaGeneratorDQBase::cszBadCoeficients_, GetVerbalName(), detd));
 		bRes = false;
 	}
 	if (Consts::Equal(l1Q, 0.0))
@@ -386,11 +386,11 @@ void CDynaGeneratorPark3C::DeviceProperties(CDeviceContainerProperties& props)
 {
 	CDynaGeneratorDQBase::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_PARK3C);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorPark3C, CDeviceContainerProperties::m_cszSysNameGeneratorPark3C);
+	props.SetClassName(CDeviceContainerProperties::cszNameGeneratorPark3C_, CDeviceContainerProperties::cszSysNameGeneratorPark3C_);
 	props.EquationsCount = CDynaGeneratorPark3C::VARS::V_LAST;
-	props.VarMap_.insert(std::make_pair(m_cszPsifd, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
-	props.VarMap_.insert(std::make_pair(m_cszPsi1d, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
-	props.VarMap_.insert(std::make_pair(m_cszPsi1q, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(cszPsifd_, CVarIndex(V_PSI_FD, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(cszPsi1d_, CVarIndex(V_PSI_1D, eVARUNITS::VARUNIT_WB)));
+	props.VarMap_.insert(std::make_pair(cszPsi1q_, CVarIndex(V_PSI_1Q, eVARUNITS::VARUNIT_WB)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorPark3C>>();
 }
 
@@ -399,36 +399,36 @@ void CDynaGeneratorPark3C::UpdateSerializer(CSerializerBase* Serializer)
 	// обновляем сериализатор базового класса
 	CDynaGeneratorDQBase::UpdateSerializer(Serializer);
 
-	Serializer->AddState(m_cszPsifd, Psifd, eVARUNITS::VARUNIT_WB);
-	Serializer->AddState(m_cszPsi1d, Psi1d, eVARUNITS::VARUNIT_WB);
-	Serializer->AddState(m_cszPsi1q, Psi1q, eVARUNITS::VARUNIT_WB);
-	Serializer->AddProperty(CDynaGenerator3C::m_cszxd2, xd2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(CDynaGenerator3C::m_cszxq2, xq2, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_cszxl, xl, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty(m_csztdo1, Tdo1, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztdo2, Tdo2, eVARUNITS::VARUNIT_SECONDS);
-	Serializer->AddProperty(m_csztqo2, Tqo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddState(cszPsifd_, Psifd, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(cszPsi1d_, Psi1d, eVARUNITS::VARUNIT_WB);
+	Serializer->AddState(cszPsi1q_, Psi1q, eVARUNITS::VARUNIT_WB);
+	Serializer->AddProperty(CDynaGenerator3C::cszxd2_, xd2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(CDynaGenerator3C::cszxq2_, xq2, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(cszxl_, xl, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(csztdo1_, Tdo1, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(csztdo2_, Tdo2, eVARUNITS::VARUNIT_SECONDS);
+	Serializer->AddProperty(csztqo2_, Tqo2, eVARUNITS::VARUNIT_SECONDS);
 }
 
 void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaGeneratorDQBase::UpdateValidator(Validator);
-	Validator->AddRule({ CDynaGenerator3C::m_cszxd2,
-						 CDynaGenerator3C::m_cszxq2, 
-						 m_cszxl, 
-						 CDynaGenerator3C::m_csztdo1,
-						 CDynaGenerator3C::m_csztdo2,
-						 CDynaGenerator3C::m_csztqo2 }, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule({ CDynaGenerator3C::cszxd2_,
+						 CDynaGenerator3C::cszxq2_, 
+						 cszxl_, 
+						 CDynaGenerator3C::csztdo1_,
+						 CDynaGenerator3C::csztdo2_,
+						 CDynaGenerator3C::csztqo2_ }, &CSerializerValidatorRules::BiggerThanZero);
 
-	Validator->AddRule(m_csztdo1, &CDynaGeneratorDQBase::ValidatorTdo1);
-	Validator->AddRule(m_cszxd, &CDynaGeneratorDQBase::ValidatorXd);
-	Validator->AddRule(m_cszxq, &CDynaGeneratorDQBase::ValidatorXq);
-	Validator->AddRule(m_cszxq, &CDynaGeneratorPark3C::ValidatorXqXq2);
-	Validator->AddRule(m_cszxd1, &CDynaGeneratorPark3C::ValidatorXd1);
-	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXd);
-	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq);
-	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXd2);
-	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq2);
+	Validator->AddRule(csztdo1_, &CDynaGeneratorDQBase::ValidatorTdo1);
+	Validator->AddRule(cszxd_, &CDynaGeneratorDQBase::ValidatorXd);
+	Validator->AddRule(cszxq_, &CDynaGeneratorDQBase::ValidatorXq);
+	Validator->AddRule(cszxq_, &CDynaGeneratorPark3C::ValidatorXqXq2);
+	Validator->AddRule(cszxd1_, &CDynaGeneratorPark3C::ValidatorXd1);
+	Validator->AddRule(cszxl_, &CDynaGeneratorDQBase::ValidatorXlXd);
+	Validator->AddRule(cszxl_, &CDynaGeneratorDQBase::ValidatorXlXq);
+	Validator->AddRule(cszxl_, &CDynaGeneratorDQBase::ValidatorXlXd2);
+	Validator->AddRule(cszxl_, &CDynaGeneratorDQBase::ValidatorXlXq2);
 	Validator->AddRule(CDynaNodeBase::cszr_, &CSerializerValidatorRules::NonNegative);
 }
 
@@ -483,17 +483,17 @@ void CDynaGeneratorPark3C::CheckParameters()
 		
 	const std::array<ParameterPair, 9> CheckList =
 	{ {
-		{{ 0.6 * Zbase, 2.3 * Zbase, m_cszxd }, xd},
-		{{ 0.4 * Zbase, 2.3 * Zbase, m_cszxq }, xq} ,
-		{{ 0.15 * Zbase, 0.5 * Zbase, m_cszxd1 }, xd1},
-		//{{ 0.3 * Zbase, 1.0 * Zbase, m_cszxq1 }, xq1},
-		{{ 0.12 * Zbase, 0.35 * Zbase, m_cszxd2 }, xd2},
-		{{ 0.12 * Zbase, 0.45 * Zbase, m_cszxq2 }, xq2},
-		{{ 1.5, 10.0, m_csztdo1 }, Tdo1},
-		//{{ 0.5, 2.0, m_csztqo1 }, Tqo1},
-		{{ 0.01, 0.05, m_csztdo2 }, Tdo2},
-		{{ 0.01, 0.09, m_csztqo2 }, Tqo2},
-		{{ 0.1 * Zbase, 0.2 * Zbase, m_cszxl}, xl}
+		{{ 0.6 * Zbase, 2.3 * Zbase, cszxd_ }, xd},
+		{{ 0.4 * Zbase, 2.3 * Zbase, cszxq_ }, xq} ,
+		{{ 0.15 * Zbase, 0.5 * Zbase, cszxd1_ }, xd1},
+		//{{ 0.3 * Zbase, 1.0 * Zbase, cszxq1_ }, xq1},
+		{{ 0.12 * Zbase, 0.35 * Zbase, cszxd2_ }, xd2},
+		{{ 0.12 * Zbase, 0.45 * Zbase, cszxq2_ }, xq2},
+		{{ 1.5, 10.0, csztdo1_ }, Tdo1},
+		//{{ 0.5, 2.0, csztqo1_ }, Tqo1},
+		{{ 0.01, 0.05, csztdo2_ }, Tdo2},
+		{{ 0.01, 0.09, csztqo2_ }, Tqo2},
+		{{ 0.1 * Zbase, 0.2 * Zbase, cszxl_}, xl}
 	} };
 
 	for (const auto& Check : CheckList)

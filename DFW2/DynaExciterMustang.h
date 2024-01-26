@@ -31,18 +31,18 @@ namespace DFW2
 		static void DeviceProperties(CDeviceContainerProperties& properties);
 
 
-		static constexpr const char* m_cszTexc = "Texc";
-		static constexpr const char* m_cszUf_min = "Uf_min";
-		static constexpr const char* m_cszUf_max = "Uf_max";
-		static constexpr const char* m_cszIf_min = "If_min";
-		static constexpr const char* m_cszIf_max = "If_max";
-		static constexpr const char* m_cszKif = "Kif";
-		static constexpr const char* m_cszKig = "Kig";
-		static constexpr const char* m_cszDECId = "ForcerId";
-		static constexpr const char* m_cszExcControlId = "ExcControlId";
-		static constexpr const char* m_cszType_rg = "Type_rg";
+		static constexpr const char* cszTexc_ = "Texc";
+		static constexpr const char* cszUf_min_ = "Uf_min";
+		static constexpr const char* cszUf_max_ = "Uf_max";
+		static constexpr const char* cszIf_min_ = "If_min";
+		static constexpr const char* cszIf_max_ = "If_max";
+		static constexpr const char* cszKif_ = "Kif";
+		static constexpr const char* cszKig_ = "Kig";
+		static constexpr const char* cszDECId_ = "ForcerId";
+		static constexpr const char* cszExcControlId_ = "ExcControlId";
+		static constexpr const char* cszType_rg_ = "Type_rg";
 
-		static constexpr const char* cszEqeV = "EqeV";
-		static constexpr const char* cszEqLimit = "EqLimit";
+		static constexpr const char* cszEqeV_ = "EqeV";
+		static constexpr const char* cszEqLimit_ = "EqLimit";
 	};
 }

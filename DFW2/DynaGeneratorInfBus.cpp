@@ -142,16 +142,16 @@ eDEVICEFUNCTIONSTATUS CDynaGeneratorInfBusBase::UpdateExternalVariables(CDynaMod
 void CDynaGeneratorInfBusBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDynaVoltageSource::UpdateSerializer(Serializer);
-	Serializer->AddState(m_cszEqs, Eqs, eVARUNITS::VARUNIT_PU);
+	Serializer->AddState(cszEqs_, Eqs, eVARUNITS::VARUNIT_PU);
 	Serializer->AddState(CDynaNodeBase::cszDelta_, Delta, eVARUNITS::VARUNIT_RADIANS);
-	Serializer->AddProperty(m_cszxd1, xd1, eVARUNITS::VARUNIT_PU);
+	Serializer->AddProperty(cszxd1_, xd1, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty(CDynaNodeBase::cszr_, r, eVARUNITS::VARUNIT_OHM);
 }
 
 void CDynaGeneratorInfBusBase::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaVoltageSource::UpdateValidator(Validator);
-	Validator->AddRule(m_cszxd1, &CSerializerValidatorRules::BiggerThanZero);
+	Validator->AddRule(cszxd1_, &CSerializerValidatorRules::BiggerThanZero);
 	Validator->AddRule(CDynaNodeBase::cszr_, &CSerializerValidatorRules::NonNegative);
 }
 
@@ -171,7 +171,7 @@ void CDynaGeneratorInfBusBase::DeviceProperties(CDeviceContainerProperties& prop
 {
 	CDynaVoltageSource::DeviceProperties(props);
 	props.SetType(DEVTYPE_GEN_INFPOWER);
-	props.SetClassName(CDeviceContainerProperties::m_cszNameGeneratorInfPower, CDeviceContainerProperties::m_cszSysNameGeneratorInfPower);
+	props.SetClassName(CDeviceContainerProperties::cszNameGeneratorInfPower_, CDeviceContainerProperties::cszSysNameGeneratorInfPower_);
 	props.EquationsCount = CDynaGeneratorInfBusBase::VARS::V_LAST;
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaGeneratorInfBus>>();
 	props.bFinishStep = true;

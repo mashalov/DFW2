@@ -141,10 +141,10 @@ namespace DFW2
 		std::tuple<double, double, cplx> Get(double VdivVnom, double dLRCVicinity = 0.0) const;
 	protected:
 		double m_VshuntBelow;
-		CDynaLRCChannel m_P{ CDynaLRC::m_cszP }, m_Q{ CDynaLRC::m_cszQ };
+		CDynaLRCChannel m_P{ CDynaLRC::cszP_ }, m_Q{ CDynaLRC::cszQ_ };
 		void UpdateSerializer(CSerializerBase* Serializer) override;
-		static constexpr const char* m_cszP = "P";
-		static constexpr const char* m_cszQ = "Q";
+		static constexpr const char* cszP_ = "P";
+		static constexpr const char* cszQ_ = "Q";
 	};
 
 
