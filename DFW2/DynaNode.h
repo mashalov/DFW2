@@ -267,22 +267,26 @@ namespace DFW2
 
 		std::pair<cplx, cplx> GetYI(ptrdiff_t Iteration);
 
-		static constexpr const char* m_cszV = "V";
-		static constexpr const char* m_cszDelta = "Delta";
-		static constexpr const char* m_cszVre = "Vre";
-		static constexpr const char* m_cszVim = "Vim";
-		static constexpr const char* m_cszGsh = "gsh";
-		static constexpr const char* m_cszBsh = "bsh";
-		static constexpr const char* m_cszPload = "pn";
-		static constexpr const char* m_cszQload = "qn";
+		static constexpr const char* cszV_ = "V";
+		static constexpr const char* cszDelta_ = "Delta";
+		static constexpr const char* cszVre_ = "Vre";
+		static constexpr const char* cszVim_ = "Vim";
+		static constexpr const char* cszGsh_ = "gsh";
+		static constexpr const char* cszBsh_ = "bsh";
+		static constexpr const char* cszPload_ = "pn";
+		static constexpr const char* cszQload_ = "qn";
 		static constexpr const char* cszPload0_ = "pn0"; // нагрузка в начальных условиях (на чтение) 
 		static constexpr const char* cszQload0_ = "qn0"; // нагрузка в начальных условиях (на чтение)
-		static constexpr const char* m_cszLFNodeTypeNames[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };
-		static constexpr const char* m_cszS = "S";
-		static constexpr const char* m_cszSz = "Sz";
-		static constexpr const char* cszSyncDelta = "SyncDelta";
+		static constexpr const char* cszLFNodeTypeNames_[5] = { "Slack", "Load", "Gen", "GenMax", "GenMin" };
+		static constexpr const char* cszS_ = "S";
+		static constexpr const char* cszSz_ = "Sz";
+		static constexpr const char* cszSyncDelta_ = "SyncDelta";
 		static constexpr const char* cszR_ = "R";
 		static constexpr const char* cszX_ = "X";
+		static constexpr const char* cszr_ = "r";
+		static constexpr const char* cszx_ = "x";
+		static constexpr const char* cszg_ = "g";
+		static constexpr const char* cszb_ = "b";
 	protected:
 		// Рассчитать полную информацию о потоках в ветвях по рассчитанным взаимным потокам
 		void CalculateZeroLFBranches();

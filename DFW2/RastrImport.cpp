@@ -468,6 +468,8 @@ void CRastrImport::GetData(CDynaModel& Network)
 		.AddFieldSynonyms("HeadNode", "Id1")
 		.AddFieldSynonyms("TailNode", "Id2")
 		.AddFieldSynonyms("ParallelBranch", "Id3")
+		.AddFieldSynonyms(CDynaNodeBase::cszb_, "B")
+		.AddFieldSynonyms(CDynaNodeBase::cszg_, "G")
 		.AddFieldSynonyms(CSerializerBase::m_cszType, "tip")
 		.AddFieldSynonyms("Placement", "Pr_vikl");
 
@@ -712,15 +714,15 @@ void CRastrImport::ReadAutomatic(CDynaModel& Network)
 	{
 		{2 , {CDeviceContainerProperties::m_cszAliasNode, CDevice::cszSta_ } },
 		{3 , {CDeviceContainerProperties::m_cszAliasBranch, CDevice::cszSta_ } },
-		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszGsh } },
-		{5 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszBsh} },
-		{6 , {CDeviceContainerProperties::m_cszAliasNode, "r"} },
-		{7 , {CDeviceContainerProperties::m_cszAliasNode, "x"} },
-		{8 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszPload} },
-		{9 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszQload} },
-		{13 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszPload} },
-		{19 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszV} },
-		{20 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::m_cszV} },
+		{4 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszGsh_ } },
+		{5 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszBsh_} },
+		{6 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNodeBase::cszr_} },
+		{7 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNodeBase::cszx_} },
+		{8 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszPload_} },
+		{9 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszQload_} },
+		{13 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszPload_} },
+		{19 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszV_} },
+		{20 , {CDeviceContainerProperties::m_cszAliasNode, CDynaNode::cszV_} },
 	},
 	StarterTypeArgs
 	{

@@ -432,17 +432,17 @@ bool CAutomaticAction::Init(CDynaModel* pDynaModel, CCustomDeviceCPP *pCustomDev
 							Action_ = std::make_unique<CModelActionChangeBranchState>(static_cast<CDynaBranch*>(pDev), CDynaBranch::BranchState::BRANCH_OFF);
 							bRes = true;
 						}
-						else if (ObjectProp_ == "r")
+						else if (ObjectProp_ == CDynaNodeBase::cszr_)
 						{
 							Action_ = std::make_unique<CModelActionChangeBranchR>(static_cast<CDynaBranch*>(pDev), *pValue_);
 							bRes = true;
 						}
-						else if (ObjectProp_ == "x")
+						else if (ObjectProp_ == CDynaNodeBase::cszx_)
 						{
 							Action_ = std::make_unique<CModelActionChangeBranchX>(static_cast<CDynaBranch*>(pDev), *pValue_);
 							bRes = true;
 						}
-						else if (ObjectProp_ == "b")
+						else if (ObjectProp_ == CDynaNodeBase::cszb_)
 						{
 							Action_ = std::make_unique<CModelActionChangeBranchB>(static_cast<CDynaBranch*>(pDev), *pValue_);
 							bRes = true;

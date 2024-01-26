@@ -82,7 +82,7 @@ void CDynaModel::WriteResultsHeader()
 		// собираем углы генераторов для детектора затухания колебаний
 		if (m_Parameters.m_bAllowDecayDetector && container->IsKindOfType(eDFW2DEVICETYPE::DEVTYPE_GEN_MOTION))
 		{
-			ptrdiff_t deltaIndex(container->GetVariableIndex(CDynaNodeBase::m_cszDelta));
+			ptrdiff_t deltaIndex(container->GetVariableIndex(CDynaNodeBase::cszDelta_));
 			if (deltaIndex >= 0)
 				for (const auto& device : *container)
 					m_OscDetector.add_value_pointer(device->GetVariableConstPtr(deltaIndex));

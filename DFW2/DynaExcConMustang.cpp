@@ -257,11 +257,11 @@ eDEVICEFUNCTIONSTATUS CDynaExcConMustang::UpdateExternalVariables(CDynaModel *pD
 {
 	// производную частоты всегда брать из РДЗ узла (подумать надо ли ее во всех узлах или только в тех, которые под генераторами)
 	// или может быть считать ее вообще вне узла - только в АРВ или еще там где нужно
-	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(dSdtIn, GetSingleLink(DEVTYPE_EXCITER), CDynaNode::m_cszS, DEVTYPE_NODE));
+	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(dSdtIn, GetSingleLink(DEVTYPE_EXCITER), CDynaNode::cszS_, DEVTYPE_NODE));
 	CDevice *pExciter = GetSingleLink(DEVTYPE_EXCITER);
 	if (pExciter)
 	{
-		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dVdtIn, pExciter, CDynaNode::m_cszV, DEVTYPE_NODE));
+		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dVdtIn, pExciter, CDynaNode::cszV_, DEVTYPE_NODE));
 		eRes = DeviceFunctionResult(eRes, InitExternalVariable(dEqdtIn, pExciter, CDynaGeneratorDQBase::m_cszEq, DEVTYPE_GEN_DQ));
 	}
 	return eRes;

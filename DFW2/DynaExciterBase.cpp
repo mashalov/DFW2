@@ -84,7 +84,7 @@ eDEVICEFUNCTIONSTATUS CDynaExciterBase::UpdateExternalVariables(CDynaModel *pDyn
 	CDevice *pGen = GetSingleLink(DEVTYPE_GEN_DQ);
 	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(GenId, pGen, CDynaGeneratorDQBase::m_cszId, DEVTYPE_GEN_DQ));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(GenIq, pGen, CDynaGeneratorDQBase::m_cszIq, DEVTYPE_GEN_DQ));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVg, pGen, CDynaNodeBase::m_cszV, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtVg, pGen, CDynaNodeBase::cszV_, DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(EqInput, pGen, CDynaGeneratorDQBase::m_cszEq));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUf, GetSingleLink(DEVTYPE_EXCCON), CDynaExciterBase::m_cszUf, DEVTYPE_EXCCON_MUSTANG));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(ExtUdec, GetSingleLink(DEVTYPE_DEC), CDynaExciterBase::m_cszUdec, DEVTYPE_DEC_MUSTANG));

@@ -421,7 +421,7 @@ void CDynaModel::InitDevices()
 {
 	eDEVICEFUNCTIONSTATUS Status{ eDEVICEFUNCTIONSTATUS::DFS_NOTREADY };
 
-	m_cszDampingName = (GetFreqDampingType() == ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND) ? CDynaNode::m_cszSz : CDynaNode::m_cszS;
+	m_cszDampingName = (GetFreqDampingType() == ACTIVE_POWER_DAMPING_TYPE::APDT_ISLAND) ? CDynaNode::cszSz_ : CDynaNode::cszS_;
 
 	// Вызываем обновление внешних переменных чтобы получить значения внешних устройств. Индексов до построения матрицы пока нет
 	if (!UpdateExternalVariables())

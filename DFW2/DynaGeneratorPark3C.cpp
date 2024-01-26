@@ -429,7 +429,7 @@ void CDynaGeneratorPark3C::UpdateValidator(CSerializerValidatorRules* Validator)
 	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq);
 	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXd2);
 	Validator->AddRule(m_cszxl, &CDynaGeneratorDQBase::ValidatorXlXq2);
-	Validator->AddRule(m_cszr, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(CDynaNodeBase::cszr_, &CSerializerValidatorRules::NonNegative);
 }
 
 /*

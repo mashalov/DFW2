@@ -328,12 +328,12 @@ void CDynaBranch::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("ip", key.Ip);
 	Serializer->AddProperty("iq", key.Iq);
 	Serializer->AddProperty("np", key.Np);
-	Serializer->AddProperty("r", R, eVARUNITS::VARUNIT_OHM);
-	Serializer->AddProperty("x", X, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(CDynaNodeBase::cszr_, R, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(CDynaNodeBase::cszx_, X, eVARUNITS::VARUNIT_OHM);
 	Serializer->AddProperty("ktr", Ktr, eVARUNITS::VARUNIT_PU);
 	Serializer->AddProperty("kti", Kti, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty("g", G, eVARUNITS::VARUNIT_SIEMENS);
-	Serializer->AddProperty("b", B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
+	Serializer->AddProperty(CDynaNodeBase::cszg_, G, eVARUNITS::VARUNIT_SIEMENS);
+	Serializer->AddProperty(CDynaNodeBase::cszb_, B, eVARUNITS::VARUNIT_SIEMENS, -1.0);
 	Serializer->AddProperty("gr_ip", GrIp, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddProperty("gr_iq", GrIq, eVARUNITS::VARUNIT_SIEMENS);
 	Serializer->AddProperty("br_ip", BrIp, eVARUNITS::VARUNIT_SIEMENS, -1.0);

@@ -80,8 +80,8 @@ void CDynaNodeMeasure::DeviceProperties(CDeviceContainerProperties& props)
 	props.VarMap_.insert({ m_cszPload,  CVarIndex(CDynaNodeMeasure::V_PLOAD, VARUNIT_MW) });
 	props.VarMap_.insert({ m_cszQload,  CVarIndex(CDynaNodeMeasure::V_QLOAD, VARUNIT_MVAR) });
 
-	props.VarAliasMap_.insert({ { CDynaNodeBase::m_cszPload, m_cszPload }, 
-								{ CDynaNodeBase::m_cszQload, m_cszQload } });
+	props.VarAliasMap_.insert({ { CDynaNodeBase::cszPload_, m_cszPload }, 
+								{ CDynaNodeBase::cszQload_, m_cszQload } });
 
 	// измерения создаются индивидуально с узлом в конструкторе
 	//props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaBranchMeasure>>();

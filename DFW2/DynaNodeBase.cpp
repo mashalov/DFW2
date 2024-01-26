@@ -870,7 +870,7 @@ void CDynaNodeContainer::SwitchLRCs(bool bSwitchToDynamicLRC)
 
 VariableIndexExternal CDynaNodeBase::GetExternalVariable(std::string_view VarName)
 {
-	if (VarName == CDynaNodeBase::m_cszSz || VarName == CDynaNodeBase::cszSyncDelta)
+	if (VarName == CDynaNodeBase::cszSz_ || VarName == CDynaNodeBase::cszSyncDelta_)
 	{
 		VariableIndexExternal ExtVar = { -1, nullptr };
 
@@ -1614,10 +1614,10 @@ void CDynaNodeBase::DeviceProperties(CDeviceContainerProperties& props)
 	props.AddLinkFrom(DEVTYPE_POWER_INJECTOR, DLM_MULTI, DPD_SLAVE);
 	props.EquationsCount = CDynaNodeBase::VARS::V_LAST;
 	props.bPredict = props.bNewtonUpdate = true;
-	props.VarMap_.insert({ CDynaNodeBase::m_cszVre, CVarIndex(V_RE, VARUNIT_KVOLTS) });
-	props.VarMap_.insert({ CDynaNodeBase::m_cszVim, CVarIndex(V_IM, VARUNIT_KVOLTS) });
-	props.VarMap_.insert({ CDynaNodeBase::m_cszV, CVarIndex(V_V, VARUNIT_KVOLTS) });
-	props.VarAliasMap_.insert({ "vras", { CDynaNodeBase::m_cszV }});
+	props.VarMap_.insert({ CDynaNodeBase::cszVre_, CVarIndex(V_RE, VARUNIT_KVOLTS) });
+	props.VarMap_.insert({ CDynaNodeBase::cszVim_, CVarIndex(V_IM, VARUNIT_KVOLTS) });
+	props.VarMap_.insert({ CDynaNodeBase::cszV_, CVarIndex(V_V, VARUNIT_KVOLTS) });
+	props.VarAliasMap_.insert({ "vras", { CDynaNodeBase::cszV_ }});
 	props.DeviceFactory = std::make_unique <CDeviceFactory<CDynaNodeBase>>();
 }
 
@@ -1719,14 +1719,14 @@ void CDynaNodeBase::UpdateSerializer(CSerializerBase* Serializer)
 	CDevice::UpdateSerializer(Serializer);
 	Serializer->AddProperty(CDevice::cszname_, TypedSerializedValue::eValueType::VT_NAME);
 	AddStateProperty(Serializer);
-	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>(eLFNodeType_, CDynaNodeBase::m_cszLFNodeTypeNames));
+	Serializer->AddEnumProperty("tip", new CSerializerAdapterEnum<CDynaNodeBase::eLFNodeType>(eLFNodeType_, CDynaNodeBase::cszLFNodeTypeNames_));
 	Serializer->AddProperty("ny", TypedSerializedValue::eValueType::VT_ID);
 	Serializer->AddProperty("vras", V, eVARUNITS::VARUNIT_KVOLTS);
 	Serializer->AddProperty("delta", Delta, eVARUNITS::VARUNIT_DEGREES);
 	Serializer->AddProperty("pnr", Pn, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty("qnr", Qn, eVARUNITS::VARUNIT_MVAR);
-	Serializer->AddProperty(CDynaNodeBase::m_cszPload, Pnr, eVARUNITS::VARUNIT_MW);
-	Serializer->AddProperty(CDynaNodeBase::m_cszQload, Qnr, eVARUNITS::VARUNIT_MVAR);
+	Serializer->AddProperty(CDynaNodeBase::cszPload_, Pnr, eVARUNITS::VARUNIT_MW);
+	Serializer->AddProperty(CDynaNodeBase::cszQload_, Qnr, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty("pg", Pg, eVARUNITS::VARUNIT_MW);
 	Serializer->AddProperty("qg", Qg, eVARUNITS::VARUNIT_MVAR);
 	Serializer->AddProperty("gsh", G, eVARUNITS::VARUNIT_SIEMENS);

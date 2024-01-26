@@ -1,5 +1,6 @@
 ﻿#include "stdafx.h"
 #include "DynaReactor.h"
+#include "DynaNode.h"
 using namespace DFW2;
 
 
@@ -25,6 +26,6 @@ void CDynaReactor::UpdateSerializer(CSerializerBase* Serializer)
 	Serializer->AddProperty("Placement", Placement, eVARUNITS::VARUNIT_UNITLESS);	// установка (0 - до выключателя / 1 - после выключателя )
 	// "до выключателя" - при отключении ветви реактор уходит на шину. Реально он и так фактически на шине. Положение влияет на расчет потоков ветви
 	// "после выключателя" - при отключении остается на ветви, видимо может шунтировать открытый конец
-	Serializer->AddProperty("B", b, eVARUNITS::VARUNIT_SIEMENS, -1.0);		// реактивная проводимость
-	Serializer->AddProperty("G", g, eVARUNITS::VARUNIT_SIEMENS);		// активная проводимость
+	Serializer->AddProperty(CDynaNodeBase::cszb_, b, eVARUNITS::VARUNIT_SIEMENS, -1.0);		// реактивная проводимость
+	Serializer->AddProperty(CDynaNodeBase::cszg_, g, eVARUNITS::VARUNIT_SIEMENS);		// активная проводимость
 }

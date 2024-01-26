@@ -93,7 +93,7 @@ void CSynchroZone::DeviceProperties(CDeviceContainerProperties& props)
 	props.bVolatile = true;
 	props.eDeviceType = DEVTYPE_SYNCZONE;
 	props.EquationsCount = CSynchroZone::VARS::V_LAST;
-	props.VarMap_.insert(std::make_pair(CDynaNode::m_cszSz, CVarIndex(CSynchroZone::VARS::V_S, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(CDynaNode::cszSyncDelta, CVarIndex(CSynchroZone::VARS::V_DELTA, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(CDynaNode::cszSz_, CVarIndex(CSynchroZone::VARS::V_S, VARUNIT_PU)));
+	props.VarMap_.insert(std::make_pair(CDynaNode::cszSyncDelta_, CVarIndex(CSynchroZone::VARS::V_DELTA, VARUNIT_PU)));
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CSynchroZone>>();
 }

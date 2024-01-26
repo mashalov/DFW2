@@ -199,7 +199,7 @@ eDEVICEFUNCTIONSTATUS CDynaDECMustang::ProcessDiscontinuity(CDynaModel* pDynaMod
 
 eDEVICEFUNCTIONSTATUS CDynaDECMustang::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(Vnode, GetSingleLink(DEVTYPE_EXCITER), CDynaNodeBase::m_cszV, DEVTYPE_NODE));
+	eDEVICEFUNCTIONSTATUS eRes = DeviceFunctionResult(InitExternalVariable(Vnode, GetSingleLink(DEVTYPE_EXCITER), CDynaNodeBase::cszV_, DEVTYPE_NODE));
 	return eRes;
 }
 

@@ -121,13 +121,13 @@ void CDynaNode::DeviceProperties(CDeviceContainerProperties& props)
 	CDynaNodeBase::DeviceProperties(props);
 	props.SetClassName(CDeviceContainerProperties::m_cszNameNode, CDeviceContainerProperties::m_cszSysNameNode);
 	props.EquationsCount = CDynaNode::VARS::V_LAST;
-	props.VarMap_.insert({ CDynaNode::m_cszS, CVarIndex(V_S, VARUNIT_PU) });
-	props.VarMap_.insert({ CDynaNodeBase::m_cszDelta, CVarIndex(V_DELTA, VARUNIT_RADIANS) });
+	props.VarMap_.insert({ CDynaNode::cszS_, CVarIndex(V_S, VARUNIT_PU) });
+	props.VarMap_.insert({ CDynaNodeBase::cszDelta_, CVarIndex(V_DELTA, VARUNIT_RADIANS) });
 	props.DeviceFactory = std::make_unique<CDeviceFactory<CDynaNode>>();
 
 	props.Aliases_.push_back(CDeviceContainerProperties::m_cszAliasNode);
-	props.ConstVarMap_.insert({ CDynaNode::m_cszGsh, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
-	props.ConstVarMap_.insert({ CDynaNode::m_cszBsh, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaNode::cszGsh_, CConstVarIndex(CDynaNode::C_GSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
+	props.ConstVarMap_.insert({ CDynaNode::cszBsh_, CConstVarIndex(CDynaNode::C_BSH, VARUNIT_SIEMENS, eDVT_INTERNALCONST) });
 
 	props.bUseCOI = true;
 	props.SyncDeltaId = CDynaNode::C_SYNCDELTA;

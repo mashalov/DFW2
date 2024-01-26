@@ -205,7 +205,7 @@ void CDynaGeneratorMotion::DeviceProperties(CDeviceContainerProperties& props)
 	props.EquationsCount = CDynaGeneratorMotion::VARS::V_LAST;
 
 	props.VarMap_.insert(std::make_pair("S", CVarIndex(CDynaGeneratorMotion::V_S, VARUNIT_PU)));
-	props.VarMap_.insert(std::make_pair(CDynaNodeBase::m_cszDelta, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
+	props.VarMap_.insert(std::make_pair(CDynaNodeBase::cszDelta_, CVarIndex(CDynaGeneratorMotion::V_DELTA, VARUNIT_RADIANS)));
 
 	props.ConstVarMap_.insert(std::make_pair(CDynaPowerInjector::m_cszUnom, CConstVarIndex(CDynaGeneratorMotion::C_UNOM, VARUNIT_KVOLTS, eDVT_CONSTSOURCE)));
 

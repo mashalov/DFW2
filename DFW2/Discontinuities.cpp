@@ -282,7 +282,7 @@ eDFW2_ACTION_STATE CModelActionChangeBranchB::Do(CDynaModel* pDynaModel, double 
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "B", B, pDynaBranch_->B, pDynaBranch_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszb_, B, pDynaBranch_->B, pDynaBranch_->GetVerbalName());
 
 	Log(pDynaModel, fmt::format("{} B={} -> B={}",
 		pDynaBranch_->GetVerbalName(),
@@ -397,8 +397,8 @@ eDFW2_ACTION_STATE CModelActionChangeNodePQLoad::Do(CDynaModel* pDynaModel, doub
 		SloadNew
 	));
 
-	WriteSlowVariable(pDynaModel, CDynaNodeBase::m_cszPload, SloadNew.real(), Sload.real(), pDynaNode_->GetVerbalName());
-	WriteSlowVariable(pDynaModel, CDynaNodeBase::m_cszQload, SloadNew.imag(), Sload.imag(), pDynaNode_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszPload_, SloadNew.real(), Sload.real(), pDynaNode_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszQload_, SloadNew.imag(), Sload.imag(), pDynaNode_->GetVerbalName());
 
 	CDevice::FromComplex(pDynaNode_->Pn, pDynaNode_->Qn, SloadNew);
 
@@ -528,7 +528,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntG::Do(CDynaModel *pDynaModel, doub
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "G", Value, pDynaNode_->G, pDynaNode_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszg_, Value, pDynaNode_->G, pDynaNode_->GetVerbalName());
 
 	if(std::isfinite(pDynaNode_->Gshunt))
 		Log(pDynaModel, fmt::format("{} G={} -> G={}",
@@ -551,7 +551,7 @@ eDFW2_ACTION_STATE CModelActionChangeNodeShuntB::Do(CDynaModel *pDynaModel, doub
 {
 	eDFW2_ACTION_STATE State{ eDFW2_ACTION_STATE::AS_DONE };
 
-	WriteSlowVariable(pDynaModel, "B", Value, pDynaNode_->B, pDynaNode_->GetVerbalName());
+	WriteSlowVariable(pDynaModel, CDynaNodeBase::cszb_, Value, pDynaNode_->B, pDynaNode_->GetVerbalName());
 
 	if (std::isfinite(pDynaNode_->Bshunt))
 		Log(pDynaModel, fmt::format("{} B={} -> B={}",

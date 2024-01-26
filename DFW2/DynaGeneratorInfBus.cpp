@@ -143,16 +143,16 @@ void CDynaGeneratorInfBusBase::UpdateSerializer(CSerializerBase* Serializer)
 {
 	CDynaVoltageSource::UpdateSerializer(Serializer);
 	Serializer->AddState(m_cszEqs, Eqs, eVARUNITS::VARUNIT_PU);
-	Serializer->AddState(CDynaNodeBase::m_cszDelta, Delta, eVARUNITS::VARUNIT_RADIANS);
+	Serializer->AddState(CDynaNodeBase::cszDelta_, Delta, eVARUNITS::VARUNIT_RADIANS);
 	Serializer->AddProperty(m_cszxd1, xd1, eVARUNITS::VARUNIT_PU);
-	Serializer->AddProperty(m_cszr, r, eVARUNITS::VARUNIT_OHM);
+	Serializer->AddProperty(CDynaNodeBase::cszr_, r, eVARUNITS::VARUNIT_OHM);
 }
 
 void CDynaGeneratorInfBusBase::UpdateValidator(CSerializerValidatorRules* Validator)
 {
 	CDynaVoltageSource::UpdateValidator(Validator);
 	Validator->AddRule(m_cszxd1, &CSerializerValidatorRules::BiggerThanZero);
-	Validator->AddRule(m_cszr, &CSerializerValidatorRules::NonNegative);
+	Validator->AddRule(CDynaNodeBase::cszr_, &CSerializerValidatorRules::NonNegative);
 }
 
 void CDynaGeneratorInfBus::UpdateSerializer(CSerializerBase* Serializer)

@@ -65,13 +65,13 @@ eDEVICEFUNCTIONSTATUS CDynaPowerInjector::Init(CDynaModel* pDynaModel)
 
 eDEVICEFUNCTIONSTATUS CDynaPowerInjector::UpdateExternalVariables(CDynaModel *pDynaModel)
 {
-	eDEVICEFUNCTIONSTATUS eRes{ DeviceFunctionResult(InitExternalVariable(V, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszV, DEVTYPE_NODE)) };
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(DeltaV, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszDelta, DEVTYPE_NODE));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vre, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszVre, DEVTYPE_NODE));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vim, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::m_cszVim, DEVTYPE_NODE));
+	eDEVICEFUNCTIONSTATUS eRes{ DeviceFunctionResult(InitExternalVariable(V, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::cszV_, DEVTYPE_NODE)) };
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(DeltaV, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::cszDelta_, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vre, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::cszVre_, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Vim, GetSingleLink(DEVTYPE_NODE), CDynaNodeBase::cszVim_, DEVTYPE_NODE));
 	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Sv, GetSingleLink(DEVTYPE_NODE), pDynaModel->GetDampingName(), DEVTYPE_NODE));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Scoi, GetSingleLink(DEVTYPE_NODE), CDynaNode::m_cszSz, DEVTYPE_NODE));
-	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Dcoi, GetSingleLink(DEVTYPE_NODE), CDynaNode::cszSyncDelta, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Scoi, GetSingleLink(DEVTYPE_NODE), CDynaNode::cszSz_, DEVTYPE_NODE));
+	eRes = DeviceFunctionResult(eRes, InitExternalVariable(Dcoi, GetSingleLink(DEVTYPE_NODE), CDynaNode::cszSyncDelta_, DEVTYPE_NODE));
 	return eRes;
 }
 

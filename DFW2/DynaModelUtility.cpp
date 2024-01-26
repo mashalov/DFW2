@@ -1055,7 +1055,7 @@ void CDynaModel::ConsiderContainerProperties()
 				// требуем расчета абсолютных углов в FinishStep
 				props.bFinishStep = true;
 				// добавляем переменную абсолютного угла в записываемые константы
-				props.ConstVarMap_.insert({ CDynaNode::cszSyncDelta, CConstVarIndex(props.SyncDeltaId, VARUNIT_RADIANS, true, eDVT_CONSTSOURCE) });
+				props.ConstVarMap_.insert({ CDynaNode::cszSyncDelta_, CConstVarIndex(props.SyncDeltaId, VARUNIT_RADIANS, true, eDVT_CONSTSOURCE) });
 			}
 		}
 
